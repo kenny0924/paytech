@@ -1,4 +1,4 @@
-package com.paytech.risk.api.decision.response;
+package com.paytech.risk.decision.api.response;
 
 /** 主体标签当前事实，不声明适用主体限制，不改写历史配置。 */
 public class SubjectTagResponseBody {

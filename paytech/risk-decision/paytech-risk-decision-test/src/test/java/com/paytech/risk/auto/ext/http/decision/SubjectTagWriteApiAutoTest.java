@@ -5,8 +5,8 @@ import static com.paytech.foundation.common.error.CommonErrorCode.INTERNAL_ERROR
 import static com.paytech.foundation.common.error.CommonErrorCode.INVALID_REQUEST;
 import static com.paytech.foundation.common.error.CommonErrorCode.UNSUPPORTED_MEDIA_TYPE;
 import static com.paytech.foundation.common.error.CommonErrorCode.VALIDATION_ERROR;
-import static com.paytech.risk.api.enums.RiskDecisionConfigurationErrorCode.RISK_DICTIONARY_CHANGED;
-import static com.paytech.risk.api.enums.RiskDecisionConfigurationErrorCode.RISK_DICTIONARY_CODE_EXISTS;
+import static com.paytech.risk.decision.api.enums.RiskDecisionConfigurationErrorCode.RISK_DICTIONARY_CHANGED;
+import static com.paytech.risk.decision.api.enums.RiskDecisionConfigurationErrorCode.RISK_DICTIONARY_CODE_EXISTS;
 import static com.paytech.risk.decision.domain.enums.DictionaryStatus.ACTIVE;
 import static com.paytech.risk.decision.domain.enums.DictionaryStatus.DISABLED;
 import static com.paytech.risk.decision.domain.enums.DictionaryType.SUBJECT_TAG;
@@ -46,10 +46,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 
-import com.paytech.risk.api.decision.DecisionDictionaryApi;
-import com.paytech.risk.api.decision.request.ChangeDictionaryStatusRequestBody;
-import com.paytech.risk.api.decision.request.CreateSubjectTagRequestBody;
-import com.paytech.risk.api.decision.request.UpdateSubjectTagRequestBody;
+import com.paytech.risk.decision.api.DecisionDictionaryApi;
+import com.paytech.risk.decision.api.request.ChangeDictionaryStatusRequestBody;
+import com.paytech.risk.decision.api.request.CreateSubjectTagRequestBody;
+import com.paytech.risk.decision.api.request.UpdateSubjectTagRequestBody;
 import com.paytech.risk.decision.domain.enums.DictionaryStatus;
 import com.paytech.risk.test.base.AbstractDecisionDictionaryApiTest;
 import com.paytech.risk.test.builder.decision.DictionaryEntryBuilder;

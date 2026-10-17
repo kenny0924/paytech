@@ -1,7 +1,7 @@
-package com.paytech.risk.compliance.domainservice.repository;
+package com.paytech.compliance.domainservice.repository;
 
 import java.util.List;
-import com.paytech.risk.compliance.core.dal.dataobject.CaseDependency;
+import com.paytech.compliance.core.dal.dataobject.CaseDependency;
 
 /** t_dd_case_dependency 的案件依赖持久化。 */
 public interface CaseDependencyRepository {

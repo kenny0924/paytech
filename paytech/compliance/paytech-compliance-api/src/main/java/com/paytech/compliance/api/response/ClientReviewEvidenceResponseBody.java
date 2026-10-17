@@ -1,4 +1,4 @@
-package com.paytech.risk.api.compliance.response;
+package com.paytech.compliance.api.response;
 
 /** 一份证据引用及核验状态。 */
 public class ClientReviewEvidenceResponseBody {

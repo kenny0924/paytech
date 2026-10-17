@@ -1,4 +1,4 @@
-package com.paytech.risk.compliance.service.processor.response;
+package com.paytech.compliance.service.processor.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

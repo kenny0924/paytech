@@ -1,10 +1,10 @@
-package com.paytech.risk.api.decision.response;
+package com.paytech.risk.decision.api.response;
 
 import java.util.List;
 
-import com.paytech.risk.api.decision.DecisionFlowModels.Graph;
-import com.paytech.risk.api.decision.DecisionFlowModels.RuleSetReference;
-import com.paytech.risk.api.decision.RiskVariableModels;
+import com.paytech.risk.decision.api.DecisionFlowModels.Graph;
+import com.paytech.risk.decision.api.DecisionFlowModels.RuleSetReference;
+import com.paytech.risk.decision.api.RiskVariableModels;
 
 /** 当前根事实与查询版本事实分别返回；删除根仅可通过准确历史入口读取。 */
 public class FlowDetailResponseBody {

@@ -4,8 +4,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
-import com.paytech.risk.api.evaluation.request.EvaluateDecisionRequestBody;
-import com.paytech.risk.api.evaluation.request.PaymentAttemptRiskInput;
+import com.paytech.risk.decision.api.evaluation.request.EvaluateDecisionRequestBody;
+import com.paytech.risk.decision.api.evaluation.request.PaymentAttemptRiskInput;
 
 /**
  * 支付尝试风控点统一评估请求的测试 Builder

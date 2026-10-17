@@ -1,10 +1,10 @@
-package com.paytech.risk.compliance.domainservice.policy;
+package com.paytech.compliance.domainservice.policy;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import com.paytech.risk.compliance.domain.ClientReviewFamily;
-import com.paytech.risk.compliance.domain.ReviewRequirementView;
+import com.paytech.compliance.domain.ClientReviewFamily;
+import com.paytech.compliance.domain.ReviewRequirementView;
 
 /**
  * Client 入驻审核的通过门禁；材料是否充分由运营逐份核验，系统只检查核验与必需项是否完成。

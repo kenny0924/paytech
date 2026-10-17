@@ -32,7 +32,7 @@ spring:
               - uri: "${acquiring.test.external.base-url}"
             consumer-service:
               - uri: "${acquiring.test.external.base-url}"
-            risk-service:
+            risk-decision-service:
               - uri: "${acquiring.test.external.base-url}"
             platform-support-service:
               - uri: "${acquiring.test.external.base-url}"
@@ -57,8 +57,8 @@ spring:
         read-timeout: 3s
         redirects: dont-follow
       # 读超时比生产 1s 短，使超时重试用例更快结束。
-      risk-service:
-        base-url: lb://risk-service
+      risk-decision-service:
+        base-url: lb://risk-decision-service
         connect-timeout: 2s
         read-timeout: 500ms
         redirects: dont-follow

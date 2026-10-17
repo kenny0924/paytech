@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import test from "node:test";
 import { TABLES as DECISION_ENGINE_TABLES } from "./risk/manifests/02-decision-engine.mjs";
@@ -7,6 +7,7 @@ import { TABLES as EVALUATION_TABLES } from "./risk/manifests/03-evaluation.mjs"
 import { TABLES as RISK_TABLES } from "./risk/manifest.mjs";
 import { CHECK_BINDINGS, CHECK_CONTRACTS, CROSS_ROW_CONTRACTS } from "./risk/model-policy.mjs";
 import * as MODEL_POLICY from "./risk/model-policy.mjs";
+import { readRiskUnionModel } from "./risk-service-models.mjs";
 import { canonicalizeSettlementActionParameterIdentity } from "./risk/settlement-control-canonicalizer.mjs";
 import {
   canonicalizeRiskCreateRuleSetVersionCommand,
@@ -25,13 +26,14 @@ import {
 } from "./risk/decision-engine-static-validator.mjs";
 
 const workspaceRoot = path.resolve(import.meta.dirname, "../..");
+// Step 06: the decision engine reads the union of the three split service models (risk-service-models.mjs).
 const modelPath = path.join(
   workspaceRoot,
-  "risk-compliance-service/docs/database/risk-compliance.pdma.json",
+  "paytech/risk-decision/docs/database/risk-decision.pdma.json",
 );
 const decisionGoldenVectorPath = path.join(
   workspaceRoot,
-  "risk-compliance-service/risk-test/src/test/resources/fixtures/risk-decision-v1-golden-vectors.json",
+  "paytech/risk-decision/paytech-risk-decision-test/src/test/resources/fixtures/risk-decision-v1-golden-vectors.json",
 );
 
 function readDecisionGoldenVectors() {
@@ -39,7 +41,8 @@ function readDecisionGoldenVectors() {
 }
 
 function readModel() {
-  return JSON.parse(readFileSync(modelPath, "utf8"));
+  assert.ok(existsSync(modelPath), `Risk decision model missing: ${modelPath}`);
+  return readRiskUnionModel();
 }
 
 function entitiesByKey(model) {

@@ -1,4 +1,4 @@
-package com.paytech.risk.api.enums;
+package com.paytech.compliance.api.enums;
 import com.paytech.foundation.common.enums.CodeEnum;
 /** Client 入驻材料查询允许的资格类型，不含其他角色资格。 */
 public enum MaterialQualificationType implements CodeEnum {

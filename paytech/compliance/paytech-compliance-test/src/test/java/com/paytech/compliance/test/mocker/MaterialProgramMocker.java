@@ -1,4 +1,4 @@
-package com.paytech.risk.test.mocker.compliance;
+package com.paytech.compliance.test.mocker;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -10,11 +10,11 @@ import java.util.concurrent.ThreadLocalRandom;
 import org.springframework.boot.test.context.TestComponent;
 
 import com.paytech.foundation.testsupport.api.Clear;
-import com.paytech.risk.api.enums.MaterialQualificationType;
-import com.paytech.risk.compliance.core.configuration.MaterialRequirementsProperties;
-import com.paytech.risk.test.builder.compliance.MaterialProgramBuilder;
-import com.paytech.risk.test.builder.compliance.MaterialProgramBuilder.Requirement;
-import com.paytech.risk.test.mapper.compliance.MaterialProgramTestMapper;
+import com.paytech.compliance.api.enums.MaterialQualificationType;
+import com.paytech.compliance.core.configuration.MaterialRequirementsProperties;
+import com.paytech.compliance.test.builder.MaterialProgramBuilder;
+import com.paytech.compliance.test.builder.MaterialProgramBuilder.Requirement;
+import com.paytech.compliance.test.mapper.MaterialProgramTestMapper;
 
 import tools.jackson.databind.ObjectMapper;
 

@@ -1,6 +1,6 @@
 package com.paytech.risk.test.builder.evaluation;
 
-import com.paytech.risk.api.evaluation.request.ManualPayoutEligibilityRequestBody;
+import com.paytech.risk.decision.api.evaluation.request.ManualPayoutEligibilityRequestBody;
 
 /**
  * Manual Payout 资格评估请求的测试 Builder

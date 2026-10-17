@@ -1,6 +1,6 @@
-# Risk 配置字段清单，同时作为 MockTestBase（mock Profile）的可运行配置。
-# 本文件列全 Risk 自定义配置、已接入公共组件的配置及实际使用的框架配置；配置字段变化必须同步本文件。
-# 固定账号密码仅适用于仓库 local-environment 的 Loopback 本地测试中间件（UNIT_TEST_GUIDE 第 198、302 条），IDE/Maven 无需设置环境变量；如本机实例密码不同，可用 RISK_TEST_* 或 MOR_* 环境变量覆盖。
+# risk-decision 配置字段清单，同时作为 RiskDecisionMockTestBase（mock Profile）的可运行配置。
+# 本文件列全 risk-decision 自定义配置、已接入公共组件的配置及实际使用的框架配置；配置字段变化必须同步本文件。
+# 固定账号密码仅适用于仓库 local-environment 的 Loopback 本地测试中间件（UNIT_TEST_GUIDE 第 198、302 条），IDE/Maven 无需设置环境变量；如本机实例密码不同，可用 RISK_DECISION_TEST_* 或 MOR_* 环境变量覆盖。
 
 # ==================== 中间件、框架与公共组件配置 ====================
 
@@ -11,7 +11,7 @@ server:
 
 spring:
   application:
-    name: risk-service
+    name: risk-decision-service
   main:
     banner-mode: "off"
   jmx:
@@ -33,9 +33,9 @@ spring:
         namespace: mor-local
         ip: 127.0.0.1
   datasource:
-    url: "jdbc:mysql://127.0.0.1:13306/mor_risk?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
-    username: risk_app
-    password: "${RISK_TEST_DB_PASSWORD:${MOR_RISK_DB_PASSWORD:b5eaa083862987988ff66f2b704d8e7c19d3bd599c5f9ebf}}"
+    url: "jdbc:mysql://127.0.0.1:13306/mor_risk_decision?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+    username: risk_decision_app
+    password: "${RISK_DECISION_TEST_DB_PASSWORD:${MOR_RISK_DECISION_DB_PASSWORD:local-risk-decision-change-me-2026}}"
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       connection-init-sql: "SET time_zone = '+00:00'"
@@ -50,20 +50,9 @@ spring:
     redis:
       host: 127.0.0.1
       port: 16379
-      password: "${RISK_TEST_REDIS_PASSWORD:${MOR_REDIS_PASSWORD:c4e99fe36176a66ece55b0c23e5af0be488d409f2e89f6c5}}"
+      password: "${RISK_DECISION_TEST_REDIS_PASSWORD:${MOR_REDIS_PASSWORD:c4e99fe36176a66ece55b0c23e5af0be488d409f2e89f6c5}}"
       connect-timeout: 2s
       timeout: 2s
-  rabbitmq:
-    host: 127.0.0.1
-    port: 5672
-    username: "${RISK_TEST_RABBITMQ_USERNAME:${MOR_RABBITMQ_USER:mor_local}}"
-    password: "${RISK_TEST_RABBITMQ_PASSWORD:${MOR_RABBITMQ_PASSWORD:c4a5fc41a6c65710372fab6bd28e51602d1cd25eeffe0360}}"
-    virtual-host: "${RISK_TEST_RABBITMQ_VHOST:${MOR_RABBITMQ_VHOST:/mor-local}}"
-    connection-timeout: 2s
-    publisher-confirm-type: correlated
-    publisher-returns: true
-    template:
-      mandatory: true
   jackson:
     deserialization:
       fail-on-unknown-properties: true
@@ -73,6 +62,9 @@ mybatis:
   mapper-locations: classpath*:mapper/**/*.xml
 
 management:
+  server:
+    # 随机管理端口；测试不访问 Actuator。
+    port: 0
   endpoints:
     enabled-by-default: false
     web:
@@ -104,9 +96,6 @@ management:
 web:
   logging:
     metadata-only-path-prefixes:
-      - /internal/due-diligence/material-requirements
-      - /client-onboarding-review
-      - /client-onboarding-admin
       - /decision-dictionaries
       - /decision-rule-sets
       - /decision-releases
@@ -118,7 +107,7 @@ web:
 # paytech-redis-starter
 redis:
   # 测试专用 Key 前缀，与开发数据隔离；生产缺省使用 spring.application.name。
-  key-prefix: risk-mock
+  key-prefix: risk-decision-test
   coordination:
     enabled: true
     threads: 4
@@ -136,7 +125,7 @@ redis:
 compensation:
   enabled: true
   # 多实例 Claim/Lease 的实例标识；测试固定值。
-  instance-id: risk-mock
+  instance-id: risk-decision-test
   # 单次 Claim 的租约时长。
   lease-duration: 2m
   # 兜底扫描单批条数。
@@ -158,7 +147,7 @@ xxl:
       timeout: 3
     executor:
       enabled: false
-      app-name: risk-service
+      app-name: risk-decision-service
       address: ""
       ip: 127.0.0.1
       port: 0
@@ -166,7 +155,7 @@ xxl:
       log-retention-days: 30
       excluded-packages: "org.springframework.,spring."
 
-# ==================== Risk 自定义配置 ====================
+# ==================== risk-decision 自定义配置 ====================
 
 decision:
   identifier:
@@ -177,13 +166,8 @@ decision:
     # 本实例的发布环境 TEST 或 PRODUCTION；支付评估读取该环境的生效发布，执行发布只允许在 TEST 激活。生产必填，测试固定 TEST。
     environment: TEST
 
-onboarding:
-  review:
-    # I01/I02 审核登记入口与 /client-onboarding-admin 管理入口开关；生产缺省关闭，mock 环境开启以便所有新规范测试共享同一应用上下文。
-    # 审核结论经 compensation 补偿任务发布到 RabbitMQ topic_risk_client_review / client_review.decided.v1。
-    enabled: true
-  materials:
-    # 材料目录入口开关；生产缺省关闭，mock 环境开启以便所有新规范测试共享同一应用上下文。
-    enabled: true
-    # 资格类型到通用材料程序的映射 JSON；每类最多一行。用例经 MaterialProgramMocker 覆盖，每例结束恢复此值。
-    programs-json: '[{"qualificationType":"INDIVIDUAL_KYC","programCode":"CLIENT_INDIVIDUAL_GENERIC"},{"qualificationType":"ORGANIZATION_KYB","programCode":"CLIENT_ORGANIZATION_GENERIC"},{"qualificationType":"RELATED_PERSON_KYC","programCode":"RELATED_PERSON_GENERIC"}]'
+# 实例 ID 与内部调用身份（D26）：测试保持 OFF。
+paytech:
+  instance-id: risk-decision-test
+internal-auth:
+  mode: "OFF"

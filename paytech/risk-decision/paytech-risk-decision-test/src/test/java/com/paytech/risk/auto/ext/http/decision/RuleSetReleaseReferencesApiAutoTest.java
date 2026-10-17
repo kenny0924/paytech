@@ -28,8 +28,8 @@ import org.springframework.http.HttpHeaders;
 import com.paytech.foundation.common.http.ApiHeaderNames;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
 import com.paytech.risk.decision.domain.enums.DecisionEnvironment;
-import com.paytech.risk.api.decision.DecisionConfigurationQueryApi;
-import com.paytech.risk.test.base.MockTestBase;
+import com.paytech.risk.decision.api.DecisionConfigurationQueryApi;
+import com.paytech.risk.test.base.RiskDecisionMockTestBase;
 import com.paytech.risk.test.checker.decision.RuleSetReleaseReferencesResponseChecker;
 import com.paytech.risk.test.mocker.decision.RuleSetMocker;
 import com.paytech.risk.test.mocker.decision.RuleSetMocker.MockedRelease;
@@ -44,7 +44,7 @@ import com.paytech.risk.test.mocker.decision.RuleSetMocker.MockedRuleSet;
  *
  * @see DecisionConfigurationQueryApi#releases(String, String, String, Integer, Integer, String, String, String)
  */
-class RuleSetReleaseReferencesApiAutoTest extends MockTestBase {
+class RuleSetReleaseReferencesApiAutoTest extends RiskDecisionMockTestBase {
     private static final String PATH = "/decision-rule-sets/v1/rule-sets/%s/release-references";
 
     @Autowired

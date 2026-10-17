@@ -1,6 +1,6 @@
-package com.paytech.risk.api.decision.response;
+package com.paytech.risk.decision.api.response;
 
-import com.paytech.risk.api.decision.response.RuleSetDetailResponseBody;
+import com.paytech.risk.decision.api.response.RuleSetDetailResponseBody;
 
 /** 由真实已保存来源约束的规则只读结果，不能传任意规则版本读取已删除根。 */
 public class RuleSetReferenceResponseBody {

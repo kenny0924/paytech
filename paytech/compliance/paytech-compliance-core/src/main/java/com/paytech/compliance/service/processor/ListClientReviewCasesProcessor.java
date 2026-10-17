@@ -1,11 +1,11 @@
-package com.paytech.risk.compliance.service.processor;
+package com.paytech.compliance.service.processor;
 
 import org.springframework.stereotype.Component;
 
 import com.paytech.foundation.processor.AbstractProcessor;
-import com.paytech.risk.compliance.domainservice.repository.DueDiligenceCaseRepository;
-import com.paytech.risk.compliance.service.processor.request.ListClientReviewCasesRequest;
-import com.paytech.risk.compliance.service.processor.response.ClientReviewCasePageResponse;
+import com.paytech.compliance.domainservice.repository.DueDiligenceCaseRepository;
+import com.paytech.compliance.service.processor.request.ListClientReviewCasesRequest;
+import com.paytech.compliance.service.processor.response.ClientReviewCasePageResponse;
 
 import lombok.AllArgsConstructor;
 

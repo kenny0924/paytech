@@ -1,11 +1,11 @@
-package com.paytech.risk.api.decision.response;
+package com.paytech.risk.decision.api.response;
 
 import java.util.List;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import com.paytech.risk.api.decision.RiskVariableModels.*;
+import com.paytech.risk.decision.api.RiskVariableModels.*;
 
 /** 游标扫描可能返回空页且 hasMore=true；不提供虚假总数。 */
 public class VariableReferencesResponseBody {

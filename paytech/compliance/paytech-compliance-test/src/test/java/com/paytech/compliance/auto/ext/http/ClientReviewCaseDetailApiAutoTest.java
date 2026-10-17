@@ -1,18 +1,18 @@
-package com.paytech.risk.auto.ext.http.compliance;
+package com.paytech.compliance.auto.ext.http;
 
 import static com.paytech.foundation.common.error.CommonErrorCode.INVALID_REQUEST;
-import static com.paytech.risk.compliance.domainservice.policy.ClientReviewApprovalPolicy.CASE_NOT_ACTIVE;
-import static com.paytech.risk.compliance.domainservice.policy.ClientReviewApprovalPolicy.CHILD_CASE_NOT_ACTIVE;
-import static com.paytech.risk.compliance.domainservice.policy.ClientReviewApprovalPolicy.CLASSIFICATION_NOT_RECEIVED;
-import static com.paytech.risk.compliance.domainservice.policy.ClientReviewApprovalPolicy.EVIDENCE_PENDING;
-import static com.paytech.risk.compliance.domainservice.policy.ClientReviewApprovalPolicy.REQUIRED_MATERIAL_NOT_ACCEPTED;
-import static com.paytech.risk.test.builder.compliance.ClientReviewCaseBuilder.ACCEPTED;
-import static com.paytech.risk.test.builder.compliance.ClientReviewCaseBuilder.RECEIVED;
-import static com.paytech.risk.test.builder.compliance.ClientReviewCaseBuilder.REJECTED;
-import static com.paytech.risk.test.builder.compliance.ClientReviewCaseBuilder.individual;
-import static com.paytech.risk.test.builder.compliance.ClientReviewCaseBuilder.organization;
-import static com.paytech.risk.test.builder.compliance.ClientReviewRegistrationRequestBuilder.IDENTITY_DOCUMENT;
-import static com.paytech.risk.test.builder.compliance.ClientReviewRegistrationRequestBuilder.PROOF_OF_ADDRESS;
+import static com.paytech.compliance.domainservice.policy.ClientReviewApprovalPolicy.CASE_NOT_ACTIVE;
+import static com.paytech.compliance.domainservice.policy.ClientReviewApprovalPolicy.CHILD_CASE_NOT_ACTIVE;
+import static com.paytech.compliance.domainservice.policy.ClientReviewApprovalPolicy.CLASSIFICATION_NOT_RECEIVED;
+import static com.paytech.compliance.domainservice.policy.ClientReviewApprovalPolicy.EVIDENCE_PENDING;
+import static com.paytech.compliance.domainservice.policy.ClientReviewApprovalPolicy.REQUIRED_MATERIAL_NOT_ACCEPTED;
+import static com.paytech.compliance.test.builder.ClientReviewCaseBuilder.ACCEPTED;
+import static com.paytech.compliance.test.builder.ClientReviewCaseBuilder.RECEIVED;
+import static com.paytech.compliance.test.builder.ClientReviewCaseBuilder.REJECTED;
+import static com.paytech.compliance.test.builder.ClientReviewCaseBuilder.individual;
+import static com.paytech.compliance.test.builder.ClientReviewCaseBuilder.organization;
+import static com.paytech.compliance.test.builder.ClientReviewRegistrationRequestBuilder.IDENTITY_DOCUMENT;
+import static com.paytech.compliance.test.builder.ClientReviewRegistrationRequestBuilder.PROOF_OF_ADDRESS;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -27,12 +27,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
-import com.paytech.risk.api.compliance.ClientReviewAdminApi;
-import com.paytech.risk.compliance.domain.ClientReviewAction;
-import com.paytech.risk.test.base.MockTestBase;
-import com.paytech.risk.test.checker.compliance.ClientReviewCaseResponseChecker;
-import com.paytech.risk.test.mocker.compliance.ClientReviewMocker;
-import com.paytech.risk.test.mocker.compliance.ClientReviewMocker.MockedReview;
+import com.paytech.compliance.api.ClientReviewAdminApi;
+import com.paytech.compliance.domain.ClientReviewAction;
+import com.paytech.compliance.test.base.ComplianceMockTestBase;
+import com.paytech.compliance.test.checker.ClientReviewCaseResponseChecker;
+import com.paytech.compliance.test.mocker.ClientReviewMocker;
+import com.paytech.compliance.test.mocker.ClientReviewMocker.MockedReview;
 
 /**
  * O02 Client 入驻审核任务详情（Risk 部分）
@@ -43,7 +43,7 @@ import com.paytech.risk.test.mocker.compliance.ClientReviewMocker.MockedReview;
  *
  * @see ClientReviewAdminApi#getCase(String, String, String)
  */
-class ClientReviewCaseDetailApiAutoTest extends MockTestBase {
+class ClientReviewCaseDetailApiAutoTest extends ComplianceMockTestBase {
     private static final String PATH = "/client-onboarding-admin/v1/cases/%s";
 
     @Autowired

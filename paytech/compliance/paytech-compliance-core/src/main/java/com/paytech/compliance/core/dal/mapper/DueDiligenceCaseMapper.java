@@ -1,11 +1,11 @@
-package com.paytech.risk.compliance.core.dal.mapper;
+package com.paytech.compliance.core.dal.mapper;
 
 import java.util.List;
 
 import java.time.Instant;
 import org.apache.ibatis.annotations.Param;
 
-import com.paytech.risk.compliance.core.dal.dataobject.DueDiligenceCase;
+import com.paytech.compliance.core.dal.dataobject.DueDiligenceCase;
 
 /** t_due_diligence_case 的案件 SQL；业务 SQL 位于 XML。 */
 public interface DueDiligenceCaseMapper {

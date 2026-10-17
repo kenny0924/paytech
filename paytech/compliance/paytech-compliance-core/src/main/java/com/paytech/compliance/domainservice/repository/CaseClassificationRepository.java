@@ -1,8 +1,8 @@
-package com.paytech.risk.compliance.domainservice.repository;
+package com.paytech.compliance.domainservice.repository;
 
 import java.util.List;
 
-import com.paytech.risk.compliance.core.dal.dataobject.CaseClassification;
+import com.paytech.compliance.core.dal.dataobject.CaseClassification;
 
 /** t_dd_case_classification 的任务经营分类持久化。 */
 public interface CaseClassificationRepository {

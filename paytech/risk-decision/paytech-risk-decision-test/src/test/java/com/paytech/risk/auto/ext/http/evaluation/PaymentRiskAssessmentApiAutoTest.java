@@ -19,9 +19,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.paytech.foundation.common.error.CommonErrorCode;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.RuleRequestBody;
-import com.paytech.risk.api.evaluation.RiskDecisionApi;
-import com.paytech.risk.api.evaluation.request.EvaluateDecisionRequestBody;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.RuleRequestBody;
+import com.paytech.risk.decision.api.evaluation.RiskDecisionApi;
+import com.paytech.risk.decision.api.evaluation.request.EvaluateDecisionRequestBody;
 import com.paytech.risk.control.domain.list.RiskSubjectType;
 import com.paytech.risk.decision.domain.enums.*;
 import com.paytech.risk.test.base.AbstractPaymentRiskApiTest;
@@ -250,7 +250,7 @@ class PaymentRiskAssessmentApiAutoTest extends AbstractPaymentRiskApiTest {
 
     /** 拒绝规则：命中即结束本规则集，附原因编码与文案。 */
     private static RuleRequestBody denyRule(String code, int priority, String reason,
-        com.paytech.risk.api.decision.DecisionRuleSetManagementModels.ConditionNodeRequestBody condition) {
+        com.paytech.risk.decision.api.DecisionRuleSetManagementModels.ConditionNodeRequestBody condition) {
         return rule(code, code, priority, reason, "支付被风控拒绝", action("DENY_PAYMENT"), List.of(), condition);
     }
 }

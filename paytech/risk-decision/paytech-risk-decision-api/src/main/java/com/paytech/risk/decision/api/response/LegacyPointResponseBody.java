@@ -1,10 +1,10 @@
-package com.paytech.risk.api.decision.response;
+package com.paytech.risk.decision.api.response;
 
 import java.util.List;
 
-import com.paytech.risk.api.decision.DecisionFlowModels.Edge;
-import com.paytech.risk.api.decision.DecisionFlowModels.Node;
-import com.paytech.risk.api.decision.DecisionFlowModels.RuleSetReference;
+import com.paytech.risk.decision.api.DecisionFlowModels.Edge;
+import com.paytech.risk.decision.api.DecisionFlowModels.Node;
+import com.paytech.risk.decision.api.DecisionFlowModels.RuleSetReference;
 
 /** 旧顺序 Point Version 的只读投影；无 Flow 身份，不接收新图保存。 */
 public class LegacyPointResponseBody {

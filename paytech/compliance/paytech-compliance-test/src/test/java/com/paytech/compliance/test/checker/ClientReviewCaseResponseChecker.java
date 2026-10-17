@@ -1,4 +1,4 @@
-package com.paytech.risk.test.checker.compliance;
+package com.paytech.compliance.test.checker;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -15,12 +15,12 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.client.EntityExchangeResult;
 
 import com.paytech.foundation.testsupport.api.AbstractHttpResponseChecker;
-import com.paytech.risk.api.enums.ClientReviewErrorCode;
-import com.paytech.risk.test.mocker.compliance.ClientReviewMocker.MockedCase;
-import com.paytech.risk.test.mocker.compliance.ClientReviewMocker.MockedClassification;
-import com.paytech.risk.test.mocker.compliance.ClientReviewMocker.MockedEvidence;
-import com.paytech.risk.test.mocker.compliance.ClientReviewMocker.MockedRequirement;
-import com.paytech.risk.test.mocker.compliance.ClientReviewMocker.MockedReview;
+import com.paytech.compliance.api.enums.ClientReviewErrorCode;
+import com.paytech.compliance.test.mocker.ClientReviewMocker.MockedCase;
+import com.paytech.compliance.test.mocker.ClientReviewMocker.MockedClassification;
+import com.paytech.compliance.test.mocker.ClientReviewMocker.MockedEvidence;
+import com.paytech.compliance.test.mocker.ClientReviewMocker.MockedRequirement;
+import com.paytech.compliance.test.mocker.ClientReviewMocker.MockedReview;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;

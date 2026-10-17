@@ -6,9 +6,9 @@ import java.time.format.DateTimeFormatter;
 
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.common.error.InvalidParameterException;
-import com.paytech.risk.api.decision.response.DictionaryWriteResponseBody;
-import com.paytech.risk.api.decision.response.RejectionReasonResponseBody;
-import com.paytech.risk.api.decision.response.SubjectTagResponseBody;
+import com.paytech.risk.decision.api.response.DictionaryWriteResponseBody;
+import com.paytech.risk.decision.api.response.RejectionReasonResponseBody;
+import com.paytech.risk.decision.api.response.SubjectTagResponseBody;
 import com.paytech.risk.decision.domain.dictionary.DecisionDictionary.Entry;
 import com.paytech.risk.decision.domain.dictionary.DecisionDictionary.WriteResult;
 import com.paytech.risk.decision.domain.enums.DictionaryStatus;

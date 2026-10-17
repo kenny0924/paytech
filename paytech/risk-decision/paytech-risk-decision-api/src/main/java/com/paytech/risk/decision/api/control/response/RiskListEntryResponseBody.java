@@ -1,4 +1,4 @@
-package com.paytech.risk.api.control.response;
+package com.paytech.risk.decision.api.control.response;
 
 /** 风险名单成员；主体键只返回脱敏形式。 */
 public class RiskListEntryResponseBody {

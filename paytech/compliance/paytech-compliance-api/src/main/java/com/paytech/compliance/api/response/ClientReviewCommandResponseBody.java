@@ -1,4 +1,4 @@
-package com.paytech.risk.api.compliance.response;
+package com.paytech.compliance.api.response;
 
 /** 审核命令结果；同步本地完成。 */
 public class ClientReviewCommandResponseBody {

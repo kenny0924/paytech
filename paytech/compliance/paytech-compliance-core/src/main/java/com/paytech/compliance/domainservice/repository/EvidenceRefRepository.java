@@ -1,9 +1,9 @@
-package com.paytech.risk.compliance.domainservice.repository;
+package com.paytech.compliance.domainservice.repository;
 
 import java.util.List;
 
 import java.time.Instant;
-import com.paytech.risk.compliance.core.dal.dataobject.EvidenceRef;
+import com.paytech.compliance.core.dal.dataobject.EvidenceRef;
 
 /** t_dd_evidence_ref 的证据引用持久化。 */
 public interface EvidenceRefRepository {

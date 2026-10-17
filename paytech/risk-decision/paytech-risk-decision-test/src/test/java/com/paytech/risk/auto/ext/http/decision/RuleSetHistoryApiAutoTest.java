@@ -20,8 +20,8 @@ import org.springframework.http.HttpMethod;
 
 import com.paytech.foundation.common.http.ApiHeaderNames;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
-import com.paytech.risk.api.decision.DecisionConfigurationQueryApi;
-import com.paytech.risk.test.base.MockTestBase;
+import com.paytech.risk.decision.api.DecisionConfigurationQueryApi;
+import com.paytech.risk.test.base.RiskDecisionMockTestBase;
 import com.paytech.risk.test.checker.decision.RuleSetHistoryResponseChecker;
 import com.paytech.risk.test.mocker.decision.RuleSetMocker;
 import com.paytech.risk.test.mocker.decision.RuleSetMocker.MockedRuleSet;
@@ -35,7 +35,7 @@ import com.paytech.risk.test.mocker.decision.RuleSetMocker.MockedRuleSet;
  *
  * @see DecisionConfigurationQueryApi#history(String, String, String, Integer, Integer, Integer)
  */
-class RuleSetHistoryApiAutoTest extends MockTestBase {
+class RuleSetHistoryApiAutoTest extends RiskDecisionMockTestBase {
     private static final String PATH = "/decision-rule-sets/v1/rule-sets/%s/versions";
 
     @Autowired

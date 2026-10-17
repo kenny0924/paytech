@@ -1,4 +1,4 @@
-package com.paytech.risk.api.decision.response;
+package com.paytech.risk.decision.api.response;
 
 /** 影子运行汇总。 */
 public class ShadowRun {

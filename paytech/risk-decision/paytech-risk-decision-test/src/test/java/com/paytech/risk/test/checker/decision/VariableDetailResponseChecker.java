@@ -1,6 +1,6 @@
 package com.paytech.risk.test.checker.decision;
 
-import static com.paytech.risk.api.enums.RiskVariableErrorCode.VARIABLE_NOT_FOUND;
+import static com.paytech.risk.decision.api.enums.RiskVariableErrorCode.VARIABLE_NOT_FOUND;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;

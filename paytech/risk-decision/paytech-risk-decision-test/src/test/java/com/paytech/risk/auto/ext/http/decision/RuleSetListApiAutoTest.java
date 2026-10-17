@@ -24,8 +24,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementApi;
-import com.paytech.risk.test.base.MockTestBase;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementApi;
+import com.paytech.risk.test.base.RiskDecisionMockTestBase;
 import com.paytech.risk.test.builder.decision.ReleaseBuilder;
 import com.paytech.risk.test.checker.decision.RuleSetListResponseChecker;
 import com.paytech.risk.test.checker.decision.RuleSetListResponseChecker.Item;
@@ -43,7 +43,7 @@ import com.paytech.risk.test.mocker.decision.RuleSetMocker.MockedRuleSet;
  *
  * @see DecisionRuleSetManagementApi#listRuleSets(String, String, Integer, Integer, String, String, String)
  */
-class RuleSetListApiAutoTest extends MockTestBase {
+class RuleSetListApiAutoTest extends RiskDecisionMockTestBase {
     private static final String PATH = "/decision-rule-sets/v1/rule-sets";
 
     private static final Instant T1 = Instant.parse("2026-03-01T00:00:00.000001Z");

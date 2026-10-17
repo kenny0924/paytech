@@ -12,7 +12,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 
 import com.paytech.foundation.common.http.ApiHeaderNames;
-import com.paytech.risk.api.decision.RiskVariableApi;
+import com.paytech.risk.decision.api.RiskVariableApi;
 import com.paytech.risk.test.base.AbstractVariableApiTest;
 import com.paytech.risk.test.checker.decision.VariableAuthoringContextResponseChecker;
 

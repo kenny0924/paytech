@@ -1,4 +1,4 @@
-package com.paytech.risk.compliance.core.enums;
+package com.paytech.compliance.core.enums;
 
 import com.paytech.foundation.common.enums.CodeMessageEnum;
 

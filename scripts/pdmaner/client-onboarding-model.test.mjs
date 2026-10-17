@@ -8,7 +8,7 @@ const model = (file) => JSON.parse(readFileSync(new URL(file, root), "utf8"));
 const clientMaster = model("paytech/client-master/docs/database/client-master.pdma.json");
 const commercial = model("paytech/commercial/docs/database/commercial.pdma.json");
 const cct = clientMaster;
-const risk = model("risk-compliance-service/docs/database/risk-compliance.pdma.json");
+const risk = model("paytech/compliance/docs/database/compliance.pdma.json");
 const table = (m, name) => m.entities.find((e) => e.defKey === name);
 const field = (t, name) => t.fields.find((f) => f.defKey === name);
 const unique = (t, names) => t.indexes.some((i) => i.unique &&

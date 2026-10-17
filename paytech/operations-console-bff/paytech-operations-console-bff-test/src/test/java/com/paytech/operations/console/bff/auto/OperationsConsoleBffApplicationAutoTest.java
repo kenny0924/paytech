@@ -23,8 +23,8 @@ import com.paytech.operations.console.bff.ext.rest.RiskDecisionConfigurationCont
 import com.paytech.operations.console.bff.integration.RiskDecisionConfigurationClient;
 import com.paytech.operations.console.bff.integration.impl.RiskDecisionConfigurationClientImpl;
 import com.paytech.platform.support.api.gatewayconfiguration.management.GatewayConfigurationManagementApi;
-import com.paytech.risk.api.decision.DecisionReleaseManagementApi;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementApi;
+import com.paytech.risk.decision.api.DecisionReleaseManagementApi;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementApi;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.endpoint.web.WebEndpointsSupplier;

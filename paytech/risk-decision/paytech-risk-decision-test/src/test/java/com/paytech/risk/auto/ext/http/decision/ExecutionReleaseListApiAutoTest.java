@@ -20,9 +20,9 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.HttpHeaders;
 
 import com.paytech.foundation.common.http.ApiHeaderNames;
-import com.paytech.risk.api.decision.ExecutionReleaseManagementApi;
-import com.paytech.risk.api.decision.request.CreateExecutionReleaseRequestBody;
-import com.paytech.risk.api.decision.request.StartShadowRunRequestBody;
+import com.paytech.risk.decision.api.ExecutionReleaseManagementApi;
+import com.paytech.risk.decision.api.request.CreateExecutionReleaseRequestBody;
+import com.paytech.risk.decision.api.request.StartShadowRunRequestBody;
 import com.paytech.risk.decision.domain.enums.DecisionEnvironment;
 import com.paytech.risk.decision.domain.enums.DecisionReleaseStatus;
 import com.paytech.risk.decision.domain.enums.RuleSetVersionStatus;

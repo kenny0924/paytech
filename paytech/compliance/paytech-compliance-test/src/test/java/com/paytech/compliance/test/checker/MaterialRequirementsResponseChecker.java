@@ -1,4 +1,4 @@
-package com.paytech.risk.test.checker.compliance;
+package com.paytech.compliance.test.checker;
 
 import static com.paytech.foundation.common.error.CommonErrorCode.SERVICE_UNAVAILABLE;
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -11,8 +11,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.client.EntityExchangeResult;
 
 import com.paytech.foundation.testsupport.api.AbstractHttpResponseChecker;
-import com.paytech.risk.test.builder.compliance.MaterialProgramBuilder.Requirement;
-import com.paytech.risk.test.mocker.compliance.MaterialProgramMocker.MockedProgram;
+import com.paytech.compliance.test.builder.MaterialProgramBuilder.Requirement;
+import com.paytech.compliance.test.mocker.MaterialProgramMocker.MockedProgram;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;

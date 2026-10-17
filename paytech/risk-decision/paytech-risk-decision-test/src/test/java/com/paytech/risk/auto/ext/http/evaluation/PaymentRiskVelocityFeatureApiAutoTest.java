@@ -11,9 +11,9 @@ import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.RuleRequestBody;
-import com.paytech.risk.api.evaluation.RiskDecisionApi;
-import com.paytech.risk.api.evaluation.request.EvaluateDecisionRequestBody;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.RuleRequestBody;
+import com.paytech.risk.decision.api.evaluation.RiskDecisionApi;
+import com.paytech.risk.decision.api.evaluation.request.EvaluateDecisionRequestBody;
 import com.paytech.risk.control.domain.list.RiskSubjectType;
 import com.paytech.risk.decision.domain.enums.AuthenticationRequirement;
 import com.paytech.risk.decision.domain.enums.DecisionValue;

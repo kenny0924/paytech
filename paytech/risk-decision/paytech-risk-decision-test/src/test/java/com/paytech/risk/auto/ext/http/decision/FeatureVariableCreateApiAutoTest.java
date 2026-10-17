@@ -1,7 +1,7 @@
 package com.paytech.risk.auto.ext.http.decision;
 
 import static com.paytech.foundation.common.error.CommonErrorCode.INVALID_REQUEST;
-import static com.paytech.risk.api.enums.RiskVariableErrorCode.INVALID_VARIABLE_DEFINITION;
+import static com.paytech.risk.decision.api.enums.RiskVariableErrorCode.INVALID_VARIABLE_DEFINITION;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -17,11 +17,11 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.http.HttpHeaders;
 
 import com.paytech.foundation.common.http.ApiHeaderNames;
-import com.paytech.risk.api.decision.RiskVariableApi;
-import com.paytech.risk.api.decision.request.CreateVariableRequestBody;
-import com.paytech.risk.api.decision.request.ListFeatureParameters;
-import com.paytech.risk.api.decision.request.VelocityFeatureParameters;
-import com.paytech.risk.api.evaluation.request.CheckoutPrepareRiskInput;
+import com.paytech.risk.decision.api.RiskVariableApi;
+import com.paytech.risk.decision.api.request.CreateVariableRequestBody;
+import com.paytech.risk.decision.api.request.ListFeatureParameters;
+import com.paytech.risk.decision.api.request.VelocityFeatureParameters;
+import com.paytech.risk.decision.api.evaluation.request.CheckoutPrepareRiskInput;
 import com.paytech.risk.control.core.enums.RiskListPurpose;
 import com.paytech.risk.control.domain.list.RiskSubjectType;
 import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;

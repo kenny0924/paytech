@@ -1,10 +1,10 @@
 package com.paytech.operations.console.bff.test.simulator;
 
-import com.paytech.risk.api.decision.request.*;
-import com.paytech.risk.api.decision.response.*;
+import com.paytech.risk.decision.api.request.*;
+import com.paytech.risk.decision.api.response.*;
 
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels;
-import com.paytech.risk.api.decision.DecisionReleaseManagementModels;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels;
+import com.paytech.risk.decision.api.DecisionReleaseManagementModels;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
@@ -159,8 +159,8 @@ public final class RiskDecisionConfigurationSimulator implements AutoCloseable {
     }
 
     /** 登记一条评估的结论与解释 DTO。 */
-    public synchronized void addEvaluation(com.paytech.risk.api.evaluation.response.EvaluationResponseBody summary,
-        com.paytech.risk.api.evaluation.response.EvaluationExplanationResponseBody explanation) {
+    public synchronized void addEvaluation(com.paytech.risk.decision.api.evaluation.response.EvaluationResponseBody summary,
+        com.paytech.risk.decision.api.evaluation.response.EvaluationExplanationResponseBody explanation) {
         evaluation.add(summary, explanation);
     }
 
@@ -197,7 +197,7 @@ public final class RiskDecisionConfigurationSimulator implements AutoCloseable {
         return new RuleAuthoringContextResponseBody("RISK_VARIABLE_AUTHORING", point, fields,
             List.of("EQ", "NE", "GT", "GTE", "LT", "LTE", "IN", "NOT_IN", "BETWEEN", "IS_NULL", "IS_NOT_NULL"),
             actions, List.of(), List.of(), List.of(), List.of(), List.of(), "VARIABLE_REFERENCE",
-            new com.paytech.risk.api.decision.RiskVariableModels.VariableQueryContext(pointCode, "ORDER_PREPARATION", 4, "RULE_CONDITION"));
+            new com.paytech.risk.decision.api.RiskVariableModels.VariableQueryContext(pointCode, "ORDER_PREPARATION", 4, "RULE_CONDITION"));
     }
 
     private static DecisionRuleSetManagementModels.DecisionActionDescriptorResponseBody action(String code, String decision) {

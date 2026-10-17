@@ -1,4 +1,4 @@
-package com.paytech.risk.test.checker.compliance;
+package com.paytech.compliance.test.checker;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -19,30 +19,30 @@ import java.util.stream.Collectors;
 
 import org.springframework.boot.test.context.TestComponent;
 
-import com.paytech.risk.api.compliance.request.ClientReviewClassificationsRequestBody;
-import com.paytech.risk.api.compliance.request.ClientReviewDocumentBody;
-import com.paytech.risk.api.compliance.request.ClientReviewRegistrationRequestBody;
-import com.paytech.risk.api.compliance.request.ClientReviewSubjectBody;
-import com.paytech.risk.api.enums.MaterialQualificationType;
-import com.paytech.risk.compliance.domain.ClientReviewAction;
-import com.paytech.risk.compliance.service.processor.RegisterClientReviewProcessor;
-import com.paytech.risk.test.builder.compliance.ClientReviewCaseBuilder;
-import com.paytech.risk.test.builder.compliance.MaterialProgramBuilder.Requirement;
-import com.paytech.risk.test.mapper.compliance.ClientReviewTestMapper;
-import com.paytech.risk.test.mapper.compliance.ClientReviewTestMapper.CaseRow;
-import com.paytech.risk.test.mapper.compliance.ClientReviewTestMapper.ClassificationRow;
-import com.paytech.risk.test.mapper.compliance.ClientReviewTestMapper.DecisionRow;
-import com.paytech.risk.test.mapper.compliance.ClientReviewTestMapper.DependencyRow;
-import com.paytech.risk.test.mapper.compliance.ClientReviewTestMapper.EvidenceRow;
-import com.paytech.risk.test.mapper.compliance.ClientReviewTestMapper.RequirementRow;
-import com.paytech.risk.test.mapper.compliance.ClientReviewTestMapper.StateChangeRow;
-import com.paytech.risk.test.mapper.compliance.ClientReviewTestMapper.SubjectRow;
-import com.paytech.risk.test.mocker.compliance.ClientReviewMocker.MockedCase;
-import com.paytech.risk.test.mocker.compliance.ClientReviewMocker.MockedClassification;
-import com.paytech.risk.test.mocker.compliance.ClientReviewMocker.MockedEvidence;
-import com.paytech.risk.test.mocker.compliance.ClientReviewMocker.MockedRequirement;
-import com.paytech.risk.test.mocker.compliance.ClientReviewMocker.MockedReview;
-import com.paytech.risk.test.mocker.compliance.MaterialProgramMocker.MockedProgram;
+import com.paytech.compliance.api.request.ClientReviewClassificationsRequestBody;
+import com.paytech.compliance.api.request.ClientReviewDocumentBody;
+import com.paytech.compliance.api.request.ClientReviewRegistrationRequestBody;
+import com.paytech.compliance.api.request.ClientReviewSubjectBody;
+import com.paytech.compliance.api.enums.MaterialQualificationType;
+import com.paytech.compliance.domain.ClientReviewAction;
+import com.paytech.compliance.service.processor.RegisterClientReviewProcessor;
+import com.paytech.compliance.test.builder.ClientReviewCaseBuilder;
+import com.paytech.compliance.test.builder.MaterialProgramBuilder.Requirement;
+import com.paytech.compliance.test.mapper.ClientReviewTestMapper;
+import com.paytech.compliance.test.mapper.ClientReviewTestMapper.CaseRow;
+import com.paytech.compliance.test.mapper.ClientReviewTestMapper.ClassificationRow;
+import com.paytech.compliance.test.mapper.ClientReviewTestMapper.DecisionRow;
+import com.paytech.compliance.test.mapper.ClientReviewTestMapper.DependencyRow;
+import com.paytech.compliance.test.mapper.ClientReviewTestMapper.EvidenceRow;
+import com.paytech.compliance.test.mapper.ClientReviewTestMapper.RequirementRow;
+import com.paytech.compliance.test.mapper.ClientReviewTestMapper.StateChangeRow;
+import com.paytech.compliance.test.mapper.ClientReviewTestMapper.SubjectRow;
+import com.paytech.compliance.test.mocker.ClientReviewMocker.MockedCase;
+import com.paytech.compliance.test.mocker.ClientReviewMocker.MockedClassification;
+import com.paytech.compliance.test.mocker.ClientReviewMocker.MockedEvidence;
+import com.paytech.compliance.test.mocker.ClientReviewMocker.MockedRequirement;
+import com.paytech.compliance.test.mocker.ClientReviewMocker.MockedReview;
+import com.paytech.compliance.test.mocker.MaterialProgramMocker.MockedProgram;
 
 /**
  * Client 入驻审核落库事实的只读 Checker

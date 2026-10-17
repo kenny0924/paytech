@@ -1,8 +1,8 @@
-package com.paytech.risk.compliance.core.dal.mapper;
+package com.paytech.compliance.core.dal.mapper;
 
 import org.apache.ibatis.annotations.Param;
 
-import com.paytech.risk.compliance.core.dal.dataobject.QualificationDecision;
+import com.paytech.compliance.core.dal.dataobject.QualificationDecision;
 
 /** t_qualification_decision 的最终决定 SQL；业务 SQL 位于 XML。 */
 public interface QualificationDecisionMapper {

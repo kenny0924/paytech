@@ -20,9 +20,9 @@ import org.springframework.http.MediaType;
 
 import com.paytech.foundation.common.http.ApiHeaderNames;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
-import com.paytech.risk.api.evaluation.ManualPayoutEligibilityApi;
-import com.paytech.risk.api.evaluation.request.ManualPayoutEligibilityRequestBody;
-import com.paytech.risk.test.base.MockTestBase;
+import com.paytech.risk.decision.api.evaluation.ManualPayoutEligibilityApi;
+import com.paytech.risk.decision.api.evaluation.request.ManualPayoutEligibilityRequestBody;
+import com.paytech.risk.test.base.RiskDecisionMockTestBase;
 import com.paytech.risk.test.builder.evaluation.ManualPayoutEligibilityRequestBuilder;
 import com.paytech.risk.test.checker.evaluation.ManualPayoutEligibilityResponseChecker;
 import com.paytech.risk.test.checker.evaluation.SettlementRiskAssessmentChecker;
@@ -40,7 +40,7 @@ import tools.jackson.databind.node.ObjectNode;
  *
  * @see ManualPayoutEligibilityApi#evaluate(ManualPayoutEligibilityRequestBody)
  */
-class ManualPayoutEligibilityApiAutoTest extends MockTestBase {
+class ManualPayoutEligibilityApiAutoTest extends RiskDecisionMockTestBase {
     private static final String PATH = "/manual-payout-eligibility/v1/evaluations";
 
     /** 超出 signed BIGINT 上限 1，但仍满足 19 位数字格式。 */

@@ -1,4 +1,4 @@
-package com.paytech.risk.api.evaluation.request;
+package com.paytech.risk.decision.api.evaluation.request;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;

@@ -21,7 +21,7 @@ spring:
               - uri: "${test.mock-http.base-url}"
             channel-connector-service:
               - uri: "${test.mock-http.base-url}"
-            risk-service:
+            risk-decision-service:
               - uri: "${test.mock-http.base-url}"
     loadbalancer:
       retry:

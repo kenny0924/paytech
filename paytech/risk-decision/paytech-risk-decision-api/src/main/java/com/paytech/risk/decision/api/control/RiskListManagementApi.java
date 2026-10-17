@@ -1,4 +1,4 @@
-package com.paytech.risk.api.control;
+package com.paytech.risk.decision.api.control;
 
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -9,11 +9,11 @@ import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
 
 import com.paytech.foundation.web.paging.PagingResponseBody;
-import com.paytech.risk.api.control.request.AddRiskListEntryRequestBody;
-import com.paytech.risk.api.control.request.CreateRiskListRequestBody;
-import com.paytech.risk.api.control.request.DeactivateRiskListEntryRequestBody;
-import com.paytech.risk.api.control.response.RiskListEntryResponseBody;
-import com.paytech.risk.api.control.response.RiskListResponseBody;
+import com.paytech.risk.decision.api.control.request.AddRiskListEntryRequestBody;
+import com.paytech.risk.decision.api.control.request.CreateRiskListRequestBody;
+import com.paytech.risk.decision.api.control.request.DeactivateRiskListEntryRequestBody;
+import com.paytech.risk.decision.api.control.response.RiskListEntryResponseBody;
+import com.paytech.risk.decision.api.control.response.RiskListResponseBody;
 
 import jakarta.validation.Valid;
 

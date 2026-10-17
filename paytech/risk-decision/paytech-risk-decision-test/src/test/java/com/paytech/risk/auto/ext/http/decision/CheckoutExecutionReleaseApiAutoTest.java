@@ -1,7 +1,7 @@
 package com.paytech.risk.auto.ext.http.decision;
 
 import static com.paytech.foundation.common.error.CommonErrorCode.BUSINESS_CHECK_FAILED;
-import static com.paytech.risk.api.enums.RiskDecisionConfigurationErrorCode.RISK_RULE_SET_IN_USE;
+import static com.paytech.risk.decision.api.enums.RiskDecisionConfigurationErrorCode.RISK_RULE_SET_IN_USE;
 import static com.paytech.risk.test.builder.decision.RuleSetCreateRequestBuilder.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -18,9 +18,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.client.EntityExchangeResult;
 
 import com.paytech.foundation.common.http.ApiHeaderNames;
-import com.paytech.risk.api.decision.ExecutionReleaseManagementApi;
-import com.paytech.risk.api.decision.request.CreateExecutionReleaseRequestBody;
-import com.paytech.risk.api.decision.request.StartShadowRunRequestBody;
+import com.paytech.risk.decision.api.ExecutionReleaseManagementApi;
+import com.paytech.risk.decision.api.request.CreateExecutionReleaseRequestBody;
+import com.paytech.risk.decision.api.request.StartShadowRunRequestBody;
 import com.paytech.risk.control.domain.list.RiskSubjectType;
 import com.paytech.risk.decision.domain.enums.ComparisonOperator;
 import com.paytech.risk.decision.domain.enums.DecisionEnvironment;

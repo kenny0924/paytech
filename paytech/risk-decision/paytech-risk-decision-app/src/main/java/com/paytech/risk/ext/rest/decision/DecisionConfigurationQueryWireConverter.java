@@ -1,10 +1,10 @@
 package com.paytech.risk.ext.rest.decision;
 import com.paytech.foundation.web.paging.PagingResponseBody;
-import com.paytech.risk.api.decision.response.RejectionReasonReferenceResponseBody;
-import com.paytech.risk.api.decision.response.RuleSetHistoryItemResponseBody;
-import com.paytech.risk.api.decision.response.RuleSetReleaseReferenceResponseBody;
-import com.paytech.risk.api.decision.response.RuleSetReleaseReferencesResponseBody;
-import com.paytech.risk.api.decision.response.SubjectTagReferenceResponseBody;
+import com.paytech.risk.decision.api.response.RejectionReasonReferenceResponseBody;
+import com.paytech.risk.decision.api.response.RuleSetHistoryItemResponseBody;
+import com.paytech.risk.decision.api.response.RuleSetReleaseReferenceResponseBody;
+import com.paytech.risk.decision.api.response.RuleSetReleaseReferencesResponseBody;
+import com.paytech.risk.decision.api.response.SubjectTagReferenceResponseBody;
 import com.paytech.risk.decision.domain.query.DecisionConfigurationQueries;
 import com.paytech.risk.decision.domain.query.RuleSetHistoryView;
 import com.paytech.risk.decision.domain.query.RuleSetReleaseReferenceView;

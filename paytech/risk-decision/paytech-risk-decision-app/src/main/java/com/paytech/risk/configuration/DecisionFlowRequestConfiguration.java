@@ -18,7 +18,7 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import com.paytech.foundation.common.error.InvalidParameterException;
-import com.paytech.risk.api.decision.request.SaveFlowRequestBody;
+import com.paytech.risk.decision.api.request.SaveFlowRequestBody;
 import com.paytech.risk.decision.domain.variable.VariableOperandJson;
 import com.paytech.risk.decision.domainservice.service.RiskVariableException;
 

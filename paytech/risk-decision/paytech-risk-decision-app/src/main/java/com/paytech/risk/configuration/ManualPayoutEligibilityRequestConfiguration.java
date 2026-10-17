@@ -7,7 +7,7 @@ import org.springframework.http.converter.HttpMessageConverters;
 import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import com.paytech.risk.api.evaluation.request.ManualPayoutEligibilityRequestBody;
+import com.paytech.risk.decision.api.evaluation.request.ManualPayoutEligibilityRequestBody;
 
 import tools.jackson.core.StreamReadFeature;
 import tools.jackson.databind.json.JsonMapper;

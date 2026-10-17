@@ -1,4 +1,4 @@
-package com.paytech.risk.compliance.service.processor.request;
+package com.paytech.compliance.service.processor.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
-import com.paytech.risk.compliance.domain.ClientReviewAction;
+import com.paytech.compliance.domain.ClientReviewAction;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

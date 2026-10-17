@@ -4,9 +4,9 @@ import java.math.BigDecimal;
 
 import org.springframework.web.bind.annotation.RestController;
 
-import com.paytech.risk.api.evaluation.ManualPayoutEligibilityApi;
-import com.paytech.risk.api.evaluation.request.ManualPayoutEligibilityRequestBody;
-import com.paytech.risk.api.evaluation.response.ManualPayoutEligibilityResponseBody;
+import com.paytech.risk.decision.api.evaluation.ManualPayoutEligibilityApi;
+import com.paytech.risk.decision.api.evaluation.request.ManualPayoutEligibilityRequestBody;
+import com.paytech.risk.decision.api.evaluation.response.ManualPayoutEligibilityResponseBody;
 import com.paytech.risk.control.service.processor.ManualPayoutEligibilityProcessor;
 import com.paytech.risk.control.service.processor.request.ManualPayoutEligibilityRequest;
 import com.paytech.risk.control.service.processor.response.ManualPayoutEligibilityResponse;

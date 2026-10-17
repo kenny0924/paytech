@@ -4,7 +4,7 @@ import com.paytech.operations.console.bff.service.model.RiskVariableModels.*;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
 
 import com.paytech.operations.console.bff.integration.RiskVariableClient;
-import com.paytech.risk.api.decision.RiskVariableApi;
+import com.paytech.risk.decision.api.RiskVariableApi;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 

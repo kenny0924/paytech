@@ -26,7 +26,7 @@ import com.paytech.client.master.integration.*;
 import com.paytech.client.master.service.processor.ClientDocumentProcessor;
 import com.paytech.platform.support.api.onboardingfiles.OnboardingFileVerificationApi;
 import com.paytech.platform.support.api.enums.OnboardingFileErrorCode;
-import com.paytech.risk.api.compliance.MaterialRequirementsApi;
+import com.paytech.compliance.api.MaterialRequirementsApi;
 /** 默认随已批准的草稿开关关闭；没有真实规则或文件服务时明确不可用。 */
 @Configuration(proxyBeanMethods=false)
 @ConditionalOnProperty(prefix="onboarding",name="draft-enabled",havingValue="true")
@@ -42,7 +42,7 @@ public class ClientDocumentConfiguration {
             InternalCallTokenOptions.apply(HttpServiceClientOptions.strict().withStrictJsonResponses(8192),tokens,"platform-support-service"),
             OnboardingFileErrorCode.values()).createClient(OnboardingFileVerificationApi.class);
         var risk=HttpServiceClientFactory.create(riskTransport(env,discovery),
-            InternalCallTokenOptions.apply(HttpServiceClientOptions.strict().withStrictJsonResponses(262144),tokens,"risk-service"))
+            InternalCallTokenOptions.apply(HttpServiceClientOptions.strict().withStrictJsonResponses(262144),tokens,"compliance-service"))
             .createClient(MaterialRequirementsApi.class);
         return new ClientMaterialAuthorityClient(risk,platform,clock);
     }
@@ -50,10 +50,10 @@ public class ClientDocumentConfiguration {
     static RestClient riskTransport(Environment env,ObjectProvider<LoadBalancerClient> discovery) {
         String url=env.getProperty("onboarding.risk-test-base-url","");var builder=RestClient.builder();
         if (url.isBlank()) {
-            builder.baseUrl("http://risk-service").requestInterceptor((request,body,execution) -> {
-                var balancer=discovery.getObject();var instance=balancer.choose("risk-service");
+            builder.baseUrl("http://compliance-service").requestInterceptor((request,body,execution) -> {
+                var balancer=discovery.getObject();var instance=balancer.choose("compliance-service");
                 if (instance==null) throw new ResourceAccessException("Risk discovery is unavailable");
-                return balancer.execute("risk-service",instance,new LoadBalancerRequestFactory(balancer).createRequest(request,body,execution));
+                return balancer.execute("compliance-service",instance,new LoadBalancerRequestFactory(balancer).createRequest(request,body,execution));
             });
         } else {
             URI uri=URI.create(url);

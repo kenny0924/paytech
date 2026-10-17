@@ -32,8 +32,8 @@ spring:
         connect-timeout: 2s
         read-timeout: 3s
         redirects: dont-follow
-      risk-service:
-        base-url: lb://risk-service
+      risk-decision-service:
+        base-url: lb://risk-decision-service
         connect-timeout: 2s
         read-timeout: 1s
         redirects: dont-follow

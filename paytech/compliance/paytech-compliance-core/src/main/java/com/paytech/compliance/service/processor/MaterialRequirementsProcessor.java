@@ -1,4 +1,4 @@
-package com.paytech.risk.compliance.service.processor;
+package com.paytech.compliance.service.processor;
 
 import java.time.Clock;
 import java.util.HashSet;
@@ -13,12 +13,12 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import com.paytech.foundation.common.error.ServiceUnavailableException;
 import com.paytech.foundation.processor.AbstractProcessor;
-import com.paytech.risk.compliance.core.dal.dataobject.MaterialProgram;
-import com.paytech.risk.compliance.core.dal.dataobject.MaterialRequirement;
-import com.paytech.risk.compliance.domainservice.policy.MaterialProgramResolver;
-import com.paytech.risk.compliance.domainservice.repository.MaterialRequirementsRepository;
-import com.paytech.risk.compliance.service.processor.request.MaterialRequirementsRequest;
-import com.paytech.risk.compliance.service.processor.response.MaterialRequirementsResponse;
+import com.paytech.compliance.core.dal.dataobject.MaterialProgram;
+import com.paytech.compliance.core.dal.dataobject.MaterialRequirement;
+import com.paytech.compliance.domainservice.policy.MaterialProgramResolver;
+import com.paytech.compliance.domainservice.repository.MaterialRequirementsRepository;
+import com.paytech.compliance.service.processor.request.MaterialRequirementsRequest;
+import com.paytech.compliance.service.processor.response.MaterialRequirementsResponse;
 
 import lombok.AllArgsConstructor;
 

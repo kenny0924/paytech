@@ -1,4 +1,4 @@
-package com.paytech.risk.api.compliance;
+package com.paytech.compliance.api;
 
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -9,11 +9,11 @@ import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
 
 import com.paytech.foundation.web.paging.PagingResponseBody;
-import com.paytech.risk.api.compliance.request.ClientReviewDecisionRequestBody;
-import com.paytech.risk.api.compliance.request.ClientReviewEvidenceReviewRequestBody;
-import com.paytech.risk.api.compliance.request.ClientReviewReturnRequestBody;
-import com.paytech.risk.api.compliance.response.ClientReviewCaseResponseBody;
-import com.paytech.risk.api.compliance.response.ClientReviewCommandResponseBody;
+import com.paytech.compliance.api.request.ClientReviewDecisionRequestBody;
+import com.paytech.compliance.api.request.ClientReviewEvidenceReviewRequestBody;
+import com.paytech.compliance.api.request.ClientReviewReturnRequestBody;
+import com.paytech.compliance.api.response.ClientReviewCaseResponseBody;
+import com.paytech.compliance.api.response.ClientReviewCommandResponseBody;
 
 import jakarta.validation.Valid;
 

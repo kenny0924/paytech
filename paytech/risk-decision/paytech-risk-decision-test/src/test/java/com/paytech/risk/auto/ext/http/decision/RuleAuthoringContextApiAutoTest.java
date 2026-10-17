@@ -2,7 +2,7 @@ package com.paytech.risk.auto.ext.http.decision;
 
 import static com.paytech.foundation.common.error.CommonErrorCode.INTERNAL_ERROR;
 import static com.paytech.foundation.common.error.CommonErrorCode.INVALID_REQUEST;
-import static com.paytech.risk.api.enums.RiskDecisionConfigurationErrorCode.RISK_DECISION_CONFIGURATION_NOT_FOUND;
+import static com.paytech.risk.decision.api.enums.RiskDecisionConfigurationErrorCode.RISK_DECISION_CONFIGURATION_NOT_FOUND;
 
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -15,8 +15,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementApi;
-import com.paytech.risk.test.base.MockTestBase;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementApi;
+import com.paytech.risk.test.base.RiskDecisionMockTestBase;
 import com.paytech.risk.test.checker.decision.RuleAuthoringContextResponseChecker;
 import com.paytech.risk.test.mocker.decision.RuleSetMocker;
 
@@ -29,7 +29,7 @@ import com.paytech.risk.test.mocker.decision.RuleSetMocker;
  *
  * @see DecisionRuleSetManagementApi#getAuthoringContext(String, String, String)
  */
-class RuleAuthoringContextApiAutoTest extends MockTestBase {
+class RuleAuthoringContextApiAutoTest extends RiskDecisionMockTestBase {
     private static final String PATH = "/decision-rule-sets/v1/authoring-context/%s";
 
     @Autowired

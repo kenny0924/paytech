@@ -1,11 +1,11 @@
-package com.paytech.risk.api.decision.request;
+package com.paytech.risk.decision.api.request;
 
 import java.util.List;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import com.paytech.risk.api.decision.RiskVariableModels.*;
+import com.paytech.risk.decision.api.RiskVariableModels.*;
 
 /** 原子替换集合；空数组清空，null 或重复规范值使整批失败。 */
 public class ReplaceMembersRequestBody {

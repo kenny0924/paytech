@@ -1,12 +1,12 @@
-package com.paytech.risk.compliance.domain;
+package com.paytech.compliance.domain;
 
 import java.util.List;
 
-import com.paytech.risk.compliance.core.dal.dataobject.CaseRequirement;
-import com.paytech.risk.compliance.core.dal.dataobject.CaseStateChange;
-import com.paytech.risk.compliance.core.dal.dataobject.CaseSubject;
-import com.paytech.risk.compliance.core.dal.dataobject.DueDiligenceCase;
-import com.paytech.risk.compliance.core.dal.dataobject.EvidenceRef;
+import com.paytech.compliance.core.dal.dataobject.CaseRequirement;
+import com.paytech.compliance.core.dal.dataobject.CaseStateChange;
+import com.paytech.compliance.core.dal.dataobject.CaseSubject;
+import com.paytech.compliance.core.dal.dataobject.DueDiligenceCase;
+import com.paytech.compliance.core.dal.dataobject.EvidenceRef;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

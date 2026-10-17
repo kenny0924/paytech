@@ -1,11 +1,11 @@
-package com.paytech.risk.api.decision.response;
+package com.paytech.risk.decision.api.response;
 
 import java.util.List;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import com.paytech.risk.api.decision.RiskVariableModels.*;
+import com.paytech.risk.decision.api.RiskVariableModels.*;
 
 /** 工程合同只用于验证映射能力，变量候选必须查询变量库。 */
 public class VariableManagementContextResponseBody {

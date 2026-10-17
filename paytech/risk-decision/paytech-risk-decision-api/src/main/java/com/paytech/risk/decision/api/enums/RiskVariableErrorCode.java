@@ -1,4 +1,4 @@
-package com.paytech.risk.api.enums;
+package com.paytech.risk.decision.api.enums;
 
 import com.paytech.foundation.common.enums.CodeMessageEnum;
 

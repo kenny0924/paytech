@@ -1,10 +1,10 @@
-package com.paytech.risk.compliance.domainservice.repository.impl;
+package com.paytech.compliance.domainservice.repository.impl;
 
 import org.springframework.stereotype.Repository;
 
-import com.paytech.risk.compliance.core.dal.dataobject.QualificationDecision;
-import com.paytech.risk.compliance.core.dal.mapper.QualificationDecisionMapper;
-import com.paytech.risk.compliance.domainservice.repository.QualificationDecisionRepository;
+import com.paytech.compliance.core.dal.dataobject.QualificationDecision;
+import com.paytech.compliance.core.dal.mapper.QualificationDecisionMapper;
+import com.paytech.compliance.domainservice.repository.QualificationDecisionRepository;
 import com.paytech.foundation.common.error.ErrorException;
 
 import lombok.AllArgsConstructor;

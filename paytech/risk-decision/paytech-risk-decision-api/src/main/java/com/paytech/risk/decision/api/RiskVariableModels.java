@@ -1,4 +1,4 @@
-package com.paytech.risk.api.decision;
+package com.paytech.risk.decision.api;
 
 import java.util.List;
 import jakarta.validation.Valid;

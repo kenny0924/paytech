@@ -1,4 +1,4 @@
--- Code-MoR Risk & Compliance 唯一初始化目录数据。
+-- Code-MoR Risk Decision（mor_risk_decision）唯一初始化目录数据；原 Risk & Compliance 初始化数据全部属于 risk-decision 表（design/03 §2.2）。
 -- 只适用于完整 Schema 经人工审核并应用后的空 Risk 数据库；应用启动不得自动执行。
 -- 所有 DATETIME(6) 初始化值均为固定 UTC 时间。
 

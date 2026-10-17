@@ -28,8 +28,8 @@ import com.paytech.foundation.internalauth.api.InternalTokenSupplier;
 import com.paytech.foundation.web.request.RequestIdFilter;
 import com.paytech.operations.console.bff.domain.enums.OperationsBffErrorCode;
 import com.paytech.operations.console.bff.integration.OwnerDiscoveryInterceptor;
-import com.paytech.risk.api.compliance.ClientReviewAdminApi;
-import com.paytech.risk.api.enums.ClientReviewErrorCode;
+import com.paytech.compliance.api.ClientReviewAdminApi;
+import com.paytech.compliance.api.enums.ClientReviewErrorCode;
 
 /**
  * Client 入驻审核的 Risk 与 CCT 代理：独立工厂，使用默认 JSON 读取，不并入决策配置的响应形状门禁
@@ -46,7 +46,7 @@ public class ClientReviewClientConfiguration {
     ClientReviewAdminApi clientReviewAdminApi(Environment environment, LoadBalancerClient loadBalancer,
         @Value("${operations.client-review-risk-test-base-url:}") String testBaseUrl,
         ObjectProvider<InternalTokenSupplier> tokens) {
-        return factory(environment, loadBalancer, "risk-service", testBaseUrl, tokens, ClientReviewErrorCode.values())
+        return factory(environment, loadBalancer, "compliance-service", testBaseUrl, tokens, ClientReviewErrorCode.values())
             .createClient(ClientReviewAdminApi.class);
     }
 

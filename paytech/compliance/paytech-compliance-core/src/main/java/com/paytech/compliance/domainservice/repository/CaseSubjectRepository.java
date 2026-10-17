@@ -1,7 +1,7 @@
-package com.paytech.risk.compliance.domainservice.repository;
+package com.paytech.compliance.domainservice.repository;
 
 import java.util.List;
-import com.paytech.risk.compliance.core.dal.dataobject.CaseSubject;
+import com.paytech.compliance.core.dal.dataobject.CaseSubject;
 
 /** t_dd_case_subject 的案件主体持久化。 */
 public interface CaseSubjectRepository {

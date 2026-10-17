@@ -1,4 +1,4 @@
-package com.paytech.risk.api.decision.response;
+package com.paytech.risk.decision.api.response;
 
 /** 本次字典事务的结果，不提供历史回执或请求重放。 */
 public class DictionaryWriteResponseBody {

@@ -20,11 +20,11 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
-import com.paytech.risk.api.decision.DecisionReleaseManagementApi;
+import com.paytech.risk.decision.api.DecisionReleaseManagementApi;
 import com.paytech.risk.decision.domain.enums.DecisionEnvironment;
 import com.paytech.risk.decision.domain.enums.DecisionReleaseStatus;
 import com.paytech.risk.test.builder.decision.CandidateBuilder;
-import com.paytech.risk.test.base.MockTestBase;
+import com.paytech.risk.test.base.RiskDecisionMockTestBase;
 import com.paytech.risk.test.checker.decision.TestReleaseListResponseChecker;
 import com.paytech.risk.test.mocker.decision.CandidateMocker;
 import com.paytech.risk.test.mocker.decision.CandidateMocker.MockedCandidate;
@@ -38,7 +38,7 @@ import com.paytech.risk.test.mocker.decision.CandidateMocker.MockedCandidate;
  *
  * @see DecisionReleaseManagementApi#listCandidates(String, String, Integer, Integer, String, String)
  */
-class TestReleaseListApiAutoTest extends MockTestBase {
+class TestReleaseListApiAutoTest extends RiskDecisionMockTestBase {
     private static final String PATH = "/decision-releases/v1/candidates";
 
     @Autowired

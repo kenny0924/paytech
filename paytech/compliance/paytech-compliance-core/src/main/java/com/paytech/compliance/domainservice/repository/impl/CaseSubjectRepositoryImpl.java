@@ -1,11 +1,11 @@
-package com.paytech.risk.compliance.domainservice.repository.impl;
+package com.paytech.compliance.domainservice.repository.impl;
 
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import com.paytech.risk.compliance.core.dal.dataobject.CaseSubject;
-import com.paytech.risk.compliance.core.dal.mapper.CaseSubjectMapper;
-import com.paytech.risk.compliance.domainservice.repository.CaseSubjectRepository;
+import com.paytech.compliance.core.dal.dataobject.CaseSubject;
+import com.paytech.compliance.core.dal.mapper.CaseSubjectMapper;
+import com.paytech.compliance.domainservice.repository.CaseSubjectRepository;
 import com.paytech.foundation.common.error.ErrorException;
 
 import lombok.AllArgsConstructor;

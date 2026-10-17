@@ -1,19 +1,19 @@
-package com.paytech.risk.ext.rest.compliance;
+package com.paytech.compliance.ext.rest;
 
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
-import com.paytech.risk.api.compliance.response.ClientReviewCaseResponseBody;
-import com.paytech.risk.api.compliance.response.ClientReviewClassificationResponseBody;
-import com.paytech.risk.api.compliance.response.ClientReviewCommandResponseBody;
-import com.paytech.risk.api.compliance.response.ClientReviewEvidenceResponseBody;
-import com.paytech.risk.api.compliance.response.ClientReviewRequirementResponseBody;
-import com.paytech.risk.api.compliance.response.ClientReviewSubjectResponseBody;
-import com.paytech.risk.compliance.service.processor.response.ClientReviewCaseResponse;
-import com.paytech.risk.compliance.service.processor.response.ClientReviewCommandResponse;
-import com.paytech.risk.compliance.service.processor.response.ClientReviewResultResponse;
-import com.paytech.risk.api.compliance.response.ClientReviewResultResponseBody;
+import com.paytech.compliance.api.response.ClientReviewCaseResponseBody;
+import com.paytech.compliance.api.response.ClientReviewClassificationResponseBody;
+import com.paytech.compliance.api.response.ClientReviewCommandResponseBody;
+import com.paytech.compliance.api.response.ClientReviewEvidenceResponseBody;
+import com.paytech.compliance.api.response.ClientReviewRequirementResponseBody;
+import com.paytech.compliance.api.response.ClientReviewSubjectResponseBody;
+import com.paytech.compliance.service.processor.response.ClientReviewCaseResponse;
+import com.paytech.compliance.service.processor.response.ClientReviewCommandResponse;
+import com.paytech.compliance.service.processor.response.ClientReviewResultResponse;
+import com.paytech.compliance.api.response.ClientReviewResultResponseBody;
 
 /** Owner 审核结果到 Wire 的纯转换；ID 与版本一律十进制字符串。 */
 final class ClientReviewWireConverter {

@@ -3,9 +3,9 @@ package com.paytech.risk.auto.ext.http.decision;
 import static com.paytech.foundation.common.error.CommonErrorCode.CONCURRENT_REQUEST;
 import static com.paytech.foundation.common.error.CommonErrorCode.INTERNAL_ERROR;
 import static com.paytech.foundation.common.error.CommonErrorCode.INVALID_REQUEST;
-import static com.paytech.risk.api.enums.RiskDecisionConfigurationErrorCode.RISK_DECISION_CONFIGURATION_NOT_FOUND;
-import static com.paytech.risk.api.enums.RiskDecisionConfigurationErrorCode.RISK_FLOW_DELETED;
-import static com.paytech.risk.api.enums.RiskDecisionConfigurationErrorCode.RISK_FLOW_VERSION_CONFLICT;
+import static com.paytech.risk.decision.api.enums.RiskDecisionConfigurationErrorCode.RISK_DECISION_CONFIGURATION_NOT_FOUND;
+import static com.paytech.risk.decision.api.enums.RiskDecisionConfigurationErrorCode.RISK_FLOW_DELETED;
+import static com.paytech.risk.decision.api.enums.RiskDecisionConfigurationErrorCode.RISK_FLOW_VERSION_CONFLICT;
 import static com.paytech.risk.decision.domain.enums.FlowStatus.CONFIGURABLE;
 import static com.paytech.risk.decision.domain.enums.FlowStatus.DELETED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -30,8 +30,8 @@ import org.springframework.http.HttpMethod;
 
 import com.paytech.foundation.common.http.ApiHeaderNames;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
-import com.paytech.risk.api.decision.DecisionFlowManagementApi;
-import com.paytech.risk.test.base.MockTestBase;
+import com.paytech.risk.decision.api.DecisionFlowManagementApi;
+import com.paytech.risk.test.base.RiskDecisionMockTestBase;
 import com.paytech.risk.test.builder.decision.FlowBuilder;
 import com.paytech.risk.test.checker.decision.DeleteFlowResponseChecker;
 import com.paytech.risk.test.checker.decision.FlowStoreChecker;
@@ -50,7 +50,7 @@ import com.paytech.risk.test.mocker.decision.FlowMocker.MockedFlow;
  *
  * @see DecisionFlowManagementApi#delete(String, String, String, String)
  */
-class FlowDeleteApiAutoTest extends MockTestBase {
+class FlowDeleteApiAutoTest extends RiskDecisionMockTestBase {
     private static final String PATH = "/decision-flows/v1/flows/%s";
 
     private static final long ACTOR = 70001L;

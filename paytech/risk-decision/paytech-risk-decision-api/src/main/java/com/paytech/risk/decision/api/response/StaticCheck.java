@@ -1,4 +1,4 @@
-package com.paytech.risk.api.decision.response;
+package com.paytech.risk.decision.api.response;
 
 /** 一项静态校验结果。 */
 public class StaticCheck {

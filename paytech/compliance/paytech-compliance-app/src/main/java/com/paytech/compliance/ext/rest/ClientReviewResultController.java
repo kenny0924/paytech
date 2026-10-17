@@ -1,12 +1,12 @@
-package com.paytech.risk.ext.rest.compliance;
+package com.paytech.compliance.ext.rest;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.paytech.risk.api.compliance.ClientReviewResultApi;
-import com.paytech.risk.api.compliance.response.ClientReviewResultResponseBody;
-import com.paytech.risk.compliance.service.processor.GetClientReviewResultProcessor;
-import com.paytech.risk.compliance.service.processor.request.ClientReviewResultRequest;
+import com.paytech.compliance.api.ClientReviewResultApi;
+import com.paytech.compliance.api.response.ClientReviewResultResponseBody;
+import com.paytech.compliance.service.processor.GetClientReviewResultProcessor;
+import com.paytech.compliance.service.processor.request.ClientReviewResultRequest;
 
 import lombok.AllArgsConstructor;
 

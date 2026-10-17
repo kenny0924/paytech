@@ -6,17 +6,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.paytech.risk.api.decision.RiskVariableApi;
-import com.paytech.risk.api.decision.request.CreateVariableRequestBody;
-import com.paytech.risk.api.decision.request.ReplaceMembersRequestBody;
-import com.paytech.risk.api.decision.request.UpdateVariableRequestBody;
-import com.paytech.risk.api.decision.response.DeleteVariableResponseBody;
-import com.paytech.risk.api.decision.response.ReplaceMembersResponseBody;
-import com.paytech.risk.api.decision.response.VariableDetailResponseBody;
-import com.paytech.risk.api.decision.response.VariableListResponseBody;
-import com.paytech.risk.api.decision.response.VariableManagementContextResponseBody;
-import com.paytech.risk.api.decision.response.VariableMembersResponseBody;
-import com.paytech.risk.api.decision.response.VariableReferencesResponseBody;
+import com.paytech.risk.decision.api.RiskVariableApi;
+import com.paytech.risk.decision.api.request.CreateVariableRequestBody;
+import com.paytech.risk.decision.api.request.ReplaceMembersRequestBody;
+import com.paytech.risk.decision.api.request.UpdateVariableRequestBody;
+import com.paytech.risk.decision.api.response.DeleteVariableResponseBody;
+import com.paytech.risk.decision.api.response.ReplaceMembersResponseBody;
+import com.paytech.risk.decision.api.response.VariableDetailResponseBody;
+import com.paytech.risk.decision.api.response.VariableListResponseBody;
+import com.paytech.risk.decision.api.response.VariableManagementContextResponseBody;
+import com.paytech.risk.decision.api.response.VariableMembersResponseBody;
+import com.paytech.risk.decision.api.response.VariableReferencesResponseBody;
 import com.paytech.risk.decision.domainservice.policy.VariableQueryPolicy;
 import com.paytech.risk.decision.service.processor.CreateVariableProcessor;
 import com.paytech.risk.decision.service.processor.DeleteVariableProcessor;
@@ -36,7 +36,7 @@ import com.paytech.risk.decision.service.processor.request.VariableDetailRequest
 import com.paytech.risk.decision.service.processor.request.VariableListRequest;
 import com.paytech.risk.decision.service.processor.request.VariableMembersRequest;
 import com.paytech.risk.decision.service.processor.request.VariableReferencesRequest;
-import com.paytech.risk.service.request.RiskOperationRequestContextParser;
+import com.paytech.foundation.web.request.OperationRequestContextParser;
 
 import lombok.AllArgsConstructor;
 
@@ -52,7 +52,7 @@ public class RiskVariableController implements RiskVariableApi {
     private final VariableMembersProcessor membersProcessor;
     private final VariableReferencesProcessor referencesProcessor;
     private final ReplaceVariableMembersProcessor replaceMembersProcessor;
-    private final RiskOperationRequestContextParser context;
+    private final OperationRequestContextParser context;
     private final VariableAuthoringContextProcessor authoringProcessor;
 
     /** 读取工程编排能力，业务变量候选继续走目录接口。 */
@@ -85,7 +85,7 @@ public class RiskVariableController implements RiskVariableApi {
     @ResponseStatus(HttpStatus.CREATED)
     public VariableDetailResponseBody createVariable(String actorAccountId, String sessionId, CreateVariableRequestBody body) {
         var actor = context.parse(actorAccountId, sessionId);
-        var request = new CreateVariableRequest(actor.actorAccountId(), RiskVariableWireConverter.create(body));
+        var request = new CreateVariableRequest(actor.getActorAccountId(), RiskVariableWireConverter.create(body));
         return RiskVariableWireConverter.detail(mapped(() -> createProcessor.process(request)));
     }
 
@@ -95,7 +95,7 @@ public class RiskVariableController implements RiskVariableApi {
         UpdateVariableRequestBody body) {
         var actor = context.parse(actorAccountId, sessionId);
         var command = RiskVariableWireConverter.update(body, context.parsePositiveId("expectedVersion", body.getExpectedVersion()));
-        var request = new UpdateVariableRequest(actor.actorAccountId(), code(variableCode), command);
+        var request = new UpdateVariableRequest(actor.getActorAccountId(), code(variableCode), command);
         return RiskVariableWireConverter.detail(mapped(() -> updateProcessor.process(request)));
     }
 
@@ -104,7 +104,7 @@ public class RiskVariableController implements RiskVariableApi {
     public DeleteVariableResponseBody deleteVariable(String actorAccountId, String sessionId, String variableCode,
         String expectedVersion) {
         var actor = context.parse(actorAccountId, sessionId);
-        var request = new DeleteVariableRequest(actor.actorAccountId(), code(variableCode),
+        var request = new DeleteVariableRequest(actor.getActorAccountId(), code(variableCode),
             context.parsePositiveId("expectedVersion", expectedVersion));
         return RiskVariableWireConverter.deleted(mapped(() -> deleteProcessor.process(request)));
     }
@@ -126,7 +126,7 @@ public class RiskVariableController implements RiskVariableApi {
     public ReplaceMembersResponseBody replaceMembers(String actorAccountId, String sessionId, String variableCode,
         ReplaceMembersRequestBody body) {
         var actor = context.parse(actorAccountId, sessionId);
-        var request = new ReplaceVariableMembersRequest(actor.actorAccountId(), code(variableCode),
+        var request = new ReplaceVariableMembersRequest(actor.getActorAccountId(), code(variableCode),
             context.parsePositiveId("expectedVersion", body.getExpectedVersion()), RiskVariableWireConverter.members(body));
         var result = mapped(() -> replaceMembersProcessor.process(request));
         return RiskVariableWireConverter.replaced(result, request.getMembers().size());

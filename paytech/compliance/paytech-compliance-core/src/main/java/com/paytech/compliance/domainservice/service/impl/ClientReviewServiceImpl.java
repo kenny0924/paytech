@@ -1,4 +1,4 @@
-package com.paytech.risk.compliance.domainservice.service.impl;
+package com.paytech.compliance.domainservice.service.impl;
 
 import java.time.Instant;
 import java.util.List;
@@ -9,23 +9,23 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.paytech.foundation.compensation.api.CompensationEventRegistrar;
-import com.paytech.risk.compliance.core.dal.dataobject.CaseClassification;
-import com.paytech.risk.compliance.core.dal.dataobject.DueDiligenceCase;
-import com.paytech.risk.compliance.core.dal.dataobject.EvidenceRef;
-import com.paytech.risk.compliance.domain.ClientReviewCaseBundle;
-import com.paytech.risk.compliance.domain.ClientReviewContext;
-import com.paytech.risk.compliance.domain.ClientReviewDecisionContext;
-import com.paytech.risk.compliance.domain.ReviewRequirementView;
-import com.paytech.risk.compliance.domainservice.repository.CaseClassificationRepository;
-import com.paytech.risk.compliance.domainservice.repository.CaseDependencyRepository;
-import com.paytech.risk.compliance.domainservice.repository.CaseRequirementRepository;
-import com.paytech.risk.compliance.domainservice.repository.CaseStateChangeRepository;
-import com.paytech.risk.compliance.domainservice.repository.CaseSubjectRepository;
-import com.paytech.risk.compliance.domainservice.repository.DueDiligenceCaseRepository;
-import com.paytech.risk.compliance.domainservice.repository.EvidenceRefRepository;
-import com.paytech.risk.compliance.domainservice.repository.QualificationDecisionRepository;
-import com.paytech.risk.compliance.domainservice.service.ClientReviewService;
-import com.paytech.risk.compliance.service.handler.ClientReviewResultHandler;
+import com.paytech.compliance.core.dal.dataobject.CaseClassification;
+import com.paytech.compliance.core.dal.dataobject.DueDiligenceCase;
+import com.paytech.compliance.core.dal.dataobject.EvidenceRef;
+import com.paytech.compliance.domain.ClientReviewCaseBundle;
+import com.paytech.compliance.domain.ClientReviewContext;
+import com.paytech.compliance.domain.ClientReviewDecisionContext;
+import com.paytech.compliance.domain.ReviewRequirementView;
+import com.paytech.compliance.domainservice.repository.CaseClassificationRepository;
+import com.paytech.compliance.domainservice.repository.CaseDependencyRepository;
+import com.paytech.compliance.domainservice.repository.CaseRequirementRepository;
+import com.paytech.compliance.domainservice.repository.CaseStateChangeRepository;
+import com.paytech.compliance.domainservice.repository.CaseSubjectRepository;
+import com.paytech.compliance.domainservice.repository.DueDiligenceCaseRepository;
+import com.paytech.compliance.domainservice.repository.EvidenceRefRepository;
+import com.paytech.compliance.domainservice.repository.QualificationDecisionRepository;
+import com.paytech.compliance.domainservice.service.ClientReviewService;
+import com.paytech.compliance.service.handler.ClientReviewResultHandler;
 
 import lombok.AllArgsConstructor;
 

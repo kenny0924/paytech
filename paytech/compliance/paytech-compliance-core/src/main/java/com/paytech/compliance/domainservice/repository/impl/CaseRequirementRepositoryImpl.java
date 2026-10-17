@@ -1,12 +1,12 @@
-package com.paytech.risk.compliance.domainservice.repository.impl;
+package com.paytech.compliance.domainservice.repository.impl;
 
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.time.Instant;
-import com.paytech.risk.compliance.core.dal.dataobject.CaseRequirement;
-import com.paytech.risk.compliance.core.dal.mapper.CaseRequirementMapper;
-import com.paytech.risk.compliance.domainservice.repository.CaseRequirementRepository;
+import com.paytech.compliance.core.dal.dataobject.CaseRequirement;
+import com.paytech.compliance.core.dal.mapper.CaseRequirementMapper;
+import com.paytech.compliance.domainservice.repository.CaseRequirementRepository;
 import com.paytech.foundation.common.error.ErrorException;
 
 import lombok.AllArgsConstructor;
@@ -27,13 +27,13 @@ public class CaseRequirementRepositoryImpl implements CaseRequirementRepository 
 
     /** 若干案件的材料要求及其程序模板。 */
     @Override
-    public List<com.paytech.risk.compliance.domain.ReviewRequirementView> findViewsByCaseIds(List<Long> caseIds) {
+    public List<com.paytech.compliance.domain.ReviewRequirementView> findViewsByCaseIds(List<Long> caseIds) {
         return caseIds.isEmpty() ? List.of() : mapper.findViewsByCaseIds(caseIds);
     }
 
     /** 条件更新要求状态并同步。 */
     @Override
-    public void updateStatus(com.paytech.risk.compliance.domain.ReviewRequirementView requirement, String status, Instant now) {
+    public void updateStatus(com.paytech.compliance.domain.ReviewRequirementView requirement, String status, Instant now) {
         if (mapper.updateStatus(requirement.getRequirementId(), requirement.getVersion(), status, now) != 1) {
             throw new com.paytech.foundation.common.error.ConcurrentRequestException("材料要求已变化，请刷新后重试");
         }

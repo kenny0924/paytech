@@ -21,8 +21,8 @@ import org.springframework.http.HttpMethod;
 
 import com.paytech.foundation.common.http.ApiHeaderNames;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
-import com.paytech.risk.api.decision.DecisionFlowQueryApi;
-import com.paytech.risk.test.base.MockTestBase;
+import com.paytech.risk.decision.api.DecisionFlowQueryApi;
+import com.paytech.risk.test.base.RiskDecisionMockTestBase;
 import com.paytech.risk.test.builder.decision.RuleSetBuilder;
 import com.paytech.risk.test.checker.decision.LegacyPointResponseChecker;
 import com.paytech.risk.test.mapper.decision.FlowTestMapper;
@@ -41,7 +41,7 @@ import com.paytech.risk.test.mocker.decision.RuleSetMocker.MockedRuleSet;
  *
  * @see DecisionFlowQueryApi#legacyPoint(String, String, String)
  */
-class LegacyPointApiAutoTest extends MockTestBase {
+class LegacyPointApiAutoTest extends RiskDecisionMockTestBase {
     private static final String PATH = "/decision-flows/v1/legacy-point-versions/%s";
 
     @Autowired

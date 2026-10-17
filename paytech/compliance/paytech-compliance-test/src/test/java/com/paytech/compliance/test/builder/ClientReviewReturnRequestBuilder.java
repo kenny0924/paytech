@@ -1,6 +1,6 @@
-package com.paytech.risk.test.builder.compliance;
+package com.paytech.compliance.test.builder;
 
-import com.paytech.risk.api.compliance.request.ClientReviewReturnRequestBody;
+import com.paytech.compliance.api.request.ClientReviewReturnRequestBody;
 
 /**
  * O07 退回修改的请求 Builder

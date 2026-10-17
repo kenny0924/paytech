@@ -1,4 +1,4 @@
-package com.paytech.risk.api.compliance.response;
+package com.paytech.compliance.api.response;
 
 /** Risk 已登记的审核任务；同一来源提交重放返回同一任务。 */
 public class ClientReviewRegistrationResponseBody {

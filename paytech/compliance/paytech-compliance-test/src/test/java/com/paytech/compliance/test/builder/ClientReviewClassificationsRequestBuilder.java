@@ -1,9 +1,9 @@
-package com.paytech.risk.test.builder.compliance;
+package com.paytech.compliance.test.builder;
 
 import java.util.ArrayList;
 
-import com.paytech.risk.api.compliance.request.ClientReviewClassificationBody;
-import com.paytech.risk.api.compliance.request.ClientReviewClassificationsRequestBody;
+import com.paytech.compliance.api.request.ClientReviewClassificationBody;
+import com.paytech.compliance.api.request.ClientReviewClassificationsRequestBody;
 
 /**
  * I02 分类交付的请求 Builder

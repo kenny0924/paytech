@@ -36,7 +36,7 @@
                 <artifactId>paytech-payment-app</artifactId>
                 <version>${project.version}</version>
             </dependency>
-            <!-- 服务间合同：channel-connector（本步拆出）、Reactor 内的 Vault Java Client；risk-api 第 06 步统一改坐标。 -->
+            <!-- 服务间合同：channel-connector（本步拆出）、Reactor 内的 Vault Java Client；Risk 统一评估合同为 paytech-risk-decision-api（第 06 步）。 -->
             <dependency>
                 <groupId>com.paytech</groupId>
                 <artifactId>paytech-channel-connector-api</artifactId>
@@ -49,7 +49,7 @@
             </dependency>
             <dependency>
                 <groupId>com.paytech</groupId>
-                <artifactId>risk-api</artifactId>
+                <artifactId>paytech-risk-decision-api</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>

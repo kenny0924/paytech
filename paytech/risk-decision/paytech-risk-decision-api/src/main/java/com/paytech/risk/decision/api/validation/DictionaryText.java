@@ -1,4 +1,4 @@
-package com.paytech.risk.api.validation;
+package com.paytech.risk.decision.api.validation;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;

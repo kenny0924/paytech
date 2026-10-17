@@ -1,11 +1,11 @@
-package com.paytech.risk.auto.ext.http.compliance;
+package com.paytech.compliance.auto.ext.http;
 
 import static com.paytech.foundation.common.error.CommonErrorCode.INVALID_REQUEST;
-import static com.paytech.risk.api.enums.MaterialQualificationType.INDIVIDUAL_KYC;
-import static com.paytech.risk.api.enums.MaterialQualificationType.ORGANIZATION_KYB;
-import static com.paytech.risk.test.builder.compliance.ClientReviewCaseBuilder.SUBMITTED;
-import static com.paytech.risk.test.builder.compliance.ClientReviewCaseBuilder.individual;
-import static com.paytech.risk.test.builder.compliance.ClientReviewCaseBuilder.organization;
+import static com.paytech.compliance.api.enums.MaterialQualificationType.INDIVIDUAL_KYC;
+import static com.paytech.compliance.api.enums.MaterialQualificationType.ORGANIZATION_KYB;
+import static com.paytech.compliance.test.builder.ClientReviewCaseBuilder.SUBMITTED;
+import static com.paytech.compliance.test.builder.ClientReviewCaseBuilder.individual;
+import static com.paytech.compliance.test.builder.ClientReviewCaseBuilder.organization;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -20,13 +20,13 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
-import com.paytech.risk.api.compliance.ClientReviewAdminApi;
-import com.paytech.risk.compliance.domain.ClientReviewAction;
-import com.paytech.risk.test.base.MockTestBase;
-import com.paytech.risk.test.checker.compliance.ClientReviewCaseResponseChecker;
-import com.paytech.risk.test.checker.compliance.ClientReviewStoreChecker;
-import com.paytech.risk.test.mocker.compliance.ClientReviewMocker;
-import com.paytech.risk.test.mocker.compliance.ClientReviewMocker.MockedReview;
+import com.paytech.compliance.api.ClientReviewAdminApi;
+import com.paytech.compliance.domain.ClientReviewAction;
+import com.paytech.compliance.test.base.ComplianceMockTestBase;
+import com.paytech.compliance.test.checker.ClientReviewCaseResponseChecker;
+import com.paytech.compliance.test.checker.ClientReviewStoreChecker;
+import com.paytech.compliance.test.mocker.ClientReviewMocker;
+import com.paytech.compliance.test.mocker.ClientReviewMocker.MockedReview;
 
 /**
  * O01 Client 入驻审核任务列表
@@ -38,7 +38,7 @@ import com.paytech.risk.test.mocker.compliance.ClientReviewMocker.MockedReview;
  *
  * @see ClientReviewAdminApi#listCases(String, String, Integer, Integer, String, String, String)
  */
-class ClientReviewCaseListApiAutoTest extends MockTestBase {
+class ClientReviewCaseListApiAutoTest extends ComplianceMockTestBase {
     private static final String PATH = "/client-onboarding-admin/v1/cases";
 
     /** 远期提交时间，保证本例任务排在倒序列表最前。 */

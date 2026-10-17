@@ -1,4 +1,4 @@
-package com.paytech.risk.api.decision;
+package com.paytech.risk.decision.api;
 
 import java.util.List;
 import java.util.Map;
@@ -6,7 +6,7 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.OperandRequestBody;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.OperandRequestBody;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;

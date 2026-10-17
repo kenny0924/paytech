@@ -10,7 +10,6 @@ import com.paytech.risk.decision.domain.release.DecisionReleaseStaticValidator;
 import com.paytech.risk.decision.domain.release.DecisionReleaseStaticValidatorImpl;
 import com.paytech.risk.decision.domain.rule.RuleAstValidator;
 import com.paytech.risk.decision.domain.rule.RuleAstValidatorImpl;
-import com.paytech.risk.compliance.domainservice.port.ComplianceIdentifierGenerator;
 import com.paytech.risk.decision.domainservice.port.DecisionIdentifierGenerator;
 import java.time.Clock;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,7 +17,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Risk 进程级基础能力装配。
+ * risk-decision 进程级基础能力装配（compliance 已拆为独立进程，有自己的 Snowflake worker，design/01 §3）。
  */
 @Configuration(proxyBeanMethods = false)
 public class RiskRuntimeConfiguration {
@@ -76,17 +75,6 @@ public class RiskRuntimeConfiguration {
      */
     @Bean
     DecisionIdentifierGenerator decisionIdentifierGenerator(IdGenerator riskIdGenerator) {
-        return riskIdGenerator::nextId;
-    }
-
-    /**
-     * 合规模块标识端口，复用进程唯一的 Snowflake 生成器。
-     *
-     * @param riskIdGenerator 进程唯一的 Snowflake 生成器
-     * @return 合规标识生成端口
-     */
-    @Bean
-    ComplianceIdentifierGenerator complianceIdentifierGenerator(IdGenerator riskIdGenerator) {
         return riskIdGenerator::nextId;
     }
 

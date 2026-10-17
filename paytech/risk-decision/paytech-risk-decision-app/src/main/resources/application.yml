@@ -4,7 +4,7 @@ server:
 
 spring:
   application:
-    name: risk-service
+    name: risk-decision-service
   data:
     redis:
       host: "${RISK_REDIS_HOST:127.0.0.1}"
@@ -32,18 +32,6 @@ spring:
         forceConnectionTimeZoneToSession: true
         connectTimeout: 2000
         socketTimeout: 2000
-  rabbitmq:
-    host: "${RISK_RABBITMQ_HOST:127.0.0.1}"
-    port: "${RISK_RABBITMQ_PORT:5672}"
-    username: "${RISK_RABBITMQ_USERNAME:}"
-    password: "${RISK_RABBITMQ_PASSWORD:}"
-    virtual-host: "${RISK_RABBITMQ_VHOST:/mor-local}"
-    connection-timeout: 2s
-    # 发布确认与不可路由退回：补偿 Handler 等待 Broker 确认后才算发布成功。
-    publisher-confirm-type: correlated
-    publisher-returns: true
-    template:
-      mandatory: true
   jackson:
     deserialization:
       fail-on-unknown-properties: true
@@ -68,11 +56,6 @@ decision:
 web:
   logging:
     metadata-only-path-prefixes:
-      - /internal/due-diligence/material-requirements
-      # I01 请求体含主体姓名、证件号与地址原值，只记元数据。
-      - /client-onboarding-review
-      # 审核命令含内部理由与客户可见说明，只记元数据。
-      - /client-onboarding-admin
       - /decision-dictionaries
       - /decision-rule-sets
       - /decision-releases
@@ -83,6 +66,9 @@ web:
       - /risk-decisions
 
 management:
+  server:
+    # 管理端口 = 业务端口 + 1000（design/01 §3）；Actuator 不再与业务端口共用。
+    port: 19104
   endpoints:
     enabled-by-default: false
     web:
@@ -110,7 +96,7 @@ management:
     prometheus:
       access: read-only
 
-# 本地补偿任务：审核结果在本地事务登记，提交后由 Handler 发布到 RabbitMQ。
+# 本地补偿任务：影子运行（DECISION_SHADOW_RUN）在本地事务登记，提交后由 Handler 执行。
 compensation:
   enabled: true
 
@@ -121,12 +107,10 @@ redis:
       wait-time: 500ms
       lease-time: 30s
 
-# Client 入驻通用材料目录：每类资格一个全局程序，不按国家区分；材料充分性由人工审核判断。
-# 程序数据由 requirements/20260914/client-console-注册与客户入驻/db/implementation/risk-generic-materials-init.sql 手工初始化。
-onboarding:
-  # I01 审核登记入口（CCT 私网调用）；默认关闭。
-  review:
-    enabled: false
-  materials:
-    enabled: false
-    programs-json: '[{"qualificationType":"INDIVIDUAL_KYC","programCode":"CLIENT_INDIVIDUAL_GENERIC"},{"qualificationType":"ORGANIZATION_KYB","programCode":"CLIENT_ORGANIZATION_GENERIC"},{"qualificationType":"RELATED_PERSON_KYC","programCode":"RELATED_PERSON_GENERIC"}]'
+# 实例 ID（实例清单 instance.id，01 §5）：内部调用 Token 的 inst。
+paytech:
+  instance-id: "${PAYTECH_INSTANCE_ID:main}"
+
+# 内部调用身份（D26）：默认 OFF；YAML 中必须带引号，裸 OFF 会被解析为布尔 false。
+internal-auth:
+  mode: "${RISK_DECISION_INTERNAL_AUTH_MODE:OFF}"

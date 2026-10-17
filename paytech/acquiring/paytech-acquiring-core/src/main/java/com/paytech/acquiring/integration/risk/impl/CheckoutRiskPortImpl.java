@@ -19,10 +19,10 @@ import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.common.error.ServiceUnavailableException;
 import com.paytech.foundation.common.utils.EnumUtils;
-import com.paytech.risk.api.evaluation.RiskDecisionApi;
-import com.paytech.risk.api.evaluation.request.CheckoutPrepareRiskInput;
-import com.paytech.risk.api.evaluation.request.EvaluateDecisionRequestBody;
-import com.paytech.risk.api.evaluation.response.EvaluateDecisionResponseBody;
+import com.paytech.risk.decision.api.evaluation.RiskDecisionApi;
+import com.paytech.risk.decision.api.evaluation.request.CheckoutPrepareRiskInput;
+import com.paytech.risk.decision.api.evaluation.request.EvaluateDecisionRequestBody;
+import com.paytech.risk.decision.api.evaluation.response.EvaluateDecisionResponseBody;
 
 import lombok.AllArgsConstructor;
 
@@ -43,7 +43,7 @@ public class CheckoutRiskPortImpl implements CheckoutRiskPort {
 
     /** Spring Cloud 阻塞式负载均衡在服务发现中没有 Risk 实例时抛出的 IllegalStateException 原文。 */
     /** Risk 服务发现名（与 app 的 RiskClientConfiguration.SERVICE_ID 一致；第 06 步改名时同步）。 */
-    static final String RISK_SERVICE_ID = "risk-service";
+    static final String RISK_SERVICE_ID = "risk-decision-service";
 
     static final String NO_INSTANCE_MESSAGE = "No instances available for " + RISK_SERVICE_ID;
 

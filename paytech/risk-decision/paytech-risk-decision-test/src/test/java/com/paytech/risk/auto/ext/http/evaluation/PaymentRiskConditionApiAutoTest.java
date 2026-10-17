@@ -19,12 +19,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
 import org.springframework.test.web.servlet.client.EntityExchangeResult;
 
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.ConditionNodeRequestBody;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.OperandRequestBody;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.RuleRequestBody;
-import com.paytech.risk.api.decision.request.CreateVariableRequestBody;
-import com.paytech.risk.api.evaluation.RiskDecisionApi;
-import com.paytech.risk.api.evaluation.request.EvaluateDecisionRequestBody;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.ConditionNodeRequestBody;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.OperandRequestBody;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.RuleRequestBody;
+import com.paytech.risk.decision.api.request.CreateVariableRequestBody;
+import com.paytech.risk.decision.api.evaluation.RiskDecisionApi;
+import com.paytech.risk.decision.api.evaluation.request.EvaluateDecisionRequestBody;
 import com.paytech.risk.decision.domain.enums.AuthenticationRequirement;
 import com.paytech.risk.decision.domain.enums.DecisionValue;
 import com.paytech.risk.decision.domain.enums.FlowEdgeType;

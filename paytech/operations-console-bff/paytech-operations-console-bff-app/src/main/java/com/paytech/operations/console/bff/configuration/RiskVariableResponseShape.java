@@ -1,6 +1,6 @@
 package com.paytech.operations.console.bff.configuration;
 
-import com.paytech.risk.api.decision.RiskVariableModels;
+import com.paytech.risk.decision.api.RiskVariableModels;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.math.BigInteger;
@@ -13,10 +13,10 @@ import tools.jackson.databind.JsonNode;
 
 /** 变量轻量合同的严格 token Reader；Owner 合同类的实例字段拥有字段集合，代码不注册业务变量。 */
 final class RiskVariableResponseShape {
-    private static final Set<Class<?>> ROOTS = Set.of(com.paytech.risk.api.decision.response.VariableManagementContextResponseBody.class,
-        com.paytech.risk.api.decision.response.VariableListResponseBody.class, com.paytech.risk.api.decision.response.VariableDetailResponseBody.class,
-        com.paytech.risk.api.decision.response.VariableMembersResponseBody.class, com.paytech.risk.api.decision.response.ReplaceMembersResponseBody.class,
-        com.paytech.risk.api.decision.response.DeleteVariableResponseBody.class, com.paytech.risk.api.decision.response.VariableReferencesResponseBody.class);
+    private static final Set<Class<?>> ROOTS = Set.of(com.paytech.risk.decision.api.response.VariableManagementContextResponseBody.class,
+        com.paytech.risk.decision.api.response.VariableListResponseBody.class, com.paytech.risk.decision.api.response.VariableDetailResponseBody.class,
+        com.paytech.risk.decision.api.response.VariableMembersResponseBody.class, com.paytech.risk.decision.api.response.ReplaceMembersResponseBody.class,
+        com.paytech.risk.decision.api.response.DeleteVariableResponseBody.class, com.paytech.risk.decision.api.response.VariableReferencesResponseBody.class);
     private static final Set<String> NULLABLE = Set.of("pointCode", "numericUnit", "currencyCode", "currencyVariableCode",
         "allowedValuesVariableCode", "currentValue", "memberCount", "description", "sourceContractCode",
         "sourceContractVersion", "sourceField", "allowedValues", "displayName", "versionId", "versionNo",
@@ -38,7 +38,7 @@ final class RiskVariableResponseShape {
         require(node != null && node.isObject() && ownerContract(type));
         var components = components(type);
         var keys = components.stream().map(c -> c.getName()).collect(Collectors.toSet());
-        if (type == com.paytech.risk.api.decision.response.VariableListResponseBody.class) {
+        if (type == com.paytech.risk.decision.api.response.VariableListResponseBody.class) {
             if (node.has("missingCodes")) keys.removeAll(Set.of("page", "size", "total"));
             else keys.remove("missingCodes");
         }
@@ -53,7 +53,7 @@ final class RiskVariableResponseShape {
             }
             scalar(value, c.getGenericType(), c.getName());
         }
-        if (type == RiskVariableModels.VariableSummary.class || type == com.paytech.risk.api.decision.response.VariableDetailResponseBody.class) {
+        if (type == RiskVariableModels.VariableSummary.class || type == com.paytech.risk.decision.api.response.VariableDetailResponseBody.class) {
             require(node.get("previewMembers").size() <= 100);
             String source = node.get("sourceType").stringValue();
             if (source.equals("CONSTANT")) {
@@ -108,7 +108,23 @@ final class RiskVariableResponseShape {
 
     /** Risk 公开合同类型；字段集合来自其实例字段。 */
     private static boolean ownerContract(Class<?> type) {
-        return type.getPackageName().startsWith("com.paytech.risk.api.decision") && !type.isEnum();
+        return decisionContractPackage(type.getPackageName()) && !type.isEnum();
+    }
+
+    /**
+     * 原 risk-api 的 decision 包（第 06 步平铺为 com.paytech.risk.decision.api 根包）；
+     * 同根下由原 api.evaluation / control / enums / validation 迁入的子包不属于原 decision 包，保持排除。
+     */
+    private static boolean decisionContractPackage(String name) {
+        String root = "com.paytech.risk.decision.api";
+        if (name.equals(root)) {
+            return true;
+        }
+        if (!name.startsWith(root + ".")) {
+            return false;
+        }
+        String child = name.substring(root.length() + 1).split("\\.")[0];
+        return !java.util.Set.of("evaluation", "control", "enums", "validation").contains(child);
     }
 
     /** 合同类按声明顺序的实例字段，与 JSON 属性一一对应。 */

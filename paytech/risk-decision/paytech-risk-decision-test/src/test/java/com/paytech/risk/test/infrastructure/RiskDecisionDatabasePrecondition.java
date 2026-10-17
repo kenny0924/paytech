@@ -12,31 +12,30 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.env.ConfigurableEnvironment;
 
 /**
- * 在 Risk Spring 测试上下文刷新前验证仓库自有本地 MySQL 已由开发者人工准备。
+ * 在 risk-decision Spring 测试上下文刷新前验证仓库自有本地 mor_risk_decision 已由开发者人工准备（由原 RiskDatabasePrecondition 拆出）。
+ * <li>表数等于本模块 init/ddl.sql；保留 t_rule_set 列、字典列、索引、Action 目录与决策点目录校验；t_command_idempotency 已按 S10 删除，不再校验。</li>
  */
-public final class RiskDatabasePrecondition
+public final class RiskDecisionDatabasePrecondition
     implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
-    /** Risk 当前获批物理模型中的表数。 */
-    public static final int EXPECTED_TABLE_COUNT = 85;
+    /** mor_risk_decision 的表数：risk-decision-schema.sql 的 54 张表加 t_consumed_event（= init/ddl.sql 的 CREATE TABLE 数）。 */
+    public static final int EXPECTED_TABLE_COUNT = 55;
 
     /**
      * 不包含凭据的本地数据库准备说明。
      */
-    public static final String SETUP = "Risk auto 需要仓库 local-environment 的 "
-        + "127.0.0.1:13306/mor_risk。请先在 local-environment 执行 "
-        + "`docker compose --env-file .env.local --profile base up -d`，再回到 risk-compliance-service "
-        + "并由开发者审核后依次执行 "
-        + "`mysql -h 127.0.0.1 -P 13306 -u risk_app -p mor_risk "
-        + "< docs/database/sql/risk-compliance-schema.sql` 与 "
-        + "`mysql -h 127.0.0.1 -P 13306 -u risk_app -p mor_risk "
-        + "< docs/database/sql/risk-compliance-initial-data.sql`，最后通过 RISK_TEST_DB_PASSWORD "
-        + "或 MOR_RISK_DB_PASSWORD 注入密码。已有旧库按当前迁移记录应用所需增量；规则集根历史增量见 ../requirements/20260911/operations-console-风控规则集列表优化/db/risk-compliance-service/；本轮字典增量见 ../requirements/20260911/operations-console-风控规则集历史与字典管理/db/risk-compliance-service/ddl.sql 与 dml.sql，必须人工备份审核后执行；禁止重跑全量初始化。决策流增量见 ../requirements/20260912/operations-console-决策流配置/db/risk-compliance-service/ddl.sql；仅增加四表，须经授权人工应用。规则输入解耦的三表增量见 ../requirements/20260912/operations-console-决策流配置/db/risk-compliance-service/simplification/local-application.md，需独立授权人工应用。统一变量增量见 ../requirements/20260912/operations-console-统一风控变量管理与条件编排/db/risk-compliance-service/local-application.md；新增两表、四张旧表中增加五列并调整四列注释及26行目录，须经本轮单独授权人工应用。支付反欺诈一期增量见 ../requirements/20261014/risk-支付反欺诈一期/db/ddl.sql 与 dml.sql；新增两表、改五表并初始化支付决策点、动作与变量，须经授权人工应用。评估流程轨迹增量见 ../requirements/20261015/risk-评估结果查询与解释/db/ddl.sql；只新增一表，须经授权人工应用。结账点运行期评估增量见 ../requirements/20261016/risk-结账点运行期评估/db/ddl.sql 与 dml.sql；重建结账输入快照表、结账变量迁到 ORDER_PREPARATION v5 并初始化结账运行期点版本，须经授权人工应用。已有表不得重跑完整 Schema。本轮还需要本机 Redis 16379，通过 RISK_TEST_REDIS_PASSWORD 或 MOR_REDIS_PASSWORD 注入凭据。测试不会启动容器、建表或灌入数据。";
+    public static final String SETUP = "risk-decision auto 需要仓库 local-environment 的 127.0.0.1:13306/mor_risk_decision "
+        + "（账号 risk_decision_app）。请先在 local-environment 执行 `docker compose --env-file .env.local --profile base up -d`，"
+        + "再由开发者审核后用 MySQL root 人工执行一次 paytech/risk-decision/paytech-risk-decision-test/src/test/resources/init/ddl.sql"
+        + "（建库、建账号、最小权限授权、全部 CREATE TABLE 与 risk-decision-initial-data.sql 目录数据）；已有库勿重复执行。"
+        + "密码经 RISK_DECISION_TEST_DB_PASSWORD 或 MOR_RISK_DECISION_DB_PASSWORD 注入，缺省为 init/ddl.sql 中的仓库本地默认值。"
+        + "本轮还需要本机 Redis 16379，通过 RISK_DECISION_TEST_REDIS_PASSWORD 或 MOR_REDIS_PASSWORD 注入凭据。"
+        + "测试不会启动容器、建表或灌入数据。";
 
     private static final String LOOPBACK_URL =
-        "jdbc:mysql://127.0.0.1:13306/mor_risk"
+        "jdbc:mysql://127.0.0.1:13306/mor_risk_decision"
             + "?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
-    private static final String USERNAME = "risk_app";
+    private static final String USERNAME = "risk_decision_app";
     private static final List<ActionCatalogEntry> ACTIONS = List.of(
         new ActionCatalogEntry("ALLOW_CHECKOUT", "DECISION_ALLOW_V1", "ALLOW"),
         new ActionCatalogEntry("REVIEW_CHECKOUT", "DECISION_REVIEW_V1", "REVIEW"),
@@ -107,14 +106,14 @@ public final class RiskDatabasePrecondition
     }
 
     /**
-     * 拒绝任何非仓库自有 Loopback Risk 数据库连接。
+     * 拒绝任何非仓库自有 Loopback risk-decision 数据库连接。
      *
      * @param url JDBC URL
      * @param username 数据库用户名
      */
     public static void validateConnectionTarget(String url, String username) {
         if (!LOOPBACK_URL.equals(url) || !USERNAME.equals(username)) {
-            throw new IllegalStateException("Risk auto 仅允许 127.0.0.1:13306/mor_risk 和 risk_app");
+            throw new IllegalStateException("risk-decision auto 仅允许 127.0.0.1:13306/mor_risk_decision 和 risk_decision_app");
         }
     }
 
@@ -139,9 +138,6 @@ public final class RiskDatabasePrecondition
         require(count(connection, "SELECT COUNT(*) FROM t_decision_point") == 2L);
         require(count(connection, "SELECT COUNT(*) FROM t_decision_point WHERE point_code='CHECKOUT_PREPARE' "
             + "AND business_domain='CHECKOUT' AND status='ACTIVE'") == 1L);
-        require(count(connection, "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() "
-            + "AND table_name='t_command_idempotency' AND column_name='idempotency_key' "
-            + "AND character_set_name='ascii' AND collation_name='ascii_bin'") == 1L);
         require("REPEATABLE-READ".equals(text(connection, "SELECT @@transaction_isolation")));
         require(count(connection, "SELECT COUNT(*) FROM t_action_version") == ACTIONS.size() + 2 + 3);
         require(count(connection, "SELECT COUNT(*) FROM t_action_version WHERE action_version_id IN (240004,240005) "

@@ -1,6 +1,6 @@
-package com.paytech.risk.compliance.service.processor;
+package com.paytech.compliance.service.processor;
 
-import static com.paytech.risk.compliance.core.enums.ClientReviewErrorCode.CLIENT_REVIEW_NOT_FOUND;
+import static com.paytech.compliance.core.enums.ClientReviewErrorCode.CLIENT_REVIEW_NOT_FOUND;
 
 import java.util.List;
 import java.util.Set;
@@ -9,10 +9,10 @@ import org.springframework.stereotype.Component;
 
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.processor.AbstractProcessor;
-import com.paytech.risk.compliance.core.dal.dataobject.DueDiligenceCase;
-import com.paytech.risk.compliance.domainservice.repository.DueDiligenceCaseRepository;
-import com.paytech.risk.compliance.service.processor.request.ClientReviewResultRequest;
-import com.paytech.risk.compliance.service.processor.response.ClientReviewResultResponse;
+import com.paytech.compliance.core.dal.dataobject.DueDiligenceCase;
+import com.paytech.compliance.domainservice.repository.DueDiligenceCaseRepository;
+import com.paytech.compliance.service.processor.request.ClientReviewResultRequest;
+import com.paytech.compliance.service.processor.response.ClientReviewResultResponse;
 
 import lombok.AllArgsConstructor;
 

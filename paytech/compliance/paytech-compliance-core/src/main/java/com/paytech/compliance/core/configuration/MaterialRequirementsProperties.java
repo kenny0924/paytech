@@ -1,4 +1,4 @@
-package com.paytech.risk.compliance.core.configuration;
+package com.paytech.compliance.core.configuration;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;

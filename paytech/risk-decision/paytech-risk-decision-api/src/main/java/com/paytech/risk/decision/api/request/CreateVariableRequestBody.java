@@ -1,11 +1,11 @@
-package com.paytech.risk.api.decision.request;
+package com.paytech.risk.decision.api.request;
 
 import java.util.List;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import com.paytech.risk.api.decision.RiskVariableModels.*;
+import com.paytech.risk.decision.api.RiskVariableModels.*;
 
 /** 创建后结构固定；所有不适用字段显式 null，系统身份和审计字段由服务端提供。 */
 public class CreateVariableRequestBody {

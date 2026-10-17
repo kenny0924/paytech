@@ -47,8 +47,8 @@ import com.paytech.foundation.httpclient.api.HttpServiceClientFactory;
 import com.paytech.foundation.httpclient.api.HttpServiceClientOptions;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.redis.core.autoconfigure.RedisResourceLockProperties;
-import com.paytech.risk.api.compliance.ClientReviewRegistrationApi;
-import com.paytech.risk.api.enums.ClientReviewErrorCode;
+import com.paytech.compliance.api.ClientReviewRegistrationApi;
+import com.paytech.compliance.api.enums.ClientReviewErrorCode;
 
 /** C14 提交与审核登记装配；随草稿开关关闭，不启用外部入口。 */
 @Configuration(proxyBeanMethods = false)
@@ -133,7 +133,7 @@ public class ClientSubmissionConfiguration {
     public ClientReviewRegistrationClient clientReviewRegistrationClient(Environment env, ObjectProvider<LoadBalancerClient> discovery,
         ObjectProvider<InternalTokenSupplier> tokens) {
         var api = HttpServiceClientFactory.create(ClientDocumentConfiguration.riskTransport(env, discovery),
-            InternalCallTokenOptions.apply(HttpServiceClientOptions.strict().withStrictJsonResponses(8192), tokens, "risk-service"),
+            InternalCallTokenOptions.apply(HttpServiceClientOptions.strict().withStrictJsonResponses(8192), tokens, "compliance-service"),
             ClientReviewErrorCode.values())
             .createClient(ClientReviewRegistrationApi.class);
         return new ClientReviewRegistrationClientImpl(api);

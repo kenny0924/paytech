@@ -6,13 +6,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
-import com.paytech.risk.api.decision.DecisionReleaseManagementApi;
-import com.paytech.risk.api.decision.request.CreateTestReleaseRequestBody;
-import com.paytech.risk.api.decision.request.ValidateTestReleaseRequestBody;
-import com.paytech.risk.api.decision.response.CreateTestReleaseResponseBody;
-import com.paytech.risk.api.decision.response.TestReleaseDetailResponseBody;
-import com.paytech.risk.api.decision.response.TestReleaseListItemResponseBody;
-import com.paytech.risk.api.decision.response.ValidateTestReleaseResponseBody;
+import com.paytech.risk.decision.api.DecisionReleaseManagementApi;
+import com.paytech.risk.decision.api.request.CreateTestReleaseRequestBody;
+import com.paytech.risk.decision.api.request.ValidateTestReleaseRequestBody;
+import com.paytech.risk.decision.api.response.CreateTestReleaseResponseBody;
+import com.paytech.risk.decision.api.response.TestReleaseDetailResponseBody;
+import com.paytech.risk.decision.api.response.TestReleaseListItemResponseBody;
+import com.paytech.risk.decision.api.response.ValidateTestReleaseResponseBody;
 import com.paytech.risk.decision.service.processor.CreateTestReleaseProcessor;
 import com.paytech.risk.decision.service.processor.GetTestReleaseProcessor;
 import com.paytech.risk.decision.service.processor.ListTestReleasesProcessor;
@@ -21,7 +21,7 @@ import com.paytech.risk.decision.service.processor.request.CreateTestReleaseRequ
 import com.paytech.risk.decision.service.processor.request.GetTestReleaseRequest;
 import com.paytech.risk.decision.service.processor.request.ListTestReleasesRequest;
 import com.paytech.risk.decision.service.processor.request.ValidateTestReleaseRequest;
-import com.paytech.risk.service.request.RiskOperationRequestContextParser;
+import com.paytech.foundation.web.request.OperationRequestContextParser;
 
 import lombok.AllArgsConstructor;
 
@@ -33,7 +33,7 @@ public class DecisionReleaseManagementController implements DecisionReleaseManag
     private final ListTestReleasesProcessor listProcessor;
     private final CreateTestReleaseProcessor createProcessor;
     private final ValidateTestReleaseProcessor validateProcessor;
-    private final RiskOperationRequestContextParser context;
+    private final OperationRequestContextParser context;
 
     /** 分页列表沿用原筛选和默认分页规则。 */
     @Override
@@ -60,7 +60,7 @@ public class DecisionReleaseManagementController implements DecisionReleaseManag
     public CreateTestReleaseResponseBody createCandidate(String actorAccountId, String sessionId,
         CreateTestReleaseRequestBody requestBody) {
         var actor = context.parse(actorAccountId, sessionId);
-        var request = new CreateTestReleaseRequest(actor.actorAccountId(),
+        var request = new CreateTestReleaseRequest(actor.getActorAccountId(),
             context.parsePositiveId("ruleSetVersionId", requestBody.getRuleSetVersionId()),
             requestBody.getExpectedRuleSetContentHash());
         return DecisionReleaseWireConverter.toResponse(mapped(() -> createProcessor.process(request)));
@@ -71,7 +71,7 @@ public class DecisionReleaseManagementController implements DecisionReleaseManag
     public ValidateTestReleaseResponseBody validateCandidate(String actorAccountId, String sessionId, String releaseId,
         ValidateTestReleaseRequestBody requestBody) {
         var actor = context.parse(actorAccountId, sessionId);
-        var request = new ValidateTestReleaseRequest(actor.actorAccountId(),
+        var request = new ValidateTestReleaseRequest(actor.getActorAccountId(),
             context.parsePositiveId("releaseId", releaseId), requestBody.getExpectedVersion());
         return DecisionReleaseWireConverter.toResponse(mapped(() -> validateProcessor.process(request)));
     }

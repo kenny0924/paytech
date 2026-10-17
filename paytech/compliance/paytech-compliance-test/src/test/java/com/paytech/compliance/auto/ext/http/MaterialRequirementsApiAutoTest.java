@@ -1,11 +1,11 @@
-package com.paytech.risk.auto.ext.http.compliance;
+package com.paytech.compliance.auto.ext.http;
 
 import static com.paytech.foundation.common.error.CommonErrorCode.INVALID_REQUEST;
-import static com.paytech.risk.api.enums.MaterialQualificationType.INDIVIDUAL_KYC;
-import static com.paytech.risk.api.enums.MaterialQualificationType.ORGANIZATION_KYB;
-import static com.paytech.risk.api.enums.MaterialQualificationType.RELATED_PERSON_KYC;
-import static com.paytech.risk.test.builder.compliance.MaterialProgramBuilder.approved;
-import static com.paytech.risk.test.mocker.compliance.MaterialProgramMocker.row;
+import static com.paytech.compliance.api.enums.MaterialQualificationType.INDIVIDUAL_KYC;
+import static com.paytech.compliance.api.enums.MaterialQualificationType.ORGANIZATION_KYB;
+import static com.paytech.compliance.api.enums.MaterialQualificationType.RELATED_PERSON_KYC;
+import static com.paytech.compliance.test.builder.MaterialProgramBuilder.approved;
+import static com.paytech.compliance.test.mocker.MaterialProgramMocker.row;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -27,14 +27,14 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
-import com.paytech.risk.api.enums.MaterialQualificationType;
-import com.paytech.risk.api.compliance.MaterialRequirementsApi;
-import com.paytech.risk.test.base.MockTestBase;
-import com.paytech.risk.test.builder.compliance.MaterialProgramBuilder;
-import com.paytech.risk.test.builder.compliance.MaterialProgramBuilder.Requirement;
-import com.paytech.risk.test.checker.compliance.MaterialRequirementsResponseChecker;
-import com.paytech.risk.test.mocker.compliance.MaterialProgramMocker;
-import com.paytech.risk.test.mocker.compliance.MaterialProgramMocker.MockedProgram;
+import com.paytech.compliance.api.enums.MaterialQualificationType;
+import com.paytech.compliance.api.MaterialRequirementsApi;
+import com.paytech.compliance.test.base.ComplianceMockTestBase;
+import com.paytech.compliance.test.builder.MaterialProgramBuilder;
+import com.paytech.compliance.test.builder.MaterialProgramBuilder.Requirement;
+import com.paytech.compliance.test.checker.MaterialRequirementsResponseChecker;
+import com.paytech.compliance.test.mocker.MaterialProgramMocker;
+import com.paytech.compliance.test.mocker.MaterialProgramMocker.MockedProgram;
 
 /**
  * 通用材料目录查询
@@ -45,10 +45,10 @@ import com.paytech.risk.test.mocker.compliance.MaterialProgramMocker.MockedProgr
  *
  * @see MaterialRequirementsApi#read(String, String)
  */
-class MaterialRequirementsApiAutoTest extends MockTestBase {
+class MaterialRequirementsApiAutoTest extends ComplianceMockTestBase {
     private static final String PATH = "/internal/due-diligence/material-requirements";
 
-    private static final String CALLER = "client-contract-service";
+    private static final String CALLER = "client-master-service";
 
     /** 模板要求按要求代码排序后的期望输出。 */
     private static final List<Requirement> TEMPLATE_ITEMS = List.of(new Requirement("IDENTITY_DOCUMENT", "PASSPORT", 1),

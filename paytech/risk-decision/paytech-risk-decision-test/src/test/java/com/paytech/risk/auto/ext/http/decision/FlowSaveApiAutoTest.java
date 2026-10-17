@@ -5,12 +5,12 @@ import static com.paytech.foundation.common.error.CommonErrorCode.INTERNAL_ERROR
 import static com.paytech.foundation.common.error.CommonErrorCode.INVALID_REQUEST;
 import static com.paytech.foundation.common.error.CommonErrorCode.UNSUPPORTED_MEDIA_TYPE;
 import static com.paytech.foundation.common.error.CommonErrorCode.VALIDATION_ERROR;
-import static com.paytech.risk.api.enums.RiskDecisionConfigurationErrorCode.RISK_DECISION_CONFIGURATION_NOT_FOUND;
-import static com.paytech.risk.api.enums.RiskDecisionConfigurationErrorCode.RISK_FLOW_CODE_EXISTS;
-import static com.paytech.risk.api.enums.RiskDecisionConfigurationErrorCode.RISK_FLOW_DELETED;
-import static com.paytech.risk.api.enums.RiskDecisionConfigurationErrorCode.RISK_FLOW_REFERENCE_UNAVAILABLE;
-import static com.paytech.risk.api.enums.RiskDecisionConfigurationErrorCode.RISK_FLOW_VERSION_CONFLICT;
-import static com.paytech.risk.api.enums.RiskVariableErrorCode.LEGACY_AUTHORING_NOT_SUPPORTED;
+import static com.paytech.risk.decision.api.enums.RiskDecisionConfigurationErrorCode.RISK_DECISION_CONFIGURATION_NOT_FOUND;
+import static com.paytech.risk.decision.api.enums.RiskDecisionConfigurationErrorCode.RISK_FLOW_CODE_EXISTS;
+import static com.paytech.risk.decision.api.enums.RiskDecisionConfigurationErrorCode.RISK_FLOW_DELETED;
+import static com.paytech.risk.decision.api.enums.RiskDecisionConfigurationErrorCode.RISK_FLOW_REFERENCE_UNAVAILABLE;
+import static com.paytech.risk.decision.api.enums.RiskDecisionConfigurationErrorCode.RISK_FLOW_VERSION_CONFLICT;
+import static com.paytech.risk.decision.api.enums.RiskVariableErrorCode.LEGACY_AUTHORING_NOT_SUPPORTED;
 import static com.paytech.risk.decision.domain.enums.FlowStatus.CONFIGURABLE;
 import static com.paytech.risk.decision.domain.enums.RuleSetVersionStatus.DRAFT;
 import static com.paytech.risk.decision.domain.enums.RuleSetVersionStatus.FROZEN;
@@ -39,12 +39,12 @@ import org.springframework.http.MediaType;
 
 import com.paytech.foundation.common.http.ApiHeaderNames;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
-import com.paytech.risk.api.decision.DecisionFlowManagementApi;
+import com.paytech.risk.decision.api.DecisionFlowManagementApi;
 import com.paytech.risk.decision.domain.enums.DecisionValue;
 import com.paytech.risk.decision.domain.enums.DictionaryStatus;
 import com.paytech.risk.decision.domain.enums.FlowEdgeType;
 import com.paytech.risk.decision.domain.enums.FlowNodeType;
-import com.paytech.risk.test.base.MockTestBase;
+import com.paytech.risk.test.base.RiskDecisionMockTestBase;
 import com.paytech.risk.test.builder.decision.FlowBuilder;
 import com.paytech.risk.test.builder.decision.FlowBuilder.EdgeSpec;
 import com.paytech.risk.test.builder.decision.FlowBuilder.GraphSpec;
@@ -75,9 +75,9 @@ import tools.jackson.databind.node.ObjectNode;
  * <li>并发：同一基准的两次编辑只有一次成功，另一项冲突且不留下孤儿版本。</li>
  * <li>所有被拒绝的写入都不改变已有流程，也不创建新流程。</li>
  *
- * @see DecisionFlowManagementApi#save(String, String, com.paytech.risk.api.decision.request.SaveFlowRequestBody)
+ * @see DecisionFlowManagementApi#save(String, String, com.paytech.risk.decision.api.request.SaveFlowRequestBody)
  */
-class FlowSaveApiAutoTest extends MockTestBase {
+class FlowSaveApiAutoTest extends RiskDecisionMockTestBase {
     /** 新保存的流程使用结账当前输入合同，只能引用同合同的规则集版本。 */
     private static final int CURRENT_CONTRACT = RuleSetBuilder.CURRENT_CONTRACT_VERSION;
 

@@ -2,7 +2,7 @@ package com.paytech.risk.auto.ext.http.decision;
 
 import static com.paytech.foundation.common.error.CommonErrorCode.INTERNAL_ERROR;
 import static com.paytech.foundation.common.error.CommonErrorCode.INVALID_REQUEST;
-import static com.paytech.risk.api.enums.RiskVariableErrorCode.VARIABLE_NOT_FOUND;
+import static com.paytech.risk.decision.api.enums.RiskVariableErrorCode.VARIABLE_NOT_FOUND;
 import static com.paytech.risk.decision.domain.enums.NumericUnit.MONEY;
 import static com.paytech.risk.decision.domain.enums.RuleSetVersionStatus.DRAFT;
 import static com.paytech.risk.decision.domain.enums.RuleSetVersionStatus.FROZEN;
@@ -24,7 +24,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 
 import com.paytech.foundation.common.http.ApiHeaderNames;
-import com.paytech.risk.api.decision.RiskVariableApi;
+import com.paytech.risk.decision.api.RiskVariableApi;
 import com.paytech.risk.decision.domain.enums.FlowStatus;
 import com.paytech.risk.decision.domain.enums.VariableStatus;
 import com.paytech.risk.test.base.AbstractVariableApiTest;

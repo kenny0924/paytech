@@ -1,10 +1,10 @@
 package com.paytech.risk.configuration;
 
 import com.paytech.foundation.common.error.InvalidParameterException;
-import com.paytech.risk.api.decision.request.CreateVariableRequestBody;
-import com.paytech.risk.api.decision.request.UpdateVariableRequestBody;
-import com.paytech.risk.api.decision.request.ReplaceMembersRequestBody;
-import com.paytech.risk.api.decision.RiskVariableModels.MemberRequest;
+import com.paytech.risk.decision.api.request.CreateVariableRequestBody;
+import com.paytech.risk.decision.api.request.UpdateVariableRequestBody;
+import com.paytech.risk.decision.api.request.ReplaceMembersRequestBody;
+import com.paytech.risk.decision.api.RiskVariableModels.MemberRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;

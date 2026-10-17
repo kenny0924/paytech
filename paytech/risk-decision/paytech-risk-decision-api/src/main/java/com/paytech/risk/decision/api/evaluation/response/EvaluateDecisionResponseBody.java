@@ -1,4 +1,4 @@
-package com.paytech.risk.api.evaluation.response;
+package com.paytech.risk.decision.api.evaluation.response;
 
 import java.util.Map;
 

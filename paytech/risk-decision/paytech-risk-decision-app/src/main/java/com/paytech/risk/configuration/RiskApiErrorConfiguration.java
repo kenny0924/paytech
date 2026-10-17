@@ -2,7 +2,7 @@ package com.paytech.risk.configuration;
 
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.foundation.web.api.ApiErrorStatusResolver;
-import com.paytech.risk.api.enums.RiskDecisionConfigurationErrorCode;
+import com.paytech.risk.decision.api.enums.RiskDecisionConfigurationErrorCode;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -17,18 +17,11 @@ public class RiskApiErrorConfiguration {
             if (errorCode == CommonErrorCode.NOT_FOUND) {
                 return HttpStatus.NOT_FOUND;
             }
-            if (errorCode instanceof com.paytech.risk.api.enums.RiskVariableErrorCode variable) {
+            if (errorCode instanceof com.paytech.risk.decision.api.enums.RiskVariableErrorCode variable) {
                 return switch (variable) {
                     case INVALID_VARIABLE_DEFINITION, INVALID_OPERAND, LEGACY_AUTHORING_NOT_SUPPORTED -> HttpStatus.BAD_REQUEST;
                     case SYSTEM_VARIABLE_READ_ONLY -> HttpStatus.FORBIDDEN;
                     case VARIABLE_NOT_FOUND -> HttpStatus.NOT_FOUND;
-                    default -> HttpStatus.CONFLICT;
-                };
-            }
-            if (errorCode instanceof com.paytech.risk.compliance.core.enums.ClientReviewErrorCode review) {
-                return switch (review) {
-                    case CLIENT_REVIEW_NOT_FOUND -> HttpStatus.NOT_FOUND;
-                    case CLIENT_REVIEW_NOT_READY -> HttpStatus.UNPROCESSABLE_CONTENT;
                     default -> HttpStatus.CONFLICT;
                 };
             }

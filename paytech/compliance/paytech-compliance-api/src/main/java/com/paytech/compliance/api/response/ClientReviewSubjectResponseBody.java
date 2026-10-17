@@ -1,4 +1,4 @@
-package com.paytech.risk.api.compliance.response;
+package com.paytech.compliance.api.response;
 
 import java.util.List;
 

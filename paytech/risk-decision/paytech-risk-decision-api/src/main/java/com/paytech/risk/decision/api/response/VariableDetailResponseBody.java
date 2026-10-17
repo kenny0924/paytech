@@ -1,11 +1,11 @@
-package com.paytech.risk.api.decision.response;
+package com.paytech.risk.decision.api.response;
 
 import java.util.List;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import com.paytech.risk.api.decision.RiskVariableModels.*;
+import com.paytech.risk.decision.api.RiskVariableModels.*;
 
 /** 当前详情包含来源元数据，不保存输入运行值或共享值历史。 */
 public class VariableDetailResponseBody {

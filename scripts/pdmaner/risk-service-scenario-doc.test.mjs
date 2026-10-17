@@ -4,15 +4,14 @@ import path from "node:path";
 import test from "node:test";
 
 import { APPROVED_TABLES } from "./risk-compliance-test-oracle/schema.oracle.mjs";
+import { RISK_PHYSICAL_DECISION_PATHS, readRiskPhysicalDecisions, readRiskUnionModel } from "./risk-service-models.mjs";
 
 const workspaceRoot = path.resolve(import.meta.dirname, "../..");
 const scenarioPath = path.join(workspaceRoot, "agent-docs/database/scenarios/RISK_COMPLIANCE_REAL_WORLD_SCENARIOS.md");
 const logicalDatabasePath = path.join(workspaceRoot, "agent-docs/database/RISK_COMPLIANCE_DATABASE.md");
-const modelPath = path.join(workspaceRoot, "risk-compliance-service/docs/database/risk-compliance.pdma.json");
-const physicalDecisionsPath = path.join(
-  workspaceRoot,
-  "risk-compliance-service/docs/database/RISK_COMPLIANCE_PHYSICAL_DECISIONS.md",
-);
+// Step 06: the model is split into risk-decision / compliance / dispute; whole-Risk assertions read the union view and the
+// three physical-decision documents concatenated (risk-service-models.mjs). The dispute section lives in the dispute document.
+const disputePhysicalDecisionsPath = RISK_PHYSICAL_DECISION_PATHS.dispute;
 const settlementDesignPath = path.join(
   workspaceRoot,
   "agent-docs/plans/2026-08-28-risk-settlement-eligibility-balanced-simplification-design.md",
@@ -90,7 +89,7 @@ const HISTORICAL_RISK_TOTALS = Object.freeze({
 test("Risk current documents freeze the 15-column compensation reconstruction and token boundaries", () => {
   const scenario = readFileSync(scenarioPath, "utf8");
   const logicalDatabase = readFileSync(logicalDatabasePath, "utf8");
-  const physicalDecisions = readFileSync(physicalDecisionsPath, "utf8");
+  const physicalDecisions = readRiskPhysicalDecisions();
   const currentContract = `${scenario}\n${logicalDatabase}\n${physicalDecisions}`;
 
   assert.match(currentContract, /event_key[^。]*event_type[^。]*sub_event_type/u);
@@ -144,7 +143,7 @@ function section(document, start, end) {
 test("Risk real-world scenarios cover all 74 physical tables and no removed or unknown table", () => {
   assert.ok(existsSync(scenarioPath), `Risk 现实场景尚未生成：${scenarioPath}`);
   const scenario = readFileSync(scenarioPath, "utf8");
-  const model = JSON.parse(readFileSync(modelPath, "utf8"));
+  const model = readRiskUnionModel();
   const modelTables = new Set(model.entities.map((entity) => entity.defKey));
   const mentionedTables = new Set(scenario.match(/\bt_[a-z][a-z0-9_]*\b/gu) ?? []);
   const exampleInventory = tableExampleInventory(scenario);
@@ -166,7 +165,7 @@ test("Risk real-world scenarios cover all 74 physical tables and no removed or u
 test("Risk documents route current statistics and preserve the historical Settlement snapshot", () => {
   const scenario = readFileSync(scenarioPath, "utf8");
   const logicalDatabase = readFileSync(logicalDatabasePath, "utf8");
-  const physicalDecisions = readFileSync(physicalDecisionsPath, "utf8");
+  const physicalDecisions = readRiskPhysicalDecisions();
   const currentDocuments = [scenario, logicalDatabase, physicalDecisions];
 
   assert.match(scenario, /现行生成模型统计、验证结果和部署状态只见/u);
@@ -226,7 +225,7 @@ test("Risk documents route current statistics and preserve the historical Settle
 test("Risk documents freeze the Local Partner Application namespace, role isolation and child ownership", () => {
   const scenario = readFileSync(scenarioPath, "utf8");
   const logicalDatabase = readFileSync(logicalDatabasePath, "utf8");
-  const physicalDecisions = readFileSync(physicalDecisionsPath, "utf8");
+  const physicalDecisions = readRiskPhysicalDecisions();
 
   for (const [documentName, document] of [
     ["逻辑数据库", logicalDatabase],
@@ -265,10 +264,10 @@ test("Risk documents freeze the Local Partner Application namespace, role isolat
 test("Dispute documentation freezes the balanced seven-table aggregate and correction contracts", () => {
   const scenario = readFileSync(scenarioPath, "utf8");
   const logicalDatabase = readFileSync(logicalDatabasePath, "utf8");
-  const physicalDecisions = readFileSync(physicalDecisionsPath, "utf8");
+  const physicalDecisions = readRiskPhysicalDecisions();
   const logicalDispute = section(logicalDatabase, "### 4.7 Dispute（7 张）", "### 4.8 本地可靠执行");
   const scenarioDispute = section(scenario, "## 7. SCN-RISK-06", "## 8. 本地可靠执行");
-  const physicalDispute = section(physicalDecisions, "### 10.3 Dispute", "## 11. CHECK");
+  const physicalDispute = section(`${readFileSync(disputePhysicalDecisionsPath, "utf8")}\n## 11. CHECK`, "### 10.3 Dispute", "## 11. CHECK");
   const disputeContract = `${logicalDispute}\n${scenarioDispute}\n${physicalDispute}`;
 
   const logicalTables = [...logicalDispute.matchAll(/^\| (dispute_[a-z0-9_]+) \|/gmu)]
@@ -373,7 +372,7 @@ test("Dispute documentation freezes the balanced seven-table aggregate and corre
 test("RCO-I09 uses retrievable Assessment and Evaluation coordinates without a Risk result aggregate", () => {
   const scenario = readFileSync(scenarioPath, "utf8");
   const logicalDatabase = readFileSync(logicalDatabasePath, "utf8");
-  const physicalDecisions = readFileSync(physicalDecisionsPath, "utf8");
+  const physicalDecisions = readRiskPhysicalDecisions();
   const settlementDesign = readFileSync(settlementDesignPath, "utf8");
   const currentContract = `${logicalDatabase}\n${scenario}\n${physicalDecisions}\n${settlementDesign}`;
 

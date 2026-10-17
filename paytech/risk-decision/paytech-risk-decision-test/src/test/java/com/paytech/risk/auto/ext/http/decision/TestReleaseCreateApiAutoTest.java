@@ -6,8 +6,8 @@ import static com.paytech.foundation.common.error.CommonErrorCode.INTERNAL_ERROR
 import static com.paytech.foundation.common.error.CommonErrorCode.INVALID_REQUEST;
 import static com.paytech.foundation.common.error.CommonErrorCode.UNSUPPORTED_MEDIA_TYPE;
 import static com.paytech.foundation.common.error.CommonErrorCode.VALIDATION_ERROR;
-import static com.paytech.risk.api.enums.RiskDecisionConfigurationErrorCode.RISK_DECISION_CONFIGURATION_NOT_FOUND;
-import static com.paytech.risk.api.enums.RiskDecisionConfigurationErrorCode.RISK_RULE_SET_DELETED;
+import static com.paytech.risk.decision.api.enums.RiskDecisionConfigurationErrorCode.RISK_DECISION_CONFIGURATION_NOT_FOUND;
+import static com.paytech.risk.decision.api.enums.RiskDecisionConfigurationErrorCode.RISK_RULE_SET_DELETED;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import java.time.Instant;
@@ -24,10 +24,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
-import com.paytech.risk.api.decision.DecisionReleaseManagementApi;
-import com.paytech.risk.api.decision.request.CreateTestReleaseRequestBody;
+import com.paytech.risk.decision.api.DecisionReleaseManagementApi;
+import com.paytech.risk.decision.api.request.CreateTestReleaseRequestBody;
 import com.paytech.risk.decision.domain.enums.RuleSetVersionStatus;
-import com.paytech.risk.test.base.MockTestBase;
+import com.paytech.risk.test.base.RiskDecisionMockTestBase;
 import com.paytech.risk.test.builder.decision.CandidateBuilder;
 import com.paytech.risk.test.builder.decision.CandidateBuilder.CompositionFacts;
 import com.paytech.risk.test.checker.decision.ReleaseStoreChecker;
@@ -47,7 +47,7 @@ import com.paytech.risk.test.mocker.decision.CandidateMocker.MockedCandidate;
  *
  * @see DecisionReleaseManagementApi#createCandidate(String, String, CreateTestReleaseRequestBody)
  */
-class TestReleaseCreateApiAutoTest extends MockTestBase {
+class TestReleaseCreateApiAutoTest extends RiskDecisionMockTestBase {
     private static final String PATH = "/decision-releases/v1/candidates";
 
     private static final long ACTOR = CandidateBuilder.ACTOR_ID;

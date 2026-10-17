@@ -1,4 +1,4 @@
-package com.paytech.risk.api.decision.response;
+package com.paytech.risk.decision.api.response;
 
 /** 本次保存成功的最小结果，不提供服务本地请求回放。 */
 public class SaveFlowResponseBody {

@@ -36,6 +36,14 @@ import {
   REQUIRED_RISK_OWNED_RECOVERABLE_TOKENS,
   RULE_SET_VERSION_AUDIT_TARGET,
 } from "./risk-compliance-test-oracle/schema.oracle.mjs";
+import {
+  CROSS_DATABASE_RELATIONS,
+  RISK_MODEL_PATHS,
+  RISK_PHYSICAL_DECISION_PATHS,
+  RISK_SERVICES,
+  readRiskServiceModel,
+  readRiskUnionModel,
+} from "./risk-service-models.mjs";
 
 const workspaceRoot = path.resolve(import.meta.dirname, "../..");
 const paths = Object.freeze({
@@ -43,8 +51,9 @@ const paths = Object.freeze({
   manifest: path.join(workspaceRoot, "scripts/pdmaner/risk/manifest.mjs"),
   policy: path.join(workspaceRoot, "scripts/pdmaner/risk/model-policy.mjs"),
   generator: path.join(workspaceRoot, "scripts/pdmaner/risk/generate-risk-compliance-model.mjs"),
-  model: path.join(workspaceRoot, "risk-compliance-service/docs/database/risk-compliance.pdma.json"),
-  decisions: path.join(workspaceRoot, "risk-compliance-service/docs/database/RISK_COMPLIANCE_PHYSICAL_DECISIONS.md"),
+  partition: path.join(workspaceRoot, "scripts/pdmaner/risk/risk-service-partition.mjs"),
+  ...Object.fromEntries(RISK_SERVICES.map((service) => [`${service} model`, RISK_MODEL_PATHS[service]])),
+  ...Object.fromEntries(RISK_SERVICES.map((service) => [`${service} decisions`, RISK_PHYSICAL_DECISION_PATHS[service]])),
 });
 
 const idPattern = /^[A-F0-9]{8}-[A-F0-9]{4}-5[A-F0-9]{3}-[89AB][A-F0-9]{3}-[A-F0-9]{12}$/u;
@@ -59,9 +68,11 @@ function assertArtifactsExist() {
   }
 }
 
+// Step 06: the former single model is split into three service models; whole-Risk assertions read their union view
+// (pre-split order, one t_compensation_event, no cross-database relation, no t_command_idempotency).
 function readModel() {
   assertArtifactsExist();
-  return JSON.parse(readFileSync(paths.model, "utf8"));
+  return readRiskUnionModel();
 }
 
 function modelTotals(model) {
@@ -185,13 +196,13 @@ test("Risk PDManer production artifacts are ready for validation", () => {
 test("Risk model is current, deterministic and preserves the shared template", () => {
   assertArtifactsExist();
   assert.equal(sha256(readFileSync(paths.template)), EXPECTED_TEMPLATE_DIGEST);
-  const result = spawnSync(process.execPath, [paths.generator, "--check"], {
-    cwd: workspaceRoot,
-    encoding: "utf8",
-  });
-  assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
-  assert.match(result.stdout, /Risk & Compliance model is up to date/u);
-  assert.equal(sha256(readFileSync(paths.model)), EXPECTED_MODEL_DIGEST);
+  // Step 06: each service model is the partition of the Manifest generator output (risk-service-partition.mjs).
+  for (const service of RISK_SERVICES) {
+    const generator = path.join(workspaceRoot, `scripts/pdmaner/risk/generate-${service}-model.mjs`);
+    const result = spawnSync(process.execPath, [generator, "--check"], { cwd: workspaceRoot, encoding: "utf8" });
+    assert.equal(result.status, 0, `${service}: ${result.stdout}${result.stderr}`);
+    assert.match(result.stdout, new RegExp(`${service} model is up to date`, "u"));
+  }
 });
 
 test("Risk model matches the independent totals and structural digest", () => {
@@ -717,9 +728,11 @@ test("Risk model persists the exact same-case composite foreign-key contracts", 
 test("Risk diagrams draw each local relation once and every table owns one primary group", () => {
   const model = readModel();
   const primaryTables = model.diagrams.flatMap((diagram) => diagram.properties.primaryTables);
-  assert.equal(primaryTables.length, 84);
-  assert.equal(new Set(primaryTables).size, 84);
-  assert.deepEqual([...primaryTables].sort(), [...APPROVED_TABLES].sort());
+  // Step 06: t_command_idempotency is deleted (S10), so the union keeps the other 83 approved primary tables exactly once.
+  const approved = APPROVED_TABLES.filter((table) => table !== "t_command_idempotency");
+  assert.equal(primaryTables.length, approved.length);
+  assert.equal(new Set(primaryTables).size, approved.length);
+  assert.deepEqual([...primaryTables].sort(), [...approved].sort());
   const relationCount = model.entities.flatMap((entity) => entity.correlations).length;
   const relationCells = model.diagrams.flatMap((diagram) => diagram.canvasData.cells)
     .filter((cell) => cell.shape === "erdRelation");
@@ -760,4 +773,52 @@ test("Risk rule set root reserves codes and deletion identity independently of i
       ["uk_rule_set_delete_trigger", true, ["delete_trigger_id"]],
       ["idx_rule_set_list", false, ["status", "decision_point_id", "current_rule_set_version_id"]],
     ]);
+});
+
+test("Risk split assigns every table to exactly one service model and keeps only local relations", () => {
+  const union = readModel();
+  const expected = {
+    "risk-decision": 54,
+    compliance: 24,
+    dispute: 8,
+  };
+  const seen = new Map();
+  for (const service of RISK_SERVICES) {
+    const model = readRiskServiceModel(service);
+    assert.equal(model.entities.length, expected[service], service);
+    const ids = new Set(model.entities.map((entity) => entity.id));
+    const tables = new Set(model.entities.map((entity) => entity.defKey));
+    assert.ok(tables.has("t_compensation_event"), `${service} 缺少每库一份的 t_compensation_event`);
+    assert.ok(!tables.has("t_command_idempotency"), `${service} 不得包含已删除的 t_command_idempotency`);
+    for (const entity of model.entities) {
+      for (const relation of entity.correlations) assert.ok(ids.has(relation.refEntity), `${service} ${entity.defKey} 引用了库外实体`);
+      if (entity.defKey !== "t_compensation_event") {
+        assert.ok(!seen.has(entity.defKey), `${entity.defKey} 同时属于 ${seen.get(entity.defKey)} 与 ${service}`);
+        seen.set(entity.defKey, service);
+      }
+    }
+    for (const diagram of model.diagrams) {
+      assert.ok(diagram.properties.primaryTables.every((table) => tables.has(table)), `${service} ${diagram.defKey} 主表越界`);
+      for (const cell of diagram.canvasData.cells.filter((candidate) => candidate.shape === "table")) {
+        assert.ok(ids.has(cell.originKey), `${service} ${diagram.defKey} 绘制了库外表`);
+      }
+    }
+  }
+  assert.equal(seen.size + 1, union.entities.length);
+  for (const table of ["t_settlement_control", "t_settlement_control_scope", "t_settle_control_state_change"]) {
+    assert.equal(seen.get(table), "compliance", `${table} 归 compliance（C3）`);
+  }
+  assert.equal(seen.get("t_settlement_risk_assessment"), "risk-decision");
+  const byId = new Map(union.entities.map((entity) => [entity.id, entity]));
+  const unionRelations = union.entities.flatMap((entity) => entity.correlations.map((relation) => {
+    const field = entity.fields.find((candidate) => candidate.id === relation.myField);
+    return `${entity.defKey}.${field?.defKey}->${byId.get(relation.refEntity)?.defKey}`;
+  }));
+  assert.equal(unionRelations.length, 131);
+  for (const relation of CROSS_DATABASE_RELATIONS) assert.ok(!unionRelations.includes(relation), `跨库关系不得建模：${relation}`);
+  for (const [entity, field] of [["t_qualification_decision", "decision_evaluation_id"], ["t_settlement_control", "source_action_effect_id"],
+    ["t_dispute_liability_decision", "decision_evaluation_id"], ["t_dispute_liability_decision", "action_effect_id"]]) {
+    assert.ok(union.entities.find((candidate) => candidate.defKey === entity).fields.some((candidate) => candidate.defKey === field),
+      `跨库引用保留 ID 列：${entity}.${field}`);
+  }
 });

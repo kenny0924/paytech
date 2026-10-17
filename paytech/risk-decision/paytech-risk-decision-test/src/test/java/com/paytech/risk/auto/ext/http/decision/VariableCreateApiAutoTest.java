@@ -4,7 +4,7 @@ import static com.paytech.foundation.common.error.CommonErrorCode.CONCURRENT_REQ
 import static com.paytech.foundation.common.error.CommonErrorCode.INVALID_REQUEST;
 import static com.paytech.foundation.common.error.CommonErrorCode.UNSUPPORTED_MEDIA_TYPE;
 import static com.paytech.foundation.common.error.CommonErrorCode.VALIDATION_ERROR;
-import static com.paytech.risk.api.enums.RiskVariableErrorCode.*;
+import static com.paytech.risk.decision.api.enums.RiskVariableErrorCode.*;
 import static com.paytech.risk.decision.domain.enums.DecisionValueType.*;
 import static com.paytech.risk.decision.domain.enums.NumericUnit.MONEY;
 import static com.paytech.risk.decision.domain.enums.NumericUnit.SCALAR;
@@ -29,8 +29,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 
 import com.paytech.foundation.common.http.ApiHeaderNames;
-import com.paytech.risk.api.decision.RiskVariableApi;
-import com.paytech.risk.api.decision.request.CreateVariableRequestBody;
+import com.paytech.risk.decision.api.RiskVariableApi;
+import com.paytech.risk.decision.api.request.CreateVariableRequestBody;
 import com.paytech.risk.decision.domain.enums.VariableStatus;
 import com.paytech.risk.test.base.AbstractVariableApiTest;
 import com.paytech.risk.test.builder.decision.RuleSetBuilder;

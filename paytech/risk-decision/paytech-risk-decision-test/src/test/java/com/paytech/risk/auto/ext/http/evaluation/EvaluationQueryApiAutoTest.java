@@ -24,12 +24,12 @@ import org.springframework.test.web.servlet.client.EntityExchangeResult;
 
 import com.paytech.foundation.common.http.ApiHeaderNames;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.OperandRequestBody;
-import com.paytech.risk.api.decision.request.CreateVariableRequestBody;
-import com.paytech.risk.api.decision.request.StartShadowRunRequestBody;
-import com.paytech.risk.api.evaluation.RiskEvaluationQueryApi;
-import com.paytech.risk.api.evaluation.request.EvaluateDecisionRequestBody;
-import com.paytech.risk.api.evaluation.request.PaymentAttemptRiskInput;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.OperandRequestBody;
+import com.paytech.risk.decision.api.request.CreateVariableRequestBody;
+import com.paytech.risk.decision.api.request.StartShadowRunRequestBody;
+import com.paytech.risk.decision.api.evaluation.RiskEvaluationQueryApi;
+import com.paytech.risk.decision.api.evaluation.request.EvaluateDecisionRequestBody;
+import com.paytech.risk.decision.api.evaluation.request.PaymentAttemptRiskInput;
 import com.paytech.risk.control.domain.list.RiskSubjectType;
 import com.paytech.risk.decision.domain.enums.AuthenticationRequirement;
 import com.paytech.risk.decision.domain.enums.DecisionEnvironment;

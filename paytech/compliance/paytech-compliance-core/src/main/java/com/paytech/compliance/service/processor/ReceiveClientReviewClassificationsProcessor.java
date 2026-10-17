@@ -1,6 +1,6 @@
-package com.paytech.risk.compliance.service.processor;
+package com.paytech.compliance.service.processor;
 
-import static com.paytech.risk.compliance.core.enums.ClientReviewErrorCode.*;
+import static com.paytech.compliance.core.enums.ClientReviewErrorCode.*;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -15,14 +15,14 @@ import org.springframework.stereotype.Component;
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.processor.AbstractProcessor;
-import com.paytech.risk.compliance.core.dal.dataobject.CaseClassification;
-import com.paytech.risk.compliance.core.dal.dataobject.DueDiligenceCase;
-import com.paytech.risk.compliance.domainservice.port.ComplianceIdentifierGenerator;
-import com.paytech.risk.compliance.domainservice.repository.CaseClassificationRepository;
-import com.paytech.risk.compliance.domainservice.repository.DueDiligenceCaseRepository;
-import com.paytech.risk.compliance.domainservice.service.ClientReviewService;
-import com.paytech.risk.compliance.service.processor.request.ReceiveClientReviewClassificationsRequest;
-import com.paytech.risk.compliance.service.processor.response.ClientReviewCommandResponse;
+import com.paytech.compliance.core.dal.dataobject.CaseClassification;
+import com.paytech.compliance.core.dal.dataobject.DueDiligenceCase;
+import com.paytech.compliance.domainservice.port.ComplianceIdentifierGenerator;
+import com.paytech.compliance.domainservice.repository.CaseClassificationRepository;
+import com.paytech.compliance.domainservice.repository.DueDiligenceCaseRepository;
+import com.paytech.compliance.domainservice.service.ClientReviewService;
+import com.paytech.compliance.service.processor.request.ReceiveClientReviewClassificationsRequest;
+import com.paytech.compliance.service.processor.response.ClientReviewCommandResponse;
 
 import lombok.AllArgsConstructor;
 

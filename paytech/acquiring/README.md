@@ -9,7 +9,7 @@
 
 - 模块：`paytech-acquiring-api`（Client API 订单 / Checkout / 退款 / 取消合同，及消费者端 Hosted Checkout 合同包 `checkout`）、`paytech-acquiring-core`（transaction / checkout / command 三个内部模块共用，共库 mor_acquiring）、`paytech-acquiring-app`（启动类、Controller、DataSource / MyBatis、出站客户端、支付结果队列声明）、`paytech-acquiring-test`。
 - Customer 归 consumer：建单时在订单事务前经 `POST /consumer/v1/customers/resolve` 建或取 Customer，订单只存 `customer_id`；GET checkout 与 SubmitPayment 经 `GET /consumer/v1/card-saving-eligibility` 读取存卡资格，任何失败降级为不可存卡并记 WARN（S6）；付款人引用经 `GET /consumer/v1/customers/{customerId}` 取 `customerNo`。已存卡列表仍经 Payment `StoredCardApi` 读取，不可用时为空。
-- 出站发现名：`payment-service`（`/payment`）、`consumer-service`、`risk-service`、`platform-support-service`；`internal-auth.mode` 默认 `"OFF"`。Checkout 商业端口仍为固定 Mock（目标 `commercial-service`）。
+- 出站发现名：`payment-service`（`/payment`）、`consumer-service`、`risk-decision-service`、`platform-support-service`；`internal-auth.mode` 默认 `"OFF"`。Checkout 商业端口仍为固定 Mock（目标 `commercial-service`）。
 - 支付结果队列改名 `cg_acquiring_payment_result`（DLX `dlx_acquiring_payment_result`、DLQ `cg_acquiring_payment_result_dlq`），交换机 `topic_payment_result` 与路由键不变。
 - 配置前缀 `acquiring.*`；环境变量名（`COMMERCE_*`、`MOR_COMMERCE_DB_*`）暂沿用，以免影响现有部署描述。
 - PDManer 模型 `docs/database/acquiring.pdma.json` 由 `scripts/pdmaner/generate-acquiring-model.mjs` 生成；Schema `docs/database/sql/acquiring-schema.sql`。

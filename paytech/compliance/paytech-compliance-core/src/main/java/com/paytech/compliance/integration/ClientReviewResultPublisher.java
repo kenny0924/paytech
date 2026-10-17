@@ -1,6 +1,6 @@
-package com.paytech.risk.compliance.integration;
+package com.paytech.compliance.integration;
 
-import com.paytech.risk.compliance.domain.ClientReviewResult;
+import com.paytech.compliance.domain.ClientReviewResult;
 
 /** 审核结果业务事实的出站端口；只能在数据库事务外调用。 */
 public interface ClientReviewResultPublisher {

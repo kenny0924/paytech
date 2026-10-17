@@ -1,10 +1,10 @@
-package com.paytech.risk.api.decision.response;
+package com.paytech.risk.decision.api.response;
 
-import static com.paytech.risk.api.decision.DecisionRuleSetManagementModels.RuleRequestBody;
+import static com.paytech.risk.decision.api.DecisionRuleSetManagementModels.RuleRequestBody;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.RuleRequestBody;
-import com.paytech.risk.api.decision.RiskVariableModels;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.RuleRequestBody;
+import com.paytech.risk.decision.api.RiskVariableModels;
 
 /** 规则集管理响应。 */
 @JsonInclude(JsonInclude.Include.ALWAYS)

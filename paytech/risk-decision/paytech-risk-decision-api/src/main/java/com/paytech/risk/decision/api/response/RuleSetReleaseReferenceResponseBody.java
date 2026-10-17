@@ -1,4 +1,4 @@
-package com.paytech.risk.api.decision.response;
+package com.paytech.risk.decision.api.response;
 
 /** 发布到决策点版本、再到规则集版本的真实引用。 */
 public class RuleSetReleaseReferenceResponseBody {

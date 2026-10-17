@@ -1,8 +1,8 @@
-package com.paytech.risk.auto.ext.http.compliance;
+package com.paytech.compliance.auto.ext.http;
 
 import static com.paytech.foundation.common.error.CommonErrorCode.INVALID_REQUEST;
-import static com.paytech.risk.test.builder.compliance.ClientReviewCaseBuilder.individual;
-import static com.paytech.risk.test.builder.compliance.ClientReviewCaseBuilder.organization;
+import static com.paytech.compliance.test.builder.ClientReviewCaseBuilder.individual;
+import static com.paytech.compliance.test.builder.ClientReviewCaseBuilder.organization;
 
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -15,12 +15,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
-import com.paytech.risk.api.compliance.ClientReviewResultApi;
-import com.paytech.risk.compliance.domain.ClientReviewAction;
-import com.paytech.risk.test.base.MockTestBase;
-import com.paytech.risk.test.checker.compliance.ClientReviewResultResponseChecker;
-import com.paytech.risk.test.mocker.compliance.ClientReviewMocker;
-import com.paytech.risk.test.mocker.compliance.ClientReviewMocker.MockedReview;
+import com.paytech.compliance.api.ClientReviewResultApi;
+import com.paytech.compliance.domain.ClientReviewAction;
+import com.paytech.compliance.test.base.ComplianceMockTestBase;
+import com.paytech.compliance.test.checker.ClientReviewResultResponseChecker;
+import com.paytech.compliance.test.mocker.ClientReviewMocker;
+import com.paytech.compliance.test.mocker.ClientReviewMocker.MockedReview;
 
 /**
  * Client 申请的客户可见审核结果
@@ -30,7 +30,7 @@ import com.paytech.risk.test.mocker.compliance.ClientReviewMocker.MockedReview;
  *
  * @see ClientReviewResultApi#result(String, String)
  */
-class ClientReviewResultApiAutoTest extends MockTestBase {
+class ClientReviewResultApiAutoTest extends ComplianceMockTestBase {
     private static final String PATH = "/client-onboarding-review/v1/applications/%s/result";
 
     @Autowired

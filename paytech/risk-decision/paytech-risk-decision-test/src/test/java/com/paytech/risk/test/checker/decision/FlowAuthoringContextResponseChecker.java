@@ -1,6 +1,6 @@
 package com.paytech.risk.test.checker.decision;
 
-import static com.paytech.risk.api.enums.RiskDecisionConfigurationErrorCode.RISK_DECISION_CONFIGURATION_NOT_FOUND;
+import static com.paytech.risk.decision.api.enums.RiskDecisionConfigurationErrorCode.RISK_DECISION_CONFIGURATION_NOT_FOUND;
 import static com.paytech.risk.test.checker.decision.FlowGraphChecker.assertFields;
 import static com.paytech.risk.test.checker.decision.FlowGraphChecker.text;
 import static org.junit.jupiter.api.Assertions.assertAll;

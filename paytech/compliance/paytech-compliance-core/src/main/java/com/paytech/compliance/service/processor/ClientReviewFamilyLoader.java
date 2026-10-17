@@ -1,20 +1,20 @@
-package com.paytech.risk.compliance.service.processor;
+package com.paytech.compliance.service.processor;
 
 import java.util.List;
 
 import org.springframework.stereotype.Component;
 
 import com.paytech.foundation.common.error.FailException;
-import com.paytech.risk.compliance.core.enums.ClientReviewErrorCode;
-import com.paytech.risk.compliance.core.dal.dataobject.CaseDependency;
-import com.paytech.risk.compliance.core.dal.dataobject.DueDiligenceCase;
-import com.paytech.risk.compliance.domain.ClientReviewFamily;
-import com.paytech.risk.compliance.domainservice.repository.CaseClassificationRepository;
-import com.paytech.risk.compliance.domainservice.repository.CaseDependencyRepository;
-import com.paytech.risk.compliance.domainservice.repository.CaseRequirementRepository;
-import com.paytech.risk.compliance.domainservice.repository.CaseSubjectRepository;
-import com.paytech.risk.compliance.domainservice.repository.DueDiligenceCaseRepository;
-import com.paytech.risk.compliance.domainservice.repository.EvidenceRefRepository;
+import com.paytech.compliance.core.enums.ClientReviewErrorCode;
+import com.paytech.compliance.core.dal.dataobject.CaseDependency;
+import com.paytech.compliance.core.dal.dataobject.DueDiligenceCase;
+import com.paytech.compliance.domain.ClientReviewFamily;
+import com.paytech.compliance.domainservice.repository.CaseClassificationRepository;
+import com.paytech.compliance.domainservice.repository.CaseDependencyRepository;
+import com.paytech.compliance.domainservice.repository.CaseRequirementRepository;
+import com.paytech.compliance.domainservice.repository.CaseSubjectRepository;
+import com.paytech.compliance.domainservice.repository.DueDiligenceCaseRepository;
+import com.paytech.compliance.domainservice.repository.EvidenceRefRepository;
 
 import lombok.AllArgsConstructor;
 

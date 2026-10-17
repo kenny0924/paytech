@@ -17,7 +17,7 @@ import com.paytech.channel.connector.api.candidate.ChannelCandidateQueryApi;
 import com.paytech.channel.connector.api.operation.ChannelOperationApi;
 import com.paytech.foundation.httpclient.api.HttpServiceClientFactory;
 import com.paytech.foundation.httpclient.api.HttpServiceClientOptions;
-import com.paytech.risk.api.evaluation.RiskDecisionApi;
+import com.paytech.risk.decision.api.evaluation.RiskDecisionApi;
 
 /**
  * Execution 出站 HTTP 客户端：经私网服务发现调用 channel-connector（候选查询与渠道操作，D06）与 Risk 统一评估，不跟随重定向、不自动重试。
@@ -28,7 +28,7 @@ import com.paytech.risk.api.evaluation.RiskDecisionApi;
 @EnableConfigurationProperties(PaymentOutboundProperties.class)
 public class PaymentOutboundConfiguration {
     private static final String CHANNEL_CONNECTOR_SERVICE = "channel-connector-service";
-    private static final String RISK_SERVICE = "risk-service";
+    private static final String RISK_SERVICE = "risk-decision-service";
 
     /** channel-connector MID 候选查询客户端；读取超时取候选查询配置。 */
     @Bean

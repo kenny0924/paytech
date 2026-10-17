@@ -26,15 +26,15 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementApi;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.ActionParameter;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.AdditionalAction;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.ConditionNodeRequestBody;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.OperandRequestBody;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.RuleActionRequestBody;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.RuleRequestBody;
-import com.paytech.risk.api.decision.request.CreateRuleSetVersionRequestBody;
-import com.paytech.risk.test.base.MockTestBase;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementApi;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.ActionParameter;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.AdditionalAction;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.ConditionNodeRequestBody;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.OperandRequestBody;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.RuleActionRequestBody;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.RuleRequestBody;
+import com.paytech.risk.decision.api.request.CreateRuleSetVersionRequestBody;
+import com.paytech.risk.test.base.RiskDecisionMockTestBase;
 import com.paytech.risk.test.builder.decision.RuleSetCreateRequestBuilder;
 import com.paytech.risk.test.checker.decision.RuleSetCommandResponseChecker;
 import com.paytech.risk.test.checker.decision.RuleSetStoreChecker;
@@ -54,7 +54,7 @@ import tools.jackson.databind.node.ObjectNode;
  *
  * @see DecisionRuleSetManagementApi#createRuleSetVersion(String, String, CreateRuleSetVersionRequestBody)
  */
-class RuleSetCreateInputApiAutoTest extends MockTestBase {
+class RuleSetCreateInputApiAutoTest extends RiskDecisionMockTestBase {
     private static final String PATH = "/decision-rule-sets/v1/rule-sets";
 
     @Autowired

@@ -1,4 +1,4 @@
-package com.paytech.risk.api.compliance.response;
+package com.paytech.compliance.api.response;
 
 /** C05 审核结果投影：客户可见的最近一次审核结果；不含内部理由、核验记录和操作人。 */
 public class ClientReviewResultResponseBody {

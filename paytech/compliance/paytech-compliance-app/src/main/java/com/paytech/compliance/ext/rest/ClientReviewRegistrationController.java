@@ -1,4 +1,4 @@
-package com.paytech.risk.ext.rest.compliance;
+package com.paytech.compliance.ext.rest;
 
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
@@ -8,19 +8,19 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.paytech.foundation.common.error.InvalidParameterException;
-import com.paytech.risk.api.compliance.ClientReviewRegistrationApi;
-import com.paytech.risk.api.compliance.request.ClientReviewClassificationsRequestBody;
-import com.paytech.risk.api.compliance.request.ClientReviewDocumentBody;
-import com.paytech.risk.api.compliance.request.ClientReviewRegistrationRequestBody;
-import com.paytech.risk.api.compliance.request.ClientReviewRelationBody;
-import com.paytech.risk.api.compliance.request.ClientReviewSubjectBody;
-import com.paytech.risk.api.compliance.response.ClientReviewCommandResponseBody;
-import com.paytech.risk.api.compliance.response.ClientReviewRegistrationResponseBody;
-import com.paytech.risk.compliance.service.processor.ReceiveClientReviewClassificationsProcessor;
-import com.paytech.risk.compliance.service.processor.RegisterClientReviewProcessor;
-import com.paytech.risk.compliance.service.processor.request.ReceiveClientReviewClassificationsRequest;
-import com.paytech.risk.compliance.service.processor.request.RegisterClientReviewRequest;
-import com.paytech.risk.compliance.service.processor.response.RegisterClientReviewResponse;
+import com.paytech.compliance.api.ClientReviewRegistrationApi;
+import com.paytech.compliance.api.request.ClientReviewClassificationsRequestBody;
+import com.paytech.compliance.api.request.ClientReviewDocumentBody;
+import com.paytech.compliance.api.request.ClientReviewRegistrationRequestBody;
+import com.paytech.compliance.api.request.ClientReviewRelationBody;
+import com.paytech.compliance.api.request.ClientReviewSubjectBody;
+import com.paytech.compliance.api.response.ClientReviewCommandResponseBody;
+import com.paytech.compliance.api.response.ClientReviewRegistrationResponseBody;
+import com.paytech.compliance.service.processor.ReceiveClientReviewClassificationsProcessor;
+import com.paytech.compliance.service.processor.RegisterClientReviewProcessor;
+import com.paytech.compliance.service.processor.request.ReceiveClientReviewClassificationsRequest;
+import com.paytech.compliance.service.processor.request.RegisterClientReviewRequest;
+import com.paytech.compliance.service.processor.response.RegisterClientReviewResponse;
 
 import lombok.AllArgsConstructor;
 

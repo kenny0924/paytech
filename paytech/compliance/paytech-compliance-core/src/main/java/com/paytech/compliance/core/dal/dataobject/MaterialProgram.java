@@ -1,4 +1,4 @@
-package com.paytech.risk.compliance.core.dal.dataobject;
+package com.paytech.compliance.core.dal.dataobject;
 
 import java.time.Instant;
 

@@ -13,7 +13,10 @@ const modelContracts = [
   ["paytech/consumer", "consumer.pdma.json", "scripts/pdmaner/generate-consumer-model.mjs"],
   ["paytech/payment", "payment.pdma.json", "scripts/pdmaner/generate-payment-model.mjs"],
   ["paytech/channel-connector", "channel-connector.pdma.json", "scripts/pdmaner/generate-channel-connector-model.mjs"],
-  ["risk-compliance-service", "risk-compliance.pdma.json", "scripts/pdmaner/risk/generate-risk-compliance-model.mjs"],
+  // 第 06 步：Risk & Compliance 模型按服务拆为 risk-decision、compliance、dispute（dispute 仅 Schema 归属）。
+  ["paytech/risk-decision", "risk-decision.pdma.json", "scripts/pdmaner/risk/generate-risk-decision-model.mjs"],
+  ["paytech/compliance", "compliance.pdma.json", "scripts/pdmaner/risk/generate-compliance-model.mjs"],
+  ["paytech/dispute", "dispute.pdma.json", "scripts/pdmaner/risk/generate-dispute-model.mjs"],
   ["paytech/ledger", "ledger.pdma.json", "scripts/pdmaner/finance/generate-finance-model.mjs"],
   ["paytech/account", "account.pdma.json", "scripts/pdmaner/finance/generate-finance-model.mjs"],
   ["paytech/billing", "billing.pdma.json", "scripts/pdmaner/finance/generate-finance-model.mjs"],

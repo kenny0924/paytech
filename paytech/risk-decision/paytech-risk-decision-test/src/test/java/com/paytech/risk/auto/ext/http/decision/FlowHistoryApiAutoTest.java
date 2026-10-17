@@ -16,8 +16,8 @@ import org.springframework.http.HttpMethod;
 
 import com.paytech.foundation.common.http.ApiHeaderNames;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
-import com.paytech.risk.api.decision.DecisionFlowQueryApi;
-import com.paytech.risk.test.base.MockTestBase;
+import com.paytech.risk.decision.api.DecisionFlowQueryApi;
+import com.paytech.risk.test.base.RiskDecisionMockTestBase;
 import com.paytech.risk.test.builder.decision.FlowBuilder;
 import com.paytech.risk.test.checker.decision.FlowHistoryResponseChecker;
 import com.paytech.risk.test.mocker.decision.FlowMocker;
@@ -32,7 +32,7 @@ import com.paytech.risk.test.mocker.decision.FlowMocker.MockedFlow;
  *
  * @see DecisionFlowQueryApi#history(String, String, String, Integer, Integer, Integer)
  */
-class FlowHistoryApiAutoTest extends MockTestBase {
+class FlowHistoryApiAutoTest extends RiskDecisionMockTestBase {
     private static final String PATH = "/decision-flows/v1/flows/%s/versions";
 
     @Autowired

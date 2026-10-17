@@ -1,19 +1,19 @@
-package com.paytech.risk.auto.ext.http.compliance;
+package com.paytech.compliance.auto.ext.http;
 
 import static com.paytech.foundation.common.error.CommonErrorCode.INVALID_REQUEST;
 import static com.paytech.foundation.common.error.CommonErrorCode.UNSUPPORTED_MEDIA_TYPE;
 import static com.paytech.foundation.common.error.CommonErrorCode.VALIDATION_ERROR;
-import static com.paytech.risk.api.enums.ClientReviewErrorCode.CLIENT_REVIEW_CLOSED;
-import static com.paytech.risk.api.enums.ClientReviewErrorCode.CLIENT_REVIEW_EVIDENCE_REVIEWED;
-import static com.paytech.risk.api.enums.ClientReviewErrorCode.CLIENT_REVIEW_NOT_FOUND;
-import static com.paytech.risk.test.builder.compliance.ClientReviewCaseBuilder.ACCEPTED;
-import static com.paytech.risk.test.builder.compliance.ClientReviewCaseBuilder.RECEIVED;
-import static com.paytech.risk.test.builder.compliance.ClientReviewCaseBuilder.REJECTED;
-import static com.paytech.risk.test.builder.compliance.ClientReviewCaseBuilder.SUBMITTED;
-import static com.paytech.risk.test.builder.compliance.ClientReviewCaseBuilder.individual;
-import static com.paytech.risk.test.builder.compliance.ClientReviewCaseBuilder.organization;
-import static com.paytech.risk.test.builder.compliance.ClientReviewRegistrationRequestBuilder.IDENTITY_DOCUMENT;
-import static com.paytech.risk.test.builder.compliance.ClientReviewRegistrationRequestBuilder.REGISTRATION_CERTIFICATE;
+import static com.paytech.compliance.api.enums.ClientReviewErrorCode.CLIENT_REVIEW_CLOSED;
+import static com.paytech.compliance.api.enums.ClientReviewErrorCode.CLIENT_REVIEW_EVIDENCE_REVIEWED;
+import static com.paytech.compliance.api.enums.ClientReviewErrorCode.CLIENT_REVIEW_NOT_FOUND;
+import static com.paytech.compliance.test.builder.ClientReviewCaseBuilder.ACCEPTED;
+import static com.paytech.compliance.test.builder.ClientReviewCaseBuilder.RECEIVED;
+import static com.paytech.compliance.test.builder.ClientReviewCaseBuilder.REJECTED;
+import static com.paytech.compliance.test.builder.ClientReviewCaseBuilder.SUBMITTED;
+import static com.paytech.compliance.test.builder.ClientReviewCaseBuilder.individual;
+import static com.paytech.compliance.test.builder.ClientReviewCaseBuilder.organization;
+import static com.paytech.compliance.test.builder.ClientReviewRegistrationRequestBuilder.IDENTITY_DOCUMENT;
+import static com.paytech.compliance.test.builder.ClientReviewRegistrationRequestBuilder.REGISTRATION_CERTIFICATE;
 
 import java.util.Map;
 import java.util.UUID;
@@ -31,15 +31,15 @@ import org.springframework.http.MediaType;
 
 import com.paytech.foundation.common.http.ApiHeaderNames;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
-import com.paytech.risk.api.compliance.ClientReviewAdminApi;
-import com.paytech.risk.api.compliance.request.ClientReviewEvidenceReviewRequestBody;
-import com.paytech.risk.compliance.domain.ClientReviewAction;
-import com.paytech.risk.test.base.MockTestBase;
-import com.paytech.risk.test.checker.compliance.ClientReviewCommandResponseChecker;
-import com.paytech.risk.test.checker.compliance.ClientReviewStoreChecker;
-import com.paytech.risk.test.mocker.compliance.ClientReviewMocker;
-import com.paytech.risk.test.mocker.compliance.ClientReviewMocker.MockedEvidence;
-import com.paytech.risk.test.mocker.compliance.ClientReviewMocker.MockedReview;
+import com.paytech.compliance.api.ClientReviewAdminApi;
+import com.paytech.compliance.api.request.ClientReviewEvidenceReviewRequestBody;
+import com.paytech.compliance.domain.ClientReviewAction;
+import com.paytech.compliance.test.base.ComplianceMockTestBase;
+import com.paytech.compliance.test.checker.ClientReviewCommandResponseChecker;
+import com.paytech.compliance.test.checker.ClientReviewStoreChecker;
+import com.paytech.compliance.test.mocker.ClientReviewMocker;
+import com.paytech.compliance.test.mocker.ClientReviewMocker.MockedEvidence;
+import com.paytech.compliance.test.mocker.ClientReviewMocker.MockedReview;
 
 /**
  * O05 核验一份材料
@@ -52,7 +52,7 @@ import com.paytech.risk.test.mocker.compliance.ClientReviewMocker.MockedReview;
  *
  * @see ClientReviewAdminApi#reviewEvidence(String, String, String, String, ClientReviewEvidenceReviewRequestBody)
  */
-class ClientReviewEvidenceReviewApiAutoTest extends MockTestBase {
+class ClientReviewEvidenceReviewApiAutoTest extends ComplianceMockTestBase {
     private static final String PATH = "/client-onboarding-admin/v1/cases/%s/evidence/%s/review";
 
     @Autowired

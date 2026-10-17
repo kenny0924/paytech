@@ -1,4 +1,4 @@
-package com.paytech.risk.api.decision;
+package com.paytech.risk.decision.api;
 
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -10,8 +10,8 @@ import org.springframework.web.service.annotation.PostExchange;
 import org.springframework.web.service.annotation.PutExchange;
 
 import com.paytech.foundation.web.paging.PagingResponseBody;
-import com.paytech.risk.api.decision.request.*;
-import com.paytech.risk.api.decision.response.*;
+import com.paytech.risk.decision.api.request.*;
+import com.paytech.risk.decision.api.response.*;
 
 import jakarta.validation.Valid;
 

@@ -27,7 +27,7 @@ import tools.jackson.databind.node.ObjectNode;
  *
  * @author Kenny
  */
-public abstract class AbstractDecisionDictionaryApiTest extends MockTestBase {
+public abstract class AbstractDecisionDictionaryApiTest extends RiskDecisionMockTestBase {
     /** 默认可信操作者。 */
     protected static final long ACTOR = 70001L;
 

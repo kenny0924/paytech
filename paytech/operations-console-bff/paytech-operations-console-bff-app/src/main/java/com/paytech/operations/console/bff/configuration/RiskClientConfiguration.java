@@ -34,66 +34,66 @@ import com.paytech.foundation.internalauth.api.InternalTokenSupplier;
 import com.paytech.foundation.web.request.RequestIdFilter;
 import com.paytech.operations.console.bff.domain.enums.OperationsBffErrorCode;
 import com.paytech.operations.console.bff.integration.RiskDiscoveryInterceptor;
-import com.paytech.risk.api.decision.DecisionReleaseManagementApi;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementApi;
-import com.paytech.risk.api.enums.RiskDecisionConfigurationErrorCode;
+import com.paytech.risk.decision.api.DecisionReleaseManagementApi;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementApi;
+import com.paytech.risk.decision.api.enums.RiskDecisionConfigurationErrorCode;
 
 /** 独立的 Risk 发现与严格协议工厂，复用 Foundation 错误语义。 */
 @Configuration(proxyBeanMethods = false)
 public class RiskClientConfiguration {
-    private static final String RISK_SERVICE = "risk-service";
+    private static final String RISK_SERVICE = "risk-decision-service";
     private static final String RISK_BASE_URL = "http://" + RISK_SERVICE;
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(2);
     private static final Duration READ_TIMEOUT = Duration.ofSeconds(4);
 
     /** 复用统一发现、超时和错误解码配置注册字典 HTTP 代理，不添加重试。 */
     @Bean
-    com.paytech.risk.api.decision.DecisionDictionaryApi decisionDictionaryApi(HttpServiceProxyFactory operationsRiskProxyFactory) {
-        return operationsRiskProxyFactory.createClient(com.paytech.risk.api.decision.DecisionDictionaryApi.class);
+    com.paytech.risk.decision.api.DecisionDictionaryApi decisionDictionaryApi(HttpServiceProxyFactory operationsRiskProxyFactory) {
+        return operationsRiskProxyFactory.createClient(com.paytech.risk.decision.api.DecisionDictionaryApi.class);
     }
 
     /** 注册历史与发布引用的轻量 HTTP 代理，沿用现有 Risk 连接边界。 */
     @Bean
-    com.paytech.risk.api.decision.DecisionConfigurationQueryApi decisionConfigurationQueryApi(HttpServiceProxyFactory operationsRiskProxyFactory) {
-        return operationsRiskProxyFactory.createClient(com.paytech.risk.api.decision.DecisionConfigurationQueryApi.class);
+    com.paytech.risk.decision.api.DecisionConfigurationQueryApi decisionConfigurationQueryApi(HttpServiceProxyFactory operationsRiskProxyFactory) {
+        return operationsRiskProxyFactory.createClient(com.paytech.risk.decision.api.DecisionConfigurationQueryApi.class);
     }
 
     @Bean
-    com.paytech.risk.api.decision.DecisionFlowQueryApi decisionFlowQueryApi(HttpServiceProxyFactory operationsRiskProxyFactory) {
-        return operationsRiskProxyFactory.createClient(com.paytech.risk.api.decision.DecisionFlowQueryApi.class);
+    com.paytech.risk.decision.api.DecisionFlowQueryApi decisionFlowQueryApi(HttpServiceProxyFactory operationsRiskProxyFactory) {
+        return operationsRiskProxyFactory.createClient(com.paytech.risk.decision.api.DecisionFlowQueryApi.class);
     }
 
     @Bean
-    com.paytech.risk.api.decision.DecisionFlowManagementApi decisionFlowManagementApi(
+    com.paytech.risk.decision.api.DecisionFlowManagementApi decisionFlowManagementApi(
         @org.springframework.beans.factory.annotation.Qualifier("operationsRiskFlowProxyFactory") HttpServiceProxyFactory operationsRiskProxyFactory) {
-        return operationsRiskProxyFactory.createClient(com.paytech.risk.api.decision.DecisionFlowManagementApi.class);
+        return operationsRiskProxyFactory.createClient(com.paytech.risk.decision.api.DecisionFlowManagementApi.class);
     }
 
     /** 变量写入的字段错误沿用 Foundation 已批准的校验错误投影。 */
     @Bean
-    com.paytech.risk.api.decision.RiskVariableApi riskVariableApi(
+    com.paytech.risk.decision.api.RiskVariableApi riskVariableApi(
         @org.springframework.beans.factory.annotation.Qualifier("operationsRiskFlowProxyFactory") HttpServiceProxyFactory factory) {
-        return factory.createClient(com.paytech.risk.api.decision.RiskVariableApi.class);
+        return factory.createClient(com.paytech.risk.decision.api.RiskVariableApi.class);
     }
 
     /** 名单维护；写入字段错误沿用页面 Body 路径投影。 */
     @Bean
-    com.paytech.risk.api.control.RiskListManagementApi riskListManagementApi(
+    com.paytech.risk.decision.api.control.RiskListManagementApi riskListManagementApi(
         @org.springframework.beans.factory.annotation.Qualifier("operationsRiskFlowProxyFactory") HttpServiceProxyFactory factory) {
-        return factory.createClient(com.paytech.risk.api.control.RiskListManagementApi.class);
+        return factory.createClient(com.paytech.risk.decision.api.control.RiskListManagementApi.class);
     }
 
     /** 执行发布；写入字段错误沿用页面 Body 路径投影。 */
     @Bean
-    com.paytech.risk.api.decision.ExecutionReleaseManagementApi executionReleaseManagementApi(
+    com.paytech.risk.decision.api.ExecutionReleaseManagementApi executionReleaseManagementApi(
         @org.springframework.beans.factory.annotation.Qualifier("operationsRiskFlowProxyFactory") HttpServiceProxyFactory factory) {
-        return factory.createClient(com.paytech.risk.api.decision.ExecutionReleaseManagementApi.class);
+        return factory.createClient(com.paytech.risk.decision.api.ExecutionReleaseManagementApi.class);
     }
 
     /** 评估结论与解释的只读查询；内部直连，不携带 Gateway 身份头。 */
     @Bean
-    com.paytech.risk.api.evaluation.RiskEvaluationQueryApi riskEvaluationQueryApi(HttpServiceProxyFactory operationsRiskProxyFactory) {
-        return operationsRiskProxyFactory.createClient(com.paytech.risk.api.evaluation.RiskEvaluationQueryApi.class);
+    com.paytech.risk.decision.api.evaluation.RiskEvaluationQueryApi riskEvaluationQueryApi(HttpServiceProxyFactory operationsRiskProxyFactory) {
+        return operationsRiskProxyFactory.createClient(com.paytech.risk.decision.api.evaluation.RiskEvaluationQueryApi.class);
     }
 
     @Bean
@@ -145,7 +145,7 @@ public class RiskClientConfiguration {
             });
         return HttpServiceClientFactory.create(client, options, java.util.stream.Stream.concat(
             Arrays.stream(RiskDecisionConfigurationErrorCode.values()),
-            Arrays.stream(com.paytech.risk.api.enums.RiskVariableErrorCode.values()))
+            Arrays.stream(com.paytech.risk.decision.api.enums.RiskVariableErrorCode.values()))
             .toArray(com.paytech.foundation.common.enums.CodeMessageEnum[]::new));
     }
 

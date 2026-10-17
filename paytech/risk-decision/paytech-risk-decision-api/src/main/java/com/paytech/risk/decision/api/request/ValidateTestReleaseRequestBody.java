@@ -1,4 +1,4 @@
-package com.paytech.risk.api.decision.request;
+package com.paytech.risk.decision.api.request;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Positive;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.OptBoolean;
 
-import com.paytech.risk.api.decision.DecisionReleaseManagementModels.*;
+import com.paytech.risk.decision.api.DecisionReleaseManagementModels.*;
 
 /** TEST Candidate 的受控协议结构。 */
 public class ValidateTestReleaseRequestBody {

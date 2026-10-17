@@ -18,8 +18,8 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import com.paytech.foundation.common.error.InvalidParameterException;
-import com.paytech.risk.api.decision.request.CreateTestReleaseRequestBody;
-import com.paytech.risk.api.decision.request.ValidateTestReleaseRequestBody;
+import com.paytech.risk.decision.api.request.CreateTestReleaseRequestBody;
+import com.paytech.risk.decision.api.request.ValidateTestReleaseRequestBody;
 import com.paytech.risk.configuration.RiskVariableRequestConfiguration.VariableRequestConverter;
 
 import jakarta.servlet.http.HttpServletRequest;

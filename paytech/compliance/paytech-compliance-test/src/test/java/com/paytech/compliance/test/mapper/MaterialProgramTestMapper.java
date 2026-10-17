@@ -1,4 +1,4 @@
-package com.paytech.risk.test.mapper.compliance;
+package com.paytech.compliance.test.mapper;
 
 import java.sql.Timestamp;
 import java.time.Instant;

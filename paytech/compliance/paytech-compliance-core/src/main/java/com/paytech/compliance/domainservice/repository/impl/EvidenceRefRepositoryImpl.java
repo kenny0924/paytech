@@ -1,13 +1,13 @@
-package com.paytech.risk.compliance.domainservice.repository.impl;
+package com.paytech.compliance.domainservice.repository.impl;
 
 import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
-import com.paytech.risk.compliance.core.dal.dataobject.EvidenceRef;
-import com.paytech.risk.compliance.core.dal.mapper.EvidenceRefMapper;
-import com.paytech.risk.compliance.domainservice.repository.EvidenceRefRepository;
+import com.paytech.compliance.core.dal.dataobject.EvidenceRef;
+import com.paytech.compliance.core.dal.mapper.EvidenceRefMapper;
+import com.paytech.compliance.domainservice.repository.EvidenceRefRepository;
 import com.paytech.foundation.common.error.ErrorException;
 
 import lombok.AllArgsConstructor;

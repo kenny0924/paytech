@@ -8,8 +8,8 @@ import com.paytech.foundation.httpclient.api.*;
 import com.paytech.foundation.internalauth.api.InternalTokenSupplier;
 import com.paytech.platform.support.api.enums.*;
 import com.paytech.platform.support.api.onboardingfiles.OnboardingFileApi;
-import com.paytech.risk.api.compliance.MaterialRequirementsApi;
-import com.paytech.risk.api.compliance.ClientReviewResultApi;
+import com.paytech.compliance.api.MaterialRequirementsApi;
+import com.paytech.compliance.api.ClientReviewResultApi;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.time.Duration;
@@ -100,8 +100,8 @@ public class ClientOnboardingConfiguration {
     MaterialRequirementsApi materialRequirementsApi(Environment env, ObjectProvider<LoadBalancerClient> discovery,
         ObjectProvider<InternalTokenSupplier> tokens) {
         return HttpServiceClientFactory.create(
-            transport(env, discovery, "risk", "risk-service", ""),
-            options(tokens, "risk-service")
+            transport(env, discovery, "risk", "compliance-service", ""),
+            options(tokens, "compliance-service")
         ).createClient(MaterialRequirementsApi.class);
     }
 
@@ -110,8 +110,8 @@ public class ClientOnboardingConfiguration {
     ClientReviewResultApi clientReviewResultApi(Environment env, ObjectProvider<LoadBalancerClient> discovery,
         ObjectProvider<InternalTokenSupplier> tokens) {
         return HttpServiceClientFactory.create(
-            transport(env, discovery, "risk", "risk-service", ""),
-            options(tokens, "risk-service")
+            transport(env, discovery, "risk", "compliance-service", ""),
+            options(tokens, "compliance-service")
         ).createClient(ClientReviewResultApi.class);
     }
 

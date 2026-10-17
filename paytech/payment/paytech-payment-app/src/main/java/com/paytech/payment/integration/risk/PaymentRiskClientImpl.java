@@ -13,9 +13,9 @@ import com.paytech.payment.execution.core.enums.RiskResult;
 import com.paytech.payment.execution.domain.PaymentRiskCommand;
 import com.paytech.payment.execution.domain.PaymentRiskResult;
 import com.paytech.payment.execution.integration.PaymentRiskClient;
-import com.paytech.risk.api.evaluation.RiskDecisionApi;
-import com.paytech.risk.api.evaluation.request.PaymentAttemptRiskInput;
-import com.paytech.risk.api.evaluation.response.EvaluateDecisionResponseBody;
+import com.paytech.risk.decision.api.evaluation.RiskDecisionApi;
+import com.paytech.risk.decision.api.evaluation.request.PaymentAttemptRiskInput;
+import com.paytech.risk.decision.api.evaluation.response.EvaluateDecisionResponseBody;
 
 import lombok.AllArgsConstructor;
 

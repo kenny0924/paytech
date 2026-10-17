@@ -16,7 +16,7 @@ import org.springframework.web.client.ResourceAccessException;
 @Component
 @AllArgsConstructor
 public final class RiskDiscoveryInterceptor implements ClientHttpRequestInterceptor {
-    private static final String SERVICE_ID = "risk-service";
+    private static final String SERVICE_ID = "risk-decision-service";
     private final LoadBalancerClient loadBalancer;
 
     @Override

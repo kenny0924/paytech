@@ -1,4 +1,4 @@
-package com.paytech.risk.api.decision;
+package com.paytech.risk.decision.api;
 
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -8,10 +8,10 @@ import org.springframework.web.service.annotation.DeleteExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
 
-import com.paytech.risk.api.decision.request.SaveFlowRequestBody;
-import com.paytech.risk.api.decision.response.DeleteFlowResponseBody;
-import com.paytech.risk.api.decision.response.SaveFlowResponseBody;
-import com.paytech.risk.api.decision.response.ValidateFlowResponseBody;
+import com.paytech.risk.decision.api.request.SaveFlowRequestBody;
+import com.paytech.risk.decision.api.response.DeleteFlowResponseBody;
+import com.paytech.risk.decision.api.response.SaveFlowResponseBody;
+import com.paytech.risk.decision.api.response.ValidateFlowResponseBody;
 
 import jakarta.validation.Valid;
 

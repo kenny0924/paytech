@@ -1,15 +1,15 @@
-package com.paytech.risk.api.decision.request;
+package com.paytech.risk.decision.api.request;
 
-import static com.paytech.risk.api.decision.DecisionRuleSetManagementModels.CONTENT_HASH;
+import static com.paytech.risk.decision.api.DecisionRuleSetManagementModels.CONTENT_HASH;
 
-import static com.paytech.risk.api.decision.DecisionRuleSetManagementModels.POSITIVE_DECIMAL_ID;
+import static com.paytech.risk.decision.api.DecisionRuleSetManagementModels.POSITIVE_DECIMAL_ID;
 
-import static com.paytech.risk.api.decision.DecisionRuleSetManagementModels.CODE;
+import static com.paytech.risk.decision.api.DecisionRuleSetManagementModels.CODE;
 
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.OptBoolean;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.RuleRequestBody;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.RuleRequestBody;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

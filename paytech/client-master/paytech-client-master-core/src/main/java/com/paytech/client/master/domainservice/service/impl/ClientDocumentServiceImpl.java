@@ -12,7 +12,7 @@ import com.paytech.client.master.domainservice.service.ClientDocumentService;
 import com.paytech.foundation.common.error.*;
 import com.paytech.foundation.id.IdGenerator;
 import static com.paytech.client.contract.api.enums.ClientDraftErrorCode.*;
-import com.paytech.risk.api.enums.MaterialQualificationType;
+import com.paytech.compliance.api.enums.MaterialQualificationType;
 /** 申请行锁保护材料集合；Hash 来自事务前的 Platform 核验，普通保存不生成 BCR。 */
 public final class ClientDocumentServiceImpl implements ClientDocumentService {
     private final ClientDraftRepository drafts;

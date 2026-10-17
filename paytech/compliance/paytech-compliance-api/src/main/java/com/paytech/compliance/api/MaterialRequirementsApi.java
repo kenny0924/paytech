@@ -1,11 +1,11 @@
-package com.paytech.risk.api.compliance;
+package com.paytech.compliance.api;
 
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 
-import com.paytech.risk.api.compliance.MaterialRequirementsModels.RequirementsResponseBody;
+import com.paytech.compliance.api.MaterialRequirementsModels.RequirementsResponseBody;
 /** CCT 与 Client BFF 授权查询的私网通用材料目录；不创建 Case 或执行审核。 */
 @HttpExchange("/internal/due-diligence")
 public interface MaterialRequirementsApi {

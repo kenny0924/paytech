@@ -1,11 +1,11 @@
-package com.paytech.risk.test.builder.compliance;
+package com.paytech.compliance.test.builder;
 
-import static com.paytech.risk.api.enums.MaterialQualificationType.INDIVIDUAL_KYC;
-import static com.paytech.risk.api.enums.MaterialQualificationType.ORGANIZATION_KYB;
-import static com.paytech.risk.api.enums.MaterialQualificationType.RELATED_PERSON_KYC;
-import static com.paytech.risk.test.builder.compliance.ClientReviewRegistrationRequestBuilder.IDENTITY_DOCUMENT;
-import static com.paytech.risk.test.builder.compliance.ClientReviewRegistrationRequestBuilder.PROOF_OF_ADDRESS;
-import static com.paytech.risk.test.builder.compliance.ClientReviewRegistrationRequestBuilder.REGISTRATION_CERTIFICATE;
+import static com.paytech.compliance.api.enums.MaterialQualificationType.INDIVIDUAL_KYC;
+import static com.paytech.compliance.api.enums.MaterialQualificationType.ORGANIZATION_KYB;
+import static com.paytech.compliance.api.enums.MaterialQualificationType.RELATED_PERSON_KYC;
+import static com.paytech.compliance.test.builder.ClientReviewRegistrationRequestBuilder.IDENTITY_DOCUMENT;
+import static com.paytech.compliance.test.builder.ClientReviewRegistrationRequestBuilder.PROOF_OF_ADDRESS;
+import static com.paytech.compliance.test.builder.ClientReviewRegistrationRequestBuilder.REGISTRATION_CERTIFICATE;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -13,9 +13,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.paytech.risk.api.enums.MaterialQualificationType;
-import com.paytech.risk.compliance.domain.ClientReviewAction;
-import com.paytech.risk.compliance.service.processor.RegisterClientReviewProcessor;
+import com.paytech.compliance.api.enums.MaterialQualificationType;
+import com.paytech.compliance.domain.ClientReviewAction;
+import com.paytech.compliance.service.processor.RegisterClientReviewProcessor;
 
 /**
  * Client 入驻审核任务的本地前置事实 Builder（交给 ClientReviewMocker 直接插入，不经过登记接口）

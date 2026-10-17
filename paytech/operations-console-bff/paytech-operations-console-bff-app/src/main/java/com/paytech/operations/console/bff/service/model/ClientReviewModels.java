@@ -5,7 +5,7 @@ import java.util.List;
 import com.paytech.client.contract.api.onboarding.ClientDraftModels.ClientDraftResponseBody;
 import com.paytech.client.contract.api.onboarding.response.CatalogOptionResponseBody;
 import com.paytech.client.contract.api.onboarding.response.ClassificationSetResponseBody;
-import com.paytech.risk.api.compliance.response.ClientReviewCaseResponseBody;
+import com.paytech.compliance.api.response.ClientReviewCaseResponseBody;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;

@@ -1,13 +1,13 @@
-package com.paytech.risk.compliance.domainservice.repository.impl;
+package com.paytech.compliance.domainservice.repository.impl;
 
 import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
-import com.paytech.risk.compliance.core.dal.dataobject.MaterialProgram;
-import com.paytech.risk.compliance.core.dal.dataobject.MaterialRequirement;
-import com.paytech.risk.compliance.core.dal.mapper.MaterialRequirementsMapper;
-import com.paytech.risk.compliance.domainservice.repository.MaterialRequirementsRepository;
+import com.paytech.compliance.core.dal.dataobject.MaterialProgram;
+import com.paytech.compliance.core.dal.dataobject.MaterialRequirement;
+import com.paytech.compliance.core.dal.mapper.MaterialRequirementsMapper;
+import com.paytech.compliance.domainservice.repository.MaterialRequirementsRepository;
 
 import lombok.AllArgsConstructor;
 

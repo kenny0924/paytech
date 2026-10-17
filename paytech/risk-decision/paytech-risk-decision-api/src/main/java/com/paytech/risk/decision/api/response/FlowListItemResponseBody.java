@@ -1,4 +1,4 @@
-package com.paytech.risk.api.decision.response;
+package com.paytech.risk.decision.api.response;
 
 /** 每个流程根一行；当前版本数不是 API 版本。 */
 public class FlowListItemResponseBody {

@@ -23,9 +23,9 @@ import org.springframework.http.HttpMethod;
 
 import com.paytech.foundation.common.http.ApiHeaderNames;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
-import com.paytech.risk.api.decision.DecisionFlowQueryApi;
+import com.paytech.risk.decision.api.DecisionFlowQueryApi;
 import com.paytech.risk.decision.domain.enums.DecisionValue;
-import com.paytech.risk.test.base.MockTestBase;
+import com.paytech.risk.test.base.RiskDecisionMockTestBase;
 import com.paytech.risk.test.builder.decision.FlowBuilder;
 import com.paytech.risk.test.builder.decision.FlowBuilder.GraphSpec;
 import com.paytech.risk.test.checker.decision.FlowListResponseChecker;
@@ -44,7 +44,7 @@ import com.paytech.risk.test.mocker.decision.RuleSetMocker.MockedRuleSet;
  *
  * @see DecisionFlowQueryApi#list(String, String, String, String, String, Integer, Integer)
  */
-class FlowListApiAutoTest extends MockTestBase {
+class FlowListApiAutoTest extends RiskDecisionMockTestBase {
     private static final String PATH = "/decision-flows/v1/flows?pointCode=CHECKOUT_PREPARE";
 
     private static final Instant T0 = Instant.parse("2026-06-01T00:00:00.000001Z");

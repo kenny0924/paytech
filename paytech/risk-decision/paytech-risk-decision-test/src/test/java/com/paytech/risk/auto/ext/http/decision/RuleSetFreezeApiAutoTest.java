@@ -6,8 +6,8 @@ import static com.paytech.foundation.common.error.CommonErrorCode.INTERNAL_ERROR
 import static com.paytech.foundation.common.error.CommonErrorCode.INVALID_REQUEST;
 import static com.paytech.foundation.common.error.CommonErrorCode.UNSUPPORTED_MEDIA_TYPE;
 import static com.paytech.foundation.common.error.CommonErrorCode.VALIDATION_ERROR;
-import static com.paytech.risk.api.enums.RiskDecisionConfigurationErrorCode.RISK_DECISION_CONFIGURATION_NOT_FOUND;
-import static com.paytech.risk.api.enums.RiskDecisionConfigurationErrorCode.RISK_RULE_SET_DELETED;
+import static com.paytech.risk.decision.api.enums.RiskDecisionConfigurationErrorCode.RISK_DECISION_CONFIGURATION_NOT_FOUND;
+import static com.paytech.risk.decision.api.enums.RiskDecisionConfigurationErrorCode.RISK_RULE_SET_DELETED;
 import static com.paytech.risk.decision.domain.enums.RuleSetVersionStatus.*;
 import static com.paytech.risk.test.builder.decision.RuleSetBuilder.versions;
 
@@ -26,9 +26,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementApi;
-import com.paytech.risk.api.decision.request.FreezeRuleSetVersionRequestBody;
-import com.paytech.risk.test.base.MockTestBase;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementApi;
+import com.paytech.risk.decision.api.request.FreezeRuleSetVersionRequestBody;
+import com.paytech.risk.test.base.RiskDecisionMockTestBase;
 import com.paytech.risk.test.checker.decision.RuleSetCommandResponseChecker;
 import com.paytech.risk.test.checker.decision.RuleSetStoreChecker;
 import com.paytech.risk.test.checker.decision.RuleSetStoreChecker.Snapshot;
@@ -47,7 +47,7 @@ import com.paytech.risk.test.mocker.decision.RuleSetMocker.MockedVersion;
  *
  * @see DecisionRuleSetManagementApi#freezeRuleSetVersion(String, String, String, FreezeRuleSetVersionRequestBody)
  */
-class RuleSetFreezeApiAutoTest extends MockTestBase {
+class RuleSetFreezeApiAutoTest extends RiskDecisionMockTestBase {
     private static final String PATH = "/decision-rule-sets/v1/rule-sets/%s/freeze";
 
     private static final long ACTOR = 70001L;

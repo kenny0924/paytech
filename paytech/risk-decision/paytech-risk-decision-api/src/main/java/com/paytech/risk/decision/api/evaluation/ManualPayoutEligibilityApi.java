@@ -1,11 +1,11 @@
-package com.paytech.risk.api.evaluation;
+package com.paytech.risk.decision.api.evaluation;
 
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
 
-import com.paytech.risk.api.evaluation.request.ManualPayoutEligibilityRequestBody;
-import com.paytech.risk.api.evaluation.response.ManualPayoutEligibilityResponseBody;
+import com.paytech.risk.decision.api.evaluation.request.ManualPayoutEligibilityRequestBody;
+import com.paytech.risk.decision.api.evaluation.response.ManualPayoutEligibilityResponseBody;
 
 import jakarta.validation.Valid;
 

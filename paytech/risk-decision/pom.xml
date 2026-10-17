@@ -3,54 +3,41 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
     <parent>
         <groupId>com.paytech</groupId>
         <artifactId>paytech-parent</artifactId>
         <version>1.0.0-SNAPSHOT</version>
-        <relativePath/>
+        <relativePath>../build/paytech-parent/pom.xml</relativePath>
     </parent>
-    <artifactId>risk-service</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
-    <packaging>pom</packaging>
-    <name>Risk Service</name>
 
-    <modules>
-        <module>risk-api</module>
-        <module>risk-decision</module>
-        <module>risk-control</module>
-        <module>risk-compliance</module>
-        <module>risk-web</module>
-        <module>risk-test</module>
-    </modules>
+    <artifactId>paytech-risk-decision</artifactId>
+    <packaging>pom</packaging>
+
+    <name>PayTech Risk Decision</name>
+    <description>Risk decision service aggregator: rule sets, releases, flows, variables, dictionaries, runtime evaluation, risk lists
+        and Manual Payout eligibility (risk-control merged, design/07 §1).</description>
+
     <dependencyManagement>
         <dependencies>
-        <dependency>
-            <groupId>com.paytech</groupId>
-            <artifactId>risk-api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.paytech</groupId>
-            <artifactId>risk-decision</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.paytech</groupId>
-            <artifactId>risk-control</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.paytech</groupId>
-            <artifactId>risk-compliance</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.paytech</groupId>
-            <artifactId>risk-web</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>paytech-risk-decision-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>paytech-risk-decision-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>paytech-risk-decision-app</artifactId>
+                <version>${project.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
+
     <build>
         <plugins>
             <plugin>
@@ -58,6 +45,7 @@
                 <artifactId>maven-enforcer-plugin</artifactId>
                 <executions>
                     <execution>
+                        <!-- 原 risk-compliance-service 禁令（09 §1.4），并禁止依赖其他服务的 core / app（D09）。 -->
                         <id>risk-bootstrap-scope</id>
                         <phase>validate</phase>
                         <goals><goal>enforce</goal></goals>
@@ -75,7 +63,14 @@
                                         <exclude>org.apache.dubbo:*</exclude>
                                         <exclude>org.mockito:*</exclude>
                                         <exclude>org.testcontainers:*</exclude>
+                                        <exclude>com.paytech:*-core</exclude>
+                                        <exclude>com.paytech:*-app</exclude>
                                     </excludes>
+                                    <includes>
+                                        <include>com.paytech:paytech-common-core</include>
+                                        <include>com.paytech:paytech-risk-decision-core</include>
+                                        <include>com.paytech:paytech-risk-decision-app</include>
+                                    </includes>
                                 </bannedDependencies>
                             </rules>
                         </configuration>
@@ -84,4 +79,11 @@
             </plugin>
         </plugins>
     </build>
+
+    <modules>
+        <module>paytech-risk-decision-api</module>
+        <module>paytech-risk-decision-core</module>
+        <module>paytech-risk-decision-app</module>
+        <module>paytech-risk-decision-test</module>
+    </modules>
 </project>

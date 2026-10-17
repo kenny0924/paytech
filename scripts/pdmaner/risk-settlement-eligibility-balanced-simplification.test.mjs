@@ -9,9 +9,11 @@ import { TABLES as SETTLEMENT_TABLES } from "./risk/manifests/06-settlement.mjs"
 import { TABLES, TABLE_GROUPS } from "./risk/manifest.mjs";
 import * as MODEL_POLICY from "./risk/model-policy.mjs";
 import { SETTLEMENT_ELIGIBILITY_TARGET } from "./risk-compliance-test-oracle/schema.oracle.mjs";
+import { readRiskUnionModel } from "./risk-service-models.mjs";
 
 const workspaceRoot = path.resolve(import.meta.dirname, "../..");
-const modelPath = path.join(workspaceRoot, "risk-compliance-service/docs/database/risk-compliance.pdma.json");
+// Step 06: settlement control (compliance, C3) and settlement risk assessment (risk-decision) are read from the union view.
+const modelPath = path.join(workspaceRoot, "paytech/compliance/docs/database/compliance.pdma.json");
 
 const SCOPE_HASH_210001_USD_AE = "835f9cfa331ac2307cfe2fdc1122c98081af03d32aaf4ad4dc9cd3fd85b630f0";
 const SCOPE_HASH_210002_USD_ALL_COUNTRIES = "afe580f03a670414c151ae43b1b42fa1323bcf057bb00c12ebe474ac03ed3ef0";
@@ -1005,7 +1007,8 @@ test("Settlement cross-row policy freezes Effect origin, aggregate history, even
 });
 
 test("Generated Risk model independently exposes the current Settlement target", () => {
-  const model = JSON.parse(readFileSync(modelPath, "utf8"));
+  assert.ok(readFileSync(modelPath, "utf8").length > 0);
+  const model = readRiskUnionModel();
   const settlementDiagram = model.diagrams.find((diagram) => diagram.defKey === "settlement");
 
   assert.equal(

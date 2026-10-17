@@ -1,9 +1,9 @@
-package com.paytech.risk.compliance.domainservice.repository;
+package com.paytech.compliance.domainservice.repository;
 
 import java.util.List;
 
-import com.paytech.risk.compliance.core.dal.dataobject.MaterialProgram;
-import com.paytech.risk.compliance.core.dal.dataobject.MaterialRequirement;
+import com.paytech.compliance.core.dal.dataobject.MaterialProgram;
+import com.paytech.compliance.core.dal.dataobject.MaterialRequirement;
 /** 持久化对象仅在 Compliance 能力模块内部使用。 */
 public interface MaterialRequirementsRepository {
     /** 查询准确配置程序的生效候选。 */

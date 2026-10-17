@@ -1,4 +1,4 @@
-package com.paytech.risk.compliance.service.handler;
+package com.paytech.compliance.service.handler;
 
 import java.time.Duration;
 import java.util.Set;
@@ -11,13 +11,13 @@ import com.paytech.foundation.compensation.api.CompensationEventHandler;
 import com.paytech.foundation.compensation.api.CompensationEventRequest;
 import com.paytech.foundation.compensation.api.CompensationExecutionPolicy;
 import com.paytech.foundation.compensation.api.CompensationHandlerResult;
-import com.paytech.risk.compliance.core.dal.dataobject.DueDiligenceCase;
-import com.paytech.risk.compliance.core.dal.dataobject.QualificationDecision;
-import com.paytech.risk.compliance.domain.ClientReviewResult;
-import com.paytech.risk.compliance.domainservice.repository.DueDiligenceCaseRepository;
-import com.paytech.risk.compliance.domainservice.repository.QualificationDecisionRepository;
-import com.paytech.risk.compliance.integration.ClientReviewResultPublisher;
-import com.paytech.risk.compliance.service.processor.RegisterClientReviewProcessor;
+import com.paytech.compliance.core.dal.dataobject.DueDiligenceCase;
+import com.paytech.compliance.core.dal.dataobject.QualificationDecision;
+import com.paytech.compliance.domain.ClientReviewResult;
+import com.paytech.compliance.domainservice.repository.DueDiligenceCaseRepository;
+import com.paytech.compliance.domainservice.repository.QualificationDecisionRepository;
+import com.paytech.compliance.integration.ClientReviewResultPublisher;
+import com.paytech.compliance.service.processor.RegisterClientReviewProcessor;
 
 import lombok.AllArgsConstructor;
 

@@ -110,3 +110,8 @@ create_v2_finance_database mor_tax tax_app MOR_TAX_DB_PASSWORD "SELECT, INSERT, 
 # variables to the mysql container. mor_commerce and commerce_app stay for the main branch.
 create_v2_finance_database mor_acquiring acquiring_app MOR_ACQUIRING_DB_PASSWORD "SELECT, INSERT, UPDATE, DELETE" mor_acquiring
 create_v2_finance_database mor_consumer consumer_app MOR_CONSUMER_DB_PASSWORD "SELECT, INSERT, UPDATE, DELETE" mor_consumer
+
+# V2 Risk successors (refactor step 06, design/10 §5.1): same optional rule. mor_risk and risk_app stay for the main branch;
+# mor_dispute only owns Schema in step 06 and is not created.
+create_v2_finance_database mor_risk_decision risk_decision_app MOR_RISK_DECISION_DB_PASSWORD "SELECT, INSERT, UPDATE, DELETE" mor_risk_decision
+create_v2_finance_database mor_compliance compliance_app MOR_COMPLIANCE_DB_PASSWORD "SELECT, INSERT, UPDATE, DELETE" mor_compliance

@@ -1,4 +1,4 @@
-package com.paytech.risk.compliance.service.processor.request;
+package com.paytech.compliance.service.processor.request;
 
 import java.time.Instant;
 import java.util.List;

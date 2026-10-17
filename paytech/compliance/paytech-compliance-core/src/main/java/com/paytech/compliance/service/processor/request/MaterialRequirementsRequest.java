@@ -1,6 +1,6 @@
-package com.paytech.risk.compliance.service.processor.request;
+package com.paytech.compliance.service.processor.request;
 
-import com.paytech.risk.compliance.core.enums.MaterialQualificationType;
+import com.paytech.compliance.core.enums.MaterialQualificationType;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;

@@ -1,12 +1,12 @@
-package com.paytech.risk.compliance.service.processor;
+package com.paytech.compliance.service.processor;
 
 import java.util.List;
 
-import com.paytech.risk.compliance.core.dal.dataobject.CaseSubject;
-import com.paytech.risk.compliance.core.dal.dataobject.DueDiligenceCase;
-import com.paytech.risk.compliance.domain.ClientReviewFamily;
-import com.paytech.risk.compliance.domainservice.policy.ClientReviewApprovalPolicy;
-import com.paytech.risk.compliance.service.processor.response.ClientReviewCaseResponse;
+import com.paytech.compliance.core.dal.dataobject.CaseSubject;
+import com.paytech.compliance.core.dal.dataobject.DueDiligenceCase;
+import com.paytech.compliance.domain.ClientReviewFamily;
+import com.paytech.compliance.domainservice.policy.ClientReviewApprovalPolicy;
+import com.paytech.compliance.service.processor.response.ClientReviewCaseResponse;
 
 /** 把模块内审核全貌转换为可跨模块的 Owner 结果；纯转换。 */
 final class ClientReviewCaseConverter {

@@ -1,12 +1,12 @@
-package com.paytech.risk.api.evaluation;
+package com.paytech.risk.decision.api.evaluation;
 
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 
-import com.paytech.risk.api.evaluation.response.EvaluationExplanationResponseBody;
-import com.paytech.risk.api.evaluation.response.EvaluationResponseBody;
+import com.paytech.risk.decision.api.evaluation.response.EvaluationExplanationResponseBody;
+import com.paytech.risk.decision.api.evaluation.response.EvaluationResponseBody;
 
 /**
  * 评估结论与解释的只读查询合同；内部直连，供运营后台经 BFF 排查

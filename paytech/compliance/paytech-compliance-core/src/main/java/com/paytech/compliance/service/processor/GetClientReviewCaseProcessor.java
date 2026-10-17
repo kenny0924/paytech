@@ -1,10 +1,10 @@
-package com.paytech.risk.compliance.service.processor;
+package com.paytech.compliance.service.processor;
 
 import org.springframework.stereotype.Component;
 
 import com.paytech.foundation.processor.AbstractProcessor;
-import com.paytech.risk.compliance.service.processor.request.ClientReviewCaseRequest;
-import com.paytech.risk.compliance.service.processor.response.ClientReviewCaseResponse;
+import com.paytech.compliance.service.processor.request.ClientReviewCaseRequest;
+import com.paytech.compliance.service.processor.response.ClientReviewCaseResponse;
 
 import lombok.AllArgsConstructor;
 

@@ -25,7 +25,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 
-import com.paytech.risk.api.decision.DecisionDictionaryApi;
+import com.paytech.risk.decision.api.DecisionDictionaryApi;
 import com.paytech.risk.decision.domain.enums.DecisionValue;
 import com.paytech.risk.decision.domain.enums.FlowStatus;
 import com.paytech.risk.test.base.AbstractDecisionDictionaryApiTest;

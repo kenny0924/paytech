@@ -1,9 +1,9 @@
-package com.paytech.risk.compliance.domainservice.repository;
+package com.paytech.compliance.domainservice.repository;
 
 import java.util.List;
 
 import java.time.Instant;
-import com.paytech.risk.compliance.core.dal.dataobject.DueDiligenceCase;
+import com.paytech.compliance.core.dal.dataobject.DueDiligenceCase;
 
 /** t_due_diligence_case 的案件持久化。 */
 public interface DueDiligenceCaseRepository {

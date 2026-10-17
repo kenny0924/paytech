@@ -1,4 +1,4 @@
-package com.paytech.risk.api.decision.response;
+package com.paytech.risk.decision.api.response;
 
 /** 不可变版本历史条目。 */
 public class FlowHistoryItemResponseBody {

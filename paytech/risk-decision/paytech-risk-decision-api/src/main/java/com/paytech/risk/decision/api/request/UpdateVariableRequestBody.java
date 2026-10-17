@@ -1,11 +1,11 @@
-package com.paytech.risk.api.decision.request;
+package com.paytech.risk.decision.api.request;
 
 import java.util.List;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import com.paytech.risk.api.decision.RiskVariableModels.*;
+import com.paytech.risk.decision.api.RiskVariableModels.*;
 
 /** 使用期望根版本维护当前值，禁止提交结构字段。 */
 public class UpdateVariableRequestBody {

@@ -1,4 +1,4 @@
-package com.paytech.risk.compliance.domainservice.port;
+package com.paytech.compliance.domainservice.port;
 
 /** 为合规聚合生成本服务拥有的稳定标识；与决策模块共享同一 Snowflake 实例。 */
 @FunctionalInterface

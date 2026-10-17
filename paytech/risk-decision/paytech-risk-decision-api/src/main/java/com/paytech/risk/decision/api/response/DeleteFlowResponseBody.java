@@ -1,4 +1,4 @@
-package com.paytech.risk.api.decision.response;
+package com.paytech.risk.decision.api.response;
 
 /** 本次整体删除结果，保留永久编码和配置历史。 */
 public class DeleteFlowResponseBody {

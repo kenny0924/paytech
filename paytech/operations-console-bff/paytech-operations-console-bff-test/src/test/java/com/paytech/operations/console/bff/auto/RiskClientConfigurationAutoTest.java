@@ -1,7 +1,7 @@
 package com.paytech.operations.console.bff.auto;
 
-import com.paytech.risk.api.decision.request.*;
-import com.paytech.risk.api.decision.response.*;
+import com.paytech.risk.decision.api.request.*;
+import com.paytech.risk.decision.api.response.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -65,11 +65,11 @@ import com.paytech.operations.console.bff.configuration.RiskClientConfiguration;
 import com.paytech.operations.console.bff.configuration.RiskOwnerResponseHttpMessageConverter;
 import com.paytech.operations.console.bff.domain.enums.OperationsBffErrorCode;
 import com.paytech.operations.console.bff.integration.RiskDiscoveryInterceptor;
-import com.paytech.risk.api.decision.DecisionReleaseManagementApi;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementApi;
-import com.paytech.risk.api.decision.DecisionReleaseManagementModels;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels;
-import com.paytech.risk.api.enums.RiskDecisionConfigurationErrorCode;
+import com.paytech.risk.decision.api.DecisionReleaseManagementApi;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementApi;
+import com.paytech.risk.decision.api.DecisionReleaseManagementModels;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels;
+import com.paytech.risk.decision.api.enums.RiskDecisionConfigurationErrorCode;
 
 /** 通过真实代理及 Loopback HTTP 覆盖成功解码和独立发现，不启动业务服务。 */
 class RiskClientConfigurationAutoTest {
@@ -79,7 +79,8 @@ class RiskClientConfigurationAutoTest {
     private static final String REQUEST_ID = "risk-client-request-1";
     private static final String ACTOR = "10001";
     private static final String SESSION = "session-10001";
-    private static final String OWNER_PACKAGE = "com/paytech/risk/api/";
+    private static final String OWNER_PACKAGE = "com/paytech/risk/decision/api/";
+    private static final String COMPLIANCE_OWNER_PACKAGE = "com/paytech/compliance/api/";
     private static final String BFF_PACKAGE = "com/paytech/operations/console/bff/";
 
     @Test
@@ -92,8 +93,8 @@ class RiskClientConfigurationAutoTest {
                 .getBean(DecisionRuleSetManagementApi.class).getAuthoringContext(ACTOR, SESSION, "CHECKOUT_PREPARE"));
             assertEquals(OperationsBffErrorCode.DEPENDENCY_UNAVAILABLE, failure.getErrorCode());
             assertInstanceOf(ResourceAccessException.class, failure.getCause());
-            assertEquals(List.of("risk-service"), discovery.choices);
-            assertFalse(failure.getMessage().contains("risk-service"));
+            assertEquals(List.of("risk-decision-service"), discovery.choices);
+            assertFalse(failure.getMessage().contains("risk-decision-service"));
             assertFalse(failure.getMessage().contains(SESSION));
         });
     }
@@ -438,10 +439,10 @@ class RiskClientConfigurationAutoTest {
         String configuration = BFF_PACKAGE + "configuration/RiskClientConfiguration";
         String resolver = BFF_PACKAGE + "configuration/OperationsErrorStatusResolver";
         Map<String, Set<String>> restricted = Map.of(
-            resolver, Set.of("com.paytech.risk.api.enums.RiskDecisionConfigurationErrorCode", "com.paytech.risk.api.enums.RiskVariableErrorCode"));
+            resolver, Set.of("com.paytech.risk.decision.api.enums.RiskDecisionConfigurationErrorCode", "com.paytech.risk.decision.api.enums.RiskVariableErrorCode"));
         Set<String> transport = Set.of(configuration, BFF_PACKAGE + "configuration/RiskOwnerResponseHttpMessageConverter",
             BFF_PACKAGE + "configuration/RiskOwnerResponseShapeValidator", BFF_PACKAGE + "configuration/RiskVariableResponseShape");
-        var imports = Pattern.compile("(?m)^import\\s+(?:static\\s+)?(com\\.paytech\\.risk\\.api\\.[^;]+);");
+        var imports = Pattern.compile("(?m)^import\\s+(?:static\\s+)?(com\\.paytech\\.(?:risk\\.decision|compliance)\\.api\\.[^;]+);");
         try (var sources = Files.walk(web.resolve("src/main/java"))) {
             for (Path source : sources.filter(path -> path.toString().endsWith(".java")).toList()) {
                 String name = web.resolve("src/main/java").relativize(source).toString().replace(".java", "");
@@ -449,9 +450,9 @@ class RiskClientConfigurationAutoTest {
                 while (matcher.find()) {
                     assertTrue(transport.contains(name) || adapters.contains(name)
                         || restricted.getOrDefault(name, Set.of()).contains(matcher.group(1))
-                        || reviewPassThrough.contains(name) && matcher.group(1).startsWith("com.paytech.risk.api.compliance.response.")
-                        || name.equals(reviewConfiguration) && Set.of("com.paytech.risk.api.compliance.ClientReviewAdminApi",
-                            "com.paytech.risk.api.enums.ClientReviewErrorCode").contains(matcher.group(1)), source.toString());
+                        || reviewPassThrough.contains(name) && matcher.group(1).startsWith("com.paytech.compliance.api.response.")
+                        || name.equals(reviewConfiguration) && Set.of("com.paytech.compliance.api.ClientReviewAdminApi",
+                            "com.paytech.compliance.api.enums.ClientReviewErrorCode").contains(matcher.group(1)), source.toString());
                 }
             }
         }
@@ -468,9 +469,9 @@ class RiskClientConfigurationAutoTest {
                         return new MethodVisitor(Opcodes.ASM9) {
                             @Override
                             public void visitMethodInsn(int opcode, String owner, String method, String descriptor, boolean isInterface) {
-                                if (!owner.startsWith(OWNER_PACKAGE)) return;
+                                if (!owner.startsWith(OWNER_PACKAGE) && !owner.startsWith(COMPLIANCE_OWNER_PACKAGE)) return;
                                 boolean errorEnum = owner.equals(OWNER_PACKAGE + "enums/RiskDecisionConfigurationErrorCode") || owner.equals(OWNER_PACKAGE + "enums/RiskVariableErrorCode");
-                                boolean reviewEnum = owner.equals(OWNER_PACKAGE + "enums/ClientReviewErrorCode");
+                                boolean reviewEnum = owner.equals(COMPLIANCE_OWNER_PACKAGE + "enums/ClientReviewErrorCode");
                                 assertTrue(adapters.contains(caller)
                                     || (caller.equals(configuration) && errorEnum && method.equals("values"))
                                     || (caller.equals(reviewConfiguration) && reviewEnum && method.equals("values"))
@@ -480,10 +481,10 @@ class RiskClientConfigurationAutoTest {
                             }
                             @Override
                             public void visitFieldInsn(int opcode, String owner, String field, String descriptor) {
-                                if (!owner.startsWith(OWNER_PACKAGE)) return;
+                                if (!owner.startsWith(OWNER_PACKAGE) && !owner.startsWith(COMPLIANCE_OWNER_PACKAGE)) return;
                                 assertTrue(adapters.contains(caller) || (caller.equals(resolver)
                                     && (owner.equals(OWNER_PACKAGE + "enums/RiskDecisionConfigurationErrorCode") || owner.equals(OWNER_PACKAGE + "enums/RiskVariableErrorCode")
-                                    || owner.equals(OWNER_PACKAGE + "enums/ClientReviewErrorCode"))),
+                                    || owner.equals(COMPLIANCE_OWNER_PACKAGE + "enums/ClientReviewErrorCode"))),
                                     caller + " accesses Owner field " + owner + "." + field);
                             }
                         };

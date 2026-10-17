@@ -1,6 +1,6 @@
-package com.paytech.risk.api.decision.request;
+package com.paytech.risk.decision.api.request;
 
-import com.paytech.risk.api.validation.DictionaryText;
+import com.paytech.risk.decision.api.validation.DictionaryText;
 
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.NotNull;

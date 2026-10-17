@@ -4,8 +4,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
-import com.paytech.risk.api.evaluation.request.CheckoutPrepareRiskInput;
-import com.paytech.risk.api.evaluation.request.EvaluateDecisionRequestBody;
+import com.paytech.risk.decision.api.evaluation.request.CheckoutPrepareRiskInput;
+import com.paytech.risk.decision.api.evaluation.request.EvaluateDecisionRequestBody;
 import com.paytech.risk.decision.domain.runtime.CheckoutRiskInput;
 
 /**

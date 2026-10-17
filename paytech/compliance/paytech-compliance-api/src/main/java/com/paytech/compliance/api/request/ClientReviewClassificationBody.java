@@ -1,4 +1,4 @@
-package com.paytech.risk.api.compliance.request;
+package com.paytech.compliance.api.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

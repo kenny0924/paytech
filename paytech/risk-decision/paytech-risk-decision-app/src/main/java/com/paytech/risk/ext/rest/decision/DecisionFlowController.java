@@ -5,13 +5,13 @@ import static com.paytech.risk.service.convert.DecisionFlowExceptionConverter.ma
 import org.springframework.web.bind.annotation.RestController;
 
 import com.paytech.foundation.web.paging.PagingResponseBody;
-import com.paytech.risk.api.decision.DecisionFlowManagementApi;
-import com.paytech.risk.api.decision.DecisionFlowQueryApi;
-import com.paytech.risk.api.decision.request.SaveFlowRequestBody;
-import com.paytech.risk.api.decision.response.*;
+import com.paytech.risk.decision.api.DecisionFlowManagementApi;
+import com.paytech.risk.decision.api.DecisionFlowQueryApi;
+import com.paytech.risk.decision.api.request.SaveFlowRequestBody;
+import com.paytech.risk.decision.api.response.*;
 import com.paytech.risk.decision.service.processor.*;
 import com.paytech.risk.decision.service.processor.request.*;
-import com.paytech.risk.service.request.RiskOperationRequestContextParser;
+import com.paytech.foundation.web.request.OperationRequestContextParser;
 
 import lombok.AllArgsConstructor;
 
@@ -28,7 +28,7 @@ public class DecisionFlowController implements DecisionFlowQueryApi, DecisionFlo
     private final LegacyPointFlowProcessor legacyProcessor;
     private final FlowAuthoringContextProcessor authoringProcessor;
     private final FlowRuleSetReferenceProcessor referenceProcessor;
-    private final RiskOperationRequestContextParser context;
+    private final OperationRequestContextParser context;
 
     /** 读取流程编排能力，决策点按规范大写编码解析。 */
     @Override
@@ -100,7 +100,7 @@ public class DecisionFlowController implements DecisionFlowQueryApi, DecisionFlo
     @Override
     public SaveFlowResponseBody save(String actorAccountId, String sessionId, SaveFlowRequestBody body) {
         var caller = context.parse(actorAccountId, sessionId);
-        var request = new SaveFlowRequest(DecisionFlowWireConverter.command(body), caller.actorAccountId());
+        var request = new SaveFlowRequest(DecisionFlowWireConverter.command(body), caller.getActorAccountId());
         return DecisionFlowWireConverter.saved(mapped(() -> saveProcessor.process(request)));
     }
 
@@ -118,7 +118,7 @@ public class DecisionFlowController implements DecisionFlowQueryApi, DecisionFlo
         String expectedVersion) {
         var caller = context.parse(actorAccountId, sessionId);
         var request = new DeleteFlowRequest(context.parsePositiveId("flowId", flowId),
-            context.parsePositiveId("expectedVersion", expectedVersion), caller.actorAccountId());
+            context.parsePositiveId("expectedVersion", expectedVersion), caller.getActorAccountId());
         return DecisionFlowWireConverter.deleted(mapped(() -> deleteProcessor.process(request)));
     }
 }

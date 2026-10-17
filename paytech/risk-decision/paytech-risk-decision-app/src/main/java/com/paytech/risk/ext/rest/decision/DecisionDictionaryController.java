@@ -7,14 +7,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.web.paging.PagingResponseBody;
-import com.paytech.risk.api.decision.DecisionDictionaryApi;
-import com.paytech.risk.api.decision.request.*;
-import com.paytech.risk.api.decision.response.*;
-import com.paytech.risk.api.enums.RiskDecisionConfigurationErrorCode;
+import com.paytech.risk.decision.api.DecisionDictionaryApi;
+import com.paytech.risk.decision.api.request.*;
+import com.paytech.risk.decision.api.response.*;
+import com.paytech.risk.decision.api.enums.RiskDecisionConfigurationErrorCode;
 import com.paytech.risk.decision.domainservice.service.DictionaryConflictException;
 import com.paytech.risk.decision.service.processor.*;
 import com.paytech.risk.decision.service.processor.request.*;
-import com.paytech.risk.service.request.RiskOperationRequestContextParser;
+import com.paytech.foundation.web.request.OperationRequestContextParser;
 
 import lombok.AllArgsConstructor;
 
@@ -33,7 +33,7 @@ public class DecisionDictionaryController implements DecisionDictionaryApi {
     private final RejectionReasonDetailProcessor rejectionReasonDetailProcessor;
     private final UpdateRejectionReasonProcessor updateRejectionReasonProcessor;
     private final ChangeSubjectTagStatusProcessor changeSubjectTagStatusProcessor;
-    private final RiskOperationRequestContextParser parser;
+    private final OperationRequestContextParser parser;
     private final RejectionReasonReferencesProcessor rejectionReasonReferencesProcessor;
     private final ChangeRejectionReasonStatusProcessor changeRejectionReasonStatusProcessor;
 
@@ -63,7 +63,7 @@ public class DecisionDictionaryController implements DecisionDictionaryApi {
         CreateRejectionReasonRequestBody body) {
         var context = parser.parse(actorAccountId, sessionId);
         var request = new CreateRejectionReasonRequest(body.getReasonCode(), body.getName(), body.getDescription(),
-            body.getDefaultMessage(), context.actorAccountId());
+            body.getDefaultMessage(), context.getActorAccountId());
         try {
             return result(createRejectionReasonProcessor.process(request));
         } catch (DictionaryConflictException failure) {
@@ -78,7 +78,7 @@ public class DecisionDictionaryController implements DecisionDictionaryApi {
         var context = parser.parse(actorAccountId, sessionId);
         var request = new UpdateRejectionReasonRequest(reasonCode,
             parser.parsePositiveId("expectedVersion", body.getExpectedVersion()), body.getName(), body.getDescription(),
-            body.getDefaultMessage(), context.actorAccountId());
+            body.getDefaultMessage(), context.getActorAccountId());
         try {
             return result(updateRejectionReasonProcessor.process(request));
         } catch (DictionaryConflictException exception) {
@@ -93,7 +93,7 @@ public class DecisionDictionaryController implements DecisionDictionaryApi {
         var context = parser.parse(actorAccountId, sessionId);
         var request = new ChangeRejectionReasonStatusRequest(reasonCode,
             parser.parsePositiveId("expectedVersion", body.getExpectedVersion()), status(body.getStatus()),
-            context.actorAccountId());
+            context.getActorAccountId());
         try {
             return result(changeRejectionReasonStatusProcessor.process(request));
         } catch (DictionaryConflictException exception) {
@@ -145,7 +145,7 @@ public class DecisionDictionaryController implements DecisionDictionaryApi {
         CreateSubjectTagRequestBody body) {
         var context = parser.parse(actorAccountId, sessionId);
         var request = new CreateSubjectTagRequest(body.getTagCode(), body.getName(), body.getDescription(),
-            context.actorAccountId());
+            context.getActorAccountId());
         try {
             return result(createSubjectTagProcessor.process(request));
         } catch (DictionaryConflictException exception) {
@@ -160,7 +160,7 @@ public class DecisionDictionaryController implements DecisionDictionaryApi {
         var context = parser.parse(actorAccountId, sessionId);
         var request =
             new UpdateSubjectTagRequest(tagCode, parser.parsePositiveId("expectedVersion", body.getExpectedVersion()),
-                body.getName(), body.getDescription(), context.actorAccountId());
+                body.getName(), body.getDescription(), context.getActorAccountId());
         try {
             return result(updateSubjectTagProcessor.process(request));
         } catch (DictionaryConflictException exception) {
@@ -175,7 +175,7 @@ public class DecisionDictionaryController implements DecisionDictionaryApi {
         var context = parser.parse(actorAccountId, sessionId);
         var request = new ChangeSubjectTagStatusRequest(tagCode,
             parser.parsePositiveId("expectedVersion", body.getExpectedVersion()), status(body.getStatus()),
-            context.actorAccountId());
+            context.getActorAccountId());
         try {
             return result(changeSubjectTagStatusProcessor.process(request));
         } catch (DictionaryConflictException exception) {

@@ -1,4 +1,4 @@
-package com.paytech.risk.configuration;
+package com.paytech.compliance.configuration;
 
 import java.io.IOException;
 import java.util.Set;

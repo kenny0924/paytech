@@ -12,7 +12,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import com.paytech.risk.api.evaluation.request.PaymentAttemptRiskInput;
+import com.paytech.risk.decision.api.evaluation.request.PaymentAttemptRiskInput;
 import com.paytech.risk.decision.domain.authoring.DecisionActionRegistry;
 import com.paytech.risk.decision.domain.enums.AuthenticationRequirement;
 import com.paytech.risk.decision.domain.enums.DecisionValue;

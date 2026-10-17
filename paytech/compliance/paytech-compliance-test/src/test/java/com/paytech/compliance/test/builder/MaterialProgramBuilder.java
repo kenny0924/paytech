@@ -1,11 +1,11 @@
-package com.paytech.risk.test.builder.compliance;
+package com.paytech.compliance.test.builder;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.paytech.risk.api.enums.MaterialQualificationType;
+import com.paytech.compliance.api.enums.MaterialQualificationType;
 
 /**
  * 通用材料程序测试数据 Builder

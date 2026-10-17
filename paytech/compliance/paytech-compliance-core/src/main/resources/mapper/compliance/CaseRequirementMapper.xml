@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.paytech.risk.compliance.core.dal.mapper.CaseRequirementMapper">
+<mapper namespace="com.paytech.compliance.core.dal.mapper.CaseRequirementMapper">
     <insert id="insert">
         INSERT INTO t_dd_requirement(requirement_id, case_id, program_requirement_id, status, version, create_time, update_time)
         VALUES(#{row.requirementId}, #{row.caseId}, #{row.programRequirementId}, #{row.status}, #{row.version}, #{row.createTime}, #{row.updateTime})
     </insert>
-    <select id="findViewsByCaseIds" useCache="false" resultType="com.paytech.risk.compliance.domain.ReviewRequirementView">
+    <select id="findViewsByCaseIds" useCache="false" resultType="com.paytech.compliance.domain.ReviewRequirementView">
         SELECT r.requirement_id AS requirementId, r.case_id AS caseId, r.status, r.version, p.requirement_code AS requirementCode,
             p.document_type AS documentType, p.required_flag AS requiredFlag
         FROM t_dd_requirement r JOIN t_dd_program_requirement p ON p.program_requirement_id = r.program_requirement_id

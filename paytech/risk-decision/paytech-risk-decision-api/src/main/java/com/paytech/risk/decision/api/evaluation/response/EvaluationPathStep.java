@@ -1,4 +1,4 @@
-package com.paytech.risk.api.evaluation.response;
+package com.paytech.risk.decision.api.evaluation.response;
 
 /** 评估经过的一个流程节点。 */
 public class EvaluationPathStep {

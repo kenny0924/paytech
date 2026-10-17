@@ -4,17 +4,17 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
-import com.paytech.risk.api.control.RiskListManagementApi;
-import com.paytech.risk.api.control.request.AddRiskListEntryRequestBody;
-import com.paytech.risk.api.control.request.CreateRiskListRequestBody;
-import com.paytech.risk.api.control.request.DeactivateRiskListEntryRequestBody;
-import com.paytech.risk.api.control.response.RiskListEntryResponseBody;
-import com.paytech.risk.api.control.response.RiskListResponseBody;
+import com.paytech.risk.decision.api.control.RiskListManagementApi;
+import com.paytech.risk.decision.api.control.request.AddRiskListEntryRequestBody;
+import com.paytech.risk.decision.api.control.request.CreateRiskListRequestBody;
+import com.paytech.risk.decision.api.control.request.DeactivateRiskListEntryRequestBody;
+import com.paytech.risk.decision.api.control.response.RiskListEntryResponseBody;
+import com.paytech.risk.decision.api.control.response.RiskListResponseBody;
 import com.paytech.risk.control.service.RiskListService;
 import com.paytech.risk.control.service.processor.AddRiskListEntryProcessor;
 import com.paytech.risk.control.service.processor.CreateRiskListProcessor;
 import com.paytech.risk.control.service.processor.DeactivateRiskListEntryProcessor;
-import com.paytech.risk.service.request.RiskOperationRequestContextParser;
+import com.paytech.foundation.web.request.OperationRequestContextParser;
 
 import lombok.AllArgsConstructor;
 
@@ -25,7 +25,7 @@ public class RiskListManagementController implements RiskListManagementApi {
     private final RiskListService listService;
     private final CreateRiskListProcessor createProcessor;
     private final AddRiskListEntryProcessor addEntryProcessor;
-    private final RiskOperationRequestContextParser context;
+    private final OperationRequestContextParser context;
     private final DeactivateRiskListEntryProcessor deactivateProcessor;
 
     /** 创建名单。 */
@@ -33,7 +33,7 @@ public class RiskListManagementController implements RiskListManagementApi {
     public RiskListResponseBody createList(String actorAccountId, String sessionId, CreateRiskListRequestBody requestBody) {
         var actor = context.parse(actorAccountId, sessionId);
         return RiskListWireConverter.toResponse(
-            createProcessor.process(RiskListWireConverter.toRequest(actor.actorAccountId(), requestBody)));
+            createProcessor.process(RiskListWireConverter.toRequest(actor.getActorAccountId(), requestBody)));
     }
 
     /** 按编码分页查询名单。 */
@@ -52,7 +52,7 @@ public class RiskListManagementController implements RiskListManagementApi {
     public RiskListEntryResponseBody addEntry(String actorAccountId, String sessionId, String listCode,
         AddRiskListEntryRequestBody requestBody) {
         var actor = context.parse(actorAccountId, sessionId);
-        var request = RiskListWireConverter.toRequest(actor.actorAccountId(),
+        var request = RiskListWireConverter.toRequest(actor.getActorAccountId(),
             context.parseRequiredUpperCode("listCode", listCode), requestBody);
         return RiskListWireConverter.toResponse(addEntryProcessor.process(request));
     }
@@ -62,7 +62,7 @@ public class RiskListManagementController implements RiskListManagementApi {
     public RiskListEntryResponseBody deactivateEntry(String actorAccountId, String sessionId, String listCode,
         String entryId, DeactivateRiskListEntryRequestBody requestBody) {
         var actor = context.parse(actorAccountId, sessionId);
-        var request = RiskListWireConverter.toRequest(actor.actorAccountId(),
+        var request = RiskListWireConverter.toRequest(actor.getActorAccountId(),
             context.parseRequiredUpperCode("listCode", listCode), context.parsePositiveId("entryId", entryId), requestBody);
         return RiskListWireConverter.toResponse(deactivateProcessor.process(request));
     }

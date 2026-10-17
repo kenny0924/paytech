@@ -1,4 +1,4 @@
-package com.paytech.risk.api.decision.response;
+package com.paytech.risk.decision.api.response;
 
 /** 拒绝原因当前值，不改写历史规则的名称和文案。 */
 public class RejectionReasonResponseBody {

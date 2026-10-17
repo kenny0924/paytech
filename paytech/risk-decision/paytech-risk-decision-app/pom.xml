@@ -5,12 +5,13 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.paytech</groupId>
-        <artifactId>risk-service</artifactId>
+        <artifactId>paytech-risk-decision</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
-    <artifactId>risk-web</artifactId>
-    <name>Risk Web</name>
+    <artifactId>paytech-risk-decision-app</artifactId>
+    <name>PayTech Risk Decision App</name>
+    <description>Only executable of risk-decision: Spring Boot entry, Controllers, persistence and runtime assembly.</description>
     <dependencies>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -23,35 +24,29 @@
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
-            <artifactId>risk-api</artifactId>
+            <artifactId>paytech-risk-decision-api</artifactId>
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
-            <artifactId>risk-decision</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.paytech</groupId>
-            <artifactId>risk-control</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.paytech</groupId>
-            <artifactId>risk-compliance</artifactId>
+            <artifactId>paytech-risk-decision-core</artifactId>
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-mvc-web-starter</artifactId>
         </dependency>
+        <!-- 内部调用身份（D26）：默认 OFF；入站校验由 MVC Starter 装配。本服务没有出站 HTTP 客户端。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-internal-auth</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-snowflake-id</artifactId>
         </dependency>
+        <!-- DECISION_SHADOW_RUN 本地补偿任务（影子运行）；不经 MQ，本服务不发布也不消费 RabbitMQ 消息。 -->
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-compensation-event</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-amqp</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

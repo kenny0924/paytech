@@ -1,4 +1,4 @@
-package com.paytech.risk.api.control.request;
+package com.paytech.risk.decision.api.control.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

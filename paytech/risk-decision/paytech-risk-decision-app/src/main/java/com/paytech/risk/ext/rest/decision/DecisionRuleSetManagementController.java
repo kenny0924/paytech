@@ -5,16 +5,16 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
 import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementApi;
-import com.paytech.risk.api.decision.request.CreateRuleSetVersionRequestBody;
-import com.paytech.risk.api.decision.request.DeleteRuleSetRequestBody;
-import com.paytech.risk.api.decision.request.FreezeRuleSetVersionRequestBody;
-import com.paytech.risk.api.decision.response.CreateRuleSetVersionResponseBody;
-import com.paytech.risk.api.decision.response.DeleteRuleSetResponseBody;
-import com.paytech.risk.api.decision.response.FreezeRuleSetVersionResponseBody;
-import com.paytech.risk.api.decision.response.RuleAuthoringContextResponseBody;
-import com.paytech.risk.api.decision.response.RuleSetDetailResponseBody;
-import com.paytech.risk.api.decision.response.RuleSetListItemResponseBody;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementApi;
+import com.paytech.risk.decision.api.request.CreateRuleSetVersionRequestBody;
+import com.paytech.risk.decision.api.request.DeleteRuleSetRequestBody;
+import com.paytech.risk.decision.api.request.FreezeRuleSetVersionRequestBody;
+import com.paytech.risk.decision.api.response.CreateRuleSetVersionResponseBody;
+import com.paytech.risk.decision.api.response.DeleteRuleSetResponseBody;
+import com.paytech.risk.decision.api.response.FreezeRuleSetVersionResponseBody;
+import com.paytech.risk.decision.api.response.RuleAuthoringContextResponseBody;
+import com.paytech.risk.decision.api.response.RuleSetDetailResponseBody;
+import com.paytech.risk.decision.api.response.RuleSetListItemResponseBody;
 import com.paytech.risk.decision.service.processor.CreateRuleSetVersionProcessor;
 import com.paytech.risk.decision.service.processor.DeleteRuleSetProcessor;
 import com.paytech.risk.decision.service.processor.FreezeRuleSetVersionProcessor;
@@ -27,7 +27,7 @@ import com.paytech.risk.decision.service.processor.request.FreezeRuleSetVersionR
 import com.paytech.risk.decision.service.processor.request.RuleAuthoringContextRequest;
 import com.paytech.risk.decision.service.processor.request.RuleSetDetailRequest;
 import com.paytech.risk.decision.service.processor.request.RuleSetListRequest;
-import com.paytech.risk.service.request.RiskOperationRequestContextParser;
+import com.paytech.foundation.web.request.OperationRequestContextParser;
 import lombok.AllArgsConstructor;
 
 /** 规则集 HTTP 边界：解析可信身份、转换协议并调用 Owner 用例。 */
@@ -41,7 +41,7 @@ public class DecisionRuleSetManagementController implements DecisionRuleSetManag
     private final CreateRuleSetVersionProcessor createProcessor;
     private final FreezeRuleSetVersionProcessor freezeProcessor;
     private final RuleAuthoringContextProcessor authoringProcessor;
-    private final RiskOperationRequestContextParser contextParser;
+    private final OperationRequestContextParser contextParser;
 
     /** 读取配置能力目录。 */
     @Override
@@ -79,7 +79,7 @@ public class DecisionRuleSetManagementController implements DecisionRuleSetManag
         CreateRuleSetVersionRequestBody requestBody) {
         var actor = contextParser.parse(actorAccountId, sessionId);
         return mapped(() -> DecisionRuleSetWireConverter.toResponse(createProcessor.process(new CreateRuleSetVersionRequest(
-            actor.actorAccountId(), DecisionRuleSetWireConverter.toDomain(requestBody)))));
+            actor.getActorAccountId(), DecisionRuleSetWireConverter.toDomain(requestBody)))));
     }
 
     /** 按准确规则版本和内容 Hash 请求冻结。 */
@@ -88,7 +88,7 @@ public class DecisionRuleSetManagementController implements DecisionRuleSetManag
         String ruleSetVersionId, FreezeRuleSetVersionRequestBody requestBody) {
         var actor = contextParser.parse(actorAccountId, sessionId);
         return mapped(() -> DecisionRuleSetWireConverter.toResponse(freezeProcessor.process(new FreezeRuleSetVersionRequest(
-            actor.actorAccountId(), contextParser.parsePositiveId("ruleSetVersionId", ruleSetVersionId), requestBody.getExpectedContentHash()))));
+            actor.getActorAccountId(), contextParser.parsePositiveId("ruleSetVersionId", ruleSetVersionId), requestBody.getExpectedContentHash()))));
     }
 
     /** 删除使用整体根身份及调用者确认的管理版本。 */
@@ -97,7 +97,7 @@ public class DecisionRuleSetManagementController implements DecisionRuleSetManag
         DeleteRuleSetRequestBody requestBody) {
         var actor = contextParser.parse(actorAccountId, sessionId);
         return mapped(() -> DecisionRuleSetWireConverter.toResponse(deleteProcessor.process(new DeleteRuleSetRequest(
-            actor.actorAccountId(), contextParser.parsePositiveId("ruleSetId", ruleSetId),
+            actor.getActorAccountId(), contextParser.parsePositiveId("ruleSetId", ruleSetId),
             contextParser.parsePositiveId("expectedVersion", requestBody.getExpectedVersion())))));
     }
 }

@@ -7,8 +7,8 @@ import java.util.Map;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.paytech.foundation.common.error.InvalidParameterException;
-import com.paytech.risk.api.evaluation.RiskEvaluationQueryApi;
-import com.paytech.risk.api.evaluation.response.*;
+import com.paytech.risk.decision.api.evaluation.RiskEvaluationQueryApi;
+import com.paytech.risk.decision.api.evaluation.response.*;
 import com.paytech.risk.decision.domain.evaluation.EvaluationExplanationView;
 import com.paytech.risk.decision.domain.evaluation.EvaluationView;
 import com.paytech.risk.decision.service.processor.FindEvaluationProcessor;

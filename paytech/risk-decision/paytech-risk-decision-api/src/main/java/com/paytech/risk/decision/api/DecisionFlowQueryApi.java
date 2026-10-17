@@ -1,4 +1,4 @@
-package com.paytech.risk.api.decision;
+package com.paytech.risk.decision.api;
 
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -7,7 +7,7 @@ import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 
 import com.paytech.foundation.web.paging.PagingResponseBody;
-import com.paytech.risk.api.decision.response.*;
+import com.paytech.risk.decision.api.response.*;
 
 /** 决策流配置只读 HTTP 合同。 */
 @HttpExchange("/decision-flows/v1")

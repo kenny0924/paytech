@@ -4,16 +4,17 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
-const workspace = new URL("../../", import.meta.url);
-const service = new URL("../../risk-compliance-service/", import.meta.url);
-const modelUrl = new URL("docs/database/risk-compliance.pdma.json", service);
-const schemaUrl = new URL("docs/database/sql/risk-compliance-schema.sql", service);
-const generatorUrl = new URL("./risk/generate-risk-compliance-schema.mjs", import.meta.url);
-const model = JSON.parse(readFileSync(modelUrl, "utf8"));
+import { RISK_SCHEMA_PATHS, RISK_SERVICES, readRiskServiceModel, readRiskUnionModel } from "./risk-service-models.mjs";
 
-function readSchema() {
-  assert.ok(existsSync(schemaUrl), "完整 Risk Schema SQL 尚未生成");
-  return readFileSync(schemaUrl, "utf8");
+// Step 06: one Schema slice per service model (paytech/<service>/docs/database/sql/<service>-schema.sql).
+const workspace = new URL("../../", import.meta.url);
+const generatorUrl = new URL("./risk/generate-risk-compliance-schema.mjs", import.meta.url);
+const EXPECTED_TABLE_COUNTS = Object.freeze({ "risk-decision": 54, compliance: 24, dispute: 8 });
+const model = readRiskUnionModel();
+
+function readSchema(service) {
+  assert.ok(existsSync(RISK_SCHEMA_PATHS[service]), `${service} Schema SQL 尚未生成`);
+  return readFileSync(RISK_SCHEMA_PATHS[service], "utf8");
 }
 
 function quote(value) {
@@ -70,22 +71,25 @@ function executableSql(sql) {
     .replace(/'(?:''|[^'])*'/gu, "''");
 }
 
-test("Risk Schema creates exactly the 84 final PDManer tables in deterministic order", () => {
-  const sql = readSchema();
-  const tables = parseTables(sql);
-  assert.equal(model.entities.length, 84);
-  assert.deepEqual(tables.map(({ name }) => name), model.entities.map(({ defKey }) => defKey));
-  assert.equal(tables.length, 84);
-  assert.ok(tables.some(({ name }) => name === "t_settle_control_state_change"));
+test("Risk Schemas create exactly each service model's tables in deterministic order", () => {
+  for (const service of RISK_SERVICES) {
+    const serviceModel = readRiskServiceModel(service);
+    const tables = parseTables(readSchema(service));
+    assert.equal(serviceModel.entities.length, EXPECTED_TABLE_COUNTS[service], service);
+    assert.deepEqual(tables.map(({ name }) => name), serviceModel.entities.map(({ defKey }) => defKey), service);
+  }
+  assert.ok(parseTables(readSchema("compliance")).some(({ name }) => name === "t_settle_control_state_change"));
 });
 
 test("every Risk SQL column, default, Chinese comment, primary key and index matches PDManer", () => {
-  const tables = new Map(parseTables(readSchema()).map((table) => [table.name, table]));
-  for (const entity of model.entities) {
-    const table = tables.get(entity.defKey);
-    assert.ok(table, `Schema 缺少表：${entity.defKey}`);
-    assert.equal(table.comment, entity.comment, `${entity.defKey} 表注释漂移`);
-    assert.deepEqual(table.definitions, expectedDefinitions(entity), `${entity.defKey} 定义漂移`);
+  for (const service of RISK_SERVICES) {
+    const tables = new Map(parseTables(readSchema(service)).map((table) => [table.name, table]));
+    for (const entity of readRiskServiceModel(service).entities) {
+      const table = tables.get(entity.defKey);
+      assert.ok(table, `${service} Schema 缺少表：${entity.defKey}`);
+      assert.equal(table.comment, entity.comment, `${entity.defKey} 表注释漂移`);
+      assert.deepEqual(table.definitions, expectedDefinitions(entity), `${entity.defKey} 定义漂移`);
+    }
   }
 });
 
@@ -113,24 +117,23 @@ test("rule configuration stores its contract and field codes while preserving le
   }
 });
 
-test("Risk command idempotency key preserves its case-sensitive opaque identity", () => {
-  const entity = model.entities.find(({ defKey }) => defKey === "t_command_idempotency");
-  assert.ok(entity, "Risk Schema 缺少命令幂等表");
-  const field = entity.fields.find(({ defKey }) => defKey === "idempotency_key");
-  assert.deepEqual(field?.extProps, { characterSet: "ascii", collation: "ascii_bin" });
-  assert.match(
-    readSchema(),
-    /`idempotency_key` VARCHAR\(128\) CHARACTER SET ascii COLLATE ascii_bin NOT NULL/u,
-  );
+test("Risk command idempotency table is deleted from every split model and Schema (S10)", () => {
+  // Step 06: t_command_idempotency has no code and is deleted (design/03 §2.2); its former ascii_bin key no longer exists.
+  for (const service of RISK_SERVICES) {
+    assert.ok(!readRiskServiceModel(service).entities.some(({ defKey }) => defKey === "t_command_idempotency"), service);
+    assert.doesNotMatch(readSchema(service), /t_command_idempotency|CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT [^\n]*幂等/u, service);
+  }
 });
 
 test("Risk empty-database Schema contains no migration, seed or physical business constraints", () => {
-  const sql = readSchema();
-  assert.match(sql, /只适用于人工审核后的空 Risk 数据库/u);
-  const executable = executableSql(sql);
-  assert.doesNotMatch(executable, /\b(?:DROP|TRUNCATE|INSERT|AUTO_INCREMENT)\b/iu);
-  assert.doesNotMatch(executable, /\bCHECK\s*\(/iu);
-  assert.doesNotMatch(executable, /\bFOREIGN\s+KEY\b/iu);
+  for (const service of RISK_SERVICES) {
+    const sql = readSchema(service);
+    assert.match(sql, /只适用于人工审核后的空 mor_[a-z_]+ 数据库/u);
+    const executable = executableSql(sql);
+    assert.doesNotMatch(executable, /\b(?:DROP|TRUNCATE|INSERT|AUTO_INCREMENT)\b/iu);
+    assert.doesNotMatch(executable, /\bCHECK\s*\(/iu);
+    assert.doesNotMatch(executable, /\bFOREIGN\s+KEY\b/iu);
+  }
 });
 
 test("Risk Schema generator --check proves the committed SQL is current", () => {
@@ -140,5 +143,7 @@ test("Risk Schema generator --check proves the committed SQL is current", () => 
     encoding: "utf8",
   });
   assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
-  assert.match(result.stdout, /Risk Schema is up to date \(84 tables\)/u);
+  for (const service of RISK_SERVICES) {
+    assert.match(result.stdout, new RegExp(`${service} Schema is up to date \\(${EXPECTED_TABLE_COUNTS[service]} tables\\)`, "u"));
+  }
 });

@@ -1,4 +1,4 @@
-package com.paytech.risk.compliance.domainservice.policy;
+package com.paytech.compliance.domainservice.policy;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -6,8 +6,8 @@ import java.util.Set;
 import org.springframework.stereotype.Component;
 
 import com.paytech.foundation.common.error.ServiceUnavailableException;
-import com.paytech.risk.compliance.core.configuration.MaterialRequirementsProperties;
-import com.paytech.risk.compliance.core.enums.MaterialQualificationType;
+import com.paytech.compliance.core.configuration.MaterialRequirementsProperties;
+import com.paytech.compliance.core.enums.MaterialQualificationType;
 
 import tools.jackson.core.StreamReadFeature;
 import tools.jackson.databind.DeserializationFeature;

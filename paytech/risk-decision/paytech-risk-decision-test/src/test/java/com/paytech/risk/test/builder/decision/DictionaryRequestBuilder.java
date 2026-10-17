@@ -1,10 +1,10 @@
 package com.paytech.risk.test.builder.decision;
 
-import com.paytech.risk.api.decision.request.ChangeDictionaryStatusRequestBody;
-import com.paytech.risk.api.decision.request.CreateRejectionReasonRequestBody;
-import com.paytech.risk.api.decision.request.CreateSubjectTagRequestBody;
-import com.paytech.risk.api.decision.request.UpdateRejectionReasonRequestBody;
-import com.paytech.risk.api.decision.request.UpdateSubjectTagRequestBody;
+import com.paytech.risk.decision.api.request.ChangeDictionaryStatusRequestBody;
+import com.paytech.risk.decision.api.request.CreateRejectionReasonRequestBody;
+import com.paytech.risk.decision.api.request.CreateSubjectTagRequestBody;
+import com.paytech.risk.decision.api.request.UpdateRejectionReasonRequestBody;
+import com.paytech.risk.decision.api.request.UpdateSubjectTagRequestBody;
 import com.paytech.risk.decision.domain.enums.DictionaryStatus;
 
 /**

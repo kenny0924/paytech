@@ -6,10 +6,10 @@ import com.paytech.foundation.common.enums.CodeEnum;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.foundation.web.paging.PagingResponseBody;
-import com.paytech.risk.api.decision.DecisionConfigurationQueryApi;
-import com.paytech.risk.api.decision.response.RuleSetHistoryItemResponseBody;
-import com.paytech.risk.api.decision.response.RuleSetReleaseReferencesResponseBody;
-import com.paytech.risk.api.enums.RiskDecisionConfigurationErrorCode;
+import com.paytech.risk.decision.api.DecisionConfigurationQueryApi;
+import com.paytech.risk.decision.api.response.RuleSetHistoryItemResponseBody;
+import com.paytech.risk.decision.api.response.RuleSetReleaseReferencesResponseBody;
+import com.paytech.risk.decision.api.enums.RiskDecisionConfigurationErrorCode;
 import com.paytech.risk.decision.domain.enums.DecisionEnvironment;
 import com.paytech.risk.decision.domain.enums.DecisionReleaseStatus;
 import com.paytech.risk.decision.domainservice.service.DecisionConfigurationNotFoundException;
@@ -17,7 +17,7 @@ import com.paytech.risk.decision.service.processor.RuleSetHistoryProcessor;
 import com.paytech.risk.decision.service.processor.RuleSetReleaseReferencesProcessor;
 import com.paytech.risk.decision.service.processor.request.RuleSetHistoryRequest;
 import com.paytech.risk.decision.service.processor.request.RuleSetReleaseReferencesRequest;
-import com.paytech.risk.service.request.RiskOperationRequestContextParser;
+import com.paytech.foundation.web.request.OperationRequestContextParser;
 
 import lombok.AllArgsConstructor;
 
@@ -26,7 +26,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class DecisionConfigurationQueryController implements DecisionConfigurationQueryApi {
     private final RuleSetHistoryProcessor historyProcessor;
-    private final RiskOperationRequestContextParser parser;
+    private final OperationRequestContextParser parser;
     private final RuleSetReleaseReferencesProcessor releaseReferencesProcessor;
 
     /** 解析可信身份及根 ID，委托历史查询；将领域未找到映射为既有 404 合同并保留原因。 */

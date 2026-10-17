@@ -1,6 +1,6 @@
-package com.paytech.risk.compliance.domainservice.repository;
+package com.paytech.compliance.domainservice.repository;
 
-import com.paytech.risk.compliance.core.dal.dataobject.CaseStateChange;
+import com.paytech.compliance.core.dal.dataobject.CaseStateChange;
 
 /** t_dd_case_state_change 的案件状态变更持久化。 */
 public interface CaseStateChangeRepository {

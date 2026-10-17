@@ -1,6 +1,6 @@
-package com.paytech.risk.test.builder.compliance;
+package com.paytech.compliance.test.builder;
 
-import com.paytech.risk.api.compliance.request.ClientReviewDecisionRequestBody;
+import com.paytech.compliance.api.request.ClientReviewDecisionRequestBody;
 
 /**
  * O08 通过 / O09 最终拒绝的请求 Builder

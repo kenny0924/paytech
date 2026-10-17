@@ -1,6 +1,6 @@
-package com.paytech.risk.compliance.service.processor;
+package com.paytech.compliance.service.processor;
 
-import static com.paytech.risk.compliance.core.enums.ClientReviewErrorCode.*;
+import static com.paytech.compliance.core.enums.ClientReviewErrorCode.*;
 
 import java.time.Clock;
 import java.time.temporal.ChronoUnit;
@@ -10,12 +10,12 @@ import org.springframework.stereotype.Component;
 
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.processor.AbstractProcessor;
-import com.paytech.risk.compliance.core.dal.dataobject.EvidenceRef;
-import com.paytech.risk.compliance.domain.ClientReviewFamily;
-import com.paytech.risk.compliance.domain.ReviewRequirementView;
-import com.paytech.risk.compliance.domainservice.service.ClientReviewService;
-import com.paytech.risk.compliance.service.processor.request.ReviewClientEvidenceRequest;
-import com.paytech.risk.compliance.service.processor.response.ClientReviewCommandResponse;
+import com.paytech.compliance.core.dal.dataobject.EvidenceRef;
+import com.paytech.compliance.domain.ClientReviewFamily;
+import com.paytech.compliance.domain.ReviewRequirementView;
+import com.paytech.compliance.domainservice.service.ClientReviewService;
+import com.paytech.compliance.service.processor.request.ReviewClientEvidenceRequest;
+import com.paytech.compliance.service.processor.response.ClientReviewCommandResponse;
 
 import lombok.AllArgsConstructor;
 

@@ -10,13 +10,13 @@ import com.paytech.operations.console.bff.service.model.riskevaluation.RiskEvalu
 import com.paytech.operations.console.bff.service.model.riskevaluation.RiskEvaluationRuleItem;
 import com.paytech.operations.console.bff.service.model.riskevaluation.RiskEvaluationShadowItem;
 import com.paytech.operations.console.bff.service.model.riskevaluation.RiskEvaluationVariableItem;
-import com.paytech.risk.api.evaluation.response.EvaluationExplanationResponseBody;
-import com.paytech.risk.api.evaluation.response.EvaluationPathStep;
-import com.paytech.risk.api.evaluation.response.EvaluationPredicateItem;
-import com.paytech.risk.api.evaluation.response.EvaluationResponseBody;
-import com.paytech.risk.api.evaluation.response.EvaluationRuleItem;
-import com.paytech.risk.api.evaluation.response.EvaluationShadowItem;
-import com.paytech.risk.api.evaluation.response.EvaluationVariableItem;
+import com.paytech.risk.decision.api.evaluation.response.EvaluationExplanationResponseBody;
+import com.paytech.risk.decision.api.evaluation.response.EvaluationPathStep;
+import com.paytech.risk.decision.api.evaluation.response.EvaluationPredicateItem;
+import com.paytech.risk.decision.api.evaluation.response.EvaluationResponseBody;
+import com.paytech.risk.decision.api.evaluation.response.EvaluationRuleItem;
+import com.paytech.risk.decision.api.evaluation.response.EvaluationShadowItem;
+import com.paytech.risk.decision.api.evaluation.response.EvaluationVariableItem;
 
 /** 评估结论与解释的 Owner 合同与页面合同之间的逐字段转换；条件树由组装器另行补充。 */
 final class RiskEvaluationConverter {

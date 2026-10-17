@@ -1,17 +1,17 @@
-package com.paytech.risk.auto.ext.http.compliance;
+package com.paytech.compliance.auto.ext.http;
 
 import static com.paytech.foundation.common.error.CommonErrorCode.BUSINESS_CHECK_FAILED;
 import static com.paytech.foundation.common.error.CommonErrorCode.INVALID_REQUEST;
 import static com.paytech.foundation.common.error.CommonErrorCode.UNSUPPORTED_MEDIA_TYPE;
 import static com.paytech.foundation.common.error.CommonErrorCode.VALIDATION_ERROR;
-import static com.paytech.risk.api.enums.ClientReviewErrorCode.CLIENT_REVIEW_CLASSIFICATION_CONFLICT;
-import static com.paytech.risk.api.enums.ClientReviewErrorCode.CLIENT_REVIEW_CLOSED;
-import static com.paytech.risk.api.enums.ClientReviewErrorCode.CLIENT_REVIEW_NOT_FOUND;
-import static com.paytech.risk.test.builder.compliance.ClientReviewCaseBuilder.SUBMITTED;
-import static com.paytech.risk.test.builder.compliance.ClientReviewCaseBuilder.individual;
-import static com.paytech.risk.test.builder.compliance.ClientReviewCaseBuilder.organization;
-import static com.paytech.risk.test.builder.compliance.ClientReviewClassificationsRequestBuilder.CONFIRMED_AT;
-import static com.paytech.risk.test.builder.compliance.ClientReviewClassificationsRequestBuilder.CONFIRMED_BY;
+import static com.paytech.compliance.api.enums.ClientReviewErrorCode.CLIENT_REVIEW_CLASSIFICATION_CONFLICT;
+import static com.paytech.compliance.api.enums.ClientReviewErrorCode.CLIENT_REVIEW_CLOSED;
+import static com.paytech.compliance.api.enums.ClientReviewErrorCode.CLIENT_REVIEW_NOT_FOUND;
+import static com.paytech.compliance.test.builder.ClientReviewCaseBuilder.SUBMITTED;
+import static com.paytech.compliance.test.builder.ClientReviewCaseBuilder.individual;
+import static com.paytech.compliance.test.builder.ClientReviewCaseBuilder.organization;
+import static com.paytech.compliance.test.builder.ClientReviewClassificationsRequestBuilder.CONFIRMED_AT;
+import static com.paytech.compliance.test.builder.ClientReviewClassificationsRequestBuilder.CONFIRMED_BY;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -29,15 +29,15 @@ import org.springframework.http.MediaType;
 
 import com.paytech.foundation.common.http.ApiHeaderNames;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
-import com.paytech.risk.api.compliance.ClientReviewRegistrationApi;
-import com.paytech.risk.api.compliance.request.ClientReviewClassificationsRequestBody;
-import com.paytech.risk.compliance.domain.ClientReviewAction;
-import com.paytech.risk.test.base.MockTestBase;
-import com.paytech.risk.test.builder.compliance.ClientReviewClassificationsRequestBuilder;
-import com.paytech.risk.test.checker.compliance.ClientReviewCommandResponseChecker;
-import com.paytech.risk.test.checker.compliance.ClientReviewStoreChecker;
-import com.paytech.risk.test.mocker.compliance.ClientReviewMocker;
-import com.paytech.risk.test.mocker.compliance.ClientReviewMocker.MockedReview;
+import com.paytech.compliance.api.ClientReviewRegistrationApi;
+import com.paytech.compliance.api.request.ClientReviewClassificationsRequestBody;
+import com.paytech.compliance.domain.ClientReviewAction;
+import com.paytech.compliance.test.base.ComplianceMockTestBase;
+import com.paytech.compliance.test.builder.ClientReviewClassificationsRequestBuilder;
+import com.paytech.compliance.test.checker.ClientReviewCommandResponseChecker;
+import com.paytech.compliance.test.checker.ClientReviewStoreChecker;
+import com.paytech.compliance.test.mocker.ClientReviewMocker;
+import com.paytech.compliance.test.mocker.ClientReviewMocker.MockedReview;
 
 /**
  * I02 接收 CCT 已确认的任务分类
@@ -49,7 +49,7 @@ import com.paytech.risk.test.mocker.compliance.ClientReviewMocker.MockedReview;
  *
  * @see ClientReviewRegistrationApi#receiveClassifications(String, String, ClientReviewClassificationsRequestBody)
  */
-class ClientReviewClassificationApiAutoTest extends MockTestBase {
+class ClientReviewClassificationApiAutoTest extends ComplianceMockTestBase {
     private static final String PATH = "/client-onboarding-review/v1/cases/%s/classifications";
 
     @Autowired
@@ -339,7 +339,7 @@ class ClientReviewClassificationApiAutoTest extends MockTestBase {
     /** CCT 私网调用：内部 JSON 请求头加调用方标识。 */
     private static HttpHeaders headers() {
         HttpHeaders headers = TestRequestHeaders.internal("risk-review-" + UUID.randomUUID());
-        headers.set("X-Caller-Service", "client-contract-service");
+        headers.set("X-Caller-Service", "client-master-service");
         return headers;
     }
 }

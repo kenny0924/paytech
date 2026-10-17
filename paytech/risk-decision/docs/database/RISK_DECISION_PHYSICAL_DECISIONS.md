@@ -1,31 +1,47 @@
-# Risk & Compliance 物理数据库决策
+# Risk Decision 物理数据库决策（原 Risk & Compliance）
 
-> **2026-09-14 Client 入驻修订：** 新 Client 使用 source_submission_id、可空旧版本引用、RETURNED 终态及任务内分类确认；其他 APPLICATION 来源使用批准的 legacy:applicationId 适配。本文旧 Client Submission/Relation Version 叙述仅适用于未迁移来源。完整合同见[数据设计](../../../requirements/20260914/client-console-注册与客户入驻/data-design.md)和[迁移方案](../../../requirements/20260914/client-console-注册与客户入驻/migration-plan.md)。当前模型、验证和执行状态见[台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#client-console-onboarding-20260914)。
+> **2026-09-14 Client 入驻修订：** 新 Client 使用 source_submission_id、可空旧版本引用、RETURNED 终态及任务内分类确认；其他 APPLICATION 来源使用批准的 legacy:applicationId 适配。本文旧 Client Submission/Relation Version 叙述仅适用于未迁移来源。完整合同见[数据设计](../../../../requirements/20260914/client-console-注册与客户入驻/data-design.md)和[迁移方案](../../../../requirements/20260914/client-console-注册与客户入驻/migration-plan.md)。当前模型、验证和执行状态见[台账](../../../../agent-docs/CURRENT_IMPLEMENTATION.md#client-console-onboarding-20260914)。
 
-> **RCO-19 配置增量：** [数据方案](../../../requirements/20260912/operations-console-统一风控变量管理与条件编排/data.md)及[接口合同](../../../requirements/20260912/operations-console-统一风控变量管理与条件编排/api.md)拥有变量定义/成员、规则操作数和动作主体变量引用。第 5 节的 FEATURE/CONTEXT/LITERAL 来源规则保留为旧格式及运行能力合同；新配置使用 VARIABLE/LITERAL，共享值从当前变量库读取，历史内容和 Hash 不改写。模型/SQL 应用及验证状态见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#rco19-variables-20260912)。
-
-
-> RCO-16 的两张字典主表与两个引用查询索引遵循[已确认数据合同](../../../requirements/20260911/operations-console-风控规则集历史与字典管理/data.md)。不增加回执表、标签主体关系或历史规则回填；数据库执行状态见当前台账。
-
-> 2026-09-11 规则集整体管理增量以[已确认需求与方案](../../../requirements/20260911/operations-console-风控规则集列表优化/technique.md)第 10–18 节为准：新增 `t_rule_set` 稳定根；列表按根及当前配置分页，删除只终止整体配置管理并永久保留编码、版本、Candidate、审计与幂等回放。有任一版本被当前 ACTIVE Release 使用时禁止删除；冻结或 Candidate 引用本身不算使用中。此项取代旧设计无管理根、版本列表和无整体删除部分，保留其余业务事实。
+> **RCO-19 配置增量：** [数据方案](../../../../requirements/20260912/operations-console-统一风控变量管理与条件编排/data.md)及[接口合同](../../../../requirements/20260912/operations-console-统一风控变量管理与条件编排/api.md)拥有变量定义/成员、规则操作数和动作主体变量引用。第 5 节的 FEATURE/CONTEXT/LITERAL 来源规则保留为旧格式及运行能力合同；新配置使用 VARIABLE/LITERAL，共享值从当前变量库读取，历史内容和 Hash 不改写。模型/SQL 应用及验证状态见[当前台账](../../../../agent-docs/CURRENT_IMPLEMENTATION.md#rco19-variables-20260912)。
 
 
-> 2026-09-11：规则 V1 配置的可空终态、附加动作、主体绑定、手工拒绝文案及格式/执行门禁以[配置增量决定](../../../agent-docs/decisions/2026-09-11-risk-rule-v1-configuration.md)及其接口合同为准。本文其他执行语义保留；新增配置不表示已实现执行。
+> RCO-16 的两张字典主表与两个引用查询索引遵循[已确认数据合同](../../../../requirements/20260911/operations-console-风控规则集历史与字典管理/data.md)。不增加回执表、标签主体关系或历史规则回填；数据库执行状态见当前台账。
+
+> 2026-09-11 规则集整体管理增量以[已确认需求与方案](../../../../requirements/20260911/operations-console-风控规则集列表优化/technique.md)第 10–18 节为准：新增 `t_rule_set` 稳定根；列表按根及当前配置分页，删除只终止整体配置管理并永久保留编码、版本、Candidate、审计与幂等回放。有任一版本被当前 ACTIVE Release 使用时禁止删除；冻结或 Candidate 引用本身不算使用中。此项取代旧设计无管理根、版本列表和无整体删除部分，保留其余业务事实。
+
+
+> 2026-09-11：规则 V1 配置的可空终态、附加动作、主体绑定、手工拒绝文案及格式/执行门禁以[配置增量决定](../../../../agent-docs/decisions/2026-09-11-risk-rule-v1-configuration.md)及其接口合同为准。本文其他执行语义保留；新增配置不表示已实现执行。
 
 最后更新：2026-09-05
 
 历史基线（2026-09-05）：Risk 侧 71 表已投影统一 15 列 Compensation Event、Vault V1 消费者边界、零物理 CHECK/FK 与规则版本审计字段；Settlement Eligibility、Dispute、Manual Payout 四检查点及 CCT Local Partner Application Typed Namespace 均已确定性生成；自动结构验证已通过，PDManer 4.9.3 应用内人工评审待完成
 
-> **2026-09-05 横切规范更新：** Risk 生成模型已完成本库 `compensation_event`、Vault V1 消费者语义与零物理 CHECK/FK 投影。该结论不等于六库 COMP-01 或全局 DB-01 完成；跨库状态仍只由 [当前实现台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md) 按全局证据维护，DB-01 继续受 Vault 物理 Schema 阻塞。
+> **2026-09-05 横切规范更新：** Risk 生成模型已完成本库 `compensation_event`、Vault V1 消费者语义与零物理 CHECK/FK 投影。该结论不等于六库 COMP-01 或全局 DB-01 完成；跨库状态仍只由 [当前实现台账](../../../../agent-docs/CURRENT_IMPLEMENTATION.md) 按全局证据维护，DB-01 继续受 Vault 物理 Schema 阻塞。
+
+## 0. 按服务归属（2026-10-18 第 06 步拆分）
+
+原 Risk & Compliance 单库 85 表模型按 [design/03 §2.2](../../../../requirements/20261017/architecture-V2骨架与模块搬迁/design/03-module-and-table-ownership.md) 与[任务卡 06](../../../../requirements/20261017/architecture-V2骨架与模块搬迁/tasks/06-risk-decision-compliance.md) 拆为三个规范模型；表结构、字段、索引与注释逐字不变，拆分只改变表归属：
+
+| 服务 | 库 | 规范模型 | 表 |
+|---|---|---|---|
+| risk-decision | `mor_risk_decision` | [risk-decision.pdma.json](./risk-decision.pdma.json) | 53 张本服务表 + `t_compensation_event`（54）：规则配置、决策流、变量、评估与运行期、名单、限额、`t_settlement_risk_assessment`、`t_risk_restriction` |
+| compliance | `mor_compliance` | [compliance.pdma.json](../../../compliance/docs/database/compliance.pdma.json) | 尽调 / 筛查 / 资格 20 张 + 结算控制 3 张（C3）+ `t_compensation_event`（24） |
+| dispute | `mor_dispute`（本步只定 Schema 归属，不建库） | [dispute.pdma.json](../../../dispute/docs/database/dispute.pdma.json) | 争议 7 张 + `t_compensation_event`（8） |
+
+- 拆分由 [risk-service-partition.mjs](../../../../scripts/pdmaner/risk/risk-service-partition.mjs) 从拆分前已提交模型确定性得到：实体、字段、索引、关系与图 ID 原样保留；`t_compensation_event` 每库一份。
+- 原模型 135 条逻辑关系中 4 条跨服务关系不再建模（拆库后为只存 ID 的跨库引用，design/07 §3）：`t_qualification_decision.decision_evaluation_id → t_decision_evaluation`、`t_settlement_control.source_action_effect_id → t_action_effect`、`t_dispute_liability_decision.decision_evaluation_id → t_decision_evaluation`、`t_dispute_liability_decision.action_effect_id → t_action_effect`。三模型合计 131 条关系。
+- `t_command_idempotency` 无任何代码引用，按 S10 删除（design/03 §2.2，待 Owner 确认），不进入任何拆分模型、Schema 或测试 DDL；第 12 节对它的历史描述只作记录。
+- `CODE-MOR:RISK:*` 哈希 Schema 标识（含 `DD_PROGRAM_VERSION:1`、`LIMIT_VERSION:1`、`DISPUTE_EVIDENCE_PACKAGE:1`、`SETTLEMENT_ELIGIBILITY_INPUT:1`）保持不变（design/07 §7）。
+- 本文保留原文第 1–9、11–13 节（决策侧与跨域通用规则）；第 10.1 节与结算控制部分移入 [COMPLIANCE_PHYSICAL_DECISIONS.md](../../../compliance/docs/database/COMPLIANCE_PHYSICAL_DECISIONS.md)，第 10.3 节移入 [DISPUTE_PHYSICAL_DECISIONS.md](../../../dispute/docs/database/DISPUTE_PHYSICAL_DECISIONS.md)。原文中的 Risk & Compliance 统计为拆分前历史快照。
 
 ## 1. 文档定位与阶段边界
 
-本文记录 [Risk & Compliance 逻辑数据库模型](../../../agent-docs/database/RISK_COMPLIANCE_DATABASE.md) 到 PDManer 4.9.3 物理模型的确定性映射。共享边界以 [数据库设计总览](../../../agent-docs/database/README.md)、[PDManer 数据库设计规范](../../../agent-docs/DATABASE_DESIGN_GUIDE.md)、[可靠异步执行规范](../../../agent-docs/COMPENSATION_EVENT_GUIDE.md) 和 [Vault 架构](../../../agent-docs/VAULT_SERVICE_ARCHITECTURE.md) 为准。
+本文记录 [Risk & Compliance 逻辑数据库模型](../../../../agent-docs/database/RISK_COMPLIANCE_DATABASE.md) 到 PDManer 4.9.3 物理模型的确定性映射。共享边界以 [数据库设计总览](../../../../agent-docs/database/README.md)、[PDManer 数据库设计规范](../../../../agent-docs/DATABASE_DESIGN_GUIDE.md)、[可靠异步执行规范](../../../../agent-docs/COMPENSATION_EVENT_GUIDE.md) 和 [Vault 架构](../../../../agent-docs/VAULT_SERVICE_ARCHITECTURE.md) 为准。
 
-目标模型位于 [risk-compliance.pdma.json](./risk-compliance.pdma.json)，只能由 [Risk Generator](../../../scripts/pdmaner/risk/generate-risk-compliance-model.mjs) 从共享模板、八组生产 Manifest 和显式物理 Policy 确定性生成，并由独立的 [模型契约测试](../../../scripts/pdmaner/risk-compliance-model.test.mjs) 校验。当前 Dispute 边界以 [7 表平衡优化设计](../../../agent-docs/plans/2026-08-28-risk-dispute-balanced-optimization-design.md) 和 [实施计划](../../../agent-docs/plans/2026-08-28-risk-dispute-balanced-optimization-implementation-plan.md) 为准，Settlement Control 三表边界以 [3 表平衡精简设计](../../../agent-docs/plans/2026-08-28-risk-settlement-eligibility-balanced-simplification-design.md) 为准，当前 Manual Payout 四检查点以 [对齐实施记录](../../../agent-docs/plans/2026-08-29-risk-manual-payout-eligibility-checkpoint-alignment-implementation-plan.md) 为准，Limit 边界以 [7 表平衡精简设计](../../../agent-docs/plans/2026-08-28-risk-limit-balanced-simplification-design.md) 和 [实施计划](../../../agent-docs/plans/2026-08-28-risk-limit-balanced-simplification-implementation-plan.md) 为准，Decision Engine/Evaluation 边界以 [27 表平衡精简计划](../../../agent-docs/plans/2026-08-27-risk-decision-engine-balanced-simplification-implementation-plan.md) 为准，DD 边界以 [19 表精简计划](../../../agent-docs/plans/2026-08-27-risk-dd-simplification-implementation-plan.md) 为准；不得直接修改生成 JSON 绕过 Manifest、Policy 或测试 Oracle。
+目标模型位于 [risk-compliance.pdma.json](./risk-decision.pdma.json)，只能由 [Risk Generator](../../../../scripts/pdmaner/risk/generate-risk-decision-model.mjs) 从共享模板、八组生产 Manifest 和显式物理 Policy 确定性生成，并由独立的 [模型契约测试](../../../../scripts/pdmaner/risk-service-model.test.mjs) 校验。当前 Dispute 边界以 [7 表平衡优化设计](../../../../agent-docs/plans/2026-08-28-risk-dispute-balanced-optimization-design.md) 和 [实施计划](../../../../agent-docs/plans/2026-08-28-risk-dispute-balanced-optimization-implementation-plan.md) 为准，Settlement Control 三表边界以 [3 表平衡精简设计](../../../../agent-docs/plans/2026-08-28-risk-settlement-eligibility-balanced-simplification-design.md) 为准，当前 Manual Payout 四检查点以 [对齐实施记录](../../../../agent-docs/plans/2026-08-29-risk-manual-payout-eligibility-checkpoint-alignment-implementation-plan.md) 为准，Limit 边界以 [7 表平衡精简设计](../../../../agent-docs/plans/2026-08-28-risk-limit-balanced-simplification-design.md) 和 [实施计划](../../../../agent-docs/plans/2026-08-28-risk-limit-balanced-simplification-implementation-plan.md) 为准，Decision Engine/Evaluation 边界以 [27 表平衡精简计划](../../../../agent-docs/plans/2026-08-27-risk-decision-engine-balanced-simplification-implementation-plan.md) 为准，DD 边界以 [19 表精简计划](../../../../agent-docs/plans/2026-08-27-risk-dd-simplification-implementation-plan.md) 为准；不得直接修改生成 JSON 绕过 Manifest、Policy 或测试 Oracle。
 
 本文只拥有逻辑模型到 PDManer/物理 SQL 的映射规则，不以自身证明 Java、物理数据库验证、共享环境或部署
-状态；这些活态事实只见[当前实现台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md)。项目继续禁止 Flyway、
+状态；这些活态事实只见[当前实现台账](../../../../agent-docs/CURRENT_IMPLEMENTATION.md)。项目继续禁止 Flyway、
 Liquibase 或应用启动时 Schema/初始化数据迁移；本地手工应用也不授权共享环境 DDL、真实流量灰度、生产
 旁路任务或任何外部发布。
 
@@ -150,7 +166,7 @@ Feature 结果写入专用结果表；Rule 与 Predicate 可解释结果统一�
 
 ## 8. 输入快照与受限数据
 
-`t_checkout_input_snapshot`（2026-10-16 按 [结账点运行期评估](../../../requirements/20261016/risk-结账点运行期评估/design.md) 重建为 17 列）冻结一次 `CHECKOUT_PREPARE` 正式评估使用的 `ORDER_PREPARATION v5` 输入：Commerce 预分配订单 ID（业务身份）、Client、经营主体编号与来源、Local Partner（仅 PARTNER 来源）、消费者国家、币种、商品/折扣/净额、行业、MCC、明细行数与稳定输入摘要；与通用 `t_decision_evaluation` 共同构成结账评估事实，不另建评估表。消费者、网络证据、协议与文件、Finance 税额及 Finance Entity ID 均不进入结账输入。
+`t_checkout_input_snapshot`（2026-10-16 按 [结账点运行期评估](../../../../requirements/20261016/risk-结账点运行期评估/design.md) 重建为 17 列）冻结一次 `CHECKOUT_PREPARE` 正式评估使用的 `ORDER_PREPARATION v5` 输入：Commerce 预分配订单 ID（业务身份）、Client、经营主体编号与来源、Local Partner（仅 PARTNER 来源）、消费者国家、币种、商品/折扣/净额、行业、MCC、明细行数与稳定输入摘要；与通用 `t_decision_evaluation` 共同构成结账评估事实，不另建评估表。消费者、网络证据、协议与文件、Finance 税额及 Finance Entity ID 均不进入结账输入。
 
 Checkout 在消费者交互前执行，因此 Consumer Reference、Email/Phone Stable Token 和网络证据允许为空；一旦存在则按受限字段保存。Risk 不保存 Consumer Profile Token，也不建立 Device Identifier。`t_transaction_risk_assessment` 精确冻结 Payment Attempt 的 Order Context、支付方式、金额币种、行业/MCC、Consumer Token 和 Network Evidence ID/Version；不得回查当前 Commerce 改写历史。
 
@@ -181,54 +197,11 @@ Movement 的 `amount_delta/count_delta` 固定表示本次 RESERVE、COMMIT 或 
 
 ## 10. Due Diligence、Settlement 与 Dispute
 
-### 10.1 Due Diligence
+Due Diligence（原 10.1）与结算控制三表（原 10.2 前三段）归 compliance，见 [COMPLIANCE_PHYSICAL_DECISIONS.md](../../../compliance/docs/database/COMPLIANCE_PHYSICAL_DECISIONS.md)；Dispute（原 10.3）归 dispute，见 [DISPUTE_PHYSICAL_DECISIONS.md](../../../dispute/docs/database/DISPUTE_PHYSICAL_DECISIONS.md)。以下为留在 risk-decision 的出款检查点评估部分。
 
-Case 冻结 Program Version 和 Case Origin。只有 Application Case 保存来源 Application ID、Submission
-Version/Hash；Continuous Review/Manual 固定 `RISK_COMPLIANCE`。Application Case 以
-`source_namespace + source_application_id + role_type + role_id + qualification_type` 唯一定位；命中完整来源身份后比较
-Hash，相同即幂等返回、不同即冲突。现有五列唯一索引保持不变，同一数值 Application/Party 由 Typed Namespace
-隔离；本次没有新增表、字段、索引、关系或 CHECK 行。
+### 10.2 Settlement Risk Assessment 与 RCO-I09（risk-decision 部分）
 
-| Namespace | 主 Role / Qualification | 允许的关联人 Role / Qualification |
-|---|---|---|
-| `CCT_CLIENT_APPLICATION` | `CLIENT + INDIVIDUAL_KYC/ORGANIZATION_KYB` | `RELATED_PERSON + RELATED_PERSON_KYC` |
-| `CCT_OPERATING_ENTITY_APPLICATION` | `OPERATING_ENTITY + ENTITY_UNDERWRITING` | `RELATED_PERSON + RELATED_PERSON_KYC` |
-| `CCT_LOCAL_PARTNER_APPLICATION` | `LOCAL_PARTNER + PARTNER_DUE_DILIGENCE` | `RELATED_PERSON + RELATED_PERSON_KYC` |
-| `RISK_COMPLIANCE` | Continuous Review / Manual 自有来源 | 按既有 Role/Qualification 矩阵 |
-
-`ck_dd_case_origin` 只新增
-`(source_namespace='CCT_LOCAL_PARTNER_APPLICATION' AND role_type IN ('LOCAL_PARTNER','RELATED_PERSON'))`，因此该
-Namespace 拒绝 `CLIENT` 和 `OPERATING_ENTITY`；`ck_dd_case_tuple` 保持不变。CCT 只接收 Local Partner 主 Case/Decision，Risk
-管理关联人 KYC 子 Case 及其依赖。Continuous Review/Manual 的三个 Submission 字段必须为空，禁止制造虚假来源坐标。Program
-Version 仅 ACTIVE 占用 `active_slot=1`，DRAFT 不得有批准信息，ACTIVE/RETIRED 必须保留批准人和时间。Case 仅
-DRAFT/SUBMITTED/IN_REVIEW/WAITING_EVIDENCE 占 Slot，终态置空；唯一键按 Role + Qualification 防止同一资格并发建案。Case Type
-可由 Qualification 完全推导，因此不重复存列；同一行 CHECK 固定 Namespace/Role 矩阵以及
-CLIENT+INDIVIDUAL_KYC/ORGANIZATION_KYB、LOCAL_PARTNER+PARTNER_DUE_DILIGENCE、OPERATING_ENTITY+ENTITY_UNDERWRITING、RELATED_PERSON+RELATED_PERSON_KYC，并与
-CCT Application Tuple 精确对齐。
-
-Case Subject 冻结 Party Profile ID/Version No，以及 UBO、Director、Signatory 的 CCT Party Relation Version ID/Version No；持股单位与 CCT 一致为百分比 `(0,100]`。每个 Case 通过 nullable `primary_slot` 唯一键最多保留一个 PRIMARY，关联主体通过准确 Relation Version ID 防重；不再建立独立 Relation Snapshot 表。Organization KYB 必须显式依赖全部 Required UBO、Director、Signatory KYC Case/Decision。Dependency 是可变 CAS 行：`accepted_decision_id` 只能从 NULL 单向写为属于 Child Case 的有效 Decision，父 Case 终结后冻结；完整性和无环由 Processor 验证。
-
-创建 Case 时必须验证 Program、Case 的 Qualification Type 完全一致。Requirement、Check、Screening Run 引用的 Template 必须属于该 Case 冻结的同一 Program Version，Screening Template 的 Subject Role 还必须等于 Case Subject Role；所有 Required Template 必须完整实例化。Parent Organization KYB 只收组织级材料，UBO/Director/Signatory 的个人材料分别落在各自 Child KYC Case 的 PRIMARY Subject Requirement 中。
-
-Requirement 通过 `program_requirement_id` 精确回链模板，不复制 Requirement Code/Type；Evidence 通过本库 `case_subject_id` 指向案件主体，不保存外部 Party ID、Document Type 或 Document Version。Evidence 创建后只有 `status/version/update_time` 可变，Requirement、Case Subject、File ID 和 Content Hash 全部冻结。替换文件时锁定 Requirement 与现有 Evidence，在同一事务将旧 RECEIVED/ACCEPTED 行 CAS 为 SUPERSEDED、插入新 RECEIVED Evidence，并把 Requirement 推进或回退为 RECEIVED；只有新 Evidence 与 Requirement 同事务转为 ACCEPTED 后才能再次满足材料要求。
-
-Check Type 和 Screening Type 分别从精确 Program Template 推导。Channel 成功响应时，先按 `(screening_run_id, external_hit_ref)` 去重写入完整 Hit 集合，再在同一事务以 Version CAS 把 Run 从 STARTED 推进为 SUCCEEDED；FAILED/TIMED_OUT 不得写 Hit，避免部分批次。Screening Hit 只保留 OPEN/RESOLVED 队列状态；最新 Resolution 为 INSUFFICIENT_EVIDENCE 时 Hit 保持或经明确 Reviewer Correction 重新变为 OPEN，为 CONFIRMED_MATCH/FALSE_POSITIVE 时同事务 CAS 为 RESOLVED，具体结论始终读取最大 Resolution Version。`resolved_time` 表示这一版人工 Review 完成时点，不表示 Hit 必然关闭。
-
-Program `content_hash` 使用 `CODE-MOR:RISK:DD_PROGRAM_VERSION:1` Canonical Object：`programId/versionNo/reviewFrequencyCode`，以及按 `requirementCode` 排序的 Requirements、按 `checkCode` 排序的 Checks、按 `subjectRole + screeningType` 排序的 Screenings。数组元素分别只含 `requirementCode/documentType/required`、`checkCode/checkType/required/validityDays`、`subjectRole/screeningType/required`。字符串按 Unicode 原值编码，Boolean 使用 JSON true/false，所有 ID/Version/Day 使用无前导零十进制字符串，可空值显式写 JSON null；对象采用固定字段顺序后按 RFC 8785 JCS 生成 UTF-8 字节并计算 SHA-256。Status、Slot、批准信息和审计时间不进入 Hash。激活前必须重算校验，Case 只引用校验通过的准确 Program Version。Check Template 的 `validity_days` 是 Channel 结果最长有效期；非空时 `valid_until` 取 Channel 有效期与 `performed_time + validity_days` 的较早值，空值只保留 Channel 明确返回的有效期。
-
-Snapshot 在 Protect 前按 `RISK_DD_PARTY_SNAPSHOT_V1` 与 `schema_version` 校验字段白名单、排序和大小，`source_content_hash` 承诺该规范化来源 Payload，`captured_time` 表示来源采集时点而非本库插入时点。三个 Risk-owned Recoverable Token 为 `snapshot_vault_token`、`result_vault_token`、`name_vault_token`，分别只允许已批准的 `RISK_DD_PARTY_SNAPSHOT_V1`、`RISK_DD_CHECK_RESULT_V1`、`RISK_SCREENING_HIT_NAME_V1` Data Type，并由当前 Vault V1 Protect/Reveal 处理；`snapshot_vault_token` 有案件复核/审计 Reveal 消费者，保持 NOT NULL，另外两个按是否保存可恢复结果维持可空。四个 Commerce Stable Correlation Token 是 Checkout/Transaction 输入快照各自的 Email/Phone Token，Risk 不 Protect、不拥有原值，也不因保存它们取得 Reveal 权限。七个 Token 列都保留 `VARCHAR(128)` 协议缓冲，不按当前 43 字符 Wire 收紧；规则配置不调用 Vault，也不保存 Vault 业务 Resource 参数。
-
-自动 Evaluation 只形成 recommendation。`t_qualification_decision` 是正式不可变决定版本，覆盖必须记录原因；Case 内最大 `decision_version` 是局部当前决定。Screening Hit 内最大 `resolution_version` 是当前处置，不保留 Current/Supersedes 双指针。`t_role_qualification.current_decision_id` 必须保留，因为它是跨 Case 的当前生效资格投影。
-
-Program Version 保存可选 `review_frequency_code`；Role Qualification 保存频率、`next_review_time` 和 `review_status`。到期任务以 Qualification Version + Next Review Time 做 CAS，在同一本地事务直接创建 `case_origin=CONTINUOUS_REVIEW` 且带 `scheduled_review_time` 的新 Case 并推进下次时间；Role + Qualification + Scheduled Time 唯一键做最终防重。不建立 Continuous Review Plan/Run 表。
-
-### 10.2 Settlement Eligibility Control 与 RCO-I09
-
-Risk 侧当前实现恰好三张控制表：`t_settlement_control` 是 Client/Local Partner 长期控制根，`t_settlement_control_scope` 保存 OE/币种/`bank_country` 的 1:N OR 作用域，`t_settle_control_state_change` 追加完整状态历史。`MIN_SECURITY_DEPOSIT` 的最终最低金额、币种和释放条件直接属于根，没有独立 Requirement 表；它只允许 Client 且不表示 Finance Balance、资金预占或余额迁移。`SETTLEMENT_BLOCK` 可用于 Client/Local Partner，金额三列必须为空。Local Partner 配置或运行出现金额门槛都 Fail-Closed。
-
-Control 只允许 `NULL→ACTIVE→RELEASED|EXPIRED`；RELEASED/EXPIRED 是不可复活终态。根只保存唯一 `source_action_effect_id`，沿 `Action Effect→Evaluation→Release` 追溯来源；REAL、PRIMARY、SUCCEEDED、LOCAL_SYNC 的已登记 `CREATE_SETTLEMENT_CONTROL` Handler 才能创建，一个 Effect 最多一个 Control，SHADOW/REPLAY 禁止创建。创建必须同时写 1..N Scope、首条状态历史和 `SettlementControlChanged`；释放必须携带准确 `control_id + expected_version + 幂等键`，不能清除同 Role 其他活动 Control。Timer Trigger 固定为 `settlement-control-expiry:v1:<control_id>:<expected_version>:<effective_to>`，重复执行返回原终态而不复活。
-
-PRIMARY Eligibility 在 MySQL InnoDB `REPEATABLE READ` 下通过 `(role_type,role_id,active_slot,control_id)` 锁定 Role Range；零行也取得 Next-Key/Gap Lock。创建、检查、精确释放和 Timer 使用唯一锁序 `Role Range -> control_id 升序 Root -> Scope/Event`，且只有取得所需锁后才采样数据库 UTC。每个命中 Control 都冻结完整 Scope 集；任一 Block 返回 RESTRICT，同币种多个最低保证金取 MAX 而不相加。
+> 2026-10-18 拆分：`t_settlement_risk_assessment` 与 `ManualPayoutEligibilityApi` 归 risk-decision；结算控制集合改经 `compliance-api` `GET /compliance/v1/settlement-controls` 在评估事务前读取并冻结 `control_set_hash`，compliance 不可用时评估失败关闭（design/07 §2）。
 
 Payout Creation、Payout Final Approval、Payout Execution Creation 和每次 Payout External Submission 都创建新的 PRIMARY Evaluation 与 `t_settlement_risk_assessment`；同一幂等命令重放复用原 `assessment_id + evaluation_id`，不同检查点及每个新 Retry Execution 必须使用新坐标。Assessment 用结构化字段证明 `checkpoint_type`、`role_type/role_id`、`operating_entity_id`、`gross_amount/currency`、`bank_country`、`source_fact_type/id/version` 和 `input_hash`，并必须满足 `Assessment.checkpoint_type = Decision Point.point_code` 与 `Assessment.input_hash = Evaluation.input_snapshot_hash`。`bank_country` 只来自 Finance 冻结的单表 `beneficiary_account.bank_country`；契约中没有 `beneficiary_account_ver`。`source_fact_version` 限定为 MySQL signed INT 的 `1..2147483647`：创建类检查点固定为 1，审批/提交类检查点冻结命令开始时的变更前 expected/current Version。`PAYOUT_CREATION/PAYOUT_FINAL_APPROVAL` 只接受 `PAYOUT`，`PAYOUT_EXECUTION_CREATION/PAYOUT_EXTERNAL_SUBMISSION` 只接受 `PAYOUT_EXECUTION`。
 
@@ -239,20 +212,6 @@ Assessment 的 Eligibility 结果与 Evaluation 只允许六组 `(eligibility_de
 `RCO-I09` 返回不可变且可检索的 `assessment_id + evaluation_id`、`decision`、排序后的 `reason_codes[]`、完整 `matched_controls[]`、`required_amount/required_currency` 和 `control_set_hash`。Risk 不建立额外结果聚合或完整响应 Hash；Finance 必须冻结完整响应并按 Finance 本地 Canonical Contract 计算自己的 `eligibility_hash`，但不能用该 Hash 跳过后续检查点。四个检查点在各自业务副作用前都必须独立执行 Finance 本地账户门禁：Client 必须满足 `CLIENT_RECOVERY_RECEIVABLE/NONE = 0` 且 `CLIENT_SECURITY_DEPOSIT/NONE >= 本次 required_amount`，Local Partner 必须满足 `PARTNER_RECOVERY_RECEIVABLE/NONE = 0` 且 `required_amount/required_currency` 均为 NULL。非 ALLOW、Scope/1:1/Hash 不一致、账户门禁不通过或技术失败一律 Fail-Closed，不得复用早先检查点。Execution Creation 通过后 Finance 才创建 CREATED Execution 并锁定准确 BANK_CASH；Local Partner 不得查询或伪造两类 Client Account。Payout 只清偿 Client/Local Partner 已形成的应付余额；Client-to-Beneficiary Disbursement 是独立能力，不得复用这些 Point、输入或 Control。
 
 Risk 三表、Assessment、Policy 和静态校验已实现；Manual Payout 四检查点及 Finance Projection 的 Scope/完整结果/账户门禁契约已于 2026-08-29 同 Finance、requirements 和共享入口对齐。
-
-### 10.3 Dispute
-
-开案冻结 Channel Notice/Version、Channel/MID、外部争议、Payment Attempt、Order、Client、金额币种和 Client/Channel Deadline；Client Deadline 必须早于 Channel Deadline。案件直接进入 EVIDENCE_REQUIRED，并通过既有 Package/Reference/Submission Request 完成按需 RFI。
-
-Dispute 当前保持 7 张表且职责分离，但删除五个重复字段：Package 不复制 Case Deadline，Evidence Ref 不复制 Platform Document Version，Submission Request 不复制 Request Hash，Liability 不再拥有独立责任决定标识，也不复制可沿 Evaluation 取得的规则发布坐标。Liability 以 `outcome_id` 作为共享主键表达逻辑 1:1，并新增非空 `security_deposit_use_allowed`；不创建物理 FK。Outcome 与 Liability 仍不合表，因为外部结果事实和内部责任判断的来源与审计含义不同。
-
-Payment 拥有 Channel Action，Risk Request 必须回绑准确 `channel_dispute_action_id + action_source_version`。`CREATED/SUBMITTED/UNKNOWN` 占用活动 Slot 且无收口时间，`SUCCEEDED/FAILED/CANCELLED` 释放 Slot 并写收口时间；`UNKNOWN` 不允许发起第二 Request。Request 与 Package、Case 当前 Outcome、Outcome 前序三条路径均由 Case Root 锁内的完整 Tuple 查询、唯一索引与 CAS 保证同案，不创建物理复合 FK。
-
-Outcome 来源闭集为 `CHANNEL_ACTION/CLIENT_DISPOSITION/OPERATIONS_DISPOSITION/OPERATIONS_CORRECTION`，由 Type+ID+Version 唯一定位。Channel、Client、Operations 首次来源只允许 Version 1，其中后两者只产生明确授权的 LOST；Version N（N>1）只允许 Operations Correction，必须直接替代同 Case Version N-1，一个旧 Outcome 最多一个后继，Case 当前指针必须指向链尾。首次 WON/LOST State Change 必须等于 V1 Outcome，Trigger Type/ID 必须匹配其来源；每条 CLOSED 自环按 Outcome Version 顺序绑定一条 Operations Correction 且 Trigger ID 等于 `decision_source_id`。Outcome、Shared-PK Liability、Case 指针/Version、State Change 和 compensation_event 在同一 Case Root Lock 本地事务内提交。
-
-Evidence Package `content_hash` 使用 `CODE-MOR:RISK:DISPUTE_EVIDENCE_PACKAGE:1`：固定 JSON 字段顺序，ID 使用正 BIGINT 十进制字符串，Version 使用正 INTEGER，Evidence 按 `evidence_type + file_id` 数值顺序排序，元素只含 Content Hash/Type/File ID，UTF-8 后计算小写 SHA-256。Status、Deadline、Package ID 和审计时间不参与；重复 Evidence Identity、开放字段或非规范数值直接拒绝。
-
-`DisputeOpened` 只启动举证，不触发 Finance 记账或冻结，Client 沉默不得自动形成 Lost。直接 LOST 的 Trigger Type/ID 必须与 V1 来源严格匹配，Timer/Deadline/沉默均拒绝；CLOSED 自环只能与新 Operations Correction Outcome 逐版成对。每条 Liability 要么保存同一 Evaluation 下 `REAL/APPLIED/LOCAL_SYNC/SUCCEEDED` 的 Action Effect，要么让 Evaluation/Effect 同时为空并保存明确 `decided_by`；人工处置和更正必须属于后一类，禁止同时带规则与人工来源。Risk 拥有权威 Outcome 和 Liability 分类；只有 `DisputeLost` 触发 Finance Journal，且 Finance 只能在 `LOST + principal_bearer=CLIENT + security_deposit_use_allowed=1` 时使用 `CLIENT_SECURITY_DEPOSIT`，剩余缺口进入 `CLIENT_RECOVERY_RECEIVABLE`。Finance 不得从承担方或原因码推导许可。Outcome 更正只追加新版本，下游只追加补偿 Journal。
 
 ## 11. CHECK Sidecar 逻辑约束与跨行事务边界
 

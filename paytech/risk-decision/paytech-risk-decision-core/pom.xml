@@ -5,12 +5,14 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.paytech</groupId>
-        <artifactId>risk-service</artifactId>
+        <artifactId>paytech-risk-decision</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
-    <artifactId>risk-decision</artifactId>
-    <name>Risk decision</name>
+    <artifactId>paytech-risk-decision-core</artifactId>
+    <name>PayTech Risk Decision Core</name>
+    <description>Decision engine, rule / release / flow / variable / dictionary Processors, runtime evaluation, Velocity,
+        risk lists and the Manual Payout eligibility Processor (former risk-decision + risk-control).</description>
     <dependencies>
         <dependency>
             <groupId>tools.jackson.core</groupId>
@@ -20,10 +22,6 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.paytech</groupId>
-            <artifactId>risk-control</artifactId>
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
@@ -41,6 +39,7 @@
             <groupId>com.paytech</groupId>
             <artifactId>paytech-mybatis-support</artifactId>
         </dependency>
+        <!-- 名单维护锁与 Velocity / 资源锁（原 risk-decision 与 risk-control 共同依赖）。 -->
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-redis-starter</artifactId>

@@ -1,4 +1,4 @@
-package com.paytech.risk.api.decision;
+package com.paytech.risk.decision.api;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

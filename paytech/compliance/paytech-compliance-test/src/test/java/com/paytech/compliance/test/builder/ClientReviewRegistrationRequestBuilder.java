@@ -1,8 +1,8 @@
-package com.paytech.risk.test.builder.compliance;
+package com.paytech.compliance.test.builder;
 
-import static com.paytech.risk.api.enums.MaterialQualificationType.INDIVIDUAL_KYC;
-import static com.paytech.risk.api.enums.MaterialQualificationType.ORGANIZATION_KYB;
-import static com.paytech.risk.api.enums.MaterialQualificationType.RELATED_PERSON_KYC;
+import static com.paytech.compliance.api.enums.MaterialQualificationType.INDIVIDUAL_KYC;
+import static com.paytech.compliance.api.enums.MaterialQualificationType.ORGANIZATION_KYB;
+import static com.paytech.compliance.api.enums.MaterialQualificationType.RELATED_PERSON_KYC;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,11 +10,11 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 
-import com.paytech.risk.api.compliance.request.ClientReviewBusinessBody;
-import com.paytech.risk.api.compliance.request.ClientReviewDocumentBody;
-import com.paytech.risk.api.compliance.request.ClientReviewRegistrationRequestBody;
-import com.paytech.risk.api.compliance.request.ClientReviewRelationBody;
-import com.paytech.risk.api.compliance.request.ClientReviewSubjectBody;
+import com.paytech.compliance.api.request.ClientReviewBusinessBody;
+import com.paytech.compliance.api.request.ClientReviewDocumentBody;
+import com.paytech.compliance.api.request.ClientReviewRegistrationRequestBody;
+import com.paytech.compliance.api.request.ClientReviewRelationBody;
+import com.paytech.compliance.api.request.ClientReviewSubjectBody;
 
 /**
  * I01 审核登记请求 Builder

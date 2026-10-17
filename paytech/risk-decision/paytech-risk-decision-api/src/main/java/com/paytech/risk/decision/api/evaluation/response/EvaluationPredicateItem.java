@@ -1,4 +1,4 @@
-package com.paytech.risk.api.evaluation.response;
+package com.paytech.risk.decision.api.evaluation.response;
 
 /** 一个条件谓词的求值结果；条件结构以规则集版本详情为准。 */
 public class EvaluationPredicateItem {

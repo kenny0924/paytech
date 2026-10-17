@@ -1,11 +1,11 @@
 package com.paytech.risk.test.builder.decision;
 
-import com.paytech.risk.api.decision.DecisionFlowModels.Condition;
-import com.paytech.risk.api.decision.DecisionFlowModels.Edge;
-import com.paytech.risk.api.decision.DecisionFlowModels.Graph;
-import com.paytech.risk.api.decision.DecisionFlowModels.Node;
-import com.paytech.risk.api.decision.DecisionFlowModels.Position;
-import com.paytech.risk.api.decision.request.SaveFlowRequestBody;
+import com.paytech.risk.decision.api.DecisionFlowModels.Condition;
+import com.paytech.risk.decision.api.DecisionFlowModels.Edge;
+import com.paytech.risk.decision.api.DecisionFlowModels.Graph;
+import com.paytech.risk.decision.api.DecisionFlowModels.Node;
+import com.paytech.risk.decision.api.DecisionFlowModels.Position;
+import com.paytech.risk.decision.api.request.SaveFlowRequestBody;
 import com.paytech.risk.decision.domain.enums.DecisionValue;
 import com.paytech.risk.test.builder.decision.FlowBuilder.EdgeSpec;
 import com.paytech.risk.test.builder.decision.FlowBuilder.GraphSpec;

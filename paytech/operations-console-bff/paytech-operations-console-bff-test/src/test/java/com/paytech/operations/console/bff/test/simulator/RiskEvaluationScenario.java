@@ -6,8 +6,8 @@ import java.util.Set;
 
 import com.paytech.operations.console.bff.test.simulator.RiskDecisionConfigurationSimulator.Request;
 import com.paytech.operations.console.bff.test.simulator.RiskDecisionConfigurationSimulator.SemanticFailure;
-import com.paytech.risk.api.evaluation.response.EvaluationExplanationResponseBody;
-import com.paytech.risk.api.evaluation.response.EvaluationResponseBody;
+import com.paytech.risk.decision.api.evaluation.response.EvaluationExplanationResponseBody;
+import com.paytech.risk.decision.api.evaluation.response.EvaluationResponseBody;
 
 /** 评估查询的外部 Risk 场景：按测试登记的结论与解释 DTO 应答，参数校验与 404 按 Risk 合同返回 Problem。 */
 final class RiskEvaluationScenario {

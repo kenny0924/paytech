@@ -10,7 +10,7 @@ import java.util.TreeMap;
 import org.springframework.test.web.servlet.client.EntityExchangeResult;
 
 import com.paytech.foundation.testsupport.api.AbstractHttpResponseChecker;
-import com.paytech.risk.api.evaluation.request.PaymentAttemptRiskInput;
+import com.paytech.risk.decision.api.evaluation.request.PaymentAttemptRiskInput;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;

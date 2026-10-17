@@ -22,8 +22,8 @@ import com.paytech.operations.console.bff.service.model.ClientReviewModels.Retur
 import com.paytech.operations.console.bff.service.model.ClientReviewModels.ReviewCaseDetailResponseBody;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
 import com.paytech.platform.support.api.reviewfiles.response.ReviewFileDownloadResponseBody;
-import com.paytech.risk.api.compliance.response.ClientReviewCaseResponseBody;
-import com.paytech.risk.api.compliance.response.ClientReviewCommandResponseBody;
+import com.paytech.compliance.api.response.ClientReviewCaseResponseBody;
+import com.paytech.compliance.api.response.ClientReviewCommandResponseBody;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;

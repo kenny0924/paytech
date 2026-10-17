@@ -1,4 +1,4 @@
-package com.paytech.risk.compliance.service.processor.request;
+package com.paytech.compliance.service.processor.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;

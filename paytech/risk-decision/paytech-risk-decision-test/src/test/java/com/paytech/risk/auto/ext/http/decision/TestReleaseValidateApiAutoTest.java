@@ -29,10 +29,10 @@ import org.springframework.http.MediaType;
 
 import com.paytech.foundation.common.http.ApiHeaderNames;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
-import com.paytech.risk.api.decision.DecisionReleaseManagementApi;
-import com.paytech.risk.api.decision.request.ValidateTestReleaseRequestBody;
+import com.paytech.risk.decision.api.DecisionReleaseManagementApi;
+import com.paytech.risk.decision.api.request.ValidateTestReleaseRequestBody;
 import com.paytech.risk.decision.domain.enums.DecisionReleaseStatus;
-import com.paytech.risk.test.base.MockTestBase;
+import com.paytech.risk.test.base.RiskDecisionMockTestBase;
 import com.paytech.risk.test.builder.decision.CandidateBuilder;
 import com.paytech.risk.test.checker.decision.ReleaseStoreChecker;
 import com.paytech.risk.test.checker.decision.TestReleaseValidateResponseChecker;
@@ -50,7 +50,7 @@ import com.paytech.risk.test.mocker.decision.CandidateMocker.MockedCandidate;
  *
  * @see DecisionReleaseManagementApi#validateCandidate(String, String, String, ValidateTestReleaseRequestBody)
  */
-class TestReleaseValidateApiAutoTest extends MockTestBase {
+class TestReleaseValidateApiAutoTest extends RiskDecisionMockTestBase {
     private static final String PATH = "/decision-releases/v1/candidates/%s/validate";
 
     private static final long ACTOR = CandidateBuilder.ACTOR_ID;

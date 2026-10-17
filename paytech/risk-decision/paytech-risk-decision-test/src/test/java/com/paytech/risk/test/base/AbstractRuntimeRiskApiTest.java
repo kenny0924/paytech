@@ -13,16 +13,16 @@ import org.springframework.test.web.servlet.client.EntityExchangeResult;
 
 import com.paytech.foundation.common.http.ApiHeaderNames;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
-import com.paytech.risk.api.control.request.AddRiskListEntryRequestBody;
-import com.paytech.risk.api.control.request.CreateRiskListRequestBody;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.OperandRequestBody;
-import com.paytech.risk.api.decision.request.CreateVariableRequestBody;
-import com.paytech.risk.api.decision.request.ListFeatureParameters;
-import com.paytech.risk.api.decision.request.VelocityFeatureParameters;
-import com.paytech.risk.api.decision.request.CreateExecutionReleaseRequestBody;
-import com.paytech.risk.api.decision.request.CreateRuleSetVersionRequestBody;
-import com.paytech.risk.api.decision.request.FreezeRuleSetVersionRequestBody;
-import com.paytech.risk.api.evaluation.request.EvaluateDecisionRequestBody;
+import com.paytech.risk.decision.api.control.request.AddRiskListEntryRequestBody;
+import com.paytech.risk.decision.api.control.request.CreateRiskListRequestBody;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.OperandRequestBody;
+import com.paytech.risk.decision.api.request.CreateVariableRequestBody;
+import com.paytech.risk.decision.api.request.ListFeatureParameters;
+import com.paytech.risk.decision.api.request.VelocityFeatureParameters;
+import com.paytech.risk.decision.api.request.CreateExecutionReleaseRequestBody;
+import com.paytech.risk.decision.api.request.CreateRuleSetVersionRequestBody;
+import com.paytech.risk.decision.api.request.FreezeRuleSetVersionRequestBody;
+import com.paytech.risk.decision.api.evaluation.request.EvaluateDecisionRequestBody;
 import com.paytech.risk.decision.domain.enums.DecisionReleaseStatus;
 import com.paytech.risk.decision.domain.enums.DictionaryStatus;
 import com.paytech.risk.test.builder.decision.FlowBuilder.GraphSpec;
@@ -39,7 +39,7 @@ import tools.jackson.databind.JsonNode;
  *
  * @author Kenny
  */
-public abstract class AbstractRuntimeRiskApiTest extends MockTestBase {
+public abstract class AbstractRuntimeRiskApiTest extends RiskDecisionMockTestBase {
     /** 可信操作者 Account ID。 */
     protected static final long ACTOR_ID = 70001L;
 

@@ -3,10 +3,10 @@ package com.paytech.risk.test.builder.decision;
 import java.util.Arrays;
 import java.util.List;
 
-import com.paytech.risk.api.decision.RiskVariableModels.MemberRequest;
-import com.paytech.risk.api.decision.request.CreateVariableRequestBody;
-import com.paytech.risk.api.decision.request.ReplaceMembersRequestBody;
-import com.paytech.risk.api.decision.request.UpdateVariableRequestBody;
+import com.paytech.risk.decision.api.RiskVariableModels.MemberRequest;
+import com.paytech.risk.decision.api.request.CreateVariableRequestBody;
+import com.paytech.risk.decision.api.request.ReplaceMembersRequestBody;
+import com.paytech.risk.decision.api.request.UpdateVariableRequestBody;
 import com.paytech.risk.decision.domain.enums.VariableUsage;
 import com.paytech.risk.test.builder.decision.VariableBuilder.MemberSpec;
 

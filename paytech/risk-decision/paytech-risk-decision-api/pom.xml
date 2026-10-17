@@ -5,12 +5,14 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.paytech</groupId>
-        <artifactId>risk-service</artifactId>
+        <artifactId>paytech-risk-decision</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
-    <artifactId>risk-api</artifactId>
-    <name>Risk api</name>
+    <artifactId>paytech-risk-decision-api</artifactId>
+    <name>PayTech Risk Decision API</name>
+    <description>Internal HTTP contracts of risk-decision: rule configuration, releases, flows, variables, dictionaries, risk lists,
+        unified evaluation, evaluation query and Manual Payout eligibility.</description>
     <dependencies>
         <dependency>
             <groupId>com.paytech</groupId>

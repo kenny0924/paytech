@@ -1,6 +1,6 @@
 package com.paytech.risk.test.checker.decision;
 
-import static com.paytech.risk.api.enums.RiskDecisionConfigurationErrorCode.RISK_DICTIONARY_NOT_FOUND;
+import static com.paytech.risk.decision.api.enums.RiskDecisionConfigurationErrorCode.RISK_DICTIONARY_NOT_FOUND;
 import static com.paytech.risk.test.checker.decision.DictionaryEntryResponseChecker.assertText;
 import static com.paytech.risk.test.checker.decision.DictionaryEntryResponseChecker.fields;
 import static org.junit.jupiter.api.Assertions.assertAll;

@@ -1,4 +1,4 @@
-package com.paytech.risk.auto;
+package com.paytech.risk.auto.architecture;
 
 import com.paytech.foundation.common.enums.CodeEnum;
 import com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler;
@@ -8,9 +8,14 @@ import com.paytech.risk.configuration.RiskRuntimeConfiguration;
 import com.paytech.risk.decision.domainservice.port.DecisionIdentifierGenerator;
 import com.paytech.risk.decision.domain.enums.DecisionValueType;
 import com.paytech.risk.decision.domain.enums.DictionaryStatus;
-import com.paytech.risk.test.infrastructure.RiskDatabasePrecondition;
+import com.paytech.risk.test.clear.RiskDecisionDataCleaner;
+import com.paytech.risk.test.infrastructure.RiskDecisionDatabasePrecondition;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Properties;
@@ -37,66 +42,48 @@ import tools.jackson.databind.exc.UnrecognizedPropertyException;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * 在默认 Maven 测试中保护模块依赖和本轮启动范围。
+ * 在默认 Maven 测试中保护 risk-decision 的模块依赖、装配与测试库边界（由原 RiskModuleBoundaryAutoTest 改写，design/10 §2.4）。
+ * <li>模块集合与依赖的跨服务规则由 {@link ArchitectureAutoTest}（R1–R12）执行；本类保留 POM 明细、Mapper / TypeHandler 装配、
+ * Enforcer 清单与 mock 数据库目标断言。</li>
  */
-class RiskModuleBoundaryAutoTest {
+class RiskDecisionArchitectureTest {
 
-    private static final Set<String> LIBRARIES = Set.of("api", "decision", "control", "compliance");
+    private static final String PREFIX = "paytech-risk-decision-";
 
     @Test
     void test_reactorContainsOnlyApprovedModules() throws Exception {
-        Assertions.assertEquals(Set.of("risk-api", "risk-decision",
-            "risk-control", "risk-compliance", "risk-web",
-            "risk-test"), values(readPom(""), "/project/modules/module"));
+        Assertions.assertEquals(Set.of("paytech-risk-decision-api", "paytech-risk-decision-core",
+            "paytech-risk-decision-app", "paytech-risk-decision-test"), values(readPom(""), "/project/modules/module"));
     }
 
     @Test
     void test_businessLibrariesHaveOnlyApprovedDependencies() throws Exception {
-        for (String module : LIBRARIES) {
-            Document pom = readPom("risk-" + module);
-            Set<String> dependencies = values(pom, "/project/dependencies/dependency/artifactId");
-            if (module.equals("api")) {
-                Assertions.assertEquals(Set.of("paytech-common-core", "spring-web", "jakarta.validation-api"),
-                    dependencies);
-            } else if (module.equals("decision")) {
-                // 2026-10-14 支付反欺诈一期：决策模块单向依赖 risk-control 的名单命中能力，影子回放使用补偿任务。
-                Assertions.assertEquals(Set.of("risk-control", "paytech-common-core", "paytech-json-canonicalization",
-                    "paytech-compensation-event", "paytech-mybatis-support", "paytech-redis-starter", "mybatis",
-                    "spring-boot", "jakarta.validation-api", "spring-context", "spring-tx", "lombok",
-                    "jackson-databind"), dependencies);
-                Assertions.assertEquals(Set.of("provided"),
-                    values(pom, "/project/dependencies/dependency[artifactId='lombok']/scope"));
-            } else if (module.equals("compliance")) {
-                Assertions.assertEquals(Set.of("paytech-common-core", "paytech-compensation-event", "mybatis", "spring-context",
-                    "spring-tx", "spring-boot", "jackson-databind", "lombok"), dependencies);
-                Assertions.assertEquals(Set.of("provided"),
-                    values(pom, "/project/dependencies/dependency[artifactId='lombok']/scope"));
-            } else if (module.equals("control")) {
-                // 2026-10-14 支付反欺诈一期：名单持久化与名单维护锁。
-                Assertions.assertEquals(Set.of("paytech-common-core", "paytech-redis-starter", "mybatis", "spring-context",
-                    "spring-tx", "lombok"), dependencies);
-                Assertions.assertEquals(Set.of("provided"),
-                    values(pom, "/project/dependencies/dependency[artifactId='lombok']/scope"));
-            } else {
-                Assertions.assertTrue(dependencies.isEmpty(), "当前业务 JAR 不应引入依赖: " + module);
-            }
-        }
-        Set<String> web = values(readPom("risk-web"),
+        Assertions.assertEquals(Set.of("paytech-common-core", "spring-web", "jakarta.validation-api"),
+            values(readPom(PREFIX + "api"), "/project/dependencies/dependency/artifactId"));
+        Document core = readPom(PREFIX + "core");
+        // risk-control 并入后：名单持久化与名单维护锁、影子回放补偿任务、决策哈希规范化。
+        Assertions.assertEquals(Set.of("paytech-common-core", "paytech-json-canonicalization",
+            "paytech-compensation-event", "paytech-mybatis-support", "paytech-redis-starter", "mybatis",
+            "spring-boot", "jakarta.validation-api", "spring-context", "spring-tx", "lombok",
+            "jackson-databind"), values(core, "/project/dependencies/dependency/artifactId"));
+        Assertions.assertEquals(Set.of("provided"),
+            values(core, "/project/dependencies/dependency[artifactId='lombok']/scope"));
+        Set<String> app = values(readPom(PREFIX + "app"),
             "/project/dependencies/dependency[groupId='com.paytech']/artifactId");
-        Assertions.assertEquals(Set.of("risk-api", "risk-decision",
-            "risk-control", "risk-compliance", "paytech-mvc-web-starter", "paytech-snowflake-id", "paytech-redis-starter",
-            "paytech-compensation-event"), web);
+        Assertions.assertEquals(Set.of("paytech-risk-decision-api", "paytech-risk-decision-core",
+            "paytech-mvc-web-starter", "paytech-internal-auth", "paytech-snowflake-id", "paytech-redis-starter",
+            "paytech-compensation-event"), app);
     }
 
     @Test
     void test_persistenceDependenciesStayInOwningModules() throws Exception {
-        Document web = readPom("risk-web");
+        Document web = readPom(PREFIX + "app");
         Assertions.assertTrue(values(web, "/project/dependencies/dependency/artifactId")
             .containsAll(Set.of("spring-boot-starter-jdbc", "mybatis-spring-boot-starter", "mysql-connector-j")));
         Assertions.assertEquals(Set.of("runtime"), values(web,
             "/project/dependencies/dependency[artifactId='mysql-connector-j']/scope"));
 
-        Document test = readPom("risk-test");
+        Document test = readPom(PREFIX + "test");
         Assertions.assertEquals(Set.of("test"), values(test,
             "/project/dependencies/dependency[artifactId='spring-jdbc']/scope"));
     }
@@ -106,23 +93,23 @@ class RiskModuleBoundaryAutoTest {
         Set<String> bans = values(readPom(""),
             "/project/build/plugins/plugin[artifactId='maven-enforcer-plugin']/executions/execution"
                 + "[id='risk-bootstrap-scope']/configuration/rules/bannedDependencies/excludes/exclude");
-        // 2026-10-13 用户批准：Client 入驻审核结果经 RabbitMQ 回传 CCT，放开 AMQP/RabbitMQ/补偿任务/XXL-Job。
+        // 原 Risk 禁令原样保留（09 §1.4），追加其他服务 core / app 通配禁令（D09）；放行自身 core / app 与 paytech-common-core。
         Assertions.assertEquals(Set.of("org.flywaydb:*", "org.liquibase:*", "com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-config",
             "org.springframework:spring-webflux", "org.springframework.cloud:spring-cloud-starter-gateway*",
             "org.springframework.cloud:spring-cloud-starter-openfeign", "org.apache.dubbo:*", "org.mockito:*",
-            "org.testcontainers:*"), bans);
+            "org.testcontainers:*", "com.paytech:*-core", "com.paytech:*-app"), bans);
     }
 
     @Test
     void test_onlyWebIsExecutableAndTestIsNotPublished() throws Exception {
-        for (String module : Set.of("api", "decision", "control", "compliance", "test")) {
-            Assertions.assertFalse(values(readPom("risk-" + module),
+        for (String module : Set.of("api", "core", "test")) {
+            Assertions.assertFalse(values(readPom(PREFIX + module),
                 "/project/build/plugins/plugin/artifactId").contains("spring-boot-maven-plugin"));
         }
-        Assertions.assertEquals(Set.of("exec"), values(readPom("risk-web"),
+        Assertions.assertEquals(Set.of("exec"), values(readPom(PREFIX + "app"),
             "/project/build/plugins/plugin[artifactId='spring-boot-maven-plugin']"
                 + "/executions/execution/configuration/classifier"));
-        Document test = readPom("risk-test");
+        Document test = readPom(PREFIX + "test");
         Assertions.assertEquals(Set.of("true"), values(test, "/project/properties/maven.install.skip"));
         Assertions.assertEquals(Set.of("true"), values(test, "/project/properties/maven.deploy.skip"));
     }
@@ -135,11 +122,13 @@ class RiskModuleBoundaryAutoTest {
             "com/paytech/foundation/jsoncanonicalization/api/Rfc8785JsonCanonicalizer.class",
             "com/paytech/foundation/mybatis/typehandler/InstantTypeHandler.class",
             "org/redisson/Redisson.class", "org/springframework/transaction/support/TransactionTemplate.class",
-            "org/springframework/amqp/rabbit/core/RabbitTemplate.class",
             "com/paytech/foundation/compensation/api/CompensationEventRegistrar.class")) {
             Assertions.assertNotNull(getClass().getClassLoader().getResource(resource), resource);
         }
-        for (String resource : Set.of("org/mockito/Mockito.class", "org/testcontainers/containers/MySQLContainer.class")) {
+        // 审核结果发布随 compliance 拆走：risk-decision 不发布也不消费 RabbitMQ（A10），合规代码不在 classpath。
+        for (String resource : Set.of("org/mockito/Mockito.class", "org/testcontainers/containers/MySQLContainer.class",
+            "org/springframework/amqp/rabbit/core/RabbitTemplate.class",
+            "com/paytech/compliance/domainservice/service/ClientReviewService.class")) {
             Assertions.assertNull(getClass().getClassLoader().getResource(resource), resource);
         }
     }
@@ -149,8 +138,7 @@ class RiskModuleBoundaryAutoTest {
         MapperScan mapperScan = PersistenceConfiguration.class.getAnnotation(MapperScan.class);
         Assertions.assertNotNull(mapperScan);
         Assertions.assertEquals(Set.of("com.paytech.risk.decision.core.dal.mapper",
-            "com.paytech.risk.control.core.dal.mapper", "com.paytech.risk.compliance.core.dal.mapper"),
-            Set.of(mapperScan.basePackages()));
+            "com.paytech.risk.control.core.dal.mapper"), Set.of(mapperScan.basePackages()));
         Assertions.assertEquals("sqlSessionTemplate", mapperScan.sqlSessionTemplateRef());
 
         PersistenceConfiguration persistence = new PersistenceConfiguration();
@@ -217,8 +205,7 @@ class RiskModuleBoundaryAutoTest {
         for (int index = 0; properties.getProperty("web.logging.metadata-only-path-prefixes[" + index + "]") != null; index++) {
             metadataOnly.add(properties.getProperty("web.logging.metadata-only-path-prefixes[" + index + "]"));
         }
-        Assertions.assertEquals(Set.of("/internal/due-diligence/material-requirements", "/client-onboarding-review", "/client-onboarding-admin",
-            "/decision-dictionaries", "/decision-rule-sets", "/decision-releases", "/decision-flows",
+        Assertions.assertEquals(Set.of("/decision-dictionaries", "/decision-rule-sets", "/decision-releases", "/decision-flows",
             "/decision-variables", "/risk-lists", "/risk-decisions"), metadataOnly);
         Assertions.assertEquals("${RISK_DECISION_ENVIRONMENT}", properties.getProperty("decision.runtime.environment"));
         Assertions.assertEquals("${RISK_SNOWFLAKE_REGION_ID}",
@@ -246,37 +233,67 @@ class RiskModuleBoundaryAutoTest {
         }
     }
 
-    /** mock Profile 的数据库目标固定为本机 Loopback 的 mor_risk 与 risk_app 账号，且从不执行 SQL 初始化。 */
+    /** mock Profile 的数据库目标固定为本机 Loopback 的 mor_risk_decision 与 risk_decision_app 账号，且从不执行 SQL 初始化。 */
     @Test
     void test_mockDatabaseTargetIsFixedToOwnedLoopbackSchema() {
         Properties properties = properties("application-mock.yml");
         String url = properties.getProperty("spring.datasource.url");
         String username = properties.getProperty("spring.datasource.username");
         Assertions.assertEquals(
-            "jdbc:mysql://127.0.0.1:13306/mor_risk?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC",
+            "jdbc:mysql://127.0.0.1:13306/mor_risk_decision?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC",
             url);
-        Assertions.assertEquals("risk_app", username);
+        Assertions.assertEquals("risk_decision_app", username);
         // 环境变量优先，缺省为仓库 local-environment 的 Loopback 本地密码；断言只核对覆盖顺序，不复述密码值。
         Assertions.assertTrue(properties.getProperty("spring.datasource.password")
-            .startsWith("${RISK_TEST_DB_PASSWORD:${MOR_RISK_DB_PASSWORD:"));
+            .startsWith("${RISK_DECISION_TEST_DB_PASSWORD:${MOR_RISK_DECISION_DB_PASSWORD:"));
         Assertions.assertEquals("never", properties.getProperty("spring.sql.init.mode"));
         Assertions.assertEquals("0", properties.getProperty("decision.identifier.region-id"));
         Assertions.assertEquals("0", properties.getProperty("decision.identifier.worker-id"));
-        Assertions.assertDoesNotThrow(() -> RiskDatabasePrecondition.validateConnectionTarget(url, username));
-        Properties connectionProperties = RiskDatabasePrecondition.connectionProperties(username, "test-only");
+        Assertions.assertDoesNotThrow(() -> RiskDecisionDatabasePrecondition.validateConnectionTarget(url, username));
+        Properties connectionProperties = RiskDecisionDatabasePrecondition.connectionProperties(username, "test-only");
         Assertions.assertEquals(username, connectionProperties.getProperty("user"));
         Assertions.assertEquals("test-only", connectionProperties.getProperty("password"));
         Assertions.assertEquals("2000", connectionProperties.getProperty("connectTimeout"));
         Assertions.assertEquals("2000", connectionProperties.getProperty("socketTimeout"));
         Assertions.assertThrows(IllegalStateException.class,
-            () -> RiskDatabasePrecondition.validateConnectionTarget(
-                "jdbc:mysql://localhost:13306/mor_risk", username));
+            () -> RiskDecisionDatabasePrecondition.validateConnectionTarget(
+                "jdbc:mysql://localhost:13306/mor_risk_decision", username));
         Assertions.assertThrows(IllegalStateException.class,
-            () -> RiskDatabasePrecondition.validateConnectionTarget(
+            () -> RiskDecisionDatabasePrecondition.validateConnectionTarget(
                 "jdbc:mysql://127.0.0.1:13306/mor_platform", username));
         Assertions.assertThrows(IllegalStateException.class,
-            () -> RiskDatabasePrecondition.validateConnectionTarget(
-                "jdbc:mysql://127.0.0.1:13306/mor_risk?createDatabaseIfNotExist=true", username));
+            () -> RiskDecisionDatabasePrecondition.validateConnectionTarget(
+                "jdbc:mysql://127.0.0.1:13306/mor_risk_decision?createDatabaseIfNotExist=true", username));
+        Assertions.assertThrows(IllegalStateException.class,
+            () -> RiskDecisionDatabasePrecondition.validateConnectionTarget(
+                "jdbc:mysql://127.0.0.1:13306/mor_risk?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC",
+                username), "拆分前的共享库 mor_risk 不再是本服务的测试库");
+    }
+
+    /** A7：全表清理器触碰的表集合等于 init/ddl.sql 的 CREATE TABLE 集合，前置检查的表数与之一致；Mapper XML 只引用这些表。 */
+    @Test
+    void test_cleanerAndPreconditionMatchTestDdl() throws Exception {
+        Path module = Path.of(System.getProperty("risk.reactor.root")).resolve(PREFIX + "test");
+        Set<String> ddl = tables(Files.readString(module.resolve("src/test/resources/init/ddl.sql")),
+            Pattern.compile("(?m)^CREATE TABLE `?(t_[a-z0-9_]+)`?"));
+        Assertions.assertEquals(ddl, new TreeSet<>(RiskDecisionDataCleaner.tables()));
+        Assertions.assertEquals(ddl.size(), RiskDecisionDatabasePrecondition.EXPECTED_TABLE_COUNT);
+        Set<String> mapped = new TreeSet<>();
+        try (var files = Files.walk(Path.of(System.getProperty("risk.reactor.root")).resolve(PREFIX + "core/src/main/resources"))) {
+            for (Path xml : files.filter(path -> path.toString().endsWith(".xml")).toList()) {
+                mapped.addAll(tables(Files.readString(xml), Pattern.compile("\\b(t_[a-z0-9_]+)\\b")));
+            }
+        }
+        Assertions.assertTrue(ddl.containsAll(mapped), () -> "Mapper 引用了本库以外的表: " + mapped);
+    }
+
+    private static Set<String> tables(String text, Pattern pattern) {
+        Set<String> tables = new TreeSet<>();
+        Matcher matcher = pattern.matcher(text);
+        while (matcher.find()) {
+            tables.add(matcher.group(1));
+        }
+        return tables;
     }
 
     private Document readPom(String module) throws Exception {

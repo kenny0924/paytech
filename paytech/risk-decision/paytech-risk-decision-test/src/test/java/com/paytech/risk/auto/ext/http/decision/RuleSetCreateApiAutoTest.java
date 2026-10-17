@@ -3,9 +3,9 @@ package com.paytech.risk.auto.ext.http.decision;
 import static com.paytech.foundation.common.error.CommonErrorCode.BUSINESS_CHECK_FAILED;
 import static com.paytech.foundation.common.error.CommonErrorCode.CONCURRENT_REQUEST;
 import static com.paytech.foundation.common.error.CommonErrorCode.INTERNAL_ERROR;
-import static com.paytech.risk.api.enums.RiskDecisionConfigurationErrorCode.RISK_DICTIONARY_SELECTION_UNAVAILABLE;
-import static com.paytech.risk.api.enums.RiskDecisionConfigurationErrorCode.RISK_RULE_SET_DELETED;
-import static com.paytech.risk.api.enums.RiskVariableErrorCode.*;
+import static com.paytech.risk.decision.api.enums.RiskDecisionConfigurationErrorCode.RISK_DICTIONARY_SELECTION_UNAVAILABLE;
+import static com.paytech.risk.decision.api.enums.RiskDecisionConfigurationErrorCode.RISK_RULE_SET_DELETED;
+import static com.paytech.risk.decision.api.enums.RiskVariableErrorCode.*;
 import static com.paytech.risk.decision.domain.enums.RuleSetVersionStatus.*;
 import static com.paytech.risk.test.builder.decision.RuleSetBuilder.versions;
 import static com.paytech.risk.test.builder.decision.RuleSetCreateRequestBuilder.*;
@@ -26,12 +26,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementApi;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.AdditionalAction;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.OperandRequestBody;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.RuleRequestBody;
-import com.paytech.risk.api.decision.request.CreateRuleSetVersionRequestBody;
-import com.paytech.risk.api.enums.RiskVariableErrorCode;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementApi;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.AdditionalAction;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.OperandRequestBody;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.RuleRequestBody;
+import com.paytech.risk.decision.api.request.CreateRuleSetVersionRequestBody;
+import com.paytech.risk.decision.api.enums.RiskVariableErrorCode;
 import com.paytech.risk.decision.domain.enums.ComparisonOperator;
 import com.paytech.risk.decision.domain.enums.DecisionValue;
 import com.paytech.risk.decision.domain.enums.DecisionValueType;
@@ -40,7 +40,7 @@ import com.paytech.risk.decision.domain.enums.GroupOperator;
 import com.paytech.risk.decision.domain.enums.NodeType;
 import com.paytech.risk.decision.domain.enums.OperandRole;
 import com.paytech.risk.decision.domain.enums.OperandSource;
-import com.paytech.risk.test.base.MockTestBase;
+import com.paytech.risk.test.base.RiskDecisionMockTestBase;
 import com.paytech.risk.test.builder.decision.RuleSetCreateRequestBuilder;
 import com.paytech.risk.test.checker.decision.RuleSetCommandResponseChecker;
 import com.paytech.risk.test.checker.decision.RuleSetStoreChecker;
@@ -63,7 +63,7 @@ import com.paytech.risk.test.mocker.decision.RuleSetMocker.MockedRuleSet;
  *
  * @see DecisionRuleSetManagementApi#createRuleSetVersion(String, String, CreateRuleSetVersionRequestBody)
  */
-class RuleSetCreateApiAutoTest extends MockTestBase {
+class RuleSetCreateApiAutoTest extends RiskDecisionMockTestBase {
     private static final String PATH = "/decision-rule-sets/v1/rule-sets";
 
     private static final long ACTOR = 70001L;

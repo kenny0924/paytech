@@ -1,26 +1,26 @@
-package com.paytech.risk.auto.ext.http.compliance;
+package com.paytech.compliance.auto.ext.http;
 
 import static com.paytech.foundation.common.error.CommonErrorCode.INVALID_REQUEST;
 import static com.paytech.foundation.common.error.CommonErrorCode.UNSUPPORTED_MEDIA_TYPE;
 import static com.paytech.foundation.common.error.CommonErrorCode.VALIDATION_ERROR;
-import static com.paytech.risk.api.enums.ClientReviewErrorCode.CLIENT_REVIEW_CLOSED;
-import static com.paytech.risk.api.enums.ClientReviewErrorCode.CLIENT_REVIEW_NOT_FOUND;
-import static com.paytech.risk.api.enums.ClientReviewErrorCode.CLIENT_REVIEW_NOT_READY;
-import static com.paytech.risk.compliance.domain.ClientReviewAction.APPROVE;
-import static com.paytech.risk.compliance.domain.ClientReviewAction.REJECT;
-import static com.paytech.risk.compliance.domain.ClientReviewAction.RETURN;
-import static com.paytech.risk.compliance.domainservice.policy.ClientReviewApprovalPolicy.CHILD_CASE_NOT_ACTIVE;
-import static com.paytech.risk.compliance.domainservice.policy.ClientReviewApprovalPolicy.CLASSIFICATION_NOT_RECEIVED;
-import static com.paytech.risk.compliance.domainservice.policy.ClientReviewApprovalPolicy.EVIDENCE_PENDING;
-import static com.paytech.risk.compliance.domainservice.policy.ClientReviewApprovalPolicy.REQUIRED_MATERIAL_NOT_ACCEPTED;
-import static com.paytech.risk.test.builder.compliance.ClientReviewCaseBuilder.ACCEPTED;
-import static com.paytech.risk.test.builder.compliance.ClientReviewCaseBuilder.RECEIVED;
-import static com.paytech.risk.test.builder.compliance.ClientReviewCaseBuilder.REJECTED;
-import static com.paytech.risk.test.builder.compliance.ClientReviewCaseBuilder.SUBMITTED;
-import static com.paytech.risk.test.builder.compliance.ClientReviewCaseBuilder.individual;
-import static com.paytech.risk.test.builder.compliance.ClientReviewCaseBuilder.organization;
-import static com.paytech.risk.test.builder.compliance.ClientReviewRegistrationRequestBuilder.IDENTITY_DOCUMENT;
-import static com.paytech.risk.test.builder.compliance.ClientReviewRegistrationRequestBuilder.PROOF_OF_ADDRESS;
+import static com.paytech.compliance.api.enums.ClientReviewErrorCode.CLIENT_REVIEW_CLOSED;
+import static com.paytech.compliance.api.enums.ClientReviewErrorCode.CLIENT_REVIEW_NOT_FOUND;
+import static com.paytech.compliance.api.enums.ClientReviewErrorCode.CLIENT_REVIEW_NOT_READY;
+import static com.paytech.compliance.domain.ClientReviewAction.APPROVE;
+import static com.paytech.compliance.domain.ClientReviewAction.REJECT;
+import static com.paytech.compliance.domain.ClientReviewAction.RETURN;
+import static com.paytech.compliance.domainservice.policy.ClientReviewApprovalPolicy.CHILD_CASE_NOT_ACTIVE;
+import static com.paytech.compliance.domainservice.policy.ClientReviewApprovalPolicy.CLASSIFICATION_NOT_RECEIVED;
+import static com.paytech.compliance.domainservice.policy.ClientReviewApprovalPolicy.EVIDENCE_PENDING;
+import static com.paytech.compliance.domainservice.policy.ClientReviewApprovalPolicy.REQUIRED_MATERIAL_NOT_ACCEPTED;
+import static com.paytech.compliance.test.builder.ClientReviewCaseBuilder.ACCEPTED;
+import static com.paytech.compliance.test.builder.ClientReviewCaseBuilder.RECEIVED;
+import static com.paytech.compliance.test.builder.ClientReviewCaseBuilder.REJECTED;
+import static com.paytech.compliance.test.builder.ClientReviewCaseBuilder.SUBMITTED;
+import static com.paytech.compliance.test.builder.ClientReviewCaseBuilder.individual;
+import static com.paytech.compliance.test.builder.ClientReviewCaseBuilder.organization;
+import static com.paytech.compliance.test.builder.ClientReviewRegistrationRequestBuilder.IDENTITY_DOCUMENT;
+import static com.paytech.compliance.test.builder.ClientReviewRegistrationRequestBuilder.PROOF_OF_ADDRESS;
 
 import java.time.Instant;
 import java.util.List;
@@ -41,23 +41,24 @@ import org.springframework.http.MediaType;
 
 import com.paytech.foundation.common.http.ApiHeaderNames;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
-import com.paytech.risk.api.compliance.ClientReviewAdminApi;
-import com.paytech.risk.api.compliance.request.ClientReviewDecisionRequestBody;
-import com.paytech.risk.api.compliance.request.ClientReviewEvidenceReviewRequestBody;
-import com.paytech.risk.api.compliance.request.ClientReviewReturnRequestBody;
-import com.paytech.risk.compliance.domain.ClientReviewAction;
-import com.paytech.risk.test.base.MockTestBase;
-import com.paytech.risk.test.builder.compliance.ClientReviewCaseBuilder;
-import com.paytech.risk.test.builder.compliance.ClientReviewClassificationsRequestBuilder;
-import com.paytech.risk.test.builder.compliance.ClientReviewDecisionRequestBuilder;
-import com.paytech.risk.test.builder.compliance.ClientReviewReturnRequestBuilder;
-import com.paytech.risk.test.checker.compliance.ClientReviewCommandResponseChecker;
-import com.paytech.risk.test.checker.compliance.ClientReviewStoreChecker;
-import com.paytech.risk.test.mapper.compliance.ClientReviewTestMapper.CaseRow;
-import com.paytech.risk.test.mocker.compliance.ClientReviewMocker;
-import com.paytech.risk.test.mocker.compliance.ClientReviewMocker.MockedEvidence;
-import com.paytech.risk.test.mocker.compliance.ClientReviewMocker.MockedReview;
-import com.paytech.risk.test.probe.ClientReviewResultProbe;
+import com.paytech.compliance.api.ClientReviewAdminApi;
+import com.paytech.compliance.api.request.ClientReviewDecisionRequestBody;
+import com.paytech.compliance.api.request.ClientReviewEvidenceReviewRequestBody;
+import com.paytech.compliance.api.request.ClientReviewReturnRequestBody;
+import com.paytech.compliance.domain.ClientReviewAction;
+import com.paytech.compliance.test.base.ComplianceMockTestBase;
+import com.paytech.compliance.test.builder.ClientReviewCaseBuilder;
+import com.paytech.compliance.test.builder.ClientReviewClassificationsRequestBuilder;
+import com.paytech.compliance.test.builder.ClientReviewDecisionRequestBuilder;
+import com.paytech.compliance.test.builder.ClientReviewReturnRequestBuilder;
+import com.paytech.compliance.test.checker.ClientReviewCommandResponseChecker;
+import com.paytech.compliance.test.checker.ClientReviewResultChecker;
+import com.paytech.compliance.test.checker.ClientReviewStoreChecker;
+import com.paytech.compliance.test.mapper.ClientReviewTestMapper.CaseRow;
+import com.paytech.compliance.test.mocker.ClientReviewMocker;
+import com.paytech.compliance.test.mocker.ClientReviewMocker.MockedEvidence;
+import com.paytech.compliance.test.mocker.ClientReviewMocker.MockedReview;
+import com.paytech.compliance.test.probe.ClientReviewResultProbe;
 
 /**
  * O07 退回修改、O08 通过、O09 最终拒绝
@@ -74,8 +75,11 @@ import com.paytech.risk.test.probe.ClientReviewResultProbe;
  * @see ClientReviewAdminApi#approveCase(String, String, String, ClientReviewDecisionRequestBody)
  * @see ClientReviewAdminApi#rejectCase(String, String, String, ClientReviewDecisionRequestBody)
  */
-class ClientReviewDecisionApiAutoTest extends MockTestBase {
+class ClientReviewDecisionApiAutoTest extends ComplianceMockTestBase {
     private static final String CASES = "/client-onboarding-admin/v1/cases/";
+
+    /** mock Profile 的 paytech.instance-id，即新信封的 instanceId。 */
+    private static final String INSTANCE_ID = "compliance-test";
 
     private static final String CLASSIFY = "/client-onboarding-review/v1/cases/%s/classifications";
 
@@ -206,7 +210,7 @@ class ClientReviewDecisionApiAutoTest extends MockTestBase {
                 .assertAccepted(review.caseId(), SUBMITTED);
         }
         HttpHeaders cct = TestRequestHeaders.internal(requestId());
-        cct.set("X-Caller-Service", "client-contract-service");
+        cct.set("X-Caller-Service", "client-master-service");
         invoke(CLASSIFY.formatted(review.caseId()), cct,
             ClientReviewClassificationsRequestBuilder.template(review.applicationId(), review.submissionId()).build())
             .assertAccepted(review.caseId(), SUBMITTED);
@@ -424,8 +428,11 @@ class ClientReviewDecisionApiAutoTest extends MockTestBase {
         String publicNote, String returnSection) {
         CaseRow main = store.caseRow(review.caseId());
         Long decisionId = action == RETURN ? null : store.decisionId(review.caseId());
-        results.awaitResult(review.caseId()).assertDecided(review, action, caseVersion, main.decisionTime(), decisionId,
-            decidedBy, publicNote, returnSection);
+        ClientReviewResultChecker legacy = results.awaitResult(review.caseId()).assertDecided(review, action, caseVersion,
+            main.decisionTime(), decisionId, decidedBy, publicNote, returnSection);
+        // 双写：旧 Topic 报文保持不变，compliance.events 收到同一结论的 Schema v1 信封（client-master 第 08 步切换前并行）。
+        results.awaitEnvelope(review.caseId()).envelope(review.caseId(), caseVersion, main.decisionTime(), INSTANCE_ID)
+            .payload(legacy.payload());
         store.assertNoResultEvent(review.caseId());
     }
 

@@ -1,10 +1,10 @@
-package com.paytech.risk.compliance.domainservice.repository.impl;
+package com.paytech.compliance.domainservice.repository.impl;
 
 import org.springframework.stereotype.Repository;
 
-import com.paytech.risk.compliance.core.dal.dataobject.CaseStateChange;
-import com.paytech.risk.compliance.core.dal.mapper.CaseStateChangeMapper;
-import com.paytech.risk.compliance.domainservice.repository.CaseStateChangeRepository;
+import com.paytech.compliance.core.dal.dataobject.CaseStateChange;
+import com.paytech.compliance.core.dal.mapper.CaseStateChangeMapper;
+import com.paytech.compliance.domainservice.repository.CaseStateChangeRepository;
 import com.paytech.foundation.common.error.ErrorException;
 
 import lombok.AllArgsConstructor;

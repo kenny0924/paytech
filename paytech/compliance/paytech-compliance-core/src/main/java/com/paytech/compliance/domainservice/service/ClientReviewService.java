@@ -1,14 +1,14 @@
-package com.paytech.risk.compliance.domainservice.service;
+package com.paytech.compliance.domainservice.service;
 
 import java.time.Instant;
 import java.util.List;
 
-import com.paytech.risk.compliance.core.dal.dataobject.CaseClassification;
-import com.paytech.risk.compliance.core.dal.dataobject.DueDiligenceCase;
-import com.paytech.risk.compliance.core.dal.dataobject.EvidenceRef;
-import com.paytech.risk.compliance.domain.ClientReviewContext;
-import com.paytech.risk.compliance.domain.ClientReviewDecisionContext;
-import com.paytech.risk.compliance.domain.ReviewRequirementView;
+import com.paytech.compliance.core.dal.dataobject.CaseClassification;
+import com.paytech.compliance.core.dal.dataobject.DueDiligenceCase;
+import com.paytech.compliance.core.dal.dataobject.EvidenceRef;
+import com.paytech.compliance.domain.ClientReviewContext;
+import com.paytech.compliance.domain.ClientReviewDecisionContext;
+import com.paytech.compliance.domain.ReviewRequirementView;
 
 /**
  * Client 入驻审核的本地保存；不访问外部服务

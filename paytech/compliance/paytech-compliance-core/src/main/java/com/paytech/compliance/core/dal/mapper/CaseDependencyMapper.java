@@ -1,9 +1,9 @@
-package com.paytech.risk.compliance.core.dal.mapper;
+package com.paytech.compliance.core.dal.mapper;
 
 import java.util.List;
 import org.apache.ibatis.annotations.Param;
 
-import com.paytech.risk.compliance.core.dal.dataobject.CaseDependency;
+import com.paytech.compliance.core.dal.dataobject.CaseDependency;
 
 /** t_dd_case_dependency 的案件依赖 SQL；业务 SQL 位于 XML。 */
 public interface CaseDependencyMapper {

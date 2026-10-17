@@ -5,8 +5,8 @@ import com.paytech.operations.console.bff.service.model.ClientReviewModels.Decis
 import com.paytech.operations.console.bff.service.model.ClientReviewModels.EvidenceReviewRequestBody;
 import com.paytech.operations.console.bff.service.model.ClientReviewModels.ReturnRequestBody;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
-import com.paytech.risk.api.compliance.response.ClientReviewCaseResponseBody;
-import com.paytech.risk.api.compliance.response.ClientReviewCommandResponseBody;
+import com.paytech.compliance.api.response.ClientReviewCaseResponseBody;
+import com.paytech.compliance.api.response.ClientReviewCommandResponseBody;
 
 /** Risk Client 入驻审核：任务查询、材料核验与结论；单次调用，不自动重试。 */
 public interface ClientReviewRiskClient {

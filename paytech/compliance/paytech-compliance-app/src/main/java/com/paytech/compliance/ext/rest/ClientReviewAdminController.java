@@ -1,26 +1,26 @@
-package com.paytech.risk.ext.rest.compliance;
+package com.paytech.compliance.ext.rest;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.foundation.web.paging.PagingResponseBody;
-import com.paytech.risk.api.compliance.ClientReviewAdminApi;
-import com.paytech.risk.api.compliance.request.ClientReviewDecisionRequestBody;
-import com.paytech.risk.api.compliance.request.ClientReviewEvidenceReviewRequestBody;
-import com.paytech.risk.api.compliance.request.ClientReviewReturnRequestBody;
-import com.paytech.risk.api.compliance.response.ClientReviewCaseResponseBody;
-import com.paytech.risk.api.compliance.response.ClientReviewCommandResponseBody;
-import com.paytech.risk.compliance.domain.ClientReviewAction;
-import com.paytech.risk.compliance.service.processor.DecideClientReviewProcessor;
-import com.paytech.risk.compliance.service.processor.GetClientReviewCaseProcessor;
-import com.paytech.risk.compliance.service.processor.ListClientReviewCasesProcessor;
-import com.paytech.risk.compliance.service.processor.ReviewClientEvidenceProcessor;
-import com.paytech.risk.compliance.service.processor.request.ClientReviewCaseRequest;
-import com.paytech.risk.compliance.service.processor.request.DecideClientReviewRequest;
-import com.paytech.risk.compliance.service.processor.request.ListClientReviewCasesRequest;
-import com.paytech.risk.compliance.service.processor.request.ReviewClientEvidenceRequest;
-import com.paytech.risk.service.request.RiskOperationRequestContextParser;
+import com.paytech.compliance.api.ClientReviewAdminApi;
+import com.paytech.compliance.api.request.ClientReviewDecisionRequestBody;
+import com.paytech.compliance.api.request.ClientReviewEvidenceReviewRequestBody;
+import com.paytech.compliance.api.request.ClientReviewReturnRequestBody;
+import com.paytech.compliance.api.response.ClientReviewCaseResponseBody;
+import com.paytech.compliance.api.response.ClientReviewCommandResponseBody;
+import com.paytech.compliance.domain.ClientReviewAction;
+import com.paytech.compliance.service.processor.DecideClientReviewProcessor;
+import com.paytech.compliance.service.processor.GetClientReviewCaseProcessor;
+import com.paytech.compliance.service.processor.ListClientReviewCasesProcessor;
+import com.paytech.compliance.service.processor.ReviewClientEvidenceProcessor;
+import com.paytech.compliance.service.processor.request.ClientReviewCaseRequest;
+import com.paytech.compliance.service.processor.request.DecideClientReviewRequest;
+import com.paytech.compliance.service.processor.request.ListClientReviewCasesRequest;
+import com.paytech.compliance.service.processor.request.ReviewClientEvidenceRequest;
+import com.paytech.foundation.web.request.OperationRequestContextParser;
 
 import lombok.AllArgsConstructor;
 
@@ -35,7 +35,7 @@ public class ClientReviewAdminController implements ClientReviewAdminApi {
     private static final int DEFAULT_SIZE = 20;
     private static final int MAX_SIZE = 100;
 
-    private final RiskOperationRequestContextParser parser;
+    private final OperationRequestContextParser parser;
     private final DecideClientReviewProcessor decideProcessor;
     private final GetClientReviewCaseProcessor detailProcessor;
     private final ListClientReviewCasesProcessor listProcessor;
@@ -78,7 +78,7 @@ public class ClientReviewAdminController implements ClientReviewAdminApi {
         ClientReviewReturnRequestBody request) {
         var context = parser.parse(actorAccountId, sessionId);
         return ClientReviewWireConverter.command(decideProcessor.process(new DecideClientReviewRequest(
-            parser.parsePositiveId("caseId", caseId), context.actorAccountId(), request.getReasonCode(), null, request.getPublicNote(),
+            parser.parsePositiveId("caseId", caseId), context.getActorAccountId(), request.getReasonCode(), null, request.getPublicNote(),
             request.getSection(), ClientReviewAction.RETURN)));
     }
 
@@ -99,7 +99,7 @@ public class ClientReviewAdminController implements ClientReviewAdminApi {
         ClientReviewAction action) {
         var context = parser.parse(actorAccountId, sessionId);
         return ClientReviewWireConverter.command(decideProcessor.process(new DecideClientReviewRequest(
-            parser.parsePositiveId("caseId", caseId), context.actorAccountId(), request.getReasonCode(), request.getReason(),
+            parser.parsePositiveId("caseId", caseId), context.getActorAccountId(), request.getReasonCode(), request.getReason(),
             request.getPublicNote(), null, action)));
     }
 }

@@ -22,21 +22,20 @@ import org.springframework.http.HttpMethod;
 
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
 import com.paytech.foundation.web.logging.WebLoggingProperties;
-import com.paytech.risk.test.base.MockTestBase;
+import com.paytech.risk.test.base.RiskDecisionMockTestBase;
 import com.paytech.risk.test.probe.HttpLogProbe;
 
 /**
- * Risk HTTP 访问日志的敏感边界
- * <li>生产 application.yml 的 metadata-only 前缀清单完整：材料、Client 入驻审核与管理、五组决策配置入口、名单维护与支付评估。</li>
+ * risk-decision HTTP 访问日志的敏感边界（compliance 的材料与入驻审核前缀随 compliance 拆出，另有一份同名测试）
+ * <li>生产 application.yml 的 metadata-only 前缀清单完整：五组决策配置入口、名单维护与支付评估。</li>
  * <li>mock Profile 实际生效的清单与生产一致，其余用例的日志行为即生产行为。</li>
  * <li>命中前缀的请求只记录方法、脱敏路径与状态，Query 与 Body 原值不进入日志；未命中前缀的请求照常记录 Query，证明 Probe 有效。</li>
  *
  * @see com.paytech.foundation.web.logging.HttpRequestResponseLoggingFilter
  */
-class WebLoggingBoundaryAutoTest extends MockTestBase {
-    /** 请求体含个人信息、审核理由或决策配置原文的入口。 */
-    private static final List<String> METADATA_ONLY_PREFIXES = List.of("/internal/due-diligence/material-requirements",
-        "/client-onboarding-review", "/client-onboarding-admin", "/decision-dictionaries", "/decision-rule-sets",
+class WebLoggingBoundaryAutoTest extends RiskDecisionMockTestBase {
+    /** 请求体含决策配置原文、名单主体值或受限评估输入的入口。 */
+    private static final List<String> METADATA_ONLY_PREFIXES = List.of("/decision-dictionaries", "/decision-rule-sets",
         "/decision-releases", "/decision-flows", "/decision-variables", "/risk-lists", "/risk-decisions");
 
     @Autowired
@@ -45,7 +44,7 @@ class WebLoggingBoundaryAutoTest extends MockTestBase {
     /** 生产配置与测试实际生效配置都恰好是这组前缀。 */
     @Test
     void test_normalFlow_prefixesMatchProduction() {
-        assertEquals(METADATA_ONLY_PREFIXES, productionPrefixes(), "risk-web application.yml");
+        assertEquals(METADATA_ONLY_PREFIXES, productionPrefixes(), "paytech-risk-decision-app application.yml");
         assertEquals(METADATA_ONLY_PREFIXES, loggingProperties.metadataOnlyPathPrefixes(), "mock Profile 生效配置");
     }
 
@@ -90,7 +89,7 @@ class WebLoggingBoundaryAutoTest extends MockTestBase {
         return METADATA_ONLY_PREFIXES;
     }
 
-    /** 读取 risk-web 打包的生产 application.yml，不经过任何 Profile 覆盖。 */
+    /** 读取 paytech-risk-decision-app 打包的生产 application.yml，不经过任何 Profile 覆盖。 */
     private static List<String> productionPrefixes() {
         YamlPropertiesFactoryBean yaml = new YamlPropertiesFactoryBean();
         yaml.setResources(new ClassPathResource("application.yml"));

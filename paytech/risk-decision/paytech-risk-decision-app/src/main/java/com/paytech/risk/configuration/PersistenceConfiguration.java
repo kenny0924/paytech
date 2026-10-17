@@ -53,13 +53,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Risk 单库持久化基础配置。
+ * risk-decision 单库（mor_risk_decision）持久化基础配置：决策与名单 Mapper、闭合枚举 TypeHandler。
  */
 @Configuration(proxyBeanMethods = false)
 @MapperScan(basePackages = {
     "com.paytech.risk.decision.core.dal.mapper",
-    "com.paytech.risk.control.core.dal.mapper",
-    "com.paytech.risk.compliance.core.dal.mapper"
+    "com.paytech.risk.control.core.dal.mapper"
 }, sqlSessionTemplateRef = "sqlSessionTemplate")
 public class PersistenceConfiguration {
 

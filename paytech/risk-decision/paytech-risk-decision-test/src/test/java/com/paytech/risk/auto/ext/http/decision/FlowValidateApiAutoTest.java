@@ -3,8 +3,8 @@ package com.paytech.risk.auto.ext.http.decision;
 import static com.paytech.foundation.common.error.CommonErrorCode.INVALID_REQUEST;
 import static com.paytech.foundation.common.error.CommonErrorCode.UNSUPPORTED_MEDIA_TYPE;
 import static com.paytech.foundation.common.error.CommonErrorCode.VALIDATION_ERROR;
-import static com.paytech.risk.api.enums.RiskVariableErrorCode.LEGACY_AUTHORING_NOT_SUPPORTED;
-import static com.paytech.risk.api.enums.RiskVariableErrorCode.VARIABLE_NOT_FOUND;
+import static com.paytech.risk.decision.api.enums.RiskVariableErrorCode.LEGACY_AUTHORING_NOT_SUPPORTED;
+import static com.paytech.risk.decision.api.enums.RiskVariableErrorCode.VARIABLE_NOT_FOUND;
 import static com.paytech.risk.decision.domain.enums.RuleSetVersionStatus.DRAFT;
 import static com.paytech.risk.decision.domain.enums.RuleSetVersionStatus.FROZEN;
 import static com.paytech.risk.decision.domain.enums.RuleSetVersionStatus.RETIRED;
@@ -26,12 +26,12 @@ import org.springframework.http.MediaType;
 
 import com.paytech.foundation.common.http.ApiHeaderNames;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
-import com.paytech.risk.api.decision.DecisionFlowManagementApi;
+import com.paytech.risk.decision.api.DecisionFlowManagementApi;
 import com.paytech.risk.decision.domain.enums.DecisionValue;
 import com.paytech.risk.decision.domain.enums.DictionaryStatus;
 import com.paytech.risk.decision.domain.enums.FlowEdgeType;
 import com.paytech.risk.decision.domain.enums.FlowNodeType;
-import com.paytech.risk.test.base.MockTestBase;
+import com.paytech.risk.test.base.RiskDecisionMockTestBase;
 import com.paytech.risk.test.builder.decision.FlowBuilder;
 import com.paytech.risk.test.builder.decision.FlowBuilder.EdgeSpec;
 import com.paytech.risk.test.builder.decision.FlowBuilder.GraphSpec;
@@ -59,9 +59,9 @@ import tools.jackson.databind.node.ObjectNode;
  * <li>参数：传输格式错误（未知/缺失键、类型、媒体类型、Query）返回 400/415，超出数组容量返回 422。</li>
  * <li>业务规则：决策点停用时不可配置（400）。</li>
  *
- * @see DecisionFlowManagementApi#validate(String, String, com.paytech.risk.api.decision.request.SaveFlowRequestBody)
+ * @see DecisionFlowManagementApi#validate(String, String, com.paytech.risk.decision.api.request.SaveFlowRequestBody)
  */
-class FlowValidateApiAutoTest extends MockTestBase {
+class FlowValidateApiAutoTest extends RiskDecisionMockTestBase {
     /** 新保存的流程使用结账当前输入合同，只能引用同合同的规则集版本。 */
     private static final int CURRENT_CONTRACT = RuleSetBuilder.CURRENT_CONTRACT_VERSION;
 

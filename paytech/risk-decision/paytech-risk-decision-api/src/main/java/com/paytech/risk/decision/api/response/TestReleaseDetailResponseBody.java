@@ -1,10 +1,10 @@
-package com.paytech.risk.api.decision.response;
+package com.paytech.risk.decision.api.response;
 
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import com.paytech.risk.api.decision.DecisionReleaseManagementModels.*;
+import com.paytech.risk.decision.api.DecisionReleaseManagementModels.*;
 
 /** TEST Candidate 的受控协议结构。 */
 @JsonInclude(JsonInclude.Include.ALWAYS)

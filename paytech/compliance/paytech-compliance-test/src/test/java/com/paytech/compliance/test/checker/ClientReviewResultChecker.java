@@ -1,4 +1,4 @@
-package com.paytech.risk.test.checker.compliance;
+package com.paytech.compliance.test.checker;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -14,8 +14,8 @@ import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageDeliveryMode;
 import org.springframework.amqp.core.MessageProperties;
 
-import com.paytech.risk.compliance.domain.ClientReviewAction;
-import com.paytech.risk.test.mocker.compliance.ClientReviewMocker.MockedReview;
+import com.paytech.compliance.domain.ClientReviewAction;
+import com.paytech.compliance.test.mocker.ClientReviewMocker.MockedReview;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -93,6 +93,11 @@ public final class ClientReviewResultChecker {
             () -> assertText(decisionId == null ? null : Long.toString(decisionId), payload.path("decisionId")),
             () -> assertText(decidedBy == null ? null : Long.toString(decidedBy), payload.path("decidedBy")));
         return this;
+    }
+
+    /** 旧报文的 payload，供新信封比对同字段同值。 */
+    public JsonNode payload() {
+        return envelope.path("payload");
     }
 
     /** 可空字符串；空值为 JSON null。 */

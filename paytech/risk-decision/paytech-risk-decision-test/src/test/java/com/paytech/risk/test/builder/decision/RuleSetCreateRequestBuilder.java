@@ -4,13 +4,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.ActionParameter;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.AdditionalAction;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.ConditionNodeRequestBody;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.OperandRequestBody;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.RuleActionRequestBody;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.RuleRequestBody;
-import com.paytech.risk.api.decision.request.CreateRuleSetVersionRequestBody;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.ActionParameter;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.AdditionalAction;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.ConditionNodeRequestBody;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.OperandRequestBody;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.RuleActionRequestBody;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.RuleRequestBody;
+import com.paytech.risk.decision.api.request.CreateRuleSetVersionRequestBody;
 
 /**
  * 保存规则集版本请求的测试 Builder

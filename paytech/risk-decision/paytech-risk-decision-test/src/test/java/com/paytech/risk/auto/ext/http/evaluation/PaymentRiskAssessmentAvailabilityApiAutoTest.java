@@ -2,7 +2,7 @@ package com.paytech.risk.auto.ext.http.evaluation;
 
 import static com.paytech.foundation.common.error.CommonErrorCode.INVALID_REQUEST;
 import static com.paytech.foundation.common.error.CommonErrorCode.VALIDATION_ERROR;
-import static com.paytech.risk.api.enums.RiskDecisionEvaluationErrorCode.RISK_DECISION_NOT_CONFIGURED;
+import static com.paytech.risk.decision.api.enums.RiskDecisionEvaluationErrorCode.RISK_DECISION_NOT_CONFIGURED;
 import static com.paytech.risk.test.builder.decision.RuleSetCreateRequestBuilder.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -17,9 +17,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import com.paytech.risk.api.evaluation.RiskDecisionApi;
-import com.paytech.risk.api.evaluation.request.EvaluateDecisionRequestBody;
-import com.paytech.risk.api.evaluation.request.PaymentAttemptRiskInput;
+import com.paytech.risk.decision.api.evaluation.RiskDecisionApi;
+import com.paytech.risk.decision.api.evaluation.request.EvaluateDecisionRequestBody;
+import com.paytech.risk.decision.api.evaluation.request.PaymentAttemptRiskInput;
 import com.paytech.risk.control.core.enums.RiskListPurpose;
 import com.paytech.risk.control.domain.list.RiskSubjectType;
 import com.paytech.risk.decision.domain.enums.EvaluationMode;

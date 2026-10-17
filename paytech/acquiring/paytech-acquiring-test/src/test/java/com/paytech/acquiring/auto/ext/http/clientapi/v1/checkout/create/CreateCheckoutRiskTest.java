@@ -30,10 +30,10 @@ import com.paytech.acquiring.domain.enums.RiskDecisionResult;
 import com.paytech.acquiring.test.base.checkout.AbstractCreateCheckoutApiTest;
 import com.paytech.acquiring.test.builder.external.CommercialFactsBuilder;
 import com.paytech.foundation.common.error.CommonErrorCode;
-import com.paytech.risk.api.enums.RiskDecisionEvaluationErrorCode;
-import com.paytech.risk.api.evaluation.request.CheckoutPrepareRiskInput;
-import com.paytech.risk.api.evaluation.request.EvaluateDecisionRequestBody;
-import com.paytech.risk.api.evaluation.response.EvaluateDecisionResponseBody;
+import com.paytech.risk.decision.api.enums.RiskDecisionEvaluationErrorCode;
+import com.paytech.risk.decision.api.evaluation.request.CheckoutPrepareRiskInput;
+import com.paytech.risk.decision.api.evaluation.request.EvaluateDecisionRequestBody;
+import com.paytech.risk.decision.api.evaluation.response.EvaluateDecisionResponseBody;
 
 /**
  * 创建结账时经真实 Risk 客户端评估 CHECKOUT_PREPARE（需求 20261016 risk-结账点运行期评估，AC-5）：结论与错误转换、一次重试、请求映射。

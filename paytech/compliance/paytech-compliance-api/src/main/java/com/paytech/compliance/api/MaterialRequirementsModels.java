@@ -1,4 +1,4 @@
-package com.paytech.risk.api.compliance;
+package com.paytech.compliance.api;
 import java.util.List;
 /** Risk 材料要求最小私网合同；程序修订不是客户资料版本。 */
 public final class MaterialRequirementsModels {

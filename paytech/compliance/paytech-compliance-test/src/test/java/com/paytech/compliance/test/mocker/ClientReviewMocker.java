@@ -1,14 +1,14 @@
-package com.paytech.risk.test.mocker.compliance;
+package com.paytech.compliance.test.mocker;
 
-import static com.paytech.risk.api.enums.MaterialQualificationType.INDIVIDUAL_KYC;
-import static com.paytech.risk.api.enums.MaterialQualificationType.ORGANIZATION_KYB;
-import static com.paytech.risk.api.enums.MaterialQualificationType.RELATED_PERSON_KYC;
-import static com.paytech.risk.test.builder.compliance.ClientReviewRegistrationRequestBuilder.COMPANY_REGISTRY_EXTRACT;
-import static com.paytech.risk.test.builder.compliance.ClientReviewRegistrationRequestBuilder.CONTENT_HASH;
-import static com.paytech.risk.test.builder.compliance.ClientReviewRegistrationRequestBuilder.PROOF_OF_ADDRESS;
-import static com.paytech.risk.test.builder.compliance.ClientReviewRegistrationRequestBuilder.REGISTRATION_CERTIFICATE;
-import static com.paytech.risk.test.builder.compliance.ClientReviewRegistrationRequestBuilder.UTILITY_BILL;
-import static com.paytech.risk.test.builder.compliance.ClientReviewRegistrationRequestBuilder.randomId;
+import static com.paytech.compliance.api.enums.MaterialQualificationType.INDIVIDUAL_KYC;
+import static com.paytech.compliance.api.enums.MaterialQualificationType.ORGANIZATION_KYB;
+import static com.paytech.compliance.api.enums.MaterialQualificationType.RELATED_PERSON_KYC;
+import static com.paytech.compliance.test.builder.ClientReviewRegistrationRequestBuilder.COMPANY_REGISTRY_EXTRACT;
+import static com.paytech.compliance.test.builder.ClientReviewRegistrationRequestBuilder.CONTENT_HASH;
+import static com.paytech.compliance.test.builder.ClientReviewRegistrationRequestBuilder.PROOF_OF_ADDRESS;
+import static com.paytech.compliance.test.builder.ClientReviewRegistrationRequestBuilder.REGISTRATION_CERTIFICATE;
+import static com.paytech.compliance.test.builder.ClientReviewRegistrationRequestBuilder.UTILITY_BILL;
+import static com.paytech.compliance.test.builder.ClientReviewRegistrationRequestBuilder.randomId;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -22,22 +22,22 @@ import java.util.UUID;
 import org.springframework.boot.test.context.TestComponent;
 
 import com.paytech.foundation.testsupport.api.Clear;
-import com.paytech.risk.api.enums.MaterialQualificationType;
-import com.paytech.risk.test.builder.compliance.ClientReviewCaseBuilder;
-import com.paytech.risk.test.builder.compliance.ClientReviewCaseBuilder.CaseSpec;
-import com.paytech.risk.test.builder.compliance.ClientReviewCaseBuilder.Classification;
-import com.paytech.risk.test.builder.compliance.ClientReviewCaseBuilder.RequirementSpec;
-import com.paytech.risk.test.builder.compliance.MaterialProgramBuilder;
-import com.paytech.risk.test.builder.compliance.MaterialProgramBuilder.Requirement;
-import com.paytech.risk.test.mapper.compliance.ClientReviewTestMapper;
-import com.paytech.risk.test.mapper.compliance.ClientReviewTestMapper.CaseRow;
-import com.paytech.risk.test.mapper.compliance.ClientReviewTestMapper.ClassificationRow;
-import com.paytech.risk.test.mapper.compliance.ClientReviewTestMapper.DependencyRow;
-import com.paytech.risk.test.mapper.compliance.ClientReviewTestMapper.EvidenceRow;
-import com.paytech.risk.test.mapper.compliance.ClientReviewTestMapper.RequirementRow;
-import com.paytech.risk.test.mapper.compliance.ClientReviewTestMapper.StateChangeRow;
-import com.paytech.risk.test.mapper.compliance.ClientReviewTestMapper.SubjectRow;
-import com.paytech.risk.test.mocker.compliance.MaterialProgramMocker.MockedProgram;
+import com.paytech.compliance.api.enums.MaterialQualificationType;
+import com.paytech.compliance.test.builder.ClientReviewCaseBuilder;
+import com.paytech.compliance.test.builder.ClientReviewCaseBuilder.CaseSpec;
+import com.paytech.compliance.test.builder.ClientReviewCaseBuilder.Classification;
+import com.paytech.compliance.test.builder.ClientReviewCaseBuilder.RequirementSpec;
+import com.paytech.compliance.test.builder.MaterialProgramBuilder;
+import com.paytech.compliance.test.builder.MaterialProgramBuilder.Requirement;
+import com.paytech.compliance.test.mapper.ClientReviewTestMapper;
+import com.paytech.compliance.test.mapper.ClientReviewTestMapper.CaseRow;
+import com.paytech.compliance.test.mapper.ClientReviewTestMapper.ClassificationRow;
+import com.paytech.compliance.test.mapper.ClientReviewTestMapper.DependencyRow;
+import com.paytech.compliance.test.mapper.ClientReviewTestMapper.EvidenceRow;
+import com.paytech.compliance.test.mapper.ClientReviewTestMapper.RequirementRow;
+import com.paytech.compliance.test.mapper.ClientReviewTestMapper.StateChangeRow;
+import com.paytech.compliance.test.mapper.ClientReviewTestMapper.SubjectRow;
+import com.paytech.compliance.test.mocker.MaterialProgramMocker.MockedProgram;
 
 /**
  * Client 入驻审核的本地数据 Mocker

@@ -1,6 +1,6 @@
-package com.paytech.risk.compliance.domainservice.repository;
+package com.paytech.compliance.domainservice.repository;
 
-import com.paytech.risk.compliance.core.dal.dataobject.QualificationDecision;
+import com.paytech.compliance.core.dal.dataobject.QualificationDecision;
 
 /** t_qualification_decision 的最终决定持久化。 */
 public interface QualificationDecisionRepository {

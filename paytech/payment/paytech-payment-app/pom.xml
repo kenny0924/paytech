@@ -19,7 +19,7 @@
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-payment-api</artifactId></dependency>
         <!-- 出站：channel-connector 候选与渠道操作（D06）、Risk 统一评估（requirements/20261015/payment-接入Risk统一评估）。 -->
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-channel-connector-api</artifactId></dependency>
-        <dependency><groupId>com.paytech</groupId><artifactId>risk-api</artifactId></dependency>
+        <dependency><groupId>com.paytech</groupId><artifactId>paytech-risk-decision-api</artifactId></dependency>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-http-client-support</artifactId></dependency>
         <!-- 内部调用身份（D26）：默认 OFF；入站校验由 MVC Starter 装配，出站 Token 见 InternalTokenClientOptions。 -->
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-internal-auth</artifactId></dependency>

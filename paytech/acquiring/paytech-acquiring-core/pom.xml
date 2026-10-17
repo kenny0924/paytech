@@ -33,7 +33,7 @@
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
-            <artifactId>risk-api</artifactId>
+            <artifactId>paytech-risk-decision-api</artifactId>
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>

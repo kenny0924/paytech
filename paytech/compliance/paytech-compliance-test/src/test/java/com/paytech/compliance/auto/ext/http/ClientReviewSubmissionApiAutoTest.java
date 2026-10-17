@@ -1,4 +1,4 @@
-package com.paytech.risk.auto.ext.http.compliance;
+package com.paytech.compliance.auto.ext.http;
 
 import static com.paytech.foundation.common.error.CommonErrorCode.BUSINESS_CHECK_FAILED;
 import static com.paytech.foundation.common.error.CommonErrorCode.CONCURRENT_REQUEST;
@@ -6,15 +6,15 @@ import static com.paytech.foundation.common.error.CommonErrorCode.INVALID_REQUES
 import static com.paytech.foundation.common.error.CommonErrorCode.SERVICE_UNAVAILABLE;
 import static com.paytech.foundation.common.error.CommonErrorCode.UNSUPPORTED_MEDIA_TYPE;
 import static com.paytech.foundation.common.error.CommonErrorCode.VALIDATION_ERROR;
-import static com.paytech.risk.api.enums.MaterialQualificationType.INDIVIDUAL_KYC;
-import static com.paytech.risk.api.enums.MaterialQualificationType.ORGANIZATION_KYB;
-import static com.paytech.risk.api.enums.MaterialQualificationType.RELATED_PERSON_KYC;
-import static com.paytech.risk.test.builder.compliance.ClientReviewRegistrationRequestBuilder.IDENTITY_DOCUMENT;
-import static com.paytech.risk.test.builder.compliance.ClientReviewRegistrationRequestBuilder.PASSPORT;
-import static com.paytech.risk.test.builder.compliance.ClientReviewRegistrationRequestBuilder.PROOF_OF_ADDRESS;
-import static com.paytech.risk.test.builder.compliance.ClientReviewRegistrationRequestBuilder.UTILITY_BILL;
-import static com.paytech.risk.test.builder.compliance.ClientReviewRegistrationRequestBuilder.individual;
-import static com.paytech.risk.test.builder.compliance.ClientReviewRegistrationRequestBuilder.organization;
+import static com.paytech.compliance.api.enums.MaterialQualificationType.INDIVIDUAL_KYC;
+import static com.paytech.compliance.api.enums.MaterialQualificationType.ORGANIZATION_KYB;
+import static com.paytech.compliance.api.enums.MaterialQualificationType.RELATED_PERSON_KYC;
+import static com.paytech.compliance.test.builder.ClientReviewRegistrationRequestBuilder.IDENTITY_DOCUMENT;
+import static com.paytech.compliance.test.builder.ClientReviewRegistrationRequestBuilder.PASSPORT;
+import static com.paytech.compliance.test.builder.ClientReviewRegistrationRequestBuilder.PROOF_OF_ADDRESS;
+import static com.paytech.compliance.test.builder.ClientReviewRegistrationRequestBuilder.UTILITY_BILL;
+import static com.paytech.compliance.test.builder.ClientReviewRegistrationRequestBuilder.individual;
+import static com.paytech.compliance.test.builder.ClientReviewRegistrationRequestBuilder.organization;
 
 import java.util.Collections;
 import java.util.List;
@@ -35,17 +35,17 @@ import org.springframework.http.MediaType;
 
 import com.paytech.foundation.common.http.ApiHeaderNames;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
-import com.paytech.risk.api.compliance.ClientReviewRegistrationApi;
-import com.paytech.risk.api.compliance.request.ClientReviewRegistrationRequestBody;
-import com.paytech.risk.api.enums.MaterialQualificationType;
-import com.paytech.risk.test.base.MockTestBase;
-import com.paytech.risk.test.builder.compliance.ClientReviewRegistrationRequestBuilder;
-import com.paytech.risk.test.builder.compliance.MaterialProgramBuilder;
-import com.paytech.risk.test.checker.compliance.ClientReviewCommandResponseChecker;
-import com.paytech.risk.test.checker.compliance.ClientReviewStoreChecker;
-import com.paytech.risk.test.mocker.compliance.ClientReviewMocker;
-import com.paytech.risk.test.mocker.compliance.MaterialProgramMocker;
-import com.paytech.risk.test.mocker.compliance.MaterialProgramMocker.MockedProgram;
+import com.paytech.compliance.api.ClientReviewRegistrationApi;
+import com.paytech.compliance.api.request.ClientReviewRegistrationRequestBody;
+import com.paytech.compliance.api.enums.MaterialQualificationType;
+import com.paytech.compliance.test.base.ComplianceMockTestBase;
+import com.paytech.compliance.test.builder.ClientReviewRegistrationRequestBuilder;
+import com.paytech.compliance.test.builder.MaterialProgramBuilder;
+import com.paytech.compliance.test.checker.ClientReviewCommandResponseChecker;
+import com.paytech.compliance.test.checker.ClientReviewStoreChecker;
+import com.paytech.compliance.test.mocker.ClientReviewMocker;
+import com.paytech.compliance.test.mocker.MaterialProgramMocker;
+import com.paytech.compliance.test.mocker.MaterialProgramMocker.MockedProgram;
 
 import tools.jackson.databind.node.ObjectNode;
 
@@ -60,7 +60,7 @@ import tools.jackson.databind.node.ObjectNode;
  *
  * @see ClientReviewRegistrationApi#register(String, ClientReviewRegistrationRequestBody)
  */
-class ClientReviewSubmissionApiAutoTest extends MockTestBase {
+class ClientReviewSubmissionApiAutoTest extends ComplianceMockTestBase {
     private static final String PATH = "/client-onboarding-review/v1/submissions";
 
     @Autowired
@@ -545,7 +545,7 @@ class ClientReviewSubmissionApiAutoTest extends MockTestBase {
     /** CCT 私网调用：内部 JSON 请求头加调用方标识。 */
     private static HttpHeaders headers() {
         HttpHeaders headers = TestRequestHeaders.internal("risk-review-" + UUID.randomUUID());
-        headers.set("X-Caller-Service", "client-contract-service");
+        headers.set("X-Caller-Service", "client-master-service");
         return headers;
     }
 }

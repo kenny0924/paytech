@@ -34,7 +34,7 @@
                 <artifactId>paytech-acquiring-app</artifactId>
                 <version>${project.version}</version>
             </dependency>
-            <!-- 服务间合同：Reactor 内的 payment / platform-support / consumer api；risk-api 第 06 步统一改坐标。
+            <!-- 服务间合同：Reactor 内的 payment / platform-support / consumer api；Risk 统一评估合同为 paytech-risk-decision-api（第 06 步）。
                  client-contract-api 已删除：Checkout 商业端口仍为固定 Mock，没有生产代码引用 commercial-api。 -->
             <dependency>
                 <groupId>com.paytech</groupId>
@@ -53,7 +53,7 @@
             </dependency>
             <dependency>
                 <groupId>com.paytech</groupId>
-                <artifactId>risk-api</artifactId>
+                <artifactId>paytech-risk-decision-api</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>

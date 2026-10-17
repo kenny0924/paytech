@@ -1,8 +1,8 @@
-package com.paytech.risk.api.decision.response;
+package com.paytech.risk.decision.api.response;
 
 import java.util.List;
 
-import com.paytech.risk.api.decision.DecisionFlowModels.Issue;
+import com.paytech.risk.decision.api.DecisionFlowModels.Issue;
 
 /** 只读静态校验结果，不预留版本或执行真实决策。 */
 public class ValidateFlowResponseBody {

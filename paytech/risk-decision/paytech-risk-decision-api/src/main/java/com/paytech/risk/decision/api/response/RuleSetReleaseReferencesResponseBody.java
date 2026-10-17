@@ -1,4 +1,4 @@
-package com.paytech.risk.api.decision.response;
+package com.paytech.risk.decision.api.response;
 
 import com.paytech.foundation.web.paging.PagingResponseBody;
 

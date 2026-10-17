@@ -4,7 +4,7 @@ import static com.paytech.foundation.common.error.CommonErrorCode.CONCURRENT_REQ
 import static com.paytech.foundation.common.error.CommonErrorCode.INTERNAL_ERROR;
 import static com.paytech.foundation.common.error.CommonErrorCode.INVALID_REQUEST;
 import static com.paytech.foundation.common.error.CommonErrorCode.VALIDATION_ERROR;
-import static com.paytech.risk.api.enums.RiskDecisionConfigurationErrorCode.*;
+import static com.paytech.risk.decision.api.enums.RiskDecisionConfigurationErrorCode.*;
 import static com.paytech.risk.decision.domain.enums.DecisionEnvironment.PRODUCTION;
 import static com.paytech.risk.decision.domain.enums.DecisionEnvironment.TEST;
 import static com.paytech.risk.decision.domain.enums.DecisionReleaseStatus.ACTIVE;
@@ -30,12 +30,12 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementApi;
-import com.paytech.risk.api.decision.request.DeleteRuleSetRequestBody;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementApi;
+import com.paytech.risk.decision.api.request.DeleteRuleSetRequestBody;
 import com.paytech.risk.decision.domain.enums.DecisionEnvironment;
 import com.paytech.risk.decision.domain.enums.RuleSetManagementStatus;
 import com.paytech.risk.decision.domain.enums.RuleSetVersionStatus;
-import com.paytech.risk.test.base.MockTestBase;
+import com.paytech.risk.test.base.RiskDecisionMockTestBase;
 import com.paytech.risk.test.builder.decision.ReleaseBuilder;
 import com.paytech.risk.test.builder.decision.RuleSetBuilder;
 import com.paytech.risk.test.checker.decision.RuleSetCommandResponseChecker;
@@ -54,7 +54,7 @@ import com.paytech.risk.test.mocker.decision.RuleSetMocker.MockedRuleSet;
  *
  * @see DecisionRuleSetManagementApi#deleteRuleSet(String, String, String, DeleteRuleSetRequestBody)
  */
-class RuleSetDeleteApiAutoTest extends MockTestBase {
+class RuleSetDeleteApiAutoTest extends RiskDecisionMockTestBase {
     private static final String PATH = "/decision-rule-sets/v1/rule-sets/%s";
 
     private static final long ACTOR = 70001L;

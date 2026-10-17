@@ -3,7 +3,7 @@ package com.paytech.risk.service.convert;
 import java.util.function.Supplier;
 
 import com.paytech.foundation.common.error.FailException;
-import com.paytech.risk.api.enums.RiskDecisionConfigurationErrorCode;
+import com.paytech.risk.decision.api.enums.RiskDecisionConfigurationErrorCode;
 import com.paytech.risk.decision.domainservice.service.DecisionConfigurationNotFoundException;
 import com.paytech.risk.decision.domainservice.service.RuleSetManagementConflictException;
 

@@ -1,16 +1,16 @@
-package com.paytech.risk.ext.rest.compliance;
+package com.paytech.compliance.ext.rest;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.paytech.foundation.common.error.InvalidParameterException;
-import com.paytech.risk.api.compliance.MaterialRequirementsApi;
-import com.paytech.risk.api.compliance.MaterialRequirementsModels.RequirementBody;
-import com.paytech.risk.api.compliance.MaterialRequirementsModels.RequirementsResponseBody;
-import com.paytech.risk.compliance.core.enums.MaterialQualificationType;
-import com.paytech.risk.compliance.service.processor.MaterialRequirementsProcessor;
-import com.paytech.risk.compliance.service.processor.request.MaterialRequirementsRequest;
-import com.paytech.risk.compliance.service.processor.response.MaterialRequirementsResponse;
+import com.paytech.compliance.api.MaterialRequirementsApi;
+import com.paytech.compliance.api.MaterialRequirementsModels.RequirementBody;
+import com.paytech.compliance.api.MaterialRequirementsModels.RequirementsResponseBody;
+import com.paytech.compliance.core.enums.MaterialQualificationType;
+import com.paytech.compliance.service.processor.MaterialRequirementsProcessor;
+import com.paytech.compliance.service.processor.request.MaterialRequirementsRequest;
+import com.paytech.compliance.service.processor.response.MaterialRequirementsResponse;
 
 import lombok.AllArgsConstructor;
 

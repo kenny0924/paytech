@@ -1,18 +1,18 @@
-package com.paytech.risk.api.decision.response;
+package com.paytech.risk.decision.api.response;
 
-import static com.paytech.risk.api.decision.DecisionRuleSetManagementModels.ActionParameterDescriptor;
-import static com.paytech.risk.api.decision.DecisionRuleSetManagementModels.DecisionActionDescriptorResponseBody;
-import static com.paytech.risk.api.decision.DecisionRuleSetManagementModels.DecisionInputFieldDescriptorResponseBody;
-import static com.paytech.risk.api.decision.DecisionRuleSetManagementModels.DecisionPointDescriptorResponseBody;
-import static com.paytech.risk.api.decision.DecisionRuleSetManagementModels.TargetBindingDescriptor;
+import static com.paytech.risk.decision.api.DecisionRuleSetManagementModels.ActionParameterDescriptor;
+import static com.paytech.risk.decision.api.DecisionRuleSetManagementModels.DecisionActionDescriptorResponseBody;
+import static com.paytech.risk.decision.api.DecisionRuleSetManagementModels.DecisionInputFieldDescriptorResponseBody;
+import static com.paytech.risk.decision.api.DecisionRuleSetManagementModels.DecisionPointDescriptorResponseBody;
+import static com.paytech.risk.decision.api.DecisionRuleSetManagementModels.TargetBindingDescriptor;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.ActionParameterDescriptor;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.DecisionActionDescriptorResponseBody;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.DecisionInputFieldDescriptorResponseBody;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.DecisionPointDescriptorResponseBody;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.TargetBindingDescriptor;
-import com.paytech.risk.api.decision.RiskVariableModels;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.ActionParameterDescriptor;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.DecisionActionDescriptorResponseBody;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.DecisionInputFieldDescriptorResponseBody;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.DecisionPointDescriptorResponseBody;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.TargetBindingDescriptor;
+import com.paytech.risk.decision.api.RiskVariableModels;
 
 /** 规则集管理响应。 */
 @JsonInclude(JsonInclude.Include.ALWAYS)

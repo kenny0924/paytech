@@ -1,4 +1,4 @@
-package com.paytech.risk.api.decision.response;
+package com.paytech.risk.decision.api.response;
 
 /** 规则集历史分页中的精确版本摘要，名称与变更信息保留保存时的事实。 */
 public class RuleSetHistoryItemResponseBody {

@@ -18,9 +18,9 @@ import org.springframework.http.HttpMethod;
 
 import com.paytech.foundation.common.http.ApiHeaderNames;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
-import com.paytech.risk.api.decision.DecisionFlowQueryApi;
+import com.paytech.risk.decision.api.DecisionFlowQueryApi;
 import com.paytech.risk.decision.domain.enums.VariableStatus;
-import com.paytech.risk.test.base.MockTestBase;
+import com.paytech.risk.test.base.RiskDecisionMockTestBase;
 import com.paytech.risk.test.checker.decision.FlowAuthoringContextResponseChecker;
 import com.paytech.risk.test.checker.decision.FlowAuthoringContextResponseChecker.ExpectedField;
 import com.paytech.risk.test.mocker.decision.FlowMocker;
@@ -35,7 +35,7 @@ import com.paytech.risk.test.mocker.decision.FlowMocker;
  *
  * @see DecisionFlowQueryApi#authoringContext(String, String, String)
  */
-class FlowAuthoringContextApiAutoTest extends MockTestBase {
+class FlowAuthoringContextApiAutoTest extends RiskDecisionMockTestBase {
     private static final String PATH = "/decision-flows/v1/authoring-context";
 
     private static final List<String> TEXT_OPERATORS = List.of("EQ", "NE", "IN", "NOT_IN", "IS_NULL", "IS_NOT_NULL");

@@ -1,6 +1,6 @@
-package com.paytech.risk.api.decision.request;
+package com.paytech.risk.decision.api.request;
 
-import com.paytech.risk.api.decision.DecisionFlowModels.Graph;
+import com.paytech.risk.decision.api.DecisionFlowModels.Graph;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;

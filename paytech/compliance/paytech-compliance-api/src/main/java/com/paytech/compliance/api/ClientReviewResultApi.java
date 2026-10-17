@@ -1,11 +1,11 @@
-package com.paytech.risk.api.compliance;
+package com.paytech.compliance.api;
 
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 
-import com.paytech.risk.api.compliance.response.ClientReviewResultResponseBody;
+import com.paytech.compliance.api.response.ClientReviewResultResponseBody;
 
 /** Client 申请的客户可见审核结果；只允许 Client BFF 在核对申请归属后私网调用，不注册到公共 Gateway。 */
 @HttpExchange("/client-onboarding-review/v1")

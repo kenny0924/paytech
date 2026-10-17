@@ -17,7 +17,7 @@ import com.paytech.risk.test.mocker.decision.VariableMocker;
  *
  * @author Kenny
  */
-public abstract class AbstractVariableApiTest extends MockTestBase {
+public abstract class AbstractVariableApiTest extends RiskDecisionMockTestBase {
     /** 变量目录与单变量资源根路径。 */
     protected static final String VARIABLES = "/decision-variables/v1/variables";
 

@@ -13,7 +13,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.config.annotation.*;
 
 import com.paytech.foundation.common.error.InvalidParameterException;
-import com.paytech.risk.api.decision.request.*;
+import com.paytech.risk.decision.api.request.*;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

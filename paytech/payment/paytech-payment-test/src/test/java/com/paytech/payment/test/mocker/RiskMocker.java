@@ -18,9 +18,9 @@ import com.paytech.foundation.testsupport.api.Clear;
 import com.paytech.foundation.testsupport.api.MockHttpFault;
 import com.paytech.payment.execution.core.enums.AuthenticationRequirement;
 import com.paytech.payment.execution.core.enums.RiskResult;
-import com.paytech.risk.api.evaluation.request.EvaluateDecisionRequestBody;
-import com.paytech.risk.api.evaluation.request.PaymentAttemptRiskInput;
-import com.paytech.risk.api.evaluation.response.EvaluateDecisionResponseBody;
+import com.paytech.risk.decision.api.evaluation.request.EvaluateDecisionRequestBody;
+import com.paytech.risk.decision.api.evaluation.request.PaymentAttemptRiskInput;
+import com.paytech.risk.decision.api.evaluation.response.EvaluateDecisionResponseBody;
 
 /**
  * Risk 统一评估的响应 DTO：按用例配置常驻结论，或按调用顺序配置一组响应（结论、Problem 故障、延迟），并记录每次请求。

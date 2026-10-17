@@ -19,10 +19,10 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.http.HttpHeaders;
 
 import com.paytech.foundation.common.http.ApiHeaderNames;
-import com.paytech.risk.api.control.RiskListManagementApi;
-import com.paytech.risk.api.control.request.AddRiskListEntryRequestBody;
-import com.paytech.risk.api.control.request.CreateRiskListRequestBody;
-import com.paytech.risk.api.control.request.DeactivateRiskListEntryRequestBody;
+import com.paytech.risk.decision.api.control.RiskListManagementApi;
+import com.paytech.risk.decision.api.control.request.AddRiskListEntryRequestBody;
+import com.paytech.risk.decision.api.control.request.CreateRiskListRequestBody;
+import com.paytech.risk.decision.api.control.request.DeactivateRiskListEntryRequestBody;
 import com.paytech.risk.control.core.enums.RiskListEntrySource;
 import com.paytech.risk.control.core.enums.RiskListEntryStatus;
 import com.paytech.risk.control.core.enums.RiskListPurpose;

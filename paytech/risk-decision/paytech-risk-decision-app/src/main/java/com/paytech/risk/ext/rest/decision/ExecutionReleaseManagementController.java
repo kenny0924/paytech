@@ -10,13 +10,13 @@ import org.springframework.web.bind.annotation.RestController;
 import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
-import com.paytech.risk.api.decision.ExecutionReleaseManagementApi;
-import com.paytech.risk.api.decision.request.CreateExecutionReleaseRequestBody;
-import com.paytech.risk.api.decision.request.StartShadowRunRequestBody;
-import com.paytech.risk.api.decision.response.ExecutionReleaseListItemResponseBody;
-import com.paytech.risk.api.decision.response.ExecutionReleaseResponseBody;
-import com.paytech.risk.api.decision.response.ShadowRun;
-import com.paytech.risk.api.decision.response.StaticCheck;
+import com.paytech.risk.decision.api.ExecutionReleaseManagementApi;
+import com.paytech.risk.decision.api.request.CreateExecutionReleaseRequestBody;
+import com.paytech.risk.decision.api.request.StartShadowRunRequestBody;
+import com.paytech.risk.decision.api.response.ExecutionReleaseListItemResponseBody;
+import com.paytech.risk.decision.api.response.ExecutionReleaseResponseBody;
+import com.paytech.risk.decision.api.response.ShadowRun;
+import com.paytech.risk.decision.api.response.StaticCheck;
 import com.paytech.risk.decision.domain.enums.DecisionReleaseStatus;
 import com.paytech.risk.decision.domain.release.ExecutionReleasePageView;
 import com.paytech.risk.decision.domain.release.ExecutionReleaseView;
@@ -30,7 +30,7 @@ import com.paytech.risk.decision.service.processor.request.CreateExecutionReleas
 import com.paytech.risk.decision.service.processor.request.ExecutionReleaseCommandRequest;
 import com.paytech.risk.decision.service.processor.request.ListExecutionReleasesRequest;
 import com.paytech.risk.decision.service.processor.request.StartShadowRunRequest;
-import com.paytech.risk.service.request.RiskOperationRequestContextParser;
+import com.paytech.foundation.web.request.OperationRequestContextParser;
 
 import lombok.AllArgsConstructor;
 
@@ -38,7 +38,7 @@ import lombok.AllArgsConstructor;
 @RestController
 @AllArgsConstructor
 public class ExecutionReleaseManagementController implements ExecutionReleaseManagementApi {
-    private final RiskOperationRequestContextParser context;
+    private final OperationRequestContextParser context;
     private final GetExecutionReleaseProcessor getProcessor;
     private final ListExecutionReleasesProcessor listProcessor;
     private final StartShadowRunProcessor shadowProcessor;
@@ -51,7 +51,7 @@ public class ExecutionReleaseManagementController implements ExecutionReleaseMan
     public ExecutionReleaseResponseBody createExecution(String actorAccountId, String sessionId,
         CreateExecutionReleaseRequestBody requestBody) {
         var actor = context.parse(actorAccountId, sessionId);
-        var request = new CreateExecutionReleaseRequest(actor.actorAccountId(),
+        var request = new CreateExecutionReleaseRequest(actor.getActorAccountId(),
             context.parseRequiredUpperCode("pointCode", requestBody.getPointCode()),
             context.parsePositiveId("flowVersionId", requestBody.getFlowVersionId()));
         return toBody(mapped(() -> createProcessor.process(request)));
@@ -88,7 +88,7 @@ public class ExecutionReleaseManagementController implements ExecutionReleaseMan
     public ExecutionReleaseResponseBody startShadowRun(String actorAccountId, String sessionId, String releaseId,
         StartShadowRunRequestBody requestBody) {
         var actor = context.parse(actorAccountId, sessionId);
-        var request = new StartShadowRunRequest(actor.actorAccountId(), context.parsePositiveId("releaseId", releaseId),
+        var request = new StartShadowRunRequest(actor.getActorAccountId(), context.parsePositiveId("releaseId", releaseId),
             requestBody.getSampleTarget());
         return toBody(mapped(() -> shadowProcessor.process(request)));
     }
@@ -102,7 +102,7 @@ public class ExecutionReleaseManagementController implements ExecutionReleaseMan
     /** 解析可信上下文与发布 ID。 */
     ExecutionReleaseCommandRequest command(String actorAccountId, String sessionId, String releaseId) {
         var actor = context.parse(actorAccountId, sessionId);
-        return new ExecutionReleaseCommandRequest(actor.actorAccountId(), context.parsePositiveId("releaseId", releaseId));
+        return new ExecutionReleaseCommandRequest(actor.getActorAccountId(), context.parsePositiveId("releaseId", releaseId));
     }
 
     /** 状态筛选：空值不筛选，未知 Code 拒绝。 */

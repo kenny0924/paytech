@@ -1,4 +1,4 @@
-package com.paytech.risk.api.evaluation.response;
+package com.paytech.risk.decision.api.evaluation.response;
 
 /** 以某正式评估为基线的一个影子评估的比较结果。 */
 public class EvaluationShadowItem {

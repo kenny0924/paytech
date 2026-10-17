@@ -24,8 +24,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.http.HttpHeaders;
 
 import com.paytech.foundation.common.http.ApiHeaderNames;
-import com.paytech.risk.api.decision.DecisionFlowManagementApi;
-import com.paytech.risk.api.evaluation.request.PaymentAttemptRiskInput;
+import com.paytech.risk.decision.api.DecisionFlowManagementApi;
+import com.paytech.risk.decision.api.evaluation.request.PaymentAttemptRiskInput;
 import com.paytech.risk.decision.domain.enums.AuthenticationRequirement;
 import com.paytech.risk.decision.domain.enums.DecisionValue;
 import com.paytech.risk.test.base.AbstractPaymentRiskApiTest;

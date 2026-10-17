@@ -1,14 +1,14 @@
-package com.paytech.risk.api.decision.response;
+package com.paytech.risk.decision.api.response;
 
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.paytech.risk.api.decision.DecisionFlowModels.Field;
-import com.paytech.risk.api.decision.DecisionFlowModels.Limits;
-import com.paytech.risk.api.decision.DecisionFlowModels.NodeOutput;
-import com.paytech.risk.api.decision.DecisionFlowModels.OutputDeclaration;
-import com.paytech.risk.api.decision.DecisionFlowModels.SupportedPoint;
-import com.paytech.risk.api.decision.RiskVariableModels;
+import com.paytech.risk.decision.api.DecisionFlowModels.Field;
+import com.paytech.risk.decision.api.DecisionFlowModels.Limits;
+import com.paytech.risk.decision.api.DecisionFlowModels.NodeOutput;
+import com.paytech.risk.decision.api.DecisionFlowModels.OutputDeclaration;
+import com.paytech.risk.decision.api.DecisionFlowModels.SupportedPoint;
+import com.paytech.risk.decision.api.RiskVariableModels;
 
 /** 本期配置能力目录，不表示执行器已就绪。 */
 public class FlowAuthoringContextResponseBody {

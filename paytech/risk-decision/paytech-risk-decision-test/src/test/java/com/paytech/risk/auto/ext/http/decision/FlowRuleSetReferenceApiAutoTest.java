@@ -23,8 +23,8 @@ import org.springframework.http.HttpMethod;
 
 import com.paytech.foundation.common.http.ApiHeaderNames;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
-import com.paytech.risk.api.decision.DecisionFlowQueryApi;
-import com.paytech.risk.test.base.MockTestBase;
+import com.paytech.risk.decision.api.DecisionFlowQueryApi;
+import com.paytech.risk.test.base.RiskDecisionMockTestBase;
 import com.paytech.risk.test.builder.decision.FlowBuilder;
 import com.paytech.risk.test.builder.decision.FlowBuilder.GraphSpec;
 import com.paytech.risk.test.builder.decision.RuleSetBuilder;
@@ -47,7 +47,7 @@ import com.paytech.risk.test.mocker.decision.RuleSetMocker.MockedRuleSet;
  *
  * @see DecisionFlowQueryApi#ruleSetReference(String, String, String, String, String)
  */
-class FlowRuleSetReferenceApiAutoTest extends MockTestBase {
+class FlowRuleSetReferenceApiAutoTest extends RiskDecisionMockTestBase {
     private static final String PATH = "/decision-flows/v1/rule-set-reference";
 
     @Autowired

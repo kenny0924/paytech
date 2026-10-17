@@ -3,7 +3,7 @@ package com.paytech.risk.service.convert;
 import java.util.function.Supplier;
 
 import com.paytech.foundation.common.error.FailException;
-import com.paytech.risk.api.enums.RiskVariableErrorCode;
+import com.paytech.risk.decision.api.enums.RiskVariableErrorCode;
 import com.paytech.risk.decision.domainservice.service.RiskVariableException;
 
 /** 变量领域失败到已登记业务 Code 的 HTTP 边界转换，不拥有业务编排。 */

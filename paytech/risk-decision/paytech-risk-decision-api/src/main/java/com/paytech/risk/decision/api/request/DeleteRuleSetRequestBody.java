@@ -1,6 +1,6 @@
-package com.paytech.risk.api.decision.request;
+package com.paytech.risk.decision.api.request;
 
-import static com.paytech.risk.api.decision.DecisionRuleSetManagementModels.POSITIVE_DECIMAL_ID;
+import static com.paytech.risk.decision.api.DecisionRuleSetManagementModels.POSITIVE_DECIMAL_ID;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.OptBoolean;

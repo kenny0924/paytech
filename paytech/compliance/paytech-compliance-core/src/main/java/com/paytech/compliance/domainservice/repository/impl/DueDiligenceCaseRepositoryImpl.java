@@ -1,13 +1,13 @@
-package com.paytech.risk.compliance.domainservice.repository.impl;
+package com.paytech.compliance.domainservice.repository.impl;
 
 import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
-import com.paytech.risk.compliance.core.dal.dataobject.DueDiligenceCase;
-import com.paytech.risk.compliance.core.dal.mapper.DueDiligenceCaseMapper;
-import com.paytech.risk.compliance.domainservice.repository.DueDiligenceCaseRepository;
+import com.paytech.compliance.core.dal.dataobject.DueDiligenceCase;
+import com.paytech.compliance.core.dal.mapper.DueDiligenceCaseMapper;
+import com.paytech.compliance.domainservice.repository.DueDiligenceCaseRepository;
 import com.paytech.foundation.common.error.ErrorException;
 
 import lombok.AllArgsConstructor;

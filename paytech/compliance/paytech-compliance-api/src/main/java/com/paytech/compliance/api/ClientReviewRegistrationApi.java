@@ -1,4 +1,4 @@
-package com.paytech.risk.api.compliance;
+package com.paytech.compliance.api;
 
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -6,10 +6,10 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
 
-import com.paytech.risk.api.compliance.request.ClientReviewClassificationsRequestBody;
-import com.paytech.risk.api.compliance.request.ClientReviewRegistrationRequestBody;
-import com.paytech.risk.api.compliance.response.ClientReviewCommandResponseBody;
-import com.paytech.risk.api.compliance.response.ClientReviewRegistrationResponseBody;
+import com.paytech.compliance.api.request.ClientReviewClassificationsRequestBody;
+import com.paytech.compliance.api.request.ClientReviewRegistrationRequestBody;
+import com.paytech.compliance.api.response.ClientReviewCommandResponseBody;
+import com.paytech.compliance.api.response.ClientReviewRegistrationResponseBody;
 
 import jakarta.validation.Valid;
 
@@ -21,7 +21,7 @@ public interface ClientReviewRegistrationApi {
      * 按来源提交编号登记主审核任务及关联人员子任务
      *
      * @param caller
-     *            私网调用方，固定为 client-contract-service
+     *            私网调用方，固定为 client-master-service
      * @param request
      *            提交时的完整受审事实
      * @return 主审核任务
@@ -36,7 +36,7 @@ public interface ClientReviewRegistrationApi {
      * I02 接收 CCT 已确认的同一任务分类
      *
      * @param caller
-     *            私网调用方，固定为 client-contract-service
+     *            私网调用方，固定为 client-master-service
      * @param caseId
      *            主审核任务 ID
      * @param request

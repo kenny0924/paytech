@@ -4,11 +4,11 @@ import java.time.Instant;
 import java.util.Arrays;
 
 import com.paytech.foundation.common.error.InvalidParameterException;
-import com.paytech.risk.api.control.request.AddRiskListEntryRequestBody;
-import com.paytech.risk.api.control.request.CreateRiskListRequestBody;
-import com.paytech.risk.api.control.request.DeactivateRiskListEntryRequestBody;
-import com.paytech.risk.api.control.response.RiskListEntryResponseBody;
-import com.paytech.risk.api.control.response.RiskListResponseBody;
+import com.paytech.risk.decision.api.control.request.AddRiskListEntryRequestBody;
+import com.paytech.risk.decision.api.control.request.CreateRiskListRequestBody;
+import com.paytech.risk.decision.api.control.request.DeactivateRiskListEntryRequestBody;
+import com.paytech.risk.decision.api.control.response.RiskListEntryResponseBody;
+import com.paytech.risk.decision.api.control.response.RiskListResponseBody;
 import com.paytech.risk.control.core.enums.RiskListEntryStatus;
 import com.paytech.risk.control.core.enums.RiskListPurpose;
 import com.paytech.risk.control.domain.list.RiskListEntryView;

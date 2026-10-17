@@ -22,9 +22,9 @@ import org.springframework.http.HttpMethod;
 
 import com.paytech.foundation.common.http.ApiHeaderNames;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
-import com.paytech.risk.api.decision.DecisionFlowQueryApi;
+import com.paytech.risk.decision.api.DecisionFlowQueryApi;
 import com.paytech.risk.decision.domain.enums.DecisionValue;
-import com.paytech.risk.test.base.MockTestBase;
+import com.paytech.risk.test.base.RiskDecisionMockTestBase;
 import com.paytech.risk.test.builder.decision.FlowBuilder;
 import com.paytech.risk.test.builder.decision.FlowBuilder.GraphSpec;
 import com.paytech.risk.test.checker.decision.FlowDetailResponseChecker;
@@ -46,7 +46,7 @@ import com.paytech.risk.test.mocker.decision.RuleSetMocker.MockedRuleSet;
  * @see DecisionFlowQueryApi#current(String, String, String)
  * @see DecisionFlowQueryApi#version(String, String, String, String)
  */
-class FlowDetailApiAutoTest extends MockTestBase {
+class FlowDetailApiAutoTest extends RiskDecisionMockTestBase {
     private static final String CURRENT = "/decision-flows/v1/flows/%s";
 
     private static final String VERSION = "/decision-flows/v1/flows/%s/versions/%s";

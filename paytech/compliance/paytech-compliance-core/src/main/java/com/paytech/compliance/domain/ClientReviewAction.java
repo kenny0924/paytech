@@ -1,4 +1,4 @@
-package com.paytech.risk.compliance.domain;
+package com.paytech.compliance.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

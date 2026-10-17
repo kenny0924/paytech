@@ -3,25 +3,25 @@ package com.paytech.risk.ext.rest.decision;
 import static com.paytech.risk.ext.rest.decision.DecisionWireValues.*;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.web.paging.PagingResponseBody;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.ActionParameter;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.ActionParameterDescriptor;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.AdditionalAction;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.ConditionNodeRequestBody;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.DecisionActionDescriptorResponseBody;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.DecisionInputFieldDescriptorResponseBody;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.DecisionPointDescriptorResponseBody;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.OperandRequestBody;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.RuleActionRequestBody;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.RuleRequestBody;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels.TargetBindingDescriptor;
-import com.paytech.risk.api.decision.RiskVariableModels;
-import com.paytech.risk.api.decision.request.CreateRuleSetVersionRequestBody;
-import com.paytech.risk.api.decision.response.CreateRuleSetVersionResponseBody;
-import com.paytech.risk.api.decision.response.DeleteRuleSetResponseBody;
-import com.paytech.risk.api.decision.response.FreezeRuleSetVersionResponseBody;
-import com.paytech.risk.api.decision.response.RuleAuthoringContextResponseBody;
-import com.paytech.risk.api.decision.response.RuleSetDetailResponseBody;
-import com.paytech.risk.api.decision.response.RuleSetListItemResponseBody;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.ActionParameter;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.ActionParameterDescriptor;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.AdditionalAction;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.ConditionNodeRequestBody;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.DecisionActionDescriptorResponseBody;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.DecisionInputFieldDescriptorResponseBody;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.DecisionPointDescriptorResponseBody;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.OperandRequestBody;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.RuleActionRequestBody;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.RuleRequestBody;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels.TargetBindingDescriptor;
+import com.paytech.risk.decision.api.RiskVariableModels;
+import com.paytech.risk.decision.api.request.CreateRuleSetVersionRequestBody;
+import com.paytech.risk.decision.api.response.CreateRuleSetVersionResponseBody;
+import com.paytech.risk.decision.api.response.DeleteRuleSetResponseBody;
+import com.paytech.risk.decision.api.response.FreezeRuleSetVersionResponseBody;
+import com.paytech.risk.decision.api.response.RuleAuthoringContextResponseBody;
+import com.paytech.risk.decision.api.response.RuleSetDetailResponseBody;
+import com.paytech.risk.decision.api.response.RuleSetListItemResponseBody;
 import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor.DecisionActionDescriptor;
 import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor.InputFieldDescriptor;
 import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;
@@ -197,9 +197,9 @@ final class DecisionRuleSetWireConverter {
     }
 
     /** 转换不可变删除回执，所有 ID/版本使用十进制字符串。 */
-    static com.paytech.risk.api.decision.response.DeleteRuleSetResponseBody toResponse(
+    static com.paytech.risk.decision.api.response.DeleteRuleSetResponseBody toResponse(
         com.paytech.risk.decision.domainservice.service.DecisionRuleSetService.DeletedRuleSet value) {
-        return new com.paytech.risk.api.decision.response.DeleteRuleSetResponseBody(
+        return new com.paytech.risk.decision.api.response.DeleteRuleSetResponseBody(
             positiveId(value.ruleSetId()), "DELETED", positiveId(value.version()), positiveId(value.deletedBy()),
             time(value.deletedTime()));
     }

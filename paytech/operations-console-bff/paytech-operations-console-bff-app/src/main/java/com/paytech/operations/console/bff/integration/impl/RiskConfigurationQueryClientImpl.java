@@ -6,7 +6,7 @@ import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.operations.console.bff.integration.RiskConfigurationQueryClient;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
 import com.paytech.operations.console.bff.service.model.RiskConfigurationQueryModels.*;
-import com.paytech.risk.api.decision.DecisionConfigurationQueryApi;
+import com.paytech.risk.decision.api.DecisionConfigurationQueryApi;
 import static com.paytech.operations.console.bff.integration.impl.RiskConfigurationResponsePolicy.*;
 /** 历史与发布查询保留 Owner 精确版本和全根使用事实。 */
 @Component

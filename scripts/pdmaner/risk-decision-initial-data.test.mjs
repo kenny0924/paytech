@@ -3,9 +3,10 @@ import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 
-const service = new URL("../../risk-compliance-service/", import.meta.url);
-const dmlUrl = new URL("docs/database/sql/risk-compliance-initial-data.sql", service);
-const vectorsUrl = new URL("risk-test/src/test/resources/fixtures/risk-decision-v1-golden-vectors.json", service);
+// Step 06: the initial catalog data and the 2026-09-11 delta belong to risk-decision (all rows are decision tables).
+const service = new URL("../../paytech/risk-decision/", import.meta.url);
+const dmlUrl = new URL("docs/database/sql/risk-decision-initial-data.sql", service);
+const vectorsUrl = new URL("paytech-risk-decision-test/src/test/resources/fixtures/risk-decision-v1-golden-vectors.json", service);
 const vectors = JSON.parse(readFileSync(vectorsUrl, "utf8"));
 
 const EXPECTED_VECTORS = Object.freeze([

@@ -1,4 +1,4 @@
-package com.paytech.risk.api.decision.response;
+package com.paytech.risk.decision.api.response;
 
 /** 执行发布列表项：发布、所冻结的决策流版本及激活信息；不含静态校验与影子汇总，见发布详情。 */
 public class ExecutionReleaseListItemResponseBody {
