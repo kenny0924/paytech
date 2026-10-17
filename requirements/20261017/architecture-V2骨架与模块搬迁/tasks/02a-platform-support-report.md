@@ -5,9 +5,10 @@
   - 4.1 至 4.3、4.5、4.6 通过；`-Pcoverage-gate` 按预期失败（0.76 / 0.56，低于 0.90，既有问题）。
   - 4.4 应用能以 mock Profile 启动，liveness 为 UP；`/actuator/health` 总体为 DOWN，原因只有 `gatewaySnapshot`。搬迁前的 web 制品在同一数据库上结果完全相同，详见第 2 节第 4 项。
   - Node 与 Python 脚本的失败与 HEAD 基线逐项一致，属既有问题。
+  - 补充项 `t_currency_spec`（D41）见第 5 节：代码与模型已完成；本地库尚未建表，新入口测试暂时失败，等待执行 DDL 的授权。
 - **需要先看的两项偏差：**
   - 签发端没有使用"现有 Operations 密钥对"，改用配置注入的 ES256 密钥，见第 4 节。
-  - 配置前缀改为 `internal-token.issuer.*`，没有使用任务卡写的 `internal-auth.issuer.*`，见第 5 节第 1 项。
+  - 配置前缀改为 `internal-token.issuer.*`，没有使用任务卡写的 `internal-auth.issuer.*`，见第 6 节第 1 项。
 
 ## 1. 改动摘要
 
@@ -138,7 +139,39 @@ ALTER TABLE `t_jwt_signing_key`
 -- 回滚：先删除 INTERNAL_CALL 行，再反向 ALTER：恢复 realm NOT NULL、原两个唯一索引与注释，删除 key_usage。
 ```
 
-## 5. 待确认项
+## 5. 补充项 · 全平台参考数据 `t_currency_spec`（D41，design/03 §3.1）
+
+提交 `6162c25`。Finance 侧未改（第 07 步让 ledger 与 billing 持只读副本）。
+
+1. **Schema 与 DML（未执行）**
+   - `platform-support-schema.sql` 追加 `t_currency_spec`：列、类型、默认值、主键与 `uk_currency` 逐字沿用 `finance-schema.sql`。只有两处注释改为 Platform：表注释，以及 `create_time` 的"在 Finance 数据库中"。原因是 Platform 的 PDManer schema 测试要求 SQL 注释与模型完全一致，而模型的审计字段注释固定为"Platform Support 数据库"。
+   - `platform-support-initial-data.sql` 在 `COMMIT` 前追加 USD 行（`1001, USD, 2, HALF_UP, ACTIVE`），与 Finance 相同。
+2. **PDManer**
+   - 新增 `manifests/10-reference-data.mjs`（组 `reference_data`，1 表），`manifest.mjs`、`model-policy.mjs` 的 diagram 组与测试 oracle 同步（70 表，9 组）。
+   - 生成器整体重跑会把另外 3 张表（`t_api_credential`、`t_notification_attempt`、`t_notification_provider`）的既有 manifest 漂移一并写入模型，并让原本通过的 schema 注释测试失败。因此模型只追加新实体与 diagram：diff 全部是新增行，内容取自生成器输出。
+   - `agent-docs/database/scenarios/PLATFORM_SUPPORT_REAL_WORLD_SCENARIOS.md` 新增 SCN-PLT-09 一节与 `t_currency_spec` 场景行（场景测试要求每张表恰有一行），原第 10 节顺延为第 11 节。
+   - 结果：Platform 相关 5 个 node 测试文件共 58 项，50 通过，8 失败，失败测试名与 HEAD 基线完全相同；`generate-table-ownership.mjs --check` 仍然 current，该表原本就在 design/03 白名单中。
+3. **合同**（`com.paytech.platform.support.api.referencedata.CurrencySpecQueryApi`）
+
+   | 方法 | 路径 | 响应 |
+   |---|---|---|
+   | `listCurrencySpecs()` | `GET /platform/v1/currency-specs` | `CurrencySpecListResponseBody{items}`，按币种升序，含全部状态 |
+   | `getCurrencySpec(currency)` | `GET /platform/v1/currency-specs/{currency}` | `CurrencySpecResponseBody{currency, minorUnit, roundingMode, status, updateTime}`；代码不是三位大写字母时 400 `INVALID_REQUEST`，未登记时 404 `NOT_FOUND` |
+
+   - 字段名与表列一致：用 `minorUnit` 而不是 `scale`，不暴露内部 `id`。
+   - 稳定 Code 枚举 `CurrencyRoundingMode`、`CurrencySpecStatus` 放在 `api/enums`，DTO 中以 String 承载。
+4. **分层**（`paytech-platform-support-core`，包 `com.paytech.platform.support.referencedata`）
+   - `core.dal.dataobject.CurrencySpec`、`core.dal.mapper.CurrencySpecMapper`，XML 位于 `mapper/referencedata/`。
+   - `domainservice.repository.CurrencySpecRepository(Impl)`、`domainservice.service.CurrencySpecQueryService(Impl)`。
+   - `service.processor.{ListCurrencySpecsProcessor, GetCurrencySpecProcessor}`；跨模块结果为 `CurrencySpecResult`，不暴露 DataObject。
+   - app 侧为 `ext/rest/referencedata/CurrencySpec{Controller,Converter}`；`@MapperScan` 与两个 `CodeEnumTypeHandler` 已登记。
+   - 只读查询，不开事务。
+5. **测试**
+   - `init/ddl.sql` 追加同一条 CREATE TABLE。USD 种子行以注释形式附在其后：用例由 `CurrencySpecMocker` 自行插入 USD / JPY / XTS 并在结束时只删除本例插入的行，库中若有常驻种子行，会与"表为空"的基线检查和固定数量断言冲突。
+   - `CurrencySpecQueryApiTest` 共 4 例：列表、按币种、未知币种 404、非法代码 400。其他用例从不访问该表，因此表缺失时只有本类失败，并提示准备方法。
+   - **当前状态：本地 `mor_platform` 中没有该表**（`information_schema` 只读核对），而任务卡禁止执行 SQL，所以这 4 例目前失败，错误为"缺少表 t_currency_spec；请在 mor_platform 人工执行 …"。已向 team-lead 申请只在本地 `mor_platform` 执行这一条 CREATE TABLE，等待答复。`ArchitectureAutoTest` 与其余 Platform 用例不受影响，抽测 `WebhookEventApiTest` 8/8。
+
+## 6. 待确认项
 
 1. **配置前缀**：任务卡写的是 `internal-auth.issuer.key-usage` 与 `internal-auth.issuer.callers`。Foundation `InternalAuthProperties` 以 `ignoreUnknownFields=false` 绑定整个 `internal-auth.*`，一旦 mode 非 OFF，宿主在其下的任何键都会导致启动失败。因此改为 Platform 自有前缀 `internal-token.issuer.*`，与现有 `webhook.http.callers`、`notification.http.callers` 同风格。若坚持原前缀，需要修改 Foundation，这超出本步范围。
 2. **签发端调用方认证**：阶段 0 只用 `X-Caller-Service` 白名单（过渡信任），签发路径在 REQUIRED 下也豁免。Foundation 签发合同 `contract.InternalTokenIssueApi` 没有该 Header 参数，因此调用方须在 RestClient 上设置默认 Header `X-Caller-Service`。是否把该 Header 加进 Foundation 合同，需要确认。
