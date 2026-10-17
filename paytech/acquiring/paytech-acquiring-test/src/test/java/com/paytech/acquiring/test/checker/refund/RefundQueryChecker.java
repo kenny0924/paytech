@@ -1,4 +1,4 @@
-package com.paytech.commerce.test.checker.refund;
+package com.paytech.acquiring.test.checker.refund;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -8,8 +8,8 @@ import java.util.Map;
 
 import org.springframework.boot.test.context.TestComponent;
 
-import com.paytech.commerce.test.checker.order.OrderQueryChecker;
-import com.paytech.commerce.test.dal.RefundCreationTestMapper;
+import com.paytech.acquiring.test.checker.order.OrderQueryChecker;
+import com.paytech.acquiring.test.dal.RefundCreationTestMapper;
 
 import lombok.AllArgsConstructor;
 

@@ -1,4 +1,4 @@
-package com.paytech.commerce.test.mocker.local;
+package com.paytech.acquiring.test.mocker.local;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -12,11 +12,10 @@ import org.springframework.boot.test.context.TestComponent;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import com.paytech.commerce.domainservice.port.CommerceIdentifierGenerator;
-import com.paytech.commerce.test.dal.CheckoutCreationTestMapper;
-import com.paytech.commerce.test.dal.ClientWebhookTestMapper;
-import com.paytech.commerce.test.dal.CustomerTestMapper;
-import com.paytech.commerce.test.dal.RefundCreationTestMapper;
+import com.paytech.acquiring.domainservice.port.CommerceIdentifierGenerator;
+import com.paytech.acquiring.test.dal.CheckoutCreationTestMapper;
+import com.paytech.acquiring.test.dal.ClientWebhookTestMapper;
+import com.paytech.acquiring.test.dal.RefundCreationTestMapper;
 import com.paytech.foundation.testsupport.api.Clear;
 
 /** 当前测试上下文独享 Client 命名空间，逐例重建业务数据，不清空共享开发库。 */
@@ -25,7 +24,6 @@ public final class CheckoutDataMocker implements Clear {
     private final long clientId = 900_000_000_000L + new SecureRandom().nextLong(100_000_000_000L) * 2;
     private final CheckoutCreationTestMapper mapper;
     private final RefundCreationTestMapper refundMapper;
-    private final CustomerTestMapper customerMapper;
     private final ClientWebhookTestMapper webhookMapper;
     private final CommerceIdentifierGenerator identifiers;
     private final TransactionTemplate transaction;
@@ -34,11 +32,10 @@ public final class CheckoutDataMocker implements Clear {
 
     /** 使用 Spring 的真实数据库事务；随机值仅作为本次运行的隔离身份。 */
     public CheckoutDataMocker(CheckoutCreationTestMapper mapper, RefundCreationTestMapper refundMapper,
-        CustomerTestMapper customerMapper, ClientWebhookTestMapper webhookMapper, CommerceIdentifierGenerator identifiers,
+        ClientWebhookTestMapper webhookMapper, CommerceIdentifierGenerator identifiers,
         PlatformTransactionManager transactionManager) {
         this.mapper = mapper;
         this.refundMapper = refundMapper;
-        this.customerMapper = customerMapper;
         this.webhookMapper = webhookMapper;
         this.identifiers = identifiers;
         this.transaction = new TransactionTemplate(transactionManager);
@@ -60,15 +57,13 @@ public final class CheckoutDataMocker implements Clear {
         try {
             mapper.checkCreationColumns();
             refundMapper.checkRefundTables();
-            customerMapper.checkCustomerTables();
             assertTrue(mapper.orderIds(clientId, otherClientId()).isEmpty(), "上例订单未清理");
-            assertTrue(customerMapper.customers(clientId, otherClientId()).isEmpty(), "上例 Customer 未清理");
             for (long orderId : ownedOrderIds) {
                 assertEquals(0, mapper.creationRows(orderId), "存在残留子行");
             }
         } catch (RuntimeException failure) {
             throw new AssertionError(
-                "请先准备 local-environment 的 127.0.0.1:13306/mor_commerce 及当前 Commerce Schema（含 creation_mode、consumer_country_code、t_refund_request、t_compensation_event）；空测试 Schema 的建表 SQL 见 paytech-commerce-test/src/test/resources/init/ddl.sql，已有库的增量 SQL 见 Commerce README，测试不会自动建库或迁移",
+                "请先准备 local-environment 的 127.0.0.1:13306/mor_acquiring 及当前 acquiring Schema（含 creation_mode、consumer_country_code、t_refund_request、t_compensation_event）；空测试 Schema 的建表 SQL 见 paytech/acquiring/paytech-acquiring-test/src/test/resources/init/ddl.sql，测试不会自动建库或迁移",
                 failure);
         }
     }
@@ -119,11 +114,7 @@ public final class CheckoutDataMocker implements Clear {
                     mapper.deleteItems(orderId);
                     mapper.deleteOrder(orderId);
                 }
-                customerMapper.deleteTasks(clientId, otherClientId());
-                customerMapper.deleteCustomers(clientId, otherClientId());
-                customerMapper.deleteSettings(clientId, otherClientId());
             });
-            assertTrue(customerMapper.customers(clientId, otherClientId()).isEmpty(), "清理后仍存在 Customer");
             for (long orderId : ownedOrderIds) {
                 assertEquals(0, mapper.creationRows(orderId), "清理后仍存在本例数据");
                 assertTrue(refundMapper.refunds(orderId).isEmpty(), "清理后仍存在退款申请");

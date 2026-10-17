@@ -8,47 +8,52 @@
         <groupId>com.paytech</groupId>
         <artifactId>paytech-parent</artifactId>
         <version>1.0.0-SNAPSHOT</version>
-        <relativePath/>
+        <relativePath>../build/paytech-parent/pom.xml</relativePath>
     </parent>
 
-    <artifactId>paytech-commerce-service</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <artifactId>paytech-acquiring</artifactId>
     <packaging>pom</packaging>
 
-    <name>Commerce Service</name>
-    <description>Commerce service reactor.</description>
+    <name>PayTech Acquiring</name>
+    <description>Acquiring service aggregator (from commerce-service): orders, hosted checkout, refunds and cancellation; transaction / checkout / command packages share one core and mor_acquiring.</description>
 
     <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>com.paytech</groupId>
-                <artifactId>paytech-payment-api</artifactId>
-                <version>1.0.0-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>com.paytech</groupId>
-                <artifactId>risk-api</artifactId>
-                <version>1.0.0-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>com.paytech</groupId>
-                <artifactId>platform-support-api</artifactId>
-                <version>1.0.0-SNAPSHOT</version>
-            </dependency>
-            <dependency><groupId>com.paytech</groupId><artifactId>paytech-commerce-customer-api</artifactId><version>${project.version}</version></dependency>
-            <dependency>
-                <groupId>com.paytech</groupId>
-                <artifactId>client-contract-api</artifactId>
-                <version>1.0.0-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>com.paytech</groupId>
-                <artifactId>paytech-commerce-client-api</artifactId>
+                <artifactId>paytech-acquiring-api</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.paytech</groupId>
-                <artifactId>paytech-commerce-web</artifactId>
+                <artifactId>paytech-acquiring-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>paytech-acquiring-app</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <!-- 服务间合同：Reactor 内的 payment / platform-support / consumer api；risk-api 第 06 步统一改坐标。
+                 client-contract-api 已删除：Checkout 商业端口仍为固定 Mock，没有生产代码引用 commercial-api。 -->
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>paytech-payment-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>paytech-platform-support-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>paytech-consumer-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>risk-api</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>
@@ -68,7 +73,8 @@
                 <artifactId>maven-enforcer-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>enforce-commerce-foundation-scope</id>
+                        <!-- 原 commerce-service 禁令（09 §1.4），并禁止依赖其他服务的 core / app（D09）。 -->
+                        <id>enforce-acquiring-foundation-scope</id>
                         <phase>validate</phase>
                         <goals>
                             <goal>enforce</goal>
@@ -78,6 +84,8 @@
                                 <bannedDependencies>
                                     <searchTransitive>true</searchTransitive>
                                     <excludes>
+                                        <exclude>com.paytech:*-core</exclude>
+                                        <exclude>com.paytech:*-app</exclude>
                                         <exclude>org.springframework.boot:spring-boot-starter-data-jdbc</exclude>
                                         <exclude>com.h2database:*</exclude>
                                         <exclude>org.flywaydb:*</exclude>
@@ -106,6 +114,9 @@
                                         <exclude>org.mockito:*</exclude>
                                     </excludes>
                                     <includes>
+                                        <include>com.paytech:paytech-common-core</include>
+                                        <include>com.paytech:paytech-acquiring-core</include>
+                                        <include>com.paytech:paytech-acquiring-app</include>
                                         <!-- Order coordination uses only the shared Redis Starter and its clients. -->
                                         <include>com.paytech:paytech-redis-starter</include>
                                         <include>org.redisson:redisson</include>
@@ -130,9 +141,9 @@
     </build>
 
     <modules>
-        <module>paytech-commerce-customer-api</module>
-        <module>paytech-commerce-client-api</module>
-        <module>paytech-commerce-web</module>
-        <module>paytech-commerce-test</module>
+        <module>paytech-acquiring-api</module>
+        <module>paytech-acquiring-core</module>
+        <module>paytech-acquiring-app</module>
+        <module>paytech-acquiring-test</module>
     </modules>
 </project>

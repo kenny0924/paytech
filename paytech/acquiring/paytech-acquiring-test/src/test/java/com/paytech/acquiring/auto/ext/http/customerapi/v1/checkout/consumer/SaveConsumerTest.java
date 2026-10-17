@@ -1,6 +1,6 @@
-package com.paytech.commerce.auto.ext.http.customerapi.v1.checkout.consumer;
+package com.paytech.acquiring.auto.ext.http.customerapi.v1.checkout.consumer;
 
-import static com.paytech.commerce.test.builder.customer.SaveConsumerRequestBuilder.template;
+import static com.paytech.acquiring.test.builder.customer.SaveConsumerRequestBuilder.template;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -20,26 +20,26 @@ import org.junit.jupiter.params.provider.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 
-import com.paytech.commerce.client.api.v1.enums.CommerceCheckoutErrorCode;
-import com.paytech.commerce.customer.api.v1.checkout.CustomerCheckoutApi;
-import com.paytech.commerce.customer.api.v1.checkout.request.SaveConsumerRequestBody;
-import com.paytech.commerce.customer.api.v1.enums.CustomerCheckoutErrorCode;
-import com.paytech.commerce.domain.checkout.CreateCheckoutContext;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.ConsumerDetails;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.ProtectedConsumer;
-import com.paytech.commerce.domain.enums.CheckoutSessionStatus;
-import com.paytech.commerce.domain.enums.OrderStatus;
-import com.paytech.commerce.test.base.MockTestBase;
-import com.paytech.commerce.test.checker.customer.SaveConsumerChecker;
-import com.paytech.commerce.test.checker.customer.SaveConsumerResponseChecker;
-import com.paytech.commerce.test.checker.order.OrderCancellationChecker;
-import com.paytech.commerce.test.mocker.external.CheckoutCardMocker;
-import com.paytech.commerce.test.mocker.external.CheckoutIntentMocker;
-import com.paytech.commerce.test.mocker.external.ConsumerProtectionMocker;
-import com.paytech.commerce.test.mocker.external.PaymentTerminationMocker;
-import com.paytech.commerce.test.mocker.local.CheckoutPaymentDataMocker;
-import com.paytech.commerce.test.mocker.local.OrderCancellationDataMocker;
-import com.paytech.commerce.test.mocker.local.SaveConsumerDataMocker;
+import com.paytech.acquiring.api.client.v1.enums.CommerceCheckoutErrorCode;
+import com.paytech.acquiring.api.checkout.v1.checkout.CustomerCheckoutApi;
+import com.paytech.acquiring.api.checkout.v1.checkout.request.SaveConsumerRequestBody;
+import com.paytech.acquiring.api.checkout.v1.enums.CustomerCheckoutErrorCode;
+import com.paytech.acquiring.domain.checkout.CreateCheckoutContext;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.ConsumerDetails;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.ProtectedConsumer;
+import com.paytech.acquiring.domain.enums.CheckoutSessionStatus;
+import com.paytech.acquiring.domain.enums.OrderStatus;
+import com.paytech.acquiring.test.base.MockTestBase;
+import com.paytech.acquiring.test.checker.customer.SaveConsumerChecker;
+import com.paytech.acquiring.test.checker.customer.SaveConsumerResponseChecker;
+import com.paytech.acquiring.test.checker.order.OrderCancellationChecker;
+import com.paytech.acquiring.test.mocker.external.CheckoutCardMocker;
+import com.paytech.acquiring.test.mocker.external.CheckoutIntentMocker;
+import com.paytech.acquiring.test.mocker.external.ConsumerProtectionMocker;
+import com.paytech.acquiring.test.mocker.external.PaymentTerminationMocker;
+import com.paytech.acquiring.test.mocker.local.CheckoutPaymentDataMocker;
+import com.paytech.acquiring.test.mocker.local.OrderCancellationDataMocker;
+import com.paytech.acquiring.test.mocker.local.SaveConsumerDataMocker;
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.foundation.common.error.ServiceUnavailableException;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
@@ -280,9 +280,9 @@ class SaveConsumerTest extends MockTestBase {
         reject(template().build(), 409, CustomerCheckoutErrorCode.CHECKOUT_CLOSED.getCode());
     }
 
-    /** 订单业务事实优先于可编辑会话；旧准备标记仍保持锁定语义。 */
+    /** 订单业务事实优先于可编辑会话；已接受法律文件后资料锁定。 */
     @ParameterizedTest
-    @ValueSource(strings = {"paid", "cancelled", "paidAt", "termination", "preparation", "accepted"})
+    @ValueSource(strings = {"paid", "cancelled", "paidAt", "termination", "accepted"})
     void test_orderCannotBeEdited(String scenario) {
         data.changeOrder(orderId(), order -> {
             switch (scenario) {
@@ -290,7 +290,6 @@ class SaveConsumerTest extends MockTestBase {
                 case "cancelled" -> order.setOrderStatus(OrderStatus.CANCELLED);
                 case "paidAt" -> order.setPaidAt(adjustableUtcClock.instant());
                 case "termination" -> order.setTerminationRequestedAt(adjustableUtcClock.instant());
-                case "preparation" -> order.setPreparationCommandId(orderId());
                 default -> {
                 }
             }
@@ -298,7 +297,7 @@ class SaveConsumerTest extends MockTestBase {
         if (scenario.equals("accepted")) {
             acceptances.mockAcceptances(orderId(), adjustableUtcClock.instant());
         }
-        var error = scenario.equals("preparation") || scenario.equals("accepted")
+        var error = scenario.equals("accepted")
             ? CustomerCheckoutErrorCode.CONSUMER_DETAILS_LOCKED : CustomerCheckoutErrorCode.CHECKOUT_CLOSED;
         reject(template().build(), 409, error.getCode());
     }

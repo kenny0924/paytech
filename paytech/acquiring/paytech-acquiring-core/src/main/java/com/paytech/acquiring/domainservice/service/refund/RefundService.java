@@ -1,8 +1,8 @@
-package com.paytech.commerce.domainservice.service.refund;
+package com.paytech.acquiring.domainservice.service.refund;
 
 import java.time.Instant;
-import com.paytech.commerce.domain.refund.RefundCreationContext;
-import com.paytech.commerce.integration.payment.PaymentRefundClient;
+import com.paytech.acquiring.domain.refund.RefundCreationContext;
+import com.paytech.acquiring.integration.payment.PaymentRefundClient;
 
 /** 退款金额和状态不变量的本库业务边界。 */
 public interface RefundService {

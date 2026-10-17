@@ -1,4 +1,4 @@
-package com.paytech.commerce.auto.ext.http.clientapi.v1.customer;
+package com.paytech.consumer.auto.ext.http.clientapi.v1.customer;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
@@ -10,11 +10,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import com.paytech.commerce.client.api.v1.customer.ClientCustomerApi;
-import com.paytech.commerce.client.api.v1.enums.CommerceCheckoutErrorCode;
-import com.paytech.commerce.domain.enums.CustomerStatus;
-import com.paytech.commerce.test.base.customer.AbstractCustomerApiTest;
-import com.paytech.commerce.test.mocker.external.StoredCardMocker;
+import com.paytech.consumer.api.client.v1.customer.ClientCustomerApi;
+import com.paytech.consumer.api.enums.ConsumerErrorCode;
+import com.paytech.consumer.api.enums.CustomerStatus;
+import com.paytech.consumer.test.base.customer.AbstractCustomerApiTest;
+import com.paytech.consumer.test.mocker.external.StoredCardMocker;
 
 /**
  * Customer 接口（需求 20261015 commerce-Customer与存卡支付，AC-01、AC-03、AC-04、AC-12）：经真实 Client API 入口、Processor 与 MySQL；
@@ -52,7 +52,7 @@ class CustomerApiTest extends AbstractCustomerApiTest {
 
         assertAll(() -> assertEquals(422, response.status()), () -> assertTrue(customerRows().isEmpty()));
         if (reference.matches("[0-9]+")) {
-            assertEquals(CommerceCheckoutErrorCode.INVALID_CONSUMER_REFERENCE.getCode(), response.text("code"));
+            assertEquals(ConsumerErrorCode.INVALID_CONSUMER_REFERENCE.getCode(), response.text("code"));
         }
     }
 
@@ -69,7 +69,7 @@ class CustomerApiTest extends AbstractCustomerApiTest {
         assertAll(() -> assertEquals(200, byNo.status()), () -> assertEquals(customerNo, byNo.text("customerNo")),
             () -> assertEquals(customerNo, byReference.text("customerNo")),
             () -> assertEquals(List.of(404, 404), List.of(crossClient.status(), unknownReference.status())),
-            () -> assertEquals(CommerceCheckoutErrorCode.CUSTOMER_NOT_FOUND.getCode(), crossClient.text("code")));
+            () -> assertEquals(ConsumerErrorCode.CUSTOMER_NOT_FOUND.getCode(), crossClient.text("code")));
     }
 
     /** 删除：状态与时间；提交后任务调用 Payment 失效已存卡；重复删除返回原结果、不再调用 Payment；引用再次使用新建 Customer。 */

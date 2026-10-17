@@ -1,11 +1,11 @@
-package com.paytech.commerce.client.api.v1.checkout.request;
+package com.paytech.acquiring.api.client.v1.checkout.request;
 
 import java.time.Instant;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.paytech.commerce.client.api.v1.common.ClientApiConstraints;
+import com.paytech.acquiring.api.client.v1.common.ClientApiConstraints;
 import com.paytech.foundation.common.json.RejectExplicitNullDeserializer;
 import com.paytech.foundation.common.json.StrictOptionalInstantDeserializer;
 

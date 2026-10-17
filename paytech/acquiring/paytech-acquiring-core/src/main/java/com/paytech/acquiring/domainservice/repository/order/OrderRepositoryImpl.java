@@ -1,12 +1,12 @@
-package com.paytech.commerce.domainservice.repository.order;
+package com.paytech.acquiring.domainservice.repository.order;
 
 import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
-import com.paytech.commerce.core.dal.dataobject.order.*;
-import com.paytech.commerce.core.dal.mapper.checkout.BasicCheckoutMapper;
-import com.paytech.commerce.core.dal.mapper.order.OrderQueryMapper;
+import com.paytech.acquiring.core.dal.dataobject.order.*;
+import com.paytech.acquiring.core.dal.mapper.checkout.BasicCheckoutMapper;
+import com.paytech.acquiring.core.dal.mapper.order.OrderQueryMapper;
 
 import lombok.AllArgsConstructor;
 

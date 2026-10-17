@@ -1,7 +1,7 @@
-package com.paytech.commerce.domainservice.repository.customer;
+package com.paytech.acquiring.domainservice.repository.customer;
 
-import com.paytech.commerce.core.dal.dataobject.customer.CheckoutNetworkEvidence;
-import com.paytech.commerce.core.dal.mapper.customer.CheckoutNetworkEvidenceMapper;
+import com.paytech.acquiring.core.dal.dataobject.customer.CheckoutNetworkEvidence;
+import com.paytech.acquiring.core.dal.mapper.customer.CheckoutNetworkEvidenceMapper;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
 
 import org.springframework.stereotype.Repository;

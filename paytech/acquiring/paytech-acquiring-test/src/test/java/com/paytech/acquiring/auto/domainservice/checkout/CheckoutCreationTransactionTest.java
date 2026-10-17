@@ -1,4 +1,4 @@
-package com.paytech.commerce.auto.domainservice.checkout;
+package com.paytech.acquiring.auto.domainservice.checkout;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -9,10 +9,10 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import com.paytech.commerce.domain.checkout.CreateCheckoutContext;
-import com.paytech.commerce.domainservice.service.checkout.CheckoutCreationService;
-import com.paytech.commerce.test.base.MockTestBase;
-import com.paytech.commerce.test.builder.checkout.CreateCheckoutContextBuilder;
+import com.paytech.acquiring.domain.checkout.CreateCheckoutContext;
+import com.paytech.acquiring.domainservice.service.checkout.CheckoutCreationService;
+import com.paytech.acquiring.test.base.MockTestBase;
+import com.paytech.acquiring.test.builder.checkout.CreateCheckoutContextBuilder;
 
 /**
  * HTTP 成功场景之外，单独验证公开原子写入入口的末步回滚和 REQUIRED 传播。

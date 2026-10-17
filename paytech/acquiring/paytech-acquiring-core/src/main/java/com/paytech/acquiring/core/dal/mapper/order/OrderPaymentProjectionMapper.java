@@ -1,11 +1,11 @@
-package com.paytech.commerce.core.dal.mapper.order;
+package com.paytech.acquiring.core.dal.mapper.order;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 
 import org.apache.ibatis.annotations.Param;
 
-import com.paytech.commerce.core.dal.dataobject.order.OrderPaymentProjection;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderPaymentProjection;
 
 /** 订单支付投影的单表查询。 */
 public interface OrderPaymentProjectionMapper {

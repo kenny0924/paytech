@@ -1,7 +1,7 @@
-package com.paytech.commerce.test.dal;
+package com.paytech.acquiring.test.dal;
 
-import com.paytech.commerce.core.dal.dataobject.customer.FrozenCheckoutRecord;
-import com.paytech.commerce.core.dal.dataobject.order.OrderPaymentProjection;
+import com.paytech.acquiring.core.dal.dataobject.customer.FrozenCheckoutRecord;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderPaymentProjection;
 
 import org.apache.ibatis.annotations.*;
 
@@ -64,7 +64,7 @@ INSERT INTO t_consumer_contract (consumer_contract_id,order_id,order_legal_id,re
 
     @Select("SELECT * FROM t_order_payment_projection WHERE order_id=#{orderId}")
     @ResultMap(
-            "com.paytech.commerce.core.dal.mapper.order.OrderPaymentProjectionMapper.OrderPaymentProjection")
+            "com.paytech.acquiring.core.dal.mapper.order.OrderPaymentProjectionMapper.OrderPaymentProjection")
     OrderPaymentProjection payment(long orderId);
 
     @Select("SELECT COUNT(*) FROM t_consumer_acceptance WHERE consumer_contract_id=#{orderId}")

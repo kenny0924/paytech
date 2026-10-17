@@ -1,4 +1,4 @@
-package com.paytech.commerce.integration.payment.impl;
+package com.paytech.acquiring.integration.payment.impl;
 
 import java.time.Clock;
 import java.time.DateTimeException;
@@ -7,13 +7,13 @@ import java.time.Instant;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
-import com.paytech.commerce.domain.checkout.CheckoutUpstreamProtocolException;
-import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.CustomerAction;
-import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.PaymentReference;
-import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.PaymentRequest;
-import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.PaymentResult;
-import com.paytech.commerce.domainservice.port.customer.CheckoutCardPaymentPort;
-import com.paytech.commerce.customer.api.v1.enums.CustomerPaymentStatus;
+import com.paytech.acquiring.domain.checkout.CheckoutUpstreamProtocolException;
+import com.paytech.acquiring.domain.customer.CheckoutSubmissionModels.CustomerAction;
+import com.paytech.acquiring.domain.customer.CheckoutSubmissionModels.PaymentReference;
+import com.paytech.acquiring.domain.customer.CheckoutSubmissionModels.PaymentRequest;
+import com.paytech.acquiring.domain.customer.CheckoutSubmissionModels.PaymentResult;
+import com.paytech.acquiring.domainservice.port.customer.CheckoutCardPaymentPort;
+import com.paytech.acquiring.api.checkout.v1.enums.CustomerPaymentStatus;
 import com.paytech.payment.api.execution.PaymentIntentApi;
 import com.paytech.payment.api.execution.request.PayRequestBody;
 import com.paytech.foundation.common.error.CommonErrorCode;

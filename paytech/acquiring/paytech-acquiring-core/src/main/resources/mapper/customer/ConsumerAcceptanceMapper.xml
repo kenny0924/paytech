@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.paytech.commerce.core.dal.mapper.customer.ConsumerAcceptanceMapper">
-    <resultMap id="ConsumerAcceptance" type="com.paytech.commerce.core.dal.dataobject.customer.ConsumerAcceptance">
+<mapper namespace="com.paytech.acquiring.core.dal.mapper.customer.ConsumerAcceptanceMapper">
+    <resultMap id="ConsumerAcceptance" type="com.paytech.acquiring.core.dal.dataobject.customer.ConsumerAcceptance">
         <id column="consumer_acceptance_id" property="consumerAcceptanceId" javaType="_long"/>
         <result column="consumer_contract_id" property="consumerContractId" javaType="_long"/>
         <result column="network_evidence_id" property="networkEvidenceId" javaType="_long"/>
-        <result column="acceptance_type" property="acceptanceType" javaType="com.paytech.commerce.domain.enums.ConsumerAcceptanceType"/>
+        <result column="acceptance_type" property="acceptanceType" javaType="com.paytech.acquiring.domain.enums.ConsumerAcceptanceType"/>
         <result column="accepted_at" property="acceptedAt" javaType="java.time.Instant"/>
         <result column="create_time" property="createTime" javaType="java.time.Instant"/>
     </resultMap>

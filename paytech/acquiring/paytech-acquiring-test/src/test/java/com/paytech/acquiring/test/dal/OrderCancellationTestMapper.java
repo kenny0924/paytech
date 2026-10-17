@@ -1,4 +1,4 @@
-package com.paytech.commerce.test.dal;
+package com.paytech.acquiring.test.dal;
 
 import java.time.Instant;
 import java.util.List;
@@ -6,9 +6,9 @@ import java.util.Map;
 
 import org.apache.ibatis.annotations.*;
 
-import com.paytech.commerce.core.dal.dataobject.checkout.CheckoutSession;
-import com.paytech.commerce.core.dal.dataobject.customer.ConsumerAcceptance;
-import com.paytech.commerce.core.dal.dataobject.order.CommerceOrder;
+import com.paytech.acquiring.core.dal.dataobject.checkout.CheckoutSession;
+import com.paytech.acquiring.core.dal.dataobject.customer.ConsumerAcceptance;
+import com.paytech.acquiring.core.dal.dataobject.order.CommerceOrder;
 
 /** 取消测试的历史事实、支付接受和真实并发版本准备；不调用生产业务命令。 */
 @Mapper
@@ -23,12 +23,12 @@ public interface OrderCancellationTestMapper {
 
     /** 独立读取订单表，复用正式数据库对象映射。 */
     @Select("SELECT * FROM t_commerce_order WHERE order_id=#{orderId}")
-    @ResultMap("com.paytech.commerce.core.dal.mapper.order.CommerceOrderMapper.CommerceOrder")
+    @ResultMap("com.paytech.acquiring.core.dal.mapper.order.CommerceOrderMapper.CommerceOrder")
     CommerceOrder order(long orderId);
 
     /** 独立读取实际关联的 Session。 */
     @Select("SELECT * FROM t_checkout_session WHERE order_id=#{orderId}")
-    @ResultMap("com.paytech.commerce.core.dal.mapper.checkout.CheckoutSessionMapper.CheckoutSession")
+    @ResultMap("com.paytech.acquiring.core.dal.mapper.checkout.CheckoutSessionMapper.CheckoutSession")
     CheckoutSession session(long orderId);
 
     /** 模拟另一个本地事务推进会话，取消必须由真实 CAS 拒绝。 */

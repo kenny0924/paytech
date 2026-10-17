@@ -1,4 +1,4 @@
-package com.paytech.commerce.test.checkout;
+package com.paytech.acquiring.test.checkout;
 
 import java.io.IOException;
 import java.util.List;
@@ -24,7 +24,7 @@ public final class PaymentTransactionProbe
     /** 自动挂载到真实 Payment 客户端，保留原有服务发现与 HTTP 传输链。 */
     @Override
     public void configureGroups(Groups<RestClient.Builder> groups) {
-        groups.filterByName("payment-orchestration-service")
+        groups.filterByName("payment-service")
             .forEachClient((group, builder) -> builder.requestInterceptor(this));
     }
 

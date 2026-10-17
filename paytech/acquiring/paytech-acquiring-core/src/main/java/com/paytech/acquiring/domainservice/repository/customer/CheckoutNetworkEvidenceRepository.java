@@ -1,6 +1,6 @@
-package com.paytech.commerce.domainservice.repository.customer;
+package com.paytech.acquiring.domainservice.repository.customer;
 
-import com.paytech.commerce.core.dal.dataobject.customer.CheckoutNetworkEvidence;
+import com.paytech.acquiring.core.dal.dataobject.customer.CheckoutNetworkEvidence;
 
 /** CheckoutNetworkEvidence 的本库持久化边界。 */
 public interface CheckoutNetworkEvidenceRepository {

@@ -1,9 +1,9 @@
-package com.paytech.commerce.ext.rest.external.clientapi.v1.refund;
+package com.paytech.acquiring.ext.rest.external.clientapi.v1.refund;
 
-import com.paytech.commerce.client.api.v1.refund.response.GetRefundResponseBody;
-import com.paytech.commerce.service.processor.refund.request.GetRefundByClientRefundIdRequest;
-import com.paytech.commerce.service.processor.refund.request.GetRefundRequest;
-import com.paytech.commerce.service.processor.refund.response.GetRefundResponse;
+import com.paytech.acquiring.api.client.v1.refund.response.GetRefundResponseBody;
+import com.paytech.acquiring.service.processor.refund.request.GetRefundByClientRefundIdRequest;
+import com.paytech.acquiring.service.processor.refund.request.GetRefundRequest;
+import com.paytech.acquiring.service.processor.refund.response.GetRefundResponse;
 
 /** 退款详情的协议转换，不查询数据库或判断资源归属。 */
 public final class GetRefundConverter {

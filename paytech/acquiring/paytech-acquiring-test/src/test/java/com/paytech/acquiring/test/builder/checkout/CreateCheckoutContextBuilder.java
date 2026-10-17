@@ -1,20 +1,20 @@
-package com.paytech.commerce.test.builder.checkout;
+package com.paytech.acquiring.test.builder.checkout;
 
-import com.paytech.commerce.core.dal.dataobject.customer.FrozenCheckoutRecord;
+import com.paytech.acquiring.core.dal.dataobject.customer.FrozenCheckoutRecord;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
-import com.paytech.commerce.client.api.v1.enums.OrderCreationMode;
-import com.paytech.commerce.core.dal.dataobject.checkout.CheckoutSession;
-import com.paytech.commerce.core.dal.dataobject.order.CommerceOrder;
-import com.paytech.commerce.core.dal.dataobject.order.OrderFundsAvailabilityProjection;
-import com.paytech.commerce.core.dal.dataobject.order.OrderItem;
-import com.paytech.commerce.core.dal.dataobject.order.OrderRefundPosition;
-import com.paytech.commerce.domain.checkout.CreateCheckoutContext;
-import com.paytech.commerce.domain.enums.CheckoutSessionStatus;
-import com.paytech.commerce.domain.enums.FundsAvailabilityStatus;
-import com.paytech.commerce.domain.enums.OrderStatus;
+import com.paytech.acquiring.api.client.v1.enums.OrderCreationMode;
+import com.paytech.acquiring.core.dal.dataobject.checkout.CheckoutSession;
+import com.paytech.acquiring.core.dal.dataobject.order.CommerceOrder;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderFundsAvailabilityProjection;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderItem;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderRefundPosition;
+import com.paytech.acquiring.domain.checkout.CreateCheckoutContext;
+import com.paytech.acquiring.domain.enums.CheckoutSessionStatus;
+import com.paytech.acquiring.domain.enums.FundsAvailabilityStatus;
+import com.paytech.acquiring.domain.enums.OrderStatus;
 
 import lombok.Setter;
 import lombok.experimental.Accessors;

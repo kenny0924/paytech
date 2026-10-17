@@ -1,4 +1,4 @@
-package com.paytech.commerce.customer.api.v1.checkout.request;
+package com.paytech.acquiring.api.checkout.v1.checkout.request;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;

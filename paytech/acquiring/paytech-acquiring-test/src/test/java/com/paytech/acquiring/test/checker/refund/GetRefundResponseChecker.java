@@ -1,12 +1,12 @@
-package com.paytech.commerce.test.checker.refund;
+package com.paytech.acquiring.test.checker.refund;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.client.EntityExchangeResult;
 
-import com.paytech.commerce.client.api.v1.refund.response.GetRefundResponseBody;
-import com.paytech.commerce.core.dal.dataobject.refund.RefundRequest;
+import com.paytech.acquiring.api.client.v1.refund.response.GetRefundResponseBody;
+import com.paytech.acquiring.core.dal.dataobject.refund.RefundRequest;
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.foundation.httpproblem.api.ApiProblemResponse;
 import com.paytech.foundation.testsupport.api.AbstractHttpResponseChecker;

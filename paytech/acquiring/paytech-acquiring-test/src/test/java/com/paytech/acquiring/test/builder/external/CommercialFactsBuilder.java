@@ -1,6 +1,6 @@
-package com.paytech.commerce.test.builder.external;
+package com.paytech.acquiring.test.builder.external;
 
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.*;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.*;
 
 /** 准备测试独立定义 CCT DTO，不借用生产固定 Mock 生成期望。 */
 public final class CommercialFactsBuilder {

@@ -1,8 +1,8 @@
-package com.paytech.commerce.auto.ext.http.clientapi.v1.order.get;
+package com.paytech.acquiring.auto.ext.http.clientapi.v1.order.get;
 
-import static com.paytech.commerce.test.builder.order.GetOrderDataBuilder.NOW;
-import static com.paytech.commerce.test.builder.order.GetOrderDataBuilder.decimal;
-import static com.paytech.commerce.test.checker.order.GetOrderResponseChecker.assertAmount;
+import static com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.NOW;
+import static com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.decimal;
+import static com.paytech.acquiring.test.checker.order.GetOrderResponseChecker.assertAmount;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.Instant;
@@ -13,10 +13,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import com.paytech.commerce.client.api.v1.order.ClientOrderApi;
-import com.paytech.commerce.domain.enums.CheckoutSessionStatus;
-import com.paytech.commerce.domain.enums.OrderStatus;
-import com.paytech.commerce.test.base.order.AbstractGetOrderApiTest;
+import com.paytech.acquiring.api.client.v1.order.ClientOrderApi;
+import com.paytech.acquiring.domain.enums.CheckoutSessionStatus;
+import com.paytech.acquiring.domain.enums.OrderStatus;
+import com.paytech.acquiring.test.base.order.AbstractGetOrderApiTest;
 
 /**
  * 订单详情、创建方式、金额、期限与公开字段合同。

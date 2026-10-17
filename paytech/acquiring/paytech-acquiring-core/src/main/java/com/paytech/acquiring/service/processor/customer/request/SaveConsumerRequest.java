@@ -1,12 +1,12 @@
-package com.paytech.commerce.service.processor.customer.request;
+package com.paytech.acquiring.service.processor.customer.request;
 
 import java.net.IDN;
 import java.text.Normalizer;
 import java.util.Locale;
 import java.util.Set;
 
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.Address;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.ConsumerDetails;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.Address;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.ConsumerDetails;
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.foundation.common.error.FailException;
 

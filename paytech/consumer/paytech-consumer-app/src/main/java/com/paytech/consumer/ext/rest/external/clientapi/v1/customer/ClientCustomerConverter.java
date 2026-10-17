@@ -1,12 +1,12 @@
-package com.paytech.commerce.ext.rest.external.clientapi.v1.customer;
+package com.paytech.consumer.ext.rest.external.clientapi.v1.customer;
 
 import java.util.List;
 
-import com.paytech.commerce.client.api.v1.customer.response.CustomerResponseBody;
-import com.paytech.commerce.client.api.v1.customer.response.ListStoredCardsResponseBody;
-import com.paytech.commerce.core.dal.dataobject.customer.Customer;
-import com.paytech.commerce.integration.payment.PaymentStoredCardClient.StoredCard;
-import com.paytech.commerce.service.processor.customer.request.ClientCustomerRequest;
+import com.paytech.consumer.api.client.v1.customer.response.CustomerResponseBody;
+import com.paytech.consumer.api.client.v1.customer.response.ListStoredCardsResponseBody;
+import com.paytech.consumer.core.dal.dataobject.Customer;
+import com.paytech.consumer.integration.payment.PaymentStoredCardClient.StoredCard;
+import com.paytech.consumer.service.processor.request.ClientCustomerRequest;
 
 /** Customer 与已存卡接口的协议转换。 */
 final class ClientCustomerConverter {

@@ -1,8 +1,8 @@
-package com.paytech.commerce.ext.rest.external.clientapi.v1.refund;
+package com.paytech.acquiring.ext.rest.external.clientapi.v1.refund;
 
-import com.paytech.commerce.client.api.v1.refund.response.GetRefundableAmountResponseBody;
-import com.paytech.commerce.service.processor.refund.request.GetRefundableAmountRequest;
-import com.paytech.commerce.service.processor.refund.response.GetRefundableAmountResponse;
+import com.paytech.acquiring.api.client.v1.refund.response.GetRefundableAmountResponseBody;
+import com.paytech.acquiring.service.processor.refund.request.GetRefundableAmountRequest;
+import com.paytech.acquiring.service.processor.refund.response.GetRefundableAmountResponse;
 
 /** 可退款金额查询的协议转换，不查询数据库或计算额度。 */
 public final class GetRefundableAmountConverter {

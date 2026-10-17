@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.paytech.commerce.core.dal.mapper.checkout.BasicCheckoutMapper">
-    <resultMap id="Basic" type="com.paytech.commerce.core.dal.dataobject.checkout.CheckoutCreationView">
+<mapper namespace="com.paytech.acquiring.core.dal.mapper.checkout.BasicCheckoutMapper">
+    <resultMap id="Basic" type="com.paytech.acquiring.core.dal.dataobject.checkout.CheckoutCreationView">
         <constructor>
             <arg column="order_id" javaType="_long"/>
             <arg column="order_no" javaType="java.lang.String"/>
@@ -16,20 +16,19 @@
             <arg column="total_amount" javaType="java.math.BigDecimal"/>
             <arg column="currency" javaType="java.lang.String"/>
             <arg column="expires_at" javaType="java.time.Instant"/>
-            <arg column="order_status" javaType="com.paytech.commerce.domain.enums.OrderStatus"/>
+            <arg column="order_status" javaType="com.paytech.acquiring.domain.enums.OrderStatus"/>
             <arg column="order_version" javaType="_long"/>
             <arg column="checkout_session_id" javaType="_long"/>
             <arg column="public_token" javaType="java.lang.String"/>
             <arg column="public_origin" javaType="java.lang.String"/>
-            <arg column="session_status" javaType="com.paytech.commerce.domain.enums.CheckoutSessionStatus"/>
+            <arg column="session_status" javaType="com.paytech.acquiring.domain.enums.CheckoutSessionStatus"/>
             <arg column="session_version" javaType="_long"/>
-            <arg column="preparation_command_id" javaType="java.lang.Long"/>
             <arg column="termination_requested_at" javaType="java.time.Instant"/>
             <arg column="context_present" javaType="_boolean"/>
             <arg column="payment_present" javaType="_boolean"/>
         </constructor>
     </resultMap>
-    <resultMap id="Item" type="com.paytech.commerce.core.dal.dataobject.order.OrderItem">
+    <resultMap id="Item" type="com.paytech.acquiring.core.dal.dataobject.order.OrderItem">
         <constructor>
             <arg column="order_item_id" javaType="_long"/>
             <arg column="order_id" javaType="_long"/>
@@ -55,7 +54,7 @@
             o.merchandise_amount,o.discount_amount,o.net_amount,o.tax_amount,o.rounding_amount,o.total_amount,
             o.currency,o.expires_at,o.order_status,o.version AS order_version,s.checkout_session_id,
             s.public_token,s.public_origin,s.session_status,s.version AS session_version,
-            o.preparation_command_id,o.termination_requested_at,
+            o.termination_requested_at,
             EXISTS(SELECT 1 FROM t_order_context c WHERE c.order_id=o.order_id) AS context_present,
             EXISTS(SELECT 1 FROM t_order_payment_projection p WHERE p.order_id=o.order_id) AS payment_present
         FROM t_commerce_order o INNER JOIN t_checkout_session s ON s.order_id=o.order_id

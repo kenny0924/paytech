@@ -1,4 +1,4 @@
-package com.paytech.commerce.domain.customer;
+package com.paytech.acquiring.domain.customer;
 
 import lombok.Getter;
 import lombok.Setter;

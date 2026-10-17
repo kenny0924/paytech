@@ -1,14 +1,14 @@
-package com.paytech.commerce.ext.rest.external.customerapi.v1.checkout;
+package com.paytech.acquiring.ext.rest.external.customerapi.v1.checkout;
 
 import java.math.BigDecimal;
 import java.util.List;
 
-import com.paytech.commerce.customer.api.v1.checkout.response.GetCheckoutResponseBody;
-import com.paytech.commerce.customer.api.v1.checkout.response.GetCheckoutResponseBody.*;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.ConsumerDetails;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.Seller;
-import com.paytech.commerce.service.processor.customer.request.GetCheckoutRequest;
-import com.paytech.commerce.service.processor.customer.response.GetCheckoutResponse;
+import com.paytech.acquiring.api.checkout.v1.checkout.response.GetCheckoutResponseBody;
+import com.paytech.acquiring.api.checkout.v1.checkout.response.GetCheckoutResponseBody.*;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.ConsumerDetails;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.Seller;
+import com.paytech.acquiring.service.processor.customer.request.GetCheckoutRequest;
+import com.paytech.acquiring.service.processor.customer.response.GetCheckoutResponse;
 import com.paytech.foundation.money.Money;
 
 /** GET 入站模型转换；只投影允许公开的字段，不访问数据库或外部依赖。 */

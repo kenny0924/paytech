@@ -1,4 +1,4 @@
-package com.paytech.commerce.ext.rest.external.customerapi.v1.filter;
+package com.paytech.acquiring.ext.rest.external.customerapi.v1.filter;
 
 import com.paytech.foundation.common.error.InvalidParameterException;
 

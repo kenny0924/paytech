@@ -1,11 +1,11 @@
-package com.paytech.commerce.ext.rest.external.customerapi.v1.checkout;
+package com.paytech.acquiring.ext.rest.external.customerapi.v1.checkout;
 
-import com.paytech.commerce.customer.api.v1.checkout.request.SaveConsumerRequestBody;
-import com.paytech.commerce.customer.api.v1.checkout.response.SaveConsumerResponseBody;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.Address;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.ConsumerDetails;
-import com.paytech.commerce.service.processor.customer.request.SaveConsumerRequest;
-import com.paytech.commerce.service.processor.customer.response.SaveConsumerResponse;
+import com.paytech.acquiring.api.checkout.v1.checkout.request.SaveConsumerRequestBody;
+import com.paytech.acquiring.api.checkout.v1.checkout.response.SaveConsumerResponseBody;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.Address;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.ConsumerDetails;
+import com.paytech.acquiring.service.processor.customer.request.SaveConsumerRequest;
+import com.paytech.acquiring.service.processor.customer.response.SaveConsumerResponse;
 
 /** 保存接口只做 Path、Body 和内部模型之间的适配。 */
 public final class SaveConsumerConverter {

@@ -1,17 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.paytech.commerce.core.dal.mapper.order.OrderQueryMapper">
-    <resultMap id="OrderRecord" type="com.paytech.commerce.core.dal.dataobject.order.OrderRecord">
+<mapper namespace="com.paytech.acquiring.core.dal.mapper.order.OrderQueryMapper">
+    <resultMap id="OrderRecord" type="com.paytech.acquiring.core.dal.dataobject.order.OrderRecord">
         <constructor>
             <arg column="order_id" javaType="_long"/>
             <arg column="order_no" javaType="java.lang.String"/>
             <arg column="client_id" javaType="_long"/>
             <arg column="client_order_id" javaType="java.lang.String"/>
-            <arg column="creation_mode" javaType="com.paytech.commerce.client.api.v1.enums.OrderCreationMode"/>
+            <arg column="creation_mode" javaType="com.paytech.acquiring.api.client.v1.enums.OrderCreationMode"/>
             <arg column="entity_no" javaType="java.lang.String"/>
-            <arg column="preparation_command_id" javaType="java.lang.Long"/>
             <arg column="termination_requested_at" javaType="java.time.Instant"/>
-            <arg column="order_status" javaType="com.paytech.commerce.domain.enums.OrderStatus"/>
+            <arg column="order_status" javaType="com.paytech.acquiring.domain.enums.OrderStatus"/>
             <arg column="version" javaType="_long"/>
             <arg column="merchandise_amount" javaType="java.math.BigDecimal"/>
             <arg column="discount_amount" javaType="java.math.BigDecimal"/>
@@ -24,7 +23,7 @@
             <arg column="paid_at" javaType="java.time.Instant"/>
             <arg column="create_time" javaType="java.time.Instant"/>
             <arg column="update_time" javaType="java.time.Instant"/>
-            <arg column="session_status" javaType="com.paytech.commerce.domain.enums.CheckoutSessionStatus"/>
+            <arg column="session_status" javaType="com.paytech.acquiring.domain.enums.CheckoutSessionStatus"/>
             <arg column="public_token" javaType="java.lang.String"/>
             <arg column="public_origin" javaType="java.lang.String"/>
             <arg column="session_version" javaType="java.lang.Long"/>
@@ -34,13 +33,13 @@
             <arg column="consumer_country_code" javaType="java.lang.String"/>
         </constructor>
     </resultMap>
-    <resultMap id="OrderPaymentRecord" type="com.paytech.commerce.core.dal.dataobject.order.OrderPaymentRecord">
+    <resultMap id="OrderPaymentRecord" type="com.paytech.acquiring.core.dal.dataobject.order.OrderPaymentRecord">
         <constructor>
             <arg column="payment_intent_id" javaType="_long"/>
-            <arg column="intent_status" javaType="com.paytech.commerce.domain.enums.PaymentIntentStatus"/>
+            <arg column="intent_status" javaType="com.paytech.acquiring.domain.enums.PaymentIntentStatus"/>
             <arg column="active_attempt_id" javaType="java.lang.Long"/>
             <arg column="last_attempt_id" javaType="java.lang.Long"/>
-            <arg column="last_attempt_status" javaType="com.paytech.commerce.domain.enums.PaymentAttemptStatus"/>
+            <arg column="last_attempt_status" javaType="com.paytech.acquiring.domain.enums.PaymentAttemptStatus"/>
             <arg column="successful_attempt_id" javaType="java.lang.Long"/>
             <arg column="captured_amount" javaType="java.math.BigDecimal"/>
             <arg column="currency" javaType="java.lang.String"/>
@@ -49,9 +48,9 @@
             <arg column="update_time" javaType="java.time.Instant"/>
         </constructor>
     </resultMap>
-    <resultMap id="OrderFundsRecord" type="com.paytech.commerce.core.dal.dataobject.order.OrderFundsRecord">
+    <resultMap id="OrderFundsRecord" type="com.paytech.acquiring.core.dal.dataobject.order.OrderFundsRecord">
         <constructor>
-            <arg column="status" javaType="com.paytech.commerce.domain.enums.FundsAvailabilityStatus"/>
+            <arg column="status" javaType="com.paytech.acquiring.domain.enums.FundsAvailabilityStatus"/>
             <arg column="available_amount" javaType="java.math.BigDecimal"/>
             <arg column="currency" javaType="java.lang.String"/>
             <arg column="scheduled_at" javaType="java.time.Instant"/>
@@ -61,11 +60,11 @@
             <arg column="update_time" javaType="java.time.Instant"/>
         </constructor>
     </resultMap>
-    <resultMap id="OrderRefundPosition" type="com.paytech.commerce.core.dal.dataobject.order.OrderRefundPosition"
-        extends="com.paytech.commerce.core.dal.mapper.order.OrderRefundPositionMapper.OrderRefundPosition"/>
+    <resultMap id="OrderRefundPosition" type="com.paytech.acquiring.core.dal.dataobject.order.OrderRefundPosition"
+        extends="com.paytech.acquiring.core.dal.mapper.order.OrderRefundPositionMapper.OrderRefundPosition"/>
 
     <select id="selectOrder" resultMap="OrderRecord" useCache="false" flushCache="true">
-        SELECT o.order_id,o.order_no,o.client_id,o.client_order_id,o.creation_mode,o.entity_no,o.preparation_command_id,
+        SELECT o.order_id,o.order_no,o.client_id,o.client_order_id,o.creation_mode,o.entity_no,
             o.termination_requested_at,o.order_status,o.version,o.merchandise_amount,o.discount_amount,o.net_amount,
             o.tax_amount,o.rounding_amount,o.total_amount,o.currency,o.expires_at,o.paid_at,o.create_time,o.update_time,
             s.session_status,s.public_token,s.public_origin,

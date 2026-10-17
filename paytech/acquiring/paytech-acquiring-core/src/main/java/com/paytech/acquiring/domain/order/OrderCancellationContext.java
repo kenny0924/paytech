@@ -1,8 +1,8 @@
-package com.paytech.commerce.domain.order;
+package com.paytech.acquiring.domain.order;
 
-import com.paytech.commerce.core.dal.dataobject.checkout.CheckoutSession;
-import com.paytech.commerce.core.dal.dataobject.order.CommerceOrder;
-import com.paytech.commerce.core.dal.dataobject.order.OrderPaymentProjection;
+import com.paytech.acquiring.core.dal.dataobject.checkout.CheckoutSession;
+import com.paytech.acquiring.core.dal.dataobject.order.CommerceOrder;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderPaymentProjection;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -28,6 +28,6 @@ public class OrderCancellationContext {
      * 未受理过支付的订单可本地取消，不能仅凭投影缺失推断没有远端支付；写入时仍由 SQL 条件保护并发事实。
      */
     public boolean canCancelLocally() {
-        return payment == null && !paymentStarted && order.getPreparationCommandId() == null;
+        return payment == null && !paymentStarted;
     }
 }

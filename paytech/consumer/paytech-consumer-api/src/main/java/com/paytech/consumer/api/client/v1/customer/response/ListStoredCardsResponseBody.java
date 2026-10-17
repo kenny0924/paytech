@@ -1,4 +1,4 @@
-package com.paytech.commerce.client.api.v1.customer.response;
+package com.paytech.consumer.api.client.v1.customer.response;
 
 import java.time.Instant;
 import java.util.List;

@@ -1,8 +1,8 @@
-package com.paytech.commerce.domainservice.repository.order;
+package com.paytech.acquiring.domainservice.repository.order;
 
 import java.util.List;
 
-import com.paytech.commerce.core.dal.dataobject.order.*;
+import com.paytech.acquiring.core.dal.dataobject.order.*;
 
 /** 本库订单查询边界；取消写入由各业务表 Repository 承担。 */
 public interface OrderRepository {

@@ -1,4 +1,4 @@
-package com.paytech.commerce.ext.rest.external.clientapi.v1.checkout;
+package com.paytech.acquiring.ext.rest.external.clientapi.v1.checkout;
 
 import java.math.BigDecimal;
 import java.net.URI;
@@ -6,13 +6,13 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
-import com.paytech.commerce.client.api.v1.checkout.request.CreateCheckoutRequestBody;
-import com.paytech.commerce.client.api.v1.checkout.request.CreateCheckoutRequestBody.CheckoutItemInfo;
-import com.paytech.commerce.client.api.v1.checkout.response.CreateCheckoutResponseBody;
-import com.paytech.commerce.client.api.v1.checkout.response.CreateCheckoutResponseBody.AmountsInfo;
-import com.paytech.commerce.service.processor.checkout.request.CreateCheckoutRequest;
-import com.paytech.commerce.service.processor.checkout.request.CreateCheckoutRequest.Item;
-import com.paytech.commerce.service.processor.checkout.response.CreateCheckoutResponse;
+import com.paytech.acquiring.api.client.v1.checkout.request.CreateCheckoutRequestBody;
+import com.paytech.acquiring.api.client.v1.checkout.request.CreateCheckoutRequestBody.CheckoutItemInfo;
+import com.paytech.acquiring.api.client.v1.checkout.response.CreateCheckoutResponseBody;
+import com.paytech.acquiring.api.client.v1.checkout.response.CreateCheckoutResponseBody.AmountsInfo;
+import com.paytech.acquiring.service.processor.checkout.request.CreateCheckoutRequest;
+import com.paytech.acquiring.service.processor.checkout.request.CreateCheckoutRequest.Item;
+import com.paytech.acquiring.service.processor.checkout.response.CreateCheckoutResponse;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.foundation.money.Money;

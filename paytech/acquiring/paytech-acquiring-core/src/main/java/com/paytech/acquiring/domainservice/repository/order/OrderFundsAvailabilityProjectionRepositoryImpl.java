@@ -1,11 +1,11 @@
-package com.paytech.commerce.domainservice.repository.order;
+package com.paytech.acquiring.domainservice.repository.order;
 
 import java.time.Instant;
 
 import org.springframework.stereotype.Repository;
 
-import com.paytech.commerce.core.dal.dataobject.order.OrderFundsAvailabilityProjection;
-import com.paytech.commerce.core.dal.mapper.order.OrderFundsAvailabilityProjectionMapper;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderFundsAvailabilityProjection;
+import com.paytech.acquiring.core.dal.mapper.order.OrderFundsAvailabilityProjectionMapper;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
 import com.paytech.foundation.common.error.ErrorException;
 

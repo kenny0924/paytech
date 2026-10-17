@@ -1,4 +1,4 @@
-package com.paytech.commerce.customer.api.v1.payment;
+package com.paytech.acquiring.api.checkout.v1.payment;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -7,8 +7,8 @@ import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
 
-import com.paytech.commerce.customer.api.v1.payment.request.SubmitPaymentRequestBody;
-import com.paytech.commerce.customer.api.v1.payment.response.PaymentSubmissionResponseBody;
+import com.paytech.acquiring.api.checkout.v1.payment.request.SubmitPaymentRequestBody;
+import com.paytech.acquiring.api.checkout.v1.payment.response.PaymentSubmissionResponseBody;
 
 import jakarta.validation.Valid;
 

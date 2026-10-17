@@ -1,4 +1,4 @@
-package com.paytech.commerce.service.processor.order;
+package com.paytech.acquiring.service.processor.order;
 
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -8,20 +8,20 @@ import java.util.stream.Stream;
 
 import org.springframework.stereotype.Component;
 
-import com.paytech.commerce.client.api.v1.enums.CommerceCheckoutErrorCode;
-import com.paytech.commerce.client.api.v1.enums.OrderCreationMode;
-import com.paytech.commerce.core.dal.dataobject.order.OrderPaymentRecord;
-import com.paytech.commerce.core.dal.dataobject.order.OrderRecord;
-import com.paytech.commerce.domain.checkout.CheckoutPublicOrigin;
-import com.paytech.commerce.domain.checkout.CheckoutPublicToken;
-import com.paytech.commerce.domain.enums.CheckoutSessionStatus;
-import com.paytech.commerce.domain.enums.FundsAvailabilityStatus;
-import com.paytech.commerce.domain.enums.OrderPaymentStatus;
-import com.paytech.commerce.domain.enums.OrderStatus;
-import com.paytech.commerce.domain.order.GetOrderContext;
-import com.paytech.commerce.domainservice.repository.order.OrderRepository;
-import com.paytech.commerce.service.processor.order.request.GetOrderRequest;
-import com.paytech.commerce.service.processor.order.response.GetOrderResponse;
+import com.paytech.acquiring.api.client.v1.enums.CommerceCheckoutErrorCode;
+import com.paytech.acquiring.api.client.v1.enums.OrderCreationMode;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderPaymentRecord;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderRecord;
+import com.paytech.acquiring.domain.checkout.CheckoutPublicOrigin;
+import com.paytech.acquiring.domain.checkout.CheckoutPublicToken;
+import com.paytech.acquiring.domain.enums.CheckoutSessionStatus;
+import com.paytech.acquiring.domain.enums.FundsAvailabilityStatus;
+import com.paytech.acquiring.domain.enums.OrderPaymentStatus;
+import com.paytech.acquiring.domain.enums.OrderStatus;
+import com.paytech.acquiring.domain.order.GetOrderContext;
+import com.paytech.acquiring.domainservice.repository.order.OrderRepository;
+import com.paytech.acquiring.service.processor.order.request.GetOrderRequest;
+import com.paytech.acquiring.service.processor.order.response.GetOrderResponse;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.common.error.InvalidParameterException;

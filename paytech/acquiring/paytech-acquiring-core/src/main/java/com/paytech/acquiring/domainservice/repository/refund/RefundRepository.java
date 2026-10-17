@@ -1,10 +1,10 @@
-package com.paytech.commerce.domainservice.repository.refund;
+package com.paytech.acquiring.domainservice.repository.refund;
 
 import java.time.Instant;
 import java.util.List;
-import com.paytech.commerce.core.dal.dataobject.refund.RefundRequest;
-import com.paytech.commerce.core.dal.dataobject.refund.RefundRequestView;
-import com.paytech.commerce.domain.enums.RefundStatus;
+import com.paytech.acquiring.core.dal.dataobject.refund.RefundRequest;
+import com.paytech.acquiring.core.dal.dataobject.refund.RefundRequestView;
+import com.paytech.acquiring.domain.enums.RefundStatus;
 
 /** 退款表的查询与状态写入边界，金额位置由独立仓储维护。 */
 public interface RefundRepository {

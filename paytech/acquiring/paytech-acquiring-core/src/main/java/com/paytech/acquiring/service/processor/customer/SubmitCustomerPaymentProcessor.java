@@ -1,6 +1,6 @@
-package com.paytech.commerce.service.processor.customer;
+package com.paytech.acquiring.service.processor.customer;
 
-import static com.paytech.commerce.customer.api.v1.enums.CustomerCheckoutErrorCode.*;
+import static com.paytech.acquiring.api.checkout.v1.enums.CustomerCheckoutErrorCode.*;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -10,39 +10,39 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
-import com.paytech.commerce.core.dal.dataobject.checkout.CheckoutSession;
-import com.paytech.commerce.core.dal.dataobject.customer.CheckoutNetworkEvidence;
-import com.paytech.commerce.core.dal.dataobject.customer.ConsumerAcceptance;
-import com.paytech.commerce.core.dal.dataobject.customer.ConsumerContract;
-import com.paytech.commerce.core.dal.dataobject.order.CommerceOrder;
-import com.paytech.commerce.core.dal.dataobject.order.OrderPaymentProjection;
-import com.paytech.commerce.domain.checkout.CheckoutPublicOrigin;
-import com.paytech.commerce.domain.checkout.CheckoutPublicToken;
-import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.CardChoice;
-import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.Payer;
-import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.PaymentRequest;
-import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.PaymentResult;
-import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.SubmissionReceipt;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.IntentRequest;
-import com.paytech.commerce.domain.customer.SubmitCustomerPaymentContext;
-import com.paytech.commerce.domain.enums.CheckoutEvidenceScene;
-import com.paytech.commerce.domain.enums.ConsumerAcceptanceType;
-import com.paytech.commerce.domain.enums.OrderStatus;
-import com.paytech.commerce.domainservice.port.CommerceIdentifierGenerator;
-import com.paytech.commerce.domainservice.port.customer.CheckoutCardPaymentPort;
-import com.paytech.commerce.integration.payment.PaymentCheckoutClient;
-import com.paytech.commerce.domainservice.repository.checkout.CheckoutSessionRepository;
-import com.paytech.commerce.domainservice.repository.customer.CheckoutNetworkEvidenceRepository;
-import com.paytech.commerce.domainservice.repository.customer.ConsumerAcceptanceRepository;
-import com.paytech.commerce.domainservice.repository.customer.ConsumerContextRepository;
-import com.paytech.commerce.domainservice.repository.customer.ConsumerContractRepository;
-import com.paytech.commerce.domainservice.repository.customer.CustomerRepository;
-import com.paytech.commerce.domainservice.repository.order.CommerceOrderRepository;
-import com.paytech.commerce.domainservice.repository.order.OrderContextRepository;
-import com.paytech.commerce.domainservice.repository.order.OrderPaymentProjectionRepository;
-import com.paytech.commerce.domainservice.service.customer.CheckoutSubmissionService;
-import com.paytech.commerce.service.processor.customer.request.SubmitCustomerPaymentRequest;
-import com.paytech.commerce.service.processor.customer.response.CustomerPaymentResponse;
+import com.paytech.acquiring.core.dal.dataobject.checkout.CheckoutSession;
+import com.paytech.acquiring.core.dal.dataobject.customer.CheckoutNetworkEvidence;
+import com.paytech.acquiring.core.dal.dataobject.customer.ConsumerAcceptance;
+import com.paytech.acquiring.core.dal.dataobject.customer.ConsumerContract;
+import com.paytech.acquiring.core.dal.dataobject.order.CommerceOrder;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderPaymentProjection;
+import com.paytech.acquiring.domain.checkout.CheckoutPublicOrigin;
+import com.paytech.acquiring.domain.checkout.CheckoutPublicToken;
+import com.paytech.acquiring.domain.customer.CheckoutSubmissionModels.CardChoice;
+import com.paytech.acquiring.domain.customer.CheckoutSubmissionModels.Payer;
+import com.paytech.acquiring.domain.customer.CheckoutSubmissionModels.PaymentRequest;
+import com.paytech.acquiring.domain.customer.CheckoutSubmissionModels.PaymentResult;
+import com.paytech.acquiring.domain.customer.CheckoutSubmissionModels.SubmissionReceipt;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.IntentRequest;
+import com.paytech.acquiring.domain.customer.SubmitCustomerPaymentContext;
+import com.paytech.acquiring.domain.enums.CheckoutEvidenceScene;
+import com.paytech.acquiring.domain.enums.ConsumerAcceptanceType;
+import com.paytech.acquiring.domain.enums.OrderStatus;
+import com.paytech.acquiring.domainservice.port.CommerceIdentifierGenerator;
+import com.paytech.acquiring.domainservice.port.customer.CheckoutCardPaymentPort;
+import com.paytech.acquiring.integration.payment.PaymentCheckoutClient;
+import com.paytech.acquiring.domainservice.repository.checkout.CheckoutSessionRepository;
+import com.paytech.acquiring.domainservice.repository.customer.CheckoutNetworkEvidenceRepository;
+import com.paytech.acquiring.domainservice.repository.customer.ConsumerAcceptanceRepository;
+import com.paytech.acquiring.domainservice.repository.customer.ConsumerContextRepository;
+import com.paytech.acquiring.domainservice.repository.customer.ConsumerContractRepository;
+import com.paytech.acquiring.domainservice.repository.order.CommerceOrderRepository;
+import com.paytech.acquiring.domainservice.repository.order.OrderContextRepository;
+import com.paytech.acquiring.domainservice.repository.order.OrderPaymentProjectionRepository;
+import com.paytech.acquiring.domainservice.service.customer.CheckoutSubmissionService;
+import com.paytech.acquiring.integration.consumer.ConsumerCustomerClient;
+import com.paytech.acquiring.service.processor.customer.request.SubmitCustomerPaymentRequest;
+import com.paytech.acquiring.service.processor.customer.response.CustomerPaymentResponse;
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.common.error.ServiceUnavailableException;
@@ -69,7 +69,7 @@ public class SubmitCustomerPaymentProcessor
     private final OrderPaymentProjectionRepository paymentRepository;
     private final CheckoutNetworkEvidenceRepository evidenceRepository;
     private final CardSavingEligibility cardSavingEligibility;
-    private final CustomerRepository customerRepository;
+    private final ConsumerCustomerClient consumer;
 
     /** 非 HTTP 调用同样执行字段约束；不访问数据库，不复制模板的事务检查。 */
     @Override
@@ -124,17 +124,20 @@ public class SubmitCustomerPaymentProcessor
             throw new FailException(STORED_CARD_NOT_AVAILABLE);
         }
         return new CardChoice(request.getCard(), request.getStoredCardToken(), request.getStoredCardCvv(),
-            customer.getCustomerId(), request.isSaveCard());
+            customer.customerId(), request.isSaveCard());
     }
 
-    /** 付款人引用不传 Client 原始引用：有 Customer 时用公开 Customer 编号，访客用订单号；回跳到本 Checkout 页面。 */
+    /**
+     * 付款人引用不传 Client 原始引用：有 Customer 时用公开 Customer 编号（事务外经 consumer 读取，含已删除），访客用订单号；回跳到本 Checkout 页面。
+     * <li>consumer 返回 Customer 不存在时按访客处理；consumer 不可用时失败，已提交的接受与 Intent 关联由重试复用。</li>
+     */
     Payer buildPayer(SubmitCustomerPaymentRequest request, SubmitCustomerPaymentContext context) {
         var order = context.getOrder();
-        var customer = order.getCustomerId() == null ? null : customerRepository.findById(order.getCustomerId());
+        var customerNo = order.getCustomerId() == null ? null : consumer.customerNo(order.getCustomerId());
         var session = context.getSession();
         var evidence = request.getEvidence();
         String userAgent = evidence.userAgent() == null || evidence.userAgent().isBlank() ? null : evidence.userAgent();
-        return new Payer(customer == null ? order.getOrderNo() : customer.getCustomerNo(),
+        return new Payer(customerNo == null ? order.getOrderNo() : customerNo,
             evidence.clientIpAddress(), userAgent,
             new CheckoutPublicOrigin(session.getPublicOrigin()).checkoutUrl(session.getPublicToken()));
     }

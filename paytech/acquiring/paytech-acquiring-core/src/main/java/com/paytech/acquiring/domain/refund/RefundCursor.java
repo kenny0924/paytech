@@ -1,11 +1,11 @@
-package com.paytech.commerce.domain.refund;
+package com.paytech.acquiring.domain.refund;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.Base64;
 
-import com.paytech.commerce.client.api.v1.enums.CommerceCheckoutErrorCode;
+import com.paytech.acquiring.api.client.v1.enums.CommerceCheckoutErrorCode;
 import com.paytech.foundation.common.error.FailException;
 
 /** 游标只编码已公开且不可变的排序字段；归属由查询入口核对原退款。 */

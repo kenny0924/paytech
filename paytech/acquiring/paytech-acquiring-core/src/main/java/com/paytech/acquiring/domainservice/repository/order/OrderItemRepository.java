@@ -1,8 +1,8 @@
-package com.paytech.commerce.domainservice.repository.order;
+package com.paytech.acquiring.domainservice.repository.order;
 
 import java.util.List;
 
-import com.paytech.commerce.core.dal.dataobject.order.OrderItem;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderItem;
 
 /** OrderItem 的单表持久化边界。 */
 public interface OrderItemRepository {

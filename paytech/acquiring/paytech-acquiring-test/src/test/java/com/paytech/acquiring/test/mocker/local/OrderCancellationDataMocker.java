@@ -1,4 +1,4 @@
-package com.paytech.commerce.test.mocker.local;
+package com.paytech.acquiring.test.mocker.local;
 
 import java.time.Instant;
 
@@ -6,11 +6,11 @@ import org.springframework.boot.test.context.TestComponent;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import com.paytech.commerce.core.dal.dataobject.customer.ConsumerAcceptance;
-import com.paytech.commerce.domain.enums.ConsumerAcceptanceType;
-import com.paytech.commerce.domainservice.port.CommerceIdentifierGenerator;
-import com.paytech.commerce.test.builder.order.GetOrderDataBuilder.Fixture;
-import com.paytech.commerce.test.dal.OrderCancellationTestMapper;
+import com.paytech.acquiring.core.dal.dataobject.customer.ConsumerAcceptance;
+import com.paytech.acquiring.domain.enums.ConsumerAcceptanceType;
+import com.paytech.acquiring.domainservice.port.CommerceIdentifierGenerator;
+import com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.Fixture;
+import com.paytech.acquiring.test.dal.OrderCancellationTestMapper;
 
 /** 复用订单 Fixture 和全局清理，仅增加取消场景需要的前置事实。 */
 @TestComponent

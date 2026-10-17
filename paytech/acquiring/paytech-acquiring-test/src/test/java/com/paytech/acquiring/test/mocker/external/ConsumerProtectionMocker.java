@@ -1,4 +1,4 @@
-package com.paytech.commerce.test.mocker.external;
+package com.paytech.acquiring.test.mocker.external;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -10,9 +10,9 @@ import java.util.function.Consumer;
 import org.springframework.boot.test.context.TestComponent;
 import org.springframework.context.annotation.Primary;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.ConsumerDetails;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.ProtectedConsumer;
-import com.paytech.commerce.domainservice.port.customer.ConsumerProtectionPort;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.ConsumerDetails;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.ProtectedConsumer;
+import com.paytech.acquiring.domainservice.port.customer.ConsumerProtectionPort;
 import com.paytech.foundation.testsupport.api.Clear;
 
 /** 当前 Protect 尚无 HTTP Client；仅替换外部端口，不能据此宣称 Vault 协议已覆盖。 */

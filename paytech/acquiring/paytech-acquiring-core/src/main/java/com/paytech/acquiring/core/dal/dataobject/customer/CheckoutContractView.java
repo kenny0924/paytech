@@ -1,4 +1,4 @@
-package com.paytech.commerce.core.dal.dataobject.customer;
+package com.paytech.acquiring.core.dal.dataobject.customer;
 
 /** 由本订单上下文与法律记录连接得到的合同绑定，不读取展示字段。 */
 public record CheckoutContractView(

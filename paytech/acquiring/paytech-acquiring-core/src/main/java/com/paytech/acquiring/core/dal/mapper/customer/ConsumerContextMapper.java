@@ -1,12 +1,12 @@
-package com.paytech.commerce.core.dal.mapper.customer;
+package com.paytech.acquiring.core.dal.mapper.customer;
 
 import java.time.Instant;
 
 import org.apache.ibatis.annotations.Param;
 
-import com.paytech.commerce.core.dal.dataobject.customer.ConsumerContext;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.Address;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.ProtectedConsumer;
+import com.paytech.acquiring.core.dal.dataobject.customer.ConsumerContext;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.Address;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.ProtectedConsumer;
 
 /** 消费者资料单表查询。 */
 public interface ConsumerContextMapper {

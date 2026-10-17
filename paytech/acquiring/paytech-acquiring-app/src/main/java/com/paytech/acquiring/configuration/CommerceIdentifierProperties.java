@@ -1,4 +1,4 @@
-package com.paytech.commerce.configuration;
+package com.paytech.acquiring.configuration;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
@@ -11,7 +11,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Validated
-@ConfigurationProperties(prefix = "commerce.identifier")
+@ConfigurationProperties(prefix = "acquiring.identifier")
 public class CommerceIdentifierProperties {
 
     /**

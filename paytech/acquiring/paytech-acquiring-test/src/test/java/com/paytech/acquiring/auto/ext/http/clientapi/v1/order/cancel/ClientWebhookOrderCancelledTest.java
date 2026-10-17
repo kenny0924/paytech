@@ -1,6 +1,6 @@
-package com.paytech.commerce.auto.ext.http.clientapi.v1.order.cancel;
+package com.paytech.acquiring.auto.ext.http.clientapi.v1.order.cancel;
 
-import static com.paytech.commerce.test.builder.order.GetOrderDataBuilder.NOW;
+import static com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.NOW;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -15,21 +15,21 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.paytech.commerce.client.api.v1.order.ClientOrderApi;
-import com.paytech.commerce.domain.enums.CheckoutSessionStatus;
-import com.paytech.commerce.domain.enums.ClientWebhookEventType;
-import com.paytech.commerce.domain.enums.OrderStatus;
-import com.paytech.commerce.domain.webhook.ClientWebhookEvent;
-import com.paytech.commerce.integration.payment.PaymentTerminationClient;
-import com.paytech.commerce.test.base.MockTestBase;
-import com.paytech.commerce.test.builder.order.GetOrderDataBuilder.Fixture;
-import com.paytech.commerce.test.builder.order.GetOrderDataBuilder.Payment;
-import com.paytech.commerce.test.checker.order.CancelOrderResponseChecker;
-import com.paytech.commerce.test.checker.order.OrderCancellationChecker;
-import com.paytech.commerce.test.checker.webhook.ClientWebhookChecker;
-import com.paytech.commerce.test.mocker.external.PaymentTerminationMocker;
-import com.paytech.commerce.test.mocker.local.OrderCancellationDataMocker;
-import com.paytech.commerce.test.mocker.local.OrderQueryDataMocker;
+import com.paytech.acquiring.api.client.v1.order.ClientOrderApi;
+import com.paytech.acquiring.domain.enums.CheckoutSessionStatus;
+import com.paytech.acquiring.domain.enums.ClientWebhookEventType;
+import com.paytech.acquiring.domain.enums.OrderStatus;
+import com.paytech.acquiring.domain.webhook.ClientWebhookEvent;
+import com.paytech.acquiring.integration.payment.PaymentTerminationClient;
+import com.paytech.acquiring.test.base.MockTestBase;
+import com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.Fixture;
+import com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.Payment;
+import com.paytech.acquiring.test.checker.order.CancelOrderResponseChecker;
+import com.paytech.acquiring.test.checker.order.OrderCancellationChecker;
+import com.paytech.acquiring.test.checker.webhook.ClientWebhookChecker;
+import com.paytech.acquiring.test.mocker.external.PaymentTerminationMocker;
+import com.paytech.acquiring.test.mocker.local.OrderCancellationDataMocker;
+import com.paytech.acquiring.test.mocker.local.OrderQueryDataMocker;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
 
 import tools.jackson.databind.JsonNode;
@@ -59,7 +59,6 @@ class ClientWebhookOrderCancelledTest extends MockTestBase {
     @BeforeEach
     void setUpCancelledWebhook() {
         fixture = orders.template().ready().build();
-        fixture.getOrder().setPreparationCommandId(null);
     }
 
     /** 仅本地取消提交一次；Direct Pay 无会话时省略 checkoutStatus；重复取消不再登记或提交。 */
@@ -67,7 +66,6 @@ class ClientWebhookOrderCancelledTest extends MockTestBase {
     @ValueSource(booleans = {true, false})
     void test_localCancel(boolean hasSession) {
         fixture = orders.template().directPay().session(hasSession).ready().build();
-        fixture.getOrder().setPreparationCommandId(null);
         data.mock(fixture);
 
         invoke().assertCancelled(orderNo(), hasSession, NOW);

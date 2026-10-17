@@ -1,11 +1,11 @@
-package com.paytech.commerce.service.processor.order.response;
+package com.paytech.acquiring.service.processor.order.response;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
-import com.paytech.commerce.client.api.v1.enums.OrderCreationMode;
-import com.paytech.commerce.domain.enums.*;
+import com.paytech.acquiring.api.client.v1.enums.OrderCreationMode;
+import com.paytech.acquiring.domain.enums.*;
 
 import lombok.Builder;
 

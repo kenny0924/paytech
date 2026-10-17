@@ -1,12 +1,12 @@
-package com.paytech.commerce.domain.order;
+package com.paytech.acquiring.domain.order;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 
-import com.paytech.commerce.core.dal.dataobject.checkout.CheckoutSession;
-import com.paytech.commerce.core.dal.dataobject.order.CommerceOrder;
-import com.paytech.commerce.core.dal.dataobject.order.OrderPaymentProjection;
-import com.paytech.commerce.core.dal.dataobject.order.OrderRefundPosition;
+import com.paytech.acquiring.core.dal.dataobject.checkout.CheckoutSession;
+import com.paytech.acquiring.core.dal.dataobject.order.CommerceOrder;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderPaymentProjection;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderRefundPosition;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

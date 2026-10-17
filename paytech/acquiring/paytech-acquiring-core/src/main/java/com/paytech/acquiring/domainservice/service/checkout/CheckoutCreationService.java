@@ -1,6 +1,6 @@
-package com.paytech.commerce.domainservice.service.checkout;
+package com.paytech.acquiring.domainservice.service.checkout;
 
-import com.paytech.commerce.domain.checkout.CreateCheckoutContext;
+import com.paytech.acquiring.domain.checkout.CreateCheckoutContext;
 
 /** 基础 Checkout 的本地原子保存。 */
 public interface CheckoutCreationService {

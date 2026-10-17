@@ -1,4 +1,4 @@
-package com.paytech.commerce.test.mock.external;
+package com.paytech.consumer.test.mock.external;
 
 import org.springframework.boot.test.context.TestComponent;
 import org.springframework.http.HttpStatus;
@@ -6,8 +6,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import com.paytech.commerce.test.mocker.external.StoredCardMocker;
+import com.paytech.consumer.test.mocker.external.StoredCardMocker;
 import com.paytech.foundation.httpproblem.api.ApiProblemProfile;
 import com.paytech.foundation.httpproblem.api.ApiProblemResponse;
 import com.paytech.foundation.testsupport.api.MockHttpFault;
@@ -22,8 +24,14 @@ import lombok.AllArgsConstructor;
 @RestController
 @TestComponent
 @AllArgsConstructor
-public class MockStoredCardApi implements StoredCardApi {
+public class MockStoredCardApi implements StoredCardApi, WebMvcConfigurer {
     private final StoredCardMocker mocker;
+
+    /** 模拟 Payment 应用的 Context Path（/payment），接口内路径仍由正式 API 定义。 */
+    @Override
+    public void configurePathMatch(PathMatchConfigurer configurer) {
+        configurer.addPathPrefix("/payment", type -> StoredCardApi.class.isAssignableFrom(type));
+    }
 
     @Override
     public StoredCardListResponseBody listStoredCards(String clientId, String customerId) {

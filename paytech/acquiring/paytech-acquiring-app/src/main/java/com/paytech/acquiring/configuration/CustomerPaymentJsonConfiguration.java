@@ -1,4 +1,4 @@
-package com.paytech.commerce.configuration;
+package com.paytech.acquiring.configuration;
 
 import java.io.IOException;
 import java.util.List;
@@ -8,7 +8,7 @@ import org.springframework.http.*;
 import org.springframework.http.converter.*;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import com.paytech.commerce.customer.api.v1.payment.request.SubmitPaymentRequestBody;
+import com.paytech.acquiring.api.checkout.v1.payment.request.SubmitPaymentRequestBody;
 
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.StreamReadFeature;

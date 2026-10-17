@@ -1,4 +1,4 @@
-package com.paytech.commerce.domain.enums;
+package com.paytech.acquiring.domain.enums;
 import com.paytech.foundation.common.enums.CodeEnum;
 /** Commerce 退款状态；未知支付结果始终保留 PROCESSING。 */
 public enum RefundStatus implements CodeEnum {

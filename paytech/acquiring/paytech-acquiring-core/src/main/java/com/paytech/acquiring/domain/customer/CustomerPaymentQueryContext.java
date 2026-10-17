@@ -1,8 +1,8 @@
-package com.paytech.commerce.domain.customer;
+package com.paytech.acquiring.domain.customer;
 
-import com.paytech.commerce.core.dal.dataobject.order.CommerceOrder;
-import com.paytech.commerce.core.dal.dataobject.order.OrderPaymentProjection;
-import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.PaymentReference;
+import com.paytech.acquiring.core.dal.dataobject.order.CommerceOrder;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderPaymentProjection;
+import com.paytech.acquiring.domain.customer.CheckoutSubmissionModels.PaymentReference;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

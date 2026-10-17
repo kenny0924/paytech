@@ -1,6 +1,6 @@
-package com.paytech.commerce.service.processor.customer;
+package com.paytech.acquiring.service.processor.customer;
 
-import com.paytech.commerce.domainservice.repository.customer.ConsumerAcceptanceRepository;
+import com.paytech.acquiring.domainservice.repository.customer.ConsumerAcceptanceRepository;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -8,30 +8,30 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
-import com.paytech.commerce.client.api.v1.enums.CommerceCheckoutErrorCode;
-import com.paytech.commerce.core.dal.dataobject.checkout.CheckoutSession;
-import com.paytech.commerce.core.dal.dataobject.customer.ConsumerContext;
-import com.paytech.commerce.core.dal.dataobject.customer.Customer;
-import com.paytech.commerce.core.dal.dataobject.order.CommerceOrder;
-import com.paytech.commerce.core.dal.dataobject.order.OrderPaymentProjection;
-import com.paytech.commerce.customer.api.v1.enums.CustomerCheckoutErrorCode;
-import com.paytech.commerce.domain.checkout.CheckoutPublicToken;
-import com.paytech.commerce.domain.checkout.CheckoutUpstreamProtocolException;
-import com.paytech.commerce.domain.customer.CheckoutLegalView;
-import com.paytech.commerce.domain.customer.CheckoutQueryContext;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.*;
-import com.paytech.commerce.domainservice.port.customer.CheckoutPaymentPort;
-import com.paytech.commerce.domainservice.port.customer.ConsumerProtectionPort;
-import com.paytech.commerce.domainservice.repository.checkout.CheckoutSessionRepository;
-import com.paytech.commerce.domainservice.repository.customer.ConsumerContextRepository;
-import com.paytech.commerce.domainservice.repository.order.CommerceOrderRepository;
-import com.paytech.commerce.domainservice.repository.order.OrderContextRepository;
-import com.paytech.commerce.domainservice.repository.order.OrderItemRepository;
-import com.paytech.commerce.domainservice.repository.order.OrderPaymentProjectionRepository;
-import com.paytech.commerce.integration.customer.CheckoutDocumentLinkClient;
-import com.paytech.commerce.integration.payment.PaymentStoredCardClient;
-import com.paytech.commerce.service.processor.customer.request.GetCheckoutRequest;
-import com.paytech.commerce.service.processor.customer.response.GetCheckoutResponse;
+import com.paytech.acquiring.api.client.v1.enums.CommerceCheckoutErrorCode;
+import com.paytech.acquiring.core.dal.dataobject.checkout.CheckoutSession;
+import com.paytech.acquiring.core.dal.dataobject.customer.ConsumerContext;
+import com.paytech.acquiring.core.dal.dataobject.order.CommerceOrder;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderPaymentProjection;
+import com.paytech.acquiring.api.checkout.v1.enums.CustomerCheckoutErrorCode;
+import com.paytech.acquiring.domain.checkout.CheckoutPublicToken;
+import com.paytech.acquiring.domain.checkout.CheckoutUpstreamProtocolException;
+import com.paytech.acquiring.domain.customer.CheckoutLegalView;
+import com.paytech.acquiring.domain.customer.CheckoutQueryContext;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.*;
+import com.paytech.acquiring.domainservice.port.customer.CheckoutPaymentPort;
+import com.paytech.acquiring.domainservice.port.customer.ConsumerProtectionPort;
+import com.paytech.acquiring.domainservice.repository.checkout.CheckoutSessionRepository;
+import com.paytech.acquiring.domainservice.repository.customer.ConsumerContextRepository;
+import com.paytech.acquiring.domainservice.repository.order.CommerceOrderRepository;
+import com.paytech.acquiring.domainservice.repository.order.OrderContextRepository;
+import com.paytech.acquiring.domainservice.repository.order.OrderItemRepository;
+import com.paytech.acquiring.domainservice.repository.order.OrderPaymentProjectionRepository;
+import com.paytech.acquiring.integration.customer.CheckoutDocumentLinkClient;
+import com.paytech.acquiring.integration.payment.PaymentStoredCardClient;
+import com.paytech.acquiring.service.processor.customer.CardSavingEligibility.EligibleCustomer;
+import com.paytech.acquiring.service.processor.customer.request.GetCheckoutRequest;
+import com.paytech.acquiring.service.processor.customer.response.GetCheckoutResponse;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.common.error.ServiceUnavailableException;
 import com.paytech.foundation.processor.AbstractProcessor;
@@ -155,12 +155,12 @@ public class GetCustomerCheckoutProcessor extends AbstractProcessor<GetCheckoutR
     }
 
     /** 有资格时在事务外读取已存卡；Payment 暂不可用时降级为不展示，不影响结账。 */
-    List<PaymentStoredCardClient.StoredCard> storedCards(Customer customer) {
+    List<PaymentStoredCardClient.StoredCard> storedCards(EligibleCustomer customer) {
         if (customer == null) {
             return List.of();
         }
         try {
-            return storedCards.list(customer.getClientId(), customer.getCustomerId());
+            return storedCards.list(customer.clientId(), customer.customerId());
         } catch (ServiceUnavailableException dependencyUnavailable) {
             return List.of();
         }

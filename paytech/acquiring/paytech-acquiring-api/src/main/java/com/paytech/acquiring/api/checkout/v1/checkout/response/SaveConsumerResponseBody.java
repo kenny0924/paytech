@@ -1,4 +1,4 @@
-package com.paytech.commerce.customer.api.v1.checkout.response;
+package com.paytech.acquiring.api.checkout.v1.checkout.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

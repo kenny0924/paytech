@@ -1,4 +1,4 @@
-package com.paytech.commerce.service.processor.order.response;
+package com.paytech.acquiring.service.processor.order.response;
 
 /** 支付成功事件的落地结果；监听器据此记录日志，均表示可以确认消息。 */
 public enum ApplyPaymentSucceededResponse {

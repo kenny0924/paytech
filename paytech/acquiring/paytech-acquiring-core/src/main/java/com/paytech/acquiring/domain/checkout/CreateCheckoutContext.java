@@ -1,13 +1,13 @@
-package com.paytech.commerce.domain.checkout;
+package com.paytech.acquiring.domain.checkout;
 
 import java.util.List;
 
-import com.paytech.commerce.core.dal.dataobject.checkout.CheckoutSession;
-import com.paytech.commerce.core.dal.dataobject.customer.FrozenCheckoutRecord;
-import com.paytech.commerce.core.dal.dataobject.order.CommerceOrder;
-import com.paytech.commerce.core.dal.dataobject.order.OrderFundsAvailabilityProjection;
-import com.paytech.commerce.core.dal.dataobject.order.OrderItem;
-import com.paytech.commerce.core.dal.dataobject.order.OrderRefundPosition;
+import com.paytech.acquiring.core.dal.dataobject.checkout.CheckoutSession;
+import com.paytech.acquiring.core.dal.dataobject.customer.FrozenCheckoutRecord;
+import com.paytech.acquiring.core.dal.dataobject.order.CommerceOrder;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderFundsAvailabilityProjection;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderItem;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderRefundPosition;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

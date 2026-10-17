@@ -1,16 +1,16 @@
-package com.paytech.commerce.service.processor.customer;
+package com.paytech.consumer.service.processor;
 
 import java.util.List;
 
 import org.springframework.stereotype.Component;
 
-import com.paytech.commerce.client.api.v1.enums.CommerceCheckoutErrorCode;
-import com.paytech.commerce.core.dal.dataobject.customer.Customer;
-import com.paytech.commerce.domain.enums.CustomerStatus;
-import com.paytech.commerce.domainservice.repository.customer.CustomerRepository;
-import com.paytech.commerce.integration.payment.PaymentStoredCardClient;
-import com.paytech.commerce.integration.payment.PaymentStoredCardClient.StoredCard;
-import com.paytech.commerce.service.processor.customer.request.ClientCustomerRequest;
+import com.paytech.consumer.api.enums.ConsumerErrorCode;
+import com.paytech.consumer.core.dal.dataobject.Customer;
+import com.paytech.consumer.api.enums.CustomerStatus;
+import com.paytech.consumer.domainservice.repository.CustomerRepository;
+import com.paytech.consumer.integration.payment.PaymentStoredCardClient;
+import com.paytech.consumer.integration.payment.PaymentStoredCardClient.StoredCard;
+import com.paytech.consumer.service.processor.request.ClientCustomerRequest;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.processor.AbstractProcessor;
 
@@ -27,7 +27,7 @@ public class ListStoredCardsProcessor extends AbstractProcessor<ClientCustomerRe
     protected List<StoredCard> processRequest(ClientCustomerRequest request) {
         Customer customer = customerRepository.findByNo(request.getClientId(), request.getCustomerNo());
         if (customer == null) {
-            throw new FailException(CommerceCheckoutErrorCode.CUSTOMER_NOT_FOUND);
+            throw new FailException(ConsumerErrorCode.CUSTOMER_NOT_FOUND);
         }
         if (customer.getCustomerStatus() == CustomerStatus.DELETED) {
             return List.of();

@@ -1,9 +1,9 @@
-package com.paytech.commerce.core.dal.dataobject.order;
+package com.paytech.acquiring.core.dal.dataobject.order;
 
 import java.math.BigDecimal;
 
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.IntentResult;
-import com.paytech.commerce.domain.enums.PaymentIntentStatus;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.IntentResult;
+import com.paytech.acquiring.domain.enums.PaymentIntentStatus;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -1,4 +1,4 @@
-package com.paytech.commerce.configuration;
+package com.paytech.acquiring.configuration;
 
 import java.time.Clock;
 
@@ -6,9 +6,9 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.paytech.commerce.domain.checkout.CheckoutPublicOrigin;
-import com.paytech.commerce.domainservice.port.CommerceIdentifierGenerator;
-import com.paytech.commerce.integration.id.FoundationCommerceIdentifierGenerator;
+import com.paytech.acquiring.domain.checkout.CheckoutPublicOrigin;
+import com.paytech.acquiring.domainservice.port.CommerceIdentifierGenerator;
+import com.paytech.acquiring.integration.id.FoundationCommerceIdentifierGenerator;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.id.SnowflakeIdGenerator;
 

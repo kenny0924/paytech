@@ -1,4 +1,4 @@
-package com.paytech.commerce.test.checker.order;
+package com.paytech.acquiring.test.checker.order;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -8,8 +8,8 @@ import java.util.Map;
 
 import org.springframework.boot.test.context.TestComponent;
 
-import com.paytech.commerce.test.dal.CheckoutCreationTestMapper;
-import com.paytech.commerce.test.dal.OrderQueryTestMapper;
+import com.paytech.acquiring.test.dal.CheckoutCreationTestMapper;
+import com.paytech.acquiring.test.dal.OrderQueryTestMapper;
 
 import lombok.AllArgsConstructor;
 

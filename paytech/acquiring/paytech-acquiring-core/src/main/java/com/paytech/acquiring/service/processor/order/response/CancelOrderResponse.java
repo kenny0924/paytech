@@ -1,8 +1,8 @@
-package com.paytech.commerce.service.processor.order.response;
+package com.paytech.acquiring.service.processor.order.response;
 
 import java.time.Instant;
 
-import com.paytech.commerce.domain.enums.CheckoutSessionStatus;
+import com.paytech.acquiring.domain.enums.CheckoutSessionStatus;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -1,11 +1,11 @@
-package com.paytech.commerce.test.mock.external;
+package com.paytech.acquiring.test.mock.external;
 
 import org.springframework.boot.test.context.TestComponent;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import com.paytech.commerce.test.mocker.external.CheckoutRiskMocker;
+import com.paytech.acquiring.test.mocker.external.CheckoutRiskMocker;
 import com.paytech.risk.api.evaluation.RiskDecisionApi;
 import com.paytech.risk.api.evaluation.request.EvaluateDecisionRequestBody;
 import com.paytech.risk.api.evaluation.response.EvaluateDecisionResponseBody;

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.paytech.commerce.core.dal.mapper.order.OrderPaymentProjectionMapper">
-    <resultMap id="OrderPaymentProjection" type="com.paytech.commerce.core.dal.dataobject.order.OrderPaymentProjection">
+<mapper namespace="com.paytech.acquiring.core.dal.mapper.order.OrderPaymentProjectionMapper">
+    <resultMap id="OrderPaymentProjection" type="com.paytech.acquiring.core.dal.dataobject.order.OrderPaymentProjection">
         <id column="order_payment_projection_id" property="orderPaymentProjectionId" javaType="_long"/>
         <result column="order_id" property="orderId" javaType="_long"/>
         <result column="payment_intent_id" property="paymentIntentId" javaType="_long"/>
-        <result column="intent_status" property="intentStatus" javaType="com.paytech.commerce.domain.enums.PaymentIntentStatus"/>
+        <result column="intent_status" property="intentStatus" javaType="com.paytech.acquiring.domain.enums.PaymentIntentStatus"/>
         <result column="successful_attempt_id" property="successfulAttemptId" javaType="java.lang.Long"/>
         <result column="captured_amount" property="capturedAmount" javaType="java.math.BigDecimal"/>
         <result column="currency" property="currency" javaType="java.lang.String"/>

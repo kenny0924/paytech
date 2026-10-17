@@ -1,4 +1,4 @@
-package com.paytech.commerce.test.mock.external;
+package com.paytech.acquiring.test.mock.external;
 
 import org.springframework.boot.test.context.TestComponent;
 import org.springframework.http.ResponseEntity;
@@ -8,7 +8,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import com.paytech.commerce.test.mocker.external.PlatformWebhookMocker;
+import com.paytech.acquiring.test.mocker.external.PlatformWebhookMocker;
 import com.paytech.platform.support.api.webhook.WebhookEventApi;
 import com.paytech.platform.support.api.webhook.request.SubmitWebhookEventRequestBody;
 

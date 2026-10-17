@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.paytech.commerce.core.dal.mapper.refund.RefundMapper">
-    <resultMap id="RefundRequest" type="com.paytech.commerce.core.dal.dataobject.refund.RefundRequest">
+<mapper namespace="com.paytech.acquiring.core.dal.mapper.refund.RefundMapper">
+    <resultMap id="RefundRequest" type="com.paytech.acquiring.core.dal.dataobject.refund.RefundRequest">
         <id column="refund_request_id" property="refundRequestId" javaType="_long"/>
         <result column="refund_request_no" property="refundRequestNo" javaType="java.lang.String"/>
         <result column="order_id" property="orderId" javaType="_long"/>
         <result column="client_id" property="clientId" javaType="_long"/>
-        <result column="request_origin" property="requestOrigin" javaType="com.paytech.commerce.domain.enums.RefundRequestOrigin"/>
+        <result column="request_origin" property="requestOrigin" javaType="com.paytech.acquiring.domain.enums.RefundRequestOrigin"/>
         <result column="client_refund_id" property="clientRefundId" javaType="java.lang.String"/>
         <result column="refund_amount" property="refundAmount" javaType="java.math.BigDecimal"/>
         <result column="currency" property="currency" javaType="java.lang.String"/>
         <result column="reason_code" property="reasonCode" javaType="java.lang.String"/>
         <result column="reason_summary" property="reasonSummary" javaType="java.lang.String"/>
-        <result column="refund_status" property="refundStatus" javaType="com.paytech.commerce.domain.enums.RefundStatus"/>
+        <result column="refund_status" property="refundStatus" javaType="com.paytech.acquiring.domain.enums.RefundStatus"/>
         <result column="status_reason_code" property="statusReasonCode" javaType="java.lang.String"/>
         <result column="channel_refund_id" property="channelRefundId" javaType="java.lang.Long"/>
         <result column="completed_at" property="completedAt" javaType="java.time.Instant"/>
@@ -20,7 +20,7 @@
         <result column="create_time" property="createTime" javaType="java.time.Instant"/>
         <result column="update_time" property="updateTime" javaType="java.time.Instant"/>
     </resultMap>
-    <resultMap id="RefundRequestView" type="com.paytech.commerce.core.dal.dataobject.refund.RefundRequestView"
+    <resultMap id="RefundRequestView" type="com.paytech.acquiring.core.dal.dataobject.refund.RefundRequestView"
         extends="RefundRequest">
         <result column="order_no" property="orderNo" javaType="java.lang.String"/>
     </resultMap>

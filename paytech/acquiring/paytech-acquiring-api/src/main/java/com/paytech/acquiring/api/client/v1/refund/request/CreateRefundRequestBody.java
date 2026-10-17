@@ -1,8 +1,8 @@
-package com.paytech.commerce.client.api.v1.refund.request;
+package com.paytech.acquiring.api.client.v1.refund.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.paytech.commerce.client.api.v1.common.ClientApiConstraints;
+import com.paytech.acquiring.api.client.v1.common.ClientApiConstraints;
 import com.paytech.foundation.common.json.RejectExplicitNullDeserializer;
 
 import jakarta.validation.constraints.NotBlank;

@@ -1,13 +1,13 @@
-package com.paytech.commerce.domainservice.service.checkout.impl;
+package com.paytech.acquiring.domainservice.service.checkout.impl;
 
 import org.springframework.stereotype.Service;
 
-import com.paytech.commerce.domain.checkout.CreateCheckoutContext;
-import com.paytech.commerce.domainservice.repository.checkout.CheckoutSessionRepository;
-import com.paytech.commerce.domainservice.repository.customer.ConsumerContractRepository;
-import com.paytech.commerce.domainservice.repository.order.*;
-import com.paytech.commerce.domainservice.service.checkout.CheckoutCreationService;
-import com.paytech.commerce.service.transaction.CommerceTransactionExecutor;
+import com.paytech.acquiring.domain.checkout.CreateCheckoutContext;
+import com.paytech.acquiring.domainservice.repository.checkout.CheckoutSessionRepository;
+import com.paytech.acquiring.domainservice.repository.customer.ConsumerContractRepository;
+import com.paytech.acquiring.domainservice.repository.order.*;
+import com.paytech.acquiring.domainservice.service.checkout.CheckoutCreationService;
+import com.paytech.acquiring.service.transaction.CommerceTransactionExecutor;
 
 import lombok.AllArgsConstructor;
 

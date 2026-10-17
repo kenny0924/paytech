@@ -1,4 +1,4 @@
-package com.paytech.commerce.auto.ext.http.clientapi.v1.refund.create;
+package com.paytech.acquiring.auto.ext.http.clientapi.v1.refund.create;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -7,12 +7,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.paytech.commerce.client.api.v1.refund.ClientRefundApi;
-import com.paytech.commerce.client.api.v1.refund.request.CreateRefundRequestBody;
-import com.paytech.commerce.domain.enums.ClientWebhookEventType;
-import com.paytech.commerce.domain.enums.RefundStatus;
-import com.paytech.commerce.test.base.refund.AbstractCreateRefundApiTest;
-import com.paytech.commerce.test.checker.webhook.ClientWebhookChecker;
+import com.paytech.acquiring.api.client.v1.refund.ClientRefundApi;
+import com.paytech.acquiring.api.client.v1.refund.request.CreateRefundRequestBody;
+import com.paytech.acquiring.domain.enums.ClientWebhookEventType;
+import com.paytech.acquiring.domain.enums.RefundStatus;
+import com.paytech.acquiring.test.base.refund.AbstractCreateRefundApiTest;
+import com.paytech.acquiring.test.checker.webhook.ClientWebhookChecker;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
 
 import tools.jackson.databind.JsonNode;

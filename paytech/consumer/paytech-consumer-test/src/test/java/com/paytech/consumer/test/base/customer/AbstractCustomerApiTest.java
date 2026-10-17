@@ -1,4 +1,4 @@
-package com.paytech.commerce.test.base.customer;
+package com.paytech.consumer.test.base.customer;
 
 import java.util.List;
 import java.util.Map;
@@ -8,15 +8,15 @@ import org.springframework.http.HttpMethod;
 import org.springframework.test.web.servlet.client.EntityExchangeResult;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.paytech.commerce.test.base.MockTestBase;
-import com.paytech.commerce.test.dal.CustomerTestMapper;
-import com.paytech.commerce.test.mocker.external.StoredCardMocker;
+import com.paytech.consumer.test.base.ConsumerMockTestBase;
+import com.paytech.consumer.test.dal.CustomerTestMapper;
+import com.paytech.consumer.test.mocker.external.StoredCardMocker;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
 
 import tools.jackson.databind.JsonNode;
 
 /** Customer 与已存卡接口共用的真实 HTTP 调用；不包含测试方法或新增生命周期。 */
-public abstract class AbstractCustomerApiTest extends MockTestBase {
+public abstract class AbstractCustomerApiTest extends ConsumerMockTestBase {
     private static final String BASE = "/client-gateway-api/v1/customers";
 
     @Autowired
@@ -27,12 +27,12 @@ public abstract class AbstractCustomerApiTest extends MockTestBase {
 
     /** 当前运行隔离的主 Client。 */
     protected final long clientId() {
-        return checkoutDataMocker.clientId();
+        return customerDataMocker.clientId();
     }
 
     /** 当前运行隔离的另一个 Client。 */
     protected final long otherClientId() {
-        return checkoutDataMocker.otherClientId();
+        return customerDataMocker.otherClientId();
     }
 
     /** 以主 Client 创建 Customer。 */

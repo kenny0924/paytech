@@ -1,4 +1,4 @@
-package com.paytech.commerce.service.processor;
+package com.paytech.acquiring.service.processor;
 
 import java.util.Objects;
 

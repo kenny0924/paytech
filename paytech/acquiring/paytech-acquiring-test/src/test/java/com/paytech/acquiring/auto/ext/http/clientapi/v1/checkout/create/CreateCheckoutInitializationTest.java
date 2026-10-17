@@ -1,12 +1,12 @@
-package com.paytech.commerce.auto.ext.http.clientapi.v1.checkout.create;
+package com.paytech.acquiring.auto.ext.http.clientapi.v1.checkout.create;
 
-import static com.paytech.commerce.test.builder.checkout.CreateCheckoutRequestBuilder.template;
+import static com.paytech.acquiring.test.builder.checkout.CreateCheckoutRequestBuilder.template;
 
-import com.paytech.commerce.client.api.v1.checkout.ClientCheckoutApi;
-import com.paytech.commerce.client.api.v1.checkout.request.CreateCheckoutRequestBody;
-import com.paytech.commerce.client.api.v1.enums.CommerceCheckoutErrorCode;
-import com.paytech.commerce.test.base.checkout.AbstractCreateCheckoutApiTest;
-import com.paytech.commerce.test.builder.external.CommercialFactsBuilder;
+import com.paytech.acquiring.api.client.v1.checkout.ClientCheckoutApi;
+import com.paytech.acquiring.api.client.v1.checkout.request.CreateCheckoutRequestBody;
+import com.paytech.acquiring.api.client.v1.enums.CommerceCheckoutErrorCode;
+import com.paytech.acquiring.test.base.checkout.AbstractCreateCheckoutApiTest;
+import com.paytech.acquiring.test.builder.external.CommercialFactsBuilder;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.common.error.ServiceUnavailableException;
 

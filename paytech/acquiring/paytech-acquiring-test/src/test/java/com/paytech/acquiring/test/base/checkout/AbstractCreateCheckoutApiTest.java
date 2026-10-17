@@ -1,11 +1,11 @@
-package com.paytech.commerce.test.base.checkout;
+package com.paytech.acquiring.test.base.checkout;
 
 import java.time.Instant;
 
-import com.paytech.commerce.test.base.MockTestBase;
-import com.paytech.commerce.test.builder.external.CommercialFactsBuilder;
-import com.paytech.commerce.test.checker.checkout.CreateCheckoutResponseChecker;
-import com.paytech.commerce.test.mocker.external.CheckoutRiskMocker;
+import com.paytech.acquiring.test.base.MockTestBase;
+import com.paytech.acquiring.test.builder.external.CommercialFactsBuilder;
+import com.paytech.acquiring.test.checker.checkout.CreateCheckoutResponseChecker;
+import com.paytech.acquiring.test.mocker.external.CheckoutRiskMocker;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
 
 /** 创建接口共用的请求调用和固定场景基线，不包含测试方法或新增生命周期。 */

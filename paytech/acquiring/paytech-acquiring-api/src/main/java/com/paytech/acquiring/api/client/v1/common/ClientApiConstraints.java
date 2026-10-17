@@ -1,4 +1,4 @@
-package com.paytech.commerce.client.api.v1.common;
+package com.paytech.acquiring.api.client.v1.common;
 
 /** Reusable lexical constraints for the Commerce Client API V1 wire contract. */
 public final class ClientApiConstraints {

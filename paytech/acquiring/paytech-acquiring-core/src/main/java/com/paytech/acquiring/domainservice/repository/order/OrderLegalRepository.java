@@ -1,6 +1,6 @@
-package com.paytech.commerce.domainservice.repository.order;
+package com.paytech.acquiring.domainservice.repository.order;
 
-import com.paytech.commerce.core.dal.dataobject.customer.FrozenCheckoutRecord;
+import com.paytech.acquiring.core.dal.dataobject.customer.FrozenCheckoutRecord;
 
 /** 订单法律事实的本库写入边界。 */
 public interface OrderLegalRepository {

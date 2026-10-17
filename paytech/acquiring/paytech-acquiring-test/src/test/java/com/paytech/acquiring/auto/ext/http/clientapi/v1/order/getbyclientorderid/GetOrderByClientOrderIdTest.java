@@ -1,8 +1,8 @@
-package com.paytech.commerce.auto.ext.http.clientapi.v1.order.getbyclientorderid;
+package com.paytech.acquiring.auto.ext.http.clientapi.v1.order.getbyclientorderid;
 
-import static com.paytech.commerce.test.builder.order.GetOrderDataBuilder.NOW;
-import static com.paytech.commerce.test.builder.order.GetOrderDataBuilder.decimal;
-import static com.paytech.commerce.test.checker.order.GetOrderResponseChecker.assertAmount;
+import static com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.NOW;
+import static com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.decimal;
+import static com.paytech.acquiring.test.checker.order.GetOrderResponseChecker.assertAmount;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.Duration;
@@ -16,18 +16,18 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.paytech.commerce.client.api.v1.enums.CommerceCheckoutErrorCode;
-import com.paytech.commerce.client.api.v1.enums.OrderCreationMode;
-import com.paytech.commerce.client.api.v1.order.ClientOrderApi;
-import com.paytech.commerce.domain.enums.CheckoutSessionStatus;
-import com.paytech.commerce.domain.enums.FundsAvailabilityStatus;
-import com.paytech.commerce.domain.enums.OrderPaymentStatus;
-import com.paytech.commerce.domain.enums.OrderStatus;
-import com.paytech.commerce.test.base.MockTestBase;
-import com.paytech.commerce.test.builder.order.GetOrderDataBuilder.Fixture;
-import com.paytech.commerce.test.checker.order.GetOrderResponseChecker;
-import com.paytech.commerce.test.checker.order.OrderQueryChecker;
-import com.paytech.commerce.test.mocker.local.OrderQueryDataMocker;
+import com.paytech.acquiring.api.client.v1.enums.CommerceCheckoutErrorCode;
+import com.paytech.acquiring.api.client.v1.enums.OrderCreationMode;
+import com.paytech.acquiring.api.client.v1.order.ClientOrderApi;
+import com.paytech.acquiring.domain.enums.CheckoutSessionStatus;
+import com.paytech.acquiring.domain.enums.FundsAvailabilityStatus;
+import com.paytech.acquiring.domain.enums.OrderPaymentStatus;
+import com.paytech.acquiring.domain.enums.OrderStatus;
+import com.paytech.acquiring.test.base.MockTestBase;
+import com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.Fixture;
+import com.paytech.acquiring.test.checker.order.GetOrderResponseChecker;
+import com.paytech.acquiring.test.checker.order.OrderQueryChecker;
+import com.paytech.acquiring.test.mocker.local.OrderQueryDataMocker;
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
 

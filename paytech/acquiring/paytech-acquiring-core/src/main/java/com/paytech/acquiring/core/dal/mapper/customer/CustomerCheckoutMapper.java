@@ -1,6 +1,6 @@
-package com.paytech.commerce.core.dal.mapper.customer;
+package com.paytech.acquiring.core.dal.mapper.customer;
 
-import com.paytech.commerce.core.dal.dataobject.customer.FrozenCheckoutRecord;
+import com.paytech.acquiring.core.dal.dataobject.customer.FrozenCheckoutRecord;
 
 /** 准备事实的三表查询与本地写入；写入由 Service 的短事务组合。 */
 public interface CustomerCheckoutMapper {

@@ -1,12 +1,12 @@
-package com.paytech.commerce.core.dal.mapper.order;
+package com.paytech.acquiring.core.dal.mapper.order;
 
 
 import org.apache.ibatis.annotations.Param;
 
-import com.paytech.commerce.core.dal.dataobject.order.OrderFundsRecord;
-import com.paytech.commerce.core.dal.dataobject.order.OrderPaymentRecord;
-import com.paytech.commerce.core.dal.dataobject.order.OrderRecord;
-import com.paytech.commerce.core.dal.dataobject.order.OrderRefundPosition;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderFundsRecord;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderPaymentRecord;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderRecord;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderRefundPosition;
 
 /** Orders 查询的本库 SQL 边界。 */
 public interface OrderQueryMapper {

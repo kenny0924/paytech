@@ -1,18 +1,18 @@
-package com.paytech.commerce.test.checker.customer;
+package com.paytech.acquiring.test.checker.customer;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.Instant;
 import java.util.List;
 import org.springframework.boot.test.context.TestComponent;
-import com.paytech.commerce.core.dal.dataobject.customer.ConsumerContext;
-import com.paytech.commerce.core.dal.dataobject.order.CommerceOrder;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.ConsumerDetails;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.ProtectedConsumer;
-import com.paytech.commerce.test.checker.order.OrderCancellationChecker;
-import com.paytech.commerce.test.dal.OrderCancellationTestMapper;
-import com.paytech.commerce.test.dal.OrderQueryTestMapper;
-import com.paytech.commerce.test.dal.SaveConsumerTestMapper;
+import com.paytech.acquiring.core.dal.dataobject.customer.ConsumerContext;
+import com.paytech.acquiring.core.dal.dataobject.order.CommerceOrder;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.ConsumerDetails;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.ProtectedConsumer;
+import com.paytech.acquiring.test.checker.order.OrderCancellationChecker;
+import com.paytech.acquiring.test.dal.OrderCancellationTestMapper;
+import com.paytech.acquiring.test.dal.OrderQueryTestMapper;
+import com.paytech.acquiring.test.dal.SaveConsumerTestMapper;
 import lombok.AllArgsConstructor;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;

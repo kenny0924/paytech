@@ -1,10 +1,10 @@
-package com.paytech.commerce.service.processor.customer.response;
+package com.paytech.acquiring.service.processor.customer.response;
 
 import java.time.Instant;
 
-import com.paytech.commerce.customer.api.v1.enums.CustomerPaymentStatus;
-import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.PaymentReference;
-import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.PaymentResult;
+import com.paytech.acquiring.api.checkout.v1.enums.CustomerPaymentStatus;
+import com.paytech.acquiring.domain.customer.CheckoutSubmissionModels.PaymentReference;
+import com.paytech.acquiring.domain.customer.CheckoutSubmissionModels.PaymentResult;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

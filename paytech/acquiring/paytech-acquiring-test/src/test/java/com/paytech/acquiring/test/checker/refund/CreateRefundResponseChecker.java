@@ -1,4 +1,4 @@
-package com.paytech.commerce.test.checker.refund;
+package com.paytech.acquiring.test.checker.refund;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -8,7 +8,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.client.EntityExchangeResult;
 
-import com.paytech.commerce.client.api.v1.refund.response.CreateRefundResponseBody;
+import com.paytech.acquiring.api.client.v1.refund.response.CreateRefundResponseBody;
 import com.paytech.foundation.testsupport.api.AbstractHttpResponseChecker;
 
 import tools.jackson.databind.ObjectMapper;

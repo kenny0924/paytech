@@ -1,4 +1,4 @@
-package com.paytech.commerce.client.api.v1.refund.response;
+package com.paytech.acquiring.api.client.v1.refund.response;
 
 import java.time.Instant;
 
@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.OptBoolean;
-import com.paytech.commerce.client.api.v1.common.ClientApiConstraints;
+import com.paytech.acquiring.api.client.v1.common.ClientApiConstraints;
 
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;

@@ -1,9 +1,9 @@
-package com.paytech.commerce.test.checker.customer;
+package com.paytech.acquiring.test.checker.customer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.client.EntityExchangeResult;
-import com.paytech.commerce.customer.api.v1.checkout.response.SaveConsumerResponseBody;
+import com.paytech.acquiring.api.checkout.v1.checkout.response.SaveConsumerResponseBody;
 import com.paytech.foundation.testsupport.api.AbstractHttpResponseChecker;
 import tools.jackson.databind.ObjectMapper;
 

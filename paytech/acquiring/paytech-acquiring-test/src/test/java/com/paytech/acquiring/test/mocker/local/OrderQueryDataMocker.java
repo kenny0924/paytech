@@ -1,14 +1,14 @@
-package com.paytech.commerce.test.mocker.local;
+package com.paytech.acquiring.test.mocker.local;
 
 import org.springframework.boot.test.context.TestComponent;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import com.paytech.commerce.core.dal.dataobject.order.OrderRefundPosition;
-import com.paytech.commerce.domainservice.port.CommerceIdentifierGenerator;
-import com.paytech.commerce.test.builder.order.GetOrderDataBuilder;
-import com.paytech.commerce.test.builder.order.GetOrderDataBuilder.Fixture;
-import com.paytech.commerce.test.dal.OrderQueryTestMapper;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderRefundPosition;
+import com.paytech.acquiring.domainservice.port.CommerceIdentifierGenerator;
+import com.paytech.acquiring.test.builder.order.GetOrderDataBuilder;
+import com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.Fixture;
+import com.paytech.acquiring.test.dal.OrderQueryTestMapper;
 
 /** 查询前置数据直接入本地库；身份登记和全局 Clear 复用现有数据 Mocker。 */
 @TestComponent

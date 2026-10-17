@@ -1,4 +1,4 @@
-package com.paytech.commerce.service.processor.refund.response;
+package com.paytech.acquiring.service.processor.refund.response;
 
 import java.time.Instant;
 

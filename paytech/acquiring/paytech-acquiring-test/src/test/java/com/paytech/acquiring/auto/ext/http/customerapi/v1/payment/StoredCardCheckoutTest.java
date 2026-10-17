@@ -1,4 +1,4 @@
-package com.paytech.commerce.auto.ext.http.customerapi.v1.payment;
+package com.paytech.acquiring.auto.ext.http.customerapi.v1.payment;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -6,26 +6,31 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.web.servlet.client.EntityExchangeResult;
 
-import com.paytech.commerce.customer.api.v1.checkout.CustomerCheckoutApi;
-import com.paytech.commerce.customer.api.v1.enums.CustomerCheckoutErrorCode;
-import com.paytech.commerce.customer.api.v1.payment.CustomerPaymentApi;
-import com.paytech.commerce.customer.api.v1.payment.request.SubmitPaymentRequestBody;
-import com.paytech.commerce.domain.checkout.CreateCheckoutContext;
-import com.paytech.commerce.test.base.MockTestBase;
-import com.paytech.commerce.test.builder.customer.PaymentResponseBuilder;
-import com.paytech.commerce.test.builder.customer.SubmitPaymentRequestBuilder;
-import com.paytech.commerce.test.checker.customer.CheckoutFlowResponseChecker;
-import com.paytech.commerce.test.dal.CustomerTestMapper;
-import com.paytech.commerce.test.mocker.external.CardInstrumentMocker;
-import com.paytech.commerce.test.mocker.external.CheckoutCardMocker;
-import com.paytech.commerce.test.mocker.external.CheckoutIntentMocker;
-import com.paytech.commerce.test.mocker.external.StoredCardMocker;
-import com.paytech.commerce.test.mocker.local.CheckoutPaymentDataMocker;
+import com.paytech.acquiring.api.checkout.v1.checkout.CustomerCheckoutApi;
+import com.paytech.acquiring.api.checkout.v1.enums.CustomerCheckoutErrorCode;
+import com.paytech.acquiring.api.checkout.v1.payment.CustomerPaymentApi;
+import com.paytech.acquiring.api.checkout.v1.payment.request.SubmitPaymentRequestBody;
+import com.paytech.acquiring.domain.checkout.CreateCheckoutContext;
+import com.paytech.acquiring.test.base.MockTestBase;
+import com.paytech.acquiring.test.builder.customer.PaymentResponseBuilder;
+import com.paytech.acquiring.test.builder.customer.SubmitPaymentRequestBuilder;
+import com.paytech.acquiring.test.checker.customer.CheckoutFlowResponseChecker;
+import com.paytech.acquiring.test.mocker.external.CardInstrumentMocker;
+import com.paytech.acquiring.test.mocker.external.CheckoutCardMocker;
+import com.paytech.acquiring.test.mocker.external.CheckoutIntentMocker;
+import com.paytech.acquiring.test.dal.CheckoutCreationTestMapper;
+import com.paytech.acquiring.test.mocker.external.ConsumerMocker;
+import com.paytech.acquiring.test.mocker.external.StoredCardMocker;
+import com.paytech.acquiring.test.mocker.local.CheckoutPaymentDataMocker;
+import com.paytech.consumer.api.enums.CardSavingIneligibleReason;
 import com.paytech.foundation.common.http.ApiHeaderNames;
+import com.paytech.foundation.testsupport.api.MockHttpFault;
 import com.paytech.payment.api.card.response.StoredCardListResponseBody;
 import com.paytech.payment.api.instrument.request.ApplyCardInstrumentRequestBody;
 
@@ -33,7 +38,8 @@ import tools.jackson.databind.JsonNode;
 
 /**
  * Hosted Checkout 的存卡与已存卡支付（需求 20261015 commerce-Customer与存卡支付，AC-05、AC-09、AC-13）：经真实 Customer API 入口、
- * Processor、MySQL 与 Payment 测试 HTTP 服务（申请工具、pay、已存卡列表）。
+ * Processor、MySQL 与 Payment 测试 HTTP 服务（申请工具、pay、已存卡列表）；Customer 状态、编号与存卡开关由 consumer 内部合同
+ * （{@link ConsumerMocker} 返回 consumer-api DTO）提供，资格读取失败降级为不可存卡（S6）。
  *
  * @see CustomerCheckoutApi#getCheckout(String, boolean)
  * @see CustomerPaymentApi#submitPayment(String, SubmitPaymentRequestBody)
@@ -54,7 +60,7 @@ class StoredCardCheckoutTest extends MockTestBase {
     @Autowired
     StoredCardMocker storedCards;
     @Autowired
-    CustomerTestMapper customers;
+    CheckoutCreationTestMapper orders;
 
     private CreateCheckoutContext fixture;
 
@@ -157,11 +163,42 @@ class StoredCardCheckoutTest extends MockTestBase {
         assertEquals(fixture.getOrder().getOrderNo(), cards.calls().getFirst().consumerReference());
     }
 
-    /** 插入有效 Customer、关联订单，并设置 Client 存卡开通。 */
+    /**
+     * 资格读取失败（consumer 不可用或响应无效）降级为不可存卡（S6）：GET 不展示保存与已存卡、不调用 Payment 列表；
+     * 选择保存卡时 422 STORED_CARD_NOT_AVAILABLE，不申请工具、不支付；手输卡普通支付不受影响，付款人引用仍为 Customer 编号。
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {"unavailable", "malformed"})
+    void test_eligibilityFailureDegrades(String failure) {
+        orders.linkOrderCustomer(orderId(), CUSTOMER_ID);
+        consumerMocker.mockCustomer(clientId(), "user-checkout", CUSTOMER_ID, CUSTOMER_NO);
+        consumerMocker.mockEligibilityFailure(clientId(), CUSTOMER_ID, failure.equals("unavailable")
+            ? ConsumerMocker.unavailable() : MockHttpFault.json(200, java.util.Map.of("eligible", true)));
+        var save = SubmitPaymentRequestBuilder.forContract(orderId());
+        save.setSaveCard(true);
+
+        JsonNode body = read(getCheckout());
+        var saveResponse = submit(save);
+        submit(SubmitPaymentRequestBuilder.forContract(orderId())).assertProcessing();
+
+        saveResponse.assertProblem(422, CustomerCheckoutErrorCode.STORED_CARD_NOT_AVAILABLE.getCode());
+        assertAll(() -> assertFalse(body.get("cardSaving").get("available").asBoolean()),
+            () -> assertEquals(0, body.get("storedCards").size()), () -> assertTrue(storedCards.calls().isEmpty()),
+            () -> assertEquals(2, consumerMocker.calls("ELIGIBILITY").size()),
+            () -> assertEquals(1, instruments.calls().size()),
+            () -> assertEquals(CUSTOMER_NO, cards.calls().getFirst().consumerReference()));
+    }
+
+    /** 订单关联 Customer 主键；consumer 返回该 Customer 与存卡资格（开通或 Client 未开通）。 */
     void attachCustomer(boolean enabled) {
-        customers.insertCustomer(CUSTOMER_ID, CUSTOMER_NO, clientId(), "user-checkout");
-        customers.linkOrder(orderId(), CUSTOMER_ID);
-        customers.setStoredCardEnabled(clientId(), enabled);
+        orders.linkOrderCustomer(orderId(), CUSTOMER_ID);
+        consumerMocker.mockCustomer(clientId(), "user-checkout", CUSTOMER_ID, CUSTOMER_NO);
+        if (enabled) {
+            consumerMocker.mockEligible(clientId(), CUSTOMER_ID, CUSTOMER_NO);
+        } else {
+            consumerMocker.mockIneligible(clientId(), CUSTOMER_ID, CardSavingIneligibleReason.SETTING_DISABLED,
+                CUSTOMER_NO);
+        }
     }
 
     /** 已存卡加本次 CVV 的提交体。 */

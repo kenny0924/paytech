@@ -1,6 +1,6 @@
-package com.paytech.commerce.domainservice.port.customer;
+package com.paytech.acquiring.domainservice.port.customer;
 
-import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.*;
+import com.paytech.acquiring.domain.customer.CheckoutSubmissionModels.*;
 
 /** 待接 Payment Card 的专用内部合同，不向普通 Intent 接口增加卡字段。 */
 public interface CheckoutCardPaymentPort {

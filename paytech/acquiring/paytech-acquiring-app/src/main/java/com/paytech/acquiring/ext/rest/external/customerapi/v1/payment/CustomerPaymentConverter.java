@@ -1,18 +1,18 @@
-package com.paytech.commerce.ext.rest.external.customerapi.v1.payment;
+package com.paytech.acquiring.ext.rest.external.customerapi.v1.payment;
 
-import static com.paytech.commerce.customer.api.v1.enums.CustomerPaymentStatus.*;
+import static com.paytech.acquiring.api.checkout.v1.enums.CustomerPaymentStatus.*;
 
 import org.slf4j.MDC;
 
-import com.paytech.commerce.customer.api.v1.payment.request.SubmitPaymentRequestBody;
-import com.paytech.commerce.customer.api.v1.payment.response.PaymentSubmissionResponseBody;
-import com.paytech.commerce.customer.api.v1.payment.response.PaymentSubmissionResponseBody.*;
-import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.CardIdentity;
-import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.CardInput;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.NetworkEvidence;
-import com.paytech.commerce.service.processor.customer.request.GetCustomerPaymentRequest;
-import com.paytech.commerce.service.processor.customer.request.SubmitCustomerPaymentRequest;
-import com.paytech.commerce.service.processor.customer.response.CustomerPaymentResponse;
+import com.paytech.acquiring.api.checkout.v1.payment.request.SubmitPaymentRequestBody;
+import com.paytech.acquiring.api.checkout.v1.payment.response.PaymentSubmissionResponseBody;
+import com.paytech.acquiring.api.checkout.v1.payment.response.PaymentSubmissionResponseBody.*;
+import com.paytech.acquiring.domain.customer.CheckoutSubmissionModels.CardIdentity;
+import com.paytech.acquiring.domain.customer.CheckoutSubmissionModels.CardInput;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.NetworkEvidence;
+import com.paytech.acquiring.service.processor.customer.request.GetCustomerPaymentRequest;
+import com.paytech.acquiring.service.processor.customer.request.SubmitCustomerPaymentRequest;
+import com.paytech.acquiring.service.processor.customer.response.CustomerPaymentResponse;
 import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.foundation.web.request.RequestIdFilter;
 

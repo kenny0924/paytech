@@ -1,4 +1,4 @@
-package com.paytech.commerce.test.dal;
+package com.paytech.acquiring.test.dal;
 
 import java.time.Instant;
 import java.util.Map;

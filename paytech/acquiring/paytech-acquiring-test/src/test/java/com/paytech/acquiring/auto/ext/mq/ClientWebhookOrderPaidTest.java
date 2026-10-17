@@ -1,4 +1,4 @@
-package com.paytech.commerce.auto.ext.mq;
+package com.paytech.acquiring.auto.ext.mq;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -15,16 +15,16 @@ import org.springframework.amqp.core.AmqpAdmin;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.paytech.commerce.domain.checkout.CreateCheckoutContext;
-import com.paytech.commerce.domain.enums.ClientWebhookEventType;
-import com.paytech.commerce.domain.enums.OrderPaymentStatus;
-import com.paytech.commerce.domain.enums.OrderStatus;
-import com.paytech.commerce.domain.enums.PaymentIntentStatus;
-import com.paytech.commerce.ext.mq.PaymentSucceededListener;
-import com.paytech.commerce.test.base.order.AbstractPaymentResultTest;
-import com.paytech.commerce.test.checker.webhook.ClientWebhookChecker;
-import com.paytech.commerce.test.dal.PaymentResultTestMapper;
-import com.paytech.commerce.test.mocker.local.CheckoutPaymentDataMocker;
+import com.paytech.acquiring.domain.checkout.CreateCheckoutContext;
+import com.paytech.acquiring.domain.enums.ClientWebhookEventType;
+import com.paytech.acquiring.domain.enums.OrderPaymentStatus;
+import com.paytech.acquiring.domain.enums.OrderStatus;
+import com.paytech.acquiring.domain.enums.PaymentIntentStatus;
+import com.paytech.acquiring.ext.mq.PaymentSucceededListener;
+import com.paytech.acquiring.test.base.order.AbstractPaymentResultTest;
+import com.paytech.acquiring.test.checker.webhook.ClientWebhookChecker;
+import com.paytech.acquiring.test.dal.PaymentResultTestMapper;
+import com.paytech.acquiring.test.mocker.local.CheckoutPaymentDataMocker;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
 
 import tools.jackson.databind.JsonNode;
@@ -35,7 +35,7 @@ import tools.jackson.databind.JsonNode;
  * @see PaymentSucceededListener#onMessage
  */
 class ClientWebhookOrderPaidTest extends AbstractPaymentResultTest {
-    private static final String DEAD_LETTER_QUEUE = "cg_commerce_payment_result_dlq";
+    private static final String DEAD_LETTER_QUEUE = "cg_acquiring_payment_result_dlq";
     private static final long ATTEMPT_ID = 8_100_001L;
 
     @Autowired

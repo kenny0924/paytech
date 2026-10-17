@@ -1,4 +1,4 @@
-package com.paytech.commerce.domain.customer;
+package com.paytech.acquiring.domain.customer;
 
 import java.math.BigDecimal;
 import java.net.InetAddress;
@@ -6,10 +6,10 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 
-import com.paytech.commerce.core.dal.dataobject.customer.FrozenCheckoutRecord;
-import com.paytech.commerce.core.dal.dataobject.order.CommerceOrder;
-import com.paytech.commerce.core.dal.dataobject.order.OrderItem;
-import com.paytech.commerce.domain.checkout.CheckoutUpstreamProtocolException;
+import com.paytech.acquiring.core.dal.dataobject.customer.FrozenCheckoutRecord;
+import com.paytech.acquiring.core.dal.dataobject.order.CommerceOrder;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderItem;
+import com.paytech.acquiring.domain.checkout.CheckoutUpstreamProtocolException;
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.common.error.FailException;
@@ -205,10 +205,10 @@ public final class CustomerCheckoutModels {
         /** 终态 Intent 不再申请工具或发起支付。 */
         public void checkPayable() {
             if ("EXPIRED".equals(status)) {
-                throw new FailException(com.paytech.commerce.customer.api.v1.enums.CustomerCheckoutErrorCode.CHECKOUT_EXPIRED);
+                throw new FailException(com.paytech.acquiring.api.checkout.v1.enums.CustomerCheckoutErrorCode.CHECKOUT_EXPIRED);
             }
             if (!"OPEN".equals(status)) {
-                throw new FailException(com.paytech.commerce.customer.api.v1.enums.CustomerCheckoutErrorCode.CHECKOUT_CLOSED);
+                throw new FailException(com.paytech.acquiring.api.checkout.v1.enums.CustomerCheckoutErrorCode.CHECKOUT_CLOSED);
             }
         }
     }

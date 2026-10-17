@@ -1,7 +1,7 @@
-package com.paytech.commerce.service.processor.customer.request;
+package com.paytech.acquiring.service.processor.customer.request;
 
-import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.CardInput;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.NetworkEvidence;
+import com.paytech.acquiring.domain.customer.CheckoutSubmissionModels.CardInput;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.NetworkEvidence;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;

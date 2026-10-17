@@ -1,4 +1,4 @@
-package com.paytech.commerce.auto.ext.http.clientapi.v1.order.get;
+package com.paytech.acquiring.auto.ext.http.clientapi.v1.order.get;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -11,8 +11,8 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import com.paytech.commerce.client.api.v1.order.ClientOrderApi;
-import com.paytech.commerce.test.base.order.AbstractGetOrderApiTest;
+import com.paytech.acquiring.api.client.v1.order.ClientOrderApi;
+import com.paytech.acquiring.test.base.order.AbstractGetOrderApiTest;
 
 /**
  * 订单标识、HTTP 身份绑定及 Client 归属隔离。

@@ -1,9 +1,9 @@
-package com.paytech.commerce.core.dal.dataobject.checkout;
+package com.paytech.acquiring.core.dal.dataobject.checkout;
 
 import java.time.Instant;
 
-import com.paytech.commerce.customer.api.v1.enums.CustomerCheckoutErrorCode;
-import com.paytech.commerce.domain.enums.CheckoutSessionStatus;
+import com.paytech.acquiring.api.checkout.v1.enums.CustomerCheckoutErrorCode;
+import com.paytech.acquiring.domain.enums.CheckoutSessionStatus;
 import com.paytech.foundation.common.error.FailException;
 
 import lombok.*;

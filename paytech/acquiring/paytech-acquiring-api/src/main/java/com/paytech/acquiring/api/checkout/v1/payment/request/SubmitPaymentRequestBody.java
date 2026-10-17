@@ -1,4 +1,4 @@
-package com.paytech.commerce.customer.api.v1.payment.request;
+package com.paytech.acquiring.api.checkout.v1.payment.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 

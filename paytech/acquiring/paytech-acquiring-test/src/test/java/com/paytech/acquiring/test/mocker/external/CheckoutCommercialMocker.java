@@ -1,4 +1,4 @@
-package com.paytech.commerce.test.mocker.external;
+package com.paytech.acquiring.test.mocker.external;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -13,9 +13,9 @@ import org.springframework.boot.test.context.TestComponent;
 import org.springframework.context.annotation.Primary;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.CommercialFacts;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.InitializationRequest;
-import com.paytech.commerce.domainservice.port.customer.CheckoutCommercialPort;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.CommercialFacts;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.InitializationRequest;
+import com.paytech.acquiring.domainservice.port.customer.CheckoutCommercialPort;
 import com.paytech.foundation.testsupport.api.Clear;
 
 /** 本轮固定 Client 接口的测试替身；配置实际 DTO，不宣称覆盖未接入的 CCT HTTP Wire。 */

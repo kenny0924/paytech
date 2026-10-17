@@ -1,4 +1,4 @@
-package com.paytech.commerce.customer.api.v1.checkout;
+package com.paytech.acquiring.api.checkout.v1.checkout;
 
 import java.time.Instant;
 import java.util.List;

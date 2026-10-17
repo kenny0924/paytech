@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import {
   CLOSED_ENUM_VALUES,
   FIELD_METADATA,
+  FIELD_PATH_METADATA,
   OPEN_CODE_SOURCES,
   TABLE_COMMENTS,
   TABLE_DISPLAY_NAMES,
@@ -16,11 +17,13 @@ const templatePath = path.join(
   workspaceRoot,
   "agent-docs/templates/pdmaner/template.pdma.json",
 );
-const outputPath = path.join(
-  workspaceRoot,
-  "commerce-service/docs/database/commerce.pdma.json",
-);
 
+// Shared Commerce-family PDManer core (design/03 §2.5, design/09 §4.3 / §5.2): one manifest for the tables split from
+// commerce-service, emitted as one canonical model per owning service. acquiring owns the transaction / checkout / command
+// tables; consumer owns t_customer; t_compensation_event is per database and appears in both models. The stable-ID key is
+// kept from the Commerce V1 model so unchanged tables keep their entity / field / index IDs.
+// Removed by S10 / C7: t_command_idempotency, t_commerce_order.context_format and preparation_command_id.
+// t_client_stored_card_setting moved to client-master (D42); cross-database relations (order.customer_id) are not modelled.
 const MODEL_KEY = "code-mor/commerce/database/v1";
 const MYSQL_MAPPING_ID = "29D1CE08-4C35-4D2D-AAA9-23D93305B52E";
 const JAVA_MAPPING_ID = "797A1496-D649-4261-89B4-544132EC3F36";
@@ -39,10 +42,10 @@ const ASCII_BINARY_FIELD_PATHS = new Set([
   "checkout_session.public_origin",
   "refund_request.refund_request_no",
   "refund_request.client_refund_id",
-  "command_idempotency.caller_scope",
-  "command_idempotency.idempotency_key",
-  "command_idempotency.resource_no",
-  "command_idempotency.response_location",
+  "customer.customer_no",
+  "customer.consumer_reference",
+  "customer.active_reference",
+  "customer.customer_status",
   "compensation_event.event_key",
   "compensation_event.event_type",
   "compensation_event.sub_event_type",
@@ -55,10 +58,9 @@ order_id BIGINT NN
 order_no VARCHAR(64) NN
 client_id BIGINT NN
 client_order_id VARCHAR(128) NN
+customer_id BIGINT N
 creation_mode VARCHAR(32) NN {HOSTED_CHECKOUT,DIRECT_PAY}
 consumer_country_code CHAR(2) N
-context_format VARCHAR(32) NN {TERM_PRICE,LEGACY_SCOPE}
-preparation_command_id BIGINT N
 termination_requested_at DATETIME(6) N
 entity_no CHAR(5) N
 entity_source_type VARCHAR(64) N {PLATFORM,CLIENT,PARTNER}
@@ -267,7 +269,7 @@ consumer_contract_id BIGINT NN
 network_evidence_id BIGINT NN
 acceptance_type VARCHAR(64) NN {CONSUMER_TERMS,REFUND_POLICY,PRIVACY_NOTICE}
 accepted_at DATETIME(6) NN
-command_idempotency_id BIGINT NN
+command_idempotency_id BIGINT N
 create_time DATETIME(6) NN
 
 [t_refund_request]
@@ -289,28 +291,14 @@ version BIGINT NN
 create_time DATETIME(6) NN
 update_time DATETIME(6) NN
 
-[t_command_idempotency]
-command_idempotency_id BIGINT NN
-caller_scope VARCHAR(128) NN
-operation_type VARCHAR(64) NN OPEN(Commerce Command Operation Catalog)
-idempotency_key VARCHAR(255) NN
-request_hash CHAR(64) NN
-request_hash_version INT NN
-request_snapshot_schema_version INT N
-request_snapshot_json JSON N
-operation_context_time DATETIME(6) NN
-recovery_stage VARCHAR(64) N {CLAIMED,ORDER_COMMITTED,PAYMENT_PENDING,REFUND_COMMITTED,PAYMENT_REFUND_BOUND,COMPLETED}
-process_status VARCHAR(64) NN {PROCESSING,SUCCEEDED,FAILED}
-resource_type VARCHAR(64) N OPEN
-resource_id BIGINT N
-resource_no VARCHAR(64) N
-response_code VARCHAR(64) N OPEN
-response_http_status INT N
-response_snapshot_schema_version INT N
-response_location VARCHAR(255) N
-response_body_json JSON N
-lock_owner VARCHAR(64) N
-lock_until DATETIME(6) N
+[t_customer]
+customer_id BIGINT NN
+customer_no VARCHAR(64) NN
+client_id BIGINT NN
+consumer_reference VARCHAR(128) NN
+active_reference VARCHAR(128) N
+customer_status VARCHAR(16) NN {ACTIVE,DELETED}
+deleted_time DATETIME(6) N
 version BIGINT NN
 create_time DATETIME(6) NN
 update_time DATETIME(6) NN
@@ -377,9 +365,9 @@ UK uk_refund_client_ref(client_id,client_refund_id)
 UK uk_refund_channel(channel_refund_id)
 IDX idx_refund_order(order_id,create_time,refund_request_id)
 IDX idx_refund_client_time(client_id,create_time,refund_request_id)
-t_command_idempotency
-UK uk_command_idempotency(caller_scope,operation_type,idempotency_key)
-IDX idx_command_recovery(process_status,lock_until,command_idempotency_id)
+t_customer
+UK uk_customer_no(customer_no)
+UK uk_customer_active_reference(client_id,active_reference)
 t_compensation_event
 UK uk_compensation_event(event_key,event_type,sub_event_type)
 IDX idx_compensation_ready(execute_status,next_execute_at,id)
@@ -413,7 +401,7 @@ n:1 consumer_acceptance.network_evidence_id -> checkout_network_evidence.network
 n:1 refund_request.order_id -> commerce_order.order_id
 `;
 
-const DIAGRAM_GROUPS = Object.freeze([
+const ACQUIRING_DIAGRAM_GROUPS = Object.freeze([
   Object.freeze({
     defKey: "order_context",
     defName: "订单与不可变上下文",
@@ -452,14 +440,28 @@ const DIAGRAM_GROUPS = Object.freeze([
     defKey: "reliability",
     defName: "可靠执行",
     primary: Object.freeze([
-      "command_idempotency",
       "compensation_event",
     ]),
     references: Object.freeze([]),
   }),
 ]);
 
-const VERSION_TABLES = Object.freeze([
+const CONSUMER_DIAGRAM_GROUPS = Object.freeze([
+  Object.freeze({
+    defKey: "customer",
+    defName: "Customer",
+    primary: Object.freeze(["customer"]),
+    references: Object.freeze([]),
+  }),
+  Object.freeze({
+    defKey: "reliability",
+    defName: "可靠执行",
+    primary: Object.freeze(["compensation_event"]),
+    references: Object.freeze([]),
+  }),
+]);
+
+const ACQUIRING_VERSION_TABLES = Object.freeze([
   "commerce_order",
   "order_payment_projection",
   "order_funds_availability_projection",
@@ -467,10 +469,9 @@ const VERSION_TABLES = Object.freeze([
   "checkout_session",
   "consumer_context",
   "refund_request",
-  "command_idempotency",
 ]);
 
-const IMMUTABLE_TABLES = Object.freeze([
+const ACQUIRING_IMMUTABLE_TABLES = Object.freeze([
   "order_context",
   "order_legal",
   "order_item",
@@ -478,6 +479,61 @@ const IMMUTABLE_TABLES = Object.freeze([
   "checkout_network_evidence",
   "consumer_acceptance",
 ]);
+
+/** Per-service partition of the Commerce-family manifest; totals are frozen so manifest drift fails generation. */
+export const COMMERCE_SERVICE_MODELS = Object.freeze({
+  acquiring: Object.freeze({
+    label: "Acquiring",
+    modelName: "Code-MoR Acquiring Database V1",
+    describe: "Deterministic PDManer physical model for mor_acquiring (transaction / checkout / command), split from the Commerce V1 manifest",
+    outputPath: "paytech/acquiring/docs/database/acquiring.pdma.json",
+    tables: Object.freeze([
+      "commerce_order",
+      "order_context",
+      "order_legal",
+      "order_item",
+      "order_payment_projection",
+      "order_funds_availability_projection",
+      "order_refund_position",
+      "checkout_session",
+      "consumer_context",
+      "consumer_contract",
+      "checkout_network_evidence",
+      "consumer_acceptance",
+      "refund_request",
+      "compensation_event",
+    ]),
+    diagramGroups: ACQUIRING_DIAGRAM_GROUPS,
+    versionTables: ACQUIRING_VERSION_TABLES,
+    immutableTables: ACQUIRING_IMMUTABLE_TABLES,
+    totals: Object.freeze({
+      tables: 14,
+      fields: 227,
+      uniqueIndexes: 23,
+      accessIndexes: 11,
+      relations: 15,
+      diagramGroups: 4,
+    }),
+  }),
+  consumer: Object.freeze({
+    label: "Consumer",
+    modelName: "Code-MoR Consumer Database V1",
+    describe: "Deterministic PDManer physical model for mor_consumer (Customer), split from the Commerce V1 manifest",
+    outputPath: "paytech/consumer/docs/database/consumer.pdma.json",
+    tables: Object.freeze(["customer", "compensation_event"]),
+    diagramGroups: CONSUMER_DIAGRAM_GROUPS,
+    versionTables: Object.freeze(["customer"]),
+    immutableTables: Object.freeze([]),
+    totals: Object.freeze({
+      tables: 2,
+      fields: 25,
+      uniqueIndexes: 3,
+      accessIndexes: 2,
+      relations: 0,
+      diagramGroups: 2,
+    }),
+  }),
+});
 
 function invariant(condition, message) {
   if (!condition) throw new Error(message);
@@ -597,10 +653,10 @@ function parseRelationManifest() {
     });
 }
 
-function normalizeTemplate(template) {
+function normalizeTemplate(template, service) {
   const model = clone(template);
-  model.name = "Code-MoR Commerce Database V1";
-  model.describe = "Deterministic PDManer physical model derived from the approved Commerce V1 manifest";
+  model.name = service.modelName;
+  model.describe = service.describe;
   model.dbConn = [];
   model.dbConns = [];
   model.profile.default.dbConn = "";
@@ -657,7 +713,7 @@ function normalizeTemplate(template) {
   const auditRule = namingRules.get("0B2F0BD2-3B84-4AB1-BA29-9DE9620AF608");
   if (auditRule) {
     auditRule.defName = "可变表使用双审计时间，不可变事实只保留 create_time";
-    auditRule.programCode = `let actual=data.entity.fields.map(field=>field.defKey); let immutable=${JSON.stringify(IMMUTABLE_TABLES.map(physicalTableKey))}.includes(data.entity.defKey); return actual.includes('create_time') && (immutable ? !actual.includes('update_time') : actual.includes('update_time'));`;
+    auditRule.programCode = `let actual=data.entity.fields.map(field=>field.defKey); let immutable=${JSON.stringify(service.immutableTables.map(physicalTableKey))}.includes(data.entity.defKey); return actual.includes('create_time') && (immutable ? !actual.includes('update_time') : actual.includes('update_time'));`;
   }
   const reservedRule = namingRules.get("BEC54F19-52D5-4882-BCE1-4439785F8001");
   if (reservedRule) {
@@ -692,8 +748,12 @@ function baseTypeFor(field, typeIds, domainIds) {
   return result;
 }
 
+function fieldMetadata(tableKey, fieldKey) {
+  return FIELD_PATH_METADATA[`${tableKey}.${fieldKey}`] ?? FIELD_METADATA[fieldKey];
+}
+
 function fieldComment(tableKey, field) {
-  const metadata = FIELD_METADATA[field.defKey];
+  const metadata = fieldMetadata(tableKey, field.defKey);
   invariant(metadata, `Missing field metadata: ${tableKey}.${field.defKey}`);
   const pathKey = `${tableKey}.${field.defKey}`;
   const closedValues = CLOSED_ENUM_VALUES[pathKey];
@@ -751,7 +811,7 @@ function buildEntities(model, tables, indexesByTable) {
   return tables.map((table) => {
     const fields = table.fields.map((manifestField) => {
       const mapping = baseTypeFor(manifestField, typeIds, domainIds);
-      const metadata = FIELD_METADATA[manifestField.defKey];
+      const metadata = fieldMetadata(table.defKey, manifestField.defKey);
       invariant(metadata, `Missing metadata: ${table.defKey}.${manifestField.defKey}`);
       return {
         defKey: manifestField.defKey,
@@ -815,9 +875,9 @@ function applyRelations(entities, relations) {
   }
 }
 
-function buildDiagrams(entities, relations) {
+function buildDiagrams(entities, relations, diagramGroups) {
   const entitiesByKey = new Map(entities.map((entity) => [logicalTableKey(entity.defKey), entity]));
-  return DIAGRAM_GROUPS.map((group) => {
+  return diagramGroups.map((group) => {
     const tableKeys = [...group.primary, ...group.references];
     const columnCount = 4;
     const heights = tableKeys.map((tableKey) => {
@@ -898,32 +958,28 @@ function validateMetadata(tables) {
   }
 }
 
-function validateGeneratedModel(model, tables, relations) {
-  invariant(JSON.stringify(modelTotals(model)) === JSON.stringify({
-    tables: 15,
-    fields: 252,
-    uniqueIndexes: 24,
-    accessIndexes: 12,
-    relations: 15,
-    diagramGroups: 4,
-  }), `Unexpected generated totals: ${JSON.stringify(modelTotals(model))}`);
+function validateGeneratedModel(model, service, relations) {
+  invariant(JSON.stringify(modelTotals(model)) === JSON.stringify(service.totals),
+    `Unexpected generated ${service.label} totals: ${JSON.stringify(modelTotals(model))}`);
 
   const entitiesByKey = new Map(model.entities.map((entity) => [logicalTableKey(entity.defKey), entity]));
-  invariant(new Set(VERSION_TABLES).size === 8, "Version allowlist must have 8 tables");
-  invariant(new Set(IMMUTABLE_TABLES).size === 6, "Immutable allowlist must have 6 tables");
   const actualVersionTables = model.entities
     .filter((entity) => entity.fields.some((field) => field.defKey === "version"))
     .map((entity) => logicalTableKey(entity.defKey));
-  invariant(JSON.stringify(actualVersionTables) === JSON.stringify(VERSION_TABLES), "Business version tables disagree with allowlist");
-  for (const tableKey of IMMUTABLE_TABLES) {
+  invariant(JSON.stringify(actualVersionTables) === JSON.stringify(service.versionTables),
+    `${service.label} business version tables disagree with allowlist`);
+  for (const tableKey of service.immutableTables) {
     const auditFields = entitiesByKey.get(tableKey).fields
       .filter((field) => ["create_time", "update_time"].includes(field.defKey))
       .map((field) => field.defKey);
     invariant(JSON.stringify(auditFields) === JSON.stringify(["create_time"]), `${tableKey} is not immutable`);
   }
   const compensation = entitiesByKey.get("compensation_event");
+  invariant(compensation, `${service.label} must own its per-database compensation_event`);
   invariant(compensation.fields.some((field) => field.defKey === "lock_version"), "Compensation lock_version is required");
   invariant(!compensation.fields.some((field) => field.defKey === "version"), "Compensation cannot use business version");
+  invariant(!entitiesByKey.has("command_idempotency"), "t_command_idempotency was removed by S10");
+  invariant(!entitiesByKey.has("client_stored_card_setting"), "t_client_stored_card_setting belongs to client-master (D42)");
 
   for (const relation of relations) {
     const child = entitiesByKey.get(relation.childTable);
@@ -934,11 +990,13 @@ function validateGeneratedModel(model, tables, relations) {
     );
     invariant(leftPrefix, `Relation field lacks left-prefix index: ${relation.childTable}.${relation.childField}`);
   }
-  const primaryTables = DIAGRAM_GROUPS.flatMap((group) => group.primary);
-  invariant(primaryTables.length === 15 && new Set(primaryTables).size === 15, "Every table must have exactly one primary diagram group");
+  const primaryTables = service.diagramGroups.flatMap((group) => group.primary);
+  invariant(primaryTables.length === service.tables.length && new Set(primaryTables).size === service.tables.length,
+    "Every table must have exactly one primary diagram group");
   const relationCells = model.diagrams.flatMap((diagram) => diagram.canvasData.cells)
     .filter((cell) => cell.shape === "erdRelation").length;
-  invariant(relationCells === 15, `Expected 15 relation cells, found ${relationCells}`);
+  invariant(relationCells === service.totals.relations,
+    `Expected ${service.totals.relations} relation cells, found ${relationCells}`);
 }
 
 export function structuralProjection(model) {
@@ -1004,40 +1062,48 @@ export function structuralProjectionDigest(model) {
   return sha256(JSON.stringify(structuralProjection(model)));
 }
 
-export function generateCommerceModel({
+/** Generates one service model from the shared manifest; relations crossing the service boundary are dropped. */
+export function generateServiceModel(serviceName, {
   template = JSON.parse(readFileSync(templatePath, "utf8")),
 } = {}) {
-  const tables = parseFieldManifest();
+  const service = COMMERCE_SERVICE_MODELS[serviceName];
+  invariant(service, `Unknown Commerce-family service: ${serviceName}`);
+  const allTables = parseFieldManifest();
+  validateMetadata(allTables);
+  const owned = new Set(service.tables);
+  const tables = allTables.filter((table) => owned.has(table.defKey));
+  invariant(JSON.stringify(tables.map((table) => table.defKey)) === JSON.stringify(service.tables),
+    `${service.label} table list must follow the manifest order`);
   const indexesByTable = parseIndexManifest();
-  const relations = parseRelationManifest();
-  validateMetadata(tables);
-  const model = normalizeTemplate(template);
+  const relations = parseRelationManifest()
+    .filter((relation) => owned.has(relation.childTable) && owned.has(relation.parentTable));
+  const model = normalizeTemplate(template, service);
   model.entities = buildEntities(model, tables, indexesByTable);
   applyRelations(model.entities, relations);
-  model.diagrams = buildDiagrams(model.entities, relations);
-  validateGeneratedModel(model, tables, relations);
+  model.diagrams = buildDiagrams(model.entities, relations, service.diagramGroups);
+  validateGeneratedModel(model, service, relations);
   return model;
 }
 
-export function serializeCommerceModel(model = generateCommerceModel()) {
+export function serializeServiceModel(serviceName, model = generateServiceModel(serviceName)) {
   return `${JSON.stringify(model, null, 2)}\n`;
 }
 
-function runCli() {
+/** Writes, or with --check verifies, one service model. */
+export function runGeneratorCli(serviceName) {
+  const service = COMMERCE_SERVICE_MODELS[serviceName];
+  const outputPath = path.join(workspaceRoot, service.outputPath);
   const unknown = process.argv.slice(2).filter((argument) => argument !== "--check");
   invariant(unknown.length === 0, `Unknown argument(s): ${unknown.join(", ")}`);
-  const expected = serializeCommerceModel();
+  const expected = serializeServiceModel(serviceName);
+  const tables = JSON.parse(expected).entities.length;
   if (process.argv.includes("--check")) {
-    invariant(existsSync(outputPath), `Commerce model does not exist: ${outputPath}`);
-    invariant(readFileSync(outputPath, "utf8") === expected, "Commerce model is stale; regenerate it");
-    process.stdout.write("Commerce model is up to date\n");
+    invariant(existsSync(outputPath), `${service.label} model does not exist: ${outputPath}`);
+    invariant(readFileSync(outputPath, "utf8") === expected, `${service.label} model is stale; regenerate it`);
+    process.stdout.write(`${service.label} model is up to date (${tables} tables)\n`);
     return;
   }
   mkdirSync(path.dirname(outputPath), { recursive: true });
   writeFileSync(outputPath, expected, "utf8");
-  process.stdout.write(`Wrote Commerce model: ${outputPath}\n`);
-}
-
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  runCli();
+  process.stdout.write(`Wrote ${service.label} model: ${outputPath} (${tables} tables)\n`);
 }

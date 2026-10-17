@@ -1,4 +1,4 @@
-package com.paytech.commerce.auto.ext.http.customerapi.v1.payment;
+package com.paytech.acquiring.auto.ext.http.customerapi.v1.payment;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -16,22 +16,22 @@ import org.springframework.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 
-import com.paytech.commerce.customer.api.v1.checkout.CustomerCheckoutApi;
-import com.paytech.commerce.customer.api.v1.payment.CustomerPaymentApi;
-import com.paytech.commerce.customer.api.v1.payment.request.SubmitPaymentRequestBody;
-import com.paytech.commerce.domain.checkout.CreateCheckoutContext;
-import com.paytech.commerce.test.builder.customer.PaymentResponseBuilder;
-import com.paytech.commerce.test.mocker.external.CardInstrumentMocker;
+import com.paytech.acquiring.api.checkout.v1.checkout.CustomerCheckoutApi;
+import com.paytech.acquiring.api.checkout.v1.payment.CustomerPaymentApi;
+import com.paytech.acquiring.api.checkout.v1.payment.request.SubmitPaymentRequestBody;
+import com.paytech.acquiring.domain.checkout.CreateCheckoutContext;
+import com.paytech.acquiring.test.builder.customer.PaymentResponseBuilder;
+import com.paytech.acquiring.test.mocker.external.CardInstrumentMocker;
 import com.paytech.foundation.testsupport.api.MockHttpFault;
-import com.paytech.commerce.integration.payment.PaymentTerminationClient;
-import com.paytech.commerce.test.base.MockTestBase;
-import com.paytech.commerce.test.builder.customer.SubmitPaymentRequestBuilder;
-import com.paytech.commerce.test.checker.customer.CheckoutFlowResponseChecker;
-import com.paytech.commerce.test.checker.customer.CheckoutPaymentChecker;
-import com.paytech.commerce.test.mocker.external.CheckoutCardMocker;
-import com.paytech.commerce.test.mocker.external.CheckoutIntentMocker;
-import com.paytech.commerce.test.mocker.external.PaymentTerminationMocker;
-import com.paytech.commerce.test.mocker.local.CheckoutPaymentDataMocker;
+import com.paytech.acquiring.integration.payment.PaymentTerminationClient;
+import com.paytech.acquiring.test.base.MockTestBase;
+import com.paytech.acquiring.test.builder.customer.SubmitPaymentRequestBuilder;
+import com.paytech.acquiring.test.checker.customer.CheckoutFlowResponseChecker;
+import com.paytech.acquiring.test.checker.customer.CheckoutPaymentChecker;
+import com.paytech.acquiring.test.mocker.external.CheckoutCardMocker;
+import com.paytech.acquiring.test.mocker.external.CheckoutIntentMocker;
+import com.paytech.acquiring.test.mocker.external.PaymentTerminationMocker;
+import com.paytech.acquiring.test.mocker.local.CheckoutPaymentDataMocker;
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.common.error.ServiceUnavailableException;
@@ -57,7 +57,7 @@ class CheckoutIntentCreationTest extends MockTestBase {
     @Autowired
     org.redisson.api.RedissonClient redisson;
     @Autowired
-    com.paytech.commerce.test.checkout.PaymentTransactionProbe paymentTransactions;
+    com.paytech.acquiring.test.checkout.PaymentTransactionProbe paymentTransactions;
     @Autowired
     CardInstrumentMocker instruments;
     private CreateCheckoutContext fixture;

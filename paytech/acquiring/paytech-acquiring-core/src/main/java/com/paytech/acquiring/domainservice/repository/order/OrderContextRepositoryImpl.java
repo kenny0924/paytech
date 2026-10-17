@@ -1,12 +1,12 @@
-package com.paytech.commerce.domainservice.repository.order;
+package com.paytech.acquiring.domainservice.repository.order;
 
 import com.paytech.foundation.common.error.ErrorException;
-import com.paytech.commerce.core.dal.mapper.customer.CustomerCheckoutMapper;
-import com.paytech.commerce.core.dal.dataobject.customer.FrozenCheckoutRecord;
+import com.paytech.acquiring.core.dal.mapper.customer.CustomerCheckoutMapper;
+import com.paytech.acquiring.core.dal.dataobject.customer.FrozenCheckoutRecord;
 import org.springframework.stereotype.Repository;
 
-import com.paytech.commerce.core.dal.mapper.order.OrderContextMapper;
-import com.paytech.commerce.domain.customer.CheckoutLegalView;
+import com.paytech.acquiring.core.dal.mapper.order.OrderContextMapper;
+import com.paytech.acquiring.domain.customer.CheckoutLegalView;
 
 import lombok.AllArgsConstructor;
 

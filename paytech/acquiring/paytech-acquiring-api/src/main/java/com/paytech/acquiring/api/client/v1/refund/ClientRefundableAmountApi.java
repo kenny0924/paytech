@@ -1,4 +1,4 @@
-package com.paytech.commerce.client.api.v1.refund;
+package com.paytech.acquiring.api.client.v1.refund;
 
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -6,8 +6,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 
-import com.paytech.commerce.client.api.v1.common.ClientApiPaths;
-import com.paytech.commerce.client.api.v1.refund.response.GetRefundableAmountResponseBody;
+import com.paytech.acquiring.api.client.v1.common.ClientApiPaths;
+import com.paytech.acquiring.api.client.v1.refund.response.GetRefundableAmountResponseBody;
 import com.paytech.foundation.common.http.ApiHeaderNames;
 
 import jakarta.validation.constraints.NotBlank;

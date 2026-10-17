@@ -7,4 +7,4 @@ export JAVA_HOME=$(/usr/libexec/java_home -v 25)
 # Reactor JARs are already in the generated classpath; adding their classes again duplicates Mappers.
 commerce_mock_classpath="paytech-commerce-test/target/test-classes:paytech-commerce-test/target/classes:$(cat paytech-commerce-test/target/customer-mock-classpath.txt)"
 exec "$JAVA_HOME/bin/java" -cp "$commerce_mock_classpath" \
-  com.paytech.commerce.manual.customer.CustomerCheckoutMockApplication "$@"
+  com.paytech.acquiring.manual.customer.CustomerCheckoutMockApplication "$@"

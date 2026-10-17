@@ -1,9 +1,9 @@
-package com.paytech.commerce.domain.checkout;
+package com.paytech.acquiring.domain.checkout;
 
 import java.math.BigDecimal;
 
-import com.paytech.commerce.core.dal.dataobject.customer.FrozenCheckoutRecord;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.*;
+import com.paytech.acquiring.core.dal.dataobject.customer.FrozenCheckoutRecord;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.*;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -1,19 +1,19 @@
-package com.paytech.commerce.ext.rest.external.clientapi.v1.customer;
+package com.paytech.consumer.ext.rest.external.clientapi.v1.customer;
 
 import java.net.URI;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.paytech.commerce.client.api.v1.customer.ClientCustomerApi;
-import com.paytech.commerce.client.api.v1.customer.request.CreateCustomerRequestBody;
-import com.paytech.commerce.client.api.v1.customer.response.CustomerResponseBody;
-import com.paytech.commerce.client.api.v1.customer.response.ListStoredCardsResponseBody;
-import com.paytech.commerce.service.processor.customer.CreateCustomerProcessor;
-import com.paytech.commerce.service.processor.customer.DeleteCustomerProcessor;
-import com.paytech.commerce.service.processor.customer.DeleteStoredCardProcessor;
-import com.paytech.commerce.service.processor.customer.GetCustomerProcessor;
-import com.paytech.commerce.service.processor.customer.ListStoredCardsProcessor;
+import com.paytech.consumer.api.client.v1.customer.ClientCustomerApi;
+import com.paytech.consumer.api.client.v1.customer.request.CreateCustomerRequestBody;
+import com.paytech.consumer.api.client.v1.customer.response.CustomerResponseBody;
+import com.paytech.consumer.api.client.v1.customer.response.ListStoredCardsResponseBody;
+import com.paytech.consumer.service.processor.CreateCustomerProcessor;
+import com.paytech.consumer.service.processor.DeleteCustomerProcessor;
+import com.paytech.consumer.service.processor.DeleteStoredCardProcessor;
+import com.paytech.consumer.service.processor.GetCustomerProcessor;
+import com.paytech.consumer.service.processor.ListStoredCardsProcessor;
 
 import lombok.AllArgsConstructor;
 

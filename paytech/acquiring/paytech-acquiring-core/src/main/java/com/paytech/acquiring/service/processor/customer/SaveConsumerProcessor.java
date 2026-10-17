@@ -1,27 +1,27 @@
-package com.paytech.commerce.service.processor.customer;
+package com.paytech.acquiring.service.processor.customer;
 
-import com.paytech.commerce.domainservice.repository.customer.ConsumerAcceptanceRepository;
+import com.paytech.acquiring.domainservice.repository.customer.ConsumerAcceptanceRepository;
 import java.time.Clock;
 
 import org.springframework.stereotype.Component;
 
-import com.paytech.commerce.core.dal.dataobject.checkout.CheckoutSession;
-import com.paytech.commerce.core.dal.dataobject.customer.ConsumerContext;
-import com.paytech.commerce.core.dal.dataobject.order.CommerceOrder;
-import com.paytech.commerce.customer.api.v1.enums.CustomerCheckoutErrorCode;
-import com.paytech.commerce.domain.checkout.CheckoutPublicToken;
-import com.paytech.commerce.domain.checkout.CheckoutUpstreamProtocolException;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.ConsumerDetails;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.ProtectedConsumer;
-import com.paytech.commerce.domain.customer.SaveConsumerContext;
-import com.paytech.commerce.domainservice.port.CommerceIdentifierGenerator;
-import com.paytech.commerce.domainservice.port.customer.ConsumerProtectionPort;
-import com.paytech.commerce.domainservice.repository.checkout.CheckoutSessionRepository;
-import com.paytech.commerce.domainservice.repository.customer.ConsumerContextRepository;
-import com.paytech.commerce.domainservice.repository.order.CommerceOrderRepository;
-import com.paytech.commerce.domainservice.service.customer.CustomerCheckoutService;
-import com.paytech.commerce.service.processor.customer.request.SaveConsumerRequest;
-import com.paytech.commerce.service.processor.customer.response.SaveConsumerResponse;
+import com.paytech.acquiring.core.dal.dataobject.checkout.CheckoutSession;
+import com.paytech.acquiring.core.dal.dataobject.customer.ConsumerContext;
+import com.paytech.acquiring.core.dal.dataobject.order.CommerceOrder;
+import com.paytech.acquiring.api.checkout.v1.enums.CustomerCheckoutErrorCode;
+import com.paytech.acquiring.domain.checkout.CheckoutPublicToken;
+import com.paytech.acquiring.domain.checkout.CheckoutUpstreamProtocolException;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.ConsumerDetails;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.ProtectedConsumer;
+import com.paytech.acquiring.domain.customer.SaveConsumerContext;
+import com.paytech.acquiring.domainservice.port.CommerceIdentifierGenerator;
+import com.paytech.acquiring.domainservice.port.customer.ConsumerProtectionPort;
+import com.paytech.acquiring.domainservice.repository.checkout.CheckoutSessionRepository;
+import com.paytech.acquiring.domainservice.repository.customer.ConsumerContextRepository;
+import com.paytech.acquiring.domainservice.repository.order.CommerceOrderRepository;
+import com.paytech.acquiring.domainservice.service.customer.CustomerCheckoutService;
+import com.paytech.acquiring.service.processor.customer.request.SaveConsumerRequest;
+import com.paytech.acquiring.service.processor.customer.response.SaveConsumerResponse;
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.processor.AbstractProcessor;

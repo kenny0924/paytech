@@ -1,10 +1,10 @@
-package com.paytech.commerce.test.builder.checkout;
+package com.paytech.acquiring.test.builder.checkout;
 
 import java.time.Instant;
 import java.util.List;
 
-import com.paytech.commerce.client.api.v1.checkout.request.CreateCheckoutRequestBody.CheckoutItemInfo;
-import com.paytech.commerce.client.api.v1.checkout.request.CreateCheckoutRequestBody;
+import com.paytech.acquiring.api.client.v1.checkout.request.CreateCheckoutRequestBody.CheckoutItemInfo;
+import com.paytech.acquiring.api.client.v1.checkout.request.CreateCheckoutRequestBody;
 
 import lombok.Setter;
 import lombok.experimental.Accessors;

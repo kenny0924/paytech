@@ -1,9 +1,9 @@
-package com.paytech.commerce.test.checker.customer;
+package com.paytech.acquiring.test.checker.customer;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.paytech.commerce.customer.api.v1.checkout.response.GetCheckoutResponseBody;
-import com.paytech.commerce.customer.api.v1.payment.response.PaymentSubmissionResponseBody;
+import com.paytech.acquiring.api.checkout.v1.checkout.response.GetCheckoutResponseBody;
+import com.paytech.acquiring.api.checkout.v1.payment.response.PaymentSubmissionResponseBody;
 import com.paytech.foundation.testsupport.api.AbstractHttpResponseChecker;
 
 import org.springframework.test.web.servlet.client.EntityExchangeResult;

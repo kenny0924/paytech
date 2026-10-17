@@ -1,4 +1,4 @@
-package com.paytech.commerce.domainservice.repository.order;
+package com.paytech.acquiring.domainservice.repository.order;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -6,12 +6,12 @@ import java.time.temporal.ChronoUnit;
 
 import org.springframework.stereotype.Repository;
 
-import com.paytech.commerce.client.api.v1.enums.CommerceCheckoutErrorCode;
-import com.paytech.commerce.core.dal.dataobject.checkout.CheckoutSession;
-import com.paytech.commerce.core.dal.dataobject.order.CommerceOrder;
-import com.paytech.commerce.core.dal.dataobject.order.OrderPaymentProjection;
-import com.paytech.commerce.core.dal.mapper.order.CommerceOrderMapper;
-import com.paytech.commerce.domain.enums.OrderStatus;
+import com.paytech.acquiring.api.client.v1.enums.CommerceCheckoutErrorCode;
+import com.paytech.acquiring.core.dal.dataobject.checkout.CheckoutSession;
+import com.paytech.acquiring.core.dal.dataobject.order.CommerceOrder;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderPaymentProjection;
+import com.paytech.acquiring.core.dal.mapper.order.CommerceOrderMapper;
+import com.paytech.acquiring.domain.enums.OrderStatus;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
 import com.paytech.foundation.common.error.FailException;
 

@@ -1,24 +1,24 @@
-package com.paytech.commerce.service.processor.customer;
+package com.paytech.acquiring.service.processor.customer;
 
-import static com.paytech.commerce.customer.api.v1.enums.CustomerCheckoutErrorCode.CHECKOUT_NOT_FOUND;
-import static com.paytech.commerce.customer.api.v1.enums.CustomerCheckoutErrorCode.PAYMENT_SUBMISSION_NOT_FOUND;
+import static com.paytech.acquiring.api.checkout.v1.enums.CustomerCheckoutErrorCode.CHECKOUT_NOT_FOUND;
+import static com.paytech.acquiring.api.checkout.v1.enums.CustomerCheckoutErrorCode.PAYMENT_SUBMISSION_NOT_FOUND;
 
 import java.time.Clock;
 
 import org.springframework.stereotype.Component;
 
-import com.paytech.commerce.core.dal.dataobject.checkout.CheckoutSession;
-import com.paytech.commerce.core.dal.dataobject.order.CommerceOrder;
-import com.paytech.commerce.core.dal.dataobject.order.OrderPaymentProjection;
-import com.paytech.commerce.domain.checkout.CheckoutPublicToken;
-import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.PaymentResult;
-import com.paytech.commerce.domain.customer.CustomerPaymentQueryContext;
-import com.paytech.commerce.domainservice.port.customer.CheckoutCardPaymentPort;
-import com.paytech.commerce.domainservice.repository.checkout.CheckoutSessionRepository;
-import com.paytech.commerce.domainservice.repository.order.CommerceOrderRepository;
-import com.paytech.commerce.domainservice.repository.order.OrderPaymentProjectionRepository;
-import com.paytech.commerce.service.processor.customer.request.GetCustomerPaymentRequest;
-import com.paytech.commerce.service.processor.customer.response.CustomerPaymentResponse;
+import com.paytech.acquiring.core.dal.dataobject.checkout.CheckoutSession;
+import com.paytech.acquiring.core.dal.dataobject.order.CommerceOrder;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderPaymentProjection;
+import com.paytech.acquiring.domain.checkout.CheckoutPublicToken;
+import com.paytech.acquiring.domain.customer.CheckoutSubmissionModels.PaymentResult;
+import com.paytech.acquiring.domain.customer.CustomerPaymentQueryContext;
+import com.paytech.acquiring.domainservice.port.customer.CheckoutCardPaymentPort;
+import com.paytech.acquiring.domainservice.repository.checkout.CheckoutSessionRepository;
+import com.paytech.acquiring.domainservice.repository.order.CommerceOrderRepository;
+import com.paytech.acquiring.domainservice.repository.order.OrderPaymentProjectionRepository;
+import com.paytech.acquiring.service.processor.customer.request.GetCustomerPaymentRequest;
+import com.paytech.acquiring.service.processor.customer.response.CustomerPaymentResponse;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.foundation.common.error.ServiceUnavailableException;

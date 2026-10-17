@@ -1,4 +1,4 @@
-package com.paytech.commerce.client.api.v1.checkout;
+package com.paytech.acquiring.api.client.v1.checkout;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -7,9 +7,9 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
 
-import com.paytech.commerce.client.api.v1.checkout.request.CreateCheckoutRequestBody;
-import com.paytech.commerce.client.api.v1.checkout.response.CreateCheckoutResponseBody;
-import com.paytech.commerce.client.api.v1.common.ClientApiPaths;
+import com.paytech.acquiring.api.client.v1.checkout.request.CreateCheckoutRequestBody;
+import com.paytech.acquiring.api.client.v1.checkout.response.CreateCheckoutResponseBody;
+import com.paytech.acquiring.api.client.v1.common.ClientApiPaths;
 import com.paytech.foundation.common.http.ApiHeaderNames;
 
 import jakarta.validation.Valid;

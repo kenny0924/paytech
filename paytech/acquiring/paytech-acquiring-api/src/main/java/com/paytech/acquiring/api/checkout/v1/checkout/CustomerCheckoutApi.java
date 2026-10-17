@@ -1,4 +1,4 @@
-package com.paytech.commerce.customer.api.v1.checkout;
+package com.paytech.acquiring.api.checkout.v1.checkout;
 
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -7,9 +7,9 @@ import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PutExchange;
 
-import com.paytech.commerce.customer.api.v1.checkout.request.SaveConsumerRequestBody;
-import com.paytech.commerce.customer.api.v1.checkout.response.GetCheckoutResponseBody;
-import com.paytech.commerce.customer.api.v1.checkout.response.SaveConsumerResponseBody;
+import com.paytech.acquiring.api.checkout.v1.checkout.request.SaveConsumerRequestBody;
+import com.paytech.acquiring.api.checkout.v1.checkout.response.GetCheckoutResponseBody;
+import com.paytech.acquiring.api.checkout.v1.checkout.response.SaveConsumerResponseBody;
 
 import jakarta.validation.Valid;
 

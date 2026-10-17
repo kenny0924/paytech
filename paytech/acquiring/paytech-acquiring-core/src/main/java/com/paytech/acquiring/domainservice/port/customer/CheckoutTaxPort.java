@@ -1,6 +1,6 @@
-package com.paytech.commerce.domainservice.port.customer;
+package com.paytech.acquiring.domainservice.port.customer;
 
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.*;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.*;
 
 /** Customer 依赖的窄 Owner 边界；实际 Wire 接入在后续阶段完成。 */
 public interface CheckoutTaxPort {

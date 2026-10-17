@@ -1,14 +1,14 @@
-package com.paytech.commerce.test.base.order;
+package com.paytech.acquiring.test.base.order;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.paytech.commerce.test.base.MockTestBase;
-import com.paytech.commerce.core.dal.dataobject.order.OrderFundsAvailabilityProjection;
-import com.paytech.commerce.test.builder.order.GetOrderDataBuilder.Fixture;
-import com.paytech.commerce.test.checker.order.GetOrderResponseChecker;
-import com.paytech.commerce.test.checker.order.OrderQueryChecker;
-import com.paytech.commerce.test.mocker.local.OrderQueryDataMocker;
+import com.paytech.acquiring.test.base.MockTestBase;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderFundsAvailabilityProjection;
+import com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.Fixture;
+import com.paytech.acquiring.test.checker.order.GetOrderResponseChecker;
+import com.paytech.acquiring.test.checker.order.OrderQueryChecker;
+import com.paytech.acquiring.test.mocker.local.OrderQueryDataMocker;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
 
 /** 订单详情测试共用真实 HTTP 调用及只读断言，不放测试方法或通用业务成功 Mock。 */

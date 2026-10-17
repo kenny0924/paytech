@@ -1,8 +1,8 @@
-package com.paytech.commerce.core.dal.mapper.customer;
+package com.paytech.acquiring.core.dal.mapper.customer;
 
 import java.util.List;
 
-import com.paytech.commerce.core.dal.dataobject.customer.ConsumerAcceptance;
+import com.paytech.acquiring.core.dal.dataobject.customer.ConsumerAcceptance;
 
 import org.apache.ibatis.annotations.Param;
 

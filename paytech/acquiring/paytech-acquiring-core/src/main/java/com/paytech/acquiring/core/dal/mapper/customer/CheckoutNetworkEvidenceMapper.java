@@ -1,6 +1,6 @@
-package com.paytech.commerce.core.dal.mapper.customer;
+package com.paytech.acquiring.core.dal.mapper.customer;
 
-import com.paytech.commerce.core.dal.dataobject.customer.CheckoutNetworkEvidence;
+import com.paytech.acquiring.core.dal.dataobject.customer.CheckoutNetworkEvidence;
 
 import org.apache.ibatis.annotations.Param;
 

@@ -1,4 +1,4 @@
-package com.paytech.commerce.core.dal.dataobject.refund;
+package com.paytech.acquiring.core.dal.dataobject.refund;
 
 import lombok.Getter;
 import lombok.Setter;

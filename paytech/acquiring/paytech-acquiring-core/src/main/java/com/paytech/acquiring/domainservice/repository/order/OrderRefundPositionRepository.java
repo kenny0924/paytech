@@ -1,11 +1,11 @@
-package com.paytech.commerce.domainservice.repository.order;
+package com.paytech.acquiring.domainservice.repository.order;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 
-import com.paytech.commerce.core.dal.dataobject.order.CommerceOrder;
-import com.paytech.commerce.core.dal.dataobject.order.OrderPaymentProjection;
-import com.paytech.commerce.core.dal.dataobject.order.OrderRefundPosition;
+import com.paytech.acquiring.core.dal.dataobject.order.CommerceOrder;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderPaymentProjection;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderRefundPosition;
 
 /** OrderRefundPosition 的单表持久化边界。 */
 public interface OrderRefundPositionRepository {

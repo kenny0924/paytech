@@ -1,13 +1,13 @@
-package com.paytech.commerce.domainservice.repository.checkout;
+package com.paytech.acquiring.domainservice.repository.checkout;
 
 import java.time.Instant;
 
 import org.springframework.stereotype.Repository;
 
-import com.paytech.commerce.core.dal.dataobject.checkout.CheckoutSession;
-import com.paytech.commerce.core.dal.dataobject.customer.CheckoutVersionView;
-import com.paytech.commerce.core.dal.mapper.checkout.CheckoutSessionMapper;
-import com.paytech.commerce.domain.enums.CheckoutSessionStatus;
+import com.paytech.acquiring.core.dal.dataobject.checkout.CheckoutSession;
+import com.paytech.acquiring.core.dal.dataobject.customer.CheckoutVersionView;
+import com.paytech.acquiring.core.dal.mapper.checkout.CheckoutSessionMapper;
+import com.paytech.acquiring.domain.enums.CheckoutSessionStatus;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
 import com.paytech.foundation.common.error.ErrorException;
 

@@ -1,10 +1,10 @@
-package com.paytech.commerce.core.dal.mapper.order;
+package com.paytech.acquiring.core.dal.mapper.order;
 
 import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 
-import com.paytech.commerce.core.dal.dataobject.order.OrderItem;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderItem;
 
 /** OrderItem 表的查询与创建持久化。 */
 public interface OrderItemMapper {

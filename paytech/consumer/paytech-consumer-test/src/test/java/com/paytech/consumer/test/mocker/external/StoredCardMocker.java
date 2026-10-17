@@ -1,4 +1,4 @@
-package com.paytech.commerce.test.mocker.external;
+package com.paytech.consumer.test.mocker.external;
 
 import java.util.ArrayList;
 import java.util.List;

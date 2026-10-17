@@ -1,19 +1,19 @@
-package com.paytech.commerce.domain.customer;
+package com.paytech.acquiring.domain.customer;
 
 import java.time.Instant;
 import java.util.EnumMap;
 import java.util.List;
 
-import com.paytech.commerce.core.dal.dataobject.checkout.CheckoutSession;
-import com.paytech.commerce.core.dal.dataobject.customer.CheckoutNetworkEvidence;
-import com.paytech.commerce.core.dal.dataobject.customer.ConsumerAcceptance;
-import com.paytech.commerce.core.dal.dataobject.customer.ConsumerContract;
-import com.paytech.commerce.core.dal.dataobject.order.CommerceOrder;
-import com.paytech.commerce.core.dal.dataobject.order.OrderPaymentProjection;
-import com.paytech.commerce.customer.api.v1.enums.CustomerCheckoutErrorCode;
-import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.SubmissionReceipt;
-import com.paytech.commerce.domain.enums.CheckoutEvidenceScene;
-import com.paytech.commerce.domain.enums.ConsumerAcceptanceType;
+import com.paytech.acquiring.core.dal.dataobject.checkout.CheckoutSession;
+import com.paytech.acquiring.core.dal.dataobject.customer.CheckoutNetworkEvidence;
+import com.paytech.acquiring.core.dal.dataobject.customer.ConsumerAcceptance;
+import com.paytech.acquiring.core.dal.dataobject.customer.ConsumerContract;
+import com.paytech.acquiring.core.dal.dataobject.order.CommerceOrder;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderPaymentProjection;
+import com.paytech.acquiring.api.checkout.v1.enums.CustomerCheckoutErrorCode;
+import com.paytech.acquiring.domain.customer.CheckoutSubmissionModels.SubmissionReceipt;
+import com.paytech.acquiring.domain.enums.CheckoutEvidenceScene;
+import com.paytech.acquiring.domain.enums.ConsumerAcceptanceType;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.common.error.FailException;
 

@@ -1,13 +1,13 @@
-package com.paytech.commerce.core.dal.mapper.order;
+package com.paytech.acquiring.core.dal.mapper.order;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 
 import org.apache.ibatis.annotations.Param;
 
-import com.paytech.commerce.core.dal.dataobject.order.CommerceOrder;
-import com.paytech.commerce.core.dal.dataobject.order.OrderPaymentProjection;
-import com.paytech.commerce.core.dal.dataobject.order.OrderRefundPosition;
+import com.paytech.acquiring.core.dal.dataobject.order.CommerceOrder;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderPaymentProjection;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderRefundPosition;
 
 /** 退款位置表的查询、预占和终态记账 SQL。 */
 public interface OrderRefundPositionMapper {

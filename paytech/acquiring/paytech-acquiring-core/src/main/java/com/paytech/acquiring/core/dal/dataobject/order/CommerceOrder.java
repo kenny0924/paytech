@@ -1,11 +1,11 @@
-package com.paytech.commerce.core.dal.dataobject.order;
+package com.paytech.acquiring.core.dal.dataobject.order;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 
-import com.paytech.commerce.client.api.v1.enums.OrderCreationMode;
-import com.paytech.commerce.customer.api.v1.enums.CustomerCheckoutErrorCode;
-import com.paytech.commerce.domain.enums.OrderStatus;
+import com.paytech.acquiring.api.client.v1.enums.OrderCreationMode;
+import com.paytech.acquiring.api.checkout.v1.enums.CustomerCheckoutErrorCode;
+import com.paytech.acquiring.domain.enums.OrderStatus;
 import com.paytech.foundation.common.error.FailException;
 
 import lombok.*;
@@ -37,9 +37,6 @@ public class CommerceOrder {
 
     /** 创建时固定的消费者国家。 */
     private String consumerCountryCode;
-
-    /** 在途或已完成的支付准备命令；尚未开始准备时为空。 */
-    private Long preparationCommandId;
 
     /** 首次请求终止的 UTC 时刻，不代表支付已经终止。 */
     private Instant terminationRequestedAt;
@@ -98,13 +95,10 @@ public class CommerceOrder {
     /** 本记录最后更新 UTC 时刻。 */
     private Instant updateTime;
 
-    /** 准备一旦受理，后续资料不能覆盖其固定的消费者事实。 */
+    /** 终止、支付或终态后不能再修改消费者资料；已接受法律文件后的锁定由接受事实判断。 */
     public void checkConsumerEditable() {
         if (terminationRequestedAt != null || paidAt != null || (!statusIn(OrderStatus.CREATED, OrderStatus.OPEN))) {
             throw new FailException(CustomerCheckoutErrorCode.CHECKOUT_CLOSED);
-        }
-        if (preparationCommandId != null) {
-            throw new FailException(CustomerCheckoutErrorCode.CONSUMER_DETAILS_LOCKED);
         }
     }
 

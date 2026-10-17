@@ -1,4 +1,4 @@
-package com.paytech.commerce.test.checker.order;
+package com.paytech.acquiring.test.checker.order;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -8,7 +8,7 @@ import java.util.Set;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.client.EntityExchangeResult;
 
-import com.paytech.commerce.client.api.v1.order.response.GetOrderResponseBody;
+import com.paytech.acquiring.api.client.v1.order.response.GetOrderResponseBody;
 import com.paytech.foundation.httpproblem.api.ApiProblemResponse;
 import com.paytech.foundation.testsupport.api.AbstractHttpResponseChecker;
 

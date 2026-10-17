@@ -1,4 +1,4 @@
-package com.paytech.commerce.integration.risk.impl;
+package com.paytech.acquiring.integration.risk.impl;
 
 import java.math.BigDecimal;
 import java.util.regex.Pattern;
@@ -8,13 +8,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientResponseException;
 
-import com.paytech.commerce.client.api.v1.enums.CommerceCheckoutErrorCode;
-import com.paytech.commerce.configuration.RiskClientConfiguration;
-import com.paytech.commerce.domain.checkout.CheckoutUpstreamProtocolException;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.CommercialFacts;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.InitializationRequest;
-import com.paytech.commerce.domain.enums.RiskDecisionResult;
-import com.paytech.commerce.domainservice.port.customer.CheckoutRiskPort;
+import com.paytech.acquiring.api.client.v1.enums.CommerceCheckoutErrorCode;
+import com.paytech.acquiring.domain.checkout.CheckoutUpstreamProtocolException;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.CommercialFacts;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.InitializationRequest;
+import com.paytech.acquiring.domain.enums.RiskDecisionResult;
+import com.paytech.acquiring.domainservice.port.customer.CheckoutRiskPort;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.common.error.FailException;
@@ -43,7 +42,10 @@ public class CheckoutRiskPortImpl implements CheckoutRiskPort {
     private static final Pattern EVALUATION_ID = Pattern.compile("[1-9][0-9]{0,18}");
 
     /** Spring Cloud 阻塞式负载均衡在服务发现中没有 Risk 实例时抛出的 IllegalStateException 原文。 */
-    static final String NO_INSTANCE_MESSAGE = "No instances available for " + RiskClientConfiguration.SERVICE_ID;
+    /** Risk 服务发现名（与 app 的 RiskClientConfiguration.SERVICE_ID 一致；第 06 步改名时同步）。 */
+    static final String RISK_SERVICE_ID = "risk-service";
+
+    static final String NO_INSTANCE_MESSAGE = "No instances available for " + RISK_SERVICE_ID;
 
     private final RiskDecisionApi riskDecisionApi;
 

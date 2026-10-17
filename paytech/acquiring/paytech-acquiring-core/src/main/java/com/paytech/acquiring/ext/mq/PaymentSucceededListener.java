@@ -1,4 +1,4 @@
-package com.paytech.commerce.ext.mq;
+package com.paytech.acquiring.ext.mq;
 
 import java.io.IOException;
 
@@ -8,7 +8,7 @@ import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
-import com.paytech.commerce.service.processor.order.ApplyPaymentSucceededProcessor;
+import com.paytech.acquiring.service.processor.order.ApplyPaymentSucceededProcessor;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
 import com.paytech.foundation.common.error.FailException;
 import com.rabbitmq.client.Channel;
@@ -16,15 +16,15 @@ import com.rabbitmq.client.Channel;
 import lombok.AllArgsConstructor;
 
 /**
- * 消费 Payment 支付成功事件（队列 cg_commerce_payment_result），本地事务提交后才确认
- * <li>信封不合法或业务明确拒绝：拒绝且不重新入队，进入死信队列 cg_commerce_payment_result_dlq。</li>
+ * 消费 Payment 支付成功事件（队列 cg_acquiring_payment_result），本地事务提交后才确认
+ * <li>信封不合法或业务明确拒绝：拒绝且不重新入队，进入死信队列 cg_acquiring_payment_result_dlq。</li>
  * <li>并发冲突及其他失败（数据库暂不可用等）：重新入队，由 Quorum Queue 投递次数上限兜底转入死信队列。</li>
  */
 @Component
 @AllArgsConstructor
 public class PaymentSucceededListener {
     /** 消费队列。 */
-    public static final String QUEUE = "cg_commerce_payment_result";
+    public static final String QUEUE = "cg_acquiring_payment_result";
 
     private static final Logger LOG = LoggerFactory.getLogger(PaymentSucceededListener.class);
 

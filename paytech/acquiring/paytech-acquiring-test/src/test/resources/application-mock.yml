@@ -1,4 +1,4 @@
-# Commerce 配置字段清单，同时作为 Mock 测试的可运行配置。
+# acquiring 配置字段清单，同时作为 Mock 测试的可运行配置。
 
 # ==================== 中间件、框架与公共组件配置 ====================
 
@@ -11,7 +11,7 @@ server:
 
 spring:
   application:
-    name: commerce-service
+    name: acquiring-service
   main:
     banner-mode: "off"
   jmx:
@@ -28,14 +28,14 @@ spring:
       client:
         simple:
           instances:
-            payment-orchestration-service:
-              - uri: "${commerce.test.external.base-url}"
-            client-contract-service:
-              - uri: "${commerce.test.external.base-url}"
+            payment-service:
+              - uri: "${acquiring.test.external.base-url}"
+            consumer-service:
+              - uri: "${acquiring.test.external.base-url}"
             risk-service:
-              - uri: "${commerce.test.external.base-url}"
+              - uri: "${acquiring.test.external.base-url}"
             platform-support-service:
-              - uri: "${commerce.test.external.base-url}"
+              - uri: "${acquiring.test.external.base-url}"
     loadbalancer:
       retry:
         enabled: false
@@ -46,14 +46,15 @@ spring:
       imperative:
         factory: http-components
     serviceclient:
-      payment-orchestration-service:
-        base-url: lb://payment-orchestration-service/payment
+      payment-service:
+        base-url: lb://payment-service/payment
         connect-timeout: 2s
         read-timeout: 5s
         redirects: dont-follow
-      client-contract-service:
+      consumer-service:
+        base-url: lb://consumer-service
         connect-timeout: 2s
-        read-timeout: 5s
+        read-timeout: 3s
         redirects: dont-follow
       # 读超时比生产 1s 短，使超时重试用例更快结束。
       risk-service:
@@ -75,9 +76,9 @@ spring:
       connect-timeout: 2s
       timeout: 2s
   datasource:
-    url: "jdbc:mysql://127.0.0.1:13306/mor_commerce?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
-    username: commerce_app
-    password: "${COMMERCE_TEST_DB_PASSWORD:local-commerce-change-me-2026}"
+    url: "jdbc:mysql://127.0.0.1:13306/mor_acquiring?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+    username: acquiring_app
+    password: "${ACQUIRING_TEST_DB_PASSWORD:${MOR_ACQUIRING_DB_PASSWORD:local-acquiring-change-me-2026}}"
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       connection-init-sql: "SET time_zone = '+00:00'"
@@ -108,7 +109,7 @@ mybatis:
   mapper-locations: "classpath*:mapper/**/*.xml"
 
 redis:
-  key-prefix: "commerce-test-${random.uuid}"
+  key-prefix: "acquiring-test-${random.uuid}"
   coordination:
     enabled: true
     threads: 4
@@ -139,7 +140,7 @@ xxl:
       timeout: 3
     executor:
       enabled: false
-      app-name: commerce-service
+      app-name: acquiring-service
       address: ""
       ip: ""
       port: 0
@@ -154,6 +155,9 @@ web:
       - /customer-gateway-api/v1
 
 management:
+  server:
+    # 随机管理端口；测试不访问 Actuator。
+    port: 0
   endpoints:
     enabled-by-default: false
     web:
@@ -188,10 +192,14 @@ management:
       enabled: true
     readinessstate:
       enabled: true
-# ==================== Commerce 系统自定义配置 ====================
+internal-auth:
+  # 裸 OFF 会被 YAML 解析为布尔 false，必须带引号。
+  mode: "OFF"
 
-# Commerce 自有业务配置，字段完整对应自有 Properties 类；这些值修改后均需重启。
-commerce:
+# ==================== acquiring 系统自定义配置 ====================
+
+# acquiring 自有业务配置，字段完整对应自有 Properties 类；这些值修改后均需重启。
+acquiring:
   payment:
     card-payment-method-code: CARD_TEST
   checkout:

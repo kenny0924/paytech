@@ -1,6 +1,6 @@
-package com.paytech.commerce.integration.id;
+package com.paytech.acquiring.integration.id;
 
-import com.paytech.commerce.domainservice.port.CommerceIdentifierGenerator;
+import com.paytech.acquiring.domainservice.port.CommerceIdentifierGenerator;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.id.IdGenerator;
 import lombok.AllArgsConstructor;

@@ -1,4 +1,4 @@
-package com.paytech.commerce.integration.payment;
+package com.paytech.consumer.integration.payment;
 
 import java.time.Instant;
 import java.util.List;

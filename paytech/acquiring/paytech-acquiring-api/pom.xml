@@ -5,13 +5,13 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.paytech</groupId>
-        <artifactId>paytech-commerce-service</artifactId>
+        <artifactId>paytech-acquiring</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
-    <artifactId>paytech-commerce-client-api</artifactId>
-    <name>Commerce Client API</name>
-    <description>Non-running Commerce Hosted Checkout V1 owner contract.</description>
+    <artifactId>paytech-acquiring-api</artifactId>
+    <name>PayTech Acquiring API</name>
+    <description>Acquiring HTTP contracts: Client API (checkout, orders, cancellation, refunds) and the consumer-facing Hosted Checkout API (package checkout).</description>
     <dependencies>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -59,7 +59,7 @@
                 <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>client-api-compile-classpath</id>
+                        <id>acquiring-api-compile-classpath</id>
                         <phase>generate-test-resources</phase>
                         <goals><goal>build-classpath</goal></goals>
                         <configuration>
@@ -74,7 +74,7 @@
                 <artifactId>maven-enforcer-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>enforce-commerce-client-api-purity</id>
+                        <id>enforce-acquiring-api-purity</id>
                         <phase>validate</phase>
                         <goals>
                             <goal>enforce</goal>

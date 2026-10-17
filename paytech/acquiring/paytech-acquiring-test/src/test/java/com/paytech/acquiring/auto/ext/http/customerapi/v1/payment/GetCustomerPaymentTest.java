@@ -1,4 +1,4 @@
-package com.paytech.commerce.auto.ext.http.customerapi.v1.payment;
+package com.paytech.acquiring.auto.ext.http.customerapi.v1.payment;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -12,17 +12,17 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 
-import com.paytech.commerce.client.api.v1.enums.CommerceCheckoutErrorCode;
-import com.paytech.commerce.customer.api.v1.enums.CustomerCheckoutErrorCode;
-import com.paytech.commerce.customer.api.v1.enums.CustomerPaymentStatus;
-import com.paytech.commerce.customer.api.v1.payment.CustomerPaymentApi;
-import com.paytech.commerce.domain.checkout.CreateCheckoutContext;
-import com.paytech.commerce.domain.enums.PaymentAttemptStatus;
-import com.paytech.commerce.test.base.MockTestBase;
-import com.paytech.commerce.test.checker.customer.CheckoutFlowResponseChecker;
-import com.paytech.commerce.test.dal.PaymentResultTestMapper;
-import com.paytech.commerce.test.mocker.external.PaymentSubmissionMocker;
-import com.paytech.commerce.test.mocker.local.CheckoutPaymentDataMocker;
+import com.paytech.acquiring.api.client.v1.enums.CommerceCheckoutErrorCode;
+import com.paytech.acquiring.api.checkout.v1.enums.CustomerCheckoutErrorCode;
+import com.paytech.acquiring.api.checkout.v1.enums.CustomerPaymentStatus;
+import com.paytech.acquiring.api.checkout.v1.payment.CustomerPaymentApi;
+import com.paytech.acquiring.domain.checkout.CreateCheckoutContext;
+import com.paytech.acquiring.domain.enums.PaymentAttemptStatus;
+import com.paytech.acquiring.test.base.MockTestBase;
+import com.paytech.acquiring.test.checker.customer.CheckoutFlowResponseChecker;
+import com.paytech.acquiring.test.dal.PaymentResultTestMapper;
+import com.paytech.acquiring.test.mocker.external.PaymentSubmissionMocker;
+import com.paytech.acquiring.test.mocker.local.CheckoutPaymentDataMocker;
 import com.paytech.foundation.common.http.ApiHeaderNames;
 import com.paytech.foundation.testsupport.api.MockHttpFault;
 import com.paytech.payment.api.execution.response.GetSubmissionResponseBody;

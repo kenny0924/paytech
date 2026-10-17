@@ -1,8 +1,8 @@
-package com.paytech.commerce.core.dal.dataobject.customer;
+package com.paytech.consumer.core.dal.dataobject;
 
 import java.time.Instant;
 
-import com.paytech.commerce.domain.enums.CustomerStatus;
+import com.paytech.consumer.api.enums.CustomerStatus;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

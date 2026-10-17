@@ -1,4 +1,4 @@
-package com.paytech.commerce.integration.payment.impl;
+package com.paytech.consumer.integration.payment.impl;
 
 import java.time.DateTimeException;
 import java.time.Instant;
@@ -6,8 +6,8 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
-import com.paytech.commerce.domain.checkout.CheckoutUpstreamProtocolException;
-import com.paytech.commerce.integration.payment.PaymentStoredCardClient;
+import com.paytech.consumer.domain.ConsumerUpstreamProtocolException;
+import com.paytech.consumer.integration.payment.PaymentStoredCardClient;
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.payment.api.card.StoredCardApi;
@@ -29,7 +29,7 @@ public class PaymentStoredCardClientImpl implements PaymentStoredCardClient {
         StoredCardListResponseBody body =
             storedCards.listStoredCards(Long.toString(clientId), Long.toString(customerId));
         if (body == null || body.getStoredCards() == null) {
-            throw new CheckoutUpstreamProtocolException("Payment 已存卡列表响应无效");
+            throw new ConsumerUpstreamProtocolException("Payment 已存卡列表响应无效");
         }
         return body.getStoredCards().stream().map(PaymentStoredCardClientImpl::storedCard).toList();
     }
@@ -54,7 +54,7 @@ public class PaymentStoredCardClientImpl implements PaymentStoredCardClient {
         request.setClientId(Long.toString(clientId));
         InvalidateStoredCardsResponseBody body = storedCards.invalidateStoredCards(Long.toString(customerId), request);
         if (body == null || body.getInvalidatedCount() < 0) {
-            throw new CheckoutUpstreamProtocolException("Payment 已存卡失效响应无效");
+            throw new ConsumerUpstreamProtocolException("Payment 已存卡失效响应无效");
         }
         return body.getInvalidatedCount();
     }
@@ -65,13 +65,13 @@ public class PaymentStoredCardClientImpl implements PaymentStoredCardClient {
             || !card.getMaskedPan().matches("[0-9]{6}\\*{6}[0-9]{4}") || card.getExpiryMonth() == null
             || !card.getExpiryMonth().matches("0[1-9]|1[0-2]") || card.getExpiryYear() == null
             || !card.getExpiryYear().matches("[0-9]{4}") || card.getCreatedAt() == null) {
-            throw new CheckoutUpstreamProtocolException("Payment 已存卡响应无效");
+            throw new ConsumerUpstreamProtocolException("Payment 已存卡响应无效");
         }
         try {
             return new StoredCard(card.getStoredCardToken(), card.getMaskedPan(), card.getLast4(), card.getExpiryMonth(),
                 card.getExpiryYear(), Instant.parse(card.getCreatedAt()));
         } catch (DateTimeException invalidTime) {
-            throw new CheckoutUpstreamProtocolException("Payment 已存卡时间无效", invalidTime);
+            throw new ConsumerUpstreamProtocolException("Payment 已存卡时间无效", invalidTime);
         }
     }
 }

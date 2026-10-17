@@ -1,12 +1,12 @@
-package com.paytech.commerce.service.processor.customer;
+package com.paytech.consumer.service.processor;
 
 import org.springframework.stereotype.Component;
 
-import com.paytech.commerce.client.api.v1.enums.CommerceCheckoutErrorCode;
-import com.paytech.commerce.core.dal.dataobject.customer.Customer;
-import com.paytech.commerce.domainservice.repository.customer.CustomerRepository;
-import com.paytech.commerce.service.processor.customer.request.ClientCustomerRequest;
-import com.paytech.commerce.service.processor.customer.response.ClientCustomerResponse;
+import com.paytech.consumer.api.enums.ConsumerErrorCode;
+import com.paytech.consumer.core.dal.dataobject.Customer;
+import com.paytech.consumer.domainservice.repository.CustomerRepository;
+import com.paytech.consumer.service.processor.request.ClientCustomerRequest;
+import com.paytech.consumer.service.processor.response.ClientCustomerResponse;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.processor.AbstractProcessor;
 
@@ -24,7 +24,7 @@ public class GetCustomerProcessor extends AbstractProcessor<ClientCustomerReques
             ? customerRepository.findByNo(request.getClientId(), request.getCustomerNo())
             : customerRepository.findActive(request.getClientId(), request.getConsumerReference());
         if (customer == null) {
-            throw new FailException(CommerceCheckoutErrorCode.CUSTOMER_NOT_FOUND);
+            throw new FailException(ConsumerErrorCode.CUSTOMER_NOT_FOUND);
         }
         return new ClientCustomerResponse(customer, false);
     }

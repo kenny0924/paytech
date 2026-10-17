@@ -1,10 +1,10 @@
-package com.paytech.commerce.integration.payment;
+package com.paytech.acquiring.integration.payment;
 
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.IntentRequest;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.IntentResult;
-import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.CardChoice;
-import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.CardInstrument;
-import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.PaymentReference;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.IntentRequest;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.IntentResult;
+import com.paytech.acquiring.domain.customer.CheckoutSubmissionModels.CardChoice;
+import com.paytech.acquiring.domain.customer.CheckoutSubmissionModels.CardInstrument;
+import com.paytech.acquiring.domain.customer.CheckoutSubmissionModels.PaymentReference;
 
 /** Payment 创建 Intent 和申请卡工具的出站边界。 */
 public interface PaymentCheckoutClient {

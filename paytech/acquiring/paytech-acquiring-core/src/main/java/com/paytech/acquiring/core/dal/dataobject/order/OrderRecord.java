@@ -1,13 +1,13 @@
-package com.paytech.commerce.core.dal.dataobject.order;
+package com.paytech.acquiring.core.dal.dataobject.order;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 
 import lombok.Builder;
 
-import com.paytech.commerce.domain.enums.CheckoutSessionStatus;
-import com.paytech.commerce.client.api.v1.enums.OrderCreationMode;
-import com.paytech.commerce.domain.enums.OrderStatus;
+import com.paytech.acquiring.domain.enums.CheckoutSessionStatus;
+import com.paytech.acquiring.api.client.v1.enums.OrderCreationMode;
+import com.paytech.acquiring.domain.enums.OrderStatus;
 
 /** Orders 用例读取的本库事实，不跨 HTTP 暴露。 */
 @Builder(toBuilder = true)
@@ -24,8 +24,6 @@ public record OrderRecord(
         OrderCreationMode creationMode,
         /** 准备选择的 OE；未选择为空。 */
         String entityNo,
-        /** 支付准备命令；未开始为空。 */
-        Long preparationCommandId,
         /** 持久化终止意图；未请求为空。 */
         Instant terminationRequestedAt,
         /** 当前订单状态。 */

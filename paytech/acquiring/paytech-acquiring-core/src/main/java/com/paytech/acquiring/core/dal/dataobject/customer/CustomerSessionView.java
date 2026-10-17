@@ -1,4 +1,4 @@
-package com.paytech.commerce.core.dal.dataobject.customer;
+package com.paytech.acquiring.core.dal.dataobject.customer;
 
 /** Session 与 Order 的联合查询投影，禁止跨 HTTP 暴露。 */
 public record CustomerSessionView(

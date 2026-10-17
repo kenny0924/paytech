@@ -1,4 +1,4 @@
-package com.paytech.commerce.domain.webhook;
+package com.paytech.acquiring.domain.webhook;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -7,12 +7,12 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import com.paytech.commerce.core.dal.dataobject.checkout.CheckoutSession;
-import com.paytech.commerce.core.dal.dataobject.order.CommerceOrder;
-import com.paytech.commerce.core.dal.dataobject.refund.RefundRequest;
-import com.paytech.commerce.domain.enums.ClientWebhookEventType;
-import com.paytech.commerce.domain.enums.OrderPaymentStatus;
-import com.paytech.commerce.domain.order.CommerceDecimalRules;
+import com.paytech.acquiring.core.dal.dataobject.checkout.CheckoutSession;
+import com.paytech.acquiring.core.dal.dataobject.order.CommerceOrder;
+import com.paytech.acquiring.core.dal.dataobject.refund.RefundRequest;
+import com.paytech.acquiring.domain.enums.ClientWebhookEventType;
+import com.paytech.acquiring.domain.enums.OrderPaymentStatus;
+import com.paytech.acquiring.domain.order.CommerceDecimalRules;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;

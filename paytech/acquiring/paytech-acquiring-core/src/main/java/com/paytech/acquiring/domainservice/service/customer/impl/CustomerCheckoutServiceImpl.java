@@ -1,12 +1,12 @@
-package com.paytech.commerce.domainservice.service.customer.impl;
+package com.paytech.acquiring.domainservice.service.customer.impl;
 import java.time.Clock;
 import java.time.temporal.ChronoUnit;
 import org.springframework.stereotype.Service;
-import com.paytech.commerce.domain.customer.SaveConsumerContext;
-import com.paytech.commerce.domainservice.repository.order.CommerceOrderRepository;
-import com.paytech.commerce.domainservice.repository.customer.ConsumerContextRepository;
-import com.paytech.commerce.domainservice.service.customer.CustomerCheckoutService;
-import com.paytech.commerce.service.transaction.CommerceTransactionExecutor;
+import com.paytech.acquiring.domain.customer.SaveConsumerContext;
+import com.paytech.acquiring.domainservice.repository.order.CommerceOrderRepository;
+import com.paytech.acquiring.domainservice.repository.customer.ConsumerContextRepository;
+import com.paytech.acquiring.domainservice.service.customer.CustomerCheckoutService;
+import com.paytech.acquiring.service.transaction.CommerceTransactionExecutor;
 import lombok.AllArgsConstructor;
 /** 消费者本地资料写入；外部保护由 Processor 在事务外完成。 */
 @Service

@@ -1,6 +1,6 @@
-package com.paytech.commerce.auto.domainservice.customer;
+package com.paytech.acquiring.auto.domainservice.customer;
 
-import static com.paytech.commerce.test.builder.customer.SaveConsumerRequestBuilder.template;
+import static com.paytech.acquiring.test.builder.customer.SaveConsumerRequestBuilder.template;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -11,16 +11,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
-import com.paytech.commerce.core.dal.dataobject.customer.ConsumerContext;
-import com.paytech.commerce.domain.checkout.CreateCheckoutContext;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.ProtectedConsumer;
-import com.paytech.commerce.domain.customer.SaveConsumerContext;
-import com.paytech.commerce.domainservice.service.customer.CustomerCheckoutService;
-import com.paytech.commerce.test.base.MockTestBase;
-import com.paytech.commerce.test.checker.customer.SaveConsumerChecker;
-import com.paytech.commerce.test.checker.order.OrderCancellationChecker;
-import com.paytech.commerce.test.mocker.external.ConsumerProtectionMocker;
-import com.paytech.commerce.test.mocker.local.CheckoutPaymentDataMocker;
+import com.paytech.acquiring.core.dal.dataobject.customer.ConsumerContext;
+import com.paytech.acquiring.domain.checkout.CreateCheckoutContext;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.ProtectedConsumer;
+import com.paytech.acquiring.domain.customer.SaveConsumerContext;
+import com.paytech.acquiring.domainservice.service.customer.CustomerCheckoutService;
+import com.paytech.acquiring.test.base.MockTestBase;
+import com.paytech.acquiring.test.checker.customer.SaveConsumerChecker;
+import com.paytech.acquiring.test.checker.order.OrderCancellationChecker;
+import com.paytech.acquiring.test.mocker.external.ConsumerProtectionMocker;
+import com.paytech.acquiring.test.mocker.local.CheckoutPaymentDataMocker;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
 
 /**

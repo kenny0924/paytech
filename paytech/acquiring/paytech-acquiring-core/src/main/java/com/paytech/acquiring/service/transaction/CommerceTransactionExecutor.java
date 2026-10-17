@@ -1,4 +1,4 @@
-package com.paytech.commerce.service.transaction;
+package com.paytech.acquiring.service.transaction;
 
 import java.util.Objects;
 import java.util.function.Supplier;

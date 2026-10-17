@@ -1,12 +1,12 @@
-package com.paytech.commerce.ext.rest.external.clientapi.v1.checkout;
+package com.paytech.acquiring.ext.rest.external.clientapi.v1.checkout;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.paytech.commerce.client.api.v1.checkout.ClientCheckoutApi;
-import com.paytech.commerce.client.api.v1.checkout.request.CreateCheckoutRequestBody;
-import com.paytech.commerce.client.api.v1.checkout.response.CreateCheckoutResponseBody;
-import com.paytech.commerce.service.processor.checkout.CreateCheckoutProcessor;
+import com.paytech.acquiring.api.client.v1.checkout.ClientCheckoutApi;
+import com.paytech.acquiring.api.client.v1.checkout.request.CreateCheckoutRequestBody;
+import com.paytech.acquiring.api.client.v1.checkout.response.CreateCheckoutResponseBody;
+import com.paytech.acquiring.service.processor.checkout.CreateCheckoutProcessor;
 
 import lombok.AllArgsConstructor;
 

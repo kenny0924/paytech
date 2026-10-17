@@ -1,8 +1,8 @@
-package com.paytech.commerce.domainservice.repository.order;
+package com.paytech.acquiring.domainservice.repository.order;
 
 import com.paytech.foundation.common.error.ErrorException;
-import com.paytech.commerce.core.dal.dataobject.customer.FrozenCheckoutRecord;
-import com.paytech.commerce.core.dal.mapper.customer.CustomerCheckoutMapper;
+import com.paytech.acquiring.core.dal.dataobject.customer.FrozenCheckoutRecord;
+import com.paytech.acquiring.core.dal.mapper.customer.CustomerCheckoutMapper;
 
 import lombok.AllArgsConstructor;
 

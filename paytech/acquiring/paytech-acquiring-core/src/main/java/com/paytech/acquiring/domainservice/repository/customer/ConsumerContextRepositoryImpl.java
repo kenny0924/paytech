@@ -1,13 +1,13 @@
-package com.paytech.commerce.domainservice.repository.customer;
+package com.paytech.acquiring.domainservice.repository.customer;
 
 import java.time.Instant;
 
 import org.springframework.stereotype.Repository;
 
-import com.paytech.commerce.core.dal.dataobject.customer.ConsumerContext;
-import com.paytech.commerce.core.dal.mapper.customer.ConsumerContextMapper;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.ConsumerDetails;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.ProtectedConsumer;
+import com.paytech.acquiring.core.dal.dataobject.customer.ConsumerContext;
+import com.paytech.acquiring.core.dal.mapper.customer.ConsumerContextMapper;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.ConsumerDetails;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.ProtectedConsumer;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
 
 import lombok.AllArgsConstructor;

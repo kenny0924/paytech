@@ -1,4 +1,4 @@
-package com.paytech.commerce.domain.checkout;
+package com.paytech.acquiring.domain.checkout;
 
 import java.net.URI;
 import java.net.URISyntaxException;

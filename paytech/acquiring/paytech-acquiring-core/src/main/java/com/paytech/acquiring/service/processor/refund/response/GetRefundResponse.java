@@ -1,9 +1,9 @@
-package com.paytech.commerce.service.processor.refund.response;
+package com.paytech.acquiring.service.processor.refund.response;
 
 import java.time.Instant;
 
-import com.paytech.commerce.domain.enums.RefundRequestOrigin;
-import com.paytech.commerce.domain.enums.RefundStatus;
+import com.paytech.acquiring.domain.enums.RefundRequestOrigin;
+import com.paytech.acquiring.domain.enums.RefundStatus;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

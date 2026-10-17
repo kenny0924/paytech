@@ -1,13 +1,13 @@
-package com.paytech.commerce.domainservice.repository.order;
+package com.paytech.acquiring.domainservice.repository.order;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 
 import org.springframework.stereotype.Repository;
 
-import com.paytech.commerce.core.dal.dataobject.order.OrderPaymentProjection;
-import com.paytech.commerce.core.dal.mapper.order.OrderPaymentProjectionMapper;
-import com.paytech.commerce.domain.enums.PaymentIntentStatus;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderPaymentProjection;
+import com.paytech.acquiring.core.dal.mapper.order.OrderPaymentProjectionMapper;
+import com.paytech.acquiring.domain.enums.PaymentIntentStatus;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
 import com.paytech.foundation.common.error.ErrorException;
 

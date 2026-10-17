@@ -1,8 +1,8 @@
-package com.paytech.commerce.test.checker.customer;
+package com.paytech.acquiring.test.checker.customer;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.paytech.commerce.test.dal.CheckoutPaymentTestMapper;
+import com.paytech.acquiring.test.dal.CheckoutPaymentTestMapper;
 
 import lombok.AllArgsConstructor;
 

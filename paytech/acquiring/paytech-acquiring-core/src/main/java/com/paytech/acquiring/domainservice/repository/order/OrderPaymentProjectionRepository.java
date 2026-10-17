@@ -1,9 +1,9 @@
-package com.paytech.commerce.domainservice.repository.order;
+package com.paytech.acquiring.domainservice.repository.order;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 
-import com.paytech.commerce.core.dal.dataobject.order.OrderPaymentProjection;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderPaymentProjection;
 
 /** 订单支付投影表的查询边界。 */
 public interface OrderPaymentProjectionRepository {

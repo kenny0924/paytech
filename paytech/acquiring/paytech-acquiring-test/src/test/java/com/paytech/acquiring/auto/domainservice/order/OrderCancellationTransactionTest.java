@@ -1,6 +1,6 @@
-package com.paytech.commerce.auto.domainservice.order;
+package com.paytech.acquiring.auto.domainservice.order;
 
-import static com.paytech.commerce.test.builder.order.GetOrderDataBuilder.NOW;
+import static com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.NOW;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -11,16 +11,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import com.paytech.commerce.domain.order.OrderCancellationContext;
-import com.paytech.commerce.domainservice.service.order.OrderCancellationService;
-import com.paytech.commerce.test.base.MockTestBase;
-import com.paytech.commerce.test.builder.order.GetOrderDataBuilder.Fixture;
-import com.paytech.commerce.test.builder.order.GetOrderDataBuilder.Payment;
-import com.paytech.commerce.test.checker.order.OrderCancellationChecker;
-import com.paytech.commerce.test.checker.refund.RefundQueryChecker;
-import com.paytech.commerce.test.mocker.external.PaymentTerminationMocker;
-import com.paytech.commerce.test.mocker.local.OrderCancellationDataMocker;
-import com.paytech.commerce.test.mocker.local.OrderQueryDataMocker;
+import com.paytech.acquiring.domain.order.OrderCancellationContext;
+import com.paytech.acquiring.domainservice.service.order.OrderCancellationService;
+import com.paytech.acquiring.test.base.MockTestBase;
+import com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.Fixture;
+import com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.Payment;
+import com.paytech.acquiring.test.checker.order.OrderCancellationChecker;
+import com.paytech.acquiring.test.checker.refund.RefundQueryChecker;
+import com.paytech.acquiring.test.mocker.external.PaymentTerminationMocker;
+import com.paytech.acquiring.test.mocker.local.OrderCancellationDataMocker;
+import com.paytech.acquiring.test.mocker.local.OrderQueryDataMocker;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
 
 /**
@@ -51,7 +51,6 @@ class OrderCancellationTransactionTest extends MockTestBase {
     @BeforeEach
     void setUpClassMocks() {
         fixture = orders.template().ready().build();
-        fixture.getOrder().setPreparationCommandId(null);
     }
 
     /** 两个公开保存入口均加入已有事务，外层回滚不能留下任何取消写入。 */

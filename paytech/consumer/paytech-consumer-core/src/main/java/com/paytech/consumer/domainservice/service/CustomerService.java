@@ -1,11 +1,11 @@
-package com.paytech.commerce.domainservice.service.customer;
+package com.paytech.consumer.domainservice.service;
 
 import java.time.Instant;
 
-import com.paytech.commerce.core.dal.dataobject.customer.Customer;
+import com.paytech.consumer.core.dal.dataobject.Customer;
 
 /**
- * Customer 本地能力：只操作 Commerce 库，不调用外部服务。
+ * Customer 本地能力：只操作 consumer 库（mor_consumer），不调用外部服务。
  * <li>Customer 的身份只来自 Client 服务端传入的 consumerReference；同一 Client 同一引用同时最多一个有效 Customer。</li>
  */
 public interface CustomerService {

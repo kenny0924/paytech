@@ -1,10 +1,10 @@
-package com.paytech.commerce.core.dal.mapper.order;
+package com.paytech.acquiring.core.dal.mapper.order;
 
 import java.time.Instant;
 
 import org.apache.ibatis.annotations.Param;
 
-import com.paytech.commerce.core.dal.dataobject.order.OrderFundsAvailabilityProjection;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderFundsAvailabilityProjection;
 
 /** OrderFundsAvailabilityProjection 表的创建持久化。 */
 public interface OrderFundsAvailabilityProjectionMapper {

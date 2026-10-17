@@ -1,18 +1,18 @@
-package com.paytech.commerce.test.dal;
+package com.paytech.acquiring.test.dal;
 
 import java.util.List;
 import java.util.Map;
 import org.apache.ibatis.annotations.*;
-import com.paytech.commerce.core.dal.dataobject.customer.ConsumerContext;
-import com.paytech.commerce.core.dal.dataobject.order.CommerceOrder;
-import com.paytech.commerce.domain.enums.CheckoutSessionStatus;
+import com.paytech.acquiring.core.dal.dataobject.customer.ConsumerContext;
+import com.paytech.acquiring.core.dal.dataobject.order.CommerceOrder;
+import com.paytech.acquiring.domain.enums.CheckoutSessionStatus;
 
 /** 消费者测试独立查询及竞争事实；所有写入限于当前测试登记的订单。 */
 @Mapper
 public interface SaveConsumerTestMapper {
     /** 独立查询本库消费者，复用数据库对象映射而非被测 Repository。 */
     @Select("SELECT * FROM t_consumer_context WHERE order_id=#{orderId}")
-    @ResultMap("com.paytech.commerce.core.dal.mapper.customer.ConsumerContextMapper.ConsumerContext")
+    @ResultMap("com.paytech.acquiring.core.dal.mapper.customer.ConsumerContextMapper.ConsumerContext")
     ConsumerContext consumer(long orderId);
 
     /** 原始快照同时覆盖未映射的可选字段，失败不得产生部分修改。 */
@@ -30,7 +30,7 @@ public interface SaveConsumerTestMapper {
     /** 准备状态、时间和版本边界，不调用任何被测业务。 */
     @Update("""
         UPDATE t_commerce_order SET order_status=#{orderStatus},expires_at=#{expiresAt},paid_at=#{paidAt},
-          preparation_command_id=#{preparationCommandId},termination_requested_at=#{terminationRequestedAt},version=#{version}
+          termination_requested_at=#{terminationRequestedAt},version=#{version}
         WHERE order_id=#{orderId}
         """)
     void changeOrder(CommerceOrder order);

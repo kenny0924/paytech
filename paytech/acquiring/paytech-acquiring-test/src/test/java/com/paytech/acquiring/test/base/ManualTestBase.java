@@ -1,4 +1,4 @@
-package com.paytech.commerce.test.base;
+package com.paytech.acquiring.test.base;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
@@ -6,7 +6,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.client.RestTestClient;
 
-import com.paytech.commerce.CommerceApplication;
+import com.paytech.acquiring.AcquiringApplication;
 
 import tools.jackson.databind.ObjectMapper;
 
@@ -14,7 +14,7 @@ import tools.jackson.databind.ObjectMapper;
 @ActiveProfiles("manual")
 @AutoConfigureRestTestClient
 @SpringBootTest(
-    classes = CommerceApplication.class,
+    classes = AcquiringApplication.class,
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
     properties = "server.port=0"
 )

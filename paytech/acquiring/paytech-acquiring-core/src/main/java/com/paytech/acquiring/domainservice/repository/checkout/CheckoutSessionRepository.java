@@ -1,9 +1,9 @@
-package com.paytech.commerce.domainservice.repository.checkout;
+package com.paytech.acquiring.domainservice.repository.checkout;
 
 import java.time.Instant;
 
-import com.paytech.commerce.core.dal.dataobject.checkout.CheckoutSession;
-import com.paytech.commerce.core.dal.dataobject.customer.CheckoutVersionView;
+import com.paytech.acquiring.core.dal.dataobject.checkout.CheckoutSession;
+import com.paytech.acquiring.core.dal.dataobject.customer.CheckoutVersionView;
 
 /** Checkout Session 单表持久化边界。 */
 public interface CheckoutSessionRepository {

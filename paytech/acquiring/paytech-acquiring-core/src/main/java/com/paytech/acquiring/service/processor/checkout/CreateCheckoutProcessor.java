@@ -1,4 +1,4 @@
-package com.paytech.commerce.service.processor.checkout;
+package com.paytech.acquiring.service.processor.checkout;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -12,33 +12,33 @@ import java.util.List;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Component;
 
-import com.paytech.commerce.client.api.v1.enums.CommerceCheckoutErrorCode;
-import com.paytech.commerce.client.api.v1.enums.OrderCreationMode;
-import com.paytech.commerce.core.dal.dataobject.checkout.CheckoutSession;
-import com.paytech.commerce.core.dal.dataobject.order.CommerceOrder;
-import com.paytech.commerce.core.dal.dataobject.order.OrderFundsAvailabilityProjection;
-import com.paytech.commerce.core.dal.dataobject.order.OrderItem;
-import com.paytech.commerce.core.dal.dataobject.order.OrderRefundPosition;
-import com.paytech.commerce.domain.checkout.CheckoutInitializationContext;
-import com.paytech.commerce.domain.checkout.CheckoutPublicOrigin;
-import com.paytech.commerce.domain.checkout.CheckoutPublicToken;
-import com.paytech.commerce.domain.checkout.CreateCheckoutContext;
-import com.paytech.commerce.domain.customer.ConsumerReferencePolicy;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.InitializationRequest;
-import com.paytech.commerce.domain.enums.CheckoutSessionStatus;
-import com.paytech.commerce.domain.enums.FundsAvailabilityStatus;
-import com.paytech.commerce.domain.enums.OrderStatus;
-import com.paytech.commerce.domain.order.CommerceDecimalRules;
-import com.paytech.commerce.domainservice.port.CommerceIdentifierGenerator;
-import com.paytech.commerce.domainservice.port.customer.CheckoutCommercialPort;
-import com.paytech.commerce.domainservice.port.customer.CheckoutDocumentPort;
-import com.paytech.commerce.domainservice.port.customer.CheckoutRiskPort;
-import com.paytech.commerce.domainservice.port.customer.CheckoutTaxPort;
-import com.paytech.commerce.domainservice.repository.order.CommerceOrderRepository;
-import com.paytech.commerce.domainservice.service.checkout.CheckoutCreationService;
-import com.paytech.commerce.domainservice.service.customer.CustomerService;
-import com.paytech.commerce.service.processor.checkout.request.CreateCheckoutRequest;
-import com.paytech.commerce.service.processor.checkout.response.CreateCheckoutResponse;
+import com.paytech.acquiring.api.client.v1.enums.CommerceCheckoutErrorCode;
+import com.paytech.acquiring.api.client.v1.enums.OrderCreationMode;
+import com.paytech.acquiring.core.dal.dataobject.checkout.CheckoutSession;
+import com.paytech.acquiring.core.dal.dataobject.order.CommerceOrder;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderFundsAvailabilityProjection;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderItem;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderRefundPosition;
+import com.paytech.acquiring.domain.checkout.CheckoutInitializationContext;
+import com.paytech.acquiring.domain.checkout.CheckoutPublicOrigin;
+import com.paytech.acquiring.domain.checkout.CheckoutPublicToken;
+import com.paytech.acquiring.domain.checkout.CreateCheckoutContext;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.InitializationRequest;
+import com.paytech.acquiring.domain.enums.CheckoutSessionStatus;
+import com.paytech.acquiring.domain.enums.FundsAvailabilityStatus;
+import com.paytech.acquiring.domain.enums.OrderStatus;
+import com.paytech.acquiring.domain.order.CommerceDecimalRules;
+import com.paytech.acquiring.domainservice.port.CommerceIdentifierGenerator;
+import com.paytech.acquiring.domainservice.port.customer.CheckoutCommercialPort;
+import com.paytech.acquiring.domainservice.port.customer.CheckoutDocumentPort;
+import com.paytech.acquiring.domainservice.port.customer.CheckoutRiskPort;
+import com.paytech.acquiring.domainservice.port.customer.CheckoutTaxPort;
+import com.paytech.acquiring.domainservice.repository.order.CommerceOrderRepository;
+import com.paytech.acquiring.domainservice.service.checkout.CheckoutCreationService;
+import com.paytech.acquiring.integration.consumer.ConsumerCustomerClient;
+import com.paytech.acquiring.service.processor.checkout.request.CreateCheckoutRequest;
+import com.paytech.acquiring.service.processor.checkout.response.CreateCheckoutResponse;
+import com.paytech.consumer.api.customer.ConsumerReferencePolicy;
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.common.error.FailException;
@@ -63,7 +63,7 @@ public final class CreateCheckoutProcessor extends AbstractProcessor<CreateCheck
     private final CheckoutCreationService checkoutCreationService;
     private final CommerceOrderRepository commerceOrderRepository;
     private final CommerceIdentifierGenerator identifierGenerator;
-    private final CustomerService customerService;
+    private final ConsumerCustomerClient consumer;
 
     /** 检查商品标识唯一性及金额关系；字段约束由 HTTP 入口和公共模板触发。 */
     @Override
@@ -155,15 +155,16 @@ public final class CreateCheckoutProcessor extends AbstractProcessor<CreateCheck
         order.setOrderStatus(OrderStatus.OPEN);
     }
 
-    /** 访客订单不建 Customer；有引用时取得有效 Customer 并写入订单。 */
+    /**
+     * 访客订单不建 Customer；有引用时在订单事务前经 consumer 建或取有效 Customer，并把主键写入订单（软引用，只存 ID）。
+     * <li>consumer 建或取与订单保存不是原子的：订单保存失败时 Customer 保留，可被后续订单复用。</li>
+     */
     void attachCustomer(CreateCheckoutContext context, CreateCheckoutRequest request) {
         if (request.getConsumerReference() == null) {
             return;
         }
         var order = context.getOrder();
-        var resolution = customerService.resolveActiveCustomer(order.getClientId(), request.getConsumerReference(),
-            order.getCreateTime());
-        order.setCustomerId(resolution.customer().getCustomerId());
+        order.setCustomerId(consumer.resolveCustomerId(order.getClientId(), request.getConsumerReference()));
     }
 
     /** 保存失败后事务已回滚；只有已存在同 Client 业务订单时才转换为业务冲突。 */

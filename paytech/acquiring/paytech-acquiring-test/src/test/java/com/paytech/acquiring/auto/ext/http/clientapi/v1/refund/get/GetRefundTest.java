@@ -1,4 +1,4 @@
-package com.paytech.commerce.auto.ext.http.clientapi.v1.refund.get;
+package com.paytech.acquiring.auto.ext.http.clientapi.v1.refund.get;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -12,15 +12,15 @@ import org.junit.jupiter.params.provider.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.paytech.commerce.client.api.v1.refund.ClientRefundApi;
-import com.paytech.commerce.domain.enums.RefundRequestOrigin;
-import com.paytech.commerce.domain.enums.RefundStatus;
-import com.paytech.commerce.test.base.MockTestBase;
-import com.paytech.commerce.test.builder.order.GetOrderDataBuilder.Fixture;
-import com.paytech.commerce.test.checker.refund.GetRefundResponseChecker;
-import com.paytech.commerce.test.checker.refund.RefundQueryChecker;
-import com.paytech.commerce.test.mocker.local.OrderQueryDataMocker;
-import com.paytech.commerce.test.mocker.local.RefundCreationDataMocker;
+import com.paytech.acquiring.api.client.v1.refund.ClientRefundApi;
+import com.paytech.acquiring.domain.enums.RefundRequestOrigin;
+import com.paytech.acquiring.domain.enums.RefundStatus;
+import com.paytech.acquiring.test.base.MockTestBase;
+import com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.Fixture;
+import com.paytech.acquiring.test.checker.refund.GetRefundResponseChecker;
+import com.paytech.acquiring.test.checker.refund.RefundQueryChecker;
+import com.paytech.acquiring.test.mocker.local.OrderQueryDataMocker;
+import com.paytech.acquiring.test.mocker.local.RefundCreationDataMocker;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
 
 /**

@@ -1,4 +1,4 @@
-package com.paytech.commerce.test.checker.refund;
+package com.paytech.acquiring.test.checker.refund;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
@@ -9,15 +9,15 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.boot.test.context.TestComponent;
 
-import com.paytech.commerce.client.api.v1.refund.request.CreateRefundRequestBody;
-import com.paytech.commerce.client.api.v1.refund.response.CreateRefundResponseBody;
-import com.paytech.commerce.core.dal.dataobject.refund.RefundRequest;
-import com.paytech.commerce.domain.enums.RefundRequestOrigin;
-import com.paytech.commerce.domain.enums.RefundStatus;
-import com.paytech.commerce.test.builder.order.GetOrderDataBuilder.Fixture;
-import com.paytech.commerce.test.dal.OrderQueryTestMapper;
-import com.paytech.commerce.test.dal.RefundCreationTestMapper;
-import com.paytech.commerce.test.dal.RefundCreationTestMapper.Task;
+import com.paytech.acquiring.api.client.v1.refund.request.CreateRefundRequestBody;
+import com.paytech.acquiring.api.client.v1.refund.response.CreateRefundResponseBody;
+import com.paytech.acquiring.core.dal.dataobject.refund.RefundRequest;
+import com.paytech.acquiring.domain.enums.RefundRequestOrigin;
+import com.paytech.acquiring.domain.enums.RefundStatus;
+import com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.Fixture;
+import com.paytech.acquiring.test.dal.OrderQueryTestMapper;
+import com.paytech.acquiring.test.dal.RefundCreationTestMapper;
+import com.paytech.acquiring.test.dal.RefundCreationTestMapper.Task;
 
 import lombok.AllArgsConstructor;
 

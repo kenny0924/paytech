@@ -1,7 +1,7 @@
-package com.paytech.commerce.auto.ext.http.clientapi.v1.order.get;
+package com.paytech.acquiring.auto.ext.http.clientapi.v1.order.get;
 
-import static com.paytech.commerce.test.builder.order.GetOrderDataBuilder.NOW;
-import static com.paytech.commerce.test.builder.order.GetOrderDataBuilder.decimal;
+import static com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.NOW;
+import static com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.decimal;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -14,10 +14,10 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import com.paytech.commerce.client.api.v1.order.ClientOrderApi;
-import com.paytech.commerce.domain.enums.FundsAvailabilityStatus;
-import com.paytech.commerce.test.base.order.AbstractGetOrderApiTest;
-import com.paytech.commerce.test.builder.order.GetOrderDataBuilder.Fixture;
+import com.paytech.acquiring.api.client.v1.order.ClientOrderApi;
+import com.paytech.acquiring.domain.enums.FundsAvailabilityStatus;
+import com.paytech.acquiring.test.base.order.AbstractGetOrderApiTest;
+import com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.Fixture;
 
 /**
  * 不完整或冲突的持久化事实必须报系统错误，不能生成看似成功的订单详情。

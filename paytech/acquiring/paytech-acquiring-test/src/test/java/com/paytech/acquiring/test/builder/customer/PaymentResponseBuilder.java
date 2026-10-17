@@ -1,4 +1,4 @@
-package com.paytech.commerce.test.builder.customer;
+package com.paytech.acquiring.test.builder.customer;
 
 import java.time.Instant;
 

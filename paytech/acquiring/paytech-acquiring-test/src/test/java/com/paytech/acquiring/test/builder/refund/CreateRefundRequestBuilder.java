@@ -1,6 +1,6 @@
-package com.paytech.commerce.test.builder.refund;
+package com.paytech.acquiring.test.builder.refund;
 
-import com.paytech.commerce.client.api.v1.refund.request.CreateRefundRequestBody;
+import com.paytech.acquiring.api.client.v1.refund.request.CreateRefundRequestBody;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 

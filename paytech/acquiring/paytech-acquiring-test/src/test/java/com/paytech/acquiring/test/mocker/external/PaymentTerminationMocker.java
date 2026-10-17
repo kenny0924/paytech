@@ -1,4 +1,4 @@
-package com.paytech.commerce.test.mocker.external;
+package com.paytech.acquiring.test.mocker.external;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -11,7 +11,7 @@ import org.springframework.boot.test.context.TestComponent;
 import org.springframework.context.annotation.Primary;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import com.paytech.commerce.integration.payment.PaymentTerminationClient;
+import com.paytech.acquiring.integration.payment.PaymentTerminationClient;
 import com.paytech.foundation.testsupport.api.Clear;
 
 /** 暂缓 HTTP 集成时只配置终止端口 DTO / 异常，不模拟 Payment 状态机或创建 Intent。 */

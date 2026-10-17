@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.paytech.commerce.core.dal.mapper.order.OrderFundsAvailabilityProjectionMapper">
+<mapper namespace="com.paytech.acquiring.core.dal.mapper.order.OrderFundsAvailabilityProjectionMapper">
     <insert id="insert">
         INSERT INTO t_order_funds_availability_projection (
             order_funds_availability_projection_id, order_id, finance_economics_id, maturity_journal_id,

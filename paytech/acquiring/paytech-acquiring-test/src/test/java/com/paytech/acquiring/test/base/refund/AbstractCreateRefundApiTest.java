@@ -1,4 +1,4 @@
-package com.paytech.commerce.test.base.refund;
+package com.paytech.acquiring.test.base.refund;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -6,14 +6,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.paytech.commerce.client.api.v1.refund.request.CreateRefundRequestBody;
-import com.paytech.commerce.test.base.MockTestBase;
-import com.paytech.commerce.test.builder.order.GetOrderDataBuilder.Fixture;
-import com.paytech.commerce.test.builder.refund.CreateRefundRequestBuilder;
-import com.paytech.commerce.test.checker.refund.CreateRefundResponseChecker;
-import com.paytech.commerce.test.checker.refund.RefundCreationChecker;
-import com.paytech.commerce.test.mocker.local.OrderQueryDataMocker;
-import com.paytech.commerce.test.mocker.local.RefundCreationDataMocker;
+import com.paytech.acquiring.api.client.v1.refund.request.CreateRefundRequestBody;
+import com.paytech.acquiring.test.base.MockTestBase;
+import com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.Fixture;
+import com.paytech.acquiring.test.builder.refund.CreateRefundRequestBuilder;
+import com.paytech.acquiring.test.checker.refund.CreateRefundResponseChecker;
+import com.paytech.acquiring.test.checker.refund.RefundCreationChecker;
+import com.paytech.acquiring.test.mocker.local.OrderQueryDataMocker;
+import com.paytech.acquiring.test.mocker.local.RefundCreationDataMocker;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
 
 /** 两组 HTTP 场景共用正式请求、真实调用器和数据组件；不配置内部成功替身。 */

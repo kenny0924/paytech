@@ -1,4 +1,4 @@
-package com.paytech.commerce.service.processor.order;
+package com.paytech.acquiring.service.processor.order;
 
 import java.time.temporal.ChronoUnit;
 
@@ -6,20 +6,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import com.paytech.commerce.client.api.v1.enums.OrderCreationMode;
-import com.paytech.commerce.core.dal.dataobject.checkout.CheckoutSession;
-import com.paytech.commerce.core.dal.dataobject.order.CommerceOrder;
-import com.paytech.commerce.core.dal.dataobject.order.OrderPaymentProjection;
-import com.paytech.commerce.core.dal.dataobject.order.OrderRefundPosition;
-import com.paytech.commerce.domain.enums.OrderStatus;
-import com.paytech.commerce.domain.order.PaymentSucceededContext;
-import com.paytech.commerce.domainservice.repository.checkout.CheckoutSessionRepository;
-import com.paytech.commerce.domainservice.repository.order.CommerceOrderRepository;
-import com.paytech.commerce.domainservice.repository.order.OrderPaymentProjectionRepository;
-import com.paytech.commerce.domainservice.repository.order.OrderRefundPositionRepository;
-import com.paytech.commerce.domainservice.service.order.OrderPaymentService;
-import com.paytech.commerce.service.processor.order.request.ApplyPaymentSucceededRequest;
-import com.paytech.commerce.service.processor.order.response.ApplyPaymentSucceededResponse;
+import com.paytech.acquiring.api.client.v1.enums.OrderCreationMode;
+import com.paytech.acquiring.core.dal.dataobject.checkout.CheckoutSession;
+import com.paytech.acquiring.core.dal.dataobject.order.CommerceOrder;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderPaymentProjection;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderRefundPosition;
+import com.paytech.acquiring.domain.enums.OrderStatus;
+import com.paytech.acquiring.domain.order.PaymentSucceededContext;
+import com.paytech.acquiring.domainservice.repository.checkout.CheckoutSessionRepository;
+import com.paytech.acquiring.domainservice.repository.order.CommerceOrderRepository;
+import com.paytech.acquiring.domainservice.repository.order.OrderPaymentProjectionRepository;
+import com.paytech.acquiring.domainservice.repository.order.OrderRefundPositionRepository;
+import com.paytech.acquiring.domainservice.service.order.OrderPaymentService;
+import com.paytech.acquiring.service.processor.order.request.ApplyPaymentSucceededRequest;
+import com.paytech.acquiring.service.processor.order.response.ApplyPaymentSucceededResponse;
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.processor.AbstractProcessor;

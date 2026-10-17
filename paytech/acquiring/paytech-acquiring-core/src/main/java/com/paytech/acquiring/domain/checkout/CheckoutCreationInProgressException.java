@@ -1,8 +1,8 @@
-package com.paytech.commerce.domain.checkout;
+package com.paytech.acquiring.domain.checkout;
 
 import java.io.Serial;
 
-import com.paytech.commerce.client.api.v1.enums.CommerceCheckoutErrorCode;
+import com.paytech.acquiring.api.client.v1.enums.CommerceCheckoutErrorCode;
 import com.paytech.foundation.common.error.ServiceUnavailableException;
 import com.paytech.foundation.web.api.RetryAfterProvider;
 

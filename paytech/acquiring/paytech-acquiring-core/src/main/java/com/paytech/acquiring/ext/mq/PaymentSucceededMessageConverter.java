@@ -1,4 +1,4 @@
-package com.paytech.commerce.ext.mq;
+package com.paytech.acquiring.ext.mq;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -7,7 +7,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.HexFormat;
 
-import com.paytech.commerce.service.processor.order.request.ApplyPaymentSucceededRequest;
+import com.paytech.acquiring.service.processor.order.request.ApplyPaymentSucceededRequest;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;

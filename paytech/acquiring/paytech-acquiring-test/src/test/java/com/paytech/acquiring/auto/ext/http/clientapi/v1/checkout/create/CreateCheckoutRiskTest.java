@@ -1,13 +1,13 @@
-package com.paytech.commerce.auto.ext.http.clientapi.v1.checkout.create;
+package com.paytech.acquiring.auto.ext.http.clientapi.v1.checkout.create;
 
-import static com.paytech.commerce.test.builder.checkout.CreateCheckoutRequestBuilder.item;
-import static com.paytech.commerce.test.builder.checkout.CreateCheckoutRequestBuilder.template;
-import static com.paytech.commerce.test.mocker.external.CheckoutRiskMocker.body;
-import static com.paytech.commerce.test.mocker.external.CheckoutRiskMocker.delayed;
-import static com.paytech.commerce.test.mocker.external.CheckoutRiskMocker.disconnect;
-import static com.paytech.commerce.test.mocker.external.CheckoutRiskMocker.problem;
-import static com.paytech.commerce.test.mocker.external.CheckoutRiskMocker.raw;
-import static com.paytech.commerce.test.mocker.external.CheckoutRiskMocker.result;
+import static com.paytech.acquiring.test.builder.checkout.CreateCheckoutRequestBuilder.item;
+import static com.paytech.acquiring.test.builder.checkout.CreateCheckoutRequestBuilder.template;
+import static com.paytech.acquiring.test.mocker.external.CheckoutRiskMocker.body;
+import static com.paytech.acquiring.test.mocker.external.CheckoutRiskMocker.delayed;
+import static com.paytech.acquiring.test.mocker.external.CheckoutRiskMocker.disconnect;
+import static com.paytech.acquiring.test.mocker.external.CheckoutRiskMocker.problem;
+import static com.paytech.acquiring.test.mocker.external.CheckoutRiskMocker.raw;
+import static com.paytech.acquiring.test.mocker.external.CheckoutRiskMocker.result;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -22,13 +22,13 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.HttpStatus;
 
-import com.paytech.commerce.client.api.v1.checkout.ClientCheckoutApi;
-import com.paytech.commerce.client.api.v1.checkout.request.CreateCheckoutRequestBody;
-import com.paytech.commerce.client.api.v1.enums.CommerceCheckoutErrorCode;
-import com.paytech.commerce.domain.enums.EntitySourceType;
-import com.paytech.commerce.domain.enums.RiskDecisionResult;
-import com.paytech.commerce.test.base.checkout.AbstractCreateCheckoutApiTest;
-import com.paytech.commerce.test.builder.external.CommercialFactsBuilder;
+import com.paytech.acquiring.api.client.v1.checkout.ClientCheckoutApi;
+import com.paytech.acquiring.api.client.v1.checkout.request.CreateCheckoutRequestBody;
+import com.paytech.acquiring.api.client.v1.enums.CommerceCheckoutErrorCode;
+import com.paytech.acquiring.domain.enums.EntitySourceType;
+import com.paytech.acquiring.domain.enums.RiskDecisionResult;
+import com.paytech.acquiring.test.base.checkout.AbstractCreateCheckoutApiTest;
+import com.paytech.acquiring.test.builder.external.CommercialFactsBuilder;
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.risk.api.enums.RiskDecisionEvaluationErrorCode;
 import com.paytech.risk.api.evaluation.request.CheckoutPrepareRiskInput;

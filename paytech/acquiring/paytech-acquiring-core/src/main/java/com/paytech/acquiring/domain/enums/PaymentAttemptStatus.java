@@ -1,4 +1,4 @@
-package com.paytech.commerce.domain.enums;
+package com.paytech.acquiring.domain.enums;
 
 import com.paytech.foundation.common.enums.CodeEnum;
 

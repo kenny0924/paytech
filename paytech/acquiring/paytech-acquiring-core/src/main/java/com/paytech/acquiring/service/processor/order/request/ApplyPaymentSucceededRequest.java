@@ -1,4 +1,4 @@
-package com.paytech.commerce.service.processor.order.request;
+package com.paytech.acquiring.service.processor.order.request;
 
 import java.math.BigDecimal;
 import java.time.Instant;

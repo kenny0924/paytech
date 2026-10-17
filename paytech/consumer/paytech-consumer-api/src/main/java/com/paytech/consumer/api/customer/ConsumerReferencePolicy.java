@@ -1,6 +1,6 @@
-package com.paytech.commerce.domain.customer;
+package com.paytech.consumer.api.customer;
 
-import com.paytech.commerce.client.api.v1.enums.CommerceCheckoutErrorCode;
+import com.paytech.consumer.api.enums.ConsumerErrorCode;
 import com.paytech.foundation.common.error.FailException;
 
 /**
@@ -13,7 +13,7 @@ public final class ConsumerReferencePolicy {
     /** 7～15 位纯数字视为电话号码等个人原值，拒绝。 */
     public static void requireOpaque(String consumerReference) {
         if (consumerReference != null && consumerReference.matches("[0-9]{7,15}")) {
-            throw new FailException(CommerceCheckoutErrorCode.INVALID_CONSUMER_REFERENCE);
+            throw new FailException(ConsumerErrorCode.INVALID_CONSUMER_REFERENCE);
         }
     }
 }

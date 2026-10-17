@@ -1,11 +1,11 @@
-package com.paytech.commerce.core.dal.dataobject.refund;
+package com.paytech.acquiring.core.dal.dataobject.refund;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Objects;
 
-import com.paytech.commerce.domain.enums.RefundRequestOrigin;
-import com.paytech.commerce.domain.enums.RefundStatus;
+import com.paytech.acquiring.domain.enums.RefundRequestOrigin;
+import com.paytech.acquiring.domain.enums.RefundStatus;
 import com.paytech.foundation.common.error.ErrorException;
 
 import lombok.*;

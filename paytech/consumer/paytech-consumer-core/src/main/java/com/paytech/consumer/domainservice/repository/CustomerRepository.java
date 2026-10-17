@@ -1,8 +1,8 @@
-package com.paytech.commerce.domainservice.repository.customer;
+package com.paytech.consumer.domainservice.repository;
 
 import java.time.Instant;
 
-import com.paytech.commerce.core.dal.dataobject.customer.Customer;
+import com.paytech.consumer.core.dal.dataobject.Customer;
 
 /** Customer 数据访问。 */
 public interface CustomerRepository {

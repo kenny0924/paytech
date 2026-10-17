@@ -1,9 +1,9 @@
-package com.paytech.commerce.core.dal.dataobject.order;
+package com.paytech.acquiring.core.dal.dataobject.order;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 
-import com.paytech.commerce.domain.enums.FundsAvailabilityStatus;
+import com.paytech.acquiring.domain.enums.FundsAvailabilityStatus;
 
 import lombok.Builder;
 

@@ -1,8 +1,8 @@
-package com.paytech.commerce.auto.ext.http.clientapi.v1.checkout.create;
+package com.paytech.acquiring.auto.ext.http.clientapi.v1.checkout.create;
 
-import com.paytech.commerce.client.api.v1.checkout.request.CreateCheckoutRequestBody.CheckoutItemInfo;
-import static com.paytech.commerce.test.builder.checkout.CreateCheckoutRequestBuilder.item;
-import static com.paytech.commerce.test.builder.checkout.CreateCheckoutRequestBuilder.template;
+import com.paytech.acquiring.api.client.v1.checkout.request.CreateCheckoutRequestBody.CheckoutItemInfo;
+import static com.paytech.acquiring.test.builder.checkout.CreateCheckoutRequestBuilder.item;
+import static com.paytech.acquiring.test.builder.checkout.CreateCheckoutRequestBuilder.template;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Arrays;
@@ -19,11 +19,11 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import com.paytech.commerce.client.api.v1.checkout.ClientCheckoutApi;
-import com.paytech.commerce.client.api.v1.checkout.request.CreateCheckoutRequestBody;
-import com.paytech.commerce.test.base.checkout.AbstractCreateCheckoutApiTest;
-import com.paytech.commerce.test.builder.external.CommercialFactsBuilder;
-import com.paytech.commerce.test.builder.checkout.CreateCheckoutRequestBuilder;
+import com.paytech.acquiring.api.client.v1.checkout.ClientCheckoutApi;
+import com.paytech.acquiring.api.client.v1.checkout.request.CreateCheckoutRequestBody;
+import com.paytech.acquiring.test.base.checkout.AbstractCreateCheckoutApiTest;
+import com.paytech.acquiring.test.builder.external.CommercialFactsBuilder;
+import com.paytech.acquiring.test.builder.checkout.CreateCheckoutRequestBuilder;
 import com.paytech.foundation.common.http.ApiHeaderNames;
 
 /**

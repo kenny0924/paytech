@@ -1,10 +1,10 @@
-package com.paytech.commerce.test.mock.external;
+package com.paytech.acquiring.test.mock.external;
 
 import org.springframework.boot.test.context.TestComponent;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.paytech.commerce.test.mocker.external.CardInstrumentMocker;
+import com.paytech.acquiring.test.mocker.external.CardInstrumentMocker;
 import com.paytech.payment.api.instrument.PaymentInstrumentApi;
 import com.paytech.payment.api.instrument.request.ApplyCardInstrumentRequestBody;
 import com.paytech.payment.api.instrument.response.ApplyCardInstrumentResponseBody;

@@ -1,4 +1,4 @@
-package com.paytech.commerce.client.api.v1.common;
+package com.paytech.acquiring.api.client.v1.common;
 
 /** Commerce Client API 契约统一声明的服务入站路径。 */
 public final class ClientApiPaths {

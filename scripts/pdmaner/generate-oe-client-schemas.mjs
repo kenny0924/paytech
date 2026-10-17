@@ -7,7 +7,9 @@ const root = path.resolve(import.meta.dirname, "../..");
 export const schemaTargets = Object.freeze([
   ["paytech/client-master", "client-master"],
   ["paytech/commercial", "commercial"],
-  ["commerce-service", "commerce"],
+  // 第 03 步：commerce-service 拆为 acquiring 与 consumer（design/09 §4.3）。
+  ["paytech/acquiring", "acquiring"],
+  ["paytech/consumer", "consumer"],
   ["paytech/payment", "payment"],
   ["paytech/channel-connector", "channel-connector"],
   // 第 07 步：finance-service 按服务切分为六个服务目录（design/09 §4.3）。

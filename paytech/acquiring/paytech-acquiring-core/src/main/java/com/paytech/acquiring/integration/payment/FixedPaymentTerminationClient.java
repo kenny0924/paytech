@@ -1,4 +1,4 @@
-package com.paytech.commerce.integration.payment;
+package com.paytech.acquiring.integration.payment;
 
 import org.springframework.stereotype.Component;
 

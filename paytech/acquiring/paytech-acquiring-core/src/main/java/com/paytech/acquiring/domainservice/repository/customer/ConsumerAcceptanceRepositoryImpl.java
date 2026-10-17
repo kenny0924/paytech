@@ -1,9 +1,9 @@
-package com.paytech.commerce.domainservice.repository.customer;
+package com.paytech.acquiring.domainservice.repository.customer;
 
 import java.util.List;
 
-import com.paytech.commerce.core.dal.dataobject.customer.ConsumerAcceptance;
-import com.paytech.commerce.core.dal.mapper.customer.ConsumerAcceptanceMapper;
+import com.paytech.acquiring.core.dal.dataobject.customer.ConsumerAcceptance;
+import com.paytech.acquiring.core.dal.mapper.customer.ConsumerAcceptanceMapper;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
 
 import org.springframework.stereotype.Repository;

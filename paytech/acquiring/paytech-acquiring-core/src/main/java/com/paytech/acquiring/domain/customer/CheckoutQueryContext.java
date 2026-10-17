@@ -1,4 +1,4 @@
-package com.paytech.commerce.domain.customer;
+package com.paytech.acquiring.domain.customer;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -6,16 +6,16 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import com.paytech.commerce.core.dal.dataobject.checkout.CheckoutSession;
-import com.paytech.commerce.core.dal.dataobject.customer.CheckoutVersionView;
-import com.paytech.commerce.core.dal.dataobject.customer.ConsumerContext;
-import com.paytech.commerce.core.dal.dataobject.order.CommerceOrder;
-import com.paytech.commerce.core.dal.dataobject.order.OrderItem;
-import com.paytech.commerce.core.dal.dataobject.order.OrderPaymentProjection;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.ConsumerDetails;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.FileLink;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.PaymentStatus;
-import com.paytech.commerce.domain.enums.OrderStatus;
+import com.paytech.acquiring.core.dal.dataobject.checkout.CheckoutSession;
+import com.paytech.acquiring.core.dal.dataobject.customer.CheckoutVersionView;
+import com.paytech.acquiring.core.dal.dataobject.customer.ConsumerContext;
+import com.paytech.acquiring.core.dal.dataobject.order.CommerceOrder;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderItem;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderPaymentProjection;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.ConsumerDetails;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.FileLink;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.PaymentStatus;
+import com.paytech.acquiring.domain.enums.OrderStatus;
 import com.paytech.foundation.common.error.ErrorException;
 
 import lombok.AllArgsConstructor;
@@ -79,7 +79,7 @@ public class CheckoutQueryContext {
             return List.of();
         }
         List<String> actions = new ArrayList<>();
-        if (!paymentStarted && order.getPreparationCommandId() == null) {
+        if (!paymentStarted) {
             actions.add("SAVE_CONSUMER");
         }
         if (isReady() && consumer != null) {

@@ -1,6 +1,6 @@
-package com.paytech.commerce.domainservice.service.customer;
+package com.paytech.acquiring.domainservice.service.customer;
 
-import com.paytech.commerce.domain.customer.SubmitCustomerPaymentContext;
+import com.paytech.acquiring.domain.customer.SubmitCustomerPaymentContext;
 
 /** 支付受理阶段的本地原子保存，不调用其他 Service 或外部能力。 */
 public interface CheckoutSubmissionService {

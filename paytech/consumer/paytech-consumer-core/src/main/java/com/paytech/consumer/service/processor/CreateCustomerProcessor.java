@@ -1,14 +1,14 @@
-package com.paytech.commerce.service.processor.customer;
+package com.paytech.consumer.service.processor;
 
 import java.time.Clock;
 import java.time.temporal.ChronoUnit;
 
 import org.springframework.stereotype.Component;
 
-import com.paytech.commerce.domain.customer.ConsumerReferencePolicy;
-import com.paytech.commerce.domainservice.service.customer.CustomerService;
-import com.paytech.commerce.service.processor.customer.request.ClientCustomerRequest;
-import com.paytech.commerce.service.processor.customer.response.ClientCustomerResponse;
+import com.paytech.consumer.api.customer.ConsumerReferencePolicy;
+import com.paytech.consumer.domainservice.service.CustomerService;
+import com.paytech.consumer.service.processor.request.ClientCustomerRequest;
+import com.paytech.consumer.service.processor.response.ClientCustomerResponse;
 import com.paytech.foundation.processor.AbstractProcessor;
 
 import lombok.AllArgsConstructor;

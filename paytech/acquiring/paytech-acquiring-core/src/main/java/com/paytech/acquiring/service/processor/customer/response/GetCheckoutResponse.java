@@ -1,16 +1,16 @@
-package com.paytech.commerce.service.processor.customer.response;
+package com.paytech.acquiring.service.processor.customer.response;
 
-import com.paytech.commerce.integration.payment.PaymentStoredCardClient;
+import com.paytech.acquiring.integration.payment.PaymentStoredCardClient;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.ConsumerDetails;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.FileLink;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.PaymentStatus;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.Seller;
-import com.paytech.commerce.domain.enums.CheckoutSessionStatus;
-import com.paytech.commerce.domain.enums.OrderStatus;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.ConsumerDetails;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.FileLink;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.PaymentStatus;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.Seller;
+import com.paytech.acquiring.domain.enums.CheckoutSessionStatus;
+import com.paytech.acquiring.domain.enums.OrderStatus;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

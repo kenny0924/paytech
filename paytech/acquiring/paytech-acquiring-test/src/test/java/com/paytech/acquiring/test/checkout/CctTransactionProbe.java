@@ -1,4 +1,4 @@
-package com.paytech.commerce.test.checkout;
+package com.paytech.acquiring.test.checkout;
 
 import java.io.IOException;
 import java.util.List;
@@ -21,10 +21,10 @@ public final class CctTransactionProbe
     implements ClientHttpRequestInterceptor, RestClientHttpServiceGroupConfigurer, Clear {
     private final List<Boolean> transactions = new CopyOnWriteArrayList<>();
 
-    /** 自动挂载到真实 CCT 客户端，保留原有服务发现与 HTTP 传输链。 */
+    /** 自动挂载到真实 commercial（原 CCT）客户端，保留原有服务发现与 HTTP 传输链；商业端口仍为固定 Mock 时无客户端可挂载。 */
     @Override
     public void configureGroups(Groups<RestClient.Builder> groups) {
-        groups.filterByName("client-contract-service")
+        groups.filterByName("commercial-service")
             .forEachClient((group, builder) -> builder.requestInterceptor(this));
     }
 

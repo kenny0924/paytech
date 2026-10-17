@@ -1,6 +1,6 @@
-package com.paytech.commerce.domainservice.port.customer;
+package com.paytech.acquiring.domainservice.port.customer;
 
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.*;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.*;
 
 import java.time.Instant;
 

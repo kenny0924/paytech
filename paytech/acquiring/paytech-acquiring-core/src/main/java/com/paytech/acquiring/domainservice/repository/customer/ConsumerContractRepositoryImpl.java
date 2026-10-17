@@ -1,11 +1,11 @@
-package com.paytech.commerce.domainservice.repository.customer;
+package com.paytech.acquiring.domainservice.repository.customer;
 
 import org.springframework.stereotype.Repository;
 
-import com.paytech.commerce.core.dal.dataobject.customer.ConsumerContract;
-import com.paytech.commerce.core.dal.dataobject.customer.FrozenCheckoutRecord;
-import com.paytech.commerce.core.dal.mapper.customer.ConsumerContractMapper;
-import com.paytech.commerce.core.dal.mapper.customer.CustomerCheckoutMapper;
+import com.paytech.acquiring.core.dal.dataobject.customer.ConsumerContract;
+import com.paytech.acquiring.core.dal.dataobject.customer.FrozenCheckoutRecord;
+import com.paytech.acquiring.core.dal.mapper.customer.ConsumerContractMapper;
+import com.paytech.acquiring.core.dal.mapper.customer.CustomerCheckoutMapper;
 import com.paytech.foundation.common.error.ErrorException;
 
 import lombok.AllArgsConstructor;

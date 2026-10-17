@@ -1,11 +1,11 @@
-package com.paytech.commerce.test.mocker.local;
+package com.paytech.acquiring.test.mocker.local;
 
 import java.util.function.Consumer;
 import org.springframework.boot.test.context.TestComponent;
-import com.paytech.commerce.core.dal.dataobject.order.CommerceOrder;
-import com.paytech.commerce.domain.enums.CheckoutSessionStatus;
-import com.paytech.commerce.test.dal.OrderCancellationTestMapper;
-import com.paytech.commerce.test.dal.SaveConsumerTestMapper;
+import com.paytech.acquiring.core.dal.dataobject.order.CommerceOrder;
+import com.paytech.acquiring.domain.enums.CheckoutSessionStatus;
+import com.paytech.acquiring.test.dal.OrderCancellationTestMapper;
+import com.paytech.acquiring.test.dal.SaveConsumerTestMapper;
 import lombok.AllArgsConstructor;
 
 /** 只准备消费者保存所需的数据库边界，数据由已有全局 Mocker 按订单清理。 */

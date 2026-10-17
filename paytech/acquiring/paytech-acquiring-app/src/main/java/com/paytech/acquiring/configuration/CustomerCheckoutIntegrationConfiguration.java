@@ -1,4 +1,4 @@
-package com.paytech.commerce.configuration;
+package com.paytech.acquiring.configuration;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -7,11 +7,11 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.PaymentReference;
-import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.PaymentRequest;
-import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.PaymentResult;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.*;
-import com.paytech.commerce.domainservice.port.customer.*;
+import com.paytech.acquiring.domain.customer.CheckoutSubmissionModels.PaymentReference;
+import com.paytech.acquiring.domain.customer.CheckoutSubmissionModels.PaymentRequest;
+import com.paytech.acquiring.domain.customer.CheckoutSubmissionModels.PaymentResult;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.*;
+import com.paytech.acquiring.domainservice.port.customer.*;
 
 /** 本轮明确授权的固定外部 Client Mock；仅用于临时流程联通，不代表真实 Owner 集成。 */
 @Configuration(proxyBeanMethods = false)
@@ -32,7 +32,7 @@ public class CustomerCheckoutIntegrationConfiguration {
         };
     }
 
-    /** TODO(CCT)：接入 exact OE、Affiliation 与 TERM_PRICE 决策接口。 */
+    /** TODO(CCT)：接入 commercial-service 的 exact OE、Affiliation 与 TERM_PRICE 决策接口（paytech-commercial-api，第 04 步）。 */
     @Bean
     @ConditionalOnMissingBean(CheckoutCommercialPort.class)
     CheckoutCommercialPort checkoutCommercialPort() {

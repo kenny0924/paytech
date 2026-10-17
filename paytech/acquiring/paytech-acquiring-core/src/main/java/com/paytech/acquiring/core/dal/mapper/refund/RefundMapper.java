@@ -1,13 +1,13 @@
-package com.paytech.commerce.core.dal.mapper.refund;
+package com.paytech.acquiring.core.dal.mapper.refund;
 
 import java.time.Instant;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 
-import com.paytech.commerce.core.dal.dataobject.refund.RefundRequest;
-import com.paytech.commerce.core.dal.dataobject.refund.RefundRequestView;
-import com.paytech.commerce.domain.enums.RefundStatus;
+import com.paytech.acquiring.core.dal.dataobject.refund.RefundRequest;
+import com.paytech.acquiring.core.dal.dataobject.refund.RefundRequestView;
+import com.paytech.acquiring.domain.enums.RefundStatus;
 
 /** 退款表 SQL；需要订单号的查询使用两表 View。 */
 public interface RefundMapper {

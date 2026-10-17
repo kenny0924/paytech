@@ -1,6 +1,6 @@
-package com.paytech.commerce.auto.ext.http.clientapi.v1.refund.refundableamount;
+package com.paytech.acquiring.auto.ext.http.clientapi.v1.refund.refundableamount;
 
-import static com.paytech.commerce.test.builder.order.GetOrderDataBuilder.decimal;
+import static com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.decimal;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Duration;
@@ -14,19 +14,19 @@ import org.junit.jupiter.params.provider.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.paytech.commerce.client.api.v1.enums.CommerceCheckoutErrorCode;
-import com.paytech.commerce.client.api.v1.refund.ClientRefundableAmountApi;
-import com.paytech.commerce.domain.enums.OrderStatus;
-import com.paytech.commerce.domain.enums.RefundStatus;
-import com.paytech.commerce.test.base.MockTestBase;
-import com.paytech.commerce.test.builder.order.GetOrderDataBuilder.Fixture;
-import com.paytech.commerce.test.checker.refund.GetRefundableAmountResponseChecker;
-import com.paytech.commerce.test.checker.refund.RefundQueryChecker;
-import com.paytech.commerce.test.mocker.external.CheckoutCardMocker;
-import com.paytech.commerce.test.mocker.external.CheckoutIntentMocker;
-import com.paytech.commerce.test.mocker.external.PaymentTerminationMocker;
-import com.paytech.commerce.test.mocker.local.OrderQueryDataMocker;
-import com.paytech.commerce.test.mocker.local.RefundCreationDataMocker;
+import com.paytech.acquiring.api.client.v1.enums.CommerceCheckoutErrorCode;
+import com.paytech.acquiring.api.client.v1.refund.ClientRefundableAmountApi;
+import com.paytech.acquiring.domain.enums.OrderStatus;
+import com.paytech.acquiring.domain.enums.RefundStatus;
+import com.paytech.acquiring.test.base.MockTestBase;
+import com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.Fixture;
+import com.paytech.acquiring.test.checker.refund.GetRefundableAmountResponseChecker;
+import com.paytech.acquiring.test.checker.refund.RefundQueryChecker;
+import com.paytech.acquiring.test.mocker.external.CheckoutCardMocker;
+import com.paytech.acquiring.test.mocker.external.CheckoutIntentMocker;
+import com.paytech.acquiring.test.mocker.external.PaymentTerminationMocker;
+import com.paytech.acquiring.test.mocker.local.OrderQueryDataMocker;
+import com.paytech.acquiring.test.mocker.local.RefundCreationDataMocker;
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
 

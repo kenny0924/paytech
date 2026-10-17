@@ -6,7 +6,7 @@ server:
 
 spring:
   application:
-    name: commerce-service
+    name: acquiring-service
   cloud:
     nacos:
       discovery:
@@ -22,14 +22,15 @@ spring:
       imperative:
         factory: http-components
     serviceclient:
-      payment-orchestration-service:
-        base-url: lb://payment-orchestration-service/payment
+      payment-service:
+        base-url: lb://payment-service/payment
         connect-timeout: 2s
         read-timeout: 5s
         redirects: dont-follow
-      client-contract-service:
+      consumer-service:
+        base-url: lb://consumer-service
         connect-timeout: 2s
-        read-timeout: 5s
+        read-timeout: 3s
         redirects: dont-follow
       risk-service:
         base-url: lb://risk-service
@@ -50,8 +51,8 @@ spring:
       connect-timeout: 2s
       timeout: 2s
   datasource:
-    url: "${MOR_COMMERCE_DB_URL:jdbc:mysql://127.0.0.1:13306/mor_commerce?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}"
-    username: "${MOR_COMMERCE_DB_USERNAME:commerce_app}"
+    url: "${MOR_COMMERCE_DB_URL:jdbc:mysql://127.0.0.1:13306/mor_acquiring?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}"
+    username: "${MOR_COMMERCE_DB_USERNAME:acquiring_app}"
     password: "${MOR_COMMERCE_DB_PASSWORD:}"
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
@@ -66,7 +67,7 @@ spring:
   sql:
     init:
       mode: never
-  # Payment 支付结果消费（cg_commerce_payment_result）；凭据只从环境变量注入。
+  # Payment 支付结果消费（cg_acquiring_payment_result）；凭据只从环境变量注入。
   rabbitmq:
     host: "${COMMERCE_RABBITMQ_HOST:127.0.0.1}"
     port: "${COMMERCE_RABBITMQ_PORT:5672}"
@@ -84,7 +85,11 @@ redis:
   coordination:
     enabled: true
 
-commerce:
+# 内部调用身份（D26）：默认 OFF；YAML 中必须带引号，裸 OFF 会被解析为布尔 false。
+internal-auth:
+  mode: "${ACQUIRING_INTERNAL_AUTH_MODE:OFF}"
+
+acquiring:
   payment:
     card-payment-method-code: "${COMMERCE_CARD_PAYMENT_METHOD_CODE}"
   checkout:
@@ -100,6 +105,8 @@ web:
       - /customer-gateway-api/v1
 
 management:
+  server:
+    port: 19102
   endpoints:
     enabled-by-default: false
     web:

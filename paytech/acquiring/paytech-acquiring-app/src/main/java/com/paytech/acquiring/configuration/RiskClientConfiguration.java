@@ -1,4 +1,4 @@
-package com.paytech.commerce.configuration;
+package com.paytech.acquiring.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,8 +18,8 @@ public class RiskClientConfiguration {
 
     /** 复用公共错误与 Request ID 处理，禁止自动重试和重定向；重试次数由结账风控端口控制。 */
     @Bean
-    RestClientHttpServiceGroupConfigurer riskClient() {
+    RestClientHttpServiceGroupConfigurer riskClient(InternalTokenClientOptions internalToken) {
         return HttpServiceClientFactory.configureGroup(SERVICE_ID,
-            HttpServiceClientOptions.strict().withStrictJsonResponses(8192));
+            internalToken.apply(HttpServiceClientOptions.strict().withStrictJsonResponses(8192), SERVICE_ID));
     }
 }

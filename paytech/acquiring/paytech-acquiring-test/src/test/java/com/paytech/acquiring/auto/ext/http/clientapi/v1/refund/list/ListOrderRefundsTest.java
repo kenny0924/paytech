@@ -1,4 +1,4 @@
-package com.paytech.commerce.auto.ext.http.clientapi.v1.refund.list;
+package com.paytech.acquiring.auto.ext.http.clientapi.v1.refund.list;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -16,17 +16,17 @@ import org.junit.jupiter.params.provider.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.paytech.commerce.client.api.v1.enums.OrderCreationMode;
-import com.paytech.commerce.client.api.v1.refund.ClientRefundApi;
-import com.paytech.commerce.core.dal.dataobject.refund.RefundRequest;
-import com.paytech.commerce.domain.enums.RefundRequestOrigin;
-import com.paytech.commerce.domain.enums.RefundStatus;
-import com.paytech.commerce.test.base.MockTestBase;
-import com.paytech.commerce.test.builder.order.GetOrderDataBuilder.Fixture;
-import com.paytech.commerce.test.checker.refund.ListOrderRefundsResponseChecker;
-import com.paytech.commerce.test.checker.refund.RefundQueryChecker;
-import com.paytech.commerce.test.mocker.local.OrderQueryDataMocker;
-import com.paytech.commerce.test.mocker.local.RefundCreationDataMocker;
+import com.paytech.acquiring.api.client.v1.enums.OrderCreationMode;
+import com.paytech.acquiring.api.client.v1.refund.ClientRefundApi;
+import com.paytech.acquiring.core.dal.dataobject.refund.RefundRequest;
+import com.paytech.acquiring.domain.enums.RefundRequestOrigin;
+import com.paytech.acquiring.domain.enums.RefundStatus;
+import com.paytech.acquiring.test.base.MockTestBase;
+import com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.Fixture;
+import com.paytech.acquiring.test.checker.refund.ListOrderRefundsResponseChecker;
+import com.paytech.acquiring.test.checker.refund.RefundQueryChecker;
+import com.paytech.acquiring.test.mocker.local.OrderQueryDataMocker;
+import com.paytech.acquiring.test.mocker.local.RefundCreationDataMocker;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
 
 /**

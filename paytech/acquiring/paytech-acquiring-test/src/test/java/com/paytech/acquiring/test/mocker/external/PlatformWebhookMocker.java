@@ -1,4 +1,4 @@
-package com.paytech.commerce.test.mocker.external;
+package com.paytech.acquiring.test.mocker.external;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

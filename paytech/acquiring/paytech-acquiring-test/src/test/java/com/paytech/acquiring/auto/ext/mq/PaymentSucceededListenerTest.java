@@ -1,4 +1,4 @@
-package com.paytech.commerce.auto.ext.mq;
+package com.paytech.acquiring.auto.ext.mq;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
@@ -12,16 +12,16 @@ import org.junit.jupiter.api.Test;
 import org.springframework.amqp.core.AmqpAdmin;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.paytech.commerce.domain.checkout.CreateCheckoutContext;
-import com.paytech.commerce.domain.enums.CheckoutSessionStatus;
-import com.paytech.commerce.domain.enums.FundsAvailabilityStatus;
-import com.paytech.commerce.domain.enums.OrderStatus;
-import com.paytech.commerce.domain.enums.PaymentAttemptStatus;
-import com.paytech.commerce.domain.enums.PaymentIntentStatus;
-import com.paytech.commerce.ext.mq.PaymentSucceededListener;
-import com.paytech.commerce.test.base.order.AbstractPaymentResultTest;
-import com.paytech.commerce.test.dal.PaymentResultTestMapper;
-import com.paytech.commerce.test.mocker.local.CheckoutPaymentDataMocker;
+import com.paytech.acquiring.domain.checkout.CreateCheckoutContext;
+import com.paytech.acquiring.domain.enums.CheckoutSessionStatus;
+import com.paytech.acquiring.domain.enums.FundsAvailabilityStatus;
+import com.paytech.acquiring.domain.enums.OrderStatus;
+import com.paytech.acquiring.domain.enums.PaymentAttemptStatus;
+import com.paytech.acquiring.domain.enums.PaymentIntentStatus;
+import com.paytech.acquiring.ext.mq.PaymentSucceededListener;
+import com.paytech.acquiring.test.base.order.AbstractPaymentResultTest;
+import com.paytech.acquiring.test.dal.PaymentResultTestMapper;
+import com.paytech.acquiring.test.mocker.local.CheckoutPaymentDataMocker;
 
 /**
  * Payment 支付成功事件消费：测试作为 Payment 发布到真实本机 RabbitMQ，经监听器在一个事务推进订单五项事实。
@@ -29,7 +29,7 @@ import com.paytech.commerce.test.mocker.local.CheckoutPaymentDataMocker;
  * @see PaymentSucceededListener#onMessage
  */
 class PaymentSucceededListenerTest extends AbstractPaymentResultTest {
-    private static final String DEAD_LETTER_QUEUE = "cg_commerce_payment_result_dlq";
+    private static final String DEAD_LETTER_QUEUE = "cg_acquiring_payment_result_dlq";
     private static final String PAID_TIME = "2026-09-08T00:00:01Z";
     private static final long ATTEMPT_ID = 8_000_001L;
 

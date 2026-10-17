@@ -67,7 +67,9 @@ class ReactorArchitectureAutoTest {
         KnownDeviations known = KnownDeviations.loadDefault();
         List<RuleViolation> unregistered = known.unregistered(violations);
         Assertions.assertTrue(unregistered.isEmpty(), () -> "Reactor 依赖图违规:\n" + describe(unregistered));
-        List<RuleViolation> stale = known.missing(violations, entry -> GRAPH_RULES.contains(entry.ruleId()));
+        // 依赖图只产出以 Maven 坐标为主体的违规；同一规则编号下的类级（ArchUnit "classes"）登记由各服务 ArchitectureAutoTest 核对。
+        List<RuleViolation> stale = known.missing(violations,
+            entry -> GRAPH_RULES.contains(entry.ruleId()) && entry.subject().startsWith("com.paytech:"));
         Assertions.assertTrue(stale.isEmpty(), () -> "已消除的偏差仍在登记中:\n" + describe(stale));
     }
 

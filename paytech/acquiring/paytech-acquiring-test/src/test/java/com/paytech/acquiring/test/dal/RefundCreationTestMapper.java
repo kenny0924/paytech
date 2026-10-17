@@ -1,4 +1,4 @@
-package com.paytech.commerce.test.dal;
+package com.paytech.acquiring.test.dal;
 
 import java.time.Instant;
 import java.util.List;
@@ -6,8 +6,8 @@ import java.util.Map;
 
 import org.apache.ibatis.annotations.*;
 
-import com.paytech.commerce.core.dal.dataobject.refund.RefundRequest;
-import com.paytech.commerce.core.dal.dataobject.order.OrderRefundPosition;
+import com.paytech.acquiring.core.dal.dataobject.refund.RefundRequest;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderRefundPosition;
 
 import lombok.Getter;
 import lombok.Setter;

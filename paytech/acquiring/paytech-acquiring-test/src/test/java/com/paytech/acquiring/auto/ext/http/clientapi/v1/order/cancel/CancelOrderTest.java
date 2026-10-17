@@ -1,6 +1,6 @@
-package com.paytech.commerce.auto.ext.http.clientapi.v1.order.cancel;
+package com.paytech.acquiring.auto.ext.http.clientapi.v1.order.cancel;
 
-import static com.paytech.commerce.test.builder.order.GetOrderDataBuilder.NOW;
+import static com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.NOW;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.math.BigDecimal;
@@ -16,23 +16,23 @@ import org.junit.jupiter.params.provider.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.paytech.commerce.client.api.v1.enums.CommerceCheckoutErrorCode;
-import com.paytech.commerce.client.api.v1.order.ClientOrderApi;
-import com.paytech.commerce.domain.enums.CheckoutSessionStatus;
-import com.paytech.commerce.domain.enums.OrderStatus;
-import com.paytech.commerce.domain.enums.PaymentIntentStatus;
-import com.paytech.commerce.integration.payment.PaymentTerminationClient;
-import com.paytech.commerce.test.base.MockTestBase;
-import com.paytech.commerce.test.builder.order.GetOrderDataBuilder.Fixture;
-import com.paytech.commerce.test.builder.order.GetOrderDataBuilder.Payment;
-import com.paytech.commerce.test.checker.order.CancelOrderResponseChecker;
-import com.paytech.commerce.test.checker.order.OrderCancellationChecker;
-import com.paytech.commerce.test.checker.refund.RefundQueryChecker;
-import com.paytech.commerce.test.mocker.external.CheckoutIntentMocker;
-import com.paytech.commerce.test.mocker.external.PaymentTerminationMocker;
-import com.paytech.commerce.test.mocker.local.CheckoutPaymentDataMocker;
-import com.paytech.commerce.test.mocker.local.OrderCancellationDataMocker;
-import com.paytech.commerce.test.mocker.local.OrderQueryDataMocker;
+import com.paytech.acquiring.api.client.v1.enums.CommerceCheckoutErrorCode;
+import com.paytech.acquiring.api.client.v1.order.ClientOrderApi;
+import com.paytech.acquiring.domain.enums.CheckoutSessionStatus;
+import com.paytech.acquiring.domain.enums.OrderStatus;
+import com.paytech.acquiring.domain.enums.PaymentIntentStatus;
+import com.paytech.acquiring.integration.payment.PaymentTerminationClient;
+import com.paytech.acquiring.test.base.MockTestBase;
+import com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.Fixture;
+import com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.Payment;
+import com.paytech.acquiring.test.checker.order.CancelOrderResponseChecker;
+import com.paytech.acquiring.test.checker.order.OrderCancellationChecker;
+import com.paytech.acquiring.test.checker.refund.RefundQueryChecker;
+import com.paytech.acquiring.test.mocker.external.CheckoutIntentMocker;
+import com.paytech.acquiring.test.mocker.external.PaymentTerminationMocker;
+import com.paytech.acquiring.test.mocker.local.CheckoutPaymentDataMocker;
+import com.paytech.acquiring.test.mocker.local.OrderCancellationDataMocker;
+import com.paytech.acquiring.test.mocker.local.OrderQueryDataMocker;
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.common.error.ServiceUnavailableException;
@@ -64,11 +64,10 @@ class CancelOrderTest extends MockTestBase {
 
     private Fixture fixture;
 
-    /** 已初始化但尚未受理支付的新订单没有历史 preparationCommandId。 */
+    /** 已初始化但尚未受理支付的新订单。 */
     @BeforeEach
     void setUpClassMocks() {
         fixture = orders.template().ready().build();
-        fixture.getOrder().setPreparationCommandId(null);
     }
 
     /** 新旧 Checkout 及无会话 Direct Pay 均按实际本地关联一起取消。 */
@@ -83,7 +82,6 @@ class CancelOrderTest extends MockTestBase {
             builder.ready();
         }
         fixture = builder.build();
-        fixture.getOrder().setPreparationCommandId(null);
         data.mock(fixture);
 
         invoke().assertCancelled(orderNo(), hasSession, NOW);
@@ -104,7 +102,6 @@ class CancelOrderTest extends MockTestBase {
     @ValueSource(booleans = {false, true})
     void test_repeatCancellation(boolean hasSession) {
         fixture = orders.template().directPay().session(hasSession).ready().build();
-        fixture.getOrder().setPreparationCommandId(null);
         data.mock(fixture);
         invoke().assertCancelled(orderNo(), hasSession, NOW);
         var before = snapshots.snapshot(checkoutDataMocker.clientId(), checkoutDataMocker.otherClientId());
@@ -139,25 +136,27 @@ class CancelOrderTest extends MockTestBase {
         assertEquals(1, terminations.calls().size(), "终态重提不能再次终止 Intent");
     }
 
-    /** 历史准备标识但尚无支付关联时保持待定，重提不重复更新终止时间。 */
+    /** 已接受法律文件但尚无支付关联（Intent 响应可能丢失）时保持待定，重提不重复更新终止时间。 */
     @Test
-    void test_pendingLegacyPreparation() {
-        fixture.getOrder().setPreparationCommandId(orderId());
-        data.mock(fixture);
-        terminations.mockResult(orderId(),
-            new PaymentTerminationClient.Result(orderId(), PaymentTerminationClient.Status.PENDING));
+    void test_pendingAfterAcceptanceWithoutPayment() {
+        var accepted = paymentData.mockPrepared(false);
+        long id = accepted.getOrder().getOrderId();
+        String no = accepted.getOrder().getOrderNo();
+        data.mockAcceptances(id, NOW);
+        long version = checker.order(id).getVersion();
+        terminations.mockResult(id, new PaymentTerminationClient.Result(id, PaymentTerminationClient.Status.PENDING));
 
-        invoke().assertPending(orderNo());
+        invoke(no).assertPending(no);
         var before = snapshots.snapshot(checkoutDataMocker.clientId(), checkoutDataMocker.otherClientId());
         adjustableUtcClock.advance(Duration.ofSeconds(10));
-        invoke().assertPending(orderNo());
+        invoke(no).assertPending(no);
 
         snapshots.assertUnchanged(before, checkoutDataMocker.clientId(), checkoutDataMocker.otherClientId());
-        assertAll(() -> assertEquals(OrderStatus.OPEN, checker.order(orderId()).getOrderStatus()),
-            () -> assertEquals(NOW, checker.order(orderId()).getTerminationRequestedAt()),
-            () -> assertEquals(8, checker.order(orderId()).getVersion()),
-            () -> assertNull(checker.order(orderId()).getCancelledAt()),
-            () -> assertEquals(CheckoutSessionStatus.OPEN, checker.session(orderId()).getSessionStatus()));
+        assertAll(() -> assertEquals(OrderStatus.OPEN, checker.order(id).getOrderStatus()),
+            () -> assertEquals(NOW, checker.order(id).getTerminationRequestedAt()),
+            () -> assertEquals(version + 1, checker.order(id).getVersion()),
+            () -> assertNull(checker.order(id).getCancelledAt()),
+            () -> assertEquals(CheckoutSessionStatus.OPEN, checker.session(id).getSessionStatus()));
         assertTrue(intents.calls().isEmpty());
         assertEquals(2, terminations.calls().size());
     }
@@ -345,7 +344,6 @@ class CancelOrderTest extends MockTestBase {
     void test_forwardedIdempotencyKeyIgnored() {
         data.mock(fixture);
         var second = orders.template().clientOrderId("second-order").ready().build();
-        second.getOrder().setPreparationCommandId(null);
         data.mock(second);
         var client = Long.toString(checkoutDataMocker.clientId());
 

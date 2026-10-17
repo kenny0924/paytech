@@ -1,4 +1,4 @@
-package com.paytech.commerce.auto.ext.http.clientapi.v1.customer;
+package com.paytech.consumer.auto.ext.http.clientapi.v1.customer;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
@@ -8,10 +8,10 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import com.paytech.commerce.client.api.v1.customer.ClientCustomerApi;
-import com.paytech.commerce.client.api.v1.enums.CommerceCheckoutErrorCode;
-import com.paytech.commerce.test.base.customer.AbstractCustomerApiTest;
-import com.paytech.commerce.test.mocker.external.StoredCardMocker.Call;
+import com.paytech.consumer.api.client.v1.customer.ClientCustomerApi;
+import com.paytech.consumer.api.enums.ConsumerErrorCode;
+import com.paytech.consumer.test.base.customer.AbstractCustomerApiTest;
+import com.paytech.consumer.test.mocker.external.StoredCardMocker.Call;
 import com.paytech.foundation.httpproblem.api.ApiProblemProfile;
 import com.paytech.foundation.httpproblem.api.ApiProblemResponse;
 import com.paytech.foundation.testsupport.api.MockHttpFault;
@@ -58,9 +58,9 @@ class StoredCardApiTest extends AbstractCustomerApiTest {
 
         assertAll(() -> assertEquals(200, list.status()), () -> assertEquals(0, list.body().get("storedCards").size()),
             () -> assertEquals(404, deleteCard.status()),
-            () -> assertEquals(CommerceCheckoutErrorCode.STORED_CARD_NOT_FOUND.getCode(), deleteCard.text("code")),
+            () -> assertEquals(ConsumerErrorCode.STORED_CARD_NOT_FOUND.getCode(), deleteCard.text("code")),
             () -> assertEquals(404, foreign.status()),
-            () -> assertEquals(CommerceCheckoutErrorCode.CUSTOMER_NOT_FOUND.getCode(), foreign.text("code")),
+            () -> assertEquals(ConsumerErrorCode.CUSTOMER_NOT_FOUND.getCode(), foreign.text("code")),
             () -> assertEquals(callsAfterDelete, storedCards.calls().size(), "已删除或跨 Client 不应调用 Payment"));
     }
 

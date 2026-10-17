@@ -1,4 +1,4 @@
-package com.paytech.commerce.client.api.v1.order;
+package com.paytech.acquiring.api.client.v1.order;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -9,10 +9,10 @@ import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
 
-import com.paytech.commerce.client.api.v1.common.ClientApiConstraints;
-import com.paytech.commerce.client.api.v1.common.ClientApiPaths;
-import com.paytech.commerce.client.api.v1.order.response.CancelOrderResponseBody;
-import com.paytech.commerce.client.api.v1.order.response.GetOrderResponseBody;
+import com.paytech.acquiring.api.client.v1.common.ClientApiConstraints;
+import com.paytech.acquiring.api.client.v1.common.ClientApiPaths;
+import com.paytech.acquiring.api.client.v1.order.response.CancelOrderResponseBody;
+import com.paytech.acquiring.api.client.v1.order.response.GetOrderResponseBody;
 import com.paytech.foundation.common.http.ApiHeaderNames;
 
 import jakarta.validation.constraints.NotBlank;

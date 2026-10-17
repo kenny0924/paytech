@@ -1,8 +1,8 @@
-package com.paytech.commerce.auto.ext.http.clientapi.v1.order.get;
+package com.paytech.acquiring.auto.ext.http.clientapi.v1.order.get;
 
-import static com.paytech.commerce.test.builder.order.GetOrderDataBuilder.NOW;
-import static com.paytech.commerce.test.builder.order.GetOrderDataBuilder.decimal;
-import static com.paytech.commerce.test.checker.order.GetOrderResponseChecker.assertAmount;
+import static com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.NOW;
+import static com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.decimal;
+import static com.paytech.acquiring.test.checker.order.GetOrderResponseChecker.assertAmount;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -10,12 +10,12 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import com.paytech.commerce.client.api.v1.order.ClientOrderApi;
-import com.paytech.commerce.domain.enums.FundsAvailabilityStatus;
-import com.paytech.commerce.domain.enums.PaymentAttemptStatus;
-import com.paytech.commerce.domain.enums.PaymentIntentStatus;
-import com.paytech.commerce.test.base.order.AbstractGetOrderApiTest;
-import com.paytech.commerce.test.builder.order.GetOrderDataBuilder.Payment;
+import com.paytech.acquiring.api.client.v1.order.ClientOrderApi;
+import com.paytech.acquiring.domain.enums.FundsAvailabilityStatus;
+import com.paytech.acquiring.domain.enums.PaymentAttemptStatus;
+import com.paytech.acquiring.domain.enums.PaymentIntentStatus;
+import com.paytech.acquiring.test.base.order.AbstractGetOrderApiTest;
+import com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.Payment;
 
 /**
  * 本地支付、退款、资金可用投影的公开映射；GET 不推进这些事实。

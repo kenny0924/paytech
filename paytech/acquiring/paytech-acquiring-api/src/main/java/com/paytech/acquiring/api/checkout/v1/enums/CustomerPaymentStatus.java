@@ -1,4 +1,4 @@
-package com.paytech.commerce.customer.api.v1.enums;
+package com.paytech.acquiring.api.checkout.v1.enums;
 
 import com.paytech.foundation.common.enums.CodeEnum;
 

@@ -1,7 +1,7 @@
-package com.paytech.commerce.auto.ext.http.clientapi.v1.checkout.create;
+package com.paytech.acquiring.auto.ext.http.clientapi.v1.checkout.create;
 
-import static com.paytech.commerce.test.builder.checkout.CreateCheckoutRequestBuilder.item;
-import static com.paytech.commerce.test.builder.checkout.CreateCheckoutRequestBuilder.template;
+import static com.paytech.acquiring.test.builder.checkout.CreateCheckoutRequestBuilder.item;
+import static com.paytech.acquiring.test.builder.checkout.CreateCheckoutRequestBuilder.template;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.Instant;
@@ -13,10 +13,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import com.paytech.commerce.client.api.v1.checkout.ClientCheckoutApi;
-import com.paytech.commerce.client.api.v1.checkout.request.CreateCheckoutRequestBody;
-import com.paytech.commerce.test.base.checkout.AbstractCreateCheckoutApiTest;
-import com.paytech.commerce.test.mocker.external.CheckoutRiskMocker;
+import com.paytech.acquiring.api.client.v1.checkout.ClientCheckoutApi;
+import com.paytech.acquiring.api.client.v1.checkout.request.CreateCheckoutRequestBody;
+import com.paytech.acquiring.test.base.checkout.AbstractCreateCheckoutApiTest;
+import com.paytech.acquiring.test.mocker.external.CheckoutRiskMocker;
 
 /**
  * 创建成功、金额计算、合法边界与扩展字段。

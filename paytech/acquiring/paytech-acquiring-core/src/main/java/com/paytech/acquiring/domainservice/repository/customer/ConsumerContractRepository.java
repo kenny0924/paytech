@@ -1,7 +1,7 @@
-package com.paytech.commerce.domainservice.repository.customer;
+package com.paytech.acquiring.domainservice.repository.customer;
 
-import com.paytech.commerce.core.dal.dataobject.customer.FrozenCheckoutRecord;
-import com.paytech.commerce.core.dal.dataobject.customer.ConsumerContract;
+import com.paytech.acquiring.core.dal.dataobject.customer.FrozenCheckoutRecord;
+import com.paytech.acquiring.core.dal.dataobject.customer.ConsumerContract;
 
 /** ConsumerContract 的本库持久化边界。 */
 public interface ConsumerContractRepository {

@@ -1,6 +1,6 @@
-package com.paytech.commerce.service.processor.customer.response;
+package com.paytech.consumer.service.processor.response;
 
-import com.paytech.commerce.core.dal.dataobject.customer.Customer;
+import com.paytech.consumer.core.dal.dataobject.Customer;
 
 /**
  * Customer 操作结果

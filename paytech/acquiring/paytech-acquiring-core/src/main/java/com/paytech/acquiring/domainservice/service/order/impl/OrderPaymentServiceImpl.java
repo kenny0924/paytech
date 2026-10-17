@@ -1,4 +1,4 @@
-package com.paytech.commerce.domainservice.service.order.impl;
+package com.paytech.acquiring.domainservice.service.order.impl;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -7,16 +7,16 @@ import java.time.temporal.ChronoUnit;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
-import com.paytech.commerce.domain.order.PaymentSucceededContext;
-import com.paytech.commerce.domain.webhook.ClientWebhookEvent;
-import com.paytech.commerce.domainservice.repository.checkout.CheckoutSessionRepository;
-import com.paytech.commerce.domainservice.repository.order.CommerceOrderRepository;
-import com.paytech.commerce.domainservice.repository.order.OrderFundsAvailabilityProjectionRepository;
-import com.paytech.commerce.domainservice.repository.order.OrderPaymentProjectionRepository;
-import com.paytech.commerce.domainservice.repository.order.OrderRefundPositionRepository;
-import com.paytech.commerce.domainservice.service.order.OrderPaymentService;
-import com.paytech.commerce.ext.job.ClientWebhookSubmissionHandler;
-import com.paytech.commerce.service.transaction.CommerceTransactionExecutor;
+import com.paytech.acquiring.domain.order.PaymentSucceededContext;
+import com.paytech.acquiring.domain.webhook.ClientWebhookEvent;
+import com.paytech.acquiring.domainservice.repository.checkout.CheckoutSessionRepository;
+import com.paytech.acquiring.domainservice.repository.order.CommerceOrderRepository;
+import com.paytech.acquiring.domainservice.repository.order.OrderFundsAvailabilityProjectionRepository;
+import com.paytech.acquiring.domainservice.repository.order.OrderPaymentProjectionRepository;
+import com.paytech.acquiring.domainservice.repository.order.OrderRefundPositionRepository;
+import com.paytech.acquiring.domainservice.service.order.OrderPaymentService;
+import com.paytech.acquiring.ext.job.ClientWebhookSubmissionHandler;
+import com.paytech.acquiring.service.transaction.CommerceTransactionExecutor;
 import com.paytech.foundation.compensation.api.CompensationEventRegistrar;
 
 import lombok.AllArgsConstructor;

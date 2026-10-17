@@ -1,13 +1,13 @@
-package com.paytech.commerce.ext.job;
+package com.paytech.acquiring.ext.job;
 
 import java.time.Clock;
 import java.time.temporal.ChronoUnit;
 
 import org.springframework.stereotype.Component;
 
-import com.paytech.commerce.domainservice.service.refund.RefundService;
-import com.paytech.commerce.integration.payment.PaymentRefundClient;
-import com.paytech.commerce.service.transaction.CommerceTransactionExecutor;
+import com.paytech.acquiring.domainservice.service.refund.RefundService;
+import com.paytech.acquiring.integration.payment.PaymentRefundClient;
+import com.paytech.acquiring.service.transaction.CommerceTransactionExecutor;
 import com.paytech.foundation.compensation.api.CompensationEvent;
 import com.paytech.foundation.compensation.api.CompensationEventHandler;
 import com.paytech.foundation.compensation.api.CompensationEventRequest;

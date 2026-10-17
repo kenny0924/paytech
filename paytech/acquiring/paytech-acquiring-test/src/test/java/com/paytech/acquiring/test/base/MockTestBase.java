@@ -1,8 +1,9 @@
-package com.paytech.commerce.test.base;
+package com.paytech.acquiring.test.base;
 
-import com.paytech.commerce.test.mocker.external.CheckoutCommercialMocker;
-import com.paytech.commerce.test.mocker.external.CheckoutRiskMocker;
-import com.paytech.commerce.test.mocker.external.PlatformWebhookMocker;
+import com.paytech.acquiring.test.mocker.external.CheckoutCommercialMocker;
+import com.paytech.acquiring.test.mocker.external.CheckoutRiskMocker;
+import com.paytech.acquiring.test.mocker.external.ConsumerMocker;
+import com.paytech.acquiring.test.mocker.external.PlatformWebhookMocker;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.awaitility.Awaitility.await;
 
@@ -19,11 +20,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.client.RestTestClient;
 
-import com.paytech.commerce.TestApplication;
-import com.paytech.commerce.test.checker.checkout.CheckoutCreationChecker;
-import com.paytech.commerce.test.checkout.AdjustableUtcClock;
-import com.paytech.commerce.test.checkout.CctTransactionProbe;
-import com.paytech.commerce.test.mocker.local.CheckoutDataMocker;
+import com.paytech.acquiring.AcquiringTestApplication;
+import com.paytech.acquiring.test.checker.checkout.CheckoutCreationChecker;
+import com.paytech.acquiring.test.checkout.AdjustableUtcClock;
+import com.paytech.acquiring.test.checkout.CctTransactionProbe;
+import com.paytech.acquiring.test.mocker.local.CheckoutDataMocker;
 import com.paytech.foundation.testsupport.api.HttpTestInvoker;
 import com.paytech.foundation.testsupport.api.MockHttpServer;
 import com.paytech.foundation.testsupport.api.TestBase;
@@ -34,7 +35,7 @@ import tools.jackson.databind.ObjectMapper;
 /** 新规范基类：每例固定公共状态、清理全部自有数据、DTO 与调用证据。 */
 @ActiveProfiles("mock")
 @AutoConfigureRestTestClient
-@SpringBootTest(classes = TestApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(classes = AcquiringTestApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public abstract class MockTestBase extends TestBase {
     @Autowired
     protected HttpTestInvoker httpTestInvoker;
@@ -50,7 +51,7 @@ public abstract class MockTestBase extends TestBase {
 
     private static boolean asynchronousWorkStopped = true;
 
-    protected static final String REQUEST_ID = "Commerce.CreateCheckout.Test";
+    protected static final String REQUEST_ID = "Acquiring.CreateCheckout.Test";
 
     @Autowired
     protected MockHttpServer cctCheckoutMockServer;
@@ -72,6 +73,9 @@ public abstract class MockTestBase extends TestBase {
 
     @Autowired
     protected PlatformWebhookMocker platformWebhookMocker;
+
+    @Autowired
+    protected ConsumerMocker consumerMocker;
 
     @Autowired
     private CompensationEventDispatcher compensationDispatcher;
@@ -104,6 +108,7 @@ public abstract class MockTestBase extends TestBase {
         }
         assertAll("检查外部 Mock 调用", preparationMocker::assertNoUnexpectedCalls,
             riskMocker::assertNoUnexpectedCalls, platformWebhookMocker::assertNoUnexpectedCalls,
+            consumerMocker::assertNoUnexpectedCalls,
             cctCheckoutMockServer::assertNoUnexpectedRequests);
     }
 

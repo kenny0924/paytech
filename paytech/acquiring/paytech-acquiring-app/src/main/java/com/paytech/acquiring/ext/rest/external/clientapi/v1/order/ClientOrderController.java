@@ -1,13 +1,13 @@
-package com.paytech.commerce.ext.rest.external.clientapi.v1.order;
+package com.paytech.acquiring.ext.rest.external.clientapi.v1.order;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.paytech.commerce.client.api.v1.order.ClientOrderApi;
-import com.paytech.commerce.client.api.v1.order.response.CancelOrderResponseBody;
-import com.paytech.commerce.client.api.v1.order.response.GetOrderResponseBody;
-import com.paytech.commerce.service.processor.order.CancelOrderProcessor;
-import com.paytech.commerce.service.processor.order.GetOrderProcessor;
+import com.paytech.acquiring.api.client.v1.order.ClientOrderApi;
+import com.paytech.acquiring.api.client.v1.order.response.CancelOrderResponseBody;
+import com.paytech.acquiring.api.client.v1.order.response.GetOrderResponseBody;
+import com.paytech.acquiring.service.processor.order.CancelOrderProcessor;
+import com.paytech.acquiring.service.processor.order.GetOrderProcessor;
 
 import lombok.AllArgsConstructor;
 

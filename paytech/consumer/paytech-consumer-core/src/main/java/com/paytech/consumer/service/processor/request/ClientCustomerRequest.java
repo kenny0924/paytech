@@ -1,4 +1,4 @@
-package com.paytech.commerce.service.processor.customer.request;
+package com.paytech.consumer.service.processor.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

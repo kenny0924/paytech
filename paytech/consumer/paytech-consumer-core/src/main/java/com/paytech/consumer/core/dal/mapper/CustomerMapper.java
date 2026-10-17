@@ -1,11 +1,11 @@
-package com.paytech.commerce.core.dal.mapper.customer;
+package com.paytech.consumer.core.dal.mapper;
 
 import java.time.Instant;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import com.paytech.commerce.core.dal.dataobject.customer.Customer;
+import com.paytech.consumer.core.dal.dataobject.Customer;
 
 /** Customer SQL 映射。 */
 @Mapper

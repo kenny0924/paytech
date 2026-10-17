@@ -1,4 +1,4 @@
-package com.paytech.commerce.test.mock.external;
+package com.paytech.acquiring.test.mock.external;
 
 import org.springframework.boot.test.context.TestComponent;
 import org.springframework.http.ResponseEntity;
@@ -6,9 +6,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import com.paytech.commerce.test.mocker.external.CheckoutCardMocker;
-import com.paytech.commerce.test.mocker.external.CheckoutIntentMocker;
-import com.paytech.commerce.test.mocker.external.PaymentSubmissionMocker;
+import com.paytech.acquiring.test.mocker.external.CheckoutCardMocker;
+import com.paytech.acquiring.test.mocker.external.CheckoutIntentMocker;
+import com.paytech.acquiring.test.mocker.external.PaymentSubmissionMocker;
 import com.paytech.payment.api.card.StoredCardApi;
 import com.paytech.payment.api.execution.PaymentIntentApi;
 import com.paytech.payment.api.execution.request.*;

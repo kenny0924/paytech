@@ -1,4 +1,4 @@
-package com.paytech.commerce.ext.job;
+package com.paytech.acquiring.ext.job;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import com.paytech.commerce.domain.webhook.ClientWebhookEvent;
+import com.paytech.acquiring.domain.webhook.ClientWebhookEvent;
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
 import com.paytech.foundation.common.error.ErrorException;

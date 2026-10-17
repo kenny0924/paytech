@@ -1,6 +1,6 @@
-package com.paytech.commerce.domainservice.service.order;
+package com.paytech.acquiring.domainservice.service.order;
 
-import com.paytech.commerce.domain.order.OrderCancellationContext;
+import com.paytech.acquiring.domain.order.OrderCancellationContext;
 
 /** 订单取消的本地保存能力，已有事务时加入，否则以 REQUIRED 创建事务。 */
 public interface OrderCancellationService {

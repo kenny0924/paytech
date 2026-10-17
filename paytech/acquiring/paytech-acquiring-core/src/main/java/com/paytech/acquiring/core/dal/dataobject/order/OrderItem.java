@@ -1,4 +1,4 @@
-package com.paytech.commerce.core.dal.dataobject.order;
+package com.paytech.acquiring.core.dal.dataobject.order;
 
 import java.math.BigDecimal;
 import java.time.Instant;

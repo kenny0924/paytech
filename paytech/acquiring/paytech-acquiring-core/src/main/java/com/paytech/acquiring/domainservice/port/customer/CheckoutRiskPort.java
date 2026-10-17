@@ -1,6 +1,6 @@
-package com.paytech.commerce.domainservice.port.customer;
+package com.paytech.acquiring.domainservice.port.customer;
 
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.*;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.*;
 
 /** 结账风控的窄 Owner 边界，由 Risk 统一评估（CHECKOUT_PREPARE）实现。 */
 public interface CheckoutRiskPort {

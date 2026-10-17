@@ -1,6 +1,6 @@
-package com.paytech.commerce.test.builder.customer;
+package com.paytech.acquiring.test.builder.customer;
 
-import com.paytech.commerce.customer.api.v1.payment.request.SubmitPaymentRequestBody;
+import com.paytech.acquiring.api.checkout.v1.payment.request.SubmitPaymentRequestBody;
 
 /** 仅使用公开测试卡值，不读取真实卡或生产信息。 */
 public final class SubmitPaymentRequestBuilder {

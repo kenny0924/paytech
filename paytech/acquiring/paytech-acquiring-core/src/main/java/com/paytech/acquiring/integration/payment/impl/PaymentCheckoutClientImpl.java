@@ -1,4 +1,4 @@
-package com.paytech.commerce.integration.payment.impl;
+package com.paytech.acquiring.integration.payment.impl;
 
 import java.time.DateTimeException;
 import java.time.Instant;
@@ -7,15 +7,15 @@ import java.util.Set;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
-import com.paytech.commerce.core.configuration.CommercePaymentProperties;
-import com.paytech.commerce.domain.checkout.CheckoutUpstreamProtocolException;
-import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.CardChoice;
-import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.CardInput;
-import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.CardInstrument;
-import com.paytech.commerce.domain.customer.CheckoutSubmissionModels.PaymentReference;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.IntentRequest;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.IntentResult;
-import com.paytech.commerce.integration.payment.PaymentCheckoutClient;
+import com.paytech.acquiring.core.configuration.CommercePaymentProperties;
+import com.paytech.acquiring.domain.checkout.CheckoutUpstreamProtocolException;
+import com.paytech.acquiring.domain.customer.CheckoutSubmissionModels.CardChoice;
+import com.paytech.acquiring.domain.customer.CheckoutSubmissionModels.CardInput;
+import com.paytech.acquiring.domain.customer.CheckoutSubmissionModels.CardInstrument;
+import com.paytech.acquiring.domain.customer.CheckoutSubmissionModels.PaymentReference;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.IntentRequest;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.IntentResult;
+import com.paytech.acquiring.integration.payment.PaymentCheckoutClient;
 import com.paytech.foundation.money.Money;
 import com.paytech.payment.api.execution.PaymentIntentApi;
 import com.paytech.payment.api.execution.request.CreateIntentRequestBody;

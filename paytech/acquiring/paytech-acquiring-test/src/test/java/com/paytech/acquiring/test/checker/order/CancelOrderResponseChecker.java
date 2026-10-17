@@ -1,4 +1,4 @@
-package com.paytech.commerce.test.checker.order;
+package com.paytech.acquiring.test.checker.order;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -8,11 +8,11 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.client.EntityExchangeResult;
 
-import com.paytech.commerce.client.api.v1.enums.CancellationReason;
-import com.paytech.commerce.client.api.v1.enums.CancellationStatus;
-import com.paytech.commerce.client.api.v1.order.response.CancelOrderResponseBody;
-import com.paytech.commerce.domain.enums.CheckoutSessionStatus;
-import com.paytech.commerce.domain.enums.OrderStatus;
+import com.paytech.acquiring.api.client.v1.enums.CancellationReason;
+import com.paytech.acquiring.api.client.v1.enums.CancellationStatus;
+import com.paytech.acquiring.api.client.v1.order.response.CancelOrderResponseBody;
+import com.paytech.acquiring.domain.enums.CheckoutSessionStatus;
+import com.paytech.acquiring.domain.enums.OrderStatus;
 import com.paytech.foundation.testsupport.api.AbstractHttpResponseChecker;
 
 import tools.jackson.databind.ObjectMapper;

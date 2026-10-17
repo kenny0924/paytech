@@ -1,9 +1,9 @@
-package com.paytech.commerce.core.dal.dataobject.order;
+package com.paytech.acquiring.core.dal.dataobject.order;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 
-import com.paytech.commerce.domain.enums.FundsAvailabilityStatus;
+import com.paytech.acquiring.domain.enums.FundsAvailabilityStatus;
 
 /** Orders 用例读取的本库事实，不跨 HTTP 暴露。 */
 public record OrderFundsRecord(

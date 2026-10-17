@@ -1,12 +1,12 @@
-package com.paytech.commerce.domainservice.repository.customer;
+package com.paytech.consumer.domainservice.repository;
 
 import java.time.Instant;
 
 import org.springframework.stereotype.Repository;
 
-import com.paytech.commerce.core.dal.dataobject.customer.Customer;
-import com.paytech.commerce.core.dal.mapper.customer.CustomerMapper;
-import com.paytech.commerce.domain.enums.CustomerStatus;
+import com.paytech.consumer.core.dal.dataobject.Customer;
+import com.paytech.consumer.core.dal.mapper.CustomerMapper;
+import com.paytech.consumer.api.enums.CustomerStatus;
 import com.paytech.foundation.common.error.ErrorException;
 
 import lombok.AllArgsConstructor;

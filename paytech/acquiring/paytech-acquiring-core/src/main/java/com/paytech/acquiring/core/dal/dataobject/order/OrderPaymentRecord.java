@@ -1,10 +1,10 @@
-package com.paytech.commerce.core.dal.dataobject.order;
+package com.paytech.acquiring.core.dal.dataobject.order;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 
-import com.paytech.commerce.domain.enums.PaymentAttemptStatus;
-import com.paytech.commerce.domain.enums.PaymentIntentStatus;
+import com.paytech.acquiring.domain.enums.PaymentAttemptStatus;
+import com.paytech.acquiring.domain.enums.PaymentIntentStatus;
 
 /** Orders 用例读取的本库事实，不跨 HTTP 暴露。 */
 public record OrderPaymentRecord(

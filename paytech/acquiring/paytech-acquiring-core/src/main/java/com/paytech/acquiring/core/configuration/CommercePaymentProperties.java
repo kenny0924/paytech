@@ -1,4 +1,4 @@
-package com.paytech.commerce.core.configuration;
+package com.paytech.acquiring.core.configuration;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
@@ -12,7 +12,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Validated
-@ConfigurationProperties("commerce.payment")
+@ConfigurationProperties("acquiring.payment")
 public class CommercePaymentProperties {
     /** 精确的 Card 支付方式代码。
      * <li>必填，来自 Payment 支付方式目录；变更后重启，单次提交保持一致。</li>

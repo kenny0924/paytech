@@ -1,12 +1,12 @@
-package com.paytech.commerce.ext.rest.external.clientapi.v1.order;
+package com.paytech.acquiring.ext.rest.external.clientapi.v1.order;
 
 import java.math.BigDecimal;
 
-import com.paytech.commerce.client.api.v1.order.response.GetOrderResponseBody;
-import com.paytech.commerce.client.api.v1.order.response.GetOrderResponseBody.*;
-import com.paytech.commerce.domain.order.CommerceDecimalRules;
-import com.paytech.commerce.service.processor.order.request.GetOrderRequest;
-import com.paytech.commerce.service.processor.order.response.GetOrderResponse;
+import com.paytech.acquiring.api.client.v1.order.response.GetOrderResponseBody;
+import com.paytech.acquiring.api.client.v1.order.response.GetOrderResponseBody.*;
+import com.paytech.acquiring.domain.order.CommerceDecimalRules;
+import com.paytech.acquiring.service.processor.order.request.GetOrderRequest;
+import com.paytech.acquiring.service.processor.order.response.GetOrderResponse;
 
 /** 订单查询的 HTTP 模型转换；不读取数据库或计算业务状态。 */
 public final class GetOrderConverter {

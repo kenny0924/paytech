@@ -1,4 +1,4 @@
-package com.paytech.commerce.client.api.v1.refund;
+package com.paytech.acquiring.api.client.v1.refund;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -10,12 +10,12 @@ import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
 
-import com.paytech.commerce.client.api.v1.common.ClientApiConstraints;
-import com.paytech.commerce.client.api.v1.common.ClientApiPaths;
-import com.paytech.commerce.client.api.v1.refund.request.CreateRefundRequestBody;
-import com.paytech.commerce.client.api.v1.refund.response.CreateRefundResponseBody;
-import com.paytech.commerce.client.api.v1.refund.response.GetRefundResponseBody;
-import com.paytech.commerce.client.api.v1.refund.response.ListOrderRefundsResponseBody;
+import com.paytech.acquiring.api.client.v1.common.ClientApiConstraints;
+import com.paytech.acquiring.api.client.v1.common.ClientApiPaths;
+import com.paytech.acquiring.api.client.v1.refund.request.CreateRefundRequestBody;
+import com.paytech.acquiring.api.client.v1.refund.response.CreateRefundResponseBody;
+import com.paytech.acquiring.api.client.v1.refund.response.GetRefundResponseBody;
+import com.paytech.acquiring.api.client.v1.refund.response.ListOrderRefundsResponseBody;
 import com.paytech.foundation.common.http.ApiHeaderNames;
 
 import jakarta.validation.Valid;

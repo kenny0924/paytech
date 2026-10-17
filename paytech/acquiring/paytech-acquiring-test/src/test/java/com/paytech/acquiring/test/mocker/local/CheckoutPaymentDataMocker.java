@@ -1,8 +1,8 @@
-package com.paytech.commerce.test.mocker.local;
+package com.paytech.acquiring.test.mocker.local;
 
-import com.paytech.commerce.domain.checkout.CreateCheckoutContext;
-import com.paytech.commerce.test.builder.checkout.CreateCheckoutContextBuilder;
-import com.paytech.commerce.test.dal.*;
+import com.paytech.acquiring.domain.checkout.CreateCheckoutContext;
+import com.paytech.acquiring.test.builder.checkout.CreateCheckoutContextBuilder;
+import com.paytech.acquiring.test.dal.*;
 import com.paytech.foundation.token.PublicTokenGenerator;
 
 import org.springframework.boot.test.context.TestComponent;

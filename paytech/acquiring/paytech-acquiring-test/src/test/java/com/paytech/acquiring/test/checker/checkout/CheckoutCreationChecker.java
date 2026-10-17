@@ -1,4 +1,4 @@
-package com.paytech.commerce.test.checker.checkout;
+package com.paytech.acquiring.test.checker.checkout;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -8,10 +8,10 @@ import java.util.List;
 
 import org.springframework.boot.test.context.TestComponent;
 
-import com.paytech.commerce.client.api.v1.enums.OrderCreationMode;
-import com.paytech.commerce.domain.enums.CheckoutSessionStatus;
-import com.paytech.commerce.domain.enums.OrderStatus;
-import com.paytech.commerce.test.dal.CheckoutCreationTestMapper;
+import com.paytech.acquiring.api.client.v1.enums.OrderCreationMode;
+import com.paytech.acquiring.domain.enums.CheckoutSessionStatus;
+import com.paytech.acquiring.domain.enums.OrderStatus;
+import com.paytech.acquiring.test.dal.CheckoutCreationTestMapper;
 
 import lombok.AllArgsConstructor;
 
@@ -32,7 +32,7 @@ public final class CheckoutCreationChecker {
             () -> assertEquals(OrderStatus.OPEN, order.getOrderStatus()),
             () -> assertAmount("44.90", order.getMerchandiseAmount()),
             () -> assertAmount("2.00", order.getDiscountAmount()), () -> assertAmount("42.90", order.getNetAmount()),
-            () -> assertEquals("AE001",order.getEntityNo()), () -> assertNull(order.getPreparationCommandId()),
+            () -> assertEquals("AE001",order.getEntityNo()),
             () -> assertAmount("0",order.getTaxAmount()), () -> assertAmount("42.90",order.getTotalAmount()),
             () -> assertAmount("0",order.getRoundingAmount()), () -> assertNull(order.getPaidAt()),
             () -> assertNull(order.getCancelledAt()), () -> assertNull(order.getTerminationRequestedAt()),

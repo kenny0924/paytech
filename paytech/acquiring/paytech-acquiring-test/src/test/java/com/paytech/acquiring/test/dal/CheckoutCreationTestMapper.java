@@ -1,20 +1,20 @@
-package com.paytech.commerce.test.dal;
+package com.paytech.acquiring.test.dal;
 
 import java.time.Instant;
 import java.util.List;
 
 import org.apache.ibatis.annotations.*;
 
-import com.paytech.commerce.core.dal.dataobject.checkout.CheckoutSession;
-import com.paytech.commerce.core.dal.dataobject.order.CommerceOrder;
-import com.paytech.commerce.core.dal.dataobject.order.OrderItem;
-import com.paytech.commerce.core.dal.dataobject.order.OrderRefundPosition;
+import com.paytech.acquiring.core.dal.dataobject.checkout.CheckoutSession;
+import com.paytech.acquiring.core.dal.dataobject.order.CommerceOrder;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderItem;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderRefundPosition;
 
 /** 本接口测试专用的前置数据、清理和只读查询；不替换生产 Mapper。 */
 @Mapper
 public interface CheckoutCreationTestMapper {
     /** 零行查询只检查当前写链必需的列存在，绝不创建或迁移 Schema。 */
-    @Select("SELECT COUNT(creation_mode)+COUNT(consumer_country_code) FROM t_commerce_order WHERE 1=0")
+    @Select("SELECT COUNT(creation_mode)+COUNT(consumer_country_code)+COUNT(customer_id) FROM t_commerce_order WHERE 1=0")
     int checkCreationColumns();
 
     /** 只枚举本次测试环境拥有的两个 Client 的订单。 */
@@ -23,12 +23,12 @@ public interface CheckoutCreationTestMapper {
 
     /** 查询原始数据库对象，断言不依赖 HTTP 查询接口。 */
     @Select("SELECT * FROM t_commerce_order WHERE client_id=#{clientId} AND client_order_id=#{clientOrderId}")
-    @ResultMap("com.paytech.commerce.core.dal.mapper.order.CommerceOrderMapper.CommerceOrder")
+    @ResultMap("com.paytech.acquiring.core.dal.mapper.order.CommerceOrderMapper.CommerceOrder")
     CommerceOrder order(@Param("clientId") long clientId, @Param("clientOrderId") String clientOrderId);
 
     /** 保留数据库商品行顺序并读取实际金额。 */
     @Select("SELECT *,NULL AS line_tax_amount,NULL AS line_total_amount FROM t_order_item WHERE order_id=#{orderId} ORDER BY sort_no")
-    @ResultMap("com.paytech.commerce.core.dal.mapper.checkout.BasicCheckoutMapper.Item")
+    @ResultMap("com.paytech.acquiring.core.dal.mapper.checkout.BasicCheckoutMapper.Item")
     List<OrderItem> items(long orderId);
 
     /** 订单上下文冻结的 Risk 结账评估 ID。 */
@@ -37,12 +37,12 @@ public interface CheckoutCreationTestMapper {
 
     /** 一笔创建只允许一条 Checkout 会话。 */
     @Select("SELECT * FROM t_checkout_session WHERE order_id=#{orderId}")
-    @ResultMap("com.paytech.commerce.core.dal.mapper.checkout.CheckoutSessionMapper.CheckoutSession")
+    @ResultMap("com.paytech.acquiring.core.dal.mapper.checkout.CheckoutSessionMapper.CheckoutSession")
     CheckoutSession session(long orderId);
 
     /** 读取真实退款初始位置。 */
     @Select("SELECT * FROM t_order_refund_position WHERE order_id=#{orderId}")
-    @ResultMap("com.paytech.commerce.core.dal.mapper.order.OrderRefundPositionMapper.OrderRefundPosition")
+    @ResultMap("com.paytech.acquiring.core.dal.mapper.order.OrderRefundPositionMapper.OrderRefundPosition")
     OrderRefundPosition refund(long orderId);
 
     /** 检查资金投影初态；单表 EXISTS 同时验证零事实没有被伪造为金额。 */
@@ -80,8 +80,8 @@ public interface CheckoutCreationTestMapper {
     /** 已存在业务编号前置事实，不通过调用被测接口完成 Arrange。 */
     @Insert("""
         INSERT INTO t_commerce_order (order_id,order_no,client_id,client_order_id,creation_mode,consumer_country_code,
-          context_format,merchandise_amount,discount_amount,net_amount,currency,order_status,expires_at,version,create_time,update_time)
-        VALUES (#{orderId},#{orderNo},#{clientId},#{clientOrderId},'HOSTED_CHECKOUT','US','TERM_PRICE',
+          merchandise_amount,discount_amount,net_amount,currency,order_status,expires_at,version,create_time,update_time)
+        VALUES (#{orderId},#{orderNo},#{clientId},#{clientOrderId},'HOSTED_CHECKOUT','US',
           44.90,2.00,42.90,'USD',#{status},#{expiresAt},1,#{now},#{now})
         """)
     void insertOrder(@Param("orderId") long orderId, @Param("orderNo") String orderNo, @Param("clientId") long clientId,
@@ -135,4 +135,12 @@ public interface CheckoutCreationTestMapper {
     /** 最后清理根订单，前面的删除和根删除在同一清理事务中。 */
     @Delete("DELETE FROM t_commerce_order WHERE order_id=#{orderId}")
     void deleteOrder(long orderId);
+
+    /** 订单关联的 Customer 主键（consumer 软引用，只存 ID）。 */
+    @Select("SELECT customer_id FROM t_commerce_order WHERE client_id=#{clientId} AND client_order_id=#{clientOrderId}")
+    Long orderCustomerId(@Param("clientId") long clientId, @Param("clientOrderId") String clientOrderId);
+
+    /** 把订单关联到 consumer 的 Customer 主键。 */
+    @Update("UPDATE t_commerce_order SET customer_id=#{customerId} WHERE order_id=#{orderId}")
+    int linkOrderCustomer(@Param("orderId") long orderId, @Param("customerId") long customerId);
 }

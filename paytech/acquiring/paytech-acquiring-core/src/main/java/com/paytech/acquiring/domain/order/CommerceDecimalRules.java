@@ -1,4 +1,4 @@
-package com.paytech.commerce.domain.order;
+package com.paytech.acquiring.domain.order;
 
 import java.math.BigDecimal;
 import java.util.regex.Pattern;

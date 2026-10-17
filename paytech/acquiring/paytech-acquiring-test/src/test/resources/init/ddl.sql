@@ -1,19 +1,18 @@
--- Commerce 当前 Mock 测试建表入口：CreateCheckout、GetOrder、CreateRefund 及本地事务测试。
+-- acquiring Mock 测试建表入口：CreateCheckout、Customer Checkout、GetOrder、Cancel、CreateRefund、Payment 结果消费及本地事务测试。
 -- 在本地 MySQL 127.0.0.1:13306 使用 root 手工执行，创建数据库、测试账号及表；应用和测试不自动执行。
 -- 本地连接见 application-mock.yml；已有表使用评审后的增量 SQL，不运行本文件覆盖。
--- 表定义来源：commerce-service/docs/database/sql/commerce-schema.sql（对应当前 PDManer 模型）。
--- 包含订单查询/创建、退款申请及真实补偿任务依赖的 10 张表；新增 Mock 依赖时同步扩充。
--- 保留正式字段、索引和注释；场景数据由每例 Mocker 准备，不在此插入。
+-- 表定义来源：paytech/acquiring/docs/database/sql/acquiring-schema.sql（对应 acquiring PDManer 模型，逐表逐字切片）。
+-- 包含 acquiring 全部 14 张表（transaction / checkout / command 共库 13 张与本库 t_compensation_event）；不含 t_command_idempotency（S10 删除）。
+-- 保留正式字段、索引和注释；场景数据由每例 Mocker 准备，不在此插入。不含 DROP DATABASE，避免误删已有库。
 SET NAMES utf8mb4;
-DROP DATABASE IF EXISTS `mor_commerce`;
-CREATE DATABASE IF NOT EXISTS `mor_commerce`
+CREATE DATABASE IF NOT EXISTS `mor_acquiring`
   CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 -- 仅用于仓库本地测试环境，与 application-mock.yml 的默认账号及密码一致；已有账号不重置密码。
-CREATE USER IF NOT EXISTS 'commerce_app'@'%' IDENTIFIED BY 'local-commerce-change-me-2026';
-GRANT SELECT, INSERT, UPDATE, DELETE ON `mor_commerce`.* TO 'commerce_app'@'%';
+CREATE USER IF NOT EXISTS 'acquiring_app'@'%' IDENTIFIED BY 'local-acquiring-change-me-2026';
+GRANT SELECT, INSERT, UPDATE, DELETE ON `mor_acquiring`.* TO 'acquiring_app'@'%';
 
-USE `mor_commerce`;
+USE `mor_acquiring`;
 
 CREATE TABLE `t_commerce_order` (
   `order_id` BIGINT NOT NULL COMMENT 'Commerce 订单聚合的内部唯一标识。',
@@ -23,8 +22,6 @@ CREATE TABLE `t_commerce_order` (
   `customer_id` BIGINT NULL COMMENT '建单时按 consumerReference 关联的 Customer；访客订单为 NULL，创建后不可修改。',
   `creation_mode` VARCHAR(32) NOT NULL DEFAULT 'HOSTED_CHECKOUT' COMMENT '服务端根据创建入口固定的订单接入方式，创建后不可修改；HOSTED_CHECKOUT为托管收银台，DIRECT_PAY为预留直接支付接入；已有订单及默认值为HOSTED_CHECKOUT。允许值：HOSTED_CHECKOUT、DIRECT_PAY。',
   `consumer_country_code` CHAR(2) NULL COMMENT '基础创建时固定的消费者 ISO 3166-1 alpha-2 国家代码；NULL 仅用于历史订单读取旧创建快照。',
-  `context_format` VARCHAR(32) NOT NULL COMMENT 'TERM_PRICE使用entityNo和条款版本；LEGACY_SCOPE保留历史身份及原Scope读取，不回写旧订单。允许值：TERM_PRICE、LEGACY_SCOPE。',
-  `preparation_command_id` BIGINT NULL COMMENT '同一Order的在途或已完成准备命令，跨幂等键重试必须复用，保证固定后不换OE。',
   `termination_requested_at` DATETIME(6) NULL COMMENT '取消或到期首次请求的UTC时间，串行阻止新副作用；不表示远端未知Intent已终止。',
   `entity_no` CHAR(5) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT 'CCT唯一不可变OE编号，创建时经营国家二位代码加001–999，如AE001；不是数字代理ID，编号不参与路由。',
   `entity_source_type` VARCHAR(64) NULL COMMENT '订单经营主体来源于平台、Client 或 Local Partner 的闭合类型。允许值：PLATFORM、CLIENT、PARTNER。',
@@ -52,32 +49,7 @@ CREATE TABLE `t_commerce_order` (
   KEY `idx_order_client_time` (`client_id`, `create_time`, `order_id`) COMMENT '访问索引：client_id、create_time、order_id',
   KEY `idx_order_partner_time` (`local_partner_id`, `create_time`, `order_id`) COMMENT '访问索引：local_partner_id、create_time、order_id',
   KEY `idx_order_expiry` (`order_status`, `expires_at`, `order_id`) COMMENT '访问索引：order_status、expires_at、order_id'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='基础创建时固定商品净额/币种/期限；支付准备选择提交后固定OE，Context建立时一次补齐税额和最终金额；context_format显式区分新旧流程，不延长到期或跨OE恢复。';
-
-CREATE TABLE `t_customer` (
-  `customer_id` BIGINT NOT NULL COMMENT 'Commerce Customer 的内部唯一标识，创建后不可修改；Payment 已存卡以此关联。',
-  `customer_no` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '供 Client API 使用的不透明公开 Customer 编号，cus_ 前缀加随机串，创建后不可修改。',
-  `client_id` BIGINT NOT NULL COMMENT '所属平台 Client 的内部唯一标识，创建后不可修改。',
-  `consumer_reference` VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT 'Client 命名空间内的不透明、非 PII 消费者引用原值，由 Client 服务端传入，创建后不可修改；不得为 Email、Phone、证件号等个人原值。',
-  `active_reference` VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT '有效时等于 consumer_reference，删除时置 NULL；与 client_id 组成唯一索引，保证同一引用同时最多一个有效 Customer。',
-  `customer_status` VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT 'Customer 状态，删除不可撤销。允许值：ACTIVE、DELETED。',
-  `deleted_time` DATETIME(6) NULL COMMENT '删除的 UTC 微秒精度时间；有效时为 NULL。',
-  `version` BIGINT NOT NULL COMMENT '可变业务行并发更新使用的单调乐观锁版本。',
-  `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 微秒精度时间。',
-  `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最近一次持久化更新的 UTC 微秒精度时间。',
-  PRIMARY KEY (`customer_id`),
-  UNIQUE KEY `uk_customer_no` (`customer_no`) COMMENT '唯一索引：customer_no',
-  UNIQUE KEY `uk_customer_active_reference` (`client_id`, `active_reference`) COMMENT '唯一索引：client_id、active_reference'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='Client 命名空间内的 Customer：身份只来自 Client 服务端传入的 consumer_reference，首期只保存身份与状态；删除不可撤销，同一引用再次使用时新建。';
-
-CREATE TABLE `t_client_stored_card_setting` (
-  `client_id` BIGINT NOT NULL COMMENT '平台 Client 的内部唯一标识；每个 Client 至多一行，没有记录视为未开通。',
-  `stored_card_enabled` TINYINT(1) NOT NULL COMMENT '是否开通存卡与已存卡支付；1 开通，0 关闭。关闭后已存卡保留但不展示、不可使用。',
-  `version` BIGINT NOT NULL COMMENT '可变业务行并发更新使用的单调乐观锁版本。',
-  `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 微秒精度时间。',
-  `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最近一次持久化更新的 UTC 微秒精度时间。',
-  PRIMARY KEY (`client_id`)
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='按 Client 开通存卡能力（CCT 暂无按 Client 配置落点时的 Commerce 本地配置）；首期由初始化 DML 或内部调用维护，运营页面后续提供。';
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='基础创建时固定商品净额/币种/期限；支付准备选择提交后固定OE，Context建立时一次补齐税额和最终金额；不延长到期或跨OE恢复。';
 
 CREATE TABLE `t_order_context` (
   `order_context_id` BIGINT NOT NULL COMMENT '订单创建时冻结外部商业、风控和税务证据引用的内部唯一标识。',

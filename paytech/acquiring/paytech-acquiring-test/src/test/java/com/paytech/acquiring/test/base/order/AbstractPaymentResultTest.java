@@ -1,4 +1,4 @@
-package com.paytech.commerce.test.base.order;
+package com.paytech.acquiring.test.base.order;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -14,8 +14,8 @@ import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.paytech.commerce.domain.checkout.CreateCheckoutContext;
-import com.paytech.commerce.test.base.MockTestBase;
+import com.paytech.acquiring.domain.checkout.CreateCheckoutContext;
+import com.paytech.acquiring.test.base.MockTestBase;
 
 import tools.jackson.databind.json.JsonMapper;
 

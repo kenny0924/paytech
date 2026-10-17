@@ -1,11 +1,11 @@
-package com.paytech.commerce.ext.rest.external.clientapi.v1.order;
+package com.paytech.acquiring.ext.rest.external.clientapi.v1.order;
 
-import com.paytech.commerce.client.api.v1.enums.CancellationReason;
-import com.paytech.commerce.client.api.v1.enums.CancellationStatus;
-import com.paytech.commerce.client.api.v1.order.response.CancelOrderResponseBody;
-import com.paytech.commerce.domain.enums.OrderStatus;
-import com.paytech.commerce.service.processor.order.request.CancelOrderRequest;
-import com.paytech.commerce.service.processor.order.response.CancelOrderResponse;
+import com.paytech.acquiring.api.client.v1.enums.CancellationReason;
+import com.paytech.acquiring.api.client.v1.enums.CancellationStatus;
+import com.paytech.acquiring.api.client.v1.order.response.CancelOrderResponseBody;
+import com.paytech.acquiring.domain.enums.OrderStatus;
+import com.paytech.acquiring.service.processor.order.request.CancelOrderRequest;
+import com.paytech.acquiring.service.processor.order.response.CancelOrderResponse;
 
 /** 取消接口的协议转换；不查询、判断取消资格或持有事务。 */
 public final class CancelOrderConverter {

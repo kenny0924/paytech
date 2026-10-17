@@ -1,8 +1,8 @@
-package com.paytech.commerce.core.dal.dataobject.checkout;
+package com.paytech.acquiring.core.dal.dataobject.checkout;
 import java.math.BigDecimal;
 import java.time.Instant;
 
-import com.paytech.commerce.domain.enums.*;
+import com.paytech.acquiring.domain.enums.*;
 /** 基础创建恢复时读取的 Order/Session 与后续准备边界。 */
 public record CheckoutCreationView(
     /** 本库订单主键。 */
@@ -46,8 +46,6 @@ public record CheckoutCreationView(
     CheckoutSessionStatus sessionStatus,
     /** Session CAS 版本。 */
     long sessionVersion,
-    /** 准备命令存在后不能按基础创建关闭。 */
-    Long preparationCommandId,
     /** 终止竞争意图。 */
     Instant terminationRequestedAt,
     /** 是否已有不可变上下文。 */

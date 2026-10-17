@@ -1,10 +1,10 @@
-package com.paytech.commerce.core.dal.dataobject.order;
+package com.paytech.acquiring.core.dal.dataobject.order;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
-import com.paytech.commerce.domain.order.CommerceDecimalRules;
+import com.paytech.acquiring.domain.order.CommerceDecimalRules;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.foundation.money.Money;

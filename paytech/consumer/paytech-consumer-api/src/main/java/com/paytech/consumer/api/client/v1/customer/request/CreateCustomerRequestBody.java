@@ -1,7 +1,7 @@
-package com.paytech.commerce.client.api.v1.customer.request;
+package com.paytech.consumer.api.client.v1.customer.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.paytech.commerce.client.api.v1.common.ClientApiConstraints;
+import com.paytech.consumer.api.client.v1.common.ClientApiConstraints;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;

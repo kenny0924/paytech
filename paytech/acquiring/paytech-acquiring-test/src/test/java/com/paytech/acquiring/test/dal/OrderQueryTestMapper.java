@@ -1,14 +1,14 @@
-package com.paytech.commerce.test.dal;
+package com.paytech.acquiring.test.dal;
 
 import java.util.List;
 import java.util.Map;
 
 import org.apache.ibatis.annotations.*;
 
-import com.paytech.commerce.core.dal.dataobject.checkout.CheckoutSession;
-import com.paytech.commerce.core.dal.dataobject.order.*;
-import com.paytech.commerce.test.builder.order.GetOrderDataBuilder.Fixture;
-import com.paytech.commerce.test.builder.order.GetOrderDataBuilder.Payment;
+import com.paytech.acquiring.core.dal.dataobject.checkout.CheckoutSession;
+import com.paytech.acquiring.core.dal.dataobject.order.*;
+import com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.Fixture;
+import com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.Payment;
 
 /** 订单及退款位置查询的真实前置写入和只读快照，不调用被测查询 Mapper 构造断言。 */
 @Mapper
@@ -16,11 +16,11 @@ public interface OrderQueryTestMapper {
     /** 插入本例订单，缺失/错误业务事实保留给 HTTP 入口验证。 */
     @Insert("""
         INSERT INTO t_commerce_order (order_id,order_no,client_id,client_order_id,creation_mode,
-          consumer_country_code,context_format,entity_no,preparation_command_id,merchandise_amount,
+          consumer_country_code,entity_no,merchandise_amount,
           discount_amount,net_amount,tax_amount,rounding_amount,total_amount,currency,order_status,
           expires_at,paid_at,version,create_time,update_time)
         VALUES (#{orderId},#{orderNo},#{clientId},#{clientOrderId},#{creationMode},#{consumerCountryCode},
-          'TERM_PRICE',#{entityNo},#{preparationCommandId},#{merchandiseAmount},#{discountAmount},#{netAmount},
+          #{entityNo},#{merchandiseAmount},#{discountAmount},#{netAmount},
           #{taxAmount},#{roundingAmount},#{totalAmount},#{currency},#{orderStatus},#{expiresAt},#{paidAt},
           #{version},#{createTime},#{updateTime})
         """)

@@ -1,4 +1,4 @@
-package com.paytech.commerce.domain.customer;
+package com.paytech.acquiring.domain.customer;
 
 import java.net.URI;
 import java.time.Instant;
@@ -6,8 +6,8 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.paytech.commerce.customer.api.v1.enums.CustomerPaymentStatus;
-import com.paytech.commerce.domain.checkout.CheckoutUpstreamProtocolException;
+import com.paytech.acquiring.api.checkout.v1.enums.CustomerPaymentStatus;
+import com.paytech.acquiring.domain.checkout.CheckoutUpstreamProtocolException;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;

@@ -1,4 +1,4 @@
-package com.paytech.commerce.client.api.v1.order.response;
+package com.paytech.acquiring.api.client.v1.order.response;
 
 import java.time.Instant;
 

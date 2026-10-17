@@ -1,4 +1,4 @@
-package com.paytech.commerce.domainservice.service.customer.impl;
+package com.paytech.consumer.domainservice.service.impl;
 
 import java.time.Instant;
 
@@ -6,15 +6,15 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
-import com.paytech.commerce.core.dal.dataobject.customer.Customer;
-import com.paytech.commerce.domain.enums.CustomerStatus;
-import com.paytech.commerce.domainservice.port.CommerceIdentifierGenerator;
-import com.paytech.commerce.domainservice.repository.customer.CustomerRepository;
-import com.paytech.commerce.domainservice.service.customer.CustomerService;
-import com.paytech.commerce.ext.job.StoredCardInvalidationHandler;
-import com.paytech.commerce.service.transaction.CommerceTransactionExecutor;
+import com.paytech.consumer.core.dal.dataobject.Customer;
+import com.paytech.consumer.api.enums.CustomerStatus;
+import com.paytech.consumer.domainservice.repository.CustomerRepository;
+import com.paytech.consumer.domainservice.service.CustomerService;
+import com.paytech.consumer.ext.job.StoredCardInvalidationHandler;
+import com.paytech.consumer.service.transaction.ConsumerTransactionExecutor;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.compensation.api.CompensationEventRegistrar;
+import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.token.PublicTokenGenerator;
 
 import lombok.AllArgsConstructor;
@@ -27,8 +27,8 @@ public class CustomerServiceImpl implements CustomerService {
     static final String CUSTOMER_NO_PREFIX = "cus_";
 
     private final CustomerRepository customers;
-    private final CommerceIdentifierGenerator identifierGenerator;
-    private final CommerceTransactionExecutor transactions;
+    private final IdGenerator identifierGenerator;
+    private final ConsumerTransactionExecutor transactions;
     /** Registry 启动时需要创建 Handler，登记器在业务调用时取得，避免相互构造。 */
     private final ObjectProvider<CompensationEventRegistrar> registrars;
 

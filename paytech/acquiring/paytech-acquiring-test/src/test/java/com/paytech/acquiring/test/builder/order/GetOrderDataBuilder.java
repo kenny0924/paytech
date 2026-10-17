@@ -1,17 +1,17 @@
-package com.paytech.commerce.test.builder.order;
+package com.paytech.acquiring.test.builder.order;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
 
-import com.paytech.commerce.client.api.v1.enums.OrderCreationMode;
-import com.paytech.commerce.core.dal.dataobject.checkout.CheckoutSession;
-import com.paytech.commerce.core.dal.dataobject.order.CommerceOrder;
-import com.paytech.commerce.core.dal.dataobject.order.OrderFundsAvailabilityProjection;
-import com.paytech.commerce.core.dal.dataobject.order.OrderItem;
-import com.paytech.commerce.core.dal.dataobject.order.OrderRefundPosition;
-import com.paytech.commerce.domain.enums.*;
+import com.paytech.acquiring.api.client.v1.enums.OrderCreationMode;
+import com.paytech.acquiring.core.dal.dataobject.checkout.CheckoutSession;
+import com.paytech.acquiring.core.dal.dataobject.order.CommerceOrder;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderFundsAvailabilityProjection;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderItem;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderRefundPosition;
+import com.paytech.acquiring.domain.enums.*;
 import com.paytech.foundation.token.PublicTokenGenerator;
 
 import lombok.AllArgsConstructor;
@@ -65,7 +65,7 @@ public final class GetOrderDataBuilder {
         var suffix = String.format(Locale.ROOT, "%030d", orderId);
         var order = CommerceOrder.builder().orderId(orderId).orderNo(orderNo == null ? "ord_" + suffix : orderNo)
             .clientId(clientId).clientOrderId(clientOrderId).creationMode(creationMode).consumerCountryCode("US")
-            .entityNo(ready ? "AE001" : null).preparationCommandId(ready ? orderId : null)
+            .entityNo(ready ? "AE001" : null)
             .merchandiseAmount(decimal("50")).discountAmount(decimal("2")).netAmount(decimal("48"))
             .taxAmount(ready ? decimal("2") : null).roundingAmount(ready ? decimal("0") : null)
             .totalAmount(ready ? decimal("50") : null).currency(currency)

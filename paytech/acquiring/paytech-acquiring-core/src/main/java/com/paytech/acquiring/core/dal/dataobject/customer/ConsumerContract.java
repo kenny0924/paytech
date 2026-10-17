@@ -1,4 +1,4 @@
-package com.paytech.commerce.core.dal.dataobject.customer;
+package com.paytech.acquiring.core.dal.dataobject.customer;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

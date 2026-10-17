@@ -1,8 +1,8 @@
-package com.paytech.commerce.test.builder.customer;
+package com.paytech.acquiring.test.builder.customer;
 
-import com.paytech.commerce.customer.api.v1.checkout.request.SaveConsumerRequestBody;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.Address;
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.ConsumerDetails;
+import com.paytech.acquiring.api.checkout.v1.checkout.request.SaveConsumerRequestBody;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.Address;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.ConsumerDetails;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 

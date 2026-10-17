@@ -1,11 +1,11 @@
-package com.paytech.commerce.ext.job;
+package com.paytech.consumer.ext.job;
 
 import org.springframework.stereotype.Component;
 
-import com.paytech.commerce.core.dal.dataobject.customer.Customer;
-import com.paytech.commerce.domain.enums.CustomerStatus;
-import com.paytech.commerce.domainservice.repository.customer.CustomerRepository;
-import com.paytech.commerce.integration.payment.PaymentStoredCardClient;
+import com.paytech.consumer.core.dal.dataobject.Customer;
+import com.paytech.consumer.api.enums.CustomerStatus;
+import com.paytech.consumer.domainservice.repository.CustomerRepository;
+import com.paytech.consumer.integration.payment.PaymentStoredCardClient;
 import com.paytech.foundation.common.error.ServiceUnavailableException;
 import com.paytech.foundation.compensation.api.CompensationEvent;
 import com.paytech.foundation.compensation.api.CompensationEventHandler;

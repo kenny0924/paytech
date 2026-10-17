@@ -1,4 +1,4 @@
-package com.paytech.commerce.test.checker.webhook;
+package com.paytech.acquiring.test.checker.webhook;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -19,11 +19,11 @@ import java.util.Set;
 
 import org.springframework.boot.test.context.TestComponent;
 
-import com.paytech.commerce.domain.enums.ClientWebhookEventType;
-import com.paytech.commerce.ext.job.ClientWebhookSubmissionHandler;
-import com.paytech.commerce.test.dal.ClientWebhookTestMapper;
-import com.paytech.commerce.test.mocker.external.PlatformWebhookMocker;
-import com.paytech.commerce.test.mocker.external.PlatformWebhookMocker.Submission;
+import com.paytech.acquiring.domain.enums.ClientWebhookEventType;
+import com.paytech.acquiring.ext.job.ClientWebhookSubmissionHandler;
+import com.paytech.acquiring.test.dal.ClientWebhookTestMapper;
+import com.paytech.acquiring.test.mocker.external.PlatformWebhookMocker;
+import com.paytech.acquiring.test.mocker.external.PlatformWebhookMocker.Submission;
 import com.paytech.foundation.jsoncanonicalization.api.Rfc8785JsonCanonicalizer;
 
 import lombok.AllArgsConstructor;

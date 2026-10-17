@@ -33,8 +33,8 @@ Customer GET 由 `GetCustomerCheckoutProcessor` 直接按需读取本库对象�
 处理中有交互时为 `REQUIRES_ACTION`（动作 ID 为尝试 ID、无跳转地址），不可用时降级为处理中并继续轮询。
 
 支付成功事件由 `PaymentSucceededListener` 消费：Commerce 声明 `topic_payment_result`（同参数）、Quorum 队列
-`cg_commerce_payment_result`（`payment.succeeded.v1`，投递上限 5）及死信 `dlx_commerce_payment_result` →
-`cg_commerce_payment_result_dlq`，手动确认。`ApplyPaymentSucceededProcessor` 核对 Client、Intent、OE 与金额后，由
+`cg_acquiring_payment_result`（`payment.succeeded.v1`，投递上限 5）及死信 `dlx_acquiring_payment_result` →
+`cg_acquiring_payment_result_dlq`，手动确认。`ApplyPaymentSucceededProcessor` 核对 Client、Intent、OE 与金额后，由
 `OrderPaymentService.applySucceeded` 在一个 REQUIRED 事务推进支付投影、订单 PAID、会话 COMPLETED、退款基数和资金投影 PENDING；
 同一事件键与 Hash 或同一成功尝试重复投递直接确认，载荷不符、未知订单或重复成功进入死信；已取消/过期订单只记录支付投影并告警。
 RabbitMQ 连接取 `COMMERCE_RABBITMQ_*`（测试取 `MOR_RABBITMQ_*`）；Enforcer 只放行 `spring-boot-starter-amqp` 及其 RabbitMQ 客户端。

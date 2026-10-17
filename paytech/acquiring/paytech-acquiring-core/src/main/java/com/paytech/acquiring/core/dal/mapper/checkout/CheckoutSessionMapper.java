@@ -1,12 +1,11 @@
-package com.paytech.commerce.core.dal.mapper.checkout;
+package com.paytech.acquiring.core.dal.mapper.checkout;
 
 import java.time.Instant;
 
 import org.apache.ibatis.annotations.Param;
 
-import com.paytech.commerce.core.dal.dataobject.checkout.CheckoutSession;
-import com.paytech.commerce.core.dal.dataobject.customer.CheckoutVersionView;
-import com.paytech.commerce.domain.enums.CheckoutSessionStatus;
+import com.paytech.acquiring.core.dal.dataobject.checkout.CheckoutSession;
+import com.paytech.acquiring.core.dal.dataobject.customer.CheckoutVersionView;
 
 /** Checkout Session 写入与 CAS 映射。 */
 public interface CheckoutSessionMapper {
@@ -31,10 +30,5 @@ public interface CheckoutSessionMapper {
 
     /** 与 Order 取消共用事务，以会话版本和原状态关闭 Session。 */
     int cancel(@Param("session") CheckoutSession session, @Param("now") Instant now);
-
-    int expire(@Param("orderId") long orderId, @Param("clientId") long clientId,
-        @Param("orderNo") String orderNo, @Param("expectedStatus") CheckoutSessionStatus expectedStatus,
-        @Param("expectedVersion") long expectedVersion, @Param("nextStatus") CheckoutSessionStatus nextStatus,
-        @Param("updatedAt") java.time.Instant updatedAt);
 
 }

@@ -1,4 +1,4 @@
-package com.paytech.commerce.domainservice.service.customer.impl;
+package com.paytech.acquiring.domainservice.service.customer.impl;
 
 import java.time.Clock;
 import java.time.temporal.ChronoUnit;
@@ -6,13 +6,13 @@ import java.time.temporal.ChronoUnit;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
-import com.paytech.commerce.domain.customer.SubmitCustomerPaymentContext;
-import com.paytech.commerce.domainservice.repository.customer.CheckoutNetworkEvidenceRepository;
-import com.paytech.commerce.domainservice.repository.customer.ConsumerAcceptanceRepository;
-import com.paytech.commerce.domainservice.repository.order.CommerceOrderRepository;
-import com.paytech.commerce.domainservice.repository.order.OrderPaymentProjectionRepository;
-import com.paytech.commerce.domainservice.service.customer.CheckoutSubmissionService;
-import com.paytech.commerce.service.transaction.CommerceTransactionExecutor;
+import com.paytech.acquiring.domain.customer.SubmitCustomerPaymentContext;
+import com.paytech.acquiring.domainservice.repository.customer.CheckoutNetworkEvidenceRepository;
+import com.paytech.acquiring.domainservice.repository.customer.ConsumerAcceptanceRepository;
+import com.paytech.acquiring.domainservice.repository.order.CommerceOrderRepository;
+import com.paytech.acquiring.domainservice.repository.order.OrderPaymentProjectionRepository;
+import com.paytech.acquiring.domainservice.service.customer.CheckoutSubmissionService;
+import com.paytech.acquiring.service.transaction.CommerceTransactionExecutor;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
 
 import lombok.AllArgsConstructor;

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.paytech.commerce.core.dal.mapper.customer.CheckoutNetworkEvidenceMapper">
-    <resultMap id="CheckoutNetworkEvidence" type="com.paytech.commerce.core.dal.dataobject.customer.CheckoutNetworkEvidence">
+<mapper namespace="com.paytech.acquiring.core.dal.mapper.customer.CheckoutNetworkEvidenceMapper">
+    <resultMap id="CheckoutNetworkEvidence" type="com.paytech.acquiring.core.dal.dataobject.customer.CheckoutNetworkEvidence">
         <id column="network_evidence_id" property="networkEvidenceId" javaType="_long"/>
         <result column="order_id" property="orderId" javaType="_long"/>
         <result column="checkout_session_id" property="checkoutSessionId" javaType="_long"/>
-        <result column="evidence_scene" property="evidenceScene" javaType="com.paytech.commerce.domain.enums.CheckoutEvidenceScene"/>
+        <result column="evidence_scene" property="evidenceScene" javaType="com.paytech.acquiring.domain.enums.CheckoutEvidenceScene"/>
         <result column="request_id" property="requestId" javaType="java.lang.String"/>
         <result column="client_ip_address" property="clientIpAddress" javaType="java.lang.String"/>
         <result column="user_agent" property="userAgent" javaType="java.lang.String"/>

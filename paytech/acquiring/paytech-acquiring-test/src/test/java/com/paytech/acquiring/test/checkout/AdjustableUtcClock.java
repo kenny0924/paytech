@@ -1,4 +1,4 @@
-package com.paytech.commerce.test.checkout;
+package com.paytech.acquiring.test.checkout;
 
 import java.time.*;
 import java.util.Objects;

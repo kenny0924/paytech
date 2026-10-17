@@ -1,8 +1,8 @@
-package com.paytech.commerce.domain.enums;
+package com.paytech.consumer.api.enums;
 
 import com.paytech.foundation.common.enums.CodeEnum;
 
-/** Customer 状态；删除不可撤销。 */
+/** Customer 状态；删除不可撤销。也是 consumer 对外合同中的状态值。 */
 public enum CustomerStatus implements CodeEnum {
     ACTIVE,
 

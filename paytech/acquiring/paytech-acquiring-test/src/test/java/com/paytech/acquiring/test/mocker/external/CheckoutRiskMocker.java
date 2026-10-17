@@ -1,4 +1,4 @@
-package com.paytech.commerce.test.mocker.external;
+package com.paytech.acquiring.test.mocker.external;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -16,8 +16,8 @@ import org.springframework.cloud.client.discovery.simple.InstanceProperties;
 import org.springframework.cloud.client.discovery.simple.SimpleDiscoveryProperties;
 import org.springframework.http.HttpStatus;
 
-import com.paytech.commerce.configuration.RiskClientConfiguration;
-import com.paytech.commerce.domain.enums.RiskDecisionResult;
+import com.paytech.acquiring.configuration.RiskClientConfiguration;
+import com.paytech.acquiring.domain.enums.RiskDecisionResult;
 import com.paytech.foundation.httpproblem.api.ApiProblemResponse;
 import com.paytech.foundation.testsupport.api.Clear;
 import com.paytech.foundation.testsupport.api.MockHttpFault;

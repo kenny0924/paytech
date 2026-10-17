@@ -1,4 +1,4 @@
-package com.paytech.commerce.service.processor.checkout.response;
+package com.paytech.acquiring.service.processor.checkout.response;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -7,8 +7,8 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 
-import com.paytech.commerce.domain.checkout.CheckoutPublicOrigin;
-import com.paytech.commerce.domain.checkout.CheckoutPublicToken;
+import com.paytech.acquiring.domain.checkout.CheckoutPublicOrigin;
+import com.paytech.acquiring.domain.checkout.CheckoutPublicToken;
 import com.paytech.foundation.token.PublicTokenGenerator;
 
 import lombok.Builder;

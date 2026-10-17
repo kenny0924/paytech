@@ -1,4 +1,4 @@
-package com.paytech.commerce.configuration;
+package com.paytech.acquiring.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,8 +21,8 @@ public class PlatformClientConfiguration {
      * <li>显式接收合规 422：Platform 合同规定 400/422 不重试，冻结内容原样重试也不会通过字段校验。</li>
      */
     @Bean
-    RestClientHttpServiceGroupConfigurer platformClient() {
-        return HttpServiceClientFactory.configureGroup(SERVICE_ID,
-            HttpServiceClientOptions.strict().withStrictJsonResponses(8192).withRequestValidationFailures());
+    RestClientHttpServiceGroupConfigurer platformClient(InternalTokenClientOptions internalToken) {
+        return HttpServiceClientFactory.configureGroup(SERVICE_ID, internalToken.apply(
+            HttpServiceClientOptions.strict().withStrictJsonResponses(8192).withRequestValidationFailures(), SERVICE_ID));
     }
 }

@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.paytech.commerce.core.dal.mapper.customer.CustomerMapper">
-    <resultMap id="Customer" type="com.paytech.commerce.core.dal.dataobject.customer.Customer">
+<mapper namespace="com.paytech.consumer.core.dal.mapper.CustomerMapper">
+    <resultMap id="Customer" type="com.paytech.consumer.core.dal.dataobject.Customer">
         <id column="customer_id" property="customerId" javaType="_long"/>
         <result column="customer_no" property="customerNo" javaType="java.lang.String"/>
         <result column="client_id" property="clientId" javaType="_long"/>
         <result column="consumer_reference" property="consumerReference" javaType="java.lang.String"/>
         <result column="active_reference" property="activeReference" javaType="java.lang.String"/>
-        <result column="customer_status" property="customerStatus" javaType="com.paytech.commerce.domain.enums.CustomerStatus"/>
+        <result column="customer_status" property="customerStatus" javaType="com.paytech.consumer.api.enums.CustomerStatus"/>
         <result column="deleted_time" property="deletedTime" javaType="java.time.Instant"/>
         <result column="version" property="version" javaType="_long"/>
         <result column="create_time" property="createTime" javaType="java.time.Instant"/>

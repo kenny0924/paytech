@@ -1,7 +1,7 @@
-package com.paytech.commerce.auto.ext.http.clientapi.v1.refund.create;
+package com.paytech.acquiring.auto.ext.http.clientapi.v1.refund.create;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static com.paytech.commerce.test.builder.order.GetOrderDataBuilder.decimal;
+import static com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.decimal;
 
 import java.util.List;
 import java.util.concurrent.*;
@@ -12,12 +12,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.*;
 
-import com.paytech.commerce.client.api.v1.refund.ClientRefundApi;
-import com.paytech.commerce.client.api.v1.refund.request.CreateRefundRequestBody;
-import com.paytech.commerce.domain.enums.RefundStatus;
-import com.paytech.commerce.test.base.refund.AbstractCreateRefundApiTest;
-import com.paytech.commerce.test.builder.refund.CreateRefundRequestBuilder;
-import com.paytech.commerce.test.checker.refund.CreateRefundResponseChecker;
+import com.paytech.acquiring.api.client.v1.refund.ClientRefundApi;
+import com.paytech.acquiring.api.client.v1.refund.request.CreateRefundRequestBody;
+import com.paytech.acquiring.domain.enums.RefundStatus;
+import com.paytech.acquiring.test.base.refund.AbstractCreateRefundApiTest;
+import com.paytech.acquiring.test.builder.refund.CreateRefundRequestBuilder;
+import com.paytech.acquiring.test.checker.refund.CreateRefundResponseChecker;
 
 /**
  * 创建受理、业务防重与真实并发请求；已支付事实由测试直接入库。

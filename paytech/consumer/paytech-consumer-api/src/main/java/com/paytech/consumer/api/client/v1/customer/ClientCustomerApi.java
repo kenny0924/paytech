@@ -1,4 +1,4 @@
-package com.paytech.commerce.client.api.v1.customer;
+package com.paytech.consumer.api.client.v1.customer;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -11,11 +11,11 @@ import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
 
-import com.paytech.commerce.client.api.v1.common.ClientApiConstraints;
-import com.paytech.commerce.client.api.v1.common.ClientApiPaths;
-import com.paytech.commerce.client.api.v1.customer.request.CreateCustomerRequestBody;
-import com.paytech.commerce.client.api.v1.customer.response.CustomerResponseBody;
-import com.paytech.commerce.client.api.v1.customer.response.ListStoredCardsResponseBody;
+import com.paytech.consumer.api.client.v1.common.ClientApiConstraints;
+import com.paytech.consumer.api.client.v1.common.ClientApiPaths;
+import com.paytech.consumer.api.client.v1.customer.request.CreateCustomerRequestBody;
+import com.paytech.consumer.api.client.v1.customer.response.CustomerResponseBody;
+import com.paytech.consumer.api.client.v1.customer.response.ListStoredCardsResponseBody;
 import com.paytech.foundation.common.http.ApiHeaderNames;
 
 import jakarta.validation.Valid;

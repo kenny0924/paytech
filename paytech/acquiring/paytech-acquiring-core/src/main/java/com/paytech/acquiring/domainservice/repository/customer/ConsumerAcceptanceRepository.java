@@ -1,8 +1,8 @@
-package com.paytech.commerce.domainservice.repository.customer;
+package com.paytech.acquiring.domainservice.repository.customer;
 
 import java.util.List;
 
-import com.paytech.commerce.core.dal.dataobject.customer.ConsumerAcceptance;
+import com.paytech.acquiring.core.dal.dataobject.customer.ConsumerAcceptance;
 
 /** ConsumerAcceptance 的本库持久化边界。 */
 public interface ConsumerAcceptanceRepository {

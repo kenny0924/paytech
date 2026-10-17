@@ -1,4 +1,4 @@
-package com.paytech.commerce.test.mocker.external;
+package com.paytech.acquiring.test.mocker.external;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -10,8 +10,8 @@ import java.util.function.Consumer;
 import org.springframework.boot.test.context.TestComponent;
 import org.springframework.context.annotation.Primary;
 
-import com.paytech.commerce.domain.customer.CustomerCheckoutModels.PaymentStatus;
-import com.paytech.commerce.domainservice.port.customer.CheckoutPaymentPort;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.PaymentStatus;
+import com.paytech.acquiring.domainservice.port.customer.CheckoutPaymentPort;
 import com.paytech.foundation.testsupport.api.Clear;
 import com.paytech.foundation.testsupport.api.MockHttpFault;
 import com.paytech.payment.api.execution.request.CreateIntentRequestBody;
