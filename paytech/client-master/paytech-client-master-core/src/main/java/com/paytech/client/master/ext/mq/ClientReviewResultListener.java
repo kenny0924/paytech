@@ -13,13 +13,13 @@ import com.paytech.foundation.common.error.FailException;
 import com.rabbitmq.client.Channel;
 
 /**
- * 消费 Risk 审核结果（队列 cg_cct_client_review），本地事务提交后才确认
- * <li>信封不合法或业务明确拒绝：拒绝且不重新入队，进入死信队列 cg_cct_client_review_dlq。</li>
+ * 消费 Risk 审核结果（队列 cg_client_master_client_review），本地事务提交后才确认
+ * <li>信封不合法或业务明确拒绝：拒绝且不重新入队，进入死信队列 cg_client_master_client_review_dlq。</li>
  * <li>并发冲突及其他失败（数据库或依赖暂不可用）：重新入队，由 Quorum Queue 投递次数上限兜底转入死信队列。</li>
  */
 public class ClientReviewResultListener {
     /** 消费队列。 */
-    public static final String QUEUE = "cg_cct_client_review";
+    public static final String QUEUE = "cg_client_master_client_review";
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientReviewResultListener.class);
 

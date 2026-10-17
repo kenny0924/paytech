@@ -24,7 +24,7 @@ spring:
       - com.paytech.vault.client.autoconfigure.VaultClientAutoConfiguration
   application:
     name: client-master-service
-  # 审核结果消费（cg_cct_client_review）；仅在 onboarding 草稿与补偿开关开启时创建监听器。
+  # 审核结果消费（cg_client_master_client_review）；仅在 onboarding 草稿与补偿开关开启时创建监听器。
   rabbitmq:
     host: "${CCT_RABBITMQ_HOST:127.0.0.1}"
     port: "${CCT_RABBITMQ_PORT:5672}"

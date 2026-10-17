@@ -56,9 +56,9 @@ public class ClientReviewConfiguration {
     /** 审核结果路由键。 */
     static final String RESULT_ROUTING_KEY = "client_review.decided.v1";
     /** 死信交换机。 */
-    static final String DEAD_LETTER_EXCHANGE = "dlx_cct_client_review";
+    static final String DEAD_LETTER_EXCHANGE = "dlx_client_master_client_review";
     /** 死信队列。 */
-    static final String DEAD_LETTER_QUEUE = "cg_cct_client_review_dlq";
+    static final String DEAD_LETTER_QUEUE = "cg_client_master_client_review_dlq";
     /** 投递次数上限，超过后进入死信队列。 */
     static final int DELIVERY_LIMIT = 5;
 

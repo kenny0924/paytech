@@ -21,7 +21,7 @@ import com.paytech.client.master.test.base.onboarding.AbstractClientReviewTest;
  * @see ClientReviewResultListener#onMessage
  */
 class ClientReviewResultListenerTest extends AbstractClientReviewTest {
-    private static final String DEAD_LETTER_QUEUE = "cg_cct_client_review_dlq";
+    private static final String DEAD_LETTER_QUEUE = "cg_client_master_client_review_dlq";
 
     @Autowired
     AmqpAdmin amqpAdmin;
