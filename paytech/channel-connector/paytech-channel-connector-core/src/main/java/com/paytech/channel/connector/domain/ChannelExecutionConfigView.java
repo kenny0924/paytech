@@ -1,4 +1,4 @@
-package com.paytech.payment.channel.domain;
+package com.paytech.channel.connector.domain;
 
 
 import lombok.Getter;

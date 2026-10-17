@@ -10,6 +10,7 @@ import java.util.Currency;
 
 import org.springframework.stereotype.Component;
 
+import com.paytech.channel.connector.api.enums.ChannelPaymentStatus;
 import com.paytech.foundation.compensation.api.CompensationEventRegistrar;
 import com.paytech.payment.card.service.CardService;
 import com.paytech.payment.execution.core.dal.dataobject.PaymentAction;
@@ -24,17 +25,15 @@ import com.paytech.payment.execution.integration.PaymentChannelClient;
 import com.paytech.payment.execution.service.handler.PaymentSucceededHandler;
 
 /**
- * 直接收款（PayerMax 卡直付对接技术方案第 5 节）：经 Channel 端口以冻结坐标调用 Platform 标准 API PAY，卡只以支付工具 Token 传递。
+ * 直接收款（PayerMax 卡直付对接技术方案第 5 节）：经 channel-connector 端口以冻结坐标执行渠道操作 PAY，卡只以支付工具 Token 传递。
  *
  * <p>
- * 结果映射：SUCCESS + SUCCEEDED → 成功；SUCCESS + PENDING → 处理中（有跳转时记 3DS 交互，指令只放入本次 Context）；SUCCESS + FAILED、FAIL、 NOT_SENT →
- * 失败；ERROR → 未知。恢复（渠道通知与查询）本期不做，PROCESSING/UNKNOWN 保持原状；不重发扣款。
+ * 只消费 channel-connector 已映射的结论（D06），不解释 Platform 输出键：SUCCESS + SUCCEEDED → 成功；SUCCESS + PENDING → 处理中（有跳转时记
+ * 3DS 交互，指令只放入本次 Context）；SUCCESS + FAILED、FAIL、NOT_SENT → 失败；SUCCESS + 无法识别的状态、ERROR → 未知。恢复（渠道通知与查询）
+ * 本期不做，PROCESSING/UNKNOWN 保持原状；不重发扣款。
  */
 @Component
 public class PayActionActor extends AbstractActionActor<PayContext> {
-    /** 标准 API 编码。 */
-    static final String STANDARD_API = "PAY";
-
     /** 3DS 等交互的有效期上限；渠道订单最短有效期 1800 秒。 */
     static final Duration INTERACTION_WINDOW = Duration.ofMinutes(30);
 
@@ -69,9 +68,9 @@ public class PayActionActor extends AbstractActionActor<PayContext> {
         ChannelExecutionResult channel = paymentChannelClient.execute(command(context));
         var now = clock.instant().truncatedTo(ChronoUnit.MICROS);
         return switch (channel.getOutcome()) {
-            case SUCCESS -> accepted(context, PayOutputs.of(channel.getOutputs()), now);
-            case FAIL -> rejected(PayOutputs.of(channel.getOutputs()), now);
-            case NOT_SENT -> failed(PayOutputs.empty(), now, channel.getFailureCode());
+            case SUCCESS -> accepted(context, channel, now);
+            case FAIL -> rejected(channel, now);
+            case NOT_SENT -> failed(null, null, now, channel.getFailureCode());
             case ERROR -> ActionResult.unknown();
         };
     }
@@ -98,8 +97,7 @@ public class PayActionActor extends AbstractActionActor<PayContext> {
         var intent = context.getIntent();
         var attempt = context.getAttempt();
         var command = new ChannelExecutionCommand();
-        command.setStandardApiCode(STANDARD_API);
-        command.setOperation(ActionType.PAY.getCode());
+        command.setOperation(ActionChannelOperations.of(ActionType.PAY));
         command.setEntityNo(intent.getEntityNo());
         command.setChannelId(attempt.getChannelId());
         command.setChannelAccountId(attempt.getChannelAccountId());
@@ -136,23 +134,22 @@ public class PayActionActor extends AbstractActionActor<PayContext> {
         return amount.setScale(Math.max(digits, 0), RoundingMode.UNNECESSARY).toPlainString();
     }
 
-    /** 渠道已受理：按支付状态映射；不认识的状态视为未知。 */
-    ActionResult accepted(PayContext context, PayOutputs outputs, Instant now) {
-        String status = outputs.getPaymentStatus();
-        ActionResult result = switch (status == null ? "" : status) {
-            case PayOutputs.STATUS_SUCCEEDED -> result(ActionStatus.SUCCEEDED, outputs, now);
-            case PayOutputs.STATUS_PENDING -> pending(context, outputs, now);
-            case PayOutputs.STATUS_FAILED -> rejected(outputs, now);
-            default -> ActionResult.unknown();
+    /** 渠道已受理：按 channel-connector 映射的支付状态处理；无法识别的状态视为未知。 */
+    ActionResult accepted(PayContext context, ChannelExecutionResult channel, Instant now) {
+        ChannelPaymentStatus status = channel.getPaymentStatus();
+        ActionResult result = status == null ? ActionResult.unknown() : switch (status) {
+            case SUCCEEDED -> result(ActionStatus.SUCCEEDED, channel.getChannelStatus(), channel.getFailureMessage(), now);
+            case PENDING -> pending(context, channel, now);
+            case FAILED -> rejected(channel, now);
         };
-        result.setChannelTransactionId(outputs.getChannelTransactionRef());
+        result.setChannelTransactionId(channel.getChannelTransactionRef());
         return result;
     }
 
     /** 待认证或处理中：有跳转地址时记 3DS 交互并把指令交给本次响应。 */
-    ActionResult pending(PayContext context, PayOutputs outputs, Instant now) {
-        var result = result(ActionStatus.PROCESSING, outputs, now);
-        String redirectUrl = outputs.getRedirectUrl();
+    ActionResult pending(PayContext context, ChannelExecutionResult channel, Instant now) {
+        var result = result(ActionStatus.PROCESSING, channel.getChannelStatus(), channel.getFailureMessage(), now);
+        String redirectUrl = channel.getRedirectUrl();
         if (redirectUrl != null) {
             var expiresAt = now.plus(INTERACTION_WINDOW);
             result.setInteractionType(InteractionType.THREE_DS_CHALLENGE);
@@ -162,24 +159,24 @@ public class PayActionActor extends AbstractActionActor<PayContext> {
         return result;
     }
 
-    /** 渠道明确拒绝或已拒绝的交易：失败代码取自输出。 */
-    static ActionResult rejected(PayOutputs outputs, Instant now) {
-        return failed(outputs, now, outputs.getFailureCode());
+    /** 渠道明确拒绝或已拒绝的交易：失败代码取自渠道结论。 */
+    static ActionResult rejected(ChannelExecutionResult channel, Instant now) {
+        return failed(channel.getChannelStatus(), channel.getFailureMessage(), now, channel.getFailureCode());
     }
 
-    /** 明确失败：记录安全的失败代码与说明。 */
-    static ActionResult failed(PayOutputs outputs, Instant now, String code) {
-        var result = result(ActionStatus.FAILED, outputs, now);
+    /** 明确失败：记录安全的失败代码与说明；未发出请求时没有渠道状态与说明。 */
+    static ActionResult failed(String channelStatus, String failureMessage, Instant now, String code) {
+        var result = result(ActionStatus.FAILED, channelStatus, failureMessage, now);
         result.setChannelResponseCode(safeCode(code));
         return result;
     }
 
     /** 公共结果字段：渠道原始状态作为响应代码，失败说明截断到列长。 */
-    static ActionResult result(ActionStatus status, PayOutputs outputs, Instant now) {
+    static ActionResult result(ActionStatus status, String channelStatus, String failureMessage, Instant now) {
         var result = new ActionResult();
         result.setStatus(status);
-        result.setChannelResponseCode(safeCode(outputs.getChannelStatus()));
-        String message = outputs.getFailureMessage();
+        result.setChannelResponseCode(safeCode(channelStatus));
+        String message = failureMessage;
         result.setChannelResponseMsg(message == null ? null : message.substring(0, Math.min(message.length(), 512)));
         result.setChannelResultTime(now);
         return result;

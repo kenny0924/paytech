@@ -6,14 +6,14 @@ server:
 
 spring:
   application:
-    name: payment-orchestration-service
+    name: payment-service
   cloud:
     nacos:
       config:
         # 启用 nacos Profile 后，从配置中心加载服务配置。
         enabled: false
       discovery:
-        # 注册本服务并发现 Platform、Vault 等内部服务；地址与命名空间由部署环境注入。
+        # 注册本服务并发现 channel-connector、Risk、Vault 等内部服务；地址与命名空间由部署环境注入。
         server-addr: "${NACOS_SERVER_ADDR:127.0.0.1:8848}"
         namespace: "${NACOS_NAMESPACE:mor-local}"
   datasource:
@@ -42,7 +42,7 @@ spring:
     password: "${PAYMENT_RABBITMQ_PASSWORD:}"
     virtual-host: "${PAYMENT_RABBITMQ_VHOST:/mor-local}"
     connection-timeout: 2s
-    # 发布确认与不可路由退回：PaymentSucceeded 补偿 Handler 等待 Broker 确认后才算发布成功。
+    # 发布确认与不可路由退回：PaymentSucceeded 补偿 Handler 等待 Broker 确认后才算发布成功（旧 Topic 与 payment.events 均如此）。
     publisher-confirm-type: correlated
     publisher-returns: true
     template:
@@ -67,6 +67,19 @@ mybatis:
 compensation:
   enabled: true
 
+# paytech-messaging 发布端：声明 payment.events（Durable Fanout）并提供 DomainEventPublisher（design/08 §3）。
+messaging:
+  producer:
+    service: payment
+
+# 实例 ID（实例清单 instance.id，01 §5）：领域事件信封 instanceId 与内部调用 Token 的 inst。
+paytech:
+  instance-id: "${PAYTECH_INSTANCE_ID:main}"
+
+# 内部调用身份（D26）：默认 OFF；YAML 中必须带引号，裸 OFF 会被解析为布尔 false。
+internal-auth:
+  mode: "${PAYMENT_INTERNAL_AUTH_MODE:OFF}"
+
 redis:
   coordination:
     enabled: true
@@ -75,17 +88,16 @@ redis:
       lease-time: 30s
 
 payment:
-  channel:
-    capability-definitions:
-      "[ACTION.PAY]": { value-type: BOOLEAN }
-      "[ACTION.AUTHORIZE]": { value-type: BOOLEAN }
-      "[ACTION.AUTHENTICATE]": { value-type: BOOLEAN }
-      "[ACTION.CAPTURE]": { value-type: BOOLEAN }
-      "[ACTION.VOID]": { value-type: BOOLEAN }
-      "[ACTION.REFUND]": { value-type: BOOLEAN }
-      "[AMOUNT.MIN]": { value-type: DECIMAL }
-      "[AMOUNT.MAX]": { value-type: DECIMAL }
-      "[SECURITY.3DS_MODE]": { value-type: CODE, allowed-codes: [REQUIRED, SUPPORTED, UNSUPPORTED] }
+  # 能力代码目录已随渠道配置迁到 channel-connector（channel-connector.capability-definitions，D06）。
+  event:
+    # PaymentSucceeded 信封身份：sourceService 与 messaging.producer.service 一致。
+    source-service: payment
+    instance-id: "${paytech.instance-id}"
+  outbound:
+    # channel-connector 无 context path；渠道操作读取超时须大于其 Platform 读取超时（30s）。
+    channel-connector-context-path: ""
+    channel-candidate-read-timeout: 2s
+    channel-operation-read-timeout: 35s
   execution:
     # 必须显式配置有效窗口；零值仅禁用首次申请，不影响原工具重放。
     instrument-preparation-window: "${PAYMENT_INSTRUMENT_PREPARATION_WINDOW:PT0S}"
@@ -99,12 +111,14 @@ payment:
 
 vault:
   client:
-    caller-service: payment-orchestration-service
+    caller-service: payment-service
     service-id: vault-service
     connect-timeout: 2s
     read-timeout: 5s
 
 management:
+  server:
+    port: 19103
   endpoints:
     access:
       default: none
@@ -135,7 +149,7 @@ spring:
       on-profile: nacos
     import:
       - "optional:nacos:mor-common.yaml?group=${NACOS_GROUP:DEFAULT_GROUP}&refreshEnabled=false"
-      - "nacos:payment-orchestration-service.yaml?group=${NACOS_GROUP:DEFAULT_GROUP}&refreshEnabled=true"
+      - "nacos:payment-service.yaml?group=${NACOS_GROUP:DEFAULT_GROUP}&refreshEnabled=true"
   cloud:
     nacos:
       config:

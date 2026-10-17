@@ -1,8 +1,8 @@
-package com.paytech.payment.channel.domain;
+package com.paytech.channel.connector.domain;
 
-import com.paytech.payment.channel.core.dal.dataobject.ChannelAccount;
-import com.paytech.payment.channel.core.dal.dataobject.ChannelMid;
-import com.paytech.payment.channel.core.dal.dataobject.PaymentChannel;
+import com.paytech.channel.connector.core.dal.dataobject.ChannelAccount;
+import com.paytech.channel.connector.core.dal.dataobject.ChannelMid;
+import com.paytech.channel.connector.core.dal.dataobject.PaymentChannel;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

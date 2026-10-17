@@ -1,14 +1,9 @@
 package com.paytech.payment.test.mocker;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.HexFormat;
-import java.util.List;
-import java.util.Map;
 
 import org.springframework.boot.test.context.TestComponent;
 import org.springframework.core.env.Environment;
@@ -16,73 +11,31 @@ import org.springframework.http.MediaType;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
-import com.paytech.foundation.testsupport.api.Clear;
-import com.paytech.foundation.testsupport.api.MockHttpFault;
 import com.paytech.payment.api.card.request.RevealChannelCardMaterialRequestBody;
 import com.paytech.payment.api.card.response.RevealChannelCardMaterialResponseBody;
-import com.paytech.platform.support.api.standardapi.request.ExecuteStandardApiRequestBody;
-import com.paytech.platform.support.api.standardapi.response.ExecuteStandardApiResponseBody;
 
 import lombok.RequiredArgsConstructor;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
 
 /**
- * Platform 标准 API 执行的响应 DTO：按用例配置返回 executeStatus/outputs 或 Problem 故障。
+ * Platform 读卡回调的测试替身：与真实 Platform 一样经真实 HTTP 回调 Payment 读卡接口（Caller platform-support-service），
+ * 由 {@link ChannelConnectorMocker} 在渠道操作请求含 card.token 时调用（channel-connector → Platform → Payment 的组合链路）。
  *
  * <p>
- * 与真实 Platform 一样，收到含 card.token 的请求时先经真实 HTTP 回调 Payment 读卡接口（Caller platform-support-service），
- * 只记录读卡结果的卡号末四位与 CVV 是否存在，以及全部卡值的 SHA-256 摘要（供核对与申请时一致），不保存卡值；读卡失败时按真实 Platform 返回 503 INTEGRATION_INITIALIZATION_FAILED。
+ * 只返回卡号末四位与 CVV 是否存在，以及全部卡值的 SHA-256 摘要（供核对与申请时一致），不保存卡值。回调目标在第 12 步改为 card 服务。
  */
 @TestComponent
 @RequiredArgsConstructor
-public class PlatformMocker implements Clear {
-    private static final JsonMapper JSON = JsonMapper.builder().build();
-
+public class PlatformMocker {
     private final Environment environment;
-    private final List<Call> calls = new ArrayList<>();
-    private ExecuteStandardApiResponseBody response;
-    private MockHttpFault fault;
-    private int unexpected;
-
-    /** 配置 200 响应。 */
-    public synchronized void respond(String executeStatus, String outputsJson) {
-        response = new ExecuteStandardApiResponseBody(executeStatus, JSON.readTree(outputsJson));
-        fault = null;
-    }
-
-    /** 配置 Problem 或网络故障。 */
-    public synchronized void fail(MockHttpFault failure) {
-        fault = failure;
-        response = null;
-    }
-
-    /** HTTP Mock 实际调用此处：先读卡，再按配置响应。 */
-    public ExecuteStandardApiResponseBody execute(String standardApiCode, ExecuteStandardApiRequestBody body) {
-        var revealed = revealCard(body.getInput());
-        synchronized (this) {
-            calls.add(new Call(standardApiCode, body.getIntegrationCode(), body.getInput(), revealed[0], revealed[1]));
-            if (revealed[0] != null && revealed[0].startsWith("REJECTED")) {
-                throw MockHttpFault.json(503, Map.of("type", "about:blank", "title", "Service Unavailable",
-                    "detail", "外部 API 初始化失败", "code", "INTEGRATION_INITIALIZATION_FAILED"));
-            }
-            if (fault != null) {
-                throw fault;
-            }
-            if (response == null) {
-                unexpected++;
-                throw new AssertionError("未配置的 Platform 执行");
-            }
-            return response;
-        }
-    }
 
     /**
      * 按真实 Platform 的 PAYMENT_CARD 初始化读卡
      *
-     * @return [“末四位/CVV 是否存在”或拒绝状态码, 卡值摘要]；请求不含 card.token 时均为 null
+     * @param input 渠道操作的标准 API 输入
+     * @return [“末四位/CVV 是否存在”或 “REJECTED 状态码”, 卡值摘要]；输入不含 card.token 时均为 null
      */
-    String[] revealCard(JsonNode input) {
+    public String[] revealCard(JsonNode input) {
         if (!input.path("card").path("token").isString()) {
             return new String[2];
         }
@@ -114,34 +67,5 @@ public class PlatformMocker implements Clear {
         } catch (NoSuchAlgorithmException unavailable) {
             throw new IllegalStateException(unavailable);
         }
-    }
-
-    /** 本例执行请求。 */
-    public synchronized List<Call> calls() {
-        return List.copyOf(calls);
-    }
-
-    /** 唯一的一次执行请求。 */
-    public synchronized Call only() {
-        assertEquals(1, calls.size(), "Platform 执行次数");
-        return calls.getFirst();
-    }
-
-    /** 每例结束检查没有未配置的执行。 */
-    public synchronized void assertNoUnexpectedCalls() {
-        assertEquals(0, unexpected, "存在未配置的 Platform 执行");
-    }
-
-    @Override
-    public synchronized void clear() {
-        calls.clear();
-        response = null;
-        fault = null;
-        unexpected = 0;
-    }
-
-    /** 一次执行请求：标准 API、接入方、输入、读卡结果摘要与卡值摘要。 */
-    public record Call(String standardApiCode, String integrationCode, JsonNode input, String revealed,
-        String materialDigest) {
     }
 }

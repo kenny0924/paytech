@@ -1,7 +1,7 @@
-package com.paytech.payment.channel.domain;
+package com.paytech.channel.connector.domain;
 
 import java.math.BigDecimal;
-import com.paytech.payment.channel.core.enums.CapabilityValueType;
+import com.paytech.channel.connector.core.enums.CapabilityValueType;
 import lombok.Getter;
 import lombok.Setter;
 

@@ -16,10 +16,9 @@ import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.cfg.CoercionAction;
 import tools.jackson.databind.cfg.CoercionInputShape;
 
-/** 支付受理所需的基础组件集中装配，不加入尚无消费者的下游依赖。 */
+/** 支付受理所需的基础组件集中装配：本服务唯一数据源扫描 execution 与 card（第 12 步前）的 Mapper，不扫描渠道表。 */
 @Configuration(proxyBeanMethods = false)
-@MapperScan({"com.paytech.payment.execution.core.dal.mapper", "com.paytech.payment.channel.core.dal.mapper",
-    "com.paytech.payment.card.core.dal.mapper"})
+@MapperScan({"com.paytech.payment.execution.core.dal.mapper", "com.paytech.payment.card.core.dal.mapper"})
 public class PaymentConfiguration {
     /** 为实际 Repository 提供已配置的正式 ID 生成器，不使用测试专用替身。 */
     @Bean

@@ -8,6 +8,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
 import com.paytech.payment.api.execution.PaymentIntentApi;
 import com.paytech.payment.execution.core.enums.AttemptStatus;
@@ -15,15 +16,16 @@ import com.paytech.payment.execution.core.enums.AuthenticationRequirement;
 import com.paytech.payment.execution.core.enums.RiskResult;
 import com.paytech.payment.execution.service.handler.PaymentSucceededHandler;
 import com.paytech.payment.test.base.AbstractPayCardTest;
-import com.paytech.payment.test.mocker.ChannelDataMocker.Fixture;
+import com.paytech.payment.test.mocker.ChannelConnectorMocker.Candidate;
 import com.paytech.payment.test.probe.PaymentResultProbe;
 
 /**
- * PaymentSucceeded 发布：从 pay 的真实 HTTP 入口收款成功，补偿任务提交后经本机 RabbitMQ 发布到 topic_payment_result。
+ * PaymentSucceeded 双写（design/08 §3、D34）：从 pay 的真实 HTTP 入口收款成功，补偿任务提交后经本机 RabbitMQ 同时发布到
+ * 旧 topic_payment_result（现有报文，Commerce 尚未切换）与 payment.events（paytech-messaging Schema v1 信封）。
  *
  * <p>
- * 每例用临时排他队列绑定生产 Exchange 观察：成功恰好发布一条、信封与最小 Payload 正确、Payload Hash 可重算、不含卡数据与付款人信息，
- * 发布确认后补偿任务删除；支付失败不登记、不发布。
+ * 每例用两个临时排他队列分别绑定两个生产交换机观察：成功时两边各恰好一条、信封与最小 Payload 正确、Payload Hash 可重算、
+ * 不含卡数据与付款人信息，两次发布均确认后补偿任务删除；支付失败与处理中两边都不发布。
  *
  * @see PaymentIntentApi#pay(String, String, com.paytech.payment.api.execution.request.PayRequestBody)
  */
@@ -31,12 +33,15 @@ class PaymentSucceededPublishTest extends AbstractPayCardTest {
     @Autowired
     private PaymentResultProbe results;
 
-    private Fixture fixture;
+    @Value("${payment.event.instance-id}")
+    private String instanceId;
 
-    /** 本类公共：渠道三元组、风控通过与临时观察队列。 */
+    private Candidate candidate;
+
+    /** 本类公共：MID 候选、风控通过与两个临时观察队列。 */
     @BeforeEach
     void setUpClassMocks() {
-        fixture = data.cardFixture("PAYERMAX", ENTITY_NO, CURRENCY);
+        candidate = channel.candidate(ENTITY_NO, CURRENCY);
         risk.respond(RiskResult.ALLOW, AuthenticationRequirement.NOT_REQUIRED);
         results.bind();
     }
@@ -47,15 +52,15 @@ class PaymentSucceededPublishTest extends AbstractPayCardTest {
         results.unbind();
     }
 
-    /** 成功：发布一条 PaymentSucceeded，信封、Payload 与 Hash 正确，补偿任务在确认后删除。 */
+    /** 成功：旧 Topic 仍收到一条现有报文，payment.events 收到一条 v1 新信封；两者 Payload 相同、Hash 正确，补偿任务在确认后删除。 */
     @Test
     void test_succeededPublishedOnce() {
-        platform.respond("SUCCESS", """
-            {"paymentStatus":"SUCCEEDED","channelTransactionRef":"T-PUB-1","channelStatus":"SUCCESS"}""");
+        channel.succeeded("T-PUB-1");
         var paid = newPayment();
         long attemptId = attemptId(paid.pay());
 
         var message = results.awaitSucceeded(attemptId);
+        var envelope = results.awaitEnvelope(attemptId);
 
         var attempt = mapper.attempt(attemptId);
         assertEquals(AttemptStatus.SUCCEEDED.getCode(), attempt.get("status"));
@@ -71,14 +76,15 @@ class PaymentSucceededPublishTest extends AbstractPayCardTest {
         expected.put("currency", CURRENCY);
         expected.put("capturedAmount", AMOUNT);
         expected.put("paymentMethodCode", PAYMENT_METHOD_CODE);
-        expected.put("channelId", String.valueOf(fixture.getChannel().getChannelId()));
-        expected.put("channelAccountId", String.valueOf(fixture.getAccount().getChannelAccountId()));
-        expected.put("midId", String.valueOf(fixture.getMid().getMidId()));
+        expected.put("channelId", String.valueOf(candidate.channelId()));
+        expected.put("channelAccountId", String.valueOf(candidate.channelAccountId()));
+        expected.put("midId", String.valueOf(candidate.midId()));
         expected.put("channelTransactionRef", "T-PUB-1");
-        message.envelope(attemptId, ((Number)attempt.get("version")).longValue()).payload(expected)
-            .payloadHashRecomputable()
-            .excludes(PAN, paid.token, CONSUMER_REFERENCE, CONSUMER_IP, CONSUMER_USER_AGENT, RETURN_URL, "consumerReference",
-                "cardToken", "card", "cvv", "clientIp", "userAgent");
+        long version = ((Number)attempt.get("version")).longValue();
+        String[] forbidden = {PAN, paid.token, CONSUMER_REFERENCE, CONSUMER_IP, CONSUMER_USER_AGENT, RETURN_URL,
+            "consumerReference", "cardToken", "card", "cvv", "clientIp", "userAgent"};
+        message.envelope(attemptId, version).payload(expected).payloadHashRecomputable().excludes(forbidden);
+        envelope.envelope(attemptId, version, instanceId).payload(expected).excludes(forbidden);
         assertTrue(mapper.compensationEvents(PaymentSucceededHandler.EVENT_TYPE, String.valueOf(attemptId)).isEmpty(),
             "发布确认后补偿任务应删除");
     }
@@ -86,11 +92,11 @@ class PaymentSucceededPublishTest extends AbstractPayCardTest {
     /** 原提交重放不重复登记或发布。 */
     @Test
     void test_replayDoesNotPublishAgain() {
-        platform.respond("SUCCESS", """
-            {"paymentStatus":"SUCCEEDED","channelTransactionRef":"T-PUB-R","channelStatus":"SUCCESS"}""");
+        channel.succeeded("T-PUB-R");
         var paid = newPayment();
         long attemptId = attemptId(paid.pay());
         results.awaitSucceeded(attemptId);
+        results.awaitEnvelope(attemptId);
 
         paid.pay();
 
@@ -100,9 +106,7 @@ class PaymentSucceededPublishTest extends AbstractPayCardTest {
     /** 支付失败：不登记补偿任务，也不发布。 */
     @Test
     void test_failedNotPublished() {
-        platform.respond("SUCCESS", """
-            {"paymentStatus":"FAILED","channelTransactionRef":"T-PUB-D","channelStatus":"FAILED",
-             "failureCode":"ISSUER_PAYMENT_REJECTED","failureMessage":"Transaction failed at issuer end."}""");
+        channel.declined("T-PUB-D", "ISSUER_PAYMENT_REJECTED", "Transaction failed at issuer end.");
         var paid = newPayment();
         long attemptId = attemptId(paid.pay());
 
@@ -113,9 +117,7 @@ class PaymentSucceededPublishTest extends AbstractPayCardTest {
     /** 3DS 待认证（处理中）：不登记补偿任务，也不发布。 */
     @Test
     void test_processingNotPublished() {
-        platform.respond("SUCCESS", """
-            {"paymentStatus":"PENDING","nextAction":{"type":"THREE_DS_CHALLENGE","redirectUrl":"https://3ds.local.invalid/c"},
-             "channelTransactionRef":"T-PUB-P","channelStatus":"PENDING"}""");
+        channel.pending("T-PUB-P", "https://3ds.local.invalid/c");
         var paid = newPayment();
         long attemptId = attemptId(paid.pay());
 

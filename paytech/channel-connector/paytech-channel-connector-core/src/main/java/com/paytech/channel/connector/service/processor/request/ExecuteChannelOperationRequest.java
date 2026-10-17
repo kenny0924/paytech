@@ -1,10 +1,9 @@
-package com.paytech.payment.channel.service.processor.request;
+package com.paytech.channel.connector.service.processor.request;
 
 import java.util.Map;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -17,11 +16,6 @@ public class ExecuteChannelOperationRequest {
     @NotNull
     private GetChannelExecutionConfigRequest target;
 
-    /** Platform 标准 API 编码，例如 PAY。 */
-    @NotNull
-    @Pattern(regexp = "[A-Z][A-Z0-9_]{0,63}")
-    private String standardApiCode;
-
     /**
      * 标准 API 业务输入
      * <li>不含 channelAccount；Processor 按冻结账号补齐账号身份与 Vault 引用。</li>
@@ -31,6 +25,6 @@ public class ExecuteChannelOperationRequest {
 
     @Override
     public String toString() {
-        return "ExecuteChannelOperationRequest[" + standardApiCode + ", input redacted]";
+        return "ExecuteChannelOperationRequest[" + target.getOperation() + ", input redacted]";
     }
 }

@@ -19,7 +19,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 
 import com.paytech.foundation.common.error.ErrorException;
-import com.paytech.payment.execution.core.action.PayActionActor;
+import com.paytech.payment.execution.domain.PaymentSucceededPayload;
 import com.paytech.payment.execution.domain.PaymentSucceededResult;
 import com.paytech.payment.execution.integration.PaymentResultPublisher;
 
@@ -27,7 +27,7 @@ import lombok.AllArgsConstructor;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * 支付结果的 RabbitMQ 发布：topic_payment_result / payment.succeeded.v1
+ * 支付结果的旧版 RabbitMQ 发布：topic_payment_result / payment.succeeded.v1（与 payment.events 新信封双写，消费方切换后删除）
  * <li>统一 JSON 信封、Persistent、mandatory；收到 Broker ack 且未被退回才算成功。</li>
  * <li>payloadHash 是 payload 按本类固定字段顺序序列化后的 UTF-8 字节 SHA-256；ID 与金额一律十进制字符串。</li>
  * <li>Payload 只含最小集合，不含卡数据、付款人引用、IP 与 User-Agent。</li>
@@ -40,7 +40,7 @@ public class PaymentResultRabbitPublisher implements PaymentResultPublisher {
     /** 支付成功路由键。 */
     public static final String SUCCEEDED_ROUTING_KEY = "payment.succeeded.v1";
     /** 支付成功事件类型。 */
-    public static final String SUCCEEDED_EVENT_TYPE = "PaymentSucceeded";
+    public static final String SUCCEEDED_EVENT_TYPE = PaymentSucceededPayload.EVENT_TYPE;
 
     private static final Duration CONFIRM_TIMEOUT = Duration.ofSeconds(10);
 
@@ -61,7 +61,7 @@ public class PaymentResultRabbitPublisher implements PaymentResultPublisher {
 
     /** 统一信封消息。 */
     Message message(String eventKey, PaymentSucceededResult result) {
-        Map<String, Object> payload = payload(result);
+        Map<String, String> payload = PaymentSucceededPayload.fields(result);
         Map<String, Object> envelope = new LinkedHashMap<>();
         envelope.put("eventKey", eventKey);
         envelope.put("eventType", SUCCEEDED_EVENT_TYPE);
@@ -76,28 +76,6 @@ public class PaymentResultRabbitPublisher implements PaymentResultPublisher {
         return MessageBuilder.withBody(jsonMapper.writeValueAsBytes(envelope)).setContentType("application/json")
             .setContentEncoding(StandardCharsets.UTF_8.name()).setDeliveryMode(MessageDeliveryMode.PERSISTENT)
             .setMessageId(eventKey).setType(SUCCEEDED_EVENT_TYPE).build();
-    }
-
-    /** 固定字段顺序的最小 Payload；金额按币种精度写成主单位十进制字符串。 */
-    static Map<String, Object> payload(PaymentSucceededResult result) {
-        Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("clientId", Long.toString(result.getClientId()));
-        payload.put("orderId", Long.toString(result.getSourceId()));
-        payload.put("sourceType", result.getSourceType());
-        payload.put("paymentIntentId", Long.toString(result.getPaymentIntentId()));
-        payload.put("paymentAttemptId", Long.toString(result.getPaymentAttemptId()));
-        payload.put("sourceSubmissionId", Long.toString(result.getSourceSubmissionId()));
-        payload.put("entityNo", result.getEntityNo());
-        payload.put("amount", PayActionActor.amountText(result.getAmount(), result.getCurrency()));
-        payload.put("currency", result.getCurrency());
-        payload.put("capturedAmount", PayActionActor.amountText(result.getCapturedAmount(), result.getCurrency()));
-        payload.put("paymentSucceededTime", result.getSucceededAt().toString());
-        payload.put("paymentMethodCode", result.getPaymentMethodCode());
-        payload.put("channelId", Long.toString(result.getChannelId()));
-        payload.put("channelAccountId", Long.toString(result.getChannelAccountId()));
-        payload.put("midId", Long.toString(result.getMidId()));
-        payload.put("channelTransactionRef", result.getChannelTransactionRef());
-        return payload;
     }
 
     /** 等待 Publisher Confirm；超时或中断按未发布处理，由补偿任务重试。 */

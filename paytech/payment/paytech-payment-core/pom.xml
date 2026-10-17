@@ -5,26 +5,29 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.paytech</groupId>
-        <artifactId>paytech-payment-service</artifactId>
+        <artifactId>paytech-payment</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
-    <artifactId>paytech-payment-execution</artifactId>
+    <artifactId>paytech-payment-core</artifactId>
     <packaging>jar</packaging>
-    <name>Payment Execution</name>
-
+    <name>PayTech Payment Core</name>
+    <description>Payment execution (intent / attempt / action), routing package, channel-connector and risk ports, and the
+        PaymentSucceeded compensation handler.</description>
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot</artifactId>
         </dependency>
+        <!-- 卡域第 12 步前仍是 payment 进程内模块（design/05）；只有 core 与 app 可以依赖。 -->
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-payment-card</artifactId>
         </dependency>
+        <!-- 渠道候选与渠道操作经 channel-connector HTTP 合同（D06）。 -->
         <dependency>
             <groupId>com.paytech</groupId>
-            <artifactId>paytech-payment-routing</artifactId>
+            <artifactId>paytech-channel-connector-api</artifactId>
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
@@ -46,6 +49,11 @@
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-compensation-event</artifactId>
+        </dependency>
+        <!-- PaymentSucceeded 新信封经 DomainEventPublisher 端口发布（design/08 §3）；发布实现只在 app。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-messaging-api</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
@@ -69,7 +77,6 @@
             <artifactId>jakarta.validation-api</artifactId>
         </dependency>
     </dependencies>
-
     <build>
         <plugins>
             <plugin>
@@ -89,26 +96,9 @@
                 <artifactId>maven-enforcer-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>enforce-payment-execution-isolation</id>
-                        <goals>
-                            <goal>enforce</goal>
-                        </goals>
+                        <id>enforce-payment-card-consumers</id>
                         <configuration>
-                            <rules>
-                                <bannedDependencies>
-                                    <searchTransitive>true</searchTransitive>
-                                    <excludes>
-                                        <exclude>com.paytech:paytech-payment-*</exclude>
-                                    </excludes>
-                                    <includes>
-                                        <include>com.paytech:paytech-payment-routing</include>
-                                        <include>com.paytech:paytech-payment-card</include>
-                                    </includes>
-                                    <message>Payment Execution may depend only on the published Routing and Card capabilities;
-                                        Payment API, Web, Test and Channel remain forbidden.
-                                    </message>
-                                </bannedDependencies>
-                            </rules>
+                            <skip>true</skip>
                         </configuration>
                     </execution>
                 </executions>

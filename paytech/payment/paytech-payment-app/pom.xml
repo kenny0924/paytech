@@ -5,37 +5,31 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.paytech</groupId>
-        <artifactId>paytech-payment-service</artifactId>
+        <artifactId>paytech-payment</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
-    <artifactId>paytech-payment-web</artifactId>
-    <name>Payment Web</name>
+    <artifactId>paytech-payment-app</artifactId>
+    <name>PayTech Payment App</name>
+    <description>Deployable payment service: Spring Boot entry, controllers, DataSource / MyBatis scan, outbound HTTP clients,
+        RabbitMQ publication of PaymentSucceeded.</description>
     <dependencies>
-        <dependency><groupId>com.paytech</groupId><artifactId>paytech-payment-channel</artifactId></dependency>
-        <!-- Execution 端口的出站实现：Platform 标准 API（requirements/20261014/payment-PayerMax卡直付对接）与 Risk 统一评估（requirements/20261015/payment-接入Risk统一评估）。 -->
-        <dependency><groupId>com.paytech</groupId><artifactId>platform-support-api</artifactId><version>1.0.0-SNAPSHOT</version></dependency>
-        <dependency><groupId>com.paytech</groupId><artifactId>risk-api</artifactId><version>1.0.0-SNAPSHOT</version></dependency>
+        <dependency><groupId>com.paytech</groupId><artifactId>paytech-payment-core</artifactId></dependency>
+        <dependency><groupId>com.paytech</groupId><artifactId>paytech-payment-card</artifactId></dependency>
+        <dependency><groupId>com.paytech</groupId><artifactId>paytech-payment-api</artifactId></dependency>
+        <!-- 出站：channel-connector 候选与渠道操作（D06）、Risk 统一评估（requirements/20261015/payment-接入Risk统一评估）。 -->
+        <dependency><groupId>com.paytech</groupId><artifactId>paytech-channel-connector-api</artifactId></dependency>
+        <dependency><groupId>com.paytech</groupId><artifactId>risk-api</artifactId></dependency>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-http-client-support</artifactId></dependency>
+        <!-- 内部调用身份（D26）：默认 OFF；入站校验由 MVC Starter 装配，出站 Token 见 InternalTokenClientOptions。 -->
+        <dependency><groupId>com.paytech</groupId><artifactId>paytech-internal-auth</artifactId></dependency>
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-restclient</artifactId></dependency>
         <dependency><groupId>org.springframework.cloud</groupId><artifactId>spring-cloud-starter-loadbalancer</artifactId></dependency>
-        <!-- 注册到 Nacos 并经 Nacos 发现 Platform 等内部服务（Platform 读卡回调需要发现 Payment）。 -->
+        <!-- 注册到 Nacos 并经 Nacos 发现内部服务（Platform 读卡回调需要发现 Payment）。 -->
         <dependency><groupId>com.alibaba.cloud</groupId><artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId></dependency>
         <dependency>
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.paytech</groupId>
-            <artifactId>paytech-payment-card</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.paytech</groupId>
-            <artifactId>paytech-payment-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.paytech</groupId>
-            <artifactId>paytech-payment-execution</artifactId>
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
@@ -57,11 +51,12 @@
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
         </dependency>
-        <!-- PaymentSucceeded 经 RabbitMQ 发布（requirements/20261015/payment-支付结果查询与回传）。 -->
+        <!-- PaymentSucceeded 经 RabbitMQ 发布：旧 topic_payment_result 报文与 payment.events 新信封双写（design/08 §3）。 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-amqp</artifactId>
         </dependency>
+        <dependency><groupId>com.paytech</groupId><artifactId>paytech-messaging</artifactId></dependency>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-redis-starter</artifactId></dependency>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-snowflake-id</artifactId></dependency>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-mybatis-support</artifactId></dependency>
@@ -73,6 +68,18 @@
         <plugins>
             <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId>
                 <configuration><annotationProcessorPaths><path><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><version>${lombok.version}</version></path></annotationProcessorPaths></configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>enforce-payment-card-consumers</id>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>

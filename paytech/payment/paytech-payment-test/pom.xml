@@ -5,32 +5,30 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.paytech</groupId>
-        <artifactId>paytech-payment-service</artifactId>
+        <artifactId>paytech-payment</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <artifactId>paytech-payment-test</artifactId>
-    <name>Payment Test</name>
+    <name>PayTech Payment Test</name>
+    <description>Isolated payment automated tests on mor_payment (card tables included until step 12), including the shared
+        architecture rules R1-R12.</description>
     <properties>
         <maven.install.skip>true</maven.install.skip>
         <maven.deploy.skip>true</maven.deploy.skip>
     </properties>
     <dependencies>
         <dependency><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><scope>test</scope></dependency>
-        <dependency><groupId>com.paytech</groupId><artifactId>paytech-payment-channel</artifactId></dependency>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-test-support</artifactId><scope>test</scope></dependency>
-
         <dependency>
             <groupId>com.paytech</groupId>
-            <artifactId>paytech-payment-api</artifactId>
+            <artifactId>paytech-payment-app</artifactId>
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
-            <artifactId>paytech-payment-execution</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.paytech</groupId>
-            <artifactId>paytech-payment-web</artifactId>
+            <artifactId>paytech-arch-rules</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -52,7 +50,6 @@
         <plugins>
             <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId><configuration><annotationProcessorPaths><path><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId></path></annotationProcessorPaths></configuration></plugin>
             <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId><configuration><forkCount>1</forkCount><reuseForks>true</reuseForks></configuration></plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>

@@ -12,13 +12,17 @@ import com.paytech.foundation.compensation.api.CompensationEventHandler;
 import com.paytech.foundation.compensation.api.CompensationEventRequest;
 import com.paytech.foundation.compensation.api.CompensationExecutionPolicy;
 import com.paytech.foundation.compensation.api.CompensationHandlerResult;
+import com.paytech.foundation.messaging.api.DomainEvent;
+import com.paytech.foundation.messaging.api.DomainEventPublisher;
 import com.paytech.payment.execution.core.action.ActionType;
+import com.paytech.payment.execution.core.configuration.PaymentEventProperties;
 import com.paytech.payment.execution.core.dal.dataobject.ChannelTransactionRef;
 import com.paytech.payment.execution.core.dal.dataobject.PaymentAction;
 import com.paytech.payment.execution.core.dal.dataobject.PaymentAttempt;
 import com.paytech.payment.execution.core.dal.dataobject.PaymentIntent;
 import com.paytech.payment.execution.core.enums.ActionStatus;
 import com.paytech.payment.execution.core.enums.AttemptStatus;
+import com.paytech.payment.execution.domain.PaymentSucceededPayload;
 import com.paytech.payment.execution.domain.PaymentSucceededResult;
 import com.paytech.payment.execution.domainservice.repository.ChannelTransactionRefRepository;
 import com.paytech.payment.execution.domainservice.repository.PaymentActionRepository;
@@ -31,7 +35,9 @@ import lombok.AllArgsConstructor;
 /**
  * 支付成功提交后发布 PaymentSucceeded
  * <li>eventKey 是支付尝试 ID；Handler 从尝试、意图、成功 PAY 动作及其渠道交易引用重建事件，补偿记录不保存业务内容。</li>
- * <li>发布收到 Broker 确认才成功；消费方按事件键与 Payload Hash 防重，重复发布无副作用。</li>
+ * <li>双写（design/08 §3、D34）：先向旧 topic_payment_result 发布现有报文（Commerce 消费者尚未切换），再经 {@link DomainEventPublisher}
+ * 向 payment.events 发布 Schema v1 信封（aggregateType=PAYMENT_ATTEMPT、aggregateId=尝试 ID、aggregateVersion=尝试版本）。</li>
+ * <li>两者都收到 Broker 确认才成功；任一失败按可重试处理，重试会重发两者，消费方按事件键 / eventId 与 Payload Hash 防重。</li>
  */
 @Component
 @AllArgsConstructor
@@ -44,6 +50,8 @@ public class PaymentSucceededHandler implements CompensationEventHandler {
     private final PaymentActionRepository actions;
     private final ChannelTransactionRefRepository refs;
     private final PaymentResultPublisher publisher;
+    private final DomainEventPublisher domainEvents;
+    private final PaymentEventProperties eventProperties;
 
     /** 纯工厂：只能与收款成功在同一本地事务登记。 */
     public static CompensationEventRequest buildEvent(long attemptId) {
@@ -84,6 +92,7 @@ public class PaymentSucceededHandler implements CompensationEventHandler {
         }
         try {
             publisher.publishSucceeded(result);
+            domainEvents.publish(envelope(result, eventProperties));
             return CompensationHandlerResult.success();
         } catch (RuntimeException unavailable) {
             // 不把 Broker 返回信息写入任务错误摘要。
@@ -110,6 +119,16 @@ public class PaymentSucceededHandler implements CompensationEventHandler {
             return null;
         }
         return result(intent, attempt, pay, payRefs.getFirst());
+    }
+
+    /** PaymentSucceeded Schema v1 信封；eventId 默认取 AggregateKey 四段式事件键，补偿重试不变。 */
+    static DomainEvent envelope(PaymentSucceededResult result, PaymentEventProperties properties) {
+        return DomainEvent.builder().eventType(PaymentSucceededPayload.EVENT_TYPE)
+            .schemaVersion(PaymentSucceededPayload.SCHEMA_VERSION)
+            .aggregate(PaymentSucceededPayload.AGGREGATE_TYPE, Long.toString(result.getPaymentAttemptId()))
+            .aggregateVersion(result.getAttemptVersion()).occurredAt(result.getSucceededAt())
+            .sourceService(properties.getSourceService()).instanceId(properties.getInstanceId())
+            .payload(PaymentSucceededPayload.json(result)).build();
     }
 
     /** 组装事件事实；成功时间优先取渠道结果时间。 */

@@ -3,28 +3,17 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <parent>
         <groupId>com.paytech</groupId>
         <artifactId>paytech-parent</artifactId>
         <version>1.0.0-SNAPSHOT</version>
-        <relativePath/>
+        <relativePath>../build/paytech-parent/pom.xml</relativePath>
     </parent>
-
-    <artifactId>paytech-payment-service</artifactId>
+    <artifactId>paytech-payment</artifactId>
     <packaging>pom</packaging>
-    <name>Payment Orchestration Service</name>
-
-    <modules>
-        <module>paytech-payment-api</module>
-        <module>paytech-payment-execution</module>
-        <module>paytech-payment-routing</module>
-        <module>paytech-payment-channel</module>
-        <module>paytech-payment-card</module>
-        <module>paytech-payment-web</module>
-        <module>paytech-payment-test</module>
-    </modules>
-
+    <name>PayTech Payment</name>
+    <description>Payment service aggregator: intent / attempt / action execution, routing, card domain (until step 12) and
+        PaymentSucceeded publication.</description>
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -34,17 +23,7 @@
             </dependency>
             <dependency>
                 <groupId>com.paytech</groupId>
-                <artifactId>paytech-payment-execution</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.paytech</groupId>
-                <artifactId>paytech-payment-routing</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.paytech</groupId>
-                <artifactId>paytech-payment-channel</artifactId>
+                <artifactId>paytech-payment-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -54,12 +33,27 @@
             </dependency>
             <dependency>
                 <groupId>com.paytech</groupId>
-                <artifactId>paytech-payment-web</artifactId>
+                <artifactId>paytech-payment-app</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <!-- 服务间合同：channel-connector（本步拆出）、Reactor 内的 Vault Java Client；risk-api 第 06 步统一改坐标。 -->
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>paytech-channel-connector-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>paytech-vault-client</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>risk-api</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
-
     <build>
         <plugins>
             <plugin>
@@ -67,6 +61,7 @@
                 <artifactId>maven-enforcer-plugin</artifactId>
                 <executions>
                     <execution>
+                        <!-- 原 payment-orchestration-service 的禁令（09 §1.4），并禁止依赖其他服务的 core / app（D09）。 -->
                         <id>enforce-payment-dependency-boundaries</id>
                         <goals>
                             <goal>enforce</goal>
@@ -83,7 +78,35 @@
                                         <exclude>org.apache.dubbo:*</exclude>
                                         <exclude>io.github.openfeign:*</exclude>
                                         <exclude>org.springframework.cloud:spring-cloud-starter-openfeign</exclude>
+                                        <exclude>com.paytech:*-core</exclude>
+                                        <exclude>com.paytech:*-app</exclude>
                                     </excludes>
+                                    <includes>
+                                        <include>com.paytech:paytech-common-core</include>
+                                        <include>com.paytech:paytech-payment-core</include>
+                                        <include>com.paytech:paytech-payment-app</include>
+                                    </includes>
+                                </bannedDependencies>
+                            </rules>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <!--
+                          R11 过渡（第 12 步前卡域仍在 payment 进程与库内）：只有 paytech-payment-core 与 paytech-payment-app 可以直接依赖
+                          paytech-payment-card；这两个模块以 skip 关闭本执行。只检查直接依赖：test 经 app 传递获得卡域类不在禁止之列。
+                        -->
+                        <id>enforce-payment-card-consumers</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <bannedDependencies>
+                                    <searchTransitive>false</searchTransitive>
+                                    <excludes>
+                                        <exclude>com.paytech:paytech-payment-card</exclude>
+                                    </excludes>
+                                    <message>Only paytech-payment-core and paytech-payment-app may depend on paytech-payment-card (R11 transition until step 12).</message>
                                 </bannedDependencies>
                             </rules>
                         </configuration>
@@ -104,4 +127,11 @@
             </plugin>
         </plugins>
     </build>
+    <modules>
+        <module>paytech-payment-api</module>
+        <module>paytech-payment-card</module>
+        <module>paytech-payment-core</module>
+        <module>paytech-payment-app</module>
+        <module>paytech-payment-test</module>
+    </modules>
 </project>

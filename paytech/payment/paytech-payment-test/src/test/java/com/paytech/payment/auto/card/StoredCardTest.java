@@ -36,17 +36,13 @@ class StoredCardTest extends AbstractPayCardTest {
     private static final String OTHER_CUSTOMER_ID = "70002";
     private static final String OTHER_CLIENT_ID = "102";
     private static final String NEW_CVV = "4321";
-    private static final String DECLINED = """
-        {"paymentStatus":"FAILED","channelTransactionRef":"T-STORED-D","channelStatus":"FAILED",
-         "failureCode":"ISSUER_PAYMENT_REJECTED","failureMessage":"Transaction failed at issuer end."}""";
-
     /** 每笔渠道交易号不同；渠道交易引用按交易号唯一。 */
     private int channelRefs;
 
-    /** 本类公共：卡直付渠道、风控放行；渠道响应在每笔支付前配置。 */
+    /** 本类公共：MID 候选、风控放行；渠道结论在每笔支付前配置。 */
     @BeforeEach
     void setUpClassMocks() {
-        data.cardFixture("PAYERMAX", ENTITY_NO, CURRENCY);
+        channel.candidate(ENTITY_NO, CURRENCY);
         risk.respond(RiskResult.ALLOW, AuthenticationRequirement.NOT_REQUIRED);
     }
 
@@ -74,7 +70,7 @@ class StoredCardTest extends AbstractPayCardTest {
         payManual(CLIENT_ID, CUSTOMER_ID, false, EXPIRY_YEAR);
         boolean verifiedWithoutSave = mapper.cardCredentials().getFirst().get("verifiedTime") != null;
 
-        var declined = payManual(CLIENT_ID, OTHER_CUSTOMER_ID, true, "2031", DECLINED);
+        var declined = payManual(CLIENT_ID, OTHER_CUSTOMER_ID, true, "2031", this::declined);
 
         assertAll(() -> assertTrue(verifiedWithoutSave, "未同意保存时凭证也应在成功后验证"),
             () -> assertEquals(AttemptStatus.FAILED.getCode(), declined.get("status")),
@@ -115,7 +111,7 @@ class StoredCardTest extends AbstractPayCardTest {
     void test_payWithStoredCard() {
         payManual(CLIENT_ID, CUSTOMER_ID, true, EXPIRY_YEAR);
         String token = (String)mapper.storedCards().getFirst().get("token");
-        platform.clear();
+        channel.clearOperations();
 
         var paid = payStored(CUSTOMER_ID, token);
 
@@ -124,7 +120,7 @@ class StoredCardTest extends AbstractPayCardTest {
             () -> assertEquals(1, mapper.cards().size()), () -> assertEquals(1, mapper.cardCredentials().size()),
             () -> assertEquals(mapper.storedCards().getFirst().get("storedCardId"), instrument.get("storedCardId")),
             () -> assertEquals(PlatformMocker.materialDigest(PAN, EXPIRY_MONTH, EXPIRY_YEAR, CARDHOLDER_NAME, NEW_CVV),
-                platform.only().materialDigest(), "渠道读到的卡值与已存卡或本次 CVV 不一致"),
+                channel.only().materialDigest(), "渠道读到的卡值与已存卡或本次 CVV 不一致"),
             () -> assertEquals(1, mapper.storedCards().size()));
     }
 
@@ -190,17 +186,17 @@ class StoredCardTest extends AbstractPayCardTest {
 
     /** 新建 Intent，用手输卡申请工具（可选关联 Customer 与同意保存）并成功支付，返回 pay 响应体。 */
     Map<String, Object> payManual(String clientId, String customerId, boolean saveCard, String expiryYear) {
-        return payManual(clientId, customerId, saveCard, expiryYear, succeeded());
+        return payManual(clientId, customerId, saveCard, expiryYear, this::succeeded);
     }
 
     /** 同上，渠道按指定响应返回。 */
     Map<String, Object> payManual(String clientId, String customerId, boolean saveCard, String expiryYear,
-        String channelResponse) {
+        Runnable channelOutcome) {
         var intent = newIntent(clientId);
         var body = new HashMap<String, Object>(Map.of("card", card(expiryYear), "customerId", customerId));
         body.put("saveCard", saveCard);
         String instrumentToken = apply(intent, body);
-        platform.respond("SUCCESS", channelResponse);
+        channelOutcome.run();
         return payment(intent, instrumentToken).pay().getBody();
     }
 
@@ -208,16 +204,19 @@ class StoredCardTest extends AbstractPayCardTest {
     Map<String, Object> payStored(String customerId, String storedCardToken) {
         var intent = newIntent();
         String instrumentToken = apply(intent, storedBody(customerId, storedCardToken));
-        platform.respond("SUCCESS", succeeded());
+        succeeded();
         return payment(intent, instrumentToken).pay().getBody();
     }
 
-    /** 成功响应，每次使用新的渠道交易号。 */
-    String succeeded() {
+    /** 渠道成功结论，每次使用新的渠道交易号。 */
+    void succeeded() {
         channelRefs++;
-        return """
-            {"paymentStatus":"SUCCEEDED","channelTransactionRef":"T-STORED-%d","channelStatus":"SUCCESS"}"""
-            .formatted(channelRefs);
+        channel.succeeded("T-STORED-" + channelRefs);
+    }
+
+    /** 渠道受理后拒绝。 */
+    void declined() {
+        channel.declined("T-STORED-D", "ISSUER_PAYMENT_REJECTED", "Transaction failed at issuer end.");
     }
 
     /** 已存卡申请体：Customer 可为空以验证必填。 */

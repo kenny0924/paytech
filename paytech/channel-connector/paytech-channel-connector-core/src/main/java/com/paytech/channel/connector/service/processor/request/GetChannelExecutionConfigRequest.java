@@ -1,10 +1,10 @@
-package com.paytech.payment.channel.service.processor.request;
+package com.paytech.channel.connector.service.processor.request;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
-import com.paytech.payment.channel.core.enums.ChannelOperation;
-import com.paytech.payment.channel.core.enums.ExecutionPurpose;
+import com.paytech.channel.connector.api.enums.ChannelOperation;
+import com.paytech.channel.connector.api.enums.ExecutionPurpose;
 import lombok.Getter;
 import lombok.Setter;
 

@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -18,6 +19,9 @@ import tools.jackson.dataformat.yaml.YAMLMapper;
 /**
  * 表归属白名单：{@code services.<service>.<database> = [tables]}，由 design/03 生成（见
  * {@code scripts/generate-table-ownership.mjs}）。
+ * <p>
+ * {@code transitionalPlacements} 登记 Owner 的表在后续步骤前暂居另一服务库内（如第 12 步前卡表位于 mor_payment）：
+ * 计入宿主服务的 R4 白名单与所列模块的 R11 豁免，但不重复计入物理表数。
  *
  * @author Claude
  */
@@ -32,10 +36,13 @@ public final class TableOwnership {
 
     private final Set<String> sharedInfrastructureTables;
 
+    private final List<TransitionalPlacement> transitionalPlacements;
+
     private TableOwnership(Map<String, Map<String, Set<String>>> tablesByService,
-        Set<String> sharedInfrastructureTables) {
+        Set<String> sharedInfrastructureTables, List<TransitionalPlacement> transitionalPlacements) {
         this.tablesByService = tablesByService;
         this.sharedInfrastructureTables = sharedInfrastructureTables;
+        this.transitionalPlacements = transitionalPlacements;
     }
 
     /**
@@ -82,7 +89,17 @@ public final class TableOwnership {
         }
         Set<String> shared = new LinkedHashSet<>();
         root.path("sharedInfrastructureTables").values().forEach(table -> shared.add(table.asString()));
-        return new TableOwnership(Map.copyOf(services), Set.copyOf(shared));
+        List<TransitionalPlacement> placements = new ArrayList<>();
+        for (JsonNode placement : root.path("transitionalPlacements").values()) {
+            Set<String> modules = new TreeSet<>();
+            placement.path("modules").values().forEach(module -> modules.add(module.asString()));
+            Set<String> tables = new TreeSet<>();
+            placement.path("tables").values().forEach(table -> tables.add(table.asString()));
+            placements.add(new TransitionalPlacement(placement.path("host").asString(),
+                placement.path("database").asString(), placement.path("owner").asString(),
+                placement.path("untilStep").asInt(), Set.copyOf(modules), Set.copyOf(tables)));
+        }
+        return new TableOwnership(Map.copyOf(services), Set.copyOf(shared), List.copyOf(placements));
     }
 
     /**
@@ -98,7 +115,30 @@ public final class TableOwnership {
         }
         Set<String> allowed = new TreeSet<>(sharedInfrastructureTables);
         databases.values().forEach(allowed::addAll);
+        transitionalPlacements.stream().filter(placement -> placement.host().equals(service))
+            .forEach(placement -> allowed.addAll(placement.tables()));
         return allowed;
+    }
+
+    /**
+     * 暂居其他服务库内的 Owner 表登记。
+     *
+     * @return 过渡登记
+     */
+    public List<TransitionalPlacement> transitionalPlacements() {
+        return transitionalPlacements;
+    }
+
+    /**
+     * 过渡期内与卡域 core 同等豁免 R11 的模块（卡表暂居宿主库期间的宿主内卡域模块）。
+     *
+     * @return artifactId 集合
+     */
+    public Set<String> transitionalCardModules() {
+        Set<String> modules = new TreeSet<>();
+        transitionalPlacements.stream().filter(placement -> "card".equals(placement.owner()))
+            .forEach(placement -> modules.addAll(placement.modules()));
+        return Set.copyOf(modules);
     }
 
     /**
@@ -147,10 +187,25 @@ public final class TableOwnership {
      * @return 表名
      */
     public List<String> cardTables() {
+        // 过渡登记的卡表与 card 服务自身表相同，不额外合并，保证 R11 的受保护集合只来自 Owner。
         Set<String> tables = new TreeSet<>();
         databasesOf("card").values().forEach(tables::addAll);
         tables.remove("t_compensation_event");
         tables.removeAll(sharedInfrastructureTables);
         return List.copyOf(tables);
+    }
+
+    /**
+     * 一条过渡登记：Owner 的表在 {@code untilStep} 前暂居宿主服务库。
+     *
+     * @param host 宿主服务
+     * @param database 宿主库
+     * @param owner 表的最终 Owner 服务
+     * @param untilStep 迁出步骤（11-dev-plan 编号）
+     * @param modules 宿主内承载 Owner 代码、过渡期豁免 R11 的模块
+     * @param tables 暂居的表
+     */
+    public record TransitionalPlacement(String host, String database, String owner, int untilStep, Set<String> modules,
+        Set<String> tables) {
     }
 }

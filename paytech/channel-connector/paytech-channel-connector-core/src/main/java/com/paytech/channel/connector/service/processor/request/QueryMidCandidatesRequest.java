@@ -1,4 +1,4 @@
-package com.paytech.payment.channel.service.processor.request;
+package com.paytech.channel.connector.service.processor.request;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;

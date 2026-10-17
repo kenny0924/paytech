@@ -1,10 +1,10 @@
-package com.paytech.payment.channel.core.dal.dataobject;
+package com.paytech.channel.connector.core.dal.dataobject;
 
 import java.time.Instant;
 
 import lombok.Getter;
 import lombok.Setter;
-import com.paytech.payment.channel.core.enums.ChannelStatus;
+import com.paytech.channel.connector.core.enums.ChannelStatus;
 
 
 /** PaymentChannel 对应的 Channel 所属持久化对象。 */

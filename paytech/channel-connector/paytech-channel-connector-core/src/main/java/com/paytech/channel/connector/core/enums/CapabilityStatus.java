@@ -1,4 +1,4 @@
-package com.paytech.payment.channel.core.enums;
+package com.paytech.channel.connector.core.enums;
 
 import com.paytech.foundation.common.enums.CodeEnum;
 

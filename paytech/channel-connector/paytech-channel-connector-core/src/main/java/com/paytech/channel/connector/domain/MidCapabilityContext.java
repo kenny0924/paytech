@@ -1,4 +1,4 @@
-package com.paytech.payment.channel.domain;
+package com.paytech.channel.connector.domain;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -9,13 +9,14 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.paytech.channel.connector.api.ChannelCapabilityCodes;
 import com.paytech.foundation.common.error.ErrorException;
-import com.paytech.payment.channel.core.configuration.CapabilityDefinition;
-import com.paytech.payment.channel.core.dal.dataobject.MidCapability;
-import com.paytech.payment.channel.core.dal.dataobject.MidCapabilityDetail;
-import com.paytech.payment.channel.core.enums.CapabilityStatus;
-import com.paytech.payment.channel.core.enums.CapabilityValueType;
-import com.paytech.payment.channel.service.processor.request.MidCriteria;
+import com.paytech.channel.connector.core.configuration.CapabilityDefinition;
+import com.paytech.channel.connector.core.dal.dataobject.MidCapability;
+import com.paytech.channel.connector.core.dal.dataobject.MidCapabilityDetail;
+import com.paytech.channel.connector.core.enums.CapabilityStatus;
+import com.paytech.channel.connector.core.enums.CapabilityValueType;
+import com.paytech.channel.connector.service.processor.request.MidCriteria;
 
 import lombok.AllArgsConstructor;
 
@@ -124,16 +125,17 @@ public class MidCapabilityContext {
 
     /** 金额上下限只能非负且顺序正确，缺失限额不伪造为零。 */
     void validateAmountRange(List<CapabilityView> values) {
-        var amounts = values.stream().filter(value -> "AMOUNT.MIN".equals(value.getCapabilityCode())
-            || "AMOUNT.MAX".equals(value.getCapabilityCode())).collect(Collectors.toMap(
+        var amounts = values.stream().filter(value -> ChannelCapabilityCodes.AMOUNT_MIN.equals(value.getCapabilityCode())
+            || ChannelCapabilityCodes.AMOUNT_MAX.equals(value.getCapabilityCode())).collect(Collectors.toMap(
                 CapabilityView::getCapabilityCode, Function.identity()));
         for (var value : amounts.values()) {
             if (value.getValueType() != CapabilityValueType.DECIMAL || value.getDecimalValue().signum() < 0) {
                 throw new ErrorException("MID 金额限制必须是非负精确数值");
             }
         }
-        if (amounts.containsKey("AMOUNT.MIN") && amounts.containsKey("AMOUNT.MAX")
-            && amounts.get("AMOUNT.MIN").getDecimalValue().compareTo(amounts.get("AMOUNT.MAX").getDecimalValue()) > 0) {
+        if (amounts.containsKey(ChannelCapabilityCodes.AMOUNT_MIN) && amounts.containsKey(ChannelCapabilityCodes.AMOUNT_MAX)
+            && amounts.get(ChannelCapabilityCodes.AMOUNT_MIN).getDecimalValue()
+                .compareTo(amounts.get(ChannelCapabilityCodes.AMOUNT_MAX).getDecimalValue()) > 0) {
             throw new ErrorException("MID 最小金额不能大于最大金额");
         }
     }

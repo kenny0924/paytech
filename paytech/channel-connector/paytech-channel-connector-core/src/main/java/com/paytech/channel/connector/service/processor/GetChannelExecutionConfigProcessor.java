@@ -1,13 +1,13 @@
-package com.paytech.payment.channel.service.processor;
+package com.paytech.channel.connector.service.processor;
 
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import com.paytech.payment.channel.core.configuration.ChannelProperties;
-import com.paytech.payment.channel.domain.ChannelExecutionConfigView;
-import com.paytech.payment.channel.domainservice.repository.*;
-import com.paytech.payment.channel.integration.ChannelAccountConfigReader;
-import com.paytech.payment.channel.service.processor.request.GetChannelExecutionConfigRequest;
+import com.paytech.channel.connector.core.configuration.ChannelProperties;
+import com.paytech.channel.connector.domain.ChannelExecutionConfigView;
+import com.paytech.channel.connector.domainservice.repository.*;
+import com.paytech.channel.connector.integration.ChannelAccountConfigReader;
+import com.paytech.channel.connector.service.processor.request.GetChannelExecutionConfigRequest;
 
 /** 受控执行边界的配置入口；原交易坐标必须由调用方从权威交易事实取得。 */
 @Component

@@ -1,8 +1,8 @@
-package com.paytech.payment.channel.core.configuration;
+package com.paytech.channel.connector.core.configuration;
 
 import java.util.Set;
 import jakarta.validation.constraints.NotNull;
-import com.paytech.payment.channel.core.enums.CapabilityValueType;
+import com.paytech.channel.connector.core.enums.CapabilityValueType;
 import lombok.Getter;
 import lombok.Setter;
 

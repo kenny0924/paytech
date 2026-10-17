@@ -1,4 +1,4 @@
-package com.paytech.payment.auto.channel;
+package com.paytech.channel.connector.auto.channel;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -10,18 +10,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.common.error.InvalidParameterException;
-import com.paytech.payment.channel.service.processor.QueryMidCandidatesProcessor;
-import com.paytech.payment.test.base.MockTestBase;
-import com.paytech.payment.test.builder.ChannelRequestBuilder;
-import com.paytech.payment.test.dal.ChannelTestMapper;
-import com.paytech.payment.test.mocker.ChannelDataMocker.Fixture;
+import com.paytech.channel.connector.service.processor.QueryMidCandidatesProcessor;
+import com.paytech.channel.connector.test.base.ChannelConnectorMockTestBase;
+import com.paytech.channel.connector.test.builder.ChannelRequestBuilder;
+import com.paytech.channel.connector.test.dal.ChannelTestMapper;
+import com.paytech.channel.connector.test.mocker.ChannelDataMocker.Fixture;
 
 /**
  * 候选检索的真实五表读取、完整维度、状态与零秘密访问场景。
  * 
  * @see QueryMidCandidatesProcessor#process(Object)
  */
-class QueryMidCandidatesTest extends MockTestBase {
+class QueryMidCandidatesTest extends ChannelConnectorMockTestBase {
     @Autowired
     private QueryMidCandidatesProcessor query;
 

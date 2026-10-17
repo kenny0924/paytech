@@ -1,33 +1,33 @@
 # Payment Orchestration V1 PDManer 物理建模决策
 
-> **Action Flow 后继：** [CARD + PAY 修订](../../../requirements/20260913/payment-Execution设计/card-pay-actionActor-flow-amendment.md)统一自有动作 PAY_RISK / PAY 名称、条件对象和执行位切换；AUTHORIZE 成功结束本次 Flow，Capture 为独立入口。前序 RISK_CHECK / SALE 表述按该范围被取代。
+> **Action Flow 后继：** [CARD + PAY 修订](../../../../requirements/20260913/payment-Execution设计/card-pay-actionActor-flow-amendment.md)统一自有动作 PAY_RISK / PAY 名称、条件对象和执行位切换；AUTHORIZE 成功结束本次 Flow，Capture 为独立入口。前序 RISK_CHECK / SALE 表述按该范围被取代。
 
 > **pay 防重后继：** 2026-09-15 用户确认按 Attempt 来源提交唯一键防重，当前规则见 [pay 阅读说明](../pay-interface-walkthrough.md)。前序[公共包接入约定](../development/command-idempotency-differences.md)保留为历史记录；pay 不再访问命令表，本轮未变更下方物理 Manifest 或执行数据库清理。
 
-> **字段精简后继：** [2026-09-14 修订](../../../requirements/20260913/payment-Execution设计/execution-field-simplification-amendment.md)拥有当前三表字段、Attempt 渠道绑定及删除 Pricing Fact/状态流转表的决定。
+> **字段精简后继：** [2026-09-14 修订](../../../../requirements/20260913/payment-Execution设计/execution-field-simplification-amendment.md)拥有当前三表字段、Attempt 渠道绑定及删除 Pricing Fact/状态流转表的决定。
 
-> **2026-09-11 模型切片：** 当前物理模型采用 [OE / Client / Pricing 四系统决定](../../../agent-docs/decisions/2026-09-11-cct-commerce-oe-pricing-model.md)。本页历史正文中的数字 OE、Assignment、独立 Acceptance、Client 多 OE 合同与 Agreement-OE 结算条款由该决定精确取代；本页摘要描述当前模型产物，运行代码、SQL 执行及待迁移状态仅见 [当前实现台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md)。Risk 本期不动。
+> **2026-09-11 模型切片：** 当前物理模型采用 [OE / Client / Pricing 四系统决定](../../../../agent-docs/decisions/2026-09-11-cct-commerce-oe-pricing-model.md)。本页历史正文中的数字 OE、Assignment、独立 Acceptance、Client 多 OE 合同与 Agreement-OE 结算条款由该决定精确取代；本页摘要描述当前模型产物，运行代码、SQL 执行及待迁移状态仅见 [当前实现台账](../../../../agent-docs/CURRENT_IMPLEMENTATION.md)。Risk 本期不动。
 
-> **交易级工具后继：** [已确认修订](../../../requirements/20260913/payment-Execution设计/instrument-token-amendment.md)取代本页旧 Instrument/卡引用描述。目标采用 Token 绑定与 Attempt 唯一关联，绑定字段不可变，revoked_at 单向撤销；不新增会话表。
+> **交易级工具后继：** [已确认修订](../../../../requirements/20260913/payment-Execution设计/instrument-token-amendment.md)取代本页旧 Instrument/卡引用描述。目标采用 Token 绑定与 Attempt 唯一关联，绑定字段不可变，revoked_at 单向撤销；不新增会话表。
 
 最后更新：2026-09-15
-状态：模型统计、验证和数据库迁移事实见[当前实施台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)；下方机器可读 Manifest 用于模型工件一致性检查。
+状态：模型统计、验证和数据库迁移事实见[当前实施台账](../../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)；下方机器可读 Manifest 用于模型工件一致性检查。
 
-> **2026-09-05 横切规范更新：** 前序 `compensation_event`、Vault 元数据及物理 CHECK/FK 说明不再是新增实现目标。Payment 的 Execution 后继模型已按已确认方案对齐补偿目标字段，实际数据库执行仍单独核验。按 [当前实现台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md) 的 COMP-01、VAULT-01、DB-01 完成同步迁移前，不得复制旧字段，也不得声称模型已经迁移。
+> **2026-09-05 横切规范更新：** 前序 `compensation_event`、Vault 元数据及物理 CHECK/FK 说明不再是新增实现目标。Payment 的 Execution 后继模型已按已确认方案对齐补偿目标字段，实际数据库执行仍单独核验。按 [当前实现台账](../../../../agent-docs/CURRENT_IMPLEMENTATION.md) 的 COMP-01、VAULT-01、DB-01 完成同步迁移前，不得复制旧字段，也不得声称模型已经迁移。
 
-> **Channel 五表后继：** [2026-09-21 需求](../../../requirements/20260921/payment-渠道账号与MID能力查询/requirement.md)及其[实施合同](../../../requirements/20260921/payment-渠道账号与MID能力查询/implementation-contract.md)取代本页旧账号定位字段、单表能力及健康状态部分；其他历史正文保持证据性质。
+> **Channel 五表后继：** [2026-09-21 需求](../../../../requirements/20260921/payment-渠道账号与MID能力查询/requirement.md)及其[实施合同](../../../../requirements/20260921/payment-渠道账号与MID能力查询/implementation-contract.md)取代本页旧账号定位字段、单表能力及健康状态部分；其他历史正文保持证据性质。
 
 ## 1. 范围与权威来源
 
 本文件冻结 Payment Orchestration V1 从逻辑目录落到 PDManer 的类型、可空性、索引、本库关系、图组、行级约束和数据库外事务约束。权威输入为：
 
-- [Payment 逻辑数据库模型](../../../agent-docs/database/PAYMENT_ORCHESTRATION_DATABASE.md)
-- [Payment 现实场景](../../../agent-docs/database/scenarios/PAYMENT_REAL_WORLD_SCENARIOS.md)
-- [Channel Account 与 MID 精简设计](../../../agent-docs/plans/2026-08-25-payment-provider-account-mid-simplification-design.md)
-- [Payment Execution 支付工具与消费者动作精简设计](../../../agent-docs/plans/2026-08-25-payment-execution-simplification-design.md)
-- [平衡型物理模型设计（本轮被精简设计局部覆盖）](../../../agent-docs/plans/2026-08-25-payment-balanced-physical-model-design.md)
-- [共享数据库设计规范](../../../agent-docs/DATABASE_DESIGN_GUIDE.md)
-- [共享 PDManer 模板](../../../agent-docs/templates/pdmaner/template.pdma.json)
+- [Payment 逻辑数据库模型](../../../../agent-docs/database/PAYMENT_ORCHESTRATION_DATABASE.md)
+- [Payment 现实场景](../../../../agent-docs/database/scenarios/PAYMENT_REAL_WORLD_SCENARIOS.md)
+- [Channel Account 与 MID 精简设计](../../../../agent-docs/plans/2026-08-25-payment-provider-account-mid-simplification-design.md)
+- [Payment Execution 支付工具与消费者动作精简设计](../../../../agent-docs/plans/2026-08-25-payment-execution-simplification-design.md)
+- [平衡型物理模型设计（本轮被精简设计局部覆盖）](../../../../agent-docs/plans/2026-08-25-payment-balanced-physical-model-design.md)
+- [共享数据库设计规范](../../../../agent-docs/DATABASE_DESIGN_GUIDE.md)
+- [共享 PDManer 模板](../../../../agent-docs/templates/pdmaner/template.pdma.json)
 
 本文维护模型物理约束；Payment pay 的当前受理流程由后继阅读说明承接，实际数据库与运行环境切换仍单独执行。项目不使用 Flyway、Liquibase 或应用启动时 Schema 迁移。
 
@@ -51,6 +51,17 @@
 }
 ```
 <!-- PAYMENT_PHYSICAL_MANIFEST_END -->
+
+### 2.1 按服务的表归属（重构第 05 步，不改表结构）
+
+上方 Manifest 记录的是拆分前的 Payment Orchestration 统一模型统计，表结构与字段不变。重构第 05 步按 [design/03 §2.3](../../../../requirements/20261017/architecture-V2骨架与模块搬迁/design/03-module-and-table-ownership.md) 把模型拆为两份规范模型，由同一生成器的分区（`scripts/pdmaner/payment-service-partition.mjs`）产出；跨服务关系不再出现在任一模型中，`t_compensation_event` 每库一份：
+
+| 服务 / 数据库 | 规范模型 | 表 |
+|---|---|---|
+| payment / `mor_payment` | [`payment.pdma.json`](payment.pdma.json)、[`sql/payment-schema.sql`](sql/payment-schema.sql) | `t_routing_decision`、`t_route_candidate_eval`、`t_payment_intent`、`t_payment_attempt`、`t_payment_instrument_token`、`t_payment_action`、`t_channel_transaction_ref`、`t_duplicate_payment_case`、`t_payment_refund_position`、`t_channel_refund`、`t_compensation_event`；第 12 步前暂居的卡域 4 表 `t_payment_card`、`t_payment_card_credential`、`t_payment_card_instrument`、`t_payment_stored_card`（归属 card）；在 dispute 服务建立前暂留的 `t_channel_dispute_notice`、`t_channel_dispute_event`、`t_channel_dispute_action`（归属 dispute，仅 Schema）；待删除的 `t_command_idempotency`（S10） |
+| channel-connector / `mor_channel_connector` | [`channel-connector.pdma.json`](../../../channel-connector/docs/database/channel-connector.pdma.json)、[`sql/channel-connector-schema.sql`](../../../channel-connector/docs/database/sql/channel-connector-schema.sql) | `t_payment_channel`、`t_channel_account`、`t_channel_mid`、`t_mid_capability`、`t_mid_capability_detail`、`t_routing_policy`、`t_routing_policy_version`、`t_routing_policy_mid`、`t_channel_interaction`、`t_channel_callback`、`t_channel_callback_item`、`t_channel_event_exception`、`t_compensation_event` |
+
+拆分后的统计（由两份模型计算）：payment 19 表、34 条本库关系；channel-connector 13 表、14 条本库关系。
 
 七个 Diagram Group 为 `Channel 与 MID`、`支付路由`、`支付执行`、`Channel Refund`、`Channel Callback`、`Channel Dispute`、`可靠执行`。每张表各作为主表出现一次，每条关系在具备完整端点的图中出现；关系总量与一对一数量由下方工件 Manifest 核验。
 

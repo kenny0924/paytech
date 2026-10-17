@@ -5,12 +5,13 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.paytech</groupId>
-        <artifactId>paytech-payment-service</artifactId>
+        <artifactId>paytech-payment</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <artifactId>paytech-payment-api</artifactId>
-    <name>Payment API</name>
+    <name>PayTech Payment API</name>
+    <description>Payment execution, instrument and card contracts (card contracts move to paytech-card-api in step 12).</description>
 
     <dependencies>
         <dependency>

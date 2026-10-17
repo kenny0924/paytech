@@ -1,12 +1,12 @@
 # pay 接口阅读说明
 
-编码方式见 [写接口开发规范](development/processor-conventions.md)，业务语义见[受理链合同](../../requirements/20260913/payment-Execution设计/execution-field-simplification-amendment.md#7-pay-受理链合同)，验证及迁移状态见[当前台账](../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。当前 pay 沿用用户重构后的 AbstractLockProcessor，在 Intent 资源锁内查询原提交、完整构造 Context、保存和推进。来源提交防重取代前序 Claim、Hash 与补命令绑定流程；旧的无锁父类、空 Context 逐步填充及保存冲突自动重查描述不再适用。
+编码方式见 [写接口开发规范](development/processor-conventions.md)，业务语义见[受理链合同](../../../requirements/20260913/payment-Execution设计/execution-field-simplification-amendment.md#7-pay-受理链合同)，验证及迁移状态见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。当前 pay 沿用用户重构后的 AbstractLockProcessor，在 Intent 资源锁内查询原提交、完整构造 Context、保存和推进。来源提交防重取代前序 Claim、Hash 与补命令绑定流程；旧的无锁父类、空 Context 逐步填充及保存冲突自动重查描述不再适用。
 
 ## 先看这三个文件
 
-1. [PayProcessor](../paytech-payment-execution/src/main/java/com/paytech/payment/execution/service/processor/PayProcessor.java)：完整接口顺序。
-2. [PayContext](../paytech-payment-execution/src/main/java/com/paytech/payment/execution/domain/PayContext.java)：一次请求涉及的意图、尝试和工具。
-3. [PaymentExecutionServiceImpl](../paytech-payment-execution/src/main/java/com/paytech/payment/execution/service/impl/PaymentExecutionServiceImpl.java)：唯一受理事务。
+1. [PayProcessor](../paytech-payment-core/src/main/java/com/paytech/payment/execution/service/processor/PayProcessor.java)：完整接口顺序。
+2. [PayContext](../paytech-payment-core/src/main/java/com/paytech/payment/execution/domain/PayContext.java)：一次请求涉及的意图、尝试和工具。
+3. [PaymentExecutionServiceImpl](../paytech-payment-core/src/main/java/com/paytech/payment/execution/service/impl/PaymentExecutionServiceImpl.java)：唯一受理事务。
 
 ```text
 开始
@@ -34,11 +34,11 @@
 
 ## 受理前选路
 
-[RouteService](../paytech-payment-routing/src/main/java/com/paytech/payment/routing/service/RouteService.java) 属于 Routing 模块，参数使用该模块的 RouteContext，包含 Client、OE、金额、币种、支付方式和 capture mode；不传 Execution 数据库对象或工具 Token。返回 RouteResult，仅含 channelId、channelAccountId、midId，由 Processor 填入本次 Attempt。
+[RouteService](../paytech-payment-core/src/main/java/com/paytech/payment/routing/service/RouteService.java) 属于 Routing 模块，参数使用该模块的 RouteContext，包含 Client、OE、金额、币种、支付方式和 capture mode；不传 Execution 数据库对象或工具 Token。返回 RouteResult，仅含 channelId、channelAccountId、midId，由 Processor 填入本次 Attempt。
 
 调用发生在本地事务前，选路异常会直接结束请求，不保存新 Attempt 或 Intent 活动指针。原提交命中提前响应，不覆盖原渠道，包括未绑定渠道的历史 Attempt。同 Intent 的请求由公共父类协调，未获取锁返回并发冲突；不会等待前一个请求完成后自动重放。后续动作沿用受理时冻结的渠道三元组。
 
-[RouteServiceImpl](../paytech-payment-routing/src/main/java/com/paytech/payment/routing/service/impl/RouteServiceImpl.java) 按用户本期要求仅返回固定 Mock `9001/9002/9003`。它未验证同 OE、渠道能力、配置状态或健康状态，也不保存选择证据；这些由 Routing 后续实现。本次没有独立 Route 进程或远程 HTTP 调用。
+[RouteServiceImpl](../paytech-payment-core/src/main/java/com/paytech/payment/routing/service/impl/RouteServiceImpl.java) 按用户本期要求仅返回固定 Mock `9001/9002/9003`。它未验证同 OE、渠道能力、配置状态或健康状态，也不保存选择证据；这些由 Routing 后续实现。本次没有独立 Route 进程或远程 HTTP 调用。
 
 ## 事务实际做什么
 
@@ -46,9 +46,9 @@
 
 | 表 | Repository | Mapper SQL |
 |---|---|---|
-| `t_payment_intent` | `PaymentIntentRepository` | [PaymentIntentMapper.xml](../paytech-payment-execution/src/main/resources/mapper/PaymentIntentMapper.xml) |
-| `t_payment_attempt` | `PaymentAttemptRepository` | [PaymentAttemptMapper.xml](../paytech-payment-execution/src/main/resources/mapper/PaymentAttemptMapper.xml) |
-| `t_payment_instrument_token` | `PaymentInstrumentTokenRepository` | [PaymentInstrumentTokenMapper.xml](../paytech-payment-execution/src/main/resources/mapper/PaymentInstrumentTokenMapper.xml) |
+| `t_payment_intent` | `PaymentIntentRepository` | [PaymentIntentMapper.xml](../paytech-payment-core/src/main/resources/mapper/PaymentIntentMapper.xml) |
+| `t_payment_attempt` | `PaymentAttemptRepository` | [PaymentAttemptMapper.xml](../paytech-payment-core/src/main/resources/mapper/PaymentAttemptMapper.xml) |
+| `t_payment_instrument_token` | `PaymentInstrumentTokenRepository` | [PaymentInstrumentTokenMapper.xml](../paytech-payment-core/src/main/resources/mapper/PaymentInstrumentTokenMapper.xml) |
 
 Action 使用 PaymentActionRepository，资金引用使用 ChannelTransactionRefRepository，均对应同名 Mapper/XML。pay 不再访问公共命令表；动作执行不使用补偿表。
 
@@ -65,7 +65,7 @@ Context 只用于 Service 层编排，调用 Repository 时拆成数据库对象
 
 新 Attempt 为 `PROCESSING`，后续状态由 Action 执行更新；响应始终从原业务对象生成，不再保存独立命令状态、响应快照或租约。旧 `t_command_idempotency` 在本轮不再被运行代码读写，模型、Schema 和实际数据库尚未执行表清理；旧公共表列迁移不再是 pay 启动前置。
 
-来源关联由 Intent 自身及唯一索引维护，pay 不再依赖独立 Binding 表。创建和终止的顺序见[字段修订第 8 节](../../requirements/20260913/payment-Execution设计/execution-field-simplification-amendment.md#8-删除来源-binding)。
+来源关联由 Intent 自身及唯一索引维护，pay 不再依赖独立 Binding 表。创建和终止的顺序见[字段修订第 8 节](../../../requirements/20260913/payment-Execution设计/execution-field-simplification-amendment.md#8-删除来源-binding)。
 
 ## 请求与结果
 
@@ -116,6 +116,6 @@ RequestBody 的必填、格式、长度、捕获模式和 ID 上界由 Hibernate
 
 Actor.doAction 只读原 PaymentAction，将完整执行结果放入 ActionResult；异常或缺失状态由 AbstractActionActor 转为 UNKNOWN。结果事务从 ActionResult 取更新值，确认 SQL 更新一行后 Repository 才同步原对象。具体 Actor 负责业务结果解释，Flow 负责调度；当前 CARD + PAY 的 FAILED 分支调用 attempts.updateToFail 和 intents.releaseAttempt。后继与结束处理的编码约束见[写接口规范第 12 节](development/processor-conventions.md#12-提交后的业务推进)，不能从本页推导所有后续操作使用同一终态规则。
 
-阅读 [ActionFlow.execute](../paytech-payment-execution/src/main/java/com/paytech/payment/execution/core/action/flow/ActionFlow.java) 查看执行和结果事务，阅读 [CardPayFlow](../paytech-payment-execution/src/main/java/com/paytech/payment/execution/core/action/flow/CardPayFlow.java) 查看分支，各 Actor.doInTransaction 负责自己的业务结果。AUTHORIZE 成功记录授权金额，Attempt 保持 PROCESSING；PAY 成功记录收款金额并使 Attempt/Intent SUCCEEDED；本次支付失败使 Attempt FAILED 并释放 Intent 的活动尝试。Attempt 的金额、状态和清空执行位在一次更新中完成，数据库更新成功后才同步对象；Action、Attempt 和相关 Intent 写入同事务提交。详见[动作修订](../../requirements/20260913/payment-Execution设计/card-pay-action-flow-amendment.md)。
+阅读 [ActionFlow.execute](../paytech-payment-core/src/main/java/com/paytech/payment/execution/core/action/flow/ActionFlow.java) 查看执行和结果事务，阅读 [CardPayFlow](../paytech-payment-core/src/main/java/com/paytech/payment/execution/core/action/flow/CardPayFlow.java) 查看分支，各 Actor.doInTransaction 负责自己的业务结果。AUTHORIZE 成功记录授权金额，Attempt 保持 PROCESSING；PAY 成功记录收款金额并使 Attempt/Intent SUCCEEDED；本次支付失败使 Attempt FAILED 并释放 Intent 的活动尝试。Attempt 的金额、状态和清空执行位在一次更新中完成，数据库更新成功后才同步对象；Action、Attempt 和相关 Intent 写入同事务提交。详见[动作修订](../../../requirements/20260913/payment-Execution设计/card-pay-action-flow-amendment.md)。
 
 Risk、认证、资金动作的真实调用及资金引用处理保留 TODO；未接入异常由 Actor 转为 UNKNOWN，保存成功后 pay 返回 202 / PROCESSING，数据库冲突或保存失败仍向上抛出。当前接口不交付 3DS 跳转材料，也未实现 Capture/Void/Refund 或通知。不登记补偿事件或自动重试；同键重放读取原 Attempt，不重新执行。若保存上下文后尚未建动作就中断，当前也不自动补建，恢复入口另行实现。真实 Routing 启用时仍须补齐选择证据并替换固定 Mock。

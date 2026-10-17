@@ -1,4 +1,4 @@
-package com.paytech.payment.channel.integration;
+package com.paytech.channel.connector.integration;
 
 import java.util.Map;
 import java.util.Objects;
@@ -6,8 +6,8 @@ import java.util.Objects;
 import org.springframework.stereotype.Component;
 
 import com.paytech.foundation.common.error.ErrorException;
-import com.paytech.payment.channel.domain.ChannelAccountConfiguration;
-import com.paytech.payment.channel.domain.ChannelExecutionContext;
+import com.paytech.channel.connector.domain.ChannelAccountConfiguration;
+import com.paytech.channel.connector.domain.ChannelExecutionContext;
 import com.paytech.vault.client.RevealQuery;
 import com.paytech.vault.client.VaultClient;
 
@@ -17,7 +17,7 @@ import tools.jackson.core.StreamReadFeature;
 import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.json.JsonMapper;
 
-/** 在业务归属核对后访问真实 Vault Client，并解释 Payment 拥有的账号 Payload。 */
+/** 在业务归属核对后访问真实 Vault Client，并解释 channel-connector 拥有的账号 Payload。 */
 @Component
 @AllArgsConstructor
 public class ChannelAccountConfigReader {

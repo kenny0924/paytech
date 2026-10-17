@@ -1,12 +1,12 @@
-package com.paytech.payment.channel.domainservice.repository.impl;
+package com.paytech.channel.connector.domainservice.repository.impl;
 
 import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
-import com.paytech.payment.channel.core.dal.dataobject.ChannelAccount;
-import com.paytech.payment.channel.core.dal.mapper.ChannelAccountMapper;
-import com.paytech.payment.channel.domainservice.repository.ChannelAccountRepository;
+import com.paytech.channel.connector.core.dal.dataobject.ChannelAccount;
+import com.paytech.channel.connector.core.dal.mapper.ChannelAccountMapper;
+import com.paytech.channel.connector.domainservice.repository.ChannelAccountRepository;
 
 import lombok.AllArgsConstructor;
 

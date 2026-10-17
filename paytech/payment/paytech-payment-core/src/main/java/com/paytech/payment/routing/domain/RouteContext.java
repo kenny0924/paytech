@@ -1,8 +1,7 @@
 package com.paytech.payment.routing.domain;
 
-import java.math.BigDecimal;
-
 import com.paytech.foundation.money.Money;
+import com.paytech.payment.execution.core.enums.CaptureMode;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -29,7 +28,7 @@ public class RouteContext {
      * 捕获模式
      * <li>AUTOMATIC：自动收款；MANUAL：授权后等待显式捕获。</li>
      */
-    private String captureMode;
+    private CaptureMode captureMode;
 
     /**
      * 消费者国家

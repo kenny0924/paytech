@@ -120,7 +120,7 @@ public class PayProcessor extends AbstractLockProcessor<PayRequest, PayResponse>
         routeContext.setEntityNo(intent.getEntityNo());
         routeContext.setAmount(Money.of(intent.getCurrency(), intent.getAmount()));
         routeContext.setPaymentMethodCode(attempt.getPaymentMethodCode());
-        routeContext.setCaptureMode(attempt.getCaptureMode().getCode());
+        routeContext.setCaptureMode(attempt.getCaptureMode());
         routeContext.setCountryCode(intent.getConsumerCountryCode());
         routeContext.setMccCode(intent.getMccCode());
 

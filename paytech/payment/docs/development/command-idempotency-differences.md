@@ -2,7 +2,7 @@
 
 > **历史接入记录，已被取代。** 2026-09-15 用户确认 Payment pay 移除公共命令幂等组件，改用 Attempt 的来源提交唯一键及原记录比较，暂不加锁。当前流程见 [pay 阅读说明](../pay-interface-walkthrough.md)。下文的 Claim、Hash、Lease、Complete 和命令表迁移仅保留为历史依据，不再是 Payment 的运行要求；Foundation 与 Commerce 的使用范围不变。
 
-2026-09-15，用户在差异分析后明确“改造吧，使用公共包”。**Payment 使用 `com.paytech:paytech-command-idempotency`。** 本文维护已确认的消费约定和迁移前后差异；代码、验证及数据库执行状态见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
+2026-09-15，用户在差异分析后明确“改造吧，使用公共包”。**Payment 使用 `com.paytech:paytech-command-idempotency`。** 本文维护已确认的消费约定和迁移前后差异；代码、验证及数据库执行状态见[当前台账](../../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
 
 沿用现有公共包，通过 Payment 本地表与调用方式适配完成接入，不另做轻量幂等包。调整 Payment 一张现有技术表，不新增业务表、不改变 HTTP 字段；pay 仍保持一次本地受理事务和当前支付状态的响应语义。
 
@@ -20,11 +20,11 @@
 | 业务校验 | Intent、来源提交、方式、capture mode、工具范围 | 不理解这些 Payment 业务含义 | 全部继续由 Payment 负责 |
 | 原实现范围 | 9 月 9 日首次迁移仅包含 Commerce | 已有原子命令和多阶段恢复的真实消费者 | 本轮已确认 Payment 的复用方向，本次按下列约定接入，不再将旧首批范围视为永久限制 |
 
-依据：[公共 API](../../../paytech-foundation/paytech-command-idempotency/src/main/java/com/paytech/foundation/idempotency/api/CommandIdempotencyService.java)、[参数与事务校验](../../../paytech-foundation/paytech-command-idempotency/src/main/java/com/paytech/foundation/idempotency/service/CommandIdempotencyValidator.java)、[公共仓储](../../../paytech-foundation/paytech-command-idempotency/src/main/java/com/paytech/foundation/idempotency/persistence/repository/CommandIdempotencyRepositoryImpl.java)、[当前 PayProcessor](../../paytech-payment-execution/src/main/java/com/paytech/payment/execution/service/processor/PayProcessor.java)。
+依据：[公共 API](../../../foundation/paytech-command-idempotency/src/main/java/com/paytech/foundation/idempotency/api/CommandIdempotencyService.java)、[参数与事务校验](../../../foundation/paytech-command-idempotency/src/main/java/com/paytech/foundation/idempotency/service/CommandIdempotencyValidator.java)、[公共仓储](../../../foundation/paytech-command-idempotency/src/main/java/com/paytech/foundation/idempotency/persistence/repository/CommandIdempotencyRepositoryImpl.java)、[当前 PayProcessor](../../paytech-payment-core/src/main/java/com/paytech/payment/execution/service/processor/PayProcessor.java)。
 
 ## 2. 表结构差异
 
-对照来源为 [Payment Schema](../database/sql/payment-orchestration-schema.sql)、[Commerce Schema](../../../commerce-service/docs/database/sql/commerce-schema.sql)和[公共 Mapper XML](../../../paytech-foundation/paytech-command-idempotency/src/main/resources/META-INF/mybatis/CommandIdempotencyMapper.xml)。公共包的 24 列清单与当前 Commerce 模型一致，但 Commerce 的业务注释、目录和恢复阶段不能复制给 Payment。
+对照来源为 [Payment Schema](../database/sql/payment-schema.sql)、[Commerce Schema](../../../../commerce-service/docs/database/sql/commerce-schema.sql)和[公共 Mapper XML](../../../foundation/paytech-command-idempotency/src/main/resources/META-INF/mybatis/CommandIdempotencyMapper.xml)。公共包的 24 列清单与当前 Commerce 模型一致，但 Commerce 的业务注释、目录和恢复阶段不能复制给 Payment。
 
 ### 2.1 新增的 13 列
 
@@ -85,7 +85,7 @@
 
 公共 Lease 是技术 CAS 条件，与 Redis 的 Intent 锁不同；Claim Owner、到期时刻仍须提供。完成时使用实际当前时刻；超过租约导致完成失败，应回滚本次受理。当前无需调用续租、接管或 advanceStage，也不增加扫描任务。本期命令 Lease 为 30 秒，本地事务超时为 5 秒；每个新 Claim 使用随机 UUID 作为 Owner。操作时刻在事务前冻结，完成时刻取当前 UTC 微秒时间。
 
-Commerce 已有[原子 Customer 命令](../../../commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/domainservice/service/customer/impl/CustomerCommandServiceImpl.java)采用公共 Claim/Complete，证明公共包不要求所有消费者都复制 Create Checkout 的多阶段恢复流程。
+Commerce 已有[原子 Customer 命令](../../../../commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/domainservice/service/customer/impl/CustomerCommandServiceImpl.java)采用公共 Claim/Complete，证明公共包不要求所有消费者都复制 Create Checkout 的多阶段恢复流程。
 
 ### 必须保留的语义
 
@@ -119,7 +119,7 @@ Commerce 已有[原子 Customer 命令](../../../commerce-service/paytech-commer
 
 ## 5. 数据迁移和验证边界
 
-具体空库/旧空表执行路径见[人工迁移说明](../../../requirements/20260913/payment-Execution设计/db/command-idempotency-migration.md)。公共包固定读取全部 24 列，不能只部署新 JAR 而保留旧表。
+具体空库/旧空表执行路径见[人工迁移说明](../../../../requirements/20260913/payment-Execution设计/db/command-idempotency-migration.md)。公共包固定读取全部 24 列，不能只部署新 JAR 而保留旧表。
 
 - 先核对实际环境的幂等表及全部 operation_type。表被多个命令共用，不能只迁 PAY_INSTRUMENT_V1 后忽略其他行；本次没有重新连接数据库，先前空库记录不代替执行前盘点。
 - 空表可直接按批准方案对齐结构；非空表须分类补齐版本、阶段、时间及回执元数据。旧 PROCESSING 不能直接填成 COMPLETED，也不能凭空赋新 Lease 后恢复。历史 SUCCEEDED/FAILED 的资源与回执依据必须可验证。
@@ -134,4 +134,4 @@ pay 已使用 Foundation 的 Redis ResourceLock、Snowflake IdGenerator、公共
 
 Hash 仍是 Payment 的业务合同：公共幂等包不计算它，公共 JSON Canonicalization 也不实现现有长度前缀协议。保持原 Hash 算法不属于重复实现公共幂等机制。今后先核对真实公共能力，有适用公共包就直接使用；存在缺口先列差异，不自行维护平行机制。
 
-公共机制边界：[Foundation 决定](../../../agent-docs/decisions/2026-09-09-foundation-command-idempotency.md)、[组件说明](../../../paytech-foundation/README.md#command-idempotency)。本文属于[原 Execution 需求](../../../requirements/20260913/payment-Execution设计/technique.md)的后继接入约定，不另建第二份业务合同。
+公共机制边界：[Foundation 决定](../../../../agent-docs/decisions/2026-09-09-foundation-command-idempotency.md)、[组件说明](../../../foundation/README.md#command-idempotency)。本文属于[原 Execution 需求](../../../../requirements/20260913/payment-Execution设计/technique.md)的后继接入约定，不另建第二份业务合同。

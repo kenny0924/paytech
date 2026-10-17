@@ -1,4 +1,4 @@
-package com.paytech.payment.channel.service.processor;
+package com.paytech.channel.connector.service.processor;
 
 import java.util.List;
 import java.util.Objects;
@@ -7,19 +7,20 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.paytech.channel.connector.api.ChannelCapabilityCodes;
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.foundation.processor.AbstractProcessor;
-import com.paytech.payment.channel.core.configuration.ChannelProperties;
-import com.paytech.payment.channel.core.dal.dataobject.MidCapability;
-import com.paytech.payment.channel.core.enums.ChannelOperation;
-import com.paytech.payment.channel.core.enums.ChannelStatus;
-import com.paytech.payment.channel.core.enums.ExecutionPurpose;
-import com.paytech.payment.channel.domain.CapabilityView;
-import com.paytech.payment.channel.domain.ChannelExecutionContext;
-import com.paytech.payment.channel.domain.MidCapabilityContext;
-import com.paytech.payment.channel.domainservice.repository.*;
-import com.paytech.payment.channel.service.processor.request.GetChannelExecutionConfigRequest;
+import com.paytech.channel.connector.core.configuration.ChannelProperties;
+import com.paytech.channel.connector.core.dal.dataobject.MidCapability;
+import com.paytech.channel.connector.api.enums.ChannelOperation;
+import com.paytech.channel.connector.core.enums.ChannelStatus;
+import com.paytech.channel.connector.api.enums.ExecutionPurpose;
+import com.paytech.channel.connector.domain.CapabilityView;
+import com.paytech.channel.connector.domain.ChannelExecutionContext;
+import com.paytech.channel.connector.domain.MidCapabilityContext;
+import com.paytech.channel.connector.domainservice.repository.*;
+import com.paytech.channel.connector.service.processor.request.GetChannelExecutionConfigRequest;
 
 /**
  * 冻结坐标执行入口的公共校验：按用途检查三元组归属、状态与新支付能力，在一致快照中读取，不持有跨网络事务。
@@ -119,7 +120,7 @@ public abstract class AbstractChannelExecutionProcessor<Q, R> extends AbstractPr
         var values = details.findByCapabilityIds(scopes.stream().map(MidCapability::getMidCapabilityId).toList());
         var resolved = new MidCapabilityContext(scopes, values).resolve(request.getCriteria(),
             properties.getCapabilityDefinitions());
-        String action = "ACTION." + request.getOperation().getCode();
+        String action = ChannelCapabilityCodes.ACTION_PREFIX + request.getOperation().getCode();
         if (resolved.stream().noneMatch(
             value -> action.equals(value.getCapabilityCode()) && Boolean.TRUE.equals(value.getBooleanValue()))) {
             throw new BizCheckFailException("MID 未明确支持本次新支付操作");
@@ -131,8 +132,9 @@ public abstract class AbstractChannelExecutionProcessor<Q, R> extends AbstractPr
 
     /** 使用精确主单位金额与本次币种匹配后的上下限比较，不在渠道查询中舍入。 */
     void checkAmount(GetChannelExecutionConfigRequest request, CapabilityView value) {
-        if ("AMOUNT.MIN".equals(value.getCapabilityCode()) && request.getAmount().compareTo(value.getDecimalValue()) < 0
-            || "AMOUNT.MAX".equals(value.getCapabilityCode())
+        if (ChannelCapabilityCodes.AMOUNT_MIN.equals(value.getCapabilityCode())
+            && request.getAmount().compareTo(value.getDecimalValue()) < 0
+            || ChannelCapabilityCodes.AMOUNT_MAX.equals(value.getCapabilityCode())
                 && request.getAmount().compareTo(value.getDecimalValue()) > 0) {
             throw new BizCheckFailException("交易金额不满足 MID 技术限制");
         }

@@ -1,20 +1,20 @@
-package com.paytech.payment.auto.domain;
+package com.paytech.channel.connector.auto.domain;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 import java.util.Map;
-import com.paytech.payment.channel.core.configuration.CapabilityDefinition;
+import com.paytech.channel.connector.core.configuration.CapabilityDefinition;
 
 import org.junit.jupiter.api.Test;
 
 import com.paytech.foundation.common.error.ErrorException;
-import com.paytech.payment.channel.core.dal.dataobject.MidCapability;
-import com.paytech.payment.channel.core.dal.dataobject.MidCapabilityDetail;
-import com.paytech.payment.channel.core.enums.CapabilityStatus;
-import com.paytech.payment.channel.core.enums.CapabilityValueType;
-import com.paytech.payment.channel.domain.MidCapabilityContext;
-import com.paytech.payment.channel.service.processor.request.MidCriteria;
+import com.paytech.channel.connector.core.dal.dataobject.MidCapability;
+import com.paytech.channel.connector.core.dal.dataobject.MidCapabilityDetail;
+import com.paytech.channel.connector.core.enums.CapabilityStatus;
+import com.paytech.channel.connector.core.enums.CapabilityValueType;
+import com.paytech.channel.connector.domain.MidCapabilityContext;
+import com.paytech.channel.connector.service.processor.request.MidCriteria;
 
 /**
  * 能力覆盖、歧义与完整交易维度的纯规则测试。

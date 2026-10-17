@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.paytech.payment.channel.core.dal.mapper.ChannelAccountMapper">
-    <resultMap id="row" type="com.paytech.payment.channel.core.dal.dataobject.ChannelAccount">
+<mapper namespace="com.paytech.channel.connector.core.dal.mapper.ChannelAccountMapper">
+    <resultMap id="row" type="com.paytech.channel.connector.core.dal.dataobject.ChannelAccount">
         <result column="channel_account_id" property="channelAccountId"/>
         <result column="channel_id" property="channelId"/>
         <result column="entity_no" property="entityNo"/>
         <result column="account_name" property="accountName"/>
         <result column="account_vault_token" property="accountVaultToken"/>
         <result column="account_status" property="accountStatus"
-                javaType="com.paytech.payment.channel.core.enums.ChannelStatus"
+                javaType="com.paytech.channel.connector.core.enums.ChannelStatus"
                 typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
         <result column="remark" property="remark"/>
         <result column="create_time" property="createTime"

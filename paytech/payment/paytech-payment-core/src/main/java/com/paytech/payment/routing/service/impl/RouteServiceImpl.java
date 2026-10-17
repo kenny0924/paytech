@@ -5,6 +5,9 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.paytech.foundation.common.error.BizCheckFailException;
+import com.paytech.payment.execution.core.action.ActionChannelOperations;
+import com.paytech.payment.execution.core.action.ActionType;
+import com.paytech.payment.execution.core.enums.CaptureMode;
 import com.paytech.payment.routing.domain.RouteCandidate;
 import com.paytech.payment.routing.domain.RouteContext;
 import com.paytech.payment.routing.domain.RouteResult;
@@ -20,7 +23,8 @@ public class RouteServiceImpl implements RouteService {
     /** 选择第一个明确支持本次动作且金额在上下限之内的候选。 */
     @Override
     public RouteResult route(RouteContext context, List<RouteCandidate> candidates) {
-        String action = "MANUAL".equals(context.getCaptureMode()) ? "AUTHORIZE" : "PAY";
+        ActionType required = context.getCaptureMode() == CaptureMode.MANUAL ? ActionType.AUTHORIZE : ActionType.PAY;
+        String action = ActionChannelOperations.of(required).getCode();
         return candidates.stream().filter(candidate -> eligible(candidate, action, context)).findFirst()
             .map(RouteServiceImpl::result).orElseThrow(() -> new BizCheckFailException(
                 "没有可用的渠道 MID: " + context.getEntityNo() + ", 支付方式: " + context.getPaymentMethodCode()));

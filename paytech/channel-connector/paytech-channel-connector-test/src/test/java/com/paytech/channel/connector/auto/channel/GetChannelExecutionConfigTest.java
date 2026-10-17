@@ -1,4 +1,4 @@
-package com.paytech.payment.auto.channel;
+package com.paytech.channel.connector.auto.channel;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -16,19 +16,19 @@ import org.springframework.transaction.support.TransactionTemplate;
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.common.error.InvalidParameterException;
-import com.paytech.payment.channel.core.enums.ChannelOperation;
-import com.paytech.payment.channel.core.enums.ExecutionPurpose;
-import com.paytech.payment.channel.service.processor.GetChannelExecutionConfigProcessor;
-import com.paytech.payment.test.base.MockTestBase;
-import com.paytech.payment.test.builder.ChannelRequestBuilder;
-import com.paytech.payment.test.dal.ChannelTestMapper;
-import com.paytech.payment.test.mocker.ChannelDataMocker.Fixture;
+import com.paytech.channel.connector.api.enums.ChannelOperation;
+import com.paytech.channel.connector.api.enums.ExecutionPurpose;
+import com.paytech.channel.connector.service.processor.GetChannelExecutionConfigProcessor;
+import com.paytech.channel.connector.test.base.ChannelConnectorMockTestBase;
+import com.paytech.channel.connector.test.builder.ChannelRequestBuilder;
+import com.paytech.channel.connector.test.dal.ChannelTestMapper;
+import com.paytech.channel.connector.test.mocker.ChannelDataMocker.Fixture;
 
 /**
  * 执行配置从正式应用、真实数据库和真实 Vault HTTP Client 经过的查询场景。
  * @see GetChannelExecutionConfigProcessor#process(Object)
  */
-class GetChannelExecutionConfigTest extends MockTestBase {
+class GetChannelExecutionConfigTest extends ChannelConnectorMockTestBase {
     @Autowired
     private GetChannelExecutionConfigProcessor query;
 

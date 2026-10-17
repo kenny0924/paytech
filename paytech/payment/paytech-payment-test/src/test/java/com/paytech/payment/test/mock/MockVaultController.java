@@ -9,22 +9,16 @@ import com.paytech.vault.client.internal.wire.*;
 
 import lombok.AllArgsConstructor;
 
-/** 仅存在于独立测试 HTTP 服务的 Vault 契约实现。 */
+/** 仅存在于独立测试 HTTP 服务的 Vault 契约实现（Payment 只托管与读取卡 DEK）。 */
 @RestController
 @TestComponent
 @AllArgsConstructor
 public class MockVaultController implements VaultHttpService {
     private final VaultMocker vault;
 
-    /** 通过实际 HTTP 请求返回按账号预设的 Reveal DTO。 */
+    /** 通过实际 HTTP 请求返回已托管卡 DEK 的 Reveal DTO。 */
     @Override
     public RevealResponse reveal(String caller, String requestId, RevealRequest request) {
-        String errorRequestId = vault.errorRequestId(request.token());
-        if (errorRequestId != null) {
-            var attributes = (org.springframework.web.context.request.ServletRequestAttributes)
-                org.springframework.web.context.request.RequestContextHolder.currentRequestAttributes();
-            attributes.getResponse().setHeader("X-Request-Id", errorRequestId);
-        }
         return vault.reveal(caller, request.token(), request.purpose());
     }
 

@@ -5,13 +5,15 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.paytech</groupId>
-        <artifactId>paytech-payment-service</artifactId>
+        <artifactId>paytech-payment</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <artifactId>paytech-payment-card</artifactId>
     <packaging>jar</packaging>
-    <name>Payment Card</name>
+    <name>PayTech Payment Card</name>
+    <description>Card domain kept inside the payment process and mor_payment until step 12 (design/05); only payment-core and
+        payment-app may depend on it.</description>
 
     <dependencies>
         <dependency>
@@ -38,7 +40,6 @@
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-vault-client</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>

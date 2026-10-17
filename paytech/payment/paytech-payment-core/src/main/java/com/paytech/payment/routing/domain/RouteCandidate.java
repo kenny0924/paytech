@@ -6,7 +6,7 @@ import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
 
-/** 路由候选：调用方从 Channel 候选查询转换而来的 MID 三元组与本次匹配到的能力。 */
+/** 路由候选：由 channel-connector 候选查询转换而来的 MID 三元组与 channel-connector 已解析的能力。 */
 @Getter
 @Setter
 public class RouteCandidate {
@@ -20,8 +20,8 @@ public class RouteCandidate {
     private Long midId;
 
     /**
-     * 明确支持的动作
-     * <li>能力代码去掉 ACTION. 前缀后的动作，例如 PAY、AUTHORIZE。</li>
+     * 明确支持的渠道操作代码
+     * <li>channel-connector 解析能力代码后返回的 ChannelOperation 代码，例如 PAY、AUTHORIZE；Payment 不解析能力代码。</li>
      */
     private Set<String> supportedActions;
 

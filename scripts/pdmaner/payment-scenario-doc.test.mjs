@@ -5,7 +5,9 @@ import test from "node:test";
 
 const workspaceRoot = path.resolve(import.meta.dirname, "../..");
 const scenarioPath = path.join(workspaceRoot, "agent-docs/database/scenarios/PAYMENT_REAL_WORLD_SCENARIOS.md");
-const modelPath = path.join(workspaceRoot, "payment-orchestration-service/docs/database/payment-orchestration.pdma.json");
+// 第 05 步拆为 payment / channel-connector 两份规范模型；场景覆盖按两份模型的并集核对（t_compensation_event 只计一次）。
+const modelPath = path.join(workspaceRoot, "paytech/payment/docs/database/payment.pdma.json");
+const channelConnectorModelPath = path.join(workspaceRoot, "paytech/channel-connector/docs/database/channel-connector.pdma.json");
 const expectedTableNames = Object.freeze([
   "t_payment_channel", "t_channel_account", "t_channel_mid", "t_mid_capability", "t_mid_health_state",
   "t_routing_policy", "t_routing_policy_version", "t_routing_policy_mid", "t_routing_decision", "t_route_candidate_eval",
@@ -41,7 +43,10 @@ function closedEnumValues(comment) {
 }
 function requireModel() {
   assert.ok(existsSync(modelPath), `Payment scenario model readiness failure: missing ${path.relative(workspaceRoot, modelPath)}`);
-  return JSON.parse(readFileSync(modelPath, "utf8"));
+  const payment = JSON.parse(readFileSync(modelPath, "utf8"));
+  const channelConnector = JSON.parse(readFileSync(channelConnectorModelPath, "utf8"));
+  const names = new Set(payment.entities.map((entity) => entity.defKey));
+  return { ...payment, entities: [...payment.entities, ...channelConnector.entities.filter((entity) => !names.has(entity.defKey))] };
 }
 
 const scenarioModelReadyAtRegistration = existsSync(modelPath);

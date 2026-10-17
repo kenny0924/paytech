@@ -1,10 +1,10 @@
-package com.paytech.payment.channel.core.dal.mapper;
+package com.paytech.channel.connector.core.dal.mapper;
 
 import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 
-import com.paytech.payment.channel.core.dal.dataobject.ChannelMid;
+import com.paytech.channel.connector.core.dal.dataobject.ChannelMid;
 
 /** ChannelMid SQL 参数绑定，SQL 仅位于 XML。 */
 public interface ChannelMidMapper {

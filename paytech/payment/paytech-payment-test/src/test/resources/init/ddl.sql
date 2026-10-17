@@ -1,90 +1,61 @@
--- ONLY mor-local MySQL at 127.0.0.1:13306; dedicated, EMPTY Channel test database.
--- REVIEW AND APPLY MANUALLY; applications and tests never execute this file.
-CREATE DATABASE IF NOT EXISTS mor_payment_channel_test CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
-CREATE USER IF NOT EXISTS 'payment_channel_test'@'%' IDENTIFIED BY 'local-channel-test-only';
-GRANT SELECT, INSERT, UPDATE, DELETE ON mor_payment_channel_test.* TO 'payment_channel_test'@'%';
-USE mor_payment_channel_test;
+-- ONLY mor-local MySQL at 127.0.0.1:13306; payment test database mor_payment (design/10 §4.2, §5.1).
+-- REVIEW AND APPLY MANUALLY with the root account to an EMPTY mor_payment; applications and tests never execute this file.
+-- mor_payment / payment_app come from local-environment/mysql/init/01-create-databases-and-users.sh (password MOR_PAYMENT_DB_PASSWORD
+-- in .env.local); the GRANT below is the minimum the tests need and does not revoke an existing broader local grant.
+CREATE DATABASE IF NOT EXISTS mor_payment CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+GRANT SELECT, INSERT, UPDATE, DELETE ON mor_payment.* TO 'payment_app'@'%';
+USE mor_payment;
 
--- Code-MoR target schema generated from the approved PDManer model.
--- Apply manually to an EMPTY database only; existing environments require a reviewed migration.
--- Execution status: agent-docs/CURRENT_IMPLEMENTATION.md. Verify Java compatibility before rollout.
--- Source: payment-orchestration-service/docs/database/payment-orchestration.pdma.json
+-- 15 tables: 10 payment tables (design/03 §2.3), the four card tables that stay in mor_payment until step 12, and the
+-- per-database t_compensation_event; copied verbatim from paytech/payment/docs/database/sql/payment-schema.sql.
 SET NAMES utf8mb4;
 
-CREATE TABLE `t_payment_channel` (
-  `channel_id` BIGINT NOT NULL COMMENT 'Payment 管理的支付服务商内部唯一标识。',
-  `channel_code` VARCHAR(64) NOT NULL COMMENT '平台稳定识别支付服务商的唯一业务代码。取值来源：Channel Catalog；非固定枚举。',
-  `channel_name` VARCHAR(255) NOT NULL COMMENT '供运营配置和审阅展示的支付服务商正式名称。',
-  `channel_status` VARCHAR(64) NOT NULL COMMENT '支付服务商从草稿、激活、暂停到关闭的当前运行状态。允许值：DRAFT、ACTIVE、SUSPENDED、CLOSED。',
+CREATE TABLE `t_routing_decision` (
+  `routing_decision_id` BIGINT NOT NULL COMMENT '一次支付尝试唯一不可变路由结论的内部标识。',
+  `payment_attempt_id` BIGINT NOT NULL COMMENT '同一支付意图内一次顺序支付尝试的内部唯一标识。',
+  `routing_policy_id` BIGINT NULL COMMENT '按固定交易作用域匹配的稳定路由策略根标识。',
+  `routing_policy_version_id` BIGINT NULL COMMENT '路由策略不可变候选集合发布版本的内部唯一标识。',
+  `selected_channel_id` BIGINT NULL COMMENT '路由最终选中的支付服务商标识；拒绝或冲突时为空。',
+  `selected_mid_id` BIGINT NULL COMMENT '路由最终选中的服务商商户号标识；拒绝或冲突时为空。',
+  `selected_channel_account_id` BIGINT NULL COMMENT '路由最终选中并要求首个资金动作逐值一致的 Channel Account 标识；未选中时为空。',
+  `decision_status` VARCHAR(64) NOT NULL COMMENT '一次支付尝试最终得到选中、拒绝或配置冲突的闭合结论。允许值：SELECTED、REJECTED、CONFIGURATION_CONFLICT。',
+  `decision_reason_code` VARCHAR(64) NULL COMMENT '路由选中、拒绝或配置冲突采用的稳定原因代码；无需原因时为空。取值来源：Reason Catalog；非固定枚举。',
   `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 微秒精度时间。',
-  `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最近一次持久化更新的 UTC 微秒精度时间。',
-  PRIMARY KEY (`channel_id`),
-  UNIQUE KEY `uk_payment_channel_code` (`channel_code`) COMMENT '唯一索引：channel_code'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='支付渠道的稳定身份和当前运行状态。';
+  PRIMARY KEY (`routing_decision_id`),
+  UNIQUE KEY `uk_routing_decision_attempt` (`payment_attempt_id`) COMMENT '唯一索引：payment_attempt_id',
+  KEY `idx_route_dec_policy` (`routing_policy_id`) COMMENT '访问索引：routing_policy_id',
+  KEY `idx_route_dec_pol_ver` (`routing_policy_version_id`) COMMENT '访问索引：routing_policy_version_id',
+  KEY `idx_route_dec_channel` (`selected_channel_id`) COMMENT '访问索引：selected_channel_id',
+  KEY `idx_route_dec_mid` (`selected_mid_id`) COMMENT '访问索引：selected_mid_id',
+  KEY `idx_route_dec_account` (`selected_channel_account_id`) COMMENT '访问索引：selected_channel_account_id'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='一次支付尝试的不可变最终路由结论，冻结服务商、Channel Account 和商户号。';
 
-CREATE TABLE `t_channel_account` (
-  `channel_account_id` BIGINT NOT NULL COMMENT 'Payment 管理的服务商技术认证账户或租户内部唯一标识。',
+CREATE TABLE `t_route_candidate_eval` (
+  `route_candidate_eval_id` BIGINT NOT NULL COMMENT '一次路由决策中一条不可变候选商户号评估的内部唯一标识。',
+  `routing_decision_id` BIGINT NOT NULL COMMENT '一次支付尝试唯一不可变路由结论的内部标识。',
   `channel_id` BIGINT NOT NULL COMMENT 'Payment 管理的支付服务商内部唯一标识。',
-  `entity_no` CHAR(5) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '账号所属 Operating Entity 的不可变 CHAR(5) 编号，来源于 CCT；与其当前绑定 MID 的 OE 一致，不作为路由规则。',
-  `account_name` VARCHAR(128) NOT NULL COMMENT '运营维护的账号展示名称，不作为唯一技术身份。',
-  `account_vault_token` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT '引用 CHANNEL_ACCOUNT_CONFIG_V1 的 REFERENCE Token，含账号业务参数及渠道凭据；仅执行前以 CHANNEL_EXECUTION 用途读取；DRAFT 可空，其他状态执行时必须存在；不得进入日志或事件。',
-  `account_status` VARCHAR(64) NOT NULL COMMENT '技术认证账户或租户从草稿、激活、暂停到关闭的当前状态。允许值：DRAFT、ACTIVE、SUSPENDED、CLOSED。',
-  `remark` VARCHAR(512) NULL COMMENT '运营维护的非敏感补充说明；无备注时为空，禁止填写凭据或个人敏感值。',
-  `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 微秒精度时间。',
-  `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最近一次持久化更新的 UTC 微秒精度时间。',
-  PRIMARY KEY (`channel_account_id`),
-  UNIQUE KEY `uk_channel_account_owner` (`channel_account_id`, `channel_id`) COMMENT '唯一索引：channel_account_id、channel_id',
-  KEY `idx_channel_account_status` (`channel_id`, `account_status`) COMMENT '访问索引：channel_id、account_status',
-  KEY `idx_channel_account_entity` (`entity_no`, `account_status`) COMMENT '访问索引：entity_no、account_status'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='归属单个 Channel 与 OE 的技术账号；账号参数及凭据只保存 Vault 引用。';
-
-CREATE TABLE `t_channel_mid` (
   `mid_id` BIGINT NOT NULL COMMENT 'Payment 管理且唯一归属于一个 Operating Entity 的服务商商户号标识。',
-  `channel_id` BIGINT NOT NULL COMMENT 'Payment 管理的支付服务商内部唯一标识。',
-  `channel_account_id` BIGINT NOT NULL COMMENT 'Payment 管理的服务商技术认证账户或租户内部唯一标识。',
-  `external_mid_code` VARCHAR(128) NOT NULL COMMENT '服务商侧识别该 MID 的稳定代码，不保存凭据或 Secret。取值来源：Channel Adapter Catalog；非固定枚举。',
-  `entity_no` CHAR(5) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT 'CCT唯一不可变OE编号，创建时经营国家二位代码加001–999，如AE001；不是数字代理ID，编号不参与路由。',
-  `mid_status` VARCHAR(64) NOT NULL COMMENT '服务商商户号从草稿、激活、暂停到关闭的当前状态。允许值：DRAFT、ACTIVE、SUSPENDED、CLOSED。',
-  `activated_at` DATETIME(6) NULL COMMENT '商户号首次进入可承接生产交易状态的业务时刻。',
-  `closed_at` DATETIME(6) NULL COMMENT '商户号永久进入关闭状态的业务时刻；未关闭时为空。',
+  `channel_account_id` BIGINT NULL COMMENT 'Payment 管理的服务商技术认证账户或租户内部唯一标识。',
+  `eligible_flag` TINYINT(1) NOT NULL COMMENT '1 表示该商户号满足本次路由条件，0 表示被排除。',
+  `candidate_priority` INT NOT NULL COMMENT '路由策略中候选商户号的优先顺序，数值越小优先级越高。',
+  `weight_value` DECIMAL(18,10) NOT NULL COMMENT '同一候选优先级内执行稳定加权选择的正数权重。',
+  `exclusion_reason_code` VARCHAR(64) NULL COMMENT '该商户号未进入最终可选集合的主要稳定原因代码；可用时为空。取值来源：Reason Catalog；非固定枚举。',
+  `health_status` VARCHAR(64) NULL COMMENT '路由评估时读取或冻结的商户号健康结论。允许值：HEALTHY、DEGRADED、UNHEALTHY、UNKNOWN。',
+  `circuit_status` VARCHAR(64) NULL COMMENT '商户号支付方式当前处于关闭、打开或半开探测的熔断状态。允许值：CLOSED、OPEN、HALF_OPEN。',
+  `health_score` DECIMAL(5,2) NULL COMMENT '当前窗口技术健康度的零到一百分评分。',
+  `technical_success_rate` DECIMAL(9,8) NULL COMMENT '当前健康窗口技术成功样本占全部样本的比例。',
+  `timeout_rate` DECIMAL(9,8) NULL COMMENT '当前健康窗口超时样本占全部样本的比例。',
+  `p95_latency_ms` INT NULL COMMENT '当前健康窗口服务商交互延迟的第九十五百分位毫秒数。',
+  `sample_count` INT NULL COMMENT '当前健康窗口纳入成功、服务商错误和超时聚合的总样本数。',
+  `health_observed_at` DATETIME(6) NULL COMMENT '路由候选评估冻结所读取健康状态的观察时间；未形成快照时为空。',
   `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 微秒精度时间。',
-  `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最近一次持久化更新的 UTC 微秒精度时间。',
-  PRIMARY KEY (`mid_id`),
-  UNIQUE KEY `uk_channel_mid` (`channel_id`, `external_mid_code`) COMMENT '唯一索引：channel_id、external_mid_code',
-  KEY `idx_channel_mid_account` (`channel_account_id`, `mid_status`) COMMENT '访问索引：channel_account_id、mid_status',
-  KEY `idx_channel_mid_entity` (`entity_no`, `mid_status`) COMMENT '访问索引：entity_no、mid_status'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='服务商商户号与唯一 Operating Entity 的稳定归属及当前 Channel Account 绑定；归属创建后不得改写。';
+  PRIMARY KEY (`route_candidate_eval_id`),
+  UNIQUE KEY `uk_route_candidate_eval` (`routing_decision_id`, `mid_id`) COMMENT '唯一索引：routing_decision_id、mid_id',
+  KEY `idx_route_eval_channel` (`channel_id`) COMMENT '访问索引：channel_id',
+  KEY `idx_route_eval_mid` (`mid_id`) COMMENT '访问索引：mid_id',
+  KEY `idx_route_eval_account` (`channel_account_id`) COMMENT '访问索引：channel_account_id'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='一次路由决策中全部候选的不可变资格评估证据。';
 
-CREATE TABLE `t_mid_capability` (
-  `mid_capability_id` BIGINT NOT NULL COMMENT '一个 MID 在完整交易条件组合下的能力配置组标识；明细按能力代码分别解析。',
-  `mid_id` BIGINT NOT NULL COMMENT 'Payment 管理且唯一归属于一个 Operating Entity 的服务商商户号标识。',
-  `payment_method_code` VARCHAR(64) NOT NULL COMMENT '支付尝试冻结本次使用的精确支付方式目录值；商户号 Capability 与 Health State 使用精确值，Routing Policy 可使用精确值或控制通配符 *。取值来源：Payment Method Catalog；非固定枚举。',
-  `scheme_code` VARCHAR(64) NOT NULL COMMENT '支付体系或网络代码，可为精确代码或 *；请求未提供体系时仅匹配 *。取值来源：Scheme Catalog；非固定枚举。',
-  `country_code` CHAR(2) NOT NULL COMMENT '匹配 Commerce 冻结到 Payment Intent 的消费者国家，可为精确两位代码或 *。取值来源：ISO 3166-1 alpha-2；非固定枚举。',
-  `currency` CHAR(3) NOT NULL COMMENT '金额事实采用 ISO 4217 三位币种；配置 Scope 允许控制通配符 *，交易事实必须使用精确币种。取值来源：ISO 4217；非固定枚举。',
-  `mcc_code` VARCHAR(4) NOT NULL COMMENT '渠道批准用于该 MID 的精确四位业务 MCC，不允许 *，不代表默认收单 MCC。取值来源：CCT/Commerce frozen classification；非固定枚举。',
-  `capability_status` VARCHAR(64) NOT NULL COMMENT '整组能力条件的启停状态；DISABLED 不参与匹配，不等价于任一 BOOLEAN 能力的 false。允许值：ENABLED、DISABLED。',
-  `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 微秒精度时间。',
-  `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最近一次持久化更新的 UTC 微秒精度时间。',
-  PRIMARY KEY (`mid_capability_id`),
-  UNIQUE KEY `uk_mid_capability_scope` (`mid_id`, `payment_method_code`, `scheme_code`, `country_code`, `currency`, `mcc_code`) COMMENT '唯一索引：mid_id、payment_method_code、scheme_code、country_code、currency、mcc_code'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='商户号按支付方式、支付体系、消费者国家、币种和精确 MCC 定义的能力条件组。';
-
-CREATE TABLE `t_mid_capability_detail` (
-  `mid_capability_detail_id` BIGINT NOT NULL COMMENT '能力条件组内一项类型化能力值的唯一标识。',
-  `mid_capability_id` BIGINT NOT NULL COMMENT '一条商户号支付方式、卡组织、地域与动作能力配置的内部唯一标识。',
-  `capability_code` VARCHAR(128) NOT NULL COMMENT 'MID 固定五维 Scope 下受控的静态路由能力代码。取值来源：MID Capability Catalog；非固定枚举。',
-  `value_type` VARCHAR(64) NOT NULL COMMENT 'MID 静态能力值采用 BOOLEAN、DECIMAL、INTEGER 或 CODE 的闭合类型。允许值：BOOLEAN、DECIMAL、CODE。',
-  `boolean_value` TINYINT(1) NULL COMMENT 'BOOLEAN 类型的能力值：1 明确支持，0 明确不支持；其他类型必须为 NULL。',
-  `decimal_value` DECIMAL(24,8) NULL COMMENT 'DECIMAL 类型的精确能力值；金额能力使用交易币种主单位；其他类型必须为 NULL。',
-  `code_value` VARCHAR(128) NULL COMMENT 'CODE 类型的能力目录值；其他类型必须为 NULL；允许值由该能力的注册定义限定。',
-  `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 微秒精度时间。',
-  `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最近一次持久化更新的 UTC 微秒精度时间。',
-  PRIMARY KEY (`mid_capability_detail_id`),
-  UNIQUE KEY `uk_mid_cap_detail_code` (`mid_capability_id`, `capability_code`) COMMENT '唯一索引：mid_capability_id、capability_code'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='能力条件组下的类型化能力值；按能力代码唯一，值类型与受控目录一致。';
-
--- 执行链路五表（2026-10-14 PayerMax 卡直付对接，经用户授权本机执行；原文取自正式 Schema）。
 CREATE TABLE `t_payment_intent` (
   `payment_intent_id` BIGINT NOT NULL COMMENT '一个来源订单唯一支付目标的内部稳定标识。',
   `source_type` VARCHAR(64) NOT NULL COMMENT '支付意图来源或补偿事件来源业务事实采用的受控目录类型。取值来源：Payment Source Type Catalog；非固定枚举。',
@@ -266,6 +237,66 @@ CREATE TABLE `t_channel_transaction_ref` (
   KEY `idx_txn_ref_mid` (`mid_id`) COMMENT '访问索引：mid_id',
   KEY `idx_txn_ref_original` (`original_channel_txn_ref_id`) COMMENT '访问索引：original_channel_txn_ref_id'
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='授权、捕获、扣款、撤销或退款的不可变服务商外部交易引用。';
+
+CREATE TABLE `t_duplicate_payment_case` (
+  `duplicate_payment_case_id` BIGINT NOT NULL COMMENT '第二笔真实渠道成功处置根的内部唯一标识。',
+  `payment_intent_id` BIGINT NOT NULL COMMENT '一个来源订单唯一支付目标的内部稳定标识。',
+  `canonical_attempt_id` BIGINT NOT NULL COMMENT '支付意图首次权威成功对应的支付尝试标识。',
+  `canonical_action_id` BIGINT NOT NULL COMMENT '支付意图首次权威成功对应的渠道动作标识。',
+  `canonical_transaction_ref_id` BIGINT NOT NULL COMMENT '支付意图首次权威成功对应的服务商交易引用标识。',
+  `duplicate_attempt_id` BIGINT NOT NULL COMMENT '第二笔真实渠道成功对应并进入冲突终态的支付尝试标识。',
+  `duplicate_action_id` BIGINT NOT NULL COMMENT '第二笔真实渠道成功对应且需要补偿处置的渠道动作标识。',
+  `duplicate_transaction_ref_id` BIGINT NOT NULL COMMENT '第二笔真实渠道成功对应的服务商交易引用标识。',
+  `duplicate_amount` DECIMAL(24,8) NOT NULL COMMENT '第二笔真实渠道成功形成且需要退回的确定金额。',
+  `currency` CHAR(3) NOT NULL COMMENT '金额事实采用 ISO 4217 三位币种；配置 Scope 允许控制通配符 *，交易事实必须使用精确币种。取值来源：ISO 4217；非固定枚举。',
+  `case_status` VARCHAR(64) NOT NULL COMMENT '第二笔真实渠道成功从发现、补偿到人工处置的当前状态。允许值：OPEN、COMPENSATING、COMPENSATION_UNKNOWN、COMPENSATED、MANUAL_REVIEW。',
+  `compensation_action_id` BIGINT NULL COMMENT '为处置第二笔真实渠道成功而创建的 REFUND 动作标识；尚未创建时为空。',
+  `version` BIGINT NOT NULL COMMENT '可变 Payment 业务根并发命令与乱序结果条件更新使用的单调版本。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 微秒精度时间。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最近一次持久化更新的 UTC 微秒精度时间。',
+  PRIMARY KEY (`duplicate_payment_case_id`),
+  UNIQUE KEY `uk_dup_case_duplicate_action` (`duplicate_action_id`) COMMENT '唯一索引：duplicate_action_id',
+  KEY `idx_dup_case_intent` (`payment_intent_id`) COMMENT '访问索引：payment_intent_id',
+  KEY `idx_dup_case_canonical_attempt` (`canonical_attempt_id`) COMMENT '访问索引：canonical_attempt_id',
+  KEY `idx_dup_case_duplicate_attempt` (`duplicate_attempt_id`) COMMENT '访问索引：duplicate_attempt_id',
+  KEY `idx_dup_case_canonical_action` (`canonical_action_id`) COMMENT '访问索引：canonical_action_id',
+  KEY `idx_dup_case_canonical_ref` (`canonical_transaction_ref_id`) COMMENT '访问索引：canonical_transaction_ref_id',
+  KEY `idx_dup_case_duplicate_ref` (`duplicate_transaction_ref_id`) COMMENT '访问索引：duplicate_transaction_ref_id',
+  KEY `idx_dup_case_comp_action` (`compensation_action_id`) COMMENT '访问索引：compensation_action_id'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='第二笔真实渠道成功的处置根，不能替换支付意图的首笔成功指针。';
+
+CREATE TABLE `t_payment_refund_position` (
+  `payment_refund_position_id` BIGINT NOT NULL COMMENT 'Payment 对原成功交易并发控制预占与已退款金额的位置标识。',
+  `payment_intent_id` BIGINT NOT NULL COMMENT '一个来源订单唯一支付目标的内部稳定标识。',
+  `successful_attempt_id` BIGINT NOT NULL COMMENT '支付意图首次形成权威成功结果的支付尝试标识。',
+  `original_channel_txn_ref_id` BIGINT NOT NULL COMMENT '退款或争议所指向的原始成功服务商交易引用标识。',
+  `original_amount` DECIMAL(24,8) NOT NULL COMMENT '成功支付对应且可用于渠道退款的原始金额上限。',
+  `reserved_amount` DECIMAL(24,8) NOT NULL COMMENT '已创建但尚未成功或释放的渠道退款占用金额。',
+  `refunded_amount` DECIMAL(24,8) NOT NULL COMMENT '原成功支付已经确认通过渠道退回消费者的累计金额。',
+  `currency` CHAR(3) NOT NULL COMMENT '金额事实采用 ISO 4217 三位币种；配置 Scope 允许控制通配符 *，交易事实必须使用精确币种。取值来源：ISO 4217；非固定枚举。',
+  `version` BIGINT NOT NULL COMMENT '可变 Payment 业务根并发命令与乱序结果条件更新使用的单调版本。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 微秒精度时间。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最近一次持久化更新的 UTC 微秒精度时间。',
+  PRIMARY KEY (`payment_refund_position_id`),
+  UNIQUE KEY `uk_payment_refund_position` (`payment_intent_id`, `original_channel_txn_ref_id`) COMMENT '唯一索引：payment_intent_id、original_channel_txn_ref_id',
+  KEY `idx_refund_pos_attempt` (`successful_attempt_id`) COMMENT '访问索引：successful_attempt_id',
+  KEY `idx_refund_pos_orig_ref` (`original_channel_txn_ref_id`) COMMENT '访问索引：original_channel_txn_ref_id'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='Payment 侧渠道可退款金额位置，预占、消费和释放由乐观锁原子保护。';
+
+CREATE TABLE `t_channel_refund` (
+  `channel_refund_id` BIGINT NOT NULL COMMENT 'Payment 为一个 Commerce 退款请求创建的唯一渠道退款标识。',
+  `commerce_refund_request_id` BIGINT NOT NULL COMMENT 'Commerce 拥有且在 Payment 中唯一对应渠道退款的业务请求标识。',
+  `payment_refund_position_id` BIGINT NOT NULL COMMENT 'Payment 对原成功交易并发控制预占与已退款金额的位置标识。',
+  `refund_amount` DECIMAL(24,8) NOT NULL COMMENT '本次渠道退款要求服务商退还给消费者的确定金额。',
+  `currency` CHAR(3) NOT NULL COMMENT '金额事实采用 ISO 4217 三位币种；配置 Scope 允许控制通配符 *，交易事实必须使用精确币种。取值来源：ISO 4217；非固定枚举。',
+  `refund_status` VARCHAR(64) NOT NULL COMMENT '渠道退款从创建、处理、未知到权威终态的当前状态。允许值：CREATED、PROCESSING、UNKNOWN、SUCCEEDED、FAILED、CANCELLED。',
+  `version` BIGINT NOT NULL COMMENT '可变 Payment 业务根并发命令与乱序结果条件更新使用的单调版本。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 微秒精度时间。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最近一次持久化更新的 UTC 微秒精度时间。',
+  PRIMARY KEY (`channel_refund_id`),
+  UNIQUE KEY `uk_channel_refund_commerce_req` (`commerce_refund_request_id`) COMMENT '唯一索引：commerce_refund_request_id',
+  KEY `idx_channel_refund_pos` (`payment_refund_position_id`) COMMENT '访问索引：payment_refund_position_id'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='一个 Commerce Refund Request 的唯一渠道退款根，UNKNOWN 继续占用退款位置。';
 
 CREATE TABLE `t_compensation_event` (
   `id` BIGINT NOT NULL COMMENT '本地补偿事件记录的内部唯一标识。',

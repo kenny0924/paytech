@@ -1,5 +1,6 @@
-package com.paytech.payment.channel.service.processor;
+package com.paytech.channel.connector.service.processor;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -11,15 +12,17 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.paytech.channel.connector.api.ChannelCapabilityCodes;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.processor.AbstractProcessor;
-import com.paytech.payment.channel.core.configuration.ChannelProperties;
-import com.paytech.payment.channel.core.dal.dataobject.*;
-import com.paytech.payment.channel.core.enums.ChannelStatus;
-import com.paytech.payment.channel.domain.MidCandidateView;
-import com.paytech.payment.channel.domain.MidCapabilityContext;
-import com.paytech.payment.channel.domainservice.repository.*;
-import com.paytech.payment.channel.service.processor.request.QueryMidCandidatesRequest;
+import com.paytech.channel.connector.core.configuration.ChannelProperties;
+import com.paytech.channel.connector.core.dal.dataobject.*;
+import com.paytech.channel.connector.core.enums.ChannelStatus;
+import com.paytech.channel.connector.domain.CapabilityView;
+import com.paytech.channel.connector.domain.MidCandidateView;
+import com.paytech.channel.connector.domain.MidCapabilityContext;
+import com.paytech.channel.connector.domainservice.repository.*;
+import com.paytech.channel.connector.service.processor.request.QueryMidCandidatesRequest;
 
 import lombok.AllArgsConstructor;
 
@@ -73,7 +76,7 @@ public class QueryMidCandidatesProcessor extends AbstractProcessor<QueryMidCandi
             && channel.getChannelStatus() == ChannelStatus.ACTIVE;
     }
 
-    /** 只投影候选身份与有效能力，绝不携带账号参数、Token 或密钥。 */
+    /** 只投影候选身份与有效能力，绝不携带账号参数、Token 或密钥；能力代码在此一处解析为支持操作与金额上下限（D06）。 */
     MidCandidateView candidate(ChannelMid mid, List<MidCapability> scopes, List<MidCapabilityDetail> values,
         QueryMidCandidatesRequest request) {
         var midScopes = scopes.stream().filter(scope -> mid.getMidId().equals(scope.getMidId())).toList();
@@ -85,6 +88,25 @@ public class QueryMidCandidatesProcessor extends AbstractProcessor<QueryMidCandi
         result.setMidId(mid.getMidId());
         result.setCapabilities(new MidCapabilityContext(midScopes, midValues).resolve(request.getCriteria(),
             properties.getCapabilityDefinitions()));
+        project(result);
         return result;
+    }
+
+    /** ACTION.* 为 true 的操作与 AMOUNT.MIN/MAX；能力按代码升序，因此支持操作也按代码升序。 */
+    static void project(MidCandidateView candidate) {
+        var operations = new LinkedHashSet<String>();
+        for (CapabilityView capability : candidate.getCapabilities()) {
+            String code = capability.getCapabilityCode();
+            if (code.startsWith(ChannelCapabilityCodes.ACTION_PREFIX) && Boolean.TRUE.equals(capability.getBooleanValue())) {
+                operations.add(code.substring(ChannelCapabilityCodes.ACTION_PREFIX.length()));
+            }
+            if (ChannelCapabilityCodes.AMOUNT_MIN.equals(code)) {
+                candidate.setMinAmount(capability.getDecimalValue());
+            }
+            if (ChannelCapabilityCodes.AMOUNT_MAX.equals(code)) {
+                candidate.setMaxAmount(capability.getDecimalValue());
+            }
+        }
+        candidate.setSupportedOperations(operations);
     }
 }

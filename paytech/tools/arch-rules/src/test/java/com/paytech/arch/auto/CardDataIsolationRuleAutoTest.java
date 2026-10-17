@@ -28,6 +28,17 @@ class CardDataIsolationRuleAutoTest {
         ViolationChecker.of(new CardDataIsolationRule(CRYPTO_PACKAGE).check(payment)).none();
     }
 
+    /** 第 12 步前的过渡登记：宿主内卡域模块 paytech-payment-card 读写卡表不违规，宿主其他模块照常检查（见下一用例）。 */
+    @Test
+    void test_transitionalCardModuleExempt() {
+        ServiceArchitectureScope payment = Fixtures.scope("payment")
+            .module(Fixtures.path("r11/pass/payment/paytech-payment-card"), Fixtures.classes("r11.paymentcore.clean"))
+            .module(Fixtures.path("r11/pass/payment/paytech-payment-core"), Fixtures.classes("r11.paymentcore.clean"))
+            .build();
+
+        ViolationChecker.of(new CardDataIsolationRule(CRYPTO_PACKAGE).check(payment)).none();
+    }
+
     @Test
     void test_businessRuleViolation() {
         ServiceArchitectureScope payment = Fixtures.scope("payment")

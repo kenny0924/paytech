@@ -1643,7 +1643,7 @@ test("shared writing conventions retain Payment responsibilities without promoti
     "utf8",
   );
   const paymentGuide = readFileSync(
-    new URL("../../payment-orchestration-service/docs/development/processor-conventions.md", import.meta.url),
+    new URL("../../paytech/payment/docs/development/processor-conventions.md", import.meta.url),
     "utf8",
   );
   const writeApiExample = readFileSync(
@@ -1651,7 +1651,7 @@ test("shared writing conventions retain Payment responsibilities without promoti
     "utf8",
   );
   const paymentInstructions = readFileSync(
-    new URL("../../payment-orchestration-service/AGENTS.md", import.meta.url),
+    new URL("../../paytech/payment/AGENTS.md", import.meta.url),
     "utf8",
   );
   assert.match(decision, /Decision status: Confirmed/u);

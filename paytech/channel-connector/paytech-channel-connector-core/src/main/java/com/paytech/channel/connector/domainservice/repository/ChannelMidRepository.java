@@ -1,8 +1,8 @@
-package com.paytech.payment.channel.domainservice.repository;
+package com.paytech.channel.connector.domainservice.repository;
 
 import java.util.List;
 
-import com.paytech.payment.channel.core.dal.dataobject.ChannelMid;
+import com.paytech.channel.connector.core.dal.dataobject.ChannelMid;
 
 /** ChannelMid 单表只读仓储。 */
 public interface ChannelMidRepository {

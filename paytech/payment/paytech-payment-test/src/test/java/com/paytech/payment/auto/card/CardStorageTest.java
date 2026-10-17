@@ -63,10 +63,10 @@ class CardStorageTest extends AbstractPayCardTest {
     @Autowired
     private CardStorageService cardStorageService;
 
-    /** 本类公共：卡直付渠道与风控放行，pay 用例按需配置 Platform 响应。 */
+    /** 本类公共：MID 候选与风控放行，pay 用例按需配置渠道结论。 */
     @BeforeEach
     void setUpClassMocks() {
-        data.cardFixture("PAYERMAX", ENTITY_NO, CURRENCY);
+        channel.candidate(ENTITY_NO, CURRENCY);
         risk.respond(RiskResult.ALLOW, AuthenticationRequirement.NOT_REQUIRED);
     }
 
@@ -171,9 +171,7 @@ class CardStorageTest extends AbstractPayCardTest {
     /** 读卡：经 Vault 取回 DEK 解密，Platform 取得的卡值与申请一致；CVV 领取后删除，再次读卡拒绝。 */
     @Test
     void test_revealReturnsStoredCardOnce() {
-        platform.respond("SUCCESS", """
-            {"paymentStatus":"PENDING","nextAction":{"type":"THREE_DS_CHALLENGE","redirectUrl":"https://3ds.local.invalid/c"},
-             "channelTransactionRef":"T-CARD-3DS","channelStatus":"PENDING"}""");
+        channel.pending("T-CARD-3DS", "https://3ds.local.invalid/c");
         var paid = newPayment();
 
         var response = paid.pay();
@@ -182,7 +180,7 @@ class CardStorageTest extends AbstractPayCardTest {
         long instrumentId = id(mapper.cardInstruments().getFirst(), "instrumentId");
         assertAll(() -> assertEquals(AttemptStatus.PROCESSING.getCode(), response.getBody().get("status")),
             () -> assertEquals(PlatformMocker.materialDigest(PAN, EXPIRY_MONTH, EXPIRY_YEAR, CARDHOLDER_NAME, CVV),
-                platform.only().materialDigest(), "读卡取得的卡值与申请不一致"),
+                channel.only().materialDigest(), "读卡取得的卡值与申请不一致"),
             () -> assertFalse(redis.hasKey(CardSecurityCodeClientImpl.key(instrumentId)), "CVV 领取后仍存在"),
             () -> assertEquals(HttpStatus.BAD_REQUEST.value(), reveal(paid.token, attemptId), "CVV 不能再次领取"),
             () -> assertEquals(2, vault.cardKeyRevealCount(), "每次读卡都先取回 DEK 解密"));
@@ -191,8 +189,7 @@ class CardStorageTest extends AbstractPayCardTest {
     /** 同一张卡的两笔交易各自暂存 CVV：一笔读卡领取后，另一笔的 CVV 仍在。 */
     @Test
     void test_securityCodePerInstrument() {
-        platform.respond("SUCCESS", """
-            {"paymentStatus":"SUCCEEDED","channelTransactionRef":"T-CARD-CVV","channelStatus":"SUCCESS"}""");
+        channel.succeeded("T-CARD-CVV");
         var paid = newPayment();
         newPayment();
         var instruments = mapper.cardInstruments();
@@ -260,8 +257,7 @@ class CardStorageTest extends AbstractPayCardTest {
     /** 申请、读卡与支付全过程的日志不含卡号、持卡人、卡指纹、凭证摘要与 DEK Vault Token。 */
     @Test
     void test_cardValuesNotLogged(CapturedOutput output) {
-        platform.respond("SUCCESS", """
-            {"paymentStatus":"SUCCEEDED","channelTransactionRef":"T-CARD-LOG","channelStatus":"SUCCESS"}""");
+        channel.succeeded("T-CARD-LOG");
         newPayment().pay();
 
         var card = mapper.cards().getFirst();

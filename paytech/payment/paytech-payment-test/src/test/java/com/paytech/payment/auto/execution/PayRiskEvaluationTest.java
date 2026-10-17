@@ -20,6 +20,7 @@ import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import com.paytech.channel.connector.api.enums.ChannelOperation;
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.payment.api.execution.PaymentIntentApi;
 import com.paytech.payment.execution.core.action.ActionType;
@@ -30,7 +31,7 @@ import com.paytech.payment.execution.core.enums.CaptureMode;
 import com.paytech.payment.execution.core.enums.IntentStatus;
 import com.paytech.payment.execution.core.enums.RiskResult;
 import com.paytech.payment.test.base.AbstractPayCardTest;
-import com.paytech.payment.test.mocker.ChannelDataMocker.Fixture;
+import com.paytech.payment.test.mocker.ChannelConnectorMocker.Candidate;
 import com.paytech.payment.test.mocker.RiskMocker;
 import com.paytech.payment.test.mocker.RiskMocker.Reply;
 import com.paytech.risk.api.enums.RiskDecisionEvaluationErrorCode;
@@ -52,12 +53,12 @@ class PayRiskEvaluationTest extends AbstractPayCardTest {
     private static final String BIN = "41111111";
     private static final Duration BEYOND_READ_TIMEOUT = Duration.ofMillis(1500);
 
-    private Fixture fixture;
+    private Candidate candidate;
 
-    /** 本类公共：AE001/AED 的合成卡渠道（CARD PAY 能力）；风控与 Platform 响应按用例配置。 */
+    /** 本类公共：AE001/AED 下一个支持 PAY 的 MID 候选；风控与渠道结论按用例配置。 */
     @BeforeEach
     void setUpClassMocks() {
-        fixture = data.cardFixture("PAYERMAX", ENTITY_NO, CURRENCY);
+        candidate = channel.candidate(ENTITY_NO, CURRENCY);
     }
 
     /** 放行且无需认证（自动捕获）：请求合同与 17 个输入字段正确，保存评估结果并进入 PAY。 */
@@ -100,7 +101,7 @@ class PayRiskEvaluationTest extends AbstractPayCardTest {
     /** 放行且无需认证（手动捕获）：进入 AUTHORIZE。 */
     @Test
     void test_allowManualCapture() {
-        data.capabilityDetail(fixture, "ACTION.AUTHORIZE", true);
+        channel.supports(candidate, ChannelOperation.AUTHORIZE);
         risk.respond(RiskResult.ALLOW, AuthenticationRequirement.NOT_REQUIRED);
         var paid = newPayment();
 
@@ -108,7 +109,7 @@ class PayRiskEvaluationTest extends AbstractPayCardTest {
 
         assertAll(() -> assertEquals(actionTypes(ActionType.PAY_RISK, ActionType.AUTHORIZE), types(attemptId)),
             () -> assertEquals(CaptureMode.MANUAL.getCode(), risk.requests().getFirst().getInputs().get("captureMode")),
-            () -> assertTrue(platform.calls().isEmpty()));
+            () -> assertTrue(channel.calls().isEmpty()));
     }
 
     /** 放行且要求 3DS：保存认证要求并进入 AUTHENTICATE。 */
@@ -120,7 +121,7 @@ class PayRiskEvaluationTest extends AbstractPayCardTest {
 
         var riskAction = mapper.actions(attemptId).getFirst();
         assertAll(() -> assertEquals(actionTypes(ActionType.PAY_RISK, ActionType.AUTHENTICATE), types(attemptId)),
-            () -> assertTrue(platform.calls().isEmpty()));
+            () -> assertTrue(channel.calls().isEmpty()));
         assertRiskSaved(riskAction, RiskResult.ALLOW, AuthenticationRequirement.THREE_DS_REQUIRED);
     }
 
@@ -139,7 +140,7 @@ class PayRiskEvaluationTest extends AbstractPayCardTest {
             () -> assertEquals(actionTypes(ActionType.PAY_RISK), types(attemptId)),
             () -> assertEquals(AttemptStatus.FAILED.getCode(), mapper.attempt(attemptId).get("status")),
             () -> assertNull(mapper.attempt(attemptId).get("activeActionId")), () -> assertIntentReleased(paid),
-            () -> assertTrue(platform.calls().isEmpty()));
+            () -> assertTrue(channel.calls().isEmpty()));
         assertRiskSaved(riskAction, result, null);
 
         risk.respond(RiskResult.ALLOW, AuthenticationRequirement.NOT_REQUIRED);
@@ -239,7 +240,7 @@ class PayRiskEvaluationTest extends AbstractPayCardTest {
         return body;
     }
 
-    /** 失败关闭：Attempt 失败、Intent 释放，风控动作失败且无结论；没有调用 Platform。 */
+    /** 失败关闭：Attempt 失败、Intent 释放，风控动作失败且无结论；没有执行渠道操作。 */
     void assertFailedClosed(Payment paid, ResponseEntity<Map<String, Object>> response, int riskCalls) {
         long attemptId = attemptId(response);
         var riskAction = mapper.actions(attemptId).getFirst();
@@ -249,7 +250,7 @@ class PayRiskEvaluationTest extends AbstractPayCardTest {
             () -> assertEquals(ActionStatus.FAILED.getCode(), riskAction.get("status")),
             () -> assertNull(riskAction.get("riskResult")), () -> assertNull(riskAction.get("evaluationId")),
             () -> assertNull(riskAction.get("code")), () -> assertIntentReleased(paid),
-            () -> assertTrue(platform.calls().isEmpty()));
+            () -> assertTrue(channel.calls().isEmpty()));
     }
 
     /** 重试使用完全相同的请求。 */
@@ -305,10 +306,9 @@ class PayRiskEvaluationTest extends AbstractPayCardTest {
         return copy;
     }
 
-    /** Platform PAY 成功。 */
+    /** 渠道 PAY 成功。 */
     void platformSucceeds() {
-        platform.respond("SUCCESS", """
-            {"paymentStatus":"SUCCEEDED","channelTransactionRef":"T-PMX-RISK","channelStatus":"SUCCESS"}""");
+        channel.succeeded("T-PMX-RISK");
     }
 
     /** 支付尝试的动作类型序列。 */

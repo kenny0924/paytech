@@ -14,7 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClient;
 
 import com.paytech.payment.execution.core.enums.CaptureMode;
-import com.paytech.payment.test.dal.ChannelTestMapper;
+import com.paytech.payment.test.dal.PaymentTestMapper;
 
 /**
  * 卡支付 pay 入口测试的公共调用：新建 Intent、申请合成卡工具并提交 pay，均经真实 HTTP 入口。
@@ -22,7 +22,7 @@ import com.paytech.payment.test.dal.ChannelTestMapper;
  * <p>
  * 卡号为公开测试卡号，消费者引用、IP 与 User-Agent 为合成值；不放 {@code @Test}。
  */
-public abstract class AbstractPayCardTest extends MockTestBase {
+public abstract class AbstractPayCardTest extends PaymentMockTestBase {
     protected static final String CLIENT_ID = "101";
     protected static final String ENTITY_NO = "AE001";
     protected static final String CURRENCY = "AED";
@@ -45,7 +45,7 @@ public abstract class AbstractPayCardTest extends MockTestBase {
     private int port;
 
     @Autowired
-    protected ChannelTestMapper mapper;
+    protected PaymentTestMapper mapper;
 
     /** 指向本服务真实 HTTP 入口的客户端。 */
     protected RestClient client() {

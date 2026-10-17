@@ -48,7 +48,7 @@ test("Polymorphic identities can carry OE codes without converting numeric Party
 test("Four manual schemas exactly preserve model metadata, types and physical constraints", () => {
   const root = path.resolve(import.meta.dirname, "../..");
   assert.deepEqual(schemaTargets.map(([repository]) => repository), [
-    "client-contract-service", "commerce-service", "payment-orchestration-service", "finance-service",
+    "client-contract-service", "commerce-service", "paytech/payment", "paytech/channel-connector", "finance-service",
   ]);
   for (const [repository, name] of schemaTargets) {
     const source = `${repository}/docs/database/${name}.pdma.json`;
