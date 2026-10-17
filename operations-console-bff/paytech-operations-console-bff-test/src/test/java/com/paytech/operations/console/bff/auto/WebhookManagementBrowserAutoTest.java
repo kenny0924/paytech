@@ -37,6 +37,7 @@ import com.paytech.operations.console.bff.ext.rest.WebhookManagementController;
 import com.paytech.operations.console.bff.test.base.OperationsBffHttpTestBase;
 import com.paytech.operations.console.bff.test.simulator.PlatformOperationsSimulator;
 import com.paytech.operations.console.bff.test.simulator.PlatformOperationsSimulator.RecordedRequest;
+import com.paytech.platform.support.api.enums.WebhookEndpointErrorCode;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -142,6 +143,24 @@ class WebhookManagementBrowserAutoTest extends OperationsBffHttpTestBase {
         assertEquals(status, response.statusCode());
         assertEquals(REQUEST_ID, JSON.readTree(response.body()).path("requestId").asString());
         assertFalse(response.body().contains(UPSTREAM_DETAIL_CANARY));
+    }
+
+    /** 端点地址错误码已登记：新建与修改原样转换为 400 与枚举安全说明，不外露上游说明与请求标识。 */
+    @ParameterizedTest
+    @CsvSource({"W03,WEBHOOK_URL_NOT_ALLOWED", "W03,WEBHOOK_URL_UNRESOLVABLE", "W04,WEBHOOK_URL_NOT_PUBLIC"})
+    void test_endpointUrlRejected(String id, WebhookEndpointErrorCode code) throws Exception {
+        var c = endpoint(id);
+        platform.problem(c.path("path").asString(), 400, code.getCode());
+
+        var response = send(c, "", c.path("request"), true);
+
+        assertEquals(400, response.statusCode(), response.body());
+        var body = JSON.readTree(response.body());
+        assertAll(() -> assertEquals(code.getCode(), body.path("code").asString()),
+            () -> assertEquals(code.getMessage(), body.path("detail").asString()),
+            () -> assertEquals(REQUEST_ID, body.path("requestId").asString()),
+            () -> assertFalse(response.body().contains(UPSTREAM_DETAIL_CANARY)),
+            () -> assertFalse(response.body().contains(UPSTREAM_REQUEST_ID)));
     }
 
     /** Owner 422 只保留本次请求体内的字段路径，说明换为安全文案。 */

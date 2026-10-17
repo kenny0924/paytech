@@ -21,12 +21,12 @@
 - **已知：** Platform 或 Commerce 每次重启约有 1 分钟扫描调度失败（执行器注销，Admin 每 30 秒刷新注册地址），由下一周期补上。
 
 <a id="operations-webhook-management-20261016"></a>
-## Operations Webhook 管理（2026-10-16，已本地提交，未推送；2026-10-17 已部署 mor-test）
+## Operations Webhook 管理（2026-10-16，已提交并已推送；2026-10-17 已部署 mor-test）
 
 - **范围：** 运营后台「平台配置 / Webhook 管理」：按 Client ID 或名称选择 Client（Platform 新增 `GET /webhook-admin/v1/clients`）、端点新建 / 修改 / 启停、签名密钥一次性展示与轮换、投递记录与详情、Replay；Operations BFF 转发 10 个接口；注册 DML 128 行（`9000000000000903xx—0907xx`）。需求见 [requirements/20261016/operations-console-Webhook管理](../requirements/20261016/operations-console-Webhook管理/requirement.md)。
 - **验证：** Platform Webhook 6 个测试类全部通过（全量 671 例中 3 例错误为其他会话未提交的通知改动）；BFF 1378/1378；Web 1051—1060 通过；本机全链路接口 28/28、浏览器 22/22。阶段 5 修正测试事件审计未落库（Webhook 投递遗留）。
 - **mor-test（2026-10-17）：** `20677f2` + 本需求差异构建 Platform `efeb1d9e…`、BFF `6341dd18…`、Web `da6154c7…`；注册与启用 SQL 已执行；接口 22/22、浏览器 13/13、30 页回归通过；未发送测试事件与业务事件。见[发布记录](../requirements/20261016/operations-console-Webhook管理/release/release.md)。
-- **未完成：** 未推送；BFF 对业务错误统一返回公共说明，页面不能就地显示具体原因（另行决定）；mor-test 补偿扫描已于 2026-10-17 生效（见上节）。
+- **后续：** 地址被拒的就地提示由 [Webhook 端点地址错误码](../requirements/20261017/platform-support-Webhook地址错误码/requirement.md) 处理：Platform 新增 `WebhookEndpointErrorCode`（3 个），BFF 登记、Web 显示在地址字段下；本机 15/15，2026-10-17 已部署 mor-test（BFF `aec81706…`、Platform `0cdfe0e9…`、Web `04f9f7d1…`，验收 13/13），已本地提交（未推送）；只读权限 2026-10-17 本机补验 12/12。mor-test 补偿扫描已于 2026-10-17 生效（见上节）。
 
 <a id="platform-webhook-delivery-20261015"></a>
 ## Platform Client Webhook 投递（2026-10-15，已本地提交 `ee469e0`，未推送；2026-10-16 已部署 mor-test）

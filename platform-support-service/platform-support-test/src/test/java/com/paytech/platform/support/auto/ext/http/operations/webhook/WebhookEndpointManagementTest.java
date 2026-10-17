@@ -1,5 +1,6 @@
 package com.paytech.platform.support.auto.ext.http.operations.webhook;
 
+import com.paytech.platform.support.api.enums.WebhookEndpointErrorCode;
 import com.paytech.platform.support.api.enums.WebhookEventType;
 import com.paytech.platform.support.api.enums.OperationsErrorCode;
 import com.paytech.platform.support.delivery.core.enums.WebhookEndpointStatus;
@@ -110,9 +111,9 @@ class WebhookEndpointManagementTest extends WebhookTestBase {
     @Test
     void test_invalidParameter() {
         post(CLIENT_ENDPOINTS, admin, save("ftp://hooks.example.com/a", List.of(WebhookEventType.ORDER_PAID.getCode()), 0))
-            .assertProblem(400, CommonErrorCode.INVALID_REQUEST);
+            .assertProblem(400, WebhookEndpointErrorCode.WEBHOOK_URL_NOT_ALLOWED);
         post(CLIENT_ENDPOINTS, admin, save("https://user:pass@hooks.example.com/a", List.of(WebhookEventType.ORDER_PAID.getCode()), 0))
-            .assertProblem(400, CommonErrorCode.INVALID_REQUEST);
+            .assertProblem(400, WebhookEndpointErrorCode.WEBHOOK_URL_NOT_ALLOWED);
         post(CLIENT_ENDPOINTS, admin, save(fixture.receiverUrl("a"), List.of(WebhookEventType.WEBHOOK_PING.getCode()), 0))
             .assertProblem(400, CommonErrorCode.INVALID_REQUEST);
         post(CLIENT_ENDPOINTS, admin, save(fixture.receiverUrl("a"), List.of(WebhookEventType.ORDER_PAID.getCode(), WebhookEventType.ORDER_PAID.getCode()), 0))
@@ -124,11 +125,13 @@ class WebhookEndpointManagementTest extends WebhookTestBase {
         assertEquals(0, webhookData.endpoints().size());
     }
 
-    /** 地址解析到内网、Client 未开通、端点数达到上限：业务错误。 */
+    /** 地址解析到内网或无法解析：专用错误码；Client 未开通、端点数达到上限：业务错误。 */
     @Test
     void test_businessRuleViolation() {
         post(CLIENT_ENDPOINTS, admin, save("http://10.0.0.1/hook", List.of(WebhookEventType.ORDER_PAID.getCode()), 0))
-            .assertProblem(400, CommonErrorCode.BUSINESS_CHECK_FAILED);
+            .assertProblem(400, WebhookEndpointErrorCode.WEBHOOK_URL_NOT_PUBLIC);
+        post(CLIENT_ENDPOINTS, admin, save("https://hooks.code-mor.invalid/a", List.of(WebhookEventType.ORDER_PAID.getCode()), 0))
+            .assertProblem(400, WebhookEndpointErrorCode.WEBHOOK_URL_UNRESOLVABLE);
         post(ADMIN + "/clients/" + WebhookFixture.UNKNOWN_CLIENT_ID + "/endpoints", admin,
             save(fixture.receiverUrl("a"), List.of(WebhookEventType.ORDER_PAID.getCode()), 0)).assertProblem(400, CommonErrorCode.BUSINESS_CHECK_FAILED);
         assertEquals(0, vault.protectCount());
@@ -141,7 +144,7 @@ class WebhookEndpointManagementTest extends WebhookTestBase {
         assertEquals(5, webhookData.endpoints().size());
     }
 
-    /** 版本不符 409；状态或内容没有变化 400；端点不存在 404。 */
+    /** 版本不符 409；修改为内网地址 400 专用错误码；状态或内容没有变化 400；端点不存在 404。 */
     @Test
     void test_conflictAndNotFound() {
         var endpoint = fixture.endpoint(WebhookFixture.TENANT_ID, fixture.receiverUrl("a"), WebhookFixture.eventTypes(WebhookEventType.ORDER_PAID));
@@ -149,6 +152,8 @@ class WebhookEndpointManagementTest extends WebhookTestBase {
 
         put(path, admin, save(fixture.receiverUrl("b"), List.of(WebhookEventType.ORDER_PAID.getCode()), 7))
             .assertProblem(409, CommonErrorCode.CONCURRENT_REQUEST);
+        put(path, admin, save("http://10.0.0.1/hook", List.of(WebhookEventType.ORDER_PAID.getCode()), 1))
+            .assertProblem(400, WebhookEndpointErrorCode.WEBHOOK_URL_NOT_PUBLIC);
         put(path, admin, save(fixture.receiverUrl("a"), List.of(WebhookEventType.ORDER_PAID.getCode()), 1))
             .assertProblem(400, CommonErrorCode.BUSINESS_CHECK_FAILED);
         patch(path + "/status", admin, status(WebhookEndpointStatus.ACTIVE, 1)).assertProblem(400, CommonErrorCode.BUSINESS_CHECK_FAILED);

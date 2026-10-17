@@ -1,0 +1,11 @@
+# Webhook 端点地址错误码：候选镜像（tag mor-test/<service>:webhook-errcode-20261017），固定 image ID，叠加在
+# compose.yaml + compose.applications.yaml 之上，环境配置不变。差异 SHA-256 前缀 ab722e02824e0729。
+# Platform：fe5a0f3 + 本需求 4 个文件（含 Toss Pay credentialFields）；jar 56b265510385b30d。
+# BFF / Web：20677f2 + Operations Webhook 管理 48 个文件 + 本需求差异；BFF jar 6cf44cabcd382585，Web 入口 assets/index-D3K4sD5J.js。
+services:
+  operations-console-bff:
+    image: sha256:aec81706d50eb3c625c53617479e1aa187a5133bdba620cbddd6fa81dfcc8df4
+  platform-support-service:
+    image: sha256:0cdfe0e966bce495b86b1b3d6771935ed1e0d616d1fbd02d4ce47dd92e2af39f
+  operations-console-web:
+    image: sha256:04f9f7d1f684ba0c865b288f4f356f291e5e5c91ad48149fc76be2647be135e7

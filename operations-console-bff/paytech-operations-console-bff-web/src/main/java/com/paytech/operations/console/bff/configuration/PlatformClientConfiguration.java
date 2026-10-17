@@ -29,6 +29,7 @@ import com.paytech.platform.support.api.authorization.OperationsAuthorizationApi
 import com.paytech.platform.support.api.enums.GatewayConfigurationErrorCode;
 import com.paytech.platform.support.api.enums.OnboardingFileErrorCode;
 import com.paytech.platform.support.api.enums.OperationsErrorCode;
+import com.paytech.platform.support.api.enums.WebhookEndpointErrorCode;
 import com.paytech.platform.support.api.gatewayconfiguration.management.GatewayConfigurationManagementApi;
 import com.paytech.platform.support.api.operations.OperationsManagementApi;
 import com.paytech.platform.support.api.reviewfiles.ReviewFileApi;
@@ -58,10 +59,12 @@ public class PlatformClientConfiguration {
         return operationsConfigurationPlatformProxyFactory.createClient(com.paytech.platform.support.api.notificationmanagement.NotificationManagementApi.class);
     }
 
-    /** Webhook 管理合同复用当前发现和 Problem 解码。 */
+    /** Webhook 管理额外登记端点地址错误码，页面按 Code 在地址字段下提示；其余沿用配置写操作的发现与 Problem 解码。 */
     @Bean
-    com.paytech.platform.support.api.webhookmanagement.WebhookManagementApi webhookManagementApi(HttpServiceProxyFactory operationsConfigurationPlatformProxyFactory) {
-        return operationsConfigurationPlatformProxyFactory.createClient(com.paytech.platform.support.api.webhookmanagement.WebhookManagementApi.class);
+    com.paytech.platform.support.api.webhookmanagement.WebhookManagementApi webhookManagementApi(Environment environment,
+        PlatformDiscoveryInterceptor discovery, @Value("${operations.platform-test-base-url:}") String testBaseUrl) {
+        return platformProxy(environment, discovery, testBaseUrl, true, WebhookEndpointErrorCode.values())
+            .createClient(com.paytech.platform.support.api.webhookmanagement.WebhookManagementApi.class);
     }
 
     /** 管理合同复用当前发现和 Problem 解码。 */

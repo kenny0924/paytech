@@ -74,7 +74,7 @@ public interface WebhookManagementApi {
      * @param actor 可信 Operations 账号标识
      * @param session 当前普通 Operations 会话
      * @param clientId Client ID；未开通平台访问返回 400，已有 5 个端点返回 400
-     * @param request 地址、订阅事件类型与原因
+     * @param request 地址、订阅事件类型与原因；地址被拒返回 400 与 {@code WebhookEndpointErrorCode}
      * @return 201，端点 ID 与只出现一次的密钥明文
      */
     @PostExchange("/clients/{clientId}/endpoints")
@@ -88,7 +88,7 @@ public interface WebhookManagementApi {
      * @param actor 可信 Operations 账号标识
      * @param session 当前普通 Operations 会话
      * @param endpointId 端点 ID，不存在返回 404
-     * @param request 地址、订阅事件类型、当前版本与原因；版本不符返回 409
+     * @param request 地址、订阅事件类型、当前版本与原因；版本不符返回 409，地址被拒返回 400 与 {@code WebhookEndpointErrorCode}
      * @return 端点 ID 与新版本
      */
     @PutExchange("/endpoints/{endpointId}")

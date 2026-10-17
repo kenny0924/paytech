@@ -18,11 +18,14 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
+import com.paytech.foundation.common.error.FailException;
+import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.platform.support.accesscontrol.domain.webhookmanagement.WebhookManagementPermissions;
 import com.paytech.platform.support.accesscontrol.domainservice.service.ClientTenantQueryService;
 import com.paytech.platform.support.accesscontrol.domainservice.service.OperationsManagementPolicyService;
 import com.paytech.platform.support.accesscontrol.domainservice.service.OperationsManagementPolicyService.ManagementContext;
 import com.paytech.platform.support.accesscontrol.domainservice.service.OperationsSessionService.SessionContext;
+import com.paytech.platform.support.api.enums.WebhookEndpointErrorCode;
 import com.paytech.platform.support.auditsecurity.domain.audit.AuditModels.Identity;
 import com.paytech.platform.support.auditsecurity.domain.audit.AuditModels.Target;
 import com.paytech.platform.support.auditsecurity.domain.audit.OperationsAuditFact.ConfigurationChanged;
@@ -130,14 +133,28 @@ public class WebhookManagementSupport {
      * @return 已校验的地址
      */
     String requirePublicUrl(String url) {
-        URI uri = WebhookEndpointUrl.parse(url, properties.getAllowedSchemes());
+        URI uri = parseUrl(url);
         try {
             guard.resolve(uri.getHost());
         } catch (WebhookAddressException rejected) {
-            throw new BizCheckFailException(rejected.getFailureCode() == WebhookFailureCode.DNS_FAILED
-                ? "端点主机名无法解析" : "端点地址指向内网或保留地址");
+            throw urlRejected(rejected.getFailureCode() == WebhookFailureCode.DNS_FAILED
+                ? WebhookEndpointErrorCode.WEBHOOK_URL_UNRESOLVABLE : WebhookEndpointErrorCode.WEBHOOK_URL_NOT_PUBLIC, rejected);
         }
         return url;
+    }
+
+    /** 地址语法与协议不合格时返回页面可按字段展示的错误码，保留原因供日志排查。 */
+    private URI parseUrl(String url) {
+        try {
+            return WebhookEndpointUrl.parse(url, properties.getAllowedSchemes());
+        } catch (InvalidParameterException rejected) {
+            throw urlRejected(WebhookEndpointErrorCode.WEBHOOK_URL_NOT_ALLOWED, rejected);
+        }
+    }
+
+    /** 地址拒绝统一使用错误码的安全提示。 */
+    private static FailException urlRejected(WebhookEndpointErrorCode code, Exception cause) {
+        return new FailException(code, code.getMessage(), cause);
     }
 
     /**

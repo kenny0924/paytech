@@ -258,10 +258,17 @@ export function testEndpointRequest(key: string = crypto.randomUUID()): RequestI
   return { method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': key } };
 }
 
-/** 保存端点时 Platform 的地址类业务错误回填到地址字段，其他错误交给通用提示。 */
+/** Platform 端点地址错误码（WebhookEndpointErrorCode）对应的字段提示，与 Owner 安全说明一致。 */
+const urlErrorMessages: Readonly<Record<string, string>> = {
+  WEBHOOK_URL_NOT_ALLOWED: '地址格式不正确或协议不允许',
+  WEBHOOK_URL_UNRESOLVABLE: '端点主机名无法解析',
+  WEBHOOK_URL_NOT_PUBLIC: '端点地址指向内网或保留地址',
+};
+
+/** 保存端点时按错误码把地址拒绝原因回填到地址字段；其他错误（含 BUSINESS_CHECK_FAILED）交给通用提示。 */
 export function urlErrorMessage(error: unknown): string | null {
   if (!(error instanceof ApiError) || error.status !== 400) return null;
-  return /^(端点主机名|端点地址|url )/.test(error.message) ? error.message : null;
+  return urlErrorMessages[error.code] ?? null;
 }
 
 const twoDigits = (value: number) => String(value).padStart(2, '0');

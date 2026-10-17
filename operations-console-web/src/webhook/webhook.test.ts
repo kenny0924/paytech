@@ -114,12 +114,14 @@ test('请求体：事件按固定顺序去重、原因去空白；测试事件�
   assert.notEqual(webhookCommand('/e', 'PUT', { a: 2 }, first).key, first.key);
 });
 
-test('URL 查询参数恢复 Client 与标签页；地址类业务错误回填地址字段', () => {
+test('URL 查询参数恢复 Client 与标签页；地址错误码回填地址字段', () => {
   assert.deepEqual(readWebhookQuery(new URLSearchParams('clientId=880000000000071001&tab=deliveries')), { clientId: '880000000000071001', tab: 'deliveries' });
   assert.deepEqual(readWebhookQuery(new URLSearchParams('clientId=abc&tab=x')), { clientId: null, tab: 'endpoints' });
   assert.equal(hostAndPath('https://erp.acme.example/webhooks/refunds?x=1'), 'erp.acme.example/webhooks/refunds');
   assert.equal(hostAndPath('https://hooks.acme.example/'), 'hooks.acme.example');
-  assert.equal(urlErrorMessage(new ApiError(400, 'BUSINESS_CHECK_FAILED', '', '端点地址指向内网或保留地址')), '端点地址指向内网或保留地址');
-  assert.equal(urlErrorMessage(new ApiError(400, 'BUSINESS_CHECK_FAILED', '', '每个 Client 最多配置 5 个 Webhook 端点')), null);
-  assert.equal(urlErrorMessage(new ApiError(409, 'CONCURRENT_REQUEST', '', '端点地址')), null);
+  assert.equal(urlErrorMessage(new ApiError(400, 'WEBHOOK_URL_NOT_PUBLIC', '', '')), '端点地址指向内网或保留地址');
+  assert.equal(urlErrorMessage(new ApiError(400, 'WEBHOOK_URL_UNRESOLVABLE', '', '')), '端点主机名无法解析');
+  assert.equal(urlErrorMessage(new ApiError(400, 'WEBHOOK_URL_NOT_ALLOWED', '', '')), '地址格式不正确或协议不允许');
+  assert.equal(urlErrorMessage(new ApiError(400, 'BUSINESS_CHECK_FAILED', '', '端点地址指向内网或保留地址')), null);
+  assert.equal(urlErrorMessage(new ApiError(409, 'WEBHOOK_URL_NOT_PUBLIC', '', '')), null);
 });
