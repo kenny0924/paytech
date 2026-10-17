@@ -31,9 +31,9 @@ export const APPROVED_TABLES = Object.freeze([
   "t_tax_return_line",
   "t_tax_payment",
   "t_tax_payment_event",
-  "t_transaction_economics",
-  "t_transaction_economic_component",
-  "t_transaction_economic_comp_link",
+  "t_economic_fact",
+  "t_economic_fact_line",
+  "t_economic_fact_line_link",
   "t_channel_cost_plan",
   "t_channel_cost_plan_ver",
   "t_channel_cost_scope",
@@ -95,18 +95,21 @@ export const APPROVED_DIAGRAMS = Object.freeze({
 });
 
 export const EXPECTED_TOTALS = Object.freeze({
+  // 第 07 步：t_economic_fact 新增 supersedes_fact_id、status（+2 字段、+1 访问索引、+1 关系）；
+  // 已实现的期间重开允许同一关账多次重开，reopens_close_id 为非唯一访问索引与 n:1 关系（与已提交 DDL 同步）。
   tables: 84,
-  fields: 1109,
-  uniqueIndexes: 145,
-  accessIndexes: 155,
-  relations: 160,
-  oneToOneRelations: 22,
+  fields: 1111,
+  uniqueIndexes: 144,
+  accessIndexes: 157,
+  relations: 161,
+  oneToOneRelations: 21,
   diagramGroups: 6,
 });
 
 export const EXPECTED_TEMPLATE_DIGEST = "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540";
-export const EXPECTED_MODEL_DIGEST = "0ce10fb68b98492017b2ba60bc773d7d2828f4b62c01b45153c757bf8f9c72df";
-export const EXPECTED_STRUCTURAL_DIGEST = "3ea1d613278f7e4be42860048596d607b134b5a85572cbce8e0684ca99504255";
+// 第 07 步重新批准：逻辑模型改由生成器在内存构建（六个服务模型为其投影），含经济事实更名、两新增列与期间重开 Manifest 同步。
+export const EXPECTED_MODEL_DIGEST = "9933669918939d8a1e5f2a0028690cdd78bf90c39537778e32cd506209410f68";
+export const EXPECTED_STRUCTURAL_DIGEST = "a420c2eb7745389e3a4ea5845dced08b755152248805aa1d8aa2569bc5d2e215";
 
 export const APPROVED_VERSION_PATHS = Object.freeze(`
 t_ledger_book.version
@@ -154,8 +157,8 @@ t_tax_return.content_hash
 t_tax_return.file_content_hash
 t_tax_payment.request_hash
 t_tax_payment_event.evidence_hash
-t_transaction_economics.source_payload_hash
-t_transaction_economic_component.source_rule_content_hash
+t_economic_fact.source_payload_hash
+t_economic_fact_line.source_rule_content_hash
 t_channel_cost_plan_ver.content_hash
 t_channel_cost_confirm.source_hash
 t_accounting_instruction.source_payload_hash
@@ -213,9 +216,9 @@ export const EXPECTED_IMMUTABLE_TABLES = Object.freeze([
   "t_tax_liability_summary",
   "t_tax_return_line",
   "t_tax_payment_event",
-  "t_transaction_economics",
-  "t_transaction_economic_component",
-  "t_transaction_economic_comp_link",
+  "t_economic_fact",
+  "t_economic_fact_line",
+  "t_economic_fact_line_link",
   "t_channel_cost_scope",
   "t_channel_cost_component",
   "t_channel_cost_confirm",
@@ -302,7 +305,7 @@ export const EXPECTED_CHECK_CONTRACTS = Object.freeze({
   ck_channel_cost_component: "(rate_value IS NOT NULL OR fixed_amount IS NOT NULL) AND (rate_value IS NULL OR (rate_value>=0 AND rate_value<=1)) AND ((fixed_amount IS NULL AND currency IS NULL) OR (fixed_amount IS NOT NULL AND fixed_amount>=0 AND currency IS NOT NULL)) AND (min_amount IS NULL OR min_amount>=0) AND (max_amount IS NULL OR max_amount>=0) AND (min_amount IS NULL OR max_amount IS NULL OR min_amount<=max_amount)",
   ck_channel_cost_confirm: "actual_cost>=0",
   ck_channel_cost_alloc_amount: "allocated_amount>=0",
-  ck_instruction_origin: "(origin_type='AUTO' AND source_system IS NOT NULL AND source_event_key IS NOT NULL AND source_version IS NOT NULL AND source_payload_hash IS NOT NULL AND manual_adjustment_id IS NULL AND accounting_rule_bundle_ver_id IS NOT NULL AND input_hash IS NOT NULL AND maker_id IS NULL AND checker_id IS NULL) OR (origin_type='MANUAL' AND source_system IS NULL AND source_event_key IS NULL AND source_version IS NULL AND source_payload_hash IS NULL AND transaction_economics_id IS NULL AND manual_adjustment_id IS NOT NULL AND accounting_rule_bundle_ver_id IS NULL AND input_hash IS NOT NULL AND maker_id IS NOT NULL AND checker_id IS NOT NULL AND maker_id<>checker_id)",
+  ck_instruction_origin: "(origin_type='AUTO' AND source_system IS NOT NULL AND source_event_key IS NOT NULL AND source_version IS NOT NULL AND source_payload_hash IS NOT NULL AND manual_adjustment_id IS NULL AND accounting_rule_bundle_ver_id IS NOT NULL AND input_hash IS NOT NULL AND maker_id IS NULL AND checker_id IS NULL) OR (origin_type='MANUAL' AND source_system IS NULL AND source_event_key IS NULL AND source_version IS NULL AND source_payload_hash IS NULL AND economic_fact_id IS NULL AND manual_adjustment_id IS NOT NULL AND accounting_rule_bundle_ver_id IS NULL AND input_hash IS NOT NULL AND maker_id IS NOT NULL AND checker_id IS NOT NULL AND maker_id<>checker_id)",
   ck_accounting_rule_review: "(status IN ('DRAFT','PENDING_APPROVAL') AND checker_id IS NULL AND approved_time IS NULL) OR (status IN ('APPROVED','ACTIVE','RETIRED') AND checker_id IS NOT NULL AND checker_id<>maker_id AND approved_time IS NOT NULL) OR (status='REJECTED' AND checker_id IS NOT NULL AND checker_id<>maker_id AND approved_time IS NULL)",
   ck_accounting_rule_version_shape: "bundle_ver>0 AND (effective_to IS NULL OR effective_from<effective_to)",
   ck_accounting_rule_line_no: "line_no>0",
@@ -350,7 +353,7 @@ export const EXPECTED_CHECK_CONTRACTS = Object.freeze({
   ck_txn_econ_component_source: "((source_rule_type IN ('CLIENT_PRICING','PARTNER_SHARE') AND tax_line_id IS NULL AND source_rule_scope_id IS NOT NULL AND source_rule_content_hash IS NULL) OR (source_rule_type='PLATFORM_SERVICE_CHARGE' AND tax_line_id IS NULL AND source_rule_scope_id IS NOT NULL AND source_rule_component_id IS NOT NULL AND source_rule_content_hash IS NULL AND party_type='FINANCE_ENTITY') OR (source_rule_type='TAX_RULE' AND tax_line_id IS NOT NULL AND source_rule_scope_id IS NULL AND source_rule_content_hash IS NOT NULL) OR (source_rule_type='CHANNEL_COST' AND tax_line_id IS NULL AND source_rule_scope_id IS NOT NULL AND source_rule_content_hash IS NOT NULL)) AND source_price_id IS NULL AND source_profile_code IS NULL AND source_band_evidence IS NULL OR (source_rule_type='CCT_PRICE_COMPONENT' AND source_rule_version_id IS NOT NULL AND source_rule_component_id IS NOT NULL AND source_price_id IS NOT NULL AND source_profile_code IS NOT NULL AND source_rule_scope_id IS NULL AND source_rule_content_hash IS NULL AND tax_line_id IS NULL)",
   ck_txn_econ_component_link: "source_component_id<>target_component_id AND linked_amount>0",
   ck_txn_economics_parent: "parent_economics_id IS NULL OR parent_economics_id<>id",
-  ck_txn_economics_type: "(economics_type='PAYMENT' AND parent_economics_id IS NULL AND payment_attempt_id IS NOT NULL AND payment_succeeded_time IS NOT NULL AND balance_available_time IS NOT NULL AND refund_request_id IS NULL AND channel_refund_id IS NULL AND duplicate_capture_item_id IS NULL AND channel_dispute_notice_id IS NULL AND dispute_case_id IS NULL) OR (economics_type='REFUND' AND parent_economics_id IS NOT NULL AND payment_attempt_id IS NOT NULL AND payment_succeeded_time IS NULL AND balance_available_time IS NULL AND refund_request_id IS NOT NULL AND channel_refund_id IS NOT NULL AND duplicate_capture_item_id IS NULL AND channel_dispute_notice_id IS NULL AND dispute_case_id IS NULL) OR (economics_type IN ('DUPLICATE_CAPTURE','DUPLICATE_COMPENSATION') AND parent_economics_id IS NOT NULL AND payment_attempt_id IS NOT NULL AND payment_succeeded_time IS NULL AND balance_available_time IS NULL AND refund_request_id IS NULL AND channel_refund_id IS NULL AND duplicate_capture_item_id IS NOT NULL AND channel_dispute_notice_id IS NULL AND dispute_case_id IS NULL) OR (economics_type='DISPUTE' AND parent_economics_id IS NOT NULL AND payment_attempt_id IS NOT NULL AND payment_succeeded_time IS NULL AND balance_available_time IS NULL AND refund_request_id IS NULL AND channel_refund_id IS NULL AND duplicate_capture_item_id IS NULL AND channel_dispute_notice_id IS NOT NULL AND dispute_case_id IS NOT NULL) OR (economics_type='COST_ADJUSTMENT' AND parent_economics_id IS NOT NULL AND payment_succeeded_time IS NULL AND balance_available_time IS NULL AND refund_request_id IS NULL AND channel_refund_id IS NULL AND duplicate_capture_item_id IS NULL AND channel_dispute_notice_id IS NULL AND dispute_case_id IS NULL)",
+  ck_txn_economics_type: "(fact_type='PAYMENT' AND parent_economics_id IS NULL AND payment_attempt_id IS NOT NULL AND payment_succeeded_time IS NOT NULL AND balance_available_time IS NOT NULL AND refund_request_id IS NULL AND channel_refund_id IS NULL AND duplicate_capture_item_id IS NULL AND channel_dispute_notice_id IS NULL AND dispute_case_id IS NULL) OR (fact_type='REFUND' AND parent_economics_id IS NOT NULL AND payment_attempt_id IS NOT NULL AND payment_succeeded_time IS NULL AND balance_available_time IS NULL AND refund_request_id IS NOT NULL AND channel_refund_id IS NOT NULL AND duplicate_capture_item_id IS NULL AND channel_dispute_notice_id IS NULL AND dispute_case_id IS NULL) OR (fact_type IN ('DUPLICATE_CAPTURE','DUPLICATE_COMPENSATION') AND parent_economics_id IS NOT NULL AND payment_attempt_id IS NOT NULL AND payment_succeeded_time IS NULL AND balance_available_time IS NULL AND refund_request_id IS NULL AND channel_refund_id IS NULL AND duplicate_capture_item_id IS NOT NULL AND channel_dispute_notice_id IS NULL AND dispute_case_id IS NULL) OR (fact_type='DISPUTE' AND parent_economics_id IS NOT NULL AND payment_attempt_id IS NOT NULL AND payment_succeeded_time IS NULL AND balance_available_time IS NULL AND refund_request_id IS NULL AND channel_refund_id IS NULL AND duplicate_capture_item_id IS NULL AND channel_dispute_notice_id IS NOT NULL AND dispute_case_id IS NOT NULL) OR (fact_type='COST_ADJUSTMENT' AND parent_economics_id IS NOT NULL AND payment_succeeded_time IS NULL AND balance_available_time IS NULL AND refund_request_id IS NULL AND channel_refund_id IS NULL AND duplicate_capture_item_id IS NULL AND channel_dispute_notice_id IS NULL AND dispute_case_id IS NULL)",
   ck_txn_economics_maturity_time: "balance_available_time IS NULL OR balance_available_time>=payment_succeeded_time",
   ck_txn_economics_partner: "(local_partner_id IS NULL AND partner_agreement_oe_id IS NULL AND finance_entity_id IS NULL) OR (local_partner_id IS NOT NULL AND partner_agreement_oe_id IS NOT NULL AND finance_entity_id IS NOT NULL)",
   ck_beneficiary_lifecycle: "(status='DRAFT' AND content_hash IS NULL AND checker_id IS NULL AND checker_decision IS NULL AND decision_time IS NULL) OR (status='PENDING_REVIEW' AND content_hash IS NOT NULL AND checker_id IS NULL AND checker_decision IS NULL AND decision_time IS NULL) OR (status='VERIFIED' AND content_hash IS NOT NULL AND checker_id IS NOT NULL AND checker_id<>maker_id AND checker_decision='APPROVED' AND decision_time IS NOT NULL) OR (status='REJECTED' AND content_hash IS NOT NULL AND checker_id IS NOT NULL AND checker_id<>maker_id AND checker_decision='REJECTED' AND decision_time IS NOT NULL) OR (status IN ('SUSPENDED','CLOSED') AND content_hash IS NOT NULL AND checker_id IS NOT NULL AND checker_id<>maker_id AND checker_decision='APPROVED' AND decision_time IS NOT NULL)",
@@ -451,15 +454,15 @@ export const EXPECTED_CHECK_BINDINGS = Object.freeze({
   ck_bank_recon_match_confirmation: Object.freeze(["bank_recon_match"]),
   ck_recon_exception_amount: Object.freeze(["recon_exception"]),
   ck_recon_exception_state: Object.freeze(["recon_exception"]),
-  ck_txn_economics_amount: Object.freeze(["transaction_economics"]),
-  ck_txn_econ_component_amounts: Object.freeze(["transaction_economic_component"]),
-  ck_txn_econ_component_party: Object.freeze(["transaction_economic_component"]),
-  ck_txn_econ_component_source: Object.freeze(["transaction_economic_component"]),
-  ck_txn_econ_component_link: Object.freeze(["transaction_economic_comp_link"]),
-  ck_txn_economics_parent: Object.freeze(["transaction_economics"]),
-  ck_txn_economics_type: Object.freeze(["transaction_economics"]),
-  ck_txn_economics_maturity_time: Object.freeze(["transaction_economics"]),
-  ck_txn_economics_partner: Object.freeze(["transaction_economics"]),
+  ck_txn_economics_amount: Object.freeze(["economic_fact"]),
+  ck_txn_econ_component_amounts: Object.freeze(["economic_fact_line"]),
+  ck_txn_econ_component_party: Object.freeze(["economic_fact_line"]),
+  ck_txn_econ_component_source: Object.freeze(["economic_fact_line"]),
+  ck_txn_econ_component_link: Object.freeze(["economic_fact_line_link"]),
+  ck_txn_economics_parent: Object.freeze(["economic_fact"]),
+  ck_txn_economics_type: Object.freeze(["economic_fact"]),
+  ck_txn_economics_maturity_time: Object.freeze(["economic_fact"]),
+  ck_txn_economics_partner: Object.freeze(["economic_fact"]),
   ck_beneficiary_lifecycle: Object.freeze(["beneficiary_account"]),
   ck_payout_amounts: Object.freeze(["payout"]),
   ck_payout_risk_snapshot: Object.freeze(["payout"]),
@@ -533,7 +536,7 @@ export const REQUIRED_FIELDS = Object.freeze({
   ]),
   t_tax_return_line: Object.freeze(["tax_return_id"]),
   t_tax_payment: Object.freeze(["tax_return_id", "tax_payable_account_id", "active_slot"]),
-  t_transaction_economics: Object.freeze([
+  t_economic_fact: Object.freeze([
     "finance_entity_id",
     "payment_succeeded_time",
     "balance_available_time",

@@ -25,6 +25,13 @@ import {
   REQUIRED_FIELDS,
 } from "./finance-test-oracle/schema.oracle.mjs";
 import {
+  generateFinanceModel,
+  generateFinanceServiceModels,
+  serializeFinanceModel,
+  serviceModelPath,
+} from "./finance/generate-finance-model.mjs";
+import { EXPECTED_SERVICE_TABLE_COUNTS, FINANCE_SERVICES } from "./finance/service-split.mjs";
+import {
   CHECK_BINDINGS as MODEL_CHECK_BINDINGS,
   CHECK_CONTRACTS as MODEL_CHECK_CONTRACTS,
   FILE_REFERENCE_TUPLES as MODEL_FILE_REFERENCE_TUPLES,
@@ -37,8 +44,7 @@ const paths = Object.freeze({
   manifestDirectory: path.join(workspaceRoot, "scripts/pdmaner/finance/manifests"),
   policy: path.join(workspaceRoot, "scripts/pdmaner/finance/model-policy.mjs"),
   oracle: path.join(workspaceRoot, "scripts/pdmaner/finance-test-oracle/schema.oracle.mjs"),
-  model: path.join(workspaceRoot, "finance-service/docs/database/finance.pdma.json"),
-  decisions: path.join(workspaceRoot, "finance-service/docs/database/FINANCE_PHYSICAL_DECISIONS.md"),
+  decisions: path.join(workspaceRoot, "paytech/ledger/docs/database/FINANCE_PHYSICAL_DECISIONS.md"),
   template: path.join(workspaceRoot, "agent-docs/templates/pdmaner/template.pdma.json"),
 });
 
@@ -57,9 +63,17 @@ function assertArtifactsExist() {
   }
 }
 
+// 第 07 步起 Finance 不再提交单一 84 表模型：逻辑模型由生成器在内存构建，六个服务库模型是它的物理投影。
+// 下面的结构断言针对逻辑模型；"service artifacts" 用例逐字核对六个已提交服务模型等于投影。
+let logicalModelBytes;
+
 function readModelBytes() {
   assertArtifactsExist();
-  return readFileSync(paths.model);
+  for (const service of FINANCE_SERVICES) {
+    assert.ok(existsSync(serviceModelPath(service)), `Finance ${service} 模型尚未生成：${serviceModelPath(service)}`);
+  }
+  logicalModelBytes ??= Buffer.from(serializeFinanceModel(generateFinanceModel()), "utf8");
+  return logicalModelBytes;
 }
 
 function readModel() {
@@ -195,8 +209,39 @@ test("Finance artifact is deterministic, current and byte-approved", () => {
     encoding: "utf8",
   });
   assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
-  assert.match(result.stdout, /Finance model is up to date/u);
+  for (const service of FINANCE_SERVICES) {
+    assert.match(result.stdout, new RegExp(`${service} model is up to date`, "u"));
+  }
   assert.equal(sha256(readModelBytes()), EXPECTED_MODEL_DIGEST);
+});
+
+test("Finance service artifacts are exact per-database projections of the logical model", () => {
+  const logical = generateFinanceModel();
+  const serviceModels = generateFinanceServiceModels(logical);
+  const owners = new Map();
+  for (const service of FINANCE_SERVICES) {
+    const artifact = readFileSync(serviceModelPath(service), "utf8");
+    const model = serviceModels.get(service);
+    assert.equal(artifact, serializeFinanceModel(model), `${service} 模型与逻辑模型投影不一致`);
+    assert.equal(model.entities.length, EXPECTED_SERVICE_TABLE_COUNTS[service], `${service} 表数`);
+    assert.equal(model.dbConn.length, 0, `${service} 模型不得保存数据库连接`);
+    const entityIds = new Set(model.entities.map((entity) => entity.id));
+    for (const entity of model.entities) {
+      for (const relation of entity.correlations) {
+        assert.ok(entityIds.has(relation.refEntity), `${service}.${entity.defKey} 不得保留跨库关系`);
+      }
+      owners.set(entity.defKey, [...(owners.get(entity.defKey) ?? []), service]);
+    }
+  }
+  assert.deepEqual(owners.get("t_compensation_event"), [...FINANCE_SERVICES], "补偿事件每库一份");
+  assert.deepEqual(owners.get("t_currency_spec"), ["ledger", "billing"], "币种规则只在 ledger 与 billing 持只读副本");
+  assert.ok(!owners.has("t_command_idempotency"), "t_command_idempotency 已删除");
+  assert.equal(owners.size, 84 - 1, "其余每张逻辑表恰属一个服务库");
+  for (const [table, services] of owners) {
+    if (!["t_compensation_event", "t_currency_spec"].includes(table)) {
+      assert.equal(services.length, 1, `${table} 只能属于一个服务库`);
+    }
+  }
 });
 
 test("Finance model matches the independent structural digest and totals", () => {
@@ -616,7 +661,7 @@ test("Finance shares Client and Partner maturity and uses direct Payout and Tax 
     );
   }
 
-  const economics = entities.get("t_transaction_economics");
+  const economics = entities.get("t_economic_fact");
   for (const fieldKey of ["payment_succeeded_time", "balance_available_time"]) {
     const field = economics.fields.find((candidate) => candidate.defKey === fieldKey);
     assert.deepEqual(
@@ -626,13 +671,13 @@ test("Finance shares Client and Partner maturity and uses direct Payout and Tax 
     );
   }
   assert.deepEqual(
-    indexFields("t_transaction_economics", "idx_econ_balance_available"),
-    ["economics_type", "balance_available_time"],
+    indexFields("t_economic_fact", "idx_econ_balance_available"),
+    ["fact_type", "balance_available_time"],
   );
-  assert.ok(!fieldKeys("t_transaction_economics").includes("client_available_time"));
+  assert.ok(!fieldKeys("t_economic_fact").includes("client_available_time"));
   assert.match(
     MODEL_CHECK_CONTRACTS.ck_txn_economics_type,
-    /economics_type='PAYMENT'.*payment_succeeded_time IS NOT NULL.*balance_available_time IS NOT NULL/u,
+    /fact_type='PAYMENT'.*payment_succeeded_time IS NOT NULL.*balance_available_time IS NOT NULL/u,
   );
   assert.match(
     MODEL_CHECK_CONTRACTS.ck_txn_economics_maturity_time,
@@ -640,7 +685,7 @@ test("Finance shares Client and Partner maturity and uses direct Payout and Tax 
   );
   assert.match(
     MODEL_CHECK_CONTRACTS.ck_txn_economics_type,
-    /economics_type='REFUND'.*payment_succeeded_time IS NULL.*balance_available_time IS NULL/u,
+    /fact_type='REFUND'.*payment_succeeded_time IS NULL.*balance_available_time IS NULL/u,
   );
 
   assert.deepEqual(indexFields("t_payout", "idx_payout_available"), ["available_account_id", "status"]);
@@ -1214,9 +1259,9 @@ test("Finance keeps transaction economics explicit and accounting rules minimal"
     assert.ok(!entities.has(oldTable), `仍保留旧模型表 ${oldTable}`);
   }
 
-  assert.deepEqual(fieldKeys("t_transaction_economics"), [
+  assert.deepEqual(fieldKeys("t_economic_fact"), [
   "id",
-  "economics_type",
+  "fact_type",
   "source_system",
   "source_event_key",
   "source_version",
@@ -1254,10 +1299,12 @@ test("Finance keeps transaction economics explicit and accounting rules minimal"
   "finance_entity_id",
   "currency",
   "gross_amount",
+  "supersedes_fact_id",
+  "status",
   "create_time"
 ]);
   assert.deepEqual(
-    indexFields("t_transaction_economics", "uk_econ_source"),
+    indexFields("t_economic_fact", "uk_econ_source"),
     ["source_system", "source_event_key"],
   );
 
@@ -1317,7 +1364,7 @@ test("Finance keeps transaction economics explicit and accounting rules minimal"
     "source_event_key",
     "source_version",
     "source_payload_hash",
-    "transaction_economics_id",
+    "economic_fact_id",
     "manual_adjustment_id",
     "accounting_rule_bundle_ver_id",
     "input_hash",
@@ -1344,7 +1391,7 @@ test("Finance keeps transaction economics explicit and accounting rules minimal"
     "create_time",
   ]);
 
-  assert.deepEqual(fieldKeys("t_transaction_economic_component"), [
+  assert.deepEqual(fieldKeys("t_economic_fact_line"), [
   "id",
   "transaction_economics_id",
   "component_no",
@@ -1377,20 +1424,20 @@ test("Finance keeps transaction economics explicit and accounting rules minimal"
   "rounding_mode",
   "create_time"
 ]);
-  const sourceRuleType = entities.get("t_transaction_economic_component").fields
+  const sourceRuleType = entities.get("t_economic_fact_line").fields
     .find((field) => field.defKey === "source_rule_type");
   assert.match(
     sourceRuleType.comment,
     /允许值：CLIENT_PRICING、PARTNER_SHARE、PLATFORM_SERVICE_CHARGE、TAX_RULE、CHANNEL_COST/u,
   );
-  const partyType = entities.get("t_transaction_economic_component").fields
+  const partyType = entities.get("t_economic_fact_line").fields
     .find((field) => field.defKey === "party_type");
   assert.match(partyType.comment, /FINANCE_ENTITY/u);
   assert.match(
-    entities.get("t_transaction_economic_component").comment,
+    entities.get("t_economic_fact_line").comment,
     /PLATFORM_SERVICE_CHARGE.*party_id.*finance_entity_id.*父链/u,
   );
-  const economics = entities.get("t_transaction_economics");
+  const economics = entities.get("t_economic_fact");
   const financeEntityField = economics.fields.find((field) => field.defKey === "finance_entity_id");
   assert.equal(financeEntityField.notNull, false);
   assert.match(financeEntityField.comment, /PARTNER.*ACTIVE.*Finance Entity/u);
@@ -1407,10 +1454,10 @@ test("Finance keeps transaction economics explicit and accounting rules minimal"
     /source_rule_type='PLATFORM_SERVICE_CHARGE'.*source_rule_component_id IS NOT NULL.*party_type='FINANCE_ENTITY'/u,
   );
   assert.ok(!entities.has("t_platform_service_charge"));
-  const componentType = entities.get("t_transaction_economic_component").fields
+  const componentType = entities.get("t_economic_fact_line").fields
     .find((field) => field.defKey === "component_type");
   assert.match(componentType.comment, /CHANNEL_COST_INCREASE.*CHANNEL_COST_DECREASE/u);
-  const componentLinkComment = entities.get("t_transaction_economic_comp_link").comment;
+  const componentLinkComment = entities.get("t_economic_fact_line_link").comment;
   assert.match(componentLinkComment, /完整关联集.*posted_amount/u);
   assert.match(componentLinkComment, /稳定顺序锁定.*原组件.*累计关联金额/u);
   assert.match(componentLinkComment, /REVERSAL.*effect_direction.*ADJUSTMENT/u);
@@ -1420,10 +1467,10 @@ test("Finance keeps transaction economics explicit and accounting rules minimal"
   const amountSourceCode = entities.get("t_accounting_rule_line").fields
     .find((field) => field.defKey === "amount_source_code");
   assert.match(amountSourceCode.comment, /CHANNEL_COST_INCREASE.*CHANNEL_COST_DECREASE/u);
-  assert.ok(entities.has("t_transaction_economic_comp_link"));
+  assert.ok(entities.has("t_economic_fact_line_link"));
 
   const renamedReferences = Object.freeze({
-    t_accounting_instruction: ["transaction_economics_id", "accounting_rule_bundle_ver_id"],
+    t_accounting_instruction: ["economic_fact_id", "accounting_rule_bundle_ver_id"],
     t_instruction_line: ["accounting_rule_line_id"],
     t_channel_open_item: ["transaction_economics_id"],
     t_channel_debit_item: ["transaction_economics_id"],
@@ -1580,7 +1627,7 @@ test("Finance close and material reconciliation controls are structurally review
   assert.equal(transactionEconomicsRelation?.myRows, "n", "同一支付交易经济结果必须允许多个 Capture 应收项");
   assert.equal(
     model.entities.find((entity) => entity.id === transactionEconomicsRelation?.refEntity)?.defKey,
-    "t_transaction_economics",
+    "t_economic_fact",
   );
   assert.deepEqual(
     channelOpenItem.indexes

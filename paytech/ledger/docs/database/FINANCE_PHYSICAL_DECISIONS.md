@@ -1,54 +1,63 @@
 # Finance 物理数据库决策
 
-> **2026-09-11 模型切片：** 当前物理模型采用 [OE / Client / Pricing 四系统决定](../../../agent-docs/decisions/2026-09-11-cct-commerce-oe-pricing-model.md)。本页历史正文中的数字 OE、Assignment、独立 Acceptance、Client 多 OE 合同与 Agreement-OE 结算条款由该决定精确取代；本页摘要描述当前模型产物，运行代码、SQL 执行及待迁移状态仅见 [当前实现台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md)。Risk 本期不动。
+> **2026-10-17 第 07 步服务切分：** Finance 逻辑模型（84 表）仍由 `scripts/pdmaner/finance/` 确定性生成并在内存校验，不再提交单一
+> `finance.pdma.json`；按 [design/03 表归属](../../../../requirements/20261017/architecture-V2骨架与模块搬迁/design/03-module-and-table-ownership.md)
+> 投影为 ledger（29）、account（1）、billing（9）、reconciliation（18）、tax（24）、payout（8）六个服务库模型，各自位于
+> `paytech/<svc>/docs/database/<svc>.pdma.json`，Schema 由同一模型生成。`t_compensation_event` 每库一份，`t_currency_spec` 为
+> platform-support 的只读副本（ledger 与 billing 各一份），`t_command_idempotency` 删除。经济事实三表更名为 `t_economic_fact`、
+> `t_economic_fact_line`、`t_economic_fact_line_link`（`fact_type` 原名 `economics_type` 并增加 `MANUAL_ADJUSTMENT`，新增
+> `supersedes_fact_id`、`status`），`t_accounting_instruction.transaction_economics_id` 更名 `economic_fact_id`；跨服务关系只保留在逻辑模型。
+> 下表为逻辑模型统计；本页其余正文中的旧表名按上述更名理解。
+
+> **2026-09-11 模型切片：** 当前物理模型采用 [OE / Client / Pricing 四系统决定](../../../../agent-docs/decisions/2026-09-11-cct-commerce-oe-pricing-model.md)。本页历史正文中的数字 OE、Assignment、独立 Acceptance、Client 多 OE 合同与 Agreement-OE 结算条款由该决定精确取代；本页摘要描述当前模型产物，运行代码、SQL 执行及待迁移状态仅见 [当前实现台账](../../../../agent-docs/CURRENT_IMPLEMENTATION.md)。Risk 本期不动。
 
 最后更新：2026-09-05
 状态：第一版 PDManer 已确定性生成并通过自动验证；PDManer 4.9.3 应用内人工评审待完成
 
-> **2026-09-05 跨主题对齐：** 本文件仍精确描述当前生成模型，但不再单独拥有 Vault、`compensation_event`、物理 CHECK/FK 或测试基础设施规范。与当前 [文档治理决策](../../../agent-docs/decisions/2026-09-05-document-governance-and-conflict-resolution.md) 冲突的旧字段/流程属于待迁移现状，不得用于新增实现；进度与完成判据见 [当前实现台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md)。
+> **2026-09-05 跨主题对齐：** 本文件仍精确描述当前生成模型，但不再单独拥有 Vault、`compensation_event`、物理 CHECK/FK 或测试基础设施规范。与当前 [文档治理决策](../../../../agent-docs/decisions/2026-09-05-document-governance-and-conflict-resolution.md) 冲突的旧字段/流程属于待迁移现状，不得用于新增实现；进度与完成判据见 [当前实现台账](../../../../agent-docs/CURRENT_IMPLEMENTATION.md)。
 
 ## 1. 交付基线
 
 | 项目             |                                                                当前值 |
 |----------------|-------------------------------------------------------------------:|
 | 物理表            |                                                                 84 |
-| 字段             |                                                              1,109 |
-| 唯一索引           |                                                                145 |
-| 普通访问索引         |                                                                155 |
-| 本库关系           |                                                                160 |
-| 其中 1:1 关系      |                                                                 22 |
+| 字段             |                                                              1,111 |
+| 唯一索引           |                                                                144 |
+| 普通访问索引         |                                                                157 |
+| 本库关系           |                                                                161 |
+| 其中 1:1 关系      |                                                                 21 |
 | Diagram Group  |                                                                  6 |
 | 共享模板 SHA-256   | `51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540` |
-| 模型文件 SHA-256   | `0ce10fb68b98492017b2ba60bc773d7d2828f4b62c01b45153c757bf8f9c72df` |
-| 测试独立结构 SHA-256 | `3ea1d613278f7e4be42860048596d607b134b5a85572cbce8e0684ca99504255` |
+| 模型文件 SHA-256   | `9933669918939d8a1e5f2a0028690cdd78bf90c39537778e32cd506209410f68` |
+| 测试独立结构 SHA-256 | `a420c2eb7745389e3a4ea5845dced08b755152248805aa1d8aa2569bc5d2e215` |
 
-模型文件：[finance.pdma.json](./finance.pdma.json)
+服务库模型：[ledger](ledger.pdma.json)、[account](../../../account/docs/database/account.pdma.json)、[billing](../../../billing/docs/database/billing.pdma.json)、[reconciliation](../../../reconciliation/docs/database/reconciliation.pdma.json)、[tax](../../../tax/docs/database/tax.pdma.json)、[payout](../../../payout/docs/database/payout.pdma.json)（上表"模型文件 SHA-256"为内存逻辑模型序列化摘要）
 
 本次 Trial Balance
-与关账门禁收紧的范围、约束和验证记录见 [实施记录](../../../agent-docs/plans/2026-08-27-finance-trial-balance-close-hardening-implementation-plan.md)。
+与关账门禁收紧的范围、约束和验证记录见 [实施记录](../../../../agent-docs/plans/2026-08-27-finance-trial-balance-close-hardening-implementation-plan.md)。
 
 本次 Tax/Fiscal 23 表精简的范围、Rule/Return
-生命周期和验证记录见 [实施记录](../../../agent-docs/plans/2026-08-27-finance-tax-fiscal-23-table-simplification-implementation-plan.md)。
+生命周期和验证记录见 [实施记录](../../../../agent-docs/plans/2026-08-27-finance-tax-fiscal-23-table-simplification-implementation-plan.md)。
 
-退款成功后入账、退款不预占与合同成熟并发语义见 [实施记录](../../../agent-docs/plans/2026-08-27-finance-refund-funding-removal-implementation-plan.md)
+退款成功后入账、退款不预占与合同成熟并发语义见 [实施记录](../../../../agent-docs/plans/2026-08-27-finance-refund-funding-removal-implementation-plan.md)
 ；通用 Funding 四表的删除、直接 Account
-现金门禁与验证结果见 [删除设计](../../../agent-docs/plans/2026-08-27-finance-funding-module-removal-design.md)
-和 [实施记录](../../../agent-docs/plans/2026-08-27-finance-funding-module-removal-implementation-plan.md)。
+现金门禁与验证结果见 [删除设计](../../../../agent-docs/plans/2026-08-27-finance-funding-module-removal-design.md)
+和 [实施记录](../../../../agent-docs/plans/2026-08-27-finance-funding-module-removal-implementation-plan.md)。
 
 本次保证金与追偿简化删除五张 Reserve/Recovery 流程表，将最低预存保证金和追偿应收收敛为 Account +
-Journal，详见 [实施记录](../../../agent-docs/plans/2026-08-27-finance-security-deposit-account-simplification-implementation-plan.md)。
+Journal，详见 [实施记录](../../../../agent-docs/plans/2026-08-27-finance-security-deposit-account-simplification-implementation-plan.md)。
 
 本次 Channel
-两层对账简化删除重复的批次级净现金中间表，以本地冻结交易引用完成渠道交易匹配，并让银行匹配直接引用清算批次，详见 [实施记录](../../../agent-docs/plans/2026-08-28-finance-provider-reconciliation-simplification-implementation-plan.md)。
+两层对账简化删除重复的批次级净现金中间表，以本地冻结交易引用完成渠道交易匹配，并让银行匹配直接引用清算批次，详见 [实施记录](../../../../agent-docs/plans/2026-08-28-finance-provider-reconciliation-simplification-implementation-plan.md)。
 
 Channel 三阶段账户把交易形成、最终 Settlement/Remittance 批次完整和银行确认分别落入待清算账户、结算账户与 `BANK_CASH`，并将
 Channel Fee
-独立计提，详见 [实施计划](../../../agent-docs/plans/2026-08-28-finance-provider-three-stage-accounting-implementation-plan.md)。
+独立计提，详见 [实施计划](../../../../agent-docs/plans/2026-08-28-finance-provider-three-stage-accounting-implementation-plan.md)。
 
 Manual Payout 以七张表替代旧自动 Profile/Run/Candidate/Obligation、取消根和 Payment/Attempt 聚合；批准边界、四次
 RCO-I09、Execution/Bank Match
-与会计路径见 [批准设计](../../../agent-docs/plans/2026-08-28-finance-manual-payout-simplification-design.md)
-和 [实施计划](../../../agent-docs/plans/2026-08-28-finance-manual-payout-simplification-implementation-plan.md)。
+与会计路径见 [批准设计](../../../../agent-docs/plans/2026-08-28-finance-manual-payout-simplification-design.md)
+和 [实施计划](../../../../agent-docs/plans/2026-08-28-finance-manual-payout-simplification-implementation-plan.md)。
 
 本基线只授权数据库设计产物，不创建审核后的手工 Schema SQL、DO、Mapper、Repository、Java 服务、数据库实例、测试环境或基础设施。项目不使用 Flyway、Liquibase 或应用启动时 Schema 迁移。
 
@@ -235,14 +244,14 @@ Reserve Case、Restricted Fund、Movement、Recovery Case 或 Application。Jour
 
 当前 Finance 模型中的 Buyer Tax ID `Prepare/CopyForBinding/ConfirmReference`、Binding、Blind Index、Masked Value、Record Version、
 Metadata Hash 与 Retire 依赖不属于 Vault V1。不得按这些字段假装当前 Vault 已支持，也不得让 Commerce 来源 Token 进入 Finance
-表、MQ Payload 或普通日志。FIN-I17 的 Buyer Tax ID 分支在完成 [Vault 消费者模型对齐计划](../../../docs/superpowers/plans/2026-09-05-vault-consumer-model-alignment.md)、
+表、MQ Payload 或普通日志。FIN-I17 的 Buyer Tax ID 分支在完成 [Vault 消费者模型对齐计划](../../../../docs/superpowers/plans/2026-09-05-vault-consumer-model-alignment.md)、
 同步批准的 API/模型迁移及安全测试前必须 Fail Closed；没有真实消费者证明时不补回宽泛 Vault V2。
 
 ### 4.10 Partner OE 与平台 Finance Entity 使用业务明确的双账分录
 
 CCT Partner Agreement 的唯一 `PLATFORM_SIGNATORY` 是平台签约法律 Party，但不保证它同时持有 MID 或是 Operating
 Entity。Partner 来源的 Commerce Order Context 因此冻结 `platform_service_charge_scope_id + platform_service_party_id`
-；Finance 以 Party 唯一解析本地 ACTIVE `t_finance_entity`，并在 `t_transaction_economics.finance_entity_id` 与
+；Finance 以 Party 唯一解析本地 ACTIVE `t_finance_entity`，并在 `t_economic_fact.finance_entity_id` 与
 `PLATFORM_SERVICE_CHARGE` Component 冻结结果。非 Partner 来源不生成服务费，
 `local_partner_id + partner_agreement_oe_id + finance_entity_id` 必须三项全空。
 
@@ -422,7 +431,7 @@ Tax Registration 和 Tax Payment 逻辑不受合同成熟简化影响。Tax Paym
 UNKNOWN 期间的替代付款。V1 不自动执行缴税：正常路径先创建 `CREATED` Tax Payment 并通过 Tax Payable、BANK_CASH 容量和活动槽门禁，
 Operations 才可在银行或税务门户形成外部承诺。已出现在 Bank Statement 的真实 Debit 不因容量不足而丢弃；没有合法既有 Tax Payment 时保留
 Bank Item 并打开 Recon Exception，不补造正常 Payment，也不在完成匹配/受控解决前结清 Tax Payable。当前事后登记闭环缺口见
-[Finance 手工缴税对账计划](../../../docs/superpowers/plans/2026-09-05-finance-manual-tax-reconciliation.md)。
+[Finance 手工缴税对账计划](../../../../docs/superpowers/plans/2026-09-05-finance-manual-tax-reconciliation.md)。
 
 Payout Execution 创建/重试、Payout 取消、Tax Payment 创建/失败、Channel/Payout/Tax 完整 Recon 和每一条改变银行现金的
 Journal，均按 Account ID 升序在同一本地事务锁定对应 `BANK_CASH/NONE` Account。锁内只派生、不存储
@@ -500,7 +509,7 @@ Source 封顶。Accounting Rule 不再拥有通用 Condition；规则行只允�
 自动门禁覆盖 JSON、确定性生成、精确总量、中文元数据、闭合枚举/开放目录、32 字符命名、索引前缀、内部逻辑关系、真 1:
 1、不可变表、Version/Hash/Active 白名单、Sidecar 独立 Oracle、场景覆盖和敏感禁存。自动验证不能替代以下人工步骤：
 
-1. 使用 PDManer 4.9.3 打开 `finance.pdma.json`；
+1. 使用 PDManer 4.9.3 打开六个服务库模型（`paytech/<svc>/docs/database/<svc>.pdma.json`）；
 2. 检查六个关系图的可读性、连线端口和循环引用；
 3. 执行应用内规范检查；
 4. 按六个子域 Review 表、字段、枚举、索引和关系；

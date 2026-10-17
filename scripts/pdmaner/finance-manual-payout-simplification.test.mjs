@@ -55,7 +55,7 @@ test("Finance payout freezes approved owner, fee, Risk and accounting coordinate
 
 test("Finance shares maturity and reconciles payout execution to bank debits", () => {
   const tables = byKey(TABLES);
-  const economicsFields = fieldKeys(tables.get("transaction_economics"));
+  const economicsFields = fieldKeys(tables.get("economic_fact"));
   assert.ok(economicsFields.includes("balance_available_time"));
   assert.ok(!economicsFields.includes("client_available_time"));
   assert.match(CHECK_CONTRACTS.ck_account_owner_bucket, /LOCAL_PARTNER.*PENDING.*AVAILABLE.*LOCKED/u);

@@ -66,7 +66,7 @@ export const TABLES = Object.freeze([
     relations: [
       relation("channel_account_id", "channel_account", "id"),
       relation("duplicate_capture_item_id", "duplicate_capture_item", "id", "1:1"),
-      relation("transaction_economics_id", "transaction_economics", "id"),
+      relation("transaction_economics_id", "economic_fact", "id"),
     ],
   }),
   defineTable({
@@ -104,7 +104,7 @@ export const TABLES = Object.freeze([
     relations: [
       relation("channel_account_id", "channel_account", "id"),
       relation("duplicate_capture_item_id", "duplicate_capture_item", "id", "1:1"),
-      relation("transaction_economics_id", "transaction_economics", "id", "1:1"),
+      relation("transaction_economics_id", "economic_fact", "id", "1:1"),
     ],
   }),
   defineTable({
