@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
  * Reactor 级依赖图校验：读取 {@code paytech/pom.xml} 当前列出的全部模块，执行 R1、R2、R3、R6、R8 的依赖图部分。
  *
  * <p>
- * 本步 Reactor 内尚无服务模块，因此另以真实 Reactor 模型加一个注入的违规模块证明规则在该模型上确实生效，避免空断言。
+ * 真实 Reactor 中的服务模块必须零违规；另以真实 Reactor 模型加注入的违规模块证明规则在该模型上确实生效，避免空断言。
  *
  * @see com.paytech.arch.ArchitectureRules#checkReactorDependencyGraph(Path)
  * @author Claude
@@ -40,8 +40,10 @@ class ReactorArchitectureAutoTest {
         Assertions.assertTrue(artifactIds.containsAll(List.of("paytech-dependencies", "paytech-parent",
             "paytech-arch-rules", "paytech-instance-manifest", "paytech-arch-rules-reactor-test")),
             () -> "Reactor 模块不完整: " + artifactIds);
-        Assertions.assertEquals(modules.getFirst().moduleNames().size() + 1, modules.size(),
-            () -> "Reactor 模块数与 paytech/pom.xml 不一致: " + artifactIds);
+        // 聚合 POM 可以嵌套（服务聚合 POM 再列出四个模块），因此按全部聚合 POM 声明的模块总数核对。
+        int declaredModules = modules.stream().mapToInt(module -> module.moduleNames().size()).sum();
+        Assertions.assertEquals(declaredModules + 1, modules.size(),
+            () -> "Reactor 模块数与各聚合 POM 声明不一致: " + artifactIds);
         List<RuleViolation> violations = ArchitectureRules.checkReactorDependencyGraph(REACTOR_ROOT);
         Assertions.assertTrue(violations.isEmpty(), () -> "Reactor 依赖图违规:\n" + describe(violations));
     }

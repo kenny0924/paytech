@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.paytech</groupId>
+        <artifactId>paytech-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../build/paytech-parent/pom.xml</relativePath>
+    </parent>
+
+    <artifactId>paytech-data-service</artifactId>
+    <packaging>pom</packaging>
+
+    <name>PayTech Data Service</name>
+    <description>Data service aggregator: read model over Apache Doris fed by Flink CDC whitelist tables (D25 / D35).</description>
+
+    <modules>
+        <module>paytech-data-service-api</module>
+        <module>paytech-data-service-core</module>
+        <module>paytech-data-service-app</module>
+        <module>paytech-data-service-test</module>
+    </modules>
+</project>

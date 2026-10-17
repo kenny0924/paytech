@@ -53,7 +53,7 @@
         <!-- <module>payout</module> -->
         <!-- <module>dispute</module> -->
         <!-- <module>fx</module> -->
-        <!-- <module>data-service</module> -->
+        <module>data-service</module>
         <!-- <module>workflow-approval</module> -->
         <module>tools/arch-rules</module>
         <module>tools/instance-manifest</module>
