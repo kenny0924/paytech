@@ -4,6 +4,8 @@
 
 通知管理见[需求方案](../requirements/20261015/operations-console-通知管理/technique.md)：`/notification-admin/v1` 下 12 个端点由 `NotificationManagementController` 简单转发到 `PlatformNotificationManagementClient`，本地 record 模型与 Platform 合同字段一一对应（严格转换，缺少基本类型字段视为上游无效响应，Owner 多出的字段不投影），写入核对模板或账号编码；422 只保留本次请求体内的字段路径；不接收、不转发 `Idempotency-Key`；`/notification-admin` 只记元数据日志。
 
+Webhook 管理见[需求方案](../requirements/20261016/operations-console-Webhook管理/technique.md)：`/webhook-admin/v1` 下 10 个端点由 `WebhookManagementController` 简单转发到 `PlatformWebhookManagementClient`，本地 record 模型与 Platform 合同字段一一对应（严格转换，时间保持 UTC 字符串，投递 Envelope 原样透传）；新建端点与 Replay 返回 201，修改、启停、详情核对端点或投递 ID；写 Body 上限 8192 字节，测试事件不接受 Body（仍需 `Content-Type: application/json`）；422 只保留本次请求体内的字段路径；新建与轮换响应含密钥明文，依赖全局 `Cache-Control: no-store`，`/webhook-admin` 只记元数据日志；不接收、不转发 `Idempotency-Key`。
+
 外部 API 配置管理的现行合同见[管理接口](../requirements/20260914/platform-support-外部API配置与执行/admin-api.md)：`/external-api-admin/v1` 下 30 个端点按对象拆成 6 组 Controller → `Platform*Client` Port → Impl，逐字段转换 `service/model/externalapi` 本地模型，`definition`、`flowDefinition` 作为 JSON 原样传递；不接收、不转发 `Idempotency-Key`（由 Gateway 处理）。`ExternalApiRequestConfiguration` 严格解析写 Body（未知属性、重复键含定义内部、尾随内容与标量强转均返回 400，上限 65,536 字节（Gateway 绝对上限））；Owner 422 由 `ExternalApiValidationConverter` 只保留以本次 Body 顶层属性开头的字段路径，说明统一为安全文案，具体问题由三个校验接口返回。
 
 > 本轮规则集整体管理的现行合同见[需求技术方案](../requirements/20260911/operations-console-风控规则集列表优化/technique.md)：沿用原接口版本，一集一行、整体删除及实际生效使用保护；Web 隐藏 Candidate 页面，后端历史合同保留。阶段确认与证据见[交付记录](../requirements/20260911/operations-console-风控规则集列表优化/delivery.md)，实现与环境状态只见[当前台账第 16 节](../agent-docs/CURRENT_IMPLEMENTATION.md#16-operations-规则集列表优化2026-09-11)。

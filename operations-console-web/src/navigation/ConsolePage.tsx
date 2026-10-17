@@ -37,6 +37,7 @@ const pages: Record<PageComponentKey, ComponentType<PageProps>> = {
   OPERATIONS_NOTIFICATION_TEMPLATES: lazy(() => import('../pages/NotificationTemplates').then(m => ({ default: m.NotificationTemplates }))),
   OPERATIONS_NOTIFICATION_PROVIDERS: lazy(() => import('../pages/NotificationProviders').then(m => ({ default: m.NotificationProviders }))),
   OPERATIONS_NOTIFICATION_RECORDS: lazy(() => import('../pages/NotificationRecords').then(m => ({ default: m.NotificationRecords }))),
+  OPERATIONS_WEBHOOKS: lazy(() => import('../pages/WebhookManagement').then(m => ({ default: m.WebhookManagement }))),
 };
 export function ConsolePage({ componentKey, ...props }: PageProps & { componentKey: string }) {
   const Page = pages[componentKey as PageComponentKey];

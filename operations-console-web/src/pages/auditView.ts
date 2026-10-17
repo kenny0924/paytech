@@ -14,6 +14,11 @@ export const auditActions: Record<string, string> = {
   OPERATIONS_NOTIFICATION_ROUTE_STATUS_CHANGE: '启停通知路由', OPERATIONS_NOTIFICATION_PROVIDER_STATUS_CHANGE: '启停发送账号',
   OPERATIONS_NOTIFICATION_PROVIDER_CREATE: '新建发送账号', OPERATIONS_NOTIFICATION_PROVIDER_UPDATE: '修改发送账号',
   OPERATIONS_NOTIFICATION_PROVIDER_CREDENTIAL_REPLACE: '更换发送账号密钥', OPERATIONS_NOTIFICATION_PROVIDER_TEST_SEND: '发送账号测试发送',
+  OPERATIONS_WEBHOOK_CLIENTS: '查询 Webhook Client', OPERATIONS_WEBHOOK_ENDPOINTS: '查询 Webhook 端点',
+  OPERATIONS_WEBHOOK_ENDPOINT_CREATE: '新建 Webhook 端点', OPERATIONS_WEBHOOK_ENDPOINT_UPDATE: '修改 Webhook 端点',
+  OPERATIONS_WEBHOOK_ENDPOINT_STATUS_CHANGE: '启停 Webhook 端点', OPERATIONS_WEBHOOK_SECRET_ROTATE: '轮换 Webhook 密钥',
+  OPERATIONS_WEBHOOK_ENDPOINT_TEST: '发送 Webhook 测试事件', OPERATIONS_WEBHOOK_DELIVERIES: '查询 Webhook 投递',
+  OPERATIONS_WEBHOOK_DELIVERY: '查看 Webhook 投递', OPERATIONS_WEBHOOK_DELIVERY_REPLAY: 'Replay Webhook 投递',
   OPERATIONS_API_CREDENTIAL_REVOKE: '紧急撤销凭证', OPERATIONS_API_SCOPE_CREATE: '新增 API Scope', OPERATIONS_API_SCOPE_UPDATE: '编辑 API Scope',
   OPERATIONS_ACCOUNT_CREATE: '创建人员', OPERATIONS_ACCOUNT_DELETE: '删除人员', OPERATIONS_ACCOUNT_DISABLE: '停用人员',
   OPERATIONS_ACCOUNT_ENABLE: '启用人员', OPERATIONS_ACCOUNT_ROLES: '分配角色',
@@ -25,7 +30,7 @@ export const auditActions: Record<string, string> = {
   OPERATIONS_ROLE_EMPLOYEE_COUNTS: '查询角色关联人数', OPERATIONS_ROLE_PERMISSIONS: '查询角色权限', OPERATIONS_ROLE_RESOURCES: '查询角色资源',
 };
 export const auditResults: Record<string, string> = { SUCCEEDED: '成功', DENIED: '拒绝', FAILED: '失败' };
-export const auditResourceTypes: Record<string, string> = { ACCESS_TENANT: '访问租户', API_CREDENTIAL: 'API 凭证', API_SCOPE: 'API Scope', GATEWAY_ROUTE: 'API 路由', USER_ACCOUNT: '人员账号', AUTH_SESSION: '登录会话', NOTIFICATION_TEMPLATE: '通知模板', NOTIFICATION_CONTENT: '通知内容', NOTIFICATION_ROUTE: '通知路由', NOTIFICATION_PROVIDER: '发送账号', ROUTE: '接口权限', ROLE: '角色', AUDIT_EVENT: '审计记录' };
+export const auditResourceTypes: Record<string, string> = { ACCESS_TENANT: '访问租户', API_CREDENTIAL: 'API 凭证', API_SCOPE: 'API Scope', GATEWAY_ROUTE: 'API 路由', USER_ACCOUNT: '人员账号', AUTH_SESSION: '登录会话', NOTIFICATION_TEMPLATE: '通知模板', NOTIFICATION_CONTENT: '通知内容', NOTIFICATION_ROUTE: '通知路由', NOTIFICATION_PROVIDER: '发送账号', WEBHOOK_CLIENT: 'Webhook Client', WEBHOOK_ENDPOINT: 'Webhook 端点', WEBHOOK_DELIVERY: 'Webhook 投递', ROUTE: '接口权限', ROLE: '角色', AUDIT_EVENT: '审计记录' };
 
 /** 时间范围在提交时按浏览器本地时区解析，传输时转换 UTC。 */
 export function auditFilters(values: AuditFilterValues, now = new Date()): Record<string, string> {

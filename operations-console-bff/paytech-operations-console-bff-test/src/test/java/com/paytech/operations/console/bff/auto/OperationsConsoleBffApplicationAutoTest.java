@@ -136,7 +136,7 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
             "Risk 浏览器入口必须是唯一具体 Controller");
         assertEquals(List.of("/auth", "/authorization", "/iam", "/audit", "/gateway-admin", "/console-admin", "/permission-admin", "/api-credential-admin", "/api-scope-admin",
                 "/decision-dictionaries", "/decision-rule-sets", "/decision-releases", "/decision-flows", "/decision-variables", "/risk-lists", "/risk-decisions", "/external-api-admin",
-                "/client-onboarding-admin", "/vault-admin", "/notification-admin"),
+                "/client-onboarding-admin", "/vault-admin", "/notification-admin", "/webhook-admin"),
             applicationContext.getBean(WebLoggingProperties.class).metadataOnlyPathPrefixes(),
             "身份、管理筛选和状态原因只能写元数据日志");
         Set<String> routes = applicationContext.getBean(
@@ -320,7 +320,13 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
             "POST /notification-admin/v1/providers", "PUT /notification-admin/v1/providers/{providerCode}",
             "PUT /notification-admin/v1/providers/{providerCode}/credential",
             "POST /notification-admin/v1/providers/{providerCode}/test-send",
-            "GET /notification-admin/v1/requests", "GET /notification-admin/v1/requests/{requestId}"), routes);
+            "GET /notification-admin/v1/requests", "GET /notification-admin/v1/requests/{requestId}",
+            "GET /webhook-admin/v1/clients", "GET /webhook-admin/v1/clients/{clientId}/endpoints",
+            "POST /webhook-admin/v1/clients/{clientId}/endpoints", "PUT /webhook-admin/v1/endpoints/{endpointId}",
+            "PATCH /webhook-admin/v1/endpoints/{endpointId}/status",
+            "POST /webhook-admin/v1/endpoints/{endpointId}/signing-secret/rotations",
+            "POST /webhook-admin/v1/endpoints/{endpointId}/tests", "GET /webhook-admin/v1/deliveries",
+            "GET /webhook-admin/v1/deliveries/{deliveryId}", "POST /webhook-admin/v1/deliveries/{deliveryId}/replays"), routes);
 
         Path classes = webModule().resolve("target/classes/com/paytech/operations/console/bff");
         try (var files = Files.walk(classes)) {

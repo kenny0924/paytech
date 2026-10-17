@@ -22,7 +22,7 @@ import tools.jackson.databind.node.ObjectNode;
 
 /**
  * 同步发送一次签名的 webhook.ping 测试事件
- * <li>确认管理权限后读取地址与密钥引用，Vault 与 HTTP 不在事务内；审计记录发送结果代码</li>
+ * <li>确认管理权限后读取地址与密钥引用，Vault 与 HTTP 不在事务内；发送后另开短事务重检权限并记录审计（结果代码）</li>
  * <li>与正式投递使用同一发送器、SSRF 防护与签名；不落事件或投递记录，停用的端点也可测试</li>
  */
 @Component
@@ -40,14 +40,18 @@ public class TestWebhookEndpointProcessor extends AbstractProcessor<TestWebhookE
     @Override
     protected WebhookAttemptOutcome processRequest(TestWebhookEndpointRequest request) {
         var now = support.now();
-        var session = support.requireManage(request.getActor(), request.getSession());
+        support.requireManage(request.getActor(), request.getSession());
         var target = management.signingTarget(request.getEndpointId(), now);
         var keys = target.getSecretVaultTokens().stream().map(vault::reveal).toList();
         byte[] body = pingEnvelope(request.getEndpointId(), now).getCanonicalBytes();
         var outcome = sender.send(URI.create(target.getUrl()), body,
             WebhookSignature.header(now.getEpochSecond(), body, keys));
-        support.recordSucceeded(request.getActor(), session.member().tenantId(), "WEBHOOK_ENDPOINT",
-            request.getEndpointId(), outcome.isSucceeded() ? "SUCCEEDED" : outcome.getFailureCode().getCode(), now);
+        String result = outcome.isSucceeded() ? "SUCCEEDED" : outcome.getFailureCode().getCode();
+        support.transaction(request.getActor(), request.getSession(), (context, at) -> {
+            support.recordSucceeded(request.getActor(), context.member().tenantId(), "WEBHOOK_ENDPOINT",
+                request.getEndpointId(), result, now);
+            return null;
+        });
         return outcome;
     }
 

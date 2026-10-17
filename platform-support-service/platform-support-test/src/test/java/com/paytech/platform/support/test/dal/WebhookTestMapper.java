@@ -33,6 +33,10 @@ public interface WebhookTestMapper {
         """)
     void tenant(@Param("tenantId") long tenantId, @Param("clientId") long clientId);
 
+    /** 修改测试租户名称，用于名称搜索场景。 */
+    @Update("UPDATE t_access_tenant SET tenant_name=#{name} WHERE tenant_id=#{tenantId}")
+    void renameTenant(@Param("tenantId") long tenantId, @Param("name") String name);
+
     /** 删除本例租户。 */
     @Delete("DELETE FROM t_access_tenant WHERE tenant_id BETWEEN 880000000000071000 AND 880000000000071999")
     void clearTenants();

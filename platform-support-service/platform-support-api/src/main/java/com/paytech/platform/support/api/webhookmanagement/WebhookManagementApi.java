@@ -21,6 +21,7 @@ import com.paytech.platform.support.api.webhookmanagement.request.SaveWebhookEnd
 import com.paytech.platform.support.api.webhookmanagement.response.CreateWebhookEndpointResponseBody;
 import com.paytech.platform.support.api.webhookmanagement.response.ReplayWebhookDeliveryResponseBody;
 import com.paytech.platform.support.api.webhookmanagement.response.RotateWebhookSecretResponseBody;
+import com.paytech.platform.support.api.webhookmanagement.response.WebhookClientResponseBody;
 import com.paytech.platform.support.api.webhookmanagement.response.WebhookDeliveryDetailResponseBody;
 import com.paytech.platform.support.api.webhookmanagement.response.WebhookDeliverySummaryResponseBody;
 import com.paytech.platform.support.api.webhookmanagement.response.WebhookEndpointMutationResponseBody;
@@ -37,6 +38,23 @@ import jakarta.validation.Valid;
  */
 @HttpExchange("/webhook-admin/v1")
 public interface WebhookManagementApi {
+
+    /**
+     * 按 Client ID 或名称搜索已开通平台访问的 Client
+     *
+     * @param actor 可信 Operations 账号标识
+     * @param session 当前普通 Operations 会话
+     * @param keyword 可空；去除首尾空白后最多 255 字符；1—18 位数字时按 Client ID 精确匹配，否则按名称包含匹配
+     * @param page 页码，默认 1
+     * @param size 每页条数，默认 10；支持 10、20、50、100、200
+     * @return 按租户 ID 升序的 Client 与端点数量；不过滤已暂停的 Client
+     */
+    @GetExchange("/clients")
+    PagingResponseBody<WebhookClientResponseBody> clients(@RequestHeader("X-Gateway-Actor-Subject") String actor,
+        @RequestHeader("X-Gateway-Session-Id") String session,
+        @RequestParam(value = "keyword", required = false) String keyword,
+        @RequestParam(value = "page", required = false) Integer page,
+        @RequestParam(value = "size", required = false) Integer size);
 
     /**
      * 查询 Client 的全部端点（最多 5 个）

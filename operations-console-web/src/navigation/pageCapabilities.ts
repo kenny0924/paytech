@@ -385,6 +385,17 @@ export const pageCapabilities = [
     "displayName": "发送记录",
     "frontendRoute": "/notification-records",
     "actions": []
+  },
+  {
+    "componentKey": "OPERATIONS_WEBHOOKS",
+    "displayName": "Webhook 管理",
+    "frontendRoute": "/webhooks",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_WEBHOOK_MANAGE",
+        "displayName": "维护"
+      }
+    ]
   }
 ] as const;
 export type PageComponentKey = typeof pageCapabilities[number]["componentKey"];

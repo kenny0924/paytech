@@ -1,0 +1,238 @@
+[
+  {
+    "id": "W01",
+    "method": "GET",
+    "path": "/webhook-admin/v1/clients",
+    "query": "?keyword=acme&page=1&size=10",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "clientId": "880000000000071001",
+          "clientName": "Acme Trading LLC",
+          "ownerStatus": "ACTIVE",
+          "securityStatus": "ACTIVE",
+          "endpointCount": 3
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    },
+    "routeCode": "operations-webhook-w01"
+  },
+  {
+    "id": "W02",
+    "method": "GET",
+    "path": "/webhook-admin/v1/clients/880000000000071001/endpoints",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": [
+      {
+        "endpointId": "880000000000072001",
+        "url": "https://hooks.acme.example/paytech",
+        "eventTypes": [
+          "order.paid",
+          "refund.succeeded"
+        ],
+        "status": "ACTIVE",
+        "signingSecret": {
+          "rotationNo": 2,
+          "createTime": "2026-10-16T08:00:00.000000Z",
+          "previousValidUntil": "2026-10-16T09:00:00.000000Z"
+        },
+        "version": 3,
+        "createTime": "2026-10-15T08:00:00.000000Z",
+        "updateTime": "2026-10-16T08:00:00.000000Z"
+      }
+    ],
+    "routeCode": "operations-webhook-w02"
+  },
+  {
+    "id": "W03",
+    "method": "POST",
+    "path": "/webhook-admin/v1/clients/880000000000071001/endpoints",
+    "query": "",
+    "request": {
+      "url": "https://hooks.acme.example/paytech",
+      "eventTypes": [
+        "order.paid",
+        "refund.succeeded"
+      ],
+      "expectedVersion": 0,
+      "reason": "Client 申请开通"
+    },
+    "status": 201,
+    "response": {
+      "endpointId": "880000000000072001",
+      "version": 1,
+      "signingSecret": "whsec_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    },
+    "routeCode": "operations-webhook-w03"
+  },
+  {
+    "id": "W04",
+    "method": "PUT",
+    "path": "/webhook-admin/v1/endpoints/880000000000072001",
+    "query": "",
+    "request": {
+      "url": "https://hooks.acme.example/paytech/v2",
+      "eventTypes": [
+        "order.paid"
+      ],
+      "expectedVersion": 1,
+      "reason": "Client 更换地址"
+    },
+    "status": 200,
+    "response": {
+      "endpointId": "880000000000072001",
+      "version": 2
+    },
+    "routeCode": "operations-webhook-w04"
+  },
+  {
+    "id": "W05",
+    "method": "PATCH",
+    "path": "/webhook-admin/v1/endpoints/880000000000072001/status",
+    "query": "",
+    "request": {
+      "status": "DISABLED",
+      "expectedVersion": 2,
+      "reason": "Client 维护窗口"
+    },
+    "status": 200,
+    "response": {
+      "endpointId": "880000000000072001",
+      "version": 3
+    },
+    "routeCode": "operations-webhook-w05"
+  },
+  {
+    "id": "W06",
+    "method": "POST",
+    "path": "/webhook-admin/v1/endpoints/880000000000072001/signing-secret/rotations",
+    "query": "",
+    "request": {
+      "immediate": false,
+      "reason": "定期轮换"
+    },
+    "status": 200,
+    "response": {
+      "rotationNo": 2,
+      "signingSecret": "whsec_BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+      "previousValidUntil": "2026-10-16T09:00:00.000000Z"
+    },
+    "routeCode": "operations-webhook-w06"
+  },
+  {
+    "id": "W07",
+    "method": "POST",
+    "path": "/webhook-admin/v1/endpoints/880000000000072001/tests",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "result": "FAILED",
+      "httpStatus": 500,
+      "failureCode": "HTTP_STATUS",
+      "durationMs": 120
+    },
+    "routeCode": "operations-webhook-w07"
+  },
+  {
+    "id": "W08",
+    "method": "GET",
+    "path": "/webhook-admin/v1/deliveries",
+    "query": "?clientId=880000000000071001&createdFrom=2026-10-15T00:00:00Z&createdTo=2026-10-16T00:00:00Z&page=1&size=20&endpointId=880000000000072001&eventType=order.paid&status=DEAD&eventId=evt_0001",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "deliveryId": "880000000000073001",
+          "eventId": "evt_0001",
+          "eventType": "order.paid",
+          "endpointId": "880000000000072001",
+          "status": "DEAD",
+          "attemptCount": 8,
+          "lastAttemptTime": "2026-10-15T20:00:00.000000Z",
+          "replayOfDeliveryId": null,
+          "createTime": "2026-10-15T08:00:00.000000Z"
+        }
+      ],
+      "page": 1,
+      "size": 20,
+      "total": 1
+    },
+    "routeCode": "operations-webhook-w08"
+  },
+  {
+    "id": "W09",
+    "method": "GET",
+    "path": "/webhook-admin/v1/deliveries/880000000000073001",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "deliveryId": "880000000000073001",
+      "eventId": "evt_0001",
+      "eventType": "order.paid",
+      "endpointId": "880000000000072001",
+      "status": "DEAD",
+      "attemptCount": 1,
+      "lastAttemptTime": "2026-10-15T20:00:00.000000Z",
+      "replayOfDeliveryId": null,
+      "createTime": "2026-10-15T08:00:00.000000Z",
+      "requestedBy": null,
+      "event": {
+        "eventId": "evt_0001",
+        "eventType": "order.paid",
+        "schemaVersion": 1,
+        "sourceSystem": "commerce-service",
+        "envelope": {
+          "id": "evt_0001",
+          "type": "order.paid",
+          "schemaVersion": 1,
+          "data": {
+            "orderId": "ord_0001",
+            "amount": {
+              "value": "10.00",
+              "currency": "USD"
+            }
+          }
+        }
+      },
+      "attempts": [
+        {
+          "attemptNo": 1,
+          "requestUrl": "https://hooks.acme.example/paytech",
+          "rotationNo": 2,
+          "graceRotationNo": 1,
+          "status": "FAILED",
+          "httpStatus": null,
+          "failureCode": "TIMEOUT",
+          "durationMs": 10000,
+          "startedTime": "2026-10-15T20:00:00.000000Z",
+          "finishedTime": "2026-10-15T20:00:10.000000Z"
+        }
+      ]
+    },
+    "routeCode": "operations-webhook-w09"
+  },
+  {
+    "id": "W10",
+    "method": "POST",
+    "path": "/webhook-admin/v1/deliveries/880000000000073001/replays",
+    "query": "",
+    "request": {
+      "reason": "Client 已修复接收端"
+    },
+    "status": 201,
+    "response": {
+      "deliveryId": "880000000000073002"
+    },
+    "routeCode": "operations-webhook-w10"
+  }
+]

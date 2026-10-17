@@ -17,6 +17,7 @@ import com.paytech.platform.support.api.webhookmanagement.request.SaveWebhookEnd
 import com.paytech.platform.support.api.webhookmanagement.response.CreateWebhookEndpointResponseBody;
 import com.paytech.platform.support.api.webhookmanagement.response.RotateWebhookSecretResponseBody;
 import com.paytech.platform.support.api.webhookmanagement.response.WebhookDeliveryDetailResponseBody;
+import com.paytech.platform.support.api.webhookmanagement.response.WebhookClientResponseBody;
 import com.paytech.platform.support.api.webhookmanagement.response.WebhookDeliverySummaryResponseBody;
 import com.paytech.platform.support.api.webhookmanagement.response.WebhookEndpointMutationResponseBody;
 import com.paytech.platform.support.api.webhookmanagement.response.WebhookEndpointResponseBody;
@@ -32,6 +33,7 @@ import com.paytech.platform.support.delivery.domain.WebhookEventTypes;
 import com.paytech.platform.support.service.processor.webhook.request.ChangeWebhookEndpointStatusRequest;
 import com.paytech.platform.support.service.processor.webhook.request.CreateWebhookEndpointRequest;
 import com.paytech.platform.support.service.processor.webhook.request.GetWebhookDeliveryRequest;
+import com.paytech.platform.support.service.processor.webhook.request.ListWebhookClientsRequest;
 import com.paytech.platform.support.service.processor.webhook.request.ListWebhookDeliveriesRequest;
 import com.paytech.platform.support.service.processor.webhook.request.ListWebhookEndpointsRequest;
 import com.paytech.platform.support.service.processor.webhook.request.ReplayWebhookDeliveryRequest;
@@ -40,6 +42,7 @@ import com.paytech.platform.support.service.processor.webhook.request.TestWebhoo
 import com.paytech.platform.support.service.processor.webhook.request.UpdateWebhookEndpointRequest;
 import com.paytech.platform.support.service.processor.webhook.response.CreateWebhookEndpointResponse;
 import com.paytech.platform.support.service.processor.webhook.response.RotateWebhookSecretResponse;
+import com.paytech.platform.support.service.processor.webhook.response.WebhookClientResponse;
 
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
@@ -52,6 +55,27 @@ public class WebhookManagementConverter {
     static final Duration MAX_DELIVERY_RANGE = Duration.ofDays(31);
 
     private static final JsonMapper JSON = JsonMapper.builder().build();
+
+    /** 关键字长度与分页参数；关键字匹配方式由租户查询决定。 */
+    public ListWebhookClientsRequest toClientsRequest(String actor, String session, String keyword, Integer page,
+        Integer size) {
+        if (keyword != null && keyword.strip().length() > 255) {
+            throw new InvalidParameterException("keyword 超长");
+        }
+        return new ListWebhookClientsRequest(actor, session, keyword, ClientApiManagementInputs.paging(page, size));
+    }
+
+    /** Client 搜索结果项。 */
+    public WebhookClientResponseBody toClient(WebhookClientResponse response) {
+        var client = response.getClient();
+        var body = new WebhookClientResponseBody();
+        body.setClientId(Long.toString(client.getClientId()));
+        body.setClientName(client.getClientName());
+        body.setOwnerStatus(client.getOwnerStatus().getCode());
+        body.setSecurityStatus(client.getSecurityStatus().getCode());
+        body.setEndpointCount(response.getEndpointCount());
+        return body;
+    }
 
     /** 校验 Path 中的 Client ID。 */
     public ListWebhookEndpointsRequest toEndpointsRequest(String actor, String session, String clientId) {

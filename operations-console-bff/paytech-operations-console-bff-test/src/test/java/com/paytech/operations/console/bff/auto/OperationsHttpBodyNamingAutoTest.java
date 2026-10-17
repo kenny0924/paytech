@@ -61,7 +61,8 @@ class OperationsHttpBodyNamingAutoTest {
         com.paytech.operations.console.bff.ext.rest.IntegrationScriptManagementController.class,
         com.paytech.operations.console.bff.ext.rest.IntegrationImplementationManagementController.class,
         com.paytech.operations.console.bff.ext.rest.ExternalApiEditorController.class,
-        com.paytech.operations.console.bff.ext.rest.NotificationManagementController.class})
+        com.paytech.operations.console.bff.ext.rest.NotificationManagementController.class,
+        com.paytech.operations.console.bff.ext.rest.WebhookManagementController.class})
     void test_httpBodyTypesUseExplicitRequestAndResponseSuffixes(Class<?> contract) {
         if (contract.isInterface()) {
             assertEquals(0, contract.getDeclaredClasses().length,
@@ -81,7 +82,11 @@ class OperationsHttpBodyNamingAutoTest {
                 }
             }
             if (method.getReturnType() != void.class) {
-                assertTrue(method.getReturnType().getSimpleName().endsWith("ResponseBody"),
+                // 顶层为 JSON 数组时约束数组元素类型。
+                Class<?> body = method.getReturnType() == List.class
+                    ? org.springframework.core.ResolvableType.forMethodReturnType(method).getGeneric(0).resolve(Object.class)
+                    : method.getReturnType();
+                assertTrue(body.getSimpleName().endsWith("ResponseBody"),
                     () -> endpoint + " 的顶层响应类型必须以 ResponseBody 结尾");
             }
         }

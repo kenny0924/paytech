@@ -1,0 +1,9 @@
+# Operations Webhook 管理：候选镜像（20677f2 + 本需求 48 个文件差异构建，差异 SHA-256 前缀 fd44a47cd8d99597，
+# tag mor-test/<service>:webhook-ops-20261017），使用固定 image ID。叠加在 compose.yaml + compose.applications.yaml 之上；配置不变。
+services:
+  platform-support-service:
+    image: sha256:efeb1d9e89045e7353b67961c94fb227a5079d493e28b2515bef8167513ee6d9
+  operations-console-bff:
+    image: sha256:6341dd18eed416895528b1541222fddf51e089bcc0fe7e2fd5e9e78b1c226190
+  operations-console-web:
+    image: sha256:da6154c7ae99c100cc08ce3492ee72416bbeb1add48a9c91a08b385ca91c9fe6

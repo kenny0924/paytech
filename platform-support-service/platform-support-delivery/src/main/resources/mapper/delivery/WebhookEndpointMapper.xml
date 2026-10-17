@@ -18,6 +18,11 @@
     <select id="findTenant" resultMap="record">SELECT <include refid="columns"/> FROM t_webhook_endpoint
         WHERE tenant_id = #{tenantId} ORDER BY create_time, endpoint_id
     </select>
+    <select id="countTenants" resultType="com.paytech.platform.support.delivery.core.dal.dataobject.WebhookEndpointTenantCount">
+        SELECT tenant_id AS tenantId, COUNT(*) AS endpointCount FROM t_webhook_endpoint WHERE tenant_id IN
+        <foreach collection="tenantIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        GROUP BY tenant_id
+    </select>
     <insert id="insert">INSERT INTO t_webhook_endpoint (<include refid="columns"/>) VALUES (#{endpointId},
         #{tenantId}, #{url}, #{eventTypes}, #{status}, #{version}, #{createTime}, #{updateTime})
     </insert>

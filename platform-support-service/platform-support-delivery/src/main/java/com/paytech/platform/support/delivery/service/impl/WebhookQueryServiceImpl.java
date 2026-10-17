@@ -16,6 +16,7 @@ import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.platform.support.delivery.core.dal.dataobject.WebhookAttempt;
 import com.paytech.platform.support.delivery.core.dal.dataobject.WebhookEndpoint;
+import com.paytech.platform.support.delivery.core.dal.dataobject.WebhookEndpointTenantCount;
 import com.paytech.platform.support.delivery.core.dal.dataobject.WebhookSigningSecret;
 import com.paytech.platform.support.delivery.domain.WebhookDeliveryDetailView;
 import com.paytech.platform.support.delivery.domain.WebhookDeliveryFilter;
@@ -52,6 +53,16 @@ public class WebhookQueryServiceImpl implements WebhookQueryService {
             .stream().collect(Collectors.groupingBy(WebhookSigningSecret::getEndpointId));
         return tenantEndpoints.stream()
             .map(endpoint -> view(endpoint, signing.getOrDefault(endpoint.getEndpointId(), List.of()), now)).toList();
+    }
+
+    /** 空列表不查询。 */
+    @Override
+    public Map<Long, Integer> endpointCounts(List<Long> tenantIds) {
+        if (tenantIds.isEmpty()) {
+            return Map.of();
+        }
+        return endpoints.countTenants(tenantIds).stream().collect(
+            Collectors.toMap(WebhookEndpointTenantCount::getTenantId, WebhookEndpointTenantCount::getEndpointCount));
     }
 
     /** 数据库分页与总数使用同一条件。 */

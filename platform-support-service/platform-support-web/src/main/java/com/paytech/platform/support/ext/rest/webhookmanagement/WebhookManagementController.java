@@ -17,6 +17,7 @@ import com.paytech.platform.support.api.webhookmanagement.request.SaveWebhookEnd
 import com.paytech.platform.support.api.webhookmanagement.response.CreateWebhookEndpointResponseBody;
 import com.paytech.platform.support.api.webhookmanagement.response.ReplayWebhookDeliveryResponseBody;
 import com.paytech.platform.support.api.webhookmanagement.response.RotateWebhookSecretResponseBody;
+import com.paytech.platform.support.api.webhookmanagement.response.WebhookClientResponseBody;
 import com.paytech.platform.support.api.webhookmanagement.response.WebhookDeliveryDetailResponseBody;
 import com.paytech.platform.support.api.webhookmanagement.response.WebhookDeliverySummaryResponseBody;
 import com.paytech.platform.support.api.webhookmanagement.response.WebhookEndpointMutationResponseBody;
@@ -26,6 +27,7 @@ import com.paytech.platform.support.ext.rest.audit.Audit;
 import com.paytech.platform.support.service.processor.webhook.ChangeWebhookEndpointStatusProcessor;
 import com.paytech.platform.support.service.processor.webhook.CreateWebhookEndpointProcessor;
 import com.paytech.platform.support.service.processor.webhook.GetWebhookDeliveryProcessor;
+import com.paytech.platform.support.service.processor.webhook.ListWebhookClientsProcessor;
 import com.paytech.platform.support.service.processor.webhook.ListWebhookDeliveriesProcessor;
 import com.paytech.platform.support.service.processor.webhook.ListWebhookEndpointsProcessor;
 import com.paytech.platform.support.service.processor.webhook.ReplayWebhookDeliveryProcessor;
@@ -42,6 +44,7 @@ import lombok.AllArgsConstructor;
 public class WebhookManagementController implements WebhookManagementApi {
 
     private final WebhookManagementConverter converter;
+    private final ListWebhookClientsProcessor listClients;
     private final TestWebhookEndpointProcessor testEndpoint;
     private final RotateWebhookSecretProcessor rotateSecret;
     private final GetWebhookDeliveryProcessor getDelivery;
@@ -51,6 +54,16 @@ public class WebhookManagementController implements WebhookManagementApi {
     private final UpdateWebhookEndpointProcessor updateEndpoint;
     private final ListWebhookDeliveriesProcessor listDeliveries;
     private final ChangeWebhookEndpointStatusProcessor changeStatus;
+
+    /** Client 搜索。 */
+    @Audit(action = "OPERATIONS_WEBHOOK_CLIENTS", resourceType = "WEBHOOK_CLIENT", fallbackResourceId = "WEBHOOK_CATALOG",
+        recordSuccess = false)
+    @Override
+    public PagingResponseBody<WebhookClientResponseBody> clients(String actor, String session, String keyword,
+        Integer page, Integer size) {
+        return listClients.process(converter.toClientsRequest(actor, session, keyword, page, size))
+            .map(converter::toClient);
+    }
 
     /** 端点列表。 */
     @Audit(action = "OPERATIONS_WEBHOOK_ENDPOINTS", resourceType = "WEBHOOK_CLIENT", resourceIdParameter = "clientId",

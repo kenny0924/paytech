@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.platform.support.delivery.core.dal.dataobject.WebhookEndpoint;
+import com.paytech.platform.support.delivery.core.dal.dataobject.WebhookEndpointTenantCount;
 import com.paytech.platform.support.delivery.core.dal.mapper.WebhookEndpointMapper;
 import com.paytech.platform.support.delivery.core.enums.WebhookEndpointStatus;
 import com.paytech.platform.support.delivery.domainservice.repository.WebhookEndpointRepository;
@@ -31,6 +32,12 @@ public class WebhookEndpointRepositoryImpl implements WebhookEndpointRepository 
     @Override
     public List<WebhookEndpoint> findTenant(long tenantId) {
         return mapper.findTenant(tenantId);
+    }
+
+    /** 按租户统计端点数量。 */
+    @Override
+    public List<WebhookEndpointTenantCount> countTenants(List<Long> tenantIds) {
+        return mapper.countTenants(tenantIds);
     }
 
     /** 插入新端点。 */

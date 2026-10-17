@@ -171,6 +171,8 @@ class WebhookEndpointManagementTest extends WebhookTestBase {
         assertEquals(WebhookAttemptStatus.SUCCEEDED.getCode(), tested.getResult());
         assertEquals(200, tested.getHttpStatus());
         assertSignedBy(receiver.requests("a").getLast(), graced.getSigningSecret(), endpoint.secret());
+        auditChecker.assertEvent(requestId, "OPERATIONS_WEBHOOK_ENDPOINT_TEST", Result.SUCCEEDED.getCode(), admin.actor(),
+            "WEBHOOK_ENDPOINT", Long.toString(endpoint.endpointId()));
 
         var immediate = post(path + "/signing-secret/rotations", admin, rotate(true)).assertOk()
             .as(RotateWebhookSecretResponseBody.class);

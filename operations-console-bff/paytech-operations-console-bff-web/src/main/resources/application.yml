@@ -96,3 +96,5 @@ web:
       - /vault-admin
       # 通知模板正文与预览示例参数可能含业务文案或样例值，只记元数据。
       - /notification-admin
+      # 新建端点与轮换的响应含签名密钥明文，只记元数据。
+      - /webhook-admin
