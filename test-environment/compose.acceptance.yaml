@@ -28,4 +28,4 @@ services:
       timeout: 5s
       retries: 6
     networks:
-      backend: { ipv4_address: 172.30.73.29 }
+      backend: { ipv4_address: 172.30.73.31 }

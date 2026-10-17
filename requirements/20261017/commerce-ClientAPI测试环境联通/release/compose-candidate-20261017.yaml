@@ -1,0 +1,7 @@
+# Client API 联通 mor-test 发布候选（2026-10-17）：固定镜像 ID，用法 ./compose.sh -f <本文件> up -d --no-deps --no-build --pull never --wait <服务>
+services:
+  commerce-service:
+    image: sha256:ea5c6dad456283de6bd85c1999920db8be1f34f859db5deab48806ac15f2eee0
+  platform-support-service:
+    # 镜像不变（发布前运行中的镜像），只随 98ba37c 的 Compose 增加信任库、接收端放行与补偿执行器。
+    image: sha256:629cccf9c1a67bd473f7d88a3bb852b6e0a20d145ee2e2e00c2a672354efe716

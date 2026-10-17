@@ -29,4 +29,5 @@ while IFS='=' read -r variable value || [[ -n "$variable" ]]; do
 done < "$environment_dir/.env.test"
 exec docker compose --project-name mor-test --project-directory "$environment_dir" \
   --env-file "$environment_dir/.env.test" -f "$environment_dir/compose.yaml" \
-  -f "$environment_dir/compose.applications.yaml" --profile base --profile applications "$@"
+  -f "$environment_dir/compose.applications.yaml" -f "$environment_dir/compose.scheduler.yaml" \
+  --profile base --profile applications --profile scheduler "$@"

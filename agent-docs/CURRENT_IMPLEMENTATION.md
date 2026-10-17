@@ -705,6 +705,14 @@
 
 - **RCO-14 Implemented / Verified / Deployed（2026-09-11，mor-test）：** 原 V1 的 Risk、Operations BFF/Web 配置增量已实现；[需求与接口合同](./plans/2026-09-11-risk-rule-v1-configuration-contract-draft.md)覆盖三条既有接口扩展，新增 API 和 Platform 注册 DML 均为 0。真实 MySQL/HTTP、BFF 转发/授权、前端和模型验证通过；开发库和 test Risk 库分别在用户授权、备份后应用增量 SQL；三个应用已部署，真实入口验收通过。精确证据及范围见第 15 节。
 
+<a id="client-api-mor-test-20261017"></a>
+
+## Client API 在 mor-test 联通（2026-10-17，已本地提交，未推送；2026-10-17 已部署 mor-test）
+
+- **Deployed（mor-test）：** 按[需求](../requirements/20261017/commerce-ClientAPI测试环境联通/requirement.md)与[技术方案](../requirements/20261017/commerce-ClientAPI测试环境联通/technique.md)：Commerce 首次部署 test（镜像 `client-api-20261017`，172.30.73.30，`mor_commerce` 17 表）；Nginx 新增 Client API 入口 `https://localhost:28444/api/v1/`（`X-Entry-Channel: CLIENT_API`）；Platform 登记 Target `commerce-client-api` 与 9 条 CLIENT_API 路由（设计冻结清单中结账查询未实现，不登记），`t_api_scope` 补齐 5 个 Scope；XXL-Job Admin 常驻（根路径，`compose.sh` 默认加载），Commerce 与 Platform 补偿扫描每 30 秒；Platform 只增加验收接收端放行（172.30.73.31/32）、合并信任库（JDK cacerts + test CA）与执行器，镜像不变。验收接收端 `webhook-receiver` 在 profile `acceptance`。
+- **验收：** `client_api_flow.py` 81/81：自助凭证经 Gateway 调 Client API（401/403/Query 白名单），`order.cancelled`、`order.paid`（PaymentSucceeded 夹具）、`refund.created` 签名送达并与查询一致；AC-05 暂停 Platform 后由 XXL-Job 扫描补交，内容与冻结一致。日志无凭证、`whsec_`、载荷。详见[发布记录](../requirements/20261017/commerce-ClientAPI测试环境联通/release/release-20261017.md)。
+- **已知限制：** Commerce 建单仍用固定 CCT 商业事实、零税与假文档；test 无 Payment，`order.paid` 依赖夹具；Gateway 未实现 `Idempotency-Key`（只转发）；Customer 4 个操作无公开 Scope 与路由；GATEWAY-CLIENT-API-01 的生产门禁未满足，本次启用仅限 test。
+
 <a id="commerce-webhook-events-20261017"></a>
 
 ## Commerce Client Webhook 业务事件（2026-10-17，已本地提交，未推送、未部署）

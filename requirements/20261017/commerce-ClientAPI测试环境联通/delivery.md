@@ -13,6 +13,8 @@
 | 2. 现状差异与影响分析 | 2026-10-17 | [technique.md](./technique.md) 第 1—4 节 | “按建议”：D1 只开放设计内 10 条路由（Customer 另立需求）；D2 Idempotency-Key 原样转发、不重放；D3 test 上按台账流程启用 CLIENT_API；D4 test CA 证书 + Platform 合并信任库，只放行接收端；D5 Commerce 与 Platform 都登记 XXL-Job；D6 test 部署文件只提交相关段落 | 阶段 3 部署与路由方案 |
 | 3. 部署与路由方案 | 2026-10-17 | [technique.md](./technique.md) 第 5—11 节（路由 9 条：结账查询未实现） | “继续” | 阶段 4 研发（本机编写部署文件、接收端、脚本；不碰 test） |
 | 4. 研发 | 2026-10-17 | 见下文“阶段 4 研发结果” | “可以”（同时授权阶段 6 动作，见“动作授权”） | 阶段 6 test 发布 |
+| 6—7. test 发布与验收 | 2026-10-17 | [release-20261017.md](./release/release-20261017.md) | 按阶段 4 授权执行 | 阶段 8 收尾 |
+| 8. 收尾 | 2026-10-17 | 见下文“阶段 8 收尾” | — | 结束；推送未授权 |
 
 ## 动作授权
 
@@ -27,15 +29,15 @@
 
 ## 当前阶段
 
-阶段 6 test 发布进行中。
+已结束：阶段 1—4、6—8 完成；已本地提交（未推送），2026-10-17 已部署 mor-test，验收 81/81（AC-05 在第 1 次运行中通过）。发布记录见 [release-20261017.md](./release/release-20261017.md)。
 
 ## 阶段 4 研发结果（2026-10-17，未提交）
 
 | 文件 | 内容 |
 |---|---|
-| `test-environment/compose.applications.yaml` | 新增 `commerce-service`（172.30.73.28，Snowflake worker 28，`/mor-test`，补偿执行器 9999）；Platform 增加 `WEBHOOK_TRUSTED_NETWORKS=172.30.73.29/32`、合并信任库挂载与 `JAVA_TOOL_OPTIONS`、补偿执行器；Nginx 发布 `127.0.0.1:28444:8444` |
+| `test-environment/compose.applications.yaml` | 新增 `commerce-service`（172.30.73.30，Snowflake worker 28，`/mor-test`，补偿执行器 9999）；Platform 增加 `WEBHOOK_TRUSTED_NETWORKS=172.30.73.31/32`、合并信任库挂载与 `JAVA_TOOL_OPTIONS`、补偿执行器；Nginx 发布 `127.0.0.1:28444:8444` |
 | `test-environment/compose.scheduler.yaml` | xxl-job-admin 增加 `--server.servlet.context-path=`（见偏离 2） |
-| `test-environment/compose.acceptance.yaml`（新） | `webhook-receiver`（profile `acceptance`，`python:3.13-alpine` 固定 digest，只读根、非 root，172.30.73.29，不发布宿主机端口） |
+| `test-environment/compose.acceptance.yaml`（新） | `webhook-receiver`（profile `acceptance`，`python:3.13-alpine` 固定 digest，只读根、非 root，172.30.73.31，不发布宿主机端口） |
 | `test-environment/acceptance/webhook-receiver/webhook_receiver.py`（新） | HTTPS 接收端：每个 POST 原样落盘并返回 204，日志只记方法、路径、状态 |
 | `test-environment/scripts/prepare_client_api_acceptance.sh`（新） | 用 test CA 签发 `webhook-receiver` 证书；生成 Platform 信任库（JDK cacerts 118 项 + test CA）；产物在 `private/`（不入库） |
 | `test-environment/nginx/nginx.conf` | 新增 8444 ssl 入口：只代理 `^~ /api/v1/`，写 `X-Entry-Channel CLIENT_API`、`X-Real-IP`，清空转发头，其余 404 |
@@ -63,3 +65,14 @@
 - 需拉取 `xuxueli/xxl-job-admin:3.4.2`（amd64，Apple 芯片下仿真运行）。
 - Platform 替换使用当前运行镜像，只改环境变量与挂载；替换前须取得 Webhook 会话等同意。
 - Risk 结账评估在 test 上须有生效的 `CHECKOUT_PREPARE` 执行发布，否则建单会被风控拒绝；阶段 6 先只读核对。
+
+## 阶段 6—8（2026-10-17）
+
+发布过程、验收与回退见 [发布记录](./release/release-20261017.md)。发布中的修正（已进入第二个提交）：
+1. IP：`compose.yaml` 已固定 172.30.73.28（MinIO）、.29（Mailpit），Commerce 改 .30，接收端改 .31，Platform 放行同步改为 .31/32。阶段 2 只核对了 `compose.applications.yaml`。
+2. 健康探针 `LocalHttpHealthProbe` 只接受白名单 URL，补 Commerce readiness URL（合同测试同步）后重建 Commerce 镜像。
+3. 与 Platform 会话 code-mor-87 合并 XXL-Job 与 Platform 重建：该会话采用本需求的根路径 Admin、执行器 9999 与信任库，自行登记 Platform 任务并修改 Admin 默认口令（`.env.test` 的 `MOR_XXL_JOB_ADMIN_PASSWORD`）；本需求登记 Commerce 任务（设置一致：每 30 秒）。
+4. 应 code-mor-87 请求，由本需求让 `compose.sh` 默认加载 scheduler profile，Admin 常驻，并更新 test-environment README。
+5. 验收脚本：`refund.created` 比对在 test 上遇到退款提交任务先推进状态的时序，按 Commerce auto 测试做法还原 3 个字段。
+
+**收尾**：台账 `CURRENT_IMPLEMENTATION.md` 新增本需求条目；`requirements/README.md` 状态更新。后续需求：Customer 4 个操作的公开 Scope 与路由；Gateway `Idempotency-Key`；结账查询；Payment 部署 test 后去掉 PaymentSucceeded 夹具。

@@ -1,0 +1,6 @@
+# 临时覆盖（code-mor-87 Webhook 管理重试验收用，2026-10-17）：验收后由该会话去掉本文件再重建 Platform；不进入已提交的 Compose。
+services:
+  platform-support-service:
+    environment:
+      WEBHOOK_ALLOWED_SCHEMES: "https,http"
+      WEBHOOK_TRUSTED_NETWORKS: "172.30.73.31/32,172.30.73.240/32"

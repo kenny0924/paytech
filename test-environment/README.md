@@ -2,7 +2,7 @@
 
 独立的本机 `mor-test` 环境。沿用 `local-environment` 的 MySQL 8.4.11、Redis 8.2.1、RabbitMQ 4.2.9、Nacos 3.1.2 与同一套基础设施初始化脚本，另外部署 Operations 前端、BFF、API Gateway、Platform Support。可与 `mor-local` 同时运行；不会读取其 `.env.local`、共享数据卷或停止其容器。
 
-本目录由根工作区版本管理，前端和各服务项目继续独立版本管理。已部署 Operations 链路与独立的 Go Vault，其他核心系统不创建空应用容器。可选 scheduler 配置与 local 一致，没有启动 XXL-Job。
+本目录由根工作区版本管理，前端和各服务项目继续独立版本管理。已部署 Operations 链路与独立的 Go Vault，其他核心系统不创建空应用容器。XXL-Job Admin（`compose.scheduler.yaml`，profile `scheduler`）自 2026-10-17 起常驻，由 `compose.sh` 默认加载；Platform 与 Commerce 的补偿扫描执行器向它注册。
 
 > 规则集列表优化的三应用增量发布使用[专用发布包](../requirements/20260911/operations-console-风控规则集列表优化/release.md)。当前为准备工件，执行状态见台账；新增目录的 37 Route/22 Resource 不适用下文旧 Risk rollout/smoke 的 36/21 闭合分类。不要用全量部署或旧初始化替代该发布包。
 
@@ -26,7 +26,8 @@
 | RabbitMQ 管理台 | `http://127.0.0.1:25673` |
 | Nacos Console | `http://127.0.0.1:28088` |
 | Nacos Client HTTP / gRPC | `127.0.0.1:18848` / `127.0.0.1:19848` |
-| XXL-Job（可选，未启动） | `http://127.0.0.1:28090` |
+| XXL-Job Admin（常驻，根路径；Foundation 执行器要求 Admin 地址不带 Context Path；登录口令为 `.env.test` 的 `MOR_XXL_JOB_ADMIN_PASSWORD`） | `http://127.0.0.1:28090/` |
+| Client API（HTTPS，test CA 证书） | `https://localhost:28444/api/v1/` |
 
 基础设施密码位于不提交的 `.env.test`；Nacos 管理账号 `nacos`，应用只使用 Namespace `mor-test` 下授权的 `mor-test-services`。RabbitMQ 使用 `mor_test` / `/mor-test`。所有端口只绑定 `127.0.0.1`，Java 应用和静态前端没有宿主机端口映射。
 

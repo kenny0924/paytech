@@ -38,7 +38,8 @@ services:
     profiles: [scheduler]
     image: xuxueli/xxl-job-admin:3.4.2
     platform: linux/amd64
-    restart: "no"
+    # 2026-10-17 起常驻（compose.sh 默认加载 scheduler profile）。
+    restart: unless-stopped
     stop_grace_period: 30s
     depends_on:
       mysql:

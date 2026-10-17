@@ -117,9 +117,27 @@ class InboxReceiver:
         return items
 
 
+_compare = cwf.compare
+
+
+def compare(label, obj, expected):
+    """refund.created 冻结在创建时（PENDING、version 1）；test 上退款提交任务常在随后的 GET 之前已把退款推进到
+    PROCESSING（Commerce 未接 Payment 退款），此时把这三个字段还原为创建时的值再逐字比对，与 Commerce auto 测试一致。"""
+    if label.startswith("AC-04 refund.created"):
+        current = {field: actual for field, actual, _ in expected}
+        if current.get("refundStatus") == "PROCESSING" and str(current.get("version")) == "2":
+            record("AC-04 refund.created 冻结创建时状态（PENDING、version 1）",
+                   obj.get("refundStatus") == "PENDING" and obj.get("version") == 1,
+                   f"event={obj.get('refundStatus')}/v{obj.get('version')} current=PROCESSING/v2")
+            expected = [(f, a, k) for f, a, k in expected if f not in ("refundStatus", "version", "updatedAt")]
+            expected.append(("updatedAt", obj.get("createdAt"), "instant"))
+    return _compare(label, obj, expected)
+
+
 cwf.commerce = client_api
 cwf.commerce_sql = commerce_sql
 cwf.rabbit_publish = rabbit_publish
+cwf.compare = compare
 
 
 # ---------- 验收步骤 ----------

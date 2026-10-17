@@ -29,7 +29,7 @@
 | 编号 | 改动 | 归属 / 影响面 |
 |---|---|---|
 | G1 | `mor_commerce` 执行 17 表 Schema 与初始化数据（人工 SQL） | test 数据库；需 SQL 授权 |
-| G2 | Compose 增加 `commerce-service`（固定 IP 172.30.73.28、Snowflake worker 未占用值）；`build.sh`、`deploy.sh` 加 Commerce | `test-environment/` 共享文件 |
+| G2 | Compose 增加 `commerce-service`（固定 IP 172.30.73.30、Snowflake worker 未占用值）；`build.sh`、`deploy.sh` 加 Commerce | `test-environment/` 共享文件 |
 | G3 | Nginx 新增 Client API 入口（如 8444 ssl → 宿主机 127.0.0.1:28444），写 `X-Entry-Channel: CLIENT_API`、`X-Real-IP`，无前端 | Nginx 重启影响所有控制台入口（秒级） |
 | G4 | Platform 登记 Target `commerce-client-api` 与路由、`t_api_scope` 补 Scope 目录 | test Platform 配置；Gateway Snapshot 刷新 |
 | G5 | 验收用 HTTPS 接收端容器；test Platform 加 `webhook.trusted-networks=<接收端>/32` 与信任证书 | Platform 重启；Webhook 会话的配置 |
@@ -63,8 +63,8 @@
 ```text
 宿主机 127.0.0.1:28444 ──TLS──> nginx:8444 (X-Entry-Channel: CLIENT_API, X-Real-IP)
    └─> api-gateway:18080  ── PLT-I03 凭证 + Scope ──> lb://commerce-service/commerce/client-gateway-api/v1/...
-commerce-service (172.30.73.28) ── Risk / CCT / Platform Webhook 受理
-platform-support-service ──HTTPS──> webhook-receiver (172.30.73.29，test CA 证书)
+commerce-service (172.30.73.30) ── Risk / CCT / Platform Webhook 受理
+platform-support-service ──HTTPS──> webhook-receiver (172.30.73.31，test CA 证书)
 xxl-job-admin ──> commerce-service:9999、platform-support-service:9999（执行器）
 ```
 
@@ -73,11 +73,11 @@ xxl-job-admin ──> commerce-service:9999、platform-support-service:9999（�
 | 项 | 方案 |
 |---|---|
 | 构建 | 从干净提交 worktree 构建 `paytech-commerce-web` 可执行 JAR → `artifacts/commerce-service.jar`，镜像 `mor-test/commerce-service:client-api-20261017`（通用 `java/Dockerfile`）；`build.sh` 增加同样步骤 |
-| Compose | 照 risk-service：`x-java` + `x-discovery`，`SERVER_ADDRESS=0.0.0.0`，`backend` 固定 IP `172.30.73.28`，健康探针 `/commerce/actuator/health/readiness`（端口 18102） |
+| Compose | 照 risk-service：`x-java` + `x-discovery`，`SERVER_ADDRESS=0.0.0.0`，`backend` 固定 IP `172.30.73.30`，健康探针 `/commerce/actuator/health/readiness`（端口 18102） |
 | 数据库 | `MOR_COMMERCE_DB_URL=jdbc:mysql://mysql:3306/mor_commerce…`，用户 `commerce_app`，密码 `MOR_COMMERCE_DB_PASSWORD`（已在 `.env.test`） |
 | Redis / RabbitMQ | 同 risk-service；`COMMERCE_RABBITMQ_VHOST=/mor-test` |
 | 必填参数 | `COMMERCE_CARD_PAYMENT_METHOD_CODE=CARD`、`COMMERCE_CHECKOUT_PUBLIC_ORIGIN=https://localhost:28443`（test 无结账页，仅占位）、Snowflake region 0 / worker 28、`COMPENSATION_INSTANCE_ID=commerce-test` |
-| 补偿执行器 | `xxl.job.executor.enabled=true`、`app-name=commerce-service`、`ip=172.30.73.28`、`port=9999`、`log-path=/tmp/xxl-job`、`admin.addresses=http://xxl-job-admin:8080/xxl-job-admin`、`access-token=${MOR_XXL_JOB_ACCESS_TOKEN}` |
+| 补偿执行器 | `xxl.job.executor.enabled=true`、`app-name=commerce-service`、`ip=172.30.73.30`、`port=9999`、`log-path=/tmp/xxl-job`、`admin.addresses=http://xxl-job-admin:8080/xxl-job-admin`、`access-token=${MOR_XXL_JOB_ACCESS_TOKEN}` |
 | SQL | `mor_commerce` 为空：执行 `commerce-schema.sql`（17 表）与 `commerce-initial-data.sql`，执行前核对空库，执行后核对表数与 PDManer 一致；回滚为删除这 17 张表（库内无其他数据） |
 | deploy.sh | 增加 Commerce 阶段（在 Platform 之后） |
 
@@ -94,9 +94,9 @@ xxl-job-admin ──> commerce-service:9999、platform-support-service:9999（�
 | 项 | 方案 |
 |---|---|
 | 程序 | `webhook_receiver.py`（标准库 `ThreadingHTTPServer` + TLS），收到的请求按序写入挂载目录（JSON：头部、正文 Base64、时间），始终返回 204；签名校验在验收脚本里做，复用 `developer_flow.signature_ok` |
-| 镜像 | `python:3.13-alpine`（固定 digest）；只读根、非 root、只接入 `backend`，IP `172.30.73.29`，主机名 `webhook-receiver`；不发布宿主机端口 |
+| 镜像 | `python:3.13-alpine`（固定 digest）；只读根、非 root、只接入 `backend`，IP `172.30.73.31`，主机名 `webhook-receiver`；不发布宿主机端口 |
 | 证书 | 用 `private/test-ca.key` 签发 SAN=`webhook-receiver` 的服务端证书，放 `private/webhook-receiver/` |
-| Platform | 挂载合并信任库（Temurin 镜像自带 cacerts + `test-ca.crt`，`keytool` 生成到 `private/platform-truststore.p12`），`JAVA_TOOL_OPTIONS=-Djavax.net.ssl.trustStore=… -Djavax.net.ssl.trustStorePassword=…`；`WEBHOOK_TRUSTED_NETWORKS=172.30.73.29/32` |
+| Platform | 挂载合并信任库（Temurin 镜像自带 cacerts + `test-ca.crt`，`keytool` 生成到 `private/platform-truststore.p12`），`JAVA_TOOL_OPTIONS=-Djavax.net.ssl.trustStore=… -Djavax.net.ssl.trustStorePassword=…`；`WEBHOOK_TRUSTED_NETWORKS=172.30.73.31/32` |
 | Compose | 接收端放 `compose.acceptance.yaml`（profile `acceptance`），与业务服务分开，验收后可停 |
 
 ## 9. XXL-Job（G6）
