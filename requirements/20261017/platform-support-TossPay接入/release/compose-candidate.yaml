@@ -1,0 +1,5 @@
+# Toss Pay 接入阶段 2：从干净提交 fe5a0f3 构建的 Platform 镜像（tag mor-test/platform-support-service:toss-pay-20261017，jar SHA-256 前缀 1ea061f01a521920），使用固定 image ID。
+# 叠加在 compose.yaml + compose.applications.yaml 之后，只替换 Platform；回退用 Webhook 管理发布的 compose-candidate.yaml（efeb1d9e…）。
+services:
+  platform-support-service:
+    image: sha256:629cccf9c1a67bd473f7d88a3bb852b6e0a20d145ee2e2e00c2a672354efe716

@@ -1,0 +1,505 @@
+{
+  "environment": "mor-test",
+  "integration": "TOSS_PAY",
+  "endpoint": "https://pay.toss.im（sk_test_ 测试 key，沙箱标记）",
+  "platformImage": "sha256:629cccf9c1a67bd473f7d88a3bb852b6e0a20d145ee2e2e00c2a672354efe716（提交 fe5a0f3）",
+  "date": "2026-10-17",
+  "note": "apiKey、付款页 URL、payToken 不写入；exchanges.apiKeyMasked 表示轨迹中请求体 apiKey 为 [REDACTED]",
+  "cases": {
+    "SBX_PAY_QUERY_NOT_FOUND": {
+      "runCode": "237086464825966592",
+      "runStatus": "PASSED",
+      "failureSummary": null,
+      "sandboxEndpoints": [
+        true
+      ],
+      "steps": [
+        {
+          "stepKey": "query",
+          "stepStatus": "PASSED",
+          "result": {
+            "kind": "EXECUTED",
+            "outputs": {
+              "failureCode": "COMMON_INVALID_PARAMETER",
+              "paymentStatus": "NOT_FOUND",
+              "failureMessage": "요청한 값이 부족하거나 올바르지 않습니다. orderNo"
+            },
+            "executeStatus": "FAIL"
+          },
+          "assertions": [
+            [
+              "executeStatus",
+              true
+            ],
+            [
+              "outputs.paymentStatus",
+              true
+            ],
+            [
+              "outputs.failureCode",
+              true
+            ]
+          ]
+        }
+      ],
+      "exchanges": [
+        {
+          "step": "query",
+          "node": "getStatus",
+          "executeStatus": "FAIL",
+          "reason": null,
+          "http": 200,
+          "error": null,
+          "channel": {
+            "code": -1,
+            "errorCode": "COMMON_INVALID_PARAMETER",
+            "payStatus": null
+          },
+          "apiKeyMasked": true
+        }
+      ]
+    },
+    "SBX_REFUND_NOT_EXIST": {
+      "runCode": "237086474179264512",
+      "runStatus": "PASSED",
+      "failureSummary": null,
+      "sandboxEndpoints": [
+        true
+      ],
+      "steps": [
+        {
+          "stepKey": "refund",
+          "stepStatus": "PASSED",
+          "result": {
+            "kind": "EXECUTED",
+            "outputs": {
+              "failureCode": "COMMON_INVALID_PARAMETER",
+              "refundStatus": "FAILED",
+              "failureMessage": "요청한 값이 부족하거나 올바르지 않습니다. orderNo"
+            },
+            "executeStatus": "FAIL"
+          },
+          "assertions": [
+            [
+              "executeStatus",
+              true
+            ],
+            [
+              "outputs.refundStatus",
+              true
+            ],
+            [
+              "outputs.failureCode",
+              true
+            ]
+          ]
+        }
+      ],
+      "exchanges": [
+        {
+          "step": "refund",
+          "node": "getStatus",
+          "executeStatus": "FAIL",
+          "reason": null,
+          "http": 200,
+          "error": null,
+          "channel": {
+            "code": -1,
+            "errorCode": "COMMON_INVALID_PARAMETER",
+            "payStatus": null
+          },
+          "apiKeyMasked": true
+        }
+      ]
+    },
+    "SBX_REFUND_QUERY_NOT_FOUND": {
+      "runCode": "237086483150880768",
+      "runStatus": "PASSED",
+      "failureSummary": null,
+      "sandboxEndpoints": [
+        true
+      ],
+      "steps": [
+        {
+          "stepKey": "query",
+          "stepStatus": "PASSED",
+          "result": {
+            "kind": "EXECUTED",
+            "outputs": {
+              "failureCode": "COMMON_INVALID_PARAMETER",
+              "refundStatus": "NOT_FOUND",
+              "failureMessage": "요청한 값이 부족하거나 올바르지 않습니다. orderNo"
+            },
+            "executeStatus": "FAIL"
+          },
+          "assertions": [
+            [
+              "executeStatus",
+              true
+            ],
+            [
+              "outputs.refundStatus",
+              true
+            ],
+            [
+              "outputs.failureCode",
+              true
+            ]
+          ]
+        }
+      ],
+      "exchanges": [
+        {
+          "step": "query",
+          "node": "getRefund",
+          "executeStatus": "FAIL",
+          "reason": null,
+          "http": 200,
+          "error": null,
+          "channel": {
+            "code": -1,
+            "errorCode": "COMMON_INVALID_PARAMETER",
+            "payStatus": null
+          },
+          "apiKeyMasked": true
+        }
+      ]
+    },
+    "SBX_PAY_NOT_KRW": {
+      "runCode": "237086492118302720",
+      "runStatus": "PASSED",
+      "failureSummary": null,
+      "sandboxEndpoints": [
+        true
+      ],
+      "steps": [
+        {
+          "stepKey": "pay",
+          "stepStatus": "PASSED",
+          "result": {
+            "kind": "EXECUTED",
+            "outputs": {},
+            "executeStatus": "ERROR"
+          },
+          "assertions": [
+            [
+              "executeStatus",
+              true
+            ]
+          ]
+        }
+      ],
+      "exchanges": [
+        {
+          "step": "pay",
+          "node": "createPayment",
+          "executeStatus": "ERROR",
+          "reason": "必填取值缺失：request.BODY:amount.args.currency",
+          "http": null,
+          "error": null,
+          "channel": null,
+          "apiKeyMasked": null
+        }
+      ]
+    },
+    "SBX_PAY_PENDING": {
+      "runCode": "237086522115964928",
+      "runStatus": "PASSED",
+      "failureSummary": null,
+      "sandboxEndpoints": [
+        true
+      ],
+      "steps": [
+        {
+          "stepKey": "pay",
+          "stepStatus": "PASSED",
+          "result": {
+            "kind": "EXECUTED",
+            "outputs": {
+              "nextAction": {
+                "type": "REDIRECT",
+                "redirectUrl": "[omitted]"
+              },
+              "paymentStatus": "PENDING",
+              "channelTransactionRef": "[omitted]"
+            },
+            "executeStatus": "SUCCESS"
+          },
+          "assertions": [
+            [
+              "executeStatus",
+              true
+            ],
+            [
+              "outputs.paymentStatus",
+              true
+            ],
+            [
+              "outputs.nextAction.type",
+              true
+            ],
+            [
+              "outputs.nextAction.redirectUrl",
+              true
+            ],
+            [
+              "outputs.channelTransactionRef",
+              true
+            ]
+          ]
+        },
+        {
+          "stepKey": "query",
+          "stepStatus": "PASSED",
+          "result": {
+            "kind": "EXECUTED",
+            "outputs": {
+              "amount": {
+                "value": "1000",
+                "currency": "KRW"
+              },
+              "channelStatus": "PAY_STANDBY",
+              "paymentStatus": "PENDING",
+              "channelTransactionRef": "[omitted]"
+            },
+            "executeStatus": "SUCCESS"
+          },
+          "assertions": [
+            [
+              "executeStatus",
+              true
+            ],
+            [
+              "outputs.paymentStatus",
+              true
+            ],
+            [
+              "outputs.channelStatus",
+              true
+            ],
+            [
+              "outputs.channelTransactionRef",
+              true
+            ],
+            [
+              "outputs.amount.value",
+              true
+            ],
+            [
+              "outputs.amount.currency",
+              true
+            ]
+          ]
+        },
+        {
+          "stepKey": "refund",
+          "stepStatus": "PASSED",
+          "result": {
+            "kind": "EXECUTED",
+            "outputs": {
+              "failureCode": "COMMON_REFUND_ERROR",
+              "refundStatus": "FAILED",
+              "failureMessage": "환불이 불가능 한 상태 입니다."
+            },
+            "executeStatus": "FAIL"
+          },
+          "assertions": [
+            [
+              "executeStatus",
+              true
+            ],
+            [
+              "outputs.refundStatus",
+              true
+            ],
+            [
+              "outputs.failureCode",
+              true
+            ]
+          ]
+        },
+        {
+          "stepKey": "refundQuery",
+          "stepStatus": "PASSED",
+          "result": {
+            "kind": "EXECUTED",
+            "outputs": {
+              "failureCode": "REFUND_NOT_EXIST",
+              "refundStatus": "NOT_FOUND",
+              "failureMessage": "Refund not found"
+            },
+            "executeStatus": "FAIL"
+          },
+          "assertions": [
+            [
+              "executeStatus",
+              true
+            ],
+            [
+              "outputs.refundStatus",
+              true
+            ],
+            [
+              "outputs.failureCode",
+              true
+            ]
+          ]
+        }
+      ],
+      "exchanges": [
+        {
+          "step": "pay",
+          "node": "createPayment",
+          "executeStatus": "SUCCESS",
+          "reason": null,
+          "http": 200,
+          "error": null,
+          "channel": {
+            "code": 0,
+            "errorCode": null,
+            "payStatus": null
+          },
+          "apiKeyMasked": true
+        },
+        {
+          "step": "query",
+          "node": "getStatus",
+          "executeStatus": "SUCCESS",
+          "reason": null,
+          "http": 200,
+          "error": null,
+          "channel": {
+            "code": 0,
+            "errorCode": null,
+            "payStatus": "PAY_STANDBY"
+          },
+          "apiKeyMasked": true
+        },
+        {
+          "step": "refund",
+          "node": "getStatus",
+          "executeStatus": "SUCCESS",
+          "reason": null,
+          "http": 200,
+          "error": null,
+          "channel": {
+            "code": 0,
+            "errorCode": null,
+            "payStatus": "PAY_STANDBY"
+          },
+          "apiKeyMasked": true
+        },
+        {
+          "step": "refund",
+          "node": "createRefund",
+          "executeStatus": "FAIL",
+          "reason": null,
+          "http": 200,
+          "error": null,
+          "channel": {
+            "code": -1,
+            "errorCode": "COMMON_REFUND_ERROR",
+            "payStatus": null
+          },
+          "apiKeyMasked": true
+        },
+        {
+          "step": "refundQuery",
+          "node": "getRefund",
+          "executeStatus": "FAIL",
+          "reason": null,
+          "http": 200,
+          "error": null,
+          "channel": {
+            "code": 0,
+            "errorCode": null,
+            "payStatus": "PAY_STANDBY"
+          },
+          "apiKeyMasked": true
+        }
+      ]
+    }
+  },
+  "regression": {
+    "PAYBY/UAT_BALANCE_AED": {
+      "runCode": "237086755315073024",
+      "runStatus": "PASSED",
+      "failureSummary": null
+    },
+    "PAYBY/UAT_CANCEL_NOT_FOUND": {
+      "runCode": "237086764173443072",
+      "runStatus": "PASSED",
+      "failureSummary": null
+    },
+    "PAYBY/UAT_PAY_QUERY_NOT_FOUND": {
+      "runCode": "237086773195390976",
+      "runStatus": "PASSED",
+      "failureSummary": null
+    },
+    "PAYBY/UAT_REFUND_NOT_EXIST": {
+      "runCode": "237086782175395840",
+      "runStatus": "PASSED",
+      "failureSummary": null
+    },
+    "PAYBY/UAT_REFUND_QUERY_NOT_FOUND": {
+      "runCode": "237086791004405760",
+      "runStatus": "PASSED",
+      "failureSummary": null
+    },
+    "PAYERMAX/UAT_PAY_THEN_QUERY": {
+      "runCode": "237086795488116736",
+      "runStatus": "PASSED",
+      "failureSummary": null
+    },
+    "PAYERMAX/UAT_QUERY_NOT_FOUND": {
+      "runCode": "237086822029672448",
+      "runStatus": "PASSED",
+      "failureSummary": null
+    },
+    "PAYERMAX/UAT_REFUND_NOT_EXIST": {
+      "runCode": "237086843328348160",
+      "runStatus": "PASSED",
+      "failureSummary": null
+    },
+    "PAYERMAX/UAT_REFUND_QUERY_NOT_FOUND": {
+      "runCode": "237086869031043072",
+      "runStatus": "PASSED",
+      "failureSummary": null
+    },
+    "ALIPAY_PLUS/SBX_PAY_QUERY_NOT_FOUND": {
+      "runCode": "237086894737932288",
+      "runStatus": "PASSED",
+      "failureSummary": null
+    },
+    "ALIPAY_PLUS/SBX_REFUND_NOT_EXIST": {
+      "runCode": "237086920239300608",
+      "runStatus": "PASSED",
+      "failureSummary": null
+    },
+    "ALIPAY_PLUS/SBX_REFUND_QUERY_NOT_FOUND": {
+      "runCode": "237086945770029056",
+      "runStatus": "PASSED",
+      "failureSummary": null
+    },
+    "DLOCAL/SBX_PAY_QUERY_NOT_FOUND": {
+      "runCode": "237086971510472704",
+      "runStatus": "PASSED",
+      "failureSummary": null
+    },
+    "DLOCAL/SBX_REFUND_NOT_EXIST": {
+      "runCode": "237086997154447360",
+      "runStatus": "PASSED",
+      "failureSummary": null
+    },
+    "DLOCAL/SBX_REFUND_QUERY_NOT_FOUND": {
+      "runCode": "237087022991360000",
+      "runStatus": "PASSED",
+      "failureSummary": null
+    },
+    "DLOCAL/SBX_PAY_PENDING_CANCEL": {
+      "runCode": "237087044239704064",
+      "runStatus": "PASSED",
+      "failureSummary": null
+    }
+  }
+}

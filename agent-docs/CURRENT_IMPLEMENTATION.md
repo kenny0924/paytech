@@ -109,6 +109,15 @@
 
 - **Implemented / mor-test 已部署（代码尚未提交）：** 按[需求](../requirements/20261015/operations-console-评估查询与解释/requirement.md)与[方案](../requirements/20261015/operations-console-评估查询与解释/design.md)，Operations BFF 接入 Risk `RiskEvaluationQueryApi` 三个 GET（按评估 ID、按支付尝试、评估解释），用规则集版本详情组装条件树；Web 新增“风控管理 ▸ 评估查询”页（结论、路径、规则与条件、变量、输入、影子评估）。权限 `RISK_EVALUATION_READ` 与 3 条路由经 Platform 注册（32 行）。验证：BFF `verify` 1349/1349、Web 1043/1043；本机全链路浏览器 22/22（[报告](../requirements/20261015/operations-console-评估查询与解释/verification/stage5-local-acceptance.md)）；mor-test BFF `376b5b827945`、Web `d37816c5ba8a`，注册与激活（PLATFORM_ADMIN v27），浏览器 17/17、29 页回归通过，合成数据已清理（[记录](../requirements/20261015/operations-console-评估查询与解释/release/test-acceptance.md)）。
 
+<a id="toss-pay-integration-20261017"></a>
+
+## Toss Pay 收款接入（2026-10-17）
+
+- **Designed：** [需求](../requirements/20261017/platform-support-TossPay接入/requirement.md)与[技术方案](../requirements/20261017/platform-support-TossPay接入/technique.md)经用户确认：接入方 `TOSS_PAY`（`pay.toss.im`，只用 `sk_test_` 测试 key）实现 `PAY`（REDIRECT `checkoutPage`，只收 KRW）、`PAY_QUERY`（退款相关状态仍为 `SUCCEEDED`；到期未付款仍为 `PAY_STANDBY`，超时由 Payment 判定）、`REFUND`（先查单取 `payToken`，发 `refundNo`，`code=0` 即成功）、`REFUND_QUERY`（`transactions[]` 按 `refundNo` 匹配）；“单不存在”只按 msg 以 `orderNo` 结尾识别，其余为 ERROR。`PAY_CANCEL`（无接口）、billingKey 自动结算与回调不在范围。
+- **Implemented / Verified：** 引擎新增原子 API `credentialFields`：声明的 BODY 字段只接受渠道账号凭据的受控句柄，只在 JSON 发送字节中展开，轨迹与验证证据为 `[REDACTED]`；凭据字段之外出现句柄、或含凭据的请求体调用 `sealJsonBody` 时节点 ERROR 且不发请求；Operations 原子 API 编辑页保留该属性。Platform 全量 729/729、前端 1061/1061。提交 `fe5a0f3`（未推送）。
+- **Platform mor-test Deployed（2026-10-17）：** 镜像 `toss-pay-20261017`（`629cccf9…`，构建自 `fe5a0f3`）替换 Webhook 管理版 `efeb1d9e…`，healthy；无 SQL 与配置变更。
+- **mor-test 配置 Deployed / Sandbox Verified（2026-10-17）：** 经管理接口写入接入方 `TOSS_PAY`、1 个脚本、4 个原子 API、4 条流程与验证账号 `SBX_MAIN`。5 个不需付款的用例 PASSED，[回执](../requirements/20261017/platform-support-TossPay接入/assets/test-sandbox-receipt.json)；运行详情与 Platform 日志按值核对不含 apiKey。PayBy、PayerMax、Alipay+、dLocal 回归 16/16 PASSED。已付款链路需要 Toss App 韩国账号，用户确认跳过。详见[交付记录](../requirements/20261017/platform-support-TossPay接入/delivery.md)。
+
 <a id="dlocal-integration-20261017"></a>
 
 ## dLocal 收款接入（2026-10-17）
