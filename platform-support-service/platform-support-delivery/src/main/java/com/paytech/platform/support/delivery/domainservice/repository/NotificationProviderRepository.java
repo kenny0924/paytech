@@ -30,10 +30,20 @@ public interface NotificationProviderRepository {
     /** 插入新账号；编码重复由唯一索引拒绝。 */
     void insert(NotificationProvider item);
 
-    /** 按原版本修改区域、发件地址与 Configuration Set；成功后同步原对象。 */
+    /** 按原版本修改区域、发件地址、Configuration Set 与事件队列；成功后同步原对象。 */
     void updateConfiguration(NotificationProvider item, String region, String fromAddress, String configurationSet,
-        Instant now);
+        String eventQueueUrl, Instant now);
 
     /** 按原版本替换密钥 Token；成功后同步原对象。 */
     void replaceCredential(NotificationProvider item, String token, Instant now);
+
+    /** 指定服务商类型下已配置事件队列且已录入密钥的账号，按编码升序。 */
+    List<NotificationProvider> findEventSources(String providerType);
+
+    /**
+     * 记录一轮事件拉取的运行状态
+     * <li>error 为空表示成功：写最近拉取时间并清空错误；否则只写错误码</li>
+     * <li>received 为真时写最近收到事件时间；不推进版本、不改更新时间，账号已不存在时忽略</li>
+     */
+    void recordEventPoll(long providerId, String error, boolean received, Instant now);
 }

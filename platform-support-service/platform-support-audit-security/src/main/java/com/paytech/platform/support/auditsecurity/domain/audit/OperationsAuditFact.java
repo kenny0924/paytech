@@ -157,6 +157,9 @@ public sealed interface OperationsAuditFact permits OperationsAuditFact.Outcome,
         /** 通知发送账号的 SES Configuration Set。 */
         CONFIGURATION_SET,
 
+        /** 通知发送账号接收投递事件的 SQS 队列 URL。 */
+        EVENT_QUEUE_URL,
+
         /** 通知发送账号密钥：只记 SET / REPLACED，不记录 Token 或密钥。 */
         CREDENTIAL,
 

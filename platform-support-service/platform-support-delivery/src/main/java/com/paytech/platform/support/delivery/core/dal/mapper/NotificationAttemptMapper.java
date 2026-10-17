@@ -25,4 +25,12 @@ public interface NotificationAttemptMapper {
 
     /** 与 Delivery 版本更新处于同一事务，成功后同步原尝试。 */
     int resolve(@Param("item") NotificationAttempt item, @Param("status") NotificationAttemptStatus status, @Param("messageId") String messageId, @Param("code") String code, @Param("source") NotificationResolutionSource source, @Param("now") Instant now);
+
+    /** 仅当尝试上的事件结果仍为调用方读到的值时覆盖。 */
+    int recordEventOutcome(@Param("item") NotificationAttempt item, @Param("outcome") NotificationEventOutcome outcome,
+        @Param("code") String code, @Param("occurredTime") Instant occurredTime, @Param("now") Instant now);
+
+    /** 仅当尚无投诉时记录首个投诉。 */
+    int recordComplaint(@Param("item") NotificationAttempt item, @Param("code") String code,
+        @Param("occurredTime") Instant occurredTime, @Param("now") Instant now);
 }

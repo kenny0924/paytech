@@ -25,6 +25,7 @@ import com.paytech.platform.support.test.mocker.external.PaymentCardMocker;
 import com.paytech.platform.support.test.mocker.external.ChannelMocker;
 import com.paytech.platform.support.test.mocker.external.LoginEmailVaultMocker;
 import com.paytech.platform.support.test.mocker.external.SesMocker;
+import com.paytech.platform.support.test.mocker.external.SqsMocker;
 import com.paytech.platform.support.test.mocker.local.ApiCredentialMocker;
 import com.paytech.platform.support.test.mocker.local.OperationsMocker;
 import com.paytech.platform.support.test.mocker.local.PlatformDataCleaner;
@@ -74,6 +75,9 @@ public abstract class MockTestBase extends TestBase {
     protected SesMocker ses;
 
     @Autowired
+    protected SqsMocker sqs;
+
+    @Autowired
     protected MockHttpServer mockHttpServer;
 
     @Autowired
@@ -97,6 +101,7 @@ public abstract class MockTestBase extends TestBase {
         operationsMocker.assertEmpty();
         loginEmailVault.assertEmpty();
         ses.assertEmpty();
+        sqs.assertEmpty();
         operationsMocker.mockCatalog();
     }
 
@@ -111,7 +116,7 @@ public abstract class MockTestBase extends TestBase {
             throw failure;
         }
         mockHttpServer.awaitIdle();
-        assertAll(loginEmailVault::assertNoUnexpectedCalls, ses::assertNoUnexpectedCalls,
+        assertAll(loginEmailVault::assertNoUnexpectedCalls, ses::assertNoUnexpectedCalls, sqs::assertNoUnexpectedCalls,
             channel::assertNoUnexpectedCalls, channelAccountVault::assertNoUnexpectedCalls,
             paymentCard::assertNoUnexpectedCalls,
             mockHttpServer::assertNoUnexpectedRequests);

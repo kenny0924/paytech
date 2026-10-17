@@ -14,18 +14,23 @@
         <result column="started_time" property="startedTime"/>
         <result column="finished_time" property="finishedTime"/>
         <result column="resolved_time" property="resolvedTime"/>
+        <result column="event_outcome" property="eventOutcome"/>
+        <result column="event_outcome_code" property="eventOutcomeCode"/>
+        <result column="event_outcome_time" property="eventOutcomeTime"/>
+        <result column="complaint_code" property="complaintCode"/>
+        <result column="complaint_time" property="complaintTime"/>
         <result column="create_time" property="createTime"/>
         <result column="update_time" property="updateTime"/>
     </resultMap>
-    <select id="find" resultMap="record">SELECT attempt_id, delivery_id, provider_id, provider_request_no, provider_message_id, status, response_code, resolution_source, resolution_code, started_time, finished_time, resolved_time, create_time, update_time FROM t_notification_attempt WHERE attempt_id = #{id}</select>
+    <select id="find" resultMap="record">SELECT attempt_id, delivery_id, provider_id, provider_request_no, provider_message_id, status, response_code, resolution_source, resolution_code, started_time, finished_time, resolved_time, event_outcome, event_outcome_code, event_outcome_time, complaint_code, complaint_time, create_time, update_time FROM t_notification_attempt WHERE attempt_id = #{id}</select>
     <select id="findDeliveries" resultMap="record">SELECT attempt_id, delivery_id, provider_id, provider_request_no,
         provider_message_id, status, response_code, resolution_source, resolution_code, started_time, finished_time,
-        resolved_time, create_time, update_time FROM t_notification_attempt WHERE delivery_id IN
+        resolved_time, event_outcome, event_outcome_code, event_outcome_time, complaint_code, complaint_time, create_time, update_time FROM t_notification_attempt WHERE delivery_id IN
         <foreach collection="deliveryIds" item="id" open="(" separator="," close=")">#{id}</foreach>
         ORDER BY delivery_id, attempt_id
     </select>
     <insert id="insert">INSERT INTO t_notification_attempt (attempt_id, delivery_id, provider_id, provider_request_no, provider_message_id, status, response_code, resolution_source, resolution_code, started_time, finished_time, resolved_time, create_time, update_time) VALUES (#{attemptId}, #{deliveryId}, #{providerId}, #{providerRequestNo}, #{providerMessageId}, #{status}, #{responseCode}, #{resolutionSource}, #{resolutionCode}, #{startedTime}, #{finishedTime}, #{resolvedTime}, #{createTime}, #{updateTime})</insert>
-    <select id="findCurrent" resultMap="record">SELECT attempt_id, delivery_id, provider_id, provider_request_no, provider_message_id, status, response_code, resolution_source, resolution_code, started_time, finished_time, resolved_time, create_time, update_time FROM t_notification_attempt WHERE delivery_id = #{deliveryId} ORDER BY attempt_id DESC LIMIT 1</select>
+    <select id="findCurrent" resultMap="record">SELECT attempt_id, delivery_id, provider_id, provider_request_no, provider_message_id, status, response_code, resolution_source, resolution_code, started_time, finished_time, resolved_time, event_outcome, event_outcome_code, event_outcome_time, complaint_code, complaint_time, create_time, update_time FROM t_notification_attempt WHERE delivery_id = #{deliveryId} ORDER BY attempt_id DESC LIMIT 1</select>
     <update id="resolve">
         UPDATE t_notification_attempt SET status = #{status}, provider_message_id = COALESCE(#{messageId}, provider_message_id),
             resolution_source = #{source}, update_time = #{now}
@@ -35,5 +40,14 @@
         </choose>
         <if test="status.code == 'ACCEPTED' or status.code == 'FAILED'">, resolved_time = COALESCE(resolved_time, #{now})</if>
         WHERE attempt_id = #{item.attemptId} AND status = #{item.status}
+    </update>
+    <update id="recordEventOutcome">
+        UPDATE t_notification_attempt SET event_outcome = #{outcome}, event_outcome_code = #{code},
+            event_outcome_time = #{occurredTime}, update_time = #{now}
+        WHERE attempt_id = #{item.attemptId} AND event_outcome <![CDATA[<=>]]> #{item.eventOutcome}
+    </update>
+    <update id="recordComplaint">
+        UPDATE t_notification_attempt SET complaint_code = #{code}, complaint_time = #{occurredTime}, update_time = #{now}
+        WHERE attempt_id = #{item.attemptId} AND complaint_time IS NULL
     </update>
 </mapper>

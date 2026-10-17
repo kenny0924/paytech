@@ -5,7 +5,7 @@ import { usePaging } from '../hooks/usePaging';
 import { CredentialModal, ProviderFormModal, TestSendModal } from '../notification/ProviderModals';
 import { StatusChangeModal } from '../notification/StatusChangeModal';
 import {
-  credentialProviders, decodeProvider, editProviders, manageProviders, missingConfigurationLabels, notificationAdminPath, pageOf,
+  credentialProviders, decodeProvider, editProviders, eventReceiving, manageProviders, missingConfigurationLabels, notificationAdminPath, pageOf,
   providerTypeLabels, statusLabels,
 } from '../notification/notification';
 import type { ProviderSummary } from '../notification/notification';
@@ -18,6 +18,17 @@ const date = (value: string) => new Date(value).toLocaleString('zh-CN', { hour12
 const providerPage = pageOf(decodeProvider);
 const roleLabels: Record<string, string> = { PRIMARY: '主', FALLBACK: '备' };
 const missingText = (row: ProviderSummary) => row.missingConfiguration.map(f => missingConfigurationLabels[f] ?? f).join('、');
+
+/** 投递事件接收状态：未配置、等待首次拉取、拉取失败（附最近成功时间）、接收正常（附最近拉取与最近事件时间）。 */
+function EventCell({ row }: { row: ProviderSummary }) {
+  const state = eventReceiving(row);
+  if (state.kind === 'none') return <span className="muted">未配置</span>;
+  if (state.kind === 'waiting') return <span className="muted">等待首次拉取</span>;
+  if (state.kind === 'failed') return <div className="notification-refs"><span className="notification-missing">拉取失败：{state.error}</span>
+    <span className="muted">{state.lastPoll ? `最近成功 ${date(state.lastPoll)}` : '从未成功'}</span></div>;
+  return <div className="notification-refs"><span className="notification-ok">接收正常</span><span className="muted">最近拉取 {date(state.lastPoll)}</span>
+    <span className="muted">{state.lastEvent ? `最近事件 ${date(state.lastEvent)}` : '暂无事件'}</span></div>;
+}
 
 /** 发送账号：维护区域、发件地址与密钥（密钥只写不读），测试发送，按配置完整情况启停。 */
 export function NotificationProviders({ resources, onAuthorizationChanged }: Props) {
@@ -33,7 +44,7 @@ export function NotificationProviders({ resources, onAuthorizationChanged }: Pro
     <div className="page-heading"><h1>发送账号</h1>{canEdit && <Button type="primary" onClick={() => setDialog({ kind: 'create' })}>+ 新建账号</Button>}</div>
     <div className="notification-note">区域、发件地址与密钥在此维护；密钥保存在 Vault，录入后无法查看，只能更换。配置不完整的账号不能启用，路由到它的邮件无法发送。</div>
     <section className="table-panel"><div className="table-toolbar"><span>共 {page.data.total} 个账号</span><Button onClick={page.refresh} loading={page.loading}>{page.error ? '重试' : '刷新'}</Button></div>
-      <Table<ProviderSummary> rowKey="providerCode" tableLayout="fixed" dataSource={page.error ? [] : page.data.items} loading={page.loading} scroll={{ x: 1260 }} pagination={page.pagination} columns={[
+      <Table<ProviderSummary> rowKey="providerCode" tableLayout="fixed" dataSource={page.error ? [] : page.data.items} loading={page.loading} scroll={{ x: 1440 }} pagination={page.pagination} columns={[
         { title: '编码', width: 170, render: (_, row) => <span className="mono">{row.providerCode}</span> },
         { title: '类型', width: 110, render: (_, row) => providerTypeLabels[row.providerType] ?? row.providerType },
         { title: '状态', width: 80, render: (_, row) => <Tag color={row.status === 'ACTIVE' ? 'green' : 'default'}>{statusLabels[row.status]}</Tag> },
@@ -44,6 +55,7 @@ export function NotificationProviders({ resources, onAuthorizationChanged }: Pro
           {row.credentialUpdateTime && <span className="muted">更换于 {date(row.credentialUpdateTime)}</span>}
           {row.missingConfiguration.length ? <span className="notification-missing">配置不完整：缺少{missingText(row)}</span> : <span className="notification-ok">配置完整</span>}
           {!row.adapterConfigured && <span className="notification-missing">本环境未启用该服务商</span>}</div> },
+        { title: '投递事件', width: 180, render: (_, row) => <EventCell row={row} /> },
         { title: '被引用', width: 250, render: (_, row) => row.references.length ? <div className="notification-refs">{row.references.map(r =>
           <span key={`${r.templateCode}:${r.role}`} className={r.routeStatus === 'ACTIVE' ? '' : 'muted'}>{r.templateCode}（{roleLabels[r.role]}）</span>)}</div>
           : <span className="muted">未被引用</span> },

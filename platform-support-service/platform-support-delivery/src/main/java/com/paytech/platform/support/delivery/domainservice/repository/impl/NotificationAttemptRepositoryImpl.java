@@ -68,4 +68,28 @@ public class NotificationAttemptRepositoryImpl implements NotificationAttemptRep
         }
         item.setUpdateTime(now);
     }
+
+    /** 按读到的旧结果条件覆盖事件结果；旧结果已变返回并发冲突，成功后同步原尝试。 */
+    @Override
+    public void recordEventOutcome(NotificationAttempt item, NotificationEventOutcome outcome, String code,
+        Instant occurredTime, Instant now) {
+        if (mapper.recordEventOutcome(item, outcome, code, occurredTime, now) != 1) {
+            throw new ConcurrentRequestException("通知尝试已变更");
+        }
+        item.setEventOutcome(outcome);
+        item.setEventOutcomeCode(code);
+        item.setEventOutcomeTime(occurredTime);
+        item.setUpdateTime(now);
+    }
+
+    /** 记录首个投诉；已有投诉返回并发冲突，成功后同步原尝试。 */
+    @Override
+    public void recordComplaint(NotificationAttempt item, String code, Instant occurredTime, Instant now) {
+        if (mapper.recordComplaint(item, code, occurredTime, now) != 1) {
+            throw new ConcurrentRequestException("通知尝试已变更");
+        }
+        item.setComplaintCode(code);
+        item.setComplaintTime(occurredTime);
+        item.setUpdateTime(now);
+    }
 }

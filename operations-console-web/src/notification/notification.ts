@@ -22,6 +22,8 @@ export const missingConfigurationLabels: Record<string, string> = { region: '区
 export const regionPattern = /^[a-z]{2}(-[a-z]+)+-[0-9]{1,2}$/;
 /** Configuration Set 格式，可空。 */
 export const configurationSetPattern = /^[A-Za-z0-9_-]{1,64}$/;
+/** 事件队列 URL 格式，与 Platform 一致：https://sqs.{区域}.amazonaws.com/{12 位账号}/{队列名}。 */
+export const eventQueuePattern = /^https:\/\/sqs\.[a-z]{2}(-[a-z]+)+-[0-9]\.amazonaws\.com\/[0-9]{12}\/[A-Za-z0-9_-]{1,80}$/;
 /** Access Key ID 格式。 */
 export const accessKeyPattern = /^[A-Z0-9]{16,128}$/;
 /** Secret Access Key 格式：可见 ASCII，无空白。 */
@@ -46,7 +48,8 @@ export interface ProviderReference { templateCode: string; role: 'PRIMARY' | 'FA
 export interface ProviderSummary {
   providerCode: string; medium: string; providerType: string; status: ConfigStatus; region: string | null; fromAddress: string | null;
   configurationSet: string | null; credentialConfigured: boolean; credentialUpdateTime: string | null; missingConfiguration: string[];
-  adapterConfigured: boolean; version: number; updateTime: string; references: ProviderReference[];
+  adapterConfigured: boolean; eventQueueUrl: string | null; eventPollTime: string | null; eventPollError: string | null;
+  eventReceiveTime: string | null; version: number; updateTime: string; references: ProviderReference[];
 }
 export interface RequestSummary {
   requestId: string; sourceSystem: string; sourceEventKey: string; templateCode: string | null; tenantId: string | null;
@@ -55,6 +58,8 @@ export interface RequestSummary {
 export interface Attempt {
   attemptId: string; providerCode: string | null; status: string; responseCode: string | null; resolutionSource: string | null;
   resolutionCode: string | null; startedTime: string; finishedTime: string | null; resolvedTime: string | null;
+  eventOutcome: string | null; eventOutcomeCode: string | null; eventOutcomeTime: string | null;
+  complaintCode: string | null; complaintTime: string | null;
 }
 export interface Delivery {
   deliveryId: string; locale: string | null; parameterKeys: string[]; status: string; attemptCount: number;
@@ -74,7 +79,22 @@ export const deliveryStatusColors: Record<string, string> = {
 };
 export const attemptStatusLabels: Record<string, string> = { PROCESSING: '处理中', ACCEPTED: '已受理', FAILED: '失败', UNKNOWN: '结果未知' };
 export const attemptStatusColors: Record<string, string> = { PROCESSING: 'blue', ACCEPTED: 'green', FAILED: 'red', UNKNOWN: 'orange' };
-export const resolutionSourceLabels: Record<string, string> = { SEND_RESPONSE: '发送响应', PROVIDER_QUERY: '供应商查询' };
+export const resolutionSourceLabels: Record<string, string> = { SEND_RESPONSE: '发送响应', PROVIDER_QUERY: '供应商查询', PROVIDER_EVENT: '投递事件' };
+export const eventOutcomeLabels: Record<string, string> = { DELIVERED: '已送达', SOFT_BOUNCE: '软退信', HARD_BOUNCE: '硬退信', REJECTED: '被拒发' };
+export const eventOutcomeColors: Record<string, string> = { DELIVERED: 'green', SOFT_BOUNCE: 'orange', HARD_BOUNCE: 'red', REJECTED: 'red' };
+
+/** 发送账号的投递事件接收状态，供列表显示。 */
+export type EventReceiving =
+  | { kind: 'none' } | { kind: 'waiting' } | { kind: 'failed'; error: string; lastPoll: string | null }
+  | { kind: 'ok'; lastPoll: string; lastEvent: string | null };
+
+/** 由账号的队列配置与拉取运行状态得出接收状态；从未拉取过（含本环境未开启拉取）为 waiting。 */
+export function eventReceiving(p: Pick<ProviderSummary, 'eventQueueUrl' | 'eventPollTime' | 'eventPollError' | 'eventReceiveTime'>): EventReceiving {
+  if (!p.eventQueueUrl) return { kind: 'none' };
+  if (p.eventPollError) return { kind: 'failed', error: p.eventPollError, lastPoll: p.eventPollTime };
+  if (!p.eventPollTime) return { kind: 'waiting' };
+  return { kind: 'ok', lastPoll: p.eventPollTime, lastEvent: p.eventReceiveTime };
+}
 /** 列表中多个收件人状态不同时，按此顺序显示最需要关注的一个。 */
 export const deliveryAttentionOrder = ['FAILED', 'UNKNOWN', 'RETRY_WAIT', 'PROCESSING', 'PENDING', 'SENT', 'DELIVERED'];
 
@@ -173,6 +193,7 @@ export function decodeProvider(value: unknown): ProviderSummary {
   require(!!v && codePattern.test(v.providerCode) && text(v.providerType) && configStatus(v.status) && optionalText(v.region)
     && optionalText(v.fromAddress) && optionalText(v.configurationSet) && typeof v.credentialConfigured === 'boolean'
     && optionalText(v.credentialUpdateTime) && strings(v.missingConfiguration) && typeof v.adapterConfigured === 'boolean'
+    && optionalText(v.eventQueueUrl) && optionalText(v.eventPollTime) && optionalText(v.eventPollError) && optionalText(v.eventReceiveTime)
     && version(v.version) && Array.isArray(v.references)
     && v.references.every(r => text(r.templateCode) && (r.role === 'PRIMARY' || r.role === 'FALLBACK') && configStatus(r.routeStatus)));
   return v;
@@ -200,7 +221,9 @@ export function decodeRequestDetail(value: unknown, requestId: string): RequestD
   require(!!v && v.requestId === requestId && strings(v.parameterKeys) && Array.isArray(v.deliveries)
     && v.deliveries.every(d => text(d.deliveryId) && optionalText(d.locale) && strings(d.parameterKeys) && text(d.status)
       && Number.isInteger(d.attemptCount) && Array.isArray(d.attempts)
-      && d.attempts.every(a => text(a.attemptId) && text(a.status) && text(a.startedTime))));
+      && d.attempts.every(a => text(a.attemptId) && text(a.status) && text(a.startedTime) && optionalText(a.eventOutcome)
+        && optionalText(a.eventOutcomeCode) && optionalText(a.eventOutcomeTime) && optionalText(a.complaintCode)
+        && optionalText(a.complaintTime))));
   return v;
 }
 

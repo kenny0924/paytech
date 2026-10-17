@@ -7,9 +7,9 @@ import { useErrorNotification } from '../feedback/useErrorNotification';
 import { usePaging } from '../hooks/usePaging';
 import {
   attemptStatusColors, attemptStatusLabels, attentionStatus, decodeRequestDetail, decodeRequestSummary, deliveryStatusColors,
-  deliveryStatusLabels, notificationAdminPath, pageOf, recordFilters, resolutionSourceLabels,
+  deliveryStatusLabels, eventOutcomeColors, eventOutcomeLabels, notificationAdminPath, pageOf, recordFilters, resolutionSourceLabels,
 } from '../notification/notification';
-import type { Delivery, RecordFilterValues, RequestDetail, RequestSummary } from '../notification/notification';
+import type { Attempt, Delivery, RecordFilterValues, RequestDetail, RequestSummary } from '../notification/notification';
 import '../configuration/configuration.css';
 import '../notification/notification.css';
 
@@ -80,6 +80,18 @@ function RecordDetail({ requestId, onClose }: { requestId: string; onClose: () =
   </Drawer>;
 }
 
+/** 尝试的投递事件结果与投诉；没有事件时不显示。 */
+function AttemptEvents({ attempt }: { attempt: Attempt }) {
+  if (!attempt.eventOutcome && !attempt.complaintCode) return null;
+  return <div className="notification-attempt-events">
+    {attempt.eventOutcome && <span>投递结果 <Tag color={eventOutcomeColors[attempt.eventOutcome] ?? 'default'}>{eventOutcomeLabels[attempt.eventOutcome] ?? attempt.eventOutcome}</Tag>
+      {attempt.eventOutcomeCode && <span className="mono">{attempt.eventOutcomeCode} </span>}
+      {attempt.eventOutcomeTime && <span className="muted">{date(attempt.eventOutcomeTime)}</span>}</span>}
+    {attempt.complaintCode && <span><Tag color="red">被投诉</Tag><span className="mono">{attempt.complaintCode} </span>
+      {attempt.complaintTime && <span className="muted">{date(attempt.complaintTime)}</span>}</span>}
+  </div>;
+}
+
 /** 一个收件人的投递卡片，尝试按先后列出。 */
 function DeliveryCard({ index, delivery }: { index: number; delivery: Delivery }) {
   const meta = [`语言 ${delivery.locale ?? '继承默认'}`, delivery.parameterKeys.length ? `参数名 ${delivery.parameterKeys.join('、')}` : null,
@@ -91,6 +103,7 @@ function DeliveryCard({ index, delivery }: { index: number; delivery: Delivery }
       <Tag color={attemptStatusColors[attempt.status] ?? 'default'}>{attemptStatusLabels[attempt.status] ?? attempt.status}</Tag>
       <span className="muted">响应码 {attempt.responseCode ?? '—'}{attempt.resolutionSource ? ` · 来源 ${resolutionSourceLabels[attempt.resolutionSource] ?? attempt.resolutionSource}` : ''}
         {attempt.resolutionCode ? ` · 确认 ${attempt.resolutionCode}` : ''}</span>
+      <AttemptEvents attempt={attempt} />
     </div>)}
   </div>;
 }

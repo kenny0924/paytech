@@ -192,15 +192,16 @@ public class NotificationManagementConverter {
         return new NotificationProviderResponseBody(view.getProviderCode(), view.getMedium().getCode(),
             view.getProviderType(), view.getStatus().getCode(), view.getRegion(), view.getFromAddress(),
             view.getConfigurationSet(), view.isCredentialConfigured(), view.getCredentialUpdateTime(),
-            view.getMissingConfiguration(), view.isAdapterConfigured(), view.getVersion(), view.getUpdateTime(),
-            references);
+            view.getMissingConfiguration(), view.isAdapterConfigured(), view.getEventQueueUrl(), view.getEventPollTime(),
+            view.getEventPollError(), view.getEventReceiveTime(), view.getVersion(), view.getUpdateTime(), references);
     }
 
     /** 新建账号；编码按配置编码规则校验，其余字段已由 Body 注解约束。 */
     public SaveNotificationProviderRequest toCreateProviderRequest(String actor, String session,
         CreateNotificationProviderRequestBody body) {
         return new SaveNotificationProviderRequest(actor, session, ConfigurationInputs.code(body.getProviderCode(), 64),
-            body.getProviderType(), body.getRegion(), body.getFromAddress(), body.getConfigurationSet(), 0,
+            body.getProviderType(), body.getRegion(), body.getFromAddress(), body.getConfigurationSet(),
+            body.getEventQueueUrl(), 0,
             ConfigurationInputs.text(body.getReason(), 500, "reason"));
     }
 
@@ -208,7 +209,8 @@ public class NotificationManagementConverter {
     public SaveNotificationProviderRequest toUpdateProviderRequest(String actor, String session, String providerCode,
         UpdateNotificationProviderRequestBody body) {
         return new SaveNotificationProviderRequest(actor, session, ConfigurationInputs.code(providerCode, 64), null,
-            body.getRegion(), body.getFromAddress(), body.getConfigurationSet(), body.getExpectedVersion(),
+            body.getRegion(), body.getFromAddress(), body.getConfigurationSet(), body.getEventQueueUrl(),
+            body.getExpectedVersion(),
             ConfigurationInputs.text(body.getReason(), 500, "reason"));
     }
 
@@ -265,7 +267,8 @@ public class NotificationManagementConverter {
     AttemptItem toAttempt(NotificationAttemptItem item) {
         return new AttemptItem(Long.toString(item.getAttemptId()), item.getProviderCode(), item.getStatus().getCode(),
             item.getResponseCode(), codeOrNull(item.getResolutionSource()), item.getResolutionCode(),
-            item.getStartedTime(), item.getFinishedTime(), item.getResolvedTime());
+            item.getStartedTime(), item.getFinishedTime(), item.getResolvedTime(), codeOrNull(item.getEventOutcome()),
+            item.getEventOutcomeCode(), item.getEventOutcomeTime(), item.getComplaintCode(), item.getComplaintTime());
     }
 
     /** 按稳定编码解析闭合枚举，未知值返回 400。 */

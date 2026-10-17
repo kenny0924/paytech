@@ -71,6 +71,24 @@ public interface NotificationTestMapper {
     @Update("UPDATE t_notification_route SET primary_provider_id=890007,version=version+1 WHERE route_id=890005")
     void useSes();
 
+    /** 模拟管理员为 SES 测试账号配置事件队列。 */
+    @Update("UPDATE t_notification_provider SET event_queue_url=#{url},version=version+1 WHERE provider_id=890007")
+    void sesEventQueue(@Param("url") String url);
+
+    /** 读取 SES 测试账号的事件运行状态与版本。 */
+    @Select("SELECT event_queue_url,event_poll_time,event_poll_error,event_receive_time,version FROM t_notification_provider WHERE provider_id=890007")
+    Map<String,Object> sesEventStatus();
+
+    /** 读取本例尝试的事件结果，按尝试先后。 */
+    @Select("""
+        SELECT a.attempt_id,a.status,a.provider_message_id,a.resolution_source,a.resolution_code,a.event_outcome,
+            a.event_outcome_code,a.event_outcome_time,a.complaint_code,a.complaint_time
+        FROM t_notification_attempt a JOIN t_notification_delivery d ON d.delivery_id=a.delivery_id
+        JOIN t_notification_request r ON r.request_id=d.request_id WHERE r.source_system LIKE 'notification-test%'
+        ORDER BY a.attempt_id
+        """)
+    List<Map<String,Object>> attemptEvents();
+
     /** 模拟 SES 测试账号的密钥被移除（配置不完整）。 */
     @Update("UPDATE t_notification_provider SET credential_vault_token=NULL,version=version+1 WHERE provider_id=890007")
     void clearSesCredential();
@@ -242,12 +260,15 @@ public interface NotificationTestMapper {
         """)
     void recordDeliveries(@Param("created") java.time.Instant created);
 
-    /** 三次尝试：一次受理，两次被拒（第二次走备用账号）。 */
+    /** 三次尝试：一次受理（已送达且被投诉），两次被拒（第二次走备用账号）。 */
     @Insert("""
-        INSERT INTO t_notification_attempt VALUES
-        (890024,890022,890004,'admin-test-req-1','admin-test-msg-1','ACCEPTED','ACCEPTED','SEND_RESPONSE',NULL,#{created},#{created},#{created},#{created},#{created}),
-        (890025,890023,890004,'admin-test-req-2',NULL,'FAILED','THROTTLED','SEND_RESPONSE',NULL,#{created},#{created},#{created},#{created},#{created}),
-        (890026,890023,890006,'admin-test-req-3',NULL,'FAILED','THROTTLED','SEND_RESPONSE',NULL,#{created},#{created},#{created},#{created},#{created})
+        INSERT INTO t_notification_attempt (attempt_id,delivery_id,provider_id,provider_request_no,provider_message_id,
+            status,response_code,resolution_source,resolution_code,started_time,finished_time,resolved_time,
+            event_outcome,event_outcome_code,event_outcome_time,complaint_code,complaint_time,create_time,update_time)
+        VALUES
+        (890024,890022,890004,'admin-test-req-1','admin-test-msg-1','ACCEPTED','ACCEPTED','SEND_RESPONSE',NULL,#{created},#{created},#{created},'DELIVERED',NULL,#{created},'abuse',#{created},#{created},#{created}),
+        (890025,890023,890004,'admin-test-req-2',NULL,'FAILED','THROTTLED','SEND_RESPONSE',NULL,#{created},#{created},#{created},NULL,NULL,NULL,NULL,NULL,#{created},#{created}),
+        (890026,890023,890006,'admin-test-req-3',NULL,'FAILED','THROTTLED','SEND_RESPONSE',NULL,#{created},#{created},#{created},NULL,NULL,NULL,NULL,NULL,#{created},#{created})
         """)
     void recordAttempts(@Param("created") java.time.Instant created);
 
@@ -274,9 +295,13 @@ public interface NotificationTestMapper {
     /** 当前账号状态、版本与配置。 */
     @Select("""
         SELECT status, version, provider_type, region, from_address, configuration_set, credential_vault_token,
-               credential_update_time FROM t_notification_provider WHERE provider_code=#{code}
+               credential_update_time, event_queue_url FROM t_notification_provider WHERE provider_code=#{code}
         """)
     Map<String, Object> providerState(@Param("code") String code);
+
+    /** 模拟拉取任务写入的运行状态：一次失败且收到过事件。 */
+    @Update("UPDATE t_notification_provider SET event_poll_error=#{error},event_receive_time=UTC_TIMESTAMP(6) WHERE provider_code=#{code}")
+    void providerEventFailure(@Param("code") String code, @Param("error") String error);
 
     /** 清理管理接口新建模板的语言内容。 */
     @Delete("DELETE c FROM t_notification_template_content c JOIN t_notification_template t ON t.template_id=c.template_id WHERE t.template_code LIKE 'NOTIFICATION!_ADMIN!_%' ESCAPE '!'")

@@ -73,16 +73,17 @@ public class NotificationProviderRepositoryImpl implements NotificationProviderR
         }
     }
 
-    /** 按原版本修改区域、发件地址与 Configuration Set；成功后同步原对象。 */
+    /** 按原版本修改区域、发件地址、Configuration Set 与事件队列；成功后同步原对象。 */
     @Override
     public void updateConfiguration(NotificationProvider item, String region, String fromAddress,
-        String configurationSet, Instant now) {
-        if (mapper.updateConfiguration(item, region, fromAddress, configurationSet, now) != 1) {
+        String configurationSet, String eventQueueUrl, Instant now) {
+        if (mapper.updateConfiguration(item, region, fromAddress, configurationSet, eventQueueUrl, now) != 1) {
             throw new ConcurrentRequestException("发送账号已被其他操作修改，请刷新后重试");
         }
         item.setRegion(region);
         item.setFromAddress(fromAddress);
         item.setConfigurationSet(configurationSet);
+        item.setEventQueueUrl(eventQueueUrl);
         item.setVersion(item.getVersion() + 1);
         item.setUpdateTime(now);
     }
@@ -97,5 +98,17 @@ public class NotificationProviderRepositoryImpl implements NotificationProviderR
         item.setCredentialUpdateTime(now);
         item.setVersion(item.getVersion() + 1);
         item.setUpdateTime(now);
+    }
+
+    /** 指定服务商类型下已配置事件队列且已录入密钥的账号，按编码升序。 */
+    @Override
+    public List<NotificationProvider> findEventSources(String providerType) {
+        return mapper.findEventSources(providerType);
+    }
+
+    /** 运行状态覆盖写；账号已不存在时影响 0 行，不视为错误。 */
+    @Override
+    public void recordEventPoll(long providerId, String error, boolean received, Instant now) {
+        mapper.recordEventPoll(providerId, error, received, now);
     }
 }

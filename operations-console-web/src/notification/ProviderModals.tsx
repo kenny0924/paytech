@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Alert, Button, Form, Input, Modal, Select } from 'antd';
 import {
-  accessKeyPattern, codePattern, configurationSetPattern, decodeMutation, decodeTestSend, notificationAdminPath, providerTypeLabels,
+  accessKeyPattern, codePattern, configurationSetPattern, decodeMutation, decodeTestSend, eventQueuePattern, notificationAdminPath,
+  providerTypeLabels,
   regionPattern, secretKeyPattern, testSendHint,
 } from './notification';
 import type { Mutation, ProviderSummary, TestSendResult } from './notification';
@@ -10,9 +11,11 @@ import { useNotificationCommand } from './useNotificationCommand';
 const roleLabels: Record<string, string> = { PRIMARY: '主', FALLBACK: '备' };
 const date = (value: string) => new Date(value).toLocaleString('zh-CN', { hour12: false });
 
-interface FormValues { providerCode?: string; providerType?: string; region: string; fromAddress: string; configurationSet?: string; reason: string }
+interface FormValues {
+  providerCode?: string; providerType?: string; region: string; fromAddress: string; configurationSet?: string; eventQueueUrl?: string; reason: string;
+}
 
-/** 新建（provider 为空）或编辑发送账号的区域、发件地址与 Configuration Set；编辑被启用路由引用的账号时提示影响。 */
+/** 新建（provider 为空）或编辑发送账号的区域、发件地址、Configuration Set 与事件队列；编辑被启用路由引用的账号时提示影响。 */
 export function ProviderFormModal({ provider, onClose, onDone, onAuthorizationChanged }: {
   provider: ProviderSummary | null; onClose: () => void; onDone: (result: Mutation) => void; onAuthorizationChanged: () => void;
 }) {
@@ -21,7 +24,8 @@ export function ProviderFormModal({ provider, onClose, onDone, onAuthorizationCh
   async function submit() {
     const values = await form.validateFields();
     const common = { region: values.region.trim(), fromAddress: values.fromAddress.trim(),
-      configurationSet: values.configurationSet?.trim() || null, reason: values.reason.trim() };
+      configurationSet: values.configurationSet?.trim() || null, eventQueueUrl: values.eventQueueUrl?.trim() || null,
+      reason: values.reason.trim() };
     const result = provider
       ? await command.run(`${notificationAdminPath}/providers/${provider.providerCode}`, 'PUT',
         { ...common, expectedVersion: provider.version }, value => decodeMutation(value, provider.providerCode), '保存账号失败')
@@ -39,7 +43,8 @@ export function ProviderFormModal({ provider, onClose, onDone, onAuthorizationCh
     </div>} />}
     <Form form={form} layout="vertical" disabled={command.saving || command.conflict} initialValues={{
       providerCode: provider?.providerCode, providerType: provider?.providerType ?? 'AMAZON_SES', region: provider?.region ?? '',
-      fromAddress: provider?.fromAddress ?? '', configurationSet: provider?.configurationSet ?? '', reason: '' }}>
+      fromAddress: provider?.fromAddress ?? '', configurationSet: provider?.configurationSet ?? '',
+      eventQueueUrl: provider?.eventQueueUrl ?? '', reason: '' }}>
       <Form.Item name="providerCode" label="账号编码" extra={provider ? undefined : '大写字母开头，可含数字与下划线；创建后不可修改'}
         rules={[{ required: true, message: '请填写账号编码' }, { pattern: codePattern, message: '编码只能由大写字母开头，包含大写字母、数字或下划线' }]}>
         <Input maxLength={64} disabled={!!provider} className="mono" /></Form.Item>
@@ -54,6 +59,10 @@ export function ProviderFormModal({ provider, onClose, onDone, onAuthorizationCh
       <Form.Item name="configurationSet" label="Configuration Set（可选）"
         rules={[{ pattern: configurationSetPattern, message: '只能包含字母、数字、下划线或连字符' }]}>
         <Input maxLength={64} placeholder="选填" /></Form.Item>
+      <Form.Item name="eventQueueUrl" label="事件队列 URL（可选）"
+        extra="SES 送达、退信、投诉事件经 SNS 发到该 SQS 队列，平台用本账号密钥定时拉取（需本环境开启事件拉取，IAM 需该队列的 ReceiveMessage、DeleteMessage）；留空则不接收事件"
+        rules={[{ pattern: eventQueuePattern, message: '格式如 https://sqs.ap-southeast-1.amazonaws.com/123456789012/队列名' }]}>
+        <Input maxLength={512} placeholder="选填" className="mono" /></Form.Item>
       <Form.Item name="reason" label="原因" rules={[{ required: true, whitespace: true, message: '请填写原因' }]}>
         <Input.TextArea rows={2} maxLength={500} showCount /></Form.Item>
     </Form>

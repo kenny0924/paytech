@@ -56,6 +56,30 @@ public class NotificationProvider {
     /** 最近一次录入或更换密钥的 UTC 微秒时间，未录入为空。 */
     private Instant credentialUpdateTime;
 
+    /**
+     * 接收投递事件的 SQS 队列 URL
+     * <li>可空；为空时不拉取事件</li>
+     */
+    private String eventQueueUrl;
+
+    /**
+     * 最近一次成功拉取事件队列的时间
+     * <li>运行状态，由拉取任务更新，不推进 version</li>
+     */
+    private Instant eventPollTime;
+
+    /**
+     * 最近一次拉取失败的安全错误码
+     * <li>成功拉取后清空；运行状态，不推进 version</li>
+     */
+    private String eventPollError;
+
+    /**
+     * 最近一次从事件队列收到消息的时间
+     * <li>运行状态，不推进 version</li>
+     */
+    private Instant eventReceiveTime;
+
     /** 当前配置的并发版本。 */
     private int version;
 

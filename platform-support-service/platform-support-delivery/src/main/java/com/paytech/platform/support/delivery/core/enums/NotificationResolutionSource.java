@@ -11,7 +11,10 @@ public enum NotificationResolutionSource implements CodeEnum {
 
     SEND_RESPONSE("SEND_RESPONSE"),
 
-    PROVIDER_QUERY("PROVIDER_QUERY");
+    PROVIDER_QUERY("PROVIDER_QUERY"),
+
+    /** 供应商投递事件证明已受理。 */
+    PROVIDER_EVENT("PROVIDER_EVENT");
 
     private final String code;
 }

@@ -20,4 +20,5 @@
 .notification-delivery { border: 1px solid #e5e7eb; border-radius: 6px; padding: 12px 14px; margin-bottom: 12px; }
 .notification-delivery-head { display: flex; gap: 10px; align-items: center; margin-bottom: 4px; }
 .notification-attempt { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; background: #f8fafc; border-radius: 5px; padding: 6px 10px; margin-top: 8px; font-size: 12px; }
+.notification-attempt-events { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
 .notification-ok { color: #1f8a4c; }

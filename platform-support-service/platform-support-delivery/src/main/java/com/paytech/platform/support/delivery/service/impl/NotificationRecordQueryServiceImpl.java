@@ -103,7 +103,8 @@ public class NotificationRecordQueryServiceImpl implements NotificationRecordQue
         Map<Long, String> providerCodes) {
         var attemptItems = items.stream().map(a -> new NotificationAttemptItem(a.getAttemptId(),
             providerCodes.get(a.getProviderId()), a.getStatus(), a.getResponseCode(), a.getResolutionSource(),
-            a.getResolutionCode(), a.getStartedTime(), a.getFinishedTime(), a.getResolvedTime())).toList();
+            a.getResolutionCode(), a.getStartedTime(), a.getFinishedTime(), a.getResolvedTime(), a.getEventOutcome(),
+            a.getEventOutcomeCode(), a.getEventOutcomeTime(), a.getComplaintCode(), a.getComplaintTime())).toList();
         return new NotificationDeliveryItem(delivery.getDeliveryId(), delivery.getLocale(),
             NotificationInput.parameterKeys(delivery.getParameters()), delivery.getStatus(),
             delivery.getAttemptCount(), delivery.getNextRetryTime(), delivery.getUpdateTime(), attemptItems);

@@ -49,6 +49,7 @@ public class PersistenceConfiguration {
         registry.register(com.paytech.platform.support.delivery.core.enums.NotificationDeliveryStatus.class, CodeEnumTypeHandler.class);
         registry.register(com.paytech.platform.support.delivery.core.enums.NotificationAttemptStatus.class, CodeEnumTypeHandler.class);
         registry.register(com.paytech.platform.support.delivery.core.enums.NotificationResolutionSource.class, CodeEnumTypeHandler.class);
+        registry.register(com.paytech.platform.support.delivery.core.enums.NotificationEventOutcome.class, CodeEnumTypeHandler.class);
         registry.register(com.paytech.platform.support.delivery.core.enums.WebhookEndpointStatus.class, CodeEnumTypeHandler.class);
         registry.register(com.paytech.platform.support.delivery.core.enums.WebhookSecretStatus.class, CodeEnumTypeHandler.class);
         registry.register(com.paytech.platform.support.delivery.core.enums.WebhookDeliveryStatus.class, CodeEnumTypeHandler.class);

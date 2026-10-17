@@ -37,6 +37,6 @@ public class UpdateNotificationProviderProcessor
             request.getProviderCode(), request.getReason(),
             now -> management.updateProvider(new SaveNotificationProviderCommand(request.getProviderCode(), null,
                 request.getRegion(), request.getFromAddress(), request.getConfigurationSet(),
-                request.getExpectedVersion(), now)));
+                request.getEventQueueUrl(), request.getExpectedVersion(), now)));
     }
 }

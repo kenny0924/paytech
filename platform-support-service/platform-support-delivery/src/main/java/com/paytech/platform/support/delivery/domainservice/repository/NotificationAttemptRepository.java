@@ -23,4 +23,11 @@ public interface NotificationAttemptRepository {
 
     /** 与 Delivery 版本更新处于同一事务，成功后同步原尝试。 */
     void resolve(NotificationAttempt item, NotificationAttemptStatus status, String messageId, String code, NotificationResolutionSource source, Instant now);
+
+    /** 按读到的旧结果条件覆盖事件结果；旧结果已变返回并发冲突，成功后同步原尝试。 */
+    void recordEventOutcome(NotificationAttempt item, NotificationEventOutcome outcome, String code,
+        Instant occurredTime, Instant now);
+
+    /** 记录首个投诉；已有投诉返回并发冲突，成功后同步原尝试。 */
+    void recordComplaint(NotificationAttempt item, String code, Instant occurredTime, Instant now);
 }

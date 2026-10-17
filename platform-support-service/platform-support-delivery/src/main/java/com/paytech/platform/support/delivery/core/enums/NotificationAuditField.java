@@ -32,6 +32,8 @@ public enum NotificationAuditField implements CodeEnum {
 
     CONFIGURATION_SET("CONFIGURATION_SET"),
 
+    EVENT_QUEUE_URL("EVENT_QUEUE_URL"),
+
     /** 只记录 SET / REPLACED，不记录 Token 或密钥。 */
     CREDENTIAL("CREDENTIAL"),
 

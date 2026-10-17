@@ -184,6 +184,10 @@
           "credentialUpdateTime": "2026-10-15T08:00:00Z",
           "missingConfiguration": [],
           "adapterConfigured": true,
+          "eventQueueUrl": "https://sqs.ap-southeast-1.amazonaws.com/123456789012/ses-events",
+          "eventPollTime": "2026-10-17T08:00:00Z",
+          "eventPollError": null,
+          "eventReceiveTime": "2026-10-17T07:59:00Z",
           "version": 3,
           "updateTime": "2026-10-15T08:00:00Z",
           "references": [
@@ -282,7 +286,12 @@
               "resolutionCode": null,
               "startedTime": "2026-10-15T08:00:00Z",
               "finishedTime": "2026-10-15T08:00:00Z",
-              "resolvedTime": "2026-10-15T08:00:00Z"
+              "resolvedTime": "2026-10-15T08:00:00Z",
+              "eventOutcome": "HARD_BOUNCE",
+              "eventOutcomeCode": "Permanent/General",
+              "eventOutcomeTime": "2026-10-15T08:00:01Z",
+              "complaintCode": null,
+              "complaintTime": null
             }
           ]
         }
@@ -301,6 +310,7 @@
       "region": "eu-west-1",
       "fromAddress": "no-reply@paytech.example",
       "configurationSet": null,
+      "eventQueueUrl": null,
       "reason": "新增备用区域账号"
     },
     "response": {
@@ -318,6 +328,7 @@
       "region": "eu-west-1",
       "fromAddress": "ops@paytech.example",
       "configurationSet": "prod-events",
+      "eventQueueUrl": "https://sqs.eu-west-1.amazonaws.com/123456789012/ses-events",
       "expectedVersion": 1,
       "reason": "更换发件地址"
     },

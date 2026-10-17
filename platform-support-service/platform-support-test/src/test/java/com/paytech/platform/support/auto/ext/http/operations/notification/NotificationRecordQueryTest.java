@@ -77,6 +77,11 @@ class NotificationRecordQueryTest extends NotificationManagementTestBase {
             () -> assertEquals(List.of("NOTIFICATION_TEST_EMAIL", "NOTIFICATION_TEST_FALLBACK"),
                 providers(second.getAttempts())),
             () -> assertEquals("THROTTLED", second.getAttempts().get(1).getResponseCode()));
+        var delivered = first.getAttempts().getFirst();
+        assertAll(() -> assertEquals("DELIVERED", delivered.getEventOutcome()),
+            () -> assertNull(delivered.getEventOutcomeCode()), () -> assertEquals(created, delivered.getEventOutcomeTime()),
+            () -> assertEquals("abuse", delivered.getComplaintCode()), () -> assertEquals(created, delivered.getComplaintTime()),
+            () -> assertNull(second.getAttempts().getFirst().getEventOutcome()));
         assertNoSensitive(response.text());
         get(BASE + "/requests/123456", reader).assertProblem(404, "NOT_FOUND");
         get(BASE + "/requests/abc", reader).assertProblem(400, "INVALID_REQUEST");

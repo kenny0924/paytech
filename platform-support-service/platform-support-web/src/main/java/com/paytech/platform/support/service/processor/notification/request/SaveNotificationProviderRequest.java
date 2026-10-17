@@ -29,6 +29,9 @@ public class SaveNotificationProviderRequest {
     /** Configuration Set，可空。 */
     private final String configurationSet;
 
+    /** 接收投递事件的 SQS 队列 URL，可空。 */
+    private final String eventQueueUrl;
+
     /** 当前版本，0 为新建。 */
     private final int expectedVersion;
 

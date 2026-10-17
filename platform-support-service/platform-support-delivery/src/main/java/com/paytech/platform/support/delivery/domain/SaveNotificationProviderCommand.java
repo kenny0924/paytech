@@ -5,7 +5,7 @@ import java.time.Instant;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-/** 新建发送账号（expectedVersion=0）或按版本修改账号的区域、发件地址与 Configuration Set。 */
+/** 新建发送账号（expectedVersion=0）或按版本修改账号的区域、发件地址、Configuration Set 与事件队列。 */
 @Getter
 @AllArgsConstructor
 public class SaveNotificationProviderCommand {
@@ -27,6 +27,9 @@ public class SaveNotificationProviderCommand {
 
     /** Configuration Set，可空。 */
     private final String configurationSet;
+
+    /** 接收投递事件的 SQS 队列 URL，可空；空白视为清空。 */
+    private final String eventQueueUrl;
 
     /** 调用方看到的当前版本；0 表示新建。 */
     private final int expectedVersion;

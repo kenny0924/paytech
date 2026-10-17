@@ -37,6 +37,6 @@ public class CreateNotificationProviderProcessor
             request.getProviderCode(), request.getReason(),
             now -> management.createProvider(new SaveNotificationProviderCommand(request.getProviderCode(),
                 request.getProviderType(), request.getRegion(), request.getFromAddress(),
-                request.getConfigurationSet(), 0, now)));
+                request.getConfigurationSet(), request.getEventQueueUrl(), 0, now)));
     }
 }

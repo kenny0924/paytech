@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   accessKeyPattern, attentionStatus, decodeMutation, decodeProvider, decodeRequestDetail, decodeTemplateDetail,
-  decodeTemplateSummary, decodeTestSend, regionPattern, secretKeyPattern, testSendHint,
+  decodeTemplateSummary, decodeTestSend, eventQueuePattern, eventReceiving, regionPattern, secretKeyPattern, testSendHint,
   missingRequired, notificationCommand, placeholders, recordFilters,
 } from './notification.ts';
 
@@ -50,8 +50,20 @@ test('解码器拒绝缺字段、编码不一致或非法状态', () => {
   assert.equal(decodeMutation({ code: 'zh-CN', version: 2 }).version, 2);
   const provider = { providerCode: 'SES', medium: 'EMAIL', providerType: 'AMAZON_SES', status: 'ACTIVE', region: 'me-central-1',
     fromAddress: null, configurationSet: null, credentialConfigured: false, credentialUpdateTime: null,
-    missingConfiguration: ['fromAddress', 'credential'], adapterConfigured: true, version: 1, updateTime: time, references: [] };
+    missingConfiguration: ['fromAddress', 'credential'], adapterConfigured: true, eventQueueUrl: null, eventPollTime: null,
+    eventPollError: null, eventReceiveTime: null, version: 1, updateTime: time, references: [] };
   assert.deepEqual(decodeProvider(provider).missingConfiguration, ['fromAddress', 'credential']);
+  assert.throws(() => decodeProvider({ ...provider, eventQueueUrl: undefined }), '缺少事件字段即合同漂移');
+  assert.throws(() => decodeProvider({ ...provider, eventPollError: 1 }));
+  const queue = 'https://sqs.ap-southeast-1.amazonaws.com/123456789012/ses-events';
+  assert.ok(eventQueuePattern.test(queue));
+  for (const bad of ['http://sqs.ap-southeast-1.amazonaws.com/123456789012/q', 'https://sqs.ap-southeast-1.example.com/123456789012/q',
+    'https://sqs.ap-southeast-1.amazonaws.com/1234/q', `${queue}?x=1`]) assert.ok(!eventQueuePattern.test(bad), bad);
+  assert.deepEqual(eventReceiving(provider), { kind: 'none' });
+  assert.deepEqual(eventReceiving({ ...provider, eventQueueUrl: queue }), { kind: 'waiting' });
+  assert.deepEqual(eventReceiving({ ...provider, eventQueueUrl: queue, eventPollError: 'SQS_ACCESS_DENIED', eventPollTime: time }),
+    { kind: 'failed', error: 'SQS_ACCESS_DENIED', lastPoll: time });
+  assert.deepEqual(eventReceiving({ ...provider, eventQueueUrl: queue, eventPollTime: time }), { kind: 'ok', lastPoll: time, lastEvent: null });
   assert.throws(() => decodeProvider({ ...provider, adapterConfigured: 'yes' }));
   assert.throws(() => decodeProvider({ ...provider, missingConfiguration: null }));
   assert.throws(() => decodeProvider({ ...provider, credentialConfigured: undefined }));
@@ -67,7 +79,12 @@ test('解码器拒绝缺字段、编码不一致或非法状态', () => {
   assert.ok(accessKeyPattern.test('AKIASYNTHETIC0000001') && !accessKeyPattern.test('akia'));
   assert.ok(secretKeyPattern.test('abc/DEF+123') && !secretKeyPattern.test('has space'));
   const record = { requestId: '1', parameterKeys: [], deliveries: [{ deliveryId: '2', locale: null, parameterKeys: [], status: 'SENT', attemptCount: 1,
-    nextRetryTime: null, updateTime: time, attempts: [{ attemptId: '3', status: 'ACCEPTED', startedTime: time }] }] };
+    nextRetryTime: null, updateTime: time, attempts: [{ attemptId: '3', status: 'ACCEPTED', startedTime: time, eventOutcome: 'HARD_BOUNCE',
+      eventOutcomeCode: 'Permanent/General', eventOutcomeTime: time, complaintCode: null, complaintTime: null }] }] };
   assert.equal(decodeRequestDetail(record, '1').deliveries.length, 1);
+  const withAttempt = (patch: Record<string, unknown>) => ({ ...record, deliveries: [{ ...record.deliveries[0],
+    attempts: [{ ...record.deliveries[0].attempts[0], ...patch }] }] });
+  assert.throws(() => decodeRequestDetail(withAttempt({ eventOutcome: undefined }), '1'), '缺少事件字段即合同漂移');
+  assert.throws(() => decodeRequestDetail(withAttempt({ complaintTime: 5 }), '1'));
   assert.throws(() => decodeRequestDetail(record, '9'));
 });

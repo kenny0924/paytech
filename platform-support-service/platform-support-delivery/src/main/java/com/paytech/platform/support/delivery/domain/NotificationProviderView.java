@@ -47,6 +47,18 @@ public class NotificationProviderView {
     /** 本环境是否注册了该类型的唯一发送适配器；未开启发送时为 false。 */
     private final boolean adapterConfigured;
 
+    /** 接收投递事件的 SQS 队列 URL，未配置为空。 */
+    private final String eventQueueUrl;
+
+    /** 最近一次成功拉取事件队列的时间，可空。 */
+    private final Instant eventPollTime;
+
+    /** 最近一次拉取失败的安全错误码；最近一次成功时为空。 */
+    private final String eventPollError;
+
+    /** 最近一次从事件队列收到消息的时间，可空。 */
+    private final Instant eventReceiveTime;
+
     /** 账号版本。 */
     private final int version;
 

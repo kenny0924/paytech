@@ -26,7 +26,7 @@ public class AttemptItem {
     /** 发送响应码，可空。 */
     private String responseCode;
 
-    /** 结果确认来源：SEND_RESPONSE、PROVIDER_QUERY，可空。 */
+    /** 结果确认来源：SEND_RESPONSE、PROVIDER_QUERY、PROVIDER_EVENT，可空。 */
     private String resolutionSource;
 
     /** 确认结果码，可空。 */
@@ -40,4 +40,25 @@ public class AttemptItem {
 
     /** 结果确认时间，可空。 */
     private Instant resolvedTime;
+
+    /**
+     * 供应商投递事件的结果
+     * <li>可空；取值 DELIVERED、SOFT_BOUNCE、HARD_BOUNCE、REJECTED。</li>
+     */
+    private String eventOutcome;
+
+    /**
+     * 投递事件的分类码
+     * <li>退信为 bounceType/bounceSubType，如 Permanent/General；拒发为 Reject/原因；送达为 null。</li>
+     */
+    private String eventOutcomeCode;
+
+    /** 投递事件结果发生时间，UTC；可空。 */
+    private Instant eventOutcomeTime;
+
+    /** 收件人投诉的分类码，如 abuse；未投诉为 null。 */
+    private String complaintCode;
+
+    /** 收件人投诉发生时间，UTC；可空。 */
+    private Instant complaintTime;
 }

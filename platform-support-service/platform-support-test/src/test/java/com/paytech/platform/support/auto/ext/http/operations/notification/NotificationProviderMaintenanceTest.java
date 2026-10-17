@@ -57,6 +57,9 @@ class NotificationProviderMaintenanceTest extends NotificationManagementTestBase
     /** NotificationTestMapper.sesProvider 写入的 SES 测试账号。 */
     static final String SES_PROVIDER = "NOTIFICATION_TEST_SES";
 
+    /** 合成的 SQS 事件队列 URL。 */
+    static final String EVENT_QUEUE = "https://sqs.ap-southeast-1.amazonaws.com/123456789012/notification-events";
+
     /** SES 测试账号的合成密钥 Token。 */
     static final String SES_TOKEN = "vlt_sesCredentialTokenForLoopbackMock000000";
 
@@ -154,6 +157,43 @@ class NotificationProviderMaintenanceTest extends NotificationManagementTestBase
         assertAll(() -> assertEquals("ops@example.com", request.from()),
             () -> assertEquals("prod-events", request.body().path("ConfigurationSetName").asString()),
             () -> assertTrue(request.headers().get("authorization").contains("/eu-west-1/ses/aws4_request")));
+    }
+
+    /** 事件队列 URL：新建时可填，编辑可改可清空并推进版本；格式不符 422；列表返回 URL 与拉取运行状态。 */
+    @Test
+    void test_eventQueueUrl() {
+        var body = create(NEW_PROVIDER, "ops@example.com", null);
+        body.put("eventQueueUrl", EVENT_QUEUE);
+        post(BASE + "/providers", manager, body).assertOk();
+        assertEquals(EVENT_QUEUE, mapper.providerState(NEW_PROVIDER).get("event_queue_url"));
+        auditChecker.assertEvent(requestId, "OPERATIONS_NOTIFICATION_PROVIDER_CREATE", "SUCCEEDED",
+            manager.actor(), "NOTIFICATION_PROVIDER", NEW_PROVIDER);
+
+        String path = BASE + "/providers/" + SES_PROVIDER;
+        var change = update("me-central-1", "noreply@example.com", null, 1);
+        change.put("eventQueueUrl", EVENT_QUEUE);
+        assertEquals(2, put(path, manager, change).assertOk().as(NotificationMutationResponseBody.class).getVersion());
+        assertEquals(EVENT_QUEUE, mapper.providerState(SES_PROVIDER).get("event_queue_url"));
+
+        mapper.providerEventFailure(SES_PROVIDER, "SQS_ACCESS_DENIED");
+        var item = provider(SES_PROVIDER);
+        assertAll(() -> assertEquals(EVENT_QUEUE, item.getEventQueueUrl()),
+            () -> assertEquals("SQS_ACCESS_DENIED", item.getEventPollError()),
+            () -> assertNotNull(item.getEventReceiveTime()), () -> assertNull(item.getEventPollTime()),
+            () -> assertEquals(2, item.getVersion(), "运行状态不推进版本"));
+
+        var cleared = update("me-central-1", "noreply@example.com", null, 2);
+        cleared.put("eventQueueUrl", "");
+        put(path, manager, cleared).assertOk();
+        assertNull(mapper.providerState(SES_PROVIDER).get("event_queue_url"), "空串视为清空");
+
+        for (String invalid : List.of("http://sqs.ap-southeast-1.amazonaws.com/123456789012/q",
+            "https://sqs.ap-southeast-1.example.com/123456789012/q", "https://sqs.Asia.amazonaws.com/123456789012/q",
+            "https://sqs.ap-southeast-1.amazonaws.com/1234/q")) {
+            var bad = update("me-central-1", "noreply@example.com", null, 3);
+            bad.put("eventQueueUrl", invalid);
+            put(path, manager, bad).assertProblem(422, "VALIDATION_ERROR").assertFieldError("eventQueueUrl");
+        }
     }
 
     /** 录入密钥：经 Vault Protect 写入 Token 并记审计；响应、审计、日志都不含密钥与 Token。 */

@@ -293,6 +293,17 @@ notification:
     endpoint: "${test.mock-http.base-url}/ses" # 运行时由 EnableMockHttpServer 注入，对全部账号生效；生产为空走区域终端。
     connect-timeout: 1s
     read-timeout: 1s # 生产默认 5s；测试用最小值缩短超时用例。
+    # 投递事件拉取指向 Mock HTTP 服务的 /sqs 前缀（SqsMockController）；用例经 NotificationEventPollJob.poll 触发，
+    # 间隔取上限避免后台调度在用例期间自行拉取，长轮询为 0 秒。
+    events:
+      enabled: true
+      endpoint: "${test.mock-http.base-url}/sqs"
+      poll-interval: 1h
+      wait-time: 0s
+      max-batches: 2
+      visibility-timeout: 30s
+      connect-timeout: 1s
+      read-timeout: 2s
   # 内部 HTTP 白名单：两个测试调用方共用测试模板（NotificationRequestBuilder 常量），TestMapper 按 notification-test 前缀清理。
   http:
     callers:

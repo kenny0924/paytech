@@ -53,6 +53,15 @@ public class CreateNotificationProviderRequestBody {
     private String configurationSet;
 
     /**
+     * 接收投递事件的 SQS 队列 URL
+     * <li>可空，null 或空串视为未配置（不接收事件）；形如 https://sqs.{区域}.amazonaws.com/{12 位账号}/{队列名}，最多 512 字符。</li>
+     */
+    @Size(max = 512)
+    @Pattern(regexp = "|https://sqs\\.[a-z]{2}(-[a-z]+)+-[0-9]\\.amazonaws\\.com/[0-9]{12}/[A-Za-z0-9_-]{1,80}",
+        message = "事件队列 URL 须为 https://sqs.{区域}.amazonaws.com/{账号}/{队列名}")
+    private String eventQueueUrl;
+
+    /**
      * 操作原因
      * <li>去除首尾空白后 1..500 字符，写入审计。</li>
      */

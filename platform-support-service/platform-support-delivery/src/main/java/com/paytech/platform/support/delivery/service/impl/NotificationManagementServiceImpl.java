@@ -296,7 +296,8 @@ public class NotificationManagementServiceImpl implements NotificationManagement
         var items = rows.stream().map(p -> new NotificationProviderView(p.getProviderCode(), p.getMedium(),
             p.getProviderType(), p.getStatus(), p.getRegion(), p.getFromAddress(), p.getConfigurationSet(),
             p.getCredentialVaultToken() != null, p.getCredentialUpdateTime(), p.missingConfiguration(),
-            registry != null && registry.isRegistered(p.getProviderType()), p.getVersion(), p.getUpdateTime(),
+            registry != null && registry.isRegistered(p.getProviderType()), p.getEventQueueUrl(), p.getEventPollTime(),
+            p.getEventPollError(), p.getEventReceiveTime(), p.getVersion(), p.getUpdateTime(),
             references(p.getProviderId(), routeRows, templateCodes))).toList();
         return new PagingResponseBody<>(items, paging.page(), paging.size(), providers.count());
     }
@@ -352,6 +353,7 @@ public class NotificationManagementServiceImpl implements NotificationManagement
         provider.setRegion(command.getRegion());
         provider.setFromAddress(NotificationInput.canonicalEmail(command.getFromAddress()));
         provider.setConfigurationSet(blankToNull(command.getConfigurationSet()));
+        provider.setEventQueueUrl(blankToNull(command.getEventQueueUrl()));
         provider.setVersion(1);
         provider.setCreateTime(command.getNow());
         provider.setUpdateTime(command.getNow());
@@ -362,10 +364,11 @@ public class NotificationManagementServiceImpl implements NotificationManagement
                 change(NotificationAuditField.REGION, null, provider.getRegion()),
                 change(NotificationAuditField.FROM_ADDRESS, null, provider.getFromAddress()),
                 change(NotificationAuditField.CONFIGURATION_SET, null, provider.getConfigurationSet()),
+                change(NotificationAuditField.EVENT_QUEUE_URL, null, provider.getEventQueueUrl()),
                 change(NotificationAuditField.STATUS, null, provider.getStatus().getCode())));
     }
 
-    /** 按版本修改账号的区域、发件地址与 Configuration Set；审计记录前后值。 */
+    /** 按版本修改账号的区域、发件地址、Configuration Set 与事件队列；审计记录前后值。 */
     @Override
     public NotificationConfigurationChange updateProvider(SaveNotificationProviderCommand command) {
         NotificationProvider provider = requireProvider(command.getProviderCode());
@@ -373,10 +376,13 @@ public class NotificationManagementServiceImpl implements NotificationManagement
         int beforeVersion = provider.getVersion();
         String fromAddress = NotificationInput.canonicalEmail(command.getFromAddress());
         String configurationSet = blankToNull(command.getConfigurationSet());
+        String eventQueueUrl = blankToNull(command.getEventQueueUrl());
         var changes = List.of(change(NotificationAuditField.REGION, provider.getRegion(), command.getRegion()),
             change(NotificationAuditField.FROM_ADDRESS, provider.getFromAddress(), fromAddress),
-            change(NotificationAuditField.CONFIGURATION_SET, provider.getConfigurationSet(), configurationSet));
-        providers.updateConfiguration(provider, command.getRegion(), fromAddress, configurationSet, command.getNow());
+            change(NotificationAuditField.CONFIGURATION_SET, provider.getConfigurationSet(), configurationSet),
+            change(NotificationAuditField.EVENT_QUEUE_URL, provider.getEventQueueUrl(), eventQueueUrl));
+        providers.updateConfiguration(provider, command.getRegion(), fromAddress, configurationSet, eventQueueUrl,
+            command.getNow());
         return new NotificationConfigurationChange(command.getProviderCode(), beforeVersion, provider.getVersion(),
             changes);
     }

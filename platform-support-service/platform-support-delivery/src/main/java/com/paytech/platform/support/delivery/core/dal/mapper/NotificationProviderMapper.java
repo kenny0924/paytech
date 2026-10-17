@@ -36,9 +36,16 @@ public interface NotificationProviderMapper {
     /** 按原版本修改区域、发件地址与 Configuration Set。 */
     int updateConfiguration(@Param("item") NotificationProvider item, @Param("region") String region,
         @Param("fromAddress") String fromAddress, @Param("configurationSet") String configurationSet,
-        @Param("now") Instant now);
+        @Param("eventQueueUrl") String eventQueueUrl, @Param("now") Instant now);
 
     /** 按原版本替换密钥 Token 与更换时间。 */
     int replaceCredential(@Param("item") NotificationProvider item, @Param("token") String token,
         @Param("now") Instant now);
+
+    /** 指定服务商类型下已配置事件队列且已录入密钥的账号，按编码升序。 */
+    List<NotificationProvider> findEventSources(@Param("providerType") String providerType);
+
+    /** 写入拉取运行状态，不推进版本、不改更新时间。 */
+    int recordEventPoll(@Param("providerId") long providerId, @Param("error") String error,
+        @Param("received") boolean received, @Param("now") Instant now);
 }

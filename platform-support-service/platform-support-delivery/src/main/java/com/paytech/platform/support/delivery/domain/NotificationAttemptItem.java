@@ -3,6 +3,7 @@ package com.paytech.platform.support.delivery.domain;
 import java.time.Instant;
 
 import com.paytech.platform.support.delivery.core.enums.NotificationAttemptStatus;
+import com.paytech.platform.support.delivery.core.enums.NotificationEventOutcome;
 import com.paytech.platform.support.delivery.core.enums.NotificationResolutionSource;
 
 import lombok.AllArgsConstructor;
@@ -39,4 +40,19 @@ public class NotificationAttemptItem {
 
     /** 结果确认时间，可空。 */
     private final Instant resolvedTime;
+
+    /** 供应商投递事件的结果，可空。 */
+    private final NotificationEventOutcome eventOutcome;
+
+    /** 投递事件的安全分类码，可空。 */
+    private final String eventOutcomeCode;
+
+    /** 投递事件结果发生时间，可空。 */
+    private final Instant eventOutcomeTime;
+
+    /** 收件人投诉的安全分类码，可空。 */
+    private final String complaintCode;
+
+    /** 收件人投诉发生时间，可空。 */
+    private final Instant complaintTime;
 }

@@ -54,6 +54,21 @@ public class NotificationProviderResponseBody {
      */
     private boolean adapterConfigured;
 
+    /** 接收投递事件的 SQS 队列 URL；未配置为 null。 */
+    private String eventQueueUrl;
+
+    /** 最近一次成功拉取事件队列的时间，UTC；从未成功为 null。 */
+    private Instant eventPollTime;
+
+    /**
+     * 最近一次拉取失败的错误码
+     * <li>最近一次成功时为 null；取值 SQS_ACCESS_DENIED、SQS_QUEUE_NOT_FOUND、SQS_THROTTLED、SQS_UNAVAILABLE、SQS_CLIENT_ERROR、CREDENTIAL_UNAVAILABLE。</li>
+     */
+    private String eventPollError;
+
+    /** 最近一次从事件队列收到消息的时间，UTC；可空。 */
+    private Instant eventReceiveTime;
+
     /** 账号版本。 */
     private int version;
 
