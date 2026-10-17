@@ -1,6 +1,6 @@
 # 任务卡 05 · Payment → payment + channel-connector（卡域暂留 payment 进程与库）
 
-- 分支：`refactor/step-05-payment-channel`；worktree：`/Users/kenny/Desktop/Workspace/Code-MoR-step05`；起点：`refactor-main`（02a 合入后，主会话填写）。
+- 分支：`refactor/step-05-payment-channel`；worktree：`/Users/kenny/Desktop/Workspace/Code-MoR-step05`；起点：`refactor-main@c3f4a92`（00–02d 步与 09、10 已合入）。
 - 对应计划：[11-dev-plan.md](../design/11-dev-plan.md) 第 05 步；决定 D06（渠道连接只拥有支付渠道）、D33、D34；S7（表归属已定）。卡域独立（S3 / 05 文档）在第 12 步，本步**不做**读卡票据与两段创建。
 - 并行：与 04、07 同时进行。
 

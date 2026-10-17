@@ -1,6 +1,6 @@
 # 任务卡 04 · CCT → client-master + commercial（两库两 app，两段式解析）
 
-- 分支：`refactor/step-04-client-master-commercial`；worktree：`/Users/kenny/Desktop/Workspace/Code-MoR-step04`；起点：`refactor-main`（02a 合入后，主会话填写）。
+- 分支：`refactor/step-04-client-master-commercial`；worktree：`/Users/kenny/Desktop/Workspace/Code-MoR-step04`；起点：`refactor-main@c3f4a92`（00–02d 步与 09、10 已合入）。
 - 对应计划：[11-dev-plan.md](../design/11-dev-plan.md) 第 04 步；设计 [06-cct-two-stage-resolution.md](../design/06-cct-two-stage-resolution.md)；决定 D39（法律文档归客户主档）、D42（已存卡开关归客户主档）、S4。
 - 并行：与 05、07 同时进行；第 03 步（收单 / 消费者）在本步之后，它将消费本步的 client-master-api。
 

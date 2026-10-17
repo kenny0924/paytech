@@ -1,6 +1,6 @@
 # 任务卡 07 · Finance → billing / account / ledger / reconciliation / tax（五 core 五 app；account 与 ledger 暂共库）
 
-- 分支：`refactor/step-07-finance-modules`；worktree：`/Users/kenny/Desktop/Workspace/Code-MoR-step07`；起点：`refactor-main`（02a 合入后，主会话填写）。
+- 分支：`refactor/step-07-finance-modules`；worktree：`/Users/kenny/Desktop/Workspace/Code-MoR-step07`；起点：`refactor-main@c3f4a92`（00–02d 步与 09、10 已合入）。
 - 对应计划：[11-dev-plan.md](../design/11-dev-plan.md) 第 07 步；决定 D16、D37（经济事实唯一来源）、D41（`t_currency_spec` 归 Platform，ledger / billing 只读副本）、D42（现金账户三表归对账）。账户与会计的事务逻辑重做在第 11a / 11b 步，本步**只搬不改业务行为**，但要把跨库读改成输入驱动，见第 3 节。
 - 并行：与 04、05 同时进行。
 
