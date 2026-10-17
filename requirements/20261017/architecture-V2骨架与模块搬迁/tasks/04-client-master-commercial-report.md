@@ -169,6 +169,7 @@ java -jar paytech-client-master-app-1.0.0-SNAPSHOT-exec.jar --spring.profiles.ac
    - Risk（旧根，第 06 步处理）未改。经核对，Risk **运行期不校验**该字面量：`risk-web/.../ext/rest/compliance/ClientReviewRegistrationController.java:30` 与 `MaterialRequirementsController.java:20` 都写明"X-Caller-Service 暂不校验"。因此 06 合入前 client-master → Risk 的入驻登记调用**不会**因调用方名被拒绝，这与 team-lead 的预判不同。
    - 第 06 步需要同步的只是文案与测试常量：`risk-api/.../compliance/ClientReviewRegistrationApi.java:24,39` 的 JavaDoc（"固定为 client-contract-service"），以及 `risk-test` 中 `MaterialRequirementsApiAutoTest.java:51`、`ClientReviewSubmissionApiAutoTest`、`ClientReviewClassificationApiAutoTest`、`ClientReviewDecisionApiAutoTest` 的 caller 常量。
    - Vault 客户端 `caller-service` 在测试配置中为 `client-master-service`；生产 Vault 调用方白名单是否需要同步，请确认。
+   - `grep -rn "client-contract-service" paytech/ --exclude-dir=target` 只剩 8 处历史说明：两份 README 第 3 行写"由原 client-contract-service 拆出"，两份 PHYSICAL_DECISIONS 第 3、16 行是来源说明，`tools/instance-manifest/.../services.yaml` 第 9、10 行的 `source:` 字段记录来源工程。三个 README 中描述当前发现名的行已改为 `client-master-service`。Platform 与 BFF 中没有 Checkout 解析目标，不涉及 `commercial-service`。Vault 客户端在生产环境未配置 `caller-service` 时取 `spring.application.name`，因此对 Vault 的调用方名也是 `client-master-service`。
    - 复测结果见第 2.8 节。
 2. **Platform 与 BFF 的 POM 坐标**：这 6 个 POM 已改为 `paytech-client-master-api`，team-lead 已确认这是任务卡第 6 节的明确例外。
 3. **人员共享标记的失败关闭**：commercial 不可用时，人员视为"已被合同引用"，不可编辑。读取草稿时可编辑标记为 false，保存返回 409 `PERSON_NOT_EDITABLE`。审核读取（申请已提交）不调用 commercial。代价是 commercial 故障期间组织申请人员无法修改。

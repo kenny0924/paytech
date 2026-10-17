@@ -58,7 +58,7 @@ OperationsRequestInterceptor（可信身份 → 当前 PLT-I02 完成 → Origin
 
 ### 内部调用 Token（D26）
 
-依赖 `paytech-internal-auth`，`internal-auth.mode` 默认 `OFF`：不创建任何 Token Bean，入站与出站行为与引入前一致。设为 `DUAL` / `REQUIRED` 时，MVC Starter 的 `InternalAuthFilter` 校验入站 Token；`InternalCallTokenOptions` 让本 BFF 全部 `HttpServiceClientFactory.create` 客户端按显式目标服务名（`platform-support-service`、`risk-service`、`client-contract-service`）附加 `Authorization: Bearer`。Token 来源为 Foundation 的 `InternalTokenSupplier`；本步只在测试中用 `internal-auth.static-key.*` 本地密钥对，Platform 签发客户端的接线留待 Platform 签发接口落地。Vault 管理客户端由 `paytech-vault-client` 自行装配，不在本接线范围内。`OperationsInternalTokenAutoTest` 覆盖 `REQUIRED` 下入站拒绝与出站附加。
+依赖 `paytech-internal-auth`，`internal-auth.mode` 默认 `OFF`：不创建任何 Token Bean，入站与出站行为与引入前一致。设为 `DUAL` / `REQUIRED` 时，MVC Starter 的 `InternalAuthFilter` 校验入站 Token；`InternalCallTokenOptions` 让本 BFF 全部 `HttpServiceClientFactory.create` 客户端按显式目标服务名（`platform-support-service`、`risk-service`、`client-master-service`）附加 `Authorization: Bearer`。Token 来源为 Foundation 的 `InternalTokenSupplier`；本步只在测试中用 `internal-auth.static-key.*` 本地密钥对，Platform 签发客户端的接线留待 Platform 签发接口落地。Vault 管理客户端由 `paytech-vault-client` 自行装配，不在本接线范围内。`OperationsInternalTokenAutoTest` 覆盖 `REQUIRED` 下入站拒绝与出站附加。
 
 ### Risk 配置适配边界
 

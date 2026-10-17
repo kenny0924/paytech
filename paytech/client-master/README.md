@@ -2,7 +2,7 @@
 
 客户主档服务：Party、Client、Local Partner、Operating Entity、入驻草稿 / 人员 / 材料 / 提交 / 审核 / 分类、工作区与 Client 生命周期投影，以及两段式 Checkout 解析的主档候选（[design/06](../../requirements/20261017/architecture-V2骨架与模块搬迁/design/06-cct-two-stage-resolution.md)）。由原 `client-contract-service` 拆出（第 04 步）。
 
-- spring.application.name：`client-master-service`（Nacos 发现名；出站调用 Platform / Risk 时 `X-Caller-Service` 仍为 `client-contract-service`，见第 04 步报告待确认项）
+- spring.application.name：`client-master-service`（Nacos 发现名；出站 `X-Caller-Service` 与 Vault 调用方同为该名）
 - 端口：18101，管理端口 19101
 - 数据库：`mor_client_master`（27 张表：21 张主档表、`t_consumer_legal_document`、`t_seller_disclosure`、`t_client_stored_card_setting`、本库 BCR 两表、`t_compensation_event`）
 - 包根：`com.paytech.client.master`；`paytech-client-master-api` 中原 onboarding / workspace 合同保留旧包 `com.paytech.client.contract.api` 一个版本，新合同位于 `com.paytech.client.master.api`
