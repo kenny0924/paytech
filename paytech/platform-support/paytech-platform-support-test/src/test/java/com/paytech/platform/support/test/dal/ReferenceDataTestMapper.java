@@ -18,6 +18,10 @@ public interface ReferenceDataTestMapper {
     @Select("SELECT COUNT(*) FROM t_currency_spec")
     long currencySpecCount();
 
+    /** 指定币种的行数。 */
+    @Select("SELECT COUNT(*) FROM t_currency_spec WHERE currency = #{currency}")
+    long currencySpecCountOf(@Param("currency") String currency);
+
     /** 插入一条币种规则。 */
     @Insert("""
         INSERT INTO t_currency_spec(id, currency, minor_unit, rounding_mode, status, create_time, update_time)

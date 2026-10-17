@@ -5,7 +5,7 @@
   - 4.1 至 4.3、4.5、4.6 通过；`-Pcoverage-gate` 按预期失败（0.76 / 0.56，低于 0.90，既有问题）。
   - 4.4 应用能以 mock Profile 启动，liveness 为 UP；`/actuator/health` 总体为 DOWN，原因只有 `gatewaySnapshot`。搬迁前的 web 制品在同一数据库上结果完全相同，详见第 2 节第 4 项。
   - Node 与 Python 脚本的失败与 HEAD 基线逐项一致，属既有问题。
-  - 补充项 `t_currency_spec`（D41）见第 5 节：代码与模型已完成；本地库尚未建表，新入口测试暂时失败，等待执行 DDL 的授权。
+  - 补充项 `t_currency_spec`（D41）见第 5 节：已完成。本机建表经批准后执行，Platform verify 全绿，798 个测试。
 - **需要先看的两项偏差：**
   - 签发端没有使用"现有 Operations 密钥对"，改用配置注入的 ES256 密钥，见第 4 节。
   - 配置前缀改为 `internal-token.issuer.*`，没有使用任务卡写的 `internal-auth.issuer.*`，见第 6 节第 1 项。
@@ -141,10 +141,10 @@ ALTER TABLE `t_jwt_signing_key`
 
 ## 5. 补充项 · 全平台参考数据 `t_currency_spec`（D41，design/03 §3.1）
 
-提交 `6162c25`。Finance 侧未改（第 07 步让 ledger 与 billing 持只读副本）。
+提交 `6162c25` 及其后的追加提交。Finance 侧未改（第 07 步让 ledger 与 billing 持只读副本）。
 
 1. **Schema 与 DML（未执行）**
-   - `platform-support-schema.sql` 追加 `t_currency_spec`：列、类型、默认值、主键与 `uk_currency` 逐字沿用 `finance-schema.sql`。只有两处注释改为 Platform：表注释，以及 `create_time` 的"在 Finance 数据库中"。原因是 Platform 的 PDManer schema 测试要求 SQL 注释与模型完全一致，而模型的审计字段注释固定为"Platform Support 数据库"。
+   - `platform-support-schema.sql` 追加 `t_currency_spec`：列、类型、默认值、主键与 `uk_currency` 逐字沿用 `finance-schema.sql`。只有两处注释按 team-lead 同意的 Platform 口径修改：表注释，以及 `create_time` 的"在 Finance 数据库中"。原因是 Platform 的 PDManer schema 测试要求 SQL 注释与模型完全一致，而模型的审计字段注释固定为"Platform Support 数据库"。
    - `platform-support-initial-data.sql` 在 `COMMIT` 前追加 USD 行（`1001, USD, 2, HALF_UP, ACTIVE`），与 Finance 相同。
 2. **PDManer**
    - 新增 `manifests/10-reference-data.mjs`（组 `reference_data`，1 表），`manifest.mjs`、`model-policy.mjs` 的 diagram 组与测试 oracle 同步（70 表，9 组）。
@@ -167,9 +167,44 @@ ALTER TABLE `t_jwt_signing_key`
    - app 侧为 `ext/rest/referencedata/CurrencySpec{Controller,Converter}`；`@MapperScan` 与两个 `CodeEnumTypeHandler` 已登记。
    - 只读查询，不开事务。
 5. **测试**
-   - `init/ddl.sql` 追加同一条 CREATE TABLE。USD 种子行以注释形式附在其后：用例由 `CurrencySpecMocker` 自行插入 USD / JPY / XTS 并在结束时只删除本例插入的行，库中若有常驻种子行，会与"表为空"的基线检查和固定数量断言冲突。
-   - `CurrencySpecQueryApiTest` 共 4 例：列表、按币种、未知币种 404、非法代码 400。其他用例从不访问该表，因此表缺失时只有本类失败，并提示准备方法。
-   - **当前状态：本地 `mor_platform` 中没有该表**（`information_schema` 只读核对），而任务卡禁止执行 SQL，所以这 4 例目前失败，错误为"缺少表 t_currency_spec；请在 mor_platform 人工执行 …"。已向 team-lead 申请只在本地 `mor_platform` 执行这一条 CREATE TABLE，等待答复。`ArchitectureAutoTest` 与其余 Platform 用例不受影响，抽测 `WebhookEventApiTest` 8/8。
+   - `init/ddl.sql` 追加同一条 CREATE TABLE 与 USD 种子行，与 `platform-support-initial-data.sql` 相同。
+   - USD（id 1001）作为常驻参考数据，不由测试插入或删除。`CurrencySpecMocker` 在每例开始时确认表存在且只有 USD 一行，再插入 JPY / XTS，结束时只删除本例插入的行。测试 Mapper 不能有同名重载方法，MyBatis 会以重复语句拒绝启动，第一次运行即因此失败，已改名修正。
+   - `CurrencySpecQueryApiTest` 共 4 例：
+     - 列表：按币种升序，INACTIVE 规则同样返回。
+     - 按币种：返回 USD 种子行。
+     - 未知币种：EUR 返回 404 `NOT_FOUND`。
+     - 非法代码：`usd`、`USDX` 返回 400 `INVALID_REQUEST`。
+   - 其他用例从不访问该表。
+6. **验证**（team-lead 批准本机建表后执行）：
+   - `node paytech/tools/arch-rules/scripts/generate-table-ownership.mjs --check` 输出 `table-ownership.yaml is current (265 physical tables + 56 retained).`。该表原本就在 design/03 的 platform-support 白名单中，生成器从 Schema 读取后保留表数不变。
+   - `cd paytech && ./mvnw -B verify -pl platform-support/paytech-platform-support-test -am -Dpaytech.local-environment.dir=/Users/kenny/Desktop/Workspace/Code-MoR/local-environment`：**BUILD SUCCESS**，用时 5:11。platform-support-test **798 个测试 0 失败 / 0 错误**（794 + 新增 4），Foundation 935 与 arch-rules 53 均为 0 失败，总计 1733。
+   - Platform 相关 node 测试 58 项，50 通过，8 失败，失败测试名与 HEAD 基线相同。
+
+### 5.1 本机一次性操作（不在仓库中）
+
+- 时间：2026-10-17T17:02:46Z。
+- 目标：本机 `local-environment` 的 `mor-local-mysql-1`，库 `mor_platform`，账号 `platform_app`，密码取自 `.env.local` 且未打印。
+- 依据：team-lead 批准，只作为本地开发库的测试前置。没有触碰 `mor_finance`，也没有重启任何容器。
+- 方式：`docker exec -i … mysql -uplatform_app mor_platform < <文件>`，执行的完整语句如下（与 `platform-support-schema.sql` 及测试 `init/ddl.sql` 逐字一致，脚本已核对）：
+
+```sql
+SET NAMES utf8mb4;
+CREATE TABLE `t_currency_spec` (
+  `id` BIGINT NOT NULL COMMENT '服务侧生成的币种规则 Snowflake 主键。',
+  `currency` CHAR(3) NOT NULL COMMENT 'ISO 4217 三位币种代码。取值来源：ISO 4217 币种代码；非固定枚举。',
+  `minor_unit` TINYINT NOT NULL COMMENT '记账与结算金额允许保留的小数位数，取值范围为零至八。',
+  `rounding_mode` VARCHAR(64) NOT NULL COMMENT '金额从八位计算精度归整到币种精度时采用的固定方式。允许值：HALF_UP。',
+  `status` VARCHAR(64) NOT NULL COMMENT '币种规则当前是否允许被新业务使用。允许值：DRAFT、ACTIVE、INACTIVE。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Platform Support 数据库中的 UTC 微秒创建时间。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_currency` (`currency`) COMMENT '保证业务唯一性：currency'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='保存全平台使用的 ISO 4217 币种精度、舍入方式和启停状态；Platform 为 Owner，Ledger 与 Billing 持只读副本。';
+INSERT INTO `t_currency_spec` (`id`, `currency`, `minor_unit`, `rounding_mode`, `status`, `create_time`, `update_time`)
+VALUES (1001, 'USD', 2, 'HALF_UP', 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6));
+```
+
+- 核对：执行后 `SELECT` 返回 `1001 USD 2 HALF_UP ACTIVE`；以 utf8mb4 客户端读取 `information_schema`，表注释与 `create_time` 注释均为上面的中文原文。测试结束后表中仍只有该行。
 
 ## 6. 待确认项
 

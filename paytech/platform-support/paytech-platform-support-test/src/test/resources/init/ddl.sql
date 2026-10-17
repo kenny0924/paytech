@@ -1060,6 +1060,6 @@ CREATE TABLE `t_currency_spec` (
   UNIQUE KEY `uk_currency` (`currency`) COMMENT '保证业务唯一性：currency'
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='保存全平台使用的 ISO 4217 币种精度、舍入方式和启停状态；Platform 为 Owner，Ledger 与 Billing 持只读副本。';
 
--- 手工初始化 Mock 库时与 platform-support-initial-data.sql 相同的 USD 币种规则；测试用例自行插入并清理数据，不依赖本行。
--- INSERT INTO `t_currency_spec` (`id`, `currency`, `minor_unit`, `rounding_mode`, `status`, `create_time`, `update_time`)
--- VALUES (1001, 'USD', 2, 'HALF_UP', 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6));
+-- 全平台参考数据种子：与 platform-support-initial-data.sql 相同的 USD 币种规则；作为常驻参考数据保留，用例只增删自己的其他币种。
+INSERT INTO `t_currency_spec` (`id`, `currency`, `minor_unit`, `rounding_mode`, `status`, `create_time`, `update_time`)
+VALUES (1001, 'USD', 2, 'HALF_UP', 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6));

@@ -38,11 +38,10 @@ class CurrencySpecQueryApiTest extends MockTestBase {
     @Autowired
     CurrencySpecMocker currencies;
 
-    /** 表就绪且为空，再插入本类公共的三条规则。 */
+    /** 表就绪且只有常驻 USD 种子，再插入本类公共的另外两条规则。 */
     @BeforeEach
     void setUpCurrencySpecs() {
         currencies.assertReady();
-        currencies.currency("USD", 2, CurrencySpecStatus.ACTIVE, NOW);
         currencies.currency("JPY", 0, CurrencySpecStatus.ACTIVE, NOW);
         currencies.currency("XTS", 2, CurrencySpecStatus.INACTIVE, NOW);
     }
@@ -61,7 +60,7 @@ class CurrencySpecQueryApiTest extends MockTestBase {
             () -> assertEquals(CurrencySpecStatus.INACTIVE.getCode(), body.getItems().get(2).getStatus()));
     }
 
-    /** 按币种代码查询单条规则。 */
+    /** 按币种代码查询单条规则：人工初始化的 USD 种子。 */
     @Test
     void test_getByCurrency() {
         var usd = get(PATH + "/USD").assertOk().as(CurrencySpecResponseBody.class);
