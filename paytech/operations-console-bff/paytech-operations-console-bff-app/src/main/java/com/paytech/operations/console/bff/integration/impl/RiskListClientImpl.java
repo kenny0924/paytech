@@ -14,7 +14,7 @@ import com.paytech.operations.console.bff.service.model.risklist.CreateRiskListR
 import com.paytech.operations.console.bff.service.model.risklist.DeactivateRiskListEntryRequestBody;
 import com.paytech.operations.console.bff.service.model.risklist.RiskListEntryResponseBody;
 import com.paytech.operations.console.bff.service.model.risklist.RiskListResponseBody;
-import com.paytech.risk.api.control.RiskListManagementApi;
+import com.paytech.risk.decision.api.control.RiskListManagementApi;
 
 import lombok.AllArgsConstructor;
 

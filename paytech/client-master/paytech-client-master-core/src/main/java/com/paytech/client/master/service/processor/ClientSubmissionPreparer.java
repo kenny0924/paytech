@@ -34,8 +34,8 @@ import com.paytech.client.master.integration.ClientAgreementPartyClient;
 import com.paytech.client.master.integration.ClientMaterialAuthorityClient;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.httpproblem.api.ProblemFieldError;
-import com.paytech.risk.api.compliance.MaterialRequirementsModels.RequirementBody;
-import com.paytech.risk.api.enums.MaterialQualificationType;
+import com.paytech.compliance.api.MaterialRequirementsModels.RequirementBody;
+import com.paytech.compliance.api.enums.MaterialQualificationType;
 
 import static com.paytech.client.contract.api.enums.ClientDraftErrorCode.*;
 

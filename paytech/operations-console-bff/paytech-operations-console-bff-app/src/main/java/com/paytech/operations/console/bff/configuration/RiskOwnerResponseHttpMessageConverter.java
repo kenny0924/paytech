@@ -49,25 +49,25 @@ public final class RiskOwnerResponseHttpMessageConverter implements SmartHttpMes
 
     private static boolean flowResponse(ResolvableType type) {
         Class<?> resolved = type.resolve();
-        if (resolved != null && resolved.getEnclosingClass() == com.paytech.risk.api.decision.DecisionFlowModels.class) return true;
-        if (resolved == com.paytech.risk.api.decision.response.FlowAuthoringContextResponseBody.class
-            || resolved == com.paytech.risk.api.decision.response.FlowListItemResponseBody.class
-            || resolved == com.paytech.risk.api.decision.response.FlowDetailResponseBody.class
-            || resolved == com.paytech.risk.api.decision.response.FlowHistoryItemResponseBody.class
-            || resolved == com.paytech.risk.api.decision.response.RuleSetReferenceResponseBody.class
-            || resolved == com.paytech.risk.api.decision.response.LegacyPointResponseBody.class) return true;
-        if (resolved == com.paytech.risk.api.decision.response.SaveFlowResponseBody.class
-            || resolved == com.paytech.risk.api.decision.response.DeleteFlowResponseBody.class
-            || resolved == com.paytech.risk.api.decision.response.ValidateFlowResponseBody.class) return true;
+        if (resolved != null && resolved.getEnclosingClass() == com.paytech.risk.decision.api.DecisionFlowModels.class) return true;
+        if (resolved == com.paytech.risk.decision.api.response.FlowAuthoringContextResponseBody.class
+            || resolved == com.paytech.risk.decision.api.response.FlowListItemResponseBody.class
+            || resolved == com.paytech.risk.decision.api.response.FlowDetailResponseBody.class
+            || resolved == com.paytech.risk.decision.api.response.FlowHistoryItemResponseBody.class
+            || resolved == com.paytech.risk.decision.api.response.RuleSetReferenceResponseBody.class
+            || resolved == com.paytech.risk.decision.api.response.LegacyPointResponseBody.class) return true;
+        if (resolved == com.paytech.risk.decision.api.response.SaveFlowResponseBody.class
+            || resolved == com.paytech.risk.decision.api.response.DeleteFlowResponseBody.class
+            || resolved == com.paytech.risk.decision.api.response.ValidateFlowResponseBody.class) return true;
         return java.util.Arrays.stream(type.getGenerics()).anyMatch(RiskOwnerResponseHttpMessageConverter::flowResponse);
     }
 
     private static java.io.InputStream boundedBody(java.io.InputStream body, ResolvableType type) throws IOException {
         boolean variable = RiskVariableResponseShape.supports(type);
-        boolean detail = type.resolve() == com.paytech.risk.api.decision.response.RuleSetDetailResponseBody.class;
+        boolean detail = type.resolve() == com.paytech.risk.decision.api.response.RuleSetDetailResponseBody.class;
         if (!variable && !detail && !flowResponse(type)) return body;
-        boolean variablePage = type.resolve() == com.paytech.risk.api.decision.response.VariableListResponseBody.class
-            || type.resolve() == com.paytech.risk.api.decision.response.VariableMembersResponseBody.class;
+        boolean variablePage = type.resolve() == com.paytech.risk.decision.api.response.VariableListResponseBody.class
+            || type.resolve() == com.paytech.risk.decision.api.response.VariableMembersResponseBody.class;
         int limit = variablePage ? 512 * 1024 : 1024 * 1024;
         byte[] bytes = body.readNBytes(limit + 1);
         if (bytes.length > limit) throw new IllegalArgumentException("Risk 响应超过协议上限");

@@ -4,7 +4,7 @@ import com.paytech.client.master.test.base.ClientMasterMockTestBase;
 import org.springframework.test.web.servlet.client.EntityExchangeResult;
 
 import com.paytech.client.master.test.mocker.onboarding.OnboardingApplicationMocker.ApplicationFixture;
-import com.paytech.risk.api.compliance.MaterialRequirementsModels.RequirementBody;
+import com.paytech.compliance.api.MaterialRequirementsModels.RequirementBody;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;

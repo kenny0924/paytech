@@ -13,8 +13,8 @@ import com.paytech.client.master.core.dal.dataobject.ClientDraftFields;
 import com.paytech.client.master.domain.enums.ClientType;
 import com.paytech.client.master.domain.onboarding.ClientSubmissionSubject;
 import com.paytech.foundation.httpproblem.api.ProblemFieldError;
-import com.paytech.risk.api.compliance.MaterialRequirementsModels.RequirementBody;
-import com.paytech.risk.api.enums.MaterialQualificationType;
+import com.paytech.compliance.api.MaterialRequirementsModels.RequirementBody;
+import com.paytech.compliance.api.enums.MaterialQualificationType;
 
 /**
  * C14 提交检查：只判断“有没有、格式对不对”，材料是否充分由审核人判断。

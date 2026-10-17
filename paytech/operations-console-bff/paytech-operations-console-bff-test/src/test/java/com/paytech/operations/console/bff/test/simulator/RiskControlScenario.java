@@ -7,16 +7,16 @@ import tools.jackson.databind.json.JsonMapper;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.operations.console.bff.test.simulator.RiskDecisionConfigurationSimulator.Request;
 import com.paytech.operations.console.bff.test.simulator.RiskDecisionConfigurationSimulator.SemanticFailure;
-import com.paytech.risk.api.control.request.AddRiskListEntryRequestBody;
-import com.paytech.risk.api.control.request.CreateRiskListRequestBody;
-import com.paytech.risk.api.control.response.RiskListEntryResponseBody;
-import com.paytech.risk.api.control.response.RiskListResponseBody;
-import com.paytech.risk.api.decision.request.CreateExecutionReleaseRequestBody;
-import com.paytech.risk.api.decision.request.StartShadowRunRequestBody;
-import com.paytech.risk.api.decision.response.ExecutionReleaseListItemResponseBody;
-import com.paytech.risk.api.decision.response.ExecutionReleaseResponseBody;
-import com.paytech.risk.api.decision.response.ShadowRun;
-import com.paytech.risk.api.decision.response.StaticCheck;
+import com.paytech.risk.decision.api.control.request.AddRiskListEntryRequestBody;
+import com.paytech.risk.decision.api.control.request.CreateRiskListRequestBody;
+import com.paytech.risk.decision.api.control.response.RiskListEntryResponseBody;
+import com.paytech.risk.decision.api.control.response.RiskListResponseBody;
+import com.paytech.risk.decision.api.request.CreateExecutionReleaseRequestBody;
+import com.paytech.risk.decision.api.request.StartShadowRunRequestBody;
+import com.paytech.risk.decision.api.response.ExecutionReleaseListItemResponseBody;
+import com.paytech.risk.decision.api.response.ExecutionReleaseResponseBody;
+import com.paytech.risk.decision.api.response.ShadowRun;
+import com.paytech.risk.decision.api.response.StaticCheck;
 
 /** 名单与执行发布的外部 Risk 场景：响应由请求和场景内状态派生，名单成员只回传脱敏键。 */
 final class RiskControlScenario {

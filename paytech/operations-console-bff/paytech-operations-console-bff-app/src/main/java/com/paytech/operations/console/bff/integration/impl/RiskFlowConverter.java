@@ -2,14 +2,14 @@ package com.paytech.operations.console.bff.integration.impl;
 
 import java.util.Map;
 
-import com.paytech.risk.api.decision.DecisionFlowModels;
+import com.paytech.risk.decision.api.DecisionFlowModels;
 import com.paytech.operations.console.bff.service.model.RiskFlowModels;
 
 /** Owner 与页面合同的显式字段转换；不执行图规则，不使用反射复制业务对象。 */
 final class RiskFlowConverter {
     private RiskFlowConverter() { }
 
-    static RiskFlowModels.SaveFlowRequestBody local(com.paytech.risk.api.decision.request.SaveFlowRequestBody r) {
+    static RiskFlowModels.SaveFlowRequestBody local(com.paytech.risk.decision.api.request.SaveFlowRequestBody r) {
         if (r == null) return null;
         return new RiskFlowModels.SaveFlowRequestBody(r.getPointCode(), r.getFlowCode(), r.getFlowName(),
             r.getBaseFlowVersionId(), r.getExpectedVersion(), r.getChangeReason(),
@@ -84,7 +84,7 @@ final class RiskFlowConverter {
             r.getConditionBytes(), r.getConditionNodes(), r.getConditionDepth());
     }
 
-    static RiskFlowModels.FlowAuthoringContextResponseBody local(com.paytech.risk.api.decision.response.FlowAuthoringContextResponseBody r) {
+    static RiskFlowModels.FlowAuthoringContextResponseBody local(com.paytech.risk.decision.api.response.FlowAuthoringContextResponseBody r) {
         if (r == null) return null;
         return new RiskFlowModels.FlowAuthoringContextResponseBody(r.getSupportedPoints().stream().map(RiskFlowConverter::local).toList(), r.getPointCode(), r.getInputContractCode(),
             r.getInputContractVersion(), r.getGraphSchemaVersion(), r.getFields().stream().map(RiskFlowConverter::local).toList(),
@@ -100,7 +100,7 @@ final class RiskFlowConverter {
             r.getDefaultValue(), r.getAllowedEndDecisions());
     }
 
-    static RiskFlowModels.FlowListItemResponseBody local(com.paytech.risk.api.decision.response.FlowListItemResponseBody r) {
+    static RiskFlowModels.FlowListItemResponseBody local(com.paytech.risk.decision.api.response.FlowListItemResponseBody r) {
         if (r == null) return null;
         return new RiskFlowModels.FlowListItemResponseBody(r.getFlowId(), r.getPointCode(), r.getFlowCode(),
             r.getFlowName(), r.getCurrentFlowVersionId(), r.getCurrentVersionNo(),
@@ -108,7 +108,7 @@ final class RiskFlowConverter {
             r.getUpdateTime());
     }
 
-    static RiskFlowModels.SaveFlowResponseBody local(com.paytech.risk.api.decision.response.SaveFlowResponseBody r) {
+    static RiskFlowModels.SaveFlowResponseBody local(com.paytech.risk.decision.api.response.SaveFlowResponseBody r) {
         if (r == null) return null;
         return new RiskFlowModels.SaveFlowResponseBody(r.getFlowId(), r.getFlowVersionId(), r.getVersionNo(),
             r.getVersion(), r.getSavedBy(), r.getSavedTime());
@@ -120,7 +120,7 @@ final class RiskFlowConverter {
             r.getField(), r.getMessage());
     }
 
-    static RiskFlowModels.ValidationResponseBody local(com.paytech.risk.api.decision.response.ValidateFlowResponseBody r) {
+    static RiskFlowModels.ValidationResponseBody local(com.paytech.risk.decision.api.response.ValidateFlowResponseBody r) {
         if (r == null) return null;
         return new RiskFlowModels.ValidationResponseBody(r.getValid(), r.getIssues().stream().map(RiskFlowConverter::local).toList(), r.getTruncated());
     }
@@ -132,7 +132,7 @@ final class RiskFlowConverter {
             r.getRuleCount(), r.getRuleSetStatus(), r.getVersionStatus());
     }
 
-    static RiskFlowModels.FlowDetailResponseBody local(com.paytech.risk.api.decision.response.FlowDetailResponseBody r) {
+    static RiskFlowModels.FlowDetailResponseBody local(com.paytech.risk.decision.api.response.FlowDetailResponseBody r) {
         if (r == null) return null;
         return new RiskFlowModels.FlowDetailResponseBody(r.getFlowId(), r.getPointCode(), r.getFlowCode(),
             r.getFlowStatus(), r.getCurrentFlowVersionId(), r.getCurrentVersionNo(),
@@ -144,25 +144,25 @@ final class RiskFlowConverter {
             r.getVariableIssues().stream().map(RiskVariableConverter::local).toList());
     }
 
-    static RiskFlowModels.FlowHistoryItemResponseBody local(com.paytech.risk.api.decision.response.FlowHistoryItemResponseBody r) {
+    static RiskFlowModels.FlowHistoryItemResponseBody local(com.paytech.risk.decision.api.response.FlowHistoryItemResponseBody r) {
         if (r == null) return null;
         return new RiskFlowModels.FlowHistoryItemResponseBody(r.getFlowVersionId(), r.getVersionNo(), r.getFlowName(),
             r.getCreatedBy(), r.getCreateTime(), r.getChangeReason());
     }
 
-    static RiskFlowModels.DeleteFlowResponseBody local(com.paytech.risk.api.decision.response.DeleteFlowResponseBody r) {
+    static RiskFlowModels.DeleteFlowResponseBody local(com.paytech.risk.decision.api.response.DeleteFlowResponseBody r) {
         if (r == null) return null;
         return new RiskFlowModels.DeleteFlowResponseBody(r.getFlowId(), r.getStatus(), r.getVersion(),
             r.getDeletedBy(), r.getDeletedTime());
     }
 
-    static RiskFlowModels.RuleSetReferenceResponseBody local(com.paytech.risk.api.decision.response.RuleSetReferenceResponseBody r) {
+    static RiskFlowModels.RuleSetReferenceResponseBody local(com.paytech.risk.decision.api.response.RuleSetReferenceResponseBody r) {
         if (r == null) return null;
         return new RiskFlowModels.RuleSetReferenceResponseBody(r.getSourceType(), r.getSourceVersionId(), r.getNodeKey(),
             r.getRuleSetStatus(), RiskDecisionConfigurationClientImpl.ruleSetDetail(r.getRuleSet(), r.getRuleSet().getRuleSetVersionId()));
     }
 
-    static RiskFlowModels.LegacyPointResponseBody local(com.paytech.risk.api.decision.response.LegacyPointResponseBody r) {
+    static RiskFlowModels.LegacyPointResponseBody local(com.paytech.risk.decision.api.response.LegacyPointResponseBody r) {
         if (r == null) return null;
         return new RiskFlowModels.LegacyPointResponseBody(r.getSourceType(), r.getPointVersionId(), r.getPointCode(),
             r.getPointName(), r.getVersionNo(), r.getInputContractCode(),
@@ -178,9 +178,9 @@ final class RiskFlowConverter {
         };
     }
 
-    static com.paytech.risk.api.decision.request.SaveFlowRequestBody owner(RiskFlowModels.SaveFlowRequestBody r) {
+    static com.paytech.risk.decision.api.request.SaveFlowRequestBody owner(RiskFlowModels.SaveFlowRequestBody r) {
         if (r == null) return null;
-        var value = new com.paytech.risk.api.decision.request.SaveFlowRequestBody();
+        var value = new com.paytech.risk.decision.api.request.SaveFlowRequestBody();
         value.setPointCode(r.pointCode());
         value.setFlowCode(r.flowCode());
         value.setFlowName(r.flowName());

@@ -35,7 +35,7 @@ public class PaymentOutboundProperties {
 
     /**
      * Risk 服务的应用 context path
-     * <li>请求地址为 http://risk-service{本值}/risk-decisions/v1/evaluations；Risk 无 context path，默认空串。</li>
+     * <li>请求地址为 http://risk-decision-service{本值}/risk-decisions/v1/evaluations；Risk 无 context path，默认空串。</li>
      */
     @NotNull
     @Pattern(regexp = "|/[A-Za-z0-9._~-]+(/[A-Za-z0-9._~-]+)*")

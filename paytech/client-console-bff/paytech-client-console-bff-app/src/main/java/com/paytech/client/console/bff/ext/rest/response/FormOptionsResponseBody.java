@@ -3,7 +3,7 @@ import java.util.List;
 import lombok.Data;
 import lombok.AllArgsConstructor;
 import com.paytech.client.contract.api.onboarding.response.*;
-import com.paytech.risk.api.compliance.MaterialRequirementsModels.RequirementBody;
+import com.paytech.compliance.api.MaterialRequirementsModels.RequirementBody;
 /** 页面选项由两个 Owner 提供，分别保留不可用状态。 */
 @Data
 @AllArgsConstructor

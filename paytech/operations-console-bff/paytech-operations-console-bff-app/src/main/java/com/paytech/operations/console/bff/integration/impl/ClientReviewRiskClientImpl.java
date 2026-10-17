@@ -9,12 +9,12 @@ import com.paytech.operations.console.bff.service.model.ClientReviewModels.Decis
 import com.paytech.operations.console.bff.service.model.ClientReviewModels.EvidenceReviewRequestBody;
 import com.paytech.operations.console.bff.service.model.ClientReviewModels.ReturnRequestBody;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
-import com.paytech.risk.api.compliance.ClientReviewAdminApi;
-import com.paytech.risk.api.compliance.request.ClientReviewDecisionRequestBody;
-import com.paytech.risk.api.compliance.request.ClientReviewEvidenceReviewRequestBody;
-import com.paytech.risk.api.compliance.request.ClientReviewReturnRequestBody;
-import com.paytech.risk.api.compliance.response.ClientReviewCaseResponseBody;
-import com.paytech.risk.api.compliance.response.ClientReviewCommandResponseBody;
+import com.paytech.compliance.api.ClientReviewAdminApi;
+import com.paytech.compliance.api.request.ClientReviewDecisionRequestBody;
+import com.paytech.compliance.api.request.ClientReviewEvidenceReviewRequestBody;
+import com.paytech.compliance.api.request.ClientReviewReturnRequestBody;
+import com.paytech.compliance.api.response.ClientReviewCaseResponseBody;
+import com.paytech.compliance.api.response.ClientReviewCommandResponseBody;
 
 import lombok.AllArgsConstructor;
 

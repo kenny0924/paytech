@@ -18,9 +18,9 @@ import com.paytech.operations.console.bff.service.model.RiskRuleSetModels.RuleSe
 import com.paytech.operations.console.bff.service.model.riskevaluation.RiskEvaluationExplanationResponseBody;
 import com.paytech.operations.console.bff.service.model.riskevaluation.RiskEvaluationResponseBody;
 import com.paytech.operations.console.bff.service.model.riskevaluation.RiskEvaluationRuleItem;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementApi;
-import com.paytech.risk.api.evaluation.RiskEvaluationQueryApi;
-import com.paytech.risk.api.evaluation.response.EvaluationResponseBody;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementApi;
+import com.paytech.risk.decision.api.evaluation.RiskEvaluationQueryApi;
+import com.paytech.risk.decision.api.evaluation.response.EvaluationResponseBody;
 
 import lombok.AllArgsConstructor;
 

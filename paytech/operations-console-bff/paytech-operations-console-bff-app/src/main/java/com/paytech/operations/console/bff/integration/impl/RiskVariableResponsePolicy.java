@@ -2,10 +2,10 @@ package com.paytech.operations.console.bff.integration.impl;
 
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.foundation.common.error.ErrorException;
-import com.paytech.risk.api.decision.response.VariableListResponseBody;
-import com.paytech.risk.api.decision.response.VariableMembersResponseBody;
-import com.paytech.risk.api.decision.response.VariableReferencesResponseBody;
-import com.paytech.risk.api.decision.RiskVariableModels.*;
+import com.paytech.risk.decision.api.response.VariableListResponseBody;
+import com.paytech.risk.decision.api.response.VariableMembersResponseBody;
+import com.paytech.risk.decision.api.response.VariableReferencesResponseBody;
+import com.paytech.risk.decision.api.RiskVariableModels.*;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashSet;

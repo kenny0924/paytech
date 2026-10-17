@@ -18,9 +18,14 @@ from risk_rule_configuration_stage import classify_stage
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKSPACE_ROOT = ROOT.parent
-RISK_SQL_DIR = WORKSPACE_ROOT / "risk-compliance-service/docs/database/sql"
-RISK_SCHEMA = RISK_SQL_DIR / "risk-compliance-schema.sql"
-RISK_INITIAL_DATA = RISK_SQL_DIR / "risk-compliance-initial-data.sql"
+# 第 06 步：Risk 拆为 risk-decision（Schema + 初始化目录）与 compliance（仅 Schema）两库（design/09 §3.6）。
+RISK_SQL_DIR = WORKSPACE_ROOT / "paytech/risk-decision/docs/database/sql"
+RISK_SCHEMA = RISK_SQL_DIR / "risk-decision-schema.sql"
+RISK_INITIAL_DATA = RISK_SQL_DIR / "risk-decision-initial-data.sql"
+RISK_DATABASE = "mor_risk_decision"
+COMPLIANCE_SQL_DIR = WORKSPACE_ROOT / "paytech/compliance/docs/database/sql"
+COMPLIANCE_SCHEMA = COMPLIANCE_SQL_DIR / "compliance-schema.sql"
+COMPLIANCE_DATABASE = "mor_compliance"
 PLATFORM_CATALOG = WORKSPACE_ROOT / 'paytech/platform-support/docs/database/sql/platform-support-initial-data.sql'
 RISK_OPERATIONS_SQL = ROOT / 'sql/2026-09-07-risk-operations-rule-configuration.sql'
 ROLLOUT_LOCK = ROOT / 'private/risk-operations-rollout.lock'
@@ -325,7 +330,7 @@ def _tab_rows(result, expected_columns):
 
 def verify_risk_catalog():
     catalog = load_risk_catalog()
-    objects = _tab_rows(mysql("SELECT table_name, table_type FROM information_schema.tables WHERE table_schema='mor_risk' ORDER BY table_name;", database="mor_risk"), 2)
+    objects = _tab_rows(mysql("SELECT table_name, table_type FROM information_schema.tables WHERE table_schema='" + RISK_DATABASE + "' ORDER BY table_name;", database=RISK_DATABASE), 2)
     if not objects:
         return "EMPTY"
     expected_objects = frozenset((name, "BASE TABLE") for name in catalog["tables"])
@@ -333,26 +338,52 @@ def verify_risk_catalog():
         raise SystemExit("Unexpected/partial Risk schema or non-table object; manual review required, nothing replaced.")
     point_columns = ", ".join("`" + value + "`" for value in catalog["point_columns"])
     action_columns = ", ".join("`" + value + "`" for value in catalog["action_columns"])
-    points = _tab_rows(mysql("SELECT " + point_columns + " FROM t_decision_point ORDER BY decision_point_id;", database="mor_risk"), len(catalog["point_columns"]))
-    actions = _tab_rows(mysql("SELECT " + action_columns + " FROM t_action_version ORDER BY action_version_id;", database="mor_risk"), len(catalog["action_columns"]))
+    points = _tab_rows(mysql("SELECT " + point_columns + " FROM t_decision_point ORDER BY decision_point_id;", database=RISK_DATABASE), len(catalog["point_columns"]))
+    actions = _tab_rows(mysql("SELECT " + action_columns + " FROM t_action_version ORDER BY action_version_id;", database=RISK_DATABASE), len(catalog["action_columns"]))
     parameter_columns = ", ".join("`" + value + "`" for value in catalog["parameter_columns"])
-    parameters = _tab_rows(mysql("SELECT " + parameter_columns + " FROM t_action_parameter_definition ORDER BY parameter_definition_id;", database="mor_risk"), len(catalog["parameter_columns"]))
+    parameters = _tab_rows(mysql("SELECT " + parameter_columns + " FROM t_action_parameter_definition ORDER BY parameter_definition_id;", database=RISK_DATABASE), len(catalog["parameter_columns"]))
     if points != catalog["points"] or actions != catalog["actions"] or parameters != catalog["parameters"]:
         raise SystemExit("Unexpected/partial Risk decision catalog; manual review required, nothing replaced.")
     return "PREPARED"
 
 
+def load_compliance_tables(schema_text=None):
+    statements = _sql_statements(schema_text if schema_text is not None else _stable_sql_text(COMPLIANCE_SCHEMA))
+    tables = set()
+    for statement in statements:
+        match = re.match(r"CREATE\s+TABLE\s+`([^`]+)`\s*\(", statement, re.IGNORECASE | re.DOTALL)
+        if not match or not re.fullmatch(r"t_[a-z0-9_]+", match.group(1)):
+            raise SystemExit("Reviewed Compliance schema contains an unaccounted executable statement; nothing was applied.")
+        tables.add(match.group(1))
+    if len(tables) != len(statements) or len(tables) != 24:
+        raise SystemExit("Reviewed Compliance schema must contain exactly 24 unique tables; nothing was applied.")
+    return frozenset(tables)
+
+
+def verify_compliance_schema():
+    tables = load_compliance_tables()
+    objects = _tab_rows(mysql("SELECT table_name, table_type FROM information_schema.tables WHERE table_schema='" + COMPLIANCE_DATABASE + "' ORDER BY table_name;", database=COMPLIANCE_DATABASE), 2)
+    if not objects:
+        return "EMPTY"
+    if frozenset(objects) != frozenset((name, "BASE TABLE") for name in tables) or len(objects) != len(tables):
+        raise SystemExit("Unexpected/partial Compliance schema or non-table object; manual review required, nothing replaced.")
+    return "PREPARED"
+
+
 def apply_risk_sql():
-    if verify_risk_catalog() != "EMPTY":
-        raise SystemExit("Risk database is not empty; refusing to replay reviewed SQL.")
+    if verify_risk_catalog() != "EMPTY" or verify_compliance_schema() != "EMPTY":
+        raise SystemExit("Risk decision or Compliance database is not empty; refusing to replay reviewed SQL.")
     schema = _stable_sql_text(RISK_SCHEMA)
     initial_data = _stable_sql_text(RISK_INITIAL_DATA)
+    compliance_schema = _stable_sql_text(COMPLIANCE_SCHEMA)
     load_risk_catalog(schema, initial_data)
-    mysql(schema, database="mor_risk")
-    mysql(initial_data, database="mor_risk")
-    if verify_risk_catalog() != "PREPARED":
-        raise SystemExit("Risk SQL did not produce the complete expected catalog; manual review required.")
-    print("Applied reviewed Risk schema and initial decision catalog to the new mor-test database.")
+    load_compliance_tables(compliance_schema)
+    mysql(schema, database=RISK_DATABASE)
+    mysql(initial_data, database=RISK_DATABASE)
+    mysql(compliance_schema, database=COMPLIANCE_DATABASE)
+    if verify_risk_catalog() != "PREPARED" or verify_compliance_schema() != "PREPARED":
+        raise SystemExit("Risk decision / Compliance SQL did not produce the complete expected catalog; manual review required.")
+    print("Applied reviewed Risk decision schema, initial decision catalog and Compliance schema to the new mor-test databases.")
 
 
 def _platform_value(token, variables):
@@ -784,7 +815,7 @@ def main(argv=None):
     actions = parser.add_mutually_exclusive_group(required=True)
     actions.add_argument("--apply-platform-sql", action="store_true", help="explicitly apply reviewed Platform SQL")
     actions.add_argument("--nacos", action="store_true", help="initialize the new test namespace and identities")
-    actions.add_argument("--apply-risk-sql", action="store_true", help="explicitly apply reviewed Risk SQL to empty mor_risk")
+    actions.add_argument("--apply-risk-sql", action="store_true", help="explicitly apply reviewed Risk decision SQL to empty mor_risk_decision and Compliance schema to empty mor_compliance")
     actions.add_argument("--verify-risk-catalog", action="store_true", help="read-only check for the Risk catalog")
     actions.add_argument('--verify-risk-operations-stage', action='store_true', help='read-only check for the persisted Operations stage')
     actions.add_argument('--apply-risk-operations-sql', action='store_true', help='explicitly apply disabled Operations Risk catalog')

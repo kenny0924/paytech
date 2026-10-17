@@ -1,7 +1,7 @@
 package com.paytech.operations.console.bff.test.simulator;
 
-import com.paytech.risk.api.decision.request.*;
-import com.paytech.risk.api.decision.response.*;
+import com.paytech.risk.decision.api.request.*;
+import com.paytech.risk.decision.api.response.*;
 
 import java.util.*;
 import tools.jackson.databind.json.JsonMapper;

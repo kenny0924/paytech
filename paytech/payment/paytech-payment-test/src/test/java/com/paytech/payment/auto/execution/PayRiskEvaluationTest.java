@@ -34,9 +34,9 @@ import com.paytech.payment.test.base.AbstractPayCardTest;
 import com.paytech.payment.test.mocker.ChannelConnectorMocker.Candidate;
 import com.paytech.payment.test.mocker.RiskMocker;
 import com.paytech.payment.test.mocker.RiskMocker.Reply;
-import com.paytech.risk.api.enums.RiskDecisionEvaluationErrorCode;
-import com.paytech.risk.api.evaluation.request.PaymentAttemptRiskInput;
-import com.paytech.risk.api.evaluation.response.EvaluateDecisionResponseBody;
+import com.paytech.risk.decision.api.enums.RiskDecisionEvaluationErrorCode;
+import com.paytech.risk.decision.api.evaluation.request.PaymentAttemptRiskInput;
+import com.paytech.risk.decision.api.evaluation.response.EvaluateDecisionResponseBody;
 
 /**
  * 支付风控（需求 20261015 payment-接入Risk统一评估）：从 pay 的真实 HTTP 入口经 PAY_RISK 动作，以真实 RiskDecisionApi 客户端调用

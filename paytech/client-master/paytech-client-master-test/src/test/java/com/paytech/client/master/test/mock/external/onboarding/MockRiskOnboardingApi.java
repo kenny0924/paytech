@@ -5,8 +5,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.paytech.client.master.test.mocker.onboarding.OnboardingOwnerMocker;
 import com.paytech.foundation.testsupport.api.MockHttpFault;
-import com.paytech.risk.api.compliance.MaterialRequirementsApi;
-import com.paytech.risk.api.compliance.MaterialRequirementsModels.RequirementsResponseBody;
+import com.paytech.compliance.api.MaterialRequirementsApi;
+import com.paytech.compliance.api.MaterialRequirementsModels.RequirementsResponseBody;
 
 /** Risk 通用材料要求的测试 HTTP 实现。 */
 @RestController

@@ -12,7 +12,7 @@ import com.paytech.operations.console.bff.service.model.riskrelease.CreateExecut
 import com.paytech.operations.console.bff.service.model.riskrelease.ExecutionReleaseItemResponseBody;
 import com.paytech.operations.console.bff.service.model.riskrelease.ExecutionReleaseResponseBody;
 import com.paytech.operations.console.bff.service.model.riskrelease.StartShadowRunRequestBody;
-import com.paytech.risk.api.decision.ExecutionReleaseManagementApi;
+import com.paytech.risk.decision.api.ExecutionReleaseManagementApi;
 
 import lombok.AllArgsConstructor;
 
@@ -38,7 +38,7 @@ public class RiskExecutionReleaseClientImpl implements RiskExecutionReleaseClien
     /** 创建发布；回执的决策点与决策流版本必须与请求一致。 */
     @Override
     public ExecutionReleaseResponseBody createExecution(OperatorContext context, CreateExecutionReleaseRequestBody body) {
-        com.paytech.risk.api.decision.response.ExecutionReleaseResponseBody response;
+        com.paytech.risk.decision.api.response.ExecutionReleaseResponseBody response;
         try {
             response = api.createExecution(context.accountId(), context.sessionId(), RiskControlConverter.owner(body));
         } catch (HttpRequestValidationException failure) {
@@ -64,7 +64,7 @@ public class RiskExecutionReleaseClientImpl implements RiskExecutionReleaseClien
     /** 影子运行。 */
     @Override
     public ExecutionReleaseResponseBody startShadowRun(OperatorContext context, String releaseId, StartShadowRunRequestBody body) {
-        com.paytech.risk.api.decision.response.ExecutionReleaseResponseBody response;
+        com.paytech.risk.decision.api.response.ExecutionReleaseResponseBody response;
         try {
             response = api.startShadowRun(context.accountId(), context.sessionId(), releaseId, RiskControlConverter.owner(body));
         } catch (HttpRequestValidationException failure) {
@@ -81,7 +81,7 @@ public class RiskExecutionReleaseClientImpl implements RiskExecutionReleaseClien
 
     /** 回执发布 ID 必须与请求路径一致。 */
     private static ExecutionReleaseResponseBody same(String releaseId,
-        com.paytech.risk.api.decision.response.ExecutionReleaseResponseBody response) {
+        com.paytech.risk.decision.api.response.ExecutionReleaseResponseBody response) {
         RiskControlResponsePolicy.require(response != null && Objects.equals(releaseId, response.getReleaseId()));
         return RiskControlConverter.local(response);
     }

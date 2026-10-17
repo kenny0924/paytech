@@ -1,0 +1,173 @@
+# risk-decision 配置字段清单，同时作为 RiskDecisionMockTestBase（mock Profile）的可运行配置。
+# 本文件列全 risk-decision 自定义配置、已接入公共组件的配置及实际使用的框架配置；配置字段变化必须同步本文件。
+# 固定账号密码仅适用于仓库 local-environment 的 Loopback 本地测试中间件（UNIT_TEST_GUIDE 第 198、302 条），IDE/Maven 无需设置环境变量；如本机实例密码不同，可用 RISK_DECISION_TEST_* 或 MOR_* 环境变量覆盖。
+
+# ==================== 中间件、框架与公共组件配置 ====================
+
+server:
+  address: 127.0.0.1
+  # 测试使用随机端口
+  port: 0
+
+spring:
+  application:
+    name: risk-decision-service
+  main:
+    banner-mode: "off"
+  jmx:
+    enabled: false
+  sql:
+    init:
+      mode: never
+  cloud:
+    discovery:
+      enabled: false
+    service-registry:
+      auto-registration:
+        enabled: false
+    nacos:
+      discovery:
+        enabled: false
+        register-enabled: false
+        server-addr: "127.0.0.1:8848"
+        namespace: mor-local
+        ip: 127.0.0.1
+  datasource:
+    url: "jdbc:mysql://127.0.0.1:13306/mor_risk_decision?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+    username: risk_decision_app
+    password: "${RISK_DECISION_TEST_DB_PASSWORD:${MOR_RISK_DECISION_DB_PASSWORD:local-risk-decision-change-me-2026}}"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-init-sql: "SET time_zone = '+00:00'"
+      connection-timeout: 2000
+      validation-timeout: 1000
+      data-source-properties:
+        connectionTimeZone: UTC
+        forceConnectionTimeZoneToSession: true
+        connectTimeout: 2000
+        socketTimeout: 2000
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 16379
+      password: "${RISK_DECISION_TEST_REDIS_PASSWORD:${MOR_REDIS_PASSWORD:c4e99fe36176a66ece55b0c23e5af0be488d409f2e89f6c5}}"
+      connect-timeout: 2s
+      timeout: 2s
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+      fail-on-missing-creator-properties: false
+
+mybatis:
+  mapper-locations: classpath*:mapper/**/*.xml
+
+management:
+  server:
+    # 随机管理端口；测试不访问 Actuator。
+    port: 0
+  endpoints:
+    enabled-by-default: false
+    web:
+      discovery:
+        enabled: false
+      exposure:
+        include: health,info,prometheus
+    jmx:
+      exposure:
+        exclude: "*"
+  endpoint:
+    health:
+      access: read-only
+      show-details: never
+      probes:
+        enabled: true
+        add-additional-paths: false
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState
+    info:
+      access: read-only
+    prometheus:
+      access: read-only
+
+# paytech-mvc-web-starter：这些路径只记录请求元数据，不记录 Body。
+web:
+  logging:
+    metadata-only-path-prefixes:
+      - /decision-dictionaries
+      - /decision-rule-sets
+      - /decision-releases
+      - /decision-flows
+      - /decision-variables
+      - /risk-lists
+      - /risk-decisions
+
+# paytech-redis-starter
+redis:
+  # 测试专用 Key 前缀，与开发数据隔离；生产缺省使用 spring.application.name。
+  key-prefix: risk-decision-test
+  coordination:
+    enabled: true
+    threads: 4
+    netty-threads: 4
+    connection-minimum-idle-size: 1
+    connection-pool-size: 16
+    subscription-connection-minimum-idle-size: 1
+    subscription-connection-pool-size: 8
+    resource-lock:
+      # 注解锁的服务级等待/租约；模板锁参数由 LockCommand 显式提供，不读取此处。
+      wait-time: 500ms
+      lease-time: 30s
+
+# paytech-compensation-event：本地补偿任务，事务内登记、提交后执行。
+compensation:
+  enabled: true
+  # 多实例 Claim/Lease 的实例标识；测试固定值。
+  instance-id: risk-decision-test
+  # 单次 Claim 的租约时长。
+  lease-duration: 2m
+  # 兜底扫描单批条数。
+  scanner-batch-size: 100
+  coordinator:
+    core-size: 10
+    maximum-size: 20
+    queue-capacity: 80
+    keep-alive: 60s
+  handler:
+    maximum-concurrency: 20
+
+# paytech-xxl-job-starter（随 compensation-event 引入）：测试不连接调度中心。
+xxl:
+  job:
+    admin:
+      addresses: ""
+      access-token: ""
+      timeout: 3
+    executor:
+      enabled: false
+      app-name: risk-decision-service
+      address: ""
+      ip: 127.0.0.1
+      port: 0
+      log-path: ./logs/xxl-job
+      log-retention-days: 30
+      excluded-packages: "org.springframework.,spring."
+
+# ==================== risk-decision 自定义配置 ====================
+
+decision:
+  identifier:
+    # Snowflake 区域与节点号；生产必须由部署注入，测试固定为 0。
+    region-id: 0
+    worker-id: 0
+  runtime:
+    # 本实例的发布环境 TEST 或 PRODUCTION；支付评估读取该环境的生效发布，执行发布只允许在 TEST 激活。生产必填，测试固定 TEST。
+    environment: TEST
+
+# 实例 ID 与内部调用身份（D26）：测试保持 OFF。
+paytech:
+  instance-id: risk-decision-test
+internal-auth:
+  mode: "OFF"

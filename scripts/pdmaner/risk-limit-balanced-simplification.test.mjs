@@ -9,7 +9,8 @@ import { TABLES as RISK_TABLES } from "./risk/manifest.mjs";
 import { CHECK_BINDINGS, CHECK_CONTRACTS } from "./risk/model-policy.mjs";
 
 const workspaceRoot = path.resolve(import.meta.dirname, "../..");
-const modelPath = path.join(workspaceRoot, "risk-compliance-service/docs/database/risk-compliance.pdma.json");
+// Step 06: the seven Limit tables belong to risk-decision.
+const modelPath = path.join(workspaceRoot, "paytech/risk-decision/docs/database/risk-decision.pdma.json");
 const EXPECTED_LIMIT_TABLES = Object.freeze([
   "limit_version",
   "decision_point_limit_binding",

@@ -81,8 +81,8 @@ class OperationsRiskDiscoveryUnavailableAutoTest {
         assertEquals(1, PLATFORM.requests().size());
         assertEquals(AUTHORIZE_PATH, PLATFORM.requests().getFirst().path());
         assertEquals(1, PLATFORM.completedAuthorizationCount());
-        assertEquals(List.of("risk-service"), observation.choices, "真实 LoadBalancer.choose 必须且只能执行一次");
-        for (String address : java.util.List.of("risk-service", "127.0.0.1", "http://", "localhost", "发现实例"))
+        assertEquals(List.of("risk-decision-service"), observation.choices, "真实 LoadBalancer.choose 必须且只能执行一次");
+        for (String address : java.util.List.of("risk-decision-service", "127.0.0.1", "http://", "localhost", "发现实例"))
             assertFalse(response.body().contains(address));
     }
 

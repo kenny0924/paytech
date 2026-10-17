@@ -27,7 +27,12 @@
         <dependencies>
             <dependency>
                 <groupId>com.paytech</groupId>
-                <artifactId>risk-api</artifactId>
+                <artifactId>paytech-risk-decision-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>paytech-compliance-api</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

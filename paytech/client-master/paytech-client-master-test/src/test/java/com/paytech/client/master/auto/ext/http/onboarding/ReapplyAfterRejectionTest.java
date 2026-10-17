@@ -15,7 +15,7 @@ import com.paytech.client.master.ext.mq.ClientReviewResultListener;
 import com.paytech.client.master.test.base.onboarding.AbstractClientReviewTest;
 import com.paytech.client.master.test.mocker.onboarding.OnboardingApplicationMocker.ApplicationFixture;
 import com.paytech.client.master.test.mocker.onboarding.OnboardingApplicationMocker.ReviewFixture;
-import com.paytech.risk.api.compliance.MaterialRequirementsModels.RequirementBody;
+import com.paytech.compliance.api.MaterialRequirementsModels.RequirementBody;
 
 import tools.jackson.databind.json.JsonMapper;
 

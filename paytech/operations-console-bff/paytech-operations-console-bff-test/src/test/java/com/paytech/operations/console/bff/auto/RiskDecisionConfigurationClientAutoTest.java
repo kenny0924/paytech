@@ -452,9 +452,9 @@ class RiskDecisionConfigurationClientAutoTest {
         assertTrue(java.lang.reflect.Modifier.isStatic(validator.getModifiers()));
         for (Class<?> type : List.of(RiskDecisionConfigurationClient.class, validator)) {
             for (var method : type.getDeclaredMethods()) {
-                assertFalse(method.getGenericReturnType().getTypeName().contains("com.paytech.risk.api"));
+                assertFalse(ownerType(method.getGenericReturnType().getTypeName()));
                 for (var parameter : method.getGenericParameterTypes()) {
-                    assertFalse(parameter.getTypeName().contains("com.paytech.risk.api"));
+                    assertFalse(ownerType(parameter.getTypeName()));
                 }
             }
         }
@@ -772,6 +772,11 @@ class RiskDecisionConfigurationClientAutoTest {
         var array = (ArrayNode) root.at(path);
         assertTrue(array.size() > 1, "order mutation requires multiple elements");
         for (int i = 0; i < array.size() / 2; i++) swap(root, path, i, array.size() - 1 - i);
+    }
+
+    /** 类型名引用了 Risk 拆分后的任一 Owner 合同包（原 risk-api 的全部包）。 */
+    private static boolean ownerType(String typeName) {
+        return typeName.contains("com.paytech.risk.decision.api") || typeName.contains("com.paytech.compliance.api");
     }
 
     private static void swap(ObjectNode root, String path, int first, int second) {

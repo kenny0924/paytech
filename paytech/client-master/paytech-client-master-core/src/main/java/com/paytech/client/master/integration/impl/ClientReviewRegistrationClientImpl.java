@@ -14,12 +14,12 @@ import com.paytech.client.master.domain.enums.ClientType;
 import com.paytech.client.master.domain.onboarding.ClientReviewSourceView;
 import com.paytech.client.master.integration.ClientReviewRegistrationClient;
 import com.paytech.foundation.common.error.ErrorException;
-import com.paytech.risk.api.compliance.ClientReviewRegistrationApi;
-import com.paytech.risk.api.compliance.request.ClientReviewBusinessBody;
-import com.paytech.risk.api.compliance.request.ClientReviewDocumentBody;
-import com.paytech.risk.api.compliance.request.ClientReviewRegistrationRequestBody;
-import com.paytech.risk.api.compliance.request.ClientReviewRelationBody;
-import com.paytech.risk.api.compliance.request.ClientReviewSubjectBody;
+import com.paytech.compliance.api.ClientReviewRegistrationApi;
+import com.paytech.compliance.api.request.ClientReviewBusinessBody;
+import com.paytech.compliance.api.request.ClientReviewDocumentBody;
+import com.paytech.compliance.api.request.ClientReviewRegistrationRequestBody;
+import com.paytech.compliance.api.request.ClientReviewRelationBody;
+import com.paytech.compliance.api.request.ClientReviewSubjectBody;
 
 import lombok.AllArgsConstructor;
 
@@ -163,14 +163,14 @@ public class ClientReviewRegistrationClientImpl implements ClientReviewRegistrat
     @Override
     public void deliverClassifications(com.paytech.client.master.domain.onboarding.ClientClassificationContext source) {
         var application = source.getApplication();
-        var body = new com.paytech.risk.api.compliance.request.ClientReviewClassificationsRequestBody();
+        var body = new com.paytech.compliance.api.request.ClientReviewClassificationsRequestBody();
         body.setApplicationId(Long.toString(application.getApplicationId()));
         body.setSubmissionId(application.getCurrentSubmissionId());
         body.setConfirmedBy(Long.toString(source.getProfile().getClassificationConfirmedBy()));
         body.setConfirmedAt(new DateTimeFormatterBuilder().appendInstant(6).toFormatter()
             .format(source.getProfile().getClassificationConfirmedTime()));
         body.setClassifications(source.getClassifications().stream().map(row -> {
-            var item = new com.paytech.risk.api.compliance.request.ClientReviewClassificationBody();
+            var item = new com.paytech.compliance.api.request.ClientReviewClassificationBody();
             item.setIndustryCode(row.getIndustryCode());
             item.setMccCode(row.getMccCode());
             item.setPrimary(row.isPrimary());

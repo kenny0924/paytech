@@ -5,7 +5,7 @@ import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.operations.console.bff.integration.RiskDictionaryClient;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
 import com.paytech.operations.console.bff.service.model.RiskDictionaryModels.*;
-import com.paytech.risk.api.decision.DecisionDictionaryApi;
+import com.paytech.risk.decision.api.DecisionDictionaryApi;
 import static com.paytech.operations.console.bff.integration.impl.RiskConfigurationResponsePolicy.*;
 /** 字典请求精确转发，成功后核对响应身份、版本和当前内容。 */
 @Component
@@ -29,7 +29,7 @@ public class RiskDictionaryClientImpl implements RiskDictionaryClient {
     }
     /** 单次请求 Risk 创建并启用唯一的原因编码，校验 Owner 响应且不自动重试。 */
     @Override public DictionaryWriteResponseBody createRejectionReason(OperatorContext o, CreateRejectionReasonRequestBody body) {
-        var request = new com.paytech.risk.api.decision.request.CreateRejectionReasonRequestBody();
+        var request = new com.paytech.risk.decision.api.request.CreateRejectionReasonRequestBody();
         request.setReasonCode(body.reasonCode());
         request.setName(body.name());
         request.setDescription(body.description());
@@ -39,7 +39,7 @@ public class RiskDictionaryClientImpl implements RiskDictionaryClient {
     }
     /** 单次请求 Risk 按期望版本完整更新原因内容，保留编码与状态，校验 Owner 响应且不自动重试。 */
     @Override public DictionaryWriteResponseBody updateRejectionReason(OperatorContext o, String code, UpdateRejectionReasonRequestBody body) {
-        var request = new com.paytech.risk.api.decision.request.UpdateRejectionReasonRequestBody();
+        var request = new com.paytech.risk.decision.api.request.UpdateRejectionReasonRequestBody();
         request.setExpectedVersion(body.expectedVersion());
         request.setName(body.name());
         request.setDescription(body.description());
@@ -49,7 +49,7 @@ public class RiskDictionaryClientImpl implements RiskDictionaryClient {
     }
     /** 单次请求 Risk 按期望版本独立启停原因，校验 Owner 响应且不自动重试。 */
     @Override public DictionaryWriteResponseBody changeRejectionReasonStatus(OperatorContext o, String code, ChangeDictionaryStatusRequestBody body) {
-        var request = new com.paytech.risk.api.decision.request.ChangeDictionaryStatusRequestBody();
+        var request = new com.paytech.risk.decision.api.request.ChangeDictionaryStatusRequestBody();
         request.setExpectedVersion(body.expectedVersion());
         request.setStatus(body.status());
         var result = RiskConfigurationConverter.write(api.changeRejectionReasonStatus(o.accountId(), o.sessionId(), code, request));
@@ -79,7 +79,7 @@ public class RiskDictionaryClientImpl implements RiskDictionaryClient {
     }
     /** 单次请求 Risk 创建并启用唯一的标签编码，校验 Owner 响应且不自动重试。 */
     @Override public DictionaryWriteResponseBody createSubjectTag(OperatorContext o, CreateSubjectTagRequestBody body) {
-        var request = new com.paytech.risk.api.decision.request.CreateSubjectTagRequestBody();
+        var request = new com.paytech.risk.decision.api.request.CreateSubjectTagRequestBody();
         request.setTagCode(body.tagCode());
         request.setName(body.name());
         request.setDescription(body.description());
@@ -88,7 +88,7 @@ public class RiskDictionaryClientImpl implements RiskDictionaryClient {
     }
     /** 单次请求 Risk 按期望版本完整更新标签内容，保留编码与状态，校验 Owner 响应且不自动重试。 */
     @Override public DictionaryWriteResponseBody updateSubjectTag(OperatorContext o, String code, UpdateSubjectTagRequestBody body) {
-        var request = new com.paytech.risk.api.decision.request.UpdateSubjectTagRequestBody();
+        var request = new com.paytech.risk.decision.api.request.UpdateSubjectTagRequestBody();
         request.setExpectedVersion(body.expectedVersion());
         request.setName(body.name());
         request.setDescription(body.description());
@@ -97,7 +97,7 @@ public class RiskDictionaryClientImpl implements RiskDictionaryClient {
     }
     /** 单次请求 Risk 按期望版本独立启停标签，校验 Owner 响应且不自动重试。 */
     @Override public DictionaryWriteResponseBody changeSubjectTagStatus(OperatorContext o, String code, ChangeDictionaryStatusRequestBody body) {
-        var request = new com.paytech.risk.api.decision.request.ChangeDictionaryStatusRequestBody();
+        var request = new com.paytech.risk.decision.api.request.ChangeDictionaryStatusRequestBody();
         request.setExpectedVersion(body.expectedVersion());
         request.setStatus(body.status());
         var result = RiskConfigurationConverter.write(api.changeSubjectTagStatus(o.accountId(), o.sessionId(), code, request));

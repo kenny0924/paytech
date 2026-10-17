@@ -9,8 +9,8 @@ import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.operations.console.bff.integration.RiskFlowClient;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
 import com.paytech.operations.console.bff.service.model.RiskFlowModels.*;
-import com.paytech.risk.api.decision.DecisionFlowManagementApi;
-import com.paytech.risk.api.decision.DecisionFlowQueryApi;
+import com.paytech.risk.decision.api.DecisionFlowManagementApi;
+import com.paytech.risk.decision.api.DecisionFlowQueryApi;
 
 /** 每次操作只转发一次 Risk 请求，严格转换自有页面模型，不自动重试写入。 */
 @Component

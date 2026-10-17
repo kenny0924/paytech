@@ -26,7 +26,7 @@ spring:
           instances:
             platform-support-service:
               - uri: "${client-master.test.external.base-url}"
-            risk-service:
+            compliance-service:
               - uri: "${client-master.test.external.base-url}"
             vault-service:
               - uri: "${client-master.test.external.base-url}"

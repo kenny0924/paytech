@@ -1,7 +1,7 @@
 package com.paytech.operations.console.bff.integration.impl;
 
 import com.paytech.operations.console.bff.service.model.RiskRuleSetModels;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels;
 
 /** 规则与流程共享同一 Wire 操作数投影，不解析或计算变量。 */
 final class RiskOperandConverter {

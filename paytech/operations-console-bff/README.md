@@ -28,7 +28,7 @@ paytech/operations-console-bff/
 
 基础包为 `com.paytech.operations.console.bff`，启动类为 `OperationsConsoleBffApplication`。服务聚合 POM 以真实相对路径继承 `com.paytech:paytech-parent:1.0.0-SNAPSHOT`（`../build/paytech-parent/pom.xml`），并由单一 Reactor `paytech/pom.xml` 列出；唯一 Maven Wrapper 是 `paytech/mvnw`。由统一 BOM 管理 Java 25、Spring Boot 4.0.8、Spring Cloud 2025.1.3 和 Spring Cloud Alibaba 2025.1.0.0。
 
-当前没有需要供其他 Java 服务依赖的 HTTP 契约，因此只有 `app + test`（design/03 §1.2：无 api、无 core），不建立空 `api` 模块或没有业务职责的领域服务、持久化层。生产依赖包括 MVC、Foundation MVC Starter / HTTP Client Support、Actuator、Prometheus、Nacos Discovery、LoadBalancer、参数校验和轻量 `platform-support-api`、`risk-api`；构建门禁继续禁止数据库、缓存、MQ、Nacos Config 和本地认证框架。
+当前没有需要供其他 Java 服务依赖的 HTTP 契约，因此只有 `app + test`（design/03 §1.2：无 api、无 core），不建立空 `api` 模块或没有业务职责的领域服务、持久化层。生产依赖包括 MVC、Foundation MVC Starter / HTTP Client Support、Actuator、Prometheus、Nacos Discovery、LoadBalancer、参数校验和轻量 `platform-support-api`、`paytech-risk-decision-api`、`paytech-compliance-api`；构建门禁继续禁止数据库、缓存、MQ、Nacos Config 和本地认证框架。
 
 ### 代码分层
 
@@ -58,7 +58,7 @@ OperationsRequestInterceptor（可信身份 → 当前 PLT-I02 完成 → Origin
 
 ### 内部调用 Token（D26）
 
-依赖 `paytech-internal-auth`，`internal-auth.mode` 默认 `OFF`：不创建任何 Token Bean，入站与出站行为与引入前一致。设为 `DUAL` / `REQUIRED` 时，MVC Starter 的 `InternalAuthFilter` 校验入站 Token；`InternalCallTokenOptions` 让本 BFF 全部 `HttpServiceClientFactory.create` 客户端按显式目标服务名（`platform-support-service`、`risk-service`、`client-master-service`）附加 `Authorization: Bearer`。Token 来源为 Foundation 的 `InternalTokenSupplier`；本步只在测试中用 `internal-auth.static-key.*` 本地密钥对，Platform 签发客户端的接线留待 Platform 签发接口落地。Vault 管理客户端由 `paytech-vault-client` 自行装配，不在本接线范围内。`OperationsInternalTokenAutoTest` 覆盖 `REQUIRED` 下入站拒绝与出站附加。
+依赖 `paytech-internal-auth`，`internal-auth.mode` 默认 `OFF`：不创建任何 Token Bean，入站与出站行为与引入前一致。设为 `DUAL` / `REQUIRED` 时，MVC Starter 的 `InternalAuthFilter` 校验入站 Token；`InternalCallTokenOptions` 让本 BFF 全部 `HttpServiceClientFactory.create` 客户端按显式目标服务名（`platform-support-service`、`risk-decision-service`、`compliance-service`、`client-master-service`）附加 `Authorization: Bearer`。Token 来源为 Foundation 的 `InternalTokenSupplier`；本步只在测试中用 `internal-auth.static-key.*` 本地密钥对，Platform 签发客户端的接线留待 Platform 签发接口落地。Vault 管理客户端由 `paytech-vault-client` 自行装配，不在本接线范围内。`OperationsInternalTokenAutoTest` 覆盖 `REQUIRED` 下入站拒绝与出站附加。
 
 ### Risk 配置适配边界
 
@@ -66,7 +66,7 @@ OperationsRequestInterceptor（可信身份 → 当前 PLT-I02 完成 → Origin
 
 `RiskDecisionConfigurationController` 的具体 Handler 只使用本地 `RiskRuleSetModels`、`RiskTestCandidateModels` 和唯一 `RiskDecisionConfigurationClient` Port。唯一实现 `RiskDecisionConfigurationClientImpl` 显式逐字段转换 Owner 请求/响应；不创建 Risk Processor、业务 Service、Repository、数据库或恢复状态缓存。
 
-`RiskClientConfiguration` 使用独立 `operationsRiskProxyFactory` 和 `risk-service` Discovery，分别注册一个 `DecisionRuleSetManagementApi` 和 `DecisionReleaseManagementApi` 代理，不复用 Platform 工厂或拦截器。私网 Base URL 固定为 `http://risk-service`，连接超时 2 秒、Socket Read 超时 4 秒，禁止跟随 Redirect，使用 Foundation `HttpServiceClientOptions.strict()`，不接受旧四字段错误体。仅 `auto` Profile 可配置严格 Loopback 的 `operations.risk-test-base-url`。每个成功入口只调用一次 Risk，写命令最多一次传输且无应用自动重试；这不承诺 URLConnection 对早期失败的幂等读永不发生底层重试。
+`RiskClientConfiguration` 使用独立 `operationsRiskProxyFactory` 和 `risk-decision-service` Discovery（入驻审核代理 `ClientReviewClientConfiguration` 使用 `compliance-service`），分别注册一个 `DecisionRuleSetManagementApi` 和 `DecisionReleaseManagementApi` 代理，不复用 Platform 工厂或拦截器。私网 Base URL 固定为 `http://risk-decision-service`，连接超时 2 秒、Socket Read 超时 4 秒，禁止跟随 Redirect，使用 Foundation `HttpServiceClientOptions.strict()`，不接受旧四字段错误体。仅 `auto` Profile 可配置严格 Loopback 的 `operations.risk-test-base-url`。每个成功入口只调用一次 Risk，写命令最多一次传输且无应用自动重试；这不承诺 URLConnection 对早期失败的幂等读永不发生底层重试。
 
 四个 Risk POST 严格拒绝重复键、尾随 JSON Root、未知/缺失成员和错误 Token；显式 nullable 与 missing 保持不同。Header/Path/Query 或 JSON Shape 错误返回 400，成功解码后的 Body Bean Validation 返回带安全字段路径的 422。AST 的业务语义仍由 Risk 判定。适配器严格校验成功响应的完整 Shape、标量、状态矩阵、顺序及请求关联；Authoring 中的 `handlerCode`、`implementationVersion`、`implementationHash` 必须先通过校验，再从浏览器模型中删除字段和值。
 
@@ -96,7 +96,7 @@ export JAVA_HOME=$(/usr/libexec/java_home -v 25)
 ./mvnw -B verify -pl operations-console-bff/paytech-operations-console-bff-test -am
 ```
 
-PayTech Parent、BOM 与 Foundation 由同一 Reactor 构建；`risk-api`、`platform-support-api`、`client-contract-api`、`paytech-vault-client` 在各自 Owner 搬入 Reactor 之前仍从开发者已有的 Settings/Nexus 与 Maven 缓存解析同版本 Snapshot（版本写 `${project.version}`）。不在本仓库保存制品库凭据。环境准备见 [本地开发环境](../../agent-docs/LOCAL_DEVELOPMENT_ENVIRONMENT.md)。
+PayTech Parent、BOM 与 Foundation 由同一 Reactor 构建；`paytech-risk-decision-api`、`paytech-compliance-api` 已在 Reactor 内（第 06 步），`platform-support-api`、`client-contract-api`、`paytech-vault-client` 在各自 Owner 搬入 Reactor 之前仍从开发者已有的 Settings/Nexus 与 Maven 缓存解析同版本 Snapshot（版本写 `${project.version}`）。不在本仓库保存制品库凭据。环境准备见 [本地开发环境](../../agent-docs/LOCAL_DEVELOPMENT_ENVIRONMENT.md)。
 
 默认 `auto` 测试启动真实随机 Loopback HTTP 端口，关闭 Nacos 和自动注册，无需 MySQL、Redis、RabbitMQ、Nacos 或其他业务服务。测试验证健康检查、管理端点暴露、Request ID、公共 MVC 组件复用及真实 BFF HTTP → Platform/Risk 有状态协议 Simulator，不使用方法 Stub 替代生产链路。Simulator 不代替 Owner 的真实领域/数据库测试。
 

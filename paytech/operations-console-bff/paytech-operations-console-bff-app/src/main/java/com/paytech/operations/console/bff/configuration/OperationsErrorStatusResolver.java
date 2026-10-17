@@ -8,7 +8,7 @@ import com.paytech.foundation.web.api.ApiErrorStatusResolver;
 import com.paytech.operations.console.bff.domain.enums.OperationsBffErrorCode;
 import com.paytech.platform.support.api.enums.GatewayConfigurationErrorCode;
 import com.paytech.platform.support.api.enums.OperationsErrorCode;
-import com.paytech.risk.api.enums.RiskDecisionConfigurationErrorCode;
+import com.paytech.risk.decision.api.enums.RiskDecisionConfigurationErrorCode;
 
 /** 仅声明浏览器错误状态；错误体、Request ID 和异常终态处理统一归 Foundation。 @author Codex */
 @Component
@@ -17,7 +17,7 @@ public final class OperationsErrorStatusResolver implements ApiErrorStatusResolv
     @Override
     public HttpStatus resolve(CodeMessageEnum errorCode, HttpStatus defaultStatus) {
         if (errorCode == com.paytech.foundation.common.error.CommonErrorCode.NOT_FOUND) return HttpStatus.NOT_FOUND;
-        if (errorCode instanceof com.paytech.risk.api.enums.RiskVariableErrorCode variable) {
+        if (errorCode instanceof com.paytech.risk.decision.api.enums.RiskVariableErrorCode variable) {
             return switch (variable) {
                 case INVALID_VARIABLE_DEFINITION, INVALID_OPERAND, LEGACY_AUTHORING_NOT_SUPPORTED -> HttpStatus.BAD_REQUEST;
                 case SYSTEM_VARIABLE_READ_ONLY -> HttpStatus.FORBIDDEN;
@@ -59,7 +59,7 @@ public final class OperationsErrorStatusResolver implements ApiErrorStatusResolv
                 case RISK_FLOW_CODE_EXISTS, RISK_FLOW_VERSION_CONFLICT, RISK_FLOW_DELETED, RISK_DICTIONARY_CODE_EXISTS, RISK_DICTIONARY_CHANGED, RISK_DICTIONARY_SELECTION_UNAVAILABLE, RISK_RULE_SET_IN_USE, RISK_RULE_SET_CHANGED, RISK_RULE_SET_DELETED -> HttpStatus.CONFLICT;
             };
         }
-        if (errorCode instanceof com.paytech.risk.api.enums.ClientReviewErrorCode review) {
+        if (errorCode instanceof com.paytech.compliance.api.enums.ClientReviewErrorCode review) {
             return switch (review) {
                 case CLIENT_REVIEW_NOT_FOUND -> HttpStatus.NOT_FOUND;
                 case CLIENT_REVIEW_NOT_READY -> HttpStatus.UNPROCESSABLE_CONTENT;

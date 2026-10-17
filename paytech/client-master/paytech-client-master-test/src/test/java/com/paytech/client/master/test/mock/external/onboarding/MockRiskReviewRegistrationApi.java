@@ -5,11 +5,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.paytech.client.master.test.mocker.onboarding.OnboardingOwnerMocker;
 import com.paytech.foundation.testsupport.api.MockHttpFault;
-import com.paytech.risk.api.compliance.ClientReviewRegistrationApi;
-import com.paytech.risk.api.compliance.request.ClientReviewClassificationsRequestBody;
-import com.paytech.risk.api.compliance.request.ClientReviewRegistrationRequestBody;
-import com.paytech.risk.api.compliance.response.ClientReviewCommandResponseBody;
-import com.paytech.risk.api.compliance.response.ClientReviewRegistrationResponseBody;
+import com.paytech.compliance.api.ClientReviewRegistrationApi;
+import com.paytech.compliance.api.request.ClientReviewClassificationsRequestBody;
+import com.paytech.compliance.api.request.ClientReviewRegistrationRequestBody;
+import com.paytech.compliance.api.response.ClientReviewCommandResponseBody;
+import com.paytech.compliance.api.response.ClientReviewRegistrationResponseBody;
 
 /** Risk I01 审核登记与 I02 分类接收的测试 HTTP 实现；请求体经正式 @Valid 合同校验后记录。 */
 @RestController

@@ -4,11 +4,11 @@ import java.util.HashSet;
 import com.paytech.client.contract.api.onboarding.ClientDocumentModels.DocumentReferenceRequestBody;
 import com.paytech.client.master.domain.onboarding.ClientDraftCommand;
 import com.paytech.client.master.domain.onboarding.ClientMaterialTarget;
-import com.paytech.risk.api.compliance.MaterialRequirementsModels.RequirementBody;
+import com.paytech.compliance.api.MaterialRequirementsModels.RequirementBody;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.platform.support.api.onboardingfiles.OnboardingFileVerificationApi;
 import com.paytech.platform.support.api.enums.*;
-import com.paytech.risk.api.compliance.*;
+import com.paytech.compliance.api.*;
 import static com.paytech.client.contract.api.enums.ClientDraftErrorCode.*;
 /** Owner HTTP 证据校验，不缓存材料许可，不跨库读取，也不进入 CCT 事务。 */
 public final class ClientMaterialAuthorityClient {
@@ -32,7 +32,7 @@ public final class ClientMaterialAuthorityClient {
      * @return 已校验的材料要求，至少一项
      */
     public java.util.List<RequirementBody> requirements(String qualificationType) {
-        com.paytech.risk.api.compliance.MaterialRequirementsModels.RequirementsResponseBody requirements;
+        com.paytech.compliance.api.MaterialRequirementsModels.RequirementsResponseBody requirements;
         try { requirements=risk.read("client-master-service",qualificationType); }
         catch (RuntimeException unavailable) { throw unavailable(); }
         if (requirements==null || !id(requirements.programId()) || !id(requirements.programVersionId())

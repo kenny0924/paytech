@@ -7,7 +7,8 @@ import { TABLES as DISPUTE_TABLES } from "./risk/manifests/07-dispute.mjs";
 import * as MODEL_POLICY from "./risk/model-policy.mjs";
 
 const workspaceRoot = path.resolve(import.meta.dirname, "../..");
-const modelPath = path.join(workspaceRoot, "risk-compliance-service/docs/database/risk-compliance.pdma.json");
+// Step 06: the seven dispute tables live in the dispute service model (Schema ownership only, D42).
+const modelPath = path.join(workspaceRoot, "paytech/dispute/docs/database/dispute.pdma.json");
 
 function table(key) {
   const result = DISPUTE_TABLES.find((item) => item.defKey === key);

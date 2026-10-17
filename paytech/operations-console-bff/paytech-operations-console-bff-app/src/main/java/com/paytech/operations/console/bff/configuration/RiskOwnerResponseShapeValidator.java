@@ -1,7 +1,7 @@
 package com.paytech.operations.console.bff.configuration;
 
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels;
-import com.paytech.risk.api.decision.DecisionReleaseManagementModels;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels;
+import com.paytech.risk.decision.api.DecisionReleaseManagementModels;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
@@ -94,19 +94,19 @@ final class RiskOwnerResponseShapeValidator {
         fields(BOOLEAN, "allStaticChecksPassed"), fields(array(VALIDATION_CHECK), "checks"));
 
     private static final Map<Type, Shape> ROOTS = Map.of(
-        com.paytech.risk.api.decision.response.RuleAuthoringContextResponseBody.class, AUTHORING,
-        new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.api.decision.response.RuleSetListItemResponseBody>>() {}.getType(),
+        com.paytech.risk.decision.api.response.RuleAuthoringContextResponseBody.class, AUTHORING,
+        new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.decision.api.response.RuleSetListItemResponseBody>>() {}.getType(),
         page(RULE_SET_ITEM),
-        com.paytech.risk.api.decision.response.RuleSetDetailResponseBody.class, RULE_SET_DETAIL,
-        com.paytech.risk.api.decision.response.CreateRuleSetVersionResponseBody.class, CREATE_RULE_SET,
-        com.paytech.risk.api.decision.response.FreezeRuleSetVersionResponseBody.class, FREEZE_RULE_SET,
-        com.paytech.risk.api.decision.response.DeleteRuleSetResponseBody.class,
+        com.paytech.risk.decision.api.response.RuleSetDetailResponseBody.class, RULE_SET_DETAIL,
+        com.paytech.risk.decision.api.response.CreateRuleSetVersionResponseBody.class, CREATE_RULE_SET,
+        com.paytech.risk.decision.api.response.FreezeRuleSetVersionResponseBody.class, FREEZE_RULE_SET,
+        com.paytech.risk.decision.api.response.DeleteRuleSetResponseBody.class,
         object(fields(TEXT, "ruleSetId status version deletedBy deletedTime")),
-        new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.api.decision.response.TestReleaseListItemResponseBody>>() {}.getType(),
+        new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.decision.api.response.TestReleaseListItemResponseBody>>() {}.getType(),
         page(CANDIDATE_ITEM),
-        com.paytech.risk.api.decision.response.TestReleaseDetailResponseBody.class, CANDIDATE_DETAIL,
-        com.paytech.risk.api.decision.response.CreateTestReleaseResponseBody.class, CREATE_CANDIDATE,
-        com.paytech.risk.api.decision.response.ValidateTestReleaseResponseBody.class, VALIDATE_CANDIDATE);
+        com.paytech.risk.decision.api.response.TestReleaseDetailResponseBody.class, CANDIDATE_DETAIL,
+        com.paytech.risk.decision.api.response.CreateTestReleaseResponseBody.class, CREATE_CANDIDATE,
+        com.paytech.risk.decision.api.response.ValidateTestReleaseResponseBody.class, VALIDATE_CANDIDATE);
 
     private static final Map<Type, Shape> ADDITIONAL_ROOTS = additionalRoots();
     /** 登记新增查询的精确响应字段集，不放宽已有规则接口的形状检查。 */
@@ -121,20 +121,20 @@ final class RiskOwnerResponseShapeValidator {
             fields(INTEGER, "versionNo"), fields(BOOLEAN, "isCurrent"));
         Shape release = object(fields(TEXT, "releaseId releaseNo environmentCode status pointCode pointVersionId ruleSetVersionId"),
             fields(INTEGER, "pointVersionNo versionNo"), fields(NULLABLE_TEXT, "activatedTime supersededTime"));
-        roots.put(com.paytech.risk.api.decision.response.RejectionReasonResponseBody.class, reason);
-        roots.put(com.paytech.risk.api.decision.response.SubjectTagResponseBody.class, tag);
-        roots.put(new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.api.decision.response.RejectionReasonResponseBody>>() {}.getType(), page(reason));
-        roots.put(new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.api.decision.response.SubjectTagResponseBody>>() {}.getType(), page(tag));
-        roots.put(new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.api.decision.response.SubjectTagReferenceResponseBody>>() {}.getType(), page(reference));
-        roots.put(com.paytech.risk.api.decision.response.DictionaryWriteResponseBody.class,
+        roots.put(com.paytech.risk.decision.api.response.RejectionReasonResponseBody.class, reason);
+        roots.put(com.paytech.risk.decision.api.response.SubjectTagResponseBody.class, tag);
+        roots.put(new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.decision.api.response.RejectionReasonResponseBody>>() {}.getType(), page(reason));
+        roots.put(new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.decision.api.response.SubjectTagResponseBody>>() {}.getType(), page(tag));
+        roots.put(new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.decision.api.response.SubjectTagReferenceResponseBody>>() {}.getType(), page(reference));
+        roots.put(com.paytech.risk.decision.api.response.DictionaryWriteResponseBody.class,
             object(fields(TEXT, "dictionaryType code version status changedBy changedTime")));
-        roots.put(new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.api.decision.response.RuleSetHistoryItemResponseBody>>() {}.getType(), page(history));
-        roots.put(com.paytech.risk.api.decision.response.RuleSetReleaseReferencesResponseBody.class,
+        roots.put(new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.decision.api.response.RuleSetHistoryItemResponseBody>>() {}.getType(), page(history));
+        roots.put(com.paytech.risk.decision.api.response.RuleSetReleaseReferencesResponseBody.class,
             object(fields(TEXT, "ruleSetId"), fields(BOOLEAN, "inUse"), fields(page(release), "references")));
         Shape reasonReference = object(fields(TEXT, "pointCode referenceKind sourceType"),
             fields(NULLABLE_TEXT, "ruleSetId ruleSetCode ruleSetName ruleSetVersionId ruleCode ruleName ruleSetStatus targetBindingCode flowId flowCode flowName flowVersionId nodeKey nodeName flowStatus"),
             fields(nullable(INTEGER), "versionNo actionSequenceNo flowVersionNo"), fields(BOOLEAN, "isCurrentConfiguration"), fields(array(TEXT), "activeEnvironments"));
-        roots.put(new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.api.decision.response.RejectionReasonReferenceResponseBody>>() {}.getType(), page(reasonReference));
+        roots.put(new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.decision.api.response.RejectionReasonReferenceResponseBody>>() {}.getType(), page(reasonReference));
         addFlowRoots(roots);
         addControlRoots(roots);
         addEvaluationRoots(roots);
@@ -169,25 +169,25 @@ final class RiskOwnerResponseShapeValidator {
         Shape output = object(fields(TEXT, "nodeType fieldCode label valueType variableCode"), fields(BOOLEAN, "required"), fields(array(TEXT), "operators"));
         Shape declaration = object(fields(TEXT, "outputCode name defaultValue"),
             fields(array(object(fields(TEXT, "value name"))), "allowedValues"), fields(array(TEXT), "allowedEndDecisions"));
-        roots.put(com.paytech.risk.api.decision.response.FlowAuthoringContextResponseBody.class,
+        roots.put(com.paytech.risk.decision.api.response.FlowAuthoringContextResponseBody.class,
             objectWithOptional(combine(fields(array(object(fields(TEXT, "pointCode pointName"))), "supportedPoints"),
                 fields(TEXT, "pointCode inputContractCode"), fields(INTEGER, "inputContractVersion graphSchemaVersion"), fields(array(fields), "fields"), fields(array(output), "nodeOutputs"),
                 fields(object(fields(INTEGER, "bodyBytes nodes edges conditionBytes conditionNodes conditionDepth")), "limits"),
                 fields(TEXT, "descriptorCode"), fields(INTEGER, "conditionSchemaVersion"),
                 fields(RiskVariableResponseShape::queryContext, "variableQueryContext")),
                 fields(value -> value.isArray() && !value.isEmpty() && array(declaration).valid(value), "outputs")));
-        roots.put(new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.api.decision.response.FlowListItemResponseBody>>() {}.getType(), page(item));
-        roots.put(new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.api.decision.response.FlowHistoryItemResponseBody>>() {}.getType(), page(history));
-        roots.put(com.paytech.risk.api.decision.response.FlowDetailResponseBody.class, detail);
-        roots.put(com.paytech.risk.api.decision.response.SaveFlowResponseBody.class,
+        roots.put(new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.decision.api.response.FlowListItemResponseBody>>() {}.getType(), page(item));
+        roots.put(new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.decision.api.response.FlowHistoryItemResponseBody>>() {}.getType(), page(history));
+        roots.put(com.paytech.risk.decision.api.response.FlowDetailResponseBody.class, detail);
+        roots.put(com.paytech.risk.decision.api.response.SaveFlowResponseBody.class,
             object(fields(TEXT, "flowId flowVersionId version savedBy savedTime"), fields(INTEGER, "versionNo")));
-        roots.put(com.paytech.risk.api.decision.response.DeleteFlowResponseBody.class,
+        roots.put(com.paytech.risk.decision.api.response.DeleteFlowResponseBody.class,
             object(fields(TEXT, "flowId status version deletedBy deletedTime")));
-        roots.put(com.paytech.risk.api.decision.response.ValidateFlowResponseBody.class,
+        roots.put(com.paytech.risk.decision.api.response.ValidateFlowResponseBody.class,
             object(fields(BOOLEAN, "valid truncated"), fields(array(object(fields(TEXT, "code message"), fields(NULLABLE_TEXT, "nodeKey edgeKey field"))), "issues")));
-        roots.put(com.paytech.risk.api.decision.response.RuleSetReferenceResponseBody.class,
+        roots.put(com.paytech.risk.decision.api.response.RuleSetReferenceResponseBody.class,
             object(fields(TEXT, "sourceType sourceVersionId nodeKey ruleSetStatus"), fields(RULE_SET_DETAIL, "ruleSet")));
-        roots.put(com.paytech.risk.api.decision.response.LegacyPointResponseBody.class,
+        roots.put(com.paytech.risk.decision.api.response.LegacyPointResponseBody.class,
             object(fields(TEXT, "sourceType pointVersionId pointCode pointName inputContractCode defaultDecision evaluationStrategy failureStrategy"),
                 fields(INTEGER, "versionNo inputContractVersion"), fields(array(node), "nodes"), fields(array(edge), "edges"), fields(array(reference), "ruleSetReferences")));
     }
@@ -206,12 +206,12 @@ final class RiskOwnerResponseShapeValidator {
             fields(nullable(shadow), "shadowRun"));
         Shape item = object(fields(TEXT, "releaseId releaseNo pointCode environment status flowId flowCode flowVersionId contentHash createdBy createTime"),
             fields(BOOLEAN, "active"), fields(INTEGER, "flowVersionNo"), fields(NULLABLE_TEXT, "activatedBy activatedTime supersededTime"));
-        roots.put(com.paytech.risk.api.control.response.RiskListResponseBody.class, list);
-        roots.put(new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.api.control.response.RiskListResponseBody>>() {}.getType(), page(list));
-        roots.put(com.paytech.risk.api.control.response.RiskListEntryResponseBody.class, entry);
-        roots.put(new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.api.control.response.RiskListEntryResponseBody>>() {}.getType(), page(entry));
-        roots.put(com.paytech.risk.api.decision.response.ExecutionReleaseResponseBody.class, release);
-        roots.put(new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.api.decision.response.ExecutionReleaseListItemResponseBody>>() {}.getType(), page(item));
+        roots.put(com.paytech.risk.decision.api.control.response.RiskListResponseBody.class, list);
+        roots.put(new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.decision.api.control.response.RiskListResponseBody>>() {}.getType(), page(list));
+        roots.put(com.paytech.risk.decision.api.control.response.RiskListEntryResponseBody.class, entry);
+        roots.put(new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.decision.api.control.response.RiskListEntryResponseBody>>() {}.getType(), page(entry));
+        roots.put(com.paytech.risk.decision.api.response.ExecutionReleaseResponseBody.class, release);
+        roots.put(new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.decision.api.response.ExecutionReleaseListItemResponseBody>>() {}.getType(), page(item));
     }
 
     /**
@@ -226,7 +226,7 @@ final class RiskOwnerResponseShapeValidator {
             }
             return true;
         };
-        roots.put(com.paytech.risk.api.evaluation.response.EvaluationResponseBody.class, object(
+        roots.put(com.paytech.risk.decision.api.evaluation.response.EvaluationResponseBody.class, object(
             fields(TEXT, "evaluationId pointCode mode result evaluationTime"),
             fields(NULLABLE_TEXT, "businessKey reasonCode reasonMessage failureCode releaseId environment flowId flowCode "
                 + "flowVersionId baselineEvaluationId shadowRunId"),
@@ -242,7 +242,7 @@ final class RiskOwnerResponseShapeValidator {
             fields(nullable(array(TEXT)), "values"), fields(nullable(INTEGER), "elapsedMillis"));
         Shape shadow = object(fields(TEXT, "evaluationId"), fields(NULLABLE_TEXT, "shadowRunId result severity"),
             fields(BOOLEAN, "decisionChanged outputChanged"));
-        roots.put(com.paytech.risk.api.evaluation.response.EvaluationExplanationResponseBody.class, object(
+        roots.put(com.paytech.risk.decision.api.evaluation.response.EvaluationExplanationResponseBody.class, object(
             fields(TEXT, "evaluationId"), fields(stringMap, "inputs"), fields(BOOLEAN, "pathAvailable"),
             fields(array(step), "path"), fields(array(rule), "rules"), fields(array(variable), "variables"),
             fields(array(shadow), "shadows")));

@@ -34,7 +34,7 @@
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
-            <artifactId>risk-api</artifactId>
+            <artifactId>paytech-compliance-api</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

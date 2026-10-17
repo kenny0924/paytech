@@ -6,9 +6,9 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import com.paytech.payment.test.mocker.RiskMocker;
-import com.paytech.risk.api.evaluation.RiskDecisionApi;
-import com.paytech.risk.api.evaluation.request.EvaluateDecisionRequestBody;
-import com.paytech.risk.api.evaluation.response.EvaluateDecisionResponseBody;
+import com.paytech.risk.decision.api.evaluation.RiskDecisionApi;
+import com.paytech.risk.decision.api.evaluation.request.EvaluateDecisionRequestBody;
+import com.paytech.risk.decision.api.evaluation.response.EvaluateDecisionResponseBody;
 
 import lombok.AllArgsConstructor;
 

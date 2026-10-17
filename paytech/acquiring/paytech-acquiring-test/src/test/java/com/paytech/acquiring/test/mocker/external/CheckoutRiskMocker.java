@@ -21,8 +21,8 @@ import com.paytech.acquiring.domain.enums.RiskDecisionResult;
 import com.paytech.foundation.httpproblem.api.ApiProblemResponse;
 import com.paytech.foundation.testsupport.api.Clear;
 import com.paytech.foundation.testsupport.api.MockHttpFault;
-import com.paytech.risk.api.evaluation.request.EvaluateDecisionRequestBody;
-import com.paytech.risk.api.evaluation.response.EvaluateDecisionResponseBody;
+import com.paytech.risk.decision.api.evaluation.request.EvaluateDecisionRequestBody;
+import com.paytech.risk.decision.api.evaluation.response.EvaluateDecisionResponseBody;
 
 /**
  * Risk 统一评估的响应 DTO：按用例配置常驻结论，或按调用顺序配置一组响应（结论、Problem、断连、延迟），并记录每次请求。
@@ -50,7 +50,7 @@ public class CheckoutRiskMocker implements Clear {
         this.discovery = discovery;
     }
 
-    /** 从服务发现中移除 risk-service 实例，使真实负载均衡走无实例路径；每例清理时恢复。 */
+    /** 从服务发现中移除 risk-decision-service 实例，使真实负载均衡走无实例路径；每例清理时恢复。 */
     public synchronized void removeInstances() {
         if (removedInstances == null) {
             removedInstances = discovery.getObject().getInstances().remove(RiskClientConfiguration.SERVICE_ID);

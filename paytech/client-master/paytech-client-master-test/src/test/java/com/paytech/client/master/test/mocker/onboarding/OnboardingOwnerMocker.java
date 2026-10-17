@@ -15,14 +15,14 @@ import com.paytech.foundation.httpproblem.api.ApiProblemResponse;
 import com.paytech.foundation.testsupport.api.Clear;
 import com.paytech.platform.support.api.authentication.response.AccountContextResponseBody;
 import com.paytech.platform.support.api.onboardingfiles.OnboardingFileModels.VerificationResponseBody;
-import com.paytech.risk.api.compliance.MaterialRequirementsModels.RequirementBody;
-import com.paytech.risk.api.compliance.MaterialRequirementsModels.RequirementsResponseBody;
+import com.paytech.compliance.api.MaterialRequirementsModels.RequirementBody;
+import com.paytech.compliance.api.MaterialRequirementsModels.RequirementsResponseBody;
 import com.paytech.platform.support.api.tenantprojection.request.StatusRequestBody;
 import com.paytech.platform.support.api.tenantprojection.response.ProjectionResponseBody;
-import com.paytech.risk.api.compliance.request.ClientReviewClassificationsRequestBody;
-import com.paytech.risk.api.compliance.request.ClientReviewRegistrationRequestBody;
-import com.paytech.risk.api.compliance.response.ClientReviewCommandResponseBody;
-import com.paytech.risk.api.compliance.response.ClientReviewRegistrationResponseBody;
+import com.paytech.compliance.api.request.ClientReviewClassificationsRequestBody;
+import com.paytech.compliance.api.request.ClientReviewRegistrationRequestBody;
+import com.paytech.compliance.api.response.ClientReviewCommandResponseBody;
+import com.paytech.compliance.api.response.ClientReviewRegistrationResponseBody;
 
 /**
  * Platform 与 Risk 的外部 DTO 配置及调用记录；未配置的请求返回 null，由 Mock 控制器转成意外调用。

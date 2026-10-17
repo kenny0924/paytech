@@ -1,13 +1,13 @@
 package com.paytech.operations.console.bff.test.simulator;
 
-import com.paytech.risk.api.decision.request.*;
-import com.paytech.risk.api.decision.response.*;
+import com.paytech.risk.decision.api.request.*;
+import com.paytech.risk.decision.api.response.*;
 
 import java.util.*;
 import tools.jackson.databind.json.JsonMapper;
 import com.paytech.foundation.web.paging.PagingResponseBody;
-import com.paytech.risk.api.decision.DecisionFlowModels.*;
-import com.paytech.risk.api.decision.response.RuleSetDetailResponseBody;
+import com.paytech.risk.decision.api.DecisionFlowModels.*;
+import com.paytech.risk.decision.api.response.RuleSetDetailResponseBody;
 
 /** 外部 Risk 配置存储场景，保存和回放从请求及历史状态派生。 */
 final class RiskFlowScenario {
@@ -32,7 +32,7 @@ final class RiskFlowScenario {
                 List.of(new SupportedPoint("CHECKOUT_PREPARE", "结账准备"), new SupportedPoint("PAYMENT_ATTEMPT_RISK", "支付尝试")),
                 "PAYMENT_ATTEMPT_RISK", "PAYMENT_ATTEMPT", 1, 1, List.of(), List.of(), new Limits(65536, 50, 100, 8192, 32, 8),
                 "RISK_VARIABLE_AUTHORING", 2,
-                new com.paytech.risk.api.decision.RiskVariableModels.VariableQueryContext("PAYMENT_ATTEMPT_RISK", "PAYMENT_ATTEMPT", 1, "FLOW_CONDITION"));
+                new com.paytech.risk.decision.api.RiskVariableModels.VariableQueryContext("PAYMENT_ATTEMPT_RISK", "PAYMENT_ATTEMPT", 1, "FLOW_CONDITION"));
             context.setOutputs(List.of(new OutputDeclaration("AUTHENTICATION_REQUIREMENT", "认证要求",
                 List.of(new OutputValue("NOT_REQUIRED", "无需认证"), new OutputValue("THREE_DS_REQUIRED", "需要 3DS")), "NOT_REQUIRED", List.of("ALLOW"))));
             return context;
@@ -42,7 +42,7 @@ final class RiskFlowScenario {
             List.of(new Field("country_code", "国家", "STRING", true, List.of("EQ", "NE"), "UPPER_ALPHA_2", "REGISTERED_COUNTRY")),
             List.of(new NodeOutput("RULE_SET", "matched", "本节点是否命中", "BOOLEAN", true, List.of("EQ", "NE"), "REGISTERED_MATCHED")),
             new Limits(65536, 50, 100, 8192, 32, 8), "RISK_VARIABLE_AUTHORING", 2,
-            new com.paytech.risk.api.decision.RiskVariableModels.VariableQueryContext("CHECKOUT_PREPARE", "ORDER_PREPARATION", 4, "FLOW_CONDITION"));
+            new com.paytech.risk.decision.api.RiskVariableModels.VariableQueryContext("CHECKOUT_PREPARE", "ORDER_PREPARATION", 4, "FLOW_CONDITION"));
         if (path.equals("flows/validate")) {
             var request = JSON.readValue(r.body(), SaveFlowRequestBody.class);
             var issues = request.getGraph().getNodes().stream().filter(n -> n.getType().equals("END") && n.getDecisionCode() == null)

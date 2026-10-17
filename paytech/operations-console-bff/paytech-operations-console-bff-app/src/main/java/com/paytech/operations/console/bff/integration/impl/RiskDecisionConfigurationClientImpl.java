@@ -1,6 +1,6 @@
 package com.paytech.operations.console.bff.integration.impl;
 
-import com.paytech.risk.api.decision.DecisionReleaseManagementModels;
+import com.paytech.risk.decision.api.DecisionReleaseManagementModels;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
@@ -26,14 +26,14 @@ import com.paytech.operations.console.bff.integration.RiskDecisionConfigurationC
 import com.paytech.operations.console.bff.service.model.OperatorContext;
 import com.paytech.operations.console.bff.service.model.RiskRuleSetModels.*;
 import com.paytech.operations.console.bff.service.model.RiskTestCandidateModels.*;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementApi;
-import com.paytech.risk.api.decision.DecisionRuleSetManagementModels;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementApi;
+import com.paytech.risk.decision.api.DecisionRuleSetManagementModels;
 import com.paytech.operations.console.bff.service.model.RiskRuleSetModels.AdditionalAction;
 import com.paytech.operations.console.bff.service.model.RiskRuleSetModels.ActionParameter;
 import com.paytech.operations.console.bff.service.model.RiskRuleSetModels.ActionParameterDescriptor;
 import com.paytech.operations.console.bff.service.model.RiskRuleSetModels.TargetBindingDescriptor;
 import com.paytech.operations.console.bff.service.model.RiskRuleSetModels.TargetFieldDescriptor;
-import com.paytech.risk.api.decision.DecisionReleaseManagementApi;
+import com.paytech.risk.decision.api.DecisionReleaseManagementApi;
 
 /** 唯一 Owner DTO 投影边界；请求不解释 AST，响应验证完整后才公开本地模型。 */
 @Component
@@ -124,7 +124,7 @@ public final class RiskDecisionConfigurationClientImpl implements RiskDecisionCo
         return result;
     }
 
-    private RuleSetListItemResponseBody ruleSetItem(com.paytech.risk.api.decision.response.RuleSetListItemResponseBody r) {
+    private RuleSetListItemResponseBody ruleSetItem(com.paytech.risk.decision.api.response.RuleSetListItemResponseBody r) {
         Validator.require(r != null);
         return new RuleSetListItemResponseBody(r.getRuleSetVersionId(), r.getPointVersionId(), r.getPointCode(), r.getRuleSetCode(),
             r.getRuleSetName(), Validator.integer(r.getVersionNo()), r.getStatus(), r.getContentHash(), r.getCreatedBy(), r.getChangeReason(),
@@ -138,7 +138,7 @@ public final class RiskDecisionConfigurationClientImpl implements RiskDecisionCo
     }
 
     /** 已保存来源的规则详情与普通规则详情使用同一严格转换器。 */
-    static RuleSetDetailResponseBody ruleSetDetail(com.paytech.risk.api.decision.response.RuleSetDetailResponseBody r,
+    static RuleSetDetailResponseBody ruleSetDetail(com.paytech.risk.decision.api.response.RuleSetDetailResponseBody r,
         String ruleSetVersionId) {
         Validator.require(r != null && r.getRules() != null);
         var rules = r.getRules().stream().map(RiskDecisionConfigurationClientImpl::rule).toList();
@@ -179,7 +179,7 @@ public final class RiskDecisionConfigurationClientImpl implements RiskDecisionCo
 
     @Override
     public CreateRuleSetVersionResponseBody createRuleSetVersion(OperatorContext context, CreateRuleSetVersionRequestBody request) {
-        var body = new com.paytech.risk.api.decision.request.CreateRuleSetVersionRequestBody(request.pointCode(), request.ruleSetCode(), request.ruleSetName(),
+        var body = new com.paytech.risk.decision.api.request.CreateRuleSetVersionRequestBody(request.pointCode(), request.ruleSetCode(), request.ruleSetName(),
             request.baseRuleSetVersionId(), request.baseContentHash(), request.changeReason(),
             request.rules().stream().map(this::ownerRule).toList(), request.operandFormat());
         var r = ruleSetApi.createRuleSetVersion(context.accountId(), context.sessionId(), body);
@@ -215,7 +215,7 @@ public final class RiskDecisionConfigurationClientImpl implements RiskDecisionCo
     @Override
     public DeleteRuleSetResponseBody deleteRuleSet(OperatorContext context, String ruleSetId, DeleteRuleSetRequestBody request) {
         var r = ruleSetApi.deleteRuleSet(context.accountId(), context.sessionId(), ruleSetId,
-            new com.paytech.risk.api.decision.request.DeleteRuleSetRequestBody(request.expectedVersion()));
+            new com.paytech.risk.decision.api.request.DeleteRuleSetRequestBody(request.expectedVersion()));
         Validator.require(r != null);
         Validator.id(r.getRuleSetId()); Validator.id(r.getVersion()); Validator.id(r.getDeletedBy()); Validator.time(r.getDeletedTime());
         Validator.equal(ruleSetId, r.getRuleSetId()); Validator.equal("DELETED", r.getStatus());
@@ -226,7 +226,7 @@ public final class RiskDecisionConfigurationClientImpl implements RiskDecisionCo
 
     @Override
     public FreezeRuleSetVersionResponseBody freezeRuleSetVersion(OperatorContext context, String ruleSetVersionId, FreezeRuleSetVersionRequestBody request) {
-        var r = ruleSetApi.freezeRuleSetVersion(context.accountId(), context.sessionId(), ruleSetVersionId, new com.paytech.risk.api.decision.request.FreezeRuleSetVersionRequestBody(request.expectedContentHash()));
+        var r = ruleSetApi.freezeRuleSetVersion(context.accountId(), context.sessionId(), ruleSetVersionId, new com.paytech.risk.decision.api.request.FreezeRuleSetVersionRequestBody(request.expectedContentHash()));
         Validator.require(r != null);
         var result = new FreezeRuleSetVersionResponseBody(r.getRuleSetVersionId(), r.getPointVersionId(), r.getRuleSetCode(),
             Validator.integer(r.getVersionNo()), r.getStatus(), r.getContentHash(), r.getFrozenBy(), r.getFrozenTime());
@@ -253,7 +253,7 @@ public final class RiskDecisionConfigurationClientImpl implements RiskDecisionCo
         return result;
     }
 
-    private TestCandidateListItemResponseBody candidateItem(com.paytech.risk.api.decision.response.TestReleaseListItemResponseBody r) {
+    private TestCandidateListItemResponseBody candidateItem(com.paytech.risk.decision.api.response.TestReleaseListItemResponseBody r) {
         Validator.require(r != null);
         return new TestCandidateListItemResponseBody(r.getReleaseId(), Validator.integer(r.getReleaseNo()), r.getDecisionPointId(),
             r.getPointCode(), r.getPointVersionId(), r.getRuleSetVersionId(), r.getEnvironmentCode(), r.getStatus(), Validator.integer(r.getVersion()),
@@ -298,7 +298,7 @@ public final class RiskDecisionConfigurationClientImpl implements RiskDecisionCo
     public CreateTestCandidateResponseBody createCandidate(OperatorContext context,
         CreateTestCandidateRequestBody request) {
         var r = releaseApi.createCandidate(context.accountId(), context.sessionId(),
-            new com.paytech.risk.api.decision.request.CreateTestReleaseRequestBody(request.ruleSetVersionId(), request.expectedRuleSetContentHash()));
+            new com.paytech.risk.decision.api.request.CreateTestReleaseRequestBody(request.ruleSetVersionId(), request.expectedRuleSetContentHash()));
         Validator.require(r != null && r.getInitialStateChange() != null);
         var state = r.getInitialStateChange();
         var initial = new InitialStateChangeResponseBody(state.getAuditEventId(), state.getEventTime(), state.getFromStatus(),
@@ -315,7 +315,7 @@ public final class RiskDecisionConfigurationClientImpl implements RiskDecisionCo
     public ValidateTestCandidateResponseBody validateCandidate(OperatorContext context,
         String releaseId, ValidateTestCandidateRequestBody request) {
         var r = releaseApi.validateCandidate(context.accountId(), context.sessionId(), releaseId,
-            new com.paytech.risk.api.decision.request.ValidateTestReleaseRequestBody(request.expectedVersion()));
+            new com.paytech.risk.decision.api.request.ValidateTestReleaseRequestBody(request.expectedVersion()));
         Validator.require(r != null && r.getChecks() != null);
         var checks = r.getChecks().stream().map(this::validationCheck).toList();
         boolean passed = Validator.flag(r.getAllStaticChecksPassed());

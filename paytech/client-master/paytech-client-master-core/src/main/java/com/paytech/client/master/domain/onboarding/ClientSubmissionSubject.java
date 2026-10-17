@@ -6,7 +6,7 @@ import com.paytech.client.master.core.dal.dataobject.ClientDraftContact;
 import com.paytech.client.master.core.dal.dataobject.ClientDraftFields;
 import com.paytech.client.master.core.dal.dataobject.PartyIdentityKey;
 import com.paytech.client.master.core.dal.dataobject.PartyProfileIdentifier;
-import com.paytech.risk.api.enums.MaterialQualificationType;
+import com.paytech.compliance.api.enums.MaterialQualificationType;
 
 import lombok.Getter;
 import lombok.Setter;

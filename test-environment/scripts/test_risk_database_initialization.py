@@ -121,18 +121,18 @@ class RiskDatabaseInitializationTest(unittest.TestCase):
         self.assertEqual(ACTION_ROWS, catalog["actions"])
         self.assertEqual(PARAMETER_COLUMNS, catalog["parameter_columns"])
         self.assertEqual(PARAMETER_ROWS, catalog["parameters"])
-        initial_data = (WORKSPACE / "risk-compliance-service/docs/database/sql/risk-compliance-initial-data.sql").read_text(encoding="utf-8")
-        schema = (WORKSPACE / "risk-compliance-service/docs/database/sql/risk-compliance-schema.sql").read_text(encoding="utf-8")
+        initial_data = (WORKSPACE / "paytech/risk-decision/docs/database/sql/risk-decision-initial-data.sql").read_text(encoding="utf-8")
+        schema = (WORKSPACE / "paytech/risk-decision/docs/database/sql/risk-decision-schema.sql").read_text(encoding="utf-8")
         for column in POINT_COLUMNS + ACTION_COLUMNS + PARAMETER_COLUMNS:
             with self.subTest(omitted_parsed_column=column):
                 with self.assertRaises(SystemExit):
                     self.module.load_risk_catalog(schema, initial_data.replace("`" + column + "`", "", 1))
         with self.assertRaises(SystemExit):
             self.module.load_risk_catalog(
-                (WORKSPACE / "risk-compliance-service/docs/database/sql/risk-compliance-schema.sql").read_text(encoding="utf-8") + "\nSELECT 1;\n",
-                (WORKSPACE / "risk-compliance-service/docs/database/sql/risk-compliance-initial-data.sql").read_text(encoding="utf-8"))
+                (WORKSPACE / "paytech/risk-decision/docs/database/sql/risk-decision-schema.sql").read_text(encoding="utf-8") + "\nSELECT 1;\n",
+                (WORKSPACE / "paytech/risk-decision/docs/database/sql/risk-decision-initial-data.sql").read_text(encoding="utf-8"))
 
-    def test_verifier_requires_empty_or_exact_prepared_catalog_in_mor_risk(self):
+    def test_verifier_requires_empty_or_exact_prepared_catalog_in_mor_risk_decision(self):
         queries = []
 
         def empty_mysql(sql, database="mor_platform"):
@@ -142,14 +142,14 @@ class RiskDatabaseInitializationTest(unittest.TestCase):
         self.module.mysql = empty_mysql
         self.assertEqual("EMPTY", self.module.verify_risk_catalog())
         self.assertTrue(queries)
-        self.assertTrue(all(database == "mor_risk" for _, database in queries))
+        self.assertTrue(all(database == "mor_risk_decision" for _, database in queries))
 
         rows = "\n".join(name + "\tBASE TABLE" for name in sorted(self.module.load_risk_catalog()["tables"]))
         point_rows = "\n".join("\t".join(row) for row in POINT_ROWS)
         action_rows = "\n".join("\t".join(row) for row in ACTION_ROWS)
 
         def prepared_mysql(sql, database="mor_platform"):
-            self.assertEqual("mor_risk", database)
+            self.assertEqual("mor_risk_decision", database)
             if "information_schema.tables" in sql:
                 return rows
             if "t_decision_point" in sql:
@@ -239,17 +239,21 @@ class RiskDatabaseInitializationTest(unittest.TestCase):
     def test_apply_runs_schema_then_dml_only_from_empty_and_rechecks_prepared(self):
         batches = []
         states = iter(("EMPTY", "PREPARED"))
+        compliance_states = iter(("EMPTY", "PREPARED"))
         self.module.verify_risk_catalog = lambda: next(states)
+        self.module.verify_compliance_schema = lambda: next(compliance_states)
         self.module.mysql = lambda sql, database="mor_platform": batches.append((sql, database)) or ""
         with contextlib.redirect_stdout(io.StringIO()):
             self.module.apply_risk_sql()
-        self.assertEqual(2, len(batches))
-        self.assertTrue(all(database == "mor_risk" for _, database in batches))
+        # 第 06 步：risk-decision Schema 与初始化目录进 mor_risk_decision，Compliance Schema 进 mor_compliance。
+        self.assertEqual(["mor_risk_decision", "mor_risk_decision", "mor_compliance"], [database for _, database in batches])
         self.assertIn("CREATE TABLE", batches[0][0])
         self.assertIn("INSERT INTO", batches[1][0])
+        self.assertIn("CREATE TABLE `t_due_diligence_case`", batches[2][0])
 
         batches = []
         self.module.verify_risk_catalog = lambda: "EMPTY"
+        self.module.verify_compliance_schema = lambda: "EMPTY"
         self.module.mysql = lambda sql, database="mor_platform": (
             batches.append((sql, database)), (_ for _ in ()).throw(SystemExit("schema failed")))[1]
         with contextlib.redirect_stdout(io.StringIO()):

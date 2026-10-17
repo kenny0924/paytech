@@ -13,11 +13,13 @@ events:
     consumers: [acquiring, card]
     strictOrder: false
     payloadSchemaRef: paytech-payment-api/event/PaymentSucceeded/v1
-  # 客户审核结论（risk → compliance 拆分后由 compliance 发布，design/07）。
+  # 客户审核结论（第 06 步按实现核对）：compliance 发布 v1，Payload 与旧 topic_risk_client_review 报文同字段同顺序；
+  # aggregateType 与旧报文 sourceType 一致为 DD_CASE，aggregateId 为审核主任务 ID，aggregateVersion 取 Payload caseVersion
+  # （t_due_diligence_case.version，登记、核验、分类都会推进，可能跳号，故 strictOrder=false）。client-master 第 08 步切换。
   - eventType: ClientReviewDecided
     schemaVersion: 1
     producer: compliance
-    aggregateType: CLIENT_REVIEW_CASE
+    aggregateType: DD_CASE
     aggregateVersionField: caseVersion
     consumers: [client-master]
     strictOrder: false
@@ -40,12 +42,13 @@ events:
     consumers: [ledger]
     strictOrder: true
     payloadSchemaRef: paytech-account-api/event/BalanceMoved/v1
-  # 结算限制变化（C3、D27，design/07）：阶段 0 仅 Schema 与发布端。
+  # 结算限制变化（C3、D27，design/07；第 06 步核对）：阶段 0 仅 Schema（compliance-api SettlementRestrictionChangedPayload），无发布调用方；
+  # aggregateId 为 control_id，aggregateVersion 取 t_settle_control_state_change.aggregate_version（同一控制连续递增，满足 strictOrder）。
   - eventType: SettlementRestrictionChanged
     schemaVersion: 1
     producer: compliance
     aggregateType: SETTLEMENT_CONTROL
-    aggregateVersionField: controlVersion
+    aggregateVersionField: aggregateVersion
     consumers: [payout, account]
     strictOrder: true
     payloadSchemaRef: paytech-compliance-api/event/SettlementRestrictionChanged/v1
