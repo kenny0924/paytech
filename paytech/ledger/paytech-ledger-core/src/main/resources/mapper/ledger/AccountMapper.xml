@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.ledger.core.dal.mapper.AccountMapper">
+    <insert id="insert">
+        INSERT INTO t_account (id, ledger_book_id, chart_account_id, owner_type, owner_id, balance_bucket, normal_side, account_status, debit_total, credit_total, net_balance, last_journal_sequence, balance_version, create_time, update_time)
+        VALUES (#{id}, #{ledgerBookId}, #{chartAccountId}, #{ownerType}, #{ownerId}, #{balanceBucket}, #{normalSide}, #{accountStatus}, #{debitTotal}, #{creditTotal}, #{netBalance}, #{lastJournalSequence}, #{balanceVersion}, #{createTime}, #{updateTime})
+    </insert>
+
+    <select id="selectById" resultType="com.paytech.ledger.core.dal.dataobject.Account">
+        SELECT id, ledger_book_id, chart_account_id, owner_type, owner_id, balance_bucket, normal_side, account_status, debit_total, credit_total, net_balance, last_journal_sequence, balance_version, create_time, update_time FROM t_account WHERE id = #{id}
+    </select>
+
+    <select id="selectByIdsForUpdate" resultType="com.paytech.ledger.core.dal.dataobject.Account">
+        SELECT id, ledger_book_id, chart_account_id, owner_type, owner_id, balance_bucket, normal_side, account_status, debit_total, credit_total, net_balance, last_journal_sequence, balance_version, create_time, update_time FROM t_account WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY id FOR UPDATE
+    </select>
+
+    <select id="selectByIds" resultType="com.paytech.ledger.core.dal.dataobject.Account">
+        SELECT id, ledger_book_id, chart_account_id, owner_type, owner_id, balance_bucket, normal_side, account_status, debit_total, credit_total, net_balance, last_journal_sequence, balance_version, create_time, update_time FROM t_account WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY id
+    </select>
+
+    <update id="applyPosting">
+        UPDATE t_account
+        SET debit_total = #{debitTotal}, credit_total = #{creditTotal}, net_balance = #{netBalance},
+            last_journal_sequence = #{journalSequence}, balance_version = balance_version + 1, update_time = #{now}
+        WHERE id = #{account.id} AND balance_version = #{account.balanceVersion}
+          AND last_journal_sequence &lt; #{journalSequence}
+    </update>
+
+    <select id="selectPage" resultType="com.paytech.ledger.domain.view.AccountView">
+        SELECT a.id account_id, c.account_code, a.owner_type, a.owner_id, a.balance_bucket, a.normal_side,
+               a.account_status, a.debit_total, a.credit_total, a.net_balance, a.last_journal_sequence
+        FROM t_account a
+        JOIN t_chart_account c ON c.id = a.chart_account_id
+        WHERE a.ledger_book_id = #{query.ledgerBookId}
+        <if test="query.accountCode != null">AND c.account_code = #{query.accountCode}</if>
+        <if test="query.ownerType != null">AND a.owner_type = #{query.ownerType}</if>
+        <if test="query.ownerId != null">AND a.owner_id = #{query.ownerId}</if>
+        <if test="query.balanceBucket != null">AND a.balance_bucket = #{query.balanceBucket}</if>
+        ORDER BY c.account_code, a.owner_type, a.owner_id, a.balance_bucket, a.id
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="long">
+        SELECT COUNT(*) FROM t_account a
+        JOIN t_chart_account c ON c.id = a.chart_account_id
+        WHERE a.ledger_book_id = #{query.ledgerBookId}
+        <if test="query.accountCode != null">AND c.account_code = #{query.accountCode}</if>
+        <if test="query.ownerType != null">AND a.owner_type = #{query.ownerType}</if>
+        <if test="query.ownerId != null">AND a.owner_id = #{query.ownerId}</if>
+        <if test="query.balanceBucket != null">AND a.balance_bucket = #{query.balanceBucket}</if>
+    </select>
+
+    <select id="selectProjectionChecks" resultType="com.paytech.ledger.domain.view.AccountProjectionCheckView">
+        SELECT a.id account_id, a.normal_side, a.debit_total, a.credit_total, a.net_balance,
+               COALESCE(j.journal_debit, 0) journal_debit, COALESCE(j.journal_credit, 0) journal_credit
+        FROM t_account a
+        LEFT JOIN (
+            SELECT l.account_id,
+                   SUM(CASE WHEN l.entry_side = 'DEBIT' THEN l.amount ELSE 0 END) journal_debit,
+                   SUM(CASE WHEN l.entry_side = 'CREDIT' THEN l.amount ELSE 0 END) journal_credit
+            FROM t_journal_line l
+            JOIN t_journal_entry e ON e.id = l.journal_entry_id
+            WHERE e.ledger_book_id = #{ledgerBookId} AND e.journal_sequence &lt;= #{asOfSequence}
+            GROUP BY l.account_id
+        ) j ON j.account_id = a.id
+        WHERE a.ledger_book_id = #{ledgerBookId}
+        ORDER BY a.id
+    </select>
+
+    <select id="selectByIdentity" resultType="com.paytech.ledger.core.dal.dataobject.Account">
+        SELECT id, ledger_book_id, chart_account_id, owner_type, owner_id, balance_bucket, normal_side, account_status, debit_total, credit_total, net_balance, last_journal_sequence, balance_version, create_time, update_time FROM t_account
+        WHERE ledger_book_id = #{ledgerBookId} AND chart_account_id = #{chartAccountId} AND owner_type = #{ownerType}
+          AND owner_id = #{ownerId} AND balance_bucket = #{balanceBucket}
+    </select>
+
+    <select id="selectByIdForUpdate" resultType="com.paytech.ledger.core.dal.dataobject.Account">
+        SELECT id, ledger_book_id, chart_account_id, owner_type, owner_id, balance_bucket, normal_side, account_status, debit_total, credit_total, net_balance, last_journal_sequence, balance_version, create_time, update_time FROM t_account WHERE id = #{id} FOR UPDATE
+    </select>
+
+    <select id="selectJournalTotals" resultType="com.paytech.ledger.domain.view.AccountJournalTotalsView">
+        SELECT COALESCE(SUM(CASE WHEN l.entry_side = 'DEBIT' THEN l.amount END), 0) debit_total,
+               COALESCE(SUM(CASE WHEN l.entry_side = 'CREDIT' THEN l.amount END), 0) credit_total,
+               COALESCE(MAX(e.journal_sequence), 0) last_journal_sequence
+        FROM t_journal_line l
+        JOIN t_journal_entry e ON e.id = l.journal_entry_id
+        WHERE l.account_id = #{accountId}
+    </select>
+
+    <update id="rebuildProjection">
+        UPDATE t_account
+        SET debit_total = #{debitTotal}, credit_total = #{creditTotal}, net_balance = #{netBalance},
+            last_journal_sequence = #{lastJournalSequence}, balance_version = balance_version + 1, update_time = #{now}
+        WHERE id = #{account.id} AND balance_version = #{account.balanceVersion}
+    </update>
+</mapper>

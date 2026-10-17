@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.ledger.core.dal.mapper.CloseApprovalMapper">
+    <insert id="insert">
+        INSERT INTO t_close_approval (id, period_close_id, approval_role, actor_id, decision, approved_close_hash, decision_time, create_time)
+        VALUES (#{id}, #{periodCloseId}, #{approvalRole}, #{actorId}, #{decision}, #{approvedCloseHash}, #{decisionTime}, #{createTime})
+    </insert>
+
+    <select id="selectByClose" resultType="com.paytech.ledger.core.dal.dataobject.CloseApproval">
+        SELECT id, period_close_id, approval_role, actor_id, decision, approved_close_hash, decision_time, create_time FROM t_close_approval WHERE period_close_id = #{periodCloseId} ORDER BY id
+    </select>
+</mapper>

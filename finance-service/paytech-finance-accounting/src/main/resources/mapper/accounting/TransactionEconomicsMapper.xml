@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.paytech.finance.accounting.core.dal.mapper.TransactionEconomicsMapper">
-    <select id="selectById" resultType="com.paytech.finance.accounting.core.dal.dataobject.TransactionEconomics">
-        SELECT id, economics_type, source_system, source_event_key, source_version, source_payload_hash, parent_economics_id, order_id, order_context_id, context_format, payment_fact_id, client_price_id, settlement_business_days, business_calendar_code, settlement_timezone, cutoff_second_of_day, commercial_context_time, tax_snapshot_id, payment_intent_id, payment_attempt_id, payment_succeeded_time, balance_available_time, refund_request_id, channel_refund_id, duplicate_capture_item_id, channel_dispute_notice_id, dispute_case_id, client_id, entity_no, local_partner_id, consumer_country_code, payment_method, industry_code, mcc_code, client_agreement_id, partner_agreement_oe_id, finance_entity_id, currency, gross_amount, create_time FROM t_transaction_economics WHERE id = #{id}
-    </select>
-</mapper>

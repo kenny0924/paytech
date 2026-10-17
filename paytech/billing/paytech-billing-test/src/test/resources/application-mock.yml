@@ -1,0 +1,85 @@
+# billing-service 配置字段清单，同时作为 Mock 测试的可运行配置。
+# 只连接仓库 local-environment 的 Loopback MySQL/Redis；固定凭据为隔离本地测试账号，可用环境变量覆盖。
+
+# ==================== 中间件、框架与公共组件配置 ====================
+
+server:
+  address: 127.0.0.1
+  port: 0
+
+spring:
+  application:
+    name: billing-service
+  main:
+    banner-mode: "off"
+  jmx:
+    enabled: false
+  datasource:
+    url: "${BILLING_TEST_DB_URL:jdbc:mysql://127.0.0.1:13306/mor_billing?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}"
+    username: "${BILLING_TEST_DB_USERNAME:billing_app}"
+    password: "${BILLING_TEST_DB_PASSWORD:92f01bf0c17cbbdc07914d46880c949dfc3de5f359d133a2}"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-init-sql: "SET time_zone = '+00:00'"
+      data-source-properties:
+        connectionTimeZone: UTC
+        forceConnectionTimeZoneToSession: true
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 16379
+      password: "${BILLING_TEST_REDIS_PASSWORD:${PAYTECH_REDIS_PASSWORD:${MOR_REDIS_PASSWORD:c4e99fe36176a66ece55b0c23e5af0be488d409f2e89f6c5}}}"
+      connect-timeout: 2s
+      timeout: 2s
+
+mybatis:
+  mapper-locations: classpath*:mapper/**/*.xml
+
+# paytech-redis-starter
+redis:
+  # 测试专用 Key 前缀，与本地运行实例隔离；生产缺省使用 spring.application.name。
+  key-prefix: billing-mock
+  coordination:
+    enabled: true
+    threads: 4
+    netty-threads: 4
+
+management:
+  server:
+    # 独立管理端口；测试随机分配，由 @LocalManagementPort 读取。
+    address: 127.0.0.1
+    port: 0
+  endpoints:
+    enabled-by-default: false
+    web:
+      discovery:
+        enabled: false
+      exposure:
+        include: health,info,prometheus
+    jmx:
+      exposure:
+        exclude: "*"
+  endpoint:
+    health:
+      access: read-only
+      show-details: never
+      probes:
+        enabled: true
+        add-additional-paths: false
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState
+    info:
+      access: read-only
+    prometheus:
+      access: read-only
+
+# ==================== Billing 系统自定义配置 ====================
+
+billing:
+  identifier:
+    # Snowflake Region / Worker 标识；生产无默认值且必填，修改需重启。测试进程固定 0/0。
+    region-id: 0
+    worker-id: 0

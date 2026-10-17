@@ -1,0 +1,66 @@
+# tax-service 配置字段清单，同时作为 Mock 测试的可运行配置。
+# 只连接仓库 local-environment 的 Loopback MySQL；固定凭据为隔离本地测试账号，可用环境变量覆盖。
+
+# ==================== 中间件、框架与公共组件配置 ====================
+
+server:
+  address: 127.0.0.1
+  port: 0
+
+spring:
+  application:
+    name: tax-service
+  main:
+    banner-mode: "off"
+  jmx:
+    enabled: false
+  datasource:
+    url: "${TAX_TEST_DB_URL:jdbc:mysql://127.0.0.1:13306/mor_tax?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}"
+    username: "${TAX_TEST_DB_USERNAME:tax_app}"
+    password: "${TAX_TEST_DB_PASSWORD:169824eacdce0451680de5a4987dcc3277a00e7debf47a9a}"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-init-sql: "SET time_zone = '+00:00'"
+      data-source-properties:
+        connectionTimeZone: UTC
+        forceConnectionTimeZoneToSession: true
+
+management:
+  server:
+    # 独立管理端口；测试随机分配，由 @LocalManagementPort 读取。
+    address: 127.0.0.1
+    port: 0
+  endpoints:
+    enabled-by-default: false
+    web:
+      discovery:
+        enabled: false
+      exposure:
+        include: health,info,prometheus
+    jmx:
+      exposure:
+        exclude: "*"
+  endpoint:
+    health:
+      access: read-only
+      show-details: never
+      probes:
+        enabled: true
+        add-additional-paths: false
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState
+    info:
+      access: read-only
+    prometheus:
+      access: read-only
+
+# ==================== Tax 系统自定义配置 ====================
+
+tax:
+  identifier:
+    # Snowflake Region / Worker 标识；生产无默认值且必填，修改需重启。测试进程固定 0/0。
+    region-id: 0
+    worker-id: 0

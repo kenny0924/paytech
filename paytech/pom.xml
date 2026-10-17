@@ -45,11 +45,11 @@
         <!-- <module>card</module> -->
         <!-- <module>risk-decision</module> -->
         <!-- <module>compliance</module> -->
-        <!-- <module>billing</module> -->
-        <!-- <module>account</module> -->
-        <!-- <module>ledger</module> -->
-        <!-- <module>reconciliation</module> -->
-        <!-- <module>tax</module> -->
+        <module>billing</module>
+        <module>account</module>
+        <module>ledger</module>
+        <module>reconciliation</module>
+        <module>tax</module>
         <!-- <module>payout</module> -->
         <!-- <module>dispute</module> -->
         <!-- <module>fx</module> -->

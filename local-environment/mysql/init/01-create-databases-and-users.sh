@@ -69,3 +69,27 @@ GRANT ALL PRIVILEGES ON paytech_foundation_test.* TO 'foundation_test'@'%';
 GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'cdc_reader'@'%';
 GRANT SELECT ON mor_finance.* TO 'cdc_reader'@'%';
 EOSQL
+
+# V2 Finance successors (refactor step 07, design/10 §5.1). Optional until compose.yaml passes the variables to the
+# mysql container: each database/account is created only when its password variable is present, so an existing
+# initialization keeps working. mor_finance and finance_app stay for the main branch; mor_account arrives in step 11b.
+# account_app shares mor_ledger read-only in step 07.
+create_v2_finance_database() {
+  local database="$1" user="$2" variable_name="$3" privileges="$4" grant_database="$5"
+  if [[ -z "${!variable_name:-}" ]]; then
+    echo "Skipping ${user}: ${variable_name} is not set" >&2
+    return 0
+  fi
+  validate_password "$variable_name"
+  mysql --protocol=socket -uroot -p"${MYSQL_ROOT_PASSWORD}" <<-EOSQL
+${database:+CREATE DATABASE IF NOT EXISTS ${database} CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;}
+CREATE USER IF NOT EXISTS '${user}'@'%' IDENTIFIED BY '${!variable_name}';
+GRANT ${privileges} ON ${grant_database}.* TO '${user}'@'%';
+EOSQL
+}
+
+create_v2_finance_database mor_ledger ledger_app MOR_LEDGER_DB_PASSWORD "SELECT, INSERT, UPDATE, DELETE" mor_ledger
+create_v2_finance_database mor_billing billing_app MOR_BILLING_DB_PASSWORD "SELECT, INSERT, UPDATE, DELETE" mor_billing
+create_v2_finance_database "" account_app MOR_ACCOUNT_DB_PASSWORD "SELECT" mor_ledger
+create_v2_finance_database mor_reconciliation reconciliation_app MOR_RECONCILIATION_DB_PASSWORD "SELECT, INSERT, UPDATE, DELETE" mor_reconciliation
+create_v2_finance_database mor_tax tax_app MOR_TAX_DB_PASSWORD "SELECT, INSERT, UPDATE, DELETE" mor_tax

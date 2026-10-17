@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 共库过渡（design/04 §6，第 11b 步收口）：语句逐字取自 ledger 的 LedgerBookMapper.selectByEntity 与 AccountMapper.selectOwnerBalances。 -->
+<mapper namespace="com.paytech.account.core.dal.mapper.BalanceAccountMapper">
+    <select id="selectOperatingEntityBook" resultType="com.paytech.account.core.dal.dataobject.BalanceBook">
+        SELECT id, chart_id FROM t_ledger_book
+        WHERE entity_type = 'OPERATING_ENTITY' AND entity_id = #{entityNo} AND currency = #{currency}
+    </select>
+
+    <select id="selectOwnerBalances" resultType="com.paytech.account.domain.view.OwnerAccountBalanceView">
+        SELECT a.id account_id, c.account_code, a.balance_bucket, a.normal_side account_normal_side,
+               c.normal_side chart_normal_side, c.posting_allowed, c.chart_id account_chart_id, a.net_balance
+        FROM t_account a
+        LEFT JOIN t_chart_account c ON c.id = a.chart_account_id
+        WHERE a.ledger_book_id = #{ledgerBookId} AND a.owner_type = #{ownerType} AND a.owner_id = #{ownerId}
+        ORDER BY a.id
+    </select>
+</mapper>
