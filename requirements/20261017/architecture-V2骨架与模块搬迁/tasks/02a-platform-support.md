@@ -47,6 +47,10 @@
 7. **文档**：`paytech/platform-support/README.md` 与 `docs/` 内指向仓库级目录的相对链接按新深度修正；仓库级文档指向 Platform 的链接**不改**（第 13 步统一）。
 8. **ArchUnit**：`paytech-platform-support-test` 新增 `ArchitectureAutoTest` 引入 `paytech-arch-rules` 执行全部规则；多 core 模块的 R1 以"同服务内 core 可互相依赖"为准（规则库若不支持需在 arch-rules 中加服务内例外并补测试）。
 
+### 3.9 补充（主会话 2026-10-17 追加，D41）
+
+Platform 接收全平台参考数据 `t_currency_spec`：DDL 与 USD 种子 DML 从 Finance 的 Schema / 初始化 SQL 逐字复制进 Platform 的 Schema / 初始化 SQL 与 PDManer 模型（不执行 SQL）；`paytech-platform-support-api` 新增 `referencedata/CurrencySpecQueryApi`（`GET /platform/v1/currency-specs`、`GET /platform/v1/currency-specs/{currency}`）；core / app 按现行分层实现；`-test` 的 DDL 加该表与种子，新增一个 HTTP 入口测试。Finance 侧不动。
+
 ## 4. 测试与验证
 
 1. 搬迁前记录 `cd platform-support-service && ./mvnw -B verify -DskipITs` 的测试总数（覆盖率门禁已知失败，用 `-Dmaven.test.failure.ignore=false` 之外的方式只记录测试数，例如 `-pl platform-support-test -am` 先 `test`）。

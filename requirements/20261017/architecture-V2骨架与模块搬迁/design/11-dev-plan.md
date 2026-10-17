@@ -12,7 +12,7 @@
 | 02b | `refactor/step-02b-gateway` | api-gateway 搬入拆模块；Enforcer 模式改真实 artifactId；边界与 JaCoCo 脚本路径修复；WebFlux 内部 Token 校验接入 | 01 | 并行 |
 | 02c | `refactor/step-02c-bffs` | 两个 BFF 搬入拆模块；相邻目录定位测试修复；`1.0.0-SNAPSHOT` 改 BOM 管理 | 01 | 并行 |
 | 02d | `refactor/step-02d-vault` | Go 服务目录与 Java Client 搬入；`verify.sh`、`vault.sh`、`build-vault.sh`、`VaultEndToEndTest` 相对路径修复；Go 服务端读内部 Token 的 caller | 01 | 并行 |
-| 03 | `refactor/step-03-acquiring-consumer` | commerce → `acquiring` + `consumer`：两库、两 app；资格判断经 `consumer-api`；补偿表与清理拆分；死表死代码删除（C7）；Commerce 对 CCT / Payment 的服务名改为新名 | 02a（Platform api） | 与 04、06 并行 |
+| 03 | `refactor/step-03-acquiring-consumer` | commerce → `acquiring` + `consumer`：两库、两 app；存卡资格经 `consumer-api`（consumer 组合 Customer 状态与 client-master 的已存卡开关，失败关闭为不可存卡）；补偿表与清理拆分；死表死代码删除（C7）；Commerce 对 CCT / Payment 的服务名改为新名 | 02a、**04**（`t_client_stored_card_setting` 与已存卡开关接口归 client-master，D42）、05（`payment-service` 发现名） | 在 04、05 之后；与 06 之前 |
 | 04 | `refactor/step-04-client-master-commercial` | CCT → `client-master` + `commercial`：两库、两 app；06 文档的候选接口（含法律文档、卖方披露与已存卡开关随候选返回）、两段式解析、查询参数化、人员共享接口；`t_client_stored_card_setting` 自 Commerce 迁入 client-master；固件拆分 | 02a | 并行 |
 | 05 | `refactor/step-05-payment-channel` | payment → `payment` + `channel-connector`（卡域此步仍留在 payment 进程与库）：渠道结果映射迁入 channel-connector；能力代码单处解析；`PaymentSucceeded` 改用 messaging 信封并双写旧 Topic | 01 | 与 03、04、06 并行 |
 | 06 | `refactor/step-06-risk` | risk → `risk-decision`（并入 control）+ `compliance`：两库两 app；`risk-api` 一次性拆为 `risk-decision-api` + `compliance-api`，同分支改五个消费方的坐标与包名（C6，唯一跨系统步）；结算控制 3 表归 compliance 并定义 compliance-api 合同（C3）；Precondition 与 MockTestBase 拆分、PDManer 拆分 | 03、04、05 | 否（跨系统，串行） |
@@ -25,7 +25,7 @@
 | 12 | `refactor/step-12-card-isolation` | 05 文档：`card` 独立库与 app、票据接口、两段创建、`PaymentSucceeded` v2 与 card 消费、Platform 读卡目标改 card、Commerce 已存卡改调 card | 05、08 | 与 11 并行 |
 | 13 | `refactor/step-13-cleanup` | 删除空的旧根目录、旧 Topic 双写、文档链接重写（09 文档 f）、`CURRENT_IMPLEMENTATION.md` 搬迁状态登记 | 全部 | 否 |
 
-关键路径：00 → 01 → 07 → 08 → 11 → 13。并行度最高的窗口是 02a–02d 与 03–07。
+关键路径：00 → 01 → 07 → 08 → 11 → 13。并行窗口：02a–02d；04 / 05 / 07；其后 03，再 06（阶段 4 执行时调整：03 依赖 04 的已存卡开关接口与 05 的发现名）。
 
 ## 2. 任务卡模板（给执行 agent）
 
