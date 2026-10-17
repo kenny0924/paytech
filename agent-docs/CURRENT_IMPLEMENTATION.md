@@ -763,14 +763,14 @@
 
 <a id="client-console-team-20261017"></a>
 
-## Client Console 团队成员与邀请（2026-10-17，已本地提交 `f7b5500`，未推送；2026-10-17 已部署 mor-test）
+## Client Console 团队成员与邀请（2026-10-17，已提交并推送 `f7b5500`；2026-10-17 已部署 mor-test；2026-10-17 交付结束）
 
 - **Implemented：** 按[需求](../requirements/20261017/client-console-团队成员与邀请/requirement.md)与[技术方案](../requirements/20261017/client-console-团队成员与邀请/technique.md)：Platform 每个 CLIENT 工作区 4 个系统角色（所有者 / 管理员 / 开发者 / 只读成员，首次 ACTIVE 投影创建，存量由 DML 回填）与团队权限 `CLIENT_TEAM_READ/MANAGE`；`ClientTeamApi`（成员、邀请、重发、撤销、调整角色、移除）与 `ClientInvitationApi`（预览、详情、接受）；`t_tenant_invitation`、挑战用途 `TENANT_INVITATION_ACCEPT`、邀请邮件模板 `CLIENT_TENANT_INVITATION`；`GET /workspaces` 排除 REVOKED。CCT 工作区摘要不再限定申请人。Client BFF 团队 7、邀请 3 个端点与 `TEAM_READ/MANAGE` 能力。Client Web `/workspace/team`、`/invitations/accept`、登录后回到接受页、工作区单项降级。路由 T01—T07、I01—I03。
 - **验证：** Platform 全量 759/759（新增团队与邀请 23 项）；CCT 52/52；Client BFF 76/76；Web 61/61 与构建；本机全链路 `team_flow.py` 123/123、`team_browser.mjs` 9/9；Platform 投影 / 权限矩阵经本机与 test DML 核对。
 - **mor-test 部署（2026-10-17）：** `mor_platform` 执行本需求 DDL / DML；Platform、CCT、Client BFF、Client Web 替换为 `client-team-20261017` 镜像；10 条路由启用（总数 277）；test `team_flow.py` 123/123、浏览器 9/9，回归 `workspace_flow.py` 53/53、`developer_flow.py` 78/78。见[发布记录](../requirements/20261017/client-console-团队成员与邀请/release/release.md)。
 - **本机：** `mor_platform_e2e` 执行本需求 DDL / DML，并经用户授权执行 Gateway 幂等的 `2026-10-17-gateway-route-idempotency-mode.sql`（新 Platform 依赖该列）。
 - **已知限制：** test SES 仍在沙箱，邀请邮件对 `@example.test` 返回 FAILED，仅 SES 模拟地址验证了 SENT，真实收件箱送达未验证；工作区暂停时发起邀请返回 401（会话重验），接受时为 403；20 条待接受上限不加锁；DML 必须先于新 Platform 执行；AC-15 并发接受仅 Platform auto 覆盖。
-- **待办：** 推送需用户授权。
+- **交付结束（2026-10-17 用户确认）：** `f7b5500`、`1c04aba` 已推送；遗留见上方已知限制。
 
 <a id="client-console-workspace-20261016"></a>
 
