@@ -226,6 +226,11 @@ function InterfaceTab({ creating, disabled, apiCode, setApiCode, apiName, setApi
         options={requestFields.filter(field => field.fieldLocation === 'BODY' && field.dataType === 'STRING' && !field.fieldPath.includes('[]'))
           .map(field => ({ value: `BODY:${field.fieldPath}`, label: `BODY:${field.fieldPath}` }))}
         onChange={cardFields => update({ cardFields })} />, draft.cardFields.length ? draft.cardFields.join('、') : '无', true)}</Field>
+      <Field label="凭据字段" hint="BODY 字符串字段；只能由渠道账号凭据（resources.<初始化项>.credentials.<名称>）赋值，执行轨迹与验证证据中遮蔽，请求体不能再 sealJsonBody">{value(<Select mode="multiple"
+        value={draft.credentialFields} className="xapi-mono-input" placeholder="无"
+        options={requestFields.filter(field => field.fieldLocation === 'BODY' && field.dataType === 'STRING' && !field.fieldPath.includes('[]'))
+          .map(field => ({ value: `BODY:${field.fieldPath}`, label: `BODY:${field.fieldPath}` }))}
+        onChange={credentialFields => update({ credentialFields })} />, draft.credentialFields.length ? draft.credentialFields.join('、') : '无', true)}</Field>
       <Note items={['实际超时取配置值与流程剩余预算的较小者。不自动重试、不跟随重定向、不保存 Cookie；Host、Content-Length 等由系统处理，不能配置。']} />
     </Panel>
     {detail && <Panel title="被引用">

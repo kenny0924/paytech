@@ -5,6 +5,7 @@ import java.util.*;
 import java.util.function.Function;
 
 import com.paytech.platform.support.integration.domain.execution.ExecutionErrorException;
+import com.paytech.platform.support.integration.domain.execution.JsonValues;
 
 /**
  * 公共脚本与状态规则读取的 HTTP 工作对象 http.*（原子 API 结构第 6、7 节）。
@@ -15,7 +16,7 @@ import com.paytech.platform.support.integration.domain.execution.ExecutionErrorE
  *
  * <p>
  * REQUEST 阶段可由脚本函数 sealJsonBody 锁定请求体（原子 API 结构第 6 节）：按本原子 API 的 JSON 编码规则序列化一次，此后请求体只读，
- * 传输层原样发送锁定的字节，签名覆盖的就是实际发送的内容。
+ * 传输层原样发送锁定的字节，签名覆盖的就是实际发送的内容。请求体含受控句柄（凭据字段）时不能锁定，避免脚本读到凭据明文。
  */
 public final class HttpWork extends LinkedHashMap<String, Object> {
 
@@ -93,6 +94,9 @@ public final class HttpWork extends LinkedHashMap<String, Object> {
             throw new ExecutionErrorException("请求体已锁定");
         }
         Object body = get(REQUEST_BODY);
+        if (JsonValues.containsHandle(body)) {
+            throw new ExecutionErrorException("请求体含凭据字段，不能锁定为脚本可读的文本");
+        }
         sealedJsonBody = jsonEncoder.apply(body);
         super.put(REQUEST_BODY, readOnly(body));
         return new String(sealedJsonBody, StandardCharsets.UTF_8);

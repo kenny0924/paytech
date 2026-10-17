@@ -18,7 +18,7 @@ import com.paytech.platform.support.api.enums.ApiFieldLocation;
 import com.paytech.platform.support.integration.core.configuration.ExternalApiExecutionProperties;
 import com.paytech.platform.support.integration.domain.FieldDefinition;
 import com.paytech.platform.support.integration.domain.execution.*;
-import com.paytech.platform.support.integration.domain.execution.JsonValues.CardRendering;
+import com.paytech.platform.support.integration.domain.execution.JsonValues.SecretRendering;
 import com.paytech.platform.support.integration.ext.outbound.ChannelRequest;
 
 import lombok.AllArgsConstructor;
@@ -29,7 +29,8 @@ import tools.jackson.databind.json.JsonMapper;
 /**
  * 原子 API 请求组装与编码（原子 API 结构第 4、5、7 节）：fixedValues 与节点 request 按字段定义取值， 分到 HEADER（大小写不敏感）、QUERY、PATH（按单个路径段编码）与
  * BODY（按点分路径组装对象）； REQUEST 脚本之后按 requestEncoding 编码，拼出受控出站地址并计算超时。 cardFields 声明的卡字段只接受卡值句柄，
- * 只在 JSON 发送字节中展开为原值（PayerMax 卡直付对接技术方案第 3 节）。
+ * 只在 JSON 发送字节中展开为原值（PayerMax 卡直付对接技术方案第 3 节）。credentialFields 声明的凭据字段只接受受控句柄，同样只在 JSON
+ * 发送字节中展开；请求体其他位置不能出现受控句柄（Toss Pay 接入技术方案 T1）。
  */
 @Component
 @AllArgsConstructor
@@ -56,6 +57,7 @@ public class ChannelRequestBuilder {
         Map<String, JsonNode> fixed = normalize(api.getDefinition().path("fixedValues"));
         Map<String, JsonNode> assigned = normalize(request);
         var cardKeys = api.cardFieldKeys();
+        var credentialKeys = api.credentialFieldKeys();
         var result = new AssembledRequest();
         for (FieldDefinition field : api.getRequestFields()) {
             String key = key(field.getLocation(), field.getPath());
@@ -67,7 +69,8 @@ public class ChannelRequestBuilder {
                 }
                 continue;
             }
-            String dataType = cardKeys.contains(key) ? ValueResolver.CARD : field.getDataType().getCode();
+            String dataType = cardKeys.contains(key) ? ValueResolver.CARD
+                : credentialKeys.contains(key) ? ValueResolver.PROTECTED_HANDLE : field.getDataType().getCode();
             Object value = valueResolver.resolve(binding, constant ? Map.of() : environment, dataType, field.isRequired(),
                 "request." + key);
             if (value != null) {
@@ -111,6 +114,7 @@ public class ChannelRequestBuilder {
         JsonNode transport = api.getDefinition().path("transport");
         var finalHeaders = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
         headers.forEach((name, value) -> finalHeaders.put(name, headerText(name, value)));
+        checkCredentialPlacement(api, body, "");
         byte[] bytes = sealedJsonBody != null ? sealed(sealedJsonBody, finalHeaders) : encode(api, body, finalHeaders);
         URI uri = uri(snapshot, transport, assembled);
         long remaining = deadline.remainingMillis();
@@ -122,6 +126,21 @@ public class ChannelRequestBuilder {
             Duration.ofMillis(Math.min(transport.path("responseTimeoutMs").asLong(10000), remaining)));
     }
 
+    /** REQUEST 脚本之后的请求体中，受控句柄只能位于 credentialFields 声明的字段。 */
+    @SuppressWarnings("unchecked")
+    static void checkCredentialPlacement(ExecutionApi api, Object value, String path) {
+        if (value instanceof ProtectedHandle && !api.credentialFieldKeys().contains("BODY:" + path)) {
+            throw new ExecutionErrorException("受控句柄只能写入原子 API 声明的凭据字段：BODY:" + path);
+        }
+        if (value instanceof Map<?, ?> map) {
+            ((Map<String, Object>)map).forEach((name, item) ->
+                checkCredentialPlacement(api, item, path.isEmpty() ? name : path + "." + name));
+        }
+        if (value instanceof java.util.List<?> list) {
+            list.forEach(item -> checkCredentialPlacement(api, item, path + "[]"));
+        }
+    }
+
     /**
      * 按本原子 API 的 JSON 规则编码请求体：decimalEncoding 为 NUMBER 时 DECIMAL 写成 JSON 数字（不用指数），否则写成十进制字符串。
      *
@@ -130,18 +149,18 @@ public class ChannelRequestBuilder {
      * @return UTF-8 字节
      */
     public byte[] jsonBody(ExecutionApi api, Object body) {
-        return JSON.writeValueAsBytes(JsonValues.toJson(body, api.isDecimalAsNumber(), CardRendering.WIRE));
+        return JSON.writeValueAsBytes(JsonValues.toJson(body, api.isDecimalAsNumber(), SecretRendering.WIRE));
     }
 
     /**
-     * 与 {@link #jsonBody} 相同的编码，但卡值写成遮蔽文本；只用于执行轨迹与沙箱验证证据。
+     * 与 {@link #jsonBody} 相同的编码，但卡值与凭据字段写成遮蔽文本；只用于执行轨迹与沙箱验证证据。
      *
      * @param api 原子 API 快照
      * @param body 请求体
      * @return UTF-8 字节
      */
     public byte[] maskedJsonBody(ExecutionApi api, Object body) {
-        return JSON.writeValueAsBytes(JsonValues.toJson(body, api.isDecimalAsNumber(), CardRendering.MASKED));
+        return JSON.writeValueAsBytes(JsonValues.toJson(body, api.isDecimalAsNumber(), SecretRendering.MASKED));
     }
 
     /** 锁定的 JSON 请求体原样发送；缺少 Content-Type 时补 application/json。 */

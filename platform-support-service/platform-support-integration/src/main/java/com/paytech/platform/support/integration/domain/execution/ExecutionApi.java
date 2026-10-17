@@ -39,4 +39,11 @@ public class ExecutionApi {
         definition.path("cardFields").forEach(key -> keys.add(key.asString("")));
         return keys;
     }
+
+    /** credentialFields 声明的凭据字段键 BODY:&lt;path&gt;；只能由受控句柄赋值（Toss Pay 接入技术方案 T1）。 */
+    public Set<String> credentialFieldKeys() {
+        var keys = new LinkedHashSet<String>();
+        definition.path("credentialFields").forEach(key -> keys.add(key.asString("")));
+        return keys;
+    }
 }

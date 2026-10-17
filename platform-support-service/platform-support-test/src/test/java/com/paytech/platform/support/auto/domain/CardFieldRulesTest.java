@@ -20,7 +20,7 @@ import com.paytech.platform.support.integration.domain.ValidationIssue;
 import com.paytech.platform.support.integration.domain.execution.CardValue;
 import com.paytech.platform.support.integration.domain.execution.ExecutionErrorException;
 import com.paytech.platform.support.integration.domain.execution.JsonValues;
-import com.paytech.platform.support.integration.domain.execution.JsonValues.CardRendering;
+import com.paytech.platform.support.integration.domain.execution.JsonValues.SecretRendering;
 import com.paytech.platform.support.integration.domainservice.expression.ExpressionEngine;
 import com.paytech.platform.support.integration.domainservice.validator.FlowDefinitionValidator;
 import com.paytech.platform.support.integration.domainservice.validator.IntegrationApiDefinitionValidator;
@@ -35,7 +35,7 @@ import tools.jackson.databind.node.ObjectNode;
  * 卡字段的纯规则（PayerMax 卡直付对接技术方案第 3.2、3.3 节）：卡值只在发送字节中展开、轨迹写遮蔽文本、其他位置拒绝；
  * 原子 API cardFields 的保存校验；流程中卡值只能以 PATH 赋给卡字段。完整执行链路见 StandardApiCardPaymentTest。
  *
- * @see JsonValues#toJson(Object, boolean, CardRendering)
+ * @see JsonValues#toJson(Object, boolean, SecretRendering)
  * @see IntegrationApiDefinitionValidator#validate(tools.jackson.databind.JsonNode, List, Set, Map)
  * @see FlowDefinitionValidator#validate(tools.jackson.databind.JsonNode, List, List, Map)
  */
@@ -58,9 +58,9 @@ class CardFieldRulesTest {
         Map<String, Object> envelope = Map.of("data", body);
 
         assertAll(() -> assertEquals("{\"number\":\"" + PAN + "\",\"cvv\":\"" + CVV + "\"}",
-                JsonValues.toJson(body, false, CardRendering.WIRE).toString()),
+                JsonValues.toJson(body, false, SecretRendering.WIRE).toString()),
             () -> assertEquals("{\"number\":\"411111******1111\",\"cvv\":\"[CARD]\"}",
-                JsonValues.toJson(body, false, CardRendering.MASKED).toString()),
+                JsonValues.toJson(body, false, SecretRendering.MASKED).toString()),
             () -> assertThrows(ExecutionErrorException.class, () -> JsonValues.toJson(body, false)),
             () -> assertTrue(JsonValues.containsCard(envelope)),
             () -> assertFalse(JsonValues.containsCard(Map.of("data", Map.of("number", PAN)))),
@@ -103,7 +103,7 @@ class CardFieldRulesTest {
             List.of(new ParameterDeclaration("privateKey", "PROTECTED_HANDLE", true)),
             Map.of("SUCCESS", List.of(new ParameterDeclaration("transactionRef", "STRING", true)), "FAIL", List.of()),
             Set.of("BODY:data.card.number", "BODY:data.card.expMonth", "BODY:data.card.expYear", "BODY:data.card.cvv",
-                "BODY:data.card.holder")));
+                "BODY:data.card.holder"), Set.of()));
     }
 
     private static Map<String, ScriptSignature> scripts() {

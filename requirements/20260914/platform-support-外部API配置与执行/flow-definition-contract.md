@@ -146,6 +146,7 @@
    - `input.*` 必须是标准 API 请求字段；
    - `resources.<id>.*` 必须是已声明初始化项的返回字段，且引用它的初始化项不能形成环；
    - 卡值（返回类型 `CARD`）只能以 PATH `resources.<id>.<卡值>` 绑定原子 API `cardFields` 声明的卡字段；卡字段也只接受这种绑定（`CARD_BINDING_INVALID`），其他位置引用卡值为 `REFERENCE_NOT_ALLOWED`；
+   - 原子 API `credentialFields` 声明的凭据字段只接受 PATH `resources.<id>.credentials.<名称>`（`CREDENTIAL_BINDING_INVALID`，2026-10-17 Toss Pay 接入新增）；其他请求字段引用凭据仍为 `REFERENCE_NOT_ALLOWED`；
    - `steps.<id>.*` 只能在 `<id>` **必经**的位置引用：从 `entry` 到该节点、连线或出口的每条路径上都已执行过 `<id>`，否则拒绝（防止读取另一分支未执行的节点）。
 5. **覆盖：** 节点 `request` 与原子 API `fixedValues` 合起来覆盖每个必填请求字段，节点 `params` 覆盖每个必填调用参数；`SUCCESS`/`FAIL` 出口必须覆盖标准 API 全部必填响应字段。
 6. **表达式：** 在白名单剖面下编译；条件表达式可推导为布尔；类型能静态推导的做静态检查，其余标记“运行时校验”。

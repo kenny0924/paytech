@@ -34,6 +34,9 @@ public class ValueResolver {
     /** 卡字段取值的目标类型：只接受卡值句柄（PayerMax 卡直付对接技术方案第 3.2 节）。 */
     public static final String CARD = "CARD";
 
+    /** 受控句柄目标类型：调用参数与原子 API 凭据字段只接受受控句柄本身。 */
+    public static final String PROTECTED_HANDLE = "PROTECTED_HANDLE";
+
     /** FUNCTION 的 result 表达式中函数返回值的变量名。 */
     public static final String RESULT = "result";
 
@@ -151,7 +154,7 @@ public class ValueResolver {
             case "DECIMAL" -> value instanceof BigDecimal;
             case "OBJECT" -> value instanceof Map<?, ?>;
             case "ARRAY" -> value instanceof List<?>;
-            case "PROTECTED_HANDLE" -> value instanceof ProtectedHandle;
+            case PROTECTED_HANDLE -> value instanceof ProtectedHandle;
             case CARD -> value instanceof CardValue;
             default -> false;
         };

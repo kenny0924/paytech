@@ -81,9 +81,10 @@ public class AtomicApiExecutor implements NodeRunner {
         return result(api, received, params);
     }
 
-    /** 执行轨迹记录的请求体：含卡值时用同一编码规则重新生成遮蔽副本，否则即发送字节。 */
+    /** 执行轨迹记录的请求体：含卡值或受控句柄时用同一编码规则重新生成遮蔽副本，否则即发送字节。 */
     byte[] traceBody(ExecutionApi api, ChannelRequest request, Object body) {
-        return JsonValues.containsCard(body) ? requestBuilder.maskedJsonBody(api, body) : request.getBody();
+        return JsonValues.containsCard(body) || JsonValues.containsHandle(body) ? requestBuilder.maskedJsonBody(api, body)
+            : request.getBody();
     }
 
     /** 发送请求；沙箱验证运行同时记录脱敏后的渠道交换（无论成功或失败），请求体卡值已遮蔽。 */

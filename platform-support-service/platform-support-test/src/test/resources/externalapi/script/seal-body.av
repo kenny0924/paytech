@@ -1,0 +1,1 @@
+http.requestHeaders.digest = base64Encode(sealJsonBody(http));

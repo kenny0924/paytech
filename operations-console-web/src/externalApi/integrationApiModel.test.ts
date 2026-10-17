@@ -118,3 +118,12 @@ test('cardFields：没有卡字段时保存省略，已有卡字段原样保留'
   assert.deepEqual(Object.keys(back), ['params', 'fixedValues', 'transport', 'requestEncoding', 'responseDecoding', 'decimalEncoding', 'cardFields', 'scripts', 'statusRules', 'outputs']);
   assert.deepEqual(back.cardFields, cardFields);
 });
+
+test('credentialFields：没有凭据字段时保存省略，已有凭据字段原样保留在 cardFields 之后', () => {
+  assert.deepEqual(toDraft(definition).credentialFields, []);
+  assert.equal('credentialFields' in toDefinition(toDraft(definition)), false);
+  const credentialFields = ['BODY:apiKey'];
+  const back = toDefinition(toDraft({ ...definition, cardFields: ['BODY:data.card.number'], credentialFields }));
+  assert.deepEqual(Object.keys(back), ['params', 'fixedValues', 'transport', 'requestEncoding', 'responseDecoding', 'cardFields', 'credentialFields', 'scripts', 'statusRules', 'outputs']);
+  assert.deepEqual(back.credentialFields, credentialFields);
+});

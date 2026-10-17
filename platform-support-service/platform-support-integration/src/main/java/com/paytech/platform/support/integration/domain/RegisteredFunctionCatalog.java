@@ -62,7 +62,7 @@ public final class RegisteredFunctionCatalog {
             new ParameterDeclaration("path", "STRING", true)),
         script("json.set", "OBJECT（写入后的 target）", new ParameterDeclaration("target", "OBJECT", true),
             new ParameterDeclaration("path", "STRING", true), new ParameterDeclaration("value", "ANY", true)),
-        script("sealJsonBody", "STRING（锁定的请求体文本，即实际发送的字节；仅 JSON 编码的 REQUEST 阶段，锁定后请求体只读）",
+        script("sealJsonBody", "STRING（锁定的请求体文本，即实际发送的字节；仅 JSON 编码的 REQUEST 阶段，锁定后请求体只读；请求体含凭据字段时 ERROR）",
             new ParameterDeclaration("http", "OBJECT", true)),
         script("rsaSha256Sign", "STRING（SHA256withRSA 签名的 Base64）", new ParameterDeclaration("privateKey", HANDLE, true),
             new ParameterDeclaration("message", "STRING", true)),

@@ -67,29 +67,29 @@ public final class JsonValues {
      * @throws ExecutionErrorException 值不是可输出的 JSON 类型（例如受控句柄、卡值）
      */
     public static JsonNode toJson(Object value, boolean decimalAsNumber) {
-        return toJson(value, decimalAsNumber, CardRendering.REJECT);
+        return toJson(value, decimalAsNumber, SecretRendering.REJECT);
     }
 
     /**
-     * 环境值转为 JSON，并指定卡值的写法。
+     * 环境值转为 JSON，并指定卡值与受控句柄的写法。
      *
      * @param value 环境值
      * @param decimalAsNumber BigDecimal 是否写成 JSON 数字
-     * @param cards 卡值写法：发送字节写原值，执行轨迹写遮蔽文本，其余位置拒绝
+     * @param secrets 卡值与受控句柄的写法：发送字节写原值，执行轨迹写遮蔽文本，其余位置拒绝
      * @throws ExecutionErrorException 值不是可输出的 JSON 类型
      */
-    public static JsonNode toJson(Object value, boolean decimalAsNumber, CardRendering cards) {
+    public static JsonNode toJson(Object value, boolean decimalAsNumber, SecretRendering secrets) {
         if (value == null) {
             return NODES.nullNode();
         }
         if (value instanceof Map<?, ?> map) {
             ObjectNode result = NODES.objectNode();
-            map.forEach((key, item) -> result.set(String.valueOf(key), toJson(item, decimalAsNumber, cards)));
+            map.forEach((key, item) -> result.set(String.valueOf(key), toJson(item, decimalAsNumber, secrets)));
             return result;
         }
         if (value instanceof List<?> list) {
             ArrayNode result = NODES.arrayNode();
-            list.forEach(item -> result.add(toJson(item, decimalAsNumber, cards)));
+            list.forEach(item -> result.add(toJson(item, decimalAsNumber, secrets)));
             return result;
         }
         if (value instanceof String text) {
@@ -107,26 +107,39 @@ public final class JsonValues {
         if (value instanceof BigDecimal decimal) {
             return decimalAsNumber ? NODES.numberNode(decimal) : NODES.stringNode(decimal.toPlainString());
         }
-        if (value instanceof CardValue card && cards != CardRendering.REJECT) {
-            return NODES.stringNode(cards == CardRendering.WIRE ? card.apply(secret -> secret) : card.masked());
+        if (value instanceof CardValue card && secrets != SecretRendering.REJECT) {
+            return NODES.stringNode(secrets == SecretRendering.WIRE ? card.apply(secret -> secret) : card.masked());
+        }
+        if (value instanceof ProtectedHandle handle && secrets != SecretRendering.REJECT) {
+            return NODES.stringNode(secrets == SecretRendering.WIRE ? handle.apply(secret -> secret) : ProtectedHandle.MASK);
         }
         throw new ExecutionErrorException("值不是可输出的 JSON 类型");
     }
 
     /** 环境值中是否含卡值。 */
     public static boolean containsCard(Object value) {
+        return contains(value, CardValue.class);
+    }
+
+    /** 环境值中是否含受控句柄。 */
+    public static boolean containsHandle(Object value) {
+        return contains(value, ProtectedHandle.class);
+    }
+
+    /** 递归查找某类值。 */
+    static boolean contains(Object value, Class<?> type) {
         return switch (value) {
-            case CardValue ignored -> true;
-            case Map<?, ?> map -> map.values().stream().anyMatch(JsonValues::containsCard);
-            case List<?> list -> list.stream().anyMatch(JsonValues::containsCard);
-            case null, default -> false;
+            case Map<?, ?> map -> map.values().stream().anyMatch(item -> contains(item, type));
+            case List<?> list -> list.stream().anyMatch(item -> contains(item, type));
+            case null -> false;
+            default -> type.isInstance(value);
         };
     }
 
-    /** 卡值在 JSON 中的写法。 */
-    public enum CardRendering {
+    /** 卡值与受控句柄在 JSON 中的写法。 */
+    public enum SecretRendering {
 
-        /** 不允许出现卡值。 */
+        /** 不允许出现卡值或受控句柄。 */
         REJECT,
 
         /** 渠道请求的发送字节：写原值。 */

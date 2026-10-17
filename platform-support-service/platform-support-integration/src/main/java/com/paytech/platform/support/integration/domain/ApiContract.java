@@ -32,4 +32,7 @@ public class ApiContract {
 
     /** 卡字段键 BODY:&lt;path&gt;，只能由卡值句柄赋值。 */
     private final Set<String> cardFieldKeys;
+
+    /** 凭据字段键 BODY:&lt;path&gt;，只能由受控句柄赋值。 */
+    private final Set<String> credentialFieldKeys;
 }

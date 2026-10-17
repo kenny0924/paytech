@@ -41,6 +41,7 @@
 | `requestEncoding` / `responseDecoding` | 是 | 报文编解码（第 5.2 节） |
 | `decimalEncoding` | 否 | 渠道报文中 DECIMAL 的 JSON 形式，`STRING`（缺省）或 `NUMBER`（第 5.2 节，2026-10-14 PayerMax 接入新增） |
 | `cardFields` | 否 | 卡字段键数组 `BODY:<path>`，最多 8 个（第 5.3 节，2026-10-14 PayerMax 卡直付新增） |
+| `credentialFields` | 否 | 凭据字段键数组 `BODY:<path>`，最多 4 个（第 5.4 节，2026-10-17 Toss Pay 接入新增） |
 | `scripts` | 是 | 有序脚本引用，可为空数组（第 6 节） |
 | `statusRules` | 是 | 执行状态判定（第 7 节） |
 | `outputs` | 是 | 按状态分支的输出映射（第 8 节） |
@@ -122,6 +123,16 @@
 - 卡字段只能由流程以 PATH 绑定初始化函数 `PAYMENT_CARD` 返回的卡值句柄；卡值句柄也不能写入其他字段、脚本参数、Header、出口或状态规则（流程结构第 6 节）。
 - 卡值只在 JSON 发送字节中展开（含 `sealJsonBody` 锁定的字节，签名覆盖原值）；REQUEST 脚本读取卡字段只得到不可读的句柄。
 - 沙箱验证证据中的请求体由同一编码规则重新生成遮蔽副本：卡号保留前 6 后 4，其他卡值为 `[CARD]`。
+
+### 5.4 凭据字段 credentialFields（2026-10-17，[Toss Pay 接入](../../20261017/platform-support-TossPay接入/technique.md#t1-请求体凭据字段建议改代码)）
+
+用于把凭据明文放在 JSON 请求体中认证的渠道（如 Toss Pay 的 body `apiKey`）。
+
+- 可选数组，元素为本 API 的 `BODY:<path>` 请求字段键：必须是 STRING 类型、路径不含 `[]`、没有固定值、不重复、不能同时是卡字段；有凭据字段时 `requestEncoding` 必须是 `JSON`。问题码 `CREDENTIAL_FIELD_INVALID`、`_FIXED`、`_DUPLICATED`、`_CONFLICT`、`_ENCODING`。
+- 凭据字段只能由流程以 PATH 绑定 `resources.<初始化项>.credentials.<名称>`（`CREDENTIAL_BINDING_INVALID`），其他请求字段仍不能引用凭据。
+- 受控句柄只在 JSON 发送字节中展开；REQUEST 脚本之后，请求体中出现在凭据字段以外的受控句柄使节点 ERROR，不发请求。
+- 请求体含受控句柄时 `sealJsonBody` 使节点 ERROR：锁定文本对脚本可读，会泄露明文。需要对含凭据的请求体签名的渠道另行设计。
+- 执行轨迹与沙箱验证证据中的请求体由同一编码规则重新生成遮蔽副本，凭据字段为 `[REDACTED]`。
 
 ## 6. 脚本
 

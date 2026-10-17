@@ -234,6 +234,10 @@ public class FlowDefinitionValidator {
                 cardBinding(request.get(raw), location + "." + raw, state);
                 continue;
             }
+            if (api.getCredentialFieldKeys().contains(key)) {
+                credentialBinding(request.get(raw), location + "." + raw, state);
+                continue;
+            }
             bindings.validate(request.get(raw), location + "." + raw, true,
                 path -> state.nodeReference(path, nodeId, location + "." + raw), state.issues);
         }
@@ -273,14 +277,27 @@ public class FlowDefinitionValidator {
 
     /** 受控句柄参数：只能是指向已声明初始化项 credentials 的 PATH。 */
     void handleBinding(JsonNode binding, String location, State state) {
-        String path = binding == null ? "" : binding.path("path").asString("");
-        boolean pathKind = binding != null && binding.isObject() && "PATH".equals(binding.path("kind").asString(""))
-            && binding.size() == 2;
-        if (!pathKind || !path.startsWith("resources.") || !"credentials".equals(segment(path, 2))
-            || path.split("\\.").length != 4 || !state.initializerFunctions.containsKey(segment(path, 1))) {
+        if (!credentialPath(binding, state)) {
             state.issue("HANDLE_BINDING_INVALID", location,
                 "受控句柄参数只能以 PATH 绑定 resources.<初始化项>.credentials.<名称>");
         }
+    }
+
+    /** 凭据字段（Toss Pay 接入技术方案 T1）：绑定规则同受控句柄参数。 */
+    void credentialBinding(JsonNode binding, String location, State state) {
+        if (!credentialPath(binding, state)) {
+            state.issue("CREDENTIAL_BINDING_INVALID", location,
+                "凭据字段只能以 PATH 绑定 resources.<初始化项>.credentials.<名称>");
+        }
+    }
+
+    /** 绑定是指向已声明初始化项 credentials 的 PATH。 */
+    static boolean credentialPath(JsonNode binding, State state) {
+        String path = binding == null ? "" : binding.path("path").asString("");
+        boolean pathKind = binding != null && binding.isObject() && "PATH".equals(binding.path("kind").asString(""))
+            && binding.size() == 2;
+        return pathKind && path.startsWith("resources.") && "credentials".equals(segment(path, 2))
+            && path.split("\\.").length == 4 && state.initializerFunctions.containsKey(segment(path, 1));
     }
 
     /** 卡字段（PayerMax 卡直付对接技术方案第 3.2 节）：只能以 PATH 绑定初始化项返回的卡值句柄 resources.&lt;id&gt;.&lt;卡值&gt;。 */

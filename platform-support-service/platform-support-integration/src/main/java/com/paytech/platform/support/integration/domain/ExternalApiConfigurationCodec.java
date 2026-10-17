@@ -123,8 +123,10 @@ public class ExternalApiConfigurationCodec {
         }
         var cardKeys = new java.util.LinkedHashSet<String>();
         definition.path("cardFields").forEach(key -> cardKeys.add(key.asString("")));
+        var credentialKeys = new java.util.LinkedHashSet<String>();
+        definition.path("credentialFields").forEach(key -> credentialKeys.add(key.asString("")));
         return new ApiContract(code, name, requestFields, fixedKeys, declarations(definition.path("params")), outputs,
-            cardKeys);
+            cardKeys, credentialKeys);
     }
 
     /** 读取 [{name, dataType, required}] 形状的声明数组。 */

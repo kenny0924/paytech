@@ -124,7 +124,8 @@ public final class FieldSchema {
             throw new FieldSchemaViolation(path, "不能为 null");
         }
         switch (dataType) {
-            case STRING -> require(value instanceof String || value instanceof CardValue, path, "必须是字符串");
+            case STRING -> require(value instanceof String || value instanceof CardValue || value instanceof ProtectedHandle, path,
+                "必须是字符串");
             case BOOLEAN -> require(value instanceof Boolean, path, "必须是布尔值");
             case INTEGER -> require(value instanceof Long || value instanceof Integer, path, "必须是 64 位整数");
             case DECIMAL -> require(value instanceof BigDecimal, path, "必须是十进制数");
