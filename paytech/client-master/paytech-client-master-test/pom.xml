@@ -6,14 +6,14 @@
 
     <parent>
         <groupId>com.paytech</groupId>
-        <artifactId>client-contract-service</artifactId>
+        <artifactId>paytech-client-master</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>client-contract-test</artifactId>
-    <name>Client &amp; Contract Test</name>
-    <description>Isolated Client &amp; Contract automated tests.</description>
+    <artifactId>paytech-client-master-test</artifactId>
+    <name>PayTech Client Master Test</name>
+    <description>Isolated client-master automated tests, including the shared architecture rules R1-R12.</description>
 
     <properties>
         <maven.install.skip>true</maven.install.skip>
@@ -21,6 +21,7 @@
     </properties>
 
     <dependencies>
+        <dependency><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><scope>test</scope></dependency>
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-test-support</artifactId>
@@ -28,7 +29,13 @@
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
-            <artifactId>client-contract-web</artifactId>
+            <artifactId>paytech-client-master-app</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-arch-rules</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -49,6 +56,18 @@
 
     <build>
         <plugins>
+            <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId>
+                <configuration><annotationProcessorPaths><path><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId></path></annotationProcessorPaths></configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <systemPropertyVariables>
+                        <paytech.client-master.root>${project.basedir}/..</paytech.client-master.root>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>

@@ -17,6 +17,7 @@ import com.paytech.client.master.core.dal.dataobject.ClientDraftIdentity;
 import com.paytech.client.master.core.dal.dataobject.ClientPartyRelation;
 import com.paytech.client.master.domain.enums.ClientType;
 import com.paytech.client.master.domain.enums.PartyRelationStatus;
+import com.paytech.client.master.domain.onboarding.ClientAgreementPartyUsage;
 import com.paytech.client.master.domain.onboarding.ClientDraftPolicy;
 import com.paytech.client.master.domain.onboarding.ClientIdentifierNormalizer;
 import com.paytech.client.master.domain.onboarding.ClientMaterialTarget;
@@ -29,6 +30,7 @@ import com.paytech.client.master.domainservice.repository.ClientPeopleRepository
 import com.paytech.client.master.domainservice.repository.PartyIdentityKeyRepository;
 import com.paytech.client.master.domainservice.repository.PartyProfileIdentifierRepository;
 import com.paytech.client.master.domainservice.validator.ClientSubmissionValidator;
+import com.paytech.client.master.integration.ClientAgreementPartyClient;
 import com.paytech.client.master.integration.ClientMaterialAuthorityClient;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.httpproblem.api.ProblemFieldError;
@@ -52,12 +54,14 @@ public class ClientSubmissionPreparer {
     private final ClientSubmissionValidator validator;
     private final PartyIdentityKeyRepository identityKeys;
     private final ClientMaterialAuthorityClient authority;
+    private final ClientAgreementPartyClient agreementParties;
     private final PartyProfileIdentifierRepository identifiers;
 
-    /** 只依赖本模块仓储、通用目录校验与 Owner 只读端口。 */
+    /** 只依赖本模块仓储、通用目录校验与 Owner 只读端口（含 commercial 合同引用查询）。 */
     public ClientSubmissionPreparer(Clock clock, ClientDraftRepository drafts, ClientPeopleRepository people,
         ClientDocumentRepository documents, ClientSubmissionValidator validator, PartyIdentityKeyRepository identityKeys,
-        ClientMaterialAuthorityClient authority, PartyProfileIdentifierRepository identifiers) {
+        ClientMaterialAuthorityClient authority, ClientAgreementPartyClient agreementParties,
+        PartyProfileIdentifierRepository identifiers) {
         this.clock = clock;
         this.drafts = drafts;
         this.people = people;
@@ -65,6 +69,7 @@ public class ClientSubmissionPreparer {
         this.validator = validator;
         this.identityKeys = identityKeys;
         this.authority = authority;
+        this.agreementParties = agreementParties;
         this.identifiers = identifiers;
     }
 
@@ -101,11 +106,14 @@ public class ClientSubmissionPreparer {
         if (!organization) {
             return rows;
         }
-        for (ClientPersonView person : people.people(identity)) {
+        List<ClientPersonView> persons = people.people(identity);
+        // 准备步骤在数据库事务外执行；合同引用由 commercial 判断，无法确认时人员按已引用处理。
+        ClientAgreementPartyUsage usage = agreementParties.usage(persons.stream().map(ClientPersonView::identity).toList());
+        for (ClientPersonView person : persons) {
             long partyId = person.identity().partyId();
             if (relations.stream().anyMatch(relation -> relation.relatedPartyId() == partyId)) {
                 rows.add(subject(partyId, person.identity().profileId(), person.fields(), false, ClientSubmissionSubject.RELATED_PERSON,
-                    MaterialQualificationType.RELATED_PERSON_KYC, ClientDraftPolicy.isPersonEditable(identity, person.identity())));
+                    MaterialQualificationType.RELATED_PERSON_KYC, ClientDraftPolicy.isPersonEditable(identity, person.identity(), usage)));
             }
         }
         return rows;

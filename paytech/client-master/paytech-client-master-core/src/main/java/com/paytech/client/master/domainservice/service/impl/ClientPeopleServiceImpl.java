@@ -34,10 +34,11 @@ public final class ClientPeopleServiceImpl implements ClientPeopleService {
             return new Change(creation.partyId(),relationId);
         });
     }
-    public PeopleCommandReceiptResponseBody savePerson(ClientDraftCommand command,long applicationId,long partyId,ClientDraftPatch patch) {
+    public PeopleCommandReceiptResponseBody savePerson(ClientDraftCommand command,long applicationId,long partyId,ClientDraftPatch patch,
+        ClientAgreementPartyUsage usage) {
         return execute(command,applicationId,SAVE_PERSON,(application,now) -> {
             var person=person(application,partyId);patch.requirePerson();
-            if (!ClientDraftPolicy.isPersonEditable(application,person)) throw new FailException(PERSON_NOT_EDITABLE);
+            if (!ClientDraftPolicy.isPersonEditable(application,person,usage)) throw new FailException(PERSON_NOT_EDITABLE);
             people.savePerson(person,patch,now);return new Change(partyId,0);
         });
     }

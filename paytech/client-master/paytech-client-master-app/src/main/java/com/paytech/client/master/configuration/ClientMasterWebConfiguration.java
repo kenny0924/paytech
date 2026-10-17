@@ -8,9 +8,9 @@ import com.paytech.foundation.web.api.ApiErrorStatusResolver;
 
 /** 应用级 JSON、时间和既有错误合同；不承载数据库连接或业务支持范围。 */
 @Configuration(proxyBeanMethods = false)
-public class ClientContractWebConfiguration {
+public class ClientMasterWebConfiguration {
     @Bean
-    public org.springframework.boot.jackson.autoconfigure.JsonMapperBuilderCustomizer clientContractJson() {
+    public org.springframework.boot.jackson.autoconfigure.JsonMapperBuilderCustomizer clientMasterJson() {
         return builder -> builder.enable(tools.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
                 .enable(tools.jackson.core.StreamReadFeature.STRICT_DUPLICATE_DETECTION)
                 .withCoercionConfig(tools.jackson.databind.type.LogicalType.Textual, coercion -> {
@@ -23,11 +23,11 @@ public class ClientContractWebConfiguration {
                 });
     }
     @Bean
-    public Clock clientContractClock() {
+    public Clock clientMasterClock() {
         return Clock.systemUTC();
     }
     @Bean
-    public ApiErrorStatusResolver clientContractErrorStatusResolver() {
+    public ApiErrorStatusResolver clientMasterErrorStatusResolver() {
         return (code, fallback) -> switch (code.getCode()) {
             case "CLIENT_SESSION_INVALID" -> HttpStatus.UNAUTHORIZED;
             case "INVALID_DRAFT", "ORGANIZATION_REQUIRED", "MATERIAL_REQUIREMENT_INVALID", "SUBMISSION_INCOMPLETE" -> HttpStatus.UNPROCESSABLE_ENTITY;
@@ -38,10 +38,9 @@ public class ClientContractWebConfiguration {
                  "PERSON_NOT_EDITABLE", "RELATION_NOT_EDITABLE", "RELATION_ALREADY_EXISTS", "IDENTITY_CONFLICT" -> HttpStatus.CONFLICT;
             case "DRAFT_CONTEXT_INVALID", "ONBOARDING_DEPENDENCY_UNAVAILABLE" -> HttpStatus.SERVICE_UNAVAILABLE;
             case "CLIENT_NOT_FOUND" -> HttpStatus.NOT_FOUND;
-            case "INVALID_CHECKOUT_QUERY", "CLIENT_NOT_ELIGIBLE", "NO_ELIGIBLE_ENTITY" ->
-                HttpStatus.UNPROCESSABLE_CONTENT;
-            case "CCT_CONTEXT_AMBIGUOUS", "CCT_CONTEXT_CHANGED" -> HttpStatus.CONFLICT;
-            case "OWNER_UNAVAILABLE" -> HttpStatus.SERVICE_UNAVAILABLE;
+            case "INVALID_CANDIDATE_QUERY", "CLIENT_NOT_ELIGIBLE" -> HttpStatus.UNPROCESSABLE_CONTENT;
+            case "CANDIDATE_CONTEXT_AMBIGUOUS" -> HttpStatus.CONFLICT;
+            case "CANDIDATE_SOURCE_UNAVAILABLE" -> HttpStatus.SERVICE_UNAVAILABLE;
             default -> fallback;
         };
     }

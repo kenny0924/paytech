@@ -24,15 +24,10 @@ public enum BusinessChangeRecordAggregateRootType implements CodeEnum {
 
     ENTITY_SOURCE_RELATION("ENTITY_SOURCE_RELATION"),
 
-    AGREEMENT("AGREEMENT"),
-
     CONSUMER_LEGAL_DOCUMENT("CONSUMER_LEGAL_DOCUMENT"),
 
-    SELLER_DISCLOSURE("SELLER_DISCLOSURE"),
+    SELLER_DISCLOSURE("SELLER_DISCLOSURE");
 
-    COMMERCIAL_TERM_PLAN("COMMERCIAL_TERM_PLAN"),
-
-    PAYMENT_METHOD_PROFILE("PAYMENT_METHOD_PROFILE");
     private final String code;
     BusinessChangeRecordAggregateRootType(String code) {
         this.code = code;

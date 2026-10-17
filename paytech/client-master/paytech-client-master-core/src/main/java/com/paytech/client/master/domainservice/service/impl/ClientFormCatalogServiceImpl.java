@@ -2,7 +2,7 @@ package com.paytech.client.master.domainservice.service.impl;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import com.paytech.client.contract.api.enums.ClientFormCatalogStatus;
-import com.paytech.client.master.configuration.ClientFormCatalogProperties;
+import com.paytech.client.master.core.configuration.ClientFormCatalogProperties;
 import com.paytech.client.master.domain.enums.ClientType;
 import com.paytech.client.master.domain.onboarding.ClientFormOptions;
 import com.paytech.client.master.domain.onboarding.ClientFormOptions.*;

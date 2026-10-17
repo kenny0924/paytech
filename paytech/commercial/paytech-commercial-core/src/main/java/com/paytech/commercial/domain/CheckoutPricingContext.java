@@ -5,7 +5,6 @@ import static com.paytech.commercial.domain.CheckoutResolutionContext.*;
 
 import java.util.*;
 import com.paytech.commercial.core.dal.dataobject.CheckoutRecords.*;
-import com.paytech.commercial.domain.CheckoutCandidateContext.EntityEligibility;
 import com.paytech.foundation.common.error.FailException;
 import lombok.Value;
 import lombok.experimental.Accessors;
@@ -19,9 +18,9 @@ public class CheckoutPricingContext {
     /** 商业时点生效的原不可变版本。 */
     CommercialTermVersion version;
 
-    static CheckoutPricingContext resolve(CheckoutResolutionContext context, Agreement agreement, EntityEligibility candidate, String type) {
+    static CheckoutPricingContext resolve(CheckoutResolutionContext context, Agreement agreement, String entityNo, String type) {
         boolean client = type.equals("CLIENT_PRICING");
-        CommercialTermPlan plan = unique(context.termPlans(), p -> code(p.termType(), type)
+        CommercialTermPlan plan = unique(context.facts().termPlans(), p -> code(p.termType(), type)
                 && "ACTIVE".equals(p.status()) && (client
                         ? Objects.equals(p.agreementId(), agreement.agreementId())
                         : Objects.equals(p.localPartnerId(), agreement.localPartnerId())));
@@ -30,9 +29,9 @@ public class CheckoutPricingContext {
         }
         require(client
                 ? Objects.equals(plan.clientId(), context.query().clientId()) && plan.localPartnerId() == null
-                        && Objects.equals(plan.entityNo(), candidate.entity().entityNo())
+                        && Objects.equals(plan.entityNo(), entityNo)
                 : plan.clientId() == null && plan.agreementId() == null && plan.entityNo() == null);
-        CommercialTermVersion version = unique(context.termVersions(),
+        CommercialTermVersion version = unique(context.facts().termVersions(),
                 v -> v.termPlanId().equals(plan.termPlanId())
                         && (code(v.status(), "ACTIVE") || code(v.status(), "SUPERSEDED") || code(v.status(), "EXPIRED"))
                         && applicable(v.effectiveFrom(), v.effectiveTo(), context.query().asOf()));
@@ -41,9 +40,9 @@ public class CheckoutPricingContext {
         }
         require(version.agreementId().equals(agreement.agreementId()) && version.effectiveFrom() != null
                 && !version.effectiveFrom().isBefore(agreement.effectiveFrom()));
-        List<CommercialTermPrice> prices = context.termPrices().stream()
+        List<CommercialTermPrice> prices = context.facts().termPrices().stream()
                 .filter(p -> p.termVersionId().equals(version.termVersionId())
-                        && p.entityNo().equals(candidate.entity().entityNo()))
+                        && p.entityNo().equals(entityNo))
                 .toList();
         if (prices.isEmpty()) {
             return null;
@@ -57,10 +56,10 @@ public class CheckoutPricingContext {
 
     private static void validatePrice(CheckoutResolutionContext context, CommercialTermPrice price, boolean client) {
         require(price.priorityNo() != null && price.priorityNo() > 0);
-        PaymentMethodProfile profile = unique(context.methodProfiles(),
+        PaymentMethodProfile profile = unique(context.facts().methodProfiles(),
                 p -> p.paymentMethodProfileCode().equals(price.paymentMethodProfileCode()));
         require(profile != null && !code(profile.status(), "DRAFT"));
-        List<CommercialTermComponent> components = context.termComponents().stream()
+        List<CommercialTermComponent> components = context.facts().termComponents().stream()
                 .filter(c -> c.termPriceId().equals(price.termPriceId())).toList();
         require(!components.isEmpty());
         Set<Integer> numbers = new HashSet<>();
@@ -94,7 +93,7 @@ public class CheckoutPricingContext {
                 && nonnegative(c.maxAmount()) && rate(c.rate()));
         require(c.minAmount() == null || c.maxAmount() == null || c.minAmount().compareTo(c.maxAmount()) <= 0);
         if (!code(c.componentType(), "TIERED")) {
-            require(context.termBands().stream()
+            require(context.facts().termBands().stream()
                     .noneMatch(b -> b.termComponentId().equals(c.termComponentId())));
         }
         if (code(c.componentType(), "PERCENTAGE")) {
@@ -113,7 +112,7 @@ public class CheckoutPricingContext {
     }
 
     private static void validateBands(CheckoutResolutionContext context, CommercialTermComponent c) {
-        List<CommercialTermComponentBand> bands = context.termBands().stream()
+        List<CommercialTermComponentBand> bands = context.facts().termBands().stream()
                 .filter(b -> b.termComponentId().equals(c.termComponentId()))
                 .sorted(Comparator.comparing(CommercialTermComponentBand::bandNo)).toList();
         require(!bands.isEmpty() && bands.size() <= 1000);

@@ -4,13 +4,13 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
- * Client & Contract 服务启动入口。
+ * client-master 服务启动入口（mor_client_master，18101 / 管理 19101）。
  */
 @SpringBootApplication
 public class ClientMasterApplication {
 
     /**
-     * 启动 Client & Contract 服务。
+     * 启动 client-master 服务。
      *
      * @param args 命令行参数
      */

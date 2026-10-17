@@ -1,5 +1,6 @@
 package com.paytech.client.master.test.base.onboarding;
 
+import com.paytech.client.master.test.base.ClientMasterMockTestBase;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.HexFormat;

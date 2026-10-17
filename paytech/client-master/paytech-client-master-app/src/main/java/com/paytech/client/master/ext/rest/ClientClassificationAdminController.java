@@ -14,7 +14,7 @@ import com.paytech.client.contract.api.onboarding.response.CatalogOptionResponse
 import com.paytech.client.contract.api.onboarding.response.ClassificationItemResponseBody;
 import com.paytech.client.contract.api.onboarding.response.ClassificationOptionsResponseBody;
 import com.paytech.client.contract.api.onboarding.response.ClassificationSetResponseBody;
-import com.paytech.client.master.configuration.ClientFormCatalogProperties;
+import com.paytech.client.master.core.configuration.ClientFormCatalogProperties;
 import com.paytech.client.master.service.processor.ConfirmClientClassificationProcessor;
 import com.paytech.client.master.service.processor.GetClientClassificationProcessor;
 import com.paytech.client.master.service.processor.ReplaceClientClassificationProcessor;

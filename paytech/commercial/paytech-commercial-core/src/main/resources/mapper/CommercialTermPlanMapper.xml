@@ -15,7 +15,7 @@
     <select id="findForCheckout" resultMap="CommercialTermPlan">
         SELECT term_plan_id, term_type, agreement_id, entity_no, client_id, local_partner_id, status
         FROM t_commercial_term_plan
-        WHERE client_id = #{clientId} OR local_partner_id IN (SELECT source_partner_id FROM t_entity_source_relation WHERE entity_no IN (SELECT entity_no FROM t_client_entity_affiliation WHERE client_id = #{clientId}) AND source_type='PARTNER')
+        WHERE client_id = #{clientId}<if test="!localPartnerIds.isEmpty()"> OR local_partner_id IN <foreach collection="localPartnerIds" item="partnerId" open="(" separator="," close=")">#{partnerId}</foreach></if>
         ORDER BY term_plan_id
     </select>
 </mapper>

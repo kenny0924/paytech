@@ -20,7 +20,7 @@ public final class CheckoutFixture implements AutoCloseable {
     /** 加载完整解析 HTTP 场景使用的合成本地事实。 */
     @SuppressWarnings("unchecked")
     public CheckoutFixture() {
-        try (var input = getClass().getResourceAsStream("/fixtures/checkout-query.json")) {
+        try (var input = getClass().getResourceAsStream("/fixtures/commercial/checkout-query.json")) {
             rows = JsonMapper.builder().build().readValue(input, Map.class);
         } catch (java.io.IOException exception) {
             throw new AssertionError(exception);
@@ -42,7 +42,7 @@ public final class CheckoutFixture implements AutoCloseable {
                     insert(jdbc, source, table.getKey(), row);
         } catch (java.sql.SQLException exception) {
             close();
-            throw new AssertionError("请先人工应用 CCT Schema，再运行本地 MySQL 测试", exception);
+            throw new AssertionError("请先人工应用 commercial 测试 DDL（init/ddl.sql），再运行本地 MySQL 测试", exception);
         }
     }
     /** 仅在插入成功后登记该行的清理动作。 */

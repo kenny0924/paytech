@@ -1,4 +1,5 @@
 package com.paytech.client.master.configuration;
+import com.paytech.foundation.internalauth.api.InternalTokenSupplier;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.time.*;
@@ -35,9 +36,14 @@ public class ClientDocumentConfiguration {
     /** 同库业务规则不依赖 Owner 网络客户端。 */
     @Bean public ClientDocumentService clientDocumentService(ClientDraftRepository drafts,ClientPeopleRepository people,ClientDocumentRepository documents,IdGenerator ids,Clock clock) { return new ClientDocumentServiceImpl(drafts,people,documents,ids,clock); }
     /** 显式私网 HTTP 合同，不由浏览器指定 URL。 */
-    @Bean public ClientMaterialAuthorityClient clientMaterialAuthorityClient(Environment env,ObjectProvider<LoadBalancerClient> discovery,Clock clock) {
-        var platform=HttpServiceClientFactory.create(ClientOnboardingRecoveryConfiguration.platformTransport(env,discovery),HttpServiceClientOptions.strict().withStrictJsonResponses(8192),OnboardingFileErrorCode.values()).createClient(OnboardingFileVerificationApi.class);
-        var risk=HttpServiceClientFactory.create(riskTransport(env,discovery),HttpServiceClientOptions.strict().withStrictJsonResponses(262144)).createClient(MaterialRequirementsApi.class);
+    @Bean public ClientMaterialAuthorityClient clientMaterialAuthorityClient(Environment env,ObjectProvider<LoadBalancerClient> discovery,Clock clock,
+        ObjectProvider<InternalTokenSupplier> tokens) {
+        var platform=HttpServiceClientFactory.create(ClientOnboardingRecoveryConfiguration.platformTransport(env,discovery),
+            InternalCallTokenOptions.apply(HttpServiceClientOptions.strict().withStrictJsonResponses(8192),tokens,"platform-support-service"),
+            OnboardingFileErrorCode.values()).createClient(OnboardingFileVerificationApi.class);
+        var risk=HttpServiceClientFactory.create(riskTransport(env,discovery),
+            InternalCallTokenOptions.apply(HttpServiceClientOptions.strict().withStrictJsonResponses(262144),tokens,"risk-service"))
+            .createClient(MaterialRequirementsApi.class);
         return new ClientMaterialAuthorityClient(risk,platform,clock);
     }
     /** 生产使用 Risk 服务发现，测试仅允许 auto 的随机 loopback 根路径。 */

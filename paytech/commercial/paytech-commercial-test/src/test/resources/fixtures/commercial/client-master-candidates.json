@@ -1,0 +1,196 @@
+{
+  "candidates": {
+    "client": {
+      "clientId": "910000000000001",
+      "status": "ACTIVE",
+      "partyId": "910000000000002",
+      "partyProfileId": "910000000000005",
+      "approvedAt": "2026-09-01T00:00:00Z",
+      "storedCardSetting": {
+        "enabled": false
+      }
+    },
+    "classification": {
+      "businessProfileId": "910000000000003",
+      "classificationId": "910000000000004",
+      "industryCode": "SOFTWARE",
+      "mccCode": "5734"
+    },
+    "candidates": [
+      {
+        "entityNo": "AE991",
+        "oePartyId": "910000000000102",
+        "affiliationId": "910000000000101",
+        "priorityNo": 10,
+        "scopeId": "910000000000105",
+        "sourceRelation": {
+          "sourceRelationId": "910000000000103",
+          "sourceType": "PLATFORM",
+          "sourceClientId": null,
+          "sourcePartnerId": null
+        },
+        "localPartner": null,
+        "legalDocuments": [
+          {
+            "legalDocumentId": "910000000000120",
+            "documentType": "CONSUMER_TERMS",
+            "contentFileId": "910000000000125",
+            "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "status": "ACTIVE",
+            "effectiveFrom": "2026-09-01T00:00:00Z",
+            "effectiveTo": "2026-10-01T00:00:00Z",
+            "approvedTime": "2026-09-01T00:00:00Z",
+            "publishedTime": "2026-09-01T00:00:00Z"
+          },
+          {
+            "legalDocumentId": "910000000000121",
+            "documentType": "REFUND_POLICY",
+            "contentFileId": "910000000000126",
+            "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "status": "ACTIVE",
+            "effectiveFrom": "2026-09-01T00:00:00Z",
+            "effectiveTo": "2026-10-01T00:00:00Z",
+            "approvedTime": "2026-09-01T00:00:00Z",
+            "publishedTime": "2026-09-01T00:00:00Z"
+          },
+          {
+            "legalDocumentId": "910000000000122",
+            "documentType": "PRIVACY_NOTICE",
+            "contentFileId": "910000000000127",
+            "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "status": "ACTIVE",
+            "effectiveFrom": "2026-09-01T00:00:00Z",
+            "effectiveTo": "2026-10-01T00:00:00Z",
+            "approvedTime": "2026-09-01T00:00:00Z",
+            "publishedTime": "2026-09-01T00:00:00Z"
+          }
+        ],
+        "sellerDisclosures": [
+          {
+            "disclosureId": "910000000000128",
+            "status": "ACTIVE",
+            "effectiveFrom": "2026-09-01T00:00:00Z",
+            "effectiveTo": "2026-10-01T00:00:00Z",
+            "approvedTime": "2026-09-01T00:00:00Z",
+            "publishedTime": "2026-09-01T00:00:00Z"
+          }
+        ],
+        "candidateDigest": "1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      {
+        "entityNo": "AE992",
+        "oePartyId": "910000000000202",
+        "affiliationId": "910000000000201",
+        "priorityNo": 20,
+        "scopeId": "910000000000205",
+        "sourceRelation": {
+          "sourceRelationId": "910000000000203",
+          "sourceType": "PLATFORM",
+          "sourceClientId": null,
+          "sourcePartnerId": null
+        },
+        "localPartner": null,
+        "legalDocuments": [
+          {
+            "legalDocumentId": "910000000000220",
+            "documentType": "CONSUMER_TERMS",
+            "contentFileId": "910000000000225",
+            "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "status": "ACTIVE",
+            "effectiveFrom": "2026-09-01T00:00:00Z",
+            "effectiveTo": "2026-10-01T00:00:00Z",
+            "approvedTime": "2026-09-01T00:00:00Z",
+            "publishedTime": "2026-09-01T00:00:00Z"
+          },
+          {
+            "legalDocumentId": "910000000000221",
+            "documentType": "REFUND_POLICY",
+            "contentFileId": "910000000000226",
+            "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "status": "ACTIVE",
+            "effectiveFrom": "2026-09-01T00:00:00Z",
+            "effectiveTo": "2026-10-01T00:00:00Z",
+            "approvedTime": "2026-09-01T00:00:00Z",
+            "publishedTime": "2026-09-01T00:00:00Z"
+          },
+          {
+            "legalDocumentId": "910000000000222",
+            "documentType": "PRIVACY_NOTICE",
+            "contentFileId": "910000000000227",
+            "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "status": "ACTIVE",
+            "effectiveFrom": "2026-09-01T00:00:00Z",
+            "effectiveTo": "2026-10-01T00:00:00Z",
+            "approvedTime": "2026-09-01T00:00:00Z",
+            "publishedTime": "2026-09-01T00:00:00Z"
+          }
+        ],
+        "sellerDisclosures": [
+          {
+            "disclosureId": "910000000000228",
+            "status": "ACTIVE",
+            "effectiveFrom": "2026-09-01T00:00:00Z",
+            "effectiveTo": "2026-10-01T00:00:00Z",
+            "approvedTime": "2026-09-01T00:00:00Z",
+            "publishedTime": "2026-09-01T00:00:00Z"
+          }
+        ],
+        "candidateDigest": "2222222222222222222222222222222222222222222222222222222222222222"
+      }
+    ],
+    "commercialScope": {
+      "entityNos": [
+        "AE991",
+        "AE992"
+      ],
+      "localPartnerIds": []
+    },
+    "rootVersions": {
+      "client": {
+        "recordId": "910000000000001",
+        "historyId": "910000000000006",
+        "version": 1
+      },
+      "operatingEntities": [
+        {
+          "recordId": "AE991",
+          "historyId": "910000000000140",
+          "version": 1
+        },
+        {
+          "recordId": "AE992",
+          "historyId": "910000000000240",
+          "version": 1
+        }
+      ],
+      "localPartners": [],
+      "consumerLegalDocuments": [],
+      "sellerDisclosures": []
+    }
+  },
+  "partyProfiles": {
+    "items": [
+      {
+        "profileId": "910000000000005",
+        "partyId": "910000000000002",
+        "approvedTime": "2026-09-01T00:00:00Z",
+        "draftApplicationId": null,
+        "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "profileId": "910000000000111",
+        "partyId": "910000000000102",
+        "approvedTime": "2026-09-01T00:00:00Z",
+        "draftApplicationId": null,
+        "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "profileId": "910000000000211",
+        "partyId": "910000000000202",
+        "approvedTime": "2026-09-01T00:00:00Z",
+        "draftApplicationId": null,
+        "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    ]
+  }
+}

@@ -8,26 +8,30 @@
         <groupId>com.paytech</groupId>
         <artifactId>paytech-parent</artifactId>
         <version>1.0.0-SNAPSHOT</version>
-        <relativePath/>
+        <relativePath>../build/paytech-parent/pom.xml</relativePath>
     </parent>
 
-    <artifactId>client-contract-service</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <artifactId>paytech-client-master</artifactId>
     <packaging>pom</packaging>
 
-    <name>Client &amp; Contract Service</name>
-    <description>Client &amp; Contract service reactor.</description>
+    <name>PayTech Client Master</name>
+    <description>Client master data service aggregator: Party, Client, Local Partner, Operating Entity, onboarding and checkout candidates.</description>
 
     <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>com.paytech</groupId>
-                <artifactId>client-contract-api</artifactId>
+                <artifactId>paytech-client-master-api</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.paytech</groupId>
-                <artifactId>client-contract-web</artifactId>
+                <artifactId>paytech-client-master-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>paytech-client-master-app</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>
@@ -40,7 +44,7 @@
                 <artifactId>maven-enforcer-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>enforce-client-contract-approved-dependencies</id>
+                        <id>enforce-client-master-approved-dependencies</id>
                         <phase>validate</phase>
                         <goals>
                             <goal>enforce</goal>
@@ -50,6 +54,9 @@
                                 <bannedDependencies>
                                     <searchTransitive>true</searchTransitive>
                                     <excludes>
+                                        <!-- No other service's core/app; cross-service calls go through *-api only (D09). -->
+                                        <exclude>com.paytech:*-core</exclude>
+                                        <exclude>com.paytech:*-app</exclude>
                                         <exclude>org.springframework.boot:spring-boot-starter-data-jdbc</exclude>
                                         <exclude>org.flywaydb:*</exclude>
                                         <exclude>org.liquibase:*</exclude>
@@ -76,7 +83,11 @@
                                         <exclude>org.mockito:*</exclude>
                                     </excludes>
                                     <includes>
-                                        <!-- CCT draft writes consume the approved Foundation resource lock. -->
+                                        <!-- Foundation, not a service core; own modules. -->
+                                        <include>com.paytech:paytech-common-core</include>
+                                        <include>com.paytech:paytech-client-master-core</include>
+                                        <include>com.paytech:paytech-client-master-app</include>
+                                        <!-- Draft writes consume the approved Foundation resource lock. -->
                                         <include>com.paytech:paytech-redis-starter</include>
                                         <include>org.redisson:redisson</include>
                                         <include>org.springframework.boot:spring-boot-starter-data-redis</include>
@@ -87,7 +98,7 @@
                                         <include>com.xuxueli:xxl-job-core</include>
                                         <include>com.xuxueli:xxl-tool</include>
                                         <include>org.springframework.security:spring-security-crypto</include>
-                                        <!-- 2026-10-13 用户批准 Operations 审核结果走 RabbitMQ：CCT 只消费 Risk 审核结果，其他 MQ 用途仍禁止。 -->
+                                        <!-- 2026-10-13 用户批准 Operations 审核结果走 RabbitMQ：client-master 只消费 Risk 审核结果，其他 MQ 用途仍禁止。 -->
                                         <include>org.springframework.boot:spring-boot-starter-amqp</include>
                                         <include>org.springframework.amqp:*</include>
                                         <include>com.rabbitmq:*</include>
@@ -102,8 +113,9 @@
     </build>
 
     <modules>
-        <module>client-contract-api</module>
-        <module>client-contract-web</module>
-        <module>client-contract-test</module>
+        <module>paytech-client-master-api</module>
+        <module>paytech-client-master-core</module>
+        <module>paytech-client-master-app</module>
+        <module>paytech-client-master-test</module>
     </modules>
 </project>

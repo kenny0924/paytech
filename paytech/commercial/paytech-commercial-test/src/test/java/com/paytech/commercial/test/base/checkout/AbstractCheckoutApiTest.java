@@ -4,6 +4,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 
 import com.paytech.commercial.api.checkout.request.ResolveCheckoutContextRequestBody;
+import com.paytech.commercial.domain.CheckoutQuery;
+import com.paytech.commercial.domain.CheckoutResolutionContext;
+import com.paytech.commercial.domainservice.service.CheckoutQueryService;
+import com.paytech.commercial.integration.ClientMasterCheckoutClient;
+import com.paytech.commercial.test.base.CommercialMockTestBase;
 import com.paytech.commercial.test.checker.checkout.CheckoutResolutionResponseChecker;
 import com.paytech.commercial.test.mocker.local.checkout.CheckoutFixture;
 import com.paytech.foundation.testsupport.api.HttpTestInvoker;
@@ -20,6 +25,10 @@ public abstract class AbstractCheckoutApiTest extends CommercialMockTestBase {
     protected HttpTestInvoker http;
     @Autowired
     protected JsonMapper json;
+    @Autowired
+    protected ClientMasterCheckoutClient clientMasterClient;
+    @Autowired
+    protected CheckoutQueryService service;
 
     /** 每次构造独立的合法请求，具体用例显式修改自己的差异字段。 */
     protected ResolveCheckoutContextRequestBody request() {
@@ -54,5 +63,14 @@ public abstract class AbstractCheckoutApiTest extends CommercialMockTestBase {
     protected CheckoutResolutionResponseChecker check(
             org.springframework.test.web.servlet.client.EntityExchangeResult<byte[]> response) {
         return new CheckoutResolutionResponseChecker(response, json, REQUEST_ID);
+    }
+
+    /**
+     * 经正式出站端口与本库只读 Service 构造解析上下文，与 Processor 的加载阶段相同（client-master 候选 → 本库快照 → 参与方资料）。
+     */
+    protected CheckoutResolutionContext context(CheckoutQuery query) {
+        var master = clientMasterClient.candidates(query);
+        var facts = service.load(master.scope());
+        return new CheckoutResolutionContext(query, master, facts, clientMasterClient.partyProfiles(facts.partyProfileIds()));
     }
 }

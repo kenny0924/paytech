@@ -11,7 +11,25 @@ import com.paytech.foundation.common.error.FailException;
 import static com.paytech.client.contract.api.enums.ClientDraftErrorCode.*;
 /** 草稿只校验已修改字段的语法和存储边界；完整性和稳定身份绑定留给正式提交。 */
 public final class ClientDraftPatch {
-    private enum Kind { TEXT, DATE, BOUNDARY, COUNTRY, CURRENCY, URL, MONEY, EMAIL, PHONE }
+    private enum Kind {
+        TEXT,
+
+        DATE,
+
+        BOUNDARY,
+
+        COUNTRY,
+
+        CURRENCY,
+
+        URL,
+
+        MONEY,
+
+        EMAIL,
+
+        PHONE
+    }
     private record Field(Kind kind, int length) {}
     private record EmailValue(@Email String value) {}
     private static final Map<String,Field> FIELDS=Map.ofEntries(

@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.paytech.client.master.core.dal.mapper.ClientPeopleMapper">
+  <!-- shared 只含本库事实；是否已被合同参与方引用由 commercial 查询（design/06 §2.2），在事务外合并且失败关闭。 -->
   <sql id="personColumns">
     p.party_id AS partyId,f.profile_id AS profileId,f.draft_application_id AS draftApplicationId,f.approved_time AS approvedTime,
     (EXISTS(SELECT 1 FROM t_party_relation shared WHERE shared.related_party_id=p.party_id
        AND (shared.client_application_id IS NULL OR shared.client_application_id != #{application.applicationId} OR shared.status != 'DRAFT'))
      OR EXISTS(SELECT 1 FROM t_client c JOIN t_client_application a ON a.client_id=c.client_id
        WHERE c.party_id=p.party_id AND a.status='APPROVED')
-     OR EXISTS(SELECT 1 FROM t_agreement_party ap WHERE ap.party_id=p.party_id OR ap.party_profile_id=f.profile_id)
      OR EXISTS(SELECT 1 FROM t_partner_application pa WHERE pa.target_party_profile_id=f.profile_id AND pa.status='APPROVED')
      OR EXISTS(SELECT 1 FROM t_operating_entity_application oa WHERE oa.party_profile_id=f.profile_id AND oa.status='APPROVED')) AS shared
   </sql>

@@ -1,5 +1,8 @@
 package com.paytech.client.master.configuration;
 
+import com.paytech.client.master.core.configuration.ClientFormCatalogProperties;
+import com.paytech.client.master.integration.ClientAgreementPartyClient;
+import com.paytech.foundation.internalauth.api.InternalTokenSupplier;
 import java.time.Clock;
 
 import org.apache.ibatis.session.SqlSessionFactory;
@@ -103,8 +106,10 @@ public class ClientSubmissionConfiguration {
     @Bean
     public ClientSubmissionPreparer clientSubmissionPreparer(Clock clock, ClientDraftRepository drafts, ClientPeopleRepository people,
         ClientDocumentRepository documents, ClientSubmissionValidator validator, PartyIdentityKeyRepository identityKeys,
-        ClientMaterialAuthorityClient authority, PartyProfileIdentifierRepository identifiers) {
-        return new ClientSubmissionPreparer(clock, drafts, people, documents, validator, identityKeys, authority, identifiers);
+        ClientMaterialAuthorityClient authority, ClientAgreementPartyClient agreementParties,
+        PartyProfileIdentifierRepository identifiers) {
+        return new ClientSubmissionPreparer(clock, drafts, people, documents, validator, identityKeys, authority, agreementParties,
+            identifiers);
     }
 
     /** 提交用例；锁参数沿用既有注解锁配置。 */
@@ -125,9 +130,11 @@ public class ClientSubmissionConfiguration {
 
     /** Risk I01/I02 出站端口；沿用 CCT 的 Risk 服务发现传输，注册 Risk 审核错误码以区分任务已结束与内容冲突。 */
     @Bean
-    public ClientReviewRegistrationClient clientReviewRegistrationClient(Environment env, ObjectProvider<LoadBalancerClient> discovery) {
+    public ClientReviewRegistrationClient clientReviewRegistrationClient(Environment env, ObjectProvider<LoadBalancerClient> discovery,
+        ObjectProvider<InternalTokenSupplier> tokens) {
         var api = HttpServiceClientFactory.create(ClientDocumentConfiguration.riskTransport(env, discovery),
-            HttpServiceClientOptions.strict().withStrictJsonResponses(8192), ClientReviewErrorCode.values())
+            InternalCallTokenOptions.apply(HttpServiceClientOptions.strict().withStrictJsonResponses(8192), tokens, "risk-service"),
+            ClientReviewErrorCode.values())
             .createClient(ClientReviewRegistrationApi.class);
         return new ClientReviewRegistrationClientImpl(api);
     }

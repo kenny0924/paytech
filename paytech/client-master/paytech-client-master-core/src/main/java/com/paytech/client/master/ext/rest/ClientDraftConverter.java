@@ -10,6 +10,7 @@ import com.paytech.client.contract.api.onboarding.ClientPeopleModels.*;
 import com.paytech.client.master.domain.onboarding.ClientRelationValues;
 import com.paytech.client.master.domain.onboarding.ClientDraftView;
 import com.paytech.client.master.domain.onboarding.ClientDraftPolicy;
+import com.paytech.client.master.domain.onboarding.ClientAgreementPartyUsage;
 /** 输出仅可见值，不返回 Vault 引用、数据库版本或未经聚合的 Risk/文件状态。 */
 public final class ClientDraftConverter {
     private ClientDraftConverter() {}
@@ -23,13 +24,21 @@ public final class ClientDraftConverter {
                 row.activeSlot()!=null,formatter.format(row.savedAt()))).toList();
         return new com.paytech.client.contract.api.onboarding.ClientDraftModels.StartResponseBody(applications,rows.size()>20);
     }
-    public static ClientDraftResponseBody response(ClientDraftView view,Map<String,String> contacts) {
+    /**
+     * 申请资料响应；人员可编辑标记同时考虑 commercial 的合同引用结果。
+     *
+     * @param view 本库快照
+     * @param contacts 已 Reveal 的联系方式
+     * @param usage 合同引用结果；无法确认时为失败关闭结果
+     * @return 申请资料响应
+     */
+    public static ClientDraftResponseBody response(ClientDraftView view,Map<String,String> contacts,ClientAgreementPartyUsage usage) {
         var row=view.identity();var values=values(view.fields());
         values.remove(row.clientType()==ClientType.INDIVIDUAL?"organization":"individual");
         values.put("contact",contacts);
         var people=view.people().stream().map(person -> {
             var personValues=values(person.fields());personValues.remove("organization");personValues.remove("business");
-            return new PersonResponseBody(Long.toString(person.identity().partyId()),ClientDraftPolicy.isPersonEditable(row,person.identity()),personValues);
+            return new PersonResponseBody(Long.toString(person.identity().partyId()),ClientDraftPolicy.isPersonEditable(row,person.identity(),usage),personValues);
         }).toList();
         var relations=view.relations().stream().map(relation -> new RelationResponseBody(Long.toString(relation.relationId()),
             Long.toString(relation.relatedPartyId()),relation.relationType().getCode(),ClientRelationValues.decimal(relation.ownershipPercentage()),

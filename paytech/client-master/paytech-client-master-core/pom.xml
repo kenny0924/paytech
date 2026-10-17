@@ -6,44 +6,41 @@
 
     <parent>
         <groupId>com.paytech</groupId>
-        <artifactId>client-contract-service</artifactId>
+        <artifactId>paytech-client-master</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>client-contract-web</artifactId>
-    <name>Client &amp; Contract Web</name>
-    <description>Deployable Client &amp; Contract Spring MVC application.</description>
+    <artifactId>paytech-client-master-core</artifactId>
+    <name>PayTech Client Master Core</name>
+    <description>Client master business implementation: onboarding, people, documents, review, classification, workspace, projection and checkout candidates.</description>
 
     <dependencies>
         <dependency><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><scope>provided</scope></dependency>
         <dependency>
-            <groupId>com.alibaba.cloud</groupId>
-            <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-client-master-api</artifactId>
+        </dependency>
+        <!-- Agreement party usage for the person shared flag; the only commercial dependency (HTTP contract). -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-commercial-api</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
-            <artifactId>client-contract-api</artifactId>
+            <artifactId>paytech-platform-support-api</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
-            <artifactId>paytech-mvc-web-starter</artifactId>
+            <artifactId>risk-api</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-webmvc</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.micrometer</groupId>
-            <artifactId>micrometer-registry-prometheus</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-validation</artifactId>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-vault-client</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
@@ -54,29 +51,12 @@
             <artifactId>mybatis</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.mybatis.spring.boot</groupId>
-            <artifactId>mybatis-spring-boot-starter</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-jdbc</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.zaxxer</groupId>
-            <artifactId>HikariCP</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.mysql</groupId>
-            <artifactId>mysql-connector-j</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-compensation-event</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.paytech</groupId>
-            <artifactId>paytech-http-client-support</artifactId>
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
@@ -88,38 +68,26 @@
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
-            <artifactId>platform-support-api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+            <artifactId>paytech-http-problem</artifactId>
         </dependency>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-redis-starter</artifactId></dependency>
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-amqp</artifactId></dependency>
-        <dependency><groupId>com.paytech</groupId><artifactId>paytech-vault-client</artifactId><version>${project.version}</version></dependency>
-        <dependency><groupId>com.paytech</groupId><artifactId>risk-api</artifactId><version>${project.version}</version></dependency>
+        <!-- ClientFormCatalogProperties 使用 @ConfigurationProperties。 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>tools.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
     </dependencies>
 
-    <build>
-        <plugins>
-            <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId>
+    <build><plugins><plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId>
                 <configuration><annotationProcessorPaths><path><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId></path></annotationProcessorPaths></configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>repackage</goal>
-                        </goals>
-                        <configuration>
-                            <classifier>exec</classifier>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
+            </plugin></plugins></build>
 </project>

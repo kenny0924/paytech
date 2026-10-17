@@ -1,4 +1,13 @@
 package com.paytech.client.master.configuration;
+import com.paytech.client.master.core.configuration.ClientFormCatalogProperties;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
+import org.springframework.cloud.client.loadbalancer.LoadBalancerRequestFactory;
+import java.time.Duration;
+import java.net.http.HttpClient;
+import com.paytech.commercial.api.agreement.AgreementPartyQueryApi;
+import com.paytech.foundation.internalauth.api.InternalTokenSupplier;
 import java.time.Clock;
 import javax.sql.DataSource;
 import jakarta.validation.Validator;
@@ -65,28 +74,64 @@ public class ClientDraftConfiguration {
         return new ClientFileTargetServiceImpl(reads,drafts,people,documents);
     }
     @Bean public ClientPeopleProcessor clientPeopleProcessor(ClientPeopleService service,ClientDraftAccountClient accounts,
-        Validator validator,PlatformTransactionManager transactions) {
+        Validator validator,PlatformTransactionManager transactions,ClientDraftRepository drafts,ClientPeopleRepository people,
+        ClientAgreementPartyClient agreementParties) {
         var writes=new TransactionTemplate(transactions);writes.setTimeout(5);
         writes.setIsolationLevel(TransactionDefinition.ISOLATION_READ_COMMITTED);
-        return new ClientPeopleProcessor(service,accounts,validator,writes);
+        return new ClientPeopleProcessor(service,accounts,validator,writes,drafts,people,agreementParties);
     }
     @Bean public ClientDraftService clientDraftService(ClientDraftRepository repository,ClientPeopleRepository people,ClientDocumentRepository documents,
         IdGenerator ids,Clock clock,CompensationEventRegistrar events) {
         return new ClientDraftServiceImpl(repository,people,documents,ids,clock,events);
     }
-    @Bean public ClientDraftAccountClient clientDraftAccountClient(Environment environment,ObjectProvider<LoadBalancerClient> discovery) {
+    @Bean public ClientDraftAccountClient clientDraftAccountClient(Environment environment,ObjectProvider<LoadBalancerClient> discovery,
+        ObjectProvider<InternalTokenSupplier> tokens) {
         var api=HttpServiceClientFactory.create(ClientOnboardingRecoveryConfiguration.platformTransport(environment,discovery),
-            HttpServiceClientOptions.strict().withStrictJsonResponses(8192),ClientAuthenticationErrorCode.values())
+            InternalCallTokenOptions.apply(HttpServiceClientOptions.strict().withStrictJsonResponses(8192),tokens,"platform-support-service"),
+            ClientAuthenticationErrorCode.values())
             .createClient(ClientAuthenticationApi.class);
         return new ClientDraftAccountClientImpl(api);
     }
     @Bean public ClientDraftContactClient clientDraftContactClient(VaultClient vault) { return new ClientDraftContactClientImpl(vault); }
+    /**
+     * commercial 合同参与方引用查询（design/06 §2.2）：人员共享标记的唯一外部来源，失败关闭。
+     * <li>服务发现名 commercial-service；超时与重定向策略同其他私网 Owner 客户端。</li>
+     */
+    @Bean public ClientAgreementPartyClient clientAgreementPartyClient(ObjectProvider<LoadBalancerClient> discovery,
+        ObjectProvider<InternalTokenSupplier> tokens) {
+        var api=HttpServiceClientFactory.create(discoveryTransport(discovery,"commercial-service",""),
+            InternalCallTokenOptions.apply(HttpServiceClientOptions.strict().withStrictJsonResponses(65536),tokens,"commercial-service"))
+            .createClient(AgreementPartyQueryApi.class);
+        return new ClientAgreementPartyClientImpl(api);
+    }
+    /**
+     * 私网服务发现传输：每次请求按发现名选实例，禁止重定向，连接 2 秒、读取 3 秒。
+     *
+     * @param discovery 负载均衡客户端
+     * @param service 服务发现名
+     * @param contextPath 目标服务的上下文路径，没有时为空串
+     * @return 未附加错误边界的 RestClient
+     */
+    static RestClient discoveryTransport(ObjectProvider<LoadBalancerClient> discovery,String service,String contextPath) {
+        var transport=new JdkClientHttpRequestFactory(HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(2))
+            .followRedirects(HttpClient.Redirect.NEVER).build());
+        transport.setReadTimeout(Duration.ofSeconds(3));
+        return RestClient.builder().baseUrl("http://"+service+contextPath).requestFactory(transport)
+            .requestInterceptor((request,body,execution) -> {
+                LoadBalancerClient balancer=discovery.getObject();
+                var instance=balancer.choose(service);
+                if (instance==null) {
+                    throw new ResourceAccessException(service+" discovery is unavailable");
+                }
+                return balancer.execute(service,instance,new LoadBalancerRequestFactory(balancer).createRequest(request,body,execution));
+            }).build();
+    }
     @Bean public ClientDraftProcessor clientDraftProcessor(ClientDraftService service,ClientDraftAccountClient accounts,
-        ClientDraftContactClient contacts,Validator validator,PlatformTransactionManager transactions) {
+        ClientDraftContactClient contacts,ClientAgreementPartyClient agreementParties,Validator validator,PlatformTransactionManager transactions) {
         var writes=new TransactionTemplate(transactions);writes.setTimeout(5);
         writes.setIsolationLevel(TransactionDefinition.ISOLATION_READ_COMMITTED);
         var reads=new TransactionTemplate(transactions);reads.setReadOnly(true);reads.setTimeout(5);
         reads.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-        return new ClientDraftProcessor(service,accounts,contacts,validator,writes,reads);
+        return new ClientDraftProcessor(service,accounts,contacts,agreementParties,validator,writes,reads);
     }
 }

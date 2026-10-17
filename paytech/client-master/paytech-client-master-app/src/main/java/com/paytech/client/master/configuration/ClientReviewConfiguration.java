@@ -1,5 +1,6 @@
 package com.paytech.client.master.configuration;
 
+import com.paytech.client.master.core.configuration.ClientFormCatalogProperties;
 import java.time.Clock;
 
 import org.springframework.amqp.core.AcknowledgeMode;

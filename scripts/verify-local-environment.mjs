@@ -38,6 +38,8 @@ const retiredRedisPasswordEnvironmentVariable = ['MOR', 'REDIS', 'PASSWORD'].joi
 const expectedEnvironmentVariables = new Map([
   ['MOR_MYSQL_ROOT_PASSWORD', 'local-root-change-me-2026'],
   ['MOR_CCT_DB_PASSWORD', 'local-cct-change-me-2026'],
+  ['MOR_CLIENT_MASTER_DB_PASSWORD', 'local-client-master-change-me-2026'],
+  ['MOR_COMMERCIAL_DB_PASSWORD', 'local-commercial-change-me-2026'],
   ['MOR_COMMERCE_DB_PASSWORD', 'local-commerce-change-me-2026'],
   ['MOR_PAYMENT_DB_PASSWORD', 'local-payment-change-me-2026'],
   ['MOR_RISK_DB_PASSWORD', 'local-risk-change-me-2026'],
@@ -661,6 +663,8 @@ const xxlJobSchema = readFileSync(xxlJobSchemaFile, 'utf8');
 const xxlJobSchemaVersion = readFileSync(xxlJobSchemaVersionFile, 'utf8');
 const databases = [
   'mor_cct',
+  'mor_client_master',
+  'mor_commercial',
   'mor_commerce',
   'mor_payment',
   'mor_risk',

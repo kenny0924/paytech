@@ -19,7 +19,7 @@
     <select id="findForCheckout" resultMap="Agreement">
         SELECT agreement_id, agreement_type, client_id, local_partner_id, entity_no, agreement_format, status, effective_from, effective_to, signed_time, activated_time
         FROM t_agreement
-        WHERE client_id = #{clientId} OR (local_partner_id IN (SELECT source_partner_id FROM t_entity_source_relation WHERE entity_no IN (SELECT entity_no FROM t_client_entity_affiliation WHERE client_id = #{clientId}) AND source_type='PARTNER') AND agreement_id IN (SELECT agreement_id FROM t_agreement_operating_entity WHERE entity_no IN (SELECT entity_no FROM t_client_entity_affiliation WHERE client_id = #{clientId})))
+        WHERE client_id = #{clientId}<if test="!localPartnerIds.isEmpty() and !entityNos.isEmpty()"> OR (local_partner_id IN <foreach collection="localPartnerIds" item="partnerId" open="(" separator="," close=")">#{partnerId}</foreach> AND agreement_id IN (SELECT agreement_id FROM t_agreement_operating_entity WHERE entity_no IN <foreach collection="entityNos" item="entityNo" open="(" separator="," close=")">#{entityNo}</foreach>))</if>
         ORDER BY agreement_id
     </select>
 </mapper>

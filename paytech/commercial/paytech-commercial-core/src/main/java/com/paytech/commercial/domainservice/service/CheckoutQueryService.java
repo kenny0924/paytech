@@ -1,11 +1,15 @@
 package com.paytech.commercial.domainservice.service;
 
-import com.paytech.commercial.domain.*;
+import com.paytech.commercial.domain.CommercialCheckoutFacts;
+import com.paytech.commercial.domain.CommercialCheckoutScope;
 
-/** CCT 本地查询能力；不负责外部资格或 HTTP。 */
+/** commercial 本地商务事实查询能力；不负责外部资格、client-master 调用或 HTTP。 */
 public interface CheckoutQueryService {
-    /** 从同一读快照取得按优先级排列的本地商业候选及相关 Root。 */
-    CheckoutResolutionContext load(CheckoutQuery query);
-    /** 外部资格检查后复核原选择，变化时返回 CCT_CONTEXT_CHANGED。 */
-    void verify(CheckoutResolutionContext context, CheckoutCandidateContext candidate);
+    /**
+     * 在一个只读快照内读取解析范围内的全部商务事实。
+     *
+     * @param scope client-master 返回的 Client、OE 与 Local Partner 范围
+     * @return 商务原始事实；数据库不可用时抛出 OWNER_UNAVAILABLE
+     */
+    CommercialCheckoutFacts load(CommercialCheckoutScope scope);
 }

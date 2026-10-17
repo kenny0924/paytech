@@ -25,7 +25,7 @@
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
-            <artifactId>client-contract-api</artifactId>
+            <artifactId>paytech-client-master-api</artifactId>
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>

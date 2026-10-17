@@ -1,5 +1,6 @@
 package com.paytech.client.master.service.processor;
 
+import com.paytech.client.master.domain.onboarding.ClientAgreementPartyUsage;
 import java.util.Map;
 
 import org.springframework.transaction.support.TransactionTemplate;
@@ -29,6 +30,7 @@ public class GetClientReviewApplicationProcessor extends AbstractProcessor<Clien
     protected ClientDraftResponseBody processRequest(ClientClassificationRequest request) {
         ClientApplicationSubmission application = GetClientClassificationProcessor.currentApplication(applications, request.getCaseId());
         var view = reads.execute(tx -> drafts.readForReview(application.getApplicationId()));
-        return ClientDraftConverter.response(view, Map.of());
+        // 审核读取时申请已提交、不可编辑，人员可编辑标记恒为 false，不查询 commercial 合同引用。
+        return ClientDraftConverter.response(view, Map.of(), ClientAgreementPartyUsage.unavailable());
     }
 }

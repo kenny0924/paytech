@@ -17,7 +17,7 @@
     <select id="findForCheckout" resultMap="CommercialTermPrice">
         SELECT term_price_id, term_version_id, entity_no, payment_method_profile_code, priority_no, settlement_business_days, business_calendar_code, settlement_timezone, cutoff_second_of_day
         FROM t_commercial_term_price
-        WHERE term_version_id IN (SELECT term_version_id FROM t_commercial_term_version WHERE term_plan_id IN (SELECT term_plan_id FROM t_commercial_term_plan WHERE client_id = #{clientId} OR local_partner_id IN (SELECT source_partner_id FROM t_entity_source_relation WHERE entity_no IN (SELECT entity_no FROM t_client_entity_affiliation WHERE client_id = #{clientId}) AND source_type='PARTNER'))) AND entity_no IN (SELECT entity_no FROM t_client_entity_affiliation WHERE client_id = #{clientId})
+        WHERE term_version_id IN (SELECT term_version_id FROM t_commercial_term_version WHERE term_plan_id IN (SELECT term_plan_id FROM t_commercial_term_plan WHERE client_id = #{clientId}<if test="!localPartnerIds.isEmpty()"> OR local_partner_id IN <foreach collection="localPartnerIds" item="partnerId" open="(" separator="," close=")">#{partnerId}</foreach></if>)) AND <choose><when test="entityNos.isEmpty()">1 = 0</when><otherwise>entity_no IN <foreach collection="entityNos" item="entityNo" open="(" separator="," close=")">#{entityNo}</foreach></otherwise></choose>
         ORDER BY term_price_id
     </select>
 </mapper>

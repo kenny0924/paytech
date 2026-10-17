@@ -14,9 +14,13 @@ public final class ClientDraftPolicy {
         if (unfinished?!Integer.valueOf(1).equals(row.activeSlot()):row.activeSlot()!=null) throw new ErrorException(DRAFT_CONTEXT_INVALID);
         return row;
     }
-    public static boolean isPersonEditable(ClientDraftIdentity application,ClientPersonIdentity person) {
+    /**
+     * 人员资料可编辑：申请可编辑、资料未批准、未被本库或合同共享且属于本申请草稿。
+     * <li>合同引用来自 commercial（design/06 §2.2）；无法确认时 usage 失败关闭为已引用。</li>
+     */
+    public static boolean isPersonEditable(ClientDraftIdentity application,ClientPersonIdentity person,ClientAgreementPartyUsage usage) {
         return isEditable(application) && person.approvedTime()==null && !person.shared()
-            && Long.valueOf(application.applicationId()).equals(person.draftApplicationId());
+            && Long.valueOf(application.applicationId()).equals(person.draftApplicationId()) && !usage.shares(person);
     }
     public static boolean isEditable(ClientDraftIdentity row) {
         return (row.status()==ClientApplicationStatus.DRAFT || row.status()==ClientApplicationStatus.RETURNED)

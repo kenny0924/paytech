@@ -21,7 +21,7 @@
     <select id="findForCheckout" resultMap="CommercialTermComponent">
         SELECT term_component_id, term_price_id, component_no, component_code, component_type, trigger_code, calculation_base, rate, fixed_amount, currency, min_amount, max_amount, band_mode
         FROM t_commercial_term_component
-        WHERE term_price_id IN (SELECT term_price_id FROM t_commercial_term_price WHERE term_version_id IN (SELECT term_version_id FROM t_commercial_term_version WHERE term_plan_id IN (SELECT term_plan_id FROM t_commercial_term_plan WHERE client_id = #{clientId} OR local_partner_id IN (SELECT source_partner_id FROM t_entity_source_relation WHERE entity_no IN (SELECT entity_no FROM t_client_entity_affiliation WHERE client_id = #{clientId}) AND source_type='PARTNER'))) AND entity_no IN (SELECT entity_no FROM t_client_entity_affiliation WHERE client_id = #{clientId}))
+        WHERE term_price_id IN (SELECT term_price_id FROM t_commercial_term_price WHERE term_version_id IN (SELECT term_version_id FROM t_commercial_term_version WHERE term_plan_id IN (SELECT term_plan_id FROM t_commercial_term_plan WHERE client_id = #{clientId}<if test="!localPartnerIds.isEmpty()"> OR local_partner_id IN <foreach collection="localPartnerIds" item="partnerId" open="(" separator="," close=")">#{partnerId}</foreach></if>)) AND <choose><when test="entityNos.isEmpty()">1 = 0</when><otherwise>entity_no IN <foreach collection="entityNos" item="entityNo" open="(" separator="," close=")">#{entityNo}</foreach></otherwise></choose>)
         ORDER BY term_component_id
     </select>
 </mapper>

@@ -17,11 +17,11 @@ import com.paytech.foundation.mybatis.typehandler.InstantTypeHandler;
 import com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler;
 import com.paytech.client.master.domain.enums.*;
 
-/** CCT 共享持久化装配；连接参数复用 Spring 标准配置，不由某个业务接口拥有。 */
+/** client-master 唯一持久化装配（mor_client_master）；连接参数复用 Spring 标准配置，不由某个业务接口拥有。 */
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnProperty(prefix = "spring.datasource", name = "url")
 @EnableConfigurationProperties(DataSourceProperties.class)
-public class ClientContractPersistenceConfiguration {
+public class ClientMasterPersistenceConfiguration {
     /** 数据库密码由部署环境注入，不建立 Checkout 专属连接或配置别名。 */
     @Bean
     @ConfigurationProperties("spring.datasource.hikari")
@@ -54,17 +54,6 @@ public class ClientContractPersistenceConfiguration {
         config.getTypeHandlerRegistry().register(OperatingEntityScopeStatus.class, CodeEnumTypeHandler.class);
         config.getTypeHandlerRegistry().register(OperatingEntityApplicationStatus.class, CodeEnumTypeHandler.class);
         config.getTypeHandlerRegistry().register(LocalPartnerStatus.class, CodeEnumTypeHandler.class);
-        config.getTypeHandlerRegistry().register(AgreementAgreementType.class, CodeEnumTypeHandler.class);
-        config.getTypeHandlerRegistry().register(AgreementAgreementFormat.class, CodeEnumTypeHandler.class);
-        config.getTypeHandlerRegistry().register(AgreementStatus.class, CodeEnumTypeHandler.class);
-        config.getTypeHandlerRegistry().register(AgreementPartyPartyRole.class, CodeEnumTypeHandler.class);
-        config.getTypeHandlerRegistry().register(AgreementPartyAcceptanceMethod.class, CodeEnumTypeHandler.class);
-        config.getTypeHandlerRegistry().register(AgreementDocumentRefDocumentType.class, CodeEnumTypeHandler.class);
-        config.getTypeHandlerRegistry().register(CommercialTermPlanTermType.class, CodeEnumTypeHandler.class);
-        config.getTypeHandlerRegistry().register(CommercialTermVersionStatus.class, CodeEnumTypeHandler.class);
-        config.getTypeHandlerRegistry().register(CommercialTermComponentComponentType.class, CodeEnumTypeHandler.class);
-        config.getTypeHandlerRegistry().register(CommercialTermComponentBandMode.class, CodeEnumTypeHandler.class);
-        config.getTypeHandlerRegistry().register(PaymentMethodProfileStatus.class, CodeEnumTypeHandler.class);
         config.getTypeHandlerRegistry().register(ConsumerLegalDocumentDocumentType.class, CodeEnumTypeHandler.class);
         config.getTypeHandlerRegistry().register(ConsumerLegalDocumentStatus.class, CodeEnumTypeHandler.class);
         config.getTypeHandlerRegistry().register(SellerDisclosureStatus.class, CodeEnumTypeHandler.class);
@@ -76,7 +65,7 @@ public class ClientContractPersistenceConfiguration {
         factory.setConfiguration(config);
         return factory.getObject();
     }
-    /** 同一 CCT 进程的所有数据库能力共享一个本地事务管理器。 */
+    /** 同一 client-master 进程的所有数据库能力共享一个本地事务管理器。 */
     @Bean
     public DataSourceTransactionManager transactionManager(DataSource source) {
         return new DataSourceTransactionManager(source);

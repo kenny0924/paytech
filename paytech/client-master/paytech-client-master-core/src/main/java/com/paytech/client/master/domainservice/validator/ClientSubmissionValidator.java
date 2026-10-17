@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.paytech.client.master.configuration.ClientFormCatalogProperties;
+import com.paytech.client.master.core.configuration.ClientFormCatalogProperties;
 import com.paytech.client.master.core.dal.dataobject.ClientApplicationDocument;
 import com.paytech.client.master.core.dal.dataobject.ClientDraftFields;
 import com.paytech.client.master.domain.enums.ClientType;

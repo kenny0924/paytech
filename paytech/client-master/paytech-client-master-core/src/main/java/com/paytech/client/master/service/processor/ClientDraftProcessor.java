@@ -17,10 +17,13 @@ public class ClientDraftProcessor {
     private final ClientDraftService service;
     private final ClientDraftAccountClient accounts;
     private final ClientDraftContactClient contacts;
+    private final ClientAgreementPartyClient agreementParties;
     private final Validator validator;
     private final TransactionTemplate writes,reads;
-    public ClientDraftProcessor(ClientDraftService service,ClientDraftAccountClient accounts,ClientDraftContactClient contacts,Validator validator,TransactionTemplate writes,TransactionTemplate reads) {
-        this.service=service;this.accounts=accounts;this.contacts=contacts;this.validator=validator;this.writes=writes;this.reads=reads;
+    public ClientDraftProcessor(ClientDraftService service,ClientDraftAccountClient accounts,ClientDraftContactClient contacts,
+        ClientAgreementPartyClient agreementParties,Validator validator,TransactionTemplate writes,TransactionTemplate reads) {
+        this.service=service;this.accounts=accounts;this.contacts=contacts;this.agreementParties=agreementParties;
+        this.validator=validator;this.writes=writes;this.reads=reads;
     }
     @ResourceLock(prefix="client-onboarding:account-slot",key="#accountId")
     public CommandReceiptResponseBody create(long accountId,long sessionId,StartApplicationRequestBody request) {
@@ -40,7 +43,11 @@ public class ClientDraftProcessor {
     public ClientDraftResponseBody read(long accountId,long sessionId,long applicationId) {
         accounts.authorize(accountId,sessionId);
         var view=reads.execute(tx -> service.read(accountId,applicationId));
-        return ClientDraftConverter.response(view,contacts.reveal(view.contacts()));
+        // 读取事务结束后再查 commercial 合同引用；申请不可编辑时人员标记恒为 false，无需查询。
+        var usage=ClientDraftPolicy.isEditable(view.identity())
+            ?agreementParties.usage(view.people().stream().map(ClientPersonView::identity).toList())
+            :ClientAgreementPartyUsage.unavailable();
+        return ClientDraftConverter.response(view,contacts.reveal(view.contacts()),usage);
     }
     @ResourceLock(prefix="client-onboarding:application",key="#applicationId")
     public CommandReceiptResponseBody save(long accountId,long sessionId,long applicationId,DraftPatchRequestBody request) {

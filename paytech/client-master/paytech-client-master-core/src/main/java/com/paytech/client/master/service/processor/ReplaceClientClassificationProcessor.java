@@ -10,7 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.paytech.client.master.configuration.ClientFormCatalogProperties;
+import com.paytech.client.master.core.configuration.ClientFormCatalogProperties;
 import com.paytech.client.master.core.dal.dataobject.ClientApplicationSubmission;
 import com.paytech.client.master.core.dal.dataobject.ClientClassification;
 import com.paytech.client.master.core.dal.dataobject.ClientClassificationProfile;

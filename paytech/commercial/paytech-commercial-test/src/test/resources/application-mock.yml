@@ -1,0 +1,62 @@
+# commercial Mock 测试的可运行配置：真实 commercial 生产链 + 本机 MySQL（mor_commercial）+ client-master 的测试 HTTP 接口。
+# 数据库使用仓库隔离的本地默认凭据（与 init/ddl.sql、local-environment/.env.example 一致），可用环境变量覆盖。
+# commercial 不使用 Redis、RabbitMQ、补偿事件或 XXL-Job（Enforcer 禁止相关依赖）。
+
+# ==================== 中间件、框架与公共组件配置 ====================
+
+server:
+  address: 127.0.0.1
+  port: 0
+
+spring:
+  application:
+    name: commercial-service
+  main:
+    banner-mode: "off"
+  jmx:
+    enabled: false
+  cloud:
+    nacos:
+      config:
+        enabled: false
+      discovery:
+        enabled: false
+    discovery:
+      client:
+        simple:
+          instances:
+            client-master-service:
+              - uri: "${commercial.test.external.base-url}"
+    loadbalancer:
+      retry:
+        enabled: false
+      cache:
+        enabled: false
+  datasource:
+    url: "jdbc:mysql://127.0.0.1:13306/mor_commercial?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&connectionTimeZone=UTC"
+    username: commercial_app
+    password: "${COMMERCIAL_TEST_DB_PASSWORD:${MOR_COMMERCIAL_DB_PASSWORD:local-commercial-change-me-2026}}"
+    hikari:
+      maximum-pool-size: 5
+      connection-timeout: 2000
+      initialization-fail-timeout: 1
+      pool-name: commercial-database
+
+management:
+  server:
+    # 随机管理端口；测试不访问 Actuator。
+    port: 0
+  endpoints:
+    enabled-by-default: false
+
+# 内部调用 Token（D26）：Mock 测试保持关闭；值必须带引号，裸 OFF 在 YAML 1.1 中是布尔 false。
+internal-auth:
+  mode: "OFF"
+
+# ==================== commercial 系统自定义配置 ====================
+
+commercial:
+  test:
+    external:
+      # EnableMockHttpServer 在应用创建客户端前注入随机 Loopback 地址；client-master-service 经 SimpleDiscovery 指向它。
+      base-url: ""

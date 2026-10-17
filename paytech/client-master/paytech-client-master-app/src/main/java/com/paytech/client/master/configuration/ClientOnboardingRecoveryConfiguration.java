@@ -1,5 +1,6 @@
 package com.paytech.client.master.configuration;
 
+import com.paytech.foundation.internalauth.api.InternalTokenSupplier;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.time.Duration;
@@ -54,9 +55,10 @@ public class ClientOnboardingRecoveryConfiguration {
         return new ClientProjectionSourceServiceImpl(repository, reads);
     }
     @Bean public ClientTenantProjectionClient clientTenantProjectionClient(Environment env,
-            ObjectProvider<LoadBalancerClient> discovery) {
+            ObjectProvider<LoadBalancerClient> discovery, ObjectProvider<InternalTokenSupplier> tokens) {
         TenantProjectionApi api = HttpServiceClientFactory.create(platformTransport(env,discovery),
-            HttpServiceClientOptions.strict().withStrictJsonResponses(8192), TenantProjectionErrorCode.values())
+            InternalCallTokenOptions.apply(HttpServiceClientOptions.strict().withStrictJsonResponses(8192), tokens,
+                "platform-support-service"), TenantProjectionErrorCode.values())
             .createClient(TenantProjectionApi.class);
         return new ClientTenantProjectionClientImpl(api);
     }

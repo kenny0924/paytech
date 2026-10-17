@@ -15,10 +15,19 @@ import lombok.AllArgsConstructor;
 public class PartyProfileRepositoryImpl implements PartyProfileRepository {
     private final PartyProfileMapper mapper;
 
-    /** 读取本 Client Checkout 范围内的 party_profile 记录，保留历史和未生效事实供业务判断。 */
+    /** 读取 Client 本身法律主体的资料，供候选查询判断主体是否已批准。 */
     @Override
     public List<PartyProfile> findForCheckout(long clientId) {
         return List.copyOf(mapper.findForCheckout(clientId));
+    }
+
+    /** 按资料 ID 读取资料；空集合不访问数据库。 */
+    @Override
+    public List<PartyProfile> findByIds(java.util.Collection<Long> ids) {
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        return List.copyOf(mapper.findByIds(ids));
     }
 
     /** 首次批准时写入法律主体资料的批准时间；必须恰好更新一行。 */

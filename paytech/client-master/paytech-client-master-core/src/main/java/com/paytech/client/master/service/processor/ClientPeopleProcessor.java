@@ -6,7 +6,12 @@ import org.springframework.transaction.support.TransactionTemplate;
 import com.paytech.client.contract.api.onboarding.ClientDraftModels.DraftPatchRequestBody;
 import com.paytech.client.contract.api.onboarding.ClientPeopleModels.*;
 import com.paytech.client.master.domain.onboarding.*;
+import com.paytech.client.master.domainservice.repository.ClientDraftRepository;
+import com.paytech.client.master.domainservice.repository.ClientPeopleRepository;
 import com.paytech.client.master.domainservice.service.ClientPeopleService;
+import com.paytech.client.master.integration.ClientAgreementPartyClient;
+import com.paytech.client.master.core.dal.dataobject.ClientPersonIdentity;
+import java.util.List;
 import com.paytech.client.master.integration.ClientDraftAccountClient;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.redis.api.ResourceLock;
@@ -18,8 +23,13 @@ public class ClientPeopleProcessor {
     private final ClientDraftAccountClient accounts;
     private final Validator validator;
     private final TransactionTemplate writes;
-    public ClientPeopleProcessor(ClientPeopleService service,ClientDraftAccountClient accounts,Validator validator,TransactionTemplate writes) {
+    private final ClientDraftRepository drafts;
+    private final ClientPeopleRepository people;
+    private final ClientAgreementPartyClient agreementParties;
+    public ClientPeopleProcessor(ClientPeopleService service,ClientDraftAccountClient accounts,Validator validator,TransactionTemplate writes,
+        ClientDraftRepository drafts,ClientPeopleRepository people,ClientAgreementPartyClient agreementParties) {
         this.service=service;this.accounts=accounts;this.validator=validator;this.writes=writes;
+        this.drafts=drafts;this.people=people;this.agreementParties=agreementParties;
     }
     @ResourceLock(prefix="client-onboarding:application",key="#applicationId")
     public PeopleCommandReceiptResponseBody createPerson(long accountId,long sessionId,long applicationId,CreatePersonRequestBody request) {
@@ -33,7 +43,8 @@ public class ClientPeopleProcessor {
     public PeopleCommandReceiptResponseBody savePerson(long accountId,long sessionId,long applicationId,long partyId,DraftPatchRequestBody request) {
         accounts.authorize(accountId,sessionId);var person=person(request);
         var command=command(accountId,SAVE_PERSON);
-        return transaction(() -> service.savePerson(command,applicationId,partyId,person));
+        var usage=agreementUsage(accountId,applicationId,partyId);
+        return transaction(() -> service.savePerson(command,applicationId,partyId,person,usage));
     }
     @ResourceLock(prefix="client-onboarding:application",key="#applicationId")
     @ResourceLock(prefix="cct:party",key="#partyId")
@@ -53,6 +64,15 @@ public class ClientPeopleProcessor {
         accounts.authorize(accountId,sessionId);
         var command=command(accountId,REMOVE_RELATION);
         transaction(() -> { service.removeRelation(command,applicationId,relationId);return null; });
+    }
+    /**
+     * 事务前查询目标人员是否已被合同引用
+     * <li>只读本库人员身份后调用 commercial；申请或人员不存在时不调用，事务内照常报原错误。</li>
+     */
+    ClientAgreementPartyUsage agreementUsage(long accountId,long applicationId,long partyId) {
+        var application=drafts.identity(applicationId,accountId,false);
+        ClientPersonIdentity person=application==null?null:people.person(application,partyId,false);
+        return agreementParties.usage(person==null?List.of():List.of(person));
     }
     private ClientDraftPatch person(DraftPatchRequestBody request) {
         var person=ClientDraftPatch.normalize(request,validator);person.requirePerson();return person;

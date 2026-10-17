@@ -1,4 +1,4 @@
-package com.paytech.client.master.configuration;
+package com.paytech.client.master.core.configuration;
 import java.util.*;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import com.paytech.client.master.domain.enums.ClientType;

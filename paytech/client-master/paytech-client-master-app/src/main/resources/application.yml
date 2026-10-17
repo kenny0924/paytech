@@ -7,7 +7,7 @@ spring:
       maximum-pool-size: 5
       connection-timeout: 2000
       initialization-fail-timeout: 1
-      pool-name: cct-database
+      pool-name: client-master-database
   data:
     redis:
       connect-timeout: 1s
@@ -23,7 +23,7 @@ spring:
       - org.mybatis.spring.boot.autoconfigure.MybatisAutoConfiguration
       - com.paytech.vault.client.autoconfigure.VaultClientAutoConfiguration
   application:
-    name: client-contract-service
+    name: client-master-service
   # 审核结果消费（cg_cct_client_review）；仅在 onboarding 草稿与补偿开关开启时创建监听器。
   rabbitmq:
     host: "${CCT_RABBITMQ_HOST:127.0.0.1}"
@@ -36,6 +36,8 @@ spring:
     enabled: false
 
 management:
+  server:
+    port: 19101
   endpoints:
     enabled-by-default: false
     web:
@@ -134,3 +136,6 @@ vault:
   client:
     connect-timeout: 2s
     read-timeout: 3s
+# 内部调用 Token（D26）：默认关闭；值必须带引号，裸 OFF 在 YAML 1.1 中是布尔 false。
+internal-auth:
+  mode: "OFF"
