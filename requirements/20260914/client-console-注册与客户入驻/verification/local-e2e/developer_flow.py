@@ -108,7 +108,8 @@ def ensure_scope():
 def credentials_flow(client, tenant_id, data):
     status, home = client.call("/workspace/v1/home")
     caps = set(home.get("capabilities") or [])
-    record("AC-11 首页 capabilities", caps == {"API_CREDENTIAL_READ", "API_CREDENTIAL_MANAGE", "WEBHOOK_READ", "WEBHOOK_MANAGE"},
+    record("AC-11 首页 capabilities", caps == {"API_CREDENTIAL_READ", "API_CREDENTIAL_MANAGE", "WEBHOOK_READ", "WEBHOOK_MANAGE",
+                                             "TEAM_READ", "TEAM_MANAGE"},  # 2026-10-17 团队成员与邀请：所有者另有团队能力
            f"capabilities={sorted(caps)}")
     status, scopes = client.call(DEV + "/scopes")
     codes = [s.get("scopeCode") for s in (scopes or {}).get("items") or []]
