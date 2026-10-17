@@ -33,6 +33,18 @@ const retainedServiceSchemas = [
   },
 ];
 
+// Physical renames executed by a migration step; design 03 lists the source names (step 07, design/04 §2-§3).
+const renamedTables = new Map([
+  ['t_transaction_economics', 't_economic_fact'],
+  ['t_transaction_economic_component', 't_economic_fact_line'],
+  ['t_transaction_economic_comp_link', 't_economic_fact_line_link'],
+]);
+// Shared-database transition (task card 07 §5.5, design/04 §6): while account-app reads mor_ledger, account-core may
+// read these ledger tables. They are not owned by account and are not counted; step 11b removes the allowance.
+const transitionalSharedReads = [
+  { service: 'account', database: 'mor_ledger', tables: ['t_account', 't_chart_account', 't_ledger_book'] },
+];
+
 const lines = readFileSync(designDocument, 'utf8').split('\n');
 const sectionStart = lines.findIndex((line) => line.startsWith('## 2. '));
 const sectionEnd = lines.findIndex((line) => line.startsWith('## 3. '));
@@ -45,7 +57,8 @@ if ([sectionStart, sectionEnd, countStart, countEnd].some((index) => index < 0))
 const cells = (line) => line.split('|').slice(1, -1).map((cell) => cell.trim());
 const databaseOf = (service) => `mor_${service.replaceAll('-', '_')}`;
 const ownership = new Map();
-const add = (service, database, table) => {
+const add = (service, database, sourceTable) => {
+  const table = renamedTables.get(sourceTable) ?? sourceTable;
   if (!ownership.has(service)) ownership.set(service, new Map());
   const databases = ownership.get(service);
   if (!databases.has(database)) databases.set(database, new Set());
@@ -118,8 +131,16 @@ const output = [
   ...retainedServiceSchemas.map((retained) => `# Retained: ${retained.service} ${retained.database} from ${relative(repositoryRoot, retained.schema)}.`),
   `# ${retainedTables} retained-service tables added on top of design 03 (not part of the §4.2 count).`,
   '# Structure: services.<service>.<database> = tables owned (or copied / per-database infrastructure).',
+  `# Renamed: ${[...renamedTables].map(([from, to]) => `${from} -> ${to}`).join(', ')}.`,
   'sharedInfrastructureTables:',
   ...sharedInfrastructureTables.map((table) => `  - ${table}`),
+  '# Shared-database transition reads (not owned, not counted); removed when the service gets its own database.',
+  'transitionalSharedReads:',
+  ...transitionalSharedReads.flatMap(({ service, database, tables }) => [
+    `  ${service}:`,
+    `    ${database}:`,
+    ...tables.map((table) => `      - ${table}`),
+  ]),
   'services:',
 ];
 for (const service of [...ownership.keys()].sort()) {

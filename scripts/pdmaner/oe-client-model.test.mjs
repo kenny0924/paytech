@@ -36,7 +36,7 @@ test("Polymorphic identities can carry OE codes without converting numeric Party
   for (const [model, name, key] of [
     [payment, "t_routing_policy", "scope_id"],
     [finance, "t_account", "owner_id"],
-    [finance, "t_transaction_economic_component", "party_id"],
+    [finance, "t_economic_fact_line", "party_id"],
   ]) {
     const actual = field(table(model, name), key);
     assert.deepEqual([actual.type, actual.len, actual.extProps.collation], ["VARCHAR", 64, "ascii_bin"]);
@@ -48,7 +48,8 @@ test("Polymorphic identities can carry OE codes without converting numeric Party
 test("Four manual schemas exactly preserve model metadata, types and physical constraints", () => {
   const root = path.resolve(import.meta.dirname, "../..");
   assert.deepEqual(schemaTargets.map(([repository]) => repository), [
-    "client-contract-service", "commerce-service", "payment-orchestration-service", "finance-service",
+    "client-contract-service", "commerce-service", "payment-orchestration-service", "paytech/ledger",
+    "paytech/account", "paytech/billing", "paytech/reconciliation", "paytech/tax", "paytech/payout",
   ]);
   for (const [repository, name] of schemaTargets) {
     const source = `${repository}/docs/database/${name}.pdma.json`;
@@ -138,9 +139,9 @@ test("Finance keeps typed book identity and separate legacy channel-cost and new
   const book = table(model, "t_ledger_book");
   assert.equal(field(book, "entity_id").type, "VARCHAR");
   assert.equal(field(book, "id").type, "BIGINT");
-  const economics = table(model, "t_transaction_economics");
+  const economics = table(model, "t_economic_fact");
   for (const name of ["entity_no", "payment_fact_id", "client_price_id", "cutoff_second_of_day"]) field(economics, name);
-  const component = table(model, "t_transaction_economic_component");
+  const component = table(model, "t_economic_fact_line");
   for (const name of ["source_rule_scope_id", "source_price_id", "source_band_evidence"]) field(component, name);
 });
 

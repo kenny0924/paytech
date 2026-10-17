@@ -4,6 +4,7 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 
+import { generateFinanceModel } from "./finance/generate-finance-model.mjs";
 import {
   APPROVED_TABLES,
   EXPECTED_CHECK_BINDINGS,
@@ -15,10 +16,8 @@ const scenarioPath = path.join(
   workspaceRoot,
   "agent-docs/database/scenarios/FINANCE_REAL_WORLD_SCENARIOS.md",
 );
-const modelPath = path.join(
-  workspaceRoot,
-  "finance-service/docs/database/finance.pdma.json",
-);
+// 第 07 步起逻辑模型由生成器在内存构建（服务模型为其物理投影），场景校验以逻辑模型为准。
+const logicalModel = generateFinanceModel();
 
 const mechanicalNotNullExemptions = new Set(["create_time", "update_time"]);
 
@@ -165,7 +164,7 @@ function integerSet(values) {
 let generatedModelCache;
 
 function generatedModel() {
-  generatedModelCache ??= JSON.parse(readFileSync(modelPath, "utf8"));
+  generatedModelCache ??= structuredClone(logicalModel);
   return generatedModelCache;
 }
 
@@ -848,7 +847,7 @@ function clonedApprovedManualInstructionRows() {
   const instruction = requireRecord(rows, "t_accounting_instruction", "100044");
   instruction.values.set("origin_type", "MANUAL");
   for (const field of ["source_system", "source_event_key", "source_version", "source_payload_hash",
-    "transaction_economics_id", "accounting_rule_bundle_ver_id"]) {
+    "economic_fact_id", "accounting_rule_bundle_ver_id"]) {
     instruction.values.set(field, "NULL");
   }
   instruction.values.set("manual_adjustment_id", valueOf(adjustment, "id"));
@@ -1213,8 +1212,8 @@ function validateAccountingSourceAuthority(records) {
       const itemId = authorityId(instruction, "DUPLICATE_CAPTURE");
       const context = `Instruction ${valueOf(instruction, "id")} DUPLICATE_CAPTURE`;
       const item = uniqueIntegerRecord("t_duplicate_capture_item", itemId, context);
-      const economics = recordsFor(records, "t_transaction_economics")
-        .filter((record) => valueOf(record, "economics_type") === "DUPLICATE_CAPTURE"
+      const economics = recordsFor(records, "t_economic_fact")
+        .filter((record) => valueOf(record, "fact_type") === "DUPLICATE_CAPTURE"
           && identifierEqual(valueOf(record, "duplicate_capture_item_id"), itemId));
       assert.equal(economics.length, 1, `${context} authority source 缺少唯一 DUPLICATE_CAPTURE Economics`);
       assert.ok(identifierEqual(valueOf(item, "source_version"), valueOf(instruction, "source_version")),
@@ -1225,10 +1224,10 @@ function validateAccountingSourceAuthority(records) {
     ["PARTNER_RECOVERY_OPEN", (instruction) => {
       const economicsId = authorityId(instruction, "PARTNER_RECOVERY_OPEN");
       const context = `Instruction ${valueOf(instruction, "id")} PARTNER_RECOVERY_OPEN`;
-      const economics = uniqueIntegerRecord("t_transaction_economics", economicsId, context);
-      assert.ok(identifierEqual(valueOf(instruction, "transaction_economics_id"), economicsId),
-        `${context} transaction_economics_id 与 authority key 不一致`);
-      assert.equal(valueOf(economics, "economics_type"), "DISPUTE",
+      const economics = uniqueIntegerRecord("t_economic_fact", economicsId, context);
+      assert.ok(identifierEqual(valueOf(instruction, "economic_fact_id"), economicsId),
+        `${context} economic_fact_id 与 authority key 不一致`);
+      assert.equal(valueOf(economics, "fact_type"), "DISPUTE",
         `${context} authority source 必须为负向 DISPUTE Economics`);
       assert.ok(!isNull(valueOf(economics, "channel_dispute_notice_id"))
         && !isNull(valueOf(economics, "dispute_case_id")),
@@ -1252,11 +1251,11 @@ function validateAccountingSourceAuthority(records) {
     ["PAYABLE_BALANCE_MATURED", (instruction) => {
       const economicsId = authorityId(instruction, "PAYABLE_BALANCE_MATURED");
       const context = `Instruction ${valueOf(instruction, "id")} PAYABLE_BALANCE_MATURED`;
-      const economics = uniqueIntegerRecord("t_transaction_economics", economicsId, context);
-      assert.equal(valueOf(economics, "economics_type"), "PAYMENT",
+      const economics = uniqueIntegerRecord("t_economic_fact", economicsId, context);
+      assert.equal(valueOf(economics, "fact_type"), "PAYMENT",
         `${context} authority source 必须为 PAYMENT Economics`);
-      assert.ok(identifierEqual(valueOf(instruction, "transaction_economics_id"), economicsId),
-        `${context} transaction_economics_id 与 authority key 不一致`);
+      assert.ok(identifierEqual(valueOf(instruction, "economic_fact_id"), economicsId),
+        `${context} economic_fact_id 与 authority key 不一致`);
       const events = recordsFor(records, "t_compensation_event").filter((event) => (
         valueOf(event, "event_type") === "PAYABLE_BALANCE_MATURED"
         && valueOf(event, "event_key") === valueOf(instruction, "source_event_key")
@@ -1271,9 +1270,9 @@ function validateAccountingSourceAuthority(records) {
       const refundRequestId = authorityId(instruction, "REFUND_SUCCEEDED");
       const context = `Instruction ${valueOf(instruction, "id")} REFUND_SUCCEEDED`;
       const economics = uniqueIntegerRecord(
-        "t_transaction_economics", valueOf(instruction, "transaction_economics_id"), context,
+        "t_economic_fact", valueOf(instruction, "economic_fact_id"), context,
       );
-      assert.equal(valueOf(economics, "economics_type"), "REFUND",
+      assert.equal(valueOf(economics, "fact_type"), "REFUND",
         `${context} authority source 必须为 REFUND Economics`);
       assert.ok(identifierEqual(valueOf(economics, "refund_request_id"), refundRequestId),
         `${context} refund_request_id 与 authority key 不一致`);
@@ -1388,9 +1387,9 @@ function validateAccountingSourceAuthority(records) {
       const disputeCaseId = authorityId(instruction, "DISPUTE_LOST");
       const context = `Instruction ${valueOf(instruction, "id")} DISPUTE_LOST`;
       const economics = uniqueIntegerRecord(
-        "t_transaction_economics", valueOf(instruction, "transaction_economics_id"), context,
+        "t_economic_fact", valueOf(instruction, "economic_fact_id"), context,
       );
-      assert.equal(valueOf(economics, "economics_type"), "DISPUTE", `${context} authority source 必须为 DISPUTE Economics`);
+      assert.equal(valueOf(economics, "fact_type"), "DISPUTE", `${context} authority source 必须为 DISPUTE Economics`);
       assert.ok(identifierEqual(valueOf(economics, "dispute_case_id"), disputeCaseId),
         `${context} dispute_case_id 与 authority key 不一致`);
     }],
@@ -1399,11 +1398,11 @@ function validateAccountingSourceAuthority(records) {
       (instruction) => {
         const context = `Instruction ${valueOf(instruction, "id")} ${instructionType}`;
         const economics = uniqueIntegerRecord(
-          "t_transaction_economics", valueOf(instruction, "transaction_economics_id"), context,
+          "t_economic_fact", valueOf(instruction, "economic_fact_id"), context,
         );
         assert.equal(valueOf(instruction, "source_event_key"), valueOf(economics, "source_event_key"),
           `${context} authority key 必须复用 Transaction Economics Event Key`);
-        assert.ok(recordsFor(records, "t_transaction_economic_component").some((component) => (
+        assert.ok(recordsFor(records, "t_economic_fact_line").some((component) => (
           identifierEqual(valueOf(component, "transaction_economics_id"), valueOf(economics, "id"))
           && valueOf(component, "component_type") === "PLATFORM_SERVICE_CHARGE"
         )), `${context} authority source 缺少 PLATFORM_SERVICE_CHARGE Component`);
@@ -1426,7 +1425,7 @@ function validateAccountingSourceAuthority(records) {
       assert.equal(valueOf(instruction, "input_hash"), valueOf(adjustment, "content_hash"),
         `${context} 未冻结 approved manual_adjustment content_hash`);
       const manualNullSourceFields = ["source_system", "source_event_key", "source_version", "source_payload_hash",
-        "transaction_economics_id", "accounting_rule_bundle_ver_id"];
+        "economic_fact_id", "accounting_rule_bundle_ver_id"];
       assert.ok(manualNullSourceFields.every((field) => isNull(valueOf(instruction, field))),
         `${context} source fields 必须全部为 NULL，不得混用 AUTO authority`);
       assert.ok(!isNull(valueOf(instruction, "maker_id")) && !isNull(valueOf(instruction, "checker_id"))
@@ -1738,14 +1737,14 @@ function validateTaxAndChannelTuples(records) {
       && valueOf(channelBook, "currency") === valueOf(channelAccount, "currency"),
     `Channel ledger Account ${valueOf(channelLedgerAccount, "id")} Ledger Book OE/currency scope 不一致`);
   }
-  const economicsById = recordsById(records, "t_transaction_economics");
+  const economicsById = recordsById(records, "t_economic_fact");
   const openItems = recordsFor(records, "t_channel_open_item");
   for (const item of [...recordsFor(records, "t_channel_open_item"), ...recordsFor(records, "t_channel_debit_item")]) {
     const itemChannelAccount = channelAccounts.get(valueOf(item, "channel_account_id"));
     assert.ok(itemChannelAccount, `Channel Item ${valueOf(item, "id")} 缺少 Channel Account`);
     assert.ok(!isNull(valueOf(itemChannelAccount, "channel_id")) && !isNull(valueOf(itemChannelAccount, "mid_id")),
       `Channel Item ${valueOf(item, "id")} Channel/MID identity 不完整`);
-    const economics = requireRecord(records, "t_transaction_economics", valueOf(item, "transaction_economics_id"));
+    const economics = requireRecord(records, "t_economic_fact", valueOf(item, "transaction_economics_id"));
     assert.ok(identifierEqual(valueOf(economics, "entity_no"), valueOf(itemChannelAccount, "entity_no")),
       `Channel Item ${valueOf(item, "id")} Economics OE tuple 不一致`);
     const matched = item.table === "t_channel_open_item"
@@ -1756,14 +1755,14 @@ function validateTaxAndChannelTuples(records) {
         `Channel Item ${valueOf(item, "id")} Economics currency 与 Channel Account 不一致`);
     }
     if (item.table === "t_channel_open_item" && valueOf(item, "item_type") === "PAYMENT") {
-      assert.equal(valueOf(economics, "economics_type"), "PAYMENT",
+      assert.equal(valueOf(economics, "fact_type"), "PAYMENT",
         `Channel Item ${valueOf(item, "id")} PAYMENT 未绑定 PAYMENT Economics`);
       assert.ok(identifierEqual(valueOf(item, "payment_intent_id"), valueOf(economics, "payment_intent_id"))
         && identifierEqual(valueOf(item, "payment_attempt_id"), valueOf(economics, "payment_attempt_id")),
       `Channel Item ${valueOf(item, "id")} Payment root tuple 不一致`);
     }
     if (item.table === "t_channel_debit_item" && valueOf(item, "debit_type") === "REFUND") {
-      assert.equal(valueOf(economics, "economics_type"), "REFUND",
+      assert.equal(valueOf(economics, "fact_type"), "REFUND",
         `Channel Item ${valueOf(item, "id")} REFUND 未绑定 REFUND Economics`);
       assert.ok(identifierEqual(valueOf(item, "channel_refund_id"), valueOf(economics, "channel_refund_id")),
         `Channel Item ${valueOf(item, "id")} Refund root tuple 不一致`);
@@ -1796,7 +1795,7 @@ function validateTaxAndChannelTuples(records) {
     assert.ok(target, `Channel Transaction Match ${valueOf(match, "id")} 缺少目标 Item`);
     assert.ok(identifierEqual(valueOf(target, "channel_account_id"), valueOf(batch, "channel_account_id")),
       `Channel Transaction Match ${valueOf(match, "id")} Channel Account tuple 不一致`);
-    const economics = requireRecord(records, "t_transaction_economics", valueOf(target, "transaction_economics_id"));
+    const economics = requireRecord(records, "t_economic_fact", valueOf(target, "transaction_economics_id"));
     assert.ok(identifierEqual(valueOf(economics, "entity_no"), channelOperatingEntityId),
       `Channel Transaction Match ${valueOf(match, "id")} OE tuple 不一致`);
     assert.equal(valueOf(economics, "currency"), valueOf(batch, "currency"),
@@ -1923,18 +1922,18 @@ function validateTaxAndChannelTuples(records) {
   }
   const channelCostAllocations = recordsFor(records, "t_channel_cost_alloc");
   for (const allocation of channelCostAllocations) {
-    const economics = requireRecord(records, "t_transaction_economics", valueOf(allocation, "transaction_economics_id"));
-    const paymentTarget = valueOf(economics, "economics_type") === "PAYMENT"
+    const economics = requireRecord(records, "t_economic_fact", valueOf(allocation, "transaction_economics_id"));
+    const paymentTarget = valueOf(economics, "fact_type") === "PAYMENT"
       && identifierEqual(valueOf(allocation, "payment_attempt_id"), valueOf(economics, "payment_attempt_id"))
       && isNull(valueOf(allocation, "channel_refund_id"))
       && isNull(valueOf(allocation, "channel_dispute_notice_id"))
       && isNull(valueOf(allocation, "dispute_case_id"));
-    const refundTarget = valueOf(economics, "economics_type") === "REFUND"
+    const refundTarget = valueOf(economics, "fact_type") === "REFUND"
       && isNull(valueOf(allocation, "payment_attempt_id"))
       && identifierEqual(valueOf(allocation, "channel_refund_id"), valueOf(economics, "channel_refund_id"))
       && isNull(valueOf(allocation, "channel_dispute_notice_id"))
       && isNull(valueOf(allocation, "dispute_case_id"));
-    const disputeTarget = valueOf(economics, "economics_type") === "DISPUTE"
+    const disputeTarget = valueOf(economics, "fact_type") === "DISPUTE"
       && isNull(valueOf(allocation, "payment_attempt_id"))
       && isNull(valueOf(allocation, "channel_refund_id"))
       && identifierEqual(valueOf(allocation, "channel_dispute_notice_id"), valueOf(economics, "channel_dispute_notice_id"))
@@ -2901,7 +2900,7 @@ function validateMaturityGraph(records, economicsId) {
   assert.equal(valueOf(maturityEvents[0], "event_key"), eventKey);
   assert.ok(identifierEqual(valueOf(maturityEvents[0], "source_id"), economicsId));
   assert.equal(valueOf(maturityInstructions[0], "source_event_key"), eventKey);
-  assert.ok(identifierEqual(valueOf(maturityInstructions[0], "transaction_economics_id"), economicsId));
+  assert.ok(identifierEqual(valueOf(maturityInstructions[0], "economic_fact_id"), economicsId));
   const maturityKeys = new Set([
     ...maturityEvents.map((record) => valueOf(record, "event_key")),
     ...maturityInstructions.map((record) => valueOf(record, "source_event_key")),
@@ -2952,10 +2951,10 @@ function validateMaturityGraph(records, economicsId) {
   const recoveryInstruction = recordsFor(records, "t_accounting_instruction")
     .find((record) => valueOf(record, "instruction_type") === "PARTNER_RECOVERY_OPEN"
       && valueOf(record, "source_event_key") === "PARTNER_RECOVERY_OPEN:31030"
-      && identifierEqual(valueOf(record, "transaction_economics_id"), "31030"));
+      && identifierEqual(valueOf(record, "economic_fact_id"), "31030"));
   assert.ok(recoveryInstruction, "缺少先前 Partner Recovery 负向 Economics 来源");
-  const recoveryEconomics = requireRecord(records, "t_transaction_economics", "31030");
-  assert.equal(valueOf(recoveryEconomics, "economics_type"), "DISPUTE");
+  const recoveryEconomics = requireRecord(records, "t_economic_fact", "31030");
+  assert.equal(valueOf(recoveryEconomics, "fact_type"), "DISPUTE");
   assert.ok(identifierEqual(valueOf(recoveryEconomics, "local_partner_id"), "41001"));
   assert.ok(identifierEqual(valueOf(recoveryEconomics, "source_version"), valueOf(recoveryInstruction, "source_version")),
     "Partner Recovery 必须冻结同一负向 Economics/Partner/Version");
@@ -3351,7 +3350,7 @@ test("scenario record parser rejects duplicate fields and unparsed fragments", (
 });
 
 test("Manual Payout CHECK validator rejects invalid execution and event matrices", () => {
-  const model = JSON.parse(readFileSync(modelPath, "utf8"));
+  const model = structuredClone(logicalModel);
   const rejects = (record, pattern) => assert.throws(
     () => validateAllOracleChecks([record], model, { requireAllContracts: false }),
     pattern,
@@ -3411,7 +3410,7 @@ test("Manual Payout CHECK validator rejects invalid execution and event matrices
 });
 
 test("DECIMAL validator enforces generated precision and scale", () => {
-  const model = JSON.parse(readFileSync(modelPath, "utf8"));
+  const model = structuredClone(logicalModel);
   const payout = model.entities.find((entity) => entity.defKey === "t_payout");
   const amount = payout.fields.find((field) => field.defKey === "requested_amount");
   assert.equal(amount.len, 24);
@@ -3422,7 +3421,7 @@ test("DECIMAL validator enforces generated precision and scale", () => {
 });
 
 test("exact DECIMAL CHECKs preserve cents above 2^53", () => {
-  const model = JSON.parse(readFileSync(modelPath, "utf8"));
+  const model = structuredClone(logicalModel);
   const valid = {
     table: "t_payout",
     lineNumber: 1,
@@ -4060,9 +4059,9 @@ test("PARTNER_RECOVERY_OPEN binds a unique negative Economics fact instead of a 
   const instruction = requireRecord(rows, "t_accounting_instruction", "32141");
   assert.equal(valueOf(instruction, "source_system"), "RISK");
   assert.equal(valueOf(instruction, "source_event_key"), "PARTNER_RECOVERY_OPEN:31030");
-  assert.ok(identifierEqual(valueOf(instruction, "transaction_economics_id"), "31030"));
-  const economics = requireRecord(rows, "t_transaction_economics", "31030");
-  assert.equal(valueOf(economics, "economics_type"), "DISPUTE");
+  assert.ok(identifierEqual(valueOf(instruction, "economic_fact_id"), "31030"));
+  const economics = requireRecord(rows, "t_economic_fact", "31030");
+  assert.equal(valueOf(economics, "fact_type"), "DISPUTE");
   assert.ok(identifierEqual(valueOf(economics, "local_partner_id"), "41001"));
   assert.ok(identifierEqual(valueOf(economics, "source_version"), valueOf(instruction, "source_version")));
   const journal = requireRecord(rows, "t_journal_entry", "32241");
@@ -4216,7 +4215,7 @@ test("FAILED to FAILED is reserved for the complete LATE_DEBIT audit path", () =
 
 test("every Channel open or debit Item validates its Economics currency tuple", () => {
   const rows = clonedScenarioRows();
-  requireRecord(rows, "t_transaction_economics", "31020").values.set("currency", "EUR");
+  requireRecord(rows, "t_economic_fact", "31020").values.set("currency", "EUR");
   assert.throws(
     () => validateTaxAndChannelTuples(rows),
     /Channel Item 100053.*Economics currency/u,
@@ -4224,7 +4223,7 @@ test("every Channel open or debit Item validates its Economics currency tuple", 
 });
 
 test("relation keys canonicalize integer primary-key aliases", () => {
-  const model = JSON.parse(readFileSync(modelPath, "utf8"));
+  const model = structuredClone(logicalModel);
   const records = [
     { table: "t_finance_entity", values: new Map(Object.entries({ id: "100003", entity_code: "ENTITY-A", legal_party_id: "700001" })) },
     { table: "t_finance_entity", values: new Map(Object.entries({ id: "0100003", entity_code: "ENTITY-B", legal_party_id: "700002" })) },
@@ -4236,7 +4235,7 @@ test("relation keys canonicalize integer primary-key aliases", () => {
 });
 
 test("relation keys accept a valid integer FK written with leading zeroes", () => {
-  const model = JSON.parse(readFileSync(modelPath, "utf8"));
+  const model = structuredClone(logicalModel);
   const records = [
     { table: "t_payout", values: new Map(Object.entries({ id: "92001" })) },
     { table: "t_payout_execution", values: new Map(Object.entries({ id: "93001", payout_id: "092001" })) },
@@ -4245,7 +4244,7 @@ test("relation keys accept a valid integer FK written with leading zeroes", () =
 });
 
 test("relation keys canonicalize every integer member of a composite UK", () => {
-  const model = JSON.parse(readFileSync(modelPath, "utf8"));
+  const model = structuredClone(logicalModel);
   const records = [
     { table: "t_payout", values: new Map(Object.entries({ id: "92001" })) },
     { table: "t_payout_execution", values: new Map(Object.entries({ id: "93001", payout_id: "92001", attempt_no: "1" })) },
@@ -4410,7 +4409,7 @@ test("Channel confirmed Bank Match rejects a non-settlement binding purpose", ()
 
 test("Channel tuple rejects economics currency outside its Batch", () => {
   const rows = clonedScenarioRows();
-  requireRecord(rows, "t_transaction_economics", "31001").values.set("currency", "EUR");
+  requireRecord(rows, "t_economic_fact", "31001").values.set("currency", "EUR");
   assert.throws(() => validateTaxAndChannelTuples(rows), /Channel Transaction Match 100057.*currency/u);
 });
 
@@ -4422,15 +4421,15 @@ test("maturity prose uses one Agreement-OE T+N and keeps Channel cash timing ind
 });
 
 test("exact integer predicates normalize leading zeroes with BigInt", () => {
-  const model = JSON.parse(readFileSync(modelPath, "utf8"));
+  const model = structuredClone(logicalModel);
   const fiscal = requireRecord(clonedScenarioRows(), "t_fiscal_record", "100024");
   fiscal.values.set("source_version", "01");
   assert.doesNotThrow(() => validateExactDecimalChecks([fiscal], model, { requireAllDerived: false }));
 });
 
 test("exact integer ID predicates reject leading-zero aliases", () => {
-  const model = JSON.parse(readFileSync(modelPath, "utf8"));
-  const link = requireRecord(clonedScenarioRows(), "t_transaction_economic_comp_link", "100035");
+  const model = structuredClone(logicalModel);
+  const link = requireRecord(clonedScenarioRows(), "t_economic_fact_line_link", "100035");
   link.values.set("source_component_id", "0100033");
   link.values.set("target_component_id", "100033");
   assert.throws(() => validateExactDecimalChecks([link], model, { requireAllDerived: false }), /ck_txn_econ_component_link/u);
@@ -4609,7 +4608,7 @@ test("late Debit and Book/Account sequence causality reject backdating and stale
 });
 
 test("all 104 Oracle CHECK contracts and all 37 derived exact-decimal predicates execute", () => {
-  const model = JSON.parse(readFileSync(modelPath, "utf8"));
+  const model = structuredClone(logicalModel);
   const rows = scenarioRows(readFileSync(scenarioPath, "utf8"));
   const result = validateAllOracleChecks(rows, model);
   const exactResult = validateExactDecimalChecks(rows, model);
@@ -4624,7 +4623,7 @@ test("all 104 Oracle CHECK contracts and all 37 derived exact-decimal predicates
 });
 
 test("full Oracle gate rejects a formerly unvalidated Accounting Instruction", () => {
-  const model = JSON.parse(readFileSync(modelPath, "utf8"));
+  const model = structuredClone(logicalModel);
   const invalid = {
     table: "t_accounting_instruction",
     lineNumber: 1,
@@ -4634,7 +4633,7 @@ test("full Oracle gate rejects a formerly unvalidated Accounting Instruction", (
       source_event_key: "BAD:1",
       source_version: "1",
       source_payload_hash: "hash",
-      transaction_economics_id: "NULL",
+      economic_fact_id: "NULL",
       manual_adjustment_id: "NULL",
       accounting_rule_bundle_ver_id: "NULL",
       input_hash: "hash-input",
@@ -4649,7 +4648,7 @@ test("full Oracle gate rejects a formerly unvalidated Accounting Instruction", (
 });
 
 test("approved Payout cannot use the all-null Risk snapshot branch", () => {
-  const model = JSON.parse(readFileSync(modelPath, "utf8"));
+  const model = structuredClone(logicalModel);
   const values = {
     owner_type: "CLIENT",
     currency: "USD",
@@ -4841,7 +4840,7 @@ test("Tax payment graph rejects CREATED roots with a full CONFIRMED bank match",
 });
 
 test("scenario relation validator rejects a missing local FK target", () => {
-  const model = JSON.parse(readFileSync(modelPath, "utf8"));
+  const model = structuredClone(logicalModel);
   assert.throws(
     () => validateRelationsAndUnique([
       {
@@ -4855,7 +4854,7 @@ test("scenario relation validator rejects a missing local FK target", () => {
 });
 
 test("scenario schema validator rejects missing NN fields and duplicate non-null UK tuples", () => {
-  const model = JSON.parse(readFileSync(modelPath, "utf8"));
+  const model = structuredClone(logicalModel);
   assert.throws(
     () => validateSchemaRecords([{
       table: "t_currency_spec",
@@ -4945,8 +4944,7 @@ test("Finance reality scenarios cover every approved table", () => {
 });
 
 test("Finance scenario assignments use real fields, primitive types and closed enum values", () => {
-  assert.ok(existsSync(modelPath), `Finance 模型尚未生成：${modelPath}`);
-  const model = JSON.parse(readFileSync(modelPath, "utf8"));
+  const model = structuredClone(logicalModel);
   const rows = scenarioRows(readFileSync(scenarioPath, "utf8"));
   const assignmentCount = validateSchemaRecords(rows, model);
   assert.ok(assignmentCount >= 700, `场景字段赋值不足，当前仅 ${assignmentCount} 个`);
@@ -5079,9 +5077,9 @@ test("Finance scenarios mature Client and Partner payable balances at one contra
     assert.ok(!rows.some((row) => row.table === removedTable), `场景仍使用已删除表 ${removedTable}`);
   }
 
-  assert.match(rowsFor("t_transaction_economics"), /payment_succeeded_time=/u);
-  assert.match(rowsFor("t_transaction_economics"), /balance_available_time=/u);
-  assert.doesNotMatch(rowsFor("t_transaction_economics"), /client_available_time=/u);
+  assert.match(rowsFor("t_economic_fact"), /payment_succeeded_time=/u);
+  assert.match(rowsFor("t_economic_fact"), /balance_available_time=/u);
+  assert.doesNotMatch(rowsFor("t_economic_fact"), /client_available_time=/u);
   assert.match(rowsFor("t_account"), /chart_account_id=20102.*balance_bucket=PENDING/u);
   assert.match(rowsFor("t_account"), /chart_account_id=20114.*balance_bucket=PENDING/u);
   assert.match(rowsFor("t_account"), /chart_account_id=20128.*balance_bucket=NONE/u);
@@ -5219,17 +5217,17 @@ test("Finance scenarios cover the complete Manual Payout lifecycle and high-risk
 test("Finance scenarios post RefundSucceeded directly without a refund Funding reservation", () => {
   const content = readFileSync(scenarioPath, "utf8");
   const rows = scenarioRows(content);
-  const refund = recordsFor(rows, "t_transaction_economics")
-    .find((record) => valueOf(record, "economics_type") === "REFUND");
+  const refund = recordsFor(rows, "t_economic_fact")
+    .find((record) => valueOf(record, "fact_type") === "REFUND");
   assert.ok(refund);
   assert.ok(identifierEqual(valueOf(refund, "parent_economics_id"), "31001"));
-  const refundComponent = recordsFor(rows, "t_transaction_economic_component")
+  const refundComponent = recordsFor(rows, "t_economic_fact_line")
     .find((record) => identifierEqual(valueOf(record, "transaction_economics_id"), valueOf(refund, "id")));
-  const reversal = recordsFor(rows, "t_transaction_economic_comp_link")
+  const reversal = recordsFor(rows, "t_economic_fact_line_link")
     .find((record) => identifierEqual(valueOf(record, "target_component_id"), valueOf(refundComponent, "id")));
   assert.equal(valueOf(reversal, "link_type"), "REVERSAL");
   const instruction = recordsFor(rows, "t_accounting_instruction")
-    .find((record) => identifierEqual(valueOf(record, "transaction_economics_id"), valueOf(refund, "id")));
+    .find((record) => identifierEqual(valueOf(record, "economic_fact_id"), valueOf(refund, "id")));
   assert.equal(valueOf(instruction, "instruction_type"), "REFUND_SUCCEEDED");
   const journal = recordsFor(rows, "t_journal_entry")
     .find((record) => identifierEqual(valueOf(record, "instruction_id"), valueOf(instruction, "id")));

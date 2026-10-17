@@ -37,6 +37,17 @@ class TableOwnershipAutoTest {
         Assertions.assertTrue(ownership.allowedTables("commercial").contains("t_business_change_record"));
         Assertions.assertTrue(ownership.allowedTables("billing").contains("t_currency_spec"));
         Assertions.assertFalse(ownership.allowedTables("tax").contains("t_currency_spec"));
+        // 第 07 步更名：经济事实三表以新表名登记在 billing，旧表名不再出现。
+        Assertions.assertTrue(ownership.allowedTables("billing").containsAll(
+            List.of("t_economic_fact", "t_economic_fact_line", "t_economic_fact_line_link")));
+        Assertions.assertTrue(ownership.services().stream()
+            .noneMatch(service -> ownership.allowedTables(service).contains("t_transaction_economics")));
+        // 共库过渡：account 只读 ledger 的三张表，不计入 account 归属。
+        Assertions.assertTrue(ownership.allowedTables("account").containsAll(
+            List.of("t_account", "t_chart_account", "t_ledger_book")));
+        Assertions.assertEquals(Set.of("t_compensation_event"), ownership.databasesOf("account").get("mor_account"));
+        Assertions.assertEquals(Set.of("t_account", "t_chart_account", "t_ledger_book"),
+            ownership.transitionalReadsOf("account").get("mor_ledger"));
         // design/03 删除的表不属于任何重切服务；保留服务 Platform 的存量命令幂等表待专项迁移，仍归 Platform。
         Assertions.assertTrue(ownership.services().stream().filter(service -> !"platform-support".equals(service))
             .noneMatch(service -> ownership.allowedTables(service).contains("t_command_idempotency")));

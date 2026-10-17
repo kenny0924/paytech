@@ -1,0 +1,57 @@
+server:
+  address: 127.0.0.1
+  port: 18116
+
+spring:
+  application:
+    name: tax-service
+  jmx:
+    enabled: false
+  datasource:
+    url: "${TAX_DB_URL:jdbc:mysql://127.0.0.1:13306/mor_tax?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}"
+    username: "${TAX_DB_USERNAME:tax_app}"
+    password: "${TAX_DB_PASSWORD:}"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-init-sql: "SET time_zone = '+00:00'"
+      data-source-properties:
+        connectionTimeZone: UTC
+        forceConnectionTimeZoneToSession: true
+
+management:
+  server:
+    # 管理端口 = 业务端口 + 1000（01 §3）。
+    address: 127.0.0.1
+    port: 19116
+  endpoints:
+    enabled-by-default: false
+    web:
+      discovery:
+        enabled: false
+      exposure:
+        include: health,info,prometheus
+    jmx:
+      exposure:
+        exclude: "*"
+  endpoint:
+    health:
+      access: read-only
+      show-details: never
+      probes:
+        enabled: true
+        add-additional-paths: false
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState
+    info:
+      access: read-only
+    prometheus:
+      access: read-only
+
+tax:
+  identifier:
+    # 部署分配的 Snowflake Region / Worker 标识，必填；每个 app 独立分配。
+    region-id: "${TAX_SNOWFLAKE_REGION_ID}"
+    worker-id: "${TAX_SNOWFLAKE_WORKER_ID}"

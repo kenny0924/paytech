@@ -683,13 +683,13 @@ export const TABLES = Object.freeze([
   }),
 
   defineTable({
-    key: "transaction_economics",
-    name: "交易经济结果",
+    key: "economic_fact",
+    name: "经济事实",
     comment: "按支付、退款、重复扣款、重复扣款补偿、争议或实际成本调整事件冻结一笔不可变的交易经济结果、必要业务锚和 PAYMENT 的 Client 合同余额到期时间。",
     audit: "immutable",
     fields: [
       primaryKey("id", "交易经济结果ID", "服务侧生成的交易经济结果 Snowflake 主键"),
-      field("economics_type", types.code, "NN", "经济结果类型", "说明本结果由支付、退款、重复扣款、重复扣款补偿、争议或成本调整业务事实产生", { values: ["PAYMENT", "REFUND", "DUPLICATE_CAPTURE", "DUPLICATE_COMPENSATION", "DISPUTE", "COST_ADJUSTMENT"] }),
+      field("fact_type", types.code, "NN", "经济事实类型", "说明本结果由支付、退款、重复扣款、重复扣款补偿、争议、人工调整或成本调整业务事实产生；原列名 economics_type", { values: ["PAYMENT", "REFUND", "DUPLICATE_CAPTURE", "DUPLICATE_COMPENSATION", "DISPUTE", "MANUAL_ADJUSTMENT", "COST_ADJUSTMENT"] }),
       field("source_system", types.code, "NN", "来源系统", "发布本次经济事实事件的受控系统代码", { source: "Code-MoR 系统目录" }),
       field("source_event_key", types.longCode, "NN", "来源事件键", "来源系统在其命名空间内稳定且可幂等消费的事件键"),
       field("source_version", "BIGINT", "NN", "来源版本", "来源业务事实的单调递增版本"),
@@ -727,6 +727,8 @@ export const TABLES = Object.freeze([
       field("finance_entity_id", "BIGINT", "N", "内部财务主体ID", "PARTNER 来源交易按 Commerce 冻结的 Platform Service Party 唯一映射并冻结的本库 ACTIVE Finance Entity 主键；非 Partner 来源为空，不建立跨聚合重复关系"),
       field("currency", types.currency, "NN", "币种", "经济计算全部金额使用的 ISO 4217 三位币种代码", { source: "ISO 4217 币种代码" }),
       field("gross_amount", types.amount, "NN", "业务总金额", "本交易经济结果对应业务事实的非负总金额"),
+      field("supersedes_fact_id", "BIGINT", "N", "被替代经济事实ID", "更正链：本事实替代的同库前一经济事实；首次登记为空"),
+      field("status", types.code, "NN", "经济事实状态", "经济事实登记状态；一经登记不可变，更正以新事实与 supersedes_fact_id 表达，Maker-Checker 中间状态由计费登记接口补充", { values: ["RECORDED"] }),
     ],
     indexes: [
       uniqueIndex("uk_econ_source", "source_system", "source_event_key"),
@@ -735,22 +737,24 @@ export const TABLES = Object.freeze([
       accessIndex("idx_econ_tax", "tax_snapshot_id"),
       accessIndex("idx_econ_intent", "payment_intent_id"),
       accessIndex("idx_econ_attempt", "payment_attempt_id"),
-      accessIndex("idx_econ_balance_available", "economics_type", "balance_available_time"),
+      accessIndex("idx_econ_balance_available", "fact_type", "balance_available_time"),
       accessIndex("idx_econ_refund", "refund_request_id"),
       accessIndex("idx_econ_channel_ref", "channel_refund_id"),
-      uniqueIndex("uk_econ_duplicate", "duplicate_capture_item_id", "economics_type"),
+      uniqueIndex("uk_econ_duplicate", "duplicate_capture_item_id", "fact_type"),
       accessIndex("idx_econ_dispute", "dispute_case_id"),
       accessIndex("idx_econ_client", "client_id", "entity_no", "currency"),
+      accessIndex("idx_econ_supersedes", "supersedes_fact_id"),
     ],
     relations: [
-      relation("parent_economics_id", "transaction_economics", "id"),
+      relation("parent_economics_id", "economic_fact", "id"),
+      relation("supersedes_fact_id", "economic_fact", "id"),
       relation("tax_snapshot_id", "tax_snapshot", "id"),
       relation("duplicate_capture_item_id", "duplicate_capture_item", "id"),
     ],
   }),
 
   defineTable({
-    key: "transaction_economic_component",
+    key: "economic_fact_line",
     name: "交易经济组件",
     comment: "逐项冻结 Client Fee、税、Partner Share、Platform Service Charge、Channel Cost、权益和舍入等实际计算输入、规则来源与结果；PLATFORM_SERVICE_CHARGE 的 party_id 必须逐值等于 Header finance_entity_id，并通过 transaction_economics_id 父链校验。",
     audit: "immutable",
@@ -793,13 +797,13 @@ export const TABLES = Object.freeze([
       accessIndex("idx_econ_comp_rule", "source_rule_type", "source_rule_version_id", "source_rule_scope_id"),
     ],
     relations: [
-      relation("transaction_economics_id", "transaction_economics", "id"),
+      relation("transaction_economics_id", "economic_fact", "id"),
       relation("tax_line_id", "tax_line", "id"),
     ],
   }),
 
   defineTable({
-    key: "transaction_economic_comp_link",
+    key: "economic_fact_line_link",
     name: "交易经济组件关联",
     comment: "关联原交易经济组件与后续冲回或调整组件；目标组件和完整关联集必须同事务创建且关联金额合计等于目标 posted_amount；REVERSAL 必须匹配目标 effect_direction=REVERSAL，ADJUSTMENT 必须匹配目标 effect_direction=ADJUSTMENT；按稳定顺序锁定全部原组件并校验 REVERSAL 累计关联金额不超过各原组件 posted_amount。",
     audit: "immutable",
@@ -815,8 +819,8 @@ export const TABLES = Object.freeze([
       accessIndex("idx_component_link_target", "target_component_id"),
     ],
     relations: [
-      relation("source_component_id", "transaction_economic_component", "id"),
-      relation("target_component_id", "transaction_economic_component", "id"),
+      relation("source_component_id", "economic_fact_line", "id"),
+      relation("target_component_id", "economic_fact_line", "id"),
     ],
   }),
 
@@ -949,7 +953,7 @@ export const TABLES = Object.freeze([
     ],
     relations: [
       relation("cost_confirm_id", "channel_cost_confirm", "id"),
-      relation("transaction_economics_id", "transaction_economics", "id"),
+      relation("transaction_economics_id", "economic_fact", "id"),
     ],
   }),
 ]);

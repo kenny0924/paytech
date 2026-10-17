@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.paytech.finance.accounting.core.dal.mapper.CurrencySpecMapper">
-    <select id="selectByCurrency" resultType="com.paytech.finance.accounting.core.dal.dataobject.CurrencySpec">
-        SELECT id, currency, minor_unit, rounding_mode, status, create_time, update_time FROM t_currency_spec WHERE currency = #{currency}
-    </select>
-</mapper>

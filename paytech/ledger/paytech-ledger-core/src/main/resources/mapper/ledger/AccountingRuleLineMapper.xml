@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.ledger.core.dal.mapper.AccountingRuleLineMapper">
+    <insert id="insertBatch">
+        INSERT INTO t_accounting_rule_line (id, bundle_ver_id, instruction_type, line_no, line_code, amount_source_code, owner_role, account_code, balance_bucket, entry_side, required_flag, create_time) VALUES
+        <foreach collection="lines" item="line" separator=",">(#{line.id}, #{line.bundleVerId}, #{line.instructionType}, #{line.lineNo}, #{line.lineCode}, #{line.amountSourceCode}, #{line.ownerRole}, #{line.accountCode}, #{line.balanceBucket}, #{line.entrySide}, #{line.requiredFlag}, #{line.createTime})</foreach>
+    </insert>
+
+    <select id="selectByVersion" resultType="com.paytech.ledger.core.dal.dataobject.AccountingRuleLine">
+        SELECT id, bundle_ver_id, instruction_type, line_no, line_code, amount_source_code, owner_role, account_code, balance_bucket, entry_side, required_flag, create_time
+        FROM t_accounting_rule_line WHERE bundle_ver_id = #{bundleVerId} ORDER BY instruction_type, line_no
+    </select>
+</mapper>

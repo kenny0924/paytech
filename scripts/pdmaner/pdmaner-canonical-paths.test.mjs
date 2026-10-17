@@ -11,7 +11,12 @@ const modelContracts = [
   ["commerce-service", "commerce.pdma.json", "scripts/pdmaner/generate-commerce-model.mjs"],
   ["payment-orchestration-service", "payment-orchestration.pdma.json", "scripts/pdmaner/generate-payment-model.mjs"],
   ["risk-compliance-service", "risk-compliance.pdma.json", "scripts/pdmaner/risk/generate-risk-compliance-model.mjs"],
-  ["finance-service", "finance.pdma.json", "scripts/pdmaner/finance/generate-finance-model.mjs"],
+  ["paytech/ledger", "ledger.pdma.json", "scripts/pdmaner/finance/generate-finance-model.mjs"],
+  ["paytech/account", "account.pdma.json", "scripts/pdmaner/finance/generate-finance-model.mjs"],
+  ["paytech/billing", "billing.pdma.json", "scripts/pdmaner/finance/generate-finance-model.mjs"],
+  ["paytech/reconciliation", "reconciliation.pdma.json", "scripts/pdmaner/finance/generate-finance-model.mjs"],
+  ["paytech/tax", "tax.pdma.json", "scripts/pdmaner/finance/generate-finance-model.mjs"],
+  ["paytech/payout", "payout.pdma.json", "scripts/pdmaner/finance/generate-finance-model.mjs"],
   ["paytech/platform-support", "platform-support.pdma.json", "scripts/pdmaner/platform-support/generate-platform-support-model.mjs"],
   ["paytech/vault", "vault.pdma.json", "scripts/pdmaner/vault/generate-vault-model.mjs"],
 ];
@@ -32,8 +37,11 @@ test("each database owner keeps exactly one canonical short-name PDManer model",
 test("every PDManer generator writes to its canonical short path", () => {
   for (const [service, filename, generator] of modelContracts) {
     const source = readFileSync(path.join(workspaceRoot, generator), "utf8");
+    // 第 07 步：Finance 逻辑模型按服务切分输出，生成器以服务名模板写 paytech/<svc>/docs/database/<svc>.pdma.json。
+    const serviceTemplate = "paytech/${service}/docs/database/${service}.pdma.json";
+    const templated = source.includes(serviceTemplate) && filename === `${path.basename(service)}.pdma.json`;
     assert.ok(
-      source.includes(`${service}/docs/database/${filename}`),
+      source.includes(`${service}/docs/database/${filename}`) || templated,
       `${generator} must target ${service}/docs/database/${filename}`,
     );
     assert.doesNotMatch(source, /Code-MoR .* Database V1\.pdma\.json/u);

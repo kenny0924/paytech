@@ -1,0 +1,228 @@
+-- billing-service Mock 测试环境准备（管理员手工执行；应用与测试从不自动执行）。
+-- 测试复用仓库 local-environment 的 MySQL；账号与 application-mock.yml 一致，只授予本库最小 DML 权限（design/10 §4.2）。
+-- 已有库和账号不删除、不重置。表结构逐字取自 paytech/billing/docs/database/sql/billing-schema.sql 的全部 9 张表。
+-- 保留行逐字取自 paytech/billing/docs/database/sql/billing-initial-data.sql（测试只删除 ID ≥ 1,000,000 的行）。
+CREATE DATABASE IF NOT EXISTS mor_billing DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+CREATE USER IF NOT EXISTS 'billing_app'@'%' IDENTIFIED BY '92f01bf0c17cbbdc07914d46880c949dfc3de5f359d133a2';
+GRANT SELECT, INSERT, UPDATE, DELETE ON mor_billing.* TO 'billing_app'@'%';
+USE mor_billing;
+SET NAMES utf8mb4;
+
+CREATE TABLE `t_currency_spec` (
+  `id` BIGINT NOT NULL COMMENT '服务侧生成的币种规则 Snowflake 主键。',
+  `currency` CHAR(3) NOT NULL COMMENT 'ISO 4217 三位币种代码。取值来源：ISO 4217 币种代码；非固定枚举。',
+  `minor_unit` TINYINT NOT NULL COMMENT '记账与结算金额允许保留的小数位数，取值范围为零至八。',
+  `rounding_mode` VARCHAR(64) NOT NULL COMMENT '金额从八位计算精度归整到币种精度时采用的固定方式。允许值：HALF_UP。',
+  `status` VARCHAR(64) NOT NULL COMMENT '币种规则当前是否允许被新业务使用。允许值：DRAFT、ACTIVE、INACTIVE。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_currency` (`currency`) COMMENT '保证业务唯一性：currency'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='只读副本，Owner platform-support（D41）：保存 Finance 使用的 ISO 4217 币种精度、舍入方式和启停状态；ledger 与 billing 各持一份，不在本服务写入。';
+
+CREATE TABLE `t_economic_fact` (
+  `id` BIGINT NOT NULL COMMENT '服务侧生成的交易经济结果 Snowflake 主键。',
+  `fact_type` VARCHAR(64) NOT NULL COMMENT '说明本结果由支付、退款、重复扣款、重复扣款补偿、争议、人工调整或成本调整业务事实产生；原列名 economics_type。允许值：PAYMENT、REFUND、DUPLICATE_CAPTURE、DUPLICATE_COMPENSATION、DISPUTE、MANUAL_ADJUSTMENT、COST_ADJUSTMENT。',
+  `source_system` VARCHAR(64) NOT NULL COMMENT '发布本次经济事实事件的受控系统代码。取值来源：Code-MoR 系统目录；非固定枚举。',
+  `source_event_key` VARCHAR(128) NOT NULL COMMENT '来源系统在其命名空间内稳定且可幂等消费的事件键。',
+  `source_version` BIGINT NOT NULL COMMENT '来源业务事实的单调递增版本。',
+  `source_payload_hash` CHAR(64) NOT NULL COMMENT '消息事件信封规范化载荷的不可变摘要。',
+  `parent_economics_id` BIGINT NULL COMMENT '退款、重复扣款、争议和成本调整的本库来源结果；重复扣款补偿直接指向对应重复扣款结果，其余派生类型指向原支付结果。',
+  `order_id` BIGINT NOT NULL COMMENT '与 Commerce Order Context 共同构成商业事实锚的订单稳定业务ID。',
+  `order_context_id` BIGINT NOT NULL COMMENT '与订单共同冻结且不可替换的 Commerce Order Context 稳定业务ID。',
+  `context_format` VARCHAR(32) NOT NULL COMMENT '新交易使用TERM_PRICE，历史数据保持LEGACY_SCOPE并读取原始冻结证据。允许值：TERM_PRICE、LEGACY_SCOPE。',
+  `payment_fact_id` BIGINT NULL COMMENT '新PAYMENT经济事实引用Payment最终定价快照；历史及负向事实按原分支或父事实读取。',
+  `client_price_id` BIGINT NULL COMMENT '新PAYMENT命中的CCT Client Price，费用和共同成熟输入必须来自同一行。',
+  `settlement_business_days` INT NULL COMMENT '新PAYMENT冻结Client Price的非负工作日数N；Partner Share随同成熟。',
+  `business_calendar_code` VARCHAR(64) NULL COMMENT '计算时采用并核验覆盖范围的工作日日历，缺失不得猜测。取值来源：Finance业务日历目录；非固定枚举。',
+  `settlement_timezone` VARCHAR(64) NULL COMMENT '新PAYMENT冻结Client Price时区，初期明确UTC。取值来源：IANA时区目录，本期仅UTC；非固定枚举。',
+  `cutoff_second_of_day` INT NULL COMMENT '新PAYMENT冻结86399即UTC23:59:59.000000；晚于截止滚至下一工作日。',
+  `commercial_context_time` DATETIME(6) NOT NULL COMMENT 'Commerce 冻结并用于精确查询 CCT 商业条款的 UTC 微秒时间。',
+  `tax_snapshot_id` BIGINT NOT NULL COMMENT '本次经济计算引用的本库不可变税务计算快照。',
+  `payment_intent_id` BIGINT NOT NULL COMMENT '该订单在 Payment 中的稳定支付意图业务ID。',
+  `payment_attempt_id` BIGINT NULL COMMENT '支付或相关调整所关联的 Payment Attempt 稳定业务ID。',
+  `payment_succeeded_time` DATETIME(6) NULL COMMENT '仅 PAYMENT 结果冻结 PaymentSucceeded 中 SALE 成功或累计全额 CAPTURE 成功的 UTC 微秒发生时间；其他经济结果为空。',
+  `balance_available_time` DATETIME(6) NULL COMMENT '仅 PAYMENT 结果按命中 Client Price 的工作日数、日历、时区和 Cutoff（LEGACY_SCOPE 继续读取原冻结输入） 计算并冻结的 UTC 微秒到期时间；同时控制 Client Principal 与 Local Partner Share 从 PENDING 成熟到 AVAILABLE，Channel 实际结算不改变该值。',
+  `refund_request_id` BIGINT NULL COMMENT '退款交易经济结果对应的 Commerce Refund Request 稳定业务ID。',
+  `channel_refund_id` BIGINT NULL COMMENT '退款交易经济结果对应的 Payment Channel Refund 稳定业务ID。',
+  `duplicate_capture_item_id` BIGINT NULL COMMENT '重复扣款及其补偿交易经济结果共同引用的本库重复扣款异常明细。',
+  `channel_dispute_notice_id` BIGINT NULL COMMENT '争议交易经济结果对应的 Payment Channel Dispute Notice 稳定业务ID。',
+  `dispute_case_id` BIGINT NULL COMMENT '争议交易经济结果对应的 Risk Dispute Case 稳定业务ID。',
+  `client_id` BIGINT NOT NULL COMMENT '订单所属 CCT Client 的稳定业务ID。',
+  `entity_no` CHAR(5) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '订单冻结且支付尝试不得切换的 CCT Operating Entity 稳定业务ID。',
+  `local_partner_id` BIGINT NULL COMMENT '交易时点有效的 CCT Local Partner 稳定业务ID，不存在合作方时为空。',
+  `consumer_country_code` CHAR(2) NOT NULL COMMENT '商业上下文冻结的 ISO 3166-1 alpha-2 消费者国家代码。取值来源：ISO 3166-1 alpha-2 国家代码；非固定枚举。',
+  `payment_method` VARCHAR(64) NOT NULL COMMENT 'Payment Attempt 冻结的实际支付方式目录代码。取值来源：Payment 支付方式目录；非固定枚举。',
+  `industry_code` VARCHAR(64) NOT NULL COMMENT 'Commerce Order Context 冻结的平台业务行业分类代码。取值来源：CCT 行业分类目录；非固定枚举。',
+  `mcc_code` CHAR(4) NOT NULL COMMENT 'Commerce Order Context 冻结且保留前导零的四位 MCC。取值来源：ISO 18245 商户类别码；非固定枚举。',
+  `client_agreement_id` BIGINT NOT NULL COMMENT 'CCT准确Client/OE合同的稳定ID；新交易成熟输入取自同一命中Client Price，不能使用当前合同覆盖原事实。',
+  `partner_agreement_oe_id` BIGINT NULL COMMENT 'CCT 合作方协议与该 Operating Entity 之间的稳定关联ID，OE 为物理字段中的 Operating Entity 缩写。',
+  `finance_entity_id` BIGINT NULL COMMENT 'PARTNER 来源交易按 Commerce 冻结的 Platform Service Party 唯一映射并冻结的本库 ACTIVE Finance Entity 主键；非 Partner 来源为空，不建立跨聚合重复关系。',
+  `currency` CHAR(3) NOT NULL COMMENT '经济计算全部金额使用的 ISO 4217 三位币种代码。取值来源：ISO 4217 币种代码；非固定枚举。',
+  `gross_amount` DECIMAL(24,8) NOT NULL COMMENT '本交易经济结果对应业务事实的非负总金额。',
+  `supersedes_fact_id` BIGINT NULL COMMENT '更正链：本事实替代的同库前一经济事实；首次登记为空。',
+  `status` VARCHAR(64) NOT NULL COMMENT '经济事实登记状态；一经登记不可变，更正以新事实与 supersedes_fact_id 表达，Maker-Checker 中间状态由计费登记接口补充。允许值：RECORDED。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_econ_source` (`source_system`, `source_event_key`) COMMENT '保证业务唯一性：source_system、source_event_key',
+  KEY `idx_econ_parent` (`parent_economics_id`) COMMENT '支持访问路径：parent_economics_id',
+  KEY `idx_econ_order` (`order_id`, `order_context_id`) COMMENT '支持访问路径：order_id、order_context_id',
+  KEY `idx_econ_tax` (`tax_snapshot_id`) COMMENT '支持访问路径：tax_snapshot_id',
+  KEY `idx_econ_intent` (`payment_intent_id`) COMMENT '支持访问路径：payment_intent_id',
+  KEY `idx_econ_attempt` (`payment_attempt_id`) COMMENT '支持访问路径：payment_attempt_id',
+  KEY `idx_econ_balance_available` (`fact_type`, `balance_available_time`) COMMENT '支持访问路径：fact_type、balance_available_time',
+  KEY `idx_econ_refund` (`refund_request_id`) COMMENT '支持访问路径：refund_request_id',
+  KEY `idx_econ_channel_ref` (`channel_refund_id`) COMMENT '支持访问路径：channel_refund_id',
+  UNIQUE KEY `uk_econ_duplicate` (`duplicate_capture_item_id`, `fact_type`) COMMENT '保证业务唯一性：duplicate_capture_item_id、fact_type',
+  KEY `idx_econ_dispute` (`dispute_case_id`) COMMENT '支持访问路径：dispute_case_id',
+  KEY `idx_econ_client` (`client_id`, `entity_no`, `currency`) COMMENT '支持访问路径：client_id、entity_no、currency',
+  KEY `idx_econ_supersedes` (`supersedes_fact_id`) COMMENT '支持访问路径：supersedes_fact_id'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='按支付、退款、重复扣款、重复扣款补偿、争议或实际成本调整事件冻结一笔不可变的交易经济结果、必要业务锚和 PAYMENT 的 Client 合同余额到期时间。';
+
+CREATE TABLE `t_economic_fact_line` (
+  `id` BIGINT NOT NULL COMMENT '服务侧生成的交易经济组件 Snowflake 主键。',
+  `transaction_economics_id` BIGINT NOT NULL COMMENT '该组件所属的本库不可变交易经济结果。',
+  `component_no` INT NOT NULL COMMENT '同一交易经济结果内稳定且唯一的组件序号。',
+  `component_type` VARCHAR(64) NOT NULL COMMENT '说明本组件属于费用、税务、分润、成本、权益或舍入的受控类别；渠道实际成本差额必须分别使用 CHANNEL_COST_INCREASE 或 CHANNEL_COST_DECREASE 冻结增提或冲减方向。取值来源：Finance 经济组件类型目录；非固定枚举。',
+  `party_type` VARCHAR(64) NULL COMMENT '该组件收入、费用、应付或权益归属的业务角色。允许值：CLIENT、LOCAL_PARTNER、CHANNEL、OPERATING_ENTITY、FINANCE_ENTITY、TAX_AUTHORITY、CONSUMER、PLATFORM。',
+  `party_id` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT '按party_type解释的稳定字符串；OE为entityNo，其余数字身份保存规范十进制字符串。',
+  `tax_line_id` BIGINT NULL COMMENT '税务组件引用的本库不可变税务计算行。',
+  `basis_amount` DECIMAL(24,8) NOT NULL COMMENT '本组件费率或规则实际使用的非负金额基数。',
+  `rate_value` DECIMAL(18,10) NULL COMMENT '本组件实际使用的十进制费率。',
+  `raw_amount` DECIMAL(24,8) NOT NULL COMMENT '按八位小数精度计算且尚未按币种精度舍入的金额。',
+  `posted_amount` DECIMAL(24,8) NOT NULL COMMENT '按币种精度和固定舍入方式归整后的非负金额。',
+  `effect_direction` VARCHAR(64) NOT NULL COMMENT '说明组件增加、冲回或调整原有经济结果；ADJUSTMENT 的具体借贷方向必须由稳定 component_type 决定，Channel Cost 使用 INCREASE/DECREASE 两类代码。允许值：CHARGE、REVERSAL、ADJUSTMENT。',
+  `source_rule_type` VARCHAR(64) NOT NULL COMMENT '提供本组件计算参数的规则族类别。允许值：CLIENT_PRICING、PARTNER_SHARE、PLATFORM_SERVICE_CHARGE、TAX_RULE、CHANNEL_COST、CCT_PRICE_COMPONENT。',
+  `source_rule_version_id` BIGINT NOT NULL COMMENT '来源规则系统中实际用于计算的不可变版本ID。',
+  `source_price_id` BIGINT NULL COMMENT 'CCT_PRICE_COMPONENT来源必填准确CCT Price ID；其他来源为空。',
+  `source_profile_code` VARCHAR(64) NULL COMMENT 'CCT_PRICE_COMPONENT来源冻结不可变Payment Method Profile Code；其他来源为空。取值来源：CCT Payment Method Profile稳定代码目录；非固定枚举。',
+  `source_band_evidence` JSON NULL COMMENT '仅TIERED保存实际参与档位的bandId/bandNo/lowerBound/upperBound/rate/fixedAmount/currency/basisAmount/rawAmount受控数组；最多1000项、64KiB，非阶梯为空；先汇总原始金额再按组件舍入。',
+  `source_rule_scope_id` BIGINT NULL COMMENT '来源规则存在适用范围时实际命中的稳定 Scope ID；无独立 Scope 的规则族为空。',
+  `source_rule_component_id` BIGINT NULL COMMENT '来源规则中实际命中的费率或金额组件稳定ID。',
+  `source_component_code` VARCHAR(64) NOT NULL COMMENT '来源规则内稳定识别该计算组成的代码。取值来源：来源规则组件代码；非固定枚举。',
+  `source_trigger_code` VARCHAR(64) NOT NULL COMMENT '来源规则声明的业务动作或计费触发条件。取值来源：来源规则触发代码；非固定枚举。',
+  `source_calculation_base` VARCHAR(64) NOT NULL COMMENT '来源规则声明的金额计算基数语义。取值来源：来源规则计算基础目录；非固定枚举。',
+  `source_rate` DECIMAL(18,10) NULL COMMENT '从精确来源规则逐值冻结的十进制费率。',
+  `source_fixed_amount` DECIMAL(24,8) NULL COMMENT '从精确来源规则逐值冻结的固定金额。',
+  `source_currency` CHAR(3) NULL COMMENT '固定金额规则声明的 ISO 4217 三位币种代码。取值来源：ISO 4217 币种代码；非固定枚举。',
+  `source_min_amount` DECIMAL(24,8) NULL COMMENT '来源规则声明的组件计算下限。',
+  `source_max_amount` DECIMAL(24,8) NULL COMMENT '来源规则声明的组件计算上限。',
+  `source_rule_content_hash` CHAR(64) NULL COMMENT '具有独立 Hash 契约的规则族提供的不可变内容摘要。',
+  `calculation_method` VARCHAR(64) NOT NULL COMMENT '把冻结参数应用于基数并得到原始金额的受控方法。取值来源：Finance 经济计算方法目录；非固定枚举。',
+  `rounding_mode` VARCHAR(64) NOT NULL COMMENT '把原始金额归整到币种精度时采用的固定方式。允许值：HALF_UP。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_econ_component` (`transaction_economics_id`, `component_no`) COMMENT '保证业务唯一性：transaction_economics_id、component_no',
+  KEY `idx_econ_comp_tax` (`tax_line_id`) COMMENT '支持访问路径：tax_line_id',
+  KEY `idx_econ_comp_party` (`party_type`, `party_id`, `component_type`) COMMENT '支持访问路径：party_type、party_id、component_type',
+  KEY `idx_econ_comp_rule` (`source_rule_type`, `source_rule_version_id`, `source_rule_scope_id`) COMMENT '支持访问路径：source_rule_type、source_rule_version_id、source_rule_scope_id'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='逐项冻结 Client Fee、税、Partner Share、Platform Service Charge、Channel Cost、权益和舍入等实际计算输入、规则来源与结果；PLATFORM_SERVICE_CHARGE 的 party_id 必须逐值等于 Header finance_entity_id，并通过 transaction_economics_id 父链校验。';
+
+CREATE TABLE `t_economic_fact_line_link` (
+  `id` BIGINT NOT NULL COMMENT '服务侧生成的交易经济组件关联 Snowflake 主键。',
+  `source_component_id` BIGINT NOT NULL COMMENT '被冲回或调整的本库原始交易经济组件。',
+  `target_component_id` BIGINT NOT NULL COMMENT '执行冲回或调整的本库后续交易经济组件。',
+  `link_type` VARCHAR(64) NOT NULL COMMENT '说明目标组件对原组件执行冲回还是成本调整。允许值：REVERSAL、ADJUSTMENT。',
+  `linked_amount` DECIMAL(24,8) NOT NULL COMMENT '分配到该原组件的本次目标冲回或调整正金额；冲回会占用原组件可逆额度，成本调整只表达差额来源关联。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_component_link` (`source_component_id`, `target_component_id`, `link_type`) COMMENT '保证业务唯一性：source_component_id、target_component_id、link_type',
+  KEY `idx_component_link_target` (`target_component_id`) COMMENT '支持访问路径：target_component_id'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='关联原交易经济组件与后续冲回或调整组件；目标组件和完整关联集必须同事务创建且关联金额合计等于目标 posted_amount；REVERSAL 必须匹配目标 effect_direction=REVERSAL，ADJUSTMENT 必须匹配目标 effect_direction=ADJUSTMENT；按稳定顺序锁定全部原组件并校验 REVERSAL 累计关联金额不超过各原组件 posted_amount。';
+
+CREATE TABLE `t_channel_cost_plan` (
+  `id` BIGINT NOT NULL COMMENT '服务侧生成的渠道成本方案 Snowflake 主键。',
+  `channel_id` BIGINT NOT NULL COMMENT 'Payment Channel 的稳定业务ID。',
+  `plan_code` VARCHAR(64) NOT NULL COMMENT '跨版本稳定识别渠道成本方案的业务代码。取值来源：Finance 渠道成本方案代码；非固定枚举。',
+  `current_ver_id` BIGINT NULL COMMENT '当前发布的本库渠道成本方案版本。',
+  `status` VARCHAR(64) NOT NULL COMMENT '渠道成本方案稳定身份的当前生命周期状态。允许值：DRAFT、ACTIVE、INACTIVE。',
+  `version` BIGINT NOT NULL DEFAULT 0 COMMENT '切换当前成本版本和状态时使用的乐观锁版本号。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_channel_cost_plan` (`channel_id`) COMMENT '保证业务唯一性：channel_id',
+  UNIQUE KEY `uk_channel_cost_code` (`plan_code`) COMMENT '保证业务唯一性：plan_code',
+  UNIQUE KEY `uk_channel_cost_current` (`current_ver_id`) COMMENT '保证业务唯一性：current_ver_id'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='保存每个 Payment Channel 的预计渠道成本规则稳定身份和当前版本指针。';
+
+CREATE TABLE `t_channel_cost_plan_ver` (
+  `id` BIGINT NOT NULL COMMENT '服务侧生成的渠道成本方案版本 Snowflake 主键。',
+  `plan_id` BIGINT NOT NULL COMMENT '该版本所属的本库渠道成本方案稳定身份。',
+  `cost_ver` INT NOT NULL COMMENT '同一渠道成本方案下严格递增的业务版本号。',
+  `effective_from` DATETIME(6) NOT NULL COMMENT '该成本版本开始参与预计成本匹配的 UTC 微秒时间。',
+  `effective_to` DATETIME(6) NULL COMMENT '该成本版本停止参与预计成本匹配的 UTC 微秒时间，长期有效时为空。',
+  `content_hash` CHAR(64) NOT NULL COMMENT '覆盖版本、全部适用范围和成本组件的不可变内容摘要。',
+  `status` VARCHAR(64) NOT NULL COMMENT '该成本版本写入时冻结的审批和发布状态。允许值：DRAFT、PENDING_APPROVAL、APPROVED、ACTIVE、REJECTED、INACTIVE。',
+  `maker_id` BIGINT NOT NULL COMMENT '创建该成本版本的 Platform Actor 稳定业务ID。',
+  `checker_id` BIGINT NULL COMMENT '复核该成本版本的另一 Platform Actor 稳定业务ID。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_channel_cost_ver` (`plan_id`, `cost_ver`) COMMENT '保证业务唯一性：plan_id、cost_ver'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='保存成本规则发布批次的生效期、内容摘要及双人审批状态，当前版本仅由方案根指针确定。';
+
+CREATE TABLE `t_channel_cost_scope` (
+  `id` BIGINT NOT NULL COMMENT '服务侧生成的渠道成本适用范围 Snowflake 主键。',
+  `cost_ver_id` BIGINT NOT NULL COMMENT '该适用范围所属的本库渠道成本方案版本。',
+  `scope_no` INT NOT NULL COMMENT '同一成本版本内稳定且唯一的适用范围序号。',
+  `mid_id` BIGINT NOT NULL COMMENT 'Payment Channel MID 的稳定业务ID。',
+  `entity_no` CHAR(5) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '该成本适用范围限定的 CCT Operating Entity 稳定业务ID。',
+  `channel_agreement_ref` VARCHAR(128) NOT NULL COMMENT '本 MID 与经营主体范围实际采用的 Channel 合同或费率文件稳定引用。',
+  `country_code` CHAR(2) NOT NULL COMMENT '该成本适用范围限定的 ISO 3166-1 alpha-2 国家代码。取值来源：ISO 3166-1 alpha-2 国家代码；非固定枚举。',
+  `currency` CHAR(3) NOT NULL COMMENT '该成本适用范围限定的 ISO 4217 三位币种代码。取值来源：ISO 4217 币种代码；非固定枚举。',
+  `payment_method_code` VARCHAR(64) NOT NULL COMMENT '该成本适用范围限定的 Payment 支付方式目录代码。取值来源：Payment 支付方式目录；非固定枚举。',
+  `action_type` VARCHAR(64) NOT NULL COMMENT '该成本适用范围限定的支付、退款或争议动作类别。取值来源：Payment 动作类型目录；非固定枚举。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_channel_cost_scope_no` (`cost_ver_id`, `scope_no`) COMMENT '保证业务唯一性：cost_ver_id、scope_no',
+  UNIQUE KEY `uk_channel_cost_scope` (`cost_ver_id`, `mid_id`, `entity_no`, `country_code`, `currency`, `payment_method_code`, `action_type`) COMMENT '保证业务唯一性：cost_ver_id、mid_id、entity_no、country_code、currency、payment_method_code、action_type',
+  KEY `idx_channel_cost_match` (`mid_id`, `entity_no`, `country_code`, `currency`) COMMENT '支持访问路径：mid_id、entity_no、country_code、currency'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='冻结成本版本对 MID、经营主体、国家、币种、支付方式和动作的确定性匹配范围。';
+
+CREATE TABLE `t_channel_cost_component` (
+  `id` BIGINT NOT NULL COMMENT '服务侧生成的渠道成本组件 Snowflake 主键。',
+  `scope_id` BIGINT NOT NULL COMMENT '该成本组件所属的本库渠道成本适用范围。',
+  `component_code` VARCHAR(64) NOT NULL COMMENT '同一适用范围内稳定识别成本组成的业务代码。取值来源：Finance 渠道成本组件代码；非固定枚举。',
+  `component_type` VARCHAR(64) NOT NULL COMMENT '说明该组件采用百分比、固定费或其他渠道收费语义。取值来源：Finance 渠道成本组件类型目录；非固定枚举。',
+  `calculation_base` VARCHAR(64) NOT NULL COMMENT '该成本组件声明的金额计算基数语义。取值来源：Finance 渠道成本计算基础目录；非固定枚举。',
+  `rate_value` DECIMAL(18,10) NULL COMMENT '零至一之间的渠道成本十进制费率。',
+  `fixed_amount` DECIMAL(24,8) NULL COMMENT '渠道成本规则声明的非负固定收费金额。',
+  `currency` CHAR(3) NULL COMMENT '固定金额使用的 ISO 4217 三位币种代码。取值来源：ISO 4217 币种代码；非固定枚举。',
+  `min_amount` DECIMAL(24,8) NULL COMMENT '该成本组件计算结果允许采用的金额下限。',
+  `max_amount` DECIMAL(24,8) NULL COMMENT '该成本组件计算结果允许采用的金额上限。',
+  `rounding_mode` VARCHAR(64) NOT NULL COMMENT '把渠道成本原始金额归整到币种精度时采用的固定方式。允许值：HALF_UP。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_channel_cost_component` (`scope_id`, `component_code`) COMMENT '保证业务唯一性：scope_id、component_code'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='冻结渠道成本适用范围下的百分比、固定费、跨境费、退款费或争议费参数。';
+
+CREATE TABLE `t_compensation_event` (
+  `id` BIGINT NOT NULL COMMENT 'Finance 数据库内补偿事件记录的 Snowflake 主键，不作为跨系统事件标识。',
+  `event_key` VARCHAR(255) NOT NULL COMMENT '按来源事实和事件类型确定性生成的全局稳定事件标识。',
+  `event_type` VARCHAR(128) NOT NULL COMMENT '业务事实事件或本地恢复任务的稳定类型代码。取值来源：Finance 事件契约目录；非固定枚举。',
+  `execution_type` VARCHAR(64) NOT NULL COMMENT '事件由 MQ 发布器或本地处理器执行。允许值：MQ_PUBLISH、LOCAL_HANDLER。',
+  `source_type` VARCHAR(64) NOT NULL COMMENT '拥有该事件的 Finance 聚合根或不可变业务事实类型。取值来源：Finance 事件来源事实类型目录；非固定枚举。',
+  `source_id` BIGINT NOT NULL COMMENT '拥有该事件的 Finance 聚合根或不可变事实标识。',
+  `source_version` BIGINT NOT NULL COMMENT '来源聚合根版本或不可变事实固定版本。',
+  `schema_version` INTEGER NOT NULL COMMENT '事件 Payload 契约的正整数版本。',
+  `payload_json` JSON NOT NULL COMMENT '最大六十四 KiB、不可变且不含敏感明文的 Canonical JSON 事件信封。',
+  `payload_hash` CHAR(64) NOT NULL COMMENT 'Canonical Payload 的 SHA-256 哈希，创建后不得修改。',
+  `execute_status` VARCHAR(64) NOT NULL COMMENT '补偿事件当前 Claim、重试或人工处置状态。允许值：INIT、PROCESSING、ERROR、FAILED。',
+  `execute_count` INTEGER NOT NULL DEFAULT 0 COMMENT '已经开始执行该事件的累计次数。',
+  `next_execute_at` DATETIME(6) NOT NULL COMMENT '事件下次允许被 Claim 的 UTC 微秒时间。',
+  `lock_owner` VARCHAR(128) NULL COMMENT '当前多实例 Claim Lease 的执行节点稳定标识。',
+  `lock_until` DATETIME(6) NULL COMMENT '当前 Claim Lease 到期的 UTC 微秒时间。',
+  `last_error_code` VARCHAR(64) NULL COMMENT '最近一次失败的受控且不含敏感信息的错误代码。取值来源：Finance 补偿执行错误代码目录；非固定枚举。',
+  `last_error_summary` VARCHAR(1000) NULL COMMENT '最近一次失败的有界脱敏摘要，禁止保存敏感明文。',
+  `lock_version` BIGINT NOT NULL DEFAULT 0 COMMENT '仅用于 Claim 和 Lease 条件更新的技术乐观锁版本。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '补偿事件与业务事实原子登记的 UTC 微秒时间。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '补偿事件执行状态最后更新的 UTC 微秒时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_finance_comp_event` (`event_key`) COMMENT '保证业务唯一性：event_key',
+  UNIQUE KEY `uk_finance_comp_source` (`source_type`, `source_id`, `source_version`, `event_type`) COMMENT '保证业务唯一性：source_type、source_id、source_version、event_type',
+  KEY `idx_fin_comp_claim` (`execute_status`, `next_execute_at`, `lock_until`) COMMENT '支持访问路径：execute_status、next_execute_at、lock_until',
+  KEY `idx_fin_comp_created` (`create_time`) COMMENT '支持访问路径：create_time'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='与 Finance 业务事实在同一事务登记 MQ 发布或本地处理任务，并通过 Claim、Lease 和乐观锁可靠重试';
+
+INSERT INTO `t_currency_spec` (`id`, `currency`, `minor_unit`, `rounding_mode`, `status`, `create_time`, `update_time`)
+VALUES (1001, 'USD', 2, 'HALF_UP', 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6));

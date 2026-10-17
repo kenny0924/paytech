@@ -1,0 +1,61 @@
+server:
+  address: 127.0.0.1
+  port: 18114
+
+spring:
+  application:
+    name: account-service
+  jmx:
+    enabled: false
+  datasource:
+    # 共库过渡（任务卡 07）：本步连接 mor_ledger，account_app 只有 SELECT；第 11b 步改连 mor_account。
+    url: "${ACCOUNT_DB_URL:jdbc:mysql://127.0.0.1:13306/mor_ledger?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}"
+    username: "${ACCOUNT_DB_USERNAME:account_app}"
+    password: "${ACCOUNT_DB_PASSWORD:}"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-init-sql: "SET time_zone = '+00:00'"
+      data-source-properties:
+        connectionTimeZone: UTC
+        forceConnectionTimeZoneToSession: true
+
+mybatis:
+  mapper-locations: classpath*:mapper/**/*.xml
+
+management:
+  server:
+    # 管理端口 = 业务端口 + 1000（01 §3）。
+    address: 127.0.0.1
+    port: 19114
+  endpoints:
+    enabled-by-default: false
+    web:
+      discovery:
+        enabled: false
+      exposure:
+        include: health,info,prometheus
+    jmx:
+      exposure:
+        exclude: "*"
+  endpoint:
+    health:
+      access: read-only
+      show-details: never
+      probes:
+        enabled: true
+        add-additional-paths: false
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState
+    info:
+      access: read-only
+    prometheus:
+      access: read-only
+
+account:
+  identifier:
+    # 部署分配的 Snowflake Region / Worker 标识，必填；每个 app 独立分配。
+    region-id: "${ACCOUNT_SNOWFLAKE_REGION_ID}"
+    worker-id: "${ACCOUNT_SNOWFLAKE_WORKER_ID}"

@@ -4,8 +4,16 @@
 # Retained: platform-support mor_platform from paytech/platform-support/docs/database/sql/platform-support-schema.sql.
 # 56 retained-service tables added on top of design 03 (not part of the §4.2 count).
 # Structure: services.<service>.<database> = tables owned (or copied / per-database infrastructure).
+# Renamed: t_transaction_economics -> t_economic_fact, t_transaction_economic_component -> t_economic_fact_line, t_transaction_economic_comp_link -> t_economic_fact_line_link.
 sharedInfrastructureTables:
   - t_consumed_event
+# Shared-database transition reads (not owned, not counted); removed when the service gets its own database.
+transitionalSharedReads:
+  account:
+    mor_ledger:
+      - t_account
+      - t_chart_account
+      - t_ledger_book
 services:
   account:
     mor_account:
@@ -34,9 +42,9 @@ services:
       - t_channel_cost_scope
       - t_compensation_event
       - t_currency_spec
-      - t_transaction_economic_comp_link
-      - t_transaction_economic_component
-      - t_transaction_economics
+      - t_economic_fact
+      - t_economic_fact_line
+      - t_economic_fact_line_link
   card:
     mor_card:
       - t_compensation_event
