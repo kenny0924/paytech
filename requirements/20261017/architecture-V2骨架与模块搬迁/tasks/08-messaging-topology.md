@@ -21,7 +21,8 @@
    - 切换完成后**删除旧 Topic 双写**：payment 不再发 `topic_payment_result`，compliance 不再发旧 Topic；旧队列 `cg_commerce_payment_result`、`cg_cct_client_review` 及其 DLX 的声明从代码删除（Broker 中既有队列的删除属部署动作，报告列出 `rabbitmqadmin delete queue` 命令，不执行）。
    - card 对 `PaymentSucceeded` 的消费留第 12 步；`EconomicFactRecorded`、`SettlementRestrictionChanged`、`BalanceMoved` 的消费留 11b / 后续切片，本步只核对目录登记。
 3. **compose**：`local-environment` 与 `test-environment` 的 RabbitMQ 插件挂载已在第 01 步完成；本步核对 `test-environment` 的 compose 对应用服务的 `messaging.*` 环境变量（`messaging.producer.service`、`messaging.consumer.service`、分区数）写入 `compose.applications.yaml` 的环境段（只加变量，不改服务拆分）。
-4. **事件目录**：`catalog/events.yaml` 中 `PaymentSucceeded`（consumers acquiring、card）、`ClientReviewDecided`（consumers client-master）的 `aggregateType / aggregateVersionField / strictOrder` 以第 05、06 步实现为准核对；R12 对两个消费方的 Handler 登记校验必须通过。
+4. **退回策略收口**：第 05 步为避免无订阅者时 mandatory 退回导致补偿任务 FAILED，在 `paytech-messaging` 加了 `messaging.publisher.unroutable-policy = FAIL | ACK_AND_WARN`，payment-app 临时配置 `ACK_AND_WARN`。本步接入订阅者后，把 payment-app（以及 compliance-app 若同样设置）改回 `FAIL`，并新增一例测试证明订阅者存在时发布成功、不存在时按 FAIL 抛错由补偿重试。
+5. **事件目录**：`catalog/events.yaml` 中 `PaymentSucceeded`（consumers acquiring、card）、`ClientReviewDecided`（consumers client-master）的 `aggregateType / aggregateVersionField / strictOrder` 以第 05、06 步实现为准核对；R12 对两个消费方的 Handler 登记校验必须通过。
 
 ## 3. 测试要求
 
