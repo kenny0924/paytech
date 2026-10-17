@@ -18,6 +18,7 @@ import com.paytech.foundation.messaging.api.DomainEvent;
 import com.paytech.foundation.messaging.api.DomainEventPublishException;
 import com.paytech.foundation.messaging.core.codec.DomainEventCodec;
 import com.paytech.foundation.messaging.core.codec.InvalidDomainEventException;
+import com.paytech.foundation.messaging.core.codec.PayloadHasher;
 
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
@@ -45,7 +46,16 @@ class DomainEventCodecAutoTest {
             + "\"EconomicFactRecorded\",\"schemaVersion\":1,\"aggregateType\":\"LEDGER_BOOK\",\"aggregateId\":\"123456\","
             + "\"aggregateVersion\":8871,\"occurredAt\":\"2026-10-17T10:00:00.123000Z\",\"sourceService\":\"ledger\","
             + "\"instanceId\":\"main\",\"correlationId\":\"req-1\",\"payloadHash\":\"sha256:"), json);
-        assertEquals(event, codec.decode(body));
+        DomainEvent decoded = codec.decode(body);
+        assertEquals(PayloadHasher.hash(event.payload()), decoded.payloadHash());
+        assertEquals(event().correlationId("req-1").payloadHash(decoded.payloadHash()).build(), decoded);
+    }
+
+    @Test
+    void test_invalidParameter_mismatchedPresetHashRejectedOnEncode() {
+        DomainEvent event = event().payloadHash("sha256:" + "0".repeat(64)).build();
+
+        assertThrows(IllegalArgumentException.class, () -> codec.encode(event));
     }
 
     @Test

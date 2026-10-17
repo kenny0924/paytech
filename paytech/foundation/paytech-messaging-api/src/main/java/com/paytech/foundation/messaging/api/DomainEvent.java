@@ -1,24 +1,18 @@
 package com.paytech.foundation.messaging.api;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
-import java.util.HexFormat;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-import com.paytech.foundation.jsoncanonicalization.api.JsonCanonicalizationException;
-import com.paytech.foundation.jsoncanonicalization.api.Rfc8785JsonCanonicalizer;
-
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
  * 跨服务领域事件信封 Schema v1（design/08 §2），不可变。
  * <li>{@code aggregateId} 是分区键；{@code aggregateVersion} 单调递增，消费者据此判乱序与重放（D24）。</li>
- * <li>{@code payloadHash = sha256:<hex>}，输入为 Payload 的 RFC 8785 规范 UTF-8 bytes，构造时计算，调用方不能指定。</li>
- * <li>Payload 必须是 JSON Object，且符合 Foundation JSON Object Profile：金额、小数、64 位 ID 与时间一律为字符串。</li>
+ * <li>{@code payloadHash = sha256:<hex>}（Payload 的 RFC 8785 规范 bytes 的 SHA-256）不在本模块计算：发布端在 publish 时计算并写入信封，
+ * 消费端解码时重新计算并校验；{@code -core} 构造的信封可不带哈希。本模块因此不依赖 {@code paytech-json-canonicalization}。</li>
+ * <li>Payload 必须是 JSON Object，且符合 Foundation JSON Object Profile：金额、小数、64 位 ID 与时间一律为字符串（发布端校验）。</li>
  * <li>{@code eventId} 未指定时取 {@link AggregateKey#eventKey(String, long)}，保证同一业务事件在补偿重试中 ID 不变。</li>
  *
  * @author Claude
@@ -37,9 +31,8 @@ public final class DomainEvent {
     /** 关联 ID：与 Request ID Profile 一致。 */
     public static final Pattern CORRELATION_ID = Pattern.compile("[A-Za-z0-9][A-Za-z0-9._-]{0,63}");
 
-    private static final String HASH_PREFIX = "sha256:";
-
-    private static final JsonMapper PAYLOAD_MAPPER = JsonMapper.builder().build();
+    /** Payload 哈希格式。 */
+    public static final Pattern PAYLOAD_HASH = Pattern.compile("sha256:[0-9a-f]{64}");
 
     private final String eventId;
     private final String eventType;
@@ -53,7 +46,7 @@ public final class DomainEvent {
     private final String payloadHash;
     private final ObjectNode payload;
 
-    private DomainEvent(Builder builder, ObjectNode payload, String payloadHash) {
+    private DomainEvent(Builder builder, ObjectNode payload) {
         this.eventType = builder.eventType;
         this.schemaVersion = builder.schemaVersion;
         this.aggregateKey = builder.aggregateKey;
@@ -65,7 +58,7 @@ public final class DomainEvent {
         this.instanceId = builder.instanceId;
         this.correlationId = builder.correlationId;
         this.payload = payload;
-        this.payloadHash = payloadHash;
+        this.payloadHash = builder.payloadHash;
     }
 
     /**
@@ -75,27 +68,6 @@ public final class DomainEvent {
      */
     public static Builder builder() {
         return new Builder();
-    }
-
-    /**
-     * 计算 Payload 的规范哈希。
-     *
-     * @param payload JSON Object
-     * @return {@code sha256:<64 位小写十六进制>}
-     * @throws IllegalArgumentException Payload 不是 JSON Object 或超出 JSON Object Profile
-     */
-    public static String payloadHashOf(JsonNode payload) {
-        if (!(payload instanceof ObjectNode)) {
-            throw new IllegalArgumentException("payload must be a JSON object");
-        }
-        try {
-            byte[] canonical = Rfc8785JsonCanonicalizer.canonicalizeObject(PAYLOAD_MAPPER.writeValueAsBytes(payload));
-            return HASH_PREFIX + HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(canonical));
-        } catch (JsonCanonicalizationException exception) {
-            throw new IllegalArgumentException("payload is outside the JSON Object Profile", exception);
-        } catch (NoSuchAlgorithmException impossible) {
-            throw new IllegalStateException("SHA-256 is unavailable", impossible);
-        }
     }
 
     /**
@@ -200,7 +172,7 @@ public final class DomainEvent {
     /**
      * Payload 规范哈希。
      *
-     * @return {@code sha256:<hex>}
+     * @return {@code sha256:<hex>}；{@code -core} 构造、尚未经发布端处理的信封为 null
      */
     public String payloadHash() {
         return payloadHash;
@@ -230,12 +202,12 @@ public final class DomainEvent {
             && schemaVersion == that.schemaVersion && aggregateKey.equals(that.aggregateKey)
             && aggregateVersion == that.aggregateVersion && occurredAt.equals(that.occurredAt)
             && sourceService.equals(that.sourceService) && instanceId.equals(that.instanceId)
-            && Objects.equals(correlationId, that.correlationId) && payloadHash.equals(that.payloadHash);
+            && Objects.equals(correlationId, that.correlationId) && Objects.equals(payloadHash, that.payloadHash);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(eventId, aggregateVersion, payloadHash);
+        return Objects.hash(eventId, aggregateVersion);
     }
 
     @Override
@@ -258,6 +230,7 @@ public final class DomainEvent {
         private String instanceId;
         private String correlationId;
         private JsonNode payload;
+        private String payloadHash;
 
         private Builder() {
         }
@@ -384,10 +357,21 @@ public final class DomainEvent {
         }
 
         /**
-         * 校验全部字段、复制 Payload 并计算哈希。
+         * Payload 规范哈希；由发布端或消费端解码器填入，{@code -core} 通常省略。
+         *
+         * @param payloadHash {@code sha256:<64 位小写十六进制>}
+         * @return 本构造器
+         */
+        public Builder payloadHash(String payloadHash) {
+            this.payloadHash = payloadHash;
+            return this;
+        }
+
+        /**
+         * 校验全部字段并复制 Payload。
          *
          * @return 不可变信封
-         * @throws IllegalArgumentException 任一字段缺失或非法
+         * @throws IllegalArgumentException 任一字段缺失或格式非法
          */
         public DomainEvent build() {
             AggregateKey.require(eventType, AggregateKey.EVENT_TYPE, "eventType");
@@ -409,11 +393,14 @@ public final class DomainEvent {
             if (correlationId != null) {
                 AggregateKey.require(correlationId, CORRELATION_ID, "correlationId");
             }
+            if (payloadHash != null) {
+                AggregateKey.require(payloadHash, PAYLOAD_HASH, "payloadHash");
+            }
             if (!(payload instanceof ObjectNode objectPayload)) {
                 throw new IllegalArgumentException("payload must be a JSON object");
             }
             ObjectNode copy = objectPayload.deepCopy();
-            return new DomainEvent(this, copy, payloadHashOf(copy));
+            return new DomainEvent(this, copy);
         }
     }
 }

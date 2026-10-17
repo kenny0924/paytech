@@ -832,8 +832,8 @@ export JAVA_HOME=$(/usr/libexec/java_home -v 25)
 [design/08](../../requirements/20261017/architecture-V2骨架与模块搬迁/design/08-messaging-module.md)。补偿事件仍负责"提交后可靠执行"：
 发布发生在补偿 Handler 内，`paytech-compensation-event` 本身不含 RabbitMQ。
 
-- `-core` 只依赖 `paytech-messaging-api`：`DomainEvent`（Schema v1 信封，`payloadHash` 为 Payload 的 RFC 8785 规范 bytes 的
-  SHA-256）、`DomainEventPublisher`、`DomainEventConsumer` + `@DomainEventHandler(eventType, strictOrder)`、`ConsumedEventStore`、
+- `-core` 只依赖 `paytech-messaging-api`（仅 common-core 与 jackson-databind，不传递 `paytech-json-canonicalization`）：`DomainEvent`（Schema v1 信封；
+  `payloadHash` 为 Payload 的 RFC 8785 规范 bytes 的 SHA-256，由 `paytech-messaging` 在发布时计算、消费时校验）、`DomainEventPublisher`、`DomainEventConsumer` + `@DomainEventHandler(eventType, strictOrder)`、`ConsumedEventRepository`、
   `AggregateKey`（`eventKey = <aggregateType>:<aggregateId>:<eventType>:<aggregateVersion>`，供补偿 `event_key`）。
 - `-app` 依赖 `paytech-messaging`：`messaging.producer.service` 设置时声明 `<service>.events` 并提供发布实现（mandatory +
   Publisher Confirm，信封上限 64 KiB）；`messaging.consumer.service` 设置时为每个订阅的发布方声明

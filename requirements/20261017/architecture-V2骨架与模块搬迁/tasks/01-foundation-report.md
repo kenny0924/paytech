@@ -1,6 +1,9 @@
 # 第 01 步报告 · Foundation 搬入、`paytech-messaging`、内部签名 Token
 
-- 分支：`refactor/step-01-foundation`（起点 `refactor-main@5f1fc10`）；实现提交 `8023ea3`（搬迁与主代码）、`f7f8d20`（测试、R12 扩展、缺口尾部重投、README），本报告随后单独提交。
+- 分支：`refactor/step-01-foundation`（起点 `refactor-main@5f1fc10`）。实现提交为 `8023ea3`（搬迁与主代码）与 `f7f8d20`（测试、R12 扩展、缺口尾部重投、README）；报告单独提交。
+- 门禁反馈修正（追加提交）：
+  - `payloadHash` 的规范化计算移出 `paytech-messaging-api`，改在 `paytech-messaging` 完成：发布时计算，消费时校验。
+  - 消费记录抽象改名为 `ConsumedEventRepository`，实现为 `MyBatisConsumedEventRepository`。
 - 结论：第 5 节 6 项全部执行。1、2、4、5、6 通过；3 中 `verify-java-foundation.mjs` 通过，`verify-local-environment.mjs` 仍失败，失败类别与改动前基线相同，属既有问题。
 - RabbitMQ：team-lead 批准后，已在共享 `mor-local-rabbitmq-1` 上在线启用 `rabbitmq_consistent_hash_exchange`，容器未重启（见第 2 节第 2 项）。之后不带任何端口覆盖的 `./mvnw -B clean verify` 在共享 Broker 上全部通过。
 
@@ -10,6 +13,9 @@
 2. `paytech/foundation/pom.xml` 的 parent 改为 `../build/paytech-parent/pom.xml`，`<modules>` 追加三个新模块。`paytech/pom.xml` 只取消了 `foundation` 一行的注释。
 3. BOM 登记 `paytech-messaging-api`、`paytech-messaging`、`paytech-internal-auth`，以及 `nimbus-jose-jwt` 10.4。
 4. 新模块 `paytech-messaging-api`、`paytech-messaging`、`paytech-internal-auth`，公开 API 见第 3 节。
+   - `paytech-messaging-api` 的生产依赖只有 `paytech-common-core` 与 `jackson-databind`，不传递 `paytech-json-canonicalization`；`dependency:tree` 已核对。
+   - 规范化与 SHA-256 由 `paytech-messaging` 的 `PayloadHasher` 完成：`DomainEventCodec` 编码时计算并写入信封，解码时重新计算并比对。
+   - `verify-java-foundation.mjs` 已把 `paytech-messaging-api` 列入"不得声明 json-canonicalization"的高扇出模块清单。
 5. MVC Starter 新增三项：
    - `internalauth` 包：`InternalAuthFilter`、`CallerIdentityArgumentResolver`、`InternalAuthWebAutoConfiguration`。
    - `request` 包：`OperationRequestContextParser(Impl)` 与 `OperationRequestContext`。
@@ -34,7 +40,15 @@
    - 第一次运行时环境中没有 `PAYTECH_REDIS_PASSWORD`，Redis Starter 的 2 个集成测试按设计失败，BUILD FAILURE。
    - 导出该键后第二次运行：BUILD SUCCESS，**722 个测试，0 失败**，各模块数见下表。
 
-2. **搬迁后**：在 `paytech/` 下执行 `./mvnw -B clean verify -Dpaytech.local-environment.dir=… -Dpaytech.test.rabbitmq.port=25682`。结果为 BUILD SUCCESS，退出码 0，**957 个测试，0 失败 / 0 错误**，用时 54 s。
+2. **搬迁后**：在 `paytech/` 下执行 `./mvnw -B clean verify -Dpaytech.local-environment.dir=… -Dpaytech.test.rabbitmq.port=25682`。结果为 首轮（修正前）BUILD SUCCESS，957 个测试，0 失败。
+
+   门禁修正后在共享 Broker（默认 5672，不带端口覆盖）上复测：
+
+   ```bash
+   cd paytech && ./mvnw -B clean verify -Dpaytech.local-environment.dir=/Users/kenny/Desktop/Workspace/Code-MoR/local-environment
+   ```
+
+   结果：BUILD SUCCESS，退出码 0，**960 个测试，0 失败 / 0 错误**，用时 56 s；运行后共享 vhost 中以 `mt` 开头的交换机与队列均为 0。下表为这次复测的数字。
 
    | 模块 | 基线 | 搬迁后 | 差异说明 |
    |---|---|---|---|
@@ -52,9 +66,9 @@
    | xxl-job-starter | 6 | 6 | |
    | compensation-event | 31 | 31 | |
    | internal-auth（新） | — | 38 | |
-   | messaging-api（新） | — | 38 | |
-   | messaging（新） | — | 50 | 其中 Broker + MySQL 场景 15 例 |
-   | Foundation 合计 | 722 | 890 | 基线 722 加新增 168，满足"不少于基线加新增" |
+   | messaging-api（新） | — | 37 | 哈希向量与 Profile 用例已移到 messaging |
+   | messaging（新） | — | 54 | 其中 Broker + MySQL 场景 16 例；含 `PayloadHasher` 向量与 Profile 边界、编码时预置哈希不符 |
+   | Foundation 合计 | 722 | 893 | 基线 722 加新增 171，满足"不少于基线加新增" |
    | tools（arch-rules / instance-manifest / reactor-test） | 63 | 67 | +3 R12 领域事件，+1 Reactor R8 |
 
    **RabbitMQ 的执行过程：**
@@ -91,7 +105,7 @@
      [e*] rabbitmq_web_dispatch             4.2.9
      ```
 
-   - 启用后重新执行 `./mvnw -B clean verify -Dpaytech.local-environment.dir=…`（不带端口覆盖，连接共享 5672）：BUILD SUCCESS，957 个测试、0 失败，messaging 50/50。运行后共享 vhost 中以 `mt` 开头的交换机与队列均为 0。
+   - 启用后（门禁修正前）不带端口覆盖复测：957 个测试、0 失败，messaging 50/50。门禁修正后的复测：960 个测试、0 失败，messaging 54/54。
    - 持久化：在线启用写入的是容器内的 `/etc/rabbitmq/enabled_plugins`，容器重建后会丢失。本步的 `local-environment/rabbitmq/enabled_plugins` 以只读方式挂载到同一路径，内容为 `[rabbitmq_management,rabbitmq_prometheus,rabbitmq_consistent_hash_exchange].`，与当前已启用集合一致，所以下次按 compose 重建时插件仍然生效。test-environment 同样处理。
    - MySQL：messaging 只在 `paytech_foundation_test` 中重建并清理自己的 `t_consumed_event`、`t_consumed_aggregate_version`、`t_test_handled_event`。
 
@@ -117,14 +131,14 @@
 
 ## 3. 新模块公开 API
 
-**`paytech-messaging-api`**（`com.paytech.foundation.messaging.api`；依赖仅 common-core、json-canonicalization、jackson-databind）：
+**`paytech-messaging-api`**（`com.paytech.foundation.messaging.api`；依赖仅 common-core、jackson-databind）：
 
 - `DomainEvent` 与 `DomainEvent.Builder`：
   - 字段为 08 §2 的全部字段，`payload()` 返回副本。
-  - `payloadHashOf(JsonNode)` 计算 `sha256:<hex>`，输入是 RFC 8785 规范 bytes。
+  - `payloadHash` 可空：`-core` 构造时一般不带，`Builder.payloadHash(...)` 只校验 `sha256:<64 hex>` 格式。
   - `eventKey()`；未指定 `eventId` 时默认取 eventKey。
 - `DomainEventPublisher.publish(DomainEvent)`；失败时抛 `DomainEventPublishException`，它是 `ErrorException` 的子类。
-- `ConsumedEventStore`：`recordIfAbsent`、`lastVersion(AggregateKey)`、`advance(AggregateKey, long)`。
+- `ConsumedEventRepository`（数据访问抽象，按开发约定以 Repository 命名）：`recordIfAbsent`、`lastVersion(AggregateKey)`、`advance(AggregateKey, long)`。
 - `AggregateKey`：
   - 构造与生成：`of`、`eventKey(eventType, version)`。
   - 解析：`fromEventKey`、`parseEventKey`，后者返回 `ParsedEventKey`。
@@ -139,8 +153,8 @@
   - 拓扑：`core.topology.MessagingTopology`（命名与常量）、`MessagingTopologyDeclarer`。
   - 消费：`consume.PartitionedListenerContainerFactory`、`PartitionedListenerContainers`、`IdempotentConsumeInterceptor`、`DomainEventHandlerRegistry`、`DomainEventMessageListener`。
 - 编解码、存储与工具：
-  - 编解码：`core.codec.DomainEventCodec`、`InvalidDomainEventException`。
-  - 存储：`persistence.mapper.ConsumedEventMapper`（XML 在 `META-INF/mybatis/messaging/`）、`persistence.repository.JdbcConsumedEventStore`。
+  - 编解码：`core.codec.DomainEventCodec`、`PayloadHasher`（RFC 8785 + SHA-256，本模块是 `paytech-json-canonicalization` 的真实消费者）、`InvalidDomainEventException`。
+  - 持久化：`persistence.mapper.ConsumedEventMapper`（XML 在 `META-INF/mybatis/messaging/`）、`persistence.repository.MyBatisConsumedEventRepository`。
   - 串行执行：`ordering.AggregateSerialExecutor`。
   - 目录：`catalog.YamlEventCatalog`。
   - 指标：`core.observability.MessagingMetrics`（`messaging.published`、`messaging.consumed{outcome}`）、`ConsumeOutcome`。
@@ -180,14 +194,13 @@
 6. **依赖与版本**：
    - Spring Boot 4.0.8 的 BOM 并不管理 `nimbus-jose-jwt`，它只经 Spring Security 7.0.7 传递进来，版本 10.4。为此在 paytech BOM 中固定为 10.4。
    - internal-auth 额外依赖 `spring-boot-autoconfigure`（自动配置所需）与 `paytech-http-problem`（WebFlux 写出 Problem 所需），这两项不在任务卡列出的依赖中。
-   - messaging-api 依赖 `paytech-json-canonicalization`，于是所有引入 messaging-api 的 `-core` 都会间接获得该 JAR。这一点与 TECHNOLOGY_STACK §6.11 "只由真实消费者引入"的原则存在张力；本次按任务卡执行。
+   - 任务卡原要求 messaging-api 依赖 `paytech-json-canonicalization`。门禁指出这违反 RFC 8785 决定：会让所有 `-core` 传递获得该 JAR。现已把哈希计算移到 `paytech-messaging`，messaging-api 不再依赖它。
 7. **test-environment 改动范围**：任务卡只列 `build.sh` 与 `prepare.py` 两处。按 09 §3.2 "与 3.1 同一提交改断言"，另改了 `test_deploy_script.py` 与 `test_risk_rule_configuration_authorization_inventory.py` 中锁定旧命令的断言，否则 `build.sh` 一改它们就会失败。
 8. **`verify-java-foundation.mjs` 的既有失败**：脚本要求 `paytech-http-problem` 的生产依赖只有 `jackson-annotations`，但该模块一直依赖 `paytech-common-core`（`ApiProblemProfile` 引用 `ApiHeaderNames`）。白名单已改为两者都允许，否则无法满足"运行通过"。
 9. **RabbitMQ 插件文件**：任务卡要求启用 `rabbitmq_management` 与 `rabbitmq_consistent_hash_exchange`。镜像原本还默认启用 `rabbitmq_prometheus`，为不丢失现有能力，一并保留。
-10. **命名与形态**：
-    - `ConsumedEventStore` 与 `JdbcConsumedEventStore` 按任务卡命名。开发约定 §3 要求数据访问抽象统一命名为 `*Repository`，与此不一致。
-    - `JdbcConsumedEventStore` 实际经 MyBatis Mapper 访问。
-    - 合同类 `InternalTokenIssueRequest/Response` 按任务卡命名，没有使用 `*RequestBody/*ResponseBody`。
+10. **命名**：
+    - 按门禁反馈，任务卡中的 `ConsumedEventStore` / `JdbcConsumedEventStore` 已改为 `ConsumedEventRepository` / `MyBatisConsumedEventRepository`，与开发约定 §3 的 `*Repository` 一致。
+    - 合同类 `InternalTokenIssueRequest/Response` 仍按任务卡命名，没有使用 `*RequestBody/*ResponseBody`。
 11. **Risk 解析器测试**：Risk 侧没有直接测试 `RiskOperationRequestContextParser` 的用例，只在 HTTP 入口测试中间接覆盖。Foundation 按原实现逐条行为编写了 29 个解析用例，并删去了原实现中正则已排除、不可能命中的 `value <= 0` 分支。
 12. **出站目标服务名**：负载均衡拦截器会先把 URI 改写为实例地址，所以不能从请求 URI 读取服务名。实际取法如下：
     - `configureGroup` 取 HTTP Service Group 名。

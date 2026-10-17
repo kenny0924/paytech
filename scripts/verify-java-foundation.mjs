@@ -733,6 +733,8 @@ if (errors.length === 0 && !selfTestOnly) {
     'paytech-redis-starter',
     'paytech-compensation-event',
     'paytech-xxl-job-starter',
+    // -core modules depend on messaging-api; payloadHash canonicalization lives in paytech-messaging (-app only).
+    'paytech-messaging-api',
   ]) {
     const modulePom = readFileSync(join(foundationRoot, moduleName, 'pom.xml'), 'utf8');
     const declaresJsonCanonicalization = checkedDependencyBlocks(modulePom, `${moduleName}/pom.xml`).some(

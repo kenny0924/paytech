@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.paytech.foundation.messaging.api.DomainEvent;
 import com.paytech.foundation.messaging.api.DomainEventPublishException;
 import com.paytech.foundation.messaging.core.codec.DomainEventCodec;
+import com.paytech.foundation.messaging.core.codec.PayloadHasher;
 import com.paytech.foundation.messaging.core.observability.MessagingMetrics;
 import com.paytech.foundation.messaging.core.topology.MessagingTopology;
 import com.paytech.foundation.messaging.core.topology.MessagingTopologyDeclarer;
@@ -66,7 +67,10 @@ class RabbitDomainEventPublisherAutoTest extends MessagingMockTestBase {
             assertEquals("880001", message.getMessageProperties().getReceivedRoutingKey());
             assertEquals(MessagingTopology.producerExchange(TestRun.PRODUCER),
                 message.getMessageProperties().getReceivedExchange());
-            assertEquals(event, new DomainEventCodec().decode(message.getBody()));
+            DomainEvent received = new DomainEventCodec().decode(message.getBody());
+            assertEquals(PayloadHasher.hash(event.payload()), received.payloadHash());
+            assertEquals(event.eventId(), received.eventId());
+            assertEquals(event.payload(), received.payload());
             assertEquals(1.0, published(TestRun.UNSUBSCRIBED_EVENT));
         } finally {
             broker.deleteQueue(observer);
@@ -106,6 +110,17 @@ class RabbitDomainEventPublisherAutoTest extends MessagingMockTestBase {
         assertTrue(exception.getMessage().contains("64 KiB"), exception.getMessage());
         assertEquals(0.0, published(TestRun.LOOSE_EVENT));
         assertTrue(probe.invocations().isEmpty());
+    }
+
+    @Test
+    void test_invalidParameter_payloadOutsideJsonObjectProfile() {
+        DomainEvent decimal = DomainEvent.builder().eventType(TestRun.LOOSE_EVENT).aggregate("TEST_NOTE", "990002")
+            .aggregateVersion(1).occurredAt(java.time.Instant.parse("2026-10-17T10:00:00Z"))
+            .sourceService(TestRun.PRODUCER).instanceId("main")
+            .payload(JsonMapper.builder().build().createObjectNode().put("rate", 1.5)).build();
+
+        assertThrows(IllegalArgumentException.class, () -> publisher.publish(decimal));
+        assertEquals(0.0, published(TestRun.LOOSE_EVENT));
     }
 
     @Test

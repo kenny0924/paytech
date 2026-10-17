@@ -3,12 +3,12 @@ package com.paytech.foundation.messaging.api;
 import java.util.OptionalLong;
 
 /**
- * 消费端幂等与聚合版本的本地存储（{@code t_consumed_event}、{@code t_consumed_aggregate_version}，design/08 §4）。
+ * 消费端幂等与聚合版本的数据访问抽象（{@code t_consumed_event}、{@code t_consumed_aggregate_version}，design/08 §4）。
  * <li>所有方法必须在宿主业务事务内调用，与业务写入同一事务提交或回滚。</li>
  *
  * @author Claude
  */
-public interface ConsumedEventStore {
+public interface ConsumedEventRepository {
 
     /**
      * 登记已消费事件；事件 ID 已存在时不写入。

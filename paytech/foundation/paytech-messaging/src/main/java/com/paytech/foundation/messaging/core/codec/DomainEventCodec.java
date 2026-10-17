@@ -21,7 +21,8 @@ import tools.jackson.databind.node.ObjectNode;
  * 信封 Schema v1 与 UTF-8 JSON 之间的转换（design/08 §2）。
  * <li>字段顺序固定；{@code occurredAt} 为 6 位小数的 UTC 时间；{@code correlationId} 为空时省略。</li>
  * <li>序列化后超过 {@value #MAX_ENVELOPE_BYTES} 字节拒绝发布；读取时同样限制。</li>
- * <li>读取时严格校验字段集合、类型与 {@code payloadHash}，任何不符都视为非法信封。</li>
+ * <li>写出时由 {@link PayloadHasher} 计算 {@code payloadHash}；信封已带哈希时必须与计算值一致。</li>
+ * <li>读取时严格校验字段集合与类型，并重新计算 {@code payloadHash} 比对，任何不符都视为非法信封。</li>
  *
  * @author Claude
  */
@@ -53,8 +54,13 @@ public final class DomainEventCodec {
      * @param event 信封
      * @return UTF-8 JSON
      * @throws DomainEventPublishException 超过大小上限
+     * @throws IllegalArgumentException Payload 超出 JSON Object Profile，或已带哈希与计算值不一致
      */
     public byte[] encode(DomainEvent event) {
+        String payloadHash = PayloadHasher.hash(event.payload());
+        if (event.payloadHash() != null && !event.payloadHash().equals(payloadHash)) {
+            throw new IllegalArgumentException("event payloadHash does not match its payload");
+        }
         ObjectNode root = mapper.createObjectNode();
         root.put("eventId", event.eventId());
         root.put("eventType", event.eventType());
@@ -68,7 +74,7 @@ public final class DomainEventCodec {
         if (event.correlationId() != null) {
             root.put("correlationId", event.correlationId());
         }
-        root.put("payloadHash", event.payloadHash());
+        root.put("payloadHash", payloadHash);
         root.set("payload", event.payload());
         byte[] bytes = mapper.writeValueAsBytes(root);
         if (bytes.length > MAX_ENVELOPE_BYTES) {
@@ -91,11 +97,7 @@ public final class DomainEventCodec {
         }
         JsonNode root = readTree(body);
         requireFieldSet(root);
-        DomainEvent event = build(root);
-        if (!event.payloadHash().equals(text(root, "payloadHash"))) {
-            throw invalid("payloadHash does not match payload", null);
-        }
-        return event;
+        return build(root);
     }
 
     private JsonNode readTree(byte[] body) {
@@ -136,10 +138,23 @@ public final class DomainEventCodec {
                 .instanceId(text(root, "instanceId"))
                 .correlationId(root.has("correlationId") ? text(root, "correlationId") : null)
                 .payload(root.get("payload"))
+                .payloadHash(verifiedHash(root))
                 .build();
         } catch (IllegalArgumentException exception) {
             throw invalid("envelope field is invalid: " + exception.getMessage(), exception);
         }
+    }
+
+    private static String verifiedHash(JsonNode root) {
+        JsonNode payload = root.get("payload");
+        if (!(payload instanceof ObjectNode objectPayload)) {
+            throw invalid("payload must be a JSON object", null);
+        }
+        String expected = PayloadHasher.hash(objectPayload);
+        if (!expected.equals(text(root, "payloadHash"))) {
+            throw invalid("payloadHash does not match payload", null);
+        }
+        return expected;
     }
 
     private static String text(JsonNode root, String field) {

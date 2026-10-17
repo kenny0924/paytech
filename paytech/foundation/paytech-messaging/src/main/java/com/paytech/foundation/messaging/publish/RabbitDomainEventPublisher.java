@@ -25,6 +25,7 @@ import com.paytech.foundation.messaging.core.topology.MessagingTopology;
  * RabbitMQ 发布实现：交换机 {@code <sourceService>.events}，路由键 {@code aggregateId}（design/08 §2–§3）。
  * <li>AMQP 属性：{@code messageId=eventId}、{@code type=eventType}、{@code correlationId}、Persistent、
  * {@code x-aggregate-id} 头。</li>
+ * <li>{@code payloadHash} 在编码时计算并写入信封；Payload 超出 JSON Object Profile 时抛 {@link IllegalArgumentException}（编程错误，不重试）。</li>
  * <li>mandatory 发送并等待 Publisher Confirm；Nack、退回（未路由到任何队列）或确认超时都抛出
  * {@link DomainEventPublishException}，由补偿 Handler 按可重试失败处理。</li>
  *

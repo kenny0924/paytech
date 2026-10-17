@@ -20,10 +20,6 @@
             <artifactId>paytech-common-core</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.paytech</groupId>
-            <artifactId>paytech-json-canonicalization</artifactId>
-        </dependency>
-        <dependency>
             <groupId>tools.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
         </dependency>

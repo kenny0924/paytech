@@ -26,7 +26,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import com.paytech.foundation.messaging.api.ConsumedEventStore;
+import com.paytech.foundation.messaging.api.ConsumedEventRepository;
 import com.paytech.foundation.messaging.api.DomainEventConsumer;
 import com.paytech.foundation.messaging.api.DomainEventPublisher;
 import com.paytech.foundation.messaging.api.EventCatalog;
@@ -41,7 +41,7 @@ import com.paytech.foundation.messaging.core.observability.MessagingMetrics;
 import com.paytech.foundation.messaging.core.topology.MessagingTopology;
 import com.paytech.foundation.messaging.core.topology.MessagingTopologyDeclarer;
 import com.paytech.foundation.messaging.persistence.mapper.ConsumedEventMapper;
-import com.paytech.foundation.messaging.persistence.repository.JdbcConsumedEventStore;
+import com.paytech.foundation.messaging.persistence.repository.MyBatisConsumedEventRepository;
 import com.paytech.foundation.messaging.publish.RabbitDomainEventPublisher;
 
 import io.micrometer.core.instrument.MeterRegistry;
@@ -148,7 +148,7 @@ public class MessagingAutoConfiguration {
     }
 
     /**
-     * 消费存储的 Mapper：把 XML 加载进宿主 MyBatis 配置。
+     * 消费记录仓储的 Mapper：把 XML 加载进宿主 MyBatis 配置。
      *
      * @param sqlSessionFactory 宿主 SqlSessionFactory
      * @return Mapper 工厂
@@ -166,16 +166,16 @@ public class MessagingAutoConfiguration {
     }
 
     /**
-     * 消费存储。
+     * 消费记录仓储。
      *
      * @param mapper Mapper
-     * @return 存储
+     * @return 仓储
      */
     @Bean
     @ConditionalOnBean(ConsumedEventMapper.class)
-    @ConditionalOnMissingBean(ConsumedEventStore.class)
-    public JdbcConsumedEventStore consumedEventStore(ConsumedEventMapper mapper) {
-        return new JdbcConsumedEventStore(mapper);
+    @ConditionalOnMissingBean(ConsumedEventRepository.class)
+    public MyBatisConsumedEventRepository consumedEventRepository(ConsumedEventMapper mapper) {
+        return new MyBatisConsumedEventRepository(mapper);
     }
 
     /**
@@ -198,18 +198,18 @@ public class MessagingAutoConfiguration {
     /**
      * 幂等拦截器，使用宿主事务管理器的 REQUIRED 事务。
      *
-     * @param store 消费存储
+     * @param repository 消费记录仓储
      * @param transactionManager 宿主事务管理器
      * @return 拦截器
      */
     @Bean
-    @ConditionalOnBean({ConsumedEventStore.class, PlatformTransactionManager.class})
+    @ConditionalOnBean({ConsumedEventRepository.class, PlatformTransactionManager.class})
     @ConditionalOnMissingBean
-    public IdempotentConsumeInterceptor idempotentConsumeInterceptor(ConsumedEventStore store,
+    public IdempotentConsumeInterceptor idempotentConsumeInterceptor(ConsumedEventRepository repository,
         PlatformTransactionManager transactionManager) {
         TransactionTemplate transaction = new TransactionTemplate(transactionManager);
         transaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
-        return new IdempotentConsumeInterceptor(store, transaction);
+        return new IdempotentConsumeInterceptor(repository, transaction);
     }
 
     /**

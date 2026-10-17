@@ -6,26 +6,26 @@ import java.util.OptionalLong;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.paytech.foundation.messaging.api.AggregateKey;
-import com.paytech.foundation.messaging.api.ConsumedEventStore;
+import com.paytech.foundation.messaging.api.ConsumedEventRepository;
 import com.paytech.foundation.messaging.api.DomainEvent;
 import com.paytech.foundation.messaging.persistence.mapper.ConsumedEvent;
 import com.paytech.foundation.messaging.persistence.mapper.ConsumedEventMapper;
 
 /**
- * 基于宿主 DataSource 与 MyBatis 的 {@link ConsumedEventStore}；只能加入宿主已开启的本地事务。
+ * 基于宿主 DataSource 与 MyBatis 的 {@link ConsumedEventRepository}；只能加入宿主已开启的本地事务。
  *
  * @author Claude
  */
-public final class JdbcConsumedEventStore implements ConsumedEventStore {
+public final class MyBatisConsumedEventRepository implements ConsumedEventRepository {
 
     private final ConsumedEventMapper mapper;
 
     /**
-     * 创建存储。
+     * 创建仓储。
      *
      * @param mapper 已加载 XML 的 Mapper
      */
-    public JdbcConsumedEventStore(ConsumedEventMapper mapper) {
+    public MyBatisConsumedEventRepository(ConsumedEventMapper mapper) {
         this.mapper = Objects.requireNonNull(mapper, "mapper must not be null");
     }
 
@@ -61,7 +61,7 @@ public final class JdbcConsumedEventStore implements ConsumedEventStore {
 
     private static void requireTransaction() {
         if (!TransactionSynchronizationManager.isActualTransactionActive()) {
-            throw new IllegalStateException("ConsumedEventStore requires an active local transaction");
+            throw new IllegalStateException("ConsumedEventRepository requires an active local transaction");
         }
     }
 }

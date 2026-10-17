@@ -21,17 +21,14 @@ import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
- * 信封构造：字段校验、默认事件 ID、规范 Payload 哈希与不可变性。
+ * 信封构造：字段校验、默认事件 ID、可选的 Payload 哈希与不可变性（哈希计算在 paytech-messaging）。
  *
  * @see DomainEvent.Builder#build()
- * @see DomainEvent#payloadHashOf(tools.jackson.databind.JsonNode)
  */
 class DomainEventAutoTest {
 
     private static final JsonMapper MAPPER = JsonMapper.builder().build();
 
-    /** {"amount":"10.00","currency":"USD","factId":"7001"} 的 SHA-256，独立于实现用 shasum 计算。 */
-    private static final String EXPECTED_HASH = "sha256:ee6b441d8a40b4a46c1ebd6e10f6be8f5629ecf79f30f4b3a22baf3aeef65da5";
 
     @Test
     void test_normalFlow() {
@@ -47,23 +44,18 @@ class DomainEventAutoTest {
         assertEquals("billing", event.sourceService());
         assertEquals("main", event.instanceId());
         assertNull(event.correlationId());
-        assertTrue(event.payloadHash().matches("sha256:[0-9a-f]{64}"), event.payloadHash());
+        assertNull(event.payloadHash());
         assertEquals("10.00", event.payload().get("amount").asString());
     }
 
     @Test
-    void test_normalFlow_payloadHashIsCanonical() {
-        ObjectNode reordered = MAPPER.createObjectNode();
-        reordered.put("currency", "USD");
-        reordered.put("amount", "10.00");
-        reordered.put("factId", "7001");
+    void test_normalFlow_explicitPayloadHash() {
+        String hash = "sha256:" + "a".repeat(64);
 
-        DomainEvent first = template().build();
-        DomainEvent second = template().payload(reordered).build();
+        DomainEvent event = template().payloadHash(hash).build();
 
-        assertEquals(first.payloadHash(), second.payloadHash());
-        assertEquals(EXPECTED_HASH, first.payloadHash());
-        assertNotEquals(first.payloadHash(), template().payload(payload("11.00")).build().payloadHash());
+        assertEquals(hash, event.payloadHash());
+        assertNotEquals(event, template().build());
     }
 
     @Test
@@ -108,10 +100,8 @@ class DomainEventAutoTest {
             Arguments.of("Payload 为空", (UnaryOperator<DomainEvent.Builder>) builder -> builder.payload(null)),
             Arguments.of("Payload 不是对象",
                 (UnaryOperator<DomainEvent.Builder>) builder -> builder.payload(MAPPER.createArrayNode())),
-            Arguments.of("Payload 含小数",
-                (UnaryOperator<DomainEvent.Builder>) builder -> builder.payload(payload("10.00").put("rate", 1.5))),
-            Arguments.of("Payload 含负数",
-                (UnaryOperator<DomainEvent.Builder>) builder -> builder.payload(payload("10.00").put("delta", -1))));
+            Arguments.of("哈希格式非法",
+                (UnaryOperator<DomainEvent.Builder>) builder -> builder.payloadHash("sha256:ABC")));
     }
 
     private static DomainEvent.Builder template() {

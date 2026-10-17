@@ -5,7 +5,7 @@ import java.util.OptionalLong;
 
 import org.springframework.transaction.support.TransactionTemplate;
 
-import com.paytech.foundation.messaging.api.ConsumedEventStore;
+import com.paytech.foundation.messaging.api.ConsumedEventRepository;
 import com.paytech.foundation.messaging.api.DomainEvent;
 import com.paytech.foundation.messaging.core.observability.ConsumeOutcome;
 
@@ -21,17 +21,17 @@ import com.paytech.foundation.messaging.core.observability.ConsumeOutcome;
  */
 public final class IdempotentConsumeInterceptor {
 
-    private final ConsumedEventStore store;
+    private final ConsumedEventRepository repository;
     private final TransactionTemplate transaction;
 
     /**
      * 创建拦截器。
      *
-     * @param store 消费存储，与 Handler 使用同一 DataSource
+     * @param repository 消费记录仓储，与 Handler 使用同一 DataSource
      * @param transaction 宿主事务模板，传播行为必须为 REQUIRED
      */
-    public IdempotentConsumeInterceptor(ConsumedEventStore store, TransactionTemplate transaction) {
-        this.store = Objects.requireNonNull(store, "store must not be null");
+    public IdempotentConsumeInterceptor(ConsumedEventRepository repository, TransactionTemplate transaction) {
+        this.repository = Objects.requireNonNull(repository, "repository must not be null");
         this.transaction = Objects.requireNonNull(transaction, "transaction must not be null");
     }
 
@@ -44,10 +44,10 @@ public final class IdempotentConsumeInterceptor {
      */
     public ConsumeOutcome consume(DomainEvent event, DomainEventHandlerRegistry.Registration registration) {
         return transaction.execute(status -> {
-            if (!store.recordIfAbsent(event)) {
+            if (!repository.recordIfAbsent(event)) {
                 return ConsumeOutcome.REPLAYED;
             }
-            OptionalLong lastVersion = store.lastVersion(event.aggregateKey());
+            OptionalLong lastVersion = repository.lastVersion(event.aggregateKey());
             if (lastVersion.isPresent() && event.aggregateVersion() <= lastVersion.getAsLong()) {
                 status.setRollbackOnly();
                 return ConsumeOutcome.STALE;
@@ -58,7 +58,7 @@ public final class IdempotentConsumeInterceptor {
                 return ConsumeOutcome.GAP;
             }
             registration.consumer().consume(event);
-            store.advance(event.aggregateKey(), event.aggregateVersion());
+            repository.advance(event.aggregateKey(), event.aggregateVersion());
             return ConsumeOutcome.HANDLED;
         });
     }

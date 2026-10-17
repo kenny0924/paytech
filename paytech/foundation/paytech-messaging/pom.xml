@@ -23,6 +23,11 @@
             <groupId>com.paytech</groupId>
             <artifactId>paytech-common-core</artifactId>
         </dependency>
+        <!-- Real canonical-bytes consumer: payloadHash is computed on publish and verified on consume. -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-json-canonicalization</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.amqp</groupId>
             <artifactId>spring-rabbit</artifactId>
