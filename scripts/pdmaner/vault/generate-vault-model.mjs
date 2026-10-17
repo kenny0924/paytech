@@ -27,7 +27,7 @@ import {
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const workspaceRoot = path.resolve(scriptDirectory, "../../..");
 const templatePath = path.join(workspaceRoot, "agent-docs/templates/pdmaner/template.pdma.json");
-const outputPath = path.join(workspaceRoot, "vault-service/docs/database/vault.pdma.json");
+const outputPath = path.join(workspaceRoot, "paytech/vault/docs/database/vault.pdma.json");
 
 const MODEL_KEY = "code-mor/vault/database/v1";
 const EXPECTED_TEMPLATE_DIGEST = "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540";
