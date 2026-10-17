@@ -56,13 +56,12 @@ main() {
   (cd "$workspace_dir/risk-compliance-service" && ./mvnw -pl risk-web -am -DskipTests clean install)
   cp "$workspace_dir/risk-compliance-service/risk-web/target/risk-web-1.0.0-SNAPSHOT-exec.jar" \
     "$environment_dir/artifacts/risk-service.jar"
-  (cd "$workspace_dir/platform-support-service" && ./mvnw -pl platform-support-web -am -DskipTests clean install)
-  (cd "$workspace_dir/api-gateway" && ./mvnw -pl api-gateway-web -am -DskipTests clean package)
-  (cd "$workspace_dir/operations-console-bff" && ./mvnw -pl paytech-operations-console-bff-web -am -DskipTests clean package)
+  # Retained systems live in the single paytech/ reactor since refactor steps 02a-02c; one Maven run packages all three apps.
+  (cd "$workspace_dir/paytech" && ./mvnw -pl platform-support/paytech-platform-support-app,api-gateway/paytech-api-gateway-app,operations-console-bff/paytech-operations-console-bff-app -am -DskipTests clean install)
   (cd "$workspace_dir/operations-console-web" && npm ci && npm run build)
-  cp "$workspace_dir/platform-support-service/platform-support-web/target/platform-support-web-1.0.0-SNAPSHOT-exec.jar" "$environment_dir/artifacts/platform-support-service.jar"
-  cp "$workspace_dir/api-gateway/api-gateway-web/target/api-gateway-web-1.0.0-SNAPSHOT-exec.jar" "$environment_dir/artifacts/api-gateway.jar"
-  cp "$workspace_dir/operations-console-bff/paytech-operations-console-bff-web/target/paytech-operations-console-bff-web-1.0.0-SNAPSHOT-exec.jar" "$environment_dir/artifacts/operations-console-bff.jar"
+  cp "$workspace_dir/paytech/platform-support/paytech-platform-support-app/target/paytech-platform-support-app-1.0.0-SNAPSHOT-exec.jar" "$environment_dir/artifacts/platform-support-service.jar"
+  cp "$workspace_dir/paytech/api-gateway/paytech-api-gateway-app/target/paytech-api-gateway-app-1.0.0-SNAPSHOT-exec.jar" "$environment_dir/artifacts/api-gateway.jar"
+  cp "$workspace_dir/paytech/operations-console-bff/paytech-operations-console-bff-app/target/paytech-operations-console-bff-app-1.0.0-SNAPSHOT-exec.jar" "$environment_dir/artifacts/operations-console-bff.jar"
 }
 
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then

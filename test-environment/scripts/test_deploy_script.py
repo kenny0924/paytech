@@ -779,12 +779,14 @@ class ApplicationBuildContractTest(unittest.TestCase):
         risk_copy = build_script.index(
             'risk-web/target/risk-web-1.0.0-SNAPSHOT-exec.jar'
         )
-        platform = build_script.index('(cd "$workspace_dir/platform-support-service"')
-        gateway = build_script.index('(cd "$workspace_dir/api-gateway"')
-        bff = build_script.index('(cd "$workspace_dir/operations-console-bff"')
+        retained_apps = build_script.index(
+            '(cd "$workspace_dir/paytech" && ./mvnw -pl platform-support/paytech-platform-support-app,'
+            'api-gateway/paytech-api-gateway-app,operations-console-bff/paytech-operations-console-bff-app'
+            ' -am -DskipTests clean install)'
+        )
         web = build_script.index('(cd "$workspace_dir/operations-console-web"')
         remaining_copies = build_script.index(
-            'platform-support-web/target/platform-support-web-1.0.0-SNAPSHOT-exec.jar'
+            'paytech-platform-support-app/target/paytech-platform-support-app-1.0.0-SNAPSHOT-exec.jar'
         )
         compose = build_script.index('"$environment_dir/compose.sh" build')
         self.assertEqual(
@@ -793,9 +795,7 @@ class ApplicationBuildContractTest(unittest.TestCase):
                 foundation,
                 risk,
                 risk_copy,
-                platform,
-                gateway,
-                bff,
+                retained_apps,
                 web,
                 remaining_copies,
                 compose,
@@ -806,9 +806,7 @@ class ApplicationBuildContractTest(unittest.TestCase):
                     foundation,
                     risk,
                     risk_copy,
-                    platform,
-                    gateway,
-                    bff,
+                    retained_apps,
                     web,
                     remaining_copies,
                     compose,
