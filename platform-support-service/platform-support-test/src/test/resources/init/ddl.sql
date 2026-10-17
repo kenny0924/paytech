@@ -302,6 +302,7 @@ CREATE TABLE `t_gateway_route` (
   `required_scope_code` VARCHAR(128) NULL COMMENT '必需 API Scope 代码的业务值。',
   `request_cookie_mode` VARCHAR(64) NOT NULL COMMENT '请求 Cookie 模式的稳定业务代码。允许值：DROP、REQUIRE_PROFILE_COOKIE。',
   `response_cookie_mode` VARCHAR(64) NOT NULL COMMENT '响应 Cookie 模式的稳定业务代码。允许值：NONE、ISSUE_ONLY、ISSUE_OR_CLEAR、CLEAR_ONLY。',
+  `idempotency_mode` VARCHAR(64) NOT NULL DEFAULT 'NONE' COMMENT '请求幂等模式的稳定业务代码。允许值：NONE、REQUIRED。',
   `body_limit_bytes` BIGINT NOT NULL COMMENT '请求体字节上限的长整数值。',
   `body_receive_timeout_millis` INT NOT NULL COMMENT '请求体接收超时毫秒数的整数值。',
   `response_timeout_millis` INT NOT NULL COMMENT '目标响应超时毫秒数的整数值。',

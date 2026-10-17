@@ -40,7 +40,7 @@ public final class GatewaySnapshotConverter {
             route.requiredScopeCode(), route.requestCookieMode().getCode(), route.responseCookieMode().getCode(),
             route.corsRequestHeaderNames(), route.forwardedRequestHeaderNames(), route.queryParameterNames(),
             route.bodyLimitBytes(), route.bodyReceiveTimeoutMillis(), route.responseTimeoutMillis(),
-            route.guardRules().stream().map(this::guardSnapshot).toList());
+            route.guardRules().stream().map(this::guardSnapshot).toList(), route.idempotencyMode().getCode());
     }
 
     /** 转换 Guard 枚举 Code 和已校验的数值。 */

@@ -102,7 +102,11 @@ The Gateway validates Owner 4xx/5xx responses before forwarding them. A valid Pr
 an invalid or truncated Owner response is discarded and replaced with `502 UPSTREAM_PROTOCOL_ERROR`. During the
 source-only rollout, legacy four-field JSON is accepted only from the immutable `operations-console-bff` target;
 strict Problem validation is the default for every other Owner. Gateway internal outcomes and metric dimensions keep
-the existing `UPSTREAM_INVALID_RESPONSE` name and are not public API codes. Pre-application Nginx/connector failures
+the existing `UPSTREAM_INVALID_RESPONSE` name and are not public API codes. The finite outcome set is
+`UPSTREAM_RESPONSE`, `AUTHENTICATION_FAILED`, `AUTHORIZATION_DENIED`, `ROUTE_NOT_FOUND`, `INVALID_REQUEST`,
+`REQUEST_HEADER_FIELDS_TOO_LARGE`, `PAYLOAD_TOO_LARGE`, `REQUEST_TIMEOUT`, `RATE_LIMITED`, `CONCURRENCY_LIMITED`,
+`DEPENDENCY_UNAVAILABLE`, `UPSTREAM_INVALID_RESPONSE`, `UPSTREAM_TIMEOUT`, `CLIENT_CANCELLED`,
+`IDEMPOTENCY_REPLAYED` and `IDEMPOTENCY_CONFLICT`. Pre-application Nginx/connector failures
 remain transport or edge failures rather than synthetic Problems.
 
 `GatewaySnapshotCompilerAutoTest` 校验通用路径语法、变量、冲突与安全档案；未注册的相似路径由实际 HTTP 测试确认返回 404。
@@ -296,8 +300,10 @@ from JWT claims. The owning core system still checks resource access.
 
 Management write routes declare `Idempotency-Key` and `Content-Type` in their CORS and forwarded Header lists;
 `Authorization` is CORS-only and `Origin` is forwarded. BFF validates exact Origin and JSON. The Cookie-specific
-`X-CSRF-Token` Header is no longer required or forwarded. A command retry keeps its original idempotency key; Gateway
-forwards it unchanged and does not implement business-command deduplication.
+`X-CSRF-Token` Header is no longer required or forwarded. Operations routes keep Snapshot `idempotencyMode=NONE`: a
+command retry keeps its original idempotency key and Gateway forwards it unchanged until the separately scoped
+Operations migration. Gateway-owned request idempotency for `REQUIRED` routes is described in
+[Request idempotency](#request-idempotency).
 
 Same-origin browser GET requests may omit `Origin`. Gateway treats only GET with no Origin Header as a non-CORS read and
 continues through the unchanged JWT, Guard and BFF authorization chain; it does not infer Origin from Host or invent
@@ -306,6 +312,53 @@ write method still require that exact Origin. All initialized Operations routes 
 and `responseCookieMode=NONE`. Gateway discards every caller Cookie and rejects any upstream `Set-Cookie` as
 `502 UPSTREAM_PROTOCOL_ERROR`; shared Cookie modes for other Channels remain available. Password change and
 Bootstrap completion revoke Sessions through Platform without issuing or clearing a Cookie.
+
+## Request idempotency
+
+The [Gateway Idempotency-Key requirement](../requirements/20261017/gateway-请求幂等IdempotencyKey/technique.md) owns this
+contract under the [2026-09-17 decision](../agent-docs/decisions/2026-09-17-gateway-request-idempotency.md). Snapshot
+Route `idempotencyMode` is `NONE` or `REQUIRED`; a missing value from an older Platform compiles as `NONE`, and an
+unknown value rejects the whole Snapshot. `REQUIRED` is accepted only for `CLIENT_API` non-`GET`/`HEAD` Routes that do
+not forward `idempotency-key`; the Owner never receives the Key.
+
+`IdempotencyGlobalFilter` runs at `HIGHEST_PRECEDENCE + 150`, after authentication, Guard, Scope and the replayable
+request body, and before the upstream timeout. Authentication, Scope, Guard and body failures therefore never occupy a
+Key. For a `REQUIRED` Route:
+
+- exactly one `Idempotency-Key` of 1–255 characters matching `[A-Za-z0-9][A-Za-z0-9._:-]*` is required; missing returns
+  `400 IDEMPOTENCY_KEY_REQUIRED`, duplicate or malformed returns `400 INVALID_IDEMPOTENCY_KEY` (outcome
+  `INVALID_REQUEST`), without Redis or Owner calls;
+- the scope is Channel + caller: Client API uses the Client ID, so credential rotation replays the same record;
+- the request digest is `SHA-256("v1\n" + method + "\n" + routeCode + "\n" + raw path + "\n" + normalized query +
+  "\n" ‖ SHA-256(raw body))`, where the query is stably sorted by raw parameter name; JSON is not normalized;
+- one Redis Hash `{namespace}:idem:v1:{channel}:{callerKey}:{sha256(key)}` is claimed, completed and released by Lua.
+  A new Key is `PENDING` for route response timeout + body receive timeout + `pending-lease-extra`; a completed record
+  expires `retention` after it was first accepted;
+- same digest while `PENDING` returns `409 IDEMPOTENCY_REQUEST_IN_PROGRESS` with `Retry-After: 3`; a different digest in
+  any state returns `409 IDEMPOTENCY_KEY_REUSED` (outcome `IDEMPOTENCY_CONFLICT`); same digest and `COMPLETED` replays
+  the record without an Owner call (outcome `IDEMPOTENCY_REPLAYED`);
+- a Redis failure on claim returns `503 DEPENDENCY_UNAVAILABLE`; a failure while completing or releasing only logs WARN
+  and never changes the response already produced.
+
+Any response the Owner actually returned (2xx/4xx/5xx, after Owner Problem validation) with a body of at most
+`max-response-bytes` is recorded with its status, gzip body and only `Content-Type`, `Content-Language`,
+`Content-Disposition`, `Content-Encoding`, `ETag`, `Last-Modified`, `Retry-After` and the `201` `Location`. A larger
+body is returned unchanged but not recorded. Gateway-generated `502`/`503`/`504`, invalid Owner responses and client
+cancellation release the Key, so a retry with the same Key reaches the Owner again and business deduplication decides
+the result. A replay rebuilds `X-Request-Id`, `Cache-Control: no-store` and the other terminal headers for the current
+request; an `application/problem+json` body has only `requestId` rewritten to the current Request ID, keeping the
+original `timestamp`. Key values and request/response bodies are never logged; Redis stores only the digest and the
+recorded response.
+
+| Property | Default |
+|---|---|
+| `gateway.idempotency.retention` | `72h` |
+| `gateway.idempotency.pending-lease-extra` | `10s` |
+| `gateway.idempotency.max-response-bytes` | `65536` |
+| `gateway.idempotency.redis.namespace` | the Guard namespace `gateway.operations.guard.redis.namespace` |
+
+The store is the replaceable `IdempotencyRecordStore`; the planned database migration keeps this interface and the
+claim/complete/release semantics. Run Redis with `noeviction` and monitor memory and `idem:v1` key counts.
 
 ## Nginx and private-network boundary
 

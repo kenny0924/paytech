@@ -11,7 +11,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.paytech.commerce.test.base.MockTestBase;
 import com.paytech.commerce.test.dal.CustomerTestMapper;
 import com.paytech.commerce.test.mocker.external.StoredCardMocker;
-import com.paytech.foundation.common.http.ApiHeaderNames;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
 
 import tools.jackson.databind.JsonNode;
@@ -85,7 +84,6 @@ public abstract class AbstractCustomerApiTest extends MockTestBase {
 
     private Response call(HttpMethod method, String path, long clientId, Object body) {
         var headers = TestRequestHeaders.client(REQUEST_ID, Long.toString(clientId), "1");
-        headers.set(ApiHeaderNames.IDEMPOTENCY_KEY, "gateway-placeholder");
         var result = httpTestInvoker.exchange(method, path, headers, body);
         return new Response(result, read(result));
     }

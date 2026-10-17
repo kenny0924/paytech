@@ -15,6 +15,7 @@ public final class GatewayGlobalFilterOrder {
     public static final int AUTHENTICATED_GUARD = Ordered.HIGHEST_PRECEDENCE + 50;
     public static final int CLIENT_API_SCOPE = Ordered.HIGHEST_PRECEDENCE + 60;
     public static final int REQUEST_BODY_LIMIT = Ordered.HIGHEST_PRECEDENCE + 100;
+    public static final int IDEMPOTENCY = Ordered.HIGHEST_PRECEDENCE + 150;
     public static final int UPSTREAM_TIMEOUT = Ordered.HIGHEST_PRECEDENCE + 200;
     public static final int UPSTREAM_REQUEST = Ordered.HIGHEST_PRECEDENCE + 300;
     public static final int TRUSTED_DOWNSTREAM_IDENTITY = Ordered.HIGHEST_PRECEDENCE + 400;

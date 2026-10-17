@@ -117,7 +117,7 @@ public class GatewayConfigurationManagementProcessor {
             result.targetServiceCode(), result.targetStatus().getCode(), result.securityProfileCode().getCode(),
             result.authorizationMode().getCode(), result.permissionId() == null ? null : result.permissionId().toString(),
             result.permissionCode(), result.requiredScopeCode(), result.requestCookieMode().getCode(),
-            result.responseCookieMode().getCode(), result.bodyLimitBytes(), result.bodyReceiveTimeoutMillis(),
+            result.responseCookieMode().getCode(), result.idempotencyMode().getCode(), result.bodyLimitBytes(), result.bodyReceiveTimeoutMillis(),
             result.responseTimeoutMillis(), result.status().getCode(), result.version(), headers,
             result.queryParameterNames(), guards, Long.toString(result.createdBy()), Long.toString(result.updatedBy()),
             result.createTime(), result.updateTime(), protection(result.managementProtection()));
@@ -227,7 +227,7 @@ public class GatewayConfigurationManagementProcessor {
     public ConfigurationMutationResponseBody createRoute(String actor, String session,
         CreateGatewayRouteRequestBody r) {
         return saveRoute(actor, session, new RouteWrite(r.routeCode(), r.channel(),
-            new RouteConfiguration(r.httpMethod(), r.externalPathTemplate(), r.downstreamPathTemplate(), r.targetServiceCode(), r.securityProfileCode(), r.authorizationMode(), permissionId(r.permissionId()), r.requiredScopeCode(), r.requestCookieMode(), r.responseCookieMode(), r.bodyLimitBytes(), r.bodyReceiveTimeoutMillis(), r.responseTimeoutMillis(),
+            new RouteConfiguration(r.httpMethod(), r.externalPathTemplate(), r.downstreamPathTemplate(), r.targetServiceCode(), r.securityProfileCode(), r.authorizationMode(), permissionId(r.permissionId()), r.requiredScopeCode(), r.requestCookieMode(), r.responseCookieMode(), r.idempotencyMode(), r.bodyLimitBytes(), r.bodyReceiveTimeoutMillis(), r.responseTimeoutMillis(),
             r.headers().stream().map(h -> new Header(h.headerName(), h.headerUse())).toList(),
             r.queryParameterNames(), r.guardRules().stream().map(g -> new Guard(g.ruleType(), g.dimension(),
                 g.capacity(), g.refillTokens(), g.refillPeriodMillis(), g.concurrencyLimit())).toList()), 0, r.reason()));
@@ -239,7 +239,7 @@ public class GatewayConfigurationManagementProcessor {
         UpdateGatewayRouteRequestBody r) {
         requireVersion(r.expectedVersion());
         return saveRoute(actor, session, new RouteWrite(code, null,
-            new RouteConfiguration(r.httpMethod(), r.externalPathTemplate(), r.downstreamPathTemplate(), r.targetServiceCode(), r.securityProfileCode(), r.authorizationMode(), permissionId(r.permissionId()), r.requiredScopeCode(), r.requestCookieMode(), r.responseCookieMode(), r.bodyLimitBytes(), r.bodyReceiveTimeoutMillis(), r.responseTimeoutMillis(),
+            new RouteConfiguration(r.httpMethod(), r.externalPathTemplate(), r.downstreamPathTemplate(), r.targetServiceCode(), r.securityProfileCode(), r.authorizationMode(), permissionId(r.permissionId()), r.requiredScopeCode(), r.requestCookieMode(), r.responseCookieMode(), r.idempotencyMode(), r.bodyLimitBytes(), r.bodyReceiveTimeoutMillis(), r.responseTimeoutMillis(),
             r.headers().stream().map(h -> new Header(h.headerName(), h.headerUse())).toList(),
             r.queryParameterNames(), r.guardRules().stream().map(g -> new Guard(g.ruleType(), g.dimension(),
                 g.capacity(), g.refillTokens(), g.refillPeriodMillis(), g.concurrencyLimit())).toList()), r.expectedVersion(), r.reason()));
@@ -284,7 +284,7 @@ public class GatewayConfigurationManagementProcessor {
         return new GatewayConfigurationCapabilitiesResponseBody(result.channels().stream().map(c ->
             new ChannelCapability(c.channel(), c.profiles().stream().map(p -> new ProfileCapability(
                 p.securityProfileCode(), p.authorizationModes(), p.requestCookieModes(), p.responseCookieModes(),
-                p.allowedGuardDimensions(), p.requiredGuardDimensions())).toList())).toList(), result.httpMethods(),
+                p.idempotencyModes(), p.allowedGuardDimensions(), p.requiredGuardDimensions())).toList())).toList(), result.httpMethods(),
             new Limits(limit.maxBodyLimitBytes(), limit.maxBodyReceiveTimeoutMillis(), limit.maxResponseTimeoutMillis(),
                 limit.maxRateCapacity(), limit.maxRateRefillTokens(), limit.maxRateRefillPeriodMillis(),
                 limit.maxConcurrencyLimit(), limit.maxTargets(), limit.maxRoutes(), limit.maxCorsHeaders(),

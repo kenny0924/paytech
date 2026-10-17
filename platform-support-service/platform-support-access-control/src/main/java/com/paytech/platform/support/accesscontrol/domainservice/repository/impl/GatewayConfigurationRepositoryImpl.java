@@ -53,7 +53,7 @@ public class GatewayConfigurationRepositoryImpl implements GatewayConfigurationR
             route.externalPathTemplate(), route.downstreamPathTemplate(), route.targetId(),
             route.securityProfileCode().getCode(), route.authorizationMode().getCode(), route.permissionId(),
             route.requiredScopeCode(), route.requestCookieMode().getCode(), route.responseCookieMode().getCode(),
-            route.bodyLimitBytes(), route.bodyReceiveTimeoutMillis(), route.responseTimeoutMillis(),
+            route.idempotencyMode().getCode(), route.bodyLimitBytes(), route.bodyReceiveTimeoutMillis(), route.responseTimeoutMillis(),
             route.status().getCode());
     }
 

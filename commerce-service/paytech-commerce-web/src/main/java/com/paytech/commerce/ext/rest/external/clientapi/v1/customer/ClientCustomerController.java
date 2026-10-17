@@ -28,7 +28,7 @@ public class ClientCustomerController implements ClientCustomerApi {
     private final DeleteStoredCardProcessor deleteStoredCardProcessor;
 
     @Override
-    public ResponseEntity<CustomerResponseBody> createCustomer(long clientId, long credentialId, String idempotencyKey,
+    public ResponseEntity<CustomerResponseBody> createCustomer(long clientId, long credentialId,
         CreateCustomerRequestBody requestBody) {
         var response = createCustomerProcessor.process(
             ClientCustomerConverter.request(clientId, null, requestBody.getConsumerReference(), null));
@@ -52,8 +52,7 @@ public class ClientCustomerController implements ClientCustomerApi {
     }
 
     @Override
-    public CustomerResponseBody deleteCustomer(long clientId, long credentialId, String customerNo,
-        String idempotencyKey) {
+    public CustomerResponseBody deleteCustomer(long clientId, long credentialId, String customerNo) {
         var response =
             deleteCustomerProcessor.process(ClientCustomerConverter.request(clientId, customerNo, null, null));
         return ClientCustomerConverter.customer(response.customer());
@@ -67,7 +66,7 @@ public class ClientCustomerController implements ClientCustomerApi {
 
     @Override
     public ResponseEntity<Void> deleteStoredCard(long clientId, long credentialId, String customerNo,
-        String storedCardToken, String idempotencyKey) {
+        String storedCardToken) {
         deleteStoredCardProcessor
             .process(ClientCustomerConverter.request(clientId, customerNo, null, storedCardToken));
         return ResponseEntity.noContent().build();

@@ -52,6 +52,7 @@
         r.security_profile_code securityProfileCode, r.authorization_mode authorizationMode,
         r.permission_id permissionId, p.permission_code permissionCode, r.required_scope_code requiredScopeCode,
         r.request_cookie_mode requestCookieMode, r.response_cookie_mode responseCookieMode,
+        r.idempotency_mode idempotencyMode,
         r.body_limit_bytes bodyLimitBytes, r.body_receive_timeout_millis bodyReceiveTimeoutMillis,
         r.response_timeout_millis responseTimeoutMillis, r.status, r.version, r.created_by createdBy,
         r.updated_by updatedBy, r.create_time createTime, r.update_time updateTime
@@ -153,12 +154,12 @@
     <insert id="insertRoute">
         INSERT INTO t_gateway_route (route_id,route_code,channel,http_method,external_path_template,
             downstream_path_template,target_id,security_profile_code,authorization_mode,permission_id,
-            required_scope_code,request_cookie_mode,response_cookie_mode,body_limit_bytes,body_receive_timeout_millis,
-            response_timeout_millis,status,version,created_by,updated_by,create_time,update_time)
+            required_scope_code,request_cookie_mode,response_cookie_mode,idempotency_mode,body_limit_bytes,
+            body_receive_timeout_millis,response_timeout_millis,status,version,created_by,updated_by,create_time,update_time)
         VALUES (#{row.routeId},#{row.routeCode},#{row.channel},#{row.httpMethod},#{row.externalPathTemplate},
             #{row.downstreamPathTemplate},#{row.targetId},#{row.securityProfileCode},#{row.authorizationMode},
             #{row.permissionId},#{row.requiredScopeCode},#{row.requestCookieMode},#{row.responseCookieMode},
-            #{row.bodyLimitBytes},#{row.bodyReceiveTimeoutMillis},#{row.responseTimeoutMillis},#{row.status},1,
+            #{row.idempotencyMode},#{row.bodyLimitBytes},#{row.bodyReceiveTimeoutMillis},#{row.responseTimeoutMillis},#{row.status},1,
             #{actorId},#{actorId},#{now},#{now})
     </insert>
     <update id="updateRoute">
@@ -167,7 +168,7 @@
             security_profile_code=#{row.securityProfileCode},authorization_mode=#{row.authorizationMode},
             permission_id=#{row.permissionId},required_scope_code=#{row.requiredScopeCode},
             request_cookie_mode=#{row.requestCookieMode},response_cookie_mode=#{row.responseCookieMode},
-            body_limit_bytes=#{row.bodyLimitBytes},body_receive_timeout_millis=#{row.bodyReceiveTimeoutMillis},
+            idempotency_mode=#{row.idempotencyMode},body_limit_bytes=#{row.bodyLimitBytes},body_receive_timeout_millis=#{row.bodyReceiveTimeoutMillis},
             response_timeout_millis=#{row.responseTimeoutMillis},version=version+1,updated_by=#{actorId},update_time=#{now}
         WHERE route_id=#{row.routeId} AND version=#{version}
     </update>

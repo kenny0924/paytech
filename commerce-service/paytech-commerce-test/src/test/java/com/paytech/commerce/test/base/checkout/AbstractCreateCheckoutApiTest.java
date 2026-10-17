@@ -6,7 +6,6 @@ import com.paytech.commerce.test.base.MockTestBase;
 import com.paytech.commerce.test.builder.external.CommercialFactsBuilder;
 import com.paytech.commerce.test.checker.checkout.CreateCheckoutResponseChecker;
 import com.paytech.commerce.test.mocker.external.CheckoutRiskMocker;
-import com.paytech.foundation.common.http.ApiHeaderNames;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
 
 /** 创建接口共用的请求调用和固定场景基线，不包含测试方法或新增生命周期。 */
@@ -26,7 +25,7 @@ public abstract class AbstractCreateCheckoutApiTest extends MockTestBase {
         return invoke(clientId(), body);
     }
 
-    /** Header 仍为当前 API 的必填传输占位，不在本测试实现 Gateway 请求重放。 */
+    /** 使用主测试 Credential 调用真实 HTTP 入口。 */
     protected final CreateCheckoutResponseChecker invoke(long clientId, Object body) {
         return invoke(Long.toString(clientId), "1", body);
     }
@@ -34,7 +33,6 @@ public abstract class AbstractCreateCheckoutApiTest extends MockTestBase {
     /** 允许省略 Header 以验证真实绑定边界，不为负例自动修复参数。 */
     protected final CreateCheckoutResponseChecker invoke(String clientId, String credentialId, Object body) {
         var headers = TestRequestHeaders.client(REQUEST_ID, clientId, credentialId);
-        headers.set(ApiHeaderNames.IDEMPOTENCY_KEY, "gateway-placeholder");
         var result = httpTestInvoker.post(PATH, headers, body);
         return new CreateCheckoutResponseChecker(result, objectMapper, REQUEST_ID);
     }

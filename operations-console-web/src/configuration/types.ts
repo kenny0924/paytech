@@ -26,7 +26,7 @@ export interface RouteReference { routeCode: string; channel: string; httpMethod
 export interface RoleReference { roleId: string; roleCode: string; roleName: string; roleStatus: string; grantStatus: string; scopeKey: string }
 export type PermissionReference = ResourceReference | RouteReference | RoleReference;
 export interface GatewayProfileCapability {
-  securityProfileCode: string; authorizationModes: string[]; requestCookieModes: string[]; responseCookieModes: string[];
+  securityProfileCode: string; authorizationModes: string[]; requestCookieModes: string[]; responseCookieModes: string[]; idempotencyModes: string[];
   allowedGuardDimensions: string[]; requiredGuardDimensions: string[];
 }
 export interface GatewayCapabilities {

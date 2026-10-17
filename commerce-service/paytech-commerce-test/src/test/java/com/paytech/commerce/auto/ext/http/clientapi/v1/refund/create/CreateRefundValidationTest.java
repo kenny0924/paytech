@@ -57,7 +57,7 @@ class CreateRefundValidationTest extends AbstractCreateRefundApiTest {
     void test_invalidWireBody(String body) {
         orderData.mock(fixture);
         var before = refundChecker.snapshot(fixture.getOrder().getOrderId());
-        invoke(Long.toString(checkoutDataMocker.clientId()), "1", fixture.getOrder().getOrderNo(), "key", body)
+        invoke(Long.toString(checkoutDataMocker.clientId()), "1", fixture.getOrder().getOrderNo(), body)
             .assertProblem(400, "INVALID_REQUEST");
         refundChecker.assertRejected(fixture.getOrder().getOrderId(), before);
     }
@@ -80,23 +80,13 @@ class CreateRefundValidationTest extends AbstractCreateRefundApiTest {
         orderData.mock(fixture);
         var before = refundChecker.snapshot(fixture.getOrder().getOrderId());
         invoke(clientHeader ? value : Long.toString(checkoutDataMocker.clientId()), clientHeader ? "1" : value,
-            fixture.getOrder().getOrderNo(), "key", request()).assertProblem(400, "INVALID_REQUEST");
+            fixture.getOrder().getOrderNo(), request()).assertProblem(400, "INVALID_REQUEST");
         refundChecker.assertRejected(fixture.getOrder().getOrderId(), before);
     }
 
     private static Stream<Arguments> invalidIdentities() {
         return Stream.of(true, false).flatMap(client -> Stream.of(null, "0", "-1", "invalid", "9223372036854775808")
             .map(value -> Arguments.of(client, value)));
-    }
-
-    /** 当前 API 仍声明必填 Key；只测 HTTP 绑定，不在 Commerce 测 Gateway 重放。 */
-    @Test
-    void test_missingRequiredHeader() {
-        orderData.mock(fixture);
-        var before = refundChecker.snapshot(fixture.getOrder().getOrderId());
-        invoke(Long.toString(checkoutDataMocker.clientId()), "1", fixture.getOrder().getOrderNo(), null, request())
-            .assertProblem(400, "INVALID_REQUEST");
-        refundChecker.assertRejected(fixture.getOrder().getOrderId(), before);
     }
 
     /** 未知和跨 Client 均不可暴露退款资格。 */
@@ -106,7 +96,7 @@ class CreateRefundValidationTest extends AbstractCreateRefundApiTest {
         orderData.mock(fixture);
         var before = refundChecker.snapshot(fixture.getOrder().getOrderId());
         invoke(Long.toString(foreign ? checkoutDataMocker.otherClientId() : checkoutDataMocker.clientId()), "1",
-            foreign ? fixture.getOrder().getOrderNo() : "ord_missing", "key", request())
+            foreign ? fixture.getOrder().getOrderNo() : "ord_missing", request())
             .assertProblem(404, "ORDER_NOT_FOUND");
         refundChecker.assertRejected(fixture.getOrder().getOrderId(), before);
     }

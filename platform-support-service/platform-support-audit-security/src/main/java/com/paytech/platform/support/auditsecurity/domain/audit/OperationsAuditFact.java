@@ -66,6 +66,8 @@ public sealed interface OperationsAuditFact permits OperationsAuditFact.Outcome,
 
         RESPONSE_COOKIE_MODE,
 
+        IDEMPOTENCY_MODE,
+
         BODY_LIMIT_BYTES,
 
         BODY_RECEIVE_TIMEOUT_MILLIS,

@@ -25,13 +25,18 @@ public interface ConfigurationTestMapper {
     @Insert("""
         INSERT INTO t_gateway_route(route_id,route_code,channel,http_method,external_path_template,
             downstream_path_template,target_id,security_profile_code,authorization_mode,permission_id,
-            required_scope_code,request_cookie_mode,response_cookie_mode,body_limit_bytes,body_receive_timeout_millis,
-            response_timeout_millis,status,version,created_by,updated_by,create_time,update_time)
+            required_scope_code,request_cookie_mode,response_cookie_mode,idempotency_mode,body_limit_bytes,
+            body_receive_timeout_millis,response_timeout_millis,status,version,created_by,updated_by,create_time,
+            update_time)
         VALUES(#{r.id},#{r.code},#{r.channel},#{r.method},#{r.externalPath},#{r.downstreamPath},#{r.targetId},
             #{r.securityProfile},#{r.authorizationMode},#{r.permissionId},#{r.scopeCode},#{r.requestCookieMode},
-            #{r.responseCookieMode},#{r.bodyLimit},5000,10000,#{r.status},1,1,1,#{now},#{now})
+            #{r.responseCookieMode},#{r.idempotencyMode},#{r.bodyLimit},5000,10000,#{r.status},1,1,1,#{now},#{now})
         """)
     int insertRoute(@Param("r") Route route, @Param("now") Instant now);
+
+    /** 读取路由当前持久化的请求幂等模式。 */
+    @Select("SELECT idempotency_mode FROM t_gateway_route WHERE route_code=#{code}")
+    String routeIdempotencyMode(@Param("code") String code);
 
     /** 插入路由 Header 白名单。 */
     @Insert("""
@@ -126,6 +131,6 @@ public interface ConfigurationTestMapper {
      */
     record Route(long id, String code, String channel, String method, String externalPath, String downstreamPath,
         long targetId, String securityProfile, String authorizationMode, Long permissionId, String scopeCode,
-        String requestCookieMode, String responseCookieMode, long bodyLimit, String status) {
+        String requestCookieMode, String responseCookieMode, String idempotencyMode, long bodyLimit, String status) {
     }
 }

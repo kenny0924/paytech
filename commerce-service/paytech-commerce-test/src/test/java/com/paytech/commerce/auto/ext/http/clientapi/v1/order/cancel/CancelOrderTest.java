@@ -99,7 +99,7 @@ class CancelOrderTest extends MockTestBase {
         assertTrue(intents.calls().isEmpty());
     }
 
-    /** 重提取消保留第一次时刻与版本，不再执行下游；原请求 Key 不参与业务。 */
+    /** 重提取消保留第一次时刻与版本，不再执行下游。 */
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
     void test_repeatCancellation(boolean hasSession) {
@@ -110,8 +110,7 @@ class CancelOrderTest extends MockTestBase {
         var before = snapshots.snapshot(checkoutDataMocker.clientId(), checkoutDataMocker.otherClientId());
         adjustableUtcClock.advance(Duration.ofHours(1));
 
-        invoke(Long.toString(checkoutDataMocker.clientId()), "1", orderNo(), "another-key").assertCancelled(orderNo(),
-            hasSession, NOW);
+        invoke().assertCancelled(orderNo(), hasSession, NOW);
 
         snapshots.assertUnchanged(before, checkoutDataMocker.clientId(), checkoutDataMocker.otherClientId());
         terminations.assertNoCalls();
@@ -323,7 +322,7 @@ class CancelOrderTest extends MockTestBase {
         data.mock(fixture);
         var before = snapshots.snapshot(checkoutDataMocker.clientId(), checkoutDataMocker.otherClientId());
         invoke("ord_unknown").assertProblem(404, CommerceCheckoutErrorCode.ORDER_NOT_FOUND.getCode());
-        invoke(Long.toString(checkoutDataMocker.otherClientId()), "1", orderNo(), "key").assertProblem(404,
+        invoke(Long.toString(checkoutDataMocker.otherClientId()), "1", orderNo()).assertProblem(404,
             CommerceCheckoutErrorCode.ORDER_NOT_FOUND.getCode());
         snapshots.assertUnchanged(before, checkoutDataMocker.clientId(), checkoutDataMocker.otherClientId());
         terminations.assertNoCalls();
@@ -335,33 +334,24 @@ class CancelOrderTest extends MockTestBase {
     void test_invalidIdentity(boolean client, String value) {
         data.mock(fixture);
         var before = snapshots.snapshot(checkoutDataMocker.clientId(), checkoutDataMocker.otherClientId());
-        invoke(client ? value : Long.toString(checkoutDataMocker.clientId()), client ? "1" : value, orderNo(), "key")
+        invoke(client ? value : Long.toString(checkoutDataMocker.clientId()), client ? "1" : value, orderNo())
             .assertProblem(400, CommonErrorCode.INVALID_REQUEST.getCode());
         snapshots.assertUnchanged(before, checkoutDataMocker.clientId(), checkoutDataMocker.otherClientId());
         terminations.assertNoCalls();
     }
 
-    /** 当前 API 仍声明该 Header 必填，测试遵守现有绑定，不新增请求幂等实现。 */
+    /** Gateway 过渡期仍可能转发 Idempotency-Key；Commerce 忽略它，同一 Key 取消两个订单互不影响。 */
     @Test
-    void test_missingReservedHeader() {
-        data.mock(fixture);
-        var before = snapshots.snapshot(checkoutDataMocker.clientId(), checkoutDataMocker.otherClientId());
-        invoke(Long.toString(checkoutDataMocker.clientId()), "1", orderNo(), null).assertProblem(400,
-            CommonErrorCode.INVALID_REQUEST.getCode());
-        snapshots.assertUnchanged(before, checkoutDataMocker.clientId(), checkoutDataMocker.otherClientId());
-        terminations.assertNoCalls();
-    }
-
-    /** 同一个接入 Key 可以取消两个不同订单，Commerce 不缓存首次 HTTP 结果。 */
-    @Test
-    void test_sameHeaderDoesNotReplaceBusinessIdentity() {
+    void test_forwardedIdempotencyKeyIgnored() {
         data.mock(fixture);
         var second = orders.template().clientOrderId("second-order").ready().build();
         second.getOrder().setPreparationCommandId(null);
         data.mock(second);
+        var client = Long.toString(checkoutDataMocker.clientId());
 
-        invoke().assertCancelled(orderNo(), true, NOW);
-        invoke(second.getOrder().getOrderNo()).assertCancelled(second.getOrder().getOrderNo(), true, NOW);
+        invoke(client, "1", orderNo(), "forwarded-key").assertCancelled(orderNo(), true, NOW);
+        invoke(client, "1", second.getOrder().getOrderNo(), "forwarded-key")
+            .assertCancelled(second.getOrder().getOrderNo(), true, NOW);
 
         checker.assertCancelled(orderId(), true, NOW);
         checker.assertCancelled(second.getOrder().getOrderId(), true, NOW);
@@ -375,7 +365,7 @@ class CancelOrderTest extends MockTestBase {
         fixture.getOrder().setOrderNo("x".repeat(64));
         data.mock(fixture);
 
-        invoke(Long.toString(checkoutDataMocker.clientId()), Long.toString(Long.MAX_VALUE), orderNo(), "key")
+        invoke(Long.toString(checkoutDataMocker.clientId()), Long.toString(Long.MAX_VALUE), orderNo())
             .assertCancelled(orderNo(), true, NOW);
 
         checker.assertCancelled(orderId(), true, NOW);
@@ -433,10 +423,15 @@ class CancelOrderTest extends MockTestBase {
 
     /** 只提供 API 实际要求的 Header，不创建额外请求对象。 */
     private CancelOrderResponseChecker invoke(String orderNo) {
-        return invoke(Long.toString(checkoutDataMocker.clientId()), "1", orderNo, "cancel-test-key");
+        return invoke(Long.toString(checkoutDataMocker.clientId()), "1", orderNo);
     }
 
-    /** 真实 HTTP 入口；每次显式检查外部调用事务边界和无关依赖零调用。 */
+    /** 不携带 Idempotency-Key 的真实 HTTP 入口。 */
+    private CancelOrderResponseChecker invoke(String client, String credential, String orderNo) {
+        return invoke(client, credential, orderNo, null);
+    }
+
+    /** 真实 HTTP 入口；key 仅模拟 Gateway 过渡期转发。每次显式检查外部调用事务边界和无关依赖零调用。 */
     private CancelOrderResponseChecker invoke(String client, String credential, String orderNo, String key) {
         var before = snapshots.snapshot(checkoutDataMocker.clientId(), checkoutDataMocker.otherClientId());
         var facts = before.keySet().stream().collect(Collectors.toMap(Function.identity(), checker::unchangedFacts));

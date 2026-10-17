@@ -28,7 +28,15 @@ public enum GatewayErrorCode implements CodeMessageEnum {
 
     UPSTREAM_PROTOCOL_ERROR("UPSTREAM_PROTOCOL_ERROR", "上游服务响应不符合安全契约"),
 
-    GATEWAY_UPSTREAM_TIMEOUT("GATEWAY_UPSTREAM_TIMEOUT", "上游服务响应超时");
+    GATEWAY_UPSTREAM_TIMEOUT("GATEWAY_UPSTREAM_TIMEOUT", "上游服务响应超时"),
+
+    IDEMPOTENCY_KEY_REQUIRED("IDEMPOTENCY_KEY_REQUIRED", "此接口要求提供 Idempotency-Key"),
+
+    INVALID_IDEMPOTENCY_KEY("INVALID_IDEMPOTENCY_KEY", "Idempotency-Key 格式无效"),
+
+    IDEMPOTENCY_KEY_REUSED("IDEMPOTENCY_KEY_REUSED", "Idempotency-Key 已用于不同的请求"),
+
+    IDEMPOTENCY_REQUEST_IN_PROGRESS("IDEMPOTENCY_REQUEST_IN_PROGRESS", "相同 Idempotency-Key 的请求仍在处理中");
 
     private final String code;
     private final String message;
@@ -61,7 +69,8 @@ public enum GatewayErrorCode implements CodeMessageEnum {
             case GATEWAY_RATE_LIMITED, GATEWAY_CONCURRENCY_LIMITED -> "RATE_LIMIT_EXCEEDED";
             case GATEWAY_DEPENDENCY_UNAVAILABLE -> "DEPENDENCY_UNAVAILABLE";
             case GATEWAY_UPSTREAM_TIMEOUT -> "DEPENDENCY_TIMEOUT";
-            case UPSTREAM_PROTOCOL_ERROR, INSUFFICIENT_SCOPE -> code;
+            case UPSTREAM_PROTOCOL_ERROR, INSUFFICIENT_SCOPE, IDEMPOTENCY_KEY_REQUIRED, INVALID_IDEMPOTENCY_KEY,
+                IDEMPOTENCY_KEY_REUSED, IDEMPOTENCY_REQUEST_IN_PROGRESS -> code;
         };
     }
 }

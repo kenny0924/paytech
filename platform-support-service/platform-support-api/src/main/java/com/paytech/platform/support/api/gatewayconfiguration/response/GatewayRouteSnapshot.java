@@ -3,6 +3,8 @@ package com.paytech.platform.support.api.gatewayconfiguration.response;
 import java.util.List;
 import java.util.Objects;
 
+import com.paytech.platform.support.api.enums.GatewayIdempotencyMode;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -118,6 +120,12 @@ public final class GatewayRouteSnapshot {
      */
     private final List<GatewayGuardRuleSnapshot> guardRules;
 
+    /**
+     * 请求幂等模式编码。
+     * <li>取值 NONE、REQUIRED；旧版本 Platform 不下发该字段时为空，Gateway 按 NONE 处理。</li>
+     */
+    private final String idempotencyMode;
+
     /** 绑定快照字段，集合使用不可变副本，保留完整快照的值语义。 */
     @JsonCreator
     public GatewayRouteSnapshot(@JsonProperty("routeCode") String routeCode,
@@ -138,7 +146,8 @@ public final class GatewayRouteSnapshot {
         @JsonProperty("bodyLimitBytes") long bodyLimitBytes,
         @JsonProperty("bodyReceiveTimeoutMillis") int bodyReceiveTimeoutMillis,
         @JsonProperty("responseTimeoutMillis") int responseTimeoutMillis,
-        @JsonProperty("guardRules") List<GatewayGuardRuleSnapshot> guardRules) {
+        @JsonProperty("guardRules") List<GatewayGuardRuleSnapshot> guardRules,
+        @JsonProperty("idempotencyMode") String idempotencyMode) {
         this.routeCode = routeCode;
         this.channel = channel;
         this.httpMethod = httpMethod;
@@ -158,6 +167,21 @@ public final class GatewayRouteSnapshot {
         this.bodyReceiveTimeoutMillis = bodyReceiveTimeoutMillis;
         this.responseTimeoutMillis = responseTimeoutMillis;
         this.guardRules = List.copyOf(guardRules);
+        this.idempotencyMode = idempotencyMode;
+    }
+
+    /** 兼容未声明请求幂等模式的构造方式，等同于 NONE。 */
+    public GatewayRouteSnapshot(String routeCode, String channel, String httpMethod, String externalPathTemplate,
+        String downstreamPathTemplate, String targetServiceCode, String securityProfileCode, String authorizationMode,
+        String permissionCode, String requiredScopeCode, String requestCookieMode, String responseCookieMode,
+        List<String> corsRequestHeaderNames, List<String> forwardedRequestHeaderNames, List<String> queryParameterNames,
+        long bodyLimitBytes, int bodyReceiveTimeoutMillis, int responseTimeoutMillis,
+        List<GatewayGuardRuleSnapshot> guardRules) {
+        this(routeCode, channel, httpMethod, externalPathTemplate, downstreamPathTemplate, targetServiceCode,
+            securityProfileCode, authorizationMode, permissionCode, requiredScopeCode, requestCookieMode,
+            responseCookieMode, corsRequestHeaderNames, forwardedRequestHeaderNames, queryParameterNames,
+            bodyLimitBytes, bodyReceiveTimeoutMillis, responseTimeoutMillis, guardRules,
+            GatewayIdempotencyMode.NONE.getCode());
     }
 
     /** 返回稳定路由编码。 */
@@ -255,6 +279,11 @@ public final class GatewayRouteSnapshot {
         return guardRules;
     }
 
+    /** 返回请求幂等模式编码；旧版本快照可能为空。 */
+    public String getIdempotencyMode() {
+        return idempotencyMode;
+    }
+
     /** 比较完整快照字段，保持原契约的值相等语义。 */
     @Override
     public boolean equals(Object other) {
@@ -282,7 +311,8 @@ public final class GatewayRouteSnapshot {
             && bodyLimitBytes == value.bodyLimitBytes
             && bodyReceiveTimeoutMillis == value.bodyReceiveTimeoutMillis
             && responseTimeoutMillis == value.responseTimeoutMillis
-            && Objects.equals(guardRules, value.guardRules);
+            && Objects.equals(guardRules, value.guardRules)
+            && Objects.equals(idempotencyMode, value.idempotencyMode);
     }
 
     /** 根据完整快照字段生成与值相等语义一致的哈希值。 */
@@ -291,6 +321,7 @@ public final class GatewayRouteSnapshot {
         return Objects.hash(routeCode, channel, httpMethod, externalPathTemplate, downstreamPathTemplate,
             targetServiceCode, securityProfileCode, authorizationMode, permissionCode, requiredScopeCode,
             requestCookieMode, responseCookieMode, corsRequestHeaderNames, forwardedRequestHeaderNames,
-            queryParameterNames, bodyLimitBytes, bodyReceiveTimeoutMillis, responseTimeoutMillis, guardRules);
+            queryParameterNames, bodyLimitBytes, bodyReceiveTimeoutMillis, responseTimeoutMillis, guardRules,
+            idempotencyMode);
     }
 }

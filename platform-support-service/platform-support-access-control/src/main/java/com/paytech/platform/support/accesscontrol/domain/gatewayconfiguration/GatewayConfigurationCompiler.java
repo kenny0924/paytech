@@ -13,6 +13,7 @@ import com.paytech.foundation.common.enums.CodeEnum;
 import com.paytech.platform.support.api.enums.GatewayAuthorizationMode;
 import com.paytech.platform.support.api.enums.GatewayGuardDimension;
 import com.paytech.platform.support.api.enums.GatewayGuardRuleType;
+import com.paytech.platform.support.api.enums.GatewayIdempotencyMode;
 import com.paytech.platform.support.api.enums.GatewayRequestCookieMode;
 import com.paytech.platform.support.api.enums.GatewayResponseCookieMode;
 import com.paytech.platform.support.api.enums.GatewayRouteChannel;
@@ -46,6 +47,8 @@ public final class GatewayConfigurationCompiler {
 
     private static final Set<String> METHODS = Set.of("GET", "POST", "PUT", "PATCH", "DELETE", "HEAD");
     private static final Set<String> HEADER_USES = Set.of("CORS_REQUEST_ALLOWED", "FORWARD_REQUEST");
+    private static final Set<String> SAFE_METHODS = Set.of("GET", "HEAD");
+    private static final String IDEMPOTENCY_KEY_HEADER = "idempotency-key";
     private static final Set<String> FORBIDDEN_HEADERS =
         Set.of("connection", "keep-alive", "proxy-authenticate", "proxy-authorization", "te", "trailer",
             "transfer-encoding", "upgrade", "host", "content-length", "cookie", "set-cookie", "forwarded",
@@ -232,10 +235,13 @@ public final class GatewayConfigurationCompiler {
         GatewayResponseCookieMode responseCookie =
             parseCode(GatewayResponseCookieMode.class, row.responseCookieMode(), "Response Cookie Mode");
         validateCompatibility(state.channel(), profile, mode, requestCookie, responseCookie, row.routeCode());
+        GatewayIdempotencyMode idempotency =
+            parseCode(GatewayIdempotencyMode.class, row.idempotencyMode(), "Idempotency Mode");
         PermissionBinding binding = resolveAuthorization(row, mode, permissions);
 
         List<HeaderRow> headerRows = children.headers().getOrDefault(row.routeId(), List.of());
         HeaderSets headerSets = compileHeaders(headerRows, row.routeCode());
+        validateIdempotency(state.channel(), row.httpMethod(), idempotency, headerSets, row.routeCode());
         List<String> queryNames =
             compileQueries(children.queries().getOrDefault(row.routeId(), List.of()), row.routeCode());
         List<GuardRule> guardRules =
@@ -243,7 +249,7 @@ public final class GatewayConfigurationCompiler {
 
         return new Route(row.routeCode(), state.channel(), row.httpMethod(), row.externalPathTemplate(),
             row.downstreamPathTemplate(), state.target().target().targetServiceCode(), profile, mode,
-            binding.permissionCode(), binding.scopeCode(), requestCookie, responseCookie, headerSets.cors(),
+            binding.permissionCode(), binding.scopeCode(), requestCookie, responseCookie, idempotency, headerSets.cors(),
             headerSets.forwarded(), queryNames, row.bodyLimitBytes(), row.bodyReceiveTimeoutMillis(),
             row.responseTimeoutMillis(), guardRules);
     }
@@ -273,6 +279,27 @@ public final class GatewayConfigurationCompiler {
             && (requestCookie != GatewayRequestCookieMode.DROP || responseCookie != GatewayResponseCookieMode.NONE)) {
             throw invalid("非人工 Channel 只能使用 DROP/NONE Cookie Mode: route=" + routeCode);
         }
+    }
+
+    /** 请求幂等由 Gateway 消费 Idempotency-Key，本期只开放 Client API 的非安全方法。 */
+    private void validateIdempotency(GatewayRouteChannel channel, String httpMethod, GatewayIdempotencyMode idempotency,
+        HeaderSets headerSets, String routeCode) {
+        if (idempotency != GatewayIdempotencyMode.REQUIRED) {
+            return;
+        }
+        if (channel != GatewayRouteChannel.CLIENT_API || SAFE_METHODS.contains(httpMethod)) {
+            throw invalid("REQUIRED 请求幂等仅允许 CLIENT_API 的非 GET/HEAD Route: route=" + routeCode);
+        }
+        if (headerSets.forwarded().contains(IDEMPOTENCY_KEY_HEADER)) {
+            throw invalid("REQUIRED 请求幂等 Route 不得转发 Idempotency-Key: route=" + routeCode);
+        }
+    }
+
+    /** 请求幂等选项与编译校验使用同一 Channel/Profile 边界。 */
+    private boolean idempotencyAllowed(GatewayRouteChannel channel, GatewaySecurityProfileCode profile,
+        GatewayIdempotencyMode idempotency) {
+        return idempotency == GatewayIdempotencyMode.NONE
+            || channel == GatewayRouteChannel.CLIENT_API && profile == GatewaySecurityProfileCode.CLIENT_API_CREDENTIAL;
     }
 
     /** 配置选项与完整候选校验使用同一兼容性谓词。 */
@@ -310,6 +337,9 @@ public final class GatewayConfigurationCompiler {
                     java.util.Arrays.stream(GatewayResponseCookieMode.values())
                         .filter(mode -> humanChannel(channel) || mode == GatewayResponseCookieMode.NONE)
                         .map(GatewayResponseCookieMode::getCode).toList(),
+                    java.util.Arrays.stream(GatewayIdempotencyMode.values())
+                        .filter(mode -> idempotencyAllowed(channel, profile, mode))
+                        .map(GatewayIdempotencyMode::getCode).toList(),
                     java.util.Arrays.stream(GatewayGuardDimension.values()).filter(d -> guardDimensionAllowed(profile, d))
                         .map(GatewayGuardDimension::getCode).toList(),
                     requiredGuardDimensions(profile).stream().map(GatewayGuardDimension::getCode).toList()))

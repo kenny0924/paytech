@@ -17,7 +17,8 @@ class GatewaySnapshotCodeParserAutoTest {
             () -> assertRoundTrip(GatewayRequestCookieMode.values(), GatewaySnapshotCodeParser::requestCookieMode),
             () -> assertRoundTrip(GatewayResponseCookieMode.values(), GatewaySnapshotCodeParser::responseCookieMode),
             () -> assertRoundTrip(GatewayGuardRuleType.values(), GatewaySnapshotCodeParser::guardRuleType),
-            () -> assertRoundTrip(GatewayGuardDimension.values(), GatewaySnapshotCodeParser::guardDimension));
+            () -> assertRoundTrip(GatewayGuardDimension.values(), GatewaySnapshotCodeParser::guardDimension),
+            () -> assertRoundTrip(GatewayIdempotencyMode.values(), GatewaySnapshotCodeParser::idempotencyMode));
     }
 
     @Test
@@ -29,7 +30,15 @@ class GatewaySnapshotCodeParserAutoTest {
             () -> assertUnknown(GatewaySnapshotCodeParser::requestCookieMode),
             () -> assertUnknown(GatewaySnapshotCodeParser::responseCookieMode),
             () -> assertUnknown(GatewaySnapshotCodeParser::guardRuleType),
-            () -> assertUnknown(GatewaySnapshotCodeParser::guardDimension));
+            () -> assertUnknown(GatewaySnapshotCodeParser::guardDimension),
+            () -> assertUnknown(GatewaySnapshotCodeParser::idempotencyMode));
+    }
+
+    @Test
+    void test_missingIdempotencyModeFromOlderPlatformMeansNone() {
+        Assertions.assertSame(GatewayIdempotencyMode.NONE, GatewaySnapshotCodeParser.idempotencyMode(null));
+        Assertions.assertThrows(InvalidGatewaySnapshotException.class,
+            () -> GatewaySnapshotCodeParser.idempotencyMode(""));
     }
 
     private <T extends Enum<T> & com.paytech.foundation.common.enums.CodeEnum> void assertRoundTrip(T[] values,

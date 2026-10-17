@@ -118,9 +118,6 @@ redis:
     subscription-connection-minimum-idle-size: 1
     subscription-connection-pool-size: 8
 
-command-idempotency:
-  enabled: false
-
 compensation:
   enabled: true
   instance-id: "${spring.application.name}"

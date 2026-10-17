@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Code-MoR Commerce Client API
   version: 1.0.0
-  description: Client-server Hosted Checkout, Order, Cancel, and Refund public contract. Gateway owns authentication, trusted identity injection, and public cache headers; upstream middleware owns transport idempotency. Query allowlists, single-value query rules, and prohibited request bodies are ingress responsibilities. Commerce retains parameter binding, field validation, and Client resource authorization without dedicated key, cache, order-query, refund-query, or trusted-context filters. Ingress implementation and activation are outside this contract change.
+  description: Client-server Hosted Checkout, Order, Cancel, and Refund public contract. Gateway owns authentication, trusted identity injection, public cache headers, and Idempotency-Key handling. The API Gateway validates and replays the Idempotency-Key header for POST /api/v1/checkouts, POST /api/v1/orders/{orderNo}/cancel and POST /api/v1/orders/{orderNo}/refunds. The same key with the same request replays the first response for 72 hours; the same key with a different request returns 409 IDEMPOTENCY_KEY_REUSED; a request still in progress returns 409 IDEMPOTENCY_REQUEST_IN_PROGRESS with Retry-After 3; a missing or invalid key returns 400 IDEMPOTENCY_KEY_REQUIRED or INVALID_IDEMPOTENCY_KEY. Commerce does not declare or read this header. Query allowlists, single-value query rules, and prohibited request bodies are ingress responsibilities. Commerce retains parameter binding, field validation, and Client resource authorization without dedicated key, cache, order-query, refund-query, or trusted-context filters. Ingress implementation and activation are outside this contract change.
 servers:
   - url: https://api.code-mor.com
 paths:
@@ -10,23 +10,12 @@ paths:
     post:
       operationId: createCheckout
       summary: Create a hosted checkout
-      description: Creates one Commerce order and its hosted checkout for the authenticated Client. clientOrderId is permanently unique within that Client; duplicate creation returns 409 CLIENT_ORDER_ID_ALREADY_EXISTS. Commerce does not store or replay this request by Idempotency-Key.
+      description: Creates one Commerce order and its hosted checkout for the authenticated Client. clientOrderId is permanently unique within that Client; duplicate creation returns 409 CLIENT_ORDER_ID_ALREADY_EXISTS. Idempotency-Key is required and validated and replayed by the API Gateway (see the API description); Commerce does not store or replay this request.
       x-required-scope: checkouts.write
       x-request-body-max-bytes: 16384
       x-query-allowlist: []
       security:
         - BearerAuth: []
-      parameters:
-        - name: Idempotency-Key
-          in: header
-          required: true
-          description: Reserved transport idempotency header for upstream middleware. Commerce retains parameter binding but does not perform dedicated key validation or use it in checkout business processing; middleware replay is not activated by this contract.
-          schema:
-            type: string
-            minLength: 1
-            maxLength: 255
-            pattern: '^[A-Za-z0-9][A-Za-z0-9._:-]{0,254}$'
-            x-case-sensitive: true
       requestBody:
         required: true
         description: Client order, expiry, and item data used to create the hosted checkout.
@@ -95,7 +84,7 @@ paths:
     post:
       operationId: cancelOrder
       summary: Cancel an unpaid order
-      description: 请求取消未支付订单，无 Body 或 Query。200 表示 Order 和实际关联的 Checkout Session 已关闭，重复请求返回订单原取消时间；HOSTED_CHECKOUT 必须有 Session，DIRECT_PAY 可以无 Session，无会话时省略 checkoutStatus；Payment 未决或暂时不可用时返回 202，可按 Retry-After 再次请求。Idempotency-Key 保留为接入协议 Header，Commerce 取消用例不读取或保存请求幂等记录，不提供同 Key 请求冲突检查或冻结响应。GET 订单只查询本地状态。已成功支付返回 409 REVERSAL_REQUIRED，已过期终态返回 409 ORDER_NOT_CANCELLABLE；保存时业务事实已变化则返回并发冲突，不自动重试。
+      description: 请求取消未支付订单，无 Body 或 Query。200 表示 Order 和实际关联的 Checkout Session 已关闭，重复请求返回订单原取消时间；HOSTED_CHECKOUT 必须有 Session，DIRECT_PAY 可以无 Session，无会话时省略 checkoutStatus；Payment 未决或暂时不可用时返回 202，可按 Retry-After 再次请求。Idempotency-Key 必填，由 API Gateway 校验与重放（相同 Key 与相同请求 72 小时内重放首次响应；不同请求 409 IDEMPOTENCY_KEY_REUSED；处理中 409 IDEMPOTENCY_REQUEST_IN_PROGRESS 并带 Retry-After 3；缺失或非法 400 IDEMPOTENCY_KEY_REQUIRED / INVALID_IDEMPOTENCY_KEY）；Commerce 不声明、不读取该 Header。GET 订单只查询本地状态。已成功支付返回 409 REVERSAL_REQUIRED，已过期终态返回 409 ORDER_NOT_CANCELLABLE；保存时业务事实已变化则返回并发冲突，不自动重试。
       x-required-scope: orders.cancel
       x-request-body-max-bytes: 0
       x-query-allowlist: []
@@ -103,16 +92,6 @@ paths:
         - BearerAuth: []
       parameters:
         - $ref: '#/components/parameters/OrderNo'
-        - name: Idempotency-Key
-          in: header
-          required: true
-          description: 为上游中间件保留的大小写敏感 Header；Commerce 保留参数绑定，不做专用 Key 校验，取消业务不使用该值识别订单或保存请求结果。
-          schema:
-            type: string
-            minLength: 1
-            maxLength: 255
-            pattern: '^[A-Za-z0-9][A-Za-z0-9._:-]{0,254}$'
-            x-case-sensitive: true
       responses:
         '200':
           $ref: '#/components/responses/CancelOrderResponse'
@@ -141,7 +120,7 @@ paths:
     post:
       operationId: createRefund
       summary: 创建订单退款
-      description: 为已认证 Client 的已支付订单受理全额或部分退款，币种继承订单。相同 clientRefundId 和订单、金额、原因返回原始 201 回执，不重复预占或提交；同业务号内容冲突返回 409 CLIENT_REFUND_ID_CONFLICT。Idempotency-Key 预留给上游中间件，Commerce 不做专用 Key 校验，也不保存请求 Key、Hash、租约或响应快照；相同 Key 配不同 clientRefundId 在 Commerce 仍是独立业务申请。新申请的业务事实在保存时变化则整体回滚并返回并发冲突，不自动重试。
+      description: 为已认证 Client 的已支付订单受理全额或部分退款，币种继承订单。相同 clientRefundId 和订单、金额、原因返回原始 201 回执，不重复预占或提交；同业务号内容冲突返回 409 CLIENT_REFUND_ID_CONFLICT。Idempotency-Key 必填，由 API Gateway 校验与重放（规则见 API 说明）；Commerce 不声明、不读取该 Header，也不保存请求 Key、Hash、租约或响应快照，业务防重只按 clientRefundId。新申请的业务事实在保存时变化则整体回滚并返回并发冲突，不自动重试。
       x-required-scope: refunds.write
       x-request-body-max-bytes: 4096
       x-query-allowlist: []
@@ -149,16 +128,6 @@ paths:
         - BearerAuth: []
       parameters:
         - $ref: '#/components/parameters/OrderNo'
-        - name: Idempotency-Key
-          in: header
-          required: true
-          description: 为上游中间件保留的传输 Header；Commerce 保留参数绑定，不做专用 Key 校验，也不用于退款业务防重，本次未启用中间件请求重放。
-          schema:
-            type: string
-            minLength: 1
-            maxLength: 255
-            pattern: '^[A-Za-z0-9][A-Za-z0-9._:-]{0,254}$'
-            x-case-sensitive: true
       requestBody:
         required: true
         description: Client 永久唯一退款业务号、金额和创建原因；不提交币种或 OE。

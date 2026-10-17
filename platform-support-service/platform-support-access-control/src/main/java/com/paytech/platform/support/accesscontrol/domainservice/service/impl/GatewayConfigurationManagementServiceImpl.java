@@ -25,6 +25,7 @@ import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.platform.support.api.enums.GatewayAuthorizationMode;
 import com.paytech.platform.support.api.enums.GatewayConfigurationErrorCode;
+import com.paytech.platform.support.api.enums.GatewayIdempotencyMode;
 import com.paytech.platform.support.api.enums.GatewayRouteChannel;
 import com.paytech.platform.support.accesscontrol.core.dal.dataobject.GatewayRouteManagement;
 import com.paytech.platform.support.accesscontrol.core.dal.dataobject.GatewayRouteRoot;
@@ -214,11 +215,12 @@ public class GatewayConfigurationManagementServiceImpl implements GatewayConfigu
     @Override
     public ConfigurationMutation saveRoute(String actorId, String session, RouteWrite command) {
         var actor = requireManagementPermission(actorId, session);
-        var config = command.configuration();
-        var permission = config.permissionId() == null ? null : gateway.permissionIdentity(config.permissionId());
         boolean create = command.expectedVersion() == 0;
         var current = gateway.route(command.code());
         requireWriteVersion(create, current == null ? null : current.route().version(), command.expectedVersion(), "Route");
+        var config = command.configuration().withDefaultIdempotencyMode(create ? GatewayIdempotencyMode.NONE.getCode()
+            : current.route().idempotencyMode().getCode());
+        var permission = config.permissionId() == null ? null : gateway.permissionIdentity(config.permissionId());
         LoadedConfiguration catalog = configurations.loadCurrentConfiguration();
         var target = requireTarget(config.targetServiceCode());
         long id = create ? ids.nextId() : current.route().routeId();
@@ -231,7 +233,8 @@ public class GatewayConfigurationManagementServiceImpl implements GatewayConfigu
         RouteRow row = new RouteRow(id, command.code(), channel, config.httpMethod(), config.externalPathTemplate(),
             config.downstreamPathTemplate(), target.targetId(), config.securityProfileCode(), config.authorizationMode(),
             config.permissionId(), config.requiredScopeCode(), config.requestCookieMode(), config.responseCookieMode(),
-            config.bodyLimitBytes(), config.bodyReceiveTimeoutMillis(), config.responseTimeoutMillis(), status);
+            config.idempotencyMode(), config.bodyLimitBytes(), config.bodyReceiveTimeoutMillis(),
+            config.responseTimeoutMillis(), status);
         var before = catalog.routes().stream().filter(r -> r.routeId() == id).findFirst().orElse(null);
         GatewayManagementProtection.requireEditable(before, row);
         ManagementRouteContracts.requireBody(row);
@@ -305,7 +308,8 @@ public class GatewayConfigurationManagementServiceImpl implements GatewayConfigu
         var r = details.route();
         return new RouteConfiguration(r.httpMethod().getCode(), r.externalPathTemplate(), r.downstreamPathTemplate(),
             r.targetServiceCode(), r.securityProfileCode().getCode(), r.authorizationMode().getCode(), r.permissionId(),
-            r.requiredScopeCode(), r.requestCookieMode().getCode(), r.responseCookieMode().getCode(), r.bodyLimitBytes(),
+            r.requiredScopeCode(), r.requestCookieMode().getCode(), r.responseCookieMode().getCode(),
+            r.idempotencyMode().getCode(), r.bodyLimitBytes(),
             r.bodyReceiveTimeoutMillis(), r.responseTimeoutMillis(), details.headers().stream()
                 .map(h -> new Header(h.headerName(), h.headerUse().getCode())).toList(), details.queryParameterNames(),
             details.guardRules().stream().map(g -> new Guard(g.ruleType().getCode(), g.dimension().getCode(),
@@ -335,6 +339,7 @@ public class GatewayConfigurationManagementServiceImpl implements GatewayConfigu
         fields.put(ConfigurationField.SCOPE, value.requiredScopeCode());
         fields.put(ConfigurationField.REQUEST_COOKIE_MODE, value.requestCookieMode());
         fields.put(ConfigurationField.RESPONSE_COOKIE_MODE, value.responseCookieMode());
+        fields.put(ConfigurationField.IDEMPOTENCY_MODE, value.idempotencyMode());
         fields.put(ConfigurationField.BODY_LIMIT_BYTES, Long.toString(value.bodyLimitBytes()));
         fields.put(ConfigurationField.BODY_RECEIVE_TIMEOUT_MILLIS, Integer.toString(value.bodyReceiveTimeoutMillis()));
         fields.put(ConfigurationField.RESPONSE_TIMEOUT_MILLIS, Integer.toString(value.responseTimeoutMillis()));
@@ -425,8 +430,8 @@ public class GatewayConfigurationManagementServiceImpl implements GatewayConfigu
         return new RouteRow(route.routeId(), route.routeCode(), route.channel(), route.httpMethod(),
             route.externalPathTemplate(), route.downstreamPathTemplate(), route.targetId(), route.securityProfileCode(),
             route.authorizationMode(), route.permissionId(), route.requiredScopeCode(), route.requestCookieMode(),
-            route.responseCookieMode(), route.bodyLimitBytes(), route.bodyReceiveTimeoutMillis(),
-            route.responseTimeoutMillis(), status.getCode());
+            route.responseCookieMode(), route.idempotencyMode(), route.bodyLimitBytes(),
+            route.bodyReceiveTimeoutMillis(), route.responseTimeoutMillis(), status.getCode());
     }
 
     private void compileCandidate(LoadedConfiguration candidate) {
@@ -483,7 +488,7 @@ public class GatewayConfigurationManagementServiceImpl implements GatewayConfigu
             route.externalPathTemplate(), route.downstreamPathTemplate(), route.targetServiceCode(),
             route.targetStatus(), route.securityProfileCode(), route.authorizationMode(), route.permissionId(),
             route.permissionCode(), route.requiredScopeCode(), route.requestCookieMode(), route.responseCookieMode(),
-            route.bodyLimitBytes(), route.bodyReceiveTimeoutMillis(), route.responseTimeoutMillis(), route.status(),
+            route.idempotencyMode(), route.bodyLimitBytes(), route.bodyReceiveTimeoutMillis(), route.responseTimeoutMillis(), route.status(),
             route.version(), headers, details.queryParameterNames(), guards, route.createdBy(), route.updatedBy(),
             route.createTime(), route.updateTime(), routeProtection(catalog, route.routeId()));
     }

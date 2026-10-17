@@ -15,7 +15,7 @@ import org.springframework.data.redis.core.types.Expiration;
 
 import reactor.core.publisher.Mono;
 
-/** 只清理当前运行 Guard 前缀的 Redis 测试工具。 */
+/** 只清理当前运行 Guard 与请求幂等前缀的 Redis 测试工具。 */
 public final class RedisTestCleaner {
     private static final int SCAN_PAGE_SIZE = 64;
     private static final Duration OPERATION_TIMEOUT = Duration.ofSeconds(5);
@@ -39,8 +39,27 @@ public final class RedisTestCleaner {
     }
 
     public void cleanGuardKeys() {
+        cleanOwned(namespace.guardScanPattern());
+        cleanOwned(namespace.idempotencyScanPattern());
+    }
+
+    public List<String> idempotencyKeys() {
+        return withConnectionResult(connection -> connection.keyCommands()
+            .scan(ScanOptions.scanOptions().match(namespace.idempotencyScanPattern()).count(SCAN_PAGE_SIZE).build())
+            .map(RedisTestCleaner::decode).doOnNext(this::validateOwnedGuardKey).collectList());
+    }
+
+    /** 以非 Hash 值占据当前运行拥有的幂等 Key，制造真实 Redis WRONGTYPE 命令失败。 */
+    public void occupyIdempotencyKeyWithString(String key) {
+        validateOwnedGuardKey(key);
+        Boolean created = withConnectionResult(connection -> connection.stringCommands().set(utf8(key),
+            utf8("not-a-hash"), Expiration.milliseconds(SENTINEL_TTL_MILLIS), RedisStringCommands.SetOption.UPSERT));
+        Assertions.assertEquals(Boolean.TRUE, created, "Redis 幂等故障 Key 创建失败");
+    }
+
+    private void cleanOwned(String pattern) {
         withConnection(connection -> connection.keyCommands()
-            .scan(ScanOptions.scanOptions().match(namespace.guardScanPattern()).count(SCAN_PAGE_SIZE).build())
+            .scan(ScanOptions.scanOptions().match(pattern).count(SCAN_PAGE_SIZE).build())
             .buffer(SCAN_PAGE_SIZE).concatMap(keys -> unlinkValidated(connection, keys)).then());
     }
 
@@ -78,7 +97,7 @@ public final class RedisTestCleaner {
     }
 
     private void validateOwnedGuardKey(String key) {
-        if (!key.startsWith(namespace.guardPrefix())) {
+        if (!key.startsWith(namespace.guardPrefix()) && !key.startsWith(namespace.idempotencyPrefix())) {
             throw new AssertionError("拒绝清理当前运行 Guard 前缀之外的 Redis Key");
         }
     }

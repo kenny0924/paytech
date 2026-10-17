@@ -34,6 +34,14 @@ final class GatewaySnapshotCodeParser {
         return require(code, GatewayResponseCookieMode.values(), "Response Cookie Mode");
     }
 
+    /** 旧 Platform 未下发该字段时按 NONE 兼容；出现未知值仍拒绝整份快照。 */
+    static GatewayIdempotencyMode idempotencyMode(String code) {
+        if (code == null) {
+            return GatewayIdempotencyMode.NONE;
+        }
+        return require(code, GatewayIdempotencyMode.values(), "Idempotency Mode");
+    }
+
     static GatewayGuardRuleType guardRuleType(String code) {
         return require(code, GatewayGuardRuleType.values(), "Guard Rule Type");
     }

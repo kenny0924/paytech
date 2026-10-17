@@ -121,7 +121,8 @@ public final class GatewaySnapshotCompiler {
             route.getResponseCookieMode(), Set.copyOf(route.getCorsRequestHeaderNames()),
             Set.copyOf(route.getForwardedRequestHeaderNames()), Set.copyOf(route.getQueryParameterNames()),
             route.getBodyLimitBytes(), Duration.ofMillis(route.getBodyReceiveTimeoutMillis()),
-            Duration.ofMillis(route.getResponseTimeoutMillis()), guards.ingress(), guards.authenticated());
+            Duration.ofMillis(route.getResponseTimeoutMillis()), guards.ingress(), guards.authenticated(),
+            GatewaySnapshotCodeParser.idempotencyMode(route.getIdempotencyMode()));
     }
 
     private void rejectOverlappingRoutes(List<GatewayRuntimeRoute> routes) {

@@ -30,7 +30,6 @@ import com.paytech.commerce.test.checker.webhook.ClientWebhookChecker;
 import com.paytech.commerce.test.mocker.external.PaymentTerminationMocker;
 import com.paytech.commerce.test.mocker.local.OrderCancellationDataMocker;
 import com.paytech.commerce.test.mocker.local.OrderQueryDataMocker;
-import com.paytech.foundation.common.http.ApiHeaderNames;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
 
 import tools.jackson.databind.JsonNode;
@@ -134,7 +133,6 @@ class ClientWebhookOrderCancelledTest extends MockTestBase {
     /** 真实 HTTP 取消入口。 */
     CancelOrderResponseChecker invoke() {
         var headers = TestRequestHeaders.client(REQUEST_ID, Long.toString(clientId()), "1");
-        headers.set(ApiHeaderNames.IDEMPOTENCY_KEY, "cancel-webhook-key");
         var path = UriComponentsBuilder.fromPath("/client-gateway-api/v1/orders/{orderNo}/cancel")
             .buildAndExpand(orderNo()).toUriString();
         return new CancelOrderResponseChecker(httpTestInvoker.post(path, headers, null), objectMapper, REQUEST_ID);

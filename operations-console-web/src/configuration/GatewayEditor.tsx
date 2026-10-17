@@ -11,7 +11,7 @@ import type { GatewayPageProps } from '../pages/GatewayConfiguration';
 import type { GatewayCapabilities, GatewayProfileCapability, ManagedRoute, ManagedTarget, PagingResponseBody } from './types';
 import { PermissionSelect } from './PermissionSelect';
 import { useConfigurationForm } from './useConfigurationForm';
-import { initialGuards, routeWrite } from './gatewayEditorModel';
+import { defaultIdempotencyMode, idempotencyOptions, initialGuards, routeWrite } from './gatewayEditorModel';
 import { editable } from './configurationModel';
 const required = [{ required: true, message: '请填写此项' }];
 const options = (values: readonly string[] = []) => values.map(value => ({ value, label: value }));
@@ -64,12 +64,12 @@ export function GatewayEditor({ resources, onAuthorizationChanged, capabilities,
     // 选择器受控回显原值，确认后才清理旧 Channel/Profile 下的草稿字段。
     form.setFieldsValue({ channel, securityProfileCode: profileCode });
     if (editor.dirty) {
-      const confirmed = await modal.confirm({ title: '切换安全配置？', content: '将重设授权、Cookie 和 Guard 配置。切换 Channel 还会清空目标服务。', okText: '切换', cancelText: '保留当前配置' });
+      const confirmed = await modal.confirm({ title: '切换安全配置？', content: '将重设授权、Cookie、请求幂等和 Guard 配置。切换 Channel 还会清空目标服务。', okText: '切换', cancelText: '保留当前配置' });
       if (!confirmed) return;
     }
     form.setFieldsValue({ channel: nextChannel, securityProfileCode: selected.securityProfileCode,
       authorizationMode: selected.authorizationModes[0], permissionId: null, requiredScopeCode: null,
-      requestCookieMode: selected.requestCookieModes[0], responseCookieMode: selected.responseCookieModes[0], guardRules: initialGuards(selected),
+      requestCookieMode: selected.requestCookieModes[0], responseCookieMode: selected.responseCookieModes[0], idempotencyMode: defaultIdempotencyMode(selected), guardRules: initialGuards(selected),
       ...(channel !== nextChannel ? { targetServiceCode: undefined } : {}) }); editor.setDirty(true);
   }
   async function save(values: Values) {
@@ -97,7 +97,7 @@ export function GatewayEditor({ resources, onAuthorizationChanged, capabilities,
       {detail?.managementProtection.reason && <p className="configuration-protection">{detail.managementProtection.reason}</p>}
       {editor.conflict && <Alert type="warning" showIcon title="配置已变化，当前草稿已保留。请重新加载后编辑。" action={<Button onClick={() => void reloadLatest()}>重新加载</Button>} />}
       <Form form={form} layout="vertical" disabled={readOnly || editor.saving} onValuesChange={() => editor.setDirty(true)} onFinish={save}
-        initialValues={{ reason: '', headers: [], queryParameterNames: [], guardRules: [], bodyLimitBytes: Math.min(65536, capabilities.limits.maxBodyLimitBytes), bodyReceiveTimeoutMillis: capabilities.limits.maxBodyReceiveTimeoutMillis, responseTimeoutMillis: capabilities.limits.maxResponseTimeoutMillis }}>
+        initialValues={{ reason: '', idempotencyMode: 'NONE', headers: [], queryParameterNames: [], guardRules: [], bodyLimitBytes: Math.min(65536, capabilities.limits.maxBodyLimitBytes), bodyReceiveTimeoutMillis: capabilities.limits.maxBodyReceiveTimeoutMillis, responseTimeoutMillis: capabilities.limits.maxResponseTimeoutMillis }}>
         <h3 className="configuration-section-heading">基本信息</h3><div className="configuration-grid two">
           <Form.Item name={kind === 'target' ? 'targetServiceCode' : 'routeCode'} label={kind === 'target' ? '目标服务编码' : '路由编码'} rules={[...required, { pattern: /^[a-z][a-z0-9-]{2,127}$/, message: '3–128 位小写字母、数字或连字符，以字母开头' }]}><Input disabled={!creating || readOnly || editor.saving} maxLength={128} /></Form.Item>
           <Form.Item name="channel" label="Channel" rules={required}><Select disabled={!creating || readOnly || editor.saving} options={options(capabilities.channels.map(c => c.channel))} onChange={value => { if (kind === 'route') void switchProfile(value); }} /></Form.Item>
@@ -115,6 +115,7 @@ export function GatewayEditor({ resources, onAuthorizationChanged, capabilities,
             {authorizationMode === 'API_SCOPE' && <Form.Item name="requiredScopeCode" label="API Scope" rules={required}><ScopeSelect disabled={locked('requiredScopeCode')} originalValue={route?.requiredScopeCode} /></Form.Item>}
           </div><div className="configuration-grid two"><Form.Item name="requestCookieMode" label="请求 Cookie" rules={required}><Select options={options(profile?.requestCookieModes)} disabled={locked('requestCookieMode')} /></Form.Item>
             <Form.Item name="responseCookieMode" label="响应 Cookie" rules={required}><Select options={options(profile?.responseCookieModes)} disabled={locked('responseCookieMode')} /></Form.Item></div>
+          <div className="configuration-grid two"><Form.Item name="idempotencyMode" label="请求幂等" rules={required}><Select options={idempotencyOptions(profile?.idempotencyModes, route?.idempotencyMode)} disabled={locked('idempotencyMode')} /></Form.Item></div>
           <h3 className="configuration-section-heading">请求限制与超时</h3><div className="configuration-grid three">
             <Form.Item name="bodyLimitBytes" label="Body 上限（字节）" rules={required}><InputNumber min={0} max={capabilities.limits.maxBodyLimitBytes} precision={0} disabled={locked('bodyLimitBytes')} /></Form.Item>
             <Form.Item name="bodyReceiveTimeoutMillis" label="接收超时（毫秒）" rules={required}><InputNumber min={1} max={capabilities.limits.maxBodyReceiveTimeoutMillis} precision={0} disabled={locked('bodyReceiveTimeoutMillis')} /></Form.Item>

@@ -57,12 +57,19 @@ import com.paytech.gateway.web.GatewayErrorWriter;
 import com.paytech.gateway.web.GatewayGlobalFilterOrder;
 import com.paytech.gateway.web.GatewayUpstreamProtocolException;
 import com.paytech.gateway.web.OwnerProblemResponseGlobalFilter;
+import com.paytech.gateway.idempotency.IdempotencyGlobalFilter;
+import com.paytech.gateway.idempotency.IdempotencyKeyPolicy;
+import com.paytech.gateway.idempotency.IdempotencyProperties;
+import com.paytech.gateway.idempotency.IdempotencyReplayWriter;
+import com.paytech.gateway.idempotency.IdempotencyRequestDigest;
+import com.paytech.gateway.idempotency.RedisIdempotencyRecordStore;
 import com.paytech.gateway.web.OwnerProblemValidator;
 import com.paytech.gateway.web.TrustedTerminalResponseHeaders;
 import com.paytech.gateway.routing.OperationsRoutingProperties;
 import com.paytech.gateway.routing.runtime.GatewayRuntimeRoute;
 import com.paytech.gateway.routing.runtime.GatewayRuntimeTarget;
 import com.paytech.gateway.web.GatewayExchangeAttributes;
+import com.paytech.platform.support.api.enums.GatewayIdempotencyMode;
 import com.paytech.platform.support.api.enums.GatewayRouteChannel;
 
 import io.netty.buffer.PooledByteBufAllocator;
@@ -114,6 +121,7 @@ class GatewayFilterOrderContractAutoTest {
             () -> Assertions.assertEquals(Ordered.HIGHEST_PRECEDENCE + 60, GatewayGlobalFilterOrder.CLIENT_API_SCOPE),
             () -> Assertions.assertEquals(Ordered.HIGHEST_PRECEDENCE + 100,
                 GatewayGlobalFilterOrder.REQUEST_BODY_LIMIT),
+            () -> Assertions.assertEquals(Ordered.HIGHEST_PRECEDENCE + 150, GatewayGlobalFilterOrder.IDEMPOTENCY),
             () -> Assertions.assertEquals(Ordered.HIGHEST_PRECEDENCE + 200,
                 GatewayGlobalFilterOrder.UPSTREAM_TIMEOUT),
             () -> Assertions.assertEquals(Ordered.HIGHEST_PRECEDENCE + 300,
@@ -132,6 +140,8 @@ class GatewayFilterOrderContractAutoTest {
             () -> Assertions.assertTrue(GatewayGlobalFilterOrder.CLIENT_API_SCOPE
                 < GatewayGlobalFilterOrder.REQUEST_BODY_LIMIT),
             () -> Assertions.assertTrue(GatewayGlobalFilterOrder.REQUEST_BODY_LIMIT
+                < GatewayGlobalFilterOrder.IDEMPOTENCY),
+            () -> Assertions.assertTrue(GatewayGlobalFilterOrder.IDEMPOTENCY
                 < GatewayGlobalFilterOrder.UPSTREAM_TIMEOUT),
             () -> Assertions.assertTrue(GatewayGlobalFilterOrder.UPSTREAM_TIMEOUT
                 < GatewayGlobalFilterOrder.UPSTREAM_REQUEST),
@@ -169,8 +179,16 @@ class GatewayFilterOrderContractAutoTest {
             new TrustedTerminalResponseHeaders(new OperationsRoutingProperties("https://operations-console.test",
                 Duration.ofSeconds(1)), new ClientRoutingProperties(false, null)));
 
+        IdempotencyProperties idempotencyProperties =
+            new IdempotencyProperties(Duration.ofHours(72), Duration.ofSeconds(10), 65_536, null);
+        IdempotencyGlobalFilter idempotency = new IdempotencyGlobalFilter(new IdempotencyKeyPolicy(),
+            new IdempotencyRequestDigest(),
+            new RedisIdempotencyRecordStore(scriptExecutor, idempotencyProperties, redisProperties),
+            new IdempotencyReplayWriter(), idempotencyProperties, new GatewayErrorWriter(ServerCodecConfigurer.create()));
+
         Assertions.assertAll(
             () -> Assertions.assertEquals(GatewayGlobalFilterOrder.TYPED_AUTHENTICATED_IDENTITY, mapper.getOrder()),
+            () -> Assertions.assertEquals(GatewayGlobalFilterOrder.IDEMPOTENCY, idempotency.getOrder()),
             () -> Assertions.assertEquals(GatewayGlobalFilterOrder.AUTHENTICATED_GUARD, guard.getOrder()),
             () -> Assertions.assertEquals(GatewayGlobalFilterOrder.TRUSTED_DOWNSTREAM_IDENTITY,
                 downstream.getOrder()),
@@ -643,7 +661,7 @@ class GatewayFilterOrderContractAutoTest {
         exchange.getAttributes().put(GatewayExchangeAttributes.RUNTIME_ROUTE,
             new GatewayRuntimeRoute("owner-test", GatewayRouteChannel.OPERATIONS, method, "/owner", "/owner",
                 new GatewayRuntimeTarget("operations-console-bff", GatewayRouteChannel.OPERATIONS, "operations-console-bff"), "PUBLIC", "PUBLIC", null, null, "DROP", "NONE", Set.of(), Set.of(),
-                Set.of(), 0, Duration.ofSeconds(1), Duration.ofSeconds(1), null, null));
+                Set.of(), 0, Duration.ofSeconds(1), Duration.ofSeconds(1), null, null, GatewayIdempotencyMode.NONE));
         exchange.getAttributes().put(GatewayExchangeAttributes.REQUEST_ID, REQUEST_ID);
         exchange.getAttributes().put(ServerWebExchangeUtils.CLIENT_RESPONSE_ATTR, nativeResponse);
         exchange.getResponse().setStatusCode(status);

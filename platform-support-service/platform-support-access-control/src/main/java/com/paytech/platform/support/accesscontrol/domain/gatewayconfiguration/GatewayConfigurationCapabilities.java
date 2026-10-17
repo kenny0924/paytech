@@ -13,8 +13,8 @@ public final class GatewayConfigurationCapabilities {
 
     /** Guard 必需维度均需 Rate/Concurrency 成对，TENANT 可选时也必须成对。 */
     public record ProfileCapability(String securityProfileCode, List<String> authorizationModes,
-        List<String> requestCookieModes, List<String> responseCookieModes, List<String> allowedGuardDimensions,
-        List<String> requiredGuardDimensions) {}
+        List<String> requestCookieModes, List<String> responseCookieModes, List<String> idempotencyModes,
+        List<String> allowedGuardDimensions, List<String> requiredGuardDimensions) {}
 
     /** 所有时间为毫秒，Body 为字节，集合数按完整聚合计算。 */
     public record Limits(long maxBodyLimitBytes, int maxBodyReceiveTimeoutMillis, int maxResponseTimeoutMillis,

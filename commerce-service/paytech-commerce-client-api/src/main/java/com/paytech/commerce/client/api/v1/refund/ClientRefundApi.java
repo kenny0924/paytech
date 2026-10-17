@@ -36,8 +36,6 @@ public interface ClientRefundApi extends ClientRefundableAmountApi {
      *            可信 Gateway 认证的 Client API Credential 标识
      * @param orderNo
      *            不透明、大小写敏感的 Commerce 订单号
-     * @param idempotencyKey
-     *            预留给上游中间件的请求 Header，Commerce 不做专用 Key 校验，不参与业务防重
      * @param requestBody
      *            Client 提交的退款内容，不允许指定币种或 OE
      * @return 本地持久化受理后的不可变 201 回执及资源 Location，不表示渠道退款成功
@@ -47,7 +45,6 @@ public interface ClientRefundApi extends ClientRefundableAmountApi {
         @RequestHeader(ApiHeaderNames.GATEWAY_CLIENT_ID) @Positive long clientId,
         @RequestHeader(ApiHeaderNames.GATEWAY_CREDENTIAL_ID) @Positive long credentialId,
         @PathVariable("orderNo") @NotBlank @Size(max = 64) String orderNo,
-        @RequestHeader(ApiHeaderNames.IDEMPOTENCY_KEY) String idempotencyKey,
         @RequestBody @NotNull @Valid CreateRefundRequestBody requestBody);
 
     /**

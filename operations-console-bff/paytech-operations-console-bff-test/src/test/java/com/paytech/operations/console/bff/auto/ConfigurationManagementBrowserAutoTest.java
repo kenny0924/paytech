@@ -85,6 +85,18 @@ class ConfigurationManagementBrowserAutoTest extends OperationsBffHttpTestBase {
         assertTrue(platform.requests().stream().allMatch(r -> r.path().equals(AUTHORIZE_PATH)));
     }
 
+    @Test void test_routeUpdateWithoutIdempotencyModeLetsOwnerKeepCurrentValue() throws Exception {
+        var c = endpoint("A04"); var body = c.path("request").deepCopy();
+        ((tools.jackson.databind.node.ObjectNode) body).remove("idempotencyMode");
+        platform.rawResponse(c.path("path").asString(), JSON.writeValueAsString(c.path("response")));
+        var response = send(c, "", body, true);
+        assertEquals(200, response.statusCode(), response.body());
+        var sent = JSON.readTree(platform.requests().getLast().body());
+        assertTrue(sent.path("idempotencyMode").isMissingNode() || sent.path("idempotencyMode").isNull(), sent.toString());
+        ((tools.jackson.databind.node.ObjectNode) sent).remove("idempotencyMode");
+        assertEquals(body, sent);
+    }
+
     @Test void test_newMutationStillRequiresOrigin() throws Exception {
         var c = endpoint("A12"); var response = send(c, "", c.path("request"), false);
         assertEquals(403, response.statusCode(), response.body());

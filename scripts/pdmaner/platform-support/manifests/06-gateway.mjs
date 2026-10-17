@@ -74,6 +74,8 @@ export const TABLES = Object.freeze([
       str("required_scope_code", "必需 API Scope 代码", "N", 128),
       code("request_cookie_mode", "请求 Cookie 模式", "NN", ["DROP", "REQUIRE_PROFILE_COOKIE"]),
       code("response_cookie_mode", "响应 Cookie 模式", "NN", ["NONE", "ISSUE_ONLY", "ISSUE_OR_CLEAR", "CLEAR_ONLY"]),
+      field("idempotency_mode", "VARCHAR(64)", "NN", "请求幂等模式", "请求幂等模式的稳定业务代码",
+        { values: ["NONE", "REQUIRED"], defaultValue: "'NONE'" }),
       long("body_limit_bytes", "请求体字节上限"),
       int("body_receive_timeout_millis", "请求体接收超时毫秒数"),
       int("response_timeout_millis", "目标响应超时毫秒数"),

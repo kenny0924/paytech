@@ -18,6 +18,7 @@ public final class GatewayRouteBuilder {
     private String scopeCode;
     private String requestCookieMode = "DROP";
     private String responseCookieMode = "NONE";
+    private String idempotencyMode = "NONE";
     private long bodyLimit = 16384;
     private String status = "ACTIVE";
 
@@ -74,6 +75,11 @@ public final class GatewayRouteBuilder {
         return this;
     }
 
+    public GatewayRouteBuilder idempotencyMode(String idempotencyMode) {
+        this.idempotencyMode = idempotencyMode;
+        return this;
+    }
+
     public GatewayRouteBuilder bodyLimit(long bodyLimit) {
         this.bodyLimit = bodyLimit;
         return this;
@@ -86,6 +92,7 @@ public final class GatewayRouteBuilder {
 
     public Route build() {
         return new Route(id, code, channel, method, externalPath, downstreamPath, targetId, securityProfile,
-            authorizationMode, permissionId, scopeCode, requestCookieMode, responseCookieMode, bodyLimit, status);
+            authorizationMode, permissionId, scopeCode, requestCookieMode, responseCookieMode, idempotencyMode, bodyLimit,
+            status);
     }
 }

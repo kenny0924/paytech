@@ -47,6 +47,7 @@ public final class PlatformGatewayConfigurationClientImpl implements PlatformGat
         "HUMAN_PERMISSION", "API_SCOPE", "CHECKOUT_RESOURCE", "CHANNEL_CALLBACK");
     private static final Set<String> REQUEST_COOKIE_MODES = Set.of("DROP", "REQUIRE_PROFILE_COOKIE");
     private static final Set<String> RESPONSE_COOKIE_MODES = Set.of("NONE", "ISSUE_ONLY", "ISSUE_OR_CLEAR", "CLEAR_ONLY");
+    private static final Set<String> IDEMPOTENCY_MODES = Set.of("NONE", "REQUIRED");
     private static final Set<String> HEADER_USES = Set.of("CORS_REQUEST_ALLOWED", "FORWARD_REQUEST");
     private static final Set<String> GUARD_TYPES = Set.of("RATE_LIMIT", "CONCURRENCY");
     private static final Set<String> GUARD_DIMENSIONS = Set.of("SHARED_ROUTE", "CLIENT_IP",
@@ -103,6 +104,7 @@ public final class PlatformGatewayConfigurationClientImpl implements PlatformGat
         requireValidResponse(validPath(result.downstreamPathTemplate())
             && REQUEST_COOKIE_MODES.contains(result.requestCookieMode())
             && RESPONSE_COOKIE_MODES.contains(result.responseCookieMode())
+            && result.idempotencyMode() != null && IDEMPOTENCY_MODES.contains(result.idempotencyMode())
             && result.bodyLimitBytes() >= 0 && result.bodyLimitBytes() <= 65_536
             && result.bodyReceiveTimeoutMillis() > 0 && result.bodyReceiveTimeoutMillis() <= 5_000
             && result.responseTimeoutMillis() > 0 && result.responseTimeoutMillis() <= 10_000);
@@ -116,7 +118,7 @@ public final class PlatformGatewayConfigurationClientImpl implements PlatformGat
             result.externalPathTemplate(), result.downstreamPathTemplate(), result.targetServiceCode(),
             result.targetStatus(), result.securityProfileCode(), result.authorizationMode(), result.permissionId(),
             result.permissionCode(), result.requiredScopeCode(), result.requestCookieMode(), result.responseCookieMode(),
-            result.bodyLimitBytes(), result.bodyReceiveTimeoutMillis(), result.responseTimeoutMillis(), result.status(),
+            result.idempotencyMode(), result.bodyLimitBytes(), result.bodyReceiveTimeoutMillis(), result.responseTimeoutMillis(), result.status(),
             result.version(), headers, queryParameters, guards, result.createdBy(), result.updatedBy(), result.createTime(),
             result.updateTime(), ConfigurationContractConverter.toBff(result.managementProtection()));
     }

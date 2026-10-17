@@ -11,6 +11,7 @@ import org.junit.jupiter.params.provider.*;
 import com.paytech.gateway.routing.snapshot.GatewaySnapshotCompiler;
 import com.paytech.gateway.routing.snapshot.InvalidGatewaySnapshotException;
 import com.paytech.gateway.test.builder.GatewaySnapshotFixture;
+import com.paytech.platform.support.api.enums.GatewayIdempotencyMode;
 import com.paytech.platform.support.api.gatewayconfiguration.response.*;
 
 /** 从完整快照编译入口验证数据库配置不可降低渠道安全或突破资源上限。 */
@@ -114,6 +115,39 @@ class GatewaySnapshotPolicyAutoTest {
         assertDoesNotThrow(() -> compiler.compile(minimum.snapshot()));
     }
 
+    /** 旧 Platform 缺字段按 NONE；REQUIRED 只允许 Client API 写方法，且 Key 由 Gateway 消费不再转发。 */
+    @Test
+    void test_idempotencyModeDefaultsToNoneAndRequiredIsLimitedToClientApiWrites() {
+        var legacy = new Draft("CLIENT_API", "CLIENT_API_CREDENTIAL", "API_SCOPE");
+        legacy.headers = List.of("idempotency-key");
+        assertEquals(GatewayIdempotencyMode.NONE,
+            compiler.compile(legacy.snapshot()).catalog().all().getFirst().idempotencyMode());
+        var required = clientApiRequired();
+        var runtime = compiler.compile(required.snapshot()).catalog().all().getFirst();
+        assertEquals(GatewayIdempotencyMode.REQUIRED, runtime.idempotencyMode());
+        assertTrue(runtime.idempotencyRequired());
+
+        rejectChanged(d -> d.idempotency = "MAYBE");
+        rejectChanged(d -> d.idempotency = GatewayIdempotencyMode.REQUIRED.getCode());
+        for (String method : List.of("GET", "HEAD")) {
+            var read = clientApiRequired();
+            read.method = method;
+            rejects(read);
+        }
+        for (String header : List.of("idempotency-key", "Idempotency-Key")) {
+            var forwarding = clientApiRequired();
+            forwarding.headers = List.of("content-type", header);
+            rejects(forwarding);
+        }
+    }
+
+    private Draft clientApiRequired() {
+        var draft = new Draft("CLIENT_API", "CLIENT_API_CREDENTIAL", "API_SCOPE");
+        draft.headers = List.of("content-type");
+        draft.idempotency = GatewayIdempotencyMode.REQUIRED.getCode();
+        return draft;
+    }
+
     /** 不支持的快照版本、重复端点和跨渠道目标都必须整体拒绝。 */
     @Test
     void test_invalidEnvelopeAndTargetIdentityRejectWholeSnapshot() {
@@ -196,6 +230,7 @@ class GatewaySnapshotPolicyAutoTest {
         String code = "configured-route";
         String channel, profile, mode, permission, scope;
         String requestCookie = "DROP", responseCookie = "NONE";
+        String method = "POST", idempotency;
         List<String> cors = List.of(), headers = List.of(), queries = List.of();
         long body = 65_536;
         int receive = 5_000, response = 10_000;
@@ -213,9 +248,9 @@ class GatewaySnapshotPolicyAutoTest {
                 : GatewaySnapshotFixture.clientApiSnapshot().getRoutes().getFirst().getGuardRules();
         }
         GatewayRouteSnapshot route() {
-            return new GatewayRouteSnapshot(code, channel, "POST", "/api/configured", "/configured", "owner",
+            return new GatewayRouteSnapshot(code, channel, method, "/api/configured", "/configured", "owner",
                 profile, mode, permission, scope, requestCookie, responseCookie, cors, headers, queries,
-                body, receive, response, guards);
+                body, receive, response, guards, idempotency);
         }
         GatewayPublicSnapshotResponseBody snapshot() {
             return new GatewayPublicSnapshotResponseBody(1,

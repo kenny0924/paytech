@@ -47,8 +47,8 @@ public final class GatewayConfigurationModels {
     public record GatewayRouteResponseBody(String routeCode, String channel, String httpMethod,
         String externalPathTemplate, String downstreamPathTemplate, String targetServiceCode, String targetStatus,
         String securityProfileCode, String authorizationMode, String permissionId, String permissionCode,
-        String requiredScopeCode, String requestCookieMode, String responseCookieMode, long bodyLimitBytes,
-        int bodyReceiveTimeoutMillis, int responseTimeoutMillis, String status, int version,
+        String requiredScopeCode, String requestCookieMode, String responseCookieMode, String idempotencyMode,
+        long bodyLimitBytes, int bodyReceiveTimeoutMillis, int responseTimeoutMillis, String status, int version,
         List<GatewayRouteHeaderResponseBody> headers, List<String> queryParameterNames,
         List<GatewayGuardRuleResponseBody> guardRules,
         String createdBy, String updatedBy, Instant createTime, Instant updateTime, ManagementProtection managementProtection) {
@@ -88,7 +88,7 @@ public final class GatewayConfigurationModels {
     public record UpdateGatewayTargetRequestBody(@NotBlank @Size(max = 255) String discoveryServiceName,
         @Positive int expectedVersion, @NotBlank @Size(max = 500) String reason) {}
 
-    /** Route 全量创建，状态固定为 DISABLED。 */
+    /** Route 全量创建，状态固定为 DISABLED；idempotencyMode 缺省为 NONE。 */
     public record CreateGatewayRouteRequestBody(
         @NotBlank @Pattern(regexp = "[a-z][a-z0-9-]{2,127}") String routeCode, @NotBlank String channel,
         @NotBlank String httpMethod,
@@ -99,6 +99,7 @@ public final class GatewayConfigurationModels {
         @Pattern(regexp = "[1-9][0-9]{0,18}") String permissionId,
         @Size(max = 128) String requiredScopeCode,
         @NotBlank String requestCookieMode, @NotBlank String responseCookieMode,
+        @Size(max = 64) String idempotencyMode,
         @Min(0) long bodyLimitBytes, @Positive int bodyReceiveTimeoutMillis,
         @Positive int responseTimeoutMillis,
         @NotNull @Size(max = 128) List<@NotNull @Valid GatewayRouteHeaderRequestBody> headers,
@@ -106,7 +107,7 @@ public final class GatewayConfigurationModels {
         @NotNull @Size(max = 8) List<@NotNull @Valid GatewayGuardRuleRequestBody> guardRules,
         @NotBlank @Size(max = 500) String reason) {}
 
-    /** 全量替换 Route 配置及子集合，身份和状态沿用当前记录。 */
+    /** 全量替换 Route 配置及子集合，身份和状态沿用当前记录；idempotencyMode 缺省时保持当前值。 */
     public record UpdateGatewayRouteRequestBody(
         @NotBlank String httpMethod,
         @NotBlank @Size(max = 1000) String externalPathTemplate,
@@ -116,6 +117,7 @@ public final class GatewayConfigurationModels {
         @Pattern(regexp = "[1-9][0-9]{0,18}") String permissionId,
         @Size(max = 128) String requiredScopeCode,
         @NotBlank String requestCookieMode, @NotBlank String responseCookieMode,
+        @Size(max = 64) String idempotencyMode,
         @Min(0) long bodyLimitBytes, @Positive int bodyReceiveTimeoutMillis,
         @Positive int responseTimeoutMillis,
         @NotNull @Size(max = 128) List<@NotNull @Valid GatewayRouteHeaderRequestBody> headers,
@@ -139,8 +141,8 @@ public final class GatewayConfigurationModels {
 
     /** Guard 必需维度均需 Rate/Concurrency 成对，TENANT 可选时也必须成对。 */
     public record ProfileCapability(String securityProfileCode, List<String> authorizationModes,
-        List<String> requestCookieModes, List<String> responseCookieModes, List<String> allowedGuardDimensions,
-        List<String> requiredGuardDimensions) {}
+        List<String> requestCookieModes, List<String> responseCookieModes, List<String> idempotencyModes,
+        List<String> allowedGuardDimensions, List<String> requiredGuardDimensions) {}
 
     /** 所有时间为毫秒，Body 为字节，集合数按完整聚合计算。 */
     public record Limits(long maxBodyLimitBytes, int maxBodyReceiveTimeoutMillis, int maxResponseTimeoutMillis,

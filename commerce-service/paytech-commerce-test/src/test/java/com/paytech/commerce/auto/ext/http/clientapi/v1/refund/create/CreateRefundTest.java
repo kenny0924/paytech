@@ -101,7 +101,7 @@ class CreateRefundTest extends AbstractCreateRefundApiTest {
         refundChecker.assertPosition(fixture.getOrder().getOrderId(), "25", "25", 10);
     }
 
-    /** 原任务失败后，Client 重提只拿回原回执，不再占额、不刷新时间或重复派发。 */
+    /** 原任务失败后，Client 以新转发 Key 重提只按 clientRefundId 拿回原回执，不再占额、不刷新时间或重复派发。 */
     @Test
     void test_duplicateReturnsOriginalReceiptWithoutResubmission() {
         orderData.mock(fixture);

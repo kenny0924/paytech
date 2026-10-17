@@ -39,7 +39,7 @@ public final class GatewayManagementProtection {
         return protectedRoute(route) ? ManagementProtection.protectedFields(transport)
             : ManagementProtection.editable("httpMethod", "externalPathTemplate", "downstreamPathTemplate",
                 "targetServiceCode", "securityProfileCode", "authorizationMode", "permissionId", "requiredScopeCode",
-                "requestCookieMode", "responseCookieMode", "headers", "queryParameterNames", "guardRules",
+                "requestCookieMode", "responseCookieMode", "idempotencyMode", "headers", "queryParameterNames", "guardRules",
                 "bodyLimitBytes", "bodyReceiveTimeoutMillis", "responseTimeoutMillis");
     }
 

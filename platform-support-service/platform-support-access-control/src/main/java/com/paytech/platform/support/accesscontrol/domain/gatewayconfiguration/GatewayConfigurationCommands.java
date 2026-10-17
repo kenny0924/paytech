@@ -29,11 +29,11 @@ public final class GatewayConfigurationCommands {
         }
     }
 
-    /** 集合为全量替换；规范化排序不能掩盖重复输入。 */
+    /** 集合为全量替换；规范化排序不能掩盖重复输入；idempotencyMode 为空表示请求未声明。 */
     public record RouteConfiguration(String httpMethod, String externalPathTemplate, String downstreamPathTemplate,
         String targetServiceCode, String securityProfileCode, String authorizationMode, Long permissionId,
-        String requiredScopeCode, String requestCookieMode, String responseCookieMode, long bodyLimitBytes,
-        int bodyReceiveTimeoutMillis, int responseTimeoutMillis, List<Header> headers,
+        String requiredScopeCode, String requestCookieMode, String responseCookieMode, String idempotencyMode,
+        long bodyLimitBytes, int bodyReceiveTimeoutMillis, int responseTimeoutMillis, List<Header> headers,
         List<String> queryParameterNames, List<Guard> guardRules) {
         public RouteConfiguration {
             requiredScopeCode = requiredScopeCode == null || requiredScopeCode.isBlank() ? null : requiredScopeCode;
@@ -51,6 +51,17 @@ public final class GatewayConfigurationCommands {
                 || guardRules.stream().map(g -> g.ruleType() + ":" + g.dimension()).distinct().count() != guardRules.size()) {
                 throw new InvalidParameterException("Route 子集合不能重复");
             }
+        }
+
+        /** 未声明请求幂等模式时补齐为指定值，已声明的值保持不变并交由编译器校验。 */
+        public RouteConfiguration withDefaultIdempotencyMode(String defaultMode) {
+            if (idempotencyMode != null) {
+                return this;
+            }
+            return new RouteConfiguration(httpMethod, externalPathTemplate, downstreamPathTemplate, targetServiceCode,
+                securityProfileCode, authorizationMode, permissionId, requiredScopeCode, requestCookieMode,
+                responseCookieMode, defaultMode, bodyLimitBytes, bodyReceiveTimeoutMillis, responseTimeoutMillis, headers,
+                queryParameterNames, guardRules);
         }
     }
 

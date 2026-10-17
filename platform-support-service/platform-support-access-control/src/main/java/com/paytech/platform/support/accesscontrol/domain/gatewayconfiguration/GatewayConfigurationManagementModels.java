@@ -8,6 +8,7 @@ import com.paytech.platform.support.api.enums.GatewayAuthorizationMode;
 import com.paytech.platform.support.api.enums.GatewayGuardDimension;
 import com.paytech.platform.support.api.enums.GatewayGuardRuleType;
 import com.paytech.platform.support.api.enums.GatewayHttpMethod;
+import com.paytech.platform.support.api.enums.GatewayIdempotencyMode;
 import com.paytech.platform.support.api.enums.GatewayRequestCookieMode;
 import com.paytech.platform.support.api.enums.GatewayResponseCookieMode;
 import com.paytech.platform.support.api.enums.GatewayRouteChannel;
@@ -71,9 +72,9 @@ public final class GatewayConfigurationManagementModels {
         String externalPathTemplate, String downstreamPathTemplate, String targetServiceCode,
         GatewayConfigurationStatus targetStatus, GatewaySecurityProfileCode securityProfileCode,
         GatewayAuthorizationMode authorizationMode, Long permissionId, String permissionCode, String requiredScopeCode,
-        GatewayRequestCookieMode requestCookieMode, GatewayResponseCookieMode responseCookieMode, long bodyLimitBytes,
-        int bodyReceiveTimeoutMillis, int responseTimeoutMillis, GatewayConfigurationStatus status, int version,
-        List<RouteHeaderResult> headers, List<String> queryParameterNames, List<GuardRuleResult> guardRules,
+        GatewayRequestCookieMode requestCookieMode, GatewayResponseCookieMode responseCookieMode,
+        GatewayIdempotencyMode idempotencyMode, long bodyLimitBytes, int bodyReceiveTimeoutMillis,
+        int responseTimeoutMillis, GatewayConfigurationStatus status, int version, List<RouteHeaderResult> headers, List<String> queryParameterNames, List<GuardRuleResult> guardRules,
         long createdBy, long updatedBy, Instant createTime, Instant updateTime, ManagementProtection managementProtection) {
         public RouteDetailResult {
             headers = List.copyOf(headers);

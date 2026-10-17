@@ -8,7 +8,9 @@
   AC-04     refund.created（含同一 clientRefundId 重放）及退款查询
   AC-05     --outage：发布 PaymentSucceeded 前暂停 Platform 容器，确认任务 ERROR 后恢复，等 XXL-Job 扫描补交
   AC-01 拒绝 无凭证 / 错凭证 / 缺 Scope
-不打印凭证、签名密钥或口令。用法：E2E_TARGET=test python3 client_api_flow.py [--outage]
+  --idempotency：Gateway 处理 Idempotency-Key 上线后（requirements/20261017/gateway-请求幂等IdempotencyKey）
+                 校验缺失 / 非法 Key、同 Key 重放、换 Body 复用、并发同 Key、凭证轮换后重放、错误响应重放
+不打印凭证、签名密钥或口令。用法：E2E_TARGET=test python3 client_api_flow.py [--outage] [--idempotency]
 """
 import base64
 import json
@@ -48,8 +50,9 @@ STATE = {"credential": None}
 
 # ---------- test 适配：替换 commerce_webhook_flow 的本机直连 ----------
 
-def client_api(method, path, client_id=None, body=None, credential="default", idempotency=True):
-    """经 Client API 正式入口调用；client_id 仅为与 commerce_webhook_flow 签名兼容，身份来自凭证。"""
+def client_api(method, path, client_id=None, body=None, credential="default", idempotency=True, key=None, raw=None):
+    """经 Client API 正式入口调用；client_id 仅为与 commerce_webhook_flow 签名兼容，身份来自凭证。
+    key：指定 Idempotency-Key（默认每次随机）；raw：传入 dict 时写入原始响应文本与响应头，供重放逐字比对。"""
     headers = {"Accept": "application/json", "X-Request-Id": "req-" + uuid.uuid4().hex[:16]}
     secret = STATE["credential"] if credential == "default" else credential
     if secret:
@@ -60,15 +63,19 @@ def client_api(method, path, client_id=None, body=None, credential="default", id
         data = json.dumps(body).encode()
     if method == "POST":
         if idempotency:
-            headers["Idempotency-Key"] = "idem-" + uuid.uuid4().hex
+            headers["Idempotency-Key"] = key or ("idem-" + uuid.uuid4().hex)
         data = data if data is not None else b""
     request = urllib.request.Request(API + path, data=data, headers=headers, method=method)
     try:
         with urllib.request.urlopen(request, timeout=30, context=TLS) as response:
             text = response.read().decode()
+            if raw is not None:
+                raw.update(text=text, headers=dict(response.headers), status=response.status)
             return response.status, (json.loads(text) if text else None)
     except urllib.error.HTTPError as failure:
         text = failure.read().decode()
+        if raw is not None:
+            raw.update(text=text, headers=dict(failure.headers), status=failure.code)
         try:
             return failure.code, json.loads(text)
         except ValueError:
@@ -168,7 +175,11 @@ def rejections(read_only, order_no):
     status, body = client_api("POST", f"/orders/{order_no}/cancel", credential=read_only)
     record("AC-01 缺 Scope（orders.cancel）被拒绝", status == 403, f"HTTP {status} code={(body or {}).get('code')}")
     status, body = client_api("POST", f"/orders/{order_no}/cancel", idempotency=False)
-    record("D2 POST 缺 Idempotency-Key 被拒（Commerce 必填 Header）", status == 400, f"HTTP {status} code={(body or {}).get('code')}")
+    if IDEMPOTENCY:
+        record("AC-01 幂等：POST 缺 Idempotency-Key 由 Gateway 拒绝", status == 400 and (body or {}).get("code") == "IDEMPOTENCY_KEY_REQUIRED",
+               f"HTTP {status} code={(body or {}).get('code')}")
+    else:
+        record("D2 POST 缺 Idempotency-Key 被拒（Commerce 必填 Header）", status == 400, f"HTTP {status} code={(body or {}).get('code')}")
 
 
 def queries(order_no, client_order_id):
@@ -180,6 +191,74 @@ def queries(order_no, client_order_id):
     record("AC-02 不存在 / 他人订单 404", status == 404, f"HTTP {status} code={(body or {}).get('code')}")
     status, body = client_api("GET", f"/orders/{order_no}?unknown=1")
     record("Gateway Query 白名单：未知参数被拒", 400 <= status < 500, f"HTTP {status} code={(body or {}).get('code')}")
+
+
+IDEMPOTENCY = "--idempotency" in sys.argv
+
+
+def checkout_body(label):
+    return {"clientOrderId": f"idem-{label}-{uuid.uuid4().hex[:8]}", "currency": "USD", "consumerCountryCode": "US",
+            "items": [{"clientItemId": "line-1", "name": "Premium subscription", "productTypeCode": "SERVICE",
+                       "taxCategoryCode": "STANDARD", "quantity": "1", "unitAmount": "10.00"}]}
+
+
+def orders_with_client_order_id(client_order_id):
+    return int(commerce_sql(f"SELECT COUNT(*) FROM t_commerce_order WHERE client_order_id='{client_order_id}'")[0][0])
+
+
+def idempotency_flow(client):
+    """Gateway 处理 Idempotency-Key（AC-01—AC-07）。"""
+    status, body = client_api("POST", "/checkouts", body=checkout_body("bad"), key="-bad key")
+    record("AC-01 非法 Key 400 INVALID_IDEMPOTENCY_KEY", status == 400 and (body or {}).get("code") == "INVALID_IDEMPOTENCY_KEY",
+           f"HTTP {status} code={(body or {}).get('code')}")
+    key, request = "idem-" + uuid.uuid4().hex, checkout_body("replay")
+    first, second = {}, {}
+    s1, b1 = client_api("POST", "/checkouts", body=request, key=key, raw=first)
+    s2, b2 = client_api("POST", "/checkouts", body=request, key=key, raw=second)
+    record("AC-02 同 Key 同请求重放：状态、响应体、Location 逐字一致，新 Request ID",
+           s1 == 201 and s2 == 201 and first["text"] == second["text"]
+           and first["headers"].get("Location") == second["headers"].get("Location")
+           and first["headers"].get("X-Request-Id") != second["headers"].get("X-Request-Id"),
+           f"HTTP {s1}/{s2} sameBody={first.get('text') == second.get('text')} "
+           f"sameLocation={first['headers'].get('Location') == second['headers'].get('Location')}")
+    record("AC-02 Commerce 只建 1 单", orders_with_client_order_id(request["clientOrderId"]) == 1,
+           f"orders={orders_with_client_order_id(request['clientOrderId'])}")
+    changed = dict(request, items=[dict(request["items"][0], unitAmount="11.00")])
+    status, body = client_api("POST", "/checkouts", body=changed, key=key)
+    record("AC-03 同 Key 换 Body 409 IDEMPOTENCY_KEY_REUSED", status == 409 and (body or {}).get("code") == "IDEMPOTENCY_KEY_REUSED",
+           f"HTTP {status} code={(body or {}).get('code')}")
+    status, body = client_api("POST", f"/orders/{b1['orderNo']}/cancel", key=key)
+    record("AC-03 同 Key 换接口 409 IDEMPOTENCY_KEY_REUSED", status == 409 and (body or {}).get("code") == "IDEMPOTENCY_KEY_REUSED",
+           f"HTTP {status} code={(body or {}).get('code')}")
+    # AC-04：并发同 Key；首次可能已完成，允许 409 执行中或逐字重放，但只能有 1 单
+    import concurrent.futures
+    key2, request2 = "idem-" + uuid.uuid4().hex, checkout_body("parallel")
+    with concurrent.futures.ThreadPoolExecutor(4) as pool:
+        results = list(pool.map(lambda _: (lambda r: (client_api("POST", "/checkouts", body=request2, key=key2, raw=r), r))({}), range(4)))
+    statuses = [r[0][0] for r in results]
+    in_progress = [r for r in results if r[0][0] == 409]
+    record("AC-04 并发同 Key：只建 1 单；其余为执行中（Retry-After: 3）或重放",
+           orders_with_client_order_id(request2["clientOrderId"]) == 1 and set(statuses) <= {201, 409}
+           and all((r[0][1] or {}).get("code") == "IDEMPOTENCY_REQUEST_IN_PROGRESS" and r[1]["headers"].get("Retry-After") == "3"
+                   for r in in_progress),
+           f"statuses={statuses} orders={orders_with_client_order_id(request2['clientOrderId'])}")
+    # AC-06：凭证轮换后同 Key 重放（作用域按 Client）
+    status, _, created = dev.raw(client, dev.DEV + "/credentials", "POST",
+                                 {"name": "Client API rotation", "scopeCodes": SCOPES, "validityDays": 30})
+    other = (created or {}).get("secret")
+    third = {}
+    s3, _ = client_api("POST", "/checkouts", body=request, key=key, credential=other, raw=third)
+    record("AC-06 另一凭证（同 Client）同 Key 重放", status == 201 and s3 == 201 and third.get("text") == first["text"],
+           f"HTTP {s3} sameBody={third.get('text') == first['text']}")
+    # AC-05：下游 4xx 也被记录并重放；Problem requestId 改写为本次、timestamp 不变
+    key3, e1, e2 = "idem-" + uuid.uuid4().hex, {}, {}
+    sa, pa = client_api("POST", "/orders/ord_doesnotexist0000000000000000/cancel", key=key3, raw=e1)
+    sb, pb = client_api("POST", "/orders/ord_doesnotexist0000000000000000/cancel", key=key3, raw=e2)
+    record("AC-05 下游 404 Problem 重放：code、timestamp 不变，requestId = 本次响应头",
+           sa == sb == 404 and (pa or {}).get("code") == (pb or {}).get("code")
+           and (pa or {}).get("timestamp") == (pb or {}).get("timestamp")
+           and (pb or {}).get("requestId") == e2["headers"].get("X-Request-Id") != e1["headers"].get("X-Request-Id"),
+           f"HTTP {sa}/{sb} code={(pb or {}).get('code')} sameTimestamp={(pa or {}).get('timestamp') == (pb or {}).get('timestamp')}")
 
 
 def task_state(event_key):
@@ -244,6 +323,8 @@ def main():
         client_order_id = client_api("GET", f"/orders/{order_no}")[1]["clientOrderId"]
         queries(order_no, client_order_id)
         rejections(read_only, order_no)
+        if IDEMPOTENCY:
+            idempotency_flow(client)
 
         cwf.flow_cancel(receiver, secret, client_id)
         if outage:

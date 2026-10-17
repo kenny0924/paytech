@@ -7,6 +7,7 @@ import java.util.Set;
 import org.springframework.http.HttpMethod;
 
 import com.paytech.gateway.guard.policy.GuardProfile;
+import com.paytech.platform.support.api.enums.GatewayIdempotencyMode;
 import com.paytech.platform.support.api.enums.GatewayRouteChannel;
 
 /** 已经由静态安全策略完整校验的单条公共运行时路由。 */
@@ -15,7 +16,7 @@ public record GatewayRuntimeRoute(String routeCode, GatewayRouteChannel channel,
     String permissionCode, String requiredScopeCode, String requestCookieMode, String responseCookieMode,
     Set<String> corsRequestHeaders, Set<String> forwardedRequestHeaders, Set<String> queryParameterNames,
     long bodyLimitBytes, Duration bodyReceiveTimeout, Duration responseTimeout, GuardProfile ingressGuard,
-    GuardProfile authenticatedGuard) {
+    GuardProfile authenticatedGuard, GatewayIdempotencyMode idempotencyMode) {
 
     /** 固定同渠道目标及不可变策略集合，避免请求期间受快照更新影响。 */
     public GatewayRuntimeRoute {
@@ -40,6 +41,12 @@ public record GatewayRuntimeRoute(String routeCode, GatewayRouteChannel channel,
         }
         bodyReceiveTimeout = positive(bodyReceiveTimeout, "请求体接收超时必须为正");
         responseTimeout = positive(responseTimeout, "上游响应超时必须为正");
+        idempotencyMode = Objects.requireNonNull(idempotencyMode, "请求幂等模式不可为空");
+    }
+
+    /** 返回该路由是否由 Gateway 处理 Idempotency-Key。 */
+    public boolean idempotencyRequired() {
+        return idempotencyMode == GatewayIdempotencyMode.REQUIRED;
     }
 
     /** 返回同一快照内绑定目标的逻辑标识，供现有日志及响应策略使用。 */

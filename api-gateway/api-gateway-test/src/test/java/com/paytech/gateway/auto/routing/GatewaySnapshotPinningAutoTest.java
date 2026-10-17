@@ -31,6 +31,7 @@ import com.paytech.gateway.routing.runtime.GatewayRuntimeSnapshot;
 import com.paytech.gateway.routing.snapshot.GatewaySnapshotStore;
 import com.paytech.gateway.test.OperationsTestPaths;
 import com.paytech.gateway.web.*;
+import com.paytech.platform.support.api.enums.GatewayIdempotencyMode;
 import com.paytech.platform.support.api.enums.GatewayRouteChannel;
 
 class GatewaySnapshotPinningAutoTest {
@@ -161,6 +162,7 @@ class GatewaySnapshotPinningAutoTest {
                 Duration.ofSeconds(60));
         return new GatewayRuntimeRoute("operations-auth-session", GatewayRouteChannel.OPERATIONS, HttpMethod.GET, externalPath,
             downstreamPath, new GatewayRuntimeTarget("operations-console-bff", GatewayRouteChannel.OPERATIONS, "operations-console-bff"), "PUBLIC", "PUBLIC", null, null, "DROP", "NONE", Set.of(),
-            Set.of("Origin"), Set.of(), 0, Duration.ofSeconds(5), Duration.ofSeconds(10), ingress, null);
+            Set.of("Origin"), Set.of(), 0, Duration.ofSeconds(5), Duration.ofSeconds(10), ingress, null,
+            GatewayIdempotencyMode.NONE);
     }
 }

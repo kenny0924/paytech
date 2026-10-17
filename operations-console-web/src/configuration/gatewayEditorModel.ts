@@ -7,10 +7,19 @@ export function initialGuards(profile: GatewayProfileCapability): GatewayGuardRu
     { ruleType: 'CONCURRENCY', dimension, capacity: null, refillTokens: null, refillPeriodMillis: null, concurrencyLimit: 5 },
   ]);
 }
+const IDEMPOTENCY_MODE_LABELS: Record<string, string> = { NONE: '不启用', REQUIRED: '必须' };
+/** 请求幂等选项来自 Profile 能力；当前值不在能力内时仍保留，便于详情原样回显。 */
+export function idempotencyOptions(modes: readonly string[] = [], current?: string | null) {
+  const values = current && !modes.includes(current) ? [...modes, current] : [...modes];
+  return values.map(value => ({ value, label: IDEMPOTENCY_MODE_LABELS[value] ?? value }));
+}
+export function defaultIdempotencyMode(profile: GatewayProfileCapability): string {
+  return profile.idempotencyModes.includes('NONE') ? 'NONE' : profile.idempotencyModes[0];
+}
 /** 编辑只发送可写合同；详情中的状态、审计字段和派生权限编码不能回传。 */
 export function routeWrite(values: Record<string, unknown>, detail: ManagedRoute | null): Record<string, unknown> {
   const fields = ['httpMethod', 'externalPathTemplate', 'downstreamPathTemplate', 'targetServiceCode', 'securityProfileCode',
-    'authorizationMode', 'requestCookieMode', 'responseCookieMode', 'bodyLimitBytes', 'bodyReceiveTimeoutMillis', 'responseTimeoutMillis',
+    'authorizationMode', 'requestCookieMode', 'responseCookieMode', 'idempotencyMode', 'bodyLimitBytes', 'bodyReceiveTimeoutMillis', 'responseTimeoutMillis',
     'headers', 'queryParameterNames', 'guardRules', 'reason'];
   const body = Object.fromEntries(fields.map(key => [key, values[key]]));
   const mode = values.authorizationMode;

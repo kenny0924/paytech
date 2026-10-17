@@ -25,9 +25,9 @@ public class CommerceApiErrorConfiguration {
                 return defaultStatus;
             }
             return switch (checkoutErrorCode) {
-                case IDEMPOTENCY_KEY_REQUIRED, INVALID_IDEMPOTENCY_KEY, INVALID_CURSOR -> HttpStatus.BAD_REQUEST;
+                case INVALID_CURSOR -> HttpStatus.BAD_REQUEST;
                 case ORDER_NOT_FOUND, REFUND_NOT_FOUND, CUSTOMER_NOT_FOUND, STORED_CARD_NOT_FOUND -> HttpStatus.NOT_FOUND;
-                case IDEMPOTENCY_KEY_REUSED, IDEMPOTENCY_REQUEST_IN_PROGRESS,
+                case IDEMPOTENCY_REQUEST_IN_PROGRESS,
                     CLIENT_ORDER_ID_ALREADY_EXISTS, REVERSAL_REQUIRED, ORDER_NOT_CANCELLABLE, CLIENT_REFUND_ID_CONFLICT -> HttpStatus.CONFLICT;
                 case CHECKOUT_NOT_ELIGIBLE, CLIENT_CONFIGURATION_NOT_READY, REFUND_AMOUNT_EXCEEDS_REFUNDABLE,
                     INVALID_CONSUMER_REFERENCE -> HttpStatus.UNPROCESSABLE_CONTENT;

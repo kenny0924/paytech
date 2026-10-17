@@ -12,6 +12,7 @@ import org.springframework.http.HttpMethod;
 import com.paytech.gateway.routing.runtime.GatewayRuntimeCatalog;
 import com.paytech.gateway.routing.runtime.GatewayRuntimeRoute;
 import com.paytech.gateway.routing.runtime.GatewayRuntimeTarget;
+import com.paytech.platform.support.api.enums.GatewayIdempotencyMode;
 import com.paytech.platform.support.api.enums.GatewayRouteChannel;
 
 class GatewayRuntimeCatalogAutoTest {
@@ -53,7 +54,7 @@ class GatewayRuntimeCatalogAutoTest {
         GatewayRuntimeRoute duplicate = new GatewayRuntimeRoute("operations-get-duplicate",
             GatewayRouteChannel.OPERATIONS, HttpMethod.GET, "/api/shared", "/api/shared", new GatewayRuntimeTarget("operations-console-bff", GatewayRouteChannel.OPERATIONS, "operations-console-bff"),
             "PUBLIC", "PUBLIC", null, null, "DROP", "NONE", Set.of(), Set.of(), Set.of(), 0,
-            Duration.ofSeconds(1), Duration.ofSeconds(1), null, null);
+            Duration.ofSeconds(1), Duration.ofSeconds(1), null, null, GatewayIdempotencyMode.NONE);
 
         assertThrows(IllegalArgumentException.class, () -> new GatewayRuntimeCatalog(List.of(first, duplicate)));
     }
@@ -64,7 +65,7 @@ class GatewayRuntimeCatalogAutoTest {
         GatewayRuntimeRoute clientApi = new GatewayRuntimeRoute("client-api-get", GatewayRouteChannel.CLIENT_API, HttpMethod.GET,
             "/api/shared", "/api/shared", new GatewayRuntimeTarget("client-api-bff", GatewayRouteChannel.CLIENT_API, "client-api-bff"), "CLIENT_API_CREDENTIAL", "API_SCOPE", null,
             "orders.read", "DROP", "NONE", Set.of(), Set.of(), Set.of(), 0, Duration.ofSeconds(1),
-            Duration.ofSeconds(1), null, null);
+            Duration.ofSeconds(1), null, null, GatewayIdempotencyMode.NONE);
 
         GatewayRuntimeCatalog catalog = new GatewayRuntimeCatalog(List.of(operations, clientApi));
 
@@ -84,6 +85,6 @@ class GatewayRuntimeCatalogAutoTest {
     private GatewayRuntimeRoute route(HttpMethod method, String externalPath, String downstreamPath) {
         return new GatewayRuntimeRoute("example-" + method.name().toLowerCase(), GatewayRouteChannel.OPERATIONS, method, externalPath,
             downstreamPath, new GatewayRuntimeTarget("operations-console-bff", GatewayRouteChannel.OPERATIONS, "operations-console-bff"), "PUBLIC", "PUBLIC", null, null, "DROP", "NONE", Set.of(),
-            Set.of(), Set.of(), 0, Duration.ofSeconds(1), Duration.ofSeconds(1), null, null);
+            Set.of(), Set.of(), 0, Duration.ofSeconds(1), Duration.ofSeconds(1), null, null, GatewayIdempotencyMode.NONE);
     }
 }

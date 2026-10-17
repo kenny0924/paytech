@@ -27,8 +27,6 @@ public interface ClientCheckoutApi {
      *            Gateway 注入的 Client ID
      * @param credentialId
      *            Gateway 注入的 Credential ID
-     * @param idempotencyKey
-     *            预留给上游中间件的传输 Header，Commerce 不做专用 Key 校验或请求幂等处理
      * @param requestBody
      *            Checkout 请求
      * @return {@code 201 Created} 与不可变创建回执
@@ -37,7 +35,6 @@ public interface ClientCheckoutApi {
     ResponseEntity<CreateCheckoutResponseBody> createCheckout(
         @RequestHeader(ApiHeaderNames.GATEWAY_CLIENT_ID) @Positive long clientId,
         @RequestHeader(ApiHeaderNames.GATEWAY_CREDENTIAL_ID) @Positive long credentialId,
-        @RequestHeader(ApiHeaderNames.IDEMPOTENCY_KEY) String idempotencyKey,
         @RequestBody @NotNull @Valid CreateCheckoutRequestBody requestBody);
 
 }

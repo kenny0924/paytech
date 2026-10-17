@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.paytech.platform.support.api.enums.GatewayIdempotencyMode;
 import com.paytech.platform.support.api.enums.GatewayRouteChannel;
 import com.paytech.gateway.web.GatewayPaths;
 import com.paytech.platform.support.api.gatewayconfiguration.response.GatewayGuardRuleSnapshot;
@@ -18,6 +19,10 @@ public final class GatewaySnapshotFixture {
     public static final String OPERATIONS_TRANSPORT_TARGET = "operations-transport-owner-test";
     public static final String CLIENT_API_PATH = "/test/client-api";
     public static final String CLIENT_API_DOWNSTREAM_PATH = "/client/test";
+    public static final String IDEMPOTENT_PATH = "/test/client-api/idempotent";
+    public static final String IDEMPOTENT_DOWNSTREAM_PATH = "/client/test/idempotent";
+    public static final String IDEMPOTENT_ITEM_PATH_PREFIX = "/test/client-api/items/";
+    public static final String IDEMPOTENT_ITEM_DOWNSTREAM_PREFIX = "/client/test/items/";
     private static final String TARGET = "operations-console-bff";
 
     private GatewaySnapshotFixture() {}
@@ -42,6 +47,25 @@ public final class GatewaySnapshotFixture {
                 CLIENT_API_DOWNSTREAM_PATH, CLIENT_API_TARGET, "CLIENT_API_CREDENTIAL", "API_SCOPE", null,
                 "orders.write", "DROP", "NONE", List.of(), List.of("content-type", "idempotency-key"),
                 List.of(), 16_384, 5_000, 1_000, List.copyOf(guards))));
+    }
+
+    /** 原 NONE 路由保持转发 Key；两条 REQUIRED 写路由由 Gateway 消费 Idempotency-Key。 */
+    public static GatewayPublicSnapshotResponseBody clientApiIdempotencySnapshot() {
+        GatewayRouteSnapshot none = clientApiSnapshot().getRoutes().getFirst();
+        List<GatewayGuardRuleSnapshot> guards = none.getGuardRules();
+        return new GatewayPublicSnapshotResponseBody(1,
+            List.of(new GatewayTargetSnapshot(CLIENT_API_TARGET, "CLIENT_API", CLIENT_API_TARGET)),
+            List.of(none, idempotentRoute("client-api-test-idempotent", IDEMPOTENT_PATH, IDEMPOTENT_DOWNSTREAM_PATH,
+                guards), idempotentRoute("client-api-test-item-cancel", IDEMPOTENT_ITEM_PATH_PREFIX + "{itemId}/cancel",
+                IDEMPOTENT_ITEM_DOWNSTREAM_PREFIX + "{itemId}/cancel", guards)));
+    }
+
+    private static GatewayRouteSnapshot idempotentRoute(String code, String externalPath, String downstreamPath,
+        List<GatewayGuardRuleSnapshot> guards) {
+        return new GatewayRouteSnapshot(code, "CLIENT_API", "POST", externalPath, downstreamPath, CLIENT_API_TARGET,
+            "CLIENT_API_CREDENTIAL", "API_SCOPE", null, "orders.write", "DROP", "NONE", List.of(),
+            List.of("content-type"), List.of("expand"), 16_384, 5_000, 1_000, guards,
+            GatewayIdempotencyMode.REQUIRED.getCode());
     }
 
     /** 沿用真实 Operations 安全链，专门验证第二个部署 transport Target。 */

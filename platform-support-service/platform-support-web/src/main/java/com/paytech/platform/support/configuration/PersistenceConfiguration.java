@@ -81,6 +81,7 @@ public class PersistenceConfiguration {
         registry.register(GatewayRequestCookieMode.class, CodeEnumTypeHandler.class);
         registry.register(GatewayResponseCookieMode.class, CodeEnumTypeHandler.class);
         registry.register(GatewayRouteHeaderUse.class, CodeEnumTypeHandler.class);
+        registry.register(GatewayIdempotencyMode.class, CodeEnumTypeHandler.class);
         registry.register(GatewayGuardRuleType.class, CodeEnumTypeHandler.class);
         registry.register(GatewayGuardDimension.class, CodeEnumTypeHandler.class);
         registry.register(ClientSessionContextType.class, CodeEnumTypeHandler.class);

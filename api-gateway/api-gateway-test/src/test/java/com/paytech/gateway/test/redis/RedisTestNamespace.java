@@ -8,6 +8,7 @@ public final class RedisTestNamespace {
     private static final String PREFIX = "gateway:test:v1:";
 
     private final String guardPrefix;
+    private final String idempotencyPrefix;
     private final String namespace;
     private final String sentinelKey;
 
@@ -15,9 +16,11 @@ public final class RedisTestNamespace {
         UUID validatedRunId = Objects.requireNonNull(runId, "Redis 测试运行 ID 不可为空");
         namespace = PREFIX + validatedRunId;
         guardPrefix = namespace + ":guard:";
+        idempotencyPrefix = namespace + ":idem:";
         sentinelKey = namespace + ":sentinel:" + validatedRunId;
         validateLiteral(namespace);
         validateLiteral(guardPrefix);
+        validateLiteral(idempotencyPrefix);
         validateLiteral(sentinelKey);
     }
 
@@ -42,6 +45,14 @@ public final class RedisTestNamespace {
 
     public String guardScanPattern() {
         return guardPrefix + "*";
+    }
+
+    public String idempotencyPrefix() {
+        return idempotencyPrefix;
+    }
+
+    public String idempotencyScanPattern() {
+        return idempotencyPrefix + "*";
     }
 
     public String sentinelKey() {

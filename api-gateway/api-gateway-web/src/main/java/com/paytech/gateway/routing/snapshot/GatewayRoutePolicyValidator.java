@@ -17,6 +17,7 @@ final class GatewayRoutePolicyValidator {
     private static final int MAX_CORS_HEADERS = 64;
     private static final int MAX_FORWARDED_HEADERS = 64;
     private static final int MAX_QUERY_PARAMETERS = 32;
+    private static final String IDEMPOTENCY_KEY_HEADER = "Idempotency-Key";
     private static final Pattern HEADER_NAME = Pattern.compile("[!#$%&'+.^_`|~0-9A-Za-z-]{1,255}");
     private static final Pattern PERMISSION_CODE = Pattern.compile("[A-Z][A-Z0-9_]{0,127}");
     private static final Pattern SCOPE_CODE = Pattern.compile("[a-z][a-z0-9]*(?:[.:-][a-z0-9]+)*");
@@ -36,6 +37,22 @@ final class GatewayRoutePolicyValidator {
         }
         validateQueries(route.getQueryParameterNames());
         validateLimits(route);
+        validateIdempotency(route);
+    }
+
+    /** REQUIRED 仅用于 Client API 写路由，且 Key 由 Gateway 消费、不再转发给 Owner。 */
+    private void validateIdempotency(GatewayRouteSnapshot route) {
+        if (GatewaySnapshotCodeParser.idempotencyMode(route.getIdempotencyMode()) != GatewayIdempotencyMode.REQUIRED) {
+            return;
+        }
+        GatewayHttpMethod method = GatewaySnapshotCodeParser.httpMethod(route.getHttpMethod());
+        if (!"CLIENT_API".equals(route.getChannel()) || method == GatewayHttpMethod.GET
+            || method == GatewayHttpMethod.HEAD) {
+            throw invalid("Gateway Route 请求幂等仅允许 Client API 写方法: " + route.getRouteCode());
+        }
+        if (route.getForwardedRequestHeaderNames().stream().anyMatch(IDEMPOTENCY_KEY_HEADER::equalsIgnoreCase)) {
+            throw invalid("Gateway Route 请求幂等不得转发 Idempotency-Key: " + route.getRouteCode());
+        }
     }
 
     private void validateCompatibility(GatewayRouteSnapshot route) {

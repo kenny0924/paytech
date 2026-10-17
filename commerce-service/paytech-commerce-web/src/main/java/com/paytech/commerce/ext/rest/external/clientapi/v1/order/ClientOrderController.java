@@ -33,8 +33,7 @@ public class ClientOrderController implements ClientOrderApi {
     }
 
     @Override
-    public ResponseEntity<CancelOrderResponseBody> cancelOrder(long clientId, long credentialId, String orderNo,
-            String idempotencyKey) {
+    public ResponseEntity<CancelOrderResponseBody> cancelOrder(long clientId, long credentialId, String orderNo) {
         var request = CancelOrderConverter.request(clientId, orderNo);
         var response = cancelOrderProcessor.process(request);
         var body = CancelOrderConverter.response(response);

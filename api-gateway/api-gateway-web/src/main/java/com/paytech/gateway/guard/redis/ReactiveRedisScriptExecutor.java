@@ -103,6 +103,43 @@ public final class ReactiveRedisScriptExecutor {
                 error -> new GuardDependencyUnavailableException("Redis Guard 脚本执行失败", error));
     }
 
+    /** 执行只返回 Bulk String 数组的脚本；参数可含二进制值，供需要保存响应字节的调用方使用。 */
+    public Mono<List<byte[]>> executeForBulkStrings(LoadedScript script, List<String> keys, List<byte[]> arguments) {
+        Objects.requireNonNull(script, "Redis Lua 脚本不可为空");
+        List<String> immutableKeys = List.copyOf(Objects.requireNonNull(keys, "Redis Lua Keys 不可为空"));
+        List<byte[]> immutableArguments = List.copyOf(Objects.requireNonNull(arguments, "Redis Lua 参数不可为空"));
+        if (immutableKeys.isEmpty()) {
+            throw new IllegalArgumentException("Redis Lua 必须包含 Key");
+        }
+        return Mono.defer(() -> Mono.usingWhen(Mono.fromSupplier(connectionFactory::getReactiveConnection),
+            connection -> evaluateBulkStrings(connection, script, immutableKeys, immutableArguments),
+            ReactiveRedisConnection::closeLater, (connection, error) -> connection.closeLater(),
+            ReactiveRedisConnection::closeLater)).onErrorMap(ReactiveRedisScriptExecutor::isRedisFailure,
+                error -> new GuardDependencyUnavailableException("Redis 脚本执行失败", error));
+    }
+
+    private Mono<List<byte[]>> evaluateBulkStrings(ReactiveRedisConnection connection, LoadedScript script,
+        List<String> keys, List<byte[]> arguments) {
+        List<ByteBuffer> keysAndArguments = new ArrayList<>(keys.size() + arguments.size());
+        keys.forEach(value -> keysAndArguments.add(StandardCharsets.UTF_8.encode(value)));
+        arguments.forEach(value -> keysAndArguments.add(ByteBuffer.wrap(value.clone())));
+        return connection.scriptingCommands()
+            .eval(script.buffer(), ReturnType.MULTI, keys.size(), keysAndArguments.toArray(ByteBuffer[]::new))
+            .collectList().map(ReactiveRedisScriptExecutor::validateBulkStringReply);
+    }
+
+    private static List<byte[]> validateBulkStringReply(List<?> replies) {
+        if (replies.size() != 1 || !(replies.getFirst() instanceof List<?> reply) || reply.isEmpty()
+            || reply.stream().anyMatch(value -> !(value instanceof ByteBuffer))) {
+            throw new GuardDependencyUnavailableException("Redis 脚本 Bulk String 响应格式无效");
+        }
+        return reply.stream().map(ByteBuffer.class::cast).map(buffer -> {
+            byte[] bytes = new byte[buffer.remaining()];
+            buffer.duplicate().get(bytes);
+            return bytes;
+        }).toList();
+    }
+
     private Mono<List<Long>> evaluate(ReactiveRedisConnection connection, LoadedScript script, List<String> keys,
         List<String> arguments, int expectedReplyArity) {
         ByteBuffer[] keysAndArguments = encode(keys, arguments);

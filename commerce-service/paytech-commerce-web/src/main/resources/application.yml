@@ -84,9 +84,6 @@ redis:
   coordination:
     enabled: true
 
-command-idempotency:
-  enabled: true
-
 commerce:
   payment:
     card-payment-method-code: "${COMMERCE_CARD_PAYMENT_METHOD_CODE}"

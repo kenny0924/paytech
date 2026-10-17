@@ -2,7 +2,9 @@
 
 流程：Target、路由先建（新建即 DISABLED）→ 启用 Target → 逐条启用路由，每条启用后等待 Gateway Snapshot 的
 CLIENT_API 路由数加 1；超时即停止并提示按发布记录回退。可重复执行：已存在的对象读取详情，已启用的跳过。
-用法：E2E_TARGET=test python3 register_client_api.py [--dry-run]
+用法：E2E_TARGET=test python3 register_client_api.py [--dry-run] [--enable-idempotency]
+  --enable-idempotency：把已登记的 3 条写路由更新为 idempotencyMode=REQUIRED 并不再转发 idempotency-key
+  （2026-10-17 Gateway 处理 Idempotency-Key；须在 Platform、Gateway 新版本部署之后执行）。
 不输出令牌或密码。
 """
 import json
@@ -51,9 +53,13 @@ GUARDS = [rate("SHARED_ROUTE", 600), concurrency("SHARED_ROUTE", 50),
           rate("TENANT", 300), concurrency("TENANT", 20)]
 
 
-def route_body(code, method, path, scope, query, body_bytes):
-    forwarded = ["accept", "content-type", "idempotency-key"] if method == "POST" else ["accept"]
-    return {
+def route_body(code, method, path, scope, query, body_bytes, idempotent=False):
+    """idempotent=True：写路由由 Gateway 处理 Idempotency-Key，不再转发给 Commerce。"""
+    if method == "POST":
+        forwarded = ["accept", "content-type"] if idempotent else ["accept", "content-type", "idempotency-key"]
+    else:
+        forwarded = ["accept"]
+    body = {
         "routeCode": code, "channel": "CLIENT_API", "httpMethod": method,
         "externalPathTemplate": "/api/v1" + path, "downstreamPathTemplate": ROOT + path,
         "securityProfileCode": "CLIENT_API_CREDENTIAL", "authorizationMode": "API_SCOPE",
@@ -63,6 +69,27 @@ def route_body(code, method, path, scope, query, body_bytes):
         "queryParameterNames": query, "guardRules": GUARDS,
         "targetServiceCode": TARGET_CODE, "permissionId": None, "requiredScopeCode": scope, "reason": REASON,
     }
+    if idempotent:
+        body["idempotencyMode"] = "REQUIRED"
+    return body
+
+
+def enable_idempotency(ops):
+    """更新 3 条写路由：全量 PUT（Platform 更新为全量替换），带上当前版本号。"""
+    for route in ROUTES:
+        if route[1] != "POST":
+            continue
+        path = f"/gateway-admin/v1/routes/{route[0]}"
+        live = ops.get(path)
+        if live.get("idempotencyMode") == "REQUIRED":
+            print("exists ", "idempotency", route[0])
+            continue
+        body = route_body(*route, idempotent=True)
+        for key in ("routeCode", "channel"):
+            body.pop(key)
+        body["expectedVersion"] = live["version"]
+        ops.send("PUT", path, body)
+        print("updated", "idempotency", route[0], ops.get(path).get("idempotencyMode"))
 
 
 def client_api_route_count():
@@ -116,6 +143,10 @@ def main():
         return
     s = secrets()
     ops = Operations(s["E2E_ADMIN_EMAIL"], s["E2E_ADMIN_PASSWORD"])
+    if "--enable-idempotency" in sys.argv:
+        enable_idempotency(ops)
+        print("done")
+        return
     target_path = f"/gateway-admin/v1/target-services/{TARGET_CODE}"
     ensure(ops, "target", target_path, "/gateway-admin/v1/target-services",
            {"targetServiceCode": TARGET_CODE, "channel": "CLIENT_API", "discoveryServiceName": "commerce-service",

@@ -91,7 +91,7 @@ export const GATEWAY_CONTROL_CONTRACTS = Object.freeze({
     fields: Object.freeze([
       "route_id", "route_code", "channel", "http_method", "external_path_template",
       "downstream_path_template", "target_id", "security_profile_code", "authorization_mode",
-      "permission_id", "required_scope_code", "request_cookie_mode", "response_cookie_mode",
+      "permission_id", "required_scope_code", "request_cookie_mode", "response_cookie_mode", "idempotency_mode",
       "body_limit_bytes", "body_receive_timeout_millis", "response_timeout_millis", "status", "version",
       "created_by", "updated_by", "create_time", "update_time",
     ]),
@@ -101,7 +101,7 @@ export const GATEWAY_CONTROL_CONTRACTS = Object.freeze({
       external_path_template: "VARCHAR(1000)", downstream_path_template: "VARCHAR(1000)", target_id: "BIGINT",
       security_profile_code: "VARCHAR(64)", authorization_mode: "VARCHAR(64)", permission_id: "BIGINT",
       required_scope_code: "VARCHAR(128)", request_cookie_mode: "VARCHAR(64)", response_cookie_mode: "VARCHAR(64)",
-      body_limit_bytes: "BIGINT", body_receive_timeout_millis: "INT", response_timeout_millis: "INT",
+      idempotency_mode: "VARCHAR(64)", body_limit_bytes: "BIGINT", body_receive_timeout_millis: "INT", response_timeout_millis: "INT",
       status: "VARCHAR(64)", version: "INT", created_by: "BIGINT", updated_by: "BIGINT",
       create_time: "DATETIME(6)", update_time: "DATETIME(6)",
     }),
@@ -126,6 +126,7 @@ export const GATEWAY_CONTROL_CONTRACTS = Object.freeze({
       authorization_mode: Object.freeze(["PUBLIC", "HUMAN_AUTHENTICATED", "HUMAN_PERMISSION", "API_SCOPE", "CHECKOUT_RESOURCE", "CHANNEL_CALLBACK"]),
       request_cookie_mode: Object.freeze(["DROP", "REQUIRE_PROFILE_COOKIE"]),
       response_cookie_mode: Object.freeze(["NONE", "ISSUE_ONLY", "ISSUE_OR_CLEAR", "CLEAR_ONLY"]),
+      idempotency_mode: Object.freeze(["NONE", "REQUIRED"]),
       status: Object.freeze(["ACTIVE", "DISABLED"]),
     }),
     fieldStorage: Object.freeze({
@@ -518,7 +519,7 @@ export const REQUIRED_CHECK_CONTRACTS = Object.freeze({
 
 export const EXPECTED_TOTALS = Object.freeze({
   tables: 69,
-  fields: 835,
+  fields: 836,
   uniqueIndexes: 105,
   accessIndexes: 88,
   relations: 101,

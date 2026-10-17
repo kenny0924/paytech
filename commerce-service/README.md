@@ -50,7 +50,7 @@ RabbitMQ 连接取 `COMMERCE_RABBITMQ_*`（测试取 `MOR_RABBITMQ_*`）；Enfor
 - `paytech-commerce-test`：保存 auto 测试和本地基础设施门禁；不生成可部署 JAR。
 
 业务模块依赖方向为 `test -> web -> client-api`；Web 另外显式按需依赖 Foundation 的
-`paytech-redis-starter`、`paytech-command-idempotency`、`paytech-compensation-event`、`paytech-http-client-support` 和 CCT `client-contract-api`。这些依赖不进入
+`paytech-redis-starter`、`paytech-compensation-event`、`paytech-http-client-support` 和 CCT `client-contract-api`。这些依赖不进入
 Commerce Client API；没有新增无消费者的 `paytech-commerce-api` 模块。
 
 ## 当前 Checkout 首片
@@ -79,8 +79,8 @@ Create Checkout 当前包含：
   退款混入 Client ID / Order No / Client Refund ID；每次只生成一次，重复业务申请使用原已保存编号。
   字段名、数据库主键和 Client 归属校验保持，既有编号不重建，历史读取和查询继续接受旧值。
 - `clientId + clientOrderId` 永久唯一；顺序重复和并发竞争均返回 `409 CLIENT_ORDER_ID_ALREADY_EXISTS`。
-  HTTP 保留 `Idempotency-Key` 参数声明，但 Commerce 不再通过专用 Filter 校验格式或单值；它不进入内部请求，创建流程不再 Hash、Claim、续租、恢复或冻结响应。
-  相同 Key 可用于不同业务订单；相同订单号不会再次创建。Gateway 请求回放尚未接入，本次不改其配置。
+  HTTP `Idempotency-Key` 由 API Gateway 校验与重放（[请求幂等决定](../agent-docs/decisions/2026-09-17-gateway-request-idempotency.md)）；Commerce 不声明、不读取该 Header，也不依赖 `paytech-command-idempotency`。
+  创建流程不 Hash、Claim、续租、恢复或冻结响应；相同订单号不会再次创建。
 - 创建入口通过请求约束限定 USD，商品 `clientItemId` 在订单内按大小写敏感的原值唯一；不满足时在外部调用和落库前返回 422。金额、行优惠、币种精度与汇总范围同样在外部调用前校验；默认三十分钟，显式期限为五分钟至二十四小时。金额复用 Common Core 的 `Money`，公开字段通过 `toAmountString()` 输出；Commerce 仅保留非负/正数、`DECIMAL(24,8)` 及商品行计算规则。
   商品行与汇总金额由内部 `CreateCheckoutRequest.calculateAmounts()` 纯计算，Processor 触发校验并构建 Context，不额外注入 Calculator。
   订单 INSERT 以期限条件保护写入，慢 CCT 查询不延长期限。创建冻结 OE 和最终金额，返回 `READY/FINAL/OPEN`；当前固定 Mock 返回零税和零舍入，总额等于净额。尚不创建 Payment Intent。
@@ -108,14 +108,14 @@ Customer 加载收银台接口保持独立，查询合并不改变它的合同�
 | --- | --- | --- |
 | GET | `/client-gateway-api/v1/orders/{orderNo}` | 按公开订单号读取当前本地订单及投影 |
 | GET | `/client-gateway-api/v1/orders?clientOrderId=...` | 按 Client 内永久唯一业务号查询同一表示 |
-| POST | `/client-gateway-api/v1/orders/{orderNo}/cancel` | 无 Body；使用 `Idempotency-Key` 请求取消 |
+| POST | `/client-gateway-api/v1/orders/{orderNo}/cancel` | 无 Body；请求取消（`Idempotency-Key` 由 Gateway 处理） |
 | GET | `/client-gateway-api/v1/orders/{orderNo}/refundable-amount` | 返回退款基数减去预占与成功退款后的剩余额度 |
 
 本地直连仍加 `/commerce` Context Path。字段绑定与 Jakarta Validation、Client 资源归属校验和 RFC 9457 错误仍由服务端处理；
 认证和可信身份注入由 Gateway 负责，身份 Header 保留必填、long 类型绑定及 `@Positive` 约束。
 Order/Refund 专用请求 Filter 已移除，Commerce 不再按业务路径额外拦截未知 Query、重复单值 Query 或禁用 Body。
 这些公开协议限制归接入层；API 参数必填、长度、格式、范围，以及 Processor 的归属和游标业务校验继续执行。
-Client `Idempotency-Key` 保留框架参数绑定，专用格式和单值校验交由上游中间件，具体接入尚未在本轮实现。
+Client `Idempotency-Key` 的格式、单值校验与请求重放由 Gateway 负责；Commerce API 不声明该 Header，过渡期被转发时忽略。
 两个订单 GET 使用 `GetOrderConverter → GetOrderProcessor`：Controller 仅适配 HTTP，Processor 逐项读取本库事实、
 检查完整性并构建有限响应，不开启查询事务或加锁，不调用 Payment 或 Finance。
 对外使用独立 `order/response/GetOrderResponseBody` class 及嵌套 `*Info`，内部使用 Request、Context 和 Response；
@@ -133,7 +133,7 @@ Controller / Converter 仅转换和委托，内部 Request/Response 与独立 `G
 未准备金额保留 null，金额字符串按币种精度输出。
 必需投影缺失、币种或退款金额不一致返回服务错误；不会用虚构零额补齐事实。
 
-Cancel 按订单业务事实处理，不再消费请求幂等组件。Idempotency-Key 只留在 HTTP 接入边界，内部 Request
+Cancel 按订单业务事实处理，不再消费请求幂等组件，也不声明 Idempotency-Key；内部 Request
 仅有 clientId/orderNo；已取消直接返回原取消时间，不再次查询支付或写入。没有受理支付且无 Intent 的订单可一次事务取消；有接受事实但创建响应未知时，先按同一 Order 取得唯一 Intent 再终止，只有明确 TERMINATED 才关闭 Order 和实际存在的 Session。
 已支付返回 `409 REVERSAL_REQUIRED`，待定返回 202；取消响应不再输出内部 version。
 
@@ -171,7 +171,7 @@ Context 和参与的数据库对象均使用普通 class，纯事实判断归对
 `RefundService.saveCreateRefundContext` 自行使用 REQUIRED 事务，原子插入退款、预占额度和登记补偿任务。
 唯一索引保护 Client 业务退款号，条件 SQL 保护预检的订单、支付投影版本和可退余额；SQL 成功后直接同步
 原数据库对象。相同业务号改订单、金额或原因返回 409；金额版本竞争整体回滚，不自动重试事务。
-`Idempotency-Key` 只保留 HTTP 参数声明，专用校验和请求级幂等归上游中间件；不进入 Request，不再读写 CREATE_REFUND 命令或保存回执快照。
+`Idempotency-Key` 由 Gateway 校验与重放，Commerce 不声明该 Header；不进入 Request，不再读写 CREATE_REFUND 命令或保存回执快照。
 原退款创建字段直接生成回执。GET 只读本库，并按可信 Client 隔离，不调用 Payment。
 本次范围与未验证状态见 [创建退款接口重构](../requirements/20260916/commerce-CreateRefund接口重构/technique.md)。
 

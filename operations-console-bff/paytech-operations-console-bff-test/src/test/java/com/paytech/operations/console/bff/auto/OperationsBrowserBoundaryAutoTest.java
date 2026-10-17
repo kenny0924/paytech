@@ -1769,6 +1769,7 @@ class OperationsBrowserBoundaryAutoTest extends OperationsBffHttpTestBase {
         assertEquals("ACTIVE", body.path("status").asString());
         assertEquals("DISABLED", body.path("targetStatus").asString());
         assertEquals("GATEWAY_CONFIG_READ", body.path("permissionCode").asString());
+        assertEquals("NONE", body.path("idempotencyMode").asString());
         assertEquals(1, body.path("headers").size());
         assertEquals(6, body.path("guardRules").size());
         assertEquals(List.of(AUTHORIZE_PATH, upstreamPath), calledPaths(),
@@ -1860,6 +1861,25 @@ class OperationsBrowserBoundaryAutoTest extends OperationsBffHttpTestBase {
         assertEquals(List.of(AUTHORIZE_PATH, upstreamPath), calledPaths());
     }
 
+    @ParameterizedTest
+    @CsvSource({"'\"REQUIRED\"',200", "'\"OPTIONAL\"',502", "null,502"})
+    void test_gatewayRouteDetailAcceptsOnlyApprovedIdempotencyModes(String mode, int expectedStatus) throws Exception {
+        String upstreamPath = "/gateway-admin/v1/routes/operations-gateway-route-list";
+        platform.rawResponse(upstreamPath, gatewayRouteDetail("[]")
+            .replace("\"idempotencyMode\":\"NONE\"", "\"idempotencyMode\":" + mode));
+
+        HttpResponse<String> response = send("GET", upstreamPath, null,
+            trustedHeaders("operations-gateway-route-detail"));
+
+        assertEquals(expectedStatus, response.statusCode(), response.body());
+        assertEquals(List.of(AUTHORIZE_PATH, upstreamPath), calledPaths());
+        if (expectedStatus == 200) {
+            assertEquals("REQUIRED", json.readTree(response.body()).path("idempotencyMode").asString());
+        } else {
+            assertError(response, 502, "UPSTREAM_INVALID_RESPONSE");
+        }
+    }
+
     @Test
     void test_gatewayDetailRejectsDuplicateNormalizedHeadersAsUpstreamProtocolFailure() throws Exception {
         String upstreamPath = "/gateway-admin/v1/routes/operations-gateway-route-list";
@@ -1927,7 +1947,7 @@ class OperationsBrowserBoundaryAutoTest extends OperationsBffHttpTestBase {
              "downstreamPathTemplate":"%s","targetServiceCode":"operations-console-bff",
              "targetStatus":"DISABLED","securityProfileCode":"OPERATIONS_JWT","authorizationMode":"HUMAN_PERMISSION",
              "permissionId":"900000000000000534","permissionCode":"GATEWAY_CONFIG_READ","requiredScopeCode":null,
-             "requestCookieMode":"DROP","responseCookieMode":"NONE","bodyLimitBytes":%d,
+             "requestCookieMode":"DROP","responseCookieMode":"NONE","idempotencyMode":"NONE","bodyLimitBytes":%d,
              "bodyReceiveTimeoutMillis":5000,"responseTimeoutMillis":10000,"status":"ACTIVE","version":3,
              "headers":%s,"queryParameterNames":["channel","status","targetServiceCode"],"guardRules":[
                {"ruleType":"RATE_LIMIT","dimension":"SHARED_ROUTE","capacity":100,"refillTokens":100,"refillPeriodMillis":1000,"concurrencyLimit":null},

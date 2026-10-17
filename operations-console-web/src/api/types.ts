@@ -62,7 +62,7 @@ export interface GatewayGuardRuleResponseBody {
 }
 export interface GatewayRouteResponseBody extends GatewayRouteSummaryResponseBody {
   downstreamPathTemplate: string; permissionId: string | null; permissionCode: string | null;
-  requiredScopeCode: string | null; requestCookieMode: string; responseCookieMode: string;
+  requiredScopeCode: string | null; requestCookieMode: string; responseCookieMode: string; idempotencyMode: string;
   bodyLimitBytes: number; bodyReceiveTimeoutMillis: number; responseTimeoutMillis: number;
   headers: GatewayRouteHeaderResponseBody[]; queryParameterNames: string[]; guardRules: GatewayGuardRuleResponseBody[];
   createdBy: string; updatedBy: string; createTime: string; updateTime: string;

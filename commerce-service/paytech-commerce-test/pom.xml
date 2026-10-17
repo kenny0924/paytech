@@ -160,7 +160,6 @@
                                 <include>com/paytech/commerce/domainservice/repository/checkout/**/*.class</include>
                                 <include>com/paytech/commerce/domainservice/service/order/**/*.class</include>
                                 <include>com/paytech/commerce/domainservice/service/checkout/**/*.class</include>
-                                <include>com/paytech/commerce/domainservice/service/idempotency/**/*.class</include>
                                 <include>com/paytech/commerce/domainservice/validator/**/*.class</include>
                                 <include>com/paytech/commerce/ext/rest/external/clientapi/v1/order/**/*.class</include>
                                 <include>com/paytech/commerce/ext/rest/external/clientapi/v1/checkout/**/*.class
@@ -269,8 +268,6 @@
                                                 <include
                                                         name="com/paytech/commerce/domainservice/service/order/**/*.class"/>
                                                 <include name="com/paytech/commerce/domainservice/service/checkout/**/*.class"/>
-                                                <include
-                                                        name="com/paytech/commerce/domainservice/service/idempotency/**/*.class"/>
                                                 <include
                                                         name="com/paytech/commerce/domainservice/validator/**/*.class"/>
                                                 <include

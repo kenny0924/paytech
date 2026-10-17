@@ -28,7 +28,7 @@ public class ClientRefundController implements ClientRefundApi {
     /** 协议转换后交给 Processor，返回受理回执及公开资源位置。 */
     @Override
     public ResponseEntity<CreateRefundResponseBody> createRefund(long clientId, long credentialId, String orderNo,
-        String idempotencyKey, CreateRefundRequestBody body) {
+        CreateRefundRequestBody body) {
         var response = createRefundProcessor.process(CreateRefundConverter.request(clientId, orderNo, body));
         return ResponseEntity.created(URI.create("/api/v1/refunds/" + response.getRefundRequestNo()))
             .body(CreateRefundConverter.response(response));

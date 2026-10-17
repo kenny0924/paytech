@@ -199,7 +199,7 @@ V1 不提供通配 Scope。Credential 可以组合多个明确 Scope。Webhook �
 - `X-Request-Id` 遵循 Gateway 已批准的单值、1 至 64 字符规则，只作当前 HTTP 尝试关联。
 - 每个 POST 必须带一个 `Idempotency-Key`；Header 名大小写不敏感，值大小写敏感。
 - Key 长度 1 至 255，只允许首字符字母或数字，其余为字母、数字、`.`、`_`、`:`、`-`；缺失为 `IDEMPOTENCY_KEY_REQUIRED`，非法为 `INVALID_IDEMPOTENCY_KEY`。
-- 上一条是公开接入协议，由上游中间件承担；Commerce 保留 Header 参数声明，不保留专用 Key Filter。框架缺参错误与接入层专有错误不混为同一实现保证；本次未启用请求幂等中间件。
+- 上一条是公开接入协议，由 API Gateway 校验、记录与重放（2026-10-17 起，见第 7 节注）；Commerce 不再声明该 Header 参数。
 - `orderNo`、`refundRequestNo`、`clientOrderId`、`clientRefundId` 和 Cursor 都大小写敏感。
 - `clientOrderId` / `clientRefundId` 最长 128 个可打印 ASCII 字符，不允许控制字符或空白；Query 使用时必须正确 URL encode。
 - `orderNo` / `refundRequestNo` 最长 64，Client 必须把它们当作不可解析的 opaque string。
@@ -523,6 +523,8 @@ uk_checkout_public_token(public_token)
 CRC 合法不表示 Token 由平台签发或当前有效。Token 到期或业务终态后不得发起新支付；在 `expiresAt` 前的终态页面可以只读显示统一结果，到期后 Client 查询不再返回 `checkoutUrl`。
 
 ## 7. 命令幂等
+
+> **2026-10-17：** 本节的 HTTP 请求幂等部分（Key 记录、请求 Hash、响应重放、执行中处理、`t_command_idempotency`）已由 [2026-09-17 职责决定](../../../agent-docs/decisions/2026-09-17-gateway-request-idempotency.md)取代，并由 [Gateway 处理 Idempotency-Key](../../../requirements/20261017/gateway-请求幂等IdempotencyKey/technique.md) 实现：Gateway 对开启幂等的路由校验 Key（缺失 400 `IDEMPOTENCY_KEY_REQUIRED`、非法 400 `INVALID_IDEMPOTENCY_KEY`），按 `通道 + Client` 判重，摘要取方法、路由、路径、Query 与请求体**原始字节**（不做本节 7.2 的语义规范化），首次下游响应保存 72 小时并逐字重放，换请求 409 `IDEMPOTENCY_KEY_REUSED`，执行中 409 `IDEMPOTENCY_REQUEST_IN_PROGRESS` + `Retry-After: 3`，下游无响应时释放 Key。Commerce 不再声明或处理该 Header。7.3 中“新 Key”各行（`clientOrderId` / `clientRefundId` / 订单状态的业务防重）仍由 Commerce 负责；其余内容为历史设计。
 
 ### 7.1 Owner 和作用域
 

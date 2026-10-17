@@ -236,7 +236,7 @@ Partner access remains read-only for transactions. It cannot operate orders, pay
 
 Client API is the collective name for stable external contracts, not an independent Java service. Every Client API route is maintained in Platform Support with channel `CLIENT_API`, authentication profile `CLIENT_API_CREDENTIAL`, authorization mode `API_SCOPE` and an explicit `required_scope_code`. After validating the global immutable Snapshot and credential scope, Gateway routes the request to the owning core system, which retains resource-level authorization:
 
-The first confirmed product slice is the Commerce-owned Hosted Checkout V1. Its exact ten-route Manifest, five Scopes, Wire schema, Commerce idempotency and activation gates are owned by the [Commerce Client API V1 design](../docs/superpowers/specs/2026-09-05-commerce-client-api-v1-design.md); the family table below remains only future routing context and must not be treated as permission to expose Finance, Platform or DirectPay APIs.
+The first confirmed product slice is the Commerce-owned Hosted Checkout V1. Its exact ten-route Manifest, five Scopes, Wire schema, Commerce business deduplication and activation gates are owned by the [Commerce Client API V1 design](../docs/superpowers/specs/2026-09-05-commerce-client-api-v1-design.md); the family table below remains only future routing context and must not be treated as permission to expose Finance, Platform or DirectPay APIs.
 
 | Illustrative external route family (not a frozen Route Manifest) | Owning backend |
 |---|---|

@@ -43,6 +43,7 @@ public final class GatewaySnapshotView {
         String downstreamPathTemplate, String targetServiceCode, GatewaySecurityProfileCode securityProfileCode,
         GatewayAuthorizationMode authorizationMode, String permissionCode, String requiredScopeCode,
         GatewayRequestCookieMode requestCookieMode, GatewayResponseCookieMode responseCookieMode,
+        GatewayIdempotencyMode idempotencyMode,
         List<String> corsRequestHeaderNames, List<String> forwardedRequestHeaderNames, List<String> queryParameterNames,
         long bodyLimitBytes, int bodyReceiveTimeoutMillis, int responseTimeoutMillis, List<GuardRule> guardRules) {
 

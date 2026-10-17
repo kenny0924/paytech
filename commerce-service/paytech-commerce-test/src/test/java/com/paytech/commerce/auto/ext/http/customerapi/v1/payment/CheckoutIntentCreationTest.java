@@ -463,7 +463,6 @@ class CheckoutIntentCreationTest extends MockTestBase {
         var h =
                 TestRequestHeaders.client(
                         REQUEST_ID, Long.toString(fixture.getOrder().getClientId()), "1");
-        h.set(ApiHeaderNames.IDEMPOTENCY_KEY, "gateway-placeholder");
         return new CheckoutFlowResponseChecker(
                 httpTestInvoker.post(
                         "/client-gateway-api/v1/orders/"

@@ -29,6 +29,7 @@
         required_scope_code AS requiredScopeCode,
         request_cookie_mode AS requestCookieMode,
         response_cookie_mode AS responseCookieMode,
+        idempotency_mode AS idempotencyMode,
         body_limit_bytes AS bodyLimitBytes,
         body_receive_timeout_millis AS bodyReceiveTimeoutMillis,
         response_timeout_millis AS responseTimeoutMillis,

@@ -51,8 +51,13 @@ public final class PlatformCredentialValidationSimulator implements AutoCloseabl
     }
 
     public void expectValid(String... scopes) {
-        expectRaw(200, JSON.writeValueAsString(new ValidatedCredentialResponseBody(TENANT, "CLIENT", CLIENT,
-            CREDENTIAL_ID, List.of(scopes))), Duration.ZERO, false);
+        expectValidIdentity(CLIENT, CREDENTIAL_ID, scopes);
+    }
+
+    /** 同一 Bearer 下由 Owner 返回指定 Client / 凭证，用于凭证轮换与多 Client 隔离场景。 */
+    public void expectValidIdentity(String client, String credentialId, String... scopes) {
+        expectRaw(200, JSON.writeValueAsString(new ValidatedCredentialResponseBody(TENANT, "CLIENT", client,
+            credentialId, List.of(scopes))), Duration.ZERO, false);
     }
 
     public synchronized void expectRaw(int status, String body, Duration delay, boolean disconnect) {

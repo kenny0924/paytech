@@ -83,10 +83,6 @@
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
-            <artifactId>paytech-command-idempotency</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.paytech</groupId>
             <artifactId>paytech-snowflake-id</artifactId>
         </dependency>
         <dependency>

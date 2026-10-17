@@ -73,14 +73,11 @@ public interface ClientOrderApi {
      *            可信接入层提供的 API Credential 主键
      * @param orderNo
      *            不透明、大小写敏感的 Commerce 订单号
-     * @param idempotencyKey
-     *            预留给上游中间件的接入 Header，Commerce 不做专用 Key 校验，不传入取消用例
      * @return 200 取消终态或 202 待定结果；已支付返回 409 REVERSAL_REQUIRED
      */
     @PostExchange("/orders/{orderNo}/cancel")
     ResponseEntity<CancelOrderResponseBody> cancelOrder(
         @RequestHeader(ApiHeaderNames.GATEWAY_CLIENT_ID) @Positive long clientId,
         @RequestHeader(ApiHeaderNames.GATEWAY_CREDENTIAL_ID) @Positive long credentialId,
-        @PathVariable("orderNo") @NotBlank @Size(max = 64) String orderNo,
-        @RequestHeader(ApiHeaderNames.IDEMPOTENCY_KEY) String idempotencyKey);
+        @PathVariable("orderNo") @NotBlank @Size(max = 64) String orderNo);
 }

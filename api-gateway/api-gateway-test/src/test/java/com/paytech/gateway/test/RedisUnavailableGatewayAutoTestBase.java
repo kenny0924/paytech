@@ -32,6 +32,7 @@ public abstract class RedisUnavailableGatewayAutoTestBase {
     private PlatformCredentialValidationSimulator credentialSimulator;
     private ConfigurableApplicationContext applicationContext;
     private WebTestClient gatewayClient;
+    private WebTestClient clientApiGatewayClient;
     private WebTestClient managementClient;
     private int closedRedisPort;
 
@@ -71,6 +72,8 @@ public abstract class RedisUnavailableGatewayAutoTestBase {
         int managementPort =
             applicationContext.getEnvironment().getRequiredProperty("local.management.port", Integer.class);
         gatewayClient = GatewayPublicTestClient.operations(gatewayPort)
+            .defaultHeader("X-Real-IP", "203.0.113.17").responseTimeout(java.time.Duration.ofSeconds(5)).build();
+        clientApiGatewayClient = GatewayPublicTestClient.clientApi(gatewayPort)
             .defaultHeader("X-Real-IP", "203.0.113.17").responseTimeout(java.time.Duration.ofSeconds(5)).build();
         managementClient = WebTestClient.bindToServer().baseUrl("http://127.0.0.1:" + managementPort)
             .responseTimeout(java.time.Duration.ofSeconds(5)).build();
@@ -125,6 +128,21 @@ public abstract class RedisUnavailableGatewayAutoTestBase {
 
     protected final WebTestClient gatewayClient() {
         return gatewayClient;
+    }
+
+    protected final WebTestClient clientApiGatewayClient() {
+        return clientApiGatewayClient;
+    }
+
+    /** 向私有 Gateway 发布并加载指定 Snapshot。 */
+    protected final void publishSnapshot(
+        com.paytech.platform.support.api.gatewayconfiguration.response.GatewayPublicSnapshotResponseBody snapshot) {
+        platformSnapshotSimulator.publish(snapshot);
+        loadInitialSnapshot(applicationContext.getBean(GatewaySnapshotRefresher.class));
+    }
+
+    protected final PlatformCredentialValidationSimulator credentialSimulator() {
+        return credentialSimulator;
     }
 
     protected final WebTestClient managementClient() {

@@ -10,7 +10,7 @@ public record GatewayRouteManagement(Long routeId, String routeCode, GatewayRout
     GatewayHttpMethod httpMethod, String externalPathTemplate, String downstreamPathTemplate, Long targetId,
     String targetServiceCode, GatewayConfigurationStatus targetStatus, GatewaySecurityProfileCode securityProfileCode,
     GatewayAuthorizationMode authorizationMode, Long permissionId, String permissionCode, String requiredScopeCode,
-    GatewayRequestCookieMode requestCookieMode, GatewayResponseCookieMode responseCookieMode, long bodyLimitBytes,
-    int bodyReceiveTimeoutMillis, int responseTimeoutMillis, GatewayConfigurationStatus status, int version,
+    GatewayRequestCookieMode requestCookieMode, GatewayResponseCookieMode responseCookieMode,
+    GatewayIdempotencyMode idempotencyMode, long bodyLimitBytes, int bodyReceiveTimeoutMillis, int responseTimeoutMillis, GatewayConfigurationStatus status, int version,
     Long createdBy, Long updatedBy, Instant createTime, Instant updateTime) {
 }

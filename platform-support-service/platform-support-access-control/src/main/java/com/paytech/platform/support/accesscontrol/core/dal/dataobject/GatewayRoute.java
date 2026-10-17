@@ -73,6 +73,11 @@ public record GatewayRoute(
     GatewayResponseCookieMode responseCookieMode,
 
     /**
+     * Gateway 处理 Idempotency-Key 的请求幂等模式。
+     */
+    GatewayIdempotencyMode idempotencyMode,
+
+    /**
      * Route 允许接收的请求体最大字节数。
      */
     long bodyLimitBytes,

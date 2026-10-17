@@ -36,7 +36,7 @@ public final class GatewayConfigurationProjection {
     public record RouteRow(Long routeId, String routeCode, String channel, String httpMethod,
         String externalPathTemplate, String downstreamPathTemplate, Long targetId, String securityProfileCode,
         String authorizationMode, Long permissionId, String requiredScopeCode, String requestCookieMode,
-        String responseCookieMode, long bodyLimitBytes, int bodyReceiveTimeoutMillis, int responseTimeoutMillis,
+        String responseCookieMode, String idempotencyMode, long bodyLimitBytes, int bodyReceiveTimeoutMillis, int responseTimeoutMillis,
         String status) {
     }
 

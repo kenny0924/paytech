@@ -55,6 +55,7 @@
       "requiredScopeCode": null,
       "requestCookieMode": "DROP",
       "responseCookieMode": "NONE",
+      "idempotencyMode": "NONE",
       "bodyLimitBytes": 65536,
       "bodyReceiveTimeoutMillis": 5000,
       "responseTimeoutMillis": 10000,
@@ -106,6 +107,7 @@
       "requiredScopeCode": null,
       "requestCookieMode": "DROP",
       "responseCookieMode": "NONE",
+      "idempotencyMode": "NONE",
       "bodyLimitBytes": 65536,
       "bodyReceiveTimeoutMillis": 5000,
       "responseTimeoutMillis": 10000,
@@ -435,6 +437,9 @@
                 "DROP"
               ],
               "responseCookieModes": [
+                "NONE"
+              ],
+              "idempotencyModes": [
                 "NONE"
               ],
               "allowedGuardDimensions": [

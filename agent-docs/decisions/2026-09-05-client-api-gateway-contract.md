@@ -14,7 +14,7 @@
 
 ## 1. 背景与边界
 
-Client API 面向 Client 的后端系统，是一种机器调用入口。它不是新的 Java 服务，也不改变六个核心系统的事实所有权。Gateway 把每条 Client API Route 直接转发到该业务能力 Owner 的隔离外部适配器；Owner 继续完成 Client 资源归属、业务权限、状态机、事务和幂等判断。
+Client API 面向 Client 的后端系统，是一种机器调用入口。它不是新的 Java 服务，也不改变六个核心系统的事实所有权。Gateway 把每条 Client API Route 直接转发到该业务能力 Owner 的隔离外部适配器；Owner 继续完成 Client 资源归属、业务权限、状态机、事务和业务防重（HTTP `Idempotency-Key` 的记录与重放自 [2026-09-17 决定](./2026-09-17-gateway-request-idempotency.md)起归 Gateway）。
 
 Operations 使用人工 Access JWT，Client API 使用 Tenant-owned opaque API Credential。两者的认证材料、生命周期和失败语义不同，不能为了代码表面统一而共用认证算法。Gateway 只统一可信入口、路由、策略、Guard、转发和观察管线的骨架。
 
@@ -142,7 +142,7 @@ Platform 发布并实现 PLT-I03 typed contract、Credential 数据与 Channel-a
 - 不新建 `client-api-service`，不让 Gateway 编排核心业务；
 - 不统一 Operations JWT 与 Client API Credential 的认证算法；
 - 不把 Tenant/Scope/Route/Channel 下发给 Owner 作为授权捷径；
-- 不把业务幂等改成 Request ID，也不在 Gateway 自动重试命令；
+- 不把业务幂等改成 Request ID，也不在 Gateway 自动重试命令；Gateway 只对开启幂等的路由重放已记录的首次响应，不重新执行业务；
 - 不预注册没有真实 Owner Adapter 的生产 Target；
 - 不在本决策中实现 Platform PLT-I03、Credential 管理/DDL、Owner 业务 API、Nginx 生产配置或部署数据。
 

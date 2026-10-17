@@ -38,8 +38,6 @@ public interface ClientCustomerApi {
      *            可信接入层提供的 Client 主键
      * @param credentialId
      *            可信接入层提供的 API Credential 主键
-     * @param idempotencyKey
-     *            预留给上游中间件的接入 Header，Commerce 不做专用 Key 校验
      * @param requestBody
      *            Client 命名空间内的消费者引用
      * @return 新建时 201 并带 Location；已存在时 200 返回原 Customer
@@ -48,7 +46,6 @@ public interface ClientCustomerApi {
     ResponseEntity<CustomerResponseBody> createCustomer(
         @RequestHeader(ApiHeaderNames.GATEWAY_CLIENT_ID) @Positive long clientId,
         @RequestHeader(ApiHeaderNames.GATEWAY_CREDENTIAL_ID) @Positive long credentialId,
-        @RequestHeader(ApiHeaderNames.IDEMPOTENCY_KEY) String idempotencyKey,
         @RequestBody @NotNull @Valid CreateCustomerRequestBody requestBody);
 
     /**
@@ -95,16 +92,13 @@ public interface ClientCustomerApi {
      *            可信接入层提供的 API Credential 主键
      * @param customerNo
      *            不透明、大小写敏感的 Customer 编号
-     * @param idempotencyKey
-     *            预留给上游中间件的接入 Header，Commerce 不做专用 Key 校验
      * @return 已删除的 Customer
      */
     @DeleteExchange("/customers/{customerNo}")
     CustomerResponseBody deleteCustomer(
         @RequestHeader(ApiHeaderNames.GATEWAY_CLIENT_ID) @Positive long clientId,
         @RequestHeader(ApiHeaderNames.GATEWAY_CREDENTIAL_ID) @Positive long credentialId,
-        @PathVariable("customerNo") @NotBlank @Size(max = 64) String customerNo,
-        @RequestHeader(ApiHeaderNames.IDEMPOTENCY_KEY) String idempotencyKey);
+        @PathVariable("customerNo") @NotBlank @Size(max = 64) String customerNo);
 
     /**
      * 列出 Customer 有效且未过期的已存卡；已删除的 Customer 返回空列表。
@@ -134,8 +128,6 @@ public interface ClientCustomerApi {
      *            不透明、大小写敏感的 Customer 编号
      * @param storedCardToken
      *            已存卡 Token
-     * @param idempotencyKey
-     *            预留给上游中间件的接入 Header，Commerce 不做专用 Key 校验
      * @return 204；Customer 或已存卡不存在返回 404
      */
     @DeleteExchange("/customers/{customerNo}/stored-cards/{storedCardToken}")
@@ -143,6 +135,5 @@ public interface ClientCustomerApi {
         @RequestHeader(ApiHeaderNames.GATEWAY_CLIENT_ID) @Positive long clientId,
         @RequestHeader(ApiHeaderNames.GATEWAY_CREDENTIAL_ID) @Positive long credentialId,
         @PathVariable("customerNo") @NotBlank @Size(max = 64) String customerNo,
-        @PathVariable("storedCardToken") @NotBlank @Size(max = 64) String storedCardToken,
-        @RequestHeader(ApiHeaderNames.IDEMPOTENCY_KEY) String idempotencyKey);
+        @PathVariable("storedCardToken") @NotBlank @Size(max = 64) String storedCardToken);
 }

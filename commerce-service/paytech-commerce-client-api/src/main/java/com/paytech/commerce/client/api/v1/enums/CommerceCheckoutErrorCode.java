@@ -4,15 +4,6 @@ import com.paytech.foundation.common.enums.CodeMessageEnum;
 
 /** Commerce Client Checkout 对外稳定错误码目录。 */
 public enum CommerceCheckoutErrorCode implements CodeMessageEnum {
-    /** Required command idempotency header was absent or blank. */
-    IDEMPOTENCY_KEY_REQUIRED("IDEMPOTENCY_KEY_REQUIRED", "Idempotency-Key 不能为空"),
-
-    /** Command idempotency header did not satisfy the public format contract. */
-    INVALID_IDEMPOTENCY_KEY("INVALID_IDEMPOTENCY_KEY", "Idempotency-Key 格式不正确"),
-
-    /** Existing idempotency key was replayed with a different canonical request. */
-    IDEMPOTENCY_KEY_REUSED("IDEMPOTENCY_KEY_REUSED", "Idempotency-Key 已用于不同请求"),
-
     /** Original command for this idempotency key has not completed yet. */
     IDEMPOTENCY_REQUEST_IN_PROGRESS("IDEMPOTENCY_REQUEST_IN_PROGRESS", "相同命令正在处理，请稍后重试"),
 

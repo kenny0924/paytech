@@ -32,11 +32,15 @@ public abstract class AbstractCreateRefundApiTest extends MockTestBase {
     }
 
     protected CreateRefundResponseChecker invoke(CreateRefundRequestBody body) {
-        return invoke(Long.toString(fixture.getOrder().getClientId()), "1", fixture.getOrder().getOrderNo(),
-            "gateway-handles-this-key", body);
+        return invoke(Long.toString(fixture.getOrder().getClientId()), "1", fixture.getOrder().getOrderNo(), body);
     }
 
-    /** 不修复负例 Header、路径或 JSON，Gateway Key 只按现有 HTTP 契约传递。 */
+    /** 不携带 Idempotency-Key；不修复负例 Header、路径或 JSON。 */
+    protected CreateRefundResponseChecker invoke(String client, String credential, String orderNo, Object body) {
+        return invoke(client, credential, orderNo, null, body);
+    }
+
+    /** key 仅模拟 Gateway 过渡期转发的 Idempotency-Key，Commerce 不读取。 */
     protected CreateRefundResponseChecker invoke(String client, String credential, String orderNo, String key,
         Object body) {
         var headers = TestRequestHeaders.client(REQUEST_ID, client, credential);

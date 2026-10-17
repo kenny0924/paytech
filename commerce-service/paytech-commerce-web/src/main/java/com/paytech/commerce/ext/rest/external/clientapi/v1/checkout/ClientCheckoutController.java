@@ -20,7 +20,7 @@ public class ClientCheckoutController implements ClientCheckoutApi {
     /** 创建入口只负责协议转换及 HTTP 201 回执。 */
     @Override
     public ResponseEntity<CreateCheckoutResponseBody> createCheckout(long clientId, long credentialId,
-        String idempotencyKey, CreateCheckoutRequestBody requestBody) {
+        CreateCheckoutRequestBody requestBody) {
         var request = CreateCheckoutConverter.toRequest(clientId, requestBody);
         var response = createCheckoutProcessor.process(request);
         return ResponseEntity.created(CreateCheckoutConverter.toLocation(response))

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { configurationCommand, descendants, visibleResourceIds } from './configurationModel.ts';
-import { initialGuards, routeWrite } from './gatewayEditorModel.ts';
+import { defaultIdempotencyMode, idempotencyOptions, initialGuards, routeWrite } from './gatewayEditorModel.ts';
 import { pageCapabilities } from '../navigation/pageCapabilities.ts';
 import type { ManagedResource, ManagedRoute } from './types.ts';
 const row = (id: string, parent: string | null, name: string, status = 'ACTIVE') => ({ resourceId: id, parentResourceId: parent, displayName: name, resourceCode: name, status }) as ManagedResource;
@@ -24,8 +24,19 @@ test('Route 写入排除只读字段，授权变更清理无关绑定，子集�
   const updated = routeWrite({ routeCode: 'injected', channel: 'CLIENT', authorizationMode: 'HUMAN_PERMISSION', permissionId: '123', requiredScopeCode: 'old' }, { version: 4 } as ManagedRoute);
   assert.equal(updated.expectedVersion, 4); assert.equal('routeCode' in updated, false); assert.equal('channel' in updated, false); assert.equal(updated.requiredScopeCode, null);
 });
+test('Route 请求幂等随写入发送，选项与默认值来自 Profile 能力', () => {
+  const created = routeWrite({ routeCode: 'new-route', channel: 'CLIENT_API', authorizationMode: 'API_SCOPE', idempotencyMode: 'REQUIRED' }, null);
+  assert.equal(created.idempotencyMode, 'REQUIRED');
+  const updated = routeWrite({ authorizationMode: 'API_SCOPE', idempotencyMode: 'NONE' }, { version: 2 } as ManagedRoute);
+  assert.equal(updated.idempotencyMode, 'NONE');
+  const profile = { securityProfileCode: 'CLIENT_API_CREDENTIAL', authorizationModes: [], requestCookieModes: [], responseCookieModes: [], idempotencyModes: ['NONE', 'REQUIRED'], allowedGuardDimensions: [], requiredGuardDimensions: [] };
+  assert.equal(defaultIdempotencyMode(profile), 'NONE');
+  assert.deepEqual(idempotencyOptions(profile.idempotencyModes), [{ value: 'NONE', label: '不启用' }, { value: 'REQUIRED', label: '必须' }]);
+  assert.deepEqual(idempotencyOptions(['NONE'], 'REQUIRED'), [{ value: 'NONE', label: '不启用' }, { value: 'REQUIRED', label: '必须' }]);
+  assert.deepEqual(idempotencyOptions(undefined, 'NONE'), [{ value: 'NONE', label: '不启用' }]);
+});
 test('Guard 默认项只来自服务端必需维度，数值形状保持 Rate/Concurrency 互斥', () => {
-  const values = initialGuards({ securityProfileCode: 'OPERATIONS_JWT', authorizationModes: [], requestCookieModes: [], responseCookieModes: [], allowedGuardDimensions: ['SHARED_ROUTE', 'CLIENT_IP'], requiredGuardDimensions: ['SHARED_ROUTE', 'CLIENT_IP'] });
+  const values = initialGuards({ securityProfileCode: 'OPERATIONS_JWT', authorizationModes: [], requestCookieModes: [], responseCookieModes: [], idempotencyModes: ['NONE'], allowedGuardDimensions: ['SHARED_ROUTE', 'CLIENT_IP'], requiredGuardDimensions: ['SHARED_ROUTE', 'CLIENT_IP'] });
   assert.equal(values.length, 4); assert.equal(values[0].concurrencyLimit, null); assert.equal(values[1].capacity, null); assert.equal(values[1].ruleType, 'CONCURRENCY');
 });
 test('已部署页面注册覆盖新菜单，组件及动作没有重复身份', () => {
