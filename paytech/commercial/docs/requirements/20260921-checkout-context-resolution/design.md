@@ -4,7 +4,7 @@
 
 用户在首次重构后进一步要求删除混杂职责的 CheckoutQueryProperties、补齐真正的业务上下文，并明确确认国家/币种/Locale 支持范围以已批准业务数据为准。本轮继续按用户要求拆除聚合 Repository，将跨表加载交还 Service。本文替代本目录首次重构中依赖部署目录、CheckoutSelection 和聚合 Repository 的设计描述。
 
-业务合同读取 [四系统合同](../../../../requirements/20260911/client-contract-OE与Client模型梳理/stage3-contracts.md)的最终解析部分；调用时机遵循 [9 月 19 日创建初始化决定](../../../../requirements/20260919/commerce-Checkout准备与Intent创建拆分/requirement.md)。本次确认的支持范围规则替代早期查询切片中的三项部署白名单，不恢复独立 preparation 阶段、Assignment 或解析回执。
+业务合同读取 [四系统合同](../../../../../requirements/20260911/client-contract-OE与Client模型梳理/stage3-contracts.md)的最终解析部分；调用时机遵循 [9 月 19 日创建初始化决定](../../../../../requirements/20260919/commerce-Checkout准备与Intent创建拆分/requirement.md)。本次确认的支持范围规则替代早期查询切片中的三项部署白名单，不恢复独立 preparation 阶段、Assignment 或解析回执。
 
 ## 配置和支持范围
 
@@ -59,4 +59,4 @@ Commerce CreateCheckoutProcessor 已调用 CheckoutCommercialPort.resolve，未�
 
 Risk 尚无符合新 entityNo 的 Checkout 资格 API，正式不可用端口继续返回 503 OWNER_UNAVAILABLE；不自定义 Risk HTTP 合同、不以入驻资格代替、不注入成功替身。因此不能声明最终解析 HTTP 200 或 Commerce 创建闭环完成。配置写入推进 Root 的合同保持，本次不新增管理写入口。
 
-先用真实 HTTP/MySQL 回归复现旧白名单错误拒绝批准业务数据，再验证范围扩展、缺失 Locale、原证据到期、跨查询混用候选、事务入口保护和查询只读；全量测试覆盖数据源迁移影响的入驻及补偿能力。实际结果见 [verification.md](verification.md)。全局实现/部署状态仍以 [当前台账](../../../../agent-docs/CURRENT_IMPLEMENTATION.md) 为准，本次不修改共享文件。
+先用真实 HTTP/MySQL 回归复现旧白名单错误拒绝批准业务数据，再验证范围扩展、缺失 Locale、原证据到期、跨查询混用候选、事务入口保护和查询只读；全量测试覆盖数据源迁移影响的入驻及补偿能力。实际结果见 [verification.md](verification.md)。全局实现/部署状态仍以 [当前台账](../../../../../agent-docs/CURRENT_IMPLEMENTATION.md) 为准，本次不修改共享文件。

@@ -12,7 +12,7 @@
 - 入驻 HTTP、投影 Handler、补偿持久化的公共装配与资源清理移入 `test/base`；SQL 差异移入测试侧 Mapper，`auto` 不再承载整套环境初始化或清理实现。
 - 入驻类共享上下文的外部监听器由 Spring 关闭，每例等待已提交补偿结束并清理自身数据、外部响应、计数和故障设置；失败时禁止继续复用。
 
-目录入口及维护方式见[测试模块说明](../../../client-contract-test/README.md)。本次没有新增或修改同步业务接口，不涉及 Processor、Context、本地业务事务或事务外调用的生产实现变更。
+目录入口及维护方式见[测试模块说明](../../../paytech-client-master-test/README.md)。本次没有新增或修改同步业务接口，不涉及 Processor、Context、本地业务事务或事务外调用的生产实现变更。
 
 ## 场景保全检查
 

@@ -5,6 +5,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.paytech.commercial.api.agreement.AgreementPartyQueryApi;
@@ -17,6 +18,7 @@ import lombok.AllArgsConstructor;
 
 /** 合同参与方引用查询入站（design/06 §2.2）；仅 client-master-service 调用。 */
 @RestController
+@ConditionalOnProperty(prefix = "spring.datasource", name = "url")
 @AllArgsConstructor
 public class AgreementPartyQueryController implements AgreementPartyQueryApi {
     static final String CLIENT_MASTER = "client-master-service";

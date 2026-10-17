@@ -1,5 +1,6 @@
 package com.paytech.client.master.ext.rest;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.paytech.client.master.api.storedcard.ClientStoredCardSettingApi;
@@ -11,6 +12,7 @@ import lombok.AllArgsConstructor;
 
 /** Client 级已存卡开关的只读入站（D42）；首期调用方为第 03 步的 consumer。 */
 @RestController
+@ConditionalOnProperty(prefix = "spring.datasource", name = "url")
 @AllArgsConstructor
 public class ClientStoredCardSettingController implements ClientStoredCardSettingApi {
     private final ClientStoredCardSettingQueryService service;

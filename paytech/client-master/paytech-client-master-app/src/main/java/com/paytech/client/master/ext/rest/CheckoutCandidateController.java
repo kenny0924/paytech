@@ -7,6 +7,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.paytech.client.master.api.checkout.ClientMasterCheckoutApi;
@@ -25,6 +26,7 @@ import lombok.AllArgsConstructor;
  * <li>私网调用范围仅 commercial-service；Caller Header 只防止调用范围误用，实际身份由部署网络保证。</li>
  */
 @RestController
+@ConditionalOnProperty(prefix = "spring.datasource", name = "url")
 @AllArgsConstructor
 public class CheckoutCandidateController implements ClientMasterCheckoutApi {
     static final String COMMERCIAL = "commercial-service";
