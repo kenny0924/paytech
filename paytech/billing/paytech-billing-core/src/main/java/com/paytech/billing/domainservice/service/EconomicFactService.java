@@ -36,13 +36,6 @@ public interface EconomicFactService {
      */
     void approve(EconomicFactContext context, long checkerId, Instant now);
 
-    /**
-     * 首次发布确认后写入 published_at
-     *
-     * @return 本次是否写入；补偿重试再次发布时为 false
-     */
-    boolean markPublished(EconomicFactContext context, Instant now);
-
     /** 查询事实详情；不存在时业务拒绝。 */
     EconomicFactView getFact(long factId);
 

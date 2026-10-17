@@ -78,12 +78,6 @@ public class EconomicFactServiceImpl implements EconomicFactService {
         });
     }
 
-    /** 首次发布确认时写入 published_at。 */
-    @Override
-    public boolean markPublished(EconomicFactContext context, Instant now) {
-        return economicFactRepository.markPublished(context.getFact(), now);
-    }
-
     /** 查询事实详情；不存在时业务拒绝。 */
     @Override
     public EconomicFactView getFact(long factId) {

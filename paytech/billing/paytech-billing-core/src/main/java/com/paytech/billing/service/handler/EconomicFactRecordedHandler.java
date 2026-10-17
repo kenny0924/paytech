@@ -11,7 +11,7 @@ import com.paytech.billing.api.fact.EconomicFactPayload;
 import com.paytech.billing.core.configuration.BillingEventProperties;
 import com.paytech.billing.domain.EconomicFactContext;
 import com.paytech.billing.domain.EconomicFactPayloads;
-import com.paytech.billing.domainservice.service.EconomicFactService;
+import com.paytech.billing.domainservice.service.EconomicFactPublicationService;
 import com.paytech.foundation.compensation.api.CompensationEvent;
 import com.paytech.foundation.compensation.api.CompensationEventHandler;
 import com.paytech.foundation.compensation.api.CompensationEventRequest;
@@ -42,9 +42,9 @@ public class EconomicFactRecordedHandler implements CompensationEventHandler {
     static final String NO_SUB_EVENT_TYPE = "-";
 
     private final Clock clock;
-    private final EconomicFactService economicFactService;
     private final DomainEventPublisher domainEventPublisher;
     private final BillingEventProperties eventProperties;
+    private final EconomicFactPublicationService publicationService;
 
     /**
      * 纯工厂：只能与事实批准在同一本地事务登记
@@ -90,7 +90,7 @@ public class EconomicFactRecordedHandler implements CompensationEventHandler {
             return CompensationHandlerResult.terminalFailure("ECONOMIC_FACT_EVENT_INVALID",
                 "Economic fact event is malformed");
         }
-        EconomicFactContext context = economicFactService.loadContext(Long.parseLong(key.aggregateKey().aggregateId()));
+        EconomicFactContext context = publicationService.loadContext(Long.parseLong(key.aggregateKey().aggregateId()));
         if (!publishable(context, key.aggregateVersion())) {
             return CompensationHandlerResult.terminalFailure("ECONOMIC_FACT_NOT_PUBLISHABLE",
                 "Economic fact is not an approved fact of this version");
@@ -102,7 +102,7 @@ public class EconomicFactRecordedHandler implements CompensationEventHandler {
             return CompensationHandlerResult.retryableFailure("ECONOMIC_FACT_UNPUBLISHED",
                 "Economic fact publication requires retry");
         }
-        economicFactService.markPublished(context, clock.instant().truncatedTo(ChronoUnit.MICROS));
+        publicationService.markPublished(context, clock.instant().truncatedTo(ChronoUnit.MICROS));
         return CompensationHandlerResult.success();
     }
 
