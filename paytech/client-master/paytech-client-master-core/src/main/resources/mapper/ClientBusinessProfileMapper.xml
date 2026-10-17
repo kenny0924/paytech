@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.client.master.core.dal.mapper.ClientBusinessProfileMapper">
+    <resultMap id="ClientBusinessProfile" type="com.paytech.client.master.core.dal.dataobject.CheckoutRecords$ClientBusinessProfile">
+        <constructor>
+            <arg column="business_profile_id" javaType="java.lang.Long"/>
+            <arg column="client_id" javaType="java.lang.Long"/>
+            <arg column="content_hash" javaType="java.lang.String"/>
+            <arg column="classification_case_id" javaType="java.lang.Long"/>
+            <arg column="classification_confirmed_by" javaType="java.lang.Long"/>
+            <arg column="classification_confirmed_time" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+    <select id="findByClientId" resultMap="ClientBusinessProfile">
+        SELECT business_profile_id, client_id, content_hash, classification_case_id, classification_confirmed_by, classification_confirmed_time
+        FROM t_client_business_profile
+        WHERE client_id = #{clientId}
+        ORDER BY business_profile_id
+    </select>
+    <select id="findClassificationProfile" resultType="com.paytech.client.master.core.dal.dataobject.ClientClassificationProfile">
+        SELECT business_profile_id AS businessProfileId, client_id AS clientId, classification_case_id AS classificationCaseId,
+            classification_confirmed_by AS classificationConfirmedBy, classification_confirmed_time AS classificationConfirmedTime,
+            update_time AS updateTime
+        FROM t_client_business_profile WHERE client_id = #{clientId}
+    </select>
+    <update id="bindClassificationCase">
+        UPDATE t_client_business_profile
+        SET classification_case_id=#{caseId}, classification_confirmed_by=NULL, classification_confirmed_time=NULL, update_time=#{now}
+        WHERE business_profile_id=#{row.businessProfileId}
+          AND (classification_case_id IS NULL OR classification_case_id &lt;&gt; #{caseId} OR classification_confirmed_time IS NULL)
+    </update>
+    <update id="confirmClassification">
+        UPDATE t_client_business_profile
+        SET classification_confirmed_by=#{actorId}, classification_confirmed_time=#{now}, update_time=#{now}
+        WHERE business_profile_id=#{row.businessProfileId} AND classification_case_id=#{row.classificationCaseId}
+          AND classification_confirmed_time IS NULL
+    </update>
+</mapper>

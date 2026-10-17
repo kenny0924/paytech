@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.commercial.core.dal.mapper.AgreementDocumentRefMapper">
+    <resultMap id="AgreementDocumentRef" type="com.paytech.commercial.core.dal.dataobject.CheckoutRecords$AgreementDocumentRef">
+        <constructor>
+            <arg column="agreement_document_id" javaType="java.lang.Long"/>
+            <arg column="agreement_id" javaType="java.lang.Long"/>
+            <arg column="document_type" javaType="com.paytech.commercial.domain.enums.AgreementDocumentRefDocumentType"/>
+            <arg column="file_id" javaType="java.lang.Long"/>
+            <arg column="content_hash" javaType="java.lang.String"/>
+        </constructor>
+    </resultMap>
+    <select id="findForCheckout" resultMap="AgreementDocumentRef">
+        SELECT agreement_document_id, agreement_id, document_type, file_id, content_hash
+        FROM t_agreement_document_ref
+        WHERE agreement_id IN (SELECT agreement_id FROM t_agreement WHERE client_id = #{clientId} OR (local_partner_id IN (SELECT source_partner_id FROM t_entity_source_relation WHERE entity_no IN (SELECT entity_no FROM t_client_entity_affiliation WHERE client_id = #{clientId}) AND source_type='PARTNER') AND agreement_id IN (SELECT agreement_id FROM t_agreement_operating_entity WHERE entity_no IN (SELECT entity_no FROM t_client_entity_affiliation WHERE client_id = #{clientId}))))
+        ORDER BY agreement_document_id
+    </select>
+</mapper>

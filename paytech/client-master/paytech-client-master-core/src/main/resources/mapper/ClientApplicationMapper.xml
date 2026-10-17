@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.client.master.core.dal.mapper.ClientApplicationMapper">
+  <sql id="submissionColumns">
+    application_id AS applicationId, application_no AS applicationNo, client_id AS clientId,
+    requested_by_account_id AS accountId, status, current_submission_id AS currentSubmissionId,
+    due_diligence_case_id AS dueDiligenceCaseId, qualification_decision_id AS qualificationDecisionId,
+    submitted_time AS submittedTime, update_time AS updateTime
+  </sql>
+  <select id="findByApplication" resultType="com.paytech.client.master.core.dal.dataobject.ClientApplicationSubmission">
+    SELECT <include refid="submissionColumns"/> FROM t_client_application
+    WHERE application_id=#{applicationId} AND requested_by_account_id=#{accountId}
+  </select>
+  <select id="findBySubmission" resultType="com.paytech.client.master.core.dal.dataobject.ClientApplicationSubmission">
+    SELECT <include refid="submissionColumns"/> FROM t_client_application WHERE current_submission_id=#{submissionId}
+  </select>
+  <update id="submit">
+    UPDATE t_client_application
+    SET status='SUBMITTED', current_submission_id=#{submissionId}, due_diligence_case_id=NULL,
+      submitted_time=#{now}, update_time=#{now}
+    WHERE application_id=#{applicationId} AND status IN ('DRAFT','RETURNED') AND active_slot=1
+  </update>
+  <update id="startReview">
+    UPDATE t_client_application
+    SET status='UNDER_REVIEW', due_diligence_case_id=#{caseId}, update_time=#{now}
+    WHERE application_id=#{applicationId} AND current_submission_id=#{submissionId} AND status='SUBMITTED'
+  </update>
+  <select id="findById" resultType="com.paytech.client.master.core.dal.dataobject.ClientApplicationSubmission">
+    SELECT <include refid="submissionColumns"/> FROM t_client_application WHERE application_id=#{applicationId}
+  </select>
+  <select id="findByCase" resultType="com.paytech.client.master.core.dal.dataobject.ClientApplicationSubmission">
+    SELECT <include refid="submissionColumns"/> FROM t_client_application
+    WHERE due_diligence_case_id=#{caseId}
+  </select>
+  <update id="concludeReview">
+    UPDATE t_client_application
+    SET status=#{status}, qualification_decision_id=#{decisionId}, update_time=#{now}
+      <if test="release">, active_slot=NULL</if>
+    WHERE application_id=#{row.applicationId} AND status='UNDER_REVIEW'
+      AND current_submission_id=#{row.currentSubmissionId} AND due_diligence_case_id=#{row.dueDiligenceCaseId}
+  </update>
+  <!-- 工作区摘要：只组合展示字段，不读取证件、地址或联系方式；approvedAt 取主体资料首次批准时间 approved_time；
+       该列尚未回填的存量数据退回最早一份 APPROVED 申请的 update_time。
+       clientIds 由 Client BFF 从 Platform 当前账号的成员列表取得，CCT 不判断成员关系，只要求存在 APPROVED 申请。 -->
+  <select id="findApprovedSummaries" resultType="com.paytech.client.master.core.dal.dataobject.ClientWorkspaceSummary">
+    SELECT c.client_id AS clientId, c.client_no AS clientNo, p.party_type AS clientType, c.status AS clientStatus,
+      o.legal_name AS legalName, i.given_name AS givenName, i.family_name AS familyName,
+      o.incorporation_country AS incorporationCountry, i.residence_country AS residenceCountry,
+      b.business_model_code AS businessModelCode, COALESCE(f.approved_time, approved.firstApprovedAt) AS approvedAt
+    FROM (SELECT client_id, MIN(update_time) AS firstApprovedAt FROM t_client_application
+          WHERE status='APPROVED'
+            AND client_id IN <foreach collection="clientIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+          GROUP BY client_id) approved
+    JOIN t_client c ON c.client_id=approved.client_id
+    JOIN t_party p ON p.party_id=c.party_id
+    LEFT JOIN t_party_profile f ON f.party_id=p.party_id
+    LEFT JOIN t_organization_profile o ON o.profile_id=f.profile_id
+    LEFT JOIN t_individual_profile i ON i.profile_id=f.profile_id
+    LEFT JOIN t_client_business_profile b ON b.client_id=c.client_id
+    ORDER BY c.client_id
+  </select>
+</mapper>

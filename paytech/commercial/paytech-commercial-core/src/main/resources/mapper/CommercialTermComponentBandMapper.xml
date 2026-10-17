@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.commercial.core.dal.mapper.CommercialTermComponentBandMapper">
+    <resultMap id="CommercialTermComponentBand" type="com.paytech.commercial.core.dal.dataobject.CheckoutRecords$CommercialTermComponentBand">
+        <constructor>
+            <arg column="term_band_id" javaType="java.lang.Long"/>
+            <arg column="term_component_id" javaType="java.lang.Long"/>
+            <arg column="band_no" javaType="java.lang.Integer"/>
+            <arg column="lower_bound" javaType="java.math.BigDecimal"/>
+            <arg column="upper_bound" javaType="java.math.BigDecimal"/>
+            <arg column="rate" javaType="java.math.BigDecimal"/>
+            <arg column="fixed_amount" javaType="java.math.BigDecimal"/>
+        </constructor>
+    </resultMap>
+    <select id="findForCheckout" resultMap="CommercialTermComponentBand">
+        SELECT term_band_id, term_component_id, band_no, lower_bound, upper_bound, rate, fixed_amount
+        FROM t_commercial_term_component_band
+        WHERE term_component_id IN (SELECT term_component_id FROM t_commercial_term_component WHERE term_price_id IN (SELECT term_price_id FROM t_commercial_term_price WHERE term_version_id IN (SELECT term_version_id FROM t_commercial_term_version WHERE term_plan_id IN (SELECT term_plan_id FROM t_commercial_term_plan WHERE client_id = #{clientId} OR local_partner_id IN (SELECT source_partner_id FROM t_entity_source_relation WHERE entity_no IN (SELECT entity_no FROM t_client_entity_affiliation WHERE client_id = #{clientId}) AND source_type='PARTNER'))) AND entity_no IN (SELECT entity_no FROM t_client_entity_affiliation WHERE client_id = #{clientId})))
+        ORDER BY term_band_id
+    </select>
+</mapper>
