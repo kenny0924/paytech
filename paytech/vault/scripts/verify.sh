@@ -35,14 +35,15 @@ def required(name):
 def prepared_foundation():
     repository = pathlib.Path(required('VAULT_MAVEN_REPOSITORY'))
     message = ('PREPARE: prepare Foundation artifacts in VAULT_MAVEN_REPOSITORY: '
-               'install the approved paytech/build parent/BOM, paytech-common-core and paytech-http-problem '
-               '1.0.0-SNAPSHOT separately; '
+               'install the approved paytech/build parent/BOM, paytech-common-core, paytech-http-problem and '
+               'paytech-internal-auth 1.0.0-SNAPSHOT separately; '
                'verification does not install, substitute or remotely resolve them.')
     if not repository.is_absolute() or not repository.is_dir():
         fail(message)
     for artifact, extensions in (('paytech-parent', ('pom',)), ('paytech-dependencies', ('pom',)),
                                  ('paytech-common-core', ('pom', 'jar')),
-                                 ('paytech-http-problem', ('pom', 'jar'))):
+                                 ('paytech-http-problem', ('pom', 'jar')),
+                                 ('paytech-internal-auth', ('pom', 'jar'))):
         for extension in extensions:
             path = repository / 'com/paytech' / artifact / '1.0.0-SNAPSHOT' / (artifact + '-1.0.0-SNAPSHOT.' + extension)
             if not path.is_file() or path.stat().st_size == 0:

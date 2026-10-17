@@ -291,6 +291,7 @@ class VaultClientHttpTest {
                     {400, "TOKEN_MODE_NOT_ALLOWED", FailException.class},
                     {400, "VALUE_NOT_JSON_OBJECT", FailException.class},
                     {400, "VALUE_PATTERN_MISMATCH", FailException.class},
+                    {401, "INTERNAL_TOKEN_INVALID", FailException.class},
                     {403, "ACCESS_DENIED", FailException.class},
                     {404, "TOKEN_NOT_FOUND", FailException.class},
                     {409, "IDEMPOTENCY_KEY_CONFLICT", FailException.class},
@@ -538,7 +539,8 @@ class VaultClientHttpTest {
                 VaultClient client = context.getBean(VaultClient.class);
                 String id = "response-status";
                 Object[][] invalidPairs = {
-                    {400, "ACCESS_DENIED"}, {403, "INVALID_REQUEST"}, {404, "IDEMPOTENCY_KEY_CONFLICT"},
+                    {400, "ACCESS_DENIED"}, {401, "ACCESS_DENIED"}, {403, "INTERNAL_TOKEN_INVALID"},
+                    {403, "INVALID_REQUEST"}, {404, "IDEMPOTENCY_KEY_CONFLICT"},
                     {409, "TOKEN_NOT_FOUND"}, {500, "DEPENDENCY_UNAVAILABLE"}, {503, "INTERNAL_ERROR"},
                     {400, "UNKNOWN_CODE"}
                 };
@@ -557,7 +559,7 @@ class VaultClientHttpTest {
                     assertInvalidProtocol(simulator, client, status, body,
                             List.of(PROBLEM_CONTENT_TYPE), List.of(id));
                 }
-                assertThat(simulator.requests).hasSize(24);
+                assertThat(simulator.requests).hasSize(26);
             });
         }
     }

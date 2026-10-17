@@ -20,16 +20,19 @@ type headerCheck func(h http.Header, call *service.Call) error
 
 // businessRoute 把业务接口包装为路由：提取 Trace、开启观测、校验公共头、统一写错误并记录指标（≈ 拦截器 + @ControllerAdvice）。
 //
-// 公共头校验失败在此独立审计一次；进入用例后的审计由 biz 负责，这里不再重复审计。
+// 调用方身份（内部 Token / X-Caller-Service）与公共头校验失败在此独立审计一次；进入用例后的审计由 biz 负责，这里不再重复审计。
 func (r *router) businessRoute(action biz.Action, handle businessHandler, checks ...headerCheck) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx, finish := r.observe(c.Request, action)
 		c.Request = c.Request.WithContext(ctx)
-		call := service.NewCall(ctx, c.GetString(requestIDKey), caller(c.Request.Header), action)
+		callerID, err := r.deps.InternalAuth.callerOf(c.Request)
+		call := service.NewCall(ctx, c.GetString(requestIDKey), callerID, action)
 		start, status := time.Now(), http.StatusInternalServerError
 		defer func() { finish(call.Projection, status, time.Since(start)) }()
 
-		err := validateHeaders(c.Request.Header, action)
+		if err == nil {
+			err = validateHeaders(c.Request.Header, callerID, action)
+		}
 		for _, check := range checks {
 			if err == nil {
 				err = check(c.Request.Header, call)

@@ -27,6 +27,8 @@ const (
 	ValuePatternMismatch   ErrorCode = "VALUE_PATTERN_MISMATCH"
 	ValuePatternInvalid    ErrorCode = "VALUE_PATTERN_INVALID"
 	SampleValueInvalid     ErrorCode = "SAMPLE_VALUE_INVALID"
+	// InternalTokenInvalid 表示内部调用 Token 缺失或不合法（VAULT_INTERNAL_AUTH_MODE 非 OFF 时）。
+	InternalTokenInvalid ErrorCode = "INTERNAL_TOKEN_INVALID"
 )
 
 // ServiceError 是携带稳定错误码的领域错误，Error() 只返回安全的本地说明。
@@ -81,7 +83,8 @@ func Sanitize(err error) error {
 func OutcomeForCode(code ErrorCode) Outcome {
 	switch code {
 	case InvalidRequest, ValueTooLarge, UnsupportedDataType, TokenModeNotAllowed, AccessDenied, TokenNotFound, IdempotencyKeyConflict,
-		PolicyVersionConflict, PolicyEntryExists, PolicyEntryNotFound, ValueNotJSONObject, ValuePatternMismatch, ValuePatternInvalid, SampleValueInvalid:
+		PolicyVersionConflict, PolicyEntryExists, PolicyEntryNotFound, ValueNotJSONObject, ValuePatternMismatch, ValuePatternInvalid, SampleValueInvalid,
+		InternalTokenInvalid:
 		return Denied
 	default:
 		return Failed
@@ -107,4 +110,5 @@ var safeMessages = map[ErrorCode]string{
 	ValuePatternMismatch:   "值不符合数据类型的正则",
 	ValuePatternInvalid:    "值格式与正则的组合无效或正则无法编译",
 	SampleValueInvalid:     "测试样例缺失或不符合值格式",
+	InternalTokenInvalid:   "内部调用凭证无效",
 }

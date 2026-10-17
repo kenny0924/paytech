@@ -41,7 +41,10 @@ public enum VaultClientErrorCode implements CodeMessageEnum {
 
     VALUE_PATTERN_INVALID("VALUE_PATTERN_INVALID", "值格式与正则的组合无效或正则无法编译"),
 
-    SAMPLE_VALUE_INVALID("SAMPLE_VALUE_INVALID", "测试样例缺失或不符合值格式");
+    SAMPLE_VALUE_INVALID("SAMPLE_VALUE_INVALID", "测试样例缺失或不符合值格式"),
+
+    /** 内部调用 Token 缺失或不合法（Vault 以 REQUIRED 模式校验时）。 */
+    INTERNAL_TOKEN_INVALID("INTERNAL_TOKEN_INVALID", "内部调用凭证无效");
 
     private final String code;
     private final String message;

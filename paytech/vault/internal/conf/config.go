@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -12,6 +13,7 @@ import (
 	"github.com/caarlos0/env/v11"
 
 	"github.com/paytech/vault-service/internal/biz"
+	"github.com/paytech/vault-service/internal/pkg/internalauth"
 )
 
 var keyIDPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$`)
@@ -27,9 +29,11 @@ type Config struct {
 	PolicyRefreshInterval time.Duration
 	SnowflakeWorkerID     int64
 	Nacos                 NacosConfig
-	databaseDSN           secret
-	localAESRootKey       secret
-	localAESKeyID         string
+	// InternalAuth 是入站内部 Token 校验配置（D26）；默认 OFF，行为与引入前一致。
+	InternalAuth    InternalAuthConfig
+	databaseDSN     secret
+	localAESRootKey secret
+	localAESKeyID   string
 }
 
 // NacosConfig 将服务注册地址与 HTTP 监听地址分开配置。
@@ -42,6 +46,15 @@ type NacosConfig struct {
 	InstancePort  int
 	username      secret
 	password      secret
+}
+
+// InternalAuthConfig 是内部调用 Token 校验配置；Mode 为 OFF 时其余字段不读取。
+type InternalAuthConfig struct {
+	Mode internalauth.Mode
+	// JWKSURL 是 Platform JWKS 地址（http/https 绝对地址）。
+	JWKSURL string
+	// InstanceID 是本实例 ID，Token 的 inst 声明必须与之相同（≈ Java paytech.instance-id）。
+	InstanceID string
 }
 
 // DatabaseDSN 仅供运行时建立 Vault 专属数据库连接，不得写入日志。
@@ -73,16 +86,24 @@ func (secret) GoString() string { return "[REDACTED]" }
 //
 // 解析后转入 Config：密钥类值放进私有字段并在格式化时脱敏。连接池参数不从环境读取，见 data.DefaultOptions。
 type environment struct {
-	RuntimeMode           string           `env:"VAULT_RUNTIME_MODE,required"`
-	HTTPAddress           string           `env:"VAULT_HTTP_ADDRESS" envDefault:"127.0.0.1:18107"`
-	AdminCallers          []string         `env:"VAULT_ADMIN_CALLERS" envDefault:"operations-console-bff" envSeparator:","`
-	PolicyRefreshInterval time.Duration    `env:"VAULT_POLICY_REFRESH_INTERVAL" envDefault:"10s"`
-	DatabaseDSN           string           `env:"VAULT_DB_DSN,required"`
-	LocalAESRootKey       string           `env:"VAULT_LOCAL_AES_ROOT_KEY,required"`
-	LocalAESKeyID         string           `env:"VAULT_LOCAL_AES_KEY_ID,required"`
-	SnowflakeDatacenterID uint8            `env:"VAULT_SNOWFLAKE_DATACENTER_ID,required"`
-	SnowflakeWorkerID     uint8            `env:"VAULT_SNOWFLAKE_WORKER_ID,required"`
-	Nacos                 nacosEnvironment `envPrefix:"VAULT_NACOS_"`
+	RuntimeMode           string                  `env:"VAULT_RUNTIME_MODE,required"`
+	HTTPAddress           string                  `env:"VAULT_HTTP_ADDRESS" envDefault:"127.0.0.1:18107"`
+	AdminCallers          []string                `env:"VAULT_ADMIN_CALLERS" envDefault:"operations-console-bff" envSeparator:","`
+	PolicyRefreshInterval time.Duration           `env:"VAULT_POLICY_REFRESH_INTERVAL" envDefault:"10s"`
+	DatabaseDSN           string                  `env:"VAULT_DB_DSN,required"`
+	LocalAESRootKey       string                  `env:"VAULT_LOCAL_AES_ROOT_KEY,required"`
+	LocalAESKeyID         string                  `env:"VAULT_LOCAL_AES_KEY_ID,required"`
+	SnowflakeDatacenterID uint8                   `env:"VAULT_SNOWFLAKE_DATACENTER_ID,required"`
+	SnowflakeWorkerID     uint8                   `env:"VAULT_SNOWFLAKE_WORKER_ID,required"`
+	Nacos                 nacosEnvironment        `envPrefix:"VAULT_NACOS_"`
+	InternalAuth          internalAuthEnvironment `envPrefix:"VAULT_INTERNAL_AUTH_"`
+	InstanceID            string                  `env:"VAULT_INSTANCE_ID"`
+}
+
+// internalAuthEnvironment 声明内部 Token 校验参数；JWKS 地址与实例 ID 只在模式非 OFF 时校验。
+type internalAuthEnvironment struct {
+	Mode    string `env:"MODE" envDefault:"OFF"`
+	JWKSURL string `env:"JWKS_URL"`
 }
 
 // nacosEnvironment 声明服务注册参数；除 ENABLED 外只在启用时校验。
@@ -143,8 +164,35 @@ func (e environment) toConfig() (Config, error) {
 		SnowflakeDatacenterID: int64(e.SnowflakeDatacenterID), SnowflakeWorkerID: int64(e.SnowflakeWorkerID),
 		databaseDSN: secret(e.DatabaseDSN), localAESRootKey: secret(rootKey), localAESKeyID: e.LocalAESKeyID,
 	}
-	config.Nacos, err = e.Nacos.toConfig()
+	if config.Nacos, err = e.Nacos.toConfig(); err != nil {
+		return Config{}, err
+	}
+	config.InternalAuth, err = e.InternalAuth.toConfig(e.InstanceID)
 	return config, err
+}
+
+// toConfig 转为 Token 校验配置；非 OFF 时要求合法的 JWKS 地址与实例 ID。
+func (a internalAuthEnvironment) toConfig(instanceID string) (InternalAuthConfig, error) {
+	mode, ok := internalauth.ParseMode(a.Mode)
+	if !ok {
+		return InternalAuthConfig{}, fmt.Errorf("invalid internal auth mode")
+	}
+	if mode == internalauth.Off {
+		return InternalAuthConfig{Mode: mode}, nil
+	}
+	if !validJWKSURL(a.JWKSURL) || !internalauth.IsInstanceID(instanceID) {
+		return InternalAuthConfig{}, fmt.Errorf("invalid internal auth configuration")
+	}
+	return InternalAuthConfig{Mode: mode, JWKSURL: a.JWKSURL, InstanceID: instanceID}, nil
+}
+
+// validJWKSURL 只接受带主机、无用户信息与片段的 http/https 绝对地址。
+func validJWKSURL(value string) bool {
+	parsed, err := url.Parse(value)
+	if err != nil || parsed.Host == "" || parsed.User != nil || parsed.Fragment != "" {
+		return false
+	}
+	return parsed.Scheme == "http" || parsed.Scheme == "https"
 }
 
 // toConfig 转为注册配置；未启用时只保留 Group 默认值。

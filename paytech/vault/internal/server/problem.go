@@ -36,6 +36,8 @@ func statusFor(code biz.ErrorCode) int {
 	case biz.InvalidRequest, biz.ValueTooLarge, biz.UnsupportedDataType, biz.TokenModeNotAllowed,
 		biz.ValueNotJSONObject, biz.ValuePatternMismatch, biz.ValuePatternInvalid, biz.SampleValueInvalid:
 		return http.StatusBadRequest
+	case biz.InternalTokenInvalid:
+		return http.StatusUnauthorized
 	case biz.AccessDenied:
 		return http.StatusForbidden
 	case biz.TokenNotFound, biz.PolicyEntryNotFound:

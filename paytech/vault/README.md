@@ -1,6 +1,6 @@
 # Vault — local/test Go server and Java client
 
-This repository implements only generic Protect/Reveal, the Operations admin API (data types, access rules, manual Protect/Reveal), LOCAL AES, the reviewed six-table MySQL model, optional Nacos Discovery and the public `paytech-vault-client`. It is not production KMS, strong service authentication or a deployed business integration. Private HTTP, spoofable `X-Caller-Service` and a database-held allowlist are the accepted V1 trust boundary. No PAN/CVV/track/expiry/PIN, secrets or private keys are legitimate Values. Retention, destruction and production compliance remain unimplemented; PDManer in-app review remains pending.
+This directory (`paytech/vault/`, moved from `vault-service/` in refactor step 02d) implements only generic Protect/Reveal, the Operations admin API (data types, access rules, manual Protect/Reveal), LOCAL AES, the reviewed six-table MySQL model, optional Nacos Discovery and the public `paytech-vault-client`. It is not production KMS, strong service authentication or a deployed business integration. Private HTTP, spoofable `X-Caller-Service` and a database-held allowlist are the accepted V1 trust boundary; the optional Platform internal token (D26, see *Internal caller token*) is off by default. No PAN/CVV/track/expiry/PIN, secrets or private keys are legitimate Values. Retention, destruction and production compliance remain unimplemented; PDManer in-app review remains pending.
 
 ## HTTP 契约
 
@@ -38,11 +38,16 @@ internal/biz/                ProtectUsecase、RevealUsecase、PolicyAdminUsecase
 internal/data/               仓储实现与事务；data/sqlc 为查询（queries/*.sql）与生成代码（*.gen.go，不手改）
 internal/conf/               配置读取与校验
 internal/bootstrap/          组合根：cmd 与自动测试共用的装配
-internal/pkg/                localaes、nacos、snowflake、observability、policy（数据库策略快照与定时刷新）技术组件
-test/auto/                   contract（OpenAPI 金样）、biz（用例）、conf、pkg/policy、ext/http（HTTP 入口测试，Snowflake 31/27）
+internal/pkg/                localaes、nacos、snowflake、observability、policy（数据库策略快照与定时刷新）、internalauth（内部调用 Token 与 JWKS）技术组件
+test/auto/                   contract（OpenAPI 金样）、biz（用例）、conf、pkg/policy、pkg/internalauth、ext/http（HTTP 入口测试，Snowflake 31/27）、
+                             ext/internalauth（Token 三种模式的入口测试，四套环境 Snowflake 31/22～25）
 包内 *_test.go              仅保留必须访问未导出实现的白盒测试（事务故障、错误归类、严格 JSON 边界等）
-test/support/                测试 base、Builder、本地 Mocker、Checker、TestMapper、隔离标识
+test/support/                测试 base、Builder、本地 Mocker、外部 Mocker（Platform JWKS）、Checker、TestMapper、隔离标识
+paytech-vault-client/        Java Client（Maven，属于 paytech/ 单 Reactor）
+paytech-vault-test/          Java → Go → MySQL 黑盒验收（Maven）
 ```
+
+Maven 模块使用 `paytech/` 唯一的 Wrapper：在本目录执行 `../mvnw …`，或在 `paytech/` 执行 `./mvnw -pl vault/<module> -am …`。
 
 入口测试只需 `VAULT_TEST_DB_DSN`：`go test ./test/...`。每次运行使用独占的调用方/数据类型/请求 ID 前缀，结束后只删除本次运行的数据。
 
@@ -58,7 +63,7 @@ The auto-test contract below remains local-environment-only; never point its fix
 
 ## Automatic verification
 
-Prerequisites: Go **1.27.1** (`GO_BIN` or PATH), **sqlc v1.31.1** and **golangci-lint v2.14.0** (PATH or `SQLC_BIN` / `GOLANGCI_LINT_BIN`), **JDK 25** (`JAVA_HOME`), the `paytech/` Maven **3.9.16** wrapper (`../mvnw`), Python 3 (portable bounded subprocess supervision), git, POSIX private-file permissions, and **15 GiB** free disk. **`VAULT_MAVEN_REPOSITORY` is required** and must be an absolute path to the prepared Maven cache. Before invoking Maven or any database/test gate, the script checks nonempty local `paytech-parent`/`paytech-dependencies` POMs and `paytech-common-core`/`paytech-http-problem` POMs and JARs at `com/paytech/<artifact>/1.0.0-SNAPSHOT`. Missing artifacts require a separate operator-approved Foundation build/install; verification neither fetches nor substitutes them. Every Maven command uses that exact repository and `--no-snapshot-updates`; private/global settings are not parsed or changed. Nothing installs or publishes artifacts, changes global settings, starts containers or prepares schema automatically.
+Prerequisites: Go **1.27.1** (`GO_BIN` or PATH), **sqlc v1.31.1** and **golangci-lint v2.14.0** (PATH or `SQLC_BIN` / `GOLANGCI_LINT_BIN`), **JDK 25** (`JAVA_HOME`), the `paytech/` Maven **3.9.16** wrapper (`../mvnw`), Python 3 (portable bounded subprocess supervision), git, POSIX private-file permissions, and **15 GiB** free disk. **`VAULT_MAVEN_REPOSITORY` is required** and must be an absolute path to the prepared Maven cache. Before invoking Maven or any database/test gate, the script checks nonempty local `paytech-parent`/`paytech-dependencies` POMs and `paytech-common-core`/`paytech-http-problem`/`paytech-internal-auth` POMs and JARs at `com/paytech/<artifact>/1.0.0-SNAPSHOT`. The parent and BOM resolve from `paytech/build` by relative path during the build, but the cache check still requires their installed copies. Missing artifacts require a separate operator-approved Foundation build/install (for example `../mvnw -B install -f ../foundation/pom.xml -DskipTests` from this directory); verification neither fetches nor substitutes them. Every Maven command uses that exact repository and `--no-snapshot-updates`; private/global settings are not parsed or changed. Nothing installs or publishes artifacts, changes global settings, starts containers or prepares schema automatically.
 
 The operator must first start the repository `local-environment` MySQL and manually apply the reviewed [schema](docs/database/sql/vault-schema.sql) to existing `mor_vault`. Never replay DDL against an already prepared schema. Exactly three tables are required; no Flyway, Liquibase, Testcontainers, seed or truncate exists. Tests use only `vault_app` at `127.0.0.1:13306/mor_vault`.
 
@@ -72,7 +77,7 @@ Supply these environment variables through your secret-management shell (never c
 - `VAULT_TEST_DB_DSN`: `vault_app:<same password>@tcp(127.0.0.1:13306)/mor_vault?parseTime=true&loc=UTC`.
 - `OTEL_RESOURCE_ATTRIBUTES` must be empty. The script rejects, never rewrites it. Runtime `service.name` is fixed as `vault-service`.
 
-Tests and scripts do not read `.env.local`, Docker environment or credentials themselves. Missing MySQL/schema/credentials fail closed with a setup instruction, never skip. No two copies of a Go test package may run concurrently: persistence uses Snowflake `31/31`, application `31/30`, HTTP `31/29`. Black-box fixtures use `31/28`, nonparallel JUnit and an exclusive loopback socket lease on **19128**; an occupied lease fails safely. Operators must not run another manually configured `31/28` server concurrently. Business test listeners use random loopback ports.
+Tests and scripts do not read `.env.local`, Docker environment or credentials themselves. Missing MySQL/schema/credentials fail closed with a setup instruction, never skip. No two copies of a Go test package may run concurrently: persistence uses Snowflake `31/31`, application `31/30`, HTTP `31/29`, `ext/http` `31/27`, the local record Mocker `31/26` and `ext/internalauth` `31/22`–`31/25`. Test cleanup selects owned primary keys with a non-locking read and deletes by key, so parallel packages never lock each other's rows. `ext/internalauth` relies on JWKS forced refresh (at most once per 10 s per environment) and must not be run with `-count` greater than 1. Black-box fixtures use `31/28`, nonparallel JUnit and an exclusive loopback socket lease on **19128**; an occupied lease fails safely. Operators must not run another manually configured `31/28` server concurrently. Business test listeners use random loopback ports.
 
 ```sh
 ./scripts/verify.sh
@@ -105,4 +110,18 @@ Both `ALIBABA_CLOUD_ACCESS_KEY_ID` and `ALIBABA_CLOUD_ACCESS_KEY_SECRET` must be
 
 ## Server configuration
 
-The server reads `VAULT_RUNTIME_MODE=local|test`, `VAULT_HTTP_ADDRESS`, `VAULT_DB_DSN`, optional `VAULT_ADMIN_CALLERS` (comma-separated, default `operations-console-bff`) and `VAULT_POLICY_REFRESH_INTERVAL` (100ms–5m, default 10s), `VAULT_LOCAL_AES_ROOT_KEY` (base64 32 random bytes), `VAULT_LOCAL_AES_KEY_ID`, explicit `VAULT_SNOWFLAKE_DATACENTER_ID` / `VAULT_SNOWFLAKE_WORKER_ID`, and `VAULT_NACOS_ENABLED`. Enabled discovery additionally needs `VAULT_NACOS_SERVER_ADDRESS`, `NAMESPACE`, `GROUP`, `INSTANCE_IP`, `INSTANCE_PORT`, `USERNAME`, `PASSWORD` with the `VAULT_NACOS_` prefix. There is no policy file: the access policy is read only from the database. Production mode rejects LOCAL AES. Nacos registration happens once at startup and is deregistered at shutdown; the SDK keeps the ephemeral instance alive and re-registers after reconnects, so readiness covers only MySQL and keys. Standard OTLP exporter/sampling variables remain available; resource attributes must be empty. `/health/liveness` and `/health/readiness` are operational endpoints, not public business-client operations.
+The server reads `VAULT_RUNTIME_MODE=local|test`, `VAULT_HTTP_ADDRESS`, `VAULT_DB_DSN`, optional `VAULT_ADMIN_CALLERS` (comma-separated, default `operations-console-bff`) and `VAULT_POLICY_REFRESH_INTERVAL` (100ms–5m, default 10s), `VAULT_LOCAL_AES_ROOT_KEY` (base64 32 random bytes), `VAULT_LOCAL_AES_KEY_ID`, explicit `VAULT_SNOWFLAKE_DATACENTER_ID` / `VAULT_SNOWFLAKE_WORKER_ID`, `VAULT_NACOS_ENABLED`, and optional `VAULT_INTERNAL_AUTH_MODE` (`OFF` default) with `VAULT_INTERNAL_AUTH_JWKS_URL` / `VAULT_INSTANCE_ID` (see *Internal caller token*). Enabled discovery additionally needs `VAULT_NACOS_SERVER_ADDRESS`, `NAMESPACE`, `GROUP`, `INSTANCE_IP`, `INSTANCE_PORT`, `USERNAME`, `PASSWORD` with the `VAULT_NACOS_` prefix. There is no policy file: the access policy is read only from the database. Production mode rejects LOCAL AES. Nacos registration happens once at startup and is deregistered at shutdown; the SDK keeps the ephemeral instance alive and re-registers after reconnects, so readiness covers only MySQL and keys. Standard OTLP exporter/sampling variables remain available; resource attributes must be empty. `/health/liveness` and `/health/readiness` are operational endpoints, not public business-client operations.
+
+## Internal caller token (D26)
+
+`VAULT_INTERNAL_AUTH_MODE` selects where the caller identity comes from; the access-rule `Caller` dimension is unchanged.
+
+| Mode | Behaviour |
+|---|---|
+| `OFF` (default) | Only `X-Caller-Service` is read; `Authorization` is ignored and JWKS is never fetched. Identical to the behaviour before D26. |
+| `DUAL` | A valid `Authorization: Bearer <token>` wins and its `sub` is the caller; a missing or invalid token, or unavailable JWKS, falls back to `X-Caller-Service`. |
+| `REQUIRED` | Only a valid token is accepted; missing or invalid → `401 INTERNAL_TOKEN_INVALID`, unavailable JWKS → `503 DEPENDENCY_UNAVAILABLE`; `X-Caller-Service` is ignored. |
+
+For `DUAL` and `REQUIRED`, `VAULT_INTERNAL_AUTH_JWKS_URL` (Platform JWKS, absolute http/https URL) and `VAULT_INSTANCE_ID` (this instance, the token's `inst`) are required; under `OFF` both are ignored. The token format matches Foundation `paytech-internal-auth`: ES256 JWS Compact, `iss=platform-support-service`, `aud=vault-service`, `inst`, `purpose`, `jti`, integer `iat`/`exp` with `exp - iat ≤ 300 s`; `exp` is strict and `iat`/`nbf` may lead by 60 s. The verifier uses only the Go standard library (`internal/pkg/internalauth`). JWKS keys are cached for 5 minutes; an unknown `kid` forces at most one refresh per 10 seconds; an expired cache whose refresh fails is dropped (fail closed). The first JWKS fetch happens on the first token-bearing request, so startup never depends on Platform. Health and metrics endpoints never require a token. Business-route rejections are audited like other header failures (caller `UNKNOWN`).
+
+The Java client always sends `X-Caller-Service`. When the host includes `paytech-internal-auth` and has an `InternalTokenSupplier` bean, it also sends `Authorization: Bearer` with `aud` = the Vault service id and purpose `GENERAL`; a supplier failure fails closed as `DEPENDENCY_UNAVAILABLE` without sending the request. Compose and test deployments keep the mode `OFF`.

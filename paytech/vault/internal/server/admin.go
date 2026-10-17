@@ -49,9 +49,13 @@ func (r *router) adminRoute(handle policyHandler) gin.HandlerFunc {
 	}
 }
 
-// checkAdmin 校验调用方属于管理调用方、操作人唯一且合法；写请求还须为 JSON。
+// checkAdmin 校验调用方身份并属于管理调用方、操作人唯一且合法；写请求还须为 JSON。
 func (r *router) checkAdmin(req *http.Request) error {
-	if !slices.Contains(r.deps.AdminCallers, caller(req.Header)) {
+	callerID, err := r.deps.InternalAuth.callerOf(req)
+	if err != nil {
+		return err
+	}
+	if !slices.Contains(r.deps.AdminCallers, callerID) {
 		return biz.NewError(biz.AccessDenied)
 	}
 	if !validOperator(req.Header) {
@@ -63,9 +67,9 @@ func (r *router) checkAdmin(req *http.Request) error {
 	return nil
 }
 
-// adminCaller 是人工加/解密的附加校验：管理调用方与操作人；通过后把操作人写入尝试与审计。
+// adminCaller 是人工加/解密的附加校验：管理调用方（已由 businessRoute 确定）与操作人；通过后把操作人写入尝试与审计。
 func (r *router) adminCaller(h http.Header, call *service.Call) error {
-	if !slices.Contains(r.deps.AdminCallers, caller(h)) {
+	if !slices.Contains(r.deps.AdminCallers, call.Attempt.Caller) {
 		return biz.NewError(biz.AccessDenied)
 	}
 	if !validOperator(h) {

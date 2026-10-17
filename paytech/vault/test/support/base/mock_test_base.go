@@ -11,14 +11,19 @@ import (
 // 全局清理最先登记、因此最后执行（t.Cleanup 后进先出），在类级清理之后；断言失败时同样执行。
 func Setup(t *testing.T) *Environment {
 	t.Helper()
-	env := current
-	if env == nil {
+	if current == nil {
 		t.Fatal("测试环境未启动：测试包必须在 TestMain 中调用 base.Run")
 	}
-	env.assertReusable(t)
-	t.Cleanup(func() { env.clearAfterEach(t) })
-	env.assertEmpty(t)
-	return env
+	return current.Setup(t)
+}
+
+// Setup 是指定环境的全局准备，语义同包级 Setup；用于 Start 启动的多个环境。
+func (e *Environment) Setup(t *testing.T) *Environment {
+	t.Helper()
+	e.assertReusable(t)
+	t.Cleanup(func() { e.clearAfterEach(t) })
+	e.assertEmpty(t)
+	return e
 }
 
 // assertEmpty 检查本次运行的数据基线为空；不在准备阶段偷偷删除。

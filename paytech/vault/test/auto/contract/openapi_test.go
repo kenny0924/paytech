@@ -27,6 +27,7 @@ func TestOpenAPIProtectContractRejectsUnexpectedFieldsAndOversizedValues(t *test
 	operation := requireOperation(t, document, "/vault/v1/records/protect", "post")
 
 	requireHeader(t, operation, "X-Caller-Service", true)
+	requireHeader(t, operation, "Authorization", false)
 	requireHeader(t, operation, "Idempotency-Key", true)
 	requireHeader(t, operation, "X-Request-Id", false)
 	requireJSONRequestSchema(t, operation, "ProtectRequest")
@@ -34,7 +35,7 @@ func TestOpenAPIProtectContractRejectsUnexpectedFieldsAndOversizedValues(t *test
 	requireObjectSchema(t, document, "ProtectRequest", []string{"dataType", "tokenMode", "value", "purpose"})
 	requireUTF8ByteLimit(t, document, "ProtectRequest", "value", 32768)
 	requireEnum(t, document, "ProtectRequest", "tokenMode", "REFERENCE", "STABLE")
-	requireResponses(t, operation, "200", "400", "403", "405", "409", "500", "503")
+	requireResponses(t, operation, "200", "400", "401", "403", "405", "409", "500", "503")
 }
 
 func TestOpenAPIRevealContractHasRequiredHeadersAndStableResponses(t *testing.T) {
@@ -42,11 +43,12 @@ func TestOpenAPIRevealContractHasRequiredHeadersAndStableResponses(t *testing.T)
 	operation := requireOperation(t, document, "/vault/v1/records/reveal", "post")
 
 	requireHeader(t, operation, "X-Caller-Service", true)
+	requireHeader(t, operation, "Authorization", false)
 	requireHeader(t, operation, "X-Request-Id", false)
 	requireJSONRequestSchema(t, operation, "RevealRequest")
 	requireRawBodyByteLimit(t, operation, 262144)
 	requireObjectSchema(t, document, "RevealRequest", []string{"token", "purpose"})
-	requireResponses(t, operation, "200", "400", "403", "404", "405", "500", "503")
+	requireResponses(t, operation, "200", "400", "401", "403", "404", "405", "500", "503")
 }
 
 func TestOpenAPIResponsesUseSuccessJSONAndErrorProblemJSON(t *testing.T) {
@@ -182,7 +184,7 @@ func requireProblemSchema(t *testing.T, document *openapi3.T) {
 		t.Fatalf("Problem type constraint = const %v format %q", typeSchema.Const, typeSchema.Format)
 	}
 	titleSchema := schema.Properties["title"].Value
-	wantTitles := []any{"Bad Request", "Forbidden", "Not Found", "Method Not Allowed", "Conflict", "Internal Server Error", "Service Unavailable"}
+	wantTitles := []any{"Bad Request", "Unauthorized", "Forbidden", "Not Found", "Method Not Allowed", "Conflict", "Internal Server Error", "Service Unavailable"}
 	if fmt.Sprint(titleSchema.Enum) != fmt.Sprint(wantTitles) {
 		t.Fatalf("Problem title enum = %v, want %v", titleSchema.Enum, wantTitles)
 	}
@@ -191,7 +193,7 @@ func requireProblemSchema(t *testing.T, document *openapi3.T) {
 		t.Fatal("Problem detail must be a non-empty string")
 	}
 	codeSchema := schema.Properties["code"].Value
-	if codeSchema.Pattern != `^[A-Z][A-Z0-9_]{0,63}$` || len(codeSchema.Enum) != 14 {
+	if codeSchema.Pattern != `^[A-Z][A-Z0-9_]{0,63}$` || len(codeSchema.Enum) != 15 {
 		t.Fatalf("Problem code constraints = pattern %q enum %v", codeSchema.Pattern, codeSchema.Enum)
 	}
 	requestIDSchema := schema.Properties["requestId"].Value
@@ -275,6 +277,7 @@ func requireErrorResponseMappings(t *testing.T, document *openapi3.T) {
 			"UNSUPPORTED_DATA_TYPE":  "不支持的数据类型",
 			"TOKEN_MODE_NOT_ALLOWED": "Token模式不允许",
 		},
+		"401": {"INTERNAL_TOKEN_INVALID": "内部调用凭证无效"},
 		"403": {"ACCESS_DENIED": "访问被拒绝"},
 		"404": {"TOKEN_NOT_FOUND": "Token不存在"},
 		"405": {"METHOD_NOT_ALLOWED": "请求方法不受支持"},

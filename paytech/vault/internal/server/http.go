@@ -32,6 +32,8 @@ type Dependencies struct {
 	Admin *service.AdminService
 	// AdminCallers 是允许调用管理接口的服务名（部署配置）。
 	AdminCallers []string
+	// InternalAuth 决定调用方身份取自内部 Token 还是 X-Caller-Service；零值为 OFF。
+	InternalAuth InternalAuth
 	Observer     Observer
 	Metrics      http.Handler
 	Ready        func(context.Context) error

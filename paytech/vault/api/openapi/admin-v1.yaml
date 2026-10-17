@@ -14,6 +14,7 @@ paths:
       summary: List all data types with the current policy version.
       parameters:
         - $ref: '#/components/parameters/XCallerService'
+        - $ref: '#/components/parameters/Authorization'
         - $ref: '#/components/parameters/XOperatorId'
         - $ref: '#/components/parameters/XRequestId'
         - name: status
@@ -26,6 +27,8 @@ paths:
           $ref: '#/components/responses/DataTypeList'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/InternalTokenInvalid'
         '403':
           $ref: '#/components/responses/AccessDenied'
         '500':
@@ -37,6 +40,7 @@ paths:
       summary: Create an ACTIVE data type; the code and token mode are immutable afterwards.
       parameters:
         - $ref: '#/components/parameters/XCallerService'
+        - $ref: '#/components/parameters/Authorization'
         - $ref: '#/components/parameters/XOperatorId'
         - $ref: '#/components/parameters/XRequestId'
       requestBody:
@@ -50,6 +54,8 @@ paths:
           $ref: '#/components/responses/DataTypeChanged'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/InternalTokenInvalid'
         '403':
           $ref: '#/components/responses/AccessDenied'
         '409':
@@ -64,6 +70,7 @@ paths:
       summary: Update class, description, manual switches or status under optimistic version control.
       parameters:
         - $ref: '#/components/parameters/XCallerService'
+        - $ref: '#/components/parameters/Authorization'
         - $ref: '#/components/parameters/XOperatorId'
         - $ref: '#/components/parameters/XRequestId'
         - name: dataTypeCode
@@ -82,6 +89,8 @@ paths:
           $ref: '#/components/responses/DataTypeChanged'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/InternalTokenInvalid'
         '403':
           $ref: '#/components/responses/AccessDenied'
         '404':
@@ -98,6 +107,7 @@ paths:
       summary: Page service access rules.
       parameters:
         - $ref: '#/components/parameters/XCallerService'
+        - $ref: '#/components/parameters/Authorization'
         - $ref: '#/components/parameters/XOperatorId'
         - $ref: '#/components/parameters/XRequestId'
         - name: dataTypeCode
@@ -127,6 +137,8 @@ paths:
           $ref: '#/components/responses/AccessRulePage'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/InternalTokenInvalid'
         '403':
           $ref: '#/components/responses/AccessDenied'
         '500':
@@ -138,6 +150,7 @@ paths:
       summary: Create an ACTIVE service access rule; OPERATIONS_MANUAL is a reserved purpose.
       parameters:
         - $ref: '#/components/parameters/XCallerService'
+        - $ref: '#/components/parameters/Authorization'
         - $ref: '#/components/parameters/XOperatorId'
         - $ref: '#/components/parameters/XRequestId'
       requestBody:
@@ -151,6 +164,8 @@ paths:
           $ref: '#/components/responses/AccessRuleChanged'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/InternalTokenInvalid'
         '403':
           $ref: '#/components/responses/AccessDenied'
         '404':
@@ -167,6 +182,7 @@ paths:
       summary: Enable or disable a service access rule under optimistic version control.
       parameters:
         - $ref: '#/components/parameters/XCallerService'
+        - $ref: '#/components/parameters/Authorization'
         - $ref: '#/components/parameters/XOperatorId'
         - $ref: '#/components/parameters/XRequestId'
         - name: accessRuleId
@@ -185,6 +201,8 @@ paths:
           $ref: '#/components/responses/AccessRuleChanged'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/InternalTokenInvalid'
         '403':
           $ref: '#/components/responses/AccessDenied'
         '404':
@@ -201,6 +219,7 @@ paths:
       summary: Page policy changes in descending version order (snapshots omitted).
       parameters:
         - $ref: '#/components/parameters/XCallerService'
+        - $ref: '#/components/parameters/Authorization'
         - $ref: '#/components/parameters/XOperatorId'
         - $ref: '#/components/parameters/XRequestId'
         - name: targetType
@@ -222,6 +241,8 @@ paths:
           $ref: '#/components/responses/PolicyChangePage'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/InternalTokenInvalid'
         '403':
           $ref: '#/components/responses/AccessDenied'
         '500':
@@ -234,6 +255,7 @@ paths:
       summary: Read one policy change with before/after metadata snapshots.
       parameters:
         - $ref: '#/components/parameters/XCallerService'
+        - $ref: '#/components/parameters/Authorization'
         - $ref: '#/components/parameters/XOperatorId'
         - $ref: '#/components/parameters/XRequestId'
         - name: policyVersionNo
@@ -247,6 +269,8 @@ paths:
           $ref: '#/components/responses/PolicyChangeDetail'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/InternalTokenInvalid'
         '403':
           $ref: '#/components/responses/AccessDenied'
         '404':
@@ -261,6 +285,7 @@ paths:
       summary: Page manual-operation audit events; tokens and values are never returned.
       parameters:
         - $ref: '#/components/parameters/XCallerService'
+        - $ref: '#/components/parameters/Authorization'
         - $ref: '#/components/parameters/XOperatorId'
         - $ref: '#/components/parameters/XRequestId'
         - name: actorId
@@ -299,6 +324,8 @@ paths:
           $ref: '#/components/responses/ManualEventPage'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/InternalTokenInvalid'
         '403':
           $ref: '#/components/responses/AccessDenied'
         '500':
@@ -312,6 +339,7 @@ paths:
       x-max-raw-body-bytes: 262144
       parameters:
         - $ref: '#/components/parameters/XCallerService'
+        - $ref: '#/components/parameters/Authorization'
         - $ref: '#/components/parameters/XOperatorId'
         - name: Idempotency-Key
           in: header
@@ -334,6 +362,8 @@ paths:
           $ref: '#/components/responses/ManualProtectSuccess'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/InternalTokenInvalid'
         '403':
           $ref: '#/components/responses/AccessDenied'
         '409':
@@ -349,6 +379,7 @@ paths:
       x-max-raw-body-bytes: 262144
       parameters:
         - $ref: '#/components/parameters/XCallerService'
+        - $ref: '#/components/parameters/Authorization'
         - $ref: '#/components/parameters/XOperatorId'
         - $ref: '#/components/parameters/XRequestId'
       requestBody:
@@ -362,6 +393,8 @@ paths:
           $ref: '#/components/responses/ManualRevealSuccess'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/InternalTokenInvalid'
         '403':
           $ref: '#/components/responses/AccessDenied'
         '404':
@@ -379,6 +412,18 @@ components:
       description: Must be one of the deployment-configured admin callers (VAULT_ADMIN_CALLERS).
       schema:
         $ref: '#/components/schemas/CallerService'
+    Authorization:
+      name: Authorization
+      in: header
+      required: false
+      description: >-
+        Optional Platform-issued internal token (D26), `Bearer <ES256 JWS compact>`; its sub replaces X-Caller-Service as
+        the caller when VAULT_INTERNAL_AUTH_MODE is DUAL or REQUIRED; ignored under OFF (default).
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 4103
+        pattern: '^[Bb][Ee][Aa][Rr][Ee][Rr] .+$'
     XOperatorId:
       name: X-Operator-Id
       in: header
@@ -854,6 +899,14 @@ components:
             title: {const: Bad Request}
             code:
               enum: [INVALID_REQUEST, VALUE_TOO_LARGE, UNSUPPORTED_DATA_TYPE, VALUE_NOT_JSON_OBJECT, VALUE_PATTERN_MISMATCH, VALUE_PATTERN_INVALID, SAMPLE_VALUE_INVALID]
+    ErrorInternalTokenInvalid:
+      allOf:
+        - $ref: '#/components/schemas/ErrorResponse'
+        - type: object
+          properties:
+            title: {const: Unauthorized}
+            code: {const: INTERNAL_TOKEN_INVALID}
+            detail: {const: 内部调用凭证无效}
     ErrorAccessDenied:
       allOf:
         - $ref: '#/components/schemas/ErrorResponse'
@@ -991,6 +1044,14 @@ components:
       content:
         application/problem+json:
           schema: {$ref: '#/components/schemas/ErrorBadRequest'}
+    InternalTokenInvalid:
+      description: Internal token missing or invalid while VAULT_INTERNAL_AUTH_MODE=REQUIRED.
+      headers:
+        X-Request-Id: {$ref: '#/components/headers/XRequestId'}
+        Cache-Control: {$ref: '#/components/headers/CacheControlNoStore'}
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/ErrorInternalTokenInvalid'}
     AccessDenied:
       description: Caller is not an admin caller, or the manual operation is not permitted.
       headers:

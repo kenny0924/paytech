@@ -13,6 +13,7 @@ import (
 	"github.com/paytech/vault-service/internal/biz"
 	"github.com/paytech/vault-service/internal/conf"
 	"github.com/paytech/vault-service/internal/data"
+	"github.com/paytech/vault-service/internal/pkg/internalauth"
 	"github.com/paytech/vault-service/internal/pkg/localaes"
 	"github.com/paytech/vault-service/internal/pkg/nacos"
 	"github.com/paytech/vault-service/internal/pkg/observability"
@@ -24,6 +25,9 @@ import (
 
 // ShutdownTimeout 是停机时 HTTP 关闭与资源清理各自的时间预算。
 const ShutdownTimeout = 10 * time.Second
+
+// ServiceName 是 Vault 的服务发现名，也是内部调用 Token 的 aud。
+const ServiceName = "vault-service"
 
 // Registration 是服务注册的生命周期：停机时注销。
 type Registration interface {
@@ -73,7 +77,7 @@ func Assemble(ctx context.Context, cfg conf.Config, obs *observability.Runtime) 
 	if app.Registration, err = startRegistration(ctx, cfg.Nacos); err != nil {
 		return nil, err
 	}
-	app.Server = NewHTTPServer(cfg.HTTPAddress, newHandler(obs, store, keys, ids, refresher, cfg.AdminCallers), obs)
+	app.Server = NewHTTPServer(cfg.HTTPAddress, newHandler(obs, store, keys, ids, refresher, cfg), obs)
 	success = true
 	return app, nil
 }
@@ -86,7 +90,7 @@ func openKeys(cfg conf.Config) (*localaes.Provider, error) {
 }
 
 // newHandler 按 data → biz → service → server 组装 HTTP Handler；存储与密钥经观测包装。
-func newHandler(obs *observability.Runtime, store *data.Store, keys *localaes.Provider, ids *snowflake.Generator, permissions biz.Authorizer, adminCallers []string) http.Handler {
+func newHandler(obs *observability.Runtime, store *data.Store, keys *localaes.Provider, ids *snowflake.Generator, permissions biz.Authorizer, cfg conf.Config) http.Handler {
 	observedStore, observedKeys := obs.ObserveStore(store), obs.ObserveKeys(keys)
 	audit := biz.NewAccessAuditService(observedStore, ids, time.Now)
 	cipher := biz.NewRecordCipherService(observedKeys, ids, rand.Reader, time.Now)
@@ -96,11 +100,22 @@ func newHandler(obs *observability.Runtime, store *data.Store, keys *localaes.Pr
 	return server.New(server.Dependencies{
 		Records:      service.NewRecordService(protect, reveal, audit),
 		Admin:        service.NewAdminService(admin, protect, reveal, audit),
-		AdminCallers: adminCallers,
+		AdminCallers: cfg.AdminCallers,
+		InternalAuth: internalAuth(cfg.InternalAuth),
 		Observer:     obs,
 		Metrics:      obs.MetricsHandler(),
 		Ready:        readiness(observedStore, observedKeys),
 	})
+}
+
+// internalAuth 按配置创建内部 Token 校验；OFF 时不创建校验器，也不访问 JWKS。
+// JWKS 首次读取延迟到第一个带 Token 的请求，启动不依赖 Platform 可用。
+func internalAuth(cfg conf.InternalAuthConfig) server.InternalAuth {
+	if cfg.Mode == internalauth.Off {
+		return server.InternalAuth{Mode: internalauth.Off}
+	}
+	keys := internalauth.NewJWKSSource(cfg.JWKSURL, nil, time.Now)
+	return server.InternalAuth{Mode: cfg.Mode, Verifier: internalauth.NewVerifier(keys, ServiceName, cfg.InstanceID, time.Now)}
 }
 
 // startRegistration 启用 Nacos 时注册实例，未启用时返回空实现。

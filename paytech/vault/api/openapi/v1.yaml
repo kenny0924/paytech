@@ -16,6 +16,7 @@ paths:
       x-max-raw-body-bytes: 262144
       parameters:
         - $ref: '#/components/parameters/XCallerService'
+        - $ref: '#/components/parameters/Authorization'
         - $ref: '#/components/parameters/IdempotencyKey'
         - $ref: '#/components/parameters/XRequestId'
       requestBody:
@@ -29,6 +30,8 @@ paths:
           $ref: '#/components/responses/ProtectSuccess'
         '400':
           $ref: '#/components/responses/ProtectBadRequest'
+        '401':
+          $ref: '#/components/responses/InternalTokenInvalid'
         '403':
           $ref: '#/components/responses/AccessDenied'
         '405':
@@ -46,6 +49,7 @@ paths:
       x-max-raw-body-bytes: 262144
       parameters:
         - $ref: '#/components/parameters/XCallerService'
+        - $ref: '#/components/parameters/Authorization'
         - $ref: '#/components/parameters/XRequestId'
       requestBody:
         required: true
@@ -58,6 +62,8 @@ paths:
           $ref: '#/components/responses/RevealSuccess'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/InternalTokenInvalid'
         '403':
           $ref: '#/components/responses/AccessDenied'
         '404':
@@ -74,11 +80,27 @@ components:
       name: X-Caller-Service
       in: header
       required: true
+      description: >-
+        Caller service name. Sole caller identity while VAULT_INTERNAL_AUTH_MODE=OFF (default); the DUAL fallback
+        when no valid internal token is present; ignored under REQUIRED. The Java client keeps sending it.
       schema:
         type: string
         minLength: 1
         maxLength: 128
         pattern: '^[a-z][a-z0-9-]*$'
+    Authorization:
+      name: Authorization
+      in: header
+      required: false
+      description: >-
+        Optional Platform-issued internal token (D26) as `Bearer <ES256 JWS compact>`, with iss=platform-support-service,
+        aud=vault-service, inst=this instance, exp - iat <= 300s. Its sub becomes the caller when
+        VAULT_INTERNAL_AUTH_MODE is DUAL or REQUIRED; ignored under OFF (default).
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 4103
+        pattern: '^[Bb][Ee][Aa][Rr][Ee][Rr] .+$'
     IdempotencyKey:
       name: Idempotency-Key
       in: header
@@ -176,6 +198,7 @@ components:
           type: string
           enum:
             - Bad Request
+            - Unauthorized
             - Forbidden
             - Not Found
             - Method Not Allowed
@@ -198,6 +221,7 @@ components:
             - ACCESS_DENIED
             - TOKEN_NOT_FOUND
             - METHOD_NOT_ALLOWED
+            - INTERNAL_TOKEN_INVALID
             - IDEMPOTENCY_KEY_CONFLICT
             - INTEGRITY_CHECK_FAILED
             - INTERNAL_ERROR
@@ -260,6 +284,14 @@ components:
             title: {const: Bad Request}
             code: {const: TOKEN_MODE_NOT_ALLOWED}
             detail: {const: Token模式不允许}
+    ErrorInternalTokenInvalid:
+      allOf:
+        - $ref: '#/components/schemas/ErrorResponse'
+        - type: object
+          properties:
+            title: {const: Unauthorized}
+            code: {const: INTERNAL_TOKEN_INVALID}
+            detail: {const: 内部调用凭证无效}
     ErrorAccessDenied:
       allOf:
         - $ref: '#/components/schemas/ErrorResponse'
@@ -387,6 +419,8 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProtectErrorBadRequest'
+    InternalTokenInvalid:
+      $ref: '#/components/responses/ErrorInternalTokenInvalid'
     AccessDenied:
       $ref: '#/components/responses/ErrorAccessDenied'
     TokenNotFound:
@@ -410,6 +444,19 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ErrorBadRequest'
+    ErrorInternalTokenInvalid:
+      description: >-
+        Internal token missing or invalid while VAULT_INTERNAL_AUTH_MODE=REQUIRED. Under DUAL an invalid token falls back
+        to X-Caller-Service; under OFF it is ignored. Unavailable JWKS keys under REQUIRED return 503 DEPENDENCY_UNAVAILABLE.
+      headers:
+        X-Request-Id:
+          $ref: '#/components/headers/XRequestId'
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlNoStore'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorInternalTokenInvalid'
     ErrorAccessDenied:
       description: A stable 403 Vault error response.
       headers:

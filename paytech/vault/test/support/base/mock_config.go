@@ -22,7 +22,8 @@ func mockConfig(dsn, adminCaller, rootKey string) map[string]string {
 		// LOCAL AES 根密钥（base64 的 32 字节）与非敏感密钥引用。
 		"VAULT_LOCAL_AES_ROOT_KEY": rootKey,
 		"VAULT_LOCAL_AES_KEY_ID":   "auto-test",
-		// Snowflake 坐标：31/27 专属本测试模块（31/28 黑盒、31/29～31 内部包测试）。
+		// Snowflake 坐标：31/27 专属 ext/http（31/28 黑盒、31/29～31 内部包测试、31/26 本地 Mocker、
+		// 31/22～25 ext/internalauth 的四个环境，由 Options 覆盖）。
 		"VAULT_SNOWFLAKE_DATACENTER_ID": "31",
 		"VAULT_SNOWFLAKE_WORKER_ID":     "27",
 		// 自动测试不连接 Nacos；以下注册参数仅在启用时读取，此处列出完整键名。
@@ -34,5 +35,9 @@ func mockConfig(dsn, adminCaller, rootKey string) map[string]string {
 		"VAULT_NACOS_INSTANCE_PORT":  "",
 		"VAULT_NACOS_USERNAME":       "",
 		"VAULT_NACOS_PASSWORD":       "",
+		// 内部调用 Token（D26）：默认 OFF，与生产默认一致；ext/internalauth 用 Options 覆盖为 DUAL / REQUIRED。
+		"VAULT_INTERNAL_AUTH_MODE":     "OFF",
+		"VAULT_INTERNAL_AUTH_JWKS_URL": "",
+		"VAULT_INSTANCE_ID":            "",
 	}
 }

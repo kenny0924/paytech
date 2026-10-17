@@ -23,6 +23,7 @@ func TestAdminOpenAPIMatchesRegisteredRoutes(t *testing.T) {
 	for path, method := range operations {
 		operation := requireOperation(t, document, path, method)
 		requireHeader(t, operation, "X-Caller-Service", true)
+		requireHeader(t, operation, "Authorization", false)
 		requireHeader(t, operation, "X-Operator-Id", true)
 		requireHeader(t, operation, "X-Request-Id", false)
 	}
@@ -68,7 +69,7 @@ func TestAdminOpenAPIRequestBodiesAreStrict(t *testing.T) {
 	}
 	manual := requireOperation(t, document, "/vault/v1/admin/manual/protect", "post")
 	requireHeader(t, manual, "Idempotency-Key", true)
-	requireResponses(t, manual, "200", "400", "403", "409", "500", "503")
+	requireResponses(t, manual, "200", "400", "401", "403", "409", "500", "503")
 }
 
 func requireEnumValues(t *testing.T, actual []any, expected ...string) {

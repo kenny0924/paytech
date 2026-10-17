@@ -1,7 +1,8 @@
 // Package base 提供自动测试的公共生命周期。
 //
 //   - Run：在 TestMain 中按正式装配（bootstrap.Assemble）启动一次 Vault，相当于 Java 的测试应用上下文；
-//   - Setup：每个用例开头调用，检查空基线并登记全局清理，相当于 MockTestBase 的 @BeforeEach/@AfterEach。
+//   - Setup：每个用例开头调用，检查空基线并登记全局清理，相当于 MockTestBase 的 @BeforeEach/@AfterEach；
+//   - Start / Stop：同一测试包需要多套配置（如内部 Token 的三种模式）时显式启动多个环境，用 (*Environment).Setup 进入用例。
 package base
 
 import (
@@ -11,6 +12,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"fmt"
+	"maps"
 	"net/http/httptest"
 	"os"
 	"sync"
@@ -27,7 +29,7 @@ import (
 )
 
 // setupInstruction 是本机依赖缺失时的准备说明；测试失败而不是跳过。
-const setupInstruction = "设置 VAULT_TEST_DB_DSN 指向仓库 local-environment 的 mor_vault（vault_app，parseTime=true&loc=UTC），并先手工执行 docs/database/sql/vault-schema.sql；见 vault-service/README.md"
+const setupInstruction = "设置 VAULT_TEST_DB_DSN 指向仓库 local-environment 的 mor_vault（vault_app，parseTime=true&loc=UTC），并先手工执行 docs/database/sql/vault-schema.sql；见 paytech/vault/README.md"
 
 // Environment 是一个测试包共享的运行环境：被测 Vault、测试数据库连接与本次运行标识。
 type Environment struct {
@@ -52,7 +54,7 @@ var current *Environment
 
 // Run 在 TestMain 中调用：启动环境、运行全部用例、关闭环境，返回进程退出码。
 func Run(m *testing.M) int {
-	env, err := start()
+	env, err := start(nil)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Vault 自动测试环境启动失败："+err.Error()+"。"+setupInstruction)
 		return 1
@@ -66,8 +68,21 @@ func Run(m *testing.M) int {
 	return code
 }
 
+// Options 是在完整测试配置之上的覆盖项。同一包内的多个环境必须各自覆盖 VAULT_SNOWFLAKE_WORKER_ID，坐标见 mockConfig。
+type Options struct {
+	Overrides map[string]string
+}
+
+// Start 按完整测试配置加覆盖项启动一个独立环境（独占的运行标识、根密钥与 Vault 实例）；调用方负责 Stop。
+func Start(options Options) (*Environment, error) {
+	return start(options.Overrides)
+}
+
+// Stop 停止环境并删除本次运行的数据。
+func (e *Environment) Stop() error { return e.stop() }
+
 // start 生成本次运行的密钥，把初始策略写入数据库后按正式装配启动 Vault，并以 httptest 承载同一 Handler。
-func start() (*Environment, error) {
+func start(overrides map[string]string) (*Environment, error) {
 	dsn := os.Getenv("VAULT_TEST_DB_DSN")
 	if dsn == "" {
 		return nil, fmt.Errorf("缺少 VAULT_TEST_DB_DSN")
@@ -87,7 +102,7 @@ func start() (*Environment, error) {
 		_ = env.stop()
 		return nil, fmt.Errorf("写入初始策略失败（请先执行策略表 DDL）")
 	}
-	if err = env.assemble(); err != nil {
+	if err = env.assemble(overrides); err != nil {
 		_ = env.stop()
 		return nil, err
 	}
@@ -104,9 +119,10 @@ func (e *Environment) openDatabase() error {
 	return nil
 }
 
-// assemble 加载完整测试配置并调用正式装配。
-func (e *Environment) assemble() error {
+// assemble 加载完整测试配置（含覆盖项）并调用正式装配。
+func (e *Environment) assemble(overrides map[string]string) error {
 	values := mockConfig(e.dsn, e.ID.AdminCaller, base64.StdEncoding.EncodeToString(e.rootKey))
+	maps.Copy(values, overrides)
 	cfg, err := conf.Load(func(key string) string { return values[key] })
 	if err != nil {
 		return fmt.Errorf("测试配置无效")

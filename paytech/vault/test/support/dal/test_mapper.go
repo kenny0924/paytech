@@ -151,29 +151,68 @@ func (m *TestMapper) DeleteOwned(ctx context.Context) error {
 	return err
 }
 
+// deleteOwned 按 审计 → 幂等映射 → 记录 → 策略 的顺序删除本次运行的数据，返回是否删除了策略变更记录。
+//
+// 每张表先用不加锁的一致性读取出本次运行的主键，再按主键删除：只锁本次运行的行。直接
+// DELETE ... WHERE ... LIKE 会全表扫描并对其他测试包的行与 supremum 加 X 锁，与并行包的业务写入形成死锁。
 func (m *TestMapper) deleteOwned(ctx context.Context, tx *sql.Tx) (bool, error) {
-	changes, err := tx.ExecContext(ctx, `DELETE FROM t_vault_policy_change WHERE actor_id LIKE ? OR target_key LIKE ?`, m.likePrefix(), m.typeLike())
-	if err != nil {
-		return false, err
-	}
 	statements := []struct {
-		query string
-		args  []any
+		table, key, condition string
+		args                  []any
 	}{
-		{`DELETE FROM t_vault_access_event WHERE ` + ownedEventCondition, m.ownedEventArgs()},
-		{`DELETE FROM t_vault_protect_request WHERE caller_service LIKE ?
-			OR record_id IN (SELECT record_id FROM (SELECT record_id FROM t_vault_record WHERE data_type LIKE ?) owned)`, []any{m.likePrefix(), m.typeLike()}},
-		{`DELETE FROM t_vault_record WHERE data_type LIKE ?`, []any{m.typeLike()}},
-		{`DELETE FROM t_vault_access_rule WHERE caller_service LIKE ? OR data_type_code LIKE ?`, []any{m.likePrefix(), m.typeLike()}},
-		{`DELETE FROM t_vault_data_type WHERE data_type_code LIKE ?`, []any{m.typeLike()}},
+		{"t_vault_policy_change", "policy_change_id", `actor_id LIKE ? OR target_key LIKE ?`, []any{m.likePrefix(), m.typeLike()}},
+		{"t_vault_access_event", "access_event_id", ownedEventCondition, m.ownedEventArgs()},
+		{"t_vault_protect_request", "protect_request_id", `caller_service LIKE ?
+			OR record_id IN (SELECT record_id FROM t_vault_record WHERE data_type LIKE ?)`, []any{m.likePrefix(), m.typeLike()}},
+		{"t_vault_record", "record_id", `data_type LIKE ?`, []any{m.typeLike()}},
+		{"t_vault_access_rule", "access_rule_id", `caller_service LIKE ? OR data_type_code LIKE ?`, []any{m.likePrefix(), m.typeLike()}},
+		{"t_vault_data_type", "data_type_id", `data_type_code LIKE ?`, []any{m.typeLike()}},
 	}
+	policyChanged := false
 	for _, statement := range statements {
-		if _, err := tx.ExecContext(ctx, statement.query, statement.args...); err != nil {
+		deleted, err := deleteByKeys(ctx, tx, statement.table, statement.key, statement.condition, statement.args)
+		if err != nil {
 			return false, err
 		}
+		if statement.table == "t_vault_policy_change" {
+			policyChanged = deleted > 0
+		}
 	}
-	affected, err := changes.RowsAffected()
-	return affected > 0, err
+	return policyChanged, nil
+}
+
+// deleteByKeys 在事务内以一致性读取主键（不加锁），再按主键逐批删除；返回删除行数。
+func deleteByKeys(ctx context.Context, tx *sql.Tx, table, key, condition string, args []any) (int, error) {
+	keys, err := ownedKeys(ctx, tx, `SELECT `+key+` FROM `+table+` WHERE `+condition, args)
+	if err != nil || len(keys) == 0 {
+		return 0, err
+	}
+	const batch = 500
+	for start := 0; start < len(keys); start += batch {
+		chunk := keys[start:min(start+batch, len(keys))]
+		placeholders := strings.TrimSuffix(strings.Repeat("?,", len(chunk)), ",")
+		if _, err := tx.ExecContext(ctx, `DELETE FROM `+table+` WHERE `+key+` IN (`+placeholders+`)`, chunk...); err != nil {
+			return 0, err
+		}
+	}
+	return len(keys), nil
+}
+
+func ownedKeys(ctx context.Context, tx *sql.Tx, query string, args []any) ([]any, error) {
+	rows, err := tx.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }() // 只读游标，关闭失败不影响已读取的主键。
+	var keys []any
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		keys = append(keys, id)
+	}
+	return keys, rows.Err()
 }
 
 // insertSeed 写入初始数据类型与规则；不写变更记录（与环境初始化 DML 一致，热加载按内容生效）。
