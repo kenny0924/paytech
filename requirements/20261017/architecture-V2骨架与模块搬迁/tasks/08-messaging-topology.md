@@ -1,6 +1,6 @@
 # 任务卡 08 · 消息拓扑接入：分区队列、发布侧串行、消费者切换新信封
 
-- 分支：`refactor/step-08-messaging-topology`；worktree：`/Users/kenny/Desktop/Workspace/Code-MoR-step08`；起点：`refactor-main`（03、04、05、06 合入后，主会话填写）。
+- 分支：`refactor/step-08-messaging-topology`；worktree：`/Users/kenny/Desktop/Workspace/Code-MoR-step08`；起点：`refactor-main@84fe5d7e`（00–07、09、10 已合入）。
 - 对应计划：[11-dev-plan.md](../design/11-dev-plan.md) 第 08 步；设计 [08-messaging-module.md](../design/08-messaging-module.md)（已按第 01 步实现修订：Fanout + 订阅方哈希交换机、缺口尾部重投）；决定 D24、D34。
 - 串行执行（涉及 payment、compliance 两个发布方与 acquiring、client-master、card 预留三个消费方）。
 

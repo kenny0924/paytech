@@ -1,6 +1,6 @@
 # 任务卡 12 · 卡域独立：`card` 服务与库、一次性读卡票据、两段创建、支付成功事件化
 
-- 分支：`refactor/step-12-card-isolation`；worktree：`/Users/kenny/Desktop/Workspace/Code-MoR-step12`；起点：`refactor-main`（05、08 合入后，主会话填写；可与 11a / 11b 并行）。
+- 分支：`refactor/step-12-card-isolation`；worktree：`/Users/kenny/Desktop/Workspace/Code-MoR-step12`；起点：`refactor-main@84fe5d7e`（00–07、09、10 已合入；08 与本步并行，消费者装配按 paytech-messaging README 直接使用 PartitionedListenerContainerFactory，08 合入时由主会话解决 PaymentSucceededHandler 的冲突）。
 - 对应计划：[11-dev-plan.md](../design/11-dev-plan.md) 第 12 步；设计 [05-payment-card-isolation.md](../design/05-payment-card-isolation.md)；决定 D10、D26、D36（修订）、C2。
 - **这是阶段 0 两处业务逻辑重做之一**：读卡回调重入改为一次性票据、申请卡工具改两段、支付成功写卡表改事件。逐条按 05 文档实现，任何偏差先在报告写明再做。CVV 不落库不哈希；原始卡号只经 `card-tokens` 入口到 payment 再到 card。
 
