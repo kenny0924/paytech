@@ -1,0 +1,163 @@
+# Optional analytics profile (D25 / D35): Apache Doris single node + Flink with Flink CDC pipeline connectors.
+# Always combine with compose.yaml (shared mor network); MySQL from the base profile must already be running.
+# Images, versions and SHA-256 values are recorded in flink/Dockerfile and paytech/data-service/README.md.
+services:
+  doris-fe:
+    profiles: [analytics]
+    image: apache/doris:fe-3.0.8@sha256:749afa2be75cd58d54a0bdb3edaa805d5974646f67500f094912f8dbc4a96b8f
+    hostname: doris-fe
+    restart: "no"
+    stop_grace_period: 30s
+    environment:
+      TZ: UTC
+    # Started directly (not via init_fe.sh) so FQDN mode works on the shared network without static IPs.
+    entrypoint: [/opt/apache-doris/fe/bin/start_fe.sh, --console]
+    ports:
+      - "127.0.0.1:19030:9030"
+      - "127.0.0.1:18030:8030"
+    volumes:
+      - ./doris/conf/fe.conf:/opt/apache-doris/fe/conf/fe.conf:ro
+      - doris-fe-meta:/opt/apache-doris/fe/doris-meta
+    healthcheck:
+      test: [CMD-SHELL, 'curl -fsS http://127.0.0.1:8030/api/health | grep -q success']
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 60s
+    mem_limit: 1280m
+    networks: [mor]
+
+  doris-be:
+    profiles: [analytics]
+    image: apache/doris:be-3.0.8@sha256:a337e2b17a65c86c22a1205467a825d46dc3380c94ba8024e53eea033641f12e
+    hostname: doris-be
+    restart: "no"
+    stop_grace_period: 30s
+    depends_on:
+      doris-fe:
+        condition: service_healthy
+    environment:
+      TZ: UTC
+      # Docker Desktop's VM keeps vm.max_map_count below Doris' production threshold; local single node only.
+      SKIP_CHECK_ULIMIT: "true"
+    entrypoint: [/opt/apache-doris/be/bin/start_be.sh, --console]
+    ulimits:
+      nofile:
+        soft: 655350
+        hard: 655350
+    volumes:
+      - ./doris/conf/be.conf:/opt/apache-doris/be/conf/be.conf:ro
+      - doris-be-storage:/opt/apache-doris/be/storage
+    healthcheck:
+      test: [CMD-SHELL, 'curl -fsS http://127.0.0.1:8040/api/health | grep -q OK']
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 60s
+    mem_limit: 1536m
+    networks: [mor]
+
+  doris-init:
+    profiles: [analytics]
+    image: apache/doris:fe-3.0.8@sha256:749afa2be75cd58d54a0bdb3edaa805d5974646f67500f094912f8dbc4a96b8f
+    restart: "no"
+    depends_on:
+      doris-fe:
+        condition: service_healthy
+      doris-be:
+        condition: service_healthy
+    environment:
+      MOR_DORIS_ROOT_PASSWORD: ${MOR_DORIS_ROOT_PASSWORD:?set MOR_DORIS_ROOT_PASSWORD}
+      MOR_DATA_SERVICE_DORIS_PASSWORD: ${MOR_DATA_SERVICE_DORIS_PASSWORD:?set MOR_DATA_SERVICE_DORIS_PASSWORD}
+    entrypoint: [/bin/bash, /init/init-doris.sh]
+    volumes:
+      - ./doris/init:/init:ro
+    networks: [mor]
+
+  flink-jobmanager:
+    profiles: [analytics]
+    image: mor-local/flink-cdc:1.20.5-cdc3.7.0
+    build:
+      context: ./flink
+    hostname: flink-jobmanager
+    restart: "no"
+    command: [jobmanager]
+    environment:
+      TZ: UTC
+      FLINK_PROPERTIES: |
+        jobmanager.rpc.address: flink-jobmanager
+        jobmanager.bind-host: 0.0.0.0
+        rest.address: flink-jobmanager
+        rest.bind-address: 0.0.0.0
+        jobmanager.memory.process.size: 640m
+        execution.checkpointing.interval: 10s
+    ports:
+      # 18081 is the host Nexus; the Flink Web UI uses 18091.
+      - "127.0.0.1:18091:8081"
+    healthcheck:
+      test: [CMD-SHELL, 'curl -fsS http://127.0.0.1:8081/overview']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    mem_limit: 768m
+    networks: [mor]
+
+  flink-taskmanager:
+    profiles: [analytics]
+    image: mor-local/flink-cdc:1.20.5-cdc3.7.0
+    build:
+      context: ./flink
+    hostname: flink-taskmanager
+    restart: "no"
+    depends_on:
+      flink-jobmanager:
+        condition: service_healthy
+    command: [taskmanager]
+    environment:
+      TZ: UTC
+      FLINK_PROPERTIES: |
+        jobmanager.rpc.address: flink-jobmanager
+        taskmanager.host: flink-taskmanager
+        taskmanager.bind-host: 0.0.0.0
+        taskmanager.numberOfTaskSlots: 2
+        taskmanager.memory.process.size: 1152m
+        taskmanager.memory.managed.size: 64m
+    healthcheck:
+      test: [CMD-SHELL, 'curl -fsS http://flink-jobmanager:8081/taskmanagers | grep -q flink-taskmanager']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    mem_limit: 1280m
+    networks: [mor]
+
+  flink-cdc-submit:
+    profiles: [analytics]
+    image: mor-local/flink-cdc:1.20.5-cdc3.7.0
+    build:
+      context: ./flink
+    restart: "no"
+    depends_on:
+      flink-taskmanager:
+        condition: service_healthy
+      doris-init:
+        condition: service_completed_successfully
+    environment:
+      FLINK_PROPERTIES: |
+        jobmanager.rpc.address: flink-jobmanager
+        rest.address: flink-jobmanager
+        rest.port: 8081
+      MOR_CDC_DB_PASSWORD: ${MOR_CDC_DB_PASSWORD:?set MOR_CDC_DB_PASSWORD}
+      MOR_DORIS_ROOT_PASSWORD: ${MOR_DORIS_ROOT_PASSWORD:?set MOR_DORIS_ROOT_PASSWORD}
+    command: [/bin/bash, /submit/submit-pipeline.sh, /pipelines/demo-currency-spec.yaml]
+    volumes:
+      - ./flink/submit-pipeline.sh:/submit/submit-pipeline.sh:ro
+      - ./flink/pipelines:/pipelines:ro
+    networks: [mor]
+
+volumes:
+  doris-fe-meta:
+    name: mor-local-doris-fe-meta
+  doris-be-storage:
+    name: mor-local-doris-be-storage

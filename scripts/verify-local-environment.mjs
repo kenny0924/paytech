@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -8,6 +8,12 @@ const repositoryRoot = resolve(scriptDirectory, '..');
 const environmentRoot = join(repositoryRoot, 'local-environment');
 const composeFile = join(environmentRoot, 'compose.yaml');
 const schedulerComposeFile = join(environmentRoot, 'compose.scheduler.yaml');
+const analyticsComposeFile = join(environmentRoot, 'compose.analytics.yaml');
+const flinkDockerfile = join(environmentRoot, 'flink', 'Dockerfile');
+const flinkPipelineDirectory = join(environmentRoot, 'flink', 'pipelines');
+const flinkSubmitScript = join(environmentRoot, 'flink', 'submit-pipeline.sh');
+const dorisInitScript = join(environmentRoot, 'doris', 'init', 'init-doris.sh');
+const cdcWhitelistFile = join(repositoryRoot, 'paytech', 'data-service', 'cdc', 'whitelist.yaml');
 const exampleEnvironment = join(environmentRoot, '.env.example');
 const mysqlInitScript = join(
   environmentRoot,
@@ -41,6 +47,7 @@ const expectedEnvironmentVariables = new Map([
   ['MOR_NACOS_DB_PASSWORD', 'local-nacos-db-change-me-2026'],
   ['MOR_XXL_JOB_DB_PASSWORD', 'local-xxl-job-change-me-2026'],
   ['PAYTECH_FOUNDATION_TEST_DB_PASSWORD', 'local-foundation-test-change-me-2026'],
+  ['MOR_CDC_DB_PASSWORD', 'local-cdc-reader-change-me-2026'],
   [redisPasswordEnvironmentVariable, 'local-redis-change-me-2026'],
   ['MOR_RABBITMQ_USER', 'mor_local'],
   ['MOR_RABBITMQ_PASSWORD', 'local-rabbit-change-me-2026'],
@@ -50,7 +57,20 @@ const expectedEnvironmentVariables = new Map([
   ['MOR_NACOS_AUTH_IDENTITY_VALUE', 'local-identity-change-me-2026'],
   ['MOR_XXL_JOB_ACCESS_TOKEN', 'local-xxl-job-access-token-change-me-2026'],
   ['MOR_XXL_JOB_LOGIN_TOKEN_KEY', 'local-xxl-job-login-token-key-change-me-2026'],
+  ['MOR_MINIO_ROOT_USER', ''],
+  ['MOR_MINIO_ROOT_PASSWORD', ''],
+  ['MOR_MINIO_KMS_SECRET_KEY', ''],
+  ['MOR_MINIO_PLATFORM_ACCESS_KEY', ''],
+  ['MOR_MINIO_PLATFORM_SECRET_KEY', ''],
+  ['MOR_DORIS_ROOT_PASSWORD', 'local-doris-root-change-me-2026'],
+  ['MOR_DATA_SERVICE_DORIS_PASSWORD', 'local-data-service-doris-change-me-2026'],
 ]);
+// The optional storage profile leaves its MinIO values empty in the example; Compose still interpolates every
+// service, so model validation supplies non-secret placeholders for exactly those empty optional keys.
+const optionalProfilePlaceholders = Object.fromEntries(
+  [...expectedEnvironmentVariables].filter(([, value]) => value === '').map(([name]) => [name, 'verify-placeholder']),
+);
+const composeEnvironment = { ...process.env, ...optionalProfilePlaceholders };
 const activeGatewayContractFiles = [
   'agent-docs/TECHNOLOGY_STACK.md',
   'agent-docs/JAVA_PROJECT_STRUCTURE.md',
@@ -215,7 +235,7 @@ const composeResult = spawnSync(
     '--format',
     'json',
   ],
-  { cwd: repositoryRoot, encoding: 'utf8' },
+  { cwd: repositoryRoot, encoding: 'utf8', env: composeEnvironment },
 );
 
 if (composeResult.status !== 0) {
@@ -349,7 +369,7 @@ const schedulerComposeResult = spawnSync(
     '--format',
     'json',
   ],
-  { cwd: repositoryRoot, encoding: 'utf8' },
+  { cwd: repositoryRoot, encoding: 'utf8', env: composeEnvironment },
 );
 
 if (schedulerComposeResult.status !== 0) {
@@ -461,6 +481,156 @@ if (schedulerComposeResult.status !== 0) {
   }
 }
 
+const analyticsComposeResult = spawnSync(
+  'docker',
+  [
+    'compose',
+    '--env-file',
+    exampleEnvironment,
+    '-f',
+    composeFile,
+    '-f',
+    analyticsComposeFile,
+    '--profile',
+    'analytics',
+    'config',
+    '--format',
+    'json',
+  ],
+  { cwd: repositoryRoot, encoding: 'utf8', env: composeEnvironment },
+);
+
+if (analyticsComposeResult.status !== 0) {
+  errors.push(`Docker analytics Compose model is invalid:\n${analyticsComposeResult.stderr}`);
+} else {
+  const model = JSON.parse(analyticsComposeResult.stdout);
+  const services = model.services ?? {};
+  const dorisFeImage = 'apache/doris:fe-3.0.8@sha256:749afa2be75cd58d54a0bdb3edaa805d5974646f67500f094912f8dbc4a96b8f';
+  const dorisBeImage = 'apache/doris:be-3.0.8@sha256:a337e2b17a65c86c22a1205467a825d46dc3380c94ba8024e53eea033641f12e';
+  const flinkImage = 'mor-local/flink-cdc:1.20.5-cdc3.7.0';
+  const expectedAnalytics = {
+    'doris-fe': { image: dorisFeImage, ports: ['127.0.0.1:18030:8030', '127.0.0.1:19030:9030'], memory: '1342177280' },
+    'doris-be': { image: dorisBeImage, ports: [], memory: '1610612736' },
+    'doris-init': { image: dorisFeImage, ports: [] },
+    'flink-jobmanager': { image: flinkImage, ports: ['127.0.0.1:18091:8081'], memory: '805306368', build: true },
+    'flink-taskmanager': { image: flinkImage, ports: [], memory: '1342177280', build: true },
+    'flink-cdc-submit': { image: flinkImage, ports: [], build: true },
+  };
+  const actualServices = Object.keys(services).sort();
+  if (JSON.stringify(actualServices) !== JSON.stringify(Object.keys(expectedAnalytics).sort())) {
+    errors.push(`unexpected analytics services: ${actualServices.join(', ')}`);
+  }
+  for (const [serviceName, expected] of Object.entries(expectedAnalytics)) {
+    const service = services[serviceName];
+    if (!service) {
+      continue;
+    }
+    if (service.image !== expected.image) {
+      errors.push(`${serviceName} image drifted: ${service.image}`);
+    }
+    if (expected.build && !(service.build?.context ?? '').endsWith('/local-environment/flink')) {
+      errors.push(`${serviceName} must build from local-environment/flink: ${service.build?.context}`);
+    }
+    if (JSON.stringify(service.profiles) !== JSON.stringify(['analytics'])) {
+      errors.push(`${serviceName} must belong only to the analytics profile`);
+    }
+    if (service.restart !== 'no') {
+      errors.push(`${serviceName} must not restart automatically`);
+    }
+    if (service.container_name) {
+      errors.push(`${serviceName} must not define a fixed container name`);
+    }
+    if (JSON.stringify(Object.keys(service.networks ?? {})) !== JSON.stringify(['mor'])) {
+      errors.push(`${serviceName} must use only the isolated mor network`);
+    }
+    const ports = (service.ports ?? []).map((port) => `${port.host_ip}:${port.published}:${port.target}`).sort();
+    if (JSON.stringify(ports) !== JSON.stringify(expected.ports)) {
+      errors.push(`${serviceName} has unexpected port bindings: ${ports.join(', ')}`);
+    }
+    if (expected.memory && service.mem_limit !== expected.memory) {
+      errors.push(`${serviceName} memory limit drifted: ${service.mem_limit}`);
+    }
+    if (expected.memory && !(service.healthcheck?.test ?? []).length) {
+      errors.push(`${serviceName} must define a health check`);
+    }
+    if ((service.depends_on ?? {}).mysql) {
+      errors.push(`${serviceName} must not depend on base MySQL; starting analytics must never recreate base services`);
+    }
+  }
+  const requiredDependencies = [
+    ['doris-be', 'doris-fe', 'service_healthy'],
+    ['doris-init', 'doris-fe', 'service_healthy'],
+    ['doris-init', 'doris-be', 'service_healthy'],
+    ['flink-taskmanager', 'flink-jobmanager', 'service_healthy'],
+    ['flink-cdc-submit', 'flink-taskmanager', 'service_healthy'],
+    ['flink-cdc-submit', 'doris-init', 'service_completed_successfully'],
+  ];
+  for (const [serviceName, dependency, condition] of requiredDependencies) {
+    if (services[serviceName]?.depends_on?.[dependency]?.condition !== condition) {
+      errors.push(`${serviceName} must wait for ${dependency} (${condition})`);
+    }
+  }
+  const expectedAnalyticsVolumes = ['mor-local-doris-be-storage', 'mor-local-doris-fe-meta'];
+  const actualAnalyticsVolumes = Object.values(model.volumes ?? {}).map((volume) => volume.name).sort();
+  if (JSON.stringify(actualAnalyticsVolumes) !== JSON.stringify(expectedAnalyticsVolumes)) {
+    errors.push(`unexpected analytics named volumes: ${actualAnalyticsVolumes.join(', ')}`);
+  }
+}
+
+const flinkBuild = readFileSync(flinkDockerfile, 'utf8');
+if (!/^FROM flink@sha256:80401a8ee20e2246718c01303712c10ccaf13961e31316d9b8c4549f7b2cfc9b$/mu.test(flinkBuild)) {
+  errors.push('Flink Dockerfile must pin the flink:1.20.5-scala_2.12-java17 digest');
+}
+const verifiedDownloads = flinkBuild.match(/"[0-9a-f]{64} {2}[a-z-]+\.(?:jar|tar\.gz)"/gu) ?? [];
+if (verifiedDownloads.length !== 4 || !flinkBuild.includes('sha256sum -c -')) {
+  errors.push(`Flink Dockerfile must verify exactly four downloads with SHA-256: ${verifiedDownloads.length}`);
+}
+
+const whitelistContent = readFileSync(cdcWhitelistFile, 'utf8');
+const whitelistedTables = new Set();
+let whitelistDatabase;
+for (const line of whitelistContent.split('\n')) {
+  const databaseMatch = line.match(/^\s+database:\s*(\S+)\s*$/u);
+  if (databaseMatch) {
+    whitelistDatabase = databaseMatch[1];
+    continue;
+  }
+  const tableMatch = line.match(/^\s+- name:\s*(\S+)\s*$/u);
+  if (tableMatch && whitelistDatabase) {
+    whitelistedTables.add(`${whitelistDatabase}.${tableMatch[1]}`);
+  }
+}
+if (whitelistedTables.size === 0) {
+  errors.push('CDC whitelist declares no table');
+}
+for (const pipelineName of readdirSync(flinkPipelineDirectory).filter((name) => name.endsWith('.yaml'))) {
+  const pipeline = readFileSync(join(flinkPipelineDirectory, pipelineName), 'utf8');
+  const referenced = [
+    ...[...pipeline.matchAll(/^\s+tables:\s*(\S+)\s*$/gmu)].flatMap((match) => match[1].split(',')),
+    ...[...pipeline.matchAll(/^\s+- source-table:\s*(\S+)\s*$/gmu)].map((match) => match[1]),
+  ];
+  if (referenced.length === 0) {
+    errors.push(`Flink pipeline ${pipelineName} references no source table`);
+  }
+  for (const table of referenced) {
+    if (!whitelistedTables.has(table)) {
+      errors.push(`Flink pipeline ${pipelineName} references a table outside the CDC whitelist: ${table}`);
+    }
+  }
+  for (const match of pipeline.matchAll(/^\s+password:\s*(.*)$/gmu)) {
+    if (!/^\$\{MOR_[A-Z_]+_PASSWORD\}$/u.test(match[1].trim())) {
+      errors.push(`Flink pipeline ${pipelineName} must reference passwords only as \${MOR_*_PASSWORD}`);
+    }
+  }
+}
+
+for (const script of [dorisInitScript, flinkSubmitScript]) {
+  const syntax = spawnSync('bash', ['-n', script], { cwd: repositoryRoot, encoding: 'utf8' });
+  if (syntax.status !== 0) {
+    errors.push(`analytics script is invalid: ${script}\n${syntax.stderr}`);
+  }
+}
+
 const shellResult = spawnSync('bash', ['-n', mysqlInitScript], {
   cwd: repositoryRoot,
   encoding: 'utf8',
@@ -497,9 +667,37 @@ const databaseDeclarationCount = mysqlInit.match(/^CREATE DATABASE IF NOT EXISTS
 if (databaseDeclarationCount !== databases.length) {
   errors.push(`unexpected MySQL database declaration count: ${databaseDeclarationCount}`);
 }
+const mysqlCommandFlags = [
+  '--binlog-format=ROW',
+  '--binlog-row-image=FULL',
+  '--gtid-mode=ON',
+  '--enforce-gtid-consistency=ON',
+  '--server-id=1',
+];
+const baseCompose = readFileSync(composeFile, 'utf8');
+for (const flag of mysqlCommandFlags) {
+  if (!baseCompose.includes(`      - ${flag}\n`)) {
+    errors.push(`MySQL command is missing the CDC binlog flag: ${flag}`);
+  }
+}
+if (!mysqlInit.includes("CREATE USER IF NOT EXISTS 'cdc_reader'@'%' IDENTIFIED BY '${MOR_CDC_DB_PASSWORD}';")
+    || !mysqlInit.includes("GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'cdc_reader'@'%';")) {
+  errors.push('MySQL initialization must create the cdc_reader replication account');
+}
+for (const grant of mysqlInit.matchAll(/^GRANT (.+) ON (\S+) TO 'cdc_reader'@'%';$/gmu)) {
+  const allowed = grant[1] === 'REPLICATION SLAVE, REPLICATION CLIENT' && grant[2] === '*.*'
+    || grant[1] === 'SELECT' && /^mor_[a-z0-9_]+\.\*$/u.test(grant[2]);
+  if (!allowed) {
+    errors.push(`cdc_reader grant exceeds SELECT on whitelisted databases plus replication: ${grant[0]}`);
+  }
+}
 const runtimeNamespaceFiles = [
   composeFile,
   schedulerComposeFile,
+  analyticsComposeFile,
+  flinkDockerfile,
+  dorisInitScript,
+  flinkSubmitScript,
   exampleEnvironment,
   mysqlInitScript,
   xxlJobSchemaFile,
@@ -693,4 +891,4 @@ if (errors.length > 0) {
   process.exit(1);
 }
 
-process.stdout.write('Local base/scheduler Compose models and MySQL initialization verified.\n');
+process.stdout.write('Local base/scheduler/analytics Compose models and MySQL initialization verified.\n');

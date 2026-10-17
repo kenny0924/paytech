@@ -1,0 +1,9 @@
+services:
+  - service: ledger
+    database: mor_finance
+    tables:
+      - name: t_currency_spec
+  - service: billing
+    database: mor_finance
+    tables:
+      - name: t_economic_fact

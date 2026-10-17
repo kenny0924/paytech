@@ -13,6 +13,7 @@ readonly REQUIRED_PASSWORD_VARIABLES=(
   MOR_NACOS_DB_PASSWORD
   MOR_XXL_JOB_DB_PASSWORD
   PAYTECH_FOUNDATION_TEST_DB_PASSWORD
+  MOR_CDC_DB_PASSWORD
 )
 
 validate_password() {
@@ -50,6 +51,7 @@ CREATE USER IF NOT EXISTS 'vault_app'@'%' IDENTIFIED BY '${MOR_VAULT_DB_PASSWORD
 CREATE USER IF NOT EXISTS 'nacos'@'%' IDENTIFIED BY '${MOR_NACOS_DB_PASSWORD}';
 CREATE USER IF NOT EXISTS 'xxl_job'@'%' IDENTIFIED BY '${MOR_XXL_JOB_DB_PASSWORD}';
 CREATE USER IF NOT EXISTS 'foundation_test'@'%' IDENTIFIED BY '${PAYTECH_FOUNDATION_TEST_DB_PASSWORD}';
+CREATE USER IF NOT EXISTS 'cdc_reader'@'%' IDENTIFIED BY '${MOR_CDC_DB_PASSWORD}';
 
 GRANT ALL PRIVILEGES ON mor_cct.* TO 'cct_app'@'%';
 GRANT ALL PRIVILEGES ON mor_commerce.* TO 'commerce_app'@'%';
@@ -61,4 +63,9 @@ GRANT ALL PRIVILEGES ON mor_vault.* TO 'vault_app'@'%';
 GRANT ALL PRIVILEGES ON nacos_config.* TO 'nacos'@'%';
 GRANT ALL PRIVILEGES ON xxl_job.* TO 'xxl_job'@'%';
 GRANT ALL PRIVILEGES ON paytech_foundation_test.* TO 'foundation_test'@'%';
+
+-- Flink CDC reader for the analytics profile: binlog replication globally, SELECT only on whitelisted databases
+-- (paytech/data-service/cdc/whitelist.yaml). Add a GRANT SELECT line here when a new database enters the whitelist.
+GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'cdc_reader'@'%';
+GRANT SELECT ON mor_finance.* TO 'cdc_reader'@'%';
 EOSQL

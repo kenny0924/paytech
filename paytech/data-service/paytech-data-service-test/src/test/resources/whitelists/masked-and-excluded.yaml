@@ -1,0 +1,7 @@
+services:
+  - service: ledger
+    database: mor_finance
+    tables:
+      - name: t_currency_spec
+        maskedColumns: [code]
+        excludedColumns: [code]
