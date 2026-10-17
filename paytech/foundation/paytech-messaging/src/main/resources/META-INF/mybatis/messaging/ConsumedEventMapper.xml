@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.foundation.messaging.persistence.mapper.ConsumedEventMapper">
+
+    <!-- 调用前已按信封格式校验长度与字符集，IGNORE 只用于吸收主键冲突。 -->
+    <insert id="insertIfAbsent">
+        INSERT IGNORE INTO t_consumed_event (
+            event_id, event_type, aggregate_type, aggregate_id, aggregate_version, consumed_at
+        ) VALUES (
+            #{event.eventId}, #{event.eventType}, #{event.aggregateType}, #{event.aggregateId},
+            #{event.aggregateVersion}, UTC_TIMESTAMP(6)
+        )
+    </insert>
+
+    <select id="selectLastVersion" resultType="java.lang.Long">
+        SELECT last_version
+        FROM t_consumed_aggregate_version
+        WHERE aggregate_type = #{aggregateType}
+          AND aggregate_id = #{aggregateId}
+    </select>
+
+    <insert id="upsertLastVersion">
+        INSERT INTO t_consumed_aggregate_version (aggregate_type, aggregate_id, last_version, update_time)
+        VALUES (#{aggregateType}, #{aggregateId}, #{aggregateVersion}, UTC_TIMESTAMP(6)) AS incoming
+        ON DUPLICATE KEY UPDATE
+            last_version = GREATEST(t_consumed_aggregate_version.last_version, incoming.last_version),
+            update_time = incoming.update_time
+    </insert>
+</mapper>

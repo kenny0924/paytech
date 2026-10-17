@@ -38,6 +38,8 @@
         <minio.version>8.5.17</minio.version>
         <aws-sdk.version>2.31.50</aws-sdk.version>
         <archunit.version>1.4.2</archunit.version>
+        <!-- Same version Spring Security 7.0 OAuth2 JOSE uses; Spring Boot 4.0 BOM does not manage it directly. -->
+        <nimbus-jose-jwt.version>10.4</nimbus-jose-jwt.version>
     </properties>
 
     <dependencyManagement>
@@ -186,6 +188,26 @@
                 <groupId>com.paytech</groupId>
                 <artifactId>paytech-xxl-job-starter</artifactId>
                 <version>${paytech.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>paytech-messaging-api</artifactId>
+                <version>${paytech.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>paytech-messaging</artifactId>
+                <version>${paytech.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>paytech-internal-auth</artifactId>
+                <version>${paytech.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.nimbusds</groupId>
+                <artifactId>nimbus-jose-jwt</artifactId>
+                <version>${nimbus-jose-jwt.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

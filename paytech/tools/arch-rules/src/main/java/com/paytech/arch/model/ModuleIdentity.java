@@ -27,7 +27,7 @@ public record ModuleIdentity(String groupId, String artifactId, String service, 
         "paytech-http-problem", "paytech-json-canonicalization", "paytech-http-client-support",
         "paytech-mybatis-support", "paytech-snowflake-id", "paytech-mvc-web-starter", "paytech-caffeine-starter",
         "paytech-redis-starter", "paytech-compensation-event", "paytech-xxl-job-starter", "paytech-test-support",
-        "paytech-command-idempotency", "paytech-messaging", "paytech-messaging-api");
+        "paytech-command-idempotency", "paytech-messaging", "paytech-messaging-api", "paytech-internal-auth");
 
     /**
      * 按 Maven 坐标判定模块归属。

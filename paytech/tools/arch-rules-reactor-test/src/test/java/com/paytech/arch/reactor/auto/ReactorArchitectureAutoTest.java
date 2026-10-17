@@ -5,6 +5,7 @@ import com.paytech.arch.model.MavenDependency;
 import com.paytech.arch.model.MavenModule;
 import com.paytech.arch.model.ModuleRole;
 import com.paytech.arch.pom.PomReader;
+import com.paytech.arch.rule.CompensationHandlerRule;
 import com.paytech.arch.rule.RuleViolation;
 
 import java.nio.file.Files;
@@ -17,15 +18,23 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /**
- * Reactor 级依赖图校验：读取 {@code paytech/pom.xml} 当前列出的全部模块，执行 R1、R2、R3、R6、R8 的依赖图部分。
+ * Reactor 级依赖图校验：读取 {@code paytech/pom.xml} 当前列出的全部模块（含 {@code foundation/} 下的嵌套模块），执行
+ * R1、R2、R3、R6、R8 的依赖图部分。
  *
  * <p>
- * 真实 Reactor 中的服务模块必须零违规；另以真实 Reactor 模型加注入的违规模块证明规则在该模型上确实生效，避免空断言。
+ * 真实 Reactor 中的服务模块必须零违规；另以真实 Reactor 模型加注入的违规模块证明规则在该模型上确实生效，避免空断言；R8 同时以真实
+ * Foundation 坐标核对：{@code -core} 依赖 {@code paytech-messaging-api} 合法，依赖 {@code paytech-messaging} 违规。
  *
  * @see com.paytech.arch.ArchitectureRules#checkReactorDependencyGraph(Path)
  * @author Claude
  */
 class ReactorArchitectureAutoTest {
+
+    private static final List<String> FOUNDATION_ARTIFACTS = List.of("paytech-foundation", "paytech-common-core",
+        "paytech-http-problem", "paytech-json-canonicalization", "paytech-http-client-support", "paytech-test-support",
+        "paytech-mybatis-support", "paytech-command-idempotency", "paytech-snowflake-id", "paytech-mvc-web-starter",
+        "paytech-caffeine-starter", "paytech-redis-starter", "paytech-xxl-job-starter", "paytech-compensation-event",
+        "paytech-messaging-api", "paytech-messaging", "paytech-internal-auth");
 
     private static final Path REACTOR_ROOT = Path.of(System.getProperty("paytech.reactor.root", "../.."))
         .toAbsolutePath().normalize();
@@ -40,10 +49,15 @@ class ReactorArchitectureAutoTest {
         Assertions.assertTrue(artifactIds.containsAll(List.of("paytech-dependencies", "paytech-parent",
             "paytech-arch-rules", "paytech-instance-manifest", "paytech-arch-rules-reactor-test")),
             () -> "Reactor 模块不完整: " + artifactIds);
-        // 聚合 POM 可以嵌套（服务聚合 POM 再列出四个模块），因此按全部聚合 POM 声明的模块总数核对。
-        int declaredModules = modules.stream().mapToInt(module -> module.moduleNames().size()).sum();
-        Assertions.assertEquals(declaredModules + 1, modules.size(),
-            () -> "Reactor 模块数与各聚合 POM 声明不一致: " + artifactIds);
+        Assertions.assertTrue(artifactIds.containsAll(FOUNDATION_ARTIFACTS),
+            () -> "Foundation 模块不完整: " + artifactIds);
+        Assertions.assertEquals(declaredModuleCount(modules.getFirst(), modules) + 1, modules.size(),
+            () -> "Reactor 模块数与 paytech/pom.xml 的嵌套声明不一致: " + artifactIds);
+        Assertions.assertTrue(modules.stream().filter(module -> FOUNDATION_ARTIFACTS.contains(module.artifactId()))
+            .allMatch(module -> module.identity().role() == ModuleRole.FOUNDATION),
+            () -> "Foundation 模块归类错误: " + artifactIds);
+        Assertions.assertTrue(Files.isRegularFile(REACTOR_ROOT.resolve(CompensationHandlerRule.MESSAGING_CATALOG)),
+            "R12 读取的 MQ 事件目录不存在: " + CompensationHandlerRule.MESSAGING_CATALOG);
         List<RuleViolation> violations = ArchitectureRules.checkReactorDependencyGraph(REACTOR_ROOT);
         Assertions.assertTrue(violations.isEmpty(), () -> "Reactor 依赖图违规:\n" + describe(violations));
     }
@@ -70,6 +84,36 @@ class ReactorArchitectureAutoTest {
         Assertions.assertEquals(List.of("R1", "R2", "R3", "R6", "R8"),
             violations.stream().map(RuleViolation::ruleId).distinct().sorted(this::compareRuleIds).toList(),
             () -> describe(violations));
+    }
+
+    @Test
+    void test_messagingApiDependency() {
+        List<MavenModule> modules = new ArrayList<>(new PomReader().readReactor(REACTOR_ROOT));
+        MavenModule messagingApi = modules.stream().filter(module -> "paytech-messaging-api".equals(module.artifactId()))
+            .findFirst().orElseThrow();
+        modules.add(new MavenModule(REACTOR_ROOT.resolve("billing/paytech-billing-core"), "com.paytech",
+            "paytech-billing-core", "jar", List.of(new MavenDependency(messagingApi.groupId(),
+                messagingApi.artifactId(), "compile")), List.of()));
+        Assertions.assertTrue(ArchitectureRules.checkDependencyGraph(modules).isEmpty(),
+            "-core 依赖 paytech-messaging-api 应合法");
+
+        modules.add(new MavenModule(REACTOR_ROOT.resolve("account/paytech-account-core"), "com.paytech",
+            "paytech-account-core", "jar", List.of(new MavenDependency("com.paytech", "paytech-messaging", "compile")),
+            List.of()));
+        List<RuleViolation> violations = ArchitectureRules.checkDependencyGraph(modules);
+        Assertions.assertEquals(List.of("R8"), violations.stream().map(RuleViolation::ruleId).distinct().toList(),
+            () -> describe(violations));
+    }
+
+    private static int declaredModuleCount(MavenModule aggregator, List<MavenModule> modules) {
+        int count = 0;
+        for (String child : aggregator.moduleNames()) {
+            Path childRoot = aggregator.root().resolve(child).normalize();
+            MavenModule childModule = modules.stream().filter(module -> module.root().equals(childRoot)).findFirst()
+                .orElseThrow(() -> new AssertionError("未读取到声明的模块: " + childRoot));
+            count += 1 + declaredModuleCount(childModule, modules);
+        }
+        return count;
     }
 
     private int compareRuleIds(String left, String right) {

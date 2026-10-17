@@ -769,8 +769,12 @@ class ApplicationBuildContractTest(unittest.TestCase):
         ):
             self.assertIn(marker, build_script)
 
-        build = build_script.index('(cd "$workspace_dir/paytech-build"')
-        foundation = build_script.index('(cd "$workspace_dir/paytech-foundation"')
+        build = build_script.index(
+            '(cd "$workspace_dir/paytech" && ./mvnw -DskipTests -B install -pl build/paytech-dependencies,build/paytech-parent)'
+        )
+        foundation = build_script.index(
+            '(cd "$workspace_dir/paytech" && ./mvnw -DskipTests -B -f foundation/pom.xml install)'
+        )
         risk = build_script.index('(cd "$workspace_dir/risk-compliance-service"')
         risk_copy = build_script.index(
             'risk-web/target/risk-web-1.0.0-SNAPSHOT-exec.jar'
@@ -817,31 +821,16 @@ class ApplicationBuildContractTest(unittest.TestCase):
         foundation_command = next(
             line
             for line in build_script.splitlines()
-            if '(cd "$workspace_dir/paytech-foundation"' in line
+            if "-f foundation/pom.xml install" in line
         )
-        foundation_modules = tuple(
-            re.search(
-                r"\./mvnw -pl ([^ ]+) -am -DskipTests clean install", foundation_command
-            )
-            .group(1)
-            .split(",")
-        )
-        self.assertEqual(
-            (
-                "paytech-mvc-web-starter",
-                "paytech-http-client-support",
-                "paytech-mybatis-support",
-                "paytech-redis-starter",
-                "paytech-snowflake-id",
-                "paytech-json-canonicalization",
-            ),
-            foundation_modules,
-            "Risk must be built from the Foundation canonicalization artifact selected in this build",
+        self.assertNotIn(
+            " -pl ",
+            foundation_command,
+            "Risk must be built from the whole Foundation reactor, including the canonicalization artifact",
         )
         self.assertIn(
             '"$environment_dir/artifacts/risk-service.jar"', build_script
         )
-        self.assertIn("paytech-redis-starter", build_script)
 
         compose_build = build_script.split(
             '"$environment_dir/compose.sh" build \\\n', 1

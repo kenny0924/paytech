@@ -36,7 +36,7 @@ def java_material():
     commons = sorted((repository / "commons-logging/commons-logging").glob("*/commons-logging-*.jar"))
     paths += (commons or bridges)[-1:]
     if not all(path.is_file() for path in paths) or len(paths) != 3:
-        raise SystemExit("Install paytech-build/Foundation/Platform dependencies first; required crypto JARs are absent.")
+        raise SystemExit("Install the paytech/ Reactor (build, foundation) and Platform dependencies first; required crypto JARs are absent.")
     run([str(Path(java_home) / "bin/java"), "--class-path", os.pathsep.join(map(str, paths)),
          str(ROOT / "scripts/GenerateOperationsMaterial.java"), str(PRIVATE)])
 

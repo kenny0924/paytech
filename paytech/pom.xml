@@ -30,7 +30,7 @@
     <modules>
         <module>build/paytech-dependencies</module>
         <module>build/paytech-parent</module>
-        <!-- <module>foundation</module> -->
+        <module>foundation</module>
         <!-- <module>vault</module> -->
         <!-- <module>platform-support</module> -->
         <!-- <module>api-gateway</module> -->

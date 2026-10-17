@@ -1,0 +1,5 @@
+events:
+  - eventType: EconomicFactRecorded
+    consumers: [ledger, account]
+  - eventType: BalanceMoved
+    consumers: [account]
