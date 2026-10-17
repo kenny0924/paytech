@@ -291,7 +291,7 @@
 <a id="operations-notification-admin-20261015"></a>
 
 <a id="platform-ses-delivery-events-20261017"></a>
-## Platform 邮件投递事件（Amazon SES，2026-10-17，`762b785` 已在 origin/main，mor-test 已部署）
+## Platform 邮件投递事件（Amazon SES，2026-10-17，已推送 `762b785`、`b59ec6b`，mor-test 已部署）
 
 - **范围：** SES Configuration Set → SNS → SQS，Platform 各实例以 Spring 定时任务按账号拉取 `t_notification_provider.event_queue_url`（复用账号发送密钥，不新增 Vault 规则），按 EmailTag `ses-<attempt_id>` 回写发送尝试：送达 → 投递已送达；硬退信 / 拒发 → 失败；软退信与投诉只记录；结果只升不降，结果未知的尝试经事件确认为已受理（`PROVIDER_EVENT`）；旧尝试送达也标已送达。认证邮件与测试发送的事件对不上尝试，只计数后删除。账号运行状态（最近拉取 / 错误 / 最近事件）不推进版本、不记审计；队列 URL 修改记审计。取代 Delivery 规划"不接回调"中的事件部分（拉取而非公网回调）。见[需求](../requirements/20261017/platform-support-SES投递事件/requirement.md)、[分析](../requirements/20261017/platform-support-SES投递事件/analysis.md)、[方案](../requirements/20261017/platform-support-SES投递事件/technique.md)（第 7 节为研发偏差）。
 - **数据库：** `t_notification_provider` +4 列、`t_notification_attempt` +5 列（[ddl.sql](../requirements/20261017/platform-support-SES投递事件/db/platform-support-service/ddl.sql)，PDManer 与 Schema 已同步）；本机 `mor_platform`、`mor_platform_e2e` 与 mor-test `mor_platform` 已执行。
