@@ -44,6 +44,27 @@ class RiskVariableBrowserBoundaryAutoTest extends OperationsBffHttpTestBase {
         assertEquals("", risk.requests().getLast().body());
     }
 
+    /** 风控点 Feature 目录原样透传；目录内多出未知键时 BFF 拒绝且不泄露。 */
+    @Test void featureCatalogsPassThroughAndStayStrict() throws Exception {
+        var context = send("GET", "authoring-context", "manage-context", null, null); ok(context, 200);
+        var catalogs = JSON.readTree(context.body()).path("featureCatalogs");
+        assertEquals(List.of("CHECKOUT_PREPARE", "PAYMENT_ATTEMPT_RISK"), List.of(catalogs.path(0).path("pointCode").asString(), catalogs.path(1).path("pointCode").asString()));
+        var checkout = catalogs.path(0);
+        assertEquals("INPUT_CURRENCY", checkout.path("currencyVariableCode").asString());
+        assertEquals("CHECKOUT_ASSESSED", checkout.at("/velocityEvents/0/eventCode").asString());
+        assertTrue(checkout.at("/velocityEvents/0/includeCurrentAllowed").asBoolean());
+        assertFalse(checkout.at("/velocityEvents/1/includeCurrentAllowed").asBoolean());
+        assertEquals("[600,3600]", checkout.at("/velocityAnchors/0/metrics/1/windowSeconds").toString());
+        assertEquals("SUM_AMOUNT", checkout.at("/velocityAnchors/0/metrics/1/metric").asString());
+        assertTrue(checkout.path("distinctSubjects").isEmpty());
+        assertEquals(6, catalogs.path(1).path("listSubjects").size());
+        assertEquals("[600,3600,86400,604800]", catalogs.path(1).at("/velocityAnchors/4/metrics/2/windowSeconds").toString());
+        risk.corruptWire(w -> ((ObjectNode)w.at("/featureCatalogs/0/velocityEvents/0")).put("privateOwnerState", "canary"));
+        var invalid = send("GET", "authoring-context", "manage-context", null, null); ok(invalid, 502); assertFalse(invalid.body().contains("canary"));
+        risk.corruptWire(w -> ((ObjectNode)w.at("/featureCatalogs/1")).remove("listSubjects"));
+        ok(send("GET", "authoring-context", "manage-context", null, null), 502);
+    }
+
     @Test void readCannotWriteManageCannotDeleteAndUnknownBodyKeysNeverReachOwner() throws Exception {
         platform.grantPermissions("900000000000000536");
         ok(send("GET", "authoring-context", "manage-context", null, null), 200);

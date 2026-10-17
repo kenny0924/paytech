@@ -23,7 +23,7 @@ export const editingCatalog = {
     const codes=String(filters.codes??'').split(',');
     return {items:variableDefinitions.filter(v=>codes.includes(v.variableCode)),missingCodes:codes.filter(c=>!variableDefinitions.some(v=>v.variableCode===c)),valuesAsOf:instant};
   },
-  async context():Promise<VariableContext> {return {supportedPoints:[],sources:[],valueTypes:[],formatProfiles:[],numericUnits:[],limits:{memberCount:1000,memberBodyBytes:65536,literalSetCount:100},contracts:[{
+  async context():Promise<VariableContext> {return {supportedPoints:[],sources:[],valueTypes:[],formatProfiles:[],numericUnits:[],limits:{memberCount:1000,memberBodyBytes:65536,literalSetCount:100},featureCatalogs:[],contracts:[{
     contractCode:'ORDER_PREPARATION',contractVersion:4,pointCode:'CHECKOUT_PREPARE',sourceType:'INPUT',nodeType:null,
     fields:variableContext.fields.map(f=>({fieldKey:f.fieldCode,valueType:f.valueType,required:f.requiredFlag,dataClassification:f.dataClassification,allowedUsages:f.actionParameterFlag?['ACTION_PARAMETER']:['RULE_CONDITION','FLOW_CONDITION'],numericUnit:null,currencyFieldKey:null,semanticRole:f.actionParameterFlag?'CLIENT_ID':null})),
   }]};},

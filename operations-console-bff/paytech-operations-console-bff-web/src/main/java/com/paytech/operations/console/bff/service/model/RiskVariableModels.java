@@ -140,7 +140,34 @@ public final class RiskVariableModels {
         List<FormatProfile> formatProfiles,
         List<String> numericUnits,
         Limits limits,
-        List<SourceContract> contracts) { }
+        List<SourceContract> contracts,
+        List<FeatureCatalog> featureCatalogs) { }
+
+    /** 支持实时累计与名单命中的风控点可选目录；由 Risk 工程登记，BFF 原样投影。 */
+    public record FeatureCatalog(
+        String pointCode,
+        String currencyVariableCode,
+        List<VelocityEventOption> velocityEvents,
+        List<VelocityAnchor> velocityAnchors,
+        List<String> distinctSubjects,
+        List<String> listSubjects) { }
+
+    /** 风控点的一个累计事件；includeCurrentAllowed 表示可计入本次。 */
+    public record VelocityEventOption(
+        String eventCode,
+        String eventName,
+        boolean includeCurrentAllowed) { }
+
+    /** 一个锚定主体可选的统计方式。 */
+    public record VelocityAnchor(
+        String subjectType,
+        List<VelocityMetricOption> metrics) { }
+
+    /** 锚定主体下一种统计方式的可选窗口秒数。 */
+    public record VelocityMetricOption(
+        String metric,
+        List<Integer> windowSeconds,
+        boolean includeCurrentAllowed) { }
 
     /** 当前支持的决策点。 */
     public record SupportedPoint(

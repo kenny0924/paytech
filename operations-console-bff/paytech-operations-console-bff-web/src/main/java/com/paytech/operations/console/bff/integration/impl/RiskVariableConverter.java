@@ -63,7 +63,35 @@ final class RiskVariableConverter {
     /** 转换 VariableManagementContextResponseBody，保留 null 与准确 Wire 值。 */
     static com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableManagementContextResponseBody local(com.paytech.risk.api.decision.response.VariableManagementContextResponseBody r) {
         if (r == null) return null;
-        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableManagementContextResponseBody(r.getSupportedPoints() == null ? null : r.getSupportedPoints().stream().map(RiskVariableConverter::local).toList(), r.getSources() == null ? null : r.getSources().stream().map(RiskVariableConverter::local).toList(), r.getValueTypes(), r.getFormatProfiles() == null ? null : r.getFormatProfiles().stream().map(RiskVariableConverter::local).toList(), r.getNumericUnits(), local(r.getLimits()), r.getContracts() == null ? null : r.getContracts().stream().map(RiskVariableConverter::local).toList());
+        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.VariableManagementContextResponseBody(r.getSupportedPoints() == null ? null : r.getSupportedPoints().stream().map(RiskVariableConverter::local).toList(), r.getSources() == null ? null : r.getSources().stream().map(RiskVariableConverter::local).toList(), r.getValueTypes(), r.getFormatProfiles() == null ? null : r.getFormatProfiles().stream().map(RiskVariableConverter::local).toList(), r.getNumericUnits(), local(r.getLimits()), r.getContracts() == null ? null : r.getContracts().stream().map(RiskVariableConverter::local).toList(), r.getFeatureCatalogs() == null ? null : r.getFeatureCatalogs().stream().map(RiskVariableConverter::local).toList());
+    }
+    /** 转换 FeatureCatalog，保留 null 与准确 Wire 值。 */
+    static com.paytech.operations.console.bff.service.model.RiskVariableModels.FeatureCatalog local(RiskVariableModels.FeatureCatalog r) {
+        if (r == null) {
+            return null;
+        }
+        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.FeatureCatalog(r.getPointCode(), r.getCurrencyVariableCode(), r.getVelocityEvents() == null ? null : r.getVelocityEvents().stream().map(RiskVariableConverter::local).toList(), r.getVelocityAnchors() == null ? null : r.getVelocityAnchors().stream().map(RiskVariableConverter::local).toList(), r.getDistinctSubjects(), r.getListSubjects());
+    }
+    /** 转换 VelocityEventOption，保留准确 Wire 值。 */
+    static com.paytech.operations.console.bff.service.model.RiskVariableModels.VelocityEventOption local(RiskVariableModels.VelocityEventOption r) {
+        if (r == null) {
+            return null;
+        }
+        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.VelocityEventOption(r.getEventCode(), r.getEventName(), r.getIncludeCurrentAllowed());
+    }
+    /** 转换 VelocityAnchor，保留 null 与准确 Wire 值。 */
+    static com.paytech.operations.console.bff.service.model.RiskVariableModels.VelocityAnchor local(RiskVariableModels.VelocityAnchor r) {
+        if (r == null) {
+            return null;
+        }
+        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.VelocityAnchor(r.getSubjectType(), r.getMetrics() == null ? null : r.getMetrics().stream().map(RiskVariableConverter::local).toList());
+    }
+    /** 转换 VelocityMetricOption，保留 null 与准确 Wire 值。 */
+    static com.paytech.operations.console.bff.service.model.RiskVariableModels.VelocityMetricOption local(RiskVariableModels.VelocityMetricOption r) {
+        if (r == null) {
+            return null;
+        }
+        return new com.paytech.operations.console.bff.service.model.RiskVariableModels.VelocityMetricOption(r.getMetric(), r.getWindowSeconds(), r.getIncludeCurrentAllowed());
     }
     /** 转换 SupportedPoint，保留 null 与准确 Wire 值。 */
     static com.paytech.operations.console.bff.service.model.RiskVariableModels.SupportedPoint local(RiskVariableModels.SupportedPoint r) {

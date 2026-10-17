@@ -22,16 +22,67 @@ final class RiskVariableScenario {
             || method.equals("GET") && path.matches(ROOT + "/variables/[A-Z][A-Z0-9_]{0,63}/references");
     }
 
+    /** 低基数主体（Client、运营主体）可选的统计方式与窗口；其他主体为五种统计方式 × 四个窗口。 */
+    private static final Map<String, List<Integer>> HOT_SUBJECT_METRICS = new LinkedHashMap<>();
+    static {
+        HOT_SUBJECT_METRICS.put("COUNT", List.of(600, 3600, 86400));
+        HOT_SUBJECT_METRICS.put("SUM_AMOUNT", List.of(600, 3600));
+        HOT_SUBJECT_METRICS.put("LAST_AMOUNT", List.of(600, 3600, 86400));
+        HOT_SUBJECT_METRICS.put("SECONDS_SINCE_LAST", List.of(600, 3600, 86400));
+    }
+
+    /** 结账在前、支付在后的 Feature 目录，与 Risk 工程登记一致。 */
+    static ObjectNode withFeatureCatalogs(ObjectNode context) {
+        var catalogs = context.putArray("featureCatalogs");
+        catalog(catalogs.addObject(), "CHECKOUT_PREPARE", "INPUT_CURRENCY", "CHECKOUT_ASSESSED", "结账评估",
+            "CHECKOUT_REJECTED", "结账被拦截（审核或拒绝）", List.of("CLIENT", "OPERATING_ENTITY"), List.of(),
+            List.of("CLIENT", "OPERATING_ENTITY"));
+        var paymentSubjects = List.of("CLIENT", "OPERATING_ENTITY", "CONSUMER", "IP_ADDRESS", "CARD_FINGERPRINT");
+        catalog(catalogs.addObject(), "PAYMENT_ATTEMPT_RISK", "PAY_INPUT_CURRENCY", "PAYMENT_ATTEMPT_ASSESSED",
+            "支付尝试评估", "PAYMENT_ATTEMPT_REJECTED", "支付尝试被拦截（审核或拒绝）", paymentSubjects, paymentSubjects,
+            List.of("CLIENT", "OPERATING_ENTITY", "CONSUMER", "IP_ADDRESS", "CARD_FINGERPRINT", "CARD_BIN"));
+        return context;
+    }
+
+    private static void catalog(ObjectNode node, String point, String currency, String assessed, String assessedName,
+        String rejected, String rejectedName, List<String> anchors, List<String> distinct, List<String> lists) {
+        node.put("pointCode", point).put("currencyVariableCode", currency);
+        var events = node.putArray("velocityEvents");
+        events.addObject().put("eventCode", assessed).put("eventName", assessedName).put("includeCurrentAllowed", true);
+        events.addObject().put("eventCode", rejected).put("eventName", rejectedName).put("includeCurrentAllowed", false);
+        var anchorNodes = node.putArray("velocityAnchors");
+        for (String anchor : anchors) {
+            var metrics = anchorNodes.addObject().put("subjectType", anchor).putArray("metrics");
+            boolean hot = anchor.equals("CLIENT") || anchor.equals("OPERATING_ENTITY");
+            Map<String, List<Integer>> allowed = hot ? HOT_SUBJECT_METRICS : allMetrics();
+            allowed.forEach((metric, windows) -> {
+                var option = metrics.addObject().put("metric", metric);
+                windows.forEach(option.putArray("windowSeconds")::add);
+                option.put("includeCurrentAllowed", metric.equals("COUNT") || metric.equals("SUM_AMOUNT"));
+            });
+        }
+        distinct.forEach(node.putArray("distinctSubjects")::add);
+        lists.forEach(node.putArray("listSubjects")::add);
+    }
+
+    private static Map<String, List<Integer>> allMetrics() {
+        Map<String, List<Integer>> all = new LinkedHashMap<>();
+        for (String metric : List.of("COUNT", "SUM_AMOUNT", "DISTINCT_COUNT", "LAST_AMOUNT", "SECONDS_SINCE_LAST")) {
+            all.put(metric, List.of(600, 3600, 86400, 604800));
+        }
+        return all;
+    }
+
     Object dispatch(Request request) {
         String path = request.path().substring(ROOT.length());
         var q = query(request.query());
-        if (path.equals("/authoring-context")) return JSON.readTree("""
+        if (path.equals("/authoring-context")) return withFeatureCatalogs((ObjectNode) JSON.readTree("""
             {"supportedPoints":[{"pointCode":"CHECKOUT_PREPARE","pointName":"结账准备"}],
              "sources":[{"sourceType":"CONSTANT","createAllowed":true},{"sourceType":"COLLECTION","createAllowed":true},{"sourceType":"VELOCITY","createAllowed":true},{"sourceType":"LIST","createAllowed":true}],
              "valueTypes":["STRING","NUMBER","BOOLEAN","DATETIME","DURATION"],
              "formatProfiles":[{"formatCode":"TEXT","label":"文本","help":"保留原值"},{"formatCode":"NONE","label":"无","help":"类型约束"}],
              "numericUnits":["SCALAR","MONEY"],"limits":{"memberCount":1000,"memberBodyBytes":65536,"literalSetCount":100},"contracts":[]}
-            """);
+            """));
         if (path.equals("/variables") && request.method().equals("POST")) {
             var root = (ObjectNode) JSON.readTree(request.body()); String code = root.path("variableCode").asString();
             if (entries.containsKey(code)) throw new RiskDecisionConfigurationSimulator.SemanticFailure(409, "VARIABLE_CODE_EXISTS");
