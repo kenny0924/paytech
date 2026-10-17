@@ -18,6 +18,7 @@ import tempfile
 import time
 
 root = pathlib.Path.cwd()
+reactor = root.parent  # paytech/: the single Maven wrapper and reactor root.
 owned = None
 active = None
 safe_to_remove = True
@@ -34,7 +35,7 @@ def required(name):
 def prepared_foundation():
     repository = pathlib.Path(required('VAULT_MAVEN_REPOSITORY'))
     message = ('PREPARE: prepare Foundation artifacts in VAULT_MAVEN_REPOSITORY: '
-               'install the approved paytech-build parent/BOM, paytech-common-core and paytech-http-problem '
+               'install the approved paytech/build parent/BOM, paytech-common-core and paytech-http-problem '
                '1.0.0-SNAPSHOT separately; '
                'verification does not install, substitute or remotely resolve them.')
     if not repository.is_absolute() or not repository.is_dir():
@@ -94,7 +95,7 @@ def run(label, command, seconds=600, capture=False):
 def scan():
     secrets = [os.environ.get(name, '') for name in ('VAULT_TEST_DB_DSN', 'VAULT_TEST_JDBC_PASSWORD')]
     secrets += ['VAULT-E2E-SENSITIVE-CANARY-', 'TEST-ONLY-NOT-A-SECRET@example.test']
-    locations = [owned, root / 'paytech-vault-client/target/surefire-reports', root / 'vault-test/target/surefire-reports']
+    locations = [owned, root / 'paytech-vault-client/target/surefire-reports', root / 'paytech-vault-test/target/surefire-reports']
     for location in locations:
         if not location.exists():
             continue
@@ -115,8 +116,8 @@ try:
     java = pathlib.Path(required('JAVA_HOME')) / 'bin/java'
     if not java.is_file():
         fail('PREPARE: JAVA_HOME must select JDK 25.')
-    if not os.access(root / 'mvnw', os.X_OK) or not (root / '.mvn/wrapper/maven-wrapper.properties').is_file():
-        fail('PREPARE: restore this repository Maven 3.9.16 wrapper.')
+    if not os.access(reactor / 'mvnw', os.X_OK) or not (reactor / '.mvn/wrapper/maven-wrapper.properties').is_file():
+        fail('PREPARE: restore the paytech/ Maven 3.9.16 wrapper.')
     if not shutil.which('git'):
         fail('PREPARE: git is required.')
     sqlc = os.environ.get('SQLC_BIN') or shutil.which('sqlc')
@@ -139,7 +140,7 @@ try:
     if not re.search(r'\bversion "25[.\-"]', version):
         fail('PREPARE: JDK 25 is required.')
     os.environ['VAULT_VERIFY_CACHED_MAVEN_ONLY'] = 'true'
-    maven = [str(root / 'mvnw'), '-B', '-ntp', '--no-snapshot-updates', '-Dmaven.repo.local=' + repository]
+    maven = [str(reactor / 'mvnw'), '-B', '-ntp', '--no-snapshot-updates', '-Dmaven.repo.local=' + repository]
     if 'Apache Maven 3.9.16' not in run('maven-version', maven + ['--version'], 60, True):
         fail('PREPARE: Maven wrapper must run exactly Maven 3.9.16.')
     run('mysql-schema-preflight', [go, 'test', './internal/data', '-run', '^TestIntegrationSchemaTablesPresent$', '-count=1', '-timeout=30s'], 90)

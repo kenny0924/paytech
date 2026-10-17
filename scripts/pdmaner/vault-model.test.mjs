@@ -11,10 +11,10 @@ const paths = Object.freeze({
   manifest: path.join(workspaceRoot, "scripts/pdmaner/vault/manifest.mjs"),
   policy: path.join(workspaceRoot, "scripts/pdmaner/vault/model-policy.mjs"),
   generator: path.join(workspaceRoot, "scripts/pdmaner/vault/generate-vault-model.mjs"),
-  model: path.join(workspaceRoot, "vault-service/docs/database/vault.pdma.json"),
+  model: path.join(workspaceRoot, "paytech/vault/docs/database/vault.pdma.json"),
   decisions: path.join(
     workspaceRoot,
-    "vault-service/docs/database/VAULT_PHYSICAL_DECISIONS.md",
+    "paytech/vault/docs/database/VAULT_PHYSICAL_DECISIONS.md",
   ),
   template: path.join(workspaceRoot, "agent-docs/templates/pdmaner/template.pdma.json"),
 });

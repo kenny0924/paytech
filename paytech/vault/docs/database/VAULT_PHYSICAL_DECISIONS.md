@@ -3,13 +3,13 @@
 最后更新：2026-10-14
 状态：**V1 六表模型（2026-10-14 增加策略三表，见第 8 节）/手工 Schema 与 local/test Go/Java 实现通过自动门禁；Nacos 实际烟测 NOT RUN，PDManer 应用内人工评审 PENDING；最终全分支审查单独记录**
 
-> **2026-09-05 物理约束对齐：** 下文 FK/CHECK 数量是已人工应用 Vault Schema 的当前事实，不是新增数据库约束规范。项目已确认后续不新建物理 `FOREIGN KEY` 或 `CHECK`；现存约束只有在应用保护、反例测试、审核 SQL 和回滚方案齐备后才按 [物理约束移除计划](../../../docs/superpowers/plans/2026-09-05-physical-constraint-removal.md) 迁移。文档更新不代表当前数据库已经移除它们。
+> **2026-09-05 物理约束对齐：** 下文 FK/CHECK 数量是已人工应用 Vault Schema 的当前事实，不是新增数据库约束规范。项目已确认后续不新建物理 `FOREIGN KEY` 或 `CHECK`；现存约束只有在应用保护、反例测试、审核 SQL 和回滚方案齐备后才按 [物理约束移除计划](../../../../docs/superpowers/plans/2026-09-05-physical-constraint-removal.md) 迁移。文档更新不代表当前数据库已经移除它们。
 
-本文是 [Vault V1 数据库设计](../../../docs/superpowers/specs/2026-09-02-vault-database-design.md) 到 PDManer 物理模型的冻结映射。Vault 是通用的非卡敏感值保护基础设施：只保存受保护值和通用 `data_type`，不拥有任何业务语义。
+本文是 [Vault V1 数据库设计](../../../../docs/superpowers/specs/2026-09-02-vault-database-design.md) 到 PDManer 物理模型的冻结映射。Vault 是通用的非卡敏感值保护基础设施：只保存受保护值和通用 `data_type`，不拥有任何业务语义。
 
 ## 1. 生成边界与冻结基线
 
-模型 [vault.pdma.json](./vault.pdma.json) 只能由 [Vault Generator](../../../scripts/pdmaner/vault/generate-vault-model.mjs) 从共享模板、[Manifest](../../../scripts/pdmaner/vault/manifest.mjs) 与 [Policy](../../../scripts/pdmaner/vault/model-policy.mjs) 生成。不得直接修改 JSON；生产 Manifest 与独立测试 Oracle 分离。序列化固定为两空格缩进和一个末尾换行，`--check` 逐字节检查且不写文件。下列为 2026-09-04 三表冻结基线；当前六表基线见第 8 节。
+模型 [vault.pdma.json](vault.pdma.json) 只能由 [Vault Generator](../../../../scripts/pdmaner/vault/generate-vault-model.mjs) 从共享模板、[Manifest](../../../../scripts/pdmaner/vault/manifest.mjs) 与 [Policy](../../../../scripts/pdmaner/vault/model-policy.mjs) 生成。不得直接修改 JSON；生产 Manifest 与独立测试 Oracle 分离。序列化固定为两空格缩进和一个末尾换行，`--check` 逐字节检查且不写文件。下列为 2026-09-04 三表冻结基线；当前六表基线见第 8 节。
 
 ```json
 {
@@ -83,7 +83,7 @@ Reveal 先校验基础请求，再按 Token 读取非敏感元数据并取得 Da
 
 ## 6. 明确排除与人工门禁
 
-本 V1 的 Go Server、Java Client、内部 HTTP 契约和 LOCAL AES 实现以 [2026-09-05 文档治理与冲突决策](../../../agent-docs/decisions/2026-09-05-document-governance-and-conflict-resolution.md) 和 [OpenAPI](../../api/openapi/v1.yaml) 为准；Schema DDL 仍为人工执行，不创建 Flyway、自动建表或生产部署资源。也不包含 Gateway/BFF/浏览器/外部 Client 访问、业务聚合/Owner/Tenant/Field 事实、Bind/Confirm/Copy/Retire/Destroy/Query/Batch/Manage/Rewrap API、mTLS/Workload Identity/数据库服务凭据、应用层请求/响应加密信封、Blind Index/Mask/Metadata/Record Version/算法或 Key Version 表、Inbox/Outbox/`compensation_event`/Platform Audit relay、审计链/WORM、自动 Retention/Legal Hold/匿名化/归档/销毁、分库分表或预留字段，以及任何 PAN、CVV/CVC、Track、卡到期日、PIN/PIN Block。
+本 V1 的 Go Server、Java Client、内部 HTTP 契约和 LOCAL AES 实现以 [2026-09-05 文档治理与冲突决策](../../../../agent-docs/decisions/2026-09-05-document-governance-and-conflict-resolution.md) 和 [OpenAPI](../../api/openapi/v1.yaml) 为准；Schema DDL 仍为人工执行，不创建 Flyway、自动建表或生产部署资源。也不包含 Gateway/BFF/浏览器/外部 Client 访问、业务聚合/Owner/Tenant/Field 事实、Bind/Confirm/Copy/Retire/Destroy/Query/Batch/Manage/Rewrap API、mTLS/Workload Identity/数据库服务凭据、应用层请求/响应加密信封、Blind Index/Mask/Metadata/Record Version/算法或 Key Version 表、Inbox/Outbox/`compensation_event`/Platform Audit relay、审计链/WORM、自动 Retention/Legal Hold/匿名化/归档/销毁、分库分表或预留字段，以及任何 PAN、CVV/CVC、Track、卡到期日、PIN/PIN Block。
 
 部署私有网络中的内部 HTTP、必需 `X-Caller-Service` 和 `caller_service + action + data_type + purpose` allowlist（2026-10-14 起存于策略表）是 V1 访问边界；缺失策略拒绝。Vault 不持有应用 X.509 证书；该 Header 是临时的 best-effort 调用者断言，不是强身份认证，不能被本模型描述为 mTLS/Binding 能力。
 
@@ -99,7 +99,7 @@ Reveal 先校验基础请求，再按 Token 读取非敏感元数据并取得 Da
 
 ## 8. 2026-10-14 策略入库（六表基线）
 
-依据 [2026-10-14 决定](../../../agent-docs/decisions/2026-10-14-vault-policy-and-manual-access.md)与[需求目录](../../../requirements/20261014/operations-console-Vault数据类型与手动加解密/)，新增 `t_vault_data_type`、`t_vault_access_rule`、`t_vault_policy_change`，访问事件增加 `actor_id`、`reason_code`、`ticket_ref` 与 `idx_vault_access_actor`。新表不建物理 FK/CHECK，枚举与引用由应用保证；原有 2 FK、4 CHECK 不变。
+依据 [2026-10-14 决定](../../../../agent-docs/decisions/2026-10-14-vault-policy-and-manual-access.md)与[需求目录](../../../../requirements/20261014/operations-console-Vault数据类型与手动加解密/)，新增 `t_vault_data_type`、`t_vault_access_rule`、`t_vault_policy_change`，访问事件增加 `actor_id`、`reason_code`、`ticket_ref` 与 `idx_vault_access_actor`。新表不建物理 FK/CHECK，枚举与引用由应用保证；原有 2 FK、4 CHECK 不变。
 
 ```json
 {

@@ -17,7 +17,7 @@ POST /vault/v1/records/reveal
 
 访问策略（数据类型 + 访问规则）只存于数据库三张策略表，各环境用初始化 DML 写入，Vault 启动时必须读取成功，
 之后按 `VAULT_POLICY_REFRESH_INTERVAL`（默认 10 秒）全量刷新；刷新失败保留上一份快照并计入指标。
-审计中的策略版本记为 `db-<版本号>`。决定见 [2026-10-14 决定](../agent-docs/decisions/2026-10-14-vault-policy-and-manual-access.md)。
+审计中的策略版本记为 `db-<版本号>`。决定见 [2026-10-14 决定](../../agent-docs/decisions/2026-10-14-vault-policy-and-manual-access.md)。
 
 `/vault` 表达系统边界，后续路径表达版本和能力；Java `@HttpExchange` 统一声明系统前缀，
 各方法只声明能力路径。接口不使用 `/internal` 前缀或冒号动作后缀，仍仅供私网内部服务调用。
@@ -26,7 +26,7 @@ POST /vault/v1/records/reveal
 
 ## 代码结构
 
-技术栈见 [TECHNOLOGY_STACK.md §7.1](../agent-docs/TECHNOLOGY_STACK.md#71-go-服务技术栈)，分层与编码规范见 [GO_DEVELOPMENT_CONVENTIONS.md](../agent-docs/GO_DEVELOPMENT_CONVENTIONS.md)。
+技术栈见 [TECHNOLOGY_STACK.md §7.1](../../agent-docs/TECHNOLOGY_STACK.md#71-go-服务技术栈)，分层与编码规范见 [GO_DEVELOPMENT_CONVENTIONS.md](../../agent-docs/GO_DEVELOPMENT_CONVENTIONS.md)。
 
 ```text
 cmd/vault-server/            进程入口
@@ -51,14 +51,14 @@ test/support/                测试 base、Builder、本地 Mocker、Checker、T
 ## Docker test deployment
 
 The current independent Docker test deployment is documented in
-[the test runbook](../test-environment/README.md#vault-test-部署). It uses only synthetic test data,
+[the test runbook](../../test-environment/README.md#vault-test-部署). It uses only synthetic test data,
 LOCAL AES and private HTTP at `http://vault-service:18107`; it does not replace Platform's Vault Mock.
 Deployment scripts explicitly initialize only an empty test schema and preserve the test AES material.
 The auto-test contract below remains local-environment-only; never point its fixture cleanup at test.
 
 ## Automatic verification
 
-Prerequisites: Go **1.27.1** (`GO_BIN` or PATH), **sqlc v1.31.1** and **golangci-lint v2.14.0** (PATH or `SQLC_BIN` / `GOLANGCI_LINT_BIN`), **JDK 25** (`JAVA_HOME`), this Maven **3.9.16** wrapper, Python 3 (portable bounded subprocess supervision), git, POSIX private-file permissions, and **15 GiB** free disk. **`VAULT_MAVEN_REPOSITORY` is required** and must be an absolute path to the prepared Maven cache. Before invoking Maven or any database/test gate, the script checks nonempty local `paytech-parent`/`paytech-dependencies` POMs and `paytech-common-core`/`paytech-http-problem` POMs and JARs at `com/paytech/<artifact>/1.0.0-SNAPSHOT`. Missing artifacts require a separate operator-approved Foundation build/install; verification neither fetches nor substitutes them. Every Maven command uses that exact repository and `--no-snapshot-updates`; private/global settings are not parsed or changed. Nothing installs or publishes artifacts, changes global settings, starts containers or prepares schema automatically.
+Prerequisites: Go **1.27.1** (`GO_BIN` or PATH), **sqlc v1.31.1** and **golangci-lint v2.14.0** (PATH or `SQLC_BIN` / `GOLANGCI_LINT_BIN`), **JDK 25** (`JAVA_HOME`), the `paytech/` Maven **3.9.16** wrapper (`../mvnw`), Python 3 (portable bounded subprocess supervision), git, POSIX private-file permissions, and **15 GiB** free disk. **`VAULT_MAVEN_REPOSITORY` is required** and must be an absolute path to the prepared Maven cache. Before invoking Maven or any database/test gate, the script checks nonempty local `paytech-parent`/`paytech-dependencies` POMs and `paytech-common-core`/`paytech-http-problem` POMs and JARs at `com/paytech/<artifact>/1.0.0-SNAPSHOT`. Missing artifacts require a separate operator-approved Foundation build/install; verification neither fetches nor substitutes them. Every Maven command uses that exact repository and `--no-snapshot-updates`; private/global settings are not parsed or changed. Nothing installs or publishes artifacts, changes global settings, starts containers or prepares schema automatically.
 
 The operator must first start the repository `local-environment` MySQL and manually apply the reviewed [schema](docs/database/sql/vault-schema.sql) to existing `mor_vault`. Never replay DDL against an already prepared schema. Exactly three tables are required; no Flyway, Liquibase, Testcontainers, seed or truncate exists. Tests use only `vault_app` at `127.0.0.1:13306/mor_vault`.
 
@@ -83,7 +83,7 @@ The gate checks versions/disk/schema, OpenAPI and golden fixtures, gofmt, `sqlc 
 To rerun only acceptance after building an actual binary into an owned temporary directory, set `VAULT_TEST_SERVER_BINARY` to its absolute executable path and run:
 
 ```sh
-./mvnw -pl vault-test -am test
+../mvnw -pl paytech-vault-test -am test
 ```
 
 Each fixture generates its own AES root key, policy, caller/request/key prefix and canary. Secrets enter the child only through environment variables; stdout/stderr and Go SDK temp files remain in a 0700 owned tree. Readiness is bounded to 20 seconds; shutdown requests graceful exit for 5 seconds then force-kills for at most 5 more. The outer database fixture owns the **19128 lease**: Go shutdown/private-file cleanup happens first, then owned SQL cleanup and connection close, then lease release. Stopping Go alone never releases it. SQL/file cleanup failures remain explicit; after failed SQL cleanup, rollback/connection close precedes lease release. If child death or database connection close cannot be confirmed, the lease is retained (and unconfirmed child death preserves rows). Cleanup follows confirmed process death, scanning logs without printing matches. SQL cleanup captures candidate Record **ID + immutable Token** through owned Protect requests before removing events/requests, deletes only owned caller/key/request rows, and preserves Records still referenced by another run. It never cleans by ID/timestamp range. Failed or interrupted tests may require operator investigation; they never delete unrelated rows to repair an ID collision.
@@ -97,7 +97,7 @@ This gate is excluded from default auto tests; no real Nacos credentials have be
 Both `ALIBABA_CLOUD_ACCESS_KEY_ID` and `ALIBABA_CLOUD_ACCESS_KEY_SECRET` must be empty for enabled Go Nacos; the test rejects them without stripping the environment. Create a dedicated **0700** directory with `mktemp -d`, and supply its absolute path as `VAULT_MANUAL_NACOS_PRIVATE_DIR`. Surefire sets `JM.LOG.PATH` before the manual fork loads SDK classes and disables the SDK default log configuration. Test-only Logback turns Nacos logging off. The exact discovery property `spring.cloud.nacos.discovery.JM.SNAPSHOT.PATH` points to an owned child inside this directory; cache loading is disabled, but writes may still occur.
 
 ```sh
-./mvnw -Pmanual-test -pl vault-test -am \
+../mvnw -Pmanual-test -pl paytech-vault-test -am \
   -Dtest='**/manual/NacosDiscoverySmokeTest' -Dsurefire.failIfNoSpecifiedTests=false test
 ```
 

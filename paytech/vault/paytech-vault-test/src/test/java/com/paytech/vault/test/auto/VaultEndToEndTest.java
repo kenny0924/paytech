@@ -24,7 +24,7 @@ class VaultEndToEndTest {
                 Files.setPosixFilePermissions(tool, PosixFilePermissions.fromString("rwx------"));
             }
             Path mavenHome = Files.createDirectory(root.resolve("empty-maven-home"));
-            var builder = new ProcessBuilder("../mvnw", "--version").redirectErrorStream(true).redirectOutput(root.resolve("output.log").toFile());
+            var builder = new ProcessBuilder("../../mvnw", "--version").redirectErrorStream(true).redirectOutput(root.resolve("output.log").toFile());
             var environment = builder.environment();
             environment.put("PATH", root + ":" + environment.get("PATH"));
             environment.put("MAVEN_USER_HOME", mavenHome.toString());

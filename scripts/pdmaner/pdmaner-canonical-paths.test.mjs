@@ -13,7 +13,7 @@ const modelContracts = [
   ["risk-compliance-service", "risk-compliance.pdma.json", "scripts/pdmaner/risk/generate-risk-compliance-model.mjs"],
   ["finance-service", "finance.pdma.json", "scripts/pdmaner/finance/generate-finance-model.mjs"],
   ["platform-support-service", "platform-support.pdma.json", "scripts/pdmaner/platform-support/generate-platform-support-model.mjs"],
-  ["vault-service", "vault.pdma.json", "scripts/pdmaner/vault/generate-vault-model.mjs"],
+  ["paytech/vault", "vault.pdma.json", "scripts/pdmaner/vault/generate-vault-model.mjs"],
 ];
 
 test("each database owner keeps exactly one canonical short-name PDManer model", () => {

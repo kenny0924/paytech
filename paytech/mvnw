@@ -155,6 +155,11 @@ if [ -d "$MAVEN_HOME" ]; then
   exec_maven "$@"
 fi
 
+# Vault verification (vault/scripts/verify.sh) must never bootstrap tools; normal wrapper use is unchanged.
+if [ "${VAULT_VERIFY_CACHED_MAVEN_ONLY-}" = true ]; then
+  die "PREPARE: prepare cached Maven 3.9.16 wrapper distribution separately; verification never installs tools."
+fi
+
 case "${distributionUrl-}" in
 *?-bin.zip | *?maven-mvnd-?*-?*.zip) ;;
 *) die "distributionUrl is not valid, must match *-bin.zip or maven-mvnd-*.zip, but found '${distributionUrl-}'" ;;

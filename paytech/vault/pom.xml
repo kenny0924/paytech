@@ -2,16 +2,29 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
+    <!--
+      Vault is a Go service (cmd/vault-server, Go module github.com/paytech/vault-service) rooted in this directory.
+      Only the Java client and its black-box acceptance tests take part in the PayTech reactor.
+    -->
     <parent>
         <groupId>com.paytech</groupId>
         <artifactId>paytech-parent</artifactId>
         <version>1.0.0-SNAPSHOT</version>
-        <relativePath/>
+        <relativePath>../build/paytech-parent/pom.xml</relativePath>
     </parent>
-    <artifactId>vault-service</artifactId>
+    <artifactId>paytech-vault</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <modules><module>paytech-vault-client</module><module>vault-test</module></modules>
+
+    <name>PayTech Vault</name>
+    <description>Vault aggregator: Java client and acceptance tests for the Go vault-service.</description>
+
+    <modules>
+        <module>paytech-vault-client</module>
+        <module>paytech-vault-test</module>
+    </modules>
+
     <dependencyManagement>
         <dependencies>
             <dependency>
