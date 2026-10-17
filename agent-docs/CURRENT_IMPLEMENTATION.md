@@ -13,13 +13,20 @@
 
 <a id="finance-accounting-kernel-20261015"></a>
 
+<a id="mor-test-compensation-scan-20261017"></a>
+## mor-test Platform 补偿扫描（2026-10-17，已部署 mor-test）
+
+- **范围：** mor-test 的 XXL-Job Admin 常驻（根路径，`compose.sh` 默认加载 scheduler，由 Client API 测试联通会话启动并提交）；默认管理员密码已改，取自 `.env.test` 的 `MOR_XXL_JOB_ADMIN_PASSWORD`。Platform 执行器为 `platform-support-service@172.30.73.21:9999`；任务 `compensationEventScan` 为 BEAN、每 30 秒、分片广播、单机串行、失败不重试，Commerce 同样设置。不改代码与镜像（Platform `629cccf9…`）。需求见 [requirements/20261017/platform-support-mor-test补偿扫描](../requirements/20261017/platform-support-mor-test补偿扫描/requirement.md)。
+- **验证：** 临时"先 503 后 204"接收端与临时 http 放行下，Webhook 投递首次失败进入 RETRY_WAIT，由扫描自动重发并送达，**9/9**；临时项已撤除，http 地址恢复为 400。
+- **已知：** Platform 或 Commerce 每次重启约有 1 分钟扫描调度失败（执行器注销，Admin 每 30 秒刷新注册地址），由下一周期补上。
+
 <a id="operations-webhook-management-20261016"></a>
 ## Operations Webhook 管理（2026-10-16，已本地提交，未推送；2026-10-17 已部署 mor-test）
 
 - **范围：** 运营后台「平台配置 / Webhook 管理」：按 Client ID 或名称选择 Client（Platform 新增 `GET /webhook-admin/v1/clients`）、端点新建 / 修改 / 启停、签名密钥一次性展示与轮换、投递记录与详情、Replay；Operations BFF 转发 10 个接口；注册 DML 128 行（`9000000000000903xx—0907xx`）。需求见 [requirements/20261016/operations-console-Webhook管理](../requirements/20261016/operations-console-Webhook管理/requirement.md)。
 - **验证：** Platform Webhook 6 个测试类全部通过（全量 671 例中 3 例错误为其他会话未提交的通知改动）；BFF 1378/1378；Web 1051—1060 通过；本机全链路接口 28/28、浏览器 22/22。阶段 5 修正测试事件审计未落库（Webhook 投递遗留）。
 - **mor-test（2026-10-17）：** `20677f2` + 本需求差异构建 Platform `efeb1d9e…`、BFF `6341dd18…`、Web `da6154c7…`；注册与启用 SQL 已执行；接口 22/22、浏览器 13/13、30 页回归通过；未发送测试事件与业务事件。见[发布记录](../requirements/20261016/operations-console-Webhook管理/release/release.md)。
-- **未完成：** 未推送；BFF 对业务错误统一返回公共说明，页面不能就地显示具体原因（另行决定）；mor-test 补偿扫描调度未配置。
+- **未完成：** 未推送；BFF 对业务错误统一返回公共说明，页面不能就地显示具体原因（另行决定）；mor-test 补偿扫描已于 2026-10-17 生效（见上节）。
 
 <a id="platform-webhook-delivery-20261015"></a>
 ## Platform Client Webhook 投递（2026-10-15，已本地提交 `ee469e0`，未推送；2026-10-16 已部署 mor-test）
@@ -28,7 +35,7 @@
 - **数据库：** 本机 `mor_platform` 执行 `docs/database/sql/changes/2026-10-15-webhook-delivery.sql`（5 表、56 字段）；mor-test `mor_platform` 执行建表、权限注册块与 test-activate（运营授权 ACTIVE）。其他环境未执行。
 - **mor-test 部署（2026-10-16）：** Platform 镜像 `sha256:63ae4cde…`（`webhook-20261016`），`WEBHOOK_ENABLED=true`、调用方 `commerce-service` 八类事件；Vault 新增 `WEBHOOK_SIGNING_SECRET_V1` 与 PROTECT/REVEAL 规则（策略 12→15）。临时接收端验收 24/24 后撤除放行与接收容器、清理验收数据。见[发布记录](../requirements/20261015/platform-support-Webhook投递/release/release.md)。同日 Platform 已由 Client Console 会话替换为 `sha256:86819a6e…`（`9ae668a`，含 `ee469e0`，Webhook 配置保留）。mor-test 未配置 XXL-Job 补偿扫描，RETRY_WAIT 投递不会自动重试。
 - **验证：** JDK 25 本机 `./mvnw -o verify`，Platform 测试 **647/647** 通过，其中 Webhook 4 个入口测试类 28 例；Webhook 相关 119 个类指令 91.91%、行 90.78%、分支 67.63%。全服务聚合 90% 覆盖率门禁仍为既有未达标（本次 Phase A 指令 58%、分支 39%）。PDManer 模型/Schema/场景测试 52/54，2 项为改动前既有失败。
-- **未完成：** 除 mor-test 外 Vault 未登记 `WEBHOOK_SIGNING_SECRET_V1` 与 `WEBHOOK_SIGNING` 规则；mor-test 补偿扫描调度；Commerce 生产端（冻结快照并调用受理接口）、Operations BFF/页面与 Gateway 路由注册、Readiness 的 Webhook 条件均未实现；未推送，未部署 mor-test 以外环境。
+- **未完成：** 除 mor-test 外 Vault 未登记 `WEBHOOK_SIGNING_SECRET_V1` 与 `WEBHOOK_SIGNING` 规则；Commerce 生产端（冻结快照并调用受理接口）、Operations BFF/页面与 Gateway 路由注册、Readiness 的 Webhook 条件均未实现；未推送，未部署 mor-test 以外环境。
 
 ## Finance Accounting 账务内核第一批（2026-10-15）
 

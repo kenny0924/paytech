@@ -57,7 +57,8 @@ def main():
                  "MOR_PLATFORM_DB_PASSWORD", "MOR_VAULT_DB_PASSWORD", "MOR_NACOS_DB_PASSWORD",
                  "MOR_XXL_JOB_DB_PASSWORD", "PAYTECH_FOUNDATION_TEST_DB_PASSWORD", "PAYTECH_REDIS_PASSWORD",
                  "MOR_RABBITMQ_PASSWORD", "MOR_NACOS_ADMIN_PASSWORD", "MOR_NACOS_SERVICE_PASSWORD",
-                 "MOR_NACOS_AUTH_IDENTITY_VALUE", "MOR_XXL_JOB_ACCESS_TOKEN", "MOR_XXL_JOB_LOGIN_TOKEN_KEY"]
+                 "MOR_NACOS_AUTH_IDENTITY_VALUE", "MOR_XXL_JOB_ACCESS_TOKEN", "MOR_XXL_JOB_LOGIN_TOKEN_KEY",
+                 "MOR_XXL_JOB_ADMIN_PASSWORD"]
     values = {name: secrets.token_hex(24) for name in passwords}
     values.update(MOR_RABBITMQ_USER="mor_test", MOR_RABBITMQ_VHOST="/mor-test",
                   MOR_NACOS_AUTH_IDENTITY_KEY="mor-test-server",
