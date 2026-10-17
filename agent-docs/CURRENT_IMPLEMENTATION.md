@@ -687,6 +687,14 @@
 
 - **RCO-14 Implemented / Verified / Deployed（2026-09-11，mor-test）：** 原 V1 的 Risk、Operations BFF/Web 配置增量已实现；[需求与接口合同](./plans/2026-09-11-risk-rule-v1-configuration-contract-draft.md)覆盖三条既有接口扩展，新增 API 和 Platform 注册 DML 均为 0。真实 MySQL/HTTP、BFF 转发/授权、前端和模型验证通过；开发库和 test Risk 库分别在用户授权、备份后应用增量 SQL；三个应用已部署，真实入口验收通过。精确证据及范围见第 15 节。
 
+<a id="commerce-webhook-events-20261017"></a>
+
+## Commerce Client Webhook 业务事件（2026-10-17，已本地提交，未推送、未部署）
+
+- **Implemented / 本机验证：** 按[需求](../requirements/20261016/commerce-Webhook业务事件/requirement.md)与[技术方案](../requirements/20261016/commerce-Webhook业务事件/technique.md)，Commerce 在首次支付成功、订单取消、退款创建的同一本地事务里登记 `CLIENT_WEBHOOK_REQUESTED` 补偿任务，冻结 RFC 8785 Envelope 与两个 Hash；`ClientWebhookSubmissionHandler` 事务外核对 Hash 后调用 Platform 内部受理接口（暂不可用含 404 重试；400、409、422 与载荷篡改记为明确失败并告警）。事件 ID `evt_<资源编号>_<短名>`；字段与 GET 订单、GET 退款一致。不改表。
+- **验证：** Commerce 新增 20 项测试，全量 `test` **810/810**；`verify` 被既有 Hosted Checkout 覆盖率门禁拦截（行 0.85 / 0.90）。本机 Commerce → Platform → 接收端 `commerce_webhook_flow.py` **66/66**（已支付订单的 Intent 投影为手工夹具）；Platform 不可用时业务照常、任务可重试（恢复后补交依赖 XXL-Job 扫描，本机未验证）。
+- **未完成：** `refund.succeeded/failed/cancelled` 随 Commerce 接入 Payment 退款接口另立需求；`order.expired`、`order.funds_available` 待对应业务能力；Commerce 未部署 mor-test；未推送。
+
 <a id="client-console-developer-20261016"></a>
 
 ## Client Console 接入自助：API 凭证与 Webhook（2026-10-16，已本地提交 `9ae668a`，未推送；2026-10-16 已部署 mor-test）

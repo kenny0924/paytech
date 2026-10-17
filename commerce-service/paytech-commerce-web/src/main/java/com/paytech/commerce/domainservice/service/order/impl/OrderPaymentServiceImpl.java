@@ -4,16 +4,20 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
 import com.paytech.commerce.domain.order.PaymentSucceededContext;
+import com.paytech.commerce.domain.webhook.ClientWebhookEvent;
 import com.paytech.commerce.domainservice.repository.checkout.CheckoutSessionRepository;
 import com.paytech.commerce.domainservice.repository.order.CommerceOrderRepository;
 import com.paytech.commerce.domainservice.repository.order.OrderFundsAvailabilityProjectionRepository;
 import com.paytech.commerce.domainservice.repository.order.OrderPaymentProjectionRepository;
 import com.paytech.commerce.domainservice.repository.order.OrderRefundPositionRepository;
 import com.paytech.commerce.domainservice.service.order.OrderPaymentService;
+import com.paytech.commerce.ext.job.ClientWebhookSubmissionHandler;
 import com.paytech.commerce.service.transaction.CommerceTransactionExecutor;
+import com.paytech.foundation.compensation.api.CompensationEventRegistrar;
 
 import lombok.AllArgsConstructor;
 
@@ -28,8 +32,13 @@ public class OrderPaymentServiceImpl implements OrderPaymentService {
     private final OrderRefundPositionRepository orderRefundPositionRepository;
     private final OrderPaymentProjectionRepository orderPaymentProjectionRepository;
     private final OrderFundsAvailabilityProjectionRepository orderFundsAvailabilityProjectionRepository;
+    /** Registry 启动时需要创建全部 Handler，登记器在业务调用时取得，避免相互构造。 */
+    private final ObjectProvider<CompensationEventRegistrar> registrars;
 
-    /** 五项事实在一次 REQUIRED 事务完成；版本或状态已变时抛出冲突，不自动重试。 */
+    /**
+     * 五项事实与 order.paid Webhook 事件在一次 REQUIRED 事务完成；版本或状态已变时抛出冲突，不自动重试。
+     * <li>只有首次进入 PAID 才到达这里；重复消息与已关闭订单的补记不登记事件。</li>
+     */
     @Override
     public void applySucceeded(PaymentSucceededContext context) {
         transactionExecutor.write(() -> {
@@ -42,6 +51,8 @@ public class OrderPaymentServiceImpl implements OrderPaymentService {
             orderRefundPositionRepository.establishBase(context.getRefundPosition(), context.getCapturedAmount(), now);
             orderFundsAvailabilityProjectionRepository.markPending(context.getOrder().getOrderId(),
                 context.getOccurredAt(), now);
+            registrars.getObject().register(ClientWebhookSubmissionHandler.buildEvent(
+                ClientWebhookEvent.orderPaid(context.getOrder(), context.getCapturedAmount(), now)));
             return null;
         });
     }

@@ -7,9 +7,6 @@ import com.paytech.commerce.client.api.v1.order.response.GetOrderResponseBody.*;
 import com.paytech.commerce.domain.order.CommerceDecimalRules;
 import com.paytech.commerce.service.processor.order.request.GetOrderRequest;
 import com.paytech.commerce.service.processor.order.response.GetOrderResponse;
-import com.paytech.foundation.common.error.ErrorException;
-import com.paytech.foundation.common.error.InvalidParameterException;
-import com.paytech.foundation.money.Money;
 
 /** 订单查询的 HTTP 模型转换；不读取数据库或计算业务状态。 */
 public final class GetOrderConverter {
@@ -51,13 +48,6 @@ public final class GetOrderConverter {
 
     /** 使用公共 Money 输出币种主单位字符串；损坏的持久化金额按系统错误处理。 */
     static String money(String currency, BigDecimal value) {
-        if (value == null) {
-            return null;
-        }
-        try {
-            return Money.of(currency, CommerceDecimalRules.parseNonNegative(value.toPlainString())).toAmountString();
-        } catch (IllegalArgumentException | InvalidParameterException exception) {
-            throw new ErrorException("订单金额币种精度不一致", exception);
-        }
+        return CommerceDecimalRules.toAmountString(currency, value);
     }
 }

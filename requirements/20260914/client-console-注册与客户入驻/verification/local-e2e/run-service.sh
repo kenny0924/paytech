@@ -68,8 +68,8 @@ case "${1:-}" in
         --compensation.instance-id=platform-local-e2e --tenant.projection.enabled=true \
         `# 2026-10-16 接入自助本机验收：开启 Webhook 投递；仅本机放行 http 与 127.0.0.1 测试接收端（生产保持 https、无内网放行）。` \
         --webhook.enabled=true --webhook.allowed-schemes=https,http --webhook.trusted-networks=127.0.0.1/32 \
-        `# 本机验收用调用方白名单：模拟 Commerce 提交 order.paid 以生成投递记录。` \
-        --webhook.http.callers.commerce-service=order.paid \
+        `# 本机验收用调用方白名单：Commerce 已实现的 3 种业务事件（2026-10-17 Commerce Webhook 业务事件）。` \
+        --webhook.http.callers.commerce-service=order.paid,order.cancelled,refund.created \
         --files.onboarding.enabled=true --files.onboarding.storage-provider=MINIO \
         --files.onboarding.storage-container-ref=mor-platform-files --files.onboarding.scan-policy-code=CLIENT_ONBOARDING_FORMAT \
         --files.onboarding.minio.endpoint=https://127.0.0.1:19400 --files.onboarding.minio.region=us-east-1 \

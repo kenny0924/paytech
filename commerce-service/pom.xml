@@ -30,6 +30,11 @@
                 <artifactId>risk-api</artifactId>
                 <version>1.0.0-SNAPSHOT</version>
             </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>platform-support-api</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+            </dependency>
             <dependency><groupId>com.paytech</groupId><artifactId>paytech-commerce-customer-api</artifactId><version>${project.version}</version></dependency>
             <dependency>
                 <groupId>com.paytech</groupId>

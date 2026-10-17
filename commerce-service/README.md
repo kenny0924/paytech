@@ -205,7 +205,24 @@ Payment 退款端口目前由 `UnavailablePaymentRefundClient` 报告尚未接�
 当前端口模拟仅验证 Commerce 的本地编排；正式 Owner 契约接入后须使用真实 HTTP Client 连接外部 Simulator，
 不能把现有测试声称为 Payment HTTP 契约或端到端退款验证。隔离规则和本次验证见
 [测试代码隔离说明](docs/requirements/20260912-refunds-api/test-isolation.md)。
-TODO(Payment)：正式 PAY-I04、结果查询及 MQ 事实；TODO(Platform)：Client Webhook。
+TODO(Payment)：正式 PAY-I04、结果查询及 MQ 事实。
+
+## Client Webhook 业务事件
+
+`order.paid`（`OrderPaymentServiceImpl.applySucceeded`）、`order.cancelled`（`OrderCancellationServiceImpl.cancel`）、
+`refund.created`（`RefundServiceImpl.saveCreateRefundContext`）在业务变更的同一事务里经
+`ClientWebhookSubmissionHandler.buildEvent` 冻结 Envelope 与两个 RFC 8785 Hash，登记 `CLIENT_WEBHOOK_REQUESTED`
+补偿任务；提交后 Handler 核对 Hash，经 `WebhookEventApi` 调 Platform 内部受理接口，204 才完成。
+5xx、网络错误、404 可重试；400/409/422 记为明确失败并输出 WARN。普通日志只记事件 ID 与类型。
+
+| 配置 | 默认 |
+|---|---|
+| `paytech.http.client.groups.platform-support-service.base-url` | `lb://platform-support-service/platform-support` |
+| 连接 / 读取超时 | 2 秒 / 5 秒 |
+
+Platform 需开启 `webhook.enabled`，并在 `webhook.http.callers.commerce-service` 中允许上述三种事件。
+退款终态与 `order.expired`、`order.funds_available` 未实现。范围与验证见
+[Commerce Webhook 业务事件](../requirements/20261016/commerce-Webhook业务事件/delivery.md)。
 
 Foundation 扫描入口已可恢复到期重试与过期租约，本期未启用外部 XXL-Job 调度。任务达到默认重试上限时
 保留失败任务和资金预占，不能将技术失败解释为退款失败；部署前需完成调度、告警与人工恢复接入。
@@ -553,7 +570,7 @@ env -u COMMERCE_TEST_REDIS_PASSWORD -u MOR_REDIS_PASSWORD \
 
 - 真实商业/风险/税务/文件/Payment Owner 接入与晚到支付事实定价；
 - 除 CCT 基础预检外的真实 Owner 适配与跨服务完整联调；
-- Platform Webhook、Funds Availability / Payment 事件消费，以及补偿任务的部署调度与人工恢复接入；
+- 退款终态与过期、资金可用 Webhook，Funds Availability / Payment 事件消费，以及补偿任务的部署调度与人工恢复接入；
 - Gateway/Platform/Nginx Client API 激活、`checkout-web`、Consumer `/c/{token}` 页面；
 - 真实 Owner 联调、跨系统端到端验收、发布和部署。
 

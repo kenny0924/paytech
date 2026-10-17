@@ -24,6 +24,10 @@
                 <groupId>com.paytech</groupId>
                 <artifactId>risk-api</artifactId>
             </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>platform-support-api</artifactId>
+            </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-redis-starter</artifactId>

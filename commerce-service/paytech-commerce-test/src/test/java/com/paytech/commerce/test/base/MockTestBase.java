@@ -2,6 +2,7 @@ package com.paytech.commerce.test.base;
 
 import com.paytech.commerce.test.mocker.external.CheckoutCommercialMocker;
 import com.paytech.commerce.test.mocker.external.CheckoutRiskMocker;
+import com.paytech.commerce.test.mocker.external.PlatformWebhookMocker;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.awaitility.Awaitility.await;
 
@@ -70,6 +71,9 @@ public abstract class MockTestBase extends TestBase {
     protected CheckoutRiskMocker riskMocker;
 
     @Autowired
+    protected PlatformWebhookMocker platformWebhookMocker;
+
+    @Autowired
     private CompensationEventDispatcher compensationDispatcher;
 
     @Autowired
@@ -82,6 +86,8 @@ public abstract class MockTestBase extends TestBase {
         Assertions.assertTrue(asynchronousWorkStopped, "前例异步处理未结束，禁止复用环境");
         checkoutDataMocker.beforeEach();
         adjustableUtcClock.reset();
+        // 支付成功、取消与退款都会登记 Webhook 提交；未单独配置的事件按 Platform 受理处理。
+        platformWebhookMocker.acceptByDefault();
     }
 
     /** 断言失败仍执行全部清理，意外调用必须在清记录前检查。 */
@@ -97,7 +103,8 @@ public abstract class MockTestBase extends TestBase {
             throw failure;
         }
         assertAll("检查外部 Mock 调用", preparationMocker::assertNoUnexpectedCalls,
-            riskMocker::assertNoUnexpectedCalls, cctCheckoutMockServer::assertNoUnexpectedRequests);
+            riskMocker::assertNoUnexpectedCalls, platformWebhookMocker::assertNoUnexpectedCalls,
+            cctCheckoutMockServer::assertNoUnexpectedRequests);
     }
 
     /** 异步无法停止时保留现场，防止公共清理之后仍被后台请求回写。 */

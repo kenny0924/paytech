@@ -13,10 +13,12 @@ import com.paytech.commerce.domain.enums.OrderStatus;
 import com.paytech.commerce.domain.enums.PaymentIntentStatus;
 import com.paytech.commerce.domain.enums.RefundStatus;
 import com.paytech.commerce.domain.refund.RefundCreationContext;
+import com.paytech.commerce.domain.webhook.ClientWebhookEvent;
 import com.paytech.commerce.domainservice.repository.order.OrderRefundPositionRepository;
 import com.paytech.commerce.domainservice.repository.order.OrderRepository;
 import com.paytech.commerce.domainservice.repository.refund.RefundRepository;
 import com.paytech.commerce.domainservice.service.refund.RefundService;
+import com.paytech.commerce.ext.job.ClientWebhookSubmissionHandler;
 import com.paytech.commerce.ext.job.RefundSubmissionHandler;
 import com.paytech.commerce.integration.payment.PaymentRefundClient;
 import com.paytech.commerce.service.transaction.CommerceTransactionExecutor;
@@ -41,7 +43,7 @@ public class RefundServiceImpl implements RefundService {
     /**
      * REQUIRED 事务保存已验证的 Context，不重新加载业务上下文。
      * <li>唯一索引保护业务退款号，条件 SQL 保护已支付资格及剩余额度。</li>
-     * <li>任务登记只写本地数据库，公共组件在提交后唤醒 Handler。</li>
+     * <li>任务登记只写本地数据库，公共组件在提交后唤醒 Handler；同时冻结 refund.created Webhook 事件。</li>
      */
     @Override
     public void saveCreateRefundContext(RefundCreationContext context) {
@@ -51,6 +53,8 @@ public class RefundServiceImpl implements RefundService {
             positions.reserve(context.getPosition(), context.getOrder(), context.getPayment(),
                 refund.getRefundAmount(), refund.getCreateTime());
             registrars.getObject().register(RefundSubmissionHandler.buildEvent(refund.getRefundRequestNo()));
+            registrars.getObject().register(ClientWebhookSubmissionHandler.buildEvent(
+                ClientWebhookEvent.refundCreated(refund, context.getOrder().getOrderNo())));
             return null;
         });
     }
@@ -123,7 +127,8 @@ public class RefundServiceImpl implements RefundService {
                     : status == RefundStatus.CANCELLED ? "PAYMENT_REFUND_CANCELLED" : null,
                 status.terminal() ? now : null, now);
         }
-        // TODO(Payment/Platform)：正式结果由 Payment 事实驱动，并衔接已批准的 Client Webhook；此处不通知 Finance。
+        // TODO(Payment/Platform)：正式结果由 Payment 事实驱动；refund.succeeded/failed/cancelled Webhook 随
+        // “Commerce 接入 Payment 退款接口（PAY-I04）”另立需求在首次进入终态时登记。此处不通知 Finance。
         return status.terminal();
     }
 

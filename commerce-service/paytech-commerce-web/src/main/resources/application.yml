@@ -36,6 +36,11 @@ spring:
         connect-timeout: 2s
         read-timeout: 1s
         redirects: dont-follow
+      platform-support-service:
+        base-url: lb://platform-support-service/platform-support
+        connect-timeout: 2s
+        read-timeout: 5s
+        redirects: dont-follow
   data:
     redis:
       host: "${MOR_REDIS_HOST:127.0.0.1}"
