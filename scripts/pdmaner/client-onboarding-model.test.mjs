@@ -4,7 +4,10 @@ import test from "node:test";
 
 const root = new URL("../../", import.meta.url);
 const model = (file) => JSON.parse(readFileSync(new URL(file, root), "utf8"));
-const cct = model("client-contract-service/docs/database/client-contract.pdma.json");
+// CCT onboarding tables live in client-master; Agreement Party lives in commercial.
+const clientMaster = model("paytech/client-master/docs/database/client-master.pdma.json");
+const commercial = model("paytech/commercial/docs/database/commercial.pdma.json");
+const cct = clientMaster;
 const risk = model("risk-compliance-service/docs/database/risk-compliance.pdma.json");
 const table = (m, name) => m.entities.find((e) => e.defKey === name);
 const field = (t, name) => t.fields.find((f) => f.defKey === name);
@@ -38,9 +41,16 @@ test("Risk distinguishes resubmissions and keeps shared legacy evidence referenc
   const classification = table(risk, "t_dd_case_classification");
   assert.ok(classification);
   assert.ok(unique(classification, ["case_id", "primary_slot"]));
-  for (const name of ["t_partner_application", "t_operating_entity_application", "t_agreement_party"]) {
+  for (const name of ["t_partner_application", "t_operating_entity_application"]) {
     assert.ok(table(cct, name).correlations.some((r) => r.refEntity === table(cct, "t_party_profile").id));
   }
+  // Agreement Party moved to commercial: the shared Party Profile reference crosses
+  // databases, so it keeps the indexed field but no PDManer correlation.
+  const agreementParty = table(commercial, "t_agreement_party");
+  const profileRef = field(agreementParty, "party_profile_id");
+  assert.ok(table(clientMaster, "t_party_profile") && !table(commercial, "t_party_profile"));
+  assert.ok(agreementParty.indexes.some((i) => i.fields[0]?.fieldDefKey === profileRef.id));
+  assert.ok(!agreementParty.correlations.some((r) => r.myField === profileRef.id));
 });
 
 test("all approved onboarding column shapes and unique keys reach the current Owner models", () => {

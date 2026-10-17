@@ -33,10 +33,6 @@ const catalogPath = path.join(
   workspaceRoot,
   "agent-docs/database/CLIENT_CONTRACT_DATABASE.md",
 );
-const outputPath = path.join(
-  workspaceRoot,
-  "client-contract-service/docs/database/client-contract.pdma.json",
-);
 
 const MODEL_KEY = "code-mor/client-contract/database/v1";
 const PHYSICAL_TABLE_PREFIX = "t_";
@@ -473,7 +469,7 @@ const ACCESS_INDEXES = {
 
 // Each tuple is child table, child field, parent table, parent field, child cardinality.
 // Only references owned by the Client & Contract database are included.
-const LOCAL_RELATIONS = [
+export const LOCAL_RELATIONS = Object.freeze([
   ["party_profile", "draft_application_id", "client_application", "application_id", "n"],
   ["party_relation", "client_application_id", "client_application", "application_id", "n"],
   ["operating_entity_scope", "entity_no", "operating_entity", "entity_no", "n"],
@@ -536,84 +532,7 @@ const LOCAL_RELATIONS = [
   ["party_relation", "related_party_id", "party", "party_id", "n"],
   ["payment_method_profile_cond", "payment_method_profile_id", "payment_method_profile", "payment_method_profile_id", "n"],
   ["seller_disclosure", "entity_no", "operating_entity", "entity_no", "n"],
-];
-
-const DIAGRAM_GROUPS = [
-  {
-    defKey: "party_identity",
-    defName: "Party and Identity",
-    tables: [
-      "party",
-      "party_profile",
-      "individual_profile",
-      "organization_profile",
-      "party_identity_key",
-      "party_profile_identifier",
-      "party_address",
-      "party_contact",
-      "party_relation",
-    ],
-  },
-  {
-    defKey: "roles_onboarding",
-    defName: "Roles and Onboarding",
-    tables: [
-      "client",
-      "local_partner",
-      "operating_entity",
-      "client_business_profile",
-      "client_business_classification",
-      "client_application",
-      "partner_application",
-      "operating_entity_application",
-      "application_document",
-    ],
-  },
-  {
-    defKey: "entity_assignment",
-    defName: "OE Scope, Affiliation and Source",
-    tables: [
-      "client_entity_affiliation",
-      "operating_entity_scope",
-      "entity_source_relation",
-    ],
-  },
-  {
-    defKey: "agreement_legal",
-    defName: "Agreement and Consumer Legal",
-    tables: [
-      "agreement",
-      "agreement_party",
-      "agreement_document_ref",
-      "agreement_operating_entity",
-      "consumer_legal_document",
-      "seller_disclosure",
-    ],
-  },
-  {
-    defKey: "pricing_share",
-    defName: "Client Pricing and Partner Share",
-    tables: [
-      "payment_method_profile",
-      "payment_method_profile_cond",
-      "commercial_term_plan",
-      "commercial_term_version",
-      "commercial_term_price",
-      "commercial_term_component",
-      "commercial_term_component_band",
-    ],
-  },
-  {
-    defKey: "history_reliability",
-    defName: "Local History and Reliability",
-    tables: [
-      "business_change_record",
-      "business_change_version",
-      "compensation_event",
-      "command_idempotency",
-    ],
-  },
-];
+]);
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -932,10 +851,10 @@ function isNullable(tableKey, fieldKey, primaryKey) {
   return NULLABLE_FIELD_PATHS.has(fieldPath);
 }
 
-function normalizeTemplate(template) {
+function normalizeTemplate(template, service) {
   const model = clone(template);
-  model.name = "Code-MoR Client & Contract Database V1";
-  model.describe = "Client & Contract";
+  model.name = service.modelName;
+  model.describe = service.describe;
   model.dbConn = [];
   model.dbConns = [];
   model.profile.default.dbConn = "";
@@ -1173,9 +1092,17 @@ function buildEntities(model, catalog) {
   });
 }
 
-function applyRelations(entities) {
+// A relation is a model correlation only when both tables belong to the same
+// service database. Cross-database references keep their field and the access
+// index derived from LOCAL_RELATIONS, but never become a PDManer correlation.
+export function modelRelations(tableKeys) {
+  const owned = new Set(tableKeys);
+  return LOCAL_RELATIONS.filter(([childKey, , parentKey]) => owned.has(childKey) && owned.has(parentKey));
+}
+
+function applyRelations(entities, relations) {
   const entitiesByKey = new Map(entities.map((entity) => [logicalTableKey(entity.defKey), entity]));
-  for (const [childKey, childFieldKey, parentKey, parentFieldKey, childRows] of LOCAL_RELATIONS) {
+  for (const [childKey, childFieldKey, parentKey, parentFieldKey, childRows] of relations) {
     const child = entitiesByKey.get(childKey);
     const parent = entitiesByKey.get(parentKey);
     assert(child && parent, `Unknown local relation ${childKey}.${childFieldKey} -> ${parentKey}.${parentFieldKey}`);
@@ -1193,12 +1120,12 @@ function applyRelations(entities) {
   }
 }
 
-function buildDiagrams(entities) {
+function buildDiagrams(entities, diagramGroups, relations) {
   const entitiesByKey = new Map(entities.map((entity) => [logicalTableKey(entity.defKey), entity]));
-  return DIAGRAM_GROUPS.map((group) => {
+  return diagramGroups.map((group) => {
     const primaryTableSet = new Set(group.tables);
     const tableKeys = [...group.tables];
-    for (const [childKey, , parentKey] of LOCAL_RELATIONS) {
+    for (const [childKey, , parentKey] of relations) {
       if (primaryTableSet.has(childKey) && !tableKeys.includes(parentKey)) {
         tableKeys.push(parentKey);
       }
@@ -1238,7 +1165,7 @@ function buildDiagrams(entities) {
       return cell;
     });
 
-    for (const [childKey, childFieldKey, parentKey, parentFieldKey, childRows] of LOCAL_RELATIONS) {
+    for (const [childKey, childFieldKey, parentKey, parentFieldKey, childRows] of relations) {
       if (!primaryTableSet.has(childKey)) {
         continue;
       }
@@ -1276,11 +1203,11 @@ function buildDiagrams(entities) {
   });
 }
 
-function validateGeneratedModel(model, catalog) {
+function validateGeneratedModel(model, expectedTableKeys, relations) {
   assert(
     JSON.stringify(model.entities.map((entity) => entity.defKey).sort()) ===
-      JSON.stringify(catalog.map((table) => physicalTableKey(table.defKey)).sort()),
-    "Generated model must exactly cover the parsed approved catalog",
+      JSON.stringify(expectedTableKeys.map((tableKey) => physicalTableKey(tableKey)).sort()),
+    "Generated model must exactly cover its owned tables of the parsed approved catalog",
   );
   const entityIds = new Set(model.entities.map((entity) => entity.id));
   const covered = new Set();
@@ -1303,7 +1230,7 @@ function validateGeneratedModel(model, catalog) {
       assert(entityIds.has(correlation.refEntity), `Cross-model relation from ${entity.defKey}`);
     }
   }
-  assert(relationCount === LOCAL_RELATIONS.length, `Expected ${LOCAL_RELATIONS.length} local relations, found ${relationCount}`);
+  assert(relationCount === relations.length, `Expected ${relations.length} local relations, found ${relationCount}`);
   for (const diagram of model.diagrams) {
     for (const cell of diagram.canvasData.cells) {
       if (cell.shape === "table") {
@@ -1314,25 +1241,39 @@ function validateGeneratedModel(model, catalog) {
   assert(covered.size === model.entities.length, `Diagrams cover ${covered.size} of ${model.entities.length} tables`);
 }
 
-export function generateClientContractModel({
+// Builds one service database model from the shared Client & Contract catalog.
+// service = { label, modelName, describe, outputPath, tables, diagramGroups,
+// additionalEntities(model) }. Field metadata stays validated against the
+// complete catalog so the two service models cannot drift from the shared source.
+export function generateServiceModel(service, {
   template = JSON.parse(readFileSync(templatePath, "utf8")),
   catalogMarkdown = readFileSync(catalogPath, "utf8"),
 } = {}) {
-  const model = normalizeTemplate(template);
+  const model = normalizeTemplate(template, service);
   const catalog = parseClientContractCatalog(catalogMarkdown);
   validateFieldMetadataCatalog(catalog);
-  model.entities = buildEntities(model, catalog);
-  applyRelations(model.entities);
-  model.diagrams = buildDiagrams(model.entities);
-  validateGeneratedModel(model, catalog);
+  const owned = new Set(service.tables);
+  const catalogKeys = new Set(catalog.map((table) => table.defKey));
+  for (const tableKey of service.tables) {
+    assert(catalogKeys.has(tableKey), `${service.label} owns a table missing from the catalog: ${tableKey}`);
+  }
+  const ownedCatalog = catalog.filter((table) => owned.has(table.defKey));
+  const additionalEntities = service.additionalEntities?.(model) ?? [];
+  model.entities = [...buildEntities(model, ownedCatalog), ...additionalEntities];
+  const tableKeys = model.entities.map((entity) => logicalTableKey(entity.defKey));
+  const relations = modelRelations(tableKeys);
+  applyRelations(model.entities, relations);
+  model.diagrams = buildDiagrams(model.entities, service.diagramGroups, relations);
+  validateGeneratedModel(model, tableKeys, relations);
   return model;
 }
 
-export function serializeClientContractModel(model = generateClientContractModel()) {
+export function serializeModel(model) {
   return `${JSON.stringify(model, null, 2)}\n`;
 }
 
-function runCli() {
+export function runGeneratorCli(service, generate) {
+  const outputPath = path.join(workspaceRoot, service.outputPath);
   const unknownArguments = process.argv
     .slice(2)
     .filter((argument) => argument !== "--check");
@@ -1342,28 +1283,24 @@ function runCli() {
     return;
   }
 
-  const serialized = serializeClientContractModel();
+  const serialized = serializeModel(generate());
   if (process.argv.includes("--check")) {
     if (!existsSync(outputPath)) {
-      console.error(`Client & Contract model is missing: ${outputPath}`);
+      console.error(`${service.label} model is missing: ${outputPath}`);
       process.exitCode = 1;
       return;
     }
     const current = readFileSync(outputPath, "utf8");
     if (current !== serialized) {
-      console.error("Client & Contract model is out of date; run the generator without --check");
+      console.error(`${service.label} model is out of date; run the generator without --check`);
       process.exitCode = 1;
       return;
     }
-    console.log("Client & Contract model is up to date");
+    console.log(`${service.label} model is up to date`);
     return;
   }
 
   mkdirSync(path.dirname(outputPath), { recursive: true });
   writeFileSync(outputPath, serialized);
   console.log(`Generated ${outputPath}`);
-}
-
-if (path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
-  runCli();
 }

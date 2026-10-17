@@ -5,7 +5,8 @@ import { fileURLToPath } from "node:url";
 
 const root = path.resolve(import.meta.dirname, "../..");
 export const schemaTargets = Object.freeze([
-  ["client-contract-service", "client-contract"],
+  ["paytech/client-master", "client-master"],
+  ["paytech/commercial", "commercial"],
   ["commerce-service", "commerce"],
   ["payment-orchestration-service", "payment-orchestration"],
   ["finance-service", "finance"],

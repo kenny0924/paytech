@@ -6,11 +6,21 @@ import path from "node:path";
 import test from "node:test";
 import {
   buildIndexes,
-  generateClientContractModel,
+  LOCAL_RELATIONS,
   logicalTableKey,
+  modelRelations,
+  parseClientContractCatalog,
   physicalTableKey,
-  serializeClientContractModel,
-} from "./generate-client-contract-model.mjs";
+  serializeModel,
+} from "./client-contract-model-core.mjs";
+import {
+  CLIENT_MASTER_CATALOG_TABLES,
+  generateClientMasterModel,
+} from "./generate-client-master-model.mjs";
+import {
+  COMMERCIAL_TABLES,
+  generateCommercialModel,
+} from "./generate-commercial-model.mjs";
 import {
   CLOSED_ENUM_VALUES,
   CONDITIONAL_VALUE_RULES,
@@ -20,28 +30,49 @@ import {
 } from "./client-contract-field-metadata.mjs";
 
 const workspaceRoot = path.resolve(import.meta.dirname, "../..");
-const modelPath = path.join(
-  workspaceRoot,
-  "client-contract-service/docs/database/client-contract.pdma.json",
-);
+// The Client & Contract catalog is split into two service databases. Catalog
+// contracts below run against the combined catalog view of both models; every
+// per-database fact (paths, totals, relations, diagrams, digests) is asserted per model.
+const serviceModels = Object.freeze([
+  {
+    key: "client-master",
+    modelPath: path.join(workspaceRoot, "paytech/client-master/docs/database/client-master.pdma.json"),
+    generatorPath: path.join(workspaceRoot, "scripts/pdmaner/generate-client-master-model.mjs"),
+    physicalDecisionsPath: path.join(workspaceRoot, "paytech/client-master/docs/database/CLIENT_MASTER_PHYSICAL_DECISIONS.md"),
+    catalogTables: CLIENT_MASTER_CATALOG_TABLES,
+    generate: generateClientMasterModel,
+  },
+  {
+    key: "commercial",
+    modelPath: path.join(workspaceRoot, "paytech/commercial/docs/database/commercial.pdma.json"),
+    generatorPath: path.join(workspaceRoot, "scripts/pdmaner/generate-commercial-model.mjs"),
+    physicalDecisionsPath: path.join(workspaceRoot, "paytech/commercial/docs/database/COMMERCIAL_PHYSICAL_DECISIONS.md"),
+    catalogTables: COMMERCIAL_TABLES,
+    generate: generateCommercialModel,
+  },
+]);
+// Tables each service database keeps its own identical copy of.
+const sharedServiceTables = Object.freeze(["business_change_record", "business_change_version", "compensation_event"]);
+// Tables that do not come from the Client & Contract catalog.
+const nonCatalogServiceTables = Object.freeze({ "client-master": ["client_stored_card_setting"], commercial: [] });
+// Catalog tables dropped from both service databases (decision S10).
+const droppedCatalogTables = Object.freeze(["command_idempotency"]);
 const templatePath = path.join(
   workspaceRoot,
   "agent-docs/templates/pdmaner/template.pdma.json",
 );
-const generatorPath = path.join(
-  workspaceRoot,
-  "scripts/pdmaner/generate-client-contract-model.mjs",
-);
-const physicalDecisionsPath = path.join(
-  workspaceRoot,
-  "client-contract-service/docs/database/CLIENT_CONTRACT_PHYSICAL_DECISIONS.md",
-);
-const generatorSource = readFileSync(generatorPath, "utf8");
+const generatorSource = [
+  path.join(workspaceRoot, "scripts/pdmaner/client-contract-model-core.mjs"),
+  ...serviceModels.map((service) => service.generatorPath),
+].map((file) => readFileSync(file, "utf8")).join("\n");
 const expectedTemplateDigest =
   "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540";
 const pendingStructuralProjectionDigest = "PENDING_APPROVED_40_DIGEST";
-const expectedStructuralProjectionDigest =
-  "c85c5105ab352dc50afa20299e85f8cbd8d02a06765d53c2887860ed8224d9dd";
+// Approved per-database Structural Projection digests after the CCT split.
+const expectedStructuralProjectionDigests = Object.freeze({
+  "client-master": "a49cd2fdc8a349cc0d2088d5cd3605b72c0911f898a0c0f09d97d899c1a1bd96",
+  commercial: "682fd345ad1402ef979289af45de0286ccefaf5c95de563245af8988f221552c",
+});
 
 const leanAssignmentTables = Object.freeze(["entity_source_relation","client_entity_affiliation","operating_entity_scope"]);
 const removedAssignmentTables = Object.freeze(["entity_assignment_rule","client_entity_assignment","entity_assignment_policy","entity_assignment_policy_ver","assignment_policy_binding","client_entity_assignment_ver"]);
@@ -56,10 +87,19 @@ const leanAssignmentFields = Object.freeze({
 const idPattern =
   /^[A-F0-9]{8}-[A-F0-9]{4}-[45][A-F0-9]{3}-[89AB][A-F0-9]{3}-[A-F0-9]{12}$/;
 
-const expectedTables = Object.freeze(["agreement","agreement_document_ref","agreement_operating_entity","agreement_party","application_document","business_change_record","business_change_version","client","client_application","client_business_classification","client_business_profile","client_entity_affiliation","command_idempotency","commercial_term_component","commercial_term_component_band","commercial_term_plan","commercial_term_price","commercial_term_version","compensation_event","consumer_legal_document","entity_source_relation","individual_profile","local_partner","operating_entity","operating_entity_application","operating_entity_scope","organization_profile","partner_application","party","party_address","party_contact","party_identity_key","party_profile","party_profile_identifier","party_relation","payment_method_profile","payment_method_profile_cond","seller_disclosure"]);
-const expectedFinalTableManifestCount = 38;
-const expectedFinalFieldManifestCount = 408;
+const expectedTables = Object.freeze(["agreement","agreement_document_ref","agreement_operating_entity","agreement_party","application_document","business_change_record","business_change_version","client","client_application","client_business_classification","client_business_profile","client_entity_affiliation","commercial_term_component","commercial_term_component_band","commercial_term_plan","commercial_term_price","commercial_term_version","compensation_event","consumer_legal_document","entity_source_relation","individual_profile","local_partner","operating_entity","operating_entity_application","operating_entity_scope","organization_profile","partner_application","party","party_address","party_contact","party_identity_key","party_profile","party_profile_identifier","party_relation","payment_method_profile","payment_method_profile_cond","seller_disclosure"]);
+// Combined catalog view: 38 catalog tables minus the dropped command_idempotency.
+const expectedFinalTableManifestCount = 37;
+const expectedFinalFieldManifestCount = 398;
+// All catalog references (each keeps a left-prefix access index); 10 of them
+// cross the client-master/commercial database boundary and are not correlations.
 const expectedRelationSignatureCount = 62;
+const expectedCrossDatabaseRelationSignatureCount = 10;
+const expectedLocalRelationSignatureCount = 52;
+const expectedServiceTotals = Object.freeze({
+  "client-master": { tables: 27, fields: 290, uniqueIndexes: 39, accessIndexes: 24, relations: 40, diagramGroups: 6 },
+  commercial: { tables: 14, fields: 145, uniqueIndexes: 22, accessIndexes: 19, relations: 14, diagramGroups: 3 },
+});
 
 const expectedTableDisplayNames = Object.freeze({
   "party": "法律主体主档",
@@ -98,146 +138,59 @@ const expectedTableDisplayNames = Object.freeze({
   "commercial_term_component_band": "商业条款阶梯档位",
   "business_change_record": "业务行变更历史主档",
   "business_change_version": "业务行变更版本明细",
-  "compensation_event": "本地补偿事件",
-  "command_idempotency": "命令幂等记录"
+  "compensation_event": "本地补偿事件"
 });
 
-const expectedDiagramGroups = Object.freeze({
-  "party_identity": {
-    "defName": "Party and Identity",
-    "primaryTables": [
-      "party",
-      "party_profile",
-      "individual_profile",
-      "organization_profile",
-      "party_identity_key",
-      "party_profile_identifier",
-      "party_address",
-      "party_contact",
-      "party_relation"
-    ],
-    "tables": [
-      "party",
-      "party_profile",
-      "individual_profile",
-      "organization_profile",
-      "party_identity_key",
-      "party_profile_identifier",
-      "party_address",
-      "party_contact",
-      "party_relation",
-      "client_application"
-    ]
-  },
-  "roles_onboarding": {
-    "defName": "Roles and Onboarding",
-    "primaryTables": [
-      "client",
-      "local_partner",
-      "operating_entity",
-      "client_business_profile",
-      "client_business_classification",
-      "client_application",
-      "partner_application",
-      "operating_entity_application",
-      "application_document"
-    ],
-    "tables": [
-      "client",
-      "local_partner",
-      "operating_entity",
-      "client_business_profile",
-      "client_business_classification",
-      "client_application",
-      "partner_application",
-      "operating_entity_application",
-      "application_document",
-      "party",
-      "entity_source_relation",
-      "party_profile"
-    ]
-  },
-  "entity_assignment": {
-    "defName": "OE Scope, Affiliation and Source",
-    "primaryTables": [
-      "operating_entity_scope",
-      "client_entity_affiliation",
-      "entity_source_relation"
-    ],
-    "tables": [
-      "client_entity_affiliation",
-      "operating_entity_scope",
-      "entity_source_relation",
-      "operating_entity",
-      "operating_entity_application",
-      "client",
-      "local_partner"
-    ]
-  },
-  "agreement_legal": {
-    "defName": "Agreement and Consumer Legal",
-    "primaryTables": [
-      "agreement",
-      "agreement_party",
-      "agreement_document_ref",
-      "agreement_operating_entity",
-      "consumer_legal_document",
-      "seller_disclosure"
-    ],
-    "tables": [
-      "agreement",
-      "agreement_party",
-      "agreement_document_ref",
-      "agreement_operating_entity",
-      "consumer_legal_document",
-      "seller_disclosure",
-      "operating_entity",
-      "client",
-      "local_partner",
-      "party",
-      "party_profile"
-    ]
-  },
-  "pricing_share": {
-    "defName": "Client Pricing and Partner Share",
-    "primaryTables": [
-      "payment_method_profile",
-      "payment_method_profile_cond",
-      "commercial_term_plan",
-      "commercial_term_version",
-      "commercial_term_price",
-      "commercial_term_component",
-      "commercial_term_component_band"
-    ],
-    "tables": [
-      "payment_method_profile",
-      "payment_method_profile_cond",
-      "commercial_term_plan",
-      "commercial_term_version",
-      "commercial_term_price",
-      "commercial_term_component",
-      "commercial_term_component_band",
-      "agreement",
-      "operating_entity",
-      "client",
-      "local_partner"
-    ]
-  },
-  "history_reliability": {
-    "defName": "Local History and Reliability",
-    "primaryTables": [
-      "business_change_record",
-      "business_change_version",
-      "compensation_event",
-      "command_idempotency"
-    ],
-    "tables": [
-      "business_change_record",
-      "business_change_version",
-      "compensation_event",
-      "command_idempotency"
-    ]
-  }
+const expectedServiceDiagramGroups = Object.freeze({
+  "client-master": Object.freeze({
+    "party_identity": {
+      "defName": "Party and Identity",
+      "primaryTables": ["party","party_profile","individual_profile","organization_profile","party_identity_key","party_profile_identifier","party_address","party_contact","party_relation"],
+      "tables": ["party","party_profile","individual_profile","organization_profile","party_identity_key","party_profile_identifier","party_address","party_contact","party_relation","client_application"]
+    },
+    "roles_onboarding": {
+      "defName": "Roles and Onboarding",
+      "primaryTables": ["client","local_partner","operating_entity","client_business_profile","client_business_classification","client_application","partner_application","operating_entity_application","application_document"],
+      "tables": ["client","local_partner","operating_entity","client_business_profile","client_business_classification","client_application","partner_application","operating_entity_application","application_document","party","entity_source_relation","party_profile"]
+    },
+    "entity_assignment": {
+      "defName": "OE Scope, Affiliation and Source",
+      "primaryTables": ["operating_entity_scope","client_entity_affiliation","entity_source_relation"],
+      "tables": ["client_entity_affiliation","operating_entity_scope","entity_source_relation","operating_entity","operating_entity_application","client","local_partner"]
+    },
+    "consumer_legal": {
+      "defName": "Consumer Legal and Seller Disclosure",
+      "primaryTables": ["consumer_legal_document","seller_disclosure"],
+      "tables": ["consumer_legal_document","seller_disclosure","operating_entity"]
+    },
+    "client_settings": {
+      "defName": "Client Settings",
+      "primaryTables": ["client_stored_card_setting"],
+      "tables": ["client_stored_card_setting"]
+    },
+    "history_reliability": {
+      "defName": "Local History and Reliability",
+      "primaryTables": ["business_change_record","business_change_version","compensation_event"],
+      "tables": ["business_change_record","business_change_version","compensation_event"]
+    }
+  }),
+  commercial: Object.freeze({
+    "agreement": {
+      "defName": "Agreement",
+      "primaryTables": ["agreement","agreement_party","agreement_document_ref","agreement_operating_entity"],
+      "tables": ["agreement","agreement_party","agreement_document_ref","agreement_operating_entity"]
+    },
+    "pricing_share": {
+      "defName": "Client Pricing and Partner Share",
+      "primaryTables": ["payment_method_profile","payment_method_profile_cond","commercial_term_plan","commercial_term_version","commercial_term_price","commercial_term_component","commercial_term_component_band"],
+      "tables": ["payment_method_profile","payment_method_profile_cond","commercial_term_plan","commercial_term_version","commercial_term_price","commercial_term_component","commercial_term_component_band","agreement"]
+    },
+    "history_reliability": {
+      "defName": "Local History and Reliability",
+      "primaryTables": ["business_change_record","business_change_version","compensation_event"],
+      "tables": ["business_change_record","business_change_version","compensation_event"]
+    }
+  }),
 });
 
 const expectedPrimaryKeys = Object.freeze({
@@ -277,8 +230,7 @@ const expectedPrimaryKeys = Object.freeze({
   "commercial_term_component_band": "term_band_id",
   "business_change_record": "history_id",
   "business_change_version": "change_version_id",
-  "compensation_event": "id",
-  "command_idempotency": "idempotency_id"
+  "compensation_event": "id"
 });
 
 const changedTableUniqueKeys = Object.freeze({
@@ -318,8 +270,7 @@ const changedTableUniqueKeys = Object.freeze({
   "commercial_term_component_band": ["term_component_id,band_no","term_component_id,lower_bound"],
   "business_change_record": ["record_type,record_id"],
   "business_change_version": ["history_id,version_no"],
-  "compensation_event": ["event_key,event_type,sub_event_type"],
-  "command_idempotency": ["caller_scope,operation_type,idempotency_key"]
+  "compensation_event": ["event_key,event_type,sub_event_type"]
 });
 
 const expectedUniqueKeys = Object.freeze({
@@ -359,8 +310,7 @@ const expectedUniqueKeys = Object.freeze({
   "commercial_term_component_band": ["term_component_id,band_no","term_component_id,lower_bound"],
   "business_change_record": ["record_type,record_id"],
   "business_change_version": ["history_id,version_no"],
-  "compensation_event": ["event_key,event_type,sub_event_type"],
-  "command_idempotency": ["caller_scope,operation_type,idempotency_key"]
+  "compensation_event": ["event_key,event_type,sub_event_type"]
 });
 
 const expectedAgreementLegalAccessIndexes = Object.freeze({
@@ -373,6 +323,11 @@ const expectedAgreementLegalAccessIndexes = Object.freeze({
 });
 
 const expectedRelationSignatures = Object.freeze(["agreement.client_id->client.client_id|n:1","agreement.entity_no->operating_entity.entity_no|n:1","agreement.local_partner_id->local_partner.local_partner_id|n:1","agreement_document_ref.agreement_id->agreement.agreement_id|n:1","agreement_operating_entity.agreement_id->agreement.agreement_id|n:1","agreement_operating_entity.entity_no->operating_entity.entity_no|n:1","agreement_party.agreement_id->agreement.agreement_id|n:1","agreement_party.evidence_document_id->agreement_document_ref.agreement_document_id|n:1","agreement_party.party_id->party.party_id|n:1","agreement_party.party_profile_id->party_profile.profile_id|n:1","application_document.client_application_id->client_application.application_id|n:1","application_document.operating_entity_application_id->operating_entity_application.application_id|n:1","application_document.partner_application_id->partner_application.application_id|n:1","application_document.subject_party_id->party.party_id|n:1","business_change_record.parent_history_id->business_change_record.history_id|n:1","business_change_version.history_id->business_change_record.history_id|n:1","client.party_id->party.party_id|1:1","client_application.client_id->client.client_id|n:1","client_business_classification.business_profile_id->client_business_profile.business_profile_id|n:1","client_business_profile.client_id->client.client_id|n:1","client_entity_affiliation.client_id->client.client_id|n:1","client_entity_affiliation.entity_no->operating_entity.entity_no|n:1","commercial_term_component.term_price_id->commercial_term_price.term_price_id|n:1","commercial_term_component_band.term_component_id->commercial_term_component.term_component_id|n:1","commercial_term_plan.agreement_id->agreement.agreement_id|1:1","commercial_term_plan.client_id->client.client_id|n:1","commercial_term_plan.entity_no->operating_entity.entity_no|n:1","commercial_term_plan.local_partner_id->local_partner.local_partner_id|n:1","commercial_term_price.entity_no->operating_entity.entity_no|n:1","commercial_term_price.payment_method_profile_code->payment_method_profile.payment_method_profile_code|n:1","commercial_term_price.term_version_id->commercial_term_version.term_version_id|n:1","commercial_term_version.agreement_id->agreement.agreement_id|n:1","commercial_term_version.term_plan_id->commercial_term_plan.term_plan_id|n:1","consumer_legal_document.entity_no->operating_entity.entity_no|n:1","entity_source_relation.entity_no->operating_entity.entity_no|n:1","entity_source_relation.source_client_id->client.client_id|n:1","entity_source_relation.source_partner_id->local_partner.local_partner_id|n:1","individual_profile.profile_id->party_profile.profile_id|1:1","local_partner.party_id->party.party_id|1:1","operating_entity.party_id->party.party_id|1:1","operating_entity_application.approved_source_relation_id->entity_source_relation.source_relation_id|n:1","operating_entity_application.entity_no->operating_entity.entity_no|n:1","operating_entity_application.party_profile_id->party_profile.profile_id|n:1","operating_entity_application.source_client_id->client.client_id|n:1","operating_entity_application.source_partner_id->local_partner.local_partner_id|n:1","operating_entity_scope.application_id->operating_entity_application.application_id|n:1","operating_entity_scope.entity_no->operating_entity.entity_no|n:1","organization_profile.profile_id->party_profile.profile_id|1:1","partner_application.local_partner_id->local_partner.local_partner_id|n:1","partner_application.target_party_profile_id->party_profile.profile_id|n:1","party_address.profile_id->party_profile.profile_id|n:1","party_contact.profile_id->party_profile.profile_id|n:1","party_identity_key.party_id->party.party_id|n:1","party_profile.draft_application_id->client_application.application_id|n:1","party_profile.party_id->party.party_id|n:1","party_profile_identifier.identity_key_id->party_identity_key.identity_key_id|n:1","party_profile_identifier.profile_id->party_profile.profile_id|n:1","party_relation.client_application_id->client_application.application_id|n:1","party_relation.organization_party_id->party.party_id|n:1","party_relation.related_party_id->party.party_id|n:1","payment_method_profile_cond.payment_method_profile_id->payment_method_profile.payment_method_profile_id|n:1","seller_disclosure.entity_no->operating_entity.entity_no|n:1"]);
+// Catalog references whose parent lives in client-master while the child lives in
+// commercial: the field and access index stay, the PDManer correlation does not.
+const expectedCrossDatabaseRelationSignatures = Object.freeze(["agreement.client_id->client.client_id|n:1","agreement.entity_no->operating_entity.entity_no|n:1","agreement.local_partner_id->local_partner.local_partner_id|n:1","agreement_operating_entity.entity_no->operating_entity.entity_no|n:1","agreement_party.party_id->party.party_id|n:1","agreement_party.party_profile_id->party_profile.profile_id|n:1","commercial_term_plan.client_id->client.client_id|n:1","commercial_term_plan.entity_no->operating_entity.entity_no|n:1","commercial_term_plan.local_partner_id->local_partner.local_partner_id|n:1","commercial_term_price.entity_no->operating_entity.entity_no|n:1"]);
+const expectedLocalRelationSignatures = Object.freeze(expectedRelationSignatures.filter(
+  (signature) => !expectedCrossDatabaseRelationSignatures.includes(signature)));
 
 const forbiddenExternalRelationFields = new Set([
   "agreement_acceptance.actor_id",
@@ -459,8 +414,7 @@ const expectedFinalFields = Object.freeze({
   "commercial_term_component_band": ["term_band_id","term_component_id","band_no","lower_bound","upper_bound","rate","fixed_amount","create_time","update_time"],
   "business_change_record": ["history_id","record_type","record_id","aggregate_root_type","aggregate_root_id","parent_history_id","current_version","create_time","update_time"],
   "business_change_version": ["change_version_id","history_id","version_no","operation_type","snapshot_json","snapshot_format","create_by","create_time"],
-  "compensation_event": ["id","event_key","event_type","sub_event_type","payload_json","execute_status","execute_count","next_execute_at","lock_owner","lock_until","last_error_code","last_error_summary","lock_version","create_time","update_time"],
-  "command_idempotency": ["idempotency_id","caller_scope","operation_type","idempotency_key","request_hash","response_ref","status","expire_time","create_time","update_time"]
+  "compensation_event": ["id","event_key","event_type","sub_event_type","payload_json","execute_status","execute_count","next_execute_at","lock_owner","lock_until","last_error_code","last_error_summary","lock_version","create_time","update_time"]
 });
 
 const forbiddenTargetFieldKeys = Object.freeze(["current_version_id","document_version","primary_flag","fallback_flag","path_version","path_length","version"]);
@@ -515,7 +469,6 @@ const legacyExpectedNullableFieldPaths = Object.freeze([
   "commercial_term_component_band.fixed_amount",
   "commercial_term_version.active_slot",
   "commercial_term_version.effective_to",
-  "command_idempotency.response_ref",
   "compensation_event.last_error_code",
   "compensation_event.last_error_summary",
   "compensation_event.lock_owner",
@@ -575,7 +528,7 @@ const agreementLegalTableKeys = new Set([
   ...removedAgreementLegalTables,
 ]);
 const expectedAgreementLegalNullableFieldPaths = Object.freeze(["agreement.activated_time","agreement.client_id","agreement.effective_from","agreement.effective_to","agreement.entity_no","agreement.local_partner_id","agreement.signed_time","agreement_party.acceptance_method","agreement_party.acceptance_recorded_at","agreement_party.acceptance_recorded_by","agreement_party.acceptance_ref_slot","agreement_party.acceptance_reference","agreement_party.accepted_by_actor_id","agreement_party.accepted_time","agreement_party.evidence_document_id","consumer_legal_document.approved_time","consumer_legal_document.effective_to","consumer_legal_document.published_time","seller_disclosure.approved_time","seller_disclosure.effective_to","seller_disclosure.public_support_phone","seller_disclosure.public_tax_registration_number","seller_disclosure.published_time"]);
-const expectedNullableFieldPaths = Object.freeze(["agreement.activated_time","agreement.client_id","agreement.effective_from","agreement.effective_to","agreement.entity_no","agreement.local_partner_id","agreement.signed_time","agreement_party.acceptance_method","agreement_party.acceptance_recorded_at","agreement_party.acceptance_recorded_by","agreement_party.acceptance_ref_slot","agreement_party.acceptance_reference","agreement_party.accepted_by_actor_id","agreement_party.accepted_time","agreement_party.evidence_document_id","application_document.client_application_id","application_document.operating_entity_application_id","application_document.partner_application_id","business_change_record.parent_history_id","client.activation_time","client.suspension_time","client.termination_time","client_application.active_slot","client_application.current_submission_id","client_application.due_diligence_case_id","client_application.qualification_decision_id","client_application.submitted_time","client_business_classification.primary_slot","client_business_profile.business_description","client_business_profile.business_model_code","client_business_profile.classification_case_id","client_business_profile.classification_confirmed_by","client_business_profile.classification_confirmed_time","client_business_profile.content_hash","client_business_profile.currency","client_business_profile.expected_ticket","client_business_profile.expected_volume","client_business_profile.website_url","client_entity_affiliation.active_slot","client_entity_affiliation.effective_to","command_idempotency.response_ref","commercial_term_component.band_mode","commercial_term_component.currency","commercial_term_component.fixed_amount","commercial_term_component.max_amount","commercial_term_component.min_amount","commercial_term_component.rate","commercial_term_component_band.fixed_amount","commercial_term_component_band.rate","commercial_term_component_band.upper_bound","commercial_term_plan.agreement_id","commercial_term_plan.client_id","commercial_term_plan.entity_no","commercial_term_plan.local_partner_id","commercial_term_price.business_calendar_code","commercial_term_price.cutoff_second_of_day","commercial_term_price.settlement_business_days","commercial_term_price.settlement_timezone","commercial_term_version.active_slot","commercial_term_version.effective_to","compensation_event.last_error_code","compensation_event.last_error_summary","compensation_event.lock_owner","compensation_event.lock_until","compensation_event.payload_json","consumer_legal_document.approved_time","consumer_legal_document.effective_to","consumer_legal_document.published_time","entity_source_relation.active_source_slot","entity_source_relation.client_source_basis","entity_source_relation.effective_to","entity_source_relation.source_client_id","entity_source_relation.source_partner_id","individual_profile.birth_date","individual_profile.family_name","individual_profile.given_name","individual_profile.middle_name","individual_profile.nationality_country","individual_profile.residence_country","local_partner.activation_time","local_partner.termination_time","operating_entity_application.active_slot","operating_entity_application.approved_source_relation_id","operating_entity_application.client_source_basis","operating_entity_application.due_diligence_case_id","operating_entity_application.qualification_decision_id","operating_entity_application.qualification_decision_version","operating_entity_application.source_client_id","operating_entity_application.source_partner_id","operating_entity_application.submitted_time","operating_entity_scope.active_slot","operating_entity_scope.effective_from","operating_entity_scope.effective_to","organization_profile.incorporation_country","organization_profile.incorporation_date","organization_profile.legal_name","organization_profile.organization_type","organization_profile.trade_name","partner_application.active_slot","partner_application.due_diligence_case_id","partner_application.qualification_decision_id","partner_application.qualification_decision_version","partner_application.submitted_time","party_address.address_line1","party_address.address_line2","party_address.city","party_address.country_code","party_address.postal_code","party_address.state_or_province","party_identity_key.issuing_country","party_profile.approved_time","party_profile.content_hash","party_profile.draft_application_id","party_profile_identifier.identifier_type","party_profile_identifier.identifier_value","party_profile_identifier.identity_key_id","party_profile_identifier.issuer_scope_key","party_profile_identifier.issuing_country","party_profile_identifier.valid_from","party_profile_identifier.valid_to","party_relation.client_application_id","party_relation.effective_to","party_relation.ownership_percentage","seller_disclosure.approved_time","seller_disclosure.effective_to","seller_disclosure.public_support_phone","seller_disclosure.public_tax_registration_number","seller_disclosure.published_time"]);
+const expectedNullableFieldPaths = Object.freeze(["agreement.activated_time","agreement.client_id","agreement.effective_from","agreement.effective_to","agreement.entity_no","agreement.local_partner_id","agreement.signed_time","agreement_party.acceptance_method","agreement_party.acceptance_recorded_at","agreement_party.acceptance_recorded_by","agreement_party.acceptance_ref_slot","agreement_party.acceptance_reference","agreement_party.accepted_by_actor_id","agreement_party.accepted_time","agreement_party.evidence_document_id","application_document.client_application_id","application_document.operating_entity_application_id","application_document.partner_application_id","business_change_record.parent_history_id","client.activation_time","client.suspension_time","client.termination_time","client_application.active_slot","client_application.current_submission_id","client_application.due_diligence_case_id","client_application.qualification_decision_id","client_application.submitted_time","client_business_classification.primary_slot","client_business_profile.business_description","client_business_profile.business_model_code","client_business_profile.classification_case_id","client_business_profile.classification_confirmed_by","client_business_profile.classification_confirmed_time","client_business_profile.content_hash","client_business_profile.currency","client_business_profile.expected_ticket","client_business_profile.expected_volume","client_business_profile.website_url","client_entity_affiliation.active_slot","client_entity_affiliation.effective_to","commercial_term_component.band_mode","commercial_term_component.currency","commercial_term_component.fixed_amount","commercial_term_component.max_amount","commercial_term_component.min_amount","commercial_term_component.rate","commercial_term_component_band.fixed_amount","commercial_term_component_band.rate","commercial_term_component_band.upper_bound","commercial_term_plan.agreement_id","commercial_term_plan.client_id","commercial_term_plan.entity_no","commercial_term_plan.local_partner_id","commercial_term_price.business_calendar_code","commercial_term_price.cutoff_second_of_day","commercial_term_price.settlement_business_days","commercial_term_price.settlement_timezone","commercial_term_version.active_slot","commercial_term_version.effective_to","compensation_event.last_error_code","compensation_event.last_error_summary","compensation_event.lock_owner","compensation_event.lock_until","compensation_event.payload_json","consumer_legal_document.approved_time","consumer_legal_document.effective_to","consumer_legal_document.published_time","entity_source_relation.active_source_slot","entity_source_relation.client_source_basis","entity_source_relation.effective_to","entity_source_relation.source_client_id","entity_source_relation.source_partner_id","individual_profile.birth_date","individual_profile.family_name","individual_profile.given_name","individual_profile.middle_name","individual_profile.nationality_country","individual_profile.residence_country","local_partner.activation_time","local_partner.termination_time","operating_entity_application.active_slot","operating_entity_application.approved_source_relation_id","operating_entity_application.client_source_basis","operating_entity_application.due_diligence_case_id","operating_entity_application.qualification_decision_id","operating_entity_application.qualification_decision_version","operating_entity_application.source_client_id","operating_entity_application.source_partner_id","operating_entity_application.submitted_time","operating_entity_scope.active_slot","operating_entity_scope.effective_from","operating_entity_scope.effective_to","organization_profile.incorporation_country","organization_profile.incorporation_date","organization_profile.legal_name","organization_profile.organization_type","organization_profile.trade_name","partner_application.active_slot","partner_application.due_diligence_case_id","partner_application.qualification_decision_id","partner_application.qualification_decision_version","partner_application.submitted_time","party_address.address_line1","party_address.address_line2","party_address.city","party_address.country_code","party_address.postal_code","party_address.state_or_province","party_identity_key.issuing_country","party_profile.approved_time","party_profile.content_hash","party_profile.draft_application_id","party_profile_identifier.identifier_type","party_profile_identifier.identifier_value","party_profile_identifier.identity_key_id","party_profile_identifier.issuer_scope_key","party_profile_identifier.issuing_country","party_profile_identifier.valid_from","party_profile_identifier.valid_to","party_relation.client_application_id","party_relation.effective_to","party_relation.ownership_percentage","seller_disclosure.approved_time","seller_disclosure.effective_to","seller_disclosure.public_support_phone","seller_disclosure.public_tax_registration_number","seller_disclosure.published_time"]);
 
 const applicationStatuses = Object.freeze(["DRAFT","SUBMITTED","UNDER_REVIEW","APPROVED","REJECTED","WITHDRAWN"]);
 
@@ -629,9 +582,9 @@ const expectedClosedEnumValues = Object.freeze({
   "agreement_party.acceptance_method": ["E_SIGNATURE","CLICK_ACCEPTANCE","MANUAL_SIGNATURE"]
 });
 
-const expectedOpenCodeFields = Object.freeze(["application_document.document_type","application_document.requirement_code","client_business_classification.industry_code","client_business_classification.mcc_code","client_business_profile.business_model_code","client_business_profile.currency","command_idempotency.operation_type","command_idempotency.status","commercial_term_component.calculation_base","commercial_term_component.currency","commercial_term_component.trigger_code","commercial_term_plan.status","commercial_term_price.business_calendar_code","commercial_term_price.payment_method_profile_code","commercial_term_price.settlement_timezone","compensation_event.event_type","compensation_event.last_error_code","compensation_event.sub_event_type","consumer_legal_document.country_code","consumer_legal_document.locale","individual_profile.nationality_country","individual_profile.residence_country","operating_entity.operating_country","operating_entity_scope.consumer_country_code","operating_entity_scope.currency","operating_entity_scope.industry_code","operating_entity_scope.mcc_code","organization_profile.incorporation_country","organization_profile.organization_type","party_address.address_type","party_address.country_code","party_identity_key.identifier_type","party_identity_key.issuing_country","party_profile_identifier.identifier_type","party_profile_identifier.issuing_country","payment_method_profile.payment_method_code","payment_method_profile_cond.condition_value","payment_method_profile_cond.dimension_code","seller_disclosure.country_code","seller_disclosure.locale"]);
+const expectedOpenCodeFields = Object.freeze(["application_document.document_type","application_document.requirement_code","client_business_classification.industry_code","client_business_classification.mcc_code","client_business_profile.business_model_code","client_business_profile.currency","commercial_term_component.calculation_base","commercial_term_component.currency","commercial_term_component.trigger_code","commercial_term_plan.status","commercial_term_price.business_calendar_code","commercial_term_price.payment_method_profile_code","commercial_term_price.settlement_timezone","compensation_event.event_type","compensation_event.last_error_code","compensation_event.sub_event_type","consumer_legal_document.country_code","consumer_legal_document.locale","individual_profile.nationality_country","individual_profile.residence_country","operating_entity.operating_country","operating_entity_scope.consumer_country_code","operating_entity_scope.currency","operating_entity_scope.industry_code","operating_entity_scope.mcc_code","organization_profile.incorporation_country","organization_profile.organization_type","party_address.address_type","party_address.country_code","party_identity_key.identifier_type","party_identity_key.issuing_country","party_profile_identifier.identifier_type","party_profile_identifier.issuing_country","payment_method_profile.payment_method_code","payment_method_profile_cond.condition_value","payment_method_profile_cond.dimension_code","seller_disclosure.country_code","seller_disclosure.locale"]);
 
-const expectedBusinessIdentifierCodeFields = Object.freeze(["commercial_term_component.component_code","commercial_term_plan.plan_code","payment_method_profile.payment_method_profile_code","command_idempotency.caller_scope","consumer_legal_document.document_code"]);
+const expectedBusinessIdentifierCodeFields = Object.freeze(["commercial_term_component.component_code","commercial_term_plan.plan_code","payment_method_profile.payment_method_profile_code","consumer_legal_document.document_code"]);
 
 const expectedConditionalValueRules = Object.freeze({
   "client_business_classification.primary_slot": "值为 1 时表示一组主要经营分类，其他情况为 NULL",
@@ -773,7 +726,6 @@ const expectedVarcharLengthOverrides = Object.freeze({
   "client_business_classification.mcc_code": 4,
   "payment_method_profile.profile_name": 128,
   "payment_method_profile_cond.condition_value": 128,
-  "command_idempotency.idempotency_key": 128,
   "compensation_event.event_key": 128,
   "compensation_event.payload_json": 4096,
   "compensation_event.execute_status": 16,
@@ -834,8 +786,7 @@ const expectedHashFields = Object.freeze({
   "application_document.content_hash": [true,null,"输入为 Platform File 返回的文件正文 SHA-256，与 file_id 成组冻结。"],
   "operating_entity_application.submission_content_hash": [true,"submission_hash_schema_version","输入遵循 CODE-MOR:CCT:OPERATING_ENTITY_APPLICATION_SUBMISSION:3，使用 UTF-8 RFC 8785/JCS 后的 SHA-256 小写 64 位 Hex。"],
   "agreement_document_ref.content_hash": [true,null,"输入为 Platform Support 返回的合同文件 SHA-256，与 file_id 成组冻结。"],
-  "consumer_legal_document.content_hash": [true,null,"输入为 Platform Support 返回的消费者法律文档 SHA-256，与 content_file_id 成组冻结。"],
-  "command_idempotency.request_hash": [true,null,"输入为幂等命令的版本化 Canonical Request。"]
+  "consumer_legal_document.content_hash": [true,null,"输入为 Platform Support 返回的消费者法律文档 SHA-256，与 content_file_id 成组冻结。"]
 });
 
 const expectedPartyIdentityFields = Object.freeze({
@@ -863,9 +814,73 @@ const hashVectors = Object.freeze([
   },
 ]);
 
+function readServiceModel(service) {
+  assert.ok(existsSync(service.modelPath), `PDManer model is missing: ${service.modelPath}`);
+  return JSON.parse(readFileSync(service.modelPath, "utf8"));
+}
+
+// Combined catalog view: Client & Contract catalog tables of both service
+// models in catalog order, shared tables once (they must be identical), the
+// non-catalog Client stored-card setting excluded. Diagrams are concatenated.
+function combineServiceModels(models) {
+  const [first] = models;
+  const entities = new Map();
+  for (const [index, model] of models.entries()) {
+    const skipped = new Set(nonCatalogServiceTables[serviceModels[index].key].map(physicalTableKey));
+    for (const entity of model.entities) {
+      if (skipped.has(entity.defKey)) continue;
+      const existing = entities.get(entity.defKey);
+      if (existing) {
+        assert.ok(sharedServiceTables.includes(logicalTableKey(entity.defKey)), `table owned by two services: ${entity.defKey}`);
+        assert.deepEqual(entity, existing, `shared table differs between service models: ${entity.defKey}`);
+        continue;
+      }
+      entities.set(entity.defKey, entity);
+    }
+  }
+  const ordered = [...entities.values()].sort((left, right) =>
+    catalogOrderIndex(left.defKey) - catalogOrderIndex(right.defKey));
+  return { ...first, name: "combined", entities: ordered, diagrams: models.flatMap((model) => model.diagrams) };
+}
+
+const catalogTableOrder = parseClientContractCatalog(
+  readFileSync(path.join(workspaceRoot, "agent-docs/database/CLIENT_CONTRACT_DATABASE.md"), "utf8"),
+).map((table) => physicalTableKey(table.defKey));
+
+function catalogOrderIndex(tableKey) {
+  return catalogTableOrder.indexOf(tableKey);
+}
+
+function serviceTableKeys(service) {
+  return [...service.catalogTables, ...nonCatalogServiceTables[service.key]];
+}
+
+function serviceRelationSignatures(service) {
+  const tables = new Set(serviceTableKeys(service));
+  return expectedLocalRelationSignatures.filter((signature) => {
+    const relation = parseRelationSignature(signature);
+    return tables.has(relation.childKey) && tables.has(relation.parentKey);
+  });
+}
+
+function serviceDiagramSpec(service) {
+  return {
+    groups: expectedServiceDiagramGroups[service.key],
+    tables: serviceTableKeys(service).slice().sort(),
+    relations: serviceRelationSignatures(service).slice().sort(),
+  };
+}
+
+function readServiceModels() {
+  return serviceModels.map(readServiceModel);
+}
+
 function readModel() {
-  assert.ok(existsSync(modelPath), `PDManer model is missing: ${modelPath}`);
-  return JSON.parse(readFileSync(modelPath, "utf8"));
+  return combineServiceModels(readServiceModels());
+}
+
+function generateClientContractModel(options) {
+  return combineServiceModels(serviceModels.map((service) => service.generate(options)));
 }
 
 function entityMap(model) {
@@ -2052,16 +2067,30 @@ function assertTableSpecificFieldSemantics(model) {
   }
 }
 
-function assertRelationContract(model) {
+function assertRelationContract(model, expectedSignatures = expectedLocalRelationSignatures) {
   assert.equal(
     expectedRelationSignatures.length,
     expectedRelationSignatureCount,
-    "exact local relation signature manifest count drift",
+    "exact catalog relation signature manifest count drift",
   );
   assert.equal(
     new Set(expectedRelationSignatures).size,
     expectedRelationSignatures.length,
     "duplicate relation signature in manifest",
+  );
+  assert.equal(
+    expectedCrossDatabaseRelationSignatures.length,
+    expectedCrossDatabaseRelationSignatureCount,
+    "cross-database relation manifest count drift",
+  );
+  assert.ok(
+    expectedCrossDatabaseRelationSignatures.every((signature) => expectedRelationSignatures.includes(signature)),
+    "cross-database relation must be a catalog reference",
+  );
+  assert.equal(
+    expectedLocalRelationSignatures.length,
+    expectedLocalRelationSignatureCount,
+    "exact local relation signature manifest count drift",
   );
   const entitiesById = new Map(model.entities.map((entity) => [entity.id, entity]));
   const actualSignatures = [];
@@ -2091,7 +2120,7 @@ function assertRelationContract(model) {
       );
     }
   }
-  assert.deepEqual(actualSignatures.sort(), expectedRelationSignatures, "local relation signature drift");
+  assert.deepEqual(actualSignatures.sort(), [...expectedSignatures].sort(), "local relation signature drift");
 }
 
 function relationContractFixture() {
@@ -2118,7 +2147,7 @@ function relationContractFixture() {
     return field;
   };
 
-  for (const signature of expectedRelationSignatures) {
+  for (const signature of expectedLocalRelationSignatures) {
     const match = signature.match(/^([^.]+)\.([^-]+)->([^.]+)\.([^|]+)\|([^:]+):(.+)$/u);
     assert.ok(match, `invalid relation manifest entry: ${signature}`);
     const [, childKey, childFieldKey, parentKey, parentFieldKey, myRows, refRows] = match;
@@ -2145,10 +2174,18 @@ function relationContractFixture() {
   return { entities: [...entities.values()] };
 }
 
-function diagramContractFixture() {
-  const model = relationContractFixture();
+function diagramContractFixture(service = serviceModels[0]) {
+  const spec = serviceDiagramSpec(service);
+  const fixture = relationContractFixture();
+  const serviceTables = new Set(spec.tables);
+  const model = {
+    entities: fixture.entities.filter((entity) => serviceTables.has(entity.defKey)).map((entity) => ({
+      ...entity,
+      correlations: entity.correlations.filter((relation) => serviceTables.has(relation.refEntity.slice("entity:".length))),
+    })),
+  };
   const relatedTableKeys = new Set(model.entities.map((entity) => entity.defKey));
-  for (const tableKey of expectedTables) {
+  for (const tableKey of spec.tables) {
     if (relatedTableKeys.has(tableKey)) continue;
     model.entities.push({
       id: `entity:${tableKey}`,
@@ -2159,8 +2196,8 @@ function diagramContractFixture() {
     });
   }
   const entities = entityMap(model);
-  assert.deepEqual([...entities.keys()].sort(), expectedTables);
-  model.diagrams = Object.entries(expectedDiagramGroups).map(([groupKey, group]) => {
+  assert.deepEqual([...entities.keys()].sort(), spec.tables);
+  model.diagrams = Object.entries(spec.groups).map(([groupKey, group]) => {
     const tableCells = group.tables.map((tableKey, index) => ({
       id: `cell:${groupKey}:${tableKey}`,
       shape: "table",
@@ -2171,7 +2208,7 @@ function diagramContractFixture() {
     const cellsByTable = new Map(
       group.tables.map((tableKey, index) => [tableKey, tableCells[index]]),
     );
-    const relationCells = expectedRelationSignatures.flatMap((signature) => {
+    const relationCells = spec.relations.flatMap((signature) => {
       const relation = parseRelationSignature(signature);
       if (!group.primaryTables.includes(relation.childKey)) return [];
       const child = entities.get(relation.childKey);
@@ -2671,7 +2708,7 @@ function hasApprovedTableCatalog(model) {
       expectedTables.join("\n");
 }
 
-function assertStructuralProjectionDigest(model) {
+function assertStructuralProjectionDigest(model, expectedStructuralProjectionDigest) {
   if (expectedStructuralProjectionDigest === pendingStructuralProjectionDigest) {
     assert.equal(
       hasApprovedTableCatalog(model),
@@ -2701,25 +2738,24 @@ function parseRelationSignature(signature) {
   return { childKey, childFieldKey, parentKey, parentFieldKey, myRows, refRows };
 }
 
-function assertDiagramManifestConsistency() {
-  assert.equal(Object.keys(expectedDiagramGroups).length, 6, "Diagram Group baseline drift");
-  const primaryTables = Object.values(expectedDiagramGroups)
+function assertDiagramManifestConsistency(spec) {
+  const primaryTables = Object.values(spec.groups)
     .flatMap((group) => group.primaryTables);
-  assert.deepEqual(primaryTables.slice().sort(), expectedTables, "Diagram primary membership drift");
+  assert.deepEqual(primaryTables.slice().sort(), spec.tables, "Diagram primary membership drift");
   assert.equal(
     new Set(primaryTables).size,
     primaryTables.length,
     "each target table must have exactly one primary Diagram Group",
   );
 
-  for (const [groupKey, group] of Object.entries(expectedDiagramGroups)) {
+  for (const [groupKey, group] of Object.entries(spec.groups)) {
     assert.equal(
       new Set(group.tables).size,
       group.tables.length,
       `duplicate table in Diagram manifest: ${groupKey}`,
     );
     const requiredTables = new Set(group.primaryTables);
-    for (const signature of expectedRelationSignatures) {
+    for (const signature of spec.relations) {
       const relation = parseRelationSignature(signature);
       if (group.primaryTables.includes(relation.childKey)) {
         requiredTables.add(relation.parentKey);
@@ -2762,11 +2798,11 @@ function resolveDiagramPort(endpoint, direction, tableCell, entitiesById, contex
   return { entity, field };
 }
 
-function assertDiagramContract(model) {
-  assertDiagramManifestConsistency();
+function assertDiagramContract(model, spec = serviceDiagramSpec(serviceModels[0])) {
+  assertDiagramManifestConsistency(spec);
   assert.equal(
     model.diagrams.length,
-    Object.keys(expectedDiagramGroups).length,
+    Object.keys(spec.groups).length,
     "Diagram Group count drift",
   );
   assert.equal(
@@ -2776,7 +2812,7 @@ function assertDiagramContract(model) {
   );
   assert.deepEqual(
     Object.fromEntries(model.diagrams.map((diagram) => [diagram.defKey, diagram.defName])),
-    Object.fromEntries(Object.entries(expectedDiagramGroups).map(
+    Object.fromEntries(Object.entries(spec.groups).map(
       ([groupKey, group]) => [groupKey, group.defName],
     )),
     "Diagram Group key/name drift",
@@ -2786,7 +2822,7 @@ function assertDiagramContract(model) {
   const coveredTableKeys = new Set();
   const visualizedRelations = [];
   for (const diagram of model.diagrams) {
-    const expectedGroup = expectedDiagramGroups[diagram.defKey];
+    const expectedGroup = spec.groups[diagram.defKey];
     assert.ok(expectedGroup, `unexpected Diagram Group: ${diagram.defKey}`);
     const cells = new Map(diagram.canvasData.cells.map((cell) => [cell.id, cell]));
     assert.equal(cells.size, diagram.canvasData.cells.length, `duplicate cell ID in ${diagram.defKey}`);
@@ -2831,7 +2867,7 @@ function assertDiagramContract(model) {
     }
   }
 
-  assert.deepEqual([...coveredTableKeys].sort(), expectedTables, "target table Diagram coverage drift");
+  assert.deepEqual([...coveredTableKeys].sort(), spec.tables, "target table Diagram coverage drift");
   assert.equal(
     new Set(visualizedRelations).size,
     visualizedRelations.length,
@@ -2839,7 +2875,7 @@ function assertDiagramContract(model) {
   );
   assert.deepEqual(
     visualizedRelations.slice().sort(),
-    expectedRelationSignatures,
+    spec.relations,
     "Diagram local relation coverage drift",
   );
 }
@@ -3052,7 +3088,7 @@ test("removes persisted Eligibility and deferred Retention tables from every str
       [],
       `removed relation manifest remains: ${removedTable}`,
     );
-    for (const [groupKey, group] of Object.entries(expectedDiagramGroups)) {
+    for (const [groupKey, group] of Object.values(expectedServiceDiagramGroups).flatMap(Object.entries)) {
       assert.equal(group.primaryTables.includes(removedTable), false, `removed primary table remains: ${groupKey}.${removedTable}`);
       assert.equal(group.tables.includes(removedTable), false, `removed diagram table remains: ${groupKey}.${removedTable}`);
     }
@@ -3128,25 +3164,62 @@ test("keeps Partner Application create_by as the mutable CCT command actor", () 
   );
 });
 
-test("locks the generated Partner Application physical totals", () => {
-  const model = readModel();
+function modelTotals(model) {
   const indexes = model.entities.flatMap((entity) => entity.indexes);
-
-  assert.deepEqual({
+  return {
     tables: model.entities.length,
     fields: model.entities.flatMap((entity) => entity.fields).length,
     uniqueIndexes: indexes.filter((index) => index.unique).length,
     accessIndexes: indexes.filter((index) => !index.unique).length,
     relations: model.entities.flatMap((entity) => entity.correlations).length,
     diagramGroups: model.diagrams.length,
-  }, {
-    tables: 38,
-    fields: 408,
-    uniqueIndexes: 59,
-    accessIndexes: 40,
-    relations: 62,
-    diagramGroups: 6,
+  };
+}
+
+test("locks the generated Partner Application physical totals", () => {
+  // Before the split one model held 38 / 408 / 59 / 40 / 62 / 6. The combined
+  // catalog view drops command_idempotency (1 table, 10 fields, 1 UK, 1 IDX) and
+  // the 10 cross-database correlations; shared BCR/compensation tables count once.
+  assert.deepEqual(modelTotals(readModel()), {
+    tables: 37,
+    fields: 398,
+    uniqueIndexes: 58,
+    accessIndexes: 39,
+    relations: 52,
+    diagramGroups: 9,
   });
+  for (const service of serviceModels) {
+    assert.deepEqual(modelTotals(readServiceModel(service)), expectedServiceTotals[service.key], service.key);
+  }
+});
+
+test("splits the catalog into client-master and commercial by approved table ownership", () => {
+  const [clientMaster, commercial] = readServiceModels();
+  const tables = (model) => model.entities.map((entity) => logicalTableKey(entity.defKey));
+  assert.deepEqual(tables(clientMaster), [...CLIENT_MASTER_CATALOG_TABLES, "client_stored_card_setting"]);
+  assert.deepEqual(tables(commercial), [...COMMERCIAL_TABLES]);
+  assert.equal(tables(clientMaster).length, 27);
+  assert.equal(tables(commercial).length, 14);
+  const both = tables(clientMaster).filter((tableKey) => tables(commercial).includes(tableKey));
+  assert.deepEqual(both, [...sharedServiceTables]);
+  for (const tableKey of droppedCatalogTables) {
+    assert.equal(tables(clientMaster).includes(tableKey), false, `dropped table in client-master: ${tableKey}`);
+    assert.equal(tables(commercial).includes(tableKey), false, `dropped table in commercial: ${tableKey}`);
+  }
+  assert.deepEqual(
+    [...new Set([...tables(clientMaster), ...tables(commercial)])]
+      .filter((tableKey) => !nonCatalogServiceTables["client-master"].includes(tableKey)).sort(),
+    expectedTables,
+    "every retained catalog table belongs to exactly one service (shared tables to both)",
+  );
+});
+
+test("copies the Client stored-card setting entity verbatim from the Commerce model", () => {
+  const commerce = JSON.parse(readFileSync(path.join(workspaceRoot, "commerce-service/docs/database/commerce.pdma.json"), "utf8"));
+  const expected = commerce.entities.find((entity) => entity.defKey === "t_client_stored_card_setting");
+  assert.ok(expected, "Commerce model no longer carries t_client_stored_card_setting; freeze the copied literal instead");
+  const actual = requireEntity(entityMap(readServiceModel(serviceModels[0])), "client_stored_card_setting");
+  assert.deepEqual(actual, expected);
 });
 
 test("rejects removed Agreement/Legal tables and fields without overreaching into Pricing or Share", () => {
@@ -3179,16 +3252,22 @@ test("keeps the approved unique-key contracts", () => {
   for (const [tableKey, expected] of Object.entries(expectedUniqueKeys)) {
     assert.deepEqual(indexSignatures(requireEntity(entities, tableKey), true), [...expected].sort());
   }
+  // Combined catalog view; 59/40 before command_idempotency was dropped.
   assert.equal(
     model.entities.flatMap((entity) => entity.indexes).filter((index) => index.unique).length,
-    59,
+    58,
     "unique-index count drift",
   );
   assert.equal(
     model.entities.flatMap((entity) => entity.indexes).filter((index) => !index.unique).length,
-    40,
+    39,
     "access-index count drift",
   );
+  for (const service of serviceModels) {
+    const totals = modelTotals(readServiceModel(service));
+    assert.equal(totals.uniqueIndexes, expectedServiceTotals[service.key].uniqueIndexes, `${service.key} unique-index count drift`);
+    assert.equal(totals.accessIndexes, expectedServiceTotals[service.key].accessIndexes, `${service.key} access-index count drift`);
+  }
 });
 
 test("keeps the approved Agreement and Legal access-index contracts", () => {
@@ -3351,7 +3430,8 @@ test("locks the complete approved Hash allowlist, CHAR(64), nullability and inpu
       .filter((field) => field.defKey.endsWith("_hash"))
       .map((field) => `${logicalTableKey(entity.defKey)}.${field.defKey}`),
   ).sort();
-  assert.equal(actualHashFields.length, 8, "hash-field count drift");
+  // 8 before the split; command_idempotency.request_hash left with the dropped table.
+  assert.equal(actualHashFields.length, 7, "hash-field count drift");
   assert.deepEqual(actualHashFields, Object.keys(expectedHashFields).sort(), "Hash field allowlist drift");
   for (const [qualifiedField, [notNull, schemaField, inputClause]] of Object.entries(expectedHashFields)) {
     const [tableKey, fieldKey] = qualifiedField.split(".");
@@ -3410,26 +3490,29 @@ test("keeps the shared template byte-for-byte unchanged", () => {
 });
 
 test("locks the approved Structural Projection or requires its digest before GREEN", () => {
-  const model = readModel();
-  assertStructuralProjectionDigest(model);
+  for (const service of serviceModels) {
+    assertStructuralProjectionDigest(readServiceModel(service), expectedStructuralProjectionDigests[service.key]);
+  }
 });
 
 test("pending Structural Projection digest cannot accept the approved 40-table catalog", () => {
-  if (expectedStructuralProjectionDigest !== pendingStructuralProjectionDigest) {
-    assert.match(expectedStructuralProjectionDigest, /^[a-f0-9]{64}$/u);
-    return;
+  for (const service of serviceModels) {
+    assert.match(expectedStructuralProjectionDigests[service.key], /^[a-f0-9]{64}$/u);
   }
   const approvedCatalogFixture = {
     entities: expectedTables.map((defKey) => ({ defKey })),
   };
   assert.throws(
-    () => assertStructuralProjectionDigest(approvedCatalogFixture),
+    () => assertStructuralProjectionDigest(approvedCatalogFixture, pendingStructuralProjectionDigest),
     /replace PENDING_APPROVED_40_DIGEST with the approved 64-hex digest before GREEN/u,
   );
 });
 
 test("Structural Projection ignores display metadata and changes for every structural layer", () => {
-  const model = readModel();
+  for (const model of readServiceModels()) assertStructuralProjectionLayers(model);
+});
+
+function assertStructuralProjectionLayers(model) {
   const approvedDigest = structuralProjectionDigest(model);
   assert.match(approvedDigest, /^[a-f0-9]{64}$/u);
 
@@ -3479,28 +3562,32 @@ test("Structural Projection ignores display metadata and changes for every struc
     mutate(candidate);
     assert.notEqual(structuralProjectionDigest(candidate), approvedDigest);
   }
-});
+}
 
 test("generator --check verifies determinism without rewriting the model", () => {
-  const before = readFileSync(modelPath, "utf8");
-  const result = spawnSync(process.execPath, [generatorPath, "--check"], {
-    cwd: workspaceRoot,
-    encoding: "utf8",
-  });
-  assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /model is up to date/iu);
-  assert.equal(readFileSync(modelPath, "utf8"), before);
+  for (const { modelPath, generatorPath } of serviceModels) {
+    const before = readFileSync(modelPath, "utf8");
+    const result = spawnSync(process.execPath, [generatorPath, "--check"], {
+      cwd: workspaceRoot,
+      encoding: "utf8",
+    });
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, /model is up to date/iu);
+    assert.equal(readFileSync(modelPath, "utf8"), before);
+  }
 });
 
 test("rejects unknown generator arguments without rewriting the model", () => {
-  const before = readFileSync(modelPath, "utf8");
-  const result = spawnSync(process.execPath, [generatorPath, "--unknown-option"], {
-    cwd: workspaceRoot,
-    encoding: "utf8",
-  });
-  assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /Unknown generator argument: --unknown-option/);
-  assert.equal(readFileSync(modelPath, "utf8"), before);
+  for (const { modelPath, generatorPath } of serviceModels) {
+    const before = readFileSync(modelPath, "utf8");
+    const result = spawnSync(process.execPath, [generatorPath, "--unknown-option"], {
+      cwd: workspaceRoot,
+      encoding: "utf8",
+    });
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /Unknown generator argument: --unknown-option/);
+    assert.equal(readFileSync(modelPath, "utf8"), before);
+  }
 });
 
 test("preserves the nine focused Party Identity tables and their immutable field contracts", () => {
@@ -3570,7 +3657,9 @@ test("keeps every generated ID, type mapping and domain reference resolvable", (
   }
   assert.equal(new Set(identifiers).size, identifiers.length);
   assertFieldTypeMappingContract(model);
-  assertAllModelIdentifiers(model);
+  // Identifier uniqueness is a per-PDManer-file property: the shared history
+  // diagram legitimately repeats its IDs across the two service models.
+  for (const serviceModel of readServiceModels()) assertAllModelIdentifiers(serviceModel);
 });
 
 test("preserves DATE, all business times, money, rate, country and currency precision", () => {
@@ -3586,17 +3675,25 @@ test("locks the complete compensation-event Claim and physical contract", () => 
 });
 
 test("keeps model identity and all database connection profiles empty", () => {
-  const model = readModel();
-  assert.equal(model.name, "Code-MoR Client & Contract Database V1");
-  assert.equal(model.describe, "Client & Contract");
-  assert.equal(model.version, "4.9.3");
-  assert.deepEqual(model.dbConn, []);
-  assert.deepEqual(model.dbConns, []);
-  assert.equal(model.profile.default.dbConn, "");
+  for (const [service, name, describe] of [
+    [serviceModels[0], "Code-MoR Client Master Database V1", "Client Master"],
+    [serviceModels[1], "Code-MoR Commercial Database V1", "Commercial"],
+  ]) {
+    const model = readServiceModel(service);
+    assert.equal(model.name, name);
+    assert.equal(model.describe, describe);
+    assert.equal(model.version, "4.9.3");
+    assert.deepEqual(model.dbConn, []);
+    assert.deepEqual(model.dbConns, []);
+    assert.equal(model.profile.default.dbConn, "");
+  }
 });
 
 test("passes every enabled PDManer rule", () => {
-  const model = readModel();
+  for (const model of readServiceModels()) assertEnabledPdmanerRules(model);
+});
+
+function assertEnabledPdmanerRules(model) {
   for (const rule of model.namingRules.filter((candidate) => candidate.enable)) {
     const execute = new Function("data", rule.programCode);
     for (const entity of model.entities) {
@@ -3607,10 +3704,46 @@ test("passes every enabled PDManer rule", () => {
       if (rule.applyFieldType === "index") for (const index of entity.indexes) assert.ok(execute({ ...data, index }), `${rule.defName}: ${entity.defKey}.${index.defKey}`);
     }
   }
-});
+}
 
 test("matches the complete approved local relation signature manifest", () => {
   assertRelationContract(readModel());
+  for (const service of serviceModels) {
+    assertRelationContract(readServiceModel(service), serviceRelationSignatures(service));
+  }
+  // The generator's catalog reference list is exactly the approved manifest.
+  assert.deepEqual(
+    LOCAL_RELATIONS.map(([child, childField, parent, parentField, rows]) =>
+      `${child}.${childField}->${parent}.${parentField}|${rows}:1`).sort(),
+    expectedRelationSignatures,
+  );
+  assert.deepEqual(
+    serviceModels.map((service) => modelRelations(serviceTableKeys(service)).length),
+    serviceModels.map((service) => serviceRelationSignatures(service).length),
+  );
+});
+
+test("cross-database catalog references keep their field and access index without a correlation", () => {
+  const commercial = entityMap(readServiceModel(serviceModels[1]));
+  const clientMaster = entityMap(readServiceModel(serviceModels[0]));
+  for (const signature of expectedCrossDatabaseRelationSignatures) {
+    const relation = parseRelationSignature(signature);
+    const child = requireEntity(commercial, relation.childKey);
+    assert.equal(clientMaster.has(relation.childKey), false, `cross-database child must live in commercial: ${signature}`);
+    assert.equal(commercial.has(relation.parentKey), false, `cross-database parent must live in client-master: ${signature}`);
+    requireEntity(clientMaster, relation.parentKey);
+    const field = fieldMap(child).get(relation.childFieldKey);
+    assert.ok(field, `cross-database reference field missing: ${signature}`);
+    assert.ok(
+      child.indexes.some((index) => index.fields[0]?.fieldDefKey === field.id),
+      `cross-database reference lost its left-prefix index: ${signature}`,
+    );
+    assert.equal(
+      child.correlations.some((correlation) => correlation.myField === field.id),
+      false,
+      `cross-database reference must not be a PDManer correlation: ${signature}`,
+    );
+  }
 });
 
 test("relation contract evaluator rejects a missing Application Document parent FK", () => {
@@ -3800,8 +3933,10 @@ test("keeps Party email and phone as the only Vault-backed Party values", () => 
   for (const entity of entities.values()) for (const field of entity.fields) assert.doesNotMatch(field.defKey, prohibited);
 });
 
-test("ships the six approved Diagram Groups with exact membership and every relation once", () => {
-  assertDiagramContract(readModel());
+test("ships the six + three approved Diagram Groups with exact membership and every relation once", () => {
+  for (const service of serviceModels) {
+    assertDiagramContract(readServiceModel(service), serviceDiagramSpec(service));
+  }
 });
 
 test("Diagram evaluator rejects deleting every Diagram Group", () => {
@@ -4101,16 +4236,18 @@ test("active physical type manifests exclude removed Agreement and Legal revisio
 });
 
 test("physical decisions records exactly one generated Model SHA-256", () => {
-  const physicalDecisions = readFileSync(physicalDecisionsPath, "utf8");
-  const documentedDigests = [
-    ...physicalDecisions.matchAll(/^\| Model SHA-256 \| `([0-9a-f]+)` \|$/gmu),
-  ].map((match) => match[1]);
+  for (const service of serviceModels) {
+    const physicalDecisions = readFileSync(service.physicalDecisionsPath, "utf8");
+    const documentedDigests = [
+      ...physicalDecisions.matchAll(/^\| Model SHA-256 \| `([0-9a-f]+)` \|$/gmu),
+    ].map((match) => match[1]);
 
-  assert.equal(documentedDigests.length, 1, "physical decisions must contain exactly one Model SHA-256");
-  assert.match(documentedDigests[0], /^[0-9a-f]{64}$/u);
+    assert.equal(documentedDigests.length, 1, `${service.key} physical decisions must contain exactly one Model SHA-256`);
+    assert.match(documentedDigests[0], /^[0-9a-f]{64}$/u);
 
-  const generatedDigest = createHash("sha256")
-    .update(serializeClientContractModel(generateClientContractModel()))
-    .digest("hex");
-  assert.equal(documentedDigests[0], generatedDigest);
+    const generatedDigest = createHash("sha256")
+      .update(serializeModel(service.generate()))
+      .digest("hex");
+    assert.equal(documentedDigests[0], generatedDigest, service.key);
+  }
 });

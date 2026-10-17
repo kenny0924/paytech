@@ -7,7 +7,8 @@ import { fileURLToPath } from "node:url";
 const workspaceRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
 const modelContracts = [
-  ["client-contract-service", "client-contract.pdma.json", "scripts/pdmaner/generate-client-contract-model.mjs"],
+  ["paytech/client-master", "client-master.pdma.json", "scripts/pdmaner/generate-client-master-model.mjs"],
+  ["paytech/commercial", "commercial.pdma.json", "scripts/pdmaner/generate-commercial-model.mjs"],
   ["commerce-service", "commerce.pdma.json", "scripts/pdmaner/generate-commerce-model.mjs"],
   ["payment-orchestration-service", "payment-orchestration.pdma.json", "scripts/pdmaner/generate-payment-model.mjs"],
   ["risk-compliance-service", "risk-compliance.pdma.json", "scripts/pdmaner/risk/generate-risk-compliance-model.mjs"],
