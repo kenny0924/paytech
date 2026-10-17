@@ -126,7 +126,7 @@
 | 编号 | 决定 |
 |---|---|
 | T1 | 凭证接口前缀 `/client-api-credentials/v1`、Webhook `/client-webhooks/v1`、权限判断 `/authorization/v1/client/authorize`；对外统一 `/api/client/developer/v1` |
-| T2 | 密钥前缀 `ck_` + 20 位 base62；secret 256 位 base64url |
+| T2 | 密钥前缀 `ck-` + 20 位 base62；secret 256 位 base64url（2026-10-17 复核时更正：原写 `ck_`，实现与 test 均为 `ck-`） |
 | T3 | 轮换不受 10 个上限阻止 |
 | T4 | 投递列表按创建时间倒序，size ≤ 50 |
 
