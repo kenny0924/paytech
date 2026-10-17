@@ -100,7 +100,7 @@ java -jar paytech-client-master-app-1.0.0-SNAPSHOT-exec.jar --spring.profiles.ac
 
 - 命令：`./mvnw -B -o verify -pl client-master/paytech-client-master-test,commercial/paytech-commercial-test,client-console-bff/paytech-client-console-bff-test,operations-console-bff/paytech-operations-console-bff-test -am -Dpaytech.local-environment.dir=… -Dtest=… -Dsurefire.failIfNoSpecifiedTests=false`。`-Dtest` 只选这四个模块的测试，不重跑 Foundation。
 - 结果：BUILD SUCCESS，0 失败、0 跳过。operations-console-bff-test 1390、client-console-bff-test 80、client-master-test 57、commercial-test 24。
-- Platform：按 team-lead 要求，改名后**没有运行** `platform-support-test`，只执行了 `test-compile`（通过），等放行后再跑。
+- Platform：team-lead 放行后执行 `cd paytech && ./mvnw -B -o verify -pl platform-support/paytech-platform-support-test -am -Dpaytech.local-environment.dir=…`。结果 **BUILD SUCCESS**（4:55 min），platform-support-test **798 / 798**、0 跳过；Foundation 与 arch-rules（55）等上游模块同样全部通过。
 - 如实说明：放行通知之前，我已在第 2.6 节的全 Reactor（2026-10-17 约 19:31–19:42 UTC）中跑过一次 `platform-support-test`（798 例全过），当时使用了共享的 `mor_platform`。那次运行在调用方名改名之前。
 
 ### 2.7 其他检查
