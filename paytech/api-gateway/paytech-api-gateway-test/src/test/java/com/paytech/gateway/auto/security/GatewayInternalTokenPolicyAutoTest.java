@@ -1,5 +1,8 @@
 package com.paytech.gateway.auto.security;
 
+import java.net.URI;
+import java.time.Duration;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -8,6 +11,9 @@ import org.junit.jupiter.params.provider.EnumSource;
 import com.paytech.foundation.internalauth.api.InternalAuthMode;
 import com.paytech.foundation.internalauth.api.InternalTokenClaims;
 import com.paytech.foundation.internalauth.api.InternalTokenSupplier;
+import com.paytech.gateway.configuration.PlatformCredentialValidationProperties;
+import com.paytech.gateway.configuration.PlatformJwksProperties;
+import com.paytech.gateway.configuration.PlatformSnapshotProperties;
 import com.paytech.gateway.security.GatewayInternalTokenPolicy;
 
 import reactor.test.StepVerifier;
@@ -17,6 +23,9 @@ import reactor.test.StepVerifier;
  *
  * @see GatewayInternalTokenPolicy#GatewayInternalTokenPolicy(InternalAuthMode, InternalTokenSupplier)
  * @see GatewayInternalTokenPolicy#token(String)
+ * @see PlatformSnapshotProperties#tokenAudience()
+ * @see PlatformJwksProperties#tokenAudience()
+ * @see PlatformCredentialValidationProperties#tokenAudience()
  */
 class GatewayInternalTokenPolicyAutoTest {
 
@@ -46,5 +55,25 @@ class GatewayInternalTokenPolicyAutoTest {
             () -> new GatewayInternalTokenPolicy(mode, null));
 
         Assertions.assertTrue(failure.getMessage().contains("internal-auth.mode=" + mode));
+    }
+
+    @Test
+    void test_normalFlow_platformTokenAudienceFollowsServiceDiscoveryName() {
+        URI local = URI.create("http://127.0.0.1:18106");
+        Assertions.assertAll(
+            () -> Assertions.assertEquals("platform-custom",
+                new PlatformSnapshotProperties(null, "platform-custom", false, null, null, 0, null).tokenAudience()),
+            () -> Assertions.assertEquals("platform-support-service",
+                new PlatformSnapshotProperties(local, null, true, null, null, 0, null).tokenAudience()),
+            () -> Assertions.assertEquals("platform-custom",
+                new PlatformJwksProperties(null, "platform-custom", false).tokenAudience()),
+            () -> Assertions.assertEquals("platform-support-service",
+                new PlatformJwksProperties(local, null, true).tokenAudience()),
+            () -> Assertions.assertEquals("platform-custom",
+                new PlatformCredentialValidationProperties(null, "platform-custom", false, null, null, 0)
+                    .tokenAudience()),
+            () -> Assertions.assertEquals("platform-support-service",
+                new PlatformCredentialValidationProperties(local, null, true, Duration.ofSeconds(1),
+                    Duration.ofSeconds(1), 0).tokenAudience()));
     }
 }
