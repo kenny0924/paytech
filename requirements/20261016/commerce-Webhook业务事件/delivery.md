@@ -25,7 +25,7 @@
 
 ## 当前阶段
 
-已结束：阶段 1—5 与 8 完成，已本地提交（未推送、未部署）。实现状态见 [CURRENT_IMPLEMENTATION.md](../../../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-webhook-events-20261017)。
+已结束：阶段 1—5 与 8 完成，已提交 `c8ba84d`（2026-10-17 已推送），未部署。实现状态见 [CURRENT_IMPLEMENTATION.md](../../../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-webhook-events-20261017)。
 
 ## 阶段 4 研发结果（2026-10-17，未提交）
 
@@ -91,6 +91,6 @@
 | 合同文档 | [Commerce Client API V1 设计](../../../docs/superpowers/specs/2026-09-05-commerce-client-api-v1-design.md) 13.5 改为补偿任务事务外调用 Platform 内部受理接口，写明重试与失败口径、本期 3 种事件与 Event ID 规则 |
 | Commerce README | 新增“Client Webhook 业务事件”一节（触发点、配置、Platform 前提）；“尚未实现”改为退款终态、过期与资金可用事件 |
 | 台账 | `CURRENT_IMPLEMENTATION.md` 本需求条目、`requirements/README.md` 登记行 |
-| 提交 | 独立暂存区本地提交，不含 Commerce 目录外其他会话改动；未推送 |
+| 提交 | 独立暂存区本地提交，不含 Commerce 目录外其他会话改动；2026-10-17 已推送 |
 
 后续需求：Commerce 接入 Payment 退款（PAY-I04，含 `refund.succeeded/failed/cancelled`）；订单过期与 `order.expired`；资金可用与 `order.funds_available`；Commerce 部署 mor-test（含 XXL-Job 补偿扫描，补验 AC-05 恢复后补交）。

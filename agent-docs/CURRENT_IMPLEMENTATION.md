@@ -714,7 +714,7 @@
 
 <a id="client-api-mor-test-20261017"></a>
 
-## Client API 在 mor-test 联通（2026-10-17，已本地提交，未推送；2026-10-17 已部署 mor-test）
+## Client API 在 mor-test 联通（2026-10-17，已提交并推送 `98ba37c`、`7cf1757`；2026-10-17 已部署 mor-test）
 
 - **Deployed（mor-test）：** 按[需求](../requirements/20261017/commerce-ClientAPI测试环境联通/requirement.md)与[技术方案](../requirements/20261017/commerce-ClientAPI测试环境联通/technique.md)：Commerce 首次部署 test（镜像 `client-api-20261017`，172.30.73.30，`mor_commerce` 17 表）；Nginx 新增 Client API 入口 `https://localhost:28444/api/v1/`（`X-Entry-Channel: CLIENT_API`）；Platform 登记 Target `commerce-client-api` 与 9 条 CLIENT_API 路由（设计冻结清单中结账查询未实现，不登记），`t_api_scope` 补齐 5 个 Scope；XXL-Job Admin 常驻（根路径，`compose.sh` 默认加载），Commerce 与 Platform 补偿扫描每 30 秒；Platform 只增加验收接收端放行（172.30.73.31/32）、合并信任库（JDK cacerts + test CA）与执行器，镜像不变。验收接收端 `webhook-receiver` 在 profile `acceptance`。
 - **验收：** `client_api_flow.py` 81/81：自助凭证经 Gateway 调 Client API（401/403/Query 白名单），`order.cancelled`、`order.paid`（PaymentSucceeded 夹具）、`refund.created` 签名送达并与查询一致；AC-05 暂停 Platform 后由 XXL-Job 扫描补交，内容与冻结一致。日志无凭证、`whsec_`、载荷。详见[发布记录](../requirements/20261017/commerce-ClientAPI测试环境联通/release/release-20261017.md)。
@@ -722,7 +722,7 @@
 
 <a id="commerce-webhook-events-20261017"></a>
 
-## Commerce Client Webhook 业务事件（2026-10-17，已本地提交，未推送、未部署）
+## Commerce Client Webhook 业务事件（2026-10-17，已提交并推送 `c8ba84d`，未部署）
 
 - **Implemented / 本机验证：** 按[需求](../requirements/20261016/commerce-Webhook业务事件/requirement.md)与[技术方案](../requirements/20261016/commerce-Webhook业务事件/technique.md)，Commerce 在首次支付成功、订单取消、退款创建的同一本地事务里登记 `CLIENT_WEBHOOK_REQUESTED` 补偿任务，冻结 RFC 8785 Envelope 与两个 Hash；`ClientWebhookSubmissionHandler` 事务外核对 Hash 后调用 Platform 内部受理接口（暂不可用含 404 重试；400、409、422 与载荷篡改记为明确失败并告警）。事件 ID `evt_<资源编号>_<短名>`；字段与 GET 订单、GET 退款一致。不改表。
 - **验证：** Commerce 新增 20 项测试，全量 `test` **810/810**；`verify` 被既有 Hosted Checkout 覆盖率门禁拦截（行 0.85 / 0.90）。本机 Commerce → Platform → 接收端 `commerce_webhook_flow.py` **66/66**（已支付订单的 Intent 投影为手工夹具）；Platform 不可用时业务照常、任务可重试（恢复后补交依赖 XXL-Job 扫描，本机未验证）。
@@ -730,7 +730,7 @@
 
 <a id="client-console-developer-20261016"></a>
 
-## Client Console 接入自助：API 凭证与 Webhook（2026-10-16，已本地提交 `9ae668a`，未推送；2026-10-16 已部署 mor-test）
+## Client Console 接入自助：API 凭证与 Webhook（2026-10-16，已提交并推送 `9ae668a`；2026-10-16 已部署 mor-test）
 
 - **mor-test 部署（2026-10-16）：** 与租户与工作区合并发布，CCT / Platform / Client BFF / Client Web 镜像 `client-console-20261016`；`mor_platform` 执行 `credential_name` DDL 与 OWNER 权限补录（4 权限、8 授权）；启用 D01—D15、W01、W02，更新 C02、A05；test `developer_flow.py` 78/78（不向外网推送，Webhook 送达、投递、重发未在 test 验证）。见[发布记录](../requirements/20261016/client-console-接入自助/release/release-20261016.md)。夜间决定待用户复核。
 - **Implemented / 本机验证（用户夜间授权推进）：** 按[需求](../requirements/20261016/client-console-接入自助/requirement.md)与[技术方案](../requirements/20261016/client-console-接入自助/technique.md)：Platform 新增 CLIENT 权限判断 `POST /authorization/v1/client/authorize`、客户侧 API 凭证 `/client-api-credentials/v1`（创建 / 轮换 / 撤销 / 列表 / 详情 / Scope 目录；密钥 `ck-` 前缀 + 256 位 secret，Argon2id，只返回一次；有效凭证上限 10）、客户侧 Webhook `/client-webhooks/v1`（9 个操作，按 ID 校验租户归属，客户视图脱敏）；首次 ACTIVE 投影授予 OWNER 4 个开发者权限；`t_api_credential.credential_name`。Client BFF `/client-developer/v1` 15 个转发、租户上下文与权限拦截、no-store、W02 `capabilities`。Client Web 开发者分组、API 凭证页、Webhook 页、一次性密钥弹窗。登记计划新增 D01—D15。
@@ -740,7 +740,7 @@
 
 <a id="client-console-workspace-20261016"></a>
 
-## Client Console 租户与工作区（2026-10-16，已本地提交 `9ae668a`，未推送；2026-10-16 已部署 mor-test）
+## Client Console 租户与工作区（2026-10-16，已提交并推送 `9ae668a`；2026-10-16 已部署 mor-test）
 
 - **mor-test 部署（2026-10-16）：** 与接入自助合并发布（见其[发布记录](../requirements/20261016/client-console-接入自助/release/release-20261016.md)）；test `workspace_flow.py` 53/53。
 - **Implemented / 本机验证：** 按[需求](../requirements/20261016/client-console-租户与工作区/requirement.md)与[技术方案](../requirements/20261016/client-console-租户与工作区/technique.md)：Platform `ClientAuthenticationApi` 新增 `GET /workspaces`、`POST /workspace-context`、`POST /account-context`，会话支持 CLIENT 租户上下文，租户会话在查询与刷新时重验成员与租户，失效且账号有效时刷新降级为账号上下文并返回 `fallbackReason`；CCT `GET /client-workspace/v1/client-summaries`；Client BFF C02 / W01 / W02 与 C01 `workspaces` 聚合；Client Web 开始页“我的工作区”、`/workspace` 侧边栏外壳与首页。路由登记计划：C02 下游改为 `/client-auth/v1/workspace-context`、A05 响应 Cookie `ISSUE_OR_CLEAR`（修复刷新失败清 Cookie 被 Gateway 判非法）、新增 W01 / W02；本机已登记。
