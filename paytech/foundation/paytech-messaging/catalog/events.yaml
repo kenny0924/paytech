@@ -1,0 +1,49 @@
+# 跨服务 RabbitMQ 领域事件目录 v1（design/08 §5）。
+# 每个事件一条；producer / consumers 使用 01 §3 的服务名；构建期由 YamlEventCatalog 与 ArchUnit 校验。
+# 新增或修改登记须同时更新发布端、消费 Handler 的 @DomainEventHandler 与对应设计文档。
+events:
+  # Payment 支付成功；v2 为 card 增加 instrumentRef、consentToSave、customerId（design/05），acquiring 忽略新增字段。
+  - eventType: PaymentSucceeded
+    schemaVersion: 2
+    producer: payment
+    aggregateType: PAYMENT_ATTEMPT
+    aggregateVersionField: attemptVersion
+    consumers: [acquiring, card]
+    strictOrder: false
+    payloadSchemaRef: paytech-payment-api/event/PaymentSucceeded/v2
+  # 客户审核结论（risk → compliance 拆分后由 compliance 发布，design/07）。
+  - eventType: ClientReviewDecided
+    schemaVersion: 1
+    producer: compliance
+    aggregateType: CLIENT_REVIEW_CASE
+    aggregateVersionField: caseVersion
+    consumers: [client-master]
+    strictOrder: false
+    payloadSchemaRef: paytech-compliance-api/event/ClientReviewDecided/v1
+  # 唯一经济事实（C1，design/04 §5）：ledger 过账、account 维护余额，Payload 含头与全部明细行。
+  - eventType: EconomicFactRecorded
+    schemaVersion: 1
+    producer: billing
+    aggregateType: ECONOMIC_FACT
+    aggregateVersionField: factVersion
+    consumers: [ledger, account]
+    strictOrder: false
+    payloadSchemaRef: paytech-billing-api/event/EconomicFactRecorded/v1
+  # 余额桶移动（design/04 §5）：阶段 0 只定义 Schema，无生产调用方。
+  - eventType: BalanceMoved
+    schemaVersion: 1
+    producer: account
+    aggregateType: ACCOUNT_BOOK
+    aggregateVersionField: movementSequence
+    consumers: [ledger]
+    strictOrder: true
+    payloadSchemaRef: paytech-account-api/event/BalanceMoved/v1
+  # 结算限制变化（C3、D27，design/07）：阶段 0 仅 Schema 与发布端。
+  - eventType: SettlementRestrictionChanged
+    schemaVersion: 1
+    producer: compliance
+    aggregateType: SETTLEMENT_CONTROL
+    aggregateVersionField: controlVersion
+    consumers: [payout, account]
+    strictOrder: true
+    payloadSchemaRef: paytech-compliance-api/event/SettlementRestrictionChanged/v1

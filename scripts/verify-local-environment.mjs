@@ -320,6 +320,19 @@ if (composeResult.status !== 0) {
   if (JSON.stringify(actualVolumes) !== JSON.stringify(expectedVolumes.sort())) {
     errors.push(`unexpected named volumes: ${actualVolumes.join(', ')}`);
   }
+  const rabbitmqPluginMount = (modelServices.rabbitmq?.volumes ?? []).find(
+    (volume) => volume.target === '/etc/rabbitmq/enabled_plugins',
+  );
+  if (!rabbitmqPluginMount || rabbitmqPluginMount.type !== 'bind' || rabbitmqPluginMount.read_only !== true
+      || rabbitmqPluginMount.source !== join(environmentRoot, 'rabbitmq', 'enabled_plugins')) {
+    errors.push('RabbitMQ must mount local-environment/rabbitmq/enabled_plugins read-only');
+  }
+  const rabbitmqPlugins = readFileSync(join(environmentRoot, 'rabbitmq', 'enabled_plugins'), 'utf8');
+  for (const plugin of ['rabbitmq_management', 'rabbitmq_consistent_hash_exchange']) {
+    if (!rabbitmqPlugins.includes(plugin)) {
+      errors.push(`RabbitMQ enabled_plugins must enable ${plugin}`);
+    }
+  }
   if (model.networks?.mor?.name !== 'mor-local-network') {
     errors.push('Compose mor network drifted');
   }

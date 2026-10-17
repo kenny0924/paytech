@@ -75,6 +75,8 @@ services:
       - "127.0.0.1:25673:15672"
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
+      # paytech-messaging needs the consistent hash exchange (design/08 §3); management and prometheus keep the image defaults.
+      - ./rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins:ro
     healthcheck:
       test: [CMD, rabbitmq-diagnostics, -q, ping]
       interval: 10s

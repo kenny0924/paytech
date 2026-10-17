@@ -51,8 +51,8 @@ main() {
   prepare_health_probe_output "$environment_dir"
   "$JAVA_HOME/bin/javac" --release 25 -encoding UTF-8 -d "$health_probe_output" "$environment_dir/java/LocalHttpHealthProbe.java" "$environment_dir/java/LocalSnapshotEvidenceFetch.java"
   # Build with the user's existing Maven Settings; do not copy credentials into Docker layers.
-  (cd "$workspace_dir/paytech-build" && ./mvnw -DskipTests clean install)
-  (cd "$workspace_dir/paytech-foundation" && ./mvnw -pl paytech-mvc-web-starter,paytech-http-client-support,paytech-mybatis-support,paytech-redis-starter,paytech-snowflake-id,paytech-json-canonicalization -am -DskipTests clean install)
+  (cd "$workspace_dir/paytech" && ./mvnw -DskipTests -B install -pl build/paytech-dependencies,build/paytech-parent)
+  (cd "$workspace_dir/paytech" && ./mvnw -DskipTests -B -f foundation/pom.xml install)
   (cd "$workspace_dir/risk-compliance-service" && ./mvnw -pl risk-web -am -DskipTests clean install)
   cp "$workspace_dir/risk-compliance-service/risk-web/target/risk-web-1.0.0-SNAPSHOT-exec.jar" \
     "$environment_dir/artifacts/risk-service.jar"

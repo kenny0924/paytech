@@ -1,0 +1,2 @@
+com.paytech.foundation.web.autoconfigure.WebAutoConfiguration
+com.paytech.foundation.web.internalauth.InternalAuthWebAutoConfiguration

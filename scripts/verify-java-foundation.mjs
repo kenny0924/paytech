@@ -14,8 +14,8 @@ import { runInNewContext } from 'node:vm';
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = resolve(scriptDirectory, '..');
 const buildRoot = join(repositoryRoot, 'paytech', 'build');
-const foundationRoot = join(repositoryRoot, 'paytech-foundation');
-const wrapper = join(foundationRoot, 'mvnw');
+const foundationRoot = join(repositoryRoot, 'paytech', 'foundation');
+const wrapper = join(repositoryRoot, 'paytech', 'mvnw');
 const mavenSettings = process.env.PAYTECH_MAVEN_SETTINGS;
 const selfTestOnly = process.argv.includes('--self-test');
 
@@ -23,6 +23,10 @@ const requiredFiles = [
   join(buildRoot, 'paytech-dependencies', 'pom.xml'),
   join(buildRoot, 'paytech-parent', 'pom.xml'),
   join(foundationRoot, 'pom.xml'),
+  join(foundationRoot, 'paytech-messaging-api', 'pom.xml'),
+  join(foundationRoot, 'paytech-messaging', 'pom.xml'),
+  join(foundationRoot, 'paytech-messaging', 'catalog', 'events.yaml'),
+  join(foundationRoot, 'paytech-internal-auth', 'pom.xml'),
   join(foundationRoot, 'paytech-json-canonicalization', 'pom.xml'),
   join(
     foundationRoot,
@@ -505,6 +509,9 @@ if (errors.length === 0 && !selfTestOnly) {
     'paytech-redis-starter/pom.xml',
     'paytech-compensation-event/pom.xml',
     'paytech-xxl-job-starter/pom.xml',
+    'paytech-messaging-api/pom.xml',
+    'paytech-messaging/pom.xml',
+    'paytech-internal-auth/pom.xml',
   ];
   const foundationModel = readFileSync(join(foundationRoot, 'pom.xml'), 'utf8');
   for (const relativePom of modulePoms) {
@@ -525,6 +532,9 @@ if (errors.length === 0 && !selfTestOnly) {
     'paytech-json-canonicalization',
     'paytech-redis-starter',
     'paytech-xxl-job-starter',
+    'paytech-messaging-api',
+    'paytech-messaging',
+    'paytech-internal-auth',
   ]) {
     const dependencies = managedDependencies.filter(
       (dependency) => dependency.groupId === 'com.paytech' && dependency.artifactId === artifactId,
@@ -628,6 +638,9 @@ if (errors.length === 0 && !selfTestOnly) {
     [join(foundationRoot, 'paytech-redis-starter', 'pom.xml'), 'paytech-redis-starter'],
     [join(foundationRoot, 'paytech-compensation-event', 'pom.xml'), 'paytech-compensation-event'],
     [join(foundationRoot, 'paytech-xxl-job-starter', 'pom.xml'), 'paytech-xxl-job-starter'],
+    [join(foundationRoot, 'paytech-messaging-api', 'pom.xml'), 'paytech-messaging-api'],
+    [join(foundationRoot, 'paytech-messaging', 'pom.xml'), 'paytech-messaging'],
+    [join(foundationRoot, 'paytech-internal-auth', 'pom.xml'), 'paytech-internal-auth'],
   ];
   for (const [modelFile, artifactId] of expectedArtifactIds) {
     const model = readFileSync(modelFile, 'utf8');
@@ -741,16 +754,19 @@ if (errors.length === 0 && !selfTestOnly) {
   const httpProblemProductionDependencies = httpProblemDependencies.filter(
     (block) => tagValue(block, 'scope') !== 'test',
   );
-  const allowedHttpProblemProductionDependency = 'com.fasterxml.jackson.core:jackson-annotations';
-  const hasOnlyAllowedHttpProblemProductionDependency = httpProblemProductionDependencies.length === 1
-    && `${tagValue(httpProblemProductionDependencies[0], 'groupId')}:${tagValue(
-      httpProblemProductionDependencies[0],
-      'artifactId',
-    )}` === allowedHttpProblemProductionDependency;
-  if (!hasOnlyAllowedHttpProblemProductionDependency) {
+  // ApiProblemProfile reuses the framework-free ApiHeaderNames constants from paytech-common-core.
+  const allowedHttpProblemProductionDependencies = [
+    'com.fasterxml.jackson.core:jackson-annotations',
+    'com.paytech:paytech-common-core',
+  ];
+  const actualHttpProblemProductionDependencies = httpProblemProductionDependencies
+    .map((block) => `${tagValue(block, 'groupId')}:${tagValue(block, 'artifactId')}`)
+    .sort();
+  if (actualHttpProblemProductionDependencies.join(',')
+      !== allowedHttpProblemProductionDependencies.join(',')) {
     errors.push(
-      'paytech-http-problem production dependencies must contain only '
-        + `${allowedHttpProblemProductionDependency}`,
+      'paytech-http-problem production dependencies must equal exactly: '
+        + allowedHttpProblemProductionDependencies.join(', '),
     );
   }
   const httpProblemSourceRoot = join(foundationRoot, 'paytech-http-problem', 'src', 'main');
@@ -1661,5 +1677,5 @@ if (errors.length > 0) {
 
 process.stdout.write(selfTestOnly ? 'Java foundation static regression checks verified.\n' :
   'Java foundation structure and effective Maven model verified; '
-    + 'JCS 1.1, eleven modules, exact production dependencies, and opt-in boundary verified.\n',
+    + 'JCS 1.1, sixteen modules, exact production dependencies, and opt-in boundary verified.\n',
 );

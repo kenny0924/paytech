@@ -972,7 +972,8 @@ class RecursiveSourceInventoryTest(unittest.TestCase):
         deploy = source_text(DEPLOY)
         compose_wrapper = source_text(COMPOSE_WRAPPER)
         for required in (
-            "./mvnw -DskipTests clean install",
+            "./mvnw -DskipTests -B install -pl build/paytech-dependencies,build/paytech-parent",
+            "./mvnw -DskipTests -B -f foundation/pom.xml install",
             "npm ci && npm run build",
             'health_probe_output="$environment_dir/artifacts/health-probe"',
             '"$environment_dir/java/LocalSnapshotEvidenceFetch.java"',
