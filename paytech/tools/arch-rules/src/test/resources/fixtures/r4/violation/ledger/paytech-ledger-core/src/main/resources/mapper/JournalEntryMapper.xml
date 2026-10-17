@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mapper namespace="com.paytech.ledger.core.dal.mapper.JournalEntryMapper">
+    <select id="selectPaidEntries" resultType="map">
+        SELECT e.journal_entry_id
+        FROM t_journal_entry e
+        JOIN t_payment_intent p ON p.payment_intent_id = e.source_id
+        JOIN t_customer c ON c.customer_id = p.customer_id
+    </select>
+</mapper>

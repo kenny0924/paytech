@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+      Single PayTech reactor. Pure aggregator: no parent, no plugins, no dependency rules.
+      Shared build rules live in build/paytech-parent; service-level Enforcer bans live in each service aggregator POM.
+    -->
+    <groupId>com.paytech</groupId>
+    <artifactId>paytech</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>PayTech Reactor</name>
+    <description>Aggregator listing every PayTech Maven module in build order.</description>
+
+    <distributionManagement>
+        <repository>
+            <id>maven-releases</id>
+            <url>${nexus.url}/repository/maven-releases</url>
+        </repository>
+        <snapshotRepository>
+            <id>maven-snapshots</id>
+            <url>${nexus.url}/repository/maven-snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+    <modules>
+        <module>build/paytech-dependencies</module>
+        <module>build/paytech-parent</module>
+        <!-- <module>foundation</module> -->
+        <!-- <module>vault</module> -->
+        <!-- <module>platform-support</module> -->
+        <!-- <module>api-gateway</module> -->
+        <!-- <module>operations-console-bff</module> -->
+        <!-- <module>client-console-bff</module> -->
+        <!-- <module>client-master</module> -->
+        <!-- <module>commercial</module> -->
+        <!-- <module>acquiring</module> -->
+        <!-- <module>consumer</module> -->
+        <!-- <module>payment</module> -->
+        <!-- <module>channel-connector</module> -->
+        <!-- <module>card</module> -->
+        <!-- <module>risk-decision</module> -->
+        <!-- <module>compliance</module> -->
+        <!-- <module>billing</module> -->
+        <!-- <module>account</module> -->
+        <!-- <module>ledger</module> -->
+        <!-- <module>reconciliation</module> -->
+        <!-- <module>tax</module> -->
+        <!-- <module>payout</module> -->
+        <!-- <module>dispute</module> -->
+        <!-- <module>fx</module> -->
+        <!-- <module>data-service</module> -->
+        <!-- <module>workflow-approval</module> -->
+        <module>tools/arch-rules</module>
+        <module>tools/instance-manifest</module>
+        <module>tools/arch-rules-reactor-test</module>
+    </modules>
+</project>

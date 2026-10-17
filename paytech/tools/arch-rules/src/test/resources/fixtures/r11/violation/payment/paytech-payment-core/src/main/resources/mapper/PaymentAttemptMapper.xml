@@ -1,0 +1,4 @@
+<mapper namespace="payment">
+    <select id="s">SELECT a.instrument_ref FROM t_payment_attempt a JOIN t_payment_card_credential c ON 1 = 1</select>
+    <select id="t">SELECT * FROM t_payment_stored_card</select>
+</mapper>

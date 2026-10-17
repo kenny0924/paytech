@@ -1,0 +1,1 @@
+<mapper namespace="payment"><select id="s">SELECT instrument_ref FROM t_payment_attempt</select></mapper>

@@ -1,0 +1,1 @@
+<mapper namespace="x"><select id="s">SELECT 1 FROM t_platform_only</select></mapper>

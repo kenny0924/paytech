@@ -13,14 +13,13 @@ import { runInNewContext } from 'node:vm';
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = resolve(scriptDirectory, '..');
-const buildRoot = join(repositoryRoot, 'paytech-build');
+const buildRoot = join(repositoryRoot, 'paytech', 'build');
 const foundationRoot = join(repositoryRoot, 'paytech-foundation');
 const wrapper = join(foundationRoot, 'mvnw');
 const mavenSettings = process.env.PAYTECH_MAVEN_SETTINGS;
 const selfTestOnly = process.argv.includes('--self-test');
 
 const requiredFiles = [
-  join(buildRoot, 'pom.xml'),
   join(buildRoot, 'paytech-dependencies', 'pom.xml'),
   join(buildRoot, 'paytech-parent', 'pom.xml'),
   join(foundationRoot, 'pom.xml'),
@@ -595,7 +594,6 @@ if (errors.length === 0 && !selfTestOnly) {
 
   const expectedGroupId = '<groupId>com.paytech</groupId>';
   const mavenModelFiles = [
-    join(buildRoot, 'pom.xml'),
     join(buildRoot, 'paytech-dependencies', 'pom.xml'),
     join(buildRoot, 'paytech-parent', 'pom.xml'),
     join(foundationRoot, 'pom.xml'),
@@ -615,7 +613,6 @@ if (errors.length === 0 && !selfTestOnly) {
   }
 
   const expectedArtifactIds = [
-    [join(buildRoot, 'pom.xml'), 'paytech-build'],
     [join(buildRoot, 'paytech-dependencies', 'pom.xml'), 'paytech-dependencies'],
     [join(buildRoot, 'paytech-parent', 'pom.xml'), 'paytech-parent'],
     [join(foundationRoot, 'pom.xml'), 'paytech-foundation'],

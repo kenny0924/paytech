@@ -1,0 +1,28 @@
+# Logical service catalog, design/03 §1.2 (coordinate table and port summary).
+# applicationName: spring.application.name / service-discovery name; database: null when the service owns no database.
+services:
+  - {name: acquiring, applicationName: acquiring-service, port: 18102, database: mor_acquiring, source: commerce-service}
+  - {name: consumer, applicationName: consumer-service, port: 18109, database: mor_consumer, source: commerce-service}
+  - {name: payment, applicationName: payment-service, port: 18103, database: mor_payment, source: payment-orchestration-service}
+  - {name: channel-connector, applicationName: channel-connector-service, port: 18110, database: mor_channel_connector, source: payment-orchestration-service}
+  - {name: card, applicationName: card-service, port: 18111, database: mor_card, source: payment-orchestration-service}
+  - {name: client-master, applicationName: client-master-service, port: 18101, database: mor_client_master, source: client-contract-service}
+  - {name: commercial, applicationName: commercial-service, port: 18108, database: mor_commercial, source: client-contract-service}
+  - {name: risk-decision, applicationName: risk-decision-service, port: 18104, database: mor_risk_decision, source: risk-compliance-service}
+  - {name: compliance, applicationName: compliance-service, port: 18112, database: mor_compliance, source: risk-compliance-service}
+  - {name: billing, applicationName: billing-service, port: 18113, database: mor_billing, source: finance-service}
+  - {name: account, applicationName: account-service, port: 18114, database: mor_account, source: finance-service}
+  - {name: ledger, applicationName: ledger-service, port: 18105, database: mor_ledger, source: finance-service}
+  - {name: reconciliation, applicationName: reconciliation-service, port: 18115, database: mor_reconciliation, source: finance-service}
+  - {name: tax, applicationName: tax-service, port: 18116, database: mor_tax, source: finance-service}
+  - {name: payout, applicationName: payout-service, port: 18117, database: mor_payout, source: finance-service}
+  - {name: dispute, applicationName: dispute-service, port: 18118, database: mor_dispute, source: risk-compliance-service + payment-orchestration-service}
+  - {name: fx, applicationName: fx-service, port: 18119, database: mor_fx, source: new}
+  - {name: data-service, applicationName: data-service, port: 18120, database: mor_data_service, source: new}
+  - {name: platform-support, applicationName: platform-support-service, port: 18106, database: mor_platform, source: platform-support-service}
+  - {name: workflow-approval, applicationName: workflow-approval-service, port: 18121, database: mor_workflow_approval, source: new}
+  - {name: api-gateway, applicationName: api-gateway, port: 18080, database: null, source: api-gateway}
+  - {name: client-console-bff, applicationName: client-console-bff, port: 18202, database: null, source: client-console-bff}
+  - {name: operations-console-bff, applicationName: operations-console-bff, port: 18201, database: null, source: operations-console-bff}
+  - {name: partner-console-bff, applicationName: partner-console-bff, port: 18203, database: null, source: reserved}
+  - {name: vault, applicationName: vault-service, port: 18107, database: mor_vault, source: vault-service}
