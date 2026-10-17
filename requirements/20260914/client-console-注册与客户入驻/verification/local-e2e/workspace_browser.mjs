@@ -1,11 +1,12 @@
-// 租户与工作区浏览器端到端验收（本机全链路，无头 Chromium，2026-10-16）。
+// 租户与工作区浏览器端到端验收（本机全链路或 mor-test，无头 Chromium，2026-10-16；2026-10-17 增加 E2E_TARGET=test）。
 //
 // 前置：一个已验证、入驻已批准且工作区已开通的客户账号（ACCOUNT_FILE 指向 JSON：email、password、applicationId、memberId）。
 // 流程：登录 → 开始页“我的工作区”（桌面）→ 申请结果页“进入工作区”入口 → 进入工作区 → 首页内容与提示 → 390px 菜单
 //   → 切换工作区（回开始页，当前工作区标记）→ 再进入 → 返回账号 → 夹具暂停工作区后开始页显示受限原因 → 恢复 → 进入 → 退出。
-// 暂停 / 恢复用本机 mor_platform_e2e 夹具（本机运营租户访问路由未启用）。只记方法、路径、状态，不记 Header/Body、密码或令牌。
+// 暂停 / 恢复用 Platform 库夹具：本机 mor_platform_e2e；mor-test 经 mor-test-mysql-1 的 mor_platform（与 workspace_flow.py 相同）。
+// 只记方法、路径、状态，不记 Header/Body、密码或令牌。
 //
-// 用法：ACCOUNT_FILE=<json> SHOTS=<截图目录> [PLAYWRIGHT_CORE=<playwright-core 目录>] node workspace_browser.mjs
+// 用法：[E2E_TARGET=test] ACCOUNT_FILE=<json> SHOTS=<截图目录> [PLAYWRIGHT_CORE=<playwright-core 目录>] node workspace_browser.mjs
 import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { mkdirSync, readFileSync } from 'node:fs';
@@ -15,7 +16,9 @@ import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '../../../../..');
-const CLIENT = 'https://127.0.0.1:18443';
+const TARGET = process.env.E2E_TARGET || 'local';
+if (!['local', 'test'].includes(TARGET)) throw new Error('E2E_TARGET 只支持 local 或 test');
+const CLIENT = TARGET === 'test' ? 'https://localhost:28443' : 'https://127.0.0.1:18443';
 const SHOTS = process.env.SHOTS || join(HERE, 'browser-shots-workspace');
 const CORE = process.env.PLAYWRIGHT_CORE || join(homedir(), '.npm/_npx/e41f203b7505f1fb/node_modules/playwright-core');
 const { chromium } = createRequire(import.meta.url)(CORE);
@@ -35,12 +38,16 @@ function env(file) {
   return values;
 }
 
-/** 本机夹具：按成员找到租户并切换安全状态，返回影响行数。 */
+/** 夹具：按成员找到租户并切换安全状态，返回影响行数。 */
 function setSecurity(status) {
   const sql = `UPDATE t_access_tenant t JOIN t_tenant_member m ON m.tenant_id=t.tenant_id SET t.security_status='${status}', `
     + `t.version=t.version+1, t.update_time=UTC_TIMESTAMP(6) WHERE m.member_id=${BigInt(account.memberId)} AND t.tenant_type='CLIENT'; SELECT ROW_COUNT();`;
-  return execFileSync('mysql', ['-h127.0.0.1', '-P13306', '-uplatform_app', '-N', '-B', 'mor_platform_e2e', '-e', sql],
-    { env: { ...process.env, MYSQL_PWD: env('local-environment/.env.local').MOR_PLATFORM_DB_PASSWORD } }).toString().trim();
+  const [command, args, file] = TARGET === 'test'
+    ? ['docker', ['exec', '-i', '-e', 'MYSQL_PWD', 'mor-test-mysql-1', 'mysql', '-uplatform_app', '-N', '-B', 'mor_platform'],
+      'test-environment/.env.test']
+    : ['mysql', ['-h127.0.0.1', '-P13306', '-uplatform_app', '-N', '-B', 'mor_platform_e2e'], 'local-environment/.env.local'];
+  return execFileSync(command, [...args, '-e', sql],
+    { env: { ...process.env, MYSQL_PWD: env(file).MOR_PLATFORM_DB_PASSWORD } }).toString().trim();
 }
 
 async function shot(page, name) {

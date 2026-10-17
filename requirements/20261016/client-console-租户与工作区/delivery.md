@@ -23,7 +23,20 @@
 
 ## 当前阶段与下一确认点
 
-阶段 6—7 已完成（2026-10-16）：与接入自助合并，提交 `9ae668a`（2026-10-17 已推送），mor-test 已部署，C02/A05 已更新、W01/W02 已启用，test `workspace_flow.py` 53/53。见[发布记录](../client-console-接入自助/release/release-20261016.md)。下一步：用户验收，再决定推送和阶段 8 收尾。
+阶段 6—7 已完成（2026-10-16）：与接入自助合并，提交 `9ae668a`（2026-10-17 已推送），mor-test 已部署，C02/A05 已更新、W01/W02 已启用，test `workspace_flow.py` 53/53；2026-10-17 补做 test 浏览器验收 `workspace_browser.mjs` 10/10。见[发布记录](../client-console-接入自助/release/release-20261016.md)。
+
+阶段 8 归档稿（2026-10-17，见下文“阶段 8 交付归档”）：等待用户确认本次交付结束。
+
+## 阶段 8 交付归档（2026-10-17，待用户确认结束）
+
+| 项 | 内容 |
+|---|---|
+| 完成范围 | F-01—F-07；AC-01/02/04—11、UI-01—04 经本机与 test 真实入口验收 |
+| 关键决定 | Q1—Q5、D1—D6 均按建议（见确认记录）；偏离设计见“阶段 4 研发结果” |
+| 代码提交 | `9ae668a`（与接入自助合并，已推送）；验收记录与 `workspace_browser.mjs` 的 test 目标支持另行本地提交 |
+| 部署 | mor-test 镜像、路由与回退见[发布记录](../client-console-接入自助/release/release-20261016.md)；本需求无 SQL（同次发布的 `credential_name` / 权限 DML 属接入自助） |
+| 验证 | 单测 Platform 651、CCT 51、BFF 47、Web 43；本机 `workspace_flow.py` 53/53、浏览器 10/10；test `workspace_flow.py` 53/53、浏览器 10/10 |
+| 遗留 | AC-03（批准后投影未完成窗口）与并发切换 409 未覆盖；Platform 全库覆盖率门禁（既有）；CCT `approved_time` 未写入，`approvedAt` 取申请更新时间；旧 `browser_acceptance.mjs` 登录等待标题可能已失效；`developer_browser.mjs`（接入自助）尚不支持 test |
 
 ## 实现 / 验证 / 部署状态
 
