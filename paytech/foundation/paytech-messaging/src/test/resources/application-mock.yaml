@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: messaging-test
+  datasource:
+    url: jdbc:mysql://${PAYTECH_TEST_DB_HOST:127.0.0.1}:${PAYTECH_TEST_DB_PORT:13306}/${PAYTECH_TEST_DB_NAME:paytech_foundation_test}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ${PAYTECH_TEST_DB_USER:foundation_test}
+    password: ${PAYTECH_TEST_DB_PASSWORD:local-foundation-test-change-me-2026}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 8
+  sql:
+    init:
+      mode: always
+      # 只重建 messaging 自有的三张表（t_consumed_event、t_consumed_aggregate_version、t_test_handled_event）。
+      schema-locations: classpath:schema/messaging-consumed-event-test.sql
+  rabbitmq:
+    # host / port / username / password / virtual-host 由 MessagingMockTestBase 从 paytech.local-environment.dir/.env.local 注入。
+    publisher-confirm-type: correlated
+    publisher-returns: true
+  cloud:
+    nacos:
+      config:
+        enabled: false
+      discovery:
+        enabled: false
+
+messaging:
+  enabled: true
+  # producer.service、consumer.service 由 MessagingMockTestBase 按本次运行的唯一前缀注入，隔离共享 Broker 上的拓扑。
+  producer:
+    confirm-timeout: 10s
+  consumer:
+    # 缩短缺口与失败的重投退避，使 DLQ 场景在数秒内完成；生产默认 1s。
+    retry-backoff: 50ms
+  consumers: {}

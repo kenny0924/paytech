@@ -10,7 +10,10 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.listener.api.ChannelAwareMessageListener;
+import org.springframework.amqp.rabbit.support.DefaultMessagePropertiesConverter;
+import org.springframework.amqp.rabbit.support.MessagePropertiesConverter;
 
 import com.paytech.foundation.messaging.api.DomainEvent;
 import com.paytech.foundation.messaging.core.codec.DomainEventCodec;
@@ -18,13 +21,17 @@ import com.paytech.foundation.messaging.core.codec.InvalidDomainEventException;
 import com.paytech.foundation.messaging.core.observability.ConsumeOutcome;
 import com.paytech.foundation.messaging.core.observability.MessagingMetrics;
 import com.paytech.foundation.messaging.core.topology.MessagingTopology;
+import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 
 /**
  * 一个分区队列的手动 Ack 监听器：解码信封、路由到 Handler、按判定结果确认、重投或进入 DLQ。
  * <li>Ack 在本地事务提交之后发送；Ack 丢失导致的重投由事件 ID 去重吸收。</li>
- * <li>缺口与 Handler 异常按线性退避后重新入队；第 {@value MessagingTopology#DELIVERY_LIMIT} 次仍失败时拒绝进入
- * DLQ，记录 ERROR 与 {@code outcome=dead}。</li>
+ * <li>版本缺口：退避后把消息重新发布到本分区队列<b>尾部</b>（等待 Broker 确认后再 Ack 原消息），让排在后面的缺失版本先被处理；
+ * Quorum Queue 对 Nack 重新入队的消息会优先重投，原样重新入队无法等到缺口补齐。尝试次数记在消息头
+ * {@value #GAP_ATTEMPT_HEADER}。</li>
+ * <li>Handler 异常：退避后 Nack 重新入队（同一消息优先重投）。</li>
+ * <li>两者第 {@value MessagingTopology#DELIVERY_LIMIT} 次仍未成功时拒绝进入 DLQ，记录 ERROR 与 {@code outcome=dead}。</li>
  * <li>非法信封、发布方不符直接进入 DLQ；本服务未订阅的事件类型直接确认。</li>
  *
  * @author Claude
@@ -33,7 +40,14 @@ public final class DomainEventMessageListener implements ChannelAwareMessageList
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DomainEventMessageListener.class);
 
+    /** 缺口重新发布的累计尝试次数。 */
+    public static final String GAP_ATTEMPT_HEADER = "x-paytech-gap-attempts";
+
     private static final String DELIVERY_COUNT_HEADER = "x-delivery-count";
+
+    private static final long REPUBLISH_CONFIRM_TIMEOUT_MILLIS = 10_000;
+
+    private static final MessagePropertiesConverter PROPERTIES_CONVERTER = new DefaultMessagePropertiesConverter();
 
     private static final String UNKNOWN_EVENT_TYPE = "UNKNOWN";
 
@@ -110,7 +124,7 @@ public final class DomainEventMessageListener implements ChannelAwareMessageList
         }
         if (outcome == ConsumeOutcome.GAP) {
             metrics.consumed(event.eventType(), ConsumeOutcome.GAP);
-            retryOrDeadLetter(message, channel, event, "聚合版本缺口未补齐");
+            deferGap(message, channel, event);
             return;
         }
         forgetAttempts(event.eventId());
@@ -129,6 +143,44 @@ public final class DomainEventMessageListener implements ChannelAwareMessageList
         }
         pause(retryBackoff.multipliedBy(attempt));
         channel.basicNack(deliveryTag, false, true);
+    }
+
+    /**
+     * 缺口等待：退避后把消息重新发布到本分区队列尾部，确认后 Ack 原消息；重新发布失败时退回 Nack 重新入队。
+     * 先发布后 Ack 之间若进程中断，会多出一份副本，由事件 ID 去重吸收。
+     */
+    private void deferGap(Message message, Channel channel, DomainEvent event) throws IOException {
+        long deliveryTag = message.getMessageProperties().getDeliveryTag();
+        int attempt = gapAttempts(message) + 1;
+        if (attempt >= MessagingTopology.DELIVERY_LIMIT) {
+            deadLetter(channel, deliveryTag, event.eventType(), "聚合版本缺口未补齐，已达投递上限: " + event);
+            return;
+        }
+        pause(retryBackoff.multipliedBy(attempt));
+        String queue = message.getMessageProperties().getConsumerQueue();
+        try {
+            MessageProperties properties = message.getMessageProperties();
+            properties.setHeader(GAP_ATTEMPT_HEADER, attempt);
+            AMQP.BasicProperties amqpProperties = PROPERTIES_CONVERTER.fromMessageProperties(properties,
+                java.nio.charset.StandardCharsets.UTF_8.name());
+            channel.confirmSelect();
+            channel.basicPublish("", queue, true, amqpProperties, message.getBody());
+            channel.waitForConfirmsOrDie(REPUBLISH_CONFIRM_TIMEOUT_MILLIS);
+        } catch (IOException | java.util.concurrent.TimeoutException | RuntimeException exception) {
+            LOGGER.warn("缺口消息重新发布失败，改为重新入队: {}", event, exception);
+            channel.basicNack(deliveryTag, false, true);
+            return;
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            channel.basicNack(deliveryTag, false, true);
+            return;
+        }
+        channel.basicAck(deliveryTag, false);
+    }
+
+    private static int gapAttempts(Message message) {
+        Object value = message.getMessageProperties().getHeader(GAP_ATTEMPT_HEADER);
+        return value instanceof Number number ? (int) Math.min(number.longValue(), Integer.MAX_VALUE) : 0;
     }
 
     private void deadLetter(Channel channel, long deliveryTag, String eventType, String reason) throws IOException {

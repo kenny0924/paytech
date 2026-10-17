@@ -825,3 +825,52 @@ export JAVA_HOME=$(/usr/libexec/java_home -v 25)
 # 在 paytech/ 下执行
 ./mvnw -pl foundation/paytech-compensation-event -am -DskipTests test-compile
 ```
+
+## Messaging（`paytech-messaging-api` / `paytech-messaging`）
+
+跨服务 RabbitMQ 领域事件的信封、分区有序消费与消费幂等，设计见
+[design/08](../../requirements/20261017/architecture-V2骨架与模块搬迁/design/08-messaging-module.md)。补偿事件仍负责"提交后可靠执行"：
+发布发生在补偿 Handler 内，`paytech-compensation-event` 本身不含 RabbitMQ。
+
+- `-core` 只依赖 `paytech-messaging-api`：`DomainEvent`（Schema v1 信封，`payloadHash` 为 Payload 的 RFC 8785 规范 bytes 的
+  SHA-256）、`DomainEventPublisher`、`DomainEventConsumer` + `@DomainEventHandler(eventType, strictOrder)`、`ConsumedEventStore`、
+  `AggregateKey`（`eventKey = <aggregateType>:<aggregateId>:<eventType>:<aggregateVersion>`，供补偿 `event_key`）。
+- `-app` 依赖 `paytech-messaging`：`messaging.producer.service` 设置时声明 `<service>.events` 并提供发布实现（mandatory +
+  Publisher Confirm，信封上限 64 KiB）；`messaging.consumer.service` 设置时为每个订阅的发布方声明
+  `<consumer>.<producer>.hash`（`x-consistent-hash`）与 `p0..pN-1` Quorum 分区队列（单活消费者、`delivery-limit=5`、DLX/DLQ），
+  每个分区一个并发 1 的监听容器。
+- 发布方交换机是 Fanout，每个订阅服务经自己的一致性哈希交换机分区：一致性哈希交换机只把一条消息路由到一个绑定队列，
+  多个订阅服务直接绑定同一个一致性哈希交换机会互相"抢"消息。
+- 严格有序 Handler 遇到版本缺口时，消息被重新发布到本分区队列尾部等待缺口补齐（Quorum Queue 对 Nack 重新入队的消息优先重投）；
+  第 5 次仍有缺口或 Handler 持续失败时进入 DLQ 并计 `messaging.consumed{outcome=dead}`。
+- 每个消费服务库需要 `src/main/resources/schema/messaging-consumed-event.sql` 中的两张表，各服务 `init/ddl.sql` 逐字复制。
+- 事件目录 `paytech-messaging/catalog/events.yaml` 同时打包为 `classpath:catalog/events.yaml`；Handler 的事件类型、消费服务与
+  `strictOrder` 在启动时与目录核对，ArchUnit R12 在构建期做同样检查。
+- 宿主连接必须配置 `spring.rabbitmq.publisher-confirm-type=correlated` 与 `spring.rabbitmq.publisher-returns=true`；Broker 必须启用
+  `rabbitmq_consistent_hash_exchange`（`local-environment/rabbitmq/enabled_plugins`），缺少时启动失败并提示。
+
+自动测试使用本地 MySQL `paytech_foundation_test` 中 messaging 自有的三张表与本地 RabbitMQ；Broker 账号经
+`paytech.local-environment.dir` 读取 `.env.local`，拓扑名带运行前缀并在测试结束后删除：
+
+```bash
+# 在 paytech/ 下执行；Broker 端口默认 5672，可用 -Dpaytech.test.rabbitmq.port 指向同账号的另一个 Loopback Broker
+./mvnw -pl foundation/paytech-messaging -am test
+```
+
+## Internal Auth（`paytech-internal-auth`，D26）
+
+Platform 签发的短期 ES256 内部调用 Token：`iss=platform-support-service`、`sub` 调用方服务名、`aud` 目标服务名、`inst` 实例 ID、
+`purpose`、`jti`，有效期不超过 300 秒。
+
+- 入站：`internal-auth.mode = OFF | DUAL | REQUIRED`，默认 `OFF` 时不创建任何 Bean。MVC Starter 的 `InternalAuthFilter` 在 `REQUIRED`
+  下对缺少或不合法的 Token 返回 401 Problem（`code=INTERNAL_TOKEN_INVALID`），校验公钥不可用返回 503；`DUAL` 回退读取
+  `X-Caller-Service`。Controller 用 `@CallerIdentityArgument CallerIdentity` 取得调用方；`internal-auth.exempt-path-prefixes` 默认
+  `/actuator`、`/public/`。校验需要 `spring.application.name`、`paytech.instance-id` 与 `internal-auth.jwks-uri`。
+- 出站：`HttpServiceClientOptions.withInternalToken(supplier)`（`configureGroup`，目标服务名取 Group 名）或
+  `withInternalToken(supplier, targetService)`（`create`）。接口方法上的 `@InternalPurpose("...")` 覆盖默认 `GENERAL`。
+- Token 来源：宿主提供 `InternalTokenIssueApi`（`POST /platform/v1/internal-tokens`，第 02a 步由 Platform 实现）时使用
+  `PlatformInternalTokenSupplier`，按 `(target, purpose)` 缓存到过期前 60 秒；取不到时失败关闭。
+- `internal-auth.static-key.private-jwk` / `public-jwk` 只用于本地与测试，以本地密钥对替代 Platform 签发与 JWKS；prod Profile 下启动失败。
+- WebFlux：`InternalAuthWebFilter` 与 `InternalTokenExchangeFilterFunction` 供 Gateway（第 02b 步）使用。
+
+`paytech-mvc-web-starter` 与 `paytech-http-client-support` 只以 optional 依赖引用本模块；未引入本模块的服务行为不变。

@@ -18,8 +18,10 @@ import java.lang.classfile.instruction.ConstantInstruction;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -35,6 +37,10 @@ import tools.jackson.dataformat.yaml.YAMLMapper;
  * ClassFile API），因此必须返回字符串字面量或编译期常量；返回枚举 {@code getCode()} 等运行期值时报告为无法核对。
  * {@code -test} 模块中的测试 Handler 不在检查范围内。
  *
+ * <p>
+ * 同一规则也检查 MQ 领域事件 Handler（标注 {@code @DomainEventHandler} 的类，design/08 §5）：只能位于 {@code -core}，其
+ * {@code eventType} 必须登记在 Reactor 的 {@value #MESSAGING_CATALOG}，且该登记的 {@code consumers} 包含本服务。
+ *
  * @author Claude
  */
 public final class CompensationHandlerRule implements ArchitectureRule {
@@ -49,22 +55,45 @@ public final class CompensationHandlerRule implements ArchitectureRule {
      */
     public static final String CATALOG_FILE = "compensation-event-catalog.yaml";
 
-    private final String handlerInterface;
+    /**
+     * Foundation 领域事件 Handler 注解。
+     */
+    public static final String DEFAULT_DOMAIN_HANDLER_ANNOTATION =
+        "com.paytech.foundation.messaging.api.DomainEventHandler";
 
     /**
-     * 使用 Foundation 补偿 Handler 接口。
+     * Reactor 根下的 MQ 事件目录（design/08 §5）。
+     */
+    public static final String MESSAGING_CATALOG = "foundation/paytech-messaging/catalog/events.yaml";
+
+    private final String handlerInterface;
+    private final String domainHandlerAnnotation;
+
+    /**
+     * 使用 Foundation 补偿 Handler 接口与领域事件 Handler 注解。
      */
     public CompensationHandlerRule() {
-        this(DEFAULT_HANDLER_INTERFACE);
+        this(DEFAULT_HANDLER_INTERFACE, DEFAULT_DOMAIN_HANDLER_ANNOTATION);
     }
 
     /**
-     * 使用指定的 Handler 接口全名。
+     * 使用指定的 Handler 接口全名与默认领域事件 Handler 注解。
      *
      * @param handlerInterface Handler 接口全名
      */
     public CompensationHandlerRule(String handlerInterface) {
+        this(handlerInterface, DEFAULT_DOMAIN_HANDLER_ANNOTATION);
+    }
+
+    /**
+     * 使用指定的 Handler 接口与领域事件 Handler 注解全名。
+     *
+     * @param handlerInterface 补偿 Handler 接口全名
+     * @param domainHandlerAnnotation 领域事件 Handler 注解全名
+     */
+    public CompensationHandlerRule(String handlerInterface, String domainHandlerAnnotation) {
         this.handlerInterface = handlerInterface;
+        this.domainHandlerAnnotation = domainHandlerAnnotation;
     }
 
     @Override
@@ -74,11 +103,76 @@ public final class CompensationHandlerRule implements ArchitectureRule {
 
     @Override
     public String description() {
-        return "补偿 Handler 只能在 -core，eventType 必须在服务事件目录中登记";
+        return "补偿 / 领域事件 Handler 只能在 -core，eventType 必须在对应事件目录中登记";
     }
 
     @Override
     public List<RuleViolation> check(ServiceArchitectureScope scope) {
+        List<RuleViolation> violations = new ArrayList<>(checkCompensationHandlers(scope));
+        violations.addAll(checkDomainEventHandlers(scope));
+        return violations;
+    }
+
+    private List<RuleViolation> checkDomainEventHandlers(ServiceArchitectureScope scope) {
+        List<JavaClass> handlers = new ArrayList<>();
+        for (JavaClass javaClass : scope.classes()) {
+            Optional<ModuleIdentity> owner = scope.ownership().ownerOf(javaClass);
+            boolean target = owner.filter(identity -> scope.serviceName().equals(identity.service())
+                && identity.role() != ModuleRole.TEST).isPresent();
+            if (target && javaClass.tryGetAnnotationOfType(domainHandlerAnnotation).isPresent()) {
+                handlers.add(javaClass);
+            }
+        }
+        if (handlers.isEmpty()) {
+            return List.of();
+        }
+        Path catalogFile = scope.serviceDirectory().getParent().resolve(MESSAGING_CATALOG);
+        List<RuleViolation> violations = new ArrayList<>();
+        Map<String, Set<String>> consumersByEventType = readMessagingCatalog(catalogFile, violations);
+        for (JavaClass handler : handlers) {
+            ModuleRole role = scope.ownership().ownerOf(handler).map(ModuleIdentity::role).orElseThrow();
+            if (role != ModuleRole.CORE) {
+                violations.add(new RuleViolation(id(), handler.getName(),
+                    "领域事件 Handler 只能注册在 -core，当前位于 " + role + " 模块"));
+            }
+            String eventType = String.valueOf(handler.getAnnotationOfType(domainHandlerAnnotation).get("eventType")
+                .orElse(""));
+            Set<String> consumers = consumersByEventType.get(eventType);
+            if (consumers == null) {
+                violations.add(new RuleViolation(id(), handler.getName(),
+                    "领域事件 " + eventType + " 未在事件目录 " + catalogFile + " 中登记"));
+            } else if (!consumers.contains(scope.serviceName())) {
+                violations.add(new RuleViolation(id(), handler.getName(),
+                    "事件目录中 " + eventType + " 的 consumers 未包含 " + scope.serviceName()));
+            }
+        }
+        return violations;
+    }
+
+    private Map<String, Set<String>> readMessagingCatalog(Path catalogFile, List<RuleViolation> violations) {
+        if (!Files.isRegularFile(catalogFile)) {
+            violations.add(new RuleViolation(id(), catalogFile.toString(), "服务存在领域事件 Handler，但缺少 MQ 事件目录"));
+            return Map.of();
+        }
+        try {
+            JsonNode root = YAMLMapper.builder().build().readTree(Files.readString(catalogFile));
+            Map<String, Set<String>> catalog = new LinkedHashMap<>();
+            for (JsonNode event : root.path("events").values()) {
+                Set<String> consumers = new LinkedHashSet<>();
+                event.path("consumers").values().forEach(node -> consumers.add(node.asString()));
+                catalog.put(event.path("eventType").asString(), consumers);
+            }
+            return catalog;
+        } catch (IOException exception) {
+            throw new UncheckedIOException("MQ 事件目录读取失败: " + catalogFile, exception);
+        } catch (JacksonException exception) {
+            violations.add(new RuleViolation(id(), catalogFile.toString(), "MQ 事件目录不是合法 YAML: "
+                + exception.getOriginalMessage()));
+            return Map.of();
+        }
+    }
+
+    private List<RuleViolation> checkCompensationHandlers(ServiceArchitectureScope scope) {
         List<JavaClass> handlers = new ArrayList<>();
         for (JavaClass javaClass : scope.classes()) {
             Optional<ModuleIdentity> owner = scope.ownership().ownerOf(javaClass);

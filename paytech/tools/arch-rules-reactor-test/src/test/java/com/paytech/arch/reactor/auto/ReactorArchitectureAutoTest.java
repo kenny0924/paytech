@@ -5,6 +5,7 @@ import com.paytech.arch.model.MavenDependency;
 import com.paytech.arch.model.MavenModule;
 import com.paytech.arch.model.ModuleRole;
 import com.paytech.arch.pom.PomReader;
+import com.paytech.arch.rule.CompensationHandlerRule;
 import com.paytech.arch.rule.RuleViolation;
 
 import java.nio.file.Files;
@@ -55,6 +56,8 @@ class ReactorArchitectureAutoTest {
         Assertions.assertTrue(modules.stream().filter(module -> FOUNDATION_ARTIFACTS.contains(module.artifactId()))
             .allMatch(module -> module.identity().role() == ModuleRole.FOUNDATION),
             () -> "Foundation 模块归类错误: " + artifactIds);
+        Assertions.assertTrue(Files.isRegularFile(REACTOR_ROOT.resolve(CompensationHandlerRule.MESSAGING_CATALOG)),
+            "R12 读取的 MQ 事件目录不存在: " + CompensationHandlerRule.MESSAGING_CATALOG);
         List<RuleViolation> violations = ArchitectureRules.checkReactorDependencyGraph(REACTOR_ROOT);
         Assertions.assertTrue(violations.isEmpty(), () -> "Reactor 依赖图违规:\n" + describe(violations));
     }

@@ -59,7 +59,7 @@ public final class YamlEventCatalog implements EventCatalog {
             if (input == null) {
                 throw new IllegalStateException("事件目录不存在: classpath:" + CLASSPATH_LOCATION);
             }
-            return read(input);
+            return read(input, SERVICE_NAMES);
         } catch (IOException exception) {
             throw new IllegalStateException("事件目录读取失败: classpath:" + CLASSPATH_LOCATION, exception);
         }
@@ -69,10 +69,11 @@ public final class YamlEventCatalog implements EventCatalog {
      * 读取并校验一份目录。
      *
      * @param input YAML 内容
+     * @param serviceNames 允许出现在 producer / consumers 中的服务名；生产目录使用 {@link #SERVICE_NAMES}
      * @return 已校验的目录
      * @throws IllegalStateException YAML 不合法或任一登记不合法
      */
-    public static YamlEventCatalog read(InputStream input) {
+    public static YamlEventCatalog read(InputStream input, Set<String> serviceNames) {
         JsonNode root;
         try {
             root = YAMLMapper.builder().build().readTree(input);
@@ -85,7 +86,7 @@ public final class YamlEventCatalog implements EventCatalog {
         }
         Map<String, EventCatalogEntry> entries = new LinkedHashMap<>();
         for (int index = 0; index < events.size(); index++) {
-            EventCatalogEntry entry = entry(events.get(index), "events[" + index + "]");
+            EventCatalogEntry entry = entry(events.get(index), "events[" + index + "]", serviceNames);
             if (entries.putIfAbsent(entry.eventType(), entry) != null) {
                 throw new IllegalStateException("事件目录 eventType 重复: " + entry.eventType());
             }
@@ -103,7 +104,7 @@ public final class YamlEventCatalog implements EventCatalog {
         return List.copyOf(entries.values());
     }
 
-    private static EventCatalogEntry entry(JsonNode node, String path) {
+    private static EventCatalogEntry entry(JsonNode node, String path, Set<String> serviceNames) {
         if (node == null || !node.isObject()) {
             throw invalid(path, "必须是对象");
         }
@@ -116,7 +117,7 @@ public final class YamlEventCatalog implements EventCatalog {
         if (!AggregateKey.EVENT_TYPE.matcher(eventType).matches()) {
             throw invalid(path, "eventType 格式非法: " + eventType);
         }
-        String producer = service(text(node, "producer", path), path);
+        String producer = service(text(node, "producer", path), path, serviceNames);
         String aggregateType = text(node, "aggregateType", path);
         if (!AggregateKey.AGGREGATE_TYPE.matcher(aggregateType).matches()) {
             throw invalid(path, "aggregateType 格式非法: " + aggregateType);
@@ -126,7 +127,7 @@ public final class YamlEventCatalog implements EventCatalog {
             throw invalid(path, "aggregateVersionField 格式非法: " + versionField);
         }
         return new EventCatalogEntry(eventType, schemaVersion(node, path), producer, aggregateType, versionField,
-            consumers(node, producer, path), strictOrder(node, path), text(node, "payloadSchemaRef", path));
+            consumers(node, producer, path, serviceNames), strictOrder(node, path), text(node, "payloadSchemaRef", path));
     }
 
     private static int schemaVersion(JsonNode node, String path) {
@@ -145,7 +146,7 @@ public final class YamlEventCatalog implements EventCatalog {
         return value.booleanValue();
     }
 
-    private static List<String> consumers(JsonNode node, String producer, String path) {
+    private static List<String> consumers(JsonNode node, String producer, String path, Set<String> serviceNames) {
         JsonNode value = node.get("consumers");
         if (value == null || !value.isArray()) {
             throw invalid(path, "consumers 必须是列表");
@@ -156,7 +157,7 @@ public final class YamlEventCatalog implements EventCatalog {
             if (!item.isString()) {
                 throw invalid(path, "consumers 只能包含服务名");
             }
-            String consumer = service(item.asString(), path);
+            String consumer = service(item.asString(), path, serviceNames);
             if (consumer.equals(producer) || !seen.add(consumer)) {
                 throw invalid(path, "consumers 重复或包含 producer: " + consumer);
             }
@@ -165,8 +166,8 @@ public final class YamlEventCatalog implements EventCatalog {
         return consumers;
     }
 
-    private static String service(String name, String path) {
-        if (!SERVICE_NAMES.contains(name)) {
+    private static String service(String name, String path, Set<String> serviceNames) {
+        if (!serviceNames.contains(name)) {
             throw invalid(path, "不是 01 §3 的服务名: " + name);
         }
         return name;

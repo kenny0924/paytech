@@ -36,6 +36,8 @@ public final class PartitionedListenerContainerFactory {
     public SimpleMessageListenerContainer create(String queueName, ChannelAwareMessageListener listener) {
         SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(connectionFactory);
         container.setQueueNames(queueName);
+        // 容器不是 Spring Bean，显式命名使消费线程带分区队列名（日志与线程转储可辨认）。
+        container.setBeanName(queueName);
         container.setConcurrentConsumers(1);
         container.setMaxConcurrentConsumers(1);
         container.setPrefetchCount(1);
