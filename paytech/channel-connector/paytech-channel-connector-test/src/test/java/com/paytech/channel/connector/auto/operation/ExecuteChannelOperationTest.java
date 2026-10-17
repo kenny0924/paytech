@@ -148,10 +148,10 @@ class ExecuteChannelOperationTest extends ChannelConnectorMockTestBase {
             () -> assertNull(unknownStatus.getFailureCode()), () -> assertEquals(2, platform.calls().size()));
     }
 
-    /** Platform 合同保证未发出渠道请求的 Problem：NOT_SENT，原因代码为 Problem code。 */
+    /** Platform 合同保证未发出渠道请求的 Problem（按 code 判定，与状态码无关，包括 500 配置无效）：NOT_SENT，原因代码为 Problem code。 */
     @ParameterizedTest
     @CsvSource({"404, STANDARD_API_NOT_FOUND", "404, INTEGRATION_IMPLEMENTATION_NOT_FOUND",
-        "409, INTEGRATION_CONFIG_INVALID", "503, INTEGRATION_INITIALIZATION_FAILED", "429, INTEGRATION_BUDGET_EXHAUSTED",
+        "500, INTEGRATION_CONFIG_INVALID", "503, INTEGRATION_INITIALIZATION_FAILED", "503, INTEGRATION_BUDGET_EXHAUSTED",
         "422, VALIDATION_ERROR"})
     void test_problemMeansNotSent(int status, String code) {
         platform.fail(MockHttpFault.json(status, Map.of("type", "about:blank", "title", "Platform", "detail", "未发出",

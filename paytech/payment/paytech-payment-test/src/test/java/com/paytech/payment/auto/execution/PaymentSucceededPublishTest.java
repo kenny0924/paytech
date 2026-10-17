@@ -4,10 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.LinkedHashMap;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import com.paytech.payment.api.execution.PaymentIntentApi;
@@ -17,7 +15,6 @@ import com.paytech.payment.execution.core.enums.RiskResult;
 import com.paytech.payment.execution.service.handler.PaymentSucceededHandler;
 import com.paytech.payment.test.base.AbstractPayCardTest;
 import com.paytech.payment.test.mocker.ChannelConnectorMocker.Candidate;
-import com.paytech.payment.test.probe.PaymentResultProbe;
 
 /**
  * PaymentSucceeded 双写（design/08 §3、D34）：从 pay 的真实 HTTP 入口收款成功，补偿任务提交后经本机 RabbitMQ 同时发布到
@@ -30,26 +27,16 @@ import com.paytech.payment.test.probe.PaymentResultProbe;
  * @see PaymentIntentApi#pay(String, String, com.paytech.payment.api.execution.request.PayRequestBody)
  */
 class PaymentSucceededPublishTest extends AbstractPayCardTest {
-    @Autowired
-    private PaymentResultProbe results;
-
     @Value("${payment.event.instance-id}")
     private String instanceId;
 
     private Candidate candidate;
 
-    /** 本类公共：MID 候选、风控通过与两个临时观察队列。 */
+    /** 本类公共：MID 候选与风控通过；两个临时观察队列由全局 BeforeEach 绑定。 */
     @BeforeEach
     void setUpClassMocks() {
         candidate = channel.candidate(ENTITY_NO, CURRENCY);
         risk.respond(RiskResult.ALLOW, AuthenticationRequirement.NOT_REQUIRED);
-        results.bind();
-    }
-
-    /** 删除本例临时队列。 */
-    @AfterEach
-    void tearDownClassMocks() {
-        results.unbind();
     }
 
     /** 成功：旧 Topic 仍收到一条现有报文，payment.events 收到一条 v1 新信封；两者 Payload 相同、Hash 正确，补偿任务在确认后删除。 */

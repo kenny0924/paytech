@@ -69,7 +69,7 @@ Windows 使用 `paytech/mvnw.cmd` 并设置对应 `JAVA_HOME`。测试实现及�
 
 ActionExecutionService 通过 ActionFlowFactory 选择 CARD:PAY；ActionFlow 调用 Actor，统一保存结果并推进下一步。Actor 异常转为 UNKNOWN，保存成功后 pay 返回 202 / PROCESSING。动作定义和事务顺序见 [Action Flow 修订](../../requirements/20260913/payment-Execution设计/card-pay-action-flow-amendment.md)。除收款成功登记 PaymentSucceeded 发布任务外，动作执行不登记补偿事件；创建和后继切换使用 active_action_id 与版本条件更新，等待或未知结果保留原执行位。回调和恢复入口仍待后续接入。旧动作名称切换见[迁移约束](../../requirements/20260913/payment-Execution设计/db/card-pay-action-migration.md)。
 
-管理端口 19103 的 `/payment/actuator/health` 及其 `/liveness`、`/readiness` 子路径提供进程与依赖健康信息，不能证明支付链路已经完成验收。统一 Request ID、Problem 错误体与元信息访问日志由 Foundation 提供；请求 Body、Token、查询参数和交互地址不记录到普通日志。
+管理端口 19103 的 `/actuator/health` 及其 `/liveness`、`/readiness` 子路径提供进程与依赖健康信息（独立管理端口不带 `/payment` Context Path），不能证明支付链路已经完成验收。统一 Request ID、Problem 错误体与元信息访问日志由 Foundation 提供；请求 Body、Token、查询参数和交互地址不记录到普通日志。
 
 ## 渠道配置与执行
 

@@ -19,7 +19,6 @@ import com.paytech.payment.PaymentApplication;
 import com.paytech.payment.test.configuration.PaymentTestConfiguration;
 import com.paytech.payment.test.mocker.ChannelConnectorMocker;
 import com.paytech.payment.test.mocker.PaymentDataMocker;
-import com.paytech.payment.test.mocker.PlatformMocker;
 import com.paytech.payment.test.mocker.RiskMocker;
 import com.paytech.payment.test.mocker.VaultMocker;
 import com.paytech.payment.test.probe.PaymentResultProbe;
@@ -51,10 +50,10 @@ public abstract class PaymentMockTestBase extends TestBase {
     protected MockHttpServer mockHttpServer;
 
     @Autowired
-    protected PlatformMocker platform;
+    protected RiskMocker risk;
 
     @Autowired
-    protected RiskMocker risk;
+    protected PaymentResultProbe results;
 
     @Autowired
     private CompensationEventDispatcher compensationDispatcher;
@@ -66,13 +65,18 @@ public abstract class PaymentMockTestBase extends TestBase {
     /** 前例补偿发布是否已经停止；未停止时禁止清理与复用环境。 */
     private static boolean asynchronousWorkStopped = true;
 
-    /** 全局初始化只核对空基线，不在前置阶段删除数据。 */
+    /**
+     * 全局初始化只核对空基线，不在前置阶段删除数据。
+     * <li>为本例绑定两个临时观察队列：PaymentSucceeded 的发布要求 mandatory 路由到至少一个队列，第 08 步前 payment.events 没有订阅方，
+     * 每例自带队列使任一收款成功的用例都不依赖共享 Broker 上其他服务的队列。</li>
+     */
     @BeforeEach
     protected final void setUpGlobalMocks() {
         Assertions.assertTrue(asynchronousWorkStopped, "前例异步处理未结束，禁止复用环境");
         data.assertEmpty();
         vault.assertEmpty();
         channel.assertEmpty();
+        results.bind();
     }
 
     /** 所有 HTTP 请求与补偿发布结束并检查意外调用后，父类继续执行全部 Clear。 */
@@ -87,9 +91,14 @@ public abstract class PaymentMockTestBase extends TestBase {
             asynchronousWorkStopped = false;
             throw failure;
         }
-        assertAll(vault::assertNoUnexpectedCalls, channel::assertNoUnexpectedCalls, risk::assertNoUnexpectedCalls,
-            mockHttpServer::assertNoUnexpectedRequests,
-            transactions::assertOutsideTransactions);
+        try {
+            assertAll(vault::assertNoUnexpectedCalls, channel::assertNoUnexpectedCalls, risk::assertNoUnexpectedCalls,
+                mockHttpServer::assertNoUnexpectedRequests,
+                transactions::assertOutsideTransactions);
+        } finally {
+            // 补偿发布结束后才删除观察队列，避免异步发布因无路由被退回。
+            results.unbind();
+        }
     }
 
     /** 异步无法停止时保留现场，防止公共清理之后仍被后台发布回写。 */
