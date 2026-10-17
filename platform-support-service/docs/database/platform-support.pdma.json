@@ -26037,6 +26037,24 @@
           "id": "2EEC21B6-9695-50BB-8931-56053B318C2C"
         },
         {
+          "defKey": "idempotency_mode",
+          "defName": "请求幂等模式",
+          "comment": "请求幂等模式的稳定业务代码。允许值：NONE、REQUIRED。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "'NONE'",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "53FB82BF-2606-57AA-8F44-FE9F785B9462"
+        },
+        {
           "defKey": "body_limit_bytes",
           "defName": "请求体字节上限",
           "comment": "请求体字节上限的长整数值。",
@@ -26198,24 +26216,6 @@
           "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
           "id": "3A4B5CFA-6722-5E57-9734-970153C26B12"
         }
-        {
-          "defKey": "idempotency_mode",
-          "defName": "请求幂等模式",
-          "comment": "请求幂等模式的稳定业务代码。允许值：NONE、REQUIRED。",
-          "type": "VARCHAR",
-          "len": 64,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "'NONE'",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
-          "domain": "",
-          "id": "53FB82BF-2606-57AA-8F44-FE9F785B9462"
-        },
       ],
       "correlations": [
         {
