@@ -860,6 +860,12 @@ export JAVA_HOME=$(/usr/libexec/java_home -v 25)
   `strictOrder` 在启动时与目录核对，ArchUnit R12 在构建期做同样检查。
 - 宿主连接必须配置 `spring.rabbitmq.publisher-confirm-type=correlated` 与 `spring.rabbitmq.publisher-returns=true`；Broker 必须启用
   `rabbitmq_consistent_hash_exchange`（`local-environment/rabbitmq/enabled_plugins`），缺少时启动失败并提示。
+- 消费方 `auto` 测试的分区队列基线（重构第 12x 步）：分区队列是持久 Quorum 队列，其他模块的测试（例如 payment 真实发布的
+  `PaymentSucceeded`）会在其中留下消息，监听容器一启动就会消费。消费方 `-test` 模块以 test 作用域引入
+  `paytech-messaging` 的 `test-jar`（只含 `com.paytech.foundation.messaging.testkit`），并在测试组合根
+  `@Import(PartitionQueueBaselineConfiguration.class)`：`PartitionQueueBaseline`（SmartLifecycle，phase 为
+  `DEFAULT_PHASE - 1`，早于分区监听容器）按宿主 Handler 注册表与 `messaging.consumers.<producer>.partitions` 声明拓扑后清空本服务
+  `p0..pN-1` 与 DLQ，声明或清空失败时上下文启动失败。测试基类的每例 purge 仍保留，用于同模块用例之间的隔离。
 
 自动测试使用本地 MySQL `paytech_foundation_test` 中 messaging 自有的三张表与本地 RabbitMQ；Broker 账号经
 `paytech.local-environment.dir` 读取 `.env.local`，拓扑名带运行前缀并在测试结束后删除：
