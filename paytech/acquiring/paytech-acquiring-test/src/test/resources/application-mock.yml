@@ -30,6 +30,8 @@ spring:
           instances:
             payment-service:
               - uri: "${acquiring.test.external.base-url}"
+            card-service:
+              - uri: "${acquiring.test.external.base-url}"
             consumer-service:
               - uri: "${acquiring.test.external.base-url}"
             risk-decision-service:
@@ -48,6 +50,11 @@ spring:
     serviceclient:
       payment-service:
         base-url: lb://payment-service/payment
+        connect-timeout: 2s
+        read-timeout: 5s
+        redirects: dont-follow
+      card-service:
+        base-url: lb://card-service
         connect-timeout: 2s
         read-timeout: 5s
         redirects: dont-follow

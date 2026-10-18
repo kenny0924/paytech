@@ -16,8 +16,8 @@ spring:
       client:
         simple:
           instances:
-            # 同一独立 Mock HTTP 服务承载 Vault（卡 DEK）、channel-connector 合同与 Risk 统一评估合同。
-            vault-service:
+            # 同一独立 Mock HTTP 服务承载 card（工具创建、读卡票据与 Platform 凭票据读卡）、channel-connector 合同与 Risk 统一评估合同。
+            card-service:
               - uri: "${test.mock-http.base-url}"
             channel-connector-service:
               - uri: "${test.mock-http.base-url}"
@@ -138,26 +138,18 @@ payment:
   execution:
     # 必须显式配置有效窗口；零值仅禁用首次申请，不影响原工具重放。
     instrument-preparation-window: PT30M
-  card:
-    # 仅供自动化测试的合成指纹密钥（Base64 的 32 字节），与任何环境都不共用。
-    fingerprint-key: "cGF5bWVudC1hdXRvLXRlc3QtZmluZ2VycHJpbnQta2V5"
   outbound:
     channel-connector-context-path: ""
     channel-candidate-read-timeout: 5s
     channel-operation-read-timeout: 30s
+    card-context-path: ""
+    card-read-timeout: 5s
     risk-context-path: ""
     # 生产默认 1s；测试缩短以便用 Mock 延迟验证读超时后重试一次。
     risk-read-timeout: 500ms
   identifier:
     region-id: 31
     worker-id: 30
-
-vault:
-  client:
-    caller-service: payment-service
-    service-id: vault-service
-    connect-timeout: 2s
-    read-timeout: 5s
 
 management:
   server:

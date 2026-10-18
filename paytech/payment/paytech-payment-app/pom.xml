@@ -15,17 +15,17 @@
         RabbitMQ publication of PaymentSucceeded.</description>
     <dependencies>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-payment-core</artifactId></dependency>
-        <dependency><groupId>com.paytech</groupId><artifactId>paytech-payment-card</artifactId></dependency>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-payment-api</artifactId></dependency>
-        <!-- 出站：channel-connector 候选与渠道操作（D06）、Risk 统一评估（requirements/20261015/payment-接入Risk统一评估）。 -->
+        <!-- 出站：channel-connector 候选与渠道操作（D06）、card 工具创建与读卡票据（design/05）、Risk 统一评估（requirements/20261015/payment-接入Risk统一评估）。 -->
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-channel-connector-api</artifactId></dependency>
+        <dependency><groupId>com.paytech</groupId><artifactId>paytech-card-api</artifactId></dependency>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-risk-decision-api</artifactId></dependency>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-http-client-support</artifactId></dependency>
         <!-- 内部调用身份（D26）：默认 OFF；入站校验由 MVC Starter 装配，出站 Token 见 InternalTokenClientOptions。 -->
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-internal-auth</artifactId></dependency>
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-restclient</artifactId></dependency>
         <dependency><groupId>org.springframework.cloud</groupId><artifactId>spring-cloud-starter-loadbalancer</artifactId></dependency>
-        <!-- 注册到 Nacos 并经 Nacos 发现内部服务（Platform 读卡回调需要发现 Payment）。 -->
+        <!-- 注册到 Nacos 并经 Nacos 发现内部服务。 -->
         <dependency><groupId>com.alibaba.cloud</groupId><artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId></dependency>
         <dependency>
             <groupId>com.alibaba.cloud</groupId>
@@ -68,18 +68,6 @@
         <plugins>
             <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId>
                 <configuration><annotationProcessorPaths><path><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><version>${lombok.version}</version></path></annotationProcessorPaths></configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-enforcer-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>enforce-payment-card-consumers</id>
-                        <configuration>
-                            <skip>true</skip>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>

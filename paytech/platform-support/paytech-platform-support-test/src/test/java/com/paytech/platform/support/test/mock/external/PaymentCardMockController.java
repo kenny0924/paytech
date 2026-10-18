@@ -6,14 +6,14 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import com.paytech.payment.api.card.ChannelCardMaterialApi;
-import com.paytech.payment.api.card.request.RevealChannelCardMaterialRequestBody;
-import com.paytech.payment.api.card.response.RevealChannelCardMaterialResponseBody;
+import com.paytech.card.api.material.ChannelCardMaterialApi;
+import com.paytech.card.api.material.request.RevealChannelCardMaterialRequestBody;
+import com.paytech.card.api.material.response.RevealChannelCardMaterialResponseBody;
 import com.paytech.platform.support.test.mocker.external.PaymentCardMocker;
 
 import lombok.RequiredArgsConstructor;
 
-/** 独立 Mock HTTP 服务实现正式 Payment 读卡 Wire，委托 PaymentCardMocker；不装入 Platform 路由；另记录出站内部 Token 头。 */
+/** 独立 Mock HTTP 服务以 card-service 实现正式读卡 Wire，委托 PaymentCardMocker；不装入 Platform 路由；另记录出站内部 Token 头。 */
 @RestController
 @TestComponent
 @RequiredArgsConstructor

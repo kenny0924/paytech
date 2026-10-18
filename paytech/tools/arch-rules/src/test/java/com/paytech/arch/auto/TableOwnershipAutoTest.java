@@ -22,7 +22,7 @@ class TableOwnershipAutoTest {
     @Test
     void test_normalFlow() {
         // design/03 §4.2：17 个目标库共 265 张物理表；另加保留服务 platform-support 自身 Schema 的 56 张表。
-        Assertions.assertEquals(265 + 56, ownership.physicalTableCount());
+        Assertions.assertEquals(265 + 56 + 1, ownership.physicalTableCount(), "design 03 + Platform 保留表 + 第 12 步 t_card_material_ticket");
         Assertions.assertEquals(57, ownership.databasesOf("platform-support").get("mor_platform").size());
         Assertions.assertEquals(29, ownership.databasesOf("ledger").get("mor_ledger").size());
         Assertions.assertEquals(Set.of("mor_platform"), ownership.databasesOf("platform-support").keySet());
@@ -53,22 +53,19 @@ class TableOwnershipAutoTest {
         Assertions.assertTrue(ownership.services().stream().filter(service -> !"platform-support".equals(service))
             .noneMatch(service -> ownership.allowedTables(service).contains("t_command_idempotency")));
         Assertions.assertTrue(ownership.allowedTables("platform-support").contains("t_command_idempotency"));
-        Assertions.assertEquals(List.of("t_payment_card", "t_payment_card_credential", "t_payment_card_instrument",
-            "t_payment_stored_card"), ownership.cardTables());
+        Assertions.assertEquals(List.of("t_card_material_ticket", "t_payment_card", "t_payment_card_credential",
+            "t_payment_card_instrument", "t_payment_stored_card"), ownership.cardTables());
     }
 
-    /** 第 12 步前卡表暂居 mor_payment：计入 payment 的 R4 白名单与 paytech-payment-card 的 R11 豁免，不重复计数。 */
+    /** 第 12 步起卡表只在 mor_card：card 的 R4 白名单含卡表与读卡票据表，payment 与 channel-connector 不含。 */
     @Test
-    void test_transitionalPlacement() {
+    void test_cardTablesOwnedByCard() {
         List<String> cardTables = List.of("t_payment_card", "t_payment_card_credential", "t_payment_card_instrument",
-            "t_payment_stored_card");
-        Assertions.assertTrue(ownership.allowedTables("payment").containsAll(cardTables));
-        Assertions.assertFalse(ownership.databasesOf("payment").get("mor_payment").contains("t_payment_card"));
-        Assertions.assertEquals(Set.of("paytech-payment-card"), ownership.transitionalCardModules());
-        var placement = ownership.transitionalPlacements().getFirst();
-        Assertions.assertEquals(List.of("payment", "mor_payment", "card", 12),
-            List.of(placement.host(), placement.database(), placement.owner(), placement.untilStep()));
-        Assertions.assertEquals(Set.copyOf(cardTables), placement.tables());
+            "t_payment_stored_card", "t_card_material_ticket");
+        Assertions.assertTrue(ownership.databasesOf("card").get("mor_card").containsAll(cardTables));
+        Assertions.assertTrue(ownership.allowedTables("card").containsAll(List.of("t_consumed_event",
+            "t_consumed_aggregate_version", "t_compensation_event")));
+        Assertions.assertFalse(ownership.allowedTables("payment").contains("t_payment_card"));
         Assertions.assertFalse(ownership.allowedTables("channel-connector").contains("t_payment_card"));
     }
 

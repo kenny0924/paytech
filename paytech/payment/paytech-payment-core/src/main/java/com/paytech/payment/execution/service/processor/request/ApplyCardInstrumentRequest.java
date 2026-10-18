@@ -1,6 +1,6 @@
 package com.paytech.payment.execution.service.processor.request;
 
-import com.paytech.payment.card.domain.CardInstrumentContext.CardInput;
+import com.paytech.payment.execution.domain.CardInput;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -21,7 +21,7 @@ public class ApplyCardInstrumentRequest {
     /** 精确支付方式代码 */
     private String paymentMethodCode;
 
-    /** Card 拥有的临时卡输入，不进入 Execution Context 或仓储；用已存卡时只含 CVV */
+    /** 临时卡输入，只转交 card-service，不进入 Execution Context 或仓储；用已存卡时只含 CVV */
     private CardInput card;
 
     /** 用已存卡时的对外已存卡 Token；手输卡为空 */

@@ -20,8 +20,8 @@ spring:
       imperative:
         factory: http-components
     serviceclient:
-      payment-service:
-        base-url: lb://payment-service/payment
+      card-service:
+        base-url: lb://card-service
         connect-timeout: 2s
         read-timeout: 5s
         redirects: dont-follow

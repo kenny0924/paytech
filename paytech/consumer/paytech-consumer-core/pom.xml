@@ -23,7 +23,7 @@
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
-            <artifactId>paytech-payment-api</artifactId>
+            <artifactId>paytech-card-api</artifactId>
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>

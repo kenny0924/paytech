@@ -115,3 +115,7 @@ create_v2_finance_database mor_consumer consumer_app MOR_CONSUMER_DB_PASSWORD "S
 # mor_dispute only owns Schema in step 06 and is not created.
 create_v2_finance_database mor_risk_decision risk_decision_app MOR_RISK_DECISION_DB_PASSWORD "SELECT, INSERT, UPDATE, DELETE" mor_risk_decision
 create_v2_finance_database mor_compliance compliance_app MOR_COMPLIANCE_DB_PASSWORD "SELECT, INSERT, UPDATE, DELETE" mor_compliance
+
+# V2 card service (refactor step 12, design/05, design/10 §5.1): same optional rule. The four card tables leave mor_payment
+# for mor_card; an existing mor_payment keeps its card tables until the user drops them (step 12 report).
+create_v2_finance_database mor_card card_app MOR_CARD_DB_PASSWORD "SELECT, INSERT, UPDATE, DELETE" mor_card

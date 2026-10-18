@@ -21,7 +21,7 @@ import com.paytech.payment.test.configuration.PaymentTestConfiguration;
 import com.paytech.payment.test.mocker.ChannelConnectorMocker;
 import com.paytech.payment.test.mocker.PaymentDataMocker;
 import com.paytech.payment.test.mocker.RiskMocker;
-import com.paytech.payment.test.mocker.VaultMocker;
+import com.paytech.payment.test.mocker.CardApiMocker;
 import com.paytech.payment.test.probe.PaymentResultProbe;
 
 import static org.awaitility.Awaitility.await;
@@ -29,7 +29,8 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 
 /**
  * 共用正式 Payment 应用；每例验证 mor_payment 空基线，等待异步补偿任务结束后由 Foundation 在最后统一清理。
- * <li>MockHttpServer 以服务发现名承载 channel-connector、Risk 与 Vault；channel-connector 的 DTO 由 {@link ChannelConnectorMocker} 配置。</li>
+ * <li>MockHttpServer 以服务发现名承载 channel-connector、card 与 Risk；channel-connector 的 DTO 由 {@link ChannelConnectorMocker}、
+ * card-api 的 DTO 由 {@link CardApiMocker} 配置（第 12 步起 Payment 不再访问 Vault 与卡表）。</li>
  */
 @SpringBootTest(classes = PaymentApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("mock")
@@ -42,7 +43,7 @@ public abstract class PaymentMockTestBase extends TestBase {
     protected ChannelConnectorMocker channel;
 
     @Autowired
-    protected VaultMocker vault;
+    protected CardApiMocker cardApi;
 
     @Autowired
     protected com.paytech.payment.test.mocker.VaultTransactionObserver transactions;
@@ -78,7 +79,7 @@ public abstract class PaymentMockTestBase extends TestBase {
     protected final void setUpGlobalMocks() {
         Assertions.assertTrue(asynchronousWorkStopped, "前例异步处理未结束，禁止复用环境");
         data.assertEmpty();
-        vault.assertEmpty();
+        cardApi.assertEmpty();
         channel.assertEmpty();
         results.bind();
     }
@@ -98,7 +99,7 @@ public abstract class PaymentMockTestBase extends TestBase {
             throw failure;
         }
         try {
-            assertAll(vault::assertNoUnexpectedCalls, channel::assertNoUnexpectedCalls, risk::assertNoUnexpectedCalls,
+            assertAll(cardApi::assertNoUnexpectedCalls, channel::assertNoUnexpectedCalls, risk::assertNoUnexpectedCalls,
                 mockHttpServer::assertNoUnexpectedRequests,
                 transactions::assertOutsideTransactions);
         } finally {

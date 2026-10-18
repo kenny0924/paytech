@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * 标准 API PAY 的输入（PayerMax 卡直付对接技术方案第 4.1 节，草案合同）：不含卡值与账号材料，卡只以支付工具 Token 传递。
+ * 标准 API PAY 的输入（PayerMax 卡直付对接技术方案第 4.1 节，草案合同）：不含卡值与账号材料，卡只以 card 签发的一次性读卡票据传递（design/05 §2.1）。
  * <li>PAY 输入的字段名只在本类定义；channelAccount 由 Channel 按冻结账号补齐，不在此处。</li>
  * <li>回跳地址、付款人引用与网络信息只用于本次渠道请求，不持久化。</li>
  */
@@ -17,7 +17,7 @@ public class PayInput {
     /** 卡对象 */
     public static final String CARD = "card";
 
-    /** 卡对象中的支付工具 Token */
+    /** 卡对象中的卡字段句柄（一次性读卡票据） */
     public static final String CARD_TOKEN = "token";
 
     /** 支付对象 */
@@ -50,7 +50,7 @@ public class PayInput {
     /** 消费者浏览器 User-Agent */
     public static final String USER_AGENT = "userAgent";
 
-    /** 支付工具 Token */
+    /** 卡字段句柄：card 签发的一次性读卡票据 */
     private String cardToken;
 
     /** 支付尝试 ID */

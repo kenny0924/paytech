@@ -12,8 +12,8 @@
     <artifactId>paytech-payment</artifactId>
     <packaging>pom</packaging>
     <name>PayTech Payment</name>
-    <description>Payment service aggregator: intent / attempt / action execution, routing, card domain (until step 12) and
-        PaymentSucceeded publication.</description>
+    <description>Payment service aggregator: intent / attempt / action execution, routing and PaymentSucceeded publication;
+        the card domain is card-service (paytech-card-api, design/05).</description>
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -28,15 +28,10 @@
             </dependency>
             <dependency>
                 <groupId>com.paytech</groupId>
-                <artifactId>paytech-payment-card</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.paytech</groupId>
                 <artifactId>paytech-payment-app</artifactId>
                 <version>${project.version}</version>
             </dependency>
-            <!-- 服务间合同：channel-connector（本步拆出）、Reactor 内的 Vault Java Client；Risk 统一评估合同为 paytech-risk-decision-api（第 06 步）。 -->
+            <!-- 服务间合同：channel-connector（第 05 步）、card（第 12 步，工具创建与读卡票据）；Risk 统一评估合同为 paytech-risk-decision-api（第 06 步）。 -->
             <dependency>
                 <groupId>com.paytech</groupId>
                 <artifactId>paytech-channel-connector-api</artifactId>
@@ -44,7 +39,7 @@
             </dependency>
             <dependency>
                 <groupId>com.paytech</groupId>
-                <artifactId>paytech-vault-client</artifactId>
+                <artifactId>paytech-card-api</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -90,27 +85,6 @@
                             </rules>
                         </configuration>
                     </execution>
-                    <execution>
-                        <!--
-                          R11 过渡（第 12 步前卡域仍在 payment 进程与库内）：只有 paytech-payment-core 与 paytech-payment-app 可以直接依赖
-                          paytech-payment-card；这两个模块以 skip 关闭本执行。只检查直接依赖：test 经 app 传递获得卡域类不在禁止之列。
-                        -->
-                        <id>enforce-payment-card-consumers</id>
-                        <goals>
-                            <goal>enforce</goal>
-                        </goals>
-                        <configuration>
-                            <rules>
-                                <bannedDependencies>
-                                    <searchTransitive>false</searchTransitive>
-                                    <excludes>
-                                        <exclude>com.paytech:paytech-payment-card</exclude>
-                                    </excludes>
-                                    <message>Only paytech-payment-core and paytech-payment-app may depend on paytech-payment-card (R11 transition until step 12).</message>
-                                </bannedDependencies>
-                            </rules>
-                        </configuration>
-                    </execution>
                 </executions>
             </plugin>
             <plugin>
@@ -129,7 +103,6 @@
     </build>
     <modules>
         <module>paytech-payment-api</module>
-        <module>paytech-payment-card</module>
         <module>paytech-payment-core</module>
         <module>paytech-payment-app</module>
         <module>paytech-payment-test</module>

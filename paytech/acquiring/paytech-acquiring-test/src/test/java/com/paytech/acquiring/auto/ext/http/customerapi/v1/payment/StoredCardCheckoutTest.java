@@ -31,7 +31,7 @@ import com.paytech.acquiring.test.mocker.local.CheckoutPaymentDataMocker;
 import com.paytech.consumer.api.enums.CardSavingIneligibleReason;
 import com.paytech.foundation.common.http.ApiHeaderNames;
 import com.paytech.foundation.testsupport.api.MockHttpFault;
-import com.paytech.payment.api.card.response.StoredCardListResponseBody;
+import com.paytech.card.api.storedcard.response.StoredCardListResponseBody;
 import com.paytech.payment.api.instrument.request.ApplyCardInstrumentRequestBody;
 
 import tools.jackson.databind.JsonNode;

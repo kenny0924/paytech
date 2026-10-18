@@ -42,7 +42,7 @@
         <module>consumer</module>
         <module>payment</module>
         <module>channel-connector</module>
-        <!-- <module>card</module> -->
+        <module>card</module>
         <module>risk-decision</module>
         <module>compliance</module>
         <module>billing</module>

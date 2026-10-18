@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.paytech</groupId>
+        <artifactId>paytech-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../build/paytech-parent/pom.xml</relativePath>
+    </parent>
+    <artifactId>paytech-card</artifactId>
+    <packaging>pom</packaging>
+    <name>PayTech Card</name>
+    <description>Card service aggregator (design/05, D10): card / credential / instrument / stored card storage in mor_card,
+        Vault-held DEKs, one-time CVV, one-time card material tickets and PaymentSucceeded consumption.</description>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>paytech-card-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>paytech-card-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>paytech-card-app</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <!-- Reactor 内的 Vault Java Client：每张卡的 DEK 由 Vault 托管（Caller card-service，数据类型 PAYMENT_CARD_DEK）。 -->
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>paytech-vault-client</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <!-- 复制 Payment 禁令（09 §1.4），并禁止依赖其他服务的 core / app（D09）。 -->
+                        <id>enforce-card-dependency-boundaries</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <bannedDependencies>
+                                    <searchTransitive>true</searchTransitive>
+                                    <excludes>
+                                        <exclude>org.flywaydb:*</exclude>
+                                        <exclude>org.liquibase:*</exclude>
+                                        <exclude>org.mockito:*</exclude>
+                                        <exclude>org.testcontainers:*</exclude>
+                                        <exclude>org.apache.dubbo:*</exclude>
+                                        <exclude>io.github.openfeign:*</exclude>
+                                        <exclude>org.springframework.cloud:spring-cloud-starter-openfeign</exclude>
+                                        <exclude>com.paytech:*-core</exclude>
+                                        <exclude>com.paytech:*-app</exclude>
+                                    </excludes>
+                                    <includes>
+                                        <include>com.paytech:paytech-common-core</include>
+                                        <include>com.paytech:paytech-card-core</include>
+                                        <include>com.paytech:paytech-card-app</include>
+                                    </includes>
+                                </bannedDependencies>
+                            </rules>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <!--
+                          R11（PCI，D10）：卡表与 com.paytech.card.core.crypto 只在 card-core 与 card-app 内；Maven 层面只有 card-app
+                          可以直接依赖 card-core（card-app 以 skip 关闭本执行）。card-test 经 card-app 传递获得卡域类，源码与 Mapper 是否触碰
+                          卡表或加密包由 ArchitectureAutoTest 的 R11 检查。只检查直接依赖。
+                        -->
+                        <id>enforce-card-core-consumers</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <bannedDependencies>
+                                    <searchTransitive>false</searchTransitive>
+                                    <excludes>
+                                        <exclude>com.paytech:paytech-card-core</exclude>
+                                    </excludes>
+                                    <message>Only paytech-card-app may depend on paytech-card-core (R11, D10).</message>
+                                </bannedDependencies>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>prepare-coverage</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+    <modules>
+        <module>paytech-card-api</module>
+        <module>paytech-card-core</module>
+        <module>paytech-card-app</module>
+        <module>paytech-card-test</module>
+    </modules>
+</project>

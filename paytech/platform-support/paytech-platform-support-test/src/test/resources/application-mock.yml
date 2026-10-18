@@ -54,6 +54,8 @@ spring:
               - uri: "${test.mock-http.base-url}"
             payment-service:
               - uri: "${test.mock-http.base-url}"
+            card-service:
+              - uri: "${test.mock-http.base-url}"
     nacos:
       discovery:
         enabled: false
@@ -288,7 +290,7 @@ ps:
       lock-lease-time: 30s # 资源锁租约；版本 CAS 仍为最终保护。
     execution:
       allowed-schemes: [https, http] # 只在本机 mock 允许 http，执行测试的出站地址指向本机 Mock 渠道。
-      payment-context-path: "" # 测试 Mock HTTP 服务承载 Payment 读卡合同，无 Payment 的 /payment 前缀。
+      card-context-path: "" # 测试 Mock HTTP 服务以 card-service 承载读卡合同；card 本身也无 context path。
 # 保留正式 application.yml 的旧键清单；当前 Properties 消费 ps.access-control。
 api-scope:
   management:
@@ -369,7 +371,7 @@ internal-token:
     # 调用方白名单：签发测试调用方；Webhook / Notification 测试调用方为访问 Platform 自身申请 Token；Platform 自身出站。
     callers:
       issuer-test:
-        targets: [payment-service, client-master-service]
+        targets: [payment-service, client-master-service, card-service]
         purposes: [GENERAL, CARD_READ]
       webhook-test:
         targets: [platform-support-service]
@@ -380,9 +382,14 @@ internal-token:
       notification-test:
         targets: [platform-support-service]
         purposes: [GENERAL]
-      # Platform 自身出站：Payment 读卡、CCT 文件，以及 Vault（02d 起 Vault Client 在存在 Supplier 时附加 Token，未授权则失败关闭）。
+      # Platform 自身出站：card 凭票据读卡（第 12 步自 Payment 改为 card-service）、CCT 文件，以及 Vault（02d 起 Vault Client 在存在 Supplier
+      # 时附加 Token，未授权则失败关闭）。payment-service 保留给既有 Platform → Payment 目标登记。
       platform-support-service:
-        targets: [payment-service, client-master-service, vault-service]
+        targets: [payment-service, client-master-service, vault-service, card-service]
+        purposes: [GENERAL]
+      # Payment 出站（第 12 步）：卡工具创建与一次性读卡票据签发访问 card-service（design/05 §4）。
+      payment-service:
+        targets: [card-service]
         purposes: [GENERAL]
 
 # 本地认证适配器的合成测试密钥（RSA 2048 PKCS#8 与 32 字节 HMAC，Base64）；只用于 Loopback Mock，不对应任何真实环境。

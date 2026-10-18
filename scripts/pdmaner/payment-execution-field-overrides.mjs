@@ -177,6 +177,27 @@ export const EXECUTION_FIELD_OVERRIDES = Object.freeze({
       "collation": "ascii_bin"
     }
   },
+  "payment_instrument_token.customer_id": {
+    "comment": "本次支付关联的 Commerce Customer 标识，随申请请求传入；访客支付为 NULL。随 PaymentSucceeded v2 交给 Card 生成已存卡。"
+  },
+  "payment_instrument_token.consent_to_save": {
+    "comment": "消费者是否同意本次支付成功后保存卡；1 表示同意，仅手输卡且有 customer_id 时可为 1。随 PaymentSucceeded v2 交给 Card。",
+    "defaultValue": "0"
+  },
+  "payment_instrument_token.card_bin": {
+    "comment": "Card 创建卡工具时返回的卡 BIN（6 或 8 位），只用作支付风控输入；非卡工具为 NULL。",
+    "extProps": {
+      "characterSet": "ascii",
+      "collation": "ascii_bin"
+    }
+  },
+  "payment_instrument_token.card_fingerprint": {
+    "comment": "Card 创建卡工具时返回的跨交易稳定卡指纹（受限值，不能反推卡号），只经内部同步请求传给 Risk，不进日志或 MQ；非卡工具为 NULL。",
+    "extProps": {
+      "characterSet": "ascii",
+      "collation": "ascii_bin"
+    }
+  },
   "payment_instrument_token.expires_at": {
     "comment": "首次用卡资格的 UTC 微秒精度截止时间，创建时按原支付和材料期限冻结；重试不延长，不表示在途资金失效。"
   },

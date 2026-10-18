@@ -8,7 +8,7 @@ import com.paytech.platform.support.integration.domain.execution.ExecutionErrorE
 import com.paytech.platform.support.integration.domain.execution.VerifyAccountMaterial;
 
 /**
- * 沙箱验证运行中的 PAYMENT_CARD（PayerMax 卡直付对接技术方案第 3.4 节）：测试卡来自验证账号凭据中 testCard. 前缀的五项， 不调用 Payment，忽略 Token
+ * 沙箱验证运行中的 PAYMENT_CARD（PayerMax 卡直付对接技术方案第 3.4 节）：测试卡来自验证账号凭据中 testCard. 前缀的五项， 不调用 card，忽略票据
  * 与支付尝试参数；返回结构与正式读取相同。验证账号只能录入渠道公布的测试卡。
  */
 @Component

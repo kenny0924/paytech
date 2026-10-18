@@ -25,11 +25,12 @@ import com.paytech.payment.test.mocker.ChannelConnectorMocker.Candidate;
 
 /**
  * PaymentSucceeded 发布（design/08 §3、D34）：从 pay 的真实 HTTP 入口收款成功，补偿任务提交后经本机 RabbitMQ 发布到
- * payment.events（paytech-messaging Schema v1 信封）；第 08 步起旧 topic_payment_result 停发。
+ * payment.events（paytech-messaging Schema v2 信封，design/05 §2.3：追加 instrumentRef、consentToSave、customerId 供 card 存卡；
+ * 卡凭证验证与存卡不在支付成功事务内执行）；第 08 步起旧 Topic 停发。
  *
  * <p>
  * 每例用一个临时排他队列绑定 payment.events 观察：成功时恰好一条、信封与最小 Payload 正确、Payload Hash 经消费端解码器校验、
- * 不含卡数据与付款人信息，发布确认后补偿任务删除；支付失败与处理中都不发布。发布端为 FAIL 策略并按聚合串行。
+ * 不含卡数据、读卡票据与付款人信息，发布确认后补偿任务删除；支付失败与处理中都不发布。发布端为 FAIL 策略并按聚合串行。
  *
  * @see PaymentIntentApi#pay(String, String, com.paytech.payment.api.execution.request.PayRequestBody)
  */
@@ -55,7 +56,7 @@ class PaymentSucceededPublishTest extends AbstractPayCardTest {
         risk.respond(RiskResult.ALLOW, AuthenticationRequirement.NOT_REQUIRED);
     }
 
-    /** 成功：payment.events 收到一条 v1 信封，Payload 与 Hash 正确，补偿任务在确认后删除。 */
+    /** 成功：payment.events 收到一条 v2 信封（卡域字段：工具引用、保存意愿与 Customer），Payload 与 Hash 正确，补偿任务在确认后删除。 */
     @Test
     void test_succeededPublishedOnce() {
         channel.succeeded("T-PUB-1");
@@ -85,7 +86,10 @@ class PaymentSucceededPublishTest extends AbstractPayCardTest {
         long version = ((Number)attempt.get("version")).longValue();
         String[] forbidden = {PAN, paid.token, CONSUMER_REFERENCE, CONSUMER_IP, CONSUMER_USER_AGENT, RETURN_URL,
             "consumerReference", "cardToken", "card", "cvv", "clientIp", "userAgent"};
-        envelope.envelope(attemptId, version, instanceId).payload(expected).excludes(forbidden);
+        String[] tickets = cardApi.tickets().toArray(String[]::new);
+        assertEquals(1, tickets.length, "每次资金动作签发一张读卡票据");
+        envelope.envelope(attemptId, version, instanceId).payload(expected).excludes(forbidden).excludes(tickets)
+            .cardFields((String)mapper.instrumentTokens().getFirst().get("instrumentRef"), false, null);
         assertTrue(mapper.compensationEvents(PaymentSucceededHandler.EVENT_TYPE, String.valueOf(attemptId)).isEmpty(),
             "发布确认后补偿任务应删除");
     }

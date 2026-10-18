@@ -6,19 +6,21 @@ import java.util.regex.Pattern;
 
 import org.springframework.stereotype.Component;
 
-import com.paytech.payment.api.card.ChannelCardMaterialApi;
-import com.paytech.payment.api.card.request.RevealChannelCardMaterialRequestBody;
-import com.paytech.payment.api.card.response.RevealChannelCardMaterialResponseBody;
+import com.paytech.card.api.material.ChannelCardMaterialApi;
+import com.paytech.card.api.material.request.RevealChannelCardMaterialRequestBody;
+import com.paytech.card.api.material.response.RevealChannelCardMaterialResponseBody;
 import com.paytech.platform.support.integration.domain.execution.CardValue;
 import com.paytech.platform.support.integration.domain.execution.ExecutionErrorException;
 
 import lombok.AllArgsConstructor;
 
 /**
- * PAYMENT_CARD（PayerMax 卡直付对接技术方案第 2、3.1 节）：凭支付工具 Token 与支付尝试 ID 向 Payment 读取卡数据， 结果全部包装为卡值句柄，只在本次调用内存中存在。
+ * PAYMENT_CARD（PayerMax 卡直付对接技术方案第 2、3.1 节；第 12 步改为 design/05 §2.1）：凭 card 签发给 Payment 的一次性读卡票据向 card 读取卡数据，
+ * 结果全部包装为卡值句柄，只在本次调用内存中存在。
  *
  * <p>
- * Token 归属、当前是否允许用卡与 CVV 一次性领取由 Payment Card 判断；本函数只校验返回格式。不缓存、不记录卡值；任何失败只报固定文字， 不带响应原文。在数据库事务外调用。
+ * 参数沿用已登记的函数签名（流程定义不变）：{@code paymentInstrumentToken} 现在承载卡字段句柄即读卡票据；{@code paymentAttemptId} 仍为必填参数，
+ * 但不再发送——票据已绑定支付尝试与动作。票据一次性、是否过期、当前是否允许用卡与 CVV 一次性领取由 card 与签票前的 Payment 判断；本函数只校验返回格式。不缓存、不记录卡值；任何失败只报固定文字， 不带响应原文。在数据库事务外调用。
  */
 @Component
 @AllArgsConstructor
@@ -29,9 +31,6 @@ public class PaymentCardFunction implements InitializerFunction {
 
     /** 调用方服务名。 */
     public static final String CALLER = "platform-support-service";
-
-    /** 读取用途。 */
-    public static final String PURPOSE = "CHANNEL_EXECUTION";
 
     private static final Pattern PAN = Pattern.compile("[0-9]{12,19}");
     private static final Pattern MONTH = Pattern.compile("0[1-9]|1[0-2]");
@@ -49,17 +48,15 @@ public class PaymentCardFunction implements InitializerFunction {
     @Override
     public Map<String, Object> apply(Map<String, Object> args) {
         var request = new RevealChannelCardMaterialRequestBody();
-        request.setPaymentInstrumentToken((String)args.get("paymentInstrumentToken"));
-        request.setPaymentAttemptId((String)args.get("paymentAttemptId"));
-        request.setPurpose(PURPOSE);
+        request.setTicket((String)args.get("paymentInstrumentToken"));
         RevealChannelCardMaterialResponseBody card;
         try {
             card = cardMaterialApi.reveal(CALLER, request);
         } catch (RuntimeException failure) {
-            throw new ExecutionErrorException("Payment 读卡失败");
+            throw new ExecutionErrorException("Card 读卡失败");
         }
         if (card == null) {
-            throw new ExecutionErrorException("Payment 读卡结果为空");
+            throw new ExecutionErrorException("Card 读卡结果为空");
         }
         return values(card.getPan(), card.getExpiryMonth(), card.getExpiryYear(), card.getCardholderName(),
             card.getCvv());

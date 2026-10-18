@@ -3,8 +3,8 @@
 # 255 source tables, 17 databases, 265 physical tables.
 # Retained: platform-support mor_platform from paytech/platform-support/docs/database/sql/platform-support-schema.sql.
 # 56 retained-service tables added on top of design 03 (not part of the §4.2 count).
+# 1 step-added tables (approved refactor-step designs, e.g. design/05 t_card_material_ticket; not part of the §4.2 count).
 # Structure: services.<service>.<database> = tables owned (or copied / per-database infrastructure);
-# transitionalPlacements = owner tables hosted in another service database until a later step (not counted twice).
 # Renamed: t_transaction_economics -> t_economic_fact, t_transaction_economic_component -> t_economic_fact_line, t_transaction_economic_comp_link -> t_economic_fact_line_link.
 sharedInfrastructureTables:
   - t_consumed_event
@@ -16,18 +16,6 @@ transitionalSharedReads:
       - t_account
       - t_chart_account
       - t_ledger_book
-transitionalPlacements:
-  # 第 12 步前位于 mor_payment：卡域代码与卡表仍在 payment 进程与库内（design/05），第 12 步整体迁到 card / mor_card。
-  - host: payment
-    database: mor_payment
-    owner: card
-    untilStep: 12
-    modules: [paytech-payment-card]
-    tables:
-      - t_payment_card
-      - t_payment_card_credential
-      - t_payment_card_instrument
-      - t_payment_stored_card
 services:
   account:
     mor_account:
@@ -61,6 +49,7 @@ services:
       - t_economic_fact_line_link
   card:
     mor_card:
+      - t_card_material_ticket
       - t_compensation_event
       - t_payment_card
       - t_payment_card_credential

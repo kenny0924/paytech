@@ -7,7 +7,7 @@ import org.springframework.boot.test.context.TestComponent;
 
 import com.paytech.foundation.testsupport.api.Clear;
 import com.paytech.foundation.testsupport.api.MockHttpFault;
-import com.paytech.payment.api.card.response.StoredCardListResponseBody;
+import com.paytech.card.api.storedcard.response.StoredCardListResponseBody;
 
 /** Payment 已存卡 Mock：只配置响应 DTO 与故障，记录调用的 Client、Customer 与操作。 */
 @TestComponent

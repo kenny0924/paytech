@@ -1,0 +1,3 @@
+# card 本地补偿事件类型目录（ArchUnit R12，第 00 步口径）。card 目前不登记补偿事件：PaymentSucceeded 经 paytech-messaging 消费，
+# 孤立工具回收由 XXL-Job 触发；本库 t_compensation_event 为每库标准表，预留给后续卡域补偿任务。
+eventTypes: []

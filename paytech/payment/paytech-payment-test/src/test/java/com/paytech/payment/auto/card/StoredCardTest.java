@@ -14,7 +14,6 @@ import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
-import com.paytech.payment.api.card.StoredCardApi;
 import com.paytech.payment.execution.core.enums.AttemptStatus;
 import com.paytech.payment.execution.core.enums.AuthenticationRequirement;
 import com.paytech.payment.execution.core.enums.RiskResult;
@@ -22,14 +21,13 @@ import com.paytech.payment.test.base.AbstractPayCardTest;
 import com.paytech.payment.test.mocker.PlatformMocker;
 
 /**
- * 已存卡（需求 20261015 commerce-Customer与存卡支付，技术方案 §2.4）：经工具申请、pay 与已存卡私网接口的真实 HTTP 入口，
- * 走真实 Card Processor、支付成功事务与 MySQL/Redis，Vault 为测试 HTTP 服务。
+ * 存卡与已存卡支付的 Payment 一侧（design/05 §2.3、§3；已存卡的生成、列出、删除与失效见 card 服务的 PaymentSucceededConsumeTest 与
+ * StoredCardHttpTest）：经工具申请与 pay 的真实 HTTP 入口，card 为 card-api 测试 HTTP 服务，PaymentSucceeded 经本机 RabbitMQ 观察。
  *
  * <p>
- * 覆盖：同意保存且支付成功才生成已存卡并标记凭证已验证；未同意、支付失败不存；同卡再存只更新凭证、Token 不变；不同 Client 的 Token 不同；
- * 用已存卡加新 CVV 支付时渠道读到保存的卡值；归属、状态与参数校验；删除与按 Customer 失效；重放不可换卡。卡号均为公开测试卡号。
- *
- * @see StoredCardApi
+ * 覆盖：Customer 与保存意愿随申请交给 card、存入 Token 行并随 PaymentSucceeded v2 交给 card 存卡；未同意或支付失败时不发布存卡意愿；
+ * 不同 Client、同一 Customer 的申请各自独立；已存卡支付只把已存卡 Token 与本次 CVV 交给 card，渠道读到保存的卡值；归属与参数校验；
+ * 已存卡接口已迁出 Payment；重放不可换卡。卡号均为公开测试卡号。
  */
 class StoredCardTest extends AbstractPayCardTest {
     private static final String CUSTOMER_ID = "70001";
@@ -46,142 +44,134 @@ class StoredCardTest extends AbstractPayCardTest {
         risk.respond(RiskResult.ALLOW, AuthenticationRequirement.NOT_REQUIRED);
     }
 
-    /** 同意保存且支付成功：凭证已验证，生成一张已存卡；列表只返回 Token、前 6 后 4 与有效期。 */
+    /** 同意保存且支付成功：card 收到 Customer 与保存意愿，Token 行记录二者，PaymentSucceeded v2 把工具引用、同意与 Customer 交给 card。 */
     @Test
     void test_saveCardOnSuccess() {
         var paid = payManual(CLIENT_ID, CUSTOMER_ID, true, EXPIRY_YEAR);
 
-        var stored = mapper.storedCards().getFirst();
-        var listed = list(CLIENT_ID, CUSTOMER_ID).getFirst();
+        var create = cardApi.creates().getFirst();
+        var token = mapper.instrumentTokens().getFirst();
+        long attemptId = Long.parseLong((String)paid.get("attemptId"));
         assertAll(() -> assertEquals(AttemptStatus.SUCCEEDED.getCode(), paid.get("status")),
-            () -> assertEquals(1, mapper.storedCards().size()),
-            () -> assertNotNull(mapper.cardCredentials().getFirst().get("verifiedTime"), "凭证未验证"),
-            () -> assertTrue(((String)stored.get("token")).matches("sc_[A-Za-z0-9_-]{28}"), "Token 格式"),
-            () -> assertEquals(Long.parseLong(CUSTOMER_ID), ((Number)stored.get("customerId")).longValue()),
-            () -> assertEquals(stored.get("token"), listed.get("storedCardToken")),
-            () -> assertEquals("411111******1111", listed.get("maskedPan")), () -> assertEquals("1111", listed.get("last4")),
-            () -> assertEquals(EXPIRY_MONTH, listed.get("expiryMonth")), () -> assertEquals(EXPIRY_YEAR, listed.get("expiryYear")),
-            () -> assertEquals(6, listed.size(), "列表字段只有 Token、掩码、后四位、有效期与创建时间"));
+            () -> assertEquals(CUSTOMER_ID, create.getCustomerId()), () -> assertTrue(create.getConsentToSave()),
+            () -> assertEquals(Long.parseLong(CUSTOMER_ID), ((Number)token.get("customerId")).longValue()),
+            () -> assertTrue(CardStorageTest.consent(token)));
+        results.awaitEnvelope(attemptId).cardFields((String)token.get("instrumentRef"), true, CUSTOMER_ID);
     }
 
-    /** 未同意保存：凭证照样验证，但不存卡；支付失败：不存卡、凭证不验证。 */
+    /** 未同意保存：v2 事件的 consentToSave 为 false；支付失败：不发布 PaymentSucceeded，card 不会存卡。 */
     @Test
     void test_noSaveWithoutConsentOrSuccess() {
-        payManual(CLIENT_ID, CUSTOMER_ID, false, EXPIRY_YEAR);
-        boolean verifiedWithoutSave = mapper.cardCredentials().getFirst().get("verifiedTime") != null;
+        var saved = payManual(CLIENT_ID, CUSTOMER_ID, false, EXPIRY_YEAR);
+        long savedAttempt = Long.parseLong((String)saved.get("attemptId"));
+        results.awaitEnvelope(savedAttempt).cardFields((String)mapper.instrumentTokens().getFirst().get("instrumentRef"),
+            false, CUSTOMER_ID);
 
         var declined = payManual(CLIENT_ID, OTHER_CUSTOMER_ID, true, "2031", this::declined);
 
-        assertAll(() -> assertTrue(verifiedWithoutSave, "未同意保存时凭证也应在成功后验证"),
-            () -> assertEquals(AttemptStatus.FAILED.getCode(), declined.get("status")),
-            () -> assertTrue(mapper.storedCards().isEmpty()),
-            () -> assertNull(mapper.cardCredentials().get(1).get("verifiedTime"), "失败的凭证被标记为已验证"));
+        assertAll(() -> assertEquals(AttemptStatus.FAILED.getCode(), declined.get("status")),
+            () -> results.assertNoSucceeded(Long.parseLong((String)declined.get("attemptId"))));
     }
 
-    /** 同一 Customer 同卡换有效期再存：仍一张已存卡，Token 不变，指向新凭证。 */
+    /** 同一 Customer 同卡换有效期再付：两笔各自以新工具申请并各发布一次存卡意愿，是否合并为同一张已存卡由 card 判断。 */
     @Test
     void test_saveSameCardUpdatesCredential() {
-        payManual(CLIENT_ID, CUSTOMER_ID, true, EXPIRY_YEAR);
-        String token = (String)mapper.storedCards().getFirst().get("token");
+        awaitPublished(payManual(CLIENT_ID, CUSTOMER_ID, true, EXPIRY_YEAR));
+        awaitPublished(payManual(CLIENT_ID, CUSTOMER_ID, true, "2031"));
 
-        payManual(CLIENT_ID, CUSTOMER_ID, true, "2031");
-
-        var stored = mapper.storedCards().getFirst();
-        assertAll(() -> assertEquals(1, mapper.storedCards().size()), () -> assertEquals(token, stored.get("token")),
-            () -> assertEquals(mapper.cardCredentials().get(1).get("credentialId"), stored.get("credentialId")),
-            () -> assertEquals("2031", list(CLIENT_ID, CUSTOMER_ID).getFirst().get("expiryYear")));
+        var tokens = mapper.instrumentTokens();
+        assertAll(() -> assertEquals(List.of(EXPIRY_YEAR, "2031"),
+            cardApi.creates().stream().map(create -> create.getCard().getExpiryYear()).toList()),
+            () -> assertNotEquals(tokens.get(0).get("instrumentRef"), tokens.get(1).get("instrumentRef")),
+            () -> assertEquals(tokens.get(0).get("cardFingerprint"), tokens.get(1).get("cardFingerprint")));
     }
 
-    /** 同一张卡在两个 Client 下保存：两张已存卡，Token 不同，各自只能看到自己的。 */
+    /** 每笔成功后立即读取其 payment.events 信封（探针会跳过并丢弃其他尝试的消息），确认各发布一次存卡意愿。 */
+    void awaitPublished(Map<String, Object> paid) {
+        long attemptId = Long.parseLong((String)paid.get("attemptId"));
+        results.awaitEnvelope(attemptId).cardFields(latestInstrumentRef(), true, CUSTOMER_ID);
+    }
+
+    /** 最近一次申请的工具引用（本类用例按顺序申请与支付）。 */
+    String latestInstrumentRef() {
+        return (String)mapper.instrumentTokens().getLast().get("instrumentRef");
+    }
+
+    /** 同一张卡在两个 Client 下保存：card 分别收到各自的 Client，Token 行各自归属。 */
     @Test
     void test_tokenPerClient() {
         payManual(CLIENT_ID, CUSTOMER_ID, true, EXPIRY_YEAR);
         payManual(OTHER_CLIENT_ID, CUSTOMER_ID, true, EXPIRY_YEAR);
 
-        var stored = mapper.storedCards();
-        assertAll(() -> assertEquals(2, stored.size()),
-            () -> assertNotEquals(stored.get(0).get("token"), stored.get(1).get("token")),
-            () -> assertEquals(stored.get(0).get("token"), list(CLIENT_ID, CUSTOMER_ID).getFirst().get("storedCardToken")),
-            () -> assertEquals(stored.get(1).get("token"),
-                list(OTHER_CLIENT_ID, CUSTOMER_ID).getFirst().get("storedCardToken")));
+        assertEquals(List.of(CLIENT_ID, OTHER_CLIENT_ID),
+            cardApi.creates().stream().map(create -> create.getClientId()).toList());
     }
 
-    /** 用已存卡与新 CVV 支付：不新增卡与凭证，渠道读到保存的卡值与本次 CVV。 */
+    /** 用已存卡与新 CVV 支付：只把已存卡 Token、Customer 与本次 CVV 交给 card（无卡号），渠道凭票据读到保存的卡值与本次 CVV。 */
     @Test
     void test_payWithStoredCard() {
-        payManual(CLIENT_ID, CUSTOMER_ID, true, EXPIRY_YEAR);
-        String token = (String)mapper.storedCards().getFirst().get("token");
-        channel.clearOperations();
+        String storedCardToken = cardApi.storedCard(CLIENT_ID, CUSTOMER_ID, PAN, EXPIRY_MONTH, EXPIRY_YEAR, CARDHOLDER_NAME);
 
-        var paid = payStored(CUSTOMER_ID, token);
+        var paid = payStored(CUSTOMER_ID, storedCardToken);
 
-        var instrument = mapper.cardInstruments().get(1);
+        var create = cardApi.creates().getFirst();
         assertAll(() -> assertEquals(AttemptStatus.SUCCEEDED.getCode(), paid.get("status")),
-            () -> assertEquals(1, mapper.cards().size()), () -> assertEquals(1, mapper.cardCredentials().size()),
-            () -> assertEquals(mapper.storedCards().getFirst().get("storedCardId"), instrument.get("storedCardId")),
+            () -> assertNull(create.getCard(), "已存卡支付不转交卡号"),
+            () -> assertEquals(storedCardToken, create.getStoredCard().getStoredCardToken()),
+            () -> assertEquals(NEW_CVV, create.getStoredCard().getCvv()),
+            () -> assertEquals(CUSTOMER_ID, create.getCustomerId()), () -> assertFalse(create.getConsentToSave()),
             () -> assertEquals(PlatformMocker.materialDigest(PAN, EXPIRY_MONTH, EXPIRY_YEAR, CARDHOLDER_NAME, NEW_CVV),
-                channel.only().materialDigest(), "渠道读到的卡值与已存卡或本次 CVV 不一致"),
-            () -> assertEquals(1, mapper.storedCards().size()));
+                channel.only().materialDigest(), "渠道读到的卡值与已存卡或本次 CVV 不一致"));
+        long attemptId = Long.parseLong((String)paid.get("attemptId"));
+        results.awaitEnvelope(attemptId);
     }
 
-    /** 已存卡不属于该 Customer、已删除：业务拒绝 400；缺 Customer、同时给卡与已存卡、已存卡再选保存：请求校验 422。均不写工具。 */
+    /** 已存卡不属于该 Customer：card 拒绝 400；缺 Customer、同时给卡与已存卡、已存卡再选保存：Payment 请求校验 422，不调用 card。均不写 Token。 */
     @Test
     void test_storedCardRejected() {
-        payManual(CLIENT_ID, CUSTOMER_ID, true, EXPIRY_YEAR);
-        String token = (String)mapper.storedCards().getFirst().get("token");
-        int instruments = mapper.cardInstruments().size();
+        String storedCardToken = cardApi.storedCard(CLIENT_ID, CUSTOMER_ID, PAN, EXPIRY_MONTH, EXPIRY_YEAR, CARDHOLDER_NAME);
 
-        int otherCustomer = applyStatus(newIntent(), storedBody(OTHER_CUSTOMER_ID, token));
-        int noCustomer = applyStatus(newIntent(), storedBody(null, token));
-        var both = storedBody(CUSTOMER_ID, token);
+        int otherCustomer = applyStatus(newIntent(), storedBody(OTHER_CUSTOMER_ID, storedCardToken));
+        int noCustomer = applyStatus(newIntent(), storedBody(null, storedCardToken));
+        var both = storedBody(CUSTOMER_ID, storedCardToken);
         both.put("card", card(EXPIRY_YEAR));
         int bothSources = applyStatus(newIntent(), both);
-        var saveAgain = storedBody(CUSTOMER_ID, token);
+        var saveAgain = storedBody(CUSTOMER_ID, storedCardToken);
         saveAgain.put("saveCard", true);
         int saveStored = applyStatus(newIntent(), saveAgain);
-        delete(CLIENT_ID, CUSTOMER_ID, token);
-        int deleted = applyStatus(newIntent(), storedBody(CUSTOMER_ID, token));
 
-        assertAll(() -> assertEquals(List.of(400, 422, 422, 422, 400),
-            List.of(otherCustomer, noCustomer, bothSources, saveStored, deleted)),
-            () -> assertEquals(instruments, mapper.cardInstruments().size()));
+        assertAll(() -> assertEquals(List.of(400, 422, 422, 422), List.of(otherCustomer, noCustomer, bothSources, saveStored)),
+            () -> assertEquals(1, cardApi.creates().size(), "只有通过 Payment 校验的请求到达 card"),
+            () -> assertTrue(mapper.instrumentTokens().isEmpty()));
     }
 
-    /** 删除与按 Customer 失效：列表变空；跨 Customer 删除 404；重复删除与重复失效幂等。 */
+    /** 已存卡的列出、删除与按 Customer 失效已迁到 card-service（/card/v1/stored-cards…），Payment 不再提供这些入口。 */
     @Test
     void test_deleteAndInvalidate() {
-        payManual(CLIENT_ID, CUSTOMER_ID, true, EXPIRY_YEAR);
-        payManual(CLIENT_ID, OTHER_CUSTOMER_ID, true, EXPIRY_YEAR);
-        String token = (String)mapper.storedCards().getFirst().get("token");
+        int list = status(noRetryClient().get().uri("/payment-card/v1/stored-cards?clientId={c}&customerId={u}", CLIENT_ID,
+            CUSTOMER_ID));
+        int invalidate = status(noRetryClient().post().uri("/payment-card/v1/customers/{u}/stored-cards/invalidation",
+            CUSTOMER_ID).contentType(MediaType.APPLICATION_JSON).body(Map.of("clientId", CLIENT_ID)));
+        int reveal = status(noRetryClient().post().uri("/payment-card/v1/channel-card-materials/reveal")
+            .contentType(MediaType.APPLICATION_JSON).body(Map.of("paymentInstrumentToken", "pit")));
 
-        int crossCustomer = delete(CLIENT_ID, OTHER_CUSTOMER_ID, token);
-        int first = delete(CLIENT_ID, CUSTOMER_ID, token);
-        int again = delete(CLIENT_ID, CUSTOMER_ID, token);
-        int invalidated = invalidate(CLIENT_ID, OTHER_CUSTOMER_ID);
-        int invalidatedAgain = invalidate(CLIENT_ID, OTHER_CUSTOMER_ID);
-
-        assertAll(() -> assertEquals(List.of(404, 204, 204), List.of(crossCustomer, first, again)),
-            () -> assertEquals(List.of(1, 0), List.of(invalidated, invalidatedAgain)),
-            () -> assertTrue(list(CLIENT_ID, CUSTOMER_ID).isEmpty()),
-            () -> assertTrue(list(CLIENT_ID, OTHER_CUSTOMER_ID).isEmpty()),
-            () -> assertTrue(mapper.storedCards().stream().allMatch(row -> "DELETED".equals(row.get("status")))));
+        assertAll(() -> assertEquals(List.of(404, 404, 404), List.of(list, invalidate, reveal)),
+            () -> assertTrue(cardApi.creates().isEmpty()));
     }
 
-    /** 原提交重放：同一已存卡返回原 Token；改成手输卡或改 Customer 返回 409。 */
+    /** 原提交重放：同一已存卡返回原 Token；改成手输卡或改 Customer 时 card 返回 409，Payment 同样 409。 */
     @Test
     void test_replayStoredCard() {
-        payManual(CLIENT_ID, CUSTOMER_ID, true, EXPIRY_YEAR);
-        String token = (String)mapper.storedCards().getFirst().get("token");
+        String storedCardToken = cardApi.storedCard(CLIENT_ID, CUSTOMER_ID, PAN, EXPIRY_MONTH, EXPIRY_YEAR, CARDHOLDER_NAME);
         var intent = newIntent();
-        String instrumentToken = apply(intent, storedBody(CUSTOMER_ID, token));
+        String instrumentToken = apply(intent, storedBody(CUSTOMER_ID, storedCardToken));
 
-        String replayed = apply(intent, storedBody(CUSTOMER_ID, token));
+        String replayed = apply(intent, storedBody(CUSTOMER_ID, storedCardToken));
         var manual = new HashMap<String, Object>(Map.of("card", card(EXPIRY_YEAR), "customerId", CUSTOMER_ID));
         int changedCard = applyStatus(intent, manual);
-        int changedCustomer = applyStatus(intent, storedBody(OTHER_CUSTOMER_ID, token));
 
         assertAll(() -> assertEquals(instrumentToken, replayed),
-            () -> assertEquals(List.of(409, 409), List.of(changedCard, changedCustomer)));
+            () -> assertEquals(409, changedCard), () -> assertEquals(1, mapper.instrumentTokens().size()));
     }
 
     /** 新建 Intent，用手输卡申请工具（可选关联 Customer 与同意保存）并成功支付，返回 pay 响应体。 */
@@ -244,12 +234,8 @@ class StoredCardTest extends AbstractPayCardTest {
 
     /** 申请工具，返回 HTTP 状态（含 4xx/5xx）。 */
     int applyStatus(Payment intent, Map<String, Object> extras) {
-        try {
-            return noRetryClient().post().uri("/payment-instrument/v1/card-tokens").contentType(MediaType.APPLICATION_JSON)
-                .body(applyBody(intent, extras)).retrieve().toBodilessEntity().getStatusCode().value();
-        } catch (RestClientResponseException failure) {
-            return failure.getStatusCode().value();
-        }
+        return status(noRetryClient().post().uri("/payment-instrument/v1/card-tokens").contentType(MediaType.APPLICATION_JSON)
+            .body(applyBody(intent, extras)));
     }
 
     /** 申请体：Intent 身份加卡来源。 */
@@ -261,32 +247,13 @@ class StoredCardTest extends AbstractPayCardTest {
         return body;
     }
 
-    /** 列出已存卡。 */
-    @SuppressWarnings("unchecked")
-    List<Map<String, Object>> list(String clientId, String customerId) {
-        var body = client().get().uri("/payment-card/v1/stored-cards?clientId={c}&customerId={u}", clientId, customerId)
-            .retrieve().toEntity(new ParameterizedTypeReference<Map<String, Object>>() {}).getBody();
-        return (List<Map<String, Object>>)body.get("storedCards");
-    }
-
-    /** 删除已存卡，返回 HTTP 状态。 */
-    int delete(String clientId, String customerId, String storedCardToken) {
+    /** 执行请求并返回 HTTP 状态（含 4xx/5xx）。 */
+    static int status(RestClient.RequestHeadersSpec<?> request) {
         try {
-            return noRetryClient().delete()
-                .uri("/payment-card/v1/stored-cards/{t}?clientId={c}&customerId={u}", storedCardToken, clientId,
-                    customerId)
-                .retrieve().toBodilessEntity().getStatusCode().value();
+            return request.retrieve().toBodilessEntity().getStatusCode().value();
         } catch (RestClientResponseException failure) {
             return failure.getStatusCode().value();
         }
-    }
-
-    /** 按 Customer 失效已存卡，返回失效条数。 */
-    int invalidate(String clientId, String customerId) {
-        var body = client().post().uri("/payment-card/v1/customers/{u}/stored-cards/invalidation", customerId)
-            .contentType(MediaType.APPLICATION_JSON).body(Map.of("clientId", clientId)).retrieve()
-            .toEntity(new ParameterizedTypeReference<Map<String, Object>>() {}).getBody();
-        return ((Number)body.get("invalidatedCount")).intValue();
     }
 
     /** 不自动重发的客户端：默认 Apache HttpClient 收到 503 会自动重发。 */

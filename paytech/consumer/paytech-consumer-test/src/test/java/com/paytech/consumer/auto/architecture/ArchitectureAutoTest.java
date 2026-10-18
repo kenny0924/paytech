@@ -18,7 +18,7 @@ import com.paytech.arch.support.KnownDeviations;
  * 对 consumer 的全部模块执行共享规则 R1–R12（design/02）；类从各模块 {@code target/classes} 导入。
  *
  * <p>
- * consumer 是领域层服务：R3 禁止其 core 依赖 acquiring、payment 等流程层服务的 api；Payment 已存卡合同与 client-master 开关合同以外不依赖其他服务。
+ * consumer 是领域层服务：R3 禁止其 core 依赖 acquiring、payment 等流程层服务的 api；card 已存卡合同（领域层 card-api，第 12 步自 paytech-payment-api 迁入）与 client-master 开关合同以外不依赖其他服务。
  * <p>
  * 搬迁前即存在、本步不改合同而保留的偏差登记在 arch-rules 的 {@code known-deviations.yaml}：新增违规失败；
  * 登记中属于本服务的条目必须仍然出现，偏差消除后同步删除登记。

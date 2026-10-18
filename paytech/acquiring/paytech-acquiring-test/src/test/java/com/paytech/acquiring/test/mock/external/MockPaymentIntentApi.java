@@ -9,7 +9,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import com.paytech.acquiring.test.mocker.external.CheckoutCardMocker;
 import com.paytech.acquiring.test.mocker.external.CheckoutIntentMocker;
 import com.paytech.acquiring.test.mocker.external.PaymentSubmissionMocker;
-import com.paytech.payment.api.card.StoredCardApi;
 import com.paytech.payment.api.execution.PaymentIntentApi;
 import com.paytech.payment.api.execution.request.*;
 import com.paytech.payment.api.execution.response.*;
@@ -30,7 +29,7 @@ public class MockPaymentIntentApi implements PaymentIntentApi, WebMvcConfigurer 
     @Override
     public void configurePathMatch(PathMatchConfigurer configurer) {
         configurer.addPathPrefix("/payment", type -> PaymentIntentApi.class.isAssignableFrom(type)
-            || PaymentInstrumentApi.class.isAssignableFrom(type) || StoredCardApi.class.isAssignableFrom(type));
+            || PaymentInstrumentApi.class.isAssignableFrom(type));
     }
 
     /** 仅创建接口在本次范围内，通过 DTO 配置响应。 */

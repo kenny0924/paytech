@@ -38,7 +38,7 @@
 {
   "modelTotals": {
     "tables": 27,
-    "fields": 345,
+    "fields": 349,
     "uniqueIndexes": 38,
     "accessIndexes": 44,
     "relations": 63,
@@ -54,14 +54,15 @@
 
 ### 2.1 按服务的表归属（重构第 05 步，不改表结构）
 
-上方 Manifest 记录的是拆分前的 Payment Orchestration 统一模型统计，表结构与字段不变。重构第 05 步按 [design/03 §2.3](../../../../requirements/20261017/architecture-V2骨架与模块搬迁/design/03-module-and-table-ownership.md) 把模型拆为两份规范模型，由同一生成器的分区（`scripts/pdmaner/payment-service-partition.mjs`）产出；跨服务关系不再出现在任一模型中，`t_compensation_event` 每库一份：
+上方 Manifest 记录的是拆分前的 Payment Orchestration 统一模型统计（27 表，不含卡域表）；第 12 步 `t_payment_instrument_token` 在 `instrument_ref` 后新增 `customer_id`、`consent_to_save`、`card_bin`、`card_fingerprint`，字段数由 345 变为 349，其余表结构与字段不变。重构第 05 步按 [design/03 §2.3](../../../../requirements/20261017/architecture-V2骨架与模块搬迁/design/03-module-and-table-ownership.md) 把模型拆为两份规范模型，由同一生成器的分区（`scripts/pdmaner/payment-service-partition.mjs`）产出；跨服务关系不再出现在任一模型中，`t_compensation_event` 每库一份：
 
 | 服务 / 数据库 | 规范模型 | 表 |
 |---|---|---|
-| payment / `mor_payment` | [`payment.pdma.json`](payment.pdma.json)、[`sql/payment-schema.sql`](sql/payment-schema.sql) | `t_routing_decision`、`t_route_candidate_eval`、`t_payment_intent`、`t_payment_attempt`、`t_payment_instrument_token`、`t_payment_action`、`t_channel_transaction_ref`、`t_duplicate_payment_case`、`t_payment_refund_position`、`t_channel_refund`、`t_compensation_event`；第 12 步前暂居的卡域 4 表 `t_payment_card`、`t_payment_card_credential`、`t_payment_card_instrument`、`t_payment_stored_card`（归属 card）；在 dispute 服务建立前暂留的 `t_channel_dispute_notice`、`t_channel_dispute_event`、`t_channel_dispute_action`（归属 dispute，仅 Schema）；待删除的 `t_command_idempotency`（S10） |
+| payment / `mor_payment` | [`payment.pdma.json`](payment.pdma.json)、[`sql/payment-schema.sql`](sql/payment-schema.sql) | `t_routing_decision`、`t_route_candidate_eval`、`t_payment_intent`、`t_payment_attempt`、`t_payment_instrument_token`、`t_payment_action`、`t_channel_transaction_ref`、`t_duplicate_payment_case`、`t_payment_refund_position`、`t_channel_refund`、`t_compensation_event`；在 dispute 服务建立前暂留的 `t_channel_dispute_notice`、`t_channel_dispute_event`、`t_channel_dispute_action`（归属 dispute，仅 Schema）；待删除的 `t_command_idempotency`（S10） |
 | channel-connector / `mor_channel_connector` | [`channel-connector.pdma.json`](../../../channel-connector/docs/database/channel-connector.pdma.json)、[`sql/channel-connector-schema.sql`](../../../channel-connector/docs/database/sql/channel-connector-schema.sql) | `t_payment_channel`、`t_channel_account`、`t_channel_mid`、`t_mid_capability`、`t_mid_capability_detail`、`t_routing_policy`、`t_routing_policy_version`、`t_routing_policy_mid`、`t_channel_interaction`、`t_channel_callback`、`t_channel_callback_item`、`t_channel_event_exception`、`t_compensation_event` |
+| card / `mor_card`（第 12 步迁出 payment） | [`card.pdma.json`](../../../card/docs/database/card.pdma.json)、[`sql/card-schema.sql`](../../../card/docs/database/sql/card-schema.sql) | `t_payment_card`、`t_payment_card_credential`、`t_payment_card_instrument`、`t_payment_stored_card`、`t_card_material_ticket`、`t_compensation_event`、`t_consumed_event`、`t_consumed_aggregate_version`（卡域 4 表的模型由 `scripts/pdmaner/card-model-additions.mjs` 维护） |
 
-拆分后的统计（由两份模型计算）：payment 19 表、34 条本库关系；channel-connector 13 表、14 条本库关系。
+拆分后的统计（由三份模型计算）：payment 15 表、29 条本库关系；channel-connector 13 表、14 条本库关系；card 8 表、5 条本库关系（第 12 步前 payment 为 19 表、34 条）。
 
 七个 Diagram Group 为 `Channel 与 MID`、`支付路由`、`支付执行`、`Channel Refund`、`Channel Callback`、`Channel Dispute`、`可靠执行`。每张表各作为主表出现一次，每条关系在具备完整端点的图中出现；关系总量与一对一数量由下方工件 Manifest 核验。
 

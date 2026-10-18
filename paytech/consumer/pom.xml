@@ -35,10 +35,10 @@
                 <artifactId>paytech-consumer-app</artifactId>
                 <version>${project.version}</version>
             </dependency>
-            <!-- 服务间合同：Payment 已存卡（列出 / 删除 / 失效）、client-master 已存卡开关（D42）。 -->
+            <!-- 服务间合同：card 已存卡（列出 / 删除 / 失效，第 12 步自 Payment 迁入 card-service）、client-master 已存卡开关（D42）。 -->
             <dependency>
                 <groupId>com.paytech</groupId>
-                <artifactId>paytech-payment-api</artifactId>
+                <artifactId>paytech-card-api</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

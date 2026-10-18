@@ -114,6 +114,10 @@ CREATE TABLE `t_payment_instrument_token` (
   `payment_method_code` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '本次工具绑定的精确支付方式，创建后不可修改。取值来源：Payment Method Catalog；非固定枚举。',
   `instrument_type` VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '工具 Owner 的受控类型，本期只实现卡工具。允许值：CARD。',
   `instrument_ref` VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '工具 Owner 返回的稳定内部记录引用，创建后不可修改；不包含原始卡数据、CVV、渠道工具 Token 或可直接使用的临时材料。',
+  `customer_id` BIGINT NULL COMMENT '本次支付关联的 Commerce Customer 标识，随申请请求传入；访客支付为 NULL。随 PaymentSucceeded v2 交给 Card 生成已存卡。',
+  `consent_to_save` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '消费者是否同意本次支付成功后保存卡；1 表示同意，仅手输卡且有 customer_id 时可为 1。随 PaymentSucceeded v2 交给 Card。',
+  `card_bin` VARCHAR(8) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT 'Card 创建卡工具时返回的卡 BIN（6 或 8 位），只用作支付风控输入；非卡工具为 NULL。',
+  `card_fingerprint` CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT 'Card 创建卡工具时返回的跨交易稳定卡指纹（受限值，不能反推卡号），只经内部同步请求传给 Risk，不进日志或 MQ；非卡工具为 NULL。',
   `expires_at` DATETIME(6) NOT NULL COMMENT '首次用卡资格的 UTC 微秒精度截止时间，创建时按原支付和材料期限冻结；重试不延长，不表示在途资金失效。',
   `revoked_at` DATETIME(6) NULL COMMENT '主动撤销新用卡资格的 UTC 微秒精度时间；NULL 表示未主动撤销，仍须检查期限和原执行事实；不能据此撤销渠道资金。',
   `create_time` DATETIME(6) NOT NULL COMMENT '应用写入的工具绑定创建 UTC 微秒精度时间。',
@@ -122,65 +126,6 @@ CREATE TABLE `t_payment_instrument_token` (
   UNIQUE KEY `uk_pay_token_value` (`payment_instrument_token`) COMMENT '唯一索引：payment_instrument_token',
   UNIQUE KEY `uk_pay_token_scope` (`client_id`, `payment_intent_id`, `source_submission_id`) COMMENT '唯一索引：client_id、payment_intent_id、source_submission_id'
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='Execution 拥有的交易级支付工具 Token 与不可变使用范围，不存卡数据或会话状态。';
-
-CREATE TABLE `t_payment_card` (
-  `payment_card_id` BIGINT NOT NULL COMMENT 'Card 卡的 Snowflake 内部主键，创建后不可修改。',
-  `card_fingerprint` CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '以配置指纹密钥对卡号做 HMAC-SHA256 的小写十六进制；同一卡号恒定，用于按卡号定位与 Risk 评估，不能反推卡号。',
-  `card_bin` VARCHAR(8) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '卡号不少于 16 位时为前 8 位，否则为前 6 位；创建后不可修改。',
-  `pan_last4` CHAR(4) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '卡号后 4 位；创建后不可修改。',
-  `encrypted_pan` VARBINARY(128) NOT NULL COMMENT '以本卡 DEK 做 AES-256-GCM 加密的卡号：IV(12) ‖ 密文 ‖ Tag(16)，AAD 绑定 payment_card_id。',
-  `dek_vault_token` CHAR(43) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '本卡数据加密密钥（DEK）在 Vault 数据类型 PAYMENT_CARD_DEK 下的 REFERENCE Token；DEK 明文不落库。',
-  `create_time` DATETIME(6) NOT NULL COMMENT '应用写入的卡创建 UTC 微秒精度时间。',
-  `update_time` DATETIME(6) NOT NULL COMMENT '应用写入的卡最近有效更新 UTC 微秒精度时间。',
-  PRIMARY KEY (`payment_card_id`),
-  UNIQUE KEY `uk_payment_card_fingerprint` (`card_fingerprint`) COMMENT '唯一索引：card_fingerprint'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='Card 拥有的卡，每个卡号一条（按卡指纹唯一），每张卡一把由 Vault 托管的 DEK；只加密保存卡号，不存 CVV、磁道、PIN 或 DEK 明文。';
-
-CREATE TABLE `t_payment_card_credential` (
-  `payment_card_credential_id` BIGINT NOT NULL COMMENT '卡凭证的 Snowflake 内部主键，创建后不可修改。',
-  `payment_card_id` BIGINT NOT NULL COMMENT '所属卡，创建后不可修改。',
-  `credential_digest` CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '以配置指纹密钥对卡号、有效期与规范化持卡人做 HMAC-SHA256 的小写十六进制；同一张卡下唯一。',
-  `encrypted_details` VARBINARY(1024) NOT NULL COMMENT '以所属卡 DEK 做 AES-256-GCM 加密的有效期与持卡人原值：IV(12) ‖ 密文 ‖ Tag(16)，AAD 绑定 payment_card_credential_id。',
-  `expiry_month` CHAR(2) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '卡有效期月份（两位）；与已加密卡号分开保存，用于已存卡展示与过期判断，不含卡号。',
-  `expiry_year` CHAR(4) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '卡有效期年份（四位）；用于已存卡展示与过期判断。',
-  `verified_time` DATETIME(6) NULL COMMENT '首次以该凭证支付成功的 UTC 微秒精度时间；NULL 表示未验证，只有已验证凭证可用于存卡。',
-  `create_time` DATETIME(6) NOT NULL COMMENT '应用写入的卡凭证创建 UTC 微秒精度时间。',
-  `update_time` DATETIME(6) NOT NULL COMMENT '应用写入的卡凭证最近有效更新 UTC 微秒精度时间。',
-  PRIMARY KEY (`payment_card_credential_id`),
-  UNIQUE KEY `uk_payment_card_credential` (`payment_card_id`, `credential_digest`) COMMENT '唯一索引：payment_card_id、credential_digest'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='同一张卡下每组有效期与规范化持卡人一条；有效期与持卡人原值以所属卡的 DEK 加密保存。';
-
-CREATE TABLE `t_payment_card_instrument` (
-  `payment_card_instrument_id` BIGINT NOT NULL COMMENT '卡交易工具的 Snowflake 内部主键；其十进制字符串即支付工具 Token 的 instrument_ref。',
-  `payment_card_credential_id` BIGINT NOT NULL COMMENT '本次使用的卡凭证，创建后不可修改。',
-  `client_id` BIGINT NOT NULL COMMENT '所属 CCT Client 稳定标识，取自已核对的 Payment Intent，创建后不可修改。',
-  `customer_id` BIGINT NULL COMMENT '本次支付关联的 Commerce Customer 标识；访客支付为 NULL。',
-  `save_requested` TINYINT(1) NOT NULL COMMENT '消费者是否同意本次支付成功后保存卡；1 表示同意，仅在有 customer_id 时为 1。',
-  `payment_stored_card_id` BIGINT NULL COMMENT '用已存卡支付时指向的已存卡；手输卡为 NULL。',
-  `create_time` DATETIME(6) NOT NULL COMMENT '应用写入的卡交易工具创建 UTC 微秒精度时间。',
-  `update_time` DATETIME(6) NOT NULL COMMENT '应用写入的卡交易工具最近有效更新 UTC 微秒精度时间。',
-  PRIMARY KEY (`payment_card_instrument_id`)
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='每个支付工具一条，记录本次使用的卡凭证与所属 Client；主键十进制字符串即支付工具 Token 的 instrument_ref。';
-
-CREATE TABLE `t_payment_stored_card` (
-  `payment_stored_card_id` BIGINT NOT NULL COMMENT '已存卡的 Snowflake 内部主键，创建后不可修改。',
-  `stored_card_token` VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '对外已存卡 Token：sc_ 前缀加随机串，按 Client 生成、不可推算；不含卡号、指纹或内部 ID。',
-  `client_id` BIGINT NOT NULL COMMENT '所属 CCT Client 稳定标识，创建后不可修改。',
-  `customer_id` BIGINT NOT NULL COMMENT '所属 Commerce Customer 标识，创建后不可修改；Payment 不保存 consumer_reference。',
-  `payment_card_id` BIGINT NOT NULL COMMENT '已存的卡（按卡号唯一的那层），创建后不可修改。',
-  `active_card_id` BIGINT NULL COMMENT '有效时等于 payment_card_id，删除时置 NULL；与 client_id、customer_id 组成唯一索引，保证同一 Customer 同一张卡最多一条有效已存卡。',
-  `payment_card_credential_id` BIGINT NOT NULL COMMENT '当前使用的已验证卡凭证；同卡以新有效期再次保存时更新。',
-  `stored_card_status` VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '已存卡状态。允许值：ACTIVE、DELETED。',
-  `consent_time` DATETIME(6) NOT NULL COMMENT '消费者最近一次同意保存的 UTC 微秒精度时间（支付成功时记录）。',
-  `source_card_instrument_id` BIGINT NOT NULL COMMENT '首次保存来源的卡交易工具，可追溯到支付意图与来源订单。',
-  `deleted_time` DATETIME(6) NULL COMMENT '删除或按 Customer 失效的 UTC 微秒精度时间；有效时为 NULL。',
-  `version` BIGINT NOT NULL COMMENT '可变业务行并发更新使用的单调乐观锁版本。',
-  `create_time` DATETIME(6) NOT NULL COMMENT '应用写入的已存卡创建 UTC 微秒精度时间。',
-  `update_time` DATETIME(6) NOT NULL COMMENT '应用写入的已存卡最近有效更新 UTC 微秒精度时间。',
-  PRIMARY KEY (`payment_stored_card_id`),
-  UNIQUE KEY `uk_payment_stored_card_token` (`stored_card_token`) COMMENT '唯一索引：stored_card_token',
-  UNIQUE KEY `uk_payment_stored_card_active` (`client_id`, `customer_id`, `active_card_id`) COMMENT '唯一索引：client_id、customer_id、active_card_id'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='Commerce Customer 名下的已存卡：指向卡与当前已验证凭证，带消费者同意时间；删除只置状态。';
 
 CREATE TABLE `t_payment_action` (
   `payment_action_id` BIGINT NOT NULL COMMENT '一次内部风控或渠道业务动作的内部唯一标识。',

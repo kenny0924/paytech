@@ -1,1 +1,0 @@
-<mapper namespace="card"><select id="s">SELECT card_id FROM t_payment_card JOIN t_payment_stored_card USING (card_id)</select></mapper>

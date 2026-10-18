@@ -18,8 +18,7 @@ import com.paytech.arch.support.KnownDeviations;
  * 对 payment 的全部模块执行共享规则 R1–R12（design/02）；类从各模块 {@code target/classes} 导入。
  *
  * <p>
- * 第 12 步前卡域模块 {@code paytech-payment-card} 仍在本服务内：卡表经 table-ownership.yaml 的过渡登记计入本服务 R4 白名单，
- * 并且只有该模块与 card-core 同等豁免 R11；Enforcer 另限只有 core / app 可以依赖它。
+ * 第 12 步起卡域已是独立的 card 服务：本服务任何模块都不得引用卡表或 import 卡域加密包（R11 无豁免），只经 paytech-card-api 调用 card。
  * <p>
  * 搬迁前即存在、本步不改合同而保留的偏差登记在 arch-rules 的 {@code known-deviations.yaml}：新增违规失败；
  * 登记中属于本服务的条目必须仍然出现，偏差消除后同步删除登记。
@@ -33,7 +32,7 @@ class ArchitectureAutoTest {
 
     private static final String MODULE_PREFIX = "com.paytech:paytech-" + SERVICE + "-";
 
-    private static final List<String> MODULES = List.of("paytech-payment-api", "paytech-payment-card", "paytech-payment-core", "paytech-payment-app", "paytech-payment-test");
+    private static final List<String> MODULES = List.of("paytech-payment-api", "paytech-payment-core", "paytech-payment-app", "paytech-payment-test");
 
     /** 除登记的既有偏差外零违规；违规清单逐条输出，便于定位模块与类。 */
     @Test

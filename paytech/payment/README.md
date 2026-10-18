@@ -11,13 +11,12 @@
 
 | 模块 | 职责 |
 |---|---|
-| `paytech-payment-api` | 私有 HTTP RequestBody、ResponseBody 与 HttpExchange 合同（含 card 合同，第 12 步迁到 `paytech-card-api`） |
+| `paytech-payment-api` | 私有 HTTP RequestBody、ResponseBody 与 HttpExchange 合同（card 合同已于第 12 步迁到 `paytech-card-api`） |
 | `paytech-payment-core` | 支付意图、支付受理、Action Flow、Context、本地事务和持久化（包 `execution`）；路由选择（包 `routing`）；channel-connector 与 Risk 端口；`PaymentSucceeded` 补偿 Handler |
-| `paytech-payment-card` | 卡加密存储（卡按卡号唯一、卡凭证、卡交易工具三层；每张卡一把 DEK，由 Vault 托管）、按明文卡号定位、CVV 的 Redis 一次性暂存、读卡与风控卡属性；第 12 步前仍是本服务内模块，只允许 core 与 app 依赖 |
 | `paytech-payment-app` | 唯一启动入口、REST Controller、协议转换、数据源 / MyBatis 扫描、出站 HTTP 客户端与 RabbitMQ 发布 |
 | `paytech-payment-test` | 独立测试模块；正式应用入口、真实本地数据库、外部 HTTP DTO Mock 与架构门禁（R1–R12） |
 
-App 依赖 API、Core 和 Card 的协议转换类型；Core 通过公开的 CardService 及 Card 公开 Processor 单向依赖 Card。渠道候选与渠道操作经 `paytech-channel-connector-api` 的 HTTP 合同调用 channel-connector（服务发现名 `channel-connector-service`）：能力代码、Platform 输出键与 NOT_SENT 判定都由 channel-connector 解释，Payment 只消费已映射的结论（D06）。Payment 不再访问渠道五表，也不再直接调用 Platform 标准 API。Card 不反向依赖 Core，也不接收其 DataObject。卡输入仅经过专用申请请求交给 Card，通用 pay、Execution Context 和仓储不接收卡原值。数据库设计文件不参与应用启动，不自动建表或初始化。pay 使用 Attempt 的 `source_submission_id` 唯一索引防重，重复请求核对原提交内容后返回当前状态，规则见 [pay 阅读说明](docs/pay-interface-walkthrough.md)。Payment 不再依赖 Foundation 命令幂等组件。
+App 依赖 API 与 Core；卡域是独立的 card-service（design/05）：Core 经 `paytech-card-api` 的 HTTP 合同创建卡工具与申请一次性读卡票据（服务发现名 `card-service`），不触碰卡表、Vault 或 CVV。渠道候选与渠道操作经 `paytech-channel-connector-api` 的 HTTP 合同调用 channel-connector（服务发现名 `channel-connector-service`）：能力代码、Platform 输出键与 NOT_SENT 判定都由 channel-connector 解释，Payment 只消费已映射的结论（D06）。Payment 不再访问渠道五表，也不再直接调用 Platform 标准 API。卡输入仅经过专用申请请求原样转交 card，通用 pay、Execution Context 和仓储不接收卡原值。数据库设计文件不参与应用启动，不自动建表或初始化。pay 使用 Attempt 的 `source_submission_id` 唯一索引防重，重复请求核对原提交内容后返回当前状态，规则见 [pay 阅读说明](docs/pay-interface-walkthrough.md)。Payment 不再依赖 Foundation 命令幂等组件。
 
 ## 构建
 
@@ -59,11 +58,12 @@ Windows 使用 `paytech/mvnw.cmd` 并设置对应 `JAVA_HOME`。测试实现及�
 
 终止 Intent 使用 `POST /payment/payment-execution/v1/intents/{intentId}/terminate`，Body 为 `clientId/reason`，无需幂等 Header，返回 `intentId/status/decision`。与 pay 共用 Intent 资源锁；安全终止只更新 Intent，已取消/过期直接返回，活动尝试返回 PENDING，授权等待返回 REVERSAL_REQUIRED，已收款返回 ALREADY_PAID；正常业务结果统一使用 HTTP 200，由上游判断 decision。完整边界见[终止接口合同](../../requirements/20260913/payment-Execution设计/terminate-intent-amendment.md)；不自动撤销授权、退款或后台重试。
 
-`applyCardInstrument` 使用 `POST /payment/payment-instrument/v1/card-tokens`，完整请求和重放规则见[工具申请合同](../../requirements/20260913/payment-Execution设计/apply-card-instrument-amendment.md)。来源提交范围一致时返回原 Token 和到期时间；新申请由 Processor 开启一个事务，依次调用 CardService 的本地申请和 Execution Service 的工具绑定保存，不创建 Attempt 或 Action。两个 Service 不互相调用，Execution Service 的该方法直接参与外层事务。新申请在事务前由 Card 的 `PrepareCardInstrumentProcessor` 准备：按卡指纹查卡，已有则经 Vault 取回 DEK，没有则生成 DEK 交 Vault 并保存卡；按（卡、凭证摘要）查或建卡凭证；加密 CVV 存 Redis。卡与凭证单条插入、自动提交，事务内只插入卡交易工具。原提交重放由 `CheckCardInstrumentProcessor` 比较卡指纹与凭证摘要，不访问 Vault。详见[Card 加密存储方案](../../requirements/20261015/payment-Card加密存储/technique.md)。
+`applyCardInstrument` 使用 `POST /payment/payment-instrument/v1/card-tokens`，完整请求和重放规则见[工具申请合同](../../requirements/20260913/payment-Execution设计/apply-card-instrument-amendment.md)。第 12 步起为两段创建（design/05 §2.2）：事务外先调 card `POST /card/v1/instruments`（card 在自己的库内保存卡、凭证与工具，托管 DEK、暂存 CVV，按 Client 与来源提交幂等），再在本地事务按 Intent 状态插入 `t_payment_instrument_token`，保存 card 返回的工具引用、期限、风控属性（BIN、指纹）以及 Customer 与保存意愿；原提交重放以同一来源提交再调 card 核对同卡。第二段失败时 card 侧留下的孤立工具由 card 的回收任务清理。
 
-本地运行需设置 `PAYMENT_CARD_FINGERPRINT_KEY`（卡指纹 HMAC 密钥，Base64、解码后至少 32 字节，缺失则启动失败）和正的 `PAYMENT_INSTRUMENT_PREPARATION_WINDOW`（ISO 8601 Duration，例如 `PT5M`；默认 `PT0S` 不接受新申请），并在所连 Vault 注册数据类型 `PAYMENT_CARD_DEK` 及 Payment 的 `CARD_STORAGE` Protect、`CARD_USE` Reveal 访问规则。卡号须通过 Luhn 校验；卡号以本卡 DEK 加密存入 `t_payment_card`（按卡指纹唯一，BIN 按卡号长度存 8 或 6 位），有效期与持卡人加密存入 `t_payment_card_credential`，每笔交易一条 `t_payment_card_instrument`；CVV 加密后按交易工具只在 Redis 暂存到工具期限、领取一次即删除。
+pay 的 PAY 动作在发起渠道调用前（事务外、Intent 锁内）先做准入校验，再向 card 申请本次动作的一次性读卡票据（`POST /card/v1/material-tickets`），把票据作为标准 API 的卡字段句柄；card 拒签（CVV 已领取、工具过期）或不可用时动作以 `CARD_MATERIAL_UNAVAILABLE` 失败、不调用渠道。支付风控读取 Token 行中的 BIN 与指纹。支付成功事务只写本服务的表；凭证验证与存卡由 card 消费 `PaymentSucceeded` v2（新增 `instrumentRef`、`consentToSave`、`customerId`）完成，已存卡的列出、删除与失效改由 card-service 提供（`/card/v1/stored-cards…`）。
 
-已存卡（[Customer 与存卡支付](../../requirements/20261015/commerce-Customer与存卡支付/technique.md) §2.4）：申请工具可带 `customerId` 与 `saveCard`，卡支付成功时在同一事务内标记凭证已验证并按同意生成已存卡（`t_payment_stored_card`，对外 `sc_` Token）；也可用 `storedCard{storedCardToken, cvv}` 代替手输卡。Commerce 通过 `GET /payment/payment-card/v1/stored-cards`、`DELETE /payment/payment-card/v1/stored-cards/{token}` 与 `POST /payment/payment-card/v1/customers/{customerId}/stored-cards/invalidation` 管理已存卡，响应只含 Token、前 6 后 4 与有效期。
+本地运行需设置正的 `PAYMENT_INSTRUMENT_PREPARATION_WINDOW`（ISO 8601 Duration，例如 `PT5M`；默认 `PT0S` 不接受新申请）并能经服务发现访问 `card-service`；卡指纹密钥（`CARD_FINGERPRINT_KEY`）与 Vault `PAYMENT_CARD_DEK` 访问规则随卡域属于 card-service。
+
 
 新 Attempt 在 Context 构建后调用 RouteService，再把渠道三元组随受理事务保存，状态仍为 PROCESSING。按本期用户要求，RouteServiceImpl 暂时固定返回合成 Channel/Account/MID `9001/9002/9003`，没有校验真实渠道配置或可用性；接通真实资金前必须替换该 Mock。保存上下文后单独创建 PROCESSING 状态的 PAY_RISK 并绑定 Attempt 的执行位，再通过 ActionFactory 取得实现并直接执行。PAY_RISK 调用 Risk 统一评估（[需求](../../requirements/20261015/payment-接入Risk统一评估/technique.md)）：放行按认证要求进入 AUTHENTICATE、AUTHORIZE 或 PAY，其他结论或未取得结论时 Attempt 失败并释放 Intent；认证与授权能力目前明确返回未接入，原 Action 保持 UNKNOWN。真实选路、选择证据与 Owner 调用仍为 TODO。调用需要预先存在有效且匹配的 Intent 和交易级工具 Token。
 
@@ -85,4 +85,4 @@ ActionExecutionService 通过 ActionFlowFactory 选择 CARD:PAY；ActionFlow 调
 ./mvnw -pl payment/paytech-payment-test -am clean verify
 ```
 
-Vault（卡 DEK）、Risk 与 channel-connector 由测试模块中的独立 HTTP Server 以服务发现名承载合成 DTO，Payment 内使用正式客户端；不连接真实 Vault、channel-connector 或渠道。渠道操作含支付工具 Token 时，测试服务像真实 Platform 一样回调 Payment 读卡接口。聚合覆盖率在 `paytech-payment-test/target/site/jacoco-aggregate/index.html`，实际结果与数据库范围见[当前台账](../../agent-docs/CURRENT_IMPLEMENTATION.md#channel-account-mid-query-requirement-20260921)。
+card、Risk 与 channel-connector 由测试模块中的独立 HTTP Server 以服务发现名承载合成 DTO，Payment 内使用正式客户端；不连接真实 card、channel-connector 或渠道。渠道操作含读卡票据时，测试服务像真实 Platform 一样凭票据向 card 测试服务读卡，并断言票据只能使用一次。聚合覆盖率在 `paytech-payment-test/target/site/jacoco-aggregate/index.html`，实际结果与数据库范围见[当前台账](../../agent-docs/CURRENT_IMPLEMENTATION.md#channel-account-mid-query-requirement-20260921)。

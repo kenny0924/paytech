@@ -59,20 +59,14 @@ payment:
   execution:
     # 零值禁用新申请；本地合成流程可配置 PT5M，实际期限受 Intent/Card 限制。
     instrument-preparation-window: PT0S
-  # card.fingerprint-key（卡指纹与凭证摘要的 HMAC 密钥）必填但不写入模板或 Nacos，由环境变量 PAYMENT_CARD_FINGERPRINT_KEY 提供；
-  # 每张卡的数据加密密钥由 Vault 托管（数据类型 PAYMENT_CARD_DEK），不在 Payment 配置。
+  # 第 12 步起卡域为 card-service：卡指纹密钥与卡 DEK 的 Vault 配置都在 card-service.yaml，Payment 不再访问 Vault。
   outbound:
-    # channel-connector 与 Risk 统一评估的对方 context path 与读取超时；修改需重启。
+    # channel-connector、card 与 Risk 统一评估的对方 context path 与读取超时；修改需重启。
     channel-connector-context-path: ""
     channel-candidate-read-timeout: 2s
     channel-operation-read-timeout: 35s
+    card-context-path: ""
+    card-read-timeout: 5s
     risk-context-path: ""
     # Risk 读超时后用同一请求重试一次，仍失败则风控失败关闭。
     risk-read-timeout: 1s
-
-vault:
-  client:
-    caller-service: payment-service
-    service-id: vault-service
-    connect-timeout: 2s
-    read-timeout: 5s
