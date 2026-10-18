@@ -122,6 +122,25 @@
             </resource>
         </resources>
         <plugins>
+            <!-- 测试侧可复用件（testkit 包，例如消费方测试的分区队列基线）以 test-jar 发布，只由各 -test 模块以 test 作用域引入；
+                 只打包 testkit，不带本模块自身的测试、Handler 与测试配置文件。 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>testkit-jar</id>
+                        <goals>
+                            <goal>test-jar</goal>
+                        </goals>
+                        <configuration>
+                            <includes>
+                                <include>com/paytech/foundation/messaging/testkit/**</include>
+                            </includes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
