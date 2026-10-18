@@ -1,4 +1,4 @@
-package com.paytech.operations.console.bff.service;
+package com.paytech.operations.console.bff.service.processor;
 
 import java.util.HashSet;
 import java.util.List;
@@ -8,22 +8,31 @@ import org.springframework.stereotype.Component;
 
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.foundation.common.error.ErrorException;
+import com.paytech.foundation.processor.AbstractProcessor;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.operations.console.bff.integration.PlatformOperationsClient;
-import com.paytech.operations.console.bff.service.model.OperatorContext;
 import com.paytech.operations.console.bff.service.model.RoleModels.RoleListItem;
 import com.paytech.operations.console.bff.service.model.RoleModels.RoleOverview;
+import com.paytech.operations.console.bff.service.processor.request.RoleListRequest;
 
 import lombok.AllArgsConstructor;
 
-/** 仅为当前角色页批量补充员工数，保留 Platform 分页与授权事实。 @author Codex */
+/**
+ * 角色列表页：为当前页角色批量补充员工数
+ * <li>保留 Platform 的分页与授权事实；空页不查询员工数。</li>
+ * <li>当前页角色 ID 重复，或员工数回执与当前页角色集合不一致，视为上游无效响应。</li>
+ *
+ * @author Codex
+ */
 @Component
 @AllArgsConstructor
-public final class RoleListProcessor {
+public class RoleListProcessor extends AbstractProcessor<RoleListRequest, PagingResponseBody<RoleListItem>> {
     private final PlatformOperationsClient client;
 
-    public PagingResponseBody<RoleListItem> list(OperatorContext operator, int page, int size) {
-        PagingResponseBody<RoleOverview> roles = client.roles(operator, page, size);
+    @Override
+    protected PagingResponseBody<RoleListItem> processRequest(RoleListRequest request) {
+        var operator = request.getOperator();
+        PagingResponseBody<RoleOverview> roles = client.roles(operator, request.getPaging().page(), request.getPaging().size());
         if (roles.items().isEmpty()) {
             return new PagingResponseBody<>(List.of(), roles.page(), roles.size(), roles.total());
         }

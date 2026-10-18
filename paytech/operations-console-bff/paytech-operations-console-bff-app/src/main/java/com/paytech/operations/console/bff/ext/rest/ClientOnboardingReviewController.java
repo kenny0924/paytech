@@ -13,8 +13,10 @@ import com.paytech.client.contract.api.onboarding.response.ClassificationSetResp
 import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.operations.console.bff.integration.ClientReviewCctClient;
 import com.paytech.operations.console.bff.integration.ClientReviewRiskClient;
-import com.paytech.operations.console.bff.service.ClientReviewDetailsProcessor;
-import com.paytech.operations.console.bff.service.ClientReviewFileProcessor;
+import com.paytech.operations.console.bff.service.processor.ClientReviewDetailsProcessor;
+import com.paytech.operations.console.bff.service.processor.ClientReviewFileDownloadProcessor;
+import com.paytech.operations.console.bff.service.processor.request.ClientReviewDetailsRequest;
+import com.paytech.operations.console.bff.service.processor.request.ClientReviewFileDownloadRequest;
 import com.paytech.operations.console.bff.service.model.ClientReviewModels.ClassificationSetRequestBody;
 import com.paytech.operations.console.bff.service.model.ClientReviewModels.DecisionRequestBody;
 import com.paytech.operations.console.bff.service.model.ClientReviewModels.EvidenceReviewRequestBody;
@@ -46,7 +48,7 @@ public class ClientOnboardingReviewController {
     private final ClientReviewRiskClient risk;
     private final ClientReviewCctClient cct;
     private final ClientReviewDetailsProcessor details;
-    private final ClientReviewFileProcessor reviewFiles;
+    private final ClientReviewFileDownloadProcessor fileDownload;
 
     /** O01 审核列表。 */
     @GetMapping("/cases")
@@ -61,7 +63,7 @@ public class ClientOnboardingReviewController {
     /** O02 审核详情。 */
     @GetMapping("/cases/{caseId}")
     public ReviewCaseDetailResponseBody detail(OperatorContext operator, @PathVariable @Pattern(regexp = ID) String caseId) {
-        return details.details(operator, caseId);
+        return details.process(new ClientReviewDetailsRequest(operator, caseId));
     }
 
     /** O03 设置分类。 */
@@ -110,6 +112,6 @@ public class ClientOnboardingReviewController {
     @PostMapping("/cases/{caseId}/files/{fileId}/download")
     public ReviewFileDownloadResponseBody downloadFile(OperatorContext operator, @PathVariable @Pattern(regexp = ID) String caseId,
         @PathVariable @Pattern(regexp = ID) String fileId) {
-        return reviewFiles.download(operator, caseId, fileId);
+        return fileDownload.process(new ClientReviewFileDownloadRequest(operator, caseId, fileId));
     }
 }

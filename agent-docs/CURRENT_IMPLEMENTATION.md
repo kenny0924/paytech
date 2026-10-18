@@ -129,6 +129,12 @@
 <a id="finance-accounting-kernel-20261015"></a>
 
 <a id="mor-test-compensation-scan-20261017"></a>
+## Operations BFF 聚合 Processor 迁到 Foundation 模板（2026-10-18，已本地提交，未推送、未部署）
+
+- **Implemented：** `operations-console-bff` 的聚合 Processor 移入 `service/processor`，每个入口一个并继承 Foundation `AbstractProcessor`；内部请求位于 `service/processor/request`，响应直接复用 BFF 页面 ResponseBody。`RoleDetailsProcessor` 拆出 `RolePermissionOptionsProcessor`，`AuditDetailsProcessor` 改名为 `AuditEventDetailsProcessor`，`ClientReviewFileProcessor` 改名为 `ClientReviewFileDownloadProcessor`。`ApiScopeDetailsProcessor` 的引用类型与分页校验移入 `validate`，引用类型改用 BFF 枚举 `ApiScopeReferenceKind`。HTTP 路径、错误码、状态码、上游调用顺序与降级规则不变。
+- **Verified：** JDK 25 `./mvnw -B -o clean verify -pl operations-console-bff/paytech-operations-console-bff-test -am`，BFF **1390/1390** 通过，构建成功。
+- **未处理：** Risk 评估解释在 `RiskEvaluationClientImpl` 内组合解释与规则集详情两个 Risk 接口，与「多接口组合进 Processor」不一致；但既有守卫 `OperationsConsoleBffApplicationAutoTest` 与 BFF README 规定 Risk 单 Owner 适配不得出现 Risk Processor，待用户决定后再迁移。`client-console-bff` 的 5 个 Processor 未纳入本次。
+
 ## mor-test Platform 补偿扫描（2026-10-17，已部署 mor-test）
 
 - **范围：** mor-test 的 XXL-Job Admin 常驻（根路径，`compose.sh` 默认加载 scheduler，由 Client API 测试联通会话启动并提交）；默认管理员密码已改，取自 `.env.test` 的 `MOR_XXL_JOB_ADMIN_PASSWORD`。Platform 执行器为 `platform-support-service@172.30.73.21:9999`；任务 `compensationEventScan` 为 BEAN、每 30 秒、分片广播、单机串行、失败不重试，Commerce 同样设置。不改代码与镜像（Platform `629cccf9…`）。需求见 [requirements/20261017/platform-support-mor-test补偿扫描](../requirements/20261017/platform-support-mor-test补偿扫描/requirement.md)。

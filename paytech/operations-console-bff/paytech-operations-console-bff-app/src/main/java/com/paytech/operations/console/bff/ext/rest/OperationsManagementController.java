@@ -15,9 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.operations.console.bff.integration.PlatformOperationsClient;
-import com.paytech.operations.console.bff.service.AuditDetailsProcessor;
-import com.paytech.operations.console.bff.service.RoleDetailsProcessor;
-import com.paytech.operations.console.bff.service.RoleListProcessor;
 import com.paytech.operations.console.bff.service.model.AuditModels.AuditEventResponseBody;
 import com.paytech.operations.console.bff.service.model.AuditModels.AuditQueryRequestBody;
 import com.paytech.operations.console.bff.service.model.ManagementModels.AccountResponseBody;
@@ -36,6 +33,13 @@ import com.paytech.operations.console.bff.service.model.RoleModels.RoleListItem;
 import com.paytech.operations.console.bff.service.model.RoleModels.RolePermissionOptionsResponseBody;
 import com.paytech.operations.console.bff.service.model.RoleModels.RoleResponseBody;
 import com.paytech.operations.console.bff.service.model.RoleModels.UpdateRoleRequestBody;
+import com.paytech.operations.console.bff.service.processor.AuditEventDetailsProcessor;
+import com.paytech.operations.console.bff.service.processor.RoleDetailsProcessor;
+import com.paytech.operations.console.bff.service.processor.RoleListProcessor;
+import com.paytech.operations.console.bff.service.processor.RolePermissionOptionsProcessor;
+import com.paytech.operations.console.bff.service.processor.request.AuditEventDetailsRequest;
+import com.paytech.operations.console.bff.service.processor.request.RoleDetailsRequest;
+import com.paytech.operations.console.bff.service.processor.request.RoleListRequest;
 
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -47,8 +51,9 @@ public class OperationsManagementController {
 
     private final RoleListProcessor roleListProcessor;
     private final RoleDetailsProcessor roleDetailsProcessor;
-    private final AuditDetailsProcessor auditDetailsProcessor;
     private final PlatformOperationsClient client;
+    private final AuditEventDetailsProcessor auditEventDetailsProcessor;
+    private final RolePermissionOptionsProcessor rolePermissionOptionsProcessor;
 
     @GetMapping("/authorization/v1/navigation")
     public NavigationResponseBody navigation(OperatorContext operator) {
@@ -98,18 +103,17 @@ public class OperationsManagementController {
     @GetMapping("/iam/v1/roles")
     public PagingResponseBody<RoleListItem> roles(OperatorContext operator,
         @RequestParam(required = false) Integer page, @RequestParam(required = false) Integer size) {
-        PagingRequestBody paging = PagingRequestBody.of(page, size);
-        return roleListProcessor.list(operator, paging.page(), paging.size());
+        return roleListProcessor.process(new RoleListRequest(operator, PagingRequestBody.of(page, size)));
     }
 
     @GetMapping("/iam/v1/role-permission-options")
     public RolePermissionOptionsResponseBody rolePermissionOptions(OperatorContext operator) {
-        return roleDetailsProcessor.options(operator);
+        return rolePermissionOptionsProcessor.process(operator);
     }
 
     @GetMapping("/iam/v1/roles/{roleId}")
     public RoleDetailsResponseBody role(OperatorContext operator, @PathVariable String roleId) {
-        return roleDetailsProcessor.details(operator, roleId);
+        return roleDetailsProcessor.process(new RoleDetailsRequest(operator, roleId));
     }
 
     @PostMapping("/iam/v1/roles")
@@ -140,6 +144,6 @@ public class OperationsManagementController {
 
     @GetMapping("/audit/v1/events/{auditEventId}")
     public AuditEventResponseBody auditEvent(OperatorContext operator, @PathVariable String auditEventId) {
-        return auditDetailsProcessor.details(operator, auditEventId);
+        return auditEventDetailsProcessor.process(new AuditEventDetailsRequest(operator, auditEventId));
     }
 }
