@@ -11,18 +11,20 @@ import org.springframework.stereotype.Component;
 
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.common.error.ServiceUnavailableException;
+import com.paytech.foundation.processor.AbstractProcessor;
 import com.paytech.platform.support.accesscontrol.domainservice.service.OperationsManagementPolicyService;
 import com.paytech.platform.support.accesscontrol.domainservice.service.OperationsSessionService.SessionContext;
 import com.paytech.platform.support.api.enums.FileObjectStatus;
 import com.paytech.platform.support.api.enums.FileScanStatus;
 import com.paytech.platform.support.api.enums.OnboardingFileErrorCode;
-import com.paytech.platform.support.api.reviewfiles.response.ReviewFileDownloadResponseBody;
 import com.paytech.platform.support.auditsecurity.domain.audit.AuditModels.Target;
 import com.paytech.platform.support.auditsecurity.domain.audit.OperationsAuditFact;
 import com.paytech.platform.support.auditsecurity.domainservice.service.OperationsAuditService;
 import com.paytech.platform.support.filedocument.domain.file.FileModels.Owned;
 import com.paytech.platform.support.filedocument.domainservice.service.FileLifecycleService;
 import com.paytech.platform.support.filedocument.integration.storage.FileDownloadStorage;
+import com.paytech.platform.support.service.processor.request.ReviewFileDownloadRequest;
+import com.paytech.platform.support.service.processor.response.ReviewFileDownloadResponse;
 
 import lombok.AllArgsConstructor;
 
@@ -32,11 +34,12 @@ import lombok.AllArgsConstructor;
  * <li>签名只在本地计算、没有网络等待，因此不再开第二个事务重检；审计要求一个请求只观察一个事务</li>
  * <li>签发成功后登记 SUCCEEDED 审计事实，事实只含文件标识，不含下载地址</li>
  * <li>文件与审核任务的对应关系由 Operations BFF 依据 Risk 任务事实组合；本处只负责运营权限和文件状态</li>
+ * <li>不写业务数据、不加锁；签名与审计登记均在只读快照之外</li>
  */
 @Component
 @AllArgsConstructor
 @ConditionalOnExpression("${files.onboarding.enabled:false} && ${operations.authentication.enabled:false}")
-public class ReviewFileDownloadProcessor {
+public class ReviewFileDownloadProcessor extends AbstractProcessor<ReviewFileDownloadRequest, ReviewFileDownloadResponse> {
     /** 客户入驻审核查看权限。 */
     static final String REVIEW_READ = "CLIENT_ONBOARDING_REVIEW_READ";
     /** 客户入驻材料核验权限。 */
@@ -52,16 +55,11 @@ public class ReviewFileDownloadProcessor {
     private final ObjectProvider<FileDownloadStorage> adapters;
     private final OperationsManagementPolicyService policy;
 
-    /**
-     * 签发原版本短时下载地址。
-     *
-     * @param actorId 运营账号
-     * @param sessionId 运营会话
-     * @param fileId 文件标识
-     * @return 展示信息与下载授权
-     */
-    public ReviewFileDownloadResponseBody download(String actorId, String sessionId, long fileId) {
-        Authorized authorized = authorized(actorId, sessionId, fileId);
+    @Override
+    protected ReviewFileDownloadResponse processRequest(ReviewFileDownloadRequest request) {
+        String actorId = request.getActorId();
+        long fileId = request.getFileId();
+        Authorized authorized = authorized(actorId, request.getSessionId(), fileId);
         Owned owned = authorized.owned();
         var expires = clock.instant().truncatedTo(ChronoUnit.MICROS).plusSeconds(DOWNLOAD_SECONDS);
         FileDownloadStorage.Download grant = sign(owned, expires);
@@ -70,8 +68,8 @@ public class ReviewFileDownloadProcessor {
         audit.record(() -> OperationsAuditFact.Outcome.succeeded(actorId, tenantId, new Target("FILE", Long.toString(fileId)),
             AUDIT_REASON, clock.instant()));
         var file = owned.file();
-        return new ReviewFileDownloadResponseBody(Long.toString(fileId), owned.upload().displayName(),
-            file.verified().mimeType(), Long.toString(file.verified().sizeBytes()), grant.url(), grant.expiresAt());
+        return new ReviewFileDownloadResponse(fileId, owned.upload().displayName(), file.verified().mimeType(),
+            file.verified().sizeBytes(), grant.url(), grant.expiresAt());
     }
 
     /** 同一只读快照内确认权限与可用文件。 */

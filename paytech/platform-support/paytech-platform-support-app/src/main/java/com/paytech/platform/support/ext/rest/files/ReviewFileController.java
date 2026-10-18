@@ -8,6 +8,8 @@ import com.paytech.platform.support.api.reviewfiles.ReviewFileApi;
 import com.paytech.platform.support.api.reviewfiles.response.ReviewFileDownloadResponseBody;
 import com.paytech.platform.support.ext.rest.audit.Audit;
 import com.paytech.platform.support.service.processor.ReviewFileDownloadProcessor;
+import com.paytech.platform.support.service.processor.request.ReviewFileDownloadRequest;
+import com.paytech.platform.support.service.processor.response.ReviewFileDownloadResponse;
 
 import lombok.AllArgsConstructor;
 
@@ -32,6 +34,12 @@ public class ReviewFileController implements ReviewFileApi {
         } catch (NumberFormatException overflow) {
             throw new InvalidParameterException("fileId 超出范围");
         }
-        return processor.download(actorAccountId, sessionId, id);
+        return body(processor.process(new ReviewFileDownloadRequest(actorAccountId, sessionId, id)));
+    }
+
+    /** 文件标识与字节数以十进制字符串返回。 */
+    ReviewFileDownloadResponseBody body(ReviewFileDownloadResponse response) {
+        return new ReviewFileDownloadResponseBody(Long.toString(response.getFileId()), response.getDisplayName(),
+            response.getMimeType(), Long.toString(response.getSizeBytes()), response.getUrl(), response.getExpiresAt());
     }
 }
