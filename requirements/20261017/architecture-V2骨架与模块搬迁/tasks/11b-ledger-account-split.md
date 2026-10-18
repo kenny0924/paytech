@@ -1,6 +1,6 @@
 # 任务卡 11b · 账户与会计分库：`t_account` 拆表、双消费 `EconomicFactRecorded`、关账一致性
 
-- 分支：`refactor/step-11b-ledger-account-split`；worktree：`/Users/kenny/Desktop/Workspace/Code-MoR-step11b`；起点：`refactor-main`（07、08、11a 合入后，主会话填写）。
+- 分支：`refactor/step-11b-ledger-account-split`；worktree：`/Users/kenny/Desktop/Workspace/Code-MoR-step11b`；起点：`refactor-main@a55be893`（00–12、11a 已合入；12x 消费方队列基线修复并行进行，合入后主会话通知接入）。
 - 对应计划：[11-dev-plan.md](../design/11-dev-plan.md) 第 11b 步；设计 [04-finance-account-ledger-split.md](../design/04-finance-account-ledger-split.md) §3–§9；决定 D05、D16、D36（修订）、D37。
 - **这是阶段 0 两处业务逻辑重做之一**：余额维护从"过账事务内同步更新"改为"账户独立消费经济事实"。逐条按 04 文档实现，任何偏差先在报告写明再做。
 
