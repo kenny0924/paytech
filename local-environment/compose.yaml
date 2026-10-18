@@ -74,6 +74,8 @@ services:
     profiles: [base]
     image: rabbitmq:4.2.9-management
     restart: "no"
+    # 固定节点名 rabbit@rabbitmq：持久队列与节点名绑定，不固定则重建容器后卷里的旧队列不可见（与 test-environment 一致）。
+    hostname: rabbitmq
     environment:
       RABBITMQ_DEFAULT_USER: ${MOR_RABBITMQ_USER:?set MOR_RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${MOR_RABBITMQ_PASSWORD:?set MOR_RABBITMQ_PASSWORD}
