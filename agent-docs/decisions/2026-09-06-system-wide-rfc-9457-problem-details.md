@@ -111,3 +111,9 @@ BFF 将上游错误重建为自身 Problem 时生成新的 `timestamp`。Gateway
 ## 3. 权威与后继
 
 完整合同、组件职责、迁移顺序和验收门禁由 [`2026-09-06-system-wide-rfc-9457-problem-details-design.md`](../../docs/superpowers/specs/2026-09-06-system-wide-rfc-9457-problem-details-design.md) 持有。后继实施计划必须覆盖 Foundation、Gateway、现有 BFF/Web、Platform Support、当前核心 Java 服务、Vault、Commerce OpenAPI 和 Requirements Site，且不得把设计完成写成运行时已迁移。
+
+## 2026-10-18 修订：Owner 业务码可携带字段级 `errors[]`
+
+- **范围**：仅限请求 Body 字段校验失败、由 Owner 以自己的业务 Code 表达的 4xx（首例 client-master `INVALID_DRAFT`，422）。业务执行检查（状态、资格、并发）仍不带 `errors[]`。
+- **Foundation**：`paytech-http-problem` 的 `RequestBodyValidationException` 增加 Owner Code 构造；`MvcProblemExceptionMapper` 按 Owner 状态解析输出 `errors[]`；`paytech-http-client-support` 对已登记合同 Code 的 4xx Problem 同时保留 `field` 与 `message`，仅在调用方开启请求校验透传且请求带 Body 时生效，使 BFF 重新映射后 `errors[]` 继续存在。
+- **依据**：用户 2026-10-18 确认（Client Console 保存资料需逐字段提示）；实现与测试见 `requirements/20261017/architecture-V2骨架与模块搬迁/tasks/16-draft-field-errors-report.md`。本节是对上文"字段错误只用 `VALIDATION_ERROR`"规则的登记例外，不改变其余合同。
