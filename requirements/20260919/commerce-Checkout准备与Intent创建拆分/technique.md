@@ -32,7 +32,7 @@ Payment 明确终止，或者明确返回该 Intent 不存在的业务 `NOT_FOUN
 
 ## 数据与迁移
 
-无新增业务字段或新的阶段/提交表。新库接受表的历史 command_idempotency_id 可空，沿用[已确认的去幂等增量](../../20260917/commerce-SubmitPayment接口重构/db/ddl.sql)。本地缺失四表的唯一执行来源为[本次补表 SQL](../../../commerce-service/docs/requirements/20260919-checkout-preparation/local-test-tables.sql)，不修改已有表或数据。测试完整初始化 SQL 同步包含四表，仍需人工执行。
+无新增业务字段或新的阶段/提交表。新库接受表的历史 command_idempotency_id 可空，沿用[已确认的去幂等增量](../../20260917/commerce-SubmitPayment接口重构/db/ddl.sql)。本地缺失四表的唯一执行来源为[本次补表 SQL](../../../paytech/acquiring/docs/requirements/20260919-checkout-preparation/local-test-tables.sql)，不修改已有表或数据。测试完整初始化 SQL 同步包含四表，仍需人工执行。
 
 历史订单、旧命令表和旧补偿事件不重写；旧未初始化订单不会由 GET 补建，不保留 preparation 兼容入口。旧 CHECKOUT_PREPARATION Handler 已删除；存在存量任务的其他环境启用前必须先处理这些任务和未准备订单，不能直接套用本地新写结论。
 

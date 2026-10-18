@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { renderSchema } from "./generate-oe-client-schemas.mjs";
 
-const source = "payment-orchestration-service/docs/database/payment-orchestration.pdma.json";
+const source = "paytech/payment/docs/database/payment.pdma.json";
 const model = JSON.parse(readFileSync(new URL(`../../${source}`, import.meta.url), "utf8"));
 const entities = new Map(model.entities.map((entity) => [entity.defKey, entity]));
 const fields = (table) => new Set(entities.get(table).fields.map((field) => field.defKey));
@@ -36,7 +36,7 @@ test("Execution preserves frozen routing, original money target, risk and intera
 });
 
 test("Payment canonical schema exactly matches the maintained model", () => {
-  const sql = readFileSync(new URL("../../payment-orchestration-service/docs/database/sql/payment-orchestration-schema.sql", import.meta.url), "utf8");
+  const sql = readFileSync(new URL("../../paytech/payment/docs/database/sql/payment-schema.sql", import.meta.url), "utf8");
   assert.equal(sql, renderSchema(model, source));
   assert.doesNotMatch(sql, /\b(?:FOREIGN KEY|CHECK\s*\()/u);
 });

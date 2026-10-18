@@ -1,0 +1,3 @@
+-- Code-MoR acquiring initialization DML (split from the Commerce initialization DML in step 03).
+-- This release has no business, catalog, account, credential, or test seed rows.
+-- Apply acquiring-schema.sql manually before application or auto tests access mor_acquiring.

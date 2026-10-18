@@ -1,0 +1,3 @@
+# account 本地补偿事件类型目录（ArchUnit R12，第 00 步口径）。account 目前不登记补偿事件：EconomicFactRecorded 经 paytech-messaging 消费，
+# 日终核对由 XXL-Job 触发；本库 t_compensation_event 为每库标准表（现行模型），预留给 BalanceMoved 等后续发布任务（design/04 §5）。
+eventTypes: []

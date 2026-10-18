@@ -4,7 +4,7 @@
 
 ## 1. 已有只读能力不能直接承担创建申请
 
-当前 CCT 有 Checkout 查询 API；[配置](../../../client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/configuration/CheckoutQueryConfiguration.java)只装配只读连接与 Mapper，[依赖门禁](../../../client-contract-service/pom.xml)仍禁止 Redis、补偿执行器和 XXL-Job。新增入驻命令必须按已批准的资源锁、事务与恢复规范调整实际消费者依赖；不能放宽所有禁止项或让现有 Checkout 开关顺带打开写接口。
+当前 CCT 有 Checkout 查询 API；[配置](../../../paytech/commercial/paytech-commercial-app/src/main/java/com/paytech/commercial/configuration)只装配只读连接与 Mapper，[依赖门禁](../../../paytech/client-master/pom.xml)仍禁止 Redis、补偿执行器和 XXL-Job。新增入驻命令必须按已批准的资源锁、事务与恢复规范调整实际消费者依赖；不能放宽所有禁止项或让现有 Checkout 开关顺带打开写接口。
 
 [十表执行候选](./db/implementation/cct-local-execution.md)解决单份资料的物理结构和已有 Checkout 读取回归前置；它不解决下面的任务执行器缺口。
 

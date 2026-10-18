@@ -7,10 +7,27 @@ import { fileURLToPath } from "node:url";
 import { CLOSED_ENUM_VALUES } from "./client-contract-field-metadata.mjs";
 
 const workspaceRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const modelPath = path.join(
-  workspaceRoot,
-  "client-contract-service/docs/database/client-contract.pdma.json",
-);
+// The Client & Contract catalog is split into the client-master and commercial
+// databases; scenarios are checked against the combined catalog view.
+const modelPaths = [
+  "paytech/client-master/docs/database/client-master.pdma.json",
+  "paytech/commercial/docs/database/commercial.pdma.json",
+].map((file) => path.join(workspaceRoot, file));
+// Old CCT database artifacts split into client-master and commercial; the
+// scenario document (agent-docs) still links the old paths until its text update.
+const retiredScenarioLinkTargets = Object.freeze({
+  "client-contract-service/docs/database/client-contract.pdma.json": [
+    "paytech/client-master/docs/database/client-master.pdma.json",
+    "paytech/commercial/docs/database/commercial.pdma.json",
+  ],
+  "client-contract-service/docs/database/CLIENT_CONTRACT_PHYSICAL_DECISIONS.md": [
+    "paytech/client-master/docs/database/CLIENT_MASTER_PHYSICAL_DECISIONS.md",
+    "paytech/commercial/docs/database/COMMERCIAL_PHYSICAL_DECISIONS.md",
+  ],
+});
+// Moved from Commerce; not part of the Client & Contract catalog or its scenarios.
+// Step 08: paytech-messaging consumer tables are not CCT catalog tables either.
+const nonCatalogTables = new Set(["t_client_stored_card_setting", "t_consumed_event", "t_consumed_aggregate_version"]);
 const scenarioPath = path.join(
   workspaceRoot,
   "agent-docs/database/scenarios/CLIENT_CONTRACT_REAL_WORLD_SCENARIOS.md",
@@ -76,7 +93,20 @@ const partnerApplicationLifecycle = Object.freeze({
 });
 
 function readModel() {
-  return JSON.parse(readFileSync(modelPath, "utf8"));
+  const models = modelPaths.map((file) => JSON.parse(readFileSync(file, "utf8")));
+  const entities = new Map();
+  for (const model of models) {
+    for (const entity of model.entities) {
+      if (nonCatalogTables.has(entity.defKey)) continue;
+      // BCR and compensation tables exist in both databases with identical definitions.
+      if (entities.has(entity.defKey)) {
+        assert.deepEqual(entity, entities.get(entity.defKey), `shared table differs: ${entity.defKey}`);
+        continue;
+      }
+      entities.set(entity.defKey, entity);
+    }
+  }
+  return { entities: [...entities.values()], diagrams: models.flatMap((model) => model.diagrams) };
 }
 
 function readScenarioDocument() {
@@ -302,8 +332,12 @@ test("现实场景文档从 Agent、数据库和 CCT 当前导航均可到达", 
     ["agent-docs/database/README.md", "./scenarios/CLIENT_CONTRACT_REAL_WORLD_SCENARIOS.md"],
     ["agent-docs/database/CLIENT_CONTRACT_DATABASE.md", "./scenarios/CLIENT_CONTRACT_REAL_WORLD_SCENARIOS.md"],
     [
-      "client-contract-service/docs/database/CLIENT_CONTRACT_PHYSICAL_DECISIONS.md",
-      "../../../agent-docs/database/scenarios/CLIENT_CONTRACT_REAL_WORLD_SCENARIOS.md",
+      "paytech/client-master/docs/database/CLIENT_MASTER_PHYSICAL_DECISIONS.md",
+      "../../../../agent-docs/database/scenarios/CLIENT_CONTRACT_REAL_WORLD_SCENARIOS.md",
+    ],
+    [
+      "paytech/commercial/docs/database/COMMERCIAL_PHYSICAL_DECISIONS.md",
+      "../../../../agent-docs/database/scenarios/CLIENT_CONTRACT_REAL_WORLD_SCENARIOS.md",
     ],
   ];
 
@@ -324,6 +358,15 @@ test("现实场景文档从 Agent、数据库和 CCT 当前导航均可到达", 
     if (/^(?:https?:|#)/u.test(target)) continue;
     const linkPath = target.split("#", 1)[0].replace(/^<|>$/gu, "");
     const targetPath = path.resolve(path.dirname(scenarioPath), linkPath);
+    const retired = retiredScenarioLinkTargets[path.relative(workspaceRoot, targetPath)];
+    if (retired) {
+      // agent-docs text is updated in a later step; the split replacements must exist.
+      assert.equal(existsSync(targetPath), false, `已拆分的旧目标仍存在：${target}`);
+      for (const replacement of retired) {
+        assert.ok(existsSync(path.join(workspaceRoot, replacement)), `拆分后的替代目标不存在：${replacement}`);
+      }
+      continue;
+    }
     assert.ok(existsSync(targetPath), `现实场景文档链接目标不存在：${target}`);
   }
 });

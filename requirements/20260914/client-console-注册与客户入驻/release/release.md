@@ -13,7 +13,7 @@
 |---|---|---|
 | 运行中容器 | 11 个全部 healthy；Gateway/Platform/运营 BFF/运营 Web 为 `ba36b63` 镜像，Risk/Vault/Nginx 为旧镜像 | 见下 |
 | `ba36b63` 是否含入驻修复 | **不含**：注册只读事务（`7ead395`）、Tenant 投影映射（`7ead395`）、CCT 联系人 STABLE（`b106d78`）、O10 下载 415（`349df5e`）都在其后 | Platform、运营 Web 从新提交重建；Gateway、运营 BFF 自 `ba36b63` 以来只有格式改动，不重建 |
-| `mor_cct` | **0 张表**（库与 `cct_app` 账号已存在） | 按完整 [CCT Schema](../../../../client-contract-service/docs/database/sql/client-contract-schema.sql) 建 38 表（新库路径，[迁移方案](../migration-plan.md)第 1 节） |
+| `mor_cct` | **0 张表**（库与 `cct_app` 账号已存在） | 按完整 [CCT Schema](../../../../paytech/client-master/docs/database/sql/client-master-schema.sql) 建 38 表（新库路径，[迁移方案](../migration-plan.md)第 1 节） |
 | `mor_risk` | 80 表。与当前 Schema 差：① 入驻 4b（缺 `t_dd_case_classification`，`t_due_diligence_case`/`t_dd_case_subject` 缺 5 列）；② 争议 4 表 8 列仍是 `provider_*`、索引 `uk_dispute_provider_act` 未改名。相关 9 张表**均为 0 行** | ① 执行 [risk-onboarding-alter.sql](../db/implementation/risk-onboarding-alter.sql)；② 见决定 D2 |
 | Risk 入驻资料方案 | `t_dd_program*` 0 行 | 执行 [risk-generic-materials-init.sql](../db/implementation/risk-generic-materials-init.sql)，`@approved_by` = test 管理员 `221546852372267008` |
 | `mor_platform` | 50 表与当前 Schema 一致；签名密钥只有 OPERATIONS 一把；扫描策略 0 行；CLIENT Gateway 目标不存在；ACTIVE 路由 149；PLATFORM_ADMIN v21；`9200000000000101～105` 授权 ID 无冲突 | 加 CUSTOMER 签名公钥、扫描策略、入驻登记、管理员授权 |

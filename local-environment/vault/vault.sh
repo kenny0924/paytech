@@ -42,7 +42,7 @@ secrets="$env_dir/e2e/secrets.env"
 image_dir="$here/bin/image"
 mkdir -p "$image_dir"
 export GOTOOLCHAIN=local CGO_ENABLED=0 GOOS=linux GOARCH=arm64 GOFLAGS=-mod=readonly
-(cd "$workspace/vault-service" && "$go_bin" build -trimpath -buildvcs=false -o "$image_dir/vault-server" ./cmd/vault-server)
+(cd "$workspace/paytech/vault" && "$go_bin" build -trimpath -buildvcs=false -o "$image_dir/vault-server" ./cmd/vault-server)
 "$go_bin" build -trimpath -buildvcs=false -o "$image_dir/vault-probe" "$workspace/test-environment/vault/probe.go"
 
 mkdir -p "$here/private" && chmod 700 "$here/private"

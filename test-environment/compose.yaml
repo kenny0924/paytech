@@ -18,11 +18,27 @@ services:
       MOR_NACOS_DB_PASSWORD: ${MOR_NACOS_DB_PASSWORD:?set MOR_NACOS_DB_PASSWORD}
       MOR_XXL_JOB_DB_PASSWORD: ${MOR_XXL_JOB_DB_PASSWORD:?set MOR_XXL_JOB_DB_PASSWORD}
       PAYTECH_FOUNDATION_TEST_DB_PASSWORD: ${PAYTECH_FOUNDATION_TEST_DB_PASSWORD:?set PAYTECH_FOUNDATION_TEST_DB_PASSWORD}
+      # V2 服务库账号（design/10 §5.1）：共享初始化脚本在新卷上据此建库与账号；已初始化的卷由 scripts/initialize.py 的建库动作补建（见 README）。
+      MOR_CLIENT_MASTER_DB_PASSWORD: ${MOR_CLIENT_MASTER_DB_PASSWORD:?set MOR_CLIENT_MASTER_DB_PASSWORD}
+      MOR_COMMERCIAL_DB_PASSWORD: ${MOR_COMMERCIAL_DB_PASSWORD:?set MOR_COMMERCIAL_DB_PASSWORD}
+      MOR_ACQUIRING_DB_PASSWORD: ${MOR_ACQUIRING_DB_PASSWORD:?set MOR_ACQUIRING_DB_PASSWORD}
+      MOR_CONSUMER_DB_PASSWORD: ${MOR_CONSUMER_DB_PASSWORD:?set MOR_CONSUMER_DB_PASSWORD}
+      MOR_CHANNEL_CONNECTOR_DB_PASSWORD: ${MOR_CHANNEL_CONNECTOR_DB_PASSWORD:?set MOR_CHANNEL_CONNECTOR_DB_PASSWORD}
+      MOR_CARD_DB_PASSWORD: ${MOR_CARD_DB_PASSWORD:?set MOR_CARD_DB_PASSWORD}
+      MOR_RISK_DECISION_DB_PASSWORD: ${MOR_RISK_DECISION_DB_PASSWORD:?set MOR_RISK_DECISION_DB_PASSWORD}
+      MOR_COMPLIANCE_DB_PASSWORD: ${MOR_COMPLIANCE_DB_PASSWORD:?set MOR_COMPLIANCE_DB_PASSWORD}
+      MOR_LEDGER_DB_PASSWORD: ${MOR_LEDGER_DB_PASSWORD:?set MOR_LEDGER_DB_PASSWORD}
+      MOR_BILLING_DB_PASSWORD: ${MOR_BILLING_DB_PASSWORD:?set MOR_BILLING_DB_PASSWORD}
+      MOR_ACCOUNT_DB_PASSWORD: ${MOR_ACCOUNT_DB_PASSWORD:?set MOR_ACCOUNT_DB_PASSWORD}
+      MOR_RECONCILIATION_DB_PASSWORD: ${MOR_RECONCILIATION_DB_PASSWORD:?set MOR_RECONCILIATION_DB_PASSWORD}
+      MOR_TAX_DB_PASSWORD: ${MOR_TAX_DB_PASSWORD:?set MOR_TAX_DB_PASSWORD}
+      MOR_CDC_DB_PASSWORD: ${MOR_CDC_DB_PASSWORD:?set MOR_CDC_DB_PASSWORD}
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_0900_ai_ci
       - --default-time-zone=+00:00
-      - --max-connections=200
+      # 16 个持库 Java 服务连接池合计约 160 个连接，另有 Nacos 与 XXL-Job（design/10 §5.1）；重建容器后生效。
+      - --max-connections=400
     ports:
       - "127.0.0.1:23306:3306"
     volumes:
@@ -75,6 +91,8 @@ services:
       - "127.0.0.1:25673:15672"
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
+      # paytech-messaging needs the consistent hash exchange (design/08 §3); management and prometheus keep the image defaults.
+      - ./rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins:ro
     healthcheck:
       test: [CMD, rabbitmq-diagnostics, -q, ping]
       interval: 10s

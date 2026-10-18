@@ -1,0 +1,130 @@
+server:
+  address: 127.0.0.1
+  port: 18112
+
+spring:
+  application:
+    name: compliance-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+        namespace: ${NACOS_NAMESPACE:mor-local}
+        ip: ${SPRING_CLOUD_NACOS_DISCOVERY_IP:${SERVER_ADDRESS:127.0.0.1}}
+  datasource:
+    url: "${COMPLIANCE_DB_URL}"
+    username: "${COMPLIANCE_DB_USERNAME}"
+    password: "${COMPLIANCE_DB_PASSWORD}"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-init-sql: "SET time_zone = '+00:00'"
+      connection-timeout: 2000
+      validation-timeout: 1000
+      data-source-properties:
+        connectionTimeZone: UTC
+        forceConnectionTimeZoneToSession: true
+        connectTimeout: 2000
+        socketTimeout: 2000
+  rabbitmq:
+    host: "${COMPLIANCE_RABBITMQ_HOST:127.0.0.1}"
+    port: "${COMPLIANCE_RABBITMQ_PORT:5672}"
+    username: "${COMPLIANCE_RABBITMQ_USERNAME:}"
+    password: "${COMPLIANCE_RABBITMQ_PASSWORD:}"
+    virtual-host: "${COMPLIANCE_RABBITMQ_VHOST:/mor-local}"
+    connection-timeout: 2s
+    # 发布确认与不可路由退回：补偿 Handler 等待 Broker 确认后才算发布成功（旧 Topic 与 compliance.events 均如此）。
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+      fail-on-missing-creator-properties: false
+  jmx:
+    enabled: false
+  sql:
+    init:
+      mode: never
+
+mybatis:
+  mapper-locations: classpath*:mapper/**/*.xml
+
+compliance:
+  identifier:
+    # 本服务独立的 Snowflake 坐标（实例清单分配），不得与 risk-decision 共用 worker。
+    region-id: "${COMPLIANCE_SNOWFLAKE_REGION_ID}"
+    worker-id: "${COMPLIANCE_SNOWFLAKE_WORKER_ID}"
+
+web:
+  logging:
+    metadata-only-path-prefixes:
+      - /internal/due-diligence/material-requirements
+      # I01 请求体含主体姓名、证件号与地址原值，只记元数据。
+      - /client-onboarding-review
+      # 审核命令含内部理由与客户可见说明，只记元数据。
+      - /client-onboarding-admin
+
+management:
+  server:
+    # 管理端口 = 业务端口 + 1000（design/01 §3）。
+    port: 19112
+  endpoints:
+    enabled-by-default: false
+    web:
+      discovery:
+        enabled: false
+      exposure:
+        include: health,info,prometheus
+    jmx:
+      exposure:
+        exclude: "*"
+  endpoint:
+    health:
+      access: read-only
+      show-details: never
+      probes:
+        enabled: true
+        add-additional-paths: false
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState
+    info:
+      access: read-only
+    prometheus:
+      access: read-only
+
+# 本地补偿任务：审核结果在本地事务登记，提交后由 Handler 发布到 RabbitMQ（旧 Topic 与 compliance.events）。
+compensation:
+  enabled: true
+
+# paytech-messaging 发布端：声明 compliance.events（Durable Fanout）并提供 DomainEventPublisher（design/08 §3）。
+messaging:
+  producer:
+    service: compliance
+    # 发布侧按聚合串行（design/08 §3）：CLIENT_REVIEW_RESULT 补偿任务按事件键（审核主任务 ID）串行到固定线程。
+    sequencer:
+      enabled: true
+  publisher:
+    # 订阅方（client-master）已接入：未路由视为发布失败，由补偿任务重试（第 08 步由过渡期的 ACK_AND_WARN 改回）。
+    unroutable-policy: FAIL
+
+# 实例 ID（实例清单 instance.id，01 §5）：领域事件信封 instanceId 与内部调用 Token 的 inst。
+paytech:
+  instance-id: "${PAYTECH_INSTANCE_ID:main}"
+
+# 内部调用身份（D26）：默认 OFF；YAML 中必须带引号，裸 OFF 会被解析为布尔 false。
+internal-auth:
+  mode: "${COMPLIANCE_INTERNAL_AUTH_MODE:OFF}"
+
+# Client 入驻通用材料目录：每类资格一个全局程序，不按国家区分；材料充分性由人工审核判断。
+# 程序数据由 requirements/20260914/client-console-注册与客户入驻/db/implementation/risk-generic-materials-init.sql 手工初始化（目标库 mor_compliance）。
+onboarding:
+  # I01 审核登记入口（client-master 私网调用）；默认关闭。
+  review:
+    enabled: false
+  materials:
+    enabled: false
+    programs-json: '[{"qualificationType":"INDIVIDUAL_KYC","programCode":"CLIENT_INDIVIDUAL_GENERIC"},{"qualificationType":"ORGANIZATION_KYB","programCode":"CLIENT_ORGANIZATION_GENERIC"},{"qualificationType":"RELATED_PERSON_KYC","programCode":"RELATED_PERSON_GENERIC"}]'

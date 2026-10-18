@@ -7,7 +7,7 @@
 
 ## 1. 合并原则
 
-公共编码规则由 [DEVELOPMENT_CONVENTIONS.md](../DEVELOPMENT_CONVENTIONS.md) 拥有，模块、包和接口边界由 [JAVA_PROJECT_STRUCTURE.md](../JAVA_PROJECT_STRUCTURE.md) 拥有。Payment 的[写接口规范](../../payment-orchestration-service/docs/development/processor-conventions.md)作为具体应用和阅读示例，不再维护一套相反的通用分层规则。
+公共编码规则由 [DEVELOPMENT_CONVENTIONS.md](../DEVELOPMENT_CONVENTIONS.md) 拥有，模块、包和接口边界由 [JAVA_PROJECT_STRUCTURE.md](../JAVA_PROJECT_STRUCTURE.md) 拥有。Payment 的[写接口规范](../../paytech/payment/docs/development/processor-conventions.md)作为具体应用和阅读示例，不再维护一套相反的通用分层规则。
 
 1. API 的 RequestBody、ResponseBody 独立使用 class；字段首行简短说明，细节用 `<li>`。正常绑定和 Hibernate Validator 负责字段基础校验，不逐层重复。
 2. 写操作使用对应 Processor，位于所属业务模块的 `service/processor`；处理顺序为基础校验、原提交判断、业务验证与完整 Context 构造、本地保存、提交后推进、响应。

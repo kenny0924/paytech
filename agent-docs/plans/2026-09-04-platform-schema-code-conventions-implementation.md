@@ -15,7 +15,7 @@
 - 63 表 PDManer、逻辑关系、复合 Tuple 和 sidecar 业务规则保留，不创建其余 41 张表，也不把保留的逻辑关系误写为物理外键。
 
 新库使用服务的当前 Schema 和唯一初始化 DML。既有库仅显式应用
-[`2026-09-04-code-owned-constraints.sql`](../../platform-support-service/docs/database/sql/changes/2026-09-04-code-owned-constraints.sql)。
+[`2026-09-04-code-owned-constraints.sql`](../../paytech/platform-support/docs/database/sql/changes/2026-09-04-code-owned-constraints.sql)。
 SQL 是一次性操作，不用于自动启动或重放；MySQL DDL 自动提交，失败应核对进度而非盲目重跑。
 
 ## mor-test 执行记录

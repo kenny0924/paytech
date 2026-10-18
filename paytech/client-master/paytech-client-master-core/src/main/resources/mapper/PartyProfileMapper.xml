@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.client.master.core.dal.mapper.PartyProfileMapper">
+    <resultMap id="PartyProfile" type="com.paytech.client.master.core.dal.dataobject.CheckoutRecords$PartyProfile">
+        <constructor>
+            <arg column="profile_id" javaType="java.lang.Long"/>
+            <arg column="party_id" javaType="java.lang.Long"/>
+            <arg column="approved_time" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg column="draft_application_id" javaType="java.lang.Long"/>
+            <arg column="content_hash" javaType="java.lang.String"/>
+        </constructor>
+    </resultMap>
+    <select id="findForCheckout" resultMap="PartyProfile">
+        SELECT profile_id, party_id, approved_time, draft_application_id, content_hash
+        FROM t_party_profile
+        WHERE party_id IN (SELECT party_id FROM t_client WHERE client_id = #{clientId})
+        ORDER BY profile_id
+    </select>
+    <!-- commercial 合同签署校验按资料 ID 读取；调用方保证 ids 非空且有界。 -->
+    <select id="findByIds" resultMap="PartyProfile">
+        SELECT profile_id, party_id, approved_time, draft_application_id, content_hash
+        FROM t_party_profile
+        WHERE profile_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY profile_id
+    </select>
+    <!-- 资料首次批准并永久锁定的时间：只填空值，与申请结论、Client 激活同一事务。 -->
+    <update id="markApproved">
+        UPDATE t_party_profile SET approved_time=#{now,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler},
+            update_time=#{now,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}
+        WHERE party_id=#{partyId} AND approved_time IS NULL
+    </update>
+</mapper>

@@ -1,0 +1,162 @@
+# client-master Mock 测试的可运行配置：真实 client-master 生产链 + 本机 MySQL/Redis/RabbitMQ + 外部 Owner 的测试 HTTP 接口。
+# 数据库使用仓库隔离的本地默认凭据（与 init/ddl.sql、local-environment/.env.example 一致），可用环境变量覆盖；Redis 密码取自环境变量。
+
+# ==================== 中间件、框架与公共组件配置 ====================
+
+server:
+  address: 127.0.0.1
+  port: 0
+
+spring:
+  application:
+    name: client-master-service
+  main:
+    banner-mode: "off"
+  jmx:
+    enabled: false
+  cloud:
+    nacos:
+      config:
+        enabled: false
+      discovery:
+        enabled: false
+    discovery:
+      client:
+        simple:
+          instances:
+            platform-support-service:
+              - uri: "${client-master.test.external.base-url}"
+            compliance-service:
+              - uri: "${client-master.test.external.base-url}"
+            vault-service:
+              - uri: "${client-master.test.external.base-url}"
+            commercial-service:
+              - uri: "${client-master.test.external.base-url}"
+    loadbalancer:
+      retry:
+        enabled: false
+      cache:
+        enabled: false
+  datasource:
+    url: "jdbc:mysql://127.0.0.1:13306/mor_client_master?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&connectionTimeZone=UTC"
+    username: client_master_app
+    password: "${CLIENT_MASTER_TEST_DB_PASSWORD:${MOR_CLIENT_MASTER_DB_PASSWORD:local-client-master-change-me-2026}}"
+    hikari:
+      maximum-pool-size: 5
+      connection-timeout: 2000
+      initialization-fail-timeout: 1
+      pool-name: client-master-database
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: "${CLIENT_MASTER_TEST_RABBITMQ_USERNAME:${MOR_RABBITMQ_USER:}}"
+    password: "${CLIENT_MASTER_TEST_RABBITMQ_PASSWORD:${MOR_RABBITMQ_PASSWORD:}}"
+    virtual-host: "${CLIENT_MASTER_TEST_RABBITMQ_VHOST:${MOR_RABBITMQ_VHOST:/mor-local}}"
+    connection-timeout: 2s
+    # 测试作为 Risk 发布审核结果时等待 Broker 确认。
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
+  data:
+    redis:
+      host: "127.0.0.1"
+      port: 16379
+      password: "${MOR_REDIS_PASSWORD:${PAYTECH_REDIS_PASSWORD:}}"
+      database: 0
+      connect-timeout: 2s
+      timeout: 2s
+
+redis:
+  key-prefix: "client-master-test-${random.uuid}"
+  coordination:
+    enabled: true
+    resource-lock:
+      wait-time: 500ms
+      lease-time: 30s
+
+compensation:
+  enabled: true
+  instance-id: "${spring.application.name}"
+  lease-duration: 2m
+  scanner-batch-size: 100
+
+xxl:
+  job:
+    admin:
+      addresses: ""
+      access-token: ""
+      timeout: 3
+    executor:
+      enabled: false
+      app-name: client-master-service
+      address: ""
+      ip: ""
+      port: 0
+      log-path: ./logs/xxl-job
+      log-retention-days: 30
+      excluded-packages: "org.springframework.,spring."
+
+web:
+  logging:
+    metadata-only-path-prefixes:
+      - /client-onboarding
+      - /internal/client-onboarding
+      - /client-onboarding-admin
+
+vault:
+  client:
+    # C14 不调用 Vault；走正式服务发现，vault-service 由 SimpleDiscovery 指向测试 HTTP 服务，任何调用都会记录为意外调用。
+    caller-service: client-master-service
+    connect-timeout: 2s
+    read-timeout: 3s
+
+management:
+  server:
+    # 随机管理端口；测试不访问 Actuator。
+    port: 0
+  endpoints:
+    enabled-by-default: false
+  health:
+    redis:
+      enabled: false
+    rabbit:
+      enabled: false
+
+# 内部调用 Token（D26）：Mock 测试保持关闭；值必须带引号，裸 OFF 在 YAML 1.1 中是布尔 false。
+internal-auth:
+  mode: "OFF"
+
+# ==================== client-master 系统自定义配置 ====================
+
+onboarding:
+  # 草稿、人员、材料与 C14 提交入口；依赖 recovery-enabled 与 Redis 资源锁。
+  draft-enabled: true
+  # 入驻补偿任务（工作区开通、审核登记）；要求 compensation.enabled。
+  recovery-enabled: true
+  id:
+    # 测试专用 Snowflake 坐标，与本机其他进程区分。
+    datacenter: 7
+    worker: 7
+  # 留空：Platform、Risk 走正式服务发现，由上方 SimpleDiscovery 指向测试 HTTP 服务。
+  platform-test-base-url: ""
+  risk-test-base-url: ""
+  form-catalog:
+    organization-types:
+      - { code: LIMITED_COMPANY, label: 有限公司 }
+      - { code: OTHER, label: 其他 }
+    business-models:
+      - { code: SERVICES, label: 服务, client-types: [INDIVIDUAL, ORGANIZATION] }
+    identifier-types:
+      - { code: PASSPORT, label: 护照, client-types: [INDIVIDUAL], issuing-country-mode: REQUIRED }
+      - { code: COMPANY_REGISTRATION_NUMBER, label: 公司注册号, client-types: [ORGANIZATION], issuing-country-mode: REQUIRED }
+      - { code: LEI, label: LEI, client-types: [ORGANIZATION], issuing-country-mode: NONE }
+    industries:
+      - { code: RETAIL, label: 零售 }
+      - { code: SOFTWARE_SAAS, label: 软件与 SaaS }
+
+client-master:
+  test:
+    external:
+      # EnableMockHttpServer 在应用创建客户端前注入随机 Loopback 地址。
+      base-url: ""

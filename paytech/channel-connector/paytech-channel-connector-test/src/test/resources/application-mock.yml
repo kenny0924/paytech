@@ -1,0 +1,102 @@
+server:
+  address: 127.0.0.1
+  port: 0
+
+spring:
+  config:
+    # 复用仓库已启动的本地环境凭据；唯一锚点 paytech.local-environment.dir 由父 POM 经 Surefire 注入（10 §4.4）。
+    import:
+      - "optional:file:${paytech.local-environment.dir}/.env.local[.properties]"
+  application:
+    name: channel-connector-service
+  cloud:
+    discovery:
+      client:
+        simple:
+          instances:
+            # 同一独立 Mock HTTP 服务承载 Vault 账号读取与 Platform 标准 API 执行。
+            vault-service:
+              - uri: "${test.mock-http.base-url}"
+            platform-support-service:
+              - uri: "${test.mock-http.base-url}"
+    loadbalancer:
+      retry:
+        enabled: false
+    nacos:
+      config:
+        enabled: false
+      discovery:
+        # 自动测试不连接 Nacos，外部服务由 simple discovery 指向测试 Mock HTTP 服务。
+        enabled: false
+        register-enabled: false
+  datasource:
+    url: "jdbc:mysql://127.0.0.1:13306/mor_channel_connector?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+    username: channel_connector_app
+    password: "${MOR_CHANNEL_CONNECTOR_DB_PASSWORD:local-channel-connector-change-me-2026}"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-timeout: 2000
+      validation-timeout: 1000
+      connection-init-sql: "SET time_zone = '+00:00'"
+  sql:
+    init:
+      mode: never
+  jmx:
+    enabled: false
+
+logging:
+  pattern:
+    level: "%5p [requestId=%X{requestId:-}] %kvp"
+
+web:
+  logging:
+    metadata-only-path-prefixes:
+      - /
+
+mybatis:
+  mapper-locations: "classpath*:mapper/**/*.xml"
+
+internal-auth:
+  # 裸 OFF 会被 YAML 解析为布尔 false，必须带引号。
+  mode: "OFF"
+
+channel-connector:
+  capability-definitions:
+    "[ACTION.PAY]": { value-type: BOOLEAN }
+    "[ACTION.AUTHORIZE]": { value-type: BOOLEAN }
+    "[ACTION.AUTHENTICATE]": { value-type: BOOLEAN }
+    "[ACTION.CAPTURE]": { value-type: BOOLEAN }
+    "[ACTION.VOID]": { value-type: BOOLEAN }
+    "[ACTION.REFUND]": { value-type: BOOLEAN }
+    "[AMOUNT.MIN]": { value-type: DECIMAL }
+    "[AMOUNT.MAX]": { value-type: DECIMAL }
+    "[SECURITY.3DS_MODE]": { value-type: CODE, allowed-codes: [REQUIRED, SUPPORTED, UNSUPPORTED] }
+  outbound:
+    platform-context-path: "" # 测试 Mock HTTP 服务无 Platform 的 /platform-support 前缀。
+    platform-read-timeout: 30s
+
+vault:
+  client:
+    caller-service: channel-connector-service
+    service-id: vault-service
+    connect-timeout: 2s
+    read-timeout: 5s
+
+management:
+  server:
+    port: 0
+  endpoints:
+    access:
+      default: none
+    web:
+      discovery:
+        enabled: false
+      exposure:
+        include: health
+  endpoint:
+    health:
+      access: read-only
+      probes:
+        enabled: true
+
+# test.mock-http.base-url 由 EnableMockHttpServer 在创建真实客户端之前注入随机 Loopback 端口。

@@ -1,0 +1,110 @@
+package com.paytech.channel.connector.auto.candidate;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.math.BigDecimal;
+import java.net.http.HttpClient;
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.http.MediaType;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
+
+import com.paytech.channel.connector.api.candidate.ChannelCandidateQueryApi;
+import com.paytech.channel.connector.api.candidate.request.QueryMidCandidatesRequestBody;
+import com.paytech.channel.connector.api.candidate.response.QueryMidCandidatesResponseBody;
+import com.paytech.channel.connector.api.enums.ChannelOperation;
+import com.paytech.channel.connector.test.base.ChannelConnectorMockTestBase;
+import com.paytech.channel.connector.test.builder.ChannelRequestBuilder;
+import com.paytech.channel.connector.test.dal.ChannelTestMapper;
+import com.paytech.channel.connector.test.mocker.ChannelDataMocker.Fixture;
+
+/**
+ * MID 候选查询的 HTTP 合同：能力代码只在 channel-connector 解析（D06），返回支持的渠道操作与金额上下限，ID 与金额为十进制字符串。
+ *
+ * @see ChannelCandidateQueryApi#queryMidCandidates(QueryMidCandidatesRequestBody)
+ */
+class ChannelCandidateQueryHttpTest extends ChannelConnectorMockTestBase {
+    @LocalServerPort
+    private int port;
+
+    @Autowired
+    private ChannelTestMapper mapper;
+
+    private Fixture fixture;
+
+    /** 本类公共：OE 00001 的启用三元组与 CARD/AED PAY 能力。 */
+    @BeforeEach
+    void setUpClassMocks() {
+        fixture = data.activeFixture();
+    }
+
+    /** ACTION.* 为 true 的操作按代码升序，AMOUNT.MIN/MAX 原样精度返回；不读取 Vault。 */
+    @Test
+    void test_candidateProjection() {
+        data.capabilityDetail(fixture, "ACTION.AUTHORIZE", true);
+        data.amountBounds(fixture, new BigDecimal("1.50"), new BigDecimal("2000"));
+
+        var candidates = query(ChannelRequestBuilder.candidatesBody()).getCandidates();
+
+        var candidate = candidates.getFirst();
+        assertAll(() -> assertEquals(1, candidates.size()),
+            () -> assertEquals(fixture.getChannel().getChannelId().toString(), candidate.getChannelId()),
+            () -> assertEquals(fixture.getAccount().getChannelAccountId().toString(), candidate.getChannelAccountId()),
+            () -> assertEquals(fixture.getMid().getMidId().toString(), candidate.getMidId()),
+            () -> assertEquals(List.of(ChannelOperation.AUTHORIZE.getCode(), ChannelOperation.PAY.getCode()),
+                candidate.getSupportedOperations()),
+            () -> assertEquals(0, new BigDecimal("1.50").compareTo(new BigDecimal(candidate.getMinAmount()))),
+            () -> assertEquals(0, new BigDecimal("2000").compareTo(new BigDecimal(candidate.getMaxAmount()))));
+        vault.assertNoCalls();
+    }
+
+    /** 明确关闭的动作不进入支持操作，候选仍返回（由 Payment 路由淘汰）；未声明的限额为空。 */
+    @Test
+    void test_disabledActionNotSupported() {
+        data.capability(fixture, "VISA", "AE", "AED", "ACTION.PAY", false);
+
+        var candidate = query(ChannelRequestBuilder.candidatesBody()).getCandidates().getFirst();
+
+        assertAll(() -> assertEquals(List.of(), candidate.getSupportedOperations()),
+            () -> assertNull(candidate.getMinAmount()), () -> assertNull(candidate.getMaxAmount()));
+    }
+
+    /** 配置损坏返回 500，不伪装成空候选；请求维度非法返回 422。 */
+    @Test
+    void test_brokenConfigurationRejected() {
+        var invalid = ChannelRequestBuilder.candidatesBody();
+        invalid.getCriteria().setCountryCode("*");
+        mapper.midEntity("00002");
+
+        assertAll(() -> assertEquals(500, status(ChannelRequestBuilder.candidatesBody())),
+            () -> assertEquals(422, status(invalid)));
+    }
+
+    /** 经真实 HTTP 入口查询；4xx/5xx 使测试失败。 */
+    QueryMidCandidatesResponseBody query(QueryMidCandidatesRequestBody body) {
+        return client().post().uri("/channel-connector/v1/mid-candidates").contentType(MediaType.APPLICATION_JSON)
+            .body(body).retrieve().body(QueryMidCandidatesResponseBody.class);
+    }
+
+    /** 查询并返回 HTTP 状态。 */
+    int status(QueryMidCandidatesRequestBody body) {
+        try {
+            return client().post().uri("/channel-connector/v1/mid-candidates").contentType(MediaType.APPLICATION_JSON)
+                .body(body).retrieve().toBodilessEntity().getStatusCode().value();
+        } catch (RestClientResponseException failure) {
+            return failure.getStatusCode().value();
+        }
+    }
+
+    /** JDK 客户端：不自动重试 POST。 */
+    RestClient client() {
+        return RestClient.builder().baseUrl("http://127.0.0.1:" + port)
+            .requestFactory(new JdkClientHttpRequestFactory(HttpClient.newHttpClient())).build();
+    }
+}

@@ -4,7 +4,7 @@
 
 1. 确认库名尚不存在、现有 `platform_app` 仅有本机用途，备份相关 Schema/授权元数据至 `~/Code-MoR-backups/`，不导出人员或凭据业务数据。
 2. 人工执行 [prepare.sql](./prepare.sql)，新建库并赋予现有本机账号该库的数据读写权限。
-3. 向新库应用唯一 [Schema](../../../../../../platform-support-service/docs/database/sql/platform-support-schema.sql)（24 张现有表）与 [完整初始化](../../../../../../platform-support-service/docs/database/sql/platform-support-initial-data.sql)（1141 行初始化数据）。Schema 没有因本需求增加或修改表/字段；新入口与按钮停用，管理员新增管理授权为 REVOKED。
+3. 向新库应用唯一 [Schema](../../../../../../paytech/platform-support/docs/database/sql/platform-support-schema.sql)（24 张现有表）与 [完整初始化](../../../../../../paytech/platform-support/docs/database/sql/platform-support-initial-data.sql)（1141 行初始化数据）。Schema 没有因本需求增加或修改表/字段；新入口与按钮停用，管理员新增管理授权为 REVOKED。
 4. 开发测试显式指定 `PLATFORM_SUPPORT_TEST_DB_URL=jdbc:mysql://127.0.0.1:13306/mor_platform_config_validation?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC`；凭据只从既有本机私有环境读取，不输出。
 5. 测试自行准备、清理隔离 Fixture；不在应用启动时迁移/播种，不向旧验证库补数据或删除历史。
 

@@ -10,6 +10,14 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { RELATIONS, TABLES } from "./manifest.mjs";
+import { CURRENT_COMPENSATION_EVENT } from "./manifests/08-reliability.mjs";
+import {
+  EXPECTED_SERVICE_TABLE_COUNTS,
+  FINANCE_SERVICES,
+  SERVICE_ADDED_TABLES,
+  SERVICE_TABLE_VARIANTS,
+  serviceTables,
+} from "./service-split.mjs";
 import {
   CHECK_BINDINGS,
   CHECK_CONTRACTS,
@@ -23,10 +31,14 @@ const templatePath = path.join(
   workspaceRoot,
   "agent-docs/templates/pdmaner/template.pdma.json",
 );
-const outputPath = path.join(
-  workspaceRoot,
-  "finance-service/docs/database/finance.pdma.json",
-);
+// 第 07 步起不再输出单一 finance.pdma.json：逻辑模型只在内存生成并校验，按服务切分后写入各服务目录。
+export function serviceModelPath(service) {
+  return path.join(workspaceRoot, `paytech/${service}/docs/database/${service}.pdma.json`);
+}
+
+const SERVICE_TITLES = Object.freeze({
+  ledger: "Ledger", account: "Account", billing: "Billing", reconciliation: "Reconciliation", tax: "Tax", payout: "Payout",
+});
 
 const MODEL_KEY = "code-mor/finance/database/v1";
 const EXPECTED_TEMPLATE_DIGEST = "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540";
@@ -223,7 +235,7 @@ function buildIndexes(table, fieldsByKey) {
       defKey: spec.defKey,
       defName: `${spec.unique ? "唯一" : "访问"}索引 ${spec.fields.join("、")}`,
       unique: spec.unique,
-      comment: `${spec.unique ? "保证业务唯一性" : "支持访问路径"}：${spec.fields.join("、")}`,
+      comment: spec.comment ?? `${spec.unique ? "保证业务唯一性" : "支持访问路径"}：${spec.fields.join("、")}`,
       fields: spec.fields.map((fieldKey, position) => {
         const field = fieldsByKey.get(fieldKey);
         invariant(field, `索引字段不存在：${table.defKey}.${spec.defKey}.${fieldKey}`);
@@ -238,10 +250,10 @@ function buildIndexes(table, fieldsByKey) {
   });
 }
 
-function buildEntities(model) {
+function buildEntities(model, tables = TABLES) {
   const typeIds = Object.fromEntries(model.dataTypeMapping.mappings.map((mapping) => [mapping.defKey, mapping.id]));
   const domainIds = Object.fromEntries(model.domains.map((domain) => [domain.defKey, domain.id]));
-  return TABLES.map((table) => {
+  return tables.map((table) => {
     const fields = table.fields.map((manifestField) => {
       const mapping = baseTypeFor(manifestField, typeIds, domainIds);
       return {
@@ -258,7 +270,7 @@ function buildEntities(model) {
         hideInGraph: false,
         refDict: "",
         baseType: mapping.baseType,
-        extProps: (["entity_no", "liable_entity_no", "entity_id"].includes(manifestField.defKey) || (table.defKey === "account" && manifestField.defKey === "owner_id") || (table.defKey === "transaction_economic_component" && manifestField.defKey === "party_id"))
+        extProps: (manifestField.ascii || ["entity_no", "liable_entity_no", "entity_id"].includes(manifestField.defKey) || (table.defKey === "account" && manifestField.defKey === "owner_id") || (table.defKey === "economic_fact_line" && ["party_id", "payer_id", "payee_id"].includes(manifestField.defKey)) || (table === CURRENT_COMPENSATION_EVENT && ["event_key", "event_type", "sub_event_type"].includes(manifestField.defKey)))
           ? { characterSet: "ascii", collation: "ascii_bin" } : {},
         domain: mapping.domain,
         id: stableUuid(`field/${table.defKey}/${manifestField.defKey}`),
@@ -550,21 +562,116 @@ export function serializeFinanceModel(model = generateFinanceModel()) {
   return `${JSON.stringify(model, null, 2)}\n`;
 }
 
+/** 把逻辑模型投影为一个服务库的物理模型：只保留本库表、库内关系与相应图组。 */
+export function projectServiceModel(model, service, tableKeys) {
+  const physical = new Set(tableKeys.map(physicalTableKey));
+  const projected = clone(model);
+  projected.name = `Code-MoR ${SERVICE_TITLES[service]} Database V1`;
+  projected.describe = `${SERVICE_TITLES[service]} 服务库物理模型：由 Finance 逻辑模型按 design/03 表归属切分（第 07 步），只保留本库关系`;
+  projected.entities = projected.entities.filter((entity) => physical.has(entity.defKey));
+  invariant(projected.entities.length === physical.size, `服务模型缺表：${service}`);
+  const renamed = new Map();
+  for (const spec of SERVICE_TABLE_VARIANTS[service] ?? []) {
+    const table = spec.table ?? spec;
+    const replacedKey = physicalTableKey(spec.replaces ?? table.defKey);
+    const [variant] = buildEntities(model, [table]);
+    const index = projected.entities.findIndex((entity) => entity.defKey === replacedKey);
+    invariant(index >= 0, `服务模型变体没有对应的逻辑表：${service}.${replacedKey}`);
+    if (spec.replaces) {
+      adoptReplacedIdentity(variant, projected.entities[index]);
+      renamed.set(replacedKey, variant.defKey);
+    } else {
+      variant.correlations = [];
+    }
+    projected.entities[index] = variant;
+  }
+  const added = SERVICE_ADDED_TABLES[service];
+  if (added) {
+    const entities = buildEntities(model, added.tables);
+    projected.entities = added.prepend ? [...entities, ...projected.entities] : [...projected.entities, ...entities];
+  }
+  const entityIds = new Set(projected.entities.map((entity) => entity.id));
+  for (const entity of projected.entities) {
+    entity.correlations = entity.correlations.filter((relation) => entityIds.has(relation.refEntity));
+  }
+  const relationIds = new Set(projected.entities.flatMap((entity) => entity.correlations.map((relation) => relation.id)));
+  projected.diagrams = projected.diagrams
+    .map((diagram) => ({
+      ...diagram,
+      canvasData: {
+        ...diagram.canvasData,
+        cells: diagram.canvasData.cells.filter((cell) => (cell.shape === "table"
+          ? entityIds.has(cell.originKey) : relationIds.has(cell.originKey))),
+      },
+      properties: {
+        primaryTables: diagram.properties.primaryTables.filter((table) => physical.has(table))
+          .map((table) => renamed.get(table) ?? table),
+        referenceTables: diagram.properties.referenceTables.filter((table) => physical.has(table))
+          .map((table) => renamed.get(table) ?? table),
+      },
+    }))
+    .filter((diagram) => diagram.properties.primaryTables.length > 0);
+  return projected;
+}
+
+/**
+ * 物理更名变体沿用被替换逻辑表的实体 ID、同名字段 ID 与出向关系，使库内其他表的关系与图组锚点保持有效；删除的字段随之消失。
+ */
+function adoptReplacedIdentity(variant, replaced) {
+  const replacedFields = new Map(replaced.fields.map((field) => [field.defKey, field.id]));
+  const fieldIds = new Map();
+  for (const field of variant.fields) {
+    const adopted = replacedFields.get(field.defKey);
+    if (adopted) {
+      fieldIds.set(field.id, adopted);
+      field.id = adopted;
+    }
+  }
+  for (const index of variant.indexes) {
+    for (const entry of index.fields) entry.fieldDefKey = fieldIds.get(entry.fieldDefKey) ?? entry.fieldDefKey;
+  }
+  const kept = new Set(variant.fields.map((field) => field.id));
+  variant.id = replaced.id;
+  variant.correlations = replaced.correlations.filter((relation) => kept.has(relation.myField));
+}
+
+/** 六个服务库的物理模型，按 FINANCE_SERVICES 顺序；每库表数必须等于 design/03 §4.2。 */
+export function generateFinanceServiceModels(model = generateFinanceModel()) {
+  const tablesByService = serviceTables();
+  const models = new Map();
+  for (const service of FINANCE_SERVICES) {
+    const tableKeys = tablesByService.get(service);
+    const count = tableKeys.length + (SERVICE_ADDED_TABLES[service]?.tables.length ?? 0);
+    invariant(count === EXPECTED_SERVICE_TABLE_COUNTS[service],
+      `${service} 表数 ${count} 与 design/03 §4.2 加第 11b 步服务物理表的 ${EXPECTED_SERVICE_TABLE_COUNTS[service]} 不一致`);
+    models.set(service, projectServiceModel(model, service, tableKeys));
+  }
+  return models;
+}
+
+function summaryOf(model) {
+  const totals = modelTotals(model);
+  return `${totals.tables} tables, ${totals.fields} fields, ${totals.uniqueIndexes} unique indexes, ${totals.accessIndexes} access indexes, ${totals.relations} relations, ${totals.oneToOneRelations} one-to-one relations, ${totals.diagramGroups} diagram groups`;
+}
+
 function runCli() {
   const unknown = process.argv.slice(2).filter((argument) => argument !== "--check");
   invariant(unknown.length === 0, `未知参数：${unknown.join(", ")}`);
-  const expected = serializeFinanceModel();
-  const totals = modelTotals(JSON.parse(expected));
-  const summary = `${totals.tables} tables, ${totals.fields} fields, ${totals.uniqueIndexes} unique indexes, ${totals.accessIndexes} access indexes, ${totals.relations} relations, ${totals.oneToOneRelations} one-to-one relations, ${totals.diagramGroups} diagram groups`;
-  if (process.argv.includes("--check")) {
-    invariant(existsSync(outputPath), `Finance 模型不存在：${outputPath}`);
-    invariant(readFileSync(outputPath, "utf8") === expected, "Finance 模型已过期，请重新生成");
-    process.stdout.write(`Finance model is up to date (${summary})\n`);
-    return;
+  const logical = generateFinanceModel();
+  process.stdout.write(`Finance logical model validated (${summaryOf(logical)})\n`);
+  for (const [service, model] of generateFinanceServiceModels(logical)) {
+    const outputPath = serviceModelPath(service);
+    const expected = serializeFinanceModel(model);
+    if (process.argv.includes("--check")) {
+      invariant(existsSync(outputPath), `${service} 模型不存在：${outputPath}`);
+      invariant(readFileSync(outputPath, "utf8") === expected, `${service} 模型已过期，请重新生成`);
+      process.stdout.write(`${service} model is up to date (${summaryOf(model)})\n`);
+      continue;
+    }
+    mkdirSync(path.dirname(outputPath), { recursive: true });
+    writeFileSync(outputPath, expected, "utf8");
+    process.stdout.write(`Wrote ${service} model: ${outputPath} (${summaryOf(model)})\n`);
   }
-  mkdirSync(path.dirname(outputPath), { recursive: true });
-  writeFileSync(outputPath, expected, "utf8");
-  process.stdout.write(`Wrote Finance model: ${outputPath}\n${summary}\n`);
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

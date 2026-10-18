@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.commercial.core.dal.mapper.BusinessChangeRecordMapper">
+    <resultMap id="BusinessChangeRecord" type="com.paytech.commercial.core.dal.dataobject.CheckoutRecords$BusinessChangeRecord">
+        <constructor>
+            <arg column="history_id" javaType="java.lang.Long"/>
+            <arg column="record_type" javaType="com.paytech.commercial.domain.enums.BusinessChangeRecordRecordType"/>
+            <arg column="record_id" javaType="java.lang.String"/>
+            <arg column="aggregate_root_type" javaType="com.paytech.commercial.domain.enums.BusinessChangeRecordAggregateRootType"/>
+            <arg column="aggregate_root_id" javaType="java.lang.String"/>
+            <arg column="parent_history_id" javaType="java.lang.Long"/>
+            <arg column="current_version" javaType="java.lang.Long"/>
+        </constructor>
+    </resultMap>
+    <!-- commercial 只持有 AGREEMENT 根；CLIENT、OPERATING_ENTITY、LOCAL_PARTNER 根由 client-master 随候选返回。 -->
+    <select id="findCheckoutRoots" resultMap="BusinessChangeRecord">
+        SELECT history_id, record_type, record_id, aggregate_root_type, aggregate_root_id, parent_history_id, current_version
+        FROM t_business_change_record
+        WHERE parent_history_id IS NULL AND record_type='AGREEMENT' AND record_id IN (SELECT CAST(agreement_id AS CHAR) FROM t_agreement WHERE client_id = #{clientId}<if test="!localPartnerIds.isEmpty() and !entityNos.isEmpty()"> OR (local_partner_id IN <foreach collection="localPartnerIds" item="partnerId" open="(" separator="," close=")">#{partnerId}</foreach> AND agreement_id IN (SELECT agreement_id FROM t_agreement_operating_entity WHERE entity_no IN <foreach collection="entityNos" item="entityNo" open="(" separator="," close=")">#{entityNo}</foreach>))</if>)
+        ORDER BY history_id
+    </select>
+</mapper>

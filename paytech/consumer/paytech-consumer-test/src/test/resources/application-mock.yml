@@ -1,0 +1,161 @@
+# consumer 配置字段清单，同时作为 Mock 测试的可运行配置。
+
+# ==================== 中间件、框架与公共组件配置 ====================
+
+server:
+  address: 127.0.0.1
+  port: 0
+
+spring:
+  application:
+    name: consumer-service
+  main:
+    banner-mode: "off"
+  jmx:
+    enabled: false
+  cloud:
+    nacos:
+      config:
+        enabled: false
+      discovery:
+        enabled: false
+        server-addr: "127.0.0.1:8848"
+        namespace: public
+    discovery:
+      client:
+        simple:
+          instances:
+            card-service:
+              - uri: "${consumer.test.external.base-url}"
+            client-master-service:
+              - uri: "${consumer.test.external.base-url}"
+    loadbalancer:
+      retry:
+        enabled: false
+      cache:
+        enabled: false
+  http:
+    clients:
+      imperative:
+        factory: http-components
+    serviceclient:
+      card-service:
+        base-url: lb://card-service
+        connect-timeout: 2s
+        read-timeout: 5s
+        redirects: dont-follow
+      client-master-service:
+        base-url: lb://client-master-service
+        connect-timeout: 2s
+        read-timeout: 2s
+        redirects: dont-follow
+  datasource:
+    url: "jdbc:mysql://127.0.0.1:13306/mor_consumer?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+    username: consumer_app
+    password: "${CONSUMER_TEST_DB_PASSWORD:${MOR_CONSUMER_DB_PASSWORD:local-consumer-change-me-2026}}"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-init-sql: "SET time_zone = '+00:00'"
+      connection-timeout: 2000
+      validation-timeout: 1000
+      data-source-properties:
+        cachePrepStmts: true
+        prepStmtCacheSize: 250
+        prepStmtCacheSqlLimit: 2048
+        useServerPrepStmts: true
+  sql:
+    init:
+      mode: never
+
+mybatis:
+  mapper-locations: "classpath*:mapper/**/*.xml"
+
+compensation:
+  enabled: true
+  instance-id: "${spring.application.name}"
+  lease-duration: 2m
+  scanner-batch-size: 100
+  coordinator:
+    core-size: 10
+    maximum-size: 20
+    queue-capacity: 80
+    keep-alive: 60s
+  handler:
+    maximum-concurrency: 20
+
+xxl:
+  job:
+    admin:
+      addresses: ""
+      access-token: ""
+      timeout: 3
+    executor:
+      enabled: false
+      app-name: consumer-service
+      address: ""
+      ip: ""
+      port: 0
+      log-path: ./logs/xxl-job
+      log-retention-days: 30
+      excluded-packages: "org.springframework.,spring."
+
+web:
+  logging:
+    metadata-only-path-prefixes:
+      - /client-gateway-api/v1
+      - /consumer/v1
+
+internal-auth:
+  # 裸 OFF 会被 YAML 解析为布尔 false，必须带引号。
+  mode: "OFF"
+
+management:
+  server:
+    # 随机管理端口；测试不访问 Actuator。
+    port: 0
+  endpoints:
+    enabled-by-default: false
+    web:
+      discovery:
+        enabled: false
+      exposure:
+        include: health,info,prometheus
+    jmx:
+      exposure:
+        exclude: "*"
+  endpoint:
+    health:
+      access: read-only
+      show-details: never
+      probes:
+        enabled: true
+        add-additional-paths: false
+      validate-group-membership: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState
+    info:
+      access: read-only
+    prometheus:
+      access: read-only
+  health:
+    db:
+      enabled: false
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+
+# ==================== consumer 系统自定义配置 ====================
+
+consumer:
+  identifier:
+    # 两者均无代码默认值且必填，范围 0～31；独立于 acquiring 的测试节点。
+    region-id: 0
+    worker-id: 1
+  test:
+    external:
+      # 测试专用运行时字段；EnableMockHttpServer 自动注册 Loopback 随机端口。
+      base-url: ""

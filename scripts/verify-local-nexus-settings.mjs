@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url';
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = resolve(scriptDirectory, '..');
-const wrapper = join(repositoryRoot, 'mvnw');
+const wrapper = join(repositoryRoot, 'paytech', 'mvnw');
 const requestedSettings = process.argv[2];
 const errors = [];
 

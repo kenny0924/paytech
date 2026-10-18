@@ -1,19 +1,33 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readdirSync, readFileSync } from "node:fs";
+import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const workspaceRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
+// 第 13 步收口：17 个 Java 持库服务（dispute、payout 以模块库登记）+ Vault，与 design/09 §5.2 一致。
 const modelContracts = [
-  ["client-contract-service", "client-contract.pdma.json", "scripts/pdmaner/generate-client-contract-model.mjs"],
-  ["commerce-service", "commerce.pdma.json", "scripts/pdmaner/generate-commerce-model.mjs"],
-  ["payment-orchestration-service", "payment-orchestration.pdma.json", "scripts/pdmaner/generate-payment-model.mjs"],
-  ["risk-compliance-service", "risk-compliance.pdma.json", "scripts/pdmaner/risk/generate-risk-compliance-model.mjs"],
-  ["finance-service", "finance.pdma.json", "scripts/pdmaner/finance/generate-finance-model.mjs"],
-  ["platform-support-service", "platform-support.pdma.json", "scripts/pdmaner/platform-support/generate-platform-support-model.mjs"],
-  ["vault-service", "vault.pdma.json", "scripts/pdmaner/vault/generate-vault-model.mjs"],
+  ["paytech/client-master", "client-master.pdma.json", "scripts/pdmaner/generate-client-master-model.mjs"],
+  ["paytech/commercial", "commercial.pdma.json", "scripts/pdmaner/generate-commercial-model.mjs"],
+  ["paytech/acquiring", "acquiring.pdma.json", "scripts/pdmaner/generate-acquiring-model.mjs"],
+  ["paytech/consumer", "consumer.pdma.json", "scripts/pdmaner/generate-consumer-model.mjs"],
+  ["paytech/payment", "payment.pdma.json", "scripts/pdmaner/generate-payment-model.mjs"],
+  ["paytech/channel-connector", "channel-connector.pdma.json", "scripts/pdmaner/generate-channel-connector-model.mjs"],
+  // 第 12 步：卡域 4 表迁出 payment，归 card-service（mor_card）。
+  ["paytech/card", "card.pdma.json", "scripts/pdmaner/generate-card-model.mjs"],
+  // 第 06 步：Risk & Compliance 模型按服务拆为 risk-decision、compliance、dispute（dispute 仅 Schema 归属）。
+  ["paytech/risk-decision", "risk-decision.pdma.json", "scripts/pdmaner/risk/generate-risk-decision-model.mjs"],
+  ["paytech/compliance", "compliance.pdma.json", "scripts/pdmaner/risk/generate-compliance-model.mjs"],
+  ["paytech/dispute", "dispute.pdma.json", "scripts/pdmaner/risk/generate-dispute-model.mjs"],
+  ["paytech/ledger", "ledger.pdma.json", "scripts/pdmaner/finance/generate-finance-model.mjs"],
+  ["paytech/account", "account.pdma.json", "scripts/pdmaner/finance/generate-finance-model.mjs"],
+  ["paytech/billing", "billing.pdma.json", "scripts/pdmaner/finance/generate-finance-model.mjs"],
+  ["paytech/reconciliation", "reconciliation.pdma.json", "scripts/pdmaner/finance/generate-finance-model.mjs"],
+  ["paytech/tax", "tax.pdma.json", "scripts/pdmaner/finance/generate-finance-model.mjs"],
+  ["paytech/payout", "payout.pdma.json", "scripts/pdmaner/finance/generate-finance-model.mjs"],
+  ["paytech/platform-support", "platform-support.pdma.json", "scripts/pdmaner/platform-support/generate-platform-support-model.mjs"],
+  ["paytech/vault", "vault.pdma.json", "scripts/pdmaner/vault/generate-vault-model.mjs"],
 ];
 
 test("each database owner keeps exactly one canonical short-name PDManer model", () => {
@@ -32,10 +46,33 @@ test("each database owner keeps exactly one canonical short-name PDManer model",
 test("every PDManer generator writes to its canonical short path", () => {
   for (const [service, filename, generator] of modelContracts) {
     const source = readFileSync(path.join(workspaceRoot, generator), "utf8");
+    // 第 07 步：Finance 逻辑模型按服务切分输出，生成器以服务名模板写 paytech/<svc>/docs/database/<svc>.pdma.json。
+    const serviceTemplate = "paytech/${service}/docs/database/${service}.pdma.json";
+    const templated = source.includes(serviceTemplate) && filename === `${path.basename(service)}.pdma.json`;
     assert.ok(
-      source.includes(`${service}/docs/database/${filename}`),
+      source.includes(`${service}/docs/database/${filename}`) || templated,
       `${generator} must target ${service}/docs/database/${filename}`,
     );
     assert.doesNotMatch(source, /Code-MoR .* Database V1\.pdma\.json/u);
   }
+});
+
+test("the contract list equals the set of PDManer models under paytech/<service>/docs/database", () => {
+  const paytechRoot = path.join(workspaceRoot, "paytech");
+  const found = readdirSync(paytechRoot)
+    .filter((service) => statSync(path.join(paytechRoot, service)).isDirectory())
+    .flatMap((service) => {
+      const databaseDirectory = path.join(paytechRoot, service, "docs/database");
+      try {
+        return readdirSync(databaseDirectory)
+          .filter((name) => name.endsWith(".pdma.json") && !name.startsWith(".back_"))
+          .map((name) => `paytech/${service}/${name}`);
+      } catch {
+        return [];
+      }
+    })
+    .sort();
+  const expected = modelContracts.map(([service, filename]) => `${service}/${filename}`).sort();
+  assert.equal(modelContracts.length, 18);
+  assert.deepEqual(found, expected);
 });

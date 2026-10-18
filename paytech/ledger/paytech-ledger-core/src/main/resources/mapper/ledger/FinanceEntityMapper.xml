@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.ledger.core.dal.mapper.FinanceEntityMapper">
+    <insert id="insert">
+        INSERT INTO t_finance_entity (id, entity_code, legal_party_id, display_name, status, create_time, update_time)
+        VALUES (#{id}, #{entityCode}, #{legalPartyId}, #{displayName}, #{status}, #{createTime}, #{updateTime})
+    </insert>
+
+    <select id="selectById" resultType="com.paytech.ledger.core.dal.dataobject.FinanceEntity">
+        SELECT id, entity_code, legal_party_id, display_name, status, create_time, update_time FROM t_finance_entity WHERE id = #{id}
+    </select>
+</mapper>

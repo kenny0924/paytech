@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.compliance.core.dal.mapper.MaterialRequirementsMapper">
+    <resultMap id="MaterialProgramMap" type="com.paytech.compliance.core.dal.dataobject.MaterialProgram">
+        <result column="program_id" property="programId"/>
+        <result column="program_version_id" property="programVersionId"/>
+        <result column="version_no" property="versionNo"/>
+        <result column="active_slot" property="activeSlot"/>
+        <result column="content_hash" property="contentHash"/>
+        <result column="approved_by" property="approvedBy"/>
+        <result column="approved_time" property="approvedTime"/>
+    </resultMap>
+
+    <resultMap id="MaterialRequirementMap" type="com.paytech.compliance.core.dal.dataobject.MaterialRequirement">
+        <result column="program_requirement_id" property="programRequirementId"/>
+        <result column="requirement_code" property="requirementCode"/>
+        <result column="document_type" property="documentType"/>
+        <result column="required_flag" property="requiredFlag"/>
+    </resultMap>
+
+    <select id="programs" useCache="false" resultMap="MaterialProgramMap">
+        SELECT p.program_id, v.program_version_id, v.version_no, v.active_slot, v.content_hash, v.approved_by, v.approved_time
+        FROM t_dd_program p JOIN t_dd_program_version v ON v.program_id = p.program_id
+        WHERE BINARY p.program_code = BINARY #{code} AND BINARY p.qualification_type = BINARY #{qualificationType}
+        AND BINARY p.status = BINARY 'ACTIVE' AND BINARY v.status = BINARY 'ACTIVE'
+        ORDER BY v.program_version_id LIMIT 2
+    </select>
+
+    <select id="requirements" useCache="false" resultMap="MaterialRequirementMap">
+        SELECT program_requirement_id, requirement_code, document_type, required_flag FROM t_dd_program_requirement
+        WHERE program_version_id = #{versionId} ORDER BY requirement_code LIMIT 1025
+    </select>
+</mapper>

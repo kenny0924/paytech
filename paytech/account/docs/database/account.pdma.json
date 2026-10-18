@@ -1,0 +1,4412 @@
+{
+  "name": "Code-MoR Account Database V1",
+  "describe": "Account 服务库物理模型：由 Finance 逻辑模型按 design/03 表归属切分（第 07 步），只保留本库关系",
+  "avatar": "",
+  "version": "4.9.3",
+  "createdTime": "2025-5-28 13:36:15",
+  "updatedTime": "2025-7-20 15:59:57",
+  "dbConns": [],
+  "profile": {
+    "default": {
+      "db": "29D1CE08-4C35-4D2D-AAA9-23D93305B52E",
+      "dbConn": "",
+      "entityInitFields": [
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "2411871E-39B2-4D32-AF11-98E6B67972DA"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在 Finance 数据库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "D60CEF1E-BFD3-4B47-B037-044DE7B3097C"
+        }
+      ],
+      "entityInitProperties": {}
+    },
+    "javaHome": "",
+    "sql": {
+      "delimiter": ""
+    },
+    "dataTypeSupports": [
+      {
+        "defKey": "MYSQL",
+        "id": "29D1CE08-4C35-4D2D-AAA9-23D93305B52E"
+      },
+      {
+        "defKey": "JAVA",
+        "id": "797A1496-D649-4261-89B4-544132EC3F36"
+      },
+      {
+        "defKey": "JavaMybatis",
+        "id": "895CFD1D-4273-4D32-A2C4-CAC70200AB5B"
+      }
+    ],
+    "codeTemplates": [
+      {
+        "applyFor": "29D1CE08-4C35-4D2D-AAA9-23D93305B52E",
+        "type": "dbDDL",
+        "createTable": "DROP TABLE IF EXISTS {{=it.entity.defKey}};\nCREATE TABLE {{=it.entity.defKey}}(\n{{ pkList = [] ; }}\n{{~it.entity.fields:field:index}}\n    {{? field.primaryKey }}{{ pkList.push(field.defKey) }}{{?}}\n    `{{=field.defKey}}` {{?field.autoIncrement}}INT AUTO_INCREMENT{{??}}{{=field.type}}{{?field.len>0}}{{='('}}{{=field.len}}{{?field.scale>0}}{{=','}}{{=field.scale}}{{?}}{{=')'}}{{?}}{{? field.extProps && field.extProps.characterSet }} CHARACTER SET {{=field.extProps.characterSet}} COLLATE {{=field.extProps.collation}}{{?}} {{= field.notNull ? 'NOT NULL' : '' }} {{= field.defaultValue ? it.func.join('DEFAULT',field.defaultValue,' ') : '' }}{{?}} COMMENT '{{=it.func.join(field.defName,field.comment,';')}}' {{= index < it.entity.fields.length-1 ? ',' : ( pkList.length>0 ? ',' :'' ) }}\n{{~}}\n{{? pkList.length >0 }}\n    PRIMARY KEY ({{~pkList:pkName:i}}{{= pkName }}{{= i<pkList.length-1 ? ',' : '' }}{{~}})\n{{?}}\n)  COMMENT = '{{=it.func.join(it.entity.defName,it.entity.comment,';') }}';\n$blankline\n",
+        "createView": "CREATE VIEW {{=it.view.defKey}} AS\nSELECT \n{{~it.view.fields:field:index}}\n    {{=field.refEntity}}.{{=field.refEntityField}} AS {{=field.defKey}}{{= index < it.view.fields.length-1 ? ',' : ''}}\n{{~}}\nFROM {{~it.view.refEntities:refEntity:index}}{{=refEntity}}{{= index < it.view.refEntities.length-1 ? ',' : ''}}{{~}};\n$blankline\n",
+        "deleteTable": "DROP TABLE IF EXISTS {{=it.entity.defKey}};",
+        "createIndex": "{{~ it.entity.indexes:index}}\nCREATE {{? index.unique}}UNIQUE {{?}}INDEX {{=index.defKey}} ON {{=it.entity.defKey}}({{ fieldsKeys = index.fields.map(function(field){return field.fieldDefKey}) ; }}{{=it.func.join(...fieldsKeys,',')}});\n{{~}}",
+        "deleteIndex": "{{~ it.entity.indexes:index}}\nDROP INDEX IF EXISTS {{=index.defKey}} ;\n{{~}}",
+        "message": "{{\n    let createEntities = it.changes.filter(function(row){return (row.opt==='add'&&row['type']==='entity');});\n    let dropEntities   = it.changes.filter(function(row){return (row.opt==='delete'&&row['type']==='entity');});\n    let modifyEntities = it.changes.filter(function(row){return (row.opt==='update'&&row['type']==='entity');});\n    \n    function baseChanged(beforeAfter){\n        if(beforeAfter == null){\n            return '';\n        }\n        let ret = [];\n        let before = beforeAfter.before || {\"defKey\":\"\",\"defName\":\"\",\"comment\":\"\"};\n        let after = beforeAfter.after || {\"defKey\":\"\",\"defName\":\"\",\"comment\":\"\"};\n        if(before.defKey !== after.defKey){\n            ret.push('代码:'+(before.defKey||'NULL')+'->'+(after.defKey||'NULL'));\n        }\n        if(before.defName !== after.defName){\n            ret.push('显示名称:'+(before.defName||'NULL')+'->'+(after.defName||'NULL'));\n        }\n        if(before.comment !== after.comment){\n            ret.push('说明:'+(before.comment||'NULL')+'->'+(after.comment||'NULL'));\n        }\n        if(ret.length>0){\n            return '    基本信息:\\n\\t'+ret.join('\\n\\t');\n        }\n        return '';\n    };\n    \n    function buildAddedDesc(entity){\n        let ret = [];\n        let fieldAdded = entity.data.fieldAdded||[];\n        \n        for (let field of fieldAdded) { \n            let row = [];\n            row.push(field.defKey+'['+field.defName+']');\n            ret.push(row.join(\"\"))\n        }\n        return ret;\n    };\n    \n    function buildRemovedDesc(entity){\n        let ret = [];\n        let fieldRemoved = entity.data.fieldRemoved||[];\n        \n        for (let field of fieldRemoved) { \n            let row = [];\n            row.push(field.defKey+'['+field.defName+']');\n            ret.push(row.join(\"\"))\n        }\n        return ret;\n    };\n    \n    function buildModifiedDesc(entity){\n        let ret = [];\n        let fieldModified = entity.data.fieldModified||[];\n        \n        for (let field1 of fieldModified) { \n            let row = [];\n            let field = field1.before;\n            row.push(field.defKey+'['+field.defName+']');\n            ret.push(row.join(\"\"))\n        }\n        return ret;\n    };\n}}\n\n\n{{? createEntities && createEntities.length > 0}}\n/* --------------- 创建表 --------------- */\n{{~ createEntities:entity}}\n{{=entity.data.defKey}}[{{=entity.data.defName}}]\n{{~}}\n{{?}}\n\n\n{{? dropEntities && dropEntities.length > 0}}\n/* --------------- 删除表 --------------- */\n{{~ dropEntities:entity}}\n{{=entity.data.defKey}}[{{=entity.data.defName}}]\n{{~}}\n{{?}}\n\n{{? modifyEntities && modifyEntities.length > 0}}\n/* --------------- 修改表 --------------- */\n{{~ modifyEntities:entity}}\n{{=entity.data.baseInfo.defKey}}[{{=entity.data.baseInfo.defName}}]{{let changeText=baseChanged(entity.data.baseChanged);}}\n{{=baseChanged(entity.data.baseChanged)}}\n    {{? entity.data.fieldModified && entity.data.fieldModified.length > 0}}\n    修改字段：\n    {{='\\t'}}{{=buildModifiedDesc(entity).join('\\n\\t')}}{{?}}{{\n        /*计算是否调整了属性*/\n        let propAdded = entity.data.propAdded || [];\n        let propRemoved = entity.data.propRemoved || [];\n        let propModified = entity.data.propModified || [];\n        let changed = propAdded.length>0 || propRemoved.length>0 || propModified.length>0;\n        /*计算关联是否调整*/\n        let refEntityAdd = entity.data.refEntityAdd || [];\n        let refEntityRemoved = entity.data.refEntityRemoved || [];\n        let relaArray = [];\n        for (let rela of refEntityAdd) {\n            relaArray.push('建立关联:'+rela.defKey+'['+rela.defName+']');\n        }\n        for (let rela of refEntityRemoved) {\n            relaArray.push('解除关联:'+rela.defKey+'['+rela.defName+']');\n        }\n        /*索引是否修改过*/\n        let indexChanged = entity.data.indexChanged;\n    }}{{=indexChanged?'\\n\\t更改了索引':''}}{{=changed?'\\n\\t更改了属性':''}}{{=relaArray.length>0?('\\n\\t'+relaArray.join('\\n\\t')):''}}\n{{? entity.data.fieldAdded && entity.data.fieldAdded.length > 0}}\n    添加字段：\n{{='\\t'}}{{=buildAddedDesc(entity).join('\\n\\t')}}\n{{?}}{{? entity.data.fieldRemoved && entity.data.fieldRemoved.length > 0}}\n    删除字段：\n{{='\\t'}}{{=buildRemovedDesc(entity).join('\\n\\t')}}\n{{?}}\n{{~}}\n{{?}}\n",
+        "update": "{{\n    let createEntities = it.changes.filter(function(row){return (row.opt==='add'&&row['type']==='entity');});\n    let dropEntities   = it.changes.filter(function(row){return (row.opt==='delete'&&row['type']==='entity');});\n    let modifyEntities = it.changes.filter(function(row){return (row.opt==='update'&&row['type']==='entity');});\n    \n    function baseChangedDDL(beforeAfter){\n        if(beforeAfter == null){\n            return '';\n        }\n        let ret = [];\n        let before = beforeAfter.before || {\"defKey\":\"\",\"defName\":\"\",\"comment\":\"\"};\n        let after = beforeAfter.after || {\"defKey\":\"\",\"defName\":\"\",\"comment\":\"\"};\n        if(before.defKey !== after.defKey){\n            ret.push('ALTER TABLE '+before.defKey+' RENAME TO '+after.defKey);\n        }\n        let commentText = '';\n        let commentChanged = false;\n        if(before.defName !== after.defName){\n            commentText = after.defName;\n            commentChanged = true;\n        }\n        if(before.comment !== after.comment){\n            commentChanged = true;\n            if(commentText){\n                commentText = (commentText+ ';'+after.comment)\n            }else{\n                commentText = after.comment\n            }\n        }\n        if(commentChanged){\n            ret.push('ALTER TABLE '+after.defKey+' COMMENT \\''+commentText+'\\'');\n        }\n        let baseText = '-- 基本信息:\\n';\n        return baseText+ret.join(';\\n')+';';\n    };\n    \n    function buildAddedDDL(entity){\n        let ret = [];\n        let fieldAdded = entity.data.fieldAdded||[];\n        if(fieldAdded.length == 0){\n            return '';\n        }\n        \n        let firstDDL = 'ALTER TABLE '+entity.data.baseInfo.defKey;\n        for (let field of fieldAdded) { \n            let ddlItem = 'ADD COLUMN `'+field.defKey+'` '+field.dbType;\n            /*处理数据类型长度*/\n            if(field.len>0){\n                ddlItem += ('('+field.len);\n                if(parseInt(field.scale)>0){\n                    ddlItem += (','+field.scale);\n                }\n                ddlItem += ')';\n            }\n            if(field.notNull){\n                ddlItem += ' NOT NULL';\n            }\n            if(field.autoIncrement){\n                ddlItem += ' AUTO_INCREMENT';\n            }\n            if(field.defaultValue){\n                ddlItem += (' DEFAULT ' + field.defaultValue);\n            }\n            ddlItem += (' COMMENT \\''+field.defName+';'+field.comment+'\\'');\n            \n            if(field.index>0 && field.afterFieldKey){\n                ddlItem += (' AFTER '+field.afterFieldKey);\n            }\n            ret.push(ddlItem);\n        }\n        return firstDDL+'\\n'+ret.join(',\\n');\n    };\n    \n    function buildRemovedDDL(entity){\n        let ret = [];\n        let fieldRemoved = entity.data.fieldRemoved||[];\n        if(fieldRemoved.length == 0){\n            return '';\n        }\n        \n        let firstDDL = 'ALTER TABLE '+entity.data.baseInfo.defKey;\n        for (let field of fieldRemoved) { \n            ret.push('DROP '+field.defKey);\n        }\n        return firstDDL+'\\n'+ret.join(',\\n');\n    };\n    \n    function buildModifiedDDL(entity){\n        let ret = [];\n        let fieldModified = entity.data.fieldModified||[];\n        \n        let firstDDL = 'ALTER TABLE '+entity.data.baseInfo.defKey;\n        for (let field of fieldModified) { \n            let changeDDL = '';\n            let before = field.before || {};\n            let after = field.after || {};\n            if(before.defKey === after.defKey){\n                changeDDL += (' MODIFY COLUMN `'+after.defKey+'`');\n            }else{\n                changeDDL += (' CHANGE COLUMN `'+before.defKey+'` `'+after.defKey+'`');\n            }\n            changeDDL += (' '+after.dbType);\n            if(after.len>0){\n                changeDDL += ('('+after.len);\n                if(parseInt(after.scale)>0){\n                    changeDDL += (','+after.scale);\n                }\n                changeDDL += ')';\n            }\n            if(after.notNull){\n                changeDDL += ' NOT NULL';\n            }\n            let defaultValue = '';\n            if(after.defaultValue != null && after.defaultValue.length>0){\n                defaultValue = (after.defaultValue);\n            }else{\n                defaultValue = 'NULL';\n            }\n            if(defaultValue != 'NULL'){\n                changeDDL += (' DEFAULT ' + defaultValue);\n            }\n\n            let comment = after.defName;\n            if(after.comment){\n                comment = comment + ';' + (after.comment||'');\n            }\n            if(comment){\n                changeDDL += (' COMMENT \\''+comment+'\\';');\n            }\n            \n            ret.push(firstDDL+' '+changeDDL);\n        }\n        return ret;\n    };\n}}\n{{? createEntities && createEntities.length > 0}}\n/* --------------- 创建表 --------------- */\n{{~ createEntities:entity}}\n{{=it.func.createDDL(entity.data,entity['type'])}}\n{{~}}\n{{?}}\n\n\n{{? dropEntities && dropEntities.length > 0}}\n/* --------------- 删除表 --------------- */\n{{~ dropEntities:entity}}\n{{=it.func.dropDDL(entity.data,entity['type'])}}\n{{~}}\n{{?}}\n\n\n{{? modifyEntities && modifyEntities.length > 0}}\n{{~ modifyEntities:entity}}\n/* --------------- 修改表 --------------- */\n-- 修改表：{{=entity.data.baseInfo.defKey}}[{{=entity.data.baseInfo.defName}}]\n{{=baseChangedDDL(entity.data.baseChanged)}}\n{{? entity.data.fieldModified && entity.data.fieldModified.length > 0}}\n-- 修改字段：\n{{=buildModifiedDDL(entity).join('\\n')}}\n{{?}}{{\n/*索引是否修改过*/\nlet indexChanged = entity.data.indexChanged;\n}}\n{{? indexChanged }}\n{{=it.func.indexRebuildDDL(entity.data.baseInfo,entity.data.newIndexes,entity.data.fullFields,entity['type'])}}\n{{?}}\n\n{{? entity.data.fieldAdded && entity.data.fieldAdded.length > 0}}\n-- 添加字段：\n{{=buildAddedDDL(entity)}};\n{{?}}\n\n{{? entity.data.fieldRemoved && entity.data.fieldRemoved.length > 0}}\n-- 删除字段：\n{{=buildRemovedDDL(entity)}};\n{{?}}\n{{~}}\n{{?}}"
+      }
+    ],
+    "generatorDoc": {
+      "docTemplate": ""
+    },
+    "relationFieldSize": "15",
+    "uiHint": [
+      {
+        "defKey": "Input",
+        "defName": "普通输入框",
+        "id": "642D2E0A-8846-4549-BE56-8C0473F26EDE"
+      },
+      {
+        "defKey": "Select",
+        "defName": "下拉输入框",
+        "id": "FB111359-2B73-4443-926C-08A98E446448"
+      },
+      {
+        "defKey": "CheckBox",
+        "defName": "复选框",
+        "id": "0CB8A6C9-1115-4FC0-B51E-5C028065082F"
+      },
+      {
+        "defKey": "RadioBox",
+        "defName": "单选框",
+        "id": "5C04987A-260F-4B7C-A5D5-22A181AAE9CA"
+      },
+      {
+        "defKey": "Double",
+        "defName": "小数输入",
+        "id": "8D5BAFE4-E15C-4707-A047-8EE59C58E70F"
+      },
+      {
+        "defKey": "Integer",
+        "defName": "整数输入",
+        "id": "9999AF2A-A44E-415C-A2DC-D7C613BD0073"
+      },
+      {
+        "defKey": "Money",
+        "defName": "金额输入",
+        "id": "2B0C3D0C-7BAF-4B36-81AD-9362B5E5DC2E"
+      },
+      {
+        "defKey": "Date",
+        "defName": "日期输入",
+        "id": "E4D94E14-F695-487F-AFC2-4D888009B7DA"
+      },
+      {
+        "defKey": "DataYearMonth",
+        "defName": "年月输入",
+        "id": "936927E3-DD2D-4096-87FD-074CDE278D59"
+      },
+      {
+        "defKey": "Text",
+        "defName": "长文本输入",
+        "id": "D89DD4F1-ADAC-4469-BF8D-B3FF41AE7963"
+      },
+      {
+        "defKey": "RichText",
+        "defName": "富文本输入",
+        "id": "C134EB1F-4CFF-49E0-882F-2C6FB275CB20"
+      }
+    ],
+    "headers": [
+      {
+        "refKey": "defKey",
+        "hideInGraph": false,
+        "value": "字段代码",
+        "freeze": false
+      },
+      {
+        "refKey": "defName",
+        "hideInGraph": false,
+        "value": "显示名称",
+        "freeze": false
+      },
+      {
+        "refKey": "primaryKey",
+        "hideInGraph": false,
+        "value": "主键",
+        "freeze": false
+      },
+      {
+        "refKey": "notNull",
+        "hideInGraph": true,
+        "value": "不为空",
+        "freeze": false
+      },
+      {
+        "refKey": "autoIncrement",
+        "hideInGraph": true,
+        "value": "自增",
+        "freeze": false
+      },
+      {
+        "refKey": "domain",
+        "hideInGraph": true,
+        "value": "数据域",
+        "freeze": false
+      },
+      {
+        "refKey": "type",
+        "hideInGraph": false,
+        "value": "数据类型",
+        "freeze": false
+      },
+      {
+        "refKey": "len",
+        "hideInGraph": false,
+        "value": "长度",
+        "freeze": false
+      },
+      {
+        "refKey": "scale",
+        "hideInGraph": false,
+        "value": "小数位数",
+        "freeze": false
+      },
+      {
+        "refKey": "comment",
+        "hideInGraph": true,
+        "value": "说明",
+        "freeze": false
+      },
+      {
+        "refKey": "refDict",
+        "hideInGraph": true,
+        "value": "数据字典",
+        "freeze": false
+      },
+      {
+        "refKey": "defaultValue",
+        "hideInGraph": true,
+        "value": "默认值",
+        "freeze": false
+      },
+      {
+        "refKey": "isStandard",
+        "hideInGraph": false,
+        "value": "标准字段",
+        "enable": false,
+        "freeze": false
+      },
+      {
+        "refKey": "uiHint",
+        "hideInGraph": true,
+        "value": "UI建议",
+        "enable": true,
+        "freeze": false
+      },
+      {
+        "refKey": "extProps",
+        "hideInGraph": true,
+        "value": "拓展属性",
+        "enable": true,
+        "freeze": false
+      },
+      {
+        "refKey": "attr1",
+        "value": "属性1",
+        "hideInGraph": true,
+        "enable": true,
+        "freeze": false
+      },
+      {
+        "refKey": "attr2",
+        "value": "属性2",
+        "hideInGraph": true,
+        "enable": false,
+        "freeze": false
+      },
+      {
+        "refKey": "attr3",
+        "value": "属性3",
+        "hideInGraph": true,
+        "enable": false,
+        "freeze": false
+      },
+      {
+        "refKey": "attr4",
+        "value": "属性4",
+        "hideInGraph": true,
+        "enable": false,
+        "freeze": false
+      },
+      {
+        "refKey": "attr5",
+        "value": "属性5",
+        "hideInGraph": true,
+        "enable": false,
+        "freeze": false
+      },
+      {
+        "refKey": "attr6",
+        "value": "属性6",
+        "hideInGraph": true,
+        "enable": false,
+        "freeze": false
+      },
+      {
+        "refKey": "attr7",
+        "value": "属性7",
+        "hideInGraph": true,
+        "enable": false,
+        "freeze": false
+      },
+      {
+        "refKey": "attr8",
+        "value": "属性8",
+        "hideInGraph": true,
+        "enable": false,
+        "freeze": false
+      },
+      {
+        "refKey": "attr9",
+        "value": "属性9",
+        "hideInGraph": true,
+        "enable": false,
+        "freeze": false
+      }
+    ],
+    "modelType": "modalAll",
+    "recentColors": [
+      "#d148d1",
+      "#ce4bce",
+      "#831b83",
+      "#dd31dd",
+      "#da2fda",
+      "#e988e9",
+      "#000000",
+      "#DDE5FF"
+    ],
+    "DDLToggleCase": "L"
+  },
+  "entities": [
+    {
+      "id": "26FEE1B9-72EA-572E-A75E-9112BDE18D67",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_account_balance",
+      "defName": "账户余额",
+      "comment": "Owner 余额桶的实时权威（design/04 §3.2）：只由 EconomicFactRecorded 消费与按 billing 经济事实重建维护，余额版本 CAS 保护并发写入；与 ledger 分录的一致性由日终核对检查。",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "id",
+          "defName": "余额账户ID",
+          "comment": "账户服务生成的余额账户 Snowflake 主键；与 ledger 账户身份按 (账簿主体, 科目代码, Owner, 余额桶) 对应，不复用 ledger 账户 ID。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "809B79B6-2C55-5FED-B02B-522011DC8DEB"
+        },
+        {
+          "defKey": "book_entity_type",
+          "defName": "账簿主体类型",
+          "comment": "余额所属 ledger 账簿的主体类型。允许值：OPERATING_ENTITY、FINANCE_ENTITY。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "F212984E-370B-5BB3-A826-868E97E19F06"
+        },
+        {
+          "defKey": "book_entity_id",
+          "defName": "账簿主体标识",
+          "comment": "余额所属 ledger 账簿的主体标识：OE 为 entityNo，Finance Entity 为 ledger 本地主键十进制字符串；来源 Owner 为 ledger，不建立跨库外键。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "CF145B0E-CCCF-56E1-A96C-E46F32E14464"
+        },
+        {
+          "defKey": "currency",
+          "defName": "币种",
+          "comment": "余额所属账簿的大写 ISO 4217 币种。",
+          "type": "CHAR",
+          "len": 3,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "4629ED77-822E-4610-86D1-82426E63066E",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "7107154F-CF2B-4D2A-AC43-514D4027E5C6",
+          "id": "0E5D8FC2-3D91-59C3-9548-6C777046100B"
+        },
+        {
+          "defKey": "account_code",
+          "defName": "科目代码",
+          "comment": "余额对应的 ledger 标准科目代码（如 CLIENT_PAYABLE）；科目名称与属性以 ledger 为准，本表不复制。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "0B4FDC51-16E4-57FD-BF6B-335645DB35DF"
+        },
+        {
+          "defKey": "owner_type",
+          "defName": "核算对象类型",
+          "comment": "余额隔离的核算对象类型。允许值：CLIENT、LOCAL_PARTNER、CHANNEL_ACCOUNT、CASH_ACCOUNT。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "4467F05E-622A-5CD6-9AFB-7D6CD61CC1BD"
+        },
+        {
+          "defKey": "owner_id",
+          "defName": "核算对象ID",
+          "comment": "按 owner_type 解释的规范十进制稳定标识；来源 Owner 为 CCT 或 reconciliation，不建立跨库外键。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "D27965A3-8C53-58CE-AF34-BEB3DA5BC24C"
+        },
+        {
+          "defKey": "balance_bucket",
+          "defName": "余额桶",
+          "comment": "应付款余额桶；独立科目使用 NONE。允许值：PENDING、AVAILABLE、LOCKED、NONE。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "AA9D0C5E-BEB5-52F1-B23B-D7ECC2758231"
+        },
+        {
+          "defKey": "normal_side",
+          "defName": "正常余额方向",
+          "comment": "科目正常余额方向，由映射规则冻结，用于计算净余额。允许值：DEBIT、CREDIT。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "D79DF4EF-2337-55FD-B032-242682FD79C0"
+        },
+        {
+          "defKey": "debit_total",
+          "defName": "借方累计",
+          "comment": "已应用经济事实累计的借方金额。",
+          "type": "DECIMAL",
+          "len": 24,
+          "scale": 8,
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "0",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1A0BDC09-0792-4174-9E8E-80BE8DF44B8E",
+          "extProps": {},
+          "domain": "C3B1681B-99F9-4818-9E80-DE1652A51D85",
+          "id": "FA76D440-9755-545D-A6B5-ECFBE276212B"
+        },
+        {
+          "defKey": "credit_total",
+          "defName": "贷方累计",
+          "comment": "已应用经济事实累计的贷方金额。",
+          "type": "DECIMAL",
+          "len": 24,
+          "scale": 8,
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "0",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1A0BDC09-0792-4174-9E8E-80BE8DF44B8E",
+          "extProps": {},
+          "domain": "C3B1681B-99F9-4818-9E80-DE1652A51D85",
+          "id": "E50E8D0E-F3D7-55CA-AFAD-99A83084C5F6"
+        },
+        {
+          "defKey": "net_balance",
+          "defName": "当前净余额",
+          "comment": "按正常方向计算、允许为负的当前净余额；是 Owner 可用额度的实时权威。",
+          "type": "DECIMAL",
+          "len": 24,
+          "scale": 8,
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "0",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1A0BDC09-0792-4174-9E8E-80BE8DF44B8E",
+          "extProps": {},
+          "domain": "C3B1681B-99F9-4818-9E80-DE1652A51D85",
+          "id": "4AD8E0E4-6654-5616-AA2B-3C9FD8ACE6B0"
+        },
+        {
+          "defKey": "balance_version",
+          "defName": "余额并发版本",
+          "comment": "余额条件更新使用的乐观锁版本，每次写入加一。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "0",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "F58324DD-90B4-5EEB-9C70-F29EED41E642"
+        },
+        {
+          "defKey": "last_fact_id",
+          "defName": "末次经济事实ID",
+          "comment": "最近一次改变本余额的 billing 经济事实 ID；尚未发生变化时为空。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "FE36B388-EA2C-5824-BF37-4C93219E7E3D"
+        },
+        {
+          "defKey": "last_fact_version",
+          "defName": "末次经济事实版本",
+          "comment": "最近一次改变本余额的经济事实版本；尚未发生变化时为空。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "296CAD7F-D159-5F92-ACB9-C57DA05792AC"
+        },
+        {
+          "defKey": "status",
+          "defName": "余额账户状态",
+          "comment": "余额账户状态。允许值：ACTIVE。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "052B7422-07E2-5333-8C0A-86466E123F1B"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "记录创建的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "5E0E004E-9D94-5D48-AD7A-0E5E4F6B26DE"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "记录最近一次持久化更新的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "143C6520-E41B-5631-8A39-967E69708F2D"
+        }
+      ],
+      "correlations": [],
+      "indexes": [
+        {
+          "defKey": "uk_account_balance_identity",
+          "defName": "唯一索引 book_entity_type、book_entity_id、currency、account_code、owner_type、owner_id、balance_bucket",
+          "unique": true,
+          "comment": "保证业务唯一性：book_entity_type、book_entity_id、currency、account_code、owner_type、owner_id、balance_bucket",
+          "fields": [
+            {
+              "fieldDefKey": "F212984E-370B-5BB3-A826-868E97E19F06",
+              "ascOrDesc": "A",
+              "id": "CC7A37A7-BCCD-52F3-967D-7662BB6F8585"
+            },
+            {
+              "fieldDefKey": "CF145B0E-CCCF-56E1-A96C-E46F32E14464",
+              "ascOrDesc": "A",
+              "id": "207B65E1-2A02-5A3C-991E-FE1F43B33A5B"
+            },
+            {
+              "fieldDefKey": "0E5D8FC2-3D91-59C3-9548-6C777046100B",
+              "ascOrDesc": "A",
+              "id": "1432A189-9615-5B0C-8365-9A0E02D0D50A"
+            },
+            {
+              "fieldDefKey": "0B4FDC51-16E4-57FD-BF6B-335645DB35DF",
+              "ascOrDesc": "A",
+              "id": "D676C798-A8AD-5F23-9C55-BF74DF69889D"
+            },
+            {
+              "fieldDefKey": "4467F05E-622A-5CD6-9AFB-7D6CD61CC1BD",
+              "ascOrDesc": "A",
+              "id": "F3A6DFAF-5481-5A7B-96DF-F3DE3B8EF225"
+            },
+            {
+              "fieldDefKey": "D27965A3-8C53-58CE-AF34-BEB3DA5BC24C",
+              "ascOrDesc": "A",
+              "id": "E216C675-3A12-50F7-8B22-353043174DE4"
+            },
+            {
+              "fieldDefKey": "AA9D0C5E-BEB5-52F1-B23B-D7ECC2758231",
+              "ascOrDesc": "A",
+              "id": "A6EA4872-170D-593A-B84F-19266E282FBA"
+            }
+          ],
+          "id": "C614F3B4-42C0-5DAD-A1D9-79948231938E"
+        },
+        {
+          "defKey": "idx_account_balance_owner",
+          "defName": "访问索引 owner_type、owner_id、book_entity_id、currency",
+          "unique": false,
+          "comment": "支持访问路径：owner_type、owner_id、book_entity_id、currency",
+          "fields": [
+            {
+              "fieldDefKey": "4467F05E-622A-5CD6-9AFB-7D6CD61CC1BD",
+              "ascOrDesc": "A",
+              "id": "4A4142BF-19EE-573C-96A3-9EC78316F60C"
+            },
+            {
+              "fieldDefKey": "D27965A3-8C53-58CE-AF34-BEB3DA5BC24C",
+              "ascOrDesc": "A",
+              "id": "77B0B3CC-25B3-5F72-8DF2-4E1E19D20AD1"
+            },
+            {
+              "fieldDefKey": "CF145B0E-CCCF-56E1-A96C-E46F32E14464",
+              "ascOrDesc": "A",
+              "id": "A6005404-41E0-503C-90EA-0525EF5D4B9F"
+            },
+            {
+              "fieldDefKey": "0E5D8FC2-3D91-59C3-9548-6C777046100B",
+              "ascOrDesc": "A",
+              "id": "941A7E84-AAE6-57CC-8128-989BDD66BF51"
+            }
+          ],
+          "id": "AA9F2A09-FC6B-5EB5-B745-6D6A8F62BC37"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "4A3FC12C-FC27-524F-900D-E2FFAA12B4B0",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_balance_applied_fact",
+      "defName": "已处理经济事实",
+      "comment": "已处理的经济事实（design/04 §3.2）：按 fact_id + fact_version 幂等，并记录版本替代关系，使替代事实可冲回被替代事实的余额变化。",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "id",
+          "defName": "已处理事实ID",
+          "comment": "账户服务生成的 Snowflake 主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "8CC7F3E1-6C8C-56A3-9F46-F0A394582971"
+        },
+        {
+          "defKey": "fact_id",
+          "defName": "经济事实ID",
+          "comment": "billing 经济事实 ID（t_economic_fact.id）；来源 Owner 为 billing，不建立跨库外键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "7261FF8A-0DC2-52D9-89DA-00633B8F4A21"
+        },
+        {
+          "defKey": "fact_version",
+          "defName": "经济事实版本",
+          "comment": "经济事实版本；被替代事实先于自身事件到达时按替代事实版本减一登记。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "23BC9DBB-49BA-55CF-84F8-EF30B1699D96"
+        },
+        {
+          "defKey": "fact_type",
+          "defName": "经济事实类型",
+          "comment": "经济事实类型代码；仅由替代关系预登记、自身事件尚未到达时为空。取值来源：billing EconomicsType；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "FAE2F16B-E345-50AD-A9C0-72C2A86F2EF8"
+        },
+        {
+          "defKey": "supersedes_fact_id",
+          "defName": "被替代事实ID",
+          "comment": "本事实替代的前一经济事实；首次登记为空。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "A71D6084-61FC-5EA1-9C4B-AF23A9643C75"
+        },
+        {
+          "defKey": "superseded_by_fact_id",
+          "defName": "替代事实ID",
+          "comment": "替代本事实的后一经济事实；未被替代时为空。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "B162C445-0F52-51B2-8F2F-66C272B89460"
+        },
+        {
+          "defKey": "entity_no",
+          "defName": "经营主体编号",
+          "comment": "经济事实头的 Operating Entity 编号，用于按 OE 账簿统计已消费事实。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "9E50DBD6-C159-5909-84CD-B2BA5EA679E7"
+        },
+        {
+          "defKey": "finance_entity_id",
+          "defName": "财务主体ID",
+          "comment": "经济事实头的平台服务费 Finance Entity；无合作方为空，用于按 Finance Entity 账簿统计已消费事实。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "56856B4C-0CD1-5037-ABC2-3640E93B65A5"
+        },
+        {
+          "defKey": "currency",
+          "defName": "币种",
+          "comment": "经济事实币种。",
+          "type": "CHAR",
+          "len": 3,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "4629ED77-822E-4610-86D1-82426E63066E",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "7107154F-CF2B-4D2A-AC43-514D4027E5C6",
+          "id": "DECEFF4E-1D7A-5D59-923E-2262287EC5E9"
+        },
+        {
+          "defKey": "apply_status",
+          "defName": "应用状态",
+          "comment": "事实对余额的影响状态：APPLIED 已应用；REVERSED 已应用后被替代事实冲回；PENDING_SUPERSEDED 已被替代但自身事件尚未到达；SKIPPED 自身事件到达时已被替代、未应用。允许值：APPLIED、REVERSED、PENDING_SUPERSEDED、SKIPPED。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "EB82B43E-A7BF-514E-BCA5-9C299C064305"
+        },
+        {
+          "defKey": "lines_hash",
+          "defName": "余额变化摘要",
+          "comment": "已应用余额变化的规范文本 SHA-256 小写十六进制；仅预登记、尚未处理时为空。",
+          "type": "CHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "4629ED77-822E-4610-86D1-82426E63066E",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "5A88A273-CCF9-5497-A001-1AEFA6E5C95B"
+        },
+        {
+          "defKey": "applied_time",
+          "defName": "处理时间",
+          "comment": "事实被本服务处理的 UTC 微秒时间；仅预登记时为空。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "8B7F0384-B6D2-5781-9997-AB292CFBCC95"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "记录创建的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "2C7BDD5E-2EA8-5330-9D20-7FCD1285C056"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "记录最近一次持久化更新的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "A01F6E99-DFF4-5667-9DF7-875EC09248D7"
+        }
+      ],
+      "correlations": [],
+      "indexes": [
+        {
+          "defKey": "uk_balance_applied_fact",
+          "defName": "唯一索引 fact_id、fact_version",
+          "unique": true,
+          "comment": "保证业务唯一性：fact_id、fact_version",
+          "fields": [
+            {
+              "fieldDefKey": "7261FF8A-0DC2-52D9-89DA-00633B8F4A21",
+              "ascOrDesc": "A",
+              "id": "31D38229-8ED3-54FB-BDB8-35A5DEF3C282"
+            },
+            {
+              "fieldDefKey": "23BC9DBB-49BA-55CF-84F8-EF30B1699D96",
+              "ascOrDesc": "A",
+              "id": "09865D7F-5EC8-507C-B46A-917664B8B7BD"
+            }
+          ],
+          "id": "B6212A04-E280-5BAB-8241-D4F4C2EF56A5"
+        },
+        {
+          "defKey": "idx_applied_fact_oe_book",
+          "defName": "访问索引 entity_no、currency、fact_id",
+          "unique": false,
+          "comment": "支持访问路径：entity_no、currency、fact_id",
+          "fields": [
+            {
+              "fieldDefKey": "9E50DBD6-C159-5909-84CD-B2BA5EA679E7",
+              "ascOrDesc": "A",
+              "id": "40ACC65E-3250-5F8D-B2C0-22577907C0AF"
+            },
+            {
+              "fieldDefKey": "DECEFF4E-1D7A-5D59-923E-2262287EC5E9",
+              "ascOrDesc": "A",
+              "id": "DEC2A587-4AB8-5D5B-98E2-2CD6F5A5FC64"
+            },
+            {
+              "fieldDefKey": "7261FF8A-0DC2-52D9-89DA-00633B8F4A21",
+              "ascOrDesc": "A",
+              "id": "9D02FCD4-02EA-55C8-8BE8-0E5CF1725F66"
+            }
+          ],
+          "id": "B8C0D63D-9AF7-5E69-AC0F-B7BAE279EDED"
+        },
+        {
+          "defKey": "idx_applied_fact_fe_book",
+          "defName": "访问索引 finance_entity_id、currency、fact_id",
+          "unique": false,
+          "comment": "支持访问路径：finance_entity_id、currency、fact_id",
+          "fields": [
+            {
+              "fieldDefKey": "56856B4C-0CD1-5037-ABC2-3640E93B65A5",
+              "ascOrDesc": "A",
+              "id": "E85A664A-B8DB-5A13-928F-EB2798139F16"
+            },
+            {
+              "fieldDefKey": "DECEFF4E-1D7A-5D59-923E-2262287EC5E9",
+              "ascOrDesc": "A",
+              "id": "76B70BDF-1D27-5D31-8C63-9D252F531C6E"
+            },
+            {
+              "fieldDefKey": "7261FF8A-0DC2-52D9-89DA-00633B8F4A21",
+              "ascOrDesc": "A",
+              "id": "C3CA996C-0048-56E4-9B98-9C7E83B36BED"
+            }
+          ],
+          "id": "D4826EAD-C0AC-5945-B7C4-067ED9FF5D0E"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "613E35A7-3D8B-543B-B384-768F411A7287",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_balance_applied_entry",
+      "defName": "已应用余额变化",
+      "comment": "不可变的已应用余额变化：一条经济事实映射到余额账户的逐行借贷，供替代事实冲回与重建核对。",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "id",
+          "defName": "余额变化ID",
+          "comment": "账户服务生成的 Snowflake 主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "FB0330B2-B0DB-53E2-B604-B9F0CD134D24"
+        },
+        {
+          "defKey": "applied_fact_id",
+          "defName": "已处理事实ID",
+          "comment": "所属已处理事实（t_balance_applied_fact.id）。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "4020410D-B428-5EB0-8D5B-E26D4A4F72A2"
+        },
+        {
+          "defKey": "fact_id",
+          "defName": "经济事实ID",
+          "comment": "billing 经济事实 ID，冗余保存便于按事实冲回。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "8110A202-DEF8-5D9D-9A4D-09AD7BF3A4D4"
+        },
+        {
+          "defKey": "line_no",
+          "defName": "明细行号",
+          "comment": "产生该变化的经济事实明细行号；交易事实的总额（GROSS_AMOUNT）取自事实头，行号为 0。",
+          "type": "INTEGER",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "0816E843-CA13-5E08-9EEC-AF9340AFD227"
+        },
+        {
+          "defKey": "balance_id",
+          "defName": "余额账户ID",
+          "comment": "被改变的余额账户（t_account_balance.id）。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "17A5DAED-7408-5E89-8D81-99C8BED94AAF"
+        },
+        {
+          "defKey": "entry_side",
+          "defName": "借贷方向",
+          "comment": "对余额账户的借贷方向。允许值：DEBIT、CREDIT。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "BAC04A08-8C75-5F1C-9BCE-158FD5747740"
+        },
+        {
+          "defKey": "amount",
+          "defName": "金额",
+          "comment": "已按币种精度归整的正金额。",
+          "type": "DECIMAL",
+          "len": 24,
+          "scale": 8,
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1A0BDC09-0792-4174-9E8E-80BE8DF44B8E",
+          "extProps": {},
+          "domain": "C3B1681B-99F9-4818-9E80-DE1652A51D85",
+          "id": "D0D217C7-394B-5EA6-9E33-8D2E3FC08138"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "记录创建的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "AD005E2B-A8AD-5C43-A828-68B2F7BA30A8"
+        }
+      ],
+      "correlations": [],
+      "indexes": [
+        {
+          "defKey": "idx_applied_entry_fact",
+          "defName": "访问索引 applied_fact_id",
+          "unique": false,
+          "comment": "支持访问路径：applied_fact_id",
+          "fields": [
+            {
+              "fieldDefKey": "4020410D-B428-5EB0-8D5B-E26D4A4F72A2",
+              "ascOrDesc": "A",
+              "id": "1A5F199A-28E3-5FCB-9CEA-9671873E03E5"
+            }
+          ],
+          "id": "CFF1A304-9BE8-5774-8008-7D0397528F7D"
+        },
+        {
+          "defKey": "idx_applied_entry_balance",
+          "defName": "访问索引 balance_id",
+          "unique": false,
+          "comment": "支持访问路径：balance_id",
+          "fields": [
+            {
+              "fieldDefKey": "17A5DAED-7408-5E89-8D81-99C8BED94AAF",
+              "ascOrDesc": "A",
+              "id": "0ED0DA54-6D05-5FAC-A3FE-11E2C88F1B65"
+            }
+          ],
+          "id": "93D10D3C-650B-5052-B2FE-6E17C492FB13"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "0F33AC99-3BA7-55E2-9ACA-F2C4EC0A1EC7",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_balance_movement",
+      "defName": "余额桶移动",
+      "comment": "账户侧余额桶移动命令记录（AVAILABLE → LOCKED 等），移动后发布 BalanceMoved 供 ledger 补记分录（design/04 §5）；阶段 0 只建表，无生产调用方。",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "id",
+          "defName": "余额移动ID",
+          "comment": "账户服务生成的 Snowflake 主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "8F7AE68B-8039-5B7F-B6DC-9E93A4E1A626"
+        },
+        {
+          "defKey": "book_entity_type",
+          "defName": "账簿主体类型",
+          "comment": "余额所属 ledger 账簿的主体类型。允许值：OPERATING_ENTITY、FINANCE_ENTITY。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "188428DE-53BC-5ED0-B9EB-DB268EC0D47D"
+        },
+        {
+          "defKey": "book_entity_id",
+          "defName": "账簿主体标识",
+          "comment": "余额所属 ledger 账簿的主体标识。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "46EC628E-A367-5DF7-B8F8-C4644243E924"
+        },
+        {
+          "defKey": "currency",
+          "defName": "币种",
+          "comment": "移动金额的币种。",
+          "type": "CHAR",
+          "len": 3,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "4629ED77-822E-4610-86D1-82426E63066E",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "7107154F-CF2B-4D2A-AC43-514D4027E5C6",
+          "id": "2A9DDD6A-478E-5DEA-BDBD-D4BC74C70A93"
+        },
+        {
+          "defKey": "movement_sequence",
+          "defName": "移动序号",
+          "comment": "同一账簿主体与币种内连续递增的移动序号，即 BalanceMoved 的 aggregateVersion。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "9B03C9FF-D3C8-5C45-81BF-8B928736D7A4"
+        },
+        {
+          "defKey": "account_code",
+          "defName": "科目代码",
+          "comment": "移动所在的标准科目代码（CLIENT_PAYABLE 或 PARTNER_PAYABLE）。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "46CABBAB-0C97-5FAA-A366-DCB6C5F67E10"
+        },
+        {
+          "defKey": "owner_type",
+          "defName": "核算对象类型",
+          "comment": "核算对象类型。允许值：CLIENT、LOCAL_PARTNER。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "A0DB6F53-FECB-5528-8263-D9A825FFE968"
+        },
+        {
+          "defKey": "owner_id",
+          "defName": "核算对象ID",
+          "comment": "核算对象规范十进制标识。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "58DC9A4F-5A2D-539B-A115-11F229008252"
+        },
+        {
+          "defKey": "from_bucket",
+          "defName": "转出余额桶",
+          "comment": "转出余额桶。允许值：PENDING、AVAILABLE、LOCKED。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "C6DE10C9-F3FE-5F6F-91E8-F3B22BFFD573"
+        },
+        {
+          "defKey": "to_bucket",
+          "defName": "转入余额桶",
+          "comment": "转入余额桶。允许值：PENDING、AVAILABLE、LOCKED。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "700CDF64-C484-5E90-8E2B-D4EB66E5310A"
+        },
+        {
+          "defKey": "amount",
+          "defName": "金额",
+          "comment": "已按币种精度归整的正移动金额。",
+          "type": "DECIMAL",
+          "len": 24,
+          "scale": 8,
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1A0BDC09-0792-4174-9E8E-80BE8DF44B8E",
+          "extProps": {},
+          "domain": "C3B1681B-99F9-4818-9E80-DE1652A51D85",
+          "id": "10BD33F9-CCCE-5CDF-A099-62890F14A040"
+        },
+        {
+          "defKey": "source_type",
+          "defName": "来源类型",
+          "comment": "发起移动的业务来源类型（如出款锁定、成熟释放）。取值来源：account 移动来源目录；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "41FDAC91-F145-5D18-9C57-ADC2EB632211"
+        },
+        {
+          "defKey": "source_ref",
+          "defName": "来源引用",
+          "comment": "来源业务的稳定引用，同一来源只移动一次。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "AA6E9EB6-E2A7-5D43-BC69-BF59EC13851A"
+        },
+        {
+          "defKey": "movement_status",
+          "defName": "移动状态",
+          "comment": "移动命令状态。允许值：APPLIED。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "79858836-8B95-59F3-80EE-C976D0BC9DC1"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "记录创建的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "773E5187-2B4C-57DD-89C3-EDC6E9C1ACE9"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "记录最近一次持久化更新的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "F9878148-C359-555C-B9CE-7008393B9C83"
+        }
+      ],
+      "correlations": [],
+      "indexes": [
+        {
+          "defKey": "uk_balance_movement_source",
+          "defName": "唯一索引 source_type、source_ref",
+          "unique": true,
+          "comment": "保证业务唯一性：source_type、source_ref",
+          "fields": [
+            {
+              "fieldDefKey": "41FDAC91-F145-5D18-9C57-ADC2EB632211",
+              "ascOrDesc": "A",
+              "id": "47C57414-FECE-5CA6-8009-998B0E548995"
+            },
+            {
+              "fieldDefKey": "AA6E9EB6-E2A7-5D43-BC69-BF59EC13851A",
+              "ascOrDesc": "A",
+              "id": "458A5555-2060-5BD2-BBA9-9FC7E4B29B99"
+            }
+          ],
+          "id": "1CAD913D-6368-5992-AEE9-D7AE4DF305D3"
+        },
+        {
+          "defKey": "uk_balance_movement_sequence",
+          "defName": "唯一索引 book_entity_type、book_entity_id、currency、movement_sequence",
+          "unique": true,
+          "comment": "保证业务唯一性：book_entity_type、book_entity_id、currency、movement_sequence",
+          "fields": [
+            {
+              "fieldDefKey": "188428DE-53BC-5ED0-B9EB-DB268EC0D47D",
+              "ascOrDesc": "A",
+              "id": "C205B5CD-9396-5355-A19B-08FEF70714CB"
+            },
+            {
+              "fieldDefKey": "46EC628E-A367-5DF7-B8F8-C4644243E924",
+              "ascOrDesc": "A",
+              "id": "B0AA8A81-D11B-5F22-884D-39B1670648CD"
+            },
+            {
+              "fieldDefKey": "2A9DDD6A-478E-5DEA-BDBD-D4BC74C70A93",
+              "ascOrDesc": "A",
+              "id": "F85F9FAD-342D-5E5A-BB08-0C4BEB608474"
+            },
+            {
+              "fieldDefKey": "9B03C9FF-D3C8-5C45-81BF-8B928736D7A4",
+              "ascOrDesc": "A",
+              "id": "010CD05E-210C-553D-9ABE-39979ED54AFB"
+            }
+          ],
+          "id": "996ABB60-8908-5F77-9E36-4E2B267193B1"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "7BDA017C-4356-51B9-8720-C22801CA2DCD",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_balance_discrepancy",
+      "defName": "余额核对差异",
+      "comment": "日终核对发现的账户余额与 ledger 分录聚合余额差异（design/04 §7）；裁决依据是 billing 经济事实，阶段 0 不接工单。",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "id",
+          "defName": "核对差异ID",
+          "comment": "账户服务生成的 Snowflake 主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "7FC85173-8F27-5FCC-A9EC-53E7ACD8E3EC"
+        },
+        {
+          "defKey": "recon_date",
+          "defName": "核对日期",
+          "comment": "核对任务执行的 UTC 日期。",
+          "type": "DATE",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC5C52B1-479F-514B-AB16-12D9EE0CFCA4",
+          "extProps": {},
+          "domain": "",
+          "id": "8809227F-D24C-5F10-A5E4-FB09103AA15E"
+        },
+        {
+          "defKey": "ledger_book_id",
+          "defName": "总账账簿ID",
+          "comment": "被核对的 ledger 账簿主键；来源 Owner 为 ledger，不建立跨库外键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "0A8CB522-68C9-5863-A675-62ABA091212B"
+        },
+        {
+          "defKey": "book_entity_type",
+          "defName": "账簿主体类型",
+          "comment": "账簿主体类型。允许值：OPERATING_ENTITY、FINANCE_ENTITY。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "FE36EC5F-1CE3-581D-84CF-3BDA2F23E6BE"
+        },
+        {
+          "defKey": "book_entity_id",
+          "defName": "账簿主体标识",
+          "comment": "账簿主体标识。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "05EF055C-CC84-505A-BDB1-E67A09B8FF37"
+        },
+        {
+          "defKey": "currency",
+          "defName": "币种",
+          "comment": "账簿币种。",
+          "type": "CHAR",
+          "len": 3,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "4629ED77-822E-4610-86D1-82426E63066E",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "7107154F-CF2B-4D2A-AC43-514D4027E5C6",
+          "id": "9A3CC5DD-ABAF-54D4-A459-A48A40F2AA93"
+        },
+        {
+          "defKey": "account_code",
+          "defName": "科目代码",
+          "comment": "存在差异的标准科目代码。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "1CD5C622-73D4-53C2-B8CB-90D11C2D9250"
+        },
+        {
+          "defKey": "owner_type",
+          "defName": "核算对象类型",
+          "comment": "核算对象类型。允许值：CLIENT、LOCAL_PARTNER、CHANNEL_ACCOUNT、CASH_ACCOUNT。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "EBC88E8E-6178-59A4-B53E-E930F0C15F73"
+        },
+        {
+          "defKey": "owner_id",
+          "defName": "核算对象ID",
+          "comment": "核算对象标识。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "011AEF23-EAC7-5C2C-AC30-A3F0691ED2AC"
+        },
+        {
+          "defKey": "balance_bucket",
+          "defName": "余额桶",
+          "comment": "余额桶。允许值：PENDING、AVAILABLE、LOCKED、NONE。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "96AF03A5-1B69-5611-ADB3-88F4072D002C"
+        },
+        {
+          "defKey": "account_net_balance",
+          "defName": "账户服务净额",
+          "comment": "账户服务余额的净额；账户服务没有该余额时为空。",
+          "type": "DECIMAL",
+          "len": 24,
+          "scale": 8,
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1A0BDC09-0792-4174-9E8E-80BE8DF44B8E",
+          "extProps": {},
+          "domain": "C3B1681B-99F9-4818-9E80-DE1652A51D85",
+          "id": "44D4AEB6-BE8D-5FE2-AA9F-92F862ADC7B8"
+        },
+        {
+          "defKey": "ledger_net_balance",
+          "defName": "ledger 净额",
+          "comment": "ledger 按分录聚合的净额；ledger 没有该账户时为空。",
+          "type": "DECIMAL",
+          "len": 24,
+          "scale": 8,
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1A0BDC09-0792-4174-9E8E-80BE8DF44B8E",
+          "extProps": {},
+          "domain": "C3B1681B-99F9-4818-9E80-DE1652A51D85",
+          "id": "6E4E3C96-E9C1-58A5-9017-B74EA9E75B32"
+        },
+        {
+          "defKey": "difference_amount",
+          "defName": "差异金额",
+          "comment": "两侧净额差的绝对值，缺失一侧按零计。",
+          "type": "DECIMAL",
+          "len": 24,
+          "scale": 8,
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1A0BDC09-0792-4174-9E8E-80BE8DF44B8E",
+          "extProps": {},
+          "domain": "C3B1681B-99F9-4818-9E80-DE1652A51D85",
+          "id": "3D3D40F3-CA78-5CBB-B69E-D9CCFB726F71"
+        },
+        {
+          "defKey": "status",
+          "defName": "处置状态",
+          "comment": "差异处置状态；阶段 0 不接工单，只记录。允许值：OPEN。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "4F6953B1-D388-5A31-8827-EE19C9B55D5F"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "记录创建的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "95E6B600-E6F7-5802-A8DB-7E16644E3644"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "记录最近一次持久化更新的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "C347BCFD-B9D1-5534-B781-307AD0EC8E4E"
+        }
+      ],
+      "correlations": [],
+      "indexes": [
+        {
+          "defKey": "uk_balance_discrepancy",
+          "defName": "唯一索引 recon_date、ledger_book_id、account_code、owner_type、owner_id、balance_bucket",
+          "unique": true,
+          "comment": "保证业务唯一性：recon_date、ledger_book_id、account_code、owner_type、owner_id、balance_bucket",
+          "fields": [
+            {
+              "fieldDefKey": "8809227F-D24C-5F10-A5E4-FB09103AA15E",
+              "ascOrDesc": "A",
+              "id": "EE0E9614-F1E8-54A9-AA1A-AFDF1BFF63F8"
+            },
+            {
+              "fieldDefKey": "0A8CB522-68C9-5863-A675-62ABA091212B",
+              "ascOrDesc": "A",
+              "id": "C3EF6673-E4D2-520E-9182-BA7114D4F6DA"
+            },
+            {
+              "fieldDefKey": "1CD5C622-73D4-53C2-B8CB-90D11C2D9250",
+              "ascOrDesc": "A",
+              "id": "58D0DDBB-B29C-5DB1-AD53-CB7CB73C7AAF"
+            },
+            {
+              "fieldDefKey": "EBC88E8E-6178-59A4-B53E-E930F0C15F73",
+              "ascOrDesc": "A",
+              "id": "10EF6A25-2D84-52D1-AE2D-2900D82CEA73"
+            },
+            {
+              "fieldDefKey": "011AEF23-EAC7-5C2C-AC30-A3F0691ED2AC",
+              "ascOrDesc": "A",
+              "id": "1E830181-40AD-5F25-8004-5A3DAE496D25"
+            },
+            {
+              "fieldDefKey": "96AF03A5-1B69-5611-ADB3-88F4072D002C",
+              "ascOrDesc": "A",
+              "id": "97C4542D-B5AE-56BD-9408-0E7F3C24A921"
+            }
+          ],
+          "id": "8BF1A3A4-EE8B-5128-9A3B-CF0452045079"
+        },
+        {
+          "defKey": "idx_balance_discrepancy_status",
+          "defName": "访问索引 status、recon_date",
+          "unique": false,
+          "comment": "支持访问路径：status、recon_date",
+          "fields": [
+            {
+              "fieldDefKey": "4F6953B1-D388-5A31-8827-EE19C9B55D5F",
+              "ascOrDesc": "A",
+              "id": "FB3FB8A4-B82C-5AFA-9DCE-CE7F34BD9AA6"
+            },
+            {
+              "fieldDefKey": "8809227F-D24C-5F10-A5E4-FB09103AA15E",
+              "ascOrDesc": "A",
+              "id": "9EC37027-D848-5E9A-9EA2-84A8CDFF01B4"
+            }
+          ],
+          "id": "6375C40D-FB7A-54C8-925C-FB280E648E89"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "6D95CD88-8DDA-5A5F-9244-00AA500CB80F",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_consumed_event",
+      "defName": "已消费领域事件",
+      "comment": "已消费领域事件：paytech-messaging 消费端按事件 ID 去重的标准表（design/08 §4），列、类型、主键与索引与 paytech-messaging 的 messaging-consumed-event.sql 一致；事件与版本合法性由消费拦截器保证。",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "event_id",
+          "defName": "事件ID",
+          "comment": "领域事件信封 eventId（默认等于 eventKey），按其去重。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "A449DF63-DB1F-52DE-916F-EF56EBCF153F"
+        },
+        {
+          "defKey": "event_type",
+          "defName": "事件类型",
+          "comment": "已消费领域事件的类型（PascalCase，登记于 paytech-messaging 事件目录）。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "1EA5C96A-7868-5C07-9356-0D22C2672A6C"
+        },
+        {
+          "defKey": "aggregate_type",
+          "defName": "聚合类型",
+          "comment": "领域事件所属聚合的大写类型代码。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "9423364E-2E23-50EE-B32C-B34D1DCEE15C"
+        },
+        {
+          "defKey": "aggregate_id",
+          "defName": "聚合标识",
+          "comment": "领域事件所属聚合的标识，同时是 RabbitMQ 分区路由键。",
+          "type": "VARCHAR",
+          "len": 40,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "F9FFBE7E-4C0D-5464-B196-7C6579EA6294"
+        },
+        {
+          "defKey": "aggregate_version",
+          "defName": "聚合版本",
+          "comment": "本条已消费领域事件携带的聚合版本。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "41F2E1E2-B835-5D36-B15E-5914B55BCBE1"
+        },
+        {
+          "defKey": "consumed_at",
+          "defName": "消费时间",
+          "comment": "消费事务提交的 UTC 微秒精度时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "C2D88D01-BBDE-5056-BCAC-47D8869B0B44"
+        }
+      ],
+      "correlations": [],
+      "indexes": [
+        {
+          "defKey": "idx_consumed_event_aggregate",
+          "defName": "访问索引 aggregate_type、aggregate_id、aggregate_version",
+          "unique": false,
+          "comment": "访问索引：aggregate_type、aggregate_id、aggregate_version",
+          "fields": [
+            {
+              "fieldDefKey": "9423364E-2E23-50EE-B32C-B34D1DCEE15C",
+              "ascOrDesc": "A",
+              "id": "C89CF205-392A-5D27-8746-A76D487E94CE"
+            },
+            {
+              "fieldDefKey": "F9FFBE7E-4C0D-5464-B196-7C6579EA6294",
+              "ascOrDesc": "A",
+              "id": "97431247-B42F-5853-BA4E-3550040159C6"
+            },
+            {
+              "fieldDefKey": "41F2E1E2-B835-5D36-B15E-5914B55BCBE1",
+              "ascOrDesc": "A",
+              "id": "D224F64E-DD74-574B-992B-2453BC828D85"
+            }
+          ],
+          "id": "87AFD3BE-EAA8-56FB-AEF3-B134E283C923"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "1C76E936-D0D9-579B-B9E7-21C82DDBC71B",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_consumed_aggregate_version",
+      "defName": "已消费聚合版本",
+      "comment": "已消费聚合版本：paytech-messaging 消费端按聚合记录已处理的最大版本，用于判定乱序、重放与缺口（design/08 §4）；列、类型与主键与 messaging-consumed-event.sql 一致。",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "aggregate_type",
+          "defName": "聚合类型",
+          "comment": "领域事件所属聚合的大写类型代码。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "C16D5BA3-B185-5D95-9A22-24BF0CD13215"
+        },
+        {
+          "defKey": "aggregate_id",
+          "defName": "聚合标识",
+          "comment": "领域事件所属聚合的标识，同时是 RabbitMQ 分区路由键。",
+          "type": "VARCHAR",
+          "len": 40,
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "29BD533A-B358-5CF1-987A-5FD90B94427C"
+        },
+        {
+          "defKey": "last_version",
+          "defName": "最大版本",
+          "comment": "本服务已处理的该聚合最大领域事件版本。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "6D5246D2-E8DF-5767-A82D-57CA5F280E9B"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "数据库记录最近一次持久化更新的 UTC 微秒精度时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "42580002-2B3A-54DE-825B-DFC412C8F051"
+        }
+      ],
+      "correlations": [],
+      "indexes": [],
+      "type": "P"
+    },
+    {
+      "id": "AF04882D-8BA7-5086-BE21-48831690D5B6",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_compensation_event",
+      "defName": "本地补偿事件",
+      "comment": "与本库业务事实在同一事务登记的本地可靠执行记录（paytech-compensation-event 现行模型，COMPENSATION_EVENT_GUIDE 第 3 节）；成功后删除，FAILED 保留并可受控重开",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "id",
+          "defName": "补偿事件标识",
+          "comment": "本库补偿事件记录的 Snowflake 主键，不作为跨系统事件标识。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "5637262C-10F4-5359-839C-AC3ABABD6058"
+        },
+        {
+          "defKey": "event_key",
+          "defName": "事件键",
+          "comment": "Handler 读取本服务权威事实使用的稳定业务键，最长 128 个字符；去首尾空白、拒绝控制字符，大小写敏感。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "F3CD3207-B72F-505C-A2EF-AA182C230772"
+        },
+        {
+          "defKey": "event_type",
+          "defName": "事件类型",
+          "comment": "全应用唯一注册的 Handler 类型，最长 64 个字符，大小写敏感。取值来源：本服务 compensation-event-catalog.yaml；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "7C9CD59B-5B93-50A8-96B4-F0F383ADD172"
+        },
+        {
+          "defKey": "sub_event_type",
+          "defName": "事件子类型",
+          "comment": "同一 Handler 下的受控业务子类型；无业务子类型时为占位值 -；与 event_key、event_type 共同组成唯一身份。取值来源：本服务补偿子类型目录；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "94F12714-9DC6-569C-8E75-0359A602552C"
+        },
+        {
+          "defKey": "payload_json",
+          "defName": "最小补充载荷",
+          "comment": "可选最小 JSON Object，通常为空；最多 4 KiB，不得保存可从本库恢复的上下文、敏感明文或凭据。",
+          "type": "VARCHAR",
+          "len": 4096,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "D41AE8F7-C2C4-53BB-8CD9-12E30991AF9D"
+        },
+        {
+          "defKey": "execute_status",
+          "defName": "执行状态",
+          "comment": "本地补偿任务执行状态；成功后删除记录。允许值：INIT、PROCESSING、ERROR、FAILED。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "'INIT'",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "4746DB9C-D2BE-5497-8A87-701F7EAB9751"
+        },
+        {
+          "defKey": "execute_count",
+          "defName": "执行次数",
+          "comment": "已开始的 Handler 尝试次数，非负，Claim 时增加。",
+          "type": "INTEGER",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "0",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "C564DD41-6E07-52C5-8942-E0DE39BBF365"
+        },
+        {
+          "defKey": "next_execute_at",
+          "defName": "下次执行时间",
+          "comment": "任务下次允许 Claim 的 UTC 微秒时间，由 Handler 退避策略更新。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "CURRENT_TIMESTAMP(6)",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "B035BAC0-2B4F-5399-B16D-053BFA00CE3B"
+        },
+        {
+          "defKey": "lock_owner",
+          "defName": "锁持有者",
+          "comment": "当前持有数据库 Claim Lease 的服务实例标识；未被认领时为空。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "D08BA24E-26E4-5A5F-8356-F7BBCB06C296"
+        },
+        {
+          "defKey": "lock_until",
+          "defName": "锁到期时间",
+          "comment": "Claim Lease 到期并可被其他实例接管的 UTC 微秒时间；无活动 Lease 时为空。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "E663D7B1-F776-579F-A01B-0150A6B94DE6"
+        },
+        {
+          "defKey": "last_error_code",
+          "defName": "最后错误代码",
+          "comment": "最近一次执行失败的稳定错误分类代码；尚无错误时为空。取值来源：本服务补偿执行错误代码目录；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "8D8B1DB3-974F-5495-BAFE-70268CEC2079"
+        },
+        {
+          "defKey": "last_error_summary",
+          "defName": "最后错误摘要",
+          "comment": "最近一次执行失败的脱敏摘要，最长 1000 字符，禁止保存敏感明文。",
+          "type": "VARCHAR",
+          "len": 1000,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "EC9F1F38-7B90-5CA0-A2DD-0E2D4F6135BD"
+        },
+        {
+          "defKey": "lock_version",
+          "defName": "锁版本",
+          "comment": "Claim 和 Lease 使用的正乐观锁版本；登记初始值固定为 1，仅当前 Lease 持有者可回写执行结果。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "1",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "83E3A8BF-DF1A-5BC6-B0E1-FF022A282ED9"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "补偿记录与业务事实原子登记的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "CURRENT_TIMESTAMP(6)",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "1E26BAEF-7949-5A9C-B3C2-B850BA4563CF"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "补偿记录最近更新的 UTC 微秒时间，由写入口维护。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "CURRENT_TIMESTAMP(6)",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "E2603E7F-BB24-54EE-88C8-DF596A5056ED"
+        }
+      ],
+      "correlations": [],
+      "indexes": [
+        {
+          "defKey": "uk_comp_event_identity",
+          "defName": "唯一索引 event_key、event_type、sub_event_type",
+          "unique": true,
+          "comment": "保证业务唯一性：event_key、event_type、sub_event_type",
+          "fields": [
+            {
+              "fieldDefKey": "F3CD3207-B72F-505C-A2EF-AA182C230772",
+              "ascOrDesc": "A",
+              "id": "BC546057-B6CF-5BA8-AD81-409C0CFF0C49"
+            },
+            {
+              "fieldDefKey": "7C9CD59B-5B93-50A8-96B4-F0F383ADD172",
+              "ascOrDesc": "A",
+              "id": "6A9BF99D-0293-5B6A-9356-24D47E3A955F"
+            },
+            {
+              "fieldDefKey": "94F12714-9DC6-569C-8E75-0359A602552C",
+              "ascOrDesc": "A",
+              "id": "4793DC33-57C9-51E9-8CE3-B24CC284AA93"
+            }
+          ],
+          "id": "3DB41784-12DD-59F6-B397-72749310C290"
+        },
+        {
+          "defKey": "idx_comp_event_ready",
+          "defName": "访问索引 execute_status、next_execute_at、id",
+          "unique": false,
+          "comment": "支持访问路径：execute_status、next_execute_at、id",
+          "fields": [
+            {
+              "fieldDefKey": "4746DB9C-D2BE-5497-8A87-701F7EAB9751",
+              "ascOrDesc": "A",
+              "id": "3EA5031B-75B4-53B5-AE3C-02B34400C89D"
+            },
+            {
+              "fieldDefKey": "B035BAC0-2B4F-5399-B16D-053BFA00CE3B",
+              "ascOrDesc": "A",
+              "id": "C4C4BE85-6794-55AA-BD3D-677D65EF915D"
+            },
+            {
+              "fieldDefKey": "5637262C-10F4-5359-839C-AC3ABABD6058",
+              "ascOrDesc": "A",
+              "id": "A9341292-584B-5207-AF9D-815783A0661B"
+            }
+          ],
+          "id": "F5D4DA32-4487-54E7-AC07-460335C498F3"
+        },
+        {
+          "defKey": "idx_comp_event_lease",
+          "defName": "访问索引 execute_status、lock_until、id",
+          "unique": false,
+          "comment": "支持访问路径：execute_status、lock_until、id",
+          "fields": [
+            {
+              "fieldDefKey": "4746DB9C-D2BE-5497-8A87-701F7EAB9751",
+              "ascOrDesc": "A",
+              "id": "335D9716-5F08-5EFD-A0E2-D62BFC712068"
+            },
+            {
+              "fieldDefKey": "E663D7B1-F776-579F-A01B-0150A6B94DE6",
+              "ascOrDesc": "A",
+              "id": "55E39319-1DAF-5118-B49B-7E70A50FD795"
+            },
+            {
+              "fieldDefKey": "5637262C-10F4-5359-839C-AC3ABABD6058",
+              "ascOrDesc": "A",
+              "id": "47BA26A7-A5BB-5671-B328-74BAC05B22D0"
+            }
+          ],
+          "id": "E09F41B8-E1DA-5293-8F45-8B9E09C8D823"
+        }
+      ],
+      "type": "P"
+    }
+  ],
+  "views": [],
+  "dicts": [],
+  "viewGroups": [],
+  "dataTypeMapping": {
+    "referURL": "",
+    "mappings": [
+      {
+        "defKey": "string",
+        "id": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+        "defName": "字串",
+        "29D1CE08-4C35-4D2D-AAA9-23D93305B52E": "VARCHAR",
+        "797A1496-D649-4261-89B4-544132EC3F36": "String",
+        "895CFD1D-4273-4D32-A2C4-CAC70200AB5B": "String"
+      },
+      {
+        "defKey": "double",
+        "id": "1A0BDC09-0792-4174-9E8E-80BE8DF44B8E",
+        "defName": "小数",
+        "29D1CE08-4C35-4D2D-AAA9-23D93305B52E": "DECIMAL",
+        "797A1496-D649-4261-89B4-544132EC3F36": "BigDecimal",
+        "895CFD1D-4273-4D32-A2C4-CAC70200AB5B": "BigDecimal"
+      },
+      {
+        "defKey": "int",
+        "id": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+        "defName": "整数",
+        "29D1CE08-4C35-4D2D-AAA9-23D93305B52E": "INT",
+        "797A1496-D649-4261-89B4-544132EC3F36": "Integer",
+        "895CFD1D-4273-4D32-A2C4-CAC70200AB5B": "Integer"
+      },
+      {
+        "defKey": "date",
+        "id": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+        "defName": "日期",
+        "29D1CE08-4C35-4D2D-AAA9-23D93305B52E": "DATETIME",
+        "797A1496-D649-4261-89B4-544132EC3F36": "Instant",
+        "895CFD1D-4273-4D32-A2C4-CAC70200AB5B": "Instant"
+      },
+      {
+        "defKey": "bytes",
+        "id": "D516E75B-90F5-4741-B9B3-A186A263F04C",
+        "defName": "二进制",
+        "29D1CE08-4C35-4D2D-AAA9-23D93305B52E": "BLOB",
+        "797A1496-D649-4261-89B4-544132EC3F36": "byte[]",
+        "895CFD1D-4273-4D32-A2C4-CAC70200AB5B": "byte[]"
+      },
+      {
+        "defKey": "largeText",
+        "id": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
+        "defName": "大文本",
+        "29D1CE08-4C35-4D2D-AAA9-23D93305B52E": "TEXT",
+        "797A1496-D649-4261-89B4-544132EC3F36": "String",
+        "895CFD1D-4273-4D32-A2C4-CAC70200AB5B": "String"
+      },
+      {
+        "defKey": "BIGINT",
+        "defName": "大整数",
+        "id": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+        "29D1CE08-4C35-4D2D-AAA9-23D93305B52E": "BIGINT",
+        "797A1496-D649-4261-89B4-544132EC3F36": "Long",
+        "895CFD1D-4273-4D32-A2C4-CAC70200AB5B": "Long"
+      },
+      {
+        "defKey": "char",
+        "defName": "Char",
+        "id": "4629ED77-822E-4610-86D1-82426E63066E",
+        "29D1CE08-4C35-4D2D-AAA9-23D93305B52E": "CHAR",
+        "797A1496-D649-4261-89B4-544132EC3F36": "String",
+        "895CFD1D-4273-4D32-A2C4-CAC70200AB5B": "String"
+      },
+      {
+        "defKey": "localDate",
+        "id": "FC5C52B1-479F-514B-AB16-12D9EE0CFCA4",
+        "defName": "本地日期",
+        "29D1CE08-4C35-4D2D-AAA9-23D93305B52E": "DATE",
+        "797A1496-D649-4261-89B4-544132EC3F36": "LocalDate",
+        "895CFD1D-4273-4D32-A2C4-CAC70200AB5B": "LocalDate"
+      }
+    ]
+  },
+  "domains": [
+    {
+      "defKey": "DefaultString",
+      "defName": "默认字串",
+      "applyFor": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+      "len": 255,
+      "scale": "",
+      "uiHint": "",
+      "id": "9092C4E0-1A54-4859-ABBB-5B62DBC27573"
+    },
+    {
+      "defKey": "PrimaryKey",
+      "defName": "主键",
+      "applyFor": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+      "len": "",
+      "scale": "",
+      "uiHint": "",
+      "id": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7"
+    },
+    {
+      "defKey": "Money",
+      "defName": "金额",
+      "applyFor": "1A0BDC09-0792-4174-9E8E-80BE8DF44B8E",
+      "len": 24,
+      "scale": 8,
+      "uiHint": "",
+      "id": "C3B1681B-99F9-4818-9E80-DE1652A51D85"
+    },
+    {
+      "defKey": "Int",
+      "defName": "整数",
+      "applyFor": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+      "len": "",
+      "scale": "",
+      "uiHint": "",
+      "id": "6BC8F04B-6CFA-4995-98D3-318F5CDD774E"
+    },
+    {
+      "defKey": "Decimal",
+      "defName": "精确小数",
+      "applyFor": "1A0BDC09-0792-4174-9E8E-80BE8DF44B8E",
+      "len": 18,
+      "scale": 10,
+      "uiHint": "",
+      "id": "FF4459C5-6B45-4DBF-8FC0-E06239BC05B4"
+    },
+    {
+      "defKey": "DateTime",
+      "defName": "日期时间",
+      "applyFor": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+      "len": 6,
+      "scale": "",
+      "uiHint": "",
+      "id": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC"
+    },
+    {
+      "defKey": "currency",
+      "defName": "币种",
+      "applyFor": "4629ED77-822E-4610-86D1-82426E63066E",
+      "len": 3,
+      "scale": "",
+      "uiHint": "",
+      "id": "7107154F-CF2B-4D2A-AC43-514D4027E5C6"
+    }
+  ],
+  "diagrams": [
+    {
+      "defKey": "reliability",
+      "defName": "可靠执行与命令幂等",
+      "relationType": "field",
+      "canvasData": {
+        "cells": [
+          {
+            "id": "01ED616C-66E3-5D70-8580-D9CA62EA35A2",
+            "shape": "table",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "count": 0,
+            "originKey": "AF04882D-8BA7-5086-BE21-48831690D5B6",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 526
+            }
+          }
+        ]
+      },
+      "properties": {
+        "primaryTables": [
+          "t_compensation_event"
+        ],
+        "referenceTables": []
+      },
+      "id": "87A45527-D454-5769-AA5F-0E06A321A3F9",
+      "comment": "可靠执行与命令幂等边界关系图"
+    }
+  ],
+  "standardFields": [],
+  "dbConn": [],
+  "logicEntities": [],
+  "namingRules": [
+    {
+      "id": "63F1DC0E-6A76-4B75-B3DA-4B00657B4E1B",
+      "defName": "字段代码不超过 32 个字符",
+      "intro": "",
+      "controlIntensity": "S",
+      "applyObjectType": "L",
+      "applyFieldType": "field",
+      "programCode": "return (data.field.defKey||\"\").length <= 32;",
+      "enable": true
+    },
+    {
+      "id": "668CBEE6-E0B7-4ACE-B72E-63942963B191",
+      "defName": "表代码不超过 32 个字符",
+      "intro": "",
+      "controlIntensity": "F",
+      "applyObjectType": "P",
+      "applyFieldType": "entity",
+      "programCode": "return (data.entity.defKey||\"\").length <= 32;",
+      "enable": true
+    },
+    {
+      "id": "11BD987F-82E7-418E-A752-FDD84F1582A2",
+      "defName": "字段代码不超过 32 个字符",
+      "intro": "",
+      "controlIntensity": "F",
+      "applyObjectType": "P",
+      "applyFieldType": "field",
+      "programCode": "return (data.field.defKey||\"\").length <= 32;",
+      "enable": true
+    },
+    {
+      "id": "29D0A8D9-ABE2-451F-8A39-52FAB02E62B9",
+      "defName": "索引代码不超过 32 个字符",
+      "intro": "",
+      "controlIntensity": "S",
+      "applyObjectType": "P",
+      "applyFieldType": "index",
+      "programCode": "return (data.index.defKey||\"\").length <= 32;",
+      "enable": true
+    },
+    {
+      "id": "B425A96F-6A31-4DBD-8743-A00DE28FB50F",
+      "defName": "不能使用保留字",
+      "intro": "",
+      "controlIntensity": "S",
+      "applyObjectType": "P",
+      "applyFieldType": "index",
+      "programCode": "let sysWords = \"action,add,aggregate,all,alter,after,and,as,asc,avg,avg_row_length,auto_increment,between,bigint,bit,binary,blob,bool,both,by,cascade,case,char,character,change,check,checksum,column,columns,comment,constraint,create,cross,current_date,current_time,current_timestamp,data,database,databases,date,datetime,day,day_hour,day_minute,day_second,dayofmonth,dayofweek,dayofyear,dec,decimal,default,delayed,delay_key_write,delete,desc,describe,distinct,distinctrow,double,drop,end,else,escape,escaped,enclosed,enum,explain,exists,fields,file,first,float,float4,float8,flush,foreign,from,for,full,function,global,grant,grants,group,having,heap,high_priority,hour,hour_minute,hour_second,hosts,identified,ignore,in,index,infile,inner,insert,insert_id,int,integer,interval,int1,int2,int3,int4,int8,into,if,is,isam,join,key,keys,kill,last_insert_id,leading,left,length,like,lines,limit,load,local,lock,logs,long,longblob,longtext,low_priority,max,max_rows,match,mediumblob,mediumtext,mediumint,middleint,min_rows,minute,minute_second,modify,month,monthname,myisam,natural,numeric,no,not,null,on,optimize,option,optionally,or,order,outer,outfile,pack_keys,partial,password,precision,primary,procedure,process,processlist,privileges,read,real,references,reload,regexp,rename,replace,restrict,returns,revoke,rlike,row,rows,second,select,set,show,shutdown,smallint,soname,sql_big_tables,sql_big_selects,sql_low_priority_updates,sql_log_off,sql_log_update,sql_select_limit,sql_small_result,sql_big_result,sql_warnings,straight_join,starting,status,string,table,tables,temporary,terminated,text,then,time,timestamp,tinyblob,tinytext,tinyint,trailing,to,type,use,using,unique,unlock,unsigned,update,usage,values,varchar,variables,varying,varbinary,with,write,when,where,year,year_month,zerofill\".split(\",\");\nreturn sysWords.indexOf(data.index.defKey.toLowerCase())<0;",
+      "enable": true
+    },
+    {
+      "id": "EF9E44D0-691A-4352-A079-CFF300107531",
+      "defName": "索引名-全小写",
+      "intro": "",
+      "controlIntensity": "F",
+      "applyObjectType": "P",
+      "applyFieldType": "index",
+      "programCode": "return !/[A-Z]+/.test(data.index.defKey);",
+      "enable": true
+    },
+    {
+      "id": "972EB2FB-4428-429D-8B0A-F082A8C7A94D",
+      "defName": "名称不能为空",
+      "intro": "",
+      "controlIntensity": "F",
+      "applyObjectType": "L",
+      "applyFieldType": "entity",
+      "programCode": "return data.logicEntity.defName",
+      "enable": true
+    },
+    {
+      "id": "EEAEB9C5-BB6C-4E92-949B-D27928690D85",
+      "defName": "名称长度不超过32",
+      "intro": "",
+      "controlIntensity": "S",
+      "applyObjectType": "L",
+      "applyFieldType": "entity",
+      "programCode": "return (data.logicEntity.defName||\"\").length <=32",
+      "enable": true
+    },
+    {
+      "id": "24E3F7E5-730D-4378-B72D-195D6B940352",
+      "defName": "不能使用保留字",
+      "intro": "",
+      "controlIntensity": "F",
+      "applyObjectType": "P",
+      "applyFieldType": "entity",
+      "programCode": "let sysWords = \"action,add,aggregate,all,alter,after,and,as,asc,avg,avg_row_length,auto_increment,between,bigint,bit,binary,blob,bool,both,by,cascade,case,char,character,change,check,checksum,column,columns,comment,constraint,create,cross,current_date,current_time,current_timestamp,data,database,databases,date,datetime,day,day_hour,day_minute,day_second,dayofmonth,dayofweek,dayofyear,dec,decimal,default,delayed,delay_key_write,delete,desc,describe,distinct,distinctrow,double,drop,end,else,escape,escaped,enclosed,enum,explain,exists,fields,file,first,float,float4,float8,flush,foreign,from,for,full,function,global,grant,grants,group,having,heap,high_priority,hour,hour_minute,hour_second,hosts,identified,ignore,in,index,infile,inner,insert,insert_id,int,integer,interval,int1,int2,int3,int4,int8,into,if,is,isam,join,key,keys,kill,last_insert_id,leading,left,length,like,lines,limit,load,local,lock,logs,long,longblob,longtext,low_priority,max,max_rows,match,mediumblob,mediumtext,mediumint,middleint,min_rows,minute,minute_second,modify,month,monthname,myisam,natural,numeric,no,not,null,on,optimize,option,optionally,or,order,outer,outfile,pack_keys,partial,password,precision,primary,procedure,process,processlist,privileges,read,real,references,reload,regexp,rename,replace,restrict,returns,revoke,rlike,row,rows,second,select,set,show,shutdown,smallint,soname,sql_big_tables,sql_big_selects,sql_low_priority_updates,sql_log_off,sql_log_update,sql_select_limit,sql_small_result,sql_big_result,sql_warnings,straight_join,starting,status,string,table,tables,temporary,terminated,text,then,time,timestamp,tinyblob,tinytext,tinyint,trailing,to,type,use,using,unique,unlock,unsigned,update,usage,values,varchar,variables,varying,varbinary,with,write,when,where,year,year_month,zerofill\".split(\",\");\nreturn sysWords.indexOf(data.entity.defKey.toLowerCase())<0;",
+      "enable": true
+    },
+    {
+      "id": "039BF435-DC77-4DA4-81C7-7F8076BF22BB",
+      "defName": "表名-全小写",
+      "intro": "",
+      "controlIntensity": "S",
+      "applyObjectType": "P",
+      "applyFieldType": "entity",
+      "programCode": "return !/[A-Z]+/.test(data.entity.defKey);",
+      "enable": true
+    },
+    {
+      "id": "CBEB0E30-19C6-427D-A8BF-61FF10E27A0B",
+      "defName": "表名-不允许空格",
+      "intro": "",
+      "controlIntensity": "F",
+      "applyObjectType": "P",
+      "applyFieldType": "entity",
+      "programCode": "return !/\\s+/.test(data.entity.defKey);",
+      "enable": true
+    },
+    {
+      "id": "1168C7C2-8E8E-4FB7-B639-B3DE839C395A",
+      "defName": "物理表名使用 t_ 前缀和小写 snake_case",
+      "intro": "",
+      "controlIntensity": "F",
+      "applyObjectType": "P",
+      "applyFieldType": "entity",
+      "programCode": "return /^t_[a-z][a-z0-9_]*$/.test(data.entity.defKey);",
+      "enable": true
+    },
+    {
+      "id": "D373637C-D3A6-4621-B656-6841A5444A76",
+      "defName": "表必须有comment注释",
+      "intro": "",
+      "controlIntensity": "S",
+      "applyObjectType": "P",
+      "applyFieldType": "entity",
+      "programCode": "return (data.entity.defName||\"\").length > 0 || (data.entity.comment||\"\").length > 0",
+      "enable": true
+    },
+    {
+      "id": "2BAB122B-8811-40BB-89F3-CDC24B5862D3",
+      "defName": "主键必须为非自增 Snowflake BIGINT",
+      "intro": "",
+      "controlIntensity": "S",
+      "applyObjectType": "P",
+      "applyFieldType": "entity",
+      "programCode": "let field=data.entity.fields.find(item=>item.primaryKey); return !!field && !field.autoIncrement && (field.type||field.dbType||'').toUpperCase()==='BIGINT';",
+      "enable": true
+    },
+    {
+      "id": "0B2F0BD2-3B84-4AB1-BA29-9DE9620AF608",
+      "defName": "可变表使用双审计时间，不可变事实只保留创建时间",
+      "intro": "",
+      "controlIntensity": "S",
+      "applyObjectType": "P",
+      "applyFieldType": "entity",
+      "programCode": "let actual=data.entity.fields.map(field=>field.defKey); let immutable=[\"t_place_of_supply_rule\",\"t_tax_rate\",\"t_tax_evidence_rule\",\"t_tax_exchange_rate\",\"t_tax_snapshot\",\"t_tax_evidence\",\"t_tax_line\",\"t_fiscal_record\",\"t_fiscal_record_line\",\"t_tax_liability_summary\",\"t_tax_return_line\",\"t_tax_payment_event\",\"t_economic_fact_line\",\"t_economic_fact_line_link\",\"t_channel_cost_scope\",\"t_channel_cost_component\",\"t_channel_cost_confirm\",\"t_channel_cost_alloc\",\"t_accounting_rule_line\",\"t_instruction_line\",\"t_journal_entry\",\"t_journal_line\",\"t_adjustment_approval\",\"t_channel_settle_batch\",\"t_channel_settle_item\",\"t_channel_transaction_match\",\"t_bank_statement\",\"t_bank_statement_item\",\"t_payout_approval\",\"t_payout_evidence_ref\",\"t_payout_event\",\"t_trial_balance_line\",\"t_close_approval\",\"t_close_account_rule\"].includes(data.entity.defKey); return actual.includes('create_time') && (immutable ? !actual.includes('update_time') : actual.includes('update_time'));",
+      "enable": true
+    },
+    {
+      "id": "BEC54F19-52D5-4882-BCE1-4439785F8001",
+      "defName": "不能使用保留字",
+      "intro": "",
+      "controlIntensity": "S",
+      "applyObjectType": "P",
+      "applyFieldType": "field",
+      "programCode": "let sysWords = \"action,add,aggregate,all,alter,after,and,as,asc,avg,avg_row_length,auto_increment,between,bigint,bit,binary,blob,bool,both,by,cascade,case,char,character,change,check,checksum,column,columns,comment,constraint,create,cross,current_date,current_time,current_timestamp,data,database,databases,date,datetime,day,day_hour,day_minute,day_second,dayofmonth,dayofweek,dayofyear,dec,decimal,default,delayed,delay_key_write,delete,desc,describe,distinct,distinctrow,double,drop,end,else,escape,escaped,enclosed,enum,explain,exists,fields,file,first,float,float4,float8,flush,foreign,from,for,full,function,global,grant,grants,group,having,heap,high_priority,hour,hour_minute,hour_second,hosts,identified,ignore,in,index,infile,inner,insert,insert_id,int,integer,interval,int1,int2,int3,int4,int8,into,if,is,isam,join,key,keys,kill,last_insert_id,leading,left,length,like,lines,limit,load,local,lock,logs,long,longblob,longtext,low_priority,max,max_rows,match,mediumblob,mediumtext,mediumint,middleint,min_rows,minute,minute_second,modify,month,monthname,myisam,natural,numeric,no,not,null,on,optimize,option,optionally,or,order,outer,outfile,pack_keys,partial,password,precision,primary,procedure,process,processlist,privileges,read,real,references,reload,regexp,rename,replace,restrict,returns,revoke,rlike,row,rows,second,select,set,show,shutdown,smallint,soname,sql_big_tables,sql_big_selects,sql_low_priority_updates,sql_log_off,sql_log_update,sql_select_limit,sql_small_result,sql_big_result,sql_warnings,straight_join,starting,string,table,tables,temporary,terminated,text,then,time,timestamp,tinyblob,tinytext,tinyint,trailing,to,type,use,using,unique,unlock,unsigned,update,usage,values,varchar,variables,varying,varbinary,with,write,when,where,year,year_month,zerofill\".split(\",\");\nreturn sysWords.indexOf(data.field.defKey.toLowerCase())<0;",
+      "enable": true
+    },
+    {
+      "id": "082E186D-7B02-4F1C-9ECE-378AB98C4845",
+      "defName": "字段-全小写",
+      "intro": "",
+      "controlIntensity": "S",
+      "applyObjectType": "P",
+      "applyFieldType": "field",
+      "programCode": "return !/[A-Z]+/.test(data.field.defKey);",
+      "enable": true
+    },
+    {
+      "id": "F3CE5C67-23B6-4E7B-BA91-D5F0BCBC9E6A",
+      "defName": "字段-不允许空格",
+      "intro": "",
+      "controlIntensity": "F",
+      "applyObjectType": "P",
+      "applyFieldType": "field",
+      "programCode": "return !/\\s+/.test(data.field.defKey);",
+      "enable": true
+    },
+    {
+      "id": "21AFEAC8-96D7-467F-8320-A33887FC0C5D",
+      "defName": "字段-英文及下划线",
+      "intro": "",
+      "controlIntensity": "F",
+      "applyObjectType": "P",
+      "applyFieldType": "field",
+      "programCode": "return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(data.field.defKey);",
+      "enable": true
+    },
+    {
+      "id": "2BBDE47B-6926-4E1A-AE57-D4F6E5399EE6",
+      "defName": "字段-必需有comment注释",
+      "intro": "",
+      "controlIntensity": "F",
+      "applyObjectType": "P",
+      "applyFieldType": "field",
+      "programCode": "return (data.field.defName||\"\").length > 0 || (data.field.comment||\"\").length > 0",
+      "enable": true
+    },
+    {
+      "id": "5E181E43-0D72-498F-8178-4C1CDBC89A16",
+      "defName": "字段-不能与表名相同",
+      "intro": "",
+      "controlIntensity": "F",
+      "applyObjectType": "P",
+      "applyFieldType": "field",
+      "programCode": "return data.field.defKey != data.entity.defKey;",
+      "enable": true
+    },
+    {
+      "id": "DE8F8598-5D53-4727-A837-7816C2AF99D9",
+      "defName": "外键-字段必须具有表名及其主键",
+      "intro": "",
+      "controlIntensity": "S",
+      "applyObjectType": "P",
+      "applyFieldType": "field",
+      "programCode": "let relas = data.entity.correlations;\nfor(let i=0;i<relas.length;i++){\n    let rela = relas[i];\n    if(data.field.defKey==rela.myField&&rela.myRows==\"n\"){\n        if(rela.myField==(rela.refEntity+\"_\"+rela.refField)){\n            return true;\n        }else{\n            return false;\n        }\n    }\n}\nreturn true;",
+      "enable": true
+    },
+    {
+      "id": "D330BCC3-DBAB-4677-8C5A-A301003A5878",
+      "defName": "时刻字段使用 DATETIME(6)，日期事实使用 DATE",
+      "intro": "",
+      "controlIntensity": "S",
+      "applyObjectType": "P",
+      "applyFieldType": "field",
+      "programCode": "let key=(data.field.defKey||'').toLowerCase(); let type=(data.field.type||data.field.dbType||'').toUpperCase(); if(key.endsWith('_date')||key==='start_date'||key==='end_date'){return type==='DATE';} if(key.endsWith('_time')||key.endsWith('_at')||key.endsWith('_from')||key.endsWith('_to')||key.endsWith('_until')){return type==='DATETIME' && parseInt(data.field.len)===6;} return true;",
+      "enable": true
+    },
+    {
+      "id": "2E7FDA44-989A-4C5B-A0C5-12B1E40E57B1",
+      "defName": "索引名-英文及下划线",
+      "intro": "",
+      "controlIntensity": "S",
+      "applyObjectType": "P",
+      "applyFieldType": "index",
+      "programCode": "return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(data.index.defKey);",
+      "enable": true
+    },
+    {
+      "id": "023450B3-AAE2-4DC1-AE63-2196DD82823D",
+      "defName": "唯一索引以 uk_ 开头，普通索引以 idx_ 开头",
+      "intro": "",
+      "controlIntensity": "S",
+      "applyObjectType": "P",
+      "applyFieldType": "index",
+      "programCode": "return data.index.unique ? data.index.defKey.indexOf('uk_')===0 : data.index.defKey.indexOf('idx_')===0;",
+      "enable": true
+    },
+    {
+      "id": "1C563E17-262B-4EB6-87F0-203CAC667CF0",
+      "defName": "不允许存在blob、text等大字段",
+      "intro": "",
+      "controlIntensity": "S",
+      "applyObjectType": "P",
+      "applyFieldType": "field",
+      "programCode": "if(\"blob,text\".indexOf(data.field.dbType.toLowerCase())>=0){\n    return false;\n}\nreturn true;",
+      "enable": true
+    }
+  ]
+}

@@ -4,17 +4,20 @@ import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import test from "node:test";
+import { serviceOfTable } from "./payment-service-partition.mjs";
 
 const workspaceRoot = path.resolve(import.meta.dirname, "../..");
 const paths = Object.freeze({
   metadata: path.join(workspaceRoot, "scripts/pdmaner/payment-field-metadata.mjs"),
   generator: path.join(workspaceRoot, "scripts/pdmaner/generate-payment-model.mjs"),
-  model: path.join(workspaceRoot, "payment-orchestration-service/docs/database/payment-orchestration.pdma.json"),
-  decisions: path.join(workspaceRoot, "payment-orchestration-service/docs/database/PAYMENT_ORCHESTRATION_PHYSICAL_DECISIONS.md"),
+  // 第 05 步按表归属拆为两份规范模型（design/03 §2.3）；断言作用于两份模型的并集，t_compensation_event 每库一份只计一次。
+  model: path.join(workspaceRoot, "paytech/payment/docs/database/payment.pdma.json"),
+  channelConnectorModel: path.join(workspaceRoot, "paytech/channel-connector/docs/database/channel-connector.pdma.json"),
+  decisions: path.join(workspaceRoot, "paytech/payment/docs/database/PAYMENT_ORCHESTRATION_PHYSICAL_DECISIONS.md"),
   template: path.join(workspaceRoot, "agent-docs/templates/pdmaner/template.pdma.json"),
 });
 
-const coreArtifactPaths = Object.freeze([paths.metadata, paths.generator, paths.model]);
+const coreArtifactPaths = Object.freeze([paths.metadata, paths.generator, paths.model, paths.channelConnectorModel]);
 const expectedTemplateDigest = "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540";
 // Approved byte-for-byte and structural digests for the 27-table model.
 const expectedModelDigest = "4fb5a4c88f00bd5552dc4c66de1811aee4bc73aee40c40674c264966261e4979";
@@ -191,6 +194,10 @@ source_submission_id BIGINT NN
 payment_method_code VARCHAR(64) NN OPEN(Payment Method Catalog)
 instrument_type VARCHAR(32) NN {CARD}
 instrument_ref VARCHAR(128) NN
+customer_id BIGINT N
+consent_to_save TINYINT(1) NN
+card_bin VARCHAR(8) N
+card_fingerprint CHAR(64) N
 expires_at DATETIME(6) NN
 revoked_at DATETIME(6) N
 create_time DATETIME(6) NN
@@ -832,7 +839,17 @@ function physicalDecisionManifest() {
   assert.ok(match, "Payment Physical Decisions 缺少物理 Manifest 标记区");
   return JSON.parse(match[1]);
 }
-function readModel() { return JSON.parse(readFileSync(paths.model, "utf8")); }
+function readModel() {
+  const payment = JSON.parse(readFileSync(paths.model, "utf8"));
+  const channelConnector = JSON.parse(readFileSync(paths.channelConnectorModel, "utf8"));
+  const names = new Set(payment.entities.map((entity) => entity.defKey));
+  return { ...payment, entities: [...payment.entities, ...channelConnector.entities.filter((entity) => !names.has(entity.defKey))],
+    diagrams: [...payment.diagrams, ...channelConnector.diagrams] };
+}
+// 跨服务（跨库）关系在拆分后不再出现在任一模型中；本地关系 = 两端同属一个服务库。
+function isLocalRelation(relation) {
+  return serviceOfTable(`t_${relation.child}`) === serviceOfTable(`t_${relation.parent}`);
+}
 function entityMap(model) { return new Map(model.entities.map((entity) => [entity.defKey, entity])); }
 function fieldMap(entity) { return new Map(entity.fields.map((field) => [field.id, field])); }
 function relationSignatures(model) {
@@ -955,7 +972,7 @@ test("Payment test-owned Oracle is internally complete for all 27 tables", () =>
   assert.deepEqual(approvedFields.map((table) => table.defKey), approvedTableNames);
   assert.ok(approvedFields.every((table) => table.fields.length > 1));
   assert.deepEqual([...parseIndexes().keys()], approvedTableNames);
-  assert.equal(approvedFields.reduce((count, table) => count + table.fields.length, 0), 345);
+  assert.equal(approvedFields.reduce((count, table) => count + table.fields.length, 0), 349);
   const oracleIndexes = [...parseIndexes().values()].flat();
   assert.equal(oracleIndexes.filter((index) => index.unique).length, 38);
   assert.equal(oracleIndexes.filter((index) => !index.unique).length, 44);
@@ -1025,7 +1042,7 @@ if (physicalDecisionsReadyAtRegistration) {
 test("Payment Physical Decisions freezes current model totals and digests", () => {
   assertPhysicalDecisionsReady();
   assert.deepEqual(physicalDecisionManifest(), {
-    modelTotals: { tables: 27, fields: 345, uniqueIndexes: 38, accessIndexes: 44, relations: 63, oneToOneRelations: 7, diagramGroups: 7 },
+    modelTotals: { tables: 27, fields: 349, uniqueIndexes: 38, accessIndexes: 44, relations: 63, oneToOneRelations: 7, diagramGroups: 7 },
     templateSha256: expectedTemplateDigest,
     modelSha256: expectedModelDigest,
     structuralProjectionSha256: expectedStructuralDigest,
@@ -1088,7 +1105,7 @@ test("Payment model freezes routing, risk and state enum contracts", () => {
 test("Payment model has only the approved local relations", () => {
     assertCoreReady();
     const model = readModel();
-    const expected = parseRelations().map((relation) => `${relation.cardinality} ${relation.child}.${relation.childField} -> ${relation.parent}.${relation.parentField}`).sort();
+    const expected = parseRelations().filter(isLocalRelation).map((relation) => `${relation.cardinality} ${relation.child}.${relation.childField} -> ${relation.parent}.${relation.parentField}`).sort();
     assert.deepEqual(relationSignatures(model).sort(), expected);
     for (const { relation, child, parent, childField } of modelRelations(model)) {
       assert.ok(parent && childField, `Payment 禁止跨库或悬空关系：${child.defKey}`);
@@ -1196,7 +1213,7 @@ test("Payment model is deterministic and preserves seven diagram themes", async 
     assert.equal(new Set(diagramRelationIds).size, relationIds.length);
     const result = spawnSync(process.execPath, [paths.generator, "--check"], { cwd: workspaceRoot, encoding: "utf8" });
     assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
-    assert.deepEqual(modelTotals(model), { tables: 27, fields: 345, uniqueIndexes: 38, accessIndexes: 44, relations: 63, oneToOneRelations: 7, diagramGroups: 7 });
+    assert.deepEqual(modelTotals(model), { tables: 27, fields: 349, uniqueIndexes: 38, accessIndexes: 44, relations: 63, oneToOneRelations: 7, diagramGroups: 7 });
 });
 
 test("Payment shared domains preserve the approved money, weight, time and currency precision", async () => {

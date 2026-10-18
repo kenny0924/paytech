@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.paytech</groupId>
+        <artifactId>paytech-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../build/paytech-parent/pom.xml</relativePath>
+    </parent>
+
+    <artifactId>paytech-compliance</artifactId>
+    <packaging>pom</packaging>
+
+    <name>PayTech Compliance</name>
+    <description>Compliance service aggregator: Client onboarding due diligence review, material requirement catalog and
+        (contract only in phase 0) settlement controls (design/07 §2, D38).</description>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>paytech-compliance-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>paytech-compliance-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>paytech-compliance-app</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <!-- 原 risk-compliance-service 禁令（09 §1.4），并禁止依赖其他服务的 core / app（D09）。 -->
+                        <id>risk-bootstrap-scope</id>
+                        <phase>validate</phase>
+                        <goals><goal>enforce</goal></goals>
+                        <configuration>
+                            <rules>
+                                <bannedDependencies>
+                                    <searchTransitive>true</searchTransitive>
+                                    <excludes>
+                                        <exclude>org.flywaydb:*</exclude>
+                                        <exclude>org.liquibase:*</exclude>
+                                        <exclude>com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-config</exclude>
+                                        <exclude>org.springframework:spring-webflux</exclude>
+                                        <exclude>org.springframework.cloud:spring-cloud-starter-gateway*</exclude>
+                                        <exclude>org.springframework.cloud:spring-cloud-starter-openfeign</exclude>
+                                        <exclude>org.apache.dubbo:*</exclude>
+                                        <exclude>org.mockito:*</exclude>
+                                        <exclude>org.testcontainers:*</exclude>
+                                        <exclude>com.paytech:*-core</exclude>
+                                        <exclude>com.paytech:*-app</exclude>
+                                    </excludes>
+                                    <includes>
+                                        <include>com.paytech:paytech-common-core</include>
+                                        <include>com.paytech:paytech-compliance-core</include>
+                                        <include>com.paytech:paytech-compliance-app</include>
+                                    </includes>
+                                </bannedDependencies>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <modules>
+        <module>paytech-compliance-api</module>
+        <module>paytech-compliance-core</module>
+        <module>paytech-compliance-app</module>
+        <module>paytech-compliance-test</module>
+    </modules>
+</project>

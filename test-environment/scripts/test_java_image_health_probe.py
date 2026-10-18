@@ -17,13 +17,24 @@ BUILD_SCRIPT = TEST_ENVIRONMENT / "scripts/build.sh"
 COMPOSE_APPLICATIONS = TEST_ENVIRONMENT / "compose.applications.yaml"
 
 READINESS_URLS = (
-    "http://127.0.0.1:18104/actuator/health/readiness",
+    "http://127.0.0.1:19104/actuator/health/readiness",
+    "http://127.0.0.1:19112/actuator/health/readiness",
     "http://127.0.0.1:18106/platform-support/actuator/health/readiness",
     "http://127.0.0.1:19201/actuator/health/readiness",
     "http://127.0.0.1:19080/actuator/health/readiness",
-    "http://127.0.0.1:18101/actuator/health/readiness",
+    "http://127.0.0.1:19101/actuator/health/readiness",
     "http://127.0.0.1:19202/actuator/health/readiness",
-    "http://127.0.0.1:18102/commerce/actuator/health/readiness",
+    "http://127.0.0.1:19102/actuator/health/readiness",
+    "http://127.0.0.1:19109/actuator/health/readiness",
+    "http://127.0.0.1:19108/actuator/health/readiness",
+    "http://127.0.0.1:19103/actuator/health/readiness",
+    "http://127.0.0.1:19110/actuator/health/readiness",
+    "http://127.0.0.1:19111/actuator/health/readiness",
+    "http://127.0.0.1:19105/actuator/health/readiness",
+    "http://127.0.0.1:19113/actuator/health/readiness",
+    "http://127.0.0.1:19114/actuator/health/readiness",
+    "http://127.0.0.1:19115/actuator/health/readiness",
+    "http://127.0.0.1:19116/actuator/health/readiness",
 )
 
 
@@ -539,13 +550,24 @@ class JavaImageHealthProbeTest(unittest.TestCase):
         expected_by_service = dict(
             zip(
                 (
-                    "risk-service",
+                    "risk-decision-service",
+                    "compliance-service",
                     "platform-support-service",
                     "operations-console-bff",
                     "api-gateway",
-                    "client-contract-service",
+                    "client-master-service",
                     "client-console-bff",
-                    "commerce-service",
+                    "acquiring-service",
+                    "consumer-service",
+                    "commercial-service",
+                    "payment-service",
+                    "channel-connector-service",
+                    "card-service",
+                    "ledger-service",
+                    "billing-service",
+                    "account-service",
+                    "reconciliation-service",
+                    "tax-service",
                 ),
                 READINESS_URLS,
             )
@@ -766,7 +788,7 @@ class JavaImageHealthProbeTest(unittest.TestCase):
 
                 public static void main(String[] args) {
                     String[] validUrls = {
-                        "http://127.0.0.1:18104/actuator/health/readiness",
+                        "http://127.0.0.1:19104/actuator/health/readiness",
                         "http://127.0.0.1:18106/platform-support/actuator/health/readiness",
                         "http://127.0.0.1:19201/actuator/health/readiness",
                         "http://127.0.0.1:19080/actuator/health/readiness"
@@ -840,7 +862,7 @@ class JavaImageHealthProbeTest(unittest.TestCase):
 
                 public static void main(String[] args) {
                     String validUrl =
-                        "http://127.0.0.1:18104/actuator/health/readiness";
+                        "http://127.0.0.1:19104/actuator/health/readiness";
 
                     int[] successfulStatuses = {200, 204, 226, 299};
                     for (int status : successfulStatuses) {

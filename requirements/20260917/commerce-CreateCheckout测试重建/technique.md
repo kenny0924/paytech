@@ -45,7 +45,7 @@ TestMapper 的缺列检查只读；所有 DDL 均由人工授权执行。CCT 事
 
 ## Mock 启动配置
 
-`MockTestBase` 自动启用 `mock` Spring Profile。[application-mock.yml](../../../commerce-service/paytech-commerce-test/src/test/resources/application-mock.yml) 配齐当前切片所需的固定配置，包括本地数据库默认凭据、随机应用端口、Checkout Origin、ID 节点、CCT HTTP 策略和服务发现绑定、日志/管理端点、关闭 Nacos 与 XXL-Job 外部调度。旧请求幂等组件在该切片关闭；不改变生产业务分支。
+`MockTestBase` 自动启用 `mock` Spring Profile。[application-mock.yml](../../../paytech/acquiring/paytech-acquiring-test/src/test/resources/application-mock.yml) 配齐当前切片所需的固定配置，包括本地数据库默认凭据、随机应用端口、Checkout Origin、ID 节点、CCT HTTP 策略和服务发现绑定、日志/管理端点、关闭 Nacos 与 XXL-Job 外部调度。旧请求幂等组件在该切片关闭；不改变生产业务分支。
 
 该 YAML 同时作为配置字段清单，完整覆盖 Commerce 两个 Properties 类、Foundation 补偿/XXL-Job/Web 日志配置及旧幂等开关。可选/默认/关闭字段仍显式展示，注释给出来源、单位、默认值、Mock 取值和启用条件；当前生产 YAML 中采用的框架键也纳入核对。不会为展示字段而开启 Nacos 或 XXL-Job。
 
@@ -53,11 +53,11 @@ CCT Mock 服务实际端口由 `DynamicPropertySource` 注入 `commerce.test.cct
 
 ## 数据库前置
 
-本需求不设计新表。当前 Mock 初始化语句汇总至测试资源 [init/ddl.sql](../../../commerce-service/paytech-commerce-test/src/test/resources/init/ddl.sql)，参考 Transaction 测试项目的集中 SQL 组织方式，由本地管理员手工创建 `mor_commerce`、`commerce_app` 并授予本库 DML 权限，账号与 Mock YAML 默认值一致；已有库和用户不删除、不重置密码。表定义逐字复用 Commerce 正式 Schema，包含创建写入的 5 张表，以及检查零副作用的 Payment Projection、Order Context、Consumer Contract 三张表；后续按 Mock 依赖扩充。建表部分仅用于空测试 Schema，不自动执行、不插入场景数据。
+本需求不设计新表。当前 Mock 初始化语句汇总至测试资源 [init/ddl.sql](../../../paytech/acquiring/paytech-acquiring-test/src/test/resources/init/ddl.sql)，参考 Transaction 测试项目的集中 SQL 组织方式，由本地管理员手工创建 `mor_commerce`、`commerce_app` 并授予本库 DML 权限，账号与 Mock YAML 默认值一致；已有库和用户不删除、不重置密码。表定义逐字复用 Commerce 正式 Schema，包含创建写入的 5 张表，以及检查零副作用的 Payment Projection、Order Context、Consumer Contract 三张表；后续按 Mock 依赖扩充。建表部分仅用于空测试 Schema，不自动执行、不插入场景数据。
 
 已有数据库缺少当前创建代码所需的两列时，仍使用已有唯一增量 SQL 来源，不复制迁移：
 
 - [creation_mode 增量](../../20260916/commerce-订单查询合并Checkout/db/creation-mode.sql)：增加带 `HOSTED_CHECKOUT` 默认值的字段。
-- [consumer_country_code 增量](../../../commerce-service/docs/requirements/20260916-create-checkout-business/ddl.sql)：增加历史行允许 NULL 的字段。
+- [consumer_country_code 增量](../../../paytech/acquiring/docs/requirements/20260916-create-checkout-business/ddl.sql)：增加历史行允许 NULL 的字段。
 
 执行前核对目标为 `mor-local / 127.0.0.1:13306 / mor_commerce`，备份 `t_commerce_order` 结构并确认两列均不存在。脚本不可重复执行，不授权修改 `mor-test`，不变更订单金额或状态。执行与批准记录见交付记录。

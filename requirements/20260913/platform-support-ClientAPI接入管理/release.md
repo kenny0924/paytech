@@ -13,7 +13,7 @@
 
 1. 核对现有管理员账号 `221546852372267008`、PLATFORM_ADMIN `900000000000000510` version 18、Operations Target/Parent、两条旧 Route 版本及新 ID/code/path/index 空缺。
 2. 将八张受影响配置表的结构及前像保存到用户目录外部的受限文件。备份不包含账号凭据、会话、业务凭证或其他系统。
-3. 应用服务原有[两表 DDL](../../../platform-support-service/docs/database/sql/changes/2026-09-08-add-api-credential-validation.sql)及本期 [DDL](./db/ddl.sql)：补齐 Credential/Grant 两旧表，新建 Scope 表，共 3 表/28 字段；两个反向查询索引。
+3. 应用服务原有[两表 DDL](../../../paytech/platform-support/docs/database/sql/changes/2026-09-08-add-api-credential-validation.sql)及本期 [DDL](./db/ddl.sql)：补齐 Credential/Grant 两旧表，新建 Scope 表，共 3 表/28 字段；两个反向查询索引。
 4. 替换三个应用并等待健康。
 5. 在同一连接应用 [DML](./db/dml.sql)，核对 INSERT 127 条、两旧 Route 各推进一版，再提交。新配置先不生效。
 6. 同连接核对并提交 [启用 SQL](./db/activate-test.sql)：9 Route、4 Resource、4 RolePermission，PLATFORM_ADMIN 18→19；新权限仅沿用已有管理员角色。Gateway 自动消费新 Snapshot，不替换 Gateway 镜像。

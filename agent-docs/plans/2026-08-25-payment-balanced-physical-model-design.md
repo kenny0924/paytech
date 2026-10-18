@@ -2,7 +2,7 @@
 
 > 2026-09-13 命名后继：[支付渠道 Channel 决定](../decisions/2026-09-13-payment-channel-terminology.md)取代本文支付领域 Provider 命名；业务边界与历史证据保持。现行实体、字段及自有回调代码使用 Channel；外部固定协议与原报文不改写。
 
-> **已被后续决策取代：** 本文中的旧 31 表/399 字段与后续 29 表/382 字段基线、`t_payment_execution_gate`/`t_payment_execution_gate_result` 持久化设计、`t_three_ds_context` 和 `provider_token_ref` 均已取消。当前权威依据为 [Payment Execution 精简设计](./2026-08-25-payment-execution-simplification-design.md)、[`PAYMENT_ORCHESTRATION_DATABASE.md`](../database/PAYMENT_ORCHESTRATION_DATABASE.md) 与 [`PAYMENT_ORCHESTRATION_PHYSICAL_DECISIONS.md`](../../payment-orchestration-service/docs/database/PAYMENT_ORCHESTRATION_PHYSICAL_DECISIONS.md)，当前基线为 29 表/376 字段/63 关系。Provider Account/MID 精简文档仅对对应五表模型的历史决策仍有参考意义；本文其余内容仅供历史追溯。
+> **已被后续决策取代：** 本文中的旧 31 表/399 字段与后续 29 表/382 字段基线、`t_payment_execution_gate`/`t_payment_execution_gate_result` 持久化设计、`t_three_ds_context` 和 `provider_token_ref` 均已取消。当前权威依据为 [Payment Execution 精简设计](./2026-08-25-payment-execution-simplification-design.md)、[`PAYMENT_ORCHESTRATION_DATABASE.md`](../database/PAYMENT_ORCHESTRATION_DATABASE.md) 与 [`PAYMENT_ORCHESTRATION_PHYSICAL_DECISIONS.md`](../../paytech/payment/docs/database/PAYMENT_ORCHESTRATION_PHYSICAL_DECISIONS.md)，当前基线为 29 表/376 字段/63 关系。Provider Account/MID 精简文档仅对对应五表模型的历史决策仍有参考意义；本文其余内容仅供历史追溯。
 
 > **已局部被替代：** [Payment Provider Account 与 MID 精简设计](./2026-08-25-payment-provider-account-mid-simplification-design.md) 已确认并覆盖本文 Provider/MID、Connection Version、MID Credential、MID Limit、Health 与相应下游冻结字段。本文件保留为 34 表阶段的历史设计记录；其余未被覆盖的支付、退款、回调、争议与可靠执行决策继续仅作历史对照，当前权威模型以新设计及同步后的逻辑数据库文档为准。
 

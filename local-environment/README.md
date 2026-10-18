@@ -1,6 +1,6 @@
 # Code-MoR Local Base Environment
 
-This directory contains the isolated local `base` infrastructure profile and the optional `scheduler` profile. It does not start Java services, create business tables, or use existing containers from other projects.
+This directory contains the isolated local `base` infrastructure profile and the optional `scheduler`, `storage`, `mail`, `vault` and `analytics` profiles. It does not start Java services, create business tables, or use existing containers from other projects.
 
 ## Prepare
 
@@ -148,6 +148,112 @@ in a production service or distributing a product that includes it.
 
 The existing host Redis on `6379` and Nexus on `18081` are outside this Compose project. Redis is not reused; Nexus is reused only as the local Maven artifact repository through the developer-owned Settings file documented in `agent-docs/LOCAL_DEVELOPMENT_ENVIRONMENT.md`. This Compose project must not restart, replace, or remove that Nexus container or its volume.
 
+## Analytics profile
+
+The optional `analytics` profile backs the data service (`paytech/data-service`, decisions D25 / D35). It contains a
+single-node Apache Doris 3.0.8 (FE + BE), a Flink 1.20.5 session cluster with Flink CDC 3.7.0 pipeline connectors,
+and two one-shot containers. Images, versions and SHA-256 values are listed in
+[`paytech/data-service/README.md`](../paytech/data-service/README.md#版本与校验值) and `flink/Dockerfile`.
+
+| Service | Role | Host endpoint |
+|---|---|---|
+| `doris-fe` | Doris FE, FQDN mode, 768 MiB heap | MySQL protocol `127.0.0.1:19030`, HTTP `http://127.0.0.1:18030` |
+| `doris-be` | Doris BE, `mem_limit = 1024M` | none (FE and Flink reach it on the `mor` network) |
+| `doris-init` | one-shot: root password, BE registration, database `mor_data_service`, read-only `data_service_app` | none |
+| `flink-jobmanager` | Flink JobManager, 10 s checkpoints | Web UI `http://127.0.0.1:18091` (not `18081`, which is the host Nexus) |
+| `flink-taskmanager` | Flink TaskManager, 2 slots | none |
+| `flink-cdc-submit` | one-shot: submits `flink/pipelines/demo-currency-spec.yaml`; skips when that pipeline is already RUNNING | none |
+
+Every pipeline file may reference only tables in `paytech/data-service/cdc/whitelist.yaml`; `node
+scripts/verify-local-environment.mjs` enforces it. Volumes `mor-local-doris-fe-meta` and `mor-local-doris-be-storage`
+keep Doris metadata and data; Flink keeps no volume, so a stopped pipeline is re-submitted (and re-snapshotted) on the next
+start.
+
+### Prerequisites
+
+1. `base` is running. Analytics services never depend on base services, so starting or stopping them does not recreate
+   MySQL.
+2. `.env.local` contains `MOR_CDC_DB_PASSWORD`, `MOR_DORIS_ROOT_PASSWORD` and `MOR_DATA_SERVICE_DORIS_PASSWORD`
+   (see `.env.example`).
+3. MySQL writes a row-based binlog. `compose.yaml` now passes `--binlog-format=ROW --binlog-row-image=FULL
+   --gtid-mode=ON --enforce-gtid-consistency=ON --server-id=1`; these flags take effect only when the MySQL container is
+   next recreated. Until then, confirm that the running instance already satisfies Flink CDC (MySQL 8.4 defaults to
+   `log_bin=ON`, `binlog_format=ROW`, `binlog_row_image=FULL`, `server_id=1`; GTID is optional for Flink CDC):
+
+   ```bash
+   set -a; source .env.local; set +a
+   docker exec -e MYSQL_PWD="$MOR_MYSQL_ROOT_PASSWORD" mor-local-mysql-1 mysql -uroot -e \
+     "SHOW VARIABLES WHERE Variable_name IN ('log_bin','binlog_format','binlog_row_image','gtid_mode','server_id')"
+   ```
+
+4. The CDC account exists. A fresh MySQL volume gets it from `mysql/init/01-create-databases-and-users.sh`. For an
+   existing volume, create it once as root. The password is read from `.env.local` and passed over stdin, never echoed:
+
+   ```bash
+   set -a; source .env.local; set +a
+   printf "CREATE USER IF NOT EXISTS 'cdc_reader'@'%%' IDENTIFIED BY '%s';\nGRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'cdc_reader'@'%%';\nGRANT SELECT ON mor_finance.* TO 'cdc_reader'@'%%';\n" "$MOR_CDC_DB_PASSWORD" \
+     | docker exec -i -e MYSQL_PWD="$MOR_MYSQL_ROOT_PASSWORD" mor-local-mysql-1 mysql -uroot
+   ```
+
+   `cdc_reader` gets only `REPLICATION SLAVE, REPLICATION CLIENT` globally and `SELECT` on whitelisted databases; add a
+   `GRANT SELECT` when a new database enters the whitelist.
+
+### Start, submit, inspect
+
+If interpolation stops on `PAYTECH_REDIS_PASSWORD`, export it first (Redis is not touched). List the analytics services
+explicitly so nothing else is started:
+
+```bash
+docker compose --env-file .env.local -f compose.yaml -f compose.analytics.yaml --profile analytics config --quiet
+docker compose --env-file .env.local -f compose.yaml -f compose.analytics.yaml --profile analytics build flink-jobmanager
+docker compose --env-file .env.local -f compose.yaml -f compose.analytics.yaml --profile analytics \
+  up -d doris-fe doris-be doris-init flink-jobmanager flink-taskmanager
+docker compose --env-file .env.local -f compose.yaml -f compose.analytics.yaml --profile analytics up flink-cdc-submit
+docker compose --env-file .env.local -f compose.yaml -f compose.analytics.yaml --profile analytics ps -a
+```
+
+`flink-cdc-submit` prints `Pipeline has been submitted to cluster.` or `... already RUNNING; nothing submitted`.
+The demo update and Doris query are in [`paytech/data-service/README.md`](../paytech/data-service/README.md#本地演示人工执行).
+Compose warns about orphan `xxl-job-*` containers when the scheduler file is not included; do not add
+`--remove-orphans`.
+
+### Resources
+
+Measured on 2026-10-17 on the Apple M4 Pro / Docker Desktop 15.84 GiB machine, with the pipeline RUNNING and idle:
+
+| Container | Memory used / limit |
+|---|---|
+| `doris-fe` | 796 MiB / 1.25 GiB |
+| `doris-be` | 1.06 GiB / 1.5 GiB |
+| `flink-jobmanager` | 318 MiB / 768 MiB |
+| `flink-taskmanager` | 504 MiB / 1.25 GiB |
+| Total | about 2.7 GiB (limits 4.75 GiB) |
+
+Disk: the images are 5.9 GB compressed (Doris BE 3.2 GB, FE 1.5 GB, Flink 0.58 GB, local Flink CDC layer 0.08 GB),
+but Docker Desktop's image store keeps compressed and unpacked layers, so `docker image ls` reports about 17 GB and
+`docker system df` grew by about 14 GB on this machine. Check `df -h /` first; `LOCAL_DEVELOPMENT_ENVIRONMENT.md`
+asks for at least 15 GiB free after `base`. Do not run analytics alongside the `mor-test` environment and the full base
+profile unless Docker has the memory above free. Removing the images afterwards (re-pulled on the next build/start):
+
+```bash
+docker image rm mor-local/flink-cdc:1.20.5-cdc3.7.0 flink:1.20.5-scala_2.12-java17 \
+  apache/doris:be-3.0.8 apache/doris:fe-3.0.8
+```
+
+The BE runs with `SKIP_CHECK_ULIMIT=true` because Docker Desktop's VM keeps `vm.max_map_count` at 262144 (Doris
+production requires 2000000). This is a local single-node setting, not a deployment baseline.
+
+### Stop
+
+Stop only the analytics services; base containers keep running and the shared network stays (Compose reports it is
+still in use):
+
+```bash
+docker compose --env-file .env.local -f compose.yaml -f compose.analytics.yaml --profile analytics down
+```
+
+Do not add `-v` unless removal of the two Doris volumes has been explicitly approved.
+
 ## Stop safely
 
 ```bash
@@ -160,16 +266,25 @@ Do not add `-v` unless removal of the three named MoR volumes has been explicitl
 
 The first MySQL initialization creates empty schemas and one scoped account per owner:
 
-- `mor_cct` / `cct_app`
-- `mor_commerce` / `commerce_app`
-- `mor_payment` / `payment_app`
-- `mor_risk` / `risk_app`
+- `mor_cct` / `cct_app` (legacy CCT schema; kept until refactor step 04 is merged and verified)
+- `mor_client_master` / `client_master_app` (client-master; test DDL `paytech/client-master/paytech-client-master-test/src/test/resources/init/ddl.sql`)
+- `mor_commercial` / `commercial_app` (commercial; test DDL `paytech/commercial/paytech-commercial-test/src/test/resources/init/ddl.sql`)
+- `mor_commerce` / `commerce_app` (legacy Commerce schema; kept until refactor step 03 is merged and verified)
+- `mor_acquiring` / `acquiring_app` (acquiring; `SELECT, INSERT, UPDATE, DELETE` only; test DDL `paytech/acquiring/paytech-acquiring-test/src/test/resources/init/ddl.sql`; created only when `MOR_ACQUIRING_DB_PASSWORD` reaches the mysql container)
+- `mor_consumer` / `consumer_app` (consumer; `SELECT, INSERT, UPDATE, DELETE` only; test DDL `paytech/consumer/paytech-consumer-test/src/test/resources/init/ddl.sql`; created only when `MOR_CONSUMER_DB_PASSWORD` reaches the mysql container)
+- `mor_payment` / `payment_app` (payment service; the four card tables moved to `mor_card` in refactor step 12 — an existing local `mor_payment` may still contain them until they are dropped manually)
+- `mor_channel_connector` / `channel_connector_app` (channel connector; `SELECT, INSERT, UPDATE, DELETE` only)
+- `mor_card` / `card_app` (card service; `SELECT, INSERT, UPDATE, DELETE` only; test DDL `paytech/card/paytech-card-test/src/test/resources/init/ddl.sql`; created only when `MOR_CARD_DB_PASSWORD` reaches the mysql container)
+- `mor_risk` / `risk_app` (legacy Risk schema; kept until refactor step 06 is merged and verified)
+- `mor_risk_decision` / `risk_decision_app` (risk-decision; `SELECT, INSERT, UPDATE, DELETE` only; test DDL `paytech/risk-decision/paytech-risk-decision-test/src/test/resources/init/ddl.sql`; created only when `MOR_RISK_DECISION_DB_PASSWORD` reaches the mysql container)
+- `mor_compliance` / `compliance_app` (compliance; `SELECT, INSERT, UPDATE, DELETE` only; test DDL `paytech/compliance/paytech-compliance-test/src/test/resources/init/ddl.sql`; created only when `MOR_COMPLIANCE_DB_PASSWORD` reaches the mysql container)
 - `mor_finance` / `finance_app`
 - `mor_platform` / `platform_app`
 - `mor_vault` / `vault_app`
 - `nacos_config` / `nacos`
 - `xxl_job` / `xxl_job`
 - `paytech_foundation_test` / `foundation_test` (local Java test schema)
+- `cdc_reader`: no schema of its own; binlog replication plus `SELECT` on CDC-whitelisted databases (analytics profile)
 
 Only `nacos_config` and `xxl_job` receive infrastructure-owned tables during environment initialization. `xxl_job`
 contains eight upstream Admin tables plus one local schema-version marker. Business/Vault/Foundation application tables

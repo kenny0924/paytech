@@ -2,7 +2,7 @@
 
 > **历史阶段提示：** 本文保留 57 表阶段及其此前 66 表基线、测试结果、Digest 与决策原文；当前基线已进一步收敛为 [36 表实时资格与 Retention 延期设计](./2026-08-23-cct-realtime-eligibility-retention-deferral-design.md)。不得据此恢复旧 Pricing/Share、Agreement/Legal、持久化 Eligibility 或 Retention 结构。
 
-状态：历史 57 表阶段实施记录，已被当前 55 表模型取代；本文仅保留执行证据，其中 Ownership Path 内容不代表当前能力。当前设计见 [物理建模决策](../../client-contract-service/docs/database/CLIENT_CONTRACT_PHYSICAL_DECISIONS.md)；PDManer 4.9.3 应用内检查待人工确认；Migration、Java 与数据库实现未授权
+状态：历史 57 表阶段实施记录，已被当前 55 表模型取代；本文仅保留执行证据，其中 Ownership Path 内容不代表当前能力。当前设计见 [物理建模决策](../../paytech/client-master/docs/database/CLIENT_MASTER_PHYSICAL_DECISIONS.md)；PDManer 4.9.3 应用内检查待人工确认；Migration、Java 与数据库实现未授权
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 

@@ -1,0 +1,100 @@
+server:
+  address: 127.0.0.1
+  port: 18114
+
+spring:
+  application:
+    name: account-service
+  jmx:
+    enabled: false
+  datasource:
+    # 第 11b 步起连接自有库 mor_account（design/04 §3.2），account_app 只有本库 DML 权限。
+    url: "${ACCOUNT_DB_URL:jdbc:mysql://127.0.0.1:13306/mor_account?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}"
+    username: "${ACCOUNT_DB_USERNAME:account_app}"
+    password: "${ACCOUNT_DB_PASSWORD:}"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-init-sql: "SET time_zone = '+00:00'"
+      data-source-properties:
+        connectionTimeZone: UTC
+        forceConnectionTimeZoneToSession: true
+  # EconomicFactRecorded 消费（design/04 §5）：account 本期只消费，不发布。
+  rabbitmq:
+    host: "${ACCOUNT_RABBITMQ_HOST:127.0.0.1}"
+    port: "${ACCOUNT_RABBITMQ_PORT:5672}"
+    username: "${ACCOUNT_RABBITMQ_USERNAME:}"
+    password: "${ACCOUNT_RABBITMQ_PASSWORD:}"
+    virtual-host: "${ACCOUNT_RABBITMQ_VHOST:/mor-local}"
+    connection-timeout: 2s
+  # ledger-api 与 billing-api 内部 HTTP 客户端：JDK HttpClient 不自动重试；Finance 后继服务不接服务发现，基址直接配置。
+  http:
+    clients:
+      imperative:
+        factory: jdk
+    serviceclient:
+      ledger-service:
+        base-url: "${ACCOUNT_LEDGER_SERVICE_URL:http://127.0.0.1:18105}"
+        connect-timeout: 2s
+        read-timeout: 5s
+        redirects: dont-follow
+      billing-service:
+        base-url: "${ACCOUNT_BILLING_SERVICE_URL:http://127.0.0.1:18113}"
+        connect-timeout: 2s
+        read-timeout: 10s
+        redirects: dont-follow
+
+mybatis:
+  mapper-locations: classpath*:mapper/**/*.xml
+
+# paytech-messaging 消费端：按 Handler 声明 account.billing.hash 与分区队列 account.billing.p0..p3（design/08 §3）。
+messaging:
+  consumer:
+    service: account
+  consumers:
+    billing:
+      partitions: 4
+
+# paytech-compensation-event：本库 t_compensation_event（现行模型）；目前没有补偿 Handler。XXL-Job 执行器同时承载日终核对任务
+# accountBalanceReconciliation（design/04 §7），调度中心地址与执行器参数沿用组件默认，由部署注入。
+compensation:
+  enabled: true
+  # 多实例 Claim/Lease 的实例标识前缀：account；部署多实例时由 ACCOUNT_COMPENSATION_INSTANCE_ID 注入带实例后缀的值。
+  instance-id: "${ACCOUNT_COMPENSATION_INSTANCE_ID:account}"
+
+management:
+  server:
+    # 管理端口 = 业务端口 + 1000（01 §3）。
+    address: 127.0.0.1
+    port: 19114
+  endpoints:
+    enabled-by-default: false
+    web:
+      discovery:
+        enabled: false
+      exposure:
+        include: health,info,prometheus
+    jmx:
+      exposure:
+        exclude: "*"
+  endpoint:
+    health:
+      access: read-only
+      show-details: never
+      probes:
+        enabled: true
+        add-additional-paths: false
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState
+    info:
+      access: read-only
+    prometheus:
+      access: read-only
+
+account:
+  identifier:
+    # 部署分配的 Snowflake Region / Worker 标识，必填；每个 app 独立分配。
+    region-id: "${ACCOUNT_SNOWFLAKE_REGION_ID}"
+    worker-id: "${ACCOUNT_SNOWFLAKE_WORKER_ID}"

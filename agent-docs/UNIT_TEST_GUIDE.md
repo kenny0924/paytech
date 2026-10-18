@@ -88,7 +88,7 @@ Mock Controller、DTO 配置、调用记录、故障控制和生命周期工具�
 
 ### 4.1 公共测试组件
 
-通用 HTTP 测试和后置清理能力由 Foundation 的 [`paytech-test-support`](../paytech-foundation/paytech-test-support/README.md) 提供，各服务测试模块显式以 `test` scope 引入，版本由统一 BOM 管理；业务 API、Web 和其他生产工件不得依赖它。
+通用 HTTP 测试和后置清理能力由 Foundation 的 [`paytech-test-support`](../paytech/foundation/paytech-test-support/README.md) 提供，各服务测试模块显式以 `test` scope 引入，版本由统一 BOM 管理；业务 API、Web 和其他生产工件不得依赖它。
 
 - `HttpTestInvoker` 使用宿主配置好的真实 `RestTestClient`，发出请求并返回原始结果；不修复输入、不补 Header、不默认断言成功。超时、禁重试和禁重定向由宿主传输配置负责。
 - `TestRequestHeaders` 提供 Client、Customer 和内部调用的请求头工厂，每次返回独立可修改的 Header；不默认添加 Idempotency-Key。Customer/内部入口的身份和访问凭据按实际接口合同补充，不能套用 Client Gateway 身份。
@@ -180,6 +180,8 @@ Mock 服务可在一组测试间复用生命周期，但响应配置和请求记
 ### 7.3 MQ
 
 涉及消息时使用真实本地 Broker 和测试专用 Namespace。入站走真实 Listener；出站由测试消费者记录，Checker 检查内容、次数及不应发布的消息。清理队列/记录前先结束本用例生产和消费工作，不删除其他环境的队列或拓扑。
+
+事实登记（2026-10-18，V2 搬迁第 12x 步）：`paytech-messaging` 以 test-jar 发布 `PartitionQueueBaseline` 与 `PartitionQueueBaselineConfiguration`，是消费方 `-test` 模块的标准接入。模块以 `type=test-jar`、`scope=test` 引入 `com.paytech:paytech-messaging`，在测试组合根 `@Import(PartitionQueueBaselineConfiguration.class)`；它在分区监听容器启动前按宿主实际订阅重复声明拓扑，并清空本服务的 `<consumer>.<producer>.p*` 与 DLQ，每例 purge 仍由本服务 Mocker 负责。已接入的模块为 acquiring、client-master、card、ledger、account。
 
 ### 7.4 Vault 与敏感数据
 

@@ -1,6 +1,6 @@
 # GetPayment 技术说明
 
-依据[开发规范](../../../agent-docs/DEVELOPMENT_CONVENTIONS.md)、[工程规范](../../../agent-docs/JAVA_PROJECT_STRUCTURE.md)、[公共接口示例](../../../agent-docs/examples/WRITE_API_EXAMPLE.md)及 [Commerce Customer 入口合同](../../../commerce-service/docs/requirements/20260912-customer-checkout/commerce-entry-amendment.md)。
+依据[开发规范](../../../agent-docs/DEVELOPMENT_CONVENTIONS.md)、[工程规范](../../../agent-docs/JAVA_PROJECT_STRUCTURE.md)、[公共接口示例](../../../agent-docs/examples/WRITE_API_EXAMPLE.md)及 [Commerce Customer 入口合同](../../../paytech/acquiring/docs/requirements/20260912-customer-checkout/commerce-entry-amendment.md)。
 
 `GetCustomerPaymentRequest` 使用普通 class，移动到 Processor 下的 request 包，字段为 checkoutToken 和 submissionId。CustomerPaymentConverter 负责将 Path 中正十进制 ID 转为 long；Controller 委托 Processor 后使用已有 Converter 输出共享的 PaymentSubmissionResponseBody，不新增同义响应类。
 

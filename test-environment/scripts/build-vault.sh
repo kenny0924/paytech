@@ -32,7 +32,7 @@ fi
 export CGO_ENABLED=0 GOOS=linux GOARCH="$target_arch" GOFLAGS=-mod=readonly
 
 (
-  cd "$workspace_dir/vault-service"
+  cd "$workspace_dir/paytech/vault"
   "$go_bin" build -trimpath -buildvcs=false -o "$build_dir/vault-server" ./cmd/vault-server
 )
 "$go_bin" build -trimpath -buildvcs=false -o "$build_dir/vault-probe" "$environment_dir/vault/probe.go"

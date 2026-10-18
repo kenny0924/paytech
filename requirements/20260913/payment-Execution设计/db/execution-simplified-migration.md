@@ -2,13 +2,13 @@
 
 本目录当前模型切换入口；前序 `execution-state-risk-*`、`instrument-token-*` 和国家增量脚本保留为前序工件，不与本稿叠加执行。当前目标及关联改造见[字段修订](../execution-field-simplification-amendment.md)，实际执行状态只见[台账](../../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
 
-2026-09-15 后继：[公共幂等接入](../../../../payment-orchestration-service/docs/development/command-idempotency-differences.md)已将本文件所列创建稿与合并迁移稿中的命令表统一到公共列合同；已经完成其他字段精简的环境使用[独立命令表迁移路径](./command-idempotency-migration.md)，不要重复执行本文件的整批迁移。
+2026-09-15 后继：[公共幂等接入](../../../../paytech/payment/docs/development/command-idempotency-differences.md)已将本文件所列创建稿与合并迁移稿中的命令表统一到公共列合同；已经完成其他字段精简的环境使用[独立命令表迁移路径](./command-idempotency-migration.md)，不要重复执行本文件的整批迁移。
 
 ## 文件与适用基线
 
 | 文件 | 用途 |
 |---|---|
-| [正式全库 Schema](../../../../payment-orchestration-service/docs/database/sql/payment-orchestration-schema.sql) | 全新空 Payment 库；含配置/路由/回调/争议等全部模块 |
+| [正式全库 Schema](../../../../paytech/payment/docs/database/sql/payment-schema.sql) | 全新空 Payment 库；含配置/路由/回调/争议等全部模块 |
 | [Execution 空库创建](./execution-simplified-create-empty-schema.sql) | 空库或所有目标表均不存在时，创建本期 10 张 Execution/命令/补偿表；其余模块仍 Mock + TODO |
 | [只读预检](./execution-simplified-preflight.sql) | 检查当前本机旧表是否为空并导出结构；COUNT 必须逐项人工检查，不会自动阻止下一文件 |
 | [本机旧空表迁移](./execution-simplified-local-empty-migration.sql) | 只适用于 127.0.0.1:13306 / mor_payment 的旧 13 表基线；9 ALTER、1 CREATE、4 DROP，结果为 10 表 |

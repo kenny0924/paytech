@@ -17,7 +17,7 @@ erDiagram
     t_role ||--o{ t_role_permission : role_id
 ```
 
-图为业务关系，不创建物理 FK/CHECK。七张配置表为 Target/Route/三个子表/Resource/Permission；Role/Role Permission、现有命令幂等和审计另外复用。模型/列的现行定义只引用[Platform Schema](../../../../platform-support-service/docs/database/sql/platform-support-schema.sql)及[数据库权威](../../../../agent-docs/database/PLATFORM_SUPPORT_DATABASE.md)，不复制第二份字段表。
+图为业务关系，不创建物理 FK/CHECK。七张配置表为 Target/Route/三个子表/Resource/Permission；Role/Role Permission、现有命令幂等和审计另外复用。模型/列的现行定义只引用[Platform Schema](../../../../paytech/platform-support/docs/database/sql/platform-support-schema.sql)及[数据库权威](../../../../agent-docs/database/PLATFORM_SUPPORT_DATABASE.md)，不复制第二份字段表。
 
 ## 2. 零结构变更的依据
 
@@ -54,6 +54,6 @@ erDiagram
 
 ## 4. 手工执行与后续同步
 
-本文件是待评审增量，不是第二套完整初始化目录。阶段 4 在同一次实现中把同样注册定义合入 Platform 唯一[初始化 DML](../../../../platform-support-service/docs/database/sql/platform-support-initial-data.sql)，保持禁用注册口径；已有环境只执行增量，空库只走完整初始化，不重复执行两份。
+本文件是待评审增量，不是第二套完整初始化目录。阶段 4 在同一次实现中把同样注册定义合入 Platform 唯一[初始化 DML](../../../../paytech/platform-support/docs/database/sql/platform-support-initial-data.sql)，保持禁用注册口径；已有环境只执行增量，空库只走完整初始化，不重复执行两份。
 
 实际应用前 SELECT 核对依赖/零冲突/角色状态，确认环境，按用户当阶段要求处理备份，停用自动续跑 SQL 客户端的 force 选项；事务中插入并检查 227 行及依赖关联，异常 ROLLBACK，成功才 COMMIT。本稿没有请求或使用本机/test 的 SQL 执行权限，也不推定后续 Channel 命名迁移已完成。

@@ -1,0 +1,12 @@
+instance:
+  id: main
+  operator: PayTech
+  operationMode: MANAGED
+  businessModes: [PSP]
+modules: {}
+brands:
+  - code: main
+    domains: [checkout.example.com]
+    legalPartyRef: PARTY-xxxx
+channels: [NI]
+owner: someone

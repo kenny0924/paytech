@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.acquiring.core.dal.mapper.order.OrderQueryMapper">
+    <resultMap id="OrderRecord" type="com.paytech.acquiring.core.dal.dataobject.order.OrderRecord">
+        <constructor>
+            <arg column="order_id" javaType="_long"/>
+            <arg column="order_no" javaType="java.lang.String"/>
+            <arg column="client_id" javaType="_long"/>
+            <arg column="client_order_id" javaType="java.lang.String"/>
+            <arg column="creation_mode" javaType="com.paytech.acquiring.api.client.v1.enums.OrderCreationMode"/>
+            <arg column="entity_no" javaType="java.lang.String"/>
+            <arg column="termination_requested_at" javaType="java.time.Instant"/>
+            <arg column="order_status" javaType="com.paytech.acquiring.domain.enums.OrderStatus"/>
+            <arg column="version" javaType="_long"/>
+            <arg column="merchandise_amount" javaType="java.math.BigDecimal"/>
+            <arg column="discount_amount" javaType="java.math.BigDecimal"/>
+            <arg column="net_amount" javaType="java.math.BigDecimal"/>
+            <arg column="tax_amount" javaType="java.math.BigDecimal"/>
+            <arg column="rounding_amount" javaType="java.math.BigDecimal"/>
+            <arg column="total_amount" javaType="java.math.BigDecimal"/>
+            <arg column="currency" javaType="java.lang.String"/>
+            <arg column="expires_at" javaType="java.time.Instant"/>
+            <arg column="paid_at" javaType="java.time.Instant"/>
+            <arg column="create_time" javaType="java.time.Instant"/>
+            <arg column="update_time" javaType="java.time.Instant"/>
+            <arg column="session_status" javaType="com.paytech.acquiring.domain.enums.CheckoutSessionStatus"/>
+            <arg column="public_token" javaType="java.lang.String"/>
+            <arg column="public_origin" javaType="java.lang.String"/>
+            <arg column="session_version" javaType="java.lang.Long"/>
+            <arg column="session_update_time" javaType="java.time.Instant"/>
+            <arg column="cancelled_at" javaType="java.time.Instant"/>
+            <arg column="context_present" javaType="_boolean"/>
+            <arg column="consumer_country_code" javaType="java.lang.String"/>
+        </constructor>
+    </resultMap>
+    <resultMap id="OrderPaymentRecord" type="com.paytech.acquiring.core.dal.dataobject.order.OrderPaymentRecord">
+        <constructor>
+            <arg column="payment_intent_id" javaType="_long"/>
+            <arg column="intent_status" javaType="com.paytech.acquiring.domain.enums.PaymentIntentStatus"/>
+            <arg column="active_attempt_id" javaType="java.lang.Long"/>
+            <arg column="last_attempt_id" javaType="java.lang.Long"/>
+            <arg column="last_attempt_status" javaType="com.paytech.acquiring.domain.enums.PaymentAttemptStatus"/>
+            <arg column="successful_attempt_id" javaType="java.lang.Long"/>
+            <arg column="captured_amount" javaType="java.math.BigDecimal"/>
+            <arg column="currency" javaType="java.lang.String"/>
+            <arg column="last_event_time" javaType="java.time.Instant"/>
+            <arg column="version" javaType="_long"/>
+            <arg column="update_time" javaType="java.time.Instant"/>
+        </constructor>
+    </resultMap>
+    <resultMap id="OrderFundsRecord" type="com.paytech.acquiring.core.dal.dataobject.order.OrderFundsRecord">
+        <constructor>
+            <arg column="status" javaType="com.paytech.acquiring.domain.enums.FundsAvailabilityStatus"/>
+            <arg column="available_amount" javaType="java.math.BigDecimal"/>
+            <arg column="currency" javaType="java.lang.String"/>
+            <arg column="scheduled_at" javaType="java.time.Instant"/>
+            <arg column="available_at" javaType="java.time.Instant"/>
+            <arg column="as_of" javaType="java.time.Instant"/>
+            <arg column="version" javaType="_long"/>
+            <arg column="update_time" javaType="java.time.Instant"/>
+        </constructor>
+    </resultMap>
+    <resultMap id="OrderRefundPosition" type="com.paytech.acquiring.core.dal.dataobject.order.OrderRefundPosition"
+        extends="com.paytech.acquiring.core.dal.mapper.order.OrderRefundPositionMapper.OrderRefundPosition"/>
+
+    <select id="selectOrder" resultMap="OrderRecord" useCache="false" flushCache="true">
+        SELECT o.order_id,o.order_no,o.client_id,o.client_order_id,o.creation_mode,o.entity_no,
+            o.termination_requested_at,o.order_status,o.version,o.merchandise_amount,o.discount_amount,o.net_amount,
+            o.tax_amount,o.rounding_amount,o.total_amount,o.currency,o.expires_at,o.paid_at,o.create_time,o.update_time,
+            s.session_status,s.public_token,s.public_origin,
+            s.version AS session_version,s.update_time AS session_update_time,s.cancelled_at,
+            c.order_context_id IS NOT NULL AS context_present,COALESCE(c.consumer_country_code,o.consumer_country_code) AS consumer_country_code
+        FROM t_commerce_order o
+        LEFT JOIN t_checkout_session s ON s.order_id=o.order_id
+        LEFT JOIN t_order_context c ON c.order_id=o.order_id
+        WHERE o.client_id=#{clientId}
+        <choose><when test="orderNo != null">AND o.order_no=#{orderNo}</when>
+            <otherwise>AND o.client_order_id=#{clientOrderId}</otherwise></choose>
+        <if test="lock">FOR UPDATE</if>
+    </select>
+    <select id="selectPayment" resultMap="OrderPaymentRecord" useCache="false" flushCache="true">
+        SELECT payment_intent_id,intent_status,active_attempt_id,last_attempt_id,last_attempt_status,
+            successful_attempt_id,captured_amount,currency,last_event_time,version,update_time
+        FROM t_order_payment_projection WHERE order_id=#{orderId}
+    </select>
+    <select id="selectRefund" resultMap="OrderRefundPosition">
+        SELECT order_refund_position_id,order_id,refundable_base_amount,reserved_amount,refunded_amount,
+            currency,version,create_time,update_time FROM t_order_refund_position WHERE order_id=#{orderId}
+    </select>
+    <select id="selectFunds" resultMap="OrderFundsRecord">
+        SELECT funds_availability_status AS status,available_amount,currency,scheduled_at,available_at,as_of,version,update_time
+        FROM t_order_funds_availability_projection WHERE order_id=#{orderId}
+    </select>
+</mapper>

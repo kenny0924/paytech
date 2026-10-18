@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent><groupId>com.paytech</groupId><artifactId>paytech-vault</artifactId><version>1.0.0-SNAPSHOT</version></parent>
+    <artifactId>paytech-vault-test</artifactId>
+    <properties><maven.install.skip>true</maven.install.skip><maven.deploy.skip>true</maven.deploy.skip></properties>
+    <dependencies>
+        <dependency><groupId>com.paytech</groupId><artifactId>paytech-vault-client</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>com.mysql</groupId><artifactId>mysql-connector-j</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>com.alibaba.cloud</groupId><artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-restclient-test</artifactId><scope>test</scope>
+            <exclusions>
+                <exclusion><groupId>org.mockito</groupId><artifactId>mockito-core</artifactId></exclusion>
+                <exclusion><groupId>org.mockito</groupId><artifactId>mockito-junit-jupiter</artifactId></exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>
+    <build><plugins>
+        <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId>
+            <configuration><forkCount>1</forkCount><reuseForks>false</reuseForks><forkedProcessTimeoutInSeconds>180</forkedProcessTimeoutInSeconds>
+                <systemPropertyVariables><junit.jupiter.execution.parallel.enabled>false</junit.jupiter.execution.parallel.enabled></systemPropertyVariables>
+            </configuration>
+        </plugin>
+        <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-enforcer-plugin</artifactId><executions><execution>
+            <id>vault-test-boundaries</id><goals><goal>enforce</goal></goals><configuration><rules><bannedDependencies>
+                <searchTransitive>true</searchTransitive><excludes>
+                    <exclude>org.mockito:*</exclude><exclude>org.testcontainers:*</exclude><exclude>org.flywaydb:*</exclude><exclude>org.liquibase:*</exclude>
+                    <exclude>com.paytech:paytech-mvc-web-starter</exclude><exclude>org.springframework.retry:*</exclude><exclude>io.github.resilience4j:*</exclude>
+                    <exclude>com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-config</exclude><exclude>org.springframework.boot:*redis*</exclude>
+                    <exclude>io.lettuce:*</exclude><exclude>org.redisson:*</exclude><exclude>com.rabbitmq:*</exclude><exclude>org.apache.kafka:*</exclude>
+                    <exclude>redis.clients:*</exclude><exclude>org.springframework.data:spring-data-redis</exclude><exclude>org.springframework.amqp:*</exclude>
+                    <exclude>dev.failsafe:*</exclude><exclude>com.github.rholder:guava-retrying</exclude><exclude>*:*kms*</exclude>
+                    <exclude>software.amazon.awssdk:kms</exclude><exclude>com.amazonaws:aws-java-sdk-kms</exclude><exclude>com.google.cloud:google-cloud-kms</exclude>
+                    <exclude>com.azure:azure-security-keyvault-keys</exclude>
+                </excludes>
+            </bannedDependencies></rules></configuration>
+        </execution></executions></plugin>
+    </plugins></build>
+    <profiles><profile><id>manual-test</id><build><plugins>
+        <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId><configuration>
+            <systemPropertyVariables>
+                <JM.LOG.PATH>${env.VAULT_MANUAL_NACOS_PRIVATE_DIR}</JM.LOG.PATH>
+                <nacos.logging.default.config.enabled>false</nacos.logging.default.config.enabled>
+            </systemPropertyVariables>
+        </configuration></plugin>
+    </plugins></build></profile></profiles>
+</project>

@@ -1,0 +1,1 @@
+<mapper namespace="gateway"><select id="s">SELECT route_id FROM t_gateway_route</select></mapper>

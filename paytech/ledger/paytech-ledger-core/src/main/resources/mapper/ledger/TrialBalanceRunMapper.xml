@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.ledger.core.dal.mapper.TrialBalanceRunMapper">
+    <insert id="insert">
+        INSERT INTO t_trial_balance_run (id, ledger_book_id, period_id, run_no, as_of_sequence, status, total_debit, total_credit, content_hash, create_time, update_time)
+        VALUES (#{id}, #{ledgerBookId}, #{periodId}, #{runNo}, #{asOfSequence}, #{status}, #{totalDebit}, #{totalCredit}, #{contentHash}, #{createTime}, #{updateTime})
+    </insert>
+
+    <select id="selectMaxRunNo" resultType="int">
+        SELECT COALESCE(MAX(run_no), 0) FROM t_trial_balance_run
+        WHERE ledger_book_id = #{ledgerBookId} AND period_id = #{periodId}
+    </select>
+
+    <select id="selectView" resultType="com.paytech.ledger.domain.view.TrialBalanceRunView">
+        SELECT r.id trial_balance_run_id, r.ledger_book_id, r.period_id, r.run_no, r.as_of_sequence, r.status,
+               r.total_debit, r.total_credit, r.content_hash, r.create_time,
+               (SELECT COUNT(*) FROM t_trial_balance_line l WHERE l.run_id = r.id) line_count,
+               (SELECT COUNT(*) FROM t_trial_balance_exception x WHERE x.run_id = r.id) exception_count
+        FROM t_trial_balance_run r
+        WHERE r.ledger_book_id = #{ledgerBookId} AND r.period_id = #{periodId} AND r.run_no = #{runNo}
+    </select>
+
+    <select id="selectPage" resultType="com.paytech.ledger.domain.view.TrialBalanceRunView">
+        SELECT r.id trial_balance_run_id, r.ledger_book_id, r.period_id, r.run_no, r.as_of_sequence, r.status,
+               r.total_debit, r.total_credit, r.content_hash, r.create_time,
+               (SELECT COUNT(*) FROM t_trial_balance_line l WHERE l.run_id = r.id) line_count,
+               (SELECT COUNT(*) FROM t_trial_balance_exception x WHERE x.run_id = r.id) exception_count
+        FROM t_trial_balance_run r
+        WHERE r.ledger_book_id = #{ledgerBookId} AND r.period_id = #{periodId}
+        ORDER BY r.run_no DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="long">
+        SELECT COUNT(*) FROM t_trial_balance_run WHERE ledger_book_id = #{ledgerBookId} AND period_id = #{periodId}
+    </select>
+</mapper>

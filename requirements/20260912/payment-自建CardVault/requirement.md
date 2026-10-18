@@ -1,6 +1,6 @@
 # 自建 Card Vault 与支付卡采集
 
-> **后继入口与工具绑定：** Customer 入口按[Commerce 后继](../../../commerce-service/docs/requirements/20260912-customer-checkout/commerce-entry-amendment.md)归 Commerce；交易级工具 Token、统一 pay、无独立会话表及 Card 受控适配职责按[Execution 修订稿](../../20260913/payment-Execution设计/instrument-token-amendment.md)评审。本文的旧 Payment Submission、Card Token 和材料传递方案不能直接用于该新目标；未被取代的加密与审计约束保留。真实 Card 仍需独立接入验证。
+> **后继入口与工具绑定：** Customer 入口按[Commerce 后继](../../../paytech/acquiring/docs/requirements/20260912-customer-checkout/commerce-entry-amendment.md)归 Commerce；交易级工具 Token、统一 pay、无独立会话表及 Card 受控适配职责按[Execution 修订稿](../../20260913/payment-Execution设计/instrument-token-amendment.md)评审。本文的旧 Payment Submission、Card Token 和材料传递方案不能直接用于该新目标；未被取代的加密与审计约束保留。真实 Card 仍需独立接入验证。
 
 2026-09-12 用户已确认自建存卡、Payment内独立Card模块及一次 Pay 请求同时提交卡信息与协议确认，由 Payment 调用 Commerce 保存确认后执行支付。本需求接续 [Customer Checkout](../commerce-CustomerCheckout接口设计/requirement.md)；现状分析见[技术入口](./technique.md)，阶段3字段与数据见[接口稿](./api-contract.md)和[数据稿](./data-design.md)。不把未来PCI计划记为当前合规/上线状态，确认与验证见 [delivery.md](./delivery.md)。
 

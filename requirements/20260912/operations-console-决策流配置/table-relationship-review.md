@@ -89,9 +89,9 @@ test 快照为 **26 个规则集、33 个规则集版本、33 个决策点版本
 
 代码证据：
 
-- [DecisionRuleSetRepositoryImpl](../../../risk-compliance-service/risk-decision/src/main/java/com/paytech/risk/decision/domainservice/repository/impl/DecisionRuleSetRepositoryImpl.java)：`requireClosure` 第 166 行起检查唯一 Companion 并加载协议字段；`findPage` 第 266 行起也依赖它；`insertDraft` 第 322 行起一起插入配套记录。
-- [DecisionFlowReferenceServiceImpl](../../../risk-compliance-service/risk-decision/src/main/java/com/paytech/risk/decision/domainservice/service/impl/DecisionFlowReferenceServiceImpl.java)：`sameContract` 通过旧绑定和 Point Version 核对新流程引用；新功能也尚未脱离这层旧依赖。
-- [DecisionConfigurationQueryMapper.xml](../../../risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionConfigurationQueryMapper.xml)：`ReleaseJoin` 仍按 Release → Point Version → Binding → Rule Set Version 查询。
+- [DecisionRuleSetRepositoryImpl](../../../paytech/risk-decision/paytech-risk-decision-core/src/main/java/com/paytech/risk/decision/domainservice/repository/impl/DecisionRuleSetRepositoryImpl.java)：`requireClosure` 第 166 行起检查唯一 Companion 并加载协议字段；`findPage` 第 266 行起也依赖它；`insertDraft` 第 322 行起一起插入配套记录。
+- [DecisionFlowReferenceServiceImpl](../../../paytech/risk-decision/paytech-risk-decision-core/src/main/java/com/paytech/risk/decision/domainservice/service/impl/DecisionFlowReferenceServiceImpl.java)：`sameContract` 通过旧绑定和 Point Version 核对新流程引用；新功能也尚未脱离这层旧依赖。
+- [DecisionConfigurationQueryMapper.xml](../../../paytech/risk-decision/paytech-risk-decision-core/src/main/resources/mapper/decision/DecisionConfigurationQueryMapper.xml)：`ReleaseJoin` 仍按 Release → Point Version → Binding → Rule Set Version 查询。
 
 这属于结构迁移，不能在阶段 5 以“测试修复”名义直接更换。当前报告只提供取舍依据。
 
@@ -169,7 +169,7 @@ test 快照为 **26 个规则集、33 个规则集版本、33 个决策点版本
 
 ## 8. 证据边界
 
-- 关系来自 [risk-compliance.pdma.json](../../../risk-compliance-service/docs/database/risk-compliance.pdma.json)，字段以 [完整 Schema](../../../risk-compliance-service/docs/database/sql/risk-compliance-schema.sql) 核对；扫描提取的 75 条关系包含被其他领域表引用的外围关系。
+- 关系来自 [risk-compliance.pdma.json](../../../paytech/risk-decision/docs/database/risk-decision.pdma.json)，字段以 [完整 Schema](../../../paytech/risk-decision/paytech-risk-decision-test/src/test/resources/init/ddl.sql) 核对；扫描提取的 75 条关系包含被其他领域表引用的外围关系。
 - 行数只证明这次观察到的本机与 test 状态，不外推生产或其他环境，也不把合成数据当成真实业务运行。
 - 生产读写扫描只用于定位消费者，已结合 Repository/Service 和当前切片边界人工核对；测试和预建模型关系单独列出，没有把“测试有引用”写成“线上有执行”。
 - 本次没有删表、搬数据、改接口或部署，也没有把本报告的建议登记为用户已确认决定。

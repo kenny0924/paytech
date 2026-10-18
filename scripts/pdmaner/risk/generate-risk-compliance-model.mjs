@@ -1,11 +1,9 @@
+// Shared builder of the full Risk & Compliance PDManer model from the ten Manifests (no output file of its own since step 06).
+// Service models are partitions of this output: generate-risk-decision-model.mjs, generate-compliance-model.mjs,
+// generate-dispute-model.mjs (see risk-service-partition.mjs).
 import { paymentChannelIdentityKey } from "../payment-channel-identity.mjs";
 import { createHash } from "node:crypto";
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  writeFileSync,
-} from "node:fs";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -26,7 +24,6 @@ import {
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const workspaceRoot = path.resolve(scriptDirectory, "../../..");
 const templatePath = path.join(workspaceRoot, "agent-docs/templates/pdmaner/template.pdma.json");
-const outputPath = path.join(workspaceRoot, "risk-compliance-service/docs/database/risk-compliance.pdma.json");
 
 const MODEL_KEY = "code-mor/risk-compliance/database/v1";
 const EXPECTED_TEMPLATE_DIGEST = "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540";
@@ -604,22 +601,3 @@ export function generateRiskComplianceModel({ template = readApprovedTemplate() 
 export function serializeRiskComplianceModel(model = generateRiskComplianceModel()) {
   return `${JSON.stringify(model, null, 2)}\n`;
 }
-
-function runCli() {
-  const unknown = process.argv.slice(2).filter((argument) => argument !== "--check");
-  invariant(unknown.length === 0, `未知参数：${unknown.join(", ")}`);
-  const expected = serializeRiskComplianceModel();
-  const totals = modelTotals(JSON.parse(expected));
-  const summary = `${totals.tables} tables, ${totals.fields} fields, ${totals.uniqueIndexes} unique indexes, ${totals.accessIndexes} access indexes, ${totals.relations} relations, ${totals.oneToOneRelations} one-to-one relations, ${totals.diagramGroups} diagram groups`;
-  if (process.argv.includes("--check")) {
-    invariant(existsSync(outputPath), `Risk & Compliance 模型不存在：${outputPath}`);
-    invariant(readFileSync(outputPath, "utf8") === expected, "Risk & Compliance 模型已过期，请重新生成");
-    process.stdout.write(`Risk & Compliance model is up to date (${summary})\n`);
-    return;
-  }
-  mkdirSync(path.dirname(outputPath), { recursive: true });
-  writeFileSync(outputPath, expected, "utf8");
-  process.stdout.write(`Wrote Risk & Compliance model: ${outputPath}\n${summary}\n`);
-}
-
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) runCli();

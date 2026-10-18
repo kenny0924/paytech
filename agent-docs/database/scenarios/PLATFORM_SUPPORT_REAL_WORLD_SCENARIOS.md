@@ -4,7 +4,7 @@
 
 状态：逐表领域示例；当前模型统计、数据库执行、验证和部署统一见[当前台账](../../CURRENT_IMPLEMENTATION.md)。
 
-> **当前权威：** 未涉及领域继续遵循 [Platform 数据库精简设计](../../../docs/superpowers/specs/2026-09-01-platform-support-database-simplification-design.md)与[公共 API 控制面设计](../../../docs/superpowers/specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md)。Notification 使用 [Delivery 七表后继](../../../requirements/20260920/platform-support-Delivery领域规划/data-design.md)；[当前生成模型](../../../platform-support-service/docs/database/platform-support.pdma.json)对应本场景字段。场景代表业务约束，不构成模块接入、SQL 执行或部署授权；历史环境描述不代表当前发布状态。
+> **当前权威：** 未涉及领域继续遵循 [Platform 数据库精简设计](../../../docs/superpowers/specs/2026-09-01-platform-support-database-simplification-design.md)与[公共 API 控制面设计](../../../docs/superpowers/specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md)。Notification 使用 [Delivery 七表后继](../../../requirements/20260920/platform-support-Delivery领域规划/data-design.md)；[当前生成模型](../../../paytech/platform-support/docs/database/platform-support.pdma.json)对应本场景字段。场景代表业务约束，不构成模块接入、SQL 执行或部署授权；历史环境描述不代表当前发布状态。
 
 > **2026-09-05 横切迁移提示：** 本文的逐表记录继续精确描述当前生成模型及当时的消费者假设，不单独拥有
 > Vault 或 `compensation_event` 契约。其中与当前三表 Protect/Reveal、补偿三字段身份和 4 KiB 可选 Payload
@@ -193,7 +193,17 @@ Operations 管理员在接入方 `PAYERMAX` 下维护验证账号与用例并发
 | `t_integration_verify_run` | `verify_run_id=840201，verify_case_id=840101，integration_id=820002，run_status=PASSED，case_snapshot_json={caseVersion:2,accountCode:UAT_MAIN,accountVersion:1}，config_versions_json={standardApis:{PAY:3,PAY_QUERY:2},integration:4}，endpoints_json=[{endpointCode:PAYERMAX_GATEWAY,sandbox:true}]，failure_summary=NULL，started_by=220001，start_time=2026-10-14T08:00:00Z，finish_time=2026-10-14T08:00:03Z`；之后任一引用配置版本变化即显示需重新验证。 |
 | `t_integration_verify_run_step` | `verify_run_step_id=840301，verify_run_id=840201，step_no=1，step_key=pay，standard_api_code=PAY，step_status=PASSED，resolved_input_json={payment:{attemptId:VR840201}}，result_json={kind:EXECUTED,executeStatus:SUCCESS}，assertions_json=[{path:paymentStatus,match:EQUALS,passed:true}]，trace_json={nodes:[{id:createOrder,executeStatus:SUCCESS,httpStatus:200}]}，elapsed_ms=1830`；运行结束时一次写入，认证类 Header 记为 [REDACTED]。 |
 
-## 10. 失败关闭与最小数据清单
+## 10. SCN-PLT-09：全平台币种规则参考数据
+
+Platform 是 `t_currency_spec` 的 Owner（D41）；Ledger 与 Billing 持同结构只读副本，过账与计费舍入不依赖远程调用。内部服务经 `GET /platform-support/platform/v1/currency-specs` 读取；只有 ACTIVE 规则允许被新业务使用。
+
+### 10.1 全平台参考数据 1 表
+
+| 物理表 | 代表性记录与判定 |
+| --- | --- |
+| `t_currency_spec` | `id=1001，currency=USD，minor_unit=2，rounding_mode=HALF_UP，status=ACTIVE`；USD 金额保留两位小数，八位计算精度按 HALF_UP 归整；未登记的币种查询返回 404。 |
+
+## 11. 失败关闭与最小数据清单
 
 - 不保存 Password 明文、Google authorization code、Access/Refresh/ID Token、OIDC client secret、KMS private key、Webhook signing secret 值、PAN 或 CVV。
 - Email/URL/消息正文等可恢复敏感值使用 Vault Token；只有明确的等值查询、完整性、幂等或安全消费者才保留 Hash。

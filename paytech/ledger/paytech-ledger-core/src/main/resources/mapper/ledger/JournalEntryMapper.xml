@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.ledger.core.dal.mapper.JournalEntryMapper">
+    <insert id="insert">
+        INSERT INTO t_journal_entry (id, ledger_book_id, accounting_period_id, instruction_id, journal_sequence, posting_date, entry_type, reversal_of_entry_id, create_time)
+        VALUES (#{id}, #{ledgerBookId}, #{accountingPeriodId}, #{instructionId}, #{journalSequence}, #{postingDate}, #{entryType}, #{reversalOfEntryId}, #{createTime})
+    </insert>
+
+    <select id="selectByInstruction" resultType="com.paytech.ledger.core.dal.dataobject.JournalEntry">
+        SELECT id, ledger_book_id, accounting_period_id, instruction_id, journal_sequence, posting_date, entry_type, reversal_of_entry_id, create_time FROM t_journal_entry WHERE instruction_id = #{instructionId}
+    </select>
+
+    <select id="selectDetail" resultType="com.paytech.ledger.domain.view.JournalEntryDetailView">
+        SELECT e.id journal_entry_id, e.ledger_book_id, e.accounting_period_id, e.journal_sequence, e.posting_date,
+               e.entry_type, e.reversal_of_entry_id, i.id instruction_id, i.instruction_type, i.origin_type,
+               i.source_system, i.source_event_key, i.manual_adjustment_id, m.adjustment_no
+        FROM t_journal_entry e
+        JOIN t_accounting_instruction i ON i.id = e.instruction_id
+        LEFT JOIN t_manual_adjustment m ON m.id = i.manual_adjustment_id
+        WHERE e.id = #{journalEntryId}
+    </select>
+
+    <select id="countUnbalancedInPeriod" resultType="long">
+        SELECT COUNT(*) FROM t_journal_entry e
+        LEFT JOIN (
+            SELECT journal_entry_id, COUNT(*) line_count,
+                   SUM(CASE WHEN entry_side = 'DEBIT' THEN amount ELSE -amount END) net
+            FROM t_journal_line GROUP BY journal_entry_id
+        ) s ON s.journal_entry_id = e.id
+        WHERE e.accounting_period_id = #{periodId} AND (s.line_count IS NULL OR s.net &lt;&gt; 0) AND e.ledger_book_id IN
+        <foreach collection="bookIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+    </select>
+</mapper>

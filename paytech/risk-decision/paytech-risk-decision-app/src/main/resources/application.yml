@@ -1,0 +1,116 @@
+server:
+  address: 127.0.0.1
+  port: 18104
+
+spring:
+  application:
+    name: risk-decision-service
+  data:
+    redis:
+      host: "${RISK_REDIS_HOST:127.0.0.1}"
+      port: "${RISK_REDIS_PORT:16379}"
+      password: "${RISK_REDIS_PASSWORD:}"
+      connect-timeout: 2s
+      timeout: 2s
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+        namespace: ${NACOS_NAMESPACE:mor-local}
+        ip: ${SPRING_CLOUD_NACOS_DISCOVERY_IP:${SERVER_ADDRESS:127.0.0.1}}
+  datasource:
+    url: "${RISK_DB_URL}"
+    username: "${RISK_DB_USERNAME}"
+    password: "${RISK_DB_PASSWORD}"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-init-sql: "SET time_zone = '+00:00'"
+      connection-timeout: 2000
+      validation-timeout: 1000
+      data-source-properties:
+        connectionTimeZone: UTC
+        forceConnectionTimeZoneToSession: true
+        connectTimeout: 2000
+        socketTimeout: 2000
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+      fail-on-missing-creator-properties: false
+  jmx:
+    enabled: false
+  sql:
+    init:
+      mode: never
+
+mybatis:
+  mapper-locations: classpath*:mapper/**/*.xml
+
+decision:
+  identifier:
+    region-id: "${RISK_SNOWFLAKE_REGION_ID}"
+    worker-id: "${RISK_SNOWFLAKE_WORKER_ID}"
+  runtime:
+    # 本实例的发布环境 TEST 或 PRODUCTION；支付评估读取该环境的生效发布，执行发布只允许在 TEST 激活。必填。
+    environment: "${RISK_DECISION_ENVIRONMENT}"
+
+web:
+  logging:
+    metadata-only-path-prefixes:
+      - /decision-dictionaries
+      - /decision-rule-sets
+      - /decision-releases
+      - /decision-flows
+      - /decision-variables
+      # 名单主体值与统一评估输入含 IP、卡指纹等受限原值，只记元数据。
+      - /risk-lists
+      - /risk-decisions
+
+management:
+  server:
+    # 管理端口 = 业务端口 + 1000（design/01 §3）；Actuator 不再与业务端口共用。
+    port: 19104
+  endpoints:
+    enabled-by-default: false
+    web:
+      discovery:
+        enabled: false
+      exposure:
+        include: health,info,prometheus
+    jmx:
+      exposure:
+        exclude: "*"
+  endpoint:
+    health:
+      access: read-only
+      show-details: never
+      probes:
+        enabled: true
+        add-additional-paths: false
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState
+    info:
+      access: read-only
+    prometheus:
+      access: read-only
+
+# 本地补偿任务：影子运行（DECISION_SHADOW_RUN）在本地事务登记，提交后由 Handler 执行。
+compensation:
+  enabled: true
+
+redis:
+  coordination:
+    enabled: true
+    resource-lock:
+      wait-time: 500ms
+      lease-time: 30s
+
+# 实例 ID（实例清单 instance.id，01 §5）：内部调用 Token 的 inst。
+paytech:
+  instance-id: "${PAYTECH_INSTANCE_ID:main}"
+
+# 内部调用身份（D26）：默认 OFF；YAML 中必须带引号，裸 OFF 会被解析为布尔 false。
+internal-auth:
+  mode: "${RISK_DECISION_INTERNAL_AUTH_MODE:OFF}"

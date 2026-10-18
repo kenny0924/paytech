@@ -156,9 +156,9 @@ Capture、Void、Refund 使用各自明确的代码处理流程；它们失败�
 
 - [本次代码编排与范围决定](../../../agent-docs/decisions/2026-09-13-payment-execution-code-orchestration.md)
 - [已确认模块职责与协作](../payment-业务模块划分/technique.md)
-- [当前 Payment 数据模型](../../../agent-docs/database/PAYMENT_ORCHESTRATION_DATABASE.md)与[现有 PDManer](../../../payment-orchestration-service/docs/database/payment-orchestration.pdma.json)
+- [当前 Payment 数据模型](../../../agent-docs/database/PAYMENT_ORCHESTRATION_DATABASE.md)与[现有 PDManer](../../../paytech/payment/docs/database/payment.pdma.json)
 - [OE 与定价事实后继决定](../../../agent-docs/decisions/2026-09-11-cct-commerce-oe-pricing-model.md)
-- [Commerce Customer 入口后继修订](../../../commerce-service/docs/requirements/20260912-customer-checkout/commerce-entry-amendment.md)
+- [Commerce Customer 入口后继修订](../../../paytech/acquiring/docs/requirements/20260912-customer-checkout/commerce-entry-amendment.md)
 - [Card 专项需求](../../20260912/payment-自建CardVault/requirement.md)及[数据草稿](../../20260912/payment-自建CardVault/data-design.md)
 - [可靠执行规范](../../../agent-docs/COMPENSATION_EVENT_GUIDE.md)与[当前实施台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-business-modules)
 

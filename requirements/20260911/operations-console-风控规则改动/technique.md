@@ -26,9 +26,9 @@
 |---|---|
 | DDL 分类入口 | [db/ddl.sql](./db/ddl.sql)，仅注释索引 |
 | DML 分类入口 | [db/dml.sql](./db/dml.sql)，仅注释索引 |
-| 已评审混合增量 | [Risk V1 增量 SQL](../../../risk-compliance-service/docs/database/sql/2026-09-11-risk-rule-v1-configuration.sql)，现有唯一增量执行来源 |
-| 模型 | [Risk PDManer](../../../risk-compliance-service/docs/database/risk-compliance.pdma.json) |
-| 物理规则及完整 SQL 入口 | [Risk 物理建模文档](../../../risk-compliance-service/docs/database/RISK_COMPLIANCE_PHYSICAL_DECISIONS.md) |
+| 已评审混合增量 | [Risk V1 增量 SQL](../../../paytech/risk-decision/docs/database/sql/2026-09-11-risk-rule-v1-configuration.sql)，现有唯一增量执行来源 |
+| 模型 | [Risk PDManer](../../../paytech/risk-decision/docs/database/risk-decision.pdma.json) |
+| 物理规则及完整 SQL 入口 | [Risk 物理建模文档](../../../paytech/risk-decision/docs/database/RISK_DECISION_PHYSICAL_DECISIONS.md) |
 
 现有增量包含结构变更和配置目录数据。此处未将已执行的脚本拆成新的可执行迁移，也未新增初始化数据来源。SQL 文件存在不代表需要再次执行；具体环境、备份、迁移和核验记录见[交付台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#15-operations-risk-v1-配置增量2026-09-11)。
 

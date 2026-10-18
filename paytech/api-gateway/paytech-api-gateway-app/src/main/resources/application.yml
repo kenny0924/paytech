@@ -1,0 +1,134 @@
+server:
+  address: ${GATEWAY_BIND_ADDRESS}
+  port: 18080
+  max-http-request-header-size: 64KB
+  http2:
+    enabled: false
+  netty:
+    max-initial-line-length: 16KB
+    max-keep-alive-requests: 1000
+    idle-timeout: 15s
+spring:
+  application:
+    name: api-gateway
+  jmx:
+    enabled: false
+  data:
+    redis:
+      connect-timeout: 2s
+      timeout: 2s
+      repositories:
+        enabled: false
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+        namespace: ${NACOS_NAMESPACE:public}
+    loadbalancer:
+      retry:
+        enabled: false
+    gateway:
+      server:
+        webflux:
+          route-filter-cache-enabled: false
+          discovery:
+            locator:
+              enabled: false
+          redis-route-definition-repository:
+            enabled: false
+          global-filter:
+            local-response-cache:
+              enabled: false
+          filter:
+            request-rate-limiter:
+              enabled: false
+            retry:
+              enabled: false
+          forwarded:
+            enabled: false
+          x-forwarded:
+            enabled: false
+          metrics:
+            path-tags:
+              enabled: false
+            tags:
+              path:
+                enabled: false
+          httpclient:
+            connect-timeout: 2000
+            pool:
+              type: FIXED
+              max-connections: 1000
+              acquire-timeout: 2000
+gateway:
+  platform-snapshot:
+    service-id: ${PLATFORM_SUPPORT_SERVICE_ID:platform-support-service}
+    direct-uri-enabled: false
+    connect-timeout: PT2S
+    response-timeout: PT2S
+    max-response-bytes: 1048576
+    refresh-interval: PT5S
+  platform-jwks:
+    service-id: ${PLATFORM_SUPPORT_SERVICE_ID:platform-support-service}
+    direct-uri-enabled: false
+  platform-credential:
+    service-id: ${PLATFORM_SUPPORT_SERVICE_ID:platform-support-service}
+    direct-uri-enabled: false
+    connect-timeout: PT1S
+    response-timeout: PT2S
+    max-response-bytes: 16384
+  operations:
+    console-origin: ${OPERATIONS_CONSOLE_ORIGIN}
+    test-http-enabled: ${OPERATIONS_TEST_HTTP_ENABLED:false}
+    response-timeout: PT10S
+    guard:
+      redis:
+        namespace: ${OPERATIONS_GUARD_REDIS_NAMESPACE}
+    security:
+      issuer: ${OPERATIONS_JWT_ISSUER}
+      audience: ${OPERATIONS_JWT_AUDIENCE}
+    hmac:
+      access-log:
+        version: ${OPERATIONS_ACCESS_LOG_HMAC_VERSION}
+        encoded-material: ${OPERATIONS_ACCESS_LOG_HMAC_MATERIAL}
+internal-auth:
+  # D26 出站内部 Token：OFF（默认）不附加；非 OFF 时为调用 Platform 与转发内部服务的请求附加 Token，需同时提供 Token 来源。
+  # Gateway 是公网入口，不校验入站内部 Token。必须加引号：未加引号的 OFF 在 YAML 1.1 中是布尔 false。
+  mode: "OFF"
+management:
+  server:
+    port: 19080
+  endpoints:
+    enabled-by-default: false
+    web:
+      discovery:
+        enabled: false
+      exposure:
+        include: health,info,prometheus
+    jmx:
+      exposure:
+        exclude: "*"
+  endpoint:
+    health:
+      access: read-only
+      show-details: never
+      probes:
+        enabled: true
+        add-additional-paths: false
+      validate-group-membership: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState,gatewayBootstrap,gatewayRedis
+    info:
+      access: read-only
+    prometheus:
+      access: read-only
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+    redis:
+      enabled: false

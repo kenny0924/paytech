@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.channel.connector.core.dal.mapper.ChannelMidMapper">
+    <resultMap id="row" type="com.paytech.channel.connector.core.dal.dataobject.ChannelMid">
+        <result column="mid_id" property="midId"/>
+        <result column="channel_id" property="channelId"/>
+        <result column="channel_account_id" property="channelAccountId"/>
+        <result column="external_mid_code" property="externalMidCode"/>
+        <result column="entity_no" property="entityNo"/>
+        <result column="mid_status" property="midStatus" javaType="com.paytech.channel.connector.core.enums.ChannelStatus"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="activated_at" property="activatedAt"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        <result column="closed_at" property="closedAt"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        <result column="create_time" property="createTime"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        <result column="update_time" property="updateTime"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+    </resultMap>
+    <sql id="columns">mid_id, channel_id, channel_account_id, external_mid_code, entity_no, mid_status, activated_at,
+        closed_at, create_time, update_time
+    </sql>
+    <select id="findByAccountIds" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM t_channel_mid WHERE channel_account_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY mid_id
+    </select>
+    <select id="findById" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM t_channel_mid WHERE mid_id = #{id}
+    </select>
+</mapper>

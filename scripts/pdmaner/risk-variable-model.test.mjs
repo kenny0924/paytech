@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 const root = new URL('../../', import.meta.url);
-const model = JSON.parse(readFileSync(new URL('risk-compliance-service/docs/database/risk-compliance.pdma.json', root)));
+const model = JSON.parse(readFileSync(new URL('paytech/risk-decision/docs/database/risk-decision.pdma.json', root)));
 const approved = JSON.parse(readFileSync(new URL('requirements/20260912/operations-console-统一风控变量管理与条件编排/contracts/design-manifest.json', root)));
 
 // 2026-10-14 支付反欺诈一期（agent-docs/decisions/2026-10-14-risk-payment-fraud-phase1.md）在 RCO-19 合同之后

@@ -1,6 +1,6 @@
 # Payment Card 模块技术入口
 
-> **后继入口与工具绑定：** Customer 入口按[Commerce 后继](../../../commerce-service/docs/requirements/20260912-customer-checkout/commerce-entry-amendment.md)归 Commerce；交易级工具 Token、统一 pay、无独立会话表及 Card 受控适配职责按[Execution 修订稿](../../20260913/payment-Execution设计/instrument-token-amendment.md)评审。本文的旧 Payment Submission、Card Token 和材料传递方案不能直接用于该新目标；未被取代的加密与审计约束保留。真实 Card 仍需独立接入验证。
+> **后继入口与工具绑定：** Customer 入口按[Commerce 后继](../../../paytech/acquiring/docs/requirements/20260912-customer-checkout/commerce-entry-amendment.md)归 Commerce；交易级工具 Token、统一 pay、无独立会话表及 Card 受控适配职责按[Execution 修订稿](../../20260913/payment-Execution设计/instrument-token-amendment.md)评审。本文的旧 Payment Submission、Card Token 和材料传递方案不能直接用于该新目标；未被取代的加密与审计约束保留。真实 Card 仍需独立接入验证。
 
 状态：阶段 1 模块边界已确认；用户在阶段 3 将前端两次提交修订为 Payment 承接的一次支付请求，本文同步受影响调用链。本文保留现状与影响分析；本轮阶段 3 交付[接口字段稿](./api-contract.md)和[数据/事务/实施稿](./data-design.md)。具体字段只在这两份稿件维护，未实现或发布接口。
 
@@ -36,12 +36,12 @@ Card Token、当前授权输入引用和长期“已保存卡”标识是否需�
 
 | 能力 | 当前证据 | 本需求需要补齐 |
 |---|---|---|
-| Payment 工程 | 仓库当前只有[数据库设计材料](../../../payment-orchestration-service/docs/database/PAYMENT_ORCHESTRATION_PHYSICAL_DECISIONS.md)，未发现 Java/POM | Payment 应用基础、真实 Card 模块及消费者；模块边界测试随功能实现，不只增加空 JAR |
+| Payment 工程 | 仓库当前只有[数据库设计材料](../../../paytech/payment/docs/database/PAYMENT_ORCHESTRATION_PHYSICAL_DECISIONS.md)，未发现 Java/POM | Payment 应用基础、真实 Card 模块及消费者；模块边界测试随功能实现，不只增加空 JAR |
 | 支付执行 | 目标模型有 Intent、Attempt、Action、Channel Account/MID 和 Customer Action | 对应业务接口、状态机、合法接受门禁、路由、NI Adapter、原执行恢复；新增 Card 模块本身不能代替完整支付执行 |
-| 自建卡库 | [当前 Schema](../../../payment-orchestration-service/docs/database/sql/payment-orchestration-schema.sql) 的 `t_payment_instrument` 必须有 `channel_instrument_ref`，并禁止 PAN/有效期 | Card 模块专属加密存储与平台引用；不能将平台 Token 填进 Channel 引用冒充已有模型支持 |
-| Commerce | [Commerce README](../../../commerce-service/README.md) 表明已有 Client 创建/查询/取消/退款，最终准备与 Payment 真正接入仍是缺口 | Customer 查询/资料/准备三个公开操作、内部法律确认及 Payment 状态查询；不把卡库塞进 Commerce |
+| 自建卡库 | [当前 Schema](../../../paytech/payment/docs/database/sql/payment-schema.sql) 的 `t_payment_instrument` 必须有 `channel_instrument_ref`，并禁止 PAN/有效期 | Card 模块专属加密存储与平台引用；不能将平台 Token 填进 Channel 引用冒充已有模型支持 |
+| Commerce | [Commerce README](../../../paytech/acquiring/README.md) 表明已有 Client 创建/查询/取消/退款，最终准备与 Payment 真正接入仍是缺口 | Customer 查询/资料/准备三个公开操作、内部法律确认及 Payment 状态查询；不把卡库塞进 Commerce |
 | Checkout Web | 仓库有已认可的页面设计，未发现前端运行工程 | 页面实现、卡输入组件、统一 Pay 请求、3DS 与结果刷新；页面设计通过不等于 SDK 已接通 |
-| 通用中间件 | [Foundation](../../../paytech-foundation/README.md) 已有 Request ID/MDC、统一错误与按路径仅记录元数据的日志配置 | 复用 `web.logging.metadata-only-path-prefixes`，覆盖卡入口和临时材料响应；无需为 Card 复制 Filter 或 Advice。出站 NI 日志、解析失败及追踪还需单独核验 |
+| 通用中间件 | [Foundation](../../../paytech/foundation/README.md) 已有 Request ID/MDC、统一错误与按路径仅记录元数据的日志配置 | 复用 `web.logging.metadata-only-path-prefixes`，覆盖卡入口和临时材料响应；无需为 Card 复制 Filter 或 Advice。出站 NI 日志、解析失败及追踪还需单独核验 |
 | 非卡个人资料 | 原 Consumer 方案依赖现有非卡 Vault 的批准用途 | 继续完成原 Email/Profile 用途接入；Card 模块不替代 Consumer Vault，也不扩大现有 Vault 数据类型 |
 | NI | 官方有直接提交卡数据的单阶段、两阶段 API，以及 EMV 3DS 流程 | 确认实际账户适用能力、请求/结果白名单、原订单查询和超时恢复；平台 Card Token 由本地解引用，不能直接作为 NI Session |
 

@@ -12,8 +12,8 @@
 
 当前实现会校验 NODE_RESULT 只能为 matched + Boolean；Web 的该选项固定添加。具体源码入口：
 
-- [Risk 条件校验](../../../risk-compliance-service/risk-decision/src/main/java/com/paytech/risk/decision/domain/flow/DecisionFlowValidatorImpl.java)
-- [Risk 能力目录投影](../../../risk-compliance-service/risk-web/src/main/java/com/paytech/risk/ext/rest/decision/DecisionFlowWireConverter.java)
+- [Risk 条件校验](../../../paytech/risk-decision/paytech-risk-decision-core/src/main/java/com/paytech/risk/decision/domain/flow/DecisionFlowValidatorImpl.java)
+- [Risk 能力目录投影](../../../paytech/risk-decision/paytech-risk-decision-app/src/main/java/com/paytech/risk/ext/rest/decision/DecisionFlowWireConverter.java)
 - [Web 条件编辑器](../../../operations-console-web/src/risk/FlowConditionEditor.tsx)
 
 本期已经保存的示例继续保留 matched，不在登记时转换。下一期按[交付流程](../../../agent-docs/REQUIREMENT_DELIVERY_WORKFLOW.md)逐阶段确认，避免将配置更新误记为执行器已经支持。

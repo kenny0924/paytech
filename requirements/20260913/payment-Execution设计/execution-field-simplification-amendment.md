@@ -86,7 +86,7 @@ Attempt 序号从本 Intent 的原 Attempt 计算，在 Intent 资源保护和 `
 
 模型删除不等于已经删除这些能力的 Java 实现或实际库表；旧接口/事件不能直接套在新 Schema 上。Channel、定价、通知迁移完成且通过入口验证后，才具备切换执行条件。
 
-当前空库创建使用[精简 Execution Schema](./db/execution-simplified-create-empty-schema.sql)，全库定义使用[正式 Schema](../../../payment-orchestration-service/docs/database/sql/payment-orchestration-schema.sql)。本机旧空表切换见[人工迁移说明](./db/execution-simplified-migration.md)。本轮没有业务 DML；非空环境不适用空库脚本，不删除未决资金、待发消息或历史定价引用。
+当前空库创建使用[精简 Execution Schema](./db/execution-simplified-create-empty-schema.sql)，全库定义使用[正式 Schema](../../../paytech/payment/docs/database/sql/payment-schema.sql)。本机旧空表切换见[人工迁移说明](./db/execution-simplified-migration.md)。本轮没有业务 DML；非空环境不适用空库脚本，不删除未决资金、待发消息或历史定价引用。
 
 ## 6. 验收
 

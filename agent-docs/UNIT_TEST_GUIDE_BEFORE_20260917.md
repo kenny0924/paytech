@@ -227,7 +227,7 @@ Domain Service → RepositoryImpl → Mapper → local MySQL
 
 业务服务的 `auto` 不连接共享 Vault 环境，而是通过真实 HTTP 调用有状态 Vault Simulator：
 
-当前 V1 的 API/数据范围以 [`2026-09-02-vault-database-design.md`](../docs/superpowers/specs/2026-09-02-vault-database-design.md) 和 [`vault-service/api/openapi/v1.yaml`](../vault-service/api/openapi/v1.yaml) 为准：只有 Protect/Reveal 与三表模型。当前传输使用部署网络限制的私有 HTTP，不配置应用证书；Simulator 保留必需但可伪造的 `X-Caller-Service` 与静态 Allowlist只能防止误用的弱信任事实。
+当前 V1 的 API/数据范围以 [`2026-09-02-vault-database-design.md`](../docs/superpowers/specs/2026-09-02-vault-database-design.md) 和 [`vault-service/api/openapi/v1.yaml`](../paytech/vault/api/openapi/v1.yaml) 为准：只有 Protect/Reveal 与三表模型。当前传输使用部署网络限制的私有 HTTP，不配置应用证书；Simulator 保留必需但可伪造的 `X-Caller-Service` 与静态 Allowlist只能防止误用的弱信任事实。
 
 - Simulator 按 `dataType + tokenMode + canonical value + purpose` 处理 Protect，生成或收敛 opaque Token，并按 `token + purpose` 处理 Reveal；同时记录 Caller、幂等键、Request ID、请求和本地审计观察结果。不得把它简化成按方法名返回固定 DTO，也不得虚构 Tenant、Binding、Blind Index、Masked Value、Record Version 或 Metadata Hash。
 - 当前服务调用覆盖真实私有 HTTP、OpenAPI 定义的 Headers/Body、静态 Allowlist、Protect 幂等冲突、Reveal、本地审计和失败关闭；不得模拟 mTLS 或把 Caller Header 当作强认证。Binding/Copy/Blind Index/Masked/Metadata/Retire/Destroy 只有未来相应 V2 能力获批后才增加测试。

@@ -1,0 +1,34 @@
+# Flink CDC pipeline: demo table mor_finance.t_currency_spec -> Doris mor_data_service.
+# Only tables registered in paytech/data-service/cdc/whitelist.yaml may appear in any pipeline file (D25).
+# ${MOR_CDC_DB_PASSWORD} and ${MOR_DORIS_ROOT_PASSWORD} are substituted by flink/submit-pipeline.sh into a private
+# temporary copy inside the one-shot submit container; this file never contains a password.
+source:
+  type: mysql
+  name: mor_finance whitelist source
+  hostname: mysql
+  port: 3306
+  username: cdc_reader
+  password: ${MOR_CDC_DB_PASSWORD}
+  tables: mor_finance.t_currency_spec
+  # Distinct from MySQL's own server-id=1; one id per source reader (parallelism 1).
+  server-id: 5401
+  server-time-zone: UTC
+
+sink:
+  type: doris
+  name: mor_data_service sink
+  fenodes: doris-fe:8030
+  benodes: doris-be:8040
+  username: root
+  password: ${MOR_DORIS_ROOT_PASSWORD}
+  # Auto-created tables use one replica (single BE).
+  table.create.properties.replication_num: 1
+
+route:
+  - source-table: mor_finance.t_currency_spec
+    sink-table: mor_data_service.t_currency_spec
+    description: whitelist demo table
+
+pipeline:
+  name: demo-currency-spec
+  parallelism: 1

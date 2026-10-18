@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.client.master.core.dal.mapper.ConsumerLegalDocumentMapper">
+    <resultMap id="ConsumerLegalDocument" type="com.paytech.client.master.core.dal.dataobject.CheckoutRecords$ConsumerLegalDocument">
+        <constructor>
+            <arg column="legal_document_id" javaType="java.lang.Long"/>
+            <arg column="document_type" javaType="com.paytech.client.master.domain.enums.ConsumerLegalDocumentDocumentType"/>
+            <arg column="entity_no" javaType="java.lang.String"/>
+            <arg column="country_code" javaType="java.lang.String"/>
+            <arg column="locale" javaType="java.lang.String"/>
+            <arg column="content_file_id" javaType="java.lang.Long"/>
+            <arg column="content_hash" javaType="java.lang.String"/>
+            <arg column="status" javaType="com.paytech.client.master.domain.enums.ConsumerLegalDocumentStatus"/>
+            <arg column="effective_from" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg column="effective_to" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg column="approved_time" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg column="published_time" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        </constructor>
+    </resultMap>
+    <select id="findForCheckout" resultMap="ConsumerLegalDocument">
+        SELECT legal_document_id, document_type, entity_no, country_code, locale, content_file_id, content_hash, status, effective_from, effective_to, approved_time, published_time
+        FROM t_consumer_legal_document
+        WHERE entity_no IN (SELECT entity_no FROM t_client_entity_affiliation WHERE client_id = #{clientId})
+        ORDER BY legal_document_id
+    </select>
+</mapper>

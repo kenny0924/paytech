@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.compliance.core.dal.mapper.CaseSubjectMapper">
+    <insert id="insert">
+        INSERT INTO t_dd_case_subject(case_subject_id, case_id, party_id, subject_role, primary_slot, source_profile_id, source_relation_id, ownership_percentage, required_flag, create_time)
+        VALUES(#{row.caseSubjectId}, #{row.caseId}, #{row.partyId}, #{row.subjectRole}, #{row.primarySlot}, #{row.sourceProfileId}, #{row.sourceRelationId}, #{row.ownershipPercentage}, #{row.requiredFlag}, #{row.createTime})
+    </insert>
+    <select id="findByCaseIds" useCache="false" resultType="com.paytech.compliance.core.dal.dataobject.CaseSubject">
+        SELECT case_subject_id AS caseSubjectId, case_id AS caseId, party_id AS partyId, subject_role AS subjectRole,
+            primary_slot AS primarySlot, source_profile_id AS sourceProfileId, source_relation_id AS sourceRelationId,
+            ownership_percentage AS ownershipPercentage, required_flag AS requiredFlag, create_time AS createTime
+        FROM t_dd_case_subject WHERE case_id IN <foreach collection="caseIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY case_id, case_subject_id
+    </select>
+</mapper>

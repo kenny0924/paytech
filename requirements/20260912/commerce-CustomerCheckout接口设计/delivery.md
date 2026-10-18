@@ -6,7 +6,7 @@
 
 2026-09-12 用户明确要求“先完成 Commerce 的接口及功能，需要调用外部接口先 Mock + TODO”，随后单独授权备份并执行本机三表增量 SQL。此授权只进入 Commerce 代码、测试与对应模型/文档切片，不扩展到 Payment、Risk、Gateway、前端或部署。
 
-本切片的[接口与实施说明](../../../commerce-service/docs/requirements/20260912-customer-checkout/implementation.md)、[可执行 OpenAPI](../../../commerce-service/docs/api/customer-checkout.openapi.json)和[状态台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-customer-20260912)承接当前工作。下方“尚未改代码/SQL”的描述只保留其设计阶段的历史语境。
+本切片的[接口与实施说明](../../../paytech/acquiring/docs/requirements/20260912-customer-checkout/implementation.md)、[可执行 OpenAPI](../../../paytech/acquiring/docs/api/customer-checkout.openapi.json)和[状态台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#commerce-customer-20260912)承接当前工作。下方“尚未改代码/SQL”的描述只保留其设计阶段的历史语境。
 
 ## 原设计阶段范围
 

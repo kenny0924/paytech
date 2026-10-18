@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.compliance.core.dal.mapper.EvidenceRefMapper">
+    <insert id="insert">
+        INSERT INTO t_dd_evidence_ref(evidence_id, requirement_id, case_subject_id, file_id, content_hash, status, version, create_time, update_time)
+        VALUES(#{row.evidenceId}, #{row.requirementId}, #{row.caseSubjectId}, #{row.fileId}, #{row.contentHash}, #{row.status}, #{row.version}, #{row.createTime}, #{row.updateTime})
+    </insert>
+    <select id="findByCaseIds" useCache="false" resultType="com.paytech.compliance.core.dal.dataobject.EvidenceRef">
+        SELECT e.evidence_id AS evidenceId, e.requirement_id AS requirementId, e.case_subject_id AS caseSubjectId, e.file_id AS fileId,
+            e.content_hash AS contentHash, e.status, e.version, e.create_time AS createTime, e.update_time AS updateTime
+        FROM t_dd_evidence_ref e JOIN t_dd_requirement r ON r.requirement_id = e.requirement_id
+        WHERE r.case_id IN <foreach collection="caseIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+    </select>
+    <select id="findById" useCache="false" resultType="com.paytech.compliance.core.dal.dataobject.EvidenceRef">
+        SELECT evidence_id AS evidenceId, requirement_id AS requirementId, case_subject_id AS caseSubjectId, file_id AS fileId,
+            content_hash AS contentHash, status, version, create_time AS createTime, update_time AS updateTime
+        FROM t_dd_evidence_ref WHERE evidence_id = #{evidenceId}
+    </select>
+    <update id="review">
+        UPDATE t_dd_evidence_ref SET status = #{status}, version = version + 1, update_time = #{now}
+        WHERE evidence_id = #{row.evidenceId} AND version = #{row.version} AND status = 'RECEIVED'
+    </update>
+</mapper>

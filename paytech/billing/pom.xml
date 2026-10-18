@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.paytech</groupId>
+        <artifactId>paytech-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../build/paytech-parent/pom.xml</relativePath>
+    </parent>
+
+    <artifactId>paytech-billing</artifactId>
+    <packaging>pom</packaging>
+
+    <name>PayTech Billing</name>
+    <description>Billing service aggregator: economic facts and channel cost plans (moved from finance-service, step 07).</description>
+
+    <modules>
+        <module>paytech-billing-api</module>
+        <module>paytech-billing-core</module>
+        <module>paytech-billing-app</module>
+        <module>paytech-billing-test</module>
+    </modules>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>billing-bootstrap-scope</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <bannedDependencies>
+                                    <searchTransitive>true</searchTransitive>
+                                    <excludes>
+                                        <!-- No other service's core/app; cross-service calls go through *-api only (D09). -->
+                                        <exclude>com.paytech:*-core</exclude>
+                                        <exclude>com.paytech:*-app</exclude>
+                                        <!-- Finance bans copied from 09 §1.4. Step 11a reopens AMQP, compensation-event and its
+                                             XXL-Job fallback for billing (EconomicFactRecorded is published from a compensation Handler). -->
+                                        <exclude>org.flywaydb:*</exclude>
+                                        <exclude>org.liquibase:*</exclude>
+                                        <exclude>com.alibaba.cloud:*</exclude>
+                                        <exclude>com.alibaba.nacos:*</exclude>
+                                        <exclude>org.springframework:spring-webflux</exclude>
+                                        <exclude>org.springframework.cloud:spring-cloud-starter-gateway*</exclude>
+                                        <exclude>org.springframework.cloud:spring-cloud-starter-openfeign</exclude>
+                                        <exclude>org.apache.dubbo:*</exclude>
+                                        <exclude>org.mockito:*</exclude>
+                                        <exclude>org.testcontainers:*</exclude>
+                                    </excludes>
+                                    <includes>
+                                        <!-- Foundation, not a service core. -->
+                                        <include>com.paytech:paytech-common-core</include>
+                                        <include>com.paytech:paytech-billing-api</include>
+                                        <include>com.paytech:paytech-billing-core</include>
+                                        <include>com.paytech:paytech-billing-app</include>
+                                        <include>com.paytech:paytech-billing-test</include>
+                                    </includes>
+                                </bannedDependencies>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

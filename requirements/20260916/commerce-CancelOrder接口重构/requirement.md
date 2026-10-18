@@ -12,4 +12,4 @@
 8. Hosted Checkout 必须有 Session；Direct Pay 允许无 Session，若实际关联了会话也需一起关闭。无 Session 时不返回 checkoutStatus。
 9. 原取消时间归属 Order：增加 t_commerce_order.cancelled_at，并同步模型、目标 Schema 和人工增量 SQL。既有会话保留自己的取消时间；本次不执行迁移。
 
-代码规范见 [Payment 示例](../../../payment-orchestration-service/docs/development/processor-conventions.md)、[开发规范](../../../agent-docs/DEVELOPMENT_CONVENTIONS.md)和[工程规范](../../../agent-docs/JAVA_PROJECT_STRUCTURE.md)。本次不改 Refund、Customer 的幂等合同，不删除共享命令表或历史数据，不修改公共 Foundation 组件。不执行 SQL、测试、构建、提交或部署，确认见 [delivery.md](delivery.md)。
+代码规范见 [Payment 示例](../../../paytech/payment/docs/development/processor-conventions.md)、[开发规范](../../../agent-docs/DEVELOPMENT_CONVENTIONS.md)和[工程规范](../../../agent-docs/JAVA_PROJECT_STRUCTURE.md)。本次不改 Refund、Customer 的幂等合同，不删除共享命令表或历史数据，不修改公共 Foundation 组件。不执行 SQL、测试、构建、提交或部署，确认见 [delivery.md](delivery.md)。

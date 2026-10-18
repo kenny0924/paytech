@@ -1,6 +1,6 @@
 # CARD + PAY 动作名称人工切换
 
-本次仅维护目标模型、Schema 和代码；没有数据库执行授权。表结构仍以[完整 Schema](../../../../payment-orchestration-service/docs/database/sql/payment-orchestration-schema.sql)为准；旧库的字段精简和公共命令/补偿表前置仍按[原迁移说明](./execution-simplified-migration.md)核对。
+本次仅维护目标模型、Schema 和代码；没有数据库执行授权。表结构仍以[完整 Schema](../../../../paytech/payment/docs/database/sql/payment-schema.sql)为准；旧库的字段精简和公共命令/补偿表前置仍按[原迁移说明](./execution-simplified-migration.md)核对。
 
 1. 在目标环境停写并盘点 `t_payment_action`、`t_channel_transaction_ref`、当前指针、命令和补偿任务；备份原始数据与 SHOW CREATE。
 2. 仅当确认都是同一自有业务语义时，将旧 Action `RISK_CHECK → PAY_RISK`、旧 Action 与 Transaction Ref `SALE → PAY`。检查 Ref 唯一键冲突、历史 Reader 和事件消费者；不能假定新旧字符串并存时可直接批量改写。

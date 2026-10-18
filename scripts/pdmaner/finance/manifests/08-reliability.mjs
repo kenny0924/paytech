@@ -69,3 +69,35 @@ export const TABLES = Object.freeze([
     ],
   }),
 ]);
+
+// 第 11a 步：billing 首个启用 paytech-compensation-event 的 Finance 后继服务，按 COMPENSATION_EVENT_GUIDE 第 3 节的现行模型建表。
+// 只替换 billing 服务库中的 t_compensation_event；逻辑模型与其他服务库仍为上表旧模型（ledger 的到期任务等场景依赖其 source_* 列），
+// 由第 11b 步随 ledger / account 接入补偿组件时一并迁移。
+export const CURRENT_COMPENSATION_EVENT = defineTable({
+  key: "compensation_event",
+  name: "本地补偿事件",
+  comment: "与本库业务事实在同一事务登记的本地可靠执行记录（paytech-compensation-event 现行模型，COMPENSATION_EVENT_GUIDE 第 3 节）；成功后删除，FAILED 保留并可受控重开",
+  audit: "custom",
+  fields: [
+    primaryKey("id", "补偿事件标识", "本库补偿事件记录的 Snowflake 主键，不作为跨系统事件标识"),
+    field("event_key", "VARCHAR(128)", "NN", "事件键", "Handler 读取本服务权威事实使用的稳定业务键，最长 128 个字符；去首尾空白、拒绝控制字符，大小写敏感"),
+    field("event_type", types.code, "NN", "事件类型", "全应用唯一注册的 Handler 类型，最长 64 个字符，大小写敏感", { source: "本服务 compensation-event-catalog.yaml" }),
+    field("sub_event_type", types.code, "NN", "事件子类型", "同一 Handler 下的受控业务子类型；无业务子类型时为占位值 -；与 event_key、event_type 共同组成唯一身份", { source: "本服务补偿子类型目录" }),
+    field("payload_json", "VARCHAR(4096)", "N", "最小补充载荷", "可选最小 JSON Object，通常为空；最多 4 KiB，不得保存可从本库恢复的上下文、敏感明文或凭据"),
+    field("execute_status", "VARCHAR(16)", "NN", "执行状态", "本地补偿任务执行状态；成功后删除记录", { values: ["INIT", "PROCESSING", "ERROR", "FAILED"], defaultValue: "'INIT'" }),
+    field("execute_count", "INTEGER", "NN", "执行次数", "已开始的 Handler 尝试次数，非负，Claim 时增加", { defaultValue: "0" }),
+    field("next_execute_at", types.dateTime, "NN", "下次执行时间", "任务下次允许 Claim 的 UTC 微秒时间，由 Handler 退避策略更新", { defaultValue: "CURRENT_TIMESTAMP(6)" }),
+    field("lock_owner", types.code, "N", "锁持有者", "当前持有数据库 Claim Lease 的服务实例标识；未被认领时为空"),
+    field("lock_until", types.dateTime, "N", "锁到期时间", "Claim Lease 到期并可被其他实例接管的 UTC 微秒时间；无活动 Lease 时为空"),
+    field("last_error_code", types.code, "N", "最后错误代码", "最近一次执行失败的稳定错误分类代码；尚无错误时为空", { source: "本服务补偿执行错误代码目录" }),
+    field("last_error_summary", "VARCHAR(1000)", "N", "最后错误摘要", "最近一次执行失败的脱敏摘要，最长 1000 字符，禁止保存敏感明文"),
+    field("lock_version", "BIGINT", "NN", "锁版本", "Claim 和 Lease 使用的正乐观锁版本；登记初始值固定为 1，仅当前 Lease 持有者可回写执行结果", { defaultValue: "1" }),
+    field("create_time", types.dateTime, "NN", "创建时间", "补偿记录与业务事实原子登记的 UTC 微秒时间", { defaultValue: "CURRENT_TIMESTAMP(6)" }),
+    field("update_time", types.dateTime, "NN", "更新时间", "补偿记录最近更新的 UTC 微秒时间，由写入口维护", { defaultValue: "CURRENT_TIMESTAMP(6)" }),
+  ],
+  indexes: [
+    uniqueIndex("uk_comp_event_identity", "event_key", "event_type", "sub_event_type"),
+    accessIndex("idx_comp_event_ready", "execute_status", "next_execute_at", "id"),
+    accessIndex("idx_comp_event_lease", "execute_status", "lock_until", "id"),
+  ],
+});

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.billing.core.dal.mapper.EconomicFactMapper">
+    <sql id="columns">
+        id, fact_type, source_system, source_event_key, source_version, source_payload_hash, parent_economics_id, order_id, order_context_id, context_format, payment_fact_id, client_price_id, settlement_business_days, business_calendar_code, settlement_timezone, cutoff_second_of_day, commercial_context_time, tax_snapshot_id, payment_intent_id, payment_attempt_id, payment_succeeded_time, balance_available_time, refund_request_id, channel_refund_id, duplicate_capture_item_id, channel_dispute_notice_id, dispute_case_id, client_id, entity_no, local_partner_id, consumer_country_code, payment_method, industry_code, mcc_code, client_agreement_id, partner_agreement_oe_id, finance_entity_id, currency, gross_amount, supersedes_fact_id, status, fact_version, channel_account_id, maker_id, checker_id, approved_time, published_at, create_time, update_time
+    </sql>
+
+    <!-- 账簿主体：OE 账簿按 entity_no，Finance Entity 账簿按 finance_entity_id，二者恰有一个非空。 -->
+    <sql id="bookScope">
+        <choose>
+            <when test="entityNo != null">entity_no = #{entityNo}</when>
+            <otherwise>finance_entity_id = #{financeEntityId}</otherwise>
+        </choose>
+        AND currency = #{currency}
+    </sql>
+
+    <select id="selectById" resultType="com.paytech.billing.core.dal.dataobject.EconomicFact">
+        SELECT <include refid="columns"/> FROM t_economic_fact WHERE id = #{id}
+    </select>
+
+    <select id="selectBySource" resultType="com.paytech.billing.core.dal.dataobject.EconomicFact">
+        SELECT <include refid="columns"/> FROM t_economic_fact
+        WHERE source_system = #{sourceSystem} AND source_event_key = #{sourceEventKey}
+    </select>
+
+    <insert id="insert">
+        INSERT INTO t_economic_fact (id, fact_type, source_system, source_event_key, source_version, source_payload_hash,
+            parent_economics_id, client_id, entity_no, local_partner_id, partner_agreement_oe_id, finance_entity_id,
+            currency, gross_amount, supersedes_fact_id, status, fact_version, channel_account_id, maker_id, create_time,
+            update_time)
+        VALUES (#{id}, #{factType}, #{sourceSystem}, #{sourceEventKey}, #{sourceVersion}, #{sourcePayloadHash},
+            #{parentEconomicsId}, #{clientId}, #{entityNo}, #{localPartnerId}, #{partnerAgreementOeId}, #{financeEntityId},
+            #{currency}, #{grossAmount}, #{supersedesFactId}, #{status}, #{factVersion}, #{channelAccountId}, #{makerId},
+            #{createTime}, #{updateTime})
+    </insert>
+
+    <!-- 只有仍为 DRAFT 的事实可以批准；版本在此定稿。 -->
+    <update id="approve">
+        UPDATE t_economic_fact
+        SET status = 'APPROVED', fact_version = #{factVersion}, checker_id = #{checkerId}, approved_time = #{now},
+            update_time = #{now}
+        WHERE id = #{id} AND status = 'DRAFT'
+    </update>
+
+    <!-- 只有仍为 APPROVED 且版本未变的事实可以被替代，防止两条更正事实同时替代同一事实。 -->
+    <update id="supersede">
+        UPDATE t_economic_fact
+        SET status = 'SUPERSEDED', update_time = #{now}
+        WHERE id = #{id} AND status = 'APPROVED' AND fact_version = #{factVersion}
+    </update>
+
+    <!-- 发布确认后写一次；补偿重试再次发布时保持首次确认时间。 -->
+    <update id="markPublished">
+        UPDATE t_economic_fact
+        SET published_at = #{now}, update_time = #{now}
+        WHERE id = #{id} AND fact_version = #{factVersion} AND status IN ('APPROVED', 'SUPERSEDED') AND published_at IS NULL
+    </update>
+
+    <select id="selectRecordedByBook" resultType="com.paytech.billing.core.dal.dataobject.EconomicFact">
+        SELECT <include refid="columns"/> FROM t_economic_fact
+        WHERE <include refid="bookScope"/> AND status IN ('APPROVED', 'SUPERSEDED') AND id &gt; #{fromFactId}
+        ORDER BY id
+        LIMIT #{limit}
+    </select>
+
+    <select id="selectPublicationProgress" resultType="com.paytech.billing.domain.view.EconomicFactPublicationView">
+        SELECT COALESCE(SUM(CASE WHEN published_at IS NULL THEN 1 ELSE 0 END), 0) AS pending_count,
+            MAX(CASE WHEN published_at IS NULL THEN id END) AS max_pending_fact_id,
+            MAX(CASE WHEN published_at IS NOT NULL THEN id END) AS max_published_fact_id
+        FROM t_economic_fact
+        WHERE <include refid="bookScope"/> AND status IN ('APPROVED', 'SUPERSEDED')
+    </select>
+</mapper>

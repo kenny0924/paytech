@@ -27,7 +27,7 @@
 
 本文拥有上述修订的唯一详细合同，窄范围取代本目录旧稿中的 `submitCard/card-payments`、`cardReference/cardUseSessionRef`、保留 Instrument、Card 瞬时输入恢复和 Commerce 端口映射。旧 API 样例、旧 DDL 和开发证据保留为前一版基线，不能用于验证本次修订。金额、退款、成功唯一性、原渠道恢复及其余接口继续服从[原详细设计](./design.md)。
 
-[Commerce 入口后继](../../../commerce-service/docs/requirements/20260912-customer-checkout/commerce-entry-amendment.md)继续拥有 Web → Commerce 的入口及法律接受事实；本稿只修订其 Payment 调用和支付方式合同。[旧 Card 数据稿](../../20260912/payment-自建CardVault/data-design.md)的加密与审计规则在未被取代处保留；其独立 Payment Submission、Card Token 及请求内材料传递方案不能机械复制到新模型。真正 Card 落库时需按来源提交及本稿工具引用重做窄映射，不在 Execution 模拟切片创建那些候选表。
+[Commerce 入口后继](../../../paytech/acquiring/docs/requirements/20260912-customer-checkout/commerce-entry-amendment.md)继续拥有 Web → Commerce 的入口及法律接受事实；本稿只修订其 Payment 调用和支付方式合同。[旧 Card 数据稿](../../20260912/payment-自建CardVault/data-design.md)的加密与审计规则在未被取代处保留；其独立 Payment Submission、Card Token 及请求内材料传递方案不能机械复制到新模型。真正 Card 落库时需按来源提交及本稿工具引用重做窄映射，不在 Execution 模拟切片创建那些候选表。
 
 ## 2. 对外 API 与 Processor
 
@@ -91,7 +91,7 @@ pay 保留原 SubmitCard 的 `clientId, sourceSubmissionId, paymentMethodCode, p
 
 ## 3. Commerce 幂等衔接与 Handler
 
-当前证据：[原 Card 端口](../../../commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/domainservice/port/customer/CheckoutCardPaymentPort.java)、[提交 Processor](../../../commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/service/processor/customer/SubmitCustomerPaymentProcessor.java)、[本地受理 Service](../../../commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/domainservice/service/customer/impl/CheckoutSubmissionServiceImpl.java)。现有 submissionId 是本地命令 ID，在接受事实提交时产生，不应在 Payment 准备阶段猜造。
+当前证据：[原 Card 端口](../../../paytech/acquiring/paytech-acquiring-core/src/main/java/com/paytech/acquiring/domainservice/port/customer/CheckoutCardPaymentPort.java)、[提交 Processor](../../../paytech/acquiring/paytech-acquiring-core/src/main/java/com/paytech/acquiring/service/processor/customer/SubmitCustomerPaymentProcessor.java)、[本地受理 Service](../../../paytech/acquiring/paytech-acquiring-core/src/main/java/com/paytech/acquiring/domainservice/service/customer/impl/CheckoutSubmissionServiceImpl.java)。现有 submissionId 是本地命令 ID，在接受事实提交时产生，不应在 Payment 准备阶段猜造。
 
 新调用次序：
 

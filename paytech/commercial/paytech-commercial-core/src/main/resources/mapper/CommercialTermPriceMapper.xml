@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.commercial.core.dal.mapper.CommercialTermPriceMapper">
+    <resultMap id="CommercialTermPrice" type="com.paytech.commercial.core.dal.dataobject.CheckoutRecords$CommercialTermPrice">
+        <constructor>
+            <arg column="term_price_id" javaType="java.lang.Long"/>
+            <arg column="term_version_id" javaType="java.lang.Long"/>
+            <arg column="entity_no" javaType="java.lang.String"/>
+            <arg column="payment_method_profile_code" javaType="java.lang.String"/>
+            <arg column="priority_no" javaType="java.lang.Integer"/>
+            <arg column="settlement_business_days" javaType="java.lang.Integer"/>
+            <arg column="business_calendar_code" javaType="java.lang.String"/>
+            <arg column="settlement_timezone" javaType="java.lang.String"/>
+            <arg column="cutoff_second_of_day" javaType="java.lang.Integer"/>
+        </constructor>
+    </resultMap>
+    <select id="findForCheckout" resultMap="CommercialTermPrice">
+        SELECT term_price_id, term_version_id, entity_no, payment_method_profile_code, priority_no, settlement_business_days, business_calendar_code, settlement_timezone, cutoff_second_of_day
+        FROM t_commercial_term_price
+        WHERE term_version_id IN (SELECT term_version_id FROM t_commercial_term_version WHERE term_plan_id IN (SELECT term_plan_id FROM t_commercial_term_plan WHERE client_id = #{clientId}<if test="!localPartnerIds.isEmpty()"> OR local_partner_id IN <foreach collection="localPartnerIds" item="partnerId" open="(" separator="," close=")">#{partnerId}</foreach></if>)) AND <choose><when test="entityNos.isEmpty()">1 = 0</when><otherwise>entity_no IN <foreach collection="entityNos" item="entityNo" open="(" separator="," close=")">#{entityNo}</foreach></otherwise></choose>
+        ORDER BY term_price_id
+    </select>
+</mapper>

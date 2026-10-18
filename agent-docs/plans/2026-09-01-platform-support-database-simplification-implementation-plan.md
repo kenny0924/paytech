@@ -100,7 +100,7 @@ Diagram Group 分布固定为 `18 + 12 + 9 + 8 + 8 + 2`。
 
 ## 6. Hash 与约束
 
-最终恰好 36 个 `_hash` 字段，完整清单和消费者见 [逻辑权威](../database/PLATFORM_SUPPORT_DATABASE.md#44-精确-hash-allowlist) 与 [物理决策](../../platform-support-service/docs/database/PLATFORM_SUPPORT_PHYSICAL_DECISIONS.md#7-精确-36-hash-policy)。不再保存 Scope/Reason/Requirement/Evidence/Route/Template/Response 等可推导或无消费者 Hash。
+最终恰好 36 个 `_hash` 字段，完整清单和消费者见 [逻辑权威](../database/PLATFORM_SUPPORT_DATABASE.md#44-精确-hash-allowlist) 与 [物理决策](../../paytech/platform-support/docs/database/PLATFORM_SUPPORT_PHYSICAL_DECISIONS.md#7-精确-36-hash-policy)。不再保存 Scope/Reason/Requirement/Evidence/Route/Template/Response 等可推导或无消费者 Hash。
 
 57 表阶段的 29 条复合 FK 锁定 Session/Invitation 身份、Tenant、Role Scope、File Policy、Document Correction/Version/Translation/Delivery/Grant、Notification Request/Route/Translation/Callback 与 Webhook Event Type/Endpoint/Revision/Subscription/Replay/Secret，74 条具名 CHECK 契约冻结在 `model-policy.mjs` sidecar 中。后继模型另增加 Route Target/Channel 和 Console Parent/Channel 两条复合 FK，以及 11 条 Target/Route/Header/Query/Guard/Console 单行 CHECK，因此当前为 31 条复合 FK 与 85 条 CHECK。PDManer 4.9.3 JSON 没有可移植 CHECK 节点，未来 Migration 必须逐项映射为真实 CHECK。跨行集合事实由事务锁、唯一键、复合 FK 与 CAS 实现。
 

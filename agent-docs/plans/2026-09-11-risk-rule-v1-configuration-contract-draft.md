@@ -31,7 +31,7 @@ Root 需求文档及规范只同步本次目标，不修改其他模块的生产
 | 单动作 Hash，Release 参数必须为空 | 新字段的完整 Hash/幂等和历史识别；旧 Hash 不重算 |
 | BFF/Web 严格固定字段和目录 | 三端同步协议适配；不能只改 Risk 或放开未知字段 |
 
-源码证据：[Risk API](../../risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionRuleSetManagementModels.java)、[创作目录](../../risk-compliance-service/risk-decision/src/main/java/com/paytech/risk/decision/domain/authoring/CheckoutPrepareAuthoringDescriptor.java)、[静态检查](../../risk-compliance-service/risk-decision/src/main/java/com/paytech/risk/decision/domain/release/DecisionReleaseStaticValidatorImpl.java)、[Hash](../../risk-compliance-service/risk-decision/src/main/java/com/paytech/risk/decision/domain/hash/RiskDecisionCanonicalizerImpl.java)、[BFF Shape](../../operations-console-bff/paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/configuration/RiskRequestShapeValidator.java)、[Web 编辑器](../../operations-console-web/src/risk/RuleSetEditor.tsx)。
+源码证据：[Risk API](../../paytech/risk-decision/paytech-risk-decision-api/src/main/java/com/paytech/risk/decision/api/DecisionRuleSetManagementModels.java)、[创作目录](../../paytech/risk-decision/paytech-risk-decision-core/src/main/java/com/paytech/risk/decision/domain/authoring)、[静态检查](../../paytech/risk-decision/paytech-risk-decision-core/src/main/java/com/paytech/risk/decision/domain/release/DecisionReleaseStaticValidatorImpl.java)、[Hash](../../paytech/risk-decision/paytech-risk-decision-core/src/main/java/com/paytech/risk/decision/domain/hash/RiskDecisionCanonicalizerImpl.java)、[BFF Shape](../../paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/configuration/RiskRequestShapeValidator.java)、[Web 编辑器](../../operations-console-web/src/risk/RuleSetEditor.tsx)。
 
 ## 3. API 路由与授权
 
@@ -125,7 +125,7 @@ interface ActionParameter {
 | t_action_parameter_definition 初始化数据 | 2400041 SUBJECT_ID、2400042 DURATION、2400051 SUBJECT_ID、2400052 TAG，共 4 条 |
 | t_rule_action_parameter | 复用结构化列：Risk 生成 CONTEXT 目标字段引用；时长写 duration_value，标签写 string_value；其他类型列必须空 |
 
-唯一[初始化 DML](../../risk-compliance-service/docs/database/sql/risk-compliance-initial-data.sql)用于空库。[人工增量 SQL](../../risk-compliance-service/docs/database/sql/2026-09-11-risk-rule-v1-configuration.sql)用于已核对的旧库；先备份，一次性执行，发生中断先核对，不直接重跑。MySQL DDL 隐式提交，不能当作可整体回滚事务。无 CHECK/FK DDL；应用及模型 Sidecar 保证不变量。
+唯一[初始化 DML](../../paytech/risk-decision/docs/database/sql/risk-decision-initial-data.sql)用于空库。[人工增量 SQL](../../paytech/risk-decision/docs/database/sql/2026-09-11-risk-rule-v1-configuration.sql)用于已核对的旧库；先备份，一次性执行，发生中断先核对，不直接重跑。MySQL DDL 隐式提交，不能当作可整体回滚事务。无 CHECK/FK DDL；应用及模型 Sidecar 保证不变量。
 
 主体目录属于当前 Risk 工程能力定义，不单独造注册表。实际 Client ID 不在配置中持久化。仅使用附加动作时，配套 Point Version 增加 client_id 输入定义；纯终态配置继续使用原九字段，从而保留历史冻结内容。
 

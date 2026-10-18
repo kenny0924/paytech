@@ -41,6 +41,28 @@ prepare_health_probe_output() {
   )
 }
 
+# Compose service name : paytech/ service directory (design/09 §3.1, one exec JAR per service).
+readonly -a java_services=(
+  risk-decision-service:risk-decision
+  compliance-service:compliance
+  platform-support-service:platform-support
+  operations-console-bff:operations-console-bff
+  api-gateway:api-gateway
+  client-console-bff:client-console-bff
+  client-master-service:client-master
+  commercial-service:commercial
+  acquiring-service:acquiring
+  consumer-service:consumer
+  payment-service:payment
+  channel-connector-service:channel-connector
+  card-service:card
+  ledger-service:ledger
+  billing-service:billing
+  account-service:account
+  reconciliation-service:reconciliation
+  tax-service:tax
+)
+
 main() {
   environment_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
   local workspace_dir
@@ -51,18 +73,22 @@ main() {
   prepare_health_probe_output "$environment_dir"
   "$JAVA_HOME/bin/javac" --release 25 -encoding UTF-8 -d "$health_probe_output" "$environment_dir/java/LocalHttpHealthProbe.java" "$environment_dir/java/LocalSnapshotEvidenceFetch.java"
   # Build with the user's existing Maven Settings; do not copy credentials into Docker layers.
-  (cd "$workspace_dir/paytech-build" && ./mvnw -DskipTests clean install)
-  (cd "$workspace_dir/paytech-foundation" && ./mvnw -pl paytech-mvc-web-starter,paytech-http-client-support,paytech-mybatis-support,paytech-redis-starter,paytech-snowflake-id,paytech-json-canonicalization -am -DskipTests clean install)
-  (cd "$workspace_dir/risk-compliance-service" && ./mvnw -pl risk-web -am -DskipTests clean install)
-  cp "$workspace_dir/risk-compliance-service/risk-web/target/risk-web-1.0.0-SNAPSHOT-exec.jar" \
-    "$environment_dir/artifacts/risk-service.jar"
-  (cd "$workspace_dir/platform-support-service" && ./mvnw -pl platform-support-web -am -DskipTests clean install)
-  (cd "$workspace_dir/api-gateway" && ./mvnw -pl api-gateway-web -am -DskipTests clean package)
-  (cd "$workspace_dir/operations-console-bff" && ./mvnw -pl paytech-operations-console-bff-web -am -DskipTests clean package)
+  # Single paytech/ Reactor (refactor steps 00-12): one Maven run packages every mor-test Java service; -am builds
+  # build/, foundation/ and the api modules they need, so nothing is installed into the local repository.
+  local service module
+  local -a app_modules=()
+  for service in "${java_services[@]}"; do
+    module="${service#*:}"
+    app_modules+=("$module/paytech-$module-app")
+  done
+  (cd "$workspace_dir/paytech" && ./mvnw -B -DskipTests -pl "$(IFS=,; echo "${app_modules[*]}")" -am clean package)
   (cd "$workspace_dir/operations-console-web" && npm ci && npm run build)
-  cp "$workspace_dir/platform-support-service/platform-support-web/target/platform-support-web-1.0.0-SNAPSHOT-exec.jar" "$environment_dir/artifacts/platform-support-service.jar"
-  cp "$workspace_dir/api-gateway/api-gateway-web/target/api-gateway-web-1.0.0-SNAPSHOT-exec.jar" "$environment_dir/artifacts/api-gateway.jar"
-  cp "$workspace_dir/operations-console-bff/paytech-operations-console-bff-web/target/paytech-operations-console-bff-web-1.0.0-SNAPSHOT-exec.jar" "$environment_dir/artifacts/operations-console-bff.jar"
+  # One JAR_FILE per Compose service: artifacts/<compose service>.jar.
+  for service in "${java_services[@]}"; do
+    module="${service#*:}"
+    cp "$workspace_dir/paytech/$module/paytech-$module-app/target/paytech-$module-app-1.0.0-SNAPSHOT-exec.jar" \
+      "$environment_dir/artifacts/${service%%:*}.jar"
+  done
 }
 
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
@@ -70,4 +96,7 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
 fi
 
 [[ "${BASH_SOURCE[0]}" != "$0" ]] || "$environment_dir/compose.sh" build \
-  nacos risk-service platform-support-service operations-console-bff api-gateway operations-console-web
+  nacos risk-decision-service compliance-service platform-support-service operations-console-bff api-gateway \
+  client-console-bff client-master-service commercial-service acquiring-service consumer-service payment-service \
+  channel-connector-service card-service ledger-service billing-service account-service reconciliation-service \
+  tax-service operations-console-web

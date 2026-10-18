@@ -12,9 +12,9 @@
 
 现行代码依据：
 
-- [OperationsDirectoryMapper](../../../platform-support-service/platform-support-access-control/src/main/resources/mapper/access-control/OperationsDirectoryMapper.xml)：`OperationsPermission` 按 ACTIVE Route/Resource 定义 Operations 可授范围，`rolePermissionIds` 返回全部 ACTIVE 角色绑定。
-- [OperationsRoleServiceImpl](../../../platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domainservice/service/impl/OperationsRoleServiceImpl.java)：角色详情执行完整授权上限检查。
-- [OperationsManagementPolicyServiceImpl](../../../platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domainservice/service/impl/OperationsManagementPolicyServiceImpl.java)：角色分配执行同一检查。
+- [OperationsDirectoryMapper](../../../paytech/platform-support/paytech-platform-support-access-control/src/main/resources/mapper/access-control/OperationsDirectoryMapper.xml)：`OperationsPermission` 按 ACTIVE Route/Resource 定义 Operations 可授范围，`rolePermissionIds` 返回全部 ACTIVE 角色绑定。
+- [OperationsRoleServiceImpl](../../../paytech/platform-support/paytech-platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domainservice/service/impl/OperationsRoleServiceImpl.java)：角色详情执行完整授权上限检查。
+- [OperationsManagementPolicyServiceImpl](../../../paytech/platform-support/paytech-platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domainservice/service/impl/OperationsManagementPolicyServiceImpl.java)：角色分配执行同一检查。
 
 ## 已确认修正
 

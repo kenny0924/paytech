@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.acquiring.core.dal.mapper.order.OrderRefundPositionMapper">
+    <resultMap id="OrderRefundPosition" type="com.paytech.acquiring.core.dal.dataobject.order.OrderRefundPosition">
+        <id column="order_refund_position_id" property="orderRefundPositionId" javaType="_long"/>
+        <result column="order_id" property="orderId" javaType="_long"/>
+        <result column="refundable_base_amount" property="refundableBaseAmount" javaType="java.math.BigDecimal"/>
+        <result column="reserved_amount" property="reservedAmount" javaType="java.math.BigDecimal"/>
+        <result column="refunded_amount" property="refundedAmount" javaType="java.math.BigDecimal"/>
+        <result column="currency" property="currency" javaType="java.lang.String"/>
+        <result column="version" property="version" javaType="_long"/>
+        <result column="create_time" property="createTime" javaType="java.time.Instant"/>
+        <result column="update_time" property="updateTime" javaType="java.time.Instant"/>
+    </resultMap>
+    <sql id="columns">
+        order_refund_position_id,order_id,refundable_base_amount,reserved_amount,refunded_amount,
+        currency,version,create_time,update_time
+    </sql>
+    <select id="findByOrderId" resultMap="OrderRefundPosition">
+        SELECT <include refid="columns"/> FROM t_order_refund_position WHERE order_id=#{orderId}
+    </select>
+    <select id="lockByOrderId" resultMap="OrderRefundPosition" useCache="false" flushCache="true">
+        SELECT <include refid="columns"/> FROM t_order_refund_position WHERE order_id=#{orderId} FOR UPDATE
+    </select>
+    <insert id="insert">
+        INSERT INTO t_order_refund_position (
+            order_refund_position_id, order_id, refundable_base_amount, reserved_amount, refunded_amount,
+            currency, version, create_time, update_time
+        ) VALUES (
+            #{orderRefundPositionId}, #{orderId}, #{refundableBaseAmount}, #{reservedAmount}, #{refundedAmount},
+            #{currency}, #{version}, #{createTime}, #{updateTime}
+        )
+    </insert>
+
+    <update id="reserve">
+        UPDATE t_order_refund_position
+        SET reserved_amount=reserved_amount+#{amount},version=version+1,update_time=#{now}
+        WHERE order_refund_position_id=#{position.orderRefundPositionId}
+            AND order_id=#{order.orderId} AND version=#{position.version} AND currency=#{order.currency}
+            AND refundable_base_amount=#{position.refundableBaseAmount}
+            AND refundable_base_amount-reserved_amount-refunded_amount &gt;= #{amount}
+            AND EXISTS (
+                SELECT 1 FROM t_commerce_order o
+                JOIN t_order_payment_projection p ON p.order_id=o.order_id
+                WHERE o.order_id=#{order.orderId} AND o.client_id=#{order.clientId} AND o.version=#{order.version}
+                    AND o.order_status='PAID' AND o.paid_at=#{order.paidAt}
+                    AND o.currency=#{order.currency} AND o.total_amount=#{order.totalAmount}
+                    AND p.order_payment_projection_id=#{payment.orderPaymentProjectionId}
+                    AND p.payment_intent_id=#{payment.paymentIntentId} AND p.version=#{payment.version}
+                    AND p.intent_status='SUCCEEDED' AND p.successful_attempt_id=#{payment.successfulAttemptId}
+                    AND p.currency=o.currency AND p.captured_amount=o.total_amount
+                    AND p.captured_amount=#{position.refundableBaseAmount}
+            )
+    </update>
+    <update id="establishBase">
+        UPDATE t_order_refund_position SET refundable_base_amount=#{amount},version=version+1,update_time=#{now}
+        WHERE order_refund_position_id=#{position.orderRefundPositionId} AND order_id=#{position.orderId}
+            AND version=#{position.version} AND currency=#{position.currency}
+            AND refundable_base_amount=0 AND reserved_amount=0 AND refunded_amount=0
+    </update>
+    <update id="settle">
+        UPDATE t_order_refund_position SET reserved_amount=reserved_amount-#{amount},
+            <if test="success">refunded_amount=refunded_amount+#{amount},</if>
+            version=version+1,update_time=#{now}
+        WHERE order_id=#{position.orderId} AND version=#{position.version} AND currency=#{position.currency}
+            AND reserved_amount &gt;= #{amount}
+    </update>
+</mapper>

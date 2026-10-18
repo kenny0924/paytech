@@ -1,10 +1,22 @@
+// Renders each Risk service's Schema SQL from its canonical PDManer model (design/07 §7, design/09 §4.3):
+// paytech/{risk-decision,compliance,dispute}/docs/database/sql/<service>-schema.sql.
+// Usage: node scripts/pdmaner/risk/generate-risk-compliance-schema.mjs [--check]
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { RISK_SERVICES, RISK_SERVICE_MODELS, tableInService } from "./risk-service-partition.mjs";
+
 const workspaceUrl = new URL("../../../", import.meta.url);
-const modelUrl = new URL("risk-compliance-service/docs/database/risk-compliance.pdma.json", workspaceUrl);
-const schemaUrl = new URL("risk-compliance-service/docs/database/sql/risk-compliance-schema.sql", workspaceUrl);
+
+/** Expected table count per service model (design/03 §4.2: 53 / 23 / 7 own tables plus t_compensation_event). */
+export const RISK_SERVICE_TABLE_COUNTS = Object.freeze({ "risk-decision": 54, compliance: 24, dispute: 8 });
+
+const SCHEMA_TITLES = Object.freeze({
+  "risk-decision": ["Risk Decision", "mor_risk_decision"],
+  compliance: ["Compliance", "mor_compliance"],
+  dispute: ["Dispute", "mor_dispute"],
+});
 
 function invariant(condition, message) {
   if (!condition) throw new Error(message);
@@ -36,8 +48,12 @@ function exactStringSql(field) {
   return ` CHARACTER SET ${characterSet} COLLATE ${collation}`;
 }
 
-function validateModel(model) {
-  invariant(Array.isArray(model.entities) && model.entities.length === 84, "Risk Schema 必须直接覆盖最终 84 表 PDManer");
+function validateModel(model, service) {
+  invariant(Array.isArray(model.entities) && model.entities.length === RISK_SERVICE_TABLE_COUNTS[service],
+    `${service} Schema 必须直接覆盖 ${RISK_SERVICE_TABLE_COUNTS[service]} 表 PDManer`);
+  for (const entity of model.entities) {
+    invariant(tableInService(entity.defKey, service), `表不属于 ${service}：${entity.defKey}`);
+  }
   const tableNames = new Set();
   for (const entity of model.entities) {
     invariant(/^t_[a-z][a-z0-9_]*$/u.test(entity.defKey), `非法 Risk 物理表名：${entity.defKey}`);
@@ -76,7 +92,9 @@ function validateModel(model) {
       }
     }
   }
-  invariant(tableNames.has("t_settle_control_state_change"), "Risk Schema 缺少特殊物理表 t_settle_control_state_change");
+  if (service === "compliance") {
+    invariant(tableNames.has("t_settle_control_state_change"), "Compliance Schema 缺少特殊物理表 t_settle_control_state_change");
+  }
 }
 
 function renderEntity(entity) {
@@ -99,12 +117,14 @@ function renderEntity(entity) {
   return `CREATE TABLE \`${entity.defKey}\` (\n${body}\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT=${quote(entity.comment)};`;
 }
 
-export function renderRiskSchema(model) {
-  validateModel(model);
+export function renderRiskSchema(model, service) {
+  invariant(RISK_SERVICES.includes(service), `未知 Risk 服务：${service}`);
+  validateModel(model, service);
+  const [title, database] = SCHEMA_TITLES[service];
   return [
-    "-- Code-MoR Risk & Compliance complete schema generated from the approved PDManer model.",
-    "-- 只适用于人工审核后的空 Risk 数据库；不得作为应用启动迁移或已有数据库升级脚本。",
-    "-- Source: risk-compliance-service/docs/database/risk-compliance.pdma.json",
+    `-- Code-MoR ${title} schema: verbatim slice of the approved Risk & Compliance schema by table ownership (design/03 §2.2).`,
+    `-- 只适用于人工审核后的空 ${database} 数据库；不得作为应用启动迁移或已有数据库升级脚本。`,
+    `-- Source: ${RISK_SERVICE_MODELS[service].modelPath}`,
     "",
     ...model.entities.flatMap((entity) => [renderEntity(entity), ""]),
   ].join("\n");
@@ -113,20 +133,24 @@ export function renderRiskSchema(model) {
 function main() {
   const args = process.argv.slice(2);
   invariant(args.length <= 1 && (args.length === 0 || args[0] === "--check"), "Usage: node generate-risk-compliance-schema.mjs [--check]");
-  const model = JSON.parse(readFileSync(modelUrl, "utf8"));
-  const expected = renderRiskSchema(model);
-  if (args[0] === "--check") {
-    if (!existsSync(schemaUrl) || readFileSync(schemaUrl, "utf8") !== expected) {
-      process.stderr.write("Risk Schema is stale; run generate-risk-compliance-schema.mjs\n");
-      process.exitCode = 1;
-      return;
+  for (const service of RISK_SERVICES) {
+    const modelUrl = new URL(RISK_SERVICE_MODELS[service].modelPath, workspaceUrl);
+    const schemaUrl = new URL(RISK_SERVICE_MODELS[service].schemaPath, workspaceUrl);
+    const model = JSON.parse(readFileSync(modelUrl, "utf8"));
+    const expected = renderRiskSchema(model, service);
+    if (args[0] === "--check") {
+      if (!existsSync(schemaUrl) || readFileSync(schemaUrl, "utf8") !== expected) {
+        process.stderr.write(`${service} Schema is stale; run generate-risk-compliance-schema.mjs\n`);
+        process.exitCode = 1;
+        continue;
+      }
+      process.stdout.write(`${service} Schema is up to date (${model.entities.length} tables)\n`);
+      continue;
     }
-    process.stdout.write(`Risk Schema is up to date (${model.entities.length} tables)\n`);
-    return;
+    mkdirSync(dirname(fileURLToPath(schemaUrl)), { recursive: true });
+    writeFileSync(schemaUrl, expected, "utf8");
+    process.stdout.write(`Wrote ${service} Schema (${model.entities.length} tables): ${fileURLToPath(schemaUrl)}\n`);
   }
-  mkdirSync(dirname(fileURLToPath(schemaUrl)), { recursive: true });
-  writeFileSync(schemaUrl, expected, "utf8");
-  process.stdout.write(`Wrote Risk Schema (${model.entities.length} tables): ${fileURLToPath(schemaUrl)}\n`);
 }
 
-main();
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) main();

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.paytech</groupId>
+        <artifactId>paytech-channel-connector</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    <artifactId>paytech-channel-connector-core</artifactId>
+    <packaging>jar</packaging>
+    <name>PayTech Channel Connector Core</name>
+    <description>Channel / account / MID repositories, capability resolution, candidate query, frozen-target checks and
+        Platform standard API execution with result mapping.</description>
+    <dependencies>
+        <dependency><groupId>com.paytech</groupId><artifactId>paytech-channel-connector-api</artifactId></dependency>
+        <dependency><groupId>com.paytech</groupId><artifactId>paytech-common-core</artifactId></dependency>
+        <dependency><groupId>com.paytech</groupId><artifactId>paytech-mybatis-support</artifactId></dependency>
+        <dependency><groupId>org.springframework</groupId><artifactId>spring-context</artifactId></dependency>
+        <dependency><groupId>org.springframework</groupId><artifactId>spring-jdbc</artifactId></dependency>
+        <dependency><groupId>org.mybatis</groupId><artifactId>mybatis</artifactId></dependency>
+        <dependency><groupId>jakarta.validation</groupId><artifactId>jakarta.validation-api</artifactId></dependency>
+        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot</artifactId></dependency>
+        <dependency><groupId>tools.jackson.core</groupId><artifactId>jackson-databind</artifactId></dependency>
+        <!-- 执行配置读取经 Vault 还原冻结账号（无生产调用方，保留 Processor 与测试）。 -->
+        <dependency><groupId>com.paytech</groupId><artifactId>paytech-vault-client</artifactId></dependency>
+        <!-- 渠道操作经 Platform 标准 API 执行（requirements/20261014/payment-PayerMax卡直付对接）。 -->
+        <dependency><groupId>com.paytech</groupId><artifactId>paytech-platform-support-api</artifactId></dependency>
+        <dependency><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><scope>provided</scope></dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId>
+                <configuration><annotationProcessorPaths><path><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId></path></annotationProcessorPaths></configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

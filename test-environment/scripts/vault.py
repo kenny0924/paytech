@@ -83,7 +83,7 @@ def initialize_schema():
     if database_tables():
         print("Existing Vault tables preserved; runtime performs exact schema validation.")
         return
-    schema = ROOT.parent / "vault-service/docs/database/sql/vault-schema.sql"
+    schema = ROOT.parent / "paytech/vault/docs/database/sql/vault-schema.sql"
     mysql(schema.read_text(encoding="utf-8"))
     if database_tables() != TABLES:
         raise SystemExit("Vault initialization incomplete; inspect manually, do not replay DDL.")

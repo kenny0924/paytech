@@ -1,0 +1,33 @@
+spring:
+  cloud:
+    nacos:
+      config:
+        enabled: false
+      discovery:
+        enabled: false
+  datasource:
+    url: "jdbc:mysql://127.0.0.1:13306/mor_acquiring?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+    username: acquiring_app
+    password: "${ACQUIRING_TEST_DB_PASSWORD:${MOR_ACQUIRING_DB_PASSWORD:local-acquiring-change-me-2026}}"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-init-sql: "SET time_zone = '+00:00'"
+      connection-timeout: 2000
+      validation-timeout: 1000
+  sql:
+    init:
+      mode: never
+  main:
+    banner-mode: "off"
+
+acquiring:
+  checkout:
+    public-origin: https://checkout.local.test
+  identifier:
+    region-id: 0
+    worker-id: 0
+
+management:
+  health:
+    db:
+      enabled: false

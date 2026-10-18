@@ -18,7 +18,7 @@
 
 这些辅助能力都位于测试模块。表中方法应按已有测试设施复用或实现，不引入新的业务 Service，也不因模板列出名称就预建空类。
 
-HTTP 和统一 AfterEach 清理复用 [`paytech-test-support`](../../paytech-foundation/paytech-test-support/README.md)，依赖限定为 test scope。
+HTTP 和统一 AfterEach 清理复用 [`paytech-test-support`](../../paytech/foundation/paytech-test-support/README.md)，依赖限定为 test scope。
 本例调用器只保留接口路径、请求适配与 Checker 构造；简单场景也可直接写成测试类的 `invoke` 方法。
 业务 ResponseChecker 继承 `AbstractHttpResponseChecker<具体类型>`，只补业务断言，不重复实现状态、Header 和 Problem 检查；数据库 Checker 无需继承 HTTP 基类。
 

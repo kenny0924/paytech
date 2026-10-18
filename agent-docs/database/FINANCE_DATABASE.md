@@ -29,8 +29,8 @@
 - [Finance Channel 三阶段账户实施计划](../plans/2026-08-28-finance-provider-three-stage-accounting-implementation-plan.md)
 - [Finance 手工出款与共同余额成熟精简设计（当前）](../plans/2026-08-28-finance-manual-payout-simplification-design.md)
 - [Finance 手工出款精简实施计划](../plans/2026-08-28-finance-manual-payout-simplification-implementation-plan.md)
-- [Finance 物理建模决策](../../finance-service/docs/database/FINANCE_PHYSICAL_DECISIONS.md)
-- [Finance PDManer 模型](../../finance-service/docs/database/finance.pdma.json)
+- [Finance 物理建模决策](../../paytech/ledger/docs/database/FINANCE_PHYSICAL_DECISIONS.md)
+- [Finance PDManer 模型](../../paytech/ledger/docs/database/ledger.pdma.json)
 
 本文固化以下决策：
 

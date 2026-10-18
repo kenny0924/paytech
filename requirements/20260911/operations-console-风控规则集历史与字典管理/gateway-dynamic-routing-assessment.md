@@ -20,11 +20,11 @@
 
 主要代码入口：
 
-- [Platform 数据读取](../../../platform-support-service/platform-support-access-control/src/main/resources/mapper/access-control/GatewayConfigurationMapper.xml)
-- [Target 快照合同](../../../platform-support-service/platform-support-api/src/main/java/com/paytech/platform/support/api/gatewayconfiguration/snapshot/GatewayTargetSnapshot.java)
-- 历史静态 Registry：Gateway `4220da8:api-gateway-web/src/main/java/com/paytech/gateway/routing/snapshot/ApprovedTargetRegistry.java`；后继实现为[动态 Target](../../../api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/routing/runtime/GatewayRuntimeTarget.java)。
-- [传输装配入口（评估后已调整）](../../../api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/routing/GatewayRouteConfiguration.java)
-- [请求 Route 捕获](../../../api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/routing/DynamicRouteWebFilter.java)
+- [Platform 数据读取](../../../paytech/platform-support/paytech-platform-support-access-control/src/main/resources/mapper/access-control/GatewayConfigurationMapper.xml)
+- [Target 快照合同](../../../paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/gatewayconfiguration/response/GatewayTargetSnapshot.java)
+- 历史静态 Registry：Gateway `4220da8:api-gateway-web/src/main/java/com/paytech/gateway/routing/snapshot/ApprovedTargetRegistry.java`；后继实现为[动态 Target](../../../paytech/api-gateway/paytech-api-gateway-app/src/main/java/com/paytech/gateway/routing/runtime/GatewayRuntimeTarget.java)。
+- [传输装配入口（评估后已调整）](../../../paytech/api-gateway/paytech-api-gateway-app/src/main/java/com/paytech/gateway/routing/GatewayRouteConfiguration.java)
+- [请求 Route 捕获](../../../paytech/api-gateway/paytech-api-gateway-app/src/main/java/com/paytech/gateway/routing/DynamicRouteWebFilter.java)
 
 ## 2. 建议的运行方式
 

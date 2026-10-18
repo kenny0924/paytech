@@ -129,7 +129,7 @@ paytech-build/
 
 ### 5.4 组件专用构建门禁
 
-- API Gateway 是 WebFlux 例外，默认只含 `web + test`，不创建空 `*-api`；它仍继承统一 Java/Maven/覆盖率基线，但反应式依赖禁止清单和独立 Node 门禁由 [`api-gateway/README.md`](../api-gateway/README.md) 维护。
+- API Gateway 是 WebFlux 例外，默认只含 `web + test`，不创建空 `*-api`；它仍继承统一 Java/Maven/覆盖率基线，但反应式依赖禁止清单和独立 Node 门禁由 [`api-gateway/README.md`](../paytech/api-gateway/README.md) 维护。
 - 核心服务和 BFF 的模块、依赖方向与打包规则由 [`JAVA_PROJECT_STRUCTURE.md`](./JAVA_PROJECT_STRUCTURE.md) 拥有；具体端点、端口、依赖白名单、构建命令和产物只写在组件 README。
 - 测试分组、真实协议链路、覆盖率及本地基础设施边界由 [`UNIT_TEST_GUIDE.md`](./UNIT_TEST_GUIDE.md) 拥有。任何组件实现或验证状态只进入 [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md) 和仓库证据。
 
@@ -211,7 +211,7 @@ paytech-foundation/
 - Redis Cache 使用普通 Jackson 3 JSON，不写 Java 类元数据或 JDK 序列化内容；物理 Key 固定为 `{service-prefix}:cache:{cache-name}::{key}`，其中服务前缀遵守统一 Redis Namespace 规则；
 - `RedisJsonTemplate` 保存不含 Java 类名的普通 UTF-8 JSON，读取时显式传入 `Class<T>` 或 `TypeReference<T>`，实现 `CodeEnum` 的枚举使用稳定 `code` 而非 `name()`；为支持滚动升级，新增未知字段可忽略，其他不兼容变更必须升级 Key 版本；每次写入必须显式提供至少 1 毫秒的 TTL；默认不创建使用 JDK 序列化的通用 `RedisTemplate<Object, Object>`；
 - 通过 `redis.coordination.enabled=true` 按需创建 Foundation 的 RedissonClient。同步写 Processor 的资源锁复用 AbstractLockProcessor；无锁入口使用 AbstractProcessor。未迁移的 @ResourceLock 消费者继续使用注解机制，不能在同一入口叠加。不复制客户端或锁框架。
-- 模板的单资源 LockCommand 参数保持毫秒合同：LOCK 持续等待且可中断；TRY_LOCK 使用非负等待时间，默认 0；租约正数为显式租约，-1 或省略时使用 Watchdog，逻辑 Key 自动加 lock:。多资源 tryLocks 接收完整逻辑 Key 列表与 Duration 等待/租约，不再添加 lock:；先校验、去重并按 ASCII 顺序排列，使用普通 RLock 及共享总等待预算，租约必须有限且至少 1 毫秒，后续锁失败或业务结束逆序释放已获取资源。两种入口均由同一客户端添加服务 Namespace；模板不自行读取注解配置，不承担注解表达式、代理门禁和指标。迁移消费者显式提供配置并维持启动校验。实际参数入口见 [Foundation README](../paytech-foundation/README.md#processor-资源锁模板)。
+- 模板的单资源 LockCommand 参数保持毫秒合同：LOCK 持续等待且可中断；TRY_LOCK 使用非负等待时间，默认 0；租约正数为显式租约，-1 或省略时使用 Watchdog，逻辑 Key 自动加 lock:。多资源 tryLocks 接收完整逻辑 Key 列表与 Duration 等待/租约，不再添加 lock:；先校验、去重并按 ASCII 顺序排列，使用普通 RLock 及共享总等待预算，租约必须有限且至少 1 毫秒，后续锁失败或业务结束逆序释放已获取资源。两种入口均由同一客户端添加服务 Namespace；模板不自行读取注解配置，不承担注解表达式、代理门禁和指标。迁移消费者显式提供配置并维持启动校验。实际参数入口见 [Foundation README](../paytech/foundation/README.md#processor-资源锁模板)。
 - 模板在创建/获取锁时统一处理依赖异常：直接中断或 Redisson 包装的中断恢复线程标记并抛公共并发错误，其他 `RedisException` 转为公共服务不可用错误，保留 Cause。`lockCommand` 和 `processWithinLock` 的业务异常原样传播；业务 Processor 不重复捕获锁异常，释放失败不覆盖业务结果。
 - 以下注解规则只适用于既有或已批准使用 `@ResourceLock` 的消费者；不把模板支持的 Watchdog 或参数接口套用到注解。`@ResourceLock.key` 可以为空以表达由 `prefix` 唯一确定的固定资源；动态 Key 只接受 `#param` 或一层 `#param.field`，完整语法为 `#[A-Za-z_$][A-Za-z0-9_$]*(\.[A-Za-z_$][A-Za-z0-9_$]*)?`。字段只按 record component 或无参 JavaBean getter 读取，不执行完整 SpEL、方法调用、Bean/类型引用、运算、拼接、索引或多层导航。可求值类型只允许 `String`、整数 primitive/wrapper 或 `UUID`；运行值必须经过有界、安全 ASCII 校验，不得把邮箱、Token、Secret、敏感明文或自由文本放入物理 Key；
 - `prefix` 是固定的小写 kebab-case 段，可用 `:` 分隔，但不得重复包含当前服务 Namespace；Foundation 只在最终逻辑 Key 前添加一次服务 Namespace。一个方法可声明多个资源锁；必须在接触 Redis 前解析全部 Key、规范化并去重，再按完整逻辑 Key 的稳定 ASCII 字典序、在一个总 Wait 预算内获取，任一失败时逆序释放已取得的锁，正常完成时同样逆序释放。注解声明顺序不构成协议；
@@ -274,7 +274,7 @@ paytech-foundation/
 - MockHttpServer 只注册传入的测试 Controller，MVC 读取外部 API 接口映射，不扫描业务组件或启用应用自动配置。宿主将随机地址注入测试服务发现；正常 DTO 与业务匹配留在本地，HTTP 故障响应和实际断连由 MockHttpFault 表达。
 - Spring 测试可用 EnableMockHttpServer 扫描指定包内的 TestComponent，注册 Mocker 与内部 Controller Bean，自动创建服务、动态注册地址并管理关闭。Controller 不进入宿主顶层 Bean 或路由；普通组件和配置类排除，独立服务仍不启用 Boot 自动配置。
 - 宿主提供 `RestTestClient` 和 `ObjectMapper`，不自动配置业务 Bean，不依赖任何业务系统或数据库；Fixture、外部 DTO Mock、业务 Checker 与具体清理由各服务测试模块负责，公共基类仅分派 AfterEach 清理。
-- 公共 API 与示例见[模块说明](../paytech-foundation/paytech-test-support/README.md)，实际发布与验证状态只见[当前台账](CURRENT_IMPLEMENTATION.md#foundation-test-support-20260917)。
+- 公共 API 与示例见[模块说明](../paytech/foundation/paytech-test-support/README.md)，实际发布与验证状态只见[当前台账](CURRENT_IMPLEMENTATION.md#foundation-test-support-20260917)。
 
 ## 7. Spring Web 与内部调用
 

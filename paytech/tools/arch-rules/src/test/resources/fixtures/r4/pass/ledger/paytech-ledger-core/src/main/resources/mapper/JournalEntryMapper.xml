@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.ledger.core.dal.mapper.JournalEntryMapper">
+    <!-- Former join with t_payment_intent was removed; comments are not table references. -->
+    <select id="selectEntries" resultType="map">
+        SELECT e.journal_entry_id, l.amount
+        FROM t_journal_entry e
+        JOIN t_journal_line l ON l.journal_entry_id = e.journal_entry_id
+        WHERE e.status = #{status}
+    </select>
+    <insert id="insertEvent">INSERT INTO t_compensation_event (event_type) VALUES (#{eventType})</insert>
+    <insert id="insertConsumed">INSERT INTO t_consumed_event (event_id) VALUES (#{eventId})</insert>
+</mapper>

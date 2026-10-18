@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.acquiring.core.dal.mapper.order.CommerceOrderMapper">
+    <update id="recordPaymentSubmission">
+        UPDATE t_commerce_order SET version=version+1,update_time=#{now}
+        WHERE order_id=#{order.orderId} AND version=#{order.version} AND order_status='OPEN'
+            AND termination_requested_at IS NULL AND paid_at IS NULL AND expires_at > #{now}
+            AND EXISTS (SELECT 1 FROM t_checkout_session s
+                WHERE s.checkout_session_id=#{session.checkoutSessionId} AND s.order_id=#{order.orderId}
+                    AND s.version=#{session.version} AND s.session_status IN ('PREPARING','OPEN'))
+            AND EXISTS (SELECT 1 FROM t_consumer_contract c
+                WHERE c.consumer_contract_id=#{contractId} AND c.order_id=#{order.orderId})
+        <choose>
+            <when test="payment != null">
+                AND EXISTS (SELECT 1 FROM t_order_payment_projection p
+                WHERE p.order_id=#{order.orderId} AND p.payment_intent_id=#{payment.paymentIntentId}
+                AND p.version=#{payment.version} AND p.successful_attempt_id IS NULL AND p.captured_amount=0
+                AND p.intent_status NOT IN ('SUCCEEDED','CANCELLED','EXPIRED'))
+            </when>
+            <otherwise>
+                AND NOT EXISTS (SELECT 1 FROM t_order_payment_projection p WHERE p.order_id=#{order.orderId})
+            </otherwise>
+        </choose>
+            AND EXISTS (SELECT 1 FROM t_consumer_context c WHERE c.order_id=#{order.orderId})
+    </update>
+    <update id="recordConsumerChange">
+        UPDATE t_commerce_order SET version=version+1,update_time=#{now}
+        WHERE order_id=#{order.orderId} AND version=#{order.version}
+        AND order_status IN ('CREATED','OPEN') AND termination_requested_at IS NULL
+        AND paid_at IS NULL AND expires_at > #{now}
+        AND NOT EXISTS (SELECT 1 FROM t_consumer_acceptance a JOIN t_consumer_contract c
+        ON c.consumer_contract_id=a.consumer_contract_id WHERE c.order_id=#{order.orderId})
+        AND EXISTS (SELECT 1 FROM t_checkout_session s
+        WHERE s.checkout_session_id=#{session.checkoutSessionId} AND s.order_id=#{order.orderId}
+        AND s.version=#{session.version} AND s.session_status IN ('PREPARING','OPEN'))
+    </update>
+    <resultMap id="CommerceOrder" type="com.paytech.acquiring.core.dal.dataobject.order.CommerceOrder">
+        <id column="order_id" property="orderId" javaType="_long"/>
+        <result column="order_no" property="orderNo" javaType="java.lang.String"/>
+        <result column="client_id" property="clientId" javaType="_long"/>
+        <result column="client_order_id" property="clientOrderId" javaType="java.lang.String"/>
+        <result column="customer_id" property="customerId" javaType="java.lang.Long"/>
+        <result column="creation_mode" property="creationMode" javaType="com.paytech.acquiring.api.client.v1.enums.OrderCreationMode"/>
+        <result column="consumer_country_code" property="consumerCountryCode" javaType="java.lang.String"/>
+        <result column="termination_requested_at" property="terminationRequestedAt" javaType="java.time.Instant"/>
+        <result column="entity_source_type" property="entitySourceType"/>
+        <result column="local_partner_id" property="localPartnerId"/>
+        <result column="industry_code" property="industryCode"/>
+        <result column="mcc_code" property="mccCode"/>
+        <result column="entity_no" property="entityNo" javaType="java.lang.String"/>
+        <result column="merchandise_amount" property="merchandiseAmount" javaType="java.math.BigDecimal"/>
+        <result column="discount_amount" property="discountAmount" javaType="java.math.BigDecimal"/>
+        <result column="net_amount" property="netAmount" javaType="java.math.BigDecimal"/>
+        <result column="tax_amount" property="taxAmount" javaType="java.math.BigDecimal"/>
+        <result column="rounding_amount" property="roundingAmount" javaType="java.math.BigDecimal"/>
+        <result column="total_amount" property="totalAmount" javaType="java.math.BigDecimal"/>
+        <result column="currency" property="currency" javaType="java.lang.String"/>
+        <result column="order_status" property="orderStatus" javaType="com.paytech.acquiring.domain.enums.OrderStatus"/>
+        <result column="expires_at" property="expiresAt" javaType="java.time.Instant"/>
+        <result column="paid_at" property="paidAt" javaType="java.time.Instant"/>
+        <result column="cancelled_at" property="cancelledAt" javaType="java.time.Instant"/>
+        <result column="version" property="version" javaType="_long"/>
+        <result column="create_time" property="createTime" javaType="java.time.Instant"/>
+        <result column="update_time" property="updateTime" javaType="java.time.Instant"/>
+    </resultMap>
+    <select id="findByOrderId" resultMap="CommerceOrder" useCache="false" flushCache="true">
+        SELECT order_id,order_no,client_id,client_order_id,customer_id,creation_mode,consumer_country_code,
+        termination_requested_at,entity_no,entity_source_type,local_partner_id,industry_code,mcc_code,merchandise_amount,discount_amount,net_amount,tax_amount,rounding_amount,
+            total_amount,currency,order_status,expires_at,paid_at,cancelled_at,version,create_time,update_time
+        FROM t_commerce_order WHERE order_id=#{orderId}
+    </select>
+    <select id="findByOrderNo" resultMap="CommerceOrder">
+        SELECT order_id,order_no,client_id,client_order_id,customer_id,creation_mode,consumer_country_code,
+        termination_requested_at,entity_no,entity_source_type,local_partner_id,industry_code,mcc_code,merchandise_amount,discount_amount,net_amount,tax_amount,rounding_amount,
+        total_amount,currency,order_status,expires_at,paid_at,cancelled_at,version,create_time,update_time
+        FROM t_commerce_order WHERE client_id=#{clientId} AND order_no=#{orderNo}
+    </select>
+    <select id="findOrderId" resultType="java.lang.Long">
+        SELECT order_id FROM t_commerce_order
+        WHERE client_id=#{clientId} AND client_order_id=#{clientOrderId}
+    </select>
+    <select id="findOrderIdByOrderNo" resultType="java.lang.Long">
+        SELECT order_id FROM t_commerce_order
+        WHERE client_id=#{clientId} AND order_no=#{orderNo}
+    </select>
+    <select id="findOrderNoByOrderId" resultType="java.lang.String">
+        SELECT order_no FROM t_commerce_order
+        WHERE client_id=#{clientId} AND order_id=#{orderId}
+    </select>
+
+    <insert id="insert">
+        INSERT INTO t_commerce_order
+        (order_id,order_no,client_id,client_order_id,customer_id,creation_mode,consumer_country_code,entity_no,entity_source_type,local_partner_id,industry_code,mcc_code,tax_amount,rounding_amount,total_amount,
+            merchandise_amount,discount_amount,net_amount,currency,order_status,expires_at,version,create_time,update_time)
+        SELECT
+        #{order.orderId},#{order.orderNo},#{order.clientId},#{order.clientOrderId},#{order.customerId},#{order.creationMode},#{order.consumerCountryCode},#{order.entityNo},#{order.entitySourceType},#{order.localPartnerId},#{order.industryCode},#{order.mccCode},#{order.taxAmount},#{order.roundingAmount},#{order.totalAmount},
+        #{order.merchandiseAmount},#{order.discountAmount},#{order.netAmount},#{order.currency},#{order.orderStatus},
+            #{order.expiresAt},1,#{order.createTime},#{order.createTime}
+        WHERE #{order.expiresAt} &gt; #{now}
+    </insert>
+    <update id="requestTermination">
+        UPDATE t_commerce_order SET termination_requested_at=#{now},version=version+1,update_time=#{now}
+        WHERE order_id=#{order.orderId} AND client_id=#{order.clientId} AND version=#{order.version}
+        AND order_status IN ('CREATED','OPEN') AND termination_requested_at IS NULL
+    </update>
+    <update id="markPaid">
+        UPDATE t_commerce_order SET order_status='PAID',paid_at=#{paidAt},version=version+1,update_time=#{now}
+        WHERE order_id=#{order.orderId} AND client_id=#{order.clientId} AND version=#{order.version}
+            AND order_status='OPEN' AND paid_at IS NULL
+    </update>
+    <update id="cancel">
+        UPDATE t_commerce_order SET order_status='CANCELLED',status_reason_code='CLIENT_REQUESTED',
+        cancelled_at=#{now},version=version+1,update_time=#{now}
+        WHERE order_id=#{order.orderId} AND client_id=#{order.clientId} AND version=#{order.version}
+        AND order_status IN ('CREATED','OPEN') AND termination_requested_at IS NOT NULL AND paid_at IS NULL
+        <choose>
+            <when test="payment != null">
+                AND EXISTS (
+                SELECT 1 FROM t_order_payment_projection p
+                WHERE p.order_id=#{order.orderId} AND p.payment_intent_id=#{payment.paymentIntentId}
+                AND p.version=#{payment.version} AND p.successful_attempt_id IS NULL
+                AND p.captured_amount=0 AND p.intent_status &lt;&gt; 'SUCCEEDED'
+                )
+            </when>
+            <otherwise>
+                <if test="localOnly">
+                    AND NOT EXISTS (SELECT 1 FROM t_consumer_acceptance a JOIN t_consumer_contract c
+                    ON c.consumer_contract_id=a.consumer_contract_id WHERE c.order_id=#{order.orderId})
+                </if>
+                AND NOT EXISTS (SELECT 1 FROM t_order_payment_projection p WHERE p.order_id=#{order.orderId})
+            </otherwise>
+        </choose>
+    </update>
+</mapper>

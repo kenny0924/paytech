@@ -97,8 +97,8 @@ D1–D3 已确认，不再等待重复答复。编号、Scope 审批、单表共
 
 - [项目背景与术语](../../../agent-docs/PROJECT_CONTEXT.md)
 - [CCT 业务模型](../../../agent-docs/database/CLIENT_CONTRACT_DATABASE.md)
-- [CCT 物理决策](../../../client-contract-service/docs/database/CLIENT_CONTRACT_PHYSICAL_DECISIONS.md)
-- [CCT PDManer](../../../client-contract-service/docs/database/client-contract.pdma.json)
+- [CCT 物理决策](../../../paytech/client-master/docs/database/CLIENT_MASTER_PHYSICAL_DECISIONS.md)
+- [CCT PDManer](../../../paytech/client-master/docs/database/client-master.pdma.json)
 - [Commerce 下单分类合同](../../../agent-docs/decisions/2026-09-05-commerce-client-api-v1.md)
 - [CCT 定价目标与迁移边界](../../../agent-docs/decisions/2026-09-10-cct-payment-method-profile-pricing.md)
 - [当前实现、验证及部署状态](../../../agent-docs/CURRENT_IMPLEMENTATION.md)

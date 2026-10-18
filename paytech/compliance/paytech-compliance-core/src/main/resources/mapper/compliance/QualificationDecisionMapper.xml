@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.compliance.core.dal.mapper.QualificationDecisionMapper">
+    <insert id="insert">
+        INSERT INTO t_qualification_decision(decision_id, case_id, role_type, role_id, qualification_type, decision_source, outcome, valid_from, decided_by, decided_time, create_time)
+        VALUES(#{row.decisionId}, #{row.caseId}, #{row.roleType}, #{row.roleId}, #{row.qualificationType}, #{row.decisionSource}, #{row.outcome}, #{row.validFrom}, #{row.decidedBy}, #{row.decidedTime}, #{row.createTime})
+    </insert>
+    <select id="findByCase" useCache="false" resultType="com.paytech.compliance.core.dal.dataobject.QualificationDecision">
+        SELECT decision_id AS decisionId, case_id AS caseId, role_type AS roleType, role_id AS roleId, qualification_type AS qualificationType,
+            decision_source AS decisionSource, outcome, valid_from AS validFrom, decided_by AS decidedBy, decided_time AS decidedTime,
+            create_time AS createTime
+        FROM t_qualification_decision WHERE case_id = #{caseId} AND decision_version IS NULL
+    </select>
+</mapper>

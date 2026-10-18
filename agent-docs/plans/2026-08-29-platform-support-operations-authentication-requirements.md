@@ -4,7 +4,7 @@
 
 最后更新：2026-08-29
 
-状态：**历史/已被替代。** 本文记录 Operations-only 的阶段性需求；[2026-08-30 统一人工认证设计](../../docs/superpowers/specs/2026-08-30-platform-unified-human-authentication-design.md)、[Operations Gateway hardening 设计](../../docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md) 和当前 [63 表模型](../../platform-support-service/docs/database/platform-support.pdma.json) 已取代其认证与 Gateway 语义。本文本身不授权业务 API、Migration、物理数据库、Secrets/KMS、BFF、前端或部署实现。
+状态：**历史/已被替代。** 本文记录 Operations-only 的阶段性需求；[2026-08-30 统一人工认证设计](../../docs/superpowers/specs/2026-08-30-platform-unified-human-authentication-design.md)、[Operations Gateway hardening 设计](../../docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md) 和当前 [63 表模型](../../paytech/platform-support/docs/database/platform-support.pdma.json) 已取代其认证与 Gateway 语义。本文本身不授权业务 API、Migration、物理数据库、Secrets/KMS、BFF、前端或部署实现。
 
 > **历史读取规则：** 后文的 Operations-only 范围、92 表数字与“未来物理修订”均是当时决策记录，不能作为当前导航或实现依据。当前模型为 63 表、822 字段、123 个唯一索引、99 个访问索引、107 条关系、5 条 1:1、7 图组、31 条复合 FK、85 条 CHECK 和 36 个 `_hash` 字段；Business Email OTP 仍独立且不得复用为认证。
 

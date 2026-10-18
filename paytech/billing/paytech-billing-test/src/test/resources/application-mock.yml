@@ -1,0 +1,118 @@
+# billing-service 配置字段清单，同时作为 Mock 测试的可运行配置。
+# 只连接仓库 local-environment 的 Loopback MySQL/Redis；固定凭据为隔离本地测试账号，可用环境变量覆盖。
+
+# ==================== 中间件、框架与公共组件配置 ====================
+
+server:
+  address: 127.0.0.1
+  port: 0
+
+spring:
+  config:
+    # 复用仓库已启动的本地 RabbitMQ 凭据；唯一锚点 paytech.local-environment.dir 由父 POM 经 Surefire 注入（10 §4.4）。
+    import:
+      - "optional:file:${paytech.local-environment.dir}/.env.local[.properties]"
+  application:
+    name: billing-service
+  main:
+    banner-mode: "off"
+  jmx:
+    enabled: false
+  datasource:
+    url: "${BILLING_TEST_DB_URL:jdbc:mysql://127.0.0.1:13306/mor_billing?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}"
+    username: "${BILLING_TEST_DB_USERNAME:billing_app}"
+    password: "${BILLING_TEST_DB_PASSWORD:92f01bf0c17cbbdc07914d46880c949dfc3de5f359d133a2}"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-init-sql: "SET time_zone = '+00:00'"
+      data-source-properties:
+        connectionTimeZone: UTC
+        forceConnectionTimeZoneToSession: true
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 16379
+      password: "${BILLING_TEST_REDIS_PASSWORD:${PAYTECH_REDIS_PASSWORD:${MOR_REDIS_PASSWORD:c4e99fe36176a66ece55b0c23e5af0be488d409f2e89f6c5}}}"
+      connect-timeout: 2s
+      timeout: 2s
+  # 仓库 local-environment 的本机 RabbitMQ；凭据只来自 .env.local 或同名环境变量，不写默认值。
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: "${MOR_RABBITMQ_USER}"
+    password: "${MOR_RABBITMQ_PASSWORD}"
+    virtual-host: "${MOR_RABBITMQ_VHOST:/mor-local}"
+    connection-timeout: 2s
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
+
+mybatis:
+  mapper-locations: classpath*:mapper/**/*.xml
+
+# paytech-redis-starter
+redis:
+  # 测试专用 Key 前缀，与本地运行实例隔离；生产缺省使用 spring.application.name。
+  key-prefix: billing-mock
+  coordination:
+    enabled: true
+    threads: 4
+    netty-threads: 4
+
+# paytech-compensation-event：本地补偿任务，事务内登记、提交后执行。
+compensation:
+  enabled: true
+  # 多实例 Claim/Lease 的实例标识；测试固定值。
+  instance-id: billing-test
+
+# paytech-messaging 发布端：声明 billing.events 并提供 DomainEventPublisher。测试每例绑定观察队列，未路由按默认 FAIL 严格判定。
+messaging:
+  producer:
+    service: billing
+
+paytech:
+  instance-id: "main"
+
+management:
+  server:
+    # 独立管理端口；测试随机分配，由 @LocalManagementPort 读取。
+    address: 127.0.0.1
+    port: 0
+  endpoints:
+    enabled-by-default: false
+    web:
+      discovery:
+        enabled: false
+      exposure:
+        include: health,info,prometheus
+    jmx:
+      exposure:
+        exclude: "*"
+  endpoint:
+    health:
+      access: read-only
+      show-details: never
+      probes:
+        enabled: true
+        add-additional-paths: false
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState
+    info:
+      access: read-only
+    prometheus:
+      access: read-only
+
+# ==================== Billing 系统自定义配置 ====================
+
+billing:
+  event:
+    source-service: billing
+    instance-id: "${paytech.instance-id}"
+  identifier:
+    # Snowflake Region / Worker 标识；生产无默认值且必填，修改需重启。测试进程固定 0/0。
+    region-id: 0
+    worker-id: 0

@@ -6,7 +6,7 @@
 - Deployment status: Not applicable
 - Decision date: 2026-09-05
 - Decision record: [`2026-09-05-commerce-client-api-contract-module.md`](../../../agent-docs/decisions/2026-09-05-commerce-client-api-contract-module.md)
-- Public Wire authority: [`commerce-service/api/openapi/client-v1.yaml`](../../../commerce-service/api/openapi/client-v1.yaml)
+- Public Wire authority: [`commerce-service/api/openapi/client-v1.yaml`](../../../paytech/acquiring/api/openapi/client-v1.yaml)
 - Scope: Hosted Checkout V1 的非运行 Java Owner 入站契约模块
 - Path amendment: 服务路径已同步 [2026-09-12 服务前缀修正](../../../agent-docs/decisions/2026-09-12-commerce-client-gateway-api-path.md)；只改变 Commerce 入站路径，不改变公开 OpenAPI。
 - Error-contract supersession: 本文原 Problem 字段投影由 [`2026-09-06-system-wide-rfc-9457-problem-details-design.md`](./2026-09-06-system-wide-rfc-9457-problem-details-design.md) 取代；当前 OpenAPI 投影和 Foundation Writer 继承验证已迁移，契约模块继续不创建 Problem DTO
@@ -451,9 +451,9 @@ Java 方法只声明正常 typed 返回。4xx/5xx 继续由共享 Foundation Cli
 ### 11.4 完整验证
 
 ```bash
-cd commerce-service
-./mvnw clean verify
-./mvnw dependency:tree
+cd paytech
+./mvnw clean verify -pl acquiring/paytech-acquiring-api,acquiring/paytech-acquiring-test -am
+./mvnw dependency:tree -pl acquiring/paytech-acquiring-api
 git diff --check
 
 cd ..

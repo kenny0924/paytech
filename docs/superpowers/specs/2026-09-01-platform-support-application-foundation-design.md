@@ -10,7 +10,7 @@ Status: Approved and implemented foundation scope. The user explicitly authorize
 > [MVC/internal-HTTP design](./2026-09-02-mvc-web-logging-and-internal-http-simplification-design.md): current PLT-I20 and
 > Actuator use private HTTP, Platform owns no X.509 certificate, and the Foundation Starter owns the shared error boundary.
 > Statements below that describe “no database/API” or the original transport are acceptance facts for this earlier milestone, not the
-> current service status; use [`platform-support-service/README.md`](../../../platform-support-service/README.md) and the
+> current service status; use [`platform-support-service/README.md`](../../../paytech/platform-support/README.md) and the
 > [dynamic public-control-plane design](./2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md)
 > for the current boundary.
 

@@ -1,0 +1,105 @@
+server:
+  address: 127.0.0.1
+  port: 18109
+
+spring:
+  application:
+    name: consumer-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: "${NACOS_SERVER_ADDR:127.0.0.1:8848}"
+        namespace: "${NACOS_NAMESPACE:public}"
+    loadbalancer:
+      retry:
+        enabled: false
+      cache:
+        enabled: false
+  http:
+    clients:
+      imperative:
+        factory: http-components
+    serviceclient:
+      card-service:
+        base-url: lb://card-service
+        connect-timeout: 2s
+        read-timeout: 5s
+        redirects: dont-follow
+      client-master-service:
+        base-url: lb://client-master-service
+        connect-timeout: 2s
+        read-timeout: 2s
+        redirects: dont-follow
+  datasource:
+    url: "${MOR_CONSUMER_DB_URL:jdbc:mysql://127.0.0.1:13306/mor_consumer?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}"
+    username: "${MOR_CONSUMER_DB_USERNAME:consumer_app}"
+    password: "${MOR_CONSUMER_DB_PASSWORD:}"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-init-sql: "SET time_zone = '+00:00'"
+      connection-timeout: 2000
+      validation-timeout: 1000
+      data-source-properties:
+        cachePrepStmts: true
+        prepStmtCacheSize: 250
+        prepStmtCacheSqlLimit: 2048
+        useServerPrepStmts: true
+  sql:
+    init:
+      mode: never
+  jmx:
+    enabled: false
+
+mybatis:
+  mapper-locations: "classpath*:mapper/**/*.xml"
+
+# 内部调用身份（D26）：默认 OFF；YAML 中必须带引号，裸 OFF 会被解析为布尔 false。
+internal-auth:
+  mode: "${CONSUMER_INTERNAL_AUTH_MODE:OFF}"
+
+consumer:
+  identifier:
+    region-id: "${CONSUMER_SNOWFLAKE_REGION_ID}"
+    worker-id: "${CONSUMER_SNOWFLAKE_WORKER_ID}"
+
+web:
+  logging:
+    metadata-only-path-prefixes:
+      - /client-gateway-api/v1
+      - /consumer/v1
+
+management:
+  server:
+    port: 19109
+  endpoints:
+    enabled-by-default: false
+    web:
+      discovery:
+        enabled: false
+      exposure:
+        include: health,info,prometheus
+    jmx:
+      exposure:
+        exclude: "*"
+  endpoint:
+    health:
+      access: read-only
+      show-details: never
+      probes:
+        enabled: true
+        add-additional-paths: false
+      validate-group-membership: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState
+    info:
+      access: read-only
+    prometheus:
+      access: read-only
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true

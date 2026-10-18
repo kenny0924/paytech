@@ -23,7 +23,7 @@
 
 其余 28 表中，`t_commercial_term_price` 与 `t_payment_method_profile` 的表注释仍用 Provider，而源文件已用 Channel；已核对差异仅为该术语替换。此次保留这两张表的实际注释，不把差异悄悄修进入驻迁移。
 
-其他 Owner 使用各自选定数据库分别只读盘点，无跨库 JOIN：本机 Commerce 业务表为空，另有三条 FAILED 的 `SUBMISSION_EVENT_TYPE` 任务；当前 [RefundSubmissionHandler](../../../../../commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/ext/job/RefundSubmissionHandler.java)证明该类型只恢复 Commerce 退款并调用 Payment，不是 CCT 入驻回调。任务保持原样，不认定为可删除测试残留。Risk 非空记录属于规则目录，Case/申请来源表为空；Platform 现有 Tenant 均为 INTERNAL，未发现 CLIENT/PARTNER 投影；Payment/Finance 已有表为空。该结论仅覆盖记录列出的本机实际库，不覆盖其他环境或尚未落地的表。
+其他 Owner 使用各自选定数据库分别只读盘点，无跨库 JOIN：本机 Commerce 业务表为空，另有三条 FAILED 的 `SUBMISSION_EVENT_TYPE` 任务；当前 [RefundSubmissionHandler](../../../../../paytech/acquiring/paytech-acquiring-core/src/main/java/com/paytech/acquiring/ext/job/RefundSubmissionHandler.java)证明该类型只恢复 Commerce 退款并调用 Payment，不是 CCT 入驻回调。任务保持原样，不认定为可删除测试残留。Risk 非空记录属于规则目录，Case/申请来源表为空；Platform 现有 Tenant 均为 INTERNAL，未发现 CLIENT/PARTNER 投影；Payment/Finance 已有表为空。该结论仅覆盖记录列出的本机实际库，不覆盖其他环境或尚未落地的表。
 
 盘点时 CCT 无其他数据库连接；测试结束后未发现 CCT Java 进程或 18101 监听。这是瞬时证据，执行前仍须再次核验。已有结构备份仅含 SHOW CREATE，目录为 0700、文件为 0600；没有业务行导出或恢复演练，不能据此声称具备生产回滚能力。
 

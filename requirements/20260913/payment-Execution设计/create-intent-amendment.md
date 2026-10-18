@@ -1,6 +1,6 @@
 # 创建 Intent 接口修订
 
-2026-09-16，按用户“开发创建 intent 接口，使用规范”的要求，在既有 EX-I01 范围内应用当前 [Payment 写接口规范](../../../payment-orchestration-service/docs/development/processor-conventions.md)。本修订只细化创建入口，取代旧 EX-I01 的独立命令幂等、来源 Binding、通用状态历史、到期补偿任务和 IntentView 响应要求；不改动其他接口的 Header 或退款、终止等业务合同。实际构建、数据库与部署状态见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
+2026-09-16，按用户“开发创建 intent 接口，使用规范”的要求，在既有 EX-I01 范围内应用当前 [Payment 写接口规范](../../../paytech/payment/docs/development/processor-conventions.md)。本修订只细化创建入口，取代旧 EX-I01 的独立命令幂等、来源 Binding、通用状态历史、到期补偿任务和 IntentView 响应要求；不改动其他接口的 Header 或退款、终止等业务合同。实际构建、数据库与部署状态见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
 
 ## 接口
 
@@ -75,8 +75,8 @@ Money 规范化金额，`100` 与 `100.00` 表示相同金额；到期时间解�
 
 ## 代码入口与后续边界
 
-- [API](../../../payment-orchestration-service/paytech-payment-api/src/main/java/com/paytech/payment/api/execution/PaymentExecutionApi.java)与 [RequestBody](../../../payment-orchestration-service/paytech-payment-api/src/main/java/com/paytech/payment/api/execution/request/CreateIntentRequestBody.java)拥有路径和字段约束。
-- [CreateIntentProcessor](../../../payment-orchestration-service/paytech-payment-execution/src/main/java/com/paytech/payment/execution/service/processor/CreateIntentProcessor.java)负责原请求比较、业务验证及完整 Context 构建。
-- [PaymentExecutionServiceImpl](../../../payment-orchestration-service/paytech-payment-execution/src/main/java/com/paytech/payment/execution/service/impl/PaymentExecutionServiceImpl.java)集中本地事务；原 Intent Repository/Mapper 按表扩展，不接收 Context。
+- [API](../../../paytech/payment/paytech-payment-api/src/main/java/com/paytech/payment/api/execution)与 [RequestBody](../../../paytech/payment/paytech-payment-api/src/main/java/com/paytech/payment/api/execution/request/CreateIntentRequestBody.java)拥有路径和字段约束。
+- [CreateIntentProcessor](../../../paytech/payment/paytech-payment-core/src/main/java/com/paytech/payment/execution/service/processor/CreateIntentProcessor.java)负责原请求比较、业务验证及完整 Context 构建。
+- [PaymentExecutionServiceImpl](../../../paytech/payment/paytech-payment-core/src/main/java/com/paytech/payment/execution/service/impl/PaymentExecutionServiceImpl.java)集中本地事务；原 Intent Repository/Mapper 按表扩展，不接收 Context。
 
 不增加表、DDL、Mock Intent 或外部查询；不修改当前 pay 及其 Header 合同。真实 Commerce 适配、CCT 资格接入、工具准备和到期状态推进保持各自 TODO；该接口不为这些能力提供默认通过的替身。后续接入需按当前字段传入真实冻结事实。未接通 Owner、未进行数据库/Redis/HTTP 联调时，不能将编译通过当作端到端验收。

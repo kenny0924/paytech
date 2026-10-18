@@ -1,6 +1,7 @@
 import { CHANNEL_FIELD_OVERRIDES } from "./payment-channel-field-overrides.mjs";
 import { EXECUTION_FIELD_OVERRIDES } from "./payment-execution-field-overrides.mjs";
 import { paymentChannelIdentityKey } from "./payment-channel-identity.mjs";
+import { partitionModel } from "./payment-service-partition.mjs";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -19,9 +20,11 @@ const templatePath = path.join(
   workspaceRoot,
   "agent-docs/templates/pdmaner/template.pdma.json",
 );
+// The full Payment Orchestration model is generated once and split per owning service (payment-service-partition.mjs);
+// this script writes the payment part, generate-channel-connector-model.mjs writes the channel-connector part.
 const outputPath = path.join(
   workspaceRoot,
-  "payment-orchestration-service/docs/database/payment-orchestration.pdma.json",
+  "paytech/payment/docs/database/payment.pdma.json",
 );
 
 const MODEL_KEY = "code-mor/payment-orchestration/database/v1";
@@ -201,6 +204,10 @@ source_submission_id BIGINT NN
 payment_method_code VARCHAR(64) NN OPEN(Payment Method Catalog)
 instrument_type VARCHAR(32) NN {CARD}
 instrument_ref VARCHAR(128) NN
+customer_id BIGINT N
+consent_to_save TINYINT(1) NN
+card_bin VARCHAR(8) N
+card_fingerprint CHAR(64) N
 expires_at DATETIME(6) NN
 revoked_at DATETIME(6) N
 create_time DATETIME(6) NN
@@ -1147,7 +1154,7 @@ function validateMetadata(tables) {
 function validateGeneratedModel(model, tables, relations) {
   invariant(JSON.stringify(modelTotals(model)) === JSON.stringify({
     tables: 27,
-    fields: 345,
+    fields: 349,
     uniqueIndexes: 38,
     accessIndexes: 44,
     relations: 63,
@@ -1295,10 +1302,15 @@ export function serializePaymentModel(model = generatePaymentModel()) {
   return `${JSON.stringify(model, null, 2)}\n`;
 }
 
+/** Serialized model of one owning service ("payment", "channel-connector" or "card"). */
+export function serializePaymentServiceModel(service, model = generatePaymentModel()) {
+  return serializePaymentModel(partitionModel(model, service));
+}
+
 function runCli() {
   const unknown = process.argv.slice(2).filter((argument) => argument !== "--check");
   invariant(unknown.length === 0, `Unknown argument(s): ${unknown.join(", ")}`);
-  const expected = serializePaymentModel();
+  const expected = serializePaymentServiceModel("payment");
   const totals = modelTotals(JSON.parse(expected));
   const summary = `${totals.tables} tables, ${totals.fields} fields, ${totals.uniqueIndexes} unique indexes, ${totals.accessIndexes} access indexes, ${totals.relations} relations, ${totals.diagramGroups} diagram groups`;
   if (process.argv.includes("--check")) {

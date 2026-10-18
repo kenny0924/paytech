@@ -1,0 +1,23 @@
+instance:
+  id: main
+  operator: PayTech
+  operator: Other
+  operationMode: SELF
+  businessModes: [MOR, PSP]
+modules:
+  card: {enabled: true, version: 2.3.0}
+  payout: {enabled: true, version: 2.3.0}
+  fx: {enabled: false}
+  dispute: {enabled: true, version: 2.3.0}
+  analytics: {enabled: false}
+brands:
+  - code: main
+    domains: [checkout.example.com]
+    legalPartyRef: PARTY-xxxx
+channels: [NI, PAYERMAX, PAYBY, ALIPAY_PLUS]
+services:
+  ledger: {port: 18105, snowflakeWorkerId: 11, db: mor_ledger}
+  account: {port: 18114, snowflakeWorkerId: 12, db: mor_account}
+versions:
+  platform: 2.3.0
+  schema: {ledger: 7, account: 1}

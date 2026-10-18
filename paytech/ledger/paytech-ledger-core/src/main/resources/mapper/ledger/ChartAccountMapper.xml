@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.ledger.core.dal.mapper.ChartAccountMapper">
+    <select id="selectByIds" resultType="com.paytech.ledger.core.dal.dataobject.ChartAccount">
+        SELECT id, chart_id, parent_account_id, account_code, account_name, account_class, normal_side, posting_allowed, create_time, update_time FROM t_chart_account WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY id
+    </select>
+
+    <select id="selectById" resultType="com.paytech.ledger.core.dal.dataobject.ChartAccount">
+        SELECT id, chart_id, parent_account_id, account_code, account_name, account_class, normal_side, posting_allowed, create_time, update_time FROM t_chart_account WHERE id = #{id}
+    </select>
+
+    <select id="selectByChartAndCode" resultType="com.paytech.ledger.core.dal.dataobject.ChartAccount">
+        SELECT id, chart_id, parent_account_id, account_code, account_name, account_class, normal_side, posting_allowed, create_time, update_time FROM t_chart_account WHERE chart_id = #{chartId} AND account_code = #{accountCode}
+    </select>
+</mapper>

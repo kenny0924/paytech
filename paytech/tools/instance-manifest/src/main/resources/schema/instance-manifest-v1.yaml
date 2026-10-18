@@ -1,0 +1,100 @@
+# PayTech instance manifest schema v1 (design/01 §5).
+#
+# Node keywords:
+#   type: object | map | array | string | integer | boolean
+#   object: properties, required, unknownCode (violation code for undeclared properties; objects are closed)
+#   map:    keys (catalog name whose entries are the only allowed keys), values, minItems, unknownCode
+#   array:  items, minItems, uniqueItems
+#   string: enum, pattern, notBlank
+#   integer: minimum, maximum
+#   $ref:   name of an entry under definitions
+# Cross-field rules (unique ports / worker ids, module version, database name, schema versions) are enforced by
+# InstanceManifestValidatorImpl and documented under semanticRules.
+schemaVersion: 1
+
+semanticRules:
+  - DUPLICATE_PORT: services.<name>.port and port + 1000 (management port) are unique across all services
+  - DUPLICATE_WORKER_ID: services.<name>.snowflakeWorkerId is unique across all services
+  - MODULE_VERSION_REQUIRED: modules.<module>.version is required when enabled is true
+  - DATABASE_MISMATCH: services.<name>.db equals the catalog database and is absent for services without one
+  - SCHEMA_VERSION_SERVICE_NOT_DEPLOYED: versions.schema keys are services listed under services
+  - DUPLICATE_BRAND: brands[*].code is unique
+
+definitions:
+  semver:
+    type: string
+    pattern: '^[0-9]+\.[0-9]+\.[0-9]+$'
+  optionalModule:
+    type: object
+    required: [enabled]
+    properties:
+      enabled: {type: boolean}
+      version: {$ref: semver}
+  serviceRuntime:
+    type: object
+    required: [port, snowflakeWorkerId]
+    properties:
+      port: {type: integer, minimum: 1024, maximum: 64535}
+      snowflakeWorkerId: {type: integer, minimum: 0, maximum: 31}
+      db: {type: string, pattern: '^mor_[a-z0-9_]+$'}
+
+root:
+  type: object
+  required: [instance, modules, brands, channels, services, versions]
+  properties:
+    instance:
+      type: object
+      required: [id, operator, operationMode, businessModes]
+      properties:
+        id: {type: string, pattern: '^[a-z][a-z0-9-]{0,31}$'}
+        operator: {type: string, notBlank: true}
+        operationMode: {type: string, enum: [SELF, MANAGED]}
+        businessModes:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items: {type: string, enum: [MOR, PSP]}
+    modules:
+      type: object
+      unknownCode: UNKNOWN_MODULE
+      properties:
+        card: {$ref: optionalModule}
+        payout: {$ref: optionalModule}
+        fx: {$ref: optionalModule}
+        dispute: {$ref: optionalModule}
+        analytics: {$ref: optionalModule}
+    brands:
+      type: array
+      minItems: 1
+      items:
+        type: object
+        required: [code, domains, legalPartyRef]
+        properties:
+          code: {type: string, pattern: '^[a-z][a-z0-9-]{0,31}$'}
+          domains:
+            type: array
+            minItems: 1
+            uniqueItems: true
+            items: {type: string, pattern: '^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$'}
+          legalPartyRef: {type: string, notBlank: true}
+    channels:
+      type: array
+      minItems: 1
+      uniqueItems: true
+      items: {type: string, pattern: '^[A-Z][A-Z0-9_]*$'}
+    services:
+      type: map
+      minItems: 1
+      keys: services
+      unknownCode: UNKNOWN_SERVICE
+      values: {$ref: serviceRuntime}
+    versions:
+      type: object
+      required: [platform, schema]
+      properties:
+        platform: {$ref: semver}
+        schema:
+          type: map
+          keys: services
+          unknownCode: UNKNOWN_SERVICE
+          values: {type: integer, minimum: 1}

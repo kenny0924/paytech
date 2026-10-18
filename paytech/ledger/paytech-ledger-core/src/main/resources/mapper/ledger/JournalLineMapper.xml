@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.ledger.core.dal.mapper.JournalLineMapper">
+    <insert id="insertBatch">
+        INSERT INTO t_journal_line (id, journal_entry_id, line_no, instruction_line_id, account_id, entry_side, amount, create_time) VALUES
+        <foreach collection="lines" item="line" separator=",">(#{line.id}, #{line.journalEntryId}, #{line.lineNo}, #{line.instructionLineId}, #{line.accountId}, #{line.entrySide}, #{line.amount}, #{line.createTime})</foreach>
+    </insert>
+
+    <select id="selectAccountLines" resultType="com.paytech.ledger.domain.view.AccountJournalLineView">
+        SELECT t.* FROM (
+            SELECT e.id journal_entry_id, e.journal_sequence, e.posting_date, e.entry_type, l.line_no, l.entry_side,
+                   l.amount,
+                   SUM(CASE WHEN l.entry_side = a.normal_side THEN l.amount ELSE -l.amount END)
+                       OVER (ORDER BY e.journal_sequence, l.line_no) balance_after,
+                   i.instruction_type, i.origin_type, i.source_system, i.source_event_key, m.adjustment_no
+            FROM t_journal_line l
+            JOIN t_journal_entry e ON e.id = l.journal_entry_id
+            JOIN t_ledger_account a ON a.id = l.account_id
+            JOIN t_accounting_instruction i ON i.id = e.instruction_id
+            LEFT JOIN t_manual_adjustment m ON m.id = i.manual_adjustment_id
+            WHERE l.account_id = #{accountId}
+        ) t
+        <where>
+            <if test="from != null">AND t.posting_date &gt;= #{from}</if>
+            <if test="to != null">AND t.posting_date &lt;= #{to}</if>
+        </where>
+        ORDER BY t.journal_sequence, t.line_no
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countAccountLines" resultType="long">
+        SELECT COUNT(*) FROM t_journal_line l
+        JOIN t_journal_entry e ON e.id = l.journal_entry_id
+        WHERE l.account_id = #{accountId}
+        <if test="from != null">AND e.posting_date &gt;= #{from}</if>
+        <if test="to != null">AND e.posting_date &lt;= #{to}</if>
+    </select>
+
+    <select id="selectEntryLines" resultType="com.paytech.ledger.domain.view.JournalEntryDetailView$Line">
+        SELECT l.line_no, l.account_id, c.account_code, a.owner_type, a.owner_id, a.balance_bucket, l.entry_side,
+               l.amount
+        FROM t_journal_line l
+        JOIN t_ledger_account a ON a.id = l.account_id
+        JOIN t_chart_account c ON c.id = a.chart_account_id
+        WHERE l.journal_entry_id = #{journalEntryId}
+        ORDER BY l.line_no
+    </select>
+
+    <select id="selectTrialAggregates" resultType="com.paytech.ledger.domain.view.TrialBalanceAggregateView">
+        SELECT t.* FROM (
+            SELECT c.id chart_account_id, c.normal_side,
+                   COALESCE(SUM(CASE WHEN e.posting_date &lt; #{start}
+                       THEN (CASE WHEN l.entry_side = c.normal_side THEN l.amount ELSE -l.amount END) ELSE 0 END), 0) opening_balance,
+                   COALESCE(SUM(CASE WHEN e.posting_date &gt;= #{start} AND l.entry_side = 'DEBIT' THEN l.amount ELSE 0 END), 0) period_debit,
+                   COALESCE(SUM(CASE WHEN e.posting_date &gt;= #{start} AND l.entry_side = 'CREDIT' THEN l.amount ELSE 0 END), 0) period_credit
+            FROM t_journal_line l
+            JOIN t_journal_entry e ON e.id = l.journal_entry_id
+            JOIN t_ledger_account a ON a.id = l.account_id
+            JOIN t_chart_account c ON c.id = a.chart_account_id
+            WHERE e.ledger_book_id = #{ledgerBookId} AND e.journal_sequence &lt;= #{asOfSequence} AND e.posting_date &lt;= #{end}
+            GROUP BY c.id, c.normal_side
+        ) t
+        WHERE t.opening_balance &lt;&gt; 0 OR t.period_debit &lt;&gt; 0 OR t.period_credit &lt;&gt; 0
+        ORDER BY t.chart_account_id
+    </select>
+
+    <select id="selectProfitCloseBalances" resultType="com.paytech.ledger.domain.view.ProfitCloseBalanceView">
+        SELECT a.id account_id, a.chart_account_id,
+               SUM(CASE WHEN l.entry_side = 'DEBIT' THEN l.amount ELSE 0 END) period_debit,
+               SUM(CASE WHEN l.entry_side = 'CREDIT' THEN l.amount ELSE 0 END) period_credit
+        FROM t_journal_line l
+        JOIN t_journal_entry e ON e.id = l.journal_entry_id
+        JOIN t_ledger_account a ON a.id = l.account_id
+        JOIN t_chart_account c ON c.id = a.chart_account_id
+        WHERE e.ledger_book_id = #{ledgerBookId} AND e.journal_sequence &lt;= #{asOfSequence}
+          AND e.posting_date BETWEEN #{start} AND #{end} AND c.account_class IN ('REVENUE', 'EXPENSE')
+        GROUP BY a.id, a.chart_account_id
+        ORDER BY a.id
+    </select>
+
+    <select id="selectCreditNetUpTo" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(CASE WHEN l.entry_side = 'CREDIT' THEN l.amount ELSE -l.amount END), 0)
+        FROM t_journal_line l
+        JOIN t_journal_entry e ON e.id = l.journal_entry_id
+        WHERE l.account_id = #{accountId} AND e.journal_sequence &lt;= #{asOfSequence} AND e.posting_date &lt;= #{end}
+    </select>
+</mapper>

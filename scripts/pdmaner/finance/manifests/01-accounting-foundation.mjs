@@ -27,7 +27,7 @@ export const TABLES = Object.freeze([
   defineTable({
     key: "currency_spec",
     name: "币种规则",
-    comment: "保存 Finance 使用的 ISO 4217 币种精度、舍入方式和启停状态。",
+    comment: "只读副本，Owner platform-support（D41）：保存 Finance 使用的 ISO 4217 币种精度、舍入方式和启停状态；ledger 与 billing 各持一份，不在本服务写入。",
     fields: [
       primaryKey("id", "币种规则ID", "服务侧生成的币种规则 Snowflake 主键"),
       field("currency", types.currency, "NN", "币种", "ISO 4217 三位币种代码", { source: "ISO 4217 币种代码" }),

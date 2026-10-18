@@ -18,7 +18,7 @@ from test_risk_database_initialization import load_initializer
 
 WORKSPACE = Path(__file__).resolve().parents[2]
 SQL = WORKSPACE / 'test-environment/sql/2026-09-07-risk-operations-rule-configuration.sql'
-CANONICAL = WORKSPACE / 'platform-support-service/docs/database/sql/platform-support-initial-data.sql'
+CANONICAL = WORKSPACE / 'paytech/platform-support/docs/database/sql/platform-support-initial-data.sql'
 BASE = 900000000000000000
 RANGES = {'t_permission': (536, 540), 't_role_permission': (581, 586),
           't_console_resource': (565, 570), 't_gateway_route': (1024, 1032),
@@ -48,6 +48,8 @@ def _canonical_rows():
     source = re.sub(r'@\w+', lambda m: variables[m.group()], source)
     result = {}
     with sqlite3.connect(':memory:') as db:
+        # Owner DML 中的 UTC_TIMESTAMP(6) 只写 create_time / update_time，fixture 随后剔除这两列；SQLite 以固定值代替。
+        db.create_function('UTC_TIMESTAMP', -1, lambda *precision: '2026-09-07 00:00:00.000000')
         for match in re.finditer(r'INSERT INTO (\w+)\s*\(([^)]+)\)\s*VALUES\s*(.*?);', source, re.S):
             table, raw_columns, values = match.groups()
             if table not in TABLES:
@@ -289,7 +291,8 @@ class StaticCatalogTest(unittest.TestCase):
     def test_readme_checkpoint_names_exact_reviewed_image_set(self):
         readme = (WORKSPACE / 'test-environment/README.md').read_text(encoding='utf-8')
         section = readme.split('两个阶段通过持久检查点', 1)[1].split('\n\n', 1)[0]
-        self.assertIn('Nacos、Risk、Platform、Gateway、BFF、Web 六个经审阅本地镜像', section)
+        # 第 13 步：risk-service 拆为 risk-decision 与 compliance，检查点镜像由六个变为七个。
+        self.assertIn('Nacos、risk-decision、compliance、Platform、Gateway、BFF、Web 七个经审阅本地镜像', section)
         self.assertIn('不包含 Nginx 或 Vault', section)
         self.assertNotIn('六个应用', section)
 

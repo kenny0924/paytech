@@ -9,6 +9,8 @@ services:
       MYSQL_ROOT_PASSWORD: ${MOR_MYSQL_ROOT_PASSWORD:?copy .env.example to .env.local and set MOR_MYSQL_ROOT_PASSWORD}
       TZ: UTC
       MOR_CCT_DB_PASSWORD: ${MOR_CCT_DB_PASSWORD:?set MOR_CCT_DB_PASSWORD}
+      MOR_CLIENT_MASTER_DB_PASSWORD: ${MOR_CLIENT_MASTER_DB_PASSWORD:?set MOR_CLIENT_MASTER_DB_PASSWORD}
+      MOR_COMMERCIAL_DB_PASSWORD: ${MOR_COMMERCIAL_DB_PASSWORD:?set MOR_COMMERCIAL_DB_PASSWORD}
       MOR_COMMERCE_DB_PASSWORD: ${MOR_COMMERCE_DB_PASSWORD:?set MOR_COMMERCE_DB_PASSWORD}
       MOR_PAYMENT_DB_PASSWORD: ${MOR_PAYMENT_DB_PASSWORD:?set MOR_PAYMENT_DB_PASSWORD}
       MOR_RISK_DB_PASSWORD: ${MOR_RISK_DB_PASSWORD:?set MOR_RISK_DB_PASSWORD}
@@ -18,11 +20,18 @@ services:
       MOR_NACOS_DB_PASSWORD: ${MOR_NACOS_DB_PASSWORD:?set MOR_NACOS_DB_PASSWORD}
       MOR_XXL_JOB_DB_PASSWORD: ${MOR_XXL_JOB_DB_PASSWORD:?set MOR_XXL_JOB_DB_PASSWORD}
       PAYTECH_FOUNDATION_TEST_DB_PASSWORD: ${PAYTECH_FOUNDATION_TEST_DB_PASSWORD:?set PAYTECH_FOUNDATION_TEST_DB_PASSWORD}
+      MOR_CDC_DB_PASSWORD: ${MOR_CDC_DB_PASSWORD:?set MOR_CDC_DB_PASSWORD}
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_0900_ai_ci
       - --default-time-zone=+00:00
       - --max-connections=200
+      # Row-based binlog with GTID for the analytics profile's Flink CDC source; applies on the next MySQL recreate.
+      - --binlog-format=ROW
+      - --binlog-row-image=FULL
+      - --gtid-mode=ON
+      - --enforce-gtid-consistency=ON
+      - --server-id=1
     ports:
       - "127.0.0.1:13306:3306"
     volumes:
@@ -75,6 +84,8 @@ services:
       - "127.0.0.1:15672:15672"
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
+      # paytech-messaging needs the consistent hash exchange (design/08 §3); management and prometheus keep the image defaults.
+      - ./rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins:ro
     healthcheck:
       test: [CMD, rabbitmq-diagnostics, -q, ping]
       interval: 10s

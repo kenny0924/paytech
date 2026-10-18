@@ -2,7 +2,7 @@
 
 本修订落实用户已确认的 `terminateIntent` 入口，属于既有 EX-I04 的研发范围。沿用[删除 Binding 后的终止边界](execution-field-simplification-amendment.md#8-删除来源-binding)，只终止已存在且能够安全关闭的 Intent；不新增表、字段、状态或后台任务。
 
-本入口取代旧 EX-I04 的独立命令幂等、通用状态历史、补偿登记及宽响应要求。其他接口不随本修订改变。代码组织遵循[公共写接口示例](../../../agent-docs/examples/WRITE_API_EXAMPLE.md)与[Payment 专项补充](../../../payment-orchestration-service/docs/development/processor-conventions.md)；实现、验证和部署状态只见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
+本入口取代旧 EX-I04 的独立命令幂等、通用状态历史、补偿登记及宽响应要求。其他接口不随本修订改变。代码组织遵循[公共写接口示例](../../../agent-docs/examples/WRITE_API_EXAMPLE.md)与[Payment 专项补充](../../../paytech/payment/docs/development/processor-conventions.md)；实现、验证和部署状态只见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
 
 ## 1. 接口
 

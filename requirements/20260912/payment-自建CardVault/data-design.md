@@ -1,6 +1,6 @@
 # Payment Card 数据、事务与实施设计
 
-> **后继入口与工具绑定：** Customer 入口按[Commerce 后继](../../../commerce-service/docs/requirements/20260912-customer-checkout/commerce-entry-amendment.md)归 Commerce；交易级工具 Token、统一 pay、无独立会话表及 Card 受控适配职责按[Execution 修订稿](../../20260913/payment-Execution设计/instrument-token-amendment.md)评审。本文的旧 Payment Submission、Card Token 和材料传递方案不能直接用于该新目标；未被取代的加密与审计约束保留。真实 Card 仍需独立接入验证。
+> **后继入口与工具绑定：** Customer 入口按[Commerce 后继](../../../paytech/acquiring/docs/requirements/20260912-customer-checkout/commerce-entry-amendment.md)归 Commerce；交易级工具 Token、统一 pay、无独立会话表及 Card 受控适配职责按[Execution 修订稿](../../20260913/payment-Execution设计/instrument-token-amendment.md)评审。本文的旧 Payment Submission、Card Token 和材料传递方案不能直接用于该新目标；未被取代的加密与审计约束保留。真实 Card 仍需独立接入验证。
 
 2026-09-12 阶段 3 单请求修订稿；与 [API 合同](./api-contract.md)配套。以下是拟新增/调整的字段，不是已修改 PDManer、当前数据库或已执行 SQL。Card 模块独占卡库表；Payment `web` 编排同一 Payment 本地事务。
 
@@ -156,7 +156,7 @@ Owner：Card模块。追加不可变的STORE、USE、RETIRE、REWRAP结果，明
 
 当前Payment模型的 `t_command_idempotency`、`t_compensation_event` 是前序结构，不能直接宣称已经可用现行Foundation接口。本切片建议明确批准Payment成为命令幂等JAR的新消费者，并将这两张现有技术表按各自现行Owner合同对齐，不新增第二套表。旧记录/实际库未盘点前，不生成猜测性ALTER或删除数据。
 
-唯一技术字段清单分别引用[命令幂等决定](../../../agent-docs/decisions/2026-09-09-foundation-command-idempotency.md)、[当前幂等物理模型](../../../commerce-service/docs/database/sql/commerce-schema.sql)及[补偿规范第3节](../../../agent-docs/COMPENSATION_EVENT_GUIDE.md#3-compensation_event-最小模型)，不在本文复制一份会漂移的通用DDL。Payment 业务拥有统一 Pay 的 Hash、快照、阶段及恢复语义，Submission.payment_command_id 引用本库原命令；Commerce 独立拥有确认命令，不把 Payment 命令行当作跨库共享表。
+唯一技术字段清单分别引用[命令幂等决定](../../../agent-docs/decisions/2026-09-09-foundation-command-idempotency.md)、[当前幂等物理模型](../../../paytech/acquiring/docs/database/sql/acquiring-schema.sql)及[补偿规范第3节](../../../agent-docs/COMPENSATION_EVENT_GUIDE.md#3-compensation_event-最小模型)，不在本文复制一份会漂移的通用DDL。Payment 业务拥有统一 Pay 的 Hash、快照、阶段及恢复语义，Submission.payment_command_id 引用本库原命令；Commerce 独立拥有确认命令，不把 Payment 命令行当作跨库共享表。
 
 该物理模型仅用于核对公共列形状，Payment的操作/恢复阶段中文注释由Payment自己定义，不复制Commerce业务枚举。当前Foundation要求request_hash_version，统一Pay写固定1；request/response_snapshot_schema_version均NULL，不建立业务schemaVersion字段、历史版本Reader或版本选择逻辑。这些公共技术列不进入Customer API。
 

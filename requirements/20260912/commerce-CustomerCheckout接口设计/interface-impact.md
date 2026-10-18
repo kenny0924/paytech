@@ -19,7 +19,7 @@
 | 支付与 3DS | Payment 有 Attempt/Action/Customer Action，临时参数不能持久存储 | typed token 消费和可靠受理合同；nextAction 指令；GET 只读取已有可安全复用的材料。按真实需要再评审窄辅助命令 |
 | AUTHORIZED/未知/成功延迟 | Commerce 旧投影不足以表示全部当前 Payment 事实 | 查询事务外读取 Payment 权威受限视图；不新增 PaymentAuthorized MQ，GET 不代替成功事件写订单 |
 
-实际实现、验证和部署只见 [CURRENT_IMPLEMENTATION](../../../agent-docs/CURRENT_IMPLEMENTATION.md) 的专项记录及 [Commerce README](../../../commerce-service/README.md)。本稿的源码/模型证据不等于真实支付链已部署。
+实际实现、验证和部署只见 [CURRENT_IMPLEMENTATION](../../../agent-docs/CURRENT_IMPLEMENTATION.md) 的专项记录及 [Commerce README](../../../paytech/acquiring/README.md)。本稿的源码/模型证据不等于真实支付链已部署。
 
 | 提供方 → 消费方 | 所需内部合同 |
 |---|---|
