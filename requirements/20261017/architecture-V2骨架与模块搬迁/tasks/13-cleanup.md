@@ -1,8 +1,10 @@
 # 任务卡 13 · 收口：旧根清理、文档链接重写、搬迁状态登记
 
-- 分支：`refactor/step-13-cleanup`；worktree：`/Users/kenny/Desktop/Workspace/Code-MoR-step13`；起点：`refactor-main`（全部搬迁步合入后，主会话填写）。
+- 分支：`refactor/step-13-cleanup`；worktree：`/Users/kenny/Desktop/Workspace/Code-MoR-step13`；起点：`refactor-main@8c5b4d50`（00–12、11a、12x 已合入；11b 第二轮并行进行中，其报告与数字在本步末尾 `git merge refactor-main` 后补入第 5 项，主会话会通知）。
 - 对应计划：[11-dev-plan.md](../design/11-dev-plan.md) 第 13 步；设计 [09-path-coupling-fixes.md](../design/09-path-coupling-fixes.md) 第 5、6 节；[10-test-baseline-and-cleanup.md](../design/10-test-baseline-and-cleanup.md) 第 5 节。
-- 串行执行，最后一步。
+- 与 11b 并行起步；第 2 节第 5 项（状态台账）最后做。与 11b 可能重叠的文件（`local-environment/mysql/init/*`、`.env.example`、`paytech/tools/arch-rules/**`、ledger / account 目录）本步不改；链接重写若涉及 ledger / account 目录内 Markdown，只改链接目标。
+- 本机一次性操作登记另加：本地 RabbitMQ 上旧 Topic 的消费组队列（`cg_acquiring_payment_result*` 等）仍存在，列入第 5 项"待用户执行"清单（给出 `rabbitmqctl delete_queue` 命令），本步不执行。
+- 第 12x 步新增的 `PartitionQueueBaseline`（`paytech-messaging` test-jar）是消费方 `-test` 模块的标准接入，`agent-docs/UNIT_TEST_GUIDE.md` 只在"本地测试基础设施"处补一条事实登记（不改规则语义）。
 
 ## 1. 输入文档（先完整读取）
 
