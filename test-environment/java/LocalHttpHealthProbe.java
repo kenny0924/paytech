@@ -11,13 +11,24 @@ public final class LocalHttpHealthProbe {
     private static final int EXIT_FAILURE = 1;
     private static final int EXIT_USAGE = 64;
     private static final Set<String> READINESS_URLS = Set.of(
-        "http://127.0.0.1:18104/actuator/health/readiness",
+        "http://127.0.0.1:19104/actuator/health/readiness",
+        "http://127.0.0.1:19112/actuator/health/readiness",
         "http://127.0.0.1:18106/platform-support/actuator/health/readiness",
         "http://127.0.0.1:19201/actuator/health/readiness",
         "http://127.0.0.1:19080/actuator/health/readiness",
-        "http://127.0.0.1:18101/actuator/health/readiness",
+        "http://127.0.0.1:19101/actuator/health/readiness",
         "http://127.0.0.1:19202/actuator/health/readiness",
-        "http://127.0.0.1:18102/commerce/actuator/health/readiness"
+        "http://127.0.0.1:19102/actuator/health/readiness",
+        "http://127.0.0.1:19109/actuator/health/readiness",
+        "http://127.0.0.1:19108/actuator/health/readiness",
+        "http://127.0.0.1:19103/actuator/health/readiness",
+        "http://127.0.0.1:19110/actuator/health/readiness",
+        "http://127.0.0.1:19111/actuator/health/readiness",
+        "http://127.0.0.1:19105/actuator/health/readiness",
+        "http://127.0.0.1:19113/actuator/health/readiness",
+        "http://127.0.0.1:19114/actuator/health/readiness",
+        "http://127.0.0.1:19115/actuator/health/readiness",
+        "http://127.0.0.1:19116/actuator/health/readiness"
     );
 
     @FunctionalInterface

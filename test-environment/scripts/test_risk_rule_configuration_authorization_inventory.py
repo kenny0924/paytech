@@ -83,13 +83,13 @@ REVIEWED_SOURCE_PATHS = READ_ONLY_SOURCES + (
 REVIEWED_SOURCE_DIGESTS = {
     RISK_V1_SMOKE: "e6adb863163a7cb12f6be851ed73682922b7f5a7191747ddde8259f8eadd90ff",
     PLAN: "7a42138ee04ed0dd006e87d1aef0369f3d251df75ff712caa69a3e621abb3678",
-    README: "fe4b09e024d7601adf959da0caaa7bff3251b95f62014225a19148a39554e4e2",
-    BUILD: "93687e6bafe31dcf29e07f8039377814b9da7c0451dddc4eafb02d6301b3eb2a",
-    DEPLOY: "61770117c3aafc2c40debcc80e3f4ae5f87e4def3e3b018614b46a0e6bc5c562",
-    COMPOSE_WRAPPER: "e1e215d4305d2a0af9ab8017cfa6cdf2eef5565dd8143b114283ec5bd7ce6c05",
-    COMPOSE_BASE: "23df38a23d0432e3851a829b18c8e58ebe9550c915bf0b9e5613c5d1d6a404cf",
-    COMPOSE_APPLICATIONS: "fc1c6b43966771308a978420e6e367e951e9a009beb7bc23960fb6cec817717e",
-    INITIALIZER: "ad9663844773fef2e707cfd020f14d00d095dd487756cbf94c43b6943116ae3e",
+    README: "54df7d6e0685df92a659c46ac99f36ac177c44da9af9b71ad93d948e3e64d0ee",
+    BUILD: "8f66c7e0e54283e158ac4d10c4b9f5623f31b8f8cf808b18a194eb5e5c78be63",
+    DEPLOY: "0ca81b0f19e8063ad6e57c2180d446093326827668deb949e3aa6666cf9efa71",
+    COMPOSE_WRAPPER: "2303d2dbe1ee579d71f299d4ab6e19dc416e3309f988b121209b0782bd6e2240",
+    COMPOSE_BASE: "2fb9b7b4154257150915450898de8747ffeac88835b0c7bd69d515e783812d85",
+    COMPOSE_APPLICATIONS: "37c2aff039cfdd2a0d9966da2207e47edd71ff3851ebb28568bb407844e3480b",
+    INITIALIZER: "aa2e0b186a57608dffbd4e457d07878ee68c84f8a23cdf6b35366bb083d2ed94",
     DEFAULT_SMOKE: "2af4f445af2c1b38dfd4da2e9855ecd1767b0a528c12740e2b37d4ec61794551",
     RISK_SMOKE: "9d1e6024bb04aff2bbf238f5606bd26bdeee78bd9486f73fa357fcea01edc7e5",
     ROLLOUT: "0b7e223ec17db0a7283acb063298562f8754c92937bda9c942cbe789ce4a83b9",
@@ -100,12 +100,12 @@ REVIEWED_SOURCE_DIGESTS = {
     REQUIREMENTS_PACKAGE: "418f6b58f27f998f4660ce65e4f1cb1d4cbae4634972b7f284922c9fe20db8bd",
     REQUIREMENTS_LAYOUT: "656662724e8b526143e3a0f16933e513beb91547e2a2a7510d95c13d67af523d",
     JAVA_DOCKERFILE: "afc9b88f9f18c95d1bb07cb38aba9d7b725487912fa90036e07799a5081bb9f1",
-    LOCAL_HTTP_HEALTH_PROBE: "641fcad677511ea9d0560b195e2a86d0b2f739f35c9a34f2f0732813eb2903ec",
+    LOCAL_HTTP_HEALTH_PROBE: "0274e675ce502dea866dd44a0629f0059193e9181fdb7dafebfe638484f53a1c",
     LOCAL_SNAPSHOT_EVIDENCE_FETCH: "bfd582f43c0ce9576561a61fcacc1b4e4b0ee78623c057e7e60b30a9f6a37942",
     NACOS_DOCKERFILE: "8454faad2cf0a4028c583ec1739ebd68869a09031ca714b845b1320cff5efb11",
     VAULT_DOCKERFILE: "f6afd4c4e02fb7cae0c504631fdde0afeb5a9b5ae5fe07c23a303224fd403ec0",
     WEB_DOCKERFILE: "bd732cb721dcdfa089bf9e50b46094e54e79569fee0580a3fb716f2cc3684bcb",
-    NGINX_CONFIGURATION: "c0924e601767456f6aea6481125ee5d1f950185f7d22c8b6e93f36c0c04e61f4",
+    NGINX_CONFIGURATION: "a0bbbc0b358f8af0a8f3a7be0024f4456f4463163976c9dbf1194f2060a20a6d",
     WEB_NGINX_CONFIGURATION: "b04ba0925de617e851bc9423cd0a0535b0b4bc37a0d9323f6eb4ca55f8cc083a",
 }
 
@@ -972,8 +972,9 @@ class RecursiveSourceInventoryTest(unittest.TestCase):
         deploy = source_text(DEPLOY)
         compose_wrapper = source_text(COMPOSE_WRAPPER)
         for required in (
-            "./mvnw -DskipTests -B install -pl build/paytech-dependencies,build/paytech-parent",
-            "./mvnw -DskipTests -B -f foundation/pom.xml install",
+            # 第 13 步：单 Reactor 一次打包全部 Java 服务（不 install），每个 Compose 服务一个 JAR。
+            '(cd "$workspace_dir/paytech" && ./mvnw -B -DskipTests -pl "$(IFS=,; echo "${app_modules[*]}")" -am clean package)',
+            '"$environment_dir/artifacts/${service%%:*}.jar"',
             "npm ci && npm run build",
             'health_probe_output="$environment_dir/artifacts/health-probe"',
             '"$environment_dir/java/LocalSnapshotEvidenceFetch.java"',
@@ -982,10 +983,11 @@ class RecursiveSourceInventoryTest(unittest.TestCase):
             self.assertIn(required, build)
         self.assertIn(
             '"$environment_dir/compose.sh" build \\\n'
-            "  nacos risk-service platform-support-service operations-console-bff "
-            "api-gateway operations-console-web",
+            "  nacos risk-decision-service compliance-service platform-support-service operations-console-bff "
+            "api-gateway \\\n",
             build,
         )
+        self.assertIn("tax-service operations-console-web\n", build)
         for required in (
             'build_script="$environment_dir/scripts/build.sh"',
             'compose_script="$environment_dir/compose.sh"',
@@ -1043,21 +1045,25 @@ class RecursiveSourceInventoryTest(unittest.TestCase):
             "nacos": TEST_ENVIRONMENT / "nacos/Dockerfile",
             "vault": TEST_ENVIRONMENT / "vault/Dockerfile",
             "web": ROOT / "operations-console-web/Dockerfile",
+            "client-web": ROOT / "client-console-web/Dockerfile",
         }
         self.assertEqual(
             ("./nacos",),
             tuple(re.findall(r"(?m)^    build: (\S+)$", base)),
         )
+        java_services = len(re.findall(r"(?m)^      args: \{ JAR_FILE: [a-z0-9-]+\.jar \}$", applications))
+        # 第 13 步：V2 拆分后 18 个 Java 服务，另有 Vault 与两个前端镜像。
+        self.assertEqual(18, java_services)
         self.assertEqual(
-            6,
+            java_services + 3,
             len(re.findall(r"(?m)^    build:(?:\s+\S+)?$", applications)),
         )
         self.assertEqual(
-            ("../../vault/Dockerfile",) + ("../java/Dockerfile",) * 4,
+            ("../../vault/Dockerfile",) + ("../java/Dockerfile",) * java_services,
             tuple(re.findall(r"(?m)^      dockerfile: (\S+)$", applications)),
         )
         self.assertEqual(
-            ("../operations-console-web",),
+            ("../operations-console-web", "../client-console-web"),
             tuple(re.findall(r"(?m)^    build: (\S+)$", applications)),
         )
         texts = {name: source_text(path) for name, path in dockerfiles.items()}
@@ -1074,7 +1080,7 @@ class RecursiveSourceInventoryTest(unittest.TestCase):
             frozenset((*PINNED_BUILD_BASES, "scratch")),
             frozenset(actual_from),
         )
-        self.assertEqual(4, len(actual_from))
+        self.assertEqual(5, len(actual_from))
 
     def test_online_package_breaker_is_rejected(self):
         breakers = (
@@ -1115,7 +1121,7 @@ class RecursiveSourceInventoryTest(unittest.TestCase):
             "name: mor-test-web",
         ):
             self.assertIn(value, base)
-        self.assertEqual(4, applications.count("LocalHttpHealthProbe"))
+        self.assertEqual(18, applications.count("LocalHttpHealthProbe"))
         validate_phase_one_infrastructure_contract(deploy)
         with self.assertRaises(AssertionError):
             validate_phase_one_infrastructure_contract(

@@ -26,7 +26,8 @@ readonly -a protected_infrastructure_services=(
 )
 
 readonly -a risk_bff_web_services=(
-  risk-service
+  risk-decision-service
+  compliance-service
   operations-console-bff
   operations-console-web
 )
@@ -39,7 +40,8 @@ readonly -a platform_gateway_nginx_services=(
 
 readonly -a operations_images=(
   mor-test/nacos:3.1.2
-  mor-test/risk-service:development
+  mor-test/risk-decision-service:development
+  mor-test/compliance-service:development
   mor-test/platform-support-service:development
   mor-test/operations-console-bff:development
   mor-test/api-gateway:development
@@ -61,7 +63,7 @@ usage() {
 
 该脚本只更新已初始化的 mor-test，不执行 Schema、初始化 DML、增量 SQL 或 Bootstrap。
 实际第一阶段在构建/启动前使 private/risk-bff-web-phase.ready 失效，全部健康后才原子发布；
-实际第二阶段必须先验证该文件及六个本地镜像 ID。--check-only 不创建或删除该文件。
+实际第二阶段必须先验证该文件及七个本地镜像 ID。--check-only 不创建或删除该文件。
 Vault 使用独立的 test-environment/scripts/build-vault.sh 流程，不在此脚本中更新。
 EOF
 }
@@ -405,7 +407,7 @@ fi
 
 if [[ "$skip_build" == false ]]; then
   current_stage="应用构建"
-  printf '\n[1/4] 构建 Nacos、Risk、Platform、Gateway、Operations BFF 和前端镜像\n'
+  printf '\n[1/4] 构建 Nacos、全部 Java 服务和运营前端镜像\n'
   "$build_script"
 else
   printf '\n[1/4] 跳过构建，复用当前本地镜像\n'
@@ -450,7 +452,7 @@ if [[ "$deployment_phase" == risk-bff-web ]]; then
   [[ "$mysql_container_id_after" == "$mysql_container_id_before" ]] || fail \
     '基础设施启动意外替换了既有 mor-test MySQL 容器；立即停止后续应用更新。'
 
-  printf '\n[3/4] 依次更新 Risk、Operations BFF 和前端并等待各自健康\n'
+  printf '\n[3/4] 依次更新 Risk（risk-decision、compliance）、Operations BFF 和前端并等待各自健康\n'
   for service_name in "${risk_bff_web_services[@]}"; do
     replace_service "$service_name"
   done

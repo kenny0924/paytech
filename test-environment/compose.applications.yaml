@@ -65,50 +65,79 @@ services:
     networks:
       backend: { ipv4_address: 172.30.73.24 }
 
-  risk-service:
+  # V2 服务拆分（refactor 第 03–12 步）：每个服务一个镜像与 JAR_FILE，健康检查走管理端口（业务端口 + 1000）。
+  risk-decision-service:
     <<: *java
-    image: mor-test/risk-service:development
+    image: mor-test/risk-decision-service:development
     build:
       context: ./artifacts
       dockerfile: ../java/Dockerfile
-      args: { JAR_FILE: risk-service.jar }
+      args: { JAR_FILE: risk-decision-service.jar }
     environment:
       <<: *discovery
       SERVER_ADDRESS: 0.0.0.0
       SPRING_CLOUD_NACOS_DISCOVERY_IP: 172.30.73.25
-      RISK_DB_URL: jdbc:mysql://mysql:3306/mor_risk?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false
-      RISK_DB_USERNAME: risk_app
-      RISK_DB_PASSWORD: ${MOR_RISK_DB_PASSWORD:?prepare test secrets}
+      RISK_DB_URL: jdbc:mysql://mysql:3306/mor_risk_decision?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false
+      RISK_DB_USERNAME: risk_decision_app
+      RISK_DB_PASSWORD: ${MOR_RISK_DECISION_DB_PASSWORD:?prepare test secrets}
       RISK_REDIS_HOST: redis
       RISK_REDIS_PORT: "6379"
       RISK_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?prepare test secrets}
       RISK_SNOWFLAKE_REGION_ID: "0"
       RISK_SNOWFLAKE_WORKER_ID: "25"
-      RISK_RABBITMQ_HOST: rabbitmq
-      RISK_RABBITMQ_PORT: "5672"
-      RISK_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
-      RISK_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
-      RISK_RABBITMQ_VHOST: /mor-test
       RISK_DECISION_ENVIRONMENT: TEST
-      ONBOARDING_REVIEW_ENABLED: "true"
-      ONBOARDING_MATERIALS_ENABLED: "true"
-      # paytech-messaging 发布端（design/08 §3，第 08 步）：该服务承载审核结果发布（拆分后为 compliance）。
-      MESSAGING_PRODUCER_SERVICE: compliance
-      MESSAGING_PRODUCER_SEQUENCER_ENABLED: "true"
-      MESSAGING_PUBLISHER_UNROUTABLEPOLICY: FAIL
     depends_on:
       mysql: { condition: service_healthy }
       redis: { condition: service_healthy }
-      rabbitmq: { condition: service_healthy }
       nacos: { condition: service_healthy }
     healthcheck:
-      test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:18104/actuator/health/readiness]
+      test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:19104/actuator/health/readiness]
       interval: 10s
       timeout: 5s
       retries: 18
       start_period: 40s
     networks:
       backend: { ipv4_address: 172.30.73.25 }
+
+  compliance-service:
+    <<: *java
+    image: mor-test/compliance-service:development
+    build:
+      context: ./artifacts
+      dockerfile: ../java/Dockerfile
+      args: { JAR_FILE: compliance-service.jar }
+    environment:
+      <<: *discovery
+      SERVER_ADDRESS: 0.0.0.0
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: 172.30.73.32
+      COMPLIANCE_DB_URL: jdbc:mysql://mysql:3306/mor_compliance?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false
+      COMPLIANCE_DB_USERNAME: compliance_app
+      COMPLIANCE_DB_PASSWORD: ${MOR_COMPLIANCE_DB_PASSWORD:?prepare test secrets}
+      COMPLIANCE_RABBITMQ_HOST: rabbitmq
+      COMPLIANCE_RABBITMQ_PORT: "5672"
+      COMPLIANCE_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
+      COMPLIANCE_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
+      COMPLIANCE_RABBITMQ_VHOST: /mor-test
+      COMPLIANCE_SNOWFLAKE_REGION_ID: "0"
+      COMPLIANCE_SNOWFLAKE_WORKER_ID: "29"
+      ONBOARDING_REVIEW_ENABLED: "true"
+      ONBOARDING_MATERIALS_ENABLED: "true"
+      # paytech-messaging 发布端（design/08 §3）：审核结论发布到 compliance.events。
+      MESSAGING_PRODUCER_SERVICE: compliance
+      MESSAGING_PRODUCER_SEQUENCER_ENABLED: "true"
+      MESSAGING_PUBLISHER_UNROUTABLEPOLICY: FAIL
+    depends_on:
+      mysql: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      nacos: { condition: service_healthy }
+    healthcheck:
+      test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:19112/actuator/health/readiness]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 40s
+    networks:
+      backend: { ipv4_address: 172.30.73.32 }
 
   platform-support-service:
     <<: *java
@@ -152,9 +181,9 @@ services:
       FILES_ONBOARDING_MINIO_TRUSTED_CERTIFICATE: /run/mor-test/test-ca.crt
       COMPENSATION_ENABLED: "true"
       COMPENSATION_INSTANCE_ID: platform-test
-      # Client Webhook 投递：签名密钥存 Vault（WEBHOOK_SIGNING_SECRET_V1 / WEBHOOK_SIGNING）；登记 commerce-service 为事件来源。
+      # Client Webhook 投递：签名密钥存 Vault（WEBHOOK_SIGNING_SECRET_V1 / WEBHOOK_SIGNING）；登记 acquiring-service 为事件来源（第 03 步改名）。
       WEBHOOK_ENABLED: "true"
-      SPRING_APPLICATION_JSON: '{"webhook":{"http":{"callers":{"commerce-service":["order.paid","order.cancelled","order.expired","order.funds_available","refund.created","refund.succeeded","refund.failed","refund.cancelled"]}}}}'
+      SPRING_APPLICATION_JSON: '{"webhook":{"http":{"callers":{"acquiring-service":["order.paid","order.cancelled","order.expired","order.funds_available","refund.created","refund.succeeded","refund.failed","refund.cancelled"]}}}}'
       # 2026-10-17 Client API 联通：只放行验收接收端 webhook-receiver；JVM 信任库为 JDK 默认 cacerts + test CA（scripts/prepare_client_api_acceptance.sh 生成）。
       WEBHOOK_TRUSTED_NETWORKS: 172.30.73.31/32
       JAVA_TOOL_OPTIONS: -Djavax.net.ssl.trustStore=/run/mor-test/platform-truststore.p12 -Djavax.net.ssl.trustStoreType=PKCS12 -Djavax.net.ssl.trustStorePassword=changeit
@@ -186,20 +215,20 @@ services:
     networks:
       backend: { ipv4_address: 172.30.73.21 }
 
-  commerce-service:
+  acquiring-service:
     <<: *java
-    image: mor-test/commerce-service:development
+    image: mor-test/acquiring-service:development
     build:
       context: ./artifacts
       dockerfile: ../java/Dockerfile
-      args: { JAR_FILE: commerce-service.jar }
+      args: { JAR_FILE: acquiring-service.jar }
     environment:
       <<: *discovery
       SERVER_ADDRESS: 0.0.0.0
       SPRING_CLOUD_NACOS_DISCOVERY_IP: 172.30.73.30
-      MOR_COMMERCE_DB_URL: jdbc:mysql://mysql:3306/mor_commerce?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false
-      MOR_COMMERCE_DB_USERNAME: commerce_app
-      MOR_COMMERCE_DB_PASSWORD: ${MOR_COMMERCE_DB_PASSWORD:?prepare test secrets}
+      MOR_COMMERCE_DB_URL: jdbc:mysql://mysql:3306/mor_acquiring?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false
+      MOR_COMMERCE_DB_USERNAME: acquiring_app
+      MOR_COMMERCE_DB_PASSWORD: ${MOR_ACQUIRING_DB_PASSWORD:?prepare test secrets}
       MOR_REDIS_HOST: redis
       MOR_REDIS_PORT: "6379"
       MOR_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?prepare test secrets}
@@ -208,19 +237,19 @@ services:
       COMMERCE_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
       COMMERCE_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
       COMMERCE_RABBITMQ_VHOST: /mor-test
-      # paytech-messaging 消费端（design/08 §3，第 08 步）：订阅 payment.events，分区 acquiring.payment.p0..p3。
+      # paytech-messaging 消费端（design/08 §3）：订阅 payment.events，分区 acquiring.payment.p0..p3。
       MESSAGING_CONSUMER_SERVICE: acquiring
       MESSAGING_CONSUMERS_PAYMENT_PARTITIONS: "4"
-      # test 无 Payment 与结账页：支付方式码与公开地址仅满足启动；CCT 商业事实、税、文档为 Commerce 内固定 Mock（需求 Q3）。
+      # 支付方式码与公开地址仅满足启动；CCT 商业事实、税、文档为 acquiring 内固定 Mock（需求 Q3）。
       COMMERCE_CARD_PAYMENT_METHOD_CODE: CARD
       COMMERCE_CHECKOUT_PUBLIC_ORIGIN: https://localhost:28443
       COMMERCE_SNOWFLAKE_REGION_ID: "0"
       COMMERCE_SNOWFLAKE_WORKER_ID: "28"
-      COMPENSATION_INSTANCEID: commerce-test
+      COMPENSATION_INSTANCEID: acquiring-test
       XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
       XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
       XXL_JOB_EXECUTOR_ENABLED: "true"
-      XXL_JOB_EXECUTOR_APPNAME: commerce-service
+      XXL_JOB_EXECUTOR_APPNAME: acquiring-service
       XXL_JOB_EXECUTOR_IP: 172.30.73.30
       XXL_JOB_EXECUTOR_PORT: "9999"
       XXL_JOB_EXECUTOR_LOGPATH: /tmp/xxl-job
@@ -231,7 +260,7 @@ services:
       rabbitmq: { condition: service_healthy }
       nacos: { condition: service_healthy }
     healthcheck:
-      test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:18102/commerce/actuator/health/readiness]
+      test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:19102/actuator/health/readiness]
       interval: 10s
       timeout: 5s
       retries: 18
@@ -239,19 +268,47 @@ services:
     networks:
       backend: { ipv4_address: 172.30.73.30 }
 
-  client-contract-service:
+  consumer-service:
     <<: *java
-    image: mor-test/client-contract-service:development
+    image: mor-test/consumer-service:development
     build:
       context: ./artifacts
       dockerfile: ../java/Dockerfile
-      args: { JAR_FILE: client-contract-service.jar }
+      args: { JAR_FILE: consumer-service.jar }
+    environment:
+      <<: *discovery
+      SERVER_ADDRESS: 0.0.0.0
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: 172.30.73.33
+      MOR_CONSUMER_DB_URL: jdbc:mysql://mysql:3306/mor_consumer?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false
+      MOR_CONSUMER_DB_USERNAME: consumer_app
+      MOR_CONSUMER_DB_PASSWORD: ${MOR_CONSUMER_DB_PASSWORD:?prepare test secrets}
+      CONSUMER_SNOWFLAKE_REGION_ID: "0"
+      CONSUMER_SNOWFLAKE_WORKER_ID: "27"
+    depends_on:
+      mysql: { condition: service_healthy }
+      nacos: { condition: service_healthy }
+    healthcheck:
+      test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:19109/actuator/health/readiness]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 40s
+    networks:
+      backend: { ipv4_address: 172.30.73.33 }
+
+  client-master-service:
+    <<: *java
+    image: mor-test/client-master-service:development
+    build:
+      context: ./artifacts
+      dockerfile: ../java/Dockerfile
+      args: { JAR_FILE: client-master-service.jar }
     environment:
       <<: *discovery
       SPRING_CLOUD_NACOS_DISCOVERY_IP: 172.30.73.26
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/mor_cct?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false
-      SPRING_DATASOURCE_USERNAME: cct_app
-      SPRING_DATASOURCE_PASSWORD: ${MOR_CCT_DB_PASSWORD:?prepare test secrets}
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/mor_client_master?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: client_master_app
+      SPRING_DATASOURCE_PASSWORD: ${MOR_CLIENT_MASTER_DB_PASSWORD:?prepare test secrets}
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: "6379"
       SPRING_DATA_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?prepare test secrets}
@@ -260,14 +317,14 @@ services:
       CCT_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
       CCT_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
       CCT_RABBITMQ_VHOST: /mor-test
-      # paytech-messaging 消费端（design/08 §3，第 08 步）：订阅 compliance.events，分区 client-master.compliance.p0..p3。
+      # paytech-messaging 消费端（design/08 §3）：订阅 compliance.events，分区 client-master.compliance.p0..p3。
       MESSAGING_CONSUMER_SERVICE: client-master
       MESSAGING_CONSUMERS_COMPLIANCE_PARTITIONS: "4"
       ONBOARDING_DRAFT_ENABLED: "true"
       ONBOARDING_RECOVERY_ENABLED: "true"
       ONBOARDING_ID_DATACENTER: "0"
       ONBOARDING_ID_WORKER: "26"
-      COMPENSATION_INSTANCE_ID: cct-test
+      COMPENSATION_INSTANCE_ID: client-master-test
     depends_on:
       mysql: { condition: service_healthy }
       redis: { condition: service_healthy }
@@ -275,13 +332,319 @@ services:
       nacos: { condition: service_healthy }
       vault-service: { condition: service_healthy }
     healthcheck:
-      test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:18101/actuator/health/readiness]
+      test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:19101/actuator/health/readiness]
       interval: 10s
       timeout: 5s
       retries: 18
       start_period: 40s
     networks:
       backend: { ipv4_address: 172.30.73.26 }
+
+  commercial-service:
+    <<: *java
+    image: mor-test/commercial-service:development
+    build:
+      context: ./artifacts
+      dockerfile: ../java/Dockerfile
+      args: { JAR_FILE: commercial-service.jar }
+    environment:
+      <<: *discovery
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: 172.30.73.34
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/mor_commercial?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: commercial_app
+      SPRING_DATASOURCE_PASSWORD: ${MOR_COMMERCIAL_DB_PASSWORD:?prepare test secrets}
+    depends_on:
+      mysql: { condition: service_healthy }
+      nacos: { condition: service_healthy }
+    healthcheck:
+      test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:19108/actuator/health/readiness]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 40s
+    networks:
+      backend: { ipv4_address: 172.30.73.34 }
+
+  payment-service:
+    <<: *java
+    image: mor-test/payment-service:development
+    build:
+      context: ./artifacts
+      dockerfile: ../java/Dockerfile
+      args: { JAR_FILE: payment-service.jar }
+    environment:
+      <<: *discovery
+      SERVER_ADDRESS: 0.0.0.0
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: 172.30.73.35
+      MOR_PAYMENT_DB_URL: jdbc:mysql://mysql:3306/mor_payment?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false
+      MOR_PAYMENT_DB_USERNAME: payment_app
+      MOR_PAYMENT_DB_PASSWORD: ${MOR_PAYMENT_DB_PASSWORD:?prepare test secrets}
+      MOR_REDIS_HOST: redis
+      MOR_REDIS_PORT: "6379"
+      MOR_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?prepare test secrets}
+      PAYMENT_RABBITMQ_HOST: rabbitmq
+      PAYMENT_RABBITMQ_PORT: "5672"
+      PAYMENT_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
+      PAYMENT_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
+      PAYMENT_RABBITMQ_VHOST: /mor-test
+      PAYMENT_SNOWFLAKE_REGION_ID: "0"
+      PAYMENT_SNOWFLAKE_WORKER_ID: "21"
+      PAYTECH_INSTANCE_ID: payment-test
+    depends_on:
+      mysql: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      nacos: { condition: service_healthy }
+    healthcheck:
+      test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:19103/actuator/health/readiness]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 40s
+    networks:
+      backend: { ipv4_address: 172.30.73.35 }
+
+  channel-connector-service:
+    <<: *java
+    image: mor-test/channel-connector-service:development
+    build:
+      context: ./artifacts
+      dockerfile: ../java/Dockerfile
+      args: { JAR_FILE: channel-connector-service.jar }
+    environment:
+      <<: *discovery
+      SERVER_ADDRESS: 0.0.0.0
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: 172.30.73.36
+      MOR_CHANNEL_CONNECTOR_DB_URL: jdbc:mysql://mysql:3306/mor_channel_connector?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false
+      MOR_CHANNEL_CONNECTOR_DB_USERNAME: channel_connector_app
+      MOR_CHANNEL_CONNECTOR_DB_PASSWORD: ${MOR_CHANNEL_CONNECTOR_DB_PASSWORD:?prepare test secrets}
+      PAYTECH_INSTANCE_ID: channel-connector-test
+    depends_on:
+      mysql: { condition: service_healthy }
+      nacos: { condition: service_healthy }
+    healthcheck:
+      test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:19110/actuator/health/readiness]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 40s
+    networks:
+      backend: { ipv4_address: 172.30.73.36 }
+
+  card-service:
+    <<: *java
+    image: mor-test/card-service:development
+    build:
+      context: ./artifacts
+      dockerfile: ../java/Dockerfile
+      args: { JAR_FILE: card-service.jar }
+    environment:
+      <<: *discovery
+      SERVER_ADDRESS: 0.0.0.0
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: 172.30.73.37
+      MOR_CARD_DB_URL: jdbc:mysql://mysql:3306/mor_card?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false
+      MOR_CARD_DB_USERNAME: card_app
+      MOR_CARD_DB_PASSWORD: ${MOR_CARD_DB_PASSWORD:?prepare test secrets}
+      MOR_REDIS_HOST: redis
+      MOR_REDIS_PORT: "6379"
+      MOR_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?prepare test secrets}
+      CARD_RABBITMQ_HOST: rabbitmq
+      CARD_RABBITMQ_PORT: "5672"
+      CARD_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
+      CARD_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
+      CARD_RABBITMQ_VHOST: /mor-test
+      CARD_SNOWFLAKE_REGION_ID: "0"
+      CARD_SNOWFLAKE_WORKER_ID: "22"
+      # 卡指纹 HMAC 密钥（Base64，至少 32 字节），由 prepare.py 生成；更换会使已存卡与凭证无法匹配。
+      CARD_FINGERPRINT_KEY: ${MOR_CARD_FINGERPRINT_KEY:?prepare test secrets}
+      PAYTECH_INSTANCE_ID: card-test
+    depends_on:
+      mysql: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      nacos: { condition: service_healthy }
+      vault-service: { condition: service_healthy }
+    healthcheck:
+      test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:19111/actuator/health/readiness]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 40s
+    networks:
+      backend: { ipv4_address: 172.30.73.37 }
+
+  ledger-service:
+    <<: *java
+    image: mor-test/ledger-service:development
+    build:
+      context: ./artifacts
+      dockerfile: ../java/Dockerfile
+      args: { JAR_FILE: ledger-service.jar }
+    environment:
+      <<: *discovery
+      SERVER_ADDRESS: 0.0.0.0
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: 172.30.73.38
+      LEDGER_DB_URL: jdbc:mysql://mysql:3306/mor_ledger?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false
+      LEDGER_DB_USERNAME: ledger_app
+      LEDGER_DB_PASSWORD: ${MOR_LEDGER_DB_PASSWORD:?prepare test secrets}
+      LEDGER_REDIS_HOST: redis
+      LEDGER_REDIS_PORT: "6379"
+      LEDGER_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?prepare test secrets}
+      LEDGER_RABBITMQ_HOST: rabbitmq
+      LEDGER_RABBITMQ_PORT: "5672"
+      LEDGER_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
+      LEDGER_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
+      LEDGER_RABBITMQ_VHOST: /mor-test
+      LEDGER_SNOWFLAKE_REGION_ID: "0"
+      LEDGER_SNOWFLAKE_WORKER_ID: "23"
+      LEDGER_ACCOUNT_SERVICE_URL: http://account-service:18114
+      LEDGER_BILLING_SERVICE_URL: http://billing-service:18113
+    depends_on:
+      mysql: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      nacos: { condition: service_healthy }
+    healthcheck:
+      test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:19105/actuator/health/readiness]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 40s
+    networks:
+      backend: { ipv4_address: 172.30.73.38 }
+
+  billing-service:
+    <<: *java
+    image: mor-test/billing-service:development
+    build:
+      context: ./artifacts
+      dockerfile: ../java/Dockerfile
+      args: { JAR_FILE: billing-service.jar }
+    environment:
+      <<: *discovery
+      SERVER_ADDRESS: 0.0.0.0
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: 172.30.73.39
+      BILLING_DB_URL: jdbc:mysql://mysql:3306/mor_billing?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false
+      BILLING_DB_USERNAME: billing_app
+      BILLING_DB_PASSWORD: ${MOR_BILLING_DB_PASSWORD:?prepare test secrets}
+      BILLING_REDIS_HOST: redis
+      BILLING_REDIS_PORT: "6379"
+      BILLING_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?prepare test secrets}
+      BILLING_RABBITMQ_HOST: rabbitmq
+      BILLING_RABBITMQ_PORT: "5672"
+      BILLING_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
+      BILLING_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
+      BILLING_RABBITMQ_VHOST: /mor-test
+      BILLING_SNOWFLAKE_REGION_ID: "0"
+      BILLING_SNOWFLAKE_WORKER_ID: "30"
+      BILLING_COMPENSATION_INSTANCE_ID: billing-test
+      PAYTECH_INSTANCE_ID: billing-test
+    depends_on:
+      mysql: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      nacos: { condition: service_healthy }
+    healthcheck:
+      test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:19113/actuator/health/readiness]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 40s
+    networks:
+      backend: { ipv4_address: 172.30.73.39 }
+
+  account-service:
+    <<: *java
+    image: mor-test/account-service:development
+    build:
+      context: ./artifacts
+      dockerfile: ../java/Dockerfile
+      args: { JAR_FILE: account-service.jar }
+    environment:
+      <<: *discovery
+      SERVER_ADDRESS: 0.0.0.0
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: 172.30.73.40
+      ACCOUNT_DB_URL: jdbc:mysql://mysql:3306/mor_account?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false
+      ACCOUNT_DB_USERNAME: account_app
+      ACCOUNT_DB_PASSWORD: ${MOR_ACCOUNT_DB_PASSWORD:?prepare test secrets}
+      ACCOUNT_RABBITMQ_HOST: rabbitmq
+      ACCOUNT_RABBITMQ_PORT: "5672"
+      ACCOUNT_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
+      ACCOUNT_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
+      ACCOUNT_RABBITMQ_VHOST: /mor-test
+      ACCOUNT_SNOWFLAKE_REGION_ID: "0"
+      ACCOUNT_SNOWFLAKE_WORKER_ID: "31"
+      ACCOUNT_LEDGER_SERVICE_URL: http://ledger-service:18105
+      ACCOUNT_BILLING_SERVICE_URL: http://billing-service:18113
+      ACCOUNT_COMPENSATION_INSTANCE_ID: account-test
+    depends_on:
+      mysql: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      nacos: { condition: service_healthy }
+    healthcheck:
+      test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:19114/actuator/health/readiness]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 40s
+    networks:
+      backend: { ipv4_address: 172.30.73.40 }
+
+  reconciliation-service:
+    <<: *java
+    image: mor-test/reconciliation-service:development
+    build:
+      context: ./artifacts
+      dockerfile: ../java/Dockerfile
+      args: { JAR_FILE: reconciliation-service.jar }
+    environment:
+      <<: *discovery
+      SERVER_ADDRESS: 0.0.0.0
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: 172.30.73.41
+      RECONCILIATION_DB_URL: jdbc:mysql://mysql:3306/mor_reconciliation?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false
+      RECONCILIATION_DB_USERNAME: reconciliation_app
+      RECONCILIATION_DB_PASSWORD: ${MOR_RECONCILIATION_DB_PASSWORD:?prepare test secrets}
+      RECONCILIATION_SNOWFLAKE_REGION_ID: "0"
+      RECONCILIATION_SNOWFLAKE_WORKER_ID: "19"
+    depends_on:
+      mysql: { condition: service_healthy }
+      nacos: { condition: service_healthy }
+    healthcheck:
+      test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:19115/actuator/health/readiness]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 40s
+    networks:
+      backend: { ipv4_address: 172.30.73.41 }
+
+  tax-service:
+    <<: *java
+    image: mor-test/tax-service:development
+    build:
+      context: ./artifacts
+      dockerfile: ../java/Dockerfile
+      args: { JAR_FILE: tax-service.jar }
+    environment:
+      <<: *discovery
+      SERVER_ADDRESS: 0.0.0.0
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: 172.30.73.42
+      TAX_DB_URL: jdbc:mysql://mysql:3306/mor_tax?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false
+      TAX_DB_USERNAME: tax_app
+      TAX_DB_PASSWORD: ${MOR_TAX_DB_PASSWORD:?prepare test secrets}
+      TAX_SNOWFLAKE_REGION_ID: "0"
+      TAX_SNOWFLAKE_WORKER_ID: "18"
+    depends_on:
+      mysql: { condition: service_healthy }
+      nacos: { condition: service_healthy }
+    healthcheck:
+      test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:19116/actuator/health/readiness]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 40s
+    networks:
+      backend: { ipv4_address: 172.30.73.42 }
 
   client-console-bff:
     <<: *java
@@ -297,7 +660,7 @@ services:
       CLIENT_CONSOLE_ORIGIN: https://localhost:28443
     depends_on:
       platform-support-service: { condition: service_healthy }
-      client-contract-service: { condition: service_healthy }
+      client-master-service: { condition: service_healthy }
     healthcheck:
       test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:19202/actuator/health/readiness]
       interval: 10s
@@ -321,7 +684,8 @@ services:
       OPERATIONS_TEST_HTTP_ENABLED: "true"
     depends_on:
       platform-support-service: { condition: service_healthy }
-      risk-service: { condition: service_healthy }
+      risk-decision-service: { condition: service_healthy }
+      compliance-service: { condition: service_healthy }
     healthcheck:
       test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:19201/actuator/health/readiness]
       interval: 10s

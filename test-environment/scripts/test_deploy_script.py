@@ -23,15 +23,17 @@ FAKE_IMAGE_IDS = {
     "mor-test/operations-console-bff:development": "sha256:" + "c" * 64,
     "mor-test/operations-console-web:development": "sha256:" + "d" * 64,
     "mor-test/platform-support-service:development": "sha256:" + "e" * 64,
-    "mor-test/risk-service:development": "sha256:" + "f" * 64,
+    "mor-test/risk-decision-service:development": "sha256:" + "f" * 64,
+    "mor-test/compliance-service:development": "sha256:" + "9" * 64,
 }
 EXPECTED_PHASE_CHECKPOINT = (
     "mor-test/api-gateway:development sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+    "mor-test/compliance-service:development sha256:9999999999999999999999999999999999999999999999999999999999999999\n"
     "mor-test/nacos:3.1.2 sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
     "mor-test/operations-console-bff:development sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\n"
     "mor-test/operations-console-web:development sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd\n"
     "mor-test/platform-support-service:development sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n"
-    "mor-test/risk-service:development sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\n"
+    "mor-test/risk-decision-service:development sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\n"
 )
 MYSQL_CONTAINER_ID = "1" * 64
 MYSQL_CONTAINER_QUERY = (
@@ -280,7 +282,9 @@ class DeployScriptTest(unittest.TestCase):
                 "--wait-timeout 240 nacos",
                 MYSQL_CONTAINER_QUERY,
                 "compose up -d --no-deps --no-build --pull never --force-recreate --wait --wait-timeout 240 "
-                "risk-service",
+                "risk-decision-service",
+                "compose up -d --no-deps --no-build --pull never --force-recreate --wait --wait-timeout 240 "
+                "compliance-service",
                 "compose up -d --no-deps --no-build --pull never --force-recreate --wait --wait-timeout 240 "
                 "operations-console-bff",
                 "compose up -d --no-deps --no-build --pull never --force-recreate --wait --wait-timeout 240 "
@@ -363,7 +367,8 @@ class DeployScriptTest(unittest.TestCase):
         expected_images = Counter(
             {
                 "mor-test/nacos:3.1.2": 1,
-                "mor-test/risk-service:development": 1,
+                "mor-test/risk-decision-service:development": 1,
+                "mor-test/compliance-service:development": 1,
                 "mor-test/platform-support-service:development": 1,
                 "mor-test/operations-console-bff:development": 1,
                 "mor-test/api-gateway:development": 1,
@@ -395,7 +400,7 @@ class DeployScriptTest(unittest.TestCase):
             for index, call in enumerate(calls)
             if call.startswith("docker image inspect --format {{.Id}} ")
         ]
-        self.assertEqual(6, len(checkpoint_checks))
+        self.assertEqual(7, len(checkpoint_checks))
         self.assertLess(calls.index(lock_call), checkpoint_checks[0])
         self.assertLess(checkpoint_checks[-1], calls.index(replacement_calls[0]))
         smoke_calls = [call for call in calls if call.startswith("python3 ")]
@@ -498,14 +503,15 @@ class DeployScriptTest(unittest.TestCase):
             for index, call in enumerate(calls)
             if call.startswith("docker image inspect --format {{.Id}} ")
         ]
-        self.assertEqual(12, len(checkpoint_checks))
+        self.assertEqual(14, len(checkpoint_checks))
         self.assertEqual(
             Counter({image_name: 2 for image_name in FAKE_IMAGE_IDS}),
             Counter(calls[index].rsplit(" ", 1)[-1] for index in checkpoint_checks),
         )
         self.assertLess(calls.index(lock_call), checkpoint_checks[0])
-        self.assertLess(checkpoint_checks[5], build_index)
-        self.assertLess(build_index, checkpoint_checks[6])
+        image_count = len(FAKE_IMAGE_IDS)
+        self.assertLess(checkpoint_checks[image_count - 1], build_index)
+        self.assertLess(build_index, checkpoint_checks[image_count])
         self.assertLess(checkpoint_checks[-1], first_replacement)
 
     def test_phase_two_rejects_missing_checkpoint_before_replacement_or_smoke(self):
@@ -545,7 +551,7 @@ class DeployScriptTest(unittest.TestCase):
     def test_phase_two_rejects_image_stale_checkpoint_before_replacement_or_smoke(self):
         environment = self.prepare_environment()
         environment["DEPLOY_TEST_CHANGED_IMAGE"] = (
-            "mor-test/risk-service:development"
+            "mor-test/risk-decision-service:development"
         )
         environment["DEPLOY_TEST_CHANGED_IMAGE_ID"] = "sha256:" + "0" * 64
 
@@ -581,7 +587,8 @@ class DeployScriptTest(unittest.TestCase):
 
         self.assertEqual(23, result.returncode)
         calls = self.calls()
-        self.assertTrue(any(call.endswith("risk-service") for call in calls))
+        self.assertTrue(any(call.endswith("risk-decision-service") for call in calls))
+        self.assertTrue(any(call.endswith("compliance-service") for call in calls))
         self.assertTrue(any(call.endswith("operations-console-bff") for call in calls))
         self.assertFalse(any(call.endswith("operations-console-web") for call in calls))
         self.assertFalse(
@@ -598,7 +605,7 @@ class DeployScriptTest(unittest.TestCase):
     def test_phase_one_image_id_failure_after_health_cannot_leave_checkpoint(self):
         environment = self.prepare_environment()
         environment["DEPLOY_TEST_IMAGE_INSPECT_FAIL"] = (
-            "mor-test/risk-service:development"
+            "mor-test/risk-decision-service:development"
         )
 
         result = self.run_deploy(environment, "--phase", "risk-bff-web")
@@ -656,7 +663,8 @@ class DeployScriptTest(unittest.TestCase):
         self.assertFalse(any(call.endswith("api-gateway") for call in calls))
         self.assertFalse(
             any(
-                "risk-service" in call and call.startswith("compose up")
+                ("risk-decision-service" in call or "compliance-service" in call)
+                and call.startswith("compose up")
                 for call in calls
             )
         )
@@ -758,77 +766,53 @@ class DeployScriptTest(unittest.TestCase):
         self.assertFalse(self.log.exists())
 
 
+JAVA_SERVICES = (
+    ("risk-decision-service", "risk-decision"),
+    ("compliance-service", "compliance"),
+    ("platform-support-service", "platform-support"),
+    ("operations-console-bff", "operations-console-bff"),
+    ("api-gateway", "api-gateway"),
+    ("client-console-bff", "client-console-bff"),
+    ("client-master-service", "client-master"),
+    ("commercial-service", "commercial"),
+    ("acquiring-service", "acquiring"),
+    ("consumer-service", "consumer"),
+    ("payment-service", "payment"),
+    ("channel-connector-service", "channel-connector"),
+    ("card-service", "card"),
+    ("ledger-service", "ledger"),
+    ("billing-service", "billing"),
+    ("account-service", "account"),
+    ("reconciliation-service", "reconciliation"),
+    ("tax-service", "tax"),
+)
+
+
 class ApplicationBuildContractTest(unittest.TestCase):
-    def test_operations_build_orders_risk_before_consumers_and_does_not_repackage_vault(self):
+    def test_single_reactor_packages_every_java_service_once_and_does_not_repackage_vault(self):
         build_script = BUILD_SCRIPT.read_text(encoding="utf-8")
-
-        for marker in (
-            '(cd "$workspace_dir/risk-compliance-service"',
-            'risk-web/target/risk-web-1.0.0-SNAPSHOT-exec.jar',
-            '"$environment_dir/artifacts/risk-service.jar"',
-        ):
-            self.assertIn(marker, build_script)
-
-        build = build_script.index(
-            '(cd "$workspace_dir/paytech" && ./mvnw -DskipTests -B install -pl build/paytech-dependencies,build/paytech-parent)'
+        services_block = build_script.split("readonly -a java_services=(\n", 1)[1].split("\n)\n", 1)[0]
+        self.assertEqual(
+            [f"{service}:{module}" for service, module in JAVA_SERVICES],
+            [line.strip() for line in services_block.splitlines()],
         )
-        foundation = build_script.index(
-            '(cd "$workspace_dir/paytech" && ./mvnw -DskipTests -B -f foundation/pom.xml install)'
+        reactor = build_script.index(
+            '(cd "$workspace_dir/paytech" && ./mvnw -B -DskipTests -pl "$(IFS=,; echo "${app_modules[*]}")" -am clean package)'
         )
-        risk = build_script.index('(cd "$workspace_dir/risk-compliance-service"')
-        risk_copy = build_script.index(
-            'risk-web/target/risk-web-1.0.0-SNAPSHOT-exec.jar'
-        )
-        retained_apps = build_script.index(
-            '(cd "$workspace_dir/paytech" && ./mvnw -pl platform-support/paytech-platform-support-app,'
-            'api-gateway/paytech-api-gateway-app,operations-console-bff/paytech-operations-console-bff-app'
-            ' -am -DskipTests clean install)'
-        )
-        web = build_script.index('(cd "$workspace_dir/operations-console-web"')
-        remaining_copies = build_script.index(
-            'paytech-platform-support-app/target/paytech-platform-support-app-1.0.0-SNAPSHOT-exec.jar'
+        web = build_script.index('(cd "$workspace_dir/operations-console-web" && npm ci && npm run build)')
+        copies = build_script.index(
+            'cp "$workspace_dir/paytech/$module/paytech-$module-app/target/paytech-$module-app-1.0.0-SNAPSHOT-exec.jar"'
         )
         compose = build_script.index('"$environment_dir/compose.sh" build')
-        self.assertEqual(
-            [
-                build,
-                foundation,
-                risk,
-                risk_copy,
-                retained_apps,
-                web,
-                remaining_copies,
-                compose,
-            ],
-            sorted(
-                (
-                    build,
-                    foundation,
-                    risk,
-                    risk_copy,
-                    retained_apps,
-                    web,
-                    remaining_copies,
-                    compose,
-                )
-            ),
-        )
-        self.assertIn(
-            "./mvnw -pl risk-web -am -DskipTests clean install", build_script
-        )
-        foundation_command = next(
-            line
-            for line in build_script.splitlines()
-            if "-f foundation/pom.xml install" in line
-        )
-        self.assertNotIn(
-            " -pl ",
-            foundation_command,
-            "Risk must be built from the whole Foundation reactor, including the canonicalization artifact",
-        )
-        self.assertIn(
-            '"$environment_dir/artifacts/risk-service.jar"', build_script
-        )
+        self.assertEqual([reactor, web, copies, compose], sorted((reactor, web, copies, compose)))
+        self.assertIn('app_modules+=("$module/paytech-$module-app")', build_script)
+        self.assertIn('"$environment_dir/artifacts/${service%%:*}.jar"', build_script)
+        self.assertEqual(1, build_script.count(" ./mvnw "))
+        for retired in ("risk-compliance-service", "risk-web", "paytech-build", "paytech-foundation"):
+            self.assertNotIn(retired, build_script)
+        maven_lines = [line for line in build_script.splitlines() if "./mvnw" in line]
+        self.assertEqual(1, len(maven_lines))
+        self.assertNotIn("install", maven_lines[0])
 
         compose_build = build_script.split(
             '"$environment_dir/compose.sh" build \\\n', 1
@@ -839,25 +823,28 @@ class ApplicationBuildContractTest(unittest.TestCase):
             if token != "\\"
         )
         self.assertEqual(
-            (
-                "nacos",
-                "risk-service",
-                "platform-support-service",
-                "operations-console-bff",
-                "api-gateway",
-                "operations-console-web",
-            ),
+            ("nacos",) + tuple(service for service, _ in JAVA_SERVICES) + ("operations-console-web",),
             services,
         )
-        self.assertEqual(1, services.count("risk-service"))
+        self.assertEqual(len(services), len(set(services)))
         self.assertNotIn("vault-service", services)
+
+    def test_every_java_compose_service_has_its_own_jar_and_management_readiness(self):
+        compose = COMPOSE_APPLICATIONS.read_text(encoding="utf-8")
+        for service, _ in JAVA_SERVICES:
+            with self.subTest(service=service):
+                block = service_block(compose, service)
+                self.assertIn(f"    image: mor-test/{service}:development", block)
+                self.assertIn(f"      args: {{ JAR_FILE: {service}.jar }}", block)
+                self.assertIn("LocalHttpHealthProbe", block)
+        self.assertEqual(len(JAVA_SERVICES), compose.count("JAR_FILE: "))
 
 
 class ReadmeDeploymentContractTest(unittest.TestCase):
     def test_first_time_setup_cannot_dependency_expand_across_deployment_waves(self):
         readme = README.read_text(encoding="utf-8")
         application_services = {
-            "risk-service",
+            *(service for service, _ in JAVA_SERVICES),
             "platform-support-service",
             "operations-console-bff",
             "api-gateway",
@@ -907,62 +894,70 @@ def service_block(compose, service_name):
     return remainder if next_service is None else remainder[: next_service.start()]
 
 
-class RiskComposeContractTest(unittest.TestCase):
-    def test_risk_is_backend_only_and_bff_waits_for_platform_and_risk(self):
-        compose = COMPOSE_APPLICATIONS.read_text(encoding="utf-8")
-        risk = service_block(compose, "risk-service")
+def healthy_dependencies(block):
+    return set(
+        re.findall(
+            r"^      ([a-z0-9-]+): \{ condition: service_healthy \}$",
+            block.split("    depends_on:\n", 1)[1].split("    healthcheck:\n", 1)[0],
+            re.MULTILINE,
+        )
+    )
 
+
+class RiskComposeContractTest(unittest.TestCase):
+    def test_risk_services_are_backend_only_and_bff_waits_for_platform_and_both_risk_services(self):
+        compose = COMPOSE_APPLICATIONS.read_text(encoding="utf-8")
+        decision = service_block(compose, "risk-decision-service")
         for exact_line in (
             "    <<: *java",
-            "    image: mor-test/risk-service:development",
+            "    image: mor-test/risk-decision-service:development",
             "      context: ./artifacts",
             "      dockerfile: ../java/Dockerfile",
-            "      args: { JAR_FILE: risk-service.jar }",
+            "      args: { JAR_FILE: risk-decision-service.jar }",
             "      <<: *discovery",
             "      SERVER_ADDRESS: 0.0.0.0",
             "      SPRING_CLOUD_NACOS_DISCOVERY_IP: 172.30.73.25",
-            "      RISK_DB_USERNAME: risk_app",
-            "      RISK_DB_PASSWORD: ${MOR_RISK_DB_PASSWORD:?prepare test secrets}",
+            "      RISK_DB_USERNAME: risk_decision_app",
+            "      RISK_DB_PASSWORD: ${MOR_RISK_DECISION_DB_PASSWORD:?prepare test secrets}",
             "      RISK_REDIS_HOST: redis",
             '      RISK_REDIS_PORT: "6379"',
             "      RISK_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?prepare test secrets}",
             '      RISK_SNOWFLAKE_REGION_ID: "0"',
             '      RISK_SNOWFLAKE_WORKER_ID: "25"',
-            "      test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:18104/actuator/health/readiness]",
+            "      test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:19104/actuator/health/readiness]",
             "      backend: { ipv4_address: 172.30.73.25 }",
         ):
-            self.assertIn(exact_line, risk)
-        self.assertIn("jdbc:mysql://mysql:3306/mor_risk?", risk)
-        self.assertEqual(
-            {"mysql", "redis", "rabbitmq", "nacos"},
-            set(
-                re.findall(
-                    r"^      ([a-z0-9-]+): \{ condition: service_healthy \}$",
-                    risk.split("    depends_on:\n", 1)[1].split(
-                        "    healthcheck:\n", 1
-                    )[0],
-                    re.MULTILINE,
-                )
-            ),
-        )
-        self.assertNotIn("ports:", risk)
-        self.assertNotIn("ingress", risk)
-        self.assertNotIn("web:", risk)
-        self.assertNotIn("networks: [web]", risk)
+            self.assertIn(exact_line, decision)
+        self.assertIn("jdbc:mysql://mysql:3306/mor_risk_decision?", decision)
+        self.assertEqual({"mysql", "redis", "nacos"}, healthy_dependencies(decision))
+        self.assertNotIn("RABBITMQ", decision)
+
+        compliance = service_block(compose, "compliance-service")
+        for exact_line in (
+            "      args: { JAR_FILE: compliance-service.jar }",
+            "      COMPLIANCE_DB_USERNAME: compliance_app",
+            "      COMPLIANCE_DB_PASSWORD: ${MOR_COMPLIANCE_DB_PASSWORD:?prepare test secrets}",
+            "      COMPLIANCE_RABBITMQ_VHOST: /mor-test",
+            "      MESSAGING_PRODUCER_SERVICE: compliance",
+            "      MESSAGING_PUBLISHER_UNROUTABLEPOLICY: FAIL",
+            '      ONBOARDING_REVIEW_ENABLED: "true"',
+            "      test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:19112/actuator/health/readiness]",
+            "      backend: { ipv4_address: 172.30.73.32 }",
+        ):
+            self.assertIn(exact_line, compliance)
+        self.assertIn("jdbc:mysql://mysql:3306/mor_compliance?", compliance)
+        self.assertEqual({"mysql", "rabbitmq", "nacos"}, healthy_dependencies(compliance))
+
+        for block in (decision, compliance):
+            self.assertNotIn("ports:", block)
+            self.assertNotIn("ingress", block)
+            self.assertNotIn("web:", block)
+            self.assertNotIn("networks: [web]", block)
 
         bff = service_block(compose, "operations-console-bff")
-        bff_dependencies = bff.split("    depends_on:\n", 1)[1].split(
-            "    healthcheck:\n", 1
-        )[0]
         self.assertEqual(
-            {"platform-support-service", "risk-service"},
-            set(
-                re.findall(
-                    r"^      ([a-z0-9-]+): \{ condition: service_healthy \}$",
-                    bff_dependencies,
-                    re.MULTILINE,
-                )
-            ),
+            {"platform-support-service", "risk-decision-service", "compliance-service"},
+            healthy_dependencies(bff),
         )
 
 

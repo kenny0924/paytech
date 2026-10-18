@@ -53,7 +53,7 @@ Platform 登录邮箱 `PLATFORM_LOGIN_EMAIL_V1`，CCT 申请联系人 `CLIENT_ON
 # 只生成缺失的独立 test AES 材料；已有材料保留，库已存在但 Key 丢失时拒绝生成替代 Key。
 python3 test-environment/scripts/vault.py prepare
 
-# 显式操作员动作：先审阅 vault-service/docs/database/sql/vault-schema.sql。
+# 显式操作员动作：先审阅 paytech/vault/docs/database/sql/vault-schema.sql。
 # 仅空 mor-test/mor_vault 应用六条 CREATE TABLE；已有表不重放，部分结构拒绝。
 python3 test-environment/scripts/vault.py initialize
 # 已有三表的 mor-test 升级：先单独授权执行该需求的 db/vault/ddl.sql，再执行 dml-test.sql；
@@ -104,7 +104,7 @@ Nacos 唯一实例、STABLE 跨调用方收敛、幂等重放与冲突、REFEREN
 ./test-environment/deploy.sh --skip-build --phase platform-gateway-nginx
 ```
 
-第一条命令先构建已审阅镜像，等待 MySQL、Redis、RabbitMQ、Nacos 健康，再依次只替换 Risk、BFF、Web；本阶段不执行公开烟测。只有第一条命令成功后才能运行第二条；任一命令中的第一处失败都立即停止，不继续替换后续服务。第二条命令依次只替换 Platform、Nginx、Gateway，全部健康后执行一次现有公开烟测。六个应用更新都使用 `--force-recreate`，保证实际进程加载当前镜像和只读挂载配置；Operations 的两个 API location 都由 Nginx 覆盖写入单值 `X-Entry-Channel: OPERATIONS`，不信任调用方同名 Header，并且先于强制 Channel 的 Gateway 更新。`--phase` 对正常、`--skip-build` 和 `--check-only` 都是必填参数；`--timeout <秒>` 调整默认 240 秒的健康等待时间。健康端点只证明进程状态，不证明 Risk 数据目录已经准备完成。
+第一条命令先构建已审阅镜像，等待 MySQL、Redis、RabbitMQ、Nacos 健康，再依次只替换 Risk（`risk-decision-service`、`compliance-service`）、BFF、Web；本阶段不执行公开烟测。只有第一条命令成功后才能运行第二条；任一命令中的第一处失败都立即停止，不继续替换后续服务。第二条命令依次只替换 Platform、Nginx、Gateway，全部健康后执行一次现有公开烟测。七个应用更新都使用 `--force-recreate`，保证实际进程加载当前镜像和只读挂载配置；Operations 的两个 API location 都由 Nginx 覆盖写入单值 `X-Entry-Channel: OPERATIONS`，不信任调用方同名 Header，并且先于强制 Channel 的 Gateway 更新。`--phase` 对正常、`--skip-build` 和 `--check-only` 都是必填参数；`--timeout <秒>` 调整默认 240 秒的健康等待时间。健康端点只证明进程状态，不证明 Risk 数据目录已经准备完成。
 
 第一阶段要求已经存在且只能存在一个 Compose-owned `mor-test` MySQL 容器；基础设施启动前后必须是同一个
 no-trunc container ID。MySQL、Redis、RabbitMQ 使用 `--no-recreate --no-build --pull never`，Nacos 才单独使用
@@ -112,11 +112,47 @@ no-trunc container ID。MySQL、Redis、RabbitMQ 使用 `--no-recreate --no-buil
 失败；部署脚本不会为本流程新建或替换 MySQL 容器或 `mor-test-mysql-data`。
 
 两个阶段通过持久检查点 `private/risk-bff-web-phase.ready` 关联。第一阶段先使旧证据失效，只有本阶段全部成功后，
-才以 `0600` 发布 Nacos、Risk、Platform、Gateway、BFF、Web 六个经审阅本地镜像的精确 image ID，不包含 Nginx 或 Vault。
+才以 `0600` 发布 Nacos、risk-decision、compliance、Platform、Gateway、BFF、Web 七个经审阅本地镜像的精确 image ID，不包含 Nginx 或 Vault。
 第二阶段在任何服务替换之前校验检查点，
-缺失、不安全或与当前六个镜像不符的过期证据都会立即拒绝；不能单独运行第二阶段，也不能用旧检查点跳过第一阶段。
+缺失、不安全或与当前七个镜像不符的过期证据都会立即拒绝；不能单独运行第二阶段，也不能用旧检查点跳过第一阶段。
 
-脚本面向已经完成首次准备的 `mor-test`，不会运行 Schema、初始化 DML、增量 SQL 或 Bootstrap，也不会更新独立 Vault。Vault 继续使用上一节的显式流程。构建使用本机 JDK 25、Maven Wrapper、既有私密 Maven Settings 和 Node/npm，按 Build → Foundation → Risk（随即复制可执行 JAR）→ Platform → Gateway → BFF → Web → 其余制品复制顺序执行。Risk 只加入 backend 网络，没有宿主机端口、Gateway/Nginx 路由或 Web/ingress 网络。第二阶段的现有烟测不会修改 Platform 目录或核心业务事实；其登录、Refresh、Logout 和忽略目录中的 `private/access.md` 更新保持原有行为。Docker 只 COPY 可执行 JAR 或构建后的 `dist`，不会把 Maven Settings、源码工作区或运行秘密复制进镜像。脚本使用 `-DskipTests` 打包；部署烟测不是完整 Maven `verify` 或覆盖率验收。
+脚本面向已经完成首次准备的 `mor-test`，不会运行 Schema、初始化 DML、增量 SQL 或 Bootstrap，也不会更新独立 Vault。Vault 继续使用上一节的显式流程。构建使用本机 JDK 25、唯一 Wrapper `paytech/mvnw`、既有私密 Maven Settings 和 Node/npm：一次 `paytech/` Reactor `clean package` 打包全部 Java 服务（`-am` 带入 build、Foundation 与 api 模块，不 install 到本地仓库），再构建 Web，然后按服务各复制一个 `artifacts/<Compose 服务名>.jar`。Risk 两个服务只加入 backend 网络，没有宿主机端口、Gateway/Nginx 路由或 Web/ingress 网络。第二阶段的现有烟测不会修改 Platform 目录或核心业务事实；其登录、Refresh、Logout 和忽略目录中的 `private/access.md` 更新保持原有行为。Docker 只 COPY 可执行 JAR 或构建后的 `dist`，不会把 Maven Settings、源码工作区或运行秘密复制进镜像。脚本使用 `-DskipTests` 打包；部署烟测不是完整 Maven `verify` 或覆盖率验收。
+
+## V2 服务拆分部署面（2026-10-18，refactor 第 13 步）
+
+`compose.applications.yaml` 按 V2 服务定义 Java 容器，每个服务一个镜像 `mor-test/<服务>:development` 与一个 `JAR_FILE`（`artifacts/<服务>.jar`），健康检查走管理端口（业务端口 + 1000，Platform 仍为 `18106/platform-support`）。旧 `risk-service`、`commerce-service`、`client-contract-service` 已拆为下表服务；本次只改脚本与 Compose，未部署。
+
+| Compose 服务 | 数据库 / 账号 | backend IP | Snowflake worker |
+|---|---|---|---|
+| `risk-decision-service` | `mor_risk_decision` / `risk_decision_app` | 172.30.73.25 | 25 |
+| `compliance-service` | `mor_compliance` / `compliance_app` | 172.30.73.32 | 29 |
+| `client-master-service` | `mor_client_master` / `client_master_app` | 172.30.73.26 | 26 |
+| `commercial-service` | `mor_commercial` / `commercial_app` | 172.30.73.34 | — |
+| `acquiring-service` | `mor_acquiring` / `acquiring_app` | 172.30.73.30 | 28 |
+| `consumer-service` | `mor_consumer` / `consumer_app` | 172.30.73.33 | 27 |
+| `payment-service` | `mor_payment` / `payment_app` | 172.30.73.35 | 21 |
+| `channel-connector-service` | `mor_channel_connector` / `channel_connector_app` | 172.30.73.36 | — |
+| `card-service` | `mor_card` / `card_app` | 172.30.73.37 | 22 |
+| `ledger-service` | `mor_ledger` / `ledger_app` | 172.30.73.38 | 23 |
+| `billing-service` | `mor_billing` / `billing_app` | 172.30.73.39 | 30 |
+| `account-service` | `mor_account` / `account_app` | 172.30.73.40 | 31 |
+| `reconciliation-service` | `mor_reconciliation` / `reconciliation_app` | 172.30.73.41 | 19 |
+| `tax-service` | `mor_tax` / `tax_app` | 172.30.73.42 | 18 |
+
+已初始化的 `mor-test` 切换前的显式操作员步骤（每行一个动作，均不由部署脚本调用）：
+
+```sh
+python3 test-environment/scripts/prepare.py
+python3 test-environment/scripts/initialize.py --create-service-databases
+python3 test-environment/scripts/initialize.py --apply-risk-sql
+python3 test-environment/scripts/initialize.py --apply-service-sql
+```
+
+- `prepare.py` 在已有材料上只追加缺失的 V2 键；不追加时 Compose 插值会因 `:?prepare test secrets` 失败。
+- `--create-service-databases` 以 root 补建 14 个库与最小权限账号（`SELECT, INSERT, UPDATE, DELETE`），已有账号与密码不变。
+- `--apply-risk-sql` 只接受空的 `mor_risk_decision` 与 `mor_compliance`。
+- `--apply-service-sql` 对其余 12 个库只在空库上执行服务 `*-schema.sql` 与 `*-initial-data.sql`；表集合与 Schema 完全一致时视为 PREPARED 不重放，部分结构拒绝且不写任何库。
+- 切换涉及的其余部署项：Platform `t_gateway_target` 的 Commerce Target 改为 `acquiring-service` 并新增 consumer Target；Webhook 调用方已改为 `acquiring-service`；Vault 访问规则登记 `card-service`、`channel-connector-service`；XXL Admin 登记 `acquiring-service` 执行器与 `cardOrphanInstrumentPurge`；RabbitMQ 一致性哈希插件需按挂载重建容器后生效；旧 `cg_*` 队列与 `topic_*` 交换机按 [CURRENT_IMPLEMENTATION](../agent-docs/CURRENT_IMPLEMENTATION.md) 的待办删除。
 
 ## 首次准备（已在当前机器执行）
 
@@ -131,8 +167,10 @@ python3 test-environment/scripts/initialize.py --nacos
 
 # Risk 目录建表/初始化和只读检查属于下游受审步骤；仅当检查明确返回 PREPARED 后继续。
 # PREPARED 之前必须停止，不得启动任何应用服务。
+python3 test-environment/scripts/initialize.py --create-service-databases
 python3 test-environment/scripts/initialize.py --apply-risk-sql
 python3 test-environment/scripts/initialize.py --verify-risk-catalog
+python3 test-environment/scripts/initialize.py --apply-service-sql
 ./test-environment/deploy.sh --phase risk-bff-web
 ./test-environment/deploy.sh --skip-build --phase platform-gateway-nginx
 
@@ -140,7 +178,7 @@ python3 test-environment/scripts/initialize.py --verify-risk-catalog
 python3 test-environment/scripts/smoke.py --complete-bootstrap
 ```
 
-`prepare.py` 生成独立随机密码、RSA 3072 签名密钥和独立 HMAC 密钥，不生成 TLS 证书；文件权限 `0600`，私密目录 `0700`。既有材料会保留；材料不完整时停止，不静默轮换。依赖 Java Crypto JAR 使用仓库既有版本，非标准 Maven 缓存可显式设置 `MAVEN_LOCAL_REPOSITORY`。
+`prepare.py` 生成独立随机密码、RSA 3072 签名密钥和独立 HMAC 密钥，不生成 TLS 证书；已有 `.env.test` 时只追加缺失的 V2 键（14 个服务库密码与 `MOR_CARD_FINGERPRINT_KEY`），不改写已有值，也不打印值；文件权限 `0600`，私密目录 `0700`。既有材料会保留；材料不完整时停止，不静默轮换。依赖 Java Crypto JAR 使用仓库既有版本，非标准 Maven 缓存可显式设置 `MAVEN_LOCAL_REPOSITORY`。
 
 基础设施 MySQL 初始化只复用 `../local-environment/mysql/init` 中的数据库/账号及 Nacos/XXL-Job 技术表。业务 SQL 由 `initialize.py --apply-platform-sql` 明确执行到本项目 `mor-test-mysql-1`，不挂进数据库 init 目录、不由 Java 启动执行。当前环境已经通过独立增量推进到 27 条 Route，不再运行首次初始化参数；异常或部分初始化会停止，不能用删除 Volume 或恢复 Bootstrap 绕过。Nacos 初始化途中失败时先检查已完成步骤，再显式恢复，不重置已有凭据。
 
