@@ -51,6 +51,8 @@ import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.foundation.common.error.ServiceUnavailableException;
 import com.paytech.foundation.httpclient.api.HttpServiceClientFactory;
 import com.paytech.foundation.httpclient.api.HttpRequestValidationException;
+import com.paytech.foundation.httpproblem.api.ProblemFieldError;
+import com.paytech.foundation.httpproblem.api.RequestBodyValidationException;
 import com.paytech.foundation.httpclient.api.HttpServiceClientOptions;
 import com.paytech.foundation.httpclient.test.simulator.HttpServiceSimulator;
 
@@ -234,6 +236,32 @@ public class HttpServiceClientFactoryTest {
         assertInvalidResponse(() -> enabled.save(new ValidationBody("a")));
         simulator.respond(422, legacy("VALIDATION_ERROR"), "application/json");
         assertInvalidResponse(() -> enabled.save(new ValidationBody("a")));
+    }
+
+    /** 显式启用后，带 Body 请求的合同 Code 保留 errors[]（field 与 message），远端 detail 不外显；未启用时只保留 Code。 */
+    @Test
+    void test_contractCodeFieldErrorsArePreservedOnlyWhenExplicitlyEnabled() {
+        respondProblem(422, problem(422, "SESSION_EXPIRED")
+            .replace("}]}", "},{\"field\":\"name\",\"message\":\"bad\"},{\"field\":\"age\",\"message\":\"too young\"}]}"));
+        var options = HttpServiceClientOptions.strict().withRequestValidationFailures()
+            .withDependencyFailureMapper((kind, cause) -> new ServiceUnavailableException(cause));
+        var enabled = HttpServiceClientFactory.create(client(Duration.ofSeconds(2)), options, ContractError.values())
+            .createClient(ValidationApi.class);
+
+        var failure = assertThrows(RequestBodyValidationException.class, () -> enabled.save(new ValidationBody("a")));
+
+        assertSame(ContractError.SESSION_EXPIRED, failure.getErrorCode());
+        assertEquals(ContractError.SESSION_EXPIRED.getMessage(), failure.getMessage());
+        assertEquals(List.of(new ProblemFieldError("name", "bad"), new ProblemFieldError("age", "too young")),
+            failure.errors());
+        assertInstanceOf(RestClientResponseException.class, failure.getCause());
+
+        respondProblem(422, problem(422, "SESSION_EXPIRED"));
+        var disabled = HttpServiceClientFactory.create(client(Duration.ofSeconds(2)), ContractError.values())
+            .createClient(ValidationApi.class);
+        FailException plain = assertThrows(FailException.class, () -> disabled.save(new ValidationBody("a")));
+        assertEquals(FailException.class, plain.getClass());
+        assertSame(ContractError.SESSION_EXPIRED, plain.getErrorCode());
     }
 
     @HttpExchange("/resource")

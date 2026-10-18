@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   patch,
+  fieldIssues,
   createCommand,
   runUpload,
   newUpload,
@@ -179,4 +180,15 @@ test("relation patch preserves concurrent untouched attributes and explicit clea
       values: { relationType: "DIRECTOR", ownershipPercentage: null },
     },
   );
+});
+test("save failure maps Problem errors onto known form fields only", () => {
+  const failure = new RequestFailure(422, "入驻字段不符合约定", "req-1", {
+    "contact.phone": "手机号须为 E.164 格式，如 +8613800138000",
+    dirtyFields: "包含不支持的字段",
+  }, "INVALID_DRAFT");
+  assert.deepEqual(fieldIssues(failure, ["contact.phone", "contact.email"]), {
+    "contact.phone": "手机号须为 E.164 格式，如 +8613800138000",
+  });
+  assert.deepEqual(fieldIssues(new RequestFailure(503, "unavailable"), ["contact.phone"]), {});
+  assert.deepEqual(fieldIssues(new Error("offline"), ["contact.phone"]), {});
 });
