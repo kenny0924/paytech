@@ -1,7 +1,7 @@
 package com.paytech.client.console.bff.configuration;
 
+import com.paytech.client.console.bff.ext.rest.ClientActorResolver;
 import com.paytech.client.console.bff.ext.rest.ClientRequestInterceptor;
-import com.paytech.client.console.bff.service.processor.ClientSessionProcessor;
 import com.paytech.foundation.common.error.InvalidParameterException;
 import jakarta.servlet.http.*;
 import java.io.IOException;
@@ -20,7 +20,7 @@ import org.springframework.web.servlet.config.annotation.*;
 public class ClientOnboardingWebConfiguration implements WebMvcConfigurer {
 
     private final ClientRequestInterceptor common;
-    private final ClientSessionProcessor sessions;
+    private final ClientActorResolver actors;
 
     /** 先验证可信身份，再检查具体路径的协议；管理监听不会注册业务入口。 */
     @Override
@@ -36,7 +36,7 @@ public class ClientOnboardingWebConfiguration implements WebMvcConfigurer {
                             return true;
                         }
                         common.preHandle(request, response, handler);
-                        sessions.identity(request);
+                        actors.resolve(request);
                         var variables = (Map<?, ?>) request.getAttribute(
                             org.springframework.web.servlet.HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE
                         );

@@ -1,4 +1,4 @@
-package com.paytech.client.console.bff.ext.rest.response;
+package com.paytech.client.console.bff.service.model;
 import java.util.List;
 import lombok.Data;
 import lombok.AllArgsConstructor;

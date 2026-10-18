@@ -1,8 +1,8 @@
 package com.paytech.client.console.bff.configuration;
 
+import com.paytech.client.console.bff.ext.rest.ClientActorResolver;
+import com.paytech.client.console.bff.ext.rest.ClientPermissionGuard;
 import com.paytech.client.console.bff.ext.rest.ClientRequestInterceptor;
-import com.paytech.client.console.bff.service.processor.ClientPermissionProcessor;
-import com.paytech.client.console.bff.service.processor.ClientSessionProcessor;
 import com.paytech.foundation.common.error.InvalidParameterException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -38,8 +38,8 @@ public class ClientTeamWebConfiguration implements WebMvcConfigurer {
         "/client-team/v1/invitations", Set.of("status", "page", "size"));
 
     private final ClientRequestInterceptor common;
-    private final ClientSessionProcessor sessions;
-    private final ClientPermissionProcessor permissions;
+    private final ClientActorResolver actors;
+    private final ClientPermissionGuard permissions;
 
     /** 注册团队接口拦截器。 */
     @Override
@@ -52,8 +52,7 @@ public class ClientTeamWebConfiguration implements WebMvcConfigurer {
                     return true;
                 }
                 common.preHandle(request, response, handler);
-                sessions.identity(request);
-                permissions.require(request, permission(request));
+                permissions.require(actors.resolve(request), permission(request));
                 ClientDeveloperWebConfiguration.checkPathIds(request);
                 checkQuery(request);
                 checkEmptyBody(request);

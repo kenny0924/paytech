@@ -129,6 +129,12 @@
 <a id="finance-accounting-kernel-20261015"></a>
 
 <a id="mor-test-compensation-scan-20261017"></a>
+## Client Console BFF 接口与 Processor 按规范重组（2026-10-18，已本地提交，未推送、未部署）
+
+- **Implemented：** `client-console-bff` 原 5 个 Processor 拆分重组。会话、权限两个共用组件移出 Processor：可信身份由入站 `ClientActorResolver` 解析并以 `ClientActor` 参数注入 Controller，工作区 PLT-I02 权限由 `ClientPermissionGuard` 判断，Refresh Cookie 读写回到 Controller 侧。真实的多 Owner 聚合按入口拆成 5 个继承 Foundation `AbstractProcessor` 的 Processor（入驻开始页、表单目录、申请详情、工作区首页、邀请详情）。原散落在 Processor 内的单 Owner 回执校验移入 `integration` 下 7 个 Port（Platform 会话与工作区、授权、邀请、文件，CCT 摘要与入驻读取，Compliance 材料与审核结果）。新增 `ClientContextType`、`SectionAvailability`、`WorkspaceRestrictionReason` 枚举替代魔法字符串，`FormOptionsResponseBody` 从 `ext/rest/response` 移到 `service/model`。HTTP 路径、错误码、状态码、校验顺序、降级规则与响应字段顺序不变。
+- **Verified：** JDK 25 `./mvnw -B -o clean verify -pl client-console-bff/paytech-client-console-bff-test -am`，改动前后均为 **81/81**。
+- **未处理：** 页面模型仍是 record 与 `*Models` 容器；Jackson 3 下改为普通 class 会改变 JSON 字段顺序，既有测试也按字段顺序断言，需单独决定。纯转发接口继续由 Controller 直接调用 Owner `@HttpExchange` 接口。邀请详情的 CCT 摘要回执含 null 元素时，原实现返回 500，现与其他无效回执一样只隐藏工作区名称。
+
 ## Operations BFF 聚合 Processor 迁到 Foundation 模板（2026-10-18，已本地提交，未推送、未部署）
 
 - **Implemented：** `operations-console-bff` 的聚合 Processor 移入 `service/processor`，每个入口一个并继承 Foundation `AbstractProcessor`；内部请求位于 `service/processor/request`，响应直接复用 BFF 页面 ResponseBody。`RoleDetailsProcessor` 拆出 `RolePermissionOptionsProcessor`，`AuditDetailsProcessor` 改名为 `AuditEventDetailsProcessor`，`ClientReviewFileProcessor` 改名为 `ClientReviewFileDownloadProcessor`。`ApiScopeDetailsProcessor` 的引用类型与分页校验移入 `validate`，引用类型改用 BFF 枚举 `ApiScopeReferenceKind`。HTTP 路径、错误码、状态码、上游调用顺序与降级规则不变。

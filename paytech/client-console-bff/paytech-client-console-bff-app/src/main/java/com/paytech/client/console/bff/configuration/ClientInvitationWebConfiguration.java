@@ -1,13 +1,14 @@
 package com.paytech.client.console.bff.configuration;
 
 import com.paytech.client.console.bff.domain.enums.ClientBffErrorCode;
+import com.paytech.client.console.bff.domain.enums.ClientContextType;
+import com.paytech.client.console.bff.ext.rest.ClientActorResolver;
 import com.paytech.client.console.bff.ext.rest.ClientRequestInterceptor;
-import com.paytech.client.console.bff.service.processor.ClientSessionProcessor;
+import com.paytech.client.console.bff.service.model.ClientActor;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.common.error.InvalidParameterException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.Collections;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.HandlerMethod;
@@ -29,7 +30,7 @@ public class ClientInvitationWebConfiguration implements WebMvcConfigurer {
     static final String PREVIEW = "/client-invitations/v1/preview";
 
     private final ClientRequestInterceptor common;
-    private final ClientSessionProcessor sessions;
+    private final ClientActorResolver actors;
 
     /** 注册邀请接口拦截器。 */
     @Override
@@ -48,17 +49,15 @@ public class ClientInvitationWebConfiguration implements WebMvcConfigurer {
                 if (PREVIEW.equals(request.getRequestURI())) {
                     return true;
                 }
-                sessions.identity(request);
-                requireAccountContext(request);
+                requireAccountContext(actors.resolve(request));
                 return true;
             }
         }).addPathPatterns("/client-invitations/**");
     }
 
-    /** 只接受 Gateway 重建的单值账号上下文。 */
-    static void requireAccountContext(HttpServletRequest request) {
-        var values = Collections.list(request.getHeaders("X-Gateway-Context-Type"));
-        if (values.size() != 1 || !"ACCOUNT".equals(values.getFirst())) {
+    /** 只接受账号上下文。 */
+    static void requireAccountContext(ClientActor actor) {
+        if (actor.getContextType() != ClientContextType.ACCOUNT) {
             throw new FailException(ClientBffErrorCode.ACCOUNT_CONTEXT_REQUIRED);
         }
     }

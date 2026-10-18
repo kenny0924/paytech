@@ -12,6 +12,12 @@ JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-25.jdk/Contents/Home ./mvnw -B v
 
 `ClientAuthenticationHttpAutoTest` 使用真实随机端口 Spring HTTP 与本机 Platform 协议 Simulator；它证明 BFF 转发、Cookie、错误格式和端口隔离，不替代 Platform 的真实 MySQL/Redis 回归。测试 profile 关闭 Nacos 和自动注册。
 
+## 代码结构
+
+- `ext/rest`：Controller 只做协议适配。可信身份由 `ClientActorResolver` 从 Gateway 单值头解析，入站拦截器先行校验，Controller 以 `ClientActor` 参数接收；工作区接口的 PLT-I02 权限由 `ClientPermissionGuard` 判断。Refresh Cookie 的读写在 Controller 侧完成，规则集中在 `core/ClientRefreshCookie`。
+- `service/processor`：只放真实的多 Owner 页面聚合，每个入口一个 Processor，继承 Foundation `AbstractProcessor`：入驻开始页、受控表单目录、申请详情、工作区首页、邀请详情。内部请求在 `service/processor/request`，请求只有可信身份时直接以 `ClientActor` 作为请求；响应使用 BFF 页面模型。
+- `integration`：每个 Port 只适配一个 Owner 的接口并校验回执（会话签发、工作区成员、授权、邀请、文件、CCT 摘要与入驻读取、Compliance 材料与审核结果）。纯转发的写命令和查询由 Controller 直接调用 Owner 的 `@HttpExchange` 接口，不增加一行转发层。
+
 ## 配置边界
 
 - 内部调用 Token（D26）：依赖 `paytech-internal-auth`，`internal-auth.mode` 默认 `OFF`，行为不变；非 `OFF` 时入站由 MVC Starter 的 `InternalAuthFilter` 校验，出站全部 `HttpServiceClientFactory.create` 客户端经 `InternalCallTokenOptions` 按显式目标服务名附加 Token。`ClientInternalTokenAutoTest` 覆盖 `REQUIRED` 下入站拒绝与出站附加。
