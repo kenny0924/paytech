@@ -13,7 +13,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.cloud.client.loadbalancer.*;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.transaction.*;
-import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.*;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.httpclient.api.*;
@@ -23,7 +22,9 @@ import com.paytech.client.master.domainservice.repository.impl.ClientDocumentRep
 import com.paytech.client.master.domainservice.service.*;
 import com.paytech.client.master.domainservice.service.impl.ClientDocumentServiceImpl;
 import com.paytech.client.master.integration.*;
-import com.paytech.client.master.service.processor.ClientDocumentProcessor;
+import com.paytech.client.master.service.processor.AssociateClientDocumentProcessor;
+import com.paytech.client.master.service.processor.RemoveClientDocumentProcessor;
+import com.paytech.foundation.redis.core.autoconfigure.RedisResourceLockProperties;
 import com.paytech.platform.support.api.onboardingfiles.OnboardingFileVerificationApi;
 import com.paytech.platform.support.api.enums.OnboardingFileErrorCode;
 import com.paytech.compliance.api.MaterialRequirementsApi;
@@ -65,10 +66,15 @@ public class ClientDocumentConfiguration {
         var transport=new JdkClientHttpRequestFactory(HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(2)).followRedirects(HttpClient.Redirect.NEVER).build());transport.setReadTimeout(Duration.ofSeconds(3));
         return builder.requestFactory(transport).build();
     }
-    /** 只读准备与最终短写事务分开，外部查询由 Processor 在事务外完成。 */
-    @Bean public ClientDocumentProcessor clientDocumentProcessor(ClientDocumentService service,ClientDraftAccountClient accounts,ClientMaterialAuthorityClient authority,PlatformTransactionManager manager) {
-        var reads=new TransactionTemplate(manager);reads.setReadOnly(true);reads.setTimeout(5);reads.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-        var writes=new TransactionTemplate(manager);writes.setTimeout(5);writes.setIsolationLevel(TransactionDefinition.ISOLATION_READ_COMMITTED);
-        return new ClientDocumentProcessor(service,accounts,authority,reads,writes);
+    /** C12 关联材料：只读准备与最终短写事务分开，外部查询由 Processor 在事务外完成。 */
+    @Bean public AssociateClientDocumentProcessor associateClientDocumentProcessor(RedisResourceLockProperties locks,ClientDocumentService service,
+        ClientDraftAccountClient accounts,ClientMaterialAuthorityClient authority,PlatformTransactionManager manager) {
+        return new AssociateClientDocumentProcessor(locks.getWaitTime(),locks.getLeaseTime(),service,accounts,authority,
+            ClientDraftConfiguration.reads(manager),ClientDraftConfiguration.writes(manager));
+    }
+    /** C13 删除材料关联。 */
+    @Bean public RemoveClientDocumentProcessor removeClientDocumentProcessor(RedisResourceLockProperties locks,ClientDocumentService service,
+        ClientDraftAccountClient accounts,PlatformTransactionManager manager) {
+        return new RemoveClientDocumentProcessor(locks.getWaitTime(),locks.getLeaseTime(),service,accounts,ClientDraftConfiguration.writes(manager));
     }
 }
