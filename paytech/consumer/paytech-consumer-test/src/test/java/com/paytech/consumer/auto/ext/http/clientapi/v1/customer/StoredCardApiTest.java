@@ -74,7 +74,7 @@ class StoredCardApiTest extends AbstractCustomerApiTest {
         storedCards.mockDeleteFound(false);
         var missing = deleteCard(clientId(), customerNo, TOKEN);
         storedCards.mockFailure(MockHttpFault.json(503, new ApiProblemResponse(ApiProblemProfile.TYPE,
-            "Service Unavailable", "合成故障", "SERVICE_UNAVAILABLE", "payment-test", "2026-09-08T00:00:00.000000Z", null)));
+            "Service Unavailable", "合成故障", "SERVICE_UNAVAILABLE", "card-test", "2026-09-08T00:00:00.000000Z", null)));
         var unavailable = deleteCard(clientId(), customerNo, TOKEN);
 
         assertAll(() -> assertEquals(List.of(204, 404, 503),
