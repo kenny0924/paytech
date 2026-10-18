@@ -10,6 +10,8 @@ import org.springframework.amqp.rabbit.listener.api.ChannelAwareMessageListener;
 /**
  * 为每个分区队列创建一个监听容器：并发 1、Prefetch 1、手动 Ack、拒绝不自动重新入队。
  * <li>队列本身为单活消费者（SAC），多实例部署时同一分区只有一个实例在消费，保证同聚合串行。</li>
+ * <li>队列缺失不视为致命（{@code missingQueuesFatal=false}）：Broker 重建后队列由连接恢复重声明补回，容器按 Spring AMQP 默认间隔
+ * （被动声明重试 5 秒、消费者重启 5 秒）持续重试而不是永久停止。启动时拓扑已在容器启动前声明，声明失败仍使启动失败。</li>
  *
  * @author Claude
  */
@@ -43,7 +45,7 @@ public final class PartitionedListenerContainerFactory {
         container.setPrefetchCount(1);
         container.setAcknowledgeMode(AcknowledgeMode.MANUAL);
         container.setDefaultRequeueRejected(false);
-        container.setMissingQueuesFatal(true);
+        container.setMissingQueuesFatal(false);
         container.setAutoStartup(false);
         container.setMessageListener(listener);
         container.afterPropertiesSet();
