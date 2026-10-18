@@ -13,7 +13,7 @@
 | SQL 来源 | [platform-support-additions.sql](./platform-support-additions.sql) 第一个完整 `CREATE TABLE t_authentication_challenge` 语句（第 4–33 行） |
 | 语句 SHA-256 | `75d3593444014a252fdcfa6b864b3e55840e40e5015308b373cb778e05a6ad30`；精确 UTF-8 CREATE 语句，从 CREATE 起至分号止，不含尾部换行 |
 
-该语句与 [Platform 完整 Schema](../../../../../platform-support-service/docs/database/sql/platform-support-schema.sql) 的同名表逐字一致；不另建一份 SQL 权威。执行时只提取这一条 CREATE，并校验源文件与语句指纹。后续六张文件表、其他系统模型变更和任何初始化 DML 均不在本次范围。
+该语句与 [Platform 完整 Schema](../../../../../paytech/platform-support/docs/database/sql/platform-support-schema.sql) 的同名表逐字一致；不另建一份 SQL 权威。执行时只提取这一条 CREATE，并校验源文件与语句指纹。后续六张文件表、其他系统模型变更和任何初始化 DML 均不在本次范围。
 
 ## 已取得的只读证据
 

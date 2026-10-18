@@ -131,7 +131,7 @@ Risk 真实启动回归暴露资源锁 Advisor 过早创建监控注册器。用
 
 这些结果属于本阶段开发检查，不替代下一阶段独立综合验收。测试数量、命令与边界见[验证摘要](./assets/stage4-verification.json)，[浏览器证据](./assets/stage4-browser.json)使用合成 HTTP；[页面及菜单截图](./assets/rule-list-menu-after.png)展示生产页面组件，不是 test 部署截图。
 
-关键开发回归入口：[Risk 删除与并发测试](../../../risk-compliance-service/risk-test/src/test/java/com/paytech/risk/auto/ext/http/DecisionRuleSetDeletionHttpAutoTest.java)、[BFF 权限与协议测试](../../../operations-console-bff/paytech-operations-console-bff-test/src/test/java/com/paytech/operations/console/bff/auto/RiskDecisionConfigurationBrowserBoundaryAutoTest.java)、[Web 导航测试](../../../operations-console-web/src/risk/riskNavigation.test.ts)、[Foundation 初始化回归](../../../paytech-foundation/paytech-redis-starter/src/test/java/com/paytech/foundation/redis/auto/autoconfigure/RedisResourceLockAutoConfigurationAutoTest.java)。开发日志保留在 `/tmp/risk-rule-list-stage4/`。
+关键开发回归入口：[Risk 删除与并发测试](../../../paytech/risk-decision/paytech-risk-decision-test/src/test/java/com/paytech/risk/auto/ext/http)、[BFF 权限与协议测试](../../../paytech/operations-console-bff/paytech-operations-console-bff-test/src/test/java/com/paytech/operations/console/bff/auto/RiskDecisionConfigurationBrowserBoundaryAutoTest.java)、[Web 导航测试](../../../operations-console-web/src/risk/riskNavigation.test.ts)、[Foundation 初始化回归](../../../paytech/foundation/paytech-redis-starter/src/test/java/com/paytech/foundation/redis/auto/autoconfigure/RedisResourceLockAutoConfigurationAutoTest.java)。开发日志保留在 `/tmp/risk-rule-list-stage4/`。
 
 开发检查发现并修复了四类边界缺陷：根指针损坏时列表静默漏行；删除成功重放重新读取已变化目录；Redis Advisor 提前创建监控注册器；未知删除错误重复显示。完整模型检查另暴露旧 71 表断言及缺失根表示例，已按批准方案同步。失败记录保留为诊断证据，未计为通过。
 

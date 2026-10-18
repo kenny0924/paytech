@@ -64,7 +64,7 @@
 
 ## 8. 阶段 3 结果（2026-10-14，待确认）
 
-已读：[开发规范](../../../agent-docs/DEVELOPMENT_CONVENTIONS.md)、[工程规范](../../../agent-docs/JAVA_PROJECT_STRUCTURE.md)（模块、HTTP 契约、外部集成、依赖方向）、[写接口示例](../../../agent-docs/examples/WRITE_API_EXAMPLE.md)、[Payment 专项补充](../../../payment-orchestration-service/docs/development/processor-conventions.md)。
+已读：[开发规范](../../../agent-docs/DEVELOPMENT_CONVENTIONS.md)、[工程规范](../../../agent-docs/JAVA_PROJECT_STRUCTURE.md)（模块、HTTP 契约、外部集成、依赖方向）、[写接口示例](../../../agent-docs/examples/WRITE_API_EXAMPLE.md)、[Payment 专项补充](../../../paytech/payment/docs/development/processor-conventions.md)。
 
 **本次 Processor / 事务：** 读卡入口 `RevealChannelCardMaterialProcessor`（Execution），无数据库写、无事务、不加 Intent 锁（调用发生在 pay 持锁期间）。pay 沿用 `PayProcessor`：候选查询与选路在受理事务前；`ActionFlow` 每个动作的外部调用（Risk、Platform）在事务外，结果、渠道交易引用与执行位切换在一个短事务内保存。实现与差异见[技术方案第 12 节](./technique.md#12-阶段-3-实现记录2026-10-14)。
 
@@ -75,6 +75,6 @@
 - 测试设施：`PlatformMocker`/`MockPlatformController`、`RiskMocker`/`MockRiskController`、执行五表的计数与清理、`cardFixture`；Channel 公开合同登记新增的四个类型。
 - Payment `./mvnw -o -pl paytech-payment-test test`：**64/64**（卡直付 8、Channel 56 未退化）；测试日志中卡号、CVV、跳转地址出现 0 次。Platform 全量 **424/424**（读卡地址改为可配置 context path，默认 `/payment`）。
 
-**配置：** Payment 新增 `payment.outbound.*`、`payment.card.mock-pans`，同步 Nacos 模板与[配置清单](../../../payment-orchestration-service/docs/development/configuration.md)；Platform 新增 `ps.integration.execution.payment-context-path`。
+**配置：** Payment 新增 `payment.outbound.*`、`payment.card.mock-pans`，同步 Nacos 模板与[配置清单](../../../paytech/payment/docs/development/configuration.md)；Platform 新增 `ps.integration.execution.payment-context-path`。
 
 **遗留：** Risk 支付评估为 Payment 草案；恢复（渠道通知与重试）未做；AUTHORIZE/AUTHENTICATE Actor 仍为 TODO；Commerce 隐私设计补记 T12；未提交。下一阶段 4：本机端到端（需另行授权本机运行库建表）。

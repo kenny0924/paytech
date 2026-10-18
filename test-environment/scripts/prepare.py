@@ -13,6 +13,33 @@ ENV = ROOT / ".env.test"
 os.umask(0o077)
 
 
+# V2 服务拆分（refactor 第 03–12 步，design/10 §5.1）新增的库账号与卡指纹密钥。已有 .env.test 时只追加缺失项，不改已有值。
+V2_DATABASE_PASSWORDS = (
+    "MOR_CLIENT_MASTER_DB_PASSWORD", "MOR_COMMERCIAL_DB_PASSWORD", "MOR_ACQUIRING_DB_PASSWORD",
+    "MOR_CONSUMER_DB_PASSWORD", "MOR_CHANNEL_CONNECTOR_DB_PASSWORD", "MOR_CARD_DB_PASSWORD",
+    "MOR_RISK_DECISION_DB_PASSWORD", "MOR_COMPLIANCE_DB_PASSWORD", "MOR_LEDGER_DB_PASSWORD",
+    "MOR_BILLING_DB_PASSWORD", "MOR_ACCOUNT_DB_PASSWORD", "MOR_RECONCILIATION_DB_PASSWORD",
+    "MOR_TAX_DB_PASSWORD", "MOR_CDC_DB_PASSWORD")
+
+
+def v2_values():
+    values = {name: secrets.token_hex(24) for name in V2_DATABASE_PASSWORDS}
+    values["MOR_CARD_FINGERPRINT_KEY"] = base64.b64encode(secrets.token_bytes(32)).decode()
+    return values
+
+
+def append_missing_v2_values():
+    """Append V2 keys absent from an existing .env.test; existing keys and values are never rewritten."""
+    present = {line.split("=", 1)[0] for line in ENV.read_text().splitlines() if line and not line.startswith("#")}
+    missing = {name: value for name, value in v2_values().items() if name not in present}
+    if not missing:
+        return []
+    with ENV.open("a") as stream:
+        stream.write("".join(f"{key}={value}\n" for key, value in missing.items()))
+    ENV.chmod(0o600)
+    return sorted(missing)
+
+
 def write_new(path, value):
     with path.open("x") as stream:
         stream.write(value)
@@ -47,7 +74,10 @@ def main():
                     PRIVATE / "bootstrap.sql"]
         if not all(path.is_file() for path in required):
             raise SystemExit("Partial test material exists. Inspect and recover it; preparation never overwrites secrets.")
+        added = append_missing_v2_values()
         print("Existing test material retained; no credentials or keys were regenerated.")
+        if added:
+            print("Appended missing V2 test keys (values not shown): " + ", ".join(added))
         return
     PRIVATE.mkdir(mode=0o700)
     java_material()
@@ -60,6 +90,7 @@ def main():
                  "MOR_NACOS_AUTH_IDENTITY_VALUE", "MOR_XXL_JOB_ACCESS_TOKEN", "MOR_XXL_JOB_LOGIN_TOKEN_KEY",
                  "MOR_XXL_JOB_ADMIN_PASSWORD"]
     values = {name: secrets.token_hex(24) for name in passwords}
+    values.update(v2_values())
     values.update(MOR_RABBITMQ_USER="mor_test", MOR_RABBITMQ_VHOST="/mor-test",
                   MOR_NACOS_AUTH_IDENTITY_KEY="mor-test-server",
                   MOR_NACOS_AUTH_TOKEN=base64.b64encode(secrets.token_bytes(48)).decode(),

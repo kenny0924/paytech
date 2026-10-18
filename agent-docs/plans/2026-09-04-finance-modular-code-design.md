@@ -6,7 +6,7 @@
 - Decision date: 2026-09-04
 - Superseded sections: 第 4 节原业务模块绝对零依赖限制已由 [`2026-09-05-business-module-collaboration-policy.md`](../decisions/2026-09-05-business-module-collaboration-policy.md) 取代
 
-本文记录 Finance 的模块、表归属与实施门禁。当前实现与验证只以 [`CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md) 和 [`finance-service/README.md`](../../finance-service/README.md) 为准；本文不授权或代表完整 Java、DDL、数据库或 PDManer 已实施。
+本文记录 Finance 的模块、表归属与实施门禁。当前实现与验证只以 [`CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md) 和 [`finance-service/README.md`](../../paytech/ledger/README.md) 为准；本文不授权或代表完整 Java、DDL、数据库或 PDManer 已实施。
 
 ## 1. 基线与范围
 

@@ -13,7 +13,7 @@
 
 ## 验收编号映射
 
-测试目录为 [auto/execution](../../../payment-orchestration-service/paytech-payment-test/src/test/java/com/paytech/payment/auto/execution/PaymentExecutionApiAutoTest.java)；表中省略共同的 `AutoTest` 后缀。四个业务 Handler 均有同名独立入口测试类。
+测试目录为 [auto/execution](../../../paytech/payment/paytech-payment-test/src/test/java/com/paytech/payment/auto/execution)；表中省略共同的 `AutoTest` 后缀。四个业务 Handler 均有同名独立入口测试类。
 
 | 编号 | 本轮运行的代表证据 | 阶段 5 仍需核对的组合或边界 |
 |---|---|---|

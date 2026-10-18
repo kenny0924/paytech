@@ -4,7 +4,7 @@
 
 ## 1. 唯一执行文件与顺序
 
-1. 缺原 Credential/Grant 两表的环境，先用服务已有 [2026-09-08-add-api-credential-validation.sql](../../../../platform-support-service/docs/database/sql/changes/2026-09-08-add-api-credential-validation.sql)。它包含两表全部 21 列及原索引，不在需求目录复制。
+1. 缺原 Credential/Grant 两表的环境，先用服务已有 [2026-09-08-add-api-credential-validation.sql](../../../../paytech/platform-support/docs/database/sql/changes/2026-09-08-add-api-credential-validation.sql)。它包含两表全部 21 列及原索引，不在需求目录复制。
 2. 模型/正式 Schema 已按获准方案同步且旧表匹配后，应用 [ddl.sql](./ddl.sql)：新 t_api_scope 7 列、1 主键/1 唯一；旧 Grant/Route 各加 1 个索引。逐语句记录结果，DDL 自动提交。
 3. Platform/BFF 已部署支持新接口和 Query、Web 包含两个页面能力后，人工应用 [dml.sql](./dml.sql)：127 条新记录 + 2 条原 Route 更新。该文件不含 COMMIT，使用同一交互连接核数并决定 COMMIT/ROLLBACK；不使用 `--force`。
 4. 发布准备已按用户“部署test”授权冻结 test 的账号/角色版本和 9 Route/4 Resource/4 RolePermission 激活清单，见 [发布单](../release.md)及 [activate-test.sql](./activate-test.sql)。其他环境仍需按自身状态另行核对和授权。新权限只给确认的管理员，普通角色仍通过已有角色管理明确授权。四条初始 RolePermission 为 REVOKED。

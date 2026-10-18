@@ -4,7 +4,7 @@
 
 状态：逐表领域示例；当前模型统计、数据库执行、验证和部署统一见[当前台账](../../CURRENT_IMPLEMENTATION.md)。
 
-> **当前权威：** 未涉及领域继续遵循 [Platform 数据库精简设计](../../../docs/superpowers/specs/2026-09-01-platform-support-database-simplification-design.md)与[公共 API 控制面设计](../../../docs/superpowers/specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md)。Notification 使用 [Delivery 七表后继](../../../requirements/20260920/platform-support-Delivery领域规划/data-design.md)；[当前生成模型](../../../platform-support-service/docs/database/platform-support.pdma.json)对应本场景字段。场景代表业务约束，不构成模块接入、SQL 执行或部署授权；历史环境描述不代表当前发布状态。
+> **当前权威：** 未涉及领域继续遵循 [Platform 数据库精简设计](../../../docs/superpowers/specs/2026-09-01-platform-support-database-simplification-design.md)与[公共 API 控制面设计](../../../docs/superpowers/specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md)。Notification 使用 [Delivery 七表后继](../../../requirements/20260920/platform-support-Delivery领域规划/data-design.md)；[当前生成模型](../../../paytech/platform-support/docs/database/platform-support.pdma.json)对应本场景字段。场景代表业务约束，不构成模块接入、SQL 执行或部署授权；历史环境描述不代表当前发布状态。
 
 > **2026-09-05 横切迁移提示：** 本文的逐表记录继续精确描述当前生成模型及当时的消费者假设，不单独拥有
 > Vault 或 `compensation_event` 契约。其中与当前三表 Protect/Reveal、补偿三字段身份和 4 KiB 可选 Payload

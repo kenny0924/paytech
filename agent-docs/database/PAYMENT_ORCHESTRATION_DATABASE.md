@@ -196,7 +196,7 @@ Channel 争议的不可变事件流。字段：channel_dispute_event_id、channe
 
 Payment 本库命令的通用 Claim、Lease 和 CAS 持久化由 Foundation `paytech-command-idempotency` 负责。字段：command_idempotency_id、caller_scope、operation_type、idempotency_key、request_hash、request_hash_version、request_snapshot_schema_version、request_snapshot_json、operation_context_time、recovery_stage、process_status、resource_type、resource_id、resource_no、response_code、response_http_status、response_snapshot_schema_version、response_location、response_body_json、lock_owner、lock_until、version、create_time、update_time。精确类型、注释和可空性以正式 PDManer 为准；caller_scope、idempotency_key、resource_no、response_location 使用 ascii_bin，key 长度统一为 255。
 
-uk_command_idempotency(caller_scope, operation_type, idempotency_key) 唯一。process_status 取 PROCESSING、SUCCEEDED、FAILED；version 是公共组件的技术 CAS 版本，独立于业务 Root 版本。Payment 继续拥有 Hash、作用域、业务资源与重放语义。pay 在同一本地事务完成 Claim、Attempt 写入和 Complete，只使用 CLAIMED→COMPLETED，命令成功表示受理完成，响应正文为空，重放投影当前 Attempt/Action。详细约定与空表迁移边界见[公共包接入说明](../../payment-orchestration-service/docs/development/command-idempotency-differences.md)；不新增恢复扫描索引或支付流程阶段。
+uk_command_idempotency(caller_scope, operation_type, idempotency_key) 唯一。process_status 取 PROCESSING、SUCCEEDED、FAILED；version 是公共组件的技术 CAS 版本，独立于业务 Root 版本。Payment 继续拥有 Hash、作用域、业务资源与重放语义。pay 在同一本地事务完成 Claim、Attempt 写入和 Complete，只使用 CLAIMED→COMPLETED，命令成功表示受理完成，响应正文为空，重放投影当前 Attempt/Action。详细约定与空表迁移边界见[公共包接入说明](../../paytech/payment/docs/development/command-idempotency-differences.md)；不新增恢复扫描索引或支付流程阶段。
 
 ### t_compensation_event
 

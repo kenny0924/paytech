@@ -6,7 +6,7 @@
 
 日期：2026-09-05
 
-决策来源：[`2026-09-05-redis-first-resource-lock.md`](../../../agent-docs/decisions/2026-09-05-redis-first-resource-lock.md)。当前实现、验证、制品发布和部署状态仅见 [`CURRENT_IMPLEMENTATION.md`](../../../agent-docs/CURRENT_IMPLEMENTATION.md) 与 [`paytech-foundation/README.md`](../../../paytech-foundation/README.md)。
+决策来源：[`2026-09-05-redis-first-resource-lock.md`](../../../agent-docs/decisions/2026-09-05-redis-first-resource-lock.md)。当前实现、验证、制品发布和部署状态仅见 [`CURRENT_IMPLEMENTATION.md`](../../../agent-docs/CURRENT_IMPLEMENTATION.md) 与 [`paytech-foundation/README.md`](../../../paytech/foundation/README.md)。
 
 ## 1. 目标与范围
 

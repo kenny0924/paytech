@@ -74,7 +74,7 @@ Card 待评审增量中的 `provider_order_ref`、`provider_payment_ref` 与 `id
 
 Gateway 已有真实 Java 和前端使用点，必须整体检查：
 
-- [Platform GatewayRouteChannel](../../../platform-support-service/platform-support-api/src/main/java/com/paytech/platform/support/api/enums/GatewayRouteChannel.java)、[GatewaySecurityProfileCode](../../../platform-support-service/platform-support-api/src/main/java/com/paytech/platform/support/api/enums/GatewaySecurityProfileCode.java)、[GatewayAuthorizationMode](../../../platform-support-service/platform-support-api/src/main/java/com/paytech/platform/support/api/enums/GatewayAuthorizationMode.java)。
+- [Platform GatewayRouteChannel](../../../paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/enums/GatewayRouteChannel.java)、[GatewaySecurityProfileCode](../../../paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/enums/GatewaySecurityProfileCode.java)、[GatewayAuthorizationMode](../../../paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/enums/GatewayAuthorizationMode.java)。
 - Platform GatewayConfigurationCompiler 的三元组校验、GatewayRoutePolicyValidator、Gateway Metrics 的固定值集合、Snapshot 编译与测试。
 - Operations BFF GatewayConfigurationModels 的校验表达式、PlatformGatewayConfigurationClientImpl 的允许值，以及 [GatewayConfiguration 页面](../../../operations-console-web/src/pages/GatewayConfiguration.tsx)的选项。
 - Platform Gateway 模型说明、当前初始化 DML 与数据库实际值。六类 Route Channel 的数量、认证与授权职责保持；不将改名变成第七种业务通道。

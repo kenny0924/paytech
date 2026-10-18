@@ -124,7 +124,7 @@
 
 结束节点会成为拒绝原因的新消费者；现有引用查询只认识 `ruleSetId/ruleSetVersionId/ruleCode`。建议将流程结束节点纳入引用明细的来源类型，查询直接从业务配置取得，不建字典回执、通用引用账本或标签适用关系表。这个补齐会涉及 Risk API、BFF 严格响应解码和 Web 跳转，需在阶段 3 明确兼容字段及统计为接口修改。[E13]、[E14]
 
-BFF 的 [请求 Shape](../../../operations-console-bff/paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/configuration/RiskRequestShapeValidator.java) 和 [响应 Shape](../../../operations-console-bff/paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/configuration/RiskOwnerResponseShapeValidator.java) 使用精确属性集合，Web 也做严格解码。即使仍用 `/v1`，新能力字段或来源类型也必须成套更新，不能只更新后端并假设前端忽略未知内容。旧既有请求/响应不无故删字段或改变字段含义；新规则配置应在相应 Reader 就绪后开放。
+BFF 的 [请求 Shape](../../../paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/configuration/RiskRequestShapeValidator.java) 和 [响应 Shape](../../../paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/configuration/RiskOwnerResponseShapeValidator.java) 使用精确属性集合，Web 也做严格解码。即使仍用 `/v1`，新能力字段或来源类型也必须成套更新，不能只更新后端并假设前端忽略未知内容。旧既有请求/响应不无故删字段或改变字段含义；新规则配置应在相应 Reader 就绪后开放。
 
 目前规则保存 Route 的上限是 65,536 字节，Gateway 还拥有安全绝对上限。图配置应优先保存准确规则集引用而非嵌入全部规则；阶段 3 据实际 Payload 确定节点/连线/条件和字节边界，避免为一个画布先扩大网关全局限制。规则内容、条件值和变更原因延续元数据日志边界，不进入普通请求体日志。[E16]、[E17]
 
@@ -170,21 +170,21 @@ BFF 的 [请求 Shape](../../../operations-console-bff/paytech-operations-consol
 
 以下链接固定到本次核对文件；精确基线见第 2 节。
 
-[E01]: ../../../risk-compliance-service/docs/database/sql/risk-compliance-schema.sql
-[E02]: ../../../risk-compliance-service/risk-decision/src/main/java/com/paytech/risk/decision/core/dal/dataobject/DecisionPointRuleSet.java
+[E01]: ../../../paytech/risk-decision/paytech-risk-decision-test/src/test/resources/init/ddl.sql
+[E02]: ../../../paytech/risk-decision/paytech-risk-decision-core/src/main/java/com/paytech/risk/decision/core/dal/dataobject/DecisionPointRuleSet.java
 [E03]: ../../../operations-console-web/package.json
-[E04]: ../../../risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionRuleSetManagementApi.java
-[E05]: ../../../risk-compliance-service/risk-decision/src/main/java/com/paytech/risk/decision/domain/rule/RuleAstValidatorImpl.java
+[E04]: ../../../paytech/risk-decision/paytech-risk-decision-api/src/main/java/com/paytech/risk/decision/api/DecisionRuleSetManagementApi.java
+[E05]: ../../../paytech/risk-decision/paytech-risk-decision-core/src/main/java/com/paytech/risk/decision/domain/rule/RuleAstValidatorImpl.java
 [E06]: ../../../operations-console-web/src/risk/ruleBuilder.ts
-[E07]: ../../../risk-compliance-service/risk-decision/src/main/java/com/paytech/risk/decision/domain/release/DecisionReleaseStaticValidatorImpl.java
-[E08]: ../../../risk-compliance-service/risk-decision/src/main/java/com/paytech/risk/decision/domain/rule/DecisionRuleSetAggregate.java
-[E09]: ../../../risk-compliance-service/risk-test/src/test/java/com/paytech/risk/auto/ext/http/RuleActionConfigurationHttpAutoTest.java
-[E10]: ../../../risk-compliance-service/risk-decision/src/main/java/com/paytech/risk/decision/domainservice/service/impl/DecisionRuleSetServiceImpl.java
-[E11]: ../../../risk-compliance-service/risk-web/src/main/java/com/paytech/risk/service/processor/DecisionRuleSetManagementProcessor.java
+[E07]: ../../../paytech/risk-decision/paytech-risk-decision-core/src/main/java/com/paytech/risk/decision/domain/release/DecisionReleaseStaticValidatorImpl.java
+[E08]: ../../../paytech/risk-decision/paytech-risk-decision-core/src/main/java/com/paytech/risk/decision/domain/rule/DecisionRuleSetAggregate.java
+[E09]: ../../../paytech/risk-decision/paytech-risk-decision-test/src/test/java/com/paytech/risk/auto/ext/http
+[E10]: ../../../paytech/risk-decision/paytech-risk-decision-core/src/main/java/com/paytech/risk/decision/domainservice/service/impl/DecisionRuleSetServiceImpl.java
+[E11]: ../../../paytech/risk-decision/paytech-risk-decision-core/src/main/java/com/paytech/risk/decision/service/processor
 [E12]: ../../../operations-console-web/src/risk/ReadRuleSetWorkspace.tsx
-[E13]: ../../../risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionDictionaryModels.java
-[E14]: ../../../risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionConfigurationQueryMapper.xml
-[E15]: ../../../operations-console-bff/paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/ext/rest/OperationsRequestInterceptor.java
-[E16]: ../../../api-gateway/api-gateway-web/src/main/java/com/paytech/gateway/routing/snapshot/GatewaySnapshotCompiler.java
-[E17]: ../../../platform-support-service/docs/database/sql/platform-support-initial-data.sql
-[E18]: ../../../risk-compliance-service/risk-decision/src/main/java/com/paytech/risk/decision/domain/hash/RiskDecisionCanonicalizerImpl.java
+[E13]: ../../../paytech/risk-decision/paytech-risk-decision-api/src/main/java/com/paytech/risk/decision/api
+[E14]: ../../../paytech/risk-decision/paytech-risk-decision-core/src/main/resources/mapper/decision/DecisionConfigurationQueryMapper.xml
+[E15]: ../../../paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/ext/rest/OperationsRequestInterceptor.java
+[E16]: ../../../paytech/api-gateway/paytech-api-gateway-app/src/main/java/com/paytech/gateway/routing/snapshot/GatewaySnapshotCompiler.java
+[E17]: ../../../paytech/platform-support/docs/database/sql/platform-support-initial-data.sql
+[E18]: ../../../paytech/risk-decision/paytech-risk-decision-core/src/main/java/com/paytech/risk/decision/domain/hash/RiskDecisionCanonicalizerImpl.java

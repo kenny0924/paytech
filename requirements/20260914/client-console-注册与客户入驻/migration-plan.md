@@ -29,7 +29,7 @@
 
 ## 3. 必须同批适配的消费者
 
-现有 [CheckoutQueryMapper.xml](../../../client-contract-service/client-contract-web/src/main/resources/mapper/CheckoutQueryMapper.xml)和 [CheckoutRecords.java](../../../client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/core/dal/dataobject/CheckoutRecords.java)读取待删状态/生效列；[CheckoutCandidateRules.java](../../../client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/domainservice/CheckoutCandidateRules.java)使用这些事实过滤资料；[CheckoutQueryConfiguration.java](../../../client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/configuration/CheckoutQueryConfiguration.java)注册旧枚举映射。阶段 4 必须一起修改查询、记录、资格规则、枚举的真实消费者和测试 Fixture。
+现有 [CheckoutQueryMapper.xml](../../../paytech/commercial/paytech-commercial-core/src/main/resources/mapper)和 [CheckoutRecords.java](../../../paytech/client-master/paytech-client-master-core/src/main/java/com/paytech/client/master/core/dal/dataobject/CheckoutRecords.java)读取待删状态/生效列；[CheckoutCandidateRules.java](../../../paytech/client-master/paytech-client-master-core/src/main/java/com/paytech/client/master/domainservice)使用这些事实过滤资料；[CheckoutQueryConfiguration.java](../../../paytech/commercial/paytech-commercial-app/src/main/java/com/paytech/commercial/configuration)注册旧枚举映射。阶段 4 必须一起修改查询、记录、资格规则、枚举的真实消费者和测试 Fixture。
 
 目标门禁为单份资料已批准、Client 当前业务/资格有效、批准资料 Hash 和精确分类齐备，再继续既有 OE/Scope/Source/Agreement 检查。不能简单去掉旧 WHERE 或把缺失状态默认为 ACTIVE；无批准事实、零/多主分类、数据矛盾和依赖不可用均拒绝支付准备。旧商业条款 Version/Scope Wire、BCR current_version 及其他生命周期并发机制有独立消费者，本期不删除。
 

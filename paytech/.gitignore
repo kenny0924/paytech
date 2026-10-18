@@ -41,7 +41,7 @@ replay_pid*
 *.pid
 *.pid.lock
 
-# Local environment
+# Local environment (service-specific rules stay in paytech/<service>/.gitignore)
 .env
 .env.local
 .env.*.local
@@ -49,3 +49,7 @@ replay_pid*
 /local_settings.xml
 /.m2/
 /.m3/
+
+# PDManer local backups
+.back_*/
+.back_*.pdma.json

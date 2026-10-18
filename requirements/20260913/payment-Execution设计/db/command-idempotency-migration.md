@@ -1,12 +1,12 @@
 # Payment 公共命令幂等表人工迁移
 
-本文件对应用户 2026-09-15 确认的[公共包接入约定](../../../../payment-orchestration-service/docs/development/command-idempotency-differences.md)。只维护待执行工件，实际数据库与验证状态见[台账](../../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
+本文件对应用户 2026-09-15 确认的[公共包接入约定](../../../../paytech/payment/docs/development/command-idempotency-differences.md)。只维护待执行工件，实际数据库与验证状态见[台账](../../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)。
 
 ## 选择一条执行路径
 
 | 实际基线 | 使用文件 |
 |---|---|
-| 全新空 Payment 库 | [正式全库 Schema](../../../../payment-orchestration-service/docs/database/sql/payment-orchestration-schema.sql) |
+| 全新空 Payment 库 | [正式全库 Schema](../../../../paytech/payment/docs/database/sql/payment-schema.sql) |
 | 本期 Execution 目标表全部不存在 | [Execution 创建稿](execution-simplified-create-empty-schema.sql)，已包含公共命令表 |
 | 原本机旧 13 张表仍为空，尚未执行整批字段精简 | 按[整批迁移说明](execution-simplified-migration.md)执行其合并迁移稿；其中命令表 ALTER 已同步本次目标 |
 | 其他表已经对齐，命令表仍为旧 11 列且为空 | [独立命令表迁移稿](command-idempotency-empty-migration.sql) |

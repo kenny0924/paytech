@@ -536,8 +536,11 @@ if (errors.length === 0 && !selfTestOnly) {
     'paytech-messaging',
     'paytech-internal-auth',
   ]) {
+    // A test-jar (for example the paytech-messaging testkit, step 12x) is a separate coordinate; govern the main jar.
     const dependencies = managedDependencies.filter(
-      (dependency) => dependency.groupId === 'com.paytech' && dependency.artifactId === artifactId,
+      (dependency) => dependency.groupId === 'com.paytech'
+        && dependency.artifactId === artifactId
+        && (dependency.type === undefined || dependency.type === null || dependency.type === 'jar'),
     );
     if (dependencies.length !== 1 || dependencies[0].version !== '${paytech.version}') {
       errors.push(`${artifactId} is missing from paytech-dependencies version governance`);

@@ -13,7 +13,7 @@
 权威依据：
 
 - [开发约定](../../../agent-docs/DEVELOPMENT_CONVENTIONS.md)与[Java 工程结构](../../../agent-docs/JAVA_PROJECT_STRUCTURE.md)。
-- [Risk 数据库权威](../../../agent-docs/database/RISK_COMPLIANCE_DATABASE.md)、[物理决策](../../../risk-compliance-service/docs/database/RISK_COMPLIANCE_PHYSICAL_DECISIONS.md)与[生产 Manifest](../../../scripts/pdmaner/risk/manifest.mjs)。
+- [Risk 数据库权威](../../../agent-docs/database/RISK_COMPLIANCE_DATABASE.md)、[物理决策](../../../paytech/risk-decision/docs/database/RISK_DECISION_PHYSICAL_DECISIONS.md)与[生产 Manifest](../../../scripts/pdmaner/risk/manifest.mjs)。
 - [本地补偿规范](../../../agent-docs/COMPENSATION_EVENT_GUIDE.md)与[测试规范](../../../agent-docs/UNIT_TEST_GUIDE.md)。
 
 当前模型为 71 表 / 865 字段 / 106 唯一索引 / 74 访问索引 / 111 本库关系 / 9 个 1:1 / 8 图组，另有 83 条 CHECK。目录规划不改变该基线，也不代表旧模型已兼容最新 Foundation。

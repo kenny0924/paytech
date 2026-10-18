@@ -25,7 +25,7 @@
 
 新增规则无旧组成的 HTTP 测试在修改前已观察到失败，旧保存返回非空 `pointVersionId`，见 `/tmp/rco17-simplification-risk-red.log`。BFF/Web 也先观察到旧严格解码拒绝合法 null；修订后连同精确键、非法 ID 和内嵌规则响应一起验证。BFF 通用损坏响应测试仅为对应规则路径排除合法 null，未放宽 Candidate 或缺键检查。
 
-测试侧新增 [LegacyRuleSetTestMapper](../../../risk-compliance-service/risk-test/src/test/java/com/paytech/risk/test/decision/LegacyRuleSetTestMapper.java) 直接准备迁移后的历史事实；旧发布与原顺序图场景不再借新版保存制造旧编排。真实数据库回归已通过。旧 Release 投影准确还原原 Context ID，原九字段快照保持九字段，规范 Hash 与保存值一致，成功回放及静态校验通过。现有 golden vectors 继续校验旧规范字节/Hash；这些证据不等于对 test 现存全部历史逐条完成迁移验证。
+测试侧新增 [LegacyRuleSetTestMapper](../../../paytech/risk-decision/paytech-risk-decision-test/src/test/java/com/paytech/risk/test) 直接准备迁移后的历史事实；旧发布与原顺序图场景不再借新版保存制造旧编排。真实数据库回归已通过。旧 Release 投影准确还原原 Context ID，原九字段快照保持九字段，规范 Hash 与保存值一致，成功回放及静态校验通过。现有 golden vectors 继续校验旧规范字节/Hash；这些证据不等于对 test 现存全部历史逐条完成迁移验证。
 
 ## 3. 修订验收映射与后续阶段
 

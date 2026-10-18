@@ -1,6 +1,6 @@
 # Payment Orchestration V1 PDManer 物理建模决策
 
-> **Action Flow 后继：** [CARD + PAY 修订](../../../../requirements/20260913/payment-Execution设计/card-pay-actionActor-flow-amendment.md)统一自有动作 PAY_RISK / PAY 名称、条件对象和执行位切换；AUTHORIZE 成功结束本次 Flow，Capture 为独立入口。前序 RISK_CHECK / SALE 表述按该范围被取代。
+> **Action Flow 后继：** [CARD + PAY 修订](../../../../requirements/20260913/payment-Execution设计/card-pay-action-flow-amendment.md)统一自有动作 PAY_RISK / PAY 名称、条件对象和执行位切换；AUTHORIZE 成功结束本次 Flow，Capture 为独立入口。前序 RISK_CHECK / SALE 表述按该范围被取代。
 
 > **pay 防重后继：** 2026-09-15 用户确认按 Attempt 来源提交唯一键防重，当前规则见 [pay 阅读说明](../pay-interface-walkthrough.md)。前序[公共包接入约定](../development/command-idempotency-differences.md)保留为历史记录；pay 不再访问命令表，本轮未变更下方物理 Manifest 或执行数据库清理。
 

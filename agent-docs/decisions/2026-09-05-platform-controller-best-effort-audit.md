@@ -23,7 +23,7 @@ Decision date: 2026-09-05
 
 只取代下列文档中 **Platform 已有 Operations HTTP 操作审计必须与业务同事务、审计失败可阻断业务** 的目标语义：
 
-- [Platform 物理决策](../../platform-support-service/docs/database/PLATFORM_SUPPORT_PHYSICAL_DECISIONS.md)“22 表代码约束与注释同步”中的 Audit/Idempotency 同事务说明；业务幂等记录仍与业务共同提交。
+- [Platform 物理决策](../../paytech/platform-support/docs/database/PLATFORM_SUPPORT_PHYSICAL_DECISIONS.md)“22 表代码约束与注释同步”中的 Audit/Idempotency 同事务说明；业务幂等记录仍与业务共同提交。
 - [Platform 资源锁重构记录](../plans/2026-09-04-platform-resource-lock-refactoring.md)中“授权拒绝因写审计需要可写事务”的理由；需要保护业务一致性的事务和锁不因此删除。
 - [审查修复设计](../../docs/superpowers/specs/2026-09-05-platform-support-review-refactoring-design.md)中对此批既有审计事务边界保持不变的约束。
 - [统一公共 API 动态控制面设计](../../docs/superpowers/specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md)中涉及既有 Operations Target/Route HTTP 状态命令的“配置与 Audit Event 同事务”约束；不改变配置写入本身的事务、CAS、幂等或全局校验，也不扩展至尚未实现的管理命令。

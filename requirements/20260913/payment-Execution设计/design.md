@@ -65,18 +65,18 @@ flowchart TD
 
 | API 方法 | 独立用例入口 |
 |---|---|
-| `createIntent` | [CreatePaymentIntentProcessor](../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/CreatePaymentIntentProcessor.java) |
-| `getIntent` | [GetPaymentIntentProcessor](../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/GetPaymentIntentProcessor.java) |
-| `closeCreation` | [ClosePaymentIntentCreationProcessor](../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/ClosePaymentIntentCreationProcessor.java) |
-| `terminate` | [TerminatePaymentIntentProcessor](../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/TerminatePaymentIntentProcessor.java) |
-| `pay`（取代旧 `submitCard`） | [PayProcessor](../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/ext/rest/execution/processor/PayProcessor.java) |
-| `getSubmission` | [GetPaymentSubmissionProcessor](../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/GetPaymentSubmissionProcessor.java) |
-| `capture` | [CapturePaymentProcessor](../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/CapturePaymentProcessor.java) |
-| `createRefund` | [CreatePaymentRefundProcessor](../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/CreatePaymentRefundProcessor.java) |
-| `getRefund` | [GetPaymentRefundProcessor](../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/GetPaymentRefundProcessor.java) |
-| `reverse` | [ReversePaymentProcessor](../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/ReversePaymentProcessor.java) |
-| `getPricingFact` | [GetPaymentPricingFactProcessor](../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/GetPaymentPricingFactProcessor.java) |
-| `getAction` | [GetPaymentActionProcessor](../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/GetPaymentActionProcessor.java) |
+| `createIntent` | [CreatePaymentIntentProcessor](../../../paytech/payment/paytech-payment-core/src/main/java/com/paytech/payment/execution/service/processor) |
+| `getIntent` | [GetPaymentIntentProcessor](../../../paytech/payment/paytech-payment-core/src/main/java/com/paytech/payment/execution/service/processor) |
+| `closeCreation` | [ClosePaymentIntentCreationProcessor](../../../paytech/payment/paytech-payment-core/src/main/java/com/paytech/payment/execution/service/processor) |
+| `terminate` | [TerminatePaymentIntentProcessor](../../../paytech/payment/paytech-payment-core/src/main/java/com/paytech/payment/execution/service/processor) |
+| `pay`（取代旧 `submitCard`） | [PayProcessor](../../../paytech/payment/paytech-payment-core/src/main/java/com/paytech/payment/execution/service/processor/PayProcessor.java) |
+| `getSubmission` | [GetPaymentSubmissionProcessor](../../../paytech/payment/paytech-payment-core/src/main/java/com/paytech/payment/execution/service/processor) |
+| `capture` | [CapturePaymentProcessor](../../../paytech/payment/paytech-payment-core/src/main/java/com/paytech/payment/execution/service/processor) |
+| `createRefund` | [CreatePaymentRefundProcessor](../../../paytech/payment/paytech-payment-core/src/main/java/com/paytech/payment/execution/service/processor) |
+| `getRefund` | [GetPaymentRefundProcessor](../../../paytech/payment/paytech-payment-core/src/main/java/com/paytech/payment/execution/service/processor) |
+| `reverse` | [ReversePaymentProcessor](../../../paytech/payment/paytech-payment-core/src/main/java/com/paytech/payment/execution/service/processor) |
+| `getPricingFact` | [GetPaymentPricingFactProcessor](../../../paytech/payment/paytech-payment-core/src/main/java/com/paytech/payment/execution/service/processor) |
+| `getAction` | [GetPaymentActionProcessor](../../../paytech/payment/paytech-payment-core/src/main/java/com/paytech/payment/execution/service/processor) |
 
 七个写用例分别使用同名的 `*AcceptanceProcessor` 作为短事务受理阶段，只有该阶段的公开代理入口加 `@ResourceLock`。每个受理入口一次声明完整资源锁，内部 `TransactionTemplate` 原子提交业务事实、命令绑定和恢复任务；返回后才进入外部调用阶段。这样不依赖同类自调用、不在事务里访问 Owner，也不靠嵌套带锁代理拼装锁集合。
 
@@ -133,11 +133,11 @@ AUTHENTICATE 超时同样进入 UNKNOWN；图中的循环表示原认证恢复�
 - 沿用已有业务状态枚举，缩小合法转换；不新增流程实例/节点状态表。保留 UNKNOWN、AUTHORIZED，因为它们分别影响重试和资金操作资格。
 - 发现 Payment 当前补偿表仍是旧合同，需随本切片将 **Web 所属本地补偿表** 对齐 Foundation 现行合同；不迁移 Foundation 命令幂等 JAR，不扩展其他业务模块。
 
-精确字段增量和历史处理以[数据方案](./data-design.md)为本评审稿唯一明细；当前正式物理模型仍以[服务 PDManer](../../../payment-orchestration-service/docs/database/payment-orchestration.pdma.json)为准。获批后先同步模型及生成器，再核对草稿 SQL，不能直接用本稿覆盖有历史交易的库。
+精确字段增量和历史处理以[数据方案](./data-design.md)为本评审稿唯一明细；当前正式物理模型仍以[服务 PDManer](../../../paytech/payment/docs/database/payment.pdma.json)为准。获批后先同步模型及生成器，再核对草稿 SQL，不能直接用本稿覆盖有历史交易的库。
 
 ## 4. 合同衔接与评审重点
 
-Commerce 现有 `CheckoutCardPaymentPort` 接收瞬时 CardInput；本稿 Execution API 只接受受控 Card 引用。未来由 Payment Web/Card 专用入口完成转换，不能把本稿接口直接配置为该 Port 的 HTTP 实现。公开 submissionId 仍是 Commerce 命令 ID；不新增 Payment 公共 Customer 入口或反向法律确认回调。依据见 [Commerce 后继修订](../../../commerce-service/docs/requirements/20260912-customer-checkout/commerce-entry-amendment.md)。
+Commerce 现有 `CheckoutCardPaymentPort` 接收瞬时 CardInput；本稿 Execution API 只接受受控 Card 引用。未来由 Payment Web/Card 专用入口完成转换，不能把本稿接口直接配置为该 Port 的 HTTP 实现。公开 submissionId 仍是 Commerce 命令 ID；不新增 Payment 公共 Customer 入口或反向法律确认回调。依据见 [Commerce 后继修订](../../../paytech/acquiring/docs/requirements/20260912-customer-checkout/commerce-entry-amendment.md)。
 
 本稿建议重点评审三个选择：**不公开单独的 authenticate/continue；基于已有 Intent 终止；Action 承担认证与交互恢复。** 其余系统的真实接入、页面、共享数据库操作均留在后续范围。
 

@@ -21,7 +21,7 @@
 ## 2. 只读核对结果（2026-10-14）
 
 - Docker context `desktop-linux`；mor-test 11 个容器此前均已停止 3 周。经用户同意只启动了 `mysql redis rabbitmq nacos`（`compose.sh start`，未重建），均 healthy；应用容器仍为停止状态。
-- **Schema（`mor_platform`）：** 现有 25 表与当前 [完整 Schema](../../../../platform-support-service/docs/database/sql/platform-support-schema.sql) 的字段、索引一致（`boolean`/`tinyint(1)` 等价）；缺失 25 表，无需 ALTER。见 [test-ddl.sql](./test-ddl.sql)。
+- **Schema（`mor_platform`）：** 现有 25 表与当前 [完整 Schema](../../../../paytech/platform-support/docs/database/sql/platform-support-schema.sql) 的字段、索引一致（`boolean`/`tinyint(1)` 等价）；缺失 25 表，无需 ALTER。见 [test-ddl.sql](./test-ddl.sql)。
 - **登记前置：** 路由 ID 071001～071044、权限 071101/071102、资源 071301～071305、授权 071201/071202 均无冲突；`/api/operations/external-api-admin/` 无路径冲突；Operations Target `900000000000000001` ACTIVE/v1；PLATFORM_ADMIN `900000000000000510` ACTIVE/v20；当前 105 条路由全部 ACTIVE；最大 Body 上限 65536，新路由不超过。
 - **操作者：** `221546852372267008`（OPERATIONS、ACTIVE），沿用上次 test 发布。
 - **配置：** 所有必填占位符 test 已提供；Platform 在 `test` Profile 使用代码内 `LocalLoginEmailVault`，登录不依赖 Vault 策略。Platform 所在 backend 网络非 internal，可出站访问 PayerMax UAT（https）；应用无出站白名单配置。

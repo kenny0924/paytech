@@ -1,3 +1,4 @@
-**/target/
+# Common Java / IDE / local-environment / PDManer ignores live in paytech/.gitignore.
+# Every local env file except the committed example.
 .env*
 !.env.example

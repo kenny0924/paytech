@@ -79,7 +79,7 @@ PAYMENT 当前只定义普通金额/币种投影，不宣称覆盖所有支付�
 4. `REFUND_ORIGINAL_FUNDS_MATCHES`：原引用类型符合函数限制，原币种与本次 Action 一致；查询不替代 Execution 的退款受理、额度预占或业务状态判断。
 5. Q2 额外执行 `NI_CAPTURE_COORDINATES_MATCHES`：四段坐标必须来自同一个经核验的原 Capture，禁止跨记录拼接、从不透明 externalTransactionId 猜测或再向 NI 查订单。
 
-Q1 的基础事实可由现有 [PaymentExecutionService](../../../payment-orchestration-service/paytech-payment-execution/src/main/java/com/paytech/payment/execution/service/PaymentExecutionService.java)公开查询取得，但函数适配与注册仍待实现。Q2 尚缺真实 NI 导航事实提供方；两个描述符示例均为 implementationAvailable=false，不因底层 Service 存在就标为可执行。
+Q1 的基础事实可由现有 [PaymentExecutionService](../../../paytech/payment/paytech-payment-core/src/main/java/com/paytech/payment/execution/service/PaymentExecutionService.java)公开查询取得，但函数适配与注册仍待实现。Q2 尚缺真实 NI 导航事实提供方；两个描述符示例均为 implementationAvailable=false，不因底层 Service 存在就标为可执行。
 
 NI 本例只配置 Q2 一次，四个 Path 字段引用同一个 originalTarget。Q2 内部的 Owner 读取由其合同管理；本例不额外配置一个 Q1 步骤重复读取。显式配置两个调用步骤则按两次计费时限与调用预算，不隐式合并。
 

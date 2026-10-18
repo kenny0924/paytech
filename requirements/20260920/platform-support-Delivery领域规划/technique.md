@@ -167,7 +167,7 @@ Provider 请求号必须在外发前保存。超时、断连或进程在可能�
 - Vault 使用 `EMAIL_ADDRESS_V1 / STABLE / PLATFORM_NOTIFICATION_EMAIL_V1`。该 Purpose 不复用登录授权；代码声明不等于 Vault 已注册或已允许调用。Token 不进入日志或补偿 Payload。
 - 测试 Mock Provider 在 EmailProvider 边界显式返回模拟证据；SES 适配器经真实 AWS SDK 访问测试 HTTP 终端（SesMockController），真实 SES 只由 manual 用例验证。
 - SES 账号配置为 `notification.ses.*`（`enabled`、`provider-code`、`region`、`from-address`、`configuration-set`、`endpoint`、`credential-token` 与超时；密钥对在 Vault，每次发送前经 `EmailProvider.prepare()` 读取），需同时开启 `notification.enabled`；生产凭据走默认凭据链。窗口为 `notification.unknown-resend-delay`。补偿开关为 `compensation.enabled: ${PLATFORM_SUPPORT_COMPENSATION_ENABLED:${files.onboarding.enabled:false}}`，单独启用通知需显式设置该变量。
-- 手工建表入口见 [notification-create.sql](./db/notification-create.sql)。脚本仅用于没有同名 Notification 表的库，不自动迁移旧九表。公共 t_compensation_event 是前置依赖，复用[正式 Schema](../../../platform-support-service/docs/database/sql/platform-support-schema.sql)中的已有定义，不创建专属任务表。正式初始化 DML 待业务配置确认；测试 Fixture 按例准备/清理自身配置，不由应用启动建表或 Seed。
+- 手工建表入口见 [notification-create.sql](./db/notification-create.sql)。脚本仅用于没有同名 Notification 表的库，不自动迁移旧九表。公共 t_compensation_event 是前置依赖，复用[正式 Schema](../../../paytech/platform-support/docs/database/sql/platform-support-schema.sql)中的已有定义，不创建专属任务表。正式初始化 DML 待业务配置确认；测试 Fixture 按例准备/清理自身配置，不由应用启动建表或 Seed。
 - Document Delivery 的通知租户一致性应沿 Delivery → Request 校验；旧 `(notification_delivery_id, tenant_id)` 复合关系不再适用于七表目标。其业务接入尚不属于本期，不能只凭单列 ID 授权。
 
 实际编译、测试、数据库执行及缺口统一见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#platform-delivery-domain-plan-20260920)。

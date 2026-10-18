@@ -1,7 +1,7 @@
 # 技术边界
 
 - Foundation `paytech-common-core` 提供静态 `PublicTokenGenerator.generate(String... mixingValues)` 和主体校验 `isValid(String)`。
-  时间、CSPRNG、Core 编码与 CRC 均封装在内部；[工具合同](../../../paytech-foundation/paytech-common-core/PUBLIC_TOKEN.md)拥有准确格式和输入边界。
+  时间、CSPRNG、Core 编码与 CRC 均封装在内部；[工具合同](../../../paytech/foundation/paytech-common-core/PUBLIC_TOKEN.md)拥有准确格式和输入边界。
 - Commerce 创建 Processor 直接调用工具并拼接 `CheckoutPublicToken.PREFIX`；删除原来的 Spring Generator 接口及实现。
   `CheckoutPublicToken` 仅保留业务前缀、parse 和委托校验，无第二份编码算法。
 - 混入值从旧固定国家码/Client ID 字节位置变为可变文本数组的有边界摘要掩码，只作用于新的随机 Payload。

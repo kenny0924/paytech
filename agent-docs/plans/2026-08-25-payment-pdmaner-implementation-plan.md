@@ -1,6 +1,6 @@
 # Payment Orchestration PDManer Implementation Plan
 
-> **已被后续决策取代：** 本文中的旧 31 表/399 字段与后续 29 表/382 字段基线、`t_payment_execution_gate`/`t_payment_execution_gate_result` 持久化设计、`t_three_ds_context` 和 `provider_token_ref` 均已取消。当前权威依据为 [Payment Execution 精简设计](./2026-08-25-payment-execution-simplification-design.md)、[`PAYMENT_ORCHESTRATION_DATABASE.md`](../database/PAYMENT_ORCHESTRATION_DATABASE.md) 与 [`PAYMENT_ORCHESTRATION_PHYSICAL_DECISIONS.md`](../../payment-orchestration-service/docs/database/PAYMENT_ORCHESTRATION_PHYSICAL_DECISIONS.md)，当前基线为 29 表/376 字段/63 关系。Provider Account/MID 精简文档仅对对应五表模型的历史决策仍有参考意义；本文其余内容仅供历史追溯。
+> **已被后续决策取代：** 本文中的旧 31 表/399 字段与后续 29 表/382 字段基线、`t_payment_execution_gate`/`t_payment_execution_gate_result` 持久化设计、`t_three_ds_context` 和 `provider_token_ref` 均已取消。当前权威依据为 [Payment Execution 精简设计](./2026-08-25-payment-execution-simplification-design.md)、[`PAYMENT_ORCHESTRATION_DATABASE.md`](../database/PAYMENT_ORCHESTRATION_DATABASE.md) 与 [`PAYMENT_ORCHESTRATION_PHYSICAL_DECISIONS.md`](../../paytech/payment/docs/database/PAYMENT_ORCHESTRATION_PHYSICAL_DECISIONS.md)，当前基线为 29 表/376 字段/63 关系。Provider Account/MID 精简文档仅对对应五表模型的历史决策仍有参考意义；本文其余内容仅供历史追溯。
 
 > **已被替代：** 本 34 表实施计划已由 [Payment Provider Account 与 MID 精简实施计划](./2026-08-25-payment-provider-account-mid-simplification-implementation-plan.md) 取代。保留本文仅用于追溯 34 表阶段的执行意图；不得据此恢复 Connection/Version、MID Credential Ref、MID Limit 或旧 Health 表。
 

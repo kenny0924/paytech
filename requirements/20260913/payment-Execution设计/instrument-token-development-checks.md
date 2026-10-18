@@ -6,14 +6,14 @@
 
 | 用例 / 边界 | 入口 |
 |---|---|
-| PI-I00 卡身份查询 | [PaymentInstrumentApi](../../../payment-orchestration-service/paytech-payment-api/src/main/java/com/paytech/payment/api/instrument/PaymentInstrumentApi.java)、[ResolveCardIdentityProcessor](../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/ResolveCardIdentityProcessor.java) |
-| PI-I01 原交易工具准备 | [PrepareCardInstrumentProcessor](../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/PrepareCardInstrumentProcessor.java) |
-| EX-I05 统一 pay | [PaymentExecutionApi](../../../payment-orchestration-service/paytech-payment-api/src/main/java/com/paytech/payment/api/execution/PaymentExecutionApi.java)、[PayProcessor](../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/PayProcessor.java)、[PayAcceptanceProcessor](../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/acceptance/PayAcceptanceProcessor.java) |
-| Token 范围、期限、撤销和安全结束 | [PaymentInstrumentService](../../../payment-orchestration-service/paytech-payment-execution/src/main/java/com/paytech/payment/execution/service/PaymentInstrumentService.java)、[实现](../../../payment-orchestration-service/paytech-payment-execution/src/main/java/com/paytech/payment/execution/service/impl/PaymentInstrumentServiceImpl.java) |
-| 方式抽象 / Card 代码流程 | [PaymentCommand](../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/flow/PaymentCommand.java)、[CardPaymentFlow](../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/flow/CardPaymentFlow.java) |
-| T3 发送与原动作恢复 | [PaymentActionProcessor](../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/service/processor/PaymentActionProcessor.java) |
-| 清理恢复 | [PaymentInstrumentCleanupHandler](../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/ext/job/PaymentInstrumentCleanupHandler.java) |
-| Card 受控输入与 Owner 端口 | [CardInstrumentInputs](../../../payment-orchestration-service/paytech-payment-card/src/main/java/com/paytech/payment/card/domain/CardInstrumentInputs.java)、[ExecutionPorts](../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/integration/execution/ExecutionPorts.java) |
+| PI-I00 卡身份查询 | [PaymentInstrumentApi](../../../paytech/payment/paytech-payment-api/src/main/java/com/paytech/payment/api/instrument/PaymentInstrumentApi.java)、[ResolveCardIdentityProcessor](../../../paytech/payment/paytech-payment-core/src/main/java/com/paytech/payment/execution/service/processor) |
+| PI-I01 原交易工具准备 | [PrepareCardInstrumentProcessor](../../../paytech/card/paytech-card-core/src/main/java/com/paytech/card/service/processor/PrepareCardInstrumentProcessor.java) |
+| EX-I05 统一 pay | [PaymentExecutionApi](../../../paytech/payment/paytech-payment-api/src/main/java/com/paytech/payment/api/execution)、[PayProcessor](../../../paytech/payment/paytech-payment-core/src/main/java/com/paytech/payment/execution/service/processor/PayProcessor.java)、[PayAcceptanceProcessor](../../../paytech/payment/paytech-payment-core/src/main/java/com/paytech/payment/execution/service/processor) |
+| Token 范围、期限、撤销和安全结束 | [PaymentInstrumentService](../../../paytech/payment/paytech-payment-core/src/main/java/com/paytech/payment/execution/service)、[实现](../../../paytech/payment/paytech-payment-core/src/main/java/com/paytech/payment/execution/service/impl) |
+| 方式抽象 / Card 代码流程 | [PaymentCommand](../../../paytech/payment/paytech-payment-core/src/main/java/com/paytech/payment/execution/service/processor)、[CardPaymentFlow](../../../paytech/payment/paytech-payment-core/src/main/java/com/paytech/payment/execution/service/processor) |
+| T3 发送与原动作恢复 | [PaymentActionProcessor](../../../paytech/payment/paytech-payment-core/src/main/java/com/paytech/payment/execution/service/processor) |
+| 清理恢复 | [PaymentInstrumentCleanupHandler](../../../paytech/payment/paytech-payment-app/src/main/java/com/paytech/payment/ext) |
+| Card 受控输入与 Owner 端口 | [CardInstrumentInputs](../../../paytech/card/paytech-card-core/src/main/java/com/paytech/card/domain)、[ExecutionPorts](../../../paytech/payment/paytech-payment-app/src/main/java/com/paytech/payment/integration) |
 
 支付方式使用共同的基本提交命令和内部 Token ID；Card Flow 自行访问 Card Owner。普通 Channel 不接收用卡材料。未来方式可注册自己的 Flow 和受控 Owner 能力，不增加空 Wallet/Crypto 实现。
 
@@ -25,7 +25,7 @@ Token 清理登记通过 Execution 拥有的本地端口交给 Web 补偿机制�
 
 ## 验收映射
 
-专项源码：[PaymentInstrumentAutoTest](../../../payment-orchestration-service/paytech-payment-test/src/test/java/com/paytech/payment/auto/execution/PaymentInstrumentAutoTest.java)。以下是待运行/补齐的场景映射，是否已运行以台账为准。
+专项源码：[PaymentInstrumentAutoTest](../../../paytech/payment/paytech-payment-test/src/test/java/com/paytech/payment/auto/execution)。以下是待运行/补齐的场景映射，是否已运行以台账为准。
 
 | 合同编号 | 已编写的检查 | 后续组合或 Owner 证明 |
 |---|---|---|

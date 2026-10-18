@@ -1,6 +1,6 @@
 # applyCardInstrument 工具申请接口
 
-2026-09-16，按用户指定名称补齐当前工具申请入口，使用 [Payment 写接口规范](../../../payment-orchestration-service/docs/development/processor-conventions.md)。实现、验证和未完成能力以[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)为准；本文件说明本次接口和代码组织，不表示真实 Card 或资金链已接入。
+2026-09-16，按用户指定名称补齐当前工具申请入口，使用 [Payment 写接口规范](../../../paytech/payment/docs/development/processor-conventions.md)。实现、验证和未完成能力以[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)为准；本文件说明本次接口和代码组织，不表示真实 Card 或资金链已接入。
 
 ## 接口与边界
 
@@ -83,10 +83,10 @@ PAYMENT_INSTRUMENT_PREPARATION_WINDOW=PT5M
 
 ## 代码导航
 
-- [ApplyCardInstrumentProcessor](../../../payment-orchestration-service/paytech-payment-execution/src/main/java/com/paytech/payment/execution/service/processor/ApplyCardInstrumentProcessor.java)：完整业务顺序及跨 Service 的单事务组合。
-- [PaymentInstrumentController](../../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/ext/rest/instrument/PaymentInstrumentController.java)：请求转换、Processor、响应转换。
-- [PaymentExecutionServiceImpl](../../../payment-orchestration-service/paytech-payment-execution/src/main/java/com/paytech/payment/execution/service/impl/PaymentExecutionServiceImpl.java)：参与 Processor 事务，只保存 Execution 的工具绑定。
-- [CardService](../../../payment-orchestration-service/paytech-payment-card/src/main/java/com/paytech/payment/card/service/CardService.java)：Card 模块公开合同。
+- [ApplyCardInstrumentProcessor](../../../paytech/payment/paytech-payment-core/src/main/java/com/paytech/payment/execution/service/processor/ApplyCardInstrumentProcessor.java)：完整业务顺序及跨 Service 的单事务组合。
+- [PaymentInstrumentController](../../../paytech/payment/paytech-payment-app/src/main/java/com/paytech/payment/ext/rest/instrument/PaymentInstrumentController.java)：请求转换、Processor、响应转换。
+- [PaymentExecutionServiceImpl](../../../paytech/payment/paytech-payment-core/src/main/java/com/paytech/payment/execution/service/impl/PaymentExecutionServiceImpl.java)：参与 Processor 事务，只保存 Execution 的工具绑定。
+- [CardService](../../../paytech/card/paytech-card-core/src/main/java/com/paytech/card/service/CardService.java)：Card 模块公开合同。
 
 本稿按本次入口范围取代前序准备工具的独立命令表、Hash、Binding、补偿清理、allowPreparation、sourceExpiresAt 和 `PrepareCardInstrument` 名称要求；不据此修改其他接口或宣称真实 Card 已通过验收。
 

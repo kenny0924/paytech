@@ -12,7 +12,7 @@
 
 ## 本地数据库动作
 
-本次目标为 `mor-local-mysql-1` / `127.0.0.1:13306/mor_cct`；授权记录见 [交付记录](./delivery.md)。执行顺序为确认空库、在工作区外备份并核对摘要、人工应用已有完整 [CCT Schema](../../../client-contract-service/docs/database/sql/client-contract-schema.sql)，再校验实际结构并运行测试。不存在初始化业务数据，本切片不编造真实 Client/OE/批准材料。测试只写入及清理自己拥有的合成数据。
+本次目标为 `mor-local-mysql-1` / `127.0.0.1:13306/mor_cct`；授权记录见 [交付记录](./delivery.md)。执行顺序为确认空库、在工作区外备份并核对摘要、人工应用已有完整 [CCT Schema](../../../paytech/client-master/docs/database/sql/client-master-schema.sql)，再校验实际结构并运行测试。不存在初始化业务数据，本切片不编造真实 Client/OE/批准材料。测试只写入及清理自己拥有的合成数据。
 
 失败时停止，不覆盖其他库或数据；建表不是应用部署。备份位置、执行时间、实际结构、测试结果及清理证据统一见 [当前状态台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#cct-query-20260911)。该完整 Schema 只能用于空库，已初始化环境不能重复执行；已有数据环境仍需单独评审增量迁移。
 

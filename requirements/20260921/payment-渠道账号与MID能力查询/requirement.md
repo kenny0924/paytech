@@ -282,7 +282,7 @@ Execution → 冻结三元组
 
 ## 5. SQL 变更清单
 
-本节记录相对前序模型的结构差异。[正式 Schema](../../../payment-orchestration-service/docs/database/sql/payment-orchestration-schema.sql)是空库结构入口；非空业务库须另行盘点并准备增量 SQL，禁止以完整 Schema 代替迁移。专用测试库入口见[实施合同 §6](./implementation-contract.md#6-sql-与消费者边界)。
+本节记录相对前序模型的结构差异。[正式 Schema](../../../paytech/payment/docs/database/sql/payment-schema.sql)是空库结构入口；非空业务库须另行盘点并准备增量 SQL，禁止以完整 Schema 代替迁移。专用测试库入口见[实施合同 §6](./implementation-contract.md#6-sql-与消费者边界)。
 
 | 对象 | 计划变化 |
 |---|---|

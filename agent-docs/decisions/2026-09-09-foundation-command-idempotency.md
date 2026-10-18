@@ -68,7 +68,7 @@ Converter、三个真实恢复检查点和三个短事务。
 
 Risk、Platform Support、Gateway 和其他系统的现有幂等实现、表结构与行为全部保持不变；后续是否迁移必须单独评审和授权。
 
-2026-09-15 后继授权：用户在差异评审后明确要求 Payment 使用公共包，新增 Payment pay 受理链消费者，消费约定与表结构差异由 [Payment 接入说明](../../payment-orchestration-service/docs/development/command-idempotency-differences.md)拥有。此授权包含代码和模型/SQL 文件维护，不包含实际库迁移；不改变其余系统范围。首次 Commerce 迁移记录保留。
+2026-09-15 后继授权：用户在差异评审后明确要求 Payment 使用公共包，新增 Payment pay 受理链消费者，消费约定与表结构差异由 [Payment 接入说明](../../paytech/payment/docs/development/command-idempotency-differences.md)拥有。此授权包含代码和模型/SQL 文件维护，不包含实际库迁移；不改变其余系统范围。首次 Commerce 迁移记录保留。
 
 2026-09-15 后继简化：Payment pay 随后按用户确认移除公共命令幂等组件，当前按业务来源提交唯一键和原记录比较防重；上段接入授权保留为历史，完整取代说明见上述 Payment 接入记录顶部。Commerce 和其他系统合同不因此改变；[2026-09-16 编码合并](2026-09-16-payment-based-coding-conventions.md)也不强制所有接口消费该 JAR。
 

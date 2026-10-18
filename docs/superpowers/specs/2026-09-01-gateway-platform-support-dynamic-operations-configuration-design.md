@@ -283,7 +283,7 @@ t_console_resource
 
 当前已生成的物理快照是精确 63 表 / 822 字段 / 123 唯一索引 / 99 访问索引 / 107 本库关系 / 5 个 1:1 / 7
 Diagram Groups，另有 31 条复合 FK、85 条具名 CHECK sidecar 契约和仍然恰好 36 个 `_hash` 字段。生成事实以
-[物理决策](../../../platform-support-service/docs/database/PLATFORM_SUPPORT_PHYSICAL_DECISIONS.md) 和模型自动门禁为准。
+[物理决策](../../../paytech/platform-support/docs/database/PLATFORM_SUPPORT_PHYSICAL_DECISIONS.md) 和模型自动门禁为准。
 
 本文明确不增加：
 

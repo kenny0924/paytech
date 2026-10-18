@@ -2,7 +2,7 @@
 
 本文是各系统开发同步写接口时的完整参考。规则由[开发规范](../DEVELOPMENT_CONVENTIONS.md)和[Java 工程规范](../JAVA_PROJECT_STRUCTURE.md)拥有；本文把这些规则落实到调用顺序、对象和代码位置，不另建一套规范。决定依据见 [Payment 基准合并决定](../decisions/2026-09-16-payment-based-coding-conventions.md)。
 
-示例使用 Payment 的业务名称帮助阅读。其他系统沿用职责划分，按自己的合同选择请求身份、状态、字段和后续操作；不必引入 Intent、Attempt、Token、路由或 Action。[Payment 专项补充](../../payment-orchestration-service/docs/development/processor-conventions.md)只维护支付特有语义。
+示例使用 Payment 的业务名称帮助阅读。其他系统沿用职责划分，按自己的合同选择请求身份、状态、字段和后续操作；不必引入 Intent、Attempt、Token、路由或 Action。[Payment 专项补充](../../paytech/payment/docs/development/processor-conventions.md)只维护支付特有语义。
 
 本文的原提交比较是业务防重，不是 HTTP 响应重放。按[全项目职责决定](../decisions/2026-09-17-gateway-request-idempotency.md)，`Idempotency-Key` 由 Gateway 处理，业务不接入公共命令幂等组件。下方 API/Converter 片段已按此规则规范化；源码中尚存的 Header 参数或检查属于待迁移差异，不得复制到新接口。
 
@@ -88,7 +88,7 @@ src/main/resources/mapper/PaymentAttemptMapper.xml
 
 先确定操作目的、路径、字段、请求唯一身份、重复请求和响应语义，再写代码。沿用已有接口版本；新接口版本规则见[开发规范第 2 节](../DEVELOPMENT_CONVENTIONS.md#2-项目标识与命名)。
 
-RequestBody、ResponseBody 使用普通 class，必要嵌套对象也使用 class。字段首行简短说明，额外约束用 `<li>`；必填、长度、格式和值域由 Hibernate Validator 标注，嵌套使用 `@Valid`。以下是 [PayRequestBody](../../payment-orchestration-service/paytech-payment-api/src/main/java/com/paytech/payment/api/execution/request/PayRequestBody.java) 的字段片段：
+RequestBody、ResponseBody 使用普通 class，必要嵌套对象也使用 class。字段首行简短说明，额外约束用 `<li>`；必填、长度、格式和值域由 Hibernate Validator 标注，嵌套使用 `@Valid`。以下是 [PayRequestBody](../../paytech/payment/paytech-payment-api/src/main/java/com/paytech/payment/api/execution/request/PayRequestBody.java) 的字段片段：
 
 ```java
 /**
@@ -101,7 +101,7 @@ RequestBody、ResponseBody 使用普通 class，必要嵌套对象也使用 clas
 private String captureMode;
 ```
 
-API 方法用 `@param/@return` 解释输入输出及必要 HTTP 语义。接口、Body 字段和 OpenAPI 保持一致；HTTP 成功不自动表示业务已完成。完整合同参考 [PaymentExecutionApi](../../payment-orchestration-service/paytech-payment-api/src/main/java/com/paytech/payment/api/execution/PaymentExecutionApi.java)。
+API 方法用 `@param/@return` 解释输入输出及必要 HTTP 语义。接口、Body 字段和 OpenAPI 保持一致；HTTP 成功不自动表示业务已完成。完整合同参考 [PaymentExecutionApi](../../paytech/payment/paytech-payment-api/src/main/java/com/paytech/payment/api/execution)。
 
 以下是规范化后的内部 pay 签名，业务来源身份来自 Body 的 `sourceSubmissionId`，不增加 HTTP `Idempotency-Key` 参数；类级路径由 `@HttpExchange("/payment-execution/v1")` 声明。此片段说明目标职责，不表示当前源码及调用方已完成协议迁移：
 
@@ -123,7 +123,7 @@ API 枚举使用稳定 Code 字符串，内部使用相应枚举；金额和 ID 
 
 ### 4.2 Controller 只适配协议
 
-参照 [PaymentExecutionController](../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/ext/rest/execution/PaymentExecutionController.java) 的分层、移除请求 Key 后的规范化片段：
+参照 [PaymentExecutionController](../../paytech/payment/paytech-payment-app/src/main/java/com/paytech/payment/ext/rest/execution) 的分层、移除请求 Key 后的规范化片段：
 
 ```java
 PayRequest request = payConverter.convertRequest(intentId, body);
@@ -135,7 +135,7 @@ return ResponseEntity.status("PROCESSING".equals(responseBody.getStatus()) ? 202
 
 200/202 和 no-store 是 pay 合同，不是所有写接口的统一返回规则。Controller 不查 Repository、不开事务，不把同一 API 路径再声明一遍。
 
-[PayConverter](../../payment-orchestration-service/paytech-payment-web/src/main/java/com/paytech/payment/ext/rest/converter/PayConverter.java) 的目标职责是字符串 ID、内部类型和响应 Code 的转换，以及 Path/Body 等协议对应关系；不校验 Gateway 请求 Key，不查询 Intent 或验证工具有效期。Converter 只在确有协议转换时存在，不增加一行透传层。
+[PayConverter](../../paytech/payment/paytech-payment-app/src/main/java/com/paytech/payment/ext/rest/converter/PayConverter.java) 的目标职责是字符串 ID、内部类型和响应 Code 的转换，以及 Path/Body 等协议对应关系；不校验 Gateway 请求 Key，不查询 Intent 或验证工具有效期。Converter 只在确有协议转换时存在，不增加一行透传层。
 
 内部 Request/Response 是真实的模块边界，不能再在中间增加同义 Input、Command、View、Snapshot。DataObject 只在 Owner 业务模块内使用，HTTP 或跨模块不能直接返回它。
 
@@ -143,7 +143,7 @@ return ResponseEntity.status("PROCESSING".equals(responseBody.getStatus()) ? 202
 
 ### 5.1 复用公共模板
 
-调用链由 [AbstractProcessor](../../paytech-foundation/paytech-common-core/src/main/java/com/paytech/foundation/processor/AbstractProcessor.java) 与 [AbstractLockProcessor](../../paytech-foundation/paytech-redis-starter/src/main/java/com/paytech/foundation/redis/core/processor/AbstractLockProcessor.java)负责：
+调用链由 [AbstractProcessor](../../paytech/foundation/paytech-common-core/src/main/java/com/paytech/foundation/processor/AbstractProcessor.java) 与 [AbstractLockProcessor](../../paytech/foundation/paytech-redis-starter/src/main/java/com/paytech/foundation/redis/core/processor/AbstractLockProcessor.java)负责：
 
 ```text
 process(request)
@@ -171,7 +171,7 @@ protected LockCommand lockCommand(PayRequest request) {
 
 ### 5.2 阶段和提前返回清楚可见
 
-以下是基于 [PayProcessor](../../payment-orchestration-service/paytech-payment-execution/src/main/java/com/paytech/payment/execution/service/processor/PayProcessor.java) 整理的**规范化主流程片段**，省略注入字段及辅助方法。`executeActions(context)` 是示意的事务外推进步骤，不是已有方法或要求新增的通用类；具体入口见第 9 节。
+以下是基于 [PayProcessor](../../paytech/payment/paytech-payment-core/src/main/java/com/paytech/payment/execution/service/processor/PayProcessor.java) 整理的**规范化主流程片段**，省略注入字段及辅助方法。`executeActions(context)` 是示意的事务外推进步骤，不是已有方法或要求新增的通用类；具体入口见第 9 节。
 
 ```java
 /** 受理支付并推进新尝试。 */
@@ -249,7 +249,7 @@ PayContext buildPayContext(PaymentIntent intent, PayRequest request) {
 }
 ```
 
-[PayContext](../../payment-orchestration-service/paytech-payment-execution/src/main/java/com/paytech/payment/execution/domain/PayContext.java) 使用普通 class，直接持有 `intent`、`attempt`、`instToken` 三个本模块 DataObject。Context 一次构造后用于保存、推进和响应；不先建空 Context 再逐层补必需数据，不复制每张表的 Snapshot，也不重复保存可由对象取得的 ID。
+[PayContext](../../paytech/payment/paytech-payment-core/src/main/java/com/paytech/payment/execution/domain/PayContext.java) 使用普通 class，直接持有 `intent`、`attempt`、`instToken` 三个本模块 DataObject。Context 一次构造后用于保存、推进和响应；不先建空 Context 再逐层补必需数据，不复制每张表的 Snapshot，也不重复保存可由对象取得的 ID。
 
 DataObject（含只读 DB 对象）、Context、RequestBody、ResponseBody 均使用普通 class，不使用 record；字段可变性按业务需要决定，既有类型按当前任务范围调整。
 
@@ -263,7 +263,7 @@ Service 超过三个业务参数时封装具名 Context，三个以内按整体�
 
 Service 接收已验证的 Context，默认归属与关系已校验。它不重新查询验证同一事实；并发变化交给实际写入条件保护。Service 使用 interface + Impl，调用方依赖接口。
 
-来自 [PaymentExecutionServiceImpl](../../payment-orchestration-service/paytech-payment-execution/src/main/java/com/paytech/payment/execution/service/impl/PaymentExecutionServiceImpl.java) 的受理阶段：
+来自 [PaymentExecutionServiceImpl](../../paytech/payment/paytech-payment-core/src/main/java/com/paytech/payment/execution/service/impl/PaymentExecutionServiceImpl.java) 的受理阶段：
 
 ```java
 /** 保存支付受理上下文 */
@@ -282,7 +282,7 @@ public void savePayContext(PayContext context) {
 
 多个模块的纯本地写入必须原子完成时，由 Processor 开一个 TransactionTemplate，调用各模块公开 Service。各 Service 参与已有事务，不独立提交、不再嵌套创建事务、不使用 REQUIRES_NEW，也不调用其他 Service。
 
-申请卡工具的事务片段来自 [ApplyCardInstrumentProcessor](../../payment-orchestration-service/paytech-payment-execution/src/main/java/com/paytech/payment/execution/service/processor/ApplyCardInstrumentProcessor.java)：
+申请卡工具的事务片段来自 [ApplyCardInstrumentProcessor](../../paytech/payment/paytech-payment-core/src/main/java/com/paytech/payment/execution/service/processor/ApplyCardInstrumentProcessor.java)：
 
 ```java
 transactionTemplate.executeWithoutResult(status -> {
@@ -302,7 +302,7 @@ transactionTemplate.executeWithoutResult(status -> {
 
 一个 Repository 对应一张表。多表写入的先后顺序由本地 Service 控制；各模块只通过自己的仓储访问自己的表。Mapper 方法使用明确的参数，业务 SQL 位于 `*Mapper.xml`，不使用注解 SQL。
 
-下面选用 [PaymentAttemptRepositoryImpl.bindAction](../../payment-orchestration-service/paytech-payment-execution/src/main/java/com/paytech/payment/execution/domainservice/repository/impl/PaymentAttemptRepositoryImpl.java) 展示更新规则；它是动作阶段的片段，不要求其他写接口增加 Action：
+下面选用 [PaymentAttemptRepositoryImpl.bindAction](../../paytech/payment/paytech-payment-core/src/main/java/com/paytech/payment/execution/domainservice/repository/impl/PaymentAttemptRepositoryImpl.java) 展示更新规则；它是动作阶段的片段，不要求其他写接口增加 Action：
 
 ```java
 /** 绑定当前动作 */
@@ -318,7 +318,7 @@ public void bindAction(PaymentAttempt attempt, long actionId) {
 }
 ```
 
-[Mapper](../../payment-orchestration-service/paytech-payment-execution/src/main/java/com/paytech/payment/execution/core/dal/mapper/PaymentAttemptMapper.java) 声明参数，[XML](../../payment-orchestration-service/paytech-payment-execution/src/main/resources/mapper/PaymentAttemptMapper.xml) 使用旧状态与版本更新：
+[Mapper](../../paytech/payment/paytech-payment-core/src/main/java/com/paytech/payment/execution/core/dal/mapper/PaymentAttemptMapper.java) 声明参数，[XML](../../paytech/payment/paytech-payment-core/src/main/resources/mapper/PaymentAttemptMapper.xml) 使用旧状态与版本更新：
 
 ```java
 int activateAction(@Param("attempt") PaymentAttempt attempt, @Param("actionId") long actionId,

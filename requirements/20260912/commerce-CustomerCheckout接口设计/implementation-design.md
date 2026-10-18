@@ -12,13 +12,13 @@
 
 | 证据 | 实现含义 |
 |---|---|
-| [Commerce README](../../../commerce-service/README.md) | 三个 Maven 模块，十个 Client 操作；基础 Checkout 只接 CCT 预检，最终准备和 Customer HTTP 未接入 |
-| [AbstractGatewayProcessor](../../../commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/service/processor/AbstractGatewayProcessor.java) | 复用既有基础校验/处理模板，不再造 Customer 基类 |
-| [CreateRefundProcessor](../../../commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/service/processor/refund/CreateRefundProcessor.java) | 已有分阶段编排、TransactionExecutor、Handler.buildEvent 与事务内登记模式 |
-| [RefundSubmissionHandler](../../../commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/ext/job/RefundSubmissionHandler.java) | Handler 自身是入口，两个短事务之间调用外部端口；不另设 Handler 专属 Processor |
-| [CctPrecheckConfiguration](../../../commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/configuration/CctPrecheckConfiguration.java) | @ImportHttpServices、LoadBalancer、Foundation MDC/Problem 处理；最终 CCT 解析沿这一公共调用方式接入 |
-| [完整目标 Schema](../../../commerce-service/docs/database/sql/commerce-schema.sql) | Consumer/Legal/Acceptance 已有目标表；不等于存量环境已完成准备迁移 |
-| [Commerce pom.xml](../../../commerce-service/pom.xml) | 当前 Enforcer 禁止 Vault Client/Redis 等首片未使用依赖；新消费者按需评审解除对应限制，不能直接复制其他服务整包依赖 |
+| [Commerce README](../../../paytech/acquiring/README.md) | 三个 Maven 模块，十个 Client 操作；基础 Checkout 只接 CCT 预检，最终准备和 Customer HTTP 未接入 |
+| [AbstractGatewayProcessor](../../../paytech/acquiring/paytech-acquiring-core/src/main/java/com/paytech/acquiring/service/processor/AbstractGatewayProcessor.java) | 复用既有基础校验/处理模板，不再造 Customer 基类 |
+| [CreateRefundProcessor](../../../paytech/acquiring/paytech-acquiring-core/src/main/java/com/paytech/acquiring/service/processor/refund/CreateRefundProcessor.java) | 已有分阶段编排、TransactionExecutor、Handler.buildEvent 与事务内登记模式 |
+| [RefundSubmissionHandler](../../../paytech/acquiring/paytech-acquiring-core/src/main/java/com/paytech/acquiring/ext/job/RefundSubmissionHandler.java) | Handler 自身是入口，两个短事务之间调用外部端口；不另设 Handler 专属 Processor |
+| [CctPrecheckConfiguration](../../../paytech/acquiring/paytech-acquiring-app/src/main/java/com/paytech/acquiring/configuration) | @ImportHttpServices、LoadBalancer、Foundation MDC/Problem 处理；最终 CCT 解析沿这一公共调用方式接入 |
+| [完整目标 Schema](../../../paytech/acquiring/docs/database/sql/acquiring-schema.sql) | Consumer/Legal/Acceptance 已有目标表；不等于存量环境已完成准备迁移 |
+| [Commerce pom.xml](../../../paytech/acquiring/pom.xml) | 当前 Enforcer 禁止 Vault Client/Redis 等首片未使用依赖；新消费者按需评审解除对应限制，不能直接复制其他服务整包依赖 |
 
 实际运行、数据库和部署状态始终以 [CURRENT_IMPLEMENTATION](../../../agent-docs/CURRENT_IMPLEMENTATION.md) 为准。本方案没有运行 Java 或数据库环境。
 

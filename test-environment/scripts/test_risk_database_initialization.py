@@ -14,6 +14,7 @@ import stat
 CLI_ACTIONS = {
     '--apply-platform-sql': 'apply_platform_sql', '--nacos': 'initialize_nacos',
     '--apply-risk-sql': 'apply_risk_sql', '--verify-risk-catalog': 'verify_risk_catalog',
+    '--create-service-databases': 'create_service_databases', '--apply-service-sql': 'apply_service_sql',
     '--verify-risk-operations-stage': 'verify_risk_operations_stage',
     '--apply-risk-operations-sql': 'apply_risk_operations_sql',
     '--enable-risk-operations-resources': 'enable_risk_operations_resources',
@@ -31,7 +32,10 @@ ACTION_COLUMNS = (
     "shadow_supported_flag", "status", "create_time", "update_time")
 POINT_ROWS = (
     ("210001", "CHECKOUT_PREPARE", "Checkout Prepare", "CHECKOUT", "ACTIVE",
-     "2026-09-05 00:00:00.000000", "2026-09-05 00:00:00.000000"),)
+     "2026-09-05 00:00:00.000000", "2026-09-05 00:00:00.000000"),
+    # 2026-10-14 支付反欺诈一期：支付决策点（@payment_seed_time 字面量）。
+    ("210002", "PAYMENT_ATTEMPT_RISK", "Payment Attempt Risk", "PAYMENT", "ACTIVE",
+     "2026-10-14 00:00:00.000000", "2026-10-14 00:00:00.000000"))
 ACTION_ROWS = (
     ("240001", "ALLOW_CHECKOUT", "Allow Checkout", "DECISION", "1", "DECISION_ALLOW_V1", "1.0.0",
      "185de7185670a27961afb0eade21b87fd99cc9677542ef5eaf6bb5c0806ceaa1", "1", "ALLOW",
@@ -46,6 +50,16 @@ ACTION_ROWS = (
 ACTION_ROWS += (
     ("240004", "APPLY_COOLDOWN", "冷却", "RESTRICTION", "1", "NULL", "NULL", "NULL", "0", "NULL", "MAX", "0", "CONFIGURATION_ONLY", "2026-09-11 00:00:00.000000", "2026-09-11 00:00:00.000000"),
     ("240005", "ADD_RISK_TAG", "添加主体标签", "TAG", "1", "NULL", "NULL", "NULL", "0", "NULL", "UNION", "0", "CONFIGURATION_ONLY", "2026-09-11 00:00:00.000000", "2026-09-11 00:00:00.000000"))
+ACTION_ROWS += (
+    ("240006", "ALLOW_PAYMENT", "放行支付", "DECISION", "1", "DECISION_ALLOW_V1", "1.0.0",
+     "185de7185670a27961afb0eade21b87fd99cc9677542ef5eaf6bb5c0806ceaa1", "1", "ALLOW",
+     "MOST_RESTRICTIVE", "1", "ACTIVE", "2026-10-14 00:00:00.000000", "2026-10-14 00:00:00.000000"),
+    ("240007", "REVIEW_PAYMENT", "人工审核", "DECISION", "1", "DECISION_REVIEW_V1", "1.0.0",
+     "a4d4709e280ee2d8c2a4dcc5537e91318a16b2cd27ba41a10d70bdae25e85716", "1", "REVIEW",
+     "MOST_RESTRICTIVE", "1", "ACTIVE", "2026-10-14 00:00:00.000000", "2026-10-14 00:00:00.000000"),
+    ("240008", "DENY_PAYMENT", "拒绝支付", "DECISION", "1", "DECISION_DENY_V1", "1.0.0",
+     "8dc8b20590fa0d0c98732d332871901c568207ba9e346277668c9daab3a1e9b7", "1", "DENY",
+     "MOST_RESTRICTIVE", "1", "ACTIVE", "2026-10-14 00:00:00.000000", "2026-10-14 00:00:00.000000"))
 PARAMETER_COLUMNS = ("parameter_definition_id", "action_version_id", "parameter_code", "value_type", "required_flag", "allowed_source_type", "target_parameter_flag", "create_time")
 PARAMETER_ROWS = (
     ("2400041", "240004", "SUBJECT_ID", "STRING", "1", "CONTEXT", "1", "2026-09-11 00:00:00.000000"),
@@ -114,7 +128,8 @@ class RiskDatabaseInitializationTest(unittest.TestCase):
 
     def test_owner_catalog_has_exact_complete_stored_tuple_contract(self):
         catalog = self.module.load_risk_catalog()
-        self.assertEqual(71, len(catalog["tables"]))
+        # 第 06 步拆库后 risk-decision 为 54 张表（53 + t_compensation_event）。
+        self.assertEqual(54, len(catalog["tables"]))
         self.assertEqual(POINT_COLUMNS, catalog["point_columns"])
         self.assertEqual(ACTION_COLUMNS, catalog["action_columns"])
         self.assertEqual(POINT_ROWS, catalog["points"])
@@ -263,6 +278,7 @@ class RiskDatabaseInitializationTest(unittest.TestCase):
 
     def test_automated_callers_and_readme_cannot_combine_initialization_actions(self):
         prohibited = ("--apply-risk-sql", "apply_risk_sql", '--apply-risk-operations-sql',
+                      "--create-service-databases", "--apply-service-sql",
                       '--enable-risk-operations-resources', '--disable-risk-operations-resources')
         callers = set(WORKSPACE.rglob("compose*.yaml"))
         callers.update(WORKSPACE.rglob("build.sh"))
@@ -273,7 +289,8 @@ class RiskDatabaseInitializationTest(unittest.TestCase):
         readme = (WORKSPACE / "test-environment/README.md").read_text(encoding="utf-8")
         for line in readme.splitlines():
             known = sum(flag in line for flag in
-                        ("--apply-platform-sql", "--nacos", "--apply-risk-sql", "--verify-risk-catalog"))
+                        ("--apply-platform-sql", "--nacos", "--apply-risk-sql", "--verify-risk-catalog",
+                         "--create-service-databases", "--apply-service-sql"))
             self.assertLessEqual(known, 1, line)
 
 

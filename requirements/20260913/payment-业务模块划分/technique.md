@@ -36,8 +36,8 @@ Refund、Void、Customer Action/3DS 状态留在 Execution；NI、Geidea 先按 
 
 | 事项 | 现有证据 | 本方案补充 |
 |---|---|---|
-| 应用模块 | 改前仅 api/web/test；[父 POM](../../../payment-orchestration-service/pom.xml)为工程入口，状态见[台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-business-modules) | 创建四业务 JAR 和包边界，接入 Web；工程骨架不表示业务实现 |
-| Payment 数据资产 | [现有完整 Schema](../../../payment-orchestration-service/docs/database/sql/payment-orchestration-schema.sql) | 为每张现有表指定建议代码 Owner，结构不变 |
+| 应用模块 | 改前仅 api/web/test；[父 POM](../../../paytech/payment/pom.xml)为工程入口，状态见[台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-business-modules) | 创建四业务 JAR 和包边界，接入 Web；工程骨架不表示业务实现 |
+| Payment 数据资产 | [现有完整 Schema](../../../paytech/payment/docs/database/sql/payment-schema.sql) | 为每张现有表指定建议代码 Owner，结构不变 |
 | Card | [已确认需求](../../20260912/payment-自建CardVault/requirement.md)确认独立模块；[数据稿](../../20260912/payment-自建CardVault/data-design.md)仍有待评审内容 | 保留已确认边界，候选表只映射模块，不通过本建议批准字段、恢复合同或技术表迁移 |
 
 | 系统/仓库 | 本轮影响 | 后续范围 |

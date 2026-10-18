@@ -4,7 +4,7 @@
 
 ## 1. 私网接口
 
-Java 合同位于 [TenantProjectionApi](../../../platform-support-service/platform-support-api/src/main/java/com/paytech/platform/support/api/tenantprojection/TenantProjectionApi.java)。服务 Context Path 为 `/platform-support`，下表列出的路径均相对于它。
+Java 合同位于 [TenantProjectionApi](../../../paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/tenantprojection/TenantProjectionApi.java)。服务 Context Path 为 `/platform-support`，下表列出的路径均相对于它。
 
 | 方法与路径 | 用途 |
 |---|---|

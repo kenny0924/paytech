@@ -36,9 +36,9 @@ Risk 通过仓库根 Maven Wrapper、Java 25 运行 `-f risk-compliance-service/
 
 新增关键行为测试入口：
 
-- [DecisionFlowConfigurationHttpAutoTest](../../../risk-compliance-service/risk-test/src/test/java/com/paytech/risk/auto/ext/http/DecisionFlowConfigurationHttpAutoTest.java)：真实 MySQL/Redis/HTTP 的 10 项流程场景。
+- [DecisionFlowConfigurationHttpAutoTest](../../../paytech/risk-decision/paytech-risk-decision-test/src/test/java/com/paytech/risk/auto/ext/http)：真实 MySQL/Redis/HTTP 的 10 项流程场景。
 - 纯图校验 7 项及规则动作可选 HTTP 5 项包含在 Risk 总数中，不重复累加；旧字典、Hash、回放与其余原回归一起运行。
-- [RiskFlowBrowserBoundaryAutoTest](../../../operations-console-bff/paytech-operations-console-bff-test/src/test/java/com/paytech/operations/console/bff/auto/RiskFlowBrowserBoundaryAutoTest.java) 覆盖 10 操作、读写/删除权限分离、授权失败零 Owner 调用、无体 DELETE、损坏成功响应与 Owner 错误适配。
+- [RiskFlowBrowserBoundaryAutoTest](../../../paytech/operations-console-bff/paytech-operations-console-bff-test/src/test/java/com/paytech/operations/console/bff/auto/RiskFlowBrowserBoundaryAutoTest.java) 覆盖 10 操作、读写/删除权限分离、授权失败零 Owner 调用、无体 DELETE、损坏成功响应与 Owner 错误适配。
 - [decisionFlow.test.ts](../../../operations-console-web/src/risk/decisionFlow.test.ts) 和 [decisionFlowApi.test.ts](../../../operations-console-web/src/risk/decisionFlowApi.test.ts)：无隐式默认决定、图序列化、删除关联线及连续优先级、URL 版本坐标、严格响应身份/CAS、无体删除、静态校验无命令键。
 
 ## 3. 本期验收映射与浏览器检查

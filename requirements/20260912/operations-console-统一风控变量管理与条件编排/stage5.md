@@ -30,8 +30,8 @@ Web 使用生产构建，通过本机入口适配器调用真实 Operations BFF�
 
 本次增量文件：
 
-- [Risk 搜索 SQL](../../../risk-compliance-service/risk-decision/src/main/resources/mapper/decision/RiskVariableMapper.xml)
-- [Risk HTTP 回归](../../../risk-compliance-service/risk-test/src/test/java/com/paytech/risk/auto/ext/http/RiskVariableHttpAutoTest.java)
+- [Risk 搜索 SQL](../../../paytech/risk-decision/paytech-risk-decision-core/src/main/resources/mapper/decision/RiskVariableMapper.xml)
+- [Risk HTTP 回归](../../../paytech/risk-decision/paytech-risk-decision-test/src/test/java/com/paytech/risk/auto/ext/http)
 - [Web 变量页面](../../../operations-console-web/src/pages/RiskVariables.tsx)
 
 ## 3. 验证及清理

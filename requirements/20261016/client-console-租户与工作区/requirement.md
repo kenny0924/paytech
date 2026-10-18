@@ -8,7 +8,7 @@
 - 已有权威约定（本需求不重新定义，只落地）：
   - [统一人类认证设计](../../../docs/superpowers/specs/2026-08-30-platform-unified-human-authentication-design.md)：CLIENT Channel 有账号上下文与 CLIENT 租户上下文两种 Token；租户上下文携带 tenant_id、tenant_type、tenant_member_id；切换新建 Session、撤销旧 Refresh Family；PENDING、被拒或状态缺失的 Tenant 不签发租户 Token；浏览器不能指定 Tenant ID；Gateway 只校验最小 Claim，成员与授权由 Platform 判定。
   - 需求目录 PLT-I16（选择账号或单一 Member 上下文）、PLT-I21（按 Channel/Account/Member 返回菜单）；全局时序“用户选择已激活的 Client Tenant，经 Gateway、BFF 调 PLT-I16”。
-  - 入驻需求的 C02 合同 `POST /api/client/auth/v1/workspace-context`（[api-contract](../20260914/client-console-注册与客户入驻/api-contract.md)，请求只传 memberId）与工作区页面状态（[ui-design](../20260914/client-console-注册与客户入驻/ui-design.md)：开通中 / 可访问 / 受限）。
+  - 入驻需求的 C02 合同 `POST /api/client/auth/v1/workspace-context`（[api-contract](../../20260914/client-console-注册与客户入驻/api-contract.md)，请求只传 memberId）与工作区页面状态（[ui-design](../../20260914/client-console-注册与客户入驻/ui-design.md)：开通中 / 可访问 / 受限）。
 
 ## 2. 使用者与目标
 

@@ -24,7 +24,7 @@
 
 ## 2. 表结构差异
 
-对照来源为 [Payment Schema](../database/sql/payment-schema.sql)、[Commerce Schema](../../../../commerce-service/docs/database/sql/commerce-schema.sql)和[公共 Mapper XML](../../../foundation/paytech-command-idempotency/src/main/resources/META-INF/mybatis/CommandIdempotencyMapper.xml)。公共包的 24 列清单与当前 Commerce 模型一致，但 Commerce 的业务注释、目录和恢复阶段不能复制给 Payment。
+对照来源为 [Payment Schema](../database/sql/payment-schema.sql)、[Commerce Schema](../../../acquiring/docs/database/sql/acquiring-schema.sql)和[公共 Mapper XML](../../../foundation/paytech-command-idempotency/src/main/resources/META-INF/mybatis/CommandIdempotencyMapper.xml)。公共包的 24 列清单与当前 Commerce 模型一致，但 Commerce 的业务注释、目录和恢复阶段不能复制给 Payment。
 
 ### 2.1 新增的 13 列
 
@@ -85,7 +85,7 @@
 
 公共 Lease 是技术 CAS 条件，与 Redis 的 Intent 锁不同；Claim Owner、到期时刻仍须提供。完成时使用实际当前时刻；超过租约导致完成失败，应回滚本次受理。当前无需调用续租、接管或 advanceStage，也不增加扫描任务。本期命令 Lease 为 30 秒，本地事务超时为 5 秒；每个新 Claim 使用随机 UUID 作为 Owner。操作时刻在事务前冻结，完成时刻取当前 UTC 微秒时间。
 
-Commerce 已有[原子 Customer 命令](../../../../commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/domainservice/service/customer/impl/CustomerCommandServiceImpl.java)采用公共 Claim/Complete，证明公共包不要求所有消费者都复制 Create Checkout 的多阶段恢复流程。
+Commerce 已有[原子 Customer 命令](../../../consumer/paytech-consumer-core/src/main/java/com/paytech/consumer/domainservice/service/impl)采用公共 Claim/Complete，证明公共包不要求所有消费者都复制 Create Checkout 的多阶段恢复流程。
 
 ### 必须保留的语义
 

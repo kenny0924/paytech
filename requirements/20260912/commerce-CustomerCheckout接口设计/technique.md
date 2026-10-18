@@ -38,6 +38,6 @@ Commerce GET 在事务外读取 Payment 概要，不新增 PaymentAuthorized MQ�
 
 ## 4. 当前产物与后续缺口
 
-本次仅修改设计文档及已有架构/需求索引。当前实际实现与部署见 [CURRENT_IMPLEMENTATION](../../../agent-docs/CURRENT_IMPLEMENTATION.md) 和 [Commerce README](../../../commerce-service/README.md)，不能由字段设计推断 Customer API 已上线。
+本次仅修改设计文档及已有架构/需求索引。当前实际实现与部署见 [CURRENT_IMPLEMENTATION](../../../agent-docs/CURRENT_IMPLEMENTATION.md) 和 [Commerce README](../../../paytech/acquiring/README.md)，不能由字段设计推断 Customer API 已上线。
 
 前序 NI Hosted Session configuration/session_id 映射已被自建方向取代。统一支付请求、Commerce 内部确认、卡数据与恢复详见[Payment 专项](../payment-自建CardVault/technique.md)；NI 直接支付/3DS 仍需沙箱核验。Platform 冻结文件能力和 Consumer 引用可空等原准备链缺口保留。前序[影响分析](./interface-impact.md)只在未被专项取代的范围继续适用。本轮不修改页面、应用代码、模型、SQL、Gateway 或 Risk。

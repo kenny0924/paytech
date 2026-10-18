@@ -124,7 +124,7 @@ mode 参与不可变命令内容和 Hash；不能把旧 PAY_V1 的 Hash 字段�
 
 ## 6. 场景与验收
 
-可筛选逐步数据见 [Payment Excel](../../../payment-orchestration-service/docs/payment-execution-state-scenarios.xlsx)。它是合成场景附件，不是数据库导出；后继风险 Action、评估恢复和工具切换场景按[内部风控修订](./internal-risk-action-amendment.md)解释。附件当前规模与核验证据见[台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)，Wallet 仍为未来能力示例。
+可筛选逐步数据见 [Payment Excel](../../../paytech/payment/docs/payment-execution-state-scenarios.xlsx)。它是合成场景附件，不是数据库导出；后继风险 Action、评估恢复和工具切换场景按[内部风控修订](./internal-risk-action-amendment.md)解释。附件当前规模与核验证据见[台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-execution-implementation)，Wallet 仍为未来能力示例。
 
 | 编号 | 必须验证的行为 |
 |---|---|
