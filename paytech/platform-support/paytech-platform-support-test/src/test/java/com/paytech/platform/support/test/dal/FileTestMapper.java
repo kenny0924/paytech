@@ -50,6 +50,56 @@ public interface FileTestMapper {
         @Param("container") String container, @Param("objectRef") String objectRef,
         @Param("policyId") long policyId, @Param("expiresAt") Instant expiresAt, @Param("now") Instant now);
 
+    /** 插入尚未完成、仍在授权期内的 CCT 入驻上传目标。 */
+    @Insert("""
+        INSERT INTO t_file_upload(upload_id,tenant_id,uploader_id,expected_size,expected_mime,owner_system,owner_type,
+            owner_ref_id,display_name,storage_provider,storage_container_ref,storage_object_ref,scan_policy_id,
+            expires_time,status,version,create_time,update_time)
+        VALUES(#{id},#{tenantId},#{uploaderId},#{size},#{mime},'CCT','CLIENT_APPLICATION_SUBJECT',#{ownerRefId},
+            #{displayName},#{provider},#{container},#{objectRef},#{policyId},#{expiresAt},'CREATED',1,#{now},#{now})
+        """)
+    int insertOpenUpload(@Param("id") long id, @Param("tenantId") long tenantId, @Param("uploaderId") long uploaderId,
+        @Param("size") long size, @Param("mime") String mime, @Param("ownerRefId") String ownerRefId,
+        @Param("displayName") String displayName, @Param("provider") String provider,
+        @Param("container") String container, @Param("objectRef") String objectRef,
+        @Param("policyId") long policyId, @Param("expiresAt") Instant expiresAt, @Param("now") Instant now);
+
+    /** 读取账号发起的全部上传，按上传 ID 排序。 */
+    @Select("""
+        SELECT upload_id,tenant_id,uploader_id,expected_size,expected_mime,owner_ref_id,display_name,storage_provider,
+            storage_container_ref,storage_object_ref,scan_policy_id,expires_time,status,version
+        FROM t_file_upload WHERE uploader_id=#{uploaderId} ORDER BY upload_id
+        """)
+    List<Map<String, Object>> uploadsOf(long uploaderId);
+
+    /** 读取上传当前状态与版本。 */
+    @Select("SELECT status,version FROM t_file_upload WHERE upload_id=#{uploadId}")
+    Map<String, Object> upload(long uploadId);
+
+    /** 读取上传登记的文件对象。 */
+    @Select("""
+        SELECT file_id,object_version,content_hash,size_bytes,mime_type,storage_encryption_key_ref,scan_policy_id,
+            scan_status,object_status,create_time
+        FROM t_file_object WHERE upload_id=#{uploadId} ORDER BY file_id
+        """)
+    List<Map<String, Object>> filesOfUpload(long uploadId);
+
+    /** 读取文件的入驻材料 Owner 引用。 */
+    @Select("SELECT owner_ref_id FROM t_file_owner_ref WHERE file_id=#{fileId}")
+    List<String> ownerRefs(long fileId);
+
+    /** 统计指定类型尚未结束（INIT / PROCESSING）的补偿任务。 */
+    @Select("SELECT COUNT(*) FROM t_compensation_event WHERE event_type=#{eventType} AND execute_status IN ('INIT','PROCESSING')")
+    long activeTasks(String eventType);
+
+    /** 读取指定类型的全部补偿任务业务键，按任务 ID 排序。 */
+    @Select("SELECT event_key FROM t_compensation_event WHERE event_type=#{eventType} ORDER BY id")
+    List<String> taskKeys(String eventType);
+
+    /** 删除指定类型的全部补偿任务。 */
+    @Delete("DELETE FROM t_compensation_event WHERE event_type=#{eventType}")
+    int deleteTasks(String eventType);
+
     /** 插入由上传完成登记的文件对象。 */
     @Insert("""
         INSERT INTO t_file_object(file_id,creation_source,upload_id,storage_provider,storage_container_ref,

@@ -249,7 +249,7 @@ files:
     enabled: false
     storage-provider: "" # MINIO | S3；启用时由文件测试基类注入。
     storage-container-ref: mor-platform-files-test # 仓库 MinIO 的测试专用版本化 SSE-S3 存储桶。
-    scan-policy-code: "" # 仅上传开始使用；文件测试直接插入策略，不经过上传开始。
+    scan-policy-code: "" # 仅上传开始使用；启用时由文件测试基类注入 UNIT_TEST_ONBOARDING，策略行由各例插入。
     upload-seconds: 900
     cct-test-base-url: "" # 既有受限直连字段；此处禁用，不连接外部系统。
     # 仓库 local-environment 的 MinIO（profile storage）；凭据优先取环境变量，否则由 LocalMockEnvironmentInitializer 读取 .env.local。

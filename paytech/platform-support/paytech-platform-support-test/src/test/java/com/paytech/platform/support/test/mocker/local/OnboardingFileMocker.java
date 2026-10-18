@@ -1,9 +1,11 @@
 package com.paytech.platform.support.test.mocker.local;
 
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -15,6 +17,7 @@ import com.paytech.foundation.testsupport.api.Clear;
 import com.paytech.platform.support.api.enums.FileScanStatus;
 import com.paytech.platform.support.filedocument.domain.enums.FileScanType;
 import com.paytech.platform.support.filedocument.integration.scanning.FormatFileScanner;
+import com.paytech.platform.support.service.handler.FileScanHandler;
 import com.paytech.platform.support.test.builder.OnboardingFileBuilder.Spec;
 import com.paytech.platform.support.test.builder.OperatorBuilder;
 import com.paytech.platform.support.test.dal.FileTestMapper;
@@ -22,7 +25,7 @@ import com.paytech.platform.support.test.dal.FileTestMapper;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 入驻文件的本地前置数据：扫描策略、已完成上传、文件对象与 CCT Owner 引用。
+ * 入驻文件的本地前置数据：扫描策略、未完成或已完成上传、文件对象与 CCT Owner 引用。
  *
  * <p>上传、文件、Owner 与结果由 {@link PlatformDataCleaner} 整表回收；扫描策略表可能保留已授权的本机开发配置，
  * 本组件只登记并删除本例插入的策略及其要求。
@@ -51,11 +54,36 @@ public class OnboardingFileMocker implements Clear {
         long policyId = OperatorBuilder.nextId();
         long requirementId = OperatorBuilder.nextId();
         assertEquals(1, mapper.insertPolicy(policyId, POLICY_CODE,
-            "[\"application/pdf\",\"image/png\",\"image/jpeg\"]", 10_485_760L, now));
+            "{\"mimeTypes\":[\"application/pdf\",\"image/png\",\"image/jpeg\"]}", 10_485_760L, now));
         policyIds.add(policyId);
         assertEquals(1, mapper.insertRequirement(requirementId, policyId, 1, FormatFileScanner.SCANNER_CODE,
             FileScanType.FORMAT.getCode(), FORMAT_MINIMUM_VERSION, "[\"" + FormatFileScanner.VALID + "\"]", now));
         return new Policy(policyId, requirementId);
+    }
+
+    /** 插入尚未完成的上传目标；未指定期限时取当前时间后 900 秒。 */
+    public Spec openUpload(Spec spec) {
+        Instant now = now();
+        Instant expiresAt = spec.expiresAt() == null ? now.plusSeconds(900) : spec.expiresAt();
+        assertEquals(1, mapper.insertOpenUpload(spec.uploadId(), spec.tenantId(), spec.uploaderId(), spec.size(),
+            spec.mime(), spec.ownerRefId(), spec.displayName(), spec.provider(), spec.container(), spec.objectRef(),
+            spec.policyId(), expiresAt, now));
+        return spec;
+    }
+
+    /**
+     * 有界等待本例上传完成后登记的扫描任务结束；超时则标记环境不可复用，避免后台继续写回已清空的表
+     *
+     * @param cleaner 公共数据回收组件
+     */
+    public void awaitScanTasks(PlatformDataCleaner cleaner) {
+        try {
+            await().atMost(Duration.ofSeconds(15)).pollInterval(Duration.ofMillis(50))
+                .until(() -> mapper.activeTasks(FileScanHandler.EVENT_TYPE) == 0);
+        } catch (RuntimeException | AssertionError timeout) {
+            cleaner.markUnusable();
+            throw timeout;
+        }
     }
 
     /** 插入已完成上传、对应文件对象及入驻材料 Owner 引用。 */
@@ -76,13 +104,15 @@ public class OnboardingFileMocker implements Clear {
     public void assertEmpty() {
         assertAll(() -> assertTrue(policyIds.isEmpty(), "上一例测试扫描策略未回收"),
             () -> assertEquals(0, mapper.countPolicies(POLICY_CODE),
-                "存在上次中断残留的测试扫描策略 " + POLICY_CODE + "，请人工确认后删除"));
+                "存在上次中断残留的测试扫描策略 " + POLICY_CODE + "，请人工确认后删除"),
+            () -> assertTrue(mapper.taskKeys(FileScanHandler.EVENT_TYPE).isEmpty(), "存在残留的文件扫描任务"));
     }
 
-    /** 删除本例插入的策略及其要求，不触碰本机开发配置。 */
+    /** 删除本例插入的策略及其要求与本例产生的文件扫描任务，不触碰本机开发配置。 */
     @Override
     public void clear() {
         try {
+            mapper.deleteTasks(FileScanHandler.EVENT_TYPE);
             for (Long policyId : policyIds) {
                 mapper.deleteRequirements(policyId);
                 mapper.deletePolicy(policyId);

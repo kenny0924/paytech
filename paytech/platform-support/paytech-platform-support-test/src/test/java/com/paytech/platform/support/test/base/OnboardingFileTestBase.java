@@ -14,9 +14,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.TestPropertySource;
 
 import com.paytech.platform.support.filedocument.integration.storage.StorageTrust;
@@ -24,6 +26,9 @@ import com.paytech.platform.support.filedocument.integration.storage.minio.Minio
 import com.paytech.platform.support.test.builder.OnboardingFileBuilder;
 import com.paytech.platform.support.test.configuration.LocalMockEnvironmentInitializer;
 import com.paytech.platform.support.test.dal.FileTestMapper;
+import com.paytech.platform.support.test.mocker.external.CctFileTargetMocker;
+import com.paytech.platform.support.test.mocker.local.OnboardingApplicantMocker;
+import com.paytech.platform.support.test.mocker.local.OnboardingApplicantMocker.Applicant;
 import com.paytech.platform.support.test.mocker.local.OnboardingFileMocker;
 import com.paytech.platform.support.test.mocker.local.StorageObjectMocker;
 
@@ -33,9 +38,13 @@ import com.paytech.platform.support.test.mocker.local.StorageObjectMocker;
  * <p>
  * 默认存储提供方为 MINIO；子类可用 {@link TestPropertySource} 覆盖 {@code files.onboarding.storage-provider}。 本机 MinIO、Platform
  * 账号环境变量或自签名证书缺失时在加载上下文前明确失败并提示准备步骤。
+ *
+ * <p>上传开始使用本例插入的测试扫描策略；CCT 文件目标授权经真实出站 Client 访问独立 Mock HTTP 服务。
+ * 每例结束先等待上传完成登记的扫描任务结束，再检查 CCT 意外调用，最后由公共清理回收。
  */
-@TestPropertySource(
-    properties = {"files.onboarding.enabled=true", "files.onboarding.storage-provider=" + MinioFileStorage.PROVIDER})
+@TestPropertySource(properties = {"files.onboarding.enabled=true",
+    "files.onboarding.storage-provider=" + MinioFileStorage.PROVIDER,
+    "files.onboarding.scan-policy-code=" + OnboardingFileMocker.POLICY_CODE})
 public abstract class OnboardingFileTestBase extends OperationsApiTestBase {
 
     /** 本机自签名证书，相对 local-environment；与 application-mock.yml 的 trusted-certificate 一致。 */
@@ -59,6 +68,12 @@ public abstract class OnboardingFileTestBase extends OperationsApiTestBase {
 
     @Autowired
     protected Clock clock;
+
+    @Autowired
+    protected CctFileTargetMocker cct;
+
+    @Autowired
+    protected OnboardingApplicantMocker applicants;
 
     /** 上下文加载前确认本机 MinIO、证书与 Platform 账号配置就绪（与 Mock 上下文同样读取 .env.local）；不启动或修改容器。 */
     @BeforeAll
@@ -98,11 +113,19 @@ public abstract class OnboardingFileTestBase extends OperationsApiTestBase {
         }
     }
 
-    /** 父类全局初始化后确认没有遗留的存储对象与测试扫描策略。 */
+    /** 父类全局初始化后确认没有遗留的存储对象、测试扫描策略与 CCT 登记。 */
     @BeforeEach
     void setUpOnboardingFileBase() {
         storage.assertEmpty();
         fileMocker.assertEmpty();
+        cct.assertEmpty();
+    }
+
+    /** 先等待扫描任务结束，再检查被业务捕获的 CCT 意外调用；公共清理随后执行。 */
+    @AfterEach
+    void tearDownOnboardingFileBase() {
+        fileMocker.awaitScanTasks(platformDataCleaner);
+        cct.assertNoUnexpectedCalls();
     }
 
     /** 应用固定时钟的当前微秒时间。 */
@@ -113,6 +136,11 @@ public abstract class OnboardingFileTestBase extends OperationsApiTestBase {
     /** 以 Platform 账号写入唯一版本，再按该版本登记上传、文件与 Owner。 */
     protected OnboardingFileBuilder.Spec stored(OnboardingFileBuilder.Spec draft) {
         return fileMocker.file(draft.withVersion(storage.put(draft.objectRef(), draft.bytes())));
+    }
+
+    /** 申请人身份的可信 Header。 */
+    protected HttpHeaders headers(Applicant applicant) {
+        return headers(applicant.actor(), applicant.session());
     }
 
     /** 本例独有对象坐标上的默认 PDF 材料，提供方取当前上下文配置。 */
