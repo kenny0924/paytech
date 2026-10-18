@@ -11,6 +11,8 @@ import com.paytech.platform.support.api.onboardingfiles.OnboardingFileApi;
 import com.paytech.platform.support.api.onboardingfiles.OnboardingFileModels.*;
 import com.paytech.platform.support.filedocument.domain.file.UploadModels.Start;
 import com.paytech.platform.support.service.processor.OnboardingUploadProcessor;
+import com.paytech.platform.support.service.processor.request.CompleteOnboardingFileRequest;
+import com.paytech.platform.support.service.processor.response.CompleteOnboardingFileResponse;
 
 /** 上传 HTTP 适配，只解析有界输入，不接受浏览器自报权限。 */
 @RestController
@@ -38,12 +40,20 @@ public class OnboardingFileController implements OnboardingFileApi {
         var start=new Start(id(request.applicationId()),id(request.subjectPartyId()),name,request.mimeType(),id(request.sizeBytes()));
         return processor.start(account,session,account+":"+start.applicationId()+":"+start.subjectPartyId(),start);
     }
-    /** 完成接口不接受浏览器自报 Hash 或任何 Body。 */
-    @Override public FileCompletionReceipt complete(String accountId,String sessionId,String uploadId) {
-        long account;long session;
-        try { account=id(accountId);session=id(sessionId); }
-        catch (InvalidParameterException invalid) { throw new FailException(ClientAuthenticationErrorCode.CLIENT_SESSION_INVALID); }
-        return completion.complete(account,session,id(uploadId));
+    /** 完成接口不接受浏览器自报 Hash 或任何 Body：解析身份 → Processor → 回执。 */
+    @Override
+    public FileCompletionReceipt complete(String accountId, String sessionId, String uploadId) {
+        var request = new CompleteOnboardingFileRequest(sessionIdentity(accountId), sessionIdentity(sessionId),
+            id(uploadId));
+        CompleteOnboardingFileResponse response = completion.process(request);
+        return convertReceipt(response);
+    }
+
+    /** 回执中的 commandId 与 uploadId 相同：完成操作的身份就是上传本身。 */
+    private FileCompletionReceipt convertReceipt(CompleteOnboardingFileResponse response) {
+        String uploadId = Long.toString(response.getUploadId());
+        return new FileCompletionReceipt(uploadId, uploadId, Long.toString(response.getFileId()),
+            response.getCompletedAt());
     }
     /** 查询入口只解析身份，资源与会话由用例重新核验。 */
     @Override public FileResponseBody read(String accountId,String sessionId,String fileId) {
