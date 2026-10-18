@@ -40,6 +40,7 @@
 - 每个消费服务对每个感兴趣的发布方声明 **N 个分区队列** `<consumer>.<producer>.p0..pN-1`（Quorum，`x-single-active-consumer=true`，`delivery-limit=5`，DLX `<consumer>.<producer>.dlx` → `.dlq`）。N 默认 4，由 `messaging.consumers.<producer>.partitions` 配置。
 - 同一 `aggregateId` 恒落同一队列，单活消费者保证该队列串行消费 → 同聚合有序；不同聚合并行。
 - 发布侧顺序：补偿事件 Handler 并发执行，可能让同聚合的两个事件乱序发出。规则：**事件的 `event_key` 包含 `aggregateId`**，`CompensationEventDispatcher` 按 `event_key` 的聚合前缀串行（messaging 提供 `AggregateSerialExecutor`，Dispatcher 以 `aggregateId` 哈希到固定线程）；再加消费侧版本判定兜底。
+- **实现注记（2026-10-18，连接恢复）**：启动声明成功的发布与订阅拓扑登记到 `MessagingTopologyRecovery`（Spring AMQP `ConnectionListener`），每次新建 Broker 连接时按原参数逐项幂等重声明；单项参数冲突记 ERROR 并跳过依赖它的绑定，其余项照常恢复。分区监听容器改为 `missingQueuesFatal=false`，队列暂缺时持续重试。详见 `paytech-messaging/README.md`「连接恢复」与需求 `local-environment/requirements/20261018/foundation-messaging-连接恢复重声明拓扑/`。
 - 现有 `topic_payment_result` / `topic_risk_client_review` 与消费队列保留一个版本：发布方双写（旧 Topic + 新一致性哈希交换机）直到消费方切换完成，然后删除旧 Topic。
 
 ## 4. 消费幂等与顺序（`t_consumed_event`）

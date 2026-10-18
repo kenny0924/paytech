@@ -127,14 +127,37 @@ public final class BrokerTestSupport implements Clear, DisposableBean {
         admin.purgeQueue(deadLetterQueue(), false);
     }
 
-    /** 上下文关闭时删除本次运行声明的全部队列与交换机。 */
-    @Override
-    public void destroy() {
+    /**
+     * 模拟 Broker 丢失订阅侧拓扑：删除本次运行的分区队列、DLQ、DLX 与一致性哈希交换机，保留发布方交换机。
+     */
+    public void deleteSubscriptionTopology() {
         partitionQueues().forEach(admin::deleteQueue);
         admin.deleteQueue(deadLetterQueue());
         admin.deleteExchange(MessagingTopology.deadLetterExchange(TestRun.CONSUMER, TestRun.PRODUCER));
         admin.deleteExchange(MessagingTopology.consumerHashExchange(TestRun.CONSUMER, TestRun.PRODUCER));
+    }
+
+    /**
+     * 模拟 Broker 重建：删除本次运行发布与订阅的全部拓扑。
+     */
+    public void deleteRunTopology() {
+        deleteSubscriptionTopology();
         admin.deleteExchange(MessagingTopology.producerExchange(TestRun.PRODUCER));
+    }
+
+    /**
+     * 声明一个无参数的持久经典队列，用于制造与生产拓扑同名但参数不同的冲突。
+     *
+     * @param queue 队列名
+     */
+    public void declareClassicQueue(String queue) {
+        admin.declareQueue(new org.springframework.amqp.core.Queue(queue, true, false, false));
+    }
+
+    /** 上下文关闭时删除本次运行声明的全部队列与交换机。 */
+    @Override
+    public void destroy() {
+        deleteRunTopology();
         admin.deleteExchange(MessagingTopology.producerExchange(TestRun.ORPHAN_PRODUCER));
         admin.deleteExchange(MessagingTopology.producerExchange(TestRun.MISSING_PRODUCER));
     }

@@ -13,6 +13,7 @@ import com.paytech.foundation.messaging.api.EventCatalog;
 import com.paytech.foundation.messaging.catalog.YamlEventCatalog;
 import com.paytech.foundation.messaging.test.mapper.TestMapper;
 import com.paytech.foundation.messaging.test.support.BrokerTestSupport;
+import com.paytech.foundation.messaging.test.support.BrokerTopologyProbe;
 import com.paytech.foundation.messaging.test.support.DatabaseCleaner;
 import com.paytech.foundation.messaging.test.support.HandledEventProbe;
 import com.paytech.foundation.messaging.test.support.LooseNoteHandler;
@@ -20,6 +21,7 @@ import com.paytech.foundation.messaging.test.support.ManagedEntryHandler;
 import com.paytech.foundation.messaging.test.support.MeterRegistryCleaner;
 import com.paytech.foundation.messaging.test.support.StrictFactHandler;
 import com.paytech.foundation.messaging.test.support.TestRun;
+import com.paytech.foundation.messaging.test.support.TopologyErrorLogProbe;
 import com.paytech.foundation.messaging.testkit.PartitionQueueBaselineConfiguration;
 
 import io.micrometer.core.instrument.MeterRegistry;
@@ -33,7 +35,8 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 @EnableAutoConfiguration
 @MapperScan(basePackageClasses = TestMapper.class)
 @Import({HandledEventProbe.class, StrictFactHandler.class, LooseNoteHandler.class, ManagedEntryHandler.class, BrokerTestSupport.class,
-    DatabaseCleaner.class, MeterRegistryCleaner.class, PartitionQueueBaselineConfiguration.class})
+    BrokerTopologyProbe.class, TopologyErrorLogProbe.class, DatabaseCleaner.class, MeterRegistryCleaner.class,
+    PartitionQueueBaselineConfiguration.class})
 public class TestApplication {
 
     @Bean

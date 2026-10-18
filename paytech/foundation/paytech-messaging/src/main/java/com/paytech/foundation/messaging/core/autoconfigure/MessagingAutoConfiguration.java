@@ -40,6 +40,7 @@ import com.paytech.foundation.messaging.core.codec.DomainEventCodec;
 import com.paytech.foundation.messaging.core.observability.MessagingMetrics;
 import com.paytech.foundation.messaging.core.topology.MessagingTopology;
 import com.paytech.foundation.messaging.core.topology.MessagingTopologyDeclarer;
+import com.paytech.foundation.messaging.core.topology.MessagingTopologyRecovery;
 import com.paytech.foundation.messaging.persistence.mapper.ConsumedEventMapper;
 import com.paytech.foundation.messaging.persistence.repository.MyBatisConsumedEventRepository;
 import com.paytech.foundation.messaging.publish.RabbitDomainEventPublisher;
@@ -53,6 +54,7 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
  * {@code spring.rabbitmq.publisher-confirm-type=correlated} 与 {@code spring.rabbitmq.publisher-returns=true}。</li>
  * <li>消费端：{@code messaging.consumer.service} 设置时按 Handler 声明分区拓扑、创建监听容器，消费存储使用宿主
  * MyBatis DataSource 与事务管理器。</li>
+ * <li>连接恢复：启动声明成功的发布与订阅拓扑登记到 {@link MessagingTopologyRecovery}，每次新建 Broker 连接时按原参数重声明。</li>
  *
  * @author Claude
  */
@@ -118,11 +120,29 @@ public class MessagingAutoConfiguration {
     }
 
     /**
+     * 连接恢复时的拓扑重声明，注册为宿主连接的 ConnectionListener。
+     *
+     * @param connectionFactory 宿主连接
+     * @param declarer 拓扑声明器
+     * @return 恢复监听器
+     */
+    @Bean
+    @ConditionalOnBean(ConnectionFactory.class)
+    @ConditionalOnMissingBean
+    public MessagingTopologyRecovery messagingTopologyRecovery(ConnectionFactory connectionFactory,
+        MessagingTopologyDeclarer declarer) {
+        MessagingTopologyRecovery recovery = new MessagingTopologyRecovery(declarer);
+        connectionFactory.addConnectionListener(recovery);
+        return recovery;
+    }
+
+    /**
      * 发布端：校验连接的 Confirm 与 Returns、声明本服务交换机并创建专用 mandatory 模板。
      *
      * @param properties 配置
      * @param connectionFactory 宿主连接
      * @param declarer 拓扑声明器
+     * @param recovery 连接恢复重声明
      * @param codec 信封编码
      * @param metrics 计数器
      * @return 发布端口实现
@@ -132,8 +152,8 @@ public class MessagingAutoConfiguration {
     @ConditionalOnProperty(prefix = "messaging.producer", name = "service")
     @ConditionalOnMissingBean(DomainEventPublisher.class)
     public RabbitDomainEventPublisher domainEventPublisher(MessagingProperties properties,
-        ConnectionFactory connectionFactory, MessagingTopologyDeclarer declarer, DomainEventCodec codec,
-        MessagingMetrics metrics) {
+        ConnectionFactory connectionFactory, MessagingTopologyDeclarer declarer, MessagingTopologyRecovery recovery,
+        DomainEventCodec codec, MessagingMetrics metrics) {
         String producer = requireService("messaging.producer.service", properties.getProducer().getService());
         if (!connectionFactory.isPublisherConfirms() || !connectionFactory.isPublisherReturns()) {
             throw new IllegalStateException("messaging 发布端要求 spring.rabbitmq.publisher-confirm-type=correlated 且 "
@@ -141,6 +161,7 @@ public class MessagingAutoConfiguration {
         }
         requirePositive("messaging.producer.confirm-timeout", properties.getProducer().getConfirmTimeout());
         declarer.declareProducer(producer);
+        recovery.registerProducer(producer);
         RabbitTemplate template = new RabbitTemplate(connectionFactory);
         template.setMandatory(true);
         return new RabbitDomainEventPublisher(producer, properties.getProducer().getConfirmTimeout(), codec, template,
@@ -218,6 +239,7 @@ public class MessagingAutoConfiguration {
      * @param properties 配置
      * @param connectionFactory 宿主连接
      * @param declarer 拓扑声明器
+     * @param recovery 连接恢复重声明
      * @param registry Handler 注册表
      * @param interceptor 幂等拦截器
      * @param codec 信封编码
@@ -228,8 +250,9 @@ public class MessagingAutoConfiguration {
     @ConditionalOnBean({ConnectionFactory.class, IdempotentConsumeInterceptor.class, DomainEventHandlerRegistry.class})
     @ConditionalOnMissingBean
     public PartitionedListenerContainers partitionedListenerContainers(MessagingProperties properties,
-        ConnectionFactory connectionFactory, MessagingTopologyDeclarer declarer, DomainEventHandlerRegistry registry,
-        IdempotentConsumeInterceptor interceptor, DomainEventCodec codec, MessagingMetrics metrics) {
+        ConnectionFactory connectionFactory, MessagingTopologyDeclarer declarer, MessagingTopologyRecovery recovery,
+        DomainEventHandlerRegistry registry, IdempotentConsumeInterceptor interceptor, DomainEventCodec codec,
+        MessagingMetrics metrics) {
         String consumer = properties.getConsumer().getService();
         requirePositive("messaging.consumer.retry-backoff", properties.getConsumer().getRetryBackoff());
         requireKnownSubscriptions(properties.getConsumers(), registry);
@@ -238,6 +261,7 @@ public class MessagingAutoConfiguration {
         for (String producer : registry.producers()) {
             int partitions = partitions(properties.getConsumers().get(producer), producer);
             declarer.declareSubscription(consumer, producer, partitions);
+            recovery.registerSubscription(consumer, producer, partitions);
             DomainEventMessageListener listener = new DomainEventMessageListener(producer,
                 properties.getConsumer().getRetryBackoff(), codec, metrics, registry, interceptor);
             for (int partition = 0; partition < partitions; partition++) {
