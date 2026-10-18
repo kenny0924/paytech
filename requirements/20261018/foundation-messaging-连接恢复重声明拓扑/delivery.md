@@ -7,3 +7,4 @@
 
 遗留（见 `tasks/01-report.md` 待确认）：重声明失败项不自动重试；连接不断而队列被删时不触发重声明；mor-test 旧节点目录仍留在 RabbitMQ 卷内。
 | 2026-10-18 | 遗留处理 | ① 失败重试、② 连接不断队列被删的恢复：立项为任务卡 02（agent 执行中）；③ mor-test RabbitMQ 卷内三个旧节点目录（rabbit@4df0dd04c154 / 9f18b768bbb5 / ac527bae5eef）已打包到 `test-environment/private/backup-20261018/rabbitmq-old-nodes-20261018.tgz`（223 项，SHA256 已登记）后删除，当前节点 rabbit@rabbitmq 与 26 个队列不受影响。 | 任务卡 02 已合入 main（失败项退避重试、队列 / 交换机被删自动恢复；messaging 73、五个消费方模块全绿）；mor-test 以新镜像验证见下一行 |
+| 2026-10-18 | mor-test 验证（任务卡 02） | 新镜像重建 8 个 AMQP 服务后现场测试：连接保持时删除 `acquiring.payment.p1`，5 秒内重建为 Quorum 队列并挂回消费者；删除 `compliance.events` 后下一次发布（入驻退回决定）触发 compliance 重声明交换机，该次发布按合同抛出并落入补偿表 ERROR 等待重试。**暴露部署缺口**：mor-test 只为 platform-support 与 acquiring 登记了 XXL 补偿扫描执行器，其余有补偿事件的服务（compliance、client-master、card、payment、billing、account、consumer、risk-decision）没有 XXL 配置，失败任务不会被重试（验收"Client 看到退回"因此 27/28）。另立任务卡处理。 | 完成（附缺口） |
