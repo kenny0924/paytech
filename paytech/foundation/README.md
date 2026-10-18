@@ -530,7 +530,7 @@ Common Core 只依赖标准 Validation API，运行实现由宿主的 validation
 
 模板为逻辑 Key 添加 `lock:` 前缀，并沿用 Redisson 的服务 Namespace。它直接使用 `LockCommand` 参数，
 不读取下述 `@ResourceLock` 的等待/租约配置；同一入口不能叠加两套锁。Payment 的选择与接口约束见
-[写接口规范](../../payment-orchestration-service/docs/development/processor-conventions.md#6-processor-模板与锁)。
+[写接口规范](../payment/docs/development/processor-conventions.md#6-processor-模板与锁)。
 该默认来自 [2026-09-16 合并决定](../../agent-docs/decisions/2026-09-16-payment-based-coding-conventions.md)。既有消费者不因规范修改自动迁移；迁移时须核对同资源 Key、持锁范围及切换顺序。
 
 多个资源可由同一 `lockCommand` 返回 `LockCommand.tryLocks(keys, waitTime, leaseTime)`，后两项使用 `Duration`。

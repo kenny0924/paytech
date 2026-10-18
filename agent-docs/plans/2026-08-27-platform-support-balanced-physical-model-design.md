@@ -4,7 +4,7 @@
 
 最后更新：2026-08-29
 
-状态：**历史/已被替代。** 本文保留 92 表阶段的设计过程；当前认证与 Gateway 边界以 [2026-08-30 统一人工认证设计](../../docs/superpowers/specs/2026-08-30-platform-unified-human-authentication-design.md) 和 [97 表模型](../../platform-support-service/docs/database/platform-support.pdma.json) 为准：1,183 字段、175 个唯一索引、126 个访问索引、157 条关系、19 条 1:1、8 图组、31 条复合 FK、92 条 CHECK。
+状态：**历史/已被替代。** 本文保留 92 表阶段的设计过程；当前认证与 Gateway 边界以 [2026-08-30 统一人工认证设计](../../docs/superpowers/specs/2026-08-30-platform-unified-human-authentication-design.md) 和 [97 表模型](../../paytech/platform-support/docs/database/platform-support.pdma.json) 为准：1,183 字段、175 个唯一索引、126 个访问索引、157 条关系、19 条 1:1、8 图组、31 条复合 FK、92 条 CHECK。
 
 > **历史读取规则：** 后文所有 92 表、外部 IdP-only、动态 Gateway Route/Upstream、Route Release Item 与旧 Guard 语义仅说明当时选择。2026-08-30 的已生成模型已经完成该物理修订；不要据此恢复删除表或当前语义。
 

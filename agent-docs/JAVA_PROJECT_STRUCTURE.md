@@ -119,7 +119,7 @@ Foundation 资源锁的 `@ResourceLock` 与 Repeatable 容器属于 `paytech-red
 
 API Gateway 是基于 Spring Cloud Gateway WebFlux 的入口适配器，不套用核心服务的 `api → web` DDD 分层。默认只有可运行 `api-gateway-web` 与不可部署的 `api-gateway-test`；只有出现真实可复用 Java 合同时才增加 API JAR。Gateway 不拥有业务数据库、核心授权、页面聚合或业务编排，也不得依赖 MVC、阻塞 Redis 客户端或核心业务持久化模型。
 
-动态 Route/Guard Snapshot、Approved Target Registry、可信协议和绝对安全上限由 Gateway 专项架构拥有；具体仓库结构、端点、端口、依赖、验证与部署状态只见 [`api-gateway/README.md`](../api-gateway/README.md) 和 [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md)。
+动态 Route/Guard Snapshot、Approved Target Registry、可信协议和绝对安全上限由 Gateway 专项架构拥有；具体仓库结构、端点、端口、依赖、验证与部署状态只见 [`api-gateway/README.md`](../paytech/api-gateway/README.md) 和 [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md)。
 
 ### 3.3 BFF 工程例外
 
@@ -219,7 +219,7 @@ test ───────────────────────→ we
 
 DataObject 的可见性边界是其 Owner 业务能力 Maven JAR，而不是 Repository 类本身。Owner JAR 内的 Repository、Service、Domain Service 和必要内部应用代码可以使用或返回自己的 DataObject；Accounting 等其他模块不得使用 Tax 等 Owner 模块的 DataObject，只能调用其公开业务能力。Controller/HTTP API 也不得把 DataObject 直接作为传输对象。需要保护领域不变量、聚合多表、隔离持久化变化或跨模块发布时，在 Owner 边界转换为 Domain/Application 对象；没有这些价值时不强制在同一 JAR 内复制同义对象。
 
-[公共写接口开发示例](examples/WRITE_API_EXAMPLE.md)以 Payment pay 展示上述规则的完整调用链：Processor 位于所属模块的 service/processor，使用内部 Request/Response 和本模块 DataObject Context，Web Converter 只转换协议模型；开发前读取，交付前按示例第 11 节自查。[Payment 专项补充](../payment-orchestration-service/docs/development/processor-conventions.md)仅维护支付业务映射。此前 REST Processor 直接使用 RequestBody 的例外已被 [2026-09-16 合并决定](decisions/2026-09-16-payment-based-coding-conventions.md)取代。
+[公共写接口开发示例](examples/WRITE_API_EXAMPLE.md)以 Payment pay 展示上述规则的完整调用链：Processor 位于所属模块的 service/processor，使用内部 Request/Response 和本模块 DataObject Context，Web Converter 只转换协议模型；开发前读取，交付前按示例第 11 节自查。[Payment 专项补充](../paytech/payment/docs/development/processor-conventions.md)仅维护支付业务映射。此前 REST Processor 直接使用 RequestBody 的例外已被 [2026-09-16 合并决定](decisions/2026-09-16-payment-based-coding-conventions.md)取代。
 
 每次新增或调整业务模块时必须同步验证：模块清单、表唯一归属、获准的单向依赖、Maven 依赖图、跨模块接口、跨模块用例事务范围，以及至少一个阻止越权 `*Impl`、未发布 Domain Service、DataObject、Repository、Mapper、SQL 访问和循环依赖的架构测试。完整决定见 [`decisions/2026-09-05-business-module-collaboration-policy.md`](./decisions/2026-09-05-business-module-collaboration-policy.md)。
 

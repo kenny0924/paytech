@@ -21,4 +21,4 @@ Route 的 permission_id 就是权限绑定；现行 Schema 没有独立 Permissi
 
 本文件只注册：Route/Resource 为 DISABLED，写角色绑定为 REVOKED；已有 READ 角色不会提前获得新可见入口。所有 DML 在一个本地事务插入，角色 version 只递增一次；SQL 工具出现错误应回滚并停止，不在半失败状态继续 COMMIT。首次成功执行后不重复执行整份文件。
 
-同一批注册数据已合入 Platform 唯一 [platform-support-initial-data.sql](../../../../../platform-support-service/docs/database/sql/platform-support-initial-data.sql)；check-design.mjs 核对逐值一致及每行唯一出现。本目录 SQL 是本次增量执行材料，不是第二份初始化权威。阶段 6 再按实际部署环境准备精确开放清单：10 Route、3 Resource、2 RolePermission 的状态切换与角色版本更新；当前不执行或假定 test 中版本值。Snapshot 验证/收敛沿用 Platform 与 Gateway 能力，Gateway 业务代码和 Target 均无新增。
+同一批注册数据已合入 Platform 唯一 [platform-support-initial-data.sql](../../../../../paytech/platform-support/docs/database/sql/platform-support-initial-data.sql)；check-design.mjs 核对逐值一致及每行唯一出现。本目录 SQL 是本次增量执行材料，不是第二份初始化权威。阶段 6 再按实际部署环境准备精确开放清单：10 Route、3 Resource、2 RolePermission 的状态切换与角色版本更新；当前不执行或假定 test 中版本值。Snapshot 验证/收敛沿用 Platform 与 Gateway 能力，Gateway 业务代码和 Target 均无新增。

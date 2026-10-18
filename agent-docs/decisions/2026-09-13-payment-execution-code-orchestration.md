@@ -26,5 +26,5 @@
 
 - 取代本次会话前序“按 Card 两种目标分别建立主流程”与“数据库配置流程及冻结流程版本”的候选建议。
 - 对后续 Execution 设计，交互表的保留要求按本次移除目标重新评审；不表示现有 PDManer、Schema、代码或历史数据已经迁移，也不批准删除持久化所需的等待/未知事实。
-- [四模块协作](../../requirements/20260913/payment-业务模块划分/technique.md)、[Commerce Customer 后继入口](../../commerce-service/docs/requirements/20260912-customer-checkout/commerce-entry-amendment.md)、[OE/Pricing 决定](./2026-09-11-cct-commerce-oe-pricing-model.md)、原交易及资金约束保持。
+- [四模块协作](../../requirements/20260913/payment-业务模块划分/technique.md)、[Commerce Customer 后继入口](../../paytech/acquiring/docs/requirements/20260912-customer-checkout/commerce-entry-amendment.md)、[OE/Pricing 决定](./2026-09-11-cct-commerce-oe-pricing-model.md)、原交易及资金约束保持。
 - 用户确认阶段 3 接口/状态/字段、Mock 与研发计划，授权阶段 4 研发；SQL 另按交付记录取得本机空库条件授权；真实渠道或其他系统改造不在授权内。阶段安排见[本轮需求](../../requirements/20260913/payment-Execution设计/requirement.md)和[技术入口](../../requirements/20260913/payment-Execution设计/technique.md)。

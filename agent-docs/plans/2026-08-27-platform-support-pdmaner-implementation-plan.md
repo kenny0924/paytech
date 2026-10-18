@@ -2,7 +2,7 @@
 
 > **2026-09-01 再次替代：** 本计划记录的 92/97 表结构、八组 Manifest、旧 Gateway、通用配置和持久化 Readiness 已被后续设计取代。[57 表精简设计](../../docs/superpowers/specs/2026-09-01-platform-support-database-simplification-design.md) 是未受影响领域的直接前序；[统一公共 API 动态控制面设计](../../docs/superpowers/specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md) 与其 [PDManer 实施计划](../../docs/superpowers/plans/2026-09-01-platform-public-api-control-plane-pdmaner.md) 定义当前六表后继。当前模型为 63 表 / 822 字段 / 123 个唯一索引 / 99 个访问索引 / 107 条关系 / 5 个 1:1 / 7 图组 / 31 条复合 FK / 85 条 CHECK / 36 个 `_hash` 字段；后文只用于追溯历史 TDD 过程。
 
-> **2026-08-30 已替代：** 本记录继续证明历史 92 表模型的生成过程，但其外部 IdP-only、无本地登录 Session、动态 Gateway Route/Upstream 与旧 Guard 语义已被 [统一人工认证设计](../../docs/superpowers/specs/2026-08-30-platform-unified-human-authentication-design.md) 和当前 [97 表模型](../../platform-support-service/docs/database/platform-support.pdma.json) 取代。认证/Guard 的物理模型修订已经在设计资产中授权并生成；Migration、Java、数据库和运行基础设施仍需单独授权。
+> **2026-08-30 已替代：** 本记录继续证明历史 92 表模型的生成过程，但其外部 IdP-only、无本地登录 Session、动态 Gateway Route/Upstream 与旧 Guard 语义已被 [统一人工认证设计](../../docs/superpowers/specs/2026-08-30-platform-unified-human-authentication-design.md) 和当前 [97 表模型](../../paytech/platform-support/docs/database/platform-support.pdma.json) 取代。认证/Guard 的物理模型修订已经在设计资产中授权并生成；Migration、Java、数据库和运行基础设施仍需单独授权。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 

@@ -796,7 +796,7 @@ Audit Event 或 Rollback 表。
 
 ## Risk V1 配置增量部署（2026-09-11）
 
-本次三个应用的合同和旧 Hash 兼容要求见 [V1 配置接口合同](../agent-docs/plans/2026-09-11-risk-rule-v1-configuration-contract-draft.md)，实际部署/验证状态只见 [当前状态台账](../agent-docs/CURRENT_IMPLEMENTATION.md)。已有 test 库使用服务拥有的 [人工增量 SQL](../risk-compliance-service/docs/database/sql/2026-09-11-risk-rule-v1-configuration.sql)，不运行空库初始化。`--verify-risk-catalog` 核对一个 Point、五个 Action 和四个 Parameter 的完整目录。
+本次三个应用的合同和旧 Hash 兼容要求见 [V1 配置接口合同](../agent-docs/plans/2026-09-11-risk-rule-v1-configuration-contract-draft.md)，实际部署/验证状态只见 [当前状态台账](../agent-docs/CURRENT_IMPLEMENTATION.md)。已有 test 库使用服务拥有的 [人工增量 SQL](../paytech/risk-decision/docs/database/sql/2026-09-11-risk-rule-v1-configuration.sql)，不运行空库初始化。`--verify-risk-catalog` 核对一个 Point、五个 Action 和四个 Parameter 的完整目录。
 
 在更新前保留三个应用的旧 image ID，备份 test Risk 库及涉及的 Platform Resource 行。镜像须先构建完成；暂时隐藏六个风控 Resource，再停止 Web/BFF/Risk 以结束旧进程对规则库的访问，核对零连接后应用增量 SQL。仅按 Risk → BFF → Web 顺序替换这三个已审阅镜像；现有 Platform、Gateway、Nginx、Vault 和基础设施不因本增量自动重建。健康及目录核对成功后恢复原 Resource 状态。此过程有短暂维护窗口，既有九条 Route 与权限保持原配置。
 

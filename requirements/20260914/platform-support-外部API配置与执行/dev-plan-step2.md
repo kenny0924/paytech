@@ -8,7 +8,7 @@
 
 ## 0. 已读规范与现状
 
-已读：Operations BFF [README](../../../operations-console-bff/README.md)（分层、入站授权、错误转换、日志）、[应用架构](../../../agent-docs/APPLICATION_ARCHITECTURE.md)的 BFF 职责、[开发约定](../../../agent-docs/DEVELOPMENT_CONVENTIONS.md)、[测试规范](../../../agent-docs/UNIT_TEST_GUIDE.md)，以及租户访问需求的[本机登记记录](../platform-support-租户访问与成员权限查询/db/local-application.md)。
+已读：Operations BFF [README](../../../paytech/operations-console-bff/README.md)（分层、入站授权、错误转换、日志）、[应用架构](../../../agent-docs/APPLICATION_ARCHITECTURE.md)的 BFF 职责、[开发约定](../../../agent-docs/DEVELOPMENT_CONVENTIONS.md)、[测试规范](../../../agent-docs/UNIT_TEST_GUIDE.md)，以及租户访问需求的[本机登记记录](../platform-support-租户访问与成员权限查询/db/local-application.md)。
 
 代码样板：
 

@@ -152,4 +152,4 @@ class ExternalMockConfiguration {
 ./mvnw -pl paytech-test-support -am test
 ```
 
-测试使用临时 Loopback HTTP / Servlet 服务，以及实际 JUnit/Spring 生命周期验证清理，不需要业务数据库或其他中间件。更完整的依赖、验证和迁移状态见[当前台账](../../agent-docs/CURRENT_IMPLEMENTATION.md#foundation-test-support-20260917)。
+测试使用临时 Loopback HTTP / Servlet 服务，以及实际 JUnit/Spring 生命周期验证清理，不需要业务数据库或其他中间件。更完整的依赖、验证和迁移状态见[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#foundation-test-support-20260917)。

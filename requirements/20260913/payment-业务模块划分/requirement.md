@@ -25,4 +25,4 @@
 - [Payment 业务模型](../../../agent-docs/database/PAYMENT_ORCHESTRATION_DATABASE.md)
 - [OE 与 Payment Pricing Fact 决定](../../../agent-docs/decisions/2026-09-11-cct-commerce-oe-pricing-model.md)
 - [已确认 Card 能力边界](../../20260912/payment-自建CardVault/requirement.md)与[待评审数据稿](../../20260912/payment-自建CardVault/data-design.md)
-- [应用工程入口](../../../payment-orchestration-service/README.md)与[当前状态台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-application-foundation)
+- [应用工程入口](../../../paytech/payment/README.md)与[当前状态台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-application-foundation)

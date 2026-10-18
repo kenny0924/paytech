@@ -6,10 +6,10 @@
 
 | 系统 | PDManer | 当前完整建表 SQL | 本期变化 |
 |---|---|---|---|
-| CCT | [client-contract.pdma.json](../../../client-contract-service/docs/database/client-contract.pdma.json) | [client-contract-schema.sql](../../../client-contract-service/docs/database/sql/client-contract-schema.sql) | entityNo 主键；独立 OE Scope；Affiliation 优先级；移出 Assignment；Agreement Party 合并签署；Client Agreement/Plan；Price 结算输入 |
-| Commerce | [commerce.pdma.json](../../../commerce-service/docs/database/commerce.pdma.json) | [commerce-schema.sql](../../../commerce-service/docs/database/sql/commerce-schema.sql) | 基础订单先建立；支付准备与终止恢复身份；最终上下文固定准确 OE、合同和条款版本 |
-| Payment | [payment-orchestration.pdma.json](../../../payment-orchestration-service/docs/database/payment-orchestration.pdma.json) | [payment-orchestration-schema.sql](../../../payment-orchestration-service/docs/database/sql/payment-orchestration-schema.sql) | 固定 OE 与 Term Versions；成功 Attempt 的不可变 Payment Pricing Fact；混合 Scope ID 支持字符串 |
-| Finance | [finance.pdma.json](../../../finance-service/docs/database/finance.pdma.json) | [finance-schema.sql](../../../finance-service/docs/database/sql/finance-schema.sql) | 专用及混合 OE 身份；Price/Component/Band 追溯；结算输入；保留旧 CCT/Provider Cost Scope 分支 |
+| CCT | [client-contract.pdma.json](../../../paytech/client-master/docs/database/client-master.pdma.json) | [client-contract-schema.sql](../../../paytech/client-master/docs/database/sql/client-master-schema.sql) | entityNo 主键；独立 OE Scope；Affiliation 优先级；移出 Assignment；Agreement Party 合并签署；Client Agreement/Plan；Price 结算输入 |
+| Commerce | [commerce.pdma.json](../../../paytech/acquiring/docs/database/acquiring.pdma.json) | [commerce-schema.sql](../../../paytech/acquiring/docs/database/sql/acquiring-schema.sql) | 基础订单先建立；支付准备与终止恢复身份；最终上下文固定准确 OE、合同和条款版本 |
+| Payment | [payment-orchestration.pdma.json](../../../paytech/payment/docs/database/payment.pdma.json) | [payment-orchestration-schema.sql](../../../paytech/payment/docs/database/sql/payment-schema.sql) | 固定 OE 与 Term Versions；成功 Attempt 的不可变 Payment Pricing Fact；混合 Scope ID 支持字符串 |
+| Finance | [finance.pdma.json](../../../paytech/ledger/docs/database/ledger.pdma.json) | [finance-schema.sql](../../../paytech/ledger/docs/database/sql/ledger-schema.sql) | 专用及混合 OE 身份；Price/Component/Band 追溯；结算输入；保留旧 CCT/Provider Cost Scope 分支 |
 
 生成器、字段说明、独立模型 Oracle、场景示例和物理决策已同步。四份完整 SQL 来自 [统一导出器](../../../scripts/pdmaner/generate-oe-client-schemas.mjs)，包含完整字段/索引/表说明、类型、默认值、字符集及排序规则；模型关系不导出成物理 FK，业务检查不导出成 CHECK。SQL 只用于人工审阅后的新空库初始化。
 

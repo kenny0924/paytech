@@ -88,7 +88,7 @@ Mock Controller、DTO 配置、调用记录、故障控制和生命周期工具�
 
 ### 4.1 公共测试组件
 
-通用 HTTP 测试和后置清理能力由 Foundation 的 [`paytech-test-support`](../paytech-foundation/paytech-test-support/README.md) 提供，各服务测试模块显式以 `test` scope 引入，版本由统一 BOM 管理；业务 API、Web 和其他生产工件不得依赖它。
+通用 HTTP 测试和后置清理能力由 Foundation 的 [`paytech-test-support`](../paytech/foundation/paytech-test-support/README.md) 提供，各服务测试模块显式以 `test` scope 引入，版本由统一 BOM 管理；业务 API、Web 和其他生产工件不得依赖它。
 
 - `HttpTestInvoker` 使用宿主配置好的真实 `RestTestClient`，发出请求并返回原始结果；不修复输入、不补 Header、不默认断言成功。超时、禁重试和禁重定向由宿主传输配置负责。
 - `TestRequestHeaders` 提供 Client、Customer 和内部调用的请求头工厂，每次返回独立可修改的 Header；不默认添加 Idempotency-Key。Customer/内部入口的身份和访问凭据按实际接口合同补充，不能套用 Client Gateway 身份。

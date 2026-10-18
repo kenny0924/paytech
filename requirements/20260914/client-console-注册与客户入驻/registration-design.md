@@ -2,7 +2,7 @@
 
 > **2026-09-15 用户决定：** 本期继续注册页填写邮箱和密码、邮件链接验证后登录；密码与邮箱所有权绑定的进一步优化延至对外开放前，详见[决定记录](./registration-password-binding-amendment.md)。
 
-阶段 3 评审稿。采用现有 Platform 配置管理命令，配置 ID 由 Platform 生成。这里定义可审阅的请求模板与执行顺序，不连接环境、不创建配置、不授予人员权限。现行 API 依据为 [Gateway 管理合同](../../../platform-support-service/platform-support-api/src/main/java/com/paytech/platform/support/api/gatewayconfiguration/management/GatewayConfigurationManagementApi.java)、[Permission 管理合同](../../../platform-support-service/platform-support-api/src/main/java/com/paytech/platform/support/api/permissionmanagement/PermissionManagementApi.java)及 [Console Resource 管理合同](../../../platform-support-service/platform-support-api/src/main/java/com/paytech/platform/support/api/consolemanagement/ConsoleResourceManagementApi.java)。
+阶段 3 评审稿。采用现有 Platform 配置管理命令，配置 ID 由 Platform 生成。这里定义可审阅的请求模板与执行顺序，不连接环境、不创建配置、不授予人员权限。现行 API 依据为 [Gateway 管理合同](../../../paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/gatewayconfiguration/management/GatewayConfigurationManagementApi.java)、[Permission 管理合同](../../../paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/permissionmanagement/PermissionManagementApi.java)及 [Console Resource 管理合同](../../../paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/consolemanagement/ConsoleResourceManagementApi.java)。
 
 ## 1. 注册对象和页面入口
 

@@ -10,7 +10,7 @@
 
 > **2026-09-05 跨主题对齐：** 本文拥有 CCT 业务事实，不单独拥有 Vault、`compensation_event`、物理 CHECK/FK 或测试基础设施规范。当前生成模型中的旧横切字段是 [当前实现台账](../CURRENT_IMPLEMENTATION.md) 记录的迁移债务；新增实现必须遵循 [文档治理路由](../DOCUMENT_GOVERNANCE.md)，不得复制旧契约。
 
-设计与物理导航：[Payment Method Profile 与组合定价决策](../decisions/2026-09-10-cct-payment-method-profile-pricing.md) · [现实场景与逐表字段映射](./scenarios/CLIENT_CONTRACT_REAL_WORLD_SCENARIOS.md) · [实时交易资格与 Retention 延期设计](../plans/2026-08-23-cct-realtime-eligibility-retention-deferral-design.md) · [Commercial Term 合并与 Hash 精简设计](../plans/2026-08-23-cct-commercial-term-consolidation-design.md) · [经营主体自动分配精简设计](../plans/2026-08-22-cct-assignment-simplification-design.md) · [通用行级变更历史设计](../plans/2026-08-20-cct-row-history-design.md) · [当前物理建模决策](../../client-contract-service/docs/database/CLIENT_CONTRACT_PHYSICAL_DECISIONS.md) · [PDManer 模型](../../client-contract-service/docs/database/client-contract.pdma.json)
+设计与物理导航：[Payment Method Profile 与组合定价决策](../decisions/2026-09-10-cct-payment-method-profile-pricing.md) · [现实场景与逐表字段映射](./scenarios/CLIENT_CONTRACT_REAL_WORLD_SCENARIOS.md) · [实时交易资格与 Retention 延期设计](../plans/2026-08-23-cct-realtime-eligibility-retention-deferral-design.md) · [Commercial Term 合并与 Hash 精简设计](../plans/2026-08-23-cct-commercial-term-consolidation-design.md) · [经营主体自动分配精简设计](../plans/2026-08-22-cct-assignment-simplification-design.md) · [通用行级变更历史设计](../plans/2026-08-20-cct-row-history-design.md) · [当前物理建模决策](../../paytech/client-master/docs/database/CLIENT_MASTER_PHYSICAL_DECISIONS.md) · [PDManer 模型](../../paytech/client-master/docs/database/client-master.pdma.json)
 
 ## 1. 目标与边界
 

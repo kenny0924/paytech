@@ -1,6 +1,6 @@
 # CreateRefund 技术说明
 
-规则入口：[公共开发规范](../../../agent-docs/DEVELOPMENT_CONVENTIONS.md)、[Processor 规范](../../../payment-orchestration-service/docs/development/processor-conventions.md)、[退款数据权威](../../../agent-docs/database/COMMERCE_DATABASE.md)、[补偿事件规范](../../../agent-docs/COMPENSATION_EVENT_GUIDE.md)。
+规则入口：[公共开发规范](../../../agent-docs/DEVELOPMENT_CONVENTIONS.md)、[Processor 规范](../../../paytech/payment/docs/development/processor-conventions.md)、[退款数据权威](../../../agent-docs/database/COMMERCE_DATABASE.md)、[补偿事件规范](../../../agent-docs/COMPENSATION_EVENT_GUIDE.md)。
 
 ## 请求流程
 

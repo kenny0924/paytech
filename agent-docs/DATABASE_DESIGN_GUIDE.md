@@ -16,7 +16,7 @@
 - 修改 DataObject、MyBatis Mapper、Repository 或与数据库结构有关的测试；DataObject 由包名表达持久化职责，类型名不追加 `DO` 后缀，可在 Owner 业务 JAR 内使用但不得跨 Maven 模块或 HTTP API 暴露；
 - 数据库正向生成、反向解析或模型与数据库差异比较。
 
-不持有数据库的 Gateway、BFF、前端和无状态应用不得为了形式一致创建空 PDManer 模型。Vault 虽不是第七个核心业务系统，但拥有独立安全数据库；其当前模型已从本模板派生，必须遵守[批准的 V1 三表设计](../docs/superpowers/specs/2026-09-02-vault-database-design.md)、[物理建模决策](../vault-service/docs/database/VAULT_PHYSICAL_DECISIONS.md)和 `VAULT_SERVICE_ARCHITECTURE.md` 中未被取代的非卡/PCI、业务所有权、内部专用与禁止直读数据库等安全边界。
+不持有数据库的 Gateway、BFF、前端和无状态应用不得为了形式一致创建空 PDManer 模型。Vault 虽不是第七个核心业务系统，但拥有独立安全数据库；其当前模型已从本模板派生，必须遵守[批准的 V1 三表设计](../docs/superpowers/specs/2026-09-02-vault-database-design.md)、[物理建模决策](../paytech/vault/docs/database/VAULT_PHYSICAL_DECISIONS.md)和 `VAULT_SERVICE_ARCHITECTURE.md` 中未被取代的非卡/PCI、业务所有权、内部专用与禁止直读数据库等安全边界。
 
 ## 2. 项目模板
 
@@ -82,7 +82,7 @@ platform-support-service/docs/database/platform-support.pdma.json
 
 模型文件名固定使用上述小写、无空格、`kebab-case` 服务短名；PDManer JSON 内部的 `name`、`describe` 仅用于展示，不得驱动磁盘文件改名。生成器、测试、Schema 来源注释和文档链接必须只引用该短路径。PDManer 保存或另存产生的 `Code-MoR ... Database V1.pdma.json` 等同目录副本只可作为本地临时工件：先与当前短名模型核对并合并确需保留的内容，再删除副本，不能作为第二个权威模型提交。`.back_*` 是被 Git 忽略的本地恢复备份，不计为权威模型，也不得被文档、生成器或测试引用。完整决定见 [PDManer 单模型与短文件名决策](./decisions/2026-09-11-pdmaner-single-model-short-filenames.md)。
 
-Vault V1 的正式实现形态是 Go Server + Java Client，当前批准能力仅为三表 Protect/Reveal。数据库任务必须同时核对 [V1 三表设计](../docs/superpowers/specs/2026-09-02-vault-database-design.md)、[OpenAPI](../vault-service/api/openapi/v1.yaml)、[物理决策](../vault-service/docs/database/VAULT_PHYSICAL_DECISIONS.md)和 [PDManer 模型](../vault-service/docs/database/vault.pdma.json)；代码、验证、测试部署、真实消费者接入与生产 KMS/身份/部署缺口只从 [当前实现台账](./CURRENT_IMPLEMENTATION.md)读取。旧架构中被三表设计取代的 Java Server、Binding/Copy、Blind Index/Masked/Metadata、广泛生命周期或“尚未实现”快照均不得当作当前运行时结论。
+Vault V1 的正式实现形态是 Go Server + Java Client，当前批准能力仅为三表 Protect/Reveal。数据库任务必须同时核对 [V1 三表设计](../docs/superpowers/specs/2026-09-02-vault-database-design.md)、[OpenAPI](../paytech/vault/api/openapi/v1.yaml)、[物理决策](../paytech/vault/docs/database/VAULT_PHYSICAL_DECISIONS.md)和 [PDManer 模型](../paytech/vault/docs/database/vault.pdma.json)；代码、验证、测试部署、真实消费者接入与生产 KMS/身份/部署缺口只从 [当前实现台账](./CURRENT_IMPLEMENTATION.md)读取。旧架构中被三表设计取代的 Java Server、Binding/Copy、Blind Index/Masked/Metadata、广泛生命周期或“尚未实现”快照均不得当作当前运行时结论。
 
 一个部署服务默认只有一个数据库模型。只有存在已批准的独立物理数据库且生命周期确实不同，才能拆成多个模型；模型展示名变化不得创建第二个文件。
 

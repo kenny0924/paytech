@@ -44,7 +44,7 @@ Platform delta**；RCO-I12 自身尚未完成的提交、数据库应用和 roll
 ### 2.1 五项 Permission
 
 当前工作区初始化目录在
-[`platform-support-initial-data.sql`](../../../platform-support-service/docs/database/sql/platform-support-initial-data.sql)
+[`platform-support-initial-data.sql`](../../../paytech/platform-support/docs/database/sql/platform-support-initial-data.sql)
 第 203–207 行定义：
 
 | Permission | 当前用途 | RCO-14 结论 |
@@ -60,14 +60,14 @@ Cooldown、Tag 各拆成一个 Permission；它们仍是同一个完整版本 Sa
 
 ### 2.2 PLT-I02 与 Navigation
 
-[`OperationsAuthorizationApi`](../../../platform-support-service/platform-support-api/src/main/java/com/paytech/platform/support/api/authorization/OperationsAuthorizationApi.java)
+[`OperationsAuthorizationApi`](../../../paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/authorization/OperationsAuthorizationApi.java)
 第 14–25 行表明 PLT-I02 只接收 Gateway 提供的可信 Actor、Session 和 `routeCode`。当前授权实现会校验 Session、
 Route 的当前状态与 HUMAN_PERMISSION 绑定、ACTIVE Permission 和实时角色授权，拒绝时 Fail-Closed；Navigation
 按同一当前授权过滤 MENU/BUTTON。对应实现与 SQL 证据是：
 
-- [`OperationsAuthorizationServiceImpl`](../../../platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domainservice/service/impl/OperationsAuthorizationServiceImpl.java)
+- [`OperationsAuthorizationServiceImpl`](../../../paytech/platform-support/paytech-platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domainservice/service/impl)
   第 36–86 行；
-- [`OperationsDirectoryMapper.xml`](../../../platform-support-service/platform-support-access-control/src/main/resources/mapper/access-control/OperationsDirectoryMapper.xml)
+- [`OperationsDirectoryMapper.xml`](../../../paytech/platform-support/paytech-platform-support-access-control/src/main/resources/mapper/access-control/OperationsDirectoryMapper.xml)
   第 244–316 行。
 
 PLT-I02 不读取请求 Body，不能在同一个 Save Route 内判断操作员选择了哪一种 Action 或参数。若未来需要字段级或
@@ -91,14 +91,14 @@ Header、Query 和每 Route 六项 Guard 分别位于第 562–596、598–607�
 
 Platform 的 PLT-I20 是完整、无分页的当前有效 Target/Route/子项投影；Snapshot 不包含 Console Resource、Role、
 Reject/Action 目录或规则内容。生产 DTO
-[`GatewayRouteSnapshot`](../../../platform-support-service/platform-support-api/src/main/java/com/paytech/platform/support/api/gatewayconfiguration/snapshot/GatewayRouteSnapshot.java)
+[`GatewayRouteSnapshot`](../../../paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/gatewayconfiguration/response/GatewayRouteSnapshot.java)
 只发布路由元数据。完整读取、编译和组装分别见：
 
-- [`GatewaySnapshotServiceImpl`](../../../platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domainservice/service/impl/GatewaySnapshotServiceImpl.java)
+- [`GatewaySnapshotServiceImpl`](../../../paytech/platform-support/paytech-platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domainservice/service/impl)
   第 25–40 行；
-- [`GatewayConfigurationCompiler`](../../../platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domain/gatewayconfiguration/GatewayConfigurationCompiler.java)
+- [`GatewayConfigurationCompiler`](../../../paytech/platform-support/paytech-platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domain/gatewayconfiguration/GatewayConfigurationCompiler.java)
   第 93–125、199–319、435–503 行；
-- [`GatewaySnapshotAssembler`](../../../platform-support-service/platform-support-web/src/main/java/com/paytech/platform/support/domain/gatewayconfiguration/GatewaySnapshotAssembler.java)
+- [`GatewaySnapshotAssembler`](../../../paytech/platform-support/paytech-platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domain/gatewayconfiguration)
   第 22–45 行。
 
 业务 JSON 的字段扩展不改变 Snapshot Schema。只要 Method/Path、权限、Header/Query、限额、超时和 Guard 不变，
@@ -217,11 +217,11 @@ Payload 测量证据，不自动提高。若后续样本证明不足，必须由
 
 | 门禁 | 复用位置 | RCO-14 需要证明 |
 |---|---|---|
-| 五 Permission / 六 Resource / 九 Route 精确目录 | [`OperationsPersistenceContractAutoTest`](../../../platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/auto/operations/OperationsPersistenceContractAutoTest.java) 第 1868–1984 行 | V2 不改变既有 tuple、Role Grant、Header/Query/Guard 和旧 Route 上限 |
-| PLT-I02 / Role / 撤权 | [`OperationsAuthenticationHttpAutoTest`](../../../platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/auto/operations/OperationsAuthenticationHttpAutoTest.java) 第 925–944、1055–1100 行 | Admin 五项、Viewer 只读、自定义角色和撤权后立即拒绝 |
-| Navigation | [`OperationsHttpChecker`](../../../platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/test/operations/OperationsHttpChecker.java) 第 184–247 行 | 同一页面/按钮 Resource；子控件不新增目录项 |
-| 完整 Snapshot / 64 KiB | [`GatewaySnapshotHttpAutoTest`](../../../platform-support-service/platform-support-test/src/test/java/com/paytech/platform/support/auto/gatewayconfiguration/GatewaySnapshotHttpAutoTest.java) 第 93–210、229–246 行 | 九 Route 完整投影；65,536 接受、65,537 整体失败；Schema 仍为 1 |
-| Compiler | [`GatewayConfigurationCompiler`](../../../platform-support-service/platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domain/gatewayconfiguration/GatewayConfigurationCompiler.java) 与其 AutoTest | Permission XOR、精确 Path、Header/Query、Guard、重叠和 DISABLED 行 |
+| 五 Permission / 六 Resource / 九 Route 精确目录 | [`OperationsPersistenceContractAutoTest`](../../../paytech/platform-support/paytech-platform-support-test/src/test/java/com/paytech/platform/support/auto) 第 1868–1984 行 | V2 不改变既有 tuple、Role Grant、Header/Query/Guard 和旧 Route 上限 |
+| PLT-I02 / Role / 撤权 | [`OperationsAuthenticationHttpAutoTest`](../../../paytech/platform-support/paytech-platform-support-test/src/test/java/com/paytech/platform/support/auto) 第 925–944、1055–1100 行 | Admin 五项、Viewer 只读、自定义角色和撤权后立即拒绝 |
+| Navigation | [`OperationsHttpChecker`](../../../paytech/platform-support/paytech-platform-support-test/src/test/java/com/paytech/platform/support/test) 第 184–247 行 | 同一页面/按钮 Resource；子控件不新增目录项 |
+| 完整 Snapshot / 64 KiB | [`GatewaySnapshotHttpAutoTest`](../../../paytech/platform-support/paytech-platform-support-test/src/test/java/com/paytech/platform/support/auto) 第 93–210、229–246 行 | 九 Route 完整投影；65,536 接受、65,537 整体失败；Schema 仍为 1 |
+| Compiler | [`GatewayConfigurationCompiler`](../../../paytech/platform-support/paytech-platform-support-access-control/src/main/java/com/paytech/platform/support/accesscontrol/domain/gatewayconfiguration/GatewayConfigurationCompiler.java) 与其 AutoTest | Permission XOR、精确 Path、Header/Query、Guard、重叠和 DISABLED 行 |
 | 保密 | Platform HTTP/审计日志回归 | 成功、拒绝、异常都不含 Reject Message、规则内容或 Action 参数 |
 
 数据库测试必须复用已手工准备的 repository-owned Local Environment；不使用 Flyway、Testcontainers 或启动 Seed。

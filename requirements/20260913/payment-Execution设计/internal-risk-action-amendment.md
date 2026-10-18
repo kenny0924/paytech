@@ -116,4 +116,4 @@ UNKNOWN 的恢复仍可保持 UNKNOWN，或取得可信结论后变为 SUCCEEDED
 
 后续实施须同步 API/Mock、类型分派与业务流程、DAL/投影、PDManer/Schema、可靠任务及关联事件消费者，再执行对应入口测试。历史记录必须按旧评估和资金证据核验；只有可验证的原评估才能形成迁移后的 RISK_CHECK，不能为了满足“每 Attempt 一次风控”回填虚构成功记录。存在未决资金或占额时保留旧恢复路径直至明确收敛。本次不提供可自动执行的迁移脚本。
 
-逐步三表数据见[Card/Wallet 场景 Excel](../../../payment-orchestration-service/docs/payment-execution-state-scenarios.xlsx)。它是设计样例，真实 Card、Wallet、Risk 和 Channel 接入仍按各 Owner 的实施范围推进。
+逐步三表数据见[Card/Wallet 场景 Excel](../../../paytech/payment/docs/payment-execution-state-scenarios.xlsx)。它是设计样例，真实 Card、Wallet、Risk 和 Channel 接入仍按各 Owner 的实施范围推进。

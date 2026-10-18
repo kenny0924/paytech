@@ -16,7 +16,7 @@
 
 ## 1. 文档用途与读取规则
 
-本文用一个连续的现实业务故事解释 Client & Contract（CCT）的表、字段、关系、写入流程、当前查询、版本切换、历史审计和跨系统冻结。后续 Agent 在处理以下任务时，必须同时读取本文、[Client & Contract 数据库设计](../CLIENT_CONTRACT_DATABASE.md)、[Payment Method Profile 与组合定价决策](../../decisions/2026-09-10-cct-payment-method-profile-pricing.md) 和 [PDManer 物理模型](../../../client-contract-service/docs/database/client-contract.pdma.json)：
+本文用一个连续的现实业务故事解释 Client & Contract（CCT）的表、字段、关系、写入流程、当前查询、版本切换、历史审计和跨系统冻结。后续 Agent 在处理以下任务时，必须同时读取本文、[Client & Contract 数据库设计](../CLIENT_CONTRACT_DATABASE.md)、[Payment Method Profile 与组合定价决策](../../decisions/2026-09-10-cct-payment-method-profile-pricing.md) 和 [PDManer 物理模型](../../../paytech/client-master/docs/database/client-master.pdma.json)：
 
 - Party、Client、Local Partner 或 Operating Entity 数据如何落库；
 - Application、Source、Affiliation、Assignment 的现实含义；
@@ -24,7 +24,7 @@
 - Current、业务 Version、Active Slot、BCR、CAS、As-Of、删除或恢复；
 - CCT-I10、legacy CCT-I13/I14、Commerce Order/Order Context 或测试场景数据构造。
 
-本文是已确认目标模型的场景化解释，不是第二份数据库 Catalog。定价主题先服从 2026-09-10 决策与 [Client & Contract 数据库设计](../CLIENT_CONTRACT_DATABASE.md)；最终生成统计与物理命名以完成同步后的 [物理建模决策](../../../client-contract-service/docs/database/CLIENT_CONTRACT_PHYSICAL_DECISIONS.md) 和 PDManer 工件为准。当前工件未同步时只能记为迁移缺口，不能用旧 Scope 反向覆盖本文的新模型。本文不授权 Java、手工数据库 SQL、物理数据库或运行环境。
+本文是已确认目标模型的场景化解释，不是第二份数据库 Catalog。定价主题先服从 2026-09-10 决策与 [Client & Contract 数据库设计](../CLIENT_CONTRACT_DATABASE.md)；最终生成统计与物理命名以完成同步后的 [物理建模决策](../../../paytech/client-master/docs/database/CLIENT_MASTER_PHYSICAL_DECISIONS.md) 和 PDManer 工件为准。当前工件未同步时只能记为迁移缺口，不能用旧 Scope 反向覆盖本文的新模型。本文不授权 Java、手工数据库 SQL、物理数据库或运行环境。
 
 示例约定：
 

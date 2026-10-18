@@ -462,7 +462,7 @@ Base62 alphabet 精确为：
 
 2026-09-16 后继：生成收敛为 Foundation `PublicTokenGenerator.generate(String... mixingValues)`，内部取当前系统 UTC 秒，
 返回 30 位无前缀主体。Commerce 传入大写国家码及 Client ID 十进制文本后拼接 `chk_`；16 字节随机 Payload 与有边界编码的
-混入值 SHA-256 前 16 字节 XOR。详见[公共 Token 合同](../../../paytech-foundation/paytech-common-core/PUBLIC_TOKEN.md)。
+混入值 SHA-256 前 16 字节 XOR。详见[公共 Token 合同](../../../paytech/foundation/paytech-common-core/PUBLIC_TOKEN.md)。
 Wire、CRC、持久化及授权规则不变。Token 生成时间不再由业务创建时间传入，也不参与订单有效期判断。
 
 以下逐字节 country/clientId 混入步骤保留为历史生成算法，仅用于解释第 16.4 节旧固定向量；新生成以以上后继为准：

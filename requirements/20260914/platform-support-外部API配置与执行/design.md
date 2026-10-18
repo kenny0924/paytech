@@ -102,7 +102,7 @@ NI 多级导航与本次退款关联继续保留[样例中的缺口](./ni-refund
 
 BFF 负责菜单权限与页面聚合；Payment 负责真实数据、校验和业务事务。页面支持只读、编辑、新建、配置检查、并发冲突、引用错误、保存结果待确认、空目录和能力未安装；保存成功提示直接生效，没有发布页面。具体行为和原型见 [ui.md](./ui.md)。
 
-Platform 除注册 SQL 外还要更新随制品装配的[页面能力清单](../../../platform-support-service/platform-support-access-control/src/main/resources/operations/console-resource-capabilities.json)，登记 `OPERATIONS_CHANNEL_APIS → /channel-apis` 和 `OPERATIONS_CHANNEL_API_MANAGE` 按钮。当前 ConsoleResourceCapabilities 会拒绝未知组件，只有数据库菜单行不足以完成接入；前端组件目录也须同时登记。不把支付配置页加入 IAM 自我保护管理闭包，不改变 Platform 权限模型或 Gateway 实现。
+Platform 除注册 SQL 外还要更新随制品装配的[页面能力清单](../../../paytech/platform-support/paytech-platform-support-access-control/src/main/resources/operations/console-resource-capabilities.json)，登记 `OPERATIONS_CHANNEL_APIS → /channel-apis` 和 `OPERATIONS_CHANNEL_API_MANAGE` 按钮。当前 ConsoleResourceCapabilities 会拒绝未知组件，只有数据库菜单行不足以完成接入；前端组件目录也须同时登记。不把支付配置页加入 IAM 自我保护管理闭包，不改变 Platform 权限模型或 Gateway 实现。
 
 ## 8. 拟研发顺序与验证
 

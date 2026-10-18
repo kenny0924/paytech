@@ -15,7 +15,7 @@ test 一直没有部署本需求：`mor_platform` 没有通知管理的权限、
 | Platform 代码 | `84b3174..f84a012` 共 3 个 Platform 提交：通知内部 HTTP 接口（`132c982`）、认证邮件接入 Delivery（`7c340ea`，**删除 SMTP**）、通知管理（`f84a012`）。Schema 只多 1 个索引 |
 | BFF / Web 代码 | `d02c7dd..f84a012` 两个目录只有本需求一个提交 |
 | 配置（Compose） | Platform 删除 `SPRING_MAIL_*` 4 项与 `CLIENT_AUTHENTICATION_MAIL_FROM`；新增 `NOTIFICATION_ENABLED=true`、`NOTIFICATION_SES_ENABLED=false`（`7c340ea` 起，开启 Client 认证必须开启通知，否则启动失败）。BFF、Web 只换镜像 |
-| 数据库 | 索引 DDL（[changes 文件](../../../../platform-support-service/docs/database/sql/changes/2026-10-15-notification-request-create-time-index.sql)）；注册 DML 160 行（初始化 DML 末尾独立块，默认 DISABLED/REVOKED）；[test-activate.sql](./test-activate.sql)（12/6/2/1） |
+| 数据库 | 索引 DDL（[changes 文件](../../../../paytech/platform-support/docs/database/sql/changes/2026-10-15-notification-request-create-time-index.sql)）；注册 DML 160 行（初始化 DML 末尾独立块，默认 DISABLED/REVOKED）；[test-activate.sql](./test-activate.sql)（12/6/2/1） |
 | 不动 | Gateway（新路由由 Gateway 从 Platform 快照动态加载）、Risk、CCT、Vault、Nginx、Client 链路；不推送 Git 与镜像，不碰生产 |
 
 ## 3. 只读核对结果（2026-10-15）

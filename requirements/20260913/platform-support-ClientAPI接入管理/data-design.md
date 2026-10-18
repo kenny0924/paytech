@@ -39,7 +39,7 @@ scope_code 为 ascii/ascii_bin，长度与语法沿用现有认证约束，完�
 
 ## 3. 既有凭证及授权：不增字段
 
-唯一补建执行来源为 [已存在的两表 SQL](../../../platform-support-service/docs/database/sql/changes/2026-09-08-add-api-credential-validation.sql)。该文件与正式 Schema 两表逐项一致，本需求不复制另一份同义 CREATE。
+唯一补建执行来源为 [已存在的两表 SQL](../../../paytech/platform-support/docs/database/sql/changes/2026-09-08-add-api-credential-validation.sql)。该文件与正式 Schema 两表逐项一致，本需求不复制另一份同义 CREATE。
 
 ### t_api_credential（10 字段）
 

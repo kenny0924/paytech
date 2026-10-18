@@ -1,6 +1,6 @@
 # 数据与权限来源设计（阶段 3 已确认）
 
-**新增业务表 0、修改表结构 0、新增/修改/删除字段 0、新增/删除索引 0。** 复用现有七张 IAM 表的 75 个字段，不增加姓名、诊断结果、暂停历史、回执或权限缓存表。字段权威是 [Platform Schema](../../../platform-support-service/docs/database/sql/platform-support-schema.sql) 和 [PDManer](../../../platform-support-service/docs/database/platform-support.pdma.json)，既有表统计及环境证据见 [阶段 2](./technique.md#3-数据模型与环境观察)。
+**新增业务表 0、修改表结构 0、新增/修改/删除字段 0、新增/删除索引 0。** 复用现有七张 IAM 表的 75 个字段，不增加姓名、诊断结果、暂停历史、回执或权限缓存表。字段权威是 [Platform Schema](../../../paytech/platform-support/docs/database/sql/platform-support-schema.sql) 和 [PDManer](../../../paytech/platform-support/docs/database/platform-support.pdma.json)，既有表统计及环境证据见 [阶段 2](./technique.md#3-数据模型与环境观察)。
 
 ## 1. 关系及读写边界
 

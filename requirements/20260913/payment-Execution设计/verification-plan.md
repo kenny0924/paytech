@@ -68,6 +68,6 @@
 
 遵循[测试规范](../../../agent-docs/UNIT_TEST_GUIDE.md)：纯状态转换/匹配/金额算法可以聚焦单测；跨层用公开 Service/HTTP 入口走真实 Execution 与本地数据库，使用仓库 `local-environment` MySQL/Redis/RabbitMQ。缺依赖应快速失败并提供设置指引；不用 Flyway、Testcontainers 或启动建表。
 
-基础测试入口扩展现有[模块边界测试](../../../payment-orchestration-service/paytech-payment-test/src/test/java/com/paytech/payment/auto/architecture/PaymentModuleBoundaryAutoTest.java)与[应用自动测试](../../../payment-orchestration-service/paytech-payment-test/src/test/java/com/paytech/payment/auto/PaymentApplicationAutoTest.java)。新的用例测试按项目 auto/manual 和 Builder/Simulator/Checker 规范落位，实际 Maven 命令由研发时已存在的测试类与 POM 决定，不在本稿给出尚不存在类的“已通过”命令。
+基础测试入口扩展现有[模块边界测试](../../../paytech/payment/paytech-payment-test/src/test/java/com/paytech/payment/auto/architecture)与[应用自动测试](../../../paytech/payment/paytech-payment-test/src/test/java/com/paytech/payment/auto)。新的用例测试按项目 auto/manual 和 Builder/Simulator/Checker 规范落位，实际 Maven 命令由研发时已存在的测试类与 POM 决定，不在本稿给出尚不存在类的“已通过”命令。
 
 获批后验证制品包括：模型/DDL 差异报告、构建结果、场景运行记录、脱敏调用/数据断言、并发及重启证据、未接入 Owner 清单。若本地数据库变更尚未授权，先完成代码和可独立验证部分，数据库集成保留为明确未验收项，不能以纯 Mock 测试宣布完成。

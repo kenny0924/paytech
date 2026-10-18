@@ -1,6 +1,6 @@
 # Execution 技术方案与差异分析
 
-> **公共幂等包后继：** 用户在差异评审后确认使用公共包，pay 的 Foundation Claim/Complete 消费约定、模型和人工迁移边界见[项目接入说明](../../../payment-orchestration-service/docs/development/command-idempotency-differences.md)。代码、验证和实际数据库状态只见当前台账。
+> **公共幂等包后继：** 用户在差异评审后确认使用公共包，pay 的 Foundation Claim/Complete 消费约定、模型和人工迁移边界见[项目接入说明](../../../paytech/payment/docs/development/command-idempotency-differences.md)。代码、验证和实际数据库状态只见当前台账。
 
 > **字段维护后继：** [整批精简修订](./execution-field-simplification-amendment.md)已取代本文受影响的字段、渠道绑定位置、认证明细、Pricing Fact 与状态历史表要求。本文旧接口/流程细节保留为迁移前基线；后续 Java/HTTP/MQ 改造须逐项对齐，数据库执行状态只见当前台账。
 
@@ -12,7 +12,7 @@
 
 分析结论：共用 Execution 的业务事实和约束，在 Web 内按支付方式与业务目标选择代码流程；Card 是本期唯一设计完整执行路径的方式。其他模块继续 Mock + TODO，Wallet/Crypto 只保留有明确职责的扩展边界。
 
-工程和模型证据：[Execution POM](../../../payment-orchestration-service/paytech-payment-execution/pom.xml)、[包职责](../../../payment-orchestration-service/paytech-payment-execution/src/main/java/com/paytech/payment/execution/package-info.java)、[模块边界检查](../../../payment-orchestration-service/paytech-payment-test/src/test/java/com/paytech/payment/auto/architecture/PaymentModuleBoundaryAutoTest.java)、[当前 PDManer](../../../payment-orchestration-service/docs/database/payment-orchestration.pdma.json)及[完整 Schema](../../../payment-orchestration-service/docs/database/sql/payment-orchestration-schema.sql)。工程实现和验证状态仍由[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-business-modules)维护；本轮源码核对不构成支付业务验证。
+工程和模型证据：[Execution POM](../../../paytech/payment/paytech-payment-core/pom.xml)、[包职责](../../../paytech/payment/paytech-payment-core/src/main/java/com/paytech/payment/execution)、[模块边界检查](../../../paytech/payment/paytech-payment-test/src/test/java/com/paytech/payment/auto/architecture)、[当前 PDManer](../../../paytech/payment/docs/database/payment.pdma.json)及[完整 Schema](../../../paytech/payment/docs/database/sql/payment-schema.sql)。工程实现和验证状态仍由[当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#payment-business-modules)维护；本轮源码核对不构成支付业务验证。
 
 ## 1. 已识别的设计差异
 
@@ -23,7 +23,7 @@
 | 支付方式抽象 | Attempt 已有精确 payment_method_code；尚无执行方式选择或恢复分发实现 | 选择代码流程与选择渠道分开；通用入口不遍布 Card/Wallet/Crypto 分支，恢复按原执行事实分发 |
 | 交互持久化 | 当前模型仍有 t_payment_customer_action | 按本次方向移除；需证明原 Action 可承接必要的定位、等待、到期和恢复事实，不只删除表 |
 | 认证动作 | 模型 Action 类型只有 AUTHORIZE/CAPTURE/SALE/VOID/REFUND/QUERY；risk_result 没有独立表达认证要求 | 设计其输入、结果、原资金动作绑定及非资金引用；现有非空渠道字段、金额含义和恢复条件必须专项核对 |
-| Commerce 入口 | [Commerce 修订](../../../commerce-service/docs/requirements/20260912-customer-checkout/commerce-entry-amendment.md)已取代旧 Payment 公共 Customer 入口及反向确认调用 | 以 Commerce 原提交身份和冻结上下文作为输入；allowExecution=false 只重放，true 仍受 Payment 自身约束 |
+| Commerce 入口 | [Commerce 修订](../../../paytech/acquiring/docs/requirements/20260912-customer-checkout/commerce-entry-amendment.md)已取代旧 Payment 公共 Customer 入口及反向确认调用 | 以 Commerce 原提交身份和冻结上下文作为输入；allowExecution=false 只重放，true 仍受 Payment 自身约束 |
 | 提交与终止 | Card 草稿有候选 t_payment_submission，旧草稿仍带原公共入口假设 | 重新评审来源身份唯一绑定和 Intent 创建关闭依据；不直接复用旧字段，也不先决定新增表 |
 | 状态简化 | 当前模型按 Intent/Attempt/Action/Refund 等保存业务状态 | 输出“保留/合并/删除及理由”与场景化转换表，特别核对 Capture 失败后的原授权和 UNKNOWN 的占用 |
 | 成功及定价事实 | [OE/Pricing 决定](../../../agent-docs/decisions/2026-09-11-cct-commerce-oe-pricing-model.md) | 新流使用 entityNo/TERM_PRICE；历史解释保持，不从旧描述恢复数字 OE、Assignment 或 Scope 替代值 |

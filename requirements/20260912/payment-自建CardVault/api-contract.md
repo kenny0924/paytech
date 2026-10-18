@@ -1,6 +1,6 @@
 # Payment Card 与 Customer 支付接口设计
 
-> **后继入口与工具绑定：** Customer 入口按[Commerce 后继](../../../commerce-service/docs/requirements/20260912-customer-checkout/commerce-entry-amendment.md)归 Commerce；交易级工具 Token、统一 pay、无独立会话表及 Card 受控适配职责按[Execution 修订稿](../../20260913/payment-Execution设计/instrument-token-amendment.md)评审。本文的旧 Payment Submission、Card Token 和材料传递方案不能直接用于该新目标；未被取代的加密与审计约束保留。真实 Card 仍需独立接入验证。
+> **后继入口与工具绑定：** Customer 入口按[Commerce 后继](../../../paytech/acquiring/docs/requirements/20260912-customer-checkout/commerce-entry-amendment.md)归 Commerce；交易级工具 Token、统一 pay、无独立会话表及 Card 受控适配职责按[Execution 修订稿](../../20260913/payment-Execution设计/instrument-token-amendment.md)评审。本文的旧 Payment Submission、Card Token 和材料传递方案不能直接用于该新目标；未被取代的加密与审计约束保留。真实 Card 仍需独立接入验证。
 
 2026-09-12 阶段 3 修订稿。用户已确认一次 Pay 请求同时提交卡信息与协议确认，由 Payment 接收；Payment 调用 Commerce 保存接受事实后继续支付。本文取代前轮“Commerce 登记 → 浏览器 POST /card”的拆分；独立 Card 模块保留。本轮只调整设计，没有实现、发布接口或修改数据库。数据与恢复见 [data-design.md](./data-design.md)，确认与验证见 [delivery.md](./delivery.md)。
 

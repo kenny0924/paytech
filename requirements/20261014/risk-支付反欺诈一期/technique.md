@@ -7,7 +7,7 @@
 
 | 依据 | 内容 |
 |---|---|
-| [Risk 数据库设计](../../../agent-docs/database/RISK_COMPLIANCE_DATABASE.md)、[Risk Schema](../../../risk-compliance-service/docs/database/sql/risk-compliance-schema.sql) | 运行期表已在完整 Schema 中（81 表），包括评估、Feature、实时累计、名单、影子运行、交易评估、限额 |
+| [Risk 数据库设计](../../../agent-docs/database/RISK_COMPLIANCE_DATABASE.md)、[Risk Schema](../../../paytech/risk-decision/paytech-risk-decision-test/src/test/resources/init/ddl.sql) | 运行期表已在完整 Schema 中（81 表），包括评估、Feature、实时累计、名单、影子运行、交易评估、限额 |
 | [内部风控 Action 修订](../../20260913/payment-Execution设计/internal-risk-action-amendment.md) | 请求带 Intent/Attempt/风控 Action 身份、方式、捕获模式、金额与工具；按原 Attempt 去重，同身份不同内容冲突；本地超时保持 UNKNOWN 并恢复原评估；验收 RSK-01～09 |
 | [CARD + PAY 修订](../../20260913/payment-Execution设计/card-pay-action-flow-amendment.md) | 风控步骤 `PAY_RISK`；DENY/REVIEW 使 Attempt FAILED、Intent 保持 OPEN |
 | [字段精简修订](../../20260913/payment-Execution设计/execution-field-simplification-amendment.md) | 选路先于风控；风控 Action 冻结认证要求 |

@@ -84,9 +84,8 @@ unused loopback port and never stop or damage the shared Redis service.
 # Run from paytech/ (the single Reactor Wrapper); -am builds the Foundation modules Gateway depends on.
 cd ..
 ./mvnw -B clean verify -pl api-gateway/paytech-api-gateway-test -am
-cd api-gateway
-node scripts/verify-gateway-boundaries.mjs
-node scripts/verify-jacoco.mjs
+node api-gateway/scripts/verify-gateway-boundaries.mjs
+node api-gateway/scripts/verify-jacoco.mjs
 ```
 
 The application listener is `18080`; the separate management listener is `19080`. The app module produces both an

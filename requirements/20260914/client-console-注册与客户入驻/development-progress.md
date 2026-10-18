@@ -149,7 +149,7 @@ Redis 使用仓库已有安全测试配置入口，每轮独立 Namespace、限�
 
 ### 2026-09-15 四工程认证接入增量
 
-用户回复“可以，开始做当前的任务”，本次继续阶段 4 的当前认证批次。证据见[四工程检查记录](./assets/stage4/client-entry-verification-20260915.json)，源码与启动方式见 [Client Web](../../../client-console-web/README.md) / [Client BFF](../../../client-console-bff/README.md)。
+用户回复“可以，开始做当前的任务”，本次继续阶段 4 的当前认证批次。证据见[四工程检查记录](./assets/stage4/client-entry-verification-20260915.json)，源码与启动方式见 [Client Web](../../../client-console-web/README.md) / [Client BFF](../../../paytech/client-console-bff/README.md)。
 
 - Platform 79 项聚焦测试通过，覆盖此前认证规则及新增 CUSTOMER 审计投影、既有审计终态处理和模块边界。Client 八个写操作接入原审计流水线；复用物理链及既有 Hash 格式，以 CLIENT action 与 CUSTOMER/CLIENT 属性区分，未新增审计表。审计真实落库测试另一次执行仍在数据库隔离前置失败，未作为通过证据。
 - Gateway 56 项聚焦测试通过：CUSTOMER/CLIENT 与原 Operations 的 JWT 合同、规范身份值、真实私网 JWKS 协议，以及同 kid 不同 Realm 公钥/缓存隔离。CUSTOMER issuer 禁止与 Operations 相同；`gateway.client.enabled` 未开启，未执行完整 Gateway/Redis 流程。

@@ -6,10 +6,10 @@
 
 | 证据 | 前序差异 / 消费者边界 | 目标入口 |
 |---|---|---|
-| [当前完整 Schema](../../../payment-orchestration-service/docs/database/sql/payment-orchestration-schema.sql) | 前序含 adapter_code、旧账号字段、单表能力和健康表；本需求的五表取代这些定义 | [需求 §3](./requirement.md#3-五张表的目标字段) |
+| [当前完整 Schema](../../../paytech/payment/docs/database/sql/payment-schema.sql) | 前序含 adapter_code、旧账号字段、单表能力和健康表；本需求的五表取代这些定义 | [需求 §3](./requirement.md#3-五张表的目标字段) |
 | [Payment 数据库规范](../../../agent-docs/database/PAYMENT_ORCHESTRATION_DATABASE.md) | 前序五表是 Channel/Account/MID/Capability/Health，与本轮五表组成不同 | [范围决定](../../../agent-docs/decisions/2026-09-21-channel-account-mid-capability-queries.md) |
-| [RouteContext](../../../payment-orchestration-service/paytech-payment-routing/src/main/java/com/paytech/payment/routing/domain/RouteContext.java) | 包含 Client、OE、Money、paymentMethodCode、captureMode，尚无独立 schemeCode、countryCode、mccCode | 调用候选查询前需收敛可信输入来源，不能猜默认值 |
-| [RouteService](../../../payment-orchestration-service/paytech-payment-routing/src/main/java/com/paytech/payment/routing/service/RouteService.java) | 提供本地 route 能力，结果为三元组 | 保留 Routing 最终选择职责，不把策略选择搬入 Channel |
+| [RouteContext](../../../paytech/payment/paytech-payment-core/src/main/java/com/paytech/payment/routing/domain/RouteContext.java) | 包含 Client、OE、Money、paymentMethodCode、captureMode，尚无独立 schemeCode、countryCode、mccCode | 调用候选查询前需收敛可信输入来源，不能猜默认值 |
+| [RouteService](../../../paytech/payment/paytech-payment-core/src/main/java/com/paytech/payment/routing/service/RouteService.java) | 提供本地 route 能力，结果为三元组 | 保留 Routing 最终选择职责，不把策略选择搬入 Channel |
 | [Execution 路由修订](../../20260913/payment-Execution设计/execution-field-simplification-amendment.md#9-受理前路由) | 受理前选路，Attempt 冻结三元组；原交易不按当前账号重路由 | 两个查询接入此协作边界 |
 | [Vault 架构](../../../agent-docs/VAULT_SERVICE_ARCHITECTURE.md#32-明确禁止进入-vault-的数据) | 原规范不允许 Channel Secret；当前用户确认账号 JSON 的窄例外 | [实施合同 §4](./implementation-contract.md#4-vault-账号配置)，不推导其他 Secret 权限 |
 
@@ -30,7 +30,7 @@ SQL 对象清单集中在[需求 §5](./requirement.md#5-sql-变更清单)。完
 
 ### 3.1 空库与非空库分开
 
-- 空库：以唯一正式 [PDManer](../../../payment-orchestration-service/docs/database/payment-orchestration.pdma.json)及一致的完整 Schema、注释和索引为准；测试 DDL 仅投影本次五表到专用测试库。
+- 空库：以唯一正式 [PDManer](../../../paytech/payment/docs/database/payment.pdma.json)及一致的完整 Schema、注释和索引为准；测试 DDL 仅投影本次五表到专用测试库。
 - 非空库：先只读盘点，设计逐条转换及核验，再生成需求目录下的唯一增量执行文件。明确目标库、前置版本、备份、顺序、是否可重跑及恢复限制。
 - 不创建物理 FK/CHECK；应用负责关联、枚举、类型与金额约束，数据库保留 PK/UK/NOT NULL。
 

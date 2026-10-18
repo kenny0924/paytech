@@ -17,7 +17,7 @@
 
 新订单读取 Order 国家；历史订单已有 Context 时使用 Context，否则使用受校验的历史创建快照。取消只对实际存在的旧创建命令检查完成状态，新订单随原子提交完成创建。
 
-物理模型与生成器、空库目标 Schema 同步；现存本地库只手工执行 [增量 SQL](../../../commerce-service/docs/requirements/20260916-create-checkout-business/ddl.sql)。它仅加一列，不清理历史命令，不更新历史业务行。
+物理模型与生成器、空库目标 Schema 同步；现存本地库只手工执行 [增量 SQL](../../../paytech/acquiring/docs/requirements/20260916-create-checkout-business/ddl.sql)。它仅加一列，不清理历史命令，不更新历史业务行。
 
 ## 验证范围
 
@@ -25,4 +25,4 @@
 
 独立 Service 入口使用真实 MySQL 验证 REQUIRED 自行提交/加入事务、保存原 Session Token 和 Token 唯一冲突后五表回滚；历史快照 Reader 的合同测试保留。
 
-本入口结构按 [processor-conventions.md](../../../payment-orchestration-service/docs/development/processor-conventions.md)第 6、8、9、11 节组织；创建订单查询归属 CommerceOrderRepository，Service 不再重复做入口有效期判断。
+本入口结构按 [processor-conventions.md](../../../paytech/payment/docs/development/processor-conventions.md)第 6、8、9、11 节组织；创建订单查询归属 CommerceOrderRepository，Service 不再重复做入口有效期判断。

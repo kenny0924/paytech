@@ -33,7 +33,7 @@
 ## 3. 部署、SQL 与恢复证据
 
 - 目标及执行记录：台账分别记录本机开发库与本机 `mor-test`，包含备份、SQL 执行、旧数据核对、应用替换和入口验收。
-- SQL 来源：[Risk V1 增量脚本](../../../risk-compliance-service/docs/database/sql/2026-09-11-risk-rule-v1-configuration.sql)。本目录的 [ddl.sql](./db/ddl.sql) 与 [dml.sql](./db/dml.sql) 为分类索引，执行文件仍只有原脚本。
+- SQL 来源：[Risk V1 增量脚本](../../../paytech/risk-decision/docs/database/sql/2026-09-11-risk-rule-v1-configuration.sql)。本目录的 [ddl.sql](./db/ddl.sql) 与 [dml.sql](./db/dml.sql) 为分类索引，执行文件仍只有原脚本。
 - 恢复证据：台账记录受影响表/完整库备份位置、原 Resource 备份、迁移核验文件、原镜像及 Web 样式更新前后的制品信息。备份和凭据不复制到需求目录。
 - 后续恢复或重新部署需要重新核对目标环境及当前写入情况；使用历史备份不能自动保证新数据无损，DDL 的隐式提交也不能用事务回滚替代恢复设计。
 

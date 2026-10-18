@@ -26,7 +26,7 @@
 
 浏览器同样复现了小写查询的 400；输入框旁没有格式错误提示，页面将其作为列表加载失败展示。BFF 同一 Request ID `c273d714-de2a-4c5b-a7d3-4a25f0f28dfa` 的日志有 `HandlerMethodValidationException` 和 400，定位到入口参数校验。
 
-[RuleSetTab.tsx](../../../operations-console-web/src/risk/RuleSetTab.tsx) 只有 `maxLength` 与提交时 `trim`，没有格式校验。[BFF Controller](../../../operations-console-bff/paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/ext/rest/RiskDecisionConfigurationController.java) 要求 `^[A-Z][A-Z0-9_]{0,63}$`：大写字母开头，后续为大写字母、数字、下划线，总长 1–64。[Risk Controller](../../../risk-compliance-service/risk-web/src/main/java/com/paytech/risk/ext/rest/decision/DecisionRuleSetManagementController.java) 也校验 Upper Code。
+[RuleSetTab.tsx](../../../operations-console-web/src/risk/RuleSetTab.tsx) 只有 `maxLength` 与提交时 `trim`，没有格式校验。[BFF Controller](../../../paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/ext/rest/RiskDecisionConfigurationController.java) 要求 `^[A-Z][A-Z0-9_]{0,63}$`：大写字母开头，后续为大写字母、数字、下划线，总长 1–64。[Risk Controller](../../../paytech/risk-decision/paytech-risk-decision-app/src/main/java/com/paytech/risk/ext/rest/decision/DecisionRuleSetManagementController.java) 也校验 Upper Code。
 
 test Platform 参数白名单实际包含 `page / size / pointCode / ruleSetCode / status`，不能把已复现问题归因于 Gateway 缺少 `ruleSetCode` 注册。修复方向是前端就地校验、明确提示，并保留服务端校验及完整编码精确匹配。
 
@@ -70,18 +70,18 @@ test Platform 参数白名单实际包含 `page / size / pointCode / ruleSetCode
 
 ### 5.1 规则集分页和当前配置
 
-[DecisionRuleSetMapper.xml](../../../risk-compliance-service/risk-decision/src/main/resources/mapper/decision/DecisionRuleSetMapper.xml) 的 `RuleSetListFilter / selectRuleSetVersions / countRuleSetVersions` 直接查询版本表，按版本创建时间排序。本次只读查询 test 库得到 **23 个版本、21 个 `(decision_point_id, rule_set_code)` 组合**；HTTP 按 20 条读取的一页只有 18 个不同规则集。因此不能只在前端对一页去重。
+[DecisionRuleSetMapper.xml](../../../paytech/risk-decision/paytech-risk-decision-core/src/main/resources/mapper/decision/DecisionRuleSetMapper.xml) 的 `RuleSetListFilter / selectRuleSetVersions / countRuleSetVersions` 直接查询版本表，按版本创建时间排序。本次只读查询 test 库得到 **23 个版本、21 个 `(decision_point_id, rule_set_code)` 组合**；HTTP 按 20 条读取的一页只有 18 个不同规则集。因此不能只在前端对一页去重。
 
 后续查询需先确定每集当前配置，再应用状态筛选及稳定分页。例如旧版 FROZEN、最新 DRAFT 时，不能为了匹配 FROZEN 筛选而选回旧版。实际使用状态独立检查整个版本集合。
 
 存在两个隐藏消费者必须同步：
 
 - [ruleSetHead.ts](../../../operations-console-web/src/risk/ruleSetHead.ts) 按每页 200 条遍历版本列表、校验总数与唯一性、选最高版本再读详情；新建编码检查、编辑、冻结和冲突恢复依赖它。改变列表语义时必须明确兼容或改写方式。
-- [BFF Client](../../../operations-console-bff/paytech-operations-console-bff-web/src/main/java/com/paytech/operations/console/bff/integration/impl/RiskDecisionConfigurationClientImpl.java) 校验版本 ID、创建时间排序及过滤条件。新投影/排序必须同步类型和严格校验，不能只改 Risk SQL。
+- [BFF Client](../../../paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/integration/impl/RiskDecisionConfigurationClientImpl.java) 校验版本 ID、创建时间排序及过滤条件。新投影/排序必须同步类型和严格校验，不能只改 Risk SQL。
 
 ### 5.2 整体生命周期与历史
 
-[现有 Schema](../../../risk-compliance-service/docs/database/sql/risk-compliance-schema.sql) 只有版本表及绑定，没有规则集根记录。`DRAFT / FROZEN / RETIRED` 是版本状态，旧草稿被新草稿替代也会退役，不能把 RETIRED 偷换为“整个规则集已删除”。
+[现有 Schema](../../../paytech/risk-decision/paytech-risk-decision-test/src/test/resources/init/ddl.sql) 只有版本表及绑定，没有规则集根记录。`DRAFT / FROZEN / RETIRED` 是版本状态，旧草稿被新草稿替代也会退役，不能把 RETIRED 偷换为“整个规则集已删除”。
 
 建议阶段 3 设计明确的规则集管理生命周期与稳定身份，与不可变版本分开；是否新增根表及如何回填由模型评审决定。[Risk 数据库规范](../../../agent-docs/database/RISK_COMPLIANCE_DATABASE.md) 不使用通用软删除，应以有明确业务含义的状态表达退出管理，而非为所有历史记录泛加 `is_deleted`。
 
@@ -97,7 +97,7 @@ Candidate 与历史失效发布不独立构成使用中。删除后保留其固�
 
 ### 5.4 并发与幂等
 
-[现有 Processor](../../../risk-compliance-service/risk-web/src/main/java/com/paytech/risk/service/processor/DecisionRuleSetManagementProcessor.java) 编排本地事务和 Risk 自有幂等；保存/冻结锁决策点、当前版本和必要绑定。Candidate 创建也锁关联资源，已有校验则读取固定闭包。
+[现有 Processor](../../../paytech/risk-decision/paytech-risk-decision-core/src/main/java/com/paytech/risk/decision/service/processor) 编排本地事务和 Risk 自有幂等；保存/冻结锁决策点、当前版本和必要绑定。Candidate 创建也锁关联资源，已有校验则读取固定闭包。
 
 删除需与保存、冻结、新建 Candidate 采用一致的资源协调和事务顺序，在命令执行时重新检查使用事实。列表返回的可删除提示不能代替最终检查。锁范围、CAS 和必要数据库保护在阶段 3 按规范设计，不借此迁移 Risk 幂等框架。
 

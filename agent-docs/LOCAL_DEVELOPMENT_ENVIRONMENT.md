@@ -150,7 +150,7 @@ Java 工程统一使用各自仓库提交的 `./mvnw`，避免依赖 Code-MoR �
 /Users/kenny/Desktop/Workspace/Settings/3-Maven/settings/local_settings.xml
 ```
 
-- `~/.m2/settings.xml` 已链接到该文件，因此仓库根目录的 `./mvnw` 默认使用它；显式验证时也可以传入 `--settings`。
+- `~/.m2/settings.xml` 已链接到该文件，因此唯一 Wrapper `paytech/mvnw` 默认使用它；显式验证时也可以传入 `--settings`。
 - Settings 将全部依赖和插件请求通过 `http://127.0.0.1:18081/repository/maven-public`，并为 `maven-snapshots`、`maven-releases` 提供本机发布认证。
 - Settings 使用独立的 `${user.home}/.m3/repository` 本地缓存。它包含凭据，文件权限必须保持 `600`，不得提交或把有效内容输出到日志。
 - 当前只复用既有本机认证；后续应在 Nexus 中改为最小权限的专用部署账号，现有凭据不得用于生产或 CI。
@@ -160,13 +160,12 @@ Java 工程统一使用各自仓库提交的 `./mvnw`，避免依赖 Code-MoR �
 
 ```bash
 node scripts/verify-local-nexus-settings.mjs /Users/kenny/Desktop/Workspace/Settings/3-Maven/settings/local_settings.xml
-cd paytech-build
-./mvnw clean deploy
-cd ../paytech-foundation
-./mvnw clean deploy
+cd paytech
+./mvnw clean deploy -pl build/paytech-dependencies,build/paytech-parent
+./mvnw clean deploy -f foundation/pom.xml
 ```
 
-`paytech-build` 必须先于首次 `paytech-foundation` 发布，以便 Nexus 中先存在 BOM 和 Parent。日常消费者只从 `maven-public` 读取，不直接指向 Hosted 仓库。
+`paytech/build` 的 BOM 与 Parent 必须先于首次 Foundation（`paytech/foundation`）发布，以便 Nexus 中先存在 BOM 和 Parent。日常消费者只从 `maven-public` 读取，不直接指向 Hosted 仓库。
 
 ## 7. Compose Profile
 
@@ -265,9 +264,9 @@ local-environment/
 
 本页只分配端口和本地依赖，不复制应用端点、健康组、认证模式、Token 存储、已应用表数或验收结果。启动或验证具体组件时读取其仓库 README：
 
-- [API Gateway](../api-gateway/README.md)
-- [Platform Support](../platform-support-service/README.md)
-- [Operations Console BFF](../operations-console-bff/README.md)
+- [API Gateway](../paytech/api-gateway/README.md)
+- [Platform Support](../paytech/platform-support/README.md)
+- [Operations Console BFF](../paytech/operations-console-bff/README.md)
 - [Operations Console Web](../operations-console-web/README.md)
 - [独立 `mor-test` 环境](../test-environment/README.md)
 
@@ -325,11 +324,11 @@ xxl_job
 - Gateway Rate Limiter 与各服务 Key 进一步使用独立前缀，禁止 `KEYS *` 作为运行逻辑。
 - Operations Gateway 不使用 Redis Starter、`StringRedisTemplate` 或 Redisson；它通过 Spring Data Redis Reactive + Lettuce Lua 实现 Rate Token Bucket 和 Concurrency ZSET Lease。
 - 所有 Redis 自动测试连接 `127.0.0.1:16379` 的 `mor-local` Compose Redis；固定测试配置由 Spring 加载 `application-auto.yml`，隔离本地测试账号凭据遵守 `UNIT_TEST_GUIDE.md` 第 7.5 节，并允许 `PAYTECH_REDIS_PASSWORD` 环境覆盖。已有实例使用自定义密码时，由开发者安全注入相同值，不自动修改共享服务密码。不引入 Testcontainers，不连接 `6379`；除下述明确授权的范围外，自动化不得读取 `.env.local`，所有场景均不得输出或改写该文件。见 [2026-09-08 决策](./decisions/2026-09-08-middleware-auto-test-configuration.md)。
-- **Platform Support Mock 测试的授权例外（2026-09-17）：** 用户明确授权读取 `.env.local` 用于本地测试连接，并要求 Mock 启动无需另配密码。仅该服务测试侧的 `mock` Profile 可自动读取 `MOR_PLATFORM_DB_PASSWORD` 和 `PAYTECH_REDIS_PASSWORD`，不导入其他字段、不执行 Shell、不输出或持久化值；显式覆盖优先。此例外不适用于正式应用、manual Profile 或其他服务。入口见 [测试模块说明](../platform-support-service/platform-support-test/README.md)，实际验证见[当前台账](CURRENT_IMPLEMENTATION.md#platform-api-credential-validation-tests-20260917)。
+- **Platform Support Mock 测试的授权例外（2026-09-17）：** 用户明确授权读取 `.env.local` 用于本地测试连接，并要求 Mock 启动无需另配密码。仅该服务测试侧的 `mock` Profile 可自动读取 `MOR_PLATFORM_DB_PASSWORD` 和 `PAYTECH_REDIS_PASSWORD`，不导入其他字段、不执行 Shell、不输出或持久化值；显式覆盖优先。此例外不适用于正式应用、manual Profile 或其他服务。入口见 [测试模块说明](../paytech/platform-support/paytech-platform-support-test/README.md)，实际验证见[当前台账](CURRENT_IMPLEMENTATION.md#platform-api-credential-validation-tests-20260917)。
 - 每次 Gateway 测试运行生成唯一 Key Namespace，Setup/Teardown 只用 `SCAN` 删除本次已知前缀，禁止 `KEYS *`、`FLUSHDB` 或停止共享 Compose Redis。Redis 不可用用例连接未监听的 Loopback 端口，不影响其他本地进程。
 - 本地密码来自 `.env.local`；应用日志不得输出完整连接串或密码。
 - 现有宿主机 `6379` Redis 不参与 Code-MoR 开发、测试或故障演练。
-- Gateway 的 Redis 启动前置、不回显密码的注入方式、Guard 状态约束、Access Log HMAC 配置与完整验证命令以 [`api-gateway/README.md`](../api-gateway/README.md) 为唯一运行手册；最终 Gateway 约束见 [`2026-08-30-operations-gateway-hardening-design.md`](../docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md)，本文不复制密钥或大段命令。
+- Gateway 的 Redis 启动前置、不回显密码的注入方式、Guard 状态约束、Access Log HMAC 配置与完整验证命令以 [`api-gateway/README.md`](../paytech/api-gateway/README.md) 为唯一运行手册；最终 Gateway 约束见 [`2026-08-30-operations-gateway-hardening-design.md`](../docs/superpowers/specs/2026-08-30-operations-gateway-hardening-design.md)，本文不复制密钥或大段命令。
 
 ## 13. 日常启动顺序
 

@@ -64,8 +64,8 @@
 
 ## 6. SQL 与消费者边界
 
-[正式 PDManer](../../../payment-orchestration-service/docs/database/payment-orchestration.pdma.json)与[完整 Schema](../../../payment-orchestration-service/docs/database/sql/payment-orchestration-schema.sql)保持一致。完整 Schema 仅用于空库，禁止直接对非空业务库使用；非空数据问题继续见[迁移影响](./technique.md#3-sql与历史迁移)。本期未获授权迁移共享业务数据库。
+[正式 PDManer](../../../paytech/payment/docs/database/payment.pdma.json)与[完整 Schema](../../../paytech/payment/docs/database/sql/payment-schema.sql)保持一致。完整 Schema 仅用于空库，禁止直接对非空业务库使用；非空数据问题继续见[迁移影响](./technique.md#3-sql与历史迁移)。本期未获授权迁移共享业务数据库。
 
-[测试 DDL](../../../payment-orchestration-service/paytech-payment-test/src/test/resources/init/ddl.sql)仅创建隔离的 `mor_payment_channel_test`、本库受限账号和五张配置表；不含 DROP/TRUNCATE，不删除或重置已有账号。测试仅在空基线后接管本例 Fixture，统一 AfterEach 清理自身数据。
+[测试 DDL](../../../paytech/payment/paytech-payment-test/src/test/resources/init/ddl.sql)仅创建隔离的 `mor_payment_channel_test`、本库受限账号和五张配置表；不含 DROP/TRUNCATE，不删除或重置已有账号。测试仅在空基线后接管本例 Fixture，统一 AfterEach 清理自身数据。
 
 当前任务交付 Channel 的公开查询能力。Routing 选路策略及其可信 scheme/MCC 来源、真实渠道协议动作和运营写接口不属于本次两个查询的实现；现有 RouteService 的占位实现不能因此被宣称已接入真实主链路。后续调用方通过上述入口接入，不穿透 Mapper/Repository/DataObject。

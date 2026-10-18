@@ -1,7 +1,7 @@
 # 结账点运行期评估：方案设计
 
 - 阶段 3：方案、接口与数据设计（2026-10-16，已确认）
-- 依据：[需求](./requirement.md)（Q1～Q7）、[差异与影响](./technique.md)（D1～D4 已确认）、[支付反欺诈一期设计](../../20261014/risk-支付反欺诈一期/design.md)、[评估查询设计](../risk-评估结果查询与解释/design.md)
+- 依据：[需求](./requirement.md)（Q1～Q7）、[差异与影响](./technique.md)（D1～D4 已确认）、[支付反欺诈一期设计](../../20261014/risk-支付反欺诈一期/design.md)、[评估查询设计](../../20261015/risk-评估结果查询与解释/design.md)
 - SQL：[db/ddl.sql](./db/ddl.sql)、[db/dml.sql](./db/dml.sql)（待执行，设计批准不改变任何环境）
 
 **规模：**本次方案涉及 3 个系统（Risk、Commerce、Operations Web；Operations BFF 只改 1 行注释）；**新增 0 个接口，0 个路由变化**，扩展 3 个已有 Risk 接口的风控点范围（统一评估、执行发布、按业务身份查评估），Commerce 创建结账接口增加 2 种错误返回（503、502）；**新增 0 张表**，重建 1 张表 `t_checkout_input_snapshot`（41 列 → 17 列，4 个索引；0 行）；DML 共 14 行（`t_risk_variable` 更新 10 行、新增 3 行，`t_decision_point_version` 新增 1 行）；Platform 注册 DML 0 行；新增页面 0 个，调整已有页面 3 个（执行发布、决策流、评估查询）及附加动作编辑区。

@@ -25,16 +25,16 @@ Risk 配置 V2 的相对工作量为**中到大**，主要成本在不可变闭�
 
 | 主题 | 当前事实 | 对 V2 的含义 |
 |---|---|---|
-| Rule Wire | [`RuleRequestBodyV1`](../../../risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionRuleSetManagementModels.java) 只有单个 `action`；Action 只有 `actionCode + actionVersionNo` | 无法无损提交或回读多个动作、参数和 Reject Message |
+| Rule Wire | [`RuleRequestBodyV1`](../../../paytech/risk-decision/paytech-risk-decision-api/src/main/java/com/paytech/risk/decision/api/DecisionRuleSetManagementModels.java) 只有单个 `action`；Action 只有 `actionCode + actionVersionNo` | 无法无损提交或回读多个动作、参数和 Reject Message |
 | Authoring Context | `CHECKOUT_PREPARE_AUTHORING_V1` 固定 9 个字段、3 个终态 Action；9 个字段的 `actionParameterFlag` 全为 `false` | 当前没有可作为“冷却主体/标签主体”的已批准 Action 参数字段 |
 | Decision 语义 | Point 为 `FIRST_TERMINAL`、默认 `REVIEW`；三个 Action 分别映射 `ALLOW/REVIEW/DENY` | UI 可展示 `PASS/REVIEW/REJECT`，Risk 内部 Code 不应改名 |
-| Rule 聚合 | [`DecisionRuleSetAggregate`](../../../risk-compliance-service/risk-decision/src/main/java/com/paytech/risk/decision/domain/rule/DecisionRuleSetAggregate.java) 强制一条 `sequenceNo=1` 的 Action | 零终态、多非终态或多 Action 都需要 V2 聚合 |
+| Rule 聚合 | [`DecisionRuleSetAggregate`](../../../paytech/risk-decision/paytech-risk-decision-core/src/main/java/com/paytech/risk/decision/domain/rule/DecisionRuleSetAggregate.java) 强制一条 `sequenceNo=1` 的 Action | 零终态、多非终态或多 Action 都需要 V2 聚合 |
 | 保存/回读 | 保存固定物化一条 `t_rule_action`，Wire Mapper 固定重建一个 Action | 需要端到端的 V2 列表和参数重建，不能只改请求模型 |
 | 原因 | `t_risk_rule.reason_code` 可空，当前测试只证明 null 可接受、空白拒绝 | 没有 Reject 目录、默认消息、覆盖消息或历史文案版本语义 |
 | Action 目录 | 初始化 DML 只有 `ALLOW_CHECKOUT`、`REVIEW_CHECKOUT`、`DENY_CHECKOUT`；工程 Registry 对 ID、Handler、版本、Hash 和终态属性做精确核对 | 画板中的冷却/标签只是产品示例，不是已注册 Handler |
-| 物理模型 | [`t_action_version`、`t_action_parameter_definition`、`t_rule_action`、`t_rule_action_parameter`](../../../risk-compliance-service/docs/database/sql/risk-compliance-schema.sql) 已存在 | 多动作/参数可能不需新基础表，但仍需目录 DML、Java 写读、Hash、校验和测试；原因目录与 Hash Schema 识别仍可能需要 Schema 变化 |
-| Hash | [`RiskDecisionCanonicalizerImpl`](../../../risk-compliance-service/risk-decision/src/main/java/com/paytech/risk/decision/domain/hash/RiskDecisionCanonicalizerImpl.java) 的 V1 Rule Hash 是单个 `action`；Release V1 要求参数等集合为空 | 不能把新字段塞入 `*_V1` 后重算历史值，必须显式演进 Schema |
-| 静态检查 | [`DecisionReleaseStaticValidatorImpl`](../../../risk-compliance-service/risk-decision/src/main/java/com/paytech/risk/decision/domain/release/DecisionReleaseStaticValidatorImpl.java) 对参数“出现即失败”，并要求每 Rule 恰好一个终态 DECISION Action | 保留八项检查框架与顺序，但 V2 必须重写其中的参数和终态语义 |
+| 物理模型 | [`t_action_version`、`t_action_parameter_definition`、`t_rule_action`、`t_rule_action_parameter`](../../../paytech/risk-decision/paytech-risk-decision-test/src/test/resources/init/ddl.sql) 已存在 | 多动作/参数可能不需新基础表，但仍需目录 DML、Java 写读、Hash、校验和测试；原因目录与 Hash Schema 识别仍可能需要 Schema 变化 |
+| Hash | [`RiskDecisionCanonicalizerImpl`](../../../paytech/risk-decision/paytech-risk-decision-core/src/main/java/com/paytech/risk/decision/domain/hash/RiskDecisionCanonicalizerImpl.java) 的 V1 Rule Hash 是单个 `action`；Release V1 要求参数等集合为空 | 不能把新字段塞入 `*_V1` 后重算历史值，必须显式演进 Schema |
+| 静态检查 | [`DecisionReleaseStaticValidatorImpl`](../../../paytech/risk-decision/paytech-risk-decision-core/src/main/java/com/paytech/risk/decision/domain/release/DecisionReleaseStaticValidatorImpl.java) 对参数“出现即失败”，并要求每 Rule 恰好一个终态 DECISION Action | 保留八项检查框架与顺序，但 V2 必须重写其中的参数和终态语义 |
 | 当前状态 | [CURRENT_IMPLEMENTATION](../../CURRENT_IMPLEMENTATION.md) 只声明配置、Freeze、TEST Candidate 与八项静态检查；Shadow、审批、激活和运行期未完成 | 本次配置扩展不得被描述为真实决策或副作用已经可用 |
 
 逻辑数据库权威长期允许“一条 Rule 有多个非终态 Action、最多一个终态 Action；没有终态时使用 Point 默认决定”，见 [Risk & Compliance 数据库设计](../../database/RISK_COMPLIANCE_DATABASE.md)。这可以作为设计方向，但不改变上述当前实现事实。

@@ -11,7 +11,7 @@
 | 2026-10-14 | 2 现状差异与影响 | 用户回复“可以” | **已确认** |
 | 2026-10-14 | 3 方案与设计 | technique.md 第 5～13 节；[Vault DDL](./db/vault/ddl.sql)；[Platform 注册 DML](./db/platform-support-service/registration-dml.sql)（174 行） | 待确认 |
 | 2026-10-14 | 3 方案与设计 | 用户要求不做首次导入、直接从数据库加载，其余按方案：去掉 `VAULT_POLICY_FILE`；新增 [dml-local.sql](./db/vault/dml-local.sql)（9 行）、[dml-test.sql](./db/vault/dml-test.sql)（16 行）；热加载改为定时全量读取；测试夹具改为写表 | **已确认** |
-| 2026-10-14 | 4 研发（Vault） | 经授权在本机 `mor_vault` 执行 ddl.sql 与 dml-local.sql（备份已留）；Vault Server 策略入库、定时全量刷新、11 个管理接口、人工加/解密与审计扩列；[管理接口 OpenAPI](../../../vault-service/api/openapi/admin-v1.yaml)；PDManer 生成器扩为六表；local/test compose 去掉策略文件、加入 `VAULT_ADMIN_CALLERS` | 进行中 |
+| 2026-10-14 | 4 研发（Vault） | 经授权在本机 `mor_vault` 执行 ddl.sql 与 dml-local.sql（备份已留）；Vault Server 策略入库、定时全量刷新、11 个管理接口、人工加/解密与审计扩列；[管理接口 OpenAPI](../../../paytech/vault/api/openapi/admin-v1.yaml)；PDManer 生成器扩为六表；local/test compose 去掉策略文件、加入 `VAULT_ADMIN_CALLERS` | 进行中 |
 | 2026-10-15 | 4 研发（Vault） | 补管理与人工加/解密入口测试；分页对齐 Java 公共分页（默认 10、最大 200）；Vault 完整门禁 `scripts/verify.sh` 13 项全部通过（含 Maven 客户端与黑盒）。下一步：Java `VaultAdminClient`、Operations BFF、Operations Web | 进行中 |
 | 2026-10-15 | 4 研发（客户端/BFF/Web） | Java `VaultAdminClient`（默认关闭，新增 3 个错误码；业务 `VaultClient` 不变）及真实 Go Vault 黑盒往返；Operations BFF 13 个接口（路由决定数据级别、submissionId 作 Vault 幂等键、`/vault-admin` 只记元数据日志、Vault 错误码映射 403/404/409）；Web 6 个页面与敏感值组件（30 秒自动隐藏）、工单号组件。验证：客户端 40、黑盒 10、BFF 1286、Web 996 全部通过，Web 构建通过。未做：浏览器联调（阶段 5） | 待确认 |
 | 2026-10-15 | 4 研发 | 用户回复“可以”：阶段 4 确认，授权阶段 5 | **已确认** |

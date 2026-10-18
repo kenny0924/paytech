@@ -53,7 +53,7 @@ Operations 人员能够查看一个规则集的全部已保存版本、理解它
 
 ## 4. 当前证据入口
 
-- [Risk 管理 API](../../../risk-compliance-service/risk-api/src/main/java/com/paytech/risk/api/decision/DecisionRuleSetManagementApi.java)：已有按版本 ID 的详情，尚无历史分页及发布引用查询。
-- [Risk 规则服务](../../../risk-compliance-service/risk-decision/src/main/java/com/paytech/risk/decision/domainservice/service/impl/DecisionRuleSetServiceImpl.java)：历史闭包读取、保存、使用判断和整体删除。
+- [Risk 管理 API](../../../paytech/risk-decision/paytech-risk-decision-api/src/main/java/com/paytech/risk/decision/api/DecisionRuleSetManagementApi.java)：已有按版本 ID 的详情，尚无历史分页及发布引用查询。
+- [Risk 规则服务](../../../paytech/risk-decision/paytech-risk-decision-core/src/main/java/com/paytech/risk/decision/domainservice/service/impl/DecisionRuleSetServiceImpl.java)：历史闭包读取、保存、使用判断和整体删除。
 - [Web 页面](../../../operations-console-web/src/pages/RiskRuleConfiguration.tsx)、[编辑器](../../../operations-console-web/src/risk/RuleSetEditor.tsx)：现有详情 Drawer 与编辑状态、最新配置读取及导航。
-- [Risk Schema](../../../risk-compliance-service/docs/database/sql/risk-compliance-schema.sql)：原因代码/文案与类型化标签参数已保存，尚无本次两类业务字典结构。
+- [Risk Schema](../../../paytech/risk-decision/paytech-risk-decision-test/src/test/resources/init/ddl.sql)：原因代码/文案与类型化标签参数已保存，尚无本次两类业务字典结构。

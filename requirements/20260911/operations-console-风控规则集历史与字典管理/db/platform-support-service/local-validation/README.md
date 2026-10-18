@@ -10,7 +10,7 @@
 
 1. 用本机管理员只读复核 Compose 项目、端口、库名不存在以及 [manifest.json](./manifest.json) 中 3 个 SQL Hash；如果库已存在则停止，不覆盖。
 2. 将原库目录结构、统计及本机账号授权元数据的备份保存在 `~/Code-MoR-backups/` 私有目录，并记录 Hash；不导出密码、私钥或业务明文。
-3. 执行 [prepare.sql](./prepare.sql)。随后明确选择新库，依次手工应用既有权威 [Schema](../../../../../../platform-support-service/docs/database/sql/platform-support-schema.sql)（24 表）及 [初始化 DML](../../../../../../platform-support-service/docs/database/sql/platform-support-initial-data.sql)（683 条初始化插入及 1 次管理员角色版本递增）。不得再次复制出第二份 Schema/初始化文件。
+3. 执行 [prepare.sql](./prepare.sql)。随后明确选择新库，依次手工应用既有权威 [Schema](../../../../../../paytech/platform-support/docs/database/sql/platform-support-schema.sql)（24 表）及 [初始化 DML](../../../../../../paytech/platform-support/docs/database/sql/platform-support-initial-data.sql)（683 条初始化插入及 1 次管理员角色版本递增）。不得再次复制出第二份 Schema/初始化文件。
 4. 运行时临时指定 `PLATFORM_SUPPORT_TEST_DB_URL=jdbc:mysql://127.0.0.1:13306/mor_platform_rco16_validation?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC`，凭据只通过已有私有环境变量传入。
 5. 先运行 Gateway 完整快照/动态目标、初始化目录/权限及导航相关用例，再进行必要的 Platform 综合回归。测试只创建和清理自有夹具，不建表或执行初始化 SQL。
 6. 对比新库测试前后完整目录，确认自有业务夹具已清理；复核原库未改变。新库保留作为验收证据，不擅自删除。任何失败都先停在新库，不修改原库。
