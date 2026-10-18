@@ -29,7 +29,7 @@
             <dependency><groupId>com.paytech</groupId><artifactId>paytech-compliance-api</artifactId><version>${project.version}</version></dependency>
             <dependency>
                 <groupId>com.paytech</groupId>
-                <artifactId>platform-support-api</artifactId>
+                <artifactId>paytech-platform-support-api</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

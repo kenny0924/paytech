@@ -4,75 +4,76 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import com.paytech.foundation.common.error.FailException;
-import com.paytech.foundation.common.error.InvalidParameterException;
-import com.paytech.platform.support.api.enums.ClientAuthenticationErrorCode;
+
 import com.paytech.platform.support.api.onboardingfiles.OnboardingFileApi;
-import com.paytech.platform.support.api.onboardingfiles.OnboardingFileModels.*;
-import com.paytech.platform.support.filedocument.domain.file.UploadModels.Start;
-import com.paytech.platform.support.service.processor.OnboardingUploadProcessor;
+import com.paytech.platform.support.api.onboardingfiles.request.StartUploadRequestBody;
+import com.paytech.platform.support.api.onboardingfiles.response.DownloadResponseBody;
+import com.paytech.platform.support.api.onboardingfiles.response.FileResponseBody;
+import com.paytech.platform.support.api.onboardingfiles.response.UploadCompletionResponseBody;
+import com.paytech.platform.support.api.onboardingfiles.response.UploadResponseBody;
+import com.paytech.platform.support.service.processor.DownloadOnboardingFileProcessor;
+import com.paytech.platform.support.service.processor.OnboardingFileCompletionProcessor;
+import com.paytech.platform.support.service.processor.ReadOnboardingFileProcessor;
+import com.paytech.platform.support.service.processor.StartOnboardingUploadProcessor;
 import com.paytech.platform.support.service.processor.request.CompleteOnboardingFileRequest;
+import com.paytech.platform.support.service.processor.request.OnboardingFileAccessRequest;
+import com.paytech.platform.support.service.processor.request.StartOnboardingUploadRequest;
 import com.paytech.platform.support.service.processor.response.CompleteOnboardingFileResponse;
+import com.paytech.platform.support.service.processor.response.DownloadOnboardingFileResponse;
+import com.paytech.platform.support.service.processor.response.ReadOnboardingFileResponse;
+import com.paytech.platform.support.service.processor.response.StartOnboardingUploadResponse;
 
-/** 上传 HTTP 适配，只解析有界输入，不接受浏览器自报权限。 */
+import lombok.AllArgsConstructor;
+
+/**
+ * 入驻文件 HTTP 适配：只做协议转换并委托对应 Processor，不接受浏览器自报权限
+ * <li>开始上传的字段约束由内部请求经公共 validateBasic 执行，保持 400 INVALID_REQUEST 合同。</li>
+ */
 @RestController
-@lombok.AllArgsConstructor
-@ConditionalOnProperty(name="files.onboarding.enabled",havingValue="true")
+@AllArgsConstructor
+@ConditionalOnProperty(name = "files.onboarding.enabled", havingValue = "true")
 public class OnboardingFileController implements OnboardingFileApi {
-    private final com.paytech.platform.support.service.processor.OnboardingFileCompletionProcessor completion;
-    private final com.paytech.platform.support.service.processor.OnboardingFileReadProcessor reads;
-    private final jakarta.validation.Validator validator;
-    private final OnboardingUploadProcessor processor;
-    /** 先校验协议形状，再交给完整用例。 */
-    @Override @ResponseStatus(HttpStatus.CREATED)
-    public UploadResponseBody start(String accountId,String sessionId,StartUploadRequestBody request) {
-        if (!validator.validate(request).isEmpty()) throw new InvalidParameterException("上传请求字段缺失或格式错误");
-        long account; long session;
-        try { account=id(accountId); session=id(sessionId); }
-        catch (InvalidParameterException invalid) { throw new FailException(ClientAuthenticationErrorCode.CLIENT_SESSION_INVALID); }
-        String name=request.filename();
-        if (name.codePointCount(0,name.length())>255) throw new InvalidParameterException("文件名最多 255 个字符");
-        name=name.replace('\\','/');
-        name=name.substring(name.lastIndexOf('/')+1).replaceAll("[\\p{Cc}\\p{Cf}]", "").strip();
-        if (name.isBlank() || name.equals(".") || name.equals("..")) throw new InvalidParameterException("文件展示名无效");
-        if (!request.mimeType().matches("[a-z0-9][a-z0-9!#$&^_.+-]*/[a-z0-9][a-z0-9!#$&^_.+-]*"))
-            throw new InvalidParameterException("mimeType 必须为规范媒体类型");
-        var start=new Start(id(request.applicationId()),id(request.subjectPartyId()),name,request.mimeType(),id(request.sizeBytes()));
-        return processor.start(account,session,account+":"+start.applicationId()+":"+start.subjectPartyId(),start);
-    }
-    /** 完成接口不接受浏览器自报 Hash 或任何 Body：解析身份 → Processor → 回执。 */
+
+    private final OnboardingFileConverter converter;
+
+    private final ReadOnboardingFileProcessor reads;
+
+    private final StartOnboardingUploadProcessor starts;
+
+    private final DownloadOnboardingFileProcessor downloads;
+
+    private final OnboardingFileCompletionProcessor completions;
+
+    /** 开始上传：解析身份与数值 → Processor → 上传授权；HTTP 201。 */
     @Override
-    public FileCompletionReceipt complete(String accountId, String sessionId, String uploadId) {
-        var request = new CompleteOnboardingFileRequest(sessionIdentity(accountId), sessionIdentity(sessionId),
-            id(uploadId));
-        CompleteOnboardingFileResponse response = completion.process(request);
-        return convertReceipt(response);
+    @ResponseStatus(HttpStatus.CREATED)
+    public UploadResponseBody start(String accountId, String sessionId, StartUploadRequestBody request) {
+        StartOnboardingUploadRequest command = converter.toStartRequest(accountId, sessionId, request);
+        StartOnboardingUploadResponse response = starts.process(command);
+        return converter.toUploadResponseBody(response);
     }
 
-    /** 回执中的 commandId 与 uploadId 相同：完成操作的身份就是上传本身。 */
-    private FileCompletionReceipt convertReceipt(CompleteOnboardingFileResponse response) {
-        String uploadId = Long.toString(response.getUploadId());
-        return new FileCompletionReceipt(uploadId, uploadId, Long.toString(response.getFileId()),
-            response.getCompletedAt());
+    /** 完成上传：不接受浏览器自报 Hash 或任何 Body；解析身份 → Processor → 回执。 */
+    @Override
+    public UploadCompletionResponseBody complete(String accountId, String sessionId, String uploadId) {
+        CompleteOnboardingFileRequest command = converter.toCompleteRequest(accountId, sessionId, uploadId);
+        CompleteOnboardingFileResponse response = completions.process(command);
+        return converter.toCompletionResponseBody(response);
     }
-    /** 查询入口只解析身份，资源与会话由用例重新核验。 */
-    @Override public FileResponseBody read(String accountId,String sessionId,String fileId) {
-        return reads.read(sessionIdentity(accountId),sessionIdentity(sessionId),id(fileId));
+
+    /** 读取元数据：只解析身份，资源与会话由 Processor 重新核验。 */
+    @Override
+    public FileResponseBody read(String accountId, String sessionId, String fileId) {
+        OnboardingFileAccessRequest command = converter.toAccessRequest(accountId, sessionId, fileId);
+        ReadOnboardingFileResponse response = reads.process(command);
+        return converter.toFileResponseBody(response);
     }
-    /** 下载响应不持久化，也不通过通用审计记录临时授权。 */
-    @Override public DownloadResponseBody download(String accountId,String sessionId,String fileId) {
-        return reads.download(sessionIdentity(accountId),sessionIdentity(sessionId),id(fileId));
-    }
-    /** 非法会话坐标统一返回认证失败。 */
-    private long sessionIdentity(String value) {
-        try { return id(value); }
-        catch (InvalidParameterException invalid) { throw new FailException(ClientAuthenticationErrorCode.CLIENT_SESSION_INVALID); }
-    }
-    /** ID/字节数拒绝前导零与溢出。 */
-    private long id(String value) {
-        try {
-            if (value==null || !value.matches("[1-9][0-9]{0,18}")) throw new NumberFormatException();
-            return Long.parseLong(value);
-        } catch (NumberFormatException invalid) { throw new InvalidParameterException("标识和字节数必须为规范正整数"); }
+
+    /** 下载：每次独立签发；响应不持久化，也不通过通用审计记录临时授权。 */
+    @Override
+    public DownloadResponseBody download(String accountId, String sessionId, String fileId) {
+        OnboardingFileAccessRequest command = converter.toAccessRequest(accountId, sessionId, fileId);
+        DownloadOnboardingFileResponse response = downloads.process(command);
+        return converter.toDownloadResponseBody(response);
     }
 }

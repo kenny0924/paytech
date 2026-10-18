@@ -9,7 +9,7 @@ import com.paytech.client.contract.api.onboarding.ClientDraftModels.ClientDraftR
 import com.paytech.foundation.common.error.*;
 import com.paytech.platform.support.api.enums.*;
 import com.paytech.platform.support.api.onboardingfiles.OnboardingFileApi;
-import com.paytech.platform.support.api.onboardingfiles.OnboardingFileModels.FileResponseBody;
+import com.paytech.platform.support.api.onboardingfiles.response.FileResponseBody;
 import com.paytech.compliance.api.MaterialRequirementsApi;
 import com.paytech.compliance.api.ClientReviewResultApi;
 import com.paytech.compliance.api.MaterialRequirementsModels.RequirementBody;
@@ -198,14 +198,14 @@ public class ClientOnboardingProcessor {
     /** 已发布代码必须识别，未知状态不默认开放下载。 */
     FileResponseBody file(String[] identity, String id) {
         var value = files.read(identity[0], identity[1], id);
-        if (value == null || !id.equals(value.fileId()) || value.allowedActions() == null) {
+        if (value == null || !id.equals(value.getFileId()) || value.getAllowedActions() == null) {
             throw new ServiceUnavailableException();
         }
-        FileScanStatus.fromCode(value.scanStatus());
-        FileObjectStatus.fromCode(value.objectStatus());
+        FileScanStatus.fromCode(value.getScanStatus());
+        FileObjectStatus.fromCode(value.getObjectStatus());
         if (
             value
-                .allowedActions()
+                .getAllowedActions()
                 .stream()
                 .anyMatch(a -> !"DOWNLOAD".equals(a))
         ) {

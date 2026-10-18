@@ -14,7 +14,7 @@ import com.paytech.foundation.httpproblem.api.ApiProblemProfile;
 import com.paytech.foundation.httpproblem.api.ApiProblemResponse;
 import com.paytech.foundation.testsupport.api.Clear;
 import com.paytech.platform.support.api.authentication.response.AccountContextResponseBody;
-import com.paytech.platform.support.api.onboardingfiles.OnboardingFileModels.VerificationResponseBody;
+import com.paytech.platform.support.api.onboardingfiles.response.FileVerificationResponseBody;
 import com.paytech.compliance.api.MaterialRequirementsModels.RequirementBody;
 import com.paytech.compliance.api.MaterialRequirementsModels.RequirementsResponseBody;
 import com.paytech.platform.support.api.tenantprojection.request.StatusRequestBody;
@@ -69,7 +69,7 @@ public class OnboardingOwnerMocker implements Clear {
 
     /** 文件当前可用，内容摘要固定。 */
     public synchronized void mockFile(long fileId, String contentHash, String scanStatus) {
-        files.put(Long.toString(fileId), new VerificationResponseBody(Long.toString(fileId), "77" + fileId, contentHash, "1024",
+        files.put(Long.toString(fileId), new FileVerificationResponseBody(Long.toString(fileId), "77" + fileId, contentHash, "1024",
             "application/pdf", scanStatus, "ACTIVE", null));
     }
 
@@ -169,11 +169,11 @@ public class OnboardingOwnerMocker implements Clear {
     }
 
     /** 文件核验；checkedAt 使用当前时间以满足 CCT 新鲜度检查。 */
-    public synchronized VerificationResponseBody file(String fileId) {
+    public synchronized FileVerificationResponseBody file(String fileId) {
         calls.add("file:" + fileId);
-        var proof = (VerificationResponseBody)files.get(fileId);
-        return proof == null ? null : new VerificationResponseBody(proof.fileId(), proof.uploadId(), proof.contentHash(),
-            proof.sizeBytes(), proof.mimeType(), proof.scanStatus(), proof.objectStatus(), Instant.now());
+        var proof = (FileVerificationResponseBody)files.get(fileId);
+        return proof == null ? null : new FileVerificationResponseBody(proof.getFileId(), proof.getUploadId(), proof.getContentHash(),
+            proof.getSizeBytes(), proof.getMimeType(), proof.getScanStatus(), proof.getObjectStatus(), Instant.now());
     }
 
     /** I01 审核登记；返回 DTO、Fault 或 null。 */
