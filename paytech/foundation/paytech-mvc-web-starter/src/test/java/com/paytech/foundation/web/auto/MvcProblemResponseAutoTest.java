@@ -498,6 +498,55 @@ class MvcProblemResponseAutoTest {
         assertFalse(response.getContentAsString().contains(PRIVATE_DETAIL));
     }
 
+    /** Owner 业务码携带字段清单：保留 Owner 码与安全消息，状态按 Owner 解析（默认 422），errors 去重排序。 */
+    @Test
+    void test_ownerCodeFieldErrorsKeepOwnerCodeAndSortedErrors() throws Exception {
+        var components = components(Clock.fixed(RESPONSE_TIME, ZoneOffset.UTC), objectMapper,
+            defaultResolver(), new WebLoggingProperties(List.of()));
+        var response = new MockHttpServletResponse();
+        components.problemFilter().doFilter(request("POST"), response, (incoming, outgoing) -> {
+            throw new RequestBodyValidationException(OwnerFieldError.INVALID_FORM, List.of(
+                new ProblemFieldError("contact.phone", "手机号须带国家码"),
+                new ProblemFieldError("address.city", "城市过长"),
+                new ProblemFieldError("contact.phone", "手机号须带国家码")), new IllegalStateException(PRIVATE_DETAIL));
+        });
+        var body = assertProblem(response, HttpStatus.UNPROCESSABLE_CONTENT, OwnerFieldError.INVALID_FORM.getCode(),
+            OwnerFieldError.INVALID_FORM.getMessage(), true);
+        var fields = body.path("errors");
+        assertEquals(2, fields.size());
+        assertEquals("address.city", fields.get(0).path("field").asString());
+        assertEquals("contact.phone", fields.get(1).path("field").asString());
+        assertEquals("手机号须带国家码", fields.get(1).path("message").asString());
+        assertFalse(response.getContentAsString().contains(PRIVATE_DETAIL));
+
+        ApiErrorStatusResolver ownerResolver = (errorCode, defaultStatus) ->
+            errorCode == OwnerFieldError.INVALID_FORM ? HttpStatus.BAD_REQUEST : defaultStatus;
+        var owner = components(Clock.fixed(RESPONSE_TIME, ZoneOffset.UTC), objectMapper, ownerResolver,
+            new WebLoggingProperties(List.of()));
+        var ownerResponse = new MockHttpServletResponse();
+        owner.problemFilter().doFilter(request("POST"), ownerResponse, (incoming, outgoing) -> {
+            throw new RequestBodyValidationException(OwnerFieldError.INVALID_FORM,
+                List.of(new ProblemFieldError("contact.phone", "手机号须带国家码")), null);
+        });
+        assertProblem(ownerResponse, HttpStatus.BAD_REQUEST, OwnerFieldError.INVALID_FORM.getCode(),
+            OwnerFieldError.INVALID_FORM.getMessage(), true);
+    }
+
+    /** 测试用 Owner 业务码。 */
+    enum OwnerFieldError implements com.paytech.foundation.common.enums.CodeMessageEnum {
+        INVALID_FORM;
+
+        @Override
+        public String getCode() {
+            return "INVALID_FORM";
+        }
+
+        @Override
+        public String getMessage() {
+            return "表单字段不符合约定";
+        }
+    }
+
     @Test
     void test_embeddedConnectorSuppliesParseableDateWithoutCustomTimestampHeader() throws Exception {
         try (var context = new SpringApplicationBuilder(ConnectorApplication.class)

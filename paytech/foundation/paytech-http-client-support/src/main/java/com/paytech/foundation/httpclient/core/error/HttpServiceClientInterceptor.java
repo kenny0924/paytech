@@ -29,6 +29,7 @@ import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.foundation.httpclient.api.HttpRequestValidationException;
 import com.paytech.foundation.httpclient.api.HttpServiceClientOptions.DependencyFailureKind;
 import com.paytech.foundation.httpclient.api.HttpServiceClientOptions.DependencyFailureMapper;
+import com.paytech.foundation.httpproblem.api.RequestBodyValidationException;
 
 /**
  * Surrounds synchronous typed HTTP calls and converts only validated first-party failures.
@@ -116,7 +117,7 @@ public final class HttpServiceClientInterceptor implements MethodInterceptor {
             && CommonErrorCode.VALIDATION_ERROR.getCode().equals(decoded.code())) {
             return new HttpRequestValidationException(decoded.fields(), failure);
         }
-        return classifyClientCode(decoded.code(), failure);
+        return classifyClientCode(decoded, requestBody, failure);
     }
 
     private RuntimeException dependencyFailure(DependencyFailureKind kind, Throwable cause) {
@@ -161,7 +162,14 @@ public final class HttpServiceClientInterceptor implements MethodInterceptor {
         return new BizCheckFailException(CommonErrorCode.BUSINESS_CHECK_FAILED.getMessage(), failure);
     }
 
-    private RuntimeException classifyClientCode(String code, RestClientResponseException failure) {
+    /**
+     * 合规 4xx 只把公共类别和显式注册的合同 Code 保留为本地明确失败，其余视为上游协议错误。
+     * 显式启用字段校验失败、请求带 Body 时，合同 Code 携带的 errors[] 随 {@link RequestBodyValidationException}
+     * 保留，使消费方 MVC 边界继续输出同一字段清单；远端 detail 仍不外显，使用合同默认消息。
+     */
+    private RuntimeException classifyClientCode(HttpProblemDecoder.DecodedProblem decoded, boolean requestBody,
+        RestClientResponseException failure) {
+        String code = decoded.code();
         if (CommonErrorCode.BUSINESS_CHECK_FAILED.getCode().equals(code)) {
             return new BizCheckFailException(CommonErrorCode.BUSINESS_CHECK_FAILED.getMessage(), failure);
         }
@@ -175,7 +183,13 @@ public final class HttpServiceClientInterceptor implements MethodInterceptor {
             return new FailException(CommonErrorCode.NOT_FOUND, null, failure);
         }
         CodeMessageEnum contractError = contractErrors.get(code);
-        return contractError == null ? invalidResponse(failure) : new FailException(contractError, null, failure);
+        if (contractError == null) {
+            return invalidResponse(failure);
+        }
+        if (requestValidationFailuresEnabled && requestBody && decoded.strictProfile() && !decoded.errors().isEmpty()) {
+            return new RequestBodyValidationException(contractError, decoded.errors(), failure);
+        }
+        return new FailException(contractError, null, failure);
     }
 
     /** 公共字段错误只对应显式 Body；GET/DELETE 等无 Body 请求保持协议错误处理。 */
