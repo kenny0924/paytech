@@ -8,7 +8,6 @@ import java.time.temporal.ChronoUnit;
 
 import org.springframework.stereotype.Component;
 
-import com.paytech.account.api.rule.AccountIdentityRule;
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.foundation.id.IdGenerator;
@@ -19,6 +18,7 @@ import com.paytech.ledger.core.enums.FinanceEntityStatus;
 import com.paytech.ledger.core.enums.LedgerEntityType;
 import com.paytech.ledger.domainservice.repository.FinanceEntityRepository;
 import com.paytech.ledger.domainservice.service.AccountingPeriodService;
+import com.paytech.ledger.domainservice.validator.account.AccountIdentityRule;
 import com.paytech.ledger.service.processor.request.CreateFiscalCalendarRequest;
 import com.paytech.ledger.service.processor.response.CreatedResourceResponse;
 

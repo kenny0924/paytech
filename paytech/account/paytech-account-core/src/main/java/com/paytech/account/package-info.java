@@ -1,5 +1,7 @@
 /**
- * 账户服务（account-service）业务实现：Client 与 Local Partner 分类余额查询。
- * <li>本期与 ledger 共连 mor_ledger 且只读 {@code t_account}、{@code t_chart_account}、{@code t_ledger_book}；第 11b 步改为消费经济事实维护自有余额表。</li>
+ * 账户服务（account-service）业务实现：消费 billing 的 EconomicFactRecorded 维护 Owner 余额桶（mor_account），并提供余额查询、
+ * 账簿一致性、按经济事实重建与日终核对（design/04 §3.2、§5–§7）。
+ * <li>账户只消费经济事实，不消费过账事件；与 ledger 分录的一致性靠同一经济事实的幂等消费加日终核对（D05）。</li>
+ * <li>账簿与科目只经 ledger-api 读取，经济事实重放只经 billing-api 读取，不读其他服务的库。</li>
  */
 package com.paytech.account;

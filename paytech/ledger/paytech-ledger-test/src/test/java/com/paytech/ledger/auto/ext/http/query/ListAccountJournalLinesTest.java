@@ -78,11 +78,11 @@ class ListAccountJournalLinesTest extends AbstractManualAdjustmentApiTest {
 
     @Test
     void test_reverseBalanceAndSourceTraceability() {
-        var submit = submitted(adjustment().transfer(clientAvailableAccountId, bankCashAccountId, "30"));
+        var submit = submitted(adjustment().transfer(liabilityAccountId, bankCashAccountId, "30"));
         var approval = approve(submit.id("manualAdjustmentId"), CHECKER_ID, submit.text("contentHash")).assertSuccess(200);
-        posted(adjustment().transfer(bankCashAccountId, clientAvailableAccountId, "10.25"));
+        posted(adjustment().transfer(bankCashAccountId, liabilityAccountId, "10.25"));
 
-        List<JsonNode> lines = get(path(clientAvailableAccountId)).assertSuccess(200).assertPage(1, 10, 2);
+        List<JsonNode> lines = get(path(liabilityAccountId)).assertSuccess(200).assertPage(1, 10, 2);
 
         JsonNode first = lines.getFirst();
         assertAll(() -> assertEquals(EntrySide.DEBIT.getCode(), first.path("entrySide").asString()),

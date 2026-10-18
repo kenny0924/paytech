@@ -1,8 +1,8 @@
 package com.paytech.ledger.domainservice.service;
 
-import com.paytech.ledger.core.dal.dataobject.Account;
 import com.paytech.ledger.core.dal.dataobject.BookSequence;
 import com.paytech.ledger.core.dal.dataobject.FinanceEntity;
+import com.paytech.ledger.core.dal.dataobject.LedgerAccount;
 import com.paytech.ledger.core.dal.dataobject.LedgerBook;
 
 /** 财务主体、账簿和统一账户的本地创建。 */
@@ -15,5 +15,5 @@ public interface LedgerSetupService {
     void createLedgerBook(LedgerBook book, BookSequence sequence);
 
     /** 保存已验证的统一账户；账户身份重复时拒绝。 */
-    void createAccount(Account account);
+    void createAccount(LedgerAccount account);
 }

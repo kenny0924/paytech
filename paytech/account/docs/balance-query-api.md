@@ -1,7 +1,8 @@
 # Client / Local Partner 余额查询接口
 
-状态：HTTP、Domain Service、Repository、MyBatis 与 MySQL 只读链路已经实现。接口仅监听 Finance 内部地址，尚未接入 Gateway 和统一资源授权，
-因此不能作为公网或租户直连接口发布。
+状态：HTTP、Processor、Domain Service、Repository、MyBatis 与 MySQL 只读链路已经实现。第 11b 步起余额读自本服务 `mor_account.t_account_balance`
+（由消费 `EconomicFactRecorded` 维护），账簿存在性经 ledger-api 确认、ledger 不可用时返回 503（design/04 §6）。接口仅监听 Finance 内部地址，
+尚未接入 Gateway 和统一资源授权，因此不能作为公网或租户直连接口发布。
 
 ## 接口
 
@@ -53,15 +54,18 @@ ISO 4217 Code，且指定 OE/币种必须存在账簿（唯一键保证唯一）
 
 - Client 三种应付来自 CLIENT_PAYABLE 的 PENDING/AVAILABLE/LOCKED；保证金来自 CLIENT_SECURITY_DEPOSIT/NONE，追偿来自
   CLIENT_RECOVERY_RECEIVABLE/NONE。Partner 使用对应 PARTNER_PAYABLE 和 PARTNER_RECOVERY_RECEIVABLE/NONE。
-- Owner 的全部账户在一条 SQL 中读取，同一语句天然使用一个一致快照，不混用变更前后余额；账簿身份创建后不可变，因此不另开只读事务。读取不修复、不创建账户，也不触发过账。
+- 账簿先经 ledger-api `GET /ledger-books/v1?entityType=OPERATING_ENTITY&entityId=&currency=` 确认存在且唯一（事务外）；随后 Owner 的全部余额在
+  一条 SQL 中读取，同一语句天然使用一个一致快照，不混用变更前后余额，因此不另开只读事务。读取不修复、不创建余额，也不触发过账。
 - 指定 Owner 在有效账簿中尚未建立某个目标账户时，该分类返回同币种零；账簿不存在或不唯一、币种非法、数据库失败不能伪装成零。
 - 不过滤掉有余额的停用账户来伪造零余额；账户状态不改变既有账务事实。
-- 科目悬空、非叶子科目、账户与科目正常方向不一致、跨 Chart 或目标账户重复均 Fail-Closed，不返回可能错误的余额。
+- 余额身份重复或金额缺失 Fail-Closed，不返回可能错误的余额；科目代码与正常方向由余额映射规则冻结，科目名称与属性以 ledger 为准
+  （可经 `GET /ledger/v1/chart-accounts?ids=` 批量读取）。
 - Available 不是出款资格，不查询实时 Risk、不返回可出款承诺或最低保证金要求。出款四检查点保持独立。
-- 成功响应直接返回上述对象。非法参数和不存在的账簿返回 Foundation 400 错误体；投影损坏和数据库错误返回安全的 500，内部细节不外显。
+- 成功响应直接返回上述对象。非法参数和不存在的账簿返回 Foundation 400 错误体；ledger 不可用返回 503；余额身份损坏和数据库错误返回安全的 500，
+  内部细节不外显。
 
 ## 发布前仍需完成
 
 - 接入统一入站安全上下文并执行 Owner/OE 资源授权；路径 ID 不是身份凭证。Client/Partner 只能读取获授权的自身数据，Operations 需要明确数据范围。
 - 验证敏感财务数据的访问审计和 metadata-only 日志策略，并由 Gateway/BFF 只暴露符合产品身份模型的入口。
-- 数据库结构来自完整 `finance-schema.sql` 与 `finance-initial-data.sql`，由开发者人工执行；应用和自动测试都不会自动建表。
+- 数据库结构来自 `docs/database/sql/account-schema.sql`（或测试 `init/ddl.sql`），由开发者人工执行；应用和自动测试都不会自动建表。

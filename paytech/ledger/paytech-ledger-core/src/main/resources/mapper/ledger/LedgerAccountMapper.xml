@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- t_ledger_account 只保存账户身份（design/04 §3.1）；累计借贷、净额与最后分录序号一律由本库 Journal 聚合得出。 -->
+<mapper namespace="com.paytech.ledger.core.dal.mapper.LedgerAccountMapper">
+    <sql id="columns">id, ledger_book_id, chart_account_id, owner_type, owner_id, balance_bucket, normal_side, account_status, create_time, update_time</sql>
+
+    <!-- 账簿内每个账户的分录借贷合计与最大分录序号。 -->
+    <sql id="bookJournalTotals">
+        SELECT l.account_id,
+               SUM(CASE WHEN l.entry_side = 'DEBIT' THEN l.amount ELSE 0 END) debit_total,
+               SUM(CASE WHEN l.entry_side = 'CREDIT' THEN l.amount ELSE 0 END) credit_total,
+               MAX(e.journal_sequence) last_journal_sequence
+        FROM t_journal_line l
+        JOIN t_journal_entry e ON e.id = l.journal_entry_id
+        WHERE e.ledger_book_id = #{ledgerBookId}
+        GROUP BY l.account_id
+    </sql>
+
+    <!-- 由分录合计与账户冻结的正常方向得出的四个余额值。 -->
+    <sql id="totalColumns">
+        COALESCE(j.debit_total, 0) debit_total, COALESCE(j.credit_total, 0) credit_total,
+        CASE WHEN a.normal_side = 'DEBIT' THEN COALESCE(j.debit_total, 0) - COALESCE(j.credit_total, 0)
+             ELSE COALESCE(j.credit_total, 0) - COALESCE(j.debit_total, 0) END net_balance,
+        COALESCE(j.last_journal_sequence, 0) last_journal_sequence
+    </sql>
+
+    <insert id="insert">
+        INSERT INTO t_ledger_account (<include refid="columns"/>)
+        VALUES (#{id}, #{ledgerBookId}, #{chartAccountId}, #{ownerType}, #{ownerId}, #{balanceBucket}, #{normalSide}, #{accountStatus}, #{createTime}, #{updateTime})
+    </insert>
+
+    <select id="selectById" resultType="com.paytech.ledger.core.dal.dataobject.LedgerAccount">
+        SELECT <include refid="columns"/> FROM t_ledger_account WHERE id = #{id}
+    </select>
+
+    <select id="selectByIds" resultType="com.paytech.ledger.core.dal.dataobject.LedgerAccount">
+        SELECT <include refid="columns"/> FROM t_ledger_account WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY id
+    </select>
+
+    <select id="selectByIdentity" resultType="com.paytech.ledger.core.dal.dataobject.LedgerAccount">
+        SELECT <include refid="columns"/> FROM t_ledger_account
+        WHERE ledger_book_id = #{ledgerBookId} AND chart_account_id = #{chartAccountId} AND owner_type = #{ownerType}
+          AND owner_id = #{ownerId} AND balance_bucket = #{balanceBucket}
+    </select>
+
+    <select id="selectPage" resultType="com.paytech.ledger.domain.view.AccountView">
+        <bind name="ledgerBookId" value="query.ledgerBookId"/>
+        SELECT a.id account_id, c.account_code, a.owner_type, a.owner_id, a.balance_bucket, a.normal_side,
+               a.account_status, <include refid="totalColumns"/>
+        FROM t_ledger_account a
+        JOIN t_chart_account c ON c.id = a.chart_account_id
+        LEFT JOIN (<include refid="bookJournalTotals"/>) j ON j.account_id = a.id
+        WHERE a.ledger_book_id = #{query.ledgerBookId}
+        <if test="query.accountCode != null">AND c.account_code = #{query.accountCode}</if>
+        <if test="query.ownerType != null">AND a.owner_type = #{query.ownerType}</if>
+        <if test="query.ownerId != null">AND a.owner_id = #{query.ownerId}</if>
+        <if test="query.balanceBucket != null">AND a.balance_bucket = #{query.balanceBucket}</if>
+        ORDER BY c.account_code, a.owner_type, a.owner_id, a.balance_bucket, a.id
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="long">
+        SELECT COUNT(*) FROM t_ledger_account a
+        JOIN t_chart_account c ON c.id = a.chart_account_id
+        WHERE a.ledger_book_id = #{query.ledgerBookId}
+        <if test="query.accountCode != null">AND c.account_code = #{query.accountCode}</if>
+        <if test="query.ownerType != null">AND a.owner_type = #{query.ownerType}</if>
+        <if test="query.ownerId != null">AND a.owner_id = #{query.ownerId}</if>
+        <if test="query.balanceBucket != null">AND a.balance_bucket = #{query.balanceBucket}</if>
+    </select>
+
+    <select id="selectOwnerTotals" resultType="com.paytech.ledger.domain.view.AccountView">
+        SELECT a.id account_id, c.account_code, a.owner_type, a.owner_id, a.balance_bucket, a.normal_side,
+               a.account_status, <include refid="totalColumns"/>
+        FROM t_ledger_account a
+        JOIN t_chart_account c ON c.id = a.chart_account_id
+        LEFT JOIN (<include refid="bookJournalTotals"/>) j ON j.account_id = a.id
+        WHERE a.ledger_book_id = #{ledgerBookId} AND a.owner_type IN
+        <foreach collection="ownerTypes" item="ownerType" open="(" separator="," close=")">#{ownerType}</foreach>
+        ORDER BY c.account_code, a.owner_type, a.owner_id, a.balance_bucket, a.id
+    </select>
+
+    <select id="countNonZeroByOwnerTypes" resultType="long">
+        SELECT COUNT(*) FROM (
+            SELECT a.id
+            FROM t_ledger_account a
+            JOIN t_journal_line l ON l.account_id = a.id
+            WHERE a.owner_type IN
+            <foreach collection="ownerTypes" item="ownerType" open="(" separator="," close=")">#{ownerType}</foreach>
+              AND a.ledger_book_id IN
+            <foreach collection="bookIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+            GROUP BY a.id
+            HAVING SUM(CASE WHEN l.entry_side = 'DEBIT' THEN l.amount ELSE -l.amount END) &lt;&gt; 0
+        ) t
+    </select>
+
+    <select id="selectJournalTotals" resultType="com.paytech.ledger.domain.view.AccountJournalTotalsView">
+        SELECT COALESCE(SUM(CASE WHEN l.entry_side = 'DEBIT' THEN l.amount END), 0) debit_total,
+               COALESCE(SUM(CASE WHEN l.entry_side = 'CREDIT' THEN l.amount END), 0) credit_total,
+               COALESCE(MAX(e.journal_sequence), 0) last_journal_sequence
+        FROM t_journal_line l
+        JOIN t_journal_entry e ON e.id = l.journal_entry_id
+        WHERE l.account_id = #{accountId}
+    </select>
+</mapper>

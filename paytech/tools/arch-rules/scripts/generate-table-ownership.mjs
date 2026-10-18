@@ -38,16 +38,24 @@ const renamedTables = new Map([
   ['t_transaction_economics', 't_economic_fact'],
   ['t_transaction_economic_component', 't_economic_fact_line'],
   ['t_transaction_economic_comp_link', 't_economic_fact_line_link'],
+  // Step 11b (design/04 §3.1): the ledger posting account keeps identity only; balances move to mor_account.
+  ['t_account', 't_ledger_account'],
 ]);
-// Shared-database transition (task card 07 §5.5, design/04 §6): while account-app reads mor_ledger, account-core may
-// read these ledger tables. They are not owned by account and are not counted; step 11b removes the allowance.
-const transitionalSharedReads = [
-  { service: 'account', database: 'mor_ledger', tables: ['t_account', 't_chart_account', 't_ledger_book'] },
-];
+// Shared-database transition reads (not owned, not counted). Step 07 let account read mor_ledger; step 11b gives account
+// its own mor_account (design/04 §3.2, §6) and removes that allowance, so no transition is registered now.
+const transitionalSharedReads = [];
 // Tables introduced by a refactor step's approved design on top of design 03 §2 (not part of the §4.2 count).
 const stepAddedTables = [
   // Step 12 (design/05 §2.1, S3): one-time card material tickets in mor_card.
   { service: 'card', database: 'mor_card', tables: ['t_card_material_ticket'] },
+  // Step 11b (design/04 §3.2, task card 11b §2.1): account balance authority, applied facts and their entries,
+  // bucket movements (schema only) and daily reconciliation discrepancies in mor_account.
+  {
+    service: 'account',
+    database: 'mor_account',
+    tables: ['t_account_balance', 't_balance_applied_fact', 't_balance_applied_entry', 't_balance_movement',
+      't_balance_discrepancy'],
+  },
 ];
 
 const lines = readFileSync(designDocument, 'utf8').split('\n');
@@ -150,7 +158,7 @@ const output = [
   'sharedInfrastructureTables:',
   ...sharedInfrastructureTables.map((table) => `  - ${table}`),
   '# Shared-database transition reads (not owned, not counted); removed when the service gets its own database.',
-  'transitionalSharedReads:',
+  transitionalSharedReads.length === 0 ? 'transitionalSharedReads: {}' : 'transitionalSharedReads:',
   ...transitionalSharedReads.flatMap(({ service, database, tables }) => [
     `  ${service}:`,
     `    ${database}:`,

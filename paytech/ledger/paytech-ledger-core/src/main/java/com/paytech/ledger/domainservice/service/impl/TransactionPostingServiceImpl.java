@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.paytech.account.api.enums.OwnerType;
-import com.paytech.account.api.rule.AccountIdentityRule;
 import com.paytech.billing.api.enums.AmountSource;
 import com.paytech.billing.api.enums.AutoInstructionType;
 import com.paytech.billing.api.enums.EconomicsType;
@@ -25,7 +24,6 @@ import com.paytech.billing.api.fact.EconomicFactPayload;
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.id.IdGenerator;
-import com.paytech.ledger.core.dal.dataobject.Account;
 import com.paytech.ledger.core.dal.dataobject.AccountingInstruction;
 import com.paytech.ledger.core.dal.dataobject.AccountingPeriod;
 import com.paytech.ledger.core.dal.dataobject.AccountingRuleBundle;
@@ -35,6 +33,7 @@ import com.paytech.ledger.core.dal.dataobject.ChartAccount;
 import com.paytech.ledger.core.dal.dataobject.FiscalCalendar;
 import com.paytech.ledger.core.dal.dataobject.InstructionLine;
 import com.paytech.ledger.core.dal.dataobject.JournalEntry;
+import com.paytech.ledger.core.dal.dataobject.LedgerAccount;
 import com.paytech.ledger.core.dal.dataobject.LedgerBook;
 import com.paytech.ledger.core.enums.AccountStatus;
 import com.paytech.ledger.core.enums.BookStatus;
@@ -51,7 +50,6 @@ import com.paytech.ledger.domain.PeriodCloseContentHash;
 import com.paytech.ledger.domain.TransactionPostingCommand;
 import com.paytech.ledger.domain.TransactionPostingContext;
 import com.paytech.ledger.domain.view.PostedInstructionView;
-import com.paytech.ledger.domainservice.repository.AccountRepository;
 import com.paytech.ledger.domainservice.repository.AccountingInstructionRepository;
 import com.paytech.ledger.domainservice.repository.AccountingPeriodRepository;
 import com.paytech.ledger.domainservice.repository.AccountingRuleBundleRepository;
@@ -61,9 +59,11 @@ import com.paytech.ledger.domainservice.repository.ChartAccountRepository;
 import com.paytech.ledger.domainservice.repository.FiscalCalendarRepository;
 import com.paytech.ledger.domainservice.repository.InstructionLineRepository;
 import com.paytech.ledger.domainservice.repository.JournalEntryRepository;
+import com.paytech.ledger.domainservice.repository.LedgerAccountRepository;
 import com.paytech.ledger.domainservice.repository.LedgerBookRepository;
 import com.paytech.ledger.domainservice.service.JournalPostingService;
 import com.paytech.ledger.domainservice.service.TransactionPostingService;
+import com.paytech.ledger.domainservice.validator.account.AccountIdentityRule;
 
 import lombok.AllArgsConstructor;
 
@@ -71,8 +71,9 @@ import lombok.AllArgsConstructor;
  * 交易自动记账引擎
  * <li>顺序：幂等返回 → 断言经济事实载荷完整并校验类型与成功时间 → 选定生效规则版本 → 逐指令类型生成（取金额、解析账簿/期间/账户、校验平衡）→ 按账簿主键升序保存并过账。</li>
  * <li>输入驱动：经济事实与渠道清算账户主键由命令载荷给出，事务内只读写 ledger 本库表；Partner 登记不变量由 billing 在登记时校验。</li>
- * <li>账户不存在时按身份矩阵在调用方事务内创建。</li>
- * <li>过账复用记账内核，指令由内核迁移为 POSTED；锁顺序沿用“期间 → 账簿序号 → 账户升序”。</li>
+ * <li>账户不存在时按身份矩阵在调用方事务内创建科目账户身份（ledger 本库）。</li>
+ * <li>过账复用记账内核，指令由内核迁移为 POSTED；锁顺序为“期间 → 账簿序号”，不锁账户、不写余额（design/04 §4）。</li>
+ * <li>生产调用方是 EconomicFactRecorded 消费 Handler；Owner 余额由 account 服务独立消费同一事实维护。</li>
  */
 @Service
 @AllArgsConstructor
@@ -82,7 +83,7 @@ public class TransactionPostingServiceImpl implements TransactionPostingService 
 
     private final Clock clock;
     private final IdGenerator idGenerator;
-    private final AccountRepository accountRepository;
+    private final LedgerAccountRepository ledgerAccountRepository;
     private final LedgerBookRepository ledgerBookRepository;
     private final JournalPostingService journalPostingService;
     private final ChartAccountRepository chartAccountRepository;
@@ -224,7 +225,7 @@ public class TransactionPostingServiceImpl implements TransactionPostingService 
         AccountingPeriod period = findOpenPeriod(context, type, book, calendar, postingDate);
         PlannedInstruction plan = new PlannedInstruction(type, book, period, postingDate);
         for (AccountingRuleLine rule : rules) {
-            Account account = resolveAccount(context, type, book, rule);
+            LedgerAccount account = resolveAccount(context, type, book, rule);
             plan.lines.add(buildLine(plan.lines.size() + 1, rule, account, context.amountOf(rule.getAmountSourceCode())));
         }
         checkBalanced(context, type, plan.lines);
@@ -290,8 +291,8 @@ public class TransactionPostingServiceImpl implements TransactionPostingService 
         return period;
     }
 
-    /** 按规则行科目、Owner Role 与余额桶解析唯一账户；不存在时在当前事务内创建零余额 ACTIVE 账户。 */
-    Account resolveAccount(TransactionPostingContext context, AutoInstructionType type, LedgerBook book,
+    /** 按规则行科目、Owner Role 与余额桶解析唯一账户；不存在时在当前事务内创建 ACTIVE 账户身份（只写 ledger 本库）。 */
+    LedgerAccount resolveAccount(TransactionPostingContext context, AutoInstructionType type, LedgerBook book,
         AccountingRuleLine rule) {
         ChartAccount chart = chartAccountRepository.findByChartAndCode(book.getChartId(), rule.getAccountCode());
         if (chart == null || !Boolean.TRUE.equals(chart.getPostingAllowed())) {
@@ -299,13 +300,13 @@ public class TransactionPostingServiceImpl implements TransactionPostingService 
         }
         Owner owner = resolveOwner(context, type, book, rule);
         AccountIdentityRule.checkAccountIdentity(rule.getAccountCode(), owner.type, rule.getBalanceBucket());
-        Account account = accountRepository.findByIdentity(book.getId(), chart.getId(), owner.type, owner.id,
+        LedgerAccount account = ledgerAccountRepository.findByIdentity(book.getId(), chart.getId(), owner.type, owner.id,
             rule.getBalanceBucket());
         if (account != null) {
             return account;
         }
         account = newAccount(book, chart, owner, rule);
-        accountRepository.insert(account);
+        ledgerAccountRepository.insertConcurrently(account);
         return account;
     }
 
@@ -346,10 +347,10 @@ public class TransactionPostingServiceImpl implements TransactionPostingService 
         return parties.get(0);
     }
 
-    /** 零余额 ACTIVE 账户，正常方向从科目复制。 */
-    Account newAccount(LedgerBook book, ChartAccount chart, Owner owner, AccountingRuleLine rule) {
+    /** ACTIVE 账户身份，正常方向从科目复制；不保存余额。 */
+    LedgerAccount newAccount(LedgerBook book, ChartAccount chart, Owner owner, AccountingRuleLine rule) {
         Instant now = now();
-        Account account = new Account();
+        LedgerAccount account = new LedgerAccount();
         account.setId(idGenerator.nextId());
         account.setLedgerBookId(book.getId());
         account.setChartAccountId(chart.getId());
@@ -358,18 +359,13 @@ public class TransactionPostingServiceImpl implements TransactionPostingService 
         account.setBalanceBucket(rule.getBalanceBucket());
         account.setNormalSide(chart.getNormalSide());
         account.setAccountStatus(AccountStatus.ACTIVE);
-        account.setDebitTotal(BigDecimal.ZERO);
-        account.setCreditTotal(BigDecimal.ZERO);
-        account.setNetBalance(BigDecimal.ZERO);
-        account.setLastJournalSequence(0L);
-        account.setBalanceVersion(0L);
         account.setCreateTime(now);
         account.setUpdateTime(now);
         return account;
     }
 
     /** 引用规则行的指令行；指令主键在指令构造后回填。 */
-    InstructionLine buildLine(int lineNo, AccountingRuleLine rule, Account account, BigDecimal amount) {
+    InstructionLine buildLine(int lineNo, AccountingRuleLine rule, LedgerAccount account, BigDecimal amount) {
         InstructionLine line = new InstructionLine();
         line.setId(idGenerator.nextId());
         line.setLineNo(lineNo);

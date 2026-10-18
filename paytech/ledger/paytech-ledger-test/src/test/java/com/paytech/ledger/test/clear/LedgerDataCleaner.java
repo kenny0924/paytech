@@ -25,12 +25,13 @@ public class LedgerDataCleaner implements Clear {
     /** 初始化 DML 保留行数：USD 1 + STANDARD 1 + 核心科目 29 + 结转规则 7 + 规则 Bundle 1 + 规则版本 1 + 规则行 12。 */
     static final int RESERVED_ROWS = 52;
 
-    private static final List<String> FULLY_OWNED_TABLES = List.of("t_compensation_event", "t_close_approval",
+    private static final List<String> FULLY_OWNED_TABLES = List.of("t_consumed_event", "t_consumed_aggregate_version",
+        "t_compensation_event", "t_close_approval",
         "t_close_step",
         "t_period_close_book", "t_period_close", "t_ledger_period_balance",
         "t_trial_balance_exception", "t_trial_balance_line", "t_trial_balance_run", "t_journal_line", "t_journal_entry",
         "t_instruction_line", "t_accounting_instruction", "t_adjustment_approval", "t_manual_adjustment_line",
-        "t_manual_adjustment", "t_account", "t_book_sequence", "t_ledger_book", "t_accounting_period",
+        "t_manual_adjustment", "t_ledger_account", "t_book_sequence", "t_ledger_book", "t_accounting_period",
         "t_fiscal_calendar", "t_finance_entity");
 
     private static final List<String> RESERVED_TABLES = List.of("t_close_account_rule", "t_accounting_rule_line",

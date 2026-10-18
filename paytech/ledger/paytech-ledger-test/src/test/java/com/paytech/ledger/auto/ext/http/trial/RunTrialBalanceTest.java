@@ -29,7 +29,7 @@ import com.paytech.ledger.test.mocker.local.LedgerMocker;
 import tools.jackson.databind.JsonNode;
 
 /**
- * 执行试算：期初/本期/期末汇总、借贷合计、水位与期间过滤、投影漂移异常、期间余额投影与拒绝场景。
+ * 执行试算：期初/本期/期末汇总、借贷合计、水位与期间过滤、分录借贷不平异常、期间余额投影与拒绝场景。
  *
  * @see com.paytech.ledger.api.TrialBalanceApi#runTrialBalance(String, String)
  */
@@ -46,7 +46,7 @@ class RunTrialBalanceTest extends AbstractTrialBalanceApiTest {
             OwnerType.CLIENT, "1001", BalanceBucket.NONE);
         postedIn(historyPeriod, bankCashAccountId, capitalAccountId, "100");
         postedIn(ledger.getOpenPeriodId(), bankCashAccountId, capitalAccountId, "50");
-        postedIn(ledger.getOpenPeriodId(), clientAvailableAccountId, bankCashAccountId, "30");
+        postedIn(ledger.getOpenPeriodId(), liabilityAccountId, bankCashAccountId, "30");
         postedIn(futurePeriod, bankCashAccountId, capitalAccountId, "7");
 
         var run = runTrial(ledger.getOpenPeriodId()).assertSuccess(201);
@@ -58,17 +58,19 @@ class RunTrialBalanceTest extends AbstractTrialBalanceApiTest {
             () -> assertTrue(run.text("contentHash").matches("[0-9a-f]{64}")),
             () -> assertTrue(run.text("createTime") != null));
         List<JsonNode> lines = detailArray(run.text("runNo"), "lines");
-        assertEquals(List.of("BANK_CASH", "CAPITAL", StandardAccountCodes.CLIENT_PAYABLE),
+        assertEquals(List.of("BANK_CASH", "CAPITAL", LIABILITY_CODE),
             lines.stream().map(line -> line.path("accountCode").asString()).toList(), "无发生额的保证金科目不落行");
         assertLine(lines.get(0), AccountClass.ASSET, NormalSide.DEBIT, "100.00", "50.00", "30.00", "120.00");
         assertLine(lines.get(1), AccountClass.EQUITY, NormalSide.CREDIT, "100.00", "0.00", "50.00", "150.00");
         assertLine(lines.get(2), AccountClass.LIABILITY, NormalSide.CREDIT, "0.00", "30.00", "0.00", "-30.00");
     }
 
+    /** 第 11b 步起试算不再核对账户投影（ledger 不保存余额）：篡改已过账分录行使借贷不平，试算以科目表级异常失败且不刷新期间余额。 */
     @Test
-    void test_projectionDriftFailsWithoutPeriodBalance() {
+    void test_unbalancedJournalFailsWithoutPeriodBalance() {
         postedIn(ledger.getOpenPeriodId(), bankCashAccountId, capitalAccountId, "100");
-        testMapper.updateAccountNetBalance(bankCashAccountId, "130");
+        long entryId = ledgerChecker.journalEntries(ledger.getLedgerBookId()).getFirst().getId();
+        testMapper.updateJournalLineAmount(entryId, 2, "130");
 
         var run = runTrial(ledger.getOpenPeriodId()).assertSuccess(201)
             .assertText("status", TrialBalanceStatus.FAILED.getCode()).assertText("exceptionCount", "1");
@@ -76,8 +78,8 @@ class RunTrialBalanceTest extends AbstractTrialBalanceApiTest {
         JsonNode exception = detailArray(run.text("runNo"), "exceptions").getFirst();
         assertAll(() -> assertEquals(TrialExceptionType.GENERAL_LEDGER_MISMATCH.getCode(),
                 exception.path("exceptionType").asString()),
-            () -> assertEquals(TrialReferenceType.ACCOUNT.getCode(), exception.path("referenceType").asString()),
-            () -> assertEquals(String.valueOf(bankCashAccountId), exception.path("referenceId").asString()),
+            () -> assertEquals(TrialReferenceType.CHART_ACCOUNT.getCode(), exception.path("referenceType").asString()),
+            () -> assertEquals(String.valueOf(LedgerMocker.STANDARD_CHART_ID), exception.path("referenceId").asString()),
             () -> assertEquals("30.00", exception.path("differenceAmount").asString()),
             () -> assertEquals(TrialExceptionStatus.OPEN.getCode(), exception.path("status").asString()));
         assertTrue(testMapper.selectPeriodBalances(ledger.getOpenPeriodId(), ledger.getLedgerBookId()).isEmpty(),

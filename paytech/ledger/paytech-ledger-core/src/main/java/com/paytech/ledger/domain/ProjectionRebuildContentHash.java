@@ -17,14 +17,15 @@ import tools.jackson.core.json.JsonFactory;
 
 /**
  * 投影重建解决摘要 {@value #SCHEMA}
- * <li>对象字段：schema, exceptionId, accountId, makerId, checkerId, before, after；before/after 各含 debitTotal,
+ * <li>对象字段：schema, exceptionId, accountId, makerId, checkerId, journalTotals；journalTotals 含 debitTotal,
  * creditTotal, netBalance, lastJournalSequence。</li>
+ * <li>第 11b 步起 ledger 不再保存余额投影（design/04 §4），批准时只冻结账户按分录聚合的四个值；Owner 余额的重建由 account 服务执行。</li>
  * <li>ID 与序号写字符串，金额按 minorUnit 补齐后写字符串。</li>
  * <li>先用 Jackson 写出 JSON，再经 RFC 8785 规范化后计算 SHA-256 小写十六进制。</li>
  */
 public final class ProjectionRebuildContentHash {
     /** 摘要输入的版本标识，变更输入结构时必须新增版本。 */
-    public static final String SCHEMA = "CODE-MOR:FINANCE:PROJECTION_REBUILD:1";
+    public static final String SCHEMA = "CODE-MOR:LEDGER:PROJECTION_REBUILD:2";
 
     private static final JsonFactory JSON = new JsonFactory();
 
@@ -35,13 +36,11 @@ public final class ProjectionRebuildContentHash {
      * 计算投影重建解决摘要
      *
      * @param exception 已填好引用账户、编制人与复核人的异常
-     * @param before 重建前投影
-     * @param after 重建后投影
+     * @param journalTotals 批准时账户按全部分录聚合的四个值
      * @param minorUnit 账簿币种小数位
      * @return SHA-256 小写十六进制
      */
-    public static String compute(TrialBalanceException exception, ProjectionSnapshot before, ProjectionSnapshot after,
-        int minorUnit) {
+    public static String compute(TrialBalanceException exception, ProjectionSnapshot journalTotals, int minorUnit) {
         ByteArrayOutputStream json = new ByteArrayOutputStream();
         try (JsonGenerator generator = JSON.createGenerator(ObjectWriteContext.empty(), json)) {
             generator.writeStartObject();
@@ -50,14 +49,13 @@ public final class ProjectionRebuildContentHash {
             generator.writeStringProperty("accountId", String.valueOf(exception.getReferenceId()));
             generator.writeStringProperty("makerId", String.valueOf(exception.getResolutionMakerId()));
             generator.writeStringProperty("checkerId", String.valueOf(exception.getResolutionCheckerId()));
-            writeSnapshot(generator, "before", before, minorUnit);
-            writeSnapshot(generator, "after", after, minorUnit);
+            writeSnapshot(generator, "journalTotals", journalTotals, minorUnit);
             generator.writeEndObject();
         }
         return sha256(Rfc8785JsonCanonicalizer.canonicalizeObject(json.toByteArray()));
     }
 
-    /** 写出一组投影值。 */
+    /** 写出一组余额值。 */
     static void writeSnapshot(JsonGenerator generator, String name, ProjectionSnapshot snapshot, int minorUnit) {
         generator.writeName(name);
         generator.writeStartObject();
@@ -70,7 +68,7 @@ public final class ProjectionRebuildContentHash {
 
     /**
      * 金额按币种精度输出普通十进制字符串
-     * <li>被篡改的投影可能超出币种精度，此处按 HALF_UP 收敛仅用于摘要输入，不改变持久化值。</li>
+     * <li>分录金额已由过账内核保证不超精度，此处 HALF_UP 只是防御性收敛，不改变持久化值。</li>
      */
     static String amount(BigDecimal value, int minorUnit) {
         return value.setScale(minorUnit, RoundingMode.HALF_UP).toPlainString();

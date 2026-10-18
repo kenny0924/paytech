@@ -44,6 +44,34 @@
             <groupId>com.paytech</groupId>
             <artifactId>paytech-mvc-web-starter</artifactId>
         </dependency>
+        <!-- EconomicFactRecorded 消费：分区拓扑、单活消费者容器与 t_consumed_event 幂等拦截器（design/04 §5、design/08）。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-messaging</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
+        <!-- 关账步骤 2、3 的 account-api / billing-api 内部 HTTP 客户端（design/04 §6）。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-account-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-billing-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-http-client-support</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-restclient</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webmvc</artifactId>

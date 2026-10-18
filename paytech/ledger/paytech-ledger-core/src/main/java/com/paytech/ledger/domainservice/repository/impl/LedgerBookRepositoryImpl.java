@@ -27,6 +27,12 @@ public class LedgerBookRepositoryImpl implements LedgerBookRepository {
         insertUnique(() -> mapper.insert(book), "账簿已存在: " + book.getEntityType().getCode() + "/" + book.getEntityId() + "/" + book.getCurrency());
     }
 
+    /** 按主键读取账簿与其科目表代码，不存在返回空。 */
+    @Override
+    public LedgerBookView findView(long id) {
+        return mapper.selectView(id);
+    }
+
     /** 按主键读取账簿，不存在返回空。 */
     @Override
     public LedgerBook findById(long id) {

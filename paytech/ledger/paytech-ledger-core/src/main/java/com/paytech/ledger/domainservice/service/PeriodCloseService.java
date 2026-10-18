@@ -5,11 +5,11 @@ import java.util.Map;
 
 import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
-import com.paytech.ledger.core.dal.dataobject.Account;
 import com.paytech.ledger.core.dal.dataobject.AccountingInstruction;
 import com.paytech.ledger.core.dal.dataobject.CloseApproval;
 import com.paytech.ledger.core.dal.dataobject.CloseStep;
 import com.paytech.ledger.core.dal.dataobject.InstructionLine;
+import com.paytech.ledger.core.dal.dataobject.LedgerAccount;
 import com.paytech.ledger.core.dal.dataobject.LedgerBook;
 import com.paytech.ledger.core.dal.dataobject.PeriodCloseBook;
 import com.paytech.ledger.domain.PeriodCloseContext;
@@ -41,7 +41,7 @@ public interface PeriodCloseService {
     void fail(PeriodCloseContext context, CloseStep step, String resultSummary);
 
     /** 读取账簿主体的本期损益账户（科目 + 主体 + NONE），不存在时按身份矩阵创建；必须加入调用方事务。 */
-    Account ensureResultAccount(LedgerBook book, long resultChartAccountId);
+    LedgerAccount ensureResultAccount(LedgerBook book, long resultChartAccountId);
 
     /** 保存损益结转指令及其行（VALIDATED）；必须加入调用方事务。 */
     void saveProfitCloseInstruction(AccountingInstruction instruction, List<InstructionLine> lines);
@@ -107,7 +107,7 @@ public interface PeriodCloseService {
     /** 关账步骤 2：统计待执行或可重试的补偿任务。 */
     long countPendingCompensationEvents();
 
-    /** 关账步骤 3：统计非零余额的渠道与银行账户。 */
+    /** 关账步骤 3：统计本库分录聚合净额非零的渠道与银行账户。 */
     long countNonZeroTreasuryAccounts(PeriodCloseContext context);
 
     /** 按序号降序分页查询期间的关账流程。 */

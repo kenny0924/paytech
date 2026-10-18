@@ -42,6 +42,13 @@ public final class LedgerResponseChecker extends AbstractHttpResponseChecker<Led
         return this;
     }
 
+    /** 断言 400 业务拒绝使用给定的专用错误码，且提示包含给定业务上下文。 */
+    public LedgerResponseChecker assertRejectedWithCode(String code, String detailFragment) {
+        assertProblem(400, code);
+        assertDetailContains(detailFragment);
+        return this;
+    }
+
     /** 断言 400 参数错误。 */
     public LedgerResponseChecker assertInvalidRequest() {
         assertProblem(400, CommonErrorCode.INVALID_REQUEST.getCode());

@@ -6,17 +6,18 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.boot.test.context.TestComponent;
 
-import com.paytech.ledger.core.dal.dataobject.Account;
 import com.paytech.ledger.core.dal.dataobject.JournalEntry;
 import com.paytech.ledger.core.dal.dataobject.JournalLine;
+import com.paytech.ledger.core.dal.dataobject.LedgerAccount;
 import com.paytech.ledger.core.enums.EntrySide;
 import com.paytech.ledger.core.enums.NormalSide;
 import com.paytech.ledger.test.dal.AccountingTestMapper;
 
-/** 从真实数据库读取账户、分录与序号，只读断言；预期值由用例给出，Journal 重算由本类独立计算。 */
+/** 从真实数据库读取账户、分录与序号，只读断言；预期值由用例给出，账户余额由本类从 Journal 独立聚合。 */
 @TestComponent
 public class LedgerChecker {
     private final AccountingTestMapper mapper;
@@ -25,30 +26,24 @@ public class LedgerChecker {
         this.mapper = mapper;
     }
 
-    /** 断言账户累计借贷、净余额与最后序号。 */
+    /**
+     * 断言账户按全部分录聚合的累计借贷、净余额与最后序号
+     * <li>第 11b 步起 ledger 不保存余额投影（design/04 §3.1），原投影断言改为分录聚合断言，预期值不变。</li>
+     */
     public LedgerChecker assertAccount(long accountId, String debitTotal, String creditTotal, String netBalance,
         long lastJournalSequence) {
-        Account account = mapper.selectAccount(accountId);
+        LedgerAccount account = mapper.selectAccount(accountId);
         assertNotNull(account, "账户不存在: " + accountId);
-        assertAll("账户 " + accountId,
-            () -> assertEquals(0, new BigDecimal(debitTotal).compareTo(account.getDebitTotal()), "debitTotal"),
-            () -> assertEquals(0, new BigDecimal(creditTotal).compareTo(account.getCreditTotal()), "creditTotal"),
-            () -> assertEquals(0, new BigDecimal(netBalance).compareTo(account.getNetBalance()), "netBalance"),
-            () -> assertEquals(lastJournalSequence, account.getLastJournalSequence(), "lastJournalSequence"));
-        return this;
-    }
-
-    /** 从账户全部分录行独立重算借贷累计与净余额，必须等于余额投影。 */
-    public LedgerChecker assertProjectionMatchesJournal(long accountId) {
-        Account account = mapper.selectAccount(accountId);
-        List<JournalLine> lines = mapper.selectAccountJournalLines(accountId);
-        BigDecimal debit = total(lines, EntrySide.DEBIT);
-        BigDecimal credit = total(lines, EntrySide.CREDIT);
+        Map<String, Object> totals = mapper.selectAccountJournalTotals(accountId);
+        BigDecimal debit = (BigDecimal)totals.get("debit_total");
+        BigDecimal credit = (BigDecimal)totals.get("credit_total");
         BigDecimal net = account.getNormalSide() == NormalSide.DEBIT ? debit.subtract(credit) : credit.subtract(debit);
-        assertAll("账户 " + accountId + " 投影与 Journal 重算",
-            () -> assertEquals(0, debit.compareTo(account.getDebitTotal())),
-            () -> assertEquals(0, credit.compareTo(account.getCreditTotal())),
-            () -> assertEquals(0, net.compareTo(account.getNetBalance())));
+        assertAll("账户 " + accountId,
+            () -> assertEquals(0, new BigDecimal(debitTotal).compareTo(debit), "debitTotal"),
+            () -> assertEquals(0, new BigDecimal(creditTotal).compareTo(credit), "creditTotal"),
+            () -> assertEquals(0, new BigDecimal(netBalance).compareTo(net), "netBalance"),
+            () -> assertEquals(lastJournalSequence, ((Number)totals.get("last_journal_sequence")).longValue(),
+                "lastJournalSequence"));
         return this;
     }
 

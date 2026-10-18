@@ -9,7 +9,9 @@ import org.junit.jupiter.api.Test;
 
 import com.paytech.ledger.core.enums.TrialBalanceStatus;
 import com.paytech.ledger.core.enums.TrialExceptionType;
+import com.paytech.ledger.core.enums.TrialReferenceType;
 import com.paytech.ledger.test.base.AbstractTrialBalanceApiTest;
+import com.paytech.ledger.test.mocker.local.LedgerMocker;
 
 import tools.jackson.databind.JsonNode;
 
@@ -41,7 +43,8 @@ class TrialBalanceQueryTest extends AbstractTrialBalanceApiTest {
     @Test
     void test_detailIncludesLinesAndExceptions() {
         postedIn(ledger.getOpenPeriodId(), bankCashAccountId, capitalAccountId, "20");
-        testMapper.updateAccountNetBalance(capitalAccountId, "25");
+        long entryId = ledgerChecker.journalEntries(ledger.getLedgerBookId()).getFirst().getId();
+        testMapper.updateJournalLineAmount(entryId, 2, "25");
         String runNo = runTrial(ledger.getOpenPeriodId()).assertSuccess(201).text("runNo");
 
         JsonNode detail = get(trialPath(ledger.getLedgerBookId(), ledger.getOpenPeriodId()) + "/" + runNo)
@@ -55,7 +58,9 @@ class TrialBalanceQueryTest extends AbstractTrialBalanceApiTest {
             () -> assertEquals(1, detail.path("exceptions").size()),
             () -> assertEquals(TrialExceptionType.GENERAL_LEDGER_MISMATCH.getCode(),
                 detail.path("exceptions").get(0).path("exceptionType").asString()),
-            () -> assertEquals(String.valueOf(capitalAccountId),
+            () -> assertEquals(TrialReferenceType.CHART_ACCOUNT.getCode(),
+                detail.path("exceptions").get(0).path("referenceType").asString()),
+            () -> assertEquals(String.valueOf(LedgerMocker.STANDARD_CHART_ID),
                 detail.path("exceptions").get(0).path("referenceId").asString()),
             () -> assertEquals("5.00", detail.path("exceptions").get(0).path("differenceAmount").asString()));
     }

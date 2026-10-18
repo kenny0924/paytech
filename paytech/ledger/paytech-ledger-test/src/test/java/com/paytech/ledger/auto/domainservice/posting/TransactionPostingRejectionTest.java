@@ -5,8 +5,10 @@ import static com.paytech.ledger.test.builder.EconomicComponentBuilder.clientPri
 import static com.paytech.ledger.test.builder.EconomicComponentBuilder.partnerShare;
 import static com.paytech.ledger.test.builder.EconomicComponentBuilder.platformServiceCharge;
 import static com.paytech.ledger.test.builder.EconomicComponentBuilder.sellerTaxWithoutAuthority;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -20,6 +22,7 @@ import com.paytech.billing.api.enums.AutoInstructionType;
 import com.paytech.billing.api.enums.EconomicsType;
 import com.paytech.billing.api.fact.EconomicFactPayload;
 import com.paytech.foundation.common.error.BizCheckFailException;
+import com.paytech.foundation.messaging.api.DomainEventRejectedException;
 import com.paytech.ledger.core.enums.PeriodStatus;
 import com.paytech.ledger.core.enums.RuleVersionStatus;
 import com.paytech.ledger.test.base.AbstractTransactionPostingTest;
@@ -30,7 +33,10 @@ import com.paytech.ledger.test.builder.TransactionEconomicsBuilder;
  * 支付成功时间 / 明细金额、期间未开放、无生效规则版本、非 PAYMENT 经济事实；拒绝后不残留指令、Journal 或自动创建的账户
  * <li>输入驱动（任务卡 07 第 3.2 项）：Partner 三元组与服务费归属等 billing 登记不变量由 billing 校验（见 billing 的 EconomicFactInvariantsTest），
  * ledger 只断言载荷完整性；渠道清算账户的存在、启用与所属 OE 由 billing 解析时保证。</li>
+ * <li>入口（第 11b 步）：拒绝矩阵在测试事务内直接调用 EconomicFactRecordedPostingHandler，断言 {@code DomainEventRejectedException} 携带的拒绝原因；
+ * {@link #test_rejectedEventGoesToDeadLetter} 经真实 Broker 证明拒绝的信封直接进入 ledger.billing.dlq 且不登记消费。</li>
  *
+ * @see com.paytech.ledger.ext.mq.EconomicFactRecordedPostingHandler
  * @see com.paytech.ledger.domainservice.service.TransactionPostingService#post(com.paytech.ledger.domain.TransactionPostingCommand)
  */
 class TransactionPostingRejectionTest extends AbstractTransactionPostingTest {
@@ -164,9 +170,24 @@ class TransactionPostingRejectionTest extends AbstractTransactionPostingTest {
         assertRejected(economics, "不是 PAYMENT", EconomicsType.REFUND.getCode());
     }
 
-    /** 调用被拒：消息含经济事实 ID 与给定片段，且整笔回滚无指令、Journal、账户残留、序号未推进。 */
+    /** 经真实 Broker 投递的非 PAYMENT 事实：Handler 明确拒绝，信封直接进入死信队列，不登记消费、不残留任何指令。 */
+    @Test
+    void test_rejectedEventGoesToDeadLetter() {
+        EconomicFactPayload economics = fact(payment("100").economicsType(EconomicsType.MANUAL_ADJUSTMENT),
+            clientPrincipal("97", CLIENT_ID), clientFee("3", ENTITY_NO));
+
+        billing.publish(economics);
+
+        await().atMost(CONSUME_WAIT).until(() -> billing.deadLetters() == 1);
+        assertAll(() -> assertEquals(0, testMapper.countAllConsumedEvents(), "拒绝不登记消费"),
+            () -> assertEquals(0, testMapper.countAllInstructions(), "不应残留指令"));
+    }
+
+    /** 调用被拒：Handler 以 DomainEventRejectedException 拒绝，原因含经济事实 ID 与给定片段，且整笔回滚无指令、Journal、账户残留、序号未推进。 */
     private void assertRejected(EconomicFactPayload economics, String... fragments) {
-        BizCheckFailException error = assertThrows(BizCheckFailException.class, () -> postFact(economics));
+        DomainEventRejectedException rejected = assertThrows(DomainEventRejectedException.class,
+            () -> consumeDirectly(economics));
+        BizCheckFailException error = assertInstanceOf(BizCheckFailException.class, rejected.getCause());
 
         String message = error.getMessage();
         assertTrue(message.contains(String.valueOf(economics.getFactId())), "拒绝消息应含经济事实 ID: " + message);

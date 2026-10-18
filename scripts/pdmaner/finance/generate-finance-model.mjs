@@ -14,6 +14,7 @@ import { CURRENT_COMPENSATION_EVENT } from "./manifests/08-reliability.mjs";
 import {
   EXPECTED_SERVICE_TABLE_COUNTS,
   FINANCE_SERVICES,
+  SERVICE_ADDED_TABLES,
   SERVICE_TABLE_VARIANTS,
   serviceTables,
 } from "./service-split.mjs";
@@ -234,7 +235,7 @@ function buildIndexes(table, fieldsByKey) {
       defKey: spec.defKey,
       defName: `${spec.unique ? "唯一" : "访问"}索引 ${spec.fields.join("、")}`,
       unique: spec.unique,
-      comment: `${spec.unique ? "保证业务唯一性" : "支持访问路径"}：${spec.fields.join("、")}`,
+      comment: spec.comment ?? `${spec.unique ? "保证业务唯一性" : "支持访问路径"}：${spec.fields.join("、")}`,
       fields: spec.fields.map((fieldKey, position) => {
         const field = fieldsByKey.get(fieldKey);
         invariant(field, `索引字段不存在：${table.defKey}.${spec.defKey}.${fieldKey}`);
@@ -269,7 +270,7 @@ function buildEntities(model, tables = TABLES) {
         hideInGraph: false,
         refDict: "",
         baseType: mapping.baseType,
-        extProps: (["entity_no", "liable_entity_no", "entity_id"].includes(manifestField.defKey) || (table.defKey === "account" && manifestField.defKey === "owner_id") || (table.defKey === "economic_fact_line" && ["party_id", "payer_id", "payee_id"].includes(manifestField.defKey)) || (table === CURRENT_COMPENSATION_EVENT && ["event_key", "event_type", "sub_event_type"].includes(manifestField.defKey)))
+        extProps: (manifestField.ascii || ["entity_no", "liable_entity_no", "entity_id"].includes(manifestField.defKey) || (table.defKey === "account" && manifestField.defKey === "owner_id") || (table.defKey === "economic_fact_line" && ["party_id", "payer_id", "payee_id"].includes(manifestField.defKey)) || (table === CURRENT_COMPENSATION_EVENT && ["event_key", "event_type", "sub_event_type"].includes(manifestField.defKey)))
           ? { characterSet: "ascii", collation: "ascii_bin" } : {},
         domain: mapping.domain,
         id: stableUuid(`field/${table.defKey}/${manifestField.defKey}`),
@@ -569,11 +570,25 @@ export function projectServiceModel(model, service, tableKeys) {
   projected.describe = `${SERVICE_TITLES[service]} 服务库物理模型：由 Finance 逻辑模型按 design/03 表归属切分（第 07 步），只保留本库关系`;
   projected.entities = projected.entities.filter((entity) => physical.has(entity.defKey));
   invariant(projected.entities.length === physical.size, `服务模型缺表：${service}`);
-  for (const variant of buildEntities(model, SERVICE_TABLE_VARIANTS[service] ?? [])) {
-    const index = projected.entities.findIndex((entity) => entity.defKey === variant.defKey);
-    invariant(index >= 0, `服务模型变体没有对应的逻辑表：${service}.${variant.defKey}`);
-    variant.correlations = [];
+  const renamed = new Map();
+  for (const spec of SERVICE_TABLE_VARIANTS[service] ?? []) {
+    const table = spec.table ?? spec;
+    const replacedKey = physicalTableKey(spec.replaces ?? table.defKey);
+    const [variant] = buildEntities(model, [table]);
+    const index = projected.entities.findIndex((entity) => entity.defKey === replacedKey);
+    invariant(index >= 0, `服务模型变体没有对应的逻辑表：${service}.${replacedKey}`);
+    if (spec.replaces) {
+      adoptReplacedIdentity(variant, projected.entities[index]);
+      renamed.set(replacedKey, variant.defKey);
+    } else {
+      variant.correlations = [];
+    }
     projected.entities[index] = variant;
+  }
+  const added = SERVICE_ADDED_TABLES[service];
+  if (added) {
+    const entities = buildEntities(model, added.tables);
+    projected.entities = added.prepend ? [...entities, ...projected.entities] : [...projected.entities, ...entities];
   }
   const entityIds = new Set(projected.entities.map((entity) => entity.id));
   for (const entity of projected.entities) {
@@ -589,12 +604,35 @@ export function projectServiceModel(model, service, tableKeys) {
           ? entityIds.has(cell.originKey) : relationIds.has(cell.originKey))),
       },
       properties: {
-        primaryTables: diagram.properties.primaryTables.filter((table) => physical.has(table)),
-        referenceTables: diagram.properties.referenceTables.filter((table) => physical.has(table)),
+        primaryTables: diagram.properties.primaryTables.filter((table) => physical.has(table))
+          .map((table) => renamed.get(table) ?? table),
+        referenceTables: diagram.properties.referenceTables.filter((table) => physical.has(table))
+          .map((table) => renamed.get(table) ?? table),
       },
     }))
     .filter((diagram) => diagram.properties.primaryTables.length > 0);
   return projected;
+}
+
+/**
+ * 物理更名变体沿用被替换逻辑表的实体 ID、同名字段 ID 与出向关系，使库内其他表的关系与图组锚点保持有效；删除的字段随之消失。
+ */
+function adoptReplacedIdentity(variant, replaced) {
+  const replacedFields = new Map(replaced.fields.map((field) => [field.defKey, field.id]));
+  const fieldIds = new Map();
+  for (const field of variant.fields) {
+    const adopted = replacedFields.get(field.defKey);
+    if (adopted) {
+      fieldIds.set(field.id, adopted);
+      field.id = adopted;
+    }
+  }
+  for (const index of variant.indexes) {
+    for (const entry of index.fields) entry.fieldDefKey = fieldIds.get(entry.fieldDefKey) ?? entry.fieldDefKey;
+  }
+  const kept = new Set(variant.fields.map((field) => field.id));
+  variant.id = replaced.id;
+  variant.correlations = replaced.correlations.filter((relation) => kept.has(relation.myField));
 }
 
 /** 六个服务库的物理模型，按 FINANCE_SERVICES 顺序；每库表数必须等于 design/03 §4.2。 */
@@ -603,8 +641,9 @@ export function generateFinanceServiceModels(model = generateFinanceModel()) {
   const models = new Map();
   for (const service of FINANCE_SERVICES) {
     const tableKeys = tablesByService.get(service);
-    invariant(tableKeys.length === EXPECTED_SERVICE_TABLE_COUNTS[service],
-      `${service} 表数 ${tableKeys.length} 与 design/03 §4.2 的 ${EXPECTED_SERVICE_TABLE_COUNTS[service]} 不一致`);
+    const count = tableKeys.length + (SERVICE_ADDED_TABLES[service]?.tables.length ?? 0);
+    invariant(count === EXPECTED_SERVICE_TABLE_COUNTS[service],
+      `${service} 表数 ${count} 与 design/03 §4.2 加第 11b 步服务物理表的 ${EXPECTED_SERVICE_TABLE_COUNTS[service]} 不一致`);
     models.set(service, projectServiceModel(model, service, tableKeys));
   }
   return models;

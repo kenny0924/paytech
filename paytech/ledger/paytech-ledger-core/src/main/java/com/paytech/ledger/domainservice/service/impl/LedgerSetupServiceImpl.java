@@ -3,13 +3,13 @@ package com.paytech.ledger.domainservice.service.impl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import com.paytech.ledger.core.dal.dataobject.Account;
 import com.paytech.ledger.core.dal.dataobject.BookSequence;
 import com.paytech.ledger.core.dal.dataobject.FinanceEntity;
+import com.paytech.ledger.core.dal.dataobject.LedgerAccount;
 import com.paytech.ledger.core.dal.dataobject.LedgerBook;
-import com.paytech.ledger.domainservice.repository.AccountRepository;
 import com.paytech.ledger.domainservice.repository.BookSequenceRepository;
 import com.paytech.ledger.domainservice.repository.FinanceEntityRepository;
+import com.paytech.ledger.domainservice.repository.LedgerAccountRepository;
 import com.paytech.ledger.domainservice.repository.LedgerBookRepository;
 import com.paytech.ledger.domainservice.service.LedgerSetupService;
 
@@ -19,7 +19,7 @@ import lombok.AllArgsConstructor;
 @Service
 @AllArgsConstructor
 public class LedgerSetupServiceImpl implements LedgerSetupService {
-    private final AccountRepository accountRepository;
+    private final LedgerAccountRepository ledgerAccountRepository;
     private final TransactionTemplate transactionTemplate;
     private final LedgerBookRepository ledgerBookRepository;
     private final BookSequenceRepository bookSequenceRepository;
@@ -42,7 +42,7 @@ public class LedgerSetupServiceImpl implements LedgerSetupService {
 
     /** 单行插入，账户身份唯一键保护重复。 */
     @Override
-    public void createAccount(Account account) {
-        accountRepository.insert(account);
+    public void createAccount(LedgerAccount account) {
+        ledgerAccountRepository.insert(account);
     }
 }

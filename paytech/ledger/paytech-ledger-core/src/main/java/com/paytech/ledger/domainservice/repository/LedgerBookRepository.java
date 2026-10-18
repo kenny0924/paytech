@@ -16,6 +16,9 @@ public interface LedgerBookRepository {
     /** 按主键读取账簿，不存在返回空。 */
     LedgerBook findById(long id);
 
+    /** 按主键读取账簿与其科目表代码，不存在返回空。 */
+    LedgerBookView findView(long id);
+
     /** 按主体与币种读取唯一账簿，不存在返回空。 */
     LedgerBook findByEntity(LedgerEntityType entityType, String entityId, String currency);
 

@@ -1,23 +1,22 @@
 package com.paytech.ledger.service.processor;
 
-import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 import org.springframework.stereotype.Component;
 
-import com.paytech.account.api.rule.AccountIdentityRule;
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.processor.AbstractProcessor;
-import com.paytech.ledger.core.dal.dataobject.Account;
 import com.paytech.ledger.core.dal.dataobject.ChartAccount;
+import com.paytech.ledger.core.dal.dataobject.LedgerAccount;
 import com.paytech.ledger.core.dal.dataobject.LedgerBook;
 import com.paytech.ledger.core.enums.AccountStatus;
 import com.paytech.ledger.domainservice.repository.ChartAccountRepository;
 import com.paytech.ledger.domainservice.repository.LedgerBookRepository;
 import com.paytech.ledger.domainservice.service.LedgerSetupService;
+import com.paytech.ledger.domainservice.validator.account.AccountIdentityRule;
 import com.paytech.ledger.service.processor.request.CreateAccountRequest;
 import com.paytech.ledger.service.processor.response.CreatedResourceResponse;
 
@@ -52,7 +51,7 @@ public class CreateAccountProcessor extends AbstractProcessor<CreateAccountReque
             throw new BizCheckFailException("账簿不存在: " + request.getLedgerBookId());
         }
         ChartAccount chartAccount = getPostableChartAccount(book, request.getAccountCode());
-        Account account = buildAccount(request, chartAccount);
+        LedgerAccount account = buildAccount(request, chartAccount);
         ledgerSetupService.createAccount(account);
         CreatedResourceResponse response = new CreatedResourceResponse();
         response.setId(account.getId());
@@ -68,10 +67,10 @@ public class CreateAccountProcessor extends AbstractProcessor<CreateAccountReque
         return chartAccount;
     }
 
-    /** 构建零余额账户。 */
-    Account buildAccount(CreateAccountRequest request, ChartAccount chartAccount) {
+    /** 构建账户身份；余额由分录聚合得出。 */
+    LedgerAccount buildAccount(CreateAccountRequest request, ChartAccount chartAccount) {
         Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
-        Account account = new Account();
+        LedgerAccount account = new LedgerAccount();
         account.setId(idGenerator.nextId());
         account.setLedgerBookId(request.getLedgerBookId());
         account.setChartAccountId(chartAccount.getId());
@@ -80,11 +79,6 @@ public class CreateAccountProcessor extends AbstractProcessor<CreateAccountReque
         account.setBalanceBucket(request.getBalanceBucket());
         account.setNormalSide(chartAccount.getNormalSide());
         account.setAccountStatus(AccountStatus.ACTIVE);
-        account.setDebitTotal(BigDecimal.ZERO);
-        account.setCreditTotal(BigDecimal.ZERO);
-        account.setNetBalance(BigDecimal.ZERO);
-        account.setLastJournalSequence(0L);
-        account.setBalanceVersion(0L);
         account.setCreateTime(now);
         account.setUpdateTime(now);
         return account;

@@ -9,9 +9,11 @@ import java.time.LocalDate;
 
 import org.junit.jupiter.api.Test;
 
+import com.paytech.account.api.constant.StandardAccountCodes;
 import com.paytech.account.api.enums.BalanceBucket;
 import com.paytech.account.api.enums.OwnerType;
 import com.paytech.ledger.api.ManualAdjustmentApi;
+import com.paytech.ledger.api.enums.LedgerErrorCode;
 import com.paytech.ledger.api.request.SubmitManualAdjustmentRequestBody;
 import com.paytech.ledger.core.constant.AccountingCodes;
 import com.paytech.ledger.core.dal.dataobject.ManualAdjustment;
@@ -48,6 +50,22 @@ class SubmitManualAdjustmentTest extends AbstractManualAdjustmentApiTest {
             () -> assertEquals(990001L, adjustment.getFileId()), () -> assertEquals(FILE_HASH, adjustment.getFileContentHash()),
             () -> assertEquals(Long.valueOf(SubmitManualAdjustmentRequestBuilder.MAKER_ID), adjustment.getMakerId()),
             () -> assertEquals(1, testMapper.countApprovals(id)));
+        ledgerChecker.assertBalancedJournals(ledger.getLedgerBookId(), 0);
+    }
+
+    /** 影响 Owner 余额的调整必须经 billing 登记（design/04 §4）：调整行涉及 Client 或 Local Partner 账户即以专用错误码拒绝，纯科目重分类不受影响。 */
+    @Test
+    void test_ownerAccountAdjustmentForbidden() {
+        long client = ledgerMocker.mockAccount(ledger.getLedgerBookId(), StandardAccountCodes.CLIENT_PAYABLE,
+            OwnerType.CLIENT, "1001", BalanceBucket.AVAILABLE);
+        long partner = ledgerMocker.mockAccount(ledger.getLedgerBookId(), StandardAccountCodes.PARTNER_PAYABLE,
+            OwnerType.LOCAL_PARTNER, "2001", BalanceBucket.PENDING);
+
+        post(PATH, adjustment().transfer(bankCashAccountId, client, "10").build()).assertRejectedWithCode(
+            LedgerErrorCode.OWNER_ACCOUNT_ADJUSTMENT_FORBIDDEN.getCode(), "MANUAL_ADJUSTMENT 经济事实");
+        post(PATH, adjustment().transfer(partner, liabilityAccountId, "10").build()).assertRejectedWithCode(
+            LedgerErrorCode.OWNER_ACCOUNT_ADJUSTMENT_FORBIDDEN.getCode(), "账户 [" + partner + "]");
+        submitted(adjustment().transfer(liabilityAccountId, capitalAccountId, "10"));
         ledgerChecker.assertBalancedJournals(ledger.getLedgerBookId(), 0);
     }
 

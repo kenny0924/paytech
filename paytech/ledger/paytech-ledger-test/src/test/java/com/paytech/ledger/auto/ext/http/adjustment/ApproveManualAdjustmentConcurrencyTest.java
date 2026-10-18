@@ -48,8 +48,7 @@ class ApproveManualAdjustmentConcurrencyTest extends AbstractManualAdjustmentApi
         assertEquals(Set.of("1", "2", "3", "4"), sequences);
         ledgerChecker.assertBalancedJournals(ledger.getLedgerBookId(), PARALLELISM)
             .assertAccount(bankCashAccountId, "40", "0", "40", PARALLELISM)
-            .assertAccount(capitalAccountId, "0", "40", "40", PARALLELISM)
-            .assertProjectionMatchesJournal(bankCashAccountId).assertProjectionMatchesJournal(capitalAccountId);
+            .assertAccount(capitalAccountId, "0", "40", "40", PARALLELISM);
     }
 
     @Test

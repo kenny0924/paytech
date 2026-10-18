@@ -8,7 +8,6 @@ import java.math.BigDecimal;
 
 import org.junit.jupiter.api.Test;
 
-import com.paytech.account.api.constant.StandardAccountCodes;
 import com.paytech.account.api.enums.BalanceBucket;
 import com.paytech.account.api.enums.OwnerType;
 import com.paytech.ledger.api.LedgerBookQueryApi;
@@ -30,7 +29,7 @@ class GetJournalEntryTest extends AbstractManualAdjustmentApiTest {
 
     @Test
     void test_detailTracesManualAdjustment() {
-        var submit = submitted(adjustment().transfer(bankCashAccountId, clientAvailableAccountId, "42.1"));
+        var submit = submitted(adjustment().transfer(bankCashAccountId, liabilityAccountId, "42.1"));
         var approval = approve(submit.id("manualAdjustmentId"), CHECKER_ID, submit.text("contentHash")).assertSuccess(200);
 
         var detail = get(path(approval.text("journalEntryId"))).assertSuccess(200)
@@ -55,9 +54,9 @@ class GetJournalEntryTest extends AbstractManualAdjustmentApiTest {
             () -> assertEquals(OwnerType.CASH_ACCOUNT.getCode(), debit.getOwnerType()),
             () -> assertEquals(EntrySide.DEBIT.getCode(), debit.getEntrySide()),
             () -> assertEquals("42.10", debit.getAmount()),
-            () -> assertEquals(StandardAccountCodes.CLIENT_PAYABLE, credit.getAccountCode()),
-            () -> assertEquals("1001", credit.getOwnerId()),
-            () -> assertEquals(BalanceBucket.AVAILABLE.getCode(), credit.getBalanceBucket()),
+            () -> assertEquals(LIABILITY_CODE, credit.getAccountCode()),
+            () -> assertEquals("AE001", credit.getOwnerId()),
+            () -> assertEquals(BalanceBucket.NONE.getCode(), credit.getBalanceBucket()),
             () -> assertEquals(EntrySide.CREDIT.getCode(), credit.getEntrySide()),
             () -> assertEquals(0, new BigDecimal(debit.getAmount()).compareTo(new BigDecimal(credit.getAmount()))));
     }

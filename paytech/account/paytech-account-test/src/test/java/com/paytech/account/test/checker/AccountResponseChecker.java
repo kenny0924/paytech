@@ -42,6 +42,12 @@ public final class AccountResponseChecker extends AbstractHttpResponseChecker<Ac
         return this;
     }
 
+    /** 断言依赖不可用时失败关闭为 503。 */
+    public AccountResponseChecker assertServiceUnavailable() {
+        assertProblem(503, CommonErrorCode.SERVICE_UNAVAILABLE.getCode());
+        return this;
+    }
+
     /** 断言 400 参数错误。 */
     public AccountResponseChecker assertInvalidRequest() {
         assertProblem(400, CommonErrorCode.INVALID_REQUEST.getCode());

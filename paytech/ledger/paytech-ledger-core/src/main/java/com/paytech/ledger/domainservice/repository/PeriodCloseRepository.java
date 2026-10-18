@@ -40,6 +40,4 @@ public interface PeriodCloseRepository {
     /** 统计待执行或可重试的补偿任务。 */
     long countPendingCompensationEvents();
 
-    /** 统计账簿内余额非零的渠道与银行账户。 */
-    long countNonZeroTreasuryAccounts(List<Long> bookIds);
 }
