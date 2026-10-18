@@ -33,6 +33,13 @@ messaging:
     # 缩短缺口与失败的重投退避，使 DLQ 场景在数秒内完成；生产默认 1s。
     retry-backoff: 50ms
   consumers: {}
+  recovery:
+    # 拓扑重声明失败项的退避重试；生产默认 5s 起、上限 5m、倍数 2、连续 5 次失败记一次 ERROR。
+    # 测试缩短到毫秒级并把阈值降为 3，使冲突重试与 ERROR 阈值在数秒内可观察。
+    initial-interval: 200ms
+    max-interval: 1s
+    multiplier: 2.0
+    error-threshold: 3
 
 # 只有 SequencedPublishAutoTest 的独立上下文开启补偿组件（compensation-event 作为可选依赖出现在测试类路径上）。
 compensation:

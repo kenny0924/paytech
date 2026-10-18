@@ -22,6 +22,7 @@ import com.paytech.foundation.messaging.api.DomainEventPublisher;
 import com.paytech.foundation.messaging.core.codec.DomainEventCodec;
 import com.paytech.foundation.messaging.core.observability.MessagingMetrics;
 import com.paytech.foundation.messaging.core.topology.MessagingTopology;
+import com.paytech.foundation.messaging.core.topology.MessagingTopologyRecovery;
 
 /**
  * RabbitMQ 发布实现：交换机 {@code <sourceService>.events}，路由键 {@code aggregateId}（design/08 §2–§3）。
@@ -31,6 +32,8 @@ import com.paytech.foundation.messaging.core.topology.MessagingTopology;
  * <li>mandatory 发送并等待 Publisher Confirm；Nack 或确认超时抛出 {@link DomainEventPublishException}，由补偿 Handler 按可重试失败处理。</li>
  * <li>退回（未路由到任何队列）按 {@link UnroutablePolicy} 处理：默认 FAIL 同样抛出；ACK_AND_WARN 记 WARN 与
  * {@code messaging.published{outcome=unroutable}} 后视为成功（仅限订阅方尚未接入的过渡期）。</li>
+ * <li>Broker 以本服务交换机不存在（{@code NOT_FOUND}）拒绝时，若装配了 {@link MessagingTopologyRecovery}，先在当前线程重声明交换机与订阅方绑定，
+ * 当次发布仍按 Broker 拒绝抛出，由补偿任务重试；两种未路由策略对此相同。</li>
  *
  * @author Claude
  */
@@ -44,6 +47,7 @@ public final class RabbitDomainEventPublisher implements DomainEventPublisher {
     private final RabbitTemplate template;
     private final MessagingMetrics metrics;
     private final UnroutablePolicy unroutablePolicy;
+    private final MessagingTopologyRecovery recovery;
 
     /**
      * 创建发布器。
@@ -71,6 +75,24 @@ public final class RabbitDomainEventPublisher implements DomainEventPublisher {
      */
     public RabbitDomainEventPublisher(String producer, Duration confirmTimeout, DomainEventCodec codec,
         RabbitTemplate template, MessagingMetrics metrics, UnroutablePolicy unroutablePolicy) {
+        this(producer, confirmTimeout, codec, template, metrics, unroutablePolicy, null);
+    }
+
+    /**
+     * 创建发布器，交换机被删时触发重声明。
+     *
+     * @param producer 本服务名，必须等于信封 {@code sourceService}
+     * @param confirmTimeout Publisher Confirm 最长等待时间
+     * @param codec 信封编码
+     * @param template 已启用 mandatory 的专用模板，连接需开启 Correlated Confirm 与 Returns
+     * @param metrics 计数器
+     * @param unroutablePolicy 退回时的处理策略
+     * @param recovery 拓扑恢复组件；null 时交换机缺失只抛出、不重声明（手工装配的测试发布器）
+     */
+    public RabbitDomainEventPublisher(String producer, Duration confirmTimeout, DomainEventCodec codec,
+        RabbitTemplate template, MessagingMetrics metrics, UnroutablePolicy unroutablePolicy,
+        MessagingTopologyRecovery recovery) {
+        this.recovery = recovery;
         this.unroutablePolicy = Objects.requireNonNull(unroutablePolicy, "unroutablePolicy must not be null");
         this.producer = Objects.requireNonNull(producer, "producer must not be null");
         this.confirmTimeout = Objects.requireNonNull(confirmTimeout, "confirmTimeout must not be null");
@@ -98,22 +120,41 @@ public final class RabbitDomainEventPublisher implements DomainEventPublisher {
         }
         CorrelationData.Confirm confirm = awaitConfirm(event, correlation);
         if (!confirm.ack()) {
-            throw new DomainEventPublishException("Broker 拒绝领域事件: " + event.eventType() + ", eventId="
-                + event.eventId() + ", 原因=" + confirm.reason());
+            throw rejected(event, confirm.reason());
         }
         if (correlation.getReturned() != null) {
-            int replyCode = correlation.getReturned().getReplyCode();
-            if (unroutablePolicy == UnroutablePolicy.ACK_AND_WARN) {
-                // 过渡期策略：发布方交换机尚无订阅方，不阻塞补偿任务；日志不带 Payload。
-                log.warn("领域事件未路由到任何队列，按 ACK_AND_WARN 视为成功: eventType={}, eventId={}, replyCode={}",
-                    event.eventType(), event.eventId(), replyCode);
-                metrics.publishedUnroutable(event.eventType());
-                return;
-            }
-            throw new DomainEventPublishException("领域事件未路由到任何队列: " + event.eventType() + ", eventId="
-                + event.eventId() + ", replyCode=" + replyCode);
+            handleReturned(event, correlation.getReturned().getReplyCode());
+            return;
         }
         metrics.published(event.eventType());
+    }
+
+    private DomainEventPublishException rejected(DomainEvent event, String reason) {
+        String exchange = MessagingTopology.producerExchange(producer);
+        if (recovery == null || !isExchangeMissing(reason, exchange)) {
+            return new DomainEventPublishException("Broker 拒绝领域事件: " + event.eventType() + ", eventId="
+                + event.eventId() + ", 原因=" + reason);
+        }
+        recovery.producerExchangeMissing(producer);
+        return new DomainEventPublishException("Broker 拒绝领域事件，发布方交换机缺失，已重声明，由补偿任务重试: "
+            + event.eventType() + ", eventId=" + event.eventId() + ", exchange=" + exchange + ", 原因=" + reason);
+    }
+
+    private void handleReturned(DomainEvent event, int replyCode) {
+        if (unroutablePolicy == UnroutablePolicy.ACK_AND_WARN) {
+            // 过渡期策略：发布方交换机尚无订阅方，不阻塞补偿任务；日志不带 Payload。
+            log.warn("领域事件未路由到任何队列，按 ACK_AND_WARN 视为成功: eventType={}, eventId={}, replyCode={}",
+                event.eventType(), event.eventId(), replyCode);
+            metrics.publishedUnroutable(event.eventType());
+            return;
+        }
+        throw new DomainEventPublishException("领域事件未路由到任何队列: " + event.eventType() + ", eventId="
+            + event.eventId() + ", replyCode=" + replyCode);
+    }
+
+    /** Nack 原因来自通道关闭信号，形如 {@code reply-text=NOT_FOUND - no exchange '<name>' in vhost ...}。 */
+    private static boolean isExchangeMissing(String reason, String exchange) {
+        return reason != null && reason.contains("NOT_FOUND") && reason.contains("no exchange '" + exchange + "'");
     }
 
     private static Message message(DomainEvent event, byte[] body) {

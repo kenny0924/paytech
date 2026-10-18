@@ -120,6 +120,15 @@ public final class BrokerTestSupport implements Clear, DisposableBean {
         admin.deleteQueue(queue);
     }
 
+    /**
+     * 删除一个交换机（模拟运维误删或策略清理），连接保持不变。
+     *
+     * @param exchange 交换机名
+     */
+    public void deleteExchange(String exchange) {
+        admin.deleteExchange(exchange);
+    }
+
     /** 每例清空分区队列与 DLQ。 */
     @Override
     public void clear() {
