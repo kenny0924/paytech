@@ -45,7 +45,7 @@
 | `456656ae` | `verify-java-foundation.mjs` BOM 治理按主 jar 坐标核对 |
 | `c46b460d` | test-environment：Compose、构建、部署、初始化脚本与测试 |
 | `e7abf824` | 第一轮报告 |
-| （第二轮） | merge refactor-main、CURRENT_IMPLEMENTATION 新节、报告第 5 节 |
+| `343d5177`、`5252e946` | 第二轮：merge refactor-main（无冲突）；CURRENT_IMPLEMENTATION 新节、报告第 5 节 |
 
 ## 3. 第 3 节验证
 
