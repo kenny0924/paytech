@@ -21,7 +21,7 @@ import com.paytech.foundation.messaging.test.support.ManagedEntryHandler;
 import com.paytech.foundation.messaging.test.support.MeterRegistryCleaner;
 import com.paytech.foundation.messaging.test.support.StrictFactHandler;
 import com.paytech.foundation.messaging.test.support.TestRun;
-import com.paytech.foundation.messaging.test.support.TopologyErrorLogProbe;
+import com.paytech.foundation.messaging.test.support.TopologyLogProbe;
 import com.paytech.foundation.messaging.testkit.PartitionQueueBaselineConfiguration;
 
 import io.micrometer.core.instrument.MeterRegistry;
@@ -35,7 +35,7 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 @EnableAutoConfiguration
 @MapperScan(basePackageClasses = TestMapper.class)
 @Import({HandledEventProbe.class, StrictFactHandler.class, LooseNoteHandler.class, ManagedEntryHandler.class, BrokerTestSupport.class,
-    BrokerTopologyProbe.class, TopologyErrorLogProbe.class, DatabaseCleaner.class, MeterRegistryCleaner.class,
+    BrokerTopologyProbe.class, TopologyLogProbe.class, DatabaseCleaner.class, MeterRegistryCleaner.class,
     PartitionQueueBaselineConfiguration.class})
 public class TestApplication {
 

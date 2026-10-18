@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.apache.ibatis.builder.xml.XMLMapperBuilder;
 import org.apache.ibatis.io.Resources;
@@ -21,6 +22,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -41,6 +43,7 @@ import com.paytech.foundation.messaging.core.observability.MessagingMetrics;
 import com.paytech.foundation.messaging.core.topology.MessagingTopology;
 import com.paytech.foundation.messaging.core.topology.MessagingTopologyDeclarer;
 import com.paytech.foundation.messaging.core.topology.MessagingTopologyRecovery;
+import com.paytech.foundation.messaging.core.topology.TopologyRetryPolicy;
 import com.paytech.foundation.messaging.persistence.mapper.ConsumedEventMapper;
 import com.paytech.foundation.messaging.persistence.repository.MyBatisConsumedEventRepository;
 import com.paytech.foundation.messaging.publish.RabbitDomainEventPublisher;
@@ -54,7 +57,8 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
  * {@code spring.rabbitmq.publisher-confirm-type=correlated} 与 {@code spring.rabbitmq.publisher-returns=true}。</li>
  * <li>消费端：{@code messaging.consumer.service} 设置时按 Handler 声明分区拓扑、创建监听容器，消费存储使用宿主
  * MyBatis DataSource 与事务管理器。</li>
- * <li>连接恢复：启动声明成功的发布与订阅拓扑登记到 {@link MessagingTopologyRecovery}，每次新建 Broker 连接时按原参数重声明。</li>
+ * <li>拓扑恢复：启动声明成功的发布与订阅拓扑登记到 {@link MessagingTopologyRecovery}；每次新建 Broker 连接、分区队列被删或发布方交换机被删时
+ * 按原参数重声明，失败项按 {@code messaging.recovery.*} 退避重试。</li>
  *
  * @author Claude
  */
@@ -120,18 +124,22 @@ public class MessagingAutoConfiguration {
     }
 
     /**
-     * 连接恢复时的拓扑重声明，注册为宿主连接的 ConnectionListener。
+     * 拓扑重声明与失败项重试，注册为宿主连接的 ConnectionListener；应用关闭时停止重试线程。
      *
+     * @param properties 配置
      * @param connectionFactory 宿主连接
      * @param declarer 拓扑声明器
-     * @return 恢复监听器
+     * @return 恢复组件
      */
     @Bean
     @ConditionalOnBean(ConnectionFactory.class)
     @ConditionalOnMissingBean
-    public MessagingTopologyRecovery messagingTopologyRecovery(ConnectionFactory connectionFactory,
-        MessagingTopologyDeclarer declarer) {
-        MessagingTopologyRecovery recovery = new MessagingTopologyRecovery(declarer);
+    public MessagingTopologyRecovery messagingTopologyRecovery(MessagingProperties properties,
+        ConnectionFactory connectionFactory, MessagingTopologyDeclarer declarer) {
+        MessagingProperties.Recovery retry = properties.getRecovery();
+        TopologyRetryPolicy policy = new TopologyRetryPolicy(retry.getInitialInterval(), retry.getMaxInterval(),
+            retry.getMultiplier(), retry.getErrorThreshold());
+        MessagingTopologyRecovery recovery = new MessagingTopologyRecovery(declarer, policy);
         connectionFactory.addConnectionListener(recovery);
         return recovery;
     }
@@ -142,7 +150,8 @@ public class MessagingAutoConfiguration {
      * @param properties 配置
      * @param connectionFactory 宿主连接
      * @param declarer 拓扑声明器
-     * @param recovery 连接恢复重声明
+     * @param recovery 拓扑恢复
+     * @param catalog 事件目录，用于登记订阅方以便交换机被删后补回绑定
      * @param codec 信封编码
      * @param metrics 计数器
      * @return 发布端口实现
@@ -153,7 +162,7 @@ public class MessagingAutoConfiguration {
     @ConditionalOnMissingBean(DomainEventPublisher.class)
     public RabbitDomainEventPublisher domainEventPublisher(MessagingProperties properties,
         ConnectionFactory connectionFactory, MessagingTopologyDeclarer declarer, MessagingTopologyRecovery recovery,
-        DomainEventCodec codec, MessagingMetrics metrics) {
+        EventCatalog catalog, DomainEventCodec codec, MessagingMetrics metrics) {
         String producer = requireService("messaging.producer.service", properties.getProducer().getService());
         if (!connectionFactory.isPublisherConfirms() || !connectionFactory.isPublisherReturns()) {
             throw new IllegalStateException("messaging 发布端要求 spring.rabbitmq.publisher-confirm-type=correlated 且 "
@@ -161,11 +170,11 @@ public class MessagingAutoConfiguration {
         }
         requirePositive("messaging.producer.confirm-timeout", properties.getProducer().getConfirmTimeout());
         declarer.declareProducer(producer);
-        recovery.registerProducer(producer);
+        recovery.registerProducer(producer, subscribers(catalog, producer));
         RabbitTemplate template = new RabbitTemplate(connectionFactory);
         template.setMandatory(true);
         return new RabbitDomainEventPublisher(producer, properties.getProducer().getConfirmTimeout(), codec, template,
-            metrics, properties.getPublisher().getUnroutablePolicy());
+            metrics, properties.getPublisher().getUnroutablePolicy(), recovery);
     }
 
     /**
@@ -239,7 +248,7 @@ public class MessagingAutoConfiguration {
      * @param properties 配置
      * @param connectionFactory 宿主连接
      * @param declarer 拓扑声明器
-     * @param recovery 连接恢复重声明
+     * @param recovery 拓扑恢复
      * @param registry Handler 注册表
      * @param interceptor 幂等拦截器
      * @param codec 信封编码
@@ -264,12 +273,18 @@ public class MessagingAutoConfiguration {
             recovery.registerSubscription(consumer, producer, partitions);
             DomainEventMessageListener listener = new DomainEventMessageListener(producer,
                 properties.getConsumer().getRetryBackoff(), codec, metrics, registry, interceptor);
+            ApplicationEventPublisher events = recovery.subscriptionWatcher(consumer, producer);
             for (int partition = 0; partition < partitions; partition++) {
                 containers.add(factory.create(MessagingTopology.partitionQueue(consumer, producer, partition),
-                    listener));
+                    listener, events));
             }
         }
         return new PartitionedListenerContainers(containers);
+    }
+
+    private static List<String> subscribers(EventCatalog catalog, String producer) {
+        return catalog.entries().stream().filter(entry -> Objects.equals(producer, entry.producer()))
+            .flatMap(entry -> entry.consumers().stream()).distinct().toList();
     }
 
     private static void requireKnownSubscriptions(Map<String, MessagingProperties.Subscription> subscriptions,

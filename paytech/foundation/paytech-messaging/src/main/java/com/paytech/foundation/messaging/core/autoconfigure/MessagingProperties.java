@@ -29,6 +29,9 @@ public class MessagingProperties {
     /** 消费端配置。 */
     private final Consumer consumer = new Consumer();
 
+    /** 拓扑重声明失败项的重试配置。 */
+    private final Recovery recovery = new Recovery();
+
     /**
      * 按发布服务名覆盖的订阅参数。
      * <li>键为发布服务名，必须是本服务 Handler 实际订阅的发布方；未列出的发布方使用默认值。</li>
@@ -57,6 +60,10 @@ public class MessagingProperties {
 
     public Map<String, Subscription> getConsumers() {
         return consumers;
+    }
+
+    public Recovery getRecovery() {
+        return recovery;
     }
 
     /** 发布端配置。 */
@@ -211,6 +218,66 @@ public class MessagingProperties {
 
         public void setPartitions(int partitions) {
             this.partitions = partitions;
+        }
+    }
+
+    /** 拓扑重声明失败项的重试（连接恢复、队列或交换机被删后的重声明中失败的项，例如同名队列参数冲突）。 */
+    public static class Recovery {
+
+        /**
+         * 首次重试前的等待。
+         * <li>默认 5 秒；之后每次连续失败按 multiplier 放大，直到 max-interval。</li>
+         */
+        private Duration initialInterval = Duration.ofSeconds(5);
+
+        /**
+         * 重试间隔上限。
+         * <li>默认 5 分钟，不能小于 initial-interval；重试不限次数，直到成功或应用停止。</li>
+         */
+        private Duration maxInterval = Duration.ofMinutes(5);
+
+        /**
+         * 每次连续失败后的间隔倍数。
+         * <li>默认 2.0，须不小于 1；1 表示固定间隔。</li>
+         */
+        private double multiplier = 2.0;
+
+        /**
+         * 连续失败达到该次数时记一次 ERROR。
+         * <li>默认 5；每次失败另记 WARN。同一单元在补齐前不重复记 ERROR，补齐后重新计数。</li>
+         */
+        private int errorThreshold = 5;
+
+        public Duration getInitialInterval() {
+            return initialInterval;
+        }
+
+        public void setInitialInterval(Duration initialInterval) {
+            this.initialInterval = initialInterval;
+        }
+
+        public Duration getMaxInterval() {
+            return maxInterval;
+        }
+
+        public void setMaxInterval(Duration maxInterval) {
+            this.maxInterval = maxInterval;
+        }
+
+        public double getMultiplier() {
+            return multiplier;
+        }
+
+        public void setMultiplier(double multiplier) {
+            this.multiplier = multiplier;
+        }
+
+        public int getErrorThreshold() {
+            return errorThreshold;
+        }
+
+        public void setErrorThreshold(int errorThreshold) {
+            this.errorThreshold = errorThreshold;
         }
     }
 }

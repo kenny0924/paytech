@@ -2,6 +2,7 @@ package com.paytech.foundation.messaging.test.support;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -21,6 +22,7 @@ public final class HandledEventProbe implements Clear {
     private final AtomicInteger maxInFlight = new AtomicInteger();
     private final List<String> invocations = new CopyOnWriteArrayList<>();
     private final Set<String> threads = ConcurrentHashMap.newKeySet();
+    private final Map<String, String> threadByInvocation = new ConcurrentHashMap<>();
     private final Set<String> failingAggregates = ConcurrentHashMap.newKeySet();
     private final Set<String> rejectingAggregates = ConcurrentHashMap.newKeySet();
     private final List<Boolean> transactionActive = new CopyOnWriteArrayList<>();
@@ -36,6 +38,7 @@ public final class HandledEventProbe implements Clear {
         int current = inFlight.incrementAndGet();
         maxInFlight.accumulateAndGet(current, Math::max);
         threads.add(Thread.currentThread().getName());
+        threadByInvocation.put(aggregateId + "@" + version, Thread.currentThread().getName());
         invocations.add(aggregateId + "@" + version);
     }
 
@@ -154,10 +157,22 @@ public final class HandledEventProbe implements Clear {
         return threads.size();
     }
 
+    /**
+     * 处理某次调用的线程名；分区容器线程名以分区队列名加 {@code -} 开头，可据此判断事件经哪个分区消费。
+     *
+     * @param aggregateId 聚合
+     * @param version 版本
+     * @return 线程名；未处理为 null
+     */
+    public String thread(String aggregateId, long version) {
+        return threadByInvocation.get(aggregateId + "@" + version);
+    }
+
     @Override
     public void clear() {
         invocations.clear();
         threads.clear();
+        threadByInvocation.clear();
         failingAggregates.clear();
         rejectingAggregates.clear();
         transactionActive.clear();
