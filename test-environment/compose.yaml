@@ -81,6 +81,8 @@ services:
     profiles: [base]
     image: rabbitmq:4.2.9-management@sha256:59935db6392a27b5192f1be080df9b4194bc22f104a7a1bf3b31479a8e0d1031
     restart: "no"
+    # 固定节点名 rabbit@rabbitmq：RabbitMQ 的持久队列与节点名绑定，不固定则每次重建容器都会换节点，卷里的旧队列不可见（2026-10-18 mor-test V2 切换时发生过）。
+    hostname: rabbitmq
     environment:
       RABBITMQ_DEFAULT_USER: ${MOR_RABBITMQ_USER:?set MOR_RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${MOR_RABBITMQ_PASSWORD:?set MOR_RABBITMQ_PASSWORD}

@@ -191,10 +191,11 @@ def check_delivery(receiver, secret, event_id, event_type, client_id):
            and event_id.startswith("evt_") and set(envelope) == {"eventId", "eventType", "schemaVersion", "createdAt", "data"},
            f"eventId={envelope.get('eventId')} type={envelope.get('eventType')} keys={sorted(envelope)} createdAt={envelope.get('createdAt')}")
     # Foundation 成功后删除任务行：行消失即 SUCCEEDED；ERROR/FAILED 会保留。
-    left = wait_for(lambda: tasks(event_id) == [] and "gone", 15)
+    # 投递成功后任务行在下一次补偿扫描提交后才删除；mor-test 实测 15 秒会偶发超时（2026-10-18 90/92），放宽到 30 秒。
+    left = wait_for(lambda: tasks(event_id) == [] and "gone", 30)
     record(f"{event_type} acquiring 任务成功完成（行已删除，无 ERROR/FAILED）", left == "gone", f"remaining={tasks(event_id)}")
     events, deliveries = wait_for(lambda: (lambda e: e if e[1] and all(d[1] == "SUCCEEDED" for d in e[1]) else None)(
-        platform_rows(event_id)), 15) or platform_rows(event_id)
+        platform_rows(event_id)), 30) or platform_rows(event_id)
     record(f"{event_type} Platform 事件唯一（来源 {CALLER}）、投递 SUCCEEDED", len(events) == 1 and events[0][2] == CALLER
            and len(deliveries) == 1 and deliveries[0][1] == "SUCCEEDED", f"events={events} deliveries={deliveries}")
     accepted = json.loads(platform_sql(f"SELECT payload FROM t_webhook_event WHERE source_event_key='{event_id}'")[0][0])
