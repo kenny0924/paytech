@@ -19,10 +19,10 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot</artifactId>
         </dependency>
-        <!-- 卡域第 12 步前仍是 payment 进程内模块（design/05）；只有 core 与 app 可以依赖。 -->
+        <!-- 卡工具创建与一次性读卡票据经 card-service HTTP 合同（design/05 §2.1、§2.2）。 -->
         <dependency>
             <groupId>com.paytech</groupId>
-            <artifactId>paytech-payment-card</artifactId>
+            <artifactId>paytech-card-api</artifactId>
         </dependency>
         <!-- 渠道候选与渠道操作经 channel-connector HTTP 合同（D06）。 -->
         <dependency>
@@ -90,18 +90,6 @@
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-enforcer-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>enforce-payment-card-consumers</id>
-                        <configuration>
-                            <skip>true</skip>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>

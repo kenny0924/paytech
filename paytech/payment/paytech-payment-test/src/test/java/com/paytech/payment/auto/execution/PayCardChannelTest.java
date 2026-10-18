@@ -8,13 +8,14 @@ import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.MediaType;
-import org.springframework.web.client.RestClientResponseException;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.paytech.channel.connector.api.enums.ChannelOperation;
 import com.paytech.channel.connector.api.enums.ExecutionPurpose;
 import com.paytech.payment.api.execution.PaymentIntentApi;
+import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.payment.execution.core.action.ActionType;
+import com.paytech.payment.execution.core.action.PayActionActor;
 import com.paytech.payment.execution.core.enums.ActionStatus;
 import com.paytech.payment.execution.core.enums.AttemptStatus;
 import com.paytech.payment.execution.core.enums.AuthenticationRequirement;
@@ -22,22 +23,27 @@ import com.paytech.payment.execution.core.enums.InteractionType;
 import com.paytech.payment.execution.core.enums.IntentStatus;
 import com.paytech.payment.execution.core.enums.RiskResult;
 import com.paytech.payment.test.base.AbstractPayCardTest;
+import com.paytech.payment.test.mocker.CardApiMocker;
 import com.paytech.payment.test.mocker.ChannelConnectorMocker;
 import com.paytech.payment.test.mocker.ChannelConnectorMocker.Candidate;
+import com.paytech.payment.test.mocker.PlatformMocker;
 
 /**
  * 卡直付执行链路（PayerMax 卡直付对接技术方案第 5 节）：从 pay 的真实 HTTP 入口经路由、受理事务、风控动作与 PAY 动作，
- * 以真实客户端调用 Risk 与 channel-connector 的测试 HTTP 服务（D06：channel-connector 返回已映射结论）。渠道操作含支付工具 Token 时，
- * 测试服务像真实 Platform 一样回调 Payment 读卡接口取得卡数据。
+ * 以真实客户端调用 Risk、card 与 channel-connector 的测试 HTTP 服务（D06：channel-connector 返回已映射结论）。发起渠道调用前 Payment
+ * 向 card 申请一次性读卡票据（design/05 §2.1），渠道输入只带票据；测试服务像真实 Platform 一样凭票据向 card 读卡取得卡数据。
  *
  * <p>
  * 覆盖：成功、3DS 待认证（临时交互指令不落库）、发卡行拒绝、结果未知、保证未发出请求、原提交重放不再执行，
- * 以及读卡接口的调用方与执行状态约束。卡号为公开测试卡号，属合成数据。风控各结论与故障见 {@link PayRiskEvaluationTest}。
+ * 以及票据只能使用一次、card 拒签（CVV 已领取）时动作以 NOT_SENT 语义失败且不调用渠道。卡号为公开测试卡号，属合成数据。风控各结论与故障见 {@link PayRiskEvaluationTest}。
  *
  * @see PaymentIntentApi#pay(String, String, com.paytech.payment.api.execution.request.PayRequestBody)
  */
 class PayCardChannelTest extends AbstractPayCardTest {
     private static final String REDIRECT_URL = "https://3ds.local.invalid/challenge?token=transient-3ds";
+
+    @Autowired
+    private PlatformMocker platform;
 
     private Candidate candidate;
 
@@ -48,7 +54,7 @@ class PayCardChannelTest extends AbstractPayCardTest {
         risk.respond(RiskResult.ALLOW, AuthenticationRequirement.NOT_REQUIRED);
     }
 
-    /** 成功：channel-connector 收到冻结三元组、OE 与支付工具 Token（无卡值、无账号材料），读卡取得卡号与一次性 CVV；Attempt、Intent 成功并保存渠道交易引用。 */
+    /** 成功：channel-connector 收到冻结三元组、OE 与读卡票据（无卡值、无账号材料、不是支付工具 Token），凭票据读卡取得卡号与一次性 CVV；Attempt、Intent 成功并保存渠道交易引用。 */
     @Test
     void test_paySucceeded() {
         channel.succeeded("T-PMX-1");
@@ -71,7 +77,14 @@ class PayCardChannelTest extends AbstractPayCardTest {
             () -> assertEquals(0, new BigDecimal(AMOUNT).compareTo(new BigDecimal(request.getAmount()))),
             () -> assertEquals(CURRENCY, request.getCriteria().getCurrency()),
             () -> assertFalse(input.has("channelAccount"), "Payment 不得发送账号材料"),
-            () -> assertEquals(paid.token, input.path("card").path("token").asString()),
+            () -> assertEquals(cardApi.tickets(), List.of(input.path("card").path("token").asString()), "卡字段句柄为票据"),
+            () -> assertNotEquals(paid.token, input.path("card").path("token").asString(), "不再传支付工具 Token"),
+            () -> assertEquals(List.of(String.valueOf(attemptId(response))),
+                cardApi.ticketRequests().stream().map(ticket -> ticket.getPaymentAttemptId()).toList()),
+            () -> assertEquals(String.valueOf(mapper.actions(attemptId(response)).get(1).get("actionId")),
+                cardApi.ticketRequests().getFirst().getPaymentActionId(), "票据绑定当前 PAY 动作"),
+            () -> assertEquals(mapper.instrumentTokens().getFirst().get("instrumentRef"),
+                cardApi.ticketRequests().getFirst().getInstrumentRef()),
             () -> assertEquals("10.00", input.path("payment").path("amount").path("value").asString()),
             () -> assertEquals(COUNTRY_CODE, input.path("payment").path("country").asString()),
             () -> assertEquals(RETURN_URL, input.path("payment").path("returnUrl").asString()),
@@ -168,26 +181,30 @@ class PayCardChannelTest extends AbstractPayCardTest {
             () -> assertEquals(1, channel.calls().size()), () -> assertEquals(1, risk.attempts().size()));
     }
 
-    /** 读卡接口：非 Platform 调用方 404；支付尝试不在执行资金动作（已成功）时 400，不返回卡数据。 */
+    /** 读卡票据只能使用一次：Platform 已凭票据读卡后，再次使用同一票据被 card 拒绝且不返回卡数据。 */
     @Test
     void test_revealRules() {
         channel.succeeded("T-PMX-V");
-        var paid = newPayment();
-        long attemptId = attemptId(paid.pay());
+        newPayment().pay();
 
-        assertAll(() -> assertEquals(404, reveal("commerce-service", paid.token, attemptId)),
-            () -> assertEquals(400, reveal("platform-support-service", paid.token, attemptId)));
+        String ticket = cardApi.tickets().getFirst();
+        assertAll(() -> assertEquals("1111/true", channel.only().revealed()),
+            () -> assertArrayEquals(new String[] {"REJECTED 400", null}, platform.reveal(ticket), "票据二次使用"),
+            () -> assertEquals(List.of(ticket, ticket), cardApi.reveals()));
     }
 
-    /** 以给定调用方直接调用读卡接口，返回 HTTP 状态。 */
-    int reveal(String caller, String token, long attemptId) {
-        try {
-            return client().post().uri("/payment-card/v1/channel-card-materials/reveal").header("X-Caller-Service", caller)
-                .contentType(MediaType.APPLICATION_JSON).body(Map.of("paymentInstrumentToken", token, "paymentAttemptId",
-                    String.valueOf(attemptId), "purpose", "CHANNEL_EXECUTION"))
-                .retrieve().toBodilessEntity().getStatusCode().value();
-        } catch (RestClientResponseException failure) {
-            return failure.getStatusCode().value();
-        }
+    /** card 拒绝签发票据（CVV 已领取或工具已过期）：PAY 动作以 CARD_MATERIAL_UNAVAILABLE 明确失败，渠道没有收到请求。 */
+    @Test
+    void test_ticketRefusedNotSent() {
+        cardApi.rejectTickets(CardApiMocker.fault(400, CommonErrorCode.BUSINESS_CHECK_FAILED));
+        var paid = newPayment();
+
+        var response = paid.pay();
+
+        long attemptId = attemptId(response);
+        assertAll(() -> assertEquals(AttemptStatus.FAILED.getCode(), response.getBody().get("status")),
+            () -> assertEquals(PayActionActor.CARD_MATERIAL_UNAVAILABLE, mapper.actions(attemptId).get(1).get("code")),
+            () -> assertTrue(channel.calls().isEmpty(), "未取得票据时不得调用渠道"),
+            () -> assertEquals(1, cardApi.ticketRequests().size()));
     }
 }

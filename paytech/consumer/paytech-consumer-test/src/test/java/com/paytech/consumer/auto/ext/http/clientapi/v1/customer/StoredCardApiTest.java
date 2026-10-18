@@ -15,7 +15,7 @@ import com.paytech.consumer.test.mocker.external.StoredCardMocker.Call;
 import com.paytech.foundation.httpproblem.api.ApiProblemProfile;
 import com.paytech.foundation.httpproblem.api.ApiProblemResponse;
 import com.paytech.foundation.testsupport.api.MockHttpFault;
-import com.paytech.payment.api.card.response.StoredCardListResponseBody;
+import com.paytech.card.api.storedcard.response.StoredCardListResponseBody;
 
 /**
  * Client 已存卡接口（需求 20261015 commerce-Customer与存卡支付，AC-04、AC-11、AC-14）：经真实 Client API 入口与 Payment 测试 HTTP 服务。

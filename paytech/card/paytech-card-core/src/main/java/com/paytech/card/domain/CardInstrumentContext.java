@@ -5,21 +5,15 @@ import java.time.Instant;
 import lombok.Getter;
 import lombok.Setter;
 
-/** Card 工具处理上下文，不进入 Execution 持久化层 */
+/** Card 工具创建上下文：只在本次创建命令内存中传递，卡输入不持久化、不记录日志 */
 @Getter
 @Setter
 public class CardInstrumentContext {
     /** Client ID */
     private Long clientId;
 
-    /** 支付意图 ID */
-    private Long intentId;
-
-    /** 来源提交 ID */
+    /** 来源提交 ID：与 Client 组成两段创建的幂等键 */
     private Long sourceSubmissionId;
-
-    /** 精确支付方式代码 */
-    private String paymentMethodCode;
 
     /** 本次卡输入；用已存卡时只含 CVV */
     private CardInput card;
@@ -33,24 +27,20 @@ public class CardInstrumentContext {
     /** 消费者是否同意支付成功后保存卡；只用于手输卡且必须有 Customer */
     private boolean saveCard;
 
-    /** Card 稳定记录引用，申请成功后填写，重放时传原值 */
+    /** Card 稳定记录引用，准备后填写；重放时为原工具引用 */
     private String instrumentRef;
 
     /** 工具期限上限，Card 可以缩短，不能延长 */
     private Instant expiresAt;
 
-    /** 新申请在事务外准备的卡交易工具，由 Card 在调用方事务内保存；原提交为空 */
+    /** 新申请在事务外准备的卡交易工具，随后由 Card 保存；原提交为空 */
     private PreparedInstrument preparedInstrument;
 
-    /** 构造本次卡工具处理上下文；准备结果由 Card 填写 */
-    public CardInstrumentContext(Long clientId, Long intentId, Long sourceSubmissionId, String paymentMethodCode,
-        CardInput card, String instrumentRef, Instant expiresAt) {
+    /** 构造新申请的上下文；准备结果由 Card 填写 */
+    public CardInstrumentContext(Long clientId, Long sourceSubmissionId, CardInput card, Instant expiresAt) {
         this.clientId = clientId;
-        this.intentId = intentId;
         this.sourceSubmissionId = sourceSubmissionId;
-        this.paymentMethodCode = paymentMethodCode;
         this.card = card;
-        this.instrumentRef = instrumentRef;
         this.expiresAt = expiresAt;
     }
 

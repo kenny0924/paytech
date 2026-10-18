@@ -17,7 +17,6 @@ import com.paytech.card.core.dal.dataobject.PaymentStoredCard;
 import com.paytech.card.core.enums.StoredCardStatus;
 import com.paytech.card.domain.CardInstrumentContext;
 import com.paytech.card.domain.CardInstrumentRecord;
-import com.paytech.card.domain.CardRiskAttributes;
 import com.paytech.card.domain.PreparedInstrument;
 import com.paytech.card.domainservice.repository.PaymentCardCredentialRepository;
 import com.paytech.card.domainservice.repository.PaymentCardInstrumentRepository;
@@ -27,7 +26,7 @@ import com.paytech.card.service.CardStorageService;
 
 import lombok.AllArgsConstructor;
 
-/** Card 本地能力：卡交易工具保存、风控属性读取与支付成功后的凭证验证和存卡 */
+/** Card 本地能力：卡交易工具保存与支付成功后的凭证验证和存卡 */
 @Service
 @AllArgsConstructor
 public class CardServiceImpl implements CardService {
@@ -56,23 +55,14 @@ public class CardServiceImpl implements CardService {
         instrument.setPaymentCardInstrumentId(prepared.getPaymentCardInstrumentId());
         instrument.setPaymentCardCredentialId(prepared.getPaymentCardCredentialId());
         instrument.setClientId(context.getClientId());
+        instrument.setSourceSubmissionId(context.getSourceSubmissionId());
         instrument.setCustomerId(context.getCustomerId());
         instrument.setSaveRequested(context.isSaveCard());
         instrument.setPaymentStoredCardId(prepared.getPaymentStoredCardId());
+        instrument.setExpiresAt(context.getExpiresAt().truncatedTo(ChronoUnit.MICROS));
         instrument.setCreateTime(now);
         instrument.setUpdateTime(now);
         paymentCardInstrumentRepository.insertInstrument(instrument);
-    }
-
-    /** 只读卡的 BIN 与指纹。 */
-    @Override
-    public CardRiskAttributes riskAttributes(String instrumentRef) {
-        CardInstrumentRecord record = cardStorageService.findInstrument(instrumentRef);
-        if (record == null) {
-            return null;
-        }
-        PaymentCard card = record.card();
-        return new CardRiskAttributes(card.getCardBin(), card.getCardFingerprint());
     }
 
     /** 标记凭证已验证；同意保存且有 Customer 时存卡。 */

@@ -36,12 +36,12 @@ import lombok.AllArgsConstructor;
  *
  * <p>
  * 校验卡号与有效期 → 按卡号查卡，已有则从 Vault 取回 DEK，没有则生成 DEK、交 Vault 托管、加密卡号并保存 → 按（卡、凭证摘要）查凭证，没有则加密有效期与持卡人原值并保存 → 分配交易工具 ID，用 DEK 加密 CVV 存
- * Redis。卡与凭证在此单条插入、自动提交，主事务失败时保留供复用；交易工具由调用方在本地事务内交 {@code CardService.applyInstrument} 保存。并发首用同一卡号时输的一方改用已有卡，本次托管的 DEK
+ * Redis。卡与凭证在此单条插入、自动提交，主事务失败时保留供复用；交易工具随后由 {@link CreateCardInstrumentProcessor} 交 {@code CardService.applyInstrument} 单条保存。并发首用同一卡号时输的一方改用已有卡，本次托管的 DEK
  * 成为无引用残留。任一步失败即申请失败。DEK 明文用完清零。
  *
  * <p>
  * 用已存卡（Customer 与存卡支付技术方案 §2.4）：按 Token 取已存卡，核对 Client、Customer 与状态，用其当前已验证凭证的有效期限制工具期限；取回 DEK 加密本次 CVV，不新建卡与凭证。
- * 同意保存只对手输卡生效，且必须有 Customer；交易工具记下 Customer、是否保存与已存卡，供支付成功时由 {@code CardService} 在成功事务内存卡。
+ * 同意保存只对手输卡生效，且必须有 Customer；交易工具记下 Customer、是否保存与已存卡，供 Card 消费 PaymentSucceeded 时存卡。
  */
 @Component
 @AllArgsConstructor

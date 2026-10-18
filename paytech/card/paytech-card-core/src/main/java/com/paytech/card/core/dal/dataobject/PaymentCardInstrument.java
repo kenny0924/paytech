@@ -18,6 +18,9 @@ public class PaymentCardInstrument {
     /** Client 标识。 */
     private Long clientId;
 
+    /** 申请本工具的 Commerce 来源提交标识；与 Client 组成幂等键。 */
+    private Long sourceSubmissionId;
+
     /** 关联的 Commerce Customer 标识；访客支付为空。 */
     private Long customerId;
 
@@ -26,6 +29,9 @@ public class PaymentCardInstrument {
 
     /** 用已存卡支付时指向的已存卡；手输卡为空。 */
     private Long paymentStoredCardId;
+
+    /** 首次用卡资格截止时间，等于 CVV 暂存期限。 */
+    private Instant expiresAt;
 
     /** 创建时间。 */
     private Instant createTime;

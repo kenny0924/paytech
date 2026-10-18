@@ -11,6 +11,10 @@
         <result column="instrument_type" property="instrumentType" javaType="com.paytech.payment.execution.core.enums.InstrumentType"
                 typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
         <result column="instrument_ref" property="instrumentRef"/>
+        <result column="customer_id" property="customerId"/>
+        <result column="consent_to_save" property="consentToSave"/>
+        <result column="card_bin" property="cardBin"/>
+        <result column="card_fingerprint" property="cardFingerprint"/>
         <result column="expires_at" property="expiresAt" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
         <result column="revoked_at" property="revokedAt" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
         <result column="create_time" property="createTime" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
@@ -19,7 +23,8 @@
 
     <sql id="PaymentInstrumentTokenColumns">
         payment_instrument_token_id, payment_instrument_token, client_id, payment_intent_id, source_submission_id,
-        payment_method_code, instrument_type, instrument_ref, expires_at, revoked_at, create_time, update_time
+        payment_method_code, instrument_type, instrument_ref, customer_id, consent_to_save, card_bin, card_fingerprint,
+        expires_at, revoked_at, create_time, update_time
     </sql>
 
     <select id="findTokenBySubmission" resultMap="row">
@@ -33,6 +38,7 @@
         INSERT INTO t_payment_instrument_token (<include refid="PaymentInstrumentTokenColumns"/>)
         SELECT #{paymentInstrumentTokenId}, #{paymentInstrumentToken}, #{clientId}, #{paymentIntentId},
             #{sourceSubmissionId}, #{paymentMethodCode}, #{instrumentType,javaType=com.paytech.payment.execution.core.enums.InstrumentType,typeHandler=com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler,jdbcType=VARCHAR}, #{instrumentRef},
+            #{customerId}, #{consentToSave}, #{cardBin}, #{cardFingerprint},
             #{expiresAt,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}, #{revokedAt,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}, #{createTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}, #{updateTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}
         FROM t_payment_intent
         WHERE payment_intent_id = #{paymentIntentId} AND client_id = #{clientId}

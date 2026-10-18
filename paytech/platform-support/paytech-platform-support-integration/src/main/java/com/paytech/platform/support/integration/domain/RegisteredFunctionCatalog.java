@@ -7,7 +7,7 @@ import java.util.Optional;
 /**
  * 当前已确认的注册函数签名目录（研发计划第 4 节）；函数实现在第 3 步执行引擎中完成。
  *
- * <p>CHANNEL_ACCOUNT_CONFIG 签名见材料交接第 4 节；PAYMENT_CARD 凭支付工具 Token 向 Payment 读取卡数据，
+ * <p>CHANNEL_ACCOUNT_CONFIG 签名见材料交接第 4 节；PAYMENT_CARD 凭 card 签发的一次性读卡票据（参数名沿用 paymentInstrumentToken）向 card-service 读取卡数据（design/05 §2.1），
  * 见 PayerMax 卡直付对接技术方案第 3.1 节（requirements/20261014/payment-PayerMax卡直付对接）；MONEY_MINOR_UNITS 按币种精度把主单位金额精确换算为最小单位整数。
  * 脚本函数（研发计划第 3 步第 5 节）只能在公共脚本中调用：认证函数返回受控句柄，由传输层发送时取出明文。
  * 签名字节锁定、RSA 与协议时间见 PayerMax 接入技术方案第 3 节（requirements/20261014/platform-support-PayerMax接入）。

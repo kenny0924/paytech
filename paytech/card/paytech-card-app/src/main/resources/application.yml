@@ -1,0 +1,146 @@
+server:
+  address: 127.0.0.1
+  port: 18111
+
+spring:
+  application:
+    name: card-service
+  cloud:
+    nacos:
+      config:
+        # 启用 nacos Profile 后，从配置中心加载服务配置。
+        enabled: false
+      discovery:
+        # 注册本服务（Payment、Platform、acquiring、consumer 经服务发现调用）并发现 Vault；地址与命名空间由部署环境注入。
+        server-addr: "${NACOS_SERVER_ADDR:127.0.0.1:8848}"
+        namespace: "${NACOS_NAMESPACE:mor-local}"
+  datasource:
+    url: "${MOR_CARD_DB_URL:jdbc:mysql://127.0.0.1:13306/mor_card?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}"
+    username: "${MOR_CARD_DB_USERNAME:card_app}"
+    password: "${MOR_CARD_DB_PASSWORD:}"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-timeout: 2000
+      validation-timeout: 1000
+      connection-init-sql: "SET time_zone = '+00:00'"
+  sql:
+    init:
+      mode: never
+  data:
+    redis:
+      # 一次性 CVV 暂存（card:cvv:<instrumentId>，Key 由 Foundation 加服务前缀）。
+      host: "${MOR_REDIS_HOST:127.0.0.1}"
+      port: "${MOR_REDIS_PORT:16379}"
+      password: "${MOR_REDIS_PASSWORD:}"
+      connect-timeout: 2s
+      timeout: 2s
+  rabbitmq:
+    # 只消费 payment.events 的 PaymentSucceeded（card.payment.p0..p3），本服务不发布领域事件。
+    host: "${CARD_RABBITMQ_HOST:127.0.0.1}"
+    port: "${CARD_RABBITMQ_PORT:5672}"
+    username: "${CARD_RABBITMQ_USERNAME:}"
+    password: "${CARD_RABBITMQ_PASSWORD:}"
+    virtual-host: "${CARD_RABBITMQ_VHOST:/mor-local}"
+    connection-timeout: 2s
+  jmx:
+    enabled: false
+
+logging:
+  pattern:
+    level: "%5p [requestId=%X{requestId:-}] %kvp"
+
+web:
+  logging:
+    # 卡原值、CVV、读卡票据与卡数据响应均不进入普通访问日志。
+    metadata-only-path-prefixes:
+      - /
+
+mybatis:
+  mapper-locations: "classpath*:mapper/**/*.xml"
+
+# paytech-messaging 消费端：按 Handler 声明 card.payment.hash 与分区队列（design/08 §3）。
+messaging:
+  consumer:
+    service: card
+  consumers:
+    payment:
+      partitions: 4
+
+# paytech-compensation-event：本库 t_compensation_event；目前没有卡域补偿 Handler。XXL-Job 兜底唤醒与回收任务沿用组件默认。
+compensation:
+  enabled: true
+
+# 实例 ID（实例清单 instance.id，01 §5）：内部调用 Token 的 inst；internal-auth.mode 非 OFF 时必填。
+paytech:
+  instance-id: "${PAYTECH_INSTANCE_ID:}"
+
+# 内部调用身份（D26）：默认 OFF；YAML 中必须带引号，裸 OFF 会被解析为布尔 false。
+internal-auth:
+  mode: "${CARD_INTERNAL_AUTH_MODE:OFF}"
+
+redis:
+  coordination:
+    enabled: false
+
+card:
+  # 卡指纹的 HMAC-SHA256 密钥（Base64，解码后至少 32 字节）；必填，缺失则启动失败。原 payment.card.fingerprint-key 的值原样迁移，
+  # 更换会使已存的卡与凭证无法再匹配。只经环境变量注入，不写入 Nacos 或版本库。
+  fingerprint-key: "${CARD_FINGERPRINT_KEY:}"
+  identifier:
+    region-id: "${CARD_SNOWFLAKE_REGION_ID}"
+    worker-id: "${CARD_SNOWFLAKE_WORKER_ID}"
+  instrument-purge:
+    grace: P1D
+    batch-size: 200
+
+vault:
+  client:
+    # 卡 DEK：数据类型 PAYMENT_CARD_DEK，Protect CARD_STORAGE、Reveal CARD_USE；Vault 访问规则须登记本 Caller。
+    caller-service: card-service
+    service-id: vault-service
+    connect-timeout: 2s
+    read-timeout: 5s
+
+management:
+  server:
+    port: 19111
+  endpoints:
+    access:
+      default: none
+    web:
+      discovery:
+        enabled: false
+      exposure:
+        include: health,info,prometheus
+    jmx:
+      exposure:
+        exclude: "*"
+  endpoint:
+    health:
+      access: read-only
+      show-details: never
+      show-components: never
+      probes:
+        enabled: true
+    info:
+      access: read-only
+    prometheus:
+      access: read-only
+
+---
+spring:
+  config:
+    activate:
+      on-profile: nacos
+    import:
+      - "optional:nacos:mor-common.yaml?group=${NACOS_GROUP:DEFAULT_GROUP}&refreshEnabled=false"
+      - "nacos:card-service.yaml?group=${NACOS_GROUP:DEFAULT_GROUP}&refreshEnabled=true"
+  cloud:
+    nacos:
+      config:
+        enabled: true
+        server-addr: "${NACOS_SERVER_ADDR:127.0.0.1:8848}"
+        namespace: "${NACOS_NAMESPACE:mor-local}"
+        group: "${NACOS_GROUP:DEFAULT_GROUP}"
+        username: "${NACOS_USERNAME:}"
+        password: "${NACOS_PASSWORD:}"

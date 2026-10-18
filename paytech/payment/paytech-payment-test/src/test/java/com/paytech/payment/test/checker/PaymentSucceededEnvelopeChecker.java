@@ -22,7 +22,8 @@ import com.paytech.payment.execution.domain.PaymentSucceededPayload;
 import tools.jackson.databind.JsonNode;
 
 /**
- * payment.events 上一条 PaymentSucceeded 信封（Schema v1，design/08 §2）的断言：信封字段、AMQP 属性、Payload 与旧报文同字段同顺序、
+ * payment.events 上一条 PaymentSucceeded 信封（Schema v2，design/08 §2、design/05 §2.3）的断言：信封字段、AMQP 属性、Payload 为旧报文 v1 字段
+ * 加 v2 卡域字段（instrumentRef、consentToSave、customerId）、
  * 以真实消费端解码器校验 payloadHash，以及禁止字段。
  */
 public class PaymentSucceededEnvelopeChecker {
@@ -46,7 +47,7 @@ public class PaymentSucceededEnvelopeChecker {
         var properties = message.getMessageProperties();
         assertAll(() -> assertEquals(eventId, decoded.eventId()),
             () -> assertEquals(PaymentSucceededPayload.EVENT_TYPE, decoded.eventType()),
-            () -> assertEquals(1, decoded.schemaVersion()),
+            () -> assertEquals(PaymentSucceededPayload.SCHEMA_VERSION, decoded.schemaVersion()),
             () -> assertEquals(PaymentSucceededPayload.AGGREGATE_TYPE, decoded.aggregateType()),
             () -> assertEquals(Long.toString(attemptId), decoded.aggregateId()),
             () -> assertEquals(attemptVersion, decoded.aggregateVersion()),
@@ -61,12 +62,34 @@ public class PaymentSucceededEnvelopeChecker {
         return this;
     }
 
-    /** Payload 与旧报文字段与顺序完全相同（第 12 步前为 v1），并与期望值一致。 */
+    /** v2 Payload 字段顺序：旧报文 v1 字段之后依次为 instrumentRef、consentToSave、customerId。 */
+    public static final List<String> PAYLOAD_FIELDS_V2 = java.util.stream.Stream.concat(
+        PaymentSucceededMessageChecker.PAYLOAD_FIELDS.stream(), java.util.stream.Stream.of("instrumentRef", "consentToSave",
+            "customerId")).toList();
+
+    /** Payload 为 v1 字段加 v2 卡域字段（顺序固定），v1 部分与期望值一致。 */
     public PaymentSucceededEnvelopeChecker payload(Map<String, String> expected) {
         JsonNode payload = envelope.path("payload");
-        assertEquals(PaymentSucceededMessageChecker.PAYLOAD_FIELDS, names(payload));
+        assertEquals(PAYLOAD_FIELDS_V2, names(payload));
         assertAll(expected.entrySet().stream()
             .map(entry -> () -> assertEquals(entry.getValue(), payload.path(entry.getKey()).asString(), entry.getKey())));
+        return this;
+    }
+
+    /**
+     * v2 卡域字段：工具引用与 Customer 为十进制字符串或 null，保存意愿为 JSON Boolean
+     *
+     * @param instrumentRef 期望的 Card 工具引用
+     * @param consentToSave 期望的保存意愿
+     * @param customerId 期望的 Customer；访客为 null
+     */
+    public PaymentSucceededEnvelopeChecker cardFields(String instrumentRef, boolean consentToSave, String customerId) {
+        JsonNode payload = envelope.path("payload");
+        assertAll(() -> assertEquals(instrumentRef, payload.path("instrumentRef").asString()),
+            () -> assertTrue(payload.path("consentToSave").isBoolean(), "consentToSave 应为 JSON Boolean"),
+            () -> assertEquals(consentToSave, payload.path("consentToSave").asBoolean()),
+            () -> assertEquals(customerId == null, payload.path("customerId").isNull(), "customerId 是否为 null"),
+            () -> assertEquals(customerId, customerId == null ? null : payload.path("customerId").asString()));
         return this;
     }
 

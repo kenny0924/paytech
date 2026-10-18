@@ -80,10 +80,10 @@
             <groupId>com.paytech</groupId>
             <artifactId>paytech-compensation-event</artifactId>
         </dependency>
-        <!-- 卡直付执行时凭支付工具 Token 读取卡数据（requirements/20261014/payment-PayerMax卡直付对接）。 -->
+        <!-- 卡直付执行时凭 card 签发的一次性读卡票据向 card-service 读取卡数据（design/05 §2.1，第 12 步自 paytech-payment-api 改为 card-api）。 -->
         <dependency>
             <groupId>com.paytech</groupId>
-            <artifactId>paytech-payment-api</artifactId>
+            <artifactId>paytech-card-api</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

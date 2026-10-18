@@ -6,8 +6,6 @@ import com.paytech.foundation.common.error.ConcurrentRequestException;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.common.error.ServiceUnavailableException;
-import com.paytech.payment.card.domain.CardRiskAttributes;
-import com.paytech.payment.card.service.CardService;
 import com.paytech.payment.execution.core.dal.dataobject.PaymentAction;
 import com.paytech.payment.execution.core.dal.dataobject.PaymentInstrumentToken;
 import com.paytech.payment.execution.core.enums.ActionStatus;
@@ -30,21 +28,19 @@ import lombok.extern.slf4j.Slf4j;
  * 与无效响应不重试。仍未取得结论时动作失败（失败关闭），不记为 UNKNOWN、不登记恢复任务：风控在资金动作之前， 失败后消费者可以重新支付（需求 20261015 payment-接入Risk统一评估 Q-02）。
  *
  * <p>
- * 评估输入中的消费者引用、IP、User-Agent 与卡指纹为受限值，只经本次请求传给 Risk，不写日志。
+ * 评估输入中的消费者引用、IP、User-Agent 与卡指纹为受限值，只经本次请求传给 Risk，不写日志；卡指纹与 BIN 取自支付工具 Token 行。
  *
  * @author lzb
  */
 @Slf4j
 @Component
 public class PayRiskCheckActionActor extends AbstractActionActor<PayContext> {
-    private final CardService cardService;
     private final PaymentRiskClient paymentRiskClient;
 
-    /** 注入卡属性、风控端口与结果持久化能力。 */
+    /** 注入风控端口与结果持久化能力。 */
     public PayRiskCheckActionActor(PaymentIntentRepository intents, PaymentAttemptRepository attempts,
-        CardService cardService, PaymentRiskClient paymentRiskClient) {
+        PaymentRiskClient paymentRiskClient) {
         super(intents, attempts);
-        this.cardService = cardService;
         this.paymentRiskClient = paymentRiskClient;
     }
 
@@ -88,7 +84,7 @@ public class PayRiskCheckActionActor extends AbstractActionActor<PayContext> {
         }
     }
 
-    /** 按 Risk 输入合同组装评估输入：交易事实取冻结的 Intent/Attempt，受限值取本次请求与 Card。 */
+    /** 按 Risk 输入合同组装评估输入：交易事实取冻结的 Intent/Attempt，受限值取本次请求与支付工具 Token 行。 */
     PaymentRiskCommand command(PayContext context, PaymentAction action) {
         var intent = context.getIntent();
         var attempt = context.getAttempt();
@@ -118,17 +114,16 @@ public class PayRiskCheckActionActor extends AbstractActionActor<PayContext> {
         command.setUserAgent(input.getConsumerUserAgent());
     }
 
-    /** 卡支付时从 Card 取 BIN 与指纹；非卡支付或 Card 无法提供时省略。 */
-    void fillCard(PaymentRiskCommand command, PaymentInstrumentToken token) {
-        if (token.getInstrumentType() != InstrumentType.CARD) {
+    /**
+     * 卡支付时取申请工具时 card 返回并存入 Token 行的 BIN 与指纹（design/05 §2.4），不再调用 card；非卡支付或缺失时省略。
+     */
+    static void fillCard(PaymentRiskCommand command, PaymentInstrumentToken token) {
+        if (token.getInstrumentType() != InstrumentType.CARD || token.getCardBin() == null
+            || token.getCardFingerprint() == null) {
             return;
         }
-        CardRiskAttributes attributes = cardService.riskAttributes(token.getInstrumentRef());
-        if (attributes == null) {
-            return;
-        }
-        command.setCardBin(attributes.getBin());
-        command.setCardFingerprint(attributes.getFingerprint());
+        command.setCardBin(token.getCardBin());
+        command.setCardFingerprint(token.getCardFingerprint());
     }
 
     /** 未取得风控结论：动作失败，风控结果与原因代码均为空（channel_response_code 只属于渠道动作）。 */

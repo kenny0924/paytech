@@ -11,7 +11,7 @@
     </parent>
     <artifactId>paytech-payment-api</artifactId>
     <name>PayTech Payment API</name>
-    <description>Payment execution, instrument and card contracts (card contracts move to paytech-card-api in step 12).</description>
+    <description>Payment execution, instrument and card contracts (card contracts moved to paytech-card-api in step 12).</description>
 
     <dependencies>
         <dependency>

@@ -9,15 +9,13 @@ import org.springframework.web.service.registry.ImportHttpServices;
 import com.paytech.acquiring.core.configuration.CommercePaymentProperties;
 import com.paytech.foundation.httpclient.api.HttpServiceClientFactory;
 import com.paytech.foundation.httpclient.api.HttpServiceClientOptions;
-import com.paytech.payment.api.card.StoredCardApi;
 import com.paytech.payment.api.execution.PaymentIntentApi;
 import com.paytech.payment.api.instrument.PaymentInstrumentApi;
 
 /** Payment 私有接口使用服务发现、负载均衡和 Foundation 公共出站边界。 */
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties(CommercePaymentProperties.class)
-@ImportHttpServices(group = PaymentClientConfiguration.SERVICE_ID, types = {PaymentIntentApi.class, PaymentInstrumentApi.class,
-    StoredCardApi.class})
+@ImportHttpServices(group = PaymentClientConfiguration.SERVICE_ID, types = {PaymentIntentApi.class, PaymentInstrumentApi.class})
 public class PaymentClientConfiguration {
     /** Payment 服务组名，同时是服务发现中的服务 ID（第 05 步由 payment-orchestration-service 改名）。 */
     public static final String SERVICE_ID = "payment-service";

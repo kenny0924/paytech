@@ -12,10 +12,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import com.paytech.foundation.common.error.*;
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
-import com.paytech.payment.card.domain.CardInstrumentContext;
-import com.paytech.payment.card.service.CardService;
-import com.paytech.payment.card.service.processor.CheckCardInstrumentProcessor;
-import com.paytech.payment.card.service.processor.PrepareCardInstrumentProcessor;
 import com.paytech.payment.execution.core.configuration.PaymentExecutionProperties;
 import com.paytech.payment.execution.core.constant.Locks;
 import com.paytech.payment.execution.core.dal.dataobject.PaymentInstrumentToken;
@@ -23,6 +19,9 @@ import com.paytech.payment.execution.core.dal.dataobject.PaymentIntent;
 import com.paytech.payment.execution.core.enums.InstrumentType;
 import com.paytech.payment.execution.core.enums.IntentStatus;
 import com.paytech.payment.execution.domain.ApplyCardInstrumentContext;
+import com.paytech.payment.execution.domain.CardInstrumentCommand;
+import com.paytech.payment.execution.domain.CardInstrumentResult;
+import com.paytech.payment.execution.integration.PaymentCardClient;
 import com.paytech.payment.execution.domainservice.repository.PaymentAttemptRepository;
 import com.paytech.payment.execution.domainservice.repository.PaymentInstrumentTokenRepository;
 import com.paytech.payment.execution.domainservice.repository.PaymentIntentRepository;
@@ -32,7 +31,14 @@ import com.paytech.payment.execution.service.processor.response.ApplyCardInstrum
 
 import lombok.RequiredArgsConstructor;
 
-/** 申请卡支付工具 */
+/**
+ * 申请卡支付工具（design/05 §2.2 两段创建）：先由 card-service 在自己的库内保存卡、凭证与交易工具，再在本地事务内按 Intent 状态保存支付工具 Token。
+ *
+ * <p>
+ * 原提交重放：查到原 Token 后以同一来源提交再调 card，card 核对同卡并返回原工具（不访问 Vault、不覆盖 CVV），工具引用须与原 Token 一致。
+ * 新申请：校验资格 → 事务外调 card 创建 → 绑定工具引用、期限、风控属性、Customer 与保存意愿 → 本地事务插入 Token（条件插入依赖 Intent 状态）。
+ * 第二段失败时 card 侧留下的孤立工具由 card 的到期回收任务处理。
+ */
 @Component
 @RequiredArgsConstructor
 public class ApplyCardInstrumentProcessor
@@ -42,9 +48,7 @@ public class ApplyCardInstrumentProcessor
     private final Clock clock;
     private final PaymentExecutionProperties properties;
     private final TransactionTemplate transactionTemplate;
-    private final CardService cardService;
-    private final PrepareCardInstrumentProcessor prepareCardInstrumentProcessor;
-    private final CheckCardInstrumentProcessor checkCardInstrumentProcessor;
+    private final PaymentCardClient paymentCardClient;
     private final PaymentExecutionService paymentExecutionService;
     private final PaymentIntentRepository paymentIntentRepository;
     private final PaymentAttemptRepository paymentAttemptRepository;
@@ -85,7 +89,7 @@ public class ApplyCardInstrumentProcessor
         return intent;
     }
 
-    /** 查询原工具，并由 Card 在事务外核对卡身份 */
+    /** 查询原工具，并由 card 在事务外核对卡身份（同一来源提交重放返回原工具） */
     ApplyCardInstrumentContext checkAndGetContext(PaymentIntent intent, ApplyCardInstrumentRequest request) {
         PaymentInstrumentToken token = paymentInstrumentTokenRepository.findTokenBySubmission(intent.getClientId(),
             intent.getPaymentIntentId(), request.getSourceSubmissionId());
@@ -96,7 +100,10 @@ public class ApplyCardInstrumentProcessor
             || !Objects.equals(token.getPaymentMethodCode(), request.getPaymentMethodCode())) {
             throw new ConcurrentRequestException("原提交不可更换支付方式或工具类型");
         }
-        checkCardInstrumentProcessor.process(buildCardContext(request, token));
+        CardInstrumentResult card = paymentCardClient.createInstrument(buildCardCommand(request, token));
+        if (!Objects.equals(card.instrumentRef(), token.getInstrumentRef())) {
+            throw new ConcurrentRequestException("原提交不可更换卡工具");
+        }
         return new ApplyCardInstrumentContext(intent, token);
     }
 
@@ -119,6 +126,8 @@ public class ApplyCardInstrumentProcessor
         token.setSourceSubmissionId(request.getSourceSubmissionId());
         token.setPaymentMethodCode(request.getPaymentMethodCode());
         token.setInstrumentType(InstrumentType.CARD);
+        token.setCustomerId(request.getCustomerId());
+        token.setConsentToSave(request.isSaveCard());
         token.setExpiresAt(now.plus(window).truncatedTo(ChronoUnit.MICROS));
         token.setCreateTime(now);
         token.setUpdateTime(now);
@@ -139,40 +148,39 @@ public class ApplyCardInstrumentProcessor
     }
 
     /**
-     * 事务外由 Card 准备卡记录，再在同一事务调用 Card 和 Execution 的本地保存能力
-     * <li>Card 准备访问 Vault 与 Redis，必须在事务前完成；准备失败则不保存、不返回 Token。</li>
-     * <li>事务失败时 Card 准备留下的 CVV 到期删除，Vault 中的 DEK 作为无引用残留保留。</li>
+     * 两段创建：事务外由 card 创建卡工具，再在本地事务保存 Token
+     * <li>card 访问 Vault 与 Redis，必须在事务前完成；创建失败则不保存、不返回 Token。</li>
+     * <li>本地事务失败（如 Intent 状态已变化）时 card 侧工具成为孤立工具，CVV 到期删除，由 card 回收任务清理。</li>
      */
     void saveContext(ApplyCardInstrumentContext context, ApplyCardInstrumentRequest request) {
         PaymentInstrumentToken token = context.getInstrumentToken();
-        CardInstrumentContext cardContext = prepareCardInstrumentProcessor.process(buildCardContext(request, token));
-        transactionTemplate.executeWithoutResult(status -> {
-            cardService.applyInstrument(cardContext);
-            bindCardInstrument(token, cardContext);
-            paymentExecutionService.saveApplyCardInstrumentContext(context);
-        });
+        CardInstrumentResult card = paymentCardClient.createInstrument(buildCardCommand(request, token));
+        bindCardInstrument(token, card);
+        transactionTemplate.executeWithoutResult(status -> paymentExecutionService.saveApplyCardInstrumentContext(context));
     }
 
-    /** 将 Card 返回的引用和期限绑定到待保存 Token */
-    void bindCardInstrument(PaymentInstrumentToken token, CardInstrumentContext cardContext) {
-        if (cardContext.getInstrumentRef() == null || cardContext.getInstrumentRef().isBlank()
-            || cardContext.getInstrumentRef().length() > 128 || cardContext.getExpiresAt() == null
-            || cardContext.getExpiresAt().isAfter(token.getExpiresAt())) {
+    /** 将 card 返回的引用、期限与风控属性绑定到待保存 Token */
+    void bindCardInstrument(PaymentInstrumentToken token, CardInstrumentResult card) {
+        if (card.instrumentRef().length() > 128 || card.expiresAt().isAfter(token.getExpiresAt())) {
             throw new ErrorException("Card 返回的工具引用或期限无效");
         }
-        token.setInstrumentRef(cardContext.getInstrumentRef());
-        token.setExpiresAt(cardContext.getExpiresAt().truncatedTo(ChronoUnit.MICROS));
+        token.setInstrumentRef(card.instrumentRef());
+        token.setExpiresAt(card.expiresAt().truncatedTo(ChronoUnit.MICROS));
+        token.setCardBin(card.cardBin());
+        token.setCardFingerprint(card.cardFingerprint());
     }
 
-    /** Card 只接收自己的领域参数 */
-    CardInstrumentContext buildCardContext(ApplyCardInstrumentRequest request, PaymentInstrumentToken token) {
-        CardInstrumentContext cardContext = new CardInstrumentContext(token.getClientId(), token.getPaymentIntentId(),
-            token.getSourceSubmissionId(), token.getPaymentMethodCode(), request.getCard(), token.getInstrumentRef(),
-            token.getExpiresAt());
-        cardContext.setStoredCardToken(request.getStoredCardToken());
-        cardContext.setCustomerId(request.getCustomerId());
-        cardContext.setSaveCard(request.isSaveCard());
-        return cardContext;
+    /** card 只接收自己需要的参数；重放时期限上限取原 Token 期限 */
+    CardInstrumentCommand buildCardCommand(ApplyCardInstrumentRequest request, PaymentInstrumentToken token) {
+        CardInstrumentCommand command = new CardInstrumentCommand();
+        command.setClientId(token.getClientId());
+        command.setCustomerId(request.getCustomerId());
+        command.setSourceSubmissionId(token.getSourceSubmissionId());
+        command.setCard(request.getCard());
+        command.setStoredCardToken(request.getStoredCardToken());
+        command.setConsentToSave(request.isSaveCard());
+        command.setExpiresAt(token.getExpiresAt());
+        return command;
     }
 
     /** 生成不包含业务身份的随机 Token */

@@ -4,16 +4,15 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.springframework.boot.test.context.TestComponent;
 import org.springframework.dao.DataAccessException;
-import org.springframework.data.redis.core.StringRedisTemplate;
 
 import com.paytech.foundation.testsupport.api.Clear;
-import com.paytech.payment.card.integration.impl.CardSecurityCodeClientImpl;
 import com.paytech.payment.test.dal.PaymentTestMapper;
 
 import lombok.RequiredArgsConstructor;
 
 /**
- * mor_payment 的空基线与清理：只触碰本库 15 张表（payment 10 + 第 12 步前暂居的卡 4 + 补偿，10 §3.1）与本库卡工具的 Redis CVV 键。
+ * mor_payment 的空基线与清理：只触碰本库 11 张表（payment 10 + 补偿，10 §3.1）；卡表与 CVV 键第 12 步随卡域迁入 card（mor_card）。
+ * <li>本机 mor_payment 若仍保留第 12 步前的卡 4 表（不 DROP，见第 12 步报告），本清理器不读写它们。</li>
  * <li>Payment 测试不再安排渠道数据；渠道候选与执行由 {@link ChannelConnectorMocker} 以 channel-connector-api DTO 配置。</li>
  */
 @TestComponent
@@ -22,7 +21,6 @@ public class PaymentDataMocker implements Clear {
     private static final String DATABASE = "mor_payment";
 
     private final PaymentTestMapper mapper;
-    private final StringRedisTemplate redis;
     private boolean reusable = true;
     private boolean cleanupOwned;
 
@@ -47,12 +45,10 @@ public class PaymentDataMocker implements Clear {
         }
         assertEquals(DATABASE, mapper.databaseName());
         try {
-            clearSecurityCodes();
             assertAll(mapper::clearCompensationEvents, mapper::clearChannelRefunds, mapper::clearRefundPositions,
                 mapper::clearDuplicatePaymentCases, mapper::clearTransactionRefs, mapper::clearActions,
                 mapper::clearRouteCandidateEvals, mapper::clearRoutingDecisions, mapper::clearAttempts,
-                mapper::clearInstrumentTokens, mapper::clearStoredCards, mapper::clearCardInstruments,
-                mapper::clearCardCredentials, mapper::clearCards, mapper::clearIntents);
+                mapper::clearInstrumentTokens, mapper::clearIntents);
             assertEquals(0, mapper.countExecutionRows() + mapper.countSchemaOnlyRows());
             cleanupOwned = false;
         } catch (RuntimeException | AssertionError failure) {
@@ -61,10 +57,4 @@ public class PaymentDataMocker implements Clear {
         }
     }
 
-    /** 按本库卡交易工具删除 Redis 中未领取的 CVV；先于卡表清理（第 12 步随卡域迁出）。 */
-    void clearSecurityCodes() {
-        for (Long paymentCardInstrumentId : mapper.cardInstrumentIds()) {
-            redis.delete(CardSecurityCodeClientImpl.key(paymentCardInstrumentId));
-        }
-    }
 }

@@ -5,20 +5,26 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.paytech</groupId>
-        <artifactId>paytech-payment</artifactId>
+        <artifactId>paytech-card</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
-    <artifactId>paytech-payment-card</artifactId>
+    <artifactId>paytech-card-core</artifactId>
     <packaging>jar</packaging>
-    <name>PayTech Payment Card</name>
-    <description>Card domain kept inside the payment process and mor_payment until step 12 (design/05); only payment-core and
-        payment-app may depend on it.</description>
+    <name>PayTech Card Core</name>
+    <description>Card domain (design/05): card / credential / instrument / stored card tables of mor_card, card encryption,
+        Vault-held DEKs, Redis one-time CVV, one-time material tickets and the PaymentSucceeded handler; only card-app may
+        depend on it (R11).</description>
 
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot</artifactId>
+        </dependency>
+        <!-- 本服务合同中的稳定代码（读卡票据用途）。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-card-api</artifactId>
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
@@ -36,6 +42,11 @@
             <groupId>com.paytech</groupId>
             <artifactId>paytech-mybatis-support</artifactId>
         </dependency>
+        <!-- PaymentSucceeded 消费 Handler 的 @DomainEventHandler 与 DomainEventConsumer（design/08 §1）；消费实现只在 app。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-messaging-api</artifactId>
+        </dependency>
         <!-- 每张卡的数据加密密钥由 Vault 托管（agent-docs/decisions/2026-10-15-vault-payment-card-dek.md）。 -->
         <dependency>
             <groupId>com.paytech</groupId>
@@ -44,6 +55,10 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-jdbc</artifactId>
         </dependency>
         <dependency>
             <groupId>org.mybatis</groupId>
@@ -57,6 +72,12 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
+        </dependency>
+        <!-- 卡加密与配置的纯 Java 测试（CardCipherTest、PaymentCardPropertiesTest）留在 core：R11 只豁免 card-core / card-app。 -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -73,29 +94,6 @@
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-enforcer-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>enforce-payment-card-isolation</id>
-                        <goals>
-                            <goal>enforce</goal>
-                        </goals>
-                        <configuration>
-                            <rules>
-                                <bannedDependencies>
-                                    <searchTransitive>true</searchTransitive>
-                                    <excludes>
-                                        <exclude>com.paytech:paytech-payment-*</exclude>
-                                    </excludes>
-                                    <message>Payment Card must remain independent of Payment API, Web, Test and sibling capabilities.</message>
-                                </bannedDependencies>
-                            </rules>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>

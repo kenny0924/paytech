@@ -9,16 +9,20 @@ import tools.jackson.databind.node.JsonNodeFactory;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
- * PaymentSucceeded Payload Schema v1：旧 topic_payment_result 报文与 payment.events 新信封共用同一组字段（design/08 §3、D34）。
- * <li>固定字段顺序；ID 与金额一律十进制字符串，时间为 UTC RFC 3339，符合 Foundation JSON Object Profile。</li>
- * <li>只含最小集合，不含卡数据、付款人引用、IP 与 User-Agent；第 12 步 v2 再为 card 扩字段。</li>
+ * PaymentSucceeded Payload：payment.events 新信封为 Schema v2，旧 topic_payment_result 报文保持 v1 字段（design/08 §3、D34，design/05 §2.3）。
+ * <li>固定字段顺序；ID 与金额一律十进制字符串，时间为 UTC RFC 3339，布尔为 JSON Boolean，缺失为 JSON null，符合 Foundation JSON Object Profile。</li>
+ * <li>只含最小集合，不含卡数据、付款人引用、IP 与 User-Agent。v2 在 v1 之后追加 instrumentRef（Card 工具引用，不是卡数据或可用凭据）、
+ * consentToSave、customerId，供 card 标记凭证已验证并存卡；acquiring 忽略新增字段。旧 Topic 消费方切换后随旧 Topic 一起删除 v1。</li>
  */
 public final class PaymentSucceededPayload {
     /** 事件类型。 */
     public static final String EVENT_TYPE = "PaymentSucceeded";
 
-    /** 当前 Payload Schema 版本。 */
-    public static final int SCHEMA_VERSION = 1;
+    /** payment.events 信封的 Payload Schema 版本。 */
+    public static final int SCHEMA_VERSION = 2;
+
+    /** 旧 topic_payment_result 报文的 Payload Schema 版本（{@link #fields} 的字段集合）。 */
+    public static final int LEGACY_SCHEMA_VERSION = 1;
 
     /** 聚合类型：支付尝试。 */
     public static final String AGGREGATE_TYPE = "PAYMENT_ATTEMPT";
@@ -26,7 +30,7 @@ public final class PaymentSucceededPayload {
     private PaymentSucceededPayload() {
     }
 
-    /** 固定字段顺序的最小 Payload；金额按币种精度写成主单位十进制字符串。 */
+    /** v1 固定字段顺序的最小 Payload（旧 Topic 报文）；金额按币种精度写成主单位十进制字符串。 */
     public static Map<String, String> fields(PaymentSucceededResult result) {
         Map<String, String> payload = new LinkedHashMap<>();
         payload.put("clientId", Long.toString(result.getClientId()));
@@ -48,10 +52,13 @@ public final class PaymentSucceededPayload {
         return payload;
     }
 
-    /** 同一组字段的 JSON Object，供领域事件信封使用。 */
+    /** v2 JSON Object（领域事件信封）：v1 全部字段之后追加 instrumentRef、consentToSave、customerId。 */
     public static ObjectNode json(PaymentSucceededResult result) {
         ObjectNode payload = JsonNodeFactory.instance.objectNode();
         fields(result).forEach(payload::put);
+        payload.put("instrumentRef", result.getInstrumentRef());
+        payload.put("consentToSave", result.isConsentToSave());
+        payload.put("customerId", result.getCustomerId() == null ? null : Long.toString(result.getCustomerId()));
         return payload;
     }
 }

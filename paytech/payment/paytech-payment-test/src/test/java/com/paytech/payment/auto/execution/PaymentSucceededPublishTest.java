@@ -18,10 +18,11 @@ import com.paytech.payment.test.mocker.ChannelConnectorMocker.Candidate;
 
 /**
  * PaymentSucceeded 双写（design/08 §3、D34）：从 pay 的真实 HTTP 入口收款成功，补偿任务提交后经本机 RabbitMQ 同时发布到
- * 旧 topic_payment_result（现有报文，Commerce 尚未切换）与 payment.events（paytech-messaging Schema v1 信封）。
+ * 旧 topic_payment_result（现有 v1 报文，Commerce 尚未切换）与 payment.events（paytech-messaging Schema v2 信封，design/05 §2.3：
+ * 追加 instrumentRef、consentToSave、customerId 供 card 存卡；卡凭证验证与存卡不再在支付成功事务内执行）。
  *
  * <p>
- * 每例用两个临时排他队列分别绑定两个生产交换机观察：成功时两边各恰好一条、信封与最小 Payload 正确、Payload Hash 可重算、
+ * 每例用两个临时排他队列分别绑定两个生产交换机观察：成功时两边各恰好一条、信封与 Payload 正确（旧报文无卡域字段）、Payload Hash 可重算、
  * 不含卡数据与付款人信息，两次发布均确认后补偿任务删除；支付失败与处理中两边都不发布。
  *
  * @see PaymentIntentApi#pay(String, String, com.paytech.payment.api.execution.request.PayRequestBody)
@@ -39,7 +40,7 @@ class PaymentSucceededPublishTest extends AbstractPayCardTest {
         risk.respond(RiskResult.ALLOW, AuthenticationRequirement.NOT_REQUIRED);
     }
 
-    /** 成功：旧 Topic 仍收到一条现有报文，payment.events 收到一条 v1 新信封；两者 Payload 相同、Hash 正确，补偿任务在确认后删除。 */
+    /** 成功：旧 Topic 仍收到一条 v1 报文，payment.events 收到一条 v2 信封（卡域事件：工具引用、保存意愿与 Customer）；Hash 正确，补偿任务在确认后删除。 */
     @Test
     void test_succeededPublishedOnce() {
         channel.succeeded("T-PUB-1");
@@ -70,8 +71,12 @@ class PaymentSucceededPublishTest extends AbstractPayCardTest {
         long version = ((Number)attempt.get("version")).longValue();
         String[] forbidden = {PAN, paid.token, CONSUMER_REFERENCE, CONSUMER_IP, CONSUMER_USER_AGENT, RETURN_URL,
             "consumerReference", "cardToken", "card", "cvv", "clientIp", "userAgent"};
-        message.envelope(attemptId, version).payload(expected).payloadHashRecomputable().excludes(forbidden);
-        envelope.envelope(attemptId, version, instanceId).payload(expected).excludes(forbidden);
+        String[] tickets = cardApi.tickets().toArray(String[]::new);
+        assertEquals(1, tickets.length, "每次资金动作签发一张读卡票据");
+        message.envelope(attemptId, version).payload(expected).payloadHashRecomputable().excludes(forbidden)
+            .excludes(tickets);
+        envelope.envelope(attemptId, version, instanceId).payload(expected).excludes(forbidden).excludes(tickets)
+            .cardFields((String)mapper.instrumentTokens().getFirst().get("instrumentRef"), false, null);
         assertTrue(mapper.compensationEvents(PaymentSucceededHandler.EVENT_TYPE, String.valueOf(attemptId)).isEmpty(),
             "发布确认后补偿任务应删除");
     }

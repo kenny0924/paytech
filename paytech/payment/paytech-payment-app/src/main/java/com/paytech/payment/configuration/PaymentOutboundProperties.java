@@ -9,7 +9,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
-/** Execution 出站依赖（channel-connector、Risk 统一评估）的私网地址与超时；修改需重启。 */
+/** Execution 出站依赖（channel-connector、card、Risk 统一评估）的私网地址与超时；修改需重启。 */
 @Data
 @Validated
 @ConfigurationProperties(prefix = "payment.outbound")
@@ -47,4 +47,19 @@ public class PaymentOutboundProperties {
      */
     @NotNull
     private Duration riskReadTimeout = Duration.ofSeconds(1);
+
+    /**
+     * card 的应用 context path
+     * <li>请求地址为 http://card-service{本值}/card/v1/...；card 无 context path，默认空串。</li>
+     */
+    @NotNull
+    @Pattern(regexp = "|/[A-Za-z0-9._~-]+(/[A-Za-z0-9._~-]+)*")
+    private String cardContextPath = "";
+
+    /**
+     * card 工具创建与读卡票据签发的读取超时
+     * <li>工具创建含 Vault 托管 DEK 与 Redis 暂存 CVV，默认 5 秒；超时后申请失败，同一来源提交可重试（card 按提交幂等）。</li>
+     */
+    @NotNull
+    private Duration cardReadTimeout = Duration.ofSeconds(5);
 }

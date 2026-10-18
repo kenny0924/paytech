@@ -1,5 +1,8 @@
 package com.paytech.card.domainservice.repository.impl;
 
+import java.time.Instant;
+import java.util.List;
+
 import org.springframework.stereotype.Repository;
 
 import com.paytech.foundation.common.error.ErrorException;
@@ -36,5 +39,20 @@ public class PaymentCardInstrumentRepositoryImpl implements PaymentCardInstrumen
             return null;
         }
         return paymentCardInstrumentMapper.findInstrument(paymentCardInstrumentId);
+    }
+
+    @Override
+    public PaymentCardInstrument findBySubmission(long clientId, long sourceSubmissionId) {
+        return paymentCardInstrumentMapper.findBySubmission(clientId, sourceSubmissionId);
+    }
+
+    @Override
+    public List<Long> listOrphanIds(Instant expiredBefore, int limit) {
+        return paymentCardInstrumentMapper.listOrphanIds(expiredBefore, limit);
+    }
+
+    @Override
+    public boolean deleteOrphan(long paymentCardInstrumentId, Instant expiredBefore) {
+        return paymentCardInstrumentMapper.deleteOrphan(paymentCardInstrumentId, expiredBefore) == 1;
     }
 }

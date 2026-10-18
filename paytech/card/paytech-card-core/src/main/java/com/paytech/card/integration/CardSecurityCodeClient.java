@@ -23,4 +23,12 @@ public interface CardSecurityCodeClient {
      * @return 加密的 CVV；已领取或已过期时为 null
      */
     String claim(long paymentCardInstrumentId);
+
+    /**
+     * CVV 是否仍可领取（签发读卡票据前检查，不读取值）
+     *
+     * @param paymentCardInstrumentId 卡交易工具 ID
+     * @return 未领取且未过期时为 true
+     */
+    boolean claimable(long paymentCardInstrumentId);
 }

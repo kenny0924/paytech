@@ -7,48 +7,62 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Currency;
+import java.util.Objects;
 
 import org.springframework.stereotype.Component;
 
 import com.paytech.channel.connector.api.enums.ChannelPaymentStatus;
 import com.paytech.foundation.compensation.api.CompensationEventRegistrar;
-import com.paytech.payment.card.service.CardService;
 import com.paytech.payment.execution.core.dal.dataobject.PaymentAction;
 import com.paytech.payment.execution.core.enums.ActionStatus;
+import com.paytech.payment.execution.core.enums.AttemptStatus;
 import com.paytech.payment.execution.core.enums.InstrumentType;
 import com.paytech.payment.execution.core.enums.IntentStatus;
 import com.paytech.payment.execution.core.enums.InteractionType;
 import com.paytech.payment.execution.domain.*;
 import com.paytech.payment.execution.domainservice.repository.PaymentAttemptRepository;
 import com.paytech.payment.execution.domainservice.repository.PaymentIntentRepository;
+import com.paytech.payment.execution.integration.PaymentCardClient;
 import com.paytech.payment.execution.integration.PaymentChannelClient;
 import com.paytech.payment.execution.service.handler.PaymentSucceededHandler;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
- * 直接收款（PayerMax 卡直付对接技术方案第 5 节）：经 channel-connector 端口以冻结坐标执行渠道操作 PAY，卡只以支付工具 Token 传递。
+ * 直接收款（PayerMax 卡直付对接技术方案第 5 节）：经 channel-connector 端口以冻结坐标执行渠道操作 PAY，卡只以 card 签发的一次性读卡票据传递。
+ *
+ * <p>
+ * 读卡票据（design/05 §2.1）：发起渠道调用前（事务外、Intent 锁内）先完成准入校验（Attempt 处理中、当前动作为执行中的 PAY 且就是本动作、
+ * 支付工具未撤销），再向 card 申请本次动作的票据，交给 Platform 标准 API 作为卡字段句柄。准入不成立、card 拒绝签发（如 CVV 已领取）或 card
+ * 不可用时，渠道请求未发出，动作以 NOT_SENT 语义明确失败（{@value #CARD_MATERIAL_UNAVAILABLE}）。
  *
  * <p>
  * 只消费 channel-connector 已映射的结论（D06），不解释 Platform 输出键：SUCCESS + SUCCEEDED → 成功；SUCCESS + PENDING → 处理中（有跳转时记
  * 3DS 交互，指令只放入本次 Context）；SUCCESS + FAILED、FAIL、NOT_SENT → 失败；SUCCESS + 无法识别的状态、ERROR → 未知。恢复（渠道通知与查询）
  * 本期不做，PROCESSING/UNKNOWN 保持原状；不重发扣款。
  */
+@Slf4j
 @Component
 public class PayActionActor extends AbstractActionActor<PayContext> {
     /** 3DS 等交互的有效期上限；渠道订单最短有效期 1800 秒。 */
     static final Duration INTERACTION_WINDOW = Duration.ofMinutes(30);
 
+    /** 未取得读卡票据、渠道请求未发出时的失败代码。 */
+    public static final String CARD_MATERIAL_UNAVAILABLE = "CARD_MATERIAL_UNAVAILABLE";
+
     private final Clock clock;
     private final PaymentChannelClient paymentChannelClient;
-    private final CardService cardService;
+    private final PaymentCardClient paymentCardClient;
     private final CompensationEventRegistrar events;
 
-    /** 注入 Channel 端口、收款结果持久化、Card 本地能力与补偿任务登记。 */
+    /** 注入 Channel 与 card 端口、收款结果持久化与补偿任务登记。 */
     public PayActionActor(PaymentIntentRepository intents, PaymentAttemptRepository attempts, Clock clock,
-        PaymentChannelClient paymentChannelClient, CardService cardService, CompensationEventRegistrar events) {
+        PaymentChannelClient paymentChannelClient, PaymentCardClient paymentCardClient,
+        CompensationEventRegistrar events) {
         super(intents, attempts);
         this.clock = clock;
         this.paymentChannelClient = paymentChannelClient;
-        this.cardService = cardService;
+        this.paymentCardClient = paymentCardClient;
         this.events = events;
     }
 
@@ -65,7 +79,11 @@ public class PayActionActor extends AbstractActionActor<PayContext> {
             // 只有本次新提交携带渠道交互输入；其他入口不能重发扣款。
             return ActionResult.unknown();
         }
-        ChannelExecutionResult channel = paymentChannelClient.execute(command(context));
+        String cardHandle = cardHandle(context, action);
+        if (cardHandle == null) {
+            return failed(null, null, clock.instant().truncatedTo(ChronoUnit.MICROS), CARD_MATERIAL_UNAVAILABLE);
+        }
+        ChannelExecutionResult channel = paymentChannelClient.execute(command(context, cardHandle));
         var now = clock.instant().truncatedTo(ChronoUnit.MICROS);
         return switch (channel.getOutcome()) {
             case SUCCESS -> accepted(context, channel, now);
@@ -76,7 +94,36 @@ public class PayActionActor extends AbstractActionActor<PayContext> {
     }
 
     /**
-     * 收款成功后完成 Attempt 和 Intent；卡工具同事务交 Card 标记凭证已验证并按同意存卡（只写本库）。
+     * 卡字段句柄：准入校验通过后向 card 申请本次动作的一次性读卡票据
+     *
+     * @return 票据；准入不成立、card 拒绝或不可用时为 null（渠道请求不发出）
+     */
+    String cardHandle(PayContext context, PaymentAction action) {
+        var token = context.getInstToken();
+        if (token.getInstrumentType() != InstrumentType.CARD) {
+            return token.getPaymentInstrumentToken();
+        }
+        var attempt = context.getAttempt();
+        if (attempt.getAttemptStatus() != AttemptStatus.PROCESSING
+            || !Objects.equals(attempt.getActiveActionId(), action.getPaymentActionId())
+            || !action.statusIn(ActionStatus.PROCESSING) || action.getActionType() != ActionType.PAY
+            || token.getRevokedAt() != null) {
+            log.warn("卡支付准入不成立，不申请读卡票据: attemptId={}, actionId={}", attempt.getPaymentAttemptId(),
+                action.getPaymentActionId());
+            return null;
+        }
+        try {
+            return paymentCardClient.issueMaterialTicket(token.getInstrumentRef(), attempt.getPaymentAttemptId(),
+                action.getPaymentActionId());
+        } catch (RuntimeException rejected) {
+            log.warn("card 未签发读卡票据，渠道请求不发出: attemptId={}, actionId={}, failure={}",
+                attempt.getPaymentAttemptId(), action.getPaymentActionId(), rejected.getClass().getSimpleName());
+            return null;
+        }
+    }
+
+    /**
+     * 收款成功后完成 Attempt 和 Intent；只写 Payment 自己的表（design/05 §2.3：卡凭证验证与存卡改由 card 消费 PaymentSucceeded）。
      * <li>同事务登记 PaymentSucceeded 发布任务，提交后由补偿 Handler 发布；事务回滚时任务一并回滚。</li>
      */
     @Override
@@ -85,15 +132,11 @@ public class PayActionActor extends AbstractActionActor<PayContext> {
         var attempt = context.getAttempt();
         attempts.payCompleted(attempt, action.getAmount());
         intents.attemptSucceed(context.getIntent(), attempt.getPaymentAttemptId(), IntentStatus.SUCCEEDED);
-        var instToken = ((PayContext)context).getInstToken();
-        if (instToken.getInstrumentType() == InstrumentType.CARD) {
-            cardService.paymentSucceeded(instToken.getInstrumentRef());
-        }
         events.register(PaymentSucceededHandler.buildEvent(attempt.getPaymentAttemptId()));
     }
 
-    /** 以冻结坐标与新支付维度组装渠道动作；输入不含卡值。 */
-    static ChannelExecutionCommand command(PayContext context) {
+    /** 以冻结坐标与新支付维度组装渠道动作；输入不含卡值，卡只以读卡票据出现。 */
+    static ChannelExecutionCommand command(PayContext context, String cardHandle) {
         var intent = context.getIntent();
         var attempt = context.getAttempt();
         var command = new ChannelExecutionCommand();
@@ -107,16 +150,16 @@ public class PayActionActor extends AbstractActionActor<PayContext> {
         command.setCurrency(intent.getCurrency());
         command.setMccCode(intent.getMccCode());
         command.setAmount(intent.getAmount());
-        command.setInput(input(context).toMap());
+        command.setInput(input(context, cardHandle).toMap());
         return command;
     }
 
-    /** 标准 API PAY 输入：支付工具 Token、本次尝试与金额、回跳地址、付款人引用及可选网络信息。 */
-    static PayInput input(PayContext context) {
+    /** 标准 API PAY 输入：卡字段句柄（读卡票据）、本次尝试与金额、回跳地址、付款人引用及可选网络信息。 */
+    static PayInput input(PayContext context, String cardHandle) {
         var intent = context.getIntent();
         var channelInput = context.getChannelInput();
         var input = new PayInput();
-        input.setCardToken(context.getInstToken().getPaymentInstrumentToken());
+        input.setCardToken(cardHandle);
         input.setAttemptId(context.getAttempt().getPaymentAttemptId().toString());
         input.setAmount(amountText(intent.getAmount(), intent.getCurrency()));
         input.setCurrency(intent.getCurrency());

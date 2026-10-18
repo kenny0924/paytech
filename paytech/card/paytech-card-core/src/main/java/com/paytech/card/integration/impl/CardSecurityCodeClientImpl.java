@@ -42,6 +42,16 @@ public class CardSecurityCodeClientImpl implements CardSecurityCodeClient {
         }
     }
 
+    /** 只判断 Key 是否存在，不读取值。 */
+    @Override
+    public boolean claimable(long paymentCardInstrumentId) {
+        try {
+            return Boolean.TRUE.equals(redisTemplate.hasKey(key(paymentCardInstrumentId)));
+        } catch (DataAccessException unavailable) {
+            throw new ServiceUnavailableException(unavailable);
+        }
+    }
+
     /** CVV 的 Redis Key，不含卡值。 */
     public static String key(long paymentCardInstrumentId) {
         return "card:cvv:" + paymentCardInstrumentId;

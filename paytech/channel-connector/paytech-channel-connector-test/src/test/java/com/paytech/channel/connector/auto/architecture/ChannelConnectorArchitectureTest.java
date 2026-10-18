@@ -29,8 +29,8 @@ class ChannelConnectorArchitectureTest {
     private static final List<String> OWN_MODULES = List.of("paytech-channel-connector-api",
         "paytech-channel-connector-core", "paytech-channel-connector-app");
 
-    private static final List<String> PAYMENT_MODULES = List.of("paytech-payment-api", "paytech-payment-card",
-        "paytech-payment-core", "paytech-payment-app");
+    private static final List<String> PAYMENT_MODULES = List.of("paytech-payment-api", "paytech-payment-core",
+        "paytech-payment-app");
 
     /** Payment 只能经 channel-connector-api 访问渠道能力；channel-connector 不依赖 Payment；api 不引用本服务实现。 */
     @Test

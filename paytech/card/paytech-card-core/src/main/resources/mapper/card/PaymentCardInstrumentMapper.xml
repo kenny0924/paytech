@@ -5,22 +5,25 @@
         <id column="payment_card_instrument_id" property="paymentCardInstrumentId"/>
         <result column="payment_card_credential_id" property="paymentCardCredentialId"/>
         <result column="client_id" property="clientId"/>
+        <result column="source_submission_id" property="sourceSubmissionId"/>
         <result column="customer_id" property="customerId"/>
         <result column="save_requested" property="saveRequested"/>
         <result column="payment_stored_card_id" property="paymentStoredCardId"/>
+        <result column="expires_at" property="expiresAt" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
         <result column="create_time" property="createTime" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
         <result column="update_time" property="updateTime" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
     </resultMap>
 
     <sql id="PaymentCardInstrumentColumns">
-        payment_card_instrument_id, payment_card_credential_id, client_id, customer_id, save_requested,
-        payment_stored_card_id, create_time, update_time
+        payment_card_instrument_id, payment_card_credential_id, client_id, source_submission_id, customer_id, save_requested,
+        payment_stored_card_id, expires_at, create_time, update_time
     </sql>
 
     <insert id="insertInstrument">
         INSERT INTO t_payment_card_instrument (<include refid="PaymentCardInstrumentColumns"/>)
-        VALUES (#{paymentCardInstrumentId}, #{paymentCardCredentialId}, #{clientId}, #{customerId}, #{saveRequested},
-            #{paymentStoredCardId},
+        VALUES (#{paymentCardInstrumentId}, #{paymentCardCredentialId}, #{clientId}, #{sourceSubmissionId}, #{customerId},
+            #{saveRequested}, #{paymentStoredCardId},
+            #{expiresAt,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP},
             #{createTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP},
             #{updateTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP})
     </insert>
@@ -30,4 +33,34 @@
         FROM t_payment_card_instrument
         WHERE payment_card_instrument_id = #{paymentCardInstrumentId}
     </select>
+
+    <select id="findBySubmission" resultMap="row">
+        SELECT <include refid="PaymentCardInstrumentColumns"/>
+        FROM t_payment_card_instrument
+        WHERE client_id = #{clientId}
+          AND source_submission_id = #{sourceSubmissionId}
+    </select>
+
+    <!-- 过期且从未签发读卡票据、也不是任何已存卡来源的工具：Payment 两段创建第二段失败留下的孤立工具（design/05 §2.2）。 -->
+    <select id="listOrphanIds" resultType="java.lang.Long">
+        SELECT i.payment_card_instrument_id
+        FROM t_payment_card_instrument i
+        WHERE i.expires_at &lt; #{expiredBefore,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}
+          AND NOT EXISTS (SELECT 1 FROM t_card_material_ticket t
+                          WHERE t.instrument_ref = CAST(i.payment_card_instrument_id AS CHAR))
+          AND NOT EXISTS (SELECT 1 FROM t_payment_stored_card s
+                          WHERE s.source_card_instrument_id = i.payment_card_instrument_id)
+        ORDER BY i.expires_at, i.payment_card_instrument_id
+        LIMIT #{limit}
+    </select>
+
+    <delete id="deleteOrphan">
+        DELETE FROM t_payment_card_instrument
+        WHERE payment_card_instrument_id = #{paymentCardInstrumentId}
+          AND expires_at &lt; #{expiredBefore,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}
+          AND NOT EXISTS (SELECT 1 FROM t_card_material_ticket t
+                          WHERE t.instrument_ref = CAST(#{paymentCardInstrumentId} AS CHAR))
+          AND NOT EXISTS (SELECT 1 FROM t_payment_stored_card s
+                          WHERE s.source_card_instrument_id = #{paymentCardInstrumentId})
+    </delete>
 </mapper>

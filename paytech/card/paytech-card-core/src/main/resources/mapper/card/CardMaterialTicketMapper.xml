@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.card.core.dal.mapper.CardMaterialTicketMapper">
+    <resultMap id="row" type="com.paytech.card.core.dal.dataobject.CardMaterialTicket">
+        <id column="card_material_ticket_id" property="cardMaterialTicketId"/>
+        <result column="ticket_hash" property="ticketHash"/>
+        <result column="instrument_ref" property="instrumentRef"/>
+        <result column="attempt_id" property="attemptId"/>
+        <result column="action_id" property="actionId"/>
+        <result column="purpose" property="purpose"/>
+        <result column="expires_at" property="expiresAt" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        <result column="used_at" property="usedAt" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        <result column="caller" property="caller"/>
+        <result column="create_time" property="createTime" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        <result column="update_time" property="updateTime" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+    </resultMap>
+
+    <sql id="CardMaterialTicketColumns">
+        card_material_ticket_id, ticket_hash, instrument_ref, attempt_id, action_id, purpose, expires_at, used_at, caller,
+        create_time, update_time
+    </sql>
+
+    <insert id="insertTicket">
+        INSERT INTO t_card_material_ticket (<include refid="CardMaterialTicketColumns"/>)
+        VALUES (#{cardMaterialTicketId}, #{ticketHash}, #{instrumentRef}, #{attemptId}, #{actionId}, #{purpose},
+            #{expiresAt,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP},
+            #{usedAt,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP},
+            #{caller},
+            #{createTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP},
+            #{updateTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP})
+    </insert>
+
+    <select id="findByHash" resultMap="row">
+        SELECT <include refid="CardMaterialTicketColumns"/>
+        FROM t_card_material_ticket
+        WHERE ticket_hash = #{ticketHash}
+    </select>
+
+    <update id="markUsed">
+        UPDATE t_card_material_ticket
+        SET used_at = #{usedAt,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP},
+            update_time = #{usedAt,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}
+        WHERE card_material_ticket_id = #{cardMaterialTicketId}
+          AND used_at IS NULL
+          AND expires_at &gt; #{usedAt,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}
+    </update>
+</mapper>

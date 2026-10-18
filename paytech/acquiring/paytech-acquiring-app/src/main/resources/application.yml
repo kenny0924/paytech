@@ -27,6 +27,11 @@ spring:
         connect-timeout: 2s
         read-timeout: 5s
         redirects: dont-follow
+      card-service:
+        base-url: lb://card-service
+        connect-timeout: 2s
+        read-timeout: 5s
+        redirects: dont-follow
       consumer-service:
         base-url: lb://consumer-service
         connect-timeout: 2s

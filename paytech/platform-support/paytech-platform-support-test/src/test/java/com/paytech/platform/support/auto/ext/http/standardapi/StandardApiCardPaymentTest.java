@@ -58,7 +58,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
- * 卡直付执行（PayerMax 卡直付对接技术方案第 2、3 节）：流程初始化项 PAYMENT_CARD 凭支付工具 Token 向 Payment 读卡，卡值只写入原子 API
+ * 卡直付执行（PayerMax 卡直付对接技术方案第 2、3 节）：流程初始化项 PAYMENT_CARD 凭一次性读卡票据向 card 读卡，卡值只写入原子 API
  * 声明的卡字段，在 sealJsonBody 生成的发送字节中展开并被签名覆盖；响应、日志不含卡值。读卡失败或卡数据格式无效为 503 且不发出渠道请求。
  * 沙箱验证运行改读验证账号测试卡、不调用 Payment，证据中的请求体卡号只留前 6 后 4，其余卡值为 [CARD]。
  *
@@ -76,7 +76,7 @@ class StandardApiCardPaymentTest extends ExternalApiTestBase {
     private static final String SANDBOX = "CARD_SANDBOX";
     private static final String PATH = "/api/orderAndPay";
     private static final String VAULT_TOKEN = ChannelAccountVaultMocker.token("card-account");
-    private static final String INSTRUMENT = "pit_card_001";
+    private static final String INSTRUMENT = "tkt_card_0000000000000000000000000000000001";
     private static final String PAN = "4111111111111111";
     private static final String CVV = "737";
     private static final String HOLDER = "TEST CARDHOLDER";
@@ -126,8 +126,8 @@ class StandardApiCardPaymentTest extends ExternalApiTestBase {
                 "card":{"number":"%s","expMonth":"12","expYear":"30","cvv":"%s","holder":"%s"}""".formatted(PAN, CVV, HOLDER)),
                 request.body()),
             () -> assertTrue(verify(MERCHANT.getPublic(), request.body(), request.headers().get("sign")), "签名覆盖卡值"),
-            () -> assertEquals(List.of(new PaymentCardMocker.Reveal(PaymentCardFunction.CALLER, INSTRUMENT, attempt(),
-                PaymentCardFunction.PURPOSE)), paymentCard.reveals()),
+            () -> assertEquals(List.of(new PaymentCardMocker.Reveal(PaymentCardFunction.CALLER, INSTRUMENT)),
+                paymentCard.reveals()),
             () -> assertEquals(List.of(PaymentCardMocker.NO_AUTHORIZATION), paymentCard.authorizations(),
                 "internal-auth.mode=OFF 时出站不附加内部 Token"),
             () -> assertFalse(output.getAll().contains(PAN), "日志包含卡号"),

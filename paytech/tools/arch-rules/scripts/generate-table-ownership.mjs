@@ -23,7 +23,7 @@ const checkOnly = process.argv.includes('--check');
 
 const financeSuccessors = ['ledger', 'account', 'billing', 'reconciliation', 'tax', 'payout'];
 // Tables every service database owns although design 03 does not list them per database (01 §3 / 08).
-const sharedInfrastructureTables = ['t_consumed_event'];
+const sharedInfrastructureTables = ['t_consumed_event', 't_consumed_aggregate_version'];
 // Retained services moved without re-cutting: every CREATE TABLE in the reviewed schema SQL belongs to the service.
 const retainedServiceSchemas = [
   {
@@ -44,18 +44,10 @@ const renamedTables = new Map([
 const transitionalSharedReads = [
   { service: 'account', database: 'mor_ledger', tables: ['t_account', 't_chart_account', 't_ledger_book'] },
 ];
-// Transitional placements (design/03 §1.2 card row, task card 05 §5.5): tables owned by one service that still live in another
-// service's database until a later step. They extend the host service's R4 whitelist and the listed modules' R11 exemption,
-// but are not counted again in the §4.2 physical table totals.
-const transitionalPlacements = [
-  {
-    host: 'payment',
-    database: 'mor_payment',
-    owner: 'card',
-    untilStep: 12,
-    modules: ['paytech-payment-card'],
-    note: '第 12 步前位于 mor_payment：卡域代码与卡表仍在 payment 进程与库内（design/05），第 12 步整体迁到 card / mor_card。',
-  },
+// Tables introduced by a refactor step's approved design on top of design 03 §2 (not part of the §4.2 count).
+const stepAddedTables = [
+  // Step 12 (design/05 §2.1, S3): one-time card material tickets in mor_card.
+  { service: 'card', database: 'mor_card', tables: ['t_card_material_ticket'] },
 ];
 
 const lines = readFileSync(designDocument, 'utf8').split('\n');
@@ -137,21 +129,13 @@ for (const retained of retainedServiceSchemas) {
   retainedTables += ownership.get(retained.service).get(retained.database).size - before;
 }
 
-const transitionalOutput = [];
-for (const placement of transitionalPlacements) {
-  const ownerTables = [...(ownership.get(placement.owner)?.values() ?? [])].flatMap((tables) => [...tables])
-    .filter((table) => table !== 't_compensation_event' && !sharedInfrastructureTables.includes(table)).sort();
-  if (ownerTables.length === 0) fail(`transitional owner ${placement.owner} has no tables`);
-  transitionalOutput.push(
-    `  # ${placement.note}`,
-    `  - host: ${placement.host}`,
-    `    database: ${placement.database}`,
-    `    owner: ${placement.owner}`,
-    `    untilStep: ${placement.untilStep}`,
-    `    modules: [${placement.modules.join(', ')}]`,
-    '    tables:',
-    ...ownerTables.map((table) => `      - ${table}`),
-  );
+let stepAdded = 0;
+for (const added of stepAddedTables) {
+  for (const table of added.tables) {
+    if (ownership.get(added.service)?.get(added.database)?.has(table)) fail(`step-added table already listed: ${table}`);
+    add(added.service, added.database, table);
+    stepAdded += 1;
+  }
 }
 
 const output = [
@@ -160,8 +144,8 @@ const output = [
   `# ${sourceRows} source tables, ${actualCounts.size} databases, ${total} physical tables.`,
   ...retainedServiceSchemas.map((retained) => `# Retained: ${retained.service} ${retained.database} from ${relative(repositoryRoot, retained.schema)}.`),
   `# ${retainedTables} retained-service tables added on top of design 03 (not part of the §4.2 count).`,
+  `# ${stepAdded} step-added tables (approved refactor-step designs, e.g. design/05 t_card_material_ticket; not part of the §4.2 count).`,
   '# Structure: services.<service>.<database> = tables owned (or copied / per-database infrastructure);',
-  '# transitionalPlacements = owner tables hosted in another service database until a later step (not counted twice).',
   `# Renamed: ${[...renamedTables].map(([from, to]) => `${from} -> ${to}`).join(', ')}.`,
   'sharedInfrastructureTables:',
   ...sharedInfrastructureTables.map((table) => `  - ${table}`),
@@ -173,7 +157,7 @@ const output = [
     ...tables.map((table) => `      - ${table}`),
   ]),
 ];
-output.push('transitionalPlacements:', ...transitionalOutput, 'services:');
+output.push('services:');
 for (const service of [...ownership.keys()].sort()) {
   output.push(`  ${service}:`);
   for (const [database, tables] of [...ownership.get(service)].sort(([a], [b]) => a.localeCompare(b))) {
@@ -186,10 +170,10 @@ const content = `${output.join('\n')}\n`;
 if (checkOnly) {
   const committed = readFileSync(outputFile, 'utf8');
   if (committed !== content) fail(`${relative(repositoryRoot, outputFile)} is stale; rerun the generator`);
-  process.stdout.write(`table-ownership.yaml is current (${total} physical tables + ${retainedTables} retained).\n`);
+  process.stdout.write(`table-ownership.yaml is current (${total} physical tables + ${retainedTables} retained + ${stepAdded} step-added).\n`);
 } else {
   writeFileSync(outputFile, content);
-  process.stdout.write(`wrote ${relative(repositoryRoot, outputFile)} (${total} physical tables + ${retainedTables} retained).\n`);
+  process.stdout.write(`wrote ${relative(repositoryRoot, outputFile)} (${total} physical tables + ${retainedTables} retained + ${stepAdded} step-added).\n`);
 }
 
 function fail(message) {

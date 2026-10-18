@@ -4,7 +4,7 @@ import org.springframework.stereotype.Component;
 
 import com.paytech.payment.api.instrument.request.ApplyCardInstrumentRequestBody;
 import com.paytech.payment.api.instrument.response.ApplyCardInstrumentResponseBody;
-import com.paytech.payment.card.domain.CardInstrumentContext.CardInput;
+import com.paytech.payment.execution.domain.CardInput;
 import com.paytech.payment.execution.service.processor.request.ApplyCardInstrumentRequest;
 import com.paytech.payment.execution.service.processor.response.ApplyCardInstrumentResponse;
 

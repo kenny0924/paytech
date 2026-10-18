@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
 /** 卡工具配置 */
 @Data
 @Configuration(proxyBeanMethods = false)
-@ConfigurationProperties(prefix = "payment.card")
+@ConfigurationProperties(prefix = "card")
 public class PaymentCardProperties implements InitializingBean {
     /** 指纹密钥解码后的最小字节数。 */
     static final int MIN_FINGERPRINT_KEY_BYTES = 32;
@@ -39,16 +39,16 @@ public class PaymentCardProperties implements InitializingBean {
      */
     public byte[] fingerprintKeyBytes() {
         if (fingerprintKey == null || fingerprintKey.isBlank()) {
-            throw new IllegalArgumentException("payment.card.fingerprint-key 未配置");
+            throw new IllegalArgumentException("card.fingerprint-key 未配置");
         }
         byte[] key;
         try {
             key = Base64.getDecoder().decode(fingerprintKey);
         } catch (IllegalArgumentException invalid) {
-            throw new IllegalArgumentException("payment.card.fingerprint-key 不是有效的 Base64");
+            throw new IllegalArgumentException("card.fingerprint-key 不是有效的 Base64");
         }
         if (key.length < MIN_FINGERPRINT_KEY_BYTES) {
-            throw new IllegalArgumentException("payment.card.fingerprint-key 解码后不足 32 字节");
+            throw new IllegalArgumentException("card.fingerprint-key 解码后不足 32 字节");
         }
         return key;
     }

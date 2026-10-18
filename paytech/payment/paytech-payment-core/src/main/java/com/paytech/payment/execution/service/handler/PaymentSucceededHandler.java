@@ -19,14 +19,17 @@ import com.paytech.payment.execution.core.configuration.PaymentEventProperties;
 import com.paytech.payment.execution.core.dal.dataobject.ChannelTransactionRef;
 import com.paytech.payment.execution.core.dal.dataobject.PaymentAction;
 import com.paytech.payment.execution.core.dal.dataobject.PaymentAttempt;
+import com.paytech.payment.execution.core.dal.dataobject.PaymentInstrumentToken;
 import com.paytech.payment.execution.core.dal.dataobject.PaymentIntent;
 import com.paytech.payment.execution.core.enums.ActionStatus;
 import com.paytech.payment.execution.core.enums.AttemptStatus;
+import com.paytech.payment.execution.core.enums.InstrumentType;
 import com.paytech.payment.execution.domain.PaymentSucceededPayload;
 import com.paytech.payment.execution.domain.PaymentSucceededResult;
 import com.paytech.payment.execution.domainservice.repository.ChannelTransactionRefRepository;
 import com.paytech.payment.execution.domainservice.repository.PaymentActionRepository;
 import com.paytech.payment.execution.domainservice.repository.PaymentAttemptRepository;
+import com.paytech.payment.execution.domainservice.repository.PaymentInstrumentTokenRepository;
 import com.paytech.payment.execution.domainservice.repository.PaymentIntentRepository;
 import com.paytech.payment.execution.integration.PaymentResultPublisher;
 
@@ -36,7 +39,8 @@ import lombok.AllArgsConstructor;
  * 支付成功提交后发布 PaymentSucceeded
  * <li>eventKey 是支付尝试 ID；Handler 从尝试、意图、成功 PAY 动作及其渠道交易引用重建事件，补偿记录不保存业务内容。</li>
  * <li>双写（design/08 §3、D34）：先向旧 topic_payment_result 发布现有报文（Commerce 消费者尚未切换），再经 {@link DomainEventPublisher}
- * 向 payment.events 发布 Schema v1 信封（aggregateType=PAYMENT_ATTEMPT、aggregateId=尝试 ID、aggregateVersion=尝试版本）。</li>
+ * 向 payment.events 发布 Schema v2 信封（aggregateType=PAYMENT_ATTEMPT、aggregateId=尝试 ID、aggregateVersion=尝试版本；v2 增加
+ * instrumentRef、consentToSave、customerId 供 card 存卡，design/05 §2.3）。</li>
  * <li>两者都收到 Broker 确认才成功；任一失败按可重试处理，重试会重发两者，消费方按事件键 / eventId 与 Payload Hash 防重。</li>
  */
 @Component
@@ -49,6 +53,7 @@ public class PaymentSucceededHandler implements CompensationEventHandler {
     private final PaymentIntentRepository intents;
     private final PaymentActionRepository actions;
     private final ChannelTransactionRefRepository refs;
+    private final PaymentInstrumentTokenRepository tokens;
     private final PaymentResultPublisher publisher;
     private final DomainEventPublisher domainEvents;
     private final PaymentEventProperties eventProperties;
@@ -118,10 +123,14 @@ public class PaymentSucceededHandler implements CompensationEventHandler {
         if (payRefs.size() != 1) {
             return null;
         }
-        return result(intent, attempt, pay, payRefs.getFirst());
+        PaymentInstrumentToken token = tokens.findToken(attempt.getPaymentInstrumentTokenId());
+        if (token == null) {
+            return null;
+        }
+        return result(intent, attempt, pay, payRefs.getFirst(), token);
     }
 
-    /** PaymentSucceeded Schema v1 信封；eventId 默认取 AggregateKey 四段式事件键，补偿重试不变。 */
+    /** PaymentSucceeded Schema v2 信封；eventId 默认取 AggregateKey 四段式事件键，补偿重试不变。 */
     static DomainEvent envelope(PaymentSucceededResult result, PaymentEventProperties properties) {
         return DomainEvent.builder().eventType(PaymentSucceededPayload.EVENT_TYPE)
             .schemaVersion(PaymentSucceededPayload.SCHEMA_VERSION)
@@ -131,9 +140,10 @@ public class PaymentSucceededHandler implements CompensationEventHandler {
             .payload(PaymentSucceededPayload.json(result)).build();
     }
 
-    /** 组装事件事实；成功时间优先取渠道结果时间。 */
+    /** 组装事件事实；成功时间优先取渠道结果时间；卡工具字段只在卡支付时填写。 */
     static PaymentSucceededResult result(PaymentIntent intent, PaymentAttempt attempt, PaymentAction pay,
-        ChannelTransactionRef ref) {
+        ChannelTransactionRef ref, PaymentInstrumentToken token) {
+        boolean card = token.getInstrumentType() == InstrumentType.CARD;
         return PaymentSucceededResult.builder().paymentAttemptId(attempt.getPaymentAttemptId())
             .attemptVersion(attempt.getVersion()).clientId(intent.getClientId()).sourceType(intent.getSourceType())
             .sourceId(intent.getSourceId()).paymentIntentId(intent.getPaymentIntentId())
@@ -142,6 +152,7 @@ public class PaymentSucceededHandler implements CompensationEventHandler {
             .succeededAt(Objects.requireNonNullElse(pay.getChannelResultTime(), attempt.getUpdateTime()))
             .paymentMethodCode(attempt.getPaymentMethodCode()).channelId(attempt.getChannelId())
             .channelAccountId(attempt.getChannelAccountId()).midId(attempt.getMidId())
-            .channelTransactionRef(ref.getExternalTransactionId()).build();
+            .channelTransactionRef(ref.getExternalTransactionId()).instrumentRef(card ? token.getInstrumentRef() : null)
+            .consentToSave(card && token.isConsentToSave()).customerId(token.getCustomerId()).build();
     }
 }
