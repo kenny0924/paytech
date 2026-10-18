@@ -2,12 +2,7 @@ package com.paytech.platform.support.accesscontrol.domainservice.service;
 
 import java.util.List;
 
-import com.paytech.platform.support.accesscontrol.domain.authentication.ClientWorkspaceView;
-import com.paytech.platform.support.accesscontrol.domain.authentication.LoginClientContext;
-import com.paytech.platform.support.accesscontrol.domain.authentication.SwitchClientContext;
-import com.paytech.platform.support.accesscontrol.domain.authentication.ClientAccountView;
-import com.paytech.platform.support.accesscontrol.domain.authentication.RefreshClientContext;
-import com.paytech.platform.support.accesscontrol.domain.authentication.LogoutClientContext;
+import com.paytech.platform.support.accesscontrol.domain.authentication.*;
 
 /** Client 认证的本地业务保存合同。 */
 public interface CustomerAuthenticationService {

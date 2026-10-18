@@ -4,30 +4,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.service.annotation.GetExchange;
-import org.springframework.web.service.annotation.HttpExchange;
-import org.springframework.web.service.annotation.PatchExchange;
-import org.springframework.web.service.annotation.PostExchange;
-import org.springframework.web.service.annotation.PutExchange;
+import org.springframework.web.service.annotation.*;
 
 import com.paytech.foundation.web.paging.PagingResponseBody;
-import com.paytech.platform.support.api.notificationmanagement.request.ChangeNotificationStatusRequestBody;
-import com.paytech.platform.support.api.notificationmanagement.request.CreateNotificationProviderRequestBody;
-import com.paytech.platform.support.api.notificationmanagement.request.CreateNotificationTemplateRequestBody;
-import com.paytech.platform.support.api.notificationmanagement.request.PreviewNotificationContentRequestBody;
-import com.paytech.platform.support.api.notificationmanagement.request.ReplaceNotificationCredentialRequestBody;
-import com.paytech.platform.support.api.notificationmanagement.request.SaveNotificationContentRequestBody;
-import com.paytech.platform.support.api.notificationmanagement.request.SaveNotificationRouteRequestBody;
-import com.paytech.platform.support.api.notificationmanagement.request.TestSendNotificationProviderRequestBody;
-import com.paytech.platform.support.api.notificationmanagement.request.UpdateNotificationProviderRequestBody;
-import com.paytech.platform.support.api.notificationmanagement.response.NotificationMutationResponseBody;
-import com.paytech.platform.support.api.notificationmanagement.response.NotificationPreviewResponseBody;
-import com.paytech.platform.support.api.notificationmanagement.response.NotificationProviderResponseBody;
-import com.paytech.platform.support.api.notificationmanagement.response.NotificationProviderTestSendResponseBody;
-import com.paytech.platform.support.api.notificationmanagement.response.NotificationRequestDetailResponseBody;
-import com.paytech.platform.support.api.notificationmanagement.response.NotificationRequestSummaryResponseBody;
-import com.paytech.platform.support.api.notificationmanagement.response.NotificationTemplateDetailResponseBody;
-import com.paytech.platform.support.api.notificationmanagement.response.NotificationTemplateSummaryResponseBody;
+import com.paytech.platform.support.api.notificationmanagement.request.*;
+import com.paytech.platform.support.api.notificationmanagement.response.*;
 
 import jakarta.validation.Valid;
 
@@ -44,12 +25,18 @@ public interface NotificationManagementApi {
     /**
      * 按编码升序分页查询模板
      *
-     * @param actor 可信 Operations 账号标识
-     * @param session 当前普通 Operations 会话
-     * @param page 页码，默认 1
-     * @param size 每页条数，默认 10，仅允许 10、20、50、100
-     * @param keyword 可选编码包含查询，最多 64 字符，通配符按文字处理
-     * @param status 可选状态 ACTIVE、DISABLED
+     * @param actor
+     *            可信 Operations 账号标识
+     * @param session
+     *            当前普通 Operations 会话
+     * @param page
+     *            页码，默认 1
+     * @param size
+     *            每页条数，默认 10，仅允许 10、20、50、100
+     * @param keyword
+     *            可选编码包含查询，最多 64 字符，通配符按文字处理
+     * @param status
+     *            可选状态 ACTIVE、DISABLED
      * @return 模板及其语言、路由状态
      */
     @GetExchange("/templates")

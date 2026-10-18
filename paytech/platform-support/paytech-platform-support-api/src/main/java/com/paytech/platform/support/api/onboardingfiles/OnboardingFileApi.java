@@ -21,9 +21,12 @@ public interface OnboardingFileApi {
      * 查询入驻文件当前元数据
      * <li>不触发扫描；每次核验真实会话与原申请。</li>
      *
-     * @param accountId Gateway/BFF 验证后的账号标识，Platform 仍核验真实会话
-     * @param sessionId 当前 CLIENT 会话标识
-     * @param fileId 文件 ID
+     * @param accountId
+     *            Gateway/BFF 验证后的账号标识，Platform 仍核验真实会话
+     * @param sessionId
+     *            当前 CLIENT 会话标识
+     * @param fileId
+     *            文件 ID
      * @return 当前元数据与允许的动作
      */
     @GetExchange("/files/{fileId}")
@@ -34,9 +37,12 @@ public interface OnboardingFileApi {
      * 签发准确不可变版本的短时下载授权
      * <li>每次独立授权；不接受 Body 或幂等回执。</li>
      *
-     * @param accountId Gateway/BFF 验证后的账号标识，Platform 仍核验真实会话
-     * @param sessionId 当前 CLIENT 会话标识
-     * @param fileId 文件 ID
+     * @param accountId
+     *            Gateway/BFF 验证后的账号标识，Platform 仍核验真实会话
+     * @param sessionId
+     *            当前 CLIENT 会话标识
+     * @param fileId
+     *            文件 ID
      * @return 最长 60 秒的下载授权
      */
     @PostExchange("/files/{fileId}/download")
@@ -48,9 +54,12 @@ public interface OnboardingFileApi {
      * <li>每次请求新建上传；HTTP 请求幂等由 Gateway 处理。</li>
      * <li>Body 约束由 BFF 入口 {@code @Valid} 执行；Platform 以等价的内部请求约束校验，字段错误返回 400 INVALID_REQUEST。</li>
      *
-     * @param accountId Gateway/BFF 验证后的账号标识，Platform 仍核验真实会话
-     * @param sessionId 当前 CLIENT 会话标识
-     * @param request 声明文件元数据和准确目标
+     * @param accountId
+     *            Gateway/BFF 验证后的账号标识，Platform 仍核验真实会话
+     * @param sessionId
+     *            当前 CLIENT 会话标识
+     * @param request
+     *            声明文件元数据和准确目标
      * @return 稳定上传身份及受控 PUT 授权；HTTP 201
      */
     @PostExchange("/uploads")
@@ -61,9 +70,12 @@ public interface OnboardingFileApi {
      * 沿原 Upload 完成登记
      * <li>Body 必须为空；同一 Upload 已完成时返回原文件，回执不包含当前扫描状态。</li>
      *
-     * @param accountId Gateway/BFF 验证后的账号标识，Platform 仍核验真实会话
-     * @param sessionId 当前 CLIENT 会话标识
-     * @param uploadId 原上传 ID
+     * @param accountId
+     *            Gateway/BFF 验证后的账号标识，Platform 仍核验真实会话
+     * @param sessionId
+     *            当前 CLIENT 会话标识
+     * @param uploadId
+     *            原上传 ID
      * @return 完成回执
      */
     @PostExchange("/uploads/{uploadId}/completion")
