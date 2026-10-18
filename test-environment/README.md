@@ -2,7 +2,7 @@
 
 独立的本机 `mor-test` 环境。沿用 `local-environment` 的 MySQL 8.4.11、Redis 8.2.1、RabbitMQ 4.2.9、Nacos 3.1.2 与同一套基础设施初始化脚本，另外部署 Operations 前端、BFF、API Gateway、Platform Support。可与 `mor-local` 同时运行；不会读取其 `.env.local`、共享数据卷或停止其容器。
 
-本目录由根工作区版本管理，前端和各服务项目继续独立版本管理。已部署 Operations 链路与独立的 Go Vault，其他核心系统不创建空应用容器。XXL-Job Admin（`compose.scheduler.yaml`，profile `scheduler`）自 2026-10-17 起常驻，由 `compose.sh` 默认加载；Platform 与 Commerce 的补偿扫描执行器向它注册。
+本目录由根工作区版本管理，前端和各服务项目继续独立版本管理。已部署 Operations 链路与独立的 Go Vault，其他核心系统不创建空应用容器。XXL-Job Admin（`compose.scheduler.yaml`，profile `scheduler`）自 2026-10-17 起常驻，由 `compose.sh` 默认加载；持有补偿事件目录的 10 个服务的补偿扫描执行器向它注册。
 
 > 规则集列表优化的三应用增量发布使用[专用发布包](../requirements/20260911/operations-console-风控规则集列表优化/release.md)。当前为准备工件，执行状态见台账；新增目录的 37 Route/22 Resource 不适用下文旧 Risk rollout/smoke 的 36/21 闭合分类。不要用全量部署或旧初始化替代该发布包。
 
@@ -153,7 +153,7 @@ python3 test-environment/scripts/initialize.py --apply-service-sql
 - `--apply-risk-sql` 只接受空的 `mor_risk_decision` 与 `mor_compliance`。
 - `--apply-service-sql` 对其余 12 个库只在空库上执行服务 `*-schema.sql` 与 `*-initial-data.sql`；表集合与 Schema 完全一致时视为 PREPARED 不重放，部分结构拒绝且不写任何库。
 - 切换涉及的其余部署项：Platform `t_gateway_target` 的 Commerce Target 改为 `acquiring-service` 并新增 consumer Target；Webhook 调用方已改为 `acquiring-service`；Vault 访问规则登记 `card-service`、`channel-connector-service`；XXL Admin 登记 `acquiring-service` 执行器与 `cardOrphanInstrumentPurge`；RabbitMQ 一致性哈希插件需按挂载重建容器后生效；旧 `cg_*` 队列与 `topic_*` 交换机按 [CURRENT_IMPLEMENTATION](../agent-docs/CURRENT_IMPLEMENTATION.md) 的待办删除。
-- 2026-10-18 已在 mor-test 执行上述切换（数据迁移、V2 镜像与启动顺序、登记核对、验收），记录见 [V2 部署与数据迁移 delivery](../requirements/20261018/test-environment-V2部署与数据迁移/delivery.md)。未新增 consumer Target（mor-test 没有 Customer 路由）；`cardOrphanInstrumentPurge` 未登记（card 在 compose 中没有 XXL 配置）。mor-test 验收脚本改用 `requirements/20261017/architecture-V2骨架与模块搬迁/verification/local-e2e/` 下的版本加 `E2E_TARGET=test`；V1 目录的 test 分支与 `register_client_api.py` 已停用。
+- 2026-10-18 已在 mor-test 执行上述切换（数据迁移、V2 镜像与启动顺序、登记核对、验收），记录见 [V2 部署与数据迁移 delivery](../requirements/20261018/test-environment-V2部署与数据迁移/delivery.md)。未新增 consumer Target（mor-test 没有 Customer 路由）。2026-10-18 任务卡 03 起，有补偿事件目录的 10 个服务（account、acquiring、billing、card、client-master、compliance、consumer、payment、platform-support、risk-decision）都以服务发现名注册 XXL 执行器（固定 IP:9999），各登记一个 `compensationEventScan`；card 另登记 `cardOrphanInstrumentPurge`。登记脚本为该需求 `scripts/register_xxl_executors.py`（`plan` 只读、`apply` 幂等）。mor-test 验收脚本改用 `requirements/20261017/architecture-V2骨架与模块搬迁/verification/local-e2e/` 下的版本加 `E2E_TARGET=test`；V1 目录的 test 分支与 `register_client_api.py` 已停用。
 
 ## 首次准备（已在当前机器执行）
 

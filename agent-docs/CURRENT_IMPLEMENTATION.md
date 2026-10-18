@@ -90,7 +90,8 @@
     - 迁移：评审 SQL 10/20/21/30/31/32/33/50 执行一次并重放验证；40 号核对 150/150；`mor_cct`、`mor_commerce`、`mor_risk` 4,210 行 = V2 六库 4,110 + 归档 100。
     - 部署项：Platform Target 指向 `acquiring-service`；Vault 新增 7 条调用方规则；XXL `acquiring-service` 补偿扫描已启动、commerce-service 任务已停；RabbitMQ 已按插件挂载重建。
     - 验收（V2 脚本 `E2E_TARGET=test`）：入驻 41/41、场景 85/85、工作区 53/53、接入自助 78/78、团队 123/123、Client API 90/90、`--outage` 92/92、Vault 烟测通过、迁移数据抽样 8/8。
-    - 未完成：`smoke.py` 与 `risk_rule_configuration_smoke.py` 被 `t_gateway_target` 目录门禁挡住，迁移前已如此。consumer Target 未新增，因为没有 Customer 路由。`cardOrphanInstrumentPurge` 未登记，因为 card 无 XXL 配置。
+    - 未完成：`smoke.py` 与 `risk_rule_configuration_smoke.py` 被 `t_gateway_target` 目录门禁挡住，迁移前已如此。consumer Target 未新增，因为没有 Customer 路由。
+    - 补偿执行器（2026-10-18 任务卡 03）：有补偿事件目录的 10 个服务全部在 XXL 登记执行器并启动 `compensationEventScan`（每 30 秒、分片广播）；card 另登记 `cardOrphanInstrumentPurge`（每小时）。只改 compose 环境变量，不改代码与镜像。compliance 停在 ERROR 的 `CLIENT_REVIEW_RESULT` 在任务启动后 32 秒内重试成功，对应申请变为 RETURNED；入驻验收 29/29 与 41/41。account 的 `accountBalanceReconciliation` 未登记。见[任务卡 03 报告](<../requirements/20261018/test-environment-V2部署与数据迁移/tasks/03-report.md>)。
     - 保留至阶段 3：旧容器、旧镜像、旧库与旧账号、`mor_v2_migration_archive`、Vault 旧调用方规则、XXL commerce-service 分组、RabbitMQ 卷内旧节点目录。
   - **其他遗留：**
     - test-environment 中 2026-09-07 Risk Operations rollout 工具的钉值需按当前 Platform 网关目录重定（3 failures、37 errors）。

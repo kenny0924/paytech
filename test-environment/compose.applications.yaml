@@ -100,6 +100,16 @@ services:
       RISK_SNOWFLAKE_REGION_ID: "0"
       RISK_SNOWFLAKE_WORKER_ID: "25"
       RISK_DECISION_ENVIRONMENT: TEST
+      # 补偿扫描执行器：任务 compensationEventScan 在 xxl-job-admin 登记（20261018 任务卡 03）。
+      COMPENSATION_INSTANCEID: risk-decision-test
+      XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
+      XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
+      XXL_JOB_EXECUTOR_ENABLED: "true"
+      XXL_JOB_EXECUTOR_APPNAME: risk-decision-service
+      XXL_JOB_EXECUTOR_IP: 172.30.73.25
+      XXL_JOB_EXECUTOR_PORT: "9999"
+      XXL_JOB_EXECUTOR_LOGPATH: /tmp/xxl-job
+      XXL_JOB_EXECUTOR_EXCLUDEDPACKAGES: org.springframework.,spring.
     depends_on:
       mysql: { condition: service_healthy }
       redis: { condition: service_healthy }
@@ -142,6 +152,16 @@ services:
       MESSAGING_PRODUCER_SERVICE: compliance
       MESSAGING_PRODUCER_SEQUENCER_ENABLED: "true"
       MESSAGING_PUBLISHER_UNROUTABLEPOLICY: FAIL
+      # 补偿扫描执行器：任务 compensationEventScan 在 xxl-job-admin 登记（20261018 任务卡 03）。
+      COMPENSATION_INSTANCEID: compliance-test
+      XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
+      XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
+      XXL_JOB_EXECUTOR_ENABLED: "true"
+      XXL_JOB_EXECUTOR_APPNAME: compliance-service
+      XXL_JOB_EXECUTOR_IP: 172.30.73.32
+      XXL_JOB_EXECUTOR_PORT: "9999"
+      XXL_JOB_EXECUTOR_LOGPATH: /tmp/xxl-job
+      XXL_JOB_EXECUTOR_EXCLUDEDPACKAGES: org.springframework.,spring.
     depends_on:
       mysql: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
@@ -306,6 +326,16 @@ services:
       MOR_CONSUMER_DB_PASSWORD: ${MOR_CONSUMER_DB_PASSWORD:?prepare test secrets}
       CONSUMER_SNOWFLAKE_REGION_ID: "0"
       CONSUMER_SNOWFLAKE_WORKER_ID: "27"
+      # 补偿扫描执行器：任务 compensationEventScan 在 xxl-job-admin 登记（20261018 任务卡 03）。
+      COMPENSATION_INSTANCEID: consumer-test
+      XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
+      XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
+      XXL_JOB_EXECUTOR_ENABLED: "true"
+      XXL_JOB_EXECUTOR_APPNAME: consumer-service
+      XXL_JOB_EXECUTOR_IP: 172.30.73.33
+      XXL_JOB_EXECUTOR_PORT: "9999"
+      XXL_JOB_EXECUTOR_LOGPATH: /tmp/xxl-job
+      XXL_JOB_EXECUTOR_EXCLUDEDPACKAGES: org.springframework.,spring.
     depends_on:
       mysql: { condition: service_healthy }
       nacos: { condition: service_healthy }
@@ -349,6 +379,15 @@ services:
       ONBOARDING_ID_DATACENTER: "0"
       ONBOARDING_ID_WORKER: "26"
       COMPENSATION_INSTANCE_ID: client-master-test
+      # 补偿扫描执行器：任务 compensationEventScan 在 xxl-job-admin 登记（20261018 任务卡 03）。
+      XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
+      XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
+      XXL_JOB_EXECUTOR_ENABLED: "true"
+      XXL_JOB_EXECUTOR_APPNAME: client-master-service
+      XXL_JOB_EXECUTOR_IP: 172.30.73.26
+      XXL_JOB_EXECUTOR_PORT: "9999"
+      XXL_JOB_EXECUTOR_LOGPATH: /tmp/xxl-job
+      XXL_JOB_EXECUTOR_EXCLUDEDPACKAGES: org.springframework.,spring.
     depends_on:
       mysql: { condition: service_healthy }
       redis: { condition: service_healthy }
@@ -418,6 +457,16 @@ services:
       PAYMENT_SNOWFLAKE_REGION_ID: "0"
       PAYMENT_SNOWFLAKE_WORKER_ID: "21"
       PAYTECH_INSTANCE_ID: payment-test
+      # 补偿扫描执行器：任务 compensationEventScan 在 xxl-job-admin 登记（20261018 任务卡 03）。
+      COMPENSATION_INSTANCEID: payment-test
+      XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
+      XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
+      XXL_JOB_EXECUTOR_ENABLED: "true"
+      XXL_JOB_EXECUTOR_APPNAME: payment-service
+      XXL_JOB_EXECUTOR_IP: 172.30.73.35
+      XXL_JOB_EXECUTOR_PORT: "9999"
+      XXL_JOB_EXECUTOR_LOGPATH: /tmp/xxl-job
+      XXL_JOB_EXECUTOR_EXCLUDEDPACKAGES: org.springframework.,spring.
     depends_on:
       mysql: { condition: service_healthy }
       redis: { condition: service_healthy }
@@ -490,6 +539,15 @@ services:
       # 卡指纹 HMAC 密钥（Base64，至少 32 字节），由 prepare.py 生成；更换会使已存卡与凭证无法匹配。
       CARD_FINGERPRINT_KEY: ${MOR_CARD_FINGERPRINT_KEY:?prepare test secrets}
       PAYTECH_INSTANCE_ID: card-test
+      # 补偿扫描执行器（另承载 cardOrphanInstrumentPurge）：任务 compensationEventScan 在 xxl-job-admin 登记（20261018 任务卡 03）。
+      XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
+      XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
+      XXL_JOB_EXECUTOR_ENABLED: "true"
+      XXL_JOB_EXECUTOR_APPNAME: card-service
+      XXL_JOB_EXECUTOR_IP: 172.30.73.37
+      XXL_JOB_EXECUTOR_PORT: "9999"
+      XXL_JOB_EXECUTOR_LOGPATH: /tmp/xxl-job
+      XXL_JOB_EXECUTOR_EXCLUDEDPACKAGES: org.springframework.,spring.
     depends_on:
       mysql: { condition: service_healthy }
       redis: { condition: service_healthy }
@@ -575,6 +633,15 @@ services:
       BILLING_SNOWFLAKE_WORKER_ID: "30"
       BILLING_COMPENSATION_INSTANCE_ID: billing-test
       PAYTECH_INSTANCE_ID: billing-test
+      # 补偿扫描执行器：任务 compensationEventScan 在 xxl-job-admin 登记（20261018 任务卡 03）。
+      XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
+      XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
+      XXL_JOB_EXECUTOR_ENABLED: "true"
+      XXL_JOB_EXECUTOR_APPNAME: billing-service
+      XXL_JOB_EXECUTOR_IP: 172.30.73.39
+      XXL_JOB_EXECUTOR_PORT: "9999"
+      XXL_JOB_EXECUTOR_LOGPATH: /tmp/xxl-job
+      XXL_JOB_EXECUTOR_EXCLUDEDPACKAGES: org.springframework.,spring.
     depends_on:
       mysql: { condition: service_healthy }
       redis: { condition: service_healthy }
@@ -615,6 +682,15 @@ services:
       ACCOUNT_LEDGER_SERVICE_URL: http://ledger-service:18105
       ACCOUNT_BILLING_SERVICE_URL: http://billing-service:18113
       ACCOUNT_COMPENSATION_INSTANCE_ID: account-test
+      # 补偿扫描执行器（另承载 accountBalanceReconciliation，任务未登记）：任务 compensationEventScan 在 xxl-job-admin 登记（20261018 任务卡 03）。
+      XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
+      XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
+      XXL_JOB_EXECUTOR_ENABLED: "true"
+      XXL_JOB_EXECUTOR_APPNAME: account-service
+      XXL_JOB_EXECUTOR_IP: 172.30.73.40
+      XXL_JOB_EXECUTOR_PORT: "9999"
+      XXL_JOB_EXECUTOR_LOGPATH: /tmp/xxl-job
+      XXL_JOB_EXECUTOR_EXCLUDEDPACKAGES: org.springframework.,spring.
     depends_on:
       mysql: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }

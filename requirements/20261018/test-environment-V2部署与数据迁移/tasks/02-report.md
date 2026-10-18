@@ -170,6 +170,8 @@ worktree 多出的 22 项全部是读取构建产物的 "rendered" 测试；两�
 4. **RabbitMQ `hostname`**：是否在 compose 中固定，避免以后重建再换节点、丢失队列与消息。
 5. **`--outage` 的时序判定**：是否把"任务行删除"的等待从 15 秒放宽到一个扫描周期以上（≥ 45 秒）。
 
+6. **其余服务的补偿执行器**（阶段 1 待确认第 7 项的遗留）：2026-10-18 任务卡 03 已为其余 8 个服务补齐执行器与 `compensationEventScan`，card 另登记 `cardOrphanInstrumentPurge`，见 [03 报告](./03-report.md)。
+
 ## 10. 阶段 2 完成判定（runbook 第 9 节）
 
 | 判定项 | 结果 |
