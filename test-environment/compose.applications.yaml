@@ -1,3 +1,13 @@
+# JVM 内存分级（requirements/20261018/test-environment-V2部署与数据迁移 阶段 1 调优；容器上限见各服务 mem_limit）：
+#   large（Platform、Gateway）：堆 128m–384m、元空间上限 256m，容器 768m；
+#   medium（收单、客户主档、风控决策、合规、支付、卡、总账、计费、两个 BFF）：堆 64m–256m、元空间上限 192m，容器 576m；
+#   small（商务、消费者、渠道连接、账户、对账、税务）：堆 64m–160m、元空间上限 160m，容器 448m。
+# 依据：本机演练 test Profile 空载实测常驻 170–340 MiB、元空间 55–100 MiB；第 14 步全链路实测 153–649 MiB。
+# 入口参数写在 entrypoint（与 java/Dockerfile 同形，只改内存参数），不经 JAVA_TOOL_OPTIONS / JDK_JAVA_OPTIONS 导出，健康探针 JVM 不受影响。
+x-jvm-large: &jvm-large [java, -Xms128m, -Xmx384m, -XX:MaxMetaspaceSize=256m, -XX:ReservedCodeCacheSize=64m, -Xss512k, -XX:+UseSerialGC, -XX:TieredStopAtLevel=1, -Duser.home=/tmp, -Djava.io.tmpdir=/tmp, -jar, /app/application.jar]
+x-jvm-medium: &jvm-medium [java, -Xms64m, -Xmx256m, -XX:MaxMetaspaceSize=192m, -XX:ReservedCodeCacheSize=48m, -Xss512k, -XX:+UseSerialGC, -XX:TieredStopAtLevel=1, -Duser.home=/tmp, -Djava.io.tmpdir=/tmp, -jar, /app/application.jar]
+x-jvm-small: &jvm-small [java, -Xms64m, -Xmx160m, -XX:MaxMetaspaceSize=160m, -XX:ReservedCodeCacheSize=48m, -Xss512k, -XX:+UseSerialGC, -XX:TieredStopAtLevel=1, -Duser.home=/tmp, -Djava.io.tmpdir=/tmp, -jar, /app/application.jar]
+
 x-java: &java
   profiles: [applications]
   restart: unless-stopped
@@ -68,6 +78,8 @@ services:
   # V2 服务拆分（refactor 第 03–12 步）：每个服务一个镜像与 JAR_FILE，健康检查走管理端口（业务端口 + 1000）。
   risk-decision-service:
     <<: *java
+    mem_limit: 576m
+    entrypoint: *jvm-medium
     image: mor-test/risk-decision-service:development
     build:
       context: ./artifacts
@@ -101,6 +113,8 @@ services:
 
   compliance-service:
     <<: *java
+    mem_limit: 576m
+    entrypoint: *jvm-medium
     image: mor-test/compliance-service:development
     build:
       context: ./artifacts
@@ -141,6 +155,8 @@ services:
 
   platform-support-service:
     <<: *java
+    mem_limit: 768m
+    entrypoint: *jvm-large
     image: mor-test/platform-support-service:development
     build:
       context: ./artifacts
@@ -217,6 +233,8 @@ services:
 
   acquiring-service:
     <<: *java
+    mem_limit: 576m
+    entrypoint: *jvm-medium
     image: mor-test/acquiring-service:development
     build:
       context: ./artifacts
@@ -270,6 +288,8 @@ services:
 
   consumer-service:
     <<: *java
+    mem_limit: 448m
+    entrypoint: *jvm-small
     image: mor-test/consumer-service:development
     build:
       context: ./artifacts
@@ -298,6 +318,8 @@ services:
 
   client-master-service:
     <<: *java
+    mem_limit: 576m
+    entrypoint: *jvm-medium
     image: mor-test/client-master-service:development
     build:
       context: ./artifacts
@@ -342,6 +364,8 @@ services:
 
   commercial-service:
     <<: *java
+    mem_limit: 448m
+    entrypoint: *jvm-small
     image: mor-test/commercial-service:development
     build:
       context: ./artifacts
@@ -367,6 +391,8 @@ services:
 
   payment-service:
     <<: *java
+    mem_limit: 576m
+    entrypoint: *jvm-medium
     image: mor-test/payment-service:development
     build:
       context: ./artifacts
@@ -406,6 +432,8 @@ services:
 
   channel-connector-service:
     <<: *java
+    mem_limit: 448m
+    entrypoint: *jvm-small
     image: mor-test/channel-connector-service:development
     build:
       context: ./artifacts
@@ -433,6 +461,8 @@ services:
 
   card-service:
     <<: *java
+    mem_limit: 576m
+    entrypoint: *jvm-medium
     image: mor-test/card-service:development
     build:
       context: ./artifacts
@@ -475,6 +505,8 @@ services:
 
   ledger-service:
     <<: *java
+    mem_limit: 576m
+    entrypoint: *jvm-medium
     image: mor-test/ledger-service:development
     build:
       context: ./artifacts
@@ -515,6 +547,8 @@ services:
 
   billing-service:
     <<: *java
+    mem_limit: 576m
+    entrypoint: *jvm-medium
     image: mor-test/billing-service:development
     build:
       context: ./artifacts
@@ -555,6 +589,8 @@ services:
 
   account-service:
     <<: *java
+    mem_limit: 448m
+    entrypoint: *jvm-small
     image: mor-test/account-service:development
     build:
       context: ./artifacts
@@ -592,6 +628,8 @@ services:
 
   reconciliation-service:
     <<: *java
+    mem_limit: 448m
+    entrypoint: *jvm-small
     image: mor-test/reconciliation-service:development
     build:
       context: ./artifacts
@@ -620,6 +658,8 @@ services:
 
   tax-service:
     <<: *java
+    mem_limit: 448m
+    entrypoint: *jvm-small
     image: mor-test/tax-service:development
     build:
       context: ./artifacts
@@ -648,6 +688,8 @@ services:
 
   client-console-bff:
     <<: *java
+    mem_limit: 576m
+    entrypoint: *jvm-medium
     image: mor-test/client-console-bff:development
     build:
       context: ./artifacts
@@ -672,6 +714,8 @@ services:
 
   operations-console-bff:
     <<: *java
+    mem_limit: 576m
+    entrypoint: *jvm-medium
     image: mor-test/operations-console-bff:development
     build:
       context: ./artifacts
@@ -697,6 +741,8 @@ services:
 
   api-gateway:
     <<: *java
+    mem_limit: 768m
+    entrypoint: *jvm-large
     image: mor-test/api-gateway:development
     build:
       context: ./artifacts
