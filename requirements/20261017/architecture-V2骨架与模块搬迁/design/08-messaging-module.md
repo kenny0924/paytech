@@ -51,7 +51,7 @@
 1. `event_id` 已存在 → 确认消息，跳过（重放）。
 2. `aggregateVersion` ≤ `last_version` → 确认并跳过（旧事件）。
 3. `aggregateVersion` > `last_version + 1` 且 Handler 声明 `strictOrder=true` → **退避后把消息重新发布到本分区队列尾部**（Quorum 队列对 Nack 重入队的消息会优先重投，原样 Nack 等不到排在后面的缺失版本），Broker 确认后再 Ack 原消息；尝试次数记在头 `x-paytech-gap-attempts`，第 5 次仍有缺口则拒绝进入 DLQ 并告警；`strictOrder=false`（如 Webhook 投递）→ 直接处理。聚合首次出现、尚无版本记录时以该事件为基线直接处理。**`strictOrder=true` 的事件要求发布方按聚合使用连续的事件序号**（如 `journal_sequence`），用可能跳号的实体版本会造成永久缺口。
-4. Handler 在本地事务内处理业务并写两张表，同事务提交；消费者按 Handler 幂等键再做业务层幂等（现行规则）。
+4. Handler 在本地事务内处理业务并写两张表，同事务提交（`transaction=SHARED`，默认）；消费者按 Handler 幂等键再做业务层幂等（现行规则）。**实现修订（第 08 步）**：当 Handler 复用继承 `AbstractProcessor` 的既有 Processor（它拒绝在已有事务中被调用）时，用 `transaction=HANDLER_MANAGED`：拦截器先以短事务判定重放 / 旧版本 / 缺口，再在事务外调用 Handler（Processor 自管事务），成功后另开短事务登记 `event_id` 并推进版本；Handler 提交后、登记前崩溃的窗口由业务幂等兜底，与切换前只靠业务幂等的现状一致。业务明确拒绝抛 `DomainEventRejectedException` 直接入 DLQ；运行时异常退避重投，5 次后入 DLQ。
 
 ## 5. 事件目录 v1
 
