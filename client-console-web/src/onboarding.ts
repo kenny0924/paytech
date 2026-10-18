@@ -162,6 +162,15 @@ export function flatten(values: Values): Flat {
     ),
   );
 }
+/**
+ * 保存失败时按字段路径取出可展示的提示：只保留页面上存在的字段，其余由顶层提示承担。
+ * 适用于 Problem errors[]（422 VALIDATION_ERROR 或 INVALID_DRAFT），程序判断仍只用顶层 code。
+ */
+export function fieldIssues(error: unknown, known: Iterable<string>): Record<string, string> {
+  if (!(error instanceof RequestFailure)) return {};
+  const allowed = new Set(known);
+  return Object.fromEntries(Object.entries(error.fields).filter(([field]) => allowed.has(field)));
+}
 export function patch(before: Flat, after: Flat) {
   const dirtyFields = Object.keys(after).filter(
     (key) => (before[key] ?? "") !== after[key],

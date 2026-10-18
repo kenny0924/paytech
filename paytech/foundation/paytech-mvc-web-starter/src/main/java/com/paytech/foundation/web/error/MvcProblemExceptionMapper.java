@@ -81,8 +81,7 @@ public final class MvcProblemExceptionMapper {
                 unavailableException.getErrorCode().getMessage()), unavailableException);
         }
         if (exception instanceof RequestBodyValidationException validationException) {
-            return problem(HttpStatus.UNPROCESSABLE_CONTENT, CommonErrorCode.VALIDATION_ERROR,
-                CommonErrorCode.VALIDATION_ERROR.getMessage(), validationException.errors(), HttpHeaders.EMPTY);
+            return mapProjectedBodyValidation(validationException);
         }
         if (exception instanceof FailException failException) {
             return mapFailException(failException);
@@ -125,6 +124,30 @@ public final class MvcProblemExceptionMapper {
         logUnexpectedFailure(exception, request);
         return problem(HttpStatus.INTERNAL_SERVER_ERROR, CommonErrorCode.INTERNAL_ERROR,
             CommonErrorCode.INTERNAL_ERROR.getMessage());
+    }
+
+    /**
+     * 本地已投影的 Body 字段错误：公共 VALIDATION_ERROR 固定 422；Owner 业务码按 Owner 状态解析（默认 422）并保留其安全消息。
+     *
+     * @param exception 携带字段清单的明确失败
+     * @return 带去重排序 errors 的 Problem 描述
+     */
+    private MappedProblem mapProjectedBodyValidation(RequestBodyValidationException exception) {
+        List<ProblemFieldError> errors = normalizedFieldErrors(exception.errors());
+        if (CommonErrorCode.VALIDATION_ERROR.getCode().equals(exception.getCode())) {
+            return problem(HttpStatus.UNPROCESSABLE_CONTENT, CommonErrorCode.VALIDATION_ERROR,
+                CommonErrorCode.VALIDATION_ERROR.getMessage(), errors, HttpHeaders.EMPTY);
+        }
+        HttpStatus status = resolveOwnerStatus(exception.getErrorCode(), HttpStatus.UNPROCESSABLE_CONTENT, true);
+        return problem(status, exception.getErrorCode(), exception.getMessage(), errors, HttpHeaders.EMPTY);
+    }
+
+    /** 字段错误按 field、message 去重并稳定排序，使同一输入总得到同一 errors 顺序。 */
+    private static List<ProblemFieldError> normalizedFieldErrors(List<ProblemFieldError> errors) {
+        return errors.stream().distinct()
+            .sorted(java.util.Comparator.comparing(ProblemFieldError::field)
+                .thenComparing(ProblemFieldError::message))
+            .toList();
     }
 
     private MappedProblem mapFailException(FailException exception) {
@@ -365,10 +388,7 @@ public final class MvcProblemExceptionMapper {
         }
 
         private List<ProblemFieldError> fieldErrors() {
-            return fieldErrors.stream().distinct()
-                .sorted(java.util.Comparator.comparing(ProblemFieldError::field)
-                    .thenComparing(ProblemFieldError::message))
-                .toList();
+            return normalizedFieldErrors(fieldErrors);
         }
     }
 }

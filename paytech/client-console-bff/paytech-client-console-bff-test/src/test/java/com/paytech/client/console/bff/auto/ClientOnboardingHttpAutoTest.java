@@ -274,6 +274,32 @@ class ClientOnboardingHttpAutoTest {
         assertTrue(CALLS.stream().allMatch(call -> call.path().startsWith("/client-onboarding/")));
     }
 
+    /** CCT 422 INVALID_DRAFT 的字段清单经 BFF 原样保留；Request ID 为浏览器请求的值，不泄露上游 ID 与 detail。 */
+    @Test
+    void invalidDraftFieldErrorsReachBrowser() throws Exception {
+        mode = "draft-invalid";
+        var result = send(
+            "PATCH",
+            "/client-onboarding/v1/applications/10/draft",
+            "{\"dirtyFields\":[\"contact.phone\",\"individual.birthDate\"],\"values\":{\"contact\":{\"phone\":\"13800138000\"},\"individual\":{\"birthDate\":\"1990/05/01\"}}}"
+        );
+        assertEquals(422, result.statusCode(), result.body());
+        assertEquals("application/problem+json", result.headers().firstValue("Content-Type").orElseThrow());
+        assertEquals("browser-onboarding-fixture", result.headers().firstValue("X-Request-Id").orElseThrow());
+        var body = tools.jackson.databind.json.JsonMapper.builder().build().readTree(result.body());
+        assertEquals("INVALID_DRAFT", body.path("code").asString());
+        assertEquals("入驻字段不符合约定", body.path("detail").asString());
+        assertEquals("browser-onboarding-fixture", body.path("requestId").asString());
+        assertEquals(
+            "[{\"field\":\"contact.phone\",\"message\":\"手机号须为 E.164 格式，如 +8613800138000\"},"
+                + "{\"field\":\"individual.birthDate\",\"message\":\"须为 YYYY-MM-DD 格式的有效日期\"}]",
+            body.path("errors").toString()
+        );
+        assertFalse(result.body().contains("fixture-owner"));
+        assertFalse(result.body().contains("Owner detail"));
+        assertEquals(1, CALLS.size());
+    }
+
     @Test
     void malformedQueryIdentifiersAndEmptyCommandsNeverReachOwner() throws Exception {
         for (String path : List.of(
@@ -559,6 +585,11 @@ class ClientOnboardingHttpAutoTest {
             body =
                 "{\"commandId\":\"80\",\"applicationId\":\"10\",\"partyId\":\"31\",\"relationId\":\"32\",\"operation\":\"PERSON_CREATED\",\"completedAt\":\"2026-09-16T00:00:00.000000Z\"}";
         } else if (path.endsWith("/draft")) {
+            if (mode.equals("draft-invalid")) {
+                exchange.getResponseHeaders().set("X-Request-Id", "fixture-owner");
+                write(exchange, 422, "{\"type\":\"about:blank\",\"title\":\"Unprocessable Content\",\"detail\":\"Owner detail\",\"code\":\"INVALID_DRAFT\",\"requestId\":\"fixture-owner\",\"timestamp\":\"2026-09-16T00:00:00.000000Z\",\"errors\":[{\"field\":\"contact.phone\",\"message\":\"手机号须为 E.164 格式，如 +8613800138000\"},{\"field\":\"individual.birthDate\",\"message\":\"须为 YYYY-MM-DD 格式的有效日期\"}]}", "application/problem+json");
+                return;
+            }
             body =
                 "{\"commandId\":\"80\",\"applicationId\":\"10\",\"applicationNo\":\"FIXTURE\",\"clientId\":\"20\",\"clientType\":\"ORGANIZATION\",\"operation\":\"SAVED\",\"completedAt\":\"2026-09-16T00:00:00.000000Z\"}";
         } else {

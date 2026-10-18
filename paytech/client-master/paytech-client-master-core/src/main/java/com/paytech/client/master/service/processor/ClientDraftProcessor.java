@@ -1,4 +1,5 @@
 package com.paytech.client.master.service.processor;
+import java.util.List;
 import java.util.function.Supplier;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -9,7 +10,8 @@ import com.paytech.client.master.domain.onboarding.*;
 import com.paytech.client.master.domainservice.service.ClientDraftService;
 import com.paytech.client.master.ext.rest.ClientDraftConverter;
 import com.paytech.client.master.integration.*;
-import com.paytech.foundation.common.error.FailException;
+import com.paytech.foundation.httpproblem.api.ProblemFieldError;
+import com.paytech.foundation.httpproblem.api.RequestBodyValidationException;
 import com.paytech.foundation.redis.api.ResourceLock;
 import static com.paytech.client.contract.api.enums.ClientDraftErrorCode.*;
 /** 外围协调和外部调用不在数据库事务中；本地事务包裹 Service 的状态、归属与持久化规则。 */
@@ -28,9 +30,7 @@ public class ClientDraftProcessor {
     @ResourceLock(prefix="client-onboarding:account-slot",key="#accountId")
     public CommandReceiptResponseBody create(long accountId,long sessionId,StartApplicationRequestBody request) {
         accounts.authorize(accountId,sessionId);
-        ClientType type;
-        try { type=ClientType.valueOf(request.clientType()); }
-        catch (RuntimeException invalid) { throw new FailException(INVALID_DRAFT); }
+        ClientType type=clientType(request);
         var command=ClientDraftCommand.of(accountId,"CLIENT_APPLICATION_CREATE");
         return duplicateRace(() -> writes.execute(tx -> service.create(command,type)));
     }
@@ -57,6 +57,17 @@ public class ClientDraftProcessor {
         reads.executeWithoutResult(tx -> service.prepareSave(command,applicationId,patch));
         var protectedContacts=contacts.protect(patch);
         return duplicateRace(() -> writes.execute(tx -> service.save(command,applicationId,patch,protectedContacts)));
+    }
+    /** 申请类型只接受闭合目录内的 Code；空值或目录外取值以 clientType 字段错误拒绝。 */
+    static ClientType clientType(StartApplicationRequestBody request) {
+        String code=request==null?null:request.clientType();
+        for (ClientType type:ClientType.values()) {
+            if (type.getCode().equals(code)) {
+                return type;
+            }
+        }
+        throw new RequestBodyValidationException(INVALID_DRAFT,
+            List.of(new ProblemFieldError("clientType","须为 INDIVIDUAL 或 ORGANIZATION")),null);
     }
     private <T> T duplicateRace(Supplier<T> transaction) {
         // Redis 租约失效时，由账号未完成名额唯一索引回滚竞争事务，再读取胜出的申请。

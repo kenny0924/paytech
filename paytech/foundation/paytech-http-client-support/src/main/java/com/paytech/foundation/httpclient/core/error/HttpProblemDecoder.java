@@ -13,6 +13,7 @@ import org.springframework.web.client.RestClientResponseException;
 
 import com.paytech.foundation.httpproblem.api.ApiProblemProfile;
 import com.paytech.foundation.httpproblem.api.ApiProblemResponse;
+import com.paytech.foundation.httpproblem.api.ProblemFieldError;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.StreamReadFeature;
 import tools.jackson.databind.DeserializationFeature;
@@ -47,7 +48,14 @@ final class HttpProblemDecoder {
         return new DecodedProblem(readLegacy(failure), List.of(), false);
     }
 
-    record DecodedProblem(String code, List<String> fields, boolean strictProfile) { }
+    /** 已校验的 Problem 摘要；errors 为去重后的远端字段错误（field 与 message），旧格式恒为空。 */
+    record DecodedProblem(String code, List<ProblemFieldError> errors, boolean strictProfile) {
+
+        /** 去重后的字段路径。 */
+        List<String> fields() {
+            return errors.stream().map(ProblemFieldError::field).distinct().toList();
+        }
+    }
 
     void validateHead(RestClientResponseException failure) {
         if (!failure.getStatusCode().is4xxClientError() && !failure.getStatusCode().is5xxServerError()) {
@@ -75,7 +83,7 @@ final class HttpProblemDecoder {
         }
         ApiProblemProfile.validate(problem, status.getReasonPhrase(), requestId);
         return new DecodedProblem(problem.code(), problem.errors() == null ? List.of()
-            : problem.errors().stream().map(error -> error.field()).distinct().toList(), true);
+            : problem.errors().stream().distinct().toList(), true);
     }
 
     private String readLegacy(RestClientResponseException failure) {
