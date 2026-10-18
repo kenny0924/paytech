@@ -5,6 +5,8 @@
 # 依据：本机演练 test Profile 空载实测常驻 170–340 MiB、元空间 55–100 MiB；第 14 步全链路实测 153–649 MiB。
 # 入口参数写在 entrypoint（与 java/Dockerfile 同形，只改内存参数），不经 JAVA_TOOL_OPTIONS / JDK_JAVA_OPTIONS 导出，健康探针 JVM 不受影响。
 x-jvm-large: &jvm-large [java, -Xms128m, -Xmx384m, -XX:MaxMetaspaceSize=256m, -XX:ReservedCodeCacheSize=64m, -Xss512k, -XX:+UseSerialGC, -XX:TieredStopAtLevel=1, -Duser.home=/tmp, -Djava.io.tmpdir=/tmp, -jar, /app/application.jar]
+# Platform 常驻接近 768m 上限（阶段 2 实测 704 MiB），单独给 1024m 容器与 512m 堆。
+x-jvm-platform: &jvm-platform [java, -Xms128m, -Xmx512m, -XX:MaxMetaspaceSize=256m, -XX:ReservedCodeCacheSize=64m, -Xss512k, -XX:+UseSerialGC, -XX:TieredStopAtLevel=1, -Duser.home=/tmp, -Djava.io.tmpdir=/tmp, -jar, /app/application.jar]
 x-jvm-medium: &jvm-medium [java, -Xms64m, -Xmx256m, -XX:MaxMetaspaceSize=192m, -XX:ReservedCodeCacheSize=48m, -Xss512k, -XX:+UseSerialGC, -XX:TieredStopAtLevel=1, -Duser.home=/tmp, -Djava.io.tmpdir=/tmp, -jar, /app/application.jar]
 x-jvm-small: &jvm-small [java, -Xms64m, -Xmx160m, -XX:MaxMetaspaceSize=160m, -XX:ReservedCodeCacheSize=48m, -Xss512k, -XX:+UseSerialGC, -XX:TieredStopAtLevel=1, -Duser.home=/tmp, -Djava.io.tmpdir=/tmp, -jar, /app/application.jar]
 
@@ -155,8 +157,8 @@ services:
 
   platform-support-service:
     <<: *java
-    mem_limit: 768m
-    entrypoint: *jvm-large
+    mem_limit: 1024m
+    entrypoint: *jvm-platform
     image: mor-test/platform-support-service:development
     build:
       context: ./artifacts

@@ -50,3 +50,4 @@ SQL 执行记录：本需求 [sql/](./sql/) 的 10、20、21、30、31、32、33
 - 已知生产缺口：Payment 退款（PAY-I04）与 RefundSucceeded。
 - `cardOrphanInstrumentPurge` 未登记。
 - consumer Target 未新增：mor-test 没有 Customer 路由。
+| 2026-10-18 | 阶段 3 · 清理 | 用户确认范围后执行：删除 3 个 V1 服务容器（client-contract / commerce / risk）与 102 个非 development 的 mor-test 旧镜像（约 11 GB）；DROP mor_cct、mor_commerce、mor_risk 与 mor_v2_migration_archive（逻辑转储与卷快照保留在 private/backup-20261018）；Platform 容器限额 768m→1024m、堆 384m→512m（新增 x-jvm-platform 入口，重建后 healthy，常驻 363 MiB）。保留：mor_finance、mor_payment 等空库，旧 *_app 账号，RabbitMQ 卷内旧节点数据。 | 完成 |
