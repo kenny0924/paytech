@@ -20,6 +20,7 @@ import com.paytech.acquiring.domain.enums.PaymentIntentStatus;
 import com.paytech.acquiring.ext.mq.PaymentSucceededListener;
 import com.paytech.acquiring.test.base.order.AbstractPaymentResultTest;
 import com.paytech.acquiring.test.dal.PaymentResultTestMapper;
+import com.paytech.acquiring.test.mocker.external.PaymentEventMocker;
 import com.paytech.acquiring.test.mocker.local.CheckoutPaymentDataMocker;
 
 /**
@@ -191,6 +192,22 @@ class PaymentSucceededListenerTest extends AbstractPaymentResultTest {
             mapper.funds(orderId()).get("funds_availability_status"));
         assertNull(paymentEvents.receiveDeadLetter(500));
         assertEquals(1, paymentEvents.consumedEvents(ATTEMPT_ID));
+    }
+
+    /** 信封版本兼容：切换前的 v1 报文仍推进为已支付；未知的 v3 进入死信队列，订单与投影不变。 */
+    @Test
+    void test_schemaVersionCompatibility() throws Exception {
+        publishSchema(payload(fixture, ATTEMPT_ID), 1);
+        awaitPaid(orderId());
+        assertEquals(1, paymentEvents.consumedEvents(ATTEMPT_ID));
+
+        var future = boundOrder();
+        var payment = mapper.payment(future.getOrder().getOrderId());
+        publishSchema(payload(future, ATTEMPT_ID + 1), PaymentEventMocker.CURRENT_SCHEMA_VERSION + 1);
+
+        assertNotNull(paymentEvents.receiveDeadLetter(5000));
+        assertEquals(payment, mapper.payment(future.getOrder().getOrderId()));
+        assertEquals(0, paymentEvents.consumedEvents(ATTEMPT_ID + 1));
     }
 
     /** 已绑定 Intent（ID 同订单）的开放订单。 */
