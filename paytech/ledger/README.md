@@ -49,7 +49,7 @@ Snowflake `LEDGER_SNOWFLAKE_REGION_ID` / `LEDGER_SNOWFLAKE_WORKER_ID`（缺失�
 health / info / prometheus，不披露组件详情。
 
 默认 auto 测试连接 local-environment 的 `mor_ledger`（账号 `ledger_app`，只有 SELECT / INSERT / UPDATE / DELETE）、Redis（前缀 `ledger-mock`）
-与 RabbitMQ；account / billing 由 Loopback Mock HTTP 服务返回配置的 DTO。每例 BeforeEach 清空本服务的 billing 分区队列并检查空基线与 52 行
+与 RabbitMQ；account / billing 由 Loopback Mock HTTP 服务返回配置的 DTO。每例 BeforeEach 清空本服务的 billing 分区队列并检查空基线与 86 行
 初始化保留数据，AfterEach 清空 31 张表的测试写入。测试环境准备见
 `paytech-ledger-test/src/test/resources/init/ddl.sql`。
 

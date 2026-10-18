@@ -25,6 +25,7 @@ import com.paytech.account.test.mocker.external.BillingFactMocker;
 import com.paytech.account.test.mocker.external.LedgerBookMocker;
 import com.paytech.account.test.probe.BillingEventPublisher;
 import com.paytech.billing.api.fact.EconomicFactPayload;
+import com.paytech.foundation.messaging.testkit.PartitionQueueBaselineConfiguration;
 import com.paytech.foundation.testsupport.api.HttpTestInvoker;
 import com.paytech.foundation.testsupport.api.MockHttpServer;
 import com.paytech.foundation.testsupport.api.TestBase;
@@ -37,13 +38,15 @@ import tools.jackson.databind.ObjectMapper;
  * <li>复用正式启动类 AccountApplication 与生产组件扫描，只附加 mock Profile 与测试组件；本地 MySQL（mor_account）与 RabbitMQ 需预先就绪。</li>
  * <li>外部依赖（第 11b 步）：ledger-api 与 billing-api 由独立 Loopback Mock HTTP 服务返回配置的 DTO；EconomicFactRecorded 由
  * {@link BillingEventPublisher} 扮演 billing 发到真实本机 RabbitMQ，经正式消费链路处理。</li>
+ * <li>{@link PartitionQueueBaselineConfiguration} 在监听容器启动前清空 account.billing.p0..p3 与 DLQ（其他模块测试的残留消息）。</li>
  * <li>每例开始前清空本服务的 billing 分区队列并检查空基线；结束时等待队列与 Mock 请求静止、检查意外调用，再由 Foundation 统一清理。</li>
  * <li>Actuator 在独立管理端口（业务端口 + 1000，测试随机），由 {@link #management(String)} 访问。</li>
  */
 @ActiveProfiles("mock")
 @AutoConfigureRestTestClient
 @SpringBootTest(classes = AccountApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Import({AccountTestConfiguration.class, AccountDataCleaner.class, BillingEventPublisher.class})
+@Import({AccountTestConfiguration.class, AccountDataCleaner.class, BillingEventPublisher.class,
+    PartitionQueueBaselineConfiguration.class})
 public abstract class MockTestBase extends TestBase {
     /** 所有测试请求使用的 Request ID。 */
     protected static final String REQUEST_ID = "Account.Test_01";

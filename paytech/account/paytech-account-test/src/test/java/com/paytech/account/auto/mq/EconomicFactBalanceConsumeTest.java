@@ -99,13 +99,17 @@ class EconomicFactBalanceConsumeTest extends AbstractBalanceTest {
             () -> assertEquals(0, testMapper.countEntries(v1.getFactId())));
     }
 
-    /** 人工调整按付方 / 收方映射：Client 收方记贷方、付方记借方，Partner 付方记借方；经营主体与平台角色不产生余额。 */
+    /**
+     * 人工调整按付方 / 收方映射：Client 收方记贷方、付方记借方，Partner 付方记借方；经营主体角色不产生余额
+     * <li>三服务链路的 account 段：与 ledger 的 {@code EconomicAdjustmentPostingTest.test_manualAdjustmentPostsByPartyRoles} 同形，
+     * Client 应付净额 9、Partner 应付净额 -4 与 ledger 分录聚合值一致。</li>
+     */
     @Test
     void test_adjustmentRolesMapToBalances() {
         EconomicFactPayload fact = adjustment().partner(PARTNER_ID, PARTNER_AGREEMENT_OE_ID, FINANCE_ENTITY_ID)
             .line(AmountSource.CLIENT_PRINCIPAL, FactPartyRole.OPERATING_ENTITY, ENTITY_NO, FactPartyRole.CLIENT, CLIENT,
                 FactLineDirection.CHARGE, "10")
-            .line(AmountSource.CLIENT_FEE, FactPartyRole.CLIENT, CLIENT, FactPartyRole.PLATFORM, "1",
+            .line(AmountSource.CLIENT_FEE, FactPartyRole.CLIENT, CLIENT, FactPartyRole.OPERATING_ENTITY, ENTITY_NO,
                 FactLineDirection.ADJUSTMENT, "1")
             .line(AmountSource.PARTNER_SHARE, FactPartyRole.LOCAL_PARTNER, PARTNER, FactPartyRole.OPERATING_ENTITY,
                 ENTITY_NO, FactLineDirection.CHARGE, "4")
@@ -117,6 +121,31 @@ class EconomicFactBalanceConsumeTest extends AbstractBalanceTest {
         assertBalance(StandardAccountCodes.PARTNER_PAYABLE, OwnerType.LOCAL_PARTNER, PARTNER, BalanceBucket.PENDING,
             "4", "0", "-4");
         assertEquals(2, testMapper.selectBalances().size(), "经营主体与平台角色不建立余额");
+    }
+
+    /** 成本调整：经营主体付、渠道收的 CHANNEL_COST 记渠道预提贷方（与 ledger CHANNEL_COST_ADJUSTMENT 规则一致）。 */
+    @Test
+    void test_costAdjustmentCreditsChannelAccrual() {
+        EconomicFactPayload fact = EconomicFactBuilder.costAdjustment(nextFactId(), CLIENT_ID, ENTITY_NO, CURRENCY,
+            CHANNEL_ACCOUNT_ID).line(AmountSource.CHANNEL_COST, FactPartyRole.OPERATING_ENTITY, ENTITY_NO,
+                FactPartyRole.CHANNEL, "77", FactLineDirection.ADJUSTMENT, "3").build();
+
+        consumed(fact);
+
+        assertBalance(StandardAccountCodes.CHANNEL_FEE_ACCRUAL, OwnerType.CHANNEL_ACCOUNT, CHANNEL, BalanceBucket.NONE,
+            "0", "3", "3");
+    }
+
+    /** ledger 没有记账规则的角色（PLATFORM）：两边一致拒绝，account 不应用余额。 */
+    @Test
+    void test_platformRoleRejectedLikeLedger() {
+        EconomicFactPayload fact = adjustment().line(AmountSource.CLIENT_FEE, FactPartyRole.CLIENT, CLIENT,
+            FactPartyRole.PLATFORM, "1", FactLineDirection.CHARGE, "1").build();
+
+        billing.publish(fact);
+
+        await().atMost(CONSUME_WAIT).until(() -> billing.deadLetters() == 1);
+        assertTrue(testMapper.selectBalances().isEmpty());
     }
 
     /** REVERSAL 方向：收方的贷方影响改为借方。 */

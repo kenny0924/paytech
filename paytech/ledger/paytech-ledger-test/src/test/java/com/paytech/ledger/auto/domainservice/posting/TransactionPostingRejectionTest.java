@@ -170,10 +170,10 @@ class TransactionPostingRejectionTest extends AbstractTransactionPostingTest {
         assertRejected(economics, "不是 PAYMENT", EconomicsType.REFUND.getCode());
     }
 
-    /** 经真实 Broker 投递的非 PAYMENT 事实：Handler 明确拒绝，信封直接进入死信队列，不登记消费、不残留任何指令。 */
+    /** 经真实 Broker 投递的没有记账规则的事实（REFUND）：Handler 明确拒绝，信封直接进入死信队列，不登记消费、不残留任何指令。 */
     @Test
     void test_rejectedEventGoesToDeadLetter() {
-        EconomicFactPayload economics = fact(payment("100").economicsType(EconomicsType.MANUAL_ADJUSTMENT),
+        EconomicFactPayload economics = fact(payment("100").economicsType(EconomicsType.REFUND),
             clientPrincipal("97", CLIENT_ID), clientFee("3", ENTITY_NO));
 
         billing.publish(economics);

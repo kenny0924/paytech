@@ -18,7 +18,9 @@ import com.paytech.foundation.common.error.BizCheckFailException;
 
 /**
  * 经济事实到 Owner 余额变化的映射规则（design/04 §5：费用类型 × 付方 / 收方角色 → owner_type / owner_id / balance_bucket）
- * <li>只有 CLIENT、LOCAL_PARTNER、CHANNEL 三个付方 / 收方角色对应 account 维护的余额；经营主体、Finance Entity、税务机关、消费者与平台角色不产生余额变化。</li>
+ * <li>只有 CLIENT、LOCAL_PARTNER、CHANNEL 三个付方 / 收方角色对应 account 维护的余额；经营主体、Finance Entity、税务机关只在 ledger
+ * STANDARD_ADJUSTMENT 规则包有对应平台侧规则行的费用类型上允许出现且不产生余额变化；PLATFORM、CONSUMER 角色与其余组合拒绝，
+ * 使 ledger 与 account 对同一事实同时接受或同时拒绝（第 11b 步补充要求）。</li>
  * <li>收方记贷方、付方记借方；方向为 REVERSAL 时借贷互换。余额都在事实 OE 的经营主体账簿内（与 ledger 交易规则的 Owner 账户一致）。</li>
  * <li>交易事实（PAYMENT）的明细行没有付方 / 收方时按费用类型的隐含角色映射，与 ledger STANDARD_TRANSACTION 规则的 Owner 行一致：事实总额为渠道应收
  * （CHANNEL 付方），CLIENT_PRINCIPAL 为 Client 应付，PARTNER_SHARE 为 Partner 应付，CHANNEL_COST 为渠道费用预提；其余费用类型不涉及 Owner 余额。</li>
@@ -64,9 +66,21 @@ public final class FactBalanceMappingRule {
     private static final Map<String, String> IMPLICIT_PAYEE = Map.of("CLIENT_PRINCIPAL", CLIENT, "PARTNER_SHARE",
         LOCAL_PARTNER, "CHANNEL_COST", CHANNEL);
 
-    /** 不产生余额变化的角色。 */
-    private static final Set<String> PLATFORM_ROLES = Set.of("OPERATING_ENTITY", "FINANCE_ENTITY", "TAX_AUTHORITY",
-        "CONSUMER", "PLATFORM");
+    /** 成本调整事实类型代码（billing EconomicsType.COST_ADJUSTMENT）。 */
+    static final String COST_ADJUSTMENT = "COST_ADJUSTMENT";
+
+    /** 渠道成本费用类型代码。 */
+    static final String CHANNEL_COST = "CHANNEL_COST";
+
+    /**
+     * 平台侧角色 → 允许的费用类型：不产生 Owner 余额变化，但必须与 ledger STANDARD_ADJUSTMENT 规则包的平台侧规则行一一对应，
+     * 不在其中的组合（含 PLATFORM、CONSUMER 角色）两边一致拒绝。
+     */
+    private static final Map<String, Set<String>> PLATFORM_SIDE_FEES = Map.of(
+        "OPERATING_ENTITY", Set.of("CLIENT_PRINCIPAL", "CLIENT_FEE", "PARTNER_SHARE", GROSS_AMOUNT, CHANNEL_COST, "SELLER_TAX",
+            "PLATFORM_SERVICE_CHARGE"),
+        "FINANCE_ENTITY", Set.of("PLATFORM_SERVICE_CHARGE"),
+        "TAX_AUTHORITY", Set.of("SELLER_TAX"));
 
     private FactBalanceMappingRule() {
     }
@@ -95,6 +109,7 @@ public final class FactBalanceMappingRule {
                 }
                 continue;
             }
+            checkAdjustmentLine(fact, line);
             addEffect(effects, fact, line.lineNo(), line.feeTypeCode(), line.payerRole(), line.payerId(),
                 EntrySide.DEBIT, line.amount(), reversal);
             addEffect(effects, fact, line.lineNo(), line.feeTypeCode(), line.payeeRole(), line.payeeId(),
@@ -103,10 +118,25 @@ public final class FactBalanceMappingRule {
         return effects;
     }
 
-    /** 一个付方或收方的余额变化；平台侧角色与零金额不产生变化。 */
+    /** 带付方 / 收方的明细行：两方都必须给出；成本调整只允许渠道成本在渠道与经营主体之间（与 ledger CHANNEL_COST_ADJUSTMENT 规则一致）。 */
+    static void checkAdjustmentLine(FactRecord fact, FactRecord.Line line) {
+        if (line.payerRole() == null || line.payeeRole() == null) {
+            throw reject(fact, line.lineNo(), "明细行缺少付方或收方");
+        }
+        boolean costRoles = Set.of(CHANNEL, "OPERATING_ENTITY").containsAll(Set.of(line.payerRole(), line.payeeRole()));
+        if (COST_ADJUSTMENT.equals(fact.factType()) && (!CHANNEL_COST.equals(line.feeTypeCode()) || !costRoles)) {
+            throw reject(fact, line.lineNo(), "成本调整只允许渠道与经营主体之间的 CHANNEL_COST");
+        }
+    }
+
+    /** 一个付方或收方的余额变化；平台侧角色与零金额不产生变化，平台侧未登记的组合拒绝。 */
     static void addEffect(List<BalanceEffect> effects, FactRecord fact, int lineNo, String feeType, String role,
         String partyId, EntrySide side, BigDecimal amount, boolean reversal) {
-        if (role == null || PLATFORM_ROLES.contains(role)) {
+        Set<String> platformFees = PLATFORM_SIDE_FEES.get(role);
+        if (platformFees != null) {
+            if (!platformFees.contains(feeType)) {
+                throw reject(fact, lineNo, "费用类型 " + feeType + " 对角色 " + role + " 没有记账规则");
+            }
             return;
         }
         if (amount == null || amount.signum() < 0) {

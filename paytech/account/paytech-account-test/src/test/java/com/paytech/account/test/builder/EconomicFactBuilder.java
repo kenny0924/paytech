@@ -44,6 +44,15 @@ public final class EconomicFactBuilder {
         return builder;
     }
 
+    /** COST_ADJUSTMENT 成本调整事实：渠道清算账户必填。 */
+    public static EconomicFactBuilder costAdjustment(long factId, long clientId, String entityNo, String currency,
+        long channelAccountId) {
+        EconomicFactBuilder builder = base(factId, EconomicsType.COST_ADJUSTMENT, clientId, entityNo, currency);
+        builder.fact.setGrossAmount(BigDecimal.ZERO);
+        builder.fact.setChannelAccountId(channelAccountId);
+        return builder;
+    }
+
     /** 公共头字段。 */
     static EconomicFactBuilder base(long factId, EconomicsType type, long clientId, String entityNo, String currency) {
         EconomicFactBuilder builder = new EconomicFactBuilder();

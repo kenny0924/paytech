@@ -6,7 +6,8 @@ import com.paytech.ledger.domain.TransactionPostingCommand;
 import com.paytech.ledger.domain.view.PostedInstructionView;
 
 /**
- * 交易自动记账引擎：按当前生效的 STANDARD_TRANSACTION 规则版本，把一条 PAYMENT 经济事实生成 AUTO 指令并过账
+ * 经济事实自动记账引擎：PAYMENT 事实按当前生效的 STANDARD_TRANSACTION 规则版本、MANUAL_ADJUSTMENT / COST_ADJUSTMENT 事实按
+ * STANDARD_ADJUSTMENT 规则版本（第 11b 步）生成 AUTO 指令并过账
  * <li>输入驱动：经济事实（头 + 明细行 + 渠道清算账户主键）来自 EconomicFactRecorded 事件 Payload，事务内只读写本库表。</li>
  * <li>必须在调用方已开启的本地事务内执行（生产调用方是 paytech-messaging 消费拦截器的事务），只操作本库数据库；不写任何余额。</li>
  * <li>同一经济事实重复调用直接返回已有指令与分录，不重算；唯一键 uk_instr_source 兜底并发重复。</li>
