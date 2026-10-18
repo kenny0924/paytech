@@ -64,7 +64,7 @@ GO_BIN=/path/to/prepared/go1.27.1/bin/go ./test-environment/scripts/build-vault.
 python3 test-environment/scripts/vault.py smoke
 ```
 
-> 当前 Platform 镜像已不含 curl，`vault.py smoke` 原样运行会在 Nacos 检查后失败；2026-10-15 发布改用接入 `mor-test-backend` 的临时 curl 容器执行同一检查（见上面发布记录第 4 节），脚本待修正。
+> Platform 镜像已不含 curl；自 2026-10-18 起 `vault.py smoke` 改在接入 `mor-test-backend` 的一次性 `nginx:1.30.4-alpine` 容器内执行同一 curl 请求。从副本（如 worktree）运行脚本时，用 `MOR_TEST_ENVIRONMENT_DIR=<主仓库>/test-environment` 指向持有 `.env.test` 与 `private/` 的目录。
 
 构建仅使用已缓存依赖离线编译 Linux ARM64 静态二进制，再封装为 scratch 镜像，不下载基础镜像或修改 Go 服务。
 容器以 `10001:10001` 运行，只读根目录、移除 Capabilities，SDK 临时文件限定在 64 MiB `/tmp` tmpfs。
@@ -153,6 +153,7 @@ python3 test-environment/scripts/initialize.py --apply-service-sql
 - `--apply-risk-sql` 只接受空的 `mor_risk_decision` 与 `mor_compliance`。
 - `--apply-service-sql` 对其余 12 个库只在空库上执行服务 `*-schema.sql` 与 `*-initial-data.sql`；表集合与 Schema 完全一致时视为 PREPARED 不重放，部分结构拒绝且不写任何库。
 - 切换涉及的其余部署项：Platform `t_gateway_target` 的 Commerce Target 改为 `acquiring-service` 并新增 consumer Target；Webhook 调用方已改为 `acquiring-service`；Vault 访问规则登记 `card-service`、`channel-connector-service`；XXL Admin 登记 `acquiring-service` 执行器与 `cardOrphanInstrumentPurge`；RabbitMQ 一致性哈希插件需按挂载重建容器后生效；旧 `cg_*` 队列与 `topic_*` 交换机按 [CURRENT_IMPLEMENTATION](../agent-docs/CURRENT_IMPLEMENTATION.md) 的待办删除。
+- 2026-10-18 已在 mor-test 执行上述切换（数据迁移、V2 镜像与启动顺序、登记核对、验收），记录见 [V2 部署与数据迁移 delivery](../requirements/20261018/test-environment-V2部署与数据迁移/delivery.md)。未新增 consumer Target（mor-test 没有 Customer 路由）；`cardOrphanInstrumentPurge` 未登记（card 在 compose 中没有 XXL 配置）。mor-test 验收脚本改用 `requirements/20261017/architecture-V2骨架与模块搬迁/verification/local-e2e/` 下的版本加 `E2E_TARGET=test`；V1 目录的 test 分支与 `register_client_api.py` 已停用。
 
 ## 首次准备（已在当前机器执行）
 

@@ -2961,7 +2961,7 @@ class FullAndCleanupTest(unittest.TestCase):
             )
         )
         self.assertEqual(
-            [("mor-test", "DEFAULT_GROUP", "risk-service")], nacos_calls
+            [("mor-test", "DEFAULT_GROUP", "risk-decision-service")], nacos_calls
         )
 
     def test_role_update_unknown_replays_once_with_identical_bytes_and_key(self):

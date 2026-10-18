@@ -2757,7 +2757,7 @@ class RiskRuleConfigurationSmoke:
                 restored_actors.authorized.browser
             )
             verify_nacos_instances(
-                self.nacos_probe("mor-test", "DEFAULT_GROUP", "risk-service")
+                self.nacos_probe("mor-test", "DEFAULT_GROUP", "risk-decision-service")
             )
         finally:
             self._close_sessions(administrator, actors, restored_actors)

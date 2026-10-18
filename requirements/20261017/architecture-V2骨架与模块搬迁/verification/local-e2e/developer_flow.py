@@ -6,9 +6,11 @@
   → Webhook：本机接收端、创建端点（一次性密钥）、测试事件、签名校验、投递列表 / 详情（无运营字段）、重发、停用、跨工作区 404。
 凭证可用性直接调用 Gateway 认证时使用的 Platform PLT-I03 私网接口验证（Client API 路由由 client_api_flow 覆盖）。
 V2 改动：模拟业务事件的调用方由 commerce-service 改为 acquiring-service（第 03 步改名，run-service.sh 已按此登记
-webhook.http.callers）；去掉 mor-test 分支。
+webhook.http.callers）。
+E2E_TARGET=test（2026-10-18 mor-test V2）：Platform 私网接口经一次性探针容器调用（e2e_http）；test 只允许可解析到公网的
+  HTTPS 端点，Webhook 段改为 webhook_flow_test（拒绝非法地址、建 / 停用 example.com 端点，不推送）。
 输出每步 PASS/FAIL 与证据；不输出密码、令牌、Cookie、凭证或签名密钥。
-用法：python3 developer_flow.py
+用法：python3 developer_flow.py（mor-test：E2E_TARGET=test python3 developer_flow.py）
 """
 import hashlib
 import hmac
@@ -21,7 +23,7 @@ import urllib.request
 
 import workspace_flow as ws_flow
 from acceptance_flow import RESULTS, Client, Stop, problem, record
-from e2e_http import CLIENT, Failure, platform_call, platform_sql
+from e2e_http import CLIENT, TARGET, Failure, platform_call, platform_sql
 
 DEV = "/developer/v1"
 
@@ -245,6 +247,36 @@ def webhook_flow(client, data):
     receiver.server.shutdown()
 
 
+def webhook_flow_test(client, data):
+    """mor-test（自 V1 同名函数恢复）：客户自助保存时解析主机名并拒绝内网地址；端点用 IANA 保留域名 example.com，
+    不发测试事件与业务事件，不向外网推送。"""
+    for name, url in (("无法解析的主机名", "https://receiver.code-mor.invalid/hook"), ("内网地址", "https://10.0.0.1/hook"),
+                      ("非 HTTPS", "http://example.com/hook")):
+        status, _, body = raw(client, DEV + "/webhook-endpoints", "POST", {"url": url, "eventTypes": ["order.paid"]})
+        record(f"AC-07 拒绝{name}", 400 <= status < 500, f"HTTP {status} code={(body or {}).get('code')}")
+    status, headers, created = raw(client, DEV + "/webhook-endpoints", "POST",
+                                   {"url": "https://example.com/code-mor-acceptance", "eventTypes": ["order.paid", "refund.succeeded"]})
+    secret = (created or {}).get("signingSecret") or ""
+    endpoint_id = (created or {}).get("endpointId")
+    record("AC-07 新建端点（一次性密钥、no-store）",
+           status == 201 and secret.startswith("whsec_") and "no-store" in (headers.get("Cache-Control") or ""),
+           f"HTTP {status} endpointId={endpoint_id} code={(created or {}).get('code')} cacheControl={headers.get('Cache-Control')}")
+    if not endpoint_id:
+        raise Stop("端点未创建")
+    data["endpointId"] = endpoint_id
+    status, endpoints = client.call(DEV + "/webhook-endpoints")
+    record("F-06 端点列表不含密钥", status == 200 and secret not in json.dumps(endpoints),
+           f"HTTP {status} items={len(endpoints.get('items') or [])}")
+    current = next(e for e in endpoints["items"] if e["endpointId"] == endpoint_id)
+    client.call(DEV + f"/webhook-endpoints/{endpoint_id}/status", "POST", {"status": "DISABLED", "expectedVersion": current["version"]})
+    status, endpoints = client.call(DEV + "/webhook-endpoints")
+    current = next(e for e in endpoints["items"] if e["endpointId"] == endpoint_id)
+    record("F-06 停用端点", current.get("status") == "DISABLED", f"status={current.get('status')}")
+    status, page = client.call(DEV + f"/webhook-deliveries?endpointId={endpoint_id}")
+    record("F-08 投递列表（无投递）", status == 200 and not (page or {}).get("items"),
+           f"HTTP {status} items={len((page or {}).get('items') or [])}")
+
+
 def cross_tenant(data):
     stamp = time.strftime("%Y%m%d%H%M%S") + "x"
     other, _, app = ws_flow.approved_client(stamp)
@@ -273,7 +305,7 @@ def main():
         data["clientId"] = app["clientId"]
         record("进入工作区", context.get("contextType") == "TENANT", f"tenantId={context.get('tenantId')}")
         credentials_flow(client, context["tenantId"], data)
-        webhook_flow(client, data)
+        (webhook_flow_test if TARGET == "test" else webhook_flow)(client, data)
         cross_tenant(data)
     except Stop as stop:
         print(f"中止于：{stop}")

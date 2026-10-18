@@ -7,6 +7,11 @@ CLIENT_API 路由数加 1；超时即停止并提示按发布记录回退。可�
   （2026-10-17 Gateway 处理 Idempotency-Key；须在 Platform、Gateway 新版本部署之后执行）。
 不输出令牌或密码。
 """
+# 2026-10-18 起 mor-test 已切换到 V2（requirements/20261018/test-environment-V2部署与数据迁移）：本 V1 版本读 mor_cct /
+# mor_commerce、按 commerce-service 登记，不得再对 test 执行。test 验收改用 requirements/20261017/architecture-V2骨架与模块搬迁/verification/local-e2e 下的同名脚本（E2E_TARGET=test）。
+# 不要再执行：它会把 commerce-client-api 的发现名写回 commerce-service；V2 的 Target 由迁移 SQL 20-platform-upgrade.sql 改为 acquiring-service。
+raise SystemExit("mor-test 已切换到 V2：不得执行本脚本（会把 Target 写回 commerce-service）")
+
 import json
 import subprocess
 import sys

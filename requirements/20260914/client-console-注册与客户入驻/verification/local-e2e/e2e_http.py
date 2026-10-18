@@ -16,7 +16,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[5]
 TARGET = os.environ.get("E2E_TARGET", "local")
+# 2026-10-18 起 mor-test 已切换到 V2（requirements/20261018/test-environment-V2部署与数据迁移）：本 V1 版本读 mor_cct /
+# mor_commerce、按 commerce-service 登记，不得再对 test 执行。test 验收改用 requirements/20261017/architecture-V2骨架与模块搬迁/verification/local-e2e 下的同名脚本（E2E_TARGET=test）。
 if TARGET == "test":
+    raise SystemExit("mor-test 已切换到 V2：改用 " + "requirements/20261017/architecture-V2骨架与模块搬迁/verification/local-e2e" + " 下的同名脚本（E2E_TARGET=test）")
     OPERATIONS = "http://localhost:28080"
     CLIENT = "https://localhost:28443"
     MAILPIT = "http://localhost:28025"

@@ -24,8 +24,9 @@ import urllib.request
 import uuid
 from pathlib import Path
 
-if os.environ.get("E2E_TARGET") != "test":
-    raise SystemExit("仅用于 mor-test：E2E_TARGET=test")
+# 2026-10-18 起 mor-test 已切换到 V2（requirements/20261018/test-environment-V2部署与数据迁移）：本 V1 版本读 mor_cct /
+# mor_commerce、按 commerce-service 登记，不得再对 test 执行。test 验收改用 requirements/20261017/architecture-V2骨架与模块搬迁/verification/local-e2e 下的同名脚本（E2E_TARGET=test）。
+raise SystemExit("mor-test 已切换到 V2：改用 requirements/20261017/architecture-V2骨架与模块搬迁/verification/local-e2e/client_api_flow.py（E2E_TARGET=test）")
 
 HERE = Path(__file__).resolve().parent
 LOCAL_E2E = HERE.parents[2] / "20260914/client-console-注册与客户入驻/verification/local-e2e"

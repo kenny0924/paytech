@@ -13,7 +13,9 @@ import uuid
 
 from initialize import environment, login, nacos_request, require_success
 
-ROOT = Path(__file__).resolve().parents[1]
+# MOR_TEST_ENVIRONMENT_DIR lets a reviewed copy of these scripts (for example a worktree) operate the one
+# test-environment directory that holds .env.test and private/; default is this script's own directory.
+ROOT = Path(os.environ.get("MOR_TEST_ENVIRONMENT_DIR") or Path(__file__).resolve().parents[1]).resolve()
 TABLES = {"t_vault_record", "t_vault_protect_request", "t_vault_access_event",
           "t_vault_data_type", "t_vault_access_rule", "t_vault_policy_change"}
 KEY_ID = "test-local-aes-v1"
@@ -90,9 +92,14 @@ def initialize_schema():
     print("Applied the reviewed six-table Vault schema to empty mor-test/mor_vault only; apply the policy DML separately.")
 
 
+# The Platform image no longer ships curl (2026-10-15); run the same request from a disposable curl-capable container
+# on the private backend network. The image is the mor-test Nginx base, already pulled for the nginx service.
+CURL_IMAGE = "nginx:1.30.4-alpine"
+
+
 def request(path, body=None, caller=CALLER, key=None, status=200, request_id=None):
-    arguments = [str(ROOT / "compose.sh"), "exec", "-T", "platform-support-service",
-                 "curl", "--silent", "--show-error", "--max-time", "15", "--path-as-is",
+    arguments = ["docker", "run", "--rm", "-i", "--network", "mor-test-backend", "--entrypoint", "curl", CURL_IMAGE,
+                 "--silent", "--show-error", "--max-time", "15", "--path-as-is",
                  "--write-out", "\n%{http_code}", "--header", "Accept: application/json"]
     if body is not None:
         arguments += ["--request", "POST", "--header", "Content-Type: application/json",

@@ -56,6 +56,7 @@ requirements/
 
 | 登记目录 | 需求 | 主入口/Owner | 关联编号 | 材料 |
 |---|---|---|---|---|
+| `20261018` | mor-test 切换到 V2：保留现有数据的部署与迁移 | test-environment / 全部 V2 服务 | 5 个旧库全部表按 V2 归属迁入新库（核对 150/150、4,210 行守恒），V2 镜像按序启动 29 个容器、登记核对与验收脚本 V2 化；阶段 1、2 已完成，阶段 2 待确认，阶段 3 清理未开始 | [需求](./20261018/test-environment-V2部署与数据迁移/requirement.md) · [确认记录](./20261018/test-environment-V2部署与数据迁移/delivery.md) |
 | `20261017` | Platform 邮件投递事件（Amazon SES） | Platform Delivery / Operations 发送账号与发送记录 | SES Configuration Set → SNS → SQS，Platform 拉取送达、退信、投诉事件更新发送记录；地址抑制依赖 SES 账户级列表；阶段 1 评审中 | [需求](./20261017/platform-support-SES投递事件/requirement.md) · [确认记录](./20261017/platform-support-SES投递事件/delivery.md) |
 | `20261017` | Webhook 端点地址错误码 | Platform Delivery Webhook / Operations BFF、Web | 端点地址被拒（内网、无法解析、协议不允许）改用登记的专用错误码，运营页面在地址字段下显示原因；Operations Webhook 管理 AC-04 遗留；阶段 1—7 已完成（本机 15/15；2026-10-17 已部署 mor-test，验收 13/13），已本地提交（未推送） | [需求](./20261017/platform-support-Webhook地址错误码/requirement.md) · [确认记录](./20261017/platform-support-Webhook地址错误码/delivery.md) |
 | `20261017` | mor-test Platform 补偿扫描 | Platform Support / test-environment | 启动 mor-test XXL-Job Admin、开启 Platform 执行器并登记 `compensationEventScan`，使 Webhook 等补偿任务自动重试；阶段 1—7 已完成，2026-10-17 已在 mor-test 生效（验收 9/9），已提交并已推送 | [需求](./20261017/platform-support-mor-test补偿扫描/requirement.md) · [确认记录](./20261017/platform-support-mor-test补偿扫描/delivery.md) |
