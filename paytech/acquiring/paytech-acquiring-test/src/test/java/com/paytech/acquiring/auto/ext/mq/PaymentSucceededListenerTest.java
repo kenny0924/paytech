@@ -9,7 +9,6 @@ import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.amqp.core.AmqpAdmin;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.paytech.acquiring.domain.checkout.CreateCheckoutContext;
@@ -24,28 +23,24 @@ import com.paytech.acquiring.test.dal.PaymentResultTestMapper;
 import com.paytech.acquiring.test.mocker.local.CheckoutPaymentDataMocker;
 
 /**
- * Payment 支付成功事件消费：测试作为 Payment 发布到真实本机 RabbitMQ，经监听器在一个事务推进订单五项事实。
+ * Payment 支付成功事件消费：测试作为 Payment 以 paytech-messaging 发布到真实本机 RabbitMQ 的 payment.events，经 acquiring 分区队列、
+ * 消费幂等拦截器与 Handler 在一个业务事务推进订单五项事实；消费登记写入 t_consumed_event / t_consumed_aggregate_version。
  *
- * @see PaymentSucceededListener#onMessage
+ * @see PaymentSucceededListener#consume
  */
 class PaymentSucceededListenerTest extends AbstractPaymentResultTest {
-    private static final String DEAD_LETTER_QUEUE = "cg_acquiring_payment_result_dlq";
     private static final String PAID_TIME = "2026-09-08T00:00:01Z";
     private static final long ATTEMPT_ID = 8_000_001L;
 
-    @Autowired
-    AmqpAdmin amqpAdmin;
     @Autowired
     CheckoutPaymentDataMocker data;
     @Autowired
     PaymentResultTestMapper mapper;
     private CreateCheckoutContext fixture;
 
-    /** 本服务队列只保留本例消息；准备已绑定 Intent 的开放订单。 */
+    /** 准备已绑定 Intent 的开放订单；分区队列与 DLQ 由基类清空。 */
     @BeforeEach
     void setUpPaymentResult() {
-        amqpAdmin.purgeQueue(PaymentSucceededListener.QUEUE, false);
-        amqpAdmin.purgeQueue(DEAD_LETTER_QUEUE, false);
         fixture = boundOrder();
     }
 
@@ -80,7 +75,9 @@ class PaymentSucceededListenerTest extends AbstractPaymentResultTest {
         var order = mapper.order(orderId());
         var session = mapper.session(orderId());
         var refund = mapper.refund(orderId());
+        double replayed = paymentEvents.outcome("replayed");
         publish(payload);
+        paymentEvents.awaitOutcome("replayed", replayed, 1);
         var marker = boundOrder();
         publish(payload(marker, ATTEMPT_ID + 1));
         awaitPaid(marker.getOrder().getOrderId());
@@ -88,7 +85,47 @@ class PaymentSucceededListenerTest extends AbstractPaymentResultTest {
         assertEquals(session, mapper.session(orderId()));
         assertEquals(refund, mapper.refund(orderId()));
         assertEquals(2L, number(mapper.payment(orderId()), "version"));
-        assertNull(rabbitTemplate.receive(DEAD_LETTER_QUEUE, 200));
+        assertEquals(1, paymentEvents.consumedEvents(ATTEMPT_ID));
+        assertEquals(SOURCE_VERSION, paymentEvents.lastVersion(ATTEMPT_ID));
+        assertNull(paymentEvents.receiveDeadLetter(200));
+    }
+
+    /** 重放跳过：同一 eventId 再次投递由消费登记确认跳过，Handler 不再执行，消费登记仍只有一行。 */
+    @Test
+    void test_replayedEventSkipped() throws Exception {
+        var payload = payload(fixture, ATTEMPT_ID);
+        publish(payload);
+        awaitPaid(orderId());
+        var payment = mapper.payment(orderId());
+        double replayed = paymentEvents.outcome("replayed");
+        double handled = paymentEvents.outcome("handled");
+
+        publish(payload);
+
+        paymentEvents.awaitOutcome("replayed", replayed, 1);
+        assertEquals(handled, paymentEvents.outcome("handled"));
+        assertEquals(payment, mapper.payment(orderId()));
+        assertEquals(1, paymentEvents.consumedEvents(ATTEMPT_ID));
+        assertNull(paymentEvents.receiveDeadLetter(200));
+    }
+
+    /** 旧版本跳过：同一尝试已处理版本 3 后，到达的版本 2 被确认跳过，投影与消费登记不变。 */
+    @Test
+    void test_staleVersionSkipped() throws Exception {
+        var payload = payload(fixture, ATTEMPT_ID);
+        publish(payload);
+        awaitPaid(orderId());
+        var payment = mapper.payment(orderId());
+        double stale = paymentEvents.outcome("stale");
+
+        publish(payload, SOURCE_VERSION - 1);
+
+        paymentEvents.awaitOutcome("stale", stale, 1);
+        assertEquals(payment, mapper.payment(orderId()));
+        assertEquals(eventKey(payload), payment.get("last_attempt_event_key"));
+        assertEquals(1, paymentEvents.consumedEvents(ATTEMPT_ID));
+        assertEquals(SOURCE_VERSION, paymentEvents.lastVersion(ATTEMPT_ID));
+        assertNull(paymentEvents.receiveDeadLetter(200));
     }
 
     /** 载荷摘要被篡改：进入死信队列，订单与投影不变。 */
@@ -96,10 +133,11 @@ class PaymentSucceededListenerTest extends AbstractPaymentResultTest {
     void test_invalidParameter() throws Exception {
         var payment = mapper.payment(orderId());
 
-        publishRaw(envelope(payload(fixture, ATTEMPT_ID), false));
+        publishTampered(payload(fixture, ATTEMPT_ID));
 
-        assertNotNull(rabbitTemplate.receive(DEAD_LETTER_QUEUE, 5000));
+        assertNotNull(paymentEvents.receiveDeadLetter(5000));
         assertUnchanged(payment);
+        assertEquals(0, paymentEvents.consumedEvents(ATTEMPT_ID));
     }
 
     /** 未知订单：进入死信队列。 */
@@ -112,8 +150,9 @@ class PaymentSucceededListenerTest extends AbstractPaymentResultTest {
 
         publish(payload);
 
-        assertNotNull(rabbitTemplate.receive(DEAD_LETTER_QUEUE, 5000));
+        assertNotNull(paymentEvents.receiveDeadLetter(5000));
         assertUnchanged(mapper.payment(orderId()));
+        assertEquals(0, paymentEvents.consumedEvents(ATTEMPT_ID));
     }
 
     /** 金额与订单冻结总额不符：进入死信队列，订单与投影不变。 */
@@ -126,8 +165,9 @@ class PaymentSucceededListenerTest extends AbstractPaymentResultTest {
 
         publish(payload);
 
-        assertNotNull(rabbitTemplate.receive(DEAD_LETTER_QUEUE, 5000));
+        assertNotNull(paymentEvents.receiveDeadLetter(5000));
         assertUnchanged(payment);
+        assertEquals(0, paymentEvents.consumedEvents(ATTEMPT_ID));
     }
 
     /** 已取消订单：只记录支付投影，订单与会话保持取消，退款与资金投影不变；消息确认而不进入死信队列。 */
@@ -149,7 +189,8 @@ class PaymentSucceededListenerTest extends AbstractPaymentResultTest {
         assertEquals(0, BigDecimal.ZERO.compareTo((BigDecimal)mapper.refund(orderId()).get("refundable_base_amount")));
         assertEquals(FundsAvailabilityStatus.NOT_APPLICABLE.getCode(),
             mapper.funds(orderId()).get("funds_availability_status"));
-        assertNull(rabbitTemplate.receive(DEAD_LETTER_QUEUE, 500));
+        assertNull(paymentEvents.receiveDeadLetter(500));
+        assertEquals(1, paymentEvents.consumedEvents(ATTEMPT_ID));
     }
 
     /** 已绑定 Intent（ID 同订单）的开放订单。 */

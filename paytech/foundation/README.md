@@ -841,12 +841,21 @@ export JAVA_HOME=$(/usr/libexec/java_home -v 25)
   每个分区一个并发 1 的监听容器。
 - 未路由（mandatory 退回）由 `messaging.publisher.unroutable-policy` 决定：默认 `FAIL` 抛出发布异常，由补偿任务重试；
   `ACK_AND_WARN` 记 WARN 与 `messaging.published{outcome=unroutable}` 后视为成功，只用于发布方交换机尚无订阅方的过渡期
-  （payment 在重构第 08 步接入订阅者前使用，之后改回 `FAIL`）。已确认且已路由的发布计 `messaging.published{outcome=confirmed}`。
+  （重构第 05–07 步的过渡期使用，第 08 步 payment 与 compliance 均已改回 `FAIL`）。已确认且已路由的发布计
+  `messaging.published{outcome=confirmed}`。
+- 发布侧按聚合串行：`messaging.producer.sequencer.enabled=true`（`lanes` 默认 4、`queue-capacity` 默认 256）且宿主引入
+  `paytech-compensation-event` 时，提供 `AggregateKeySequencer` 作为补偿 Dispatcher 的 `CompensationExecutionSequencer`：同一聚合
+  （四段式 `event_key` 取 `aggregateType:aggregateId`，其他格式取整个键）的已 Claim 任务在固定线程按 Claim 顺序执行，线程队列满时
+  任务按 `SEQUENCER_UNAVAILABLE` 可重试释放。补偿组件只暴露端口、不依赖本模块；扫描、Claim/Lease 与分片不变。
+- Handler 事务关系：`@DomainEventHandler(transaction = SHARED)`（默认）加入拦截器事务，业务写入与两张消费登记表同事务提交；
+  `HANDLER_MANAGED` 用于必须在事务外调用的 Processor，判定与登记分别在 Handler 前后的短事务中完成，中断造成的重投由 Handler 业务
+  幂等吸收。Handler 抛出 `DomainEventRejectedException` 表示明确拒绝，消息直接进入 DLQ，不消耗重投次数。
 - 发布方交换机是 Fanout，每个订阅服务经自己的一致性哈希交换机分区：一致性哈希交换机只把一条消息路由到一个绑定队列，
   多个订阅服务直接绑定同一个一致性哈希交换机会互相"抢"消息。
 - 严格有序 Handler 遇到版本缺口时，消息被重新发布到本分区队列尾部等待缺口补齐（Quorum Queue 对 Nack 重新入队的消息优先重投）；
   第 5 次仍有缺口或 Handler 持续失败时进入 DLQ 并计 `messaging.consumed{outcome=dead}`。
-- 每个消费服务库需要 `src/main/resources/schema/messaging-consumed-event.sql` 中的两张表，各服务 `init/ddl.sql` 逐字复制。
+- 每个消费服务库需要 `src/main/resources/schema/messaging-consumed-event.sql` 中的两张表；服务的 PDManer 与 Schema SQL 登记同列、同类型、
+  同键的两张表，`init/ddl.sql` 从服务 Schema 逐字切片（acquiring、client-master 第 08 步接入）。
 - 事件目录 `paytech-messaging/catalog/events.yaml` 同时打包为 `classpath:catalog/events.yaml`；Handler 的事件类型、消费服务与
   `strictOrder` 在启动时与目录核对，ArchUnit R12 在构建期做同样检查。
 - 宿主连接必须配置 `spring.rabbitmq.publisher-confirm-type=correlated` 与 `spring.rabbitmq.publisher-returns=true`；Broker 必须启用

@@ -2,7 +2,8 @@
 -- 在本地 MySQL 127.0.0.1:13306 使用 root 手工执行，创建数据库、测试账号及表；应用和测试不自动执行。
 -- 本地连接见 application-mock.yml；已有表使用评审后的增量 SQL，不运行本文件覆盖。
 -- 表定义来源：paytech/acquiring/docs/database/sql/acquiring-schema.sql（对应 acquiring PDManer 模型，逐表逐字切片）。
--- 包含 acquiring 全部 14 张表（transaction / checkout / command 共库 13 张与本库 t_compensation_event）；不含 t_command_idempotency（S10 删除）。
+-- 包含 acquiring 全部 16 张表（transaction / checkout / command 共库 13 张、本库 t_compensation_event，以及 paytech-messaging 消费端
+-- t_consumed_event / t_consumed_aggregate_version，列、类型、主键与索引同 messaging-consumed-event.sql）；不含 t_command_idempotency（S10 删除）。
 -- 保留正式字段、索引和注释；场景数据由每例 Mocker 准备，不在此插入。不含 DROP DATABASE，避免误删已有库。
 SET NAMES utf8mb4;
 CREATE DATABASE IF NOT EXISTS `mor_acquiring`
@@ -331,3 +332,22 @@ CREATE TABLE `t_consumer_acceptance` (
   UNIQUE KEY `uk_consumer_acceptance` (`consumer_contract_id`, `acceptance_type`) COMMENT '唯一索引：consumer_contract_id、acceptance_type',
   KEY `idx_acceptance_network` (`network_evidence_id`) COMMENT '访问索引：network_evidence_id'
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='消费者对特定法律文档类型的不可变接受证据；不维护 Acceptance Summary，Payment Readiness 依据三种必需接受类型的不可变记录实时判定。';
+
+CREATE TABLE `t_consumed_event` (
+  `event_id` VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '领域事件信封 eventId（默认等于 eventKey），按其去重。',
+  `event_type` VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '已消费领域事件的类型（PascalCase，登记于 paytech-messaging 事件目录）。',
+  `aggregate_type` VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '领域事件所属聚合的大写类型代码。',
+  `aggregate_id` VARCHAR(40) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '领域事件所属聚合的标识，同时是 RabbitMQ 分区路由键。',
+  `aggregate_version` BIGINT NOT NULL COMMENT '本条已消费领域事件携带的聚合版本。',
+  `consumed_at` DATETIME(6) NOT NULL COMMENT '消费事务提交的 UTC 微秒精度时间。',
+  PRIMARY KEY (`event_id`),
+  KEY `idx_consumed_event_aggregate` (`aggregate_type`, `aggregate_id`, `aggregate_version`) COMMENT '访问索引：aggregate_type、aggregate_id、aggregate_version'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='已消费领域事件：paytech-messaging 消费端按事件 ID 去重的标准表（design/08 §4），列、类型、主键与索引与 paytech-messaging 的 messaging-consumed-event.sql 一致；事件与版本合法性由消费拦截器保证。';
+
+CREATE TABLE `t_consumed_aggregate_version` (
+  `aggregate_type` VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '领域事件所属聚合的大写类型代码。',
+  `aggregate_id` VARCHAR(40) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '领域事件所属聚合的标识，同时是 RabbitMQ 分区路由键。',
+  `last_version` BIGINT NOT NULL COMMENT '本服务已处理的该聚合最大领域事件版本。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最近一次持久化更新的 UTC 微秒精度时间。',
+  PRIMARY KEY (`aggregate_type`, `aggregate_id`)
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='已消费聚合版本：paytech-messaging 消费端按聚合记录已处理的最大版本，用于判定乱序、重放与缺口（design/08 §4）；列、类型与主键与 messaging-consumed-event.sql 一致。';

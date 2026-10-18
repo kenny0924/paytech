@@ -27,7 +27,7 @@ public class ClientMasterDataCleaner implements Clear {
         "t_operating_entity_application", "t_operating_entity_scope", "t_application_document",
         "t_client_entity_affiliation", "t_entity_source_relation", "t_consumer_legal_document", "t_seller_disclosure",
         "t_business_change_record", "t_business_change_version", "t_compensation_event", "t_client_stored_card_setting",
-        "t_consumed_event");
+        "t_consumed_event", "t_consumed_aggregate_version");
 
     private final JdbcTemplate jdbc;
 

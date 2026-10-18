@@ -7,10 +7,10 @@
 
 ## 第 03 步拆分（2026-10-18）
 
-- 模块：`paytech-acquiring-api`（Client API 订单 / Checkout / 退款 / 取消合同，及消费者端 Hosted Checkout 合同包 `checkout`）、`paytech-acquiring-core`（transaction / checkout / command 三个内部模块共用，共库 mor_acquiring）、`paytech-acquiring-app`（启动类、Controller、DataSource / MyBatis、出站客户端、支付结果队列声明）、`paytech-acquiring-test`。
+- 模块：`paytech-acquiring-api`（Client API 订单 / Checkout / 退款 / 取消合同，及消费者端 Hosted Checkout 合同包 `checkout`）、`paytech-acquiring-core`（transaction / checkout / command 三个内部模块共用，共库 mor_acquiring）、`paytech-acquiring-app`（启动类、Controller、DataSource / MyBatis、出站客户端、paytech-messaging 消费端配置）、`paytech-acquiring-test`。
 - Customer 归 consumer：建单时在订单事务前经 `POST /consumer/v1/customers/resolve` 建或取 Customer，订单只存 `customer_id`；GET checkout 与 SubmitPayment 经 `GET /consumer/v1/card-saving-eligibility` 读取存卡资格，任何失败降级为不可存卡并记 WARN（S6）；付款人引用经 `GET /consumer/v1/customers/{customerId}` 取 `customerNo`。已存卡列表仍经 Payment `StoredCardApi` 读取，不可用时为空。
 - 出站发现名：`payment-service`（`/payment`）、`consumer-service`、`risk-decision-service`、`platform-support-service`；`internal-auth.mode` 默认 `"OFF"`。Checkout 商业端口仍为固定 Mock（目标 `commercial-service`）。
-- 支付结果队列改名 `cg_acquiring_payment_result`（DLX `dlx_acquiring_payment_result`、DLQ `cg_acquiring_payment_result_dlq`），交换机 `topic_payment_result` 与路由键不变。
+- 支付结果消费第 08 步切到 paytech-messaging：订阅 `payment.events`，分区队列 `acquiring.payment.p0..p3`（DLQ `acquiring.payment.dlq`）；第 03 步的旧队列与旧 Topic 已不再声明。
 - 配置前缀 `acquiring.*`；环境变量名（`COMMERCE_*`、`MOR_COMMERCE_DB_*`）暂沿用，以免影响现有部署描述。
 - PDManer 模型 `docs/database/acquiring.pdma.json` 由 `scripts/pdmaner/generate-acquiring-model.mjs` 生成；Schema `docs/database/sql/acquiring-schema.sql`。
 - 测试：`cd paytech && ./mvnw -B verify -pl acquiring/paytech-acquiring-test -am`；需要本机 `mor_acquiring`（`paytech-acquiring-test/src/test/resources/init/ddl.sql`）、Redis 与 RabbitMQ。Hosted Checkout 行覆盖率门禁移入 `-Pcoverage-gate`。
@@ -49,12 +49,13 @@ Customer GET 由 `GetCustomerCheckoutProcessor` 直接按需读取本库对象�
 查询经 Payment EX-I06（`PaymentIntentApi.getSubmission`，带订单 Client）读取原提交：Payment 404 返回 `PAYMENT_SUBMISSION_NOT_FOUND`，
 处理中有交互时为 `REQUIRES_ACTION`（动作 ID 为尝试 ID、无跳转地址），不可用时降级为处理中并继续轮询。
 
-支付成功事件由 `PaymentSucceededListener` 消费：Commerce 声明 `topic_payment_result`（同参数）、Quorum 队列
-`cg_acquiring_payment_result`（`payment.succeeded.v1`，投递上限 5）及死信 `dlx_acquiring_payment_result` →
-`cg_acquiring_payment_result_dlq`，手动确认。`ApplyPaymentSucceededProcessor` 核对 Client、Intent、OE 与金额后，由
-`OrderPaymentService.applySucceeded` 在一个 REQUIRED 事务推进支付投影、订单 PAID、会话 COMPLETED、退款基数和资金投影 PENDING；
-同一事件键与 Hash 或同一成功尝试重复投递直接确认，载荷不符、未知订单或重复成功进入死信；已取消/过期订单只记录支付投影并告警。
-RabbitMQ 连接取 `COMMERCE_RABBITMQ_*`（测试取 `MOR_RABBITMQ_*`）；Enforcer 只放行 `spring-boot-starter-amqp` 及其 RabbitMQ 客户端。
+支付成功事件由 `PaymentSucceededListener`（`@DomainEventHandler(eventType="PaymentSucceeded", strictOrder=false,
+transaction=HANDLER_MANAGED)`）消费：paytech-messaging 声明 `acquiring.payment.hash`（`x-consistent-hash`，绑定 `payment.events`）与
+Quorum 分区队列 `acquiring.payment.p0..p3`（单活消费者、投递上限 5、死信 `acquiring.payment.dlx` → `acquiring.payment.dlq`），按
+`eventId` 跳过重放、按尝试版本跳过旧版本并写 `t_consumed_event` / `t_consumed_aggregate_version`。`ApplyPaymentSucceededProcessor`
+核对 Client、Intent、OE 与金额后，由 `OrderPaymentService.applySucceeded` 在一个 REQUIRED 事务推进支付投影、订单 PAID、会话
+COMPLETED、退款基数和资金投影 PENDING；同一事件键与 Hash 或同一成功尝试重复投递直接确认，载荷不符、未知订单或重复成功进入死信；已取消/过期订单只记录支付投影并告警。
+RabbitMQ 连接取 `COMMERCE_RABBITMQ_*`（测试取 `MOR_RABBITMQ_*`）；core 只依赖 `paytech-messaging-api`，AMQP 只在 app。
 设计见[支付结果查询与回传](../../requirements/20261015/payment-支付结果查询与回传/technique.md)。
 
 ## 模块
@@ -352,7 +353,7 @@ Mock 和 Manual 基类均通过现有 `@AutoConfigureRestTestClient` 启用 Foun
 - [`application-mock.yml`](paytech-acquiring-test/src/test/resources/application-mock.yml) 同时是 Commerce 配置字段清单和 Mock 运行配置：列全自有配置、已接入 Foundation 组件配置及本服务使用的框架配置，包含可选字段、代码默认值和已关闭能力的附属字段；中间件、框架与公共配置在上方，系统自定义配置在下方；公共配置不逐项添加说明，自定义字段保留必要的用途、单位和启用条件注释。配置字段新增、修改或删除时同步维护。`MockTestBase` 自动启用 `mock` Profile，无需设置生产环境变量；CCT 随机端口由测试注入 `commerce.test.cct.base-url`，YAML 将其绑定到 SimpleDiscovery，DTO 响应由每个用例配置。
 - `application-auto.yml` 是尚未清理的旧配置资源，当前 auto 测试均使用 `application-mock.yml`。`auto` 测试目录与 `mock` Spring Profile 职责不同，不需要在 IDE 手动切换 Profile。
 - Mock 数据库固定为仓库 `local-environment` 的 `127.0.0.1:13306/mor_commerce`，默认凭据与其本地初始化值一致；仅自定义本地密码时使用 `COMMERCE_TEST_DB_PASSWORD` 覆盖。MySQL 和已批准 Schema 仍须事先准备，测试不自动建表或迁移。
-- 当前 Mock 的完整初始化入口为 [`src/test/resources/init/ddl.sql`](paytech-acquiring-test/src/test/resources/init/ddl.sql)：使用 root 在本地 MySQL 手工执行，创建 `mor_commerce`、`commerce_app`，授予本库 `SELECT/INSERT/UPDATE/DELETE` 权限，再创建测试依赖的 14 张表，已包含 `creation_mode`、`consumer_country_code`。账号及默认密码与 Mock 配置一致；文件含重建数据库语句，只能用于获准重建的本地测试库，已有用户不重置自定义密码。表定义与正式 Schema 一致；已有开发库只能执行缺失表或对应需求的增量 SQL。后续 Mock 增加表依赖时同步此文件，场景数据仍由每例 Mocker 准备。
+- 当前 Mock 的完整初始化入口为 [`src/test/resources/init/ddl.sql`](paytech-acquiring-test/src/test/resources/init/ddl.sql)：使用 root 在本地 MySQL 手工执行，创建 `mor_commerce`、`commerce_app`，授予本库 `SELECT/INSERT/UPDATE/DELETE` 权限，再创建测试依赖的 16 张表（含 paytech-messaging 消费端 `t_consumed_event`、`t_consumed_aggregate_version`），已包含 `creation_mode`、`consumer_country_code`。账号及默认密码与 Mock 配置一致；文件含重建数据库语句，只能用于获准重建的本地测试库，已有用户不重置自定义密码。表定义与正式 Schema 一致；已有开发库只能执行缺失表或对应需求的增量 SQL。后续 Mock 增加表依赖时同步此文件，场景数据仍由每例 Mocker 准备。
 - `application-manual.yml` 使用同一本地 MySQL 与测试凭据边界，默认关闭 Nacos；无发现实例时依赖失败关闭。人工联调可显式启用 Nacos Discovery 并指定注册中心；
 - 支付订单锁引入 Foundation Redis Starter，默认启动需要 `MOR_REDIS_HOST/PORT/PASSWORD`（本地 `127.0.0.1:16379`）。自动测试使用仓库手工启动的 `mor-local-redis-1`；`application-mock.yml` 已配置该隔离本地实例的默认密码，IDE / Maven 直接运行无需额外注入。自定义本地密码时仍可通过 `COMMERCE_TEST_REDIS_PASSWORD` 或 `MOR_REDIS_PASSWORD` 覆盖。测试 Context 使用独立随机 Redis Namespace，锁在 finally 释放，不清理其他业务 Key、不自动启动容器。Redis 不可用时启动/获取锁失败关闭，不降级为无锁。
 - Commerce 使用 Nacos Discovery，自动测试显式关闭注册和发现；RabbitMQ 仍无运行时消费者，父 POM 继续禁止 AMQP 及非 Foundation Redis 客户端依赖。

@@ -31,4 +31,14 @@ public @interface DomainEventHandler {
      * @return 是否严格有序，须与事件目录的 strictOrder 一致
      */
     boolean strictOrder();
+
+    /**
+     * Handler 与消费登记（{@code t_consumed_event}、{@code t_consumed_aggregate_version}）的事务关系。
+     * <li>默认 {@link ConsumeTransaction#SHARED}：Handler 加入拦截器的本地事务，与两张表同事务提交。</li>
+     * <li>{@link ConsumeTransaction#HANDLER_MANAGED}：Handler 在事务外调用并自行管理本地事务（例如必须在事务外调用的
+     * Processor 模板），成功后另开短事务登记；两者之间进程中断导致的重投由 Handler 的业务幂等吸收。</li>
+     *
+     * @return 事务关系
+     */
+    ConsumeTransaction transaction() default ConsumeTransaction.SHARED;
 }

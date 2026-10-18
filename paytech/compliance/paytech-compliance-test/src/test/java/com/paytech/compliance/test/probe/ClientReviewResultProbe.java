@@ -8,19 +8,15 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.amqp.core.AmqpAdmin;
-import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.FanoutExchange;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.QueueBuilder;
-import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.boot.test.context.TestComponent;
 
-import com.paytech.compliance.ext.mq.ClientReviewResultRabbitPublisher;
 import com.paytech.compliance.test.checker.ClientReviewDecidedEnvelopeChecker;
-import com.paytech.compliance.test.checker.ClientReviewResultChecker;
 import com.paytech.foundation.messaging.core.codec.DomainEventCodec;
 import com.paytech.foundation.messaging.core.topology.MessagingTopology;
 import com.paytech.compliance.test.mapper.ClientReviewTestMapper;
@@ -30,11 +26,10 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 /**
- * 审核结果 MQ 双写的测试观察者（真实本地 Broker）
- * <li>bind() 声明两个本例专用的临时排他队列（带 x-expires）：一个绑定旧 Exchange topic_risk_client_review / client_review.decided.v1，
- * 一个绑定 paytech-messaging 发布方交换机 compliance.events（Fanout）；不消费 client-master 的生产队列 cg_client_master_client_review。</li>
- * <li>awaitResult() 先等到该主任务的 CLIENT_REVIEW_RESULT 补偿任务被删除（两次发布均已确认），再从临时队列读取该任务的旧报文；
- * awaitEnvelope() 读取该任务的新信封。</li>
+ * 审核结果领域事件的测试观察者（真实本地 Broker）
+ * <li>bind() 声明本例专用的临时排他队列（带 x-expires），绑定 paytech-messaging 发布方交换机 compliance.events（Fanout）；
+ * 不消费 client-master 的分区队列 client-master.compliance.p0..p3。</li>
+ * <li>awaitEnvelope() 先等到该主任务的 CLIENT_REVIEW_RESULT 补偿任务被删除（发布已确认），再读取该任务的信封。</li>
  * <li>只观察，不发布、不修改补偿任务；unbind() 删除临时队列。</li>
  *
  * @author Kenny
@@ -57,8 +52,6 @@ public class ClientReviewResultProbe {
 
     private final DomainEventCodec codec;
 
-    private String queue;
-
     private String envelopeQueue;
 
     public ClientReviewResultProbe(AmqpAdmin amqpAdmin, RabbitTemplate rabbitTemplate, ClientReviewTestMapper mapper,
@@ -70,29 +63,18 @@ public class ClientReviewResultProbe {
         this.codec = codec;
     }
 
-    /** 声明本例两个临时队列并分别绑定旧审核结果 Exchange 与 compliance.events。 */
+    /** 声明本例临时队列并绑定 compliance.events。 */
     public void bind() {
-        queue = "compliance_test_client_review_" + UUID.randomUUID();
         envelopeQueue = "compliance_test_compliance_events_" + UUID.randomUUID();
         // 不设 auto-delete：RabbitTemplate.receive 每次轮询都会注销消费者，auto-delete 队列会在第一次轮询后被 Broker 删除。
         // 排他队列随连接关闭删除，x-expires 兜底清理进程异常退出后的残留。
-        Queue temporary = QueueBuilder.nonDurable(queue).exclusive().expires(600_000).build();
-        amqpAdmin.declareQueue(temporary);
-        Binding binding = BindingBuilder.bind(temporary)
-            .to(new TopicExchange(ClientReviewResultRabbitPublisher.EXCHANGE, true, false))
-            .with(ClientReviewResultRabbitPublisher.ROUTING_KEY);
-        amqpAdmin.declareBinding(binding);
         Queue envelopes = QueueBuilder.nonDurable(envelopeQueue).exclusive().expires(600_000).build();
         amqpAdmin.declareQueue(envelopes);
         amqpAdmin.declareBinding(BindingBuilder.bind(envelopes).to(new FanoutExchange(EVENTS_EXCHANGE, true, false)));
     }
 
-    /** 删除两个临时队列。 */
+    /** 删除临时队列。 */
     public void unbind() {
-        if (queue != null) {
-            amqpAdmin.deleteQueue(queue);
-            queue = null;
-        }
         if (envelopeQueue != null) {
             amqpAdmin.deleteQueue(envelopeQueue);
             envelopeQueue = null;
@@ -126,31 +108,10 @@ public class ClientReviewResultProbe {
         return null;
     }
 
-    /** 等待该主任务的结果发布完成并返回其消息 Checker。 */
-    public ClientReviewResultChecker awaitResult(long caseId) {
-        awaitPublished(caseId);
-        long deadline = System.currentTimeMillis() + WAIT_MILLIS;
-        while (System.currentTimeMillis() < deadline) {
-            Message message = rabbitTemplate.receive(queue, 500);
-            if (message == null) {
-                continue;
-            }
-            JsonNode envelope = json.readTree(new String(message.getBody(), StandardCharsets.UTF_8));
-            if (Long.toString(caseId).equals(envelope.path("sourceId").asString())) {
-                return new ClientReviewResultChecker(message, envelope, json);
-            }
-        }
-        return fail("审核结果消息未到达：" + caseId);
-    }
-
-    /** 该主任务没有结果补偿任务，临时队列中也没有它的消息。 */
+    /** 该主任务没有结果补偿任务，临时队列中也没有它的信封。 */
     public void assertNoResult(long caseId) {
         assertTrue(mapper.resultEvents(caseId).isEmpty(), "不应登记审核结果补偿任务：" + caseId);
         Message message;
-        while ((message = rabbitTemplate.receive(queue, 300)) != null) {
-            JsonNode envelope = json.readTree(new String(message.getBody(), StandardCharsets.UTF_8));
-            assertTrue(!Long.toString(caseId).equals(envelope.path("sourceId").asString()), "不应发布审核结果：" + caseId);
-        }
         while ((message = rabbitTemplate.receive(envelopeQueue, 300)) != null) {
             JsonNode envelope = json.readTree(new String(message.getBody(), StandardCharsets.UTF_8));
             assertTrue(!Long.toString(caseId).equals(envelope.path("aggregateId").asString()), "不应发布审核结果信封：" + caseId);

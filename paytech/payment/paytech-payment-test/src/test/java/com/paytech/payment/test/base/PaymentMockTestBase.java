@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 import com.paytech.foundation.compensation.core.execution.CompensationEventDispatcher;
+import com.paytech.foundation.messaging.ordering.AggregateKeySequencer;
 import com.paytech.foundation.testsupport.api.MockHttpServer;
 import com.paytech.foundation.testsupport.api.TestBase;
 import com.paytech.payment.PaymentApplication;
@@ -59,6 +60,9 @@ public abstract class PaymentMockTestBase extends TestBase {
     private CompensationEventDispatcher compensationDispatcher;
 
     @Autowired
+    private AggregateKeySequencer sequencer;
+
+    @Autowired
     @Qualifier("compensationHandlerExecutor")
     private ThreadPoolExecutor compensationHandlers;
 
@@ -67,8 +71,8 @@ public abstract class PaymentMockTestBase extends TestBase {
 
     /**
      * 全局初始化只核对空基线，不在前置阶段删除数据。
-     * <li>为本例绑定两个临时观察队列：PaymentSucceeded 的发布要求 mandatory 路由到至少一个队列，第 08 步前 payment.events 没有订阅方，
-     * 每例自带队列使任一收款成功的用例都不依赖共享 Broker 上其他服务的队列。</li>
+     * <li>为本例绑定 payment.events 的临时观察队列：发布端 FAIL 策略要求至少路由到一个队列，每例自带队列使任一收款成功的用例都不依赖
+     * 共享 Broker 上订阅服务的分区队列。</li>
      */
     @BeforeEach
     protected final void setUpGlobalMocks() {
@@ -85,8 +89,10 @@ public abstract class PaymentMockTestBase extends TestBase {
         mockHttpServer.awaitIdle();
         try {
             // 同时观察协调器和真实 Handler；协调器空闲不代表 Handler 已经停止。
+            // 按聚合串行时已 Claim 任务在编排线程上排队，协调器空闲不代表发布已结束。
             await().atMost(Duration.ofSeconds(15)).until(() -> compensationDispatcher.activeTaskCount() == 0
-                && compensationDispatcher.queuedTaskCount() == 0 && compensationHandlers.getActiveCount() == 0);
+                && compensationDispatcher.queuedTaskCount() == 0 && sequencer.pendingTaskCount() == 0
+                && compensationHandlers.getActiveCount() == 0);
         } catch (RuntimeException | AssertionError failure) {
             asynchronousWorkStopped = false;
             throw failure;

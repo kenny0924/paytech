@@ -24,6 +24,7 @@ import com.paytech.compliance.test.mocker.ClientReviewMocker;
 import com.paytech.compliance.test.mocker.MaterialProgramMocker;
 import com.paytech.compliance.test.probe.ClientReviewResultProbe;
 import com.paytech.foundation.compensation.core.execution.CompensationEventDispatcher;
+import com.paytech.foundation.messaging.ordering.AggregateKeySequencer;
 import com.paytech.foundation.testsupport.api.HttpTestInvoker;
 import com.paytech.foundation.testsupport.api.TestBase;
 
@@ -47,6 +48,9 @@ public abstract class ComplianceMockTestBase extends TestBase {
     private static final long ASYNC_STOP_MILLIS = 10_000;
 
     private static boolean asynchronousWorkStopped = true;
+
+    @Autowired
+    private AggregateKeySequencer sequencer;
 
     @Autowired
     protected HttpTestInvoker http;
@@ -98,7 +102,8 @@ public abstract class ComplianceMockTestBase extends TestBase {
 
     private boolean compensationIdle() {
         boolean handlersIdle = !(compensationHandlers instanceof ThreadPoolExecutor pool) || pool.getActiveCount() == 0;
+        // 按聚合串行时已 Claim 任务在编排线程上排队，协调器空闲不代表发布已结束。
         return compensationDispatcher.activeTaskCount() == 0 && compensationDispatcher.queuedTaskCount() == 0
-            && handlersIdle;
+            && sequencer.pendingTaskCount() == 0 && handlersIdle;
     }
 }

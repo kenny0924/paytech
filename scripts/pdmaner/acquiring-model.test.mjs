@@ -291,6 +291,21 @@ update_time DATETIME(6) NN
 UK uk_compensation_event(event_key,event_type,sub_event_type)
 IDX idx_compensation_ready(execute_status,next_execute_at,id)
 IDX idx_compensation_lease(execute_status,lock_until,id)
+
+[t_consumed_event]
+event_id VARCHAR(128) NN
+event_type VARCHAR(32) NN
+aggregate_type VARCHAR(32) NN
+aggregate_id VARCHAR(40) NN
+aggregate_version BIGINT NN
+consumed_at DATETIME(6) NN
+IDX idx_consumed_event_aggregate(aggregate_type,aggregate_id,aggregate_version)
+
+[t_consumed_aggregate_version]
+aggregate_type VARCHAR(32) NN
+aggregate_id VARCHAR(40) NN
+last_version BIGINT NN
+update_time DATETIME(6) NN
 `;
 
 registerServiceModelContract({
@@ -300,15 +315,15 @@ registerServiceModelContract({
   account: "acquiring_app",
   oracle: ORACLE,
   totals: {
-    "tables": 14,
-    "fields": 227,
+    "tables": 16,
+    "fields": 237,
     "uniqueIndexes": 23,
-    "accessIndexes": 11,
+    "accessIndexes": 12,
     "relations": 15,
     "diagramGroups": 4
   },
-  modelSha256: "eaf2905a124462d42ac676a9144a7ed708b77f91b7696e6630c33537389781dc",
-  structuralSha256: "708f517f6d7325e06fda0e66dda6bfbe1d4677a96608bf4752982e7c8012e58c",
+  modelSha256: "6cae77e067f4bc5dd590f1b8f3546988faa5160174f103b999f3b0c7ddcd6eb1",
+  structuralSha256: "15ac80e63b9268b1c0ee094689c8c9a82ddd6aa1f9f7c11a8d534a86b4a7d794",
   diagrams: [
     "订单与不可变上下文",
     "Checkout 与消费者法律",

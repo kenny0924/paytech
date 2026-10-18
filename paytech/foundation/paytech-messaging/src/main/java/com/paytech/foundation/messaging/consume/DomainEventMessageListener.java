@@ -16,6 +16,7 @@ import org.springframework.amqp.rabbit.support.DefaultMessagePropertiesConverter
 import org.springframework.amqp.rabbit.support.MessagePropertiesConverter;
 
 import com.paytech.foundation.messaging.api.DomainEvent;
+import com.paytech.foundation.messaging.api.DomainEventRejectedException;
 import com.paytech.foundation.messaging.core.codec.DomainEventCodec;
 import com.paytech.foundation.messaging.core.codec.InvalidDomainEventException;
 import com.paytech.foundation.messaging.core.observability.ConsumeOutcome;
@@ -32,7 +33,7 @@ import com.rabbitmq.client.Channel;
  * {@value #GAP_ATTEMPT_HEADER}。</li>
  * <li>Handler 异常：退避后 Nack 重新入队（同一消息优先重投）。</li>
  * <li>两者第 {@value MessagingTopology#DELIVERY_LIMIT} 次仍未成功时拒绝进入 DLQ，记录 ERROR 与 {@code outcome=dead}。</li>
- * <li>非法信封、发布方不符直接进入 DLQ；本服务未订阅的事件类型直接确认。</li>
+ * <li>非法信封、发布方不符、Handler 抛出 {@link DomainEventRejectedException} 直接进入 DLQ；本服务未订阅的事件类型直接确认。</li>
  *
  * @author Claude
  */
@@ -117,6 +118,11 @@ public final class DomainEventMessageListener implements ChannelAwareMessageList
         ConsumeOutcome outcome;
         try {
             outcome = interceptor.consume(event, registration);
+        } catch (DomainEventRejectedException rejected) {
+            forgetAttempts(event.eventId());
+            deadLetter(channel, deliveryTag, event.eventType(), "Handler 拒绝领域事件: " + event + ", 原因="
+                + rejected.getMessage());
+            return;
         } catch (RuntimeException exception) {
             LOGGER.warn("领域事件处理失败，将重新投递: {}", event, exception);
             retryOrDeadLetter(message, channel, event, "Handler 持续失败");

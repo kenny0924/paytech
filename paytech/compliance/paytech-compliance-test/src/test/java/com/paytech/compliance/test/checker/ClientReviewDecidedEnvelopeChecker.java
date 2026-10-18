@@ -11,6 +11,8 @@ import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageDeliveryMode;
 
 import com.paytech.compliance.api.event.ClientReviewDecidedPayload;
+import com.paytech.compliance.domain.ClientReviewAction;
+import com.paytech.compliance.test.mocker.ClientReviewMocker.MockedReview;
 import com.paytech.foundation.messaging.api.AggregateKey;
 import com.paytech.foundation.messaging.api.DomainEvent;
 import com.paytech.foundation.messaging.core.codec.DomainEventCodec;
@@ -20,7 +22,7 @@ import tools.jackson.databind.JsonNode;
 
 /**
  * compliance.events 上一条 ClientReviewDecided 信封（Schema v1，design/08 §2）的断言：信封字段、AMQP 属性、以真实消费端解码器校验
- * payloadHash，以及 Payload 与旧 topic_risk_client_review 报文同字段、同顺序、同值。
+ * payloadHash，以及 Payload 字段顺序与结束后的主任务、决定一致（旧 topic_risk_client_review 第 08 步停发，原报文 Checker 的 Payload 断言移入本类）。
  */
 public class ClientReviewDecidedEnvelopeChecker {
     private final Message message;
@@ -58,11 +60,43 @@ public class ClientReviewDecidedEnvelopeChecker {
         return this;
     }
 
-    /** Payload 与旧报文 payload 同字段、同顺序、同值。 */
-    public ClientReviewDecidedEnvelopeChecker payload(JsonNode legacyPayload) {
+    /**
+     * Payload 与结束后的主任务一致
+     *
+     * @param review 主任务
+     * @param action 审核结论
+     * @param caseVersion 结束后的主任务版本
+     * @param decidedAt 主任务结束时间（落库值）
+     * @param decisionId 主任务最终决定 ID；退回为 null
+     * @param decidedBy 决定人；退回为 null
+     * @param publicNote 客户可见说明
+     * @param returnSection 退回分区
+     * @return 当前 Checker
+     */
+    public ClientReviewDecidedEnvelopeChecker payload(MockedReview review, ClientReviewAction action, long caseVersion,
+        Instant decidedAt, Long decisionId, Long decidedBy, String publicNote, String returnSection) {
         JsonNode payload = envelope.path("payload");
-        assertEquals(ClientReviewDecidedPayload.FIELDS, List.copyOf(payload.propertyNames()), "Payload 字段与顺序");
-        assertEquals(legacyPayload, payload, "Payload 与旧报文一致");
+        assertAll("payload", () -> assertEquals(ClientReviewDecidedPayload.FIELDS, List.copyOf(payload.propertyNames())),
+            () -> assertEquals(Long.toString(review.caseId()), payload.path("caseId").asString()),
+            () -> assertEquals(caseVersion, payload.path("caseVersion").asLong()),
+            () -> assertEquals(Long.toString(review.applicationId()), payload.path("applicationId").asString()),
+            () -> assertEquals(review.submissionId(), payload.path("submissionId").asString()),
+            () -> assertEquals(action.getCaseStatus(), payload.path("outcome").asString()),
+            () -> assertText(returnSection, payload.path("returnSection")),
+            () -> assertText(publicNote, payload.path("publicNote")),
+            () -> assertEquals(decidedAt, Instant.parse(payload.path("decidedAt").asString())),
+            () -> assertText(decisionId == null ? null : Long.toString(decisionId), payload.path("decisionId")),
+            () -> assertText(decidedBy == null ? null : Long.toString(decidedBy), payload.path("decidedBy")));
         return this;
+    }
+
+    /** 可空字符串；空值为 JSON null。 */
+    static void assertText(String expected, JsonNode actual) {
+        if (expected == null) {
+            assertTrue(actual.isNull(), "应为 null");
+            return;
+        }
+        assertTrue(actual.isString(), "应为字符串");
+        assertEquals(expected, actual.asString());
     }
 }

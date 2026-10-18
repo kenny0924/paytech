@@ -11,7 +11,6 @@ import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.amqp.core.AmqpAdmin;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -32,14 +31,11 @@ import tools.jackson.databind.JsonNode;
 /**
  * 支付成功首次推进订单时冻结 order.paid 并提交 Platform；重复投递与已关闭订单补记不产生事件。
  *
- * @see PaymentSucceededListener#onMessage
+ * @see PaymentSucceededListener#consume
  */
 class ClientWebhookOrderPaidTest extends AbstractPaymentResultTest {
-    private static final String DEAD_LETTER_QUEUE = "cg_acquiring_payment_result_dlq";
     private static final long ATTEMPT_ID = 8_100_001L;
 
-    @Autowired
-    AmqpAdmin amqpAdmin;
     @Autowired
     CheckoutPaymentDataMocker data;
     @Autowired
@@ -48,11 +44,9 @@ class ClientWebhookOrderPaidTest extends AbstractPaymentResultTest {
     ClientWebhookChecker webhooks;
     private CreateCheckoutContext fixture;
 
-    /** 本服务队列只保留本例消息；准备已绑定 Intent 的开放订单。 */
+    /** 准备已绑定 Intent 的开放订单；分区队列与 DLQ 由基类清空。 */
     @BeforeEach
     void setUpOrderPaidWebhook() {
-        amqpAdmin.purgeQueue(PaymentSucceededListener.QUEUE, false);
-        amqpAdmin.purgeQueue(DEAD_LETTER_QUEUE, false);
         fixture = boundOrder();
     }
 
@@ -70,7 +64,9 @@ class ClientWebhookOrderPaidTest extends AbstractPaymentResultTest {
             fixture.getOrder().getClientId(), "2026-09-08T00:00:00Z", expectedObject(version));
         assertMatchesGetOrder(submission.envelope().path("data").path("object"));
 
+        double replayed = paymentEvents.outcome("replayed");
         publish(payload);
+        paymentEvents.awaitOutcome("replayed", replayed, 1);
         var marker = boundOrder();
         publish(payload(marker, ATTEMPT_ID + 1));
         webhooks.awaitSubmissions(ClientWebhookEventType.ORDER_PAID.eventId(marker.getOrder().getOrderNo()), 1);

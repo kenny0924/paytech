@@ -1213,8 +1213,13 @@ function validateGeneratedModel(model, expectedTableKeys, relations) {
   const covered = new Set();
   let relationCount = 0;
   for (const entity of model.entities) {
-    assert(entity.fields.filter((field) => field.primaryKey).length === 1, `${entity.defKey} must have one primary key`);
     const logicalKey = logicalTableKey(entity.defKey);
+    if (MESSAGING_CONSUMER_TABLE_KEYS.has(logicalKey)) {
+      // paytech-messaging standard tables keep their own key and audit shape (design/08 §4).
+      assert(entity.fields.some((field) => field.primaryKey), `${entity.defKey} must have a primary key`);
+      continue;
+    }
+    assert(entity.fields.filter((field) => field.primaryKey).length === 1, `${entity.defKey} must have one primary key`);
     const expectedAuditFields = auditFieldsFor(logicalKey);
     assert(expectedAuditFields.every((key) => entity.fields.some((field) => field.defKey === key)), `${entity.defKey} lacks audit fields`);
     if (CREATE_ONLY_AUDIT_TABLES.has(logicalKey)) {
@@ -1239,6 +1244,96 @@ function validateGeneratedModel(model, expectedTableKeys, relations) {
     }
   }
   assert(covered.size === model.entities.length, `Diagrams cover ${covered.size} of ${model.entities.length} tables`);
+}
+
+// paytech-messaging consumer tables (design/08 §4, step 08): columns, types, nullability, primary key and index are taken
+// from paytech/foundation/paytech-messaging/src/main/resources/schema/messaging-consumed-event.sql. They are not part of
+// the approved CCT catalog, so a consuming service adds them through additionalEntities(model).
+const ASCII_BINARY = Object.freeze({ characterSet: "ascii", collation: "ascii_bin" });
+const MESSAGING_CONSUMER_TABLES = Object.freeze([
+  Object.freeze({
+    defKey: "consumed_event",
+    defName: "已消费领域事件",
+    comment: "已消费领域事件：paytech-messaging 消费端按事件 ID 去重的标准表（design/08 §4），列、类型、主键与索引与 paytech-messaging 的 messaging-consumed-event.sql 一致；事件与版本合法性由消费拦截器保证。",
+    fields: Object.freeze([
+      ["event_id", "VARCHAR", 128, true, true, "事件 ID", "领域事件信封 eventId（默认等于 eventKey），按其去重。"],
+      ["event_type", "VARCHAR", 32, false, true, "事件类型", "已消费领域事件的类型（PascalCase，登记于 paytech-messaging 事件目录）。"],
+      ["aggregate_type", "VARCHAR", 32, false, true, "聚合类型", "领域事件所属聚合的大写类型代码。"],
+      ["aggregate_id", "VARCHAR", 40, false, true, "聚合标识", "领域事件所属聚合的标识，同时是 RabbitMQ 分区路由键。"],
+      ["aggregate_version", "BIGINT", "", false, false, "聚合版本", "本条已消费领域事件携带的聚合版本。"],
+      ["consumed_at", "DATETIME", 6, false, false, "消费时间", "消费事务提交的 UTC 微秒精度时间。"],
+    ]),
+    accessIndexes: Object.freeze([
+      Object.freeze({ defKey: "idx_consumed_event_aggregate", fields: Object.freeze(["aggregate_type", "aggregate_id", "aggregate_version"]) }),
+    ]),
+  }),
+  Object.freeze({
+    defKey: "consumed_aggregate_version",
+    defName: "已消费聚合版本",
+    comment: "已消费聚合版本：paytech-messaging 消费端按聚合记录已处理的最大版本，用于判定乱序、重放与缺口（design/08 §4）；列、类型与主键与 messaging-consumed-event.sql 一致。",
+    fields: Object.freeze([
+      ["aggregate_type", "VARCHAR", 32, true, true, "聚合类型", "领域事件所属聚合的大写类型代码。"],
+      ["aggregate_id", "VARCHAR", 40, true, true, "聚合标识", "领域事件所属聚合的标识，同时是 RabbitMQ 分区路由键。"],
+      ["last_version", "BIGINT", "", false, false, "已处理最大版本", "本服务已处理的该聚合最大领域事件版本。"],
+      ["update_time", "DATETIME", 6, false, false, "更新时间", "数据库记录最近一次持久化更新的 UTC 微秒精度时间。"],
+    ]),
+    accessIndexes: Object.freeze([]),
+  }),
+]);
+const MESSAGING_CONSUMER_TABLE_KEYS = new Set(MESSAGING_CONSUMER_TABLES.map((table) => table.defKey));
+
+/** Deterministic entities for the paytech-messaging consumer tables, in DDL order. */
+export function messagingConsumerEntities(model) {
+  const typeIds = Object.fromEntries(model.dataTypeMapping.mappings.map((mapping) => [mapping.defKey, mapping.id]));
+  const domainIds = Object.fromEntries(model.domains.map((domain) => [domain.defKey, domain.id]));
+  const baseTypes = { VARCHAR: typeIds.string, BIGINT: typeIds.BIGINT, DATETIME: typeIds.date };
+  return MESSAGING_CONSUMER_TABLES.map((table) => {
+    const fields = table.fields.map(([defKey, type, len, primaryKey, ascii, defName, comment]) => ({
+      defKey,
+      defName,
+      comment,
+      type,
+      len,
+      scale: "",
+      primaryKey,
+      notNull: true,
+      autoIncrement: false,
+      defaultValue: "",
+      hideInGraph: false,
+      refDict: "",
+      baseType: baseTypes[type],
+      extProps: ascii ? { ...ASCII_BINARY } : {},
+      domain: type === "DATETIME" ? domainIds.DateTime : "",
+      id: stableUuid(`field/${table.defKey}/${defKey}`),
+    }));
+    const fieldsByKey = new Map(fields.map((field) => [field.defKey, field]));
+    return {
+      id: stableUuid(`entity/${table.defKey}`),
+      env: { base: { nameSpace: "", codeRoot: "" } },
+      defKey: physicalTableKey(table.defKey),
+      defName: table.defName,
+      comment: table.comment,
+      properties: {},
+      sysProps: { nameTemplate: "{defKey}[{defName}]" },
+      notes: {},
+      headers: clone(model.profile.headers),
+      fields,
+      correlations: [],
+      indexes: table.accessIndexes.map((index) => ({
+        defKey: index.defKey,
+        defName: humanize(index.defKey),
+        unique: false,
+        comment: `Access index for ${table.defKey} on ${index.fields.join(", ")}`,
+        fields: index.fields.map((fieldKey, position) => ({
+          fieldDefKey: fieldsByKey.get(fieldKey).id,
+          ascOrDesc: "A",
+          id: stableUuid(`index-field/${table.defKey}/${index.defKey}/${position}/${fieldKey}`),
+        })),
+        id: stableUuid(`index/${table.defKey}/${index.defKey}`),
+      })),
+      type: "P",
+    };
+  });
 }
 
 // Builds one service database model from the shared Client & Contract catalog.

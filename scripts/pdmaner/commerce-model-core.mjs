@@ -24,6 +24,8 @@ const templatePath = path.join(
 // kept from the Commerce V1 model so unchanged tables keep their entity / field / index IDs.
 // Removed by S10 / C7: t_command_idempotency, t_commerce_order.context_format and preparation_command_id.
 // t_client_stored_card_setting moved to client-master (D42); cross-database relations (order.customer_id) are not modelled.
+// Step 08: acquiring also owns the paytech-messaging consumer tables t_consumed_event / t_consumed_aggregate_version
+// (copied from paytech/foundation/paytech-messaging/src/main/resources/schema/messaging-consumed-event.sql).
 const MODEL_KEY = "code-mor/commerce/database/v1";
 const MYSQL_MAPPING_ID = "29D1CE08-4C35-4D2D-AAA9-23D93305B52E";
 const JAVA_MAPPING_ID = "797A1496-D649-4261-89B4-544132EC3F36";
@@ -49,6 +51,12 @@ const ASCII_BINARY_FIELD_PATHS = new Set([
   "compensation_event.event_key",
   "compensation_event.event_type",
   "compensation_event.sub_event_type",
+  "consumed_event.event_id",
+  "consumed_event.event_type",
+  "consumed_event.aggregate_type",
+  "consumed_event.aggregate_id",
+  "consumed_aggregate_version.aggregate_type",
+  "consumed_aggregate_version.aggregate_id",
 ]);
 
 // Explicit production manifest. It is intentionally independent from tests and Markdown.
@@ -319,6 +327,20 @@ last_error_summary TEXT N
 lock_version BIGINT NN
 create_time DATETIME(6) NN
 update_time DATETIME(6) NN
+
+[t_consumed_event]
+event_id VARCHAR(128) NN
+event_type VARCHAR(32) NN
+aggregate_type VARCHAR(32) NN
+aggregate_id VARCHAR(40) NN
+aggregate_version BIGINT NN
+consumed_at DATETIME(6) NN
+
+[t_consumed_aggregate_version]
+aggregate_type VARCHAR(32) NN PK
+aggregate_id VARCHAR(40) NN PK
+last_version BIGINT NN
+update_time DATETIME(6) NN
 `;
 const INDEX_MANIFEST = String.raw`
 t_commerce_order
@@ -372,6 +394,8 @@ t_compensation_event
 UK uk_compensation_event(event_key,event_type,sub_event_type)
 IDX idx_compensation_ready(execute_status,next_execute_at,id)
 IDX idx_compensation_lease(execute_status,lock_until,id)
+t_consumed_event
+IDX idx_consumed_event_aggregate(aggregate_type,aggregate_id,aggregate_version)
 `;
 
 const FIELD_DEFAULT_VALUES = Object.freeze({
@@ -441,6 +465,8 @@ const ACQUIRING_DIAGRAM_GROUPS = Object.freeze([
     defName: "可靠执行",
     primary: Object.freeze([
       "compensation_event",
+      "consumed_event",
+      "consumed_aggregate_version",
     ]),
     references: Object.freeze([]),
   }),
@@ -502,15 +528,17 @@ export const COMMERCE_SERVICE_MODELS = Object.freeze({
       "consumer_acceptance",
       "refund_request",
       "compensation_event",
+      "consumed_event",
+      "consumed_aggregate_version",
     ]),
     diagramGroups: ACQUIRING_DIAGRAM_GROUPS,
     versionTables: ACQUIRING_VERSION_TABLES,
     immutableTables: ACQUIRING_IMMUTABLE_TABLES,
     totals: Object.freeze({
-      tables: 14,
-      fields: 227,
+      tables: 16,
+      fields: 237,
       uniqueIndexes: 23,
-      accessIndexes: 11,
+      accessIndexes: 12,
       relations: 15,
       diagramGroups: 4,
     }),
@@ -583,6 +611,8 @@ function parseFieldManifest() {
   return headings.map((heading, tableIndex) => {
     const end = headings[tableIndex + 1]?.index ?? FIELD_MANIFEST.length;
     const section = FIELD_MANIFEST.slice(heading.index + heading[0].length, end);
+    // A table whose primary key is not the first field marks every key column with a trailing PK annotation.
+    const explicitPrimaryKey = /\sPK$/mu.test(section);
     const fields = section
       .split(/\r?\n/u)
       .map((line) => line.trim())
@@ -592,13 +622,15 @@ function parseFieldManifest() {
           /^([a-z][a-z0-9_]*)\s+([A-Z]+(?:\(\d+(?:,\d+)?\))?)\s+(NN|N)(?:\s+(.*))?$/u,
         );
         invariant(match, `Cannot parse field manifest: ${heading[1]}.${line}`);
-        const [, defKey, typeToken, nullability, annotations = ""] = match;
+        const [, defKey, typeToken, nullability, rawAnnotations = ""] = match;
+        const markedPrimaryKey = /(?:^|\s)PK$/u.test(rawAnnotations);
+        const annotations = rawAnnotations.replace(/(?:^|\s)PK$/u, "");
         const closed = annotations.match(/\{([^}]+)\}/u);
         const open = annotations.match(/(?:^|\s)OPEN(?:\(([^)]+)\))?/u);
         return Object.freeze({
           defKey,
           ...parseType(typeToken),
-          primaryKey: fieldIndex === 0,
+          primaryKey: explicitPrimaryKey ? markedPrimaryKey : fieldIndex === 0,
           notNull: nullability === "NN",
           closedValues: closed ? Object.freeze(closed[1].split(",")) : null,
           openSourceHint: open?.[1] ?? (open ? "APPROVED_CATALOG" : null),
@@ -731,7 +763,7 @@ function normalizeTemplate(template, service) {
 
 function baseTypeFor(field, typeIds, domainIds) {
   const result = { baseType: "", domain: "" };
-  if (field.primaryKey) result.domain = domainIds.PrimaryKey;
+  if (field.primaryKey && field.type === "BIGINT") result.domain = domainIds.PrimaryKey;
   if (field.type === "BIGINT") result.baseType = typeIds.BIGINT;
   else if (field.type === "VARCHAR") result.baseType = typeIds.string;
   else if (field.type === "CHAR") result.baseType = typeIds.char;

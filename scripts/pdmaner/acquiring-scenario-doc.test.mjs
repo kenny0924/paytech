@@ -41,9 +41,13 @@ const expectedScenarioLogicalTables = Object.freeze([
 // S10：拆分时删除，不进入 acquiring 模型。
 const removedByS10 = Object.freeze(["command_idempotency"]);
 
-const expectedTargetLogicalTables = Object.freeze(
-  expectedScenarioLogicalTables.filter((table) => !removedByS10.includes(table)),
-);
+// 第 08 步：paytech-messaging 消费端标准表（每库一份，design/08 §4）不属于业务场景，追加在 acquiring 模型末尾。
+const messagingConsumerTables = Object.freeze(["consumed_event", "consumed_aggregate_version"]);
+
+const expectedTargetLogicalTables = Object.freeze([
+  ...expectedScenarioLogicalTables.filter((table) => !removedByS10.includes(table)),
+  ...messagingConsumerTables,
+]);
 
 const removedTables = Object.freeze([
   "order_status_history",
@@ -126,20 +130,20 @@ test("NOVA scenario provides one concrete mapping row for every approved target 
   }
 });
 
-artifactTest("scenario minus S10 removals and the generated acquiring model share the exact 14-table target", () => {
+artifactTest("scenario minus S10 removals plus messaging consumer tables equals the generated 16-table acquiring model", () => {
   const model = JSON.parse(readFileSync(modelPath, "utf8"));
   const scenarioTables = scenarioTableRows(readScenario())
     .map((row) => row.table)
     .filter((table) => !removedByS10.includes(table))
     .map((table) => `t_${table}`);
   const generatedTables = model.entities.map((entity) => entity.defKey);
-  assert.deepEqual(scenarioTables, generatedTables);
+  assert.deepEqual([...scenarioTables, ...messagingConsumerTables.map((table) => `t_${table}`)], generatedTables);
   assert.deepEqual(generatedTables, expectedTargetLogicalTables.map((table) => `t_${table}`));
   assert.deepEqual(modelTotals(model), {
-    tables: 14,
-    fields: 227,
+    tables: 16,
+    fields: 237,
     uniqueIndexes: 23,
-    accessIndexes: 11,
+    accessIndexes: 12,
     relations: 15,
     diagramGroups: 4,
   });

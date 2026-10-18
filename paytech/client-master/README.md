@@ -4,7 +4,7 @@
 
 - spring.application.name：`client-master-service`（Nacos 发现名；出站 `X-Caller-Service` 与 Vault 调用方同为该名）
 - 端口：18101，管理端口 19101
-- 数据库：`mor_client_master`（27 张表：21 张主档表、`t_consumer_legal_document`、`t_seller_disclosure`、`t_client_stored_card_setting`、本库 BCR 两表、`t_compensation_event`）
+- 数据库：`mor_client_master`（29 张表：21 张主档表、`t_consumer_legal_document`、`t_seller_disclosure`、`t_client_stored_card_setting`、本库 BCR 两表、`t_compensation_event`，以及 paytech-messaging 消费端 `t_consumed_event`、`t_consumed_aggregate_version`）
 - 包根：`com.paytech.client.master`；`paytech-client-master-api` 中原 onboarding / workspace 合同保留旧包 `com.paytech.client.contract.api` 一个版本，新合同位于 `com.paytech.client.master.api`
 
 ## 模块

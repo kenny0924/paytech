@@ -8,11 +8,8 @@ import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.amqp.core.AmqpAdmin;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.client.EntityExchangeResult;
 
-import com.paytech.client.master.ext.mq.ClientReviewResultListener;
 import com.paytech.client.master.test.base.onboarding.AbstractClientReviewTest;
 import com.paytech.client.master.test.mocker.onboarding.OnboardingApplicationMocker.ApplicationFixture;
 import com.paytech.client.master.test.mocker.onboarding.OnboardingApplicationMocker.ReviewFixture;
@@ -30,14 +27,10 @@ class ResubmitAfterReturnTest extends AbstractClientReviewTest {
     private static final String HASH = "a".repeat(64);
     private static final JsonMapper JSON = JsonMapper.builder().build();
 
-    @Autowired
-    AmqpAdmin amqpAdmin;
-
-    /** 个人身份证明为必需材料；结果队列只保留本例消息。 */
+    /** 个人身份证明为必需材料；结果分区队列由基类清空。 */
     @BeforeEach
     void setUpReturnFlow() {
         owners.mockRequirements("INDIVIDUAL_KYC", new RequirementBody("IDENTITY", "IDENTITY_DOCUMENT", true));
-        amqpAdmin.purgeQueue(ClientReviewResultListener.QUEUE, false);
     }
 
     /** 退回后改证件号：保存成功并解绑，重提绑定新键，旧键仍归本主体。 */

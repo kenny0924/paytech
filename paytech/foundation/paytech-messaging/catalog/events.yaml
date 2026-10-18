@@ -2,9 +2,10 @@
 # 每个事件一条；producer / consumers 使用 01 §3 的服务名；构建期由 YamlEventCatalog 与 ArchUnit 校验。
 # 新增或修改登记须同时更新发布端、消费 Handler 的 @DomainEventHandler 与对应设计文档。
 events:
-  # Payment 支付成功（第 05 步按实现核对）：当前发布 v1，Payload 与旧 topic_payment_result 报文一致；aggregateId 为支付尝试 ID，
-  # aggregateVersion 取 t_payment_attempt.version（可能跳号，故 strictOrder=false）。第 12 步升 v2，为 card 增加 instrumentRef、
-  # consentToSave、customerId（design/05），acquiring 忽略新增字段。
+  # Payment 支付成功（第 05 步按实现核对，第 08 步复核）：发布 v1；aggregateId 为支付尝试 ID，aggregateVersion 取
+  # t_payment_attempt.version（可能跳号，故 strictOrder=false）。acquiring 第 08 步切到 acquiring.payment.p0..p3（Handler
+  # strictOrder=false、HANDLER_MANAGED），旧 Topic 停发。第 12 步升 v2，为 card 增加 instrumentRef、consentToSave、customerId
+  # （design/05），acquiring 忽略新增字段。
   - eventType: PaymentSucceeded
     schemaVersion: 1
     producer: payment
@@ -15,7 +16,8 @@ events:
     payloadSchemaRef: paytech-payment-api/event/PaymentSucceeded/v1
   # 客户审核结论（第 06 步按实现核对）：compliance 发布 v1，Payload 与旧 topic_risk_client_review 报文同字段同顺序；
   # aggregateType 与旧报文 sourceType 一致为 DD_CASE，aggregateId 为审核主任务 ID，aggregateVersion 取 Payload caseVersion
-  # （t_due_diligence_case.version，登记、核验、分类都会推进，可能跳号，故 strictOrder=false）。client-master 第 08 步切换。
+  # （t_due_diligence_case.version，登记、核验、分类都会推进，可能跳号，故 strictOrder=false）。client-master 第 08 步切到
+  # client-master.compliance.p0..p3（Handler strictOrder=false、HANDLER_MANAGED），旧 topic_risk_client_review 停发。
   - eventType: ClientReviewDecided
     schemaVersion: 1
     producer: compliance

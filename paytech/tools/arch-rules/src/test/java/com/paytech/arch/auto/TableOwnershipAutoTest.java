@@ -27,7 +27,8 @@ class TableOwnershipAutoTest {
         Assertions.assertEquals(29, ownership.databasesOf("ledger").get("mor_ledger").size());
         Assertions.assertEquals(Set.of("mor_platform"), ownership.databasesOf("platform-support").keySet());
         Assertions.assertTrue(ownership.allowedTables("ledger").containsAll(
-            List.of("t_journal_entry", "t_currency_spec", "t_compensation_event", "t_consumed_event")));
+            List.of("t_journal_entry", "t_currency_spec", "t_compensation_event", "t_consumed_event",
+                "t_consumed_aggregate_version")));
     }
 
     @Test

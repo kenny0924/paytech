@@ -56,6 +56,13 @@
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-core</artifactId>
         </dependency>
+        <!-- Optional: AggregateKeySequencer implements the compensation Dispatcher's execution port (design/08 §3).
+             The compensation library never depends on messaging; hosts that publish via compensation already include it. -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-compensation-event</artifactId>
+            <optional>true</optional>
+        </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>

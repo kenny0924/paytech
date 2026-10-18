@@ -22,6 +22,8 @@ public final class HandledEventProbe implements Clear {
     private final List<String> invocations = new CopyOnWriteArrayList<>();
     private final Set<String> threads = ConcurrentHashMap.newKeySet();
     private final Set<String> failingAggregates = ConcurrentHashMap.newKeySet();
+    private final Set<String> rejectingAggregates = ConcurrentHashMap.newKeySet();
+    private final List<Boolean> transactionActive = new CopyOnWriteArrayList<>();
     private volatile Duration handlingDelay = Duration.ZERO;
 
     /**
@@ -80,6 +82,43 @@ public final class HandledEventProbe implements Clear {
     }
 
     /**
+     * 让该聚合的处理抛出 {@code DomainEventRejectedException}。
+     *
+     * @param aggregateId 聚合
+     */
+    public void rejectAggregate(String aggregateId) {
+        rejectingAggregates.add(aggregateId);
+    }
+
+    /**
+     * 是否应拒绝。
+     *
+     * @param aggregateId 聚合
+     * @return 是返回 true
+     */
+    public boolean shouldReject(String aggregateId) {
+        return rejectingAggregates.contains(aggregateId);
+    }
+
+    /**
+     * 记录 Handler 被调用时是否处于事务中。
+     *
+     * @param active 是否有活动事务
+     */
+    public void recordTransactionActive(boolean active) {
+        transactionActive.add(active);
+    }
+
+    /**
+     * 每次调用时的事务状态。
+     *
+     * @return 按调用顺序
+     */
+    public List<Boolean> transactionActive() {
+        return List.copyOf(transactionActive);
+    }
+
+    /**
      * 全部调用记录，形如 {@code aggregate@version}。
      *
      * @return 调用记录
@@ -120,6 +159,8 @@ public final class HandledEventProbe implements Clear {
         invocations.clear();
         threads.clear();
         failingAggregates.clear();
+        rejectingAggregates.clear();
+        transactionActive.clear();
         maxInFlight.set(0);
         handlingDelay = Duration.ZERO;
     }

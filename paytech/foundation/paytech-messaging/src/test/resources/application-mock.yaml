@@ -33,3 +33,7 @@ messaging:
     # 缩短缺口与失败的重投退避，使 DLQ 场景在数秒内完成；生产默认 1s。
     retry-backoff: 50ms
   consumers: {}
+
+# 只有 SequencedPublishAutoTest 的独立上下文开启补偿组件（compensation-event 作为可选依赖出现在测试类路径上）。
+compensation:
+  enabled: false

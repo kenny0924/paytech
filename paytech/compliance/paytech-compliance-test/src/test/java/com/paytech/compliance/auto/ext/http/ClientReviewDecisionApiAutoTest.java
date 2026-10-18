@@ -52,7 +52,6 @@ import com.paytech.compliance.test.builder.ClientReviewClassificationsRequestBui
 import com.paytech.compliance.test.builder.ClientReviewDecisionRequestBuilder;
 import com.paytech.compliance.test.builder.ClientReviewReturnRequestBuilder;
 import com.paytech.compliance.test.checker.ClientReviewCommandResponseChecker;
-import com.paytech.compliance.test.checker.ClientReviewResultChecker;
 import com.paytech.compliance.test.checker.ClientReviewStoreChecker;
 import com.paytech.compliance.test.mapper.ClientReviewTestMapper.CaseRow;
 import com.paytech.compliance.test.mocker.ClientReviewMocker;
@@ -65,7 +64,7 @@ import com.paytech.compliance.test.probe.ClientReviewResultProbe;
  * <li>通过：门禁满足后主任务与全部进行中子任务结束为 APPROVED，每个任务一条 REVIEWER 资格决定与状态变更。</li>
  * <li>拒绝：主任务 REJECTED 并有一条决定，进行中子任务随之 WITHDRAWN；内部理由只进内部备注，不复制为客户可见说明。</li>
  * <li>退回：主任务与进行中子任务 RETURNED，记录分区与客户可见说明，不形成决定。</li>
- * <li>每个结论在同一事务登记结果发布，经补偿任务发布 ClientReviewDecided 到 topic_risk_client_review；
+ * <li>每个结论在同一事务登记结果发布，经补偿任务发布 ClientReviewDecided 到 compliance.events；
  * 用例绑定临时队列观察消息信封、payloadHash 与 payload。</li>
  * <li>重放：已以同一结论结束直接返回，不再写行或发布；端到端：从核验材料、接收分类到通过的完整审核。</li>
  * <li>业务规则：门禁未满足 422（逐项给出未满足条件）；已以其他结论结束 409；任务不存在、是子任务或不属于 Client 入驻 404。</li>
@@ -428,11 +427,9 @@ class ClientReviewDecisionApiAutoTest extends ComplianceMockTestBase {
         String publicNote, String returnSection) {
         CaseRow main = store.caseRow(review.caseId());
         Long decisionId = action == RETURN ? null : store.decisionId(review.caseId());
-        ClientReviewResultChecker legacy = results.awaitResult(review.caseId()).assertDecided(review, action, caseVersion,
-            main.decisionTime(), decisionId, decidedBy, publicNote, returnSection);
-        // 双写：旧 Topic 报文保持不变，compliance.events 收到同一结论的 Schema v1 信封（client-master 第 08 步切换前并行）。
+        // compliance.events 收到该结论的 Schema v1 信封；旧 topic_risk_client_review 第 08 步停发。
         results.awaitEnvelope(review.caseId()).envelope(review.caseId(), caseVersion, main.decisionTime(), INSTANCE_ID)
-            .payload(legacy.payload());
+            .payload(review, action, caseVersion, main.decisionTime(), decisionId, decidedBy, publicNote, returnSection);
         store.assertNoResultEvent(review.caseId());
     }
 

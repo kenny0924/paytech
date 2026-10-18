@@ -92,6 +92,10 @@ services:
       RISK_DECISION_ENVIRONMENT: TEST
       ONBOARDING_REVIEW_ENABLED: "true"
       ONBOARDING_MATERIALS_ENABLED: "true"
+      # paytech-messaging 发布端（design/08 §3，第 08 步）：该服务承载审核结果发布（拆分后为 compliance）。
+      MESSAGING_PRODUCER_SERVICE: compliance
+      MESSAGING_PRODUCER_SEQUENCER_ENABLED: "true"
+      MESSAGING_PUBLISHER_UNROUTABLEPOLICY: FAIL
     depends_on:
       mysql: { condition: service_healthy }
       redis: { condition: service_healthy }
@@ -204,6 +208,9 @@ services:
       COMMERCE_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
       COMMERCE_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
       COMMERCE_RABBITMQ_VHOST: /mor-test
+      # paytech-messaging 消费端（design/08 §3，第 08 步）：订阅 payment.events，分区 acquiring.payment.p0..p3。
+      MESSAGING_CONSUMER_SERVICE: acquiring
+      MESSAGING_CONSUMERS_PAYMENT_PARTITIONS: "4"
       # test 无 Payment 与结账页：支付方式码与公开地址仅满足启动；CCT 商业事实、税、文档为 Commerce 内固定 Mock（需求 Q3）。
       COMMERCE_CARD_PAYMENT_METHOD_CODE: CARD
       COMMERCE_CHECKOUT_PUBLIC_ORIGIN: https://localhost:28443
@@ -253,6 +260,9 @@ services:
       CCT_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
       CCT_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
       CCT_RABBITMQ_VHOST: /mor-test
+      # paytech-messaging 消费端（design/08 §3，第 08 步）：订阅 compliance.events，分区 client-master.compliance.p0..p3。
+      MESSAGING_CONSUMER_SERVICE: client-master
+      MESSAGING_CONSUMERS_COMPLIANCE_PARTITIONS: "4"
       ONBOARDING_DRAFT_ENABLED: "true"
       ONBOARDING_RECOVERY_ENABLED: "true"
       ONBOARDING_ID_DATACENTER: "0"

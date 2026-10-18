@@ -143,9 +143,11 @@ xxl:
 messaging:
   producer:
     service: compliance
+    sequencer:
+      enabled: true
   publisher:
-    # 与生产一致：第 08 步改回 FAIL。测试 Probe 为每例绑定临时队列观察 compliance.events。
-    unroutable-policy: ACK_AND_WARN
+    # 与生产一致：FAIL。测试 Probe 为每例绑定临时队列观察 compliance.events，使发布不依赖共享 Broker 上的订阅队列。
+    unroutable-policy: FAIL
 
 # 实例 ID 与内部调用身份（D26）：测试保持 OFF。
 paytech:
@@ -164,7 +166,7 @@ compliance:
 onboarding:
   review:
     # I01/I02 审核登记入口与 /client-onboarding-admin 管理入口开关；生产缺省关闭，mock 环境开启以便所有新规范测试共享同一应用上下文。
-    # 审核结论经 compensation 补偿任务双写发布到 topic_risk_client_review / client_review.decided.v1 与 compliance.events。
+    # 审核结论经 compensation 补偿任务发布到 compliance.events（ClientReviewDecided v1）。
     enabled: true
   materials:
     # 材料目录入口开关；生产缺省关闭，mock 环境开启以便所有新规范测试共享同一应用上下文。

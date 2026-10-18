@@ -70,6 +70,11 @@
             <groupId>com.paytech</groupId>
             <artifactId>paytech-snowflake-id</artifactId>
         </dependency>
+        <!-- 订阅 payment.events：分区队列、单活消费者、消费幂等（design/08 §3–§4）。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-messaging</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-amqp</artifactId>

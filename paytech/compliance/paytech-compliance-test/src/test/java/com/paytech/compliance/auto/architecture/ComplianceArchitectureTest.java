@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
@@ -177,17 +178,19 @@ class ComplianceArchitectureTest {
         Assertions.assertEquals("${COMPLIANCE_INTERNAL_AUTH_MODE:OFF}", properties.getProperty("internal-auth.mode"));
     }
 
-    /** ClientReviewDecided 由 compliance 发布到 compliance.events；第 08 步接入订阅者前未路由策略为 ACK_AND_WARN。 */
+    /** ClientReviewDecided 由 compliance 发布到 compliance.events；client-master 已订阅，未路由按 FAIL 重试，发布任务按聚合串行。 */
     @Test
     void test_domainEventPublicationIsRegistered() {
         Properties properties = properties("application.yml");
         Assertions.assertEquals("compliance", properties.getProperty("messaging.producer.service"));
-        Assertions.assertEquals("ACK_AND_WARN", properties.getProperty("messaging.publisher.unroutable-policy"),
-            "第 08 步接入 client-master 订阅后改回 FAIL");
+        Assertions.assertEquals("FAIL", properties.getProperty("messaging.publisher.unroutable-policy"));
+        Assertions.assertEquals("true", properties.getProperty("messaging.producer.sequencer.enabled"));
         var entry = YamlEventCatalog.fromClasspath().find("ClientReviewDecided").orElseThrow();
         Assertions.assertEquals("compliance", entry.producer());
         Assertions.assertEquals("DD_CASE", entry.aggregateType());
         Assertions.assertEquals("caseVersion", entry.aggregateVersionField());
+        Assertions.assertEquals(List.of("client-master"), List.copyOf(entry.consumers()));
+        Assertions.assertFalse(entry.strictOrder());
         Assertions.assertEquals("compliance", YamlEventCatalog.fromClasspath().find("SettlementRestrictionChanged")
             .orElseThrow().producer());
     }

@@ -7,11 +7,8 @@ import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.amqp.core.AmqpAdmin;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.client.EntityExchangeResult;
 
-import com.paytech.client.master.ext.mq.ClientReviewResultListener;
 import com.paytech.client.master.test.base.onboarding.AbstractClientReviewTest;
 import com.paytech.client.master.test.mocker.onboarding.OnboardingApplicationMocker.ApplicationFixture;
 import com.paytech.client.master.test.mocker.onboarding.OnboardingApplicationMocker.ReviewFixture;
@@ -29,15 +26,11 @@ class ReapplyAfterRejectionTest extends AbstractClientReviewTest {
     private static final String HASH = "a".repeat(64);
     private static final JsonMapper JSON = JsonMapper.builder().build();
 
-    @Autowired
-    AmqpAdmin amqpAdmin;
-
-    /** 组织与关联人员各需一份必需材料；结果队列只保留本例消息。 */
+    /** 组织与关联人员各需一份必需材料；结果分区队列由基类清空。 */
     @BeforeEach
     void setUpRejectionFlow() {
         owners.mockRequirements("ORGANIZATION_KYB", new RequirementBody("REGISTRATION", "REGISTRATION_CERTIFICATE", true));
         owners.mockRequirements("RELATED_PERSON_KYC", new RequirementBody("IDENTITY", "IDENTITY_DOCUMENT", true));
-        amqpAdmin.purgeQueue(ClientReviewResultListener.QUEUE, false);
     }
 
     /** 同类型重新申请：原 Client 下新 DRAFT 申请，资料与人员可编辑，材料需重传；重提复用原身份键，不再开通工作区。 */

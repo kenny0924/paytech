@@ -159,10 +159,18 @@ public class CompensationEventAutoConfiguration {
         RetryDelayCalculator retryDelayCalculator, CompensationEventObserver observer,
         CompensationEventRepository eventRepository,
         @Qualifier(HANDLER_REGISTRY_BEAN) CompensationHandlerRegistry handlerRegistry,
-        ValidatedCompensationConfiguration configuration) {
+        ValidatedCompensationConfiguration configuration,
+        ObjectProvider<CompensationExecutionSequencer> sequencerProvider) {
+        // 宿主未提供编排器时在协调线程直接执行（原有并发）；提供多个属于装配错误。
+        CompensationExecutionSequencer sequencer = sequencerProvider.getIfUnique(() -> {
+            if (sequencerProvider.stream().limit(2L).count() > 1L) {
+                throw configurationError("multiple CompensationExecutionSequencer beans are not allowed");
+            }
+            return CompensationExecutionSequencer.DIRECT;
+        });
         return new CompensationEventDispatcher(handlerExecutor, safeErrorSummary, coordinatorExecutor,
             retryDelayCalculator, observer, eventRepository, handlerRegistry, configuration.handlerMaximumConcurrency(),
-            configuration.instanceId(), configuration.leaseDuration());
+            configuration.instanceId(), configuration.leaseDuration(), sequencer);
     }
 
     @Bean

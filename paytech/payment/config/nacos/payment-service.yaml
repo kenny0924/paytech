@@ -43,14 +43,16 @@ redis:
       wait-time: 500ms
       lease-time: 30s
 
-# PaymentSucceeded 双写：旧 topic_payment_result 与 payment.events 新信封（design/08 §3）。
+# PaymentSucceeded 经 paytech-messaging 发布到 payment.events（design/08 §3）。
 messaging:
   producer:
     service: payment
+    # 发布侧按聚合串行（design/08 §3）：PAYMENT_SUCCEEDED 补偿任务按事件键（尝试 ID）串行到固定线程，不同尝试并行。
+    sequencer:
+      enabled: true
   publisher:
-    # 第 08 步接入订阅者后改回 FAIL：在此之前 payment.events 没有订阅队列，未路由的信封记 WARN 与
-    # messaging.published{outcome=unroutable} 后视为成功，避免 PaymentSucceeded 补偿任务持续失败（旧 Topic 仍按 mandatory 严格发布）。
-    unroutable-policy: ACK_AND_WARN
+    # 订阅方（acquiring）已接入：未路由视为发布失败，由补偿任务重试（第 08 步由过渡期的 ACK_AND_WARN 改回）。
+    unroutable-policy: FAIL
 
 payment:
   # 能力代码目录随渠道配置迁到 channel-connector（channel-connector-service.yaml）。

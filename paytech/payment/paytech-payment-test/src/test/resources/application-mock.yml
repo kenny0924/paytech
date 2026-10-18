@@ -81,7 +81,7 @@ web:
 mybatis:
   mapper-locations: "classpath*:mapper/**/*.xml"
 
-# paytech-messaging 发布端：声明 payment.events 并提供 DomainEventPublisher（PaymentSucceeded 双写）。
+# paytech-messaging 发布端：声明 payment.events 并提供 DomainEventPublisher（未路由 FAIL、按聚合串行沿用 application.yml）。
 messaging:
   producer:
     service: payment

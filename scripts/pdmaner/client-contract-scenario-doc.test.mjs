@@ -26,7 +26,8 @@ const retiredScenarioLinkTargets = Object.freeze({
   ],
 });
 // Moved from Commerce; not part of the Client & Contract catalog or its scenarios.
-const nonCatalogTables = new Set(["t_client_stored_card_setting"]);
+// Step 08: paytech-messaging consumer tables are not CCT catalog tables either.
+const nonCatalogTables = new Set(["t_client_stored_card_setting", "t_consumed_event", "t_consumed_aggregate_version"]);
 const scenarioPath = path.join(
   workspaceRoot,
   "agent-docs/database/scenarios/CLIENT_CONTRACT_REAL_WORLD_SCENARIOS.md",

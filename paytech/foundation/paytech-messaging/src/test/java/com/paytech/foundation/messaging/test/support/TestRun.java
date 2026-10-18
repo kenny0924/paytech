@@ -23,14 +23,21 @@ public final class TestRun {
     /** 从未声明交换机的发布服务名（用于 Broker 拒绝场景）。 */
     public static final String MISSING_PRODUCER = PREFIX + "-missing";
 
+    /** 发布侧串行测试的发布服务名（经补偿 Dispatcher 发布，无订阅方）。 */
+    public static final String SEQUENCED_PRODUCER = PREFIX + "-sequenced";
+
     /** 测试目录允许的服务名。 */
-    public static final Set<String> SERVICES = Set.of(PRODUCER, CONSUMER, ORPHAN_PRODUCER, MISSING_PRODUCER);
+    public static final Set<String> SERVICES = Set.of(PRODUCER, CONSUMER, ORPHAN_PRODUCER, MISSING_PRODUCER,
+        SEQUENCED_PRODUCER);
 
     /** 严格有序测试事件。 */
     public static final String STRICT_EVENT = "TestFactRecorded";
 
     /** 非严格测试事件。 */
     public static final String LOOSE_EVENT = "TestNoteRecorded";
+
+    /** Handler 自管事务的测试事件。 */
+    public static final String MANAGED_EVENT = "TestEntryRecorded";
 
     /** 本服务不订阅的测试事件。 */
     public static final String UNSUBSCRIBED_EVENT = "TestAuditRecorded";

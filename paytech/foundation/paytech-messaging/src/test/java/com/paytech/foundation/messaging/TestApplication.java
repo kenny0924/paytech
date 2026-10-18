@@ -16,6 +16,7 @@ import com.paytech.foundation.messaging.test.support.BrokerTestSupport;
 import com.paytech.foundation.messaging.test.support.DatabaseCleaner;
 import com.paytech.foundation.messaging.test.support.HandledEventProbe;
 import com.paytech.foundation.messaging.test.support.LooseNoteHandler;
+import com.paytech.foundation.messaging.test.support.ManagedEntryHandler;
 import com.paytech.foundation.messaging.test.support.MeterRegistryCleaner;
 import com.paytech.foundation.messaging.test.support.StrictFactHandler;
 import com.paytech.foundation.messaging.test.support.TestRun;
@@ -29,7 +30,7 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 @SpringBootConfiguration
 @EnableAutoConfiguration
 @MapperScan(basePackageClasses = TestMapper.class)
-@Import({HandledEventProbe.class, StrictFactHandler.class, LooseNoteHandler.class, BrokerTestSupport.class,
+@Import({HandledEventProbe.class, StrictFactHandler.class, LooseNoteHandler.class, ManagedEntryHandler.class, BrokerTestSupport.class,
     DatabaseCleaner.class, MeterRegistryCleaner.class})
 public class TestApplication {
 
@@ -53,6 +54,14 @@ public class TestApplication {
                 consumers: [%5$s]
                 strictOrder: false
                 payloadSchemaRef: test/%2$s/v1
+              - eventType: %6$s
+                schemaVersion: 1
+                producer: %4$s
+                aggregateType: TEST_ENTRY
+                aggregateVersionField: entryVersion
+                consumers: [%5$s]
+                strictOrder: false
+                payloadSchemaRef: test/%6$s/v1
               - eventType: %3$s
                 schemaVersion: 1
                 producer: %4$s
@@ -62,7 +71,7 @@ public class TestApplication {
                 strictOrder: false
                 payloadSchemaRef: test/%3$s/v1
             """.formatted(TestRun.STRICT_EVENT, TestRun.LOOSE_EVENT, TestRun.UNSUBSCRIBED_EVENT, TestRun.PRODUCER,
-            TestRun.CONSUMER);
+            TestRun.CONSUMER, TestRun.MANAGED_EVENT);
         return YamlEventCatalog.read(new ByteArrayInputStream(yaml.getBytes(StandardCharsets.UTF_8)),
             TestRun.SERVICES);
     }

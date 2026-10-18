@@ -20,6 +20,8 @@ export const TABLE_DISPLAY_NAMES = Object.freeze({
   refund_request: "退款请求",
   customer: "Customer",
   compensation_event: "本地补偿事件",
+  consumed_event: "已消费领域事件",
+  consumed_aggregate_version: "已消费聚合版本",
 });
 
 /*
@@ -32,6 +34,9 @@ accepted_at|接受时间|消费者完成该项法律接受动作的业务时刻
 active_attempt_id|活动支付尝试标识|支付投影中当前仍可能继续推进的支付尝试标识
 active_reference|有效引用|有效时等于 consumer_reference，删除时置 NULL；与 client_id 组成唯一索引，保证同一引用同时最多一个有效 Customer
 affiliation_id|客户主体授权标识|CCT批准的Client对整个OE授权关系，支付准备时冻结
+aggregate_id|聚合标识|领域事件所属聚合的标识，同时是 RabbitMQ 分区路由键
+aggregate_type|聚合类型|领域事件所属聚合的大写类型代码
+aggregate_version|聚合版本|本条已消费领域事件携带的聚合版本
 as_of|投影截至时点|本投影已应用来源事件 occurredAt 的最大值，迟到事件不得使其回退
 attempt_source_version|尝试来源版本|支付尝试投影已经消费的来源聚合版本
 available_amount|可用金额|Finance 确认本订单已经成熟进入 Client 可用余额的金额，未成熟时为空
@@ -56,6 +61,7 @@ client_refund_id|Client 退款标识|Client 在自身命名空间内提供且不
 command_idempotency_id|命令幂等记录标识|仅历史请求幂等记录引用；新支付提交不写入，由合同和接受类型唯一键保护业务事实
 commercial_context_time|商业上下文时点|CCT 解析经营主体和商业条款时使用并由订单上下文冻结的业务有效时点
 completed_at|完成时间|Checkout 会话或退款请求进入完成终态的业务时刻
+consumed_at|消费时间|消费事务提交的 UTC 微秒精度时间
 consumer_acceptance_id|消费者接受证据标识|一条不可变消费者法律接受证据的内部唯一标识
 consumer_context_id|消费者上下文标识|订单当前消费者受保护上下文的内部唯一标识
 consumer_contract_id|消费者合同标识|订单呈现给消费者的不可变合同文件记录标识
@@ -83,6 +89,7 @@ entity_no|经营主体编号|CCT唯一不可变OE编号，创建时经营国家�
 entity_scope_id|经营主体准入范围标识|CCT已批准的准确国家/币种/行业/MCC范围事实
 entity_source_relation_id|经营主体来源关系标识|CCT唯一有效OE来源关系，固定后不得换来源
 entity_source_type|主体来源类型|订单经营主体来源于平台、Client 或 Local Partner 的闭合类型
+event_id|事件 ID|领域事件信封 eventId（默认等于 eventKey），按其去重
 event_key|事件幂等键|领域事件或本地恢复动作的全局稳定幂等键
 event_type|事件类型|本地补偿 Handler 的全应用唯一类型
 evidence_scene|证据场景|网络证据产生于打开 Checkout、提交消费者资料、接受法律条款或开始支付的闭合场景
@@ -114,6 +121,7 @@ last_error_summary|最近错误摘要|补偿事件最近一次执行失败且不
 last_event_time|最近事件时间|支付或退款投影最近一次成功应用来源事实的业务时刻
 last_intent_event_key|最近意图事件键|支付投影最近处理的支付意图事件幂等键
 last_intent_payload_hash|最近意图载荷哈希|最近支付意图事件规范化载荷的完整性哈希
+last_version|已处理最大版本|本服务已处理的该聚合最大领域事件版本
 line_discount_amount|行优惠金额|订单商品服务行的冻结优惠金额
 line_gross_amount|行毛金额|优惠和税务处理前的订单商品服务行金额
 line_net_amount|行净金额|行毛金额扣除优惠后的冻结净金额
@@ -226,8 +234,8 @@ function parseFieldMetadataSource(source) {
     }
     result[fieldKey] = metadata(defName, description);
   }
-  if (Object.keys(result).length !== 179) {
-    throw new Error(`Commerce 家族（acquiring + consumer）字段元数据必须精确覆盖 179 个唯一字段键，实际 ${Object.keys(result).length}`);
+  if (Object.keys(result).length !== 185) {
+    throw new Error(`Commerce 家族（acquiring + consumer）字段元数据必须精确覆盖 185 个唯一字段键，实际 ${Object.keys(result).length}`);
   }
   return Object.freeze(result);
 }
@@ -282,6 +290,8 @@ export const TABLE_COMMENTS = Object.freeze({
   "refund_request": "Commerce 拥有的退款聚合；只保存退款业务状态、订单金额位置所需金额以及 Payment Channel Refund 的稳定标识，不复制下游状态、事件版本、事件键、载荷哈希或渠道执行明细。",
   "customer": "Client 命名空间内的 Customer：身份只来自 Client 服务端传入的 consumer_reference，首期只保存身份与状态；删除不可撤销，同一引用再次使用时新建。",
   "compensation_event": "业务变更同事务写入的本地可靠执行记录；身份固定为 event_key、event_type、sub_event_type，PROCESSING 必须同时持有 lock_owner 且 lock_until 晚于当前时间，XXL-Job 仅负责唤醒和分片扫描。",
+  "consumed_event": "已消费领域事件：paytech-messaging 消费端按事件 ID 去重的标准表（design/08 §4），列、类型、主键与索引与 paytech-messaging 的 messaging-consumed-event.sql 一致；事件与版本合法性由消费拦截器保证。",
+  "consumed_aggregate_version": "已消费聚合版本：paytech-messaging 消费端按聚合记录已处理的最大版本，用于判定乱序、重放与缺口（design/08 §4）；列、类型与主键与 messaging-consumed-event.sql 一致。",
 });
 
 /**
@@ -289,6 +299,7 @@ export const TABLE_COMMENTS = Object.freeze({
  * Customer 表的说明沿用拆分前 Commerce 模型中的已批准注释。
  */
 export const FIELD_PATH_METADATA = Object.freeze({
+  "consumed_event.event_type": metadata("事件类型", "已消费领域事件的类型（PascalCase，登记于 paytech-messaging 事件目录）"),
   "customer.customer_id": metadata("Customer 标识", "Commerce Customer 的内部唯一标识，创建后不可修改；Payment 已存卡以此关联"),
   "customer.client_id": metadata("Client 标识", "所属平台 Client 的内部唯一标识，创建后不可修改"),
   "customer.consumer_reference": metadata("消费者引用", "Client 命名空间内的不透明、非 PII 消费者引用原值，由 Client 服务端传入，创建后不可修改；不得为 Email、Phone、证件号等个人原值"),

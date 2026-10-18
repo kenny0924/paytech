@@ -54,7 +54,12 @@ const serviceModels = Object.freeze([
 // Tables each service database keeps its own identical copy of.
 const sharedServiceTables = Object.freeze(["business_change_record", "business_change_version", "compensation_event"]);
 // Tables that do not come from the Client & Contract catalog.
-const nonCatalogServiceTables = Object.freeze({ "client-master": ["client_stored_card_setting"], commercial: [] });
+const nonCatalogServiceTables = Object.freeze({
+  "client-master": ["client_stored_card_setting", "consumed_event", "consumed_aggregate_version"],
+  commercial: [],
+});
+// paytech-messaging consumer tables (step 08, design/08 §4): standard messaging shape, not CCT catalog conventions.
+const messagingConsumerTables = Object.freeze(["consumed_event", "consumed_aggregate_version"]);
 // Catalog tables dropped from both service databases (decision S10).
 const droppedCatalogTables = Object.freeze(["command_idempotency"]);
 const templatePath = path.join(
@@ -70,7 +75,7 @@ const expectedTemplateDigest =
 const pendingStructuralProjectionDigest = "PENDING_APPROVED_40_DIGEST";
 // Approved per-database Structural Projection digests after the CCT split.
 const expectedStructuralProjectionDigests = Object.freeze({
-  "client-master": "a49cd2fdc8a349cc0d2088d5cd3605b72c0911f898a0c0f09d97d899c1a1bd96",
+  "client-master": "80dba108a6322e957ca7c652a1911979705388b47b71caa24ee51bb14f989802",
   commercial: "682fd345ad1402ef979289af45de0286ccefaf5c95de563245af8988f221552c",
 });
 
@@ -97,7 +102,8 @@ const expectedRelationSignatureCount = 62;
 const expectedCrossDatabaseRelationSignatureCount = 10;
 const expectedLocalRelationSignatureCount = 52;
 const expectedServiceTotals = Object.freeze({
-  "client-master": { tables: 27, fields: 290, uniqueIndexes: 39, accessIndexes: 24, relations: 40, diagramGroups: 6 },
+  // Step 08 adds t_consumed_event (6 fields, 1 IDX) and t_consumed_aggregate_version (4 fields).
+  "client-master": { tables: 29, fields: 300, uniqueIndexes: 39, accessIndexes: 25, relations: 40, diagramGroups: 6 },
   commercial: { tables: 14, fields: 145, uniqueIndexes: 22, accessIndexes: 19, relations: 14, diagramGroups: 3 },
 });
 
@@ -170,8 +176,8 @@ const expectedServiceDiagramGroups = Object.freeze({
     },
     "history_reliability": {
       "defName": "Local History and Reliability",
-      "primaryTables": ["business_change_record","business_change_version","compensation_event"],
-      "tables": ["business_change_record","business_change_version","compensation_event"]
+      "primaryTables": ["business_change_record","business_change_version","compensation_event","consumed_event","consumed_aggregate_version"],
+      "tables": ["business_change_record","business_change_version","compensation_event","consumed_event","consumed_aggregate_version"]
     }
   }),
   commercial: Object.freeze({
@@ -3196,9 +3202,9 @@ test("locks the generated Partner Application physical totals", () => {
 test("splits the catalog into client-master and commercial by approved table ownership", () => {
   const [clientMaster, commercial] = readServiceModels();
   const tables = (model) => model.entities.map((entity) => logicalTableKey(entity.defKey));
-  assert.deepEqual(tables(clientMaster), [...CLIENT_MASTER_CATALOG_TABLES, "client_stored_card_setting"]);
+  assert.deepEqual(tables(clientMaster), [...CLIENT_MASTER_CATALOG_TABLES, ...nonCatalogServiceTables["client-master"]]);
   assert.deepEqual(tables(commercial), [...COMMERCIAL_TABLES]);
-  assert.equal(tables(clientMaster).length, 27);
+  assert.equal(tables(clientMaster).length, 29);
   assert.equal(tables(commercial).length, 14);
   const both = tables(clientMaster).filter((tableKey) => tables(commercial).includes(tableKey));
   assert.deepEqual(both, [...sharedServiceTables]);
@@ -3752,6 +3758,8 @@ function assertEnabledPdmanerRules(model) {
   for (const rule of model.namingRules.filter((candidate) => candidate.enable)) {
     const execute = new Function("data", rule.programCode);
     for (const entity of model.entities) {
+      // The paytech-messaging standard tables keep their VARCHAR / composite primary keys and own audit shape.
+      if (messagingConsumerTables.includes(logicalTableKey(entity.defKey))) continue;
       const checkedEntity = { ...entity, fields: entity.fields.map((field) => ({ ...field, dbType: field.type })) };
       const data = { entity: checkedEntity, logicEntity: checkedEntity };
       if (rule.applyFieldType === "entity") assert.ok(execute(data), `${rule.defName}: ${entity.defKey}`);

@@ -42,19 +42,24 @@
 ```json
 {
   "modelTotals": {
-    "tables": 14,
-    "fields": 227,
+    "tables": 16,
+    "fields": 237,
     "uniqueIndexes": 23,
-    "accessIndexes": 11,
+    "accessIndexes": 12,
     "relations": 15,
     "diagramGroups": 4
   },
   "templateSha256": "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540",
-  "modelSha256": "eaf2905a124462d42ac676a9144a7ed708b77f91b7696e6630c33537389781dc",
-  "structuralProjectionSha256": "708f517f6d7325e06fda0e66dda6bfbe1d4677a96608bf4752982e7c8012e58c"
+  "modelSha256": "6cae77e067f4bc5dd590f1b8f3546988faa5160174f103b999f3b0c7ddcd6eb1",
+  "structuralProjectionSha256": "15ac80e63b9268b1c0ee094689c8c9a82ddd6aa1f9f7c11a8d534a86b4a7d794"
 }
 ```
 <!-- ACQUIRING_PHYSICAL_MANIFEST_END -->
+
+第 08 步（消息拓扑接入）新增 paytech-messaging 消费端标准表 `t_consumed_event` 与 `t_consumed_aggregate_version`，列名、类型、
+可空性、主键与 `idx_consumed_event_aggregate` 索引取自 `paytech/foundation/paytech-messaging/src/main/resources/schema/messaging-consumed-event.sql`
+（design/08 §4）。二者归入 `可靠执行` Diagram Group；字符串列为 `ascii_bin`；`t_consumed_aggregate_version` 是本模型唯一的复合主键
+（`aggregate_type, aggregate_id`），生成器以字段清单的 `PK` 标注表达；两表不含业务 `version`，不计入下表的审计时间与乐观锁统计。
 
 四个 Diagram Group 为 `订单与不可变上下文`、`Checkout 与消费者法律`、`支付与退款`、`可靠执行`。不得恢复历史 `t_order_snapshot`、Tax/Term 本地副本、三张已删除退款表、`t_consumer_document`、Commerce BCR 或主动履约 Diagram/Relation Cell。
 

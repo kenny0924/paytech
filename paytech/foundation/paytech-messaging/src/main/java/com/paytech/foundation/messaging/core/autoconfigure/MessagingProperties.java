@@ -74,6 +74,9 @@ public class MessagingProperties {
          */
         private Duration confirmTimeout = Duration.ofSeconds(10);
 
+        /** 补偿事件发布任务的按聚合串行。 */
+        private final Sequencer sequencer = new Sequencer();
+
         public String getService() {
             return service;
         }
@@ -88,6 +91,56 @@ public class MessagingProperties {
 
         public void setConfirmTimeout(Duration confirmTimeout) {
             this.confirmTimeout = confirmTimeout;
+        }
+
+        public Sequencer getSequencer() {
+            return sequencer;
+        }
+    }
+
+    /** 补偿事件发布任务的按聚合串行（design/08 §3）。 */
+    public static class Sequencer {
+
+        /**
+         * 是否以按聚合串行的编排器替换补偿 Dispatcher 的默认直接执行。
+         * <li>默认 false；需要宿主同时引入 {@code paytech-compensation-event}。同一聚合的任务按 Claim 顺序在固定线程执行。</li>
+         */
+        private boolean enabled;
+
+        /**
+         * 串行线程数。
+         * <li>默认 4，范围 1..256；同时也是本实例补偿任务的最大并行聚合数。</li>
+         */
+        private int lanes = 4;
+
+        /**
+         * 每条线程的排队上限。
+         * <li>默认 256；队列满时任务按可重试失败释放，由扫描兜底。排队期间任务持有 Lease。</li>
+         */
+        private int queueCapacity = 256;
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public int getLanes() {
+            return lanes;
+        }
+
+        public void setLanes(int lanes) {
+            this.lanes = lanes;
+        }
+
+        public int getQueueCapacity() {
+            return queueCapacity;
+        }
+
+        public void setQueueCapacity(int queueCapacity) {
+            this.queueCapacity = queueCapacity;
         }
     }
 

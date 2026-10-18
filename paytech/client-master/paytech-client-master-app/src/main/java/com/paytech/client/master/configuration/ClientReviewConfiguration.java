@@ -3,15 +3,6 @@ package com.paytech.client.master.configuration;
 import com.paytech.client.master.core.configuration.ClientFormCatalogProperties;
 import java.time.Clock;
 
-import org.springframework.amqp.core.AcknowledgeMode;
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.DirectExchange;
-import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.core.QueueBuilder;
-import org.springframework.amqp.core.TopicExchange;
-import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
-import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -46,22 +37,12 @@ import com.paytech.foundation.redis.core.autoconfigure.RedisResourceLockProperti
 /**
  * Operations 审核在 CCT 侧的装配：O03/O04 分类、I02 交付、审核结果消费与 Client 激活
  * <li>随草稿与补偿开关同时开启；结果消费要求本机 RabbitMQ。</li>
- * <li>CCT 声明自己的消费队列、死信交换机与死信队列；Risk 的 Topic Exchange 同参数幂等声明以便绑定。</li>
+ * <li>审核结果 Handler 为 paytech-messaging 的 DomainEventConsumer：订阅 compliance.events，分区拓扑（client-master.compliance.hash、
+ * p0..p3、dlx / dlq）与监听容器由 messaging 按 messaging.consumer.* 声明（design/08 §3）。</li>
  */
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnProperty(prefix = "onboarding", name = {"draft-enabled", "recovery-enabled"}, havingValue = "true")
 public class ClientReviewConfiguration {
-    /** Risk 审核结果 Topic Exchange。 */
-    static final String RESULT_EXCHANGE = "topic_risk_client_review";
-    /** 审核结果路由键。 */
-    static final String RESULT_ROUTING_KEY = "client_review.decided.v1";
-    /** 死信交换机。 */
-    static final String DEAD_LETTER_EXCHANGE = "dlx_client_master_client_review";
-    /** 死信队列。 */
-    static final String DEAD_LETTER_QUEUE = "cg_client_master_client_review_dlq";
-    /** 投递次数上限，超过后进入死信队列。 */
-    static final int DELIVERY_LIMIT = 5;
-
     /** 分类本地保存与交付读取。 */
     @Bean
     public ClientClassificationService clientClassificationService(PlatformTransactionManager manager, CompensationEventRegistrar events,
@@ -134,57 +115,9 @@ public class ClientReviewConfiguration {
         return new ApplyClientReviewResultProcessor(clock, ids, outcomes, projections, applications);
     }
 
-    /** 审核结果监听器。 */
+    /** 审核结果 Handler（ClientReviewDecided）。 */
     @Bean
     public ClientReviewResultListener clientReviewResultListener(ApplyClientReviewResultProcessor processor) {
         return new ClientReviewResultListener(processor);
-    }
-
-    /** 手动确认、拒绝不重新入队的监听容器。 */
-    @Bean
-    public SimpleRabbitListenerContainerFactory clientReviewListenerFactory(ConnectionFactory connectionFactory) {
-        var factory = new SimpleRabbitListenerContainerFactory();
-        factory.setConnectionFactory(connectionFactory);
-        factory.setAcknowledgeMode(AcknowledgeMode.MANUAL);
-        factory.setDefaultRequeueRejected(false);
-        factory.setPrefetchCount(10);
-        return factory;
-    }
-
-    /** Risk 发布的 Topic Exchange（同参数幂等声明）。 */
-    @Bean
-    public TopicExchange clientReviewResultExchange() {
-        return new TopicExchange(RESULT_EXCHANGE, true, false);
-    }
-
-    /** 消费队列：Quorum、死信与投递次数上限。 */
-    @Bean
-    public Queue clientReviewResultQueue() {
-        return QueueBuilder.durable(ClientReviewResultListener.QUEUE).quorum().deliveryLimit(DELIVERY_LIMIT)
-            .deadLetterExchange(DEAD_LETTER_EXCHANGE).deadLetterRoutingKey(DEAD_LETTER_QUEUE).build();
-    }
-
-    /** 消费队列绑定审核结果路由键。 */
-    @Bean
-    public Binding clientReviewResultBinding() {
-        return BindingBuilder.bind(clientReviewResultQueue()).to(clientReviewResultExchange()).with(RESULT_ROUTING_KEY);
-    }
-
-    /** 死信交换机。 */
-    @Bean
-    public DirectExchange clientReviewDeadLetterExchange() {
-        return new DirectExchange(DEAD_LETTER_EXCHANGE, true, false);
-    }
-
-    /** 死信队列，保留待人工处理。 */
-    @Bean
-    public Queue clientReviewDeadLetterQueue() {
-        return QueueBuilder.durable(DEAD_LETTER_QUEUE).quorum().build();
-    }
-
-    /** 死信绑定。 */
-    @Bean
-    public Binding clientReviewDeadLetterBinding() {
-        return BindingBuilder.bind(clientReviewDeadLetterQueue()).to(clientReviewDeadLetterExchange()).with(DEAD_LETTER_QUEUE);
     }
 }

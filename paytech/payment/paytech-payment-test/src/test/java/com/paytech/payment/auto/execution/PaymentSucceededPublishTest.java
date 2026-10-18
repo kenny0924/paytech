@@ -6,7 +6,14 @@ import java.util.LinkedHashMap;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+
+import com.paytech.foundation.compensation.api.CompensationExecutionSequencer;
+import com.paytech.foundation.messaging.core.autoconfigure.MessagingProperties;
+import com.paytech.foundation.messaging.ordering.AggregateKeySequencer;
+import com.paytech.foundation.messaging.publish.UnroutablePolicy;
 
 import com.paytech.payment.api.execution.PaymentIntentApi;
 import com.paytech.payment.execution.core.enums.AttemptStatus;
@@ -17,18 +24,27 @@ import com.paytech.payment.test.base.AbstractPayCardTest;
 import com.paytech.payment.test.mocker.ChannelConnectorMocker.Candidate;
 
 /**
- * PaymentSucceeded 双写（design/08 §3、D34）：从 pay 的真实 HTTP 入口收款成功，补偿任务提交后经本机 RabbitMQ 同时发布到
- * 旧 topic_payment_result（现有报文，Commerce 尚未切换）与 payment.events（paytech-messaging Schema v1 信封）。
+ * PaymentSucceeded 发布（design/08 §3、D34）：从 pay 的真实 HTTP 入口收款成功，补偿任务提交后经本机 RabbitMQ 发布到
+ * payment.events（paytech-messaging Schema v1 信封）；第 08 步起旧 topic_payment_result 停发。
  *
  * <p>
- * 每例用两个临时排他队列分别绑定两个生产交换机观察：成功时两边各恰好一条、信封与最小 Payload 正确、Payload Hash 可重算、
- * 不含卡数据与付款人信息，两次发布均确认后补偿任务删除；支付失败与处理中两边都不发布。
+ * 每例用一个临时排他队列绑定 payment.events 观察：成功时恰好一条、信封与最小 Payload 正确、Payload Hash 经消费端解码器校验、
+ * 不含卡数据与付款人信息，发布确认后补偿任务删除；支付失败与处理中都不发布。发布端为 FAIL 策略并按聚合串行。
  *
  * @see PaymentIntentApi#pay(String, String, com.paytech.payment.api.execution.request.PayRequestBody)
  */
 class PaymentSucceededPublishTest extends AbstractPayCardTest {
     @Value("${payment.event.instance-id}")
     private String instanceId;
+
+    @Autowired
+    private MessagingProperties messagingProperties;
+
+    @Autowired
+    private AggregateKeySequencer sequencer;
+
+    @Autowired
+    private ObjectProvider<CompensationExecutionSequencer> sequencerProvider;
 
     private Candidate candidate;
 
@@ -39,14 +55,13 @@ class PaymentSucceededPublishTest extends AbstractPayCardTest {
         risk.respond(RiskResult.ALLOW, AuthenticationRequirement.NOT_REQUIRED);
     }
 
-    /** 成功：旧 Topic 仍收到一条现有报文，payment.events 收到一条 v1 新信封；两者 Payload 相同、Hash 正确，补偿任务在确认后删除。 */
+    /** 成功：payment.events 收到一条 v1 信封，Payload 与 Hash 正确，补偿任务在确认后删除。 */
     @Test
     void test_succeededPublishedOnce() {
         channel.succeeded("T-PUB-1");
         var paid = newPayment();
         long attemptId = attemptId(paid.pay());
 
-        var message = results.awaitSucceeded(attemptId);
         var envelope = results.awaitEnvelope(attemptId);
 
         var attempt = mapper.attempt(attemptId);
@@ -70,7 +85,6 @@ class PaymentSucceededPublishTest extends AbstractPayCardTest {
         long version = ((Number)attempt.get("version")).longValue();
         String[] forbidden = {PAN, paid.token, CONSUMER_REFERENCE, CONSUMER_IP, CONSUMER_USER_AGENT, RETURN_URL,
             "consumerReference", "cardToken", "card", "cvv", "clientIp", "userAgent"};
-        message.envelope(attemptId, version).payload(expected).payloadHashRecomputable().excludes(forbidden);
         envelope.envelope(attemptId, version, instanceId).payload(expected).excludes(forbidden);
         assertTrue(mapper.compensationEvents(PaymentSucceededHandler.EVENT_TYPE, String.valueOf(attemptId)).isEmpty(),
             "发布确认后补偿任务应删除");
@@ -82,12 +96,26 @@ class PaymentSucceededPublishTest extends AbstractPayCardTest {
         channel.succeeded("T-PUB-R");
         var paid = newPayment();
         long attemptId = attemptId(paid.pay());
-        results.awaitSucceeded(attemptId);
         results.awaitEnvelope(attemptId);
 
         paid.pay();
 
         results.assertNoSucceeded(attemptId);
+    }
+
+    /**
+     * 发布端装配：未路由按 FAIL 抛错由补偿任务重试（第 08 步由 ACK_AND_WARN 改回），补偿 Dispatcher 使用按聚合串行的编排器。
+     * <li>FAIL 时的重试行为与同聚合串行顺序由 paytech-messaging 的 SequencedPublishAutoTest 以真实 Dispatcher 与 Broker 覆盖；
+     * 共享 Broker 上 payment.events 可能已有其他服务的订阅绑定，本服务测试无法稳定构造“无订阅方”。</li>
+     */
+    @Test
+    void test_publisherFailsUnroutableAndSequencesByAttempt() {
+        assertEquals(UnroutablePolicy.FAIL, messagingProperties.getPublisher().getUnroutablePolicy());
+        assertTrue(messagingProperties.getProducer().getSequencer().isEnabled());
+        assertSame(sequencer, sequencerProvider.getIfUnique());
+        assertEquals(sequencer.laneOf("8000001"), sequencer.laneOf("8000001"));
+        assertEquals("8000001", AggregateKeySequencer.aggregateOf(
+            PaymentSucceededHandler.buildEvent(8_000_001L).eventKey()));
     }
 
     /** 支付失败：不登记补偿任务，也不发布。 */

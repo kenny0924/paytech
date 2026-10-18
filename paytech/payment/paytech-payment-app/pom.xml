@@ -51,7 +51,7 @@
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
         </dependency>
-        <!-- PaymentSucceeded 经 RabbitMQ 发布：旧 topic_payment_result 报文与 payment.events 新信封双写（design/08 §3）。 -->
+        <!-- PaymentSucceeded 经 paytech-messaging 发布到 payment.events（design/08 §3）。 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-amqp</artifactId>

@@ -11,6 +11,7 @@ import java.util.TreeSet;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.core.annotation.AnnotationUtils;
 
+import com.paytech.foundation.messaging.api.ConsumeTransaction;
 import com.paytech.foundation.messaging.api.DomainEventConsumer;
 import com.paytech.foundation.messaging.api.DomainEventHandler;
 import com.paytech.foundation.messaging.api.EventCatalog;
@@ -85,7 +86,8 @@ public final class DomainEventHandlerRegistry {
             throw new IllegalStateException("Handler strictOrder 与事件目录不一致: " + entry.eventType() + ", Handler="
                 + type.getName());
         }
-        return new Registration(entry.eventType(), entry.producer(), annotation.strictOrder(), consumer);
+        return new Registration(entry.eventType(), entry.producer(), annotation.strictOrder(), annotation.transaction(),
+            consumer);
     }
 
     /**
@@ -94,8 +96,10 @@ public final class DomainEventHandlerRegistry {
      * @param eventType 事件类型
      * @param producer 发布服务名
      * @param strictOrder 是否严格有序
+     * @param transaction Handler 与消费登记的事务关系
      * @param consumer 业务 Handler
      */
-    public record Registration(String eventType, String producer, boolean strictOrder, DomainEventConsumer consumer) {
+    public record Registration(String eventType, String producer, boolean strictOrder, ConsumeTransaction transaction,
+        DomainEventConsumer consumer) {
     }
 }

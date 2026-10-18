@@ -1,35 +1,29 @@
 package com.paytech.client.master.ext.mq;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.HexFormat;
-
 import com.paytech.client.master.service.processor.request.ApplyClientReviewResultRequest;
+import com.paytech.foundation.messaging.api.DomainEvent;
 
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
 
 /**
- * Risk ClientReviewDecided 事件信封（topic_risk_client_review / client_review.decided.v1）到内部请求的纯转换
- * <li>只接受 schemaVersion=1；payloadHash 按 Risk 合同对 payload 原字段顺序的 UTF-8 JSON 计算 SHA-256。</li>
- * <li>信封不合法抛出 IllegalArgumentException，由监听器转入死信队列。</li>
+ * compliance ClientReviewDecided 信封（compliance.events，Schema v1）到内部请求的纯转换
+ * <li>信封结构与 payloadHash（RFC 8785）已由 paytech-messaging 解码器校验；这里校验事件身份与 Payload 业务字段。</li>
+ * <li>aggregateId 必须等于 payload.caseId；不合法抛出 IllegalArgumentException，由 Handler 转为拒绝进入死信队列。</li>
  */
 final class ClientReviewResultMessageConverter {
-    private static final JsonMapper JSON = JsonMapper.builder().build();
+    /** 事件类型。 */
+    static final String EVENT_TYPE = "ClientReviewDecided";
 
     private ClientReviewResultMessageConverter() {
     }
 
-    /** 校验信封并转换。 */
-    static ApplyClientReviewResultRequest convert(byte[] body) {
+    /** 校验信封身份并转换。 */
+    static ApplyClientReviewResultRequest convert(DomainEvent event) {
         try {
-            JsonNode envelope = JSON.readTree(new String(body, StandardCharsets.UTF_8));
-            JsonNode payload = envelope.path("payload");
-            if (!"ClientReviewDecided".equals(envelope.path("eventType").asString()) || !"risk".equals(envelope.path("sourceSystem").asString())
-                || envelope.path("schemaVersion").asInt() != 1 || !payload.isObject()
-                || !("sha256:" + sha256(JSON.writeValueAsBytes(payload))).equals(envelope.path("payloadHash").asString())
-                || !envelope.path("sourceId").asString().equals(payload.path("caseId").asString())) {
+            JsonNode payload = event.payload();
+            if (!EVENT_TYPE.equals(event.eventType()) || !"compliance".equals(event.sourceService())
+                || !"DD_CASE".equals(event.aggregateType()) || event.schemaVersion() != 1
+                || !event.aggregateId().equals(payload.path("caseId").asString())) {
                 throw invalid();
             }
             return new ApplyClientReviewResultRequest(id(payload, "applicationId"), id(payload, "caseId"),
@@ -54,15 +48,6 @@ final class ClientReviewResultMessageConverter {
     /** 可空正 BIGINT 字符串。 */
     static Long optionalId(JsonNode payload, String field) {
         return payload.path(field).isNull() || payload.path(field).isMissingNode() ? null : id(payload, field);
-    }
-
-    /** 小写十六进制 SHA-256。 */
-    static String sha256(byte[] bytes) {
-        try {
-            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes));
-        } catch (NoSuchAlgorithmException impossible) {
-            throw new IllegalStateException(impossible);
-        }
     }
 
     /** 不回显消息内容。 */

@@ -23,7 +23,7 @@ const checkOnly = process.argv.includes('--check');
 
 const financeSuccessors = ['ledger', 'account', 'billing', 'reconciliation', 'tax', 'payout'];
 // Tables every service database owns although design 03 does not list them per database (01 §3 / 08).
-const sharedInfrastructureTables = ['t_consumed_event'];
+const sharedInfrastructureTables = ['t_consumed_event', 't_consumed_aggregate_version'];
 // Retained services moved without re-cutting: every CREATE TABLE in the reviewed schema SQL belongs to the service.
 const retainedServiceSchemas = [
   {

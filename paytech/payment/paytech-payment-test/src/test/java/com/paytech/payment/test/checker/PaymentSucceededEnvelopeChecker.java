@@ -22,10 +22,15 @@ import com.paytech.payment.execution.domain.PaymentSucceededPayload;
 import tools.jackson.databind.JsonNode;
 
 /**
- * payment.events 上一条 PaymentSucceeded 信封（Schema v1，design/08 §2）的断言：信封字段、AMQP 属性、Payload 与旧报文同字段同顺序、
+ * payment.events 上一条 PaymentSucceeded 信封（Schema v1，design/08 §2）的断言：信封字段、AMQP 属性、Payload 字段与顺序、
  * 以真实消费端解码器校验 payloadHash，以及禁止字段。
  */
 public class PaymentSucceededEnvelopeChecker {
+    /** Payload 固定字段顺序（Schema v1）。 */
+    public static final List<String> PAYLOAD_FIELDS = List.of("clientId", "orderId", "sourceType", "paymentIntentId",
+        "paymentAttemptId", "sourceSubmissionId", "entityNo", "amount", "currency", "capturedAmount", "paymentSucceededTime",
+        "paymentMethodCode", "channelId", "channelAccountId", "midId", "channelTransactionRef");
+
     private final Message message;
 
     private final JsonNode envelope;
@@ -61,10 +66,10 @@ public class PaymentSucceededEnvelopeChecker {
         return this;
     }
 
-    /** Payload 与旧报文字段与顺序完全相同（第 12 步前为 v1），并与期望值一致。 */
+    /** Payload 字段与顺序固定（第 12 步前为 v1），并与期望值一致。 */
     public PaymentSucceededEnvelopeChecker payload(Map<String, String> expected) {
         JsonNode payload = envelope.path("payload");
-        assertEquals(PaymentSucceededMessageChecker.PAYLOAD_FIELDS, names(payload));
+        assertEquals(PAYLOAD_FIELDS, names(payload));
         assertAll(expected.entrySet().stream()
             .map(entry -> () -> assertEquals(entry.getValue(), payload.path(entry.getKey()).asString(), entry.getKey())));
         return this;

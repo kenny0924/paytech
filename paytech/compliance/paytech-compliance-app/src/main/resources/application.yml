@@ -104,10 +104,12 @@ compensation:
 messaging:
   producer:
     service: compliance
+    # 发布侧按聚合串行（design/08 §3）：CLIENT_REVIEW_RESULT 补偿任务按事件键（审核主任务 ID）串行到固定线程。
+    sequencer:
+      enabled: true
   publisher:
-    # 第 08 步改回 FAIL：在 client-master 订阅 compliance.events 之前该交换机没有绑定队列，未路由的信封记 WARN 与
-    # messaging.published{outcome=unroutable} 后视为成功，避免审核结果补偿任务持续失败（旧 Topic 仍按 mandatory 严格发布）。
-    unroutable-policy: ACK_AND_WARN
+    # 订阅方（client-master）已接入：未路由视为发布失败，由补偿任务重试（第 08 步由过渡期的 ACK_AND_WARN 改回）。
+    unroutable-policy: FAIL
 
 # 实例 ID（实例清单 instance.id，01 §5）：领域事件信封 instanceId 与内部调用 Token 的 inst。
 paytech:

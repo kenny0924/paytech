@@ -71,7 +71,8 @@
             <artifactId>paytech-http-problem</artifactId>
         </dependency>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-redis-starter</artifactId></dependency>
-        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-amqp</artifactId></dependency>
+        <!-- ClientReviewDecided 消费 Handler（DomainEventConsumer 在 core，分区拓扑与容器由 app 的 paytech-messaging 提供）。 -->
+        <dependency><groupId>com.paytech</groupId><artifactId>paytech-messaging-api</artifactId></dependency>
         <!-- ClientFormCatalogProperties 使用 @ConfigurationProperties。 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

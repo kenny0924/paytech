@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.compensation.api.CompensationExecutionPolicy;
+import com.paytech.foundation.compensation.api.CompensationExecutionSequencer;
 import com.paytech.foundation.compensation.api.CompensationHandlerResult;
 import com.paytech.foundation.compensation.core.error.CompensationErrorCode;
 import com.paytech.foundation.compensation.core.observability.CompensationEventObserver;
@@ -24,6 +25,8 @@ import com.paytech.foundation.compensation.persistence.repository.CompensationEv
 
 /**
  * 使用数据库 Claim/Lease、版本围栏和隔离 Handler 执行的有界协调器。
+ * <li>Claim 成功后的执行交给 {@link CompensationExecutionSequencer}；默认 {@link CompensationExecutionSequencer#DIRECT}
+ * 在协调线程直接执行（原有并发）。编排器拒绝时按可重试失败释放任务。</li>
  *
  * @author Codex
  */
@@ -36,6 +39,7 @@ public final class CompensationEventDispatcher implements CompensationEventWakeu
     private static final String NON_RETRYABLE_EXCEPTION_CODE = "NON_RETRYABLE_HANDLER_EXCEPTION";
     private static final String TIMEOUT_ERROR_CODE = "HANDLER_TIMEOUT";
     private static final String HANDLER_EXECUTOR_ERROR_CODE = "HANDLER_EXECUTOR_UNAVAILABLE";
+    private static final String SEQUENCER_ERROR_CODE = "SEQUENCER_UNAVAILABLE";
     private static final String MAXIMUM_ATTEMPTS_ERROR_CODE = "MAXIMUM_ATTEMPTS_EXCEEDED";
 
     private final ExecutorService handlerExecutor;
@@ -48,12 +52,23 @@ public final class CompensationEventDispatcher implements CompensationEventWakeu
     private final Semaphore handlerCapacity;
     private final String instanceId;
     private final Duration leaseDuration;
+    private final CompensationExecutionSequencer sequencer;
 
     public CompensationEventDispatcher(ExecutorService handlerExecutor, SafeErrorSummary safeErrorSummary,
         ThreadPoolExecutor coordinatorExecutor, RetryDelayCalculator retryDelayCalculator,
         CompensationEventObserver observer, CompensationEventRepository eventRepository,
         CompensationHandlerRegistry handlerRegistry, int maximumHandlerConcurrency, String instanceId,
         Duration leaseDuration) {
+        this(handlerExecutor, safeErrorSummary, coordinatorExecutor, retryDelayCalculator, observer, eventRepository,
+            handlerRegistry, maximumHandlerConcurrency, instanceId, leaseDuration,
+            CompensationExecutionSequencer.DIRECT);
+    }
+
+    public CompensationEventDispatcher(ExecutorService handlerExecutor, SafeErrorSummary safeErrorSummary,
+        ThreadPoolExecutor coordinatorExecutor, RetryDelayCalculator retryDelayCalculator,
+        CompensationEventObserver observer, CompensationEventRepository eventRepository,
+        CompensationHandlerRegistry handlerRegistry, int maximumHandlerConcurrency, String instanceId,
+        Duration leaseDuration, CompensationExecutionSequencer sequencer) {
         this.handlerExecutor = Objects.requireNonNull(handlerExecutor, "handlerExecutor must not be null");
         this.safeErrorSummary = Objects.requireNonNull(safeErrorSummary, "safeErrorSummary must not be null");
         this.coordinatorExecutor = Objects.requireNonNull(coordinatorExecutor, "coordinatorExecutor must not be null");
@@ -68,6 +83,7 @@ public final class CompensationEventDispatcher implements CompensationEventWakeu
         this.handlerCapacity = new Semaphore(maximumHandlerConcurrency);
         this.instanceId = requireInstanceId(instanceId);
         this.leaseDuration = requirePositiveLease(leaseDuration);
+        this.sequencer = Objects.requireNonNull(sequencer, "sequencer must not be null");
     }
 
     @Override
@@ -102,12 +118,44 @@ public final class CompensationEventDispatcher implements CompensationEventWakeu
                 return;
             }
             observeClaim(claimedEvent.get());
-            executeClaimed(claimedEvent.get(), permitLease);
+            sequenceClaimed(claimedEvent.get(), permitLease);
         } catch (RuntimeException exception) {
             permitLease.closeIfCoordinatorOwned();
             LOGGER.warn("Compensation coordinator failed safely; Lease recovery remains available, exceptionType={}",
                 exception.getClass().getSimpleName());
         }
+    }
+
+    private void sequenceClaimed(ClaimedCompensationEvent claimedEvent, PermitLease permitLease) {
+        try {
+            sequencer.execute(claimedEvent.eventType(), claimedEvent.eventKey(),
+                () -> executeClaimedSafely(claimedEvent, permitLease));
+        } catch (RejectedExecutionException exception) {
+            permitLease.close();
+            finishSequencerRejected(claimedEvent);
+        }
+    }
+
+    private void executeClaimedSafely(ClaimedCompensationEvent claimedEvent, PermitLease permitLease) {
+        try {
+            executeClaimed(claimedEvent, permitLease);
+        } catch (RuntimeException exception) {
+            permitLease.closeIfCoordinatorOwned();
+            LOGGER.warn("Compensation coordinator failed safely; Lease recovery remains available, exceptionType={}",
+                exception.getClass().getSimpleName());
+        }
+    }
+
+    private void finishSequencerRejected(ClaimedCompensationEvent claimedEvent) {
+        CompensationExecutionPolicy policy;
+        try {
+            policy = handlerRegistry.policy(claimedEvent.eventType());
+        } catch (FailException exception) {
+            finishFailException(claimedEvent, exception, Duration.ZERO);
+            return;
+        }
+        finishRetryable(claimedEvent, policy, SEQUENCER_ERROR_CODE,
+            "Execution sequencer capacity is temporarily unavailable.", "sequencer_unavailable", Duration.ZERO);
     }
 
     private void executeClaimed(ClaimedCompensationEvent claimedEvent, PermitLease permitLease) {

@@ -2,6 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   generateServiceModel,
+  messagingConsumerEntities,
   runGeneratorCli,
   serializeModel,
 } from "./client-contract-model-core.mjs";
@@ -16,6 +17,7 @@ export {
 // Consumer Legal facts from the shared Client & Contract catalog, plus the
 // Client stored-card setting moved from Commerce. Each service database keeps
 // its own BCR and compensation_event copy. command_idempotency is dropped (S10).
+// Step 08 adds the paytech-messaging consumer tables t_consumed_event / t_consumed_aggregate_version.
 export const CLIENT_MASTER_CATALOG_TABLES = Object.freeze([
   "party",
   "party_profile",
@@ -223,6 +225,8 @@ export const CLIENT_MASTER_DIAGRAM_GROUPS = Object.freeze([
       "business_change_record",
       "business_change_version",
       "compensation_event",
+      "consumed_event",
+      "consumed_aggregate_version",
     ],
   },
 ]);
@@ -236,7 +240,9 @@ export const CLIENT_MASTER_SERVICE = Object.freeze({
   diagramGroups: CLIENT_MASTER_DIAGRAM_GROUPS,
   additionalEntities: (model) => {
     const { fields, correlations, indexes, type, ...head } = structuredClone(CLIENT_STORED_CARD_SETTING_ENTITY);
-    return [{ ...head, headers: structuredClone(model.profile.headers), fields, correlations, indexes, type }];
+    // Step 08: paytech-messaging consumer tables for the ClientReviewDecided subscription (design/08 §4).
+    return [{ ...head, headers: structuredClone(model.profile.headers), fields, correlations, indexes, type },
+      ...messagingConsumerEntities(model)];
   },
 });
 

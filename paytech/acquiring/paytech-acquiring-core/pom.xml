@@ -75,10 +75,10 @@
             <groupId>com.paytech</groupId>
             <artifactId>paytech-mvc-web-starter</artifactId>
         </dependency>
-        <!-- Payment 支付结果消费者（@RabbitListener 在 core，队列声明在 app）。 -->
+        <!-- Payment PaymentSucceeded 消费 Handler（DomainEventConsumer 在 core，分区拓扑与容器由 app 的 paytech-messaging 提供）。 -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-amqp</artifactId>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-messaging-api</artifactId>
         </dependency>
         <dependency>
             <groupId>org.mybatis.spring.boot</groupId>

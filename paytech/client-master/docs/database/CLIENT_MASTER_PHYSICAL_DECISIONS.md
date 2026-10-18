@@ -1,6 +1,6 @@
 # Client Master 物理数据库决策
 
-> **2026-10-17 服务拆分：** 本文由原 `client-contract-service/docs/database/CLIENT_CONTRACT_PHYSICAL_DECISIONS.md` 按[模块与表归属](../../../../requirements/20261017/architecture-V2骨架与模块搬迁/design/03-module-and-table-ownership.md) §2.4 拆出；决策正文逐字保留，只调整标题、归属说明、相对链接与本库生成统计。client-master（`mor_client_master`）拥有 27 张表：Client & Contract Catalog 中 Party、角色、入驻、OE Scope/Affiliation/Source、Consumer Legal 与 Seller Disclosure 共 23 张，本库独立副本 `business_change_record`、`business_change_version`、`compensation_event`，以及从 Commerce 原样迁入的 `client_stored_card_setting`。Agreement 与定价 14 张表见 [Commercial 物理数据库决策](../../../commercial/docs/database/COMMERCIAL_PHYSICAL_DECISIONS.md)。`command_idempotency` 按决定 S10 删除，不进入任何模型或 Schema。手工 Schema SQL 为 [client-master-schema.sql](./sql/client-master-schema.sql)（由 [generate-oe-client-schemas.mjs](../../../../scripts/pdmaner/generate-oe-client-schemas.mjs) 从模型生成），初始化 DML 为 [client-master-initial-data.sql](./sql/client-master-initial-data.sql)。
+> **2026-10-17 服务拆分：** 本文由原 `client-contract-service/docs/database/CLIENT_CONTRACT_PHYSICAL_DECISIONS.md` 按[模块与表归属](../../../../requirements/20261017/architecture-V2骨架与模块搬迁/design/03-module-and-table-ownership.md) §2.4 拆出；决策正文逐字保留，只调整标题、归属说明、相对链接与本库生成统计。client-master（`mor_client_master`）拥有 29 张表（第 08 步加入 paytech-messaging 消费端 `consumed_event`、`consumed_aggregate_version` 两张表，见第 9 节）：Client & Contract Catalog 中 Party、角色、入驻、OE Scope/Affiliation/Source、Consumer Legal 与 Seller Disclosure 共 23 张，本库独立副本 `business_change_record`、`business_change_version`、`compensation_event`，以及从 Commerce 原样迁入的 `client_stored_card_setting`。Agreement 与定价 14 张表见 [Commercial 物理数据库决策](../../../commercial/docs/database/COMMERCIAL_PHYSICAL_DECISIONS.md)。`command_idempotency` 按决定 S10 删除，不进入任何模型或 Schema。手工 Schema SQL 为 [client-master-schema.sql](./sql/client-master-schema.sql)（由 [generate-oe-client-schemas.mjs](../../../../scripts/pdmaner/generate-oe-client-schemas.mjs) 从模型生成），初始化 DML 为 [client-master-initial-data.sql](./sql/client-master-initial-data.sql)。
 
 > **2026-09-14 Client 入驻修订：** Client 申请使用单份资料和 current_submission_id；Party/Profile/Relation 稳定标识及 Checkout 实际消费的批准 Hash 保留。本文旧的 Profile Version、Base/Target、Client Submission Hash 与 Relation Version 段落仅作前身设计记录；Partner/OE/Agreement 的共享引用不自动合并。完整合同见[数据设计](../../../../requirements/20260914/client-console-注册与客户入驻/data-design.md)和[迁移方案](../../../../requirements/20260914/client-console-注册与客户入驻/migration-plan.md)。当前模型、验证和执行状态见[台账](../../../../agent-docs/CURRENT_IMPLEMENTATION.md#client-console-onboarding-20260914)。
 
@@ -233,24 +233,30 @@ MVP 暂不建设通用 Retention/Legal Hold 投影、Worker、归档、匿名化
 - `BIGINT -> Long`、`DECIMAL -> BigDecimal`、`DATETIME(6) -> Instant`；
 - 新增派生 `localDate`，映射 `DATE -> LocalDate`；
 - 注入完整中文显示元数据、闭合/开放值域和 Slot 规则；
-- 生成本库 27 张表的字段、唯一索引、普通索引、本库关系、关系图与稳定结构投影；
+- 生成本库 29 张表的字段、唯一索引、普通索引、本库关系、关系图与稳定结构投影；
 - 禁用模板自增主键假设，保留 Snowflake 非自增和空数据库连接。
 
 以下为 2026-10-17 拆分后 client-master 模型统计快照（拆分前合并模型的 38 / 413 统计只属于历史基线）；现行生成统计及运行数据库迁移状态只见[当前实现台账](../../../../agent-docs/CURRENT_IMPLEMENTATION.md#client-console-onboarding-20260914)。下方模型与结构指纹随当前产物更新：
 
 | 项目 | 最终结果 |
 |---|---|
-| 表 / 字段 | 27 / 290 |
+| 表 / 字段 | 29 / 300 |
 | 必填 / 可空字段 | 197 / 93 |
-| 唯一键 / 访问索引 | 39 / 24 |
+| 唯一键 / 访问索引 | 39 / 25 |
 | 本库关系 / 1:1 关系 | 40 / 5 |
 | Diagram Groups | 6 |
 | Table Cells / Relation Cells | 36 / 40 |
-| Structural Projection SHA-256 | `a49cd2fdc8a349cc0d2088d5cd3605b72c0911f898a0c0f09d97d899c1a1bd96` |
-| Model SHA-256 | `17a772558f4db9e8b7849af51869977561ff806b51210d300128433a34f892f6` |
+| Structural Projection SHA-256 | `80dba108a6322e957ca7c652a1911979705388b47b71caa24ee51bb14f989802` |
+| Model SHA-256 | `3101e35c5f5626dfdf201bc88c3bdfbe71a443a1edf351b312e374bbab4a55cc` |
 | Template SHA-256 | `51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540` |
 
-全部 290 个字段来自批准 Catalog（`client_stored_card_setting` 的 5 个字段原样复制自 Commerce 模型），没有在 Catalog 之外重复注入公共字段。40 条关系均为本库关系；6 个图组覆盖全部 27 张表，并让每条关系恰好可视化一次。
+全部 300 个字段中 285 个来自批准 Catalog，`client_stored_card_setting` 的 5 个字段原样复制自 Commerce 模型，`t_consumed_event`（6）与 `t_consumed_aggregate_version`（4）来自 paytech-messaging 消费端标准表，没有在 Catalog 之外重复注入公共字段。40 条关系均为本库关系；6 个图组覆盖全部 29 张表，并让每条关系恰好可视化一次。
+
+第 08 步（消息拓扑接入）为 `ClientReviewDecided` 订阅新增 `t_consumed_event` 与 `t_consumed_aggregate_version`：列名、类型、可空性、主键与
+`idx_consumed_event_aggregate` 索引取自 `paytech/foundation/paytech-messaging/src/main/resources/schema/messaging-consumed-event.sql`（design/08 §4），
+字符串列为 `ascii_bin`，归入 `Local History and Reliability` 图组。两表不来自 CCT Catalog，由生成器 `additionalEntities` 注入；`t_consumed_event`
+以 `event_id`（VARCHAR）为主键，`t_consumed_aggregate_version` 以 `(aggregate_type, aggregate_id)` 为复合主键，二者不使用 Snowflake 主键与
+`create_time + update_time` 双审计时间，是本文“每张表恰好一个非自增 BIGINT 主键”规则的唯一例外，模型契约测试与 PDManer 规则检查对其豁免。
 
 ## 10. 验证与后续门禁
 

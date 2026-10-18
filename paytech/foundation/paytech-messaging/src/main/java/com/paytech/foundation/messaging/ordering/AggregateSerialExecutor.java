@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * 按 {@code aggregateId} 哈希到固定线程的串行执行器（design/08 §3）。
  * <li>同一聚合的任务恒在同一条线程按提交顺序执行；不同聚合分散到不同线程并行。</li>
  * <li>每条线程的等待队列有界；队列满时抛出 {@link java.util.concurrent.RejectedExecutionException}，调用方保留任务待扫描兜底。</li>
- * <li>供补偿事件 Dispatcher 在第 08 步接入；本类不依赖补偿组件。</li>
+ * <li>补偿事件 Dispatcher 经 {@link AggregateKeySequencer} 接入；本类不依赖补偿组件。</li>
  *
  * @author Claude
  */
@@ -75,6 +75,19 @@ public final class AggregateSerialExecutor implements AutoCloseable {
     public int laneOf(String aggregateId) {
         Objects.requireNonNull(aggregateId, "aggregateId must not be null");
         return Math.floorMod(aggregateId.hashCode(), lanes.size());
+    }
+
+    /**
+     * 全部线程上正在执行与排队等待的任务数，供宿主判断是否空闲。
+     *
+     * @return 任务数
+     */
+    public int pendingTaskCount() {
+        int pending = 0;
+        for (ThreadPoolExecutor lane : lanes) {
+            pending += lane.getQueue().size() + lane.getActiveCount();
+        }
+        return pending;
     }
 
     /**

@@ -152,6 +152,54 @@ class PartitionedConsumeAutoTest extends MessagingMockTestBase {
     }
 
     @Test
+    void test_normalFlow_handlerManagedTransactionRunsOutsideConsumeTransaction() {
+        String aggregateId = uniqueAggregate();
+        DomainEvent event = managedEvent(aggregateId, 2);
+
+        publisher.publish(event);
+        awaitHandled(aggregateId, 1);
+        Awaitility.await().atMost(WAIT).until(() -> testMapper.countConsumedEvent(event.eventId()) == 1);
+        publisher.publish(event);
+        publisher.publish(managedEvent(aggregateId, 1));
+
+        Awaitility.await().atMost(WAIT).until(() -> consumed(TestRun.MANAGED_EVENT, "replayed") == 1.0
+            && consumed(TestRun.MANAGED_EVENT, "stale") == 1.0);
+        assertEquals(List.of(false), probe.transactionActive());
+        assertEquals(List.of(2L), testMapper.findHandledVersions(aggregateId));
+        assertEquals(2L, testMapper.findLastVersion("TEST_ENTRY", aggregateId));
+        assertEquals(1, testMapper.countConsumedEventsOfAggregate(aggregateId));
+    }
+
+    @Test
+    void test_businessRuleViolation_handlerManagedFailureLeavesNoConsumeRecord() {
+        String aggregateId = uniqueAggregate();
+        probe.failAggregate(aggregateId);
+
+        publisher.publish(managedEvent(aggregateId, 1));
+
+        Awaitility.await().atMost(WAIT).until(() -> consumed(TestRun.MANAGED_EVENT, "dead") == 1.0);
+        assertNotNull(awaitDeadLetter());
+        assertEquals(List.of(), testMapper.findHandledVersions(aggregateId));
+        assertEquals(0, testMapper.countConsumedEventsOfAggregate(aggregateId));
+        assertEquals(null, testMapper.findLastVersion("TEST_ENTRY", aggregateId));
+    }
+
+    @Test
+    void test_businessRuleViolation_rejectedEventDeadLetteredWithoutRetry() {
+        String aggregateId = uniqueAggregate();
+        probe.rejectAggregate(aggregateId);
+        DomainEvent event = managedEvent(aggregateId, 1);
+
+        publisher.publish(event);
+
+        Awaitility.await().atMost(WAIT).until(() -> consumed(TestRun.MANAGED_EVENT, "dead") == 1.0);
+        Message deadLetter = awaitDeadLetter();
+        assertEquals(event.eventId(), deadLetter.getMessageProperties().getMessageId());
+        assertEquals(1, probe.transactionActive().size(), "拒绝不重投");
+        assertEquals(0, testMapper.countConsumedEventsOfAggregate(aggregateId));
+    }
+
+    @Test
     void test_invalidParameter_malformedEnvelopeDeadLettered() {
         broker.sendRaw(broker.partitionQueues().getFirst(), "{\"eventId\":\"x\"}".getBytes(StandardCharsets.UTF_8));
 
@@ -172,6 +220,10 @@ class PartitionedConsumeAutoTest extends MessagingMockTestBase {
         assertEquals(List.of(aggregateId + "@1"), probe.invocations());
         assertEquals(1, testMapper.countConsumedEventsOfAggregate(aggregateId));
         assertEquals(null, broker.receiveDeadLetter());
+    }
+
+    private DomainEvent managedEvent(String aggregateId, long version) {
+        return event(TestRun.MANAGED_EVENT, "TEST_ENTRY", aggregateId, version);
     }
 
     private void awaitHandled(String aggregateId, int count) {
