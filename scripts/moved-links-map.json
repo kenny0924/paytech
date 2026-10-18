@@ -2778,7 +2778,7 @@
     },
     {
       "from": "finance-service/paytech-finance-accounting/src/main/resources/mapper/accounting/BalanceAccountMapper.xml",
-      "to": "paytech/account/paytech-account-core/src/main/resources/mapper/account/BalanceAccountMapper.xml"
+      "to": "paytech/account/paytech-account-core/src/main/resources/mapper/account/AccountBalanceMapper.xml"
     },
     {
       "from": "finance-service/paytech-finance-accounting/src/main/resources/mapper/accounting/BookSequenceMapper.xml",

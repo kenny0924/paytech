@@ -11,6 +11,119 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
+<a id="v2-skeleton-module-migration-20261018"></a>
+## V2 骨架与模块搬迁（阶段 0，refactor-main，2026-10-17—18，未合入 main、未推送、未部署）
+
+- **范围：** 按 [V2 决定草案](./decisions/2026-10-17-target-architecture-v2.md) D09、D11、D22、D24–D26、D31–D36 与[需求](<../requirements/20261017/architecture-V2骨架与模块搬迁/requirement.md>)，把 12 个旧工程根并入单一 Maven Reactor `paytech/`（唯一 Wrapper `paytech/mvnw`）。各步任务卡与报告见 [tasks/](<../requirements/20261017/architecture-V2骨架与模块搬迁/tasks/>)。本节只登记事实，规范正文仍以 `DOCUMENT_GOVERNANCE.md` 路由的 Owner 为准。
+- **Implemented：**
+  - **目录与模块：** `paytech/` 下有 24 个服务目录。
+    - 18 个已建工程：platform-support、api-gateway、operations-console-bff、client-console-bff、vault、client-master、commercial、acquiring、consumer、payment、channel-connector、card、risk-decision、compliance、billing、account、ledger、data-service。
+    - 另有 reconciliation、tax 两个空壳服务。
+    - dispute、payout 只有模型；fx、workflow-approval 只有 README 占位。
+    - 另有 `paytech/build`（BOM、父 POM）、`paytech/foundation`（17 个模块，含 `paytech-messaging(-api)`、`paytech-internal-auth`）与 `paytech/tools/{arch-rules,arch-rules-reactor-test,instance-manifest,migration-runner}`。
+  - **模块坐标：** `com.paytech:paytech-<服务>-{api,core,app,test}`（Gateway 与两个 BFF 无 api / core）。服务名、业务端口与管理端口见 [LOCAL_DEVELOPMENT_ENVIRONMENT.md](./LOCAL_DEVELOPMENT_ENVIRONMENT.md) 8.2 节；服务目录见 `paytech/tools/instance-manifest/src/main/resources/catalog/services.yaml`。
+  - **库：** 每个服务独立库：`mor_client_master`、`mor_commercial`、`mor_acquiring`、`mor_consumer`、`mor_payment`、`mor_channel_connector`、`mor_card`、`mor_risk_decision`、`mor_compliance`、`mor_ledger`、`mor_billing`、`mor_account`、`mor_reconciliation`、`mor_tax`；`mor_platform`、`mor_vault` 不变。模型为 `paytech/<服务>/docs/database/<服务>.pdma.json`（18 份），R4 表归属由 `paytech/tools/arch-rules/src/main/resources/table-ownership.yaml` 强制（265 张物理表 + 56 张保留表 + 6 张 step-added）。
+  - **过渡与清理：** 第 07 步 account 对 `mor_ledger` 的共库只读已于第 11b 步结束，`transitionalSharedReads` 已删除，account 改用自有 `mor_account`。第 05 步卡表暂居 `mor_payment` 的过渡已于第 12 步结束。旧根在 git 中为 0 个文件；文档链接已改写到新路径。
+  - **消息：** `<producer>.events` Fanout 加订阅方一致性哈希分区队列（D34）。payment、compliance 只发新信封；acquiring、client-master、card、ledger、account 为消费者；billing 发布 `EconomicFactRecorded`。旧 `topic_*` / `cg_*` 不再由代码声明。
+  - **test-environment：** Compose 已按上述服务拆分（18 个 Java 服务，每个服务一个 `JAR_FILE`）；`build.sh` 单 Reactor 打包；`initialize.py` 新增 V2 库建库与 Schema 动作。只改了脚本，mor-test 未按 V2 部署。
+- **Verified：**
+  - **全 Reactor：** refactor-main@6b8a6672（11b 合入后）执行 `cd paytech && ./mvnw -B clean verify`，BUILD SUCCESS，用时 19:49，2026-10-18 10:16 完成（主会话）。
+    - 结果：42 个含测试模块、8218 个测试，0 失败、0 错误、0 跳过。
+    - 运行环境含 Vault Go 服务端二进制与 `VAULT_TEST_*`、`PAYTECH_REDIS_PASSWORD`、`MOR_RABBITMQ_*`。
+    - 历史全 Reactor：02x 后 4642，03 后 6011（主会话）。
+  - **各步搬迁前后测试数**（执行数，均 0 失败、0 跳过）：
+
+    | 步骤 | 搬迁前 | 搬迁后 |
+    |---|---|---|
+    | 01 Foundation | 722 | 893 |
+    | 02a Platform | 759 | 798 |
+    | 02b Gateway | 1277 | 1306 |
+    | 02c BFF | 1386 / 76 | 1390 / 80 |
+    | 02d Vault | Go 顶层用例 148，Java 53 | Go 177，Java 58 |
+    | 03 Commerce | 808 | acquiring 801 + consumer 21 |
+    | 04 CCT | 53 | client-master 57 + commercial 24 |
+    | 05 Payment | 127 | payment 72 + channel-connector 75 |
+    | 06 Risk | 2083 | risk-decision 1726 + compliance 374 |
+    | 07 Finance | 242 | 316 |
+
+  - **后续各步终值：** 08 起：acquiring 803、client-master 58；11a：billing 89；11b：ledger 204、account 40；12：card-test 38、card-core 11、payment 62；12x：payment 63。arch-rules 56、data-service-test 16、migration-runner 27。
+  - **app 启动：** 各步 app 以 mock Profile 启动后，管理端口健康检查均为 UP。
+  - **第 13 步：** `scripts/verify-markdown-links.mjs` 0 broken；`scripts/rewrite-moved-links.mjs --check` 0 待改；`verify-java-foundation.mjs` 通过。requirements-site 137 / 127 / 10、PDManer 557 / 520 / 37 均与起点失败集相同。test-environment Python 336 项、3 failures、37 errors，均为搬迁前即有的 Risk rollout 工具钉值漂移。
+  - **本机库 DDL 应用情况**（`mor-local-mysql-1`，root 执行各服务测试 `init/ddl.sql` 或评审增量 SQL）：
+
+    | 库 | 表数 | 步骤 |
+    |---|---:|---|
+    | `mor_acquiring` | 16 | 03、08 |
+    | `mor_consumer` | 2 | 03 |
+    | `mor_client_master` | 29 | 04、08 |
+    | `mor_commercial` | 15 | 04 |
+    | `mor_channel_connector` | 13 | 05 |
+    | `mor_payment` | 15，另有卡 4 表残留 | 05 重建；12 为 `t_payment_instrument_token` 加 4 列 |
+    | `mor_risk_decision` | 55 | 06 |
+    | `mor_compliance` | 25 | 06 |
+    | `mor_ledger` | 31 | 07 建库；11b 执行拆表与调整规则 SQL |
+    | `mor_billing` | 9 | 07 建库；11a 执行 maker-checker 增量 SQL |
+    | `mor_reconciliation` | 18 | 07 |
+    | `mor_tax` | 24 | 07 |
+    | `mor_account` | 8 | 11b |
+    | `mor_card` | 8 | 12 |
+    | `mor_platform` | 新增 `t_currency_spec` 及 USD 行 | 02a |
+
+    旧库 `mor_cct`、`mor_commerce`、`mor_risk`、`mor_finance` 保留，供 main 分支使用。
+- **Pending：**
+  - **design/04 修订：** §3.2 与 §6 按 [11b 报告](<../requirements/20261017/architecture-V2骨架与模块搬迁/tasks/11b-ledger-account-split-report.md>)偏差 1–3 修订：余额身份带科目并由 account 自有主键；新增 `t_balance_applied_entry`；试算不再比对账户投影，改由日终核对与关账 consistency 承担。主会话已接受这三项偏差，规范正文未改。design/03 的表数与 `t_account` 归属同样按 11b 报告回写。
+  - **DRAFT 事实驳回 / 撤回切片：** 第 11a 步用户决定在 11b 之后作为独立小切片。
+  - **撤销 account_app 对 mor_ledger 的只读授权：** `REVOKE SELECT ON mor_ledger.* FROM 'account_app'@'%';` 待执行（本机及已建该授权的环境）。
+  - **旧 RabbitMQ 拓扑删除：** 待用户执行，见下文本机一次性操作。
+  - **Vault REQUIRED 切换：** Vault 与各服务 `internal-auth.mode` 目前均为 `OFF`。前提是 Platform 签发端上线、所有调用方接入 `InternalTokenSupplier`，并以 DUAL 观察一段时间；DUAL 期限未定。
+  - **Platform 内部 Token 签发：** 改为表驱动，待 `t_jwt_signing_key` 增加 `key_usage` 的 Schema 评审；草案见 [02a 报告](<../requirements/20261017/architecture-V2骨架与模块搬迁/tasks/02a-platform-support-report.md>)第 4 节。当前为配置注入的 ES256（`STATIC`，prod 拒绝启动）。
+  - **规范修订：**
+    - `t_schema_migration` / 迁移执行器替代"人工执行当前 Schema"，涉及 `DATABASE_DESIGN_GUIDE.md`、`TECHNOLOGY_STACK.md`、`DEVELOPMENT_CONVENTIONS.md` 与 AGENTS.md 的 Manual infrastructure rule（第 10 步待确认第 4 项）。
+    - D11（实例内迁移执行器）、D26（内部签名 Token）、D09（每服务独立进程）的规范正文修订。
+    - `agent-docs` 现行正文替换为 V2 草案，作为后续需求。
+    - `LOCAL_DEVELOPMENT_ENVIRONMENT.md` 第 11 节 V2 消息命名约定的正文修订。
+  - **配置待改：**
+    - billing 的 `messaging.publisher.unroutable-policy` 仍为 `ACK_AND_WARN`，订阅者已接入，应改回 `FAIL`。
+    - `local-environment/compose.yaml` 的 `mysql.environment` 未透传 V2 库密码，全新卷初始化会因必需变量缺失而失败。
+  - **mor-test V2 部署：** 未执行。需要以下各项：
+    - 补 `.env.test` 键、建库与 Schema。
+    - Platform `t_gateway_target` 改为 acquiring 并新增 consumer Target。
+    - Vault 访问规则登记 `card-service` 与 `channel-connector-service`；XXL 登记 `acquiring-service` 执行器与 `cardOrphanInstrumentPurge`。
+    - RabbitMQ 按插件挂载重建；Docker 内存约需 20 GiB 以上。
+    - 启动顺序见[第 13 步报告](<../requirements/20261017/architecture-V2骨架与模块搬迁/tasks/13-cleanup-report.md>)第 6 节。
+  - **其他遗留：**
+    - test-environment 中 2026-09-07 Risk Operations rollout 工具的钉值需按当前 Platform 网关目录重定（3 failures、37 errors）。
+    - acquiring 的 `CheckoutSessionStatus.PREPARING` 读容忍与 Context Path `/commerce` 是否改名。
+    - `t_consumer_acceptance.command_idempotency_id` 是否删除。
+    - Gateway 边界脚本的 `.subscribe()` 与 90% 分支覆盖率门禁；Platform、acquiring 的 `coverage-gate` 仍低于 0.90。
+- **本机一次性操作汇总（不在仓库中）：**
+  - **已执行：**
+    - 01：在线启用 `mor-local-rabbitmq-1` 的 `rabbitmq_consistent_hash_exchange`，未重启。
+    - 02a：在 `mor_platform` 建 `t_currency_spec` 并写入 USD 行。
+    - 03–12：按上表新建各 V2 测试库与账号（仓库默认密码），`.env.local` 未改。
+    - 05：`mor_payment` 的 13 张旧表 `RENAME` 到 `mor_payment_legacy_20261017`；临时库 `mor_payment_step05_tmp` 已删除。
+    - 09：`.env.local` 追加 3 个 CDC / Doris 键；创建 `cdc_reader`；`mor_finance.t_currency_spec` USD 行 `update_time` 被演示更新；Doris / Flink 镜像约 14 GB 保留。
+    - 11b：清理 `mor_account` 残留数据。
+    - 12x：清理 `mor_card` 消费登记残留各 3 行。
+    - 宿主磁盘写满期间 Redis AOF 出现 `MISCONF`、Docker 停止响应，已由他人恢复。
+  - **安全提示：** 第 05 步会话输出中曾显示本机 MySQL root 密码，第 04 步曾显示本地 Redis 测试密码；均未写入仓库，建议轮换。
+  - **待用户执行：**
+    - 撤销 account_app 对 mor_ledger 的只读授权（见 Pending）。
+    - 确认无用后 `DROP DATABASE mor_payment_legacy_20261017`，并删除 `mor_payment` 中残留的卡 4 表。
+    - main 停用后删除 `mor_cct`、`mor_commerce`、`mor_risk`、`mor_finance` 及对应账号。
+    - 按需清理 `mor_risk` 中来源不明的 `t_decision_flow` 残留行。
+    - 删除 `/mor-local` 上的旧 RabbitMQ 拓扑。先确认旧进程已停，并按需导出队列消息（另一会话的旧 CCT 进程曾消费 `cg_cct_client_review`）：
+
+      ```bash
+      for q in cg_commerce_payment_result cg_commerce_payment_result_dlq cg_acquiring_payment_result cg_acquiring_payment_result_dlq \
+               cg_cct_client_review cg_cct_client_review_dlq cg_client_master_client_review cg_client_master_client_review_dlq; do
+        docker exec mor-local-rabbitmq-1 rabbitmqctl delete_queue --vhost /mor-local "$q"
+      done
+      # 交换机（rabbitmqctl 无删除交换机子命令，用容器内的 rabbitmqadmin 或管理台）：
+      # dlx_commerce_payment_result dlx_acquiring_payment_result dlx_cct_client_review dlx_client_master_client_review
+      # topic_payment_result topic_risk_client_review
+      ```
+
 <a id="finance-accounting-kernel-20261015"></a>
 
 <a id="mor-test-compensation-scan-20261017"></a>
