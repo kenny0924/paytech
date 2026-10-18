@@ -25,7 +25,7 @@
   - **库：** 每个服务独立库：`mor_client_master`、`mor_commercial`、`mor_acquiring`、`mor_consumer`、`mor_payment`、`mor_channel_connector`、`mor_card`、`mor_risk_decision`、`mor_compliance`、`mor_ledger`、`mor_billing`、`mor_account`、`mor_reconciliation`、`mor_tax`；`mor_platform`、`mor_vault` 不变。模型为 `paytech/<服务>/docs/database/<服务>.pdma.json`（18 份），R4 表归属由 `paytech/tools/arch-rules/src/main/resources/table-ownership.yaml` 强制（265 张物理表 + 56 张保留表 + 6 张 step-added）。
   - **过渡与清理：** 第 07 步 account 对 `mor_ledger` 的共库只读已于第 11b 步结束，`transitionalSharedReads` 已删除，account 改用自有 `mor_account`。第 05 步卡表暂居 `mor_payment` 的过渡已于第 12 步结束。旧根在 git 中为 0 个文件；文档链接已改写到新路径。
   - **消息：** `<producer>.events` Fanout 加订阅方一致性哈希分区队列（D34）。payment、compliance 只发新信封；acquiring、client-master、card、ledger、account 为消费者；billing 发布 `EconomicFactRecorded`。旧 `topic_*` / `cg_*` 不再由代码声明。
-  - **test-environment：** Compose 已按上述服务拆分（18 个 Java 服务，每个服务一个 `JAR_FILE`）；`build.sh` 单 Reactor 打包；`initialize.py` 新增 V2 库建库与 Schema 动作。只改了脚本，mor-test 未按 V2 部署。
+  - **test-environment：** Compose 已按上述服务拆分（18 个 Java 服务，每个服务一个 `JAR_FILE`）；`build.sh` 单 Reactor 打包；`initialize.py` 新增 V2 库建库与 Schema 动作。2026-10-18 mor-test 已按 V2 部署，见下方"mor-test V2 部署"。
 - **Verified：**
   - **全 Reactor：** refactor-main@6b8a6672（11b 合入后）执行 `cd paytech && ./mvnw -B clean verify`，BUILD SUCCESS，用时 19:49，2026-10-18 10:16 完成（主会话）。
     - 结果：42 个含测试模块、8218 个测试，0 失败、0 错误、0 跳过。
@@ -85,12 +85,13 @@
   - **配置待改：**
     - billing 的 `messaging.publisher.unroutable-policy` 仍为 `ACK_AND_WARN`，订阅者已接入，应改回 `FAIL`。
     - `local-environment/compose.yaml` 的 `mysql.environment` 未透传 V2 库密码，全新卷初始化会因必需变量缺失而失败。
-  - **mor-test V2 部署：** 未执行。需要以下各项：
-    - 补 `.env.test` 键、建库与 Schema。
-    - Platform `t_gateway_target` 改为 acquiring 并新增 consumer Target。
-    - Vault 访问规则登记 `card-service` 与 `channel-connector-service`；XXL 登记 `acquiring-service` 执行器与 `cardOrphanInstrumentPurge`。
-    - RabbitMQ 按插件挂载重建；Docker 内存约需 20 GiB 以上。
-    - 启动顺序见[第 13 步报告](<../requirements/20261017/architecture-V2骨架与模块搬迁/tasks/13-cleanup-report.md>)第 6 节。
+  - **mor-test V2 部署：** 2026-10-18 已部署并保留全部数据，见[需求交付记录](<../requirements/20261018/test-environment-V2部署与数据迁移/delivery.md>)与[阶段 2 报告](<../requirements/20261018/test-environment-V2部署与数据迁移/tasks/02-report.md>)。
+    - 镜像：main@e5467400 构建的 18 个 Java 服务、2 个 Web 的 `mor-test/*:development` 与 Vault 镜像；29 个容器 healthy。
+    - 迁移：评审 SQL 10/20/21/30/31/32/33/50 执行一次并重放验证；40 号核对 150/150；`mor_cct`、`mor_commerce`、`mor_risk` 4,210 行 = V2 六库 4,110 + 归档 100。
+    - 部署项：Platform Target 指向 `acquiring-service`；Vault 新增 7 条调用方规则；XXL `acquiring-service` 补偿扫描已启动、commerce-service 任务已停；RabbitMQ 已按插件挂载重建。
+    - 验收（V2 脚本 `E2E_TARGET=test`）：入驻 41/41、场景 85/85、工作区 53/53、接入自助 78/78、团队 123/123、Client API 90/90、`--outage` 92/92、Vault 烟测通过、迁移数据抽样 8/8。
+    - 未完成：`smoke.py` 与 `risk_rule_configuration_smoke.py` 被 `t_gateway_target` 目录门禁挡住，迁移前已如此。consumer Target 未新增，因为没有 Customer 路由。`cardOrphanInstrumentPurge` 未登记，因为 card 无 XXL 配置。
+    - 保留至阶段 3：旧容器、旧镜像、旧库与旧账号、`mor_v2_migration_archive`、Vault 旧调用方规则、XXL commerce-service 分组、RabbitMQ 卷内旧节点目录。
   - **其他遗留：**
     - test-environment 中 2026-09-07 Risk Operations rollout 工具的钉值需按当前 Platform 网关目录重定（3 failures、37 errors）。
     - acquiring 的 `CheckoutSessionStatus.PREPARING` 读容忍与 Context Path `/commerce` 是否改名。

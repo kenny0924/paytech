@@ -13,9 +13,23 @@
   去掉 --idempotency 开关（路由一开始即 REQUIRED）；接收端为本机线程，不读 test 落盘目录；库为 mor_acquiring_v2e2e。
 前置：run-service.sh start all；sql/50、sql/51 已执行；依次 risk_setup.py、channel_setup.py、register_client_api.py。
 不打印凭证、签名密钥、卡号或口令。用法：python3 client_api_flow.py
+
+E2E_TARGET=test（2026-10-18 mor-test V2，取代 20261017 commerce-ClientAPI测试环境联通/verification/client_api_flow.py）：
+  入口 https://localhost:28444/api/v1；接收端为 test 验收容器 webhook-receiver（https://webhook-receiver:8443/hook，落盘到
+  test-environment/private/webhook-receiver/inbox，需先 compose.sh -f compose.acceptance.yaml --profile acceptance up -d webhook-receiver）；
+  test 没有真实渠道与 Hosted Checkout 站点，order.paid 沿用原 test 脚本的夹具方式（已标注）：插入订单 Intent 关联投影，
+  再把 PaymentSucceeded v1 信封（paytech-messaging 新格式，sourceService=payment）直接发到 acquiring.payment.hash
+  （只到 acquiring，不经 payment.events，不触发 card 等其他订阅方）；--outage：发布前暂停 Platform 容器，确认任务 ERROR 后恢复，
+  等 XXL-Job（acquiring-service 执行器）补偿扫描补交。Target 已由迁移 SQL 指向 acquiring-service，不执行 register_client_api.py。
+  用法：E2E_TARGET=test python3 client_api_flow.py [--outage]
 """
 import concurrent.futures
+import datetime
+import hashlib
+import base64
 import json
+import random
+import subprocess
 import sys
 import time
 import urllib.error
@@ -30,12 +44,17 @@ import developer_flow as dev  # noqa: E402
 import webhook_flow as wf  # noqa: E402
 import workspace_flow as ws_flow  # noqa: E402
 from acceptance_flow import RESULTS, Stop, problem  # noqa: E402
-from e2e_http import CLIENT_API, TLS, Failure  # noqa: E402
+from e2e_http import CLIENT_API, TARGET, TEST_ENV, TLS, Failure, rabbit_publish  # noqa: E402
 
 API = CLIENT_API + "/api/v1"
 SCOPES = ["checkouts.write", "orders.read", "orders.cancel", "refunds.read", "refunds.write"]
 record = wf.record
 STATE = {"credential": None}
+OUTAGE = "--outage" in sys.argv
+TEST_INBOX = TEST_ENV / "private/webhook-receiver/inbox"
+TEST_ENDPOINT_URL = "https://webhook-receiver:8443/hook"
+PLATFORM_CONTAINER = "mor-test-platform-support-service-1"
+ACQUIRING_PAYMENT_EXCHANGE = "acquiring.payment.hash"
 
 
 def client_api(method, path, client_id=None, body=None, credential="default", idempotency=True, key=None, raw=None):
@@ -89,6 +108,129 @@ def compare(label, obj, expected):
 
 wf.commerce = client_api
 wf.compare = compare
+
+
+# ---------- E2E_TARGET=test 适配：test 接收端与支付成功夹具 ----------
+
+class InboxReceiver:
+    """读取 test 接收端落盘的请求；只看本次运行开始后的文件（文件名以纳秒时间戳开头）。"""
+
+    def __init__(self):
+        self.started_ns = time.time_ns()
+        self.url = TEST_ENDPOINT_URL
+
+    @property
+    def requests(self):
+        items = []
+        for path in sorted(TEST_INBOX.glob("*.json")):
+            if int(path.name.split("-", 1)[0]) < self.started_ns:
+                continue
+            raw = json.loads(path.read_text(encoding="utf-8"))
+            items.append({"headers": raw["headers"], "body": base64.b64decode(raw["body"])})
+        return items
+
+
+def amount_text(value):
+    """数据库 DECIMAL 文本 → 去掉末尾零的十进制字符串（与原 test 脚本相同）。"""
+    text = value.rstrip("0").rstrip(".") if "." in value else value
+    return text or "0"
+
+
+def payment_fixture(order):
+    """夹具（test 无 Payment 真实渠道）：插入订单 Intent 关联投影，替代 acquiring createIntent 的结果。"""
+    projection_id = 9_400_000_000_000_000 + random.randint(1, 99_999_999)
+    intent_id = 9_410_000_000_000_000 + random.randint(1, 99_999_999)
+    rows = wf.acquiring_sql(
+        "INSERT INTO t_order_payment_projection(order_payment_projection_id,order_id,payment_intent_id,intent_status,"
+        "intent_source_version,captured_amount,currency,last_event_time,version,create_time,update_time) VALUES "
+        f"({projection_id},{int(order['orderId'])},{intent_id},'REQUIRES_PAYMENT',1,0,'{order['currency']}',"
+        "UTC_TIMESTAMP(6),1,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6)); SELECT ROW_COUNT();")
+    record("夹具：订单 Intent 关联投影（替代 createIntent）", bool(rows) and rows[-1][0] == "1",
+           f"orderId={order['orderId']} paymentIntentId={intent_id} projectionId={projection_id}")
+    return intent_id
+
+
+def payment_succeeded_envelope(order, intent_id, attempt_id):
+    """PaymentSucceeded 信封（paytech-messaging Schema v1，design/08 §2）；payloadHash = RFC 8785 规范 UTF-8 的 SHA-256。
+    Payload 全部为字符串，排序键 + 紧凑序列化即 RFC 8785 规范形式。"""
+    now = datetime.datetime.now(datetime.timezone.utc)
+    total = amount_text(order["total"])
+    payload = {"sourceType": "COMMERCE_ORDER", "clientId": order["clientId"], "orderId": order["orderId"],
+               "paymentIntentId": str(intent_id), "paymentAttemptId": str(attempt_id), "entityNo": order["entityNo"],
+               "amount": total, "currency": order["currency"], "capturedAmount": total,
+               "paymentSucceededTime": now.replace(microsecond=0).strftime("%Y-%m-%dT%H:%M:%SZ")}
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+    event_id = f"acceptance-fixture:{attempt_id}"
+    envelope = {"eventId": event_id, "eventType": "PaymentSucceeded", "schemaVersion": 1,
+                "aggregateType": "PAYMENT_ATTEMPT", "aggregateId": str(attempt_id), "aggregateVersion": 1,
+                "occurredAt": now.strftime("%Y-%m-%dT%H:%M:%S.%fZ"), "sourceService": "payment",
+                "instanceId": "acceptance-fixture", "payloadHash": "sha256:" + hashlib.sha256(canonical).hexdigest(),
+                "payload": payload}
+    return event_id, json.dumps(envelope, separators=(",", ":"), ensure_ascii=False)
+
+
+def publish_payment_succeeded(event_id, attempt_id, body):
+    """直接发到 acquiring 的一致性哈希交换机（路由键 = aggregateId，与 paytech-messaging 发布端相同）。"""
+    return rabbit_publish(ACQUIRING_PAYMENT_EXCHANGE, str(attempt_id), body, event_id,
+                          {"x-aggregate-id": str(attempt_id)})
+
+
+def task_state(event_key):
+    rows = wf.tasks(event_key)
+    return (rows[0][3], rows[0][4], rows[0][5]) if rows else None
+
+
+def flow_paid_fixture(receiver, secret, client_id):
+    """AC-01/02（test 夹具）：PaymentSucceeded → acquiring 订单 PAID → order.paid；同一信封重投不产生第二个事件。
+    OUTAGE：发布前暂停 Platform，任务 ERROR 后恢复，由 XXL-Job 补偿扫描补交（AC-05）。"""
+    order_no, _ = wf.create_checkout(client_id, "paid")
+    order = wf.order_row(order_no)
+    intent_id = payment_fixture(order)
+    attempt_id = 9_420_000_000_000_000 + int(time.time() * 1000) % 99_999_999
+    event_id, body = payment_succeeded_envelope(order, intent_id, attempt_id)
+    webhook_event_id = f"evt_{order_no}_paid"
+    if OUTAGE:
+        subprocess.run(["docker", "pause", PLATFORM_CONTAINER], check=True, capture_output=True)
+        try:
+            routed = publish_payment_succeeded(event_id, attempt_id, body)
+            failed = wf.wait_for(lambda: (lambda t: t if t and t[0] in ("ERROR", "FAILED") else None)(
+                task_state(webhook_event_id)), 60)
+        finally:
+            subprocess.run(["docker", "unpause", PLATFORM_CONTAINER], check=True, capture_output=True)
+        record("AC-05 Platform 不可用时业务照常（PAID），Webhook 任务可重试 ERROR",
+               routed and wf.order_row(order_no)["status"] == "PAID" and bool(failed) and failed[0] == "ERROR",
+               f"routed={routed} status={wf.order_row(order_no)['status']} task={failed}")
+        hits = wf.wait_for(lambda: wf.received(receiver, webhook_event_id), 300, 5)
+        record("AC-05 恢复后 XXL-Job（acquiring-service）扫描补交，接收端收到 1 次", len(hits) == 1,
+               f"received={len(hits)} task={task_state(webhook_event_id)}")
+    else:
+        routed = publish_payment_succeeded(event_id, attempt_id, body)
+    paid = wf.wait_for(lambda: wf.order_row(order_no)["status"] == "PAID", 30)
+    projection = wf.payment_projection(order["orderId"]) or {}
+    record("AC-01 PaymentSucceeded（夹具信封）经 acquiring.payment 分区队列落地为订单 PAID",
+           routed and paid and projection.get("successfulAttemptId") == str(attempt_id),
+           f"routed={routed} status={wf.order_row(order_no)['status']} projection={projection} attemptId={attempt_id}")
+    record("PaymentSucceeded 由 acquiring 消费登记一次（t_consumed_event）",
+           len(wf.wait_for(lambda: wf.consumed("acquiring", attempt_id), 20)) == 1,
+           f"acquiring={len(wf.consumed('acquiring', attempt_id))}")
+    envelope = wf.check_delivery(receiver, secret, webhook_event_id, "order.paid", client_id)
+    routed_again = publish_payment_succeeded(event_id, attempt_id, body)
+    time.sleep(5)
+    record("AC-02 同一 PaymentSucceeded 重复投递不产生第二个事件",
+           routed_again and len(wf.consumed("acquiring", attempt_id)) == 1 and not wf.tasks(webhook_event_id)
+           and len(wf.received(receiver, webhook_event_id)) == 1 and len(wf.platform_rows(webhook_event_id)[0]) == 1,
+           f"routed={routed_again} consumed={len(wf.consumed('acquiring', attempt_id))} tasks={len(wf.tasks(webhook_event_id))} "
+           f"received={len(wf.received(receiver, webhook_event_id))}")
+    if envelope:
+        _, current = client_api("GET", f"/orders/{order_no}")
+        row = wf.order_row(order_no)
+        wf.compare("AC-01 order.paid", envelope["data"]["object"], [
+            ("orderNo", current["orderNo"], "str"), ("clientOrderId", current["clientOrderId"], "str"),
+            ("orderStatus", current["orderStatus"], "str"), ("paymentStatus", current["paymentStatus"], "str"),
+            ("currency", current["currency"], "str"), ("amounts.totalAmount", current["amounts"]["totalAmount"], "str"),
+            ("amounts.paidAmount", current["amounts"]["paidAmount"], "str"), ("paidAt", current["paidAt"], "instant"),
+            ("version", row["version"], "int")])
+    return order_no
 
 
 # ---------- 验收步骤 ----------
@@ -205,11 +347,11 @@ def main():
         context = dev.enter(client, client_id)
         record("进入工作区", context.get("contextType") == "TENANT", f"tenantId={context.get('tenantId')} clientId={client_id}")
         read_only = create_credentials(client)
-        receiver = dev.Receiver()
+        receiver = InboxReceiver() if TARGET == "test" else dev.Receiver()
         status, _, created = dev.raw(client, dev.DEV + "/webhook-endpoints", "POST",
                                      {"url": receiver.url, "eventTypes": wf.EVENT_TYPES})
         secret = (created or {}).get("signingSecret") or ""
-        record("端点：本机接收端、订阅 3 种事件", status == 201 and secret.startswith("whsec_"),
+        record(f"端点：{'test 验收接收端' if TARGET == 'test' else '本机接收端'}、订阅 3 种事件", status == 201 and secret.startswith("whsec_"),
                f"HTTP {status} endpointId={(created or {}).get('endpointId')} code={(created or {}).get('code')}")
         if status != 201:
             raise Stop("端点未创建")
@@ -222,7 +364,7 @@ def main():
         idempotency_flow(client)
 
         wf.flow_cancel(receiver, secret, client_id)
-        paid_order = wf.flow_paid(receiver, secret, client_id)
+        paid_order = (flow_paid_fixture if TARGET == "test" else wf.flow_paid)(receiver, secret, client_id)
         data["orderNoPaid"] = paid_order
         data["refundRequestNo"] = wf.flow_refund(receiver, secret, client_id, paid_order)
         for path in (f"/orders/{paid_order}/refundable-amount", f"/orders/{paid_order}/refunds?limit=10"):
@@ -230,7 +372,8 @@ def main():
             record(f"退款查询 {path.split('/')[-1].split('?')[0]}", status == 200, f"HTTP {status} code={(body or {}).get('code')}")
         types = [json.loads(r["body"]).get("eventType") for r in receiver.requests]
         record("接收端总数 = 3（无多余投递）", len(types) == 3, f"eventTypes={types}")
-        receiver.server.shutdown()
+        if TARGET != "test":
+            receiver.server.shutdown()
     except Stop as stop:
         print(f"中止于：{stop}")
         RESULTS.append(("中止", "FAIL", str(stop)))

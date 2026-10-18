@@ -17,7 +17,9 @@ import urllib.request
 
 from risk_rule_configuration_stage import classify_stage
 
-ROOT = Path(__file__).resolve().parents[1]
+# MOR_TEST_ENVIRONMENT_DIR lets a reviewed copy of these scripts (for example a worktree) operate the one
+# test-environment directory that holds .env.test and private/; default is this script's own directory.
+ROOT = Path(os.environ.get("MOR_TEST_ENVIRONMENT_DIR") or Path(__file__).resolve().parents[1]).resolve()
 WORKSPACE_ROOT = ROOT.parent
 # 第 06 步：Risk 拆为 risk-decision（Schema + 初始化目录）与 compliance（仅 Schema）两库（design/09 §3.6）。
 RISK_SQL_DIR = WORKSPACE_ROOT / "paytech/risk-decision/docs/database/sql"
