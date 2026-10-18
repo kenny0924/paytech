@@ -22,6 +22,7 @@ import com.paytech.billing.core.dal.dataobject.ChannelCostPlanVer;
 import com.paytech.billing.core.dal.dataobject.ChannelCostScope;
 import com.paytech.billing.core.dal.dataobject.CurrencySpec;
 import com.paytech.billing.core.enums.AmountRoundingMode;
+import com.paytech.billing.core.enums.BillingCodes;
 import com.paytech.billing.core.enums.ChannelCostCalculationBase;
 import com.paytech.billing.core.enums.ChannelCostComponentType;
 import com.paytech.billing.core.enums.ChannelCostVersionStatus;
@@ -33,7 +34,6 @@ import com.paytech.billing.domainservice.service.ChannelCostPlanService;
 import com.paytech.billing.service.processor.request.CreateChannelCostVersionRequest;
 import com.paytech.foundation.common.enums.CodeEnum;
 import com.paytech.foundation.common.error.BizCheckFailException;
-import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
 import com.paytech.platform.support.api.enums.CurrencySpecStatus;
@@ -288,11 +288,6 @@ public class CreateChannelCostVersionProcessor
 
     /** 按稳定 Code 解析 V1 目录枚举，未知代码以参数错误拒绝。 */
     static <E extends Enum<E> & CodeEnum> E parse(Class<E> type, String field, String code) {
-        for (E constant : type.getEnumConstants()) {
-            if (constant.getCode().equals(code)) {
-                return constant;
-            }
-        }
-        throw new InvalidParameterException(field + "代码不在目录内: " + code);
+        return BillingCodes.parse(type, field, code);
     }
 }

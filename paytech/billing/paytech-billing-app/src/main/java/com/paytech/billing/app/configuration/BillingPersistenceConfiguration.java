@@ -6,13 +6,15 @@ import org.mybatis.spring.boot.autoconfigure.ConfigurationCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.paytech.billing.api.enums.EconomicFactStatus;
 import com.paytech.billing.api.enums.EconomicsType;
+import com.paytech.billing.api.enums.FactLineDirection;
+import com.paytech.billing.api.enums.FactPartyRole;
 import com.paytech.billing.core.enums.AmountRoundingMode;
 import com.paytech.billing.core.enums.ChannelCostCalculationBase;
 import com.paytech.billing.core.enums.ChannelCostComponentType;
 import com.paytech.billing.core.enums.ChannelCostPlanStatus;
 import com.paytech.billing.core.enums.ChannelCostVersionStatus;
-import com.paytech.billing.core.enums.EconomicFactStatus;
 import com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler;
 import com.paytech.foundation.mybatis.typehandler.InstantTypeHandler;
 import com.paytech.platform.support.api.enums.CurrencySpecStatus;
@@ -37,6 +39,8 @@ public class BillingPersistenceConfiguration {
             registry.register(InstantTypeHandler.class);
             registry.register(EconomicsType.class, new CodeEnumTypeHandler<>(EconomicsType.class));
             registry.register(EconomicFactStatus.class, new CodeEnumTypeHandler<>(EconomicFactStatus.class));
+            registry.register(FactPartyRole.class, new CodeEnumTypeHandler<>(FactPartyRole.class));
+            registry.register(FactLineDirection.class, new CodeEnumTypeHandler<>(FactLineDirection.class));
             registry.register(ChannelCostPlanStatus.class, new CodeEnumTypeHandler<>(ChannelCostPlanStatus.class));
             registry.register(ChannelCostVersionStatus.class, new CodeEnumTypeHandler<>(ChannelCostVersionStatus.class));
             registry.register(ChannelCostComponentType.class, new CodeEnumTypeHandler<>(ChannelCostComponentType.class));

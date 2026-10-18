@@ -24,14 +24,45 @@ spring:
       password: "${BILLING_REDIS_PASSWORD:}"
       connect-timeout: 2s
       timeout: 2s
+  rabbitmq:
+    host: "${BILLING_RABBITMQ_HOST:127.0.0.1}"
+    port: "${BILLING_RABBITMQ_PORT:5672}"
+    username: "${BILLING_RABBITMQ_USERNAME:}"
+    password: "${BILLING_RABBITMQ_PASSWORD:}"
+    virtual-host: "${BILLING_RABBITMQ_VHOST:/mor-local}"
+    connection-timeout: 2s
+    # 发布确认与不可路由退回：EconomicFactRecorded 补偿 Handler 等待 Broker 确认后才算发布成功。
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
 
 mybatis:
   mapper-locations: classpath*:mapper/**/*.xml
 
-# paytech-redis-starter：渠道成本方案创建与版本创建、提交、批准、驳回的资源锁使用 AbstractLockProcessor。
+# paytech-redis-starter：渠道成本方案的写入口与经济事实的提交、批准使用 AbstractLockProcessor 资源锁。
 redis:
   coordination:
     enabled: true
+
+# paytech-compensation-event：经济事实批准事务内登记 EconomicFactRecorded 发布任务，提交后执行；XXL-Job 兜底唤醒沿用组件默认。
+compensation:
+  enabled: true
+  # 多实例 Claim/Lease 的实例标识前缀：billing；部署多实例时由 BILLING_COMPENSATION_INSTANCE_ID 注入带实例后缀的值。
+  instance-id: "${BILLING_COMPENSATION_INSTANCE_ID:billing}"
+
+# paytech-messaging 发布端：声明 billing.events（Durable Fanout）并提供 DomainEventPublisher（design/08 §3）。
+messaging:
+  producer:
+    service: billing
+  publisher:
+    # 第 08 步接入订阅者后改回 FAIL：在此之前 billing.events 没有订阅队列（ledger / account 消费者在第 11b 步），未路由的信封记 WARN 与
+    # messaging.published{outcome=unroutable} 后视为成功，避免 EconomicFactRecorded 补偿任务持续失败。
+    unroutable-policy: ACK_AND_WARN
+
+# 实例 ID（实例清单 instance.id，01 §5）：领域事件信封 instanceId。
+paytech:
+  instance-id: "${PAYTECH_INSTANCE_ID:main}"
 
 management:
   server:
@@ -66,6 +97,10 @@ management:
       access: read-only
 
 billing:
+  event:
+    # EconomicFactRecorded 信封身份：sourceService 与 messaging.producer.service 一致。
+    source-service: billing
+    instance-id: "${paytech.instance-id}"
   identifier:
     # 部署分配的 Snowflake Region / Worker 标识，必填；每个 app 独立分配。
     region-id: "${BILLING_SNOWFLAKE_REGION_ID}"

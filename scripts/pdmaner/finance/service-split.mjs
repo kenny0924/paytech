@@ -11,7 +11,7 @@ import { TABLES as ACCOUNTING_JOURNAL_TABLES } from "./manifests/03-accounting-j
 import { TABLES as CHANNEL_CASH_RECON_TABLES } from "./manifests/05-channel-cash-recon.mjs";
 import { TABLES as PAYOUT_TABLES } from "./manifests/06-payout.mjs";
 import { TABLES as CLOSE_TABLES } from "./manifests/07-close.mjs";
-import { TABLES as RELIABILITY_TABLES } from "./manifests/08-reliability.mjs";
+import { CURRENT_COMPENSATION_EVENT, TABLES as RELIABILITY_TABLES } from "./manifests/08-reliability.mjs";
 
 export const FINANCE_SERVICES = Object.freeze(["ledger", "account", "billing", "reconciliation", "tax", "payout"]);
 
@@ -20,6 +20,12 @@ export const PER_DATABASE_TABLES = Object.freeze(["compensation_event"]);
 
 /** 只读副本表：Owner 不在 Finance 后继服务内，副本持有方列出。 */
 export const READ_ONLY_COPIES = Object.freeze({ currency_spec: Object.freeze(["ledger", "billing"]) });
+
+/**
+ * 服务库内替换逻辑表定义的物理变体（同一 defKey）：第 11a 步 billing 启用 paytech-compensation-event，使用现行补偿表模型；
+ * 其他服务库在接入补偿组件前保持逻辑模型定义。
+ */
+export const SERVICE_TABLE_VARIANTS = Object.freeze({ billing: Object.freeze([CURRENT_COMPENSATION_EVENT]) });
 
 /** 删除且不进入任何服务模型的表。 */
 export const DROPPED_TABLES = Object.freeze(["command_idempotency"]);

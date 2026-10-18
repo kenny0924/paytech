@@ -3,10 +3,16 @@ package com.paytech.billing.core.dal.dataobject;
 import java.math.BigDecimal;
 import java.time.Instant;
 
+import com.paytech.billing.api.enums.FactLineDirection;
+import com.paytech.billing.api.enums.FactPartyRole;
+
 import lombok.Getter;
 import lombok.Setter;
 
-/** t_economic_fact_line（原 t_transaction_economic_component）：逐项冻结的经济事实明细行；component_type 为开放目录，保持字符串。 */
+/**
+ * t_economic_fact_line（原 t_transaction_economic_component）：逐项冻结的经济事实明细行
+ * <li>component_type 为开放目录，保持字符串；来源规则字段只对规则计算产生的交易事实行必填，人工 / 成本调整行为空。</li>
+ */
 @Getter
 @Setter
 public class EconomicFactLine {
@@ -33,15 +39,39 @@ public class EconomicFactLine {
 
     /**
      * 归属业务角色
-     * <li>可为空。</li>
+     * <li>可为空；人工 / 成本调整行等于收方角色。</li>
      */
-    private String partyType;
+    private FactPartyRole partyType;
 
     /**
      * 按 partyType 解释的稳定字符串标识
      * <li>可为空。</li>
      */
     private String partyId;
+
+    /**
+     * 付方角色
+     * <li>人工 / 成本调整行必填；规则计算产生的交易事实行可为空。</li>
+     */
+    private FactPartyRole payerRole;
+
+    /**
+     * 按 payerRole 解释的付方稳定字符串标识
+     * <li>与 payerRole 同时为空或非空。</li>
+     */
+    private String payerId;
+
+    /**
+     * 收方角色
+     * <li>可空条件同 payerRole。</li>
+     */
+    private FactPartyRole payeeRole;
+
+    /**
+     * 按 payeeRole 解释的收方稳定字符串标识
+     * <li>与 payeeRole 同时为空或非空。</li>
+     */
+    private String payeeId;
 
     /**
      * 本库税务计算行ID
@@ -74,15 +104,17 @@ public class EconomicFactLine {
      * 影响方向
      * <li>允许值：CHARGE、REVERSAL、ADJUSTMENT。</li>
      */
-    private String effectDirection;
+    private FactLineDirection effectDirection;
 
     /**
      * 来源规则族
+     * <li>规则计算产生的组件必填；人工 / 成本调整行为空。</li>
      */
     private String sourceRuleType;
 
     /**
      * 来源规则不可变版本ID
+     * <li>规则计算产生的组件必填；人工 / 成本调整行为空。</li>
      */
     private Long sourceRuleVersionId;
 
@@ -118,16 +150,19 @@ public class EconomicFactLine {
 
     /**
      * 来源规则组件代码
+     * <li>规则计算产生的组件必填；人工 / 成本调整行为空。</li>
      */
     private String sourceComponentCode;
 
     /**
      * 来源规则触发代码
+     * <li>规则计算产生的组件必填；人工 / 成本调整行为空。</li>
      */
     private String sourceTriggerCode;
 
     /**
      * 来源规则计算基础
+     * <li>规则计算产生的组件必填；人工 / 成本调整行为空。</li>
      */
     private String sourceCalculationBase;
 
@@ -169,6 +204,7 @@ public class EconomicFactLine {
 
     /**
      * 计算方法
+     * <li>规则计算产生的组件必填；人工 / 成本调整行为空。</li>
      */
     private String calculationMethod;
 
@@ -179,7 +215,7 @@ public class EconomicFactLine {
     private String roundingMode;
 
     /**
-     * 该记录在 Finance 数据库中的 UTC 微秒创建时间
+     * 该记录在 Billing 数据库中的 UTC 微秒创建时间
      */
     private Instant createTime;
 }

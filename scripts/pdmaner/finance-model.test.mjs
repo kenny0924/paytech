@@ -1301,7 +1301,14 @@ test("Finance keeps transaction economics explicit and accounting rules minimal"
   "gross_amount",
   "supersedes_fact_id",
   "status",
-  "create_time"
+  "fact_version",
+  "channel_account_id",
+  "maker_id",
+  "checker_id",
+  "approved_time",
+  "published_at",
+  "create_time",
+  "update_time"
 ]);
   assert.deepEqual(
     indexFields("t_economic_fact", "uk_econ_source"),
@@ -1398,6 +1405,10 @@ test("Finance keeps transaction economics explicit and accounting rules minimal"
   "component_type",
   "party_type",
   "party_id",
+  "payer_role",
+  "payer_id",
+  "payee_role",
+  "payee_id",
   "tax_line_id",
   "basis_amount",
   "rate_value",

@@ -645,7 +645,7 @@
       },
       "defKey": "t_economic_fact",
       "defName": "经济事实",
-      "comment": "按支付、退款、重复扣款、重复扣款补偿、争议或实际成本调整事件冻结一笔不可变的交易经济结果、必要业务锚和 PAYMENT 的 Client 合同余额到期时间。",
+      "comment": "按支付、退款、重复扣款、重复扣款补偿、争议、人工调整或实际成本调整冻结一笔经济事实、必要业务锚和 PAYMENT 的 Client 合同余额到期时间；内容一经提交不可修改，只有 Maker-Checker 状态、版本定稿与事件发布时间推进。",
       "properties": {},
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -939,12 +939,12 @@
         {
           "defKey": "order_id",
           "defName": "订单ID",
-          "comment": "与 Commerce Order Context 共同构成商业事实锚的订单稳定业务ID。",
+          "comment": "与 Commerce Order Context 共同构成商业事实锚的订单稳定业务ID；交易类事实必填，MANUAL_ADJUSTMENT 与 COST_ADJUSTMENT 人工登记为空。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoIncrement": false,
           "defaultValue": "",
           "hideInGraph": false,
@@ -957,12 +957,12 @@
         {
           "defKey": "order_context_id",
           "defName": "订单上下文ID",
-          "comment": "与订单共同冻结且不可替换的 Commerce Order Context 稳定业务ID。",
+          "comment": "与订单共同冻结且不可替换的 Commerce Order Context 稳定业务ID；交易类事实必填，MANUAL_ADJUSTMENT 与 COST_ADJUSTMENT 人工登记为空。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoIncrement": false,
           "defaultValue": "",
           "hideInGraph": false,
@@ -975,12 +975,12 @@
         {
           "defKey": "context_format",
           "defName": "交易上下文格式",
-          "comment": "新交易使用TERM_PRICE，历史数据保持LEGACY_SCOPE并读取原始冻结证据。允许值：TERM_PRICE、LEGACY_SCOPE。",
+          "comment": "新交易使用TERM_PRICE，历史数据保持LEGACY_SCOPE并读取原始冻结证据；交易类事实必填，MANUAL_ADJUSTMENT 与 COST_ADJUSTMENT 人工登记为空。允许值：TERM_PRICE、LEGACY_SCOPE。",
           "type": "VARCHAR",
           "len": 32,
           "scale": "",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoIncrement": false,
           "defaultValue": "",
           "hideInGraph": false,
@@ -1101,12 +1101,12 @@
         {
           "defKey": "commercial_context_time",
           "defName": "商业上下文时间",
-          "comment": "Commerce 冻结并用于精确查询 CCT 商业条款的 UTC 微秒时间。",
+          "comment": "Commerce 冻结并用于精确查询 CCT 商业条款的 UTC 微秒时间；交易类事实必填，MANUAL_ADJUSTMENT 与 COST_ADJUSTMENT 人工登记为空。",
           "type": "DATETIME",
           "len": 6,
           "scale": "",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoIncrement": false,
           "defaultValue": "",
           "hideInGraph": false,
@@ -1119,12 +1119,12 @@
         {
           "defKey": "tax_snapshot_id",
           "defName": "税务计算快照ID",
-          "comment": "本次经济计算引用的本库不可变税务计算快照。",
+          "comment": "本次经济计算引用的本库不可变税务计算快照；交易类事实必填，MANUAL_ADJUSTMENT 与 COST_ADJUSTMENT 人工登记为空。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoIncrement": false,
           "defaultValue": "",
           "hideInGraph": false,
@@ -1137,12 +1137,12 @@
         {
           "defKey": "payment_intent_id",
           "defName": "支付意图ID",
-          "comment": "该订单在 Payment 中的稳定支付意图业务ID。",
+          "comment": "该订单在 Payment 中的稳定支付意图业务ID；交易类事实必填，MANUAL_ADJUSTMENT 与 COST_ADJUSTMENT 人工登记为空。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoIncrement": false,
           "defaultValue": "",
           "hideInGraph": false,
@@ -1356,12 +1356,12 @@
         {
           "defKey": "consumer_country_code",
           "defName": "消费者国家",
-          "comment": "商业上下文冻结的 ISO 3166-1 alpha-2 消费者国家代码。取值来源：ISO 3166-1 alpha-2 国家代码；非固定枚举。",
+          "comment": "商业上下文冻结的 ISO 3166-1 alpha-2 消费者国家代码；交易类事实必填，MANUAL_ADJUSTMENT 与 COST_ADJUSTMENT 人工登记为空。取值来源：ISO 3166-1 alpha-2 国家代码；非固定枚举。",
           "type": "CHAR",
           "len": 2,
           "scale": "",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoIncrement": false,
           "defaultValue": "",
           "hideInGraph": false,
@@ -1374,12 +1374,12 @@
         {
           "defKey": "payment_method",
           "defName": "支付方式",
-          "comment": "Payment Attempt 冻结的实际支付方式目录代码。取值来源：Payment 支付方式目录；非固定枚举。",
+          "comment": "Payment Attempt 冻结的实际支付方式目录代码；交易类事实必填，MANUAL_ADJUSTMENT 与 COST_ADJUSTMENT 人工登记为空。取值来源：Payment 支付方式目录；非固定枚举。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoIncrement": false,
           "defaultValue": "",
           "hideInGraph": false,
@@ -1392,12 +1392,12 @@
         {
           "defKey": "industry_code",
           "defName": "平台行业代码",
-          "comment": "Commerce Order Context 冻结的平台业务行业分类代码。取值来源：CCT 行业分类目录；非固定枚举。",
+          "comment": "Commerce Order Context 冻结的平台业务行业分类代码；交易类事实必填，MANUAL_ADJUSTMENT 与 COST_ADJUSTMENT 人工登记为空。取值来源：CCT 行业分类目录；非固定枚举。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoIncrement": false,
           "defaultValue": "",
           "hideInGraph": false,
@@ -1410,12 +1410,12 @@
         {
           "defKey": "mcc_code",
           "defName": "商户类别码",
-          "comment": "Commerce Order Context 冻结且保留前导零的四位 MCC。取值来源：ISO 18245 商户类别码；非固定枚举。",
+          "comment": "Commerce Order Context 冻结且保留前导零的四位 MCC；交易类事实必填，MANUAL_ADJUSTMENT 与 COST_ADJUSTMENT 人工登记为空。取值来源：ISO 18245 商户类别码；非固定枚举。",
           "type": "CHAR",
           "len": 4,
           "scale": "",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoIncrement": false,
           "defaultValue": "",
           "hideInGraph": false,
@@ -1428,12 +1428,12 @@
         {
           "defKey": "client_agreement_id",
           "defName": "客户合同标识",
-          "comment": "CCT准确Client/OE合同的稳定ID；新交易成熟输入取自同一命中Client Price，不能使用当前合同覆盖原事实。",
+          "comment": "CCT准确Client/OE合同的稳定ID；新交易成熟输入取自同一命中Client Price，不能使用当前合同覆盖原事实；交易类事实必填，MANUAL_ADJUSTMENT 与 COST_ADJUSTMENT 人工登记为空。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoIncrement": false,
           "defaultValue": "",
           "hideInGraph": false,
@@ -1536,7 +1536,7 @@
         {
           "defKey": "status",
           "defName": "经济事实状态",
-          "comment": "经济事实登记状态；一经登记不可变，更正以新事实与 supersedes_fact_id 表达，Maker-Checker 中间状态由计费登记接口补充。允许值：RECORDED。",
+          "comment": "经济事实登记状态：Maker 提交为 DRAFT，Checker 批准为 APPROVED，被更正事实替代后为 SUPERSEDED；更正以新事实与 supersedes_fact_id 表达。允许值：DRAFT、APPROVED、SUPERSEDED。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -1550,6 +1550,114 @@
           "extProps": {},
           "domain": "",
           "id": "07CDC75A-1A4B-5675-BCB3-83C592C06AF5"
+        },
+        {
+          "defKey": "fact_version",
+          "defName": "事实版本",
+          "comment": "批准时定稿的事实版本：首次登记为 1，替代事实为被替代事实版本加 1，DRAFT 为 0；EconomicFactRecorded 的聚合版本。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "0",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "878C91C3-CFF4-53AA-B80E-98900161C45C"
+        },
+        {
+          "defKey": "channel_account_id",
+          "defName": "渠道清算账户ID",
+          "comment": "billing 在事实头给出的 Finance 渠道清算账户（reconciliation t_channel_account.id），COST_ADJUSTMENT 必填；不建立跨库关系。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "72A5B8EB-4BDA-5CC3-8DD9-6B4EE1FCF285"
+        },
+        {
+          "defKey": "maker_id",
+          "defName": "编制人ID",
+          "comment": "提交人工或成本调整事实的 Platform Actor 稳定业务ID；系统生成的交易事实为空。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "038C70AA-021D-52ED-BEBA-14A4F54B52FA"
+        },
+        {
+          "defKey": "checker_id",
+          "defName": "复核人ID",
+          "comment": "批准该事实且不同于编制人的 Platform Actor 稳定业务ID；未批准为空。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "66664CC7-21A3-5280-8A8D-B7B6D48EDC85"
+        },
+        {
+          "defKey": "approved_time",
+          "defName": "批准时间",
+          "comment": "Checker 批准的 UTC 微秒时间，也是事件发生时间；DRAFT 为空。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "7412CD79-B241-5420-AFD9-1EE80A71D2DB"
+        },
+        {
+          "defKey": "published_at",
+          "defName": "事件发布时间",
+          "comment": "EconomicFactRecorded 首次收到 Broker 确认的 UTC 微秒时间；未发布为空。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "1D6138F3-E8AD-5A91-8DB5-D6490A36170C"
         },
         {
           "defKey": "create_time",
@@ -1568,6 +1676,24 @@
           "extProps": {},
           "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
           "id": "018EEDBB-2772-527E-8EA9-0F57C4A53AB9"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "37853F78-37E7-52FB-A247-316CDDA2DAE5"
         }
       ],
       "correlations": [
@@ -1802,6 +1928,54 @@
             }
           ],
           "id": "6D6A5682-AA1B-5C31-A581-D6DA5B674C97"
+        },
+        {
+          "defKey": "idx_econ_book_oe",
+          "defName": "访问索引 entity_no、currency、id",
+          "unique": false,
+          "comment": "支持访问路径：entity_no、currency、id",
+          "fields": [
+            {
+              "fieldDefKey": "F540C576-210C-5FBD-A545-745027DD04B7",
+              "ascOrDesc": "A",
+              "id": "561E7B81-4C05-5E2D-8F52-1C82A0B920DB"
+            },
+            {
+              "fieldDefKey": "5B858F87-4ADF-503F-9678-BE4869092F25",
+              "ascOrDesc": "A",
+              "id": "100C48FE-A2B8-5735-B112-1C477FDB6AA2"
+            },
+            {
+              "fieldDefKey": "39ADA226-FE14-551B-92EC-C533B35EA8E3",
+              "ascOrDesc": "A",
+              "id": "C187B904-5C54-5FE2-8CD4-DA7448AA836A"
+            }
+          ],
+          "id": "8B90F411-DA77-53E0-92F8-A62D0503D573"
+        },
+        {
+          "defKey": "idx_econ_book_fe",
+          "defName": "访问索引 finance_entity_id、currency、id",
+          "unique": false,
+          "comment": "支持访问路径：finance_entity_id、currency、id",
+          "fields": [
+            {
+              "fieldDefKey": "43AD47B2-7F8A-5EC6-B746-1D433F225BF6",
+              "ascOrDesc": "A",
+              "id": "4241C566-BDC2-5A5D-AC0E-B2D02695B675"
+            },
+            {
+              "fieldDefKey": "5B858F87-4ADF-503F-9678-BE4869092F25",
+              "ascOrDesc": "A",
+              "id": "6183CE57-C558-56D5-B75E-CEE1D6B67227"
+            },
+            {
+              "fieldDefKey": "39ADA226-FE14-551B-92EC-C533B35EA8E3",
+              "ascOrDesc": "A",
+              "id": "45B56EFF-8980-5F2B-BF65-57729FE1DD43"
+            }
+          ],
+          "id": "F2B20C64-9E9D-55E4-8D7D-13FB54512727"
         }
       ],
       "type": "P"
@@ -1816,7 +1990,7 @@
       },
       "defKey": "t_economic_fact_line",
       "defName": "交易经济组件",
-      "comment": "逐项冻结 Client Fee、税、Partner Share、Platform Service Charge、Channel Cost、权益和舍入等实际计算输入、规则来源与结果；PLATFORM_SERVICE_CHARGE 的 party_id 必须逐值等于 Header finance_entity_id，并通过 transaction_economics_id 父链校验。",
+      "comment": "逐项冻结 Client Fee、税、Partner Share、Platform Service Charge、Channel Cost、权益和舍入等实际计算输入、规则来源与结果；人工与成本调整行冻结付方、收方、金额与方向而不带来源规则；PLATFORM_SERVICE_CHARGE 的 party_id 必须逐值等于 Header finance_entity_id，并通过 transaction_economics_id 父链校验。",
       "properties": {},
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -2056,7 +2230,7 @@
         {
           "defKey": "party_type",
           "defName": "相关方类型",
-          "comment": "该组件收入、费用、应付或权益归属的业务角色。允许值：CLIENT、LOCAL_PARTNER、CHANNEL、OPERATING_ENTITY、FINANCE_ENTITY、TAX_AUTHORITY、CONSUMER、PLATFORM。",
+          "comment": "该组件收入、费用、应付或权益归属的业务角色；人工与成本调整行等于收方角色。允许值：CLIENT、LOCAL_PARTNER、CHANNEL、OPERATING_ENTITY、FINANCE_ENTITY、TAX_AUTHORITY、CONSUMER、PLATFORM。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -2091,6 +2265,84 @@
           },
           "domain": "",
           "id": "026F6DD9-7FFD-571D-8EB6-CF418E9710B5"
+        },
+        {
+          "defKey": "payer_role",
+          "defName": "付方角色",
+          "comment": "人工与成本调整行的付方业务角色；规则计算产生的交易事实行为空。允许值：CLIENT、LOCAL_PARTNER、CHANNEL、OPERATING_ENTITY、FINANCE_ENTITY、TAX_AUTHORITY、CONSUMER、PLATFORM。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "4F679121-4CD6-5E42-ADF3-52B0692D7FA8"
+        },
+        {
+          "defKey": "payer_id",
+          "defName": "付方ID",
+          "comment": "按payer_role解释的稳定字符串；OE为entityNo，其余数字身份保存规范十进制字符串；与payer_role同时为空或非空。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "A4ED769E-CF32-5A34-99CC-215F71DEF9BC"
+        },
+        {
+          "defKey": "payee_role",
+          "defName": "收方角色",
+          "comment": "人工与成本调整行的收方业务角色；规则计算产生的交易事实行为空。允许值：CLIENT、LOCAL_PARTNER、CHANNEL、OPERATING_ENTITY、FINANCE_ENTITY、TAX_AUTHORITY、CONSUMER、PLATFORM。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "52283419-E7D5-5937-A677-FEA8EA6265D0"
+        },
+        {
+          "defKey": "payee_id",
+          "defName": "收方ID",
+          "comment": "按payee_role解释的稳定字符串；与payee_role同时为空或非空。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "F7CFFD3C-3035-51CF-943D-B6ACAC39F6DF"
         },
         {
           "defKey": "tax_line_id",
@@ -2203,12 +2455,12 @@
         {
           "defKey": "source_rule_type",
           "defName": "来源规则类型",
-          "comment": "提供本组件计算参数的规则族类别。允许值：CLIENT_PRICING、PARTNER_SHARE、PLATFORM_SERVICE_CHARGE、TAX_RULE、CHANNEL_COST、CCT_PRICE_COMPONENT。",
+          "comment": "提供本组件计算参数的规则族类别；规则计算产生的组件必填，人工与成本调整行为空。允许值：CLIENT_PRICING、PARTNER_SHARE、PLATFORM_SERVICE_CHARGE、TAX_RULE、CHANNEL_COST、CCT_PRICE_COMPONENT。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoIncrement": false,
           "defaultValue": "",
           "hideInGraph": false,
@@ -2221,12 +2473,12 @@
         {
           "defKey": "source_rule_version_id",
           "defName": "来源规则版本ID",
-          "comment": "来源规则系统中实际用于计算的不可变版本ID。",
+          "comment": "来源规则系统中实际用于计算的不可变版本ID；规则计算产生的组件必填，人工与成本调整行为空。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoIncrement": false,
           "defaultValue": "",
           "hideInGraph": false,
@@ -2329,12 +2581,12 @@
         {
           "defKey": "source_component_code",
           "defName": "来源组件代码",
-          "comment": "来源规则内稳定识别该计算组成的代码。取值来源：来源规则组件代码；非固定枚举。",
+          "comment": "来源规则内稳定识别该计算组成的代码；规则计算产生的组件必填，人工与成本调整行为空。取值来源：来源规则组件代码；非固定枚举。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoIncrement": false,
           "defaultValue": "",
           "hideInGraph": false,
@@ -2347,12 +2599,12 @@
         {
           "defKey": "source_trigger_code",
           "defName": "来源触发代码",
-          "comment": "来源规则声明的业务动作或计费触发条件。取值来源：来源规则触发代码；非固定枚举。",
+          "comment": "来源规则声明的业务动作或计费触发条件；规则计算产生的组件必填，人工与成本调整行为空。取值来源：来源规则触发代码；非固定枚举。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoIncrement": false,
           "defaultValue": "",
           "hideInGraph": false,
@@ -2365,12 +2617,12 @@
         {
           "defKey": "source_calculation_base",
           "defName": "来源计算基础",
-          "comment": "来源规则声明的金额计算基数语义。取值来源：来源规则计算基础目录；非固定枚举。",
+          "comment": "来源规则声明的金额计算基数语义；规则计算产生的组件必填，人工与成本调整行为空。取值来源：来源规则计算基础目录；非固定枚举。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoIncrement": false,
           "defaultValue": "",
           "hideInGraph": false,
@@ -2491,12 +2743,12 @@
         {
           "defKey": "calculation_method",
           "defName": "计算方法",
-          "comment": "把冻结参数应用于基数并得到原始金额的受控方法。取值来源：Finance 经济计算方法目录；非固定枚举。",
+          "comment": "把冻结参数应用于基数并得到原始金额的受控方法；规则计算产生的组件必填，人工与成本调整行为空。取值来源：Finance 经济计算方法目录；非固定枚举。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoIncrement": false,
           "defaultValue": "",
           "hideInGraph": false,
@@ -4690,7 +4942,7 @@
       },
       "defKey": "t_compensation_event",
       "defName": "本地补偿事件",
-      "comment": "与 Finance 业务事实在同一事务登记 MQ 发布或本地处理任务，并通过 Claim、Lease 和乐观锁可靠重试",
+      "comment": "与本库业务事实在同一事务登记的本地可靠执行记录（paytech-compensation-event 现行模型，COMPENSATION_EVENT_GUIDE 第 3 节）；成功后删除，FAILED 保留并可受控重开",
       "properties": {},
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -4858,7 +5110,7 @@
         {
           "defKey": "id",
           "defName": "补偿事件标识",
-          "comment": "Finance 数据库内补偿事件记录的 Snowflake 主键，不作为跨系统事件标识。",
+          "comment": "本库补偿事件记录的 Snowflake 主键，不作为跨系统事件标识。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -4876,25 +5128,7 @@
         {
           "defKey": "event_key",
           "defName": "事件键",
-          "comment": "按来源事实和事件类型确定性生成的全局稳定事件标识。",
-          "type": "VARCHAR",
-          "len": 255,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
-          "domain": "",
-          "id": "F3CD3207-B72F-505C-A2EF-AA182C230772"
-        },
-        {
-          "defKey": "event_type",
-          "defName": "事件类型",
-          "comment": "业务事实事件或本地恢复任务的稳定类型代码。取值来源：Finance 事件契约目录；非固定枚举。",
+          "comment": "Handler 读取本服务权威事实使用的稳定业务键，最长 128 个字符；去首尾空白、拒绝控制字符，大小写敏感。",
           "type": "VARCHAR",
           "len": 128,
           "scale": "",
@@ -4905,14 +5139,38 @@
           "hideInGraph": false,
           "refDict": "",
           "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "F3CD3207-B72F-505C-A2EF-AA182C230772"
+        },
+        {
+          "defKey": "event_type",
+          "defName": "事件类型",
+          "comment": "全应用唯一注册的 Handler 类型，最长 64 个字符，大小写敏感。取值来源：本服务 compensation-event-catalog.yaml；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
           "domain": "",
           "id": "7C9CD59B-5B93-50A8-96B4-F0F383ADD172"
         },
         {
-          "defKey": "execution_type",
-          "defName": "执行类型",
-          "comment": "事件由 MQ 发布器或本地处理器执行。允许值：MQ_PUBLISH、LOCAL_HANDLER。",
+          "defKey": "sub_event_type",
+          "defName": "事件子类型",
+          "comment": "同一 Handler 下的受控业务子类型；无业务子类型时为占位值 -；与 event_key、event_type 共同组成唯一身份。取值来源：本服务补偿子类型目录；非固定枚举。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -4923,129 +5181,42 @@
           "hideInGraph": false,
           "refDict": "",
           "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
           "domain": "",
-          "id": "BFA6AA67-0798-54C4-B939-7425352824AF"
-        },
-        {
-          "defKey": "source_type",
-          "defName": "来源事实类型",
-          "comment": "拥有该事件的 Finance 聚合根或不可变业务事实类型。取值来源：Finance 事件来源事实类型目录；非固定枚举。",
-          "type": "VARCHAR",
-          "len": 64,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
-          "domain": "",
-          "id": "6F0F7433-64A3-5DBD-8797-E29167EC7ED4"
-        },
-        {
-          "defKey": "source_id",
-          "defName": "来源事实标识",
-          "comment": "拥有该事件的 Finance 聚合根或不可变事实标识。",
-          "type": "BIGINT",
-          "len": "",
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
-          "extProps": {},
-          "domain": "",
-          "id": "3066ED98-FAC0-57F0-AADC-5CA9CD96C20C"
-        },
-        {
-          "defKey": "source_version",
-          "defName": "来源事实版本",
-          "comment": "来源聚合根版本或不可变事实固定版本。",
-          "type": "BIGINT",
-          "len": "",
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
-          "extProps": {},
-          "domain": "",
-          "id": "40FA7364-FFCE-55CE-8072-FEE124F5CF05"
-        },
-        {
-          "defKey": "schema_version",
-          "defName": "契约版本",
-          "comment": "事件 Payload 契约的正整数版本。",
-          "type": "INTEGER",
-          "len": "",
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
-          "extProps": {},
-          "domain": "",
-          "id": "B37F0E17-CDC3-5334-9BAD-250F0E09A331"
+          "id": "94F12714-9DC6-569C-8E75-0359A602552C"
         },
         {
           "defKey": "payload_json",
-          "defName": "事件载荷",
-          "comment": "最大六十四 KiB、不可变且不含敏感明文的 Canonical JSON 事件信封。",
-          "type": "JSON",
-          "len": "",
+          "defName": "最小补充载荷",
+          "comment": "可选最小 JSON Object，通常为空；最多 4 KiB，不得保存可从本库恢复的上下文、敏感明文或凭据。",
+          "type": "VARCHAR",
+          "len": 4096,
           "scale": "",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoIncrement": false,
           "defaultValue": "",
           "hideInGraph": false,
           "refDict": "",
-          "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
           "extProps": {},
           "domain": "",
           "id": "D41AE8F7-C2C4-53BB-8CD9-12E30991AF9D"
         },
         {
-          "defKey": "payload_hash",
-          "defName": "载荷哈希",
-          "comment": "Canonical Payload 的 SHA-256 哈希，创建后不得修改。",
-          "type": "CHAR",
-          "len": 64,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "4629ED77-822E-4610-86D1-82426E63066E",
-          "extProps": {},
-          "domain": "",
-          "id": "63B54ADD-A942-5C68-B33F-2312A021A861"
-        },
-        {
           "defKey": "execute_status",
           "defName": "执行状态",
-          "comment": "补偿事件当前 Claim、重试或人工处置状态。允许值：INIT、PROCESSING、ERROR、FAILED。",
+          "comment": "本地补偿任务执行状态；成功后删除记录。允许值：INIT、PROCESSING、ERROR、FAILED。",
           "type": "VARCHAR",
-          "len": 64,
+          "len": 16,
           "scale": "",
           "primaryKey": false,
           "notNull": true,
           "autoIncrement": false,
-          "defaultValue": "",
+          "defaultValue": "'INIT'",
           "hideInGraph": false,
           "refDict": "",
           "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
@@ -5056,7 +5227,7 @@
         {
           "defKey": "execute_count",
           "defName": "执行次数",
-          "comment": "已经开始执行该事件的累计次数。",
+          "comment": "已开始的 Handler 尝试次数，非负，Claim 时增加。",
           "type": "INTEGER",
           "len": "",
           "scale": "",
@@ -5074,14 +5245,14 @@
         {
           "defKey": "next_execute_at",
           "defName": "下次执行时间",
-          "comment": "事件下次允许被 Claim 的 UTC 微秒时间。",
+          "comment": "任务下次允许 Claim 的 UTC 微秒时间，由 Handler 退避策略更新。",
           "type": "DATETIME",
           "len": 6,
           "scale": "",
           "primaryKey": false,
           "notNull": true,
           "autoIncrement": false,
-          "defaultValue": "",
+          "defaultValue": "CURRENT_TIMESTAMP(6)",
           "hideInGraph": false,
           "refDict": "",
           "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
@@ -5092,9 +5263,9 @@
         {
           "defKey": "lock_owner",
           "defName": "锁持有者",
-          "comment": "当前多实例 Claim Lease 的执行节点稳定标识。",
+          "comment": "当前持有数据库 Claim Lease 的服务实例标识；未被认领时为空。",
           "type": "VARCHAR",
-          "len": 128,
+          "len": 64,
           "scale": "",
           "primaryKey": false,
           "notNull": false,
@@ -5110,7 +5281,7 @@
         {
           "defKey": "lock_until",
           "defName": "锁到期时间",
-          "comment": "当前 Claim Lease 到期的 UTC 微秒时间。",
+          "comment": "Claim Lease 到期并可被其他实例接管的 UTC 微秒时间；无活动 Lease 时为空。",
           "type": "DATETIME",
           "len": 6,
           "scale": "",
@@ -5128,7 +5299,7 @@
         {
           "defKey": "last_error_code",
           "defName": "最后错误代码",
-          "comment": "最近一次失败的受控且不含敏感信息的错误代码。取值来源：Finance 补偿执行错误代码目录；非固定枚举。",
+          "comment": "最近一次执行失败的稳定错误分类代码；尚无错误时为空。取值来源：本服务补偿执行错误代码目录；非固定枚举。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -5146,7 +5317,7 @@
         {
           "defKey": "last_error_summary",
           "defName": "最后错误摘要",
-          "comment": "最近一次失败的有界脱敏摘要，禁止保存敏感明文。",
+          "comment": "最近一次执行失败的脱敏摘要，最长 1000 字符，禁止保存敏感明文。",
           "type": "VARCHAR",
           "len": 1000,
           "scale": "",
@@ -5164,14 +5335,14 @@
         {
           "defKey": "lock_version",
           "defName": "锁版本",
-          "comment": "仅用于 Claim 和 Lease 条件更新的技术乐观锁版本。",
+          "comment": "Claim 和 Lease 使用的正乐观锁版本；登记初始值固定为 1，仅当前 Lease 持有者可回写执行结果。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
           "primaryKey": false,
           "notNull": true,
           "autoIncrement": false,
-          "defaultValue": "0",
+          "defaultValue": "1",
           "hideInGraph": false,
           "refDict": "",
           "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
@@ -5182,14 +5353,14 @@
         {
           "defKey": "create_time",
           "defName": "创建时间",
-          "comment": "补偿事件与业务事实原子登记的 UTC 微秒时间。",
+          "comment": "补偿记录与业务事实原子登记的 UTC 微秒时间。",
           "type": "DATETIME",
           "len": 6,
           "scale": "",
           "primaryKey": false,
           "notNull": true,
           "autoIncrement": false,
-          "defaultValue": "",
+          "defaultValue": "CURRENT_TIMESTAMP(6)",
           "hideInGraph": false,
           "refDict": "",
           "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
@@ -5200,14 +5371,14 @@
         {
           "defKey": "update_time",
           "defName": "更新时间",
-          "comment": "补偿事件执行状态最后更新的 UTC 微秒时间。",
+          "comment": "补偿记录最近更新的 UTC 微秒时间，由写入口维护。",
           "type": "DATETIME",
           "len": 6,
           "scale": "",
           "primaryKey": false,
           "notNull": true,
           "autoIncrement": false,
-          "defaultValue": "",
+          "defaultValue": "CURRENT_TIMESTAMP(6)",
           "hideInGraph": false,
           "refDict": "",
           "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
@@ -5219,85 +5390,76 @@
       "correlations": [],
       "indexes": [
         {
-          "defKey": "uk_finance_comp_event",
-          "defName": "唯一索引 event_key",
+          "defKey": "uk_comp_event_identity",
+          "defName": "唯一索引 event_key、event_type、sub_event_type",
           "unique": true,
-          "comment": "保证业务唯一性：event_key",
+          "comment": "保证业务唯一性：event_key、event_type、sub_event_type",
           "fields": [
             {
               "fieldDefKey": "F3CD3207-B72F-505C-A2EF-AA182C230772",
               "ascOrDesc": "A",
-              "id": "E657FECF-ABF5-596E-9B45-2115AAF20464"
-            }
-          ],
-          "id": "774E0A83-9183-59DB-B392-7BDFFB393A0C"
-        },
-        {
-          "defKey": "uk_finance_comp_source",
-          "defName": "唯一索引 source_type、source_id、source_version、event_type",
-          "unique": true,
-          "comment": "保证业务唯一性：source_type、source_id、source_version、event_type",
-          "fields": [
-            {
-              "fieldDefKey": "6F0F7433-64A3-5DBD-8797-E29167EC7ED4",
-              "ascOrDesc": "A",
-              "id": "49D1E892-8FEF-5937-A218-0784D9483B60"
-            },
-            {
-              "fieldDefKey": "3066ED98-FAC0-57F0-AADC-5CA9CD96C20C",
-              "ascOrDesc": "A",
-              "id": "98DBCDE2-80E8-5AEF-ADDF-3F032585D18E"
-            },
-            {
-              "fieldDefKey": "40FA7364-FFCE-55CE-8072-FEE124F5CF05",
-              "ascOrDesc": "A",
-              "id": "A5E8C34E-6E8B-5867-9EBD-E76DE7BB57D5"
+              "id": "BC546057-B6CF-5BA8-AD81-409C0CFF0C49"
             },
             {
               "fieldDefKey": "7C9CD59B-5B93-50A8-96B4-F0F383ADD172",
               "ascOrDesc": "A",
-              "id": "C41B76C4-1911-5643-B524-F0C4CFC65CF6"
+              "id": "6A9BF99D-0293-5B6A-9356-24D47E3A955F"
+            },
+            {
+              "fieldDefKey": "94F12714-9DC6-569C-8E75-0359A602552C",
+              "ascOrDesc": "A",
+              "id": "4793DC33-57C9-51E9-8CE3-B24CC284AA93"
             }
           ],
-          "id": "6CDD6902-C19F-5E3A-BBC9-9D29C8D96F01"
+          "id": "3DB41784-12DD-59F6-B397-72749310C290"
         },
         {
-          "defKey": "idx_fin_comp_claim",
-          "defName": "访问索引 execute_status、next_execute_at、lock_until",
+          "defKey": "idx_comp_event_ready",
+          "defName": "访问索引 execute_status、next_execute_at、id",
           "unique": false,
-          "comment": "支持访问路径：execute_status、next_execute_at、lock_until",
+          "comment": "支持访问路径：execute_status、next_execute_at、id",
           "fields": [
             {
               "fieldDefKey": "4746DB9C-D2BE-5497-8A87-701F7EAB9751",
               "ascOrDesc": "A",
-              "id": "C3A21E55-EF5B-5FC0-B224-17D0784EDC1C"
+              "id": "3EA5031B-75B4-53B5-AE3C-02B34400C89D"
             },
             {
               "fieldDefKey": "B035BAC0-2B4F-5399-B16D-053BFA00CE3B",
               "ascOrDesc": "A",
-              "id": "5A5786FE-0B87-5D75-8E0B-5A8E036B27CF"
+              "id": "C4C4BE85-6794-55AA-BD3D-677D65EF915D"
+            },
+            {
+              "fieldDefKey": "5637262C-10F4-5359-839C-AC3ABABD6058",
+              "ascOrDesc": "A",
+              "id": "A9341292-584B-5207-AF9D-815783A0661B"
+            }
+          ],
+          "id": "F5D4DA32-4487-54E7-AC07-460335C498F3"
+        },
+        {
+          "defKey": "idx_comp_event_lease",
+          "defName": "访问索引 execute_status、lock_until、id",
+          "unique": false,
+          "comment": "支持访问路径：execute_status、lock_until、id",
+          "fields": [
+            {
+              "fieldDefKey": "4746DB9C-D2BE-5497-8A87-701F7EAB9751",
+              "ascOrDesc": "A",
+              "id": "335D9716-5F08-5EFD-A0E2-D62BFC712068"
             },
             {
               "fieldDefKey": "E663D7B1-F776-579F-A01B-0150A6B94DE6",
               "ascOrDesc": "A",
-              "id": "41AC5B3E-4B13-5B70-BC19-7265E5CE7BBF"
-            }
-          ],
-          "id": "3BDC121D-39ED-5A90-9973-0F5048DF3883"
-        },
-        {
-          "defKey": "idx_fin_comp_created",
-          "defName": "访问索引 create_time",
-          "unique": false,
-          "comment": "支持访问路径：create_time",
-          "fields": [
+              "id": "55E39319-1DAF-5118-B49B-7E70A50FD795"
+            },
             {
-              "fieldDefKey": "1E26BAEF-7949-5A9C-B3C2-B850BA4563CF",
+              "fieldDefKey": "5637262C-10F4-5359-839C-AC3ABABD6058",
               "ascOrDesc": "A",
-              "id": "5BC92FE6-1BB0-55F9-9A6A-524F2FF9658E"
+              "id": "47BA26A7-A5BB-5671-B328-74BAC05B22D0"
             }
           ],
-          "id": "67AC49AA-0660-553B-B47A-AA2F53821FF7"
+          "id": "E09F41B8-E1DA-5293-8F45-8B9E09C8D823"
         }
       ],
       "type": "P"
@@ -5482,7 +5644,7 @@
             "type": "P",
             "size": {
               "width": 390,
-              "height": 1010
+              "height": 1164
             }
           }
         ]
@@ -5516,7 +5678,7 @@
             "type": "P",
             "size": {
               "width": 390,
-              "height": 1010
+              "height": 1164
             }
           },
           {
@@ -5531,7 +5693,7 @@
             "type": "P",
             "size": {
               "width": 390,
-              "height": 768
+              "height": 856
             }
           },
           {
@@ -5569,7 +5731,7 @@
             "shape": "table",
             "position": {
               "x": 0,
-              "y": 1070
+              "y": 1224
             },
             "count": 0,
             "originKey": "ED545DFB-95D8-5154-85D6-3994F6E75479",
@@ -5584,7 +5746,7 @@
             "shape": "table",
             "position": {
               "x": 430,
-              "y": 1070
+              "y": 1224
             },
             "count": 0,
             "originKey": "18D5DA11-0C7D-5DBB-B01E-89D878765CC9",
@@ -5599,7 +5761,7 @@
             "shape": "table",
             "position": {
               "x": 860,
-              "y": 1070
+              "y": 1224
             },
             "count": 0,
             "originKey": "9F763B65-7630-5E50-9B57-9C11B105BFF4",
@@ -6008,7 +6170,7 @@
       "controlIntensity": "S",
       "applyObjectType": "P",
       "applyFieldType": "entity",
-      "programCode": "let actual=data.entity.fields.map(field=>field.defKey); let immutable=[\"t_place_of_supply_rule\",\"t_tax_rate\",\"t_tax_evidence_rule\",\"t_tax_exchange_rate\",\"t_tax_snapshot\",\"t_tax_evidence\",\"t_tax_line\",\"t_fiscal_record\",\"t_fiscal_record_line\",\"t_tax_liability_summary\",\"t_tax_return_line\",\"t_tax_payment_event\",\"t_economic_fact\",\"t_economic_fact_line\",\"t_economic_fact_line_link\",\"t_channel_cost_scope\",\"t_channel_cost_component\",\"t_channel_cost_confirm\",\"t_channel_cost_alloc\",\"t_accounting_rule_line\",\"t_instruction_line\",\"t_journal_entry\",\"t_journal_line\",\"t_adjustment_approval\",\"t_channel_settle_batch\",\"t_channel_settle_item\",\"t_channel_transaction_match\",\"t_bank_statement\",\"t_bank_statement_item\",\"t_payout_approval\",\"t_payout_evidence_ref\",\"t_payout_event\",\"t_trial_balance_line\",\"t_close_approval\",\"t_close_account_rule\"].includes(data.entity.defKey); return actual.includes('create_time') && (immutable ? !actual.includes('update_time') : actual.includes('update_time'));",
+      "programCode": "let actual=data.entity.fields.map(field=>field.defKey); let immutable=[\"t_place_of_supply_rule\",\"t_tax_rate\",\"t_tax_evidence_rule\",\"t_tax_exchange_rate\",\"t_tax_snapshot\",\"t_tax_evidence\",\"t_tax_line\",\"t_fiscal_record\",\"t_fiscal_record_line\",\"t_tax_liability_summary\",\"t_tax_return_line\",\"t_tax_payment_event\",\"t_economic_fact_line\",\"t_economic_fact_line_link\",\"t_channel_cost_scope\",\"t_channel_cost_component\",\"t_channel_cost_confirm\",\"t_channel_cost_alloc\",\"t_accounting_rule_line\",\"t_instruction_line\",\"t_journal_entry\",\"t_journal_line\",\"t_adjustment_approval\",\"t_channel_settle_batch\",\"t_channel_settle_item\",\"t_channel_transaction_match\",\"t_bank_statement\",\"t_bank_statement_item\",\"t_payout_approval\",\"t_payout_evidence_ref\",\"t_payout_event\",\"t_trial_balance_line\",\"t_close_approval\",\"t_close_account_rule\"].includes(data.entity.defKey); return actual.includes('create_time') && (immutable ? !actual.includes('update_time') : actual.includes('update_time'));",
       "enable": true
     },
     {

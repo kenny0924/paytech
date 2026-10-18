@@ -1,9 +1,11 @@
 package com.paytech.billing.test.dal;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -45,6 +47,36 @@ public interface BillingTestMapper {
     @Select("SELECT p.status, p.version, v.cost_ver AS current_cost_ver FROM t_channel_cost_plan p "
         + "LEFT JOIN t_channel_cost_plan_ver v ON v.id = p.current_ver_id WHERE p.plan_code = #{planCode}")
     Map<String, Object> selectChannelCostPlan(@Param("planCode") String planCode);
+
+    /** 读取经济事实头的状态、版本、复核与发布字段。 */
+    @Select("SELECT status, fact_version, maker_id, checker_id, approved_time, published_at, supersedes_fact_id "
+        + "FROM t_economic_fact WHERE id = #{factId}")
+    Map<String, Object> selectEconomicFact(@Param("factId") long factId);
+
+    /** 统计经济事实的明细行数。 */
+    @Select("SELECT COUNT(*) FROM t_economic_fact_line WHERE transaction_economics_id = #{factId}")
+    int countEconomicFactLines(@Param("factId") long factId);
+
+    /** 某经济事实的 ECONOMIC_FACT_RECORDED 补偿任务（任意版本）及其执行状态。 */
+    @Select("SELECT event_key, sub_event_type, execute_status, payload_json FROM t_compensation_event "
+        + "WHERE event_type = #{eventType} AND event_key LIKE CONCAT('ECONOMIC_FACT:', #{factId}, ':%')")
+    List<Map<String, Object>> selectFactCompensationEvents(@Param("eventType") String eventType,
+        @Param("factId") long factId);
+
+    /**
+     * 插入一条已有经济事实（前置数据）：交易锚点为空，只填 NOT NULL 列与账簿主体、状态、版本和发布时间
+     * <li>模拟后续业务切片登记的 PAYMENT 事实或已批准未发布的事实；明细行不需要时不插入。</li>
+     */
+    @Insert("INSERT INTO t_economic_fact (id, fact_type, source_system, source_event_key, source_version, "
+        + "source_payload_hash, client_id, entity_no, finance_entity_id, currency, gross_amount, status, fact_version, "
+        + "approved_time, published_at, create_time, update_time) VALUES (#{id}, #{factType}, 'PAYMENT', #{sourceEventKey}, 1, "
+        + "REPEAT('0', 64), #{clientId}, #{entityNo}, #{financeEntityId}, #{currency}, 10, #{status}, #{factVersion}, "
+        + "UTC_TIMESTAMP(6), #{publishedAt}, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6))")
+    void insertEconomicFact(@Param("id") long id, @Param("factType") String factType,
+        @Param("sourceEventKey") String sourceEventKey, @Param("clientId") long clientId,
+        @Param("entityNo") String entityNo, @Param("financeEntityId") Long financeEntityId,
+        @Param("currency") String currency, @Param("status") String status, @Param("factVersion") long factVersion,
+        @Param("publishedAt") Instant publishedAt);
 
     /** 统计方案下的版本数。 */
     @Select("SELECT COUNT(*) FROM t_channel_cost_plan_ver v JOIN t_channel_cost_plan p ON p.id = v.plan_id "

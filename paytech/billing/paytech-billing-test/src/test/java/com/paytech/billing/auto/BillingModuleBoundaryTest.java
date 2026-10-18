@@ -35,14 +35,15 @@ class BillingModuleBoundaryTest {
         Assertions.assertEquals(
             Set.of("paytech-billing-api", "paytech-platform-support-api", "paytech-mybatis-support",
                 "paytech-redis-starter", "paytech-snowflake-id", "paytech-json-canonicalization",
-                "jackson-core", "jakarta.validation-api", "spring-context", "spring-tx", "mybatis", "lombok"),
+                "paytech-compensation-event", "paytech-messaging-api", "jackson-core", "jackson-databind",
+                "jakarta.validation-api", "spring-boot", "spring-context", "spring-tx", "mybatis", "lombok"),
             values(readPom("paytech-billing-core"), "/project/dependencies/dependency/artifactId"));
         Assertions.assertEquals(Set.of("spring-web", "jakarta.validation-api", "paytech-common-core", "lombok"),
             values(readPom("paytech-billing-api"), "/project/dependencies/dependency/artifactId"));
         Set<String> app = values(readPom("paytech-billing-app"),
             "/project/dependencies/dependency[groupId='com.paytech']/artifactId");
         Assertions.assertEquals(Set.of("paytech-billing-api", "paytech-billing-core", "paytech-redis-starter", "paytech-snowflake-id",
-                "paytech-mybatis-support", "paytech-mvc-web-starter"), app);
+                "paytech-mybatis-support", "paytech-mvc-web-starter", "paytech-compensation-event", "paytech-messaging"), app);
     }
 
     @Test
@@ -65,11 +66,12 @@ class BillingModuleBoundaryTest {
         for (String resource : Set.of("org/apache/ibatis/session/SqlSession.class",
             "com/zaxxer/hikari/HikariDataSource.class",
             "com/mysql/cj/jdbc/Driver.class",
-            "org/redisson/Redisson.class")) {
+            "org/redisson/Redisson.class",
+            // 第 11a 步：EconomicFactRecorded 由补偿 Handler 经 paytech-messaging 发布到 RabbitMQ。
+            "org/springframework/amqp/rabbit/core/RabbitTemplate.class")) {
             Assertions.assertNotNull(getClass().getClassLoader().getResource(resource), resource);
         }
         for (String resource : Set.of("com/alibaba/nacos/api/NacosFactory.class",
-            "org/springframework/amqp/rabbit/core/RabbitTemplate.class",
             "org/mockito/Mockito.class")) {
             Assertions.assertNull(getClass().getClassLoader().getResource(resource), resource);
         }
