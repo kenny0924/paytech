@@ -132,10 +132,12 @@
    - 列表含 APPROVED 与 SUPERSEDED。`pending` 统计“已批准（含被替代）且未发布”，并多返回 `maxPublishedFactId`，供 04 §6 “按最大 fact_id 比对”。
 3. **状态取值**：第 07 步的 `RECORDED` 改为 `DRAFT / APPROVED / SUPERSEDED`（库内没有数据）。后续切片由系统生成的交易事实，预期直接以 APPROVED、`maker_id` 为空写入。
 4. **未实现驳回**：任务卡只列了提交与批准，DRAFT 只能一直保留。是否需要 `reject` 或撤回待确认。
+   - **用户决定（2026-10-18）**：阶段 0 不加驳回 / 撤回，作为 11b 之后的独立小切片登记。
 5. **明细行补列**：04 §2 写“明细行不变”，却又要求明细行带付方 / 收方。本步新增 4 列，并约定人工 / 成本调整行的 `party_type/party_id` 等于收方。
 6. **可空调整**：头表 11 个交易锚点列、明细 6 个来源规则列改为可空，必填由代码按事实类型保证。
    - 模型中 `ck_txn_economics_type` 与 `ck_txn_econ_component_source` 两条 CHECK 合同（只是文档化的不变量，不生成物理 CHECK）分别补了 MANUAL_ADJUSTMENT 分支和无来源规则分支。
 7. **主体必填**：人工 / 成本调整要求 `clientId` 与 `entityNo` 必填（列为 NOT NULL），因此只涉及合作方的调整也必须挂在某个 Client 下。是否放开待确认。
+   - **用户决定（2026-10-18）**：保持 NOT NULL；阶段 0 没有纯合作伙伴调整场景，需要时再放开并由代码按事实类型校验。
 8. **成本调整**：要求来源事实是同 Client / OE / 币种的已批准 PAYMENT，并给出 `channelAccountId`，明细只允许 `CHANNEL_COST`。
    - 阶段 0 billing 中还没有 PAYMENT 事实，所以这条路径在业务切片前实际不可用；测试用 TestMapper 插入前置 PAYMENT 行验证。
    - `channelAccountId` 不向 reconciliation 核对 ACTIVE 与 OE 归属，因为还没有对应 api。这是第 07 步遗留的检查，仍待补。
