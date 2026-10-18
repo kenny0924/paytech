@@ -67,18 +67,29 @@
         └── <service-short-name>.pdma.json
 ```
 
-六大核心系统默认使用以下模型路径：
+六大核心系统的模型按 V2 服务目录存放（`<project-root>` 为 `paytech/<service>/`，2026-10-17 搬迁）：
 
 ```text
-client-contract-service/docs/database/client-contract.pdma.json
-commerce-service/docs/database/commerce.pdma.json
-payment-orchestration-service/docs/database/payment-orchestration.pdma.json
-finance-service/docs/database/finance.pdma.json
-risk-compliance-service/docs/database/risk-compliance.pdma.json
-platform-support-service/docs/database/platform-support.pdma.json
+paytech/client-master/docs/database/client-master.pdma.json          # Client & Contract
+paytech/commercial/docs/database/commercial.pdma.json
+paytech/acquiring/docs/database/acquiring.pdma.json                  # Commerce
+paytech/consumer/docs/database/consumer.pdma.json
+paytech/payment/docs/database/payment.pdma.json                      # Payment Orchestration
+paytech/channel-connector/docs/database/channel-connector.pdma.json
+paytech/card/docs/database/card.pdma.json
+paytech/risk-decision/docs/database/risk-decision.pdma.json          # Risk & Compliance
+paytech/compliance/docs/database/compliance.pdma.json
+paytech/dispute/docs/database/dispute.pdma.json
+paytech/ledger/docs/database/ledger.pdma.json                        # Finance
+paytech/account/docs/database/account.pdma.json
+paytech/billing/docs/database/billing.pdma.json
+paytech/reconciliation/docs/database/reconciliation.pdma.json
+paytech/tax/docs/database/tax.pdma.json
+paytech/payout/docs/database/payout.pdma.json
+paytech/platform-support/docs/database/platform-support.pdma.json    # Platform Support
 ```
 
-六大核心系统之外，Vault 使用 `vault-service/docs/database/vault.pdma.json`。系统业务语义、现实场景、当前专项决策与物理入口统一从 [database/README.md](./database/README.md) 路由；模型统计、生成/人工门禁、代码、SQL、验证和部署状态只读 [CURRENT_IMPLEMENTATION.md](./CURRENT_IMPLEMENTATION.md)。
+六大核心系统之外，Vault 使用 `paytech/vault/docs/database/vault.pdma.json`。系统业务语义、现实场景、当前专项决策与物理入口统一从 [database/README.md](./database/README.md) 路由；模型统计、生成/人工门禁、代码、SQL、验证和部署状态只读 [CURRENT_IMPLEMENTATION.md](./CURRENT_IMPLEMENTATION.md)。
 
 模型文件名固定使用上述小写、无空格、`kebab-case` 服务短名；PDManer JSON 内部的 `name`、`describe` 仅用于展示，不得驱动磁盘文件改名。生成器、测试、Schema 来源注释和文档链接必须只引用该短路径。PDManer 保存或另存产生的 `Code-MoR ... Database V1.pdma.json` 等同目录副本只可作为本地临时工件：先与当前短名模型核对并合并确需保留的内容，再删除副本，不能作为第二个权威模型提交。`.back_*` 是被 Git 忽略的本地恢复备份，不计为权威模型，也不得被文档、生成器或测试引用。完整决定见 [PDManer 单模型与短文件名决策](./decisions/2026-09-11-pdmaner-single-model-short-filenames.md)。
 

@@ -1,11 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readdirSync, readFileSync } from "node:fs";
+import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const workspaceRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
+// 第 13 步收口：17 个 Java 持库服务（dispute、payout 以模块库登记）+ Vault，与 design/09 §5.2 一致。
 const modelContracts = [
   ["paytech/client-master", "client-master.pdma.json", "scripts/pdmaner/generate-client-master-model.mjs"],
   ["paytech/commercial", "commercial.pdma.json", "scripts/pdmaner/generate-commercial-model.mjs"],
@@ -54,4 +55,24 @@ test("every PDManer generator writes to its canonical short path", () => {
     );
     assert.doesNotMatch(source, /Code-MoR .* Database V1\.pdma\.json/u);
   }
+});
+
+test("the contract list equals the set of PDManer models under paytech/<service>/docs/database", () => {
+  const paytechRoot = path.join(workspaceRoot, "paytech");
+  const found = readdirSync(paytechRoot)
+    .filter((service) => statSync(path.join(paytechRoot, service)).isDirectory())
+    .flatMap((service) => {
+      const databaseDirectory = path.join(paytechRoot, service, "docs/database");
+      try {
+        return readdirSync(databaseDirectory)
+          .filter((name) => name.endsWith(".pdma.json") && !name.startsWith(".back_"))
+          .map((name) => `paytech/${service}/${name}`);
+      } catch {
+        return [];
+      }
+    })
+    .sort();
+  const expected = modelContracts.map(([service, filename]) => `${service}/${filename}`).sort();
+  assert.equal(modelContracts.length, 18);
+  assert.deepEqual(found, expected);
 });
