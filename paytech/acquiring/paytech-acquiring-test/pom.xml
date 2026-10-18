@@ -23,6 +23,13 @@
     </properties>
 
     <dependencies>
+        <!-- 消费方测试的分区队列基线（监听容器启动前清空本服务分区队列与 DLQ）。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-messaging</artifactId>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
             <dependency>
                 <groupId>com.paytech</groupId>
                 <artifactId>paytech-payment-api</artifactId>

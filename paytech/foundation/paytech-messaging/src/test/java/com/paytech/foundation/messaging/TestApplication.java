@@ -20,18 +20,20 @@ import com.paytech.foundation.messaging.test.support.ManagedEntryHandler;
 import com.paytech.foundation.messaging.test.support.MeterRegistryCleaner;
 import com.paytech.foundation.messaging.test.support.StrictFactHandler;
 import com.paytech.foundation.messaging.test.support.TestRun;
+import com.paytech.foundation.messaging.testkit.PartitionQueueBaselineConfiguration;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 /**
  * messaging 测试应用：真实自动配置、本地 MySQL 与 RabbitMQ；事件目录换成本次运行前缀下的测试服务名。
+ * <li>与消费方测试相同，注册 {@link PartitionQueueBaselineConfiguration}，监听容器启动前清空本次运行的分区队列。</li>
  */
 @SpringBootConfiguration
 @EnableAutoConfiguration
 @MapperScan(basePackageClasses = TestMapper.class)
 @Import({HandledEventProbe.class, StrictFactHandler.class, LooseNoteHandler.class, ManagedEntryHandler.class, BrokerTestSupport.class,
-    DatabaseCleaner.class, MeterRegistryCleaner.class})
+    DatabaseCleaner.class, MeterRegistryCleaner.class, PartitionQueueBaselineConfiguration.class})
 public class TestApplication {
 
     @Bean
