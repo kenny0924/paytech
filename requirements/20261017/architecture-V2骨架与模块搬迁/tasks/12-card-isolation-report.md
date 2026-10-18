@@ -170,6 +170,10 @@ Platform 主 `application.yml` 中的 `callers: {}` 没有改。生产或测试�
 14. **配置前缀与环境变量改名。** `payment.card.fingerprint-key` 改为 `card.fingerprint-key`，环境变量改为 `CARD_FINGERPRINT_KEY`，取值必须原样迁移（见第 9 节）。
 15. **测试位置与数量。** 卡加密纯 Java 测试放在 card-core 而不是 card-test，因为 R11 不豁免 card-test 引用加密包。payment 6 类从 48 个方法变为 49 个，新增 1 个。
 16. **acquiring 与 consumer 的端口类名保留 `PaymentStoredCardClient`，** 以减少与第 08 步的冲突；实现已指向 card-service。
+17. **PDManer 的三处限制。**
+    - `t_consumed_event` 与 `t_consumed_aggregate_version` 逐字取自 paytech-messaging 的 SQL，表级排序规则为 `utf8mb4_0900_bin`，PDManer 渲染无法表达。`card-model.test.mjs` 比较这两张表时，先规范化格式与表选项行。
+    - `t_card_material_ticket.instrument_ref` 是字符串形式的工具主键，不建模型关系，只在注释中说明。
+    - 卡 4 表仍由手工维护的基线（`scripts/pdmaner/card-model-baseline.json`）加 `card-model-additions.mjs` 生成，不进 Payment 生成器清单，与第 05 步口径相同。
 
 ## 7. 待确认项
 
