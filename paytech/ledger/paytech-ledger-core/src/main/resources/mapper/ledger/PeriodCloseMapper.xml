@@ -59,9 +59,4 @@
         SELECT COUNT(*) FROM t_compensation_event WHERE execute_status IN ('INIT', 'PROCESSING', 'ERROR')
     </select>
 
-    <select id="countNonZeroTreasuryAccounts" resultType="long">
-        SELECT COUNT(*) FROM t_account
-        WHERE owner_type IN ('CHANNEL_ACCOUNT', 'CASH_ACCOUNT') AND net_balance &lt;&gt; 0 AND ledger_book_id IN
-        <foreach collection="bookIds" item="id" open="(" separator="," close=")">#{id}</foreach>
-    </select>
 </mapper>

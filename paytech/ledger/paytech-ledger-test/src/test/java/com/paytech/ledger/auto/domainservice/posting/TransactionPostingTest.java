@@ -6,6 +6,7 @@ import static com.paytech.ledger.test.builder.EconomicComponentBuilder.clientPri
 import static com.paytech.ledger.test.builder.EconomicComponentBuilder.partnerShare;
 import static com.paytech.ledger.test.builder.EconomicComponentBuilder.platformServiceCharge;
 import static com.paytech.ledger.test.builder.EconomicComponentBuilder.sellerTax;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -30,9 +31,12 @@ import com.paytech.ledger.test.builder.RuleVersionRequestBuilder;
 import com.paytech.ledger.test.mocker.local.LedgerFixture;
 
 /**
- * 交易自动记账成功路径：无 Partner 单指令、有 Partner 三指令双账簿、零金额来源跳过、税与渠道成本行，以及重复调用幂等
- * <li>经济事实以 DTO 直接传入（输入驱动），渠道清算账户主键取自载荷头；断言只落 ledger 表（本步余额列仍在共库 t_account）。</li>
+ * 交易自动记账成功路径：消费 EconomicFactRecorded 后过账——无 Partner 单指令、有 Partner 三指令双账簿、零金额来源跳过、税与渠道成本行，
+ * 以及同一事实重复投递与重复调用幂等
+ * <li>测试扮演 billing 向真实本机 RabbitMQ 发布信封，经 ledger.billing 分区队列与幂等拦截器由正式 Handler 过账（design/04 §5）；渠道清算账户主键取自
+ * 载荷头；断言只落 ledger 表，账户余额按分录聚合（Owner 余额由 account 的消费测试覆盖）。</li>
  *
+ * @see com.paytech.ledger.ext.mq.EconomicFactRecordedPostingHandler
  * @see com.paytech.ledger.domainservice.service.TransactionPostingService#post(com.paytech.ledger.domain.TransactionPostingCommand)
  */
 class TransactionPostingTest extends AbstractTransactionPostingTest {
@@ -149,7 +153,7 @@ class TransactionPostingTest extends AbstractTransactionPostingTest {
             .assertAccount(channelAccrual, "0", "2", "2", 1);
     }
 
-    /** 同一经济结果重复调用：返回原指令与 Journal，不新增指令、Journal 或序号。 */
+    /** 同一事实重复投递（同一 eventId）只消费一次；直接重复调用引擎返回原指令与 Journal，不新增指令、Journal 或序号。 */
     @Test
     void test_repeatedPostReturnsOriginal() {
         LedgerFixture platform = mockPlatformFinanceEntityLedger();
@@ -158,14 +162,17 @@ class TransactionPostingTest extends AbstractTransactionPostingTest {
             clientPrincipal("97", CLIENT_ID), clientFee("3", ENTITY_NO), partnerShare("1", PARTNER_ID),
             platformServiceCharge("0.5", financeEntityId));
         List<PostedInstructionView> first = sorted(postFact(economics));
+        billing.publish(economics);
+        await().atMost(CONSUME_WAIT).until(() -> billing.pending() == 0);
 
-        List<PostedInstructionView> second = postFact(economics);
+        List<PostedInstructionView> second = postDirectly(economics);
 
         assertEquals(sorted(second).stream().map(this::identity).toList(),
             first.stream().map(this::identity).toList());
         assertEquals(second, sorted(second), "幂等返回按账簿 ID、指令主键升序");
         assertAll(() -> assertEquals(3, testMapper.countAllInstructions()),
-            () -> assertEquals(3, testMapper.countAllJournalEntries()));
+            () -> assertEquals(3, testMapper.countAllJournalEntries()),
+            () -> assertEquals(1, testMapper.countAllConsumedEvents(), "同一 eventId 只登记一次消费"));
         ledgerChecker.assertBalancedJournals(oeLedger.getLedgerBookId(), 2)
             .assertBalancedJournals(platform.getLedgerBookId(), 1)
             .assertAccount(channelReceivable(oeLedger.getLedgerBookId()), "100", "0", "100", 1);

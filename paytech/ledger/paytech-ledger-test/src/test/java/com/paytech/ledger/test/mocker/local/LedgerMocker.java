@@ -1,6 +1,5 @@
 package com.paytech.ledger.test.mocker.local;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -10,20 +9,20 @@ import org.springframework.boot.test.context.TestComponent;
 import com.paytech.account.api.enums.BalanceBucket;
 import com.paytech.account.api.enums.OwnerType;
 import com.paytech.foundation.id.IdGenerator;
-import com.paytech.ledger.core.dal.dataobject.Account;
 import com.paytech.ledger.core.dal.dataobject.AccountingPeriod;
 import com.paytech.ledger.core.dal.dataobject.BookSequence;
 import com.paytech.ledger.core.dal.dataobject.ChartAccount;
 import com.paytech.ledger.core.dal.dataobject.CurrencySpec;
 import com.paytech.ledger.core.dal.dataobject.FinanceEntity;
 import com.paytech.ledger.core.dal.dataobject.FiscalCalendar;
+import com.paytech.ledger.core.dal.dataobject.LedgerAccount;
 import com.paytech.ledger.core.dal.dataobject.LedgerBook;
-import com.paytech.ledger.core.dal.mapper.AccountMapper;
 import com.paytech.ledger.core.dal.mapper.AccountingPeriodMapper;
 import com.paytech.ledger.core.dal.mapper.BookSequenceMapper;
 import com.paytech.ledger.core.dal.mapper.ChartAccountMapper;
 import com.paytech.ledger.core.dal.mapper.FinanceEntityMapper;
 import com.paytech.ledger.core.dal.mapper.FiscalCalendarMapper;
+import com.paytech.ledger.core.dal.mapper.LedgerAccountMapper;
 import com.paytech.ledger.core.dal.mapper.LedgerBookMapper;
 import com.paytech.ledger.core.enums.AccountStatus;
 import com.paytech.ledger.core.enums.BookStatus;
@@ -46,7 +45,7 @@ public class LedgerMocker {
     public static final String TIMEZONE = "Asia/Dubai";
 
     private final IdGenerator idGenerator;
-    private final AccountMapper accountMapper;
+    private final LedgerAccountMapper ledgerAccountMapper;
     private final LedgerBookMapper ledgerBookMapper;
     private final AccountingTestMapper testMapper;
     private final ChartAccountMapper chartAccountMapper;
@@ -55,12 +54,12 @@ public class LedgerMocker {
     private final FiscalCalendarMapper fiscalCalendarMapper;
     private final AccountingPeriodMapper accountingPeriodMapper;
 
-    public LedgerMocker(IdGenerator idGenerator, AccountMapper accountMapper, LedgerBookMapper ledgerBookMapper,
+    public LedgerMocker(IdGenerator idGenerator, LedgerAccountMapper ledgerAccountMapper, LedgerBookMapper ledgerBookMapper,
         AccountingTestMapper testMapper, ChartAccountMapper chartAccountMapper, BookSequenceMapper bookSequenceMapper,
         FinanceEntityMapper financeEntityMapper, FiscalCalendarMapper fiscalCalendarMapper,
         AccountingPeriodMapper accountingPeriodMapper) {
         this.idGenerator = idGenerator;
-        this.accountMapper = accountMapper;
+        this.ledgerAccountMapper = ledgerAccountMapper;
         this.ledgerBookMapper = ledgerBookMapper;
         this.testMapper = testMapper;
         this.chartAccountMapper = chartAccountMapper;
@@ -148,11 +147,11 @@ public class LedgerMocker {
         return period.getId();
     }
 
-    /** 在 STANDARD 科目下插入零余额 ACTIVE 账户，正常方向取自科目。 */
+    /** 在 STANDARD 科目下插入 ACTIVE 账户身份，正常方向取自科目；余额由分录聚合。 */
     public long mockAccount(long ledgerBookId, String accountCode, OwnerType ownerType, String ownerId,
         BalanceBucket bucket) {
         ChartAccount chartAccount = chartAccountMapper.selectByChartAndCode(STANDARD_CHART_ID, accountCode);
-        Account account = new Account();
+        LedgerAccount account = new LedgerAccount();
         account.setId(idGenerator.nextId());
         account.setLedgerBookId(ledgerBookId);
         account.setChartAccountId(chartAccount.getId());
@@ -161,14 +160,9 @@ public class LedgerMocker {
         account.setBalanceBucket(bucket);
         account.setNormalSide(chartAccount.getNormalSide());
         account.setAccountStatus(AccountStatus.ACTIVE);
-        account.setDebitTotal(BigDecimal.ZERO);
-        account.setCreditTotal(BigDecimal.ZERO);
-        account.setNetBalance(BigDecimal.ZERO);
-        account.setLastJournalSequence(0L);
-        account.setBalanceVersion(0L);
         account.setCreateTime(now());
         account.setUpdateTime(now());
-        accountMapper.insert(account);
+        ledgerAccountMapper.insert(account);
         return account.getId();
     }
 

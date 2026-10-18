@@ -29,6 +29,8 @@ events:
   # 唯一经济事实（C1，design/04 §5）：ledger 过账、account 维护余额，Payload 含头与全部明细行。
   # 第 11a 步按实现核对：aggregateId 为 factId，aggregateVersion 取 t_economic_fact.fact_version（替代链递增）；Payload 字段定义见
   # paytech-billing-api 的 com.paytech.billing.api.fact.EconomicFactPayload。不同事实之间无顺序依赖，故 strictOrder=false。
+  # 第 11b 步接入消费方：ledger 的 EconomicFactRecordedPostingHandler（ledger.billing.p0..p3）与 account 的
+  # EconomicFactRecordedBalanceHandler（account.billing.p0..p3），两者均为 SHARED 事务、strictOrder=false。
   - eventType: EconomicFactRecorded
     schemaVersion: 1
     producer: billing
@@ -37,7 +39,8 @@ events:
     consumers: [ledger, account]
     strictOrder: false
     payloadSchemaRef: paytech-billing-api/event/EconomicFactRecorded/v1
-  # 余额桶移动（design/04 §5）：阶段 0 只定义 Schema，无生产调用方。
+  # 余额桶移动（design/04 §5）：阶段 0 只定义 Schema，无生产调用方。第 11b 步按实现核对：Payload 为 paytech-account-api 的
+  # com.paytech.account.api.event.BalanceMovedPayload，aggregateId 为账簿主体身份，aggregateVersion 为 t_balance_movement.movement_sequence。
   - eventType: BalanceMoved
     schemaVersion: 1
     producer: account

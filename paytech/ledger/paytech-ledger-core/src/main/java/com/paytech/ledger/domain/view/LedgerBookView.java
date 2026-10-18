@@ -22,6 +22,9 @@ public class LedgerBookView {
     /** 账簿币种。 */
     private String currency;
 
+    /** 采用的科目表主键。 */
+    private Long chartId;
+
     /** 采用的科目表代码。 */
     private String chartCode;
 

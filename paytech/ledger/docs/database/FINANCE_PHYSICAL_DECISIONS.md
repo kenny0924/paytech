@@ -9,6 +9,17 @@
 > `supersedes_fact_id`、`status`），`t_accounting_instruction.transaction_economics_id` 更名 `economic_fact_id`；跨服务关系只保留在逻辑模型。
 > 下表为逻辑模型统计；本页其余正文中的旧表名按上述更名理解。
 
+> **2026-10-18 第 11b 步账户与会计分库：** 按 [design/04 §3](../../../../requirements/20261017/architecture-V2骨架与模块搬迁/design/04-finance-account-ledger-split.md)，
+> 余额不再由 ledger 过账事务同步维护，而由 account 独立消费 `EconomicFactRecorded`。逻辑模型（84 表）不变，仍是本页第 4.12 节等
+> 场景与规则契约的基准；物理替换与追加只作用于服务模型（`scripts/pdmaner/finance/manifests/09-service-physical.mjs`）：
+> ledger 的 `t_account` 物理更名为只保存身份的 `t_ledger_account`（删除 `debit_total`、`credit_total`、`net_balance`、
+> `last_journal_sequence`、`balance_version`，沿用实体与字段 ID 和库内关系），并追加 `t_consumed_event`、
+> `t_consumed_aggregate_version`（31 表）；`mor_account` 新建 `t_account_balance`、`t_balance_applied_fact`、
+> `t_balance_applied_entry`、`t_balance_movement`（仅 Schema）、`t_balance_discrepancy` 与两张消费表，`t_compensation_event`
+> 改用 Foundation 现行模型（8 表）。第 4.12 节所述余额投影在服务库中由 account 的 `t_account_balance` 承担，ledger 余额一律按分录聚合。
+> 已初始化库的增量 SQL：`sql/changes/2026-10-18-ledger-account-split.sql` 与
+> `paytech/account/docs/database/sql/changes/2026-10-18-account-database.sql`。
+
 > **2026-09-11 模型切片：** 当前物理模型采用 [OE / Client / Pricing 四系统决定](../../../../agent-docs/decisions/2026-09-11-cct-commerce-oe-pricing-model.md)。本页历史正文中的数字 OE、Assignment、独立 Acceptance、Client 多 OE 合同与 Agreement-OE 结算条款由该决定精确取代；本页摘要描述当前模型产物，运行代码、SQL 执行及待迁移状态仅见 [当前实现台账](../../../../agent-docs/CURRENT_IMPLEMENTATION.md)。Risk 本期不动。
 
 最后更新：2026-09-05

@@ -1,6 +1,5 @@
 package com.paytech.ledger.test.base;
 
-
 import java.time.LocalDate;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -9,6 +8,7 @@ import com.paytech.account.api.enums.BalanceBucket;
 import com.paytech.account.api.enums.OwnerType;
 import com.paytech.ledger.api.request.ReviewPeriodCloseRequestBody;
 import com.paytech.ledger.api.request.StartPeriodCloseRequestBody;
+import com.paytech.ledger.core.enums.PeriodStatus;
 import com.paytech.ledger.test.builder.SubmitManualAdjustmentRequestBuilder;
 import com.paytech.ledger.test.checker.LedgerResponseChecker;
 
@@ -17,6 +17,8 @@ import com.paytech.ledger.test.checker.LedgerResponseChecker;
  * <li>沿用人工调整基类的 AE001/USD 账簿与当月 OPEN 期间，另准备收入（CLIENT_FEE_REVENUE）与费用（CHANNEL_FEE_EXPENSE）账户。</li>
  * <li>正常关账用例以实收资本作为对方科目，避免银行现金余额触发余额核对步骤失败。</li>
  * <li>请求体以 JSON 字段直接构造：关账与复核的 RequestBody 由并行实现提供，本基类只依赖 HTTP 契约。</li>
+ * <li>关账步骤 2、3 的外部依赖（第 11b 步）：每例默认 billing 无已发布事实、account 尚未处理任何事实且无非零渠道 / 银行账户，即“已追平”；
+ * 需要未追平或不可用的用例自行覆盖账簿配置。</li>
  */
 public abstract class AbstractPeriodCloseApiTest extends AbstractManualAdjustmentApiTest {
     /** 关账 Maker；与调整模板编制人相同不影响关账。 */
@@ -41,6 +43,8 @@ public abstract class AbstractPeriodCloseApiTest extends AbstractManualAdjustmen
     /** 每例准备账簿主体的收入与费用账户，并把当月期间设为非年末期间，使结果不随运行月份变化；年末用例自行改为年末。 */
     @BeforeEach
     void setUpPeriodCloseMocks() {
+        accountConsistency.mockCaughtUpByDefault();
+        billingProgress.mockNothingPublishedByDefault();
         makeCurrentPeriodNotYearEnd();
         revenueAccountId = ledgerMocker.mockAccount(ledger.getLedgerBookId(), REVENUE_CODE, OwnerType.OPERATING_ENTITY,
             ledger.getEntityNo(), BalanceBucket.NONE);
@@ -72,6 +76,19 @@ public abstract class AbstractPeriodCloseApiTest extends AbstractManualAdjustmen
     /** 当月期间一笔借记银行现金的调整，使银行账户余额非零。 */
     protected void postBankCash(String amount) {
         posted(adjustment().transfer(bankCashAccountId, capitalAccountId, amount));
+    }
+
+    /**
+     * 在已关闭的历史期间留下一条借贷不平的分录：先在 OPEN 历史期间以非渠道 / 银行账户过账，再篡改贷方行并关闭期间
+     * <li>步骤 2 只检查本期分录，本期关账因而通过步骤 2，但试算的期初余额借贷不平，在步骤 5 失败（第 11b 步起替代账户投影漂移场景）。</li>
+     */
+    protected void postUnbalancedPriorPeriod() {
+        long history = ledgerMocker.mockPeriod(ledger.getFiscalCalendarId(), 2020, 1, LocalDate.of(2020, 1, 1),
+            LocalDate.of(2020, 1, 31), PeriodStatus.OPEN);
+        long entryId = posted(SubmitManualAdjustmentRequestBuilder.template(ledger.getLedgerBookId(), history)
+            .transfer(capitalAccountId, liabilityAccountId, "10")).id("journalEntryId");
+        testMapper.updateJournalLineAmount(entryId, 2, "11");
+        testMapper.updatePeriodStatus(history, PeriodStatus.CLOSED.getCode());
     }
 
     /** 关账资源路径。 */

@@ -18,10 +18,10 @@ import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.processor.AbstractProcessor;
 import com.paytech.ledger.core.constant.AccountingCodes;
-import com.paytech.ledger.core.dal.dataobject.Account;
 import com.paytech.ledger.core.dal.dataobject.AccountingPeriod;
 import com.paytech.ledger.core.dal.dataobject.AdjustmentApproval;
 import com.paytech.ledger.core.dal.dataobject.FiscalCalendar;
+import com.paytech.ledger.core.dal.dataobject.LedgerAccount;
 import com.paytech.ledger.core.dal.dataobject.LedgerBook;
 import com.paytech.ledger.core.dal.dataobject.ManualAdjustment;
 import com.paytech.ledger.core.dal.dataobject.ManualAdjustmentLine;
@@ -34,12 +34,13 @@ import com.paytech.ledger.core.enums.EntrySide;
 import com.paytech.ledger.core.enums.PeriodStatus;
 import com.paytech.ledger.domain.ManualAdjustmentContentHash;
 import com.paytech.ledger.domain.SubmitManualAdjustmentContext;
-import com.paytech.ledger.domainservice.repository.AccountRepository;
 import com.paytech.ledger.domainservice.repository.AccountingPeriodRepository;
 import com.paytech.ledger.domainservice.repository.CurrencySpecRepository;
 import com.paytech.ledger.domainservice.repository.FiscalCalendarRepository;
+import com.paytech.ledger.domainservice.repository.LedgerAccountRepository;
 import com.paytech.ledger.domainservice.repository.LedgerBookRepository;
 import com.paytech.ledger.domainservice.service.ManualAdjustmentService;
+import com.paytech.ledger.domainservice.validator.adjustment.OwnerAccountAdjustmentRule;
 import com.paytech.ledger.service.processor.request.SubmitManualAdjustmentRequest;
 import com.paytech.ledger.service.processor.response.SubmitManualAdjustmentResponse;
 
@@ -50,6 +51,8 @@ import lombok.AllArgsConstructor;
  * <li>账簿、期间、币种、账户、精度与借贷平衡全部校验通过后，冻结内容摘要并保存为 SUBMITTED，同时写入 Maker 记录。</li>
  * <li>每次请求都是一笔新调整；HTTP 重复提交由 Gateway Idempotency-Key 处理，不做业务防重。</li>
  * <li>审批过账时会在锁内复验期间、账户与平衡，提交时的校验只用于尽早拒绝。</li>
+ * <li>调整行涉及 Client 或 Local Partner 账户时以 OWNER_ACCOUNT_ADJUSTMENT_FORBIDDEN 拒绝：影响 Owner 余额的调整必须经 billing 登记
+ * MANUAL_ADJUSTMENT 经济事实（design/04 §4）；纯科目重分类不受影响。</li>
  */
 @Component
 @AllArgsConstructor
@@ -59,7 +62,7 @@ public class SubmitManualAdjustmentProcessor
 
     private final Clock clock;
     private final IdGenerator idGenerator;
-    private final AccountRepository accountRepository;
+    private final LedgerAccountRepository ledgerAccountRepository;
     private final LedgerBookRepository ledgerBookRepository;
     private final CurrencySpecRepository currencySpecRepository;
     private final ManualAdjustmentService manualAdjustmentService;
@@ -117,13 +120,13 @@ public class SubmitManualAdjustmentProcessor
         }
     }
 
-    /** 每个明细账户必须存在、属于该账簿且开放。 */
+    /** 每个明细账户必须存在、属于该账簿且开放，且不得是 Client 或 Local Partner 账户。 */
     void checkAccounts(LedgerBook book, List<SubmitManualAdjustmentRequest.Line> lines) {
         List<Long> ids = lines.stream().map(SubmitManualAdjustmentRequest.Line::getAccountId).distinct().toList();
-        Map<Long, Account> accounts = accountRepository.findByIds(ids).stream()
-            .collect(Collectors.toMap(Account::getId, Function.identity()));
+        Map<Long, LedgerAccount> accounts = ledgerAccountRepository.findByIds(ids).stream()
+            .collect(Collectors.toMap(LedgerAccount::getId, Function.identity()));
         for (Long id : ids) {
-            Account account = accounts.get(id);
+            LedgerAccount account = accounts.get(id);
             if (account == null || !account.getLedgerBookId().equals(book.getId())) {
                 throw new BizCheckFailException("账户不存在或不属于账簿: 账户 " + id + ", 账簿 " + book.getId());
             }
@@ -131,6 +134,7 @@ public class SubmitManualAdjustmentProcessor
                 throw new BizCheckFailException("账户未开放过账: " + id + ", 状态 " + account.getAccountStatus().getCode());
             }
         }
+        OwnerAccountAdjustmentRule.checkNoOwnerAccounts("账簿 " + book.getId(), accounts.values());
     }
 
     /** 金额大于零、不超过币种精度且借贷平衡，返回借方（=贷方）合计。 */

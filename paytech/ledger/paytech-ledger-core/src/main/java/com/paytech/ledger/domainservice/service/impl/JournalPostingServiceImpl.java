@@ -15,7 +15,6 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.id.IdGenerator;
-import com.paytech.ledger.core.dal.dataobject.Account;
 import com.paytech.ledger.core.dal.dataobject.AccountingInstruction;
 import com.paytech.ledger.core.dal.dataobject.AccountingPeriod;
 import com.paytech.ledger.core.dal.dataobject.BookSequence;
@@ -23,16 +22,15 @@ import com.paytech.ledger.core.dal.dataobject.FiscalCalendar;
 import com.paytech.ledger.core.dal.dataobject.InstructionLine;
 import com.paytech.ledger.core.dal.dataobject.JournalEntry;
 import com.paytech.ledger.core.dal.dataobject.JournalLine;
+import com.paytech.ledger.core.dal.dataobject.LedgerAccount;
 import com.paytech.ledger.core.dal.dataobject.LedgerBook;
 import com.paytech.ledger.core.enums.AccountStatus;
 import com.paytech.ledger.core.enums.BookStatus;
 import com.paytech.ledger.core.enums.EntrySide;
 import com.paytech.ledger.core.enums.InstructionStatus;
 import com.paytech.ledger.core.enums.JournalEntryType;
-import com.paytech.ledger.core.enums.NormalSide;
 import com.paytech.ledger.core.enums.PeriodStatus;
 import com.paytech.ledger.domain.JournalPostingContext;
-import com.paytech.ledger.domainservice.repository.AccountRepository;
 import com.paytech.ledger.domainservice.repository.AccountingInstructionRepository;
 import com.paytech.ledger.domainservice.repository.AccountingPeriodRepository;
 import com.paytech.ledger.domainservice.repository.BookSequenceRepository;
@@ -40,18 +38,22 @@ import com.paytech.ledger.domainservice.repository.CurrencySpecRepository;
 import com.paytech.ledger.domainservice.repository.FiscalCalendarRepository;
 import com.paytech.ledger.domainservice.repository.JournalEntryRepository;
 import com.paytech.ledger.domainservice.repository.JournalLineRepository;
+import com.paytech.ledger.domainservice.repository.LedgerAccountRepository;
 import com.paytech.ledger.domainservice.repository.LedgerBookRepository;
 import com.paytech.ledger.domainservice.service.JournalPostingService;
 
 import lombok.AllArgsConstructor;
 
-/** 单账簿 Journal 过账；锁后全部使用当前读复验，不信任事务前的快照。 */
+/**
+ * 单账簿 Journal 过账；锁后全部使用当前读复验，不信任事务前的快照
+ * <li>第 11b 步起不锁账户、不写任何余额（design/04 §4）：Owner 余额由 account 服务独立消费经济事实维护，科目余额由分录聚合。</li>
+ */
 @Service
 @AllArgsConstructor
 public class JournalPostingServiceImpl implements JournalPostingService {
     private final Clock clock;
     private final IdGenerator idGenerator;
-    private final AccountRepository accountRepository;
+    private final LedgerAccountRepository ledgerAccountRepository;
     private final LedgerBookRepository ledgerBookRepository;
     private final JournalLineRepository journalLineRepository;
     private final BookSequenceRepository bookSequenceRepository;
@@ -61,7 +63,7 @@ public class JournalPostingServiceImpl implements JournalPostingService {
     private final AccountingPeriodRepository accountingPeriodRepository;
     private final AccountingInstructionRepository accountingInstructionRepository;
 
-    /** 校验期间与账簿 → 取序号 → 锁账户并校验平衡 → 写分录 → 更新余额 → 指令 POSTED。 */
+    /** 校验期间与账簿 → 取序号 → 校验账户存在且 ACTIVE → 平衡校验 → 写分录 → 指令 POSTED。 */
     @Override
     public JournalEntry post(JournalPostingContext context) {
         if (!TransactionSynchronizationManager.isActualTransactionActive()) {
@@ -73,10 +75,9 @@ public class JournalPostingServiceImpl implements JournalPostingService {
         }
         LedgerBook book = checkPostable(context, instruction.getLedgerBookId());
         long journalSequence = nextJournalSequence(book.getId());
-        Map<Long, Account> accounts = lockAccounts(book, context.getLines());
+        checkAccounts(book, context.getLines());
         checkBalanced(book, context.getLines());
         JournalEntry entry = writeJournal(context, journalSequence);
-        applyBalances(accounts, context.getLines(), journalSequence);
         accountingInstructionRepository.updateStatus(instruction, InstructionStatus.POSTED);
         return entry;
     }
@@ -134,15 +135,15 @@ public class JournalPostingServiceImpl implements JournalPostingService {
         return journalSequence;
     }
 
-    /** 按主键升序排他锁定全部账户，并确认账户存在、开放且属于本账簿。 */
-    Map<Long, Account> lockAccounts(LedgerBook book, List<InstructionLine> lines) {
+    /** 读取全部账户（不加锁，账户身份只增不改），确认账户存在、开放且属于本账簿。 */
+    void checkAccounts(LedgerBook book, List<InstructionLine> lines) {
         List<Long> ids = lines.stream().map(InstructionLine::getAccountId).distinct().sorted().toList();
-        Map<Long, Account> accounts = new HashMap<>();
-        for (Account account : accountRepository.lockByIds(ids)) {
+        Map<Long, LedgerAccount> accounts = new HashMap<>();
+        for (LedgerAccount account : ledgerAccountRepository.findByIds(ids)) {
             accounts.put(account.getId(), account);
         }
         for (Long id : ids) {
-            Account account = accounts.get(id);
+            LedgerAccount account = accounts.get(id);
             if (account == null || !account.getLedgerBookId().equals(book.getId())) {
                 throw new BizCheckFailException("账户不存在或不属于账簿: 账户 " + id + ", 账簿 " + book.getId());
             }
@@ -150,7 +151,6 @@ public class JournalPostingServiceImpl implements JournalPostingService {
                 throw new BizCheckFailException("账户未开放过账: " + id + ", 状态 " + account.getAccountStatus().getCode());
             }
         }
-        return accounts;
     }
 
     /** 每行金额大于零且不超过币种精度，借贷合计相等且大于零。 */
@@ -204,23 +204,5 @@ public class JournalPostingServiceImpl implements JournalPostingService {
         line.setAmount(source.getAmount());
         line.setCreateTime(now);
         return line;
-    }
-
-    /** 按主键升序逐账户累加本分录金额，并按账户冻结的正常方向重算净余额。 */
-    void applyBalances(Map<Long, Account> accounts, List<InstructionLine> lines, long journalSequence) {
-        for (Long accountId : accounts.keySet().stream().sorted().toList()) {
-            Account account = accounts.get(accountId);
-            BigDecimal debit = account.getDebitTotal().add(sum(lines, accountId, EntrySide.DEBIT));
-            BigDecimal credit = account.getCreditTotal().add(sum(lines, accountId, EntrySide.CREDIT));
-            BigDecimal net =
-                account.getNormalSide() == NormalSide.DEBIT ? debit.subtract(credit) : credit.subtract(debit);
-            accountRepository.applyPosting(account, debit, credit, net, journalSequence);
-        }
-    }
-
-    /** 汇总一个账户在本分录中某一方向的金额。 */
-    BigDecimal sum(List<InstructionLine> lines, long accountId, EntrySide side) {
-        return lines.stream().filter(line -> line.getAccountId() == accountId && line.getEntrySide() == side)
-            .map(InstructionLine::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }

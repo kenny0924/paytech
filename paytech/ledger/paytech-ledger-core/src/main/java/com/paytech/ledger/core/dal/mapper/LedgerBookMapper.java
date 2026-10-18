@@ -20,6 +20,9 @@ public interface LedgerBookMapper {
     /** 按主键读取。 */
     LedgerBook selectById(@Param("id") long id);
 
+    /** 按主键读取账簿与其科目表代码，不存在返回空。 */
+    LedgerBookView selectView(@Param("id") long id);
+
     /** 按主体类型、主体标识和币种读取唯一账簿。 */
     LedgerBook selectByEntity(@Param("entityType") LedgerEntityType entityType, @Param("entityId") String entityId,
         @Param("currency") String currency);

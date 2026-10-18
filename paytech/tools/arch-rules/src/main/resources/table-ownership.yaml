@@ -3,22 +3,22 @@
 # 255 source tables, 17 databases, 265 physical tables.
 # Retained: platform-support mor_platform from paytech/platform-support/docs/database/sql/platform-support-schema.sql.
 # 56 retained-service tables added on top of design 03 (not part of the §4.2 count).
-# 1 step-added tables (approved refactor-step designs, e.g. design/05 t_card_material_ticket; not part of the §4.2 count).
+# 6 step-added tables (approved refactor-step designs, e.g. design/05 t_card_material_ticket; not part of the §4.2 count).
 # Structure: services.<service>.<database> = tables owned (or copied / per-database infrastructure);
-# Renamed: t_transaction_economics -> t_economic_fact, t_transaction_economic_component -> t_economic_fact_line, t_transaction_economic_comp_link -> t_economic_fact_line_link.
+# Renamed: t_transaction_economics -> t_economic_fact, t_transaction_economic_component -> t_economic_fact_line, t_transaction_economic_comp_link -> t_economic_fact_line_link, t_account -> t_ledger_account.
 sharedInfrastructureTables:
   - t_consumed_event
   - t_consumed_aggregate_version
 # Shared-database transition reads (not owned, not counted); removed when the service gets its own database.
-transitionalSharedReads:
-  account:
-    mor_ledger:
-      - t_account
-      - t_chart_account
-      - t_ledger_book
+transitionalSharedReads: {}
 services:
   account:
     mor_account:
+      - t_account_balance
+      - t_balance_applied_entry
+      - t_balance_applied_fact
+      - t_balance_discrepancy
+      - t_balance_movement
       - t_compensation_event
   acquiring:
     mor_acquiring:
@@ -160,7 +160,6 @@ services:
       - t_dispute_submission_request
   ledger:
     mor_ledger:
-      - t_account
       - t_accounting_instruction
       - t_accounting_period
       - t_accounting_rule_bundle
@@ -180,6 +179,7 @@ services:
       - t_instruction_line
       - t_journal_entry
       - t_journal_line
+      - t_ledger_account
       - t_ledger_book
       - t_ledger_period_balance
       - t_manual_adjustment

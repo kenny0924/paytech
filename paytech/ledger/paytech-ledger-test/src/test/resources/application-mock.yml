@@ -1,5 +1,5 @@
 # ledger-service 配置字段清单，同时作为 Mock 测试的可运行配置。
-# 只连接仓库 local-environment 的 Loopback MySQL/Redis；固定凭据为隔离本地测试账号，可用环境变量覆盖。
+# 只连接仓库 local-environment 的 Loopback MySQL/Redis/RabbitMQ；固定凭据为隔离本地测试账号，可用环境变量覆盖。
 
 # ==================== 中间件、框架与公共组件配置 ====================
 
@@ -8,6 +8,10 @@ server:
   port: 0
 
 spring:
+  config:
+    # 复用仓库已启动的本地 RabbitMQ 凭据；唯一锚点 paytech.local-environment.dir 由父 POM 经 Surefire 注入（10 §4.4）。
+    import:
+      - "optional:file:${paytech.local-environment.dir}/.env.local[.properties]"
   application:
     name: ledger-service
   main:
@@ -31,6 +35,32 @@ spring:
       password: "${LEDGER_TEST_REDIS_PASSWORD:${PAYTECH_REDIS_PASSWORD:${MOR_REDIS_PASSWORD:c4e99fe36176a66ece55b0c23e5af0be488d409f2e89f6c5}}}"
       connect-timeout: 2s
       timeout: 2s
+  # 仓库 local-environment 的本机 RabbitMQ；凭据只来自 .env.local 或同名环境变量。测试扮演 billing 向 billing.events 发布，需要发布确认。
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: "${MOR_RABBITMQ_USER}"
+    password: "${MOR_RABBITMQ_PASSWORD}"
+    virtual-host: "${MOR_RABBITMQ_VHOST:/mor-local}"
+    connection-timeout: 2s
+    publisher-confirm-type: correlated
+    publisher-returns: true
+  # account（consistency）与 billing（pending）由 EnableMockHttpServer 的随机 Loopback 端口承载，真实客户端直连该地址。
+  http:
+    clients:
+      imperative:
+        factory: jdk
+    serviceclient:
+      account-service:
+        base-url: "${ledger.test.external.base-url}"
+        connect-timeout: 2s
+        read-timeout: 5s
+        redirects: dont-follow
+      billing-service:
+        base-url: "${ledger.test.external.base-url}"
+        connect-timeout: 2s
+        read-timeout: 5s
+        redirects: dont-follow
 
 mybatis:
   mapper-locations: classpath*:mapper/**/*.xml
@@ -43,6 +73,15 @@ redis:
     enabled: true
     threads: 4
     netty-threads: 4
+
+# paytech-messaging 消费端：ledger.billing.hash 与 ledger.billing.p0..p3；重投退避缩短到 200ms。
+messaging:
+  consumer:
+    service: ledger
+    retry-backoff: 200ms
+  consumers:
+    billing:
+      partitions: 4
 
 management:
   server:
@@ -83,3 +122,7 @@ ledger:
     # Snowflake Region / Worker 标识；生产无默认值且必填，修改需重启。测试进程固定 0/0。
     region-id: 0
     worker-id: 0
+  test:
+    external:
+      # 测试专用运行时字段；EnableMockHttpServer 在创建真实客户端之前注入 Loopback 随机端口。
+      base-url: ""

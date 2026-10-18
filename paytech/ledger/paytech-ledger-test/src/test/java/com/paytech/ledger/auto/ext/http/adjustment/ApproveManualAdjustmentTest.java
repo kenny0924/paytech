@@ -11,7 +11,11 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.paytech.account.api.constant.StandardAccountCodes;
+import com.paytech.account.api.enums.BalanceBucket;
+import com.paytech.account.api.enums.OwnerType;
 import com.paytech.ledger.api.ManualAdjustmentApi;
+import com.paytech.ledger.api.enums.LedgerErrorCode;
 import com.paytech.ledger.api.request.ReviewManualAdjustmentRequestBody;
 import com.paytech.ledger.core.dal.dataobject.AccountingInstruction;
 import com.paytech.ledger.core.dal.dataobject.JournalEntry;
@@ -56,24 +60,38 @@ class ApproveManualAdjustmentTest extends AbstractManualAdjustmentApiTest {
             () -> assertEquals(bankCashAccountId, lines.get(0).getAccountId()));
         ledgerChecker.assertBalancedJournals(ledger.getLedgerBookId(), 1)
             .assertAccount(bankCashAccountId, "100", "0", "100", 1L)
-            .assertAccount(capitalAccountId, "0", "100", "100", 1L)
-            .assertProjectionMatchesJournal(bankCashAccountId).assertProjectionMatchesJournal(capitalAccountId);
+            .assertAccount(capitalAccountId, "0", "100", "100", 1L);
         assertManualInstruction(id, InstructionStatus.POSTED);
         assertEquals(AdjustmentStatus.POSTED, testMapper.selectAdjustment(id).getStatus());
     }
 
     @Test
     void test_reverseBalanceIsNegativeAndMatchesJournal() {
-        var first = submitted(adjustment().transfer(clientAvailableAccountId, bankCashAccountId, "30"));
+        var first = submitted(adjustment().transfer(liabilityAccountId, bankCashAccountId, "30"));
         approve(first.id("manualAdjustmentId"), CHECKER_ID, first.text("contentHash")).assertSuccess(200);
-        var second = submitted(adjustment().transfer(bankCashAccountId, clientAvailableAccountId, "10.25"));
+        var second = submitted(adjustment().transfer(bankCashAccountId, liabilityAccountId, "10.25"));
         approve(second.id("manualAdjustmentId"), CHECKER_ID, second.text("contentHash")).assertSuccess(200)
             .assertText("journalSequence", "2");
 
         ledgerChecker.assertBalancedJournals(ledger.getLedgerBookId(), 2)
-            .assertAccount(clientAvailableAccountId, "30", "10.25", "-19.75", 2L)
-            .assertAccount(bankCashAccountId, "10.25", "30", "-19.75", 2L)
-            .assertProjectionMatchesJournal(clientAvailableAccountId).assertProjectionMatchesJournal(bankCashAccountId);
+            .assertAccount(liabilityAccountId, "30", "10.25", "-19.75", 2L)
+            .assertAccount(bankCashAccountId, "10.25", "30", "-19.75", 2L);
+    }
+
+    /** 第 11b 步前已提交、涉及 Client 账户的存量调整：批准时同样以专用错误码拒绝，调整保持 SUBMITTED、不写分录。 */
+    @Test
+    void test_legacyOwnerAccountAdjustmentRejectedOnApprove() {
+        long client = ledgerMocker.mockAccount(ledger.getLedgerBookId(), StandardAccountCodes.CLIENT_PAYABLE,
+            OwnerType.CLIENT, "1001", BalanceBucket.AVAILABLE);
+        var submit = submitted(adjustment().transfer(bankCashAccountId, liabilityAccountId, "10"));
+        long id = submit.id("manualAdjustmentId");
+        testMapper.updateAdjustmentLineAccount(id, 2, client);
+
+        approve(id, CHECKER_ID, submit.text("contentHash")).assertRejectedWithCode(
+            LedgerErrorCode.OWNER_ACCOUNT_ADJUSTMENT_FORBIDDEN.getCode(), "调整 " + id);
+
+        assertEquals(AdjustmentStatus.SUBMITTED, testMapper.selectAdjustment(id).getStatus());
+        ledgerChecker.assertBalancedJournals(ledger.getLedgerBookId(), 0);
     }
 
     @Test

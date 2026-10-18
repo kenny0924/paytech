@@ -1,6 +1,5 @@
 package com.paytech.ledger.domainservice.service.impl;
 
-import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -19,7 +18,6 @@ import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
-import com.paytech.ledger.core.dal.dataobject.Account;
 import com.paytech.ledger.core.dal.dataobject.AccountingInstruction;
 import com.paytech.ledger.core.dal.dataobject.AccountingPeriod;
 import com.paytech.ledger.core.dal.dataobject.BookSequence;
@@ -27,6 +25,7 @@ import com.paytech.ledger.core.dal.dataobject.ChartAccount;
 import com.paytech.ledger.core.dal.dataobject.CloseApproval;
 import com.paytech.ledger.core.dal.dataobject.CloseStep;
 import com.paytech.ledger.core.dal.dataobject.InstructionLine;
+import com.paytech.ledger.core.dal.dataobject.LedgerAccount;
 import com.paytech.ledger.core.dal.dataobject.LedgerBook;
 import com.paytech.ledger.core.dal.dataobject.PeriodClose;
 import com.paytech.ledger.core.dal.dataobject.PeriodCloseBook;
@@ -43,7 +42,6 @@ import com.paytech.ledger.domain.PeriodReopenContext;
 import com.paytech.ledger.domain.PeriodReopenPlan;
 import com.paytech.ledger.domain.view.PeriodCloseDetailView;
 import com.paytech.ledger.domain.view.PeriodCloseView;
-import com.paytech.ledger.domainservice.repository.AccountRepository;
 import com.paytech.ledger.domainservice.repository.AccountingInstructionRepository;
 import com.paytech.ledger.domainservice.repository.AccountingPeriodRepository;
 import com.paytech.ledger.domainservice.repository.BookSequenceRepository;
@@ -52,6 +50,7 @@ import com.paytech.ledger.domainservice.repository.CloseApprovalRepository;
 import com.paytech.ledger.domainservice.repository.CloseStepRepository;
 import com.paytech.ledger.domainservice.repository.InstructionLineRepository;
 import com.paytech.ledger.domainservice.repository.JournalEntryRepository;
+import com.paytech.ledger.domainservice.repository.LedgerAccountRepository;
 import com.paytech.ledger.domainservice.repository.PeriodCloseBookRepository;
 import com.paytech.ledger.domainservice.repository.PeriodCloseRepository;
 import com.paytech.ledger.domainservice.service.PeriodCloseService;
@@ -64,9 +63,12 @@ import lombok.AllArgsConstructor;
 public class PeriodCloseServiceImpl implements PeriodCloseService {
     private static final int ACTIVE_SLOT = 1;
 
+    /** 关账步骤 3 核对的渠道与银行账户核算对象类型。 */
+    private static final List<OwnerType> TREASURY_OWNERS = List.of(OwnerType.CHANNEL_ACCOUNT, OwnerType.CASH_ACCOUNT);
+
     private final Clock clock;
     private final IdGenerator idGenerator;
-    private final AccountRepository accountRepository;
+    private final LedgerAccountRepository ledgerAccountRepository;
     private final CloseStepRepository closeStepRepository;
     private final TransactionTemplate transactionTemplate;
     private final PeriodCloseRepository periodCloseRepository;
@@ -146,24 +148,24 @@ public class PeriodCloseServiceImpl implements PeriodCloseService {
 
     /** 主体自身的本期损益账户；身份唯一键保护并发创建。 */
     @Override
-    public Account ensureResultAccount(LedgerBook book, long resultChartAccountId) {
+    public LedgerAccount ensureResultAccount(LedgerBook book, long resultChartAccountId) {
         requireTransaction();
         OwnerType ownerType = book.getEntityType() == LedgerEntityType.OPERATING_ENTITY ? OwnerType.OPERATING_ENTITY
             : OwnerType.FINANCE_ENTITY;
-        Account existing = accountRepository.findByIdentity(book.getId(), resultChartAccountId, ownerType,
+        LedgerAccount existing = ledgerAccountRepository.findByIdentity(book.getId(), resultChartAccountId, ownerType,
             book.getEntityId(), BalanceBucket.NONE);
         if (existing != null) {
             return existing;
         }
-        Account account = newAccount(book, chartAccountRepository.findById(resultChartAccountId), ownerType);
-        accountRepository.insert(account);
+        LedgerAccount account = newAccount(book, chartAccountRepository.findById(resultChartAccountId), ownerType);
+        ledgerAccountRepository.insert(account);
         return account;
     }
 
-    /** 构造零余额 ACTIVE 账户，正常方向取自科目。 */
-    Account newAccount(LedgerBook book, ChartAccount chartAccount, OwnerType ownerType) {
+    /** 构造 ACTIVE 账户身份，正常方向取自科目；余额由分录聚合得出。 */
+    LedgerAccount newAccount(LedgerBook book, ChartAccount chartAccount, OwnerType ownerType) {
         Instant now = now();
-        Account account = new Account();
+        LedgerAccount account = new LedgerAccount();
         account.setId(idGenerator.nextId());
         account.setLedgerBookId(book.getId());
         account.setChartAccountId(chartAccount.getId());
@@ -172,11 +174,6 @@ public class PeriodCloseServiceImpl implements PeriodCloseService {
         account.setBalanceBucket(BalanceBucket.NONE);
         account.setNormalSide(chartAccount.getNormalSide());
         account.setAccountStatus(AccountStatus.ACTIVE);
-        account.setDebitTotal(BigDecimal.ZERO);
-        account.setCreditTotal(BigDecimal.ZERO);
-        account.setNetBalance(BigDecimal.ZERO);
-        account.setLastJournalSequence(0L);
-        account.setBalanceVersion(0L);
         account.setCreateTime(now);
         account.setUpdateTime(now);
         return account;
@@ -368,10 +365,10 @@ public class PeriodCloseServiceImpl implements PeriodCloseService {
         return periodCloseRepository.countPendingCompensationEvents();
     }
 
-    /** 非零余额的渠道与银行账户计数。 */
+    /** 分录聚合净额非零的渠道与银行账户计数（ledger 本库 Journal，不读余额投影）。 */
     @Override
     public long countNonZeroTreasuryAccounts(PeriodCloseContext context) {
-        return periodCloseRepository.countNonZeroTreasuryAccounts(context.bookIds());
+        return ledgerAccountRepository.countNonZero(context.bookIds(), TREASURY_OWNERS);
     }
 
     /** 期间存在后分页读取。 */

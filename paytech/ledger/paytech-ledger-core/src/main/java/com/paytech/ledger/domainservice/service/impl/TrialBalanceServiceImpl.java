@@ -6,8 +6,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -17,7 +15,6 @@ import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
-import com.paytech.ledger.core.dal.dataobject.Account;
 import com.paytech.ledger.core.dal.dataobject.AccountingPeriod;
 import com.paytech.ledger.core.dal.dataobject.BookSequence;
 import com.paytech.ledger.core.dal.dataobject.LedgerBook;
@@ -32,13 +29,11 @@ import com.paytech.ledger.core.enums.TrialExceptionType;
 import com.paytech.ledger.core.enums.TrialReferenceType;
 import com.paytech.ledger.domain.TrialBalanceContentHash;
 import com.paytech.ledger.domain.TrialBalanceContext;
-import com.paytech.ledger.domain.view.AccountProjectionCheckView;
 import com.paytech.ledger.domain.view.TrialBalanceAggregateView;
 import com.paytech.ledger.domain.view.TrialBalanceDetailView;
 import com.paytech.ledger.domain.view.TrialBalanceFindingView;
 import com.paytech.ledger.domain.view.TrialBalanceLineView;
 import com.paytech.ledger.domain.view.TrialBalanceRunView;
-import com.paytech.ledger.domainservice.repository.AccountRepository;
 import com.paytech.ledger.domainservice.repository.AccountingPeriodRepository;
 import com.paytech.ledger.domainservice.repository.BookSequenceRepository;
 import com.paytech.ledger.domainservice.repository.CurrencySpecRepository;
@@ -54,7 +49,9 @@ import lombok.AllArgsConstructor;
 
 /**
  * 试算平衡执行与查询
- * <li>执行：序号行共享锁 → 聚合科目余额 → 核对账户投影 → 计算借贷合计与异常 → 冻结摘要 → 写入终态；只在 SUCCEEDED 时刷新期间余额。</li>
+ * <li>执行：序号行共享锁 → 聚合科目余额 → 计算借贷合计与异常 → 冻结摘要 → 写入终态；只在 SUCCEEDED 时刷新期间余额。</li>
+ * <li>第 11b 步起 ledger 不保存账户余额投影（design/04 §4、§6）：试算不再做账户投影核对；Owner 余额与分录的一致性由 account 日终核对与关账步骤 2
+ * 的 consistency 检查承担。</li>
  * <li>查询：不加锁、不开事务，金额按账簿币种精度补齐。</li>
  */
 @Service
@@ -62,7 +59,6 @@ import lombok.AllArgsConstructor;
 public class TrialBalanceServiceImpl implements TrialBalanceService {
     private final Clock clock;
     private final IdGenerator idGenerator;
-    private final AccountRepository accountRepository;
     private final TransactionTemplate transactionTemplate;
     private final LedgerBookRepository ledgerBookRepository;
     private final JournalLineRepository journalLineRepository;
@@ -78,40 +74,25 @@ public class TrialBalanceServiceImpl implements TrialBalanceService {
     @Override
     public void run(TrialBalanceContext context) {
         transactionTemplate.executeWithoutResult(
-            status -> execute(context, lockWatermark(context.getBook().getId()), false));
+            status -> execute(context, lockWatermark(context.getBook().getId())));
     }
 
-    /** 与 run 相同的计算，只是水位由调用方给出，并排除水位之后已有过账的账户的投影核对。 */
+    /** 与 run 相同的计算，只是水位由调用方给出。 */
     @Override
     public void runAt(TrialBalanceContext context, long asOfSequence) {
-        transactionTemplate.executeWithoutResult(status -> execute(context, asOfSequence, true));
+        transactionTemplate.executeWithoutResult(status -> execute(context, asOfSequence));
     }
 
-    /** 聚合科目余额、核对账户投影、计算合计与异常并保存终态；必须在事务内调用。 */
-    void execute(TrialBalanceContext context, long asOfSequence, boolean skipAdvancedAccounts) {
+    /** 聚合科目余额、计算合计与异常并保存终态；必须在事务内调用。 */
+    void execute(TrialBalanceContext context, long asOfSequence) {
         Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
         AccountingPeriod period = context.getPeriod();
         List<TrialBalanceAggregateView> aggregates = journalLineRepository.findTrialAggregates(
             context.getBook().getId(), asOfSequence, period.getStartDate(), period.getEndDate());
         List<TrialBalanceLine> lines = buildLines(context, aggregates, now);
-        List<TrialBalanceException> exceptions = projectionExceptions(context, asOfSequence, now);
-        if (skipAdvancedAccounts) {
-            exceptions = excludeAdvancedAccounts(exceptions, asOfSequence);
-        }
+        List<TrialBalanceException> exceptions = new ArrayList<>();
         TrialBalanceRun run = buildRun(context, asOfSequence, aggregates, lines, exceptions, now);
         saveRun(context, run, lines, exceptions);
-    }
-
-    /** 去掉最后过账序号已超过水位的账户异常：其投影包含水位之后的分录，无法在该水位比较。 */
-    List<TrialBalanceException> excludeAdvancedAccounts(List<TrialBalanceException> exceptions, long asOfSequence) {
-        List<Long> accountIds = exceptions.stream().map(TrialBalanceException::getReferenceId).toList();
-        if (accountIds.isEmpty()) {
-            return exceptions;
-        }
-        Set<Long> advanced = accountRepository.findByIds(accountIds).stream()
-            .filter(account -> account.getLastJournalSequence() > asOfSequence).map(Account::getId)
-            .collect(Collectors.toSet());
-        return new ArrayList<>(exceptions.stream().filter(e -> !advanced.contains(e.getReferenceId())).toList());
     }
 
     /** 以共享锁读取账簿序号行，水位为下一可分配序号减一。 */
@@ -140,22 +121,6 @@ public class TrialBalanceServiceImpl implements TrialBalanceService {
             lines.add(line);
         }
         return lines;
-    }
-
-    /** 账户投影与水位内全量分录重算不一致时记录总账异常，差额取三项绝对差的最大值。 */
-    List<TrialBalanceException> projectionExceptions(TrialBalanceContext context, long asOfSequence, Instant now) {
-        List<TrialBalanceException> exceptions = new ArrayList<>();
-        for (AccountProjectionCheckView check : accountRepository.findProjectionChecks(context.getBook().getId(),
-            asOfSequence)) {
-            BigDecimal netDiff = check.getNetBalance()
-                .subtract(net(check.getNormalSide(), check.getJournalDebit(), check.getJournalCredit())).abs();
-            BigDecimal difference = check.getDebitTotal().subtract(check.getJournalDebit()).abs()
-                .max(check.getCreditTotal().subtract(check.getJournalCredit()).abs()).max(netDiff);
-            if (difference.signum() != 0) {
-                exceptions.add(exception(TrialReferenceType.ACCOUNT, check.getAccountId(), difference, context, now));
-            }
-        }
-        return exceptions;
     }
 
     /** 计算借贷合计；不等时追加科目表级异常；有异常即 FAILED；冻结内容摘要。 */

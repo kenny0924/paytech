@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component;
 import com.paytech.account.api.enums.BalanceBucket;
 import com.paytech.account.api.enums.OwnerRole;
 import com.paytech.account.api.enums.OwnerType;
-import com.paytech.account.api.rule.AccountIdentityRule;
 import com.paytech.billing.api.enums.AmountSource;
 import com.paytech.billing.api.enums.AutoInstructionType;
 import com.paytech.foundation.common.enums.CodeEnum;
@@ -35,6 +34,7 @@ import com.paytech.ledger.domainservice.repository.AccountingRuleBundleVerReposi
 import com.paytech.ledger.domainservice.repository.ChartAccountRepository;
 import com.paytech.ledger.domainservice.repository.ChartOfAccountsRepository;
 import com.paytech.ledger.domainservice.service.AccountingRuleService;
+import com.paytech.ledger.domainservice.validator.account.AccountIdentityRule;
 import com.paytech.ledger.service.processor.request.CreateRuleVersionRequest;
 
 import lombok.AllArgsConstructor;

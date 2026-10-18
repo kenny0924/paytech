@@ -236,9 +236,19 @@ test("Finance service artifacts are exact per-database projections of the logica
   assert.deepEqual(owners.get("t_compensation_event"), [...FINANCE_SERVICES], "补偿事件每库一份");
   assert.deepEqual(owners.get("t_currency_spec"), ["ledger", "billing"], "币种规则只在 ledger 与 billing 持只读副本");
   assert.ok(!owners.has("t_command_idempotency"), "t_command_idempotency 已删除");
-  assert.equal(owners.size, 84 - 1, "其余每张逻辑表恰属一个服务库");
+  // 第 11b 步服务物理表（design/04 §3）：ledger 的 t_account 物理更名为 t_ledger_account；两张 paytech-messaging 消费表在
+  // ledger 与 account 各一份；account 另有五张余额表。逻辑模型仍为 84 张表。
+  assert.ok(!owners.has("t_account"), "ledger 服务库的统一记账账户已物理更名");
+  assert.deepEqual(owners.get("t_ledger_account"), ["ledger"], "会计科目账户只在 ledger");
+  for (const table of ["t_consumed_event", "t_consumed_aggregate_version"]) {
+    assert.deepEqual(owners.get(table), ["ledger", "account"], `${table} 在 ledger 与 account 各一份`);
+  }
+  const accountBalanceTables = ["t_account_balance", "t_balance_applied_fact", "t_balance_applied_entry",
+    "t_balance_movement", "t_balance_discrepancy"];
+  for (const table of accountBalanceTables) assert.deepEqual(owners.get(table), ["account"], `${table} 只在 account`);
+  assert.equal(owners.size, 84 - 1 + 2 + accountBalanceTables.length, "其余每张逻辑表恰属一个服务库");
   for (const [table, services] of owners) {
-    if (!["t_compensation_event", "t_currency_spec"].includes(table)) {
+    if (!["t_compensation_event", "t_currency_spec", "t_consumed_event", "t_consumed_aggregate_version"].includes(table)) {
       assert.equal(services.length, 1, `${table} 只能属于一个服务库`);
     }
   }

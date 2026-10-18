@@ -1,5 +1,7 @@
 package com.paytech.ledger.domainservice.repository.impl;
 
+import java.util.List;
+
 import org.springframework.stereotype.Repository;
 
 import com.paytech.ledger.core.dal.dataobject.ChartAccount;
@@ -13,6 +15,12 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class ChartAccountRepositoryImpl implements ChartAccountRepository {
     private final ChartAccountMapper mapper;
+
+    /** 按主键升序读取一组科目；空集合返回空列表。 */
+    @Override
+    public List<ChartAccount> findByIds(List<Long> ids) {
+        return ids.isEmpty() ? List.of() : mapper.selectByIds(ids);
+    }
 
     /** 按主键读取科目，不存在返回空。 */
     @Override

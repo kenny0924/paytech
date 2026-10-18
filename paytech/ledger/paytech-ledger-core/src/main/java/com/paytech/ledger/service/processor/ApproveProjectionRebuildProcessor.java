@@ -16,8 +16,8 @@ import lombok.AllArgsConstructor;
 
 /**
  * 批准试算异常的投影重建（Checker）
- * <li>同一异常的批准按资源锁串行；状态迁移与投影写回仍以条件更新和余额版本 CAS 为最终防线。</li>
- * <li>复核人必须不同于编制人；只重建引用账户的投影，不写 Journal、不改变序号。</li>
+ * <li>同一异常的批准按资源锁串行；状态迁移仍以条件更新为最终防线。</li>
+ * <li>复核人必须不同于编制人；只写 t_trial_balance_exception（冻结引用账户按分录聚合的值），不写 Journal、不写余额、不改变序号（design/04 §4）。</li>
  */
 @Component
 @AllArgsConstructor

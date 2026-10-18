@@ -20,7 +20,7 @@ export function field(
   nullability,
   defName,
   description,
-  { values = null, source = null, primaryKey = false, defaultValue = "" } = {},
+  { values = null, source = null, primaryKey = false, defaultValue = "", ascii = false } = {},
 ) {
   invariant(/^[a-z][a-z0-9_]*$/u.test(defKey), `非法字段名：${defKey}`);
   invariant(["NN", "N"].includes(nullability), `非法空值标记：${defKey}.${nullability}`);
@@ -37,6 +37,8 @@ export function field(
     closedValues: values ? Object.freeze([...values]) : null,
     openSource: source,
     defaultValue,
+    // 第 11b 步服务物理表：显式声明 ascii/ascii_bin 编码（逻辑模型仍按字段名约定）。
+    ascii,
   });
 }
 
@@ -57,6 +59,11 @@ function index(defKey, unique, fields) {
   invariant(defKey.length <= 32, `索引名超过 32 字符：${defKey}`);
   invariant(fields.length > 0, `索引没有字段：${defKey}`);
   return Object.freeze({ defKey, unique, fields: Object.freeze([...fields]) });
+}
+
+/** 带显式注释的访问索引（第 11b 步：paytech-messaging 标准表沿用其他服务 Schema 的索引注释）。 */
+export function commentedAccessIndex(defKey, comment, ...fields) {
+  return Object.freeze({ ...index(defKey, false, fields.flat()), comment });
 }
 
 export function relation(childField, parentTable, parentField, cardinality = "n:1") {

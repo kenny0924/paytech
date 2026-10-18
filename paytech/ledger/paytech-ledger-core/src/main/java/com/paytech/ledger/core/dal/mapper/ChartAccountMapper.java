@@ -1,5 +1,7 @@
 package com.paytech.ledger.core.dal.mapper;
 
+import java.util.List;
+
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -11,6 +13,9 @@ public interface ChartAccountMapper {
 
     /** 按主键读取。 */
     ChartAccount selectById(@Param("id") long id);
+
+    /** 按主键升序读取一组科目。 */
+    List<ChartAccount> selectByIds(@Param("ids") List<Long> ids);
 
     /** 按科目表和科目代码读取。 */
     ChartAccount selectByChartAndCode(@Param("chartId") long chartId, @Param("accountCode") String accountCode);
