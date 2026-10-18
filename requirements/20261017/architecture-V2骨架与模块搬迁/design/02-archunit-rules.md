@@ -16,6 +16,7 @@
 | R10 | 枚举常量之间保留一个空行（现行规范，静态检查以文本规则实现） | 全部 | DEVELOPMENT_CONVENTIONS |
 | R11 | 卡域：除 `paytech-card-core` 与 `paytech-card-app` 外，任何模块的 Mapper XML 不得引用 `t_payment_card*`、`t_payment_stored_card`；任何模块不得 import `com.paytech.card.core.crypto` | 全部 | D10、PCI |
 | R12 | 补偿事件 Handler 只能注册在 `-core`，且 `eventType` 必须在本服务的事件目录文件中登记 | 全部 | 08 |
+| R13 | Reactor 内任何模块声明的 `com.paytech` 依赖（含 test 范围）必须能归入 Reactor 命名体系（Build / Foundation / Tool / 服务目录）；旧工程坐标（如 `platform-support-api`）只会从本地仓库解析到过期制品，POM 层直接拒绝 | 全部（依赖图） | D42；2026-10-18 Gateway / BFF 旧坐标事故 |
 
 实现要点：
 

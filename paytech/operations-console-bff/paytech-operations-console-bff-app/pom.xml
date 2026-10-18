@@ -25,7 +25,7 @@
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
-            <artifactId>platform-support-api</artifactId>
+            <artifactId>paytech-platform-support-api</artifactId>
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>

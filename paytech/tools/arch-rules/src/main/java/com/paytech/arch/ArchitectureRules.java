@@ -14,6 +14,7 @@ import com.paytech.arch.rule.DomainLayerRule;
 import com.paytech.arch.rule.EnumBlankLineRule;
 import com.paytech.arch.rule.MapperTableOwnershipRule;
 import com.paytech.arch.rule.MessagingDependencyRule;
+import com.paytech.arch.rule.ReactorCoordinateRule;
 import com.paytech.arch.rule.RemoteApiBindingRule;
 import com.paytech.arch.rule.RuleViolation;
 import com.paytech.arch.rule.TransactionExternalCallRule;
@@ -51,13 +52,13 @@ public final class ArchitectureRules {
     }
 
     /**
-     * 返回含 Maven 依赖图部分的规则 R1、R2、R3、R6、R8。
+     * 返回含 Maven 依赖图部分的规则 R1、R2、R3、R6、R8，以及只有依赖图部分的 R13。
      *
      * @return 规则
      */
     public static List<DependencyGraphRule> dependencyGraphRules() {
         return List.of(new CoreIsolationRule(), new ApiDependencyRule(), new DomainLayerRule(),
-            new RemoteApiBindingRule(), new MessagingDependencyRule());
+            new RemoteApiBindingRule(), new MessagingDependencyRule(), new ReactorCoordinateRule());
     }
 
     /**

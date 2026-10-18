@@ -24,7 +24,7 @@ class ArchitectureRulesAutoTest {
     void test_normalFlow() {
         Assertions.assertEquals(List.of("R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8", "R9", "R10", "R11", "R12"),
             ArchitectureRules.all().stream().map(ArchitectureRule::id).toList());
-        Assertions.assertEquals(List.of("R1", "R2", "R3", "R6", "R8"),
+        Assertions.assertEquals(List.of("R1", "R2", "R3", "R6", "R8", "R13"),
             ArchitectureRules.dependencyGraphRules().stream().map(DependencyGraphRule::id).toList());
         Path service = Fixtures.path("r4/pass/ledger");
 

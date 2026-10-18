@@ -23,9 +23,9 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <!-- Platform 仍在旧工程，从本地仓库解析；第 02a 步合入后改为 Reactor 内的 paytech-platform-support-api。 -->
+                <!-- Reactor 内的 Platform API 模块；不得再依赖旧工程坐标 platform-support-api（R13）。 -->
                 <groupId>com.paytech</groupId>
-                <artifactId>platform-support-api</artifactId>
+                <artifactId>paytech-platform-support-api</artifactId>
                 <version>1.0.0-SNAPSHOT</version>
             </dependency>
         </dependencies>
