@@ -62,6 +62,11 @@ public class StorageObjectMocker implements Clear {
         return prefix + "material";
     }
 
+    /** 登记由生产链路生成的对象引用（例如上传开始），本例结束时同样回收其全部版本。 */
+    public synchronized void track(String objectRef) {
+        prefixes.add(objectRef);
+    }
+
     /** 以 Platform 账号直接写入一个新版本（不带条件），返回存储生成的版本号。 */
     public String put(String objectRef, byte[] bytes) {
         try {

@@ -53,22 +53,22 @@ public final class ClientMaterialAuthorityClient {
      *         <li>文件不存在 DOCUMENT_NOT_FOUND；扫描未通过或对象失效 MATERIAL_FILE_UNAVAILABLE；其他为依赖不可用。</li>
      */
     public String fileHash(long accountId,ClientMaterialTarget target,long fileId) {
-        com.paytech.platform.support.api.onboardingfiles.OnboardingFileModels.VerificationResponseBody proof;
+        com.paytech.platform.support.api.onboardingfiles.response.FileVerificationResponseBody proof;
         try { proof=platform.verify("client-master-service",Long.toString(fileId),Long.toString(target.applicationId()),Long.toString(target.subjectPartyId()),Long.toString(target.clientId()),Long.toString(accountId),OnboardingFilePurpose.ASSOCIATE.getCode()); }
         catch (FailException rejected) {
             if ("FILE_NOT_FOUND".equals(rejected.getCode())) throw new FailException(DOCUMENT_NOT_FOUND);
             throw unavailable();
         } catch (RuntimeException unavailable) { throw unavailable(); }
-        if (proof==null || !Long.toString(fileId).equals(proof.fileId()) || !id(proof.uploadId()) || !id(proof.sizeBytes())
-            || proof.contentHash()==null || !proof.contentHash().matches("[0-9a-f]{64}")
-            || proof.mimeType()==null || proof.mimeType().isBlank() || proof.mimeType().length()>128
-            || proof.scanStatus()==null || proof.objectStatus()==null || proof.checkedAt()==null
-            || proof.checkedAt().isBefore(clock.instant().minusSeconds(30)) || proof.checkedAt().isAfter(clock.instant().plusSeconds(5))) throw unavailable();
+        if (proof==null || !Long.toString(fileId).equals(proof.getFileId()) || !id(proof.getUploadId()) || !id(proof.getSizeBytes())
+            || proof.getContentHash()==null || !proof.getContentHash().matches("[0-9a-f]{64}")
+            || proof.getMimeType()==null || proof.getMimeType().isBlank() || proof.getMimeType().length()>128
+            || proof.getScanStatus()==null || proof.getObjectStatus()==null || proof.getCheckedAt()==null
+            || proof.getCheckedAt().isBefore(clock.instant().minusSeconds(30)) || proof.getCheckedAt().isAfter(clock.instant().plusSeconds(5))) throw unavailable();
         FileScanStatus scan;FileObjectStatus object;
-        try { scan=FileScanStatus.fromCode(proof.scanStatus());object=FileObjectStatus.fromCode(proof.objectStatus()); }
+        try { scan=FileScanStatus.fromCode(proof.getScanStatus());object=FileObjectStatus.fromCode(proof.getObjectStatus()); }
         catch (IllegalArgumentException unknown) { throw unavailable(); }
         if (scan!=FileScanStatus.AVAILABLE || object!=FileObjectStatus.ACTIVE) throw new FailException(MATERIAL_FILE_UNAVAILABLE);
-        return proof.contentHash();
+        return proof.getContentHash();
     }
     /** 下游标识和字节数必须为规范正整数。 */
     private boolean id(String value) {

@@ -2,7 +2,7 @@ package com.paytech.client.console.bff.service.model;
 
 import com.paytech.client.contract.api.onboarding.ClientDraftModels.*;
 import com.paytech.client.contract.api.onboarding.ClientPeopleModels.*;
-import com.paytech.platform.support.api.onboardingfiles.OnboardingFileModels.FileResponseBody;
+import com.paytech.platform.support.api.onboardingfiles.response.FileResponseBody;
 import com.paytech.compliance.api.MaterialRequirementsModels.RequirementBody;
 import java.util.List;
 import java.util.Map;

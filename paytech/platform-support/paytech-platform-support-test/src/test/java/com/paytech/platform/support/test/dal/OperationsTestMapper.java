@@ -23,6 +23,13 @@ public interface OperationsTestMapper {
         @Param("name") String name, @Param("ownerStatus") String ownerStatus,
         @Param("securityStatus") String securityStatus, @Param("now") Instant now);
 
+    /** 把租户改为已完成来源投影的指定所有者状态（版本 1 与给定载荷摘要），供入驻 IAM 候选查询使用。 */
+    @Update("""
+        UPDATE t_access_tenant SET owner_status=#{ownerStatus},source_version=1,source_payload_hash=#{hash}
+        WHERE tenant_id=#{id}
+        """)
+    int projectTenant(@Param("id") long id, @Param("ownerStatus") String ownerStatus, @Param("hash") String hash);
+
     /** 删除本例登记的租户。 */
     @Delete("DELETE FROM t_access_tenant WHERE tenant_id=#{id}")
     int deleteTenant(long id);

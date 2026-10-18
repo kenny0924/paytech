@@ -49,6 +49,9 @@ public final class OnboardingFileBuilder {
     private FileScanStatus scanStatus = FileScanStatus.AVAILABLE;
     private FileObjectStatus objectStatus = FileObjectStatus.ACTIVE;
     private Instant expiresAt;
+    private long tenantId = OperationsCatalog.INTERNAL_TENANT_ID;
+    private long uploaderId = OperatorBuilder.nextId();
+    private String ownerRefId = OperatorBuilder.nextId() + ":" + OperatorBuilder.nextId();
 
     private OnboardingFileBuilder(String provider, String container, String objectRef) {
         this.provider = provider;
@@ -117,10 +120,24 @@ public final class OnboardingFileBuilder {
         return this;
     }
 
+    /**
+     * 原上传账号、所属租户与 CCT 申请主体；默认是互不相关的随机值，仅适合不核验归属的运营入口
+     *
+     * @param tenantId 上传登记时解析出的入驻租户
+     * @param uploaderId 原上传账号
+     * @param applicationId CCT 原申请
+     * @param subjectPartyId 申请下的材料主体
+     */
+    public OnboardingFileBuilder owner(long tenantId, long uploaderId, long applicationId, long subjectPartyId) {
+        this.tenantId = tenantId;
+        this.uploaderId = uploaderId;
+        this.ownerRefId = applicationId + ":" + subjectPartyId;
+        return this;
+    }
+
     /** 构建不可变规格。 */
     public Spec build() {
-        return new Spec(fileId, uploadId, OperationsCatalog.INTERNAL_TENANT_ID, OperatorBuilder.nextId(),
-            OperatorBuilder.nextId() + ":" + OperatorBuilder.nextId(), displayName, provider, container, objectRef, mime,
+        return new Spec(fileId, uploadId, tenantId, uploaderId, ownerRefId, displayName, provider, container, objectRef, mime,
             bytes.clone(), contentHash == null ? sha256(bytes) : contentHash, version, encryption, policyId, scanStatus,
             objectStatus, expiresAt);
     }

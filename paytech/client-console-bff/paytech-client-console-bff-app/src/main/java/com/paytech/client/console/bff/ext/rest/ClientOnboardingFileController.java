@@ -2,7 +2,11 @@ package com.paytech.client.console.bff.ext.rest;
 
 import com.paytech.client.console.bff.service.processor.ClientSessionProcessor;
 import com.paytech.platform.support.api.onboardingfiles.OnboardingFileApi;
-import com.paytech.platform.support.api.onboardingfiles.OnboardingFileModels.*;
+import com.paytech.platform.support.api.onboardingfiles.request.StartUploadRequestBody;
+import com.paytech.platform.support.api.onboardingfiles.response.DownloadResponseBody;
+import com.paytech.platform.support.api.onboardingfiles.response.FileResponseBody;
+import com.paytech.platform.support.api.onboardingfiles.response.UploadCompletionResponseBody;
+import com.paytech.platform.support.api.onboardingfiles.response.UploadResponseBody;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -32,7 +36,7 @@ public class ClientOnboardingFileController {
 
     /** 空 Body 完成原 Upload；同一 Upload 已完成时由 Platform 返回原文件。 */
     @PostMapping("/uploads/{upload}/completion")
-    public FileCompletionReceipt complete(
+    public UploadCompletionResponseBody complete(
         HttpServletRequest request,
         @PathVariable String upload
     ) {

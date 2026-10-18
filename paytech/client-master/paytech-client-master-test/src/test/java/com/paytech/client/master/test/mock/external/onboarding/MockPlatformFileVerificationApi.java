@@ -4,8 +4,8 @@ import org.springframework.boot.test.context.TestComponent;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.paytech.client.master.test.mocker.onboarding.OnboardingOwnerMocker;
-import com.paytech.platform.support.api.onboardingfiles.OnboardingFileModels.VerificationResponseBody;
 import com.paytech.platform.support.api.onboardingfiles.OnboardingFileVerificationApi;
+import com.paytech.platform.support.api.onboardingfiles.response.FileVerificationResponseBody;
 
 /** Platform 文件核验的测试 HTTP 实现；路径前缀由 MockPlatformAuthenticationApi 统一配置。 */
 @RestController
@@ -20,7 +20,7 @@ public class MockPlatformFileVerificationApi implements OnboardingFileVerificati
 
     /** 返回本例配置的文件证据。 */
     @Override
-    public VerificationResponseBody verify(String caller, String fileId, String expectedApplicationId,
+    public FileVerificationResponseBody verify(String caller, String fileId, String expectedApplicationId,
         String expectedSubjectPartyId, String expectedClientId, String requestingAccountId, String purpose) {
         MockPlatformAuthenticationApi.requestId();
         return MockPlatformAuthenticationApi.required(mocker.file(fileId));
