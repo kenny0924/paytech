@@ -1,6 +1,6 @@
 {
-  "name": "Code-MoR Card Database V1",
-  "describe": "Card part of the Payment Orchestration V1 PDManer model (mor_card, card-service)",
+  "name": "card",
+  "describe": "卡、卡凭证、交易级卡工具、已存卡与一次性读卡票据",
   "avatar": "",
   "version": "4.9.3",
   "createdTime": "2025-5-28 13:36:15",

@@ -1,6 +1,6 @@
 {
-  "name": "Code-MoR Payment Database V1",
-  "describe": "Payment service part of the Payment Orchestration V1 PDManer model (mor_payment)",
+  "name": "payment",
+  "describe": "支付意图、支付尝试与支付动作、路由决策、支付工具 Token、渠道退款与服务商争议通知",
   "avatar": "",
   "version": "4.9.3",
   "createdTime": "2025-5-28 13:36:15",

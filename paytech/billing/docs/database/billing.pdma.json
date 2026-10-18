@@ -1,6 +1,6 @@
 {
-  "name": "Code-MoR Billing Database V1",
-  "describe": "Billing 服务库物理模型：由 Finance 逻辑模型按 design/03 表归属切分（第 07 步），只保留本库关系",
+  "name": "billing",
+  "describe": "经济事实及其组件明细、币种规则、渠道成本方案与适用范围",
   "avatar": "",
   "version": "4.9.3",
   "createdTime": "2025-5-28 13:36:15",

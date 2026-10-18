@@ -1,6 +1,6 @@
 {
-  "name": "Code-MoR Commercial Database V1",
-  "describe": "Commercial",
+  "name": "commercial",
+  "describe": "合同及参与方、支付方式特征、商业条款方案 / 版本 / 价格 / 组件 / 阶梯档位",
   "avatar": "",
   "version": "4.9.3",
   "createdTime": "2025-5-28 13:36:15",

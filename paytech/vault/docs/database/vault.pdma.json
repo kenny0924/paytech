@@ -1,6 +1,6 @@
 {
-  "name": "Code-MoR Vault Database V1",
-  "describe": "基于批准的 Vault V1 六表物理清单（核心三表与策略三表）确定性生成的 PDManer 模型",
+  "name": "vault",
+  "describe": "Vault 加密记录、保护请求与访问事件；数据类型、访问规则与策略变更",
   "avatar": "",
   "version": "4.9.3",
   "createdTime": "2025-5-28 13:36:15",

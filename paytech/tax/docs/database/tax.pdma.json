@@ -1,6 +1,6 @@
 {
-  "name": "Code-MoR Tax Database V1",
-  "describe": "Tax 服务库物理模型：由 Finance 逻辑模型按 design/03 表归属切分（第 07 步），只保留本库关系",
+  "name": "tax",
+  "describe": "税务辖区与机关、税务注册与分类、税务规则与税率、税务计算快照与证据、财政记录、税务期间 / 申报 / 税款支付",
   "avatar": "",
   "version": "4.9.3",
   "createdTime": "2025-5-28 13:36:15",

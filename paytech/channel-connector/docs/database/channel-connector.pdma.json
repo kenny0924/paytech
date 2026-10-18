@@ -1,6 +1,6 @@
 {
-  "name": "Code-MoR Channel Connector Database V1",
-  "describe": "Channel connector part of the Payment Orchestration V1 PDManer model (mor_channel_connector)",
+  "name": "channel-connector",
+  "describe": "支付服务商、账户与商户号、静态能力、路由策略、服务商交互与回调记录",
   "avatar": "",
   "version": "4.9.3",
   "createdTime": "2025-5-28 13:36:15",

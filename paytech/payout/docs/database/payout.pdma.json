@@ -1,6 +1,6 @@
 {
-  "name": "Code-MoR Payout Database V1",
-  "describe": "Payout 服务库物理模型：由 Finance 逻辑模型按 design/03 表归属切分（第 07 步），只保留本库关系",
+  "name": "payout",
+  "describe": "受益人账户、手工出款、出款审批、出款执行与证据引用、出款限制投影",
   "avatar": "",
   "version": "4.9.3",
   "createdTime": "2025-5-28 13:36:15",

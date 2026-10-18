@@ -1,6 +1,6 @@
 {
-  "name": "Code-MoR Compliance Database V1",
-  "describe": "Compliance part of the Risk & Compliance V1 PDManer model (mor_compliance; settlement control C3)",
+  "name": "compliance",
+  "describe": "尽调程序与案件、筛查执行与命中处置、资格决定与结算资格控制",
   "avatar": "",
   "version": "4.9.3",
   "createdTime": "2025-5-28 13:36:15",

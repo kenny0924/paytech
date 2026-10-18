@@ -1,6 +1,6 @@
 {
-  "name": "Code-MoR Consumer Database V1",
-  "describe": "Deterministic PDManer physical model for mor_consumer (Customer), split from the Commerce V1 manifest",
+  "name": "consumer",
+  "describe": "Customer 主档",
   "avatar": "",
   "version": "4.9.3",
   "createdTime": "2025-5-28 13:36:15",

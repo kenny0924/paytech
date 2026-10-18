@@ -1,6 +1,6 @@
 {
-  "name": "Code-MoR Risk Decision Database V1",
-  "describe": "Risk decision part of the Risk & Compliance V1 PDManer model (mor_risk_decision)",
+  "name": "risk-decision",
+  "describe": "决策事件点、Feature、规则集与规则 AST、Action、决策流与发布、决策评估轨迹、风险名单 / 限制 / 频次事件 / 限额",
   "avatar": "",
   "version": "4.9.3",
   "createdTime": "2025-5-28 13:36:15",

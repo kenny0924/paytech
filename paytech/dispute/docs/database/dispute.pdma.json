@@ -1,6 +1,6 @@
 {
-  "name": "Code-MoR Dispute Database V1",
-  "describe": "Dispute part of the Risk & Compliance V1 PDManer model (mor_dispute; Schema ownership only)",
+  "name": "dispute",
+  "describe": "争议案件、状态变更、证据包与提交请求、争议结果与责任决定",
   "avatar": "",
   "version": "4.9.3",
   "createdTime": "2025-5-28 13:36:15",

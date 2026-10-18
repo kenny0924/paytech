@@ -1,6 +1,6 @@
 {
-  "name": "Code-MoR Platform Support Database V1",
-  "describe": "基于已确认 Platform Support V1 物理清单确定性生成的 PDManer 模型",
+  "name": "platform-support",
+  "describe": "人工账号 / 租户 / 会话 / 角色权限 / API 凭证、文件与消费者文档、通知与 Webhook、审计与安全事件、Gateway 路由配置、标准 API 与外部接入",
   "avatar": "",
   "version": "4.9.3",
   "createdTime": "2025-5-28 13:36:15",

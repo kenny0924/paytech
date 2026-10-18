@@ -1,6 +1,6 @@
 {
-  "name": "Code-MoR Client Master Database V1",
-  "describe": "Client Master",
+  "name": "client-master",
+  "describe": "法律主体主档、资料、标识与关系；Client / Local Partner / Operating Entity 角色、入驻申请、准入范围与适用关系",
   "avatar": "",
   "version": "4.9.3",
   "createdTime": "2025-5-28 13:36:15",
