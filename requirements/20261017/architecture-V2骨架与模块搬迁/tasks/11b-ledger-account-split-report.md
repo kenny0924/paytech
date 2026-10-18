@@ -205,6 +205,7 @@ REVOKE SELECT ON mor_ledger.* FROM 'account_app'@'%';
 ## 7. 待确认
 
 1. 偏差 1–3 请确认。偏差 5 已在第二轮按用户确认补规则解除（第 6 节）。
+   - **主会话合入决定（2026-10-18）**：偏差 1–3 接受——余额身份带科目并由 account 自有主键（04 的键无法区分保证金与追偿应收，且避免消费顺序依赖）；`t_balance_applied_entry` 为替代事实冲回所需；试算不再比对异步投影，改由日终核对与关账 consistency 承担。design/04 §3.2 / §6 以本报告为实现口径，规范修订列入 13 步台账 Pending。
 2. FactBalanceMappingRule 的映射表：CLIENT（CLIENT_PRINCIPAL、CLIENT_FEE）→ CLIENT_PAYABLE/PENDING；LOCAL_PARTNER（PARTNER_SHARE）→ PARTNER_PAYABLE/PENDING；
    CHANNEL（总额 → CHANNEL_UNSETTLED_RECEIVABLE，CHANNEL_COST → CHANNEL_FEE_ACCRUAL），Owner 为事实头 `channelAccountId`。收方记贷、付方记借，REVERSAL 互换。
    **已确认（第二轮）**：CLIENT_FEE 以 Client 为付方时借记 CLIENT_PAYABLE；CHANNEL 角色的 Owner 取头部 `channelAccountId`。ledger 调整规则按同一映射。
