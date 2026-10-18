@@ -3,7 +3,10 @@
 //   - 按 Manifest 分组：01/03/07 → ledger，05 → reconciliation，06 → payout，02 按表拆到 tax / billing / reconciliation；
 //   - 08 的 compensation_event 每库一份，command_idempotency 删除（S10）；
 //   - currency_spec 的 Owner 是 platform-support（D41），ledger 与 billing 各持一份只读副本；
-//   - account 本期只有每库一份的 compensation_event（mor_account 在第 11b 步新建，t_account 本期归 ledger）。
+//   - account 第 07 步只有每库一份的 compensation_event；第 11b 步（design/04 §3）新建 mor_account 余额表。
+// 第 11b 步的物理替换与追加只作用于服务模型（manifests/09-service-physical.mjs），84 张表的逻辑模型不变：
+//   - ledger：逻辑表 account 物理替换为 t_ledger_account（去余额列），追加两张 paytech-messaging 消费表；
+//   - account：前置五张余额表与两张消费表，t_compensation_event 改用 Foundation 现行模型（同 billing）。
 // 跨服务关系（如 accounting_instruction.economic_fact_id → economic_fact）只保留在逻辑模型，服务模型只保留库内关系。
 import { TABLES as ACCOUNTING_FOUNDATION_TABLES } from "./manifests/01-accounting-foundation.mjs";
 import { TABLES as TAX_ECONOMICS_COST_TABLES } from "./manifests/02-tax-economics-cost.mjs";
@@ -12,6 +15,12 @@ import { TABLES as CHANNEL_CASH_RECON_TABLES } from "./manifests/05-channel-cash
 import { TABLES as PAYOUT_TABLES } from "./manifests/06-payout.mjs";
 import { TABLES as CLOSE_TABLES } from "./manifests/07-close.mjs";
 import { CURRENT_COMPENSATION_EVENT, TABLES as RELIABILITY_TABLES } from "./manifests/08-reliability.mjs";
+import {
+  ACCOUNT_BALANCE_TABLES,
+  CONSUMED_AGGREGATE_VERSION,
+  CONSUMED_EVENT,
+  LEDGER_ACCOUNT,
+} from "./manifests/09-service-physical.mjs";
 
 export const FINANCE_SERVICES = Object.freeze(["ledger", "account", "billing", "reconciliation", "tax", "payout"]);
 
@@ -22,10 +31,25 @@ export const PER_DATABASE_TABLES = Object.freeze(["compensation_event"]);
 export const READ_ONLY_COPIES = Object.freeze({ currency_spec: Object.freeze(["ledger", "billing"]) });
 
 /**
- * 服务库内替换逻辑表定义的物理变体（同一 defKey）：第 11a 步 billing 启用 paytech-compensation-event，使用现行补偿表模型；
- * 其他服务库在接入补偿组件前保持逻辑模型定义。
+ * 服务库内替换逻辑表定义的物理变体：表定义直接给出时替换同一 defKey；{ replaces, table } 形式替换另一个逻辑表并沿用其实体、
+ * 同名字段 ID 与库内关系（物理更名）。
+ * <li>第 11a 步 billing、第 11b 步 account 启用 paytech-compensation-event，使用现行补偿表模型；其他服务库在接入补偿组件前保持逻辑模型定义。</li>
+ * <li>第 11b 步 ledger 的 account 物理替换为只保存身份的 t_ledger_account。</li>
  */
-export const SERVICE_TABLE_VARIANTS = Object.freeze({ billing: Object.freeze([CURRENT_COMPENSATION_EVENT]) });
+export const SERVICE_TABLE_VARIANTS = Object.freeze({
+  billing: Object.freeze([CURRENT_COMPENSATION_EVENT]),
+  ledger: Object.freeze([LEDGER_ACCOUNT]),
+  account: Object.freeze([CURRENT_COMPENSATION_EVENT]),
+});
+
+/** 不在逻辑模型中的服务物理表（第 11b 步）：prepend 为 true 时排在本库逻辑表之前，否则追加在末尾。 */
+export const SERVICE_ADDED_TABLES = Object.freeze({
+  ledger: Object.freeze({ prepend: false, tables: Object.freeze([CONSUMED_EVENT, CONSUMED_AGGREGATE_VERSION]) }),
+  account: Object.freeze({
+    prepend: true,
+    tables: Object.freeze([...ACCOUNT_BALANCE_TABLES, CONSUMED_EVENT, CONSUMED_AGGREGATE_VERSION]),
+  }),
+});
 
 /** 删除且不进入任何服务模型的表。 */
 export const DROPPED_TABLES = Object.freeze(["command_idempotency"]);
@@ -76,7 +100,10 @@ export function serviceTables() {
   return byService;
 }
 
-/** design/03 §4.2 的每库物理表数，切分结果必须逐库一致。 */
+/**
+ * 每库物理表数：design/03 §4.2 的逻辑切分（ledger 29、account 1）加第 11b 步服务物理表（ledger +2 消费表；
+ * account +5 余额表 +2 消费表），切分结果必须逐库一致。
+ */
 export const EXPECTED_SERVICE_TABLE_COUNTS = Object.freeze({
-  ledger: 29, account: 1, billing: 9, reconciliation: 18, tax: 24, payout: 8,
+  ledger: 31, account: 8, billing: 9, reconciliation: 18, tax: 24, payout: 8,
 });

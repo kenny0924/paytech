@@ -9,23 +9,25 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import com.paytech.account.api.enums.OwnerRole;
 import com.paytech.account.api.enums.OwnerType;
-import com.paytech.account.api.rule.AccountIdentityRule;
 import com.paytech.billing.api.enums.AmountSource;
 import com.paytech.billing.api.enums.AutoInstructionType;
 import com.paytech.billing.api.enums.EconomicsType;
+import com.paytech.billing.api.enums.FactLineDirection;
+import com.paytech.billing.api.enums.FactPartyRole;
 import com.paytech.billing.api.fact.EconomicFactLinePayload;
 import com.paytech.billing.api.fact.EconomicFactPayload;
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.id.IdGenerator;
-import com.paytech.ledger.core.dal.dataobject.Account;
 import com.paytech.ledger.core.dal.dataobject.AccountingInstruction;
 import com.paytech.ledger.core.dal.dataobject.AccountingPeriod;
 import com.paytech.ledger.core.dal.dataobject.AccountingRuleBundle;
@@ -35,6 +37,7 @@ import com.paytech.ledger.core.dal.dataobject.ChartAccount;
 import com.paytech.ledger.core.dal.dataobject.FiscalCalendar;
 import com.paytech.ledger.core.dal.dataobject.InstructionLine;
 import com.paytech.ledger.core.dal.dataobject.JournalEntry;
+import com.paytech.ledger.core.dal.dataobject.LedgerAccount;
 import com.paytech.ledger.core.dal.dataobject.LedgerBook;
 import com.paytech.ledger.core.enums.AccountStatus;
 import com.paytech.ledger.core.enums.BookStatus;
@@ -51,7 +54,6 @@ import com.paytech.ledger.domain.PeriodCloseContentHash;
 import com.paytech.ledger.domain.TransactionPostingCommand;
 import com.paytech.ledger.domain.TransactionPostingContext;
 import com.paytech.ledger.domain.view.PostedInstructionView;
-import com.paytech.ledger.domainservice.repository.AccountRepository;
 import com.paytech.ledger.domainservice.repository.AccountingInstructionRepository;
 import com.paytech.ledger.domainservice.repository.AccountingPeriodRepository;
 import com.paytech.ledger.domainservice.repository.AccountingRuleBundleRepository;
@@ -61,18 +63,23 @@ import com.paytech.ledger.domainservice.repository.ChartAccountRepository;
 import com.paytech.ledger.domainservice.repository.FiscalCalendarRepository;
 import com.paytech.ledger.domainservice.repository.InstructionLineRepository;
 import com.paytech.ledger.domainservice.repository.JournalEntryRepository;
+import com.paytech.ledger.domainservice.repository.LedgerAccountRepository;
 import com.paytech.ledger.domainservice.repository.LedgerBookRepository;
 import com.paytech.ledger.domainservice.service.JournalPostingService;
 import com.paytech.ledger.domainservice.service.TransactionPostingService;
+import com.paytech.ledger.domainservice.validator.account.AccountIdentityRule;
 
 import lombok.AllArgsConstructor;
 
 /**
  * 交易自动记账引擎
  * <li>顺序：幂等返回 → 断言经济事实载荷完整并校验类型与成功时间 → 选定生效规则版本 → 逐指令类型生成（取金额、解析账簿/期间/账户、校验平衡）→ 按账簿主键升序保存并过账。</li>
+ * <li>人工 / 成本调整事实（第 11b 步）：按 STANDARD_ADJUSTMENT 规则集，以明细行的费用类型、付方 / 收方角色与借贷方向匹配规则行，生成一条交易 OE
+ * 账簿的指令；规则行是初始化 DML，代码不写死科目。</li>
  * <li>输入驱动：经济事实与渠道清算账户主键由命令载荷给出，事务内只读写 ledger 本库表；Partner 登记不变量由 billing 在登记时校验。</li>
- * <li>账户不存在时按身份矩阵在调用方事务内创建。</li>
- * <li>过账复用记账内核，指令由内核迁移为 POSTED；锁顺序沿用“期间 → 账簿序号 → 账户升序”。</li>
+ * <li>账户不存在时按身份矩阵在调用方事务内创建科目账户身份（ledger 本库）。</li>
+ * <li>过账复用记账内核，指令由内核迁移为 POSTED；锁顺序为“期间 → 账簿序号”，不锁账户、不写余额（design/04 §4）。</li>
+ * <li>生产调用方是 EconomicFactRecorded 消费 Handler；Owner 余额由 account 服务独立消费同一事实维护。</li>
  */
 @Service
 @AllArgsConstructor
@@ -80,9 +87,26 @@ public class TransactionPostingServiceImpl implements TransactionPostingService 
     /** 交易自动记账使用的规则集代码。 */
     static final String STANDARD_TRANSACTION_BUNDLE = "STANDARD_TRANSACTION";
 
+    /** 人工 / 成本调整经济事实使用的规则集代码（第 11b 步）。 */
+    static final String STANDARD_ADJUSTMENT_BUNDLE = "STANDARD_ADJUSTMENT";
+
+    /** 调整类经济事实类型 → 指令类型。 */
+    static final Map<String, AutoInstructionType> ADJUSTMENT_INSTRUCTIONS = Map.of(
+        EconomicsType.MANUAL_ADJUSTMENT.getCode(), AutoInstructionType.ECONOMIC_ADJUSTMENT,
+        EconomicsType.COST_ADJUSTMENT.getCode(), AutoInstructionType.CHANNEL_COST_ADJUSTMENT);
+
+    /** 明细行付方 / 收方角色 → 规则行核算对象角色；未列出的角色（PLATFORM、CONSUMER）没有记账规则。 */
+    static final Map<String, OwnerRole> PARTY_OWNER_ROLES = Map.of(
+        FactPartyRole.CLIENT.getCode(), OwnerRole.CLIENT,
+        FactPartyRole.LOCAL_PARTNER.getCode(), OwnerRole.LOCAL_PARTNER,
+        FactPartyRole.CHANNEL.getCode(), OwnerRole.CHANNEL_ACCOUNT,
+        FactPartyRole.OPERATING_ENTITY.getCode(), OwnerRole.TRANSACTION_OE,
+        FactPartyRole.FINANCE_ENTITY.getCode(), OwnerRole.PLATFORM_FINANCE_ENTITY,
+        FactPartyRole.TAX_AUTHORITY.getCode(), OwnerRole.TAX_AUTHORITY);
+
     private final Clock clock;
     private final IdGenerator idGenerator;
-    private final AccountRepository accountRepository;
+    private final LedgerAccountRepository ledgerAccountRepository;
     private final LedgerBookRepository ledgerBookRepository;
     private final JournalPostingService journalPostingService;
     private final ChartAccountRepository chartAccountRepository;
@@ -106,6 +130,9 @@ public class TransactionPostingServiceImpl implements TransactionPostingService 
             accountingInstructionRepository.findByEconomicFact(command.getFact().getFactId());
         if (!existing.isEmpty()) {
             return existing.stream().map(this::existingView).toList();
+        }
+        if (ADJUSTMENT_INSTRUCTIONS.containsKey(command.getFact().getFactType())) {
+            return List.of(savePosted(planAdjustment(loadAdjustmentContext(command))));
         }
         TransactionPostingContext context = loadContext(command);
         List<PlannedInstruction> planned = new ArrayList<>();
@@ -177,7 +204,8 @@ public class TransactionPostingServiceImpl implements TransactionPostingService 
         EconomicFactPayload fact = command.getFact();
         long factId = fact.getFactId();
         if (!EconomicsType.PAYMENT.getCode().equals(fact.getFactType())) {
-            throw new BizCheckFailException("交易经济结果不是 PAYMENT: " + factId + ", 类型 " + fact.getFactType());
+            throw new BizCheckFailException("交易经济结果不是 PAYMENT、MANUAL_ADJUSTMENT 或 COST_ADJUSTMENT，没有记账规则: "
+                + factId + ", 类型 " + fact.getFactType());
         }
         if (fact.getPaymentSucceededTime() == null) {
             throw new BizCheckFailException("交易经济结果缺少支付成功时间: " + factId);
@@ -191,13 +219,17 @@ public class TransactionPostingServiceImpl implements TransactionPostingService 
 
     /** 规则集当前版本必须 ACTIVE，且生效区间 [effective_from, effective_to) 覆盖支付成功时间。 */
     AccountingRuleBundleVer effectiveBundleVer(EconomicFactPayload fact) {
-        AccountingRuleBundle bundle = accountingRuleBundleRepository.findByCode(STANDARD_TRANSACTION_BUNDLE);
+        return effectiveBundleVer(fact, STANDARD_TRANSACTION_BUNDLE, fact.getPaymentSucceededTime());
+    }
+
+    /** 指定规则集的当前版本必须 ACTIVE，且生效区间 [effective_from, effective_to) 覆盖给定时点。 */
+    AccountingRuleBundleVer effectiveBundleVer(EconomicFactPayload fact, String bundleCode, Instant at) {
+        AccountingRuleBundle bundle = accountingRuleBundleRepository.findByCode(bundleCode);
         if (bundle == null || bundle.getStatus() != ReferenceDataStatus.ACTIVE || bundle.getCurrentVerId() == null) {
-            throw new BizCheckFailException("无可用自动记账规则集: " + STANDARD_TRANSACTION_BUNDLE + ", 交易经济结果 "
+            throw new BizCheckFailException("无可用自动记账规则集: " + bundleCode + ", 交易经济结果 "
                 + fact.getFactId());
         }
         AccountingRuleBundleVer ver = accountingRuleBundleVerRepository.findById(bundle.getCurrentVerId());
-        Instant at = fact.getPaymentSucceededTime();
         boolean effective = ver != null && ver.getStatus() == RuleVersionStatus.ACTIVE
             && !ver.getEffectiveFrom().isAfter(at) && (ver.getEffectiveTo() == null || at.isBefore(ver.getEffectiveTo()));
         if (!effective) {
@@ -224,7 +256,7 @@ public class TransactionPostingServiceImpl implements TransactionPostingService 
         AccountingPeriod period = findOpenPeriod(context, type, book, calendar, postingDate);
         PlannedInstruction plan = new PlannedInstruction(type, book, period, postingDate);
         for (AccountingRuleLine rule : rules) {
-            Account account = resolveAccount(context, type, book, rule);
+            LedgerAccount account = resolveAccount(context, type, book, rule);
             plan.lines.add(buildLine(plan.lines.size() + 1, rule, account, context.amountOf(rule.getAmountSourceCode())));
         }
         checkBalanced(context, type, plan.lines);
@@ -290,22 +322,27 @@ public class TransactionPostingServiceImpl implements TransactionPostingService 
         return period;
     }
 
-    /** 按规则行科目、Owner Role 与余额桶解析唯一账户；不存在时在当前事务内创建零余额 ACTIVE 账户。 */
-    Account resolveAccount(TransactionPostingContext context, AutoInstructionType type, LedgerBook book,
+    /** 按规则行科目、Owner Role 与余额桶解析唯一账户；不存在时在当前事务内创建 ACTIVE 账户身份（只写 ledger 本库）。 */
+    LedgerAccount resolveAccount(TransactionPostingContext context, AutoInstructionType type, LedgerBook book,
         AccountingRuleLine rule) {
+        return resolveAccount(context, type, book, rule, resolveOwner(context, type, book, rule));
+    }
+
+    /** 按规则行科目、给定核算对象与余额桶解析唯一账户；不存在时在当前事务内创建 ACTIVE 账户身份。 */
+    LedgerAccount resolveAccount(TransactionPostingContext context, AutoInstructionType type, LedgerBook book,
+        AccountingRuleLine rule, Owner owner) {
         ChartAccount chart = chartAccountRepository.findByChartAndCode(book.getChartId(), rule.getAccountCode());
         if (chart == null || !Boolean.TRUE.equals(chart.getPostingAllowed())) {
             throw reject(context, type, "科目不存在或不可过账 " + rule.getAccountCode() + ", 账簿 " + book.getId());
         }
-        Owner owner = resolveOwner(context, type, book, rule);
         AccountIdentityRule.checkAccountIdentity(rule.getAccountCode(), owner.type, rule.getBalanceBucket());
-        Account account = accountRepository.findByIdentity(book.getId(), chart.getId(), owner.type, owner.id,
+        LedgerAccount account = ledgerAccountRepository.findByIdentity(book.getId(), chart.getId(), owner.type, owner.id,
             rule.getBalanceBucket());
         if (account != null) {
             return account;
         }
         account = newAccount(book, chart, owner, rule);
-        accountRepository.insert(account);
+        ledgerAccountRepository.insertConcurrently(account);
         return account;
     }
 
@@ -346,10 +383,10 @@ public class TransactionPostingServiceImpl implements TransactionPostingService 
         return parties.get(0);
     }
 
-    /** 零余额 ACTIVE 账户，正常方向从科目复制。 */
-    Account newAccount(LedgerBook book, ChartAccount chart, Owner owner, AccountingRuleLine rule) {
+    /** ACTIVE 账户身份，正常方向从科目复制；不保存余额。 */
+    LedgerAccount newAccount(LedgerBook book, ChartAccount chart, Owner owner, AccountingRuleLine rule) {
         Instant now = now();
-        Account account = new Account();
+        LedgerAccount account = new LedgerAccount();
         account.setId(idGenerator.nextId());
         account.setLedgerBookId(book.getId());
         account.setChartAccountId(chart.getId());
@@ -358,18 +395,13 @@ public class TransactionPostingServiceImpl implements TransactionPostingService 
         account.setBalanceBucket(rule.getBalanceBucket());
         account.setNormalSide(chart.getNormalSide());
         account.setAccountStatus(AccountStatus.ACTIVE);
-        account.setDebitTotal(BigDecimal.ZERO);
-        account.setCreditTotal(BigDecimal.ZERO);
-        account.setNetBalance(BigDecimal.ZERO);
-        account.setLastJournalSequence(0L);
-        account.setBalanceVersion(0L);
         account.setCreateTime(now);
         account.setUpdateTime(now);
         return account;
     }
 
     /** 引用规则行的指令行；指令主键在指令构造后回填。 */
-    InstructionLine buildLine(int lineNo, AccountingRuleLine rule, Account account, BigDecimal amount) {
+    InstructionLine buildLine(int lineNo, AccountingRuleLine rule, LedgerAccount account, BigDecimal amount) {
         InstructionLine line = new InstructionLine();
         line.setId(idGenerator.nextId());
         line.setLineNo(lineNo);
@@ -442,6 +474,100 @@ public class TransactionPostingServiceImpl implements TransactionPostingService 
     BizCheckFailException reject(TransactionPostingContext context, AutoInstructionType type, String reason) {
         return new BizCheckFailException("交易自动记账拒绝: 交易经济结果 " + context.factId() + ", 指令类型 "
             + type.getCode() + ", " + reason);
+    }
+
+    /**
+     * 调整类事实的规则上下文：登记（批准）时间必须存在，并选定 STANDARD_ADJUSTMENT 在该时点生效的版本；明细行按行号升序
+     */
+    TransactionPostingContext loadAdjustmentContext(TransactionPostingCommand command) {
+        EconomicFactPayload fact = command.getFact();
+        if (fact.getRecordedTime() == null) {
+            throw new BizCheckFailException("调整经济事实缺少登记时间: " + fact.getFactId());
+        }
+        List<EconomicFactLinePayload> lines = fact.getLines().stream()
+            .sorted(Comparator.comparing(EconomicFactLinePayload::getLineNo)).toList();
+        AccountingRuleBundleVer ver = effectiveBundleVer(fact, STANDARD_ADJUSTMENT_BUNDLE, fact.getRecordedTime());
+        return new TransactionPostingContext(command, fact, lines, ver,
+            accountingRuleLineRepository.findByVersion(ver.getId()));
+    }
+
+    /**
+     * 调整类事实的指令计划（design/04 §4 第 3 行）：每条明细行的付方记借方、收方记贷方（方向为 REVERSAL 时互换），
+     * 按“费用类型 × 角色对应的核算对象角色 × 借贷方向”唯一匹配规则行取科目与余额桶；交易 OE 账簿、登记时间所在 OPEN 期间
+     * <li>匹配不到或匹配多条、角色没有记账规则、缺少付方 / 收方、金额为负时整笔拒绝。</li>
+     */
+    PlannedInstruction planAdjustment(TransactionPostingContext context) {
+        AutoInstructionType type = ADJUSTMENT_INSTRUCTIONS.get(context.getFact().getFactType());
+        LedgerBook book = findOpenBook(context, type);
+        FiscalCalendar calendar = findCalendar(context, type, book);
+        LocalDate postingDate = LocalDate.ofInstant(context.getFact().getRecordedTime(), ZoneId.of(calendar.getTimezone()));
+        PlannedInstruction plan = new PlannedInstruction(type, book, findOpenPeriod(context, type, book, calendar,
+            postingDate), postingDate);
+        for (EconomicFactLinePayload line : context.getLines()) {
+            if (line.getPayerRole() == null || line.getPayeeRole() == null) {
+                throw reject(context, type, "明细行缺少付方或收方: 行 " + line.getLineNo());
+            }
+            if (line.getPostedAmount().signum() < 0) {
+                throw reject(context, type, "明细行金额为负: 行 " + line.getLineNo());
+            }
+            if (line.getPostedAmount().signum() == 0) {
+                continue;
+            }
+            boolean reversal = FactLineDirection.REVERSAL.getCode().equals(line.getDirection());
+            addAdjustmentLine(context, plan, line, line.getPayerRole(), line.getPayerId(),
+                reversal ? EntrySide.CREDIT : EntrySide.DEBIT);
+            addAdjustmentLine(context, plan, line, line.getPayeeRole(), line.getPayeeId(),
+                reversal ? EntrySide.DEBIT : EntrySide.CREDIT);
+        }
+        if (plan.lines.isEmpty()) {
+            throw reject(context, type, "没有可过账的明细行");
+        }
+        checkBalanced(context, type, plan.lines);
+        plan.instruction = buildInstruction(context, plan);
+        plan.lines.forEach(instructionLine -> instructionLine.setInstructionId(plan.instruction.getId()));
+        return plan;
+    }
+
+    /** 一个付方或收方：匹配唯一规则行、解析账户并追加指令行。 */
+    void addAdjustmentLine(TransactionPostingContext context, PlannedInstruction plan, EconomicFactLinePayload line,
+        String partyRole, String partyId, EntrySide side) {
+        OwnerRole ownerRole = PARTY_OWNER_ROLES.get(partyRole);
+        if (ownerRole == null) {
+            throw reject(context, plan.type, "角色没有记账规则 " + partyRole + ": 行 " + line.getLineNo());
+        }
+        List<AccountingRuleLine> matched = context.rulesOf(plan.type).stream()
+            .filter(rule -> rule.getAmountSourceCode().getCode().equals(line.getComponentType())
+                && rule.getOwnerRole() == ownerRole && rule.getEntrySide() == side)
+            .toList();
+        if (matched.size() != 1) {
+            throw reject(context, plan.type, "费用类型 " + line.getComponentType() + " × 角色 " + partyRole + " × "
+                + side.getCode() + " 匹配 " + matched.size() + " 条规则行: 行 " + line.getLineNo());
+        }
+        AccountingRuleLine rule = matched.getFirst();
+        LedgerAccount account = resolveAccount(context, plan.type, plan.book, rule,
+            adjustmentOwner(context, plan.type, plan.book, ownerRole, partyId));
+        plan.lines.add(buildLine(plan.lines.size() + 1, rule, account, line.getPostedAmount()));
+    }
+
+    /** 调整行的核算对象：渠道取事实头渠道清算账户，交易 OE 取事实头 entityNo，其余取明细行标识。 */
+    Owner adjustmentOwner(TransactionPostingContext context, AutoInstructionType type, LedgerBook book, OwnerRole role,
+        String partyId) {
+        EconomicFactPayload fact = context.getFact();
+        Owner owner = switch (role) {
+            case CHANNEL_ACCOUNT -> new Owner(OwnerType.CHANNEL_ACCOUNT,
+                requireId(context, type, fact.getChannelAccountId(), "channel_account_id"));
+            case TRANSACTION_OE -> new Owner(OwnerType.OPERATING_ENTITY, fact.getEntityNo());
+            case CLIENT -> new Owner(OwnerType.CLIENT, partyId);
+            case LOCAL_PARTNER -> new Owner(OwnerType.LOCAL_PARTNER, partyId);
+            case PLATFORM_FINANCE_ENTITY -> new Owner(OwnerType.FINANCE_ENTITY, partyId);
+            case TAX_AUTHORITY -> new Owner(OwnerType.TAX_AUTHORITY, partyId);
+            case BOOK_ENTITY -> new Owner(OwnerType.OPERATING_ENTITY, book.getEntityId());
+        };
+        if (owner.id == null) {
+            throw reject(context, type, "角色 " + role.getCode() + " 缺少标识");
+        }
+        AccountIdentityRule.checkOwnerId(owner.type, owner.id);
+        return owner;
     }
 
     /** 微秒精度的当前 UTC 时间。 */

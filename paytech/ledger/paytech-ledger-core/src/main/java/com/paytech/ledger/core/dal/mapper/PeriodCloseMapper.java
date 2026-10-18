@@ -52,6 +52,4 @@ public interface PeriodCloseMapper {
     /** 关账步骤 2：统计服务级补偿任务表中仍在待执行或可重试状态的任务（只读）。 */
     long countPendingCompensationEvents();
 
-    /** 关账步骤 3：统计账簿内余额非零的渠道与银行账户（Treasury 未上线，无法核对）。 */
-    long countNonZeroTreasuryAccounts(@Param("bookIds") List<Long> bookIds);
 }

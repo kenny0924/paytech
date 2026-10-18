@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 
 import com.paytech.account.api.enums.OwnerType;
 import com.paytech.billing.api.enums.AmountSource;
+import com.paytech.billing.api.enums.FactLineDirection;
+import com.paytech.billing.api.enums.FactPartyRole;
 import com.paytech.billing.api.fact.EconomicFactLinePayload;
 
 /**
@@ -60,6 +62,30 @@ public final class EconomicComponentBuilder {
     public static EconomicComponentBuilder platformServiceCharge(String amount, long financeEntityId) {
         return component(AmountSource.PLATFORM_SERVICE_CHARGE, amount).party(OwnerType.FINANCE_ENTITY,
             String.valueOf(financeEntityId));
+    }
+
+    /**
+     * 人工 / 成本调整明细行：费用类型、付方、收方与方向；归属方等于收方（第 11a 步约定）
+     *
+     * @param type 费用类型
+     * @param payerRole 付方角色，可为 null（缺失场景）
+     * @param payerId 付方标识
+     * @param payeeRole 收方角色，可为 null（缺失场景）
+     * @param payeeId 收方标识
+     * @param direction 影响方向
+     * @param amount 已归整金额
+     */
+    public static EconomicComponentBuilder adjustment(AmountSource type, FactPartyRole payerRole, String payerId,
+        FactPartyRole payeeRole, String payeeId, FactLineDirection direction, String amount) {
+        EconomicComponentBuilder builder = component(type, amount);
+        builder.line.setPayerRole(payerRole == null ? null : payerRole.getCode());
+        builder.line.setPayerId(payerId);
+        builder.line.setPayeeRole(payeeRole == null ? null : payeeRole.getCode());
+        builder.line.setPayeeId(payeeId);
+        builder.line.setPartyType(payeeRole == null ? null : payeeRole.getCode());
+        builder.line.setPartyId(payeeId);
+        builder.line.setDirection(direction.getCode());
+        return builder;
     }
 
     /** 设置归属方类型与标识。 */

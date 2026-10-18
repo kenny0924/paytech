@@ -46,7 +46,6 @@ class YearEndProfitCloseTest extends AbstractPeriodReopenApiTest {
         assertNetBalance(expenseAccountId, "0");
         assertNetBalance(resultAccountId, "0");
         assertNetBalance(retainedId, "180");
-        ledgerChecker.assertProjectionMatchesJournal(resultAccountId).assertProjectionMatchesJournal(retainedId);
         List<JournalLine> lines = postedLines(ledger.getOpenPeriodId(), close.text("closeNo"));
         assertEquals(5, lines.size(), "收入、费用、本期损益净额 3 行 + 年末两行");
         assertYearEndLines(lines, resultAccountId, retainedId, EntrySide.DEBIT, "180");
@@ -147,8 +146,6 @@ class YearEndProfitCloseTest extends AbstractPeriodReopenApiTest {
         assertNetBalance(currentResultAccountId(), "0");
         assertNetBalance(revenueAccountId, "300");
         assertNetBalance(expenseAccountId, "120");
-        ledgerChecker.assertProjectionMatchesJournal(retainedId)
-            .assertProjectionMatchesJournal(currentResultAccountId());
     }
 
     /** 结转分录的年末两行：本期损益与留存收益同额，本期损益在给定方向、留存收益相反。 */

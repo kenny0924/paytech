@@ -15,7 +15,7 @@
     <packaging>jar</packaging>
 
     <name>PayTech Account Core</name>
-    <description>Account business implementation: dal, domain, domainservice and processors; no boot class or controller.</description>
+    <description>Account business implementation: EconomicFactRecorded balance handler, dal, domain, domainservice, integration clients and processors; no boot class or controller.</description>
 
     <dependencies>
         <dependency>
@@ -23,13 +23,49 @@
             <artifactId>paytech-account-api</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- 账簿身份与 Owner 账户分录余额经 ledger-api 读取，经济事实 Payload 与重放读取经 billing-api（design/04 §5–§7）。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-ledger-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-billing-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- EconomicFactRecorded 消费 Handler（DomainEventConsumer 在 core，分区拓扑与容器由 app 的 paytech-messaging 提供）。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-messaging-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>tools.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-mybatis-support</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-snowflake-id</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-tx</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
         </dependency>
         <dependency>
             <groupId>org.mybatis</groupId>

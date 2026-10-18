@@ -15,9 +15,11 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
 /**
- * 在默认 Maven 测试中保护 account-service 的模块集合、依赖清单与已批准的基础设施范围（Snowflake 与 MyBatis）
+ * 在默认 Maven 测试中保护 account-service 的模块集合、依赖清单与已批准的基础设施范围（Snowflake、MyBatis、paytech-messaging 消费端、
+ * paytech-compensation-event 与内部 HTTP 客户端）
  * <li>由 FinanceModuleBoundaryTest 按服务拆分（design/09 §2.7）；跨服务依赖图规则由 ArchitectureAutoTest（R1–R12）检查。</li>
- * <li>本服务第 11 步前不得引入 MQ：RabbitTemplate 不在 classpath。</li>
+ * <li>第 11b 步起 account 消费 EconomicFactRecorded：RabbitTemplate 必须在 classpath（09 §2.7 对 account 取消“不在 classpath”断言）；
+ * 不使用资源锁，Redisson 仍不得引入。</li>
  *
  * @see com.paytech.account.AccountApplication
  */
@@ -33,14 +35,17 @@ class AccountModuleBoundaryTest {
     @Test
     void test_businessLibrariesHaveApprovedDependencies() throws Exception {
         Assertions.assertEquals(
-            Set.of("paytech-account-api", "paytech-mybatis-support", "spring-context", "mybatis", "lombok"),
+            Set.of("paytech-account-api", "paytech-ledger-api", "paytech-billing-api", "paytech-messaging-api",
+                "jackson-databind", "paytech-mybatis-support", "paytech-snowflake-id", "jakarta.validation-api",
+                "spring-context", "spring-tx", "slf4j-api", "mybatis", "lombok"),
             values(readPom("paytech-account-core"), "/project/dependencies/dependency/artifactId"));
         Assertions.assertEquals(Set.of("spring-web", "jakarta.validation-api", "paytech-common-core", "lombok"),
             values(readPom("paytech-account-api"), "/project/dependencies/dependency/artifactId"));
         Set<String> app = values(readPom("paytech-account-app"),
             "/project/dependencies/dependency[groupId='com.paytech']/artifactId");
         Assertions.assertEquals(Set.of("paytech-account-api", "paytech-account-core", "paytech-snowflake-id",
-                "paytech-mybatis-support", "paytech-mvc-web-starter"), app);
+                "paytech-mybatis-support", "paytech-mvc-web-starter", "paytech-messaging", "paytech-compensation-event",
+                "paytech-http-client-support"), app);
     }
 
     @Test
@@ -62,11 +67,12 @@ class AccountModuleBoundaryTest {
     void test_runtimeContainsOnlyApprovedInfrastructure() {
         for (String resource : Set.of("org/apache/ibatis/session/SqlSession.class",
             "com/zaxxer/hikari/HikariDataSource.class",
-            "com/mysql/cj/jdbc/Driver.class")) {
+            "com/mysql/cj/jdbc/Driver.class",
+            "org/springframework/amqp/rabbit/core/RabbitTemplate.class",
+            "com/xxl/job/core/handler/annotation/XxlJob.class")) {
             Assertions.assertNotNull(getClass().getClassLoader().getResource(resource), resource);
         }
         for (String resource : Set.of("com/alibaba/nacos/api/NacosFactory.class",
-            "org/springframework/amqp/rabbit/core/RabbitTemplate.class",
             "org/mockito/Mockito.class",
             "org/redisson/Redisson.class")) {
             Assertions.assertNull(getClass().getClassLoader().getResource(resource), resource);

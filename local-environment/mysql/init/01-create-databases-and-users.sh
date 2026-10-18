@@ -84,8 +84,9 @@ EOSQL
 
 # V2 Finance successors (refactor step 07, design/10 §5.1). Optional until compose.yaml passes the variables to the
 # mysql container: each database/account is created only when its password variable is present, so an existing
-# initialization keeps working. mor_finance and finance_app stay for the main branch; mor_account arrives in step 11b.
-# account_app shares mor_ledger read-only in step 07.
+# initialization keeps working. mor_finance and finance_app stay for the main branch. Since step 11b account_app owns
+# mor_account (design/04 §3.2); the step-07 read-only mor_ledger grant is no longer created here (revoking it on an
+# existing server is a reviewed draft in paytech/account/docs/database/sql/changes/2026-10-18-account-database.sql).
 create_v2_finance_database() {
   local database="$1" user="$2" variable_name="$3" privileges="$4" grant_database="$5"
   if [[ -z "${!variable_name:-}" ]]; then
@@ -102,7 +103,7 @@ EOSQL
 
 create_v2_finance_database mor_ledger ledger_app MOR_LEDGER_DB_PASSWORD "SELECT, INSERT, UPDATE, DELETE" mor_ledger
 create_v2_finance_database mor_billing billing_app MOR_BILLING_DB_PASSWORD "SELECT, INSERT, UPDATE, DELETE" mor_billing
-create_v2_finance_database "" account_app MOR_ACCOUNT_DB_PASSWORD "SELECT" mor_ledger
+create_v2_finance_database mor_account account_app MOR_ACCOUNT_DB_PASSWORD "SELECT, INSERT, UPDATE, DELETE" mor_account
 create_v2_finance_database mor_reconciliation reconciliation_app MOR_RECONCILIATION_DB_PASSWORD "SELECT, INSERT, UPDATE, DELETE" mor_reconciliation
 create_v2_finance_database mor_tax tax_app MOR_TAX_DB_PASSWORD "SELECT, INSERT, UPDATE, DELETE" mor_tax
 

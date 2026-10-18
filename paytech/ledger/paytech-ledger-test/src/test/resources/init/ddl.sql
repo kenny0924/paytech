@@ -1,6 +1,6 @@
 -- ledger-service Mock 测试环境准备（管理员手工执行；应用与测试从不自动执行）。
 -- 测试复用仓库 local-environment 的 MySQL；账号与 application-mock.yml 一致，只授予本库最小 DML 权限（design/10 §4.2）。
--- 已有库和账号不删除、不重置。表结构逐字取自 paytech/ledger/docs/database/sql/ledger-schema.sql 的全部 29 张表。
+-- 已有库和账号不删除、不重置。表结构逐字取自 paytech/ledger/docs/database/sql/ledger-schema.sql 的全部 31 张表。
 -- 保留行逐字取自 paytech/ledger/docs/database/sql/ledger-initial-data.sql（测试只删除 ID ≥ 1,000,000 的行）。
 CREATE DATABASE IF NOT EXISTS mor_ledger DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 CREATE USER IF NOT EXISTS 'ledger_app'@'%' IDENTIFIED BY '05a148d75d6913440f13b66dd4f793519923433100eb1d0a';
@@ -77,27 +77,22 @@ CREATE TABLE `t_ledger_book` (
   KEY `idx_ledger_book_status` (`book_status`) COMMENT '支持访问路径：book_status'
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='为单一 Operating Entity 或 Finance Entity 和单一币种建立独立会计账簿；主体类型与标识创建后不可修改。';
 
-CREATE TABLE `t_account` (
-  `id` BIGINT NOT NULL COMMENT '服务侧生成的统一记账账户 Snowflake 主键。',
-  `ledger_book_id` BIGINT NOT NULL COMMENT '该账户严格归属的本库经营主体币种账簿。',
+CREATE TABLE `t_ledger_account` (
+  `id` BIGINT NOT NULL COMMENT '服务侧生成的会计科目账户 Snowflake 主键，也是全局账户 ID。',
+  `ledger_book_id` BIGINT NOT NULL COMMENT '该账户严格归属的本库经营主体或财务主体币种账簿。',
   `chart_account_id` BIGINT NOT NULL COMMENT '该账户使用且必须允许过账的本库会计科目定义。',
-  `owner_type` VARCHAR(64) NOT NULL COMMENT '决定账户余额按经营主体、内部财务主体、Client、Local Partner、渠道账户、银行账户或税务机关隔离的类型。允许值：OPERATING_ENTITY、FINANCE_ENTITY、CLIENT、LOCAL_PARTNER、CHANNEL_ACCOUNT、CASH_ACCOUNT、TAX_AUTHORITY。',
+  `owner_type` VARCHAR(64) NOT NULL COMMENT '决定账户按经营主体、内部财务主体、Client、Local Partner、渠道账户、银行账户或税务机关隔离的类型。允许值：OPERATING_ENTITY、FINANCE_ENTITY、CLIENT、LOCAL_PARTNER、CHANNEL_ACCOUNT、CASH_ACCOUNT、TAX_AUTHORITY。',
   `owner_id` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '按owner_type解释的稳定字符串；OE为entityNo，其余数字身份保存规范十进制字符串；本库对象使用本地主键，外部对象不建立跨库外键。',
   `balance_bucket` VARCHAR(64) NOT NULL COMMENT 'PARTNER_PAYABLE 使用 PENDING、AVAILABLE、LOCKED，其中 Partner 的 PENDING 是共享待结算桶；PARTNER_RECOVERY_RECEIVABLE 使用 NONE；CLIENT_PAYABLE 使用 PENDING、AVAILABLE、LOCKED，CLIENT_RECOVERY_RECEIVABLE/NONE、CLIENT_SECURITY_DEPOSIT/NONE 以及 Channel 三阶段账户均使用独立会计科目并采用 NONE，不复用应付款余额桶。允许值：PENDING、AVAILABLE、LOCKED、NONE。',
   `normal_side` VARCHAR(64) NOT NULL COMMENT '创建账户时从会计科目复制并冻结的正常余额方向；账户仍允许借贷双向过账。允许值：DEBIT、CREDIT。',
   `account_status` VARCHAR(64) NOT NULL COMMENT '该具体核算账户当前是否允许新的会计分录过账。允许值：ACTIVE、INACTIVE、CLOSED。',
-  `debit_total` DECIMAL(24,8) NOT NULL DEFAULT 0 COMMENT '截至末次分录序号已计入该账户的累计借方金额。',
-  `credit_total` DECIMAL(24,8) NOT NULL DEFAULT 0 COMMENT '截至末次分录序号已计入该账户的累计贷方金额。',
-  `net_balance` DECIMAL(24,8) NOT NULL DEFAULT 0 COMMENT '按照本账户正常余额方向计算且可由不可变分录重建的有符号余额；正数表示正常方向，负数表示反向余额。',
-  `last_journal_sequence` BIGINT NOT NULL DEFAULT 0 COMMENT '已经应用到账户余额投影的本账簿最后分录序号。',
-  `balance_version` BIGINT NOT NULL DEFAULT 0 COMMENT '仅用于账户余额投影顺序条件更新的乐观锁版本，不表示账户身份版本。',
-  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Ledger 数据库中的 UTC 微秒创建时间。',
   `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_account_identity` (`ledger_book_id`, `chart_account_id`, `owner_type`, `owner_id`, `balance_bucket`) COMMENT '保证业务唯一性：ledger_book_id、chart_account_id、owner_type、owner_id、balance_bucket',
   KEY `idx_account_owner` (`owner_type`, `owner_id`, `ledger_book_id`, `balance_bucket`) COMMENT '支持访问路径：owner_type、owner_id、ledger_book_id、balance_bucket',
   KEY `idx_account_chart_status` (`chart_account_id`, `ledger_book_id`, `account_status`) COMMENT '支持访问路径：chart_account_id、ledger_book_id、account_status'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='在具体账簿和可过账科目下按核算对象与余额桶建立唯一记账账户，并保存可由不可变 Journal 重建的当前余额投影；CLIENT_PAYABLE 与 PARTNER_PAYABLE 使用 PENDING、AVAILABLE、LOCKED，其中 Partner PENDING 是共享待结算桶；Partner reversal 无法由 PENDING/AVAILABLE/LOCKED liability 吸收时使用资产科目 PARTNER_RECOVERY_RECEIVABLE/NONE；Client Recovery 使用 CLIENT_RECOVERY_RECEIVABLE/NONE，保证金使用 CLIENT_SECURITY_DEPOSIT/NONE；Channel 使用 CHANNEL_UNSETTLED_RECEIVABLE、CHANNEL_SETTLEMENT_RECEIVABLE、CHANNEL_UNSETTLED_PAYABLE、CHANNEL_SETTLEMENT_PAYABLE 四个科目表达交易形成、交易对账完整和银行确认三个阶段，Channel Cost 单独使用 CHANNEL_FEE_ACCRUAL，银行现金使用 BANK_CASH。';
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='在具体账簿和可过账科目下按核算对象与余额桶建立唯一会计科目账户（只保存身份，不保存余额）；余额由不可变 Journal 聚合得出，Owner 余额桶的实时权威是 account 服务的 t_account_balance（design/04 §3）；CLIENT_PAYABLE 与 PARTNER_PAYABLE 使用 PENDING、AVAILABLE、LOCKED，其中 Partner PENDING 是共享待结算桶；Partner reversal 无法由 PENDING/AVAILABLE/LOCKED liability 吸收时使用资产科目 PARTNER_RECOVERY_RECEIVABLE/NONE；Client Recovery 使用 CLIENT_RECOVERY_RECEIVABLE/NONE，保证金使用 CLIENT_SECURITY_DEPOSIT/NONE；Channel 使用 CHANNEL_UNSETTLED_RECEIVABLE、CHANNEL_SETTLEMENT_RECEIVABLE、CHANNEL_UNSETTLED_PAYABLE、CHANNEL_SETTLEMENT_PAYABLE 四个科目表达交易形成、交易对账完整和银行确认三个阶段，Channel Cost 单独使用 CHANNEL_FEE_ACCRUAL，银行现金使用 BANK_CASH。';
 
 CREATE TABLE `t_fiscal_calendar` (
   `id` BIGINT NOT NULL COMMENT '服务侧生成的财务日历 Snowflake 主键。',
@@ -511,6 +506,25 @@ CREATE TABLE `t_compensation_event` (
   KEY `idx_fin_comp_created` (`create_time`) COMMENT '支持访问路径：create_time'
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='与 Finance 业务事实在同一事务登记 MQ 发布或本地处理任务，并通过 Claim、Lease 和乐观锁可靠重试';
 
+CREATE TABLE `t_consumed_event` (
+  `event_id` VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '领域事件信封 eventId（默认等于 eventKey），按其去重。',
+  `event_type` VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '已消费领域事件的类型（PascalCase，登记于 paytech-messaging 事件目录）。',
+  `aggregate_type` VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '领域事件所属聚合的大写类型代码。',
+  `aggregate_id` VARCHAR(40) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '领域事件所属聚合的标识，同时是 RabbitMQ 分区路由键。',
+  `aggregate_version` BIGINT NOT NULL COMMENT '本条已消费领域事件携带的聚合版本。',
+  `consumed_at` DATETIME(6) NOT NULL COMMENT '消费事务提交的 UTC 微秒精度时间。',
+  PRIMARY KEY (`event_id`),
+  KEY `idx_consumed_event_aggregate` (`aggregate_type`, `aggregate_id`, `aggregate_version`) COMMENT '访问索引：aggregate_type、aggregate_id、aggregate_version'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='已消费领域事件：paytech-messaging 消费端按事件 ID 去重的标准表（design/08 §4），列、类型、主键与索引与 paytech-messaging 的 messaging-consumed-event.sql 一致；事件与版本合法性由消费拦截器保证。';
+
+CREATE TABLE `t_consumed_aggregate_version` (
+  `aggregate_type` VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '领域事件所属聚合的大写类型代码。',
+  `aggregate_id` VARCHAR(40) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '领域事件所属聚合的标识，同时是 RabbitMQ 分区路由键。',
+  `last_version` BIGINT NOT NULL COMMENT '本服务已处理的该聚合最大领域事件版本。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最近一次持久化更新的 UTC 微秒精度时间。',
+  PRIMARY KEY (`aggregate_type`, `aggregate_id`)
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='已消费聚合版本：paytech-messaging 消费端按聚合记录已处理的最大版本，用于判定乱序、重放与缺口（design/08 §4）；列、类型与主键与 messaging-consumed-event.sql 一致。';
+
 INSERT INTO `t_currency_spec` (`id`, `currency`, `minor_unit`, `rounding_mode`, `status`, `create_time`, `update_time`)
 VALUES (1001, 'USD', 2, 'HALF_UP', 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6));
 
@@ -585,3 +599,52 @@ VALUES
   (5210, 5101, 'PLATFORM_SERVICE_CHARGE_PARTNER',  2, 'SERVICE_PAYABLE',          'PLATFORM_SERVICE_CHARGE', 'PLATFORM_FINANCE_ENTITY', 'PLATFORM_SERVICE_PAYABLE',     'NONE',    'CREDIT', 0, UTC_TIMESTAMP(6)),
   (5211, 5101, 'PLATFORM_SERVICE_CHARGE_PLATFORM', 1, 'SERVICE_RECEIVABLE',       'PLATFORM_SERVICE_CHARGE', 'TRANSACTION_OE',          'PLATFORM_SERVICE_RECEIVABLE',  'NONE',    'DEBIT',  0, UTC_TIMESTAMP(6)),
   (5212, 5101, 'PLATFORM_SERVICE_CHARGE_PLATFORM', 2, 'SERVICE_REVENUE',          'PLATFORM_SERVICE_CHARGE', 'BOOK_ENTITY',             'PLATFORM_SERVICE_REVENUE',     'NONE',    'CREDIT', 0, UTC_TIMESTAMP(6));
+
+-- Economic-fact adjustments: STANDARD_ADJUSTMENT bundle version 1 (ACTIVE), refactor step 11b (design/04 §4 row 3).
+-- MANUAL_ADJUSTMENT facts post as ECONOMIC_ADJUSTMENT, COST_ADJUSTMENT facts as CHANNEL_COST_ADJUSTMENT, both in the fact's OE book.
+-- Each fact line posts twice: the payer side as DEBIT and the payee side as CREDIT (swapped when direction = REVERSAL).
+-- A rule line matches when amount_source_code = the line's fee type, owner_role = the party role's owner role
+-- (CLIENT, LOCAL_PARTNER, CHANNEL -> CHANNEL_ACCOUNT, OPERATING_ENTITY -> TRANSACTION_OE, FINANCE_ENTITY -> PLATFORM_FINANCE_ENTITY,
+-- TAX_AUTHORITY) and entry_side = the side; required_flag is not used for adjustments. Any unmatched combination rejects the fact.
+INSERT INTO `t_accounting_rule_bundle` (`id`, `bundle_code`, `current_ver_id`, `status`, `version`, `create_time`, `update_time`)
+VALUES (5002, 'STANDARD_ADJUSTMENT', 5102, 'ACTIVE', 0, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6));
+
+INSERT INTO `t_accounting_rule_bundle_ver`
+  (`id`, `bundle_id`, `bundle_ver`, `effective_from`, `effective_to`, `status`, `maker_id`, `checker_id`, `approved_time`, `create_time`, `update_time`)
+VALUES (5102, 5002, 1, '2000-01-01 00:00:00.000000', NULL, 'ACTIVE', 1, 2, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6), UTC_TIMESTAMP(6));
+
+INSERT INTO `t_accounting_rule_line`
+  (`id`, `bundle_ver_id`, `instruction_type`, `line_no`, `line_code`, `amount_source_code`, `owner_role`, `account_code`, `balance_bucket`, `entry_side`, `required_flag`, `create_time`)
+VALUES
+  (5301, 5102, 'ECONOMIC_ADJUSTMENT', 1, 'OE_CLIENT_PRINCIPAL_DR', 'CLIENT_PRINCIPAL', 'TRANSACTION_OE', 'RECON_ADJUSTMENT_EXPENSE', 'NONE', 'DEBIT', 0, UTC_TIMESTAMP(6)),
+  (5302, 5102, 'ECONOMIC_ADJUSTMENT', 2, 'OE_CLIENT_PRINCIPAL_CR', 'CLIENT_PRINCIPAL', 'TRANSACTION_OE', 'RECON_ADJUSTMENT_EXPENSE', 'NONE', 'CREDIT', 0, UTC_TIMESTAMP(6)),
+  (5303, 5102, 'ECONOMIC_ADJUSTMENT', 3, 'OE_CLIENT_FEE_DR', 'CLIENT_FEE', 'TRANSACTION_OE', 'CLIENT_FEE_REVENUE', 'NONE', 'DEBIT', 0, UTC_TIMESTAMP(6)),
+  (5304, 5102, 'ECONOMIC_ADJUSTMENT', 4, 'OE_CLIENT_FEE_CR', 'CLIENT_FEE', 'TRANSACTION_OE', 'CLIENT_FEE_REVENUE', 'NONE', 'CREDIT', 0, UTC_TIMESTAMP(6)),
+  (5305, 5102, 'ECONOMIC_ADJUSTMENT', 5, 'OE_PARTNER_SHARE_DR', 'PARTNER_SHARE', 'TRANSACTION_OE', 'PARTNER_SHARE_EXPENSE', 'NONE', 'DEBIT', 0, UTC_TIMESTAMP(6)),
+  (5306, 5102, 'ECONOMIC_ADJUSTMENT', 6, 'OE_PARTNER_SHARE_CR', 'PARTNER_SHARE', 'TRANSACTION_OE', 'PARTNER_SHARE_EXPENSE', 'NONE', 'CREDIT', 0, UTC_TIMESTAMP(6)),
+  (5307, 5102, 'ECONOMIC_ADJUSTMENT', 7, 'OE_GROSS_AMOUNT_DR', 'GROSS_AMOUNT', 'TRANSACTION_OE', 'RECON_ADJUSTMENT_EXPENSE', 'NONE', 'DEBIT', 0, UTC_TIMESTAMP(6)),
+  (5308, 5102, 'ECONOMIC_ADJUSTMENT', 8, 'OE_GROSS_AMOUNT_CR', 'GROSS_AMOUNT', 'TRANSACTION_OE', 'RECON_ADJUSTMENT_EXPENSE', 'NONE', 'CREDIT', 0, UTC_TIMESTAMP(6)),
+  (5309, 5102, 'ECONOMIC_ADJUSTMENT', 9, 'OE_CHANNEL_COST_DR', 'CHANNEL_COST', 'TRANSACTION_OE', 'CHANNEL_FEE_EXPENSE', 'NONE', 'DEBIT', 0, UTC_TIMESTAMP(6)),
+  (5310, 5102, 'ECONOMIC_ADJUSTMENT', 10, 'OE_CHANNEL_COST_CR', 'CHANNEL_COST', 'TRANSACTION_OE', 'CHANNEL_FEE_EXPENSE', 'NONE', 'CREDIT', 0, UTC_TIMESTAMP(6)),
+  (5311, 5102, 'ECONOMIC_ADJUSTMENT', 11, 'OE_SELLER_TAX_DR', 'SELLER_TAX', 'TRANSACTION_OE', 'RECON_ADJUSTMENT_EXPENSE', 'NONE', 'DEBIT', 0, UTC_TIMESTAMP(6)),
+  (5312, 5102, 'ECONOMIC_ADJUSTMENT', 12, 'OE_SELLER_TAX_CR', 'SELLER_TAX', 'TRANSACTION_OE', 'RECON_ADJUSTMENT_EXPENSE', 'NONE', 'CREDIT', 0, UTC_TIMESTAMP(6)),
+  (5313, 5102, 'ECONOMIC_ADJUSTMENT', 13, 'OE_SERVICE_CHARGE_DR', 'PLATFORM_SERVICE_CHARGE', 'TRANSACTION_OE', 'PLATFORM_SERVICE_FEE_EXPENSE', 'NONE', 'DEBIT', 0, UTC_TIMESTAMP(6)),
+  (5314, 5102, 'ECONOMIC_ADJUSTMENT', 14, 'OE_SERVICE_CHARGE_CR', 'PLATFORM_SERVICE_CHARGE', 'TRANSACTION_OE', 'PLATFORM_SERVICE_FEE_EXPENSE', 'NONE', 'CREDIT', 0, UTC_TIMESTAMP(6)),
+  (5315, 5102, 'ECONOMIC_ADJUSTMENT', 15, 'CLIENT_PRINCIPAL_DR', 'CLIENT_PRINCIPAL', 'CLIENT', 'CLIENT_PAYABLE', 'PENDING', 'DEBIT', 0, UTC_TIMESTAMP(6)),
+  (5316, 5102, 'ECONOMIC_ADJUSTMENT', 16, 'CLIENT_PRINCIPAL_CR', 'CLIENT_PRINCIPAL', 'CLIENT', 'CLIENT_PAYABLE', 'PENDING', 'CREDIT', 0, UTC_TIMESTAMP(6)),
+  (5317, 5102, 'ECONOMIC_ADJUSTMENT', 17, 'CLIENT_FEE_DR', 'CLIENT_FEE', 'CLIENT', 'CLIENT_PAYABLE', 'PENDING', 'DEBIT', 0, UTC_TIMESTAMP(6)),
+  (5318, 5102, 'ECONOMIC_ADJUSTMENT', 18, 'CLIENT_FEE_CR', 'CLIENT_FEE', 'CLIENT', 'CLIENT_PAYABLE', 'PENDING', 'CREDIT', 0, UTC_TIMESTAMP(6)),
+  (5319, 5102, 'ECONOMIC_ADJUSTMENT', 19, 'PARTNER_SHARE_DR', 'PARTNER_SHARE', 'LOCAL_PARTNER', 'PARTNER_PAYABLE', 'PENDING', 'DEBIT', 0, UTC_TIMESTAMP(6)),
+  (5320, 5102, 'ECONOMIC_ADJUSTMENT', 20, 'PARTNER_SHARE_CR', 'PARTNER_SHARE', 'LOCAL_PARTNER', 'PARTNER_PAYABLE', 'PENDING', 'CREDIT', 0, UTC_TIMESTAMP(6)),
+  (5321, 5102, 'ECONOMIC_ADJUSTMENT', 21, 'CHANNEL_GROSS_DR', 'GROSS_AMOUNT', 'CHANNEL_ACCOUNT', 'CHANNEL_UNSETTLED_RECEIVABLE', 'NONE', 'DEBIT', 0, UTC_TIMESTAMP(6)),
+  (5322, 5102, 'ECONOMIC_ADJUSTMENT', 22, 'CHANNEL_GROSS_CR', 'GROSS_AMOUNT', 'CHANNEL_ACCOUNT', 'CHANNEL_UNSETTLED_RECEIVABLE', 'NONE', 'CREDIT', 0, UTC_TIMESTAMP(6)),
+  (5323, 5102, 'ECONOMIC_ADJUSTMENT', 23, 'CHANNEL_COST_DR', 'CHANNEL_COST', 'CHANNEL_ACCOUNT', 'CHANNEL_FEE_ACCRUAL', 'NONE', 'DEBIT', 0, UTC_TIMESTAMP(6)),
+  (5324, 5102, 'ECONOMIC_ADJUSTMENT', 24, 'CHANNEL_COST_CR', 'CHANNEL_COST', 'CHANNEL_ACCOUNT', 'CHANNEL_FEE_ACCRUAL', 'NONE', 'CREDIT', 0, UTC_TIMESTAMP(6)),
+  (5325, 5102, 'ECONOMIC_ADJUSTMENT', 25, 'FE_SERVICE_CHARGE_DR', 'PLATFORM_SERVICE_CHARGE', 'PLATFORM_FINANCE_ENTITY', 'PLATFORM_SERVICE_PAYABLE', 'NONE', 'DEBIT', 0, UTC_TIMESTAMP(6)),
+  (5326, 5102, 'ECONOMIC_ADJUSTMENT', 26, 'FE_SERVICE_CHARGE_CR', 'PLATFORM_SERVICE_CHARGE', 'PLATFORM_FINANCE_ENTITY', 'PLATFORM_SERVICE_PAYABLE', 'NONE', 'CREDIT', 0, UTC_TIMESTAMP(6)),
+  (5327, 5102, 'ECONOMIC_ADJUSTMENT', 27, 'TAX_SELLER_TAX_DR', 'SELLER_TAX', 'TAX_AUTHORITY', 'TAX_PAYABLE', 'NONE', 'DEBIT', 0, UTC_TIMESTAMP(6)),
+  (5328, 5102, 'ECONOMIC_ADJUSTMENT', 28, 'TAX_SELLER_TAX_CR', 'SELLER_TAX', 'TAX_AUTHORITY', 'TAX_PAYABLE', 'NONE', 'CREDIT', 0, UTC_TIMESTAMP(6)),
+  (5329, 5102, 'CHANNEL_COST_ADJUSTMENT', 1, 'CHANNEL_COST_DR', 'CHANNEL_COST', 'CHANNEL_ACCOUNT', 'CHANNEL_FEE_ACCRUAL', 'NONE', 'DEBIT', 0, UTC_TIMESTAMP(6)),
+  (5330, 5102, 'CHANNEL_COST_ADJUSTMENT', 2, 'CHANNEL_COST_CR', 'CHANNEL_COST', 'CHANNEL_ACCOUNT', 'CHANNEL_FEE_ACCRUAL', 'NONE', 'CREDIT', 0, UTC_TIMESTAMP(6)),
+  (5331, 5102, 'CHANNEL_COST_ADJUSTMENT', 3, 'OE_CHANNEL_COST_DR', 'CHANNEL_COST', 'TRANSACTION_OE', 'CHANNEL_FEE_EXPENSE', 'NONE', 'DEBIT', 0, UTC_TIMESTAMP(6)),
+  (5332, 5102, 'CHANNEL_COST_ADJUSTMENT', 4, 'OE_CHANNEL_COST_CR', 'CHANNEL_COST', 'TRANSACTION_OE', 'CHANNEL_FEE_EXPENSE', 'NONE', 'CREDIT', 0, UTC_TIMESTAMP(6));

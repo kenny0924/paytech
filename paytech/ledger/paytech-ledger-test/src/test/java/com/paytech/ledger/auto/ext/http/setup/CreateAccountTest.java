@@ -5,20 +5,19 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.paytech.account.api.enums.BalanceBucket;
 import com.paytech.account.api.enums.OwnerType;
 import com.paytech.ledger.api.LedgerBookCommandApi;
 import com.paytech.ledger.api.request.CreateAccountRequestBody;
-import com.paytech.ledger.core.dal.dataobject.Account;
+import com.paytech.ledger.core.dal.dataobject.LedgerAccount;
 import com.paytech.ledger.core.enums.AccountStatus;
 import com.paytech.ledger.core.enums.NormalSide;
 import com.paytech.ledger.test.base.MockTestBase;
 import com.paytech.ledger.test.builder.AccountingSetupRequestBuilder;
 import com.paytech.ledger.test.dal.AccountingTestMapper;
 import com.paytech.ledger.test.mocker.local.LedgerFixture;
-
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * 创建统一账户：正常方向冻结、账户身份矩阵、科目归属与唯一性。
@@ -42,13 +41,12 @@ class CreateAccountTest extends MockTestBase {
         var response = post(path(), AccountingSetupRequestBuilder.account("CLIENT_PAYABLE",
             OwnerType.CLIENT.getCode(), "1001", BalanceBucket.PENDING.getCode())).assertSuccess(201);
 
-        Account account = testMapper.selectAccount(response.id("accountId"));
+        LedgerAccount account = testMapper.selectAccount(response.id("accountId"));
         assertAll(() -> assertEquals(ledger.getLedgerBookId(), account.getLedgerBookId()),
             () -> assertEquals(OwnerType.CLIENT, account.getOwnerType()), () -> assertEquals("1001", account.getOwnerId()),
             () -> assertEquals(BalanceBucket.PENDING, account.getBalanceBucket()),
             () -> assertEquals(NormalSide.CREDIT, account.getNormalSide()),
-            () -> assertEquals(AccountStatus.ACTIVE, account.getAccountStatus()),
-            () -> assertEquals(0L, account.getBalanceVersion()));
+            () -> assertEquals(AccountStatus.ACTIVE, account.getAccountStatus()));
         ledgerChecker.assertAccount(account.getId(), "0", "0", "0", 0L);
     }
 

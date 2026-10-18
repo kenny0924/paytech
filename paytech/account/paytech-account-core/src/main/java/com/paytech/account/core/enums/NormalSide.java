@@ -4,7 +4,7 @@ import com.paytech.foundation.common.enums.CodeEnum;
 
 /**
  * 账户或科目余额增加时采用的会计方向
- * <li>副本：Owner 为 ledger（{@code com.paytech.ledger.core.enums.NormalSide}），本期只用于只读校验共库 t_account 投影；第 11b 步随余额表收口。</li>
+ * <li>与 ledger 科目的正常方向一致（Owner 为 ledger）；由余额映射规则冻结到 t_account_balance，用于计算净余额。</li>
  */
 public enum NormalSide implements CodeEnum {
     /** 借方 */

@@ -8,7 +8,7 @@ import lombok.Getter;
 /**
  * 交易自动记账命令：billing 发布的一条经济事实（头 + 全部明细行）
  * <li>输入驱动：ledger 不再读取 billing 经济事实表与 reconciliation 渠道清算账户表；渠道清算账户主键由事实头给出。</li>
- * <li>第 11a / 11b 步由 EconomicFactRecorded 消费 Handler 构造本命令。</li>
+ * <li>由 EconomicFactRecorded 消费 Handler（{@code EconomicFactRecordedPostingHandler}）从事件 Payload 构造本命令（第 11b 步）。</li>
  */
 @Getter
 @AllArgsConstructor

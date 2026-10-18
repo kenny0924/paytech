@@ -10,8 +10,8 @@ public interface TrialExceptionService {
 
     /**
      * 批准投影重建
-     * <li>一个事务内锁定账户、从全部分录重算四个投影值并以余额版本 CAS 写回，再把异常迁移为 RESOLVED。</li>
-     * <li>不写 Journal、不改变序号；版本或状态已变化时整体回滚并以并发冲突失败。</li>
+     * <li>一个事务内聚合引用账户的全部分录、冻结解决摘要并把异常迁移为 RESOLVED；只写 t_trial_balance_exception。</li>
+     * <li>不写 Journal、不写余额、不改变序号；状态已变化时整体回滚并以并发冲突失败。Owner 余额重算由 account 服务执行。</li>
      *
      * @param exception 状态为 UNDER_REVIEW 的异常
      * @param checkerId 复核人，调用方已校验不同于编制人

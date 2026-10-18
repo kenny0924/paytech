@@ -6,7 +6,6 @@ import java.time.temporal.ChronoUnit;
 
 import org.springframework.stereotype.Component;
 
-import com.paytech.account.api.rule.AccountIdentityRule;
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.processor.AbstractProcessor;
@@ -24,6 +23,7 @@ import com.paytech.ledger.domainservice.repository.ChartOfAccountsRepository;
 import com.paytech.ledger.domainservice.repository.CurrencySpecRepository;
 import com.paytech.ledger.domainservice.repository.FinanceEntityRepository;
 import com.paytech.ledger.domainservice.service.LedgerSetupService;
+import com.paytech.ledger.domainservice.validator.account.AccountIdentityRule;
 import com.paytech.ledger.service.processor.request.CreateLedgerBookRequest;
 import com.paytech.ledger.service.processor.response.CreatedResourceResponse;
 import com.paytech.platform.support.api.enums.CurrencySpecStatus;

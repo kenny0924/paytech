@@ -15,8 +15,15 @@
         WHERE entity_type = #{entityType} AND entity_id = #{entityId} AND currency = #{currency}
     </select>
 
+    <select id="selectView" resultType="com.paytech.ledger.domain.view.LedgerBookView">
+        SELECT b.id ledger_book_id, b.entity_type, b.entity_id, b.currency, b.chart_id, c.chart_code, b.book_status
+        FROM t_ledger_book b
+        JOIN t_chart_of_accounts c ON c.id = b.chart_id
+        WHERE b.id = #{id}
+    </select>
+
     <select id="selectPage" resultType="com.paytech.ledger.domain.view.LedgerBookView">
-        SELECT b.id ledger_book_id, b.entity_type, b.entity_id, b.currency, c.chart_code, b.book_status
+        SELECT b.id ledger_book_id, b.entity_type, b.entity_id, b.currency, b.chart_id, c.chart_code, b.book_status
         FROM t_ledger_book b
         JOIN t_chart_of_accounts c ON c.id = b.chart_id
         <where>

@@ -24,6 +24,30 @@ spring:
       password: "${LEDGER_REDIS_PASSWORD:}"
       connect-timeout: 2s
       timeout: 2s
+  # EconomicFactRecorded 消费（design/04 §5）：ledger 只消费，不发布，因此不要求 Publisher Confirm。
+  rabbitmq:
+    host: "${LEDGER_RABBITMQ_HOST:127.0.0.1}"
+    port: "${LEDGER_RABBITMQ_PORT:5672}"
+    username: "${LEDGER_RABBITMQ_USERNAME:}"
+    password: "${LEDGER_RABBITMQ_PASSWORD:}"
+    virtual-host: "${LEDGER_RABBITMQ_VHOST:/mor-local}"
+    connection-timeout: 2s
+  # 关账步骤 2、3 的内部 HTTP 客户端（design/04 §6）：JDK HttpClient 不自动重试；Finance 后继服务不接服务发现，基址直接配置。
+  http:
+    clients:
+      imperative:
+        factory: jdk
+    serviceclient:
+      account-service:
+        base-url: "${LEDGER_ACCOUNT_SERVICE_URL:http://127.0.0.1:18114}"
+        connect-timeout: 2s
+        read-timeout: 5s
+        redirects: dont-follow
+      billing-service:
+        base-url: "${LEDGER_BILLING_SERVICE_URL:http://127.0.0.1:18113}"
+        connect-timeout: 2s
+        read-timeout: 5s
+        redirects: dont-follow
 
 mybatis:
   mapper-locations: classpath*:mapper/**/*.xml
@@ -32,6 +56,14 @@ mybatis:
 redis:
   coordination:
     enabled: true
+
+# paytech-messaging 消费端：按 Handler 声明 ledger.billing.hash 与分区队列 ledger.billing.p0..p3（design/08 §3）。
+messaging:
+  consumer:
+    service: ledger
+  consumers:
+    billing:
+      partitions: 4
 
 management:
   server:

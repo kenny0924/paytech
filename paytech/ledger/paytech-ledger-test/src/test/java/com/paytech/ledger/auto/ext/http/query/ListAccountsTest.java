@@ -20,36 +20,38 @@ import com.paytech.ledger.test.mocker.local.LedgerMocker;
 import tools.jackson.databind.JsonNode;
 
 /**
- * 账户列表：过滤、余额与投影一致、排序、账簿隔离与不存在拒绝。
+ * 账户列表：过滤、余额由分录聚合、排序、账簿隔离与不存在拒绝。
  *
  * @see LedgerBookQueryApi#listAccounts(String, String, String, String, String, Integer, Integer)
  */
 class ListAccountsTest extends AbstractManualAdjustmentApiTest {
 
     @Test
-    void test_balancesMatchProjectionAfterPosting() {
-        posted(adjustment().transfer(clientAvailableAccountId, bankCashAccountId, "12.5"));
+    void test_balancesAggregateJournalsAfterPosting() {
+        posted(adjustment().transfer(liabilityAccountId, bankCashAccountId, "12.5"));
 
         List<JsonNode> accounts = get(path()).assertSuccess(200).assertPage(1, 10, 3);
 
-        assertEquals(List.of("BANK_CASH", "CAPITAL", StandardAccountCodes.CLIENT_PAYABLE),
+        assertEquals(List.of("BANK_CASH", "CAPITAL", LIABILITY_CODE),
             accounts.stream().map(item -> item.path("accountCode").asString()).toList(), "按科目代码排序");
         JsonNode client = accounts.get(2);
-        assertAll(() -> assertEquals(String.valueOf(clientAvailableAccountId), client.path("accountId").asString()),
-            () -> assertEquals(OwnerType.CLIENT.getCode(), client.path("ownerType").asString()),
-            () -> assertEquals("1001", client.path("ownerId").asString()),
-            () -> assertEquals(BalanceBucket.AVAILABLE.getCode(), client.path("balanceBucket").asString()),
+        assertAll(() -> assertEquals(String.valueOf(liabilityAccountId), client.path("accountId").asString()),
+            () -> assertEquals(OwnerType.OPERATING_ENTITY.getCode(), client.path("ownerType").asString()),
+            () -> assertEquals("AE001", client.path("ownerId").asString()),
+            () -> assertEquals(BalanceBucket.NONE.getCode(), client.path("balanceBucket").asString()),
             () -> assertEquals(NormalSide.CREDIT.getCode(), client.path("normalSide").asString()),
             () -> assertEquals(AccountStatus.ACTIVE.getCode(), client.path("accountStatus").asString()),
             () -> assertEquals("12.50", client.path("debitTotal").asString()),
             () -> assertEquals("0.00", client.path("creditTotal").asString()),
             () -> assertEquals("-12.50", client.path("netBalance").asString()),
             () -> assertEquals("1", client.path("lastJournalSequence").asString()));
-        ledgerChecker.assertAccount(clientAvailableAccountId, "12.5", "0", "-12.5", 1L);
+        ledgerChecker.assertAccount(liabilityAccountId, "12.5", "0", "-12.5", 1L);
     }
 
     @Test
     void test_filters() {
+        ledgerMocker.mockAccount(ledger.getLedgerBookId(), StandardAccountCodes.CLIENT_PAYABLE, OwnerType.CLIENT, "1001",
+            BalanceBucket.AVAILABLE);
         ledgerMocker.mockAccount(ledger.getLedgerBookId(), StandardAccountCodes.CLIENT_PAYABLE, OwnerType.CLIENT, "1001",
             BalanceBucket.PENDING);
         ledgerMocker.mockAccount(ledger.getLedgerBookId(), StandardAccountCodes.CLIENT_PAYABLE, OwnerType.CLIENT, "1002",

@@ -34,11 +34,13 @@ import com.paytech.ledger.domainservice.repository.AccountingPeriodRepository;
 import com.paytech.ledger.domainservice.repository.AdjustmentApprovalRepository;
 import com.paytech.ledger.domainservice.repository.FiscalCalendarRepository;
 import com.paytech.ledger.domainservice.repository.JournalEntryRepository;
+import com.paytech.ledger.domainservice.repository.LedgerAccountRepository;
 import com.paytech.ledger.domainservice.repository.ManualAdjustmentLineRepository;
 import com.paytech.ledger.domainservice.repository.ManualAdjustmentRepository;
 import com.paytech.ledger.domainservice.service.JournalPostingService;
 import com.paytech.ledger.domainservice.service.ManualAdjustmentService;
 import com.paytech.ledger.domainservice.validator.adjustment.ManualAdjustmentReviewValidator;
+import com.paytech.ledger.domainservice.validator.adjustment.OwnerAccountAdjustmentRule;
 import com.paytech.ledger.service.processor.request.ReviewManualAdjustmentRequest;
 import com.paytech.ledger.service.processor.response.ReviewManualAdjustmentResponse;
 
@@ -50,6 +52,8 @@ import lombok.AllArgsConstructor;
  * <li>一个事务内依次：调整 SUBMITTED→APPROVED 与 Checker 记录、生成 VALIDATED 人工指令、过账、调整→POSTED；任一步失败整体回滚。</li>
  * <li>同一复核人以同一摘要重复批准已 POSTED 的调整时返回原过账结果，其他重复复核拒绝。</li>
  * <li>过账日期取批准时刻在日历时区的日期，并收敛到期间起止日期之内。</li>
+ * <li>事务前复验调整行不涉及 Client 或 Local Partner 账户（OWNER_ACCOUNT_ADJUSTMENT_FORBIDDEN，design/04 §4），拦截第 11b 步前提交的存量调整；
+ * 账户身份只增不改，事务前读取即可。</li>
  */
 @Component
 @AllArgsConstructor
@@ -59,6 +63,7 @@ public class ApproveManualAdjustmentProcessor
     private final IdGenerator idGenerator;
     private final TransactionTemplate transactionTemplate;
     private final JournalPostingService journalPostingService;
+    private final LedgerAccountRepository ledgerAccountRepository;
     private final JournalEntryRepository journalEntryRepository;
     private final ManualAdjustmentService manualAdjustmentService;
     private final FiscalCalendarRepository fiscalCalendarRepository;
@@ -86,6 +91,7 @@ public class ApproveManualAdjustmentProcessor
         ManualAdjustmentReviewValidator.checkReviewable(adjustment, request.getCheckerId(),
             request.getApprovedContentHash());
         ApproveManualAdjustmentContext context = buildContext(adjustment, request.getCheckerId());
+        checkNoOwnerAccounts(adjustment, context.getInstructionLines());
 
         // 批准并过账
         transactionTemplate.executeWithoutResult(status -> {
@@ -94,6 +100,12 @@ public class ApproveManualAdjustmentProcessor
             manualAdjustmentService.markPosted(context);
         });
         return response(adjustment, context.getJournalEntry());
+    }
+
+    /** 调整行引用的账户不得是 Client 或 Local Partner 账户。 */
+    void checkNoOwnerAccounts(ManualAdjustment adjustment, List<InstructionLine> lines) {
+        List<Long> ids = lines.stream().map(InstructionLine::getAccountId).distinct().sorted().toList();
+        OwnerAccountAdjustmentRule.checkNoOwnerAccounts("调整 " + adjustment.getId(), ledgerAccountRepository.findByIds(ids));
     }
 
     /** 读取调整，不存在时业务拒绝。 */

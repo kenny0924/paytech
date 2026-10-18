@@ -1,13 +1,13 @@
 package com.paytech.arch.auto;
 
-import com.paytech.arch.ownership.TableOwnership;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import com.paytech.arch.ownership.TableOwnership;
 
 /**
  * 表归属白名单（由 design/03 与保留服务的评审 Schema 生成）的内容与查询。
@@ -22,7 +22,8 @@ class TableOwnershipAutoTest {
     @Test
     void test_normalFlow() {
         // design/03 §4.2：17 个目标库共 265 张物理表；另加保留服务 platform-support 自身 Schema 的 56 张表。
-        Assertions.assertEquals(265 + 56 + 1, ownership.physicalTableCount(), "design 03 + Platform 保留表 + 第 12 步 t_card_material_ticket");
+        Assertions.assertEquals(265 + 56 + 1 + 5, ownership.physicalTableCount(),
+            "design 03 + Platform 保留表 + 第 12 步 t_card_material_ticket + 第 11b 步 account 五张余额表");
         Assertions.assertEquals(57, ownership.databasesOf("platform-support").get("mor_platform").size());
         Assertions.assertEquals(29, ownership.databasesOf("ledger").get("mor_ledger").size());
         Assertions.assertEquals(Set.of("mor_platform"), ownership.databasesOf("platform-support").keySet());
@@ -43,12 +44,15 @@ class TableOwnershipAutoTest {
             List.of("t_economic_fact", "t_economic_fact_line", "t_economic_fact_line_link")));
         Assertions.assertTrue(ownership.services().stream()
             .noneMatch(service -> ownership.allowedTables(service).contains("t_transaction_economics")));
-        // 共库过渡：account 只读 ledger 的三张表，不计入 account 归属。
-        Assertions.assertTrue(ownership.allowedTables("account").containsAll(
-            List.of("t_account", "t_chart_account", "t_ledger_book")));
-        Assertions.assertEquals(Set.of("t_compensation_event"), ownership.databasesOf("account").get("mor_account"));
-        Assertions.assertEquals(Set.of("t_account", "t_chart_account", "t_ledger_book"),
-            ownership.transitionalReadsOf("account").get("mor_ledger"));
+        // 第 11b 步拆表：t_account 更名 t_ledger_account 归 ledger；account 改连自有 mor_account，不再只读 mor_ledger。
+        Assertions.assertTrue(ownership.allowedTables("ledger").contains("t_ledger_account"));
+        Assertions.assertTrue(ownership.services().stream()
+            .noneMatch(service -> ownership.allowedTables(service).contains("t_account")));
+        Assertions.assertEquals(Set.of("t_account_balance", "t_balance_applied_fact", "t_balance_applied_entry",
+            "t_balance_movement", "t_balance_discrepancy", "t_compensation_event"),
+            ownership.databasesOf("account").get("mor_account"));
+        Assertions.assertFalse(ownership.allowedTables("account").contains("t_chart_account"));
+        Assertions.assertTrue(ownership.transitionalReadsOf("account").isEmpty());
         // design/03 删除的表不属于任何重切服务；保留服务 Platform 的存量命令幂等表待专项迁移，仍归 Platform。
         Assertions.assertTrue(ownership.services().stream().filter(service -> !"platform-support".equals(service))
             .noneMatch(service -> ownership.allowedTables(service).contains("t_command_idempotency")));

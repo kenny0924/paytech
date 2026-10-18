@@ -1,9 +1,11 @@
 package com.paytech.ledger.domainservice.service;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
+import com.paytech.ledger.core.dal.dataobject.ChartAccount;
 import com.paytech.ledger.domain.AccountQuery;
 import com.paytech.ledger.domain.LedgerBookQuery;
 import com.paytech.ledger.domain.view.AccountJournalLineView;
@@ -39,4 +41,27 @@ public interface LedgerQueryService {
 
     /** 查询分录详情；分录不存在或不属于该账簿时拒绝。 */
     JournalEntryDetailView getJournalEntry(long ledgerBookId, long journalEntryId);
+
+    /** 查询单个账簿与其科目表（design/04 §8，供 account 失败关闭地读取账簿身份）；不存在时拒绝。 */
+    LedgerBookView getLedgerBook(long ledgerBookId);
+
+    /**
+     * 按主键批量读取科目（design/04 §6 科目名经 ledger-api 批量读）
+     *
+     * @param chartAccountIds 去重后的科目主键，不超过 {@value #MAX_CHART_ACCOUNT_IDS} 个
+     * @return 按主键升序的科目；不存在的主键不返回
+     */
+    List<ChartAccount> listChartAccounts(List<Long> chartAccountIds);
+
+    /**
+     * 账簿内 Owner 账户按分录聚合的余额（design/04 §7 日终核对的 ledger 侧）
+     * <li>Owner 类型为 account 服务维护余额的 CLIENT、LOCAL_PARTNER、CHANNEL_ACCOUNT、CASH_ACCOUNT。</li>
+     *
+     * @param ledgerBookId 账簿主键；不存在时拒绝
+     * @return 按科目代码、核算对象、余额桶排序的全部 Owner 账户，金额按币种精度补齐
+     */
+    List<AccountView> listOwnerAccountTotals(long ledgerBookId);
+
+    /** 批量读取科目的最大主键数。 */
+    int MAX_CHART_ACCOUNT_IDS = 200;
 }

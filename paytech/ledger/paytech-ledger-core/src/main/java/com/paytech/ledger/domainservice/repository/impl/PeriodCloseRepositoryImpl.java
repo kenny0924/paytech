@@ -98,11 +98,6 @@ public class PeriodCloseRepositoryImpl implements PeriodCloseRepository {
         return mapper.countPendingCompensationEvents();
     }
 
-    /** 统计账簿内余额非零的渠道与银行账户。 */
-    @Override
-    public long countNonZeroTreasuryAccounts(List<Long> bookIds) {
-        return mapper.countNonZeroTreasuryAccounts(bookIds);
-    }
 
     /** 当前 UTC 时间，截断到数据库支持的微秒精度。 */
     private Instant now() {

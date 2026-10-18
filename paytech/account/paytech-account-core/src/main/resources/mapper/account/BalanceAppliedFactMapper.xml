@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- t_balance_applied_fact 与 t_balance_applied_entry：已处理经济事实及其余额变化，只读写 mor_account。 -->
+<mapper namespace="com.paytech.account.core.dal.mapper.BalanceAppliedFactMapper">
+    <sql id="columns">id, fact_id, fact_version, fact_type, supersedes_fact_id, superseded_by_fact_id, entity_no, finance_entity_id, currency, apply_status, lines_hash, applied_time, create_time, update_time</sql>
+
+    <!-- 账簿主体的事实范围：OE 账簿按 entity_no，Finance Entity 账簿按 finance_entity_id。 -->
+    <sql id="bookFacts">
+        <choose>
+            <when test="bookEntityType.code == 'OPERATING_ENTITY'">entity_no = #{bookEntityId}</when>
+            <otherwise>finance_entity_id = #{bookEntityId}</otherwise>
+        </choose>
+        AND currency = #{currency}
+    </sql>
+
+    <insert id="insert">
+        INSERT INTO t_balance_applied_fact (<include refid="columns"/>)
+        VALUES (#{id}, #{factId}, #{factVersion}, #{factType}, #{supersedesFactId}, #{supersededByFactId}, #{entityNo}, #{financeEntityId}, #{currency}, #{applyStatus}, #{linesHash}, #{appliedTime}, #{createTime}, #{updateTime})
+    </insert>
+
+    <select id="selectByFactIdForUpdate" resultType="com.paytech.account.core.dal.dataobject.BalanceAppliedFact">
+        SELECT <include refid="columns"/> FROM t_balance_applied_fact WHERE fact_id = #{factId}
+        ORDER BY fact_version DESC LIMIT 1 FOR UPDATE
+    </select>
+
+    <update id="updateStatus">
+        UPDATE t_balance_applied_fact
+        SET apply_status = #{status}, fact_type = #{fact.factType}, supersedes_fact_id = #{fact.supersedesFactId},
+            superseded_by_fact_id = #{fact.supersededByFactId}, lines_hash = #{fact.linesHash},
+            applied_time = #{fact.appliedTime}, update_time = #{now}
+        WHERE id = #{fact.id} AND apply_status = #{fact.applyStatus}
+    </update>
+
+    <select id="selectProgress" resultType="java.util.Map">
+        SELECT COUNT(*) factCount, MAX(fact_id) maxFactId FROM t_balance_applied_fact
+        WHERE <include refid="bookFacts"/> AND apply_status IN ('APPLIED', 'REVERSED', 'SKIPPED')
+    </select>
+
+    <select id="countAfter" resultType="long">
+        SELECT COUNT(*) FROM t_balance_applied_fact WHERE <include refid="bookFacts"/> AND fact_id &gt; #{factId}
+    </select>
+
+    <delete id="deleteEntriesUpTo">
+        DELETE e FROM t_balance_applied_entry e
+        JOIN t_balance_applied_fact f ON f.id = e.applied_fact_id
+        WHERE f.entity_no = #{bookEntityId} AND f.currency = #{currency} AND f.fact_id &lt;= #{factId}
+    </delete>
+
+    <delete id="deleteFactsUpTo">
+        DELETE FROM t_balance_applied_fact
+        WHERE entity_no = #{bookEntityId} AND currency = #{currency} AND fact_id &lt;= #{factId}
+    </delete>
+
+    <insert id="insertEntries">
+        INSERT INTO t_balance_applied_entry (id, applied_fact_id, fact_id, line_no, balance_id, entry_side, amount, create_time) VALUES
+        <foreach collection="entries" item="entry" separator=",">(#{entry.id}, #{entry.appliedFactId}, #{entry.factId}, #{entry.lineNo}, #{entry.balanceId}, #{entry.entrySide}, #{entry.amount}, #{entry.createTime})</foreach>
+    </insert>
+
+    <select id="selectEntries" resultType="com.paytech.account.core.dal.dataobject.BalanceAppliedEntry">
+        SELECT id, applied_fact_id, fact_id, line_no, balance_id, entry_side, amount, create_time
+        FROM t_balance_applied_entry WHERE applied_fact_id = #{appliedFactId} ORDER BY id
+    </select>
+</mapper>

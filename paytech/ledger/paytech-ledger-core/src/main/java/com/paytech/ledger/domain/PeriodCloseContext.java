@@ -38,6 +38,9 @@ public class PeriodCloseContext {
     /** 7 个固定步骤，按步骤号升序。 */
     private final List<CloseStep> steps;
 
+    /** 账簿主键 → 步骤 2 从 account 读取的余额消费进度；步骤 3 读取非零渠道 / 银行账户数。 */
+    private final Map<Long, BookBalanceConsistency> balanceConsistencies = new HashMap<>();
+
     /** 账簿主键 → 步骤 4 生成的试算；步骤 5 读取。 */
     private final Map<Long, TrialBalanceRun> trialRuns = new HashMap<>();
 
