@@ -194,6 +194,10 @@ source_submission_id BIGINT NN
 payment_method_code VARCHAR(64) NN OPEN(Payment Method Catalog)
 instrument_type VARCHAR(32) NN {CARD}
 instrument_ref VARCHAR(128) NN
+customer_id BIGINT N
+consent_to_save TINYINT(1) NN
+card_bin VARCHAR(8) N
+card_fingerprint CHAR(64) N
 expires_at DATETIME(6) NN
 revoked_at DATETIME(6) N
 create_time DATETIME(6) NN
@@ -968,7 +972,7 @@ test("Payment test-owned Oracle is internally complete for all 27 tables", () =>
   assert.deepEqual(approvedFields.map((table) => table.defKey), approvedTableNames);
   assert.ok(approvedFields.every((table) => table.fields.length > 1));
   assert.deepEqual([...parseIndexes().keys()], approvedTableNames);
-  assert.equal(approvedFields.reduce((count, table) => count + table.fields.length, 0), 345);
+  assert.equal(approvedFields.reduce((count, table) => count + table.fields.length, 0), 349);
   const oracleIndexes = [...parseIndexes().values()].flat();
   assert.equal(oracleIndexes.filter((index) => index.unique).length, 38);
   assert.equal(oracleIndexes.filter((index) => !index.unique).length, 44);
@@ -1038,7 +1042,7 @@ if (physicalDecisionsReadyAtRegistration) {
 test("Payment Physical Decisions freezes current model totals and digests", () => {
   assertPhysicalDecisionsReady();
   assert.deepEqual(physicalDecisionManifest(), {
-    modelTotals: { tables: 27, fields: 345, uniqueIndexes: 38, accessIndexes: 44, relations: 63, oneToOneRelations: 7, diagramGroups: 7 },
+    modelTotals: { tables: 27, fields: 349, uniqueIndexes: 38, accessIndexes: 44, relations: 63, oneToOneRelations: 7, diagramGroups: 7 },
     templateSha256: expectedTemplateDigest,
     modelSha256: expectedModelDigest,
     structuralProjectionSha256: expectedStructuralDigest,
@@ -1209,7 +1213,7 @@ test("Payment model is deterministic and preserves seven diagram themes", async 
     assert.equal(new Set(diagramRelationIds).size, relationIds.length);
     const result = spawnSync(process.execPath, [paths.generator, "--check"], { cwd: workspaceRoot, encoding: "utf8" });
     assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
-    assert.deepEqual(modelTotals(model), { tables: 27, fields: 345, uniqueIndexes: 38, accessIndexes: 44, relations: 63, oneToOneRelations: 7, diagramGroups: 7 });
+    assert.deepEqual(modelTotals(model), { tables: 27, fields: 349, uniqueIndexes: 38, accessIndexes: 44, relations: 63, oneToOneRelations: 7, diagramGroups: 7 });
 });
 
 test("Payment shared domains preserve the approved money, weight, time and currency precision", async () => {

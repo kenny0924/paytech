@@ -1,0 +1,54 @@
+# Data ID: card-service.yaml
+# Namespace: 按环境选择；本地为 mor-local。Group: DEFAULT_GROUP。
+# 本地参数模板；上传前按目标环境调整。数据库与 RabbitMQ 密码、卡指纹密钥和实例 Snowflake 坐标由进程环境提供，不写入模板。
+
+server:
+  address: 127.0.0.1
+  port: 18111
+
+spring:
+  datasource:
+    url: jdbc:mysql://127.0.0.1:13306/mor_card?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: card_app
+    hikari:
+      connection-timeout: 2000
+      validation-timeout: 1000
+  data:
+    redis:
+      # 一次性 CVV 暂存（card:cvv:<instrumentId>）。
+      host: 127.0.0.1
+      port: 16379
+      connect-timeout: 2s
+      timeout: 2s
+  # 只消费 payment.events 的 PaymentSucceeded；账号密码由 CARD_RABBITMQ_USERNAME / CARD_RABBITMQ_PASSWORD 提供。
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    virtual-host: /mor-local
+    connection-timeout: 2s
+
+messaging:
+  consumer:
+    service: card
+  consumers:
+    payment:
+      partitions: 4
+
+compensation:
+  enabled: true
+
+card:
+  # card.fingerprint-key（卡指纹与凭证摘要的 HMAC 密钥）必填但不写入模板或 Nacos，由环境变量 CARD_FINGERPRINT_KEY 提供；
+  # 值与原 Payment 的 PAYMENT_CARD_FINGERPRINT_KEY 相同（更换会使已存的卡与凭证无法匹配）。每张卡的 DEK 由 Vault 托管（PAYMENT_CARD_DEK）。
+  instrument-purge:
+    # 孤立卡交易工具（Payment 第二段失败留下）过期后的保留宽限期与单次回收条数；XXL-Job Handler cardOrphanInstrumentPurge。
+    grace: P1D
+    batch-size: 200
+
+vault:
+  client:
+    # Vault 访问规则须为 card-service 登记 PAYMENT_CARD_DEK 的 Protect（CARD_STORAGE）与 Reveal（CARD_USE）。
+    caller-service: card-service
+    service-id: vault-service
+    connect-timeout: 2s
+    read-timeout: 5s

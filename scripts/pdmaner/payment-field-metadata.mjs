@@ -47,6 +47,10 @@ payment_instrument_token_id|交易工具绑定标识|交易级工具 Token 的 S
 payment_instrument_token|交易工具 Token|安全随机生成的不透明内部工具定位符；只持有此值不具有扣款权限
 instrument_type|工具类型|已批准的工具 Owner 类型
 instrument_ref|工具记录引用|Owner 返回的稳定内部记录引用，不携带原始卡数据或临时材料
+customer_id|Customer 标识|本次支付关联的 Commerce Customer 标识；访客支付为 NULL
+consent_to_save|同意保存卡|1 表示消费者同意支付成功后保存卡，0 表示不同意；仅手输卡且有 customer_id 时可为 1
+card_bin|卡 BIN|Card 创建卡工具时返回的 6 或 8 位卡 BIN，只用作支付风控输入；非卡工具为 NULL
+card_fingerprint|卡指纹|Card 创建卡工具时返回的跨交易稳定受限卡指纹，不能反推卡号；非卡工具为 NULL
 revoked_at|撤销时间|单向撤销新使用资格的 UTC 时间，不表示渠道资金撤销
 sub_event_type|补偿业务子类型|同一 Handler 下的受控业务子类型，最长 64 个 Java 字符；与 event_key、event_type 共同组成稳定唯一身份
 interaction_expires_at|交互截止时间|原消费者交互可继续等待的 UTC 微秒截止时间；REQUIRES_ACTION 时必填，完成后保留历史值，不等于认证证明有效期
@@ -264,8 +268,8 @@ function parseFieldMetadataSource(source) {
     }
     result[fieldKey] = metadata(defName, description);
   }
-  if (Object.keys(result).length !== 205) {
-    throw new Error(`Payment 字段元数据必须精确覆盖 205 个唯一字段键，实际 ${Object.keys(result).length}`);
+  if (Object.keys(result).length !== 209) {
+    throw new Error(`Payment 字段元数据必须精确覆盖 209 个唯一字段键，实际 ${Object.keys(result).length}`);
   }
   return Object.freeze(result);
 }

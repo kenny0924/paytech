@@ -1,0 +1,157 @@
+server:
+  address: 127.0.0.1
+  port: 0
+
+spring:
+  config:
+    # 复用仓库已启动的本地 MySQL、Redis、RabbitMQ 凭据；唯一锚点 paytech.local-environment.dir 由父 POM 经 Surefire 注入（10 §4.4）。
+    import:
+      - "optional:file:${paytech.local-environment.dir}/.env.local[.properties]"
+  application:
+    name: card-service
+  cloud:
+    discovery:
+      client:
+        simple:
+          instances:
+            # 独立 Mock HTTP 服务承载 Vault（卡 DEK）。
+            vault-service:
+              - uri: "${test.mock-http.base-url}"
+    loadbalancer:
+      retry:
+        enabled: false
+    nacos:
+      config:
+        enabled: false
+      discovery:
+        # 自动测试不连接 Nacos，外部服务由 simple discovery 指向测试 Mock HTTP 服务。
+        enabled: false
+        register-enabled: false
+  datasource:
+    url: "jdbc:mysql://127.0.0.1:13306/mor_card?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+    username: card_app
+    password: "${MOR_CARD_DB_PASSWORD:local-card-change-me-2026}"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-timeout: 2000
+      validation-timeout: 1000
+      connection-init-sql: "SET time_zone = '+00:00'"
+  sql:
+    init:
+      mode: never
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 16379
+      password: "${MOR_REDIS_PASSWORD:${PAYTECH_REDIS_PASSWORD:local-redis-change-me-2026}}"
+      connect-timeout: 2s
+      timeout: 2s
+  # 仓库 local-environment 的本机 RabbitMQ；凭据只来自 .env.local 或同名环境变量。测试扮演 Payment 向 payment.events 发布，需要发布确认。
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: "${MOR_RABBITMQ_USER}"
+    password: "${MOR_RABBITMQ_PASSWORD}"
+    virtual-host: "${MOR_RABBITMQ_VHOST:/mor-local}"
+    connection-timeout: 2s
+    publisher-confirm-type: correlated
+    publisher-returns: true
+  jmx:
+    enabled: false
+
+logging:
+  pattern:
+    level: "%5p [requestId=%X{requestId:-}] %kvp"
+
+web:
+  logging:
+    metadata-only-path-prefixes:
+      - /
+
+mybatis:
+  mapper-locations: "classpath*:mapper/**/*.xml"
+
+messaging:
+  consumer:
+    service: card
+    retry-backoff: 200ms
+  consumers:
+    payment:
+      partitions: 4
+
+paytech:
+  instance-id: "main"
+
+internal-auth:
+  # 裸 OFF 会被 YAML 解析为布尔 false，必须带引号。
+  mode: "OFF"
+
+redis:
+  # 随机后缀允许多个 JVM 并行而互不清理（10 §5.2）。
+  key-prefix: card-test-${random.uuid}
+  coordination:
+    enabled: false
+
+compensation:
+  enabled: true
+  instance-id: card-test
+  lease-duration: 2m
+  scanner-batch-size: 100
+  coordinator:
+    core-size: 2
+    maximum-size: 4
+    queue-capacity: 16
+    keep-alive: 60s
+  handler:
+    maximum-concurrency: 4
+
+# paytech-xxl-job-starter（随 compensation-event 引入）：测试不连接调度中心。
+xxl:
+  job:
+    executor:
+      enabled: false
+
+card:
+  # 仅供自动化测试的合成指纹密钥（Base64 的 32 字节），与任何环境都不共用。
+  fingerprint-key: "Y2FyZC1zZXJ2aWNlLWF1dG8tdGVzdC1maW5nZXJwcmludA=="
+  identifier:
+    region-id: 31
+    worker-id: 27
+  instrument-purge:
+    grace: P1D
+    batch-size: 100
+
+vault:
+  client:
+    caller-service: card-service
+    service-id: vault-service
+    connect-timeout: 2s
+    read-timeout: 5s
+
+management:
+  server:
+    port: 0
+  endpoints:
+    access:
+      default: none
+    web:
+      discovery:
+        enabled: false
+      exposure:
+        include: health,info,prometheus
+    jmx:
+      exposure:
+        exclude: "*"
+  endpoint:
+    health:
+      access: read-only
+      show-details: never
+      show-components: never
+      probes:
+        enabled: true
+    info:
+      access: read-only
+    prometheus:
+      access: read-only
+
+# test.mock-http.base-url 由 EnableMockHttpServer 在创建真实客户端之前注入随机 Loopback 端口。

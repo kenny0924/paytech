@@ -2,9 +2,9 @@
 // (requirements/20261017/architecture-V2骨架与模块搬迁/design/03 §2.3, design/09 §4.3 / §5.2).
 //
 // - channel-connector owns the channel identity, account, MID, capability, routing-policy, interaction and callback tables;
-// - payment owns everything else, including the four card tables until step 12 (design/05) and the three channel-dispute
-//   tables until the dispute service exists;
-// - t_compensation_event is a per-database table and appears in both models.
+// - card owns the four card tables since step 12 (design/05; mor_card, card-service);
+// - payment owns everything else, including the three channel-dispute tables until the dispute service exists;
+// - t_compensation_event is a per-database table and appears in every model.
 // Entities, field / index / relation / diagram IDs are copied unchanged. Relations whose parent lives in the other service are
 // dropped (no cross-database relation, AGENTS.md); diagrams keep only the cells of their own service.
 
@@ -23,22 +23,35 @@ export const CHANNEL_CONNECTOR_TABLES = Object.freeze([
   "t_channel_event_exception",
 ]);
 
+export const CARD_TABLES = Object.freeze([
+  "t_payment_card",
+  "t_payment_card_credential",
+  "t_payment_card_instrument",
+  "t_payment_stored_card",
+]);
+
 export const PER_DATABASE_TABLES = Object.freeze(["t_compensation_event"]);
 
 export const PAYMENT_SERVICE_MODELS = Object.freeze({
   payment: Object.freeze({
     name: "Code-MoR Payment Database V1",
-    describe: "Payment service part of the Payment Orchestration V1 PDManer model (mor_payment; card tables until step 12)",
+    describe: "Payment service part of the Payment Orchestration V1 PDManer model (mor_payment)",
   }),
   "channel-connector": Object.freeze({
     name: "Code-MoR Channel Connector Database V1",
     describe: "Channel connector part of the Payment Orchestration V1 PDManer model (mor_channel_connector)",
   }),
+  card: Object.freeze({
+    name: "Code-MoR Card Database V1",
+    describe: "Card part of the Payment Orchestration V1 PDManer model (mor_card, card-service)",
+  }),
 });
 
 /** Owning service of a physical table. */
 export function serviceOfTable(table) {
-  return CHANNEL_CONNECTOR_TABLES.includes(table) ? "channel-connector" : "payment";
+  if (CHANNEL_CONNECTOR_TABLES.includes(table)) return "channel-connector";
+  if (CARD_TABLES.includes(table)) return "card";
+  return "payment";
 }
 
 /** Whether a table belongs to the given service's database. */

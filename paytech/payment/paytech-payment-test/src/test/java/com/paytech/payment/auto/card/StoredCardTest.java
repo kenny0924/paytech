@@ -78,19 +78,26 @@ class StoredCardTest extends AbstractPayCardTest {
     /** 同一 Customer 同卡换有效期再付：两笔各自以新工具申请并各发布一次存卡意愿，是否合并为同一张已存卡由 card 判断。 */
     @Test
     void test_saveSameCardUpdatesCredential() {
-        var first = payManual(CLIENT_ID, CUSTOMER_ID, true, EXPIRY_YEAR);
-        var second = payManual(CLIENT_ID, CUSTOMER_ID, true, "2031");
+        awaitPublished(payManual(CLIENT_ID, CUSTOMER_ID, true, EXPIRY_YEAR));
+        awaitPublished(payManual(CLIENT_ID, CUSTOMER_ID, true, "2031"));
 
         var tokens = mapper.instrumentTokens();
         assertAll(() -> assertEquals(List.of(EXPIRY_YEAR, "2031"),
             cardApi.creates().stream().map(create -> create.getCard().getExpiryYear()).toList()),
             () -> assertNotEquals(tokens.get(0).get("instrumentRef"), tokens.get(1).get("instrumentRef")),
             () -> assertEquals(tokens.get(0).get("cardFingerprint"), tokens.get(1).get("cardFingerprint")));
-        for (var paid : List.of(first, second)) {
-            long attemptId = Long.parseLong((String)paid.get("attemptId"));
-            results.awaitEnvelope(attemptId);
-            results.awaitSucceeded(attemptId);
-        }
+    }
+
+    /** 每笔成功后立即读取其两条发布（探针会跳过并丢弃其他尝试的消息），确认各发布一次存卡意愿。 */
+    void awaitPublished(Map<String, Object> paid) {
+        long attemptId = Long.parseLong((String)paid.get("attemptId"));
+        results.awaitEnvelope(attemptId).cardFields(latestInstrumentRef(), true, CUSTOMER_ID);
+        results.awaitSucceeded(attemptId);
+    }
+
+    /** 最近一次申请的工具引用（本类用例按顺序申请与支付）。 */
+    String latestInstrumentRef() {
+        return (String)mapper.instrumentTokens().getLast().get("instrumentRef");
     }
 
     /** 同一张卡在两个 Client 下保存：card 分别收到各自的 Client，Token 行各自归属。 */

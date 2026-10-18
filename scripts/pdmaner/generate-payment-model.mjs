@@ -204,6 +204,10 @@ source_submission_id BIGINT NN
 payment_method_code VARCHAR(64) NN OPEN(Payment Method Catalog)
 instrument_type VARCHAR(32) NN {CARD}
 instrument_ref VARCHAR(128) NN
+customer_id BIGINT N
+consent_to_save TINYINT(1) NN
+card_bin VARCHAR(8) N
+card_fingerprint CHAR(64) N
 expires_at DATETIME(6) NN
 revoked_at DATETIME(6) N
 create_time DATETIME(6) NN
@@ -1150,7 +1154,7 @@ function validateMetadata(tables) {
 function validateGeneratedModel(model, tables, relations) {
   invariant(JSON.stringify(modelTotals(model)) === JSON.stringify({
     tables: 27,
-    fields: 345,
+    fields: 349,
     uniqueIndexes: 38,
     accessIndexes: 44,
     relations: 63,
@@ -1298,7 +1302,7 @@ export function serializePaymentModel(model = generatePaymentModel()) {
   return `${JSON.stringify(model, null, 2)}\n`;
 }
 
-/** Serialized model of one owning service ("payment" or "channel-connector"). */
+/** Serialized model of one owning service ("payment", "channel-connector" or "card"). */
 export function serializePaymentServiceModel(service, model = generatePaymentModel()) {
   return serializePaymentModel(partitionModel(model, service));
 }

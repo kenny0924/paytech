@@ -45,6 +45,7 @@ const expectedEnvironmentVariables = new Map([
   ['MOR_CONSUMER_DB_PASSWORD', 'local-consumer-change-me-2026'],
   ['MOR_PAYMENT_DB_PASSWORD', 'local-payment-change-me-2026'],
   ['MOR_CHANNEL_CONNECTOR_DB_PASSWORD', 'local-channel-connector-change-me-2026'],
+  ['MOR_CARD_DB_PASSWORD', 'local-card-change-me-2026'],
   ['MOR_RISK_DB_PASSWORD', 'local-risk-change-me-2026'],
   ['MOR_RISK_DECISION_DB_PASSWORD', 'local-risk-decision-change-me-2026'],
   ['MOR_COMPLIANCE_DB_PASSWORD', 'local-compliance-change-me-2026'],
