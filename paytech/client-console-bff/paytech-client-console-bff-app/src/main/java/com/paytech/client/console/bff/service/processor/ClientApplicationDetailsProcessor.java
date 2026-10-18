@@ -15,10 +15,10 @@ import com.paytech.client.console.bff.integration.ComplianceOnboardingClient;
 import com.paytech.client.console.bff.integration.PlatformAuthenticationClient;
 import com.paytech.client.console.bff.integration.PlatformOnboardingFileClient;
 import com.paytech.client.console.bff.service.model.ClientActor;
-import com.paytech.client.console.bff.service.model.ClientOnboardingModels.ApplicationResponseBody;
-import com.paytech.client.console.bff.service.model.ClientOnboardingModels.Document;
-import com.paytech.client.console.bff.service.model.ClientOnboardingModels.MaterialSubject;
-import com.paytech.client.console.bff.service.model.ClientOnboardingModels.ReviewResult;
+import com.paytech.client.console.bff.service.model.response.ApplicationResponseBody;
+import com.paytech.client.console.bff.service.model.response.ApplicationDocument;
+import com.paytech.client.console.bff.service.model.response.MaterialSubject;
+import com.paytech.client.console.bff.service.model.response.ReviewResult;
 import com.paytech.client.console.bff.service.processor.request.ClientApplicationDetailsRequest;
 import com.paytech.client.contract.api.onboarding.ClientDraftModels.ClientDraftResponseBody;
 import com.paytech.compliance.api.MaterialRequirementsModels.RequirementBody;
@@ -110,7 +110,7 @@ public class ClientApplicationDetailsProcessor
         List<MaterialSubject> subjects) {
         var futures = new LinkedHashMap<String, Future<List<RequirementBody>>>();
         for (var subject : subjects) {
-            futures.computeIfAbsent(subject.qualificationType(),
+            futures.computeIfAbsent(subject.getQualificationType(),
                 type -> executor.submit(ConcurrentPageReads.withRequestContext(() -> compliance.requirements(type))));
         }
         return futures;
@@ -131,25 +131,25 @@ public class ClientApplicationDetailsProcessor
     static List<MaterialSubject> materials(List<MaterialSubject> subjects,
         Map<String, Future<List<RequirementBody>>> requirements, long deadline) {
         return subjects.stream().map(subject -> {
-            var list = ConcurrentPageReads.result(requirements.get(subject.qualificationType()), deadline);
-            return new MaterialSubject(subject.subjectPartyId(), subject.qualificationType(),
+            var list = ConcurrentPageReads.result(requirements.get(subject.getQualificationType()), deadline);
+            return new MaterialSubject(subject.getSubjectPartyId(), subject.getQualificationType(),
                 SectionAvailability.of(list), list == null ? List.of() : list);
         }).toList();
     }
 
     /** 为每条材料引用附上文件状态；文件无法查询时只保留 CCT 引用。 */
-    static List<Document> documents(ClientDraftResponseBody draft, Map<String, Future<FileResponseBody>> files,
+    static List<ApplicationDocument> documents(ClientDraftResponseBody draft, Map<String, Future<FileResponseBody>> files,
         long deadline) {
         return draft.documents().stream().map(document -> {
             var file = ConcurrentPageReads.result(files.get(document.fileId()), deadline);
-            return new Document(document.documentId(), document.subjectPartyId(), document.requirementCode(),
+            return new ApplicationDocument(document.documentId(), document.subjectPartyId(), document.requirementCode(),
                 document.documentType(), document.fileId(), document.subjectInScope(), SectionAvailability.of(file),
                 file);
         }).toList();
     }
 
     /** 组装申请详情页。 */
-    static ApplicationResponseBody response(ClientDraftResponseBody draft, List<Document> documents,
+    static ApplicationResponseBody response(ClientDraftResponseBody draft, List<ApplicationDocument> documents,
         List<MaterialSubject> materials, String reviewStatus, ReviewResult review) {
         return new ApplicationResponseBody(draft.applicationId(), draft.applicationNo(), draft.clientId(),
             draft.clientType(), draft.subjectPartyId(), draft.status(), draft.savedAt(), draft.editable(),

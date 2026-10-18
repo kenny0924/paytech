@@ -1,7 +1,7 @@
 package com.paytech.client.console.bff.ext.rest;
 
 import com.paytech.client.console.bff.service.model.ClientActor;
-import com.paytech.client.console.bff.service.model.ClientWorkspaceModels.WorkspaceHomeResponseBody;
+import com.paytech.client.console.bff.service.model.response.WorkspaceHomeResponseBody;
 import com.paytech.client.console.bff.service.processor.ClientWorkspaceHomeProcessor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.bind.annotation.GetMapping;

@@ -7,8 +7,9 @@ import org.springframework.web.bind.annotation.*;
 
 import com.paytech.client.console.bff.integration.CallerServiceCodes;
 import com.paytech.client.console.bff.service.model.ClientActor;
-import com.paytech.client.console.bff.service.model.ClientOnboardingModels;
-import com.paytech.client.console.bff.service.model.FormOptionsResponseBody;
+import com.paytech.client.console.bff.service.model.response.ApplicationResponseBody;
+import com.paytech.client.console.bff.service.model.response.StartResponseBody;
+import com.paytech.client.console.bff.service.model.response.FormOptionsResponseBody;
 import com.paytech.client.console.bff.service.processor.ClientApplicationDetailsProcessor;
 import com.paytech.client.console.bff.service.processor.ClientFormOptionsProcessor;
 import com.paytech.client.console.bff.service.processor.ClientOnboardingStartProcessor;
@@ -47,7 +48,7 @@ public class ClientOnboardingController {
 
     /** 当前账号的原申请导航。 */
     @GetMapping("/start")
-    public ClientOnboardingModels.StartResponseBody start(ClientActor actor) {
+    public StartResponseBody start(ClientActor actor) {
         return startPage.process(actor);
     }
 
@@ -73,7 +74,7 @@ public class ClientOnboardingController {
 
     /** 当前表单、要求及文件状态由 BFF 组合。 */
     @GetMapping("/applications/{app}")
-    public ClientOnboardingModels.ApplicationResponseBody read(ClientActor actor, @PathVariable String app) {
+    public ApplicationResponseBody read(ClientActor actor, @PathVariable String app) {
         return applicationDetails.process(new ClientApplicationDetailsRequest(actor, app));
     }
 

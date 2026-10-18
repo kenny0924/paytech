@@ -12,6 +12,8 @@ import com.paytech.operations.console.bff.integration.RiskEvaluationClient;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
 import com.paytech.operations.console.bff.service.model.riskevaluation.RiskEvaluationExplanationResponseBody;
 import com.paytech.operations.console.bff.service.model.riskevaluation.RiskEvaluationResponseBody;
+import com.paytech.operations.console.bff.service.processor.RiskEvaluationExplanationProcessor;
+import com.paytech.operations.console.bff.service.processor.request.RiskEvaluationExplanationRequest;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Pattern;
@@ -30,6 +32,7 @@ public class RiskEvaluationController {
     private static final String ID = "[1-9][0-9]{0,18}";
 
     private final RiskEvaluationClient client;
+    private final RiskEvaluationExplanationProcessor explanationProcessor;
 
     /** 按评估 ID 查结论（正式与影子评估均可）。 */
     @GetMapping("/{evaluationId}")
@@ -53,6 +56,6 @@ public class RiskEvaluationController {
     public RiskEvaluationExplanationResponseBody explanation(HttpServletRequest servletRequest, OperatorContext context,
         @PathVariable("evaluationId") @Pattern(regexp = ID) String evaluationId) {
         RiskListController.requireQueryKeys(servletRequest, Set.of());
-        return client.getExplanation(context, evaluationId);
+        return explanationProcessor.process(new RiskEvaluationExplanationRequest(context, evaluationId));
     }
 }

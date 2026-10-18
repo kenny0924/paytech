@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 
 import com.paytech.client.console.bff.integration.CallerServiceCodes;
 import com.paytech.client.console.bff.integration.ComplianceOnboardingClient;
-import com.paytech.client.console.bff.service.model.ClientOnboardingModels.ReviewResult;
+import com.paytech.client.console.bff.service.model.response.ReviewResult;
 import com.paytech.compliance.api.ClientReviewResultApi;
 import com.paytech.compliance.api.MaterialRequirementsApi;
 import com.paytech.compliance.api.MaterialRequirementsModels.RequirementBody;

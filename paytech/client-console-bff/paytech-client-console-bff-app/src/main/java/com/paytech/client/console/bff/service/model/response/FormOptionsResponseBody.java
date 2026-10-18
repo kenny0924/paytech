@@ -1,11 +1,11 @@
-package com.paytech.client.console.bff.service.model;
+package com.paytech.client.console.bff.service.model.response;
 import java.util.List;
-import lombok.Data;
+import lombok.Getter;
 import lombok.AllArgsConstructor;
 import com.paytech.client.contract.api.onboarding.response.*;
 import com.paytech.compliance.api.MaterialRequirementsModels.RequirementBody;
 /** 页面选项由两个 Owner 提供，分别保留不可用状态。 */
-@Data
+@Getter
 @AllArgsConstructor
 public class FormOptionsResponseBody {
     /** 当前客户类型。 */

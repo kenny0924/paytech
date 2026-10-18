@@ -48,7 +48,7 @@ OperationsRequestInterceptor（可信身份 → 当前 PLT-I02 完成 → Origin
 
 当前简单转发用例的 Controller 直接调用本服务的 Client Port，不接触远端 API DTO、第三方 SDK、持久化或事务。没有为简单转发再增加同义 Service 或 Processor。需要多接口查询组合或页面响应组装时，由 BFF 的 `service` / Processor 承担，通过 Client Port 访问上游；真实聚合职责不适用删除空转发层的规则。BFF 保留各上游授权约束，不编排跨系统写事务。
 
-聚合 Processor 位于 `service/processor`，每个入口一个，继承 Foundation `AbstractProcessor`（入口事务检查、内部请求字段校验、`validate` 附加校验，再执行 `processRequest`）。内部请求放在 `service/processor/request`；响应直接使用 BFF 页面 ResponseBody，不复制同义 Response。Controller 只构造内部请求并调用 `process`。
+聚合 Processor 位于 `service/processor`，每个入口一个，继承 Foundation `AbstractProcessor`（入口事务检查、内部请求字段校验、`validate` 附加校验，再执行 `processRequest`）。内部请求放在 `service/processor/request`；响应直接使用 BFF 页面 ResponseBody，不复制同义 Response。Controller 只构造内部请求并调用 `process`。Risk 适配一般是单 Owner 转发，不建 Risk Processor；唯一例外是 `RiskEvaluationExplanationProcessor`，它组合评估解释与规则集详情两个 Risk 接口组装条件树，规则集详情失败只降级对应规则。
 
 角色详情和权限配置是实际聚合用例：`RoleDetailsProcessor` 通过本地 Client 获取角色事实、当前可授予权限 Catalog 和 Console Resource 绑定，`RolePermissionOptionsProcessor` 只获取后两者，均交给纯页面组装器 `RolePermissionTree` 生成 UI 树。`RoleListProcessor` 获取角色分页后，仅对当前页发起一次批量员工数查询，再按 Role ID 合并展示模型；空页不调用统计接口。角色创建、更新和删除仍由 Controller 直接委托单个 Platform 命令；Platform 持有角色版本、权限集合、系统角色保护、当前授权、幂等和审计事务，BFF 不保存或计算业务权限。
 

@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.sql.DataSource;
 
+import com.paytech.operations.console.bff.service.processor.RiskEvaluationExplanationProcessor;
 import com.paytech.foundation.web.error.GlobalExceptionHandler;
 import com.paytech.foundation.web.logging.HttpRequestResponseLoggingFilter;
 import com.paytech.foundation.web.logging.WebLoggingProperties;
@@ -46,6 +47,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author Codex
  */
 class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase {
+    /** 唯一获批的 Risk 页面聚合：评估解释组合解释与规则集详情两个 Risk 接口。 */
+    private static final String APPROVED_RISK_AGGREGATION_CLASS = "RiskEvaluationExplanationProcessor.class";
+
 
     private static final HttpClient CLIENT = HttpClient.newBuilder()
         .connectTimeout(Duration.ofSeconds(5))
@@ -331,9 +335,10 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
         try (var files = Files.walk(classes)) {
             assertTrue(files.filter(Files::isRegularFile)
                 .map(path -> path.getFileName().toString())
+                .filter(name -> !APPROVED_RISK_AGGREGATION_CLASS.equals(name))
                 .noneMatch(name -> name.contains("Risk")
                     && (name.contains("Processor") || name.contains("Service") || name.contains("Repository"))),
-                "简单单 Owner 转发不得新增 Risk Processor、Service 或 Repository");
+                "除获批的评估解释页聚合 Processor 外，Risk 适配不得新增 Processor、Service 或 Repository");
         }
     }
 
@@ -383,9 +388,9 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
         for (String name : applicationContext.getBeanDefinitionNames()) {
             Class<?> type = applicationContext.getType(name);
             if (type == null || !type.getName().startsWith("com.paytech.operations.console.bff.")
-                || !type.getSimpleName().contains("Risk")) continue;
+                || !type.getSimpleName().contains("Risk") || type == RiskEvaluationExplanationProcessor.class) continue;
             assertFalse(type.getSimpleName().matches(".*(Processor|Service|Repository|Mapper|Database|DataSource).*"),
-                "单 Owner 转发不得新增 Risk 业务层或数据库 Bean: " + name);
+                "除获批的评估解释页聚合 Processor 外，Risk 适配不得新增业务层或数据库 Bean: " + name);
         }
     }
 

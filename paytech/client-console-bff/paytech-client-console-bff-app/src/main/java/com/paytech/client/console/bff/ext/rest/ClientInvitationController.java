@@ -1,6 +1,6 @@
 package com.paytech.client.console.bff.ext.rest;
 
-import com.paytech.client.console.bff.service.model.ClientInvitationDetailsResponseBody;
+import com.paytech.client.console.bff.service.model.response.ClientInvitationDetailsResponseBody;
 import com.paytech.client.console.bff.service.model.ClientActor;
 import com.paytech.client.console.bff.service.processor.ClientInvitationDetailsProcessor;
 import com.paytech.client.console.bff.service.processor.request.ClientInvitationDetailsRequest;

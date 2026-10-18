@@ -2,7 +2,7 @@ package com.paytech.client.console.bff.integration;
 
 import java.util.List;
 
-import com.paytech.client.console.bff.service.model.ClientOnboardingModels.ReviewResult;
+import com.paytech.client.console.bff.service.model.response.ReviewResult;
 import com.paytech.compliance.api.MaterialRequirementsModels.RequirementBody;
 
 /** Compliance 入驻材料要求与客户可见审核结果的出站端口。 */

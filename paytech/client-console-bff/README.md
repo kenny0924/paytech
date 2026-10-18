@@ -17,6 +17,7 @@ JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-25.jdk/Contents/Home ./mvnw -B v
 - `ext/rest`：Controller 只做协议适配。可信身份由 `ClientActorResolver` 从 Gateway 单值头解析，入站拦截器先行校验，Controller 以 `ClientActor` 参数接收；工作区接口的 PLT-I02 权限由 `ClientPermissionGuard` 判断。Refresh Cookie 的读写在 Controller 侧完成，规则集中在 `core/ClientRefreshCookie`。
 - `service/processor`：只放真实的多 Owner 页面聚合，每个入口一个 Processor，继承 Foundation `AbstractProcessor`：入驻开始页、受控表单目录、申请详情、工作区首页、邀请详情。内部请求在 `service/processor/request`，请求只有可信身份时直接以 `ClientActor` 作为请求；响应使用 BFF 页面模型。
 - `integration`：每个 Port 只适配一个 Owner 的接口并校验回执（会话签发、工作区成员、授权、邀请、文件、CCT 摘要与入驻读取、Compliance 材料与审核结果）。纯转发的写命令和查询由 Controller 直接调用 Owner 的 `@HttpExchange` 接口，不增加一行转发层。
+- `service/model`：BFF 页面模型使用普通 class，响应在 `response`、请求在 `request`，一个类型一个文件；`ClientActor`、`SessionGrant` 是不出站的内部模型。
 
 ## 配置边界
 

@@ -129,17 +129,22 @@
 <a id="finance-accounting-kernel-20261015"></a>
 
 <a id="mor-test-compensation-scan-20261017"></a>
+## BFF 遗留项收尾（2026-10-18，已本地提交，未推送、未部署）
+
+- **Implemented：** 经用户同意处理前两次重构的遗留项。Operations BFF 新增 `RiskEvaluationExplanationProcessor`，把评估解释与规则集详情的组合及条件树组装从 `RiskEvaluationClientImpl` 移入 Processor，Client 只适配单个 Risk 接口；`OperationsConsoleBffApplicationAutoTest` 的 Risk 守卫收窄为只放行这一个聚合 Processor，Risk Service、Repository、Mapper 与数据库 Bean 仍禁止。Client Console BFF 的页面模型由 record 与 `*Models` 容器改为普通 class，一个类型一个文件，放在 `service/model/response` 与 `service/model/request`；`Document` 改名 `ApplicationDocument`。HTTP 合同与 JSON 字段顺序不变。
+- **Verified：** JDK 25 `clean verify`：Operations BFF **1390/1390**，Client Console BFF **81/81**（含按字段顺序断言的用例）。
+
 ## Client Console BFF 接口与 Processor 按规范重组（2026-10-18，已本地提交，未推送、未部署）
 
 - **Implemented：** `client-console-bff` 原 5 个 Processor 拆分重组。会话、权限两个共用组件移出 Processor：可信身份由入站 `ClientActorResolver` 解析并以 `ClientActor` 参数注入 Controller，工作区 PLT-I02 权限由 `ClientPermissionGuard` 判断，Refresh Cookie 读写回到 Controller 侧。真实的多 Owner 聚合按入口拆成 5 个继承 Foundation `AbstractProcessor` 的 Processor（入驻开始页、表单目录、申请详情、工作区首页、邀请详情）。原散落在 Processor 内的单 Owner 回执校验移入 `integration` 下 7 个 Port（Platform 会话与工作区、授权、邀请、文件，CCT 摘要与入驻读取，Compliance 材料与审核结果）。新增 `ClientContextType`、`SectionAvailability`、`WorkspaceRestrictionReason` 枚举替代魔法字符串，`FormOptionsResponseBody` 从 `ext/rest/response` 移到 `service/model`。HTTP 路径、错误码、状态码、校验顺序、降级规则与响应字段顺序不变。
 - **Verified：** JDK 25 `./mvnw -B -o clean verify -pl client-console-bff/paytech-client-console-bff-test -am`，改动前后均为 **81/81**。
-- **未处理：** 页面模型仍是 record 与 `*Models` 容器；Jackson 3 下改为普通 class 会改变 JSON 字段顺序，既有测试也按字段顺序断言，需单独决定。纯转发接口继续由 Controller 直接调用 Owner `@HttpExchange` 接口。邀请详情的 CCT 摘要回执含 null 元素时，原实现返回 500，现与其他无效回执一样只隐藏工作区名称。
+- **后续：** 页面模型已于同日改为普通 class（见上方「BFF 遗留项收尾」）。纯转发接口继续由 Controller 直接调用 Owner `@HttpExchange` 接口。邀请详情的 CCT 摘要回执含 null 元素时，原实现返回 500，现与其他无效回执一样只隐藏工作区名称。
 
 ## Operations BFF 聚合 Processor 迁到 Foundation 模板（2026-10-18，已本地提交，未推送、未部署）
 
 - **Implemented：** `operations-console-bff` 的聚合 Processor 移入 `service/processor`，每个入口一个并继承 Foundation `AbstractProcessor`；内部请求位于 `service/processor/request`，响应直接复用 BFF 页面 ResponseBody。`RoleDetailsProcessor` 拆出 `RolePermissionOptionsProcessor`，`AuditDetailsProcessor` 改名为 `AuditEventDetailsProcessor`，`ClientReviewFileProcessor` 改名为 `ClientReviewFileDownloadProcessor`。`ApiScopeDetailsProcessor` 的引用类型与分页校验移入 `validate`，引用类型改用 BFF 枚举 `ApiScopeReferenceKind`。HTTP 路径、错误码、状态码、上游调用顺序与降级规则不变。
 - **Verified：** JDK 25 `./mvnw -B -o clean verify -pl operations-console-bff/paytech-operations-console-bff-test -am`，BFF **1390/1390** 通过，构建成功。
-- **未处理：** Risk 评估解释在 `RiskEvaluationClientImpl` 内组合解释与规则集详情两个 Risk 接口，与「多接口组合进 Processor」不一致；但既有守卫 `OperationsConsoleBffApplicationAutoTest` 与 BFF README 规定 Risk 单 Owner 适配不得出现 Risk Processor，待用户决定后再迁移。`client-console-bff` 的 5 个 Processor 未纳入本次。
+- **后续：** Risk 评估解释的聚合经用户同意于同日迁入 Processor（见上方「BFF 遗留项收尾」）。`client-console-bff` 另见上方小节。
 
 ## mor-test Platform 补偿扫描（2026-10-17，已部署 mor-test）
 

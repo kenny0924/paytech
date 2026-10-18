@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.paytech.client.console.bff.core.ClientRefreshCookie;
 import com.paytech.client.console.bff.integration.PlatformAuthenticationClient;
 import com.paytech.client.console.bff.service.model.ClientActor;
-import com.paytech.client.console.bff.service.model.ClientBrowserModels.TokenGrantResponseBody;
-import com.paytech.client.console.bff.service.model.ClientBrowserModels.WorkspaceSelectRequestBody;
+import com.paytech.client.console.bff.service.model.response.TokenGrantResponseBody;
+import com.paytech.client.console.bff.service.model.request.WorkspaceSelectRequestBody;
 import com.paytech.client.console.bff.service.model.SessionGrant;
 import com.paytech.platform.support.api.authentication.ClientAuthenticationApi;
 import com.paytech.platform.support.api.authentication.request.EmailRequestBody;
@@ -104,7 +104,7 @@ public class ClientAuthenticationController {
     @PostMapping("/workspace-context")
     public TokenGrantResponseBody selectWorkspace(@Valid @RequestBody WorkspaceSelectRequestBody body,
         HttpServletRequest request, HttpServletResponse response, ClientActor actor) {
-        return issue(sessions.selectWorkspace(actor, ClientRefreshCookie.read(request), body.memberId()), response);
+        return issue(sessions.selectWorkspace(actor, ClientRefreshCookie.read(request), body.getMemberId()), response);
     }
 
     /** W01 返回账号上下文，同样新建会话并替换 Cookie。 */

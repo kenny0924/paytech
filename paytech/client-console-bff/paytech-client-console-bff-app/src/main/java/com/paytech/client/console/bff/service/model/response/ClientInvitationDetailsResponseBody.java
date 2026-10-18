@@ -1,4 +1,4 @@
-package com.paytech.client.console.bff.service.model;
+package com.paytech.client.console.bff.service.model.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

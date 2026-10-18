@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 import com.paytech.client.console.bff.integration.CctWorkspaceClient;
 import com.paytech.client.console.bff.integration.PlatformInvitationClient;
 import com.paytech.client.console.bff.service.model.ClientActor;
-import com.paytech.client.console.bff.service.model.ClientInvitationDetailsResponseBody;
+import com.paytech.client.console.bff.service.model.response.ClientInvitationDetailsResponseBody;
 import com.paytech.client.console.bff.service.processor.request.ClientInvitationDetailsRequest;
 import com.paytech.client.contract.api.workspace.response.ClientSummaryResponseBody;
 import com.paytech.foundation.common.error.ErrorException;

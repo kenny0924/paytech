@@ -11,7 +11,7 @@ import com.paytech.client.console.bff.domain.enums.SectionAvailability;
 import com.paytech.client.console.bff.integration.CctOnboardingClient;
 import com.paytech.client.console.bff.integration.ComplianceOnboardingClient;
 import com.paytech.client.console.bff.integration.PlatformAuthenticationClient;
-import com.paytech.client.console.bff.service.model.FormOptionsResponseBody;
+import com.paytech.client.console.bff.service.model.response.FormOptionsResponseBody;
 import com.paytech.client.console.bff.service.processor.request.ClientFormOptionsRequest;
 import com.paytech.client.contract.api.onboarding.response.ClientFormOptionsResponseBody;
 import com.paytech.compliance.api.MaterialRequirementsModels.RequirementBody;
