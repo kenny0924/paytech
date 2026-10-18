@@ -138,7 +138,7 @@ Docker 容量核对（`docker info` 与 `docker stats`，2026-10-18 本步期间
 4. **旧调用方与历史数据**：Vault 中 `client-contract-service` 的 4 条规则保留；`t_webhook_event` 中冻结的来源 `commerce-service`、审计属性中的旧服务名保留。停用旧规则建议放阶段 3。
 5. **Gateway Target 与 Vault 策略用评审 SQL 修改**，没有走运营后台，因此 Platform 审计表没有对应操作记录（Vault 有一条 SEED 策略变更）。如需审计痕迹，阶段 2 可改由运营后台操作，SQL 只作核对。
 6. **`mor_payment` 等被旧表占用的 V2 库名**：`migrate.sh` 默认停止，确认后用 `--park-legacy` 把旧表整体移入归档库（数据随表保留）。旧 init 给 `payment_app` 的 `ALL` 权限不收回（与 initialize.py 一致）。
-7. **XXL 执行器范围**：只把 commerce-service 的补偿扫描迁到 acquiring-service。`cardOrphanInstrumentPurge`（card）、client-master 与 account 的执行器在 compose 中没有 `XXL_JOB_*` 配置，本次不登记；CURRENT_IMPLEMENTATION 的 Pending 列了 `cardOrphanInstrumentPurge`，需另行补 compose 配置。
+7. **XXL 执行器范围**：只把 commerce-service 的补偿扫描迁到 acquiring-service。`cardOrphanInstrumentPurge`（card）、client-master 与 account 的执行器在 compose 中没有 `XXL_JOB_*` 配置，本次不登记；CURRENT_IMPLEMENTATION 的 Pending 列了 `cardOrphanInstrumentPurge`，需另行补 compose 配置。**2026-10-18 任务卡 03 已完成**：8 个服务补齐 compose 配置并登记执行器与 `compensationEventScan`，card 另登记 `cardOrphanInstrumentPurge`，见 [03 报告](./03-report.md)。
 8. **mor-test 验收脚本仍是 V1 名称**：`acceptance_flow.py`、`scenario_flow.py`、`client_api_flow.py`、`risk_rule_configuration_smoke.py` 等在 `E2E_TARGET=test` 下读 `mor_cct` / `mor_commerce`、用 `cct_app` 与 `commerce-service`；第 14 步的 V2 版本只支持本机。阶段 2 跑验收前需要先改脚本。`register_client_api.py` 会把 Target 写回 `commerce-service`，阶段 2 不得执行。
 9. **Docker 内存**：gitlab 实际占用 7.75 GiB 且无上限，不在主会话"nexus + mor-local"的前提里。常驻可容纳，但上限合计不可容纳；是否给 gitlab 设上限或在阶段 2 期间停用，请决定。
 10. **JVM 取舍**：`TieredStopAtLevel=1`（只用 C1）与 SerialGC 降低内存与启动开销，代价是峰值吞吐；对 test 环境建议接受。
