@@ -59,7 +59,14 @@ databases() { "${MYSQL[@]}" < "$HERE/00-e2e-databases.sql"; echo "databases: don
 schemas() {
   for svc in "${SERVICES[@]}"; do
     local db; db=$(db_of "$svc"); require_empty "$db"
-    while read -r file; do "${MYSQL[@]}" "$db" < "$file"; done < <(files_of "$svc")
+    while read -r file; do
+      # 通用材料程序要求先设置审批人：取复制来源库中最早的 ACTIVE 运营真人账号（交接后的 E2E 管理员）
+      if [[ "$file" == "$MATERIALS" ]]; then
+        { echo "SET @approved_by=(SELECT account_id FROM mor_platform_e2e.t_user_account WHERE realm='OPERATIONS' AND account_type='HUMAN' AND status='ACTIVE' ORDER BY create_time, account_id LIMIT 1);"; cat "$file"; } | "${MYSQL[@]}" "$db"
+      else
+        "${MYSQL[@]}" "$db" < "$file"
+      fi
+    done < <(files_of "$svc")
     echo "schemas: $db $(tables_in "$db") 张表"
   done
 }

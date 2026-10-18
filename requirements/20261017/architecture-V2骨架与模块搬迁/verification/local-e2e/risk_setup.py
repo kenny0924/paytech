@@ -20,13 +20,14 @@ EXECUTIONS = "/decision-releases/v1/executions"
 
 
 def allow_graph():
-    """与 risk-decision 测试 FlowBuilder.GraphSpec.direct(ALLOW) 相同的形态。"""
+    """与 risk-decision 测试 FlowBuilder.GraphSpec.direct(ALLOW) 相同的形态。Operations BFF 要求节点 / 连线的全部键都出现（可为 null）。"""
+    def node(key, kind, name, x, y, decision=None):
+        return {"nodeKey": key, "type": kind, "name": name, "position": {"x": x, "y": y}, "ruleSetVersionId": None,
+                "decisionCode": decision, "reasonCode": None, "reasonMessage": None}
     return {"schemaVersion": 1,
-            "nodes": [{"nodeKey": "start", "type": "START", "name": "Start", "position": {"x": "-120", "y": "0"}},
-                      {"nodeKey": "finish", "type": "END", "name": "Allow", "position": {"x": "240", "y": "-60"},
-                       "decisionCode": "ALLOW"}],
+            "nodes": [node("start", "START", "Start", "-120", "0"), node("finish", "END", "Allow", "240", "-60", "ALLOW")],
             "edges": [{"edgeKey": "next", "sourceNodeKey": "start", "targetNodeKey": "finish", "type": "UNCONDITIONAL",
-                       "priority": 0, "name": "Next"}]}
+                       "priority": 0, "name": "Next", "condition": None}]}
 
 
 def active_release(ops, point):
@@ -47,11 +48,11 @@ def ensure(ops, point):
     flow_version_id = flow["flowVersionId"]
     release = ops.send("POST", EXECUTIONS, {"pointCode": point, "flowVersionId": str(flow_version_id)})
     release_id = release["releaseId"]
-    validated = ops.send("POST", f"{EXECUTIONS}/{release_id}/validate", {})
+    validated = ops.send("POST", f"{EXECUTIONS}/{release_id}/validate")  # 路由 body_limit_bytes=0：不带 Body
     if validated.get("status") != "SHADOWING":
         raise SystemExit(f"{point} 发布校验未通过：status={validated.get('status')} "
                          f"checks={json.dumps(validated.get('staticChecks') or validated.get('validation'), ensure_ascii=False)[:400]}")
-    activated = ops.send("POST", f"{EXECUTIONS}/{release_id}/activate", {})
+    activated = ops.send("POST", f"{EXECUTIONS}/{release_id}/activate")
     print(f"created {point} flowVersionId={flow_version_id} releaseId={release_id} status={activated.get('status')}")
     return release_id
 

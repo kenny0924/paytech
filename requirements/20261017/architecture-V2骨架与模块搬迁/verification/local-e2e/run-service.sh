@@ -75,10 +75,10 @@ port_of() {
 }
 health_of() {
   case "$1" in
-    platform) echo "http://127.0.0.1:18106/platform-support/actuator/health" ;;
+    platform) echo "http://127.0.0.1:18106/platform-support/actuator/health/readiness" ;;
     vault) echo "http://127.0.0.1:18107/health/readiness" ;;
     payermax-mock|nginx|client-web|ops-web) echo "" ;;
-    *) echo "http://127.0.0.1:$(( $(port_of "$1") + 1000 ))/actuator/health" ;;
+    *) echo "http://127.0.0.1:$(( $(port_of "$1") + 1000 ))/actuator/health/readiness" ;;  # Gateway 的 /actuator/health 经身份验证过滤器返回 401
   esac
 }
 
@@ -94,7 +94,7 @@ db_url() { echo "$MYSQL_URL/mor_${1//-/_}_v2e2e?$JDBC_OPTS"; }
 NACOS=(--spring.cloud.nacos.discovery.server-addr=127.0.0.1:8848 --spring.cloud.nacos.discovery.namespace=mor-local
   "--spring.cloud.nacos.discovery.username=$E2E_NACOS_USERNAME" --spring.cloud.nacos.discovery.ip=127.0.0.1)
 export SPRING_CLOUD_NACOS_DISCOVERY_PASSWORD="$E2E_NACOS_PASSWORD" NACOS_NAMESPACE=mor-local NACOS_SERVER_ADDR=127.0.0.1:8848
-COMMON=(--server.address=127.0.0.1 --management.server.address=127.0.0.1 "--spring.data.redis.database=$REDIS_DB"
+COMMON=(--server.address=127.0.0.1 "--spring.data.redis.database=$REDIS_DB"
   --spring.rabbitmq.host=127.0.0.1 --spring.rabbitmq.port=5672 "--spring.rabbitmq.virtual-host=$VHOST")
 export PAYTECH_INSTANCE_ID=local-e2e
 # 一致性修正：internal-auth 全部 OFF（本步不验证 D26 切换）；带 *_INTERNAL_AUTH_MODE 键的服务显式设置，其余在 application.yml 固定 "OFF"。
@@ -137,7 +137,12 @@ launch() {
   echo "$name 已启动 (pid $!)，日志 $LOGS/$name.log"
 }
 
-java_app() { local name="$1"; shift; launch "$name" "$JAVA" "${JVM[@]}" -jar "$(jar_of "$name")" "${COMMON[@]}" "$@"; }
+# Platform 的 Actuator 与业务共用 18106（无独立管理端口），不能设置 management.server.address。
+java_app() {
+  local name="$1"; shift
+  local management=(--management.server.address=127.0.0.1); [[ "$name" == platform ]] && management=()
+  launch "$name" "$JAVA" "${JVM[@]}" -jar "$(jar_of "$name")" "${COMMON[@]}" ${management[@]+"${management[@]}"} "$@"
+}
 
 start_one() {
   local svc="$1"

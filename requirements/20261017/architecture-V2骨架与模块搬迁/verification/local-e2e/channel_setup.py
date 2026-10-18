@@ -126,8 +126,42 @@ def identity(token=None):
 
 # ---------- 步骤 ----------
 
+def reset_stale_catalog(token):
+    """mor_platform_v2e2e 复制自 mor_platform_e2e，其中留有旧会话不完整的外部 API 配置：标准 API PAY / PAY_QUERY 没有任何字段
+    （t_api_field 0 行），接入方 PAYERMAX 的流程与原子 API 引用它们。任何对 PAY 的保存都因引用不完整被拒（BUSINESS_CHECK_FAILED）。
+    只在检测到“PAY 存在且无请求字段”时，经真实运营入口按依赖倒序删除：实现 → 原子 API → 脚本 → 接入方 → 标准 API。"""
+    found, pay = call("standard-api-get-PAY", "GET", f"{ADMIN}/standard-apis/PAY", token, expected=(200, 404))
+    if found != 200 or pay.get("requestFields"):
+        return
+    print("stale   标准 API PAY 无字段：清理旧会话残留的外部 API 配置")
+    reason = {"reason": REASON + "：清理复制库中不完整的旧配置"}
+
+    def delete(name, path):
+        status, current = call(name + "-get", "GET", path, token, expected=(200, 404))
+        if status == 200:
+            call(name + "-delete", "DELETE", path, token, {"expectedVersion": current["version"], **reason})
+            print(f"deleted {name}")
+    integrations = {i["integrationCode"] for code in ("PAY", "PAY_QUERY")
+                    for i in (call("standard-api-get-" + code, "GET", f"{ADMIN}/standard-apis/{code}", token,
+                                   expected=(200, 404))[1] or {}).get("implementations") or []}
+    for integration in sorted(integrations):
+        base = f"{ADMIN}/integrations/{integration}"
+        for code in ("PAY", "PAY_QUERY", "REFUND", "REFUND_QUERY"):
+            delete(f"implementation-{integration}-{code}", f"{base}/implementations/{code}")
+        for (code,) in h.platform_sql("SELECT a.api_code FROM t_integration_api a JOIN t_integration i "
+                                      f"ON i.integration_id=a.integration_id WHERE i.integration_code='{integration}'"):
+            delete(f"api-{integration}-{code}", f"{base}/apis/{code}")
+        for (code,) in h.platform_sql("SELECT s.script_code FROM t_integration_script s JOIN t_integration i "
+                                      f"ON i.integration_id=s.integration_id WHERE i.integration_code='{integration}'"):
+            delete(f"script-{integration}-{code}", f"{base}/scripts/{code}")
+        delete(f"integration-{integration}", base)
+    for code in ("PAY", "PAY_QUERY"):
+        delete(f"standard-api-{code}", f"{ADMIN}/standard-apis/{code}")
+
+
 def configure_platform(configure, configure_card, configure_refund):
     token = login()
+    reset_stale_catalog(token)
     base = f"{ADMIN}/integrations/{INTEGRATION}"
     found, current = call("implementation-get-PAY", "GET", f"{base}/implementations/PAY", token, expected=(200, 404))
     card_ready = found == 200 and any(i.get("function") == "PAYMENT_CARD"

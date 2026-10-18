@@ -107,7 +107,7 @@ def setup_ledger(run):
     run["fiscalCalendarId"] = calendar["fiscalCalendarId"]
     record("建财务日历（UTC，1 月起）", True, f"fiscalCalendarId={run['fiscalCalendarId']}")
 
-    today = datetime.datetime.now(datetime.UTC).date()
+    today = datetime.datetime.now(datetime.timezone.utc).date()
     start = today.replace(day=1)
     end = (start + datetime.timedelta(days=32)).replace(day=1) - datetime.timedelta(days=1)
     _, period = require("ledger", "POST", f"/fiscal-calendars/v1/{run['fiscalCalendarId']}/periods",
