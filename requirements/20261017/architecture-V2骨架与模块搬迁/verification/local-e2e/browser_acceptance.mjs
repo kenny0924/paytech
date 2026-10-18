@@ -196,7 +196,9 @@ async function reloadUntil(page, text, seconds = 60) {
   const deadline = Date.now() + seconds * 1000;
   while (Date.now() < deadline) {
     await page.reload();
-    if (await page.getByText(text).first().isVisible({ timeout: 5000 }).catch(() => false)) return true;
+    // V2：isVisible() 不等待（timeout 参数被忽略），而页面数据在 reload 后异步加载；改为等待任一可见匹配最多 5 秒。
+    const shown = page.getByText(text).filter({ visible: true }).first();
+    if (await shown.waitFor({ state: 'visible', timeout: 5000 }).then(() => true).catch(() => false)) return true;
     await page.waitForTimeout(3000);
   }
   return false;
@@ -212,12 +214,16 @@ async function opsLogin(page, email, password) {
   await page.waitForLoadState('networkidle');
 }
 
+// V2：案件提交后为 SUBMITTED，运营列表显示“待审核”（IN_REVIEW 才是“审核中”，现行 compliance 不产生该状态）；两种进行中状态都可打开。
+const ACTIVE_CASE = /待审核|审核中/;
+
 async function openCase(page, applicationId, statusLabel) {
   const deadline = Date.now() + 60000;
   while (Date.now() < deadline) {
     await page.goto(`${OPERATIONS}/client-onboarding/reviews?applicationId=${applicationId}&page=1&size=20`);
     const row = page.locator('tr.ant-table-row').filter({ hasText: statusLabel }).first();
-    if (await row.isVisible({ timeout: 8000 }).catch(() => false)) {
+    // V2：isVisible() 不等待，表格数据异步加载；等待最多 8 秒。
+    if (await row.waitFor({ state: 'visible', timeout: 8000 }).then(() => true).catch(() => false)) {
       await row.getByRole('button', { name: /^审\s*核$/ }).click();
       await page.getByRole('heading', { name: '入驻审核详情' }).waitFor({ timeout: 20000 });
       return;
@@ -232,9 +238,21 @@ async function downloadMaterial(page) {
   const download = page.waitForEvent('download', { timeout: 20000 }).catch(() => null);
   const popup = page.context().waitForEvent('page', { timeout: 20000 }).catch(() => null);
   const before = page.url();
+  // V2：本机 MinIO 为自签名证书，Chromium 把跳转到预签名地址的下载记为 ERR_ABORTED 而不发出 download 事件；
+  // 此时以浏览器实际发出的同一预签名地址经上下文请求（ignoreHTTPSErrors）核对 200 + attachment，不打印地址。
+  const presigned = page.waitForRequest(r => new URL(r.url()).port === '19400', { timeout: 20000 }).catch(() => null);
   await button.click();
   const got = await Promise.race([download, popup, page.waitForURL(url => url.toString() !== before, { timeout: 20000 }).then(() => 'nav').catch(() => null)]);
-  if (!got) throw new Error('点击下载 20 秒内既无下载也无跳转');
+  if (!got) {
+    const request = await presigned;
+    if (!request) throw new Error('点击下载 20 秒内既无下载也无跳转，也未请求对象存储');
+    const response = await page.context().request.get(request.url(), { ignoreHTTPSErrors: true });
+    const disposition = response.headers()['content-disposition'] || '';
+    if (response.status() !== 200 || !disposition.startsWith('attachment')) {
+      throw new Error(`预签名地址响应 ${response.status()} disposition=${disposition}`);
+    }
+    return `浏览器请求预签名地址（无 download 事件）；同一地址 200、${disposition}、${(await response.body()).length} 字节`;
+  }
   if (got === 'nav') {
     const host = new URL(page.url()).host;
     await page.goBack();
@@ -294,7 +312,7 @@ async function main() {
     }, 'status=审核中');
 
     await attempt(ops, '运营登录', () => opsLogin(ops, admin.E2E_ADMIN_EMAIL, admin.E2E_ADMIN_PASSWORD), ops.url());
-    await attempt(ops, '审核列表打开任务', () => openCase(ops, applicationId, '审核中'), () => ops.url());
+    await attempt(ops, '审核列表打开任务', () => openCase(ops, applicationId, ACTIVE_CASE), () => ops.url());
     await attempt(ops, '下载材料', async () => { evidence = await downloadMaterial(ops); }, () => evidence);
     await attempt(ops, '退回修改（基础资料）', () => decide(ops, '退回修改', { reasonCode: 'IDENTIFIER_UNCLEAR', section: '基础资料',
       publicNote: '证件号码无法核对，请修改后重新提交。', confirm: '退回修改' }), '');
@@ -309,7 +327,7 @@ async function main() {
     }, `identifier=BRX${stamp}`);
     await attempt(client, '重提', () => submit(client), 'status=已提交');
 
-    await attempt(ops, '打开重提后的任务', () => openCase(ops, applicationId, '审核中'), () => ops.url());
+    await attempt(ops, '打开重提后的任务', () => openCase(ops, applicationId, ACTIVE_CASE), () => ops.url());
     await attempt(ops, '最终拒绝', () => decide(ops, '最终拒绝', { reasonCode: 'BROWSER_ACCEPTANCE', reason: '浏览器验收：最终拒绝路径',
       publicNote: '很抱歉，本次申请未通过。', confirm: '确认最终拒绝' }), '');
 

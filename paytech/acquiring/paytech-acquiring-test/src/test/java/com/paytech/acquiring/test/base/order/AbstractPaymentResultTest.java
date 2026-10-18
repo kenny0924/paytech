@@ -62,6 +62,10 @@ public abstract class AbstractPaymentResultTest extends MockTestBase {
         payload.put("channelAccountId", "302");
         payload.put("midId", "303");
         payload.put("channelTransactionRef", "ch-ref-" + attemptId);
+        // v2 追加的 card 字段（acquiring 不读取）
+        payload.put("instrumentRef", "7100001");
+        payload.put("consentToSave", false);
+        payload.put("customerId", null);
         return payload;
     }
 
@@ -83,6 +87,11 @@ public abstract class AbstractPaymentResultTest extends MockTestBase {
     /** 发布指定版本的合法事件并等待确认。 */
     protected DomainEvent publish(Map<String, Object> payload, long version) {
         return paymentEvents.publish(payload, version, Instant.parse(OCCURRED_AT));
+    }
+
+    /** 发布指定信封版本的合法事件（来源版本 3）并等待确认。 */
+    protected DomainEvent publishSchema(Map<String, Object> payload, int schemaVersion) {
+        return paymentEvents.publish(payload, SOURCE_VERSION, Instant.parse(OCCURRED_AT), schemaVersion);
     }
 
     /** 发布 payloadHash 被篡改的信封。 */

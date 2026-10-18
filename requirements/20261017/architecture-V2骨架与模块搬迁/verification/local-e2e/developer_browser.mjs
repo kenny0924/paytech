@@ -92,14 +92,14 @@ function canonical(value) {
   return JSON.stringify(value);
 }
 
-/** 模拟 Commerce 经私网提交 order.paid（本机 webhook.http.callers 已登记 commerce-service），返回 HTTP 状态。 */
+/** 模拟 acquiring 经私网提交 order.paid（run-service.sh 以 webhook.http.callers.acquiring-service 登记；第 03 步由 commerce-service 改名），返回 HTTP 状态。 */
 async function submitOrderPaid() {
   const eventId = 'evt_browser_' + Date.now();
   const object = { orderNo: 'ord_' + eventId, orderStatus: 'PAID', totalAmount: '42.90', version: 5 };
   const envelope = { eventId, eventType: 'order.paid', schemaVersion: '1', createdAt: '2026-10-16T00:00:00Z', data: { object } };
   const sha = s => createHash('sha256').update(s).digest('hex');
   const response = await fetch(PLATFORM + '/webhooks/v1/events', {
-    method: 'POST', headers: { 'X-Caller-Service': 'commerce-service', 'Content-Type': 'application/json' },
+    method: 'POST', headers: { 'X-Caller-Service': 'acquiring-service', 'Content-Type': 'application/json' },
     body: JSON.stringify({ clientId: String(account.clientId), sourceVersion: 5, sourcePayloadHash: sha(canonical(object)),
       payloadHash: sha(canonical(envelope)), envelope }),
   });

@@ -25,6 +25,9 @@ final class PaymentSucceededMessageConverter {
     static final String EVENT_TYPE = "PaymentSucceeded";
 
     private static final String AGGREGATE_TYPE = "PAYMENT_ATTEMPT";
+    /** 接受的信封版本：v1 为切换前报文；v2（第 12 步）只追加 card 使用的 instrumentRef / consentToSave / customerId，本服务不读取。 */
+    private static final int MIN_SCHEMA_VERSION = 1;
+    private static final int MAX_SCHEMA_VERSION = 2;
     private static final String ID = "[1-9][0-9]{0,18}";
     private static final String AMOUNT = "(0|[1-9][0-9]{0,15})(\\.[0-9]{1,8})?";
     private static final JsonMapper JSON = JsonMapper.builder().build();
@@ -53,7 +56,8 @@ final class PaymentSucceededMessageConverter {
     /** 事件身份、版本与来源一致性。 */
     static void checkEnvelope(DomainEvent event, JsonNode payload) {
         if (!EVENT_TYPE.equals(event.eventType()) || !"payment".equals(event.sourceService())
-            || !AGGREGATE_TYPE.equals(event.aggregateType()) || event.schemaVersion() != 1
+            || !AGGREGATE_TYPE.equals(event.aggregateType())
+            || event.schemaVersion() < MIN_SCHEMA_VERSION || event.schemaVersion() > MAX_SCHEMA_VERSION
             || !"COMMERCE_ORDER".equals(text(payload, "sourceType"))) {
             throw invalid();
         }

@@ -89,10 +89,26 @@ public class PaymentEventMocker implements Clear {
         return event;
     }
 
-    /** 构造信封；Payload 字段顺序即给定 Map 顺序。 */
+    /** Payment 当前发布的 PaymentSucceeded 信封版本（PaymentSucceededPayload.SCHEMA_VERSION）。 */
+    public static final int CURRENT_SCHEMA_VERSION = 2;
+
+    /** 以指定信封版本发布一条 PaymentSucceeded 并等待 Broker 确认与路由。 */
+    public DomainEvent publish(Map<String, Object> payload, long version, Instant occurredAt, int schemaVersion) {
+        DomainEvent event = event(payload, version, occurredAt, schemaVersion);
+        attempts.add(event.aggregateId());
+        publisher.publish(event);
+        return event;
+    }
+
+    /** 构造 Payment 当前版本的信封；Payload 字段顺序即给定 Map 顺序。 */
     public static DomainEvent event(Map<String, Object> payload, long version, Instant occurredAt) {
+        return event(payload, version, occurredAt, CURRENT_SCHEMA_VERSION);
+    }
+
+    /** 构造指定信封版本的信封。 */
+    public static DomainEvent event(Map<String, Object> payload, long version, Instant occurredAt, int schemaVersion) {
         ObjectNode node = JSON.valueToTree(payload);
-        return DomainEvent.builder().eventType("PaymentSucceeded").schemaVersion(1)
+        return DomainEvent.builder().eventType("PaymentSucceeded").schemaVersion(schemaVersion)
             .aggregate("PAYMENT_ATTEMPT", (String)payload.get("paymentAttemptId")).aggregateVersion(version)
             .occurredAt(occurredAt).sourceService(PRODUCER).instanceId("main").payload(node).build();
     }
