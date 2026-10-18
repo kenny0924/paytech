@@ -25,6 +25,7 @@ import {
   files,
   patch,
   flatten,
+  fieldIssues,
   relationPatch,
   createCommand,
   newUpload,
@@ -382,13 +383,20 @@ function Fields({
   items,
   values,
   set,
+  issues = {},
 }: {
   items: Field[];
   values: Flat;
   set: (key: string, value: string) => void;
+  issues?: Record<string, string>;
 }) {
   const prefix = useId();
   const catalog = useContext(FormCatalog);
+  // 服务端字段提示：标红控件并以 aria-describedby 关联说明。
+  const invalid = (key: string) =>
+    issues[key]
+      ? { "aria-invalid": true, "aria-describedby": prefix + key + "-issue" }
+      : {};
   return (
     <div className="form-grid">
       {items.map(([key, label, kind = "text", max = 64]) => (
@@ -400,6 +408,7 @@ function Fields({
           {kind === "catalog" ? (
             <select
               id={prefix + key}
+              {...invalid(key)}
               value={values[key] ?? ""}
               disabled={!catalogChoices(key, values, catalog).length}
               onChange={(event) => set(key, event.target.value)}
@@ -431,6 +440,7 @@ function Fields({
             kind === "currency" ? (
             <select
               id={prefix + key}
+              {...invalid(key)}
               value={values[key] ?? ""}
               onChange={(event) => set(key, event.target.value)}
             >
@@ -447,6 +457,7 @@ function Fields({
           ) : kind === "textarea" ? (
             <textarea
               id={prefix + key}
+              {...invalid(key)}
               rows={4}
               maxLength={max}
               value={values[key] ?? ""}
@@ -455,11 +466,17 @@ function Fields({
           ) : (
             <input
               id={prefix + key}
+              {...invalid(key)}
               type={kind}
               maxLength={max}
               value={values[key] ?? ""}
               onChange={(event) => set(key, event.target.value)}
             />
+          )}
+          {issues[key] && (
+            <small className="field-error" id={prefix + key + "-issue"}>
+              {issues[key]}
+            </small>
           )}
         </div>
       ))}
@@ -481,7 +498,8 @@ function Profile({
 }) {
   const [before, setBefore] = useState(() => flatten(app.values)),
     [values, setValues] = useState(before),
-    [message, setMessage] = useState("");
+    [message, setMessage] = useState(""),
+    [issues, setIssues] = useState<Record<string, string>>({});
   const catalog = useFormCatalog(client, app.clientType);
   useEffect(() => {
     const next = flatten(app.values);
@@ -505,19 +523,22 @@ function Profile({
   }, [dirty, onDirty]);
   const set = (key: string, value: string) => {
     setMessage("");
+    setIssues(({ [key]: _, ...rest }) => rest);
     setValues((old) => changeCatalogField(old, key, value, catalog.data));
   };
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (!dirty) return;
+    setIssues({});
     try {
       const updated = await save(changes);
       const next = flatten(updated.values);
       setBefore(next);
       setValues(next);
       setMessage("资料已保存");
-    } catch {
-      /* 页面统一显示可重试错误。 */
+    } catch (failure) {
+      /* 页面统一显示可重试错误；字段级问题同时标在对应表单项。 */
+      setIssues(fieldIssues(failure, Object.keys(fieldLabels)));
     }
   }
   return (
@@ -535,18 +556,19 @@ function Profile({
               }
               values={values}
               set={set}
+              issues={issues}
             />
             <h3>
               {app.clientType === "ORGANIZATION" ? "注册地址" : "居住地址"}
             </h3>
-            <Fields items={address} values={values} set={set} />
+            <Fields items={address} values={values} set={set} issues={issues} />
             <h3>身份证明</h3>
-            <Fields items={identifier} values={values} set={set} />
+            <Fields items={identifier} values={values} set={set} issues={issues} />
           </section>
           <section id="business" className="form-section">
             <h2>经营资料</h2>
             <p>描述实际销售的商品或提供的服务，便于审核人员了解业务。</p>
-            <Fields items={business} values={values} set={set} />
+            <Fields items={business} values={values} set={set} issues={issues} />
           </section>
         </fieldset>
         {app.editable && (

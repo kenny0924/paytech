@@ -54,6 +54,7 @@ select,textarea{font:inherit;width:100%;color:inherit;background:#fff;border:1px
 .modal .secondary,.drawer .secondary{margin-left:0}
 .secret-value{display:block;padding:12px;border:1px solid #e6eaf0;border-radius:6px;background:#f7f8fb;font-size:13px;overflow-wrap:anywhere;user-select:all}
 .field-error{color:#a4372b;font-size:12px}
+.form-grid .field-error{display:block;margin-top:6px}.form-grid [aria-invalid="true"]{border-color:#d92d20}
 .danger{background:#c2412d;color:white;border:0;border-radius:6px;padding:10px 16px;font-size:13px;cursor:pointer}
 .table-wrap{overflow-x:auto;border:1px solid #edf0f5;border-radius:8px;margin:12px 0}
 .table-wrap table{width:100%;border-collapse:collapse;font-size:13px}.table-wrap th,.table-wrap td{padding:10px 12px;text-align:left;border-bottom:1px solid #f0f2f6;vertical-align:top}
