@@ -1,8 +1,8 @@
 # Client / Local Partner 余额查询接口
 
-状态：HTTP、Processor、Domain Service、Repository、MyBatis 与 MySQL 只读链路已经实现。第 11b 步起余额读自本服务 `mor_account.t_account_balance`
-（由消费 `EconomicFactRecorded` 维护），账簿存在性经 ledger-api 确认、ledger 不可用时返回 503（design/04 §6）。接口仅监听 Finance 内部地址，
-尚未接入 Gateway 和统一资源授权，因此不能作为公网或租户直连接口发布。
+状态：HTTP、Processor、Domain Service、Repository、MyBatis 与 MySQL 只读链路已经实现。2026-10-19 起余额读自本服务明细账
+`mor_account.t_owner_account`（由消费 `EconomicFactRecorded` 与桶移动维护），不再调用 ledger；Owner 在该 OE 与币种下没有任何账户时返回
+400 `OWNER_ACCOUNT_NOT_FOUND`（technique 2.2）。接口仅监听 Finance 内部地址，尚未接入 Gateway 和统一资源授权，因此不能作为公网或租户直连接口发布。
 
 ## 接口
 
@@ -17,7 +17,7 @@ GET /balances/v1/partners/3001?entityNo=AE001&currency=USD
 每次只查询一个 Owner + Operating Entity + Currency，不允许省略 OE/币种后合计，也不查询平台 FE 利润。Owner ID 必须是 BIGINT 范围内的
 正十进制字符串；OE 使用 entityNo（两位国家码加 `001`—`999`，如 `AE001`），与账簿 `entity_id`、账户 `owner_id` 的字符串身份一致，
 不再接受旧的数字 `operatingEntityId`（2026-10-15 不兼容调整，当时无 Gateway Route 或 BFF 消费者）。币种必须是 JDK 识别的大写
-ISO 4217 Code，且指定 OE/币种必须存在账簿（唯一键保证唯一）。
+ISO 4217 Code；该 Owner 在指定 OE/币种下至少要有一个 Owner 账户。
 
 ## Client 响应示例
 
@@ -54,15 +54,14 @@ ISO 4217 Code，且指定 OE/币种必须存在账簿（唯一键保证唯一）
 
 - Client 三种应付来自 CLIENT_PAYABLE 的 PENDING/AVAILABLE/LOCKED；保证金来自 CLIENT_SECURITY_DEPOSIT/NONE，追偿来自
   CLIENT_RECOVERY_RECEIVABLE/NONE。Partner 使用对应 PARTNER_PAYABLE 和 PARTNER_RECOVERY_RECEIVABLE/NONE。
-- 账簿先经 ledger-api `GET /ledger-books/v1?entityType=OPERATING_ENTITY&entityId=&currency=` 确认存在且唯一（事务外）；随后 Owner 的全部余额在
-  一条 SQL 中读取，同一语句天然使用一个一致快照，不混用变更前后余额，因此不另开只读事务。读取不修复、不创建余额，也不触发过账。
-- 指定 Owner 在有效账簿中尚未建立某个目标账户时，该分类返回同币种零；账簿不存在或不唯一、币种非法、数据库失败不能伪装成零。
+- Owner 在该 OE/币种下的全部账户在一条 SQL 中读取，同一语句天然使用一个一致快照，不混用变更前后余额，因此不另开只读事务。读取不修复、
+  不创建账户，也不触发入账。
+- Owner 已有账户但缺少某个目标桶时，该分类返回同币种零；没有任何账户返回 400 `OWNER_ACCOUNT_NOT_FOUND`；币种非法、数据库失败不能伪装成零。
 - 不过滤掉有余额的停用账户来伪造零余额；账户状态不改变既有账务事实。
-- 余额身份重复或金额缺失 Fail-Closed，不返回可能错误的余额；科目代码与正常方向由余额映射规则冻结，科目名称与属性以 ledger 为准
-  （可经 `GET /ledger/v1/chart-accounts?ids=` 批量读取）。
+- 账户身份重复或金额缺失 Fail-Closed，不返回可能错误的余额；科目代码、Owner 类型、正常方向与允许桶由 `OwnerAccountType` 目录冻结，
+  科目名称与属性以 ledger 科目表为准。
 - Available 不是出款资格，不查询实时 Risk、不返回可出款承诺或最低保证金要求。出款四检查点保持独立。
-- 成功响应直接返回上述对象。非法参数和不存在的账簿返回 Foundation 400 错误体；ledger 不可用返回 503；余额身份损坏和数据库错误返回安全的 500，
-  内部细节不外显。
+- 成功响应直接返回上述对象。非法参数与没有账户返回 Foundation 400 错误体；账户身份损坏和数据库错误返回安全的 500，内部细节不外显。
 
 ## 发布前仍需完成
 

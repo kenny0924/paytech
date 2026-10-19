@@ -43,7 +43,8 @@ public interface LedgerBookCommandApi {
      * @param sessionId 操作人会话 ID，由 Operations BFF 填入 X-Gateway-Session-Id；缺失时 400 INVALID_REQUEST
      * @param ledgerBookId 账簿主键
      * @param body 请求
-     * @return 201 与新账户主键；科目不可过账、违反账户身份矩阵或账户已存在时 400
+     * @return 201 与新账户主键；科目不可过账 400 CHART_ACCOUNT_NOT_POSTABLE；违反账户身份矩阵 400 ACCOUNT_IDENTITY_INVALID
+     *         （控制科目只允许账簿主体类型、ownerId 等于账簿主体；其余科目只允许平台类 Owner；余额桶一律 NONE）；账户已存在 400
      */
     @PostExchange("/{ledgerBookId}/accounts")
     ResponseEntity<CreateAccountResponseBody> createAccount(

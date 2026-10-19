@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
@@ -18,6 +19,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.id.IdGenerator;
+import com.paytech.foundation.messaging.api.ConsumedEventRepository;
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
 import com.paytech.ledger.core.constant.AccountingCodes;
 import com.paytech.ledger.core.constant.AccountingLocks;
@@ -45,7 +47,7 @@ import com.paytech.ledger.core.enums.PeriodCloseStatus;
 import com.paytech.ledger.core.enums.PeriodCloseType;
 import com.paytech.ledger.core.enums.PeriodStatus;
 import com.paytech.ledger.core.enums.TrialBalanceStatus;
-import com.paytech.ledger.domain.BookBalanceConsistency;
+import com.paytech.ledger.domain.AccountPostingProgress;
 import com.paytech.ledger.domain.EconomicFactProgress;
 import com.paytech.ledger.domain.JournalPostingContext;
 import com.paytech.ledger.domain.PeriodCloseContentHash;
@@ -64,8 +66,8 @@ import com.paytech.ledger.domainservice.repository.TrialBalanceExceptionReposito
 import com.paytech.ledger.domainservice.service.JournalPostingService;
 import com.paytech.ledger.domainservice.service.PeriodCloseService;
 import com.paytech.ledger.domainservice.service.TrialBalanceService;
-import com.paytech.ledger.integration.account.BalanceConsistencyClient;
-import com.paytech.ledger.integration.billing.EconomicFactProgressClient;
+import com.paytech.ledger.integration.account.AccountPostingClient;
+import com.paytech.ledger.integration.billing.EconomicFactClient;
 import com.paytech.ledger.service.processor.request.StartPeriodCloseRequest;
 
 import lombok.AllArgsConstructor;
@@ -74,8 +76,10 @@ import lombok.AllArgsConstructor;
  * 发起期间关账并同步执行 7 个固定步骤
  * <li>事务前：期间存在且 OPEN、同日历更早期间全部 CLOSED（按顺序关账）、枚举期间主体的全部账簿。</li>
  * <li>步骤 1 在一个事务内推进 CLOSING、占用活动槽并冻结水位；步骤 2—7 各自短事务，任一步失败即流程 FAILED、期间回到 OPEN。</li>
- * <li>步骤 2、3 在事务外经 billing-api 与 account-api 检查每个账簿主体：billing 无未发布事实，且 account 已处理的最大 factId 不小于 billing
- * 已发布的最大 factId；account 报告的非零渠道 / 银行账户与本库分录聚合的一并核对。任一不可用或未追平即失败关闭（design/04 §6）。</li>
+ * <li>步骤 2 只检查本库：未过账指令、借贷不平分录与待执行补偿任务都必须为零。</li>
+ * <li>步骤 3 CHECK_ACCOUNT_POSTING_PROGRESS 在事务外对每本账簿做两段检查（技术方案 2.1、设计 8.8）：① billing → account：billing 无未发布事实，
+ * account 已应用事实数与最大 factId 等于 billing 已发布事实数与最大 factId；② account → ledger：account 列出的该账簿涉及的每条过账流，
+ * ledger 已消费序号等于 account 最大序号。任一接口不可用或未追平即失败关闭，摘要记录阻断的流与两侧序号或计数。</li>
  * <li>步骤 6 的损益结转在一个事务内生成 AUTO 指令（来源 FINANCE / PERIOD_CLOSE:{关账ID}:{账簿ID}，无规则 Bundle）并以 CLOSING 分录过账；财年最后期间同一指令追加本期损益转入留存收益的两行；没有任何结转行的账簿不生成指令。</li>
  * <li>全部通过后冻结 close_hash，流程进入 PENDING_CHECK，并写入 Maker 记录。</li>
  * <li>与审批、驳回共用期间资源锁；数据库期间行锁、活动槽唯一键与状态 CAS 仍是最终防线。</li>
@@ -88,8 +92,9 @@ public class StartPeriodCloseProcessor extends AbstractLockProcessor<StartPeriod
     private final PeriodCloseService periodCloseService;
     private final TransactionTemplate transactionTemplate;
     private final TrialBalanceService trialBalanceService;
-    private final BalanceConsistencyClient balanceConsistencyClient;
-    private final EconomicFactProgressClient economicFactProgressClient;
+    private final EconomicFactClient economicFactClient;
+    private final AccountPostingClient accountPostingClient;
+    private final ConsumedEventRepository consumedEventRepository;
     private final LedgerBookRepository ledgerBookRepository;
     private final JournalLineRepository journalLineRepository;
     private final JournalPostingService journalPostingService;
@@ -207,7 +212,7 @@ public class StartPeriodCloseProcessor extends AbstractLockProcessor<StartPeriod
      * @return 全部步骤成功时为 true
      */
     boolean runSteps(PeriodCloseContext context) {
-        for (CloseStepType type : List.of(CloseStepType.CHECK_ASYNC_AND_JOURNAL, CloseStepType.RECONCILE_ACCOUNT_BALANCES,
+        for (CloseStepType type : List.of(CloseStepType.CHECK_ASYNC_AND_JOURNAL, CloseStepType.CHECK_ACCOUNT_POSTING_PROGRESS,
             CloseStepType.GENERATE_TRIAL_BALANCE, CloseStepType.RESOLVE_EXCEPTIONS, CloseStepType.POST_PROFIT_CLOSE,
             CloseStepType.FINAL_TRIAL_BALANCE)) {
             StepOutcome outcome;
@@ -230,7 +235,7 @@ public class StartPeriodCloseProcessor extends AbstractLockProcessor<StartPeriod
     StepOutcome execute(PeriodCloseContext context, CloseStepType type) {
         return switch (type) {
             case CHECK_ASYNC_AND_JOURNAL -> checkAsyncAndJournal(context);
-            case RECONCILE_ACCOUNT_BALANCES -> reconcileAccountBalances(context);
+            case CHECK_ACCOUNT_POSTING_PROGRESS -> checkAccountPostingProgress(context);
             case GENERATE_TRIAL_BALANCE -> generateTrialBalances(context);
             case RESOLVE_EXCEPTIONS -> checkExceptionsResolved(context);
             case POST_PROFIT_CLOSE -> postProfitClose(context);
@@ -239,58 +244,67 @@ public class StartPeriodCloseProcessor extends AbstractLockProcessor<StartPeriod
         };
     }
 
-    /** 步骤 2：本库未过账指令、借贷不平分录与待执行补偿任务都必须为零，且每个账簿主体的经济事实已被 account 追平。 */
+    /** 步骤 2：本库未过账指令、借贷不平分录与待执行补偿任务都必须为零。 */
     StepOutcome checkAsyncAndJournal(PeriodCloseContext context) {
         long pending = periodCloseService.countPendingInstructions(context);
         long unbalanced = periodCloseService.countUnbalancedEntries(context);
         long compensation = periodCloseService.countPendingCompensationEvents();
-        StringBuilder summary = new StringBuilder("CHECK_ASYNC_AND_JOURNAL|pendingInstructions=").append(pending)
-            .append("|unbalancedEntries=").append(unbalanced).append("|pendingCompensationEvents=").append(compensation);
-        boolean passed = pending == 0 && unbalanced == 0 && compensation == 0;
+        String summary = "CHECK_ASYNC_AND_JOURNAL|pendingInstructions=" + pending + "|unbalancedEntries=" + unbalanced
+            + "|pendingCompensationEvents=" + compensation;
+        return new StepOutcome(pending == 0 && unbalanced == 0 && compensation == 0, summary);
+    }
+
+    /** 步骤 3：逐账簿做 billing → account、account → ledger 两段入账进度检查，全部追平才通过。 */
+    StepOutcome checkAccountPostingProgress(PeriodCloseContext context) {
+        StringBuilder summary = new StringBuilder("CHECK_ACCOUNT_POSTING_PROGRESS");
+        boolean passed = true;
         for (LedgerBook book : context.getBooks()) {
-            passed = checkCaughtUp(context, book, summary) && passed;
+            passed = checkBookPostingProgress(book, summary) && passed;
         }
         return new StepOutcome(passed, summary.toString());
     }
 
     /**
-     * 一个账簿主体的追平检查：billing 无未发布事实，account 已处理的最大 factId 不小于 billing 已发布的最大 factId
+     * 一本账簿的两段进度检查
      * <li>远程调用在事务外；任一方不可用或响应不合法时记为 UNAVAILABLE 并失败关闭。</li>
      *
-     * @return 是否已追平
+     * @return 两段是否都已追平
      */
-    boolean checkCaughtUp(PeriodCloseContext context, LedgerBook book, StringBuilder summary) {
+    boolean checkBookPostingProgress(LedgerBook book, StringBuilder summary) {
         summary.append('|').append(book.getId()).append(':');
-        EconomicFactProgress progress;
-        BookBalanceConsistency consistency;
+        EconomicFactProgress billing;
+        AccountPostingProgress account;
         try {
-            progress = economicFactProgressClient.getProgress(book);
-            consistency = balanceConsistencyClient.getConsistency(book.getId());
+            billing = economicFactClient.getProgress(book);
+            account = accountPostingClient.getProgress(book);
         } catch (RuntimeException unavailable) {
             summary.append("UNAVAILABLE=").append(unavailable.getClass().getSimpleName());
             return false;
         }
-        context.getBalanceConsistencies().put(book.getId(), consistency);
-        Long published = progress.getMaxPublishedFactId();
-        Long applied = consistency.getMaxAppliedFactId();
-        summary.append("billingPending=").append(progress.getPendingCount()).append(",billingMaxPublished=")
-            .append(published).append(",accountMaxApplied=").append(applied);
-        boolean caughtUp = published == null || applied != null && applied >= published;
-        return progress.getPendingCount() == 0 && caughtUp;
+        boolean passed = checkFactsApplied(billing, account, summary);
+        for (AccountPostingProgress.Stream stream : account.getStreams()) {
+            passed = checkStreamConsumed(stream, summary) && passed;
+        }
+        return passed;
     }
 
-    /**
-     * 步骤 3：Treasury 未上线，渠道或银行账户存在非零余额即无法核对（Fail-Closed）；否则记录无核对对象
-     * <li>同时核对本库分录聚合的非零账户与 account 在步骤 2 报告的非零账户（design/04 §6）。</li>
-     */
-    StepOutcome reconcileAccountBalances(PeriodCloseContext context) {
-        long nonZero = periodCloseService.countNonZeroTreasuryAccounts(context);
-        long accountNonZero = context.getBooks().stream()
-            .mapToLong(book -> context.getBalanceConsistencies().get(book.getId()).getNonZeroTreasuryAccounts()).sum();
-        boolean passed = nonZero == 0 && accountNonZero == 0;
-        String result = passed ? "NO_RECONCILIATION_TARGET" : "TREASURY_RECONCILIATION_UNAVAILABLE";
-        return new StepOutcome(passed, "RECONCILE_ACCOUNT_BALANCES|nonZeroTreasuryAccounts=" + nonZero
-            + "|accountNonZeroTreasuryAccounts=" + accountNonZero + "|" + result);
+    /** 段 ①：billing 无未发布事实，account 已应用事实数与最大 factId 等于 billing 已发布事实数与最大 factId。 */
+    boolean checkFactsApplied(EconomicFactProgress billing, AccountPostingProgress account, StringBuilder summary) {
+        summary.append("billingPending=").append(billing.getPendingCount()).append(",billingPublished=")
+            .append(billing.getPublishedFactCount()).append(",billingMaxPublished=").append(billing.getMaxPublishedFactId())
+            .append(",accountApplied=").append(account.getAppliedFactCount()).append(",accountMaxApplied=")
+            .append(account.getMaxAppliedFactId());
+        return billing.getPendingCount() == 0 && account.getAppliedFactCount() == billing.getPublishedFactCount()
+            && Objects.equals(account.getMaxAppliedFactId(), billing.getMaxPublishedFactId());
+    }
+
+    /** 段 ②：ledger 对该过账流的已消费序号（本库短事务内读取）等于 account 最大序号。 */
+    boolean checkStreamConsumed(AccountPostingProgress.Stream stream, StringBuilder summary) {
+        long consumed = transactionTemplate.execute(
+            status -> consumedEventRepository.lastVersion(stream.getAggregateKey())).orElse(0L);
+        summary.append(",stream=").append(stream.getAggregateKey().aggregateId()).append(":account=")
+            .append(stream.getMaxPostingSequence()).append("/ledger=").append(consumed);
+        return consumed == stream.getMaxPostingSequence();
     }
 
     /** 步骤 4：每个账簿按冻结水位试算。 */

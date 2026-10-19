@@ -1,0 +1,176 @@
+[
+  {
+    "id": "R19",
+    "method": "GET",
+    "path": "/finance/owner-accounts/v1",
+    "query": "?entityType=OPERATING_ENTITY&entityId=AE001&currency=USD&ownerType=CLIENT&ownerId=1001&accountCode=CLIENT_PAYABLE&balanceBucket=PENDING&page=1&size=10",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "accountId": "7200000000000001",
+          "accountCode": "CLIENT_PAYABLE",
+          "ownerType": "CLIENT",
+          "ownerId": "1001",
+          "balanceBucket": "PENDING",
+          "normalSide": "CREDIT",
+          "accountStatus": "ACTIVE",
+          "debitTotal": {
+            "currency": "USD",
+            "amount": "500.00"
+          },
+          "creditTotal": {
+            "currency": "USD",
+            "amount": "920.00"
+          },
+          "netBalance": {
+            "currency": "USD",
+            "amount": "420.00"
+          },
+          "balanceVersion": "5"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    },
+    "routeCode": "operations-finance-owner-accounts"
+  },
+  {
+    "id": "R20",
+    "method": "GET",
+    "path": "/finance/owner-accounts/v1/7200000000000001/entries",
+    "query": "?page=1&size=20",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "entryId": "7400000000000003",
+          "postingId": "7300000000000003",
+          "postingSequence": "3",
+          "sourceType": "ECONOMIC_FACT",
+          "factId": "8750",
+          "factVersion": "1",
+          "factType": "PAYMENT",
+          "movementSourceType": null,
+          "lineNo": "1",
+          "factLineNo": "1",
+          "entrySide": "CREDIT",
+          "amount": {
+            "currency": "USD",
+            "amount": "400.00"
+          },
+          "reversesEntryId": null,
+          "postedTime": "2026-10-15T18:30:00.123456Z"
+        },
+        {
+          "entryId": "7400000000000009",
+          "postingId": "7300000000000009",
+          "postingSequence": "9",
+          "sourceType": "ECONOMIC_FACT",
+          "factId": "8790",
+          "factVersion": "2",
+          "factType": "PAYMENT",
+          "movementSourceType": null,
+          "lineNo": "1",
+          "factLineNo": "1",
+          "entrySide": "DEBIT",
+          "amount": {
+            "currency": "USD",
+            "amount": "200.00"
+          },
+          "reversesEntryId": "7400000000000003",
+          "postedTime": "2026-10-16T09:12:00Z"
+        },
+        {
+          "entryId": "7400000000000015",
+          "postingId": "7300000000000015",
+          "postingSequence": "15",
+          "sourceType": "BALANCE_MOVEMENT",
+          "factId": null,
+          "factVersion": null,
+          "factType": null,
+          "movementSourceType": "FACT_MATURITY",
+          "lineNo": "1",
+          "factLineNo": null,
+          "entrySide": "DEBIT",
+          "amount": {
+            "currency": "USD",
+            "amount": "300.00"
+          },
+          "reversesEntryId": null,
+          "postedTime": "2026-10-17T00:05:00Z"
+        }
+      ],
+      "page": 1,
+      "size": 20,
+      "total": 3
+    },
+    "routeCode": "operations-finance-owner-account-entries"
+  },
+  {
+    "id": "R21",
+    "method": "GET",
+    "path": "/finance/account-postings/v1/7318802201114002018",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "postingId": "7318802201114002018",
+      "entityType": "OPERATING_ENTITY",
+      "entityId": "AE001",
+      "currency": "USD",
+      "shardNo": "0",
+      "postingSequence": "18",
+      "sourceType": "ECONOMIC_FACT",
+      "postedTime": "2026-10-18T10:21:07.123456Z",
+      "publishedTime": "2026-10-18T10:21:08.500Z",
+      "factId": "9001",
+      "factVersion": "1",
+      "factType": "PAYMENT",
+      "supersedesFactId": null,
+      "factApplyStatus": "APPLIED",
+      "financeEntityId": "8001",
+      "movementId": null,
+      "movementSourceType": null,
+      "movementSourceRef": null,
+      "entries": [
+        {
+          "entryId": "7400000000000018",
+          "lineNo": "1",
+          "accountId": "7200000000000001",
+          "accountCode": "CLIENT_PAYABLE",
+          "ownerType": "CLIENT",
+          "ownerId": "1001",
+          "balanceBucket": "PENDING",
+          "entrySide": "CREDIT",
+          "amount": {
+            "currency": "USD",
+            "amount": "90.00"
+          },
+          "factLineNo": "1",
+          "reversesEntryId": null
+        },
+        {
+          "entryId": "7400000000000019",
+          "lineNo": "2",
+          "accountId": "7200000000000004",
+          "accountCode": "PARTNER_PAYABLE",
+          "ownerType": "LOCAL_PARTNER",
+          "ownerId": "2001",
+          "balanceBucket": "PENDING",
+          "entrySide": "CREDIT",
+          "amount": {
+            "currency": "USD",
+            "amount": "8.00"
+          },
+          "factLineNo": "2",
+          "reversesEntryId": null
+        }
+      ]
+    },
+    "routeCode": "operations-finance-account-posting"
+  }
+]

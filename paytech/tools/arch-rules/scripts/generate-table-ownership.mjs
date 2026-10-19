@@ -48,13 +48,14 @@ const transitionalSharedReads = [];
 const stepAddedTables = [
   // Step 12 (design/05 §2.1, S3): one-time card material tickets in mor_card.
   { service: 'card', database: 'mor_card', tables: ['t_card_material_ticket'] },
-  // Step 11b (design/04 §3.2, task card 11b §2.1): account balance authority, applied facts and their entries,
-  // bucket movements (schema only) and daily reconciliation discrepancies in mor_account.
+  // Step 11b (design/04 §3.2) reshaped by the 2026-10-19 subledger refactor (decision 2026-10-18, technique 2.3):
+  // account is the Owner subledger in mor_account - Owner accounts, posting streams, postings, entries, applied facts and
+  // bucket movements. t_account_balance, t_balance_applied_entry and t_balance_discrepancy are dropped.
   {
     service: 'account',
     database: 'mor_account',
-    tables: ['t_account_balance', 't_balance_applied_fact', 't_balance_applied_entry', 't_balance_movement',
-      't_balance_discrepancy'],
+    tables: ['t_owner_account', 't_account_posting_stream', 't_account_posting', 't_account_entry',
+      't_balance_applied_fact', 't_balance_movement'],
   },
 ];
 

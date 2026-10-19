@@ -85,7 +85,7 @@ public interface EconomicFactCommandApi {
      * @param bookEntityType 账簿主体类型：OPERATING_ENTITY 或 FINANCE_ENTITY
      * @param bookEntityId 账簿主体标识
      * @param currency 账簿币种
-     * @return 未发布计数、未发布最大 factId 与已发布最大 factId
+     * @return 未发布计数、未发布最大 factId、已发布计数与已发布最大 factId
      */
     @GetExchange("/pending")
     PendingEconomicFactsResponseBody getPendingEconomicFacts(

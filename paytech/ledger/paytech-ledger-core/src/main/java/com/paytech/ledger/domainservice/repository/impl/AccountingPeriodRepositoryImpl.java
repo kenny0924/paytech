@@ -73,6 +73,12 @@ public class AccountingPeriodRepositoryImpl implements AccountingPeriodRepositor
         return mapper.selectByIdForUpdate(id);
     }
 
+    /** 迟到事实顺延的候选期间。 */
+    @Override
+    public AccountingPeriod findFirstUnclosedAfter(long calendarId, LocalDate endDate) {
+        return mapper.selectFirstUnclosedAfter(calendarId, endDate);
+    }
+
     /** 读取同一日历中早于给定日期且未关闭的最早期间，不存在返回空。 */
     @Override
     public AccountingPeriod findFirstUnclosedBefore(long calendarId, LocalDate startDate) {

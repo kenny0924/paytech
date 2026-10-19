@@ -1,5 +1,7 @@
 # Finance 数据库设计规范
 
+> **2026-10-18 V2 拆分取代：** account 与 ledger 拆分后，本页 §4.1 `account` 的余额投影与 Client / Partner × 余额桶开户、§4.4 成熟与锁定的 Journal 表达、§4.7 第 3 步 `RECONCILE_ACCOUNT_BALANCES`、§4.10 `BalanceChanged`、§6.3 BANK_CASH 账户行门禁、§6.9 合同余额成熟与 Payout 锁定、§7 第 4、32 条，由 [account 明细账与 ledger 总账控制科目决定](../decisions/2026-10-18-account-ledger-subledger-control-account.md) 取代：余额桶、Owner 明细账户、银行现金可用额度与桶移动归 account；ledger 只记控制科目，桶移动不产生分录。科目、账簿、Journal、试算与关账等其余内容不变。
+
 > **2026-09-11 模型更新：** 本页的数字 OE、Assignment、Client 多 OE 合同及旧 Scope 冻结描述，仅适用于迁移前记录与接口；现行目标由 [四系统模型决定](../decisions/2026-09-11-cct-commerce-oe-pricing-model.md) 精确取代。Risk 本期不改，Java 与数据库尚未据此迁移，历史订单与 Hash 不重写。
 
 最后更新：2026-08-28

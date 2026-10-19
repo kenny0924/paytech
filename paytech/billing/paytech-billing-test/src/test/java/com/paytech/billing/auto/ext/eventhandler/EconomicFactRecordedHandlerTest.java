@@ -3,6 +3,7 @@ package com.paytech.billing.auto.ext.eventhandler;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.time.Instant;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -12,6 +13,7 @@ import com.paytech.billing.api.enums.EconomicFactStatus;
 import com.paytech.billing.service.handler.EconomicFactRecordedHandler;
 import com.paytech.billing.test.base.AbstractEconomicFactApiTest;
 import com.paytech.billing.test.builder.EconomicFactRequestBuilder;
+import com.paytech.billing.test.checker.EconomicFactEnvelopeChecker;
 import com.paytech.foundation.compensation.api.CompensationEvent;
 import com.paytech.foundation.compensation.api.CompensationHandlerResult;
 
@@ -35,6 +37,21 @@ class EconomicFactRecordedHandlerTest extends AbstractEconomicFactApiTest {
         assertEquals(CompensationHandlerResult.success(), result);
         events.awaitEnvelope(factId).envelope(factId, 1, instanceId);
         assertEquals(publishedAt, factRow(factId).get("published_at"));
+    }
+
+    /** 事实头带余额到期时间：Payload 的 balanceAvailableTime 为 UTC RFC 3339 字符串，并按 billing-api 载荷类反序列化为同一时刻。 */
+    @Test
+    void test_payloadCarriesBalanceAvailableTime() {
+        long factId = submitApprovedAndPublished(EconomicFactRequestBuilder.template());
+        Instant availableTime = Instant.parse("2026-10-21T04:00:00.123456Z");
+        testMapper.updateBalanceAvailableTime(factId, availableTime);
+
+        CompensationHandlerResult result = handler.handle(event(EconomicFactRecordedHandler.buildEvent(factId, 1).eventKey()));
+
+        EconomicFactEnvelopeChecker envelope = events.awaitEnvelope(factId).envelope(factId, 1, instanceId).payloadShape();
+        assertAll(() -> assertEquals(CompensationHandlerResult.success(), result),
+            () -> assertEquals(availableTime.toString(), envelope.payloadText("balanceAvailableTime")),
+            () -> assertEquals(availableTime, envelope.payload().getBalanceAvailableTime()));
     }
 
     /** 事实仍为 DRAFT、版本不符或不存在：终态失败，不发布、不写 published_at。 */

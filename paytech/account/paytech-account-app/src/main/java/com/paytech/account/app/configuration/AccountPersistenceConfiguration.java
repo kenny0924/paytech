@@ -6,14 +6,16 @@ import org.mybatis.spring.boot.autoconfigure.ConfigurationCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.paytech.account.api.enums.AccountEntityType;
 import com.paytech.account.api.enums.BalanceBucket;
+import com.paytech.account.api.enums.EntrySide;
+import com.paytech.account.api.enums.MovementSourceType;
 import com.paytech.account.api.enums.OwnerType;
+import com.paytech.account.api.enums.PostingSourceType;
+import com.paytech.account.core.enums.AccountStatus;
 import com.paytech.account.core.enums.AppliedFactStatus;
-import com.paytech.account.core.enums.BalanceStatus;
-import com.paytech.account.core.enums.BookEntityType;
-import com.paytech.account.core.enums.DiscrepancyStatus;
-import com.paytech.account.core.enums.EntrySide;
-import com.paytech.account.core.enums.NormalSide;
+import com.paytech.account.core.enums.MaturityStatus;
+import com.paytech.account.core.enums.MovementStatus;
 import com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler;
 import com.paytech.foundation.mybatis.typehandler.InstantTypeHandler;
 
@@ -36,14 +38,16 @@ public class AccountPersistenceConfiguration {
             configuration.setMapUnderscoreToCamelCase(true);
             TypeHandlerRegistry registry = configuration.getTypeHandlerRegistry();
             registry.register(InstantTypeHandler.class);
+            registry.register(AccountEntityType.class, new CodeEnumTypeHandler<>(AccountEntityType.class));
             registry.register(BalanceBucket.class, new CodeEnumTypeHandler<>(BalanceBucket.class));
             registry.register(OwnerType.class, new CodeEnumTypeHandler<>(OwnerType.class));
-            registry.register(NormalSide.class, new CodeEnumTypeHandler<>(NormalSide.class));
             registry.register(EntrySide.class, new CodeEnumTypeHandler<>(EntrySide.class));
-            registry.register(BalanceStatus.class, new CodeEnumTypeHandler<>(BalanceStatus.class));
-            registry.register(BookEntityType.class, new CodeEnumTypeHandler<>(BookEntityType.class));
+            registry.register(PostingSourceType.class, new CodeEnumTypeHandler<>(PostingSourceType.class));
+            registry.register(MovementSourceType.class, new CodeEnumTypeHandler<>(MovementSourceType.class));
+            registry.register(AccountStatus.class, new CodeEnumTypeHandler<>(AccountStatus.class));
             registry.register(AppliedFactStatus.class, new CodeEnumTypeHandler<>(AppliedFactStatus.class));
-            registry.register(DiscrepancyStatus.class, new CodeEnumTypeHandler<>(DiscrepancyStatus.class));
+            registry.register(MaturityStatus.class, new CodeEnumTypeHandler<>(MaturityStatus.class));
+            registry.register(MovementStatus.class, new CodeEnumTypeHandler<>(MovementStatus.class));
         };
     }
 }

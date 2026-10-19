@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import com.paytech.account.api.constant.StandardAccountCodes;
 import com.paytech.account.api.enums.BalanceBucket;
-import com.paytech.account.api.enums.OwnerType;
+import com.paytech.ledger.api.enums.LedgerOwnerType;
 import com.paytech.ledger.api.ManualAdjustmentApi;
 import com.paytech.ledger.api.enums.LedgerErrorCode;
 import com.paytech.ledger.api.request.SubmitManualAdjustmentRequestBody;
@@ -53,13 +53,13 @@ class SubmitManualAdjustmentTest extends AbstractManualAdjustmentApiTest {
         ledgerChecker.assertBalancedJournals(ledger.getLedgerBookId(), 0);
     }
 
-    /** 影响 Owner 余额的调整必须经 billing 登记（design/04 §4）：调整行涉及 Client 或 Local Partner 账户即以专用错误码拒绝，纯科目重分类不受影响。 */
+    /** 影响 Owner 余额的调整必须经 billing 登记：调整行涉及 Owner 控制科目（Client 应付、Partner 应付等）即以专用错误码拒绝，纯科目重分类不受影响。 */
     @Test
     void test_ownerAccountAdjustmentForbidden() {
         long client = ledgerMocker.mockAccount(ledger.getLedgerBookId(), StandardAccountCodes.CLIENT_PAYABLE,
-            OwnerType.CLIENT, "1001", BalanceBucket.AVAILABLE);
+            LedgerOwnerType.OPERATING_ENTITY, ledger.getEntityNo(), BalanceBucket.NONE);
         long partner = ledgerMocker.mockAccount(ledger.getLedgerBookId(), StandardAccountCodes.PARTNER_PAYABLE,
-            OwnerType.LOCAL_PARTNER, "2001", BalanceBucket.PENDING);
+            LedgerOwnerType.OPERATING_ENTITY, ledger.getEntityNo(), BalanceBucket.NONE);
 
         post(PATH, adjustment().transfer(bankCashAccountId, client, "10").build()).assertRejectedWithCode(
             LedgerErrorCode.OWNER_ACCOUNT_ADJUSTMENT_FORBIDDEN.getCode(), "MANUAL_ADJUSTMENT 经济事实");
@@ -87,7 +87,7 @@ class SubmitManualAdjustmentTest extends AbstractManualAdjustmentApiTest {
     void test_accountMustBelongToBookAndBeActive() {
         long otherBook = ledgerMocker.mockBook(LedgerEntityType.OPERATING_ENTITY, "AE002", "USD",
             LedgerMocker.STANDARD_CHART_ID);
-        long foreignAccount = ledgerMocker.mockAccount(otherBook, "CAPITAL", OwnerType.OPERATING_ENTITY, "AE002",
+        long foreignAccount = ledgerMocker.mockAccount(otherBook, "CAPITAL", LedgerOwnerType.OPERATING_ENTITY, "AE002",
             BalanceBucket.NONE);
         post(PATH, adjustment().transfer(bankCashAccountId, foreignAccount, "10").build())
             .assertBusinessRejected("账户不存在或不属于账簿: 账户 " + foreignAccount);

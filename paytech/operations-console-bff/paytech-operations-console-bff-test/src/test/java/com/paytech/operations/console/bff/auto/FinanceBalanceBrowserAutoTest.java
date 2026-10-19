@@ -13,7 +13,6 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import com.paytech.account.api.enums.BalanceQueryErrorCode;
-import com.paytech.ledger.api.enums.LedgerSetupErrorCode;
 import com.paytech.operations.console.bff.domain.enums.OperationsBffErrorCode;
 import com.paytech.operations.console.bff.ext.rest.FinanceBalanceController;
 import com.paytech.operations.console.bff.test.base.FinanceBrowserAutoTestBase;
@@ -64,17 +63,14 @@ class FinanceBalanceBrowserAutoTest extends FinanceBrowserAutoTestBase {
         assertTrue(body.has("recoveryReceivableAmount"));
     }
 
-    /** 无账簿时 account 的 LEDGER_BOOK_NOT_FOUND 以 account 合同说明返回，而不是 ledger 同名错误码的说明。 */
+    /** Owner 在该主体与币种下没有账户时，account 的 OWNER_ACCOUNT_NOT_FOUND 以 400、原 Code 与 account 合同说明返回。 */
     @ParameterizedTest
     @CsvSource({"R17", "R18"})
     void test_noDataFound(String id) throws Exception {
         var row = row(BOUNDARY, id);
-        account.problem("GET", ownerPath(row), 400, BalanceQueryErrorCode.LEDGER_BOOK_NOT_FOUND.getCode());
+        account.problem("GET", ownerPath(row), 400, BalanceQueryErrorCode.OWNER_ACCOUNT_NOT_FOUND.getCode());
 
-        var response = send(row);
-
-        assertCodedRejection(BalanceQueryErrorCode.LEDGER_BOOK_NOT_FOUND, response);
-        assertFalse(response.body().contains(LedgerSetupErrorCode.LEDGER_BOOK_NOT_FOUND.getMessage()));
+        assertCodedRejection(BalanceQueryErrorCode.OWNER_ACCOUNT_NOT_FOUND, send(row));
     }
 
     /** 缺少必填 Query、非法 entityNo、未知 Query、非法 Owner ID、查询带 Body 在访问 account 前拒绝。 */

@@ -63,15 +63,6 @@ public interface LedgerQueryService {
      */
     List<ChartAccount> listChartAccounts(List<Long> chartAccountIds);
 
-    /**
-     * 账簿内 Owner 账户按分录聚合的余额（design/04 §7 日终核对的 ledger 侧）
-     * <li>Owner 类型为 account 服务维护余额的 CLIENT、LOCAL_PARTNER、CHANNEL_ACCOUNT、CASH_ACCOUNT。</li>
-     *
-     * @param ledgerBookId 账簿主键；不存在时拒绝
-     * @return 按科目代码、核算对象、余额桶排序的全部 Owner 账户，金额按币种精度补齐
-     */
-    List<AccountView> listOwnerAccountTotals(long ledgerBookId);
-
     /** 分页查询财务主体，按主键升序。 */
     PagingResponseBody<FinanceEntity> pageFinanceEntities(FinanceEntityQuery query);
 

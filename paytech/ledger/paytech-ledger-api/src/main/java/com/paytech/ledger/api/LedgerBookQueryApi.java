@@ -45,9 +45,10 @@ public interface LedgerBookQueryApi {
      *
      * @param ledgerBookId 账簿主键
      * @param accountCode 可选科目代码
-     * @param ownerType 可选核算对象类型
+     * @param ownerType 可选核算对象类型，取值见 {@code LedgerOwnerType}：OPERATING_ENTITY、FINANCE_ENTITY、CHANNEL_ACCOUNT、CASH_ACCOUNT、TAX_AUTHORITY；
+     *        Client / Partner 明细在 account，控制科目账户的 Owner 为账簿主体
      * @param ownerId 可选核算对象标识
-     * @param balanceBucket 可选余额桶：PENDING、AVAILABLE、LOCKED 或 NONE
+     * @param balanceBucket 可选余额桶；ledger 账户一律为 NONE，保留参数仅用于兼容筛选
      * @param page 可选页码
      * @param size 可选每页条数
      * @return 账户分页；账簿不存在时 400
@@ -56,7 +57,7 @@ public interface LedgerBookQueryApi {
     PagingResponseBody<AccountResponseBody> listAccounts(
         @PathVariable("ledgerBookId") @Pattern(regexp = "[1-9][0-9]{0,18}") String ledgerBookId,
         @RequestParam(value = "accountCode", required = false) String accountCode,
-        @RequestParam(value = "ownerType", required = false) @Pattern(regexp = "OPERATING_ENTITY|FINANCE_ENTITY|CLIENT|LOCAL_PARTNER|CHANNEL_ACCOUNT|CASH_ACCOUNT|TAX_AUTHORITY") String ownerType,
+        @RequestParam(value = "ownerType", required = false) @Pattern(regexp = "OPERATING_ENTITY|FINANCE_ENTITY|CHANNEL_ACCOUNT|CASH_ACCOUNT|TAX_AUTHORITY") String ownerType,
         @RequestParam(value = "ownerId", required = false) String ownerId,
         @RequestParam(value = "balanceBucket", required = false) @Pattern(regexp = "PENDING|AVAILABLE|LOCKED|NONE") String balanceBucket,
         @RequestParam(value = "page", required = false) Integer page,

@@ -177,6 +177,29 @@ public interface AccountingTestMapper {
     @Select("SELECT COUNT(*) FROM t_consumed_event WHERE event_id = #{eventId}")
     int countConsumedEvent(@Param("eventId") String eventId);
 
+    /** 读取过账流（聚合）的已消费序号，未消费返回空。 */
+    @Select("SELECT last_version FROM t_consumed_aggregate_version WHERE aggregate_type = #{aggregateType} "
+        + "AND aggregate_id = #{aggregateId}")
+    Long selectConsumedVersion(@Param("aggregateType") String aggregateType, @Param("aggregateId") String aggregateId);
+
+    /** 写入过账流的已消费序号，构造关账步骤 3 的 ledger 进度。 */
+    @Insert("INSERT INTO t_consumed_aggregate_version (aggregate_type, aggregate_id, last_version, update_time) "
+        + "VALUES (#{aggregateType}, #{aggregateId}, #{lastVersion}, UTC_TIMESTAMP(6))")
+    void insertConsumedVersion(@Param("aggregateType") String aggregateType, @Param("aggregateId") String aggregateId,
+        @Param("lastVersion") long lastVersion);
+
+    /** 改写过账流的已消费序号，构造“ledger 已追平”。 */
+    @Update("UPDATE t_consumed_aggregate_version SET last_version = #{lastVersion} WHERE aggregate_type = #{aggregateType} "
+        + "AND aggregate_id = #{aggregateId}")
+    void updateConsumedVersion(@Param("aggregateType") String aggregateType, @Param("aggregateId") String aggregateId,
+        @Param("lastVersion") long lastVersion);
+
+    /** 读取来源事件（account 批次主键）生成的全部指令，按账簿主键、指令类型升序。 */
+    @Select("SELECT * FROM t_accounting_instruction WHERE source_system = #{sourceSystem} "
+        + "AND source_event_key = #{sourceEventKey} ORDER BY ledger_book_id, instruction_type")
+    List<AccountingInstruction> selectSourceInstructions(@Param("sourceSystem") String sourceSystem,
+        @Param("sourceEventKey") String sourceEventKey);
+
     /** 统计全部已消费的领域事件。 */
     @Select("SELECT COUNT(*) FROM t_consumed_event")
     int countAllConsumedEvents();

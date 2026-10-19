@@ -28,27 +28,27 @@ import com.paytech.ledger.test.checker.LedgerResponseChecker;
 import com.paytech.ledger.test.clear.LedgerDataCleaner;
 import com.paytech.ledger.test.clear.LedgerRedisCleaner;
 import com.paytech.ledger.test.configuration.LedgerTestMockConfiguration;
-import com.paytech.ledger.test.mocker.external.AccountConsistencyMocker;
-import com.paytech.ledger.test.mocker.external.BillingProgressMocker;
+import com.paytech.ledger.test.mocker.external.AccountPostingMocker;
+import com.paytech.ledger.test.mocker.external.EconomicFactMocker;
 import com.paytech.ledger.test.mocker.local.LedgerMocker;
-import com.paytech.ledger.test.probe.BillingEventPublisher;
+import com.paytech.ledger.test.probe.AccountPostedPublisher;
 
 import tools.jackson.databind.ObjectMapper;
 
 /**
  * Ledger 服务级入口测试基类
  * <li>复用正式启动类 LedgerApplication 与生产组件扫描，只附加 mock Profile 与测试组件；本地 MySQL（mor_ledger）/Redis/RabbitMQ 需预先就绪。</li>
- * <li>外部依赖（第 11b 步）：account consistency 与 billing pending 由独立 Loopback Mock HTTP 服务返回配置的 DTO；EconomicFactRecorded 由
- * {@link BillingEventPublisher} 扮演 billing 发到真实本机 RabbitMQ，经正式消费链路处理。</li>
- * <li>{@link PartitionQueueBaselineConfiguration} 在监听容器启动前清空 ledger.billing.p0..p3 与 DLQ（其他模块测试的残留消息）。</li>
- * <li>每例开始前检查空基线并清空本服务的 billing 分区队列；结束时等待队列与 Mock 请求静止、检查意外调用，再由 Foundation 统一清理。</li>
+ * <li>外部依赖：account 过账进度与批次、billing 事实详情与 pending 由独立 Loopback Mock HTTP 服务返回配置的 DTO；AccountPosted 由
+ * {@link AccountPostedPublisher} 扮演 account 发到真实本机 RabbitMQ，经正式消费链路处理。</li>
+ * <li>{@link PartitionQueueBaselineConfiguration} 在监听容器启动前清空 ledger.account.p0..p3 与 DLQ（其他模块测试的残留消息）。</li>
+ * <li>每例开始前检查空基线并清空本服务的 account 分区队列；结束时等待队列与 Mock 请求静止、检查意外调用，再由 Foundation 统一清理。</li>
  * <li>Actuator 在独立管理端口（业务端口 + 1000，测试随机），由 {@link #management(String)} 访问。</li>
  */
 @ActiveProfiles("mock")
 @AutoConfigureRestTestClient
 @SpringBootTest(classes = LedgerApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Import({LedgerTestMapperConfiguration.class, LedgerTestMockConfiguration.class, LedgerDataCleaner.class,
-    LedgerRedisCleaner.class, LedgerMocker.class, LedgerChecker.class, BillingEventPublisher.class, PartitionQueueBaselineConfiguration.class})
+    LedgerRedisCleaner.class, LedgerMocker.class, LedgerChecker.class, AccountPostedPublisher.class, PartitionQueueBaselineConfiguration.class})
 public abstract class MockTestBase extends TestBase {
     /** 所有测试请求使用的 Request ID。 */
     protected static final String REQUEST_ID = "Ledger.Test_01";
@@ -81,13 +81,13 @@ public abstract class MockTestBase extends TestBase {
     protected LedgerChecker ledgerChecker;
 
     @Autowired
-    protected BillingEventPublisher billing;
+    protected AccountPostedPublisher accountEvents;
 
     @Autowired
-    protected AccountConsistencyMocker accountConsistency;
+    protected AccountPostingMocker accountPostings;
 
     @Autowired
-    protected BillingProgressMocker billingProgress;
+    protected EconomicFactMocker economicFacts;
 
     @Autowired
     protected MockHttpServer mockHttpServer;
@@ -98,10 +98,10 @@ public abstract class MockTestBase extends TestBase {
     @LocalManagementPort
     private int managementPort;
 
-    /** 全局初始化：清空本服务的 billing 分区队列并检查空基线，不承接上一例状态，也不删除任何业务数据。 */
+    /** 全局初始化：清空本服务的 account 分区队列并检查空基线，不承接上一例状态，也不删除任何业务数据。 */
     @BeforeEach
     protected final void setUpGlobalMocks() {
-        billing.purge();
+        accountEvents.purge();
         dataCleaner.assertEmpty();
     }
 
@@ -109,12 +109,12 @@ public abstract class MockTestBase extends TestBase {
     @AfterEach
     protected final void tearDownGlobalMocks() {
         try {
-            await().atMost(CONSUME_WAIT).until(() -> billing.pending() == 0);
+            await().atMost(CONSUME_WAIT).until(() -> accountEvents.pending() == 0);
             mockHttpServer.awaitIdle();
-            assertAll("检查外部 Mock 调用", accountConsistency::assertNoUnexpectedCalls,
-                billingProgress::assertNoUnexpectedCalls, mockHttpServer::assertNoUnexpectedRequests);
+            assertAll("检查外部 Mock 调用", accountPostings::assertNoUnexpectedCalls,
+                economicFacts::assertNoUnexpectedCalls, mockHttpServer::assertNoUnexpectedRequests);
         } finally {
-            billing.purge();
+            accountEvents.purge();
         }
     }
 

@@ -8,7 +8,7 @@ import java.util.List;
 import org.springframework.stereotype.Component;
 
 import com.paytech.account.api.enums.BalanceBucket;
-import com.paytech.account.api.enums.OwnerType;
+import com.paytech.ledger.api.enums.LedgerOwnerType;
 import com.paytech.foundation.common.enums.CodeEnum;
 import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.foundation.web.paging.PagingRequestBody;
@@ -56,7 +56,7 @@ public class LedgerQueryConverter {
     public AccountQuery toAccountQuery(String ledgerBookId, String accountCode, String ownerType, String ownerId,
         String balanceBucket, PagingRequestBody paging) {
         return new AccountQuery(Long.parseLong(ledgerBookId), blankToNull(accountCode),
-            optionalCode(OwnerType.class, ownerType), blankToNull(ownerId),
+            optionalCode(LedgerOwnerType.class, ownerType), blankToNull(ownerId),
             optionalCode(BalanceBucket.class, balanceBucket), paging);
     }
 
@@ -199,6 +199,8 @@ public class LedgerQueryConverter {
         body.setSourceSystem(view.getSourceSystem());
         body.setSourceEventKey(view.getSourceEventKey());
         body.setAdjustmentNo(view.getAdjustmentNo());
+        body.setAccountPostingId(text(view.getAccountPostingId()));
+        body.setAccountPostingSequence(text(view.getAccountPostingSequence()));
         return body;
     }
 
@@ -219,6 +221,8 @@ public class LedgerQueryConverter {
         body.setSourceEventKey(view.getSourceEventKey());
         body.setManualAdjustmentId(text(view.getManualAdjustmentId()));
         body.setAdjustmentNo(view.getAdjustmentNo());
+        body.setAccountPostingId(text(view.getAccountPostingId()));
+        body.setAccountPostingSequence(text(view.getAccountPostingSequence()));
         body.setLines(view.getLines().stream().map(this::toLineBody).toList());
         return body;
     }
@@ -234,6 +238,7 @@ public class LedgerQueryConverter {
         body.setBalanceBucket(line.getBalanceBucket().getCode());
         body.setEntrySide(line.getEntrySide().getCode());
         body.setAmount(amount(line.getAmount()));
+        body.setAccountEntryId(text(line.getAccountEntryId()));
         return body;
     }
 

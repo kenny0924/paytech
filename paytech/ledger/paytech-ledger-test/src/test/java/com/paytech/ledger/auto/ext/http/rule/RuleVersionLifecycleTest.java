@@ -46,7 +46,7 @@ class RuleVersionLifecycleTest extends AbstractRuleBundleApiTest {
             () -> assertNull(response.text("approvedTime")));
         assertLinesEqual(RuleVersionRequestBuilder.standardLines(), response.json().path("lines"));
         long versionId = response.id("versionId");
-        assertEquals(12, testMapper.countRuleLines(versionId));
+        assertEquals(RuleVersionRequestBuilder.standardLines().size(), testMapper.countRuleLines(versionId));
         assertPointer(INITIAL_VERSION_ID, 0L);
     }
 
@@ -144,7 +144,7 @@ class RuleVersionLifecycleTest extends AbstractRuleBundleApiTest {
     @Test
     void test_submitUnbalancedInstructionTypeRejected() {
         RuleVersionRequestBuilder builder = version();
-        builder.removeLine(11);
+        builder.removeLine(RuleVersionRequestBuilder.standardLines().size() - 1);
         createVersion(builder).assertSuccess(201).assertText("status", RuleVersionStatus.DRAFT.getCode());
 
         submit(2, MAKER_ID).assertBusinessRejected(AutoInstructionType.PLATFORM_SERVICE_CHARGE_PLATFORM.getCode());
@@ -161,7 +161,7 @@ class RuleVersionLifecycleTest extends AbstractRuleBundleApiTest {
         getBundle(unknown).assertBusinessRejected(unknown);
     }
 
-    /** 查询：版本详情含 12 条初始化规则行；Bundle 版本摘要按版本号降序。 */
+    /** 查询：版本详情含 10 条初始化规则行（Owner 行 5202、5208 已删除）；Bundle 版本摘要按版本号降序。 */
     @Test
     void test_queryVersionAndBundleDescending() {
         createSubmitted(version());
@@ -173,9 +173,8 @@ class RuleVersionLifecycleTest extends AbstractRuleBundleApiTest {
             .assertText("status", RuleVersionStatus.ACTIVE.getCode());
         JsonNode lines = initial.json().path("lines");
         assertLinesEqual(RuleVersionRequestBuilder.standardLines(), lines);
-        for (int i = 0; i < lines.size(); i++) {
-            assertEquals(String.valueOf(5201 + i), lines.get(i).path("ruleLineId").asString(), "规则行主键顺序");
-        }
+        assertEquals(List.of("5201", "5203", "5204", "5205", "5206", "5207", "5209", "5210", "5211", "5212"),
+            lines.valueStream().map(line -> line.path("ruleLineId").asString()).toList(), "规则行主键顺序");
 
         JsonNode versions = getBundle(BUNDLE_CODE).assertSuccess(200).assertText("bundleCode", BUNDLE_CODE)
             .assertText("bundleId", String.valueOf(BUNDLE_ID)).assertText("currentBundleVer", "1").json()

@@ -39,6 +39,13 @@ public class InstructionLine {
     private Long manualAdjustmentLineId;
 
     /**
+     * ACCOUNT_POSTING 指令中 Owner 控制科目行对应的 account 流水（mor_account.t_account_entry.id），用于下钻
+     * <li>可为空：规则行与人工行为空；与 accountingRuleLineId、manualAdjustmentLineId 三选一。</li>
+     * <li>跨库引用只存 ID。</li>
+     */
+    private Long accountEntryId;
+
+    /**
      * 该指令行准备写入且已冻结账簿、科目、核算对象和余额桶的本库账户
      */
     private Long accountId;

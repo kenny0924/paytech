@@ -1,5 +1,6 @@
 # account-service 配置字段清单，同时作为 Mock 测试的可运行配置。
 # 只连接仓库 local-environment 的 Loopback MySQL（mor_account）与 RabbitMQ；固定凭据为隔离本地测试账号，可用环境变量覆盖。
+# account 没有出站 HTTP 依赖（2026-10-19 明细账重构删除 ledger / billing 客户端），因此没有 Mock HTTP 服务与服务地址配置。
 
 # ==================== 中间件、框架与公共组件配置 ====================
 
@@ -29,7 +30,7 @@ spring:
       data-source-properties:
         connectionTimeZone: UTC
         forceConnectionTimeZoneToSession: true
-  # 仓库 local-environment 的本机 RabbitMQ；凭据只来自 .env.local 或同名环境变量。测试扮演 billing 向 billing.events 发布，需要发布确认。
+  # 仓库 local-environment 的本机 RabbitMQ；凭据只来自 .env.local 或同名环境变量。account 发布 AccountPosted、测试扮演 billing 发布，都需要发布确认。
   rabbitmq:
     host: 127.0.0.1
     port: 5672
@@ -39,27 +40,14 @@ spring:
     connection-timeout: 2s
     publisher-confirm-type: correlated
     publisher-returns: true
-  # ledger-api 与 billing-api 由 EnableMockHttpServer 的随机 Loopback 端口承载，真实客户端直连该地址。
-  http:
-    clients:
-      imperative:
-        factory: jdk
-    serviceclient:
-      ledger-service:
-        base-url: "${account.test.external.base-url}"
-        connect-timeout: 2s
-        read-timeout: 5s
-        redirects: dont-follow
-      billing-service:
-        base-url: "${account.test.external.base-url}"
-        connect-timeout: 2s
-        read-timeout: 5s
-        redirects: dont-follow
+    template:
+      mandatory: true
 
 mybatis:
   mapper-locations: classpath*:mapper/**/*.xml
 
 # paytech-messaging 消费端：account.billing.hash 与 account.billing.p0..p3；重投退避缩短到 200ms。
+# 发布端：account.events；与生产一致按聚合串行、未路由 FAIL（测试 AccountPostedProbe 为每例绑定临时观察队列）。
 messaging:
   consumer:
     service: account
@@ -67,13 +55,23 @@ messaging:
   consumers:
     billing:
       partitions: 4
+  producer:
+    service: account
+    sequencer:
+      enabled: true
+  publisher:
+    unroutable-policy: FAIL
 
-# paytech-compensation-event：本库 t_compensation_event（现行模型）；account 目前没有补偿 Handler，扫描空表验证装配。
+# paytech-compensation-event：本库 t_compensation_event；入账事务内登记 ACCOUNT_POSTED 发布任务，提交后由 AccountPostedHandler 执行。
 compensation:
   enabled: true
   instance-id: account-test
 
-# paytech-xxl-job-starter（随 compensation-event 引入）：测试不连接调度中心，日终核对由用例直接调用 Job Handler。
+# 实例 ID：领域事件信封 instanceId。
+paytech:
+  instance-id: account-test
+
+# paytech-xxl-job-starter（随 compensation-event 引入）：测试不连接调度中心，到期转可用由用例直接调用 Job Handler。
 xxl:
   job:
     executor:
@@ -114,11 +112,11 @@ management:
 # ==================== Account 系统自定义配置 ====================
 
 account:
+  event:
+    # AccountPosted 信封身份：sourceService 必须与 messaging.producer.service 一致；instanceId 取实例 ID。生产默认值同此。
+    source-service: account
+    instance-id: "${paytech.instance-id}"
   identifier:
     # Snowflake Region / Worker 标识；生产无默认值且必填，修改需重启。测试进程固定 0/0。
     region-id: 0
     worker-id: 0
-  test:
-    external:
-      # 测试专用运行时字段；EnableMockHttpServer 在创建真实客户端之前注入 Loopback 随机端口。
-      base-url: ""

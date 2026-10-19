@@ -7,9 +7,10 @@ import org.junit.jupiter.api.Test;
 
 import com.paytech.account.api.constant.StandardAccountCodes;
 import com.paytech.account.api.enums.BalanceBucket;
-import com.paytech.account.api.enums.OwnerRole;
+import com.paytech.account.api.enums.OwnerType;
 import com.paytech.billing.api.enums.AmountSource;
 import com.paytech.billing.api.enums.AutoInstructionType;
+import com.paytech.ledger.api.enums.RuleOwnerRole;
 import com.paytech.ledger.core.enums.EntrySide;
 import com.paytech.ledger.test.base.AbstractRuleBundleApiTest;
 import com.paytech.ledger.test.builder.RuleVersionRequestBuilder;
@@ -68,22 +69,31 @@ class CreateRuleVersionValidationTest extends AbstractRuleBundleApiTest {
         createVersion(builder).assertBusinessRejected(RuleVersionRequestBuilder.CHANNEL_UNSETTLED_RECEIVABLE);
     }
 
-    /** Partner 应付只允许 PENDING/AVAILABLE/LOCKED。 */
+    /** Client / Local Partner 角色已从规则目录删除：Owner 行只能来自 account 流水。 */
     @Test
-    void test_partnerPayableNoneBucketRejected() {
+    void test_removedOwnerRoleRejected() {
         RuleVersionRequestBuilder builder = version();
-        builder.line(7).setBalanceBucket(BalanceBucket.NONE.getCode());
+        builder.line(1).setOwnerRole(OwnerType.CLIENT.getCode());
 
-        createVersion(builder).assertBusinessRejected(StandardAccountCodes.PARTNER_PAYABLE);
+        createVersion(builder).assertBusinessRejected("核算对象角色不在自动记账目录中: " + OwnerType.CLIENT.getCode());
     }
 
-    /** Client 应付只允许 PENDING/AVAILABLE/LOCKED（账户身份矩阵）。 */
+    /** 规则行不得引用 Owner 控制科目，即使核算对象是账簿主体、桶为 NONE。 */
     @Test
-    void test_clientPayableNoneBucketRejected() {
+    void test_controlAccountRejected() {
         RuleVersionRequestBuilder builder = version();
-        builder.line(1).setBalanceBucket(BalanceBucket.NONE.getCode());
+        builder.line(1).setAccountCode(StandardAccountCodes.CLIENT_PAYABLE);
 
-        createVersion(builder).assertBusinessRejected(StandardAccountCodes.CLIENT_PAYABLE);
+        createVersion(builder).assertBusinessRejected("Owner 控制科目");
+    }
+
+    /** 总账账户一律 NONE 桶。 */
+    @Test
+    void test_nonNoneBucketRejected() {
+        RuleVersionRequestBuilder builder = version();
+        builder.line(1).setBalanceBucket(BalanceBucket.PENDING.getCode());
+
+        createVersion(builder).assertBusinessRejected("余额桶只能为 NONE");
     }
 
     /** 行集为空由服务端拒绝。 */
@@ -97,7 +107,7 @@ class CreateRuleVersionValidationTest extends AbstractRuleBundleApiTest {
     void test_duplicateLineNoRejected() {
         RuleVersionRequestBuilder builder = version();
         builder.addLine(RuleVersionRequestBuilder.line(AutoInstructionType.PAYMENT_SUCCEEDED, 1, "EXTRA_FEE_REVENUE",
-            AmountSource.CLIENT_FEE, OwnerRole.BOOK_ENTITY, RuleVersionRequestBuilder.CLIENT_FEE_REVENUE,
+            AmountSource.CLIENT_FEE, RuleOwnerRole.BOOK_ENTITY, RuleVersionRequestBuilder.CLIENT_FEE_REVENUE,
             BalanceBucket.NONE, EntrySide.CREDIT, false));
 
         createVersion(builder).assertBusinessRejected(AutoInstructionType.PAYMENT_SUCCEEDED.getCode());
@@ -108,7 +118,7 @@ class CreateRuleVersionValidationTest extends AbstractRuleBundleApiTest {
     void test_duplicateLineCodeRejected() {
         RuleVersionRequestBuilder builder = version();
         builder.addLine(RuleVersionRequestBuilder.line(AutoInstructionType.PAYMENT_SUCCEEDED, 9, "GROSS_RECEIVABLE",
-            AmountSource.CLIENT_FEE, OwnerRole.BOOK_ENTITY, RuleVersionRequestBuilder.CLIENT_FEE_REVENUE,
+            AmountSource.CLIENT_FEE, RuleOwnerRole.BOOK_ENTITY, RuleVersionRequestBuilder.CLIENT_FEE_REVENUE,
             BalanceBucket.NONE, EntrySide.CREDIT, false));
 
         createVersion(builder).assertBusinessRejected("GROSS_RECEIVABLE");

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- t_balance_movement：余额桶移动命令记录，只读写 mor_account。 -->
+<mapper namespace="com.paytech.account.core.dal.mapper.BalanceMovementMapper">
+    <sql id="columns">id, entity_type, entity_id, currency, account_code, owner_type, owner_id, from_bucket, to_bucket, amount, source_type, source_ref, posting_id, operator_id, movement_status, create_time, update_time</sql>
+
+    <insert id="insert">
+        INSERT INTO t_balance_movement (<include refid="columns"/>)
+        VALUES (#{id}, #{entityType}, #{entityId}, #{currency}, #{accountCode}, #{ownerType}, #{ownerId}, #{fromBucket}, #{toBucket}, #{amount}, #{sourceType}, #{sourceRef}, #{postingId}, #{operatorId}, #{movementStatus}, #{createTime}, #{updateTime})
+    </insert>
+
+    <select id="selectBySource" resultType="com.paytech.account.core.dal.dataobject.BalanceMovement">
+        SELECT <include refid="columns"/> FROM t_balance_movement WHERE source_type = #{sourceType} AND source_ref = #{sourceRef}
+    </select>
+
+    <select id="selectByIds" resultType="com.paytech.account.core.dal.dataobject.BalanceMovement">
+        SELECT <include refid="columns"/> FROM t_balance_movement WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+    </select>
+</mapper>

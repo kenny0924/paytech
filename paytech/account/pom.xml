@@ -15,7 +15,7 @@
     <packaging>pom</packaging>
 
     <name>PayTech Account</name>
-    <description>Account service aggregator: Owner balance buckets maintained by consuming EconomicFactRecorded in mor_account, balance queries, book consistency, rebuild and daily reconciliation (step 11b).</description>
+    <description>Account service aggregator: subledger Owner accounts, postings and entries in mor_account built from EconomicFactRecorded, AccountPosted publication to ledger, bucket movements, maturity and queries (2026-10-19).</description>
 
     <modules>
         <module>paytech-account-api</module>
@@ -45,8 +45,8 @@
                                         <exclude>com.paytech:*-core</exclude>
                                         <exclude>com.paytech:*-app</exclude>
                                         <!-- Finance bans copied from 09 §1.4. Step 11b reopens AMQP, RabbitMQ, compensation-event and XXL-Job
-                                             for account: it consumes EconomicFactRecorded through paytech-messaging and runs the daily balance
-                                             reconciliation as an XXL-Job Handler (design/04 §5, §7). -->
+                                             for account: it consumes EconomicFactRecorded, publishes AccountPosted through paytech-messaging and
+                                             runs the balance maturity job as an XXL-Job Handler (technique 2.1). -->
                                         <exclude>org.flywaydb:*</exclude>
                                         <exclude>org.liquibase:*</exclude>
                                         <exclude>com.alibaba.cloud:*</exclude>

@@ -257,3 +257,9 @@ POST 使用去重权限与幂等键，PUT 携带当前版本，每次保存只�
 停用 `operations-gateway-route-status` 时弹窗明确提示控制台将无法再执行任何 Route 状态变更；停用其他 `operations-gateway-*` 管理路由时提示可能削弱或切断本页面，并要求先确认 Break-glass 恢复路径。停用 `operations-console-bff` Target 也保留控制台自锁警示。
 
 本轮 `npm test` 88/88 与 TypeScript/Vite 生产构建通过；测试覆盖菜单注册、筛选、分页窗口完整性与安全整数边界、状态请求与同键手动重试、响应版本严格递增一位、成功边界文案、404/409/403 交互判定及管理路由自锁警示。未提交或部署。
+
+## 财务明细账查询与控制科目（2026-10-19）
+
+需求与设计见[技术方案](../requirements/20261019/finance-account明细账与ledger控制科目重构/technique.md) 2.2 / 2.4。新增只读页面 `OPERATIONS_FINANCE_SUBLEDGER → /finance/subledger`（父 `OPERATIONS_FINANCE`，READ 权限），由 `src/pages/FinanceSubledger.tsx` 与 `src/finance/Subledger*.tsx` 实现：主体类型 / 主体标识 / 币种必填后查询 Owner 账户（`GET /finance/owner-accounts/v1`），点击账户进入明细流水（`.../{accountId}/entries`，只接受分页），点击批次序号打开入账批次抽屉（`GET /finance/account-postings/v1/{postingId}`）。主体、筛选、账户、分页与打开的批次都在 URL，面包屑逐级返回保留筛选。
+
+账本查询与账务基础资料同步改为控制科目口径：ledger 账户核算对象只剩 `OPERATING_ENTITY`、`FINANCE_ENTITY`、`CHANNEL_ACCOUNT`、`CASH_ACCOUNT`、`TAX_AUTHORITY`，新建账户的余额桶固定 NONE；流水与分录详情显示 `ACCOUNT_POSTING · account` 来源与 account 批次，控制科目行的「流水 …后 4 位 ↗」以 `/finance/subledger?posting=&entry=` 打开明细账批次抽屉并高亮该流水。余额查询的无账户错误 `OWNER_ACCOUNT_NOT_FOUND` 挂在 Owner ID 字段。

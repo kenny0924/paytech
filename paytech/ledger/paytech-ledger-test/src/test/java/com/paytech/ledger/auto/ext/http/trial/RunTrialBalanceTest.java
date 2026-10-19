@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import com.paytech.account.api.constant.StandardAccountCodes;
 import com.paytech.account.api.enums.BalanceBucket;
-import com.paytech.account.api.enums.OwnerType;
+import com.paytech.ledger.api.enums.LedgerOwnerType;
 import com.paytech.ledger.core.enums.AccountClass;
 import com.paytech.ledger.core.enums.LedgerEntityType;
 import com.paytech.ledger.core.enums.NormalSide;
@@ -43,7 +43,7 @@ class RunTrialBalanceTest extends AbstractTrialBalanceApiTest {
         long futurePeriod = ledgerMocker.mockPeriod(ledger.getFiscalCalendarId(), 2099, 1, LocalDate.of(2099, 1, 1),
             LocalDate.of(2099, 1, 31), PeriodStatus.OPEN);
         ledgerMocker.mockAccount(ledger.getLedgerBookId(), StandardAccountCodes.CLIENT_SECURITY_DEPOSIT,
-            OwnerType.CLIENT, "1001", BalanceBucket.NONE);
+            LedgerOwnerType.OPERATING_ENTITY, ledger.getEntityNo(), BalanceBucket.NONE);
         postedIn(historyPeriod, bankCashAccountId, capitalAccountId, "100");
         postedIn(ledger.getOpenPeriodId(), bankCashAccountId, capitalAccountId, "50");
         postedIn(ledger.getOpenPeriodId(), liabilityAccountId, bankCashAccountId, "30");

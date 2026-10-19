@@ -4,7 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.paytech.account.api.enums.BalanceBucket;
-import com.paytech.account.api.enums.OwnerType;
+import com.paytech.ledger.api.enums.LedgerOwnerType;
 import com.paytech.ledger.api.request.ReviewManualAdjustmentRequestBody;
 import com.paytech.ledger.test.builder.SubmitManualAdjustmentRequestBuilder;
 import com.paytech.ledger.test.checker.LedgerResponseChecker;
@@ -42,12 +42,12 @@ public abstract class AbstractManualAdjustmentApiTest extends MockTestBase {
     @BeforeEach
     void setUpManualAdjustmentMocks() {
         ledger = ledgerMocker.mockOperatingEntityLedger("AE001", "USD");
-        bankCashAccountId = ledgerMocker.mockAccount(ledger.getLedgerBookId(), "BANK_CASH", OwnerType.CASH_ACCOUNT,
+        bankCashAccountId = ledgerMocker.mockAccount(ledger.getLedgerBookId(), "BANK_CASH", LedgerOwnerType.CASH_ACCOUNT,
             "5001", BalanceBucket.NONE);
-        capitalAccountId = ledgerMocker.mockAccount(ledger.getLedgerBookId(), "CAPITAL", OwnerType.OPERATING_ENTITY,
+        capitalAccountId = ledgerMocker.mockAccount(ledger.getLedgerBookId(), "CAPITAL", LedgerOwnerType.OPERATING_ENTITY,
             "AE001", BalanceBucket.NONE);
         liabilityAccountId = ledgerMocker.mockAccount(ledger.getLedgerBookId(), LIABILITY_CODE,
-            OwnerType.OPERATING_ENTITY, "AE001", BalanceBucket.NONE);
+            LedgerOwnerType.OPERATING_ENTITY, "AE001", BalanceBucket.NONE);
     }
 
     /** 本类账簿与开放期间的提交模板。 */

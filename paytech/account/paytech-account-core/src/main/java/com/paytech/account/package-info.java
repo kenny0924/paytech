@@ -1,7 +1,7 @@
 /**
- * 账户服务（account-service）业务实现：消费 billing 的 EconomicFactRecorded 维护 Owner 余额桶（mor_account），并提供余额查询、
- * 账簿一致性、按经济事实重建与日终核对（design/04 §3.2、§5–§7）。
- * <li>账户只消费经济事实，不消费过账事件；与 ledger 分录的一致性靠同一经济事实的幂等消费加日终核对（D05）。</li>
- * <li>账簿与科目只经 ledger-api 读取，经济事实重放只经 billing-api 读取，不读其他服务的库。</li>
+ * 账户服务（account-service）业务实现：明细账 Owner（2026-10-18 决定）。消费 billing 的 EconomicFactRecorded，在 mor_account 写入
+ * Owner 账户、入账流、入账批次与流水，经补偿事件发布 AccountPosted 给 ledger 记控制科目；另提供余额桶移动、到期转可用、按流重建与查询。
+ * <li>余额只由本库流水维护并可从流水重算；不调用 ledger 或 billing 的 HTTP 接口，也不读其他服务的库。</li>
+ * <li>同一主体 + 币种 + 分片内的全部入账在入账流行锁内串行分配连续序号，即 AccountPosted 的聚合版本。</li>
  */
 package com.paytech.account;

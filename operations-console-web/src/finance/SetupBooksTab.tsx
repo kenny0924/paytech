@@ -120,7 +120,7 @@ export function SetupBooksTab({ canManage, reloadToken, entities, currencies, mi
         onAuthorizationChanged={onAuthorizationChanged} heading={<h2>统一账户 · {bookTitle(selected, entities)}</h2>}
         extra={canManage && <Button type="primary" className="finance-head-action" onClick={() => setCreating(true)}>新建账户</Button>} />
     </section> : <div className="finance-empty"><Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="选择一个账簿查看账户" /></div>}
-    <FinanceNote>账簿按主体 + 币种唯一，币种和科目表只能选 Finance 已启用项；账户的科目只能选该科目表中可过账科目，CLIENT_PAYABLE / PARTNER_PAYABLE 使用 PENDING / AVAILABLE / LOCKED 余额桶，其余科目固定 NONE。净余额按正常方向计算，负数表示反向余额。</FinanceNote>
+    <FinanceNote>账簿按主体 + 币种唯一，币种和科目表只能选 Finance 已启用项；账户只按核算对象开立（经营主体、财务主体、渠道账户、银行账户、税务机关），余额桶一律 NONE。Client / Partner 应付、保证金、追偿在总账是以账簿主体为核算对象的控制账户，明细与余额桶见「明细账查询」。净余额按正常方向计算，负数表示反向余额。</FinanceNote>
     {creating && selected && <CreateAccountModal book={selected} entities={entities} onClose={() => setCreating(false)}
       onDone={() => { setCreating(false); setAccountReload(value => value + 1); }} onAuthorizationChanged={onAuthorizationChanged} />}
   </>;

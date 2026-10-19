@@ -37,7 +37,7 @@ export function serviceModelPath(service) {
 }
 
 const SERVICE_TITLES = Object.freeze({
-  ledger: "Ledger", account: "Account", billing: "Billing", reconciliation: "Reconciliation", tax: "Tax", payout: "Payout",
+  billing: "Billing", reconciliation: "Reconciliation", tax: "Tax", payout: "Payout",
 });
 
 const MODEL_KEY = "code-mor/finance/database/v1";
@@ -635,7 +635,7 @@ function adoptReplacedIdentity(variant, replaced) {
   variant.correlations = replaced.correlations.filter((relation) => kept.has(relation.myField));
 }
 
-/** 六个服务库的物理模型，按 FINANCE_SERVICES 顺序；每库表数必须等于 design/03 §4.2。 */
+/** 生成器维护的四个服务库物理模型（account、ledger 已脱离生成器），按 FINANCE_SERVICES 顺序；每库表数必须等于 design/03 §4.2。 */
 export function generateFinanceServiceModels(model = generateFinanceModel()) {
   const tablesByService = serviceTables();
   const models = new Map();
@@ -643,7 +643,7 @@ export function generateFinanceServiceModels(model = generateFinanceModel()) {
     const tableKeys = tablesByService.get(service);
     const count = tableKeys.length + (SERVICE_ADDED_TABLES[service]?.tables.length ?? 0);
     invariant(count === EXPECTED_SERVICE_TABLE_COUNTS[service],
-      `${service} 表数 ${count} 与 design/03 §4.2 加第 11b 步服务物理表的 ${EXPECTED_SERVICE_TABLE_COUNTS[service]} 不一致`);
+      `${service} 表数 ${count} 与 design/03 §4.2 的 ${EXPECTED_SERVICE_TABLE_COUNTS[service]} 不一致`);
     models.set(service, projectServiceModel(model, service, tableKeys));
   }
   return models;

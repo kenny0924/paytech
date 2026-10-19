@@ -55,6 +55,7 @@ public final class EconomicFactPayloads {
         payload.setSourcePayloadHash(fact.getSourcePayloadHash());
         payload.setRecordedTime(fact.getApprovedTime());
         payload.setPaymentSucceededTime(fact.getPaymentSucceededTime());
+        payload.setBalanceAvailableTime(fact.getBalanceAvailableTime());
         payload.setClientId(fact.getClientId());
         payload.setEntityNo(fact.getEntityNo());
         payload.setLocalPartnerId(fact.getLocalPartnerId());
@@ -102,6 +103,7 @@ public final class EconomicFactPayloads {
         node.put("sourcePayloadHash", payload.getSourcePayloadHash());
         node.put("recordedTime", text(payload.getRecordedTime()));
         node.put("paymentSucceededTime", text(payload.getPaymentSucceededTime()));
+        node.put("balanceAvailableTime", text(payload.getBalanceAvailableTime()));
         node.put("clientId", text(payload.getClientId()));
         node.put("entityNo", payload.getEntityNo());
         node.put("localPartnerId", text(payload.getLocalPartnerId()));

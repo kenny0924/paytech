@@ -7,7 +7,7 @@ import java.time.temporal.ChronoUnit;
 import org.springframework.boot.test.context.TestComponent;
 
 import com.paytech.account.api.enums.BalanceBucket;
-import com.paytech.account.api.enums.OwnerType;
+import com.paytech.ledger.api.enums.LedgerOwnerType;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.ledger.core.dal.dataobject.AccountingPeriod;
 import com.paytech.ledger.core.dal.dataobject.BookSequence;
@@ -152,7 +152,7 @@ public class LedgerMocker {
     }
 
     /** 在 STANDARD 科目下插入 ACTIVE 账户身份，正常方向取自科目；余额由分录聚合。 */
-    public long mockAccount(long ledgerBookId, String accountCode, OwnerType ownerType, String ownerId,
+    public long mockAccount(long ledgerBookId, String accountCode, LedgerOwnerType ownerType, String ownerId,
         BalanceBucket bucket) {
         ChartAccount chartAccount = chartAccountMapper.selectByChartAndCode(STANDARD_CHART_ID, accountCode);
         LedgerAccount account = new LedgerAccount();

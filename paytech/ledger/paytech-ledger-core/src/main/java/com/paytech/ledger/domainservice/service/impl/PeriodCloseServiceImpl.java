@@ -12,12 +12,12 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.paytech.account.api.enums.BalanceBucket;
-import com.paytech.account.api.enums.OwnerType;
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
+import com.paytech.ledger.api.enums.LedgerOwnerType;
 import com.paytech.ledger.core.dal.dataobject.AccountingInstruction;
 import com.paytech.ledger.core.dal.dataobject.AccountingPeriod;
 import com.paytech.ledger.core.dal.dataobject.BookSequence;
@@ -32,7 +32,6 @@ import com.paytech.ledger.core.dal.dataobject.PeriodCloseBook;
 import com.paytech.ledger.core.enums.AccountStatus;
 import com.paytech.ledger.core.enums.CloseStepStatus;
 import com.paytech.ledger.core.enums.CloseStepType;
-import com.paytech.ledger.core.enums.LedgerEntityType;
 import com.paytech.ledger.core.enums.PeriodCloseStatus;
 import com.paytech.ledger.core.enums.PeriodStatus;
 import com.paytech.ledger.domain.PeriodCloseContentHash;
@@ -54,6 +53,7 @@ import com.paytech.ledger.domainservice.repository.LedgerAccountRepository;
 import com.paytech.ledger.domainservice.repository.PeriodCloseBookRepository;
 import com.paytech.ledger.domainservice.repository.PeriodCloseRepository;
 import com.paytech.ledger.domainservice.service.PeriodCloseService;
+import com.paytech.ledger.domainservice.validator.account.AccountIdentityRule;
 
 import lombok.AllArgsConstructor;
 
@@ -62,9 +62,6 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class PeriodCloseServiceImpl implements PeriodCloseService {
     private static final int ACTIVE_SLOT = 1;
-
-    /** 关账步骤 3 核对的渠道与银行账户核算对象类型。 */
-    private static final List<OwnerType> TREASURY_OWNERS = List.of(OwnerType.CHANNEL_ACCOUNT, OwnerType.CASH_ACCOUNT);
 
     private final Clock clock;
     private final IdGenerator idGenerator;
@@ -150,8 +147,7 @@ public class PeriodCloseServiceImpl implements PeriodCloseService {
     @Override
     public LedgerAccount ensureResultAccount(LedgerBook book, long resultChartAccountId) {
         requireTransaction();
-        OwnerType ownerType = book.getEntityType() == LedgerEntityType.OPERATING_ENTITY ? OwnerType.OPERATING_ENTITY
-            : OwnerType.FINANCE_ENTITY;
+        LedgerOwnerType ownerType = AccountIdentityRule.bookOwnerType(book);
         LedgerAccount existing = ledgerAccountRepository.findByIdentity(book.getId(), resultChartAccountId, ownerType,
             book.getEntityId(), BalanceBucket.NONE);
         if (existing != null) {
@@ -163,7 +159,7 @@ public class PeriodCloseServiceImpl implements PeriodCloseService {
     }
 
     /** 构造 ACTIVE 账户身份，正常方向取自科目；余额由分录聚合得出。 */
-    LedgerAccount newAccount(LedgerBook book, ChartAccount chartAccount, OwnerType ownerType) {
+    LedgerAccount newAccount(LedgerBook book, ChartAccount chartAccount, LedgerOwnerType ownerType) {
         Instant now = now();
         LedgerAccount account = new LedgerAccount();
         account.setId(idGenerator.nextId());
@@ -363,12 +359,6 @@ public class PeriodCloseServiceImpl implements PeriodCloseService {
     @Override
     public long countPendingCompensationEvents() {
         return periodCloseRepository.countPendingCompensationEvents();
-    }
-
-    /** 分录聚合净额非零的渠道与银行账户计数（ledger 本库 Journal，不读余额投影）。 */
-    @Override
-    public long countNonZeroTreasuryAccounts(PeriodCloseContext context) {
-        return ledgerAccountRepository.countNonZero(context.bookIds(), TREASURY_OWNERS);
     }
 
     /** 期间存在后分页读取。 */

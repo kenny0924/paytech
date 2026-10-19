@@ -18,6 +18,12 @@ import lombok.Setter;
  * @author Claude
  */
 public final class FinanceLedgerBookModels {
+    /**
+     * ledger 账户核算对象类型的校验正则
+     * <li>与 ledger-api {@code LedgerOwnerType} 全部 Code 一致（注解需要编译期常量，由 auto 测试逐值核对）；Client 与 Local Partner 不在总账开户。</li>
+     */
+    public static final String LEDGER_OWNER_TYPE_PATTERN =
+        "OPERATING_ENTITY|FINANCE_ENTITY|CHANNEL_ACCOUNT|CASH_ACCOUNT|TAX_AUTHORITY";
 
     /** 只承载类型，禁止创建实例。 */
     private FinanceLedgerBookModels() {
@@ -149,11 +155,10 @@ public final class FinanceLedgerBookModels {
 
         /**
          * 核算对象类型
-         * <li>OPERATING_ENTITY、FINANCE_ENTITY、CLIENT、LOCAL_PARTNER、CHANNEL_ACCOUNT、CASH_ACCOUNT、TAX_AUTHORITY。</li>
+         * <li>OPERATING_ENTITY、FINANCE_ENTITY、CHANNEL_ACCOUNT、CASH_ACCOUNT 或 TAX_AUTHORITY；控制科目只能以账簿主体为核算对象。</li>
          */
         @NotBlank(message = "核算对象类型必填")
-        @Pattern(regexp = "OPERATING_ENTITY|FINANCE_ENTITY|CLIENT|LOCAL_PARTNER|CHANNEL_ACCOUNT|CASH_ACCOUNT|TAX_AUTHORITY",
-            message = "核算对象类型非法")
+        @Pattern(regexp = LEDGER_OWNER_TYPE_PATTERN, message = "核算对象类型非法")
         private String ownerType;
 
         /**
@@ -166,7 +171,7 @@ public final class FinanceLedgerBookModels {
 
         /**
          * 余额桶
-         * <li>PENDING、AVAILABLE、LOCKED 或 NONE；是否合法由账户身份矩阵决定。</li>
+         * <li>ledger 账户一律为 NONE；其他取值由 ledger 账户身份矩阵返回 ACCOUNT_IDENTITY_INVALID。</li>
          */
         @NotBlank(message = "余额桶必填")
         @Pattern(regexp = "PENDING|AVAILABLE|LOCKED|NONE", message = "余额桶非法")
@@ -215,7 +220,7 @@ public final class FinanceLedgerBookModels {
         /** 来源指令类型。 */
         private String instructionType;
 
-        /** 来源类型：AUTO 或 MANUAL。 */
+        /** 来源类型：AUTO、MANUAL 或 ACCOUNT_POSTING（消费 account 过账批次生成）。 */
         private String originType;
 
         /** 自动来源系统；人工调整为空。 */
@@ -226,6 +231,12 @@ public final class FinanceLedgerBookModels {
 
         /** 人工调整单号；自动来源为空。 */
         private String adjustmentNo;
+
+        /** account 过账批次主键；仅 ACCOUNT_POSTING 来源非空。 */
+        private String accountPostingId;
+
+        /** account 过账批次在其过账流内的序号；仅 ACCOUNT_POSTING 来源非空。 */
+        private String accountPostingSequence;
     }
 
     /** 分录行。 */
@@ -255,6 +266,9 @@ public final class FinanceLedgerBookModels {
 
         /** 金额。 */
         private String amount;
+
+        /** 来源 account 明细流水主键；由 account 流水生成的控制科目行非空，规则行与人工行为空。 */
+        private String accountEntryId;
     }
 
     /** 分录详情：分录头、来源与全部分录行。 */
@@ -288,7 +302,7 @@ public final class FinanceLedgerBookModels {
         /** 来源指令类型。 */
         private String instructionType;
 
-        /** 来源类型：AUTO 或 MANUAL。 */
+        /** 来源类型：AUTO、MANUAL 或 ACCOUNT_POSTING（消费 account 过账批次生成）。 */
         private String originType;
 
         /** 自动来源系统；人工调整为空。 */
@@ -302,6 +316,12 @@ public final class FinanceLedgerBookModels {
 
         /** 人工调整单号；自动来源为空。 */
         private String adjustmentNo;
+
+        /** account 过账批次主键；仅 ACCOUNT_POSTING 来源非空。 */
+        private String accountPostingId;
+
+        /** account 过账批次在其过账流内的序号；仅 ACCOUNT_POSTING 来源非空。 */
+        private String accountPostingSequence;
 
         /** 全部分录行，按行号升序。 */
         private List<JournalEntryLineResponseBody> lines;

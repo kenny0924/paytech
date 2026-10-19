@@ -16,6 +16,9 @@ public class EconomicFactPublicationView {
      */
     private Long maxPendingFactId;
 
+    /** 已批准（含已被替代）且已确认发布的事实数。 */
+    private long publishedFactCount;
+
     /**
      * 已发布事实中最大的 ID
      * <li>尚无已发布事实时为空。</li>

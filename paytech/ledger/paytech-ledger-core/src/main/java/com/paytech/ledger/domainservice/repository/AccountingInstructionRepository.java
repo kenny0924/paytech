@@ -20,6 +20,9 @@ public interface AccountingInstructionRepository {
     /** 统计账簿中尚未过账的指令。 */
     long countPendingByBooks(List<Long> bookIds);
 
-    /** 经济事实已生成的全部 AUTO 指令，按账簿、主键升序；没有时返回空列表。 */
+    /** 经济事实已生成的全部规则（AUTO）或入账批次（ACCOUNT_POSTING）指令，按账簿、主键升序；没有时返回空列表。 */
     List<AccountingInstruction> findByEconomicFact(long economicFactId);
+
+    /** 同一来源系统与事件键（如 account 入账批次 ID）已生成的全部指令，按账簿、主键升序；没有时返回空列表。 */
+    List<AccountingInstruction> findBySourceEvent(String sourceSystem, String sourceEventKey);
 }

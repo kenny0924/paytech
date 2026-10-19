@@ -3,6 +3,7 @@ package com.paytech.operations.console.bff.configuration;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.time.Duration;
+import java.util.stream.Stream;
 
 import org.slf4j.MDC;
 import org.springframework.beans.factory.ObjectProvider;
@@ -13,7 +14,11 @@ import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 
+import com.paytech.account.api.AccountPostingApi;
 import com.paytech.account.api.BalanceQueryApi;
+import com.paytech.account.api.OwnerAccountQueryApi;
+import com.paytech.account.api.enums.AccountPostingErrorCode;
+import com.paytech.account.api.enums.BalanceMovementErrorCode;
 import com.paytech.account.api.enums.BalanceQueryErrorCode;
 import com.paytech.foundation.common.enums.CodeMessageEnum;
 import com.paytech.foundation.common.error.ErrorException;
@@ -35,7 +40,8 @@ import com.paytech.operations.console.bff.domain.enums.OperationsBffErrorCode;
  * ledger 与 account 的 HTTP 接口代理：两者不注册 Nacos，使用固定私网地址
  * <li>不加 LoadBalancer、不加 Discovery 拦截器、不重试；连接 2 秒、读取 4 秒，禁止跟随重定向，传递 X-Request-Id。</li>
  * <li>严格 Problem 解码并保留 Owner 422 字段路径；超时映射 504 DEPENDENCY_TIMEOUT，不可达映射 503 DEPENDENCY_UNAVAILABLE。</li>
- * <li>两个 Owner 各用独立工厂登记各自的错误码：LedgerSetupErrorCode 与 BalanceQueryErrorCode 都含 LEDGER_BOOK_NOT_FOUND，同一工厂登记会冲突。</li>
+ * <li>两个 Owner 各用独立工厂、只登记本 Owner 的合同错误码：ledger 为 LedgerSetupErrorCode；account 为 BalanceQueryErrorCode、
+ * AccountPostingErrorCode 与明细流水查询使用的 BalanceMovementErrorCode.ACCOUNT_NOT_FOUND。</li>
  * <li>工厂不注册为 Bean，避免被其他 Platform/Risk 代理按类型误用。</li>
  *
  * @author Claude
@@ -56,7 +62,7 @@ public class FinanceClientConfiguration {
         this.ledger = factory(validated("operations.ledger-base-url", ledgerBaseUrl), LEDGER_SERVICE, tokens,
             LedgerSetupErrorCode.values());
         this.account = factory(validated("operations.account-base-url", accountBaseUrl), ACCOUNT_SERVICE, tokens,
-            BalanceQueryErrorCode.values());
+            accountErrorCodes());
     }
 
     /** ledger 账务基础资料只读查询。 */
@@ -99,6 +105,25 @@ public class FinanceClientConfiguration {
     @Bean
     BalanceQueryApi balanceQueryApi() {
         return account.createClient(BalanceQueryApi.class);
+    }
+
+    /** account Owner 账户与过账批次查询（明细账）。 */
+    @Bean
+    OwnerAccountQueryApi ownerAccountQueryApi() {
+        return account.createClient(OwnerAccountQueryApi.class);
+    }
+
+    /** account 过账批次详情；BFF 只使用批次详情，不暴露进度、追平读取与按流重建。 */
+    @Bean
+    AccountPostingApi accountPostingApi() {
+        return account.createClient(AccountPostingApi.class);
+    }
+
+    /** account 页面可能收到的合同错误码：余额无账户、批次不存在、明细流水的账户不存在。 */
+    private static CodeMessageEnum[] accountErrorCodes() {
+        return Stream.<CodeMessageEnum>concat(
+            Stream.concat(Stream.of(BalanceQueryErrorCode.values()), Stream.of(AccountPostingErrorCode.values())),
+            Stream.of(BalanceMovementErrorCode.ACCOUNT_NOT_FOUND)).toArray(CodeMessageEnum[]::new);
     }
 
     /** 固定地址、严格协议并映射依赖故障；只登记本 Owner 的合同错误码。 */

@@ -5,7 +5,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import com.paytech.account.api.enums.BalanceBucket;
-import com.paytech.account.api.enums.OwnerType;
+import com.paytech.ledger.api.enums.LedgerOwnerType;
 import com.paytech.ledger.core.enums.EntrySide;
 import com.paytech.ledger.core.enums.InstructionOrigin;
 import com.paytech.ledger.core.enums.JournalEntryType;
@@ -74,6 +74,18 @@ public class JournalEntryDetailView {
      */
     private String adjustmentNo;
 
+    /**
+     * account 入账批次主键
+     * <li>仅 ACCOUNT_POSTING 指令有值（即来源事件键），其余为空。</li>
+     */
+    private Long accountPostingId;
+
+    /**
+     * account 入账批次在其过账流内的序号
+     * <li>仅 ACCOUNT_POSTING 指令有值（即来源版本），其余为空。</li>
+     */
+    private Long accountPostingSequence;
+
     /** 按行号升序的分录行。 */
     private List<Line> lines;
 
@@ -91,7 +103,7 @@ public class JournalEntryDetailView {
         private String accountCode;
 
         /** 核算对象类型。 */
-        private OwnerType ownerType;
+        private LedgerOwnerType ownerType;
 
         /** 核算对象标识。 */
         private String ownerId;
@@ -104,5 +116,11 @@ public class JournalEntryDetailView {
 
         /** 金额，按币种精度规范。 */
         private BigDecimal amount;
+
+        /**
+         * 对应的 account 流水主键
+         * <li>仅 ACCOUNT_POSTING 指令中的 Owner 控制科目行有值；规则行与人工行为空。</li>
+         */
+        private Long accountEntryId;
     }
 }

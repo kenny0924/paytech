@@ -18,7 +18,7 @@ spring:
       data-source-properties:
         connectionTimeZone: UTC
         forceConnectionTimeZoneToSession: true
-  # EconomicFactRecorded 消费（design/04 §5）：account 本期只消费，不发布。
+  # EconomicFactRecorded 消费与 AccountPosted 发布：发布确认与不可路由退回，AccountPostedHandler 等待 Broker 确认后才算发布成功。
   rabbitmq:
     host: "${ACCOUNT_RABBITMQ_HOST:127.0.0.1}"
     port: "${ACCOUNT_RABBITMQ_PORT:5672}"
@@ -26,40 +26,40 @@ spring:
     password: "${ACCOUNT_RABBITMQ_PASSWORD:}"
     virtual-host: "${ACCOUNT_RABBITMQ_VHOST:/mor-local}"
     connection-timeout: 2s
-  # ledger-api 与 billing-api 内部 HTTP 客户端：JDK HttpClient 不自动重试；Finance 后继服务不接服务发现，基址直接配置。
-  http:
-    clients:
-      imperative:
-        factory: jdk
-    serviceclient:
-      ledger-service:
-        base-url: "${ACCOUNT_LEDGER_SERVICE_URL:http://127.0.0.1:18105}"
-        connect-timeout: 2s
-        read-timeout: 5s
-        redirects: dont-follow
-      billing-service:
-        base-url: "${ACCOUNT_BILLING_SERVICE_URL:http://127.0.0.1:18113}"
-        connect-timeout: 2s
-        read-timeout: 10s
-        redirects: dont-follow
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
 
 mybatis:
   mapper-locations: classpath*:mapper/**/*.xml
 
-# paytech-messaging 消费端：按 Handler 声明 account.billing.hash 与分区队列 account.billing.p0..p3（design/08 §3）。
+# paytech-messaging：消费端按 Handler 声明 account.billing.hash 与分区队列 account.billing.p0..p3；发布端声明 account.events（design/08 §3）。
 messaging:
   consumer:
     service: account
   consumers:
     billing:
       partitions: 4
+  producer:
+    service: account
+    # 发布侧按聚合串行（design/08 §3）：同一过账流的 ACCOUNT_POSTED 补偿任务在固定线程按 Claim 顺序发布，减少 ledger 的序号缺口重投。
+    sequencer:
+      enabled: true
+  publisher:
+    # 订阅方 ledger 与本次改造同时接入 AccountPosted：未路由视为发布失败，由补偿任务重试。
+    unroutable-policy: FAIL
 
-# paytech-compensation-event：本库 t_compensation_event（现行模型）；目前没有补偿 Handler。XXL-Job 执行器同时承载日终核对任务
-# accountBalanceReconciliation（design/04 §7），调度中心地址与执行器参数沿用组件默认，由部署注入。
+# paytech-compensation-event：入账事务内登记 ACCOUNT_POSTED 发布任务，提交后执行；XXL-Job 执行器同时承载兜底扫描与到期转可用任务
+# accountBalanceMaturity，调度中心地址与执行器参数沿用组件默认，由部署注入。
 compensation:
   enabled: true
   # 多实例 Claim/Lease 的实例标识前缀：account；部署多实例时由 ACCOUNT_COMPENSATION_INSTANCE_ID 注入带实例后缀的值。
   instance-id: "${ACCOUNT_COMPENSATION_INSTANCE_ID:account}"
+
+# 实例 ID（实例清单 instance.id，01 §5）：领域事件信封 instanceId。
+paytech:
+  instance-id: "${PAYTECH_INSTANCE_ID:main}"
 
 management:
   server:
@@ -94,6 +94,10 @@ management:
       access: read-only
 
 account:
+  event:
+    # AccountPosted 信封身份：sourceService 与 messaging.producer.service 一致。
+    source-service: account
+    instance-id: "${paytech.instance-id}"
   identifier:
     # 部署分配的 Snowflake Region / Worker 标识，必填；每个 app 独立分配。
     region-id: "${ACCOUNT_SNOWFLAKE_REGION_ID}"

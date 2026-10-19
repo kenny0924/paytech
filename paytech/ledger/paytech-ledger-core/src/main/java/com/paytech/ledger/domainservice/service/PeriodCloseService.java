@@ -107,9 +107,6 @@ public interface PeriodCloseService {
     /** 关账步骤 2：统计待执行或可重试的补偿任务。 */
     long countPendingCompensationEvents();
 
-    /** 关账步骤 3：统计本库分录聚合净额非零的渠道与银行账户。 */
-    long countNonZeroTreasuryAccounts(PeriodCloseContext context);
-
     /** 按序号降序分页查询期间的关账流程。 */
     PagingResponseBody<PeriodCloseView> pageCloses(long periodId, PagingRequestBody paging);
 

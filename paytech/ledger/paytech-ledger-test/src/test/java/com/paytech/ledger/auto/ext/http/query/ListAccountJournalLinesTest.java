@@ -12,7 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.paytech.account.api.enums.BalanceBucket;
-import com.paytech.account.api.enums.OwnerType;
+import com.paytech.ledger.api.enums.LedgerOwnerType;
 import com.paytech.ledger.api.LedgerBookQueryApi;
 import com.paytech.ledger.api.enums.LedgerSetupErrorCode;
 import com.paytech.ledger.core.constant.AccountingCodes;
@@ -106,7 +106,7 @@ class ListAccountJournalLinesTest extends AbstractManualAdjustmentApiTest {
     void test_accountMustBelongToBook() {
         long otherBook = ledgerMocker.mockBook(LedgerEntityType.OPERATING_ENTITY, "AE002", "USD",
             LedgerMocker.STANDARD_CHART_ID);
-        long foreign = ledgerMocker.mockAccount(otherBook, "CAPITAL", OwnerType.OPERATING_ENTITY, "AE002",
+        long foreign = ledgerMocker.mockAccount(otherBook, "CAPITAL", LedgerOwnerType.OPERATING_ENTITY, "AE002",
             BalanceBucket.NONE);
 
         get(path(foreign)).assertBusinessRejected("账户不存在或不属于账簿: 账户 " + foreign);

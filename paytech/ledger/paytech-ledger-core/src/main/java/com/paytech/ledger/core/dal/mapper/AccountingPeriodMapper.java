@@ -39,6 +39,9 @@ public interface AccountingPeriodMapper {
     /** 以排他锁读取期间；关账推进状态时使用，与过账的共享锁互斥。 */
     AccountingPeriod selectByIdForUpdate(@Param("id") long id);
 
+    /** 读取同一日历中开始日期晚于给定日期且未 CLOSED 的最早期间。 */
+    AccountingPeriod selectFirstUnclosedAfter(@Param("calendarId") long calendarId, @Param("endDate") LocalDate endDate);
+
     /** 读取同一日历中结束日期早于给定日期且未 CLOSED 的最早期间。 */
     AccountingPeriod selectFirstUnclosedBefore(@Param("calendarId") long calendarId, @Param("startDate") LocalDate startDate);
 

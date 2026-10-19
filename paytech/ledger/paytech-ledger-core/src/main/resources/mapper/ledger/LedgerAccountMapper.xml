@@ -70,38 +70,4 @@
         <if test="query.ownerId != null">AND a.owner_id = #{query.ownerId}</if>
         <if test="query.balanceBucket != null">AND a.balance_bucket = #{query.balanceBucket}</if>
     </select>
-
-    <select id="selectOwnerTotals" resultType="com.paytech.ledger.domain.view.AccountView">
-        SELECT a.id account_id, c.account_code, a.owner_type, a.owner_id, a.balance_bucket, a.normal_side,
-               a.account_status, <include refid="totalColumns"/>
-        FROM t_ledger_account a
-        JOIN t_chart_account c ON c.id = a.chart_account_id
-        LEFT JOIN (<include refid="bookJournalTotals"/>) j ON j.account_id = a.id
-        WHERE a.ledger_book_id = #{ledgerBookId} AND a.owner_type IN
-        <foreach collection="ownerTypes" item="ownerType" open="(" separator="," close=")">#{ownerType}</foreach>
-        ORDER BY c.account_code, a.owner_type, a.owner_id, a.balance_bucket, a.id
-    </select>
-
-    <select id="countNonZeroByOwnerTypes" resultType="long">
-        SELECT COUNT(*) FROM (
-            SELECT a.id
-            FROM t_ledger_account a
-            JOIN t_journal_line l ON l.account_id = a.id
-            WHERE a.owner_type IN
-            <foreach collection="ownerTypes" item="ownerType" open="(" separator="," close=")">#{ownerType}</foreach>
-              AND a.ledger_book_id IN
-            <foreach collection="bookIds" item="id" open="(" separator="," close=")">#{id}</foreach>
-            GROUP BY a.id
-            HAVING SUM(CASE WHEN l.entry_side = 'DEBIT' THEN l.amount ELSE -l.amount END) &lt;&gt; 0
-        ) t
-    </select>
-
-    <select id="selectJournalTotals" resultType="com.paytech.ledger.domain.view.AccountJournalTotalsView">
-        SELECT COALESCE(SUM(CASE WHEN l.entry_side = 'DEBIT' THEN l.amount END), 0) debit_total,
-               COALESCE(SUM(CASE WHEN l.entry_side = 'CREDIT' THEN l.amount END), 0) credit_total,
-               COALESCE(MAX(e.journal_sequence), 0) last_journal_sequence
-        FROM t_journal_line l
-        JOIN t_journal_entry e ON e.id = l.journal_entry_id
-        WHERE l.account_id = #{accountId}
-    </select>
 </mapper>

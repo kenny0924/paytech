@@ -31,8 +31,8 @@ public final class AccountingLocks {
         return "accounting-rule-bundle:" + bundleCode;
     }
 
-    /** 同一试算异常处置（发起与批准投影重建）共用的资源锁。 */
-    public static String trialException(long exceptionId) {
-        return "trial-exception:" + exceptionId;
+    /** 同一 account 过账流追平命令的资源锁；消费 Handler 不取锁，并发由 uk_instr_source 与只增进度保护。 */
+    public static String postingStream(String aggregateId) {
+        return "posting-stream:" + aggregateId;
     }
 }

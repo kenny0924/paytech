@@ -12,8 +12,8 @@ public enum CloseStepType implements CodeEnum {
     /** 异步任务与分录完整性检查 */
     CHECK_ASYNC_AND_JOURNAL,
 
-    /** 账户余额核对 */
-    RECONCILE_ACCOUNT_BALANCES,
+    /** 入账进度检查：billing → account 已批准事实全部入账，account → ledger 各过账流序号已追平 */
+    CHECK_ACCOUNT_POSTING_PROGRESS,
 
     /** 生成试算 */
     GENERATE_TRIAL_BALANCE,
@@ -34,7 +34,7 @@ public enum CloseStepType implements CodeEnum {
     POST_REOPEN_REVERSAL;
 
     private static final List<CloseStepType> CLOSE_STEPS = List.of(LOCK_SEQUENCE, CHECK_ASYNC_AND_JOURNAL,
-        RECONCILE_ACCOUNT_BALANCES, GENERATE_TRIAL_BALANCE, RESOLVE_EXCEPTIONS, POST_PROFIT_CLOSE, FINAL_TRIAL_BALANCE);
+        CHECK_ACCOUNT_POSTING_PROGRESS, GENERATE_TRIAL_BALANCE, RESOLVE_EXCEPTIONS, POST_PROFIT_CLOSE, FINAL_TRIAL_BALANCE);
 
     private static final List<CloseStepType> REOPEN_STEPS = List.of(LOCK_SEQUENCE, PLAN_REOPEN_REVERSAL,
         POST_REOPEN_REVERSAL);

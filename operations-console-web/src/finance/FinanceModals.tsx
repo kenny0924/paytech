@@ -4,9 +4,9 @@ import { Alert, Form, Input, InputNumber, Modal, Select } from 'antd';
 import type { FormInstance } from 'antd';
 import { DatePicker } from '../components/DatePicker';
 import {
-  accountBody, activeOnly, bookBody, bucketOptions, calendarBody, decimalIdPattern, decodeCreated, decodeOpenedPeriod, entityBody,
+  accountBody, activeOnly, bookBody, calendarBody, decimalIdPattern, decodeCreated, decodeOpenedPeriod, entityBody,
   entityLabel, entityNoPattern, entityTypeLabels, financePaths, ledgerEntityTypes, ownerIdError, ownerTypes, periodBody, periodRangeError,
-  sideLabels, timezoneOptions, usesPayableBuckets,
+  sideLabels, timezoneOptions,
 } from './finance';
 import type {
   AccountFormValues, AccountingPeriod, BookFormValues, CalendarFormValues, EntityFormValues, FinanceEntity, FiscalCalendar,
@@ -184,14 +184,6 @@ export function CreateAccountModal({ book, entities, onClose, onDone, onAuthoriz
   const [form] = Form.useForm<AccountFormValues>();
   const command = useFinanceCommand(onAuthorizationChanged, form, ['accountCode', 'ownerType', 'ownerId', 'balanceBucket']);
   const chartAccounts = useChartAccounts(book.chartCode, true, onAuthorizationChanged);
-  const accountCode = Form.useWatch('accountCode', form) as string | undefined;
-  const buckets = bucketOptions(accountCode);
-  // 非应付科目锁定 NONE；切到应付科目时清掉 NONE 让操作员显式选择。
-  useEffect(() => {
-    const current = form.getFieldValue('balanceBucket');
-    if (!usesPayableBuckets(accountCode)) form.setFieldValue('balanceBucket', 'NONE');
-    else if (current === 'NONE') form.setFieldValue('balanceBucket', undefined);
-  }, [accountCode, form]);
   async function submit() {
     const values = await form.validateFields();
     const result = await command.run(financePaths.accounts(book.ledgerBookId), accountBody(values), decodeCreated('accountId'), '新建账户失败');
@@ -213,9 +205,9 @@ export function CreateAccountModal({ book, entities, onClose, onDone, onAuthoriz
           if (message) throw new Error(message);
         } })]}><Input maxLength={64} /></Form.Item>
       </div>
-      <Form.Item name="balanceBucket" label="余额桶" rules={[{ required: true, message: '请选择余额桶' }]}>
-        <Select disabled={!usesPayableBuckets(accountCode)} options={buckets.map(value => ({ value, label: value }))} /></Form.Item>
+      {/* 余额桶固定 NONE、不可编辑；保留字段用于承接 ACCOUNT_ALREADY_EXISTS 的字段错误（画板 05）。 */}
+      <Form.Item name="balanceBucket" label="余额桶"><Select disabled options={[{ value: 'NONE', label: 'NONE' }]} /></Form.Item>
     </Form>
-    <FinanceNote>CLIENT_PAYABLE / PARTNER_PAYABLE 可选 PENDING、AVAILABLE、LOCKED；其他科目固定 NONE。核算对象为经营主体时填 entityNo。</FinanceNote>
+    <FinanceNote>核算对象只能是经营主体、财务主体、渠道账户、银行账户或税务机关，余额桶固定 NONE；Client / Partner 余额在明细账，不在总账开户。核算对象为经营主体时填 entityNo。</FinanceNote>
   </CommandModal>;
 }

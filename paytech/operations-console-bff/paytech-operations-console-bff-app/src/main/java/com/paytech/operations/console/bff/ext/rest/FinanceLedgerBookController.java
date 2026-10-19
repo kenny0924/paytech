@@ -1,6 +1,7 @@
 package com.paytech.operations.console.bff.ext.rest;
 
 import static com.paytech.operations.console.bff.ext.rest.RiskListController.requireQueryKeys;
+import static com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.LEDGER_OWNER_TYPE_PATTERN;
 
 import java.util.Set;
 
@@ -72,13 +73,12 @@ public class FinanceLedgerBookController {
         return client.createLedgerBook(context, body);
     }
 
-    /** R10 账簿内账户及余额分页。 */
+    /** R10 账簿内账户及余额分页；核算对象只有平台类对象，Client 与 Local Partner 明细见明细账查询。 */
     @GetMapping("/{ledgerBookId}/accounts")
     public PagingResponseBody<LedgerAccountResponseBody> listAccounts(HttpServletRequest servletRequest,
         @PathVariable("ledgerBookId") @Pattern(regexp = ID) String ledgerBookId,
         @RequestParam(value = "accountCode", required = false) @Size(max = 64) String accountCode,
-        @RequestParam(value = "ownerType", required = false)
-        @Pattern(regexp = "OPERATING_ENTITY|FINANCE_ENTITY|CLIENT|LOCAL_PARTNER|CHANNEL_ACCOUNT|CASH_ACCOUNT|TAX_AUTHORITY") String ownerType,
+        @RequestParam(value = "ownerType", required = false) @Pattern(regexp = LEDGER_OWNER_TYPE_PATTERN) String ownerType,
         @RequestParam(value = "ownerId", required = false) @Size(max = 64) String ownerId,
         @RequestParam(value = "balanceBucket", required = false) @Pattern(regexp = "PENDING|AVAILABLE|LOCKED|NONE") String balanceBucket,
         @RequestParam(value = "page", required = false) Integer page,

@@ -5,9 +5,10 @@ import java.time.LocalDate;
 import org.junit.jupiter.api.BeforeEach;
 
 import com.paytech.account.api.enums.BalanceBucket;
-import com.paytech.account.api.enums.OwnerType;
+import com.paytech.ledger.api.enums.LedgerOwnerType;
 import com.paytech.ledger.api.request.ReviewPeriodCloseRequestBody;
 import com.paytech.ledger.api.request.StartPeriodCloseRequestBody;
+import com.paytech.ledger.core.enums.LedgerEntityType;
 import com.paytech.ledger.core.enums.PeriodStatus;
 import com.paytech.ledger.test.builder.SubmitManualAdjustmentRequestBuilder;
 import com.paytech.ledger.test.checker.LedgerResponseChecker;
@@ -15,10 +16,9 @@ import com.paytech.ledger.test.checker.LedgerResponseChecker;
 /**
  * 期间关账入口测试的公共前置与调用
  * <li>沿用人工调整基类的 AE001/USD 账簿与当月 OPEN 期间，另准备收入（CLIENT_FEE_REVENUE）与费用（CHANNEL_FEE_EXPENSE）账户。</li>
- * <li>正常关账用例以实收资本作为对方科目，避免银行现金余额触发余额核对步骤失败。</li>
  * <li>请求体以 JSON 字段直接构造：关账与复核的 RequestBody 由并行实现提供，本基类只依赖 HTTP 契约。</li>
- * <li>关账步骤 2、3 的外部依赖（第 11b 步）：每例默认 billing 无已发布事实、account 尚未处理任何事实且无非零渠道 / 银行账户，即“已追平”；
- * 需要未追平或不可用的用例自行覆盖账簿配置。</li>
+ * <li>关账步骤 3（CHECK_ACCOUNT_POSTING_PROGRESS）的外部依赖：每例默认 billing 无已发布事实、account 没有已应用事实也没有过账流，即“已追平”；
+ * 需要未追平或不可用的用例自行覆盖账簿主体配置。</li>
  */
 public abstract class AbstractPeriodCloseApiTest extends AbstractManualAdjustmentApiTest {
     /** 关账 Maker；与调整模板编制人相同不影响关账。 */
@@ -43,12 +43,12 @@ public abstract class AbstractPeriodCloseApiTest extends AbstractManualAdjustmen
     /** 每例准备账簿主体的收入与费用账户，并把当月期间设为非年末期间，使结果不随运行月份变化；年末用例自行改为年末。 */
     @BeforeEach
     void setUpPeriodCloseMocks() {
-        accountConsistency.mockCaughtUpByDefault();
-        billingProgress.mockNothingPublishedByDefault();
+        accountPostings.mockCaughtUpByDefault();
+        economicFacts.mockNothingPublishedByDefault();
         makeCurrentPeriodNotYearEnd();
-        revenueAccountId = ledgerMocker.mockAccount(ledger.getLedgerBookId(), REVENUE_CODE, OwnerType.OPERATING_ENTITY,
+        revenueAccountId = ledgerMocker.mockAccount(ledger.getLedgerBookId(), REVENUE_CODE, LedgerOwnerType.OPERATING_ENTITY,
             ledger.getEntityNo(), BalanceBucket.NONE);
-        expenseAccountId = ledgerMocker.mockAccount(ledger.getLedgerBookId(), EXPENSE_CODE, OwnerType.OPERATING_ENTITY,
+        expenseAccountId = ledgerMocker.mockAccount(ledger.getLedgerBookId(), EXPENSE_CODE, LedgerOwnerType.OPERATING_ENTITY,
             ledger.getEntityNo(), BalanceBucket.NONE);
     }
 
@@ -71,6 +71,12 @@ public abstract class AbstractPeriodCloseApiTest extends AbstractManualAdjustmen
     /** 当月期间确认费用：Dr 费用 / Cr 实收资本。 */
     protected void postExpense(String amount) {
         posted(adjustment().transfer(expenseAccountId, capitalAccountId, amount));
+    }
+
+    /** billing 仍有 1 条已批准未发布的事实，使关账步骤 3（入账进度检查）失败。 */
+    protected void mockBillingUnpublished() {
+        economicFacts.mockProgress(LedgerEntityType.OPERATING_ENTITY.getCode(), ledger.getEntityNo(), ledger.getCurrency(),
+            1, 0, null);
     }
 
     /** 当月期间一笔借记银行现金的调整，使银行账户余额非零。 */

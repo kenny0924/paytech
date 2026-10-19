@@ -21,6 +21,7 @@ import com.paytech.ledger.core.dal.dataobject.AccountingPeriod;
 import com.paytech.ledger.core.dal.dataobject.AdjustmentApproval;
 import com.paytech.ledger.core.dal.dataobject.InstructionLine;
 import com.paytech.ledger.core.dal.dataobject.JournalEntry;
+import com.paytech.ledger.core.dal.dataobject.LedgerAccount;
 import com.paytech.ledger.core.dal.dataobject.ManualAdjustment;
 import com.paytech.ledger.core.dal.dataobject.ManualAdjustmentLine;
 import com.paytech.ledger.core.enums.AdjustmentStatus;
@@ -34,6 +35,7 @@ import com.paytech.ledger.domainservice.repository.AccountingPeriodRepository;
 import com.paytech.ledger.domainservice.repository.AdjustmentApprovalRepository;
 import com.paytech.ledger.domainservice.repository.FiscalCalendarRepository;
 import com.paytech.ledger.domainservice.repository.JournalEntryRepository;
+import com.paytech.ledger.domainservice.repository.ChartAccountRepository;
 import com.paytech.ledger.domainservice.repository.LedgerAccountRepository;
 import com.paytech.ledger.domainservice.repository.ManualAdjustmentLineRepository;
 import com.paytech.ledger.domainservice.repository.ManualAdjustmentRepository;
@@ -63,6 +65,7 @@ public class ApproveManualAdjustmentProcessor
     private final IdGenerator idGenerator;
     private final TransactionTemplate transactionTemplate;
     private final JournalPostingService journalPostingService;
+    private final ChartAccountRepository chartAccountRepository;
     private final LedgerAccountRepository ledgerAccountRepository;
     private final JournalEntryRepository journalEntryRepository;
     private final ManualAdjustmentService manualAdjustmentService;
@@ -91,7 +94,7 @@ public class ApproveManualAdjustmentProcessor
         ManualAdjustmentReviewValidator.checkReviewable(adjustment, request.getCheckerId(),
             request.getApprovedContentHash());
         ApproveManualAdjustmentContext context = buildContext(adjustment, request.getCheckerId());
-        checkNoOwnerAccounts(adjustment, context.getInstructionLines());
+        checkNoControlAccounts(adjustment, context.getInstructionLines());
 
         // 批准并过账
         transactionTemplate.executeWithoutResult(status -> {
@@ -102,10 +105,13 @@ public class ApproveManualAdjustmentProcessor
         return response(adjustment, context.getJournalEntry());
     }
 
-    /** 调整行引用的账户不得是 Client 或 Local Partner 账户。 */
-    void checkNoOwnerAccounts(ManualAdjustment adjustment, List<InstructionLine> lines) {
+    /** 调整行引用的账户不得属于 Owner 控制科目。 */
+    void checkNoControlAccounts(ManualAdjustment adjustment, List<InstructionLine> lines) {
         List<Long> ids = lines.stream().map(InstructionLine::getAccountId).distinct().sorted().toList();
-        OwnerAccountAdjustmentRule.checkNoOwnerAccounts("调整 " + adjustment.getId(), ledgerAccountRepository.findByIds(ids));
+        List<LedgerAccount> accounts = ledgerAccountRepository.findByIds(ids);
+        List<Long> chartIds = accounts.stream().map(LedgerAccount::getChartAccountId).distinct().sorted().toList();
+        OwnerAccountAdjustmentRule.checkNoControlAccounts("调整 " + adjustment.getId(), accounts,
+            chartAccountRepository.findByIds(chartIds));
     }
 
     /** 读取调整，不存在时业务拒绝。 */

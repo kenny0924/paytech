@@ -9,11 +9,11 @@ import org.springframework.stereotype.Service;
 import com.paytech.account.api.constant.StandardAccountCodes;
 import com.paytech.account.api.enums.BalanceBucket;
 import com.paytech.account.api.enums.OwnerType;
-import com.paytech.account.core.dal.dataobject.AccountBalance;
-import com.paytech.account.domain.BookIdentity;
+import com.paytech.account.api.enums.AccountEntityType;
+import com.paytech.account.core.dal.dataobject.OwnerAccount;
 import com.paytech.account.domain.model.ClientBalance;
 import com.paytech.account.domain.model.PartnerBalance;
-import com.paytech.account.domainservice.repository.AccountBalanceRepository;
+import com.paytech.account.domainservice.repository.OwnerAccountRepository;
 import com.paytech.account.domainservice.service.BalanceQueryService;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.money.Money;
@@ -22,19 +22,22 @@ import lombok.AllArgsConstructor;
 
 /**
  * 查询 Owner 的分类余额
- * <li>读取 mor_account 自有余额（design/04 §6）；Owner 的全部余额由一条 SQL 读取，即一致快照，不加锁、不开事务。</li>
- * <li>余额身份漂移（同键重复或金额缺失）时 Fail-Closed，不返回可能错误的余额；账簿存在性由调用方事务外经 ledger-api 先行确认。</li>
+ * <li>只读 mor_account 的 Owner 账户（technique 2.2 BalanceQueryApi）；Owner 的全部账户由一条 SQL 读取，即一致快照，不加锁、不开事务。</li>
+ * <li>没有任何账户时返回空，由调用方拒绝；有账户但缺少某个桶时该金额为零。</li>
+ * <li>账户身份漂移（同键重复或金额缺失）时 Fail-Closed，不返回可能错误的余额。</li>
  */
 @Service
 @AllArgsConstructor
 public class BalanceQueryServiceImpl implements BalanceQueryService {
-    private final AccountBalanceRepository accountBalanceRepository;
+    private final OwnerAccountRepository ownerAccountRepository;
 
     /** 读取 Client 应付三桶、保证金和追偿应收。 */
     @Override
     public ClientBalance clientBalance(String clientId, String entityNo, String currency) {
-        Map<String, BigDecimal> balances = balances(BookIdentity.operatingEntity(entityNo, currency), OwnerType.CLIENT,
-            clientId);
+        Map<String, BigDecimal> balances = balances(entityNo, currency, OwnerType.CLIENT, clientId);
+        if (balances.isEmpty()) {
+            return null;
+        }
         ClientBalance balance = new ClientBalance();
         balance.setClientId(clientId);
         balance.setEntityNo(entityNo);
@@ -52,8 +55,10 @@ public class BalanceQueryServiceImpl implements BalanceQueryService {
     /** 读取 Partner 应付三桶和追偿应收。 */
     @Override
     public PartnerBalance partnerBalance(String partnerId, String entityNo, String currency) {
-        Map<String, BigDecimal> balances = balances(BookIdentity.operatingEntity(entityNo, currency),
-            OwnerType.LOCAL_PARTNER, partnerId);
+        Map<String, BigDecimal> balances = balances(entityNo, currency, OwnerType.LOCAL_PARTNER, partnerId);
+        if (balances.isEmpty()) {
+            return null;
+        }
         PartnerBalance balance = new PartnerBalance();
         balance.setPartnerId(partnerId);
         balance.setEntityNo(entityNo);
@@ -66,22 +71,23 @@ public class BalanceQueryServiceImpl implements BalanceQueryService {
         return balance;
     }
 
-    /** 读取 Owner 余额并以“科目代码/余额桶”为键汇总；同键重复或金额缺失时 Fail-Closed。 */
-    Map<String, BigDecimal> balances(BookIdentity book, OwnerType ownerType, String ownerId) {
+    /** 读取 Owner 账户并以“科目代码/余额桶”为键汇总；同键重复或金额缺失时 Fail-Closed。 */
+    Map<String, BigDecimal> balances(String entityNo, String currency, OwnerType ownerType, String ownerId) {
         Map<String, BigDecimal> result = new HashMap<>();
-        for (AccountBalance balance : accountBalanceRepository.findByOwner(book, ownerType, ownerId)) {
-            if (balance.getAccountCode() == null || balance.getNetBalance() == null) {
-                throw new ErrorException("余额账户不完整: " + balance.getId());
+        for (OwnerAccount account : ownerAccountRepository.findByOwner(AccountEntityType.OPERATING_ENTITY, entityNo,
+            currency, ownerType, ownerId)) {
+            if (account.getAccountCode() == null || account.getNetBalance() == null) {
+                throw new ErrorException("Owner 账户不完整: " + account.getId());
             }
-            String key = key(balance.getAccountCode(), balance.getBalanceBucket());
-            if (result.putIfAbsent(key, balance.getNetBalance()) != null) {
-                throw new ErrorException("余额账户不唯一: " + book + ", " + key);
+            String key = key(account.getAccountCode(), account.getBalanceBucket());
+            if (result.putIfAbsent(key, account.getNetBalance()) != null) {
+                throw new ErrorException("Owner 账户不唯一: " + entityNo + "/" + currency + ", " + key);
             }
         }
         return result;
     }
 
-    /** 读取指定科目与余额桶的金额，未建立余额时为零。 */
+    /** 读取指定科目与余额桶的金额，未开立该桶账户时为零。 */
     Money money(String currency, Map<String, BigDecimal> balances, String accountCode, BalanceBucket bucket) {
         return Money.of(currency, balances.getOrDefault(key(accountCode, bucket), BigDecimal.ZERO));
     }

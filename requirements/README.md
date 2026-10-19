@@ -56,6 +56,7 @@ requirements/
 
 | 登记目录 | 需求 | 主入口/Owner | 关联编号 | 材料 |
 |---|---|---|---|---|
+| `20261019` | account 明细账与 ledger 控制科目重构（含 Operations 财务页面适配） | account、ledger / billing 载荷、Foundation 事件目录、Operations BFF / Web、Platform 注册 | 按 2026-10-18 决定实施：account 入账批次 + `AccountPosted` 严格有序发布、桶移动与到期转可用、ledger 控制科目消费 account 并做两段关账检查、删除金额核对与 `PROJECTION_REBUILD`；控制台账户枚举 / 分录来源 / 余额错误适配并新增明细账查询页；阶段 1、2 评审稿待确认 | [需求](./20261019/finance-account明细账与ledger控制科目重构/requirement.md) · [技术方案](./20261019/finance-account明细账与ledger控制科目重构/technique.md) · [确认记录](./20261019/finance-account明细账与ledger控制科目重构/delivery.md) |
 | `20261018` | Operations 财务基础资料、账本与余额查询 | Operations Console / Operations BFF、ledger、account、Platform 注册 | Finance 第一批接入运营后台：财务主体 / 日历 / 期间 / 账簿 / 账户维护与开放期间、账本流水与分录查询、Client/Partner 余额查询；ledger 补齐只读列表接口；阶段 1 评审稿待确认 | [需求](./20261018/operations-console-财务基础资料与账本余额查询/requirement.md) · [确认记录](./20261018/operations-console-财务基础资料与账本余额查询/delivery.md) |
 | `20261018` | mor-test 切换到 V2：保留现有数据的部署与迁移 | test-environment / 全部 V2 服务 | 5 个旧库全部表按 V2 归属迁入新库（核对 150/150、4,210 行守恒），V2 镜像按序启动 29 个容器、登记核对与验收脚本 V2 化；阶段 1、2 已完成，阶段 2 待确认，阶段 3 清理未开始 | [需求](./20261018/test-environment-V2部署与数据迁移/requirement.md) · [确认记录](./20261018/test-environment-V2部署与数据迁移/delivery.md) |
 | `20261017` | Platform 邮件投递事件（Amazon SES） | Platform Delivery / Operations 发送账号与发送记录 | SES Configuration Set → SNS → SQS，Platform 拉取送达、退信、投诉事件更新发送记录；地址抑制依赖 SES 账户级列表；阶段 1 评审中 | [需求](./20261017/platform-support-SES投递事件/requirement.md) · [确认记录](./20261017/platform-support-SES投递事件/delivery.md) |

@@ -14,15 +14,15 @@ import com.paytech.account.test.dal.AccountTestMapper;
 import com.paytech.foundation.testsupport.api.Clear;
 
 /**
- * Account 自有库 mor_account 测试数据的基线检查与全局清理（design/10 §3.1 的 AccountDataCleaner，第 11b 步）
- * <li>清理范围等于测试 DDL 的 8 张表：五张余额表、t_consumed_event、t_consumed_aggregate_version 与 t_compensation_event；没有保留数据。</li>
- * <li>BeforeEach 只检查空基线，发现非测试遗留数据时失败而不删除；AfterEach 按依赖逆序删除，清理失败后环境标记为不可复用。</li>
+ * Account 自有库 mor_account 测试数据的基线检查与全局清理
+ * <li>清理范围等于测试 DDL 的 9 张表：六张明细账表、t_consumed_event、t_consumed_aggregate_version 与 t_compensation_event；没有保留数据。</li>
+ * <li>BeforeEach 只检查空基线，发现非测试遗留数据时失败而不删除；AfterEach 按引用逆序删除，清理失败后环境标记为不可复用。</li>
  */
 @TestComponent
 @Order(1)
 public class AccountDataCleaner implements Clear {
-    private static final List<String> TABLES = List.of("t_balance_discrepancy", "t_balance_movement",
-        "t_balance_applied_entry", "t_balance_applied_fact", "t_account_balance", "t_consumed_event",
+    private static final List<String> TABLES = List.of("t_account_entry", "t_balance_movement", "t_balance_applied_fact",
+        "t_account_posting", "t_account_posting_stream", "t_owner_account", "t_consumed_event",
         "t_consumed_aggregate_version", "t_compensation_event");
 
     private static boolean reusable = true;
@@ -42,7 +42,7 @@ public class AccountDataCleaner implements Clear {
             "测试开始前 " + row.get("t") + " 应为空；若是本地开发数据请先自行处理，测试不会删除它")));
     }
 
-    /** 按依赖逆序删除全部测试写入；任何失败都标记环境不可复用并上抛。 */
+    /** 按引用逆序删除全部测试写入；任何失败都标记环境不可复用并上抛。 */
     @Override
     public void clear() {
         try {
@@ -51,5 +51,15 @@ public class AccountDataCleaner implements Clear {
             reusable = false;
             throw e;
         }
+    }
+
+    /** 标记环境不可复用（异步写入未停止时）。 */
+    public void markUnusable() {
+        reusable = false;
+    }
+
+    /** 环境被标记不可复用时拒绝清理。 */
+    public void assertReusable() {
+        assertTrue(reusable, "测试环境不可复用：异步写入未停止或上一次清理失败");
     }
 }

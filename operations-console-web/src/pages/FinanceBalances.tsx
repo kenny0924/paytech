@@ -4,7 +4,7 @@ import { ApiError, session } from '../api/session';
 import { useErrorNotification } from '../feedback/useErrorNotification';
 import {
   activeOnly, balanceCards, balanceErrorTargets, balanceFieldName, balanceRequestPath, decimalIdPattern, decodeClientBalance,
-  decodePartnerBalance, entityNoPattern, financeErrorTarget,
+  decodePartnerBalance, entityNoPattern, financeErrorTarget, ownerAccountNotFoundMessage,
 } from '../finance/finance';
 import type { BalanceFormValues, ClientBalance, PartnerBalance } from '../finance/finance';
 import { Amount, FinanceNote } from '../finance/FinanceParts';
@@ -35,9 +35,10 @@ export function FinanceBalances({ onAuthorizationChanged }: { onAuthorizationCha
     } catch (error) {
       if (abort.signal.aborted) return;
       if (error instanceof ApiError && error.status === 403) onAuthorizationChanged();
-      const target = financeErrorTarget(error, ['entityNo'], balanceErrorTargets);
+      // OWNER_ACCOUNT_NOT_FOUND 挂在 Owner ID 并带上 Owner 类型与查询范围（画板 11）。
+      const target = financeErrorTarget(error, ['ownerId'], balanceErrorTargets);
       if (target?.field) {
-        form.setFields([{ name: target.field as keyof BalanceFormValues, errors: [target.message] }]);
+        form.setFields([{ name: target.field as keyof BalanceFormValues, errors: [ownerAccountNotFoundMessage(values)] }]);
         setOutcome({ kind: 'notFound' });
         return;
       }
@@ -75,7 +76,7 @@ function BalanceResult({ outcome, minorUnits }: { outcome: Outcome; minorUnits: 
   if (outcome.kind === 'idle' || outcome.kind === 'failed') return <div className="finance-empty"><Empty image={Empty.PRESENTED_IMAGE_SIMPLE}
     description="选择 Owner 类型并填写 Owner ID、entityNo 与币种后查询" /></div>;
   if (outcome.kind === 'notFound') return <div className="finance-empty"><Empty image={Empty.PRESENTED_IMAGE_SIMPLE}
-    description="未找到账簿，请确认 entityNo 与币种后重新查询" /></div>;
+    description="该 Owner 在此经营主体与币种下没有账户，请确认 Owner ID、entityNo 与币种后重新查询" /></div>;
   const { query, balance } = outcome;
   const minorUnit = minorUnits.get(balance.currency);
   return <>

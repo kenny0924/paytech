@@ -15,15 +15,17 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.paytech.account.api.enums.OwnerType;
+import com.paytech.account.api.enums.AccountEntityType;
+import com.paytech.account.api.event.AccountPostedPayload;
 import com.paytech.foundation.id.IdGenerator;
+import com.paytech.ledger.api.enums.LedgerOwnerType;
 import com.paytech.ledger.core.dal.dataobject.JournalEntry;
 import com.paytech.ledger.core.enums.JournalEntryType;
 import com.paytech.ledger.core.enums.LedgerEntityType;
 import com.paytech.ledger.core.enums.PeriodStatus;
 import com.paytech.ledger.test.base.AbstractPeriodCloseApiTest;
-import com.paytech.ledger.test.mocker.external.AccountConsistencyMocker;
-import com.paytech.ledger.test.mocker.external.BillingProgressMocker;
+import com.paytech.ledger.test.mocker.external.AccountPostingMocker;
+import com.paytech.ledger.test.mocker.external.EconomicFactMocker;
 import com.paytech.ledger.test.mocker.local.LedgerMocker;
 
 import tools.jackson.databind.JsonNode;
@@ -35,10 +37,13 @@ import tools.jackson.databind.JsonNode;
  */
 class StartPeriodCloseTest extends AbstractPeriodCloseApiTest {
     private static final List<String> STEP_TYPES = List.of("LOCK_SEQUENCE", "CHECK_ASYNC_AND_JOURNAL",
-        "RECONCILE_ACCOUNT_BALANCES", "GENERATE_TRIAL_BALANCE", "RESOLVE_EXCEPTIONS", "POST_PROFIT_CLOSE",
+        "CHECK_ACCOUNT_POSTING_PROGRESS", "GENERATE_TRIAL_BALANCE", "RESOLVE_EXCEPTIONS", "POST_PROFIT_CLOSE",
         "FINAL_TRIAL_BALANCE");
 
-    /** billing 账簿主体类型：经营主体。 */
+    /** 入账进度检查步骤。 */
+    private static final String STEP_3 = "CHECK_ACCOUNT_POSTING_PROGRESS";
+
+    /** billing / account 账簿主体类型：经营主体。 */
     private static final String OE = "OPERATING_ENTITY";
 
     @Autowired
@@ -59,7 +64,7 @@ class StartPeriodCloseTest extends AbstractPeriodCloseApiTest {
         assertEquals(null, response.text("failedStepType"));
         assertEquals(PeriodStatus.CLOSING.getCode(), testMapper.selectPeriodStatus(ledger.getOpenPeriodId()));
         Long resultAccountId = testMapper.selectAccountId(ledger.getLedgerBookId(), CURRENT_RESULT_CODE,
-            OwnerType.OPERATING_ENTITY.getCode(), ledger.getEntityNo());
+            LedgerOwnerType.OPERATING_ENTITY.getCode(), ledger.getEntityNo());
         assertNotNull(resultAccountId, "结转应自动创建账簿主体的本期损益账户");
         assertAll(() -> assertEquals(0, BigDecimal.ZERO.compareTo(testMapper.selectAccountNetBalance(revenueAccountId))),
             () -> assertEquals(0, BigDecimal.ZERO.compareTo(testMapper.selectAccountNetBalance(expenseAccountId))),
@@ -132,11 +137,12 @@ class StartPeriodCloseTest extends AbstractPeriodCloseApiTest {
         assertFailedAt("CHECK_ASYNC_AND_JOURNAL", "2");
     }
 
+    /** 银行现金余额非零不再阻断关账（原余额核对步骤已由入账进度检查替代）。 */
     @Test
-    void test_nonZeroCashBalanceFailsReconciliation() {
+    void test_nonZeroCashBalanceNoLongerBlocks() {
         postBankCash("10");
 
-        assertFailedAt("RECONCILE_ACCOUNT_BALANCES", "1");
+        startClose().assertSuccess(201).assertText("status", "PENDING_CHECK");
     }
 
     @Test
@@ -149,51 +155,61 @@ class StartPeriodCloseTest extends AbstractPeriodCloseApiTest {
         assertEquals(0, testMapper.countInstructions(ledger.getLedgerBookId(), "PERIOD_PROFIT_CLOSE"));
     }
 
-    /** 步骤 2（design/04 §6）：account 已处理的最大 factId 落后于 billing 已发布的最大 factId 时失败关闭；追平后可再次关账。 */
+    /** 步骤 3 段 ①：billing 仍有已批准未发布的事实时失败关闭。 */
     @Test
-    void test_accountBehindBillingFailsAsyncCheck() {
+    void test_billingUnpublishedFactsFail() {
         postRevenue("10");
-        billingProgress.mockProgress(OE, ledger.getEntityNo(), ledger.getCurrency(), 0, 9002L);
-        accountConsistency.mockConsistency(ledger.getLedgerBookId(), 9001L, 0, 0);
+        economicFacts.mockProgress(OE, ledger.getEntityNo(), ledger.getCurrency(), 1, 0, null);
 
-        assertFailedAt("CHECK_ASYNC_AND_JOURNAL", "1");
+        assertFailedAt(STEP_3, "1");
+    }
 
-        accountConsistency.mockConsistency(ledger.getLedgerBookId(), 9002L, 0, 0);
+    /** 步骤 3 段 ①：account 已应用事实数与 billing 已发布事实数不等（有事实被拒入死信）时失败关闭，即使最大 factId 相同。 */
+    @Test
+    void test_appliedCountMismatchFails() {
+        postRevenue("10");
+        economicFacts.mockProgress(OE, ledger.getEntityNo(), ledger.getCurrency(), 0, 2, 9002L);
+        accountPostings.mockProgress(OE, ledger.getEntityNo(), ledger.getCurrency(), 1, 9002L);
+
+        assertFailedAt(STEP_3, "1");
+    }
+
+    /** 步骤 3 段 ②：ledger 对某条过账流的已消费序号落后于 account 最大序号时失败关闭；追平后再次关账通过。 */
+    @Test
+    void test_ledgerBehindThenCaughtUp() {
+        postRevenue("10");
+        economicFacts.mockProgress(OE, ledger.getEntityNo(), ledger.getCurrency(), 0, 2, 9002L);
+        accountPostings.mockProgress(OE, ledger.getEntityNo(), ledger.getCurrency(), 2, 9002L,
+            new AccountPostingMocker.StreamProgress(OE, ledger.getEntityNo(), ledger.getCurrency(), 0, 5));
+        String stream = AccountPostedPayload.aggregateId(AccountEntityType.OPERATING_ENTITY, ledger.getEntityNo(),
+            ledger.getCurrency(), 0);
+        testMapper.insertConsumedVersion(AccountPostedPayload.AGGREGATE_TYPE, stream, 4);
+
+        assertFailedAt(STEP_3, "1");
+
+        testMapper.updateConsumedVersion(AccountPostedPayload.AGGREGATE_TYPE, stream, 5);
         startClose().assertSuccess(201).assertText("status", "PENDING_CHECK").assertText("closeNo", "2");
-        assertEquals(List.of(String.valueOf(ledger.getLedgerBookId()), String.valueOf(ledger.getLedgerBookId())),
-            accountConsistency.calls());
+        assertEquals(List.of(progressCall(), progressCall()), accountPostings.calls());
     }
 
-    /** 步骤 2：billing 仍有已批准未发布的事实时失败关闭。 */
-    @Test
-    void test_billingPendingFactsFailAsyncCheck() {
-        postRevenue("10");
-        billingProgress.mockProgress(OE, ledger.getEntityNo(), ledger.getCurrency(), 1, null);
-
-        assertFailedAt("CHECK_ASYNC_AND_JOURNAL", "1");
-    }
-
-    /** 步骤 2：billing 或 account 不可用时失败关闭，不按“无事实”放行。 */
+    /** 步骤 3：billing 或 account 不可用时失败关闭，不按“无事实”放行。 */
     @Test
     void test_dependencyUnavailableFailsClosed() {
         postRevenue("10");
-        billingProgress.mockFailure(OE, ledger.getEntityNo(), ledger.getCurrency(), BillingProgressMocker.unavailable());
+        economicFacts.mockProgressFailure(OE, ledger.getEntityNo(), ledger.getCurrency(), EconomicFactMocker.unavailable());
 
-        assertFailedAt("CHECK_ASYNC_AND_JOURNAL", "1");
+        assertFailedAt(STEP_3, "1");
 
-        billingProgress.mockProgress(OE, ledger.getEntityNo(), ledger.getCurrency(), 0, null);
-        accountConsistency.mockFailure(ledger.getLedgerBookId(), AccountConsistencyMocker.unavailable());
+        economicFacts.mockProgress(OE, ledger.getEntityNo(), ledger.getCurrency(), 0, 0, null);
+        accountPostings.mockProgressFailure(OE, ledger.getEntityNo(), ledger.getCurrency(),
+            AccountPostingMocker.unavailable());
 
-        assertFailedAt("CHECK_ASYNC_AND_JOURNAL", "2");
+        assertFailedAt(STEP_3, "2");
     }
 
-    /** 步骤 3：account 报告的非零渠道账户与本库分录一并核对，任一非零即失败关闭。 */
-    @Test
-    void test_accountNonZeroChannelAccountsFailReconciliation() {
-        postRevenue("10");
-        accountConsistency.mockConsistency(ledger.getLedgerBookId(), null, 1, 0);
-
-        assertFailedAt("RECONCILE_ACCOUNT_BALANCES", "1");
+    /** account 进度调用记录：本账簿主体。 */
+    String progressCall() {
+        return "progress:" + OE + "/" + ledger.getEntityNo() + "/" + ledger.getCurrency();
     }
 
     @Test

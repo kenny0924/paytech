@@ -7,19 +7,15 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 import com.paytech.billing.api.enums.AmountSource;
-import com.paytech.billing.api.enums.EconomicFactStatus;
 import com.paytech.billing.api.enums.EconomicsType;
 import com.paytech.billing.api.enums.FactLineDirection;
 import com.paytech.billing.api.enums.FactPartyRole;
 import com.paytech.billing.api.fact.EconomicFactLinePayload;
 import com.paytech.billing.api.fact.EconomicFactPayload;
-import com.paytech.billing.api.response.EconomicFactLineResponseBody;
-import com.paytech.billing.api.response.EconomicFactResponseBody;
 
 /**
  * 经济事实（EconomicFactRecorded Payload）的合法模板：交易事实（PAYMENT，明细行无付方 / 收方）与人工调整（MANUAL_ADJUSTMENT，明细行带付方 / 收方）
  * <li>只构造对象，不访问数据库；事实主键由用例分配，行号按追加顺序从 1 起。</li>
- * <li>{@link #responseBody()} 把同一事实转换为 billing 列表接口的 DTO，供重建场景的 DTO Mock 使用。</li>
  */
 public final class EconomicFactBuilder {
     private final EconomicFactPayload fact = new EconomicFactPayload();
@@ -87,6 +83,12 @@ public final class EconomicFactBuilder {
         return this;
     }
 
+    /** 应付余额到期转可用时间（PAYMENT 由 billing 计算）。 */
+    public EconomicFactBuilder balanceAvailableTime(Instant time) {
+        fact.setBalanceAvailableTime(time);
+        return this;
+    }
+
     /** 交易事实明细行：只有费用类型与金额（规则计算产生的行没有付方 / 收方）。 */
     public EconomicFactBuilder component(AmountSource feeType, String amount) {
         return line(feeType, null, null, null, null, null, amount);
@@ -116,53 +118,5 @@ public final class EconomicFactBuilder {
     /** 返回构造好的载荷。 */
     public EconomicFactPayload build() {
         return fact;
-    }
-
-    /** 同一事实的 billing 列表 DTO（状态 APPROVED；被替代的事实由用例改为 SUPERSEDED）。 */
-    public EconomicFactResponseBody responseBody() {
-        return responseBody(fact, EconomicFactStatus.APPROVED);
-    }
-
-    /** 把载荷转换为 billing 列表 DTO。 */
-    public static EconomicFactResponseBody responseBody(EconomicFactPayload fact, EconomicFactStatus status) {
-        EconomicFactResponseBody body = new EconomicFactResponseBody();
-        body.setFactId(fact.getFactId().toString());
-        body.setFactType(fact.getFactType());
-        body.setStatus(status.getCode());
-        body.setFactVersion(fact.getFactVersion().toString());
-        body.setSourceSystem(fact.getSourceSystem());
-        body.setSourceReference(fact.getSourceEventKey());
-        body.setContentHash(fact.getSourcePayloadHash());
-        body.setSupersedesFactId(text(fact.getSupersedesFactId()));
-        body.setClientId(text(fact.getClientId()));
-        body.setEntityNo(fact.getEntityNo());
-        body.setLocalPartnerId(text(fact.getLocalPartnerId()));
-        body.setPartnerAgreementOeId(text(fact.getPartnerAgreementOeId()));
-        body.setFinanceEntityId(text(fact.getFinanceEntityId()));
-        body.setCurrency(fact.getCurrency());
-        body.setGrossAmount(fact.getGrossAmount().toPlainString());
-        body.setChannelAccountId(text(fact.getChannelAccountId()));
-        body.setApprovedTime(fact.getRecordedTime());
-        body.setLines(fact.getLines().stream().map(EconomicFactBuilder::lineBody).toList());
-        return body;
-    }
-
-    /** 明细行 DTO。 */
-    static EconomicFactLineResponseBody lineBody(EconomicFactLinePayload line) {
-        EconomicFactLineResponseBody body = new EconomicFactLineResponseBody();
-        body.setLineNo(line.getLineNo().toString());
-        body.setFeeTypeCode(line.getComponentType());
-        body.setPayerRole(line.getPayerRole());
-        body.setPayerId(line.getPayerId());
-        body.setPayeeRole(line.getPayeeRole());
-        body.setPayeeId(line.getPayeeId());
-        body.setAmount(line.getPostedAmount().toPlainString());
-        body.setDirection(line.getDirection());
-        return body;
-    }
-
-    /** 可空数值文本。 */
-    static String text(Long value) {
-        return value == null ? null : value.toString();
     }
 }

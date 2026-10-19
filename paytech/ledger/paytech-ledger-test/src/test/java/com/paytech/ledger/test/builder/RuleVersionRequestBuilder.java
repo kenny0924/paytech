@@ -6,9 +6,9 @@ import java.util.List;
 
 import com.paytech.account.api.constant.StandardAccountCodes;
 import com.paytech.account.api.enums.BalanceBucket;
-import com.paytech.account.api.enums.OwnerRole;
 import com.paytech.billing.api.enums.AmountSource;
 import com.paytech.billing.api.enums.AutoInstructionType;
+import com.paytech.ledger.api.enums.RuleOwnerRole;
 import com.paytech.ledger.api.request.CreateRuleVersionRequestBody;
 import com.paytech.ledger.api.request.RuleLineRequestBody;
 import com.paytech.ledger.core.enums.EntrySide;
@@ -62,42 +62,38 @@ public final class RuleVersionRequestBuilder {
         return builder;
     }
 
-    /** 初始化 DML 版本 5101 的 12 条规则行，按指令类型、行号排序。 */
+    /** 初始化 DML 版本 5101 的 10 条规则行（Owner 行 2、8 已删除），按指令类型、行号排序。 */
     public static List<RuleLineRequestBody> standardLines() {
         AutoInstructionType payment = AutoInstructionType.PAYMENT_SUCCEEDED;
         AutoInstructionType partner = AutoInstructionType.PLATFORM_SERVICE_CHARGE_PARTNER;
         AutoInstructionType platform = AutoInstructionType.PLATFORM_SERVICE_CHARGE_PLATFORM;
         return List.of(
-            line(payment, 1, "GROSS_RECEIVABLE", AmountSource.GROSS_AMOUNT, OwnerRole.CHANNEL_ACCOUNT,
+            line(payment, 1, "GROSS_RECEIVABLE", AmountSource.GROSS_AMOUNT, RuleOwnerRole.CHANNEL_ACCOUNT,
                 CHANNEL_UNSETTLED_RECEIVABLE, BalanceBucket.NONE, EntrySide.DEBIT, true),
-            line(payment, 2, "CLIENT_PRINCIPAL_PAYABLE", AmountSource.CLIENT_PRINCIPAL, OwnerRole.CLIENT,
-                StandardAccountCodes.CLIENT_PAYABLE, BalanceBucket.PENDING, EntrySide.CREDIT, true),
-            line(payment, 3, "CLIENT_FEE_REVENUE", AmountSource.CLIENT_FEE, OwnerRole.BOOK_ENTITY,
+            line(payment, 3, "CLIENT_FEE_REVENUE", AmountSource.CLIENT_FEE, RuleOwnerRole.BOOK_ENTITY,
                 CLIENT_FEE_REVENUE, BalanceBucket.NONE, EntrySide.CREDIT, true),
-            line(payment, 4, "SELLER_TAX_PAYABLE", AmountSource.SELLER_TAX, OwnerRole.TAX_AUTHORITY, TAX_PAYABLE,
+            line(payment, 4, "SELLER_TAX_PAYABLE", AmountSource.SELLER_TAX, RuleOwnerRole.TAX_AUTHORITY, TAX_PAYABLE,
                 BalanceBucket.NONE, EntrySide.CREDIT, false),
-            line(payment, 5, "CHANNEL_COST_EXPENSE", AmountSource.CHANNEL_COST, OwnerRole.BOOK_ENTITY,
+            line(payment, 5, "CHANNEL_COST_EXPENSE", AmountSource.CHANNEL_COST, RuleOwnerRole.BOOK_ENTITY,
                 CHANNEL_FEE_EXPENSE, BalanceBucket.NONE, EntrySide.DEBIT, false),
-            line(payment, 6, "CHANNEL_COST_ACCRUAL", AmountSource.CHANNEL_COST, OwnerRole.CHANNEL_ACCOUNT,
+            line(payment, 6, "CHANNEL_COST_ACCRUAL", AmountSource.CHANNEL_COST, RuleOwnerRole.CHANNEL_ACCOUNT,
                 CHANNEL_FEE_ACCRUAL, BalanceBucket.NONE, EntrySide.CREDIT, false),
-            line(payment, 7, "PARTNER_SHARE_EXPENSE", AmountSource.PARTNER_SHARE, OwnerRole.BOOK_ENTITY,
+            line(payment, 7, "PARTNER_SHARE_EXPENSE", AmountSource.PARTNER_SHARE, RuleOwnerRole.BOOK_ENTITY,
                 PARTNER_SHARE_EXPENSE, BalanceBucket.NONE, EntrySide.DEBIT, false),
-            line(payment, 8, "PARTNER_SHARE_PAYABLE", AmountSource.PARTNER_SHARE, OwnerRole.LOCAL_PARTNER,
-                StandardAccountCodes.PARTNER_PAYABLE, BalanceBucket.PENDING, EntrySide.CREDIT, false),
-            line(partner, 1, "SERVICE_FEE_EXPENSE", AmountSource.PLATFORM_SERVICE_CHARGE, OwnerRole.BOOK_ENTITY,
+            line(partner, 1, "SERVICE_FEE_EXPENSE", AmountSource.PLATFORM_SERVICE_CHARGE, RuleOwnerRole.BOOK_ENTITY,
                 PLATFORM_SERVICE_FEE_EXPENSE, BalanceBucket.NONE, EntrySide.DEBIT, false),
             line(partner, 2, "SERVICE_PAYABLE", AmountSource.PLATFORM_SERVICE_CHARGE,
-                OwnerRole.PLATFORM_FINANCE_ENTITY, PLATFORM_SERVICE_PAYABLE, BalanceBucket.NONE, EntrySide.CREDIT,
+                RuleOwnerRole.PLATFORM_FINANCE_ENTITY, PLATFORM_SERVICE_PAYABLE, BalanceBucket.NONE, EntrySide.CREDIT,
                 false),
-            line(platform, 1, "SERVICE_RECEIVABLE", AmountSource.PLATFORM_SERVICE_CHARGE, OwnerRole.TRANSACTION_OE,
+            line(platform, 1, "SERVICE_RECEIVABLE", AmountSource.PLATFORM_SERVICE_CHARGE, RuleOwnerRole.TRANSACTION_OE,
                 PLATFORM_SERVICE_RECEIVABLE, BalanceBucket.NONE, EntrySide.DEBIT, false),
-            line(platform, 2, "SERVICE_REVENUE", AmountSource.PLATFORM_SERVICE_CHARGE, OwnerRole.BOOK_ENTITY,
+            line(platform, 2, "SERVICE_REVENUE", AmountSource.PLATFORM_SERVICE_CHARGE, RuleOwnerRole.BOOK_ENTITY,
                 PLATFORM_SERVICE_REVENUE, BalanceBucket.NONE, EntrySide.CREDIT, false));
     }
 
     /** 以枚举构造一条规则行。 */
     public static RuleLineRequestBody line(AutoInstructionType instructionType, int lineNo, String lineCode,
-        AmountSource amountSource, OwnerRole ownerRole, String accountCode, BalanceBucket bucket, EntrySide entrySide,
+        AmountSource amountSource, RuleOwnerRole ownerRole, String accountCode, BalanceBucket bucket, EntrySide entrySide,
         boolean required) {
         RuleLineRequestBody line = new RuleLineRequestBody();
         line.setInstructionType(instructionType.getCode());

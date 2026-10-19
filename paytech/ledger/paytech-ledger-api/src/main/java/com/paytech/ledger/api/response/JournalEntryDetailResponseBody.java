@@ -40,7 +40,10 @@ public class JournalEntryDetailResponseBody {
     /** 来源指令类型。 */
     private String instructionType;
 
-    /** 指令来源：AUTO 或 MANUAL。 */
+    /**
+     * 指令来源
+     * <li>AUTO、MANUAL 或 ACCOUNT_POSTING（消费 account 过账批次生成）。</li>
+     */
     private String originType;
 
     /**
@@ -66,6 +69,18 @@ public class JournalEntryDetailResponseBody {
      * <li>自动指令为空。</li>
      */
     private String adjustmentNo;
+
+    /**
+     * account 过账批次主键，十进制字符串
+     * <li>仅 originType = ACCOUNT_POSTING 时非空。</li>
+     */
+    private String accountPostingId;
+
+    /**
+     * account 过账批次在其过账流内的序号，十进制字符串
+     * <li>仅 originType = ACCOUNT_POSTING 时非空。</li>
+     */
+    private String accountPostingSequence;
 
     /** 按行号升序的全部分录行。 */
     private List<Line> lines;
@@ -97,5 +112,11 @@ public class JournalEntryDetailResponseBody {
 
         /** 金额，主货币单位，按账簿币种精度补齐。 */
         private String amount;
+
+        /**
+         * 来源 account 明细流水主键，十进制字符串
+         * <li>由 account 流水生成的控制科目行非空；规则行、人工行为空。</li>
+         */
+        private String accountEntryId;
     }
 }

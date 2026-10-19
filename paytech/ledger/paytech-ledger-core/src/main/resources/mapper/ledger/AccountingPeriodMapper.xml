@@ -29,6 +29,13 @@
         SELECT id, calendar_id, fiscal_year, period_no, start_date, end_date, status, reopen_count, version, create_time, update_time FROM t_accounting_period WHERE id = #{id} FOR UPDATE
     </select>
 
+    <select id="selectFirstUnclosedAfter" resultType="com.paytech.ledger.core.dal.dataobject.AccountingPeriod">
+        SELECT id, calendar_id, fiscal_year, period_no, start_date, end_date, status, reopen_count, version, create_time, update_time FROM t_accounting_period
+        WHERE calendar_id = #{calendarId} AND start_date &gt; #{endDate} AND status &lt;&gt; 'CLOSED'
+        ORDER BY start_date
+        LIMIT 1
+    </select>
+
     <select id="selectFirstUnclosedBefore" resultType="com.paytech.ledger.core.dal.dataobject.AccountingPeriod">
         SELECT id, calendar_id, fiscal_year, period_no, start_date, end_date, status, reopen_count, version, create_time, update_time FROM t_accounting_period
         WHERE calendar_id = #{calendarId} AND end_date &lt; #{startDate} AND status &lt;&gt; 'CLOSED'

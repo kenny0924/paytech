@@ -73,6 +73,12 @@ public class EconomicFactResponseBody {
     /** 批准时间（UTC）；未批准为空 */
     private Instant approvedTime;
 
+    /**
+     * 支付成功时间（UTC）
+     * <li>仅 PAYMENT，其余为空。</li>
+     */
+    private Instant paymentSucceededTime;
+
     /** EconomicFactRecorded 发布确认时间（UTC）；未发布为空 */
     private Instant publishedAt;
 

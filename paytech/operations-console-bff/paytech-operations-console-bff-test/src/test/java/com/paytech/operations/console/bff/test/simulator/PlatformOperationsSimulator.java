@@ -176,7 +176,10 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
         Map.entry("operations-finance-chart-account-list", FINANCE_READ_PERMISSION_ID),
         Map.entry("operations-finance-currency-list", FINANCE_READ_PERMISSION_ID),
         Map.entry("operations-finance-client-balance", FINANCE_READ_PERMISSION_ID),
-        Map.entry("operations-finance-partner-balance", FINANCE_READ_PERMISSION_ID));
+        Map.entry("operations-finance-partner-balance", FINANCE_READ_PERMISSION_ID),
+        Map.entry("operations-finance-owner-accounts", FINANCE_READ_PERMISSION_ID),
+        Map.entry("operations-finance-owner-account-entries", FINANCE_READ_PERMISSION_ID),
+        Map.entry("operations-finance-account-posting", FINANCE_READ_PERMISSION_ID));
 
     // 这是 Platform Simulator 的当前目录事实；BFF 生产代码仍只传可信 Route Code。
     private static final Map<String, String> ROUTE_PERMISSIONS = Map.ofEntries(

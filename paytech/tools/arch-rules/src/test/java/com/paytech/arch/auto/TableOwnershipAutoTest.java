@@ -22,8 +22,8 @@ class TableOwnershipAutoTest {
     @Test
     void test_normalFlow() {
         // design/03 §4.2：17 个目标库共 265 张物理表；另加保留服务 platform-support 自身 Schema 的 56 张表。
-        Assertions.assertEquals(265 + 56 + 1 + 5, ownership.physicalTableCount(),
-            "design 03 + Platform 保留表 + 第 12 步 t_card_material_ticket + 第 11b 步 account 五张余额表");
+        Assertions.assertEquals(265 + 56 + 1 + 6, ownership.physicalTableCount(),
+            "design 03 + Platform 保留表 + 第 12 步 t_card_material_ticket + account 明细账六张业务表（2026-10-19 重构）");
         Assertions.assertEquals(57, ownership.databasesOf("platform-support").get("mor_platform").size());
         Assertions.assertEquals(29, ownership.databasesOf("ledger").get("mor_ledger").size());
         Assertions.assertEquals(Set.of("mor_platform"), ownership.databasesOf("platform-support").keySet());
@@ -48,8 +48,9 @@ class TableOwnershipAutoTest {
         Assertions.assertTrue(ownership.allowedTables("ledger").contains("t_ledger_account"));
         Assertions.assertTrue(ownership.services().stream()
             .noneMatch(service -> ownership.allowedTables(service).contains("t_account")));
-        Assertions.assertEquals(Set.of("t_account_balance", "t_balance_applied_fact", "t_balance_applied_entry",
-            "t_balance_movement", "t_balance_discrepancy", "t_compensation_event"),
+        // 2026-10-19 明细账重构：account 为 Owner 明细账，删除 t_account_balance、t_balance_applied_entry、t_balance_discrepancy。
+        Assertions.assertEquals(Set.of("t_owner_account", "t_account_posting_stream", "t_account_posting",
+            "t_account_entry", "t_balance_applied_fact", "t_balance_movement", "t_compensation_event"),
             ownership.databasesOf("account").get("mor_account"));
         Assertions.assertFalse(ownership.allowedTables("account").contains("t_chart_account"));
         Assertions.assertTrue(ownership.transitionalReadsOf("account").isEmpty());

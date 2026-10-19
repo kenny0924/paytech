@@ -69,7 +69,7 @@ class EconomicFactQueryTest extends AbstractEconomicFactApiTest {
         list(EconomicFactBookScope.OPERATING_ENTITY, ENTITY_NO, null, "501").assertInvalidRequest();
     }
 
-    /** 发布进度：已批准未发布的事实计入 pending 与最大未发布 ID，已发布事实给出最大已发布 ID；DRAFT 不计入。 */
+    /** 发布进度：已批准未发布的事实计入 pending 与最大未发布 ID，已发布（含已被替代）事实计入已发布数并给出最大已发布 ID；DRAFT 不计入。 */
     @Test
     void test_pendingProgress() {
         long published = submitApprovedAndPublished(EconomicFactRequestBuilder.template());
@@ -83,9 +83,11 @@ class EconomicFactQueryTest extends AbstractEconomicFactApiTest {
 
         pending(EconomicFactBookScope.OPERATING_ENTITY, ENTITY_NO).assertSuccess(200).assertText("pendingCount", "1")
             .assertText("maxPendingFactId", Long.toString(unpublished))
+            .assertText("publishedFactCount", "2")
             .assertText("maxPublishedFactId", Long.toString(unpublished + 1));
         pending(EconomicFactBookScope.FINANCE_ENTITY, FINANCE_ENTITY_ID).assertSuccess(200)
-            .assertText("pendingCount", "0").assertText("maxPendingFactId", null).assertText("maxPublishedFactId", null);
+            .assertText("pendingCount", "0").assertText("maxPendingFactId", null).assertText("publishedFactCount", "0")
+            .assertText("maxPublishedFactId", null);
     }
 
     /** 读取一页。 */

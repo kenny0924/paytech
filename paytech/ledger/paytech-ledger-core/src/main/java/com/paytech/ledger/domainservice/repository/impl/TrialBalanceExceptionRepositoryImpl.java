@@ -1,16 +1,11 @@
 package com.paytech.ledger.domainservice.repository.impl;
 
-import java.time.Clock;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
-import com.paytech.foundation.common.error.ConcurrentRequestException;
 import com.paytech.ledger.core.dal.dataobject.TrialBalanceException;
 import com.paytech.ledger.core.dal.mapper.TrialBalanceExceptionMapper;
-import com.paytech.ledger.core.enums.TrialExceptionStatus;
 import com.paytech.ledger.domain.view.TrialBalanceFindingView;
 import com.paytech.ledger.domainservice.repository.TrialBalanceExceptionRepository;
 
@@ -20,7 +15,6 @@ import lombok.AllArgsConstructor;
 @Repository
 @AllArgsConstructor
 public class TrialBalanceExceptionRepositoryImpl implements TrialBalanceExceptionRepository {
-    private final Clock clock;
     private final TrialBalanceExceptionMapper mapper;
 
     /** 批量插入异常；空列表不访问数据库。 */
@@ -37,26 +31,9 @@ public class TrialBalanceExceptionRepositoryImpl implements TrialBalanceExceptio
         return mapper.selectViews(runId);
     }
 
-    /** 按主键读取异常，不存在返回空。 */
-    @Override
-    public TrialBalanceException findById(long id) {
-        return mapper.selectById(id);
-    }
-
     /** 统计一次试算中仍为 OPEN 或 UNDER_REVIEW 的异常。 */
     @Override
     public long countUnresolvedByRun(long runId) {
         return mapper.countUnresolvedByRun(runId);
-    }
-
-    /** 以原状态为条件写入解决字段并迁移状态，成功后同步原对象。 */
-    @Override
-    public void updateResolution(TrialBalanceException exception, TrialExceptionStatus status) {
-        Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
-        if (mapper.updateResolution(exception, status, now) != 1) {
-            throw new ConcurrentRequestException("试算异常状态已变化: " + exception.getId());
-        }
-        exception.setStatus(status);
-        exception.setUpdateTime(now);
     }
 }

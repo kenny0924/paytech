@@ -3,7 +3,7 @@ package com.paytech.ledger.app.ext.rest.converter;
 import org.springframework.stereotype.Component;
 
 import com.paytech.account.api.enums.BalanceBucket;
-import com.paytech.account.api.enums.OwnerType;
+import com.paytech.ledger.api.enums.LedgerOwnerType;
 import com.paytech.ledger.api.request.CreateAccountRequestBody;
 import com.paytech.ledger.api.request.CreateAccountingPeriodRequestBody;
 import com.paytech.ledger.api.request.CreateFinanceEntityRequestBody;
@@ -46,7 +46,7 @@ public class LedgerSetupConverter {
         CreateAccountRequest request = new CreateAccountRequest();
         request.setLedgerBookId(Long.valueOf(ledgerBookId));
         request.setAccountCode(body.getAccountCode());
-        request.setOwnerType(CodeEnumConverter.parse(OwnerType.class, body.getOwnerType()));
+        request.setOwnerType(CodeEnumConverter.parse(LedgerOwnerType.class, body.getOwnerType()));
         request.setOwnerId(body.getOwnerId());
         request.setBalanceBucket(CodeEnumConverter.parse(BalanceBucket.class, body.getBalanceBucket()));
         return request;

@@ -24,7 +24,7 @@ spring:
       password: "${LEDGER_REDIS_PASSWORD:}"
       connect-timeout: 2s
       timeout: 2s
-  # EconomicFactRecorded 消费（design/04 §5）：ledger 只消费，不发布，因此不要求 Publisher Confirm。
+  # AccountPosted 消费（技术方案 2.1）：ledger 只消费，不发布，因此不要求 Publisher Confirm。
   rabbitmq:
     host: "${LEDGER_RABBITMQ_HOST:127.0.0.1}"
     port: "${LEDGER_RABBITMQ_PORT:5672}"
@@ -32,7 +32,8 @@ spring:
     password: "${LEDGER_RABBITMQ_PASSWORD:}"
     virtual-host: "${LEDGER_RABBITMQ_VHOST:/mor-local}"
     connection-timeout: 2s
-  # 关账步骤 2、3 的内部 HTTP 客户端（design/04 §6）：JDK HttpClient 不自动重试；Finance 后继服务不接服务发现，基址直接配置。
+  # 内部 HTTP 客户端：account 过账进度与批次（关账步骤 3、过账流追平），billing 经济事实与发布进度（AccountPosted 消费读事实、关账步骤 3）。
+  # JDK HttpClient 不自动重试；Finance 后继服务不接服务发现，基址直接配置。
   http:
     clients:
       imperative:
@@ -57,12 +58,13 @@ redis:
   coordination:
     enabled: true
 
-# paytech-messaging 消费端：按 Handler 声明 ledger.billing.hash 与分区队列 ledger.billing.p0..p3（design/08 §3）。
+# paytech-messaging 消费端：按 Handler 声明 ledger.account.hash 与分区队列 ledger.account.p0..p3（design/08 §3）；
+# AccountPosted 按过账流严格有序（strictOrder），死信 ledger.account.dlq 的恢复路径是 POST /posting-streams/v1/catch-up。
 messaging:
   consumer:
     service: ledger
   consumers:
-    billing:
+    account:
       partitions: 4
 
 management:

@@ -20,6 +20,8 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -73,6 +75,19 @@ class OperationsAccountUnavailableAutoTest {
     void test_connectionRefusedReturnsSafe503() throws Exception {
         var response = send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/finance/balances/v1/clients/880000000000071001?entityNo=AE001&currency=USD"))
             .header("X-Gateway-Route-Code", "operations-finance-client-balance").GET());
+
+        assertUnavailable(response);
+    }
+
+    /** 明细账三个路由同样只经一次 PLT-I02 后返回 503，不重试。 */
+    @ParameterizedTest
+    @CsvSource({
+        "/finance/owner-accounts/v1?entityType=OPERATING_ENTITY&entityId=AE001&currency=USD,operations-finance-owner-accounts",
+        "/finance/owner-accounts/v1/7400000000000001/entries?page=1&size=20,operations-finance-owner-account-entries",
+        "/finance/account-postings/v1/7300000000000018,operations-finance-account-posting"})
+    void test_subledgerConnectionRefusedReturnsSafe503(String path, String routeCode) throws Exception {
+        var response = send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + path))
+            .header("X-Gateway-Route-Code", routeCode).GET());
 
         assertUnavailable(response);
     }

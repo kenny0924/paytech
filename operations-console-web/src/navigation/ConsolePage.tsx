@@ -41,6 +41,7 @@ const pages: Record<PageComponentKey, ComponentType<PageProps>> = {
   OPERATIONS_FINANCE_SETUP: lazy(() => import('../pages/FinanceSetup').then(m => ({ default: m.FinanceSetup }))),
   OPERATIONS_FINANCE_LEDGER: lazy(() => import('../pages/FinanceLedger').then(m => ({ default: m.FinanceLedger }))),
   OPERATIONS_FINANCE_BALANCES: lazy(() => import('../pages/FinanceBalances').then(m => ({ default: m.FinanceBalances }))),
+  OPERATIONS_FINANCE_SUBLEDGER: lazy(() => import('../pages/FinanceSubledger').then(m => ({ default: m.FinanceSubledger }))),
 };
 export function ConsolePage({ componentKey, ...props }: PageProps & { componentKey: string }) {
   const Page = pages[componentKey as PageComponentKey];

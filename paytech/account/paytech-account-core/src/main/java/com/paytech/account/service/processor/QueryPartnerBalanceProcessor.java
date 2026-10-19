@@ -5,7 +5,6 @@ import org.springframework.stereotype.Component;
 import com.paytech.account.api.enums.BalanceQueryErrorCode;
 import com.paytech.account.domain.model.PartnerBalance;
 import com.paytech.account.domainservice.service.BalanceQueryService;
-import com.paytech.account.integration.ledger.LedgerBookClient;
 import com.paytech.account.service.processor.request.OwnerBalanceQuery;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.money.Money;
@@ -14,13 +13,12 @@ import com.paytech.foundation.processor.AbstractProcessor;
 import lombok.AllArgsConstructor;
 
 /**
- * 查询 Local Partner 在经营主体币种账簿下的分类余额（FIN-I02）
- * <li>先经 ledger-api 确认经营主体币种账簿存在（ledger 不可用时失败关闭，design/04 §6），再读本服务余额；未建立的余额按零返回。</li>
+ * 查询 Local Partner 在经营主体与币种下的分类余额（FIN-I02）
+ * <li>只读本库 Owner 账户，不调用 ledger：该 Owner 在此 OE 与币种下没有任何账户时 OWNER_ACCOUNT_NOT_FOUND，有账户但缺少某个桶时该金额为零。</li>
  */
 @Component
 @AllArgsConstructor
 public class QueryPartnerBalanceProcessor extends AbstractProcessor<OwnerBalanceQuery, PartnerBalance> {
-    private final LedgerBookClient ledgerBookClient;
     private final BalanceQueryService balanceQueryService;
 
     @Override
@@ -30,9 +28,11 @@ public class QueryPartnerBalanceProcessor extends AbstractProcessor<OwnerBalance
 
     @Override
     protected PartnerBalance processRequest(OwnerBalanceQuery request) {
-        if (ledgerBookClient.findOperatingEntityBook(request.getEntityNo(), request.getCurrency()) == null) {
-            throw new FailException(BalanceQueryErrorCode.LEDGER_BOOK_NOT_FOUND);
+        PartnerBalance balance = balanceQueryService.partnerBalance(request.getOwnerId(), request.getEntityNo(),
+            request.getCurrency());
+        if (balance == null) {
+            throw new FailException(BalanceQueryErrorCode.OWNER_ACCOUNT_NOT_FOUND);
         }
-        return balanceQueryService.partnerBalance(request.getOwnerId(), request.getEntityNo(), request.getCurrency());
+        return balance;
     }
 }

@@ -44,7 +44,7 @@
     "id": "R10",
     "method": "GET",
     "path": "/finance/ledger-books/v1/7312345678901239001/accounts",
-    "query": "?accountCode=CLIENT_PAYABLE&ownerType=CLIENT&ownerId=880000000000071001&balanceBucket=AVAILABLE&page=1&size=10",
+    "query": "?accountCode=CLIENT_PAYABLE&ownerType=OPERATING_ENTITY&ownerId=AE001&balanceBucket=NONE&page=1&size=10",
     "request": null,
     "status": 200,
     "response": {
@@ -52,15 +52,15 @@
         {
           "accountId": "7312345678901240001",
           "accountCode": "CLIENT_PAYABLE",
-          "ownerType": "CLIENT",
-          "ownerId": "880000000000071001",
-          "balanceBucket": "AVAILABLE",
+          "ownerType": "OPERATING_ENTITY",
+          "ownerId": "AE001",
+          "balanceBucket": "NONE",
           "normalSide": "CREDIT",
           "accountStatus": "ACTIVE",
-          "debitTotal": "20.00",
-          "creditTotal": "120.50",
-          "netBalance": "100.50",
-          "lastJournalSequence": "42"
+          "debitTotal": "0.00",
+          "creditTotal": "1970.00",
+          "netBalance": "1970.00",
+          "lastJournalSequence": "1024"
         }
       ],
       "page": 1,
@@ -75,10 +75,10 @@
     "path": "/finance/ledger-books/v1/7312345678901239001/accounts",
     "query": "",
     "request": {
-      "accountCode": "CLIENT_PAYABLE",
-      "ownerType": "CLIENT",
-      "ownerId": "880000000000071001",
-      "balanceBucket": "PENDING"
+      "accountCode": "CHANNEL_UNSETTLED_RECEIVABLE",
+      "ownerType": "CHANNEL_ACCOUNT",
+      "ownerId": "9001",
+      "balanceBucket": "NONE"
     },
     "status": 201,
     "response": {
@@ -104,11 +104,13 @@
           "entrySide": "CREDIT",
           "amount": "120.50",
           "balanceAfter": "120.50",
-          "instructionType": "PAYMENT_CAPTURED",
-          "originType": "AUTO",
-          "sourceSystem": "PAYMENT",
-          "sourceEventKey": "capture-7001",
-          "adjustmentNo": null
+          "instructionType": "PAYMENT_SUCCEEDED",
+          "originType": "ACCOUNT_POSTING",
+          "sourceSystem": "account",
+          "sourceEventKey": "7318802201114002018",
+          "adjustmentNo": null,
+          "accountPostingId": "7318802201114002018",
+          "accountPostingSequence": "18"
         },
         {
           "journalEntryId": "7312345678901241002",
@@ -123,7 +125,9 @@
           "originType": "MANUAL",
           "sourceSystem": null,
           "sourceEventKey": null,
-          "adjustmentNo": "ADJ-20261018-0001"
+          "adjustmentNo": "ADJ-20261018-0001",
+          "accountPostingId": null,
+          "accountPostingSequence": null
         }
       ],
       "page": 1,
@@ -148,32 +152,36 @@
       "entryType": "NORMAL",
       "reversalOfEntryId": null,
       "instructionId": "7312345678901242001",
-      "instructionType": "PAYMENT_CAPTURED",
-      "originType": "AUTO",
-      "sourceSystem": "PAYMENT",
-      "sourceEventKey": "capture-7001",
+      "instructionType": "PAYMENT_SUCCEEDED",
+      "originType": "ACCOUNT_POSTING",
+      "sourceSystem": "account",
+      "sourceEventKey": "7318802201114002018",
       "manualAdjustmentId": null,
       "adjustmentNo": null,
+      "accountPostingId": "7318802201114002018",
+      "accountPostingSequence": "18",
       "lines": [
         {
           "lineNo": 1,
           "accountId": "7312345678901240009",
-          "accountCode": "CHANNEL_RECEIVABLE",
+          "accountCode": "CHANNEL_UNSETTLED_RECEIVABLE",
           "ownerType": "CHANNEL_ACCOUNT",
-          "ownerId": "880000000000081001",
+          "ownerId": "9001",
           "balanceBucket": "NONE",
           "entrySide": "DEBIT",
-          "amount": "120.50"
+          "amount": "120.50",
+          "accountEntryId": null
         },
         {
           "lineNo": 2,
           "accountId": "7312345678901240001",
           "accountCode": "CLIENT_PAYABLE",
-          "ownerType": "CLIENT",
-          "ownerId": "880000000000071001",
-          "balanceBucket": "AVAILABLE",
+          "ownerType": "OPERATING_ENTITY",
+          "ownerId": "AE001",
+          "balanceBucket": "NONE",
           "entrySide": "CREDIT",
-          "amount": "120.50"
+          "amount": "120.50",
+          "accountEntryId": "7400000000000001"
         }
       ]
     },

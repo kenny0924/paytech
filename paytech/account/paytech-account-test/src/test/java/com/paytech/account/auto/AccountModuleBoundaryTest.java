@@ -15,11 +15,10 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
 /**
- * 在默认 Maven 测试中保护 account-service 的模块集合、依赖清单与已批准的基础设施范围（Snowflake、MyBatis、paytech-messaging 消费端、
- * paytech-compensation-event 与内部 HTTP 客户端）
+ * 在默认 Maven 测试中保护 account-service 的模块集合、依赖清单与已批准的基础设施范围（Snowflake、MyBatis、paytech-messaging 消费与发布端、
+ * paytech-compensation-event）；2026-10-19 起 core 不依赖 ledger-api，app 不再有出站 HTTP 客户端
  * <li>由 FinanceModuleBoundaryTest 按服务拆分（design/09 §2.7）；跨服务依赖图规则由 ArchitectureAutoTest（R1–R12）检查。</li>
- * <li>第 11b 步起 account 消费 EconomicFactRecorded：RabbitTemplate 必须在 classpath（09 §2.7 对 account 取消“不在 classpath”断言）；
- * 不使用资源锁，Redisson 仍不得引入。</li>
+ * <li>account 消费 EconomicFactRecorded 并发布 AccountPosted：RabbitTemplate 必须在 classpath；不使用资源锁，Redisson 仍不得引入。</li>
  *
  * @see com.paytech.account.AccountApplication
  */
@@ -35,8 +34,8 @@ class AccountModuleBoundaryTest {
     @Test
     void test_businessLibrariesHaveApprovedDependencies() throws Exception {
         Assertions.assertEquals(
-            Set.of("paytech-account-api", "paytech-ledger-api", "paytech-billing-api", "paytech-messaging-api",
-                "jackson-databind", "paytech-mybatis-support", "paytech-snowflake-id", "jakarta.validation-api",
+            Set.of("paytech-account-api", "paytech-billing-api", "paytech-compensation-event", "paytech-messaging-api",
+                "spring-boot", "jackson-databind", "paytech-mybatis-support", "paytech-snowflake-id", "jakarta.validation-api",
                 "spring-context", "spring-tx", "slf4j-api", "mybatis", "lombok"),
             values(readPom("paytech-account-core"), "/project/dependencies/dependency/artifactId"));
         Assertions.assertEquals(Set.of("spring-web", "jakarta.validation-api", "paytech-common-core", "lombok"),
@@ -44,8 +43,7 @@ class AccountModuleBoundaryTest {
         Set<String> app = values(readPom("paytech-account-app"),
             "/project/dependencies/dependency[groupId='com.paytech']/artifactId");
         Assertions.assertEquals(Set.of("paytech-account-api", "paytech-account-core", "paytech-snowflake-id",
-                "paytech-mybatis-support", "paytech-mvc-web-starter", "paytech-messaging", "paytech-compensation-event",
-                "paytech-http-client-support"), app);
+                "paytech-mybatis-support", "paytech-mvc-web-starter", "paytech-messaging", "paytech-compensation-event"), app);
     }
 
     @Test

@@ -1,8 +1,13 @@
 package com.paytech.operations.console.bff.auto;
 
 import static com.paytech.operations.console.bff.test.simulator.PlatformOperationsSimulator.FINANCE_READ_PERMISSION_ID;
+import static com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.LEDGER_OWNER_TYPE_PATTERN;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
@@ -10,6 +15,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import com.paytech.account.api.enums.OwnerType;
+import com.paytech.ledger.api.enums.LedgerOwnerType;
 import com.paytech.ledger.api.enums.LedgerSetupErrorCode;
 import com.paytech.operations.console.bff.ext.rest.FinanceLedgerBookController;
 import com.paytech.operations.console.bff.test.base.FinanceBrowserAutoTestBase;
@@ -46,6 +53,51 @@ class FinanceLedgerBookBrowserAutoTest extends FinanceBrowserAutoTestBase {
         platform.allow(false);
 
         assertDenied(ledger, send(row));
+    }
+
+    /** ACCOUNT_POSTING 来源的流水行与分录详情透传 account 批次主键、序号与行级流水主键；人工行这些字段为空。 */
+    @Test
+    void test_accountPostingOriginForwarded() throws Exception {
+        var lines = row(BOUNDARY, "R12");
+        replyAsOwner(ledger, lines);
+        var items = JSON.readTree(send(lines).body()).path("items");
+        assertAll(() -> assertEquals("ACCOUNT_POSTING", items.path(0).path("originType").asString()),
+            () -> assertEquals("7318802201114002018", items.path(0).path("accountPostingId").asString()),
+            () -> assertEquals("18", items.path(0).path("accountPostingSequence").asString()),
+            () -> assertTrue(items.path(1).path("accountPostingId").isNull()),
+            () -> assertTrue(items.path(1).path("accountPostingSequence").isNull()));
+
+        resetBetweenCalls();
+        var entry = row(BOUNDARY, "R13");
+        replyAsOwner(ledger, entry);
+        var detail = JSON.readTree(send(entry).body());
+        assertAll(() -> assertEquals("ACCOUNT_POSTING", detail.path("originType").asString()),
+            () -> assertEquals("7318802201114002018", detail.path("accountPostingId").asString()),
+            () -> assertEquals("18", detail.path("accountPostingSequence").asString()),
+            () -> assertTrue(detail.path("lines").path(0).path("accountEntryId").isNull()),
+            () -> assertEquals("7400000000000001", detail.path("lines").path(1).path("accountEntryId").asString()));
+    }
+
+    /** 账户核算对象类型校验与 ledger 合同 LedgerOwnerType 的全部 Code 完全一致。 */
+    @Test
+    void test_ownerTypePatternMatchesLedgerContract() {
+        assertEquals(Arrays.stream(LedgerOwnerType.values()).map(LedgerOwnerType::getCode)
+            .collect(Collectors.joining("|")), LEDGER_OWNER_TYPE_PATTERN);
+    }
+
+    /** Client 与 Local Partner 不再是 ledger 核算对象：账户筛选（Query 400）与新建账户（Body 字段 422）都在访问 ledger 前拒绝。 */
+    @ParameterizedTest
+    @CsvSource({"CLIENT", "LOCAL_PARTNER"})
+    void test_subledgerOwnerTypeRejected(OwnerType ownerType) throws Exception {
+        var accounts = row(BOUNDARY, "R10");
+        assertRejectedLocally(400, ledger, send(accounts, "?ownerType=" + ownerType.getCode(),
+            accounts.path("request"), true));
+
+        resetBetweenCalls();
+        var create = row(BOUNDARY, "R11");
+        var body = (ObjectNode) create.path("request").deepCopy();
+        body.put("ownerType", ownerType.getCode());
+        assertRejectedLocally(422, ledger, send(create, "", body, true));
     }
 
     /** 只有 READ 权限的操作人不能新建账簿或账户。 */

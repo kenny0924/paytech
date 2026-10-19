@@ -9,8 +9,8 @@ import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
 
 import com.paytech.account.api.enums.BalanceBucket;
-import com.paytech.account.api.enums.OwnerType;
 import com.paytech.ledger.api.LedgerBookQueryApi;
+import com.paytech.ledger.api.enums.LedgerOwnerType;
 import com.paytech.ledger.api.enums.LedgerSetupErrorCode;
 import com.paytech.ledger.api.response.JournalEntryDetailResponseBody;
 import com.paytech.ledger.core.constant.AccountingCodes;
@@ -47,18 +47,21 @@ class GetJournalEntryTest extends AbstractManualAdjustmentApiTest {
             () -> assertNull(detail.getSourceSystem()),
             () -> assertEquals(submit.text("manualAdjustmentId"), detail.getManualAdjustmentId()),
             () -> assertEquals(submit.text("adjustmentNo"), detail.getAdjustmentNo()),
+            () -> assertNull(detail.getAccountPostingId(), "人工指令没有 account 批次"),
+            () -> assertNull(detail.getAccountPostingSequence()),
             () -> assertEquals(2, detail.getLines().size()));
         var debit = detail.getLines().get(0);
         var credit = detail.getLines().get(1);
         assertAll(() -> assertEquals(String.valueOf(bankCashAccountId), debit.getAccountId()),
             () -> assertEquals("BANK_CASH", debit.getAccountCode()),
-            () -> assertEquals(OwnerType.CASH_ACCOUNT.getCode(), debit.getOwnerType()),
+            () -> assertEquals(LedgerOwnerType.CASH_ACCOUNT.getCode(), debit.getOwnerType()),
             () -> assertEquals(EntrySide.DEBIT.getCode(), debit.getEntrySide()),
             () -> assertEquals("42.10", debit.getAmount()),
             () -> assertEquals(LIABILITY_CODE, credit.getAccountCode()),
             () -> assertEquals("AE001", credit.getOwnerId()),
             () -> assertEquals(BalanceBucket.NONE.getCode(), credit.getBalanceBucket()),
             () -> assertEquals(EntrySide.CREDIT.getCode(), credit.getEntrySide()),
+            () -> assertNull(debit.getAccountEntryId(), "人工行没有 account 流水"),
             () -> assertEquals(0, new BigDecimal(debit.getAmount()).compareTo(new BigDecimal(credit.getAmount()))));
     }
 

@@ -66,6 +66,7 @@
     <select id="selectPublicationProgress" resultType="com.paytech.billing.domain.view.EconomicFactPublicationView">
         SELECT COALESCE(SUM(CASE WHEN published_at IS NULL THEN 1 ELSE 0 END), 0) AS pending_count,
             MAX(CASE WHEN published_at IS NULL THEN id END) AS max_pending_fact_id,
+            COALESCE(SUM(CASE WHEN published_at IS NOT NULL THEN 1 ELSE 0 END), 0) AS published_fact_count,
             MAX(CASE WHEN published_at IS NOT NULL THEN id END) AS max_published_fact_id
         FROM t_economic_fact
         WHERE <include refid="bookScope"/> AND status IN ('APPROVED', 'SUPERSEDED')

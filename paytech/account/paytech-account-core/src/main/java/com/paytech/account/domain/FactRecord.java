@@ -1,32 +1,27 @@
 package com.paytech.account.domain;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 
 /**
- * 账户服务内部的经济事实：由 EconomicFactRecorded Payload 或 billing 重放读取结果转换，只保留余额映射需要的字段（design/04 §5）
+ * 账户服务内部的经济事实：由 EconomicFactRecorded Payload 转换，只保留明细账入账需要的字段
  *
  * @param factId 经济事实 ID
  * @param factVersion 经济事实版本
  * @param supersedesFactId 被替代的前一事实，可空
  * @param factType 事实类型代码（billing EconomicsType）
  * @param clientId Client，规范十进制
- * @param entityNo Operating Entity 编号，决定余额所在的 OE 账簿
+ * @param entityNo Operating Entity 编号，决定入账流
  * @param localPartnerId Local Partner，可空
  * @param financeEntityId 平台服务费 Finance Entity，可空
  * @param currency 币种
- * @param grossAmount 总额
- * @param channelAccountId 渠道清算账户（CHANNEL_ACCOUNT Owner），可空
+ * @param balanceAvailableTime 应付余额到期转可用时间，可空（设计 8.5）
  * @param lines 全部明细行，按行号升序
  */
 public record FactRecord(long factId, long factVersion, Long supersedesFactId, String factType, Long clientId,
-    String entityNo, Long localPartnerId, Long financeEntityId, String currency, BigDecimal grossAmount,
-    Long channelAccountId, List<Line> lines) {
-
-    /** 余额所在的经营主体账簿身份。 */
-    public BookIdentity book() {
-        return BookIdentity.operatingEntity(entityNo, currency);
-    }
+    String entityNo, Long localPartnerId, Long financeEntityId, String currency, Instant balanceAvailableTime,
+    List<Line> lines) {
 
     /**
      * 经济事实明细行

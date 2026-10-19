@@ -14,7 +14,7 @@ import lombok.AllArgsConstructor;
 
 /**
  * account 余额投影的 HTTP 转发：每个入口只调用一次 account，不重试
- * <li>回执的 Owner、entityNo 与币种必须与请求一致；无账簿时 account 以 BalanceQueryErrorCode 返回 400。</li>
+ * <li>回执的 Owner、entityNo 与币种必须与请求一致；Owner 在该主体与币种下没有账户时 account 返回 400 OWNER_ACCOUNT_NOT_FOUND。</li>
  *
  * @author Claude
  */

@@ -419,6 +419,12 @@ export const pageCapabilities = [
     "displayName": "余额查询",
     "frontendRoute": "/finance/balances",
     "actions": []
+  },
+  {
+    "componentKey": "OPERATIONS_FINANCE_SUBLEDGER",
+    "displayName": "明细账查询",
+    "frontendRoute": "/finance/subledger",
+    "actions": []
   }
 ] as const;
 export type PageComponentKey = typeof pageCapabilities[number]["componentKey"];

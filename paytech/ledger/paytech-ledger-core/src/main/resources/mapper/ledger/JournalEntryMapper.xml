@@ -13,7 +13,9 @@
     <select id="selectDetail" resultType="com.paytech.ledger.domain.view.JournalEntryDetailView">
         SELECT e.id journal_entry_id, e.ledger_book_id, e.accounting_period_id, e.journal_sequence, e.posting_date,
                e.entry_type, e.reversal_of_entry_id, i.id instruction_id, i.instruction_type, i.origin_type,
-               i.source_system, i.source_event_key, i.manual_adjustment_id, m.adjustment_no
+               i.source_system, i.source_event_key, i.manual_adjustment_id, m.adjustment_no,
+               CASE WHEN i.origin_type = 'ACCOUNT_POSTING' THEN CAST(i.source_event_key AS UNSIGNED) END account_posting_id,
+               CASE WHEN i.origin_type = 'ACCOUNT_POSTING' THEN i.source_version END account_posting_sequence
         FROM t_journal_entry e
         JOIN t_accounting_instruction i ON i.id = e.instruction_id
         LEFT JOIN t_manual_adjustment m ON m.id = i.manual_adjustment_id

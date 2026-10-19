@@ -3,7 +3,7 @@ package com.paytech.ledger.core.dal.dataobject;
 import java.time.Instant;
 
 import com.paytech.account.api.enums.BalanceBucket;
-import com.paytech.account.api.enums.OwnerType;
+import com.paytech.ledger.api.enums.LedgerOwnerType;
 import com.paytech.ledger.core.enums.AccountStatus;
 import com.paytech.ledger.core.enums.NormalSide;
 
@@ -30,10 +30,11 @@ public class LedgerAccount {
     private Long chartAccountId;
 
     /**
-     * 决定账户余额按经营主体、内部财务主体、Client、Local Partner、渠道账户、银行账户或税务机关隔离的类型
-     * <li>允许值：OPERATING_ENTITY、FINANCE_ENTITY、CLIENT、LOCAL_PARTNER、CHANNEL_ACCOUNT、CASH_ACCOUNT、TAX_AUTHORITY。</li>
+     * 决定账户按经营主体、内部财务主体、渠道账户、银行账户或税务机关隔离的类型
+     * <li>允许值：OPERATING_ENTITY、FINANCE_ENTITY、CHANNEL_ACCOUNT、CASH_ACCOUNT、TAX_AUTHORITY。</li>
+     * <li>Client / Local Partner 不在总账开户：其科目以账簿主体为 Owner 的控制账户表达，明细在 account。</li>
      */
-    private OwnerType ownerType;
+    private LedgerOwnerType ownerType;
 
     /**
      * 按owner_type解释的稳定字符串；OE为entityNo，其余数字身份保存规范十进制字符串；本库对象使用本地主键，外部对象不建立跨库外键
@@ -41,8 +42,8 @@ public class LedgerAccount {
     private String ownerId;
 
     /**
-     * PARTNER_PAYABLE 使用 PENDING、AVAILABLE、LOCKED，其中 Partner 的 PENDING 是共享待结算桶；PARTNER_RECOVERY_RECEIVABLE 使用 NONE；CLIENT_PAYABLE 使用 PENDING、AVAILABLE、LOCKED，CLIENT_RECOVERY_RECEIVABLE/NONE、CLIENT_SECURITY_DEPOSIT/NONE 以及 Channel 三阶段账户均使用独立会计科目并采用 NONE，不复用应付款余额桶
-     * <li>允许值：PENDING、AVAILABLE、LOCKED、NONE。</li>
+     * 总账账户不再按余额桶分账户，一律 NONE；Owner 余额桶由 account 明细账维护
+     * <li>允许值：NONE。</li>
      */
     private BalanceBucket balanceBucket;
 

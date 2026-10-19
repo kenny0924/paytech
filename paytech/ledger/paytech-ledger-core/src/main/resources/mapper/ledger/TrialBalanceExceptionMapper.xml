@@ -12,20 +12,7 @@
         ORDER BY exception_type, reference_type, reference_id
     </select>
 
-    <select id="selectById" resultType="com.paytech.ledger.core.dal.dataobject.TrialBalanceException">
-        SELECT id, run_id, exception_type, reference_type, reference_id, difference_amount, status, resolution_type, resolution_ref_id, resolution_content_hash, resolution_maker_id, resolution_checker_id, resolution_time, create_time, update_time FROM t_trial_balance_exception WHERE id = #{id}
-    </select>
-
     <select id="countUnresolvedByRun" resultType="long">
         SELECT COUNT(*) FROM t_trial_balance_exception WHERE run_id = #{runId} AND status IN ('OPEN', 'UNDER_REVIEW')
     </select>
-
-    <update id="updateResolution">
-        UPDATE t_trial_balance_exception
-        SET status = #{status}, resolution_type = #{exception.resolutionType}, resolution_ref_id = #{exception.resolutionRefId},
-            resolution_content_hash = #{exception.resolutionContentHash}, resolution_maker_id = #{exception.resolutionMakerId},
-            resolution_checker_id = #{exception.resolutionCheckerId}, resolution_time = #{exception.resolutionTime},
-            update_time = #{now}
-        WHERE id = #{exception.id} AND status = #{exception.status}
-    </update>
 </mapper>

@@ -16,6 +16,8 @@ import jakarta.validation.constraints.Pattern;
  *
  * <li>Finance 内部开发接口：未接调用方身份及资源授权，不得把请求中的 Owner ID 当作身份凭证，不得对外发布。</li>
  * <li>余额查询不等于出款资格评估。</li>
+ * <li>只读 account 本库 Owner 账户（t_owner_account），不调用 ledger；Owner 在该 OE 与币种下没有任何账户时 400 OWNER_ACCOUNT_NOT_FOUND
+ * （{@code BalanceQueryErrorCode}），有账户但缺少某个桶时该金额为零。</li>
  */
 @HttpExchange(value = "/balances/v1", accept = "application/json")
 public interface BalanceQueryApi {
@@ -29,7 +31,7 @@ public interface BalanceQueryApi {
      *            Operating Entity 的 entityNo，如 AE001
      * @param currency
      *            大写三字母币种；格式合法不代表 Finance 已支持该币种
-     * @return 本授权范围的分类余额，不提供跨主体或跨币种合计
+     * @return 本授权范围的分类余额，不提供跨主体或跨币种合计；无任何账户时 400 OWNER_ACCOUNT_NOT_FOUND
      */
     @GetExchange("/clients/{clientId}")
     ClientBalanceResponseBody queryClientBalance(
@@ -46,7 +48,7 @@ public interface BalanceQueryApi {
      *            Operating Entity 的 entityNo；不汇总 Partner 的其他 OE
      * @param currency
      *            大写三字母币种；实现时验证业务支持范围
-     * @return 本授权范围的分类余额，Available 不承诺本次出款可获批准
+     * @return 本授权范围的分类余额，Available 不承诺本次出款可获批准；无任何账户时 400 OWNER_ACCOUNT_NOT_FOUND
      */
     @GetExchange("/partners/{partnerId}")
     PartnerBalanceResponseBody queryPartnerBalance(

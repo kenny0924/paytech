@@ -6,7 +6,9 @@
 -- the period-close transfer rules of every REVENUE/EXPENSE leaf account, and the STANDARD_TRANSACTION
 -- automatic posting rule bundle version 1, plus (step 11b) the STANDARD_ADJUSTMENT rule bundle version 1 that posts
 -- MANUAL_ADJUSTMENT and COST_ADJUSTMENT economic facts by payer / payee role
--- (agent-docs/database/FINANCE_DATABASE.md §4.1.1). Fixed IDs are reserved below 1,000,000 and never
+-- (agent-docs/database/FINANCE_DATABASE.md §4.1.1). Since 2026-10-19 (account subledger / ledger control accounts) the
+-- bundles carry no Owner-role (CLIENT, LOCAL_PARTNER) lines: rows 5202, 5208 and 5315-5320 were removed and the Owner
+-- control-account lines come from account posting entries (AccountPosted). Fixed IDs are reserved below 1,000,000 and never
 -- produced by the Snowflake generator. Re-running fails on primary/unique keys by design.
 SET NAMES utf8mb4;
 
@@ -73,13 +75,11 @@ INSERT INTO `t_accounting_rule_line`
   (`id`, `bundle_ver_id`, `instruction_type`, `line_no`, `line_code`, `amount_source_code`, `owner_role`, `account_code`, `balance_bucket`, `entry_side`, `required_flag`, `create_time`)
 VALUES
   (5201, 5101, 'PAYMENT_SUCCEEDED',                1, 'GROSS_RECEIVABLE',         'GROSS_AMOUNT',            'CHANNEL_ACCOUNT',         'CHANNEL_UNSETTLED_RECEIVABLE', 'NONE',    'DEBIT',  1, UTC_TIMESTAMP(6)),
-  (5202, 5101, 'PAYMENT_SUCCEEDED',                2, 'CLIENT_PRINCIPAL_PAYABLE', 'CLIENT_PRINCIPAL',        'CLIENT',                  'CLIENT_PAYABLE',               'PENDING', 'CREDIT', 1, UTC_TIMESTAMP(6)),
   (5203, 5101, 'PAYMENT_SUCCEEDED',                3, 'CLIENT_FEE_REVENUE',       'CLIENT_FEE',              'BOOK_ENTITY',             'CLIENT_FEE_REVENUE',           'NONE',    'CREDIT', 1, UTC_TIMESTAMP(6)),
   (5204, 5101, 'PAYMENT_SUCCEEDED',                4, 'SELLER_TAX_PAYABLE',       'SELLER_TAX',              'TAX_AUTHORITY',           'TAX_PAYABLE',                  'NONE',    'CREDIT', 0, UTC_TIMESTAMP(6)),
   (5205, 5101, 'PAYMENT_SUCCEEDED',                5, 'CHANNEL_COST_EXPENSE',     'CHANNEL_COST',            'BOOK_ENTITY',             'CHANNEL_FEE_EXPENSE',          'NONE',    'DEBIT',  0, UTC_TIMESTAMP(6)),
   (5206, 5101, 'PAYMENT_SUCCEEDED',                6, 'CHANNEL_COST_ACCRUAL',     'CHANNEL_COST',            'CHANNEL_ACCOUNT',         'CHANNEL_FEE_ACCRUAL',          'NONE',    'CREDIT', 0, UTC_TIMESTAMP(6)),
   (5207, 5101, 'PAYMENT_SUCCEEDED',                7, 'PARTNER_SHARE_EXPENSE',    'PARTNER_SHARE',           'BOOK_ENTITY',             'PARTNER_SHARE_EXPENSE',        'NONE',    'DEBIT',  0, UTC_TIMESTAMP(6)),
-  (5208, 5101, 'PAYMENT_SUCCEEDED',                8, 'PARTNER_SHARE_PAYABLE',    'PARTNER_SHARE',           'LOCAL_PARTNER',           'PARTNER_PAYABLE',              'PENDING', 'CREDIT', 0, UTC_TIMESTAMP(6)),
   (5209, 5101, 'PLATFORM_SERVICE_CHARGE_PARTNER',  1, 'SERVICE_FEE_EXPENSE',      'PLATFORM_SERVICE_CHARGE', 'BOOK_ENTITY',             'PLATFORM_SERVICE_FEE_EXPENSE', 'NONE',    'DEBIT',  0, UTC_TIMESTAMP(6)),
   (5210, 5101, 'PLATFORM_SERVICE_CHARGE_PARTNER',  2, 'SERVICE_PAYABLE',          'PLATFORM_SERVICE_CHARGE', 'PLATFORM_FINANCE_ENTITY', 'PLATFORM_SERVICE_PAYABLE',     'NONE',    'CREDIT', 0, UTC_TIMESTAMP(6)),
   (5211, 5101, 'PLATFORM_SERVICE_CHARGE_PLATFORM', 1, 'SERVICE_RECEIVABLE',       'PLATFORM_SERVICE_CHARGE', 'TRANSACTION_OE',          'PLATFORM_SERVICE_RECEIVABLE',  'NONE',    'DEBIT',  0, UTC_TIMESTAMP(6)),
@@ -87,9 +87,10 @@ VALUES
 
 -- Economic-fact adjustments: STANDARD_ADJUSTMENT bundle version 1 (ACTIVE), refactor step 11b (design/04 §4 row 3).
 -- MANUAL_ADJUSTMENT facts post as ECONOMIC_ADJUSTMENT, COST_ADJUSTMENT facts as CHANNEL_COST_ADJUSTMENT, both in the fact's OE book.
--- Each fact line posts twice: the payer side as DEBIT and the payee side as CREDIT (swapped when direction = REVERSAL).
+-- Each fact line posts twice: the payer side as DEBIT and the payee side as CREDIT (swapped when direction = REVERSAL);
+-- a CLIENT or LOCAL_PARTNER side is not rule-driven: it is the account posting entry booked to the book's control account.
 -- A rule line matches when amount_source_code = the line's fee type, owner_role = the party role's owner role
--- (CLIENT, LOCAL_PARTNER, CHANNEL -> CHANNEL_ACCOUNT, OPERATING_ENTITY -> TRANSACTION_OE, FINANCE_ENTITY -> PLATFORM_FINANCE_ENTITY,
+-- (CHANNEL -> CHANNEL_ACCOUNT, OPERATING_ENTITY -> TRANSACTION_OE, FINANCE_ENTITY -> PLATFORM_FINANCE_ENTITY,
 -- TAX_AUTHORITY) and entry_side = the side; required_flag is not used for adjustments. Any unmatched combination rejects the fact.
 INSERT INTO `t_accounting_rule_bundle` (`id`, `bundle_code`, `current_ver_id`, `status`, `version`, `create_time`, `update_time`)
 VALUES (5002, 'STANDARD_ADJUSTMENT', 5102, 'ACTIVE', 0, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6));
@@ -115,12 +116,6 @@ VALUES
   (5312, 5102, 'ECONOMIC_ADJUSTMENT', 12, 'OE_SELLER_TAX_CR', 'SELLER_TAX', 'TRANSACTION_OE', 'RECON_ADJUSTMENT_EXPENSE', 'NONE', 'CREDIT', 0, UTC_TIMESTAMP(6)),
   (5313, 5102, 'ECONOMIC_ADJUSTMENT', 13, 'OE_SERVICE_CHARGE_DR', 'PLATFORM_SERVICE_CHARGE', 'TRANSACTION_OE', 'PLATFORM_SERVICE_FEE_EXPENSE', 'NONE', 'DEBIT', 0, UTC_TIMESTAMP(6)),
   (5314, 5102, 'ECONOMIC_ADJUSTMENT', 14, 'OE_SERVICE_CHARGE_CR', 'PLATFORM_SERVICE_CHARGE', 'TRANSACTION_OE', 'PLATFORM_SERVICE_FEE_EXPENSE', 'NONE', 'CREDIT', 0, UTC_TIMESTAMP(6)),
-  (5315, 5102, 'ECONOMIC_ADJUSTMENT', 15, 'CLIENT_PRINCIPAL_DR', 'CLIENT_PRINCIPAL', 'CLIENT', 'CLIENT_PAYABLE', 'PENDING', 'DEBIT', 0, UTC_TIMESTAMP(6)),
-  (5316, 5102, 'ECONOMIC_ADJUSTMENT', 16, 'CLIENT_PRINCIPAL_CR', 'CLIENT_PRINCIPAL', 'CLIENT', 'CLIENT_PAYABLE', 'PENDING', 'CREDIT', 0, UTC_TIMESTAMP(6)),
-  (5317, 5102, 'ECONOMIC_ADJUSTMENT', 17, 'CLIENT_FEE_DR', 'CLIENT_FEE', 'CLIENT', 'CLIENT_PAYABLE', 'PENDING', 'DEBIT', 0, UTC_TIMESTAMP(6)),
-  (5318, 5102, 'ECONOMIC_ADJUSTMENT', 18, 'CLIENT_FEE_CR', 'CLIENT_FEE', 'CLIENT', 'CLIENT_PAYABLE', 'PENDING', 'CREDIT', 0, UTC_TIMESTAMP(6)),
-  (5319, 5102, 'ECONOMIC_ADJUSTMENT', 19, 'PARTNER_SHARE_DR', 'PARTNER_SHARE', 'LOCAL_PARTNER', 'PARTNER_PAYABLE', 'PENDING', 'DEBIT', 0, UTC_TIMESTAMP(6)),
-  (5320, 5102, 'ECONOMIC_ADJUSTMENT', 20, 'PARTNER_SHARE_CR', 'PARTNER_SHARE', 'LOCAL_PARTNER', 'PARTNER_PAYABLE', 'PENDING', 'CREDIT', 0, UTC_TIMESTAMP(6)),
   (5321, 5102, 'ECONOMIC_ADJUSTMENT', 21, 'CHANNEL_GROSS_DR', 'GROSS_AMOUNT', 'CHANNEL_ACCOUNT', 'CHANNEL_UNSETTLED_RECEIVABLE', 'NONE', 'DEBIT', 0, UTC_TIMESTAMP(6)),
   (5322, 5102, 'ECONOMIC_ADJUSTMENT', 22, 'CHANNEL_GROSS_CR', 'GROSS_AMOUNT', 'CHANNEL_ACCOUNT', 'CHANNEL_UNSETTLED_RECEIVABLE', 'NONE', 'CREDIT', 0, UTC_TIMESTAMP(6)),
   (5323, 5102, 'ECONOMIC_ADJUSTMENT', 23, 'CHANNEL_COST_DR', 'CHANNEL_COST', 'CHANNEL_ACCOUNT', 'CHANNEL_FEE_ACCRUAL', 'NONE', 'DEBIT', 0, UTC_TIMESTAMP(6)),

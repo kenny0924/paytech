@@ -47,7 +47,7 @@ public class AccountJournalLineResponseBody {
 
     /**
      * 指令来源
-     * <li>AUTO 或 MANUAL。</li>
+     * <li>AUTO、MANUAL 或 ACCOUNT_POSTING（消费 account 过账批次生成）。</li>
      */
     private String originType;
 
@@ -68,4 +68,16 @@ public class AccountJournalLineResponseBody {
      * <li>自动指令为空。</li>
      */
     private String adjustmentNo;
+
+    /**
+     * account 过账批次主键，十进制字符串
+     * <li>仅 originType = ACCOUNT_POSTING 时非空。</li>
+     */
+    private String accountPostingId;
+
+    /**
+     * account 过账批次在其过账流内的序号，十进制字符串
+     * <li>仅 originType = ACCOUNT_POSTING 时非空。</li>
+     */
+    private String accountPostingSequence;
 }

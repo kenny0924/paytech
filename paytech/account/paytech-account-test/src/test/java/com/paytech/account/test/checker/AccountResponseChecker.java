@@ -62,6 +62,12 @@ public final class AccountResponseChecker extends AbstractHttpResponseChecker<Ac
         return this;
     }
 
+    /** 断言 422 请求体字段校验失败（公共 VALIDATION_ERROR）。 */
+    public AccountResponseChecker assertValidationError() {
+        assertProblem(422, CommonErrorCode.VALIDATION_ERROR.getCode());
+        return this;
+    }
+
     /** 断言 409 并发冲突。 */
     public AccountResponseChecker assertConcurrentRequest() {
         assertProblem(409, CommonErrorCode.CONCURRENT_REQUEST.getCode());

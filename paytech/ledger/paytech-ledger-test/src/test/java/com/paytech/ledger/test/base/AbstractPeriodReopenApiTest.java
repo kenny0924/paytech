@@ -8,7 +8,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.paytech.account.api.enums.OwnerType;
+import com.paytech.ledger.api.enums.LedgerOwnerType;
 import com.paytech.ledger.api.request.StartPeriodReopenRequestBody;
 import com.paytech.ledger.core.dal.dataobject.JournalEntry;
 import com.paytech.ledger.core.dal.dataobject.JournalLine;
@@ -108,7 +108,7 @@ public abstract class AbstractPeriodReopenApiTest extends AbstractPeriodCloseApi
 
     /** 按科目代码读取账簿主体账户主键。 */
     protected Long entityAccountId(String accountCode) {
-        return testMapper.selectAccountId(ledger.getLedgerBookId(), accountCode, OwnerType.OPERATING_ENTITY.getCode(),
+        return testMapper.selectAccountId(ledger.getLedgerBookId(), accountCode, LedgerOwnerType.OPERATING_ENTITY.getCode(),
             ledger.getEntityNo());
     }
 

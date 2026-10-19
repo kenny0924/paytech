@@ -66,6 +66,8 @@ class OperationsHttpBodyNamingAutoTest {
         com.paytech.operations.console.bff.ext.rest.FinanceSetupController.class,
         com.paytech.operations.console.bff.ext.rest.FinanceLedgerBookController.class,
         com.paytech.operations.console.bff.ext.rest.FinanceBalanceController.class,
+        com.paytech.operations.console.bff.ext.rest.FinanceSubledgerController.class,
+        com.paytech.account.api.OwnerAccountQueryApi.class, com.paytech.account.api.AccountPostingApi.class,
         com.paytech.ledger.api.LedgerSetupQueryApi.class, com.paytech.ledger.api.LedgerBookQueryApi.class,
         com.paytech.ledger.api.AccountingPeriodCommandApi.class, com.paytech.account.api.BalanceQueryApi.class})
     void test_httpBodyTypesUseExplicitRequestAndResponseSuffixes(Class<?> contract) {

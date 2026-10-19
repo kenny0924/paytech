@@ -1,7 +1,7 @@
 package com.paytech.ledger.service.processor.request;
 
 import com.paytech.account.api.enums.BalanceBucket;
-import com.paytech.account.api.enums.OwnerType;
+import com.paytech.ledger.api.enums.LedgerOwnerType;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -23,7 +23,7 @@ public class CreateAccountRequest {
 
     /** 核算对象类型 */
     @NotNull
-    private OwnerType ownerType;
+    private LedgerOwnerType ownerType;
 
     /** 核算对象标识 */
     @NotBlank

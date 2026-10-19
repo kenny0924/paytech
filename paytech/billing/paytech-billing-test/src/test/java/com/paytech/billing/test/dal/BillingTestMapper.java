@@ -9,6 +9,7 @@ import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 /**
  * Billing 测试专用读取与全局清理；只触碰 mor_billing 的 9 张表（design/10 §3.1）
@@ -77,6 +78,14 @@ public interface BillingTestMapper {
         @Param("entityNo") String entityNo, @Param("financeEntityId") Long financeEntityId,
         @Param("currency") String currency, @Param("status") String status, @Param("factVersion") long factVersion,
         @Param("publishedAt") Instant publishedAt);
+
+    /**
+     * 写入事实的余额到期时间（前置数据）
+     * <li>模拟后续 PAYMENT 切片由 billing 计算并冻结的 balance_available_time；本期无生产写入路径。</li>
+     */
+    @Update("UPDATE t_economic_fact SET balance_available_time = #{balanceAvailableTime} WHERE id = #{factId}")
+    void updateBalanceAvailableTime(@Param("factId") long factId,
+        @Param("balanceAvailableTime") Instant balanceAvailableTime);
 
     /** 统计方案下的版本数。 */
     @Select("SELECT COUNT(*) FROM t_channel_cost_plan_ver v JOIN t_channel_cost_plan p ON p.id = v.plan_id "

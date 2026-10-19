@@ -64,4 +64,16 @@ public class AccountJournalLineView {
      * <li>自动指令为空。</li>
      */
     private String adjustmentNo;
+
+    /**
+     * account 入账批次主键
+     * <li>仅 ACCOUNT_POSTING 指令有值（即来源事件键），其余为空。</li>
+     */
+    private Long accountPostingId;
+
+    /**
+     * account 入账批次在其过账流内的序号
+     * <li>仅 ACCOUNT_POSTING 指令有值（即来源版本），其余为空。</li>
+     */
+    private Long accountPostingSequence;
 }

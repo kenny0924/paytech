@@ -10,46 +10,46 @@ import com.paytech.billing.api.request.SubmitEconomicFactRequestBody;
 import com.paytech.billing.api.response.EconomicFactListResponseBody;
 import com.paytech.billing.api.response.EconomicFactResponseBody;
 import com.paytech.billing.api.response.PendingEconomicFactsResponseBody;
-import com.paytech.ledger.test.mocker.external.BillingProgressMocker;
+import com.paytech.ledger.test.mocker.external.EconomicFactMocker;
 
 import lombok.AllArgsConstructor;
 
-/** 在独立 Mock 服务继承 billing 正式合同（无 Context Path）；ledger 只调用 pending，其余入口记为意外。 */
+/** 在独立 Mock 服务继承 billing 正式合同（无 Context Path）；ledger 只调用事实详情与 pending，其余入口记为意外。 */
 @RestController
 @TestComponent
 @AllArgsConstructor
 public class MockEconomicFactApi implements EconomicFactCommandApi {
-    private final BillingProgressMocker mocker;
+    private final EconomicFactMocker mocker;
 
     @Override
     public ResponseEntity<EconomicFactResponseBody> submitEconomicFact(SubmitEconomicFactRequestBody body) {
-        MockRequestId.mark(BillingProgressMocker.REQUEST_ID);
+        MockRequestId.mark(EconomicFactMocker.REQUEST_ID);
         throw mocker.unexpectedCall("submitEconomicFact");
     }
 
     @Override
     public EconomicFactResponseBody approveEconomicFact(String factId, ApproveEconomicFactRequestBody body) {
-        MockRequestId.mark(BillingProgressMocker.REQUEST_ID);
+        MockRequestId.mark(EconomicFactMocker.REQUEST_ID);
         throw mocker.unexpectedCall("approveEconomicFact");
     }
 
     @Override
     public EconomicFactResponseBody getEconomicFact(String factId) {
-        MockRequestId.mark(BillingProgressMocker.REQUEST_ID);
-        throw mocker.unexpectedCall("getEconomicFact");
+        MockRequestId.mark(EconomicFactMocker.REQUEST_ID);
+        return mocker.answerFact(factId);
     }
 
     @Override
     public EconomicFactListResponseBody listEconomicFacts(String bookEntityType, String bookEntityId, String currency,
         String fromFactId, String limit) {
-        MockRequestId.mark(BillingProgressMocker.REQUEST_ID);
+        MockRequestId.mark(EconomicFactMocker.REQUEST_ID);
         throw mocker.unexpectedCall("listEconomicFacts");
     }
 
     @Override
     public PendingEconomicFactsResponseBody getPendingEconomicFacts(String bookEntityType, String bookEntityId,
         String currency) {
-        MockRequestId.mark(BillingProgressMocker.REQUEST_ID);
-        return mocker.answer(bookEntityType, bookEntityId, currency);
+        MockRequestId.mark(EconomicFactMocker.REQUEST_ID);
+        return mocker.answerProgress(bookEntityType, bookEntityId, currency);
     }
 }

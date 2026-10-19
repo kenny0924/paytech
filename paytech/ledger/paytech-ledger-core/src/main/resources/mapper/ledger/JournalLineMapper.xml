@@ -12,7 +12,9 @@
                    l.amount,
                    SUM(CASE WHEN l.entry_side = a.normal_side THEN l.amount ELSE -l.amount END)
                        OVER (ORDER BY e.journal_sequence, l.line_no) balance_after,
-                   i.instruction_type, i.origin_type, i.source_system, i.source_event_key, m.adjustment_no
+                   i.instruction_type, i.origin_type, i.source_system, i.source_event_key, m.adjustment_no,
+                   CASE WHEN i.origin_type = 'ACCOUNT_POSTING' THEN CAST(i.source_event_key AS UNSIGNED) END account_posting_id,
+                   CASE WHEN i.origin_type = 'ACCOUNT_POSTING' THEN i.source_version END account_posting_sequence
             FROM t_journal_line l
             JOIN t_journal_entry e ON e.id = l.journal_entry_id
             JOIN t_ledger_account a ON a.id = l.account_id
@@ -38,8 +40,9 @@
 
     <select id="selectEntryLines" resultType="com.paytech.ledger.domain.view.JournalEntryDetailView$Line">
         SELECT l.line_no, l.account_id, c.account_code, a.owner_type, a.owner_id, a.balance_bucket, l.entry_side,
-               l.amount
+               l.amount, il.account_entry_id
         FROM t_journal_line l
+        JOIN t_instruction_line il ON il.id = l.instruction_line_id
         JOIN t_ledger_account a ON a.id = l.account_id
         JOIN t_chart_account c ON c.id = a.chart_account_id
         WHERE l.journal_entry_id = #{journalEntryId}

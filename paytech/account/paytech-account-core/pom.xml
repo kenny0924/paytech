@@ -15,7 +15,7 @@
     <packaging>jar</packaging>
 
     <name>PayTech Account Core</name>
-    <description>Account business implementation: EconomicFactRecorded balance handler, dal, domain, domainservice, integration clients and processors; no boot class or controller.</description>
+    <description>Account subledger implementation: EconomicFactRecorded posting handler, AccountPosted publisher, bucket movements, maturity, dal, domain, domainservice and processors; no boot class or controller.</description>
 
     <dependencies>
         <dependency>
@@ -23,21 +23,25 @@
             <artifactId>paytech-account-api</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <!-- 账簿身份与 Owner 账户分录余额经 ledger-api 读取，经济事实 Payload 与重放读取经 billing-api（design/04 §5–§7）。 -->
-        <dependency>
-            <groupId>com.paytech</groupId>
-            <artifactId>paytech-ledger-api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+        <!-- 只用 EconomicFactRecorded 的 Payload 合同；account 不再调用 billing 或 ledger 的 HTTP 接口（technique 2.1）。 -->
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-billing-api</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <!-- EconomicFactRecorded 消费 Handler（DomainEventConsumer 在 core，分区拓扑与容器由 app 的 paytech-messaging 提供）。 -->
+        <!-- AccountPosted 发布：入账事务内登记补偿事件，提交后由 AccountPostedHandler 发布。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-compensation-event</artifactId>
+        </dependency>
+        <!-- EconomicFactRecorded 消费 Handler 与 AccountPosted 发布端口（拓扑、容器与发布实现由 app 的 paytech-messaging 提供）。 -->
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-messaging-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot</artifactId>
         </dependency>
         <dependency>
             <groupId>tools.jackson.core</groupId>

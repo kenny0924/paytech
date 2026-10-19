@@ -85,7 +85,7 @@ class ReviewPeriodCloseTest extends AbstractPeriodCloseApiTest {
 
     @Test
     void test_failedCloseCannotBeApproved() {
-        postBankCash("10");
+        mockBillingUnpublished();
         LedgerResponseChecker failed = startClose().assertSuccess(201).assertText("status", "FAILED");
 
         approveClose(ledger.getOpenPeriodId(), "1", CLOSE_CHECKER_ID, "a".repeat(64))

@@ -28,6 +28,9 @@ public interface AccountingPeriodRepository {
     /** 以排他锁读取期间；必须在事务内调用。 */
     AccountingPeriod lockById(long id);
 
+    /** 同一日历中开始日期晚于给定日期且未 CLOSED 的最早期间（迟到事实顺延的候选），不存在返回空。 */
+    AccountingPeriod findFirstUnclosedAfter(long calendarId, LocalDate endDate);
+
     /** 读取同一日历中早于给定日期且未关闭的最早期间，不存在返回空。 */
     AccountingPeriod findFirstUnclosedBefore(long calendarId, LocalDate startDate);
 

@@ -4,9 +4,9 @@ import java.time.Instant;
 import java.util.List;
 
 import com.paytech.account.api.enums.BalanceBucket;
-import com.paytech.account.api.enums.OwnerRole;
 import com.paytech.billing.api.enums.AmountSource;
 import com.paytech.billing.api.enums.AutoInstructionType;
+import com.paytech.ledger.api.enums.RuleOwnerRole;
 import com.paytech.ledger.core.dal.dataobject.AccountingRuleBundleVer;
 import com.paytech.ledger.core.dal.dataobject.AccountingRuleLine;
 import com.paytech.ledger.core.enums.EntrySide;
@@ -94,7 +94,7 @@ public class RuleVersionView {
         private AmountSource amountSourceCode;
 
         /** 核算对象角色。 */
-        private OwnerRole ownerRole;
+        private RuleOwnerRole ownerRole;
 
         /** 科目代码。 */
         private String accountCode;

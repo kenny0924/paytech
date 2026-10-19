@@ -602,7 +602,8 @@ test("Finance catalog exposes tax payment, period close, payout cancel, and mate
   assert.match(taxLifecycle, /available_cash.*active_payout_cash.*active_tax_cash/u);
   assert.match(taxLifecycle, /同一 tax_payable_account_id.*net_balance.*全部.*活动 Tax Payment/u);
   assert.match(taxLifecycle, /不同 Return.*合计/u);
-  assert.match(taxLifecycle, /BANK_CASH t_account.*FAILED.*完整对账.*BANK_CASH/u);
+  assert.match(taxLifecycle, /account 桶移动 TAX_PAYMENT_LOCK.*BANK_CASH.*FAILED.*TAX_PAYMENT_RELEASE.*完整对账.*BANK_CASH/u);
+  assert.doesNotMatch(taxLifecycle, /BANK_CASH t_account/u);
   assert.doesNotMatch(financeBlock, /t_funding_(?:position|commitment|allocation|move)|Funding Commitment/u);
 
   const periodClose = financeBlock.match(/uc\("FIN-22"[^\n]+/u)?.[0] ?? "";
@@ -659,7 +660,8 @@ test("Finance catalog freezes shared maturity, Manual Payout, and the four-point
   assert.match(payoutExecution, /四个 checkpoint.*本地门禁.*相互独立.*本次.*required_amount/u);
   assert.match(payoutExecution, /eligibility_hash.*完整 RCO-I09 返回.*Owner\/OE\/currency.*owner_debit_amount.*Canonical/u);
   assert.match(beneficiary, /Finance-owned.*单表.*DRAFT.*VERIFIED.*content_hash/u);
-  assert.match(maturity, /Client.*Partner.*PENDING.*balance_available_time.*PAYABLE_BALANCE_MATURED:<economics_id>.*AVAILABLE/u);
+  assert.match(maturity, /Client.*Partner.*PENDING.*balance_available_time.*account.*FACT_MATURITY.*PENDING → AVAILABLE.*不产生 Journal/u);
+  assert.doesNotMatch(maturity, /PAYABLE_BALANCE_MATURED/u);
   assert.match(financeBlock, /eligibility_hash.*不能替代.*下一检查点/u);
   assert.match(paymentCreate, /PaymentSucceeded.*payment_intent_id\/payment_attempt_id.*channel_id\/channel_account_id\/mid_id.*channel_transaction_ref_id\/reference_type\/external_transaction_id/u);
   assert.match(requirementsSiteSource, /assessment_id.*evaluation_id.*decision.*reason_codes.*matched_controls.*required_amount.*required_currency.*control_set_hash/u);

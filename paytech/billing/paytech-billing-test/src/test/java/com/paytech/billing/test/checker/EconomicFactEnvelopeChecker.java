@@ -26,7 +26,7 @@ public class EconomicFactEnvelopeChecker {
     /** Payload 字段顺序（与 EconomicFactPayload 字段一致）。 */
     public static final List<String> PAYLOAD_FIELDS = List.of("factId", "factVersion", "supersedesFactId", "parentFactId",
         "factType", "sourceSystem", "sourceEventKey", "sourceVersion", "sourcePayloadHash", "recordedTime",
-        "paymentSucceededTime", "clientId", "entityNo", "localPartnerId", "partnerAgreementOeId", "financeEntityId",
+        "paymentSucceededTime", "balanceAvailableTime", "clientId", "entityNo", "localPartnerId", "partnerAgreementOeId", "financeEntityId",
         "currency", "grossAmount", "channelAccountId", "lines");
 
     private static final JsonMapper JSON = JsonMapper.builder().build();
@@ -78,6 +78,12 @@ public class EconomicFactEnvelopeChecker {
     /** 按 billing-api 载荷类反序列化 Payload。 */
     public EconomicFactPayload payload() {
         return JSON.treeToValue(envelope.path("payload"), EconomicFactPayload.class);
+    }
+
+    /** Payload 中一个标量字段的原始 JSON 文本；JSON null 返回 null。 */
+    public String payloadText(String field) {
+        JsonNode value = envelope.path("payload").path(field);
+        return value.isNull() || value.isMissingNode() ? null : value.asString();
     }
 
     /** 信封 eventId。 */

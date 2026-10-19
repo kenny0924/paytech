@@ -4,8 +4,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { DatePicker } from '../components/DatePicker';
 import { usePaging } from '../hooks/usePaging';
 import {
-  decodeJournalLine, entryTypeColors, entryTypeLabels, financeErrorTarget, financePaths, ledgerLevelSearch, ledgerQuerySearch, lineFilters,
-  pageOf, readLedgerQuery, replaceQuery, sideLabels,
+  decodeJournalLine, entryTypeColors, entryTypeLabels, financeErrorTarget, financePaths, journalLineSourceMeta, ledgerLevelSearch, ledgerQuerySearch,
+  lineFilters, pageOf, readLedgerQuery, replaceQuery, sideLabels,
 } from './finance';
 import type { AccountRef, BookRef, JournalLine, LedgerAccount, LedgerBook, LedgerLevel, LedgerQuery } from './finance';
 import { Amount, FinanceNote, LoadFailure, SideTag } from './FinanceParts';
@@ -44,7 +44,7 @@ export function LedgerDrilldown({ onAuthorizationChanged }: { onAuthorizationCha
       <AccountList key={keyOf(query, 'accounts')} book={book} minorUnit={minorUnit} initialFilters={query.accountFilters} initialPaging={query.accountPaging}
         onQueryChange={writeQuery('accounts')} onAuthorizationChanged={onAuthorizationChanged}
         onSelect={next => go(ledgerLevelSearch(location.search, 'lines', { account: next.accountId }), { book: state.book, account: next })} />
-      <FinanceNote>点击账户行进入流水。账本查询只读，不显示新建按钮；账簿与账户列表组件与账务基础资料共用。</FinanceNote>
+      <FinanceNote>点击账户行进入流水。总账只有以账簿主体为核算对象的控制账户（余额桶 NONE）；Client / Partner 明细与余额桶在「明细账查询」。账本查询只读，不显示新建按钮。</FinanceNote>
     </>}
     {query.level === 'lines' && book && account && <JournalLines key={keyOf(query, 'lines')} book={book} account={account} minorUnit={minorUnit} query={query}
       onQueryChange={writeQuery('lines')} onOpenEntry={entry => go(replaceQuery(location.search, { entry }), state)}
@@ -109,9 +109,9 @@ function JournalLines({ book, account, minorUnit, query, onQueryChange, onOpenEn
           { title: '行后余额', width: 150, align: 'right', render: (_, row) => amount(row.balanceAfter) },
           { title: '指令类型', dataIndex: 'instructionType', width: 190, ellipsis: true },
           { title: '来源', render: (_, row) => <div><div>{row.originType} · {row.originType === 'MANUAL' ? '人工调整' : row.sourceSystem ?? '—'}</div>
-            <div className="cell-meta">{(row.originType === 'MANUAL' ? row.adjustmentNo : row.sourceEventKey) ?? '—'}</div></div> },
+            <div className="cell-meta">{journalLineSourceMeta(row)}</div></div> },
         ]} />
     </section>}
-    <FinanceNote>行后余额按全量历史累计，筛选不改变起点；点击分录序号打开分录详情。</FinanceNote>
+    <FinanceNote>行后余额按全量历史累计，筛选不改变起点；来源为 ACCOUNT_POSTING 的分录由 account 入账批次生成；点击分录序号打开分录详情。</FinanceNote>
   </>;
 }

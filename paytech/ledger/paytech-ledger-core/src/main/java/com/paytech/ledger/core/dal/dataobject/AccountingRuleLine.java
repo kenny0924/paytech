@@ -3,9 +3,9 @@ package com.paytech.ledger.core.dal.dataobject;
 import java.time.Instant;
 
 import com.paytech.account.api.enums.BalanceBucket;
-import com.paytech.account.api.enums.OwnerRole;
 import com.paytech.billing.api.enums.AmountSource;
 import com.paytech.billing.api.enums.AutoInstructionType;
+import com.paytech.ledger.api.enums.RuleOwnerRole;
 import com.paytech.ledger.core.enums.EntrySide;
 
 import lombok.Getter;
@@ -48,7 +48,7 @@ public class AccountingRuleLine {
     /**
      * 核算对象角色
      */
-    private OwnerRole ownerRole;
+    private RuleOwnerRole ownerRole;
 
     /**
      * 在账簿科目表中唯一解析的叶子科目代码

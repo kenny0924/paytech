@@ -18,8 +18,8 @@ import org.w3c.dom.NodeList;
  * 在默认 Maven 测试中保护 ledger-service 的模块集合、依赖清单与已批准的基础设施范围（Redis 资源锁、Snowflake、MyBatis、paytech-messaging
  * 消费端与内部 HTTP 客户端）
  * <li>由 FinanceModuleBoundaryTest 按服务拆分（design/09 §2.7）；跨服务依赖图规则由 ArchitectureAutoTest（R1–R12）检查。</li>
- * <li>第 11b 步起 ledger 消费 EconomicFactRecorded：RabbitTemplate 必须在 classpath（09 §2.7 对 ledger 取消“不在 classpath”断言）；
- * 不注册补偿 Handler，补偿组件仍不得引入。</li>
+ * <li>ledger 消费 account 的 AccountPosted（2026-10-19 起替代 EconomicFactRecorded）：RabbitTemplate 必须在 classpath；account-api 提供
+ * 载荷与过账进度 / 批次合同，billing-api 提供事实详情与发布进度合同；不注册补偿 Handler，补偿组件仍不得引入。</li>
  *
  * @see com.paytech.ledger.LedgerApplication
  */

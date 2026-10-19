@@ -1,0 +1,20 @@
+# account 明细账与 ledger 控制科目重构：mor-test 候选覆盖文件（阶段 6 评审稿，2026-10-19）。
+# 叠加在 compose.yaml + compose.applications.yaml + compose.scheduler.yaml 之上（compose.sh 已带这三个文件，只传本文件的 -f）。
+# 镜像：HEAD 2bae8597 干净 worktree + 本需求 441 个文件（source-overlay.txt）构建，tag mor-test/<服务>:subledger-20261019；
+# 下面固定为 sha256 镜像 ID（tag 同名），JAR SHA-256 与 Web 入口见 release.md 第 2.8 节。Gateway 不变。
+# 配置增量：account-service 删除 ACCOUNT_LEDGER_SERVICE_URL。覆盖文件不能删除合并后的环境变量键，
+# 该删除由工作区 compose.applications.yaml（D 线改动，随阶段 8 提交）承担；compose.sh 读取的就是工作区文件。
+# 部署顺序：ledger 先于 account（account 发布端 unroutable-policy: FAIL，需 ledger.account.hash 已绑定到 account.events）。
+services:
+  billing-service:
+    image: sha256:403fc7decdc759784d438d2551ce839cd6d8942640ce760d14de47f2db77c850
+  ledger-service:
+    image: sha256:fb7c661dcede9656e998bdb51f3ff4d24e15552b8a12132de1a23a907675fde7
+  account-service:
+    image: sha256:b356a4f38060367d7f6ccf4cd65d34f46d041f398d80b3535da7d154cb9481d6
+  platform-support-service:
+    image: sha256:33c196ec9f9a1d18af5876f7c24b32563580bc9b5bc895ea5bc8bb4f494a5b82
+  operations-console-bff:
+    image: sha256:446ad6977e6e77725d3c2a517d5419b9e22ead9ad92b72827e09789a4ca1a314
+  operations-console-web:
+    image: sha256:12e2e021014e13d0d61d81d711b56c3af051ff546cf8d8cd89c4bd0cb35e55b2

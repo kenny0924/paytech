@@ -3,7 +3,7 @@ package com.paytech.ledger.domain.view;
 import java.math.BigDecimal;
 
 import com.paytech.account.api.enums.BalanceBucket;
-import com.paytech.account.api.enums.OwnerType;
+import com.paytech.ledger.api.enums.LedgerOwnerType;
 import com.paytech.ledger.core.enums.AccountStatus;
 import com.paytech.ledger.core.enums.NormalSide;
 
@@ -21,7 +21,7 @@ public class AccountView {
     private String accountCode;
 
     /** 核算对象类型。 */
-    private OwnerType ownerType;
+    private LedgerOwnerType ownerType;
 
     /** 核算对象标识。 */
     private String ownerId;

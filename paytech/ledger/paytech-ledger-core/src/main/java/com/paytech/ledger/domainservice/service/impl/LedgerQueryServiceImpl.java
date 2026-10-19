@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import com.paytech.account.api.enums.OwnerType;
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.common.error.InvalidParameterException;
@@ -48,10 +47,6 @@ import lombok.AllArgsConstructor;
 @Service
 @AllArgsConstructor
 public class LedgerQueryServiceImpl implements LedgerQueryService {
-    /** account 服务维护余额桶的 Owner 类型，日终核对按它们比对（design/04 §7）。 */
-    static final List<OwnerType> OWNER_BALANCE_TYPES = List.of(OwnerType.CLIENT, OwnerType.LOCAL_PARTNER,
-        OwnerType.CHANNEL_ACCOUNT, OwnerType.CASH_ACCOUNT);
-
     private final ChartAccountRepository chartAccountRepository;
     private final LedgerAccountRepository ledgerAccountRepository;
     private final LedgerBookRepository ledgerBookRepository;
@@ -126,18 +121,6 @@ public class LedgerQueryServiceImpl implements LedgerQueryService {
             throw new InvalidParameterException("科目主键数量必须在 1 到 " + MAX_CHART_ACCOUNT_IDS + " 之间");
         }
         return chartAccountRepository.findByIds(chartAccountIds.stream().distinct().sorted().toList());
-    }
-
-    /**
-     * 账簿存在后读取全部 Owner 账户的分录聚合余额，并按币种精度补齐
-     * <li>供 account 经 LedgerReadApi 读取：账簿不存在沿用公共业务拒绝，account 未注册 LedgerSetupErrorCode。</li>
-     */
-    @Override
-    public List<AccountView> listOwnerAccountTotals(long ledgerBookId) {
-        int minorUnit = minorUnit(getLedgerBook(ledgerBookId).getCurrency());
-        List<AccountView> accounts = ledgerAccountRepository.findOwnerTotals(ledgerBookId, OWNER_BALANCE_TYPES);
-        accounts.forEach(account -> scale(account, minorUnit));
-        return accounts;
     }
 
     /** 三个余额字段按币种精度补齐。 */

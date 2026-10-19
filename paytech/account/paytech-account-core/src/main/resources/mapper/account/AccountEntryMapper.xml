@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- t_account_entry：不可变账户流水，只读写 mor_account。 -->
+<mapper namespace="com.paytech.account.core.dal.mapper.AccountEntryMapper">
+    <sql id="columns">id, posting_id, line_no, account_id, entry_side, amount, fact_line_no, reverses_entry_id, create_time</sql>
+
+    <insert id="insertAll">
+        INSERT INTO t_account_entry (<include refid="columns"/>) VALUES
+        <foreach collection="entries" item="entry" separator=",">(#{entry.id}, #{entry.postingId}, #{entry.lineNo}, #{entry.accountId}, #{entry.entrySide}, #{entry.amount}, #{entry.factLineNo}, #{entry.reversesEntryId}, #{entry.createTime})</foreach>
+    </insert>
+
+    <select id="selectByPostingIds" resultType="com.paytech.account.core.dal.dataobject.AccountEntry">
+        SELECT <include refid="columns"/> FROM t_account_entry WHERE posting_id IN
+        <foreach collection="postingIds" item="postingId" open="(" separator="," close=")">#{postingId}</foreach>
+        ORDER BY posting_id, line_no
+    </select>
+
+    <select id="selectByReversedIds" resultType="com.paytech.account.core.dal.dataobject.AccountEntry">
+        SELECT <include refid="columns"/> FROM t_account_entry WHERE reverses_entry_id IN
+        <foreach collection="entryIds" item="entryId" open="(" separator="," close=")">#{entryId}</foreach>
+        ORDER BY id
+    </select>
+
+    <!-- 同一账户的流水都在该账户主体 + 币种的过账流内，按批次序号排序即入账顺序。 -->
+    <select id="selectPageByAccount" resultType="com.paytech.account.core.dal.dataobject.AccountEntry">
+        SELECT e.id, e.posting_id, e.line_no, e.account_id, e.entry_side, e.amount, e.fact_line_no, e.reverses_entry_id, e.create_time
+        FROM t_account_entry e JOIN t_account_posting p ON p.id = e.posting_id
+        WHERE e.account_id = #{accountId}
+        ORDER BY p.posting_sequence, e.line_no
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countByAccount" resultType="long">
+        SELECT COUNT(*) FROM t_account_entry WHERE account_id = #{accountId}
+    </select>
+
+    <select id="sumByAccountIds" resultType="java.util.Map">
+        SELECT account_id accountId,
+            SUM(CASE WHEN entry_side = 'DEBIT' THEN amount ELSE 0 END) debitTotal,
+            SUM(CASE WHEN entry_side = 'CREDIT' THEN amount ELSE 0 END) creditTotal,
+            COUNT(*) entryCount
+        FROM t_account_entry WHERE account_id IN
+        <foreach collection="accountIds" item="accountId" open="(" separator="," close=")">#{accountId}</foreach>
+        GROUP BY account_id
+    </select>
+</mapper>

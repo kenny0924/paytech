@@ -3,11 +3,12 @@ package com.paytech.account.core.dal.dataobject;
 import java.time.Instant;
 
 import com.paytech.account.core.enums.AppliedFactStatus;
+import com.paytech.account.core.enums.MaturityStatus;
 
 import lombok.Getter;
 import lombok.Setter;
 
-/** t_balance_applied_fact：已处理的经济事实，按 fact_id + fact_version 幂等，并记录版本替代关系。 */
+/** t_balance_applied_fact：已处理的经济事实，按 fact_id + fact_version 幂等，记录替代关系、入账批次与到期转可用进度。 */
 @Getter
 @Setter
 public class BalanceAppliedFact {
@@ -29,7 +30,7 @@ public class BalanceAppliedFact {
     /** 替代本事实的后一经济事实；未被替代时为空。 */
     private Long supersededByFactId;
 
-    /** 经济事实头的 Operating Entity 编号。 */
+    /** 经济事实头的 Operating Entity 编号，决定入账流。 */
     private String entityNo;
 
     /** 经济事实头的平台服务费 Finance Entity；无合作方为空。 */
@@ -41,10 +42,19 @@ public class BalanceAppliedFact {
     /** 事实对余额的影响状态。 */
     private AppliedFactStatus applyStatus;
 
-    /** 已应用余额变化的规范文本 SHA-256；仅预登记时为空。 */
-    private String linesHash;
+    /** 自身事件到达后生成的入账批次；仅预登记时为空。 */
+    private Long postingId;
 
-    /** 事实被处理的 UTC 时间；仅预登记时为空。 */
+    /** 应付余额到期转可用的 UTC 时间；billing 未给出为空。 */
+    private Instant balanceAvailableTime;
+
+    /** 到期转可用进度。 */
+    private MaturityStatus maturityStatus;
+
+    /** 到期转可用完成的 UTC 微秒时间。 */
+    private Instant maturedTime;
+
+    /** 事实被本服务处理的 UTC 微秒时间；仅预登记时为空。 */
     private Instant appliedTime;
 
     /** 记录创建的 UTC 微秒时间。 */

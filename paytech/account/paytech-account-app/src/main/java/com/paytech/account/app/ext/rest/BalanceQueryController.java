@@ -13,7 +13,7 @@ import com.paytech.account.service.processor.request.OwnerBalanceQuery;
 
 import lombok.AllArgsConstructor;
 
-/** Client 与 Local Partner 分类余额的 HTTP 协议适配；账簿经 ledger-api 确认，委托 Processor。 */
+/** Client 与 Local Partner 分类余额的 HTTP 协议适配；只读本库 Owner 账户，委托 Processor。 */
 @RestController
 @AllArgsConstructor
 public class BalanceQueryController implements BalanceQueryApi {

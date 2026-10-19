@@ -9,7 +9,8 @@ import lombok.Setter;
 
 /**
  * 经济事实载荷：头与全部明细行，消费者无需回查 billing（design/04 §2、§5）
- * <li>同一份结构既是 ledger 交易自动记账的输入 DTO，也是 EconomicFactRecorded Schema v1 事件的 Payload（ledger、account 反序列化本类）。</li>
+ * <li>同一份结构既是 billing 经济事实读取接口的明细，也是 EconomicFactRecorded Schema v1 事件的 Payload（account 消费该事件并反序列化本类；
+ * ledger 经读取接口取事实头与明细）。</li>
  * <li>事件信封：eventType = {@value #EVENT_TYPE}，schemaVersion = {@value #SCHEMA_VERSION}，aggregateType = {@value #AGGREGATE_TYPE}，
  * aggregateId = factId，aggregateVersion = factVersion，occurredAt = recordedTime，sourceService = billing。</li>
  * <li>事件 JSON 中所有标量都是字符串（ID、版本与金额为十进制字符串，时间为 UTC RFC 3339），缺省值为 JSON null，符合 Foundation
@@ -64,6 +65,13 @@ public class EconomicFactPayload {
 
     /** 仅 PAYMENT：支付成功的 UTC 微秒时间，决定过账日期与生效规则版本。 */
     private Instant paymentSucceededTime;
+
+    /**
+     * 余额到期时间：Client Principal / Local Partner Share 由 PENDING 成熟到 AVAILABLE 的 UTC 微秒时间
+     * <li>仅 PAYMENT 且 billing 已计算时非空，其余为空（JSON null）；Schema 版本保持 1，新增可选字段向后兼容。</li>
+     * <li>account 读取它决定到期转可用；ledger 不使用。</li>
+     */
+    private Instant balanceAvailableTime;
 
     /** CCT Client 稳定业务 ID。 */
     private Long clientId;

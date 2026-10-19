@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.paytech.account.api.constant.StandardAccountCodes;
 import com.paytech.account.api.enums.BalanceBucket;
-import com.paytech.account.api.enums.OwnerType;
+import com.paytech.ledger.api.enums.LedgerOwnerType;
 import com.paytech.ledger.api.ManualAdjustmentApi;
 import com.paytech.ledger.api.enums.LedgerErrorCode;
 import com.paytech.ledger.api.request.ReviewManualAdjustmentRequestBody;
@@ -78,11 +78,11 @@ class ApproveManualAdjustmentTest extends AbstractManualAdjustmentApiTest {
             .assertAccount(bankCashAccountId, "10.25", "30", "-19.75", 2L);
     }
 
-    /** 第 11b 步前已提交、涉及 Client 账户的存量调整：批准时同样以专用错误码拒绝，调整保持 SUBMITTED、不写分录。 */
+    /** 提交后改指 Owner 控制科目的调整：批准时同样以专用错误码拒绝，调整保持 SUBMITTED、不写分录。 */
     @Test
     void test_legacyOwnerAccountAdjustmentRejectedOnApprove() {
         long client = ledgerMocker.mockAccount(ledger.getLedgerBookId(), StandardAccountCodes.CLIENT_PAYABLE,
-            OwnerType.CLIENT, "1001", BalanceBucket.AVAILABLE);
+            LedgerOwnerType.OPERATING_ENTITY, ledger.getEntityNo(), BalanceBucket.NONE);
         var submit = submitted(adjustment().transfer(bankCashAccountId, liabilityAccountId, "10"));
         long id = submit.id("manualAdjustmentId");
         testMapper.updateAdjustmentLineAccount(id, 2, client);

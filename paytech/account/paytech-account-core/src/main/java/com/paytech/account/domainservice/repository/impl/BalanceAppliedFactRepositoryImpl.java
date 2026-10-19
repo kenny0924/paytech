@@ -1,22 +1,18 @@
 package com.paytech.account.domainservice.repository.impl;
 
-import java.time.Clock;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
 
-import com.paytech.account.core.dal.dataobject.BalanceAppliedEntry;
 import com.paytech.account.core.dal.dataobject.BalanceAppliedFact;
 import com.paytech.account.core.dal.mapper.BalanceAppliedFactMapper;
 import com.paytech.account.core.enums.AppliedFactStatus;
-import com.paytech.account.core.enums.BookEntityType;
-import com.paytech.account.domain.BookIdentity;
+import com.paytech.account.core.enums.MaturityStatus;
 import com.paytech.account.domainservice.repository.BalanceAppliedFactRepository;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
-import com.paytech.foundation.common.error.ErrorException;
 
 import lombok.AllArgsConstructor;
 
@@ -24,7 +20,6 @@ import lombok.AllArgsConstructor;
 @Repository
 @AllArgsConstructor
 public class BalanceAppliedFactRepositoryImpl implements BalanceAppliedFactRepository {
-    private final Clock clock;
     private final BalanceAppliedFactMapper mapper;
 
     /** 唯一键冲突转为可重试的并发冲突。 */
@@ -43,10 +38,15 @@ public class BalanceAppliedFactRepositoryImpl implements BalanceAppliedFactRepos
         return mapper.selectByFactIdForUpdate(factId);
     }
 
+    /** 空集合不查询。 */
+    @Override
+    public List<BalanceAppliedFact> findByFactIds(List<Long> factIds) {
+        return factIds.isEmpty() ? List.of() : mapper.selectByFactIds(factIds);
+    }
+
     /** 条件迁移，成功后同步原对象。 */
     @Override
-    public void updateStatus(BalanceAppliedFact fact, AppliedFactStatus status) {
-        Instant now = now();
+    public void updateStatus(BalanceAppliedFact fact, AppliedFactStatus status, Instant now) {
         if (mapper.updateStatus(fact, status, now) != 1) {
             throw new ConcurrentRequestException("经济事实处理状态已变化: " + fact.getFactId());
         }
@@ -54,51 +54,44 @@ public class BalanceAppliedFactRepositoryImpl implements BalanceAppliedFactRepos
         fact.setUpdateTime(now);
     }
 
-    /** 账簿主体内已处理的事实数。 */
+    /** 经营主体与币种下的进度。 */
     @Override
-    public long countProcessed(BookIdentity book) {
-        return ((Number)mapper.selectProgress(book.entityType(), book.entityId(), book.currency()).get("factCount")).longValue();
+    public Progress operatingEntityProgress(String entityNo, String currency) {
+        return progress(mapper.selectOperatingEntityProgress(entityNo, currency));
     }
 
-    /** 账簿主体内已处理事实的最大 factId。 */
+    /** Finance Entity 与币种下的进度。 */
     @Override
-    public Long maxProcessedFactId(BookIdentity book) {
-        Object max = mapper.selectProgress(book.entityType(), book.entityId(), book.currency()).get("maxFactId");
-        return max == null ? null : ((Number)max).longValue();
+    public Progress financeEntityProgress(long financeEntityId, String currency) {
+        return progress(mapper.selectFinanceEntityProgress(financeEntityId, currency));
     }
 
-    /** 统计 factId 大于给定值的处理记录。 */
+    /** 引用 Finance Entity 的经营主体编号。 */
     @Override
-    public long countAfter(BookIdentity book, long factId) {
-        return mapper.countAfter(book.entityType(), book.entityId(), book.currency(), factId);
+    public List<String> findEntityNosByFinanceEntity(long financeEntityId, String currency) {
+        return mapper.selectEntityNosByFinanceEntity(financeEntityId, currency);
     }
 
-    /** 余额变化先于处理记录删除；只允许经营主体账簿。 */
+    /** 到期待移动的事实。 */
     @Override
-    public void deleteUpTo(BookIdentity book, long factId) {
-        if (book.entityType() != BookEntityType.OPERATING_ENTITY) {
-            throw new ErrorException("只能按经营主体账簿删除处理记录: " + book);
+    public List<BalanceAppliedFact> findMaturityDue(Instant asOf, long afterId, int limit) {
+        return mapper.selectMaturityDue(asOf, afterId, limit);
+    }
+
+    /** 以 PENDING 为条件标记完成，成功后同步原对象。 */
+    @Override
+    public void markMatured(BalanceAppliedFact fact, Instant maturedTime) {
+        if (mapper.markMatured(fact.getId(), maturedTime) != 1) {
+            throw new ConcurrentRequestException("经济事实到期状态已变化: " + fact.getFactId());
         }
-        mapper.deleteEntriesUpTo(book.entityType(), book.entityId(), book.currency(), factId);
-        mapper.deleteFactsUpTo(book.entityType(), book.entityId(), book.currency(), factId);
+        fact.setMaturityStatus(MaturityStatus.MATURED);
+        fact.setMaturedTime(maturedTime);
+        fact.setUpdateTime(maturedTime);
     }
 
-    /** 空集合不写。 */
-    @Override
-    public void insertEntries(List<BalanceAppliedEntry> entries) {
-        if (!entries.isEmpty()) {
-            mapper.insertEntries(entries);
-        }
-    }
-
-    /** 读取一条已处理事实的全部余额变化。 */
-    @Override
-    public List<BalanceAppliedEntry> findEntries(long appliedFactId) {
-        return mapper.selectEntries(appliedFactId);
-    }
-
-    /** 当前 UTC 时间，截断到微秒。 */
-    private Instant now() {
-        return clock.instant().truncatedTo(ChronoUnit.MICROS);
+    /** 聚合行转进度；没有事实时最大值为空。 */
+    static Progress progress(Map<String, Object> row) {
+        Object max = row.get("maxFactId");
+        return new Progress(((Number)row.get("factCount")).longValue(), max == null ? null : ((Number)max).longValue());
     }
 }

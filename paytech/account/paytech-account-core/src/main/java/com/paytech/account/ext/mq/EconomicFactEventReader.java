@@ -17,6 +17,7 @@ import tools.jackson.databind.json.JsonMapper;
  * EconomicFactRecorded Schema v1 信封到账户服务内部经济事实的解析（第 11a 步 Payload 合同）
  * <li>信封的聚合类型、聚合 ID 与版本必须与 Payload 的 factId、factVersion 一致；不一致或无法解析视为内容非法。</li>
  * <li>只做协议解析，不访问数据库；转换为本服务的 {@link FactRecord} 后由余额映射规则校验业务完整性。</li>
+ * <li>载荷可选字段 balanceAvailableTime（T0 合同，Schema 版本仍为 1）带入到期转可用时间。</li>
  */
 public final class EconomicFactEventReader {
     private static final JsonMapper JSON = JsonMapper.builder().build();
@@ -66,6 +67,6 @@ public final class EconomicFactEventReader {
         lines.sort(Comparator.comparingInt(FactRecord.Line::lineNo));
         return new FactRecord(fact.getFactId(), fact.getFactVersion(), fact.getSupersedesFactId(), fact.getFactType(),
             fact.getClientId(), fact.getEntityNo(), fact.getLocalPartnerId(), fact.getFinanceEntityId(),
-            fact.getCurrency(), fact.getGrossAmount(), fact.getChannelAccountId(), List.copyOf(lines));
+            fact.getCurrency(), fact.getBalanceAvailableTime(), List.copyOf(lines));
     }
 }

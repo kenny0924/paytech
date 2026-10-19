@@ -15,7 +15,7 @@
     <packaging>jar</packaging>
 
     <name>PayTech Account App</name>
-    <description>Deployable account-service: Spring Boot entry, controllers, EconomicFactRecorded consumption, reconciliation job, persistence and runtime configuration.</description>
+    <description>Deployable account-service: Spring Boot entry, controllers, EconomicFactRecorded consumption, AccountPosted publication, maturity job, persistence and runtime configuration.</description>
 
     <dependencies>
         <dependency>
@@ -40,7 +40,7 @@
             <groupId>com.paytech</groupId>
             <artifactId>paytech-mvc-web-starter</artifactId>
         </dependency>
-        <!-- EconomicFactRecorded 消费：分区拓扑、单活消费者容器与 t_consumed_event 幂等拦截器（design/04 §5、design/08）。 -->
+        <!-- EconomicFactRecorded 消费（分区拓扑、单活消费者容器、t_consumed_event 幂等拦截器）与 AccountPosted 发布（account.events）。 -->
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-messaging</artifactId>
@@ -49,19 +49,10 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-amqp</artifactId>
         </dependency>
-        <!-- 本库 t_compensation_event（现行模型）与其 XXL-Job 兜底；日终核对任务也注册为 XXL-Job Handler（design/04 §7）。 -->
+        <!-- 本库 t_compensation_event 与其 XXL-Job 兜底：AccountPosted 发布任务；到期转可用任务也注册为 XXL-Job Handler。 -->
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-compensation-event</artifactId>
-        </dependency>
-        <!-- ledger-api 与 billing-api 内部 HTTP 客户端（design/04 §6、§7）。 -->
-        <dependency>
-            <groupId>com.paytech</groupId>
-            <artifactId>paytech-http-client-support</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-restclient</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

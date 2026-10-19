@@ -37,6 +37,7 @@ import com.paytech.ledger.domain.SubmitManualAdjustmentContext;
 import com.paytech.ledger.domainservice.repository.AccountingPeriodRepository;
 import com.paytech.ledger.domainservice.repository.CurrencySpecRepository;
 import com.paytech.ledger.domainservice.repository.FiscalCalendarRepository;
+import com.paytech.ledger.domainservice.repository.ChartAccountRepository;
 import com.paytech.ledger.domainservice.repository.LedgerAccountRepository;
 import com.paytech.ledger.domainservice.repository.LedgerBookRepository;
 import com.paytech.ledger.domainservice.service.ManualAdjustmentService;
@@ -62,6 +63,7 @@ public class SubmitManualAdjustmentProcessor
 
     private final Clock clock;
     private final IdGenerator idGenerator;
+    private final ChartAccountRepository chartAccountRepository;
     private final LedgerAccountRepository ledgerAccountRepository;
     private final LedgerBookRepository ledgerBookRepository;
     private final CurrencySpecRepository currencySpecRepository;
@@ -134,7 +136,9 @@ public class SubmitManualAdjustmentProcessor
                 throw new BizCheckFailException("账户未开放过账: " + id + ", 状态 " + account.getAccountStatus().getCode());
             }
         }
-        OwnerAccountAdjustmentRule.checkNoOwnerAccounts("账簿 " + book.getId(), accounts.values());
+        List<Long> chartIds = accounts.values().stream().map(LedgerAccount::getChartAccountId).distinct().sorted().toList();
+        OwnerAccountAdjustmentRule.checkNoControlAccounts("账簿 " + book.getId(), accounts.values(),
+            chartAccountRepository.findByIds(chartIds));
     }
 
     /** 金额大于零、不超过币种精度且借贷平衡，返回借方（=贷方）合计。 */

@@ -18,6 +18,11 @@ spring:
     banner-mode: "off"
   jmx:
     enabled: false
+  # 测试不建表、不执行任何 SQL 脚本（init/ddl.sql 由管理员手工执行）；同时屏蔽 reactor 构建中 paytech-messaging test-jar 的测试配置
+  # （其 application-mock.yaml 会为自身测试启用 schema 脚本）。
+  sql:
+    init:
+      mode: never
   datasource:
     url: "${LEDGER_TEST_DB_URL:jdbc:mysql://127.0.0.1:13306/mor_ledger?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}"
     username: "${LEDGER_TEST_DB_USERNAME:ledger_app}"
@@ -35,7 +40,7 @@ spring:
       password: "${LEDGER_TEST_REDIS_PASSWORD:${PAYTECH_REDIS_PASSWORD:${MOR_REDIS_PASSWORD:c4e99fe36176a66ece55b0c23e5af0be488d409f2e89f6c5}}}"
       connect-timeout: 2s
       timeout: 2s
-  # 仓库 local-environment 的本机 RabbitMQ；凭据只来自 .env.local 或同名环境变量。测试扮演 billing 向 billing.events 发布，需要发布确认。
+  # 仓库 local-environment 的本机 RabbitMQ；凭据只来自 .env.local 或同名环境变量。测试扮演 account 向 account.events 发布，需要发布确认。
   rabbitmq:
     host: 127.0.0.1
     port: 5672
@@ -45,7 +50,7 @@ spring:
     connection-timeout: 2s
     publisher-confirm-type: correlated
     publisher-returns: true
-  # account（consistency）与 billing（pending）由 EnableMockHttpServer 的随机 Loopback 端口承载，真实客户端直连该地址。
+  # account（过账进度、批次）与 billing（事实详情、pending）由 EnableMockHttpServer 的随机 Loopback 端口承载，真实客户端直连该地址。
   http:
     clients:
       imperative:
@@ -74,13 +79,13 @@ redis:
     threads: 4
     netty-threads: 4
 
-# paytech-messaging 消费端：ledger.billing.hash 与 ledger.billing.p0..p3；重投退避缩短到 200ms。
+# paytech-messaging 消费端：ledger.account.hash 与 ledger.account.p0..p3（AccountPosted 严格有序）；重投退避缩短到 200ms。
 messaging:
   consumer:
     service: ledger
     retry-backoff: 200ms
   consumers:
-    billing:
+    account:
       partitions: 4
 
 management:

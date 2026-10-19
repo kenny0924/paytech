@@ -16,9 +16,9 @@ import com.paytech.billing.api.enums.FactPartyRole;
 import com.paytech.foundation.money.Money;
 
 /**
- * Client 与 Partner 分类余额：经 ledger-api 确认 entityNo 的币种账簿存在，读取本服务自有余额，未建立的余额返回零
- * <li>第 11b 步：余额由消费 EconomicFactRecorded 建立（扮演 billing 发布到真实本机 RabbitMQ），不再读 ledger 的 t_account；
- * ledger 不可用时失败关闭（design/04 §6）。</li>
+ * Client 与 Partner 分类余额：只读本库 Owner 账户，不调用 ledger
+ * <li>账户由消费 EconomicFactRecorded 开立（扮演 billing 发布到真实本机 RabbitMQ）；有账户时缺少的桶为零，没有任何账户时 400
+ * OWNER_ACCOUNT_NOT_FOUND。</li>
  *
  * @see BalanceQueryApi#queryClientBalance(String, String, String)
  * @see BalanceQueryApi#queryPartnerBalance(String, String, String)
@@ -26,7 +26,7 @@ import com.paytech.foundation.money.Money;
 class QueryOwnerBalanceTest extends AbstractBalanceTest {
 
     @Test
-    void test_clientBalanceReadsAccountProjection() {
+    void test_clientBalanceReadsOwnerAccounts() {
         consumed(payment("100").component(AmountSource.CLIENT_PRINCIPAL, "70.25").build());
 
         var body = get("/balances/v1/clients/1001?entityNo=AE001&currency=USD").assertSuccess(200)
@@ -38,13 +38,14 @@ class QueryOwnerBalanceTest extends AbstractBalanceTest {
             () -> assertEquals(Money.zero("USD"), body.getLockedAmount()),
             () -> assertEquals(Money.zero("USD"), body.getSecurityDepositAmount()),
             () -> assertEquals(Money.zero("USD"), body.getRecoveryReceivableAmount()));
+        posted.await(1);
     }
 
     @Test
-    void test_partnerBalanceReturnsZeroForMissingAccounts() {
+    void test_partnerBalanceReturnsZeroForMissingBuckets() {
         consumed(adjustment().partner(PARTNER_ID, PARTNER_AGREEMENT_OE_ID, FINANCE_ENTITY_ID)
             .line(AmountSource.PARTNER_SHARE, FactPartyRole.OPERATING_ENTITY, ENTITY_NO, FactPartyRole.LOCAL_PARTNER,
-                "2001", FactLineDirection.CHARGE, "10").build());
+                PARTNER, FactLineDirection.CHARGE, "10").build());
 
         var body = get("/balances/v1/partners/2001?entityNo=AE001&currency=USD").assertSuccess(200)
             .as(PartnerBalanceResponseBody.class);
@@ -53,29 +54,26 @@ class QueryOwnerBalanceTest extends AbstractBalanceTest {
             () -> assertEquals(Money.zero("USD"), body.getAvailableAmount()),
             () -> assertEquals(Money.zero("USD"), body.getLockedAmount()),
             () -> assertEquals(Money.zero("USD"), body.getRecoveryReceivableAmount()));
+        posted.await(1);
     }
 
+    /** Owner 在该 OE 与币种下没有任何账户（含其他 Owner 已有账户、其他 OE）：400 OWNER_ACCOUNT_NOT_FOUND。 */
     @Test
-    void test_missingBookRejected() {
+    void test_ownerWithoutAccountsRejected() {
+        consumed(clientCredit("1").build());
+
+        get("/balances/v1/partners/2001?entityNo=AE001&currency=USD")
+            .assertRejected(BalanceQueryErrorCode.OWNER_ACCOUNT_NOT_FOUND);
         get("/balances/v1/clients/1001?entityNo=AE009&currency=USD")
-            .assertRejected(BalanceQueryErrorCode.LEDGER_BOOK_NOT_FOUND);
-        get("/balances/v1/partners/2001?entityNo=AE009&currency=USD")
-            .assertRejected(BalanceQueryErrorCode.LEDGER_BOOK_NOT_FOUND);
+            .assertRejected(BalanceQueryErrorCode.OWNER_ACCOUNT_NOT_FOUND);
+        get("/balances/v1/clients/1001?entityNo=AE001&currency=EUR")
+            .assertRejected(BalanceQueryErrorCode.OWNER_ACCOUNT_NOT_FOUND);
+        posted.await(1);
     }
 
     @Test
     void test_invalidParameter() {
         get("/balances/v1/clients/1001?entityNo=ae001&currency=USD").assertStatus(400);
         get("/balances/v1/clients/1001?operatingEntityId=2001&currency=USD").assertStatus(400);
-    }
-
-    /** ledger-api 不可用：不猜测账簿是否存在，以 503 失败关闭。 */
-    @Test
-    void test_ledgerUnavailableFailsClosed() {
-        consumed(payment("100").component(AmountSource.CLIENT_PRINCIPAL, "100").build());
-        ledger.mockUnavailable();
-
-        get("/balances/v1/clients/1001?entityNo=AE001&currency=USD").assertServiceUnavailable();
-        get("/balances/v1/partners/2001?entityNo=AE001&currency=USD").assertServiceUnavailable();
     }
 }

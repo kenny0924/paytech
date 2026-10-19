@@ -14,20 +14,20 @@ import com.paytech.ledger.core.dal.dataobject.AccountingRuleLine;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-/** 一次交易自动记账的规则上下文：已断言完整的经济事实、生效规则版本与规则行。 */
+/** 一次控制科目过账的规则上下文：入账批次、已断言完整的经济事实、生效规则版本与规则行。 */
 @Getter
 @RequiredArgsConstructor
 public class TransactionPostingContext {
-    /** 调用方命令。 */
-    private final TransactionPostingCommand command;
+    /** 调用方命令（入账批次与经济事实）。 */
+    private final AccountPostingCommand command;
 
-    /** 已断言完整的 PAYMENT 经济事实。 */
+    /** 已断言完整的经济事实。 */
     private final EconomicFactPayload fact;
 
     /** 经济事实全部明细行，按行号升序。 */
     private final List<EconomicFactLinePayload> lines;
 
-    /** 支付成功时点生效的规则版本。 */
+    /** 事实业务时点生效的规则版本。 */
     private final AccountingRuleBundleVer bundleVer;
 
     /** 生效规则版本的全部规则行。 */

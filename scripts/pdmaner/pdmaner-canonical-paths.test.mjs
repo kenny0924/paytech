@@ -20,8 +20,10 @@ const modelContracts = [
   ["paytech/risk-decision", "risk-decision.pdma.json", "scripts/pdmaner/risk/generate-risk-decision-model.mjs"],
   ["paytech/compliance", "compliance.pdma.json", "scripts/pdmaner/risk/generate-compliance-model.mjs"],
   ["paytech/dispute", "dispute.pdma.json", "scripts/pdmaner/risk/generate-dispute-model.mjs"],
-  ["paytech/ledger", "ledger.pdma.json", "scripts/pdmaner/finance/generate-finance-model.mjs"],
-  ["paytech/account", "account.pdma.json", "scripts/pdmaner/finance/generate-finance-model.mjs"],
+  // ledger 模型脱离 Finance 生成器（2026-10-19 控制科目重构），直接维护 JSON。
+  ["paytech/ledger", "ledger.pdma.json", null],
+  // account 模型脱离 Finance 生成器，直接维护 JSON。
+  ["paytech/account", "account.pdma.json", null],
   ["paytech/billing", "billing.pdma.json", "scripts/pdmaner/finance/generate-finance-model.mjs"],
   ["paytech/reconciliation", "reconciliation.pdma.json", "scripts/pdmaner/finance/generate-finance-model.mjs"],
   ["paytech/tax", "tax.pdma.json", "scripts/pdmaner/finance/generate-finance-model.mjs"],
@@ -45,6 +47,7 @@ test("each database owner keeps exactly one canonical short-name PDManer model",
 
 test("every PDManer generator writes to its canonical short path", () => {
   for (const [service, filename, generator] of modelContracts) {
+    if (!generator) continue;
     const source = readFileSync(path.join(workspaceRoot, generator), "utf8");
     // 第 07 步：Finance 逻辑模型按服务切分输出，生成器以服务名模板写 paytech/<svc>/docs/database/<svc>.pdma.json。
     const serviceTemplate = "paytech/${service}/docs/database/${service}.pdma.json";

@@ -12,7 +12,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import com.paytech.account.api.enums.BalanceBucket;
-import com.paytech.account.api.enums.OwnerType;
+import com.paytech.ledger.api.enums.LedgerOwnerType;
 import com.paytech.ledger.core.dal.dataobject.JournalLine;
 import com.paytech.ledger.core.enums.EntrySide;
 import com.paytech.ledger.core.enums.PeriodCloseStatus;
@@ -99,7 +99,7 @@ class YearEndProfitCloseTest extends AbstractPeriodReopenApiTest {
     void test_yearEndWithoutIncomeStillClosesAccumulatedResult() {
         makeCurrentPeriodYearEnd();
         long resultAccountId = ledgerMocker.mockAccount(ledger.getLedgerBookId(), CURRENT_RESULT_CODE,
-            OwnerType.OPERATING_ENTITY, ledger.getEntityNo(), BalanceBucket.NONE);
+            LedgerOwnerType.OPERATING_ENTITY, ledger.getEntityNo(), BalanceBucket.NONE);
         posted(adjustment().transfer(capitalAccountId, resultAccountId, "70"));
 
         LedgerResponseChecker close = startClose().assertSuccess(201)

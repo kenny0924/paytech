@@ -25,9 +25,15 @@
         <foreach collection="bookIds" item="id" open="(" separator="," close=")">#{id}</foreach>
     </select>
 
-    <select id="selectAutoByEconomicFact" resultType="com.paytech.ledger.core.dal.dataobject.AccountingInstruction">
+    <select id="selectByEconomicFact" resultType="com.paytech.ledger.core.dal.dataobject.AccountingInstruction">
         SELECT id, ledger_book_id, instruction_type, origin_type, source_system, source_event_key, source_version, source_payload_hash, economic_fact_id, manual_adjustment_id, accounting_rule_bundle_ver_id, input_hash, status, maker_id, checker_id, version, create_time, update_time FROM t_accounting_instruction
-        WHERE economic_fact_id = #{economicFactId} AND origin_type = 'AUTO'
+        WHERE economic_fact_id = #{economicFactId} AND origin_type IN ('AUTO', 'ACCOUNT_POSTING')
+        ORDER BY ledger_book_id, id
+    </select>
+
+    <select id="selectBySourceEvent" resultType="com.paytech.ledger.core.dal.dataobject.AccountingInstruction">
+        SELECT id, ledger_book_id, instruction_type, origin_type, source_system, source_event_key, source_version, source_payload_hash, economic_fact_id, manual_adjustment_id, accounting_rule_bundle_ver_id, input_hash, status, maker_id, checker_id, version, create_time, update_time FROM t_accounting_instruction
+        WHERE source_system = #{sourceSystem} AND source_event_key = #{sourceEventKey}
         ORDER BY ledger_book_id, id
     </select>
 </mapper>

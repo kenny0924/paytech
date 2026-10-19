@@ -26,7 +26,8 @@ import lombok.AllArgsConstructor;
 /**
  * 在账簿下创建 ACTIVE 统一账户
  * <li>科目必须属于账簿采用的科目表且可过账；正常方向从科目复制并冻结。</li>
- * <li>科目、Owner 类型与余额桶组合按账户身份矩阵校验；账户身份唯一由唯一键保护。</li>
+ * <li>科目、Owner 类型与余额桶组合按账户身份矩阵校验：余额桶一律 NONE；Owner 控制科目只能以账簿主体为 Owner（每账簿每科目一个
+ * 控制账户），其余科目只允许平台类 Owner；账户身份唯一由唯一键保护。</li>
  */
 @Component
 @AllArgsConstructor
@@ -41,10 +42,6 @@ public class CreateAccountProcessor extends AbstractProcessor<CreateAccountReque
     @Override
     protected void validate(CreateAccountRequest request) {
         AccountIdentityRule.checkOwnerId(request.getOwnerType(), request.getOwnerId());
-        if (!AccountIdentityRule.isAccountIdentityAllowed(request.getAccountCode(), request.getOwnerType(),
-            request.getBalanceBucket())) {
-            throw new FailException(LedgerSetupErrorCode.ACCOUNT_IDENTITY_INVALID);
-        }
     }
 
     @Override
@@ -52,6 +49,10 @@ public class CreateAccountProcessor extends AbstractProcessor<CreateAccountReque
         LedgerBook book = ledgerBookRepository.findById(request.getLedgerBookId());
         if (book == null) {
             throw new FailException(LedgerSetupErrorCode.LEDGER_BOOK_NOT_FOUND);
+        }
+        if (!AccountIdentityRule.isAccountIdentityAllowed(request.getAccountCode(), request.getOwnerType(),
+            request.getOwnerId(), request.getBalanceBucket(), book)) {
+            throw new FailException(LedgerSetupErrorCode.ACCOUNT_IDENTITY_INVALID);
         }
         ChartAccount chartAccount = getPostableChartAccount(book, request.getAccountCode());
         LedgerAccount account = buildAccount(request, chartAccount);

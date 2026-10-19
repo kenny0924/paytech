@@ -104,6 +104,7 @@ public class BillingEventPublisher {
         node.put("sourcePayloadHash", payload.getSourcePayloadHash());
         node.put("recordedTime", text(payload.getRecordedTime()));
         node.put("paymentSucceededTime", text(payload.getPaymentSucceededTime()));
+        node.put("balanceAvailableTime", text(payload.getBalanceAvailableTime()));
         node.put("clientId", text(payload.getClientId()));
         node.put("entityNo", payload.getEntityNo());
         node.put("localPartnerId", text(payload.getLocalPartnerId()));

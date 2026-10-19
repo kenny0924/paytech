@@ -53,8 +53,8 @@ public class TrialBalanceException {
     private TrialExceptionStatus status;
 
     /**
-     * 终态异常采用的受控解决证据类型；PROJECTION_REBUILD 只从 Journal 重建投影且不得追加 Journal
-     * <li>允许值：RECON_RESOLUTION、ACCOUNTING_INSTRUCTION、PROJECTION_REBUILD、CONTROLLED_WAIVER。</li>
+     * 终态异常采用的受控解决证据类型
+     * <li>允许值：RECON_RESOLUTION、ACCOUNTING_INSTRUCTION、CONTROLLED_WAIVER。</li>
      * <li>可为空。</li>
      */
     private String resolutionType;

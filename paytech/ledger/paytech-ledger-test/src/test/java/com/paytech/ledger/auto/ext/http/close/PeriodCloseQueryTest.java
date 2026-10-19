@@ -8,6 +8,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import com.paytech.ledger.core.enums.ApprovalRole;
+import com.paytech.ledger.core.enums.CloseStepType;
 import com.paytech.ledger.test.base.AbstractPeriodCloseApiTest;
 
 import tools.jackson.databind.JsonNode;
@@ -22,19 +23,19 @@ class PeriodCloseQueryTest extends AbstractPeriodCloseApiTest {
 
     @Test
     void test_historyListedDescending() {
-        postBankCash("10");
+        mockBillingUnpublished();
         startClose().assertSuccess(201).assertText("status", "FAILED");
         startClose().assertSuccess(201).assertText("status", "FAILED");
 
         List<JsonNode> items = get(closesPath(ledger.getOpenPeriodId())).assertSuccess(200).assertPage(1, 10, 2);
 
         assertEquals(List.of("2", "1"), items.stream().map(item -> item.path("closeNo").asString()).toList());
-        assertEquals("RECONCILE_ACCOUNT_BALANCES", items.getFirst().path("failedStepType").asString());
+        assertEquals(CloseStepType.CHECK_ACCOUNT_POSTING_PROGRESS.getCode(), items.getFirst().path("failedStepType").asString());
     }
 
     @Test
     void test_detailOfFailedCloseKeepsLockedBookAndNoApproval() {
-        postBankCash("10");
+        mockBillingUnpublished();
         startClose().assertSuccess(201).assertText("status", "FAILED");
 
         JsonNode detail = closeDetail(ledger.getOpenPeriodId(), "1").assertSuccess(200).json();

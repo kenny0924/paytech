@@ -77,9 +77,9 @@ CREATE TABLE `t_ledger_account` (
   `id` BIGINT NOT NULL COMMENT '服务侧生成的会计科目账户 Snowflake 主键，也是全局账户 ID。',
   `ledger_book_id` BIGINT NOT NULL COMMENT '该账户严格归属的本库经营主体或财务主体币种账簿。',
   `chart_account_id` BIGINT NOT NULL COMMENT '该账户使用且必须允许过账的本库会计科目定义。',
-  `owner_type` VARCHAR(64) NOT NULL COMMENT '决定账户按经营主体、内部财务主体、Client、Local Partner、渠道账户、银行账户或税务机关隔离的类型。允许值：OPERATING_ENTITY、FINANCE_ENTITY、CLIENT、LOCAL_PARTNER、CHANNEL_ACCOUNT、CASH_ACCOUNT、TAX_AUTHORITY。',
+  `owner_type` VARCHAR(64) NOT NULL COMMENT '决定账户按经营主体、内部财务主体、渠道账户、银行账户或税务机关隔离的类型；Client / Local Partner 不再在总账开户，其科目以账簿主体为 Owner 的控制账户表达。允许值：OPERATING_ENTITY、FINANCE_ENTITY、CHANNEL_ACCOUNT、CASH_ACCOUNT、TAX_AUTHORITY。',
   `owner_id` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '按owner_type解释的稳定字符串；OE为entityNo，其余数字身份保存规范十进制字符串；本库对象使用本地主键，外部对象不建立跨库外键。',
-  `balance_bucket` VARCHAR(64) NOT NULL COMMENT 'PARTNER_PAYABLE 使用 PENDING、AVAILABLE、LOCKED，其中 Partner 的 PENDING 是共享待结算桶；PARTNER_RECOVERY_RECEIVABLE 使用 NONE；CLIENT_PAYABLE 使用 PENDING、AVAILABLE、LOCKED，CLIENT_RECOVERY_RECEIVABLE/NONE、CLIENT_SECURITY_DEPOSIT/NONE 以及 Channel 三阶段账户均使用独立会计科目并采用 NONE，不复用应付款余额桶。允许值：PENDING、AVAILABLE、LOCKED、NONE。',
+  `balance_bucket` VARCHAR(64) NOT NULL COMMENT '总账账户不再按余额桶分账户，一律 NONE；Owner 余额桶由 account 明细账维护。允许值：NONE。',
   `normal_side` VARCHAR(64) NOT NULL COMMENT '创建账户时从会计科目复制并冻结的正常余额方向；账户仍允许借贷双向过账。允许值：DEBIT、CREDIT。',
   `account_status` VARCHAR(64) NOT NULL COMMENT '该具体核算账户当前是否允许新的会计分录过账。允许值：ACTIVE、INACTIVE、CLOSED。',
   `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Ledger 数据库中的 UTC 微秒创建时间。',
@@ -88,7 +88,7 @@ CREATE TABLE `t_ledger_account` (
   UNIQUE KEY `uk_account_identity` (`ledger_book_id`, `chart_account_id`, `owner_type`, `owner_id`, `balance_bucket`) COMMENT '保证业务唯一性：ledger_book_id、chart_account_id、owner_type、owner_id、balance_bucket',
   KEY `idx_account_owner` (`owner_type`, `owner_id`, `ledger_book_id`, `balance_bucket`) COMMENT '支持访问路径：owner_type、owner_id、ledger_book_id、balance_bucket',
   KEY `idx_account_chart_status` (`chart_account_id`, `ledger_book_id`, `account_status`) COMMENT '支持访问路径：chart_account_id、ledger_book_id、account_status'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='在具体账簿和可过账科目下按核算对象与余额桶建立唯一会计科目账户（只保存身份，不保存余额）；余额由不可变 Journal 聚合得出，Owner 余额桶的实时权威是 account 服务的 t_account_balance（design/04 §3）；CLIENT_PAYABLE 与 PARTNER_PAYABLE 使用 PENDING、AVAILABLE、LOCKED，其中 Partner PENDING 是共享待结算桶；Partner reversal 无法由 PENDING/AVAILABLE/LOCKED liability 吸收时使用资产科目 PARTNER_RECOVERY_RECEIVABLE/NONE；Client Recovery 使用 CLIENT_RECOVERY_RECEIVABLE/NONE，保证金使用 CLIENT_SECURITY_DEPOSIT/NONE；Channel 使用 CHANNEL_UNSETTLED_RECEIVABLE、CHANNEL_SETTLEMENT_RECEIVABLE、CHANNEL_UNSETTLED_PAYABLE、CHANNEL_SETTLEMENT_PAYABLE 四个科目表达交易形成、交易对账完整和银行确认三个阶段，Channel Cost 单独使用 CHANNEL_FEE_ACCRUAL，银行现金使用 BANK_CASH。';
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='在具体账簿和可过账科目下按核算对象建立唯一会计科目账户（只保存身份，不保存余额）；余额由不可变 Journal 聚合得出。Owner 科目（CLIENT_PAYABLE、CLIENT_SECURITY_DEPOSIT、CLIENT_RECOVERY_RECEIVABLE、PARTNER_PAYABLE、PARTNER_RECOVERY_RECEIVABLE）每账簿每科目一个控制账户，Owner 取账簿主体、桶 NONE，明细在 account 的 t_owner_account（2026-10-18 决定第 3 条）；Channel 使用 CHANNEL_UNSETTLED_RECEIVABLE、CHANNEL_SETTLEMENT_RECEIVABLE、CHANNEL_UNSETTLED_PAYABLE、CHANNEL_SETTLEMENT_PAYABLE 与 CHANNEL_FEE_ACCRUAL，银行存款使用 BANK_CASH / CASH_ACCOUNT，税务机关使用 TAX_PAYABLE。';
 
 CREATE TABLE `t_fiscal_calendar` (
   `id` BIGINT NOT NULL COMMENT '服务侧生成的财务日历 Snowflake 主键。',
@@ -186,10 +186,10 @@ CREATE TABLE `t_accounting_instruction` (
   `id` BIGINT NOT NULL COMMENT '会计记账指令的服务侧雪花主键。',
   `ledger_book_id` BIGINT NOT NULL COMMENT '该指令唯一适用的本库 Ledger Book；全部指令行账户和最终 Journal Entry 必须逐值属于同一账簿。',
   `instruction_type` VARCHAR(64) NOT NULL COMMENT '该指令所表达的业务会计动作类型。取值来源：Finance 会计指令类型目录；非固定枚举。',
-  `origin_type` VARCHAR(64) NOT NULL COMMENT '区分规则自动生成和人工调整生成的指令。允许值：AUTO、MANUAL。',
-  `source_system` VARCHAR(64) NULL COMMENT '自动指令所消费权威事件的来源系统，人工指令为空。取值来源：Code-MoR 系统代码目录；非固定枚举。',
-  `source_event_key` VARCHAR(128) NULL COMMENT '自动指令所消费权威事件的稳定事件键，人工指令为空。',
-  `source_version` BIGINT NULL COMMENT '自动指令所消费权威事件或事实的版本，人工指令为空。',
+  `origin_type` VARCHAR(64) NOT NULL COMMENT '区分规则自动生成、account 入账批次生成和人工调整生成的指令。允许值：AUTO、ACCOUNT_POSTING、MANUAL。',
+  `source_system` VARCHAR(64) NULL COMMENT '自动指令所消费权威事件的来源系统（ACCOUNT_POSTING 指令为 account），人工指令为空。取值来源：Code-MoR 系统代码目录；非固定枚举。',
+  `source_event_key` VARCHAR(128) NULL COMMENT '自动指令所消费权威事件的稳定事件键（ACCOUNT_POSTING 指令为 account 入账批次 ID），人工指令为空。',
+  `source_version` BIGINT NULL COMMENT '自动指令所消费权威事件或事实的版本（ACCOUNT_POSTING 指令为 posting_sequence），人工指令为空。',
   `source_payload_hash` CHAR(64) NULL COMMENT '自动指令来源规范载荷的 SHA-256 小写十六进制摘要，人工指令为空。',
   `economic_fact_id` BIGINT NULL COMMENT '自动交易类指令对应的 billing 经济事实主键，仅存 ID；原列名 transaction_economics_id。',
   `manual_adjustment_id` BIGINT NULL COMMENT '人工指令对应且已经固定双人审批的人工调整主键。',
@@ -216,6 +216,7 @@ CREATE TABLE `t_instruction_line` (
   `line_no` INTEGER NOT NULL COMMENT '同一记账指令内稳定且有序的明细序号。',
   `accounting_rule_line_id` BIGINT NULL COMMENT '自动指令行采用的自动记账规则行主键。',
   `manual_adjustment_line_id` BIGINT NULL COMMENT '人工指令行一一对应的已批准人工调整明细主键。',
+  `account_entry_id` BIGINT NULL COMMENT 'ACCOUNT_POSTING 指令中 Owner 控制科目行对应的 account 流水（mor_account.t_account_entry.id），用于下钻；规则行与人工行为空；与 accounting_rule_line_id、manual_adjustment_line_id 三选一。',
   `account_id` BIGINT NOT NULL COMMENT '该指令行准备写入且已冻结账簿、科目、核算对象和余额桶的本库账户。',
   `entry_side` VARCHAR(64) NOT NULL COMMENT '指令行的借方或贷方方向。允许值：DEBIT、CREDIT。',
   `amount` DECIMAL(24,8) NOT NULL COMMENT '按币种精度舍入后且必须大于零的记账金额。',
@@ -224,7 +225,8 @@ CREATE TABLE `t_instruction_line` (
   UNIQUE KEY `uk_instr_line` (`instruction_id`, `line_no`) COMMENT '保证业务唯一性：instruction_id、line_no',
   UNIQUE KEY `uk_instr_adj_line` (`manual_adjustment_line_id`) COMMENT '保证业务唯一性：manual_adjustment_line_id',
   KEY `idx_instr_line_rule` (`accounting_rule_line_id`) COMMENT '支持访问路径：accounting_rule_line_id',
-  KEY `idx_instr_line_account` (`account_id`) COMMENT '支持访问路径：account_id'
+  KEY `idx_instr_line_account` (`account_id`) COMMENT '支持访问路径：account_id',
+  KEY `idx_instr_line_entry` (`account_entry_id`) COMMENT '支持访问路径：account_entry_id'
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='追加保存已解析到唯一统一记账账户的借贷指令行；全部账户必须属于 Instruction Header 指定的同一 Ledger Book';
 
 CREATE TABLE `t_journal_entry` (
@@ -374,7 +376,7 @@ CREATE TABLE `t_trial_balance_exception` (
   `reference_id` BIGINT NOT NULL COMMENT '按异常引用类型解释且用于定位被核对对象的稳定主键。',
   `difference_amount` DECIMAL(24,8) NOT NULL COMMENT '核对结果之间的绝对差异金额。',
   `status` VARCHAR(64) NOT NULL COMMENT '试算平衡异常当前处置状态。允许值：OPEN、UNDER_REVIEW、RESOLVED、WAIVED。',
-  `resolution_type` VARCHAR(64) NULL COMMENT '终态异常采用的受控解决证据类型；PROJECTION_REBUILD 只从 Journal 重建投影且不得追加 Journal。允许值：RECON_RESOLUTION、ACCOUNTING_INSTRUCTION、PROJECTION_REBUILD、CONTROLLED_WAIVER。',
+  `resolution_type` VARCHAR(64) NULL COMMENT '终态异常采用的受控解决证据类型。允许值：RECON_RESOLUTION、ACCOUNTING_INSTRUCTION、CONTROLLED_WAIVER。',
   `resolution_ref_id` BIGINT NULL COMMENT '批准的对账处置、会计指令、投影重建命令结果或 Platform 控制豁免的稳定标识。',
   `resolution_content_hash` CHAR(64) NULL COMMENT '异常、解决类型、证据标识和决定的 Canonical SHA-256 哈希。',
   `resolution_maker_id` BIGINT NULL COMMENT 'Platform 身份系统中提交该异常解决方案的操作人标识。',
@@ -433,7 +435,7 @@ CREATE TABLE `t_close_step` (
   `id` BIGINT NOT NULL COMMENT '关账执行步骤的 Snowflake 主键。',
   `period_close_id` BIGINT NOT NULL COMMENT '该步骤所属的本库关账或重开流程。',
   `step_no` INTEGER NOT NULL COMMENT '同一流程内按固定定义连续递增的步骤序号。',
-  `step_type` VARCHAR(64) NOT NULL COMMENT '关账或重开流程中的固定执行步骤。允许值：LOCK_SEQUENCE、CHECK_ASYNC_AND_JOURNAL、RECONCILE_ACCOUNT_BALANCES、GENERATE_TRIAL_BALANCE、RESOLVE_EXCEPTIONS、POST_PROFIT_CLOSE、FINAL_TRIAL_BALANCE、PLAN_REOPEN_REVERSAL、POST_REOPEN_REVERSAL。',
+  `step_type` VARCHAR(64) NOT NULL COMMENT '关账或重开流程中的固定执行步骤；CHECK_ACCOUNT_POSTING_PROGRESS 在一个步骤内做 billing → account、account → ledger 两段进度检查（决定第 9 条）。允许值：LOCK_SEQUENCE、CHECK_ASYNC_AND_JOURNAL、CHECK_ACCOUNT_POSTING_PROGRESS、GENERATE_TRIAL_BALANCE、RESOLVE_EXCEPTIONS、POST_PROFIT_CLOSE、FINAL_TRIAL_BALANCE、PLAN_REOPEN_REVERSAL、POST_REOPEN_REVERSAL。',
   `status` VARCHAR(64) NOT NULL COMMENT '关账步骤当前执行状态。允许值：PENDING、RUNNING、SUCCEEDED、FAILED、SKIPPED。',
   `result_hash` CHAR(64) NULL COMMENT '本步骤输入和确定性结果的 Canonical SHA-256 哈希。',
   `completed_time` DATETIME(6) NULL COMMENT '步骤进入成功、失败或跳过终态的 UTC 微秒时间。',

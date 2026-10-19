@@ -1,8 +1,8 @@
 package com.paytech.ledger.domain;
 
 import com.paytech.account.api.enums.BalanceBucket;
-import com.paytech.account.api.enums.OwnerType;
 import com.paytech.foundation.web.paging.PagingRequestBody;
+import com.paytech.ledger.api.enums.LedgerOwnerType;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -18,7 +18,7 @@ public class AccountQuery {
     private final String accountCode;
 
     /** 核算对象类型，可空。 */
-    private final OwnerType ownerType;
+    private final LedgerOwnerType ownerType;
 
     /** 核算对象标识，可空。 */
     private final String ownerId;

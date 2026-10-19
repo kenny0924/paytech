@@ -122,6 +122,7 @@ public class EconomicFactConverter {
         body.setMakerId(text(view.getMakerId()));
         body.setCheckerId(text(view.getCheckerId()));
         body.setApprovedTime(view.getApprovedTime());
+        body.setPaymentSucceededTime(payload.getPaymentSucceededTime());
         body.setPublishedAt(view.getPublishedAt());
         body.setLines(payload.getLines().stream().map(this::toLineBody).toList());
         return body;
@@ -154,6 +155,7 @@ public class EconomicFactConverter {
         PendingEconomicFactsResponseBody body = new PendingEconomicFactsResponseBody();
         body.setPendingCount(Long.toString(view.getPendingCount()));
         body.setMaxPendingFactId(text(view.getMaxPendingFactId()));
+        body.setPublishedFactCount(Long.toString(view.getPublishedFactCount()));
         body.setMaxPublishedFactId(text(view.getMaxPublishedFactId()));
         return body;
     }

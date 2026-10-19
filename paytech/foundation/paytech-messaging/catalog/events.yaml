@@ -26,29 +26,34 @@ events:
     consumers: [client-master]
     strictOrder: false
     payloadSchemaRef: paytech-compliance-api/event/ClientReviewDecided/v1
-  # 唯一经济事实（C1，design/04 §5）：ledger 过账、account 维护余额，Payload 含头与全部明细行。
+  # 唯一经济事实（C1，design/04 §5）：account 维护 Owner 明细账，Payload 含头与全部明细行。
   # 第 11a 步按实现核对：aggregateId 为 factId，aggregateVersion 取 t_economic_fact.fact_version（替代链递增）；Payload 字段定义见
   # paytech-billing-api 的 com.paytech.billing.api.fact.EconomicFactPayload。不同事实之间无顺序依赖，故 strictOrder=false。
-  # 第 11b 步接入消费方：ledger 的 EconomicFactRecordedPostingHandler（ledger.billing.p0..p3）与 account 的
-  # EconomicFactRecordedBalanceHandler（account.billing.p0..p3），两者均为 SHARED 事务、strictOrder=false。
+  # 2026-10-19 明细账与控制科目重构（决定 2026-10-18）：唯一消费方为 account 的 EconomicFactRecordedBalanceHandler
+  # （account.billing.p0..p3，SHARED 事务）；ledger 不再消费本事件，改消费 AccountPosted，并经 billing-api 读取事实。
+  # Payload 头新增可选 balanceAvailableTime（UTC RFC 3339，仅 PAYMENT 且 billing 已计算时非空），Schema 版本保持 1。
   - eventType: EconomicFactRecorded
     schemaVersion: 1
     producer: billing
     aggregateType: ECONOMIC_FACT
     aggregateVersionField: factVersion
-    consumers: [ledger, account]
+    consumers: [account]
     strictOrder: false
     payloadSchemaRef: paytech-billing-api/event/EconomicFactRecorded/v1
-  # 余额桶移动（design/04 §5）：阶段 0 只定义 Schema，无生产调用方。第 11b 步按实现核对：Payload 为 paytech-account-api 的
-  # com.paytech.account.api.event.BalanceMovedPayload，aggregateId 为账簿主体身份，aggregateVersion 为 t_balance_movement.movement_sequence。
-  - eventType: BalanceMoved
+  # account 过账批次（决定 2026-10-18，2026-10-19 技术方案 2.1 / 2.2）：account 每生成一个 t_account_posting（事实入账或余额桶移动）
+  # 发布一次，ledger 按批次过账控制科目。Payload 为 paytech-account-api 的 com.paytech.account.api.event.AccountPostedPayload。
+  # aggregateId 为过账流身份 {OE|FE}.{entityId}.{currency}.{shardNo}（例如 OE.AE001.USD.0、FE.8001.USD.0；用 . 分隔，因 aggregateId
+  # 是路由键且 event_key 以 : 分段），aggregateVersion 为 postingSequence（同一流从 1 连续递增，strictOrder=true）。
+  # ledger 的 AccountPosted Handler 为 HANDLER_MANAGED：事务外校验首条序号并经 billing-api 读事实，事务内过账；缺口进入
+  # ledger.account.dlq 后经 ledger POST /posting-streams/v1/catch-up 追平，不重放死信。
+  - eventType: AccountPosted
     schemaVersion: 1
     producer: account
-    aggregateType: ACCOUNT_BOOK
-    aggregateVersionField: movementSequence
+    aggregateType: ACCOUNT_POSTING
+    aggregateVersionField: postingSequence
     consumers: [ledger]
     strictOrder: true
-    payloadSchemaRef: paytech-account-api/event/BalanceMoved/v1
+    payloadSchemaRef: paytech-account-api/event/AccountPosted/v1
   # 结算限制变化（C3、D27，design/07；第 06 步核对）：阶段 0 仅 Schema（compliance-api SettlementRestrictionChangedPayload），无发布调用方；
   # aggregateId 为 control_id，aggregateVersion 取 t_settle_control_state_change.aggregate_version（同一控制连续递增，满足 strictOrder）。
   - eventType: SettlementRestrictionChanged

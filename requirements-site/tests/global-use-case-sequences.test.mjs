@@ -194,7 +194,7 @@ test("closure sequences cover shared payable maturity, post-payout recovery, and
   assert.ok(maturity.participants.includes("partner"));
   assert.ok(maturity.participants.includes("partner_console"));
   assert.ok(maturity.messages.some((message) => /Pending.*Available/.test(message.label)));
-  assert.ok(maturity.messages.some((message) => /PAYABLE_BALANCE_MATURED:<economics_id>.*已成熟/u.test(message.label)));
+  assert.ok(maturity.messages.some((message) => /account.*FACT_MATURITY.*source_ref.*不产生 Journal.*已成熟/u.test(message.label)));
   assert.ok(maturity.messages.some((message) => /balance_available_time/u.test(message.label)));
   assert.ok(maturity.messages.some((message) => /Client.*Partner.*PENDING.*AVAILABLE/su.test(message.label)));
   assert.ok(maturity.messages.some((message) => /查询合同成熟与出款资格/u.test(message.label)));
@@ -1121,12 +1121,12 @@ test("Finance operational sequences perform period close and tax payment with im
   assert.ok(taxSequence.participants.includes("bank"));
   assert.match(taxLabels, /Tax Liability Summary.*不可变 Tax Return Version/u);
   assert.match(taxLabels, /Tax Return.*Maker[\s\S]*不同 Checker.*同一 Content Hash/u);
-  assert.match(taxLabels, /tax_payable_account_id.*TAX_PAYABLE.*BANK_CASH.*t_account/u);
+  assert.match(taxLabels, /tax_payable_account_id.*TAX_PAYABLE.*account 桶移动 TAX_PAYMENT_LOCK.*BANK_CASH/u);
   assert.match(taxLabels, /available_cash.*active_payout_cash.*active_tax_cash/u);
   assert.match(taxLabels, /同一 tax_payable_account_id.*net_balance.*全部.*活动 Tax Payment/u);
   assert.match(taxLabels, /不同 Tax Return.*合计/u);
   assert.match(taxLabels, /UNKNOWN.*active_slot=1.*不释放.*不允许替代/u);
-  assert.match(taxLabels, /BANK_CASH t_account.*权威未扣款证据.*FAILED.*释放 active_slot.*保留 Ledger Tax Payable.*新的 payment_no.*execution_key/u);
+  assert.match(taxLabels, /权威未扣款证据.*FAILED.*释放 active_slot.*TAX_PAYMENT_RELEASE.*BANK_CASH.*保留 Ledger Tax Payable.*新的 payment_no.*execution_key/u);
   assert.match(taxLabels, /银行借记.*完整对账.*Tax Payment.*RECONCILED/u);
   assert.doesNotMatch(taxLabels, /Funding|Commitment|Allocation|Position/u);
 });

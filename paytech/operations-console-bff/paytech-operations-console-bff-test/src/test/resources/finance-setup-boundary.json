@@ -180,7 +180,7 @@
           "chartAccountId": "7312345678901238001",
           "chartId": "7312345678901237001",
           "accountCode": "CLIENT_PAYABLE",
-          "accountName": "Client 应付",
+          "accountName": "Client 应付（控制科目）",
           "accountClass": "LIABILITY",
           "normalSide": "CREDIT",
           "postingAllowed": true

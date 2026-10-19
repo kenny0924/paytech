@@ -341,7 +341,8 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
             "GET /finance/ledger-books/v1/{ledgerBookId}/journal-entries/{journalEntryId}",
             "GET /finance/chart-of-accounts/v1", "GET /finance/chart-of-accounts/v1/{chartCode}/accounts",
             "GET /finance/currencies/v1", "GET /finance/balances/v1/clients/{clientId}",
-            "GET /finance/balances/v1/partners/{partnerId}"), routes);
+            "GET /finance/balances/v1/partners/{partnerId}", "GET /finance/owner-accounts/v1",
+            "GET /finance/owner-accounts/v1/{accountId}/entries", "GET /finance/account-postings/v1/{postingId}"), routes);
 
         Path classes = appModule().resolve("target/classes/com/paytech/operations/console/bff");
         try (var files = Files.walk(classes)) {

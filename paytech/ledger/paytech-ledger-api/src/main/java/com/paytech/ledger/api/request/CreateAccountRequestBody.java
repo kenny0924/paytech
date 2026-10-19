@@ -21,10 +21,12 @@ public class CreateAccountRequestBody {
 
     /**
      * 核算对象类型
-     * <li>OPERATING_ENTITY、FINANCE_ENTITY、CLIENT、LOCAL_PARTNER、CHANNEL_ACCOUNT、CASH_ACCOUNT、TAX_AUTHORITY</li>
+     * <li>OPERATING_ENTITY、FINANCE_ENTITY、CHANNEL_ACCOUNT、CASH_ACCOUNT、TAX_AUTHORITY（{@code LedgerOwnerType}）。</li>
+     * <li>控制科目（CLIENT_PAYABLE、CLIENT_SECURITY_DEPOSIT、CLIENT_RECOVERY_RECEIVABLE、PARTNER_PAYABLE、PARTNER_RECOVERY_RECEIVABLE）
+     * 只允许账簿主体类型且 ownerId 等于账簿主体，否则 ACCOUNT_IDENTITY_INVALID。</li>
      */
     @NotBlank
-    @Pattern(regexp = "OPERATING_ENTITY|FINANCE_ENTITY|CLIENT|LOCAL_PARTNER|CHANNEL_ACCOUNT|CASH_ACCOUNT|TAX_AUTHORITY", message = "核算对象类型非法")
+    @Pattern(regexp = "OPERATING_ENTITY|FINANCE_ENTITY|CHANNEL_ACCOUNT|CASH_ACCOUNT|TAX_AUTHORITY", message = "核算对象类型非法")
     private String ownerType;
 
     /**
@@ -37,7 +39,7 @@ public class CreateAccountRequestBody {
 
     /**
      * 余额桶
-     * <li>CLIENT_PAYABLE、PARTNER_PAYABLE 使用 PENDING、AVAILABLE、LOCKED；其他科目使用 NONE</li>
+     * <li>ledger 账户一律 NONE（分桶明细只在 account）；其他取值违反账户身份矩阵。</li>
      */
     @NotBlank
     @Pattern(regexp = "PENDING|AVAILABLE|LOCKED|NONE", message = "余额桶非法")

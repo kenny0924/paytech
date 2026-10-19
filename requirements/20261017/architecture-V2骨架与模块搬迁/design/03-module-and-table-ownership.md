@@ -80,7 +80,7 @@
 | t_close_step | ledger | mor_ledger | 有 | 搬迁 | |
 | t_close_approval | ledger | mor_ledger | 有 | 搬迁 | |
 | t_close_account_rule | ledger | mor_ledger | 有 | 搬迁 | 测试清理器未覆盖，搬迁时补入 |
-| t_account | ledger（会计科目账户）；余额投影列迁出到 account | mor_ledger；新余额表在 mor_account | 有 | 搬迁 + 更名 `t_ledger_account` 去余额列；account 新建 `t_account_balance` | C1 已定（design/04 §3）：余额只由 `EconomicFactRecorded` 维护，第 11b 步执行 |
+| t_account | ledger（会计科目账户）；余额投影列迁出到 account | mor_ledger；新余额表在 mor_account | 有 | 搬迁 + 更名 `t_ledger_account` 去余额列；account 新建 `t_account_balance`（2026-10-19 明细账重构改为 `t_owner_account` + 过账流 / 批次 / 流水表，ledger 只留控制科目） | C1 已定（design/04 §3）：余额只由 `EconomicFactRecorded` 维护，第 11b 步执行；2026-10-18 决定 account 为 Owner 明细账、ledger 消费 `AccountPosted` 过账控制科目 |
 | t_transaction_economics | billing | mor_billing | 有（只读） | 搬迁 + 更名 `t_economic_fact`，补 `fact_type=MANUAL_ADJUSTMENT`、`supersedes_fact_id`、`status` | 唯一经济事实（C1）；ledger 与 account 均消费 `EconomicFactRecorded`，不再读表（04 §2） |
 | t_transaction_economic_component | billing | mor_billing | 有（只读） | 搬迁 + 更名 `t_economic_fact_line` | |
 | t_transaction_economic_comp_link | billing | mor_billing | 无 | 搬迁 + 更名 `t_economic_fact_line_link` | 更正链 |

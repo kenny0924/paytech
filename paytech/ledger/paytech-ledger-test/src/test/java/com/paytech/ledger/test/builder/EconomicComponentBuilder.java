@@ -2,7 +2,6 @@ package com.paytech.ledger.test.builder;
 
 import java.math.BigDecimal;
 
-import com.paytech.account.api.enums.OwnerType;
 import com.paytech.billing.api.enums.AmountSource;
 import com.paytech.billing.api.enums.FactLineDirection;
 import com.paytech.billing.api.enums.FactPartyRole;
@@ -28,17 +27,17 @@ public final class EconomicComponentBuilder {
 
     /** Client 本金，归属 Client。 */
     public static EconomicComponentBuilder clientPrincipal(String amount, long clientId) {
-        return component(AmountSource.CLIENT_PRINCIPAL, amount).party(OwnerType.CLIENT, String.valueOf(clientId));
+        return component(AmountSource.CLIENT_PRINCIPAL, amount).party(FactPartyRole.CLIENT, String.valueOf(clientId));
     }
 
     /** Client 手续费，归属交易 OE。 */
     public static EconomicComponentBuilder clientFee(String amount, String entityNo) {
-        return component(AmountSource.CLIENT_FEE, amount).party(OwnerType.OPERATING_ENTITY, entityNo);
+        return component(AmountSource.CLIENT_FEE, amount).party(FactPartyRole.OPERATING_ENTITY, entityNo);
     }
 
     /** Seller 实收税，归属税务机关。 */
     public static EconomicComponentBuilder sellerTax(String amount, long taxAuthorityId) {
-        return component(AmountSource.SELLER_TAX, amount).party(OwnerType.TAX_AUTHORITY,
+        return component(AmountSource.SELLER_TAX, amount).party(FactPartyRole.TAX_AUTHORITY,
             String.valueOf(taxAuthorityId));
     }
 
@@ -54,13 +53,13 @@ public final class EconomicComponentBuilder {
 
     /** Local Partner 分润，归属 Partner。 */
     public static EconomicComponentBuilder partnerShare(String amount, long localPartnerId) {
-        return component(AmountSource.PARTNER_SHARE, amount).party(OwnerType.LOCAL_PARTNER,
+        return component(AmountSource.PARTNER_SHARE, amount).party(FactPartyRole.LOCAL_PARTNER,
             String.valueOf(localPartnerId));
     }
 
     /** 平台服务费，归属平台 Finance Entity。 */
     public static EconomicComponentBuilder platformServiceCharge(String amount, long financeEntityId) {
-        return component(AmountSource.PLATFORM_SERVICE_CHARGE, amount).party(OwnerType.FINANCE_ENTITY,
+        return component(AmountSource.PLATFORM_SERVICE_CHARGE, amount).party(FactPartyRole.FINANCE_ENTITY,
             String.valueOf(financeEntityId));
     }
 
@@ -88,10 +87,12 @@ public final class EconomicComponentBuilder {
         return builder;
     }
 
-    /** 设置归属方类型与标识。 */
-    public EconomicComponentBuilder party(OwnerType partyType, String partyId) {
+    /** 设置归属方类型与标识；归属方即收方（billing 登记约定，详情接口只返回付方 / 收方）。 */
+    public EconomicComponentBuilder party(FactPartyRole partyType, String partyId) {
         line.setPartyType(partyType.getCode());
         line.setPartyId(partyId);
+        line.setPayeeRole(partyType.getCode());
+        line.setPayeeId(partyId);
         return this;
     }
 

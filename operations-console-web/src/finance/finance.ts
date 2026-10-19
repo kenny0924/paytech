@@ -20,6 +20,9 @@ export const financePaths = {
   currencies: '/finance/currencies/v1',
   clientBalance: (clientId: string) => `/finance/balances/v1/clients/${clientId}`,
   partnerBalance: (partnerId: string) => `/finance/balances/v1/partners/${partnerId}`,
+  ownerAccounts: '/finance/owner-accounts/v1',
+  ownerAccountEntries: (accountId: string) => `/finance/owner-accounts/v1/${accountId}/entries`,
+  accountPosting: (postingId: string) => `/finance/account-postings/v1/${postingId}`,
 } as const;
 
 /** 五类创建与期间开放的按钮资源；只读账号看不到任何新建 / 开放按钮。 */
@@ -33,14 +36,21 @@ const decimalPattern = /^-?(0|[1-9][0-9]*)(\.[0-9]+)?$/;
 const isoDatePattern = /^\d{4}-\d{2}-\d{2}$/;
 
 export const ledgerEntityTypes = ['OPERATING_ENTITY', 'FINANCE_ENTITY'] as const;
-export const ownerTypes = ['OPERATING_ENTITY', 'FINANCE_ENTITY', 'CLIENT', 'LOCAL_PARTNER', 'CHANNEL_ACCOUNT', 'CASH_ACCOUNT', 'TAX_AUTHORITY'] as const;
+/** ledger 账户核算对象（LedgerOwnerType）：只有平台类对象，Client / Partner 余额在明细账。 */
+export const ownerTypes = ['OPERATING_ENTITY', 'FINANCE_ENTITY', 'CHANNEL_ACCOUNT', 'CASH_ACCOUNT', 'TAX_AUTHORITY'] as const;
 export const balanceBuckets = ['PENDING', 'AVAILABLE', 'LOCKED', 'NONE'] as const;
-/** 使用 PENDING / AVAILABLE / LOCKED 余额桶的科目；其余科目固定 NONE。 */
-export const bucketedAccountCodes: readonly string[] = ['CLIENT_PAYABLE', 'PARTNER_PAYABLE'];
+/** 明细账 Owner 类型（account OwnerType）。 */
+export const subledgerOwnerTypes = ['CLIENT', 'LOCAL_PARTNER', 'CASH_ACCOUNT'] as const;
+/** 明细账科目目录（account OwnerAccountType 六条）与显示名，供科目筛选与列表副标题。 */
+export const subledgerAccountNames: Readonly<Record<string, string>> = {
+  CLIENT_PAYABLE: 'Client 应付', CLIENT_SECURITY_DEPOSIT: 'Client 保证金', CLIENT_RECOVERY_RECEIVABLE: 'Client 追偿应收',
+  PARTNER_PAYABLE: 'Partner 应付', PARTNER_RECOVERY_RECEIVABLE: 'Partner 追偿应收', BANK_CASH: '银行现金',
+};
 
 export type LedgerEntityType = typeof ledgerEntityTypes[number];
 export type OwnerType = typeof ownerTypes[number];
 export type BalanceBucket = typeof balanceBuckets[number];
+export type SubledgerOwnerType = typeof subledgerOwnerTypes[number];
 export type FinanceEntityStatus = 'ACTIVE' | 'CLOSED';
 export type PeriodStatus = 'FUTURE' | 'OPEN' | 'CLOSING' | 'CLOSED' | 'REOPENING';
 export type ReferenceDataStatus = 'DRAFT' | 'ACTIVE' | 'INACTIVE';
@@ -48,7 +58,9 @@ export type BookStatus = 'OPEN' | 'SUSPENDED' | 'CLOSED';
 export type AccountStatus = 'ACTIVE' | 'INACTIVE' | 'CLOSED';
 export type Side = 'DEBIT' | 'CREDIT';
 export type JournalEntryType = 'STANDARD' | 'REVERSAL' | 'ADJUSTMENT' | 'CLOSING' | 'REOPENING';
-export type OriginType = 'AUTO' | 'MANUAL';
+export type OriginType = 'AUTO' | 'MANUAL' | 'ACCOUNT_POSTING';
+export type PostingSourceType = 'ECONOMIC_FACT' | 'BALANCE_MOVEMENT';
+export type OwnerAccountStatus = 'ACTIVE' | 'FROZEN' | 'CLOSED';
 export type SetupTab = 'entities' | 'calendars' | 'books' | 'charts';
 export type BalanceOwnerType = 'CLIENT' | 'PARTNER';
 
@@ -74,15 +86,17 @@ export interface LedgerAccount {
 export interface JournalLine {
   journalEntryId: string; journalSequence: string; postingDate: string; entryType: JournalEntryType; lineNo: number; entrySide: Side;
   amount: string; balanceAfter: string; instructionType: string; originType: OriginType; sourceSystem: string | null;
-  sourceEventKey: string | null; adjustmentNo: string | null;
+  sourceEventKey: string | null; adjustmentNo: string | null; accountPostingId: string | null; accountPostingSequence: string | null;
 }
 export interface JournalEntryLine {
   lineNo: number; accountId: string; accountCode: string; ownerType: OwnerType; ownerId: string; balanceBucket: BalanceBucket; entrySide: Side; amount: string;
+  accountEntryId: string | null;
 }
 export interface JournalEntryDetail {
   journalEntryId: string; ledgerBookId: string; accountingPeriodId: string; journalSequence: string; postingDate: string; entryType: JournalEntryType;
   reversalOfEntryId: string | null; instructionId: string; instructionType: string; originType: OriginType; sourceSystem: string | null;
-  sourceEventKey: string | null; manualAdjustmentId: string | null; adjustmentNo: string | null; lines: JournalEntryLine[];
+  sourceEventKey: string | null; manualAdjustmentId: string | null; adjustmentNo: string | null; accountPostingId: string | null;
+  accountPostingSequence: string | null; lines: JournalEntryLine[];
 }
 export interface Money { currency: string; amount: string }
 export interface ClientBalance {
@@ -92,6 +106,28 @@ export interface ClientBalance {
 export interface PartnerBalance {
   partnerId: string; entityNo: string; currency: string; pendingAmount: Money; availableAmount: Money; lockedAmount: Money; recoveryReceivableAmount: Money;
 }
+/** 明细账 Owner 账户（account）；金额为 Money。 */
+export interface OwnerAccount {
+  accountId: string; accountCode: string; ownerType: SubledgerOwnerType; ownerId: string; balanceBucket: BalanceBucket; normalSide: Side;
+  accountStatus: OwnerAccountStatus; debitTotal: Money; creditTotal: Money; netBalance: Money; balanceVersion: string;
+}
+export type OwnerAccountRef = Pick<OwnerAccount, 'accountId'> & Partial<Omit<OwnerAccount, 'accountId'>>;
+/** Owner 账户的一条明细流水：事实批次带 factId / factVersion，桶移动批次带 movementSourceType。 */
+export interface AccountEntry {
+  entryId: string; postingId: string; postingSequence: string; sourceType: PostingSourceType; factId: string | null; factVersion: string | null;
+  factType: string | null; movementSourceType: string | null; lineNo: string; factLineNo: string | null; entrySide: Side; amount: Money; reversesEntryId: string | null; postedTime: string;
+}
+export interface AccountPostingEntry {
+  entryId: string; lineNo: string; accountId: string; accountCode: string; ownerType: SubledgerOwnerType; ownerId: string; balanceBucket: BalanceBucket;
+  entrySide: Side; amount: Money; factLineNo: string | null; reversesEntryId: string | null;
+}
+/** 过账批次：批次头、来源事实或桶移动，以及全部流水。 */
+export interface AccountPosting {
+  postingId: string; entityType: LedgerEntityType; entityId: string; currency: string; shardNo: string; postingSequence: string;
+  sourceType: PostingSourceType; postedTime: string; publishedTime: string | null; factId: string | null; factVersion: string | null; factType: string | null;
+  supersedesFactId: string | null; factApplyStatus: 'APPLIED' | 'SKIPPED' | null; financeEntityId: string | null; movementId: string | null;
+  movementSourceType: string | null; movementSourceRef: string | null; entries: AccountPostingEntry[];
+}
 
 export const entityTypeLabels: Record<LedgerEntityType, string> = { OPERATING_ENTITY: '经营主体', FINANCE_ENTITY: '财务主体' };
 export const financeEntityStatusLabels: Record<FinanceEntityStatus, string> = { ACTIVE: '启用', CLOSED: '已关闭' };
@@ -99,10 +135,13 @@ export const referenceStatusLabels: Record<ReferenceDataStatus, string> = { DRAF
 export const accountStatusLabels: Record<AccountStatus, string> = { ACTIVE: '启用', INACTIVE: '停用', CLOSED: '已关闭' };
 export const sideLabels: Record<Side, string> = { DEBIT: '借', CREDIT: '贷' };
 export const entryTypeLabels: Record<JournalEntryType, string> = { STANDARD: '标准', REVERSAL: '冲回', ADJUSTMENT: '调整', CLOSING: '结账', REOPENING: '重开' };
+export const ownerAccountStatusLabels: Record<OwnerAccountStatus, string> = { ACTIVE: '启用', FROZEN: '冻结', CLOSED: '已关闭' };
+export const postingSourceLabels: Record<PostingSourceType, string> = { ECONOMIC_FACT: '事实', BALANCE_MOVEMENT: '桶移动' };
+export const postingSourceColors: Record<PostingSourceType, string> = { ECONOMIC_FACT: 'default', BALANCE_MOVEMENT: 'orange' };
 /** 统一标签色：启用/开放为绿，未来/草稿为蓝/橙，停用/关闭为灰，异常为红。 */
 export const statusColors: Record<string, string> = {
   ACTIVE: 'green', OPEN: 'green', FUTURE: 'blue', DRAFT: 'orange', CLOSING: 'gold', REOPENING: 'gold',
-  SUSPENDED: 'orange', INACTIVE: 'default', CLOSED: 'default',
+  SUSPENDED: 'orange', INACTIVE: 'default', CLOSED: 'default', FROZEN: 'orange',
 };
 export const sideColors: Record<Side, string> = { DEBIT: 'blue', CREDIT: 'orange' };
 export const entryTypeColors: Record<JournalEntryType, string> = { STANDARD: 'default', REVERSAL: 'red', ADJUSTMENT: 'orange', CLOSING: 'purple', REOPENING: 'purple' };
@@ -114,7 +153,11 @@ const accountStatuses: readonly string[] = ['ACTIVE', 'INACTIVE', 'CLOSED'];
 const accountClasses: readonly string[] = ['ASSET', 'LIABILITY', 'EQUITY', 'REVENUE', 'EXPENSE'];
 const sides: readonly string[] = ['DEBIT', 'CREDIT'];
 const entryTypes: readonly string[] = ['STANDARD', 'REVERSAL', 'ADJUSTMENT', 'CLOSING', 'REOPENING'];
-const originTypes: readonly string[] = ['AUTO', 'MANUAL'];
+const originTypes: readonly string[] = ['AUTO', 'MANUAL', 'ACCOUNT_POSTING'];
+const ownerAccountStatuses: readonly string[] = ['ACTIVE', 'FROZEN', 'CLOSED'];
+const postingSources: readonly string[] = ['ECONOMIC_FACT', 'BALANCE_MOVEMENT'];
+/** account 主体标识与科目代码格式（OwnerAccountQueryApi）。 */
+const subledgerEntityIdPattern = /^[A-Z0-9]{1,19}$/;
 
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
 const id = (v: unknown) => typeof v === 'string' && decimalIdPattern.test(v);
@@ -196,15 +239,23 @@ export function decodeJournalLine(value: unknown): JournalLine {
   require(object(v) && id(v.journalEntryId) && digits(v.journalSequence) && isoDate(v.postingDate) && oneOf(entryTypes)(v.entryType)
     && integer(v.lineNo, 1, 2147483647) && oneOf(sides)(v.entrySide) && decimal(v.amount) && decimal(v.balanceAfter)
     && text(v.instructionType, 64) && oneOf(originTypes)(v.originType) && optional(text)(v.sourceSystem)
-    && optional(text)(v.sourceEventKey) && optional(text)(v.adjustmentNo));
-  return { ...v, sourceSystem: orNull(v.sourceSystem), sourceEventKey: orNull(v.sourceEventKey), adjustmentNo: orNull(v.adjustmentNo) };
+    && optional(text)(v.sourceEventKey) && optional(text)(v.adjustmentNo) && accountPostingRef(v));
+  return { ...v, sourceSystem: orNull(v.sourceSystem), sourceEventKey: orNull(v.sourceEventKey), adjustmentNo: orNull(v.adjustmentNo),
+    accountPostingId: orNull(v.accountPostingId), accountPostingSequence: orNull(v.accountPostingSequence) };
+}
+
+/** ACCOUNT_POSTING 来源必须带 account 批次主键与序号，其他来源两者为空。 */
+function accountPostingRef(v: { originType: unknown; accountPostingId?: unknown; accountPostingSequence?: unknown }) {
+  return v.originType === 'ACCOUNT_POSTING' ? id(v.accountPostingId) && digits(v.accountPostingSequence)
+    : v.accountPostingId == null && v.accountPostingSequence == null;
 }
 
 function decodeEntryLine(value: unknown): JournalEntryLine {
   const v = value as JournalEntryLine;
   require(object(v) && integer(v.lineNo, 1, 2147483647) && id(v.accountId) && text(v.accountCode, 64) && oneOf(ownerTypes)(v.ownerType)
-    && text(v.ownerId, 64) && oneOf(balanceBuckets)(v.balanceBucket) && oneOf(sides)(v.entrySide) && decimal(v.amount));
-  return v;
+    && text(v.ownerId, 64) && oneOf(balanceBuckets)(v.balanceBucket) && oneOf(sides)(v.entrySide) && decimal(v.amount)
+    && optional(id)(v.accountEntryId));
+  return { ...v, accountEntryId: orNull(v.accountEntryId) };
 }
 
 /** 分录详情：分录与账簿必须与请求一致，至少一行。 */
@@ -213,10 +264,11 @@ export function decodeJournalEntryDetail(value: unknown, ledgerBookId: string, j
   require(object(v) && v.journalEntryId === journalEntryId && v.ledgerBookId === ledgerBookId && id(v.accountingPeriodId)
     && digits(v.journalSequence) && isoDate(v.postingDate) && oneOf(entryTypes)(v.entryType) && optional(id)(v.reversalOfEntryId)
     && id(v.instructionId) && text(v.instructionType, 64) && oneOf(originTypes)(v.originType) && optional(text)(v.sourceSystem)
-    && optional(text)(v.sourceEventKey) && optional(id)(v.manualAdjustmentId) && optional(text)(v.adjustmentNo)
+    && optional(text)(v.sourceEventKey) && optional(id)(v.manualAdjustmentId) && optional(text)(v.adjustmentNo) && accountPostingRef(v)
     && Array.isArray(v.lines) && v.lines.length > 0);
   return { ...v, reversalOfEntryId: orNull(v.reversalOfEntryId), sourceSystem: orNull(v.sourceSystem), sourceEventKey: orNull(v.sourceEventKey),
-    manualAdjustmentId: orNull(v.manualAdjustmentId), adjustmentNo: orNull(v.adjustmentNo), lines: v.lines.map(decodeEntryLine) };
+    manualAdjustmentId: orNull(v.manualAdjustmentId), adjustmentNo: orNull(v.adjustmentNo), accountPostingId: orNull(v.accountPostingId),
+    accountPostingSequence: orNull(v.accountPostingSequence), lines: v.lines.map(decodeEntryLine) };
 }
 
 function money(v: unknown, currency: string) {
@@ -237,6 +289,65 @@ export function decodePartnerBalance(value: unknown, partnerId: string, entityNo
   require(object(v) && v.partnerId === partnerId && v.entityNo === entityNo && v.currency === currency && !Object.hasOwn(v, 'securityDepositAmount')
     && [v.pendingAmount, v.availableAmount, v.lockedAmount, v.recoveryReceivableAmount].every(item => money(item, currency)));
   return v;
+}
+
+// ---------- 明细账 ----------
+
+/** 金额：currency 给定时必须同币种，否则只校验格式（直接粘贴 URL 进入流水时还不知道币种）。 */
+const moneyIn = (currency?: string) => (v: unknown) => object(v) && typeof v.currency === 'string' && currencyPattern.test(v.currency)
+  && (!currency || v.currency === currency) && decimal(v.amount);
+
+/** Owner 账户：三类 Owner、四个余额桶，金额同查询币种。 */
+export function decodeOwnerAccount(currency: string) {
+  return (value: unknown): OwnerAccount => {
+    const v = value as OwnerAccount;
+    require(object(v) && id(v.accountId) && typeof v.accountCode === 'string' && chartCodePattern.test(v.accountCode)
+      && oneOf(subledgerOwnerTypes)(v.ownerType) && id(v.ownerId) && oneOf(balanceBuckets)(v.balanceBucket) && oneOf(sides)(v.normalSide)
+      && oneOf(ownerAccountStatuses)(v.accountStatus) && [v.debitTotal, v.creditTotal, v.netBalance].every(moneyIn(currency))
+      && digits(v.balanceVersion));
+    return v;
+  };
+}
+
+/** 事实批次必须有事实主键、版本与类型，没有桶移动来源；桶移动批次相反。 */
+function postingSource(v: { sourceType: unknown; factId?: unknown; factVersion?: unknown; factType?: unknown; movementSourceType?: unknown }) {
+  if (v.sourceType === 'ECONOMIC_FACT') return id(v.factId) && digits(v.factVersion) && text(v.factType, 64) && v.movementSourceType == null;
+  return v.sourceType === 'BALANCE_MOVEMENT' && v.factId == null && v.factVersion == null && v.factType == null && text(v.movementSourceType, 64);
+}
+
+/** 账户明细流水。 */
+export function decodeAccountEntry(currency?: string) {
+  return (value: unknown): AccountEntry => {
+    const v = value as AccountEntry;
+    require(object(v) && id(v.entryId) && id(v.postingId) && digits(v.postingSequence) && oneOf(postingSources)(v.sourceType) && postingSource(v)
+      && digits(v.lineNo) && optional(digits)(v.factLineNo) && oneOf(sides)(v.entrySide) && moneyIn(currency)(v.amount)
+      && optional(id)(v.reversesEntryId) && instant(v.postedTime));
+    return { ...v, factId: orNull(v.factId), factVersion: orNull(v.factVersion), factType: orNull(v.factType),
+      movementSourceType: orNull(v.movementSourceType), factLineNo: orNull(v.factLineNo), reversesEntryId: orNull(v.reversesEntryId) };
+  };
+}
+
+function decodePostingEntry(currency: string) {
+  return (value: unknown): AccountPostingEntry => {
+    const v = value as AccountPostingEntry;
+    require(object(v) && id(v.entryId) && digits(v.lineNo) && id(v.accountId) && typeof v.accountCode === 'string' && chartCodePattern.test(v.accountCode)
+      && oneOf(subledgerOwnerTypes)(v.ownerType) && id(v.ownerId) && oneOf(balanceBuckets)(v.balanceBucket) && oneOf(sides)(v.entrySide)
+      && moneyIn(currency)(v.amount) && optional(digits)(v.factLineNo) && optional(id)(v.reversesEntryId));
+    return { ...v, factLineNo: orNull(v.factLineNo), reversesEntryId: orNull(v.reversesEntryId) };
+  };
+}
+
+/** 过账批次：主键与请求一致，来源字段与来源类型互斥，流水同批次币种。 */
+export function decodeAccountPosting(value: unknown, postingId: string): AccountPosting {
+  const v = value as AccountPosting;
+  require(object(v) && v.postingId === postingId && oneOf(ledgerEntityTypes)(v.entityType) && typeof v.entityId === 'string'
+    && subledgerEntityIdPattern.test(v.entityId) && typeof v.currency === 'string' && currencyPattern.test(v.currency) && digits(v.shardNo)
+    && digits(v.postingSequence) && oneOf(postingSources)(v.sourceType) && postingSource(v) && instant(v.postedTime)
+    && optional(instant)(v.publishedTime) && optional(id)(v.supersedesFactId) && optional(oneOf(['APPLIED', 'SKIPPED']))(v.factApplyStatus)
+    && optional(id)(v.financeEntityId) && optional(id)(v.movementId) && optional(text)(v.movementSourceRef) && Array.isArray(v.entries));
+  return { ...v, publishedTime: orNull(v.publishedTime), factId: orNull(v.factId), factVersion: orNull(v.factVersion), factType: orNull(v.factType), supersedesFactId: orNull(v.supersedesFactId),
+    factApplyStatus: orNull(v.factApplyStatus), financeEntityId: orNull(v.financeEntityId), movementId: orNull(v.movementId),
+    movementSourceType: orNull(v.movementSourceType), movementSourceRef: orNull(v.movementSourceRef), entries: v.entries.map(decodePostingEntry(v.currency)) };
 }
 
 /** 列表响应 {items}。 */
@@ -275,7 +386,7 @@ export function decodeOpenedPeriod(value: unknown, accountingPeriodId: string): 
 /** 错误落点：字段名，或 null 表示表单顶部 / 页面提示。 */
 export interface FinanceErrorTarget { field: string | null; message: string }
 
-/** ledger LedgerSetupErrorCode 与 account BalanceQueryErrorCode 的页面落点（technique 2.4）。 */
+/** ledger LedgerSetupErrorCode 的页面落点（technique 2.4）。 */
 export const financeErrorTargets: Readonly<Record<string, FinanceErrorTarget>> = {
   FINANCE_ENTITY_ALREADY_EXISTS: { field: null, message: '财务主体代码或法律 Party 已被使用' },
   FINANCE_ENTITY_UNAVAILABLE: { field: 'entityId', message: '财务主体不存在或已关闭' },
@@ -291,14 +402,25 @@ export const financeErrorTargets: Readonly<Record<string, FinanceErrorTarget>> =
   LEDGER_BOOK_NOT_FOUND: { field: null, message: '账簿不存在' },
   CHART_ACCOUNT_NOT_POSTABLE: { field: 'accountCode', message: '科目不存在或不可过账' },
   ACCOUNT_IDENTITY_INVALID: { field: 'ownerType', message: '核算对象或余额桶不符合账户身份矩阵' },
-  // 设计画板 05：账户重复落在余额桶字段下（同一核算对象 + 科目只差余额桶）。
+  // 设计画板 05：账户重复落在余额桶字段下（余额桶固定 NONE，同一核算对象 + 科目即重复）。
   ACCOUNT_ALREADY_EXISTS: { field: 'balanceBucket', message: '该核算对象与余额桶的账户已存在' },
 };
 
-/** 余额查询（account）对同名 Code 的落点。 */
+/** 余额查询（account BalanceQueryErrorCode）的落点：Owner 在该主体与币种下没有账户时挂在 Owner ID（画板 11）。 */
 export const balanceErrorTargets: Readonly<Record<string, FinanceErrorTarget>> = {
-  LEDGER_BOOK_NOT_FOUND: { field: 'entityNo', message: '未找到该经营主体与币种的账簿' },
+  OWNER_ACCOUNT_NOT_FOUND: { field: 'ownerId', message: '该 Owner 在此经营主体与币种下没有账户' },
 };
+
+/** 明细账查询（account AccountPostingErrorCode 与流水的 ACCOUNT_NOT_FOUND）的页面提示。 */
+export const subledgerErrorTargets: Readonly<Record<string, FinanceErrorTarget>> = {
+  ACCOUNT_NOT_FOUND: { field: null, message: 'Owner 账户不存在' },
+  POSTING_NOT_FOUND: { field: null, message: '过账批次不存在' },
+};
+
+/** 余额页无账户提示带上 Owner 类型与查询范围，例如「该 Local Partner 在 SG002 / USD 下没有账户」。 */
+export function ownerAccountNotFoundMessage(values: Pick<BalanceFormValues, 'ownerType' | 'entityNo' | 'currency'>): string {
+  return `该 ${values.ownerType === 'CLIENT' ? 'Client' : 'Local Partner'} 在 ${values.entityNo.trim()} / ${values.currency} 下没有账户（OWNER_ACCOUNT_NOT_FOUND）`;
+}
 
 /**
  * 把 400 业务错误映射为表单落点；字段不在当前表单内时退回表单顶部。
@@ -356,7 +478,7 @@ export interface EntityFormValues { entityCode: string; legalPartyId: string; di
 export interface CalendarFormValues { entityType: LedgerEntityType; entityId: string; calendarCode: string; timezone: string; yearStartMonth: number }
 export interface PeriodFormValues { fiscalYear: number; periodNo: number; startDate: string; endDate: string }
 export interface BookFormValues { entityType: LedgerEntityType; entityId: string; currency: string; chartCode: string }
-export interface AccountFormValues { accountCode: string; ownerType: OwnerType; ownerId: string; balanceBucket: BalanceBucket }
+export interface AccountFormValues { accountCode: string; ownerType: OwnerType; ownerId: string }
 
 export function entityBody(values: EntityFormValues) {
   return { entityCode: values.entityCode.trim(), legalPartyId: values.legalPartyId.trim(), displayName: values.displayName.trim() };
@@ -375,27 +497,24 @@ export function bookBody(values: BookFormValues) {
   return { entityType: values.entityType, entityId: values.entityId.trim(), currency: values.currency, chartCode: values.chartCode };
 }
 
-/** 非应付科目强制 NONE，避免切换科目后残留旧余额桶。 */
+/** ledger 账户余额桶一律 NONE（余额桶只在明细账）。 */
 export function accountBody(values: AccountFormValues) {
-  return { accountCode: values.accountCode, ownerType: values.ownerType, ownerId: values.ownerId.trim(),
-    balanceBucket: usesPayableBuckets(values.accountCode) ? values.balanceBucket : 'NONE' };
+  return { accountCode: values.accountCode, ownerType: values.ownerType, ownerId: values.ownerId.trim(), balanceBucket: 'NONE' as const };
 }
 
-export function usesPayableBuckets(accountCode: string | undefined): boolean {
-  return !!accountCode && bucketedAccountCodes.includes(accountCode);
-}
-
-/** 新建账户可选余额桶。 */
-export function bucketOptions(accountCode: string | undefined): BalanceBucket[] {
-  return usesPayableBuckets(accountCode) ? ['PENDING', 'AVAILABLE', 'LOCKED'] : ['NONE'];
-}
-
-/** 核算对象标识校验：经营主体为 entityNo，其余为正十进制主键；返回错误文案或 null。 */
+/** 核算对象标识校验：经营主体为 entityNo，其余（财务主体、渠道账户、银行账户、税务机关）为正十进制主键；返回错误文案或 null。 */
 export function ownerIdError(ownerType: string | undefined, ownerId: string | undefined): string | null {
   const value = ownerId?.trim() ?? '';
   if (!value) return '请填写核算对象标识';
   if (ownerType === 'OPERATING_ENTITY') return entityNoPattern.test(value) ? null : '必须是两位大写国家码加三位序号，如 AE001';
   return decimalIdPattern.test(value) ? null : '必须是正十进制整数字符串';
+}
+
+/** 账户流水「来源」第二行：人工调整单号、account 批次（缩略主键 · 序号）或自动来源事件键。 */
+export function journalLineSourceMeta(line: Pick<JournalLine, 'originType' | 'adjustmentNo' | 'sourceEventKey' | 'accountPostingId' | 'accountPostingSequence'>): string {
+  if (line.originType === 'MANUAL') return line.adjustmentNo ?? '—';
+  if (line.originType === 'ACCOUNT_POSTING' && line.accountPostingId) return `批次 …${line.accountPostingId.slice(-4)} · 序号 ${line.accountPostingSequence}`;
+  return line.sourceEventKey ?? '—';
 }
 
 /** 期间起止：开始不晚于结束。 */
@@ -516,6 +635,107 @@ export function ledgerQuerySearch(search: string, level: LedgerLevel, filters: R
   const keys = level === 'books' ? bookFilterKeys : level === 'accounts' ? accountFilterKeys : lineFilterKeys;
   const [pageKey, sizeKey] = pagingKeys[level];
   return replaceQuery(search, { ...clear(keys), ...filters, [pageKey]: String(paging.page), [sizeKey]: String(paging.size) });
+}
+
+// ---------- 明细账查询条件与 URL 状态 ----------
+
+export const subledgerScopeKeys = ['entityType', 'entityId', 'currency'] as const;
+export const subledgerAccountFilterKeys = ['accountCode', 'ownerType', 'ownerId', 'balanceBucket'] as const;
+export interface SubledgerScope { entityType: LedgerEntityType; entityId: string; currency: string }
+export type SubledgerLevel = 'idle' | 'accounts' | 'entries';
+export interface SubledgerQuery {
+  level: SubledgerLevel; scope: SubledgerScope | null; accountFilters: Record<string, string>; accountPaging: PagingRequestBody;
+  account: string | null; entryPaging: PagingRequestBody; posting: string | null; entry: string | null;
+}
+const subledgerPagingKeys = { accounts: ['page', 'size'], entries: ['entryPage', 'entrySize'] } as const;
+
+/** 主体标识：经营主体为 entityNo，财务主体为正十进制主键；返回错误文案或 null。 */
+export function subledgerEntityIdError(entityType: string | undefined, entityId: string | undefined): string | null {
+  const value = entityId?.trim() ?? '';
+  if (!value) return '请填写主体标识';
+  if (entityType === 'FINANCE_ENTITY') return decimalIdPattern.test(value) ? null : '必须是财务主体主键（正十进制整数字符串）';
+  return entityNoPattern.test(value) ? null : '必须是两位大写国家码加三位序号，如 AE001';
+}
+
+const subledgerFilterValid = (key: string, value: string) => (key !== 'ownerType' || (subledgerOwnerTypes as readonly string[]).includes(value))
+  && (key !== 'balanceBucket' || (balanceBuckets as readonly string[]).includes(value))
+  && (key !== 'ownerId' || decimalIdPattern.test(value)) && (key !== 'accountCode' || chartCodePattern.test(value));
+
+/** 明细账查询：主体三项必填且合法才查询；可选筛选只保留合法值（BFF 白名单 R19）。 */
+export function subledgerFilters(values: Readonly<Record<string, unknown>>): Record<string, string> {
+  const filters = trimmed(values, [...subledgerScopeKeys, ...subledgerAccountFilterKeys]);
+  if (!(ledgerEntityTypes as readonly string[]).includes(filters.entityType) || subledgerEntityIdError(filters.entityType, filters.entityId)
+    || !currencyPattern.test(filters.currency ?? '')) throw new Error('请完整填写主体类型、主体标识与币种');
+  for (const key of subledgerAccountFilterKeys) if (filters[key] && !subledgerFilterValid(key, filters[key])) throw new Error('筛选条件格式不正确');
+  return filters;
+}
+
+/** 明细账 URL：主体 › 账户 › 流水逐级下钻；批次抽屉（posting，可带高亮流水 entry）可在任一级打开，供总账分录行直接跳转。 */
+export function readSubledgerQuery(params: URLSearchParams): SubledgerQuery {
+  const pick = (key: string) => { const value = params.get(key); return value && decimalIdPattern.test(value) ? value : null; };
+  const scopeValues = readFilters(params, subledgerScopeKeys);
+  let scope: SubledgerScope | null = null;
+  try { const filters = subledgerFilters(scopeValues); scope = { entityType: filters.entityType as LedgerEntityType, entityId: filters.entityId, currency: filters.currency }; } catch { scope = null; }
+  const account = scope ? pick('account') : null;
+  const posting = pick('posting');
+  return {
+    level: account ? 'entries' : scope ? 'accounts' : 'idle', scope,
+    accountFilters: readFilters(params, subledgerAccountFilterKeys, subledgerFilterValid),
+    accountPaging: readPaging(params, subledgerPagingKeys.accounts, 10), account,
+    entryPaging: readPaging(params, subledgerPagingKeys.entries, 20), posting, entry: posting ? pick('entry') : null,
+  };
+}
+
+/** 进入某一级：idle 清空全部；accounts 清掉账户选择与流水分页（保留主体与筛选）；entries 换账户时重置流水分页。批次抽屉随层级切换关闭。 */
+export function subledgerLevelSearch(search: string, level: SubledgerLevel, selection: { account?: string; scope?: SubledgerScope } = {}): string {
+  const entryKeys = { account: null, ...clear(subledgerPagingKeys.entries), posting: null, entry: null };
+  if (level === 'idle') return replaceQuery(search, { ...clear([...subledgerScopeKeys, ...subledgerAccountFilterKeys, ...subledgerPagingKeys.accounts]), ...entryKeys });
+  if (level === 'accounts') return replaceQuery(search, { ...entryKeys, ...(selection.scope ?? {}) });
+  const current = new URLSearchParams(search).get('account');
+  const switching = selection.account !== undefined && selection.account !== current;
+  return replaceQuery(search, { ...(selection.scope ?? {}), account: selection.account ?? current, posting: null, entry: null,
+    ...(switching ? clear(subledgerPagingKeys.entries) : {}) });
+}
+
+/** 账户列表的主体、筛选与分页，或流水分页写回 URL；改主体或筛选时清掉账户选择。 */
+export function subledgerQuerySearch(search: string, level: 'accounts' | 'entries', filters: Readonly<Record<string, string>>, paging: PagingRequestBody): string {
+  const [pageKey, sizeKey] = subledgerPagingKeys[level];
+  if (level === 'entries') return replaceQuery(search, { [pageKey]: String(paging.page), [sizeKey]: String(paging.size) });
+  return replaceQuery(search, { ...clear([...subledgerScopeKeys, ...subledgerAccountFilterKeys]), ...filters, account: null,
+    ...clear(subledgerPagingKeys.entries), [pageKey]: String(paging.page), [sizeKey]: String(paging.size) });
+}
+
+/**
+ * 从批次抽屉进入流水时只知道科目、Owner 与余额桶：用 R19 按这四项精确筛选取回完整账户（方向、净余额）
+ * <li>已有净余额（从账户列表下钻）或信息不全（直接粘贴 URL）时返回 null，不请求。</li>
+ */
+export function ownerAccountLookupPath(scope: SubledgerScope | null, account: OwnerAccountRef | null): string | null {
+  if (!scope || !account || account.netBalance || !account.accountCode || !account.ownerType || !account.ownerId || !account.balanceBucket) return null;
+  const query = new URLSearchParams({ ...scope, ownerType: account.ownerType, ownerId: account.ownerId, accountCode: account.accountCode,
+    balanceBucket: account.balanceBucket, page: '1', size: '10' });
+  return `${financePaths.ownerAccounts}?${query}`;
+}
+
+/** R19 精确筛选必须恰好一行且是同一账户，否则视为无效响应。 */
+export function decodeOwnerAccountLookup(value: unknown, accountId: string, currency: string): OwnerAccount {
+  const page = pageOf(decodeOwnerAccount(currency))(value);
+  require(page.total === 1 && page.items.length === 1 && page.items[0].accountId === accountId);
+  return page.items[0];
+}
+
+/** 总账分录行跳转明细账：先经批次详情（R21）定位，抽屉内高亮对应流水。 */
+export function subledgerPostingLink(accountPostingId: string, accountEntryId: string): string {
+  return `/finance/subledger${replaceQuery('', { posting: accountPostingId, entry: accountEntryId })}`;
+}
+
+/** 明细流水「来源」列：事实批次为「事实 ID · v版本」，桶移动为来源类型。 */
+export function entrySourceLabel(entry: Pick<AccountEntry, 'sourceType' | 'factId' | 'factVersion' | 'movementSourceType'>): string {
+  return entry.sourceType === 'ECONOMIC_FACT' ? `事实 ${entry.factId} · v${entry.factVersion}` : entry.movementSourceType ?? '—';
+}
+
+/** 批次流水借贷合计（Money 金额）。 */
+export function postingTotals(entries: readonly Pick<AccountPostingEntry, 'entrySide' | 'amount'>[]) {
+  return journalTotals(entries.map(entry => ({ entrySide: entry.entrySide, amount: entry.amount.amount })));
 }
 
 // ---------- 写命令 ----------

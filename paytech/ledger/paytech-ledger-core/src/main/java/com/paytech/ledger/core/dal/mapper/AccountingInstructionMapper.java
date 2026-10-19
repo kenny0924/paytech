@@ -33,6 +33,10 @@ public interface AccountingInstructionMapper {
     /** 关账步骤 2：统计账簿中仍处于 RECEIVED/VALIDATING/VALIDATED 的指令。 */
     long countPendingByBooks(@Param("bookIds") List<Long> bookIds);
 
-    /** 按经济事实读取全部 AUTO 指令，按账簿、主键升序。 */
-    List<AccountingInstruction> selectAutoByEconomicFact(@Param("economicFactId") long economicFactId);
+    /** 经济事实已生成的全部规则或入账批次指令，按账簿、主键升序。 */
+    List<AccountingInstruction> selectByEconomicFact(@Param("economicFactId") long economicFactId);
+
+    /** 同一来源事件已生成的全部指令，按账簿、主键升序。 */
+    List<AccountingInstruction> selectBySourceEvent(@Param("sourceSystem") String sourceSystem,
+        @Param("sourceEventKey") String sourceEventKey);
 }

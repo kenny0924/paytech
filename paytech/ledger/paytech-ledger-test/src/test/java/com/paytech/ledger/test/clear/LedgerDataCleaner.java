@@ -23,10 +23,11 @@ import com.paytech.ledger.test.dal.AccountingTestMapper;
 @Order(1)
 public class LedgerDataCleaner implements Clear {
     /**
-     * 初始化 DML 保留行数：USD 1 + STANDARD 1 + 核心科目 29 + 结转规则 7 + 规则 Bundle 2 + 规则版本 2 + 规则行 12 + 32
-     * （第 11b 步增加 STANDARD_ADJUSTMENT Bundle 5002、版本 5102 与规则行 5301–5332）。
+     * 初始化 DML 保留行数：USD 1 + STANDARD 1 + 核心科目 29 + 结转规则 7 + 规则 Bundle 2 + 规则版本 2 + 规则行 10 + 26
+     * （第 11b 步增加 STANDARD_ADJUSTMENT Bundle 5002、版本 5102 与规则行 5301–5332；2026-10-19 删除 Owner 角色规则行 5202、5208、
+     * 5315–5320，Owner 控制科目行改由 account 入账批次流水生成）。
      */
-    static final int RESERVED_ROWS = 86;
+    static final int RESERVED_ROWS = 78;
 
     private static final List<String> FULLY_OWNED_TABLES = List.of("t_consumed_event", "t_consumed_aggregate_version",
         "t_compensation_event", "t_close_approval",

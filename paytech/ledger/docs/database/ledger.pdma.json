@@ -2123,7 +2123,7 @@
       },
       "defKey": "t_ledger_account",
       "defName": "会计科目账户",
-      "comment": "在具体账簿和可过账科目下按核算对象与余额桶建立唯一会计科目账户（只保存身份，不保存余额）；余额由不可变 Journal 聚合得出，Owner 余额桶的实时权威是 account 服务的 t_account_balance（design/04 §3）；CLIENT_PAYABLE 与 PARTNER_PAYABLE 使用 PENDING、AVAILABLE、LOCKED，其中 Partner PENDING 是共享待结算桶；Partner reversal 无法由 PENDING/AVAILABLE/LOCKED liability 吸收时使用资产科目 PARTNER_RECOVERY_RECEIVABLE/NONE；Client Recovery 使用 CLIENT_RECOVERY_RECEIVABLE/NONE，保证金使用 CLIENT_SECURITY_DEPOSIT/NONE；Channel 使用 CHANNEL_UNSETTLED_RECEIVABLE、CHANNEL_SETTLEMENT_RECEIVABLE、CHANNEL_UNSETTLED_PAYABLE、CHANNEL_SETTLEMENT_PAYABLE 四个科目表达交易形成、交易对账完整和银行确认三个阶段，Channel Cost 单独使用 CHANNEL_FEE_ACCRUAL，银行现金使用 BANK_CASH。",
+      "comment": "在具体账簿和可过账科目下按核算对象建立唯一会计科目账户（只保存身份，不保存余额）；余额由不可变 Journal 聚合得出。Owner 科目（CLIENT_PAYABLE、CLIENT_SECURITY_DEPOSIT、CLIENT_RECOVERY_RECEIVABLE、PARTNER_PAYABLE、PARTNER_RECOVERY_RECEIVABLE）每账簿每科目一个控制账户，Owner 取账簿主体、桶 NONE，明细在 account 的 t_owner_account（2026-10-18 决定第 3 条）；Channel 使用 CHANNEL_UNSETTLED_RECEIVABLE、CHANNEL_SETTLEMENT_RECEIVABLE、CHANNEL_UNSETTLED_PAYABLE、CHANNEL_SETTLEMENT_PAYABLE 与 CHANNEL_FEE_ACCRUAL，银行存款使用 BANK_CASH / CASH_ACCOUNT，税务机关使用 TAX_PAYABLE。",
       "properties": {},
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -2345,7 +2345,7 @@
         {
           "defKey": "owner_type",
           "defName": "核算对象类型",
-          "comment": "决定账户按经营主体、内部财务主体、Client、Local Partner、渠道账户、银行账户或税务机关隔离的类型。允许值：OPERATING_ENTITY、FINANCE_ENTITY、CLIENT、LOCAL_PARTNER、CHANNEL_ACCOUNT、CASH_ACCOUNT、TAX_AUTHORITY。",
+          "comment": "决定账户按经营主体、内部财务主体、渠道账户、银行账户或税务机关隔离的类型；Client / Local Partner 不再在总账开户，其科目以账簿主体为 Owner 的控制账户表达。允许值：OPERATING_ENTITY、FINANCE_ENTITY、CHANNEL_ACCOUNT、CASH_ACCOUNT、TAX_AUTHORITY。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -2384,7 +2384,7 @@
         {
           "defKey": "balance_bucket",
           "defName": "余额桶",
-          "comment": "PARTNER_PAYABLE 使用 PENDING、AVAILABLE、LOCKED，其中 Partner 的 PENDING 是共享待结算桶；PARTNER_RECOVERY_RECEIVABLE 使用 NONE；CLIENT_PAYABLE 使用 PENDING、AVAILABLE、LOCKED，CLIENT_RECOVERY_RECEIVABLE/NONE、CLIENT_SECURITY_DEPOSIT/NONE 以及 Channel 三阶段账户均使用独立会计科目并采用 NONE，不复用应付款余额桶。允许值：PENDING、AVAILABLE、LOCKED、NONE。",
+          "comment": "总账账户不再按余额桶分账户，一律 NONE；Owner 余额桶由 account 明细账维护。允许值：NONE。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -5196,7 +5196,7 @@
         {
           "defKey": "origin_type",
           "defName": "指令来源类型",
-          "comment": "区分规则自动生成和人工调整生成的指令。允许值：AUTO、MANUAL。",
+          "comment": "区分规则自动生成、account 入账批次生成和人工调整生成的指令。允许值：AUTO、ACCOUNT_POSTING、MANUAL。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -5214,7 +5214,7 @@
         {
           "defKey": "source_system",
           "defName": "来源系统",
-          "comment": "自动指令所消费权威事件的来源系统，人工指令为空。取值来源：Code-MoR 系统代码目录；非固定枚举。",
+          "comment": "自动指令所消费权威事件的来源系统（ACCOUNT_POSTING 指令为 account），人工指令为空。取值来源：Code-MoR 系统代码目录；非固定枚举。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -5232,7 +5232,7 @@
         {
           "defKey": "source_event_key",
           "defName": "来源事件键",
-          "comment": "自动指令所消费权威事件的稳定事件键，人工指令为空。",
+          "comment": "自动指令所消费权威事件的稳定事件键（ACCOUNT_POSTING 指令为 account 入账批次 ID），人工指令为空。",
           "type": "VARCHAR",
           "len": 128,
           "scale": "",
@@ -5250,7 +5250,7 @@
         {
           "defKey": "source_version",
           "defName": "来源版本",
-          "comment": "自动指令所消费权威事件或事实的版本，人工指令为空。",
+          "comment": "自动指令所消费权威事件或事实的版本（ACCOUNT_POSTING 指令为 posting_sequence），人工指令为空。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -5872,6 +5872,24 @@
           "id": "BC640F42-1E5D-5248-82C1-37C6A35F14F9"
         },
         {
+          "defKey": "account_entry_id",
+          "defName": "account 流水主键",
+          "comment": "ACCOUNT_POSTING 指令中 Owner 控制科目行对应的 account 流水（mor_account.t_account_entry.id），用于下钻；规则行与人工行为空；与 accounting_rule_line_id、manual_adjustment_line_id 三选一。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "1F3607A1-366A-45B5-AA24-67D0943F372B"
+        },
+        {
           "defKey": "account_id",
           "defName": "统一记账账户主键",
           "comment": "该指令行准备写入且已冻结账簿、科目、核算对象和余额桶的本库账户。",
@@ -6043,6 +6061,20 @@
             }
           ],
           "id": "FC7CAA08-E53C-513F-A834-A8101D97ECAB"
+        },
+        {
+          "defKey": "idx_instr_line_entry",
+          "defName": "访问索引 account_entry_id",
+          "unique": false,
+          "comment": "支持访问路径：account_entry_id",
+          "fields": [
+            {
+              "fieldDefKey": "1F3607A1-366A-45B5-AA24-67D0943F372B",
+              "ascOrDesc": "A",
+              "id": "B880A177-92BA-4778-A0C7-D27963F995A6"
+            }
+          ],
+          "id": "9DAE229B-ABDA-48C3-9930-F142F746E208"
         }
       ],
       "type": "P"
@@ -9918,7 +9950,7 @@
         {
           "defKey": "resolution_type",
           "defName": "解决类型",
-          "comment": "终态异常采用的受控解决证据类型；PROJECTION_REBUILD 只从 Journal 重建投影且不得追加 Journal。允许值：RECON_RESOLUTION、ACCOUNTING_INSTRUCTION、PROJECTION_REBUILD、CONTROLLED_WAIVER。",
+          "comment": "终态异常采用的受控解决证据类型。允许值：RECON_RESOLUTION、ACCOUNTING_INSTRUCTION、CONTROLLED_WAIVER。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -11385,7 +11417,7 @@
         {
           "defKey": "step_type",
           "defName": "步骤类型",
-          "comment": "关账或重开流程中的固定执行步骤。允许值：LOCK_SEQUENCE、CHECK_ASYNC_AND_JOURNAL、RECONCILE_ACCOUNT_BALANCES、GENERATE_TRIAL_BALANCE、RESOLVE_EXCEPTIONS、POST_PROFIT_CLOSE、FINAL_TRIAL_BALANCE、PLAN_REOPEN_REVERSAL、POST_REOPEN_REVERSAL。",
+          "comment": "关账或重开流程中的固定执行步骤；CHECK_ACCOUNT_POSTING_PROGRESS 在一个步骤内做 billing → account、account → ledger 两段进度检查（决定第 9 条）。允许值：LOCK_SEQUENCE、CHECK_ASYNC_AND_JOURNAL、CHECK_ACCOUNT_POSTING_PROGRESS、GENERATE_TRIAL_BALANCE、RESOLVE_EXCEPTIONS、POST_PROFIT_CLOSE、FINAL_TRIAL_BALANCE、PLAN_REOPEN_REVERSAL、POST_REOPEN_REVERSAL。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -15263,7 +15295,7 @@
     },
     {
       "defKey": "reliability",
-      "defName": "可靠执行与命令幂等",
+      "defName": "可靠执行与消费幂等",
       "relationType": "field",
       "canvasData": {
         "cells": [
@@ -15281,17 +15313,49 @@
               "width": 390,
               "height": 526
             }
+          },
+          {
+            "id": "6DB56207-72E5-4077-AC93-6FBE7E54CDDD",
+            "shape": "table",
+            "position": {
+              "x": 430,
+              "y": 0
+            },
+            "count": 0,
+            "originKey": "6D95CD88-8DDA-5A5F-9244-00AA500CB80F",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 218
+            }
+          },
+          {
+            "id": "CC5B1726-3DA6-494A-AD94-93C8B1A24924",
+            "shape": "table",
+            "position": {
+              "x": 860,
+              "y": 0
+            },
+            "count": 0,
+            "originKey": "1C76E936-D0D9-579B-B9E7-21C82DDBC71B",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 174
+            }
           }
         ]
       },
       "properties": {
         "primaryTables": [
-          "t_compensation_event"
+          "t_compensation_event",
+          "t_consumed_event",
+          "t_consumed_aggregate_version"
         ],
         "referenceTables": []
       },
       "id": "87A45527-D454-5769-AA5F-0E06A321A3F9",
-      "comment": "可靠执行与命令幂等边界关系图"
+      "comment": "可靠执行与消费幂等边界关系图：本地补偿事件；paytech-messaging 消费端按事件 ID 去重与按聚合记录已处理最大版本（AccountPosted 按过账流的消费进度，关账步骤 3 比对）。已消费事件与已消费聚合版本按 (aggregate_type, aggregate_id) 组合对应，不画主键连线。"
     }
   ],
   "standardFields": [],

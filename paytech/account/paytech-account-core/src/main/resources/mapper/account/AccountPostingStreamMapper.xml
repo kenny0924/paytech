@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- t_account_posting_stream：入账流序号行，只读写 mor_account。 -->
+<mapper namespace="com.paytech.account.core.dal.mapper.AccountPostingStreamMapper">
+    <sql id="columns">id, entity_type, entity_id, currency, shard_no, last_sequence, last_posted_time, create_time, update_time</sql>
+
+    <insert id="insert">
+        INSERT INTO t_account_posting_stream (<include refid="columns"/>)
+        VALUES (#{id}, #{entityType}, #{entityId}, #{currency}, #{shardNo}, #{lastSequence}, #{lastPostedTime}, #{createTime}, #{updateTime})
+    </insert>
+
+    <select id="selectForUpdate" resultType="com.paytech.account.core.dal.dataobject.AccountPostingStream" flushCache="true" useCache="false">
+        SELECT <include refid="columns"/> FROM t_account_posting_stream
+        WHERE entity_type = #{entityType} AND entity_id = #{entityId} AND currency = #{currency} AND shard_no = #{shardNo}
+        FOR UPDATE
+    </select>
+
+    <select id="selectByEntity" resultType="com.paytech.account.core.dal.dataobject.AccountPostingStream">
+        SELECT <include refid="columns"/> FROM t_account_posting_stream
+        WHERE entity_type = #{entityType} AND entity_id = #{entityId} AND currency = #{currency}
+        ORDER BY shard_no
+    </select>
+
+    <select id="selectByEntities" resultType="com.paytech.account.core.dal.dataobject.AccountPostingStream">
+        SELECT <include refid="columns"/> FROM t_account_posting_stream
+        WHERE entity_type = #{entityType} AND currency = #{currency} AND entity_id IN
+        <foreach collection="entityIds" item="entityId" open="(" separator="," close=")">#{entityId}</foreach>
+        ORDER BY entity_id, shard_no
+    </select>
+
+    <update id="advance">
+        UPDATE t_account_posting_stream
+        SET last_sequence = last_sequence + 1, last_posted_time = #{postedTime}, update_time = #{postedTime}
+        WHERE id = #{stream.id} AND last_sequence = #{stream.lastSequence}
+    </update>
+</mapper>

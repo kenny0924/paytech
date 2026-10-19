@@ -11,7 +11,7 @@ import com.paytech.billing.api.fact.EconomicFactPayload;
 
 /**
  * 经济事实载荷的合法模板：PAYMENT、来源 payment、唯一事件键，头部必填字段给出稳定默认值
- * <li>作为 EconomicFactRecorded Payload（版本 1、登记时间为当前时刻）发布或直接传入，不写 billing 表；支付成功时间默认为一分钟前，落在
+ * <li>作为 billing 事实详情 DTO 的来源（版本 1、批准时间为当前时刻），不写 billing 表；支付成功时间默认为一分钟前，落在
  * LedgerMocker 准备的当月 OPEN 期间内。</li>
  * <li>只构造对象，不访问数据库；事实主键由用例分配，明细行由 {@link EconomicComponentBuilder} 构造后按顺序编号。</li>
  */
@@ -76,6 +76,13 @@ public final class TransactionEconomicsBuilder {
     /** 覆盖支付成功时间，可为 null。 */
     public TransactionEconomicsBuilder paymentSucceededTime(Instant paymentSucceededTime) {
         fact.setPaymentSucceededTime(paymentSucceededTime);
+        return this;
+    }
+
+    /** 替代给定事实：记录被替代事实主键，版本为其版本 + 1。 */
+    public TransactionEconomicsBuilder supersedes(EconomicFactPayload previous) {
+        fact.setSupersedesFactId(previous.getFactId());
+        fact.setFactVersion(previous.getFactVersion() + 1);
         return this;
     }
 

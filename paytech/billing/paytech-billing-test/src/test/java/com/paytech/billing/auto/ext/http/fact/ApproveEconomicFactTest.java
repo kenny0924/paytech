@@ -70,7 +70,8 @@ class ApproveEconomicFactTest extends AbstractEconomicFactApiTest {
             () -> assertEquals(Long.valueOf(FINANCE_ENTITY_ID), payload.getFinanceEntityId()),
             () -> assertEquals(CURRENCY, payload.getCurrency()),
             () -> assertEquals(new BigDecimal("12.50"), payload.getGrossAmount()),
-            () -> assertNotNull(payload.getRecordedTime()), () -> assertNotNull(row.get("published_at")),
+            () -> assertNotNull(payload.getRecordedTime()), () -> assertNull(payload.getBalanceAvailableTime()),
+            () -> assertNull(envelope.payloadText("balanceAvailableTime")), () -> assertNotNull(row.get("published_at")),
             () -> assertEquals(List.of(), events.events(factId), "发布确认后补偿任务应删除"));
         List<EconomicFactLinePayload> lines = payload.getLines();
         assertAll(() -> assertEquals(2, lines.size()),
