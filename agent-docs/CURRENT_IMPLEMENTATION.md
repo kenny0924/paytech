@@ -131,7 +131,9 @@
       ```
 
 <a id="billing-fact-model-channel-cost-20261019"></a>
-## billing 计费事实模型重构与渠道成本迁出（2026-10-19，已部署 mor-test，未提交）
+## billing 计费事实模型重构与渠道成本迁出（2026-10-19，已部署 mor-test，已本地提交 `8b7b4e7a`，未推送）
+
+> 本地提交 `8b7b4e7a`（2026-10-19，未推送）。
 
 - **范围：** 按[决定](decisions/2026-10-19-billing-fact-engine.md)、[需求](<../requirements/20261019/billing-计费事实模型重构与渠道成本迁出/requirement.md>)与[技术方案](<../requirements/20261019/billing-计费事实模型重构与渠道成本迁出/technique.md>)第 2 节实施需求 A。各线报告见 [tasks/](<../requirements/20261019/billing-计费事实模型重构与渠道成本迁出/tasks/>)（T0、A、B、C、D）。
 - **Implemented：**
