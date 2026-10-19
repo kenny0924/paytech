@@ -128,3 +128,14 @@
 3. **注解锁基础设施的去留。** client-master 与 platform-support 已无 `@ResourceLock` 消费者，`redis.coordination.resource-lock` 配置继续作为 Wait/Lease 来源（client-master）或保持原样（platform）保留。是否关闭注解锁自动配置留待 Foundation 决定。
 4. **`CURRENT_IMPLEMENTATION.md` 未更新。** 第 1509 行“所有 Processor 继承 `AbstractGatewayProcessor`”已过时。台账由主会话维护，本任务未改，避免与并行会话冲突。
 5. **`GetClientFormOptionsProcessor` 的类型解析。** 它仍按 `ClientType.valueOf`（枚举 name）解析客户类型，与开发规范第 4 节“禁止依赖 name()”不符。这是原有行为，本次未改。
+
+## 8. 合并门禁记录（主会话，2026-10-19）
+
+- 合并方式：`main`（4c7892a8）与 `refactor/processor-template-r14`（45b79b76）在隔离 worktree 以 `--no-ff` 合并，无冲突；两侧无共同改动文件。合并期间主工作区 `ReviewFileDownloadProcessor.java` 有一处仅重排 `@param` 换行的未提交格式改动，该方法已被 `processRequest` 取代，补丁另存，不进入提交。
+- 复核：合并基线以来 `main` 新增的核心服务 `*Processor` 均已继承模板，R14 在合并树上无新增违例；全 Reactor `clean verify` 结果见 `delivery.md`。
+- 第 7 节待确认项裁决：
+  1. 内部 Response 形态——接受。写入口沿用 Service 回执、读入口沿用 core 内 ResponseBody，不另建同义 Response；如需 Service 返回领域结果再单独立项。
+  2. 409 提示文字——接受。错误码与状态不变，与 Platform 入驻文件、Risk、C14 迁移一致。
+  3. 注解锁自动配置去留——不在本任务裁决，登记为 Foundation 遗留项。
+  4. `CURRENT_IMPLEMENTATION.md` 第 1533 行“所有 Processor 继承 `AbstractGatewayProcessor`”——确认过时（仓库内已无该类）。该文件当前被并行会话占用，台账修订顺延到其提交之后，由主会话单独提交。
+  5. `GetClientFormOptionsProcessor` 按 `ClientType.valueOf` 解析——登记为小型遗留项，改为按 code 解析时需补 400 用例，另开任务卡。
