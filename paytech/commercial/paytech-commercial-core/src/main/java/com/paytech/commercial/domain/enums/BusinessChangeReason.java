@@ -41,7 +41,31 @@ public enum BusinessChangeReason implements CodeEnum {
     PRICING_PROFILE_ACTIVATED("PRICING_PROFILE_ACTIVATED"),
 
     /** 退役定价画像 */
-    PRICING_PROFILE_RETIRED("PRICING_PROFILE_RETIRED");
+    PRICING_PROFILE_RETIRED("PRICING_PROFILE_RETIRED"),
+
+    /** 创建商业条款方案 */
+    TERM_PLAN_CREATED("TERM_PLAN_CREATED"),
+
+    /** 创建 DRAFT 条款版本 */
+    TERM_VERSION_CREATED("TERM_VERSION_CREATED"),
+
+    /** 整体替换 DRAFT 版本价格集合 */
+    TERM_VERSION_PRICES_REPLACED("TERM_VERSION_PRICES_REPLACED"),
+
+    /** 条款版本提交审批（快照记录 Maker） */
+    TERM_VERSION_SUBMITTED("TERM_VERSION_SUBMITTED"),
+
+    /** 条款版本审批通过（快照记录 Maker 与 Checker） */
+    TERM_VERSION_APPROVED("TERM_VERSION_APPROVED"),
+
+    /** 条款版本驳回（快照记录 Maker 与 Checker） */
+    TERM_VERSION_REJECTED("TERM_VERSION_REJECTED"),
+
+    /** 条款版本排期；同命令关闭前一 ACTIVE 版本的生效窗口 */
+    TERM_VERSION_SCHEDULED("TERM_VERSION_SCHEDULED"),
+
+    /** 条款版本激活；同命令替代前一 ACTIVE 版本，方案首次生效转 ACTIVE */
+    TERM_VERSION_ACTIVATED("TERM_VERSION_ACTIVATED");
 
     private final String code;
 

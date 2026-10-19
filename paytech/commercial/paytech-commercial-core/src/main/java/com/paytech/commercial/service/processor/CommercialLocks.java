@@ -19,6 +19,11 @@ public final class CommercialLocks {
         return "agreement:" + agreementId;
     }
 
+    /** 条款方案：方案下版本、价格集合与状态推进共用，定时激活作业同样获取。 */
+    public static String termPlan(long termPlanId) {
+        return "term-plan:" + termPlanId;
+    }
+
     /** 画像创建：按不可变代码串行化。 */
     public static String pricingProfileCode(String pricingProfileCode) {
         return "pricing-profile:" + pricingProfileCode;

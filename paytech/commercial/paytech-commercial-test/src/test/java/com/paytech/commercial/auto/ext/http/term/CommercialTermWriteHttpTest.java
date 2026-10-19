@@ -16,6 +16,7 @@ import com.paytech.commercial.api.enums.BandBasis;
 import com.paytech.commercial.api.event.CommercialTermVersionActivatedPayload;
 import com.paytech.commercial.api.term.CommercialTermApi;
 import com.paytech.commercial.api.term.request.CreateCommercialTermPlanRequestBody;
+import com.paytech.commercial.domain.enums.BusinessChangeReason;
 import com.paytech.commercial.domain.enums.CommercialTermVersionStatus;
 import com.paytech.commercial.service.handler.CommercialTermVersionActivatedHandler;
 import com.paytech.commercial.test.base.term.AbstractCommercialTermApiTest;
@@ -66,7 +67,7 @@ class CommercialTermWriteHttpTest extends AbstractCommercialTermApiTest {
         assertAll(() -> assertEquals(List.of(2L, 3L, 4L, 5L, 6L, 7L),
                 snapshots.stream().map(row -> ((Number)row.get("version_no")).longValue()).toList()),
             () -> assertEquals(MAKER, ((Number)snapshots.get(2).get("create_by")).longValue()),
-            () -> assertEquals("TERM_VERSION_SUBMITTED", snapshot(snapshots.get(2)).path("_meta").path("reasonCode").asString()),
+            () -> assertEquals(BusinessChangeReason.TERM_VERSION_SUBMITTED.getCode(), snapshot(snapshots.get(2)).path("_meta").path("reasonCode").asString()),
             () -> assertEquals(CHECKER, ((Number)snapshots.get(3).get("create_by")).longValue()),
             () -> assertEquals(Long.toString(MAKER), snapshot(snapshots.get(3)).path("data").path("makerAccountId").asString()),
             () -> assertEquals(Long.toString(CHECKER),
@@ -168,10 +169,10 @@ class CommercialTermWriteHttpTest extends AbstractCommercialTermApiTest {
 
         var stale = createVersionResult(text(plan, "planId"), text(plan, "changeVersion"), null);
 
-        assertProblem(stale, 409, CommonErrorCode.CONCURRENT_REQUEST.getCode(), "已被修改");
+        assertProblem(stale, 409, CommonErrorCode.CONCURRENT_REQUEST.getCode(), "业务版本已变化");
         assertProblem(replacePricesResult(((ObjectNode)plan.deepCopy()).put("versionId", text(version, "versionId")),
             price("USD", CARD, 1, percentage("MDR", "0.025"))), 409, CommonErrorCode.CONCURRENT_REQUEST.getCode(),
-            "已被修改");
+            "业务版本已变化");
         assertEquals(2L, testMapper.businessChangeVersion("COMMERCIAL_TERM_PLAN", Long.parseLong(text(plan, "planId"))));
     }
 

@@ -6,7 +6,7 @@ import java.util.List;
 import com.paytech.commercial.core.dal.dataobject.Agreement;
 import com.paytech.commercial.core.dal.dataobject.AgreementCapability;
 import com.paytech.commercial.core.dal.dataobject.AgreementCapabilityLimit;
-import com.paytech.commercial.core.dal.dataobject.BusinessChangeHistory;
+import com.paytech.commercial.core.dal.dataobject.BusinessChangeRecord;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermComponent;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermComponentBand;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermPlan;
@@ -25,15 +25,13 @@ import lombok.Singular;
  * 商业条款方案 / 版本写入的请求上下文：由各写入 Processor 在锁内查询校验后一次构造，贯穿本地保存与响应
  * <li>持有本模块 DataObject；各命令只填所需部分，未用到的集合为空、对象为 null。</li>
  * <li>expectedChangeVersion 为方案 BCR 根的 CAS 令牌：运营命令来自请求，系统命令（定时激活）为锁内读取的当前值。</li>
+ * <li>BCR 身份、快照与 triggerId 由 BusinessChangeHistoryWriter 在保存事务内生成；Context 只携带已读取的方案 Root。</li>
  */
 @Getter
 @Builder
 public class CommercialTermVersionContext {
     /** 本次命令时间（UTC 微秒）。 */
     private final Instant now;
-
-    /** 同一命令全部审计快照共用的关联 ID。 */
-    private final long triggerId;
 
     /** 操作人账号 ID；系统命令为 0。 */
     private final long operatorAccountId;
@@ -47,8 +45,8 @@ public class CommercialTermVersionContext {
     /** 方案。 */
     private final CommercialTermPlan plan;
 
-    /** 方案的 BCR 根；创建方案时为待插入的新行。 */
-    private final BusinessChangeHistory planHistory;
+    /** 已读取的方案 BCR Root；创建方案时为空（由保存事务创建）。 */
+    private final BusinessChangeRecord planRoot;
 
     /** 方案或版本引用的合同。 */
     private final Agreement agreement;
@@ -59,9 +57,6 @@ public class CommercialTermVersionContext {
 
     /** 本次操作的版本；创建方案时为空。 */
     private final CommercialTermVersion version;
-
-    /** 版本的 BCR Child；创建版本时为待插入的新行。 */
-    private final BusinessChangeHistory versionHistory;
 
     /** 版本价格集合：创建版本复制或整体替换时为新写入行，排期 / 激活时为读取的现有行。 */
     @Singular
@@ -91,9 +86,6 @@ public class CommercialTermVersionContext {
 
     /** 前一 ACTIVE 版本（排期关闭其窗口、激活将其替代），可空。 */
     private final CommercialTermVersion supersededVersion;
-
-    /** 前一 ACTIVE 版本的 BCR Child，可空。 */
-    private final BusinessChangeHistory supersededHistory;
 
     /** 激活校验：价格引用的画像。 */
     @Singular
@@ -140,6 +132,6 @@ public class CommercialTermVersionContext {
 
     /** 版本与方案的当前视图（写入成功后同步的对象）。 */
     public CommercialTermVersionView toVersionView() {
-        return new CommercialTermVersionView(plan, version, planHistory.getCurrentVersion());
+        return new CommercialTermVersionView(plan, version, planRoot.getCurrentVersion());
     }
 }

@@ -75,3 +75,16 @@ events:
     consumers: [acquiring]
     strictOrder: false
     payloadSchemaRef: paytech-commercial-api/event/AgreementStatusChanged/v1
+  # 商业条款版本生效（2026-10-19 六层定价 technique.md §2.8，C 线）：commercial 在条款版本激活（运营激活或定时激活作业）的本地事务
+  # 登记补偿任务 COMMERCIAL_TERM_VERSION_ACTIVATED，提交后由 CommercialTermVersionActivatedHandler 回读方案与唯一 ACTIVE 版本发布；
+  # aggregateId 为方案 ID，aggregateVersion 取方案 BCR Root 的 changeVersion（同一方案的其他写入也推进该版本，事件之间会跳号，故
+  # strictOrder=false）。消费 Handler 由 acquiring 接入时登记。Payload 见 paytech-commercial-api 的
+  # com.paytech.commercial.api.event.CommercialTermVersionActivatedPayload。
+  - eventType: CommercialTermVersionActivated
+    schemaVersion: 1
+    producer: commercial
+    aggregateType: COMMERCIAL_TERM_PLAN
+    aggregateVersionField: changeVersion
+    consumers: [acquiring]
+    strictOrder: false
+    payloadSchemaRef: paytech-commercial-api/event/CommercialTermVersionActivated/v1

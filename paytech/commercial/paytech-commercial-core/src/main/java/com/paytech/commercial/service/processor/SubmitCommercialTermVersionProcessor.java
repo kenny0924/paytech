@@ -2,7 +2,6 @@ package com.paytech.commercial.service.processor;
 
 import org.springframework.stereotype.Component;
 
-import com.paytech.commercial.core.constant.CommercialLocks;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermVersion;
 import com.paytech.commercial.domain.CommercialTermVersionContext;
 import com.paytech.commercial.domain.CommercialTermVersionView;

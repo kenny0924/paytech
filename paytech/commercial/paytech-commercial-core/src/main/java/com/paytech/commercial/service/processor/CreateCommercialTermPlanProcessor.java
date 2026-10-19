@@ -11,15 +11,11 @@ import org.springframework.stereotype.Component;
 
 import com.paytech.commercial.api.constant.CommercialCodes;
 import com.paytech.commercial.api.enums.CommercialTermPlanStatus;
-import com.paytech.commercial.core.constant.CommercialLocks;
 import com.paytech.commercial.core.dal.dataobject.Agreement;
-import com.paytech.commercial.core.dal.dataobject.BusinessChangeHistory;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermPlan;
 import com.paytech.commercial.domain.CommercialTermVersionContext;
 import com.paytech.commercial.domain.CommercialTermVersionView;
 import com.paytech.commercial.domain.enums.AgreementAgreementType;
-import com.paytech.commercial.domain.enums.BusinessChangeRecordAggregateRootType;
-import com.paytech.commercial.domain.enums.BusinessChangeRecordRecordType;
 import com.paytech.commercial.domainservice.repository.CommercialTermPlanRepository;
 import com.paytech.commercial.domainservice.repository.ProductFeeEventRepository;
 import com.paytech.commercial.domainservice.service.CommercialTermService;
@@ -82,11 +78,10 @@ public class CreateCommercialTermPlanProcessor
         // 新方案：合同与 Owner、条款类型目录、同合同 / 同 Partner 唯一
         CommercialTermVersionContext context = buildContext(request);
         try {
-            commercialTermService.createPlan(context);
+            return new CreateCommercialTermPlanResponse(commercialTermService.createPlan(context), true);
         } catch (DuplicateKeyException concurrent) {
             throw new ConcurrentRequestException("方案编号或合同条款类型已被并发占用: " + request.getPlanCode(), concurrent);
         }
-        return new CreateCommercialTermPlanResponse(context.toVersionView(), true);
     }
 
     /** 同号重放：归属一致返回原方案，否则 409。 */
@@ -102,7 +97,7 @@ public class CreateCommercialTermPlanProcessor
         return new CreateCommercialTermPlanResponse(new CommercialTermVersionView(existing, null, changeVersion), false);
     }
 
-    /** 校验合同、Owner 与唯一性后构造新方案与 BCR 根。 */
+    /** 校验合同、Owner 与唯一性后构造新方案（BCR Root 由保存事务创建）。 */
     CommercialTermVersionContext buildContext(CreateCommercialTermPlanRequest request) {
         Agreement agreement = loader.openAgreement(request.getAgreementId());
         checkOwner(agreement, request);
@@ -112,8 +107,7 @@ public class CreateCommercialTermPlanProcessor
         checkUnique(request);
         Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
         CommercialTermPlan plan = newPlan(agreement, request, now);
-        return CommercialTermVersionContext.builder().now(now).triggerId(loader.nextId())
-            .operatorAccountId(request.getOperatorAccountId()).plan(plan).planHistory(newRoot(plan, now))
+        return CommercialTermVersionContext.builder().now(now).operatorAccountId(request.getOperatorAccountId()).plan(plan)
             .agreement(agreement).build();
     }
 
@@ -157,18 +151,4 @@ public class CreateCommercialTermPlanProcessor
         return plan;
     }
 
-    /** 方案的 BCR 根（版本 1）。 */
-    BusinessChangeHistory newRoot(CommercialTermPlan plan, Instant now) {
-        BusinessChangeHistory root = new BusinessChangeHistory();
-        root.setHistoryId(loader.nextId());
-        root.setRecordType(BusinessChangeRecordRecordType.COMMERCIAL_TERM_PLAN);
-        root.setRecordId(Long.toString(plan.getTermPlanId()));
-        root.setAggregateRootType(BusinessChangeRecordAggregateRootType.COMMERCIAL_TERM_PLAN);
-        root.setAggregateRootId(Long.toString(plan.getTermPlanId()));
-        root.setParentHistoryId(null);
-        root.setCurrentVersion(1L);
-        root.setCreateTime(now);
-        root.setUpdateTime(now);
-        return root;
-    }
 }

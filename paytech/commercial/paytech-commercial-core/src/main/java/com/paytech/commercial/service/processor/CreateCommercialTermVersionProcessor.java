@@ -11,9 +11,8 @@ import org.springframework.stereotype.Component;
 
 import com.paytech.commercial.api.enums.FeeTaxTreatment;
 import com.paytech.commercial.api.enums.PricingModel;
-import com.paytech.commercial.core.constant.CommercialLocks;
 import com.paytech.commercial.core.dal.dataobject.Agreement;
-import com.paytech.commercial.core.dal.dataobject.BusinessChangeHistory;
+import com.paytech.commercial.core.dal.dataobject.BusinessChangeRecord;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermComponent;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermComponentBand;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermPlan;
@@ -22,8 +21,6 @@ import com.paytech.commercial.core.dal.dataobject.CommercialTermVersion;
 import com.paytech.commercial.domain.CommercialTermVersionContext;
 import com.paytech.commercial.domain.CommercialTermVersionView;
 import com.paytech.commercial.domain.enums.AgreementAgreementType;
-import com.paytech.commercial.domain.enums.BusinessChangeRecordAggregateRootType;
-import com.paytech.commercial.domain.enums.BusinessChangeRecordRecordType;
 import com.paytech.commercial.domain.enums.CommercialTermRoundingMode;
 import com.paytech.commercial.domain.enums.CommercialTermVersionStatus;
 import com.paytech.commercial.domainservice.repository.CommercialTermVersionRepository;
@@ -59,7 +56,7 @@ public class CreateCommercialTermVersionProcessor
     protected CommercialTermVersionView processWithinLock(CreateCommercialTermVersionRequest request) {
         // 方案、根版本与合同
         CommercialTermPlan plan = loader.plan(request.getPlanId());
-        BusinessChangeHistory root = loader.planRoot(plan);
+        BusinessChangeRecord root = loader.planRoot(plan);
         long expected = loader.expectedVersion(root, request.getExpectedChangeVersion());
         Agreement agreement = versionAgreement(plan, request);
 
@@ -68,9 +65,8 @@ public class CreateCommercialTermVersionProcessor
         Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
         CommercialTermVersion version = newVersion(plan, agreement, source, request, now);
         CommercialTermVersionContext.CommercialTermVersionContextBuilder builder = CommercialTermVersionContext.builder()
-            .now(now).triggerId(loader.nextId()).operatorAccountId(request.getOperatorAccountId())
-            .expectedChangeVersion(expected).plan(plan).planHistory(root).agreement(agreement).version(version)
-            .versionHistory(newChild(root, version, expected + 1, now));
+            .now(now).operatorAccountId(request.getOperatorAccountId())
+            .expectedChangeVersion(expected).plan(plan).planRoot(root).agreement(agreement).version(version);
         if (source != null) {
             copyPriceSet(builder, source, version, now);
         }
@@ -137,21 +133,6 @@ public class CreateCommercialTermVersionProcessor
         version.setCreateTime(now);
         version.setUpdateTime(now);
         return version;
-    }
-
-    /** 版本的 BCR Child，指向本次根版本。 */
-    BusinessChangeHistory newChild(BusinessChangeHistory root, CommercialTermVersion version, long rootVersion, Instant now) {
-        BusinessChangeHistory child = new BusinessChangeHistory();
-        child.setHistoryId(loader.nextId());
-        child.setRecordType(BusinessChangeRecordRecordType.COMMERCIAL_TERM_VERSION);
-        child.setRecordId(Long.toString(version.getTermVersionId()));
-        child.setAggregateRootType(BusinessChangeRecordAggregateRootType.COMMERCIAL_TERM_PLAN);
-        child.setAggregateRootId(root.getAggregateRootId());
-        child.setParentHistoryId(root.getHistoryId());
-        child.setCurrentVersion(rootVersion);
-        child.setCreateTime(now);
-        child.setUpdateTime(now);
-        return child;
     }
 
     /** 以新 ID 复制来源版本的价格、组件与档位。 */

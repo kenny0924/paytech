@@ -20,6 +20,8 @@ import com.paytech.commercial.core.dal.dataobject.AgreementCapabilityLimit;
 import com.paytech.commercial.core.dal.dataobject.AgreementProduct;
 import com.paytech.commercial.core.dal.dataobject.BusinessChangeRecord;
 import com.paytech.commercial.core.dal.dataobject.BusinessChangeVersion;
+import com.paytech.commercial.core.dal.dataobject.CommercialTermPlan;
+import com.paytech.commercial.core.dal.dataobject.CommercialTermVersion;
 import com.paytech.commercial.core.dal.dataobject.PricingProfile;
 import com.paytech.commercial.core.dal.dataobject.PricingProfileCond;
 import com.paytech.commercial.domain.enums.BusinessChangeReason;
@@ -27,6 +29,7 @@ import com.paytech.foundation.common.enums.CodeEnum;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.jsoncanonicalization.api.Rfc8785JsonCanonicalizer;
 
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
@@ -46,6 +49,9 @@ public final class BusinessChangeSnapshot {
 
     /** 外部写命令触发。 */
     public static final String TRIGGER_COMMAND = "COMMAND";
+
+    /** 系统命令（定时激活等）触发。 */
+    public static final String TRIGGER_SYSTEM = "SYSTEM";
 
     /** 完整性算法。 */
     public static final String INTEGRITY_ALGORITHM = "SHA-256";
@@ -70,9 +76,25 @@ public final class BusinessChangeSnapshot {
      */
     public static String build(BusinessChangeRecord record, BusinessChangeVersion version, long triggerId,
         BusinessChangeReason reason, Map<String, Object> data) {
+        return build(record, version, TRIGGER_COMMAND, triggerId, reason, data);
+    }
+
+    /**
+     * 生成带完整性哈希的快照 JSON，显式给出触发类型
+     *
+     * @param record 已准备 Tuple 的历史身份
+     * @param version 已准备 ID、版本号、操作、操作者与时间的快照行（snapshotJson 由本方法结果填充）
+     * @param triggerType {@value #TRIGGER_COMMAND} 或 {@value #TRIGGER_SYSTEM}
+     * @param triggerId 同一命令所有快照共享的触发标识（正十进制）
+     * @param reason 业务原因
+     * @param data 白名单审计视图
+     * @return 快照 JSON
+     */
+    public static String build(BusinessChangeRecord record, BusinessChangeVersion version, String triggerType,
+        long triggerId, BusinessChangeReason reason, Map<String, Object> data) {
         Map<String, Object> meta = new LinkedHashMap<>();
         meta.put("schemaVersion", SCHEMA_VERSION);
-        meta.put("triggerType", TRIGGER_COMMAND);
+        meta.put("triggerType", triggerType);
         meta.put("triggerId", Long.toString(triggerId));
         meta.put("reasonCode", reason.getCode());
         meta.put("integrityAlgorithm", INTEGRITY_ALGORITHM);
@@ -182,6 +204,58 @@ public final class BusinessChangeSnapshot {
             });
         data.put("conditions", rows);
         return data;
+    }
+
+    /**
+     * 商业条款方案 Root 审计视图：t_commercial_term_plan 的业务字段
+     *
+     * @param plan 方案
+     * @return data
+     */
+    public static Map<String, Object> commercialTermPlanData(CommercialTermPlan plan) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("termPlanId", id(plan.getTermPlanId()));
+        data.put("planCode", plan.getPlanCode());
+        data.put("termType", plan.getTermType());
+        data.put("agreementId", id(plan.getAgreementId()));
+        data.put("entityNo", plan.getEntityNo());
+        data.put("clientId", id(plan.getClientId()));
+        data.put("localPartnerId", id(plan.getLocalPartnerId()));
+        data.put("status", code(plan.getStatus()));
+        return data;
+    }
+
+    /**
+     * 商业条款版本 Child 审计视图：t_commercial_term_version 的业务字段（不含 active_slot 技术槽位）
+     * <li>调用方可在返回的可变 Map 上追加本命令的审计事实：priceCount、makerAccountId、checkerAccountId（十进制字符串）。</li>
+     *
+     * @param version 版本
+     * @return data
+     */
+    public static Map<String, Object> commercialTermVersionData(CommercialTermVersion version) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("termVersionId", id(version.getTermVersionId()));
+        data.put("termPlanId", id(version.getTermPlanId()));
+        data.put("agreementId", id(version.getAgreementId()));
+        data.put("versionNo", id(version.getVersionNo()));
+        data.put("status", code(version.getStatus()));
+        data.put("effectiveFrom", time(version.getEffectiveFrom()));
+        data.put("effectiveTo", time(version.getEffectiveTo()));
+        data.put("roundingMode", code(version.getRoundingMode()));
+        data.put("pricingModel", code(version.getPricingModel()));
+        data.put("feeTaxTreatment", code(version.getFeeTaxTreatment()));
+        return data;
+    }
+
+    /**
+     * 读取快照 _meta.reasonCode
+     *
+     * @param snapshotJson 快照 JSON
+     * @return reasonCode，缺失为 null
+     */
+    public static String reasonCode(String snapshotJson) {
+        JsonNode reason = JSON.readTree(snapshotJson).path("_meta").path("reasonCode");
+        return reason.isString() ? reason.asString() : null;
     }
 
     /** 记录 / 聚合 / 父级 Tuple、明细结构化字段与信封的 SHA-256。 */

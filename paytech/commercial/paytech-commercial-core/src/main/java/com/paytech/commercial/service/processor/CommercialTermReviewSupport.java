@@ -2,11 +2,12 @@ package com.paytech.commercial.service.processor;
 
 import org.springframework.stereotype.Component;
 
-import com.paytech.commercial.core.dal.dataobject.BusinessChangeHistory;
+import com.paytech.commercial.core.dal.dataobject.BusinessChangeRecord;
 import com.paytech.commercial.core.dal.dataobject.BusinessChangeVersion;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermVersion;
-import com.paytech.commercial.domain.BusinessChangeSnapshots;
+import com.paytech.commercial.domain.BusinessChangeSnapshot;
 import com.paytech.commercial.domain.CommercialTermVersionContext;
+import com.paytech.commercial.domain.enums.BusinessChangeReason;
 import com.paytech.commercial.domain.enums.CommercialTermVersionStatus;
 import com.paytech.commercial.domainservice.repository.BusinessChangeVersionRepository;
 import com.paytech.commercial.service.processor.request.CommercialTermVersionCommandRequest;
@@ -22,9 +23,6 @@ import lombok.AllArgsConstructor;
 @Component
 @AllArgsConstructor
 public class CommercialTermReviewSupport {
-    /** 提交快照的原因代码。 */
-    static final String SUBMITTED = "TERM_VERSION_SUBMITTED";
-
     private final CommercialTermLoader loader;
     private final BusinessChangeVersionRepository businessChangeVersionRepository;
 
@@ -49,10 +47,11 @@ public class CommercialTermReviewSupport {
     }
 
     /** 版本 Child 当前快照必须是提交快照，返回其操作人。 */
-    long maker(BusinessChangeHistory child) {
-        BusinessChangeVersion submitted =
-            businessChangeVersionRepository.findByHistoryAndVersion(child.getHistoryId(), child.getCurrentVersion());
-        if (submitted == null || !SUBMITTED.equals(BusinessChangeSnapshots.reasonCode(submitted.getSnapshotJson()))) {
+    long maker(BusinessChangeRecord child) {
+        BusinessChangeVersion submitted = businessChangeVersionRepository.findByHistoryId(child.getHistoryId()).stream()
+            .filter(snapshot -> snapshot.getVersionNo().equals(child.getCurrentVersion())).findFirst().orElse(null);
+        if (submitted == null || !BusinessChangeReason.TERM_VERSION_SUBMITTED.getCode()
+            .equals(BusinessChangeSnapshot.reasonCode(submitted.getSnapshotJson()))) {
             throw new ErrorException("待审批版本缺少提交快照: " + child.getRecordId());
         }
         return submitted.getCreateBy();

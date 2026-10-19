@@ -11,16 +11,17 @@ import com.paytech.commercial.domain.CommercialTermVersionView;
  */
 public interface CommercialTermService {
     /**
-     * 创建方案：插入方案、BCR 根（版本 1）与 CREATE 快照。
+     * 创建方案：插入方案、BCR Root（版本 1）与 CREATE 快照。
      *
-     * @param context 含新方案与待插入根
+     * @param context 含新方案
+     * @return 方案与 Root 版本（版本为空）
      */
-    void createPlan(CommercialTermVersionContext context);
+    CommercialTermVersionView createPlan(CommercialTermVersionContext context);
 
     /**
-     * 创建 DRAFT 版本：根 CAS，插入版本、BCR Child 与 CREATE 快照，以及复制来的价格、组件与档位。
+     * 创建 DRAFT 版本：根 CAS，插入版本、复制来的价格、组件与档位，以及版本 BCR Child 与 CREATE 快照。
      *
-     * @param context 含新版本、待插入 Child 与复制行
+     * @param context 含新版本与复制行
      */
     void createVersion(CommercialTermVersionContext context);
 
@@ -63,7 +64,7 @@ public interface CommercialTermService {
      * 激活：先让前一 ACTIVE 释放槽位成为 SUPERSEDED 并写生效终点，再让本版本 ACTIVE；方案首次生效时 DRAFT → ACTIVE
      * <li>加入调用方已开启的事务（激活 Processor 在同一事务内登记 CommercialTermVersionActivated 发布任务）。</li>
      *
-     * @param context 含版本、被替代版本与各自 Child
+     * @param context 含版本与被替代版本
      */
     void activate(CommercialTermVersionContext context);
 

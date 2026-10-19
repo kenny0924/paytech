@@ -1,83 +1,84 @@
 package com.paytech.commercial.domainservice.service.impl;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.paytech.commercial.api.enums.CommercialTermPlanStatus;
-import com.paytech.commercial.core.dal.dataobject.BusinessChangeHistory;
-import com.paytech.commercial.core.dal.dataobject.BusinessChangeVersion;
+import com.paytech.commercial.core.dal.dataobject.BusinessChangeRecord;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermPlan;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermVersion;
-import com.paytech.commercial.domain.BusinessChangeSnapshots;
+import com.paytech.commercial.domain.BusinessChangeSnapshot;
 import com.paytech.commercial.domain.CommercialTermVersionContext;
 import com.paytech.commercial.domain.CommercialTermVersionView;
 import com.paytech.commercial.domain.enums.BusinessChangeOperation;
+import com.paytech.commercial.domain.enums.BusinessChangeReason;
 import com.paytech.commercial.domain.enums.BusinessChangeRecordAggregateRootType;
-import com.paytech.commercial.domain.enums.BusinessChangeSnapshotFormat;
+import com.paytech.commercial.domain.enums.BusinessChangeRecordRecordType;
 import com.paytech.commercial.domain.enums.CommercialTermVersionStatus;
 import com.paytech.commercial.domainservice.repository.BusinessChangeRecordRepository;
-import com.paytech.commercial.domainservice.repository.BusinessChangeVersionRepository;
 import com.paytech.commercial.domainservice.repository.CommercialTermComponentBandRepository;
 import com.paytech.commercial.domainservice.repository.CommercialTermComponentRepository;
 import com.paytech.commercial.domainservice.repository.CommercialTermPlanRepository;
 import com.paytech.commercial.domainservice.repository.CommercialTermPriceRepository;
 import com.paytech.commercial.domainservice.repository.CommercialTermVersionRepository;
 import com.paytech.commercial.domainservice.service.CommercialTermService;
-import com.paytech.foundation.common.enums.CodeEnum;
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.common.error.FailException;
-import com.paytech.foundation.id.IdGenerator;
 
 import lombok.AllArgsConstructor;
 
-/** CommercialTermService 实现：只访问 mor_commercial，每个写方法一个 TransactionTemplate 事务。 */
+/**
+ * CommercialTermService 实现：只访问 mor_commercial，每个写方法一个 TransactionTemplate 事务
+ * <li>BCR 统一经 BusinessChangeHistoryWriter：方案为 COMMERCIAL_TERM_PLAN Root（每条命令 CAS 推进并写方案快照），版本为
+ * COMMERCIAL_TERM_VERSION 受审计 Child；同一命令的快照共享 triggerId、triggerType 与原因。</li>
+ */
 @Service
 @AllArgsConstructor
 public class CommercialTermServiceImpl implements CommercialTermService {
-    private final IdGenerator idGenerator;
     private final TransactionTemplate transactionTemplate;
+    private final BusinessChangeHistoryWriter historyWriter;
     private final CommercialTermPlanRepository commercialTermPlanRepository;
     private final CommercialTermPriceRepository commercialTermPriceRepository;
     private final BusinessChangeRecordRepository businessChangeRecordRepository;
-    private final BusinessChangeVersionRepository businessChangeVersionRepository;
     private final CommercialTermVersionRepository commercialTermVersionRepository;
     private final CommercialTermComponentRepository commercialTermComponentRepository;
     private final CommercialTermComponentBandRepository commercialTermComponentBandRepository;
 
-    /** 方案、BCR 根与 CREATE 快照同事务插入。 */
+    /** 方案、BCR Root（版本 1）与 CREATE 快照同事务插入。 */
     @Override
-    public void createPlan(CommercialTermVersionContext context) {
-        transactionTemplate.executeWithoutResult(status -> {
-            commercialTermPlanRepository.insert(context.getPlan());
-            businessChangeRecordRepository.insert(context.getPlanHistory());
-            appendSnapshot(context, context.getPlanHistory(), BusinessChangeOperation.CREATE, "TERM_PLAN_CREATED",
-                planData(context.getPlan()));
+    public CommercialTermVersionView createPlan(CommercialTermVersionContext context) {
+        return transactionTemplate.execute(status -> {
+            CommercialTermPlan plan = context.getPlan();
+            commercialTermPlanRepository.insert(plan);
+            BusinessChangeRecord root = historyWriter.createRoot(BusinessChangeRecordAggregateRootType.COMMERCIAL_TERM_PLAN,
+                plan.getTermPlanId(), BusinessChangeReason.TERM_PLAN_CREATED,
+                BusinessChangeSnapshot.commercialTermPlanData(plan), context.getOperatorAccountId(), context.getNow());
+            return new CommercialTermVersionView(plan, null, root.getCurrentVersion());
         });
     }
 
-    /** 根 CAS 后插入版本、Child、快照与复制行。 */
+    /** Root CAS 后插入版本与复制行，再为版本创建 Child 与 CREATE 快照。 */
     @Override
     public void createVersion(CommercialTermVersionContext context) {
         transactionTemplate.executeWithoutResult(status -> {
-            advanceRoot(context);
-            commercialTermVersionRepository.insert(context.getVersion());
-            businessChangeRecordRepository.insert(context.getVersionHistory());
-            Map<String, String> data = versionData(context.getVersion());
-            data.put("priceCount", Integer.toString(context.getPrices().size()));
-            appendSnapshot(context, context.getVersionHistory(), BusinessChangeOperation.CREATE, "TERM_VERSION_CREATED", data);
+            long triggerId = advanceRoot(context, BusinessChangeReason.TERM_VERSION_CREATED);
+            CommercialTermVersion version = context.getVersion();
+            commercialTermVersionRepository.insert(version);
             insertPriceSet(context);
+            historyWriter.createChild(context.getPlanRoot(), BusinessChangeRecordRecordType.COMMERCIAL_TERM_VERSION,
+                version.getTermVersionId(), triggerId, BusinessChangeReason.TERM_VERSION_CREATED,
+                withPriceCount(context, version), context.getOperatorAccountId(), context.getNow());
         });
     }
 
-    /** 根 CAS 后删除旧价格集合并插入新集合。 */
+    /** Root CAS 后删除旧价格集合并插入新集合。 */
     @Override
     public void replacePrices(CommercialTermVersionContext context) {
         transactionTemplate.executeWithoutResult(status -> {
-            advanceRoot(context);
+            long triggerId = advanceRoot(context, BusinessChangeReason.TERM_VERSION_PRICES_REPLACED);
             commercialTermComponentBandRepository.deleteByComponentIds(context.getReplacedComponentIds());
             commercialTermComponentRepository.deleteByPriceIds(context.getReplacedPriceIds());
             int deleted = commercialTermPriceRepository.deleteByVersionId(context.getVersion().getTermVersionId());
@@ -85,9 +86,8 @@ public class CommercialTermServiceImpl implements CommercialTermService {
                 throw new ErrorException("价格集合删除行数不符: " + context.getVersion().getTermVersionId());
             }
             insertPriceSet(context);
-            Map<String, String> data = versionData(context.getVersion());
-            data.put("priceCount", Integer.toString(context.getPrices().size()));
-            updateChild(context, context.getVersionHistory(), "TERM_VERSION_PRICES_REPLACED", data);
+            changeVersion(context, context.getVersion(), triggerId, BusinessChangeReason.TERM_VERSION_PRICES_REPLACED,
+                withPriceCount(context, context.getVersion()));
         });
     }
 
@@ -95,51 +95,56 @@ public class CommercialTermServiceImpl implements CommercialTermService {
     @Override
     public void submit(CommercialTermVersionContext context) {
         transactionTemplate.executeWithoutResult(status -> {
-            advanceRoot(context);
+            long triggerId = advanceRoot(context, BusinessChangeReason.TERM_VERSION_SUBMITTED);
             commercialTermVersionRepository.updateStatus(context.getVersion(), CommercialTermVersionStatus.PENDING_APPROVAL,
                 null, context.getNow());
-            Map<String, String> data = versionData(context.getVersion());
+            Map<String, Object> data = BusinessChangeSnapshot.commercialTermVersionData(context.getVersion());
             data.put("makerAccountId", Long.toString(context.getOperatorAccountId()));
-            updateChild(context, context.getVersionHistory(), "TERM_VERSION_SUBMITTED", data);
+            changeVersion(context, context.getVersion(), triggerId, BusinessChangeReason.TERM_VERSION_SUBMITTED, data);
         });
     }
 
     /** PENDING_APPROVAL → APPROVED，记录 Maker 与 Checker。 */
     @Override
     public void approve(CommercialTermVersionContext context) {
-        review(context, CommercialTermVersionStatus.APPROVED, "TERM_VERSION_APPROVED");
+        review(context, CommercialTermVersionStatus.APPROVED, BusinessChangeReason.TERM_VERSION_APPROVED);
     }
 
     /** PENDING_APPROVAL → DRAFT，记录 Maker 与 Checker。 */
     @Override
     public void reject(CommercialTermVersionContext context) {
-        review(context, CommercialTermVersionStatus.DRAFT, "TERM_VERSION_REJECTED");
+        review(context, CommercialTermVersionStatus.DRAFT, BusinessChangeReason.TERM_VERSION_REJECTED);
     }
 
     /** 关闭前一 ACTIVE 窗口，写入生效起点后 APPROVED → SCHEDULED。 */
     @Override
     public void schedule(CommercialTermVersionContext context) {
         transactionTemplate.executeWithoutResult(status -> {
-            advanceRoot(context);
-            closePreviousWindow(context);
+            long triggerId = advanceRoot(context, BusinessChangeReason.TERM_VERSION_SCHEDULED);
+            closePreviousWindow(context, triggerId);
             CommercialTermVersion version = context.getVersion();
             commercialTermVersionRepository.updateEffectivePeriod(version, context.getEffectiveFrom(), null, context.getNow());
             commercialTermVersionRepository.updateStatus(version, CommercialTermVersionStatus.SCHEDULED, null,
                 context.getNow());
-            updateChild(context, context.getVersionHistory(), "TERM_VERSION_SCHEDULED", versionData(version));
+            changeVersion(context, version, triggerId, BusinessChangeReason.TERM_VERSION_SCHEDULED,
+                BusinessChangeSnapshot.commercialTermVersionData(version));
         });
     }
 
-    /** 释放旧 ACTIVE 槽位后占用新槽位，方案首次生效转 ACTIVE；加入调用方事务，发布任务由激活 Processor 在同一事务登记。 */
+    /**
+     * 方案首次生效先转 ACTIVE（使 Root 快照为提交后状态），再 Root CAS；释放旧 ACTIVE 槽位后占用新槽位
+     * <li>加入调用方事务，发布任务由激活 Processor 在同一事务登记。</li>
+     */
     @Override
     public void activate(CommercialTermVersionContext context) {
         transactionTemplate.executeWithoutResult(status -> {
-            advanceRoot(context);
-            supersede(context);
+            activatePlan(context);
+            long triggerId = advanceRoot(context, BusinessChangeReason.TERM_VERSION_ACTIVATED);
+            supersede(context, triggerId);
             CommercialTermVersion version = context.getVersion();
             commercialTermVersionRepository.updateStatus(version, CommercialTermVersionStatus.ACTIVE, 1, context.getNow());
-            updateChild(context, context.getVersionHistory(), "TERM_VERSION_ACTIVATED", versionData(version));
-            activatePlan(context);
+            changeVersion(context, version, triggerId, BusinessChangeReason.TERM_VERSION_ACTIVATED,
+                BusinessChangeSnapshot.commercialTermVersionData(version));
         });
     }
 
@@ -160,30 +165,31 @@ public class CommercialTermServiceImpl implements CommercialTermService {
     }
 
     /** 批准或驳回的共同保存。 */
-    void review(CommercialTermVersionContext context, CommercialTermVersionStatus target, String reasonCode) {
+    void review(CommercialTermVersionContext context, CommercialTermVersionStatus target, BusinessChangeReason reason) {
         transactionTemplate.executeWithoutResult(status -> {
-            advanceRoot(context);
+            long triggerId = advanceRoot(context, reason);
             commercialTermVersionRepository.updateStatus(context.getVersion(), target, null, context.getNow());
-            Map<String, String> data = versionData(context.getVersion());
+            Map<String, Object> data = BusinessChangeSnapshot.commercialTermVersionData(context.getVersion());
             data.put("makerAccountId", Long.toString(context.getMakerAccountId()));
             data.put("checkerAccountId", Long.toString(context.getOperatorAccountId()));
-            updateChild(context, context.getVersionHistory(), reasonCode, data);
+            changeVersion(context, context.getVersion(), triggerId, reason, data);
         });
     }
 
     /** 排期时把前一 ACTIVE 的生效终点写成新起点（状态不变），使按时点选取在激活前也无重叠。 */
-    void closePreviousWindow(CommercialTermVersionContext context) {
+    void closePreviousWindow(CommercialTermVersionContext context, long triggerId) {
         CommercialTermVersion previous = context.getSupersededVersion();
         if (previous == null) {
             return;
         }
         commercialTermVersionRepository.updateEffectivePeriod(previous, previous.getEffectiveFrom(),
             context.getEffectiveFrom(), context.getNow());
-        updateChild(context, context.getSupersededHistory(), "TERM_VERSION_WINDOW_CLOSED", versionData(previous));
+        changeVersion(context, previous, triggerId, BusinessChangeReason.TERM_VERSION_SCHEDULED,
+            BusinessChangeSnapshot.commercialTermVersionData(previous));
     }
 
     /** 前一 ACTIVE 先释放槽位成为 SUPERSEDED，再把生效终点写成新版本起点。 */
-    void supersede(CommercialTermVersionContext context) {
+    void supersede(CommercialTermVersionContext context, long triggerId) {
         CommercialTermVersion superseded = context.getSupersededVersion();
         if (superseded == null) {
             return;
@@ -192,47 +198,32 @@ public class CommercialTermServiceImpl implements CommercialTermService {
             context.getNow());
         commercialTermVersionRepository.updateEffectivePeriod(superseded, superseded.getEffectiveFrom(),
             context.getVersion().getEffectiveFrom(), context.getNow());
-        updateChild(context, context.getSupersededHistory(), "TERM_VERSION_SUPERSEDED", versionData(superseded));
+        changeVersion(context, superseded, triggerId, BusinessChangeReason.TERM_VERSION_ACTIVATED,
+            BusinessChangeSnapshot.commercialTermVersionData(superseded));
     }
 
-    /** 方案首个版本生效时 DRAFT → ACTIVE，并为方案根写 UPDATE 快照。 */
+    /** 方案首个版本生效时 DRAFT → ACTIVE；方案 Root 快照由同一命令的 Root CAS 写出。 */
     void activatePlan(CommercialTermVersionContext context) {
         CommercialTermPlan plan = context.getPlan();
         if (plan.getStatus() != CommercialTermPlanStatus.DRAFT) {
             return;
         }
         commercialTermPlanRepository.updateStatus(plan, CommercialTermPlanStatus.ACTIVE, context.getNow());
-        appendSnapshot(context, context.getPlanHistory(), BusinessChangeOperation.UPDATE, "TERM_PLAN_ACTIVATED",
-            planData(plan));
     }
 
-    /** 方案根 CAS 到期望版本 + 1。 */
-    void advanceRoot(CommercialTermVersionContext context) {
-        businessChangeRecordRepository.advanceRoot(context.getPlanHistory(), context.getExpectedChangeVersion(),
+    /** 方案 Root CAS 到期望版本 + 1 并写方案快照，返回本命令 triggerId。 */
+    long advanceRoot(CommercialTermVersionContext context, BusinessChangeReason reason) {
+        return historyWriter.advanceRoot(context.getPlanRoot(), context.getExpectedChangeVersion(), triggerType(context),
+            reason, BusinessChangeSnapshot.commercialTermPlanData(context.getPlan()), context.getOperatorAccountId(),
             context.getNow());
     }
 
-    /** Child 指针指向本次根版本并追加 UPDATE 快照。 */
-    void updateChild(CommercialTermVersionContext context, BusinessChangeHistory child, String reasonCode,
-        Map<String, String> data) {
-        businessChangeRecordRepository.pointChild(child, context.nextChangeVersion(), context.getNow());
-        appendSnapshot(context, child, BusinessChangeOperation.UPDATE, reasonCode, data);
-    }
-
-    /** 按审计身份当前版本追加一条快照。 */
-    void appendSnapshot(CommercialTermVersionContext context, BusinessChangeHistory history, BusinessChangeOperation operation,
-        String reasonCode, Map<String, String> data) {
-        BusinessChangeVersion snapshot = new BusinessChangeVersion();
-        snapshot.setChangeVersionId(idGenerator.nextId());
-        snapshot.setHistoryId(history.getHistoryId());
-        snapshot.setVersionNo(history.getCurrentVersion());
-        snapshot.setOperationType(operation);
-        snapshot.setSnapshotFormat(BusinessChangeSnapshotFormat.ENTITY_NO);
-        snapshot.setCreateBy(context.getOperatorAccountId());
-        snapshot.setCreateTime(context.getNow());
-        snapshot.setSnapshotJson(BusinessChangeSnapshots.snapshot(history, snapshot, triggerType(context),
-            context.getTriggerId(), reasonCode, data));
-        businessChangeVersionRepository.insert(snapshot);
+    /** 版本 Child 指针指向本次 Root 版本并追加 UPDATE 快照。 */
+    void changeVersion(CommercialTermVersionContext context, CommercialTermVersion version, long triggerId,
+        BusinessChangeReason reason, Map<String, Object> data) {
+        historyWriter.changeChild(context.getPlanRoot(), BusinessChangeRecordRecordType.COMMERCIAL_TERM_VERSION,
+            version.getTermVersionId(), BusinessChangeOperation.UPDATE, triggerType(context), triggerId, reason, data,
+            context.getOperatorAccountId(), context.getNow());
     }
 
     /** 按价格 → 组件 → 档位插入新集合（空集合不访问数据库）。 */
@@ -242,43 +233,15 @@ public class CommercialTermServiceImpl implements CommercialTermService {
         commercialTermComponentBandRepository.insertAll(context.getBands());
     }
 
+    /** 版本审计视图追加本次价格条数。 */
+    static Map<String, Object> withPriceCount(CommercialTermVersionContext context, CommercialTermVersion version) {
+        Map<String, Object> data = BusinessChangeSnapshot.commercialTermVersionData(version);
+        data.put("priceCount", Integer.toString(context.getPrices().size()));
+        return data;
+    }
+
     /** 运营命令或系统命令。 */
     static String triggerType(CommercialTermVersionContext context) {
-        return context.isSystemCommand() ? BusinessChangeSnapshots.TRIGGER_SYSTEM : BusinessChangeSnapshots.TRIGGER_COMMAND;
-    }
-
-    /** 方案审计白名单字段。 */
-    static Map<String, String> planData(CommercialTermPlan plan) {
-        Map<String, String> data = new LinkedHashMap<>();
-        data.put("planId", text(plan.getTermPlanId()));
-        data.put("planCode", plan.getPlanCode());
-        data.put("termType", plan.getTermType());
-        data.put("agreementId", text(plan.getAgreementId()));
-        data.put("entityNo", plan.getEntityNo());
-        data.put("clientId", text(plan.getClientId()));
-        data.put("localPartnerId", text(plan.getLocalPartnerId()));
-        data.put("status", CodeEnum.defaultCode(plan.getStatus()));
-        return data;
-    }
-
-    /** 版本审计白名单字段。 */
-    static Map<String, String> versionData(CommercialTermVersion version) {
-        Map<String, String> data = new LinkedHashMap<>();
-        data.put("versionId", text(version.getTermVersionId()));
-        data.put("planId", text(version.getTermPlanId()));
-        data.put("agreementId", text(version.getAgreementId()));
-        data.put("versionNo", text(version.getVersionNo()));
-        data.put("status", CodeEnum.defaultCode(version.getStatus()));
-        data.put("effectiveFrom", text(version.getEffectiveFrom()));
-        data.put("effectiveTo", text(version.getEffectiveTo()));
-        data.put("roundingMode", CodeEnum.defaultCode(version.getRoundingMode()));
-        data.put("pricingModel", CodeEnum.defaultCode(version.getPricingModel()));
-        data.put("feeTaxTreatment", CodeEnum.defaultCode(version.getFeeTaxTreatment()));
-        return data;
-    }
-
-    /** 文本，空为 null。 */
-    static String text(Object value) {
-        return value == null ? null : value.toString();
+        return context.isSystemCommand() ? BusinessChangeSnapshot.TRIGGER_SYSTEM : BusinessChangeSnapshot.TRIGGER_COMMAND;
     }
 }

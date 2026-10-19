@@ -3,7 +3,6 @@ package com.paytech.commercial.service.processor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import com.paytech.commercial.core.constant.CommercialLocks;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermPlan;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermVersion;
 import com.paytech.commercial.domain.CommercialTermVersionContext;

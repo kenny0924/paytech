@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.paytech.commercial.core.dal.dataobject.CommercialTermVersion;
+import com.paytech.commercial.domain.BusinessChangeSnapshot;
 import com.paytech.commercial.ext.job.CommercialTermVersionActivationJobHandler;
 import com.paytech.commercial.service.handler.CommercialTermVersionActivatedHandler;
 import com.paytech.commercial.service.processor.response.CommercialTermActivationRunResponse;
@@ -57,7 +58,7 @@ class CommercialTermVersionActivationJobTest extends AbstractCommercialTermApiTe
             () -> assertEquals("SUPERSEDED", previous.get("status")),
             () -> assertEquals(null, previous.get("active_slot")),
             () -> assertEquals(0L, ((Number)activation.get("create_by")).longValue()),
-            () -> assertEquals("SYSTEM", json.readTree(activation.get("snapshot_json").toString()).path("_meta")
+            () -> assertEquals(BusinessChangeSnapshot.TRIGGER_SYSTEM, json.readTree(activation.get("snapshot_json").toString()).path("_meta")
                 .path("triggerType").asString()));
         long changeVersion = testMapper.businessChangeVersion("COMMERCIAL_TERM_PLAN", CommercialTermPlanBuilder.TERM_PLAN_ID);
         JsonNode payload = events.awaitEnvelope(CommercialTermVersionActivatedHandler.EVENT_TYPE,

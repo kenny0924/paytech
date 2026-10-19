@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 import com.paytech.commercial.core.dal.dataobject.Agreement;
 import com.paytech.commercial.core.dal.dataobject.AgreementCapability;
 import com.paytech.commercial.core.dal.dataobject.AgreementOperatingEntity;
-import com.paytech.commercial.core.dal.dataobject.BusinessChangeHistory;
+import com.paytech.commercial.core.dal.dataobject.BusinessChangeRecord;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermComponent;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermComponentBand;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermPlan;
@@ -39,7 +39,6 @@ import com.paytech.commercial.domainservice.repository.ProductCapabilityReposito
 import com.paytech.commercial.domainservice.repository.ProductFeeEventRepository;
 import com.paytech.commercial.service.processor.request.CommercialTermVersionCommandRequest;
 import com.paytech.foundation.common.error.BizCheckFailException;
-import com.paytech.foundation.common.error.ConcurrentRequestException;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.id.IdGenerator;
 
@@ -113,13 +112,17 @@ public class CommercialTermLoader {
         return agreement;
     }
 
-    /** 方案的 BCR 根；缺失为系统数据不一致。 */
-    public BusinessChangeHistory planRoot(CommercialTermPlan plan) {
-        return history(BusinessChangeRecordRecordType.COMMERCIAL_TERM_PLAN, plan.getTermPlanId());
+    /** 方案的 BCR Root；缺失或带父级为系统数据不一致。 */
+    public BusinessChangeRecord planRoot(CommercialTermPlan plan) {
+        BusinessChangeRecord root = history(BusinessChangeRecordRecordType.COMMERCIAL_TERM_PLAN, plan.getTermPlanId());
+        if (root.getParentHistoryId() != null) {
+            throw new ErrorException("聚合缺少 BCR Root: COMMERCIAL_TERM_PLAN " + plan.getTermPlanId());
+        }
+        return root;
     }
 
     /** 版本的 BCR Child；缺失为系统数据不一致。 */
-    public BusinessChangeHistory versionChild(CommercialTermVersion version) {
+    public BusinessChangeRecord versionChild(CommercialTermVersion version) {
         return history(BusinessChangeRecordRecordType.COMMERCIAL_TERM_VERSION, version.getTermVersionId());
     }
 
@@ -130,14 +133,11 @@ public class CommercialTermLoader {
      * @param requested 请求携带的版本，系统命令为空
      * @return 期望版本
      */
-    public long expectedVersion(BusinessChangeHistory root, Long requested) {
+    public long expectedVersion(BusinessChangeRecord root, Long requested) {
         if (requested == null) {
             return root.getCurrentVersion();
         }
-        if (requested.longValue() != root.getCurrentVersion()) {
-            throw new ConcurrentRequestException("方案已被修改，期望版本 " + requested + "，当前 " + root.getCurrentVersion()
-                + ": " + root.getAggregateRootId());
-        }
+        AbstractCommercialWriteProcessor.checkVersion(root, requested);
         return requested;
     }
 
@@ -153,7 +153,7 @@ public class CommercialTermLoader {
     }
 
     /**
-     * 版本命令 Context 的公共部分：时间、关联 ID、操作人、方案、根、版本、Child、合同与覆盖 OE。
+     * 版本命令 Context 的公共部分：时间、操作人、方案、根、版本、合同与覆盖 OE。
      *
      * @param request 版本命令
      * @param version 已读取的版本
@@ -162,17 +162,16 @@ public class CommercialTermLoader {
     public CommercialTermVersionContext.CommercialTermVersionContextBuilder commandContext(
         CommercialTermVersionCommandRequest request, CommercialTermVersion version) {
         CommercialTermPlan plan = plan(version.getTermPlanId());
-        BusinessChangeHistory root = planRoot(plan);
+        BusinessChangeRecord root = planRoot(plan);
         Agreement agreement = agreementRepository.findById(version.getAgreementId());
         if (agreement == null) {
             throw new ErrorException("版本冻结的合同不存在: " + version.getTermVersionId());
         }
         return CommercialTermVersionContext.builder().now(clock.instant().truncatedTo(ChronoUnit.MICROS))
-            .triggerId(idGenerator.nextId()).systemCommand(request.systemCommand())
+            .systemCommand(request.systemCommand())
             .operatorAccountId(request.systemCommand() ? 0L : request.getOperatorAccountId())
-            .expectedChangeVersion(expectedVersion(root, request.getExpectedChangeVersion())).plan(plan).planHistory(root)
-            .agreement(agreement).coveredEntityNos(coveredEntityNos(agreement)).version(version)
-            .versionHistory(versionChild(version));
+            .expectedChangeVersion(expectedVersion(root, request.getExpectedChangeVersion())).plan(plan).planRoot(root)
+            .agreement(agreement).coveredEntityNos(coveredEntityNos(agreement)).version(version);
     }
 
     /** 版本的全部价格。 */
@@ -238,7 +237,7 @@ public class CommercialTermLoader {
     }
 
     /**
-     * 追加前一 ACTIVE 版本及其 Child（排期关闭其窗口、激活将其替代）。
+     * 追加前一 ACTIVE 版本（排期关闭其窗口、激活将其替代）。
      *
      * @param builder 已含激活校验输入的 Builder
      * @param version 本版本
@@ -248,7 +247,7 @@ public class CommercialTermLoader {
         CommercialTermVersionContext.CommercialTermVersionContextBuilder builder, CommercialTermVersion version) {
         CommercialTermVersion previous = currentActive(builder.build().getPlanVersions(), version);
         if (previous != null) {
-            builder.supersededVersion(previous).supersededHistory(versionChild(previous));
+            builder.supersededVersion(previous);
         }
         return builder;
     }
@@ -259,8 +258,8 @@ public class CommercialTermLoader {
     }
 
     /** 读取一条审计身份；缺失为系统数据不一致。 */
-    BusinessChangeHistory history(BusinessChangeRecordRecordType recordType, long recordId) {
-        BusinessChangeHistory history = businessChangeRecordRepository.findByRecord(recordType, Long.toString(recordId));
+    BusinessChangeRecord history(BusinessChangeRecordRecordType recordType, long recordId) {
+        BusinessChangeRecord history = businessChangeRecordRepository.findByRecord(recordType, Long.toString(recordId));
         if (history == null) {
             throw new ErrorException("缺少 BCR 审计身份: " + recordType.getCode() + ":" + recordId);
         }

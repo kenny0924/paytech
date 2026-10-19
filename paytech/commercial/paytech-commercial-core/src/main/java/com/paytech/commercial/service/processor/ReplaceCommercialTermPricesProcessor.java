@@ -5,7 +5,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
-import com.paytech.commercial.core.constant.CommercialLocks;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermComponent;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermPrice;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermVersion;
