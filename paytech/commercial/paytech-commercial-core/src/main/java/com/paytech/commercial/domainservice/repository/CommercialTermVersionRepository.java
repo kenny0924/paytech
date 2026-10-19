@@ -64,6 +64,15 @@ public interface CommercialTermVersionRepository {
     CommercialTermVersion findEffectiveAt(long termPlanId, Instant asOf);
 
     /**
+     * 读取生效起点已到的 SCHEDULED 版本，供激活作业逐个调用激活用例。
+     *
+     * @param now 当前时间
+     * @param limit 本轮最多条数
+     * @return 按生效起点、版本 ID 升序的版本
+     */
+    List<CommercialTermVersion> findScheduledDue(Instant now, int limit);
+
+    /**
      * 以对象当前状态为条件迁移状态并写入 active_slot（ACTIVE 为 1，其他为 null）；未命中抛出并发冲突，成功后同步原对象。
      * <li>切换生效版本时先让旧 ACTIVE 释放槽位，再占用新槽位；uk_comm_term_active 兜底。</li>
      *

@@ -33,6 +33,9 @@ public interface CommercialTermVersionMapper {
     /** 按商业时点选取方案下唯一适用版本，没有时返回 null。 */
     CommercialTermVersion findEffectiveAt(@Param("termPlanId") long termPlanId, @Param("asOf") Instant asOf);
 
+    /** 生效起点已到的 SCHEDULED 版本，按生效起点、版本 ID 升序。 */
+    List<CommercialTermVersion> selectScheduledDue(@Param("now") Instant now, @Param("limit") int limit);
+
     /** 仅当状态仍为 row.status 时写入状态与 active_slot，返回影响行数。 */
     int updateStatus(@Param("row") CommercialTermVersion row, @Param("status") CommercialTermVersionStatus status,
         @Param("activeSlot") Integer activeSlot, @Param("now") Instant now);

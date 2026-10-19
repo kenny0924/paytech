@@ -1,0 +1,134 @@
+package com.paytech.commercial.api.term;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.service.annotation.GetExchange;
+import org.springframework.web.service.annotation.HttpExchange;
+import org.springframework.web.service.annotation.PostExchange;
+import org.springframework.web.service.annotation.PutExchange;
+
+import com.paytech.commercial.api.term.request.CommercialTermVersionCommandRequestBody;
+import com.paytech.commercial.api.term.request.CreateCommercialTermPlanRequestBody;
+import com.paytech.commercial.api.term.request.CreateCommercialTermVersionRequestBody;
+import com.paytech.commercial.api.term.request.ReplaceCommercialTermPricesRequestBody;
+import com.paytech.commercial.api.term.request.ScheduleCommercialTermVersionRequestBody;
+import com.paytech.commercial.api.term.response.CommercialTermPlanResponseBody;
+import com.paytech.commercial.api.term.response.CommercialTermVersionResponseBody;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
+
+/**
+ * 商业条款方案与版本的运营写入（technique.md §2.1–§2.3、§2.6）；私网，调用方 operations-console-bff
+ * <li>版本状态机：DRAFT → PENDING_APPROVAL（提交，Maker）→ APPROVED（批准，Checker ≠ Maker）/ DRAFT（驳回）→ SCHEDULED（排期，执行激活校验）
+ * → ACTIVE（激活，前一 ACTIVE 成为 SUPERSEDED）。</li>
+ * <li>每次写入携带方案 BCR 根修订 expectedChangeVersion 做 CAS，冲突 409；业务检查失败 400 BUSINESS_CHECK_FAILED。</li>
+ * <li>本地 Maker-Checker 只记录"人已同意"，排期与激活时重新执行全部校验；操作人由调用方传入，未接统一身份前不得对外发布。</li>
+ */
+@HttpExchange(url = "/commercial-terms/v1", accept = "application/json")
+public interface CommercialTermApi {
+    /**
+     * 创建条款方案（DRAFT）
+     *
+     * @param body 条款类型、合同、Owner 与方案编号
+     * @return 新建 201；同条款类型同编号且内容一致返回原方案 200；同编号内容不同 409；合同已有该条款类型方案、合同或 Owner 不符 400
+     */
+    @PostExchange("/plans")
+    ResponseEntity<CommercialTermPlanResponseBody> createPlan(@Valid @RequestBody CreateCommercialTermPlanRequestBody body);
+
+    /**
+     * 创建 DRAFT 版本，可复制已有版本的全部价格
+     *
+     * @param planId 方案 ID
+     * @param body 根修订、操作人、复制来源与版本属性
+     * @return 201 与版本；根修订冲突 409；方案不存在或来源版本不属于该方案 400
+     */
+    @PostExchange("/plans/{planId}/versions")
+    ResponseEntity<CommercialTermVersionResponseBody> createVersion(
+        @PathVariable("planId") @Pattern(regexp = "[1-9][0-9]{0,18}") String planId,
+        @Valid @RequestBody CreateCommercialTermVersionRequestBody body);
+
+    /**
+     * 整体替换 DRAFT 版本的价格集合
+     *
+     * @param versionId 版本 ID
+     * @param body 根修订、操作人与完整价格集合
+     * @return 200 与版本；非 DRAFT、OE 不被合同覆盖、画像不存在、计费事件未登记、组件矩阵或结算字段不符 400；根修订冲突 409
+     */
+    @PutExchange("/versions/{versionId}/prices")
+    CommercialTermVersionResponseBody replacePrices(
+        @PathVariable("versionId") @Pattern(regexp = "[1-9][0-9]{0,18}") String versionId,
+        @Valid @RequestBody ReplaceCommercialTermPricesRequestBody body);
+
+    /**
+     * 提交审批：DRAFT → PENDING_APPROVAL，操作人记为 Maker
+     *
+     * @param versionId 版本 ID
+     * @param body 根修订与 Maker
+     * @return 200 与版本；非 DRAFT 或没有价格 400；根修订冲突 409
+     */
+    @PostExchange("/versions/{versionId}/submit")
+    CommercialTermVersionResponseBody submitVersion(
+        @PathVariable("versionId") @Pattern(regexp = "[1-9][0-9]{0,18}") String versionId,
+        @Valid @RequestBody CommercialTermVersionCommandRequestBody body);
+
+    /**
+     * 批准：PENDING_APPROVAL → APPROVED，操作人为 Checker
+     *
+     * @param versionId 版本 ID
+     * @param body 根修订与 Checker
+     * @return 200 与版本；非 PENDING_APPROVAL 或 Checker 等于 Maker 400；根修订冲突 409
+     */
+    @PostExchange("/versions/{versionId}/approve")
+    CommercialTermVersionResponseBody approveVersion(
+        @PathVariable("versionId") @Pattern(regexp = "[1-9][0-9]{0,18}") String versionId,
+        @Valid @RequestBody CommercialTermVersionCommandRequestBody body);
+
+    /**
+     * 驳回：PENDING_APPROVAL → DRAFT，操作人为 Checker
+     *
+     * @param versionId 版本 ID
+     * @param body 根修订与 Checker
+     * @return 200 与版本；非 PENDING_APPROVAL 或 Checker 等于 Maker 400；根修订冲突 409
+     */
+    @PostExchange("/versions/{versionId}/reject")
+    CommercialTermVersionResponseBody rejectVersion(
+        @PathVariable("versionId") @Pattern(regexp = "[1-9][0-9]{0,18}") String versionId,
+        @Valid @RequestBody CommercialTermVersionCommandRequestBody body);
+
+    /**
+     * 排期：APPROVED → SCHEDULED，写入生效起点并执行激活校验 1–5
+     *
+     * @param versionId 版本 ID
+     * @param body 根修订、操作人与生效起点
+     * @return 200 与版本；状态不符或任一激活校验失败 400；根修订冲突 409
+     */
+    @PostExchange("/versions/{versionId}/schedule")
+    CommercialTermVersionResponseBody scheduleVersion(
+        @PathVariable("versionId") @Pattern(regexp = "[1-9][0-9]{0,18}") String versionId,
+        @Valid @RequestBody ScheduleCommercialTermVersionRequestBody body);
+
+    /**
+     * 激活：SCHEDULED → ACTIVE（生效起点已到），前一 ACTIVE → SUPERSEDED 并写其生效终点；提交后发布 CommercialTermVersionActivated
+     * <li>与定时作业 commercialTermVersionActivation 执行同一用例；作业不可用时由本接口手工触发。</li>
+     *
+     * @param versionId 版本 ID
+     * @param body 根修订与操作人
+     * @return 200 与版本；非 SCHEDULED、生效起点未到或任一激活校验失败 400；根修订冲突 409
+     */
+    @PostExchange("/versions/{versionId}/activate")
+    CommercialTermVersionResponseBody activateVersion(
+        @PathVariable("versionId") @Pattern(regexp = "[1-9][0-9]{0,18}") String versionId,
+        @Valid @RequestBody CommercialTermVersionCommandRequestBody body);
+
+    /**
+     * 版本详情
+     *
+     * @param versionId 版本 ID
+     * @return 200 与版本；不存在 404
+     */
+    @GetExchange("/versions/{versionId}")
+    CommercialTermVersionResponseBody getVersion(
+        @PathVariable("versionId") @Pattern(regexp = "[1-9][0-9]{0,18}") String versionId);
+}

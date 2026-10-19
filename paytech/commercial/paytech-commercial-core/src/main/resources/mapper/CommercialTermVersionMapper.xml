@@ -73,6 +73,12 @@
         ORDER BY effective_from DESC, version_no DESC LIMIT 1
     </select>
 
+    <select id="selectScheduledDue" resultMap="CommercialTermVersionRow">
+        SELECT <include refid="commercialTermVersionColumns"/> FROM t_commercial_term_version
+        WHERE status = 'SCHEDULED' AND effective_from &lt;= #{now}
+        ORDER BY effective_from, term_version_id LIMIT #{limit}
+    </select>
+
     <update id="updateStatus">
         UPDATE t_commercial_term_version SET status = #{status}, active_slot = #{activeSlot}, update_time = #{now}
         WHERE term_version_id = #{row.termVersionId} AND status = #{row.status}

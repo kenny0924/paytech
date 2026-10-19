@@ -243,4 +243,67 @@ public class CommercialTestMapper {
         }
         return rows.isEmpty() ? null : rows.getFirst();
     }
+
+    /** 插入一个 Child 审计身份（挂在 Root 下），只用于构造已生效版本的前置数据。 */
+    public void insertBusinessChangeChild(long historyId, String recordType, long recordId, String rootType, long rootId,
+        long parentHistoryId, long currentVersion) {
+        jdbc.update("INSERT INTO t_business_change_record (history_id, record_type, record_id, aggregate_root_type, "
+            + "aggregate_root_id, parent_history_id, current_version, create_time, update_time) "
+            + "VALUES (?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6))", historyId, recordType,
+            Long.toString(recordId), rootType, Long.toString(rootId), parentHistoryId, currentVersion);
+    }
+
+    /** 删除一条审计身份，制造保存阶段的系统失败以验证整体回滚。 */
+    public void deleteBusinessChangeRecord(String recordType, long recordId) {
+        jdbc.update("DELETE FROM t_business_change_record WHERE record_type=? AND record_id=?", recordType,
+            Long.toString(recordId));
+    }
+
+    /** 某审计对象的当前修订；不存在为 null。 */
+    public Long businessChangeVersion(String recordType, long recordId) {
+        List<Long> rows = jdbc.queryForList("SELECT current_version FROM t_business_change_record WHERE record_type=? "
+            + "AND record_id=?", Long.class, recordType, Long.toString(recordId));
+        return rows.isEmpty() ? null : rows.getFirst();
+    }
+
+    /** 某审计对象的全部快照（版本、操作、操作人、JSON），按版本升序。 */
+    public List<Map<String, Object>> businessChangeSnapshots(String recordType, long recordId) {
+        return jdbc.queryForList("SELECT v.version_no, v.operation_type, v.create_by, v.snapshot_json "
+            + "FROM t_business_change_version v JOIN t_business_change_record r ON r.history_id=v.history_id "
+            + "WHERE r.record_type=? AND r.record_id=? ORDER BY v.version_no", recordType, Long.toString(recordId));
+    }
+
+    /** 某版本的状态、槽位与生效区间。 */
+    public Map<String, Object> termVersion(long termVersionId) {
+        return jdbc.queryForMap("SELECT status, active_slot, effective_from, effective_to FROM t_commercial_term_version "
+            + "WHERE term_version_id=?", termVersionId);
+    }
+
+    /** 某方案的状态。 */
+    public String termPlanStatus(long termPlanId) {
+        return jdbc.queryForObject("SELECT status FROM t_commercial_term_plan WHERE term_plan_id=?", String.class,
+            termPlanId);
+    }
+
+    /** 某版本的价格、组件、档位行数。 */
+    public List<Integer> countPriceSet(long termVersionId) {
+        Integer prices = jdbc.queryForObject("SELECT COUNT(*) FROM t_commercial_term_price WHERE term_version_id=?",
+            Integer.class, termVersionId);
+        Integer components = jdbc.queryForObject("SELECT COUNT(*) FROM t_commercial_term_component c JOIN "
+            + "t_commercial_term_price p ON p.term_price_id=c.term_price_id WHERE p.term_version_id=?", Integer.class,
+            termVersionId);
+        Integer bands = jdbc.queryForObject("SELECT COUNT(*) FROM t_commercial_term_component_band b JOIN "
+            + "t_commercial_term_component c ON c.term_component_id=b.term_component_id JOIN t_commercial_term_price p "
+            + "ON p.term_price_id=c.term_price_id WHERE p.term_version_id=?", Integer.class, termVersionId);
+        return List.of(prices, components, bands);
+    }
+
+    /** 为某审计对象预先占用一个快照版本号，制造保存阶段的唯一键冲突以验证整体回滚。 */
+    public void insertBusinessChangeSnapshot(String recordType, long recordId, long versionNo) {
+        Long historyId = jdbc.queryForObject("SELECT history_id FROM t_business_change_record WHERE record_type=? "
+            + "AND record_id=?", Long.class, recordType, Long.toString(recordId));
+        jdbc.update("INSERT INTO t_business_change_version (change_version_id, history_id, version_no, operation_type, "
+            + "snapshot_json, snapshot_format, create_by, create_time) VALUES (?, ?, ?, 'UPDATE', '{}', 'ENTITY_NO', 1, "
+            + "UTC_TIMESTAMP(6))", historyId + versionNo, historyId, versionNo);
+    }
 }

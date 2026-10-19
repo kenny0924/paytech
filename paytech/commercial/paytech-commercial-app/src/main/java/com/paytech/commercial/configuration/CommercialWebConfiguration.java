@@ -32,7 +32,7 @@ public class CommercialWebConfiguration {
         return Clock.systemUTC();
     }
 
-    /** Checkout 合同错误的 HTTP 状态，与原 CCT 一致。 */
+    /** Checkout 合同错误（与原 CCT 一致）、价格命中错误码（technique.md §2.4）与按 ID 读取不存在（404）的 HTTP 状态。 */
     @Bean
     public ApiErrorStatusResolver commercialErrorStatusResolver() {
         return (code, fallback) -> switch (code.getCode()) {
@@ -40,6 +40,9 @@ public class CommercialWebConfiguration {
             case "INVALID_CHECKOUT_QUERY", "CLIENT_NOT_ELIGIBLE", "NO_ELIGIBLE_ENTITY" -> HttpStatus.UNPROCESSABLE_CONTENT;
             case "CCT_CONTEXT_AMBIGUOUS", "CCT_CONTEXT_CHANGED" -> HttpStatus.CONFLICT;
             case "OWNER_UNAVAILABLE" -> HttpStatus.SERVICE_UNAVAILABLE;
+            case "PRICING_FACTS_INCOMPLETE", "PRICE_NOT_FOUND", "INVALID_PRICING_FACT" -> HttpStatus.UNPROCESSABLE_CONTENT;
+            case "PRICE_AMBIGUOUS" -> HttpStatus.CONFLICT;
+            case "NOT_FOUND" -> HttpStatus.NOT_FOUND;
             default -> fallback;
         };
     }

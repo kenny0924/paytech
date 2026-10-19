@@ -67,6 +67,12 @@ public class CommercialTermVersionRepositoryImpl implements CommercialTermVersio
         return mapper.findEffectiveAt(termPlanId, asOf);
     }
 
+    /** 读取生效起点已到的 SCHEDULED 版本。 */
+    @Override
+    public List<CommercialTermVersion> findScheduledDue(Instant now, int limit) {
+        return List.copyOf(mapper.selectScheduledDue(now, limit));
+    }
+
     /** 条件迁移，成功后同步原对象。 */
     @Override
     public void updateStatus(CommercialTermVersion version, CommercialTermVersionStatus status, Integer activeSlot,

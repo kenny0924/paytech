@@ -34,6 +34,24 @@
 
 `AgreementApi` 与 `PricingProfileApi` 是 technique.md §2.2 的合同 / 订阅 / 开通项 / 画像 13 个接口，调用方 operations-console-bff，操作者经 `X-Gateway-Actor-Subject` 透传。每个写入一个 Processor（Foundation `AbstractLockProcessor`，LOCK、租约 -1，Key `agreement:{agreementNo|id}`、`pricing-profile:{code|id}`）；Service 在一个本地事务内写业务表、BCR（Root `current_version` 为 CAS 令牌，请求携带 `expectedChangeVersion`；受审计 Child 为 `AGREEMENT_PRODUCT`、`AGREEMENT_CAPABILITY`；快照为 `_meta + data` 信封与 RFC 8785 完整性哈希）与 `compensation_event`。只有激活与终止登记 `AGREEMENT_STATUS_CHANGED`，提交后发布 `AgreementStatusChanged`。
 
+## 商业条款、价格命中与费率卡（2026-10-19 六层定价模型 C 线）
+
+接口合同见 [technique.md §2.2–§2.8](../../requirements/20261019/commercial-六层产品定价模型/technique.md)；写入 Processor 继承 `AbstractLockProcessor`（锁 `term-plan:{planId}`，创建方案锁 `agreement:{agreementId}`，LOCK），每次写入携带方案 BCR 根修订 `expectedChangeVersion` 做 CAS（冲突 409）。
+
+| 接口 | 作用 |
+|---|---|
+| `POST /commercial-terms/v1/plans` | 创建方案（DRAFT）；`(termType, planCode)` 同内容重放 200、改内容 409 |
+| `POST /commercial-terms/v1/plans/{planId}/versions` | 创建 DRAFT 版本，可 `copyFromVersionId` |
+| `PUT /commercial-terms/v1/versions/{versionId}/prices` | DRAFT 价格集合整体替换 |
+| `POST .../versions/{versionId}/submit` · `approve` · `reject` | 本地 Maker-Checker：提交记 Maker，批准 / 驳回 Checker ≠ Maker（400） |
+| `POST .../versions/{versionId}/schedule` · `activate` | 排期执行激活校验 1–5；激活切换 ACTIVE / SUPERSEDED 并登记 `CommercialTermVersionActivated` |
+| `GET /commercial-terms/v1/versions/{versionId}` | 版本详情（含 `changeVersion`） |
+| `GET /commercial-term-versions/v1/{versionId}/prices` | 固定版本价格全集（stage3 新增 5） |
+| `POST /commercial-prices/v1/resolutions` · `GET /commercial-prices/v1/{priceId}` | 价格命中与回读；错误码 `CommercialPriceErrorCode` |
+| `GET /rate-cards/v1` | Client 费率卡结构化数据 |
+
+定时激活作业 `commercialTermVersionActivation`（XXL-Job，测试中执行器关闭）以系统命令调用与 `activate` 接口相同的用例。
+
 ## 数据库与 PDManer
 
 - 模型：[commercial.pdma.json](docs/database/commercial.pdma.json)；Schema：[commercial-schema.sql](docs/database/sql/commercial-schema.sql)；初始化 DML（产品目录）：[commercial-initial-data.sql](docs/database/sql/commercial-initial-data.sql)；物理决定：[COMMERCIAL_PHYSICAL_DECISIONS.md](docs/database/COMMERCIAL_PHYSICAL_DECISIONS.md)。
@@ -47,5 +65,7 @@ cd paytech
 export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-25.jdk/Contents/Home
 ./mvnw -B verify -pl commercial/paytech-commercial-test -am
 ```
+
+并行任务使用隔离库时设置 `COMMERCIAL_TEST_DB_URL`（如 `jdbc:mysql://127.0.0.1:13306/mor_commercial_linec?...`）；清理器只接受 `mor_commercial` 或 `mor_commercial_<后缀>`。不要用 `SPRING_DATASOURCE_URL`，它会改写同一 Reactor 内 Foundation 模块的测试库。
 
 只需要本机 `local-environment` 的 MySQL（`mor_commercial` 已按 `init/ddl.sql` 建好）。
