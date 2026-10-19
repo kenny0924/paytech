@@ -195,6 +195,8 @@ Assets + Expenses = Liabilities + Equity + Revenue
 
 ### 4.2 税务、交易经济与 Channel Cost
 
+> **2026-10-19 取代：** 本节的 V5 Scope 口径与 `t_transaction_economics*` 命名，由 [billing 计费事实决定](../decisions/2026-10-19-billing-fact-engine.md) 与其详细设计取代：计费事实为 billing 的 `t_billing_fact*` 五表，渠道成本方案 / 版本 / 范围 / 组件四表归 channel-connector。本节的费用公式继续成立：百分比加固定费、退款按比例冲回、固定费不退、服务费不按残差、预估成本不默认为 0。
+
 | 表 | 用途 | 关键字段 | 唯一、检查与并发约束 |
 |---|---|---|---|
 | `tax_jurisdiction` | 国家、州/省、地区和特殊税区等税务辖区树 | `jurisdiction_code`、`jurisdiction_type`、`country_code`、`parent_id`、`timezone`、`status` | `uk_tax_jurisdiction(jurisdiction_code)`；禁止形成环；国家使用 ISO 3166 编码；类型支持 `COUNTRY/SUBNATIONAL/LOCAL/SPECIAL_ZONE` |

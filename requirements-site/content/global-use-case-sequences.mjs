@@ -529,7 +529,7 @@ export const GLOBAL_USE_CASE_SEQUENCES = {
       { from: "payment", to: "finance", label: "PaymentSucceeded（含 payment_succeeded_time）", kind: "async" },
       { from: "finance", to: "client_contract", label: "按冻结 Agreement-OE Association 与 As-Of 读取 T+N 工作日、日历、时区、Cutoff、FOLLOWING", kind: "sync" },
       { from: "finance", to: "finance", label: "在同一 PAYMENT Economics 冻结 payment_succeeded_time、共同 balance_available_time；Client Principal 与可选 Partner Share 均先进入 PENDING", kind: "sync" },
-      { from: "finance", to: "commerce", label: "EconomicsCalculated 携带 Order/Context、Economics、币种、balance_available_time、Event Key/Version/Hash；Commerce 只冻结 scheduledAt，状态保持 PENDING", kind: "async" },
+      { from: "finance", to: "commerce", label: "BillingFactRecorded 携带 Order/Context、Economics、币种、balance_available_time、Event Key/Version/Hash；Commerce 只冻结 scheduledAt，状态保持 PENDING", kind: "async" },
       { from: "finance", to: "finance", label: "到 balance_available_time 由 account 定时任务对已应用 PAYMENT 事实中记入 *_PAYABLE/PENDING 的每个账户，按该账户在此事实上的净贷方金额做 FACT_MATURITY 桶移动（source_ref = factId:factVersion:accountId，重复执行幂等），只记 account 流水、不产生 Journal，全部完成后事实标记已成熟；Client/Partner 完成 Pending → Available，Partner PENDING 先净额抵扣 PARTNER_RECOVERY_RECEIVABLE/NONE 后转 AVAILABLE，并记录本次已成熟金额", kind: "sync" },
       { from: "finance", to: "commerce", label: "account 成熟桶移动完成后发布 PayableBalanceMatured（不来自 ledger Journal），携带相同 Order/Context/Economics/时间、Client matured amount、account 入账批次与 Event Key/Version/Hash", kind: "async" },
       { from: "commerce", to: "commerce", label: "本地事务幂等转为 AVAILABLE (>0) 或 FULLY_OFFSET (=0)，最终态不回退；正金额 AVAILABLE 同事务冻结 order.funds_available 公开快照并登记 ClientWebhookRequested，FULLY_OFFSET 不登记该事件", kind: "sync" },

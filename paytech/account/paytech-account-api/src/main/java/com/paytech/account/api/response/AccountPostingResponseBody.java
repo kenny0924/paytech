@@ -44,13 +44,13 @@ public class AccountPostingResponseBody {
     /** AccountPosted 收到 Broker 确认的 UTC 时间；尚未发布为空。 */
     private Instant publishedTime;
 
-    /** 事实批次：经济事实主键。 */
+    /** 事实批次：计费事实主键。 */
     private String factId;
 
-    /** 事实批次：经济事实版本。 */
+    /** 事实批次：计费事实版本。 */
     private String factVersion;
 
-    /** 事实批次：经济事实类型代码。 */
+    /** 事实批次：计费事实类型代码。 */
     private String factType;
 
     /** 事实批次：本事实替代的前一事实；首次登记为空。 */

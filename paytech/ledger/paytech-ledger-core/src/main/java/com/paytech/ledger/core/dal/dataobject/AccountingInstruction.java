@@ -59,7 +59,7 @@ public class AccountingInstruction {
     private String sourcePayloadHash;
 
     /**
-     * 自动交易类指令对应的 billing 经济事实主键（原 transaction_economics_id，仅存 ID）
+     * 自动交易类指令对应的 billing 计费事实主键（原 transaction_economics_id，仅存 ID）
      * <li>可为空。</li>
      */
     private Long economicFactId;

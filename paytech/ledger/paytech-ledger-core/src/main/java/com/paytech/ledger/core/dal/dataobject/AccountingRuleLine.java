@@ -3,8 +3,8 @@ package com.paytech.ledger.core.dal.dataobject;
 import java.time.Instant;
 
 import com.paytech.account.api.enums.BalanceBucket;
-import com.paytech.billing.api.enums.AmountSource;
-import com.paytech.billing.api.enums.AutoInstructionType;
+import com.paytech.ledger.api.enums.AmountSource;
+import com.paytech.ledger.api.enums.AutoInstructionType;
 import com.paytech.ledger.api.enums.RuleOwnerRole;
 import com.paytech.ledger.core.enums.EntrySide;
 

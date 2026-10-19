@@ -1,0 +1,35 @@
+package com.paytech.billing.domainservice.service;
+
+import java.time.Instant;
+
+import com.paytech.billing.domain.BillingFactContext;
+
+/**
+ * 计费事实的本地保存与 Maker-Checker 状态推进
+ * <li>状态推进以原状态与版本为条件；批准与 BillingFactRecorded 发布任务登记在同一本地事务。</li>
+ * <li>只操作本模块数据库，不调用外部依赖。</li>
+ */
+public interface BillingFactService {
+
+    /**
+     * 读取事实头、引用、全部明细行与币种精度
+     *
+     * @param factId 计费事实 ID
+     * @return 上下文（不含被替代事实）；事实不存在返回空
+     */
+    BillingFactContext loadContext(long factId);
+
+    /** 一个事务内写入 DRAFT 事实头、全部引用与全部明细行；来源引用被并发登记时按并发冲突拒绝。 */
+    void saveDraft(BillingFactContext context);
+
+    /**
+     * 一个事务内批准事实：DRAFT → APPROVED 并定稿版本、业务时间覆盖为批准时间；有被替代事实时将其 APPROVED → SUPERSEDED；登记
+     * BILLING_FACT_RECORDED 发布任务
+     * <li>任一条件更新未命中按并发冲突拒绝并整体回滚。</li>
+     *
+     * @param context 含被替代事实的已验证上下文
+     * @param checkerId 复核人
+     * @param now 批准时间
+     */
+    void approve(BillingFactContext context, long checkerId, Instant now);
+}

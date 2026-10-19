@@ -10,14 +10,14 @@ import com.paytech.account.api.enums.BalanceQueryErrorCode;
 import com.paytech.account.api.response.ClientBalanceResponseBody;
 import com.paytech.account.api.response.PartnerBalanceResponseBody;
 import com.paytech.account.test.base.AbstractBalanceTest;
-import com.paytech.billing.api.enums.AmountSource;
+import com.paytech.billing.api.enums.FactComponentType;
 import com.paytech.billing.api.enums.FactLineDirection;
 import com.paytech.billing.api.enums.FactPartyRole;
 import com.paytech.foundation.money.Money;
 
 /**
  * Client 与 Partner 分类余额：只读本库 Owner 账户，不调用 ledger
- * <li>账户由消费 EconomicFactRecorded 开立（扮演 billing 发布到真实本机 RabbitMQ）；有账户时缺少的桶为零，没有任何账户时 400
+ * <li>账户由消费 BillingFactRecorded 开立（扮演 billing 发布到真实本机 RabbitMQ）；有账户时缺少的桶为零，没有任何账户时 400
  * OWNER_ACCOUNT_NOT_FOUND。</li>
  *
  * @see BalanceQueryApi#queryClientBalance(String, String, String)
@@ -27,7 +27,9 @@ class QueryOwnerBalanceTest extends AbstractBalanceTest {
 
     @Test
     void test_clientBalanceReadsOwnerAccounts() {
-        consumed(payment("100").component(AmountSource.CLIENT_PRINCIPAL, "70.25").build());
+        consumed(payment("100")
+            .component(FactComponentType.CLIENT_PRINCIPAL, FactPartyRole.OPERATING_ENTITY,
+                FactPartyRole.CLIENT, "70.25").build());
 
         var body = get("/balances/v1/clients/1001?entityNo=AE001&currency=USD").assertSuccess(200)
             .as(ClientBalanceResponseBody.class);
@@ -43,8 +45,8 @@ class QueryOwnerBalanceTest extends AbstractBalanceTest {
 
     @Test
     void test_partnerBalanceReturnsZeroForMissingBuckets() {
-        consumed(adjustment().partner(PARTNER_ID, PARTNER_AGREEMENT_OE_ID, FINANCE_ENTITY_ID)
-            .line(AmountSource.PARTNER_SHARE, FactPartyRole.OPERATING_ENTITY, ENTITY_NO, FactPartyRole.LOCAL_PARTNER,
+        consumed(adjustment().partner(PARTNER_ID, FINANCE_ENTITY_ID)
+            .line(FactComponentType.PARTNER_SHARE, FactPartyRole.OPERATING_ENTITY, ENTITY_NO, FactPartyRole.LOCAL_PARTNER,
                 PARTNER, FactLineDirection.CHARGE, "10").build());
 
         var body = get("/balances/v1/partners/2001?entityNo=AE001&currency=USD").assertSuccess(200)

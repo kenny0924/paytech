@@ -1,11 +1,15 @@
 // Finance 逻辑模型按 V2 服务切分（第 07 步，design/03 §2.1、§4.2，design/09 §5.2）。
 // 逻辑模型仍由 manifests 生成 84 张表并做全部校验；每个服务只持有本库表的物理模型：
-//   - 按 Manifest 分组：05 → reconciliation，06 → payout，02 按表拆到 tax / billing / reconciliation；01/03/07 归 ledger，
+//   - 按 Manifest 分组：05 → reconciliation，06 → payout，02 按表拆到 tax / reconciliation；01/03/07 归 ledger，
 //     但 ledger 服务库模型已脱离生成器（2026-10-19），不再投影；
+//   - 02 中原属 billing 的经济事实三表与渠道成本四表不再投影（2026-10-19 计费事实重构，决定 2026-10-19-billing-fact-engine）：
+//     billing 模型脱离生成器直接维护 paytech/billing/docs/database/billing.pdma.json（由 billing-model.test.mjs 校验），
+//     渠道成本四表归 channel-connector，由 Payment Orchestration 生成器的 channel-connector 分区产出；
 //   - 08 的 compensation_event 每库一份，command_idempotency 删除（S10）；
-//   - currency_spec 的 Owner 是 platform-support（D41），billing 持一份只读副本（ledger 的副本随 ledger 模型直接维护）；
-//   - account（mor_account）与 ledger（mor_ledger）服务库模型已脱离生成器，分别直接维护
-//     paytech/account/docs/database/account.pdma.json 与 paytech/ledger/docs/database/ledger.pdma.json，不在此切分。
+//   - currency_spec 的 Owner 是 platform-support（D41），ledger 与 billing 的只读副本随各自直接维护的模型维护，生成器不再投影；
+//   - account（mor_account）、ledger（mor_ledger）与 billing（mor_billing）服务库模型已脱离生成器，分别直接维护
+//     paytech/account/docs/database/account.pdma.json、paytech/ledger/docs/database/ledger.pdma.json 与
+//     paytech/billing/docs/database/billing.pdma.json，不在此切分。
 // 84 张表的逻辑模型不变，仍覆盖全部 Finance 表并做全部校验。
 // 跨服务关系（如 accounting_instruction.economic_fact_id → economic_fact）只保留在逻辑模型，服务模型只保留库内关系。
 import { TABLES as ACCOUNTING_FOUNDATION_TABLES } from "./manifests/01-accounting-foundation.mjs";
@@ -14,24 +18,23 @@ import { TABLES as ACCOUNTING_JOURNAL_TABLES } from "./manifests/03-accounting-j
 import { TABLES as CHANNEL_CASH_RECON_TABLES } from "./manifests/05-channel-cash-recon.mjs";
 import { TABLES as PAYOUT_TABLES } from "./manifests/06-payout.mjs";
 import { TABLES as CLOSE_TABLES } from "./manifests/07-close.mjs";
-import { CURRENT_COMPENSATION_EVENT, TABLES as RELIABILITY_TABLES } from "./manifests/08-reliability.mjs";
+import { TABLES as RELIABILITY_TABLES } from "./manifests/08-reliability.mjs";
 
-export const FINANCE_SERVICES = Object.freeze(["billing", "reconciliation", "tax", "payout"]);
+export const FINANCE_SERVICES = Object.freeze(["reconciliation", "tax", "payout"]);
 
 /** 每库一份的基础设施表。 */
 export const PER_DATABASE_TABLES = Object.freeze(["compensation_event"]);
 
-/** 只读副本表：Owner 不在 Finance 后继服务内，副本持有方列出。 */
-export const READ_ONLY_COPIES = Object.freeze({ currency_spec: Object.freeze(["billing"]) });
+/** 只读副本表：Owner 不在 Finance 后继服务内，副本持有方列出（ledger、billing 的 currency_spec 副本随直接维护的模型，不在此列）。 */
+export const READ_ONLY_COPIES = Object.freeze({});
 
 /**
  * 服务库内替换逻辑表定义的物理变体：表定义直接给出时替换同一 defKey；{ replaces, table } 形式替换另一个逻辑表并沿用其实体、
  * 同名字段 ID 与库内关系（物理更名）。
- * <li>第 11a 步 billing 启用 paytech-compensation-event，使用现行补偿表模型；其他服务库在接入补偿组件前保持逻辑模型定义。</li>
+ * <li>第 11a 步 billing 使用的现行补偿表变体随 billing 模型脱离生成器（2026-10-19）一并移出；生成器维护的服务库在接入补偿组件前
+ * 保持逻辑模型定义。</li>
  */
-export const SERVICE_TABLE_VARIANTS = Object.freeze({
-  billing: Object.freeze([CURRENT_COMPENSATION_EVENT]),
-});
+export const SERVICE_TABLE_VARIANTS = Object.freeze({});
 
 /** 不在逻辑模型中的服务物理表：prepend 为 true 时排在本库逻辑表之前，否则追加在末尾（当前生成器维护的服务库没有）。 */
 export const SERVICE_ADDED_TABLES = Object.freeze({});
@@ -42,7 +45,8 @@ const NOT_PROJECTED = null;
 /** 删除且不进入任何服务模型的表。 */
 export const DROPPED_TABLES = Object.freeze(["command_idempotency"]);
 
-const BILLING_TABLES = new Set([
+/** 2026-10-19 起不投影的 02 表：经济事实三表由 billing 计费事实五表取代，渠道成本四表归 channel-connector。 */
+const RETIRED_FROM_02 = new Set([
   "economic_fact", "economic_fact_line", "economic_fact_line_link",
   "channel_cost_plan", "channel_cost_plan_ver", "channel_cost_scope", "channel_cost_component",
 ]);
@@ -51,7 +55,7 @@ const RECONCILIATION_FROM_02 = new Set(["channel_cost_confirm", "channel_cost_al
 const MANIFEST_DEFAULTS = Object.freeze([
   [ACCOUNTING_FOUNDATION_TABLES, () => NOT_PROJECTED],
   [TAX_ECONOMICS_COST_TABLES, (key) => {
-    if (BILLING_TABLES.has(key)) return "billing";
+    if (RETIRED_FROM_02.has(key)) return NOT_PROJECTED;
     if (RECONCILIATION_FROM_02.has(key)) return "reconciliation";
     return "tax";
   }],
@@ -89,7 +93,7 @@ export function serviceTables() {
   return byService;
 }
 
-/** 每库物理表数：design/03 §4.2 的逻辑切分，切分结果必须逐库一致（ledger、account 已脱离生成器，不在此列）。 */
+/** 每库物理表数：design/03 §4.2 的逻辑切分，切分结果必须逐库一致（ledger、account、billing 已脱离生成器，不在此列）。 */
 export const EXPECTED_SERVICE_TABLE_COUNTS = Object.freeze({
-  billing: 9, reconciliation: 18, tax: 24, payout: 8,
+  reconciliation: 18, tax: 24, payout: 8,
 });

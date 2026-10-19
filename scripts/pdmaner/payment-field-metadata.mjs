@@ -32,6 +32,10 @@ export const TABLE_DISPLAY_NAMES = Object.freeze({
   "channel_dispute_action": "服务商争议动作",
   "command_idempotency": "命令幂等记录",
   "compensation_event": "本地补偿事件",
+  "channel_cost_plan": "渠道成本方案",
+  "channel_cost_plan_ver": "渠道成本方案版本",
+  "channel_cost_scope": "渠道成本适用范围",
+  "channel_cost_component": "渠道成本组件",
 });
 
 /*
@@ -58,6 +62,26 @@ interaction_type|交互类型|原 Action 的消费者交互类型，无交互时
 authentication_requirement|认证要求|原 PAY_RISK 获得可信 ALLOW 后冻结的认证要求。允许值：NOT_REQUIRED、THREE_DS_REQUIRED、CHALLENGE_REQUIRED；尚无确定允许结果时为空
 capture_mode|捕获模式|本次支付尝试冻结的捕获模式；新执行必填且不可修改。允许值：AUTOMATIC、MANUAL；历史未核对时为空
 source_submission_id|原支付提交标识|Commerce 原支付提交命令标识；新执行必填且全局唯一绑定一个 Attempt，历史无可靠身份时为空，不得猜测回填
+plan_code|渠道成本方案代码|跨版本稳定识别渠道成本方案的业务代码
+current_ver_id|当前成本版本|当前发布的本库渠道成本方案版本
+status|生命周期状态|渠道成本方案稳定身份的当前生命周期状态
+plan_id|渠道成本方案标识|该版本所属的本库渠道成本方案稳定身份
+cost_ver|成本版本号|同一渠道成本方案下严格递增的业务版本号
+effective_from|生效开始时间|该成本版本开始参与预计成本匹配的 UTC 微秒时间
+effective_to|生效结束时间|该成本版本停止参与预计成本匹配的 UTC 微秒时间，长期有效时为空
+maker_id|制单人标识|创建该成本版本的 Platform Actor 稳定业务ID
+checker_id|复核人标识|复核该成本版本的另一 Platform Actor 稳定业务ID
+cost_ver_id|成本版本标识|该适用范围所属的本库渠道成本方案版本
+scope_no|适用范围序号|同一成本版本内稳定且唯一的适用范围序号
+channel_agreement_ref|渠道合同引用|本 MID 与经营主体范围实际采用的 Channel 合同或费率文件稳定引用
+component_code|成本组件代码|同一适用范围内稳定识别成本组成的业务代码
+component_type|成本组件类型|说明该组件采用的渠道收费语义
+calculation_base|计算基数|该成本组件声明的金额计算基数语义
+rate_value|费率|零至一之间的渠道成本十进制费率
+fixed_amount|固定金额|渠道成本规则声明的非负固定收费金额
+min_amount|最低金额|该成本组件计算结果允许采用的金额下限
+max_amount|最高金额|该成本组件计算结果允许采用的金额上限
+rounding_mode|舍入方式|把渠道成本原始金额归整到币种精度时采用的固定方式
 account_status|Channel Account 状态|技术认证账户或租户从草稿、激活、暂停到关闭的当前状态
 action_no|动作序号|同一支付尝试、渠道退款或重复支付处置内单调递增的动作序号
 action_status|动作状态|渠道动作从创建、提交到权威结果收敛的当前状态
@@ -268,8 +292,8 @@ function parseFieldMetadataSource(source) {
     }
     result[fieldKey] = metadata(defName, description);
   }
-  if (Object.keys(result).length !== 209) {
-    throw new Error(`Payment 字段元数据必须精确覆盖 209 个唯一字段键，实际 ${Object.keys(result).length}`);
+  if (Object.keys(result).length !== 229) {
+    throw new Error(`Payment 字段元数据必须精确覆盖 229 个唯一字段键，实际 ${Object.keys(result).length}`);
   }
   return Object.freeze(result);
 }
@@ -314,6 +338,11 @@ export const CLOSED_ENUM_VALUES = Object.freeze({
   "channel_dispute_action.action_status": ["CREATED", "SUBMITTED", "UNKNOWN", "SUCCEEDED", "FAILED"],
   "command_idempotency.process_status": ["PROCESSING", "SUCCEEDED", "FAILED"],
   "compensation_event.execute_status": ["INIT", "PROCESSING", "ERROR", "FAILED"],
+  "channel_cost_plan.status": ["DRAFT", "ACTIVE", "INACTIVE"],
+  "channel_cost_plan_ver.status": ["DRAFT", "PENDING_APPROVAL", "APPROVED", "ACTIVE", "REJECTED", "INACTIVE"],
+  "channel_cost_component.component_type": ["PROCESSING_FEE", "CROSS_BORDER_FEE", "REFUND_FEE", "DISPUTE_FEE"],
+  "channel_cost_component.calculation_base": ["TRANSACTION_AMOUNT"],
+  "channel_cost_component.rounding_mode": ["HALF_UP"],
 });
 
 /** 开放代码的精确权威来源；这些字段不能被生成器虚构为固定枚举。 */
@@ -362,6 +391,13 @@ export const OPEN_CODE_SOURCES = Object.freeze({
   "command_idempotency.response_code": "Payment Command Response Code Catalog",
   "compensation_event.event_type": "Payment Event/Handler Catalog",
   "compensation_event.last_error_code": "Payment Error Catalog",
+  "channel_cost_plan.plan_code": "channel-connector 渠道成本方案代码",
+  "channel_cost_scope.country_code": "ISO 3166-1 alpha-2 国家代码",
+  "channel_cost_scope.currency": "ISO 4217 币种代码",
+  "channel_cost_scope.payment_method_code": "Payment 支付方式目录",
+  "channel_cost_scope.action_type": "Payment 动作类型目录",
+  "channel_cost_component.component_code": "channel-connector 渠道成本组件代码",
+  "channel_cost_component.currency": "ISO 4217 币种代码",
 });
 
 /** 表级说明显式固定每张表的职责与关键不变量。 */
@@ -393,4 +429,8 @@ export const TABLE_COMMENTS = Object.freeze({
   "channel_dispute_action": "按 Risk 精确请求提交举证或查询并冻结 Channel Account 的服务商动作。",
   "command_idempotency": "Foundation 公共组件持久化的 Payment 本地命令 Claim、Lease、CAS 与结果定位；业务幂等语义由 Payment 拥有。",
   "compensation_event": "业务变化同事务登记的本地可靠执行记录；成功后删除，FAILED 保留并可受控重开。",
+  "channel_cost_plan": "保存每个 Payment Channel 的预计渠道成本规则稳定身份和当前版本指针；billing 经命中接口取组件并冻结证据，本库不算金额。",
+  "channel_cost_plan_ver": "保存成本规则发布批次的生效期、内容摘要及双人审批状态，当前版本仅由方案根指针确定；APPROVED 版本到达生效时间后由到期切换 Job 原子切换为当前版本。",
+  "channel_cost_scope": "冻结成本版本对 MID、经营主体、国家、币种、支付方式和动作的确定性匹配范围。",
+  "channel_cost_component": "冻结渠道成本适用范围下的百分比、固定费、跨境费、退款费或争议费参数；金额由 billing 按证据计算。",
 });

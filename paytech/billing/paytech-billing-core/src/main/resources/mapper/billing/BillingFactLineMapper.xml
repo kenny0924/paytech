@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.billing.core.dal.mapper.BillingFactLineMapper">
+    <!-- source_evidence 是 JSON 列，显式指定 TypeHandler；其余列按下划线转驼峰自动映射。 -->
+    <resultMap id="line" type="com.paytech.billing.core.dal.dataobject.BillingFactLine" autoMapping="true">
+        <id column="id" property="id"/>
+        <result column="source_evidence" property="sourceEvidence"
+            typeHandler="com.paytech.billing.core.dal.configuration.SourceEvidenceTypeHandler"/>
+    </resultMap>
+
+    <sql id="columns">
+        id, fact_id, line_no, component_type, payer_role, payer_id, payee_role, payee_id, basis_amount, rate_value, raw_amount,
+        posted_amount, effect_direction, target_bucket, source_rule_type, source_rule_version_id, source_price_id,
+        source_rule_component_id, source_evidence, create_time
+    </sql>
+
+    <insert id="insertAll">
+        INSERT INTO t_billing_fact_line (id, fact_id, line_no, component_type, payer_role, payer_id, payee_role, payee_id,
+            basis_amount, rate_value, raw_amount, posted_amount, effect_direction, target_bucket, source_rule_type,
+            source_rule_version_id, source_price_id, source_rule_component_id, source_evidence, create_time)
+        VALUES
+        <foreach collection="lines" item="line" separator=",">
+            (#{line.id}, #{line.factId}, #{line.lineNo}, #{line.componentType}, #{line.payerRole}, #{line.payerId},
+            #{line.payeeRole}, #{line.payeeId}, #{line.basisAmount}, #{line.rateValue}, #{line.rawAmount},
+            #{line.postedAmount}, #{line.effectDirection}, #{line.targetBucket}, #{line.sourceRuleType},
+            #{line.sourceRuleVersionId}, #{line.sourcePriceId}, #{line.sourceRuleComponentId},
+            #{line.sourceEvidence,jdbcType=VARCHAR,typeHandler=com.paytech.billing.core.dal.configuration.SourceEvidenceTypeHandler},
+            #{line.createTime})
+        </foreach>
+    </insert>
+
+    <select id="selectByFactId" resultMap="line">
+        SELECT <include refid="columns"/> FROM t_billing_fact_line WHERE fact_id = #{factId} ORDER BY line_no
+    </select>
+
+    <select id="selectByFactIds" resultMap="line">
+        SELECT <include refid="columns"/> FROM t_billing_fact_line
+        WHERE fact_id IN <foreach collection="factIds" item="factId" open="(" separator="," close=")">#{factId}</foreach>
+        ORDER BY fact_id, line_no
+    </select>
+</mapper>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.billing.core.dal.mapper.BillingFactPricingMapper">
+    <insert id="insert">
+        INSERT INTO t_billing_fact_pricing (fact_id, client_agreement_id, partner_agreement_oe_id, commercial_context_time,
+            consumer_country_code, payment_method, industry_code, mcc_code, card_network, funding_type, card_level,
+            authentication_class, commercial_price_id, settlement_business_days, business_calendar_code, settlement_timezone,
+            cutoff_second_of_day, create_time)
+        VALUES (#{factId}, #{clientAgreementId}, #{partnerAgreementOeId}, #{commercialContextTime}, #{consumerCountryCode},
+            #{paymentMethod}, #{industryCode}, #{mccCode}, #{cardNetwork}, #{fundingType}, #{cardLevel},
+            #{authenticationClass}, #{commercialPriceId}, #{settlementBusinessDays}, #{businessCalendarCode},
+            #{settlementTimezone}, #{cutoffSecondOfDay}, #{createTime})
+    </insert>
+
+    <sql id="columns">
+        fact_id, client_agreement_id, partner_agreement_oe_id, commercial_context_time, consumer_country_code, payment_method,
+        industry_code, mcc_code, card_network, funding_type, card_level, authentication_class, commercial_price_id,
+        settlement_business_days, business_calendar_code, settlement_timezone, cutoff_second_of_day, create_time
+    </sql>
+
+    <select id="selectByFactId" resultType="com.paytech.billing.core.dal.dataobject.BillingFactPricing">
+        SELECT <include refid="columns"/> FROM t_billing_fact_pricing WHERE fact_id = #{factId}
+    </select>
+
+    <select id="selectByFactIds" resultType="com.paytech.billing.core.dal.dataobject.BillingFactPricing">
+        SELECT <include refid="columns"/> FROM t_billing_fact_pricing
+        WHERE fact_id IN <foreach collection="factIds" item="factId" open="(" separator="," close=")">#{factId}</foreach>
+    </select>
+</mapper>

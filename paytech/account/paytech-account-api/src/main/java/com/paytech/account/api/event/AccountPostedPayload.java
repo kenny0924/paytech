@@ -18,7 +18,7 @@ import lombok.Setter;
  * <li>聚合 ID 格式 {@code {OE|FE}.{entityId}.{currency}.{shardNo}}，例如 {@code OE.AE001.USD.0}、{@code FE.8001.USD.0}；分隔符用 {@code .}
  * 而非 {@code :}，因为 Foundation AggregateKey 的 aggregateId 是消息路由键，且补偿 event_key 以 {@code :} 分四段。</li>
  * <li>事件 JSON 中所有标量都是字符串（ID、序号、版本、行号与金额为十进制，时间为 UTC RFC 3339），缺省值为 JSON null，符合 Foundation
- * JSON Object Profile；Jackson 默认把它们绑定到本类的 Long / Integer / BigDecimal / Instant 字段（同 billing {@code EconomicFactPayload}）。</li>
+ * JSON Object Profile；Jackson 默认把它们绑定到本类的 Long / Integer / BigDecimal / Instant 字段（同 billing {@code BillingFactPayload}）。</li>
  * <li>事实批次填 fact* 与 financeEntityId，桶移动批次填 movement*，另一组为空；代码类字段以 String 承载稳定 Code，取值见对应枚举。</li>
  */
 @Getter
@@ -72,13 +72,13 @@ public class AccountPostedPayload {
     /** 批次生成的 UTC 微秒时间，即信封 occurredAt。 */
     private Instant postedTime;
 
-    /** 事实批次：经济事实主键；桶移动批次为空。 */
+    /** 事实批次：计费事实主键；桶移动批次为空。 */
     private Long factId;
 
-    /** 事实批次：经济事实版本；桶移动批次为空。 */
+    /** 事实批次：计费事实版本；桶移动批次为空。 */
     private Long factVersion;
 
-    /** 事实批次：经济事实类型代码（billing {@code EconomicsType}）；桶移动批次为空。 */
+    /** 事实批次：计费事实类型代码（billing {@code BillingFactType}）；桶移动批次为空。 */
     private String factType;
 
     /** 事实批次：本事实替代的前一事实；首次登记或桶移动批次为空。 */

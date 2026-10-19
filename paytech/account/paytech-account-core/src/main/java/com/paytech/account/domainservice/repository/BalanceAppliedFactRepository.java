@@ -6,16 +6,16 @@ import java.util.List;
 import com.paytech.account.core.dal.dataobject.BalanceAppliedFact;
 import com.paytech.account.core.enums.AppliedFactStatus;
 
-/** t_balance_applied_fact：已处理经济事实读写。 */
+/** t_balance_applied_fact：已处理计费事实读写。 */
 public interface BalanceAppliedFactRepository {
 
     /** 插入处理记录；同一 fact_id + fact_version 已被并发登记时以并发冲突失败。 */
     void insert(BalanceAppliedFact fact);
 
-    /** 以排他锁读取一个经济事实的处理记录，不存在返回空；必须在事务内调用。 */
+    /** 以排他锁读取一个计费事实的处理记录，不存在返回空；必须在事务内调用。 */
     BalanceAppliedFact lockByFactId(long factId);
 
-    /** 读取一组经济事实的处理记录；空集合返回空列表。 */
+    /** 读取一组计费事实的处理记录；空集合返回空列表。 */
     List<BalanceAppliedFact> findByFactIds(List<Long> factIds);
 
     /** 以原状态为条件迁移状态并写入处理信息，成功后同步原对象；状态已变化时以并发冲突失败。 */

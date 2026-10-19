@@ -8,7 +8,7 @@ import com.paytech.account.api.enums.PostingSourceType;
 import lombok.Getter;
 import lombok.Setter;
 
-/** t_account_posting：账户入账批次，一次经济事实入账或一次桶移动一条，经补偿事件发布为 AccountPosted。 */
+/** t_account_posting：账户入账批次，一次计费事实入账或一次桶移动一条，经补偿事件发布为 AccountPosted。 */
 @Getter
 @Setter
 public class AccountPosting {
@@ -33,10 +33,10 @@ public class AccountPosting {
     /** 批次来源。 */
     private PostingSourceType sourceType;
 
-    /** 事实批次的经济事实 ID；桶移动批次为空。 */
+    /** 事实批次的计费事实 ID；桶移动批次为空。 */
     private Long factId;
 
-    /** 事实批次的经济事实版本；桶移动批次为空。 */
+    /** 事实批次的计费事实版本；桶移动批次为空。 */
     private Long factVersion;
 
     /** 桶移动批次的移动记录 ID；事实批次为空。 */

@@ -10,17 +10,17 @@ import org.apache.ibatis.annotations.Param;
 import com.paytech.account.core.dal.dataobject.BalanceAppliedFact;
 import com.paytech.account.core.enums.AppliedFactStatus;
 
-/** t_balance_applied_fact：已处理经济事实。 */
+/** t_balance_applied_fact：已处理计费事实。 */
 @Mapper
 public interface BalanceAppliedFactMapper {
 
     /** 插入一条处理记录。 */
     int insert(BalanceAppliedFact record);
 
-    /** 以排他锁读取一个经济事实的处理记录（同 fact_id 取最高版本），不存在返回空；必须在事务内调用。 */
+    /** 以排他锁读取一个计费事实的处理记录（同 fact_id 取最高版本），不存在返回空；必须在事务内调用。 */
     BalanceAppliedFact selectByFactIdForUpdate(@Param("factId") long factId);
 
-    /** 读取一组经济事实的处理记录。 */
+    /** 读取一组计费事实的处理记录。 */
     List<BalanceAppliedFact> selectByFactIds(@Param("factIds") List<Long> factIds);
 
     /**

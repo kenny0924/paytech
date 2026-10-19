@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.billing.core.dal.mapper.BusinessCalendarDayMapper">
+    <!-- uk_calendar_day (calendar_code, calendar_date)。 -->
+    <select id="selectByCalendarBetween" resultType="com.paytech.billing.core.dal.dataobject.BusinessCalendarDay">
+        SELECT id, calendar_code, calendar_date, day_type, note, create_time
+        FROM t_business_calendar_day
+        WHERE calendar_code = #{calendarCode} AND calendar_date BETWEEN #{fromDate} AND #{toDate}
+        ORDER BY calendar_date
+    </select>
+</mapper>

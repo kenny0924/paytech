@@ -303,7 +303,7 @@ public interface AccountingTestMapper {
     @Select("SELECT COUNT(*) FROM t_accounting_rule_line WHERE bundle_ver_id = #{bundleVerId}")
     int countRuleLines(@Param("bundleVerId") long bundleVerId);
 
-    /** 读取经济事实生成的全部指令，按账簿主键、指令类型升序。 */
+    /** 读取计费事实生成的全部指令，按账簿主键、指令类型升序。 */
     @Select("SELECT * FROM t_accounting_instruction WHERE economic_fact_id = #{economicFactId} "
         + "ORDER BY ledger_book_id, instruction_type")
     List<AccountingInstruction> selectEconomicsInstructions(@Param("economicFactId") long economicFactId);

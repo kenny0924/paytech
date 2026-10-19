@@ -41,7 +41,7 @@ public class AccountPostedEntryPayload {
     private BigDecimal amount;
 
     /**
-     * 来源经济事实明细行号
+     * 来源计费事实明细行号
      * <li>事实批次的普通行与冲回行为对应事实行号；桶移动批次为空。</li>
      */
     private Integer factLineNo;

@@ -1,6 +1,6 @@
 package com.paytech.ledger.auto.ext.http.query;
 
-import static com.paytech.ledger.test.builder.EconomicComponentBuilder.adjustment;
+import static com.paytech.ledger.test.builder.BillingFactLineBuilder.adjustment;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -15,11 +15,11 @@ import com.paytech.account.api.enums.BalanceBucket;
 import com.paytech.account.api.enums.EntrySide;
 import com.paytech.account.api.enums.OwnerType;
 import com.paytech.account.api.event.AccountPostedPayload;
-import com.paytech.billing.api.enums.AmountSource;
-import com.paytech.billing.api.enums.EconomicsType;
+import com.paytech.billing.api.enums.BillingFactType;
+import com.paytech.billing.api.enums.FactComponentType;
 import com.paytech.billing.api.enums.FactLineDirection;
 import com.paytech.billing.api.enums.FactPartyRole;
-import com.paytech.billing.api.fact.EconomicFactPayload;
+import com.paytech.billing.api.fact.BillingFactPayload;
 import com.paytech.ledger.api.LedgerBookQueryApi;
 import com.paytech.ledger.api.enums.LedgerOwnerType;
 import com.paytech.ledger.api.response.JournalEntryDetailResponseBody;
@@ -81,8 +81,8 @@ class AccountPostingJournalQueryTest extends AbstractTransactionPostingTest {
         testMapper.insertConsumedVersion(AccountPostedPayload.AGGREGATE_TYPE,
             AccountPostedPayload.aggregateId(AccountEntityType.OPERATING_ENTITY, ENTITY_NO,
                 CURRENCY, 0), 2);
-        EconomicFactPayload fact = fact(payment("0").economicsType(EconomicsType.MANUAL_ADJUSTMENT),
-            adjustment(AmountSource.CLIENT_PRINCIPAL, FactPartyRole.OPERATING_ENTITY, ENTITY_NO, FactPartyRole.CLIENT,
+        BillingFactPayload fact = fact(payment("0").factType(BillingFactType.MANUAL_ADJUSTMENT),
+            adjustment(FactComponentType.CLIENT_PRINCIPAL, FactPartyRole.OPERATING_ENTITY, ENTITY_NO, FactPartyRole.CLIENT,
                 CLIENT, FactLineDirection.CHARGE, "9"));
         AccountPostedPayload posting = AccountPostingBuilder.fact(fact, 3).entry(StandardAccountCodes.CLIENT_PAYABLE,
             OwnerType.CLIENT, CLIENT, BalanceBucket.PENDING, EntrySide.CREDIT, "9", 1).build();

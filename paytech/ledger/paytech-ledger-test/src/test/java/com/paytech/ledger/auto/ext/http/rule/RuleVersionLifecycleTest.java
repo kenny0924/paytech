@@ -13,7 +13,7 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import com.paytech.billing.api.enums.AutoInstructionType;
+import com.paytech.ledger.api.enums.AutoInstructionType;
 import com.paytech.ledger.api.request.RuleLineRequestBody;
 import com.paytech.ledger.core.enums.RuleVersionStatus;
 import com.paytech.ledger.test.base.AbstractRuleBundleApiTest;

@@ -18,7 +18,7 @@ import org.w3c.dom.NodeList;
  * 在默认 Maven 测试中保护 account-service 的模块集合、依赖清单与已批准的基础设施范围（Snowflake、MyBatis、paytech-messaging 消费与发布端、
  * paytech-compensation-event）；2026-10-19 起 core 不依赖 ledger-api，app 不再有出站 HTTP 客户端
  * <li>由 FinanceModuleBoundaryTest 按服务拆分（design/09 §2.7）；跨服务依赖图规则由 ArchitectureAutoTest（R1–R12）检查。</li>
- * <li>account 消费 EconomicFactRecorded 并发布 AccountPosted：RabbitTemplate 必须在 classpath；不使用资源锁，Redisson 仍不得引入。</li>
+ * <li>account 消费 BillingFactRecorded 并发布 AccountPosted：RabbitTemplate 必须在 classpath；不使用资源锁，Redisson 仍不得引入。</li>
  *
  * @see com.paytech.account.AccountApplication
  */

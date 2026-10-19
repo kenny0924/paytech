@@ -58,7 +58,7 @@
             <groupId>tools.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
         </dependency>
-        <!-- EconomicFactRecorded 消费 Handler（DomainEventConsumer 在 core，分区拓扑与容器由 app 的 paytech-messaging 提供，design/04 §5）。 -->
+        <!-- BillingFactRecorded 消费 Handler（DomainEventConsumer 在 core，分区拓扑与容器由 app 的 paytech-messaging 提供，design/04 §5）。 -->
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-messaging-api</artifactId>

@@ -29,7 +29,7 @@ import com.paytech.ledger.test.clear.LedgerDataCleaner;
 import com.paytech.ledger.test.clear.LedgerRedisCleaner;
 import com.paytech.ledger.test.configuration.LedgerTestMockConfiguration;
 import com.paytech.ledger.test.mocker.external.AccountPostingMocker;
-import com.paytech.ledger.test.mocker.external.EconomicFactMocker;
+import com.paytech.ledger.test.mocker.external.BillingFactMocker;
 import com.paytech.ledger.test.mocker.local.LedgerMocker;
 import com.paytech.ledger.test.probe.AccountPostedPublisher;
 
@@ -38,7 +38,7 @@ import tools.jackson.databind.ObjectMapper;
 /**
  * Ledger 服务级入口测试基类
  * <li>复用正式启动类 LedgerApplication 与生产组件扫描，只附加 mock Profile 与测试组件；本地 MySQL（mor_ledger）/Redis/RabbitMQ 需预先就绪。</li>
- * <li>外部依赖：account 过账进度与批次、billing 事实详情与 pending 由独立 Loopback Mock HTTP 服务返回配置的 DTO；AccountPosted 由
+ * <li>外部依赖：account 过账进度与批次、billing 事实详情与发布进度由独立 Loopback Mock HTTP 服务返回配置的 DTO；AccountPosted 由
  * {@link AccountPostedPublisher} 扮演 account 发到真实本机 RabbitMQ，经正式消费链路处理。</li>
  * <li>{@link PartitionQueueBaselineConfiguration} 在监听容器启动前清空 ledger.account.p0..p3 与 DLQ（其他模块测试的残留消息）。</li>
  * <li>每例开始前检查空基线并清空本服务的 account 分区队列；结束时等待队列与 Mock 请求静止、检查意外调用，再由 Foundation 统一清理。</li>
@@ -87,7 +87,7 @@ public abstract class MockTestBase extends TestBase {
     protected AccountPostingMocker accountPostings;
 
     @Autowired
-    protected EconomicFactMocker economicFacts;
+    protected BillingFactMocker billingFacts;
 
     @Autowired
     protected MockHttpServer mockHttpServer;
@@ -112,7 +112,7 @@ public abstract class MockTestBase extends TestBase {
             await().atMost(CONSUME_WAIT).until(() -> accountEvents.pending() == 0);
             mockHttpServer.awaitIdle();
             assertAll("检查外部 Mock 调用", accountPostings::assertNoUnexpectedCalls,
-                economicFacts::assertNoUnexpectedCalls, mockHttpServer::assertNoUnexpectedRequests);
+                billingFacts::assertNoUnexpectedCalls, mockHttpServer::assertNoUnexpectedRequests);
         } finally {
             accountEvents.purge();
         }

@@ -1,7 +1,7 @@
 # Client / Local Partner 余额查询接口
 
 状态：HTTP、Processor、Domain Service、Repository、MyBatis 与 MySQL 只读链路已经实现。2026-10-19 起余额读自本服务明细账
-`mor_account.t_owner_account`（由消费 `EconomicFactRecorded` 与桶移动维护），不再调用 ledger；Owner 在该 OE 与币种下没有任何账户时返回
+`mor_account.t_owner_account`（由消费 `BillingFactRecorded` 与桶移动维护），不再调用 ledger；Owner 在该 OE 与币种下没有任何账户时返回
 400 `OWNER_ACCOUNT_NOT_FOUND`（technique 2.2）。接口仅监听 Finance 内部地址，尚未接入 Gateway 和统一资源授权，因此不能作为公网或租户直连接口发布。
 
 ## 接口

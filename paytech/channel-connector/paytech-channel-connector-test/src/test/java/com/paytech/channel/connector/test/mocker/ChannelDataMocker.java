@@ -17,7 +17,7 @@ import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.Getter;
 
-/** 只操作 mor_channel_connector 的本库 13 张表（10 §3.1）；Fixture ID 使用正式 Snowflake 接口。 */
+/** 只操作 mor_channel_connector 的本库 17 张表（10 §3.1 与渠道成本四表）；Fixture ID 使用正式 Snowflake 接口。 */
 @TestComponent
 @RequiredArgsConstructor
 public class ChannelDataMocker implements Clear {
@@ -31,7 +31,8 @@ public class ChannelDataMocker implements Clear {
         assertTrue(reusable, "测试库清理失败，须人工核查后重新运行");
         try {
             assertEquals("mor_channel_connector", mapper.databaseName());
-            assertEquals(0, mapper.countRows() + mapper.countSchemaOnlyRows(), "专用库非空，不自动删除原有数据");
+            assertEquals(0, mapper.countRows() + mapper.countSchemaOnlyRows() + mapper.countChannelCostRows(),
+                "专用库非空，不自动删除原有数据");
             cleanupOwned = true;
         } catch (org.springframework.dao.DataAccessException failure) {
             throw new AssertionError("请先人工审查并应用 paytech-channel-connector-test/src/test/resources/init/ddl.sql 到 mor-local MySQL",
@@ -167,11 +168,13 @@ public class ChannelDataMocker implements Clear {
         }
         assertEquals("mor_channel_connector", mapper.databaseName());
         try {
-            assertAll(mapper::clearCompensationEvents, mapper::clearEventExceptions, mapper::clearCallbackItems,
+            assertAll(mapper::clearChannelCostComponents, mapper::clearChannelCostScopes,
+                mapper::clearChannelCostVersions, mapper::clearChannelCostPlans, mapper::clearCompensationEvents,
+                mapper::clearEventExceptions, mapper::clearCallbackItems,
                 mapper::clearCallbacks, mapper::clearInteractions, mapper::clearRoutingPolicyMids,
                 mapper::clearRoutingPolicyVersions, mapper::clearRoutingPolicies, mapper::clearDetails,
                 mapper::clearCapabilities, mapper::clearMids, mapper::clearAccounts, mapper::clearChannels);
-            assertEquals(0, mapper.countRows() + mapper.countSchemaOnlyRows());
+            assertEquals(0, mapper.countRows() + mapper.countSchemaOnlyRows() + mapper.countChannelCostRows());
             cleanupOwned = false;
         } catch (RuntimeException | AssertionError failure) {
             reusable = false;

@@ -22,7 +22,7 @@ import com.paytech.billing.BillingApplication;
 import com.paytech.billing.test.checker.BillingResponseChecker;
 import com.paytech.billing.test.clear.BillingDataCleaner;
 import com.paytech.billing.test.clear.BillingRedisCleaner;
-import com.paytech.billing.test.probe.EconomicFactEventProbe;
+import com.paytech.billing.test.probe.BillingFactEventProbe;
 import com.paytech.foundation.compensation.core.execution.CompensationEventDispatcher;
 import com.paytech.foundation.testsupport.api.HttpTestInvoker;
 import com.paytech.foundation.testsupport.api.TestBase;
@@ -33,8 +33,8 @@ import tools.jackson.databind.ObjectMapper;
 /**
  * Billing 服务级入口测试基类
  * <li>复用正式启动类 BillingApplication 与生产组件扫描，只附加 mock Profile 与测试组件；本地 MySQL（mor_billing）/Redis/RabbitMQ 需预先就绪。</li>
- * <li>本服务没有外部 HTTP 依赖，不启动 Mock HTTP 服务；EconomicFactRecorded 经补偿任务异步发布到真实本地 Broker，每例为 billing.events
- * 绑定一个临时观察队列（第 08 步前没有订阅方，发布端默认 mandatory 严格判定未路由）。</li>
+ * <li>本服务没有外部 HTTP 依赖，不启动 Mock HTTP 服务；BillingFactRecorded 经补偿任务异步发布到真实本地 Broker，每例为 billing.events
+ * 绑定一个临时观察队列（发布端 unroutable-policy 为 FAIL，未路由严格判定；不消费 account 的生产队列）。</li>
  * <li>AfterEach 先等待补偿协调器与 Handler 全部空闲，再删除观察队列；Foundation TestBase 随后执行全部 Clear 组件。异步未停止时禁止清理与复用环境。</li>
  * <li>Actuator 在独立管理端口（业务端口 + 1000，测试随机），由 {@link #management(String)} 访问。</li>
  */
@@ -42,7 +42,7 @@ import tools.jackson.databind.ObjectMapper;
 @AutoConfigureRestTestClient
 @SpringBootTest(classes = BillingApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Import({BillingTestMapperConfiguration.class, BillingDataCleaner.class, BillingRedisCleaner.class,
-    EconomicFactEventProbe.class})
+    BillingFactEventProbe.class})
 public abstract class MockTestBase extends TestBase {
     /** 所有测试请求使用的 Request ID。 */
     protected static final String REQUEST_ID = "Billing.Test_01";
@@ -57,7 +57,7 @@ public abstract class MockTestBase extends TestBase {
     protected ObjectMapper objectMapper;
 
     @Autowired
-    protected EconomicFactEventProbe events;
+    protected BillingFactEventProbe events;
 
     @Autowired
     private BillingDataCleaner dataCleaner;

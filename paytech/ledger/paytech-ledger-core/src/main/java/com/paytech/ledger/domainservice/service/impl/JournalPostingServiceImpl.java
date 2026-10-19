@@ -46,7 +46,7 @@ import lombok.AllArgsConstructor;
 
 /**
  * 单账簿 Journal 过账；锁后全部使用当前读复验，不信任事务前的快照
- * <li>第 11b 步起不锁账户、不写任何余额（design/04 §4）：Owner 余额由 account 服务独立消费经济事实维护，科目余额由分录聚合。</li>
+ * <li>第 11b 步起不锁账户、不写任何余额（design/04 §4）：Owner 余额由 account 服务独立消费计费事实维护，科目余额由分录聚合。</li>
  */
 @Service
 @AllArgsConstructor

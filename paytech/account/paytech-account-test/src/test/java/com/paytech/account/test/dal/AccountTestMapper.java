@@ -45,11 +45,11 @@ public interface AccountTestMapper {
     @Select("SELECT * FROM t_owner_account ORDER BY account_code, owner_type, owner_id, balance_bucket")
     List<Map<String, Object>> selectAccounts();
 
-    /** 读取一条经济事实的处理记录。 */
+    /** 读取一条计费事实的处理记录。 */
     @Select("SELECT * FROM t_balance_applied_fact WHERE fact_id = #{factId}")
     Map<String, Object> selectAppliedFact(@Param("factId") long factId);
 
-    /** 读取一条经济事实生成的批次。 */
+    /** 读取一条计费事实生成的批次。 */
     @Select("SELECT * FROM t_account_posting WHERE source_type = 'ECONOMIC_FACT' AND fact_id = #{factId}")
     Map<String, Object> selectFactPosting(@Param("factId") long factId);
 

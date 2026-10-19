@@ -19,25 +19,27 @@ account 明细账，总账每账簿每 Owner 科目一个以账簿主体为 Owne
 
 | 模块 | 职责 |
 |---|---|
-| paytech-ledger-api | 内部 HTTP 契约：Finance Entity、财务日历与期间、账簿与科目账户、规则集、人工调整、试算与关账、过账流追平 `PostingStreamCommandApi`；`LedgerReadApi`（`/ledger/v1`：账簿、批量科目）；`LedgerOwnerType`、`RuleOwnerRole`、`LedgerErrorCode` |
+| paytech-ledger-api | 内部 HTTP 契约：Finance Entity、财务日历与期间、账簿与科目账户、规则集、人工调整、试算与关账、过账流追平 `PostingStreamCommandApi`；`LedgerReadApi`（`/ledger/v1`：账簿、批量科目）；`LedgerOwnerType`、`RuleOwnerRole`、`LedgerErrorCode`、`AmountSource`、`AutoInstructionType` |
 | paytech-ledger-core | 过账内核、`AccountPosted` 消费 Handler 与控制科目过账、追平、规则、人工调整、试算、关账、account / billing 出站客户端；包根 `com.paytech.ledger` |
 | paytech-ledger-app | 唯一 Spring Boot 启动模块：Controller、DataSource / MyBatis / TypeHandler、Snowflake、Redis 锁、paytech-messaging 消费端、account / billing HTTP 客户端 |
 | paytech-ledger-test | auto 测试、Mocker / Checker / 清理器、扮演 account 的 `AccountPosted` 发布 Probe、account / billing DTO Mock、`init/ddl.sql` |
 
 - ledger-core 依赖 `paytech-account-api`（`AccountPosted` 载荷与过账流身份、过账进度 / 批次合同、`OwnerAccountType` 目录、余额桶与标准科目代码）、
-  `paytech-billing-api`（金额来源、经济事实类型与事实详情 / pending 合同）与 `paytech-platform-support-api`（币种规则状态）；不依赖其他服务的 core。
+  `paytech-billing-api`（计费事实类型、外部引用类型与事实详情 / 进度查询合同 `BillingFactQueryApi`）、`paytech-ledger-api`
+  （金额来源 `AmountSource`、自动指令类型 `AutoInstructionType`）与 `paytech-platform-support-api`（币种规则状态）；不依赖其他服务的 core。
 - 控制科目过账：`AccountPostedPostingHandler`（`HANDLER_MANAGED`、按过账流 `strictOrder`）消费 `account.events`（分区队列 `ledger.account.p0..p3`）。
-  事务外：过账流尚无消费进度且序号不是 1 时等待重投；桶移动批次与 SKIPPED 批次只推进进度；其余经 billing `GET /billing/v1/economic-facts/{factId}`
+  事务外：过账流尚无消费进度且序号不是 1 时等待重投；桶移动批次与 SKIPPED 批次只推进进度；其余经 billing `GET /billing/v1/facts/{factId}`
   读事实（版本不一致等待重投）。事务内生成 `origin_type = ACCOUNT_POSTING` 的指令并过账：Owner 行逐条来自 account 流水（`account_entry_id`），
   非 Owner 行按 STANDARD_TRANSACTION / STANDARD_ADJUSTMENT 规则；替代事实在同一指令内对被替代事实的正向规则行取反。规则明确拒绝的批次进入
   `ledger.account.dlq`，恢复走 `POST /posting-streams/v1/catch-up`（经 account `GET /account-postings/v1` 按序号补齐，每批次一个本库事务）。
-- 过账期间按事实业务时间（PAYMENT 为支付成功时间，其余为批准时间）确定；该期间已关闭时顺延到其后最早的 OPEN 期间，没有可用期间时等待。
+- 过账期间按事实载荷的 businessTime（PAYMENT 为支付成功时间，人工 / 成本调整为批准时间，由 billing 决定）确定；该期间已关闭时顺延到其后最早的
+  OPEN 期间，没有可用期间时等待。渠道清算账户 Owner 取事实外部引用 `CLEARING_ACCOUNT`，税务机关取 `SELLER_TAX` 行的收方。
 - 过账内核不锁账户、不写余额：锁顺序为期间共享锁 → 账簿序号行排他锁；账户列表、试算与关账检查的余额一律由本库分录聚合。人工调整复核、期间创建、
   试算、关账与过账流追平另用 Foundation `AbstractLockProcessor` 的 Redis 资源锁（`AccountingLocks`）。
 - 账户身份矩阵（`AccountIdentityRule`）：桶一律 NONE；Owner 控制科目（`CLIENT_PAYABLE`、`CLIENT_SECURITY_DEPOSIT`、`CLIENT_RECOVERY_RECEIVABLE`、
   `PARTNER_PAYABLE`、`PARTNER_RECOVERY_RECEIVABLE`）只能以账簿主体为 Owner，且规则行不得引用；其余科目只允许平台类 Owner。
-- 人工调整不得涉及 Owner 控制科目（`OWNER_ACCOUNT_ADJUSTMENT_FORBIDDEN`），影响 Owner 余额的调整经 billing 登记 `MANUAL_ADJUSTMENT` 经济事实。
-- 关账步骤 3 `CHECK_ACCOUNT_POSTING_PROGRESS` 在事务外调用 billing `GET /billing/v1/economic-facts/pending` 与 account
+- 人工调整不得涉及 Owner 控制科目（`OWNER_ACCOUNT_ADJUSTMENT_FORBIDDEN`），影响 Owner 余额的调整经 billing 登记 `MANUAL_ADJUSTMENT` 计费事实。
+- 关账步骤 3 `CHECK_ACCOUNT_POSTING_PROGRESS` 在事务外调用 billing `GET /billing/v1/facts/progress` 与 account
   `GET /account-postings/v1/progress`：billing 无未发布事实、account 已应用事实数与最大 factId 等于 billing 已发布的，且 account 列出的每条过账流
   ledger 都已消费到最大序号，否则失败关闭。
 

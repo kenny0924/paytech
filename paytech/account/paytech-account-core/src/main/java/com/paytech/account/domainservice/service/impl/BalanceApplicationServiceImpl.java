@@ -41,7 +41,7 @@ import com.paytech.foundation.id.IdGenerator;
 import lombok.AllArgsConstructor;
 
 /**
- * 经济事实入账
+ * 计费事实入账
  * <li>锁顺序：① 本事实处理记录（fact_id 行锁）→ 被替代事实处理记录 → ② 事实主体 + 币种的入账流行 → ③ Owner 账户按主键升序 CAS。</li>
  * <li>不变量：每个 Owner 账户的借贷累计等于其全部流水之和；冲回只冲被替代事实自身的普通行（不冲它的冲回行），被冲回事实状态改为 REVERSED。</li>
  * <li>事实入账不检查账户状态（设计 8.7）；CLOSED 账户入账时记 WARN。</li>
@@ -58,11 +58,11 @@ public class BalanceApplicationServiceImpl implements BalanceApplicationService 
     private final OwnerAccountRepository ownerAccountRepository;
     private final BalanceAppliedFactRepository balanceAppliedFactRepository;
 
-    /** 幂等入账一条经济事实。 */
+    /** 幂等入账一条计费事实。 */
     @Override
     public AppliedFactStatus apply(FactRecord fact) {
         if (!TransactionSynchronizationManager.isActualTransactionActive()) {
-            throw new ErrorException("经济事实入账必须在调用方事务内执行");
+            throw new ErrorException("计费事实入账必须在调用方事务内执行");
         }
         BalanceAppliedFact existing = balanceAppliedFactRepository.lockByFactId(fact.factId());
         if (existing != null && existing.getApplyStatus() != AppliedFactStatus.PENDING_SUPERSEDED) {
@@ -129,7 +129,7 @@ public class BalanceApplicationServiceImpl implements BalanceApplicationService 
                 + effect.bucket().getCode(), key -> accountPostingWriter.resolveAccount(AccountEntityType.OPERATING_ENTITY,
                     fact.entityNo(), fact.currency(), effect.accountType(), effect.ownerId(), effect.bucket(), now));
             if (account.getAccountStatus() == AccountStatus.CLOSED) {
-                LOG.warn("经济事实入账到已关闭的 Owner 账户: fact {}, account {}", fact.factId(), account.getId());
+                LOG.warn("计费事实入账到已关闭的 Owner 账户: fact {}, account {}", fact.factId(), account.getId());
             }
             lines.add(new PostingLine(account, effect.entrySide(), effect.amount(), effect.factLineNo(), null));
         }

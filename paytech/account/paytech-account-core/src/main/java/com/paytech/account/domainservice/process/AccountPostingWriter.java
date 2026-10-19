@@ -132,12 +132,12 @@ public class AccountPostingWriter {
     }
 
     /**
-     * 写一个经济事实批次：分配序号、写批次与流水、更新余额并登记 AccountPosted
+     * 写一个计费事实批次：分配序号、写批次与流水、更新余额并登记 AccountPosted
      *
      * @param stream 已锁定的入账流
      * @param postingId 预先分配的批次主键（已处理事实记录引用它）
-     * @param factId 经济事实 ID
-     * @param factVersion 经济事实版本
+     * @param factId 计费事实 ID
+     * @param factVersion 计费事实版本
      * @param lines 流水，可为空列表（0 流水批次）
      * @param now 入账时间
      * @return 已写入的批次

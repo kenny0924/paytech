@@ -14,7 +14,7 @@ import com.paytech.ledger.domainservice.validator.account.AccountIdentityRule;
 /**
  * 人工调整的 Owner 控制科目禁令（技术方案 2.1）：调整行的账户科目属于 Owner 控制科目集合即拒绝
  * <li>控制科目（CLIENT_PAYABLE、CLIENT_SECURITY_DEPOSIT、CLIENT_RECOVERY_RECEIVABLE、PARTNER_PAYABLE、PARTNER_RECOVERY_RECEIVABLE）
- * 的余额必须等于 account 明细账合计，只能由 account 入账批次生成；影响 Owner 余额的调整必须经 billing 登记 MANUAL_ADJUSTMENT 经济事实。</li>
+ * 的余额必须等于 account 明细账合计，只能由 account 入账批次生成；影响 Owner 余额的调整必须经 billing 登记 MANUAL_ADJUSTMENT 计费事实。</li>
  * <li>只读入参，不访问数据库；提交与批准两个入口共用，错误码不变。</li>
  */
 public final class OwnerAccountAdjustmentRule {
@@ -38,7 +38,7 @@ public final class OwnerAccountAdjustmentRule {
             .map(LedgerAccount::getId).sorted().toList();
         if (!controls.isEmpty()) {
             throw new BusinessException(LedgerErrorCode.OWNER_ACCOUNT_ADJUSTMENT_FORBIDDEN,
-                "人工调整不得涉及 Client 或 Local Partner 的控制科目，请经计费登记 MANUAL_ADJUSTMENT 经济事实: " + adjustmentRef
+                "人工调整不得涉及 Client 或 Local Partner 的控制科目，请经计费登记 MANUAL_ADJUSTMENT 计费事实: " + adjustmentRef
                     + ", 账户 " + controls);
         }
     }

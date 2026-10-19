@@ -12,14 +12,20 @@
     <artifactId>paytech-channel-connector-core</artifactId>
     <packaging>jar</packaging>
     <name>PayTech Channel Connector Core</name>
-    <description>Channel / account / MID repositories, capability resolution, candidate query, frozen-target checks and
-        Platform standard API execution with result mapping.</description>
+    <description>Channel / account / MID repositories, capability resolution, candidate query, frozen-target checks,
+        Platform standard API execution with result mapping, and channel cost plan Maker-Checker / resolution / activation.</description>
     <dependencies>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-channel-connector-api</artifactId></dependency>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-common-core</artifactId></dependency>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-mybatis-support</artifactId></dependency>
+        <!-- 渠道成本方案写入口的 AbstractLockProcessor 资源锁、Snowflake 主键与 RFC 8785 内容摘要（需求 billing-计费事实模型重构与渠道成本迁出）。 -->
+        <dependency><groupId>com.paytech</groupId><artifactId>paytech-redis-starter</artifactId></dependency>
+        <dependency><groupId>com.paytech</groupId><artifactId>paytech-snowflake-id</artifactId></dependency>
+        <dependency><groupId>com.paytech</groupId><artifactId>paytech-json-canonicalization</artifactId></dependency>
         <dependency><groupId>org.springframework</groupId><artifactId>spring-context</artifactId></dependency>
         <dependency><groupId>org.springframework</groupId><artifactId>spring-jdbc</artifactId></dependency>
+        <dependency><groupId>org.springframework</groupId><artifactId>spring-tx</artifactId></dependency>
+        <dependency><groupId>org.slf4j</groupId><artifactId>slf4j-api</artifactId></dependency>
         <dependency><groupId>org.mybatis</groupId><artifactId>mybatis</artifactId></dependency>
         <dependency><groupId>jakarta.validation</groupId><artifactId>jakarta.validation-api</artifactId></dependency>
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot</artifactId></dependency>

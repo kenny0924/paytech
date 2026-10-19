@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.channel.connector.core.dal.mapper.ChannelCostScopeMapper">
+    <sql id="columns">id, cost_ver_id, scope_no, mid_id, entity_no, channel_agreement_ref, country_code, currency, payment_method_code, action_type, create_time</sql>
+
+    <insert id="insertBatch">
+        INSERT INTO t_channel_cost_scope (<include refid="columns"/>) VALUES
+        <foreach collection="scopes" item="scope" separator=",">(#{scope.id}, #{scope.costVerId}, #{scope.scopeNo}, #{scope.midId}, #{scope.entityNo}, #{scope.channelAgreementRef}, #{scope.countryCode}, #{scope.currency}, #{scope.paymentMethodCode}, #{scope.actionType}, #{scope.createTime})</foreach>
+    </insert>
+
+    <select id="selectByVersion" resultType="com.paytech.channel.connector.core.dal.dataobject.ChannelCostScope">
+        SELECT <include refid="columns"/> FROM t_channel_cost_scope WHERE cost_ver_id = #{costVerId} ORDER BY scope_no
+    </select>
+
+    <select id="selectMatch" resultType="com.paytech.channel.connector.core.dal.dataobject.ChannelCostScope">
+        SELECT <include refid="columns"/> FROM t_channel_cost_scope
+        WHERE cost_ver_id = #{costVerId} AND mid_id = #{midId} AND entity_no = #{entityNo} AND country_code = #{countryCode}
+          AND currency = #{currency} AND payment_method_code = #{paymentMethodCode} AND action_type = #{actionType}
+    </select>
+</mapper>

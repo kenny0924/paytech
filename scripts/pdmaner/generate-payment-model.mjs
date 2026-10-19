@@ -1,4 +1,4 @@
-import { CHANNEL_FIELD_OVERRIDES } from "./payment-channel-field-overrides.mjs";
+import { CHANNEL_FIELD_OVERRIDES, CHANNEL_INDEX_COMMENTS } from "./payment-channel-field-overrides.mjs";
 import { EXECUTION_FIELD_OVERRIDES } from "./payment-execution-field-overrides.mjs";
 import { paymentChannelIdentityKey } from "./payment-channel-identity.mjs";
 import { partitionModel } from "./payment-service-partition.mjs";
@@ -440,6 +440,56 @@ lock_version BIGINT NN
 create_time DATETIME(6) NN
 update_time DATETIME(6) NN
 sub_event_type VARCHAR(64) NN OPEN(Payment Compensation Sub Event Catalog)
+
+[t_channel_cost_plan]
+id BIGINT NN
+channel_id BIGINT NN
+plan_code VARCHAR(64) NN OPEN(channel-connector 渠道成本方案代码)
+current_ver_id BIGINT N
+status VARCHAR(64) NN {DRAFT,ACTIVE,INACTIVE}
+version BIGINT NN
+create_time DATETIME(6) NN
+update_time DATETIME(6) NN
+
+[t_channel_cost_plan_ver]
+id BIGINT NN
+plan_id BIGINT NN
+cost_ver INT NN
+effective_from DATETIME(6) NN
+effective_to DATETIME(6) N
+content_hash CHAR(64) NN
+status VARCHAR(64) NN {DRAFT,PENDING_APPROVAL,APPROVED,ACTIVE,REJECTED,INACTIVE}
+maker_id BIGINT NN
+checker_id BIGINT N
+create_time DATETIME(6) NN
+update_time DATETIME(6) NN
+
+[t_channel_cost_scope]
+id BIGINT NN
+cost_ver_id BIGINT NN
+scope_no INT NN
+mid_id BIGINT NN
+entity_no CHAR(5) NN
+channel_agreement_ref VARCHAR(128) NN
+country_code CHAR(2) NN OPEN(ISO 3166-1 alpha-2 国家代码)
+currency CHAR(3) NN OPEN(ISO 4217 币种代码)
+payment_method_code VARCHAR(64) NN OPEN(Payment 支付方式目录)
+action_type VARCHAR(64) NN OPEN(Payment 动作类型目录)
+create_time DATETIME(6) NN
+
+[t_channel_cost_component]
+id BIGINT NN
+scope_id BIGINT NN
+component_code VARCHAR(64) NN OPEN(channel-connector 渠道成本组件代码)
+component_type VARCHAR(64) NN {PROCESSING_FEE,CROSS_BORDER_FEE,REFUND_FEE,DISPUTE_FEE}
+calculation_base VARCHAR(64) NN {TRANSACTION_AMOUNT}
+rate_value DECIMAL(18,10) N
+fixed_amount DECIMAL(24,8) N
+currency CHAR(3) N OPEN(ISO 4217 币种代码)
+min_amount DECIMAL(24,8) N
+max_amount DECIMAL(24,8) N
+rounding_mode VARCHAR(64) NN {HALF_UP}
+create_time DATETIME(6) NN
 `;
 const INDEX_MANIFEST = String.raw`
 t_payment_channel
@@ -551,6 +601,18 @@ t_compensation_event
 UK uk_comp_event_identity(event_key,event_type,sub_event_type)
 IDX idx_comp_event_ready(execute_status,next_execute_at,id)
 IDX idx_comp_event_lease(execute_status,lock_until,id)
+t_channel_cost_plan
+UK uk_channel_cost_plan(channel_id)
+UK uk_channel_cost_code(plan_code)
+UK uk_channel_cost_current(current_ver_id)
+t_channel_cost_plan_ver
+UK uk_channel_cost_ver(plan_id,cost_ver)
+t_channel_cost_scope
+UK uk_channel_cost_scope_no(cost_ver_id,scope_no)
+UK uk_channel_cost_scope(cost_ver_id,mid_id,entity_no,country_code,currency,payment_method_code,action_type)
+IDX idx_channel_cost_match(mid_id,entity_no,country_code,currency)
+t_channel_cost_component
+UK uk_channel_cost_component(scope_id,component_code)
 `;
 const RELATION_MANIFEST = String.raw`
 n:1 channel_account.channel_id -> payment_channel.channel_id
@@ -616,6 +678,11 @@ n:1 channel_dispute_action.channel_dispute_notice_id -> channel_dispute_notice.c
 n:1 channel_dispute_action.channel_id -> payment_channel.channel_id
 n:1 channel_dispute_action.mid_id -> channel_mid.mid_id
 n:1 channel_dispute_action.channel_account_id -> channel_account.channel_account_id
+n:1 channel_cost_plan.channel_id -> payment_channel.channel_id
+n:1 channel_cost_plan_ver.plan_id -> channel_cost_plan.id
+n:1 channel_cost_scope.cost_ver_id -> channel_cost_plan_ver.id
+n:1 channel_cost_scope.mid_id -> channel_mid.mid_id
+n:1 channel_cost_component.scope_id -> channel_cost_scope.id
 `;
 
 const DIAGRAM_GROUPS = Object.freeze([
@@ -661,6 +728,13 @@ const DIAGRAM_GROUPS = Object.freeze([
     primary: Object.freeze(["command_idempotency", "compensation_event"]),
     references: Object.freeze([]),
   }),
+  // 2026-10-19 billing fact refactor: channel cost configuration moved from billing to channel-connector.
+  Object.freeze({
+    defKey: "channel_cost",
+    defName: "渠道成本配置",
+    primary: Object.freeze(["channel_cost_plan", "channel_cost_plan_ver", "channel_cost_scope", "channel_cost_component"]),
+    references: Object.freeze(["payment_channel", "channel_mid"]),
+  }),
 ]);
 
 const VERSION_TABLES = Object.freeze([
@@ -676,6 +750,7 @@ const VERSION_TABLES = Object.freeze([
   "channel_dispute_notice",
   "channel_dispute_action",
   "command_idempotency",
+  "channel_cost_plan",
 ]);
 
 const IMMUTABLE_TABLES = Object.freeze([
@@ -688,6 +763,8 @@ const IMMUTABLE_TABLES = Object.freeze([
 
   "channel_callback_item",
   "channel_dispute_event",
+  "channel_cost_scope",
+  "channel_cost_component",
 ]);
 
 function invariant(condition, message) {
@@ -967,7 +1044,8 @@ function buildIndexes(table, fieldsByKey, specs) {
       defKey: spec.defKey,
       defName: humanize(spec.defKey),
       unique: spec.unique,
-      comment: `${spec.unique ? "唯一" : "访问"}索引：${spec.fields.join("、")}`,
+      comment: CHANNEL_INDEX_COMMENTS[`${table.defKey}.${spec.defKey}`]
+        ?? `${spec.unique ? "唯一" : "访问"}索引：${spec.fields.join("、")}`,
       fields: spec.fields.map((fieldKey, position) => {
         const field = fieldsByKey.get(fieldKey);
         invariant(field, `Unknown index field: ${table.defKey}.${spec.defKey}.${fieldKey}`);
@@ -1144,7 +1222,7 @@ function validateMetadata(tables) {
     .filter((field) => field.openSourceHint)
     .map((field) => `${table.defKey}.${field.defKey}`)).sort();
   invariant(JSON.stringify(openMetadataKeys) === JSON.stringify(openManifestKeys), "Open-code metadata must exactly cover the manifest");
-  invariant(openManifestKeys.length === 44, `Expected 44 true open-code rows, found ${openManifestKeys.length}`);
+  invariant(openManifestKeys.length === 51, `Expected 51 true open-code rows, found ${openManifestKeys.length}`);
   for (const [key, value] of Object.entries(FIELD_METADATA)) {
     invariant(/[\u3400-\u9fff]/u.test(value.defName), `Field display name is not Chinese: ${key}`);
     invariant(/[\u3400-\u9fff]/u.test(value.description), `Field description is not Chinese: ${key}`);
@@ -1153,18 +1231,18 @@ function validateMetadata(tables) {
 
 function validateGeneratedModel(model, tables, relations) {
   invariant(JSON.stringify(modelTotals(model)) === JSON.stringify({
-    tables: 27,
-    fields: 349,
-    uniqueIndexes: 38,
-    accessIndexes: 44,
-    relations: 63,
-    diagramGroups: 7,
+    tables: 31,
+    fields: 391,
+    uniqueIndexes: 45,
+    accessIndexes: 45,
+    relations: 68,
+    diagramGroups: 8,
   }), `Unexpected generated totals: ${JSON.stringify(modelTotals(model))}`);
 
   const entitiesByKey = new Map(model.entities.map((entity) => [logicalTableKey(entity.defKey), entity]));
-  invariant(tables.length === 27, `Field manifest must have 27 tables, found ${tables.length}`);
-  invariant(new Set(VERSION_TABLES).size === 12, "Version allowlist must have 12 tables");
-  invariant(new Set(IMMUTABLE_TABLES).size === 7, "Immutable allowlist must have 7 tables");
+  invariant(tables.length === 31, `Field manifest must have 31 tables, found ${tables.length}`);
+  invariant(new Set(VERSION_TABLES).size === 13, "Version allowlist must have 13 tables");
+  invariant(new Set(IMMUTABLE_TABLES).size === 9, "Immutable allowlist must have 9 tables");
   const actualVersionTables = model.entities
     .filter((entity) => entity.fields.some((field) => field.defKey === "version"))
     .map((entity) => logicalTableKey(entity.defKey));
@@ -1201,10 +1279,10 @@ function validateGeneratedModel(model, tables, relations) {
   }
   invariant(relations.filter((relation) => relation.cardinality === "1:1").length === 7, "Relation manifest must have 6 indexed and one application-enforced 1:1 relations");
   const primaryTables = DIAGRAM_GROUPS.flatMap((group) => group.primary);
-  invariant(primaryTables.length === 27 && new Set(primaryTables).size === 27, "Every table must have exactly one primary diagram group");
+  invariant(primaryTables.length === 31 && new Set(primaryTables).size === 31, "Every table must have exactly one primary diagram group");
   const relationCells = model.diagrams.flatMap((diagram) => diagram.canvasData.cells)
     .filter((cell) => cell.shape === "erdRelation");
-  invariant(relationCells.length === 63, `Expected 63 relation cells, found ${relationCells.length}`);
+  invariant(relationCells.length === 68, `Expected 68 relation cells, found ${relationCells.length}`);
   const relationIds = relations.map(relationId);
   invariant(new Set(relationIds).size === relations.length, "Relation IDs must be unique");
   invariant(

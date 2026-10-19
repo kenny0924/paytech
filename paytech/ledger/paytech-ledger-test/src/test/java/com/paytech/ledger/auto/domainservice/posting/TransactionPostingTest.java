@@ -1,11 +1,11 @@
 package com.paytech.ledger.auto.domainservice.posting;
 
-import static com.paytech.ledger.test.builder.EconomicComponentBuilder.channelCost;
-import static com.paytech.ledger.test.builder.EconomicComponentBuilder.clientFee;
-import static com.paytech.ledger.test.builder.EconomicComponentBuilder.clientPrincipal;
-import static com.paytech.ledger.test.builder.EconomicComponentBuilder.partnerShare;
-import static com.paytech.ledger.test.builder.EconomicComponentBuilder.platformServiceCharge;
-import static com.paytech.ledger.test.builder.EconomicComponentBuilder.sellerTax;
+import static com.paytech.ledger.test.builder.BillingFactLineBuilder.channelCost;
+import static com.paytech.ledger.test.builder.BillingFactLineBuilder.clientFee;
+import static com.paytech.ledger.test.builder.BillingFactLineBuilder.clientPrincipal;
+import static com.paytech.ledger.test.builder.BillingFactLineBuilder.partnerShare;
+import static com.paytech.ledger.test.builder.BillingFactLineBuilder.platformServiceCharge;
+import static com.paytech.ledger.test.builder.BillingFactLineBuilder.sellerTax;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -21,8 +21,8 @@ import org.junit.jupiter.api.Test;
 
 import com.paytech.account.api.constant.StandardAccountCodes;
 import com.paytech.account.api.event.AccountPostedPayload;
-import com.paytech.billing.api.enums.AutoInstructionType;
-import com.paytech.billing.api.fact.EconomicFactPayload;
+import com.paytech.billing.api.fact.BillingFactPayload;
+import com.paytech.ledger.api.enums.AutoInstructionType;
 import com.paytech.ledger.api.enums.LedgerOwnerType;
 import com.paytech.ledger.core.dal.dataobject.AccountingInstruction;
 import com.paytech.ledger.domain.view.PostedInstructionView;
@@ -45,7 +45,7 @@ class TransactionPostingTest extends AbstractTransactionPostingTest {
     @Test
     void test_paymentWithoutPartner() {
         long book = oeLedger.getLedgerBookId();
-        EconomicFactPayload economics = fact(payment("100"),
+        BillingFactPayload economics = fact(payment("100"),
             clientPrincipal("97", CLIENT_ID), clientFee("3", ENTITY_NO));
         AccountPostedPayload posting = paymentPosting(economics, 1, "97", null).build();
 
@@ -53,7 +53,7 @@ class TransactionPostingTest extends AbstractTransactionPostingTest {
 
         assertEquals(1, views.size());
         AccountingInstruction instruction = instruction(posting, AutoInstructionType.PAYMENT_SUCCEEDED);
-        assertPostingInstruction(instruction, economics, posting, book, INITIAL_VERSION_ID, paymentDate(economics));
+        assertPostingInstruction(instruction, economics, posting, book, INITIAL_VERSION_ID, businessDate(economics));
         long receivable = channelReceivable(book);
         long feeRevenue = existingAccount(book, RuleVersionRequestBuilder.CLIENT_FEE_REVENUE,
             LedgerOwnerType.OPERATING_ENTITY, ENTITY_NO);
@@ -63,7 +63,7 @@ class TransactionPostingTest extends AbstractTransactionPostingTest {
         ledgerChecker.assertBalancedJournals(book, 1).assertAccount(receivable, "100", "0", "100", 1)
             .assertAccount(clientControl, "0", "97", "97", 1).assertAccount(feeRevenue, "0", "3", "3", 1);
         assertEquals(1, consumedSequence(posting));
-        assertEquals(1, economicFacts.factCalls(economics.getFactId()));
+        assertEquals(1, billingFacts.factCalls(economics.getFactId()));
     }
 
     /** 有 Partner：OE 账簿支付指令含分润费用规则行与两条控制科目流水行、Partner 侧服务费指令；平台 FE 账簿 1 条服务费指令。 */
@@ -73,7 +73,7 @@ class TransactionPostingTest extends AbstractTransactionPostingTest {
         long financeEntityId = Long.parseLong(platform.getEntityNo());
         long book = oeLedger.getLedgerBookId();
         long platformBook = platform.getLedgerBookId();
-        EconomicFactPayload economics = fact(payment("100").partner(PARTNER_ID, PARTNER_AGREEMENT_OE_ID, financeEntityId),
+        BillingFactPayload economics = fact(payment("100").partner(PARTNER_ID, financeEntityId),
             clientPrincipal("97", CLIENT_ID), clientFee("3", ENTITY_NO), partnerShare("1", PARTNER_ID),
             platformServiceCharge("0.5", financeEntityId));
         AccountPostedPayload posting = paymentPosting(economics, 1, "97", "1").build();
@@ -83,7 +83,7 @@ class TransactionPostingTest extends AbstractTransactionPostingTest {
         assertEquals(3, views.size());
         String fe = String.valueOf(financeEntityId);
         AccountingInstruction payment = instruction(posting, AutoInstructionType.PAYMENT_SUCCEEDED);
-        assertPostingInstruction(payment, economics, posting, book, INITIAL_VERSION_ID, paymentDate(economics));
+        assertPostingInstruction(payment, economics, posting, book, INITIAL_VERSION_ID, businessDate(economics));
         long partnerControl = controlAccount(StandardAccountCodes.PARTNER_PAYABLE);
         assertInstructionLines(payment.getId(), debit(5201, channelReceivable(book), "100"),
             credit(5203, existingAccount(book, RuleVersionRequestBuilder.CLIENT_FEE_REVENUE,
@@ -94,7 +94,7 @@ class TransactionPostingTest extends AbstractTransactionPostingTest {
             entry(posting.getEntries().get(1), partnerControl));
 
         AccountingInstruction partnerSide = instruction(posting, AutoInstructionType.PLATFORM_SERVICE_CHARGE_PARTNER);
-        assertPostingInstruction(partnerSide, economics, posting, book, INITIAL_VERSION_ID, paymentDate(economics));
+        assertPostingInstruction(partnerSide, economics, posting, book, INITIAL_VERSION_ID, businessDate(economics));
         long servicePayable = existingAccount(book, RuleVersionRequestBuilder.PLATFORM_SERVICE_PAYABLE,
             LedgerOwnerType.FINANCE_ENTITY, fe);
         assertInstructionLines(partnerSide.getId(), debit(5209, existingAccount(book,
@@ -103,7 +103,7 @@ class TransactionPostingTest extends AbstractTransactionPostingTest {
 
         AccountingInstruction platformSide = instruction(posting, AutoInstructionType.PLATFORM_SERVICE_CHARGE_PLATFORM);
         assertPostingInstruction(platformSide, economics, posting, platformBook, INITIAL_VERSION_ID,
-            paymentDate(economics));
+            businessDate(economics));
         long serviceRevenue = existingAccount(platformBook, RuleVersionRequestBuilder.PLATFORM_SERVICE_REVENUE,
             LedgerOwnerType.FINANCE_ENTITY, fe);
         assertInstructionLines(platformSide.getId(), debit(5211, existingAccount(platformBook,
@@ -121,7 +121,7 @@ class TransactionPostingTest extends AbstractTransactionPostingTest {
     @Test
     void test_zeroFeeSkippedWithTaxAndChannelCost() {
         long book = oeLedger.getLedgerBookId();
-        EconomicFactPayload economics = fact(payment("100"),
+        BillingFactPayload economics = fact(payment("100"),
             clientPrincipal("95", CLIENT_ID), clientFee("0", ENTITY_NO), sellerTax("5", TAX_AUTHORITY_ID),
             channelCost("2"));
         AccountPostedPayload posting = paymentPosting(economics, 1, "95", null).build();
@@ -151,7 +151,7 @@ class TransactionPostingTest extends AbstractTransactionPostingTest {
     void test_repeatedPostReturnsOriginal() {
         LedgerFixture platform = mockPlatformFinanceEntityLedger();
         long financeEntityId = Long.parseLong(platform.getEntityNo());
-        EconomicFactPayload economics = fact(payment("100").partner(PARTNER_ID, PARTNER_AGREEMENT_OE_ID, financeEntityId),
+        BillingFactPayload economics = fact(payment("100").partner(PARTNER_ID, financeEntityId),
             clientPrincipal("97", CLIENT_ID), clientFee("3", ENTITY_NO), partnerShare("1", PARTNER_ID),
             platformServiceCharge("0.5", financeEntityId));
         AccountPostedPayload posting = paymentPosting(economics, 1, "97", "1").build();

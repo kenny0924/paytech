@@ -1,7 +1,8 @@
 // Splits the Payment Orchestration PDManer model into one canonical model per owning service
 // (requirements/20261017/architecture-V2骨架与模块搬迁/design/03 §2.3, design/09 §4.3 / §5.2).
 //
-// - channel-connector owns the channel identity, account, MID, capability, routing-policy, interaction and callback tables;
+// - channel-connector owns the channel identity, account, MID, capability, routing-policy, interaction and callback tables,
+//   and since 2026-10-19 the four channel cost configuration tables moved from billing (decision 2026-10-19-billing-fact-engine);
 // - card owns the four card tables since step 12 (design/05; mor_card, card-service);
 // - payment owns everything else, including the three channel-dispute tables until the dispute service exists;
 // - t_compensation_event is a per-database table and appears in every model.
@@ -21,6 +22,10 @@ export const CHANNEL_CONNECTOR_TABLES = Object.freeze([
   "t_channel_callback",
   "t_channel_callback_item",
   "t_channel_event_exception",
+  "t_channel_cost_plan",
+  "t_channel_cost_plan_ver",
+  "t_channel_cost_scope",
+  "t_channel_cost_component",
 ]);
 
 export const CARD_TABLES = Object.freeze([
@@ -32,18 +37,19 @@ export const CARD_TABLES = Object.freeze([
 
 export const PER_DATABASE_TABLES = Object.freeze(["t_compensation_event"]);
 
+// name / describe follow the per-service convention of commit cf4a429c (service directory name, short Chinese table scope).
 export const PAYMENT_SERVICE_MODELS = Object.freeze({
   payment: Object.freeze({
-    name: "Code-MoR Payment Database V1",
-    describe: "Payment service part of the Payment Orchestration V1 PDManer model (mor_payment)",
+    name: "payment",
+    describe: "支付意图、支付尝试与支付动作、路由决策、支付工具 Token、渠道退款与服务商争议通知",
   }),
   "channel-connector": Object.freeze({
-    name: "Code-MoR Channel Connector Database V1",
-    describe: "Channel connector part of the Payment Orchestration V1 PDManer model (mor_channel_connector)",
+    name: "channel-connector",
+    describe: "支付服务商、账户与商户号、静态能力、路由策略、服务商交互与回调记录、渠道成本配置",
   }),
   card: Object.freeze({
-    name: "Code-MoR Card Database V1",
-    describe: "Card part of the Payment Orchestration V1 PDManer model (mor_card, card-service)",
+    name: "card",
+    describe: "卡、卡凭证、交易级卡工具、已存卡与一次性读卡票据",
   }),
 });
 

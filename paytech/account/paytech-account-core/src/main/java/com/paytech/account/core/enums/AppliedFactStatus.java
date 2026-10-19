@@ -2,7 +2,7 @@ package com.paytech.account.core.enums;
 
 import com.paytech.foundation.common.enums.CodeEnum;
 
-/** 经济事实对余额的影响状态（t_balance_applied_fact.apply_status）。 */
+/** 计费事实对余额的影响状态（t_balance_applied_fact.apply_status）。 */
 public enum AppliedFactStatus implements CodeEnum {
     /** 已应用到余额 */
     APPLIED,

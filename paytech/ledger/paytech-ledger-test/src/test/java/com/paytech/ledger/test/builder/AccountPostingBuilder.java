@@ -16,10 +16,10 @@ import com.paytech.account.api.enums.OwnerType;
 import com.paytech.account.api.enums.PostingSourceType;
 import com.paytech.account.api.event.AccountPostedEntryPayload;
 import com.paytech.account.api.event.AccountPostedPayload;
-import com.paytech.billing.api.fact.EconomicFactPayload;
+import com.paytech.billing.api.fact.BillingFactPayload;
 
 /**
- * account 入账批次（AccountPosted 载荷）模板：扮演 account 为经济事实或桶移动生成的批次，序号由用例控制
+ * account 入账批次（AccountPosted 载荷）模板：扮演 account 为计费事实或桶移动生成的批次，序号由用例控制
  * <li>默认流为事实 OE（entityNo）+ 币种 + 分片 0；批次主键与流水主键取测试内递增的合成值，不访问数据库。</li>
  * <li>流水按追加顺序编行号；金额为主货币单位普通十进制，方向与桶为 account-api 稳定 Code。</li>
  */
@@ -33,7 +33,7 @@ public final class AccountPostingBuilder {
     }
 
     /** 已应用事实的批次：主体为事实 OE，序号由调用方给出，流水为空。 */
-    public static AccountPostingBuilder fact(EconomicFactPayload fact, long postingSequence) {
+    public static AccountPostingBuilder fact(BillingFactPayload fact, long postingSequence) {
         AccountPostingBuilder builder = stream(AccountEntityType.OPERATING_ENTITY, fact.getEntityNo(), fact.getCurrency(),
             postingSequence);
         builder.payload.setSourceType(PostingSourceType.ECONOMIC_FACT.getCode());

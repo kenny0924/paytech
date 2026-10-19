@@ -1,6 +1,6 @@
 package com.paytech.ledger.auto.ext.http.stream;
 
-import static com.paytech.ledger.test.builder.EconomicComponentBuilder.adjustment;
+import static com.paytech.ledger.test.builder.BillingFactLineBuilder.adjustment;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -14,11 +14,11 @@ import com.paytech.account.api.enums.BalanceBucket;
 import com.paytech.account.api.enums.EntrySide;
 import com.paytech.account.api.enums.OwnerType;
 import com.paytech.account.api.event.AccountPostedPayload;
-import com.paytech.billing.api.enums.AmountSource;
-import com.paytech.billing.api.enums.EconomicsType;
+import com.paytech.billing.api.enums.BillingFactType;
+import com.paytech.billing.api.enums.FactComponentType;
 import com.paytech.billing.api.enums.FactLineDirection;
 import com.paytech.billing.api.enums.FactPartyRole;
-import com.paytech.billing.api.fact.EconomicFactPayload;
+import com.paytech.billing.api.fact.BillingFactPayload;
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.ledger.api.request.CatchUpPostingStreamRequestBody;
 import com.paytech.ledger.api.response.CatchUpPostingStreamResponseBody;
@@ -26,7 +26,7 @@ import com.paytech.ledger.test.base.AbstractTransactionPostingTest;
 import com.paytech.ledger.test.builder.AccountPostingBuilder;
 import com.paytech.ledger.test.checker.LedgerResponseChecker;
 import com.paytech.ledger.test.mocker.external.AccountPostingMocker;
-import com.paytech.ledger.test.mocker.external.EconomicFactMocker;
+import com.paytech.ledger.test.mocker.external.BillingFactMocker;
 import com.paytech.ledger.test.probe.AccountPostedPublisher;
 
 /**
@@ -45,9 +45,9 @@ class CatchUpPostingStreamTest extends AbstractTransactionPostingTest {
     @Test
     void test_catchUpFillsStreamAfterDeadLetter() {
         AccountPostedPayload movement = AccountPostingBuilder.movement(ENTITY_NO, CURRENCY, 1, CLIENT, "5").build();
-        EconomicFactPayload fact = clientCharge("8");
+        BillingFactPayload fact = clientCharge("8");
         AccountPostedPayload posting = clientCredit(fact, 2, "8");
-        economicFacts.mockFact(fact);
+        billingFacts.mockFact(fact);
         accountEvents.publish(posting);
         await().atMost(CONSUME_WAIT).until(() -> accountEvents.deadLetters() == 1);
         accountPostings.mockPostings(movement, posting);
@@ -61,7 +61,7 @@ class CatchUpPostingStreamTest extends AbstractTransactionPostingTest {
             () -> assertEquals(2, consumedSequence(posting)),
             () -> assertEquals(1, postedViews(posting).size()),
             () -> assertEquals(1, testMapper.countAllInstructions()),
-            () -> assertEquals(1, economicFacts.factCalls(fact.getFactId())));
+            () -> assertEquals(1, billingFacts.factCalls(fact.getFactId())));
         String replayId = accountEvents.publish(posting);
         await().atMost(CONSUME_WAIT).until(() -> accountEvents.pending() == 0);
         assertAll(() -> assertEquals(0, testMapper.countConsumedEvent(replayId), "重放的旧批次按 STALE 跳过、不登记"),
@@ -71,12 +71,12 @@ class CatchUpPostingStreamTest extends AbstractTransactionPostingTest {
     /** maxBatches 限制本次处理数，返回未追平；再次调用从已消费序号继续。 */
     @Test
     void test_maxBatchesThenResume() {
-        EconomicFactPayload first = clientCharge("1");
-        EconomicFactPayload second = clientCharge("2");
-        EconomicFactPayload third = clientCharge("3");
-        economicFacts.mockFact(first);
-        economicFacts.mockFact(second);
-        economicFacts.mockFact(third);
+        BillingFactPayload first = clientCharge("1");
+        BillingFactPayload second = clientCharge("2");
+        BillingFactPayload third = clientCharge("3");
+        billingFacts.mockFact(first);
+        billingFacts.mockFact(second);
+        billingFacts.mockFact(third);
         AccountPostedPayload thirdPosting = clientCredit(third, 3, "3");
         accountPostings.mockPostings(clientCredit(first, 1, "1"), clientCredit(second, 2, "2"), thirdPosting);
 
@@ -98,7 +98,7 @@ class CatchUpPostingStreamTest extends AbstractTransactionPostingTest {
     /** 已追平：从已消费序号 + 1 读取到空页，零处理。 */
     @Test
     void test_alreadyCaughtUp() {
-        EconomicFactPayload fact = clientCharge("1");
+        BillingFactPayload fact = clientCharge("1");
         AccountPostedPayload posting = clientCredit(fact, 1, "1");
         postBatch(fact, posting);
         accountPostings.mockPostings(posting);
@@ -122,10 +122,10 @@ class CatchUpPostingStreamTest extends AbstractTransactionPostingTest {
     @Test
     void test_billingUnavailableKeepsProcessedBatches() {
         AccountPostedPayload movement = AccountPostingBuilder.movement(ENTITY_NO, CURRENCY, 1, CLIENT, "5").build();
-        EconomicFactPayload fact = clientCharge("8");
+        BillingFactPayload fact = clientCharge("8");
         AccountPostedPayload posting = clientCredit(fact, 2, "8");
         accountPostings.mockPostings(movement, posting);
-        economicFacts.mockFactFailure(fact.getFactId(), EconomicFactMocker.unavailable());
+        billingFacts.mockFactFailure(fact.getFactId(), BillingFactMocker.unavailable());
 
         catchUp(null).assertProblem(503, CommonErrorCode.SERVICE_UNAVAILABLE.getCode());
 
@@ -165,13 +165,13 @@ class CatchUpPostingStreamTest extends AbstractTransactionPostingTest {
     }
 
     /** 一行 OE 向 Client 支付本金的人工调整。 */
-    EconomicFactPayload clientCharge(String amount) {
-        return fact(payment("0").economicsType(EconomicsType.MANUAL_ADJUSTMENT), adjustment(AmountSource.CLIENT_PRINCIPAL,
+    BillingFactPayload clientCharge(String amount) {
+        return fact(payment("0").factType(BillingFactType.MANUAL_ADJUSTMENT), adjustment(FactComponentType.CLIENT_PRINCIPAL,
             FactPartyRole.OPERATING_ENTITY, ENTITY_NO, FactPartyRole.CLIENT, CLIENT, FactLineDirection.CHARGE, amount));
     }
 
     /** 该事实的批次：一条 Client 应付贷方流水。 */
-    static AccountPostedPayload clientCredit(EconomicFactPayload fact, long sequence, String amount) {
+    static AccountPostedPayload clientCredit(BillingFactPayload fact, long sequence, String amount) {
         return AccountPostingBuilder.fact(fact, sequence).entry(StandardAccountCodes.CLIENT_PAYABLE, OwnerType.CLIENT,
             CLIENT, BalanceBucket.PENDING, EntrySide.CREDIT, amount, 1).build();
     }

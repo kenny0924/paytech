@@ -81,13 +81,13 @@
 | t_close_approval | ledger | mor_ledger | 有 | 搬迁 | |
 | t_close_account_rule | ledger | mor_ledger | 有 | 搬迁 | 测试清理器未覆盖，搬迁时补入 |
 | t_account | ledger（会计科目账户）；余额投影列迁出到 account | mor_ledger；新余额表在 mor_account | 有 | 搬迁 + 更名 `t_ledger_account` 去余额列；account 新建 `t_account_balance`（2026-10-19 明细账重构改为 `t_owner_account` + 过账流 / 批次 / 流水表，ledger 只留控制科目） | C1 已定（design/04 §3）：余额只由 `EconomicFactRecorded` 维护，第 11b 步执行；2026-10-18 决定 account 为 Owner 明细账、ledger 消费 `AccountPosted` 过账控制科目 |
-| t_transaction_economics | billing | mor_billing | 有（只读） | 搬迁 + 更名 `t_economic_fact`，补 `fact_type=MANUAL_ADJUSTMENT`、`supersedes_fact_id`、`status` | 唯一经济事实（C1）；ledger 与 account 均消费 `EconomicFactRecorded`，不再读表（04 §2） |
-| t_transaction_economic_component | billing | mor_billing | 有（只读） | 搬迁 + 更名 `t_economic_fact_line` | |
-| t_transaction_economic_comp_link | billing | mor_billing | 无 | 搬迁 + 更名 `t_economic_fact_line_link` | 更正链 |
-| t_channel_cost_plan | billing | mor_billing | 有 | 搬迁 | `/channel-cost-plans/v1` |
-| t_channel_cost_plan_ver | billing | mor_billing | 有 | 搬迁 | |
-| t_channel_cost_scope | billing | mor_billing | 有 | 搬迁 | |
-| t_channel_cost_component | billing | mor_billing | 有 | 搬迁 | |
+| t_transaction_economics | billing | mor_billing | 有（只读） | 搬迁 + 更名 `t_economic_fact`，补 `fact_type=MANUAL_ADJUSTMENT`、`supersedes_fact_id`、`status` | 唯一经济事实（C1）；ledger 与 account 均消费 `EconomicFactRecorded`，不再读表（04 §2）；**2026-10-19 起：** `t_billing_fact*` 五表归 billing（本行经济事实表删除），`t_channel_cost_*` 四表归 channel-connector，见 [billing 计费事实决定](../../../../agent-docs/decisions/2026-10-19-billing-fact-engine.md) |
+| t_transaction_economic_component | billing | mor_billing | 有（只读） | 搬迁 + 更名 `t_economic_fact_line` | **2026-10-19 起：** `t_billing_fact*` 五表归 billing（本行经济事实表删除），`t_channel_cost_*` 四表归 channel-connector，见 [billing 计费事实决定](../../../../agent-docs/decisions/2026-10-19-billing-fact-engine.md) |
+| t_transaction_economic_comp_link | billing | mor_billing | 无 | 搬迁 + 更名 `t_economic_fact_line_link` | 更正链；**2026-10-19 起：** `t_billing_fact*` 五表归 billing（本行经济事实表删除），`t_channel_cost_*` 四表归 channel-connector，见 [billing 计费事实决定](../../../../agent-docs/decisions/2026-10-19-billing-fact-engine.md) |
+| t_channel_cost_plan | billing | mor_billing | 有 | 搬迁 | `/channel-cost-plans/v1`；**2026-10-19 起：** `t_billing_fact*` 五表归 billing（本行经济事实表删除），`t_channel_cost_*` 四表归 channel-connector，见 [billing 计费事实决定](../../../../agent-docs/decisions/2026-10-19-billing-fact-engine.md)（接口改 `/channel-connector/v1/channel-cost-plans`） |
+| t_channel_cost_plan_ver | billing | mor_billing | 有 | 搬迁 | **2026-10-19 起：** `t_billing_fact*` 五表归 billing（本行经济事实表删除），`t_channel_cost_*` 四表归 channel-connector，见 [billing 计费事实决定](../../../../agent-docs/decisions/2026-10-19-billing-fact-engine.md) |
+| t_channel_cost_scope | billing | mor_billing | 有 | 搬迁 | **2026-10-19 起：** `t_billing_fact*` 五表归 billing（本行经济事实表删除），`t_channel_cost_*` 四表归 channel-connector，见 [billing 计费事实决定](../../../../agent-docs/decisions/2026-10-19-billing-fact-engine.md) |
+| t_channel_cost_component | billing | mor_billing | 有 | 搬迁 | **2026-10-19 起：** `t_billing_fact*` 五表归 billing（本行经济事实表删除），`t_channel_cost_*` 四表归 channel-connector，见 [billing 计费事实决定](../../../../agent-docs/decisions/2026-10-19-billing-fact-engine.md) |
 | t_channel_account | reconciliation | mor_reconciliation | 有（只读） | 搬迁 | Finance 渠道清算账户，与 Payment 同名表无关；ledger 自动记账解析 CHANNEL_ACCOUNT owner 改为事务外读 reconciliation-api |
 | t_channel_open_item | reconciliation | mor_reconciliation | 无 | 仅 Schema 归属 | |
 | t_channel_debit_item | reconciliation | mor_reconciliation | 无 | 仅 Schema 归属 | |
@@ -339,7 +339,7 @@
 | `t_finance_entity` | Finance 人工维护的会计法人主档，`/finance-entities/v1` 由 ledger Controller 提供；billing、tax 以 `finance_entity_id` 引用 | ledger | **API 读取**：billing / tax / payout 只存 ID，写入时经 `paytech-ledger-api` 校验存在性与 ACTIVE；不复制 | 无 |
 | `t_business_change_record` / `t_business_change_version`（CCT 审计根） | 单表混存两核心的 record_type；client-master 还把它作为 Client 生命周期投影源 | 各核心各自持有（两边各一份） | **两边各一份**：client-master 实例只收 PARTY、CLIENT、LOCAL_PARTNER、OPERATING_ENTITY、PARTY_PROFILE、CLIENT_BUSINESS_PROFILE、CLIENT_APPLICATION、PARTNER_APPLICATION、OPERATING_ENTITY_APPLICATION、PARTY_RELATION、CLIENT_ENTITY_AFFILIATION、ENTITY_SOURCE_RELATION；commercial 实例只收 AGREEMENT、COMMERCIAL_TERM_PLAN、COMMERCIAL_TERM_VERSION、PAYMENT_METHOD_PROFILE、CONSUMER_LEGAL_DOCUMENT、SELLER_DISCLOSURE。`BusinessChangeRecordRecordType` 与 `AggregateRootType` 枚举按此拆分；Checkout 解析所需的四类根版本由 client-master 随候选返回（S4），commercial 不读对方 BCR | 通用枚举 `BusinessChangeOperation`、`BusinessChangeSnapshotFormat` 两核心各保留一份副本，不新增 Foundation 模块（阶段 3 定稿，随整体方案确认） |
 | `t_compensation_event` | 每个现有库一份，Handler 跨未来核心共用 | 每个业务库 | **每库一份**：16 个业务库各一张；Handler、`compensation.instance-id`、XXL 执行器按 app 拆分；测试按 event_type 的清理改为按库清理 | 无 |
-| Finance 共享枚举 `AmountSource`、`EconomicsType`、`AutoInstructionType` | billing 组件代码与 ledger 规则行匹配键 | billing | 放入 `paytech-billing-api`；ledger 依赖 billing-api（流程层不依赖领域层内部包，符合 ArchUnit 规则） | 无 |
+| Finance 共享枚举 `AmountSource`、`EconomicsType`、`AutoInstructionType` | billing 组件代码与 ledger 规则行匹配键 | billing | 放入 `paytech-billing-api`；ledger 依赖 billing-api（流程层不依赖领域层内部包，符合 ArchUnit 规则） | **2026-10-19 起：** `AmountSource`、`AutoInstructionType` 已迁 `paytech-ledger-api`（值不变），`EconomicsType` 改名 billing-api `BillingFactType`，billing 行组件另用 `FactComponentType`；见[billing 计费事实决定](../../../../agent-docs/decisions/2026-10-19-billing-fact-engine.md) |
 | Finance 共享枚举 `OwnerType`、`OwnerRole`、`BalanceBucket`、`AccountIdentityRule`、`StandardAccountCodes`、`CurrencySpec` 值类型 | 跨 account / ledger / reconciliation / tax | account（账户身份规则）；`CurrencySpec` 值类型随 `t_currency_spec` 归 platform-support-api | 放入 `paytech-account-api` / `paytech-ledger-api`；S1 方案若把科目账户身份留在 ledger，则 `AccountIdentityRule` 改归 ledger-api | 随 S1 一并确认 |
 | Finance DataObject `Account`、`LedgerBook`、`ChartAccount` | account 与 ledger 代码共用 | ledger | DataObject 不跨模块（Owner-JAR 边界）；account 经 ledger-api 的 Result 模型读取 | 无 |
 | Payment 字符串代码 `ActionType` ↔ `ChannelOperation`、`ChannelExecutionOutcome` ↔ `ChannelOperationOutcome`、能力代码、`CaptureMode` 字面量 | web 两处映射，能力代码两处解析 | channel-connector 拥有 `ChannelOperation`、`ChannelOperationOutcome`、能力代码定义；payment 拥有 `ActionType`、`CaptureMode` | `paytech-channel-connector-api` 暴露枚举与能力代码常量；payment-core 做一次映射，`RouteServiceImpl` 改用 `CaptureMode` 枚举 | 无 |
@@ -421,6 +421,8 @@
 | **合计** | **243** | **22** | **265** |
 
 核对：255 − 5（删除 `t_command_idempotency`）= 250；`t_compensation_event` 来源 5 张、目标 16 张，+11；BCR 两边各一份 +2；`t_currency_spec` 只读副本 +2（ledger、billing）；250 + 11 + 2 + 2 = 265，与上表合计一致。Doris 库 `mor_data_service`、`mor_vault`、`mor_fx`、`mor_workflow_approval` 不含本次搬迁的表，不计入；`mor_platform` 只计入迁入的 `t_currency_spec`。
+
+> **2026-10-19 取代说明：** 上表是第 07 步搬迁时的口径。计费事实重构后 `mor_billing` 为 11 张（删经济事实三表与渠道成本四表，新增计费事实五表、工作日日历两表、消息消费两表），`mor_channel_connector` 为 17 张（迁入渠道成本四表）；归属以 [billing 计费事实决定](../../../../agent-docs/decisions/2026-10-19-billing-fact-engine.md) 与 `paytech/tools/arch-rules/scripts/generate-table-ownership.mjs` 的 step-removed / step-added 登记为准，本表数字不改。
 
 ### 4.3 各库对应的验收前置
 

@@ -11,7 +11,8 @@
     </parent>
     <artifactId>paytech-channel-connector-app</artifactId>
     <name>PayTech Channel Connector App</name>
-    <description>Deployable channel connector: Spring Boot entry, controllers, DataSource / MyBatis scan, Platform client wiring.</description>
+    <description>Deployable channel connector: Spring Boot entry, controllers, DataSource / MyBatis scan, Platform client wiring,
+        channel cost activation XXL-Job.</description>
     <dependencies>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-channel-connector-core</artifactId></dependency>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-channel-connector-api</artifactId></dependency>
@@ -19,6 +20,11 @@
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-http-client-support</artifactId></dependency>
         <!-- 内部调用身份（D26）：默认 OFF；入站校验由 MVC Starter 装配，出站 Token 见 InternalTokenClientOptions。 -->
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-internal-auth</artifactId></dependency>
+        <!-- 渠道成本：Snowflake 生成器装配、MyBatis TypeHandler、资源锁 Redisson，以及带 XXL 执行器的补偿组件（承载到期切换 Job）。 -->
+        <dependency><groupId>com.paytech</groupId><artifactId>paytech-snowflake-id</artifactId></dependency>
+        <dependency><groupId>com.paytech</groupId><artifactId>paytech-mybatis-support</artifactId></dependency>
+        <dependency><groupId>com.paytech</groupId><artifactId>paytech-redis-starter</artifactId></dependency>
+        <dependency><groupId>com.paytech</groupId><artifactId>paytech-compensation-event</artifactId></dependency>
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-webmvc</artifactId></dependency>
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-validation</artifactId></dependency>
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-actuator</artifactId></dependency>

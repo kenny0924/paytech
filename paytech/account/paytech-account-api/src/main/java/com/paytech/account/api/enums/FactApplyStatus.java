@@ -3,7 +3,7 @@ package com.paytech.account.api.enums;
 import com.paytech.foundation.common.enums.CodeEnum;
 
 /**
- * 事实批次中该经济事实在 account 的应用结果
+ * 事实批次中该计费事实在 account 的应用结果
  * <li>SKIPPED：替代事实先到，被替代事实的自身事件后到时只生成 0 流水批次；ledger 不生成任何行，只推进进度。</li>
  */
 public enum FactApplyStatus implements CodeEnum {

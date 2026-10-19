@@ -23,13 +23,13 @@ public class OwnerAccountEntryResponseBody {
     /** 批次来源：ECONOMIC_FACT 或 BALANCE_MOVEMENT。 */
     private String sourceType;
 
-    /** 事实批次：经济事实主键；桶移动批次为空。 */
+    /** 事实批次：计费事实主键；桶移动批次为空。 */
     private String factId;
 
-    /** 事实批次：经济事实版本；桶移动批次为空。 */
+    /** 事实批次：计费事实版本；桶移动批次为空。 */
     private String factVersion;
 
-    /** 事实批次：经济事实类型代码（billing {@code EconomicsType}）；桶移动批次为空。 */
+    /** 事实批次：计费事实类型代码（billing {@code BillingFactType}）；桶移动批次为空。 */
     private String factType;
 
     /** 桶移动批次：移动来源类型；事实批次为空。 */

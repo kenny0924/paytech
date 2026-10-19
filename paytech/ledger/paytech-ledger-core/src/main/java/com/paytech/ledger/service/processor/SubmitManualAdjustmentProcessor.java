@@ -53,7 +53,7 @@ import lombok.AllArgsConstructor;
  * <li>每次请求都是一笔新调整；HTTP 重复提交由 Gateway Idempotency-Key 处理，不做业务防重。</li>
  * <li>审批过账时会在锁内复验期间、账户与平衡，提交时的校验只用于尽早拒绝。</li>
  * <li>调整行涉及 Client 或 Local Partner 账户时以 OWNER_ACCOUNT_ADJUSTMENT_FORBIDDEN 拒绝：影响 Owner 余额的调整必须经 billing 登记
- * MANUAL_ADJUSTMENT 经济事实（design/04 §4）；纯科目重分类不受影响。</li>
+ * MANUAL_ADJUSTMENT 计费事实（design/04 §4）；纯科目重分类不受影响。</li>
  */
 @Component
 @AllArgsConstructor

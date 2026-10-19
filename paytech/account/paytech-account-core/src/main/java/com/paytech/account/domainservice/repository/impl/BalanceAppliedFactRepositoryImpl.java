@@ -28,7 +28,7 @@ public class BalanceAppliedFactRepositoryImpl implements BalanceAppliedFactRepos
         try {
             mapper.insert(fact);
         } catch (DuplicateKeyException e) {
-            throw new ConcurrentRequestException("经济事实被并发登记: " + fact.getFactId() + "/" + fact.getFactVersion(), e);
+            throw new ConcurrentRequestException("计费事实被并发登记: " + fact.getFactId() + "/" + fact.getFactVersion(), e);
         }
     }
 
@@ -48,7 +48,7 @@ public class BalanceAppliedFactRepositoryImpl implements BalanceAppliedFactRepos
     @Override
     public void updateStatus(BalanceAppliedFact fact, AppliedFactStatus status, Instant now) {
         if (mapper.updateStatus(fact, status, now) != 1) {
-            throw new ConcurrentRequestException("经济事实处理状态已变化: " + fact.getFactId());
+            throw new ConcurrentRequestException("计费事实处理状态已变化: " + fact.getFactId());
         }
         fact.setApplyStatus(status);
         fact.setUpdateTime(now);
@@ -82,7 +82,7 @@ public class BalanceAppliedFactRepositoryImpl implements BalanceAppliedFactRepos
     @Override
     public void markMatured(BalanceAppliedFact fact, Instant maturedTime) {
         if (mapper.markMatured(fact.getId(), maturedTime) != 1) {
-            throw new ConcurrentRequestException("经济事实到期状态已变化: " + fact.getFactId());
+            throw new ConcurrentRequestException("计费事实到期状态已变化: " + fact.getFactId());
         }
         fact.setMaturityStatus(MaturityStatus.MATURED);
         fact.setMaturedTime(maturedTime);

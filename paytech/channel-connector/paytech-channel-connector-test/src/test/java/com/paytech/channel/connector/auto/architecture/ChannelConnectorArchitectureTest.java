@@ -59,11 +59,12 @@ class ChannelConnectorArchitectureTest {
         }
     }
 
-    /** 渠道 12 表只属于 channel-connector：R4 对两个服务零违规，Payment 源码与 Mapper 不出现渠道表名。 */
+    /** 渠道 12 表与渠道成本 4 表只属于 channel-connector：R4 对两个服务零违规，Payment 源码与 Mapper 不出现这些表名。 */
     @Test
     void keepsChannelTablesInsideOwnerModule() throws IOException {
         var tables = Pattern.compile("\\bt_(?:payment_channel|channel_account|channel_mid|mid_capability(?:_detail)?"
-            + "|routing_policy(?:_version|_mid)?|channel_interaction|channel_callback(?:_item)?|channel_event_exception)\\b",
+            + "|routing_policy(?:_version|_mid)?|channel_interaction|channel_callback(?:_item)?|channel_event_exception"
+            + "|channel_cost_(?:plan(?:_ver)?|scope|component))\\b",
             Pattern.CASE_INSENSITIVE);
         for (var module : modules(paymentRoot(), PAYMENT_MODULES)) {
             for (var file : sources(module)) {

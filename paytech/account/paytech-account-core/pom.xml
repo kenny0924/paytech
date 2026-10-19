@@ -15,7 +15,7 @@
     <packaging>jar</packaging>
 
     <name>PayTech Account Core</name>
-    <description>Account subledger implementation: EconomicFactRecorded posting handler, AccountPosted publisher, bucket movements, maturity, dal, domain, domainservice and processors; no boot class or controller.</description>
+    <description>Account subledger implementation: BillingFactRecorded posting handler, AccountPosted publisher, bucket movements, maturity, dal, domain, domainservice and processors; no boot class or controller.</description>
 
     <dependencies>
         <dependency>
@@ -23,7 +23,7 @@
             <artifactId>paytech-account-api</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <!-- 只用 EconomicFactRecorded 的 Payload 合同；account 不再调用 billing 或 ledger 的 HTTP 接口（technique 2.1）。 -->
+        <!-- 只用 BillingFactRecorded 的 Payload 合同；account 不再调用 billing 或 ledger 的 HTTP 接口（technique 2.1）。 -->
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-billing-api</artifactId>
@@ -34,7 +34,7 @@
             <groupId>com.paytech</groupId>
             <artifactId>paytech-compensation-event</artifactId>
         </dependency>
-        <!-- EconomicFactRecorded 消费 Handler 与 AccountPosted 发布端口（拓扑、容器与发布实现由 app 的 paytech-messaging 提供）。 -->
+        <!-- BillingFactRecorded 消费 Handler 与 AccountPosted 发布端口（拓扑、容器与发布实现由 app 的 paytech-messaging 提供）。 -->
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-messaging-api</artifactId>

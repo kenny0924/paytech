@@ -1,6 +1,6 @@
 # account 本地补偿事件类型目录（ArchUnit R12）：每个 CompensationEventHandler 的 eventType() 必须在此登记；
 # 与 MQ 领域事件目录 foundation/paytech-messaging/catalog/events.yaml 不是同一集合。
-# ACCOUNT_POSTED：消费 EconomicFactRecorded 入账或执行余额桶移动时，与过账批次（t_account_posting）在同一本地事务登记；
+# ACCOUNT_POSTED：消费 BillingFactRecorded 入账或执行余额桶移动时，与过账批次（t_account_posting）在同一本地事务登记；
 # 提交后由 AccountPostedHandler 按事件键读批次与流水重建 AccountPosted 载荷，发布到 account.events，Broker 确认后写 published_time。
 eventTypes:
   - ACCOUNT_POSTED

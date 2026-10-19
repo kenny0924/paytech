@@ -41,7 +41,7 @@ class YamlEventCatalogAutoTest {
     void test_normalFlow_packagedCatalog() {
         YamlEventCatalog catalog = YamlEventCatalog.fromClasspath();
 
-        assertEquals(List.of("PaymentSucceeded", "ClientReviewDecided", "EconomicFactRecorded", "AccountPosted",
+        assertEquals(List.of("PaymentSucceeded", "ClientReviewDecided", "BillingFactRecorded", "AccountPosted",
             "SettlementRestrictionChanged"), catalog.entries().stream().map(EventCatalogEntry::eventType).toList());
         EventCatalogEntry payment = catalog.find("PaymentSucceeded").orElseThrow();
         assertEquals(2, payment.schemaVersion());
@@ -49,7 +49,7 @@ class YamlEventCatalogAutoTest {
         assertEquals("payment", payment.producer());
         assertEquals(List.of("acquiring", "card"), payment.consumers());
         assertFalse(payment.strictOrder());
-        EventCatalogEntry economic = catalog.find("EconomicFactRecorded").orElseThrow();
+        EventCatalogEntry economic = catalog.find("BillingFactRecorded").orElseThrow();
         assertEquals("billing", economic.producer());
         assertEquals(List.of("account"), economic.consumers());
         assertEquals(List.of("payout", "account"), catalog.find("SettlementRestrictionChanged").orElseThrow().consumers());

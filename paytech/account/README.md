@@ -15,7 +15,7 @@
 | 模块 | 职责 |
 |---|---|
 | paytech-account-api | `BalanceQueryApi`、`BalanceMovementApi`、`AccountPostingApi`、`OwnerAccountQueryApi`；`AccountPostedPayload`；`OwnerAccountType`、`OwnerType`、`BalanceBucket`、`MovementSourceType` 等稳定 Code 与错误码 |
-| paytech-account-core | 入账 `BalanceApplicationService`（映射规则 `FactBalanceMappingRule`）、桶移动、到期转可用、按流重建、查询；共用写入步骤 `AccountPostingWriter`；`EconomicFactRecordedBalanceHandler`（MQ 消费）与 `AccountPostedHandler`（补偿发布）；包根 `com.paytech.account` |
+| paytech-account-core | 入账 `BalanceApplicationService`（映射规则 `FactBalanceMappingRule`）、桶移动、到期转可用、按流重建、查询；共用写入步骤 `AccountPostingWriter`；`BillingFactRecordedBalanceHandler`（MQ 消费）与 `AccountPostedHandler`（补偿发布）；包根 `com.paytech.account` |
 | paytech-account-app | 启动类、Controller 与 Converter、XXL-Job Handler `accountBalanceMaturity`、DataSource / MyBatis / TypeHandler、paytech-messaging 消费与发布端、paytech-compensation-event、Snowflake |
 | paytech-account-test | auto 测试；扮演 billing 的事件发布 Probe、`AccountPostedProbe`（观察 account.events）、`init/ddl.sql` |
 

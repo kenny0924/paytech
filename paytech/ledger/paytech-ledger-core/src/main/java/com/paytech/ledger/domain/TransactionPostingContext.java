@@ -4,28 +4,28 @@ import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
 
-import com.paytech.billing.api.enums.AmountSource;
-import com.paytech.billing.api.enums.AutoInstructionType;
-import com.paytech.billing.api.fact.EconomicFactLinePayload;
-import com.paytech.billing.api.fact.EconomicFactPayload;
+import com.paytech.ledger.api.enums.AmountSource;
+import com.paytech.ledger.api.enums.AutoInstructionType;
+import com.paytech.billing.api.fact.BillingFactLinePayload;
+import com.paytech.billing.api.fact.BillingFactPayload;
 import com.paytech.ledger.core.dal.dataobject.AccountingRuleBundleVer;
 import com.paytech.ledger.core.dal.dataobject.AccountingRuleLine;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-/** 一次控制科目过账的规则上下文：入账批次、已断言完整的经济事实、生效规则版本与规则行。 */
+/** 一次控制科目过账的规则上下文：入账批次、已断言完整的计费事实、生效规则版本与规则行。 */
 @Getter
 @RequiredArgsConstructor
 public class TransactionPostingContext {
-    /** 调用方命令（入账批次与经济事实）。 */
+    /** 调用方命令（入账批次与计费事实）。 */
     private final AccountPostingCommand command;
 
-    /** 已断言完整的经济事实。 */
-    private final EconomicFactPayload fact;
+    /** 已断言完整的计费事实。 */
+    private final BillingFactPayload fact;
 
-    /** 经济事实全部明细行，按行号升序。 */
-    private final List<EconomicFactLinePayload> lines;
+    /** 计费事实全部明细行，按行号升序。 */
+    private final List<BillingFactLinePayload> lines;
 
     /** 事实业务时点生效的规则版本。 */
     private final AccountingRuleBundleVer bundleVer;
@@ -33,7 +33,7 @@ public class TransactionPostingContext {
     /** 生效规则版本的全部规则行。 */
     private final List<AccountingRuleLine> ruleLines;
 
-    /** 经济事实主键。 */
+    /** 计费事实主键。 */
     public long factId() {
         return fact.getFactId();
     }
@@ -45,7 +45,7 @@ public class TransactionPostingContext {
     }
 
     /** 某组件类型的全部明细行。 */
-    public List<EconomicFactLinePayload> linesOf(String componentType) {
+    public List<BillingFactLinePayload> linesOf(String componentType) {
         return lines.stream().filter(line -> componentType.equals(line.getComponentType())).toList();
     }
 
@@ -58,10 +58,10 @@ public class TransactionPostingContext {
         if (source == AmountSource.GROSS_AMOUNT) {
             return fact.getGrossAmount();
         }
-        List<EconomicFactLinePayload> matched = linesOf(source.getCode());
+        List<BillingFactLinePayload> matched = linesOf(source.getCode());
         if (matched.isEmpty()) {
             return null;
         }
-        return matched.stream().map(EconomicFactLinePayload::getPostedAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        return matched.stream().map(BillingFactLinePayload::getPostedAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }

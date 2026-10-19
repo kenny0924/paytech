@@ -13,6 +13,8 @@
 
 ## 2. 阶段 0 的最小计费（billing-service）
 
+> **2026-10-19 取代：** 本节的表名（`t_economic_fact*`）、事实类型清单、`PAYOUT_FEE` 与事件名 `EconomicFactRecorded`，由 [billing 计费事实决定](../../../../agent-docs/decisions/2026-10-19-billing-fact-engine.md) 第 3 节所列条款（第 3、4、6、11、12 条）取代：表改为 `t_billing_fact*`，事件改为 `BillingFactRecorded`，渠道成本四表归 channel-connector。本节的 Maker-Checker 与载荷含全部明细行的原则不变；以下内容保留为第 07 步的历史记录。
+
 现有 `t_transaction_economics`、`t_transaction_economic_component`（有读代码、无生产写入）与 `t_transaction_economic_comp_link` 迁入 `mor_billing` 并成为经济事实模型：
 
 | 表 | 用途 | 变化 |

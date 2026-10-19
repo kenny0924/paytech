@@ -10,8 +10,8 @@ import java.util.Set;
 import org.springframework.stereotype.Component;
 
 import com.paytech.account.api.enums.BalanceBucket;
-import com.paytech.billing.api.enums.AmountSource;
-import com.paytech.billing.api.enums.AutoInstructionType;
+import com.paytech.ledger.api.enums.AmountSource;
+import com.paytech.ledger.api.enums.AutoInstructionType;
 import com.paytech.foundation.common.enums.CodeEnum;
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.ErrorException;

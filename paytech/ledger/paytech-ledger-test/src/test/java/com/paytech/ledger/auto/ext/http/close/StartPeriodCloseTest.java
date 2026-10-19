@@ -25,7 +25,7 @@ import com.paytech.ledger.core.enums.LedgerEntityType;
 import com.paytech.ledger.core.enums.PeriodStatus;
 import com.paytech.ledger.test.base.AbstractPeriodCloseApiTest;
 import com.paytech.ledger.test.mocker.external.AccountPostingMocker;
-import com.paytech.ledger.test.mocker.external.EconomicFactMocker;
+import com.paytech.ledger.test.mocker.external.BillingFactMocker;
 import com.paytech.ledger.test.mocker.local.LedgerMocker;
 
 import tools.jackson.databind.JsonNode;
@@ -159,7 +159,7 @@ class StartPeriodCloseTest extends AbstractPeriodCloseApiTest {
     @Test
     void test_billingUnpublishedFactsFail() {
         postRevenue("10");
-        economicFacts.mockProgress(OE, ledger.getEntityNo(), ledger.getCurrency(), 1, 0, null);
+        billingFacts.mockProgress(OE, ledger.getEntityNo(), ledger.getCurrency(), 1, 0, null);
 
         assertFailedAt(STEP_3, "1");
     }
@@ -168,7 +168,7 @@ class StartPeriodCloseTest extends AbstractPeriodCloseApiTest {
     @Test
     void test_appliedCountMismatchFails() {
         postRevenue("10");
-        economicFacts.mockProgress(OE, ledger.getEntityNo(), ledger.getCurrency(), 0, 2, 9002L);
+        billingFacts.mockProgress(OE, ledger.getEntityNo(), ledger.getCurrency(), 0, 2, 9002L);
         accountPostings.mockProgress(OE, ledger.getEntityNo(), ledger.getCurrency(), 1, 9002L);
 
         assertFailedAt(STEP_3, "1");
@@ -178,7 +178,7 @@ class StartPeriodCloseTest extends AbstractPeriodCloseApiTest {
     @Test
     void test_ledgerBehindThenCaughtUp() {
         postRevenue("10");
-        economicFacts.mockProgress(OE, ledger.getEntityNo(), ledger.getCurrency(), 0, 2, 9002L);
+        billingFacts.mockProgress(OE, ledger.getEntityNo(), ledger.getCurrency(), 0, 2, 9002L);
         accountPostings.mockProgress(OE, ledger.getEntityNo(), ledger.getCurrency(), 2, 9002L,
             new AccountPostingMocker.StreamProgress(OE, ledger.getEntityNo(), ledger.getCurrency(), 0, 5));
         String stream = AccountPostedPayload.aggregateId(AccountEntityType.OPERATING_ENTITY, ledger.getEntityNo(),
@@ -196,11 +196,11 @@ class StartPeriodCloseTest extends AbstractPeriodCloseApiTest {
     @Test
     void test_dependencyUnavailableFailsClosed() {
         postRevenue("10");
-        economicFacts.mockProgressFailure(OE, ledger.getEntityNo(), ledger.getCurrency(), EconomicFactMocker.unavailable());
+        billingFacts.mockProgressFailure(OE, ledger.getEntityNo(), ledger.getCurrency(), BillingFactMocker.unavailable());
 
         assertFailedAt(STEP_3, "1");
 
-        economicFacts.mockProgress(OE, ledger.getEntityNo(), ledger.getCurrency(), 0, 0, null);
+        billingFacts.mockProgress(OE, ledger.getEntityNo(), ledger.getCurrency(), 0, 0, null);
         accountPostings.mockProgressFailure(OE, ledger.getEntityNo(), ledger.getCurrency(),
             AccountPostingMocker.unavailable());
 

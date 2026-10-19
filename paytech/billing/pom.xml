@@ -15,7 +15,7 @@
     <packaging>pom</packaging>
 
     <name>PayTech Billing</name>
-    <description>Billing service aggregator: economic facts and channel cost plans (moved from finance-service, step 07).</description>
+    <description>Billing service aggregator: billing facts (t_billing_fact model, 2026-10-19) published as BillingFactRecorded; channel cost configuration moved to channel-connector.</description>
 
     <modules>
         <module>paytech-billing-api</module>
@@ -45,7 +45,7 @@
                                         <exclude>com.paytech:*-core</exclude>
                                         <exclude>com.paytech:*-app</exclude>
                                         <!-- Finance bans copied from 09 §1.4. Step 11a reopens AMQP, compensation-event and its
-                                             XXL-Job fallback for billing (EconomicFactRecorded is published from a compensation Handler). -->
+                                             XXL-Job fallback for billing (BillingFactRecorded is published from a compensation Handler). -->
                                         <exclude>org.flywaydb:*</exclude>
                                         <exclude>org.liquibase:*</exclude>
                                         <exclude>com.alibaba.cloud:*</exclude>

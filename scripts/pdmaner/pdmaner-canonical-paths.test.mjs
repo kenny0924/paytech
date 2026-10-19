@@ -24,7 +24,8 @@ const modelContracts = [
   ["paytech/ledger", "ledger.pdma.json", null],
   // account 模型脱离 Finance 生成器，直接维护 JSON。
   ["paytech/account", "account.pdma.json", null],
-  ["paytech/billing", "billing.pdma.json", "scripts/pdmaner/finance/generate-finance-model.mjs"],
+  // billing 模型脱离 Finance 生成器（2026-10-19 计费事实重构），直接维护 JSON，由 billing-model.test.mjs 校验。
+  ["paytech/billing", "billing.pdma.json", null],
   ["paytech/reconciliation", "reconciliation.pdma.json", "scripts/pdmaner/finance/generate-finance-model.mjs"],
   ["paytech/tax", "tax.pdma.json", "scripts/pdmaner/finance/generate-finance-model.mjs"],
   ["paytech/payout", "payout.pdma.json", "scripts/pdmaner/finance/generate-finance-model.mjs"],

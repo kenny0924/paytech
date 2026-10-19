@@ -20,9 +20,10 @@ import com.paytech.account.core.enums.AccountStatus;
 import com.paytech.account.test.base.AbstractBalanceTest;
 import com.paytech.account.api.enums.MovementSourceType;
 import com.paytech.account.test.builder.BalanceMovementRequestBuilder;
-import com.paytech.billing.api.enums.AmountSource;
-import com.paytech.billing.api.enums.EconomicsType;
-import com.paytech.billing.api.fact.EconomicFactPayload;
+import com.paytech.billing.api.enums.FactComponentType;
+import com.paytech.billing.api.enums.FactPartyRole;
+import com.paytech.billing.api.enums.BillingFactType;
+import com.paytech.billing.api.fact.BillingFactPayload;
 
 import tools.jackson.databind.JsonNode;
 
@@ -41,8 +42,10 @@ class OwnerAccountQueryTest extends AbstractBalanceTest {
     /** 全部账户、按 Owner 类型与按科目 + 桶筛选、越界页与非法 size。 */
     @Test
     void test_listAccountsWithFilters() {
-        consumed(payment("100").partner(PARTNER_ID, PARTNER_AGREEMENT_OE_ID, FINANCE_ENTITY_ID)
-            .component(AmountSource.CLIENT_PRINCIPAL, "94").component(AmountSource.PARTNER_SHARE, "1").build());
+        consumed(payment("100").partner(PARTNER_ID, FINANCE_ENTITY_ID)
+            .component(FactComponentType.CLIENT_PRINCIPAL, FactPartyRole.OPERATING_ENTITY, FactPartyRole.CLIENT, "94")
+            .component(FactComponentType.PARTNER_SHARE, FactPartyRole.OPERATING_ENTITY,
+                FactPartyRole.LOCAL_PARTNER, "1").build());
         accounts.mockAccount(ENTITY_NO, CURRENCY, OwnerAccountType.BANK_CASH, "770001", BalanceBucket.AVAILABLE, "500");
 
         List<JsonNode> all = get(ACCOUNTS).assertSuccess(200).assertPage(1, 10, 3);
@@ -72,7 +75,7 @@ class OwnerAccountQueryTest extends AbstractBalanceTest {
     /** 账户流水按入账顺序分页，带批次序号与来源；账户不存在为 ACCOUNT_NOT_FOUND。 */
     @Test
     void test_listEntriesPaged() {
-        EconomicFactPayload first = clientCredit("10").build();
+        BillingFactPayload first = clientCredit("10").build();
         consumed(first);
         consumed(clientCredit("2").build());
         String accountId = account(OwnerAccountType.CLIENT_PAYABLE, CLIENT, BalanceBucket.PENDING).get("id").toString();
@@ -84,7 +87,7 @@ class OwnerAccountQueryTest extends AbstractBalanceTest {
             .toList()), () -> assertEquals(PostingSourceType.ECONOMIC_FACT.getCode(), head.path("sourceType").asString()),
             () -> assertEquals(Long.toString(first.getFactId()), head.path("factId").asString()),
             () -> assertEquals("1", head.path("factVersion").asString()),
-            () -> assertEquals(EconomicsType.MANUAL_ADJUSTMENT.getCode(), head.path("factType").asString()),
+            () -> assertEquals(BillingFactType.MANUAL_ADJUSTMENT.getCode(), head.path("factType").asString()),
             () -> assertEquals(EntrySide.CREDIT.getCode(), head.path("entrySide").asString()),
             () -> assertEquals("10.00", head.path("amount").path("amount").asString()),
             () -> assertTrue(head.path("movementSourceType").isNull()));

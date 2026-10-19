@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
@@ -18,9 +19,14 @@ import com.paytech.channel.connector.test.mocker.VaultTransactionObserver;
 import com.paytech.foundation.testsupport.api.MockHttpServer;
 import com.paytech.foundation.testsupport.api.TestBase;
 
-/** 共用正式 channel-connector 应用；每例验证专用库与 Mock 空基线，结束时检查意外调用后由 Foundation 统一清理。 */
+/**
+ * 共用正式 channel-connector 应用；每例验证专用库与 Mock 空基线，结束时检查意外调用后由 Foundation 统一清理
+ * <li>本地 MySQL（mor_channel_connector）与 Redis（渠道成本资源锁，前缀 channel-connector-mock）需预先就绪。</li>
+ * <li>{@code @AutoConfigureRestTestClient} 提供公共 HttpTestInvoker，供渠道成本接口测试经真实 HTTP 入口调用。</li>
+ */
 @SpringBootTest(classes = ChannelConnectorApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("mock")
+@AutoConfigureRestTestClient
 @Import(ChannelConnectorTestConfiguration.class)
 public abstract class ChannelConnectorMockTestBase extends TestBase {
     @Autowired

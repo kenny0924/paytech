@@ -37,7 +37,7 @@ export function serviceModelPath(service) {
 }
 
 const SERVICE_TITLES = Object.freeze({
-  billing: "Billing", reconciliation: "Reconciliation", tax: "Tax", payout: "Payout",
+  reconciliation: "Reconciliation", tax: "Tax", payout: "Payout",
 });
 
 const MODEL_KEY = "code-mor/finance/database/v1";
@@ -635,7 +635,7 @@ function adoptReplacedIdentity(variant, replaced) {
   variant.correlations = replaced.correlations.filter((relation) => kept.has(relation.myField));
 }
 
-/** 生成器维护的四个服务库物理模型（account、ledger 已脱离生成器），按 FINANCE_SERVICES 顺序；每库表数必须等于 design/03 §4.2。 */
+/** 生成器维护的三个服务库物理模型（account、ledger、billing 已脱离生成器），按 FINANCE_SERVICES 顺序；每库表数必须等于 design/03 §4.2。 */
 export function generateFinanceServiceModels(model = generateFinanceModel()) {
   const tablesByService = serviceTables();
   const models = new Map();

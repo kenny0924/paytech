@@ -6,8 +6,8 @@ import java.util.List;
 
 import com.paytech.account.api.constant.StandardAccountCodes;
 import com.paytech.account.api.enums.BalanceBucket;
-import com.paytech.billing.api.enums.AmountSource;
-import com.paytech.billing.api.enums.AutoInstructionType;
+import com.paytech.ledger.api.enums.AmountSource;
+import com.paytech.ledger.api.enums.AutoInstructionType;
 import com.paytech.ledger.api.enums.RuleOwnerRole;
 import com.paytech.ledger.api.request.CreateRuleVersionRequestBody;
 import com.paytech.ledger.api.request.RuleLineRequestBody;

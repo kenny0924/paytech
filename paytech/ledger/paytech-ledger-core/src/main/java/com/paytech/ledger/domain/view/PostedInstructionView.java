@@ -1,6 +1,6 @@
 package com.paytech.ledger.domain.view;
 
-import com.paytech.billing.api.enums.AutoInstructionType;
+import com.paytech.ledger.api.enums.AutoInstructionType;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

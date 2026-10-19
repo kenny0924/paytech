@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.channel.connector.core.dal.mapper.ChannelCostComponentMapper">
+    <!-- 闭合枚举列以内联 CodeEnumTypeHandler 按 javaType 绑定（未知 Code 读取失败），其余列按下划线转驼峰自动映射。 -->
+    <resultMap id="row" type="com.paytech.channel.connector.core.dal.dataobject.ChannelCostComponent" autoMapping="true">
+        <result column="component_type" property="componentType" javaType="com.paytech.channel.connector.core.enums.ChannelCostComponentType" typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="calculation_base" property="calculationBase" javaType="com.paytech.channel.connector.core.enums.ChannelCostCalculationBase" typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="rounding_mode" property="roundingMode" javaType="com.paytech.channel.connector.core.enums.AmountRoundingMode" typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+    </resultMap>
+
+    <sql id="columns">id, scope_id, component_code, component_type, calculation_base, rate_value, fixed_amount, currency, min_amount, max_amount, rounding_mode, create_time</sql>
+
+    <insert id="insertBatch">
+        INSERT INTO t_channel_cost_component (<include refid="columns"/>) VALUES
+        <foreach collection="components" item="component" separator=",">(#{component.id}, #{component.scopeId}, #{component.componentCode}, #{component.componentType.code}, #{component.calculationBase.code}, #{component.rateValue}, #{component.fixedAmount}, #{component.currency}, #{component.minAmount}, #{component.maxAmount}, #{component.roundingMode.code}, #{component.createTime})</foreach>
+    </insert>
+
+    <select id="selectByScope" resultMap="row">
+        SELECT <include refid="columns"/> FROM t_channel_cost_component WHERE scope_id = #{scopeId} ORDER BY component_code COLLATE utf8mb4_bin
+    </select>
+
+    <select id="selectByScopes" resultMap="row">
+        SELECT <include refid="columns"/> FROM t_channel_cost_component
+        WHERE scope_id IN <foreach collection="scopeIds" item="scopeId" open="(" separator="," close=")">#{scopeId}</foreach>
+        ORDER BY scope_id, component_code COLLATE utf8mb4_bin
+    </select>
+</mapper>

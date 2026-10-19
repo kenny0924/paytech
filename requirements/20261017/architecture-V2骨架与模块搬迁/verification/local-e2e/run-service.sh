@@ -202,9 +202,14 @@ start_one() {
       CARD_FINGERPRINT_KEY="$(cat "$RUNTIME/card-fingerprint.key")" CARD_SNOWFLAKE_REGION_ID=0 CARD_SNOWFLAKE_WORKER_ID=9 \
         java_app card "${NACOS[@]}" --compensation.instance-id=card-local-e2e ;;
     channel-connector)
+      # 2026-10-19 渠道成本迁入（requirements/20261019/billing-计费事实模型重构与渠道成本迁出 B-report 第 6 节第 9 项）：
+      # Snowflake 必填（Worker 16 未被其他服务占用）、Redis 资源锁、补偿实例；XXL 执行器同 billing 本机不连调度中心，显式禁用。
       MOR_CHANNEL_CONNECTOR_DB_URL="$(db_url channel-connector)" MOR_CHANNEL_CONNECTOR_DB_USERNAME=channel_connector_app \
       MOR_CHANNEL_CONNECTOR_DB_PASSWORD="$(db_password MOR_CHANNEL_CONNECTOR_DB_PASSWORD channel-connector)" \
-        java_app channel-connector "${NACOS[@]}" ;;
+      CHANNEL_CONNECTOR_SNOWFLAKE_REGION_ID=0 CHANNEL_CONNECTOR_SNOWFLAKE_WORKER_ID=16 \
+      CHANNEL_CONNECTOR_REDIS_HOST=127.0.0.1 CHANNEL_CONNECTOR_REDIS_PORT=16379 CHANNEL_CONNECTOR_REDIS_PASSWORD="$MOR_REDIS_PASSWORD" \
+      CHANNEL_CONNECTOR_COMPENSATION_INSTANCE_ID=channel-connector-local-e2e \
+        java_app channel-connector "${NACOS[@]}" --xxl.job.executor.enabled=false ;;
     payment)
       MOR_PAYMENT_DB_URL="$(db_url payment)" MOR_PAYMENT_DB_USERNAME=payment_app MOR_PAYMENT_DB_PASSWORD="$MOR_PAYMENT_DB_PASSWORD" \
       MOR_REDIS_PASSWORD="$MOR_REDIS_PASSWORD" PAYMENT_RABBITMQ_USERNAME="$MOR_RABBITMQ_USER" \

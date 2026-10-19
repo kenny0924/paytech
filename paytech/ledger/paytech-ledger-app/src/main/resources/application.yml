@@ -32,7 +32,7 @@ spring:
     password: "${LEDGER_RABBITMQ_PASSWORD:}"
     virtual-host: "${LEDGER_RABBITMQ_VHOST:/mor-local}"
     connection-timeout: 2s
-  # 内部 HTTP 客户端：account 过账进度与批次（关账步骤 3、过账流追平），billing 经济事实与发布进度（AccountPosted 消费读事实、关账步骤 3）。
+  # 内部 HTTP 客户端：account 过账进度与批次（关账步骤 3、过账流追平），billing 计费事实与发布进度（AccountPosted 消费读事实、关账步骤 3）。
   # JDK HttpClient 不自动重试；Finance 后继服务不接服务发现，基址直接配置。
   http:
     clients:

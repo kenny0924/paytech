@@ -8,7 +8,7 @@ import com.paytech.foundation.common.enums.CodeEnum;
  * <li>FACT_MATURITY 由 account 到期任务内部发起，接口请求使用它时拒绝（MOVEMENT_NOT_ALLOWED）。</li>
  */
 public enum MovementSourceType implements CodeEnum {
-    /** 经济事实到期：PENDING → AVAILABLE；sourceRef 为 {factId}:{factVersion}:{accountId}；仅内部 */
+    /** 计费事实到期：PENDING → AVAILABLE；sourceRef 为 {factId}:{factVersion}:{accountId}；仅内部 */
     FACT_MATURITY(BalanceBucket.PENDING, BalanceBucket.AVAILABLE, false),
 
     /** 出款锁定：AVAILABLE → LOCKED */

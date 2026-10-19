@@ -26,20 +26,19 @@ events:
     consumers: [client-master]
     strictOrder: false
     payloadSchemaRef: paytech-compliance-api/event/ClientReviewDecided/v1
-  # 唯一经济事实（C1，design/04 §5）：account 维护 Owner 明细账，Payload 含头与全部明细行。
-  # 第 11a 步按实现核对：aggregateId 为 factId，aggregateVersion 取 t_economic_fact.fact_version（替代链递增）；Payload 字段定义见
-  # paytech-billing-api 的 com.paytech.billing.api.fact.EconomicFactPayload。不同事实之间无顺序依赖，故 strictOrder=false。
-  # 2026-10-19 明细账与控制科目重构（决定 2026-10-18）：唯一消费方为 account 的 EconomicFactRecordedBalanceHandler
-  # （account.billing.p0..p3，SHARED 事务）；ledger 不再消费本事件，改消费 AccountPosted，并经 billing-api 读取事实。
-  # Payload 头新增可选 balanceAvailableTime（UTC RFC 3339，仅 PAYMENT 且 billing 已计算时非空），Schema 版本保持 1。
-  - eventType: EconomicFactRecorded
+  # 唯一计费事实（决定 2026-10-19 计费事实引擎；需求 billing-计费事实模型重构与渠道成本迁出，替代原经济事实事件）：Payload 为
+  # paytech-billing-api 的 com.paytech.billing.api.fact.BillingFactPayload，含头 + 外部引用（refs）+ 全部明细行（每行付方 / 收方）。
+  # aggregateId 为 factId，aggregateVersion 取 t_billing_fact.fact_version（替代链递增），occurredAt 为批准（AUTO 为登记）时间。
+  # businessTime 是 ledger 过账日期来源；refs 的 CLEARING_ACCOUNT 是 ledger 渠道账户 Owner 来源。不同事实之间无顺序依赖，故 strictOrder=false。
+  # 唯一消费方为 account（SHARED 事务）维护 Owner 明细账；ledger 不消费本事件，改消费 AccountPosted 并经 billing-api 读取事实。
+  - eventType: BillingFactRecorded
     schemaVersion: 1
     producer: billing
-    aggregateType: ECONOMIC_FACT
+    aggregateType: BILLING_FACT
     aggregateVersionField: factVersion
     consumers: [account]
     strictOrder: false
-    payloadSchemaRef: paytech-billing-api/event/EconomicFactRecorded/v1
+    payloadSchemaRef: paytech-billing-api/event/BillingFactRecorded/v1
   # account 过账批次（决定 2026-10-18，2026-10-19 技术方案 2.1 / 2.2）：account 每生成一个 t_account_posting（事实入账或余额桶移动）
   # 发布一次，ledger 按批次过账控制科目。Payload 为 paytech-account-api 的 com.paytech.account.api.event.AccountPostedPayload。
   # aggregateId 为过账流身份 {OE|FE}.{entityId}.{currency}.{shardNo}（例如 OE.AE001.USD.0、FE.8001.USD.0；用 . 分隔，因 aggregateId

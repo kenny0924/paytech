@@ -38,6 +38,14 @@ spring:
       connection-timeout: 2000
       validation-timeout: 1000
       connection-init-sql: "SET time_zone = '+00:00'"
+  # 仓库 local-environment 的本机 Redis：渠道成本写入口资源锁；凭据可用环境变量覆盖。
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 16379
+      password: "${CHANNEL_CONNECTOR_TEST_REDIS_PASSWORD:${PAYTECH_REDIS_PASSWORD:${MOR_REDIS_PASSWORD:c4e99fe36176a66ece55b0c23e5af0be488d409f2e89f6c5}}}"
+      connect-timeout: 2s
+      timeout: 2s
   sql:
     init:
       mode: never
@@ -55,6 +63,27 @@ web:
 
 mybatis:
   mapper-locations: "classpath*:mapper/**/*.xml"
+
+# paytech-redis-starter
+redis:
+  # 测试专用 Key 前缀，与本地运行实例隔离；生产缺省使用 spring.application.name。
+  key-prefix: channel-connector-mock
+  coordination:
+    enabled: true
+    threads: 4
+    netty-threads: 4
+
+# paytech-compensation-event：本服务暂无补偿事件类型；引入组件只为带上 XXL-Job 执行器。
+compensation:
+  enabled: true
+  # 多实例 Claim/Lease 的实例标识；测试固定值。
+  instance-id: channel-connector-test
+
+# paytech-xxl-job-starter（随 compensation-event 引入）：测试不连接调度中心，到期切换由用例直接调用 Job Handler。
+xxl:
+  job:
+    executor:
+      enabled: false
 
 internal-auth:
   # 裸 OFF 会被 YAML 解析为布尔 false，必须带引号。
@@ -74,6 +103,10 @@ channel-connector:
   outbound:
     platform-context-path: "" # 测试 Mock HTTP 服务无 Platform 的 /platform-support 前缀。
     platform-read-timeout: 30s
+  identifier:
+    # Snowflake Region / Worker 标识（渠道成本主键与测试 Fixture 主键）；生产无默认值且必填，修改需重启。测试进程固定 31/29。
+    region-id: 31
+    worker-id: 29
 
 vault:
   client:

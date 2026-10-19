@@ -30,7 +30,7 @@ import lombok.AllArgsConstructor;
  * Handler 从批次、流水、Owner 账户与来源记录重建 Payload，补偿记录不保存业务内容。</li>
  * <li>经 {@link DomainEventPublisher} 发布到 account.events，收到 Broker 确认后写 published_time；发布前后崩溃只会重复发布同一 eventId，
  * ledger 按聚合版本幂等。发布端按聚合串行（messaging.producer.sequencer），同一流的批次按序号顺序发布。</li>
- * <li>批次不存在为终态失败，保留记录供人工处理；Broker 未确认或连接失败可重试。策略同 billing EconomicFactRecorded。</li>
+ * <li>批次不存在为终态失败，保留记录供人工处理；Broker 未确认或连接失败可重试。策略同 billing BillingFactRecorded。</li>
  */
 @Component
 @AllArgsConstructor

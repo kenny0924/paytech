@@ -498,8 +498,25 @@ services:
       MOR_CHANNEL_CONNECTOR_DB_USERNAME: channel_connector_app
       MOR_CHANNEL_CONNECTOR_DB_PASSWORD: ${MOR_CHANNEL_CONNECTOR_DB_PASSWORD:?prepare test secrets}
       PAYTECH_INSTANCE_ID: channel-connector-test
+      # 渠道成本方案写入口的资源锁（paytech-redis-starter）与主键（Snowflake，Worker 26 未被其他服务占用（Snowflake 允许 0–31））。
+      CHANNEL_CONNECTOR_REDIS_HOST: redis
+      CHANNEL_CONNECTOR_REDIS_PORT: "6379"
+      CHANNEL_CONNECTOR_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?prepare test secrets}
+      CHANNEL_CONNECTOR_SNOWFLAKE_REGION_ID: "0"
+      CHANNEL_CONNECTOR_SNOWFLAKE_WORKER_ID: "26"
+      CHANNEL_CONNECTOR_COMPENSATION_INSTANCE_ID: channel-connector-test
+      # XXL 执行器：任务 channelCostVersionActivation 在 xxl-job-admin 登记（20261019 billing 计费事实需求 release/xxl-job-channel-cost-activation.md）。
+      XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
+      XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
+      XXL_JOB_EXECUTOR_ENABLED: "true"
+      XXL_JOB_EXECUTOR_APPNAME: channel-connector-service
+      XXL_JOB_EXECUTOR_IP: 172.30.73.36
+      XXL_JOB_EXECUTOR_PORT: "9999"
+      XXL_JOB_EXECUTOR_LOGPATH: /tmp/xxl-job
+      XXL_JOB_EXECUTOR_EXCLUDEDPACKAGES: org.springframework.,spring.
     depends_on:
       mysql: { condition: service_healthy }
+      redis: { condition: service_healthy }
       nacos: { condition: service_healthy }
     healthcheck:
       test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:19110/actuator/health/readiness]

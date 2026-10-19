@@ -48,7 +48,7 @@ import com.paytech.ledger.core.enums.PeriodCloseType;
 import com.paytech.ledger.core.enums.PeriodStatus;
 import com.paytech.ledger.core.enums.TrialBalanceStatus;
 import com.paytech.ledger.domain.AccountPostingProgress;
-import com.paytech.ledger.domain.EconomicFactProgress;
+import com.paytech.ledger.domain.BillingFactProgress;
 import com.paytech.ledger.domain.JournalPostingContext;
 import com.paytech.ledger.domain.PeriodCloseContentHash;
 import com.paytech.ledger.domain.PeriodCloseContext;
@@ -67,7 +67,7 @@ import com.paytech.ledger.domainservice.service.JournalPostingService;
 import com.paytech.ledger.domainservice.service.PeriodCloseService;
 import com.paytech.ledger.domainservice.service.TrialBalanceService;
 import com.paytech.ledger.integration.account.AccountPostingClient;
-import com.paytech.ledger.integration.billing.EconomicFactClient;
+import com.paytech.ledger.integration.billing.BillingFactClient;
 import com.paytech.ledger.service.processor.request.StartPeriodCloseRequest;
 
 import lombok.AllArgsConstructor;
@@ -92,7 +92,7 @@ public class StartPeriodCloseProcessor extends AbstractLockProcessor<StartPeriod
     private final PeriodCloseService periodCloseService;
     private final TransactionTemplate transactionTemplate;
     private final TrialBalanceService trialBalanceService;
-    private final EconomicFactClient economicFactClient;
+    private final BillingFactClient billingFactClient;
     private final AccountPostingClient accountPostingClient;
     private final ConsumedEventRepository consumedEventRepository;
     private final LedgerBookRepository ledgerBookRepository;
@@ -272,10 +272,10 @@ public class StartPeriodCloseProcessor extends AbstractLockProcessor<StartPeriod
      */
     boolean checkBookPostingProgress(LedgerBook book, StringBuilder summary) {
         summary.append('|').append(book.getId()).append(':');
-        EconomicFactProgress billing;
+        BillingFactProgress billing;
         AccountPostingProgress account;
         try {
-            billing = economicFactClient.getProgress(book);
+            billing = billingFactClient.getProgress(book);
             account = accountPostingClient.getProgress(book);
         } catch (RuntimeException unavailable) {
             summary.append("UNAVAILABLE=").append(unavailable.getClass().getSimpleName());
@@ -289,7 +289,7 @@ public class StartPeriodCloseProcessor extends AbstractLockProcessor<StartPeriod
     }
 
     /** 段 ①：billing 无未发布事实，account 已应用事实数与最大 factId 等于 billing 已发布事实数与最大 factId。 */
-    boolean checkFactsApplied(EconomicFactProgress billing, AccountPostingProgress account, StringBuilder summary) {
+    boolean checkFactsApplied(BillingFactProgress billing, AccountPostingProgress account, StringBuilder summary) {
         summary.append("billingPending=").append(billing.getPendingCount()).append(",billingPublished=")
             .append(billing.getPublishedFactCount()).append(",billingMaxPublished=").append(billing.getMaxPublishedFactId())
             .append(",accountApplied=").append(account.getAppliedFactCount()).append(",accountMaxApplied=")

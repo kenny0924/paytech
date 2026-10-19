@@ -4,7 +4,7 @@ import com.paytech.foundation.common.enums.CodeEnum;
 
 /**
  * Owner 账户状态（t_owner_account.account_status）
- * <li>只约束桶移动等主动命令；经济事实照常入账，CLOSED 账户入账时记 WARN（设计 8.7）。本期没有改状态接口。</li>
+ * <li>只约束桶移动等主动命令；计费事实照常入账，CLOSED 账户入账时记 WARN（设计 8.7）。本期没有改状态接口。</li>
  */
 public enum AccountStatus implements CodeEnum {
     /** 正常 */

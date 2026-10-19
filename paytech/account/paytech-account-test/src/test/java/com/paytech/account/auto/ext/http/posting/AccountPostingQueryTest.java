@@ -25,12 +25,13 @@ import com.paytech.account.api.response.AccountPostingListResponseBody;
 import com.paytech.account.api.response.AccountPostingProgressResponseBody;
 import com.paytech.account.api.response.AccountPostingResponseBody;
 import com.paytech.account.test.base.AbstractBalanceTest;
-import com.paytech.billing.api.enums.AmountSource;
-import com.paytech.billing.api.fact.EconomicFactPayload;
+import com.paytech.billing.api.enums.FactComponentType;
+import com.paytech.billing.api.enums.FactPartyRole;
+import com.paytech.billing.api.fact.BillingFactPayload;
 import com.paytech.foundation.money.Money;
 
 /**
- * 入账进度、批次列表（ledger 追平）与批次详情：经真实 HTTP 入口读取本地 MySQL，批次由消费 EconomicFactRecorded 生成
+ * 入账进度、批次列表（ledger 追平）与批次详情：经真实 HTTP 入口读取本地 MySQL，批次由消费 BillingFactRecorded 生成
  * <li>进度只计自身事件已到达的事实（排除 PENDING_SUPERSEDED）；FINANCE_ENTITY 主体的流包含引用它的事实所在的 OE 流；没有流时为空。</li>
  * <li>列表按序号升序、满页给出下一页起始序号，limit 超过 200 为 400；详情不存在为 POSTING_NOT_FOUND。</li>
  *
@@ -47,9 +48,9 @@ class AccountPostingQueryTest extends AbstractBalanceTest {
     /** OE 进度：三条已到达事实（替代先到的占位不计），一条流最大序号 3。 */
     @Test
     void test_progressForOperatingEntity() {
-        EconomicFactPayload partnerFact = partnerPayment();
-        EconomicFactPayload plain = clientCredit("1").build();
-        EconomicFactPayload v2 = clientCredit("2").supersedes(nextFactId(), 2).build();
+        BillingFactPayload partnerFact = partnerPayment();
+        BillingFactPayload plain = clientCredit("1").build();
+        BillingFactPayload v2 = clientCredit("2").supersedes(nextFactId(), 2).build();
         consumed(partnerFact);
         consumed(plain);
         consumed(v2);
@@ -69,7 +70,7 @@ class AccountPostingQueryTest extends AbstractBalanceTest {
     /** Finance Entity 进度：只计引用它的事实，流为这些事实所在的 OE 流。 */
     @Test
     void test_progressForFinanceEntity() {
-        EconomicFactPayload partnerFact = partnerPayment();
+        BillingFactPayload partnerFact = partnerPayment();
         consumed(partnerFact);
         consumed(clientCredit("1").build());
 
@@ -122,7 +123,7 @@ class AccountPostingQueryTest extends AbstractBalanceTest {
     /** 批次详情：批次头（含 Broker 确认后的发布时间）、来源事实与带科目、Owner、桶的流水；不存在为 POSTING_NOT_FOUND。 */
     @Test
     void test_getPostingDetail() {
-        EconomicFactPayload fact = partnerPayment();
+        BillingFactPayload fact = partnerPayment();
         consumed(fact);
         String postingId = factPosting(fact.getFactId()).get("id").toString();
         posted.await(1);
@@ -151,8 +152,10 @@ class AccountPostingQueryTest extends AbstractBalanceTest {
     }
 
     /** 带合作方的交易事实：Client 94、Partner 1，平台服务费收取方为 Finance Entity。 */
-    private static EconomicFactPayload partnerPayment() {
-        return payment("100").partner(PARTNER_ID, PARTNER_AGREEMENT_OE_ID, FINANCE_ENTITY_ID)
-            .component(AmountSource.CLIENT_PRINCIPAL, "94").component(AmountSource.PARTNER_SHARE, "1").build();
+    private static BillingFactPayload partnerPayment() {
+        return payment("100").partner(PARTNER_ID, FINANCE_ENTITY_ID)
+            .component(FactComponentType.CLIENT_PRINCIPAL, FactPartyRole.OPERATING_ENTITY, FactPartyRole.CLIENT, "94")
+            .component(FactComponentType.PARTNER_SHARE, FactPartyRole.OPERATING_ENTITY,
+                FactPartyRole.LOCAL_PARTNER, "1").build();
     }
 }

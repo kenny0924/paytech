@@ -1,6 +1,6 @@
 {
   "name": "channel-connector",
-  "describe": "支付服务商、账户与商户号、静态能力、路由策略、服务商交互与回调记录",
+  "describe": "支付服务商、账户与商户号、静态能力、路由策略、服务商交互与回调记录、渠道成本配置",
   "avatar": "",
   "version": "4.9.3",
   "createdTime": "2025-5-28 13:36:15",
@@ -5827,6 +5827,1710 @@
         }
       ],
       "type": "P"
+    },
+    {
+      "id": "1ADB1F18-5FF0-5986-97FD-8FD9DA7996B8",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_channel_cost_plan",
+      "defName": "渠道成本方案",
+      "comment": "保存每个 Payment Channel 的预计渠道成本规则稳定身份和当前版本指针；billing 经命中接口取组件并冻结证据，本库不算金额。",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "id",
+          "defName": "补偿事件标识",
+          "comment": "服务侧生成的渠道成本方案 Snowflake 主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "429C8D93-18E3-5022-B22D-647B8A59147B"
+        },
+        {
+          "defKey": "channel_id",
+          "defName": "支付服务商标识",
+          "comment": "Payment Channel（本库 t_payment_channel.id）。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "AE32B742-B497-572C-A463-3F4AA622603C"
+        },
+        {
+          "defKey": "plan_code",
+          "defName": "渠道成本方案代码",
+          "comment": "跨版本稳定识别渠道成本方案的业务代码。取值来源：channel-connector 渠道成本方案代码；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "28CC469E-6540-5486-9477-6E002634EF57"
+        },
+        {
+          "defKey": "current_ver_id",
+          "defName": "当前成本版本",
+          "comment": "当前发布的本库渠道成本方案版本。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "0B8466F6-ED47-54DF-AA45-8CBCE3AE43F1"
+        },
+        {
+          "defKey": "status",
+          "defName": "生命周期状态",
+          "comment": "渠道成本方案稳定身份的当前生命周期状态。允许值：DRAFT、ACTIVE、INACTIVE。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "36CAAA33-2751-5B89-8B7B-5483C87F8527"
+        },
+        {
+          "defKey": "version",
+          "defName": "乐观锁版本",
+          "comment": "切换当前成本版本和状态时使用的乐观锁版本号。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "0",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "6E2980FF-CC94-5914-80F2-335B3B03172B"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在本库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "8C6BE506-DED5-5B71-BE34-3581079BC3F7"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "4C040A32-8034-528D-B450-E9C43A8E0914"
+        }
+      ],
+      "correlations": [
+        {
+          "id": "35ECD660-5A79-5A74-B9C8-C79C55EC2C3E",
+          "myField": "AE32B742-B497-572C-A463-3F4AA622603C",
+          "refEntity": "9C656B8F-9AFD-5293-B5EA-E83D183FC1D2",
+          "refField": "CAB586C4-48E7-5A9F-A1B7-F4D032844CA3",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ],
+      "indexes": [
+        {
+          "defKey": "uk_channel_cost_plan",
+          "defName": "UK CHANNEL COST PLAN",
+          "unique": true,
+          "comment": "保证业务唯一性：channel_id",
+          "fields": [
+            {
+              "fieldDefKey": "AE32B742-B497-572C-A463-3F4AA622603C",
+              "ascOrDesc": "A",
+              "id": "4F139E29-2DB0-511A-AF1A-0E0743CE4187"
+            }
+          ],
+          "id": "3C29F14E-8F67-51E0-B61B-52C5C9D80312"
+        },
+        {
+          "defKey": "uk_channel_cost_code",
+          "defName": "UK CHANNEL COST CODE",
+          "unique": true,
+          "comment": "保证业务唯一性：plan_code",
+          "fields": [
+            {
+              "fieldDefKey": "28CC469E-6540-5486-9477-6E002634EF57",
+              "ascOrDesc": "A",
+              "id": "AEC2E9C7-BA08-5B5B-BADF-992B6A2BE07D"
+            }
+          ],
+          "id": "49D0FC1D-CAB0-5377-A8A4-7E3D8618A45D"
+        },
+        {
+          "defKey": "uk_channel_cost_current",
+          "defName": "UK CHANNEL COST CURRENT",
+          "unique": true,
+          "comment": "保证业务唯一性：current_ver_id",
+          "fields": [
+            {
+              "fieldDefKey": "0B8466F6-ED47-54DF-AA45-8CBCE3AE43F1",
+              "ascOrDesc": "A",
+              "id": "85E8BA54-4D8D-5F5E-B611-784A06E992A6"
+            }
+          ],
+          "id": "7C63C4F5-376E-548A-91FA-0D542708C875"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "3CBD4753-2E78-5F9D-A4BD-A6CB0EA18137",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_channel_cost_plan_ver",
+      "defName": "渠道成本方案版本",
+      "comment": "保存成本规则发布批次的生效期、内容摘要及双人审批状态，当前版本仅由方案根指针确定；APPROVED 版本到达生效时间后由到期切换 Job 原子切换为当前版本。",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "id",
+          "defName": "补偿事件标识",
+          "comment": "服务侧生成的渠道成本方案版本 Snowflake 主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "6C48B05F-ED19-5AF4-B9CD-6587F7B6E30F"
+        },
+        {
+          "defKey": "plan_id",
+          "defName": "渠道成本方案标识",
+          "comment": "该版本所属的本库渠道成本方案稳定身份。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "C0F4E171-C190-5C20-B8FF-8990D3D25E9B"
+        },
+        {
+          "defKey": "cost_ver",
+          "defName": "成本版本号",
+          "comment": "同一渠道成本方案下严格递增的业务版本号。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "8F6E4B8C-662E-55CD-8AAD-A03C06E285F0"
+        },
+        {
+          "defKey": "effective_from",
+          "defName": "生效开始时间",
+          "comment": "该成本版本开始参与预计成本匹配的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "818EEBE4-10A0-5BD9-9003-9BEF36A7365A"
+        },
+        {
+          "defKey": "effective_to",
+          "defName": "生效结束时间",
+          "comment": "该成本版本停止参与预计成本匹配的 UTC 微秒时间，长期有效时为空。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "53C3D9DE-3286-52E9-89F2-E04845811809"
+        },
+        {
+          "defKey": "content_hash",
+          "defName": "受控内容哈希",
+          "comment": "覆盖版本、全部适用范围和成本组件的不可变内容摘要。",
+          "type": "CHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "4629ED77-822E-4610-86D1-82426E63066E",
+          "extProps": {},
+          "domain": "",
+          "id": "601FCA1E-A3AE-5110-BFD4-7EEF5522C34A"
+        },
+        {
+          "defKey": "status",
+          "defName": "生命周期状态",
+          "comment": "该成本版本写入时冻结的审批和发布状态。允许值：DRAFT、PENDING_APPROVAL、APPROVED、ACTIVE、REJECTED、INACTIVE。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "7E5C1EAD-16E1-5D98-BC4A-28484775065B"
+        },
+        {
+          "defKey": "maker_id",
+          "defName": "制单人标识",
+          "comment": "创建该成本版本的 Platform Actor 稳定业务ID。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "F654BCFD-2E03-53B7-B3C5-24F39C142D24"
+        },
+        {
+          "defKey": "checker_id",
+          "defName": "复核人标识",
+          "comment": "复核该成本版本的另一 Platform Actor 稳定业务ID。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "0D56F7D1-D2C9-57FD-B0EF-4E77DF8562A8"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在本库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "64C92E5C-6576-5EA3-A64F-46F199948270"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "06006EC1-9860-50B0-A77E-39971D932DF2"
+        }
+      ],
+      "correlations": [
+        {
+          "id": "BC0430C3-CAD9-5CBD-B112-1A5D2872C52A",
+          "myField": "C0F4E171-C190-5C20-B8FF-8990D3D25E9B",
+          "refEntity": "1ADB1F18-5FF0-5986-97FD-8FD9DA7996B8",
+          "refField": "429C8D93-18E3-5022-B22D-647B8A59147B",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ],
+      "indexes": [
+        {
+          "defKey": "uk_channel_cost_ver",
+          "defName": "UK CHANNEL COST VER",
+          "unique": true,
+          "comment": "保证业务唯一性：plan_id、cost_ver",
+          "fields": [
+            {
+              "fieldDefKey": "C0F4E171-C190-5C20-B8FF-8990D3D25E9B",
+              "ascOrDesc": "A",
+              "id": "95F3936C-1332-56CD-86AF-E7561F13B8FC"
+            },
+            {
+              "fieldDefKey": "8F6E4B8C-662E-55CD-8AAD-A03C06E285F0",
+              "ascOrDesc": "A",
+              "id": "33E8823B-4065-503D-AC6D-9C485EE647F0"
+            }
+          ],
+          "id": "2FD022BF-C6F0-5D26-9047-C332185C407D"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "4C986E29-07DC-5CC7-8E51-3B652605F5F9",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_channel_cost_scope",
+      "defName": "渠道成本适用范围",
+      "comment": "冻结成本版本对 MID、经营主体、国家、币种、支付方式和动作的确定性匹配范围。",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "id",
+          "defName": "补偿事件标识",
+          "comment": "服务侧生成的渠道成本适用范围 Snowflake 主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "7CD52550-60CD-57BF-A76F-92D12807F06B"
+        },
+        {
+          "defKey": "cost_ver_id",
+          "defName": "成本版本标识",
+          "comment": "该适用范围所属的本库渠道成本方案版本。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "0D4BD120-E993-5FA8-B8BC-DC927B38605F"
+        },
+        {
+          "defKey": "scope_no",
+          "defName": "适用范围序号",
+          "comment": "同一成本版本内稳定且唯一的适用范围序号。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "1985A30B-BF65-571D-8525-A5C71464B2ED"
+        },
+        {
+          "defKey": "mid_id",
+          "defName": "服务商商户号标识",
+          "comment": "Payment Channel MID（本库 t_channel_mid.id）；写入时校验存在、归属方案的 Channel 且 entity_no 一致。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "D1595704-D7A7-50AA-9493-A089C6AE3B19"
+        },
+        {
+          "defKey": "entity_no",
+          "defName": "经营主体编号",
+          "comment": "该成本适用范围限定的 Operating Entity 稳定业务ID，须等于 MID 归属的 OE。",
+          "type": "CHAR",
+          "len": 5,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "4629ED77-822E-4610-86D1-82426E63066E",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "E790D5A2-9E17-58B5-98BB-DF89E7A1F7E3"
+        },
+        {
+          "defKey": "channel_agreement_ref",
+          "defName": "渠道合同引用",
+          "comment": "本 MID 与经营主体范围实际采用的 Channel 合同或费率文件稳定引用。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "49DAEF18-0BA3-5017-A9CC-B4F5CD862D03"
+        },
+        {
+          "defKey": "country_code",
+          "defName": "国家代码",
+          "comment": "该成本适用范围限定的 ISO 3166-1 alpha-2 国家代码。取值来源：ISO 3166-1 alpha-2 国家代码；非固定枚举。",
+          "type": "CHAR",
+          "len": 2,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "4629ED77-822E-4610-86D1-82426E63066E",
+          "extProps": {},
+          "domain": "",
+          "id": "72DACB24-77DB-5B35-983B-9B012301CD1D"
+        },
+        {
+          "defKey": "currency",
+          "defName": "币种代码",
+          "comment": "该成本适用范围限定的 ISO 4217 三位币种代码，也是成本金额的币种。取值来源：ISO 4217 币种代码；非固定枚举。",
+          "type": "CHAR",
+          "len": 3,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "4629ED77-822E-4610-86D1-82426E63066E",
+          "extProps": {},
+          "domain": "7107154F-CF2B-4D2A-AC43-514D4027E5C6",
+          "id": "E4CD3C6E-1B53-50EF-BC68-529998B9CB4B"
+        },
+        {
+          "defKey": "payment_method_code",
+          "defName": "支付方式代码",
+          "comment": "该成本适用范围限定的 Payment 支付方式目录代码。取值来源：Payment 支付方式目录；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "B24A109D-B5A6-5F2C-96D5-1E54B7AC173F"
+        },
+        {
+          "defKey": "action_type",
+          "defName": "动作类型",
+          "comment": "该成本适用范围限定的支付、退款或争议动作类别。取值来源：Payment 动作类型目录；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "0BAA8E00-1248-5F8A-9D85-F528D73A6255"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在本库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "D7489B8F-6F9D-5E3E-96E9-118469C1FCDD"
+        }
+      ],
+      "correlations": [
+        {
+          "id": "4389C5B7-BC38-5A74-95A7-A9B2D0BCF67B",
+          "myField": "0D4BD120-E993-5FA8-B8BC-DC927B38605F",
+          "refEntity": "3CBD4753-2E78-5F9D-A4BD-A6CB0EA18137",
+          "refField": "6C48B05F-ED19-5AF4-B9CD-6587F7B6E30F",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        },
+        {
+          "id": "43FD688F-80E3-5CF9-B8DD-D138AE1C0AB7",
+          "myField": "D1595704-D7A7-50AA-9493-A089C6AE3B19",
+          "refEntity": "E491F43D-0B59-5911-915D-33CD884C2FB9",
+          "refField": "5E4EB0C3-DE59-542E-932E-0D5004DD5BD0",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ],
+      "indexes": [
+        {
+          "defKey": "uk_channel_cost_scope_no",
+          "defName": "UK CHANNEL COST SCOPE NO",
+          "unique": true,
+          "comment": "保证业务唯一性：cost_ver_id、scope_no",
+          "fields": [
+            {
+              "fieldDefKey": "0D4BD120-E993-5FA8-B8BC-DC927B38605F",
+              "ascOrDesc": "A",
+              "id": "5C6684F8-66D9-5C55-A966-9407BF74A509"
+            },
+            {
+              "fieldDefKey": "1985A30B-BF65-571D-8525-A5C71464B2ED",
+              "ascOrDesc": "A",
+              "id": "B292743D-8DEF-507B-B9A0-E15981F10321"
+            }
+          ],
+          "id": "6921D21C-5C0D-5FE4-9239-44F8DE8EE339"
+        },
+        {
+          "defKey": "uk_channel_cost_scope",
+          "defName": "UK CHANNEL COST SCOPE",
+          "unique": true,
+          "comment": "保证业务唯一性：cost_ver_id、mid_id、entity_no、country_code、currency、payment_method_code、action_type",
+          "fields": [
+            {
+              "fieldDefKey": "0D4BD120-E993-5FA8-B8BC-DC927B38605F",
+              "ascOrDesc": "A",
+              "id": "B4EB706F-144F-502E-86F5-CD2B07D3BE24"
+            },
+            {
+              "fieldDefKey": "D1595704-D7A7-50AA-9493-A089C6AE3B19",
+              "ascOrDesc": "A",
+              "id": "12EE2AB8-07BB-5800-A5DC-AFBA33F6371E"
+            },
+            {
+              "fieldDefKey": "E790D5A2-9E17-58B5-98BB-DF89E7A1F7E3",
+              "ascOrDesc": "A",
+              "id": "E0E519E8-2D2E-5E35-9E3D-8D788F192973"
+            },
+            {
+              "fieldDefKey": "72DACB24-77DB-5B35-983B-9B012301CD1D",
+              "ascOrDesc": "A",
+              "id": "76316F77-BD45-5C55-851C-6488E08DE440"
+            },
+            {
+              "fieldDefKey": "E4CD3C6E-1B53-50EF-BC68-529998B9CB4B",
+              "ascOrDesc": "A",
+              "id": "156A9EB1-DE06-5B5F-BC8B-9304E892CA4E"
+            },
+            {
+              "fieldDefKey": "B24A109D-B5A6-5F2C-96D5-1E54B7AC173F",
+              "ascOrDesc": "A",
+              "id": "F23483B5-D44F-5CE8-A213-D1F50BAF9252"
+            },
+            {
+              "fieldDefKey": "0BAA8E00-1248-5F8A-9D85-F528D73A6255",
+              "ascOrDesc": "A",
+              "id": "3954D8A7-FDD6-5BD6-BC01-482B1ED3F41B"
+            }
+          ],
+          "id": "8BD47EC7-EAAD-5679-BF2C-4BBC1C7ADEB7"
+        },
+        {
+          "defKey": "idx_channel_cost_match",
+          "defName": "IDX CHANNEL COST MATCH",
+          "unique": false,
+          "comment": "支持访问路径：mid_id、entity_no、country_code、currency",
+          "fields": [
+            {
+              "fieldDefKey": "D1595704-D7A7-50AA-9493-A089C6AE3B19",
+              "ascOrDesc": "A",
+              "id": "E6C1675A-364E-5DB5-89E2-A97488E51CC9"
+            },
+            {
+              "fieldDefKey": "E790D5A2-9E17-58B5-98BB-DF89E7A1F7E3",
+              "ascOrDesc": "A",
+              "id": "BE59EF34-5C6B-5953-8595-E0A4A12CDE28"
+            },
+            {
+              "fieldDefKey": "72DACB24-77DB-5B35-983B-9B012301CD1D",
+              "ascOrDesc": "A",
+              "id": "6B4A984A-DFE6-5C58-98FB-26CC5643D51D"
+            },
+            {
+              "fieldDefKey": "E4CD3C6E-1B53-50EF-BC68-529998B9CB4B",
+              "ascOrDesc": "A",
+              "id": "C1041CDD-7B2E-5851-BD0C-CF5815C2EDAA"
+            }
+          ],
+          "id": "833F36BE-DF98-52DA-9D2C-CF0496C2DD64"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "BDD783CE-1BBD-502B-B6D2-28DBEBE37074",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_channel_cost_component",
+      "defName": "渠道成本组件",
+      "comment": "冻结渠道成本适用范围下的百分比、固定费、跨境费、退款费或争议费参数；金额由 billing 按证据计算。",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "id",
+          "defName": "补偿事件标识",
+          "comment": "服务侧生成的渠道成本组件 Snowflake 主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "BE248406-3C78-567B-86C6-4A0BC2E1B975"
+        },
+        {
+          "defKey": "scope_id",
+          "defName": "策略作用域标识",
+          "comment": "该成本组件所属的本库渠道成本适用范围。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "8C8783EA-199B-5C4E-9983-26271EDFA01C"
+        },
+        {
+          "defKey": "component_code",
+          "defName": "成本组件代码",
+          "comment": "同一适用范围内稳定识别成本组成的业务代码。取值来源：channel-connector 渠道成本组件代码；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "2E730A70-692E-5E04-88F1-189742E3F69C"
+        },
+        {
+          "defKey": "component_type",
+          "defName": "成本组件类型",
+          "comment": "说明该组件采用的渠道收费语义。允许值：PROCESSING_FEE、CROSS_BORDER_FEE、REFUND_FEE、DISPUTE_FEE。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "522AF3D2-ACAC-5771-9943-D247C6B0F0FD"
+        },
+        {
+          "defKey": "calculation_base",
+          "defName": "计算基数",
+          "comment": "该成本组件声明的金额计算基数语义。允许值：TRANSACTION_AMOUNT。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "F58FA536-1993-539B-A984-2A7DA7E8D279"
+        },
+        {
+          "defKey": "rate_value",
+          "defName": "费率",
+          "comment": "零至一之间的渠道成本十进制费率。",
+          "type": "DECIMAL",
+          "len": 18,
+          "scale": 10,
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1A0BDC09-0792-4174-9E8E-80BE8DF44B8E",
+          "extProps": {},
+          "domain": "FF4459C5-6B45-4DBF-8FC0-E06239BC05B4",
+          "id": "C059C3CE-20BF-50E7-B733-7AA10F2E7754"
+        },
+        {
+          "defKey": "fixed_amount",
+          "defName": "固定金额",
+          "comment": "渠道成本规则声明的非负固定收费金额。",
+          "type": "DECIMAL",
+          "len": 24,
+          "scale": 8,
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1A0BDC09-0792-4174-9E8E-80BE8DF44B8E",
+          "extProps": {},
+          "domain": "C3B1681B-99F9-4818-9E80-DE1652A51D85",
+          "id": "C49EA472-9965-5E7D-B7C5-6213BB7D08D9"
+        },
+        {
+          "defKey": "currency",
+          "defName": "币种代码",
+          "comment": "固定金额使用的 ISO 4217 三位币种代码，须等于范围币种。取值来源：ISO 4217 币种代码；非固定枚举。",
+          "type": "CHAR",
+          "len": 3,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "4629ED77-822E-4610-86D1-82426E63066E",
+          "extProps": {},
+          "domain": "7107154F-CF2B-4D2A-AC43-514D4027E5C6",
+          "id": "2C37D618-0F7B-5469-A8F8-7EF14F7220FC"
+        },
+        {
+          "defKey": "min_amount",
+          "defName": "最低金额",
+          "comment": "该成本组件计算结果允许采用的金额下限。",
+          "type": "DECIMAL",
+          "len": 24,
+          "scale": 8,
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1A0BDC09-0792-4174-9E8E-80BE8DF44B8E",
+          "extProps": {},
+          "domain": "C3B1681B-99F9-4818-9E80-DE1652A51D85",
+          "id": "627E0EEF-120B-5AB1-BFA4-74331E85F582"
+        },
+        {
+          "defKey": "max_amount",
+          "defName": "最高金额",
+          "comment": "该成本组件计算结果允许采用的金额上限。",
+          "type": "DECIMAL",
+          "len": 24,
+          "scale": 8,
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1A0BDC09-0792-4174-9E8E-80BE8DF44B8E",
+          "extProps": {},
+          "domain": "C3B1681B-99F9-4818-9E80-DE1652A51D85",
+          "id": "5D954792-78F8-51FA-AD9E-3BC275E62E88"
+        },
+        {
+          "defKey": "rounding_mode",
+          "defName": "舍入方式",
+          "comment": "把渠道成本原始金额归整到币种精度时采用的固定方式。允许值：HALF_UP。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "B8EF00B2-B5F6-59F0-9942-F31BB8540D41"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在本库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "E5004DF9-2325-5526-B2BD-26A0DEA46750"
+        }
+      ],
+      "correlations": [
+        {
+          "id": "60791BBF-C262-5C57-AFBC-9F3B057C7E54",
+          "myField": "8C8783EA-199B-5C4E-9983-26271EDFA01C",
+          "refEntity": "4C986E29-07DC-5CC7-8E51-3B652605F5F9",
+          "refField": "7CD52550-60CD-57BF-A76F-92D12807F06B",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ],
+      "indexes": [
+        {
+          "defKey": "uk_channel_cost_component",
+          "defName": "UK CHANNEL COST COMPONENT",
+          "unique": true,
+          "comment": "保证业务唯一性：scope_id、component_code",
+          "fields": [
+            {
+              "fieldDefKey": "8C8783EA-199B-5C4E-9983-26271EDFA01C",
+              "ascOrDesc": "A",
+              "id": "2659E38F-D432-5F1D-86EC-D4A5F171A19B"
+            },
+            {
+              "fieldDefKey": "2E730A70-692E-5E04-88F1-189742E3F69C",
+              "ascOrDesc": "A",
+              "id": "DAC4D197-C0F9-57E9-846F-C9655E581456"
+            }
+          ],
+          "id": "D6E0FB0F-DD9B-561C-BCC1-7D3B58C7F311"
+        }
+      ],
+      "type": "P"
     }
   ],
   "views": [],
@@ -6715,6 +8419,217 @@
       },
       "id": "FD2FF31F-CBE9-522D-A445-4F41AAAEBC4C",
       "comment": "可靠执行 bounded-context view"
+    },
+    {
+      "defKey": "channel_cost",
+      "defName": "渠道成本配置",
+      "relationType": "field",
+      "canvasData": {
+        "cells": [
+          {
+            "id": "1B777441-49E9-56AE-A9AB-8171505EF66D",
+            "shape": "table",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "count": 0,
+            "originKey": "1ADB1F18-5FF0-5986-97FD-8FD9DA7996B8",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 262
+            }
+          },
+          {
+            "id": "BCF9226E-EF90-55E1-9C92-DB03104BF9D2",
+            "shape": "table",
+            "position": {
+              "x": 430,
+              "y": 0
+            },
+            "count": 0,
+            "originKey": "3CBD4753-2E78-5F9D-A4BD-A6CB0EA18137",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 328
+            }
+          },
+          {
+            "id": "F53C94B7-785D-5232-97B5-223B4DCA8B1D",
+            "shape": "table",
+            "position": {
+              "x": 860,
+              "y": 0
+            },
+            "count": 0,
+            "originKey": "4C986E29-07DC-5CC7-8E51-3B652605F5F9",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 328
+            }
+          },
+          {
+            "id": "18719663-460D-596E-B590-48BB6A8C76C2",
+            "shape": "table",
+            "position": {
+              "x": 1290,
+              "y": 0
+            },
+            "count": 0,
+            "originKey": "BDD783CE-1BBD-502B-B6D2-28DBEBE37074",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 350
+            }
+          },
+          {
+            "id": "90B8CE0C-5BD4-53AA-9AF6-A59554C6024C",
+            "shape": "table",
+            "position": {
+              "x": 0,
+              "y": 410
+            },
+            "count": 0,
+            "originKey": "9C656B8F-9AFD-5293-B5EA-E83D183FC1D2",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 220
+            }
+          },
+          {
+            "id": "E8F027AF-50EE-5FA3-8CF0-0ECF8B885B9B",
+            "shape": "table",
+            "position": {
+              "x": 430,
+              "y": 410
+            },
+            "count": 0,
+            "originKey": "E491F43D-0B59-5911-915D-33CD884C2FB9",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 306
+            }
+          },
+          {
+            "id": "4E31F6B8-A724-51FB-8B20-2864120C51E5",
+            "shape": "erdRelation",
+            "originKey": "35ECD660-5A79-5A74-B9C8-C79C55EC2C3E",
+            "source": {
+              "cell": "1B777441-49E9-56AE-A9AB-8171505EF66D",
+              "port": "AE32B742-B497-572C-A463-3F4AA622603C%out"
+            },
+            "target": {
+              "cell": "90B8CE0C-5BD4-53AA-9AF6-A59554C6024C",
+              "port": "CAB586C4-48E7-5A9F-A1B7-F4D032844CA3%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "BDD6F57C-7E1B-5EB3-B69A-FE7885963AF3",
+            "shape": "erdRelation",
+            "originKey": "BC0430C3-CAD9-5CBD-B112-1A5D2872C52A",
+            "source": {
+              "cell": "BCF9226E-EF90-55E1-9C92-DB03104BF9D2",
+              "port": "C0F4E171-C190-5C20-B8FF-8990D3D25E9B%out"
+            },
+            "target": {
+              "cell": "1B777441-49E9-56AE-A9AB-8171505EF66D",
+              "port": "429C8D93-18E3-5022-B22D-647B8A59147B%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "009C3EB8-9B9D-5DE4-8F0B-340DCB53B6F1",
+            "shape": "erdRelation",
+            "originKey": "4389C5B7-BC38-5A74-95A7-A9B2D0BCF67B",
+            "source": {
+              "cell": "F53C94B7-785D-5232-97B5-223B4DCA8B1D",
+              "port": "0D4BD120-E993-5FA8-B8BC-DC927B38605F%out"
+            },
+            "target": {
+              "cell": "BCF9226E-EF90-55E1-9C92-DB03104BF9D2",
+              "port": "6C48B05F-ED19-5AF4-B9CD-6587F7B6E30F%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "566E7C94-9882-5532-9A99-6B0A16BC0FC0",
+            "shape": "erdRelation",
+            "originKey": "43FD688F-80E3-5CF9-B8DD-D138AE1C0AB7",
+            "source": {
+              "cell": "F53C94B7-785D-5232-97B5-223B4DCA8B1D",
+              "port": "D1595704-D7A7-50AA-9493-A089C6AE3B19%out"
+            },
+            "target": {
+              "cell": "E8F027AF-50EE-5FA3-8CF0-0ECF8B885B9B",
+              "port": "5E4EB0C3-DE59-542E-932E-0D5004DD5BD0%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "C0ED40FA-9613-59B3-BDC4-86A373BC668C",
+            "shape": "erdRelation",
+            "originKey": "60791BBF-C262-5C57-AFBC-9F3B057C7E54",
+            "source": {
+              "cell": "18719663-460D-596E-B590-48BB6A8C76C2",
+              "port": "8C8783EA-199B-5C4E-9983-26271EDFA01C%out"
+            },
+            "target": {
+              "cell": "F53C94B7-785D-5232-97B5-223B4DCA8B1D",
+              "port": "7CD52550-60CD-57BF-A76F-92D12807F06B%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          }
+        ]
+      },
+      "id": "A6B7997F-9469-539D-A45C-54139DD1F54B",
+      "comment": "渠道成本配置 bounded-context view"
     }
   ],
   "standardFields": [],
@@ -6868,7 +8783,7 @@
       "controlIntensity": "S",
       "applyObjectType": "P",
       "applyFieldType": "entity",
-      "programCode": "let actual=data.entity.fields.map(field=>field.defKey); let immutable=[\"t_routing_policy_version\",\"t_routing_policy_mid\",\"t_routing_decision\",\"t_route_candidate_eval\",\"t_channel_transaction_ref\",\"t_channel_callback_item\",\"t_channel_dispute_event\"].includes(data.entity.defKey); return actual.includes('create_time') && (immutable ? !actual.includes('update_time') : actual.includes('update_time'));",
+      "programCode": "let actual=data.entity.fields.map(field=>field.defKey); let immutable=[\"t_routing_policy_version\",\"t_routing_policy_mid\",\"t_routing_decision\",\"t_route_candidate_eval\",\"t_channel_transaction_ref\",\"t_channel_callback_item\",\"t_channel_dispute_event\",\"t_channel_cost_scope\",\"t_channel_cost_component\"].includes(data.entity.defKey); return actual.includes('create_time') && (immutable ? !actual.includes('update_time') : actual.includes('update_time'));",
       "enable": true
     },
     {

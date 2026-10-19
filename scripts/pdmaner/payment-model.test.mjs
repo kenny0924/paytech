@@ -19,9 +19,14 @@ const paths = Object.freeze({
 
 const coreArtifactPaths = Object.freeze([paths.metadata, paths.generator, paths.model, paths.channelConnectorModel]);
 const expectedTemplateDigest = "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540";
-// Approved byte-for-byte and structural digests for the 27-table model.
+// Physical Decisions freezes the pre-split 27-table unified model (historical manifest, see the document text).
+const historicalModelTotals = Object.freeze({ tables: 27, fields: 349, uniqueIndexes: 38, accessIndexes: 44, relations: 63, oneToOneRelations: 7, diagramGroups: 7 });
+const historicalStructuralDigest = "2793402a691608c374c988e9ef2e01a24ad965d3fdec1b0f9acaf8ade026b690";
+// Current models: payment.pdma.json bytes, and the union with channel-connector.pdma.json (31 tables since the 2026-10-19
+// channel cost tables moved into the channel-connector partition).
+const currentModelTotals = Object.freeze({ tables: 31, fields: 391, uniqueIndexes: 45, accessIndexes: 45, relations: 68, oneToOneRelations: 7, diagramGroups: 8 });
 const expectedModelDigest = "4fb5a4c88f00bd5552dc4c66de1811aee4bc73aee40c40674c264966261e4979";
-const expectedStructuralDigest = "2793402a691608c374c988e9ef2e01a24ad965d3fdec1b0f9acaf8ade026b690";
+const expectedStructuralDigest = "3588e21f75a01a0563a1547a123b19168db0129039169820c7db3af19ad7abf7";
 
 // Test-owned oracle. It must never import a generator manifest or parse Markdown.
 const APPROVED_FIELD_MANIFEST = String.raw`
@@ -430,6 +435,56 @@ lock_version BIGINT NN
 create_time DATETIME(6) NN
 update_time DATETIME(6) NN
 sub_event_type VARCHAR(64) NN OPEN(Payment Compensation Sub Event Catalog)
+
+[t_channel_cost_plan]
+id BIGINT NN
+channel_id BIGINT NN
+plan_code VARCHAR(64) NN OPEN(channel-connector 渠道成本方案代码)
+current_ver_id BIGINT N
+status VARCHAR(64) NN {DRAFT,ACTIVE,INACTIVE}
+version BIGINT NN
+create_time DATETIME(6) NN
+update_time DATETIME(6) NN
+
+[t_channel_cost_plan_ver]
+id BIGINT NN
+plan_id BIGINT NN
+cost_ver INT NN
+effective_from DATETIME(6) NN
+effective_to DATETIME(6) N
+content_hash CHAR(64) NN
+status VARCHAR(64) NN {DRAFT,PENDING_APPROVAL,APPROVED,ACTIVE,REJECTED,INACTIVE}
+maker_id BIGINT NN
+checker_id BIGINT N
+create_time DATETIME(6) NN
+update_time DATETIME(6) NN
+
+[t_channel_cost_scope]
+id BIGINT NN
+cost_ver_id BIGINT NN
+scope_no INT NN
+mid_id BIGINT NN
+entity_no CHAR(5) NN
+channel_agreement_ref VARCHAR(128) NN
+country_code CHAR(2) NN OPEN(ISO 3166-1 alpha-2 国家代码)
+currency CHAR(3) NN OPEN(ISO 4217 币种代码)
+payment_method_code VARCHAR(64) NN OPEN(Payment 支付方式目录)
+action_type VARCHAR(64) NN OPEN(Payment 动作类型目录)
+create_time DATETIME(6) NN
+
+[t_channel_cost_component]
+id BIGINT NN
+scope_id BIGINT NN
+component_code VARCHAR(64) NN OPEN(channel-connector 渠道成本组件代码)
+component_type VARCHAR(64) NN {PROCESSING_FEE,CROSS_BORDER_FEE,REFUND_FEE,DISPUTE_FEE}
+calculation_base VARCHAR(64) NN {TRANSACTION_AMOUNT}
+rate_value DECIMAL(18,10) N
+fixed_amount DECIMAL(24,8) N
+currency CHAR(3) N OPEN(ISO 4217 币种代码)
+min_amount DECIMAL(24,8) N
+max_amount DECIMAL(24,8) N
+rounding_mode VARCHAR(64) NN {HALF_UP}
+create_time DATETIME(6) NN
 `;
 
 const APPROVED_INDEX_MANIFEST = String.raw`
@@ -542,6 +597,18 @@ t_compensation_event
 UK uk_comp_event_identity(event_key,event_type,sub_event_type)
 IDX idx_comp_event_ready(execute_status,next_execute_at,id)
 IDX idx_comp_event_lease(execute_status,lock_until,id)
+t_channel_cost_plan
+UK uk_channel_cost_plan(channel_id)
+UK uk_channel_cost_code(plan_code)
+UK uk_channel_cost_current(current_ver_id)
+t_channel_cost_plan_ver
+UK uk_channel_cost_ver(plan_id,cost_ver)
+t_channel_cost_scope
+UK uk_channel_cost_scope_no(cost_ver_id,scope_no)
+UK uk_channel_cost_scope(cost_ver_id,mid_id,entity_no,country_code,currency,payment_method_code,action_type)
+IDX idx_channel_cost_match(mid_id,entity_no,country_code,currency)
+t_channel_cost_component
+UK uk_channel_cost_component(scope_id,component_code)
 `;
 
 const APPROVED_RELATION_MANIFEST = String.raw`
@@ -608,6 +675,11 @@ n:1 channel_dispute_action.channel_dispute_notice_id -> channel_dispute_notice.c
 n:1 channel_dispute_action.channel_id -> payment_channel.channel_id
 n:1 channel_dispute_action.mid_id -> channel_mid.mid_id
 n:1 channel_dispute_action.channel_account_id -> channel_account.channel_account_id
+n:1 channel_cost_plan.channel_id -> payment_channel.channel_id
+n:1 channel_cost_plan_ver.plan_id -> channel_cost_plan.id
+n:1 channel_cost_scope.cost_ver_id -> channel_cost_plan_ver.id
+n:1 channel_cost_scope.mid_id -> channel_mid.mid_id
+n:1 channel_cost_component.scope_id -> channel_cost_scope.id
 `;
 
 // Row-level invariants that future MySQL migrations must implement. PDManer 4.9.3
@@ -715,6 +787,8 @@ const approvedTableNames = Object.freeze([
   "t_routing_policy", "t_routing_policy_version", "t_routing_policy_mid", "t_routing_decision", "t_route_candidate_eval",
   "t_payment_intent", "t_payment_attempt", "t_payment_instrument_token", "t_payment_action", "t_channel_transaction_ref", "t_channel_interaction", "t_duplicate_payment_case",
   "t_payment_refund_position", "t_channel_refund", "t_channel_callback", "t_channel_callback_item", "t_channel_event_exception", "t_channel_dispute_notice", "t_channel_dispute_event", "t_channel_dispute_action", "t_command_idempotency", "t_compensation_event",
+  // 2026-10-19 计费事实重构：渠道成本四表自 billing 迁入 channel-connector 分区。
+  "t_channel_cost_plan", "t_channel_cost_plan_ver", "t_channel_cost_scope", "t_channel_cost_component",
 ]);
 
 const forbiddenTables = Object.freeze([
@@ -728,13 +802,14 @@ const hashFieldWhitelist = new Set([
   "request_hash", "payload_hash", "payload_fingerprint", "content_hash", "request_content_hash", "response_content_hash",
 ]);
 const versionFieldWhitelist = new Set([
-  "t_command_idempotency", "t_routing_policy", "t_payment_intent", "t_payment_attempt", "t_payment_action", "t_duplicate_payment_case", "t_payment_refund_position", "t_channel_refund", "t_channel_callback", "t_channel_event_exception", "t_channel_dispute_notice", "t_channel_dispute_action",
+  "t_command_idempotency", "t_routing_policy", "t_payment_intent", "t_payment_attempt", "t_payment_action", "t_duplicate_payment_case", "t_payment_refund_position", "t_channel_refund", "t_channel_callback", "t_channel_event_exception", "t_channel_dispute_notice", "t_channel_dispute_action", "t_channel_cost_plan",
 ]);
 const expectedTableDisplayNames = Object.freeze({
   payment_channel: "支付服务商", channel_account: "支付服务商账户", channel_mid: "服务商商户号", mid_capability: "商户号静态能力", mid_capability_detail: "商户号能力明细",
   routing_policy: "路由策略", routing_policy_version: "路由策略版本", routing_policy_mid: "路由策略候选商户号", routing_decision: "路由决策", route_candidate_eval: "路由候选评估",
   payment_intent: "支付意图", payment_attempt: "支付尝试", payment_instrument_token: "交易级支付工具 Token", payment_action: "支付动作", channel_transaction_ref: "服务商交易引用", channel_interaction: "服务商交互记录", duplicate_payment_case: "重复支付处置",
   payment_refund_position: "渠道可退款位置", channel_refund: "渠道退款", channel_callback: "服务商回调", channel_callback_item: "服务商回调项", channel_event_exception: "服务商事件异常", channel_dispute_notice: "服务商争议通知", channel_dispute_event: "服务商争议事件", channel_dispute_action: "服务商争议动作", command_idempotency: "命令幂等记录", compensation_event: "本地补偿事件",
+  channel_cost_plan: "渠道成本方案", channel_cost_plan_ver: "渠道成本方案版本", channel_cost_scope: "渠道成本适用范围", channel_cost_component: "渠道成本组件",
 });
 const expectedTableComments = Object.freeze({
   payment_channel: "支付渠道的稳定身份和当前运行状态。",
@@ -764,6 +839,10 @@ const expectedTableComments = Object.freeze({
   channel_dispute_action: "按 Risk 精确请求提交举证或查询并冻结 Channel Account 的服务商动作。",
   command_idempotency: "Foundation 公共组件持久化的 Payment 本地命令 Claim、Lease、CAS 与结果定位；业务幂等语义由 Payment 拥有。",
   compensation_event: "业务变化同事务登记的本地可靠执行记录；成功后删除，FAILED 保留并可受控重开。",
+  channel_cost_plan: "保存每个 Payment Channel 的预计渠道成本规则稳定身份和当前版本指针；billing 经命中接口取组件并冻结证据，本库不算金额。",
+  channel_cost_plan_ver: "保存成本规则发布批次的生效期、内容摘要及双人审批状态，当前版本仅由方案根指针确定；APPROVED 版本到达生效时间后由到期切换 Job 原子切换为当前版本。",
+  channel_cost_scope: "冻结成本版本对 MID、经营主体、国家、币种、支付方式和动作的确定性匹配范围。",
+  channel_cost_component: "冻结渠道成本适用范围下的百分比、固定费、跨境费、退款费或争议费参数；金额由 billing 按证据计算。",
 });
 const expectedDiagramGroups = Object.freeze({
   channel_mid: Object.freeze({ defName: "Channel 与 MID", primary: Object.freeze(["payment_channel", "channel_account", "channel_mid", "mid_capability", "mid_capability_detail"]), references: Object.freeze([]) }),
@@ -773,6 +852,7 @@ const expectedDiagramGroups = Object.freeze({
   channel_callback: Object.freeze({ defName: "Channel Callback", primary: Object.freeze(["channel_callback", "channel_callback_item", "channel_event_exception"]), references: Object.freeze(["payment_channel", "channel_account", "payment_action", "channel_refund", "channel_dispute_notice", "channel_dispute_action"]) }),
   channel_dispute: Object.freeze({ defName: "Channel Dispute", primary: Object.freeze(["channel_dispute_notice", "channel_dispute_event", "channel_dispute_action"]), references: Object.freeze(["payment_channel", "channel_account", "channel_mid", "channel_transaction_ref", "channel_interaction"]) }),
   reliability: Object.freeze({ defName: "可靠执行", primary: Object.freeze(["command_idempotency", "compensation_event"]), references: Object.freeze([]) }),
+  channel_cost: Object.freeze({ defName: "渠道成本配置", primary: Object.freeze(["channel_cost_plan", "channel_cost_plan_ver", "channel_cost_scope", "channel_cost_component"]), references: Object.freeze(["payment_channel", "channel_mid"]) }),
 });
 
 function sha256(value) { return createHash("sha256").update(value).digest("hex"); }
@@ -967,16 +1047,16 @@ function assertPhysicalDecisionsReady() {
 const coreArtifactsReadyAtRegistration = coreArtifactPaths.every((artifact) => existsSync(artifact));
 const physicalDecisionsReadyAtRegistration = existsSync(paths.decisions);
 
-test("Payment test-owned Oracle is internally complete for all 27 tables", () => {
+test("Payment test-owned Oracle is internally complete for all 31 tables", () => {
   const approvedFields = parseApprovedFields();
   assert.deepEqual(approvedFields.map((table) => table.defKey), approvedTableNames);
   assert.ok(approvedFields.every((table) => table.fields.length > 1));
   assert.deepEqual([...parseIndexes().keys()], approvedTableNames);
-  assert.equal(approvedFields.reduce((count, table) => count + table.fields.length, 0), 349);
+  assert.equal(approvedFields.reduce((count, table) => count + table.fields.length, 0), 391);
   const oracleIndexes = [...parseIndexes().values()].flat();
-  assert.equal(oracleIndexes.filter((index) => index.unique).length, 38);
-  assert.equal(oracleIndexes.filter((index) => !index.unique).length, 44);
-  assert.equal(parseRelations().length, 63);
+  assert.equal(oracleIndexes.filter((index) => index.unique).length, 45);
+  assert.equal(oracleIndexes.filter((index) => !index.unique).length, 45);
+  assert.equal(parseRelations().length, 68);
   assert.equal(parseRelations().filter((relation) => relation.cardinality === "1:1").length, 7);
   const logicalTables = new Set(approvedTableNames.map(logicalTableKey));
   const fieldsByTable = new Map(approvedFields.map((table) => [logicalTableKey(table.defKey), table.fields]));
@@ -1042,10 +1122,10 @@ if (physicalDecisionsReadyAtRegistration) {
 test("Payment Physical Decisions freezes current model totals and digests", () => {
   assertPhysicalDecisionsReady();
   assert.deepEqual(physicalDecisionManifest(), {
-    modelTotals: { tables: 27, fields: 349, uniqueIndexes: 38, accessIndexes: 44, relations: 63, oneToOneRelations: 7, diagramGroups: 7 },
+    modelTotals: historicalModelTotals,
     templateSha256: expectedTemplateDigest,
     modelSha256: expectedModelDigest,
-    structuralProjectionSha256: expectedStructuralDigest,
+    structuralProjectionSha256: historicalStructuralDigest,
   });
 });
 
@@ -1057,11 +1137,13 @@ test("Payment Physical Decisions freezes every approved row-level CHECK", () => 
 }
 
 if (coreArtifactsReadyAtRegistration) {
-test("Payment model has the exact approved 27-table set and no retired roots", () => {
+test("Payment model has the exact approved 31-table set and no retired roots", () => {
     assertCoreReady();
     const model = readModel();
+    // The union lists payment tables before channel-connector tables (step 05 split), so compare as a set.
     const actualTableNames = model.entities.map((entity) => entity.defKey);
-    assert.deepEqual(actualTableNames, approvedTableNames);
+    assert.deepEqual([...actualTableNames].sort(), [...approvedTableNames].sort());
+    assert.equal(new Set(actualTableNames).size, actualTableNames.length);
     const names = new Set(actualTableNames);
     for (const table of forbiddenTables) assert.ok(!names.has(table), `恢复已删除表 ${table}`);
 });
@@ -1179,7 +1261,7 @@ test("Payment metadata exports exactly cover approved Chinese names, comments an
     }
 });
 
-test("Payment model is deterministic and preserves seven diagram themes", async () => {
+test("Payment model is deterministic and preserves eight diagram themes", async () => {
     assertCoreReady();
     const { structuralProjectionDigest: generatorStructuralProjectionDigest } = await import(`./generate-payment-model.mjs?digest=${Date.now()}`);
     const modelBytes = readFileSync(paths.model); const model = JSON.parse(modelBytes);
@@ -1208,12 +1290,12 @@ test("Payment model is deterministic and preserves seven diagram themes", async 
       }
     }
     assert.deepEqual(primaryTables.sort(), approvedTableNames.map(logicalTableKey).sort());
-    assert.equal(new Set(primaryTables).size, 27);
+    assert.equal(new Set(primaryTables).size, 31);
     assert.deepEqual(diagramRelationIds.sort(), relationIds.sort());
     assert.equal(new Set(diagramRelationIds).size, relationIds.length);
     const result = spawnSync(process.execPath, [paths.generator, "--check"], { cwd: workspaceRoot, encoding: "utf8" });
     assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
-    assert.deepEqual(modelTotals(model), { tables: 27, fields: 349, uniqueIndexes: 38, accessIndexes: 44, relations: 63, oneToOneRelations: 7, diagramGroups: 7 });
+    assert.deepEqual(modelTotals(model), currentModelTotals);
 });
 
 test("Payment shared domains preserve the approved money, weight, time and currency precision", async () => {

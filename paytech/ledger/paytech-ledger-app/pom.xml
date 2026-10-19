@@ -44,7 +44,7 @@
             <groupId>com.paytech</groupId>
             <artifactId>paytech-mvc-web-starter</artifactId>
         </dependency>
-        <!-- EconomicFactRecorded 消费：分区拓扑、单活消费者容器与 t_consumed_event 幂等拦截器（design/04 §5、design/08）。 -->
+        <!-- BillingFactRecorded 消费：分区拓扑、单活消费者容器与 t_consumed_event 幂等拦截器（design/04 §5、design/08）。 -->
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-messaging</artifactId>

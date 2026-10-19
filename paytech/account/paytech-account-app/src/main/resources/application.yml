@@ -18,7 +18,7 @@ spring:
       data-source-properties:
         connectionTimeZone: UTC
         forceConnectionTimeZoneToSession: true
-  # EconomicFactRecorded 消费与 AccountPosted 发布：发布确认与不可路由退回，AccountPostedHandler 等待 Broker 确认后才算发布成功。
+  # BillingFactRecorded 消费与 AccountPosted 发布：发布确认与不可路由退回，AccountPostedHandler 等待 Broker 确认后才算发布成功。
   rabbitmq:
     host: "${ACCOUNT_RABBITMQ_HOST:127.0.0.1}"
     port: "${ACCOUNT_RABBITMQ_PORT:5672}"

@@ -44,7 +44,7 @@ public abstract class AbstractPeriodCloseApiTest extends AbstractManualAdjustmen
     @BeforeEach
     void setUpPeriodCloseMocks() {
         accountPostings.mockCaughtUpByDefault();
-        economicFacts.mockNothingPublishedByDefault();
+        billingFacts.mockNothingPublishedByDefault();
         makeCurrentPeriodNotYearEnd();
         revenueAccountId = ledgerMocker.mockAccount(ledger.getLedgerBookId(), REVENUE_CODE, LedgerOwnerType.OPERATING_ENTITY,
             ledger.getEntityNo(), BalanceBucket.NONE);
@@ -75,7 +75,7 @@ public abstract class AbstractPeriodCloseApiTest extends AbstractManualAdjustmen
 
     /** billing 仍有 1 条已批准未发布的事实，使关账步骤 3（入账进度检查）失败。 */
     protected void mockBillingUnpublished() {
-        economicFacts.mockProgress(LedgerEntityType.OPERATING_ENTITY.getCode(), ledger.getEntityNo(), ledger.getCurrency(),
+        billingFacts.mockProgress(LedgerEntityType.OPERATING_ENTITY.getCode(), ledger.getEntityNo(), ledger.getCurrency(),
             1, 0, null);
     }
 

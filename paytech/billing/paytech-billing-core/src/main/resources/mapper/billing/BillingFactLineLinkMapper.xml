@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.billing.core.dal.mapper.BillingFactLineLinkMapper">
+    <sql id="columns">id, source_line_id, target_line_id, link_type, linked_amount, create_time</sql>
+
+    <!-- uk_fact_line_link 以 source_line_id 为左前缀。 -->
+    <select id="selectBySourceLineIds" resultType="com.paytech.billing.core.dal.dataobject.BillingFactLineLink">
+        SELECT <include refid="columns"/> FROM t_billing_fact_line_link
+        WHERE source_line_id IN <foreach collection="lineIds" item="lineId" open="(" separator="," close=")">#{lineId}</foreach>
+        ORDER BY id
+    </select>
+
+    <!-- idx_fact_line_link_target。 -->
+    <select id="selectByTargetLineIds" resultType="com.paytech.billing.core.dal.dataobject.BillingFactLineLink">
+        SELECT <include refid="columns"/> FROM t_billing_fact_line_link
+        WHERE target_line_id IN <foreach collection="lineIds" item="lineId" open="(" separator="," close=")">#{lineId}</foreach>
+        ORDER BY id
+    </select>
+</mapper>

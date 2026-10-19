@@ -1,6 +1,8 @@
 package com.paytech.billing.test.dal;
 
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -12,83 +14,132 @@ import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
 /**
- * Billing 测试专用读取与全局清理；只触碰 mor_billing 的 9 张表（design/10 §3.1）
- * <li>由原 Finance AccountingTestMapper 的渠道成本与经济事实部分摘出；初始化 DML 的固定 ID 行（小于 1,000,000）是只读全局基础数据，清理时保留。</li>
+ * Billing 测试专用读取、前置数据与全局清理；只触碰 mor_billing 的 11 张表
+ * <li>初始化 DML 的保留行（币种 ID 小于 1,000,000、DEFAULT 日历）是只读全局基础数据，清理时保留。</li>
+ * <li>前置数据只模拟后续业务切片才会产生的事实、引用、规则行、行链接与日历例外日；本期人工登记均经真实接口写入。</li>
  */
 @Mapper
 public interface BillingTestMapper {
 
-    /** 统计 mor_billing 全部 9 张表中测试可写入的行数（保留表只统计 ID ≥ 1,000,000 的行），按表返回。 */
+    /** 保留的日历代码（初始化 DML）。 */
+    String RESERVED_CALENDAR = "DEFAULT";
+
+    /** 统计 mor_billing 全部 11 张表中测试可写入的行数（保留表只统计非保留行），按表返回。 */
     @Select("""
-        SELECT 't_channel_cost_plan' t, COUNT(*) c FROM t_channel_cost_plan UNION ALL
-        SELECT 't_channel_cost_plan_ver', COUNT(*) FROM t_channel_cost_plan_ver UNION ALL
-        SELECT 't_channel_cost_scope', COUNT(*) FROM t_channel_cost_scope UNION ALL
-        SELECT 't_channel_cost_component', COUNT(*) FROM t_channel_cost_component UNION ALL
-        SELECT 't_economic_fact', COUNT(*) FROM t_economic_fact UNION ALL
-        SELECT 't_economic_fact_line', COUNT(*) FROM t_economic_fact_line UNION ALL
-        SELECT 't_economic_fact_line_link', COUNT(*) FROM t_economic_fact_line_link UNION ALL
+        SELECT 't_billing_fact' t, COUNT(*) c FROM t_billing_fact UNION ALL
+        SELECT 't_billing_fact_ref', COUNT(*) FROM t_billing_fact_ref UNION ALL
+        SELECT 't_billing_fact_pricing', COUNT(*) FROM t_billing_fact_pricing UNION ALL
+        SELECT 't_billing_fact_line', COUNT(*) FROM t_billing_fact_line UNION ALL
+        SELECT 't_billing_fact_line_link', COUNT(*) FROM t_billing_fact_line_link UNION ALL
+        SELECT 't_business_calendar_day', COUNT(*) FROM t_business_calendar_day UNION ALL
+        SELECT 't_consumed_event', COUNT(*) FROM t_consumed_event UNION ALL
+        SELECT 't_consumed_aggregate_version', COUNT(*) FROM t_consumed_aggregate_version UNION ALL
         SELECT 't_compensation_event', COUNT(*) FROM t_compensation_event UNION ALL
-        SELECT 't_currency_spec', COUNT(*) FROM t_currency_spec WHERE id >= 1000000
+        SELECT 't_currency_spec', COUNT(*) FROM t_currency_spec WHERE id >= 1000000 UNION ALL
+        SELECT 't_business_calendar', COUNT(*) FROM t_business_calendar WHERE calendar_code <> 'DEFAULT'
         """)
     List<Map<String, Object>> countWritableRows();
 
-    /** 统计初始化 DML 的保留行数，用于确认 mor_billing 已执行 billing-initial-data.sql。 */
-    @Select("SELECT COUNT(*) FROM t_currency_spec WHERE id < 1000000")
+    /** 统计初始化 DML 的保留行数（USD 币种 + DEFAULT 日历），用于确认 mor_billing 已执行 billing-initial-data.sql。 */
+    @Select("SELECT (SELECT COUNT(*) FROM t_currency_spec WHERE id < 1000000) "
+        + "+ (SELECT COUNT(*) FROM t_business_calendar WHERE calendar_code = 'DEFAULT')")
     int countReservedRows();
 
     /** 删除一张测试可写表的全部行；表名只来自清理组件的固定清单。 */
     @Delete("DELETE FROM ${table}")
     void deleteAll(@Param("table") String table);
 
-    /** 删除初始化表中非保留 ID 的测试行。 */
-    @Delete("DELETE FROM ${table} WHERE id >= 1000000")
-    void deleteNonReserved(@Param("table") String table);
+    /** 删除币种只读副本中非保留 ID 的测试行。 */
+    @Delete("DELETE FROM t_currency_spec WHERE id >= 1000000")
+    void deleteNonReservedCurrencies();
 
-    /** 读取渠道成本方案状态、乐观锁版本与当前版本号（经 current_ver_id 关联，无当前版本为空）。 */
-    @Select("SELECT p.status, p.version, v.cost_ver AS current_cost_ver FROM t_channel_cost_plan p "
-        + "LEFT JOIN t_channel_cost_plan_ver v ON v.id = p.current_ver_id WHERE p.plan_code = #{planCode}")
-    Map<String, Object> selectChannelCostPlan(@Param("planCode") String planCode);
+    /** 删除非保留日历。 */
+    @Delete("DELETE FROM t_business_calendar WHERE calendar_code <> 'DEFAULT'")
+    void deleteNonReservedCalendars();
 
-    /** 读取经济事实头的状态、版本、复核与发布字段。 */
-    @Select("SELECT status, fact_version, maker_id, checker_id, approved_time, published_at, supersedes_fact_id "
-        + "FROM t_economic_fact WHERE id = #{factId}")
-    Map<String, Object> selectEconomicFact(@Param("factId") long factId);
+    /** 读取计费事实头的来源方式、状态、版本、主体、复核、业务时间与发布字段。 */
+    @Select("SELECT origin_type, status, fact_version, client_id, maker_id, checker_id, approved_time, business_time, "
+        + "published_at, supersedes_fact_id, parent_fact_id FROM t_billing_fact WHERE id = #{factId}")
+    Map<String, Object> selectBillingFact(@Param("factId") long factId);
 
-    /** 统计经济事实的明细行数。 */
-    @Select("SELECT COUNT(*) FROM t_economic_fact_line WHERE transaction_economics_id = #{factId}")
-    int countEconomicFactLines(@Param("factId") long factId);
+    /** 计费事实的全部明细行（组件、金额、目标余额桶与来源规则字段），按行号升序。 */
+    @Select("SELECT line_no, component_type, posted_amount, basis_amount, raw_amount, rate_value, target_bucket, "
+        + "source_rule_type, source_evidence FROM t_billing_fact_line WHERE fact_id = #{factId} ORDER BY line_no")
+    List<Map<String, Object>> selectBillingFactLines(@Param("factId") long factId);
 
-    /** 某经济事实的 ECONOMIC_FACT_RECORDED 补偿任务（任意版本）及其执行状态。 */
+    /** 计费事实的全部引用，按引用类型升序。 */
+    @Select("SELECT ref_type, ref_id FROM t_billing_fact_ref WHERE fact_id = #{factId} ORDER BY ref_type")
+    List<Map<String, Object>> selectBillingFactRefs(@Param("factId") long factId);
+
+    /** 某计费事实的 BILLING_FACT_RECORDED 补偿任务（任意版本）及其执行状态。 */
     @Select("SELECT event_key, sub_event_type, execute_status, payload_json FROM t_compensation_event "
-        + "WHERE event_type = #{eventType} AND event_key LIKE CONCAT('ECONOMIC_FACT:', #{factId}, ':%')")
+        + "WHERE event_type = #{eventType} AND event_key LIKE CONCAT('BILLING_FACT:', #{factId}, ':%')")
     List<Map<String, Object>> selectFactCompensationEvents(@Param("eventType") String eventType,
         @Param("factId") long factId);
 
     /**
-     * 插入一条已有经济事实（前置数据）：交易锚点为空，只填 NOT NULL 列与账簿主体、状态、版本和发布时间
-     * <li>模拟后续业务切片登记的 PAYMENT 事实或已批准未发布的事实；明细行不需要时不插入。</li>
+     * 插入一条已有计费事实（前置数据）：只填 NOT NULL 列与账簿主体、状态、版本和发布时间
+     * <li>模拟后续自动事实切片登记的 PAYMENT 事实或已批准未发布的事实；引用与明细行按需另插。</li>
      */
-    @Insert("INSERT INTO t_economic_fact (id, fact_type, source_system, source_event_key, source_version, "
-        + "source_payload_hash, client_id, entity_no, finance_entity_id, currency, gross_amount, status, fact_version, "
-        + "approved_time, published_at, create_time, update_time) VALUES (#{id}, #{factType}, 'PAYMENT', #{sourceEventKey}, 1, "
-        + "REPEAT('0', 64), #{clientId}, #{entityNo}, #{financeEntityId}, #{currency}, 10, #{status}, #{factVersion}, "
+    @Insert("INSERT INTO t_billing_fact (id, fact_type, origin_type, source_system, source_event_key, source_version, "
+        + "source_payload_hash, client_id, entity_no, local_partner_id, finance_entity_id, currency, gross_amount, "
+        + "business_time, status, fact_version, approved_time, published_at, create_time, update_time) VALUES (#{id}, "
+        + "#{factType}, #{originType}, 'PAYMENT', #{sourceEventKey}, 1, REPEAT('0', 64), #{clientId}, #{entityNo}, "
+        + "#{localPartnerId}, #{financeEntityId}, #{currency}, 10, UTC_TIMESTAMP(6), #{status}, #{factVersion}, "
         + "UTC_TIMESTAMP(6), #{publishedAt}, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6))")
-    void insertEconomicFact(@Param("id") long id, @Param("factType") String factType,
-        @Param("sourceEventKey") String sourceEventKey, @Param("clientId") long clientId,
-        @Param("entityNo") String entityNo, @Param("financeEntityId") Long financeEntityId,
-        @Param("currency") String currency, @Param("status") String status, @Param("factVersion") long factVersion,
-        @Param("publishedAt") Instant publishedAt);
+    void insertBillingFact(@Param("id") long id, @Param("factType") String factType,
+        @Param("originType") String originType, @Param("sourceEventKey") String sourceEventKey,
+        @Param("clientId") Long clientId, @Param("entityNo") String entityNo, @Param("localPartnerId") Long localPartnerId,
+        @Param("financeEntityId") Long financeEntityId, @Param("currency") String currency, @Param("status") String status,
+        @Param("factVersion") long factVersion, @Param("publishedAt") Instant publishedAt);
+
+    /** 插入一条计费事实引用（前置数据）。 */
+    @Insert("INSERT INTO t_billing_fact_ref (id, fact_id, ref_type, ref_id, create_time) "
+        + "VALUES (#{id}, #{factId}, #{refType}, #{refId}, UTC_TIMESTAMP(6))")
+    void insertBillingFactRef(@Param("id") long id, @Param("factId") long factId, @Param("refType") String refType,
+        @Param("refId") String refId);
+
+    /**
+     * 插入一条规则计算明细行（前置数据）：模拟后续自动事实切片写入的费率、基数与 JSON 计算证据
+     * <li>evidenceJson 为 JSON 对象文本或空。</li>
+     */
+    @Insert("INSERT INTO t_billing_fact_line (id, fact_id, line_no, component_type, payer_role, payer_id, payee_role, "
+        + "payee_id, basis_amount, rate_value, raw_amount, posted_amount, effect_direction, source_rule_type, "
+        + "source_rule_version_id, source_rule_component_id, source_evidence, create_time) VALUES (#{id}, #{factId}, "
+        + "#{lineNo}, #{componentType}, #{payerRole}, #{payerId}, #{payeeRole}, #{payeeId}, #{basisAmount}, #{rateValue}, "
+        + "#{rawAmount}, #{postedAmount}, #{direction}, #{sourceRuleType}, #{sourceRuleVersionId}, "
+        + "#{sourceRuleComponentId}, #{evidenceJson}, UTC_TIMESTAMP(6))")
+    void insertRuleLine(@Param("id") long id, @Param("factId") long factId, @Param("lineNo") int lineNo,
+        @Param("componentType") String componentType, @Param("payerRole") String payerRole,
+        @Param("payerId") String payerId, @Param("payeeRole") String payeeRole, @Param("payeeId") String payeeId,
+        @Param("basisAmount") BigDecimal basisAmount, @Param("rateValue") BigDecimal rateValue,
+        @Param("rawAmount") BigDecimal rawAmount, @Param("postedAmount") BigDecimal postedAmount,
+        @Param("direction") String direction, @Param("sourceRuleType") String sourceRuleType,
+        @Param("sourceRuleVersionId") Long sourceRuleVersionId, @Param("sourceRuleComponentId") Long sourceRuleComponentId,
+        @Param("evidenceJson") String evidenceJson);
+
+    /** 插入一条明细行链接（前置数据，本期无生产写入）。 */
+    @Insert("INSERT INTO t_billing_fact_line_link (id, source_line_id, target_line_id, link_type, linked_amount, "
+        + "create_time) VALUES (#{id}, #{sourceLineId}, #{targetLineId}, #{linkType}, #{linkedAmount}, UTC_TIMESTAMP(6))")
+    void insertLineLink(@Param("id") long id, @Param("sourceLineId") long sourceLineId,
+        @Param("targetLineId") long targetLineId, @Param("linkType") String linkType,
+        @Param("linkedAmount") BigDecimal linkedAmount);
+
+    /** 插入一条日历例外日（前置数据，本服务只读）。 */
+    @Insert("INSERT INTO t_business_calendar_day (id, calendar_code, calendar_date, day_type, note, create_time) "
+        + "VALUES (#{id}, #{calendarCode}, #{calendarDate}, #{dayType}, #{note}, UTC_TIMESTAMP(6))")
+    void insertCalendarDay(@Param("id") long id, @Param("calendarCode") String calendarCode,
+        @Param("calendarDate") LocalDate calendarDate, @Param("dayType") String dayType, @Param("note") String note);
 
     /**
      * 写入事实的余额到期时间（前置数据）
      * <li>模拟后续 PAYMENT 切片由 billing 计算并冻结的 balance_available_time；本期无生产写入路径。</li>
      */
-    @Update("UPDATE t_economic_fact SET balance_available_time = #{balanceAvailableTime} WHERE id = #{factId}")
+    @Update("UPDATE t_billing_fact SET balance_available_time = #{balanceAvailableTime} WHERE id = #{factId}")
     void updateBalanceAvailableTime(@Param("factId") long factId,
         @Param("balanceAvailableTime") Instant balanceAvailableTime);
 
-    /** 统计方案下的版本数。 */
-    @Select("SELECT COUNT(*) FROM t_channel_cost_plan_ver v JOIN t_channel_cost_plan p ON p.id = v.plan_id "
-        + "WHERE p.plan_code = #{planCode}")
-    int countChannelCostVersions(@Param("planCode") String planCode);
+    /** 写入事实的派生来源（前置数据，模拟后续退款等派生事实切片）。 */
+    @Update("UPDATE t_billing_fact SET parent_fact_id = #{parentFactId} WHERE id = #{factId}")
+    void updateParentFact(@Param("factId") long factId, @Param("parentFactId") long parentFactId);
 }

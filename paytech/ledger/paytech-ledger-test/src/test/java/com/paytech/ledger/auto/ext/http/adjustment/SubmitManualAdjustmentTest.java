@@ -11,9 +11,9 @@ import org.junit.jupiter.api.Test;
 
 import com.paytech.account.api.constant.StandardAccountCodes;
 import com.paytech.account.api.enums.BalanceBucket;
-import com.paytech.ledger.api.enums.LedgerOwnerType;
 import com.paytech.ledger.api.ManualAdjustmentApi;
 import com.paytech.ledger.api.enums.LedgerErrorCode;
+import com.paytech.ledger.api.enums.LedgerOwnerType;
 import com.paytech.ledger.api.request.SubmitManualAdjustmentRequestBody;
 import com.paytech.ledger.core.constant.AccountingCodes;
 import com.paytech.ledger.core.dal.dataobject.ManualAdjustment;
@@ -62,7 +62,7 @@ class SubmitManualAdjustmentTest extends AbstractManualAdjustmentApiTest {
             LedgerOwnerType.OPERATING_ENTITY, ledger.getEntityNo(), BalanceBucket.NONE);
 
         post(PATH, adjustment().transfer(bankCashAccountId, client, "10").build()).assertRejectedWithCode(
-            LedgerErrorCode.OWNER_ACCOUNT_ADJUSTMENT_FORBIDDEN.getCode(), "MANUAL_ADJUSTMENT 经济事实");
+            LedgerErrorCode.OWNER_ACCOUNT_ADJUSTMENT_FORBIDDEN.getCode(), "MANUAL_ADJUSTMENT 计费事实");
         post(PATH, adjustment().transfer(partner, liabilityAccountId, "10").build()).assertRejectedWithCode(
             LedgerErrorCode.OWNER_ACCOUNT_ADJUSTMENT_FORBIDDEN.getCode(), "账户 [" + partner + "]");
         submitted(adjustment().transfer(liabilityAccountId, capitalAccountId, "10"));

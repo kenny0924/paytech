@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.paytech.account.api.event.AccountPostedPayload;
-import com.paytech.billing.api.fact.EconomicFactPayload;
+import com.paytech.billing.api.fact.BillingFactPayload;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.messaging.api.ConsumeTransaction;
@@ -22,7 +22,7 @@ import com.paytech.ledger.domain.AccountPostingBatch;
 import com.paytech.ledger.domain.AccountPostingCommand;
 import com.paytech.ledger.domain.view.PostedInstructionView;
 import com.paytech.ledger.domainservice.service.TransactionPostingService;
-import com.paytech.ledger.integration.billing.EconomicFactClient;
+import com.paytech.ledger.integration.billing.BillingFactClient;
 
 import lombok.AllArgsConstructor;
 
@@ -42,7 +42,7 @@ import lombok.AllArgsConstructor;
 public class AccountPostedPostingHandler implements DomainEventConsumer {
     private static final Logger LOG = LoggerFactory.getLogger(AccountPostedPostingHandler.class);
 
-    private final EconomicFactClient economicFactClient;
+    private final BillingFactClient billingFactClient;
     private final TransactionTemplate transactionTemplate;
     private final ConsumedEventRepository consumedEventRepository;
     private final TransactionPostingService transactionPostingService;
@@ -57,7 +57,7 @@ public class AccountPostedPostingHandler implements DomainEventConsumer {
                 LOG.info("AccountPosted {} advanced without posting: sourceType={}", event.eventId(), batch.getSourceType());
                 return;
             }
-            EconomicFactPayload fact = economicFactClient.getFact(batch.getPayload().getFactId(),
+            BillingFactPayload fact = billingFactClient.getFact(batch.getPayload().getFactId(),
                 batch.getPayload().getFactVersion());
             List<PostedInstructionView> posted = transactionTemplate.execute(
                 status -> transactionPostingService.post(new AccountPostingCommand(batch, fact)));

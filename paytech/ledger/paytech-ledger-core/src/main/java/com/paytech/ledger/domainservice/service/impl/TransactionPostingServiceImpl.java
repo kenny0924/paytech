@@ -25,17 +25,19 @@ import com.paytech.account.api.enums.BalanceBucket;
 import com.paytech.account.api.enums.OwnerAccountType;
 import com.paytech.account.api.enums.OwnerType;
 import com.paytech.account.api.event.AccountPostedEntryPayload;
-import com.paytech.billing.api.enums.AmountSource;
-import com.paytech.billing.api.enums.AutoInstructionType;
-import com.paytech.billing.api.enums.EconomicsType;
+import com.paytech.billing.api.enums.BillingFactType;
 import com.paytech.billing.api.enums.FactLineDirection;
 import com.paytech.billing.api.enums.FactPartyRole;
-import com.paytech.billing.api.fact.EconomicFactLinePayload;
-import com.paytech.billing.api.fact.EconomicFactPayload;
+import com.paytech.billing.api.enums.FactRefType;
+import com.paytech.billing.api.fact.BillingFactLinePayload;
+import com.paytech.billing.api.fact.BillingFactPayload;
+import com.paytech.billing.api.fact.BillingFactRefPayload;
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.id.IdGenerator;
+import com.paytech.ledger.api.enums.AmountSource;
+import com.paytech.ledger.api.enums.AutoInstructionType;
 import com.paytech.ledger.api.enums.LedgerOwnerType;
 import com.paytech.ledger.api.enums.RuleOwnerRole;
 import com.paytech.ledger.core.dal.dataobject.AccountingInstruction;
@@ -103,7 +105,7 @@ public class TransactionPostingServiceImpl implements TransactionPostingService 
     /** 交易自动记账使用的规则集代码。 */
     static final String STANDARD_TRANSACTION_BUNDLE = "STANDARD_TRANSACTION";
 
-    /** 人工 / 成本调整经济事实使用的规则集代码。 */
+    /** 人工 / 成本调整计费事实使用的规则集代码。 */
     static final String STANDARD_ADJUSTMENT_BUNDLE = "STANDARD_ADJUSTMENT";
 
     /** 交易事实按规则生成的指令类型，按此顺序计划。 */
@@ -112,9 +114,9 @@ public class TransactionPostingServiceImpl implements TransactionPostingService 
 
     /** 事实类型 → 承载 Owner 控制科目行的指令类型；调整类事实只有这一个指令类型。 */
     static final Map<String, AutoInstructionType> OWNER_INSTRUCTIONS = Map.of(
-        EconomicsType.PAYMENT.getCode(), AutoInstructionType.PAYMENT_SUCCEEDED,
-        EconomicsType.MANUAL_ADJUSTMENT.getCode(), AutoInstructionType.ECONOMIC_ADJUSTMENT,
-        EconomicsType.COST_ADJUSTMENT.getCode(), AutoInstructionType.CHANNEL_COST_ADJUSTMENT);
+        BillingFactType.PAYMENT.getCode(), AutoInstructionType.PAYMENT_SUCCEEDED,
+        BillingFactType.MANUAL_ADJUSTMENT.getCode(), AutoInstructionType.ECONOMIC_ADJUSTMENT,
+        BillingFactType.COST_ADJUSTMENT.getCode(), AutoInstructionType.CHANNEL_COST_ADJUSTMENT);
 
     /** 调整明细行中由 account 流水承载的角色：这一侧不按规则生成，由批次流水记到控制科目。 */
     static final Set<String> SUBLEDGER_PARTY_ROLES = Set.of(FactPartyRole.CLIENT.getCode(),
@@ -186,18 +188,18 @@ public class TransactionPostingServiceImpl implements TransactionPostingService 
     }
 
     /**
-     * 经济事实载荷完整性断言（DTO 完整性；业务不变量由 billing 负责）
+     * 计费事实载荷完整性断言（DTO 完整性；业务不变量由 billing 负责）
      * <li>主键、版本、类型必须与批次一致；类型、OE、币种、总额与明细行集合必须存在，每行必须有行号、组件类型与金额。</li>
      */
     void checkFactComplete(AccountPostingCommand command) {
-        EconomicFactPayload fact = command.getFact();
+        BillingFactPayload fact = command.getFact();
         if (fact == null) {
-            throw new BizCheckFailException("经济事实缺失: 入账批次 " + command.getBatch().postingKey());
+            throw new BizCheckFailException("计费事实缺失: 入账批次 " + command.getBatch().postingKey());
         }
         var batch = command.getBatch().getPayload();
         if (!Objects.equals(fact.getFactId(), batch.getFactId()) || !Objects.equals(fact.getFactVersion(), batch.getFactVersion())
             || !Objects.equals(fact.getFactType(), batch.getFactType())) {
-            throw new BizCheckFailException("经济事实与入账批次不一致: 批次 " + batch.getPostingId() + ", 事实 "
+            throw new BizCheckFailException("计费事实与入账批次不一致: 批次 " + batch.getPostingId() + ", 事实 "
                 + fact.getFactId() + "/" + fact.getFactVersion() + "/" + fact.getFactType());
         }
         Long factId = fact.getFactId();
@@ -205,7 +207,7 @@ public class TransactionPostingServiceImpl implements TransactionPostingService 
         requireField(factId, fact.getCurrency(), "currency");
         requireField(factId, fact.getGrossAmount(), "gross_amount");
         requireField(factId, fact.getLines(), "lines");
-        for (EconomicFactLinePayload line : fact.getLines()) {
+        for (BillingFactLinePayload line : fact.getLines()) {
             requireField(factId, line, "line");
             requireField(factId, line.getLineNo(), "line_no");
             requireField(factId, line.getComponentType(), "component_type");
@@ -216,25 +218,24 @@ public class TransactionPostingServiceImpl implements TransactionPostingService 
     /** 载荷必填字段缺失时业务拒绝。 */
     void requireField(Long factId, Object value, String field) {
         if (value == null) {
-            throw new BizCheckFailException("经济事实载荷不完整: " + factId + ", 缺少 " + field);
+            throw new BizCheckFailException("计费事实载荷不完整: " + factId + ", 缺少 " + field);
         }
     }
 
     /** 校验事实类型与业务时间，选定生效规则版本；明细行按行号升序。 */
     TransactionPostingContext loadContext(AccountPostingCommand command) {
-        EconomicFactPayload fact = command.getFact();
+        BillingFactPayload fact = command.getFact();
         if (!OWNER_INSTRUCTIONS.containsKey(fact.getFactType())) {
-            throw new BizCheckFailException("经济事实不是 PAYMENT、MANUAL_ADJUSTMENT 或 COST_ADJUSTMENT，没有记账规则: "
+            throw new BizCheckFailException("计费事实不是 PAYMENT、MANUAL_ADJUSTMENT 或 COST_ADJUSTMENT，没有记账规则: "
                 + fact.getFactId() + ", 类型 " + fact.getFactType());
         }
-        boolean payment = EconomicsType.PAYMENT.getCode().equals(fact.getFactType());
-        Instant businessTime = payment ? fact.getPaymentSucceededTime() : fact.getRecordedTime();
+        boolean payment = BillingFactType.PAYMENT.getCode().equals(fact.getFactType());
+        Instant businessTime = fact.getBusinessTime();
         if (businessTime == null) {
-            throw new BizCheckFailException("经济事实缺少业务时间（" + (payment ? "支付成功时间" : "批准时间") + "）: "
-                + fact.getFactId());
+            throw new BizCheckFailException("计费事实缺少业务时间（businessTime）: " + fact.getFactId());
         }
-        List<EconomicFactLinePayload> lines = fact.getLines().stream()
-            .sorted(Comparator.comparing(EconomicFactLinePayload::getLineNo)).toList();
+        List<BillingFactLinePayload> lines = fact.getLines().stream()
+            .sorted(Comparator.comparing(BillingFactLinePayload::getLineNo)).toList();
         AccountingRuleBundleVer ver = effectiveBundleVer(fact,
             payment ? STANDARD_TRANSACTION_BUNDLE : STANDARD_ADJUSTMENT_BUNDLE, businessTime);
         return new TransactionPostingContext(command, fact, lines, ver,
@@ -242,37 +243,36 @@ public class TransactionPostingServiceImpl implements TransactionPostingService 
     }
 
     /** 指定规则集的当前版本必须 ACTIVE，且生效区间 [effective_from, effective_to) 覆盖给定时点。 */
-    AccountingRuleBundleVer effectiveBundleVer(EconomicFactPayload fact, String bundleCode, Instant at) {
+    AccountingRuleBundleVer effectiveBundleVer(BillingFactPayload fact, String bundleCode, Instant at) {
         AccountingRuleBundle bundle = accountingRuleBundleRepository.findByCode(bundleCode);
         if (bundle == null || bundle.getStatus() != ReferenceDataStatus.ACTIVE || bundle.getCurrentVerId() == null) {
-            throw new BizCheckFailException("无可用自动记账规则集: " + bundleCode + ", 经济事实 " + fact.getFactId());
+            throw new BizCheckFailException("无可用自动记账规则集: " + bundleCode + ", 计费事实 " + fact.getFactId());
         }
         AccountingRuleBundleVer ver = accountingRuleBundleVerRepository.findById(bundle.getCurrentVerId());
         boolean effective = ver != null && ver.getStatus() == RuleVersionStatus.ACTIVE
             && !ver.getEffectiveFrom().isAfter(at) && (ver.getEffectiveTo() == null || at.isBefore(ver.getEffectiveTo()));
         if (!effective) {
-            throw new BizCheckFailException("业务时间无生效的自动记账规则版本: 经济事实 " + fact.getFactId()
+            throw new BizCheckFailException("业务时间无生效的自动记账规则版本: 计费事实 " + fact.getFactId()
                 + ", 规则集 " + bundleCode + ", 当前版本 " + bundle.getCurrentVerId() + ", 业务时间 " + at);
         }
         return ver;
     }
 
-    /** 事实的业务时间：PAYMENT 为支付成功时间，其余为批准时间。 */
-    static Instant businessTime(EconomicFactPayload fact) {
-        return EconomicsType.PAYMENT.getCode().equals(fact.getFactType()) ? fact.getPaymentSucceededTime()
-            : fact.getRecordedTime();
+    /** 事实的业务时间：取载荷 businessTime（PAYMENT 为支付成功时间，人工 / 成本调整为批准时间，由 billing 决定）。 */
+    static Instant businessTime(BillingFactPayload fact) {
+        return fact.getBusinessTime();
     }
 
     /** 非 Owner 规则行：交易事实按金额来源，调整事实按明细行付方 / 收方。 */
     void planRuleLines(TransactionPostingContext context, Map<AutoInstructionType, PlannedInstruction> plans) {
-        if (EconomicsType.PAYMENT.getCode().equals(context.getFact().getFactType())) {
+        if (BillingFactType.PAYMENT.getCode().equals(context.getFact().getFactType())) {
             for (AutoInstructionType type : TRANSACTION_INSTRUCTIONS) {
                 planTransactionRules(context, plans, type);
             }
             return;
         }
         AutoInstructionType type = OWNER_INSTRUCTIONS.get(context.getFact().getFactType());
-        for (EconomicFactLinePayload line : context.getLines()) {
+        for (BillingFactLinePayload line : context.getLines()) {
             planAdjustmentLine(context, plans, type, line);
         }
     }
@@ -317,7 +317,7 @@ public class TransactionPostingServiceImpl implements TransactionPostingService 
      * <li>缺少付方 / 收方、金额为负时整笔拒绝；金额为零的行跳过。</li>
      */
     void planAdjustmentLine(TransactionPostingContext context, Map<AutoInstructionType, PlannedInstruction> plans,
-        AutoInstructionType type, EconomicFactLinePayload line) {
+        AutoInstructionType type, BillingFactLinePayload line) {
         if (line.getPayerRole() == null || line.getPayeeRole() == null) {
             throw reject(context, type, "明细行缺少付方或收方: 行 " + line.getLineNo());
         }
@@ -336,7 +336,7 @@ public class TransactionPostingServiceImpl implements TransactionPostingService 
 
     /** 调整明细行的一侧：明细账角色跳过；其余匹配唯一规则行、解析账户并追加规则行。 */
     void planAdjustmentSide(TransactionPostingContext context, Map<AutoInstructionType, PlannedInstruction> plans,
-        AutoInstructionType type, EconomicFactLinePayload line, String partyRole, String partyId, EntrySide side) {
+        AutoInstructionType type, BillingFactLinePayload line, String partyRole, String partyId, EntrySide side) {
         if (SUBLEDGER_PARTY_ROLES.contains(partyRole)) {
             return;
         }
@@ -465,7 +465,7 @@ public class TransactionPostingServiceImpl implements TransactionPostingService 
 
     /** 指令类型的目标账簿必须存在且 OPEN：平台侧服务费入 Finance Entity 账簿，其余入事实 OE 账簿。 */
     LedgerBook findOpenBook(TransactionPostingContext context, AutoInstructionType type) {
-        EconomicFactPayload fact = context.getFact();
+        BillingFactPayload fact = context.getFact();
         boolean platform = type == AutoInstructionType.PLATFORM_SERVICE_CHARGE_PLATFORM;
         LedgerEntityType entityType = platform ? LedgerEntityType.FINANCE_ENTITY : LedgerEntityType.OPERATING_ENTITY;
         String entityId = platform ? Objects.toString(fact.getFinanceEntityId(), null) : fact.getEntityNo();
@@ -502,12 +502,12 @@ public class TransactionPostingServiceImpl implements TransactionPostingService 
         if (period != null && period.getStatus() == PeriodStatus.CLOSED) {
             AccountingPeriod next = accountingPeriodRepository.findFirstUnclosedAfter(calendar.getId(), period.getEndDate());
             if (next != null && next.getStatus() == PeriodStatus.OPEN) {
-                LOG.warn("迟到事实顺延到下一开放期间: 经济事实 {}, 业务日期 {}, 原期间 {}, 目标期间 {}, 过账日期 {}",
+                LOG.warn("迟到事实顺延到下一开放期间: 计费事实 {}, 业务日期 {}, 原期间 {}, 目标期间 {}, 过账日期 {}",
                     context.factId(), businessDate, period.getId(), next.getId(), next.getStartDate());
                 return new PlannedInstruction(type, book, next, next.getStartDate());
             }
         }
-        throw new ConcurrentRequestException("没有可用的 OPEN 会计期间，等待期间开放: 经济事实 " + context.factId()
+        throw new ConcurrentRequestException("没有可用的 OPEN 会计期间，等待期间开放: 计费事实 " + context.factId()
             + ", 指令类型 " + type.getCode() + ", 账簿 " + book.getId() + ", 业务日期 " + businessDate
             + (period == null ? "" : ", 所属期间 " + period.getId() + " 状态 " + period.getStatus().getCode()));
     }
@@ -536,11 +536,10 @@ public class TransactionPostingServiceImpl implements TransactionPostingService 
     /** 按固定解释器把交易规则行的 Owner Role 解析为账户 owner_type / owner_id。 */
     Owner resolveOwner(TransactionPostingContext context, AutoInstructionType type, LedgerBook book,
         AccountingRuleLine rule) {
-        EconomicFactPayload fact = context.getFact();
+        BillingFactPayload fact = context.getFact();
         return switch (rule.getOwnerRole()) {
             case BOOK_ENTITY -> new Owner(AccountIdentityRule.bookOwnerType(book), book.getEntityId());
-            case CHANNEL_ACCOUNT -> new Owner(LedgerOwnerType.CHANNEL_ACCOUNT,
-                requireId(context, type, fact.getChannelAccountId(), "channel_account_id"));
+            case CHANNEL_ACCOUNT -> new Owner(LedgerOwnerType.CHANNEL_ACCOUNT, clearingAccount(context, type));
             case PLATFORM_FINANCE_ENTITY -> new Owner(LedgerOwnerType.FINANCE_ENTITY,
                 requireId(context, type, fact.getFinanceEntityId(), "finance_entity_id"));
             case TRANSACTION_OE -> new Owner(LedgerOwnerType.OPERATING_ENTITY, fact.getEntityNo());
@@ -556,23 +555,40 @@ public class TransactionPostingServiceImpl implements TransactionPostingService 
         return String.valueOf(id);
     }
 
-    /** SELLER_TAX 组件必须指向唯一且非空的税务机关。 */
+    /**
+     * 渠道清算账户：取外部引用 CLEARING_ACCOUNT 的 refId，必须唯一
+     * <li>缺失时拒绝原因同原 channel_account_id 缺失；多个不同引用无法确定渠道账户 Owner，同样拒绝。</li>
+     */
+    String clearingAccount(TransactionPostingContext context, AutoInstructionType type) {
+        List<BillingFactRefPayload> refs = context.getFact().getRefs();
+        List<String> accounts = refs == null ? List.of() : refs.stream()
+            .filter(ref -> ref != null && FactRefType.CLEARING_ACCOUNT.getCode().equals(ref.getRefType()))
+            .map(BillingFactRefPayload::getRefId).filter(Objects::nonNull).distinct().toList();
+        if (accounts.isEmpty()) {
+            throw reject(context, type, "缺少 channel_account_id");
+        }
+        if (accounts.size() > 1) {
+            throw reject(context, type, "CLEARING_ACCOUNT 引用不唯一 " + accounts);
+        }
+        return accounts.get(0);
+    }
+
+    /** SELLER_TAX 组件的收方必须指向唯一且非空的税务机关。 */
     String taxAuthority(TransactionPostingContext context, AutoInstructionType type) {
         List<String> parties = context.linesOf(AmountSource.SELLER_TAX.getCode()).stream()
-            .map(EconomicFactLinePayload::getPartyId).distinct().toList();
+            .map(BillingFactLinePayload::getPayeeId).distinct().toList();
         if (parties.size() != 1 || parties.get(0) == null) {
             throw reject(context, type, "SELLER_TAX 组件税务机关缺失或不唯一 " + parties);
         }
         return parties.get(0);
     }
 
-    /** 调整行的核算对象：渠道取事实头渠道清算账户，交易 OE 取事实头 entityNo，其余取明细行标识。 */
+    /** 调整行的核算对象：渠道取外部引用 CLEARING_ACCOUNT，交易 OE 取事实头 entityNo，其余取明细行标识。 */
     Owner adjustmentOwner(TransactionPostingContext context, AutoInstructionType type, LedgerBook book, RuleOwnerRole role,
         String partyId) {
-        EconomicFactPayload fact = context.getFact();
+        BillingFactPayload fact = context.getFact();
         Owner owner = switch (role) {
-            case CHANNEL_ACCOUNT -> new Owner(LedgerOwnerType.CHANNEL_ACCOUNT,
-                requireId(context, type, fact.getChannelAccountId(), "channel_account_id"));
+            case CHANNEL_ACCOUNT -> new Owner(LedgerOwnerType.CHANNEL_ACCOUNT, clearingAccount(context, type));
             case TRANSACTION_OE -> new Owner(LedgerOwnerType.OPERATING_ENTITY, fact.getEntityNo());
             case PLATFORM_FINANCE_ENTITY -> new Owner(LedgerOwnerType.FINANCE_ENTITY, partyId);
             case TAX_AUTHORITY -> new Owner(LedgerOwnerType.TAX_AUTHORITY, partyId);
@@ -690,9 +706,9 @@ public class TransactionPostingServiceImpl implements TransactionPostingService 
             entry.getJournalSequence());
     }
 
-    /** 带经济事实、入账批次、指令类型与原因的业务拒绝。 */
+    /** 带计费事实、入账批次、指令类型与原因的业务拒绝。 */
     BizCheckFailException reject(TransactionPostingContext context, AutoInstructionType type, String reason) {
-        return new BizCheckFailException("控制科目过账拒绝: 经济事实 " + context.factId() + ", 入账批次 "
+        return new BizCheckFailException("控制科目过账拒绝: 计费事实 " + context.factId() + ", 入账批次 "
             + context.getCommand().getBatch().postingKey() + ", 指令类型 " + type.getCode() + ", " + reason);
     }
 

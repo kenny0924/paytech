@@ -13,15 +13,15 @@ import com.paytech.account.api.enums.AccountEntityType;
 import com.paytech.account.api.enums.BalanceBucket;
 import com.paytech.account.api.enums.OwnerAccountType;
 import com.paytech.account.api.event.AccountPostedPayload;
-import com.paytech.account.test.builder.EconomicFactBuilder;
-import com.paytech.billing.api.enums.AmountSource;
+import com.paytech.account.test.builder.BillingFactBuilder;
+import com.paytech.billing.api.enums.FactComponentType;
 import com.paytech.billing.api.enums.FactLineDirection;
 import com.paytech.billing.api.enums.FactPartyRole;
 
 /**
  * 明细账入账、桶移动、到期与查询用例的公共常量与断言
  * <li>交易主体固定为 AE001/USD，入账流聚合 ID {@code OE.AE001.USD.0}。</li>
- * <li>经济事实主键在本类内递增分配，与 billing 的 Snowflake 主键一样随登记顺序增大。</li>
+ * <li>计费事实主键在本类内递增分配，与 billing 的 Snowflake 主键一样随登记顺序增大。</li>
  */
 public abstract class AbstractBalanceTest extends MockTestBase {
     protected static final String ENTITY_NO = "AE001";
@@ -36,11 +36,9 @@ public abstract class AbstractBalanceTest extends MockTestBase {
 
     protected static final String PARTNER = String.valueOf(PARTNER_ID);
 
-    protected static final long PARTNER_AGREEMENT_OE_ID = 2101L;
-
     protected static final long FINANCE_ENTITY_ID = 8001L;
 
-    /** billing 在事实头中给出的渠道清算账户（只在 ledger 记账）。 */
+    /** billing 以 CLEARING_ACCOUNT 外部引用给出的渠道清算账户（只在 ledger 记账）。 */
     protected static final long CHANNEL_ACCOUNT_ID = 620001L;
 
     /** AE001/USD 分片 0 的入账流聚合 ID。 */
@@ -49,24 +47,24 @@ public abstract class AbstractBalanceTest extends MockTestBase {
 
     private static final AtomicLong FACT_IDS = new AtomicLong(910_000_000L);
 
-    /** 下一个经济事实主键。 */
+    /** 下一个计费事实主键。 */
     protected static long nextFactId() {
         return FACT_IDS.incrementAndGet();
     }
 
     /** 无合作方的 PAYMENT 交易事实模板。 */
-    protected static EconomicFactBuilder payment(String grossAmount) {
-        return EconomicFactBuilder.payment(nextFactId(), CLIENT_ID, ENTITY_NO, CURRENCY, grossAmount, CHANNEL_ACCOUNT_ID);
+    protected static BillingFactBuilder payment(String grossAmount) {
+        return BillingFactBuilder.payment(nextFactId(), CLIENT_ID, ENTITY_NO, CURRENCY, grossAmount, CHANNEL_ACCOUNT_ID);
     }
 
     /** MANUAL_ADJUSTMENT 人工调整事实模板。 */
-    protected static EconomicFactBuilder adjustment() {
-        return EconomicFactBuilder.adjustment(nextFactId(), CLIENT_ID, ENTITY_NO, CURRENCY);
+    protected static BillingFactBuilder adjustment() {
+        return BillingFactBuilder.adjustment(nextFactId(), CLIENT_ID, ENTITY_NO, CURRENCY);
     }
 
     /** 给 Client 记一笔 PENDING 贷方的人工调整。 */
-    protected static EconomicFactBuilder clientCredit(String amount) {
-        return adjustment().line(AmountSource.CLIENT_PRINCIPAL, FactPartyRole.OPERATING_ENTITY, ENTITY_NO,
+    protected static BillingFactBuilder clientCredit(String amount) {
+        return adjustment().line(FactComponentType.CLIENT_PRINCIPAL, FactPartyRole.OPERATING_ENTITY, ENTITY_NO,
             FactPartyRole.CLIENT, CLIENT, FactLineDirection.CHARGE, amount);
     }
 

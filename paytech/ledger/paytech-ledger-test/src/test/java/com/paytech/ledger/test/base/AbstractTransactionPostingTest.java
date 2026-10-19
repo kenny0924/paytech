@@ -21,9 +21,9 @@ import com.paytech.account.api.enums.BalanceBucket;
 import com.paytech.account.api.enums.OwnerType;
 import com.paytech.account.api.event.AccountPostedEntryPayload;
 import com.paytech.account.api.event.AccountPostedPayload;
-import com.paytech.billing.api.enums.AutoInstructionType;
-import com.paytech.billing.api.fact.EconomicFactPayload;
+import com.paytech.billing.api.fact.BillingFactPayload;
 import com.paytech.foundation.id.IdGenerator;
+import com.paytech.ledger.api.enums.AutoInstructionType;
 import com.paytech.ledger.api.enums.LedgerOwnerType;
 import com.paytech.ledger.core.dal.dataobject.AccountingInstruction;
 import com.paytech.ledger.core.dal.dataobject.InstructionLine;
@@ -39,8 +39,8 @@ import com.paytech.ledger.domain.view.PostedInstructionView;
 import com.paytech.ledger.domainservice.service.TransactionPostingService;
 import com.paytech.ledger.ext.mq.AccountPostedPostingHandler;
 import com.paytech.ledger.test.builder.AccountPostingBuilder;
-import com.paytech.ledger.test.builder.EconomicComponentBuilder;
-import com.paytech.ledger.test.builder.TransactionEconomicsBuilder;
+import com.paytech.ledger.test.builder.BillingFactBuilder;
+import com.paytech.ledger.test.builder.BillingFactLineBuilder;
 import com.paytech.ledger.test.dal.AccountingTestMapper;
 import com.paytech.ledger.test.mocker.local.LedgerFixture;
 import com.paytech.ledger.test.mocker.local.LedgerMocker;
@@ -49,7 +49,7 @@ import com.paytech.ledger.test.probe.AccountPostedPublisher;
 /**
  * 控制科目过账入口测试的公共前置与调用
  * <li>每例准备交易 OE（AE001/USD）账簿与当月 OPEN 期间；不预建任何 t_ledger_account，验证引擎自动建户。</li>
- * <li>入口：经济事实由 {@link TransactionEconomicsBuilder} 构造并配置为 billing 详情 DTO，入账批次由 {@link AccountPostingBuilder} 构造，经
+ * <li>入口：计费事实由 {@link BillingFactBuilder} 构造并配置为 billing 详情 DTO，入账批次由 {@link AccountPostingBuilder} 构造，经
  * {@link #postBatch} 扮演 account 发布 AccountPosted 到真实本机 RabbitMQ，由正式消费链路（分区队列 → 幂等拦截器 →
  * AccountPostedPostingHandler）事务外读事实、事务内过账；拒绝矩阵经 {@link #consumeDirectly} 直接调用同一 Handler，断言拒绝原因。</li>
  * <li>断言落在指令、指令行（规则行 / account 流水行）、分录与按分录聚合的账户余额；Owner 明细余额由 account 的测试覆盖。</li>
@@ -64,15 +64,13 @@ public abstract class AbstractTransactionPostingTest extends MockTestBase {
     /** 交易 Client。 */
     protected static final long CLIENT_ID = 1001L;
 
-    /** billing 在经济事实头中给出的 Finance 渠道清算账户主键。 */
+    /** billing 在计费事实头中给出的 Finance 渠道清算账户主键。 */
     protected static final long CHANNEL_ACCOUNT_ID = 620001L;
 
     /** 交易 Local Partner。 */
     protected static final long PARTNER_ID = 3001L;
 
     /** Partner Agreement OE 关联。 */
-    protected static final long PARTNER_AGREEMENT_OE_ID = 3101L;
-
     /** Seller 税务机关。 */
     protected static final long TAX_AUTHORITY_ID = 4001L;
 
@@ -110,13 +108,13 @@ public abstract class AbstractTransactionPostingTest extends MockTestBase {
         oeLedger = ledgerMocker.mockOperatingEntityLedger(ENTITY_NO, CURRENCY);
     }
 
-    /** 无 Partner 的 PAYMENT 经济事实模板，渠道清算账户为默认主键。 */
-    protected static TransactionEconomicsBuilder payment(String grossAmount) {
-        return TransactionEconomicsBuilder.template(ENTITY_NO, CLIENT_ID, CURRENCY, grossAmount, CHANNEL_ACCOUNT_ID);
+    /** 无 Partner 的 PAYMENT 计费事实模板，渠道清算账户为默认主键。 */
+    protected static BillingFactBuilder payment(String grossAmount) {
+        return BillingFactBuilder.template(ENTITY_NO, CLIENT_ID, CURRENCY, grossAmount, CHANNEL_ACCOUNT_ID);
     }
 
-    /** 分配事实主键并构造经济事实载荷。 */
-    protected EconomicFactPayload fact(TransactionEconomicsBuilder builder, EconomicComponentBuilder... lines) {
+    /** 分配事实主键并构造计费事实载荷。 */
+    protected BillingFactPayload fact(BillingFactBuilder builder, BillingFactLineBuilder... lines) {
         return builder.build(idGenerator.nextId(), lines);
     }
 
@@ -133,12 +131,12 @@ public abstract class AbstractTransactionPostingTest extends MockTestBase {
     }
 
     /** 事实批次模板：OE 流、给定序号、APPLIED、无流水。 */
-    protected static AccountPostingBuilder posting(EconomicFactPayload fact, long sequence) {
+    protected static AccountPostingBuilder posting(BillingFactPayload fact, long sequence) {
         return AccountPostingBuilder.fact(fact, sequence);
     }
 
     /** PAYMENT 批次：Client 本金进 CLIENT_PAYABLE / PENDING 贷，Partner 分成进 PARTNER_PAYABLE / PENDING 贷。 */
-    protected static AccountPostingBuilder paymentPosting(EconomicFactPayload fact, long sequence, String principal,
+    protected static AccountPostingBuilder paymentPosting(BillingFactPayload fact, long sequence, String principal,
         String partnerShare) {
         com.paytech.account.api.enums.EntrySide credit = com.paytech.account.api.enums.EntrySide.CREDIT;
         AccountPostingBuilder builder = posting(fact, sequence).entry(StandardAccountCodes.CLIENT_PAYABLE, OwnerType.CLIENT,
@@ -155,8 +153,8 @@ public abstract class AbstractTransactionPostingTest extends MockTestBase {
      *
      * @return 按账簿主键、指令主键升序的指令与分录
      */
-    protected List<PostedInstructionView> postBatch(EconomicFactPayload fact, AccountPostedPayload posting) {
-        economicFacts.mockFact(fact);
+    protected List<PostedInstructionView> postBatch(BillingFactPayload fact, AccountPostedPayload posting) {
+        billingFacts.mockFact(fact);
         return publishAndAwait(posting);
     }
 
@@ -173,7 +171,7 @@ public abstract class AbstractTransactionPostingTest extends MockTestBase {
     }
 
     /** 在调用方事务内直接调用过账引擎，验证业务层幂等。 */
-    protected List<PostedInstructionView> postDirectly(EconomicFactPayload fact, AccountPostedPayload posting) {
+    protected List<PostedInstructionView> postDirectly(BillingFactPayload fact, AccountPostedPayload posting) {
         return transactionTemplate.execute(status -> postingService.post(new AccountPostingCommand(
             AccountPostingBatch.of(posting), fact)));
     }
@@ -225,8 +223,8 @@ public abstract class AbstractTransactionPostingTest extends MockTestBase {
         return matched.get(0);
     }
 
-    /** 断言 ACCOUNT_POSTING 指令冻结批次来源、规则版本、Input Hash 与经济事实，并已过账生成一条 STANDARD Journal。 */
-    protected JournalEntry assertPostingInstruction(AccountingInstruction instruction, EconomicFactPayload economics,
+    /** 断言 ACCOUNT_POSTING 指令冻结批次来源、规则版本、Input Hash 与计费事实，并已过账生成一条 STANDARD Journal。 */
+    protected JournalEntry assertPostingInstruction(AccountingInstruction instruction, BillingFactPayload economics,
         AccountPostedPayload posting, long ledgerBookId, long ruleVersionId, LocalDate postingDate) {
         JournalEntry journal = testMapper.selectJournalEntryByInstruction(instruction.getId());
         assertNotNull(journal, "指令应已过账: " + instruction.getId());
@@ -246,15 +244,11 @@ public abstract class AbstractTransactionPostingTest extends MockTestBase {
         return journal;
     }
 
-    /** PAYMENT 的业务日期：支付成功时间在账簿日历时区的日期。 */
-    protected static LocalDate paymentDate(EconomicFactPayload economics) {
-        return LocalDate.ofInstant(economics.getPaymentSucceededTime(), ZoneId.of(LedgerMocker.TIMEZONE));
+    /** 事实的业务日期：载荷 businessTime（PAYMENT 为支付成功时间，调整类为批准时间）在账簿日历时区的日期。 */
+    protected static LocalDate businessDate(BillingFactPayload economics) {
+        return LocalDate.ofInstant(economics.getBusinessTime(), ZoneId.of(LedgerMocker.TIMEZONE));
     }
 
-    /** 调整类事实的业务日期：批准（登记）时间在账簿日历时区的日期。 */
-    protected static LocalDate recordedDate(EconomicFactPayload economics) {
-        return LocalDate.ofInstant(economics.getRecordedTime(), ZoneId.of(LedgerMocker.TIMEZONE));
-    }
 
     /** 断言指令行按行号顺序逐行引用规则行或 account 流水、账户、方向与金额。 */
     protected void assertInstructionLines(long instructionId, ExpectedLine... expected) {

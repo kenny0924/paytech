@@ -6,11 +6,9 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 
 import com.paytech.channel.connector.test.mocker.VaultTransactionObserver;
-import com.paytech.foundation.id.IdGenerator;
-import com.paytech.foundation.id.SnowflakeIdGenerator;
 import com.paytech.foundation.testsupport.api.EnableMockHttpServer;
 
-/** 只增加测试 Mapper、Fixture ID 与独立的 Vault / Platform HTTP Mock，生产装配由正式应用完成。 */
+/** 只增加测试 Mapper 与独立的 Vault / Platform HTTP Mock；生产装配（含 Fixture 复用的 Snowflake 生成器）由正式应用完成。 */
 @TestConfiguration(proxyBeanMethods = false)
 @MapperScan("com.paytech.channel.connector.test.dal")
 @EnableMockHttpServer(basePackages = {"com.paytech.channel.connector.test.mocker", "com.paytech.channel.connector.test.mock"},
@@ -20,11 +18,5 @@ public class ChannelConnectorTestConfiguration {
     @Bean
     RestClientCustomizer observeVaultTransaction(VaultTransactionObserver observer) {
         return builder -> builder.requestInitializer(request -> observer.observe());
-    }
-
-    /** Fixture ID 使用正式 Snowflake 实现；生产代码只读渠道配置，不生成 ID。 */
-    @Bean
-    IdGenerator channelConnectorFixtureIds() {
-        return new SnowflakeIdGenerator(31L, 29L);
     }
 }

@@ -26,7 +26,7 @@ public interface BalanceMaturityService {
     /**
      * 移动一条事实的到期余额并标记 MATURED
      *
-     * @param factId 经济事实 ID
+     * @param factId 计费事实 ID
      * @return 本次新建的移动数；事实已不在 PENDING 时为 0
      */
     int mature(long factId);

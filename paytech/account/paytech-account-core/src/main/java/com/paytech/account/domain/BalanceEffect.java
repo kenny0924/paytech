@@ -7,7 +7,7 @@ import com.paytech.account.api.enums.EntrySide;
 import com.paytech.account.api.enums.OwnerAccountType;
 
 /**
- * 一条经济事实明细映射出的一行 Owner 账户流水
+ * 一条计费事实明细映射出的一行 Owner 账户流水
  *
  * @param factLineNo 来源明细行号
  * @param accountType Owner 账户类型（科目代码、Owner 类型与正常方向）

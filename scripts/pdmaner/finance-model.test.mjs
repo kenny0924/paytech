@@ -234,14 +234,20 @@ test("Finance service artifacts are exact per-database projections of the logica
     }
   }
   assert.deepEqual(owners.get("t_compensation_event"), [...FINANCE_SERVICES], "补偿事件每库一份");
-  assert.deepEqual(owners.get("t_currency_spec"), ["billing"], "币种规则在生成器维护的服务库中只有 billing 持只读副本");
+  // 2026-10-19 计费事实重构：billing 模型脱离生成器（由 billing-model.test.mjs 校验），经济事实三表与渠道成本四表不再投影，
+  // currency_spec 只读副本随 ledger、billing 直接维护的模型。
+  assert.ok(!owners.has("t_currency_spec"), "币种规则副本不再由生成器投影");
+  for (const table of ["t_economic_fact", "t_economic_fact_line", "t_economic_fact_line_link", "t_channel_cost_plan",
+    "t_channel_cost_plan_ver", "t_channel_cost_scope", "t_channel_cost_component"]) {
+    assert.ok(!owners.has(table), `${table} 不再由 Finance 生成器投影`);
+  }
   assert.ok(!owners.has("t_command_idempotency"), "t_command_idempotency 已删除");
   // account（第 11b 步）与 ledger（2026-10-19 控制科目重构）服务库模型已脱离生成器直接维护，不在此投影；逻辑模型仍为 84 张表。
   // ledger 逻辑切分的 29 张表中，27 张只属于 ledger（另两张为每库一份的补偿事件与 currency_spec 只读副本）。
   for (const table of ["t_account", "t_ledger_book", "t_accounting_instruction", "t_period_close"]) {
     assert.ok(!owners.has(table), `${table} 属于 ledger，不再投影`);
   }
-  assert.equal(owners.size, 84 - 1 - 27, "其余每张逻辑表恰属一个生成器维护的服务库");
+  assert.equal(owners.size, 84 - 1 - 27 - 7 - 1, "其余每张逻辑表恰属一个生成器维护的服务库");
   for (const [table, services] of owners) {
     if (!["t_compensation_event", "t_currency_spec"].includes(table)) {
       assert.equal(services.length, 1, `${table} 只能属于一个服务库`);

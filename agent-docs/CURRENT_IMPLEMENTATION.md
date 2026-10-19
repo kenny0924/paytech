@@ -22,9 +22,9 @@
     - dispute、payout 只有模型；fx、workflow-approval 只有 README 占位。
     - 另有 `paytech/build`（BOM、父 POM）、`paytech/foundation`（17 个模块，含 `paytech-messaging(-api)`、`paytech-internal-auth`）与 `paytech/tools/{arch-rules,arch-rules-reactor-test,instance-manifest,migration-runner}`。
   - **模块坐标：** `com.paytech:paytech-<服务>-{api,core,app,test}`（Gateway 与两个 BFF 无 api / core）。服务名、业务端口与管理端口见 [LOCAL_DEVELOPMENT_ENVIRONMENT.md](./LOCAL_DEVELOPMENT_ENVIRONMENT.md) 8.2 节；服务目录见 `paytech/tools/instance-manifest/src/main/resources/catalog/services.yaml`。
-  - **库：** 每个服务独立库：`mor_client_master`、`mor_commercial`、`mor_acquiring`、`mor_consumer`、`mor_payment`、`mor_channel_connector`、`mor_card`、`mor_risk_decision`、`mor_compliance`、`mor_ledger`、`mor_billing`、`mor_account`、`mor_reconciliation`、`mor_tax`；`mor_platform`、`mor_vault` 不变。模型为 `paytech/<服务>/docs/database/<服务>.pdma.json`（18 份），R4 表归属由 `paytech/tools/arch-rules/src/main/resources/table-ownership.yaml` 强制（265 张物理表 + 56 张保留表 + 6 张 step-added）。
+  - **库：** 每个服务独立库：`mor_client_master`、`mor_commercial`、`mor_acquiring`、`mor_consumer`、`mor_payment`、`mor_channel_connector`、`mor_card`、`mor_risk_decision`、`mor_compliance`、`mor_ledger`、`mor_billing`、`mor_account`、`mor_reconciliation`、`mor_tax`；`mor_platform`、`mor_vault` 不变。模型为 `paytech/<服务>/docs/database/<服务>.pdma.json`（18 份），R4 表归属由 `paytech/tools/arch-rules/src/main/resources/table-ownership.yaml` 强制（265 张物理表 + 56 张保留表 + 6 张 step-added；2026-10-19 计费事实重构后为 −7 step-removed + 20 step-added）。
   - **过渡与清理：** 第 07 步 account 对 `mor_ledger` 的共库只读已于第 11b 步结束，`transitionalSharedReads` 已删除，account 改用自有 `mor_account`。第 05 步卡表暂居 `mor_payment` 的过渡已于第 12 步结束。旧根在 git 中为 0 个文件；文档链接已改写到新路径。
-  - **消息：** `<producer>.events` Fanout 加订阅方一致性哈希分区队列（D34）。payment、compliance 只发新信封；acquiring、client-master、card、ledger、account 为消费者；billing 发布 `EconomicFactRecorded`。旧 `topic_*` / `cg_*` 不再由代码声明。
+  - **消息：** `<producer>.events` Fanout 加订阅方一致性哈希分区队列（D34）。payment、compliance 只发新信封；acquiring、client-master、card、ledger、account 为消费者；billing 发布 `EconomicFactRecorded`（2026-10-19 改名 `BillingFactRecorded`，代码已改、未部署，见下方计费事实重构一节）。旧 `topic_*` / `cg_*` 不再由代码声明。
   - **test-environment：** Compose 已按上述服务拆分（18 个 Java 服务，每个服务一个 `JAR_FILE`）；`build.sh` 单 Reactor 打包；`initialize.py` 新增 V2 库建库与 Schema 动作。2026-10-18 mor-test 已按 V2 部署，见下方"mor-test V2 部署"。
 - **Verified：**
   - **全 Reactor：** refactor-main@6b8a6672（11b 合入后）执行 `cd paytech && ./mvnw -B clean verify`，BUILD SUCCESS，用时 19:49，2026-10-18 10:16 完成（主会话）。
@@ -74,7 +74,7 @@
 - **Pending：**
   - **account / ledger 明细账与控制科目（2026-10-18 决定已确认，未实施）：** [决定](decisions/2026-10-18-account-ledger-subledger-control-account.md)与[详细设计](../design-discuss/finance-account-ledger-v3/design.md)改为 billing → account → ledger 单向链路、ledger 只记控制科目、余额桶与银行现金额度归 account、删除金额核对。现行代码、模型与本机库仍是第 11b 步双消费实现；下一步为阶段 2 模型与 SQL。
   - **account 明细账与 ledger 控制科目重构（2026-10-19，阶段 7 已部署 mor-test，已本地提交 `080909fb`，未推送）：** mor-test 已于 2026-10-19 10:43—10:54Z 部署并验收：六个镜像（tag `subledger-20261019`，源码 HEAD `2bae8597` + 441 个文件）billing `sha256:403fc7de…`、account `sha256:b356a4f3…`、ledger `sha256:fb7c661d…`、Platform `sha256:33c196ec…`、Operations BFF `sha256:446ad697…`、Operations Web `sha256:12e2e021…`，Gateway 未动；SQL 已执行：`mor_account` 9 表明细账（`db/account/ddl.sql`）、`mor_ledger` 加 `account_entry_id` 与注释（`db/ledger/ddl.sql`）、规则行 44 → 36（`db/ledger/dml.sql`）、`mor_platform` 块 99（39 行）并经 `release/test-activate.sql` 激活 3 / 1 / 1（PLATFORM_ADMIN 31）；RabbitMQ `/mor-test` 已删除 `ledger.billing.p0`—`p3`、`ledger.billing.dlq` 与交换机 `ledger.billing.hash` / `ledger.billing.dlx`（0 消息），新声明 `account.events` → `ledger.account.*`；XXL 任务 14 `accountBalanceMaturity`（account 执行器、`0 */10 * * * ?`、启用，手动触发 matured 0）；验收接口 58/58、浏览器 31/31、全页面回归 34/34，合成数据已清理回基线；备份 `~/Code-MoR-backups/20261019T104222Z-subledger-test/`，执行记录与回退见需求目录 `release/release.md` 第 6 / 5 节。按[需求](<../requirements/20261019/finance-account明细账与ledger控制科目重构/requirement.md>)与[技术方案](<../requirements/20261019/finance-account明细账与ledger控制科目重构/technique.md>)多线并行实施：account-api / ledger-api / billing-api 合同与事件目录（`AccountPosted` 取代 `BalanceMoved`，聚合 ID `{OE|FE}.{entityId}.{currency}.{shardNo}`）、account 与 ledger 实现、Operations BFF / Web 明细账查询，以及 Platform 初始化 SQL 块 99（明细账菜单 1、路由 3，休眠，39 行）与 `console-resource-capabilities.json` +1；test-environment Compose 删除 account 的 `ACCOUNT_LEDGER_SERVICE_URL`（未部署）。本机 `mor_account` / `mor_ledger` 未重建，各线验证结果见需求目录 `tasks/*-report.md`。
-  - **Finance 生成器 --check 漂移：** 提交 `cf4a429c` 直接修改了 18 份模型的 name/describe，Finance 五份服务模型因此与生成器输出不一致（仅这两个字段），`finance-model.test.mjs` 第 2、3 项失败；需在生成器中同步或继续把对应服务移出生成器。
+  - **Finance 生成器 --check 漂移：** 提交 `cf4a429c` 直接修改了 18 份模型的 name/describe，Finance 五份服务模型因此与生成器输出不一致（仅这两个字段），`finance-model.test.mjs` 第 2、3 项失败；需在生成器中同步或继续把对应服务移出生成器。2026-10-19 billing 已移出生成器，余下 reconciliation、tax、payout 三份仍有该漂移。
   - **design/04 修订：** §3.2 与 §6 按 [11b 报告](<../requirements/20261017/architecture-V2骨架与模块搬迁/tasks/11b-ledger-account-split-report.md>)偏差 1–3 修订：余额身份带科目并由 account 自有主键；新增 `t_balance_applied_entry`；试算不再比对账户投影，改由日终核对与关账 consistency 承担。主会话已接受这三项偏差，规范正文未改。design/03 的表数与 `t_account` 归属同样按 11b 报告回写。
   - **DRAFT 事实驳回 / 撤回切片：** 第 11a 步用户决定在 11b 之后作为独立小切片。
   - **撤销 account_app 对 mor_ledger 的只读授权：** `REVOKE SELECT ON mor_ledger.* FROM 'account_app'@'%';` 待执行（本机及已建该授权的环境）。
@@ -87,7 +87,7 @@
     - `agent-docs` 现行正文替换为 V2 草案，作为后续需求。
     - `LOCAL_DEVELOPMENT_ENVIRONMENT.md` 第 11 节 V2 消息命名约定的正文修订。
   - **配置待改：**
-    - billing 的 `messaging.publisher.unroutable-policy` 仍为 `ACK_AND_WARN`，订阅者已接入，应改回 `FAIL`。
+    - ~~billing 的 `messaging.publisher.unroutable-policy` 仍为 `ACK_AND_WARN`~~：2026-10-19 计费事实重构已改回 `FAIL`（代码已改、未部署）。
     - `local-environment/compose.yaml` 的 `mysql.environment` 未透传 V2 库密码，全新卷初始化会因必需变量缺失而失败。
   - **mor-test V2 部署：** 2026-10-18 已部署并保留全部数据，见[需求交付记录](<../requirements/20261018/test-environment-V2部署与数据迁移/delivery.md>)与[阶段 2 报告](<../requirements/20261018/test-environment-V2部署与数据迁移/tasks/02-report.md>)。
     - 镜像：main@e5467400 构建的 18 个 Java 服务、2 个 Web 的 `mor-test/*:development` 与 Vault 镜像；29 个容器 healthy。
@@ -129,6 +129,41 @@
       # dlx_commerce_payment_result dlx_acquiring_payment_result dlx_cct_client_review dlx_client_master_client_review
       # topic_payment_result topic_risk_client_review
       ```
+
+<a id="billing-fact-model-channel-cost-20261019"></a>
+## billing 计费事实模型重构与渠道成本迁出（2026-10-19，已部署 mor-test，未提交）
+
+- **范围：** 按[决定](decisions/2026-10-19-billing-fact-engine.md)、[需求](<../requirements/20261019/billing-计费事实模型重构与渠道成本迁出/requirement.md>)与[技术方案](<../requirements/20261019/billing-计费事实模型重构与渠道成本迁出/technique.md>)第 2 节实施需求 A。各线报告见 [tasks/](<../requirements/20261019/billing-计费事实模型重构与渠道成本迁出/tasks/>)（T0、A、B、C、D）。
+- **Implemented：**
+  - **billing 模型：** `mor_billing` 目标 9 → 11 张：`t_billing_fact`、`t_billing_fact_ref`、`t_billing_fact_pricing`、`t_billing_fact_line`（20 列，含 `target_bucket`）、`t_billing_fact_line_link`、`t_business_calendar`、`t_business_calendar_day`、`t_consumed_event`、`t_consumed_aggregate_version`，加原有 `t_currency_spec`、`t_compensation_event`。经济事实三表与渠道成本四表删除。`billing.pdma.json` 脱离 Finance 生成器直接维护，由 `scripts/pdmaner/billing-model.test.mjs` 校验。待执行 SQL 为 [db/billing](<../requirements/20261019/billing-计费事实模型重构与渠道成本迁出/db/billing/>)。
+  - **billing 接口：** `BillingFactCommandApi` 提交 `POST /billing/v1/facts`、批准 `POST /billing/v1/facts/{factId}/approve`；`BillingFactQueryApi` 按 ID、按账簿流分页、发布进度 `GET /billing/v1/facts/progress`（原 `/pending`）、新增按引用查 `GET /billing/v1/facts/by-ref`。人工登记只开放 `MANUAL_ADJUSTMENT` 与 `COST_ADJUSTMENT`。保留纯计算器 `ChannelCostCalculator`，暂无调用方。
+  - **事件：** `EconomicFactRecorded` 改为 `BillingFactRecorded`（聚合 `BILLING_FACT`，载荷含 `refs` 与全部行，消费者 account），补偿类型 `BILLING_FACT_RECORDED`。`messaging.publisher.unroutable-policy` 已改回 `FAIL`，上一节「配置待改」中的该项关闭。
+  - **channel-connector：** 渠道成本四表迁入，`mor_channel_connector` 目标 13 → 17 张，增量 SQL 见 [db/channel-connector](<../requirements/20261019/billing-计费事实模型重构与渠道成本迁出/db/channel-connector/ddl.sql>)。`ChannelCostPlanApi` 的 Maker-Checker 端点迁到 `/channel-connector/v1/channel-cost-plans/**`，增加 MID 存在、Channel 与 entityNo 归属校验。新增命中接口 `POST /channel-connector/v1/channel-costs/resolutions`，只返回命中组件，不算金额。新增到期切换 Job `channelCostVersionActivation`。`channel-connector.pdma.json` 由 Payment Orchestration 生成器 channel-connector 分区产出。
+  - **account / ledger：** account 改读 `BillingFactRecorded` 新载荷，映射为每行必有付方 / 收方。ledger 经 `BillingFactQueryApi` 读事实，过账日期取 `businessTime`，关账改调 `/progress`。`AmountSource`、`AutoInstructionType` 迁 `paytech-ledger-api`。两服务无表结构变化。
+  - **规则与模型：** `table-ownership.yaml` 改为 billing 11 张、channel-connector 17 张，总计 265 + 56 − 7 step-removed + 20 step-added。Finance 生成器不再投影 billing，只输出 reconciliation、tax、payout 三份服务模型。
+- **Verified（各线报告，2026-10-19）：**
+
+  | 范围 | 结果 |
+  |---|---|
+  | billing-test | 71/71 |
+  | channel-connector-test | 123/125，余下 2 例 R4 在表归属更新后定向重跑通过 |
+  | account-test / ledger-test | 58/58、234/234 |
+  | arch-rules | 61/61 |
+  | `billing-model.test.mjs` | 7/7 |
+
+  本机 `mor_billing`、`mor_channel_connector` 已由主会话按各自测试 `init/ddl.sql` 重建，供自动测试使用。本机链路验收 59/59 两轮（[stage5-report.md](<../requirements/20261019/billing-计费事实模型重构与渠道成本迁出/verification/stage5-report.md>)）。
+- **Deployed（mor-test，2026-10-19 19:37—19:44Z，记录见 [release.md 第 6 节](<../requirements/20261019/billing-计费事实模型重构与渠道成本迁出/release/release.md>)）：**
+  - **镜像（tag `billing-fact-20261019`，源码 HEAD `08c8f794` + 本需求 460 个文件）：** channel-connector `sha256:194961f11db549ab57fa8ccb9f94ee51d737dee46cb588b86e2a40905539eff3`、billing `sha256:eeec27f923b7f55f7f3f6b7a8b32528b063fe9a64197615b1e645d3f8cf6540e`、ledger `sha256:0e9390666b839739d7b418783d70682040d761d0e3e5634be86f89076d4de020`、account `sha256:ad0621b12a80731ed550729ff7709383a7dee28017bc736c3ea9e2152a58ce00`。Gateway、Platform、BFF、Web 与其余服务未动。
+  - **SQL（root，19:37:14Z）：** `mor_channel_connector` 13 → 17 张；`mor_billing` 删 7 建 9 → 11 张，`t_business_calendar` 1 行 `DEFAULT / UTC / ACTIVE`。RabbitMQ 无改动。
+  - **Compose：** 工作区 `test-environment/compose.applications.yaml` 的 channel-connector-service 段新增 Redis、Snowflake（Region 0、**Worker 26**）、补偿实例与 XXL 执行器变量，未提交。发布包原定 Worker 32 超出 Snowflake 允许的 0—31，首次启动失败后改为 26。
+  - **XXL：** 分组 13 `channel-connector-service`（自动注册 `http://172.30.73.36:9999/`），任务 15 `channelCostVersionActivation`（CRON `0 */5 * * * ?`、FIRST、SERIAL_EXECUTION、超时 300、重试 0）已启用；手动与定时触发 200 / 200，`activated 0`。
+  - **验收：** `E2E_TARGET=test` 接口验收 59/59；合成数据与渠道种子已清理，四库行数回到备份基线，差异只有授权 SQL 的结构变化。
+  - **备份 / 回退：** `~/Code-MoR-backups/20261019T193439Z-billing-fact-test/`（四库 dump、`compose-rollback.yaml`、行数基线前后对比）；channel-connector 回退用运行 JAR 替身 `sha256:7eea94df1e63…`（`:rollback-20261019`）。
+- **Pending：**
+  - 阶段 8 提交（含 Compose 段与 Worker 26）。
+  - 自动 PAYMENT 事实与 account 映射不兼容，需求 B 前先定，见 [design-discuss/billing/cases.md](../design-discuss/billing/cases.md) 待定点第 5 条。
+  - 作废 APPROVED 渠道成本版本的入口登记为后续项；`config/nacos/channel-connector-service.yaml` 未补新配置键（mor-test 以 `test` Profile 启动，不加载 Nacos），启用 Nacos 时再补。
+  - Payment 生成器与已提交 `payment.pdma.json`、`card.pdma.json` 存在既有漂移（提交 `cf4a429c` 的 name/describe、`a457754f` 的一条字段注释）；本需求在 PDManer 不可变表规则中新增两张成本表，两份模型需随漂移一并收敛后重生成。
 
 <a id="finance-accounting-kernel-20261015"></a>
 
@@ -190,6 +225,8 @@
 <a id="finance-channel-cost-20261017"></a>
 
 ## Finance 渠道成本配置（2026-10-17）
+
+> **2026-10-19：** 本节的四表、`ChannelCostPlanApi` 与审批逻辑已迁到 channel-connector（路径 `/channel-connector/v1/channel-cost-plans`），并补上到期切换 Job；billing 只保留纯计算器。现状见[计费事实重构](#billing-fact-model-channel-cost-20261019)。
 
 - **Implemented（未提交、未部署）：** 按[需求](../requirements/20261017/finance-渠道成本配置/requirement.md)与[技术方案](../requirements/20261017/finance-渠道成本配置/technique.md)，新增 `ChannelCostPlanApi`（`/channel-cost-plans/v1`）：创建方案（每个 Channel 一个，DRAFT）、以完整适用范围与成本组成一次创建版本并冻结 RFC 8785 `CODE-MOR:FINANCE:CHANNEL_COST:1` 摘要、提交、批准（Checker ≠ Maker 且确认同一摘要；到期即切换当前版本、方案 ACTIVE、原版本 INACTIVE 并写失效时间，未到期 APPROVED）、驳回与查询。领域服务 `ChannelCostEstimationService` 按发生时间命中 ACTIVE/INACTIVE 版本、六维精确命中适用范围，逐组成计算“费率 × 基数 + 固定费”、受上下限约束、按币种精度 HALF_UP，返回与 `t_transaction_economic_component` CHANNEL_COST 证据列一一对应的结果；无方案、无覆盖版本或无命中范围时拒绝，不默认零成本。本期不换汇（固定费币种须等于范围币种）。四张表已存在，无 SQL 变更。生产代码与测试由三个并行 agent 实现、主会话合并核对。
 - **Verified：** finance-service JDK 25 `clean verify` **242/242**（新增 49 个）；JaCoCo 命令行合计行 96.6%、分支 83.1%，`ChannelCostEstimationServiceImpl` 行 93.2%、`ChannelCostPlanServiceImpl` 93.9%。本地 `-exec.jar` 真实 HTTP 冒烟 20/20，数据已清理。

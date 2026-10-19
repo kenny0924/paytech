@@ -24,7 +24,7 @@ public class AccountPostingProgressResponseBody {
     private String currency;
 
     /**
-     * 已应用经济事实数，十进制字符串
+     * 已应用计费事实数，十进制字符串
      * <li>账簿主体为该主体的事实中自身事件已到达的事实（APPLIED、REVERSED、SKIPPED），排除仅因替代先到而占位的 PENDING_SUPERSEDED。</li>
      */
     private String appliedFactCount;

@@ -45,7 +45,7 @@
                                         <exclude>com.paytech:*-core</exclude>
                                         <exclude>com.paytech:*-app</exclude>
                                         <!-- Finance bans copied from 09 §1.4. Step 11b reopens AMQP / RabbitMQ for ledger: it consumes
-                                             EconomicFactRecorded through paytech-messaging (design/04 §5). Ledger registers no compensation
+                                             AccountPosted through paytech-messaging (design/04 §5). Ledger registers no compensation
                                              Handler, so compensation-event and its XXL-Job fallback stay banned. -->
                                         <exclude>org.flywaydb:*</exclude>
                                         <exclude>org.liquibase:*</exclude>

@@ -67,7 +67,7 @@ public class AccountingInstructionRepositoryImpl implements AccountingInstructio
         }
     }
 
-    /** 经济事实已生成的全部规则或入账批次指令，按账簿、主键升序；没有时返回空列表。 */
+    /** 计费事实已生成的全部规则或入账批次指令，按账簿、主键升序；没有时返回空列表。 */
     @Override
     public List<AccountingInstruction> findByEconomicFact(long economicFactId) {
         return mapper.selectByEconomicFact(economicFactId);

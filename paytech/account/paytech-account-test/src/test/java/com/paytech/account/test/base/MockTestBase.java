@@ -23,7 +23,7 @@ import com.paytech.account.test.dal.AccountTestMapper;
 import com.paytech.account.test.mocker.local.OwnerAccountMocker;
 import com.paytech.account.test.probe.AccountPostedProbe;
 import com.paytech.account.test.probe.BillingEventPublisher;
-import com.paytech.billing.api.fact.EconomicFactPayload;
+import com.paytech.billing.api.fact.BillingFactPayload;
 import com.paytech.foundation.messaging.testkit.PartitionQueueBaselineConfiguration;
 import com.paytech.foundation.testsupport.api.HttpTestInvoker;
 import com.paytech.foundation.testsupport.api.TestBase;
@@ -34,7 +34,7 @@ import tools.jackson.databind.ObjectMapper;
 /**
  * Account 服务级入口测试基类
  * <li>复用正式启动类 AccountApplication 与生产组件扫描，只附加 mock Profile 与测试组件；本地 MySQL（mor_account）与 RabbitMQ 需预先就绪。</li>
- * <li>account 没有出站 HTTP 依赖：EconomicFactRecorded 由 {@link BillingEventPublisher} 扮演 billing 发到真实本机 RabbitMQ，经正式消费链路处理；
+ * <li>account 没有出站 HTTP 依赖：BillingFactRecorded 由 {@link BillingEventPublisher} 扮演 billing 发到真实本机 RabbitMQ，经正式消费链路处理；
  * AccountPosted 由 {@link AccountPostedProbe} 以每例临时队列观察 account.events。</li>
  * <li>{@link PartitionQueueBaselineConfiguration} 在监听容器启动前清空 account.billing.p0..p3 与 DLQ（其他模块测试的残留消息）。</li>
  * <li>每例开始前清空本服务的 billing 分区队列、检查空基线并绑定观察队列；结束时等待消费与 AccountPosted 发布任务完成，再由 Foundation 统一清理。</li>
@@ -106,7 +106,7 @@ public abstract class MockTestBase extends TestBase {
     }
 
     /** 扮演 billing 发布事实并等待 account 消费提交。 */
-    protected String consumed(EconomicFactPayload fact) {
+    protected String consumed(BillingFactPayload fact) {
         String eventId = billing.publish(fact);
         await().atMost(CONSUME_WAIT).until(() -> testMapper.countConsumedEvent(eventId) == 1);
         return eventId;

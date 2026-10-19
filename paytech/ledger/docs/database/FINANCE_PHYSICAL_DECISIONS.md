@@ -20,6 +20,11 @@
 > 已初始化库的增量 SQL：`sql/changes/2026-10-18-ledger-account-split.sql` 与
 > `paytech/account/docs/database/sql/changes/2026-10-18-account-database.sql`。
 
+> **2026-10-19 计费事实模型重构（需求 billing-计费事实模型重构与渠道成本迁出）：** billing 的经济事实改称计费事实，事件改为
+> `BillingFactRecorded`（聚合 `BILLING_FACT`），billing 表更名为 `t_billing_fact*`，以 billing 服务模型为准。ledger 无表结构变化：
+> `t_accounting_instruction.economic_fact_id` 列名保留，语义为计费事实 ID；`AmountSource`、`AutoInstructionType` 迁到 ledger-api，值不变。
+> 本页其余正文中的"经济事实"与 `t_economic_fact*` 均按计费事实理解。
+
 > **2026-09-11 模型切片：** 当前物理模型采用 [OE / Client / Pricing 四系统决定](../../../../agent-docs/decisions/2026-09-11-cct-commerce-oe-pricing-model.md)。本页历史正文中的数字 OE、Assignment、独立 Acceptance、Client 多 OE 合同与 Agreement-OE 结算条款由该决定精确取代；本页摘要描述当前模型产物，运行代码、SQL 执行及待迁移状态仅见 [当前实现台账](../../../../agent-docs/CURRENT_IMPLEMENTATION.md)。Risk 本期不动。
 
 最后更新：2026-09-05

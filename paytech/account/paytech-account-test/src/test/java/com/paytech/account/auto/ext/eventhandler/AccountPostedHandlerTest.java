@@ -12,7 +12,7 @@ import com.paytech.account.api.enums.AccountEntityType;
 import com.paytech.account.service.handler.AccountPostedHandler;
 import com.paytech.account.test.base.AbstractBalanceTest;
 import com.paytech.account.test.probe.AccountPostedProbe;
-import com.paytech.billing.api.fact.EconomicFactPayload;
+import com.paytech.billing.api.fact.BillingFactPayload;
 import com.paytech.foundation.compensation.api.CompensationEvent;
 import com.paytech.foundation.compensation.api.CompensationHandlerResult;
 
@@ -72,7 +72,7 @@ class AccountPostedHandlerTest extends AbstractBalanceTest {
 
     /** 入账一条事实并等待首次发布完成（消费观察队列中的首条信封），返回事实主键。 */
     private long consumedAndPublished() {
-        EconomicFactPayload fact = clientCredit("3").build();
+        BillingFactPayload fact = clientCredit("3").build();
         consumed(fact);
         posted.await(1);
         await().atMost(CONSUME_WAIT).until(() -> testMapper.countCompensationEvents() == 0);

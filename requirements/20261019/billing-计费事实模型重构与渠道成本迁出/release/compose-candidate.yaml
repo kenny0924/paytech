@@ -1,0 +1,17 @@
+# billing 计费事实模型重构与渠道成本迁出：mor-test 候选覆盖文件（阶段 6，2026-10-19，任务卡 F）。
+# 叠加在 compose.yaml + compose.applications.yaml + compose.scheduler.yaml 之上（compose.sh 已带这三个文件，只传本文件的 -f）。
+# 镜像：HEAD 08c8f794 的 git archive 解包 + 本需求 460 个文件（source-overlay.txt）构建，tag mor-test/<服务>:billing-fact-20261019；
+# 下面固定为 sha256 镜像 ID（tag 同名），JAR SHA-256 见 release.md 第 2.7 节。Gateway、Platform、BFF、Web 不变。
+# 配置增量：channel-connector-service 新增 Redis、Snowflake、补偿实例与 XXL 执行器变量，由工作区 compose.applications.yaml 的
+# channel-connector-service 段承担（随阶段 8 提交）；compose.sh 读取的就是工作区文件，本文件只固定镜像。
+# 部署顺序：channel-connector → billing → ledger → account（release.md 第 4 节）。
+# 阶段 7 偏差：工作区 Compose 的 CHANNEL_CONNECTOR_SNOWFLAKE_WORKER_ID 原为 32（超出 Snowflake 允许的 0—31，启动失败），已改为 26。
+services:
+  channel-connector-service:
+    image: sha256:194961f11db549ab57fa8ccb9f94ee51d737dee46cb588b86e2a40905539eff3
+  billing-service:
+    image: sha256:eeec27f923b7f55f7f3f6b7a8b32528b063fe9a64197615b1e645d3f8cf6540e
+  ledger-service:
+    image: sha256:0e9390666b839739d7b418783d70682040d761d0e3e5634be86f89076d4de020
+  account-service:
+    image: sha256:ad0621b12a80731ed550729ff7709383a7dee28017bc736c3ea9e2152a58ce00

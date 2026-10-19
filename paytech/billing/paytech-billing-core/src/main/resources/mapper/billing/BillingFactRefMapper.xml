@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.billing.core.dal.mapper.BillingFactRefMapper">
+    <sql id="columns">id, fact_id, ref_type, ref_id, create_time</sql>
+
+    <insert id="batchInsert">
+        INSERT INTO t_billing_fact_ref (id, fact_id, ref_type, ref_id, create_time)
+        VALUES
+        <foreach collection="refs" item="ref" separator=",">
+            (#{ref.id}, #{ref.factId}, #{ref.refType}, #{ref.refId}, #{ref.createTime})
+        </foreach>
+    </insert>
+
+    <select id="selectByFactId" resultType="com.paytech.billing.core.dal.dataobject.BillingFactRef">
+        SELECT <include refid="columns"/> FROM t_billing_fact_ref WHERE fact_id = #{factId} ORDER BY ref_type
+    </select>
+
+    <select id="selectByFactIds" resultType="com.paytech.billing.core.dal.dataobject.BillingFactRef">
+        SELECT <include refid="columns"/> FROM t_billing_fact_ref
+        WHERE fact_id IN <foreach collection="factIds" item="factId" open="(" separator="," close=")">#{factId}</foreach>
+        ORDER BY fact_id, ref_type
+    </select>
+
+    <!-- idx_fact_ref_lookup (ref_type, ref_id)：一事实每种类型至多一条引用，事实 ID 不重复。 -->
+    <select id="selectFactIdsByRef" resultType="long">
+        SELECT fact_id FROM t_billing_fact_ref
+        WHERE ref_type = #{refType} AND ref_id = #{refId} AND fact_id &gt; #{fromFactId}
+        ORDER BY fact_id
+        LIMIT #{limit}
+    </select>
+</mapper>

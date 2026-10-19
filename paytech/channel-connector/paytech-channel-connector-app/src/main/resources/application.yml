@@ -23,6 +23,14 @@ spring:
       connection-timeout: 2000
       validation-timeout: 1000
       connection-init-sql: "SET time_zone = '+00:00'"
+  # 渠道成本方案写入口的 AbstractLockProcessor 资源锁（paytech-redis-starter）；地址与密码由部署环境注入。
+  data:
+    redis:
+      host: "${CHANNEL_CONNECTOR_REDIS_HOST:127.0.0.1}"
+      port: "${CHANNEL_CONNECTOR_REDIS_PORT:16379}"
+      password: "${CHANNEL_CONNECTOR_REDIS_PASSWORD:}"
+      connect-timeout: 2s
+      timeout: 2s
   sql:
     init:
       mode: never
@@ -41,6 +49,18 @@ web:
 
 mybatis:
   mapper-locations: "classpath*:mapper/**/*.xml"
+
+# paytech-redis-starter：渠道成本方案的创建、版本创建、提交、批准、驳回与到期切换按 planCode 加资源锁。
+redis:
+  coordination:
+    enabled: true
+
+# paytech-compensation-event：本服务暂无补偿事件类型（compensation-event-catalog.yaml 为空），引入它是为了带上 XXL-Job 执行器；
+# 执行器承载补偿兜底扫描与渠道成本到期切换任务 channelCostVersionActivation，调度中心地址与执行器参数沿用组件默认，由部署注入。
+compensation:
+  enabled: true
+  # 多实例 Claim/Lease 的实例标识前缀；部署多实例时由 CHANNEL_CONNECTOR_COMPENSATION_INSTANCE_ID 注入带实例后缀的值。
+  instance-id: "${CHANNEL_CONNECTOR_COMPENSATION_INSTANCE_ID:channel-connector}"
 
 # 实例 ID（实例清单 instance.id，01 §5）：内部调用 Token 的 inst；internal-auth.mode 非 OFF 时必填。
 paytech:
@@ -66,6 +86,10 @@ channel-connector:
     # Platform 标准 API 执行的对方 context path 与读取超时；修改需重启。
     platform-context-path: /platform-support
     platform-read-timeout: 30s
+  identifier:
+    # 部署分配的 Snowflake Region / Worker 标识（渠道成本主键），必填、无默认值；每个 app 独立分配，修改需重启。
+    region-id: "${CHANNEL_CONNECTOR_SNOWFLAKE_REGION_ID}"
+    worker-id: "${CHANNEL_CONNECTOR_SNOWFLAKE_WORKER_ID}"
 
 vault:
   client:

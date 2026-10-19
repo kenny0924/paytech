@@ -31,7 +31,7 @@ public class AccountEntry {
     private BigDecimal amount;
 
     /**
-     * 来源经济事实明细行号
+     * 来源计费事实明细行号
      * <li>事实头总额为 0；桶移动为空。</li>
      */
     private Integer factLineNo;

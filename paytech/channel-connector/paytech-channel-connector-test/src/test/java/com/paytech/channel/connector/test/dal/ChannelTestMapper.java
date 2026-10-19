@@ -1,10 +1,13 @@
 package com.paytech.channel.connector.test.dal;
 
+import java.time.Instant;
+import java.util.Map;
+
 import org.apache.ibatis.annotations.*;
 
 import com.paytech.channel.connector.core.dal.dataobject.*;
 
-/** mor_channel_connector 的前置数据和清理 SQL；只触碰本库 13 张表（10 §3.1），不代替被测生产 Mapper。 */
+/** mor_channel_connector 的前置数据和清理 SQL；只触碰本库 17 张表（10 §3.1 与渠道成本四表），不代替被测生产 Mapper。 */
 public interface ChannelTestMapper {
     /** 插入本例的 PaymentChannel 配置。 */
     @Insert("INSERT INTO t_payment_channel (channel_id, channel_code, channel_name, channel_status, create_time, update_time) VALUES (#{channelId}, #{channelCode}, #{channelName}, #{channelStatus.code}, #{createTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}, #{updateTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler})")
@@ -45,6 +48,40 @@ public interface ChannelTestMapper {
     /** 读取本库其余八张表（仅 Schema 的路由策略、交互、回调、异常与补偿任务）总行数，空基线必须为零。 */
     @Select("SELECT (SELECT COUNT(*) FROM t_routing_policy) + (SELECT COUNT(*) FROM t_routing_policy_version) + (SELECT COUNT(*) FROM t_routing_policy_mid) + (SELECT COUNT(*) FROM t_channel_interaction) + (SELECT COUNT(*) FROM t_channel_callback) + (SELECT COUNT(*) FROM t_channel_callback_item) + (SELECT COUNT(*) FROM t_channel_event_exception) + (SELECT COUNT(*) FROM t_compensation_event)")
     int countSchemaOnlyRows();
+
+    /** 读取渠道成本四表总行数，空基线必须为零。 */
+    @Select("SELECT (SELECT COUNT(*) FROM t_channel_cost_plan) + (SELECT COUNT(*) FROM t_channel_cost_plan_ver) + (SELECT COUNT(*) FROM t_channel_cost_scope) + (SELECT COUNT(*) FROM t_channel_cost_component)")
+    int countChannelCostRows();
+
+    /** 读取方案的状态、乐观锁版本与当前版本号（经指针关联版本表），方案不存在时为空。 */
+    @Select("SELECT p.status, p.version, v.cost_ver AS current_cost_ver FROM t_channel_cost_plan p LEFT JOIN t_channel_cost_plan_ver v ON v.id = p.current_ver_id WHERE p.plan_code = #{planCode}")
+    Map<String, Object> selectChannelCostPlan(@Param("planCode") String planCode);
+
+    /** 统计方案下的版本数。 */
+    @Select("SELECT COUNT(*) FROM t_channel_cost_plan_ver v JOIN t_channel_cost_plan p ON p.id = v.plan_id WHERE p.plan_code = #{planCode}")
+    int countChannelCostVersions(@Param("planCode") String planCode);
+
+    /** 改写版本的状态与生效区间，模拟时间推进或制造重叠的历史版本；不改内容摘要。 */
+    @Update("UPDATE t_channel_cost_plan_ver v JOIN t_channel_cost_plan p ON p.id = v.plan_id SET v.status = #{status}, v.effective_from = #{effectiveFrom,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}, v.effective_to = #{effectiveTo,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler} WHERE p.plan_code = #{planCode} AND v.cost_ver = #{costVer}")
+    int rewriteVersionWindow(@Param("planCode") String planCode, @Param("costVer") int costVer,
+        @Param("status") String status, @Param("effectiveFrom") Instant effectiveFrom,
+        @Param("effectiveTo") Instant effectiveTo);
+
+    /** 仅清理本测试库的渠道成本组成。 */
+    @Delete("DELETE FROM t_channel_cost_component")
+    void clearChannelCostComponents();
+
+    /** 仅清理本测试库的渠道成本适用范围。 */
+    @Delete("DELETE FROM t_channel_cost_scope")
+    void clearChannelCostScopes();
+
+    /** 仅清理本测试库的渠道成本版本。 */
+    @Delete("DELETE FROM t_channel_cost_plan_ver")
+    void clearChannelCostVersions();
+
+    /** 仅清理本测试库的渠道成本方案。 */
+    @Delete("DELETE FROM t_channel_cost_plan")
+    void clearChannelCostPlans();
 
     /** 更新当前绑定以模拟真实换绑后的历史执行。 */
     @Update("UPDATE t_channel_mid SET channel_account_id = #{accountId} WHERE mid_id = #{midId}")

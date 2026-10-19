@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<!-- t_balance_applied_fact：已处理经济事实，只读写 mor_account。 -->
+<!-- t_balance_applied_fact：已处理计费事实，只读写 mor_account。 -->
 <mapper namespace="com.paytech.account.core.dal.mapper.BalanceAppliedFactMapper">
     <sql id="columns">id, fact_id, fact_version, fact_type, supersedes_fact_id, superseded_by_fact_id, entity_no, finance_entity_id, currency, apply_status, posting_id, balance_available_time, maturity_status, matured_time, applied_time, create_time, update_time</sql>
 

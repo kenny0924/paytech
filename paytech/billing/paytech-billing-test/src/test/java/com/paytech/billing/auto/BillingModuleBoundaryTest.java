@@ -17,7 +17,7 @@ import org.w3c.dom.NodeList;
 /**
  * 在默认 Maven 测试中保护 billing-service 的模块集合、依赖清单与已批准的基础设施范围（Redis 资源锁、Snowflake 与 MyBatis）
  * <li>由 FinanceModuleBoundaryTest 按服务拆分（design/09 §2.7）；跨服务依赖图规则由 ArchitectureAutoTest（R1–R12）检查。</li>
- * <li>本服务第 11 步前不得引入 MQ：RabbitTemplate 不在 classpath。</li>
+ * <li>BillingFactRecorded 由补偿 Handler 经 paytech-messaging 发布到 RabbitMQ；Nacos 与 Mockito 不得进入 classpath。</li>
  *
  * @see com.paytech.billing.BillingApplication
  */
@@ -67,7 +67,7 @@ class BillingModuleBoundaryTest {
             "com/zaxxer/hikari/HikariDataSource.class",
             "com/mysql/cj/jdbc/Driver.class",
             "org/redisson/Redisson.class",
-            // 第 11a 步：EconomicFactRecorded 由补偿 Handler 经 paytech-messaging 发布到 RabbitMQ。
+            // BillingFactRecorded 由补偿 Handler 经 paytech-messaging 发布到 RabbitMQ。
             "org/springframework/amqp/rabbit/core/RabbitTemplate.class")) {
             Assertions.assertNotNull(getClass().getClassLoader().getResource(resource), resource);
         }

@@ -15,7 +15,7 @@
     <packaging>jar</packaging>
 
     <name>PayTech Account App</name>
-    <description>Deployable account-service: Spring Boot entry, controllers, EconomicFactRecorded consumption, AccountPosted publication, maturity job, persistence and runtime configuration.</description>
+    <description>Deployable account-service: Spring Boot entry, controllers, BillingFactRecorded consumption, AccountPosted publication, maturity job, persistence and runtime configuration.</description>
 
     <dependencies>
         <dependency>
@@ -40,7 +40,7 @@
             <groupId>com.paytech</groupId>
             <artifactId>paytech-mvc-web-starter</artifactId>
         </dependency>
-        <!-- EconomicFactRecorded 消费（分区拓扑、单活消费者容器、t_consumed_event 幂等拦截器）与 AccountPosted 发布（account.events）。 -->
+        <!-- BillingFactRecorded 消费（分区拓扑、单活消费者容器、t_consumed_event 幂等拦截器）与 AccountPosted 发布（account.events）。 -->
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-messaging</artifactId>

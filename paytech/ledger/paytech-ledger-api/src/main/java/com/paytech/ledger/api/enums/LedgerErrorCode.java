@@ -6,10 +6,10 @@ import com.paytech.foundation.common.enums.CodeMessageEnum;
 public enum LedgerErrorCode implements CodeMessageEnum {
     /**
      * 人工调整涉及 Owner 控制科目（CLIENT_PAYABLE、CLIENT_SECURITY_DEPOSIT、CLIENT_RECOVERY_RECEIVABLE、PARTNER_PAYABLE、
-     * PARTNER_RECOVERY_RECEIVABLE）：影响 Owner 余额的调整必须经 billing 登记 MANUAL_ADJUSTMENT 经济事实，由 account 明细账生成控制科目行
+     * PARTNER_RECOVERY_RECEIVABLE）：影响 Owner 余额的调整必须经 billing 登记 MANUAL_ADJUSTMENT 计费事实，由 account 明细账生成控制科目行
      */
     OWNER_ACCOUNT_ADJUSTMENT_FORBIDDEN("OWNER_ACCOUNT_ADJUSTMENT_FORBIDDEN",
-        "人工调整不得涉及 Client 或 Local Partner 的控制科目，请经计费登记 MANUAL_ADJUSTMENT 经济事实");
+        "人工调整不得涉及 Client 或 Local Partner 的控制科目，请经计费登记 MANUAL_ADJUSTMENT 计费事实");
 
     private final String code;
 

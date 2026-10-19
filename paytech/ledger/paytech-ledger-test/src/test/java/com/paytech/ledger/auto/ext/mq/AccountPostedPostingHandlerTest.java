@@ -1,6 +1,6 @@
 package com.paytech.ledger.auto.ext.mq;
 
-import static com.paytech.ledger.test.builder.EconomicComponentBuilder.adjustment;
+import static com.paytech.ledger.test.builder.BillingFactLineBuilder.adjustment;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -17,13 +17,13 @@ import com.paytech.account.api.enums.BalanceBucket;
 import com.paytech.account.api.enums.EntrySide;
 import com.paytech.account.api.enums.OwnerType;
 import com.paytech.account.api.event.AccountPostedPayload;
-import com.paytech.billing.api.enums.AmountSource;
-import com.paytech.billing.api.enums.AutoInstructionType;
-import com.paytech.billing.api.enums.EconomicsType;
+import com.paytech.billing.api.enums.BillingFactType;
+import com.paytech.billing.api.enums.FactComponentType;
 import com.paytech.billing.api.enums.FactLineDirection;
 import com.paytech.billing.api.enums.FactPartyRole;
-import com.paytech.billing.api.fact.EconomicFactPayload;
+import com.paytech.billing.api.fact.BillingFactPayload;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
+import com.paytech.ledger.api.enums.AutoInstructionType;
 import com.paytech.ledger.core.dal.dataobject.AccountingInstruction;
 import com.paytech.ledger.core.dal.dataobject.JournalEntry;
 import com.paytech.ledger.core.enums.PeriodStatus;
@@ -52,19 +52,19 @@ class AccountPostedPostingHandlerTest extends AbstractTransactionPostingTest {
         assertAll(() -> assertTrue(views.isEmpty()),
             () -> assertEquals(1, consumedSequence(movement)),
             () -> assertEquals(0, testMapper.countAllInstructions()),
-            () -> assertTrue(economicFacts.calls().isEmpty(), "桶移动批次不读 billing"));
+            () -> assertTrue(billingFacts.calls().isEmpty(), "桶移动批次不读 billing"));
     }
 
     /** 缺口：序号 1 已消费后 3 先于 2 到达，3 被延后重投，2 过账后 3 再过账，进度到 3。 */
     @Test
     void test_gapRedeliveredUntilFilled() {
-        EconomicFactPayload first = clientCharge("1");
-        EconomicFactPayload second = clientCharge("2");
-        EconomicFactPayload third = clientCharge("3");
+        BillingFactPayload first = clientCharge("1");
+        BillingFactPayload second = clientCharge("2");
+        BillingFactPayload third = clientCharge("3");
         AccountPostedPayload firstPosting = clientCredit(first, 1, "1");
         postBatch(first, firstPosting);
-        economicFacts.mockFact(second);
-        economicFacts.mockFact(third);
+        billingFacts.mockFact(second);
+        billingFacts.mockFact(third);
         AccountPostedPayload thirdPosting = clientCredit(third, 3, "3");
         AccountPostedPayload secondPosting = clientCredit(second, 2, "2");
 
@@ -81,8 +81,8 @@ class AccountPostedPostingHandlerTest extends AbstractTransactionPostingTest {
     /** 首条序号不是 1：该流没有消费进度时等待重投，不过账、不推进；超过投递上限进入死信（恢复走追平）。 */
     @Test
     void test_firstSequenceNotOneWaitsThenDeadLetters() {
-        EconomicFactPayload fact = clientCharge("4");
-        economicFacts.mockFact(fact);
+        BillingFactPayload fact = clientCharge("4");
+        billingFacts.mockFact(fact);
         AccountPostedPayload posting = clientCredit(fact, 2, "4");
 
         accountEvents.publish(posting);
@@ -90,14 +90,14 @@ class AccountPostedPostingHandlerTest extends AbstractTransactionPostingTest {
         await().atMost(CONSUME_WAIT).until(() -> accountEvents.deadLetters() == 1);
         assertAll(() -> assertEquals(0, consumedSequence(posting)),
             () -> assertEquals(0, testMapper.countAllInstructions()),
-            () -> assertEquals(0, economicFacts.factCalls(fact.getFactId()), "等待首条时不读事实"));
+            () -> assertEquals(0, billingFacts.factCalls(fact.getFactId()), "等待首条时不读事实"));
     }
 
     /** billing 返回的事实版本与批次不一致：并发冲突等待重投，不过账。 */
     @Test
     void test_factVersionMismatchWaits() {
-        EconomicFactPayload fact = clientCharge("5");
-        economicFacts.mockFact(fact);
+        BillingFactPayload fact = clientCharge("5");
+        billingFacts.mockFact(fact);
         AccountPostedPayload posting = AccountPostingBuilder.fact(fact, 1).factVersion(2L).entry(
             StandardAccountCodes.CLIENT_PAYABLE, OwnerType.CLIENT, CLIENT, BalanceBucket.PENDING, EntrySide.CREDIT, "5", 1)
             .build();
@@ -105,7 +105,7 @@ class AccountPostedPostingHandlerTest extends AbstractTransactionPostingTest {
         ConcurrentRequestException conflict = assertThrows(ConcurrentRequestException.class,
             () -> consumeDirectly(posting));
 
-        assertTrue(conflict.getMessage().contains("经济事实版本与入账批次不一致"), conflict.getMessage());
+        assertTrue(conflict.getMessage().contains("计费事实版本与入账批次不一致"), conflict.getMessage());
         assertEquals(0, testMapper.countAllInstructions());
     }
 
@@ -116,7 +116,7 @@ class AccountPostedPostingHandlerTest extends AbstractTransactionPostingTest {
         long nextPeriod = ledgerMocker.mockPeriod(oeLedger.getFiscalCalendarId(), nextStart.getYear(),
             nextStart.getMonthValue(), nextStart, nextStart.withDayOfMonth(nextStart.lengthOfMonth()), PeriodStatus.OPEN);
         testMapper.updatePeriodStatus(oeLedger.getOpenPeriodId(), PeriodStatus.CLOSED.getCode());
-        EconomicFactPayload fact = clientCharge("6");
+        BillingFactPayload fact = clientCharge("6");
         AccountPostedPayload posting = clientCredit(fact, 1, "6");
 
         postBatch(fact, posting);
@@ -131,8 +131,8 @@ class AccountPostedPostingHandlerTest extends AbstractTransactionPostingTest {
     @Test
     void test_noOpenPeriodWaits() {
         testMapper.updatePeriodStatus(oeLedger.getOpenPeriodId(), PeriodStatus.CLOSED.getCode());
-        EconomicFactPayload fact = clientCharge("7");
-        economicFacts.mockFact(fact);
+        BillingFactPayload fact = clientCharge("7");
+        billingFacts.mockFact(fact);
         AccountPostedPayload posting = clientCredit(fact, 1, "7");
 
         ConcurrentRequestException conflict = assertThrows(ConcurrentRequestException.class,
@@ -144,13 +144,13 @@ class AccountPostedPostingHandlerTest extends AbstractTransactionPostingTest {
     }
 
     /** 一行 OE 向 Client 支付本金的人工调整。 */
-    EconomicFactPayload clientCharge(String amount) {
-        return fact(payment("0").economicsType(EconomicsType.MANUAL_ADJUSTMENT), adjustment(AmountSource.CLIENT_PRINCIPAL,
+    BillingFactPayload clientCharge(String amount) {
+        return fact(payment("0").factType(BillingFactType.MANUAL_ADJUSTMENT), adjustment(FactComponentType.CLIENT_PRINCIPAL,
             FactPartyRole.OPERATING_ENTITY, ENTITY_NO, FactPartyRole.CLIENT, CLIENT, FactLineDirection.CHARGE, amount));
     }
 
     /** 该事实的批次：一条 Client 应付贷方流水。 */
-    static AccountPostedPayload clientCredit(EconomicFactPayload fact, long sequence, String amount) {
+    static AccountPostedPayload clientCredit(BillingFactPayload fact, long sequence, String amount) {
         return AccountPostingBuilder.fact(fact, sequence).entry(StandardAccountCodes.CLIENT_PAYABLE, OwnerType.CLIENT,
             CLIENT, BalanceBucket.PENDING, EntrySide.CREDIT, amount, 1).build();
     }

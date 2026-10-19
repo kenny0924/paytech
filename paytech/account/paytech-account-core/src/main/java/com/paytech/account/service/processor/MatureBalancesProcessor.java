@@ -46,7 +46,7 @@ public class MatureBalancesProcessor extends AbstractProcessor<MatureBalancesReq
                 } catch (RuntimeException failure) {
                     // 单条事实失败不阻塞其他事实；它保持 PENDING，由下一轮重试。
                     failed++;
-                    LOG.warn("经济事实到期转可用失败: fact {}, {}", fact.getFactId(), failure.getClass().getSimpleName());
+                    LOG.warn("计费事实到期转可用失败: fact {}, {}", fact.getFactId(), failure.getClass().getSimpleName());
                 }
             }
         } while (page.size() == PAGE_SIZE);

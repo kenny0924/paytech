@@ -48,6 +48,12 @@ public final class BillingResponseChecker extends AbstractHttpResponseChecker<Bi
         return this;
     }
 
+    /** 断言 422 请求 Body 字段校验失败（Foundation 公共 VALIDATION_ERROR）。 */
+    public BillingResponseChecker assertValidationError() {
+        assertProblem(422, CommonErrorCode.VALIDATION_ERROR.getCode());
+        return this;
+    }
+
     /** 断言 409 并发冲突。 */
     public BillingResponseChecker assertConcurrentRequest() {
         assertProblem(409, CommonErrorCode.CONCURRENT_REQUEST.getCode());

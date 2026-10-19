@@ -7,8 +7,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import com.paytech.account.api.enums.BalanceBucket;
-import com.paytech.billing.api.enums.AmountSource;
-import com.paytech.billing.api.enums.AutoInstructionType;
+import com.paytech.ledger.api.enums.AmountSource;
+import com.paytech.ledger.api.enums.AutoInstructionType;
 import com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler;
 import com.paytech.foundation.mybatis.typehandler.InstantTypeHandler;
 import com.paytech.ledger.api.enums.LedgerOwnerType;

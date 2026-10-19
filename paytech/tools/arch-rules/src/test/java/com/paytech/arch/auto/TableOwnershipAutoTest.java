@@ -22,8 +22,9 @@ class TableOwnershipAutoTest {
     @Test
     void test_normalFlow() {
         // design/03 §4.2：17 个目标库共 265 张物理表；另加保留服务 platform-support 自身 Schema 的 56 张表。
-        Assertions.assertEquals(265 + 56 + 1 + 6 + 6, ownership.physicalTableCount(),
+        Assertions.assertEquals(265 + 56 + 1 + 6 - 7 + 9 + 4 + 6, ownership.physicalTableCount(),
             "design 03 + Platform 保留表 + 第 12 步 t_card_material_ticket + account 明细账六张业务表（2026-10-19 重构）"
+                + " - billing 经济事实三表与渠道成本四表 + billing 计费事实九表 + channel-connector 渠道成本四表（2026-10-19 计费事实重构）"
                 + " + commercial 产品目录三表与合同订阅 / 开通 / 约束三表（2026-10-19 六层产品定价模型）");
         Assertions.assertEquals(57, ownership.databasesOf("platform-support").get("mor_platform").size());
         Assertions.assertEquals(29, ownership.databasesOf("ledger").get("mor_ledger").size());
@@ -40,11 +41,11 @@ class TableOwnershipAutoTest {
         Assertions.assertTrue(ownership.allowedTables("commercial").contains("t_business_change_record"));
         Assertions.assertTrue(ownership.allowedTables("billing").contains("t_currency_spec"));
         Assertions.assertFalse(ownership.allowedTables("tax").contains("t_currency_spec"));
-        // 第 07 步更名：经济事实三表以新表名登记在 billing，旧表名不再出现。
-        Assertions.assertTrue(ownership.allowedTables("billing").containsAll(
-            List.of("t_economic_fact", "t_economic_fact_line", "t_economic_fact_line_link")));
+        // 第 07 步更名的经济事实三表已由 2026-10-19 计费事实重构删除，来源表名与第 07 步表名都不再出现。
         Assertions.assertTrue(ownership.services().stream()
             .noneMatch(service -> ownership.allowedTables(service).contains("t_transaction_economics")));
+        Assertions.assertTrue(ownership.services().stream()
+            .noneMatch(service -> ownership.allowedTables(service).contains("t_economic_fact")));
         // 第 11b 步拆表：t_account 更名 t_ledger_account 归 ledger；account 改连自有 mor_account，不再只读 mor_ledger。
         Assertions.assertTrue(ownership.allowedTables("ledger").contains("t_ledger_account"));
         Assertions.assertTrue(ownership.services().stream()
@@ -61,6 +62,23 @@ class TableOwnershipAutoTest {
         Assertions.assertTrue(ownership.allowedTables("platform-support").contains("t_command_idempotency"));
         Assertions.assertEquals(List.of("t_card_material_ticket", "t_payment_card", "t_payment_card_credential",
             "t_payment_card_instrument", "t_payment_stored_card"), ownership.cardTables());
+    }
+
+    /** 2026-10-19 计费事实重构：mor_billing 为 11 张表；渠道成本四表归 channel-connector（17 张），billing 不再引用。 */
+    @Test
+    void test_billingFactAndChannelCostOwnership() {
+        Assertions.assertEquals(Set.of("t_billing_fact", "t_billing_fact_ref", "t_billing_fact_pricing",
+            "t_billing_fact_line", "t_billing_fact_line_link", "t_business_calendar", "t_business_calendar_day",
+            "t_consumed_event", "t_consumed_aggregate_version", "t_currency_spec", "t_compensation_event"),
+            ownership.databasesOf("billing").get("mor_billing"));
+        List<String> channelCostTables = List.of("t_channel_cost_plan", "t_channel_cost_plan_ver",
+            "t_channel_cost_scope", "t_channel_cost_component");
+        Assertions.assertEquals(17, ownership.databasesOf("channel-connector").get("mor_channel_connector").size());
+        Assertions.assertTrue(ownership.databasesOf("channel-connector").get("mor_channel_connector")
+            .containsAll(channelCostTables));
+        Assertions.assertTrue(channelCostTables.stream().noneMatch(ownership.allowedTables("billing")::contains));
+        Assertions.assertTrue(ownership.allowedTables("billing").containsAll(
+            List.of("t_consumed_event", "t_consumed_aggregate_version")));
     }
 
     /** 第 12 步起卡表只在 mor_card：card 的 R4 白名单含卡表与读卡票据表，payment 与 channel-connector 不含。 */

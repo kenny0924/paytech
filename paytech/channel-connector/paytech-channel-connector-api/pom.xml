@@ -11,7 +11,7 @@
     </parent>
     <artifactId>paytech-channel-connector-api</artifactId>
     <name>PayTech Channel Connector API</name>
-    <description>@HttpExchange contracts, DTOs and stable code enums for MID candidate query and channel operation execution.</description>
+    <description>@HttpExchange contracts, DTOs and stable code enums for MID candidate query, channel operation execution and channel cost plans and resolution.</description>
     <dependencies>
         <dependency>
             <groupId>com.paytech</groupId>

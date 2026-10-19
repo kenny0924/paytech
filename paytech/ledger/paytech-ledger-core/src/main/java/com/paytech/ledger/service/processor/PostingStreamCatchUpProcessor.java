@@ -4,7 +4,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.paytech.account.api.event.AccountPostedPayload;
-import com.paytech.billing.api.fact.EconomicFactPayload;
+import com.paytech.billing.api.fact.BillingFactPayload;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.foundation.messaging.api.AggregateKey;
@@ -16,7 +16,7 @@ import com.paytech.ledger.domain.AccountPostingCommand;
 import com.paytech.ledger.domain.AccountPostingPage;
 import com.paytech.ledger.domainservice.service.TransactionPostingService;
 import com.paytech.ledger.integration.account.AccountPostingClient;
-import com.paytech.ledger.integration.billing.EconomicFactClient;
+import com.paytech.ledger.integration.billing.BillingFactClient;
 import com.paytech.ledger.service.processor.request.CatchUpPostingStreamRequest;
 import com.paytech.ledger.service.processor.response.CatchUpPostingStreamResponse;
 
@@ -37,7 +37,7 @@ public class PostingStreamCatchUpProcessor
     /** account-api 单页批次上限。 */
     static final int PAGE_LIMIT = 200;
 
-    private final EconomicFactClient economicFactClient;
+    private final BillingFactClient billingFactClient;
     private final TransactionTemplate transactionTemplate;
     private final AccountPostingClient accountPostingClient;
     private final ConsumedEventRepository consumedEventRepository;
@@ -96,8 +96,8 @@ public class PostingStreamCatchUpProcessor
      * <li>过账幂等（同一批次已有指令时直接返回），进度只增不减，因此与消费 Handler 先后处理同一批次都安全。</li>
      */
     void apply(AggregateKey key, AccountPostingBatch batch) {
-        EconomicFactPayload fact = batch.requiresPosting()
-            ? economicFactClient.getFact(batch.getPayload().getFactId(), batch.getPayload().getFactVersion()) : null;
+        BillingFactPayload fact = batch.requiresPosting()
+            ? billingFactClient.getFact(batch.getPayload().getFactId(), batch.getPayload().getFactVersion()) : null;
         transactionTemplate.executeWithoutResult(status -> {
             if (fact != null) {
                 transactionPostingService.post(new AccountPostingCommand(batch, fact));

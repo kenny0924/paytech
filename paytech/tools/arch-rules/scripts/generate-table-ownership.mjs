@@ -47,6 +47,17 @@ const renamedTables = new Map([
 // Shared-database transition reads (not owned, not counted). Step 07 let account read mor_ledger; step 11b gives account
 // its own mor_account (design/04 §3.2, §6) and removes that allowance, so no transition is registered now.
 const transitionalSharedReads = [];
+// Tables a later approved refactor removes from a service after design 03 §2 (applied after the §4.2 count check).
+// 2026-10-19 billing fact model refactor (decision 2026-10-19-billing-fact-engine, REQ technique 2.3): the economic fact
+// tables are dropped for t_billing_fact*, and the four channel cost tables move from billing to channel-connector.
+const stepRemovedTables = [
+  {
+    service: 'billing',
+    database: 'mor_billing',
+    tables: ['t_economic_fact', 't_economic_fact_line', 't_economic_fact_line_link', 't_channel_cost_plan',
+      't_channel_cost_plan_ver', 't_channel_cost_scope', 't_channel_cost_component'],
+  },
+];
 // Tables introduced by a refactor step's approved design on top of design 03 §2 (not part of the §4.2 count).
 const stepAddedTables = [
   // 2026-10-19 commercial six-layer product pricing model (decision 2026-10-19-commercial-six-layer-product-pricing,
@@ -67,6 +78,21 @@ const stepAddedTables = [
     database: 'mor_account',
     tables: ['t_owner_account', 't_account_posting_stream', 't_account_posting', 't_account_entry',
       't_balance_applied_fact', 't_balance_movement'],
+  },
+  // 2026-10-19 billing fact model refactor (REQ technique 2.3): mor_billing holds 11 tables - five billing fact tables,
+  // the business calendar copy, the Foundation consume-idempotency pair, t_currency_spec and t_compensation_event.
+  {
+    service: 'billing',
+    database: 'mor_billing',
+    tables: ['t_billing_fact', 't_billing_fact_ref', 't_billing_fact_pricing', 't_billing_fact_line',
+      't_billing_fact_line_link', 't_business_calendar', 't_business_calendar_day', 't_consumed_event',
+      't_consumed_aggregate_version'],
+  },
+  // Same refactor: the channel cost plan, version, scope and component tables are owned by channel-connector (17 tables).
+  {
+    service: 'channel-connector',
+    database: 'mor_channel_connector',
+    tables: ['t_channel_cost_plan', 't_channel_cost_plan_ver', 't_channel_cost_scope', 't_channel_cost_component'],
   },
 ];
 
@@ -149,6 +175,15 @@ for (const retained of retainedServiceSchemas) {
   retainedTables += ownership.get(retained.service).get(retained.database).size - before;
 }
 
+let stepRemoved = 0;
+for (const removed of stepRemovedTables) {
+  const tables = ownership.get(removed.service)?.get(removed.database);
+  for (const table of removed.tables) {
+    if (!tables?.delete(table)) fail(`step-removed table not listed: ${removed.service} ${removed.database} ${table}`);
+    stepRemoved += 1;
+  }
+}
+
 let stepAdded = 0;
 for (const added of stepAddedTables) {
   for (const table of added.tables) {
@@ -164,6 +199,7 @@ const output = [
   `# ${sourceRows} source tables, ${actualCounts.size} databases, ${total} physical tables.`,
   ...retainedServiceSchemas.map((retained) => `# Retained: ${retained.service} ${retained.database} from ${relative(repositoryRoot, retained.schema)}.`),
   `# ${retainedTables} retained-service tables added on top of design 03 (not part of the §4.2 count).`,
+  `# ${stepRemoved} step-removed tables (approved later refactors, e.g. 2026-10-19 billing fact model; applied after the §4.2 count).`,
   `# ${stepAdded} step-added tables (approved refactor-step designs, e.g. design/05 t_card_material_ticket; not part of the §4.2 count).`,
   '# Structure: services.<service>.<database> = tables owned (or copied / per-database infrastructure);',
   `# Renamed: ${[...renamedTables].map(([from, to]) => `${from} -> ${to}`).join(', ')}.`,
@@ -190,10 +226,10 @@ const content = `${output.join('\n')}\n`;
 if (checkOnly) {
   const committed = readFileSync(outputFile, 'utf8');
   if (committed !== content) fail(`${relative(repositoryRoot, outputFile)} is stale; rerun the generator`);
-  process.stdout.write(`table-ownership.yaml is current (${total} physical tables + ${retainedTables} retained + ${stepAdded} step-added).\n`);
+  process.stdout.write(`table-ownership.yaml is current (${total} physical tables + ${retainedTables} retained - ${stepRemoved} step-removed + ${stepAdded} step-added).\n`);
 } else {
   writeFileSync(outputFile, content);
-  process.stdout.write(`wrote ${relative(repositoryRoot, outputFile)} (${total} physical tables + ${retainedTables} retained + ${stepAdded} step-added).\n`);
+  process.stdout.write(`wrote ${relative(repositoryRoot, outputFile)} (${total} physical tables + ${retainedTables} retained - ${stepRemoved} step-removed + ${stepAdded} step-added).\n`);
 }
 
 function fail(message) {

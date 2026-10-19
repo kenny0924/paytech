@@ -10,8 +10,9 @@ import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.boot.test.context.TestComponent;
 
-import com.paytech.billing.api.fact.EconomicFactLinePayload;
-import com.paytech.billing.api.fact.EconomicFactPayload;
+import com.paytech.billing.api.fact.BillingFactLinePayload;
+import com.paytech.billing.api.fact.BillingFactPayload;
+import com.paytech.billing.api.fact.BillingFactRefPayload;
 import com.paytech.foundation.messaging.api.DomainEvent;
 import com.paytech.foundation.messaging.core.codec.DomainEventCodec;
 import com.paytech.foundation.messaging.core.observability.MessagingMetrics;
@@ -23,9 +24,9 @@ import tools.jackson.databind.node.JsonNodeFactory;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
- * 测试扮演 billing 向真实本机 RabbitMQ 的 billing.events 发布 EconomicFactRecorded 信封（第 11a 步 Payload 合同），由 account 的正式消费
+ * 测试扮演 billing 向真实本机 RabbitMQ 的 billing.events 发布 BillingFactRecorded 信封（第 11a 步 Payload 合同），由 account 的正式消费
  * 链路（account.billing.hash → account.billing.p0..p3 → 幂等拦截器 → Handler）处理。
- * <li>Payload JSON 与 billing 的 {@code EconomicFactPayloads.json} 同序同格式：标量一律为字符串，缺省为 JSON null。</li>
+ * <li>Payload JSON 与 billing 发布端组装的 {@code BillingFactPayload} 同序同格式：标量一律为字符串，缺省为 JSON null。</li>
  * <li>只清理本服务自己的分区队列与 DLQ（10 §5.3），不触碰其他服务的队列。</li>
  */
 @TestComponent
@@ -50,15 +51,15 @@ public class BillingEventPublisher {
     }
 
     /**
-     * 发布一条 EconomicFactRecorded
+     * 发布一条 BillingFactRecorded
      *
-     * @param fact 已分配 factId 与 factVersion 的经济事实
+     * @param fact 已分配 factId 与 factVersion 的计费事实
      * @return 事件 ID（= billing 补偿任务的事件键）
      */
-    public String publish(EconomicFactPayload fact) {
-        DomainEvent event = DomainEvent.builder().eventType(EconomicFactPayload.EVENT_TYPE)
-            .schemaVersion(EconomicFactPayload.SCHEMA_VERSION)
-            .aggregate(EconomicFactPayload.AGGREGATE_TYPE, fact.getFactId().toString())
+    public String publish(BillingFactPayload fact) {
+        DomainEvent event = DomainEvent.builder().eventType(BillingFactPayload.EVENT_TYPE)
+            .schemaVersion(BillingFactPayload.SCHEMA_VERSION)
+            .aggregate(BillingFactPayload.AGGREGATE_TYPE, fact.getFactId().toString())
             .aggregateVersion(fact.getFactVersion())
             .occurredAt(fact.getRecordedTime() == null ? Instant.now().truncatedTo(ChronoUnit.MICROS) : fact.getRecordedTime())
             .sourceService("billing").instanceId("main").payload(json(fact)).build();
@@ -90,42 +91,47 @@ public class BillingEventPublisher {
         return info == null ? 0 : (int)info.getMessageCount();
     }
 
-    /** EconomicFactRecorded Schema v1 Payload：与 billing 发布端相同的字段顺序与字符串标量。 */
-    public static ObjectNode json(EconomicFactPayload payload) {
+    /** BillingFactRecorded Schema v1 Payload：与 billing 发布端相同的字段顺序与字符串标量。 */
+    public static ObjectNode json(BillingFactPayload payload) {
         ObjectNode node = JsonNodeFactory.instance.objectNode();
         node.put("factId", text(payload.getFactId()));
         node.put("factVersion", text(payload.getFactVersion()));
         node.put("supersedesFactId", text(payload.getSupersedesFactId()));
         node.put("parentFactId", text(payload.getParentFactId()));
         node.put("factType", payload.getFactType());
+        node.put("originType", payload.getOriginType());
+        node.put("status", payload.getStatus());
         node.put("sourceSystem", payload.getSourceSystem());
         node.put("sourceEventKey", payload.getSourceEventKey());
         node.put("sourceVersion", text(payload.getSourceVersion()));
         node.put("sourcePayloadHash", payload.getSourcePayloadHash());
+        node.put("businessTime", text(payload.getBusinessTime()));
         node.put("recordedTime", text(payload.getRecordedTime()));
-        node.put("paymentSucceededTime", text(payload.getPaymentSucceededTime()));
         node.put("balanceAvailableTime", text(payload.getBalanceAvailableTime()));
         node.put("clientId", text(payload.getClientId()));
         node.put("entityNo", payload.getEntityNo());
         node.put("localPartnerId", text(payload.getLocalPartnerId()));
-        node.put("partnerAgreementOeId", text(payload.getPartnerAgreementOeId()));
         node.put("financeEntityId", text(payload.getFinanceEntityId()));
         node.put("currency", payload.getCurrency());
         node.put("grossAmount", text(payload.getGrossAmount()));
-        node.put("channelAccountId", text(payload.getChannelAccountId()));
+        ArrayNode refs = node.putArray("refs");
+        for (BillingFactRefPayload ref : payload.getRefs()) {
+            ObjectNode item = refs.addObject();
+            item.put("refType", ref.getRefType());
+            item.put("refId", ref.getRefId());
+        }
         ArrayNode lines = node.putArray("lines");
-        for (EconomicFactLinePayload line : payload.getLines()) {
+        for (BillingFactLinePayload line : payload.getLines()) {
             ObjectNode item = lines.addObject();
             item.put("lineNo", text(line.getLineNo()));
             item.put("componentType", line.getComponentType());
-            item.put("partyType", line.getPartyType());
-            item.put("partyId", line.getPartyId());
             item.put("payerRole", line.getPayerRole());
             item.put("payerId", line.getPayerId());
             item.put("payeeRole", line.getPayeeRole());
             item.put("payeeId", line.getPayeeId());
             item.put("direction", line.getDirection());
             item.put("postedAmount", text(line.getPostedAmount()));
+            item.put("targetBucket", line.getTargetBucket());
         }
         return node;
     }

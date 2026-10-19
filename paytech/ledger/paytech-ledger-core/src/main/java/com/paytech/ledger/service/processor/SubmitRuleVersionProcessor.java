@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
-import com.paytech.billing.api.enums.AutoInstructionType;
+import com.paytech.ledger.api.enums.AutoInstructionType;
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
 import com.paytech.ledger.core.constant.AccountingLocks;

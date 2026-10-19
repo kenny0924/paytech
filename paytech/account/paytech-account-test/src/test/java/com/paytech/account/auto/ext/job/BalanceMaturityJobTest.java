@@ -19,8 +19,9 @@ import com.paytech.account.core.enums.MaturityStatus;
 import com.paytech.account.domain.model.MaturityRunResult;
 import com.paytech.account.test.base.AbstractBalanceTest;
 import com.paytech.account.test.probe.AccountPostedProbe;
-import com.paytech.billing.api.enums.AmountSource;
-import com.paytech.billing.api.fact.EconomicFactPayload;
+import com.paytech.billing.api.enums.FactComponentType;
+import com.paytech.billing.api.enums.FactPartyRole;
+import com.paytech.billing.api.fact.BillingFactPayload;
 
 /**
  * 应付余额到期转可用：显式触发生产 XXL-Job Handler，经 MatureBalancesProcessor 与 BalanceMaturityService 读写本地 MySQL
@@ -36,8 +37,10 @@ class BalanceMaturityJobTest extends AbstractBalanceTest {
     /** 到期：Client 与 Partner 的 PENDING 各移动到 AVAILABLE，事实标记 MATURED，批次序号接在事实批次之后。 */
     @Test
     void test_dueFactMatures() {
-        EconomicFactPayload fact = payment("100").partner(PARTNER_ID, PARTNER_AGREEMENT_OE_ID, FINANCE_ENTITY_ID)
-            .component(AmountSource.CLIENT_PRINCIPAL, "94").component(AmountSource.PARTNER_SHARE, "1")
+        BillingFactPayload fact = payment("100").partner(PARTNER_ID, FINANCE_ENTITY_ID)
+            .component(FactComponentType.CLIENT_PRINCIPAL, FactPartyRole.OPERATING_ENTITY, FactPartyRole.CLIENT, "94")
+            .component(FactComponentType.PARTNER_SHARE, FactPartyRole.OPERATING_ENTITY,
+                FactPartyRole.LOCAL_PARTNER, "1")
             .balanceAvailableTime(past()).build();
         consumed(fact);
 
@@ -63,7 +66,8 @@ class BalanceMaturityJobTest extends AbstractBalanceTest {
     /** 未到期：不移动，事实保持 PENDING。 */
     @Test
     void test_notDueUnchanged() {
-        EconomicFactPayload fact = payment("10").component(AmountSource.CLIENT_PRINCIPAL, "10")
+        BillingFactPayload fact = payment("10")
+            .component(FactComponentType.CLIENT_PRINCIPAL, FactPartyRole.OPERATING_ENTITY, FactPartyRole.CLIENT, "10")
             .balanceAvailableTime(Instant.now().plus(1, ChronoUnit.DAYS)).build();
         consumed(fact);
 
@@ -80,7 +84,9 @@ class BalanceMaturityJobTest extends AbstractBalanceTest {
     /** 重复执行：第二轮没有到期事实，不重复移动。 */
     @Test
     void test_repeatedRunDoesNotRepeat() {
-        consumed(payment("10").component(AmountSource.CLIENT_PRINCIPAL, "10").balanceAvailableTime(past()).build());
+        consumed(payment("10")
+            .component(FactComponentType.CLIENT_PRINCIPAL, FactPartyRole.OPERATING_ENTITY,
+                FactPartyRole.CLIENT, "10").balanceAvailableTime(past()).build());
         job.runOnce();
 
         MaturityRunResult second = job.runOnce();
@@ -94,8 +100,8 @@ class BalanceMaturityJobTest extends AbstractBalanceTest {
     /** 被替代后到期：版本 1 扣除冲回后净额为零不移动，版本 2 按自身金额移动；两条事实都标记 MATURED。 */
     @Test
     void test_supersededFactMaturesNetOfReversal() {
-        EconomicFactPayload v1 = clientCredit("10").balanceAvailableTime(past()).build();
-        EconomicFactPayload v2 = clientCredit("12").supersedes(v1.getFactId(), 2).balanceAvailableTime(past()).build();
+        BillingFactPayload v1 = clientCredit("10").balanceAvailableTime(past()).build();
+        BillingFactPayload v2 = clientCredit("12").supersedes(v1.getFactId(), 2).balanceAvailableTime(past()).build();
         consumed(v1);
         consumed(v2);
 
