@@ -69,7 +69,10 @@ class OperationsHttpBodyNamingAutoTest {
         com.paytech.operations.console.bff.ext.rest.FinanceSubledgerController.class,
         com.paytech.account.api.OwnerAccountQueryApi.class, com.paytech.account.api.AccountPostingApi.class,
         com.paytech.ledger.api.LedgerSetupQueryApi.class, com.paytech.ledger.api.LedgerBookQueryApi.class,
-        com.paytech.ledger.api.AccountingPeriodCommandApi.class, com.paytech.account.api.BalanceQueryApi.class})
+        com.paytech.ledger.api.AccountingPeriodCommandApi.class, com.paytech.account.api.BalanceQueryApi.class,
+        com.paytech.operations.console.bff.ext.rest.CommercialAgreementController.class,
+        com.paytech.operations.console.bff.ext.rest.CommercialPricingController.class,
+        com.paytech.commercial.api.agreement.AgreementApi.class, com.paytech.commercial.api.pricing.PricingProfileApi.class})
     void test_httpBodyTypesUseExplicitRequestAndResponseSuffixes(Class<?> contract) {
         if (contract.isInterface()) {
             assertEquals(0, contract.getDeclaredClasses().length,

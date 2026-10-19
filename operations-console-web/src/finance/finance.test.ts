@@ -35,8 +35,8 @@ const entry = { journalEntryId: line.journalEntryId, ledgerBookId: book.ledgerBo
   lines: [entryLine(1, 'DEBIT', '125.00'), entryLine(2, 'CREDIT', '120.00', '7400000000003001'), entryLine(3, 'CREDIT', '5.00')] };
 const usd = (amount: string) => ({ currency: 'USD', amount });
 
-test('页面注册：四页追加在末尾（明细账在余额之后），只有账务基础资料有维护动作', () => {
-  const finance = pageCapabilities.slice(-4);
+test('页面注册：财务四页按序登记（明细账在余额之后），只有账务基础资料有维护动作', () => {
+  const finance = pageCapabilities.filter(page => page.componentKey.startsWith('OPERATIONS_FINANCE_'));
   assert.deepEqual(finance.map(page => [page.componentKey, page.frontendRoute]), [
     ['OPERATIONS_FINANCE_SETUP', '/finance/setup'], ['OPERATIONS_FINANCE_LEDGER', '/finance/ledger'], ['OPERATIONS_FINANCE_BALANCES', '/finance/balances'],
     ['OPERATIONS_FINANCE_SUBLEDGER', '/finance/subledger']]);

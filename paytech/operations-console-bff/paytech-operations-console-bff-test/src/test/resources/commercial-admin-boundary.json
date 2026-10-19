@@ -1,0 +1,760 @@
+[
+ {
+  "id": "C02",
+  "method": "POST",
+  "path": "/commercial-admin/v1/agreements",
+  "ownerPath": "/agreements/v1",
+  "query": "",
+  "request": {
+   "agreementNo": "AGR-AE001-0001",
+   "agreementName": "示例 Client 合同",
+   "agreementType": "CLIENT",
+   "businessMode": "MOR",
+   "fundMode": "SETTLE_THROUGH_PLATFORM",
+   "pricingAuthority": "PLATFORM",
+   "referralPartnerId": null,
+   "clientId": "7300000000000000011",
+   "localPartnerId": null,
+   "entityNo": "AE001",
+   "operatingEntityNos": null,
+   "effectiveFrom": "2026-11-01T00:00:00+04:00",
+   "effectiveTo": null,
+   "parties": [
+    {
+     "partyId": "7319000000000000201",
+     "partyProfileId": "7319000000000000202",
+     "partyRole": "CLIENT"
+    },
+    {
+     "partyId": "7319000000000000211",
+     "partyProfileId": "7319000000000000212",
+     "partyRole": "OPERATING_ENTITY"
+    }
+   ],
+   "documents": [
+    {
+     "documentType": "SIGNING_DOCUMENT",
+     "fileId": "7319000000000000701",
+     "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+   ]
+  },
+  "status": 201,
+  "ownerStatus": 200,
+  "response": {
+   "agreementId": "7319000000000000101",
+   "agreementNo": "AGR-AE001-0001",
+   "status": "DRAFT",
+   "changeVersion": 1
+  },
+  "routeCode": "operations-commercial-agreement-create"
+ },
+ {
+  "id": "C03",
+  "method": "POST",
+  "path": "/commercial-admin/v1/agreements/7319000000000000101/submit-for-signature",
+  "ownerPath": "/agreements/v1/7319000000000000101/submit-for-signature",
+  "query": "",
+  "request": {
+   "expectedChangeVersion": 1
+  },
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "agreementId": "7319000000000000101",
+   "agreementNo": "AGR-AE001-0001",
+   "status": "PENDING_SIGNATURE",
+   "changeVersion": 2
+  },
+  "routeCode": "operations-commercial-agreement-submit"
+ },
+ {
+  "id": "C04",
+  "method": "POST",
+  "path": "/commercial-admin/v1/agreements/7319000000000000101/parties/7319000000000000201/acceptance",
+  "ownerPath": "/agreements/v1/7319000000000000101/parties/7319000000000000201/acceptance",
+  "query": "",
+  "request": {
+   "expectedChangeVersion": 2,
+   "acceptanceReference": "ESIGN-2026-0001",
+   "acceptanceMethod": "E_SIGNATURE",
+   "acceptedByActorId": null,
+   "acceptedAt": "2026-10-19T10:00:00+04:00",
+   "executedDocument": {
+    "fileId": "7319000000000000702",
+    "contentHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+   }
+  },
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "agreementId": "7319000000000000101",
+   "agreementNo": "AGR-AE001-0001",
+   "status": "PENDING_SIGNATURE",
+   "changeVersion": 3
+  },
+  "routeCode": "operations-commercial-agreement-acceptance"
+ },
+ {
+  "id": "C05",
+  "method": "POST",
+  "path": "/commercial-admin/v1/agreements/7319000000000000101/activate",
+  "ownerPath": "/agreements/v1/7319000000000000101/activate",
+  "query": "",
+  "request": {
+   "expectedChangeVersion": 4
+  },
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "agreementId": "7319000000000000101",
+   "agreementNo": "AGR-AE001-0001",
+   "status": "ACTIVE",
+   "changeVersion": 5
+  },
+  "routeCode": "operations-commercial-agreement-activate"
+ },
+ {
+  "id": "C06",
+  "method": "POST",
+  "path": "/commercial-admin/v1/agreements/7319000000000000101/terminate",
+  "ownerPath": "/agreements/v1/7319000000000000101/terminate",
+  "query": "",
+  "request": {
+   "expectedChangeVersion": 9,
+   "effectiveTo": "2027-01-01T00:00:00+04:00",
+   "terminationNotice": {
+    "fileId": "7319000000000000703",
+    "contentHash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+   }
+  },
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "agreementId": "7319000000000000101",
+   "agreementNo": "AGR-AE001-0001",
+   "status": "ACTIVE",
+   "changeVersion": 10
+  },
+  "routeCode": "operations-commercial-agreement-terminate"
+ },
+ {
+  "id": "C07",
+  "method": "PUT",
+  "path": "/commercial-admin/v1/agreements/7319000000000000101/products",
+  "ownerPath": "/agreements/v1/7319000000000000101/products",
+  "query": "",
+  "request": {
+   "expectedChangeVersion": 5,
+   "productCodes": [
+    "ACQUIRING",
+    "PAYOUT"
+   ]
+  },
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "agreementId": "7319000000000000101",
+   "agreementNo": "AGR-AE001-0001",
+   "status": "ACTIVE",
+   "changeVersion": 6
+  },
+  "routeCode": "operations-commercial-agreement-products"
+ },
+ {
+  "id": "C08",
+  "method": "POST",
+  "path": "/commercial-admin/v1/agreements/7319000000000000101/capabilities",
+  "ownerPath": "/agreements/v1/7319000000000000101/capabilities",
+  "query": "",
+  "request": {
+   "expectedChangeVersion": 6,
+   "entityNo": "AE001",
+   "capabilityCode": "CARD_VISA",
+   "effectiveFrom": "2026-11-01T00:00:00+04:00",
+   "effectiveTo": null,
+   "rollingReserveRate": "0.1",
+   "rollingReserveDays": 90,
+   "limits": [
+    {
+     "limitCode": "CURRENCY",
+     "limitValue": "USD"
+    },
+    {
+     "limitCode": "CURRENCY",
+     "limitValue": "AED"
+    }
+   ]
+  },
+  "status": 201,
+  "ownerStatus": 200,
+  "response": {
+   "agreementId": "7319000000000000101",
+   "agreementCapabilityId": "7319000000000000301",
+   "status": "ENABLED",
+   "changeVersion": 7
+  },
+  "routeCode": "operations-commercial-capability-create"
+ },
+ {
+  "id": "C09",
+  "method": "PUT",
+  "path": "/commercial-admin/v1/agreements/7319000000000000101/capabilities/7319000000000000301",
+  "ownerPath": "/agreements/v1/7319000000000000101/capabilities/7319000000000000301",
+  "query": "",
+  "request": {
+   "expectedChangeVersion": 7,
+   "status": "SUSPENDED",
+   "effectiveFrom": "2026-11-01T00:00:00+04:00",
+   "effectiveTo": null,
+   "rollingReserveRate": null,
+   "rollingReserveDays": null,
+   "limits": [
+    {
+     "limitCode": "CURRENCY",
+     "limitValue": "USD"
+    }
+   ]
+  },
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "agreementId": "7319000000000000101",
+   "agreementCapabilityId": "7319000000000000301",
+   "status": "SUSPENDED",
+   "changeVersion": 8
+  },
+  "routeCode": "operations-commercial-capability-update"
+ },
+ {
+  "id": "P01",
+  "method": "GET",
+  "path": "/commercial-admin/v1/pricing-profiles",
+  "ownerPath": "/pricing-profiles/v1",
+  "query": "?kind=PAYMENT_METHOD&status=ACTIVE",
+  "request": null,
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "profiles": [
+    {
+     "pricingProfileId": "7319000000000000401",
+     "pricingProfileCode": "CARD_VISA_CREDIT",
+     "profileName": "Visa 信用卡",
+     "profileKind": "PAYMENT_METHOD",
+     "paymentMethodCode": "CARD",
+     "status": "ACTIVE",
+     "changeVersion": 3,
+     "conditions": [
+      {
+       "dimensionCode": "CARD_BRAND",
+       "conditionValue": "VISA"
+      },
+      {
+       "dimensionCode": "FUNDING_TYPE",
+       "conditionValue": "CREDIT"
+      }
+     ]
+    }
+   ]
+  },
+  "routeCode": "operations-commercial-profile-list"
+ },
+ {
+  "id": "P02",
+  "method": "POST",
+  "path": "/commercial-admin/v1/pricing-profiles",
+  "ownerPath": "/pricing-profiles/v1",
+  "query": "",
+  "request": {
+   "pricingProfileCode": "CARD_VISA_CREDIT",
+   "profileKind": "PAYMENT_METHOD",
+   "profileName": "Visa 信用卡",
+   "paymentMethodCode": "CARD",
+   "conditions": [
+    {
+     "dimensionCode": "CARD_BRAND",
+     "conditionValue": "VISA"
+    },
+    {
+     "dimensionCode": "FUNDING_TYPE",
+     "conditionValue": "CREDIT"
+    }
+   ]
+  },
+  "status": 201,
+  "ownerStatus": 200,
+  "response": {
+   "pricingProfileId": "7319000000000000401",
+   "pricingProfileCode": "CARD_VISA_CREDIT",
+   "profileName": "Visa 信用卡",
+   "profileKind": "PAYMENT_METHOD",
+   "paymentMethodCode": "CARD",
+   "status": "DRAFT",
+   "changeVersion": 1,
+   "conditions": [
+    {
+     "dimensionCode": "CARD_BRAND",
+     "conditionValue": "VISA"
+    },
+    {
+     "dimensionCode": "FUNDING_TYPE",
+     "conditionValue": "CREDIT"
+    }
+   ]
+  },
+  "routeCode": "operations-commercial-profile-create"
+ },
+ {
+  "id": "P03",
+  "method": "PUT",
+  "path": "/commercial-admin/v1/pricing-profiles/7319000000000000401",
+  "ownerPath": "/pricing-profiles/v1/7319000000000000401",
+  "query": "",
+  "request": {
+   "expectedChangeVersion": 1,
+   "profileName": "Visa 信用卡",
+   "paymentMethodCode": "CARD",
+   "conditions": [
+    {
+     "dimensionCode": "CARD_BRAND",
+     "conditionValue": "VISA"
+    },
+    {
+     "dimensionCode": "FUNDING_TYPE",
+     "conditionValue": "CREDIT"
+    }
+   ]
+  },
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "pricingProfileId": "7319000000000000401",
+   "pricingProfileCode": "CARD_VISA_CREDIT",
+   "profileName": "Visa 信用卡",
+   "profileKind": "PAYMENT_METHOD",
+   "paymentMethodCode": "CARD",
+   "status": "DRAFT",
+   "changeVersion": 2,
+   "conditions": [
+    {
+     "dimensionCode": "CARD_BRAND",
+     "conditionValue": "VISA"
+    },
+    {
+     "dimensionCode": "FUNDING_TYPE",
+     "conditionValue": "CREDIT"
+    }
+   ]
+  },
+  "routeCode": "operations-commercial-profile-update"
+ },
+ {
+  "id": "P04",
+  "method": "POST",
+  "path": "/commercial-admin/v1/pricing-profiles/7319000000000000401/activate",
+  "ownerPath": "/pricing-profiles/v1/7319000000000000401/activate",
+  "query": "",
+  "request": {
+   "expectedChangeVersion": 2
+  },
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "pricingProfileId": "7319000000000000401",
+   "pricingProfileCode": "CARD_VISA_CREDIT",
+   "profileName": "Visa 信用卡",
+   "profileKind": "PAYMENT_METHOD",
+   "paymentMethodCode": "CARD",
+   "status": "ACTIVE",
+   "changeVersion": 3,
+   "conditions": [
+    {
+     "dimensionCode": "CARD_BRAND",
+     "conditionValue": "VISA"
+    },
+    {
+     "dimensionCode": "FUNDING_TYPE",
+     "conditionValue": "CREDIT"
+    }
+   ]
+  },
+  "routeCode": "operations-commercial-profile-activate"
+ },
+ {
+  "id": "P05",
+  "method": "POST",
+  "path": "/commercial-admin/v1/pricing-profiles/7319000000000000401/retire",
+  "ownerPath": "/pricing-profiles/v1/7319000000000000401/retire",
+  "query": "",
+  "request": {
+   "expectedChangeVersion": 3
+  },
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "pricingProfileId": "7319000000000000401",
+   "pricingProfileCode": "CARD_VISA_CREDIT",
+   "profileName": "Visa 信用卡",
+   "profileKind": "PAYMENT_METHOD",
+   "paymentMethodCode": "CARD",
+   "status": "RETIRED",
+   "changeVersion": 4,
+   "conditions": [
+    {
+     "dimensionCode": "CARD_BRAND",
+     "conditionValue": "VISA"
+    },
+    {
+     "dimensionCode": "FUNDING_TYPE",
+     "conditionValue": "CREDIT"
+    }
+   ]
+  },
+  "routeCode": "operations-commercial-profile-retire"
+ },
+ {
+  "id": "T01",
+  "method": "POST",
+  "path": "/commercial-admin/v1/commercial-terms/plans",
+  "ownerPath": "/commercial-terms/v1/plans",
+  "query": "",
+  "request": {
+   "planCode": "CP-AE001-0001",
+   "termType": "CLIENT_PRICING",
+   "agreementId": "7319000000000000101",
+   "clientId": "7300000000000000011",
+   "localPartnerId": null
+  },
+  "status": 201,
+  "ownerStatus": 201,
+  "response": {
+   "planId": "7319000000000000501",
+   "planCode": "CP-AE001-0001",
+   "termType": "CLIENT_PRICING",
+   "agreementId": "7319000000000000101",
+   "entityNo": "AE001",
+   "clientId": "7300000000000000011",
+   "localPartnerId": null,
+   "status": "DRAFT",
+   "changeVersion": "1"
+  },
+  "routeCode": "operations-commercial-term-plan-create"
+ },
+ {
+  "id": "T02",
+  "method": "POST",
+  "path": "/commercial-admin/v1/commercial-terms/plans/7319000000000000501/versions",
+  "ownerPath": "/commercial-terms/v1/plans/7319000000000000501/versions",
+  "query": "",
+  "request": {
+   "expectedChangeVersion": "4",
+   "copyFromVersionId": "7319000000000000600",
+   "agreementId": null,
+   "pricingModel": null,
+   "feeTaxTreatment": null
+  },
+  "status": 201,
+  "ownerStatus": 201,
+  "response": {
+   "versionId": "7319000000000000601",
+   "planId": "7319000000000000501",
+   "termType": "CLIENT_PRICING",
+   "agreementId": "7319000000000000101",
+   "versionNo": "2",
+   "status": "DRAFT",
+   "effectiveFrom": "2026-10-19T08:00:00Z",
+   "effectiveTo": null,
+   "roundingMode": "HALF_UP",
+   "pricingModel": "BLENDED",
+   "feeTaxTreatment": "EXCLUSIVE",
+   "changeVersion": "5"
+  },
+  "routeCode": "operations-commercial-term-version-create"
+ },
+ {
+  "id": "T03",
+  "method": "PUT",
+  "path": "/commercial-admin/v1/commercial-terms/versions/7319000000000000601/prices",
+  "ownerPath": "/commercial-terms/v1/versions/7319000000000000601/prices",
+  "query": "",
+  "request": {
+   "expectedChangeVersion": "5",
+   "prices": [
+    {
+     "entityNo": "AE001",
+     "currency": "USD",
+     "pricingProfileCode": "CARD_VISA_CREDIT",
+     "priorityNo": 1,
+     "settlementBusinessDays": 2,
+     "businessCalendarCode": "AE_BUSINESS_DAYS",
+     "settlementTimezone": "UTC",
+     "cutoffSecondOfDay": 0,
+     "components": [
+      {
+       "componentCode": "MDR",
+       "componentType": "PERCENTAGE",
+       "triggerCode": "PAYMENT_CAPTURED",
+       "calculationBase": "GROSS_AMOUNT",
+       "refundBehavior": "RETURN_PRORATA",
+       "rate": "0.029",
+       "fixedAmount": null,
+       "currency": "USD",
+       "minAmount": "0.50",
+       "maxAmount": null,
+       "bandBasis": null,
+       "bandMode": null,
+       "bands": null
+      },
+      {
+       "componentCode": "VOLUME",
+       "componentType": "TIERED",
+       "triggerCode": "PAYMENT_CAPTURED",
+       "calculationBase": "GROSS_AMOUNT",
+       "refundBehavior": "KEEP",
+       "rate": null,
+       "fixedAmount": null,
+       "currency": "USD",
+       "minAmount": null,
+       "maxAmount": null,
+       "bandBasis": "TRANSACTION_AMOUNT",
+       "bandMode": "WHOLE_BASE",
+       "bands": [
+        {
+         "lowerBound": "0",
+         "upperBound": "1000",
+         "rate": "0.01",
+         "fixedAmount": null
+        },
+        {
+         "lowerBound": "1000",
+         "upperBound": null,
+         "rate": "0.005",
+         "fixedAmount": null
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "versionId": "7319000000000000601",
+   "planId": "7319000000000000501",
+   "termType": "CLIENT_PRICING",
+   "agreementId": "7319000000000000101",
+   "versionNo": "2",
+   "status": "DRAFT",
+   "effectiveFrom": "2026-10-19T08:00:00Z",
+   "effectiveTo": null,
+   "roundingMode": "HALF_UP",
+   "pricingModel": "BLENDED",
+   "feeTaxTreatment": "EXCLUSIVE",
+   "changeVersion": "6"
+  },
+  "routeCode": "operations-commercial-term-prices"
+ },
+ {
+  "id": "T04",
+  "method": "POST",
+  "path": "/commercial-admin/v1/commercial-terms/versions/7319000000000000601/submit",
+  "ownerPath": "/commercial-terms/v1/versions/7319000000000000601/submit",
+  "query": "",
+  "request": {
+   "expectedChangeVersion": "6"
+  },
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "versionId": "7319000000000000601",
+   "planId": "7319000000000000501",
+   "termType": "CLIENT_PRICING",
+   "agreementId": "7319000000000000101",
+   "versionNo": "2",
+   "status": "PENDING_APPROVAL",
+   "effectiveFrom": "2026-10-19T08:00:00Z",
+   "effectiveTo": null,
+   "roundingMode": "HALF_UP",
+   "pricingModel": "BLENDED",
+   "feeTaxTreatment": "EXCLUSIVE",
+   "changeVersion": "7"
+  },
+  "routeCode": "operations-commercial-term-submit"
+ },
+ {
+  "id": "T05",
+  "method": "POST",
+  "path": "/commercial-admin/v1/commercial-terms/versions/7319000000000000601/approve",
+  "ownerPath": "/commercial-terms/v1/versions/7319000000000000601/approve",
+  "query": "",
+  "request": {
+   "expectedChangeVersion": "7"
+  },
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "versionId": "7319000000000000601",
+   "planId": "7319000000000000501",
+   "termType": "CLIENT_PRICING",
+   "agreementId": "7319000000000000101",
+   "versionNo": "2",
+   "status": "APPROVED",
+   "effectiveFrom": "2026-10-19T08:00:00Z",
+   "effectiveTo": null,
+   "roundingMode": "HALF_UP",
+   "pricingModel": "BLENDED",
+   "feeTaxTreatment": "EXCLUSIVE",
+   "changeVersion": "8"
+  },
+  "routeCode": "operations-commercial-term-approve"
+ },
+ {
+  "id": "T06",
+  "method": "POST",
+  "path": "/commercial-admin/v1/commercial-terms/versions/7319000000000000601/reject",
+  "ownerPath": "/commercial-terms/v1/versions/7319000000000000601/reject",
+  "query": "",
+  "request": {
+   "expectedChangeVersion": "7"
+  },
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "versionId": "7319000000000000601",
+   "planId": "7319000000000000501",
+   "termType": "CLIENT_PRICING",
+   "agreementId": "7319000000000000101",
+   "versionNo": "2",
+   "status": "DRAFT",
+   "effectiveFrom": "2026-10-19T08:00:00Z",
+   "effectiveTo": null,
+   "roundingMode": "HALF_UP",
+   "pricingModel": "BLENDED",
+   "feeTaxTreatment": "EXCLUSIVE",
+   "changeVersion": "8"
+  },
+  "routeCode": "operations-commercial-term-reject"
+ },
+ {
+  "id": "T07",
+  "method": "POST",
+  "path": "/commercial-admin/v1/commercial-terms/versions/7319000000000000601/schedule",
+  "ownerPath": "/commercial-terms/v1/versions/7319000000000000601/schedule",
+  "query": "",
+  "request": {
+   "expectedChangeVersion": "8",
+   "effectiveFrom": "2026-11-01T00:00:00Z"
+  },
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "versionId": "7319000000000000601",
+   "planId": "7319000000000000501",
+   "termType": "CLIENT_PRICING",
+   "agreementId": "7319000000000000101",
+   "versionNo": "2",
+   "status": "SCHEDULED",
+   "effectiveFrom": "2026-11-01T00:00:00Z",
+   "effectiveTo": null,
+   "roundingMode": "HALF_UP",
+   "pricingModel": "BLENDED",
+   "feeTaxTreatment": "EXCLUSIVE",
+   "changeVersion": "9"
+  },
+  "routeCode": "operations-commercial-term-schedule"
+ },
+ {
+  "id": "T08",
+  "method": "POST",
+  "path": "/commercial-admin/v1/commercial-terms/versions/7319000000000000601/activate",
+  "ownerPath": "/commercial-terms/v1/versions/7319000000000000601/activate",
+  "query": "",
+  "request": {
+   "expectedChangeVersion": "9"
+  },
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "versionId": "7319000000000000601",
+   "planId": "7319000000000000501",
+   "termType": "CLIENT_PRICING",
+   "agreementId": "7319000000000000101",
+   "versionNo": "2",
+   "status": "ACTIVE",
+   "effectiveFrom": "2026-11-01T00:00:00Z",
+   "effectiveTo": null,
+   "roundingMode": "HALF_UP",
+   "pricingModel": "BLENDED",
+   "feeTaxTreatment": "EXCLUSIVE",
+   "changeVersion": "10"
+  },
+  "routeCode": "operations-commercial-term-activate"
+ },
+ {
+  "id": "T10",
+  "method": "GET",
+  "path": "/commercial-admin/v1/commercial-terms/versions/7319000000000000601/prices",
+  "ownerPath": "/commercial-term-versions/v1/7319000000000000601/prices",
+  "query": "?entityNo=AE001&termType=CLIENT_PRICING&currency=USD",
+  "request": null,
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "termVersionId": "7319000000000000601",
+   "termType": "CLIENT_PRICING",
+   "entityNo": "AE001",
+   "prices": [
+    {
+     "termType": "CLIENT_PRICING",
+     "agreementId": "7319000000000000101",
+     "planId": "7319000000000000501",
+     "termVersionId": "7319000000000000601",
+     "entityNo": "AE001",
+     "clientId": "7300000000000000011",
+     "localPartnerId": null,
+     "priceId": "73190000000000008",
+     "pricingProfileCode": "CARD_VISA_CREDIT",
+     "paymentMethodCode": "CARD",
+     "priorityNo": 1,
+     "currency": "USD",
+     "pricingModel": "BLENDED",
+     "feeTaxTreatment": "EXCLUSIVE",
+     "conditions": [
+      {
+       "dimensionCode": "CARD_BRAND",
+       "conditionValue": "VISA"
+      }
+     ],
+     "components": [
+      {
+       "componentId": "731900000000000081",
+       "componentNo": 1,
+       "componentCode": "MDR",
+       "componentType": "PERCENTAGE",
+       "triggerCode": "PAYMENT_CAPTURED",
+       "calculationBase": "GROSS_AMOUNT",
+       "refundBehavior": "RETURN_PRORATA",
+       "rate": "0.029",
+       "fixedAmount": null,
+       "currency": "USD",
+       "minAmount": "0.50",
+       "maxAmount": null,
+       "bandBasis": null,
+       "bandMode": null,
+       "bands": []
+      }
+     ],
+     "settlement": {
+      "settlementBusinessDays": 2,
+      "businessCalendarCode": "AE_BUSINESS_DAYS",
+      "settlementTimezone": "UTC",
+      "cutoffSecondOfDay": 0
+     }
+    }
+   ]
+  },
+  "routeCode": "operations-commercial-term-version-prices"
+ }
+]

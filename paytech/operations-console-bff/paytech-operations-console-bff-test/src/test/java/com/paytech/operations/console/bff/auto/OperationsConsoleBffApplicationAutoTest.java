@@ -342,7 +342,29 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
             "GET /finance/chart-of-accounts/v1", "GET /finance/chart-of-accounts/v1/{chartCode}/accounts",
             "GET /finance/currencies/v1", "GET /finance/balances/v1/clients/{clientId}",
             "GET /finance/balances/v1/partners/{partnerId}", "GET /finance/owner-accounts/v1",
-            "GET /finance/owner-accounts/v1/{accountId}/entries", "GET /finance/account-postings/v1/{postingId}"), routes);
+            "GET /finance/owner-accounts/v1/{accountId}/entries", "GET /finance/account-postings/v1/{postingId}",
+            "GET /commercial-admin/v1/agreements/{agreementId}", "POST /commercial-admin/v1/agreements",
+            "POST /commercial-admin/v1/agreements/{agreementId}/submit-for-signature",
+            "POST /commercial-admin/v1/agreements/{agreementId}/parties/{partyId}/acceptance",
+            "POST /commercial-admin/v1/agreements/{agreementId}/activate",
+            "POST /commercial-admin/v1/agreements/{agreementId}/terminate",
+            "PUT /commercial-admin/v1/agreements/{agreementId}/products",
+            "POST /commercial-admin/v1/agreements/{agreementId}/capabilities",
+            "PUT /commercial-admin/v1/agreements/{agreementId}/capabilities/{agreementCapabilityId}",
+            "GET /commercial-admin/v1/pricing-profiles", "POST /commercial-admin/v1/pricing-profiles",
+            "PUT /commercial-admin/v1/pricing-profiles/{pricingProfileId}",
+            "POST /commercial-admin/v1/pricing-profiles/{pricingProfileId}/activate",
+            "POST /commercial-admin/v1/pricing-profiles/{pricingProfileId}/retire",
+            "POST /commercial-admin/v1/commercial-terms/plans",
+            "POST /commercial-admin/v1/commercial-terms/plans/{planId}/versions",
+            "PUT /commercial-admin/v1/commercial-terms/versions/{versionId}/prices",
+            "POST /commercial-admin/v1/commercial-terms/versions/{versionId}/submit",
+            "POST /commercial-admin/v1/commercial-terms/versions/{versionId}/approve",
+            "POST /commercial-admin/v1/commercial-terms/versions/{versionId}/reject",
+            "POST /commercial-admin/v1/commercial-terms/versions/{versionId}/schedule",
+            "POST /commercial-admin/v1/commercial-terms/versions/{versionId}/activate",
+            "GET /commercial-admin/v1/commercial-terms/versions/{versionId}",
+            "GET /commercial-admin/v1/commercial-terms/versions/{versionId}/prices"), routes);
 
         Path classes = appModule().resolve("target/classes/com/paytech/operations/console/bff");
         try (var files = Files.walk(classes)) {

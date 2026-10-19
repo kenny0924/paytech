@@ -42,6 +42,9 @@ const pages: Record<PageComponentKey, ComponentType<PageProps>> = {
   OPERATIONS_FINANCE_LEDGER: lazy(() => import('../pages/FinanceLedger').then(m => ({ default: m.FinanceLedger }))),
   OPERATIONS_FINANCE_BALANCES: lazy(() => import('../pages/FinanceBalances').then(m => ({ default: m.FinanceBalances }))),
   OPERATIONS_FINANCE_SUBLEDGER: lazy(() => import('../pages/FinanceSubledger').then(m => ({ default: m.FinanceSubledger }))),
+  OPERATIONS_COMMERCIAL_AGREEMENTS: lazy(() => import('../pages/CommercialAgreements').then(m => ({ default: m.CommercialAgreements }))),
+  OPERATIONS_COMMERCIAL_PRICING_PROFILES: lazy(() => import('../pages/CommercialPricingProfiles').then(m => ({ default: m.CommercialPricingProfiles }))),
+  OPERATIONS_COMMERCIAL_TERMS: lazy(() => import('../pages/CommercialTerms').then(m => ({ default: m.CommercialTerms }))),
 };
 export function ConsolePage({ componentKey, ...props }: PageProps & { componentKey: string }) {
   const Page = pages[componentKey as PageComponentKey];

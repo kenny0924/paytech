@@ -182,6 +182,40 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
         Map.entry("operations-finance-account-posting", FINANCE_READ_PERMISSION_ID));
 
     // 这是 Platform Simulator 的当前目录事实；BFF 生产代码仍只传可信 Route Code。
+    /**
+     * 商务路由权限（注册 DML 块 95）：合同读写、定价读写与独立的定价审批；未登记的 operations-commercial-* 视为意外调用。
+     */
+    public static final String COMMERCIAL_CONTRACT_READ_PERMISSION_ID = "900000000000095101";
+    public static final String COMMERCIAL_CONTRACT_MANAGE_PERMISSION_ID = "900000000000095102";
+    public static final String COMMERCIAL_PRICING_READ_PERMISSION_ID = "900000000000095103";
+    public static final String COMMERCIAL_PRICING_MANAGE_PERMISSION_ID = "900000000000095104";
+    public static final String COMMERCIAL_PRICING_APPROVE_PERMISSION_ID = "900000000000095105";
+    public static final Map<String, String> COMMERCIAL_ROUTE_PERMISSIONS = Map.ofEntries(
+        Map.entry("operations-commercial-agreement-detail", COMMERCIAL_CONTRACT_READ_PERMISSION_ID),
+        Map.entry("operations-commercial-agreement-create", COMMERCIAL_CONTRACT_MANAGE_PERMISSION_ID),
+        Map.entry("operations-commercial-agreement-submit", COMMERCIAL_CONTRACT_MANAGE_PERMISSION_ID),
+        Map.entry("operations-commercial-agreement-acceptance", COMMERCIAL_CONTRACT_MANAGE_PERMISSION_ID),
+        Map.entry("operations-commercial-agreement-activate", COMMERCIAL_CONTRACT_MANAGE_PERMISSION_ID),
+        Map.entry("operations-commercial-agreement-terminate", COMMERCIAL_CONTRACT_MANAGE_PERMISSION_ID),
+        Map.entry("operations-commercial-agreement-products", COMMERCIAL_CONTRACT_MANAGE_PERMISSION_ID),
+        Map.entry("operations-commercial-capability-create", COMMERCIAL_CONTRACT_MANAGE_PERMISSION_ID),
+        Map.entry("operations-commercial-capability-update", COMMERCIAL_CONTRACT_MANAGE_PERMISSION_ID),
+        Map.entry("operations-commercial-profile-list", COMMERCIAL_PRICING_READ_PERMISSION_ID),
+        Map.entry("operations-commercial-profile-create", COMMERCIAL_PRICING_MANAGE_PERMISSION_ID),
+        Map.entry("operations-commercial-profile-update", COMMERCIAL_PRICING_MANAGE_PERMISSION_ID),
+        Map.entry("operations-commercial-profile-activate", COMMERCIAL_PRICING_MANAGE_PERMISSION_ID),
+        Map.entry("operations-commercial-profile-retire", COMMERCIAL_PRICING_MANAGE_PERMISSION_ID),
+        Map.entry("operations-commercial-term-plan-create", COMMERCIAL_PRICING_MANAGE_PERMISSION_ID),
+        Map.entry("operations-commercial-term-version-create", COMMERCIAL_PRICING_MANAGE_PERMISSION_ID),
+        Map.entry("operations-commercial-term-prices", COMMERCIAL_PRICING_MANAGE_PERMISSION_ID),
+        Map.entry("operations-commercial-term-submit", COMMERCIAL_PRICING_MANAGE_PERMISSION_ID),
+        Map.entry("operations-commercial-term-approve", COMMERCIAL_PRICING_APPROVE_PERMISSION_ID),
+        Map.entry("operations-commercial-term-reject", COMMERCIAL_PRICING_APPROVE_PERMISSION_ID),
+        Map.entry("operations-commercial-term-schedule", COMMERCIAL_PRICING_MANAGE_PERMISSION_ID),
+        Map.entry("operations-commercial-term-activate", COMMERCIAL_PRICING_MANAGE_PERMISSION_ID),
+        Map.entry("operations-commercial-term-version-detail", COMMERCIAL_PRICING_READ_PERMISSION_ID),
+        Map.entry("operations-commercial-term-version-prices", COMMERCIAL_PRICING_READ_PERMISSION_ID));
+
     private static final Map<String, String> ROUTE_PERMISSIONS = Map.ofEntries(
         Map.entry("operations-account-create", ACCOUNT_CREATE_PERMISSION_ID),
         Map.entry("operations-account-disable", ACCOUNT_DISABLE_PERMISSION_ID),
@@ -264,6 +298,8 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
         riskIdentity = true;
         grantedPermissions.addAll(RISK_ROUTE_PERMISSIONS.values());
     }
+    /** 商务操作者：commercial 只接受规范正十进制操作人，会话身份切换为数字 Account ID，授权集合不变。 */
+    public synchronized void useCommercialIdentity() { activeAccountId = RISK_ACCOUNT_ID; }
     /** 审核操作者：沿用数字 Risk 身份并授予全部入驻审核权限。 */
     public synchronized void useClientReviewIdentity() {
         useRiskIdentity();
@@ -335,6 +371,7 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
             grantedPermissions.clear();
             permissionCatalog().forEach(permission -> grantedPermissions.add(permission.getPermissionId()));
             grantedPermissions.addAll(FINANCE_ROUTE_PERMISSIONS.values());
+            grantedPermissions.addAll(COMMERCIAL_ROUTE_PERMISSIONS.values());
             sessionActive = true;
             allowed = true;
             disconnect = false;
@@ -437,6 +474,16 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
         }
         if (request.getRouteCode() == null || !request.getRouteCode().startsWith("operations-")) {
             unexpected(exchange, "未识别的 Operations Route Code");
+            return;
+        }
+        if (request.getRouteCode().startsWith("operations-commercial-")) {
+            String commercialPermission = COMMERCIAL_ROUTE_PERMISSIONS.get(request.getRouteCode());
+            if (commercialPermission == null) {
+                unexpected(exchange, "未登记的商务 Route Code");
+                return;
+            }
+            write(exchange, 200, new AuthorizationDecisionResponseBody(allowed && grantedPermissions.contains(commercialPermission)));
+            completedAuthorizationCount++;
             return;
         }
         if (request.getRouteCode().startsWith("operations-finance-")) {

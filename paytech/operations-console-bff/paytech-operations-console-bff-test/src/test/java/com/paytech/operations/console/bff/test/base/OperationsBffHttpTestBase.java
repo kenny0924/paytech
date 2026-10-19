@@ -20,6 +20,7 @@ public abstract class OperationsBffHttpTestBase {
         registry.add("operations.cct-test-base-url", OperationsBffTestConfiguration.CLIENT_REVIEW::baseUrl);
         registry.add("operations.ledger-base-url", OperationsBffTestConfiguration.LEDGER::baseUrl);
         registry.add("operations.account-base-url", OperationsBffTestConfiguration.ACCOUNT::baseUrl);
+        registry.add("operations.commercial-test-base-url", OperationsBffTestConfiguration.COMMERCIAL::baseUrl);
         registry.add("operations.console-origin", () -> "https://operations-console.local.test");
     }
 }
