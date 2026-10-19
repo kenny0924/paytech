@@ -10,13 +10,14 @@
 | 4. 研发实现 | 已确认（2026-10-19，"继续"：接受结果与 3 项偏离的建议）：T0 + A / B / C / D 五个 Opus 5.5 agent，主会话（Fable 5.1）任务卡、门禁、跨线核对与独立重跑；用户授权后 A / B 重建了本机 `mor_account` / `mor_ledger`（local-environment）；未提交，未动 mor-test。见下方「阶段 4 研发结果」 |
 | 5. 综合验证与本地验收 | 已确认（2026-10-19，"继续下一阶段"）：本机 V2 全链路接口 58/58、浏览器 31/31（C-1 修复后重跑）、只读回归 27/34（7 页为未启动的 risk-decision / compliance 503）；清理后 49 张表回到基线。见 [verification/stage5-report.md](./verification/stage5-report.md) |
 | 6. test 发布准备 | 已确认（2026-10-19，"继续"：D1=A、D2=A、D4=A、D5 按建议）：[release/release.md](./release/release.md)（只读核对、D1–D5、执行顺序、恢复）、[compose-candidate.yaml](./release/compose-candidate.yaml)（6 个镜像 tag `subledger-20261019` 固定 ID）、[source-overlay.txt](./release/source-overlay.txt)（HEAD `2bae8597` + 441 文件）、验收脚本已支持 `E2E_TARGET=test`；mor-test 未改 |
-| 7. test 部署与验收 | 已交付待确认（2026-10-19，用户"继续部署"）：release.md 第 4 节 11 步全部通过，接口 58/58、浏览器 31/31、全页面回归 34/34；备份 `~/Code-MoR-backups/20261019T104222Z-subledger-test/`；六个镜像 tag `subledger-20261019` 已替换并 healthy；`ledger.billing.*` 旧队列与交换机已删；XXL 任务 14 `accountBalanceMaturity` 已登记启用；块 99 已激活（PLATFORM_ADMIN v31）；合成数据已清理回基线。见 [release.md 第 6 节](./release/release.md#6-执行记录) 与 [tasks/G-report.md](./tasks/G-report.md) |
-| 8. 提交 | 单独授权 |
+| 7. test 部署与验收 | 已确认（2026-10-19，"提交"）：release.md 第 4 节 11 步全部通过，接口 58/58、浏览器 31/31、全页面回归 34/34；备份 `~/Code-MoR-backups/20261019T104222Z-subledger-test/`；六个镜像 tag `subledger-20261019` 已替换并 healthy；`ledger.billing.*` 旧队列与交换机已删；XXL 任务 14 `accountBalanceMaturity` 已登记启用；块 99 已激活（PLATFORM_ADMIN v31）；合成数据已清理回基线。见 [release.md 第 6 节](./release/release.md#6-执行记录) 与 [tasks/G-report.md](./tasks/G-report.md) |
+| 8. 提交 | 已完成（2026-10-19）：`080909fb`（528 个文件：account / ledger / billing / Foundation 事件目录 / arch-rules / scripts/pdmaner / Operations BFF / Web / Platform 注册 SQL / test-environment / requirements-site / system-design / 决定与台账 / 需求目录，含 `design.pen`）+ 归档提交（本记录与台账）；私有索引构建，不含其他会话的 compliance 改动与未纳入范围的 `system-design/architecture-design.pen`；未推送 |
 
 ## 确认记录
 
 | 日期 | 阶段 | 用户原意 | 获准的下一步 |
 |---|---|---|---|
+| 2026-10-19 | 8 | "提交"：确认阶段 7 结果并授权本地提交 | 私有索引提交 `080909fb` 与归档提交；不推送、不建分支、不发 PR |
 | 2026-10-19 | 7 | "继续部署"：授权按 release.md 第 4 节执行阶段 7（首次启动被权限分类器拒绝，第二次通过） | G agent 执行 11 步并写执行记录、台账与决定记录状态 |
 | 2026-10-19 | 6 | "继续"：确认发布包，D1=A（HEAD `2bae8597` + 441 文件）、D2=A（验收后清理）、D4=A（登记并启用 `accountBalanceMaturity`）、D5 计数为 0 则删 | 阶段 7：按 release.md 第 4 节在 mor-test 备份、停 account / ledger、执行四份 SQL、替换六个镜像、删旧队列、XXL 登记、启用、验收、清理、更新台账；不提交。**主会话的 agent 启动与部署命令被 Claude Code 权限分类器以「修改共享资源」拒绝，阶段 7 待用户另行安排执行方式** |
 | 2026-10-19 | 5 | "继续下一阶段"：接受阶段 5 结果 | 阶段 6 mor-test 发布准备：只读核对与发布清单、镜像构建，不改 mor-test 环境、不执行 SQL、不提交 |
@@ -27,7 +28,7 @@
 
 ## 当前阶段与下一确认点
 
-当前：阶段 7 结果待确认（2026-10-19）。下一确认点：阶段 8 本地提交（需明确授权；提交前先在 Pen 中保存 `operations-console-web/docs/design.pen`）。主会话独立核对：六个 mor-test 容器 healthy 且镜像 ID 与候选一致；`/mor-test` 只剩 `account.billing.*` 与 `ledger.account.*` 队列（各 1 消费者），旧 `ledger.billing.*` 已不存在。阶段 5 记录：追加本机动作（主会话批准，范围同类）：`mor_billing_v2e2e` 原为空库，按 billing 完整 Schema 与初始化数据建表以启动本机 billing。已授权动作：对本机 V2 全链路库 `mor_account_v2e2e`、`mor_ledger_v2e2e` 执行本需求变更 SQL（`db/account/ddl.sql`、`db/ledger/ddl.sql` + `dml.sql`）、对 `mor_platform_v2e2e` 执行块 99 注册与 `db/platform-support/activation-local.sql`、用新 JAR 重启本机 billing / account / ledger / Platform / Operations BFF / Gateway 与 Web 开发服务器、接口与浏览器验收并清理合成数据。
+全部阶段完成（2026-10-19）。代码与文档已本地提交 `080909fb` 及归档提交，未推送；后续切片见「遗留项及后续需求」。主会话独立核对：六个 mor-test 容器 healthy 且镜像 ID 与候选一致；`/mor-test` 只剩 `account.billing.*` 与 `ledger.account.*` 队列（各 1 消费者），旧 `ledger.billing.*` 已不存在。阶段 5 记录：追加本机动作（主会话批准，范围同类）：`mor_billing_v2e2e` 原为空库，按 billing 完整 Schema 与初始化数据建表以启动本机 billing。已授权动作：对本机 V2 全链路库 `mor_account_v2e2e`、`mor_ledger_v2e2e` 执行本需求变更 SQL（`db/account/ddl.sql`、`db/ledger/ddl.sql` + `dml.sql`）、对 `mor_platform_v2e2e` 执行块 99 注册与 `db/platform-support/activation-local.sql`、用新 JAR 重启本机 billing / account / ledger / Platform / Operations BFF / Gateway 与 Web 开发服务器、接口与浏览器验收并清理合成数据。
 
 ## 阶段 4 研发结果（2026-10-19）
 
@@ -77,20 +78,28 @@
 
 ## 测试 / 验收证据
 
-（阶段 4 起登记）
+阶段 4 独立重跑与阶段 5 / 7 验收计数见上文各阶段记录；脚本与截图在 `verification/`、`assets/stage5/`、`assets/stage7/`。
 
 ## 部署 / 恢复方案及 SQL 执行记录入口
 
-（阶段 6 起登记）
+[release/release.md](./release/release.md)（第 4 节顺序、第 5 节恢复、第 6 节执行记录）；本机 e2e 库的 SQL 执行见 [verification/stage5-report.md](./verification/stage5-report.md) 第 1 节。
 
 ## 提交记录
 
-（阶段 8 登记）
+| 仓库 | 提交 | 内容 |
+|---|---|---|
+| Code-MoR（main，本地） | `080909fb` | 本需求全部代码、SQL、模型、画板、文档（528 个文件） |
+| Code-MoR（main，本地） | 归档提交 | 本记录与台账的提交号登记 |
+
+推送状态：未推送。
 
 ## 遗留项及后续需求
 
 - 退款与争议入账（设计 8.6）、payout / tax 接入 account 桶移动、渠道结算到账 / 出款完成 / 缴税完成登记经济事实：各自切片。
 - requirements-site Finance 目录按 billing / account / ledger 三系统整体重写：另立文档需求（Q-07）。
+- `PayableBalanceMatured`（Commerce 订阅）后续由 account 到期桶移动后发布：另立切片（阶段 4 D 线待决项，用户已接受保留）。
+- Compose 可选清理：account 的 `ACCOUNT_BILLING_SERVICE_URL` 已无用、`PAYTECH_INSTANCE_ID` 未设（事件 instanceId 为 main）。
+- 决定第 12 条过账日期规则已按阶段 4 偏离 1 修订（取下一开放期间开始日）。
 
 ## 实现 / 验证 / 部署状态
 
