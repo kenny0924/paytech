@@ -32,11 +32,16 @@ public class CheckoutPricingContext {
                 ? Objects.equals(plan.clientId(), context.query().clientId()) && plan.localPartnerId() == null
                         && Objects.equals(plan.entityNo(), entityNo)
                 : plan.clientId() == null && plan.agreementId() == null && plan.entityNo() == null);
-        // technique §2.3：按商业时点在 SCHEDULED / ACTIVE / SUPERSEDED 中选唯一区间命中者，不依赖激活作业是否已切换标签。
-        CommercialTermVersion version = unique(context.facts().termVersions(),
-                v -> v.termPlanId().equals(plan.termPlanId())
+        // technique §2.3：SCHEDULED / ACTIVE / SUPERSEDED 中区间含商业时点者取 effective_from 最大的一条，与
+        // CommercialTermVersionRepository.findEffectiveAt 同一规则；ACTIVE 在激活作业前 effective_to 仍为空，后继起点到达即胜出。
+        // 排期校验保证同一方案起点严格递增，起点相同说明数据冲突。
+        List<CommercialTermVersion> effective = context.facts().termVersions().stream()
+                .filter(v -> v.termPlanId().equals(plan.termPlanId())
                         && CommercialTermVersionStatus.RESOLVABLE.contains(v.status())
-                        && applicable(v.effectiveFrom(), v.effectiveTo(), context.query().asOf()));
+                        && applicable(v.effectiveFrom(), v.effectiveTo(), context.query().asOf()))
+                .sorted(Comparator.comparing(CommercialTermVersion::effectiveFrom).reversed()).toList();
+        require(effective.size() < 2 || effective.get(0).effectiveFrom().isAfter(effective.get(1).effectiveFrom()));
+        CommercialTermVersion version = effective.isEmpty() ? null : effective.getFirst();
         if (version == null) {
             return null;
         }

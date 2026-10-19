@@ -180,6 +180,15 @@ class CheckoutResolutionMatrixTest extends AbstractCheckoutApiTest {
             () -> assertEquals(Long.toString(SUCCESSOR_VERSION_ID), view.clientTerms().versionId()));
     }
 
+    /** 原 ACTIVE 终点仍为空（激活作业尚未运行）时，起点已到的 SCHEDULED 后继以较大起点胜出，不报冲突。 */
+    @Test
+    void test_scheduledVersionWinsOverOpenActive() {
+        versions.mockSuccessorVersion(SUCCESSOR_VERSION_ID, CommercialTermVersionStatus.SCHEDULED,
+            Instant.parse("2026-09-10T00:00:00Z"));
+
+        assertEquals(Long.toString(SUCCESSOR_VERSION_ID), first(query()).toView().clientTerms().versionId());
+    }
+
     /** 尚未到起点的 SCHEDULED 不参与，原 ACTIVE 版本继续生效。 */
     @Test
     void test_futureScheduledVersionIsIgnored() {

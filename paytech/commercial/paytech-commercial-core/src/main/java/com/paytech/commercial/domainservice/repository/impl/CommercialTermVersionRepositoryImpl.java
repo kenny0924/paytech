@@ -55,21 +55,16 @@ public class CommercialTermVersionRepositoryImpl implements CommercialTermVersio
         return List.copyOf(mapper.selectByPlanId(termPlanId));
     }
 
-    /** 按商业时点选取唯一生效版本；区间重叠属于数据不变量破坏。 */
-    @Override
-    public CommercialTermVersion findEffectiveAt(long termPlanId, Instant asOf) {
-        List<CommercialTermVersion> versions =
-            mapper.selectEffectiveAt(termPlanId, CommercialTermVersionStatus.RESOLVABLE, micros(asOf));
-        if (versions.size() > 1) {
-            throw new ErrorException("商业条款方案在同一时点存在多个生效版本: " + termPlanId + ", 时点: " + asOf);
-        }
-        return versions.isEmpty() ? null : versions.getFirst();
-    }
-
     /** 方案内当前最大版本号。 */
     @Override
     public Long findMaxVersionNo(long termPlanId) {
         return mapper.selectMaxVersionNo(termPlanId);
+    }
+
+    /** 按商业时点选取方案下唯一适用版本。 */
+    @Override
+    public CommercialTermVersion findEffectiveAt(long termPlanId, Instant asOf) {
+        return mapper.findEffectiveAt(termPlanId, asOf);
     }
 
     /** 条件迁移，成功后同步原对象。 */
