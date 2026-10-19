@@ -47336,6 +47336,696 @@
                   "fontWeight": "normal"
                 }
               ]
+            },
+            {
+              "type": "frame",
+              "id": "a0WYd",
+              "name": "D37 经济事实唯一来源与账户消费口径（阶段 3 C1）",
+              "width": "fill_container",
+              "stroke": "#EEF1F5",
+              "strokeWidth": {
+                "bottom": 1
+              },
+              "strokeAlignment": "inner",
+              "gap": 12,
+              "padding": [
+                8,
+                0
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "XfNfL",
+                  "name": "C0",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width",
+                  "width": 46,
+                  "content": "D37",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "d1qB2",
+                  "name": "C1",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": 190,
+                  "content": "经济事实唯一来源与账户消费口径（阶段 3 C1）",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 12,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "frame",
+                  "id": "g1alcE",
+                  "name": "S",
+                  "width": 96,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "Dr8f7",
+                      "name": "Badge",
+                      "fill": "#E9F6F3",
+                      "cornerRadius": 4,
+                      "padding": [
+                        3,
+                        6
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "b7Eoi",
+                          "name": "T",
+                          "fill": "#0F766E",
+                          "content": "已定",
+                          "fontFamily": "$font",
+                          "fontSize": 10,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "T1PZ53",
+                  "name": "C3",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "计费是唯一经济事实来源；阶段 0 即引入最小计费能力（t_transaction_economics 三表更名 t_economic_fact*，人工调整与成本调整经计费登记为经济事实，发布 EconomicFactRecorded）。账户从一开始只消费经济事实维护余额桶，不消费会计过账事件；会计消费同一事实自动过账；影响 Owner 余额的人工调整不得直接在会计提交。方案见阶段 0 需求 design/04。",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "y9UXhp",
+                  "name": "C4",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width",
+                  "width": 80,
+                  "content": "用户",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "HeOVA",
+                  "name": "C5",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width",
+                  "width": 230,
+                  "content": "计费 · 账户 · 会计 · 阶段 0 第 11a/11b 步",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "DwmOM",
+              "name": "D38 结算控制归属（阶段 3 C3）",
+              "width": "fill_container",
+              "stroke": "#EEF1F5",
+              "strokeWidth": {
+                "bottom": 1
+              },
+              "strokeAlignment": "inner",
+              "gap": 12,
+              "padding": [
+                8,
+                0
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "c1ObII",
+                  "name": "C0",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width",
+                  "width": 46,
+                  "content": "D38",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "b34V6f",
+                  "name": "C1",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": 190,
+                  "content": "结算控制归属（阶段 3 C3）",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 12,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "frame",
+                  "id": "QhNUN",
+                  "name": "S",
+                  "width": 96,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "efVvT",
+                      "name": "Badge",
+                      "fill": "#E9F6F3",
+                      "cornerRadius": 4,
+                      "padding": [
+                        3,
+                        6
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "FCXsP",
+                          "name": "T",
+                          "fill": "#0F766E",
+                          "content": "已定",
+                          "fontFamily": "$font",
+                          "fontSize": 10,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "XA7MZ",
+                  "name": "C3",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "t_settlement_control 三表归合规服务（mor_compliance）。风控决策 Action Effect 产生控制时经 compliance-api 创建（幂等键 source_action_effect_id）；出款检查点评估在事务前经 compliance-api 读取 ACTIVE 控制集合并冻结 control_set_hash；合规不可用则评估失败关闭。变更经 SettlementRestrictionChanged 通知出款与账户。",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "B4VT2",
+                  "name": "C4",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width",
+                  "width": 80,
+                  "content": "用户",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "mYDfk",
+                  "name": "C5",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width",
+                  "width": 230,
+                  "content": "合规 · 风控决策 · 出款 · 第 6 步",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "TkOXB",
+              "name": "D39 消费者法律文档与卖方披露归属（阶段 3 C4）",
+              "width": "fill_container",
+              "stroke": "#EEF1F5",
+              "strokeWidth": {
+                "bottom": 1
+              },
+              "strokeAlignment": "inner",
+              "gap": 12,
+              "padding": [
+                8,
+                0
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "f2kVI",
+                  "name": "C0",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width",
+                  "width": 46,
+                  "content": "D39",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "bCizc",
+                  "name": "C1",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": 190,
+                  "content": "消费者法律文档与卖方披露归属（阶段 3 C4）",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 12,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "frame",
+                  "id": "YD8vJ",
+                  "name": "S",
+                  "width": 96,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "JkBzY",
+                      "name": "Badge",
+                      "fill": "#E9F6F3",
+                      "cornerRadius": 4,
+                      "padding": [
+                        3,
+                        6
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "CfSYS",
+                          "name": "T",
+                          "fill": "#0F766E",
+                          "content": "已定",
+                          "fontFamily": "$font",
+                          "fontSize": 10,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "P3PIcw",
+                  "name": "C3",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "t_consumer_legal_document、t_seller_disclosure 归客户主档（mor_client_master）。候选接口按消费者国家与语言随每个候选返回三份法律文档引用与卖方披露，商务两段式解析直接取候选自带值，不再读这两表。",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "PdRCr",
+                  "name": "C4",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width",
+                  "width": 80,
+                  "content": "用户",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "x4lCe8",
+                  "name": "C5",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width",
+                  "width": 230,
+                  "content": "客户主档 · 商务 · 第 4 步",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "EHWkf",
+              "name": "D40 risk-api 拆分方式（阶段 3 C6）",
+              "width": "fill_container",
+              "stroke": "#EEF1F5",
+              "strokeWidth": {
+                "bottom": 1
+              },
+              "strokeAlignment": "inner",
+              "gap": 12,
+              "padding": [
+                8,
+                0
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "d87Ro",
+                  "name": "C0",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width",
+                  "width": 46,
+                  "content": "D40",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "zLPFr",
+                  "name": "C1",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": 190,
+                  "content": "risk-api 拆分方式（阶段 3 C6）",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 12,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "frame",
+                  "id": "i6z2g",
+                  "name": "S",
+                  "width": 96,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "x6gyrv",
+                      "name": "Badge",
+                      "fill": "#E9F6F3",
+                      "cornerRadius": 4,
+                      "padding": [
+                        3,
+                        6
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "PY5K5",
+                          "name": "T",
+                          "fill": "#0F766E",
+                          "content": "已定",
+                          "fontFamily": "$font",
+                          "fontSize": 10,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "RtBfg",
+                  "name": "C3",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "risk-api 一次性拆为 risk-decision-api 与 compliance-api，不保留聚合坐标与兼容期。研发计划第 6 步在同一分支内同步修改五个消费方的坐标与 import，是阶段 0 唯一允许一步改多个系统的例外，排在收单、客户主档、支付三步之后串行执行。",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "DGzvW",
+                  "name": "C4",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width",
+                  "width": 80,
+                  "content": "用户",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "nVZnN",
+                  "name": "C5",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width",
+                  "width": 230,
+                  "content": "风控 · 五个消费方 · 第 6 步",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "wlu1c",
+              "name": "D41 全平台参考数据归属（阶段 3）",
+              "width": "fill_container",
+              "stroke": "#EEF1F5",
+              "strokeWidth": {
+                "bottom": 1
+              },
+              "strokeAlignment": "inner",
+              "gap": 12,
+              "padding": [
+                8,
+                0
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "XYWmF",
+                  "name": "C0",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width",
+                  "width": 46,
+                  "content": "D41",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "CNQmG",
+                  "name": "C1",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": 190,
+                  "content": "全平台参考数据归属（阶段 3）",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 12,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "frame",
+                  "id": "xSfMR",
+                  "name": "S",
+                  "width": 96,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "Qshqb",
+                      "name": "Badge",
+                      "fill": "#E9F6F3",
+                      "cornerRadius": 4,
+                      "padding": [
+                        3,
+                        6
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "z54c1D",
+                          "name": "T",
+                          "fill": "#0F766E",
+                          "content": "已定",
+                          "fontFamily": "$font",
+                          "fontSize": 10,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "nnSbu",
+                  "name": "C3",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "t_currency_spec 等全平台参考数据归平台支撑持有并提供查询 API（GET /platform/v1/currency-specs）；会计与计费为保证过账与舍入不依赖远程调用，各持同结构只读副本，用同一份评审 SQL 初始化；副本同步机制在后续切片定义。",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "j23Gy",
+                  "name": "C4",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width",
+                  "width": 80,
+                  "content": "用户",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "S2nERy",
+                  "name": "C5",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width",
+                  "width": 230,
+                  "content": "平台支撑 · 会计 · 计费 · 第 2a/7 步",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "t3ya6",
+              "name": "D42 阶段 3 其余表归属与服务改名口径",
+              "width": "fill_container",
+              "stroke": "#EEF1F5",
+              "strokeWidth": {
+                "bottom": 1
+              },
+              "strokeAlignment": "inner",
+              "gap": 12,
+              "padding": [
+                8,
+                0
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "H9bbG",
+                  "name": "C0",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width",
+                  "width": 46,
+                  "content": "D42",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "Xy7j3",
+                  "name": "C1",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": 190,
+                  "content": "阶段 3 其余表归属与服务改名口径",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 12,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "frame",
+                  "id": "B5pvy",
+                  "name": "S",
+                  "width": 96,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "Iv9oR",
+                      "name": "Badge",
+                      "fill": "#E9F6F3",
+                      "cornerRadius": 4,
+                      "padding": [
+                        3,
+                        6
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "RsMYG",
+                          "name": "T",
+                          "fill": "#0F766E",
+                          "content": "已定",
+                          "fontFamily": "$font",
+                          "fontSize": 10,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "Rn9d1",
+                  "name": "C3",
+                  "fill": "$ink",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "尚无代码的渠道相关表按建议归属（路由策略、渠道交互与回调归渠道连接；渠道交易引用归支付；渠道争议归争议库）；现金账户三表归对账；订单法律文档快照与退款头寸归收单；t_client_stored_card_setting 为 Client 级配置归客户主档并随候选接口返回。改名服务不在 Nacos 保留旧名别名，改名步骤同分支改完全部调用方。",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "rCyTq",
+                  "name": "C4",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width",
+                  "width": 80,
+                  "content": "用户",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "IP3VK",
+                  "name": "C5",
+                  "fill": "$muted",
+                  "textGrowth": "fixed-width",
+                  "width": 230,
+                  "content": "归属表 design/03 · 全部搬迁步",
+                  "lineHeight": 1.4,
+                  "fontFamily": "$font",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                }
+              ]
             }
           ]
         },
