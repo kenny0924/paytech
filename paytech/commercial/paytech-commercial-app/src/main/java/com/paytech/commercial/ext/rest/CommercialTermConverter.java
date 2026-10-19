@@ -39,35 +39,39 @@ final class CommercialTermConverter {
     private CommercialTermConverter() {
     }
 
-    /** 创建方案。 */
-    static CreateCommercialTermPlanRequest toRequest(CreateCommercialTermPlanRequestBody body) {
+    /** 创建方案；操作者取 X-Gateway-Actor-Subject 请求头（与合同写入同一解析）。 */
+    static CreateCommercialTermPlanRequest toRequest(String actorId, CreateCommercialTermPlanRequestBody body) {
         return new CreateCommercialTermPlanRequest(body.getPlanCode(), body.getTermType(), Long.parseLong(body.getAgreementId()),
-            id(body.getClientId()), id(body.getLocalPartnerId()), Long.parseLong(body.getOperatorAccountId()));
+            id(body.getClientId()), id(body.getLocalPartnerId()), AgreementConverter.actor(actorId));
     }
 
     /** 创建版本。 */
-    static CreateCommercialTermVersionRequest toRequest(String planId, CreateCommercialTermVersionRequestBody body) {
+    static CreateCommercialTermVersionRequest toRequest(String actorId,
+        String planId, CreateCommercialTermVersionRequestBody body) {
         return new CreateCommercialTermVersionRequest(Long.parseLong(planId), Long.parseLong(body.getExpectedChangeVersion()),
-            Long.parseLong(body.getOperatorAccountId()), id(body.getCopyFromVersionId()), id(body.getAgreementId()),
+            AgreementConverter.actor(actorId), id(body.getCopyFromVersionId()), id(body.getAgreementId()),
             code(PricingModel.class, body.getPricingModel()), code(FeeTaxTreatment.class, body.getFeeTaxTreatment()));
     }
 
     /** 整体替换价格集合。 */
-    static ReplaceCommercialTermPricesRequest toRequest(String versionId, ReplaceCommercialTermPricesRequestBody body) {
+    static ReplaceCommercialTermPricesRequest toRequest(String actorId,
+        String versionId, ReplaceCommercialTermPricesRequestBody body) {
         return new ReplaceCommercialTermPricesRequest(Long.parseLong(versionId), Long.parseLong(body.getExpectedChangeVersion()),
-            Long.parseLong(body.getOperatorAccountId()), body.getPrices().stream().map(CommercialTermConverter::price).toList());
+            AgreementConverter.actor(actorId), body.getPrices().stream().map(CommercialTermConverter::price).toList());
     }
 
     /** 提交、批准、驳回、激活。 */
-    static CommercialTermVersionCommandRequest toRequest(String versionId, CommercialTermVersionCommandRequestBody body) {
+    static CommercialTermVersionCommandRequest toRequest(String actorId,
+        String versionId, CommercialTermVersionCommandRequestBody body) {
         return CommercialTermVersionCommandRequest.operator(Long.parseLong(versionId),
-            Long.parseLong(body.getExpectedChangeVersion()), Long.parseLong(body.getOperatorAccountId()));
+            Long.parseLong(body.getExpectedChangeVersion()), AgreementConverter.actor(actorId));
     }
 
     /** 排期。 */
-    static CommercialTermVersionCommandRequest toRequest(String versionId, ScheduleCommercialTermVersionRequestBody body) {
+    static CommercialTermVersionCommandRequest toRequest(String actorId,
+        String versionId, ScheduleCommercialTermVersionRequestBody body) {
         return new CommercialTermVersionCommandRequest(Long.parseLong(versionId), Long.parseLong(body.getExpectedChangeVersion()),
-            Long.parseLong(body.getOperatorAccountId()), Instant.parse(body.getEffectiveFrom()));
+            AgreementConverter.actor(actorId), Instant.parse(body.getEffectiveFrom()));
     }
 
     /** 方案响应。 */

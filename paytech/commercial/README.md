@@ -36,7 +36,7 @@
 
 ## 商业条款、价格命中与费率卡（2026-10-19 六层定价模型 C 线）
 
-接口合同见 [technique.md §2.2–§2.8](../../requirements/20261019/commercial-六层产品定价模型/technique.md)；写入 Processor 继承 `AbstractLockProcessor`（锁 `term-plan:{planId}`，创建方案锁 `agreement:{agreementId}`，LOCK），每次写入携带方案 BCR 根修订 `expectedChangeVersion` 做 CAS（冲突 409）。BCR 与 B 线共用 `BusinessChangeHistoryWriter`：方案为 `COMMERCIAL_TERM_PLAN` Root，版本为受审计 Child `COMMERCIAL_TERM_VERSION`，Maker / Checker 记在版本快照 `data`，定时激活的快照 `triggerType=SYSTEM`。
+接口合同见 [technique.md §2.2–§2.8](../../requirements/20261019/commercial-六层产品定价模型/technique.md)；写入 Processor 继承 `AbstractLockProcessor`（锁 `term-plan:{planId}`，创建方案锁 `agreement:{agreementId}`，LOCK），每次写入携带方案 BCR 根修订 `expectedChangeVersion` 做 CAS（冲突 409）。BCR 与 B 线共用 `BusinessChangeHistoryWriter`：方案为 `COMMERCIAL_TERM_PLAN` Root，版本为受审计 Child `COMMERCIAL_TERM_VERSION`，Maker / Checker 记在版本快照 `data`，定时激活的快照 `triggerType=SYSTEM`。操作者与合同写入一致取 `X-Gateway-Actor-Subject` 请求头（缺失或非规范十进制 400），请求体不含操作人；定时激活作业以系统操作者 0 执行。
 
 | 接口 | 作用 |
 |---|---|

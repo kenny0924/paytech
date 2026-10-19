@@ -105,10 +105,9 @@ class TermVersionActivationCheckHttpTest extends AbstractCommercialTermApiTest {
 
         CreateCommercialTermVersionRequestBody icpp = new CreateCommercialTermVersionRequestBody();
         icpp.setExpectedChangeVersion(text(periodVolume, "changeVersion"));
-        icpp.setOperatorAccountId(Long.toString(MAKER));
         icpp.setPricingModel(PricingModel.INTERCHANGE_PLUS_PLUS.getCode());
         icpp.setFeeTaxTreatment("EXCLUSIVE");
-        JsonNode icppVersion = ok(201, http.post(TERMS + "/plans/" + text(plan, "planId") + "/versions", headers(), icpp));
+        JsonNode icppVersion = ok(201, http.post(TERMS + "/plans/" + text(plan, "planId") + "/versions", headers(MAKER), icpp));
         JsonNode approvedIcpp = approved(replacePrices(icppVersion, price("USD", CARD, 1, percentage("MDR", "0.025"))));
 
         assertRejected(approvedIcpp, NOW, "本期定价模型只接受 BLENDED");

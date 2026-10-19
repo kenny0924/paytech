@@ -41,60 +41,68 @@ public class CommercialTermController implements CommercialTermApi {
 
     /** 新建返回 201，同号同内容重放返回 200。 */
     @Override
-    public ResponseEntity<CommercialTermPlanResponseBody> createPlan(CreateCommercialTermPlanRequestBody body) {
-        CreateCommercialTermPlanResponse response = createPlanProcessor.process(CommercialTermConverter.toRequest(body));
+    public ResponseEntity<CommercialTermPlanResponseBody> createPlan(String actorId,
+        CreateCommercialTermPlanRequestBody body) {
+        CreateCommercialTermPlanResponse response =
+            createPlanProcessor.process(CommercialTermConverter.toRequest(actorId, body));
         return ResponseEntity.status(response.isCreated() ? HttpStatus.CREATED : HttpStatus.OK)
             .body(CommercialTermConverter.toPlanResponseBody(response.getView()));
     }
 
     /** 创建版本并返回 201。 */
     @Override
-    public ResponseEntity<CommercialTermVersionResponseBody> createVersion(String planId,
+    public ResponseEntity<CommercialTermVersionResponseBody> createVersion(String actorId, String planId,
         CreateCommercialTermVersionRequestBody body) {
         return ResponseEntity.status(HttpStatus.CREATED).body(CommercialTermConverter.toVersionResponseBody(
-            createVersionProcessor.process(CommercialTermConverter.toRequest(planId, body))));
+            createVersionProcessor.process(CommercialTermConverter.toRequest(actorId, planId, body))));
     }
 
     /** 整体替换价格集合。 */
     @Override
-    public CommercialTermVersionResponseBody replacePrices(String versionId, ReplaceCommercialTermPricesRequestBody body) {
+    public CommercialTermVersionResponseBody replacePrices(String actorId,
+        String versionId, ReplaceCommercialTermPricesRequestBody body) {
         return CommercialTermConverter.toVersionResponseBody(
-            replacePricesProcessor.process(CommercialTermConverter.toRequest(versionId, body)));
+            replacePricesProcessor.process(CommercialTermConverter.toRequest(actorId, versionId, body)));
     }
 
     /** 提交审批。 */
     @Override
-    public CommercialTermVersionResponseBody submitVersion(String versionId, CommercialTermVersionCommandRequestBody body) {
+    public CommercialTermVersionResponseBody submitVersion(String actorId,
+        String versionId, CommercialTermVersionCommandRequestBody body) {
         return CommercialTermConverter.toVersionResponseBody(
-            submitProcessor.process(CommercialTermConverter.toRequest(versionId, body)));
+            submitProcessor.process(CommercialTermConverter.toRequest(actorId, versionId, body)));
     }
 
     /** 批准。 */
     @Override
-    public CommercialTermVersionResponseBody approveVersion(String versionId, CommercialTermVersionCommandRequestBody body) {
+    public CommercialTermVersionResponseBody approveVersion(String actorId,
+        String versionId, CommercialTermVersionCommandRequestBody body) {
         return CommercialTermConverter.toVersionResponseBody(
-            approveProcessor.process(CommercialTermConverter.toRequest(versionId, body)));
+            approveProcessor.process(CommercialTermConverter.toRequest(actorId, versionId, body)));
     }
 
     /** 驳回。 */
     @Override
-    public CommercialTermVersionResponseBody rejectVersion(String versionId, CommercialTermVersionCommandRequestBody body) {
+    public CommercialTermVersionResponseBody rejectVersion(String actorId,
+        String versionId, CommercialTermVersionCommandRequestBody body) {
         return CommercialTermConverter.toVersionResponseBody(
-            rejectProcessor.process(CommercialTermConverter.toRequest(versionId, body)));
+            rejectProcessor.process(CommercialTermConverter.toRequest(actorId, versionId, body)));
     }
 
     /** 排期。 */
     @Override
-    public CommercialTermVersionResponseBody scheduleVersion(String versionId, ScheduleCommercialTermVersionRequestBody body) {
+    public CommercialTermVersionResponseBody scheduleVersion(String actorId,
+        String versionId, ScheduleCommercialTermVersionRequestBody body) {
         return CommercialTermConverter.toVersionResponseBody(
-            scheduleProcessor.process(CommercialTermConverter.toRequest(versionId, body)));
+            scheduleProcessor.process(CommercialTermConverter.toRequest(actorId, versionId, body)));
     }
 
     /** 手工激活（与定时作业同一用例）。 */
     @Override
-    public CommercialTermVersionResponseBody activateVersion(String versionId, CommercialTermVersionCommandRequestBody body) {
+    public CommercialTermVersionResponseBody activateVersion(String actorId,
+        String versionId, CommercialTermVersionCommandRequestBody body) {
         return CommercialTermConverter.toVersionResponseBody(
-            activateProcessor.process(CommercialTermConverter.toRequest(versionId, body)));
+            activateProcessor.process(CommercialTermConverter.toRequest(actorId, versionId, body)));
     }
 
     /** 版本详情。 */

@@ -268,14 +268,13 @@ class CommercialPriceResolutionHttpTest extends AbstractCommercialTermApiTest {
         planBody.setAgreementId(Long.toString(partnerAgreementId));
         planBody.setClientId(null);
         planBody.setLocalPartnerId(Long.toString(localPartnerId));
-        JsonNode plan = ok(201, http.post(TERMS + "/plans", headers(), planBody));
+        JsonNode plan = ok(201, http.post(TERMS + "/plans", headers(MAKER), planBody));
         CreateCommercialTermVersionRequestBody versionBody = new CreateCommercialTermVersionRequestBody();
         versionBody.setExpectedChangeVersion(text(plan, "changeVersion"));
-        versionBody.setOperatorAccountId(Long.toString(MAKER));
         versionBody.setAgreementId(Long.toString(partnerAgreementId));
         versionBody.setPricingModel("BLENDED");
         versionBody.setFeeTaxTreatment("EXCLUSIVE");
-        JsonNode version = ok(201, http.post(TERMS + "/plans/" + text(plan, "planId") + "/versions", headers(), versionBody));
+        JsonNode version = ok(201, http.post(TERMS + "/plans/" + text(plan, "planId") + "/versions", headers(MAKER), versionBody));
         CommercialTermPriceRequestBody share = price("USD", CARD, 1, percentage("SHARE", "0.2"));
         share.getComponents().getFirst().setCalculationBase(CalculationBase.ACTUAL_CLIENT_FEE.getCode());
         share.setSettlementBusinessDays(null);

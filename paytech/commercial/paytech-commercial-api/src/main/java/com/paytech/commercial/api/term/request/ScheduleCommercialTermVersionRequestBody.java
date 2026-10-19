@@ -14,10 +14,6 @@ public class ScheduleCommercialTermVersionRequestBody {
     @Pattern(regexp = "[1-9][0-9]{0,18}", message = "expectedChangeVersion 格式不正确")
     private String expectedChangeVersion;
 
-    /** 操作人账号 ID，记入审计快照。 */
-    @NotBlank(message = "operatorAccountId 必填")
-    @Pattern(regexp = "[1-9][0-9]{0,18}", message = "operatorAccountId 格式不正确")
-    private String operatorAccountId;
 
     /**
      * 生效起点

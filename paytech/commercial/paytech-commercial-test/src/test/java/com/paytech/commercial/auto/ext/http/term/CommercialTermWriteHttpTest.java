@@ -10,11 +10,13 @@ import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpHeaders;
 
 import com.paytech.commercial.api.constant.CommercialCodes;
 import com.paytech.commercial.api.enums.BandBasis;
 import com.paytech.commercial.api.event.CommercialTermVersionActivatedPayload;
 import com.paytech.commercial.api.term.CommercialTermApi;
+import com.paytech.commercial.api.term.request.CommercialTermVersionCommandRequestBody;
 import com.paytech.commercial.api.term.request.CreateCommercialTermPlanRequestBody;
 import com.paytech.commercial.domain.enums.BusinessChangeReason;
 import com.paytech.commercial.domain.enums.CommercialTermVersionStatus;
@@ -89,17 +91,32 @@ class CommercialTermWriteHttpTest extends AbstractCommercialTermApiTest {
     void test_planReplay() {
         JsonNode first = createPlan();
 
-        JsonNode replay = ok(200, http.post(TERMS + "/plans", headers(), planRequest()));
+        JsonNode replay = ok(200, http.post(TERMS + "/plans", headers(MAKER), planRequest()));
         CreateCommercialTermPlanRequestBody otherOwner = planRequest();
         otherOwner.setClientId("930000000000999");
         CreateCommercialTermPlanRequestBody otherCode = planRequest();
         otherCode.setPlanCode("PLAN-C-2");
 
         assertEquals(text(first, "planId"), text(replay, "planId"));
-        assertProblem(http.post(TERMS + "/plans", headers(), otherOwner), 409, CommonErrorCode.CONCURRENT_REQUEST.getCode(),
+        assertProblem(http.post(TERMS + "/plans", headers(MAKER), otherOwner), 409, CommonErrorCode.CONCURRENT_REQUEST.getCode(),
             "不同归属");
-        assertProblem(http.post(TERMS + "/plans", headers(), otherCode), 400,
+        assertProblem(http.post(TERMS + "/plans", headers(MAKER), otherCode), 400,
             CommonErrorCode.BUSINESS_CHECK_FAILED.getCode(), "已有同条款类型方案");
+    }
+
+    /** 操作者取 X-Gateway-Actor-Subject：缺失或非规范十进制 400，落库前拒绝。 */
+    @Test
+    void test_invalidActorHeader() {
+        assertProblem(http.post(TERMS + "/plans", headers(), planRequest()), 400, CommonErrorCode.INVALID_REQUEST.getCode(),
+            "");
+        JsonNode version = createVersion(createPlan());
+        HttpHeaders malformed = headers();
+        malformed.set(CommercialTermApi.ACTOR_HEADER, "01");
+        CommercialTermVersionCommandRequestBody body = new CommercialTermVersionCommandRequestBody();
+        body.setExpectedChangeVersion(text(version, "changeVersion"));
+        assertProblem(http.post(TERMS + "/versions/" + text(version, "versionId") + "/submit", malformed, body), 400,
+            CommonErrorCode.INVALID_REQUEST.getCode(), "X-Gateway-Actor-Subject");
+        assertEquals(2L, testMapper.businessChangeVersion("COMMERCIAL_TERM_PLAN", Long.parseLong(text(version, "planId"))));
     }
 
     /** 归属错误：Owner 二选一违反 400；Owner 与合同 Client 不符 400；价格 OE 不被合同覆盖 400，价格集合不变。 */
@@ -109,9 +126,9 @@ class CommercialTermWriteHttpTest extends AbstractCommercialTermApiTest {
         bothOwners.setLocalPartnerId("930000000000998");
         CreateCommercialTermPlanRequestBody wrongClient = planRequest();
         wrongClient.setClientId("930000000000999");
-        assertProblem(http.post(TERMS + "/plans", headers(), bothOwners), 400, CommonErrorCode.INVALID_REQUEST.getCode(),
+        assertProblem(http.post(TERMS + "/plans", headers(MAKER), bothOwners), 400, CommonErrorCode.INVALID_REQUEST.getCode(),
             "恰好一个");
-        assertProblem(http.post(TERMS + "/plans", headers(), wrongClient), 400,
+        assertProblem(http.post(TERMS + "/plans", headers(MAKER), wrongClient), 400,
             CommonErrorCode.BUSINESS_CHECK_FAILED.getCode(), "Owner 不符");
 
         JsonNode version = createVersion(createPlan());

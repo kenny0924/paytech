@@ -13,12 +13,4 @@ public class CommercialTermVersionCommandRequestBody {
     @NotBlank(message = "expectedChangeVersion 必填")
     @Pattern(regexp = "[1-9][0-9]{0,18}", message = "expectedChangeVersion 格式不正确")
     private String expectedChangeVersion;
-
-    /**
-     * 操作人账号 ID
-     * <li>提交时记为 Maker；批准、驳回时为 Checker，必须不同于 Maker；记入审计快照。</li>
-     */
-    @NotBlank(message = "operatorAccountId 必填")
-    @Pattern(regexp = "[1-9][0-9]{0,18}", message = "operatorAccountId 格式不正确")
-    private String operatorAccountId;
 }

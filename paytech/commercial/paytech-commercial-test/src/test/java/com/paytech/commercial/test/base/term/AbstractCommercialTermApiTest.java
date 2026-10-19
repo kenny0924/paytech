@@ -20,6 +20,7 @@ import com.paytech.commercial.api.enums.FeeTaxTreatment;
 import com.paytech.commercial.api.enums.PricingDimension;
 import com.paytech.commercial.api.enums.PricingModel;
 import com.paytech.commercial.api.enums.RefundBehavior;
+import com.paytech.commercial.api.term.CommercialTermApi;
 import com.paytech.commercial.api.term.request.CommercialTermBandRequestBody;
 import com.paytech.commercial.api.term.request.CommercialTermComponentRequestBody;
 import com.paytech.commercial.api.term.request.CommercialTermPriceRequestBody;
@@ -183,7 +184,6 @@ public abstract class AbstractCommercialTermApiTest extends CommercialMockTestBa
         body.setTermType(CommercialCodes.TermType.CLIENT_PRICING);
         body.setAgreementId(Long.toString(AgreementBuilder.AGREEMENT_ID));
         body.setClientId(Long.toString(AgreementBuilder.CLIENT_ID));
-        body.setOperatorAccountId(Long.toString(MAKER));
         return body;
     }
 
@@ -253,7 +253,7 @@ public abstract class AbstractCommercialTermApiTest extends CommercialMockTestBa
 
     /** 创建默认方案，201。 */
     protected JsonNode createPlan() {
-        return ok(201, http.post(TERMS + "/plans", headers(), planRequest()));
+        return ok(201, http.post(TERMS + "/plans", headers(MAKER), planRequest()));
     }
 
     /** 创建 BLENDED / EXCLUSIVE 的 DRAFT 版本，201。 */
@@ -265,20 +265,18 @@ public abstract class AbstractCommercialTermApiTest extends CommercialMockTestBa
     protected EntityExchangeResult<byte[]> createVersionResult(String planId, String changeVersion, String copyFrom) {
         CreateCommercialTermVersionRequestBody body = new CreateCommercialTermVersionRequestBody();
         body.setExpectedChangeVersion(changeVersion);
-        body.setOperatorAccountId(Long.toString(MAKER));
         body.setCopyFromVersionId(copyFrom);
         body.setPricingModel(PricingModel.BLENDED.getCode());
         body.setFeeTaxTreatment(FeeTaxTreatment.EXCLUSIVE.getCode());
-        return http.post(TERMS + "/plans/" + planId + "/versions", headers(), body);
+        return http.post(TERMS + "/plans/" + planId + "/versions", headers(MAKER), body);
     }
 
     /** 整体替换价格集合的原始结果。 */
     protected EntityExchangeResult<byte[]> replacePricesResult(JsonNode version, CommercialTermPriceRequestBody... prices) {
         ReplaceCommercialTermPricesRequestBody body = new ReplaceCommercialTermPricesRequestBody();
         body.setExpectedChangeVersion(text(version, "changeVersion"));
-        body.setOperatorAccountId(Long.toString(MAKER));
         body.setPrices(List.of(prices));
-        return http.exchange(HttpMethod.PUT, TERMS + "/versions/" + text(version, "versionId") + "/prices", headers(), body);
+        return http.exchange(HttpMethod.PUT, TERMS + "/versions/" + text(version, "versionId") + "/prices", headers(MAKER), body);
     }
 
     /** 整体替换价格集合，200。 */
@@ -290,8 +288,7 @@ public abstract class AbstractCommercialTermApiTest extends CommercialMockTestBa
     protected EntityExchangeResult<byte[]> commandResult(JsonNode version, String action, long operator) {
         CommercialTermVersionCommandRequestBody body = new CommercialTermVersionCommandRequestBody();
         body.setExpectedChangeVersion(text(version, "changeVersion"));
-        body.setOperatorAccountId(Long.toString(operator));
-        return http.post(TERMS + "/versions/" + text(version, "versionId") + "/" + action, headers(), body);
+        return http.post(TERMS + "/versions/" + text(version, "versionId") + "/" + action, headers(operator), body);
     }
 
     /** 版本命令，200。 */
@@ -303,9 +300,8 @@ public abstract class AbstractCommercialTermApiTest extends CommercialMockTestBa
     protected EntityExchangeResult<byte[]> scheduleResult(JsonNode version, Instant effectiveFrom) {
         ScheduleCommercialTermVersionRequestBody body = new ScheduleCommercialTermVersionRequestBody();
         body.setExpectedChangeVersion(text(version, "changeVersion"));
-        body.setOperatorAccountId(Long.toString(CHECKER));
         body.setEffectiveFrom(effectiveFrom.toString());
-        return http.post(TERMS + "/versions/" + text(version, "versionId") + "/schedule", headers(), body);
+        return http.post(TERMS + "/versions/" + text(version, "versionId") + "/schedule", headers(CHECKER), body);
     }
 
     /** 提交并批准：DRAFT → APPROVED。 */
@@ -344,5 +340,12 @@ public abstract class AbstractCommercialTermApiTest extends CommercialMockTestBa
     /** 私网 JSON 调用头。 */
     protected static HttpHeaders headers() {
         return TestRequestHeaders.internal(REQUEST_ID);
+    }
+
+    /** 写入调用头：私网 JSON 加操作者 X-Gateway-Actor-Subject。 */
+    protected static HttpHeaders headers(long actorId) {
+        HttpHeaders headers = headers();
+        headers.set(CommercialTermApi.ACTOR_HEADER, Long.toString(actorId));
+        return headers;
     }
 }

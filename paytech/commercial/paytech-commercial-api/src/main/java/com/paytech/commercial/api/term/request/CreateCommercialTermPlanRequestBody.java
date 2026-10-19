@@ -46,9 +46,4 @@ public class CreateCommercialTermPlanRequestBody {
      */
     @Pattern(regexp = "[1-9][0-9]{0,18}", message = "localPartnerId 格式不正确")
     private String localPartnerId;
-
-    /** 操作人账号 ID，记入审计快照。 */
-    @NotBlank(message = "operatorAccountId 必填")
-    @Pattern(regexp = "[1-9][0-9]{0,18}", message = "operatorAccountId 格式不正确")
-    private String operatorAccountId;
 }
