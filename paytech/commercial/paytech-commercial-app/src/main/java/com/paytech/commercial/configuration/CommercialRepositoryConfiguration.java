@@ -96,6 +96,13 @@ public class CommercialRepositoryConfiguration {
             new SqlSessionTemplate(factory).getMapper(BusinessChangeRecordMapper.class));
     }
 
+    /** 装配 t_business_change_version 仓储。 */
+    @Bean
+    public BusinessChangeVersionRepository businessChangeVersionRepository(SqlSessionFactory factory) {
+        return new BusinessChangeVersionRepositoryImpl(
+            new SqlSessionTemplate(factory).getMapper(BusinessChangeVersionMapper.class));
+    }
+
     /** 装配 t_product 仓储。 */
     @Bean
     public ProductRepository productRepository(SqlSessionFactory factory) {

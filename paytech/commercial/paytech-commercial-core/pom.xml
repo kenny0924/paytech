@@ -69,6 +69,16 @@
             <groupId>tools.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
         </dependency>
+        <!-- BCR 快照完整性哈希的 RFC 8785 规范化输入（DATABASE_DESIGN_GUIDE §9.1；B 线写入 Service）。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-json-canonicalization</artifactId>
+        </dependency>
+        <!-- 写入 Processor / Service 为新行准备 Snowflake 主键（实现由 app 装配）。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-snowflake-id</artifactId>
+        </dependency>
         <!-- CommercialEventProperties（@ConfigurationProperties / @Validated）。 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

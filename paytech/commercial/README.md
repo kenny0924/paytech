@@ -12,8 +12,8 @@
 
 | 模块 | 内容 |
 |---|---|
-| `paytech-commercial-api` | `CheckoutContextApi`（路径不变）、`CheckoutErrorCode`、`AgreementPartyQueryApi`；六层定价闭合枚举（`api/enums`）与开放目录稳定代码 `CommercialCodes`（`api/constant`） |
-| `paytech-commercial-core` | 参数化商务查询、两段式解析 `CheckoutResolutionProcessor`、client-master 出站端口、Risk 资格端口（仍为 503 占位，risk-decision 尚无对应合同）；全部 17 张商务表的完整行 DataObject 与写入映射（Mapper XML + Repository，尚无生产写入方）；`CheckoutRecords` 保留为 Checkout 只读投影 |
+| `paytech-commercial-api` | `CheckoutContextApi`（路径不变）、`CheckoutErrorCode`、`AgreementPartyQueryApi`、运营写入 `AgreementApi`（`/agreements/v1`）与 `PricingProfileApi`（`/pricing-profiles/v1`）；六层定价闭合枚举（`api/enums`）与开放目录稳定代码 `CommercialCodes`（`api/constant`） |
+| `paytech-commercial-core` | 参数化商务查询、两段式解析 `CheckoutResolutionProcessor`、client-master 出站端口、Risk 资格端口（仍为 503 占位，risk-decision 尚无对应合同）；全部 17 张商务表的完整行 DataObject 与写入映射（Mapper XML + Repository）；合同 / 签署 / 订阅 / 开通项 / 画像的写入 Processor、`AgreementService`、`PricingProfileService` 与 BCR 写入协作者 `BusinessChangeHistoryWriter`；`CheckoutRecords` 保留为 Checkout 只读投影 |
 | `paytech-commercial-app` | 启动类、Controller、DataSource / 事务 / MyBatis、client-master HTTP 客户端、`application.yml` |
 | `paytech-commercial-test` | 全部 `auto` 测试，见[测试说明](paytech-commercial-test/README.md) |
 
@@ -29,6 +29,10 @@
 6. 响应在原 CCT 结构上只做加字段：`clientTerms` 增加 `businessMode`、`fundMode`、`pricingAuthority`、`referralPartnerId`、`agreementProducts`、`capabilities[]`（含维度），顶层增加 `derived`（MOR：卖方 OE Party、税务 `OPERATING_ENTITY`；PSP：卖方 Client Party、税务 `CLIENT`；资金账簿均为 `OPERATING_ENTITY`）。client-master 或 verify 不可用一律 503 `OWNER_UNAVAILABLE`；两次调用沿用同一 Request ID 并写入解析日志。
 
 接口分层与原解析设计见 [docs/requirements/20260921-checkout-context-resolution/design.md](docs/requirements/20260921-checkout-context-resolution/design.md)。
+
+## 运营写入（六层定价 B 线）
+
+`AgreementApi` 与 `PricingProfileApi` 是 technique.md §2.2 的合同 / 订阅 / 开通项 / 画像 13 个接口，调用方 operations-console-bff，操作者经 `X-Gateway-Actor-Subject` 透传。每个写入一个 Processor（Foundation `AbstractLockProcessor`，LOCK、租约 -1，Key `agreement:{agreementNo|id}`、`pricing-profile:{code|id}`）；Service 在一个本地事务内写业务表、BCR（Root `current_version` 为 CAS 令牌，请求携带 `expectedChangeVersion`；受审计 Child 为 `AGREEMENT_PRODUCT`、`AGREEMENT_CAPABILITY`；快照为 `_meta + data` 信封与 RFC 8785 完整性哈希）与 `compensation_event`。只有激活与终止登记 `AGREEMENT_STATUS_CHANGED`，提交后发布 `AgreementStatusChanged`。
 
 ## 数据库与 PDManer
 

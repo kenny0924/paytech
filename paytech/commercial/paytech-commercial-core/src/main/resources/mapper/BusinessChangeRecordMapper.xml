@@ -12,6 +12,21 @@
             <arg column="current_version" javaType="java.lang.Long"/>
         </constructor>
     </resultMap>
+    <resultMap id="HistoryRow" type="com.paytech.commercial.core.dal.dataobject.BusinessChangeRecord">
+        <id column="history_id" property="historyId"/>
+        <result column="record_type" property="recordType"/>
+        <result column="record_id" property="recordId"/>
+        <result column="aggregate_root_type" property="aggregateRootType"/>
+        <result column="aggregate_root_id" property="aggregateRootId"/>
+        <result column="parent_history_id" property="parentHistoryId"/>
+        <result column="current_version" property="currentVersion"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+    <sql id="HistoryColumns">
+        history_id, record_type, record_id, aggregate_root_type, aggregate_root_id, parent_history_id, current_version,
+        create_time, update_time
+    </sql>
     <!-- commercial 只持有 AGREEMENT 根；CLIENT、OPERATING_ENTITY、LOCAL_PARTNER 根由 client-master 随候选返回。 -->
     <select id="findCheckoutRoots" resultMap="BusinessChangeRecord">
         SELECT history_id, record_type, record_id, aggregate_root_type, aggregate_root_id, parent_history_id, current_version
@@ -25,4 +40,32 @@
         FROM t_business_change_record
         WHERE record_type = #{rootType} AND record_id = #{rootId} AND parent_history_id IS NULL
     </select>
+    <insert id="insert">
+        INSERT INTO t_business_change_record (history_id, record_type, record_id, aggregate_root_type, aggregate_root_id,
+            parent_history_id, current_version, create_time, update_time)
+        VALUES (#{row.historyId}, #{row.recordType}, #{row.recordId}, #{row.aggregateRootType}, #{row.aggregateRootId},
+            #{row.parentHistoryId}, #{row.currentVersion}, #{row.createTime}, #{row.updateTime})
+    </insert>
+    <select id="findByRecord" resultMap="HistoryRow">
+        SELECT <include refid="HistoryColumns"/>
+        FROM t_business_change_record
+        WHERE record_type = #{recordType} AND record_id = #{recordId}
+    </select>
+    <select id="findRoots" resultMap="HistoryRow">
+        SELECT <include refid="HistoryColumns"/>
+        FROM t_business_change_record
+        WHERE record_type = #{rootType} AND parent_history_id IS NULL AND record_id IN
+        <foreach collection="rootIds" item="rootId" open="(" separator="," close=")">#{rootId}</foreach>
+        ORDER BY history_id
+    </select>
+    <!-- Root CAS：只有当前版本等于外部命令携带的 expected_change_version 时推进一次。 -->
+    <update id="advanceRoot">
+        UPDATE t_business_change_record SET current_version = #{nextVersion}, update_time = #{now}
+        WHERE history_id = #{historyId} AND parent_history_id IS NULL AND current_version = #{expectedVersion}
+    </update>
+    <!-- Child 指针不是独立 CAS；Root CAS 已串行化同聚合写入，这里只防止指针后退。 -->
+    <update id="advanceChild">
+        UPDATE t_business_change_record SET current_version = #{nextVersion}, update_time = #{now}
+        WHERE history_id = #{historyId} AND parent_history_id IS NOT NULL AND current_version &lt; #{nextVersion}
+    </update>
 </mapper>

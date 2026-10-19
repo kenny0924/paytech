@@ -9,7 +9,8 @@ import com.paytech.foundation.testsupport.api.EnableMockHttpServer;
 @TestConfiguration(proxyBeanMethods = false)
 @EnableMockHttpServer(
     basePackages = {"com.paytech.commercial.test.mock.external.clientmaster", "com.paytech.commercial.test.mocker",
-        "com.paytech.commercial.test.dal", "com.paytech.commercial.test.clear"},
+        "com.paytech.commercial.test.dal", "com.paytech.commercial.test.clear",
+        "com.paytech.commercial.test.checker.write"},
     baseUrlProperty = "commercial.test.external.base-url")
 @Import(CommercialApplication.class)
 public class CommercialTestApplication {

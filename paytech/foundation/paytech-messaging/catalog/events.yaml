@@ -63,3 +63,15 @@ events:
     consumers: [payout, account]
     strictOrder: true
     payloadSchemaRef: paytech-compliance-api/event/SettlementRestrictionChanged/v1
+  # 合同状态变更（2026-10-19 六层定价 technique.md §2.8，B 线）：commercial 在合同激活 / 终止的本地事务登记补偿任务
+  # AGREEMENT_STATUS_CHANGED，提交后由 AgreementStatusChangedHandler 回读合同行发布；aggregateId 为合同 ID，aggregateVersion 取
+  # 合同 BCR Root 的 changeVersion（同一合同的其他写入也推进该版本，事件之间会跳号，故 strictOrder=false）。acquiring 用于支付前
+  # 新鲜门禁，消费 Handler 由 acquiring 接入时登记。Payload 见 paytech-commercial-api 的 com.paytech.commercial.api.event.AgreementStatusChangedPayload。
+  - eventType: AgreementStatusChanged
+    schemaVersion: 1
+    producer: commercial
+    aggregateType: AGREEMENT
+    aggregateVersionField: changeVersion
+    consumers: [acquiring]
+    strictOrder: false
+    payloadSchemaRef: paytech-commercial-api/event/AgreementStatusChanged/v1

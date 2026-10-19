@@ -42,7 +42,7 @@ class YamlEventCatalogAutoTest {
         YamlEventCatalog catalog = YamlEventCatalog.fromClasspath();
 
         assertEquals(List.of("PaymentSucceeded", "ClientReviewDecided", "BillingFactRecorded", "AccountPosted",
-            "SettlementRestrictionChanged"), catalog.entries().stream().map(EventCatalogEntry::eventType).toList());
+            "SettlementRestrictionChanged", "AgreementStatusChanged"), catalog.entries().stream().map(EventCatalogEntry::eventType).toList());
         EventCatalogEntry payment = catalog.find("PaymentSucceeded").orElseThrow();
         assertEquals(2, payment.schemaVersion());
         assertEquals("PAYMENT_ATTEMPT", payment.aggregateType());
@@ -60,6 +60,10 @@ class YamlEventCatalogAutoTest {
         assertTrue(posted.strictOrder());
         assertTrue(catalog.find("BalanceMoved").isEmpty());
         assertEquals(List.of("client-master"), catalog.find("ClientReviewDecided").orElseThrow().consumers());
+        EventCatalogEntry agreement = catalog.find("AgreementStatusChanged").orElseThrow();
+        assertEquals("commercial", agreement.producer());
+        assertEquals(List.of("acquiring"), agreement.consumers());
+        assertFalse(agreement.strictOrder());
         assertTrue(catalog.find("Unknown").isEmpty());
     }
 

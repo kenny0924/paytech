@@ -37,7 +37,8 @@ spring:
       cache:
         enabled: false
   datasource:
-    url: "jdbc:mysql://127.0.0.1:13306/mor_commercial?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&connectionTimeZone=UTC"
+    # 并行任务可用 COMMERCIAL_TEST_DB_URL 指向独立的 mor_commercial_<任务> 库（同一 commercial_app 账号）。
+    url: "${COMMERCIAL_TEST_DB_URL:jdbc:mysql://127.0.0.1:13306/mor_commercial?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&connectionTimeZone=UTC}"
     username: commercial_app
     password: "${COMMERCIAL_TEST_DB_PASSWORD:${MOR_COMMERCIAL_DB_PASSWORD:local-commercial-change-me-2026}}"
     hikari:
@@ -65,9 +66,9 @@ spring:
     template:
       mandatory: true
 
-# paytech-redis-starter：资源锁；测试专用 Key 前缀，与本地运行实例隔离。
+# paytech-redis-starter：资源锁；测试专用 Key 前缀，与本地运行实例隔离；并行任务用 COMMERCIAL_TEST_REDIS_KEY_PREFIX 再隔离。
 redis:
-  key-prefix: commercial-mock
+  key-prefix: "${COMMERCIAL_TEST_REDIS_KEY_PREFIX:commercial-mock}"
   coordination:
     enabled: true
     threads: 4

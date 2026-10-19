@@ -1,0 +1,139 @@
+package com.paytech.commercial.service.processor;
+
+import java.time.Clock;
+import java.time.Instant;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import com.paytech.commercial.core.dal.dataobject.Agreement;
+import com.paytech.commercial.core.dal.dataobject.AgreementCapability;
+import com.paytech.commercial.core.dal.dataobject.AgreementCapabilityLimit;
+import com.paytech.commercial.core.dal.dataobject.BusinessChangeRecord;
+import com.paytech.commercial.domain.AgreementContext;
+import com.paytech.commercial.domainservice.repository.AgreementCapabilityLimitRepository;
+import com.paytech.commercial.domainservice.repository.AgreementCapabilityRepository;
+import com.paytech.commercial.domainservice.repository.AgreementRepository;
+import com.paytech.commercial.domainservice.repository.BusinessChangeRecordRepository;
+import com.paytech.commercial.domainservice.service.AgreementService;
+import com.paytech.commercial.service.processor.request.UpdateAgreementCapabilityRequest;
+import com.paytech.commercial.service.processor.response.AgreementCapabilityResponse;
+import com.paytech.foundation.common.error.BizCheckFailException;
+import com.paytech.foundation.id.IdGenerator;
+
+/**
+ * 整体改写开通项（PUT /agreements/v1/{agreementId}/capabilities/{agreementCapabilityId}），锁 {@code agreement:{id}}
+ * <li>原请求：开通项必须属于该合同；状态、区间、保证金与约束集合均与当前一致时不写入，直接返回当前版本。</li>
+ * <li>新请求：期望版本一致（合同 BCR Root CAS）、合同未结束；状态在 ENABLED / SUSPENDED / DISABLED 间自由切换。状态与条款条件更新、
+ * 约束行整体替换、Root CAS 与 AGREEMENT_CAPABILITY UPDATE 快照同一事务写入。</li>
+ */
+public class UpdateAgreementCapabilityProcessor
+    extends AbstractAgreementWriteProcessor<UpdateAgreementCapabilityRequest, AgreementCapabilityResponse> {
+    private final IdGenerator idGenerator;
+    private final AgreementService agreementService;
+    private final AgreementCapabilityRepository agreementCapabilityRepository;
+    private final AgreementCapabilityLimitRepository agreementCapabilityLimitRepository;
+
+    /**
+     * 注入依赖
+     *
+     * @param clock 业务时钟
+     * @param idGenerator 主键生成器
+     * @param agreementService 合同写入服务
+     * @param agreementRepository 合同仓储
+     * @param agreementCapabilityRepository 开通项仓储
+     * @param businessChangeRecordRepository BCR 仓储
+     * @param agreementCapabilityLimitRepository 约束仓储
+     */
+    public UpdateAgreementCapabilityProcessor(Clock clock, IdGenerator idGenerator, AgreementService agreementService,
+        AgreementRepository agreementRepository, AgreementCapabilityRepository agreementCapabilityRepository,
+        BusinessChangeRecordRepository businessChangeRecordRepository,
+        AgreementCapabilityLimitRepository agreementCapabilityLimitRepository) {
+        super(clock, agreementRepository, businessChangeRecordRepository);
+        this.idGenerator = idGenerator;
+        this.agreementService = agreementService;
+        this.agreementCapabilityRepository = agreementCapabilityRepository;
+        this.agreementCapabilityLimitRepository = agreementCapabilityLimitRepository;
+    }
+
+    /** 请求所指合同。 */
+    @Override
+    protected long agreementId(UpdateAgreementCapabilityRequest request) {
+        return request.getAgreementId();
+    }
+
+    /** 生效区间、保证金成组与约束行规范化只依赖输入。 */
+    @Override
+    protected void validate(UpdateAgreementCapabilityRequest request) {
+        AgreementCapabilityValidator.checkTerms(request);
+    }
+
+    @Override
+    protected AgreementCapabilityResponse processWithinLock(UpdateAgreementCapabilityRequest request) {
+        // 查询合同、开通项与内容是否已一致
+        Agreement agreement = getAgreement(request.getAgreementId());
+        BusinessChangeRecord root = getRoot(agreement);
+        AgreementCapability capability = getCapability(agreement, request.getAgreementCapabilityId());
+        List<AgreementCapabilityLimit> limits = agreementCapabilityLimitRepository
+            .findByAgreementCapabilityId(capability.getAgreementCapabilityId());
+        AgreementContext context = new AgreementContext(agreement, root, request.getActorId(), now(),
+            request.getExpectedChangeVersion());
+        context.setCapability(capability);
+        if (unchanged(capability, limits, request)) {
+            return AddAgreementCapabilityProcessor.capabilityResponse(context);
+        }
+
+        // 构建上下文
+        prepareChange(context, request);
+
+        // 保存上下文
+        agreementService.updateCapability(context);
+
+        // 响应处理
+        return AddAgreementCapabilityProcessor.capabilityResponse(context);
+    }
+
+    /** 开通项必须属于请求合同。 */
+    AgreementCapability getCapability(Agreement agreement, long agreementCapabilityId) {
+        AgreementCapability capability = agreementCapabilityRepository.findById(agreementCapabilityId);
+        if (capability == null || !capability.getAgreementId().equals(agreement.getAgreementId())) {
+            throw new BizCheckFailException("开通项不存在或不属于该合同: " + agreementCapabilityId + ", 合同: "
+                + agreement.getAgreementId());
+        }
+        return capability;
+    }
+
+    /** 状态、条款与约束集合是否均与当前一致。 */
+    static boolean unchanged(AgreementCapability capability, List<AgreementCapabilityLimit> limits,
+        UpdateAgreementCapabilityRequest request) {
+        Set<String> current = limits.stream().map(limit -> limit.getLimitCode().getCode() + ":" + limit.getLimitValue())
+            .collect(Collectors.toSet());
+        Set<String> requested = request.getLimits().stream()
+            .map(limit -> limit.getLimitCode().getCode() + ":" + limit.getLimitValue()).collect(Collectors.toSet());
+        boolean sameRate = capability.getRollingReserveRate() == null ? request.getRollingReserveRate() == null
+            : request.getRollingReserveRate() != null
+                && capability.getRollingReserveRate().compareTo(request.getRollingReserveRate()) == 0;
+        return capability.getStatus() == request.getStatus()
+            && Objects.equals(capability.getEffectiveFrom(), request.getEffectiveFrom())
+            && Objects.equals(capability.getEffectiveTo(), request.getEffectiveTo()) && sameRate
+            && Objects.equals(capability.getRollingReserveDays(), request.getRollingReserveDays())
+            && current.equals(requested);
+    }
+
+    /** 校验版本与合同状态，准备目标值载体与新的约束行。 */
+    void prepareChange(AgreementContext context, UpdateAgreementCapabilityRequest request) {
+        checkVersion(context.getRoot(), request.getExpectedChangeVersion());
+        checkOpen(context.getAgreement(), "修改开通项");
+        AgreementCapability change = new AgreementCapability();
+        change.setStatus(request.getStatus());
+        change.setEffectiveFrom(request.getEffectiveFrom());
+        change.setEffectiveTo(request.getEffectiveTo());
+        change.setRollingReserveRate(request.getRollingReserveRate());
+        change.setRollingReserveDays(request.getRollingReserveDays());
+        context.setCapabilityChange(change);
+        Instant now = context.getNow();
+        context.setCapabilityLimits(AddAgreementCapabilityProcessor.buildLimits(idGenerator,
+            context.getCapability().getAgreementCapabilityId(), request, now));
+    }
+}
