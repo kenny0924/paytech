@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.commercial.core.dal.mapper.ProductFeeEventMapper">
+    <resultMap id="ProductFeeEvent" type="com.paytech.commercial.core.dal.dataobject.ProductFeeEvent">
+        <id column="product_fee_event_id" property="productFeeEventId"/>
+        <result column="product_code" property="productCode"/>
+        <result column="fee_event_code" property="feeEventCode"/>
+        <result column="term_type" property="termType"/>
+        <result column="billing_fact_type" property="billingFactType"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="columns">
+        product_fee_event_id, product_code, fee_event_code, term_type, billing_fact_type, create_time,
+        update_time
+    </sql>
+
+    <insert id="insert">
+        INSERT INTO t_product_fee_event (<include refid="columns"/>)
+        VALUES (#{productFeeEventId}, #{productCode}, #{feeEventCode}, #{termType}, #{billingFactType}, #{createTime},
+            #{updateTime})
+    </insert>
+
+    <select id="selectById" resultMap="ProductFeeEvent">
+        SELECT <include refid="columns"/> FROM t_product_fee_event WHERE product_fee_event_id = #{productFeeEventId}
+    </select>
+
+    <select id="selectByFeeEventAndTermType" resultMap="ProductFeeEvent">
+        SELECT <include refid="columns"/> FROM t_product_fee_event WHERE fee_event_code = #{feeEventCode} AND term_type = #{termType}
+    </select>
+
+    <select id="selectByProductCode" resultMap="ProductFeeEvent">
+        SELECT <include refid="columns"/> FROM t_product_fee_event WHERE product_code = #{productCode}
+        ORDER BY product_fee_event_id
+    </select>
+
+    <select id="selectByTermType" resultMap="ProductFeeEvent">
+        SELECT <include refid="columns"/> FROM t_product_fee_event WHERE term_type = #{termType} ORDER BY product_fee_event_id
+    </select>
+</mapper>

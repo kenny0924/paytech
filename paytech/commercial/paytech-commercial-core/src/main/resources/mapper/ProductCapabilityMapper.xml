@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.commercial.core.dal.mapper.ProductCapabilityMapper">
+    <resultMap id="ProductCapability" type="com.paytech.commercial.core.dal.dataobject.ProductCapability">
+        <id column="product_capability_id" property="productCapabilityId"/>
+        <result column="product_code" property="productCode"/>
+        <result column="capability_code" property="capabilityCode"/>
+        <result column="capability_name" property="capabilityName"/>
+        <result column="capability_kind" property="capabilityKind"/>
+        <result column="payment_method_code" property="paymentMethodCode"/>
+        <result column="dimension_code" property="dimensionCode"/>
+        <result column="dimension_value" property="dimensionValue"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="columns">
+        product_capability_id, product_code, capability_code, capability_name, capability_kind, payment_method_code,
+        dimension_code, dimension_value, status, create_time, update_time
+    </sql>
+
+    <insert id="insert">
+        INSERT INTO t_product_capability (<include refid="columns"/>)
+        VALUES (#{productCapabilityId}, #{productCode}, #{capabilityCode}, #{capabilityName}, #{capabilityKind},
+            #{paymentMethodCode}, #{dimensionCode}, #{dimensionValue}, #{status}, #{createTime}, #{updateTime})
+    </insert>
+
+    <select id="selectById" resultMap="ProductCapability">
+        SELECT <include refid="columns"/> FROM t_product_capability WHERE product_capability_id = #{productCapabilityId}
+    </select>
+
+    <select id="selectByCode" resultMap="ProductCapability">
+        SELECT <include refid="columns"/> FROM t_product_capability WHERE capability_code = #{capabilityCode}
+    </select>
+
+    <select id="selectByCodes" resultMap="ProductCapability">
+        SELECT <include refid="columns"/> FROM t_product_capability
+        WHERE capability_code IN <foreach collection="capabilityCodes" item="code" open="(" separator="," close=")">#{code}</foreach>
+        ORDER BY product_capability_id
+    </select>
+
+    <select id="selectByProductCode" resultMap="ProductCapability">
+        SELECT <include refid="columns"/> FROM t_product_capability WHERE product_code = #{productCode}
+        ORDER BY product_capability_id
+    </select>
+
+    <update id="updateStatus">
+        UPDATE t_product_capability SET status = #{status}, update_time = #{now}
+        WHERE product_capability_id = #{capability.productCapabilityId} AND status = #{capability.status}
+    </update>
+</mapper>

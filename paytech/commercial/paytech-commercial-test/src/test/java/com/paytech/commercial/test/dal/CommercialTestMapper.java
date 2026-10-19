@@ -5,7 +5,10 @@ import javax.sql.DataSource;
 import org.springframework.boot.test.context.TestComponent;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-/** 只修改本例商务夹具的合成行，制造复核负例；只操作 mor_commercial。 */
+/**
+ * 商务测试数据的定向修改、清理与只读计数，制造负例或观察写入；只操作 mor_commercial。
+ * <li>全量清理由 CommercialDataCleaner 在每例结束后执行；这里的清理只用于用例内部重建前置数据。</li>
+ */
 @TestComponent
 public class CommercialTestMapper {
     private final JdbcTemplate jdbc;
@@ -24,5 +27,44 @@ public class CommercialTestMapper {
     /** 终止某合同。 */
     public void terminateAgreement(long agreementId) {
         jdbc.update("UPDATE t_agreement SET status='TERMINATED' WHERE agreement_id=?", agreementId);
+    }
+
+    /** 清空产品目录三表（计费事件、可开通项、产品）。 */
+    public void clearProductCatalog() {
+        jdbc.update("DELETE FROM t_product_fee_event");
+        jdbc.update("DELETE FROM t_product_capability");
+        jdbc.update("DELETE FROM t_product");
+    }
+
+    /** 删除一份合同的订阅、开通项及其约束。 */
+    public void clearAgreementSubscriptions(long agreementId) {
+        jdbc.update("DELETE FROM t_agreement_capability_limit WHERE agreement_capability_id IN "
+            + "(SELECT agreement_capability_id FROM t_agreement_capability WHERE agreement_id=?)", agreementId);
+        jdbc.update("DELETE FROM t_agreement_capability WHERE agreement_id=?", agreementId);
+        jdbc.update("DELETE FROM t_agreement_product WHERE agreement_id=?", agreementId);
+    }
+
+    /** 某合同的订阅行数。 */
+    public int countAgreementProducts(long agreementId) {
+        return jdbc.queryForObject("SELECT COUNT(*) FROM t_agreement_product WHERE agreement_id=?", Integer.class,
+            agreementId);
+    }
+
+    /** 某开通项的约束行数。 */
+    public int countCapabilityLimits(long agreementCapabilityId) {
+        return jdbc.queryForObject("SELECT COUNT(*) FROM t_agreement_capability_limit WHERE agreement_capability_id=?",
+            Integer.class, agreementCapabilityId);
+    }
+
+    /** 直接改写开通项 update_time，制造以 update_time 为条件的并发冲突。 */
+    public void touchAgreementCapability(long agreementCapabilityId, java.time.Instant updateTime) {
+        jdbc.update("UPDATE t_agreement_capability SET update_time=? WHERE agreement_capability_id=?",
+            java.sql.Timestamp.from(updateTime), agreementCapabilityId);
+    }
+
+    /** 直接写入组件计算基数原值，制造闭合枚举之外的数据库 Code。 */
+    public void overwriteComponentCalculationBase(long termComponentId, String calculationBase) {
+        jdbc.update("UPDATE t_commercial_term_component SET calculation_base=? WHERE term_component_id=?", calculationBase,
+            termComponentId);
     }
 }

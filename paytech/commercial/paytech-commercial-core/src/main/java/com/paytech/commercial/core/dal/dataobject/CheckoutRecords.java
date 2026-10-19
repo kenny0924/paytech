@@ -2,6 +2,7 @@ package com.paytech.commercial.core.dal.dataobject;
 
 import java.time.Instant;
 import java.math.BigDecimal;
+import com.paytech.commercial.api.enums.*;
 import com.paytech.commercial.domain.enums.*;
 
 /** 本库查询的最小持久化投影，不能作为 HTTP 或跨模块 DTO。 */
@@ -15,6 +16,14 @@ public final class CheckoutRecords {
             Long agreementId,
             /** 区分 Client 合同与 Local Partner 合同的类型代码。允许值：CLIENT、PARTNER。 */
             AgreementAgreementType agreementType,
+            /** agreement_type=CLIENT 时必填的合同业务模式，PARTNER 时为空；创建后不可修改。允许值：MOR、PSP。 */
+            BusinessMode businessMode,
+            /** agreement_type=CLIENT 时必填的资金模式，PARTNER 时为空；本期只接受 SETTLE_THROUGH_PLATFORM。 */
+            FundMode fundMode,
+            /** agreement_type=CLIENT 时必填的定价权归属，PARTNER 时为空；本期只接受 PLATFORM。 */
+            PricingAuthority pricingAuthority,
+            /** 推荐该合同的 Local Partner（client-master 跨库值引用）；pricing_authority=PARTNER 时必须非空。 */
+            Long referralPartnerId,
             /** agreement_type=CLIENT 时必须非空的本库 Client 标识；PARTNER 时必须为空。 */
             Long clientId,
             /** agreement_type=PARTNER 时必须非空的本库 Local Partner 标识；CLIENT 时必须为空。 */
@@ -93,8 +102,8 @@ public final class CheckoutRecords {
     public record CommercialTermPlan(
             /** Client Pricing、Partner Share 或 Platform Service Charge 方案根的内部唯一标识。 */
             Long termPlanId,
-            /** 区分客户定价、本地合作伙伴分润与平台服务费的闭合业务类型。允许值：CLIENT_PRICING、PARTNER_SHARE、PLATFORM_SERVICE_CHARGE。 */
-            CommercialTermPlanTermType termType,
+            /** 方案所属的商业条款类型；开放目录，值域为 t_product_fee_event.term_type 登记项，稳定项见 CommercialCodes.TermType。 */
+            String termType,
             /** 商业合同稳定身份的内部唯一标识。 */
             Long agreementId,
             /** CCT唯一不可变OE身份，CHAR(5)，创建时经营国家二位代码加001–999，如AE001；编号不参与路由、不复用。 */
@@ -103,8 +112,8 @@ public final class CheckoutRecords {
             Long clientId,
             /** Local Partner 角色的内部唯一标识。 */
             Long localPartnerId,
-            /** 当前业务记录在其所属聚合生命周期中的状态代码。取值来源：Commercial Term Plan 生命周期定义；非固定枚举。 */
-            String status) {
+            /** 方案状态。允许值：DRAFT、ACTIVE、RETIRED。 */
+            CommercialTermPlanStatus status) {
     }
 
     /** 商业条款版本的只读字段。 */
@@ -122,7 +131,11 @@ public final class CheckoutRecords {
             /** 业务记录生效区间的 UTC 微秒精度起点，包含该时刻。 */
             Instant effectiveFrom,
             /** 业务记录生效区间的 UTC 微秒精度终点，不包含该时刻；为空表示未预定结束。 */
-            Instant effectiveTo) {
+            Instant effectiveTo,
+            /** 该版本采用的定价模型；本期应用只接受 BLENDED。 */
+            PricingModel pricingModel,
+            /** 该版本费用金额是否已包含税额。 */
+            FeeTaxTreatment feeTaxTreatment) {
     }
 
     /** 商业条款价格的只读字段。 */
@@ -133,11 +146,13 @@ public final class CheckoutRecords {
             Long termVersionId,
             /** 该价格准确适用且必须被所属 Agreement 覆盖的 Operating Entity；不允许 NULL 或通配值。 */
             String entityNo,
+            /** 该价格适用的 ISO 4217 交易币种，即费用币种；同一画像按币种各一条 Price，不做通配。 */
+            String currency,
             /**
              * 关联 ACTIVE Payment Method Profile 的全局稳定代码；不得保存或向外传播 Profile 内部 ID。取值来源：CCT ACTIVE Payment Method Profile
              * 代码目录；非固定枚举。
              */
-            String paymentMethodProfileCode,
+            String pricingProfileCode,
             /** 同一 Commercial Term Version 与准确 OE 下、相同具体度候选的确定性顺序，数值越小越优先。 */
             Integer priorityNo,
             /** Client 合同约定的 T+N 工作日结算到期天数。 */
@@ -162,13 +177,12 @@ public final class CheckoutRecords {
             String componentCode,
             /** 区分百分比、固定金额与阶梯组件的闭合类型代码。允许值：PERCENTAGE、FIXED、TIERED。 */
             CommercialTermComponentComponentType componentType,
-            /** 决定费用或分润组件何时计算的稳定业务事件代码。取值来源：Commercial Term Trigger Catalog；非固定枚举。 */
+            /** 触发该组件计算的计费事件代码；开放目录，值域为 t_product_fee_event.fee_event_code 登记项。 */
             String triggerCode,
-            /**
-             * Client Pricing 使用受控计算基数目录；Partner Share 固定为 ACTUAL_CLIENT_FEE。取值来源：Client Pricing 计算基数目录，Partner Share 固定
-             * ACTUAL_CLIENT_FEE；非固定枚举。
-             */
-            String calculationBase,
+            /** 组件计算基数；BUY_RATE_DIFFERENCE 仅 PARTNER_SHARE 组件可用。 */
+            CalculationBase calculationBase,
+            /** 原交易退款时该组件费用的处理方式；非支付类事件的组件为 KEEP。 */
+            RefundBehavior refundBehavior,
             /** 百分比费用、分润或阶梯档位使用的小数费率，取值范围为 0 至 1。 */
             BigDecimal rate,
             /** 固定费用或阶梯档位使用的金额参数；不适用时为空。 */
@@ -179,7 +193,9 @@ public final class CheckoutRecords {
             BigDecimal minAmount,
             /** 百分比组件计算结果允许收取或分配的最高金额。 */
             BigDecimal maxAmount,
-            /** 仅 TIERED 组件非空；WHOLE_BASE 将命中档位参数用于完整基数，PROGRESSIVE 对各档位区间分别计算。允许值：WHOLE_BASE、PROGRESSIVE。 */
+            /** 仅 TIERED 组件非空的档位匹配基数；本期只接受 TRANSACTION_AMOUNT。 */
+            BandBasis bandBasis,
+            /** 仅 TIERED 组件非空；WHOLE_BASE 用于完整基数，PROGRESSIVE 分区间计算，RETROACTIVE 回溯整期且只配 PERIOD_VOLUME。 */
             CommercialTermComponentBandMode bandMode) {
     }
 
@@ -202,18 +218,20 @@ public final class CheckoutRecords {
     }
 
     /** 支付方式特征的只读字段。 */
-    public record PaymentMethodProfile(
+    public record PricingProfile(
             /** Payment Method Profile 聚合在 CCT 内部使用的唯一标识。 */
-            Long paymentMethodProfileId,
+            Long pricingProfileId,
             /** CCT 拥有的全局唯一稳定代码；创建后不可修改、不可回收复用，跨聚合和跨系统关联必须使用该代码。 */
-            String paymentMethodProfileCode,
+            String pricingProfileCode,
+            /** 定价画像描述的定价对象种类；ACTIVE 后冻结，决定 payment_method_code 是否必填。 */
+            PricingProfileKind profileKind,
             /**
              * 该 Profile 精确绑定的 Payment Method 稳定代码；由 Payment 目录拥有，CCT 不建立 Payment Method 主表。取值来源：Payment 拥有的 Payment
              * Method 稳定代码目录；非固定枚举。
              */
             String paymentMethodCode,
             /** 当前业务记录在其所属聚合生命周期中的状态代码。允许值：DRAFT、ACTIVE、RETIRED。 */
-            PaymentMethodProfileStatus status) {
+            PricingProfileStatus status) {
     }
 
     /** 业务行变更历史主档的只读字段。 */

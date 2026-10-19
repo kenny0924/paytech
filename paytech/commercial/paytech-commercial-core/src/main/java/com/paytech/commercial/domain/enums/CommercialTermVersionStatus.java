@@ -6,6 +6,9 @@ import com.paytech.foundation.common.enums.CodeEnum;
 public enum CommercialTermVersionStatus implements CodeEnum {
     DRAFT("DRAFT"),
 
+    /** 已提交等待审批；提交人不得审批。 */
+    PENDING_APPROVAL("PENDING_APPROVAL"),
+
     APPROVED("APPROVED"),
 
     SCHEDULED("SCHEDULED"),

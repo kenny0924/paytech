@@ -20,8 +20,8 @@ public class CheckoutPricingContext {
 
     static CheckoutPricingContext resolve(CheckoutResolutionContext context, Agreement agreement, String entityNo, String type) {
         boolean client = type.equals("CLIENT_PRICING");
-        CommercialTermPlan plan = unique(context.facts().termPlans(), p -> code(p.termType(), type)
-                && "ACTIVE".equals(p.status()) && (client
+        CommercialTermPlan plan = unique(context.facts().termPlans(), p -> type.equals(p.termType())
+                && code(p.status(), "ACTIVE") && (client
                         ? Objects.equals(p.agreementId(), agreement.agreementId())
                         : Objects.equals(p.localPartnerId(), agreement.localPartnerId())));
         if (plan == null) {
@@ -56,8 +56,8 @@ public class CheckoutPricingContext {
 
     private static void validatePrice(CheckoutResolutionContext context, CommercialTermPrice price, boolean client) {
         require(price.priorityNo() != null && price.priorityNo() > 0);
-        PaymentMethodProfile profile = unique(context.facts().methodProfiles(),
-                p -> p.paymentMethodProfileCode().equals(price.paymentMethodProfileCode()));
+        PricingProfile profile = unique(context.facts().methodProfiles(),
+                p -> p.pricingProfileCode().equals(price.pricingProfileCode()));
         require(profile != null && !code(profile.status(), "DRAFT"));
         List<CommercialTermComponent> components = context.facts().termComponents().stream()
                 .filter(c -> c.termPriceId().equals(price.termPriceId())).toList();
@@ -89,7 +89,7 @@ public class CheckoutPricingContext {
 
     private static void validateComponent(CheckoutResolutionContext context, CommercialTermComponent c) {
         require(c.triggerCode() != null && !c.triggerCode().isBlank() && c.calculationBase() != null
-                && !c.calculationBase().isBlank() && nonnegative(c.fixedAmount()) && nonnegative(c.minAmount())
+                && nonnegative(c.fixedAmount()) && nonnegative(c.minAmount())
                 && nonnegative(c.maxAmount()) && rate(c.rate()));
         require(c.minAmount() == null || c.maxAmount() == null || c.minAmount().compareTo(c.maxAmount()) <= 0);
         if (!code(c.componentType(), "TIERED")) {

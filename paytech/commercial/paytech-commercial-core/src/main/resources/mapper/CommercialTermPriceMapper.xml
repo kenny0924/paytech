@@ -6,7 +6,8 @@
             <arg column="term_price_id" javaType="java.lang.Long"/>
             <arg column="term_version_id" javaType="java.lang.Long"/>
             <arg column="entity_no" javaType="java.lang.String"/>
-            <arg column="payment_method_profile_code" javaType="java.lang.String"/>
+            <arg column="currency" javaType="java.lang.String"/>
+            <arg column="pricing_profile_code" javaType="java.lang.String"/>
             <arg column="priority_no" javaType="java.lang.Integer"/>
             <arg column="settlement_business_days" javaType="java.lang.Integer"/>
             <arg column="business_calendar_code" javaType="java.lang.String"/>
@@ -15,9 +16,54 @@
         </constructor>
     </resultMap>
     <select id="findForCheckout" resultMap="CommercialTermPrice">
-        SELECT term_price_id, term_version_id, entity_no, payment_method_profile_code, priority_no, settlement_business_days, business_calendar_code, settlement_timezone, cutoff_second_of_day
+        SELECT term_price_id, term_version_id, entity_no, currency, pricing_profile_code, priority_no, settlement_business_days, business_calendar_code, settlement_timezone, cutoff_second_of_day
         FROM t_commercial_term_price
         WHERE term_version_id IN (SELECT term_version_id FROM t_commercial_term_version WHERE term_plan_id IN (SELECT term_plan_id FROM t_commercial_term_plan WHERE client_id = #{clientId}<if test="!localPartnerIds.isEmpty()"> OR local_partner_id IN <foreach collection="localPartnerIds" item="partnerId" open="(" separator="," close=")">#{partnerId}</foreach></if>)) AND <choose><when test="entityNos.isEmpty()">1 = 0</when><otherwise>entity_no IN <foreach collection="entityNos" item="entityNo" open="(" separator="," close=")">#{entityNo}</foreach></otherwise></choose>
         ORDER BY term_price_id
     </select>
+
+    <!-- 完整行映射：写入与按主键 / 唯一键 / 父读取；CheckoutRecords 只读投影另见 findForCheckout。 -->
+    <resultMap id="CommercialTermPriceRow" type="com.paytech.commercial.core.dal.dataobject.CommercialTermPrice">
+        <id column="term_price_id" property="termPriceId"/>
+        <result column="term_version_id" property="termVersionId"/>
+        <result column="entity_no" property="entityNo"/>
+        <result column="currency" property="currency"/>
+        <result column="pricing_profile_code" property="pricingProfileCode"/>
+        <result column="priority_no" property="priorityNo"/>
+        <result column="settlement_business_days" property="settlementBusinessDays"/>
+        <result column="business_calendar_code" property="businessCalendarCode"/>
+        <result column="settlement_timezone" property="settlementTimezone"/>
+        <result column="cutoff_second_of_day" property="cutoffSecondOfDay"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="commercialTermPriceColumns">
+        term_price_id, term_version_id, entity_no, currency, pricing_profile_code, priority_no,
+        settlement_business_days, business_calendar_code, settlement_timezone, cutoff_second_of_day,
+        create_time, update_time
+    </sql>
+
+    <insert id="insertAll">
+        INSERT INTO t_commercial_term_price (<include refid="commercialTermPriceColumns"/>) VALUES
+        <foreach collection="rows" item="row" separator=",">
+            (#{row.termPriceId}, #{row.termVersionId}, #{row.entityNo}, #{row.currency}, #{row.pricingProfileCode}, #{row.priorityNo}, #{row.settlementBusinessDays}, #{row.businessCalendarCode}, #{row.settlementTimezone}, #{row.cutoffSecondOfDay}, #{row.createTime}, #{row.updateTime})
+        </foreach>
+    </insert>
+
+    <select id="selectById" resultMap="CommercialTermPriceRow">
+        SELECT <include refid="commercialTermPriceColumns"/> FROM t_commercial_term_price WHERE term_price_id = #{termPriceId}
+    </select>
+
+    <select id="selectByUniqueKey" resultMap="CommercialTermPriceRow">
+        SELECT <include refid="commercialTermPriceColumns"/> FROM t_commercial_term_price WHERE term_version_id = #{termVersionId} AND entity_no = #{entityNo} AND currency = #{currency} AND pricing_profile_code = #{pricingProfileCode}
+    </select>
+
+    <select id="selectByVersionId" resultMap="CommercialTermPriceRow">
+        SELECT <include refid="commercialTermPriceColumns"/> FROM t_commercial_term_price WHERE term_version_id = #{termVersionId} ORDER BY term_price_id
+    </select>
+
+    <delete id="deleteByVersionId">
+        DELETE FROM t_commercial_term_price WHERE term_version_id = #{termVersionId}
+    </delete>
 </mapper>

@@ -18,4 +18,43 @@
         WHERE term_component_id IN (SELECT term_component_id FROM t_commercial_term_component WHERE term_price_id IN (SELECT term_price_id FROM t_commercial_term_price WHERE term_version_id IN (SELECT term_version_id FROM t_commercial_term_version WHERE term_plan_id IN (SELECT term_plan_id FROM t_commercial_term_plan WHERE client_id = #{clientId}<if test="!localPartnerIds.isEmpty()"> OR local_partner_id IN <foreach collection="localPartnerIds" item="partnerId" open="(" separator="," close=")">#{partnerId}</foreach></if>)) AND <choose><when test="entityNos.isEmpty()">1 = 0</when><otherwise>entity_no IN <foreach collection="entityNos" item="entityNo" open="(" separator="," close=")">#{entityNo}</foreach></otherwise></choose>))
         ORDER BY term_band_id
     </select>
+
+    <!-- 完整行映射：写入与按主键 / 唯一键 / 父读取；CheckoutRecords 只读投影另见 findForCheckout。 -->
+    <resultMap id="CommercialTermComponentBandRow" type="com.paytech.commercial.core.dal.dataobject.CommercialTermComponentBand">
+        <id column="term_band_id" property="termBandId"/>
+        <result column="term_component_id" property="termComponentId"/>
+        <result column="band_no" property="bandNo"/>
+        <result column="lower_bound" property="lowerBound"/>
+        <result column="upper_bound" property="upperBound"/>
+        <result column="rate" property="rate"/>
+        <result column="fixed_amount" property="fixedAmount"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="commercialTermComponentBandColumns">
+        term_band_id, term_component_id, band_no, lower_bound, upper_bound, rate, fixed_amount, create_time,
+        update_time
+    </sql>
+
+    <insert id="insertAll">
+        INSERT INTO t_commercial_term_component_band (<include refid="commercialTermComponentBandColumns"/>) VALUES
+        <foreach collection="rows" item="row" separator=",">
+            (#{row.termBandId}, #{row.termComponentId}, #{row.bandNo}, #{row.lowerBound}, #{row.upperBound}, #{row.rate}, #{row.fixedAmount}, #{row.createTime}, #{row.updateTime})
+        </foreach>
+    </insert>
+
+    <select id="selectById" resultMap="CommercialTermComponentBandRow">
+        SELECT <include refid="commercialTermComponentBandColumns"/> FROM t_commercial_term_component_band WHERE term_band_id = #{termBandId}
+    </select>
+
+    <select id="selectByComponentIds" resultMap="CommercialTermComponentBandRow">
+        SELECT <include refid="commercialTermComponentBandColumns"/> FROM t_commercial_term_component_band
+        WHERE term_component_id IN <foreach collection="termComponentIds" item="value" open="(" separator="," close=")">#{value}</foreach>
+        ORDER BY term_band_id
+    </select>
+
+    <delete id="deleteByComponentIds">
+        DELETE FROM t_commercial_term_component_band WHERE term_component_id IN <foreach collection="termComponentIds" item="value" open="(" separator="," close=")">#{value}</foreach>
+    </delete>
 </mapper>

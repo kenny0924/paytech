@@ -75,11 +75,18 @@ public class CommercialRepositoryConfiguration {
             new SqlSessionTemplate(factory).getMapper(CommercialTermComponentBandMapper.class));
     }
 
-    /** 装配 t_payment_method_profile 仓储。 */
+    /** 装配 t_pricing_profile 仓储。 */
     @Bean
-    public PaymentMethodProfileRepository paymentMethodProfileRepository(SqlSessionFactory factory) {
-        return new PaymentMethodProfileRepositoryImpl(
-            new SqlSessionTemplate(factory).getMapper(PaymentMethodProfileMapper.class));
+    public PricingProfileRepository pricingProfileRepository(SqlSessionFactory factory) {
+        return new PricingProfileRepositoryImpl(
+            new SqlSessionTemplate(factory).getMapper(PricingProfileMapper.class));
+    }
+
+    /** 装配 t_pricing_profile_cond 仓储。 */
+    @Bean
+    public PricingProfileCondRepository pricingProfileCondRepository(SqlSessionFactory factory) {
+        return new PricingProfileCondRepositoryImpl(
+            new SqlSessionTemplate(factory).getMapper(PricingProfileCondMapper.class));
     }
 
     /** 装配 t_business_change_record 仓储。 */
@@ -87,5 +94,46 @@ public class CommercialRepositoryConfiguration {
     public BusinessChangeRecordRepository businessChangeRecordRepository(SqlSessionFactory factory) {
         return new BusinessChangeRecordRepositoryImpl(
             new SqlSessionTemplate(factory).getMapper(BusinessChangeRecordMapper.class));
+    }
+
+    /** 装配 t_product 仓储。 */
+    @Bean
+    public ProductRepository productRepository(SqlSessionFactory factory) {
+        return new ProductRepositoryImpl(new SqlSessionTemplate(factory).getMapper(ProductMapper.class));
+    }
+
+    /** 装配 t_product_capability 仓储。 */
+    @Bean
+    public ProductCapabilityRepository productCapabilityRepository(SqlSessionFactory factory) {
+        return new ProductCapabilityRepositoryImpl(
+            new SqlSessionTemplate(factory).getMapper(ProductCapabilityMapper.class));
+    }
+
+    /** 装配 t_product_fee_event 仓储。 */
+    @Bean
+    public ProductFeeEventRepository productFeeEventRepository(SqlSessionFactory factory) {
+        return new ProductFeeEventRepositoryImpl(
+            new SqlSessionTemplate(factory).getMapper(ProductFeeEventMapper.class));
+    }
+
+    /** 装配 t_agreement_product 仓储。 */
+    @Bean
+    public AgreementProductRepository agreementProductRepository(SqlSessionFactory factory) {
+        return new AgreementProductRepositoryImpl(
+            new SqlSessionTemplate(factory).getMapper(AgreementProductMapper.class));
+    }
+
+    /** 装配 t_agreement_capability 仓储。 */
+    @Bean
+    public AgreementCapabilityRepository agreementCapabilityRepository(SqlSessionFactory factory) {
+        return new AgreementCapabilityRepositoryImpl(
+            new SqlSessionTemplate(factory).getMapper(AgreementCapabilityMapper.class));
+    }
+
+    /** 装配 t_agreement_capability_limit 仓储。 */
+    @Bean
+    public AgreementCapabilityLimitRepository agreementCapabilityLimitRepository(SqlSessionFactory factory) {
+        return new AgreementCapabilityLimitRepositoryImpl(
+            new SqlSessionTemplate(factory).getMapper(AgreementCapabilityLimitMapper.class));
     }
 }

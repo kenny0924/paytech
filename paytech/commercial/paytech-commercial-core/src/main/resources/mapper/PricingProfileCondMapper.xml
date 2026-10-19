@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.commercial.core.dal.mapper.PricingProfileCondMapper">
+
+    <!-- 完整行映射：写入与按主键 / 唯一键 / 父读取；CheckoutRecords 只读投影另见 findForCheckout。 -->
+    <resultMap id="PricingProfileCondRow" type="com.paytech.commercial.core.dal.dataobject.PricingProfileCond">
+        <id column="profile_condition_id" property="profileConditionId"/>
+        <result column="pricing_profile_id" property="pricingProfileId"/>
+        <result column="dimension_code" property="dimensionCode"/>
+        <result column="condition_value" property="conditionValue"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="pricingProfileCondColumns">
+        profile_condition_id, pricing_profile_id, dimension_code, condition_value, create_time, update_time
+    </sql>
+
+    <insert id="insertAll">
+        INSERT INTO t_pricing_profile_cond (<include refid="pricingProfileCondColumns"/>) VALUES
+        <foreach collection="rows" item="row" separator=",">
+            (#{row.profileConditionId}, #{row.pricingProfileId}, #{row.dimensionCode}, #{row.conditionValue}, #{row.createTime}, #{row.updateTime})
+        </foreach>
+    </insert>
+
+    <select id="selectById" resultMap="PricingProfileCondRow">
+        SELECT <include refid="pricingProfileCondColumns"/> FROM t_pricing_profile_cond WHERE profile_condition_id = #{profileConditionId}
+    </select>
+
+    <select id="selectByProfileId" resultMap="PricingProfileCondRow">
+        SELECT <include refid="pricingProfileCondColumns"/> FROM t_pricing_profile_cond WHERE pricing_profile_id = #{pricingProfileId} ORDER BY profile_condition_id
+    </select>
+
+    <select id="selectByProfileIds" resultMap="PricingProfileCondRow">
+        SELECT <include refid="pricingProfileCondColumns"/> FROM t_pricing_profile_cond
+        WHERE pricing_profile_id IN <foreach collection="pricingProfileIds" item="value" open="(" separator="," close=")">#{value}</foreach>
+        ORDER BY profile_condition_id
+    </select>
+
+    <delete id="deleteByProfileId">
+        DELETE FROM t_pricing_profile_cond WHERE pricing_profile_id = #{pricingProfileId}
+    </delete>
+</mapper>

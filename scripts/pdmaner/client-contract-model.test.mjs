@@ -76,7 +76,7 @@ const pendingStructuralProjectionDigest = "PENDING_APPROVED_40_DIGEST";
 // Approved per-database Structural Projection digests after the CCT split.
 const expectedStructuralProjectionDigests = Object.freeze({
   "client-master": "80dba108a6322e957ca7c652a1911979705388b47b71caa24ee51bb14f989802",
-  commercial: "682fd345ad1402ef979289af45de0286ccefaf5c95de563245af8988f221552c",
+  commercial: "34c577620f6290641323d9a7b1996032e0ccda5af6cf6911ff8a1591a1cff72e",
 });
 
 const leanAssignmentTables = Object.freeze(["entity_source_relation","client_entity_affiliation","operating_entity_scope"]);
@@ -92,19 +92,19 @@ const leanAssignmentFields = Object.freeze({
 const idPattern =
   /^[A-F0-9]{8}-[A-F0-9]{4}-[45][A-F0-9]{3}-[89AB][A-F0-9]{3}-[A-F0-9]{12}$/;
 
-const expectedTables = Object.freeze(["agreement","agreement_document_ref","agreement_operating_entity","agreement_party","application_document","business_change_record","business_change_version","client","client_application","client_business_classification","client_business_profile","client_entity_affiliation","commercial_term_component","commercial_term_component_band","commercial_term_plan","commercial_term_price","commercial_term_version","compensation_event","consumer_legal_document","entity_source_relation","individual_profile","local_partner","operating_entity","operating_entity_application","operating_entity_scope","organization_profile","partner_application","party","party_address","party_contact","party_identity_key","party_profile","party_profile_identifier","party_relation","payment_method_profile","payment_method_profile_cond","seller_disclosure"]);
-// Combined catalog view: 38 catalog tables minus the dropped command_idempotency.
-const expectedFinalTableManifestCount = 37;
-const expectedFinalFieldManifestCount = 398;
-// All catalog references (each keeps a left-prefix access index); 10 of them
+const expectedTables = Object.freeze(["agreement","agreement_capability","agreement_capability_limit","agreement_document_ref","agreement_operating_entity","agreement_party","agreement_product","application_document","business_change_record","business_change_version","client","client_application","client_business_classification","client_business_profile","client_entity_affiliation","commercial_term_component","commercial_term_component_band","commercial_term_plan","commercial_term_price","commercial_term_version","compensation_event","consumer_legal_document","entity_source_relation","individual_profile","local_partner","operating_entity","operating_entity_application","operating_entity_scope","organization_profile","partner_application","party","party_address","party_contact","party_identity_key","party_profile","party_profile_identifier","party_relation","pricing_profile","pricing_profile_cond","product","product_capability","product_fee_event","seller_disclosure"]);
+// Combined catalog view: 44 catalog tables minus the dropped command_idempotency.
+const expectedFinalTableManifestCount = 43;
+const expectedFinalFieldManifestCount = 456;
+// All catalog references (each keeps a left-prefix access index); 12 of them
 // cross the client-master/commercial database boundary and are not correlations.
-const expectedRelationSignatureCount = 62;
-const expectedCrossDatabaseRelationSignatureCount = 10;
-const expectedLocalRelationSignatureCount = 52;
+const expectedRelationSignatureCount = 71;
+const expectedCrossDatabaseRelationSignatureCount = 12;
+const expectedLocalRelationSignatureCount = 59;
 const expectedServiceTotals = Object.freeze({
   // Step 08 adds t_consumed_event (6 fields, 1 IDX) and t_consumed_aggregate_version (4 fields).
   "client-master": { tables: 29, fields: 300, uniqueIndexes: 39, accessIndexes: 25, relations: 40, diagramGroups: 6 },
-  commercial: { tables: 14, fields: 145, uniqueIndexes: 22, accessIndexes: 19, relations: 14, diagramGroups: 3 },
+  commercial: { tables: 20, fields: 203, uniqueIndexes: 28, accessIndexes: 25, relations: 21, diagramGroups: 4 },
 });
 
 const expectedTableDisplayNames = Object.freeze({
@@ -133,10 +133,16 @@ const expectedTableDisplayNames = Object.freeze({
   "agreement_party": "合同参与方与签署",
   "agreement_document_ref": "合同文件引用",
   "agreement_operating_entity": "合同覆盖经营主体",
+  "agreement_product": "合同订阅产品",
+  "agreement_capability": "合同开通项",
+  "agreement_capability_limit": "开通项约束",
+  "product": "产品",
+  "product_capability": "可开通项目录",
+  "product_fee_event": "计费事件目录",
   "consumer_legal_document": "消费者法律文档",
   "seller_disclosure": "法律卖方披露",
-  "payment_method_profile": "支付方式特征",
-  "payment_method_profile_cond": "支付方式特征条件",
+  "pricing_profile": "定价画像",
+  "pricing_profile_cond": "定价画像条件",
   "commercial_term_plan": "商业条款方案",
   "commercial_term_version": "商业条款版本",
   "commercial_term_price": "商业条款价格",
@@ -183,13 +189,18 @@ const expectedServiceDiagramGroups = Object.freeze({
   commercial: Object.freeze({
     "agreement": {
       "defName": "Agreement",
-      "primaryTables": ["agreement","agreement_party","agreement_document_ref","agreement_operating_entity"],
-      "tables": ["agreement","agreement_party","agreement_document_ref","agreement_operating_entity"]
+      "primaryTables": ["agreement","agreement_party","agreement_document_ref","agreement_operating_entity","agreement_product","agreement_capability","agreement_capability_limit"],
+      "tables": ["agreement","agreement_party","agreement_document_ref","agreement_operating_entity","agreement_product","agreement_capability","agreement_capability_limit","product","product_capability"]
+    },
+    "product_catalog": {
+      "defName": "Product Catalog",
+      "primaryTables": ["product","product_capability","product_fee_event"],
+      "tables": ["product","product_capability","product_fee_event"]
     },
     "pricing_share": {
       "defName": "Client Pricing and Partner Share",
-      "primaryTables": ["payment_method_profile","payment_method_profile_cond","commercial_term_plan","commercial_term_version","commercial_term_price","commercial_term_component","commercial_term_component_band"],
-      "tables": ["payment_method_profile","payment_method_profile_cond","commercial_term_plan","commercial_term_version","commercial_term_price","commercial_term_component","commercial_term_component_band","agreement"]
+      "primaryTables": ["pricing_profile","pricing_profile_cond","commercial_term_plan","commercial_term_version","commercial_term_price","commercial_term_component","commercial_term_component_band"],
+      "tables": ["pricing_profile","pricing_profile_cond","commercial_term_plan","commercial_term_version","commercial_term_price","commercial_term_component","commercial_term_component_band","agreement"]
     },
     "history_reliability": {
       "defName": "Local History and Reliability",
@@ -225,10 +236,16 @@ const expectedPrimaryKeys = Object.freeze({
   "agreement_party": "agreement_party_id",
   "agreement_document_ref": "agreement_document_id",
   "agreement_operating_entity": "agreement_operating_entity_id",
+  "agreement_product": "agreement_product_id",
+  "agreement_capability": "agreement_capability_id",
+  "agreement_capability_limit": "agreement_capability_limit_id",
+  "product": "product_id",
+  "product_capability": "product_capability_id",
+  "product_fee_event": "product_fee_event_id",
   "consumer_legal_document": "legal_document_id",
   "seller_disclosure": "disclosure_id",
-  "payment_method_profile": "payment_method_profile_id",
-  "payment_method_profile_cond": "profile_condition_id",
+  "pricing_profile": "pricing_profile_id",
+  "pricing_profile_cond": "profile_condition_id",
   "commercial_term_plan": "term_plan_id",
   "commercial_term_version": "term_version_id",
   "commercial_term_price": "term_price_id",
@@ -265,13 +282,19 @@ const changedTableUniqueKeys = Object.freeze({
   "agreement_party": ["agreement_id,party_id,party_role","agreement_id,party_id,acceptance_ref_slot","acceptance_reference,acceptance_ref_slot"],
   "agreement_document_ref": ["agreement_id,document_type,file_id"],
   "agreement_operating_entity": ["agreement_id,entity_no"],
+  "agreement_product": ["agreement_id,product_code"],
+  "agreement_capability": ["agreement_id,entity_no,capability_code"],
+  "agreement_capability_limit": ["agreement_capability_id,limit_code,limit_value"],
+  "product": ["product_code"],
+  "product_capability": ["capability_code"],
+  "product_fee_event": ["fee_event_code,term_type"],
   "consumer_legal_document": ["document_code","document_type,entity_no,country_code,locale,effective_from"],
   "seller_disclosure": ["entity_no,country_code,locale,effective_from"],
-  "payment_method_profile": ["payment_method_profile_code"],
-  "payment_method_profile_cond": ["payment_method_profile_id,dimension_code,condition_value"],
+  "pricing_profile": ["pricing_profile_code"],
+  "pricing_profile_cond": ["pricing_profile_id,dimension_code,condition_value"],
   "commercial_term_plan": ["term_type,plan_code","agreement_id,term_type","local_partner_id,term_type"],
   "commercial_term_version": ["term_plan_id,version_no","term_plan_id,active_slot"],
-  "commercial_term_price": ["term_version_id,entity_no,payment_method_profile_code","term_version_id,entity_no,priority_no"],
+  "commercial_term_price": ["term_version_id,entity_no,currency,pricing_profile_code","term_version_id,entity_no,currency,priority_no"],
   "commercial_term_component": ["term_price_id,component_code","term_price_id,component_no"],
   "commercial_term_component_band": ["term_component_id,band_no","term_component_id,lower_bound"],
   "business_change_record": ["record_type,record_id"],
@@ -305,13 +328,19 @@ const expectedUniqueKeys = Object.freeze({
   "agreement_party": ["agreement_id,party_id,party_role","agreement_id,party_id,acceptance_ref_slot","acceptance_reference,acceptance_ref_slot"],
   "agreement_document_ref": ["agreement_id,document_type,file_id"],
   "agreement_operating_entity": ["agreement_id,entity_no"],
+  "agreement_product": ["agreement_id,product_code"],
+  "agreement_capability": ["agreement_id,entity_no,capability_code"],
+  "agreement_capability_limit": ["agreement_capability_id,limit_code,limit_value"],
+  "product": ["product_code"],
+  "product_capability": ["capability_code"],
+  "product_fee_event": ["fee_event_code,term_type"],
   "consumer_legal_document": ["document_code","document_type,entity_no,country_code,locale,effective_from"],
   "seller_disclosure": ["entity_no,country_code,locale,effective_from"],
-  "payment_method_profile": ["payment_method_profile_code"],
-  "payment_method_profile_cond": ["payment_method_profile_id,dimension_code,condition_value"],
+  "pricing_profile": ["pricing_profile_code"],
+  "pricing_profile_cond": ["pricing_profile_id,dimension_code,condition_value"],
   "commercial_term_plan": ["term_type,plan_code","agreement_id,term_type","local_partner_id,term_type"],
   "commercial_term_version": ["term_plan_id,version_no","term_plan_id,active_slot"],
-  "commercial_term_price": ["term_version_id,entity_no,payment_method_profile_code","term_version_id,entity_no,priority_no"],
+  "commercial_term_price": ["term_version_id,entity_no,currency,pricing_profile_code","term_version_id,entity_no,currency,priority_no"],
   "commercial_term_component": ["term_price_id,component_code","term_price_id,component_no"],
   "commercial_term_component_band": ["term_component_id,band_no","term_component_id,lower_bound"],
   "business_change_record": ["record_type,record_id"],
@@ -320,7 +349,7 @@ const expectedUniqueKeys = Object.freeze({
 });
 
 const expectedAgreementLegalAccessIndexes = Object.freeze({
-  "agreement": [["client_id","effective_from","effective_to"],["local_partner_id","effective_from","effective_to"],["entity_no"]],
+  "agreement": [["client_id","effective_from","effective_to"],["local_partner_id","effective_from","effective_to"],["referral_partner_id"],["entity_no"]],
   "agreement_party": [["party_id"],["party_profile_id"],["evidence_document_id"]],
   "agreement_document_ref": [],
   "agreement_operating_entity": [["entity_no"]],
@@ -328,10 +357,10 @@ const expectedAgreementLegalAccessIndexes = Object.freeze({
   "seller_disclosure": [["entity_no","country_code","locale","effective_from","effective_to"]]
 });
 
-const expectedRelationSignatures = Object.freeze(["agreement.client_id->client.client_id|n:1","agreement.entity_no->operating_entity.entity_no|n:1","agreement.local_partner_id->local_partner.local_partner_id|n:1","agreement_document_ref.agreement_id->agreement.agreement_id|n:1","agreement_operating_entity.agreement_id->agreement.agreement_id|n:1","agreement_operating_entity.entity_no->operating_entity.entity_no|n:1","agreement_party.agreement_id->agreement.agreement_id|n:1","agreement_party.evidence_document_id->agreement_document_ref.agreement_document_id|n:1","agreement_party.party_id->party.party_id|n:1","agreement_party.party_profile_id->party_profile.profile_id|n:1","application_document.client_application_id->client_application.application_id|n:1","application_document.operating_entity_application_id->operating_entity_application.application_id|n:1","application_document.partner_application_id->partner_application.application_id|n:1","application_document.subject_party_id->party.party_id|n:1","business_change_record.parent_history_id->business_change_record.history_id|n:1","business_change_version.history_id->business_change_record.history_id|n:1","client.party_id->party.party_id|1:1","client_application.client_id->client.client_id|n:1","client_business_classification.business_profile_id->client_business_profile.business_profile_id|n:1","client_business_profile.client_id->client.client_id|n:1","client_entity_affiliation.client_id->client.client_id|n:1","client_entity_affiliation.entity_no->operating_entity.entity_no|n:1","commercial_term_component.term_price_id->commercial_term_price.term_price_id|n:1","commercial_term_component_band.term_component_id->commercial_term_component.term_component_id|n:1","commercial_term_plan.agreement_id->agreement.agreement_id|1:1","commercial_term_plan.client_id->client.client_id|n:1","commercial_term_plan.entity_no->operating_entity.entity_no|n:1","commercial_term_plan.local_partner_id->local_partner.local_partner_id|n:1","commercial_term_price.entity_no->operating_entity.entity_no|n:1","commercial_term_price.payment_method_profile_code->payment_method_profile.payment_method_profile_code|n:1","commercial_term_price.term_version_id->commercial_term_version.term_version_id|n:1","commercial_term_version.agreement_id->agreement.agreement_id|n:1","commercial_term_version.term_plan_id->commercial_term_plan.term_plan_id|n:1","consumer_legal_document.entity_no->operating_entity.entity_no|n:1","entity_source_relation.entity_no->operating_entity.entity_no|n:1","entity_source_relation.source_client_id->client.client_id|n:1","entity_source_relation.source_partner_id->local_partner.local_partner_id|n:1","individual_profile.profile_id->party_profile.profile_id|1:1","local_partner.party_id->party.party_id|1:1","operating_entity.party_id->party.party_id|1:1","operating_entity_application.approved_source_relation_id->entity_source_relation.source_relation_id|n:1","operating_entity_application.entity_no->operating_entity.entity_no|n:1","operating_entity_application.party_profile_id->party_profile.profile_id|n:1","operating_entity_application.source_client_id->client.client_id|n:1","operating_entity_application.source_partner_id->local_partner.local_partner_id|n:1","operating_entity_scope.application_id->operating_entity_application.application_id|n:1","operating_entity_scope.entity_no->operating_entity.entity_no|n:1","organization_profile.profile_id->party_profile.profile_id|1:1","partner_application.local_partner_id->local_partner.local_partner_id|n:1","partner_application.target_party_profile_id->party_profile.profile_id|n:1","party_address.profile_id->party_profile.profile_id|n:1","party_contact.profile_id->party_profile.profile_id|n:1","party_identity_key.party_id->party.party_id|n:1","party_profile.draft_application_id->client_application.application_id|n:1","party_profile.party_id->party.party_id|n:1","party_profile_identifier.identity_key_id->party_identity_key.identity_key_id|n:1","party_profile_identifier.profile_id->party_profile.profile_id|n:1","party_relation.client_application_id->client_application.application_id|n:1","party_relation.organization_party_id->party.party_id|n:1","party_relation.related_party_id->party.party_id|n:1","payment_method_profile_cond.payment_method_profile_id->payment_method_profile.payment_method_profile_id|n:1","seller_disclosure.entity_no->operating_entity.entity_no|n:1"]);
+const expectedRelationSignatures = Object.freeze(["agreement.client_id->client.client_id|n:1","agreement.entity_no->operating_entity.entity_no|n:1","agreement.local_partner_id->local_partner.local_partner_id|n:1","agreement.referral_partner_id->local_partner.local_partner_id|n:1","agreement_capability.agreement_id->agreement.agreement_id|n:1","agreement_capability.capability_code->product_capability.capability_code|n:1","agreement_capability.entity_no->operating_entity.entity_no|n:1","agreement_capability_limit.agreement_capability_id->agreement_capability.agreement_capability_id|n:1","agreement_document_ref.agreement_id->agreement.agreement_id|n:1","agreement_operating_entity.agreement_id->agreement.agreement_id|n:1","agreement_operating_entity.entity_no->operating_entity.entity_no|n:1","agreement_party.agreement_id->agreement.agreement_id|n:1","agreement_party.evidence_document_id->agreement_document_ref.agreement_document_id|n:1","agreement_party.party_id->party.party_id|n:1","agreement_party.party_profile_id->party_profile.profile_id|n:1","agreement_product.agreement_id->agreement.agreement_id|n:1","agreement_product.product_code->product.product_code|n:1","application_document.client_application_id->client_application.application_id|n:1","application_document.operating_entity_application_id->operating_entity_application.application_id|n:1","application_document.partner_application_id->partner_application.application_id|n:1","application_document.subject_party_id->party.party_id|n:1","business_change_record.parent_history_id->business_change_record.history_id|n:1","business_change_version.history_id->business_change_record.history_id|n:1","client.party_id->party.party_id|1:1","client_application.client_id->client.client_id|n:1","client_business_classification.business_profile_id->client_business_profile.business_profile_id|n:1","client_business_profile.client_id->client.client_id|n:1","client_entity_affiliation.client_id->client.client_id|n:1","client_entity_affiliation.entity_no->operating_entity.entity_no|n:1","commercial_term_component.term_price_id->commercial_term_price.term_price_id|n:1","commercial_term_component_band.term_component_id->commercial_term_component.term_component_id|n:1","commercial_term_plan.agreement_id->agreement.agreement_id|1:1","commercial_term_plan.client_id->client.client_id|n:1","commercial_term_plan.entity_no->operating_entity.entity_no|n:1","commercial_term_plan.local_partner_id->local_partner.local_partner_id|n:1","commercial_term_price.entity_no->operating_entity.entity_no|n:1","commercial_term_price.pricing_profile_code->pricing_profile.pricing_profile_code|n:1","commercial_term_price.term_version_id->commercial_term_version.term_version_id|n:1","commercial_term_version.agreement_id->agreement.agreement_id|n:1","commercial_term_version.term_plan_id->commercial_term_plan.term_plan_id|n:1","consumer_legal_document.entity_no->operating_entity.entity_no|n:1","entity_source_relation.entity_no->operating_entity.entity_no|n:1","entity_source_relation.source_client_id->client.client_id|n:1","entity_source_relation.source_partner_id->local_partner.local_partner_id|n:1","individual_profile.profile_id->party_profile.profile_id|1:1","local_partner.party_id->party.party_id|1:1","operating_entity.party_id->party.party_id|1:1","operating_entity_application.approved_source_relation_id->entity_source_relation.source_relation_id|n:1","operating_entity_application.entity_no->operating_entity.entity_no|n:1","operating_entity_application.party_profile_id->party_profile.profile_id|n:1","operating_entity_application.source_client_id->client.client_id|n:1","operating_entity_application.source_partner_id->local_partner.local_partner_id|n:1","operating_entity_scope.application_id->operating_entity_application.application_id|n:1","operating_entity_scope.entity_no->operating_entity.entity_no|n:1","organization_profile.profile_id->party_profile.profile_id|1:1","partner_application.local_partner_id->local_partner.local_partner_id|n:1","partner_application.target_party_profile_id->party_profile.profile_id|n:1","party_address.profile_id->party_profile.profile_id|n:1","party_contact.profile_id->party_profile.profile_id|n:1","party_identity_key.party_id->party.party_id|n:1","party_profile.draft_application_id->client_application.application_id|n:1","party_profile.party_id->party.party_id|n:1","party_profile_identifier.identity_key_id->party_identity_key.identity_key_id|n:1","party_profile_identifier.profile_id->party_profile.profile_id|n:1","party_relation.client_application_id->client_application.application_id|n:1","party_relation.organization_party_id->party.party_id|n:1","party_relation.related_party_id->party.party_id|n:1","pricing_profile_cond.pricing_profile_id->pricing_profile.pricing_profile_id|n:1","product_capability.product_code->product.product_code|n:1","product_fee_event.product_code->product.product_code|n:1","seller_disclosure.entity_no->operating_entity.entity_no|n:1"]);
 // Catalog references whose parent lives in client-master while the child lives in
 // commercial: the field and access index stay, the PDManer correlation does not.
-const expectedCrossDatabaseRelationSignatures = Object.freeze(["agreement.client_id->client.client_id|n:1","agreement.entity_no->operating_entity.entity_no|n:1","agreement.local_partner_id->local_partner.local_partner_id|n:1","agreement_operating_entity.entity_no->operating_entity.entity_no|n:1","agreement_party.party_id->party.party_id|n:1","agreement_party.party_profile_id->party_profile.profile_id|n:1","commercial_term_plan.client_id->client.client_id|n:1","commercial_term_plan.entity_no->operating_entity.entity_no|n:1","commercial_term_plan.local_partner_id->local_partner.local_partner_id|n:1","commercial_term_price.entity_no->operating_entity.entity_no|n:1"]);
+const expectedCrossDatabaseRelationSignatures = Object.freeze(["agreement.client_id->client.client_id|n:1","agreement.entity_no->operating_entity.entity_no|n:1","agreement.local_partner_id->local_partner.local_partner_id|n:1","agreement.referral_partner_id->local_partner.local_partner_id|n:1","agreement_capability.entity_no->operating_entity.entity_no|n:1","agreement_operating_entity.entity_no->operating_entity.entity_no|n:1","agreement_party.party_id->party.party_id|n:1","agreement_party.party_profile_id->party_profile.profile_id|n:1","commercial_term_plan.client_id->client.client_id|n:1","commercial_term_plan.entity_no->operating_entity.entity_no|n:1","commercial_term_plan.local_partner_id->local_partner.local_partner_id|n:1","commercial_term_price.entity_no->operating_entity.entity_no|n:1"]);
 const expectedLocalRelationSignatures = Object.freeze(expectedRelationSignatures.filter(
   (signature) => !expectedCrossDatabaseRelationSignatures.includes(signature)));
 
@@ -368,18 +397,24 @@ const expectedFields = Object.freeze({
   "application_document": ["document_id","client_application_id","partner_application_id","operating_entity_application_id","subject_party_id","requirement_code","document_type","file_id","content_hash","create_time","update_time"],
   "client_entity_affiliation": ["affiliation_id","client_id","entity_no","priority_no","status","active_slot","effective_from","effective_to","create_time","update_time"],
   "entity_source_relation": ["source_relation_id","entity_no","source_type","source_client_id","source_partner_id","client_source_basis","status","active_source_slot","effective_from","effective_to","create_time","update_time"],
-  "agreement": ["agreement_id","agreement_no","agreement_name","agreement_type","client_id","local_partner_id","entity_no","agreement_format","status","effective_from","effective_to","signed_time","activated_time","create_by","create_time","update_time"],
+  "agreement": ["agreement_id","agreement_no","agreement_name","agreement_type","business_mode","fund_mode","pricing_authority","referral_partner_id","client_id","local_partner_id","entity_no","agreement_format","status","effective_from","effective_to","signed_time","activated_time","create_by","create_time","update_time"],
   "agreement_party": ["agreement_party_id","agreement_id","party_id","party_profile_id","party_role","acceptance_method","accepted_by_actor_id","accepted_time","evidence_document_id","acceptance_reference","acceptance_ref_slot","acceptance_recorded_by","acceptance_recorded_at","create_by","create_time","update_time"],
   "agreement_document_ref": ["agreement_document_id","agreement_id","document_type","file_id","content_hash","create_time","update_time"],
   "agreement_operating_entity": ["agreement_operating_entity_id","agreement_id","entity_no","create_time","update_time"],
+  "agreement_product": ["agreement_product_id","agreement_id","product_code","create_time","update_time"],
+  "agreement_capability": ["agreement_capability_id","agreement_id","entity_no","capability_code","status","effective_from","effective_to","rolling_reserve_rate","rolling_reserve_days","create_time","update_time"],
+  "agreement_capability_limit": ["agreement_capability_limit_id","agreement_capability_id","limit_code","limit_value","create_time","update_time"],
+  "product": ["product_id","product_code","product_name","business_mode_scope","base_product","status","create_time","update_time"],
+  "product_capability": ["product_capability_id","product_code","capability_code","capability_name","capability_kind","payment_method_code","dimension_code","dimension_value","status","create_time","update_time"],
+  "product_fee_event": ["product_fee_event_id","product_code","fee_event_code","term_type","billing_fact_type","create_time","update_time"],
   "consumer_legal_document": ["legal_document_id","document_code","document_type","entity_no","country_code","locale","content_file_id","content_hash","status","effective_from","effective_to","approved_time","published_time","create_by","create_time","update_time"],
   "seller_disclosure": ["disclosure_id","entity_no","country_code","locale","public_legal_name","public_registration_number","public_tax_registration_number","public_address_text","public_support_email","public_support_phone","status","effective_from","effective_to","approved_time","published_time","create_by","create_time","update_time"],
-  "payment_method_profile": ["payment_method_profile_id","payment_method_profile_code","profile_name","payment_method_code","status","create_time","update_time"],
-  "payment_method_profile_cond": ["profile_condition_id","payment_method_profile_id","dimension_code","condition_value","create_time","update_time"],
+  "pricing_profile": ["pricing_profile_id","pricing_profile_code","profile_name","profile_kind","payment_method_code","status","create_time","update_time"],
+  "pricing_profile_cond": ["profile_condition_id","pricing_profile_id","dimension_code","condition_value","create_time","update_time"],
   "commercial_term_plan": ["term_plan_id","plan_code","term_type","agreement_id","entity_no","client_id","local_partner_id","status","create_time","update_time"],
-  "commercial_term_version": ["term_version_id","term_plan_id","agreement_id","version_no","status","active_slot","effective_from","effective_to","rounding_mode","create_time","update_time"],
-  "commercial_term_price": ["term_price_id","term_version_id","entity_no","payment_method_profile_code","priority_no","settlement_business_days","business_calendar_code","settlement_timezone","cutoff_second_of_day","create_time","update_time"],
-  "commercial_term_component": ["term_component_id","term_price_id","component_no","component_code","component_type","trigger_code","calculation_base","rate","fixed_amount","currency","min_amount","max_amount","band_mode","create_time","update_time"],
+  "commercial_term_version": ["term_version_id","term_plan_id","agreement_id","version_no","status","active_slot","effective_from","effective_to","rounding_mode","pricing_model","fee_tax_treatment","create_time","update_time"],
+  "commercial_term_price": ["term_price_id","term_version_id","entity_no","currency","pricing_profile_code","priority_no","settlement_business_days","business_calendar_code","settlement_timezone","cutoff_second_of_day","create_time","update_time"],
+  "commercial_term_component": ["term_component_id","term_price_id","component_no","component_code","component_type","trigger_code","calculation_base","refund_behavior","rate","fixed_amount","currency","min_amount","max_amount","band_basis","band_mode","create_time","update_time"],
   "commercial_term_component_band": ["term_band_id","term_component_id","band_no","lower_bound","upper_bound","rate","fixed_amount","create_time","update_time"]
 });
 
@@ -405,18 +440,24 @@ const expectedFinalFields = Object.freeze({
   "application_document": ["document_id","client_application_id","partner_application_id","operating_entity_application_id","subject_party_id","requirement_code","document_type","file_id","content_hash","create_time","update_time"],
   "client_entity_affiliation": ["affiliation_id","client_id","entity_no","priority_no","status","active_slot","effective_from","effective_to","create_time","update_time"],
   "entity_source_relation": ["source_relation_id","entity_no","source_type","source_client_id","source_partner_id","client_source_basis","status","active_source_slot","effective_from","effective_to","create_time","update_time"],
-  "agreement": ["agreement_id","agreement_no","agreement_name","agreement_type","client_id","local_partner_id","entity_no","agreement_format","status","effective_from","effective_to","signed_time","activated_time","create_by","create_time","update_time"],
+  "agreement": ["agreement_id","agreement_no","agreement_name","agreement_type","business_mode","fund_mode","pricing_authority","referral_partner_id","client_id","local_partner_id","entity_no","agreement_format","status","effective_from","effective_to","signed_time","activated_time","create_by","create_time","update_time"],
   "agreement_party": ["agreement_party_id","agreement_id","party_id","party_profile_id","party_role","acceptance_method","accepted_by_actor_id","accepted_time","evidence_document_id","acceptance_reference","acceptance_ref_slot","acceptance_recorded_by","acceptance_recorded_at","create_by","create_time","update_time"],
   "agreement_document_ref": ["agreement_document_id","agreement_id","document_type","file_id","content_hash","create_time","update_time"],
   "agreement_operating_entity": ["agreement_operating_entity_id","agreement_id","entity_no","create_time","update_time"],
+  "agreement_product": ["agreement_product_id","agreement_id","product_code","create_time","update_time"],
+  "agreement_capability": ["agreement_capability_id","agreement_id","entity_no","capability_code","status","effective_from","effective_to","rolling_reserve_rate","rolling_reserve_days","create_time","update_time"],
+  "agreement_capability_limit": ["agreement_capability_limit_id","agreement_capability_id","limit_code","limit_value","create_time","update_time"],
+  "product": ["product_id","product_code","product_name","business_mode_scope","base_product","status","create_time","update_time"],
+  "product_capability": ["product_capability_id","product_code","capability_code","capability_name","capability_kind","payment_method_code","dimension_code","dimension_value","status","create_time","update_time"],
+  "product_fee_event": ["product_fee_event_id","product_code","fee_event_code","term_type","billing_fact_type","create_time","update_time"],
   "consumer_legal_document": ["legal_document_id","document_code","document_type","entity_no","country_code","locale","content_file_id","content_hash","status","effective_from","effective_to","approved_time","published_time","create_by","create_time","update_time"],
   "seller_disclosure": ["disclosure_id","entity_no","country_code","locale","public_legal_name","public_registration_number","public_tax_registration_number","public_address_text","public_support_email","public_support_phone","status","effective_from","effective_to","approved_time","published_time","create_by","create_time","update_time"],
-  "payment_method_profile": ["payment_method_profile_id","payment_method_profile_code","profile_name","payment_method_code","status","create_time","update_time"],
-  "payment_method_profile_cond": ["profile_condition_id","payment_method_profile_id","dimension_code","condition_value","create_time","update_time"],
+  "pricing_profile": ["pricing_profile_id","pricing_profile_code","profile_name","profile_kind","payment_method_code","status","create_time","update_time"],
+  "pricing_profile_cond": ["profile_condition_id","pricing_profile_id","dimension_code","condition_value","create_time","update_time"],
   "commercial_term_plan": ["term_plan_id","plan_code","term_type","agreement_id","entity_no","client_id","local_partner_id","status","create_time","update_time"],
-  "commercial_term_version": ["term_version_id","term_plan_id","agreement_id","version_no","status","active_slot","effective_from","effective_to","rounding_mode","create_time","update_time"],
-  "commercial_term_price": ["term_price_id","term_version_id","entity_no","payment_method_profile_code","priority_no","settlement_business_days","business_calendar_code","settlement_timezone","cutoff_second_of_day","create_time","update_time"],
-  "commercial_term_component": ["term_component_id","term_price_id","component_no","component_code","component_type","trigger_code","calculation_base","rate","fixed_amount","currency","min_amount","max_amount","band_mode","create_time","update_time"],
+  "commercial_term_version": ["term_version_id","term_plan_id","agreement_id","version_no","status","active_slot","effective_from","effective_to","rounding_mode","pricing_model","fee_tax_treatment","create_time","update_time"],
+  "commercial_term_price": ["term_price_id","term_version_id","entity_no","currency","pricing_profile_code","priority_no","settlement_business_days","business_calendar_code","settlement_timezone","cutoff_second_of_day","create_time","update_time"],
+  "commercial_term_component": ["term_component_id","term_price_id","component_no","component_code","component_type","trigger_code","calculation_base","refund_behavior","rate","fixed_amount","currency","min_amount","max_amount","band_basis","band_mode","create_time","update_time"],
   "commercial_term_component_band": ["term_band_id","term_component_id","band_no","lower_bound","upper_bound","rate","fixed_amount","create_time","update_time"],
   "business_change_record": ["history_id","record_type","record_id","aggregate_root_type","aggregate_root_id","parent_history_id","current_version","create_time","update_time"],
   "business_change_version": ["change_version_id","history_id","version_no","operation_type","snapshot_json","snapshot_format","create_by","create_time"],
@@ -534,7 +575,7 @@ const agreementLegalTableKeys = new Set([
   ...removedAgreementLegalTables,
 ]);
 const expectedAgreementLegalNullableFieldPaths = Object.freeze(["agreement.activated_time","agreement.client_id","agreement.effective_from","agreement.effective_to","agreement.entity_no","agreement.local_partner_id","agreement.signed_time","agreement_party.acceptance_method","agreement_party.acceptance_recorded_at","agreement_party.acceptance_recorded_by","agreement_party.acceptance_ref_slot","agreement_party.acceptance_reference","agreement_party.accepted_by_actor_id","agreement_party.accepted_time","agreement_party.evidence_document_id","consumer_legal_document.approved_time","consumer_legal_document.effective_to","consumer_legal_document.published_time","seller_disclosure.approved_time","seller_disclosure.effective_to","seller_disclosure.public_support_phone","seller_disclosure.public_tax_registration_number","seller_disclosure.published_time"]);
-const expectedNullableFieldPaths = Object.freeze(["agreement.activated_time","agreement.client_id","agreement.effective_from","agreement.effective_to","agreement.entity_no","agreement.local_partner_id","agreement.signed_time","agreement_party.acceptance_method","agreement_party.acceptance_recorded_at","agreement_party.acceptance_recorded_by","agreement_party.acceptance_ref_slot","agreement_party.acceptance_reference","agreement_party.accepted_by_actor_id","agreement_party.accepted_time","agreement_party.evidence_document_id","application_document.client_application_id","application_document.operating_entity_application_id","application_document.partner_application_id","business_change_record.parent_history_id","client.activation_time","client.suspension_time","client.termination_time","client_application.active_slot","client_application.current_submission_id","client_application.due_diligence_case_id","client_application.qualification_decision_id","client_application.submitted_time","client_business_classification.primary_slot","client_business_profile.business_description","client_business_profile.business_model_code","client_business_profile.classification_case_id","client_business_profile.classification_confirmed_by","client_business_profile.classification_confirmed_time","client_business_profile.content_hash","client_business_profile.currency","client_business_profile.expected_ticket","client_business_profile.expected_volume","client_business_profile.website_url","client_entity_affiliation.active_slot","client_entity_affiliation.effective_to","commercial_term_component.band_mode","commercial_term_component.currency","commercial_term_component.fixed_amount","commercial_term_component.max_amount","commercial_term_component.min_amount","commercial_term_component.rate","commercial_term_component_band.fixed_amount","commercial_term_component_band.rate","commercial_term_component_band.upper_bound","commercial_term_plan.agreement_id","commercial_term_plan.client_id","commercial_term_plan.entity_no","commercial_term_plan.local_partner_id","commercial_term_price.business_calendar_code","commercial_term_price.cutoff_second_of_day","commercial_term_price.settlement_business_days","commercial_term_price.settlement_timezone","commercial_term_version.active_slot","commercial_term_version.effective_to","compensation_event.last_error_code","compensation_event.last_error_summary","compensation_event.lock_owner","compensation_event.lock_until","compensation_event.payload_json","consumer_legal_document.approved_time","consumer_legal_document.effective_to","consumer_legal_document.published_time","entity_source_relation.active_source_slot","entity_source_relation.client_source_basis","entity_source_relation.effective_to","entity_source_relation.source_client_id","entity_source_relation.source_partner_id","individual_profile.birth_date","individual_profile.family_name","individual_profile.given_name","individual_profile.middle_name","individual_profile.nationality_country","individual_profile.residence_country","local_partner.activation_time","local_partner.termination_time","operating_entity_application.active_slot","operating_entity_application.approved_source_relation_id","operating_entity_application.client_source_basis","operating_entity_application.due_diligence_case_id","operating_entity_application.qualification_decision_id","operating_entity_application.qualification_decision_version","operating_entity_application.source_client_id","operating_entity_application.source_partner_id","operating_entity_application.submitted_time","operating_entity_scope.active_slot","operating_entity_scope.effective_from","operating_entity_scope.effective_to","organization_profile.incorporation_country","organization_profile.incorporation_date","organization_profile.legal_name","organization_profile.organization_type","organization_profile.trade_name","partner_application.active_slot","partner_application.due_diligence_case_id","partner_application.qualification_decision_id","partner_application.qualification_decision_version","partner_application.submitted_time","party_address.address_line1","party_address.address_line2","party_address.city","party_address.country_code","party_address.postal_code","party_address.state_or_province","party_identity_key.issuing_country","party_profile.approved_time","party_profile.content_hash","party_profile.draft_application_id","party_profile_identifier.identifier_type","party_profile_identifier.identifier_value","party_profile_identifier.identity_key_id","party_profile_identifier.issuer_scope_key","party_profile_identifier.issuing_country","party_profile_identifier.valid_from","party_profile_identifier.valid_to","party_relation.client_application_id","party_relation.effective_to","party_relation.ownership_percentage","seller_disclosure.approved_time","seller_disclosure.effective_to","seller_disclosure.public_support_phone","seller_disclosure.public_tax_registration_number","seller_disclosure.published_time"]);
+const expectedNullableFieldPaths = Object.freeze(["agreement.activated_time","agreement.business_mode","agreement.client_id","agreement.effective_from","agreement.effective_to","agreement.entity_no","agreement.fund_mode","agreement.local_partner_id","agreement.pricing_authority","agreement.referral_partner_id","agreement.signed_time","agreement_capability.effective_to","agreement_capability.rolling_reserve_days","agreement_capability.rolling_reserve_rate","agreement_party.acceptance_method","agreement_party.acceptance_recorded_at","agreement_party.acceptance_recorded_by","agreement_party.acceptance_ref_slot","agreement_party.acceptance_reference","agreement_party.accepted_by_actor_id","agreement_party.accepted_time","agreement_party.evidence_document_id","application_document.client_application_id","application_document.operating_entity_application_id","application_document.partner_application_id","business_change_record.parent_history_id","client.activation_time","client.suspension_time","client.termination_time","client_application.active_slot","client_application.current_submission_id","client_application.due_diligence_case_id","client_application.qualification_decision_id","client_application.submitted_time","client_business_classification.primary_slot","client_business_profile.business_description","client_business_profile.business_model_code","client_business_profile.classification_case_id","client_business_profile.classification_confirmed_by","client_business_profile.classification_confirmed_time","client_business_profile.content_hash","client_business_profile.currency","client_business_profile.expected_ticket","client_business_profile.expected_volume","client_business_profile.website_url","client_entity_affiliation.active_slot","client_entity_affiliation.effective_to","commercial_term_component.band_basis","commercial_term_component.band_mode","commercial_term_component.currency","commercial_term_component.fixed_amount","commercial_term_component.max_amount","commercial_term_component.min_amount","commercial_term_component.rate","commercial_term_component_band.fixed_amount","commercial_term_component_band.rate","commercial_term_component_band.upper_bound","commercial_term_plan.agreement_id","commercial_term_plan.client_id","commercial_term_plan.entity_no","commercial_term_plan.local_partner_id","commercial_term_price.business_calendar_code","commercial_term_price.cutoff_second_of_day","commercial_term_price.settlement_business_days","commercial_term_price.settlement_timezone","commercial_term_version.active_slot","commercial_term_version.effective_to","compensation_event.last_error_code","compensation_event.last_error_summary","compensation_event.lock_owner","compensation_event.lock_until","compensation_event.payload_json","consumer_legal_document.approved_time","consumer_legal_document.effective_to","consumer_legal_document.published_time","entity_source_relation.active_source_slot","entity_source_relation.client_source_basis","entity_source_relation.effective_to","entity_source_relation.source_client_id","entity_source_relation.source_partner_id","individual_profile.birth_date","individual_profile.family_name","individual_profile.given_name","individual_profile.middle_name","individual_profile.nationality_country","individual_profile.residence_country","local_partner.activation_time","local_partner.termination_time","operating_entity_application.active_slot","operating_entity_application.approved_source_relation_id","operating_entity_application.client_source_basis","operating_entity_application.due_diligence_case_id","operating_entity_application.qualification_decision_id","operating_entity_application.qualification_decision_version","operating_entity_application.source_client_id","operating_entity_application.source_partner_id","operating_entity_application.submitted_time","operating_entity_scope.active_slot","operating_entity_scope.effective_from","operating_entity_scope.effective_to","organization_profile.incorporation_country","organization_profile.incorporation_date","organization_profile.legal_name","organization_profile.organization_type","organization_profile.trade_name","partner_application.active_slot","partner_application.due_diligence_case_id","partner_application.qualification_decision_id","partner_application.qualification_decision_version","partner_application.submitted_time","party_address.address_line1","party_address.address_line2","party_address.city","party_address.country_code","party_address.postal_code","party_address.state_or_province","party_identity_key.issuing_country","party_profile.approved_time","party_profile.content_hash","party_profile.draft_application_id","party_profile_identifier.identifier_type","party_profile_identifier.identifier_value","party_profile_identifier.identity_key_id","party_profile_identifier.issuer_scope_key","party_profile_identifier.issuing_country","party_profile_identifier.valid_from","party_profile_identifier.valid_to","party_relation.client_application_id","party_relation.effective_to","party_relation.ownership_percentage","pricing_profile.payment_method_code","product_capability.dimension_code","product_capability.dimension_value","product_capability.payment_method_code","seller_disclosure.approved_time","seller_disclosure.effective_to","seller_disclosure.public_support_phone","seller_disclosure.public_tax_registration_number","seller_disclosure.published_time"]);
 
 const applicationStatuses = Object.freeze(["DRAFT","SUBMITTED","UNDER_REVIEW","APPROVED","REJECTED","WITHDRAWN"]);
 
@@ -542,7 +583,7 @@ const expectedBcrRecordTypes = Object.freeze(["PARTY","CLIENT","LOCAL_PARTNER","
 
 const expectedBcrRootTypes = Object.freeze(["PARTY","CLIENT","LOCAL_PARTNER","OPERATING_ENTITY","CLIENT_APPLICATION","PARTNER_APPLICATION","OPERATING_ENTITY_APPLICATION","PARTY_RELATION","CLIENT_ENTITY_AFFILIATION","ENTITY_SOURCE_RELATION","AGREEMENT","CONSUMER_LEGAL_DOCUMENT","SELLER_DISCLOSURE","COMMERCIAL_TERM_PLAN","PAYMENT_METHOD_PROFILE"]);
 
-const expectedBcrExcludedBusinessTables = Object.freeze(["individual_profile","organization_profile","party_identity_key","party_profile_identifier","party_address","party_contact","client_business_classification","application_document","operating_entity_scope","agreement_party","agreement_document_ref","agreement_operating_entity","payment_method_profile_cond","commercial_term_price","commercial_term_component","commercial_term_component_band"]);
+const expectedBcrExcludedBusinessTables = Object.freeze(["individual_profile","organization_profile","party_identity_key","party_profile_identifier","party_address","party_contact","client_business_classification","application_document","operating_entity_scope","agreement_party","agreement_document_ref","agreement_operating_entity","pricing_profile_cond","commercial_term_price","commercial_term_component","commercial_term_component_band","agreement_capability_limit","product","product_capability","product_fee_event"]);
 
 const expectedClosedEnumValues = Object.freeze({
   "party.party_type": ["INDIVIDUAL","ORGANIZATION"],
@@ -566,12 +607,19 @@ const expectedClosedEnumValues = Object.freeze({
   "entity_source_relation.status": ["ACTIVE","ENDED"],
   "agreement.agreement_type": ["CLIENT","PARTNER"],
   "consumer_legal_document.document_type": ["CONSUMER_TERMS","REFUND_POLICY","PRIVACY_NOTICE"],
-  "commercial_term_plan.term_type": ["CLIENT_PRICING","PARTNER_SHARE","PLATFORM_SERVICE_CHARGE"],
-  "commercial_term_version.status": ["DRAFT","APPROVED","SCHEDULED","ACTIVE","SUPERSEDED","EXPIRED"],
+  "commercial_term_plan.status": ["DRAFT","ACTIVE","RETIRED"],
+  "commercial_term_version.status": ["DRAFT","PENDING_APPROVAL","APPROVED","SCHEDULED","ACTIVE","SUPERSEDED","EXPIRED"],
   "commercial_term_version.rounding_mode": ["HALF_UP"],
-  "payment_method_profile.status": ["DRAFT","ACTIVE","RETIRED"],
+  "commercial_term_version.pricing_model": ["BLENDED","INTERCHANGE_PLUS_PLUS"],
+  "commercial_term_version.fee_tax_treatment": ["INCLUSIVE","EXCLUSIVE"],
+  "pricing_profile.status": ["DRAFT","ACTIVE","RETIRED"],
+  "pricing_profile.profile_kind": ["PAYMENT_METHOD","PAYOUT_RAIL","FX_PAIR","DISPUTE","PERIODIC"],
+  "pricing_profile_cond.dimension_code": ["CARD_BRAND","FUNDING_TYPE","CARD_LEVEL","CARD_PRODUCT","ISSUER_REGION","ISSUER_COUNTRY","THREE_DS_RESULT","CURRENCY","CONSUMER_COUNTRY","TRANSACTION_TYPE","PAYOUT_RAIL","DESTINATION_COUNTRY","CURRENCY_PAIR","DISPUTE_STAGE"],
   "commercial_term_component.component_type": ["PERCENTAGE","FIXED","TIERED"],
-  "commercial_term_component.band_mode": ["WHOLE_BASE","PROGRESSIVE"],
+  "commercial_term_component.calculation_base": ["GROSS_AMOUNT","NET_AMOUNT","ACTUAL_CLIENT_FEE","FIXED_PER_EVENT","BUY_RATE_DIFFERENCE"],
+  "commercial_term_component.refund_behavior": ["RETURN_ALL","RETURN_PRORATA","KEEP"],
+  "commercial_term_component.band_basis": ["TRANSACTION_AMOUNT","PERIOD_VOLUME"],
+  "commercial_term_component.band_mode": ["WHOLE_BASE","PROGRESSIVE","RETROACTIVE"],
   "business_change_record.record_type": ["PARTY","CLIENT","LOCAL_PARTNER","OPERATING_ENTITY","PARTY_PROFILE","CLIENT_BUSINESS_PROFILE","COMMERCIAL_TERM_VERSION","CLIENT_APPLICATION","PARTNER_APPLICATION","OPERATING_ENTITY_APPLICATION","PARTY_RELATION","CLIENT_ENTITY_AFFILIATION","ENTITY_SOURCE_RELATION","AGREEMENT","CONSUMER_LEGAL_DOCUMENT","SELLER_DISCLOSURE","COMMERCIAL_TERM_PLAN","PAYMENT_METHOD_PROFILE"],
   "business_change_record.aggregate_root_type": ["PARTY","CLIENT","LOCAL_PARTNER","OPERATING_ENTITY","CLIENT_APPLICATION","PARTNER_APPLICATION","OPERATING_ENTITY_APPLICATION","PARTY_RELATION","CLIENT_ENTITY_AFFILIATION","ENTITY_SOURCE_RELATION","AGREEMENT","CONSUMER_LEGAL_DOCUMENT","SELLER_DISCLOSURE","COMMERCIAL_TERM_PLAN","PAYMENT_METHOD_PROFILE"],
   "business_change_version.operation_type": ["CREATE","UPDATE","DELETE"],
@@ -585,12 +633,26 @@ const expectedClosedEnumValues = Object.freeze({
   "operating_entity_scope.status": ["DRAFT","ACTIVE","ENDED"],
   "agreement.agreement_format": ["MERGED_PARTY","LEGACY_ROLE_SIGNATURE"],
   "business_change_version.snapshot_format": ["ENTITY_NO","LEGACY_NUMERIC"],
-  "agreement_party.acceptance_method": ["E_SIGNATURE","CLICK_ACCEPTANCE","MANUAL_SIGNATURE"]
+  "agreement_party.acceptance_method": ["E_SIGNATURE","CLICK_ACCEPTANCE","MANUAL_SIGNATURE"],
+  "agreement.business_mode": ["MOR","PSP"],
+  "agreement.fund_mode": ["SETTLE_THROUGH_PLATFORM","FEES_ONLY"],
+  "agreement.pricing_authority": ["PLATFORM","PARTNER"],
+  "product.product_code": ["ACQUIRING","PAYOUT","FX","DISPUTE","TAX_INVOICE","DATA_ANALYTICS","PLATFORM"],
+  "product.business_mode_scope": ["MOR_ONLY","PSP_ONLY","BOTH"],
+  "product.status": ["DRAFT","ACTIVE","RETIRED"],
+  "product_capability.product_code": ["ACQUIRING","PAYOUT","FX","DISPUTE","TAX_INVOICE","DATA_ANALYTICS","PLATFORM"],
+  "product_capability.capability_kind": ["PAYMENT_METHOD","PAYOUT_RAIL","FX","DISPUTE","PERIODIC_SERVICE"],
+  "product_capability.dimension_code": ["CARD_BRAND","FUNDING_TYPE","CARD_LEVEL","CARD_PRODUCT","ISSUER_REGION","ISSUER_COUNTRY","THREE_DS_RESULT","CURRENCY","CONSUMER_COUNTRY","TRANSACTION_TYPE","PAYOUT_RAIL","DESTINATION_COUNTRY","CURRENCY_PAIR","DISPUTE_STAGE"],
+  "product_capability.status": ["DRAFT","ACTIVE","RETIRED"],
+  "product_fee_event.product_code": ["ACQUIRING","PAYOUT","FX","DISPUTE","TAX_INVOICE","DATA_ANALYTICS","PLATFORM"],
+  "agreement_product.product_code": ["ACQUIRING","PAYOUT","FX","DISPUTE","TAX_INVOICE","DATA_ANALYTICS","PLATFORM"],
+  "agreement_capability.status": ["ENABLED","SUSPENDED","DISABLED"],
+  "agreement_capability_limit.limit_code": ["CURRENCY","CONSUMER_COUNTRY","REQUIRE_3DS"]
 });
 
-const expectedOpenCodeFields = Object.freeze(["application_document.document_type","application_document.requirement_code","client_business_classification.industry_code","client_business_classification.mcc_code","client_business_profile.business_model_code","client_business_profile.currency","commercial_term_component.calculation_base","commercial_term_component.currency","commercial_term_component.trigger_code","commercial_term_plan.status","commercial_term_price.business_calendar_code","commercial_term_price.payment_method_profile_code","commercial_term_price.settlement_timezone","compensation_event.event_type","compensation_event.last_error_code","compensation_event.sub_event_type","consumer_legal_document.country_code","consumer_legal_document.locale","individual_profile.nationality_country","individual_profile.residence_country","operating_entity.operating_country","operating_entity_scope.consumer_country_code","operating_entity_scope.currency","operating_entity_scope.industry_code","operating_entity_scope.mcc_code","organization_profile.incorporation_country","organization_profile.organization_type","party_address.address_type","party_address.country_code","party_identity_key.identifier_type","party_identity_key.issuing_country","party_profile_identifier.identifier_type","party_profile_identifier.issuing_country","payment_method_profile.payment_method_code","payment_method_profile_cond.condition_value","payment_method_profile_cond.dimension_code","seller_disclosure.country_code","seller_disclosure.locale"]);
+const expectedOpenCodeFields = Object.freeze(["agreement_capability.capability_code","application_document.document_type","application_document.requirement_code","client_business_classification.industry_code","client_business_classification.mcc_code","client_business_profile.business_model_code","client_business_profile.currency","commercial_term_component.currency","commercial_term_component.trigger_code","commercial_term_plan.term_type","commercial_term_price.business_calendar_code","commercial_term_price.currency","commercial_term_price.pricing_profile_code","commercial_term_price.settlement_timezone","compensation_event.event_type","compensation_event.last_error_code","compensation_event.sub_event_type","consumer_legal_document.country_code","consumer_legal_document.locale","individual_profile.nationality_country","individual_profile.residence_country","operating_entity.operating_country","operating_entity_scope.consumer_country_code","operating_entity_scope.currency","operating_entity_scope.industry_code","operating_entity_scope.mcc_code","organization_profile.incorporation_country","organization_profile.organization_type","party_address.address_type","party_address.country_code","party_identity_key.identifier_type","party_identity_key.issuing_country","party_profile_identifier.identifier_type","party_profile_identifier.issuing_country","pricing_profile.payment_method_code","pricing_profile_cond.condition_value","product_capability.capability_code","product_capability.payment_method_code","product_fee_event.billing_fact_type","product_fee_event.fee_event_code","product_fee_event.term_type","seller_disclosure.country_code","seller_disclosure.locale"]);
 
-const expectedBusinessIdentifierCodeFields = Object.freeze(["commercial_term_component.component_code","commercial_term_plan.plan_code","payment_method_profile.payment_method_profile_code","consumer_legal_document.document_code"]);
+const expectedBusinessIdentifierCodeFields = Object.freeze(["commercial_term_component.component_code","commercial_term_plan.plan_code","pricing_profile.pricing_profile_code","consumer_legal_document.document_code"]);
 
 const expectedConditionalValueRules = Object.freeze({
   "client_business_classification.primary_slot": "值为 1 时表示一组主要经营分类，其他情况为 NULL",
@@ -607,7 +669,7 @@ const expectedConditionalValueRules = Object.freeze({
 const versionContracts = Object.freeze({
   commercial_term_version: {
     rootKey: "term_plan_id",
-    statuses: ["DRAFT", "APPROVED", "SCHEDULED", "ACTIVE", "SUPERSEDED", "EXPIRED"],
+    statuses: ["DRAFT", "PENDING_APPROVAL", "APPROVED", "SCHEDULED", "ACTIVE", "SUPERSEDED", "EXPIRED"],
   },
 });
 
@@ -717,12 +779,13 @@ const expectedBaseTypeOverrides = Object.freeze({
   "commercial_term_version.active_slot": ["TINYINT","int","INT","Integer","Integer"],
   "entity_source_relation.active_source_slot": ["TINYINT","int","INT","Integer","Integer"],
   "operating_entity_application.active_slot": ["TINYINT","int","INT","Integer","Integer"],
-  "partner_application.active_slot": ["TINYINT","int","INT","Integer","Integer"]
+  "partner_application.active_slot": ["TINYINT","int","INT","Integer","Integer"],
+  "product.base_product": ["TINYINT","int","INT","Integer","Integer"]
 });
 
 const expectedMoneyDomainFields = Object.freeze(["client_business_profile.expected_ticket","client_business_profile.expected_volume","commercial_term_component.fixed_amount","commercial_term_component.max_amount","commercial_term_component.min_amount","commercial_term_component_band.fixed_amount","commercial_term_component_band.lower_bound","commercial_term_component_band.upper_bound"]);
 
-const expectedDecimalDomainFields = Object.freeze(["commercial_term_component.rate","commercial_term_component_band.rate","party_relation.ownership_percentage"]);
+const expectedDecimalDomainFields = Object.freeze(["agreement_capability.rolling_reserve_rate","commercial_term_component.rate","commercial_term_component_band.rate","party_relation.ownership_percentage"]);
 
 const expectedVarcharLengthOverrides = Object.freeze({
   "agreement_party.acceptance_reference": 128,
@@ -730,8 +793,8 @@ const expectedVarcharLengthOverrides = Object.freeze({
   "agreement.agreement_format": 32,
   "business_change_version.snapshot_format": 32,
   "client_business_classification.mcc_code": 4,
-  "payment_method_profile.profile_name": 128,
-  "payment_method_profile_cond.condition_value": 128,
+  "pricing_profile.profile_name": 128,
+  "pricing_profile_cond.condition_value": 128,
   "compensation_event.event_key": 128,
   "compensation_event.payload_json": 4096,
   "compensation_event.execute_status": 16,
@@ -754,7 +817,22 @@ const expectedVarcharLengthOverrides = Object.freeze({
   "party_profile_identifier.identifier_value": 128,
   "party_identity_key.normalized_identifier_value": 128,
   "client_business_profile.website_url": 2048,
-  "client_business_profile.business_description": 2000
+  "client_business_profile.business_description": 2000,
+  "agreement.business_mode": 16,
+  "agreement.fund_mode": 32,
+  "agreement.pricing_authority": 16,
+  "product.product_name": 128,
+  "product.business_mode_scope": 16,
+  "product_capability.capability_name": 128,
+  "product_capability.capability_kind": 32,
+  "product_capability.dimension_value": 128,
+  "agreement_capability.status": 32,
+  "agreement_capability_limit.limit_value": 128,
+  "pricing_profile.profile_kind": 32,
+  "commercial_term_version.pricing_model": 32,
+  "commercial_term_version.fee_tax_treatment": 16,
+  "commercial_term_component.refund_behavior": 32,
+  "commercial_term_component.band_basis": 32
 });
 
 const expectedBigIntFieldKeys = Object.freeze(new Set([
@@ -767,12 +845,12 @@ const expectedBigIntFieldKeys = Object.freeze(new Set([
 const expectedIntegerFieldKeys = Object.freeze(new Set([
   "band_no", "component_no", "execute_count", "hash_schema_version",
   "priority_no", "schema_version", "settlement_business_days", "submission_hash_schema_version",
-  "cutoff_second_of_day",
+  "cutoff_second_of_day", "rolling_reserve_days",
 ]));
 
 const expectedTinyIntFieldKeys = Object.freeze(new Set([
   "active_slot", "active_source_slot", "primary_slot",
-  "required_acceptance_flag",
+  "required_acceptance_flag", "base_product",
 ]));
 
 const expectedDomains = Object.freeze({
@@ -1615,7 +1693,8 @@ function assertPhysicalPrecisionContract(model) {
   "commercial_term_component_band.lower_bound": [24,8],
   "commercial_term_component_band.upper_bound": [24,8],
   "commercial_term_component_band.rate": [18,10],
-  "commercial_term_component_band.fixed_amount": [24,8]
+  "commercial_term_component_band.fixed_amount": [24,8],
+  "agreement_capability.rolling_reserve_rate": [18,10]
 });
   const fields = allPhysicalFields(model);
   assert.deepEqual(
@@ -2282,7 +2361,7 @@ function versionSemanticFixture() {
     field("status", {
       type: "VARCHAR",
       notNull: true,
-      comment: "版本状态。允许值：DRAFT、APPROVED、SCHEDULED、ACTIVE、SUPERSEDED、EXPIRED。",
+      comment: "版本状态。允许值：DRAFT、PENDING_APPROVAL、APPROVED、SCHEDULED、ACTIVE、SUPERSEDED、EXPIRED。",
     }),
     field("active_slot", { type: "TINYINT", len: 1, notNull: false, defaultValue: "" }),
     field("effective_from", { type: "DATETIME", len: 6, notNull: true }),
@@ -2939,18 +3018,19 @@ test("uses approved OE scopes and ordered affiliations without persisted assignm
 test("uses reusable Payment Method Profiles and composable commercial prices", () => {
   const entities = entityMap(generateClientContractModel());
   const expectedCommercialTermFields = {
-  "payment_method_profile": [
-    "payment_method_profile_id",
-    "payment_method_profile_code",
+  "pricing_profile": [
+    "pricing_profile_id",
+    "pricing_profile_code",
     "profile_name",
+    "profile_kind",
     "payment_method_code",
     "status",
     "create_time",
     "update_time"
   ],
-  "payment_method_profile_cond": [
+  "pricing_profile_cond": [
     "profile_condition_id",
-    "payment_method_profile_id",
+    "pricing_profile_id",
     "dimension_code",
     "condition_value",
     "create_time",
@@ -2978,6 +3058,8 @@ test("uses reusable Payment Method Profiles and composable commercial prices", (
     "effective_from",
     "effective_to",
     "rounding_mode",
+    "pricing_model",
+    "fee_tax_treatment",
     "create_time",
     "update_time"
   ],
@@ -2985,7 +3067,8 @@ test("uses reusable Payment Method Profiles and composable commercial prices", (
     "term_price_id",
     "term_version_id",
     "entity_no",
-    "payment_method_profile_code",
+    "currency",
+    "pricing_profile_code",
     "priority_no",
     "settlement_business_days",
     "business_calendar_code",
@@ -3002,11 +3085,13 @@ test("uses reusable Payment Method Profiles and composable commercial prices", (
     "component_type",
     "trigger_code",
     "calculation_base",
+    "refund_behavior",
     "rate",
     "fixed_amount",
     "currency",
     "min_amount",
     "max_amount",
+    "band_basis",
     "band_mode",
     "create_time",
     "update_time"
@@ -3037,7 +3122,7 @@ test("uses reusable Payment Method Profiles and composable commercial prices", (
     "client_fee_component", "partner_share_plan", "partner_share_version",
     "partner_share_scope", "partner_share_component", "commercial_term_scope",
     "payment_method", "payment_method_profile_version",
-    "payment_method_profile_condition_value", "dimension_definition",
+    "pricing_profile_condition_value", "dimension_definition",
   ]) {
     assert.equal(entities.has(removedTable), false, `legacy table remains: ${removedTable}`);
   }
@@ -3186,13 +3271,14 @@ test("locks the generated Partner Application physical totals", () => {
   // Before the split one model held 38 / 408 / 59 / 40 / 62 / 6. The combined
   // catalog view drops command_idempotency (1 table, 10 fields, 1 UK, 1 IDX) and
   // the 10 cross-database correlations; shared BCR/compensation tables count once.
+  // The 2026-10-19 six-layer product tables add 6 / 54 / 6 / 5 / 7 / 1 (one more cross-database reference); Price.currency adds 1 field; round 2 adds 3 agreement fields and idx_agreement_referral.
   assert.deepEqual(modelTotals(readModel()), {
-    tables: 37,
-    fields: 398,
-    uniqueIndexes: 58,
-    accessIndexes: 39,
-    relations: 52,
-    diagramGroups: 9,
+    tables: 43,
+    fields: 456,
+    uniqueIndexes: 64,
+    accessIndexes: 45,
+    relations: 59,
+    diagramGroups: 10,
   });
   for (const service of serviceModels) {
     assert.deepEqual(modelTotals(readServiceModel(service)), expectedServiceTotals[service.key], service.key);
@@ -3205,7 +3291,7 @@ test("splits the catalog into client-master and commercial by approved table own
   assert.deepEqual(tables(clientMaster), [...CLIENT_MASTER_CATALOG_TABLES, ...nonCatalogServiceTables["client-master"]]);
   assert.deepEqual(tables(commercial), [...COMMERCIAL_TABLES]);
   assert.equal(tables(clientMaster).length, 29);
-  assert.equal(tables(commercial).length, 14);
+  assert.equal(tables(commercial).length, 20);
   const both = tables(clientMaster).filter((tableKey) => tables(commercial).includes(tableKey));
   assert.deepEqual(both, [...sharedServiceTables]);
   for (const tableKey of droppedCatalogTables) {
@@ -3313,15 +3399,15 @@ test("keeps the approved unique-key contracts", () => {
   for (const [tableKey, expected] of Object.entries(expectedUniqueKeys)) {
     assert.deepEqual(indexSignatures(requireEntity(entities, tableKey), true), [...expected].sort());
   }
-  // Combined catalog view; 59/40 before command_idempotency was dropped.
+  // Combined catalog view; 59/40 before command_idempotency was dropped, +6 for the six-layer product tables.
   assert.equal(
     model.entities.flatMap((entity) => entity.indexes).filter((index) => index.unique).length,
-    58,
+    64,
     "unique-index count drift",
   );
   assert.equal(
     model.entities.flatMap((entity) => entity.indexes).filter((index) => !index.unique).length,
-    39,
+    45,
     "access-index count drift",
   );
   for (const service of serviceModels) {
@@ -3738,7 +3824,7 @@ test("locks the complete compensation-event Claim and physical contract", () => 
 test("keeps model identity and all database connection profiles empty", () => {
   for (const [service, name, describe] of [
     [serviceModels[0], "Code-MoR Client Master Database V1", "Client Master"],
-    [serviceModels[1], "Code-MoR Commercial Database V1", "Commercial"],
+    [serviceModels[1], "commercial", "合同及参与方、产品目录、合同订阅与开通项、定价画像、商业条款方案 / 版本 / 价格 / 组件 / 阶梯档位"],
   ]) {
     const model = readServiceModel(service);
     assert.equal(model.name, name);
@@ -4250,8 +4336,8 @@ test("CCT authority defines Profile-priced Commercial Terms without intermediate
   );
 
   assert.doesNotMatch(authority, /父 Content Hash 按.*Component Canonical Hash/u);
-  assert.match(authority, /`payment_method_profile`/u);
-  assert.match(authority, /`payment_method_profile_code`/u);
+  assert.match(authority, /`pricing_profile`/u);
+  assert.match(authority, /`pricing_profile_code`/u);
   assert.match(authority, /`commercial_term_price`/u);
   assert.match(authority, /同维度多行按 OR、不同维度按 AND/u);
   assert.match(

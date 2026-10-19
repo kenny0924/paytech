@@ -46,7 +46,7 @@ public class CheckoutResolutionConfiguration {
         CommercialTermPlanRepository commercialTermPlanRepository, CommercialTermPriceRepository commercialTermPriceRepository,
         AgreementDocumentRefRepository agreementDocumentRefRepository,
         BusinessChangeRecordRepository businessChangeRecordRepository,
-        PaymentMethodProfileRepository paymentMethodProfileRepository,
+        PricingProfileRepository pricingProfileRepository,
         CommercialTermVersionRepository commercialTermVersionRepository,
         CommercialTermComponentRepository commercialTermComponentRepository,
         AgreementOperatingEntityRepository agreementOperatingEntityRepository,
@@ -58,7 +58,7 @@ public class CheckoutResolutionConfiguration {
         reads.setTimeout(10);
         return new CheckoutQueryServiceImpl(reads, agreementRepository, agreementPartyRepository,
             commercialTermPlanRepository, commercialTermPriceRepository, agreementDocumentRefRepository,
-            businessChangeRecordRepository, paymentMethodProfileRepository, commercialTermVersionRepository,
+            businessChangeRecordRepository, pricingProfileRepository, commercialTermVersionRepository,
             commercialTermComponentRepository, agreementOperatingEntityRepository, commercialTermComponentBandRepository);
     }
 

@@ -40,12 +40,23 @@ const renamedTables = new Map([
   ['t_transaction_economic_comp_link', 't_economic_fact_line_link'],
   // Step 11b (design/04 §3.1): the ledger posting account keeps identity only; balances move to mor_account.
   ['t_account', 't_ledger_account'],
+  // 2026-10-19 commercial round 2 (design-discuss/commercial/database.md §8): the profile tables become pricing profiles.
+  ['t_payment_method_profile', 't_pricing_profile'],
+  ['t_payment_method_profile_cond', 't_pricing_profile_cond'],
 ]);
 // Shared-database transition reads (not owned, not counted). Step 07 let account read mor_ledger; step 11b gives account
 // its own mor_account (design/04 §3.2, §6) and removes that allowance, so no transition is registered now.
 const transitionalSharedReads = [];
 // Tables introduced by a refactor step's approved design on top of design 03 §2 (not part of the §4.2 count).
 const stepAddedTables = [
+  // 2026-10-19 commercial six-layer product pricing model (decision 2026-10-19-commercial-six-layer-product-pricing,
+  // design-discuss/commercial/database.md §2): product catalog and agreement subscription / capability tables.
+  {
+    service: 'commercial',
+    database: 'mor_commercial',
+    tables: ['t_product', 't_product_capability', 't_product_fee_event', 't_agreement_product',
+      't_agreement_capability', 't_agreement_capability_limit'],
+  },
   // Step 12 (design/05 §2.1, S3): one-time card material tickets in mor_card.
   { service: 'card', database: 'mor_card', tables: ['t_card_material_ticket'] },
   // Step 11b (design/04 §3.2) reshaped by the 2026-10-19 subledger refactor (decision 2026-10-18, technique 2.3):

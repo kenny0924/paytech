@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.commercial.core.dal.mapper.AgreementProductMapper">
+    <resultMap id="AgreementProduct" type="com.paytech.commercial.core.dal.dataobject.AgreementProduct">
+        <id column="agreement_product_id" property="agreementProductId"/>
+        <result column="agreement_id" property="agreementId"/>
+        <result column="product_code" property="productCode"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="columns">agreement_product_id, agreement_id, product_code, create_time, update_time</sql>
+
+    <insert id="insert">
+        INSERT INTO t_agreement_product (<include refid="columns"/>)
+        VALUES (#{agreementProductId}, #{agreementId}, #{productCode}, #{createTime}, #{updateTime})
+    </insert>
+
+    <select id="selectById" resultMap="AgreementProduct">
+        SELECT <include refid="columns"/> FROM t_agreement_product WHERE agreement_product_id = #{agreementProductId}
+    </select>
+
+    <select id="selectByAgreementAndProduct" resultMap="AgreementProduct">
+        SELECT <include refid="columns"/> FROM t_agreement_product
+        WHERE agreement_id = #{agreementId} AND product_code = #{productCode}
+    </select>
+
+    <select id="selectByAgreementId" resultMap="AgreementProduct">
+        SELECT <include refid="columns"/> FROM t_agreement_product WHERE agreement_id = #{agreementId}
+        ORDER BY agreement_product_id
+    </select>
+
+    <select id="selectByAgreementIds" resultMap="AgreementProduct">
+        SELECT <include refid="columns"/> FROM t_agreement_product
+        WHERE agreement_id IN <foreach collection="agreementIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY agreement_product_id
+    </select>
+
+    <delete id="deleteById">
+        DELETE FROM t_agreement_product WHERE agreement_product_id = #{agreementProductId}
+    </delete>
+</mapper>

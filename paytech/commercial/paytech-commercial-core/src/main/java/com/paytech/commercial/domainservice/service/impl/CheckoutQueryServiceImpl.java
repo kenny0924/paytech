@@ -28,7 +28,7 @@ public class CheckoutQueryServiceImpl implements CheckoutQueryService {
     private final CommercialTermPriceRepository commercialTermPriceRepository;
     private final AgreementDocumentRefRepository agreementDocumentRefRepository;
     private final BusinessChangeRecordRepository businessChangeRecordRepository;
-    private final PaymentMethodProfileRepository paymentMethodProfileRepository;
+    private final PricingProfileRepository pricingProfileRepository;
     private final CommercialTermVersionRepository commercialTermVersionRepository;
     private final CommercialTermComponentRepository commercialTermComponentRepository;
     private final AgreementOperatingEntityRepository agreementOperatingEntityRepository;
@@ -44,7 +44,7 @@ public class CheckoutQueryServiceImpl implements CheckoutQueryService {
                 commercialTermVersionRepository.findForCheckout(scope), commercialTermPriceRepository.findForCheckout(scope),
                 commercialTermComponentRepository.findForCheckout(scope),
                 commercialTermComponentBandRepository.findForCheckout(scope),
-                paymentMethodProfileRepository.findForCheckout(scope), businessChangeRecordRepository.findCheckoutRoots(scope)));
+                pricingProfileRepository.findForCheckout(scope), businessChangeRecordRepository.findCheckoutRoots(scope)));
         } catch (DataAccessException | TransactionException exception) {
             throw new ErrorException(OWNER_UNAVAILABLE, "commercial 数据读取不可用", exception);
         }

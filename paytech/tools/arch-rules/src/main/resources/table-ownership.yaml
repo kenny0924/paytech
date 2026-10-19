@@ -3,9 +3,9 @@
 # 255 source tables, 17 databases, 265 physical tables.
 # Retained: platform-support mor_platform from paytech/platform-support/docs/database/sql/platform-support-schema.sql.
 # 56 retained-service tables added on top of design 03 (not part of the §4.2 count).
-# 7 step-added tables (approved refactor-step designs, e.g. design/05 t_card_material_ticket; not part of the §4.2 count).
+# 13 step-added tables (approved refactor-step designs, e.g. design/05 t_card_material_ticket; not part of the §4.2 count).
 # Structure: services.<service>.<database> = tables owned (or copied / per-database infrastructure);
-# Renamed: t_transaction_economics -> t_economic_fact, t_transaction_economic_component -> t_economic_fact_line, t_transaction_economic_comp_link -> t_economic_fact_line_link, t_account -> t_ledger_account.
+# Renamed: t_transaction_economics -> t_economic_fact, t_transaction_economic_component -> t_economic_fact_line, t_transaction_economic_comp_link -> t_economic_fact_line_link, t_account -> t_ledger_account, t_payment_method_profile -> t_pricing_profile, t_payment_method_profile_cond -> t_pricing_profile_cond.
 sharedInfrastructureTables:
   - t_consumed_event
   - t_consumed_aggregate_version
@@ -103,9 +103,12 @@ services:
   commercial:
     mor_commercial:
       - t_agreement
+      - t_agreement_capability
+      - t_agreement_capability_limit
       - t_agreement_document_ref
       - t_agreement_operating_entity
       - t_agreement_party
+      - t_agreement_product
       - t_business_change_record
       - t_business_change_version
       - t_commercial_term_component
@@ -114,8 +117,11 @@ services:
       - t_commercial_term_price
       - t_commercial_term_version
       - t_compensation_event
-      - t_payment_method_profile
-      - t_payment_method_profile_cond
+      - t_pricing_profile
+      - t_pricing_profile_cond
+      - t_product
+      - t_product_capability
+      - t_product_fee_event
   compliance:
     mor_compliance:
       - t_compensation_event

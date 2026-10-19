@@ -1,10 +1,10 @@
 # commercial
 
-商务服务：合同、合同参与方与签署文件、商业条款计划 / 版本 / 价格 / 组件 / 阶梯、支付方式 Profile，以及两段式 Checkout 解析的编排（[design/06](../../requirements/20261017/architecture-V2骨架与模块搬迁/design/06-cct-two-stage-resolution.md)）。由原 `client-contract-service` 拆出（第 04 步）。
+商务服务：合同、合同参与方与签署文件、产品目录（产品 / 可开通项 / 计费事件）、合同订阅与开通项、商业条款计划 / 版本 / 价格 / 组件 / 阶梯、定价画像，以及两段式 Checkout 解析的编排（[design/06](../../requirements/20261017/architecture-V2骨架与模块搬迁/design/06-cct-two-stage-resolution.md)）。由原 `client-contract-service` 拆出（第 04 步）。
 
 - spring.application.name：`commercial-service`
 - 端口：18108，管理端口 19108
-- 数据库：`mor_commercial`（14 张表：11 张商务表、本库 BCR 两表、`t_compensation_event`）
+- 数据库：`mor_commercial`（20 张表：17 张商务表、本库 BCR 两表、`t_compensation_event`）
 - 包根：`com.paytech.commercial`
 - 无 MQ、无补偿 Handler、无 Redis：Enforcer 禁止 AMQP / XXL / compensation-event / Redis 依赖
 
@@ -12,8 +12,8 @@
 
 | 模块 | 内容 |
 |---|---|
-| `paytech-commercial-api` | `CheckoutContextApi`（路径不变）、`CheckoutErrorCode`、`AgreementPartyQueryApi` |
-| `paytech-commercial-core` | 参数化商务查询、两段式解析 `CheckoutResolutionProcessor`、client-master 出站端口、Risk 资格端口（仍为 503 占位） |
+| `paytech-commercial-api` | `CheckoutContextApi`（路径不变）、`CheckoutErrorCode`、`AgreementPartyQueryApi`；六层定价闭合枚举（`api/enums`）与开放目录稳定代码 `CommercialCodes`（`api/constant`） |
+| `paytech-commercial-core` | 参数化商务查询、两段式解析 `CheckoutResolutionProcessor`、client-master 出站端口、Risk 资格端口（仍为 503 占位）；全部 17 张商务表的完整行 DataObject 与写入映射（Mapper XML + Repository，尚无生产写入方）；`CheckoutRecords` 保留为 Checkout 只读投影 |
 | `paytech-commercial-app` | 启动类、Controller、DataSource / 事务 / MyBatis、client-master HTTP 客户端、`application.yml` |
 | `paytech-commercial-test` | 全部 `auto` 测试，见[测试说明](paytech-commercial-test/README.md) |
 
@@ -31,7 +31,8 @@
 
 ## 数据库与 PDManer
 
-- 模型：[commercial.pdma.json](docs/database/commercial.pdma.json)；Schema：[commercial-schema.sql](docs/database/sql/commercial-schema.sql)；物理决定：[COMMERCIAL_PHYSICAL_DECISIONS.md](docs/database/COMMERCIAL_PHYSICAL_DECISIONS.md)。
+- 模型：[commercial.pdma.json](docs/database/commercial.pdma.json)；Schema：[commercial-schema.sql](docs/database/sql/commercial-schema.sql)；初始化 DML（产品目录）：[commercial-initial-data.sql](docs/database/sql/commercial-initial-data.sql)；物理决定：[COMMERCIAL_PHYSICAL_DECISIONS.md](docs/database/COMMERCIAL_PHYSICAL_DECISIONS.md)。
+- 本机测试库增量：[local/2026-10-19-round3-local.sql](docs/database/sql/local/2026-10-19-round3-local.sql)（只写不执行，由主会话审阅后人工执行；执行状态以 `agent-docs/CURRENT_IMPLEMENTATION.md` 为准）。
 - 生成器：`scripts/pdmaner/generate-commercial-model.mjs`；测试库 DDL：`paytech-commercial-test/src/test/resources/init/ddl.sql`。
 
 ## 构建与验证

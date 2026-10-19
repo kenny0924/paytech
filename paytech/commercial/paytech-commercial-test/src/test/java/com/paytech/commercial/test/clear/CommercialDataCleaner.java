@@ -20,8 +20,9 @@ import com.paytech.foundation.testsupport.api.Clear;
 public class CommercialDataCleaner implements Clear {
     /** 本库全部表，与 init/ddl.sql 一致。 */
     public static final List<String> TABLES = List.of("t_agreement", "t_agreement_party", "t_agreement_document_ref",
-        "t_agreement_operating_entity", "t_payment_method_profile", "t_payment_method_profile_cond", "t_commercial_term_plan",
-        "t_commercial_term_version", "t_commercial_term_price", "t_commercial_term_component",
+        "t_agreement_operating_entity", "t_agreement_product", "t_agreement_capability", "t_agreement_capability_limit",
+        "t_product", "t_product_capability", "t_product_fee_event", "t_pricing_profile", "t_pricing_profile_cond",
+        "t_commercial_term_plan", "t_commercial_term_version", "t_commercial_term_price", "t_commercial_term_component",
         "t_commercial_term_component_band", "t_business_change_record", "t_business_change_version", "t_compensation_event",
         "t_consumed_event");
 

@@ -72,6 +72,7 @@ const RATE_FIELD_PATHS = new Set([
   "commercial_term_component.rate",
   "commercial_term_component_band.rate",
   "party_relation.ownership_percentage",
+  "agreement_capability.rolling_reserve_rate",
 ]);
 const INTEGER_FIELDS = new Set([
   "execute_count",
@@ -83,6 +84,7 @@ const INTEGER_FIELDS = new Set([
   "settlement_business_days",
   "submission_hash_schema_version",
   "cutoff_second_of_day",
+  "rolling_reserve_days",
 ]);
 const FLAG_OR_SLOT_FIELDS = new Set([
   "acceptance_ref_slot",
@@ -90,6 +92,7 @@ const FLAG_OR_SLOT_FIELDS = new Set([
   "active_source_slot",
   "primary_slot",
   "required_acceptance_flag",
+  "base_product",
 ]);
 const TEXT_FIELDS = new Set(["last_error_summary"]);
 const VARCHAR_LENGTH_OVERRIDES = new Map(Object.entries({
@@ -103,8 +106,8 @@ const VARCHAR_LENGTH_OVERRIDES = new Map(Object.entries({
   "client_business_profile.website_url": 2048,
   "client_entity_affiliation.mcc_code": 4,
   "client_entity_assignment.mcc_code": 4,
-  "payment_method_profile.profile_name": 128,
-  "payment_method_profile_cond.condition_value": 128,
+  "pricing_profile.profile_name": 128,
+  "pricing_profile_cond.condition_value": 128,
   "command_idempotency.idempotency_key": 128,
   "compensation_event.event_key": 128,
   "consumer_legal_document.locale": 35,
@@ -125,6 +128,21 @@ const VARCHAR_LENGTH_OVERRIDES = new Map(Object.entries({
   "seller_disclosure.public_address_text": 512,
   "seller_disclosure.public_support_email": 254,
   "seller_disclosure.public_support_phone": 32,
+  "agreement.business_mode": 16,
+  "agreement.fund_mode": 32,
+  "agreement.pricing_authority": 16,
+  "product.product_name": 128,
+  "product.business_mode_scope": 16,
+  "product_capability.capability_name": 128,
+  "product_capability.capability_kind": 32,
+  "product_capability.dimension_value": 128,
+  "agreement_capability.status": 32,
+  "agreement_capability_limit.limit_value": 128,
+  "pricing_profile.profile_kind": 32,
+  "commercial_term_version.pricing_model": 32,
+  "commercial_term_version.fee_tax_treatment": 16,
+  "commercial_term_component.refund_behavior": 32,
+  "commercial_term_component.band_basis": 32,
 }));
 const NULLABLE_FIELD_PATHS = new Set([
   "agreement.entity_no",
@@ -227,6 +245,14 @@ const NULLABLE_FIELD_PATHS = new Set([
   "consumer_legal_document.effective_to", "consumer_legal_document.approved_time", "consumer_legal_document.published_time",
   "seller_disclosure.public_tax_registration_number", "seller_disclosure.public_support_phone",
   "seller_disclosure.effective_to", "seller_disclosure.approved_time", "seller_disclosure.published_time",
+  "agreement.business_mode",
+  "agreement.fund_mode",
+  "agreement.pricing_authority",
+  "agreement.referral_partner_id",
+  "pricing_profile.payment_method_code",
+  "commercial_term_component.band_basis",
+  "product_capability.payment_method_code", "product_capability.dimension_code", "product_capability.dimension_value",
+  "agreement_capability.effective_to", "agreement_capability.rolling_reserve_rate", "agreement_capability.rolling_reserve_days",
 ]);
 
 const VERSION_TABLES = new Set([
@@ -264,6 +290,32 @@ const TABLE_COMMENT_CLAUSES = Object.freeze({
     "历史 As-Of 候选必须满足 signed_time <= t AND activated_time <= t AND effective_from <= t AND (effective_to IS NULL OR t < effective_to)，不得按当前 status=ACTIVE 排除历史行；零条或多条候选均 Fail Closed。",
     "进入 PENDING_SIGNATURE、SIGNED、ACTIVE 和显式替换时，按 Owner、Agreement Type、Operating Entity 的稳定顺序锁定全部相关 Root 并防御性复查区间冲突。",
     "替换在同一事务收窄旧合同 effective_to、写 BCR/事件和终止依据并冻结新合同；不得按当前状态过滤 EXPIRED/TERMINATED 行，不得回溯收窄到 operation_context_time 之前，旧合同内容、覆盖关系和 effective_from 不得覆盖。",
+    "业务模式：agreement_type=CLIENT 要求 business_mode IS NOT NULL；agreement_type=PARTNER 要求 business_mode IS NULL；创建后不可修改。",
+    "商业关系：agreement_type=CLIENT 要求 fund_mode、pricing_authority 非空，PARTNER 要求二者为空；business_mode=MOR 只允许 fund_mode=SETTLE_THROUGH_PLATFORM；fund_mode=FEES_ONLY 只允许 OE 来源 CLIENT。",
+    "pricing_authority=PARTNER 要求 referral_partner_id IS NOT NULL；referral_partner_id 为 client-master Local Partner 跨库值引用，签署时冻结。",
+    "本期应用只接受 fund_mode=SETTLE_THROUGH_PLATFORM 与 pricing_authority=PLATFORM。",
+  ],
+  agreement_product: [
+    "business_mode_scope=BOTH 兼容 MOR 与 PSP 合同；产品 RETIRED 后禁止新订阅，历史订阅可读。",
+  ],
+  agreement_capability: [
+    "所属产品必须已在 agreement_product 订阅；capability_code 引用时目录项须为 ACTIVE。",
+    "CLIENT 合同的 entity_no 必须等于 agreement.entity_no；PARTNER 合同的 entity_no 必须在 agreement_operating_entity 内。",
+    "CHECK (effective_to IS NULL OR effective_from < effective_to)，解析时要求 status=ENABLED 且 effective_from <= contextAsOfTime < effective_to。",
+    "rolling_reserve_rate 与 rolling_reserve_days 成组为空或成组非空；比例取值 0 至 1，保证金执行归 account / risk。",
+  ],
+  agreement_capability_limit: [
+    "CURRENCY 用 ISO 4217，CONSUMER_COUNTRY 用 ISO 3166-1 alpha-2，REQUIRE_3DS 固定为 1。",
+  ],
+  product: [
+    "base_product 只允许 0 或 1，基座产品对所有合同默认生效。",
+  ],
+  product_capability: [
+    "capability_kind=PAYMENT_METHOD 要求 payment_method_code IS NOT NULL，其他种类要求 payment_method_code IS NULL。",
+    "dimension_code 与 dimension_value 成组为空或成组非空。",
+  ],
+  product_fee_event: [
+    "fee_event_code 是 commercial_term_component.trigger_code 的值域，term_type 是 commercial_term_plan.term_type 的值域；均为值引用，不建关系。",
   ],
   agreement_party: [
     "party_profile_id 必须属于 party_id 且提交签署时已封存；CLIENT/LOCAL_PARTNER 签约方必须分别匹配合同 Owner，PLATFORM_SIGNATORY 为平台授权签约主体，OPERATING_ENTITY 必须属于合同覆盖经营主体。",
@@ -275,7 +327,7 @@ const TABLE_COMMENT_CLAUSES = Object.freeze({
     "最终接受证据仅允许从待签补齐一次，补齐后不得修改或删除。",
   ],
   commercial_term_price: [
-    "每条 Price 属于准确 term_version_id + entity_no，并以 payment_method_profile_code 关联一个 ACTIVE Payment Method Profile；Profile 可跨 Client、Version 与 OE 复用。",
+    "每条 Price 属于准确 term_version_id + entity_no，并以 pricing_profile_code 关联一个 ACTIVE 定价画像；Profile 可跨 Client、Version 与 OE 复用。",
     "Operating Entity 必须被 Version 引用的 Agreement 覆盖；不允许 NULL、* 或全 OE 通配，旧全 Agreement-OE Scope 迁移时展开为准确 OE Price。",
     "匹配先选择不同 dimension_code 数量最多的 Profile，再以最小 priority_no 选择；零命中、事实缺失或仍有歧义均 Fail Closed。",
     "PLATFORM_SERVICE_CHARGE 使用受控 Calculation Base Catalog；不得用 Client Fee、Partner Share、Channel Cost 或其残差倒算平台服务费。",
@@ -283,11 +335,14 @@ const TABLE_COMMENT_CLAUSES = Object.freeze({
     "CHECK (settlement_business_days IS NULL OR settlement_business_days>=0)",
     "CHECK (cutoff_second_of_day IS NULL OR cutoff_second_of_day BETWEEN 0 AND 86399)",
     "UTC 截止时刻精确至秒的起点；23:59:59.000001 已超过 86399 秒截止，使用冻结的工作日日历和实际成功时刻计算。",
+    "费用币种 = 交易币种，同一画像按币种各一条 Price，不做通配；命中顺序为币种精确 → 画像具体度 → priority_no。",
+    "组件 currency 非空时必须等于本 Price 的 currency；激活前每个开通项 × 每个 CURRENCY 约束币种至少命中一条 Price。",
   ],
   commercial_term_plan: [
     "Owner XOR：term_type=CLIENT_PRICING 要求 client_id IS NOT NULL AND local_partner_id IS NULL；term_type IN (PARTNER_SHARE,PLATFORM_SERVICE_CHARGE) 要求 client_id IS NULL AND local_partner_id IS NOT NULL。",
     "term_type、client_id 与 local_partner_id 创建后不可修改；MVP 每份 Client Agreement 一个 Client Pricing Plan，每个 Local Partner 可分别拥有一个 Partner Share Plan 和一个 PLATFORM_SERVICE_CHARGE Plan，通过 local_partner_id + term_type 复合唯一。",
     "CLIENT_PRICING 的 agreement_id/entity_no/client_id 必须与同一 Client Agreement 一致，local_partner_id 为空；Partner 两类只填 local_partner_id，Version 冻结其 Partner Agreement。",
+    "PARTNER_BUY_RATE 属于 Partner 合同，Owner 规则同 PARTNER_SHARE；结构同 CLIENT_PRICING，按画像 × 币种定价。",
   ],
   application_document: [
     "CHECK ((client_application_id IS NOT NULL) + (partner_application_id IS NOT NULL) + (operating_entity_application_id IS NOT NULL) = 1)",
@@ -314,21 +369,26 @@ const TABLE_COMMENT_CLAUSES = Object.freeze({
   commercial_term_version: [
     "CLIENT_PRICING 必须引用同一 Client 的 CLIENT Agreement；PARTNER_SHARE 与 PLATFORM_SERVICE_CHARGE 必须引用同一 Local Partner 的 PARTNER Agreement，同一交易命中的两类 Partner Term 必须属于同一 Agreement。",
     "Agreement 必须覆盖全部 Price 的准确 Operating Entity，Version 有效区间不得超出 Agreement；APPROVED 后 Version、Price、Component 与 Band 业务字段不可修改。",
+    "本期 pricing_model 只接受 BLENDED；激活前 Version 下每个开通项至少命中一条 Price。",
   ],
-  payment_method_profile: [
-    "状态只允许 DRAFT、ACTIVE、RETIRED；DRAFT 可在 Profile Root BCR/CAS 下编辑，ACTIVE 后 payment_method_profile_code、payment_method_code 与全部 Condition 永久冻结。",
+  pricing_profile: [
+    "状态只允许 DRAFT、ACTIVE、RETIRED；DRAFT 可在 Profile Root BCR/CAS 下编辑，ACTIVE 后 pricing_profile_code、payment_method_code 与全部 Condition 永久冻结。",
     "Condition 变化必须创建新 Profile 与新 Code；RETIRED 只阻止新 Commercial Term Version 引用，历史引用继续可读，Code 不得回收复用。",
-    "一个 Profile 精确绑定一个 Payment Method 稳定代码；CCT 不建立 Payment Method 主表，也不复制名称、图标、路由能力或 Channel 配置。",
+    "profile_kind=PAYMENT_METHOD 要求 payment_method_code IS NOT NULL，其他种类要求 payment_method_code IS NULL；CCT 不建立 Payment Method 主表，也不复制名称、图标、路由能力或 Channel 配置。",
+    "条件维度须与种类相容：出款类只用 PAYOUT_RAIL、DESTINATION_COUNTRY、CURRENCY，FX 只用 CURRENCY_PAIR。",
   ],
-  payment_method_profile_cond: [
+  pricing_profile_cond: [
     "每行保存一个 dimension_code + condition_value 离散等值条件；同维度多行按 OR，不同维度按 AND，缺少维度表示不限制。",
     "不保存 CSV、*、Operator、Range，不建立 Dimension Definition、Profile Version 或 Condition Value 子表；维度和值由版本化应用/API 合同校验。",
-    "Condition 是 Profile 聚合内部 Child，使用 payment_method_profile_id 关联，并由 Profile Root BCR/CAS 与冻结规则保护。",
+    "Condition 是 Profile 聚合内部 Child，使用 pricing_profile_id 关联，并由 Profile Root BCR/CAS 与冻结规则保护。",
   ],
   commercial_term_component: [
     "PERCENTAGE、FIXED、TIERED 必须满足批准的 rate、fixed_amount、currency、min_amount、max_amount 与 band_mode 矩阵。",
     "多个 Component 按 component_no 稳定计算并相加；PERCENTAGE/FIXED 不得拥有 Band，TIERED 头部 rate/fixed_amount 为空、band_mode 非空且至少拥有一档。",
-    "CLIENT_PRICING 使用受控 Client Fee 计算基数目录；PARTNER_SHARE 固定 calculation_base=ACTUAL_CLIENT_FEE；PLATFORM_SERVICE_CHARGE 使用受控 Calculation Base Catalog，现实场景可使用 GROSS_PAYMENT_AMOUNT。",
+    "CLIENT_PRICING 使用闭合计算基数；PARTNER_SHARE 使用 calculation_base=ACTUAL_CLIENT_FEE 或 BUY_RATE_DIFFERENCE；PLATFORM_SERVICE_CHARGE 使用闭合计算基数，现实场景可使用 GROSS_AMOUNT。",
+    "BUY_RATE_DIFFERENCE = Client 实收费用 − 同场景 PARTNER_BUY_RATE 命中金额，负值取 0；仅 PARTNER_SHARE 组件可用。",
+    "TIERED 要求 band_basis 非空，其他类型 band_basis 为空；RETROACTIVE 只允许与 PERIOD_VOLUME 组合，本期 band_basis=PERIOD_VOLUME 拒绝激活。",
+    "trigger_code 必须在 product_fee_event 登记；非支付类事件的组件 refund_behavior=KEEP。",
     "所属 Version 进入 APPROVED 后结构化 Component 与 Band 不可修改；调整条款必须创建新 Version。",
   ],
   commercial_term_component_band: [
@@ -415,6 +475,7 @@ const ACCESS_INDEXES = {
   agreement: [
     { defKey: "idx_agreement_client_time", fields: ["client_id", "effective_from", "effective_to"] },
     { defKey: "idx_agreement_partner_time", fields: ["local_partner_id", "effective_from", "effective_to"] },
+    { defKey: "idx_agreement_referral", fields: ["referral_partner_id"] },
   ],
   agreement_party: [
     { defKey: "idx_agreement_party", fields: ["party_id"] },
@@ -422,6 +483,19 @@ const ACCESS_INDEXES = {
   ],
   agreement_operating_entity: [
     { defKey: "idx_agreement_oe_entity", fields: ["entity_no"] },
+  ],
+  agreement_product: [
+    { defKey: "idx_agreement_product_code", fields: ["product_code"] },
+  ],
+  agreement_capability: [
+    { defKey: "idx_agreement_capability_lookup", fields: ["entity_no", "capability_code", "status"] },
+    { defKey: "idx_agreement_capability_code", fields: ["capability_code"] },
+  ],
+  product_capability: [
+    { defKey: "idx_product_capability_product", fields: ["product_code", "status"] },
+  ],
+  product_fee_event: [
+    { defKey: "idx_product_fee_event_product", fields: ["product_code"] },
   ],
   consumer_legal_document: [
     { defKey: "idx_legal_doc_resolve", fields: ["entity_no", "country_code", "locale", "document_type", "effective_from", "effective_to"] },
@@ -433,15 +507,15 @@ const ACCESS_INDEXES = {
     ["term_plan_id", "status", "effective_from", "effective_to"],
     { defKey: "idx_comm_term_agreement", fields: ["agreement_id"] },
   ],
-  payment_method_profile: [
-    { defKey: "idx_pm_profile_lookup", fields: ["status", "payment_method_code", "payment_method_profile_code"] },
+  pricing_profile: [
+    { defKey: "idx_pricing_profile_lookup", fields: ["status", "payment_method_code", "pricing_profile_code"] },
   ],
-  payment_method_profile_cond: [
-    { defKey: "idx_pm_cond_lookup", fields: ["dimension_code", "condition_value", "payment_method_profile_id"] },
+  pricing_profile_cond: [
+    { defKey: "idx_pricing_cond_lookup", fields: ["dimension_code", "condition_value", "pricing_profile_id"] },
   ],
   commercial_term_price: [
-    { defKey: "idx_term_price_profile", fields: ["payment_method_profile_code", "term_version_id"] },
-    { defKey: "idx_term_price_oe", fields: ["entity_no", "term_version_id"] },
+    { defKey: "idx_term_price_profile", fields: ["pricing_profile_code", "term_version_id"] },
+    { defKey: "idx_term_price_oe", fields: ["entity_no", "currency", "term_version_id"] },
   ],
   business_change_record: [
     ["aggregate_root_type", "aggregate_root_id", "history_id"],
@@ -480,12 +554,21 @@ export const LOCAL_RELATIONS = Object.freeze([
   ["commercial_term_plan", "entity_no", "operating_entity", "entity_no", "n"],
   ["agreement", "client_id", "client", "client_id", "n"],
   ["agreement", "local_partner_id", "local_partner", "local_partner_id", "n"],
+  ["agreement", "referral_partner_id", "local_partner", "local_partner_id", "n"],
   ["agreement_party", "agreement_id", "agreement", "agreement_id", "n"],
   ["agreement_party", "party_id", "party", "party_id", "n"],
   ["agreement_party", "party_profile_id", "party_profile", "profile_id", "n"],
   ["agreement_document_ref", "agreement_id", "agreement", "agreement_id", "n"],
   ["agreement_operating_entity", "agreement_id", "agreement", "agreement_id", "n"],
   ["agreement_operating_entity", "entity_no", "operating_entity", "entity_no", "n"],
+  ["agreement_product", "agreement_id", "agreement", "agreement_id", "n"],
+  ["agreement_product", "product_code", "product", "product_code", "n"],
+  ["agreement_capability", "agreement_id", "agreement", "agreement_id", "n"],
+  ["agreement_capability", "entity_no", "operating_entity", "entity_no", "n"],
+  ["agreement_capability", "capability_code", "product_capability", "capability_code", "n"],
+  ["agreement_capability_limit", "agreement_capability_id", "agreement_capability", "agreement_capability_id", "n"],
+  ["product_capability", "product_code", "product", "product_code", "n"],
+  ["product_fee_event", "product_code", "product", "product_code", "n"],
   ["application_document", "client_application_id", "client_application", "application_id", "n"],
   ["application_document", "partner_application_id", "partner_application", "application_id", "n"],
   ["application_document", "operating_entity_application_id", "operating_entity_application", "application_id", "n"],
@@ -503,7 +586,7 @@ export const LOCAL_RELATIONS = Object.freeze([
   ["commercial_term_plan", "client_id", "client", "client_id", "n"],
   ["commercial_term_plan", "local_partner_id", "local_partner", "local_partner_id", "n"],
   ["commercial_term_price", "entity_no", "operating_entity", "entity_no", "n"],
-  ["commercial_term_price", "payment_method_profile_code", "payment_method_profile", "payment_method_profile_code", "n"],
+  ["commercial_term_price", "pricing_profile_code", "pricing_profile", "pricing_profile_code", "n"],
   ["commercial_term_price", "term_version_id", "commercial_term_version", "term_version_id", "n"],
   ["commercial_term_version", "agreement_id", "agreement", "agreement_id", "n"],
   ["commercial_term_version", "term_plan_id", "commercial_term_plan", "term_plan_id", "n"],
@@ -530,7 +613,7 @@ export const LOCAL_RELATIONS = Object.freeze([
   ["party_profile_identifier", "profile_id", "party_profile", "profile_id", "n"],
   ["party_relation", "organization_party_id", "party", "party_id", "n"],
   ["party_relation", "related_party_id", "party", "party_id", "n"],
-  ["payment_method_profile_cond", "payment_method_profile_id", "payment_method_profile", "payment_method_profile_id", "n"],
+  ["pricing_profile_cond", "pricing_profile_id", "pricing_profile", "pricing_profile_id", "n"],
   ["seller_disclosure", "entity_no", "operating_entity", "entity_no", "n"],
 ]);
 

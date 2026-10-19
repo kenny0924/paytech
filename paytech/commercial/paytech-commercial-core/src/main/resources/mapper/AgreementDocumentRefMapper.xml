@@ -16,4 +16,38 @@
         WHERE agreement_id IN (SELECT agreement_id FROM t_agreement WHERE client_id = #{clientId}<if test="!localPartnerIds.isEmpty() and !entityNos.isEmpty()"> OR (local_partner_id IN <foreach collection="localPartnerIds" item="partnerId" open="(" separator="," close=")">#{partnerId}</foreach> AND agreement_id IN (SELECT agreement_id FROM t_agreement_operating_entity WHERE entity_no IN <foreach collection="entityNos" item="entityNo" open="(" separator="," close=")">#{entityNo}</foreach>))</if>)
         ORDER BY agreement_document_id
     </select>
+
+    <!-- 完整行映射：写入与按主键 / 唯一键 / 父读取；CheckoutRecords 只读投影另见 findForCheckout。 -->
+    <resultMap id="AgreementDocumentRefRow" type="com.paytech.commercial.core.dal.dataobject.AgreementDocumentRef">
+        <id column="agreement_document_id" property="agreementDocumentId"/>
+        <result column="agreement_id" property="agreementId"/>
+        <result column="document_type" property="documentType"/>
+        <result column="file_id" property="fileId"/>
+        <result column="content_hash" property="contentHash"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="agreementDocumentRefColumns">
+        agreement_document_id, agreement_id, document_type, file_id, content_hash, create_time, update_time
+    </sql>
+
+    <insert id="insertAll">
+        INSERT INTO t_agreement_document_ref (<include refid="agreementDocumentRefColumns"/>) VALUES
+        <foreach collection="rows" item="row" separator=",">
+            (#{row.agreementDocumentId}, #{row.agreementId}, #{row.documentType}, #{row.fileId}, #{row.contentHash}, #{row.createTime}, #{row.updateTime})
+        </foreach>
+    </insert>
+
+    <select id="selectById" resultMap="AgreementDocumentRefRow">
+        SELECT <include refid="agreementDocumentRefColumns"/> FROM t_agreement_document_ref WHERE agreement_document_id = #{agreementDocumentId}
+    </select>
+
+    <select id="selectByUniqueKey" resultMap="AgreementDocumentRefRow">
+        SELECT <include refid="agreementDocumentRefColumns"/> FROM t_agreement_document_ref WHERE agreement_id = #{agreementId} AND document_type = #{documentType} AND file_id = #{fileId}
+    </select>
+
+    <select id="selectByAgreementId" resultMap="AgreementDocumentRefRow">
+        SELECT <include refid="agreementDocumentRefColumns"/> FROM t_agreement_document_ref WHERE agreement_id = #{agreementId} ORDER BY agreement_document_id
+    </select>
 </mapper>

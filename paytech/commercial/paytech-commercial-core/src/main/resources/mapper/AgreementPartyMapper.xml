@@ -35,4 +35,59 @@
         WHERE party_profile_id IN <foreach collection="partyProfileIds" item="id" open="(" separator="," close=")">#{id}</foreach>
         ORDER BY party_profile_id
     </select>
+
+    <!-- 完整行映射：写入与按主键 / 唯一键 / 父读取；CheckoutRecords 只读投影另见 findForCheckout。 -->
+    <resultMap id="AgreementPartyRow" type="com.paytech.commercial.core.dal.dataobject.AgreementParty">
+        <id column="agreement_party_id" property="agreementPartyId"/>
+        <result column="agreement_id" property="agreementId"/>
+        <result column="party_id" property="partyId"/>
+        <result column="party_profile_id" property="partyProfileId"/>
+        <result column="party_role" property="partyRole"/>
+        <result column="acceptance_method" property="acceptanceMethod"/>
+        <result column="accepted_by_actor_id" property="acceptedByActorId"/>
+        <result column="accepted_time" property="acceptedTime"/>
+        <result column="evidence_document_id" property="evidenceDocumentId"/>
+        <result column="acceptance_reference" property="acceptanceReference"/>
+        <result column="acceptance_ref_slot" property="acceptanceRefSlot"/>
+        <result column="acceptance_recorded_by" property="acceptanceRecordedBy"/>
+        <result column="acceptance_recorded_at" property="acceptanceRecordedAt"/>
+        <result column="create_by" property="createBy"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="agreementPartyColumns">
+        agreement_party_id, agreement_id, party_id, party_profile_id, party_role, acceptance_method,
+        accepted_by_actor_id, accepted_time, evidence_document_id, acceptance_reference, acceptance_ref_slot,
+        acceptance_recorded_by, acceptance_recorded_at, create_by, create_time, update_time
+    </sql>
+
+    <insert id="insertAll">
+        INSERT INTO t_agreement_party (<include refid="agreementPartyColumns"/>) VALUES
+        <foreach collection="rows" item="row" separator=",">
+            (#{row.agreementPartyId}, #{row.agreementId}, #{row.partyId}, #{row.partyProfileId}, #{row.partyRole}, #{row.acceptanceMethod}, #{row.acceptedByActorId}, #{row.acceptedTime}, #{row.evidenceDocumentId}, #{row.acceptanceReference}, #{row.acceptanceRefSlot}, #{row.acceptanceRecordedBy}, #{row.acceptanceRecordedAt}, #{row.createBy}, #{row.createTime}, #{row.updateTime})
+        </foreach>
+    </insert>
+
+    <select id="selectById" resultMap="AgreementPartyRow">
+        SELECT <include refid="agreementPartyColumns"/> FROM t_agreement_party WHERE agreement_party_id = #{agreementPartyId}
+    </select>
+
+    <select id="selectByUniqueKey" resultMap="AgreementPartyRow">
+        SELECT <include refid="agreementPartyColumns"/> FROM t_agreement_party WHERE agreement_id = #{agreementId} AND party_id = #{partyId} AND party_role = #{partyRole}
+    </select>
+
+    <select id="selectByAgreementId" resultMap="AgreementPartyRow">
+        SELECT <include refid="agreementPartyColumns"/> FROM t_agreement_party WHERE agreement_id = #{agreementId} ORDER BY agreement_party_id
+    </select>
+
+    <select id="selectByAcceptanceReference" resultMap="AgreementPartyRow">
+        SELECT <include refid="agreementPartyColumns"/> FROM t_agreement_party WHERE acceptance_reference = #{acceptanceReference} ORDER BY agreement_party_id
+    </select>
+
+    <update id="updateAcceptance">
+        UPDATE t_agreement_party SET acceptance_method = #{acceptance.acceptanceMethod}, accepted_by_actor_id = #{acceptance.acceptedByActorId}, accepted_time = #{acceptance.acceptedTime}, evidence_document_id = #{acceptance.evidenceDocumentId}, acceptance_reference = #{acceptance.acceptanceReference}, acceptance_ref_slot = #{acceptance.acceptanceRefSlot}, acceptance_recorded_by = #{acceptance.acceptanceRecordedBy}, acceptance_recorded_at = #{acceptance.acceptanceRecordedAt},
+            update_time = #{now}
+        WHERE agreement_party_id = #{row.agreementPartyId} AND accepted_time IS NULL
+    </update>
 </mapper>

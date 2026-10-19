@@ -22,8 +22,9 @@ class TableOwnershipAutoTest {
     @Test
     void test_normalFlow() {
         // design/03 §4.2：17 个目标库共 265 张物理表；另加保留服务 platform-support 自身 Schema 的 56 张表。
-        Assertions.assertEquals(265 + 56 + 1 + 6, ownership.physicalTableCount(),
-            "design 03 + Platform 保留表 + 第 12 步 t_card_material_ticket + account 明细账六张业务表（2026-10-19 重构）");
+        Assertions.assertEquals(265 + 56 + 1 + 6 + 6, ownership.physicalTableCount(),
+            "design 03 + Platform 保留表 + 第 12 步 t_card_material_ticket + account 明细账六张业务表（2026-10-19 重构）"
+                + " + commercial 产品目录三表与合同订阅 / 开通 / 约束三表（2026-10-19 六层产品定价模型）");
         Assertions.assertEquals(57, ownership.databasesOf("platform-support").get("mor_platform").size());
         Assertions.assertEquals(29, ownership.databasesOf("ledger").get("mor_ledger").size());
         Assertions.assertEquals(Set.of("mor_platform"), ownership.databasesOf("platform-support").keySet());

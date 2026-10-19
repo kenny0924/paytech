@@ -31,7 +31,7 @@ public class CommercialCheckoutFacts {
     /** 定价阶梯。 */
     List<CommercialTermComponentBand> termBands;
     /** 支付方式 Profile。 */
-    List<PaymentMethodProfile> methodProfiles;
+    List<PricingProfile> methodProfiles;
     /** 合同业务根。 */
     List<BusinessChangeRecord> roots;
 

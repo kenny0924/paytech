@@ -1,0 +1,4 @@
+-- 本文件仅为索引，不含可执行语句。
+-- 完整 Schema（空库执行文件）：paytech/commercial/docs/database/sql/commercial-schema.sql
+-- 本机 local-environment 测试库增量（2026-10-19 已执行，用户授权）：design-discuss/commercial/local-mor_commercial-round2.sql
+-- mor-test 增量：阶段 6 按 mor-test 当前结构另行生成与评审；执行状态只见 agent-docs/CURRENT_IMPLEMENTATION.md

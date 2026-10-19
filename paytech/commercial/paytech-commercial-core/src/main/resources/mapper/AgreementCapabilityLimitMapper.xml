@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.commercial.core.dal.mapper.AgreementCapabilityLimitMapper">
+    <resultMap id="AgreementCapabilityLimit" type="com.paytech.commercial.core.dal.dataobject.AgreementCapabilityLimit">
+        <id column="agreement_capability_limit_id" property="agreementCapabilityLimitId"/>
+        <result column="agreement_capability_id" property="agreementCapabilityId"/>
+        <result column="limit_code" property="limitCode"/>
+        <result column="limit_value" property="limitValue"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="columns">
+        agreement_capability_limit_id, agreement_capability_id, limit_code, limit_value, create_time,
+        update_time
+    </sql>
+
+    <insert id="insertAll">
+        INSERT INTO t_agreement_capability_limit (<include refid="columns"/>) VALUES
+        <foreach collection="limits" item="limit" separator=",">
+            (#{limit.agreementCapabilityLimitId}, #{limit.agreementCapabilityId}, #{limit.limitCode}, #{limit.limitValue},
+            #{limit.createTime}, #{limit.updateTime})
+        </foreach>
+    </insert>
+
+    <select id="selectById" resultMap="AgreementCapabilityLimit">
+        SELECT <include refid="columns"/> FROM t_agreement_capability_limit
+        WHERE agreement_capability_limit_id = #{agreementCapabilityLimitId}
+    </select>
+
+    <select id="selectByAgreementCapabilityId" resultMap="AgreementCapabilityLimit">
+        SELECT <include refid="columns"/> FROM t_agreement_capability_limit WHERE agreement_capability_id = #{agreementCapabilityId}
+        ORDER BY agreement_capability_limit_id
+    </select>
+
+    <select id="selectByAgreementCapabilityIds" resultMap="AgreementCapabilityLimit">
+        SELECT <include refid="columns"/> FROM t_agreement_capability_limit
+        WHERE agreement_capability_id IN
+        <foreach collection="agreementCapabilityIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY agreement_capability_limit_id
+    </select>
+
+    <delete id="deleteByAgreementCapabilityId">
+        DELETE FROM t_agreement_capability_limit WHERE agreement_capability_id = #{agreementCapabilityId}
+    </delete>
+</mapper>

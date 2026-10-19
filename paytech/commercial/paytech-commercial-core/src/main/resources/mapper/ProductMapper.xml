@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.commercial.core.dal.mapper.ProductMapper">
+    <resultMap id="Product" type="com.paytech.commercial.core.dal.dataobject.Product">
+        <id column="product_id" property="productId"/>
+        <result column="product_code" property="productCode"/>
+        <result column="product_name" property="productName"/>
+        <result column="business_mode_scope" property="businessModeScope"/>
+        <result column="base_product" property="baseProduct"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="columns">
+        product_id, product_code, product_name, business_mode_scope, base_product, status, create_time,
+        update_time
+    </sql>
+
+    <insert id="insert">
+        INSERT INTO t_product (<include refid="columns"/>)
+        VALUES (#{productId}, #{productCode}, #{productName}, #{businessModeScope}, #{baseProduct}, #{status}, #{createTime},
+            #{updateTime})
+    </insert>
+
+    <select id="selectById" resultMap="Product">
+        SELECT <include refid="columns"/> FROM t_product WHERE product_id = #{productId}
+    </select>
+
+    <select id="selectByCode" resultMap="Product">
+        SELECT <include refid="columns"/> FROM t_product WHERE product_code = #{productCode}
+    </select>
+
+    <select id="selectAll" resultMap="Product">
+        SELECT <include refid="columns"/> FROM t_product ORDER BY product_id
+    </select>
+
+    <update id="updateStatus">
+        UPDATE t_product SET status = #{status}, update_time = #{now}
+        WHERE product_id = #{product.productId} AND status = #{product.status}
+    </update>
+</mapper>

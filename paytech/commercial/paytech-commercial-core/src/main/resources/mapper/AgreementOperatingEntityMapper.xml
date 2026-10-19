@@ -14,4 +14,46 @@
         WHERE agreement_id IN (SELECT agreement_id FROM t_agreement WHERE client_id = #{clientId}<if test="!localPartnerIds.isEmpty() and !entityNos.isEmpty()"> OR (local_partner_id IN <foreach collection="localPartnerIds" item="partnerId" open="(" separator="," close=")">#{partnerId}</foreach> AND agreement_id IN (SELECT agreement_id FROM t_agreement_operating_entity WHERE entity_no IN <foreach collection="entityNos" item="entityNo" open="(" separator="," close=")">#{entityNo}</foreach>))</if>)
         ORDER BY agreement_operating_entity_id
     </select>
+
+    <!-- 完整行映射：写入与按主键 / 唯一键 / 父读取；CheckoutRecords 只读投影另见 findForCheckout。 -->
+    <resultMap id="AgreementOperatingEntityRow" type="com.paytech.commercial.core.dal.dataobject.AgreementOperatingEntity">
+        <id column="agreement_operating_entity_id" property="agreementOperatingEntityId"/>
+        <result column="agreement_id" property="agreementId"/>
+        <result column="entity_no" property="entityNo"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="agreementOperatingEntityColumns">
+        agreement_operating_entity_id, agreement_id, entity_no, create_time, update_time
+    </sql>
+
+    <insert id="insertAll">
+        INSERT INTO t_agreement_operating_entity (<include refid="agreementOperatingEntityColumns"/>) VALUES
+        <foreach collection="rows" item="row" separator=",">
+            (#{row.agreementOperatingEntityId}, #{row.agreementId}, #{row.entityNo}, #{row.createTime}, #{row.updateTime})
+        </foreach>
+    </insert>
+
+    <select id="selectById" resultMap="AgreementOperatingEntityRow">
+        SELECT <include refid="agreementOperatingEntityColumns"/> FROM t_agreement_operating_entity WHERE agreement_operating_entity_id = #{agreementOperatingEntityId}
+    </select>
+
+    <select id="selectByUniqueKey" resultMap="AgreementOperatingEntityRow">
+        SELECT <include refid="agreementOperatingEntityColumns"/> FROM t_agreement_operating_entity WHERE agreement_id = #{agreementId} AND entity_no = #{entityNo}
+    </select>
+
+    <select id="selectByAgreementId" resultMap="AgreementOperatingEntityRow">
+        SELECT <include refid="agreementOperatingEntityColumns"/> FROM t_agreement_operating_entity WHERE agreement_id = #{agreementId} ORDER BY agreement_operating_entity_id
+    </select>
+
+    <select id="selectByAgreementIds" resultMap="AgreementOperatingEntityRow">
+        SELECT <include refid="agreementOperatingEntityColumns"/> FROM t_agreement_operating_entity
+        WHERE agreement_id IN <foreach collection="agreementIds" item="value" open="(" separator="," close=")">#{value}</foreach>
+        ORDER BY agreement_operating_entity_id
+    </select>
+
+    <delete id="deleteById">
+        DELETE FROM t_agreement_operating_entity WHERE agreement_operating_entity_id = #{agreementOperatingEntityId}
+    </delete>
 </mapper>

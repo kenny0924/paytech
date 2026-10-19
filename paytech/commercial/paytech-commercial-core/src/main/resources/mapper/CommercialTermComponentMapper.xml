@@ -9,19 +9,73 @@
             <arg column="component_code" javaType="java.lang.String"/>
             <arg column="component_type" javaType="com.paytech.commercial.domain.enums.CommercialTermComponentComponentType"/>
             <arg column="trigger_code" javaType="java.lang.String"/>
-            <arg column="calculation_base" javaType="java.lang.String"/>
+            <arg column="calculation_base" javaType="com.paytech.commercial.api.enums.CalculationBase"/>
+            <arg column="refund_behavior" javaType="com.paytech.commercial.api.enums.RefundBehavior"/>
             <arg column="rate" javaType="java.math.BigDecimal"/>
             <arg column="fixed_amount" javaType="java.math.BigDecimal"/>
             <arg column="currency" javaType="java.lang.String"/>
             <arg column="min_amount" javaType="java.math.BigDecimal"/>
             <arg column="max_amount" javaType="java.math.BigDecimal"/>
+            <arg column="band_basis" javaType="com.paytech.commercial.api.enums.BandBasis"/>
             <arg column="band_mode" javaType="com.paytech.commercial.domain.enums.CommercialTermComponentBandMode"/>
         </constructor>
     </resultMap>
     <select id="findForCheckout" resultMap="CommercialTermComponent">
-        SELECT term_component_id, term_price_id, component_no, component_code, component_type, trigger_code, calculation_base, rate, fixed_amount, currency, min_amount, max_amount, band_mode
+        SELECT term_component_id, term_price_id, component_no, component_code, component_type, trigger_code, calculation_base, refund_behavior, rate, fixed_amount, currency, min_amount, max_amount, band_basis, band_mode
         FROM t_commercial_term_component
         WHERE term_price_id IN (SELECT term_price_id FROM t_commercial_term_price WHERE term_version_id IN (SELECT term_version_id FROM t_commercial_term_version WHERE term_plan_id IN (SELECT term_plan_id FROM t_commercial_term_plan WHERE client_id = #{clientId}<if test="!localPartnerIds.isEmpty()"> OR local_partner_id IN <foreach collection="localPartnerIds" item="partnerId" open="(" separator="," close=")">#{partnerId}</foreach></if>)) AND <choose><when test="entityNos.isEmpty()">1 = 0</when><otherwise>entity_no IN <foreach collection="entityNos" item="entityNo" open="(" separator="," close=")">#{entityNo}</foreach></otherwise></choose>)
         ORDER BY term_component_id
     </select>
+
+    <!-- 完整行映射：写入与按主键 / 唯一键 / 父读取；CheckoutRecords 只读投影另见 findForCheckout。 -->
+    <resultMap id="CommercialTermComponentRow" type="com.paytech.commercial.core.dal.dataobject.CommercialTermComponent">
+        <id column="term_component_id" property="termComponentId"/>
+        <result column="term_price_id" property="termPriceId"/>
+        <result column="component_no" property="componentNo"/>
+        <result column="component_code" property="componentCode"/>
+        <result column="component_type" property="componentType"/>
+        <result column="trigger_code" property="triggerCode"/>
+        <result column="calculation_base" property="calculationBase"/>
+        <result column="refund_behavior" property="refundBehavior"/>
+        <result column="rate" property="rate"/>
+        <result column="fixed_amount" property="fixedAmount"/>
+        <result column="currency" property="currency"/>
+        <result column="min_amount" property="minAmount"/>
+        <result column="max_amount" property="maxAmount"/>
+        <result column="band_basis" property="bandBasis"/>
+        <result column="band_mode" property="bandMode"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="commercialTermComponentColumns">
+        term_component_id, term_price_id, component_no, component_code, component_type, trigger_code,
+        calculation_base, refund_behavior, rate, fixed_amount, currency, min_amount, max_amount, band_basis,
+        band_mode, create_time, update_time
+    </sql>
+
+    <insert id="insertAll">
+        INSERT INTO t_commercial_term_component (<include refid="commercialTermComponentColumns"/>) VALUES
+        <foreach collection="rows" item="row" separator=",">
+            (#{row.termComponentId}, #{row.termPriceId}, #{row.componentNo}, #{row.componentCode}, #{row.componentType}, #{row.triggerCode}, #{row.calculationBase}, #{row.refundBehavior}, #{row.rate}, #{row.fixedAmount}, #{row.currency}, #{row.minAmount}, #{row.maxAmount}, #{row.bandBasis}, #{row.bandMode}, #{row.createTime}, #{row.updateTime})
+        </foreach>
+    </insert>
+
+    <select id="selectById" resultMap="CommercialTermComponentRow">
+        SELECT <include refid="commercialTermComponentColumns"/> FROM t_commercial_term_component WHERE term_component_id = #{termComponentId}
+    </select>
+
+    <select id="selectByUniqueKey" resultMap="CommercialTermComponentRow">
+        SELECT <include refid="commercialTermComponentColumns"/> FROM t_commercial_term_component WHERE term_price_id = #{termPriceId} AND component_code = #{componentCode}
+    </select>
+
+    <select id="selectByPriceIds" resultMap="CommercialTermComponentRow">
+        SELECT <include refid="commercialTermComponentColumns"/> FROM t_commercial_term_component
+        WHERE term_price_id IN <foreach collection="termPriceIds" item="value" open="(" separator="," close=")">#{value}</foreach>
+        ORDER BY term_component_id
+    </select>
+
+    <delete id="deleteByPriceIds">
+        DELETE FROM t_commercial_term_component WHERE term_price_id IN <foreach collection="termPriceIds" item="value" open="(" separator="," close=")">#{value}</foreach>
+    </delete>
 </mapper>
