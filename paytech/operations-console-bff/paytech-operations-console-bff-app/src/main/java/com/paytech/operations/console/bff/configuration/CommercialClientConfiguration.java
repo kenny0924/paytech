@@ -22,7 +22,6 @@ import com.paytech.foundation.httpclient.api.HttpServiceClientOptions;
 import com.paytech.foundation.internalauth.api.InternalTokenSupplier;
 import com.paytech.foundation.web.request.RequestIdFilter;
 import com.paytech.operations.console.bff.domain.enums.OperationsBffErrorCode;
-import com.paytech.operations.console.bff.integration.CommercialTermCommandExchange;
 import com.paytech.operations.console.bff.integration.OwnerDiscoveryInterceptor;
 
 import org.slf4j.MDC;
@@ -64,16 +63,10 @@ public class CommercialClientConfiguration {
         return commercial.createClient(PricingProfileApi.class);
     }
 
-    /** 条款版本详情读取（写入经 {@link CommercialTermCommandExchange}）。 */
+    /** 条款方案与版本的写入和版本详情读取；操作人走 X-Gateway-Actor-Subject 请求头。 */
     @Bean
     CommercialTermApi commercialTermApi() {
         return commercial.createClient(CommercialTermApi.class);
-    }
-
-    /** 条款写入：操作人走 X-Gateway-Actor-Subject 请求头。 */
-    @Bean
-    CommercialTermCommandExchange commercialTermCommandExchange() {
-        return commercial.createClient(CommercialTermCommandExchange.class);
     }
 
     /** 固定版本价格全集。 */

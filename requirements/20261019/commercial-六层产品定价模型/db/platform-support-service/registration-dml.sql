@@ -1,6 +1,5 @@
--- 写入副本：commercial 六层产品定价模型 E 线（Operations 商务控制台）的 Platform 注册 DML，只写不执行。
--- 执行源：阶段 6 由 Platform 负责人把本块原样追加到 paytech/platform-support/docs/database/sql/platform-support-initial-data.sql 末尾，
--- 并同步 paytech-platform-support-access-control 的 operations/console-resource-capabilities.json（+3 页面）后人工审阅执行；不要单独对共享环境执行本文件。
+-- Reading copy only. The single execution source is the Operations commercial console block (ID block 95) at the end of
+-- paytech/platform-support/docs/database/sql/platform-support-initial-data.sql; do not apply this file separately.
 
 -- ---------------------------------------------------------------------------
 -- Operations commercial console (2026-10-19, requirements/20261019/commercial-六层产品定价模型, task E).

@@ -336,5 +336,42 @@
     "displayName": "明细账查询",
     "frontendRoute": "/finance/subledger",
     "actions": []
+  },
+  {
+    "componentKey": "OPERATIONS_COMMERCIAL_AGREEMENTS",
+    "displayName": "合同",
+    "frontendRoute": "/commercial/agreements",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_COMMERCIAL_AGREEMENT_MANAGE",
+        "displayName": "维护"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_COMMERCIAL_PRICING_PROFILES",
+    "displayName": "定价画像",
+    "frontendRoute": "/commercial/pricing-profiles",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_COMMERCIAL_PROFILE_MANAGE",
+        "displayName": "维护"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_COMMERCIAL_TERMS",
+    "displayName": "价目",
+    "frontendRoute": "/commercial/terms",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_COMMERCIAL_TERM_MANAGE",
+        "displayName": "维护"
+      },
+      {
+        "resourceCode": "OPERATIONS_COMMERCIAL_TERM_APPROVE",
+        "displayName": "审批"
+      }
+    ]
   }
 ]

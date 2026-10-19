@@ -14,7 +14,6 @@ import com.paytech.commercial.api.price.CommercialTermVersionPriceApi;
 import com.paytech.commercial.api.pricing.PricingProfileApi;
 import com.paytech.commercial.api.term.CommercialTermApi;
 import com.paytech.operations.console.bff.integration.CommercialPricingClient;
-import com.paytech.operations.console.bff.integration.CommercialTermCommandExchange;
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels.CommercialTermPlanResponseBody;
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels.CommercialTermVersionCommandRequestBody;
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels.CommercialTermVersionPricesResponseBody;
@@ -44,7 +43,6 @@ import lombok.AllArgsConstructor;
 public class CommercialPricingClientImpl implements CommercialPricingClient {
     private final PricingProfileApi profileApi;
     private final CommercialTermApi termApi;
-    private final CommercialTermCommandExchange termCommands;
     private final CommercialTermVersionPriceApi priceApi;
 
     /** 画像列表。 */
@@ -93,7 +91,7 @@ public class CommercialPricingClientImpl implements CommercialPricingClient {
     /** 创建方案；回执方案编号、条款类型与请求一致。 */
     @Override
     public CommercialTermPlanResponseBody createPlan(OperatorContext operator, CreateCommercialTermPlanRequestBody request) {
-        var plan = write(request, () -> body(termCommands.createPlan(operator.accountId(), request)),
+        var plan = write(request, () -> body(termApi.createPlan(operator.accountId(), request(request, com.paytech.commercial.api.term.request.CreateCommercialTermPlanRequestBody.class))),
             CommercialTermPlanResponseBody.class);
         requireSame(request.getPlanCode(), plan.getPlanCode());
         requireSame(request.getTermType(), plan.getTermType());
@@ -104,7 +102,8 @@ public class CommercialPricingClientImpl implements CommercialPricingClient {
     @Override
     public CommercialTermVersionResponseBody createVersion(OperatorContext operator, String planId,
         CreateCommercialTermVersionRequestBody request) {
-        var version = write(request, () -> body(termCommands.createVersion(operator.accountId(), planId, request)),
+        var version = write(request, () -> body(termApi.createVersion(operator.accountId(), planId,
+            request(request, com.paytech.commercial.api.term.request.CreateCommercialTermVersionRequestBody.class))),
             CommercialTermVersionResponseBody.class);
         requireSame(planId, version.getPlanId());
         return version;
@@ -114,7 +113,8 @@ public class CommercialPricingClientImpl implements CommercialPricingClient {
     @Override
     public CommercialTermVersionResponseBody replacePrices(OperatorContext operator, String versionId,
         ReplaceCommercialTermPricesRequestBody request) {
-        return sameVersion(versionId, request, () -> termCommands.replacePrices(operator.accountId(), versionId, request));
+        return sameVersion(versionId, request, () -> termApi.replacePrices(operator.accountId(), versionId,
+            request(request, com.paytech.commercial.api.term.request.ReplaceCommercialTermPricesRequestBody.class)));
     }
 
     /** 版本状态推进。 */
@@ -122,11 +122,12 @@ public class CommercialPricingClientImpl implements CommercialPricingClient {
     public CommercialTermVersionResponseBody transitionVersion(OperatorContext operator, String versionId,
         VersionAction action, CommercialTermVersionCommandRequestBody request) {
         String actor = operator.accountId();
+        var body = request(request, com.paytech.commercial.api.term.request.CommercialTermVersionCommandRequestBody.class);
         return sameVersion(versionId, request, () -> switch (action) {
-            case SUBMIT -> termCommands.submitVersion(actor, versionId, request);
-            case APPROVE -> termCommands.approveVersion(actor, versionId, request);
-            case REJECT -> termCommands.rejectVersion(actor, versionId, request);
-            case ACTIVATE -> termCommands.activateVersion(actor, versionId, request);
+            case SUBMIT -> termApi.submitVersion(actor, versionId, body);
+            case APPROVE -> termApi.approveVersion(actor, versionId, body);
+            case REJECT -> termApi.rejectVersion(actor, versionId, body);
+            case ACTIVATE -> termApi.activateVersion(actor, versionId, body);
         });
     }
 
@@ -134,7 +135,8 @@ public class CommercialPricingClientImpl implements CommercialPricingClient {
     @Override
     public CommercialTermVersionResponseBody scheduleVersion(OperatorContext operator, String versionId,
         ScheduleCommercialTermVersionRequestBody request) {
-        return sameVersion(versionId, request, () -> termCommands.scheduleVersion(operator.accountId(), versionId, request));
+        return sameVersion(versionId, request, () -> termApi.scheduleVersion(operator.accountId(), versionId,
+            request(request, com.paytech.commercial.api.term.request.ScheduleCommercialTermVersionRequestBody.class)));
     }
 
     /** 版本概要；回执版本 ID 与请求一致。 */
