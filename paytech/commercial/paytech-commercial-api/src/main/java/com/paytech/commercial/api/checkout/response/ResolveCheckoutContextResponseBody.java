@@ -118,8 +118,11 @@ public class ResolveCheckoutContextResponseBody {
         /** 合同订阅的产品 Code，按 Code 升序；必含 ACQUIRING。 */
         private java.util.List<String> agreementProducts;
 
-        /** 本次支付方式命中的开通项；请求未给支付方式时为 null。 */
-        private Capability capability;
+        /**
+         * 本次支付方式命中的全部开通项，按开通项代码升序
+         * <li>请求未给支付方式时为空数组；给出时至少一项，卡品牌等维度在支付尝试时再按实际品牌选用。</li>
+         */
+        private java.util.List<Capability> capabilities;
     }
 
     /** 命中的合同开通项。 */
@@ -136,6 +139,12 @@ public class ResolveCheckoutContextResponseBody {
 
         /** 开通项状态 Code；命中时恒为 ENABLED。 */
         private String status;
+
+        /** 目录维度 Code，如 CARD_BRAND；不分维度时为 null。 */
+        private String dimensionCode;
+
+        /** 目录维度值，如 VISA；不分维度时为 null。 */
+        private String dimensionValue;
 
         /** 滚动保证金比例，0 至 1 的十进制字符串；未约定时为 null。 */
         private String rollingReserveRate;

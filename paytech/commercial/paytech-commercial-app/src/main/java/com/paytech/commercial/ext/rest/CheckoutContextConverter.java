@@ -45,15 +45,15 @@ final class CheckoutContextConverter {
                         r.clientAgreementChangeVersion(), r.partnerAgreementChangeVersion()));
     }
 
-    /** Client 合同条款与可选的命中开通项。 */
+    /** Client 合同条款与命中的全部开通项。 */
     private static ResolveCheckoutContextResponseBody.ClientTerms clientTerms(CheckoutContextView.ClientTerms t) {
-        var k = t.capability();
         return new ResolveCheckoutContextResponseBody.ClientTerms(t.agreementId(), t.planId(), t.versionId(),
                 t.businessMode(), t.fundMode(), t.pricingAuthority(), t.referralPartnerId(), t.agreementProducts(),
-                k == null
-                        ? null
-                        : new ResolveCheckoutContextResponseBody.Capability(k.agreementCapabilityId(), k.capabilityCode(),
-                                k.status(), k.rollingReserveRate(), k.rollingReserveDays()));
+                t.capabilities().stream()
+                        .map(k -> new ResolveCheckoutContextResponseBody.Capability(k.agreementCapabilityId(),
+                                k.capabilityCode(), k.status(), k.dimensionCode(), k.dimensionValue(),
+                                k.rollingReserveRate(), k.rollingReserveDays()))
+                        .toList());
     }
 
     /** 四项派生原样投影。 */

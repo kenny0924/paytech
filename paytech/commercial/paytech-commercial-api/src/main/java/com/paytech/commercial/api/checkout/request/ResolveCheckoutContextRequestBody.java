@@ -29,8 +29,8 @@ public class ResolveCheckoutContextRequestBody {
     /**
      * 本次支付方式 Code，可选
      * <li>Payment Method 稳定代码，大写字母开头，仅含大写字母、数字与下划线，最长 64 个字符；格式不符返回 INVALID_CHECKOUT_QUERY。</li>
-     * <li>给出时，候选 OE 下 Client 合同必须恰有一个 ENABLED、商业时点在区间内且币种与消费者国家约束满足的开通项，否则该候选落空；省略时不做开通项匹配，响应
-     * clientTerms.capability 为 null。</li>
+     * <li>给出时，候选 OE 下 Client 合同至少一个 ENABLED、商业时点在区间内且币种与消费者国家约束满足的开通项，否则该候选落空；命中项全部在
+     * clientTerms.capabilities 返回。省略时不做开通项匹配，该数组为空。</li>
      */
     @Size(max = 64)
     private String paymentMethodCode;

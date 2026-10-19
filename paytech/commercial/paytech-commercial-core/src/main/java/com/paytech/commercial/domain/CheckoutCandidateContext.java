@@ -77,9 +77,7 @@ public class CheckoutCandidateContext {
                 agreement.agreementId(), clientTerms.plan().termPlanId(), clientTerms.version().termVersionId(),
                 legal.seller().disclosureId())
             .forEach(CheckoutResolutionContext::id);
-        if (subscription.capability() != null) {
-            id(subscription.capability().getAgreementCapabilityId());
-        }
+        subscription.capabilities().forEach(matched -> id(matched.capability().getAgreementCapabilityId()));
         require(legal.documents().size() == 3);
         legal.documents().forEach(document -> {
             id(document.legalDocumentId());
@@ -117,18 +115,24 @@ public class CheckoutCandidateContext {
 
     /** Client 合同、条款版本、商业关系、订阅产品与命中的开通项。 */
     private CheckoutContextView.ClientTerms clientTermsView() {
-        AgreementCapability capability = subscription.capability();
         return new CheckoutContextView.ClientTerms(id(agreement.agreementId()), id(clientTerms.plan().termPlanId()),
             id(clientTerms.version().termVersionId()), agreement.businessMode().getCode(), agreement.fundMode().getCode(),
             agreement.pricingAuthority().getCode(),
             agreement.referralPartnerId() == null ? null : id(agreement.referralPartnerId()),
             subscription.products().stream().map(ProductCode::getCode).toList(),
-            capability == null ? null
-                : new CheckoutContextView.Capability(id(capability.getAgreementCapabilityId()),
-                    capability.getCapabilityCode(), capability.getStatus().getCode(),
-                    capability.getRollingReserveRate() == null ? null
-                        : capability.getRollingReserveRate().stripTrailingZeros().toPlainString(),
-                    capability.getRollingReserveDays()));
+            subscription.capabilities().stream().map(CheckoutCandidateContext::capabilityView).toList());
+    }
+
+    /** 一个命中开通项的投影；维度来自目录行，保证金比例去掉尾随零。 */
+    private static CheckoutContextView.Capability capabilityView(CheckoutSubscriptionContext.MatchedCapability matched) {
+        AgreementCapability capability = matched.capability();
+        return new CheckoutContextView.Capability(id(capability.getAgreementCapabilityId()),
+            capability.getCapabilityCode(), capability.getStatus().getCode(),
+            matched.catalog().getDimensionCode() == null ? null : matched.catalog().getDimensionCode().getCode(),
+            matched.catalog().getDimensionValue(),
+            capability.getRollingReserveRate() == null ? null
+                : capability.getRollingReserveRate().stripTrailingZeros().toPlainString(),
+            capability.getRollingReserveDays());
     }
 
     /**

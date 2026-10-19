@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.Instant;
 import java.util.List;
@@ -16,8 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.paytech.commercial.api.constant.CommercialCodes;
 import com.paytech.commercial.api.enums.AgreementCapabilityStatus;
 import com.paytech.commercial.api.enums.BusinessMode;
-import com.paytech.commercial.api.enums.CheckoutErrorCode;
 import com.paytech.commercial.api.enums.FundMode;
+import com.paytech.commercial.api.enums.PricingDimension;
 import com.paytech.commercial.api.enums.PricingAuthority;
 import com.paytech.commercial.api.enums.ProductCode;
 import com.paytech.commercial.api.enums.ResponsiblePartyType;
@@ -33,7 +32,6 @@ import com.paytech.commercial.test.dal.CommercialTestMapper;
 import com.paytech.commercial.test.mocker.local.agreement.AgreementSubscriptionMocker;
 import com.paytech.commercial.test.mocker.local.catalog.ProductCatalogMocker;
 import com.paytech.commercial.test.mocker.local.checkout.CheckoutTermVersionMocker;
-import com.paytech.foundation.common.error.FailException;
 
 /**
  * 解析矩阵（technique §2.3、§2.5、§2.11）：订阅、开通项、约束、资金模式、版本区间与派生四项。
@@ -83,21 +81,25 @@ class CheckoutResolutionMatrixTest extends AbstractCheckoutApiTest {
             () -> assertNull(terms.referralPartnerId()),
             () -> assertEquals(List.of(ProductCode.ACQUIRING.getCode(), ProductCode.PAYOUT.getCode()),
                 terms.agreementProducts()),
-            () -> assertNull(terms.capability()),
+            () -> assertEquals(List.of(), terms.capabilities()),
             () -> assertEquals(Long.toString(FIRST_ENTITY_PARTY_ID), derived.sellerPartyId()),
             () -> assertEquals(FIRST_ENTITY, derived.acquiringEntityNo()),
             () -> assertEquals(ResponsiblePartyType.OPERATING_ENTITY.getCode(), derived.taxResponsibleParty()),
             () -> assertEquals(ResponsiblePartyType.OPERATING_ENTITY.getCode(), derived.fundsBookOwner()));
     }
 
-    /** 给出 CARD：命中带维度的 CARD_VISA（本切片按支付方式匹配），返回开通项与保证金条款。 */
+    /** 给出 CARD：命中带维度的 CARD_VISA（按支付方式匹配），返回开通项、维度与保证金条款。 */
     @Test
     void test_normalFlow_withPaymentMethod() {
-        var capability = first(query(CommercialCodes.PaymentMethod.CARD)).toView().clientTerms().capability();
+        var capabilities = first(query(CommercialCodes.PaymentMethod.CARD)).toView().clientTerms().capabilities();
+        var capability = capabilities.getFirst();
 
-        assertAll(() -> assertEquals(Long.toString(FIRST_CARD_CAPABILITY_ID), capability.agreementCapabilityId()),
+        assertAll(() -> assertEquals(1, capabilities.size()),
+            () -> assertEquals(Long.toString(FIRST_CARD_CAPABILITY_ID), capability.agreementCapabilityId()),
             () -> assertEquals(CommercialCodes.Capability.CARD_VISA, capability.capabilityCode()),
             () -> assertEquals(AgreementCapabilityStatus.ENABLED.getCode(), capability.status()),
+            () -> assertEquals(PricingDimension.CARD_BRAND.getCode(), capability.dimensionCode()),
+            () -> assertEquals(CommercialCodes.CardBrand.VISA, capability.dimensionValue()),
             () -> assertEquals("0.1", capability.rollingReserveRate()),
             () -> assertEquals(90, capability.rollingReserveDays()));
     }
@@ -206,15 +208,40 @@ class CheckoutResolutionMatrixTest extends AbstractCheckoutApiTest {
         assertEquals(SECOND_ENTITY, first(query()).entityNo());
     }
 
-    /** 同一支付方式开通多个维度项（Visa 与 Mastercard）且请求不带卡品牌：视为配置冲突，不任选其一。 */
+    /** Visa 与 Mastercard 同时开通是常态：候选通过，两个开通项连同品牌维度全部返回，由支付尝试按实际品牌选用。 */
     @Test
-    void test_multipleDimensionCapabilitiesAreAmbiguous() {
+    void test_multipleCardBrandsAllReturned() {
         catalog.mockCapability(ProductCapabilityBuilder.template().capabilityCode(CommercialCodes.Capability.CARD_MC)
             .dimensionValue(CommercialCodes.CardBrand.MASTERCARD));
         subscriptions.mockCapability(AgreementCapabilityBuilder.template().capabilityCode(CommercialCodes.Capability.CARD_MC));
 
-        var failure = assertThrows(FailException.class, () -> first(query(CommercialCodes.PaymentMethod.CARD)));
-        assertEquals(CheckoutErrorCode.CCT_CONTEXT_AMBIGUOUS.getCode(), failure.getCode());
+        CheckoutContextView view = first(query(CommercialCodes.PaymentMethod.CARD)).toView();
+
+        var capabilities = view.clientTerms().capabilities();
+        assertAll(() -> assertEquals(FIRST_ENTITY, view.entityNo()),
+            () -> assertEquals(List.of(CommercialCodes.Capability.CARD_MC, CommercialCodes.Capability.CARD_VISA),
+                capabilities.stream().map(CheckoutContextView.Capability::capabilityCode).toList()),
+            () -> assertEquals(List.of(CommercialCodes.CardBrand.MASTERCARD, CommercialCodes.CardBrand.VISA),
+                capabilities.stream().map(CheckoutContextView.Capability::dimensionValue).toList()));
+    }
+
+    /** 只开通 Amex 时 CARD 仍通过，返回唯一的 CARD_AMEX；停用后无卡开通项则落空。 */
+    @Test
+    void test_singleOtherCardBrandStillPasses() {
+        data.overwriteCapabilityStatus(FIRST_CARD_CAPABILITY_ID, AgreementCapabilityStatus.DISABLED);
+        catalog.mockCapability(ProductCapabilityBuilder.template().capabilityCode(CommercialCodes.Capability.CARD_AMEX)
+            .dimensionValue(CommercialCodes.CardBrand.AMEX));
+        var amex = subscriptions
+            .mockCapability(AgreementCapabilityBuilder.template().capabilityCode(CommercialCodes.Capability.CARD_AMEX))
+            .capability();
+
+        CheckoutContextView view = first(query(CommercialCodes.PaymentMethod.CARD)).toView();
+        assertAll(() -> assertEquals(FIRST_ENTITY, view.entityNo()),
+            () -> assertEquals(List.of(CommercialCodes.Capability.CARD_AMEX), view.clientTerms().capabilities().stream()
+                .map(CheckoutContextView.Capability::capabilityCode).toList()));
+
+        data.overwriteCapabilityStatus(amex.getAgreementCapabilityId(), AgreementCapabilityStatus.DISABLED);
+        assertEquals(SECOND_ENTITY, first(query(CommercialCodes.PaymentMethod.CARD)).entityNo());
     }
 
     /** 首个完整候选。 */
