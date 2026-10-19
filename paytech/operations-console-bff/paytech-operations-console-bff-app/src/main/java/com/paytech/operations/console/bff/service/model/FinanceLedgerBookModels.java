@@ -1,0 +1,309 @@
+package com.paytech.operations.console.bff.service.model;
+
+import java.time.LocalDate;
+import java.util.List;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+
+import lombok.Getter;
+import lombok.Setter;
+
+/**
+ * 账簿、账户、账户流水与分录详情页面模型
+ * <li>字段与 ledger 合同一一对应，由 Client 适配器严格转换；Owner 新增字段即视为合同漂移。</li>
+ * <li>金额为主货币单位字符串，已按账簿币种精度补齐；ID 与枚举均为字符串。</li>
+ *
+ * @author Claude
+ */
+public final class FinanceLedgerBookModels {
+
+    /** 只承载类型，禁止创建实例。 */
+    private FinanceLedgerBookModels() {
+    }
+
+    /** 账簿。 */
+    @Getter
+    @Setter
+    public static class LedgerBookResponseBody {
+        /** 账簿主键。 */
+        private String ledgerBookId;
+
+        /**
+         * 主体类型
+         * <li>OPERATING_ENTITY 或 FINANCE_ENTITY。</li>
+         */
+        private String entityType;
+
+        /** 主体标识。 */
+        private String entityId;
+
+        /** 账簿币种。 */
+        private String currency;
+
+        /** 科目表代码。 */
+        private String chartCode;
+
+        /** 账簿状态。 */
+        private String bookStatus;
+    }
+
+    /** 新建账簿；同主体同币种只能有一个账簿。 */
+    @Getter
+    @Setter
+    public static class CreateLedgerBookRequestBody {
+        /**
+         * 主体类型
+         * <li>OPERATING_ENTITY 或 FINANCE_ENTITY。</li>
+         */
+        @NotBlank(message = "主体类型必填")
+        @Pattern(regexp = "OPERATING_ENTITY|FINANCE_ENTITY", message = "主体类型只能为 OPERATING_ENTITY 或 FINANCE_ENTITY")
+        private String entityType;
+
+        /**
+         * 主体标识
+         * <li>1..64 个字符。</li>
+         */
+        @NotBlank(message = "主体标识必填")
+        @Size(max = 64, message = "主体标识不超过 64 个字符")
+        private String entityId;
+
+        /**
+         * 币种
+         * <li>大写 ISO 4217 三位代码。</li>
+         */
+        @NotBlank(message = "币种必填")
+        @Pattern(regexp = "[A-Z]{3}", message = "币种必须是大写 ISO 4217 三位代码")
+        private String currency;
+
+        /**
+         * 科目表代码
+         * <li>1..64 个字符。</li>
+         */
+        @NotBlank(message = "科目表代码必填")
+        @Size(max = 64, message = "科目表代码不超过 64 个字符")
+        private String chartCode;
+    }
+
+    /** 新建账簿结果。 */
+    @Getter
+    @Setter
+    public static class CreateLedgerBookResponseBody {
+        /** 新账簿主键。 */
+        private String ledgerBookId;
+    }
+
+    /** 账簿内账户及余额。 */
+    @Getter
+    @Setter
+    public static class LedgerAccountResponseBody {
+        /** 账户主键。 */
+        private String accountId;
+
+        /** 科目代码。 */
+        private String accountCode;
+
+        /** 核算对象类型。 */
+        private String ownerType;
+
+        /** 核算对象标识。 */
+        private String ownerId;
+
+        /** 余额桶。 */
+        private String balanceBucket;
+
+        /** 正常余额方向。 */
+        private String normalSide;
+
+        /** 账户状态。 */
+        private String accountStatus;
+
+        /** 借方合计。 */
+        private String debitTotal;
+
+        /** 贷方合计。 */
+        private String creditTotal;
+
+        /**
+         * 净余额
+         * <li>按正常余额方向计算，反向余额为负数。</li>
+         */
+        private String netBalance;
+
+        /** 最近一次过账的分录序号；未过账为空。 */
+        private String lastJournalSequence;
+    }
+
+    /** 在账簿下新建账户。 */
+    @Getter
+    @Setter
+    public static class CreateLedgerAccountRequestBody {
+        /**
+         * 科目代码
+         * <li>1..64 个字符，必须可过账。</li>
+         */
+        @NotBlank(message = "科目代码必填")
+        @Size(max = 64, message = "科目代码不超过 64 个字符")
+        private String accountCode;
+
+        /**
+         * 核算对象类型
+         * <li>OPERATING_ENTITY、FINANCE_ENTITY、CLIENT、LOCAL_PARTNER、CHANNEL_ACCOUNT、CASH_ACCOUNT、TAX_AUTHORITY。</li>
+         */
+        @NotBlank(message = "核算对象类型必填")
+        @Pattern(regexp = "OPERATING_ENTITY|FINANCE_ENTITY|CLIENT|LOCAL_PARTNER|CHANNEL_ACCOUNT|CASH_ACCOUNT|TAX_AUTHORITY",
+            message = "核算对象类型非法")
+        private String ownerType;
+
+        /**
+         * 核算对象标识
+         * <li>1..64 个字符。</li>
+         */
+        @NotBlank(message = "核算对象标识必填")
+        @Size(max = 64, message = "核算对象标识不超过 64 个字符")
+        private String ownerId;
+
+        /**
+         * 余额桶
+         * <li>PENDING、AVAILABLE、LOCKED 或 NONE；是否合法由账户身份矩阵决定。</li>
+         */
+        @NotBlank(message = "余额桶必填")
+        @Pattern(regexp = "PENDING|AVAILABLE|LOCKED|NONE", message = "余额桶非法")
+        private String balanceBucket;
+    }
+
+    /** 新建账户结果。 */
+    @Getter
+    @Setter
+    public static class CreateLedgerAccountResponseBody {
+        /** 新账户主键。 */
+        private String accountId;
+    }
+
+    /** 账户流水行。 */
+    @Getter
+    @Setter
+    public static class AccountJournalLineResponseBody {
+        /** 分录主键。 */
+        private String journalEntryId;
+
+        /** 账簿内分录序号。 */
+        private String journalSequence;
+
+        /** 过账日期。 */
+        private LocalDate postingDate;
+
+        /** 分录类型。 */
+        private String entryType;
+
+        /** 分录行号。 */
+        private Integer lineNo;
+
+        /** 借贷方向。 */
+        private String entrySide;
+
+        /** 金额。 */
+        private String amount;
+
+        /**
+         * 行后余额
+         * <li>按全量历史累计，筛选日期不改变起点。</li>
+         */
+        private String balanceAfter;
+
+        /** 来源指令类型。 */
+        private String instructionType;
+
+        /** 来源类型：AUTO 或 MANUAL。 */
+        private String originType;
+
+        /** 自动来源系统；人工调整为空。 */
+        private String sourceSystem;
+
+        /** 自动来源事件键；人工调整为空。 */
+        private String sourceEventKey;
+
+        /** 人工调整单号；自动来源为空。 */
+        private String adjustmentNo;
+    }
+
+    /** 分录行。 */
+    @Getter
+    @Setter
+    public static class JournalEntryLineResponseBody {
+        /** 行号。 */
+        private Integer lineNo;
+
+        /** 账户主键。 */
+        private String accountId;
+
+        /** 科目代码。 */
+        private String accountCode;
+
+        /** 核算对象类型。 */
+        private String ownerType;
+
+        /** 核算对象标识。 */
+        private String ownerId;
+
+        /** 余额桶。 */
+        private String balanceBucket;
+
+        /** 借贷方向。 */
+        private String entrySide;
+
+        /** 金额。 */
+        private String amount;
+    }
+
+    /** 分录详情：分录头、来源与全部分录行。 */
+    @Getter
+    @Setter
+    public static class JournalEntryDetailResponseBody {
+        /** 分录主键。 */
+        private String journalEntryId;
+
+        /** 账簿主键。 */
+        private String ledgerBookId;
+
+        /** 会计期间主键。 */
+        private String accountingPeriodId;
+
+        /** 账簿内分录序号。 */
+        private String journalSequence;
+
+        /** 过账日期。 */
+        private LocalDate postingDate;
+
+        /** 分录类型。 */
+        private String entryType;
+
+        /** 被冲回的原分录主键；非冲回分录为空。 */
+        private String reversalOfEntryId;
+
+        /** 来源指令主键。 */
+        private String instructionId;
+
+        /** 来源指令类型。 */
+        private String instructionType;
+
+        /** 来源类型：AUTO 或 MANUAL。 */
+        private String originType;
+
+        /** 自动来源系统；人工调整为空。 */
+        private String sourceSystem;
+
+        /** 自动来源事件键；人工调整为空。 */
+        private String sourceEventKey;
+
+        /** 人工调整主键；自动来源为空。 */
+        private String manualAdjustmentId;
+
+        /** 人工调整单号；自动来源为空。 */
+        private String adjustmentNo;
+
+        /** 全部分录行，按行号升序。 */
+        private List<JournalEntryLineResponseBody> lines;
+    }
+}

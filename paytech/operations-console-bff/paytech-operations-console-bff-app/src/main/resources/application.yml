@@ -67,6 +67,10 @@ vault:
 operations:
   console-origin: ${OPERATIONS_CONSOLE_ORIGIN:https://operations-console.local.test}
   test-http-enabled: ${OPERATIONS_TEST_HTTP_ENABLED:false}
+  # ledger 与 account 不注册 Nacos（服务 pom 的 Enforcer 禁止 Nacos 依赖），BFF 以固定私网地址直连，不经 LoadBalancer/Discovery。
+  # 只允许不含路径、Query 与 Fragment 的 http(s) 地址；auto 测试指向本地 Simulator。
+  ledger-base-url: ${OPERATIONS_LEDGER_BASE_URL:http://127.0.0.1:18105}
+  account-base-url: ${OPERATIONS_ACCOUNT_BASE_URL:http://127.0.0.1:18114}
 
 web:
   logging:

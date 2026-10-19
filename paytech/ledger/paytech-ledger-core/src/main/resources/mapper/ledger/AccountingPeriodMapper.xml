@@ -52,4 +52,18 @@
         SELECT id, calendar_id, fiscal_year, period_no, start_date, end_date, status, reopen_count, version, create_time, update_time FROM t_accounting_period
         WHERE calendar_id = #{calendarId} AND start_date &lt;= #{date} AND end_date &gt;= #{date}
     </select>
+
+    <select id="selectPage" resultType="com.paytech.ledger.core.dal.dataobject.AccountingPeriod">
+        SELECT id, calendar_id, fiscal_year, period_no, start_date, end_date, status, reopen_count, version, create_time, update_time FROM t_accounting_period
+        WHERE calendar_id = #{query.fiscalCalendarId}
+        <if test="query.fiscalYear != null">AND fiscal_year = #{query.fiscalYear}</if>
+        ORDER BY fiscal_year, period_no
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="long">
+        SELECT COUNT(*) FROM t_accounting_period
+        WHERE calendar_id = #{query.fiscalCalendarId}
+        <if test="query.fiscalYear != null">AND fiscal_year = #{query.fiscalYear}</if>
+    </select>
 </mapper>

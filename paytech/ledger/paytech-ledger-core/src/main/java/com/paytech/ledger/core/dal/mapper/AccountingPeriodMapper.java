@@ -2,12 +2,14 @@ package com.paytech.ledger.core.dal.mapper;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import com.paytech.ledger.core.dal.dataobject.AccountingPeriod;
 import com.paytech.ledger.core.enums.PeriodStatus;
+import com.paytech.ledger.domain.AccountingPeriodQuery;
 
 /** t_accounting_period：会计期间持久化。 */
 @Mapper
@@ -52,4 +54,11 @@ public interface AccountingPeriodMapper {
 
     /** 读取日历中包含给定日期的期间。 */
     AccountingPeriod selectByCalendarAndDate(@Param("calendarId") long calendarId, @Param("date") LocalDate date);
+
+    /** 按日历与可选财年分页读取期间，按财年、期号升序。 */
+    List<AccountingPeriod> selectPage(@Param("query") AccountingPeriodQuery query, @Param("size") int size,
+        @Param("offset") int offset);
+
+    /** 统计日历下符合过滤条件的期间数量。 */
+    long countPage(@Param("query") AccountingPeriodQuery query);
 }

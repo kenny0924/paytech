@@ -1,0 +1,182 @@
+[
+  {
+    "id": "R08",
+    "method": "GET",
+    "path": "/finance/ledger-books/v1",
+    "query": "?entityType=OPERATING_ENTITY&entityId=AE001&currency=USD&page=1&size=10",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "ledgerBookId": "7312345678901239001",
+          "entityType": "OPERATING_ENTITY",
+          "entityId": "AE001",
+          "currency": "USD",
+          "chartCode": "STANDARD",
+          "bookStatus": "OPEN"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    },
+    "routeCode": "operations-finance-book-list"
+  },
+  {
+    "id": "R09",
+    "method": "POST",
+    "path": "/finance/ledger-books/v1",
+    "query": "",
+    "request": {
+      "entityType": "OPERATING_ENTITY",
+      "entityId": "AE001",
+      "currency": "USD",
+      "chartCode": "STANDARD"
+    },
+    "status": 201,
+    "response": {
+      "ledgerBookId": "7312345678901239001"
+    },
+    "routeCode": "operations-finance-book-create"
+  },
+  {
+    "id": "R10",
+    "method": "GET",
+    "path": "/finance/ledger-books/v1/7312345678901239001/accounts",
+    "query": "?accountCode=CLIENT_PAYABLE&ownerType=CLIENT&ownerId=880000000000071001&balanceBucket=AVAILABLE&page=1&size=10",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "accountId": "7312345678901240001",
+          "accountCode": "CLIENT_PAYABLE",
+          "ownerType": "CLIENT",
+          "ownerId": "880000000000071001",
+          "balanceBucket": "AVAILABLE",
+          "normalSide": "CREDIT",
+          "accountStatus": "ACTIVE",
+          "debitTotal": "20.00",
+          "creditTotal": "120.50",
+          "netBalance": "100.50",
+          "lastJournalSequence": "42"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    },
+    "routeCode": "operations-finance-account-list"
+  },
+  {
+    "id": "R11",
+    "method": "POST",
+    "path": "/finance/ledger-books/v1/7312345678901239001/accounts",
+    "query": "",
+    "request": {
+      "accountCode": "CLIENT_PAYABLE",
+      "ownerType": "CLIENT",
+      "ownerId": "880000000000071001",
+      "balanceBucket": "PENDING"
+    },
+    "status": 201,
+    "response": {
+      "accountId": "7312345678901240002"
+    },
+    "routeCode": "operations-finance-account-create"
+  },
+  {
+    "id": "R12",
+    "method": "GET",
+    "path": "/finance/ledger-books/v1/7312345678901239001/accounts/7312345678901240001/journal-lines",
+    "query": "?postingDateFrom=2026-10-01&postingDateTo=2026-10-31&page=1&size=10",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "journalEntryId": "7312345678901241001",
+          "journalSequence": "41",
+          "postingDate": "2026-10-17",
+          "entryType": "NORMAL",
+          "lineNo": 2,
+          "entrySide": "CREDIT",
+          "amount": "120.50",
+          "balanceAfter": "120.50",
+          "instructionType": "PAYMENT_CAPTURED",
+          "originType": "AUTO",
+          "sourceSystem": "PAYMENT",
+          "sourceEventKey": "capture-7001",
+          "adjustmentNo": null
+        },
+        {
+          "journalEntryId": "7312345678901241002",
+          "journalSequence": "42",
+          "postingDate": "2026-10-18",
+          "entryType": "NORMAL",
+          "lineNo": 1,
+          "entrySide": "DEBIT",
+          "amount": "20.00",
+          "balanceAfter": "100.50",
+          "instructionType": "MANUAL_ADJUSTMENT",
+          "originType": "MANUAL",
+          "sourceSystem": null,
+          "sourceEventKey": null,
+          "adjustmentNo": "ADJ-20261018-0001"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 2
+    },
+    "routeCode": "operations-finance-journal-line-list"
+  },
+  {
+    "id": "R13",
+    "method": "GET",
+    "path": "/finance/ledger-books/v1/7312345678901239001/journal-entries/7312345678901241001",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "journalEntryId": "7312345678901241001",
+      "ledgerBookId": "7312345678901239001",
+      "accountingPeriodId": "7312345678901236010",
+      "journalSequence": "41",
+      "postingDate": "2026-10-17",
+      "entryType": "NORMAL",
+      "reversalOfEntryId": null,
+      "instructionId": "7312345678901242001",
+      "instructionType": "PAYMENT_CAPTURED",
+      "originType": "AUTO",
+      "sourceSystem": "PAYMENT",
+      "sourceEventKey": "capture-7001",
+      "manualAdjustmentId": null,
+      "adjustmentNo": null,
+      "lines": [
+        {
+          "lineNo": 1,
+          "accountId": "7312345678901240009",
+          "accountCode": "CHANNEL_RECEIVABLE",
+          "ownerType": "CHANNEL_ACCOUNT",
+          "ownerId": "880000000000081001",
+          "balanceBucket": "NONE",
+          "entrySide": "DEBIT",
+          "amount": "120.50"
+        },
+        {
+          "lineNo": 2,
+          "accountId": "7312345678901240001",
+          "accountCode": "CLIENT_PAYABLE",
+          "ownerType": "CLIENT",
+          "ownerId": "880000000000071001",
+          "balanceBucket": "AVAILABLE",
+          "entrySide": "CREDIT",
+          "amount": "120.50"
+        }
+      ]
+    },
+    "routeCode": "operations-finance-journal-entry-detail"
+  }
+]

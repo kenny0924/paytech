@@ -6,10 +6,11 @@ import java.time.temporal.ChronoUnit;
 
 import org.springframework.stereotype.Component;
 
-import com.paytech.foundation.common.error.BizCheckFailException;
+import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
+import com.paytech.ledger.api.enums.LedgerSetupErrorCode;
 import com.paytech.ledger.core.constant.AccountingLocks;
 import com.paytech.ledger.core.dal.dataobject.AccountingPeriod;
 import com.paytech.ledger.core.enums.PeriodStatus;
@@ -55,7 +56,7 @@ public class CreateAccountingPeriodProcessor
     @Override
     protected CreatedResourceResponse processWithinLock(CreateAccountingPeriodRequest request) {
         if (fiscalCalendarRepository.findById(request.getFiscalCalendarId()) == null) {
-            throw new BizCheckFailException("财务日历不存在: " + request.getFiscalCalendarId());
+            throw new FailException(LedgerSetupErrorCode.FISCAL_CALENDAR_NOT_FOUND);
         }
         AccountingPeriod period = buildPeriod(request);
         accountingPeriodService.createAccountingPeriod(period);

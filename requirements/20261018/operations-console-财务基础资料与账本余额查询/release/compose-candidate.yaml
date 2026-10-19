@@ -1,0 +1,19 @@
+# Operations 财务基础资料、账本与余额查询：mor-test 候选覆盖文件（阶段 6 评审稿，2026-10-19）。
+# 叠加在 compose.yaml + compose.applications.yaml 之上（compose.sh 已带这两个文件，只传本文件的 -f）。
+# 镜像：HEAD 26a6a217 干净 worktree + 本需求 140 个文件（source-overlay.txt）构建，tag mor-test/<服务>:finance-ops-20261019；
+# 阶段 7（2026-10-19）已把五个 image 固定为 sha256 镜像 ID（tag 同名）；JAR SHA-256 与 Web 入口见 release.md 第 6 节。
+# 配置增量：Operations BFF 直连 ledger / account 的固定私网地址（两个服务不注册 Nacos）；阶段 7 同时写入 compose.applications.yaml 以便 deploy.sh 复用。
+services:
+  ledger-service:
+    image: sha256:0c0b6d4e6b0dbce3d11f1f653187ca58f49384e0b9c84853a6da5019d85d3e95
+  account-service:
+    image: sha256:d341485d92600a44423ee2052e597f0470e217e99df674176e8354ef43cda6d3
+  platform-support-service:
+    image: sha256:7c8af66064607050c2c64bf4890d597fe1988be3e627c49c78eb2a8bf094d1e9
+  operations-console-bff:
+    image: sha256:ea20c4a31f08deab58bfcb0886116502c25bfa82e7256fe90a0737bd23ac14f2
+    environment:
+      OPERATIONS_LEDGER_BASE_URL: http://ledger-service:18105
+      OPERATIONS_ACCOUNT_BASE_URL: http://account-service:18114
+  operations-console-web:
+    image: sha256:a16abbcd15497eea8675dc837cb6e17a354d063d44cca9504bac707f8b39b63e

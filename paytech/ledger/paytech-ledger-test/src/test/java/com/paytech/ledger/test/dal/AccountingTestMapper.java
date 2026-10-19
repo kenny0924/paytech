@@ -12,6 +12,8 @@ import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
 import com.paytech.ledger.core.dal.dataobject.AccountingInstruction;
+import com.paytech.ledger.core.dal.dataobject.ChartAccount;
+import com.paytech.ledger.core.dal.dataobject.ChartOfAccounts;
 import com.paytech.ledger.core.dal.dataobject.CurrencySpec;
 import com.paytech.ledger.core.dal.dataobject.InstructionLine;
 import com.paytech.ledger.core.dal.dataobject.JournalEntry;
@@ -86,6 +88,17 @@ public interface AccountingTestMapper {
     @Insert("INSERT INTO t_currency_spec (id, currency, minor_unit, rounding_mode, status, create_time, update_time) "
         + "VALUES (#{id}, #{currency}, #{minorUnit}, #{roundingMode}, #{status}, #{createTime}, #{updateTime})")
     void insertCurrencySpec(CurrencySpec spec);
+
+    /** 插入测试科目表（主键须 >= 1000000，由全局清理删除）。 */
+    @Insert("INSERT INTO t_chart_of_accounts (id, chart_code, chart_name, status, create_time, update_time) "
+        + "VALUES (#{id}, #{chartCode}, #{chartName}, #{status}, #{createTime}, #{updateTime})")
+    void insertChartOfAccounts(ChartOfAccounts chart);
+
+    /** 插入测试科目（主键须 >= 1000000，由全局清理删除）。 */
+    @Insert("INSERT INTO t_chart_account (id, chart_id, parent_account_id, account_code, account_name, account_class, "
+        + "normal_side, posting_allowed, create_time, update_time) VALUES (#{id}, #{chartId}, #{parentAccountId}, "
+        + "#{accountCode}, #{accountName}, #{accountClass}, #{normalSide}, #{postingAllowed}, #{createTime}, #{updateTime})")
+    void insertChartAccount(ChartAccount account);
 
     /** 直接改变账户状态，构造停用账户场景（本期无停用入口）。 */
     @Update("UPDATE t_ledger_account SET account_status = #{status} WHERE id = #{id}")

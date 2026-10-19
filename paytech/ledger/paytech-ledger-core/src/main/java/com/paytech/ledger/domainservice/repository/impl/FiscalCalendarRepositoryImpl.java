@@ -1,12 +1,16 @@
 package com.paytech.ledger.domainservice.repository.impl;
 
+import java.util.List;
+
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
 
-import com.paytech.foundation.common.error.BizCheckFailException;
+import com.paytech.foundation.common.error.FailException;
+import com.paytech.ledger.api.enums.LedgerSetupErrorCode;
 import com.paytech.ledger.core.dal.dataobject.FiscalCalendar;
 import com.paytech.ledger.core.dal.mapper.FiscalCalendarMapper;
 import com.paytech.ledger.core.enums.LedgerEntityType;
+import com.paytech.ledger.domain.FiscalCalendarQuery;
 import com.paytech.ledger.domainservice.repository.FiscalCalendarRepository;
 
 import lombok.AllArgsConstructor;
@@ -20,7 +24,11 @@ public class FiscalCalendarRepositoryImpl implements FiscalCalendarRepository {
     /** 插入财务日历；同主体已有日历时拒绝。 */
     @Override
     public void insert(FiscalCalendar calendar) {
-        insertUnique(() -> mapper.insert(calendar), "财务日历已存在: " + calendar.getEntityType().getCode() + "/" + calendar.getEntityId());
+        try {
+            mapper.insert(calendar);
+        } catch (DuplicateKeyException e) {
+            throw new FailException(LedgerSetupErrorCode.FISCAL_CALENDAR_ALREADY_EXISTS, null, e);
+        }
     }
 
     /** 按主键读取日历，不存在返回空。 */
@@ -41,12 +49,15 @@ public class FiscalCalendarRepositoryImpl implements FiscalCalendarRepository {
         return mapper.selectByEntity(entityType, entityId);
     }
 
-    /** 执行插入，业务唯一键冲突时转换为带上下文的业务拒绝。 */
-    private void insertUnique(Runnable insert, String message) {
-        try {
-            insert.run();
-        } catch (DuplicateKeyException e) {
-            throw new BizCheckFailException(message, e);
-        }
+    /** 按过滤条件分页读取财务日历，按主键升序。 */
+    @Override
+    public List<FiscalCalendar> findPage(FiscalCalendarQuery query) {
+        return mapper.selectPage(query, query.getPaging().size(), query.getPaging().offset());
+    }
+
+    /** 统计符合过滤条件的财务日历数量。 */
+    @Override
+    public long countPage(FiscalCalendarQuery query) {
+        return mapper.countPage(query);
     }
 }

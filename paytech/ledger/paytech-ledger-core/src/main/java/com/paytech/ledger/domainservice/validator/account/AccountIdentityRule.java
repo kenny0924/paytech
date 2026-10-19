@@ -39,14 +39,28 @@ public final class AccountIdentityRule {
 
     /** 校验科目、Owner 类型与余额桶组合是否属于账户身份矩阵。 */
     public static void checkAccountIdentity(String accountCode, OwnerType ownerType, BalanceBucket bucket) {
-        OwnerType requiredOwner = OWNER_SPECIFIC_CODES.get(accountCode);
-        boolean ownerAllowed = requiredOwner == null ? PLATFORM_OWNERS.contains(ownerType) : requiredOwner == ownerType;
-        if (!ownerAllowed) {
+        if (!ownerAllowed(accountCode, ownerType)) {
             throw new BizCheckFailException("科目不允许该核算对象: 科目 " + accountCode + ", Owner 类型 " + ownerType.getCode());
         }
         if (!allowedBuckets(accountCode).contains(bucket)) {
             throw new BizCheckFailException("科目不允许该余额桶: 科目 " + accountCode + ", 余额桶 " + bucket.getCode());
         }
+    }
+
+    /**
+     * 判断科目、Owner 类型与余额桶组合是否属于账户身份矩阵
+     * <li>供创建账户以稳定错误码拒绝；过账与规则版本仍用 {@link #checkAccountIdentity} 的分项提示。</li>
+     *
+     * @return 核算对象与余额桶均被科目允许时为 true
+     */
+    public static boolean isAccountIdentityAllowed(String accountCode, OwnerType ownerType, BalanceBucket bucket) {
+        return ownerAllowed(accountCode, ownerType) && allowedBuckets(accountCode).contains(bucket);
+    }
+
+    /** Owner 专属科目只允许对应 Owner 类型，其他科目只允许平台侧 Owner。 */
+    static boolean ownerAllowed(String accountCode, OwnerType ownerType) {
+        OwnerType requiredOwner = OWNER_SPECIFIC_CODES.get(accountCode);
+        return requiredOwner == null ? PLATFORM_OWNERS.contains(ownerType) : requiredOwner == ownerType;
     }
 
     /** 校验 Owner 标识格式：OE 为 entityNo，其他为规范十进制正整数。 */

@@ -15,4 +15,7 @@ public interface ChartAccountRepository {
 
     /** 按科目表和科目代码读取，不存在返回空。 */
     ChartAccount findByChartAndCode(long chartId, String accountCode);
+
+    /** 读取科目表下的科目；postingAllowed 为空时不过滤，按科目代码升序。 */
+    List<ChartAccount> findByChart(long chartId, Boolean postingAllowed);
 }

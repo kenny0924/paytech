@@ -2,6 +2,12 @@ package com.paytech.operations.console.bff.integration.impl;
 
 import org.springframework.stereotype.Component;
 
+import com.paytech.compliance.api.ClientReviewAdminApi;
+import com.paytech.compliance.api.request.ClientReviewDecisionRequestBody;
+import com.paytech.compliance.api.request.ClientReviewEvidenceReviewRequestBody;
+import com.paytech.compliance.api.request.ClientReviewReturnRequestBody;
+import com.paytech.compliance.api.response.ClientReviewCaseResponseBody;
+import com.paytech.compliance.api.response.ClientReviewCommandResponseBody;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.operations.console.bff.integration.ClientReviewRiskClient;
@@ -9,12 +15,6 @@ import com.paytech.operations.console.bff.service.model.ClientReviewModels.Decis
 import com.paytech.operations.console.bff.service.model.ClientReviewModels.EvidenceReviewRequestBody;
 import com.paytech.operations.console.bff.service.model.ClientReviewModels.ReturnRequestBody;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
-import com.paytech.compliance.api.ClientReviewAdminApi;
-import com.paytech.compliance.api.request.ClientReviewDecisionRequestBody;
-import com.paytech.compliance.api.request.ClientReviewEvidenceReviewRequestBody;
-import com.paytech.compliance.api.request.ClientReviewReturnRequestBody;
-import com.paytech.compliance.api.response.ClientReviewCaseResponseBody;
-import com.paytech.compliance.api.response.ClientReviewCommandResponseBody;
 
 import lombok.AllArgsConstructor;
 

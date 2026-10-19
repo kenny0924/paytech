@@ -396,6 +396,29 @@ export const pageCapabilities = [
         "displayName": "维护"
       }
     ]
+  },
+  {
+    "componentKey": "OPERATIONS_FINANCE_SETUP",
+    "displayName": "账务基础资料",
+    "frontendRoute": "/finance/setup",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_FINANCE_SETUP_MANAGE",
+        "displayName": "维护"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_FINANCE_LEDGER",
+    "displayName": "账本查询",
+    "frontendRoute": "/finance/ledger",
+    "actions": []
+  },
+  {
+    "componentKey": "OPERATIONS_FINANCE_BALANCES",
+    "displayName": "余额查询",
+    "frontendRoute": "/finance/balances",
+    "actions": []
   }
 ] as const;
 export type PageComponentKey = typeof pageCapabilities[number]["componentKey"];

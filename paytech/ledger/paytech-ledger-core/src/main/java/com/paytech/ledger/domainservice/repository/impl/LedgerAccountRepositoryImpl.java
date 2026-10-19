@@ -8,8 +8,9 @@ import org.springframework.stereotype.Repository;
 
 import com.paytech.account.api.enums.BalanceBucket;
 import com.paytech.account.api.enums.OwnerType;
-import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
+import com.paytech.foundation.common.error.FailException;
+import com.paytech.ledger.api.enums.LedgerSetupErrorCode;
 import com.paytech.ledger.core.dal.dataobject.LedgerAccount;
 import com.paytech.ledger.core.dal.mapper.LedgerAccountMapper;
 import com.paytech.ledger.domain.AccountQuery;
@@ -31,9 +32,7 @@ public class LedgerAccountRepositoryImpl implements LedgerAccountRepository {
         try {
             mapper.insert(account);
         } catch (DuplicateKeyException e) {
-            throw new BizCheckFailException("账户已存在: 账簿 " + account.getLedgerBookId() + ", Owner "
-                + account.getOwnerType().getCode() + "/" + account.getOwnerId() + ", 余额桶 "
-                + account.getBalanceBucket().getCode(), e);
+            throw new FailException(LedgerSetupErrorCode.ACCOUNT_ALREADY_EXISTS, null, e);
         }
     }
 

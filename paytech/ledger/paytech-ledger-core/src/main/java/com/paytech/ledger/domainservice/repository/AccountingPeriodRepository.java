@@ -1,9 +1,11 @@
 package com.paytech.ledger.domainservice.repository;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import com.paytech.ledger.core.dal.dataobject.AccountingPeriod;
 import com.paytech.ledger.core.enums.PeriodStatus;
+import com.paytech.ledger.domain.AccountingPeriodQuery;
 
 /** t_AccountingPeriod：会计期间读写。 */
 public interface AccountingPeriodRepository {
@@ -37,4 +39,10 @@ public interface AccountingPeriodRepository {
 
     /** 读取日历中包含给定日期的期间，不存在返回空。 */
     AccountingPeriod findByCalendarAndDate(long calendarId, LocalDate date);
+
+    /** 分页读取日历下的期间，按财年、期号升序。 */
+    List<AccountingPeriod> findPage(AccountingPeriodQuery query);
+
+    /** 统计日历下符合过滤条件的期间数量。 */
+    long countPage(AccountingPeriodQuery query);
 }

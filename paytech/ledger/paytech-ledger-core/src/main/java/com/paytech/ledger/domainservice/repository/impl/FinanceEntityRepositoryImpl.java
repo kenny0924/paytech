@@ -1,11 +1,15 @@
 package com.paytech.ledger.domainservice.repository.impl;
 
+import java.util.List;
+
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
 
-import com.paytech.foundation.common.error.BizCheckFailException;
+import com.paytech.foundation.common.error.FailException;
+import com.paytech.ledger.api.enums.LedgerSetupErrorCode;
 import com.paytech.ledger.core.dal.dataobject.FinanceEntity;
 import com.paytech.ledger.core.dal.mapper.FinanceEntityMapper;
+import com.paytech.ledger.domain.FinanceEntityQuery;
 import com.paytech.ledger.domainservice.repository.FinanceEntityRepository;
 
 import lombok.AllArgsConstructor;
@@ -19,7 +23,11 @@ public class FinanceEntityRepositoryImpl implements FinanceEntityRepository {
     /** 插入财务主体；代码或法律 Party 已存在时拒绝。 */
     @Override
     public void insert(FinanceEntity entity) {
-        insertUnique(() -> mapper.insert(entity), "财务主体代码或法律 Party 已存在: " + entity.getEntityCode());
+        try {
+            mapper.insert(entity);
+        } catch (DuplicateKeyException e) {
+            throw new FailException(LedgerSetupErrorCode.FINANCE_ENTITY_ALREADY_EXISTS, null, e);
+        }
     }
 
     /** 按主键读取财务主体，不存在返回空。 */
@@ -28,12 +36,15 @@ public class FinanceEntityRepositoryImpl implements FinanceEntityRepository {
         return mapper.selectById(id);
     }
 
-    /** 执行插入，业务唯一键冲突时转换为带上下文的业务拒绝。 */
-    private void insertUnique(Runnable insert, String message) {
-        try {
-            insert.run();
-        } catch (DuplicateKeyException e) {
-            throw new BizCheckFailException(message, e);
-        }
+    /** 按过滤条件分页读取财务主体，按主键升序。 */
+    @Override
+    public List<FinanceEntity> findPage(FinanceEntityQuery query) {
+        return mapper.selectPage(query, query.getPaging().size(), query.getPaging().offset());
+    }
+
+    /** 统计符合过滤条件的财务主体数量。 */
+    @Override
+    public long countPage(FinanceEntityQuery query) {
+        return mapper.countPage(query);
     }
 }

@@ -2,11 +2,12 @@ package com.paytech.account.service.processor;
 
 import org.springframework.stereotype.Component;
 
+import com.paytech.account.api.enums.BalanceQueryErrorCode;
 import com.paytech.account.domain.model.ClientBalance;
 import com.paytech.account.domainservice.service.BalanceQueryService;
 import com.paytech.account.integration.ledger.LedgerBookClient;
 import com.paytech.account.service.processor.request.OwnerBalanceQuery;
-import com.paytech.foundation.common.error.BizCheckFailException;
+import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.money.Money;
 import com.paytech.foundation.processor.AbstractProcessor;
 
@@ -30,7 +31,7 @@ public class QueryClientBalanceProcessor extends AbstractProcessor<OwnerBalanceQ
     @Override
     protected ClientBalance processRequest(OwnerBalanceQuery request) {
         if (ledgerBookClient.findOperatingEntityBook(request.getEntityNo(), request.getCurrency()) == null) {
-            throw new BizCheckFailException("未找到经营主体币种账簿: " + request.getEntityNo() + "/" + request.getCurrency());
+            throw new FailException(BalanceQueryErrorCode.LEDGER_BOOK_NOT_FOUND);
         }
         return balanceQueryService.clientBalance(request.getOwnerId(), request.getEntityNo(), request.getCurrency());
     }

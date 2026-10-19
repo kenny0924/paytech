@@ -2,8 +2,9 @@ package com.paytech.ledger.service.processor;
 
 import org.springframework.stereotype.Component;
 
-import com.paytech.foundation.common.error.BizCheckFailException;
+import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.processor.AbstractProcessor;
+import com.paytech.ledger.api.enums.LedgerSetupErrorCode;
 import com.paytech.ledger.core.dal.dataobject.AccountingPeriod;
 import com.paytech.ledger.core.enums.PeriodStatus;
 import com.paytech.ledger.domainservice.repository.AccountingPeriodRepository;
@@ -29,14 +30,13 @@ public class OpenAccountingPeriodProcessor
     protected OpenAccountingPeriodResponse processRequest(OpenAccountingPeriodRequest request) {
         AccountingPeriod period = accountingPeriodRepository.findById(request.getAccountingPeriodId());
         if (period == null) {
-            throw new BizCheckFailException("会计期间不存在: " + request.getAccountingPeriodId());
+            throw new FailException(LedgerSetupErrorCode.ACCOUNTING_PERIOD_NOT_FOUND);
         }
         if (period.getStatus() == PeriodStatus.OPEN) {
             return response(period);
         }
         if (period.getStatus() != PeriodStatus.FUTURE) {
-            throw new BizCheckFailException("只有 FUTURE 期间可以开放: " + period.getId() + ", 状态 "
-                + period.getStatus().getCode());
+            throw new FailException(LedgerSetupErrorCode.ACCOUNTING_PERIOD_NOT_FUTURE);
         }
         accountingPeriodService.openAccountingPeriod(period);
         return response(period);

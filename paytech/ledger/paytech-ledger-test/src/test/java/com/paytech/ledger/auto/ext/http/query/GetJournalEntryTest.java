@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import com.paytech.account.api.enums.BalanceBucket;
 import com.paytech.account.api.enums.OwnerType;
 import com.paytech.ledger.api.LedgerBookQueryApi;
+import com.paytech.ledger.api.enums.LedgerSetupErrorCode;
 import com.paytech.ledger.api.response.JournalEntryDetailResponseBody;
 import com.paytech.ledger.core.constant.AccountingCodes;
 import com.paytech.ledger.core.enums.EntrySide;
@@ -71,7 +72,7 @@ class GetJournalEntryTest extends AbstractManualAdjustmentApiTest {
         get("/ledger-books/v1/" + otherBook + "/journal-entries/" + entryId)
             .assertBusinessRejected("分录不存在或不属于账簿: 分录 " + entryId);
         get(path("123456789")).assertBusinessRejected("分录不存在或不属于账簿");
-        get("/ledger-books/v1/123456789/journal-entries/" + entryId).assertBusinessRejected("账簿不存在");
+        get("/ledger-books/v1/123456789/journal-entries/" + entryId).assertRejected(LedgerSetupErrorCode.LEDGER_BOOK_NOT_FOUND);
     }
 
     /** 本类账簿的分录详情路径。 */

@@ -5,7 +5,8 @@ import java.util.List;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
 
-import com.paytech.foundation.common.error.BizCheckFailException;
+import com.paytech.foundation.common.error.FailException;
+import com.paytech.ledger.api.enums.LedgerSetupErrorCode;
 import com.paytech.ledger.core.dal.dataobject.LedgerBook;
 import com.paytech.ledger.core.dal.mapper.LedgerBookMapper;
 import com.paytech.ledger.core.enums.LedgerEntityType;
@@ -24,7 +25,11 @@ public class LedgerBookRepositoryImpl implements LedgerBookRepository {
     /** 插入账簿；同主体同币种已有账簿时拒绝。 */
     @Override
     public void insert(LedgerBook book) {
-        insertUnique(() -> mapper.insert(book), "账簿已存在: " + book.getEntityType().getCode() + "/" + book.getEntityId() + "/" + book.getCurrency());
+        try {
+            mapper.insert(book);
+        } catch (DuplicateKeyException e) {
+            throw new FailException(LedgerSetupErrorCode.LEDGER_BOOK_ALREADY_EXISTS, null, e);
+        }
     }
 
     /** 按主键读取账簿与其科目表代码，不存在返回空。 */
@@ -61,14 +66,5 @@ public class LedgerBookRepositoryImpl implements LedgerBookRepository {
     @Override
     public List<LedgerBook> findAllByEntity(LedgerEntityType entityType, String entityId) {
         return mapper.selectAllByEntity(entityType, entityId);
-    }
-
-    /** 执行插入，业务唯一键冲突时转换为带上下文的业务拒绝。 */
-    private void insertUnique(Runnable insert, String message) {
-        try {
-            insert.run();
-        } catch (DuplicateKeyException e) {
-            throw new BizCheckFailException(message, e);
-        }
     }
 }

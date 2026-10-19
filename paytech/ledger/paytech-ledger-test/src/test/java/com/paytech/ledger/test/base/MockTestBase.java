@@ -12,6 +12,7 @@ import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTe
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalManagementPort;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.client.EntityExchangeResult;
 import org.springframework.test.web.servlet.client.RestTestClient;
@@ -51,6 +52,18 @@ import tools.jackson.databind.ObjectMapper;
 public abstract class MockTestBase extends TestBase {
     /** 所有测试请求使用的 Request ID。 */
     protected static final String REQUEST_ID = "Ledger.Test_01";
+
+    /** 财务基础资料命令的操作人 Account Header。 */
+    protected static final String ACTOR_HEADER = "X-Gateway-Actor-Subject";
+
+    /** 财务基础资料命令的操作人会话 Header。 */
+    protected static final String SESSION_HEADER = "X-Gateway-Session-Id";
+
+    /** 测试操作人 Account ID。 */
+    protected static final String OPERATOR_ACCOUNT_ID = "900000000000000001";
+
+    /** 测试操作人会话 ID。 */
+    protected static final String OPERATOR_SESSION_ID = "ledger-test-session";
 
     /** 等待消费完成的上限。 */
     protected static final Duration CONSUME_WAIT = Duration.ofSeconds(20);
@@ -109,6 +122,14 @@ public abstract class MockTestBase extends TestBase {
     protected LedgerResponseChecker post(String path, Object body) {
         return new LedgerResponseChecker(http.post(path, TestRequestHeaders.internal(REQUEST_ID), body),
             objectMapper, REQUEST_ID);
+    }
+
+    /** 以 Operations 操作人身份发送财务基础资料命令（BFF 填入的两个操作人 Header）。 */
+    protected LedgerResponseChecker postAsOperator(String path, Object body) {
+        HttpHeaders headers = TestRequestHeaders.internal(REQUEST_ID);
+        headers.set(ACTOR_HEADER, OPERATOR_ACCOUNT_ID);
+        headers.set(SESSION_HEADER, OPERATOR_SESSION_ID);
+        return new LedgerResponseChecker(http.post(path, headers, body), objectMapper, REQUEST_ID);
     }
 
     /** 发送内部 GET 请求。 */

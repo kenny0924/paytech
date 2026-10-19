@@ -1,0 +1,39 @@
+[
+  {
+    "id": "R17",
+    "method": "GET",
+    "path": "/finance/balances/v1/clients/880000000000071001",
+    "query": "?entityNo=AE001&currency=USD",
+    "request": null,
+    "status": 200,
+    "response": {
+      "clientId": "880000000000071001",
+      "entityNo": "AE001",
+      "currency": "USD",
+      "pendingAmount": {"currency": "USD", "amount": "35.00"},
+      "availableAmount": {"currency": "USD", "amount": "100.50"},
+      "lockedAmount": {"currency": "USD", "amount": "0.00"},
+      "securityDepositAmount": {"currency": "USD", "amount": "500.00"},
+      "recoveryReceivableAmount": {"currency": "USD", "amount": "0.00"}
+    },
+    "routeCode": "operations-finance-client-balance"
+  },
+  {
+    "id": "R18",
+    "method": "GET",
+    "path": "/finance/balances/v1/partners/880000000000091001",
+    "query": "?entityNo=AE001&currency=USD",
+    "request": null,
+    "status": 200,
+    "response": {
+      "partnerId": "880000000000091001",
+      "entityNo": "AE001",
+      "currency": "USD",
+      "pendingAmount": {"currency": "USD", "amount": "12.30"},
+      "availableAmount": {"currency": "USD", "amount": "45.00"},
+      "lockedAmount": {"currency": "USD", "amount": "5.00"},
+      "recoveryReceivableAmount": {"currency": "USD", "amount": "0.00"}
+    },
+    "routeCode": "operations-finance-partner-balance"
+  }
+]

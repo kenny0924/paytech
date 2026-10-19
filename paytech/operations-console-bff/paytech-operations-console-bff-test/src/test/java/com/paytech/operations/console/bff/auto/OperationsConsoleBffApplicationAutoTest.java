@@ -329,7 +329,19 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
             "PATCH /webhook-admin/v1/endpoints/{endpointId}/status",
             "POST /webhook-admin/v1/endpoints/{endpointId}/signing-secret/rotations",
             "POST /webhook-admin/v1/endpoints/{endpointId}/tests", "GET /webhook-admin/v1/deliveries",
-            "GET /webhook-admin/v1/deliveries/{deliveryId}", "POST /webhook-admin/v1/deliveries/{deliveryId}/replays"), routes);
+            "GET /webhook-admin/v1/deliveries/{deliveryId}", "POST /webhook-admin/v1/deliveries/{deliveryId}/replays",
+            "GET /finance/finance-entities/v1", "POST /finance/finance-entities/v1",
+            "GET /finance/fiscal-calendars/v1", "POST /finance/fiscal-calendars/v1",
+            "GET /finance/fiscal-calendars/v1/{fiscalCalendarId}/periods",
+            "POST /finance/fiscal-calendars/v1/{fiscalCalendarId}/periods",
+            "POST /finance/accounting-periods/v1/{accountingPeriodId}/open",
+            "GET /finance/ledger-books/v1", "POST /finance/ledger-books/v1",
+            "GET /finance/ledger-books/v1/{ledgerBookId}/accounts", "POST /finance/ledger-books/v1/{ledgerBookId}/accounts",
+            "GET /finance/ledger-books/v1/{ledgerBookId}/accounts/{accountId}/journal-lines",
+            "GET /finance/ledger-books/v1/{ledgerBookId}/journal-entries/{journalEntryId}",
+            "GET /finance/chart-of-accounts/v1", "GET /finance/chart-of-accounts/v1/{chartCode}/accounts",
+            "GET /finance/currencies/v1", "GET /finance/balances/v1/clients/{clientId}",
+            "GET /finance/balances/v1/partners/{partnerId}"), routes);
 
         Path classes = appModule().resolve("target/classes/com/paytech/operations/console/bff");
         try (var files = Files.walk(classes)) {

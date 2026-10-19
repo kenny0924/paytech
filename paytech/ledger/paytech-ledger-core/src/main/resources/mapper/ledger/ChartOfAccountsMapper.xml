@@ -4,4 +4,8 @@
     <select id="selectByChartCode" resultType="com.paytech.ledger.core.dal.dataobject.ChartOfAccounts">
         SELECT id, chart_code, chart_name, status, create_time, update_time FROM t_chart_of_accounts WHERE chart_code = #{chartCode}
     </select>
+
+    <select id="selectAll" resultType="com.paytech.ledger.core.dal.dataobject.ChartOfAccounts">
+        SELECT id, chart_code, chart_name, status, create_time, update_time FROM t_chart_of_accounts ORDER BY chart_code
+    </select>
 </mapper>

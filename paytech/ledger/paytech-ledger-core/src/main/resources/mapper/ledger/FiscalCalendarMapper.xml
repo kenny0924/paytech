@@ -17,4 +17,22 @@
     <select id="selectByEntity" resultType="com.paytech.ledger.core.dal.dataobject.FiscalCalendar">
         SELECT id, entity_type, entity_id, calendar_code, timezone, year_start_month, version, create_time, update_time FROM t_fiscal_calendar WHERE entity_type = #{entityType} AND entity_id = #{entityId}
     </select>
+
+    <select id="selectPage" resultType="com.paytech.ledger.core.dal.dataobject.FiscalCalendar">
+        SELECT id, entity_type, entity_id, calendar_code, timezone, year_start_month, version, create_time, update_time FROM t_fiscal_calendar
+        <where>
+            <if test="query.entityType != null">AND entity_type = #{query.entityType}</if>
+            <if test="query.entityId != null">AND entity_id = #{query.entityId}</if>
+        </where>
+        ORDER BY id
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="long">
+        SELECT COUNT(*) FROM t_fiscal_calendar
+        <where>
+            <if test="query.entityType != null">AND entity_type = #{query.entityType}</if>
+            <if test="query.entityId != null">AND entity_id = #{query.entityId}</if>
+        </where>
+    </select>
 </mapper>

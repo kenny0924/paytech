@@ -38,6 +38,9 @@ const pages: Record<PageComponentKey, ComponentType<PageProps>> = {
   OPERATIONS_NOTIFICATION_PROVIDERS: lazy(() => import('../pages/NotificationProviders').then(m => ({ default: m.NotificationProviders }))),
   OPERATIONS_NOTIFICATION_RECORDS: lazy(() => import('../pages/NotificationRecords').then(m => ({ default: m.NotificationRecords }))),
   OPERATIONS_WEBHOOKS: lazy(() => import('../pages/WebhookManagement').then(m => ({ default: m.WebhookManagement }))),
+  OPERATIONS_FINANCE_SETUP: lazy(() => import('../pages/FinanceSetup').then(m => ({ default: m.FinanceSetup }))),
+  OPERATIONS_FINANCE_LEDGER: lazy(() => import('../pages/FinanceLedger').then(m => ({ default: m.FinanceLedger }))),
+  OPERATIONS_FINANCE_BALANCES: lazy(() => import('../pages/FinanceBalances').then(m => ({ default: m.FinanceBalances }))),
 };
 export function ConsolePage({ componentKey, ...props }: PageProps & { componentKey: string }) {
   const Page = pages[componentKey as PageComponentKey];

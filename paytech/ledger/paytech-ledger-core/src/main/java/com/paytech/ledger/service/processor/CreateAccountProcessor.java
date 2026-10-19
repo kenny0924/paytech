@@ -6,9 +6,10 @@ import java.time.temporal.ChronoUnit;
 
 import org.springframework.stereotype.Component;
 
-import com.paytech.foundation.common.error.BizCheckFailException;
+import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.processor.AbstractProcessor;
+import com.paytech.ledger.api.enums.LedgerSetupErrorCode;
 import com.paytech.ledger.core.dal.dataobject.ChartAccount;
 import com.paytech.ledger.core.dal.dataobject.LedgerAccount;
 import com.paytech.ledger.core.dal.dataobject.LedgerBook;
@@ -40,15 +41,17 @@ public class CreateAccountProcessor extends AbstractProcessor<CreateAccountReque
     @Override
     protected void validate(CreateAccountRequest request) {
         AccountIdentityRule.checkOwnerId(request.getOwnerType(), request.getOwnerId());
-        AccountIdentityRule.checkAccountIdentity(request.getAccountCode(), request.getOwnerType(),
-            request.getBalanceBucket());
+        if (!AccountIdentityRule.isAccountIdentityAllowed(request.getAccountCode(), request.getOwnerType(),
+            request.getBalanceBucket())) {
+            throw new FailException(LedgerSetupErrorCode.ACCOUNT_IDENTITY_INVALID);
+        }
     }
 
     @Override
     protected CreatedResourceResponse processRequest(CreateAccountRequest request) {
         LedgerBook book = ledgerBookRepository.findById(request.getLedgerBookId());
         if (book == null) {
-            throw new BizCheckFailException("账簿不存在: " + request.getLedgerBookId());
+            throw new FailException(LedgerSetupErrorCode.LEDGER_BOOK_NOT_FOUND);
         }
         ChartAccount chartAccount = getPostableChartAccount(book, request.getAccountCode());
         LedgerAccount account = buildAccount(request, chartAccount);
@@ -62,7 +65,7 @@ public class CreateAccountProcessor extends AbstractProcessor<CreateAccountReque
     ChartAccount getPostableChartAccount(LedgerBook book, String accountCode) {
         ChartAccount chartAccount = chartAccountRepository.findByChartAndCode(book.getChartId(), accountCode);
         if (chartAccount == null || !Boolean.TRUE.equals(chartAccount.getPostingAllowed())) {
-            throw new BizCheckFailException("科目不存在或不可过账: 账簿 " + book.getId() + ", 科目 " + accountCode);
+            throw new FailException(LedgerSetupErrorCode.CHART_ACCOUNT_NOT_POSTABLE);
         }
         return chartAccount;
     }

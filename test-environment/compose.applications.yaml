@@ -804,6 +804,9 @@ services:
       OPERATIONS_BFF_BIND_ADDRESS: 172.30.73.22
       OPERATIONS_CONSOLE_ORIGIN: http://localhost:28080
       OPERATIONS_TEST_HTTP_ENABLED: "true"
+      # ledger / account 不注册 Nacos；BFF 以固定私网地址直连（20261018 财务基础资料与账本余额查询）。
+      OPERATIONS_LEDGER_BASE_URL: http://ledger-service:18105
+      OPERATIONS_ACCOUNT_BASE_URL: http://account-service:18114
     depends_on:
       platform-support-service: { condition: service_healthy }
       risk-decision-service: { condition: service_healthy }

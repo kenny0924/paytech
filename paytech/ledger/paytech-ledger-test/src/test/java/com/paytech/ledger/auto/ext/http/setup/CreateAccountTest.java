@@ -10,10 +10,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.paytech.account.api.enums.BalanceBucket;
 import com.paytech.account.api.enums.OwnerType;
 import com.paytech.ledger.api.LedgerBookCommandApi;
+import com.paytech.ledger.api.enums.LedgerSetupErrorCode;
 import com.paytech.ledger.api.request.CreateAccountRequestBody;
 import com.paytech.ledger.core.dal.dataobject.LedgerAccount;
 import com.paytech.ledger.core.enums.AccountStatus;
+import com.paytech.ledger.core.enums.LedgerEntityType;
 import com.paytech.ledger.core.enums.NormalSide;
+import com.paytech.ledger.core.enums.ReferenceDataStatus;
 import com.paytech.ledger.test.base.MockTestBase;
 import com.paytech.ledger.test.builder.AccountingSetupRequestBuilder;
 import com.paytech.ledger.test.dal.AccountingTestMapper;
@@ -22,7 +25,7 @@ import com.paytech.ledger.test.mocker.local.LedgerFixture;
 /**
  * 创建统一账户：正常方向冻结、账户身份矩阵、科目归属与唯一性。
  *
- * @see LedgerBookCommandApi#createAccount(String, CreateAccountRequestBody)
+ * @see LedgerBookCommandApi#createAccount(String, String, String, CreateAccountRequestBody)
  */
 class CreateAccountTest extends MockTestBase {
 
@@ -38,7 +41,7 @@ class CreateAccountTest extends MockTestBase {
 
     @Test
     void test_normalFlowCopiesNormalSide() {
-        var response = post(path(), AccountingSetupRequestBuilder.account("CLIENT_PAYABLE",
+        var response = postAsOperator(path(), AccountingSetupRequestBuilder.account("CLIENT_PAYABLE",
             OwnerType.CLIENT.getCode(), "1001", BalanceBucket.PENDING.getCode())).assertSuccess(201);
 
         LedgerAccount account = testMapper.selectAccount(response.id("accountId"));
@@ -52,46 +55,57 @@ class CreateAccountTest extends MockTestBase {
 
     @Test
     void test_platformOwnedAccountUsesNoneBucket() {
-        post(path(), AccountingSetupRequestBuilder.account("BANK_CASH", OwnerType.CASH_ACCOUNT.getCode(), "5001",
+        postAsOperator(path(), AccountingSetupRequestBuilder.account("BANK_CASH", OwnerType.CASH_ACCOUNT.getCode(), "5001",
             BalanceBucket.NONE.getCode())).assertSuccess(201);
-        post(path(), AccountingSetupRequestBuilder.account("CAPITAL", OwnerType.OPERATING_ENTITY.getCode(), "AE001",
+        postAsOperator(path(), AccountingSetupRequestBuilder.account("CAPITAL", OwnerType.OPERATING_ENTITY.getCode(), "AE001",
             BalanceBucket.NONE.getCode())).assertSuccess(201);
     }
 
     @Test
     void test_identityMatrixViolationRejected() {
-        post(path(), AccountingSetupRequestBuilder.account("CLIENT_PAYABLE", OwnerType.CLIENT.getCode(), "1001",
-            BalanceBucket.NONE.getCode())).assertBusinessRejected("科目不允许该余额桶");
-        post(path(), AccountingSetupRequestBuilder.account("PARTNER_RECOVERY_RECEIVABLE",
+        postAsOperator(path(), AccountingSetupRequestBuilder.account("CLIENT_PAYABLE", OwnerType.CLIENT.getCode(), "1001",
+            BalanceBucket.NONE.getCode())).assertRejected(LedgerSetupErrorCode.ACCOUNT_IDENTITY_INVALID);
+        postAsOperator(path(), AccountingSetupRequestBuilder.account("PARTNER_RECOVERY_RECEIVABLE",
             OwnerType.LOCAL_PARTNER.getCode(), "2001", BalanceBucket.AVAILABLE.getCode()))
-            .assertBusinessRejected("科目不允许该余额桶");
-        post(path(), AccountingSetupRequestBuilder.account("CLIENT_PAYABLE", OwnerType.LOCAL_PARTNER.getCode(), "2001",
-            BalanceBucket.PENDING.getCode())).assertBusinessRejected("科目不允许该核算对象");
-        post(path(), AccountingSetupRequestBuilder.account("BANK_CASH", OwnerType.CLIENT.getCode(), "1001",
-            BalanceBucket.NONE.getCode())).assertBusinessRejected("科目不允许该核算对象");
+            .assertRejected(LedgerSetupErrorCode.ACCOUNT_IDENTITY_INVALID);
+        postAsOperator(path(), AccountingSetupRequestBuilder.account("CLIENT_PAYABLE", OwnerType.LOCAL_PARTNER.getCode(), "2001",
+            BalanceBucket.PENDING.getCode())).assertRejected(LedgerSetupErrorCode.ACCOUNT_IDENTITY_INVALID);
+        postAsOperator(path(), AccountingSetupRequestBuilder.account("BANK_CASH", OwnerType.CLIENT.getCode(), "1001",
+            BalanceBucket.NONE.getCode())).assertRejected(LedgerSetupErrorCode.ACCOUNT_IDENTITY_INVALID);
     }
 
     @Test
     void test_unknownChartAccountOrBookRejected() {
-        post(path(), AccountingSetupRequestBuilder.account("NOT_EXISTS", OwnerType.OPERATING_ENTITY.getCode(), "AE001",
-            BalanceBucket.NONE.getCode())).assertBusinessRejected("科目不存在或不可过账");
-        post("/ledger-books/v1/123456789/accounts", AccountingSetupRequestBuilder.account("CAPITAL",
+        postAsOperator(path(), AccountingSetupRequestBuilder.account("NOT_EXISTS", OwnerType.OPERATING_ENTITY.getCode(), "AE001",
+            BalanceBucket.NONE.getCode())).assertRejected(LedgerSetupErrorCode.CHART_ACCOUNT_NOT_POSTABLE);
+        postAsOperator("/ledger-books/v1/123456789/accounts", AccountingSetupRequestBuilder.account("CAPITAL",
             OwnerType.OPERATING_ENTITY.getCode(), "AE001", BalanceBucket.NONE.getCode()))
-            .assertBusinessRejected("账簿不存在");
+            .assertRejected(LedgerSetupErrorCode.LEDGER_BOOK_NOT_FOUND);
+    }
+
+    @Test
+    void test_nonPostableChartAccountRejected() {
+        long chartId = ledgerMocker.mockChart("LOCAL", ReferenceDataStatus.ACTIVE);
+        ledgerMocker.mockChartAccount(chartId, "LOCAL_PARENT", false);
+        long bookId = ledgerMocker.mockBook(LedgerEntityType.OPERATING_ENTITY, "AE002", "USD", chartId);
+
+        postAsOperator("/ledger-books/v1/" + bookId + "/accounts", AccountingSetupRequestBuilder.account("LOCAL_PARENT",
+            OwnerType.OPERATING_ENTITY.getCode(), "AE002", BalanceBucket.NONE.getCode()))
+            .assertRejected(LedgerSetupErrorCode.CHART_ACCOUNT_NOT_POSTABLE);
     }
 
     @Test
     void test_duplicateAccountRejected() {
         var body = AccountingSetupRequestBuilder.account("CLIENT_PAYABLE", OwnerType.CLIENT.getCode(), "1001",
             BalanceBucket.AVAILABLE.getCode());
-        post(path(), body).assertSuccess(201);
+        postAsOperator(path(), body).assertSuccess(201);
 
-        post(path(), body).assertBusinessRejected("账户已存在");
+        postAsOperator(path(), body).assertRejected(LedgerSetupErrorCode.ACCOUNT_ALREADY_EXISTS);
     }
 
     @Test
     void test_invalidOwnerIdFormat() {
-        post(path(), AccountingSetupRequestBuilder.account("CLIENT_PAYABLE", OwnerType.CLIENT.getCode(), "C-1001",
+        postAsOperator(path(), AccountingSetupRequestBuilder.account("CLIENT_PAYABLE", OwnerType.CLIENT.getCode(), "C-1001",
             BalanceBucket.PENDING.getCode())).assertInvalidRequest().assertDetailContains("Owner 标识格式非法");
     }
 

@@ -5,25 +5,35 @@ import java.util.List;
 
 import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
+import com.paytech.ledger.core.dal.dataobject.AccountingPeriod;
 import com.paytech.ledger.core.dal.dataobject.ChartAccount;
+import com.paytech.ledger.core.dal.dataobject.ChartOfAccounts;
+import com.paytech.ledger.core.dal.dataobject.CurrencySpec;
+import com.paytech.ledger.core.dal.dataobject.FinanceEntity;
+import com.paytech.ledger.core.dal.dataobject.FiscalCalendar;
 import com.paytech.ledger.domain.AccountQuery;
+import com.paytech.ledger.domain.AccountingPeriodQuery;
+import com.paytech.ledger.domain.FinanceEntityQuery;
+import com.paytech.ledger.domain.FiscalCalendarQuery;
 import com.paytech.ledger.domain.LedgerBookQuery;
 import com.paytech.ledger.domain.view.AccountJournalLineView;
 import com.paytech.ledger.domain.view.AccountView;
 import com.paytech.ledger.domain.view.JournalEntryDetailView;
 import com.paytech.ledger.domain.view.LedgerBookView;
+import com.paytech.platform.support.api.enums.CurrencySpecStatus;
 
 /**
  * 账簿、账户、账户流水与分录详情的只读查询
  * <li>不加锁、不开启事务；金额按账簿币种精度补齐小数位。</li>
  * <li>账户与分录必须属于路径指定的账簿，否则业务拒绝。</li>
+ * <li>账务基础资料（财务主体、日历、期间、科目表、科目、币种）列表供 Operations 页面只读展示。</li>
  */
 public interface LedgerQueryService {
 
     /** 分页查询账簿。 */
     PagingResponseBody<LedgerBookView> pageLedgerBooks(LedgerBookQuery query);
 
-    /** 分页查询账簿内账户；账簿不存在时拒绝。 */
+    /** 分页查询账簿内账户；账簿不存在时以 LEDGER_BOOK_NOT_FOUND 拒绝。 */
     PagingResponseBody<AccountView> pageAccounts(AccountQuery query);
 
     /**
@@ -61,6 +71,30 @@ public interface LedgerQueryService {
      * @return 按科目代码、核算对象、余额桶排序的全部 Owner 账户，金额按币种精度补齐
      */
     List<AccountView> listOwnerAccountTotals(long ledgerBookId);
+
+    /** 分页查询财务主体，按主键升序。 */
+    PagingResponseBody<FinanceEntity> pageFinanceEntities(FinanceEntityQuery query);
+
+    /** 分页查询财务日历，按主键升序。 */
+    PagingResponseBody<FiscalCalendar> pageFiscalCalendars(FiscalCalendarQuery query);
+
+    /** 分页查询日历下的会计期间，按财年、期号升序；日历不存在时以 FISCAL_CALENDAR_NOT_FOUND 拒绝。 */
+    PagingResponseBody<AccountingPeriod> pageAccountingPeriods(AccountingPeriodQuery query);
+
+    /** 查询全部科目表，按科目表代码升序。 */
+    List<ChartOfAccounts> listChartsOfAccounts();
+
+    /**
+     * 查询科目表下的科目
+     *
+     * @param chartCode 科目表代码；不存在时以 CHART_NOT_ACTIVE 拒绝
+     * @param postingAllowed 是否可过账，为空时不过滤
+     * @return 按科目代码升序的科目
+     */
+    List<ChartAccount> listChartAccountsByChart(String chartCode, Boolean postingAllowed);
+
+    /** 查询币种规则，status 为空时不过滤，按币种代码升序。 */
+    List<CurrencySpec> listCurrencies(CurrencySpecStatus status);
 
     /** 批量读取科目的最大主键数。 */
     int MAX_CHART_ACCOUNT_IDS = 200;

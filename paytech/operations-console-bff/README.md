@@ -58,9 +58,13 @@ OperationsRequestInterceptor（可信身份 → 当前 PLT-I02 完成 → Origin
 
 `OperationsAuthenticationApi`、`OperationsAuthorizationApi`、`OperationsManagementApi` 和 `GatewayConfigurationManagementApi` 只声明 HTTP 方法。BFF 的 Client Adapter 显式映射这些 Platform DTO，BFF 自己的 `service.model` 保留独立展示模型。Gateway 配置的分页 Item 和详情内嵌结构同样使用 `*ResponseBody`，不保留无后缀别名。`OperationsHttpBodyNamingAutoTest` 同时约束 Body 类型后缀和 API 接口不声明内嵌 DTO。
 
+#### 固定地址下游（ledger / account）
+
+账务基础资料、账本查询与余额查询见[需求方案](../../requirements/20261018/operations-console-财务基础资料与账本余额查询/technique.md)：`/finance` 下 18 个端点由 `FinanceSetupController`、`FinanceLedgerBookController`、`FinanceBalanceController` 简单转发到 `FinanceSetupClient`、`FinanceLedgerBookClient`、`FinanceBalanceClient`，浏览器路径为 `/finance` + Owner 路径。ledger 与 account 不注册 Nacos，`FinanceClientConfiguration` 以 `operations.ledger-base-url`、`operations.account-base-url`（环境变量 `OPERATIONS_LEDGER_BASE_URL` / `OPERATIONS_ACCOUNT_BASE_URL`）固定私网地址直连，不加 LoadBalancer、Discovery 拦截器或重试；启动时只接受不含路径、Query 与 Fragment 的 http(s) 地址。JDK HttpClient 连接 2 秒、读取 4 秒、禁止重定向，严格 Problem 解码；超时 504、不可达 503。两个 Owner 各用独立工厂登记 `LedgerSetupErrorCode` 与 `BalanceQueryErrorCode`（两者都有 `LEDGER_BOOK_NOT_FOUND`），业务拒绝以 400 与原 Code 到达浏览器。命令把会话 Account/Session 填入 `X-Gateway-Actor-Subject` / `X-Gateway-Session-Id`，不转发 Authorization、Cookie 或 `Idempotency-Key`；分页、命令主键与查询身份回执不一致按 502 处理。`FinanceRequestConfiguration` 严格解析写 Body（上限 8192 字节），GET 与开放会计期间不接受 Body；`/finance` 不含个人原值，不加入元数据日志前缀。auto 测试把两个地址指向 `LedgerOwnerSimulator`、`AccountOwnerSimulator`。
+
 ### 内部调用 Token（D26）
 
-依赖 `paytech-internal-auth`，`internal-auth.mode` 默认 `OFF`：不创建任何 Token Bean，入站与出站行为与引入前一致。设为 `DUAL` / `REQUIRED` 时，MVC Starter 的 `InternalAuthFilter` 校验入站 Token；`InternalCallTokenOptions` 让本 BFF 全部 `HttpServiceClientFactory.create` 客户端按显式目标服务名（`platform-support-service`、`risk-decision-service`、`compliance-service`、`client-master-service`）附加 `Authorization: Bearer`。Token 来源为 Foundation 的 `InternalTokenSupplier`；本步只在测试中用 `internal-auth.static-key.*` 本地密钥对，Platform 签发客户端的接线留待 Platform 签发接口落地。Vault 管理客户端由 `paytech-vault-client` 自行装配，不在本接线范围内。`OperationsInternalTokenAutoTest` 覆盖 `REQUIRED` 下入站拒绝与出站附加。
+依赖 `paytech-internal-auth`，`internal-auth.mode` 默认 `OFF`：不创建任何 Token Bean，入站与出站行为与引入前一致。设为 `DUAL` / `REQUIRED` 时，MVC Starter 的 `InternalAuthFilter` 校验入站 Token；`InternalCallTokenOptions` 让本 BFF 全部 `HttpServiceClientFactory.create` 客户端按显式目标服务名（`platform-support-service`、`risk-decision-service`、`compliance-service`、`client-master-service`、`ledger-service`、`account-service`）附加 `Authorization: Bearer`。Token 来源为 Foundation 的 `InternalTokenSupplier`；本步只在测试中用 `internal-auth.static-key.*` 本地密钥对，Platform 签发客户端的接线留待 Platform 签发接口落地。Vault 管理客户端由 `paytech-vault-client` 自行装配，不在本接线范围内。`OperationsInternalTokenAutoTest` 覆盖 `REQUIRED` 下入站拒绝与出站附加。
 
 ### Risk 配置适配边界
 

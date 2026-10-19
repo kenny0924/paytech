@@ -12,6 +12,7 @@ import com.paytech.foundation.id.IdGenerator;
 import com.paytech.ledger.core.dal.dataobject.AccountingPeriod;
 import com.paytech.ledger.core.dal.dataobject.BookSequence;
 import com.paytech.ledger.core.dal.dataobject.ChartAccount;
+import com.paytech.ledger.core.dal.dataobject.ChartOfAccounts;
 import com.paytech.ledger.core.dal.dataobject.CurrencySpec;
 import com.paytech.ledger.core.dal.dataobject.FinanceEntity;
 import com.paytech.ledger.core.dal.dataobject.FiscalCalendar;
@@ -24,11 +25,14 @@ import com.paytech.ledger.core.dal.mapper.FinanceEntityMapper;
 import com.paytech.ledger.core.dal.mapper.FiscalCalendarMapper;
 import com.paytech.ledger.core.dal.mapper.LedgerAccountMapper;
 import com.paytech.ledger.core.dal.mapper.LedgerBookMapper;
+import com.paytech.ledger.core.enums.AccountClass;
 import com.paytech.ledger.core.enums.AccountStatus;
 import com.paytech.ledger.core.enums.BookStatus;
 import com.paytech.ledger.core.enums.FinanceEntityStatus;
 import com.paytech.ledger.core.enums.LedgerEntityType;
+import com.paytech.ledger.core.enums.NormalSide;
 import com.paytech.ledger.core.enums.PeriodStatus;
+import com.paytech.ledger.core.enums.ReferenceDataStatus;
 import com.paytech.ledger.test.dal.AccountingTestMapper;
 import com.paytech.platform.support.api.enums.CurrencySpecStatus;
 
@@ -182,15 +186,49 @@ public class LedgerMocker {
 
     /** 插入启用的测试币种规则，用于非 USD 精度场景。 */
     public void mockCurrency(String currency, int minorUnit) {
+        mockCurrency(currency, minorUnit, CurrencySpecStatus.ACTIVE);
+    }
+
+    /** 插入指定状态的测试币种规则。 */
+    public void mockCurrency(String currency, int minorUnit, CurrencySpecStatus status) {
         CurrencySpec spec = new CurrencySpec();
         spec.setId(idGenerator.nextId());
         spec.setCurrency(currency);
         spec.setMinorUnit(minorUnit);
         spec.setRoundingMode("HALF_UP");
-        spec.setStatus(CurrencySpecStatus.ACTIVE);
+        spec.setStatus(status);
         spec.setCreateTime(now());
         spec.setUpdateTime(now());
         testMapper.insertCurrencySpec(spec);
+    }
+
+    /** 插入指定状态的测试科目表，返回主键（Snowflake，>= 1000000）。 */
+    public long mockChart(String chartCode, ReferenceDataStatus status) {
+        ChartOfAccounts chart = new ChartOfAccounts();
+        chart.setId(idGenerator.nextId());
+        chart.setChartCode(chartCode);
+        chart.setChartName("Test " + chartCode);
+        chart.setStatus(status);
+        chart.setCreateTime(now());
+        chart.setUpdateTime(now());
+        testMapper.insertChartOfAccounts(chart);
+        return chart.getId();
+    }
+
+    /** 在测试科目表下插入资产类借方科目，返回主键。 */
+    public long mockChartAccount(long chartId, String accountCode, boolean postingAllowed) {
+        ChartAccount account = new ChartAccount();
+        account.setId(idGenerator.nextId());
+        account.setChartId(chartId);
+        account.setAccountCode(accountCode);
+        account.setAccountName("Test " + accountCode);
+        account.setAccountClass(AccountClass.ASSET);
+        account.setNormalSide(NormalSide.DEBIT);
+        account.setPostingAllowed(postingAllowed);
+        account.setCreateTime(now());
+        account.setUpdateTime(now());
+        testMapper.insertChartAccount(account);
+        return account.getId();
     }
 
     /** 微秒精度的当前 UTC 时间。 */

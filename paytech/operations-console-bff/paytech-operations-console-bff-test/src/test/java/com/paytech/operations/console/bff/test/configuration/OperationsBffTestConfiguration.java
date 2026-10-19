@@ -3,7 +3,9 @@ package com.paytech.operations.console.bff.test.configuration;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.paytech.operations.console.bff.test.simulator.AccountOwnerSimulator;
 import com.paytech.operations.console.bff.test.simulator.ClientReviewOwnerSimulator;
+import com.paytech.operations.console.bff.test.simulator.LedgerOwnerSimulator;
 import com.paytech.operations.console.bff.test.simulator.PlatformOperationsSimulator;
 import com.paytech.operations.console.bff.test.simulator.RiskDecisionConfigurationSimulator;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -16,6 +18,14 @@ public class OperationsBffTestConfiguration {
     public static final PlatformOperationsSimulator PLATFORM = new PlatformOperationsSimulator(JOURNAL_SEQUENCE);
     public static final RiskDecisionConfigurationSimulator RISK = riskSimulator();
     public static final ClientReviewOwnerSimulator CLIENT_REVIEW = clientReviewSimulator();
+    public static final LedgerOwnerSimulator LEDGER = new LedgerOwnerSimulator();
+    public static final AccountOwnerSimulator ACCOUNT = new AccountOwnerSimulator();
+
+    @Bean(destroyMethod = "close")
+    LedgerOwnerSimulator ledgerOwnerSimulator() { return LEDGER; }
+
+    @Bean(destroyMethod = "close")
+    AccountOwnerSimulator accountOwnerSimulator() { return ACCOUNT; }
 
     @Bean(destroyMethod = "close")
     ClientReviewOwnerSimulator clientReviewOwnerSimulator() { return CLIENT_REVIEW; }

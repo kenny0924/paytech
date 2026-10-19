@@ -9,4 +9,20 @@
     <select id="selectById" resultType="com.paytech.ledger.core.dal.dataobject.FinanceEntity">
         SELECT id, entity_code, legal_party_id, display_name, status, create_time, update_time FROM t_finance_entity WHERE id = #{id}
     </select>
+
+    <select id="selectPage" resultType="com.paytech.ledger.core.dal.dataobject.FinanceEntity">
+        SELECT id, entity_code, legal_party_id, display_name, status, create_time, update_time FROM t_finance_entity
+        <where>
+            <if test="query.status != null">AND status = #{query.status}</if>
+        </where>
+        ORDER BY id
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="long">
+        SELECT COUNT(*) FROM t_finance_entity
+        <where>
+            <if test="query.status != null">AND status = #{query.status}</if>
+        </where>
+    </select>
 </mapper>

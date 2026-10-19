@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import com.paytech.account.api.enums.BalanceBucket;
 import com.paytech.account.api.enums.OwnerType;
 import com.paytech.ledger.api.LedgerBookQueryApi;
+import com.paytech.ledger.api.enums.LedgerSetupErrorCode;
 import com.paytech.ledger.core.constant.AccountingCodes;
 import com.paytech.ledger.core.enums.EntrySide;
 import com.paytech.ledger.core.enums.InstructionOrigin;
@@ -110,7 +111,7 @@ class ListAccountJournalLinesTest extends AbstractManualAdjustmentApiTest {
 
         get(path(foreign)).assertBusinessRejected("账户不存在或不属于账簿: 账户 " + foreign);
         get("/ledger-books/v1/123456789/accounts/" + bankCashAccountId + "/journal-lines")
-            .assertBusinessRejected("账簿不存在");
+            .assertRejected(LedgerSetupErrorCode.LEDGER_BOOK_NOT_FOUND);
     }
 
     @Test

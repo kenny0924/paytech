@@ -9,6 +9,7 @@ import java.util.List;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.client.EntityExchangeResult;
 
+import com.paytech.foundation.common.enums.CodeMessageEnum;
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.foundation.testsupport.api.AbstractHttpResponseChecker;
 
@@ -46,6 +47,13 @@ public final class LedgerResponseChecker extends AbstractHttpResponseChecker<Led
     public LedgerResponseChecker assertRejectedWithCode(String code, String detailFragment) {
         assertProblem(400, code);
         assertDetailContains(detailFragment);
+        return this;
+    }
+
+    /** 断言 400 专用错误码拒绝，detail 为该错误码的默认消息。 */
+    public LedgerResponseChecker assertRejected(CodeMessageEnum errorCode) {
+        assertProblem(400, errorCode.getCode());
+        assertEquals(errorCode.getMessage(), body().path("detail").asString(), "detail");
         return this;
     }
 

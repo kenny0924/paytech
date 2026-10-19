@@ -1,5 +1,7 @@
 package com.paytech.ledger.domainservice.repository.impl;
 
+import java.util.List;
+
 import org.springframework.stereotype.Repository;
 
 import com.paytech.ledger.core.dal.dataobject.ChartOfAccounts;
@@ -18,5 +20,11 @@ public class ChartOfAccountsRepositoryImpl implements ChartOfAccountsRepository 
     @Override
     public ChartOfAccounts findByChartCode(String chartCode) {
         return mapper.selectByChartCode(chartCode);
+    }
+
+    /** 读取全部科目表，按科目表代码升序。 */
+    @Override
+    public List<ChartOfAccounts> findAll() {
+        return mapper.selectAll();
     }
 }

@@ -6,9 +6,10 @@ import java.time.temporal.ChronoUnit;
 
 import org.springframework.stereotype.Component;
 
-import com.paytech.foundation.common.error.BizCheckFailException;
+import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.processor.AbstractProcessor;
+import com.paytech.ledger.api.enums.LedgerSetupErrorCode;
 import com.paytech.ledger.core.constant.AccountingCodes;
 import com.paytech.ledger.core.dal.dataobject.BookSequence;
 import com.paytech.ledger.core.dal.dataobject.ChartOfAccounts;
@@ -67,7 +68,7 @@ public class CreateLedgerBookProcessor extends AbstractProcessor<CreateLedgerBoo
     void checkActiveCurrency(String currency) {
         CurrencySpec spec = currencySpecRepository.findByCurrency(currency);
         if (spec == null || spec.getStatus() != CurrencySpecStatus.ACTIVE) {
-            throw new BizCheckFailException("币种未启用: " + currency);
+            throw new FailException(LedgerSetupErrorCode.CURRENCY_NOT_ACTIVE);
         }
     }
 
@@ -75,7 +76,7 @@ public class CreateLedgerBookProcessor extends AbstractProcessor<CreateLedgerBoo
     ChartOfAccounts getActiveChart(String chartCode) {
         ChartOfAccounts chart = chartOfAccountsRepository.findByChartCode(chartCode);
         if (chart == null || chart.getStatus() != ReferenceDataStatus.ACTIVE) {
-            throw new BizCheckFailException("科目表不存在或未启用: " + chartCode);
+            throw new FailException(LedgerSetupErrorCode.CHART_NOT_ACTIVE);
         }
         return chart;
     }
@@ -87,7 +88,7 @@ public class CreateLedgerBookProcessor extends AbstractProcessor<CreateLedgerBoo
         }
         FinanceEntity entity = financeEntityRepository.findById(Long.parseLong(request.getEntityId()));
         if (entity == null || entity.getStatus() != FinanceEntityStatus.ACTIVE) {
-            throw new BizCheckFailException("财务主体不存在或已关闭: " + request.getEntityId());
+            throw new FailException(LedgerSetupErrorCode.FINANCE_ENTITY_UNAVAILABLE);
         }
     }
 

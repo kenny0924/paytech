@@ -3,6 +3,7 @@ package com.paytech.ledger.app.ext.rest.converter;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.List;
 
 import org.springframework.stereotype.Component;
 
@@ -13,17 +14,34 @@ import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.ledger.api.response.AccountJournalLineResponseBody;
 import com.paytech.ledger.api.response.AccountResponseBody;
+import com.paytech.ledger.api.response.AccountingPeriodResponseBody;
+import com.paytech.ledger.api.response.ChartOfAccountsListResponseBody;
+import com.paytech.ledger.api.response.ChartOfAccountsResponseBody;
+import com.paytech.ledger.api.response.CurrencyListResponseBody;
+import com.paytech.ledger.api.response.CurrencyResponseBody;
+import com.paytech.ledger.api.response.FinanceEntityResponseBody;
+import com.paytech.ledger.api.response.FiscalCalendarResponseBody;
 import com.paytech.ledger.api.response.JournalEntryDetailResponseBody;
 import com.paytech.ledger.api.response.LedgerBookResponseBody;
+import com.paytech.ledger.core.dal.dataobject.AccountingPeriod;
+import com.paytech.ledger.core.dal.dataobject.ChartOfAccounts;
+import com.paytech.ledger.core.dal.dataobject.CurrencySpec;
+import com.paytech.ledger.core.dal.dataobject.FinanceEntity;
+import com.paytech.ledger.core.dal.dataobject.FiscalCalendar;
+import com.paytech.ledger.core.enums.FinanceEntityStatus;
 import com.paytech.ledger.core.enums.LedgerEntityType;
 import com.paytech.ledger.domain.AccountQuery;
+import com.paytech.ledger.domain.AccountingPeriodQuery;
+import com.paytech.ledger.domain.FinanceEntityQuery;
+import com.paytech.ledger.domain.FiscalCalendarQuery;
 import com.paytech.ledger.domain.LedgerBookQuery;
 import com.paytech.ledger.domain.view.AccountJournalLineView;
 import com.paytech.ledger.domain.view.AccountView;
 import com.paytech.ledger.domain.view.JournalEntryDetailView;
 import com.paytech.ledger.domain.view.LedgerBookView;
+import com.paytech.platform.support.api.enums.CurrencySpecStatus;
 
-/** 账本查询的 Query 参数解析与 View 到 ResponseBody 的转换；ID 与金额输出为字符串。 */
+/** 账本与账务基础资料查询的 Query 参数解析与查询结果到 ResponseBody 的转换；ID 与金额输出为字符串。 */
 @Component
 public class LedgerQueryConverter {
 
@@ -40,6 +58,28 @@ public class LedgerQueryConverter {
         return new AccountQuery(Long.parseLong(ledgerBookId), blankToNull(accountCode),
             optionalCode(OwnerType.class, ownerType), blankToNull(ownerId),
             optionalCode(BalanceBucket.class, balanceBucket), paging);
+    }
+
+    /** 解析财务主体列表条件。 */
+    public FinanceEntityQuery toFinanceEntityQuery(String status, Integer page, Integer size) {
+        return new FinanceEntityQuery(optionalCode(FinanceEntityStatus.class, status), PagingRequestBody.of(page, size));
+    }
+
+    /** 解析财务日历列表条件；空字符串视为不过滤。 */
+    public FiscalCalendarQuery toFiscalCalendarQuery(String entityType, String entityId, Integer page, Integer size) {
+        return new FiscalCalendarQuery(optionalCode(LedgerEntityType.class, entityType), blankToNull(entityId),
+            PagingRequestBody.of(page, size));
+    }
+
+    /** 解析日历下会计期间列表条件。 */
+    public AccountingPeriodQuery toAccountingPeriodQuery(String fiscalCalendarId, Integer fiscalYear, Integer page,
+        Integer size) {
+        return new AccountingPeriodQuery(Long.parseLong(fiscalCalendarId), fiscalYear, PagingRequestBody.of(page, size));
+    }
+
+    /** 解析可选币种状态。 */
+    public CurrencySpecStatus toCurrencyStatus(String status) {
+        return optionalCode(CurrencySpecStatus.class, status);
     }
 
     /** 解析可选 ISO 日期；格式合法但不存在的日期（如 02-30）按参数错误拒绝。 */
@@ -70,6 +110,59 @@ public class LedgerQueryConverter {
         body.setCurrency(view.getCurrency());
         body.setChartCode(view.getChartCode());
         body.setBookStatus(view.getBookStatus().getCode());
+        return body;
+    }
+
+    /** 转换财务主体列表项。 */
+    public FinanceEntityResponseBody toResponseBody(FinanceEntity entity) {
+        FinanceEntityResponseBody body = new FinanceEntityResponseBody();
+        body.setFinanceEntityId(entity.getId().toString());
+        body.setEntityCode(entity.getEntityCode());
+        body.setLegalPartyId(entity.getLegalPartyId().toString());
+        body.setDisplayName(entity.getDisplayName());
+        body.setStatus(entity.getStatus().getCode());
+        body.setCreateTime(entity.getCreateTime());
+        return body;
+    }
+
+    /** 转换财务日历列表项。 */
+    public FiscalCalendarResponseBody toResponseBody(FiscalCalendar calendar) {
+        FiscalCalendarResponseBody body = new FiscalCalendarResponseBody();
+        body.setFiscalCalendarId(calendar.getId().toString());
+        body.setEntityType(calendar.getEntityType().getCode());
+        body.setEntityId(calendar.getEntityId());
+        body.setCalendarCode(calendar.getCalendarCode());
+        body.setTimezone(calendar.getTimezone());
+        body.setYearStartMonth(calendar.getYearStartMonth());
+        body.setCreateTime(calendar.getCreateTime());
+        return body;
+    }
+
+    /** 转换会计期间列表项。 */
+    public AccountingPeriodResponseBody toResponseBody(AccountingPeriod period) {
+        AccountingPeriodResponseBody body = new AccountingPeriodResponseBody();
+        body.setAccountingPeriodId(period.getId().toString());
+        body.setFiscalCalendarId(period.getCalendarId().toString());
+        body.setFiscalYear(period.getFiscalYear());
+        body.setPeriodNo(period.getPeriodNo());
+        body.setStartDate(period.getStartDate());
+        body.setEndDate(period.getEndDate());
+        body.setStatus(period.getStatus().getCode());
+        body.setReopenCount(period.getReopenCount());
+        return body;
+    }
+
+    /** 转换科目表列表。 */
+    public ChartOfAccountsListResponseBody toChartsResponseBody(List<ChartOfAccounts> charts) {
+        ChartOfAccountsListResponseBody body = new ChartOfAccountsListResponseBody();
+        body.setItems(charts.stream().map(this::toChartBody).toList());
+        return body;
+    }
+
+    /** 转换币种列表。 */
+    public CurrencyListResponseBody toCurrenciesResponseBody(List<CurrencySpec> currencies) {
+        CurrencyListResponseBody body = new CurrencyListResponseBody();
+        body.setItems(currencies.stream().map(this::toCurrencyBody).toList());
         return body;
     }
 
@@ -141,6 +234,26 @@ public class LedgerQueryConverter {
         body.setBalanceBucket(line.getBalanceBucket().getCode());
         body.setEntrySide(line.getEntrySide().getCode());
         body.setAmount(amount(line.getAmount()));
+        return body;
+    }
+
+    /** 转换科目表。 */
+    ChartOfAccountsResponseBody toChartBody(ChartOfAccounts chart) {
+        ChartOfAccountsResponseBody body = new ChartOfAccountsResponseBody();
+        body.setChartId(chart.getId().toString());
+        body.setChartCode(chart.getChartCode());
+        body.setChartName(chart.getChartName());
+        body.setStatus(chart.getStatus().getCode());
+        return body;
+    }
+
+    /** 转换币种规则。 */
+    CurrencyResponseBody toCurrencyBody(CurrencySpec spec) {
+        CurrencyResponseBody body = new CurrencyResponseBody();
+        body.setCurrency(spec.getCurrency());
+        body.setMinorUnit(spec.getMinorUnit());
+        body.setRoundingMode(spec.getRoundingMode());
+        body.setStatus(spec.getStatus().getCode());
         return body;
     }
 

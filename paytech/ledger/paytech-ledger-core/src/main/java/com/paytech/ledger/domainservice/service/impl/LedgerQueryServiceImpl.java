@@ -7,25 +7,40 @@ import org.springframework.stereotype.Service;
 
 import com.paytech.account.api.enums.OwnerType;
 import com.paytech.foundation.common.error.BizCheckFailException;
+import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
+import com.paytech.ledger.api.enums.LedgerSetupErrorCode;
+import com.paytech.ledger.core.dal.dataobject.AccountingPeriod;
 import com.paytech.ledger.core.dal.dataobject.ChartAccount;
+import com.paytech.ledger.core.dal.dataobject.ChartOfAccounts;
+import com.paytech.ledger.core.dal.dataobject.CurrencySpec;
+import com.paytech.ledger.core.dal.dataobject.FinanceEntity;
+import com.paytech.ledger.core.dal.dataobject.FiscalCalendar;
 import com.paytech.ledger.core.dal.dataobject.LedgerAccount;
 import com.paytech.ledger.core.dal.dataobject.LedgerBook;
 import com.paytech.ledger.domain.AccountQuery;
+import com.paytech.ledger.domain.AccountingPeriodQuery;
+import com.paytech.ledger.domain.FinanceEntityQuery;
+import com.paytech.ledger.domain.FiscalCalendarQuery;
 import com.paytech.ledger.domain.LedgerBookQuery;
 import com.paytech.ledger.domain.view.AccountJournalLineView;
 import com.paytech.ledger.domain.view.AccountView;
 import com.paytech.ledger.domain.view.JournalEntryDetailView;
 import com.paytech.ledger.domain.view.LedgerBookView;
+import com.paytech.ledger.domainservice.repository.AccountingPeriodRepository;
 import com.paytech.ledger.domainservice.repository.ChartAccountRepository;
+import com.paytech.ledger.domainservice.repository.ChartOfAccountsRepository;
 import com.paytech.ledger.domainservice.repository.CurrencySpecRepository;
+import com.paytech.ledger.domainservice.repository.FinanceEntityRepository;
+import com.paytech.ledger.domainservice.repository.FiscalCalendarRepository;
 import com.paytech.ledger.domainservice.repository.JournalEntryRepository;
 import com.paytech.ledger.domainservice.repository.JournalLineRepository;
 import com.paytech.ledger.domainservice.repository.LedgerAccountRepository;
 import com.paytech.ledger.domainservice.repository.LedgerBookRepository;
 import com.paytech.ledger.domainservice.service.LedgerQueryService;
+import com.paytech.platform.support.api.enums.CurrencySpecStatus;
 
 import lombok.AllArgsConstructor;
 
@@ -43,6 +58,10 @@ public class LedgerQueryServiceImpl implements LedgerQueryService {
     private final JournalLineRepository journalLineRepository;
     private final CurrencySpecRepository currencySpecRepository;
     private final JournalEntryRepository journalEntryRepository;
+    private final FinanceEntityRepository financeEntityRepository;
+    private final FiscalCalendarRepository fiscalCalendarRepository;
+    private final ChartOfAccountsRepository chartOfAccountsRepository;
+    private final AccountingPeriodRepository accountingPeriodRepository;
 
     /** 账簿列表无金额，直接分页返回。 */
     @Override
@@ -109,10 +128,13 @@ public class LedgerQueryServiceImpl implements LedgerQueryService {
         return chartAccountRepository.findByIds(chartAccountIds.stream().distinct().sorted().toList());
     }
 
-    /** 账簿存在后读取全部 Owner 账户的分录聚合余额，并按币种精度补齐。 */
+    /**
+     * 账簿存在后读取全部 Owner 账户的分录聚合余额，并按币种精度补齐
+     * <li>供 account 经 LedgerReadApi 读取：账簿不存在沿用公共业务拒绝，account 未注册 LedgerSetupErrorCode。</li>
+     */
     @Override
     public List<AccountView> listOwnerAccountTotals(long ledgerBookId) {
-        int minorUnit = minorUnit(getBook(ledgerBookId));
+        int minorUnit = minorUnit(getLedgerBook(ledgerBookId).getCurrency());
         List<AccountView> accounts = ledgerAccountRepository.findOwnerTotals(ledgerBookId, OWNER_BALANCE_TYPES);
         accounts.forEach(account -> scale(account, minorUnit));
         return accounts;
@@ -125,18 +147,69 @@ public class LedgerQueryServiceImpl implements LedgerQueryService {
         account.setNetBalance(account.getNetBalance().setScale(minorUnit));
     }
 
-    /** 读取账簿，不存在时业务拒绝。 */
+    /** 分页读取财务主体。 */
+    @Override
+    public PagingResponseBody<FinanceEntity> pageFinanceEntities(FinanceEntityQuery query) {
+        return page(financeEntityRepository.findPage(query), query.getPaging(),
+            financeEntityRepository.countPage(query));
+    }
+
+    /** 分页读取财务日历。 */
+    @Override
+    public PagingResponseBody<FiscalCalendar> pageFiscalCalendars(FiscalCalendarQuery query) {
+        return page(fiscalCalendarRepository.findPage(query), query.getPaging(),
+            fiscalCalendarRepository.countPage(query));
+    }
+
+    /** 日历存在后分页读取期间。 */
+    @Override
+    public PagingResponseBody<AccountingPeriod> pageAccountingPeriods(AccountingPeriodQuery query) {
+        if (fiscalCalendarRepository.findById(query.getFiscalCalendarId()) == null) {
+            throw new FailException(LedgerSetupErrorCode.FISCAL_CALENDAR_NOT_FOUND);
+        }
+        return page(accountingPeriodRepository.findPage(query), query.getPaging(),
+            accountingPeriodRepository.countPage(query));
+    }
+
+    /** 全部科目表数量有限，不分页。 */
+    @Override
+    public List<ChartOfAccounts> listChartsOfAccounts() {
+        return chartOfAccountsRepository.findAll();
+    }
+
+    /** 科目表存在后读取其科目；科目表状态不过滤，供页面展示全部已发布科目表。 */
+    @Override
+    public List<ChartAccount> listChartAccountsByChart(String chartCode, Boolean postingAllowed) {
+        ChartOfAccounts chart = chartOfAccountsRepository.findByChartCode(chartCode);
+        if (chart == null) {
+            throw new FailException(LedgerSetupErrorCode.CHART_NOT_ACTIVE);
+        }
+        return chartAccountRepository.findByChart(chart.getId(), postingAllowed);
+    }
+
+    /** 币种规则数量有限，不分页。 */
+    @Override
+    public List<CurrencySpec> listCurrencies(CurrencySpecStatus status) {
+        return currencySpecRepository.findAll(status);
+    }
+
+    /** 读取账簿，不存在时以 LEDGER_BOOK_NOT_FOUND 拒绝（LedgerBookQueryApi 的页面区分处理）。 */
     LedgerBook getBook(long ledgerBookId) {
         LedgerBook book = ledgerBookRepository.findById(ledgerBookId);
         if (book == null) {
-            throw new BizCheckFailException("账簿不存在: " + ledgerBookId);
+            throw new FailException(LedgerSetupErrorCode.LEDGER_BOOK_NOT_FOUND);
         }
         return book;
     }
 
     /** 账簿币种的小数位。 */
     int minorUnit(LedgerBook book) {
-        return currencySpecRepository.findByCurrency(book.getCurrency()).getMinorUnit();
+        return minorUnit(book.getCurrency());
+    }
+
+    /** 币种的小数位。 */
+    int minorUnit(String currency) {
+        return currencySpecRepository.findByCurrency(currency).getMinorUnit();
     }
 
     /** 组装分页结果。 */

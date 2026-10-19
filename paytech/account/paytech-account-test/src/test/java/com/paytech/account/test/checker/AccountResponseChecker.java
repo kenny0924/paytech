@@ -9,6 +9,7 @@ import java.util.List;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.client.EntityExchangeResult;
 
+import com.paytech.foundation.common.enums.CodeMessageEnum;
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.foundation.testsupport.api.AbstractHttpResponseChecker;
 
@@ -45,6 +46,13 @@ public final class AccountResponseChecker extends AbstractHttpResponseChecker<Ac
     /** 断言依赖不可用时失败关闭为 503。 */
     public AccountResponseChecker assertServiceUnavailable() {
         assertProblem(503, CommonErrorCode.SERVICE_UNAVAILABLE.getCode());
+        return this;
+    }
+
+    /** 断言 400 专用错误码拒绝，detail 为该错误码的默认消息。 */
+    public AccountResponseChecker assertRejected(CodeMessageEnum errorCode) {
+        assertProblem(400, errorCode.getCode());
+        assertEquals(errorCode.getMessage(), body().path("detail").asString(), "detail");
         return this;
     }
 

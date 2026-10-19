@@ -155,6 +155,29 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
         Map.entry("client-onboarding-o09", "900000000000041005"),
         Map.entry("client-onboarding-o10", "900000000000041001"));
 
+    /** 财务路由权限：GET 为 FINANCE_ACCOUNTING_READ，POST 为 FINANCE_ACCOUNTING_MANAGE；未登记的 operations-finance-* 视为意外调用。 */
+    public static final String FINANCE_READ_PERMISSION_ID = "900000000000097101";
+    public static final String FINANCE_MANAGE_PERMISSION_ID = "900000000000097102";
+    public static final Map<String, String> FINANCE_ROUTE_PERMISSIONS = Map.ofEntries(
+        Map.entry("operations-finance-entity-list", FINANCE_READ_PERMISSION_ID),
+        Map.entry("operations-finance-entity-create", FINANCE_MANAGE_PERMISSION_ID),
+        Map.entry("operations-finance-calendar-list", FINANCE_READ_PERMISSION_ID),
+        Map.entry("operations-finance-calendar-create", FINANCE_MANAGE_PERMISSION_ID),
+        Map.entry("operations-finance-period-list", FINANCE_READ_PERMISSION_ID),
+        Map.entry("operations-finance-period-create", FINANCE_MANAGE_PERMISSION_ID),
+        Map.entry("operations-finance-period-open", FINANCE_MANAGE_PERMISSION_ID),
+        Map.entry("operations-finance-book-list", FINANCE_READ_PERMISSION_ID),
+        Map.entry("operations-finance-book-create", FINANCE_MANAGE_PERMISSION_ID),
+        Map.entry("operations-finance-account-list", FINANCE_READ_PERMISSION_ID),
+        Map.entry("operations-finance-account-create", FINANCE_MANAGE_PERMISSION_ID),
+        Map.entry("operations-finance-journal-line-list", FINANCE_READ_PERMISSION_ID),
+        Map.entry("operations-finance-journal-entry-detail", FINANCE_READ_PERMISSION_ID),
+        Map.entry("operations-finance-chart-list", FINANCE_READ_PERMISSION_ID),
+        Map.entry("operations-finance-chart-account-list", FINANCE_READ_PERMISSION_ID),
+        Map.entry("operations-finance-currency-list", FINANCE_READ_PERMISSION_ID),
+        Map.entry("operations-finance-client-balance", FINANCE_READ_PERMISSION_ID),
+        Map.entry("operations-finance-partner-balance", FINANCE_READ_PERMISSION_ID));
+
     // 这是 Platform Simulator 的当前目录事实；BFF 生产代码仍只传可信 Route Code。
     private static final Map<String, String> ROUTE_PERMISSIONS = Map.ofEntries(
         Map.entry("operations-account-create", ACCOUNT_CREATE_PERMISSION_ID),
@@ -308,6 +331,7 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
                 List.of("p_menu", "p_read")));
             grantedPermissions.clear();
             permissionCatalog().forEach(permission -> grantedPermissions.add(permission.getPermissionId()));
+            grantedPermissions.addAll(FINANCE_ROUTE_PERMISSIONS.values());
             sessionActive = true;
             allowed = true;
             disconnect = false;
@@ -410,6 +434,16 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
         }
         if (request.getRouteCode() == null || !request.getRouteCode().startsWith("operations-")) {
             unexpected(exchange, "未识别的 Operations Route Code");
+            return;
+        }
+        if (request.getRouteCode().startsWith("operations-finance-")) {
+            String financePermission = FINANCE_ROUTE_PERMISSIONS.get(request.getRouteCode());
+            if (financePermission == null) {
+                unexpected(exchange, "未登记的财务 Route Code");
+                return;
+            }
+            write(exchange, 200, new AuthorizationDecisionResponseBody(allowed && grantedPermissions.contains(financePermission)));
+            completedAuthorizationCount++;
             return;
         }
         String permissionId = (riskIdentity ? RISK_ROUTE_PERMISSIONS : ROUTE_PERMISSIONS).get(request.getRouteCode());

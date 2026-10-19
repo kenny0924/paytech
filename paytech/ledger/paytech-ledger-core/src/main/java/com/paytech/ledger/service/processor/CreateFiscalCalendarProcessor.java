@@ -8,10 +8,11 @@ import java.time.temporal.ChronoUnit;
 
 import org.springframework.stereotype.Component;
 
-import com.paytech.foundation.common.error.BizCheckFailException;
+import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.processor.AbstractProcessor;
+import com.paytech.ledger.api.enums.LedgerSetupErrorCode;
 import com.paytech.ledger.core.dal.dataobject.FinanceEntity;
 import com.paytech.ledger.core.dal.dataobject.FiscalCalendar;
 import com.paytech.ledger.core.enums.FinanceEntityStatus;
@@ -65,7 +66,7 @@ public class CreateFiscalCalendarProcessor
         }
         FinanceEntity entity = financeEntityRepository.findById(Long.parseLong(request.getEntityId()));
         if (entity == null || entity.getStatus() != FinanceEntityStatus.ACTIVE) {
-            throw new BizCheckFailException("财务主体不存在或已关闭: " + request.getEntityId());
+            throw new FailException(LedgerSetupErrorCode.FINANCE_ENTITY_UNAVAILABLE);
         }
     }
 

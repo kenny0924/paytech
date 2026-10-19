@@ -1,0 +1,217 @@
+[
+  {
+    "id": "R01",
+    "method": "GET",
+    "path": "/finance/finance-entities/v1",
+    "query": "?status=ACTIVE&page=1&size=10",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "financeEntityId": "7312345678901234567",
+          "entityCode": "PLT-AE",
+          "legalPartyId": "880000000000012001",
+          "displayName": "平台阿联酋财务主体",
+          "status": "ACTIVE",
+          "createTime": "2026-10-18T08:00:00.123456Z"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    },
+    "routeCode": "operations-finance-entity-list"
+  },
+  {
+    "id": "R02",
+    "method": "POST",
+    "path": "/finance/finance-entities/v1",
+    "query": "",
+    "request": {
+      "entityCode": "PLT-AE",
+      "legalPartyId": "880000000000012001",
+      "displayName": "平台阿联酋财务主体"
+    },
+    "status": 201,
+    "response": {
+      "financeEntityId": "7312345678901234567"
+    },
+    "routeCode": "operations-finance-entity-create"
+  },
+  {
+    "id": "R03",
+    "method": "GET",
+    "path": "/finance/fiscal-calendars/v1",
+    "query": "?entityType=FINANCE_ENTITY&entityId=7312345678901234567&page=2&size=20",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "fiscalCalendarId": "7312345678901235001",
+          "entityType": "FINANCE_ENTITY",
+          "entityId": "7312345678901234567",
+          "calendarCode": "PLT-AE-GREGORIAN",
+          "timezone": "Asia/Dubai",
+          "yearStartMonth": 1,
+          "createTime": "2026-10-18T08:05:00Z"
+        }
+      ],
+      "page": 2,
+      "size": 20,
+      "total": 21
+    },
+    "routeCode": "operations-finance-calendar-list"
+  },
+  {
+    "id": "R04",
+    "method": "POST",
+    "path": "/finance/fiscal-calendars/v1",
+    "query": "",
+    "request": {
+      "entityType": "OPERATING_ENTITY",
+      "entityId": "AE001",
+      "calendarCode": "AE001-GREGORIAN",
+      "timezone": "Asia/Dubai",
+      "yearStartMonth": 4
+    },
+    "status": 201,
+    "response": {
+      "fiscalCalendarId": "7312345678901235002"
+    },
+    "routeCode": "operations-finance-calendar-create"
+  },
+  {
+    "id": "R05",
+    "method": "GET",
+    "path": "/finance/fiscal-calendars/v1/7312345678901235001/periods",
+    "query": "?fiscalYear=2026&page=1&size=10",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "accountingPeriodId": "7312345678901236010",
+          "fiscalCalendarId": "7312345678901235001",
+          "fiscalYear": 2026,
+          "periodNo": 10,
+          "startDate": "2026-10-01",
+          "endDate": "2026-10-31",
+          "status": "OPEN",
+          "reopenCount": 0
+        },
+        {
+          "accountingPeriodId": "7312345678901236011",
+          "fiscalCalendarId": "7312345678901235001",
+          "fiscalYear": 2026,
+          "periodNo": 11,
+          "startDate": "2026-11-01",
+          "endDate": "2026-11-30",
+          "status": "FUTURE",
+          "reopenCount": 0
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 2
+    },
+    "routeCode": "operations-finance-period-list"
+  },
+  {
+    "id": "R06",
+    "method": "POST",
+    "path": "/finance/fiscal-calendars/v1/7312345678901235001/periods",
+    "query": "",
+    "request": {
+      "fiscalYear": 2026,
+      "periodNo": 12,
+      "startDate": "2026-12-01",
+      "endDate": "2026-12-31"
+    },
+    "status": 201,
+    "response": {
+      "accountingPeriodId": "7312345678901236012"
+    },
+    "routeCode": "operations-finance-period-create"
+  },
+  {
+    "id": "R07",
+    "method": "POST",
+    "path": "/finance/accounting-periods/v1/7312345678901236011/open",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "accountingPeriodId": "7312345678901236011",
+      "status": "OPEN"
+    },
+    "routeCode": "operations-finance-period-open"
+  },
+  {
+    "id": "R14",
+    "method": "GET",
+    "path": "/finance/chart-of-accounts/v1",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "chartId": "7312345678901237001",
+          "chartCode": "STANDARD",
+          "chartName": "标准科目表",
+          "status": "ACTIVE"
+        }
+      ]
+    },
+    "routeCode": "operations-finance-chart-list"
+  },
+  {
+    "id": "R15",
+    "method": "GET",
+    "path": "/finance/chart-of-accounts/v1/STANDARD/accounts",
+    "query": "?postingAllowed=true",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "chartAccountId": "7312345678901238001",
+          "chartId": "7312345678901237001",
+          "accountCode": "CLIENT_PAYABLE",
+          "accountName": "Client 应付",
+          "accountClass": "LIABILITY",
+          "normalSide": "CREDIT",
+          "postingAllowed": true
+        }
+      ]
+    },
+    "routeCode": "operations-finance-chart-account-list"
+  },
+  {
+    "id": "R16",
+    "method": "GET",
+    "path": "/finance/currencies/v1",
+    "query": "?status=ACTIVE",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "currency": "AED",
+          "minorUnit": 2,
+          "roundingMode": "HALF_EVEN",
+          "status": "ACTIVE"
+        },
+        {
+          "currency": "USD",
+          "minorUnit": 2,
+          "roundingMode": "HALF_EVEN",
+          "status": "ACTIVE"
+        }
+      ]
+    },
+    "routeCode": "operations-finance-currency-list"
+  }
+]

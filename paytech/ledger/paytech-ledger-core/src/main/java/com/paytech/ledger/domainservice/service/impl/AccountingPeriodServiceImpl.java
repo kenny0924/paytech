@@ -3,8 +3,9 @@ package com.paytech.ledger.domainservice.service.impl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.ErrorException;
+import com.paytech.foundation.common.error.FailException;
+import com.paytech.ledger.api.enums.LedgerSetupErrorCode;
 import com.paytech.ledger.core.dal.dataobject.AccountingPeriod;
 import com.paytech.ledger.core.dal.dataobject.FiscalCalendar;
 import com.paytech.ledger.core.enums.PeriodStatus;
@@ -38,8 +39,7 @@ public class AccountingPeriodServiceImpl implements AccountingPeriodService {
             int overlapping = accountingPeriodRepository.countOverlapping(period.getCalendarId(),
                 period.getStartDate(), period.getEndDate());
             if (overlapping > 0) {
-                throw new BizCheckFailException("会计期间日期与已有期间重叠: 日历 " + period.getCalendarId() + ", "
-                    + period.getStartDate() + " 至 " + period.getEndDate());
+                throw new FailException(LedgerSetupErrorCode.ACCOUNTING_PERIOD_OVERLAP);
             }
             accountingPeriodRepository.insert(period);
         });

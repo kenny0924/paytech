@@ -14,4 +14,11 @@
     <select id="selectByChartAndCode" resultType="com.paytech.ledger.core.dal.dataobject.ChartAccount">
         SELECT id, chart_id, parent_account_id, account_code, account_name, account_class, normal_side, posting_allowed, create_time, update_time FROM t_chart_account WHERE chart_id = #{chartId} AND account_code = #{accountCode}
     </select>
+
+    <select id="selectByChart" resultType="com.paytech.ledger.core.dal.dataobject.ChartAccount">
+        SELECT id, chart_id, parent_account_id, account_code, account_name, account_class, normal_side, posting_allowed, create_time, update_time FROM t_chart_account
+        WHERE chart_id = #{chartId}
+        <if test="postingAllowed != null">AND posting_allowed = #{postingAllowed}</if>
+        ORDER BY account_code
+    </select>
 </mapper>

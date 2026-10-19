@@ -1,11 +1,14 @@
 package com.paytech.operations.console.bff.ext.rest;
-import com.paytech.operations.console.bff.service.model.ConsoleResourceModels.*;
+
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import com.paytech.operations.console.bff.integration.PlatformConsoleResourceClient;
 import com.paytech.operations.console.bff.service.model.ConfigurationManagementModels.ConfigurationMutationResponseBody;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.validation.annotation.Validated;
+import com.paytech.operations.console.bff.service.model.ConsoleResourceModels.*;
+
 import jakarta.validation.Valid;
-import com.paytech.operations.console.bff.integration.PlatformConsoleResourceClient;
 /** 页面入口沿用 PLT-I02、Origin 和可信身份拦截器。 */
 @RestController
 @Validated

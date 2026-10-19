@@ -59,7 +59,9 @@ public final class OperationsCatalog {
         new Permission(900000000000086101L, "NOTIFICATION_READ", "NOTIFICATION", "READ", "LOW", false),
         new Permission(900000000000086102L, "NOTIFICATION_MANAGE", "NOTIFICATION", "MANAGE", "HIGH", false),
         new Permission(900000000000096101L, "NOTIFICATION_CREDENTIAL_MANAGE", "NOTIFICATION", "CREDENTIAL_MANAGE", "HIGH",
-            false));
+            false),
+        new Permission(900000000000097101L, "FINANCE_ACCOUNTING_READ", "FINANCE_ACCOUNTING", "READ", "LOW", false),
+        new Permission(900000000000097102L, "FINANCE_ACCOUNTING_MANAGE", "FINANCE_ACCOUNTING", "MANAGE", "HIGH", false));
 
     private OperationsCatalog() {
     }

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 
 import com.paytech.account.api.BalanceQueryApi;
+import com.paytech.account.api.enums.BalanceQueryErrorCode;
 import com.paytech.account.api.response.ClientBalanceResponseBody;
 import com.paytech.account.api.response.PartnerBalanceResponseBody;
 import com.paytech.account.test.base.AbstractBalanceTest;
@@ -56,7 +57,10 @@ class QueryOwnerBalanceTest extends AbstractBalanceTest {
 
     @Test
     void test_missingBookRejected() {
-        get("/balances/v1/clients/1001?entityNo=AE009&currency=USD").assertBusinessRejected("未找到经营主体币种账簿");
+        get("/balances/v1/clients/1001?entityNo=AE009&currency=USD")
+            .assertRejected(BalanceQueryErrorCode.LEDGER_BOOK_NOT_FOUND);
+        get("/balances/v1/partners/2001?entityNo=AE009&currency=USD")
+            .assertRejected(BalanceQueryErrorCode.LEDGER_BOOK_NOT_FOUND);
     }
 
     @Test

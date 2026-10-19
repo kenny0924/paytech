@@ -11,6 +11,7 @@ import com.paytech.account.api.constant.StandardAccountCodes;
 import com.paytech.account.api.enums.BalanceBucket;
 import com.paytech.account.api.enums.OwnerType;
 import com.paytech.ledger.api.LedgerBookQueryApi;
+import com.paytech.ledger.api.enums.LedgerSetupErrorCode;
 import com.paytech.ledger.core.enums.AccountStatus;
 import com.paytech.ledger.core.enums.LedgerEntityType;
 import com.paytech.ledger.core.enums.NormalSide;
@@ -76,7 +77,7 @@ class ListAccountsTest extends AbstractManualAdjustmentApiTest {
 
     @Test
     void test_unknownBookRejected() {
-        get("/ledger-books/v1/123456789/accounts").assertBusinessRejected("账簿不存在: 123456789");
+        get("/ledger-books/v1/123456789/accounts").assertRejected(LedgerSetupErrorCode.LEDGER_BOOK_NOT_FOUND);
     }
 
     @Test

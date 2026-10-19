@@ -4,4 +4,12 @@
     <select id="selectByCurrency" resultType="com.paytech.ledger.core.dal.dataobject.CurrencySpec">
         SELECT id, currency, minor_unit, rounding_mode, status, create_time, update_time FROM t_currency_spec WHERE currency = #{currency}
     </select>
+
+    <select id="selectAll" resultType="com.paytech.ledger.core.dal.dataobject.CurrencySpec">
+        SELECT id, currency, minor_unit, rounding_mode, status, create_time, update_time FROM t_currency_spec
+        <where>
+            <if test="status != null">AND status = #{status}</if>
+        </where>
+        ORDER BY currency
+    </select>
 </mapper>

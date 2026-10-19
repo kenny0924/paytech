@@ -1,0 +1,283 @@
+-- Reading copy only. The single execution source is the two finance console blocks at the end of
+-- paytech/platform-support/docs/database/sql/platform-support-initial-data.sql; do not apply this file separately.
+
+-- ---------------------------------------------------------------------------
+-- Operations finance setup and ledger query console (2026-10-18, requirements/20261018/operations-console-财务基础资料与账本余额查询).
+-- Self-contained block: on an environment already initialized by the statements above, apply ONLY this block.
+-- Dormant like earlier Operations features: permissions ACTIVE, administrator grants REVOKED, menus/button/routes
+-- DISABLED; activate them in a separate reviewed change. BFF routes forward to ledger through operations-console-bff.
+-- Rows: permission 2, role_permission 2, console_resource 5, gateway_route 16, route_header 56, query_param 27,
+-- guard_rule 96 (204). Rollback: delete the rows by the 9000000000000971xx-977xx IDs below.
+-- ---------------------------------------------------------------------------
+START TRANSACTION;
+
+SET @finance_console_time = UTC_TIMESTAMP(6);
+SET @finance_console_actor_id = 1;
+SET @finance_console_target_id = 900000000000000001;
+SET @finance_console_role_id = 900000000000000510;
+
+INSERT INTO t_permission (permission_id,permission_code,resource_type,action_code,risk_level,status,version,create_time,update_time) VALUES
+  (900000000000097101, 'FINANCE_ACCOUNTING_READ', 'FINANCE_ACCOUNTING', 'READ', 'LOW', 'ACTIVE', 1, @finance_console_time, @finance_console_time),
+  (900000000000097102, 'FINANCE_ACCOUNTING_MANAGE', 'FINANCE_ACCOUNTING', 'MANAGE', 'HIGH', 'ACTIVE', 1, @finance_console_time, @finance_console_time);
+
+INSERT INTO t_role_permission (role_permission_id,role_id,permission_id,status,version,create_time,update_time) VALUES
+  (900000000000097201, @finance_console_role_id, 900000000000097101, 'REVOKED', 1, @finance_console_time, @finance_console_time),
+  (900000000000097202, @finance_console_role_id, 900000000000097102, 'REVOKED', 1, @finance_console_time, @finance_console_time);
+
+INSERT INTO t_console_resource (resource_id,resource_code,channel,resource_type,parent_resource_id,display_name,frontend_route,component_key,permission_id,sort_order,status,version,create_time,update_time) VALUES
+  (900000000000097301, 'OPERATIONS_FINANCE', 'OPERATIONS', 'MENU', NULL, '财务', NULL, NULL, 900000000000097101, 50, 'DISABLED', 1, @finance_console_time, @finance_console_time),
+  (900000000000097302, 'OPERATIONS_FINANCE_SETUP', 'OPERATIONS', 'MENU', 900000000000097301, '账务基础资料', '/finance/setup', 'OPERATIONS_FINANCE_SETUP', 900000000000097101, 10, 'DISABLED', 1, @finance_console_time, @finance_console_time),
+  (900000000000097303, 'OPERATIONS_FINANCE_LEDGER', 'OPERATIONS', 'MENU', 900000000000097301, '账本查询', '/finance/ledger', 'OPERATIONS_FINANCE_LEDGER', 900000000000097101, 20, 'DISABLED', 1, @finance_console_time, @finance_console_time),
+  (900000000000097304, 'OPERATIONS_FINANCE_BALANCES', 'OPERATIONS', 'MENU', 900000000000097301, '余额查询', '/finance/balances', 'OPERATIONS_FINANCE_BALANCES', 900000000000097101, 30, 'DISABLED', 1, @finance_console_time, @finance_console_time),
+  (900000000000097305, 'OPERATIONS_FINANCE_SETUP_MANAGE', 'OPERATIONS', 'BUTTON', 900000000000097302, '维护', NULL, NULL, 900000000000097102, 10, 'DISABLED', 1, @finance_console_time, @finance_console_time);
+
+INSERT INTO t_gateway_route (route_id, route_code, channel, http_method, external_path_template, downstream_path_template, target_id, security_profile_code, authorization_mode, permission_id, required_scope_code, request_cookie_mode, response_cookie_mode, idempotency_mode, body_limit_bytes, body_receive_timeout_millis, response_timeout_millis, status, version, created_by, updated_by, create_time, update_time) VALUES
+  (900000000000097401, 'operations-finance-entity-list', 'OPERATIONS', 'GET', '/api/operations/finance/finance-entities/v1', '/finance/finance-entities/v1', @finance_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000097101, NULL, 'DROP', 'NONE', 'NONE', 0, 5000, 10000, 'DISABLED', 1, @finance_console_actor_id, @finance_console_actor_id, @finance_console_time, @finance_console_time),
+  (900000000000097402, 'operations-finance-entity-create', 'OPERATIONS', 'POST', '/api/operations/finance/finance-entities/v1', '/finance/finance-entities/v1', @finance_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000097102, NULL, 'DROP', 'NONE', 'NONE', 8192, 5000, 10000, 'DISABLED', 1, @finance_console_actor_id, @finance_console_actor_id, @finance_console_time, @finance_console_time),
+  (900000000000097403, 'operations-finance-calendar-list', 'OPERATIONS', 'GET', '/api/operations/finance/fiscal-calendars/v1', '/finance/fiscal-calendars/v1', @finance_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000097101, NULL, 'DROP', 'NONE', 'NONE', 0, 5000, 10000, 'DISABLED', 1, @finance_console_actor_id, @finance_console_actor_id, @finance_console_time, @finance_console_time),
+  (900000000000097404, 'operations-finance-calendar-create', 'OPERATIONS', 'POST', '/api/operations/finance/fiscal-calendars/v1', '/finance/fiscal-calendars/v1', @finance_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000097102, NULL, 'DROP', 'NONE', 'NONE', 8192, 5000, 10000, 'DISABLED', 1, @finance_console_actor_id, @finance_console_actor_id, @finance_console_time, @finance_console_time),
+  (900000000000097405, 'operations-finance-period-list', 'OPERATIONS', 'GET', '/api/operations/finance/fiscal-calendars/v1/{fiscalCalendarId}/periods', '/finance/fiscal-calendars/v1/{fiscalCalendarId}/periods', @finance_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000097101, NULL, 'DROP', 'NONE', 'NONE', 0, 5000, 10000, 'DISABLED', 1, @finance_console_actor_id, @finance_console_actor_id, @finance_console_time, @finance_console_time),
+  (900000000000097406, 'operations-finance-period-create', 'OPERATIONS', 'POST', '/api/operations/finance/fiscal-calendars/v1/{fiscalCalendarId}/periods', '/finance/fiscal-calendars/v1/{fiscalCalendarId}/periods', @finance_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000097102, NULL, 'DROP', 'NONE', 'NONE', 8192, 5000, 10000, 'DISABLED', 1, @finance_console_actor_id, @finance_console_actor_id, @finance_console_time, @finance_console_time),
+  (900000000000097407, 'operations-finance-period-open', 'OPERATIONS', 'POST', '/api/operations/finance/accounting-periods/v1/{accountingPeriodId}/open', '/finance/accounting-periods/v1/{accountingPeriodId}/open', @finance_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000097102, NULL, 'DROP', 'NONE', 'NONE', 0, 5000, 10000, 'DISABLED', 1, @finance_console_actor_id, @finance_console_actor_id, @finance_console_time, @finance_console_time),
+  (900000000000097408, 'operations-finance-book-list', 'OPERATIONS', 'GET', '/api/operations/finance/ledger-books/v1', '/finance/ledger-books/v1', @finance_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000097101, NULL, 'DROP', 'NONE', 'NONE', 0, 5000, 10000, 'DISABLED', 1, @finance_console_actor_id, @finance_console_actor_id, @finance_console_time, @finance_console_time),
+  (900000000000097409, 'operations-finance-book-create', 'OPERATIONS', 'POST', '/api/operations/finance/ledger-books/v1', '/finance/ledger-books/v1', @finance_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000097102, NULL, 'DROP', 'NONE', 'NONE', 8192, 5000, 10000, 'DISABLED', 1, @finance_console_actor_id, @finance_console_actor_id, @finance_console_time, @finance_console_time),
+  (900000000000097410, 'operations-finance-account-list', 'OPERATIONS', 'GET', '/api/operations/finance/ledger-books/v1/{ledgerBookId}/accounts', '/finance/ledger-books/v1/{ledgerBookId}/accounts', @finance_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000097101, NULL, 'DROP', 'NONE', 'NONE', 0, 5000, 10000, 'DISABLED', 1, @finance_console_actor_id, @finance_console_actor_id, @finance_console_time, @finance_console_time),
+  (900000000000097411, 'operations-finance-account-create', 'OPERATIONS', 'POST', '/api/operations/finance/ledger-books/v1/{ledgerBookId}/accounts', '/finance/ledger-books/v1/{ledgerBookId}/accounts', @finance_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000097102, NULL, 'DROP', 'NONE', 'NONE', 8192, 5000, 10000, 'DISABLED', 1, @finance_console_actor_id, @finance_console_actor_id, @finance_console_time, @finance_console_time),
+  (900000000000097412, 'operations-finance-journal-line-list', 'OPERATIONS', 'GET', '/api/operations/finance/ledger-books/v1/{ledgerBookId}/accounts/{accountId}/journal-lines', '/finance/ledger-books/v1/{ledgerBookId}/accounts/{accountId}/journal-lines', @finance_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000097101, NULL, 'DROP', 'NONE', 'NONE', 0, 5000, 10000, 'DISABLED', 1, @finance_console_actor_id, @finance_console_actor_id, @finance_console_time, @finance_console_time),
+  (900000000000097413, 'operations-finance-journal-entry-detail', 'OPERATIONS', 'GET', '/api/operations/finance/ledger-books/v1/{ledgerBookId}/journal-entries/{journalEntryId}', '/finance/ledger-books/v1/{ledgerBookId}/journal-entries/{journalEntryId}', @finance_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000097101, NULL, 'DROP', 'NONE', 'NONE', 0, 5000, 10000, 'DISABLED', 1, @finance_console_actor_id, @finance_console_actor_id, @finance_console_time, @finance_console_time),
+  (900000000000097414, 'operations-finance-chart-list', 'OPERATIONS', 'GET', '/api/operations/finance/chart-of-accounts/v1', '/finance/chart-of-accounts/v1', @finance_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000097101, NULL, 'DROP', 'NONE', 'NONE', 0, 5000, 10000, 'DISABLED', 1, @finance_console_actor_id, @finance_console_actor_id, @finance_console_time, @finance_console_time),
+  (900000000000097415, 'operations-finance-chart-account-list', 'OPERATIONS', 'GET', '/api/operations/finance/chart-of-accounts/v1/{chartCode}/accounts', '/finance/chart-of-accounts/v1/{chartCode}/accounts', @finance_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000097101, NULL, 'DROP', 'NONE', 'NONE', 0, 5000, 10000, 'DISABLED', 1, @finance_console_actor_id, @finance_console_actor_id, @finance_console_time, @finance_console_time),
+  (900000000000097416, 'operations-finance-currency-list', 'OPERATIONS', 'GET', '/api/operations/finance/currencies/v1', '/finance/currencies/v1', @finance_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000097101, NULL, 'DROP', 'NONE', 'NONE', 0, 5000, 10000, 'DISABLED', 1, @finance_console_actor_id, @finance_console_actor_id, @finance_console_time, @finance_console_time);
+
+INSERT INTO t_gateway_route_header (route_header_id,route_id,header_name,header_use) VALUES
+  (900000000000097501, 900000000000097401, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000097502, 900000000000097401, 'origin', 'FORWARD_REQUEST'),
+  (900000000000097503, 900000000000097402, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000097504, 900000000000097402, 'origin', 'FORWARD_REQUEST'),
+  (900000000000097505, 900000000000097402, 'content-type', 'CORS_REQUEST_ALLOWED'),
+  (900000000000097506, 900000000000097402, 'content-type', 'FORWARD_REQUEST'),
+  (900000000000097507, 900000000000097402, 'idempotency-key', 'CORS_REQUEST_ALLOWED'),
+  (900000000000097508, 900000000000097402, 'idempotency-key', 'FORWARD_REQUEST'),
+  (900000000000097509, 900000000000097403, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000097510, 900000000000097403, 'origin', 'FORWARD_REQUEST'),
+  (900000000000097511, 900000000000097404, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000097512, 900000000000097404, 'origin', 'FORWARD_REQUEST'),
+  (900000000000097513, 900000000000097404, 'content-type', 'CORS_REQUEST_ALLOWED'),
+  (900000000000097514, 900000000000097404, 'content-type', 'FORWARD_REQUEST'),
+  (900000000000097515, 900000000000097404, 'idempotency-key', 'CORS_REQUEST_ALLOWED'),
+  (900000000000097516, 900000000000097404, 'idempotency-key', 'FORWARD_REQUEST'),
+  (900000000000097517, 900000000000097405, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000097518, 900000000000097405, 'origin', 'FORWARD_REQUEST'),
+  (900000000000097519, 900000000000097406, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000097520, 900000000000097406, 'origin', 'FORWARD_REQUEST'),
+  (900000000000097521, 900000000000097406, 'content-type', 'CORS_REQUEST_ALLOWED'),
+  (900000000000097522, 900000000000097406, 'content-type', 'FORWARD_REQUEST'),
+  (900000000000097523, 900000000000097406, 'idempotency-key', 'CORS_REQUEST_ALLOWED'),
+  (900000000000097524, 900000000000097406, 'idempotency-key', 'FORWARD_REQUEST'),
+  (900000000000097525, 900000000000097407, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000097526, 900000000000097407, 'origin', 'FORWARD_REQUEST'),
+  (900000000000097527, 900000000000097407, 'content-type', 'CORS_REQUEST_ALLOWED'),
+  (900000000000097528, 900000000000097407, 'content-type', 'FORWARD_REQUEST'),
+  (900000000000097529, 900000000000097407, 'idempotency-key', 'CORS_REQUEST_ALLOWED'),
+  (900000000000097530, 900000000000097407, 'idempotency-key', 'FORWARD_REQUEST'),
+  (900000000000097531, 900000000000097408, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000097532, 900000000000097408, 'origin', 'FORWARD_REQUEST'),
+  (900000000000097533, 900000000000097409, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000097534, 900000000000097409, 'origin', 'FORWARD_REQUEST'),
+  (900000000000097535, 900000000000097409, 'content-type', 'CORS_REQUEST_ALLOWED'),
+  (900000000000097536, 900000000000097409, 'content-type', 'FORWARD_REQUEST'),
+  (900000000000097537, 900000000000097409, 'idempotency-key', 'CORS_REQUEST_ALLOWED'),
+  (900000000000097538, 900000000000097409, 'idempotency-key', 'FORWARD_REQUEST'),
+  (900000000000097539, 900000000000097410, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000097540, 900000000000097410, 'origin', 'FORWARD_REQUEST'),
+  (900000000000097541, 900000000000097411, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000097542, 900000000000097411, 'origin', 'FORWARD_REQUEST'),
+  (900000000000097543, 900000000000097411, 'content-type', 'CORS_REQUEST_ALLOWED'),
+  (900000000000097544, 900000000000097411, 'content-type', 'FORWARD_REQUEST'),
+  (900000000000097545, 900000000000097411, 'idempotency-key', 'CORS_REQUEST_ALLOWED'),
+  (900000000000097546, 900000000000097411, 'idempotency-key', 'FORWARD_REQUEST'),
+  (900000000000097547, 900000000000097412, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000097548, 900000000000097412, 'origin', 'FORWARD_REQUEST'),
+  (900000000000097549, 900000000000097413, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000097550, 900000000000097413, 'origin', 'FORWARD_REQUEST'),
+  (900000000000097551, 900000000000097414, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000097552, 900000000000097414, 'origin', 'FORWARD_REQUEST'),
+  (900000000000097553, 900000000000097415, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000097554, 900000000000097415, 'origin', 'FORWARD_REQUEST'),
+  (900000000000097555, 900000000000097416, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000097556, 900000000000097416, 'origin', 'FORWARD_REQUEST');
+
+INSERT INTO t_gateway_route_query_param (route_query_param_id,route_id,parameter_name) VALUES
+  (900000000000097601, 900000000000097401, 'status'),
+  (900000000000097602, 900000000000097401, 'page'),
+  (900000000000097603, 900000000000097401, 'size'),
+  (900000000000097604, 900000000000097403, 'entityType'),
+  (900000000000097605, 900000000000097403, 'entityId'),
+  (900000000000097606, 900000000000097403, 'page'),
+  (900000000000097607, 900000000000097403, 'size'),
+  (900000000000097608, 900000000000097405, 'fiscalYear'),
+  (900000000000097609, 900000000000097405, 'page'),
+  (900000000000097610, 900000000000097405, 'size'),
+  (900000000000097611, 900000000000097408, 'entityType'),
+  (900000000000097612, 900000000000097408, 'entityId'),
+  (900000000000097613, 900000000000097408, 'currency'),
+  (900000000000097614, 900000000000097408, 'page'),
+  (900000000000097615, 900000000000097408, 'size'),
+  (900000000000097616, 900000000000097410, 'accountCode'),
+  (900000000000097617, 900000000000097410, 'ownerType'),
+  (900000000000097618, 900000000000097410, 'ownerId'),
+  (900000000000097619, 900000000000097410, 'balanceBucket'),
+  (900000000000097620, 900000000000097410, 'page'),
+  (900000000000097621, 900000000000097410, 'size'),
+  (900000000000097622, 900000000000097412, 'postingDateFrom'),
+  (900000000000097623, 900000000000097412, 'postingDateTo'),
+  (900000000000097624, 900000000000097412, 'page'),
+  (900000000000097625, 900000000000097412, 'size'),
+  (900000000000097626, 900000000000097415, 'postingAllowed'),
+  (900000000000097627, 900000000000097416, 'status');
+
+INSERT INTO t_gateway_guard_rule (guard_rule_id,route_id,rule_type,dimension,capacity,refill_tokens,refill_period_millis,concurrency_limit) VALUES
+  (900000000000097701, 900000000000097401, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000097702, 900000000000097401, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000097703, 900000000000097401, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000097704, 900000000000097401, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000097705, 900000000000097401, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 10, 10, 60000, NULL),
+  (900000000000097706, 900000000000097401, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
+  (900000000000097707, 900000000000097402, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000097708, 900000000000097402, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000097709, 900000000000097402, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000097710, 900000000000097402, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000097711, 900000000000097402, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 10, 10, 60000, NULL),
+  (900000000000097712, 900000000000097402, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
+  (900000000000097713, 900000000000097403, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000097714, 900000000000097403, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000097715, 900000000000097403, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000097716, 900000000000097403, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000097717, 900000000000097403, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 10, 10, 60000, NULL),
+  (900000000000097718, 900000000000097403, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
+  (900000000000097719, 900000000000097404, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000097720, 900000000000097404, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000097721, 900000000000097404, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000097722, 900000000000097404, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000097723, 900000000000097404, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 10, 10, 60000, NULL),
+  (900000000000097724, 900000000000097404, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
+  (900000000000097725, 900000000000097405, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000097726, 900000000000097405, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000097727, 900000000000097405, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000097728, 900000000000097405, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000097729, 900000000000097405, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 10, 10, 60000, NULL),
+  (900000000000097730, 900000000000097405, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
+  (900000000000097731, 900000000000097406, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000097732, 900000000000097406, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000097733, 900000000000097406, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000097734, 900000000000097406, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000097735, 900000000000097406, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 10, 10, 60000, NULL),
+  (900000000000097736, 900000000000097406, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
+  (900000000000097737, 900000000000097407, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000097738, 900000000000097407, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000097739, 900000000000097407, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000097740, 900000000000097407, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000097741, 900000000000097407, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 10, 10, 60000, NULL),
+  (900000000000097742, 900000000000097407, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
+  (900000000000097743, 900000000000097408, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000097744, 900000000000097408, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000097745, 900000000000097408, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000097746, 900000000000097408, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000097747, 900000000000097408, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 30, 30, 60000, NULL),
+  (900000000000097748, 900000000000097408, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
+  (900000000000097749, 900000000000097409, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000097750, 900000000000097409, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000097751, 900000000000097409, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000097752, 900000000000097409, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000097753, 900000000000097409, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 10, 10, 60000, NULL),
+  (900000000000097754, 900000000000097409, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
+  (900000000000097755, 900000000000097410, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000097756, 900000000000097410, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000097757, 900000000000097410, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000097758, 900000000000097410, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000097759, 900000000000097410, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 30, 30, 60000, NULL),
+  (900000000000097760, 900000000000097410, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
+  (900000000000097761, 900000000000097411, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000097762, 900000000000097411, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000097763, 900000000000097411, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000097764, 900000000000097411, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000097765, 900000000000097411, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 10, 10, 60000, NULL),
+  (900000000000097766, 900000000000097411, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
+  (900000000000097767, 900000000000097412, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000097768, 900000000000097412, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000097769, 900000000000097412, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000097770, 900000000000097412, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000097771, 900000000000097412, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 30, 30, 60000, NULL),
+  (900000000000097772, 900000000000097412, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
+  (900000000000097773, 900000000000097413, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000097774, 900000000000097413, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000097775, 900000000000097413, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000097776, 900000000000097413, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000097777, 900000000000097413, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 10, 10, 60000, NULL),
+  (900000000000097778, 900000000000097413, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
+  (900000000000097779, 900000000000097414, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000097780, 900000000000097414, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000097781, 900000000000097414, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000097782, 900000000000097414, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000097783, 900000000000097414, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 10, 10, 60000, NULL),
+  (900000000000097784, 900000000000097414, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
+  (900000000000097785, 900000000000097415, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000097786, 900000000000097415, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000097787, 900000000000097415, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000097788, 900000000000097415, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000097789, 900000000000097415, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 10, 10, 60000, NULL),
+  (900000000000097790, 900000000000097415, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
+  (900000000000097791, 900000000000097416, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000097792, 900000000000097416, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000097793, 900000000000097416, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000097794, 900000000000097416, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000097795, 900000000000097416, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 10, 10, 60000, NULL),
+  (900000000000097796, 900000000000097416, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2);
+
+COMMIT;
+
+-- ---------------------------------------------------------------------------
+-- Operations finance balance query console (2026-10-18, requirements/20261018/operations-console-财务基础资料与账本余额查询).
+-- Self-contained block: on an environment already initialized by the statements above, apply ONLY this block.
+-- Requires the finance setup and ledger block above (FINANCE_ACCOUNTING_READ 900000000000097101).
+-- Dormant: routes DISABLED; activate them in a separate reviewed change. BFF routes forward to account.
+-- Rows: gateway_route 2, route_header 4, query_param 4, guard_rule 12 (22).
+-- Rollback: delete the rows by the 9000000000000984xx-987xx IDs below.
+-- ---------------------------------------------------------------------------
+START TRANSACTION;
+
+SET @finance_balance_console_time = UTC_TIMESTAMP(6);
+SET @finance_balance_console_actor_id = 1;
+SET @finance_balance_console_target_id = 900000000000000001;
+
+INSERT INTO t_gateway_route (route_id, route_code, channel, http_method, external_path_template, downstream_path_template, target_id, security_profile_code, authorization_mode, permission_id, required_scope_code, request_cookie_mode, response_cookie_mode, idempotency_mode, body_limit_bytes, body_receive_timeout_millis, response_timeout_millis, status, version, created_by, updated_by, create_time, update_time) VALUES
+  (900000000000098401, 'operations-finance-client-balance', 'OPERATIONS', 'GET', '/api/operations/finance/balances/v1/clients/{clientId}', '/finance/balances/v1/clients/{clientId}', @finance_balance_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000097101, NULL, 'DROP', 'NONE', 'NONE', 0, 5000, 10000, 'DISABLED', 1, @finance_balance_console_actor_id, @finance_balance_console_actor_id, @finance_balance_console_time, @finance_balance_console_time),
+  (900000000000098402, 'operations-finance-partner-balance', 'OPERATIONS', 'GET', '/api/operations/finance/balances/v1/partners/{partnerId}', '/finance/balances/v1/partners/{partnerId}', @finance_balance_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000097101, NULL, 'DROP', 'NONE', 'NONE', 0, 5000, 10000, 'DISABLED', 1, @finance_balance_console_actor_id, @finance_balance_console_actor_id, @finance_balance_console_time, @finance_balance_console_time);
+
+INSERT INTO t_gateway_route_header (route_header_id,route_id,header_name,header_use) VALUES
+  (900000000000098501, 900000000000098401, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000098502, 900000000000098401, 'origin', 'FORWARD_REQUEST'),
+  (900000000000098503, 900000000000098402, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000098504, 900000000000098402, 'origin', 'FORWARD_REQUEST');
+
+INSERT INTO t_gateway_route_query_param (route_query_param_id,route_id,parameter_name) VALUES
+  (900000000000098601, 900000000000098401, 'entityNo'),
+  (900000000000098602, 900000000000098401, 'currency'),
+  (900000000000098603, 900000000000098402, 'entityNo'),
+  (900000000000098604, 900000000000098402, 'currency');
+
+INSERT INTO t_gateway_guard_rule (guard_rule_id,route_id,rule_type,dimension,capacity,refill_tokens,refill_period_millis,concurrency_limit) VALUES
+  (900000000000098701, 900000000000098401, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000098702, 900000000000098401, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000098703, 900000000000098401, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000098704, 900000000000098401, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000098705, 900000000000098401, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 10, 10, 60000, NULL),
+  (900000000000098706, 900000000000098401, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
+  (900000000000098707, 900000000000098402, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000098708, 900000000000098402, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000098709, 900000000000098402, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000098710, 900000000000098402, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000098711, 900000000000098402, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 10, 10, 60000, NULL),
+  (900000000000098712, 900000000000098402, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2);
+
+COMMIT;

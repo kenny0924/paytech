@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.paytech.ledger.api.AccountingPeriodCommandApi;
+import com.paytech.ledger.api.enums.LedgerSetupErrorCode;
 import com.paytech.ledger.core.dal.mapper.AccountingPeriodMapper;
 import com.paytech.ledger.core.enums.LedgerEntityType;
 import com.paytech.ledger.core.enums.PeriodStatus;
@@ -17,7 +18,7 @@ import com.paytech.ledger.test.base.MockTestBase;
 /**
  * 开放会计期间：FUTURE→OPEN、已 OPEN 幂等返回、其他状态拒绝。
  *
- * @see AccountingPeriodCommandApi#openAccountingPeriod(String)
+ * @see AccountingPeriodCommandApi#openAccountingPeriod(String, String, String)
  */
 class OpenAccountingPeriodTest extends MockTestBase {
     private static final LocalDate JAN_1 = LocalDate.of(2027, 1, 1);
@@ -37,7 +38,7 @@ class OpenAccountingPeriodTest extends MockTestBase {
     void test_futurePeriodOpened() {
         long periodId = ledgerMocker.mockPeriod(calendarId, 2027, 1, JAN_1, JAN_31, PeriodStatus.FUTURE);
 
-        post(path(periodId), null).assertSuccess(200).assertText("status", PeriodStatus.OPEN.getCode());
+        postAsOperator(path(periodId), null).assertSuccess(200).assertText("status", PeriodStatus.OPEN.getCode());
 
         assertEquals(PeriodStatus.OPEN, accountingPeriodMapper.selectById(periodId).getStatus());
         assertEquals(1L, accountingPeriodMapper.selectById(periodId).getVersion());
@@ -47,7 +48,7 @@ class OpenAccountingPeriodTest extends MockTestBase {
     void test_alreadyOpenReturnsCurrentState() {
         long periodId = ledgerMocker.mockPeriod(calendarId, 2027, 1, JAN_1, JAN_31, PeriodStatus.OPEN);
 
-        post(path(periodId), null).assertSuccess(200).assertText("status", PeriodStatus.OPEN.getCode());
+        postAsOperator(path(periodId), null).assertSuccess(200).assertText("status", PeriodStatus.OPEN.getCode());
 
         assertEquals(0L, accountingPeriodMapper.selectById(periodId).getVersion());
     }
@@ -56,12 +57,12 @@ class OpenAccountingPeriodTest extends MockTestBase {
     void test_closedPeriodRejected() {
         long periodId = ledgerMocker.mockPeriod(calendarId, 2027, 1, JAN_1, JAN_31, PeriodStatus.CLOSED);
 
-        post(path(periodId), null).assertBusinessRejected("只有 FUTURE 期间可以开放");
+        postAsOperator(path(periodId), null).assertRejected(LedgerSetupErrorCode.ACCOUNTING_PERIOD_NOT_FUTURE);
     }
 
     @Test
     void test_unknownPeriodRejected() {
-        post(path(123456789L), null).assertBusinessRejected("会计期间不存在");
+        postAsOperator(path(123456789L), null).assertRejected(LedgerSetupErrorCode.ACCOUNTING_PERIOD_NOT_FOUND);
     }
 
     /** 开放期间路径。 */

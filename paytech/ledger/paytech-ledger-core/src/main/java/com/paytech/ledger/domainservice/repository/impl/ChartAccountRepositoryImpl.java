@@ -33,4 +33,10 @@ public class ChartAccountRepositoryImpl implements ChartAccountRepository {
     public ChartAccount findByChartAndCode(long chartId, String accountCode) {
         return mapper.selectByChartAndCode(chartId, accountCode);
     }
+
+    /** 读取科目表下的科目；postingAllowed 为空时不过滤，按科目代码升序。 */
+    @Override
+    public List<ChartAccount> findByChart(long chartId, Boolean postingAllowed) {
+        return mapper.selectByChart(chartId, postingAllowed);
+    }
 }

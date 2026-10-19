@@ -19,4 +19,7 @@ public interface ChartAccountMapper {
 
     /** 按科目表和科目代码读取。 */
     ChartAccount selectByChartAndCode(@Param("chartId") long chartId, @Param("accountCode") String accountCode);
+
+    /** 读取科目表下的科目，可按是否可过账过滤，按科目代码升序。 */
+    List<ChartAccount> selectByChart(@Param("chartId") long chartId, @Param("postingAllowed") Boolean postingAllowed);
 }

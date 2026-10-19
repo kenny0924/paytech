@@ -4,15 +4,18 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
 
-import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
+import com.paytech.foundation.common.error.FailException;
+import com.paytech.ledger.api.enums.LedgerSetupErrorCode;
 import com.paytech.ledger.core.dal.dataobject.AccountingPeriod;
 import com.paytech.ledger.core.dal.mapper.AccountingPeriodMapper;
 import com.paytech.ledger.core.enums.PeriodStatus;
+import com.paytech.ledger.domain.AccountingPeriodQuery;
 import com.paytech.ledger.domainservice.repository.AccountingPeriodRepository;
 
 import lombok.AllArgsConstructor;
@@ -27,7 +30,11 @@ public class AccountingPeriodRepositoryImpl implements AccountingPeriodRepositor
     /** 插入会计期间；同一日历的年度与期号已存在时拒绝。 */
     @Override
     public void insert(AccountingPeriod period) {
-        insertUnique(() -> mapper.insert(period), "会计期间已存在: 日历 " + period.getCalendarId() + ", " + period.getFiscalYear() + "-" + period.getPeriodNo());
+        try {
+            mapper.insert(period);
+        } catch (DuplicateKeyException e) {
+            throw new FailException(LedgerSetupErrorCode.ACCOUNTING_PERIOD_NO_DUPLICATE, null, e);
+        }
     }
 
     /** 按主键读取期间，不存在返回空。 */
@@ -102,12 +109,15 @@ public class AccountingPeriodRepositoryImpl implements AccountingPeriodRepositor
         return clock.instant().truncatedTo(ChronoUnit.MICROS);
     }
 
-    /** 执行插入，业务唯一键冲突时转换为带上下文的业务拒绝。 */
-    private void insertUnique(Runnable insert, String message) {
-        try {
-            insert.run();
-        } catch (DuplicateKeyException e) {
-            throw new BizCheckFailException(message, e);
-        }
+    /** 分页读取日历下的期间，按财年、期号升序。 */
+    @Override
+    public List<AccountingPeriod> findPage(AccountingPeriodQuery query) {
+        return mapper.selectPage(query, query.getPaging().size(), query.getPaging().offset());
+    }
+
+    /** 统计日历下符合过滤条件的期间数量。 */
+    @Override
+    public long countPage(AccountingPeriodQuery query) {
+        return mapper.countPage(query);
     }
 }
