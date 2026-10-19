@@ -1,8 +1,8 @@
 # commercial 六层产品定价模型决定
 
 - Decision status: Confirmed
-- Implementation status: Not started（讨论稿定稿；PDManer 模型、SQL、写入能力与价格命中接口均未实现；需求目录待按 `requirements/README.md` 登记）
-- Deployment status: Not deployed
+- Implementation status: Implemented（2026-10-20，需求 [requirements/20261019/commercial-六层产品定价模型](../../requirements/20261019/commercial-六层产品定价模型/requirement.md) 阶段 1–7；本地提交 `08c8f794` / `691b695c` / `0ecc5713` / `cf39a1ee`，未推送）
+- Deployment status: Deployed to mor-test（2026-10-20，镜像 tag `commercial-20261020`，见需求目录 release/release.md 第 6 节与[当前台账](../CURRENT_IMPLEMENTATION.md)）
 - Decision date: 2026-10-19
 - 用户决定：commercial（商务 · 售卖）采用六层产品定价模型；2026-10-19 讨论中用户先确认六层模型、IC++ 本期只留字段、月量阶梯"规则归商务 / 用量归 billing"，随后对其余待定项全部"按建议来"。
 - 详细设计：[commercial 的职责与设计](../../design-discuss/commercial/design.md)，配套图 [design.pen](../../design-discuss/commercial/design.pen)（三张画板：职责与设计、数据库表与枚举、六层模型例子）。

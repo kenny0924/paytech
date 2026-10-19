@@ -1,0 +1,22 @@
+# 阶段 6 草案：test-environment/compose.applications.yaml 中 commercial-service 的 environment 需补的键（T0 后应用启动必需）。
+# 合并时按 hunk 写入该文件，不整文件覆盖（其他会话同晚也在改 compose）。Snowflake worker 26 为当前未占用值（Snowflake worker 只允许 0–31；已占 18–25、27–32；阶段 5 冒烟实测 33 启动失败）。
+      COMMERCIAL_RABBITMQ_HOST: rabbitmq
+      COMMERCIAL_RABBITMQ_PORT: "5672"
+      COMMERCIAL_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
+      COMMERCIAL_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
+      COMMERCIAL_RABBITMQ_VHOST: /mor-test
+      COMMERCIAL_REDIS_HOST: redis
+      COMMERCIAL_REDIS_PORT: "6379"
+      COMMERCIAL_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?prepare test secrets}
+      COMMERCIAL_SNOWFLAKE_REGION_ID: "0"
+      COMMERCIAL_SNOWFLAKE_WORKER_ID: "26"
+      COMMERCIAL_COMPENSATION_INSTANCE_ID: commercial-test-1
+      COMMERCIAL_XXL_JOB_ENABLED: "true"
+      XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
+      XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
+      XXL_JOB_EXECUTOR_APPNAME: commercial-service
+      XXL_JOB_EXECUTOR_IP: 172.30.73.34
+      XXL_JOB_EXECUTOR_PORT: "9999"
+      XXL_JOB_EXECUTOR_LOGPATH: /tmp/xxl-job
+      XXL_JOB_EXECUTOR_EXCLUDEDPACKAGES: org.springframework.,spring.
+# depends_on 需增加 rabbitmq、redis（condition: service_healthy），与 compliance-service 一致。

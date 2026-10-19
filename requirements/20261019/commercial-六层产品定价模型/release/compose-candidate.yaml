@@ -1,0 +1,37 @@
+# commercial 六层产品定价模型：mor-test 候选覆盖文件（任务卡 G，阶段 6，2026-10-20）。
+# 叠加在 compose.yaml + compose.applications.yaml + compose.scheduler.yaml 之上（compose.sh 已带这三个文件，只传本文件的 -f）：
+#   test-environment/compose.sh -f <本文件绝对路径> up -d --no-deps --no-build --pull never --wait <service>
+# 镜像：main cf39a1ee 干净 worktree 构建（JDK 25 离线 package；Web npm ci + build），tag mor-test/<服务>:commercial-20261020，
+# 下面固定为 sha256 镜像 ID。JAR SHA-256：commercial fa656f403f8b3968…，BFF 2578b29475bef142…；Web 入口 assets/index-CZvT-J3j.js。
+# 不修改 test-environment/compose.applications.yaml（其他会话同晚在改）；commercial-service 新增的环境变量与 depends_on 只在本文件。
+# 偏差：Snowflake Worker 用 17（草案 26 已被 channel-connector 占用；mor-test 已用 18–31，Worker 只允许 0–31）。
+services:
+  commercial-service:
+    image: sha256:88dbf74155a9ceb5c82f01376b1bb3ddec7a9fe7ba9077bf42b50b7da04cd71d
+    environment:
+      COMMERCIAL_RABBITMQ_HOST: rabbitmq
+      COMMERCIAL_RABBITMQ_PORT: "5672"
+      COMMERCIAL_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
+      COMMERCIAL_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
+      COMMERCIAL_RABBITMQ_VHOST: /mor-test
+      COMMERCIAL_REDIS_HOST: redis
+      COMMERCIAL_REDIS_PORT: "6379"
+      COMMERCIAL_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?prepare test secrets}
+      COMMERCIAL_SNOWFLAKE_REGION_ID: "0"
+      COMMERCIAL_SNOWFLAKE_WORKER_ID: "17"
+      COMMERCIAL_COMPENSATION_INSTANCE_ID: commercial-test-1
+      COMMERCIAL_XXL_JOB_ENABLED: "true"
+      XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
+      XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
+      XXL_JOB_EXECUTOR_APPNAME: commercial-service
+      XXL_JOB_EXECUTOR_IP: 172.30.73.34
+      XXL_JOB_EXECUTOR_PORT: "9999"
+      XXL_JOB_EXECUTOR_LOGPATH: /tmp/xxl-job
+      XXL_JOB_EXECUTOR_EXCLUDEDPACKAGES: org.springframework.,spring.
+    depends_on:
+      rabbitmq: { condition: service_healthy }
+      redis: { condition: service_healthy }
+  operations-console-bff:
+    image: sha256:2bd2afee26092ff41ad69b19af40c04c97a053921c1eb5b61cde13fcdc1706aa
+  operations-console-web:
+    image: sha256:edf140b9e25b1a682e9b60fd8954fa36b4906334d26fd924a66ba2e5a5882bc2
