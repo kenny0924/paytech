@@ -36,6 +36,12 @@
 - 本机数据库：`mor_commercial` 已按 round2 脚本变更；2026-10-19 阶段 4 A 线再按 `paytech/commercial/docs/database/sql/local/2026-10-19-round3-local.sql` 变更（六张新表、Price `currency` 与三个键重建、Version / Component 新列；审阅：6 CREATE、4 ALTER、无 DML、无 DROP 库表、受影响四表为空），现 21 张表与 `init/ddl.sql` 一致。两次均只针对 local-environment，不含 mor-test。
 - 未提交。
 
+## 发布后环境动态（2026-10-20，其他会话）
+
+- code-mor-9c 随后发布 ledger 科目分级：基于 `cf39a1ee`（含本需求 E 线）重建 ops-bff / ops-web，运行镜像改为 ops-bff `971c9238…`、ops-web `db35544f…`（tag chart-20261020），并回归了本需求的合同、价目页面正常；Platform 块 91 启用后 PLATFORM_ADMIN 版本 32 → 33。本需求的 ops 镜像 `2bd2afee` / `edf140b9` 已被取代，候选文件中的 ID 仅作历史记录。
+- 22:53Z mor-test RabbitMQ 被 OOM Kill 并由 code-mor-9c 重启；commercial 容器未重启，仍 healthy。
+- 23:30Z 起 commercial 日志出现 XXL 执行器注册读超时（xxl-job-admin 本就不稳定，重启计数 17+，发布 Agent 已记录）；属共享基础设施问题，不是本需求引入，注册线程会自动重试。
+
 ## 遗留项
 
 - BCR 共享白名单（PRICING_PROFILE、AGREEMENT_PRODUCT、AGREEMENT_CAPABILITY）待按服务拆分。
