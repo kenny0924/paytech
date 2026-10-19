@@ -13,7 +13,7 @@ import com.paytech.foundation.testsupport.api.Clear;
 
 /**
  * commercial 测试专用库的全量清理（design/10 §3.1）：表集合等于 init/ddl.sql 的表集合，不触碰其他服务的库。
- * <li>在夹具定向清理之后执行；只连接 mor_commercial。</li>
+ * <li>在夹具定向清理之后执行；只连接 mor_commercial 或并行任务的隔离库 mor_commercial_&lt;后缀&gt;。</li>
  */
 @TestComponent
 @Order(Ordered.LOWEST_PRECEDENCE)
@@ -37,8 +37,8 @@ public class CommercialDataCleaner implements Clear {
     @Override
     public void clear() {
         String database = jdbc.queryForObject("SELECT DATABASE()", String.class);
-        if (!"mor_commercial".equals(database)) {
-            throw new IllegalStateException("清理器只允许连接 mor_commercial，实际: " + database);
+        if (database == null || !database.matches("mor_commercial(_[a-z0-9]+)?")) {
+            throw new IllegalStateException("清理器只允许连接 mor_commercial 或其隔离库，实际: " + database);
         }
         for (String table : TABLES) {
             jdbc.update("DELETE FROM " + table);

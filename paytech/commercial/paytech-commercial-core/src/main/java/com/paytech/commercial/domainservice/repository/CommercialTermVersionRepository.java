@@ -47,6 +47,17 @@ public interface CommercialTermVersionRepository {
     List<CommercialTermVersion> findByPlanId(long termPlanId);
 
     /**
+     * 按商业时点选取方案内唯一生效的版本（technique §2.3），Checkout 解析与价格命中共用。
+     * <li>候选状态为 SCHEDULED / ACTIVE / SUPERSEDED，且 effective_from ≤ asOf &lt; effective_to（空为无穷）；不看 active_slot。</li>
+     * <li>同一方案已排期区间不得重叠（排期时校验）；仍命中多条说明数据违反该不变量，抛出系统异常而不是任选其一。</li>
+     *
+     * @param termPlanId 方案 ID
+     * @param asOf 商业时点
+     * @return 生效版本，没有时为 null
+     */
+    CommercialTermVersion findEffectiveAt(long termPlanId, Instant asOf);
+
+    /**
      * 方案内当前最大版本号，供服务端递增新版本号；并发由方案锁与 uk_comm_term_ver 保护。
      *
      * @param termPlanId 方案 ID

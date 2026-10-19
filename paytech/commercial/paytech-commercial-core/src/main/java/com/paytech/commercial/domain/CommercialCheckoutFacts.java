@@ -3,7 +3,11 @@ package com.paytech.commercial.domain;
 import java.util.List;
 import java.util.Objects;
 
+import com.paytech.commercial.core.dal.dataobject.AgreementCapability;
+import com.paytech.commercial.core.dal.dataobject.AgreementCapabilityLimit;
+import com.paytech.commercial.core.dal.dataobject.AgreementProduct;
 import com.paytech.commercial.core.dal.dataobject.CheckoutRecords.*;
+import com.paytech.commercial.core.dal.dataobject.ProductCapability;
 
 import lombok.Value;
 import lombok.experimental.Accessors;
@@ -34,6 +38,14 @@ public class CommercialCheckoutFacts {
     List<PricingProfile> methodProfiles;
     /** 合同业务根。 */
     List<BusinessChangeRecord> roots;
+    /** CLIENT 合同订阅的产品。 */
+    List<AgreementProduct> agreementProducts;
+    /** CLIENT 合同在各 OE 下的开通项。 */
+    List<AgreementCapability> agreementCapabilities;
+    /** 上述开通项的约束行。 */
+    List<AgreementCapabilityLimit> capabilityLimits;
+    /** 上述开通项引用的可开通项目录。 */
+    List<ProductCapability> productCapabilities;
 
     /** 合同参与方引用的资料 ID，去重升序；签署校验据此向 client-master 读取资料。 */
     public List<Long> partyProfileIds() {

@@ -6,6 +6,10 @@ import static com.paytech.commercial.domain.CheckoutResolutionContext.require;
 import java.util.List;
 import java.util.Objects;
 
+import com.paytech.commercial.api.enums.BusinessMode;
+import com.paytech.commercial.api.enums.ProductCode;
+import com.paytech.commercial.api.enums.ResponsiblePartyType;
+import com.paytech.commercial.core.dal.dataobject.AgreementCapability;
 import com.paytech.commercial.core.dal.dataobject.CheckoutRecords.*;
 import com.paytech.commercial.domain.ClientMasterCandidates.Candidate;
 import com.paytech.commercial.domain.ClientMasterCandidates.ClientFacts;
@@ -34,6 +38,8 @@ public class CheckoutCandidateContext {
     Agreement agreement;
     /** 已验证的 Client 条款计划与不可变版本。 */
     CheckoutPricingContext clientTerms;
+    /** 合同订阅产品与本次支付方式命中的开通项。 */
+    CheckoutSubscriptionContext subscription;
     /** PARTNER 来源的合同与双条款，其他来源为空。 */
     PartnerTerms partnerTerms;
     /** 原消费者法律文档、卖方披露及参与方资料。 */
@@ -71,6 +77,9 @@ public class CheckoutCandidateContext {
                 agreement.agreementId(), clientTerms.plan().termPlanId(), clientTerms.version().termVersionId(),
                 legal.seller().disclosureId())
             .forEach(CheckoutResolutionContext::id);
+        if (subscription.capability() != null) {
+            id(subscription.capability().getAgreementCapabilityId());
+        }
         require(legal.documents().size() == 3);
         legal.documents().forEach(document -> {
             id(document.legalDocumentId());
@@ -100,12 +109,39 @@ public class CheckoutCandidateContext {
                 id(classification.classificationId()), classification.industryCode(), classification.mccCode()),
             new CheckoutContextView.Eligibility(id(eligibility.affiliationId()), eligibility.priorityNo(),
                 id(eligibility.scopeId()), id(eligibility.sourceRelationId())),
-            new CheckoutContextView.ClientTerms(id(agreement.agreementId()), id(clientTerms.plan().termPlanId()),
-                id(clientTerms.version().termVersionId())),
-            partnerView(), legalView(),
+            clientTermsView(), partnerView(), legalView(), derivedView(),
             new CheckoutContextView.Revisions(id(clientRoot.version()), id(entityRoot.version()),
                 id(agreementRoot.currentVersion()),
                 partnerAgreementRoot == null ? null : id(partnerAgreementRoot.currentVersion())));
+    }
+
+    /** Client 合同、条款版本、商业关系、订阅产品与命中的开通项。 */
+    private CheckoutContextView.ClientTerms clientTermsView() {
+        AgreementCapability capability = subscription.capability();
+        return new CheckoutContextView.ClientTerms(id(agreement.agreementId()), id(clientTerms.plan().termPlanId()),
+            id(clientTerms.version().termVersionId()), agreement.businessMode().getCode(), agreement.fundMode().getCode(),
+            agreement.pricingAuthority().getCode(),
+            agreement.referralPartnerId() == null ? null : id(agreement.referralPartnerId()),
+            subscription.products().stream().map(ProductCode::getCode).toList(),
+            capability == null ? null
+                : new CheckoutContextView.Capability(id(capability.getAgreementCapabilityId()),
+                    capability.getCapabilityCode(), capability.getStatus().getCode(),
+                    capability.getRollingReserveRate() == null ? null
+                        : capability.getRollingReserveRate().stripTrailingZeros().toPlainString(),
+                    capability.getRollingReserveDays()));
+    }
+
+    /**
+     * D02 四项派生，由合同业务模式决定，收单只冻结（technique §2.5）。
+     * <li>MOR：卖方为 OE Party，税务责任在 OE；PSP：卖方为 Client Party，税务责任在 Client。</li>
+     * <li>资金经平台结算（本期唯一受理的资金模式），两种模式的资金账簿都归收单 OE。</li>
+     */
+    private CheckoutContextView.Derived derivedView() {
+        boolean merchantOfRecord = agreement.businessMode() == BusinessMode.MOR;
+        return new CheckoutContextView.Derived(id(merchantOfRecord ? eligibility.oePartyId() : client.partyId()),
+            entityNo(),
+            (merchantOfRecord ? ResponsiblePartyType.OPERATING_ENTITY : ResponsiblePartyType.CLIENT).getCode(),
+            ResponsiblePartyType.OPERATING_ENTITY.getCode());
     }
 
     /** Partner 专属结果由原合同及两个已验证条款构造。 */

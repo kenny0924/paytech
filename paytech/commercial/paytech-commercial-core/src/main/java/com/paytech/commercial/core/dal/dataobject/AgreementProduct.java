@@ -4,8 +4,10 @@ import java.time.Instant;
 
 import com.paytech.commercial.api.enums.ProductCode;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 /**
  * t_agreement_product：合同订阅的可选产品模块。
@@ -13,6 +15,8 @@ import lombok.Setter;
  */
 @Getter
 @Setter
+@EqualsAndHashCode
+@ToString
 public class AgreementProduct {
     /** 合同订阅产品行的内部唯一标识 */
     private Long agreementProductId;

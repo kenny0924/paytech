@@ -304,5 +304,131 @@
       "create_time": "2026-09-01T00:00:00Z",
       "update_time": "2026-09-01T00:00:00Z"
     }
+  ],
+  "product_capability": [
+    {
+      "product_capability_id": 910000000000311,
+      "product_code": "ACQUIRING",
+      "capability_code": "CARD_VISA",
+      "capability_name": "Visa",
+      "capability_kind": "PAYMENT_METHOD",
+      "payment_method_code": "CARD",
+      "dimension_code": "CARD_BRAND",
+      "dimension_value": "VISA",
+      "status": "ACTIVE",
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    },
+    {
+      "product_capability_id": 910000000000312,
+      "product_code": "ACQUIRING",
+      "capability_code": "APPLE_PAY",
+      "capability_name": "Apple Pay",
+      "capability_kind": "PAYMENT_METHOD",
+      "payment_method_code": "APPLE_PAY",
+      "dimension_code": null,
+      "dimension_value": null,
+      "status": "ACTIVE",
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    }
+  ],
+  "agreement_product": [
+    {
+      "agreement_product_id": 910000000000321,
+      "agreement_id": 910000000000106,
+      "product_code": "ACQUIRING",
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    },
+    {
+      "agreement_product_id": 910000000000322,
+      "agreement_id": 910000000000106,
+      "product_code": "PAYOUT",
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    },
+    {
+      "agreement_product_id": 910000000000323,
+      "agreement_id": 910000000000206,
+      "product_code": "ACQUIRING",
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    }
+  ],
+  "agreement_capability": [
+    {
+      "agreement_capability_id": 910000000000331,
+      "agreement_id": 910000000000106,
+      "entity_no": "AE991",
+      "capability_code": "CARD_VISA",
+      "status": "ENABLED",
+      "effective_from": "2026-09-01T00:00:00Z",
+      "effective_to": null,
+      "rolling_reserve_rate": "0.1000000000",
+      "rolling_reserve_days": 90,
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    },
+    {
+      "agreement_capability_id": 910000000000332,
+      "agreement_id": 910000000000106,
+      "entity_no": "AE991",
+      "capability_code": "APPLE_PAY",
+      "status": "ENABLED",
+      "effective_from": "2026-09-01T00:00:00Z",
+      "effective_to": null,
+      "rolling_reserve_rate": null,
+      "rolling_reserve_days": null,
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    },
+    {
+      "agreement_capability_id": 910000000000333,
+      "agreement_id": 910000000000206,
+      "entity_no": "AE992",
+      "capability_code": "CARD_VISA",
+      "status": "ENABLED",
+      "effective_from": "2026-09-01T00:00:00Z",
+      "effective_to": null,
+      "rolling_reserve_rate": null,
+      "rolling_reserve_days": null,
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    }
+  ],
+  "agreement_capability_limit": [
+    {
+      "agreement_capability_limit_id": 910000000000341,
+      "agreement_capability_id": 910000000000331,
+      "limit_code": "CURRENCY",
+      "limit_value": "USD",
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    },
+    {
+      "agreement_capability_limit_id": 910000000000342,
+      "agreement_capability_id": 910000000000331,
+      "limit_code": "CURRENCY",
+      "limit_value": "EUR",
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    },
+    {
+      "agreement_capability_limit_id": 910000000000343,
+      "agreement_capability_id": 910000000000333,
+      "limit_code": "CURRENCY",
+      "limit_value": "USD",
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    },
+    {
+      "agreement_capability_limit_id": 910000000000344,
+      "agreement_capability_id": 910000000000333,
+      "limit_code": "CONSUMER_COUNTRY",
+      "limit_value": "AE",
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    }
   ]
 }

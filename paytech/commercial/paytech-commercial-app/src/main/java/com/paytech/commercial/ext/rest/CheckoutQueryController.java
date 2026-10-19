@@ -28,7 +28,7 @@ public class CheckoutQueryController implements CheckoutContextApi {
         authorize(callerService);
         CheckoutQuery query =
             CheckoutQuery.resolve(request.getClientId(), request.getOrderNo(), request.getConsumerCountryCode(),
-                request.getCurrency(), request.getLocale(), request.getContextAsOfTime(), clock.instant());
+                request.getCurrency(), request.getPaymentMethodCode(), request.getLocale(), request.getContextAsOfTime(), clock.instant());
         return CheckoutContextConverter.convert(processor.process(query));
     }
 

@@ -62,6 +62,15 @@
         SELECT <include refid="commercialTermVersionColumns"/> FROM t_commercial_term_version WHERE term_plan_id = #{termPlanId} ORDER BY version_no
     </select>
 
+    <select id="selectEffectiveAt" resultMap="CommercialTermVersionRow">
+        SELECT <include refid="commercialTermVersionColumns"/> FROM t_commercial_term_version
+        WHERE term_plan_id = #{termPlanId}
+          AND status IN <foreach collection="statuses" item="status" open="(" separator="," close=")">#{status}</foreach>
+          AND effective_from &lt;= #{asOf}
+          AND (effective_to IS NULL OR effective_to &gt; #{asOf})
+        ORDER BY effective_from
+    </select>
+
     <select id="selectMaxVersionNo" resultType="java.lang.Long">
         SELECT MAX(version_no) FROM t_commercial_term_version WHERE term_plan_id = #{termPlanId}
     </select>

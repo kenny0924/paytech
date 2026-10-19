@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import com.paytech.client.master.api.enums.CheckoutCandidateErrorCode;
 import com.paytech.commercial.api.checkout.CheckoutContextApi;
+import com.paytech.commercial.api.constant.CommercialCodes;
 import com.paytech.commercial.api.checkout.request.ResolveCheckoutContextRequestBody;
 import com.paytech.commercial.test.base.checkout.AbstractCheckoutApiTest;
 
@@ -29,6 +30,19 @@ class ResolveCheckoutHttpTest extends AbstractCheckoutApiTest {
     void test_unconnectedRiskFailsClosedAndLeavesDatabaseUnchanged() {
         fixture.assertReadOnly(
                 () -> invoke(request(), headers()).assertProblem(503, "OWNER_UNAVAILABLE").assertNoCommercialFacts());
+    }
+
+    /** 支付方式只接受规范 Code；合法值参与开通项匹配：无候选开通时业务拒绝，有开通时停在尚未接入的 Risk 资格。 */
+    @Test
+    void test_paymentMethodCodeSelectsEnabledCapability() {
+        var request = request();
+        request.setPaymentMethodCode("card");
+        fixture.assertReadOnly(() -> invoke(request, headers()).assertProblem(422, "INVALID_CHECKOUT_QUERY"));
+        assertEquals(0, clientMaster.count("candidates"));
+        request.setPaymentMethodCode(CommercialCodes.PaymentMethod.GOOGLE_PAY);
+        fixture.assertReadOnly(() -> invoke(request, headers()).assertProblem(422, "NO_ELIGIBLE_ENTITY"));
+        request.setPaymentMethodCode(CommercialCodes.PaymentMethod.CARD);
+        fixture.assertReadOnly(() -> invoke(request, headers()).assertProblem(503, "OWNER_UNAVAILABLE"));
     }
 
     /** class DTO 缺失必填字段时由 HTTP Bean Validation 拒绝。 */

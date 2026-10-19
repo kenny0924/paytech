@@ -1,6 +1,7 @@
 package com.paytech.commercial.core.dal.mapper;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
@@ -26,6 +27,10 @@ public interface CommercialTermVersionMapper {
 
     /** 读取一个方案的全部版本，按版本号升序，按 version_no 升序。 */
     List<CommercialTermVersion> selectByPlanId(@Param("termPlanId") long termPlanId);
+
+    /** 状态属于给定集合且生效区间包含 asOf 的版本，按 effective_from 升序。 */
+    List<CommercialTermVersion> selectEffectiveAt(@Param("termPlanId") long termPlanId,
+        @Param("statuses") Collection<CommercialTermVersionStatus> statuses, @Param("asOf") Instant asOf);
 
     /** 方案内当前最大版本号，没有版本时返回 null。 */
     Long selectMaxVersionNo(@Param("termPlanId") long termPlanId);

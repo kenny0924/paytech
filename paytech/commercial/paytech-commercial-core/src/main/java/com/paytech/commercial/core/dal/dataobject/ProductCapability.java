@@ -7,8 +7,10 @@ import com.paytech.commercial.api.enums.PricingDimension;
 import com.paytech.commercial.api.enums.ProductCode;
 import com.paytech.commercial.api.enums.ProductStatus;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 /**
  * t_product_capability：L1 可开通项目录。
@@ -16,6 +18,8 @@ import lombok.Setter;
  */
 @Getter
 @Setter
+@EqualsAndHashCode
+@ToString
 public class ProductCapability {
     /** 可开通项目录行的内部唯一标识 */
     private Long productCapabilityId;

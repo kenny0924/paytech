@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
-/** Commerce 创建 Checkout 时的只读解析输入；不得指定 OE、行业、MCC 或支付方式。 */
+/** 收单创建 Checkout 时的只读解析输入；不得指定 OE、行业或 MCC，支付方式只用于开通项匹配。 */
 @Getter
 @Setter
 public class ResolveCheckoutContextRequestBody {
@@ -25,6 +25,15 @@ public class ResolveCheckoutContextRequestBody {
     /** 交易币种；三位大写代码，必须与批准的 OE Scope 准确匹配。 */
     @NotBlank
     private String currency;
+
+    /**
+     * 本次支付方式 Code，可选
+     * <li>Payment Method 稳定代码，大写字母开头，仅含大写字母、数字与下划线，最长 64 个字符；格式不符返回 INVALID_CHECKOUT_QUERY。</li>
+     * <li>给出时，候选 OE 下 Client 合同必须恰有一个 ENABLED、商业时点在区间内且币种与消费者国家约束满足的开通项，否则该候选落空；省略时不做开通项匹配，响应
+     * clientTerms.capability 为 null。</li>
+     */
+    @Size(max = 64)
+    private String paymentMethodCode;
 
     /** 法律内容 Locale；精确匹配批准的法律文件与卖方披露，不作隐式回退。 */
     @NotBlank

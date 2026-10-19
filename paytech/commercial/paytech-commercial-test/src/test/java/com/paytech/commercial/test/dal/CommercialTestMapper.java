@@ -8,6 +8,11 @@ import javax.sql.DataSource;
 import org.springframework.boot.test.context.TestComponent;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import com.paytech.commercial.api.enums.AgreementCapabilityStatus;
+import com.paytech.commercial.api.enums.BusinessMode;
+import com.paytech.commercial.api.enums.FundMode;
+import com.paytech.commercial.api.enums.ProductCode;
+
 /**
  * 商务测试数据的定向修改、清理与只读计数，制造负例或观察写入；只操作 mor_commercial。
  * <li>全量清理由 CommercialDataCleaner 在每例结束后执行；这里的清理只用于用例内部重建前置数据。</li>
@@ -63,6 +68,42 @@ public class CommercialTestMapper {
     public void touchAgreementCapability(long agreementCapabilityId, java.time.Instant updateTime) {
         jdbc.update("UPDATE t_agreement_capability SET update_time=? WHERE agreement_capability_id=?",
             java.sql.Timestamp.from(updateTime), agreementCapabilityId);
+    }
+
+    /** 改写合同业务模式与资金模式，制造 PSP 或本期不受理的资金模式。 */
+    public void overwriteAgreementModes(long agreementId, BusinessMode businessMode, FundMode fundMode) {
+        jdbc.update("UPDATE t_agreement SET business_mode=?, fund_mode=? WHERE agreement_id=?", businessMode.getCode(),
+            fundMode.getCode(), agreementId);
+    }
+
+    /** 删除一份合同的某个产品订阅。 */
+    public void deleteAgreementProduct(long agreementId, ProductCode productCode) {
+        jdbc.update("DELETE FROM t_agreement_product WHERE agreement_id=? AND product_code=?", agreementId,
+            productCode.getCode());
+    }
+
+    /** 改写开通项状态。 */
+    public void overwriteCapabilityStatus(long agreementCapabilityId, AgreementCapabilityStatus status) {
+        jdbc.update("UPDATE t_agreement_capability SET status=? WHERE agreement_capability_id=?", status.getCode(),
+            agreementCapabilityId);
+    }
+
+    /** 改写开通项生效终点。 */
+    public void overwriteCapabilityEffectiveTo(long agreementCapabilityId, java.time.Instant effectiveTo) {
+        jdbc.update("UPDATE t_agreement_capability SET effective_to=? WHERE agreement_capability_id=?",
+            java.sql.Timestamp.from(effectiveTo), agreementCapabilityId);
+    }
+
+    /** 删除一条开通项约束。 */
+    public void deleteCapabilityLimit(long agreementCapabilityLimitId) {
+        jdbc.update("DELETE FROM t_agreement_capability_limit WHERE agreement_capability_limit_id=?",
+            agreementCapabilityLimitId);
+    }
+
+    /** 改写条款版本生效终点，模拟排期时关闭前一版本区间或版本已过期。 */
+    public void overwriteVersionEffectiveTo(long termVersionId, java.time.Instant effectiveTo) {
+        jdbc.update("UPDATE t_commercial_term_version SET effective_to=? WHERE term_version_id=?",
+            java.sql.Timestamp.from(effectiveTo), termVersionId);
     }
 
     /** 直接写入组件计算基数原值，制造闭合枚举之外的数据库 Code。 */

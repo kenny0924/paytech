@@ -39,7 +39,8 @@ public class CheckoutResolutionFixture implements Clear {
     public void assertEmpty() {
         assertTrue(reusable, "上例清理失败，不复用污染环境");
         assertNull(fixture, "前例 Fixture 尚未清理");
-        assertTrue(properties.getUrl().startsWith("jdbc:mysql://127.0.0.1:13306/mor_commercial?"));
+        assertTrue(properties.getUrl().matches("jdbc:mysql://127\\.0\\.0\\.1:13306/mor_commercial(_[a-z0-9]+)?\\?.*"),
+            "只允许本机 mor_commercial 或其隔离库: " + properties.getUrl());
     }
 
     /** 插入商务合成场景；已有同键数据时失败，不覆盖。 */

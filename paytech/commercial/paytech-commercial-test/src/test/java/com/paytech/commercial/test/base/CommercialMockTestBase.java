@@ -101,10 +101,15 @@ public abstract class CommercialMockTestBase extends TestBase {
         Assertions.assertTrue(asynchronousWorkStopped, "异步处理未结束，禁止清理环境");
     }
 
-    /** 为内部入口用例构造同一固定商业时点，不读取或改变数据库。 */
+    /** 为内部入口用例构造同一固定商业时点，不读取或改变数据库；不带支付方式。 */
     protected CheckoutQuery query() {
-        return CheckoutQuery.resolve(Long.toString(CheckoutFixture.CLIENT_ID), "ORDER-1", "AE", "USD", "en-AE",
-            CheckoutFixture.NOW.toString(), CheckoutFixture.NOW);
+        return query(null);
+    }
+
+    /** 同一固定商业时点、USD 与 AE 消费者，带指定支付方式。 */
+    protected CheckoutQuery query(String paymentMethodCode) {
+        return CheckoutQuery.resolve(Long.toString(CheckoutFixture.CLIENT_ID), "ORDER-1", "AE", "USD", paymentMethodCode,
+            "en-AE", CheckoutFixture.NOW.toString(), CheckoutFixture.NOW);
     }
 
     /** 固定测试时点并约束测试 HTTP 客户端，不替换生产业务链路。 */

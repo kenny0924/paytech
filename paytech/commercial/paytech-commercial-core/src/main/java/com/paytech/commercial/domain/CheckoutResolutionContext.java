@@ -7,6 +7,10 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.paytech.commercial.api.enums.FundMode;
 import com.paytech.commercial.core.dal.dataobject.CheckoutRecords.*;
 import com.paytech.commercial.domain.ClientMasterCandidates.Candidate;
 import com.paytech.commercial.domain.ClientMasterCandidates.LegalDocument;
@@ -28,6 +32,8 @@ import lombok.experimental.Accessors;
 @Getter
 @Accessors(fluent = true)
 public final class CheckoutResolutionContext {
+    private static final Logger LOG = LoggerFactory.getLogger(CheckoutResolutionContext.class);
+
     /** 本次查询的原始业务条件与冻结时点。 */
     private final CheckoutQuery query;
     /** client-master 首次返回的主档候选。 */
@@ -103,14 +109,15 @@ public final class CheckoutResolutionContext {
     /** 完整商务资格通过后一次构造候选上下文，不在后续步骤逐层补字段。 */
     private CheckoutCandidateContext buildCandidate(Candidate candidate, Set<BusinessChangeRecord> roots) {
         var client = master.client();
-        Agreement clientAgreement = unique(facts.agreements(),
-            value -> code(value.agreementType(), "CLIENT") && Objects.equals(value.clientId(), client.clientId())
-                && Objects.equals(value.entityNo(), candidate.entityNo()) && agreementApplicable(value));
+        Agreement clientAgreement = clientAgreement(candidate);
         if (clientAgreement == null) {
             return null;
         }
-        require(clientAgreement.localPartnerId() == null);
-        requireSigned(clientAgreement, client.partyId(), "CLIENT", candidate.oePartyId());
+        CheckoutSubscriptionContext subscription =
+            CheckoutSubscriptionContext.resolve(this, clientAgreement, candidate.entityNo());
+        if (subscription == null) {
+            return null;
+        }
         CheckoutPricingContext clientTerms =
             CheckoutPricingContext.resolve(this, clientAgreement, candidate.entityNo(), "CLIENT_PRICING");
         if (clientTerms == null) {
@@ -125,11 +132,34 @@ public final class CheckoutResolutionContext {
             return null;
         }
         CheckoutCandidateContext result = new CheckoutCandidateContext(query, client, master.classification(), candidate,
-            clientAgreement, clientTerms, partner, legal, masterRoot("CLIENT", id(client.clientId())),
+            clientAgreement, clientTerms, subscription, partner, legal, masterRoot("CLIENT", id(client.clientId())),
             masterRoot("OPERATING_ENTITY", candidate.entityNo()), root(roots, id(clientAgreement.agreementId())),
             partner == null ? null : root(roots, id(partner.agreement().agreementId())));
         result.validateEvidence();
         return result;
+    }
+
+    /**
+     * 与 Client 和 OE 准确匹配、已签署且资金模式本期可受理的 CLIENT 合同；不存在或资金模式不受理时候选落空。
+     * <li>FEES_ONLY 本期不接受（technique §2.5），落空并记录日志，不改变合同本身的合法性判断。</li>
+     */
+    private Agreement clientAgreement(Candidate candidate) {
+        var client = master.client();
+        Agreement agreement = unique(facts.agreements(),
+            value -> code(value.agreementType(), "CLIENT") && Objects.equals(value.clientId(), client.clientId())
+                && Objects.equals(value.entityNo(), candidate.entityNo()) && agreementApplicable(value));
+        if (agreement == null) {
+            return null;
+        }
+        require(agreement.localPartnerId() == null && agreement.businessMode() != null && agreement.fundMode() != null
+            && agreement.pricingAuthority() != null);
+        requireSigned(agreement, client.partyId(), "CLIENT", candidate.oePartyId());
+        if (agreement.fundMode() != FundMode.SETTLE_THROUGH_PLATFORM) {
+            LOG.info("checkout 候选落空：资金模式本期不受理 clientId={} entityNo={} agreementId={} fundMode={}",
+                client.clientId(), candidate.entityNo(), agreement.agreementId(), agreement.fundMode().getCode());
+            return null;
+        }
+        return agreement;
     }
 
     /** PARTNER 来源的合同、双条款与唯一平台签约方；其他来源为空。 */

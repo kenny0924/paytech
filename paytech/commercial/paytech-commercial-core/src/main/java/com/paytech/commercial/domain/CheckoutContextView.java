@@ -40,6 +40,9 @@ public class CheckoutContextView {
     /** 法律文件、卖方披露和参与方资料引用。 */
     Legal legal;
 
+    /** D02 四项派生：卖方 Party、收单 OE、税务责任方与资金账簿归属。 */
+    Derived derived;
+
     /** 返回前复核的相关业务根修订。 */
     Revisions revisions;
 
@@ -89,6 +92,61 @@ public class CheckoutContextView {
 
         /** 商业时点适用的不可变条款版本 ID。 */
         String versionId;
+
+        /** 合同业务模式 Code：MOR 或 PSP。 */
+        String businessMode;
+
+        /** 合同资金模式 Code；本期只会返回 SETTLE_THROUGH_PLATFORM。 */
+        String fundMode;
+
+        /** 合同定价权归属 Code：PLATFORM 或 PARTNER。 */
+        String pricingAuthority;
+
+        /** 推荐该合同的 Local Partner ID；没有推荐关系时为 null。 */
+        String referralPartnerId;
+
+        /** 合同订阅的产品 Code，按 Code 升序。 */
+        java.util.List<String> agreementProducts;
+
+        /** 本次支付方式命中的开通项；请求未给支付方式时为 null。 */
+        Capability capability;
+    }
+
+    /** 命中的合同开通项。 */
+    @Value
+    @Accessors(fluent = true)
+    public static class Capability {
+        /** 开通项 ID。 */
+        String agreementCapabilityId;
+
+        /** 可开通项代码。 */
+        String capabilityCode;
+
+        /** 开通项状态 Code；命中时恒为 ENABLED。 */
+        String status;
+
+        /** 滚动保证金比例，0 至 1 的十进制字符串；未约定时为 null。 */
+        String rollingReserveRate;
+
+        /** 滚动保证金天数；未约定时为 null。 */
+        Integer rollingReserveDays;
+    }
+
+    /** 按合同业务模式派生、由收单冻结的四项主体。 */
+    @Value
+    @Accessors(fluent = true)
+    public static class Derived {
+        /** 卖方 Party ID：MOR 为 OE Party，PSP 为 Client Party。 */
+        String sellerPartyId;
+
+        /** 收单 OE 编号。 */
+        String acquiringEntityNo;
+
+        /** 税务责任方类型 Code：MOR 为 OPERATING_ENTITY，PSP 为 CLIENT。 */
+        String taxResponsibleParty;
+
+        /** 资金账簿归属类型 Code；资金经平台结算时恒为 OPERATING_ENTITY，账簿主体即 acquiringEntityNo。 */
+        String fundsBookOwner;
     }
 
     /** Partner 商业条款。 */

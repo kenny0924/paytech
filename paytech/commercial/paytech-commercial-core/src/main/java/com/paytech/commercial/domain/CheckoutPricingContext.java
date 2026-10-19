@@ -5,6 +5,7 @@ import static com.paytech.commercial.domain.CheckoutResolutionContext.*;
 
 import java.util.*;
 import com.paytech.commercial.core.dal.dataobject.CheckoutRecords.*;
+import com.paytech.commercial.domain.enums.CommercialTermVersionStatus;
 import com.paytech.foundation.common.error.FailException;
 import lombok.Value;
 import lombok.experimental.Accessors;
@@ -31,9 +32,10 @@ public class CheckoutPricingContext {
                 ? Objects.equals(plan.clientId(), context.query().clientId()) && plan.localPartnerId() == null
                         && Objects.equals(plan.entityNo(), entityNo)
                 : plan.clientId() == null && plan.agreementId() == null && plan.entityNo() == null);
+        // technique §2.3：按商业时点在 SCHEDULED / ACTIVE / SUPERSEDED 中选唯一区间命中者，不依赖激活作业是否已切换标签。
         CommercialTermVersion version = unique(context.facts().termVersions(),
                 v -> v.termPlanId().equals(plan.termPlanId())
-                        && (code(v.status(), "ACTIVE") || code(v.status(), "SUPERSEDED") || code(v.status(), "EXPIRED"))
+                        && CommercialTermVersionStatus.RESOLVABLE.contains(v.status())
                         && applicable(v.effectiveFrom(), v.effectiveTo(), context.query().asOf()));
         if (version == null) {
             return null;

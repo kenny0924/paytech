@@ -4,8 +4,10 @@ import java.time.Instant;
 
 import com.paytech.commercial.api.enums.CapabilityLimitCode;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 /**
  * t_agreement_capability_limit：开通项约束，一值一行。
@@ -13,6 +15,8 @@ import lombok.Setter;
  */
 @Getter
 @Setter
+@EqualsAndHashCode
+@ToString
 public class AgreementCapabilityLimit {
     /** 约束行的内部唯一标识 */
     private Long agreementCapabilityLimitId;

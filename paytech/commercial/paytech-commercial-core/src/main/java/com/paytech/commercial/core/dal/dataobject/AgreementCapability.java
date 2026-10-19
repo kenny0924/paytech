@@ -5,8 +5,10 @@ import java.time.Instant;
 
 import com.paytech.commercial.api.enums.AgreementCapabilityStatus;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 /**
  * t_agreement_capability：合同在准确 OE 下的开通项与保证金条款。
@@ -14,6 +16,8 @@ import lombok.Setter;
  */
 @Getter
 @Setter
+@EqualsAndHashCode
+@ToString
 public class AgreementCapability {
     /** 开通项行的内部唯一标识 */
     private Long agreementCapabilityId;

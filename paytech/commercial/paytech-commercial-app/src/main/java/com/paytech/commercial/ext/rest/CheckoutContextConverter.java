@@ -22,7 +22,7 @@ final class CheckoutContextConverter {
                         k.mccCode()),
                 new ResolveCheckoutContextResponseBody.Eligibility(e.affiliationId(), e.priorityNo(), e.entityScopeId(),
                         e.entitySourceRelationId()),
-                new ResolveCheckoutContextResponseBody.ClientTerms(t.agreementId(), t.planId(), t.versionId()),
+                clientTerms(t),
                 p == null
                         ? null
                         : new ResolveCheckoutContextResponseBody.PartnerTerms(p.localPartnerId(), p.agreementId(),
@@ -40,7 +40,25 @@ final class CheckoutContextConverter {
                                 .map(f -> new ResolveCheckoutContextResponseBody.PartyEvidence(f.partyId(), f.partyProfileId(),
                                         f.profileContentHash()))
                                 .toList()),
+                derived(c.derived()),
                 new ResolveCheckoutContextResponseBody.Revisions(r.clientChangeVersion(), r.entityChangeVersion(),
                         r.clientAgreementChangeVersion(), r.partnerAgreementChangeVersion()));
+    }
+
+    /** Client 合同条款与可选的命中开通项。 */
+    private static ResolveCheckoutContextResponseBody.ClientTerms clientTerms(CheckoutContextView.ClientTerms t) {
+        var k = t.capability();
+        return new ResolveCheckoutContextResponseBody.ClientTerms(t.agreementId(), t.planId(), t.versionId(),
+                t.businessMode(), t.fundMode(), t.pricingAuthority(), t.referralPartnerId(), t.agreementProducts(),
+                k == null
+                        ? null
+                        : new ResolveCheckoutContextResponseBody.Capability(k.agreementCapabilityId(), k.capabilityCode(),
+                                k.status(), k.rollingReserveRate(), k.rollingReserveDays()));
+    }
+
+    /** 四项派生原样投影。 */
+    private static ResolveCheckoutContextResponseBody.Derived derived(CheckoutContextView.Derived d) {
+        return new ResolveCheckoutContextResponseBody.Derived(d.sellerPartyId(), d.acquiringEntityNo(),
+                d.taxResponsibleParty(), d.fundsBookOwner());
     }
 }

@@ -44,6 +44,9 @@ public class ResolveCheckoutContextResponseBody {
     /** 法律文件、卖方披露和参与方资料引用。 */
     private Legal legal;
 
+    /** 按合同业务模式派生、由收单冻结的四项主体。 */
+    private Derived derived;
+
     /** 返回前复核的相关业务根修订。 */
     private Revisions revisions;
 
@@ -99,6 +102,69 @@ public class ResolveCheckoutContextResponseBody {
 
         /** 商业时点适用的不可变条款版本 ID。 */
         private String versionId;
+
+        /** 合同业务模式 Code：MOR 或 PSP。 */
+        private String businessMode;
+
+        /** 合同资金模式 Code；本期只会返回 SETTLE_THROUGH_PLATFORM。 */
+        private String fundMode;
+
+        /** 合同定价权归属 Code：PLATFORM 或 PARTNER。 */
+        private String pricingAuthority;
+
+        /** 推荐该合同的 Local Partner ID；没有推荐关系时为 null。 */
+        private String referralPartnerId;
+
+        /** 合同订阅的产品 Code，按 Code 升序；必含 ACQUIRING。 */
+        private java.util.List<String> agreementProducts;
+
+        /** 本次支付方式命中的开通项；请求未给支付方式时为 null。 */
+        private Capability capability;
+    }
+
+    /** 命中的合同开通项。 */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Capability {
+        /** 开通项 ID。 */
+        private String agreementCapabilityId;
+
+        /** 可开通项代码，如 CARD_VISA、APPLE_PAY。 */
+        private String capabilityCode;
+
+        /** 开通项状态 Code；命中时恒为 ENABLED。 */
+        private String status;
+
+        /** 滚动保证金比例，0 至 1 的十进制字符串；未约定时为 null。 */
+        private String rollingReserveRate;
+
+        /** 滚动保证金天数；未约定时为 null。 */
+        private Integer rollingReserveDays;
+    }
+
+    /**
+     * D02 四项派生
+     * <li>MOR：卖方为 OE Party，税务责任 OPERATING_ENTITY；PSP：卖方为 Client Party，税务责任 CLIENT。</li>
+     * <li>资金经平台结算时资金账簿恒归收单 OE（OPERATING_ENTITY）。</li>
+     */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Derived {
+        /** 卖方 Party ID。 */
+        private String sellerPartyId;
+
+        /** 收单 OE 编号，与顶层 entityNo 相同。 */
+        private String acquiringEntityNo;
+
+        /** 税务责任方类型 Code：OPERATING_ENTITY 或 CLIENT。 */
+        private String taxResponsibleParty;
+
+        /** 资金账簿归属类型 Code：OPERATING_ENTITY；账簿主体即 acquiringEntityNo。 */
+        private String fundsBookOwner;
     }
 
     /** Partner 来源专用商业条款。 */
