@@ -5,6 +5,7 @@ import java.util.List;
 import com.paytech.commercial.core.dal.dataobject.CheckoutRecords.BusinessChangeRecord;
 import com.paytech.commercial.core.dal.mapper.BusinessChangeRecordMapper;
 import com.paytech.commercial.domain.CommercialCheckoutScope;
+import com.paytech.commercial.domain.enums.BusinessChangeRecordAggregateRootType;
 import com.paytech.commercial.domainservice.repository.BusinessChangeRecordRepository;
 
 import lombok.AllArgsConstructor;
@@ -18,5 +19,11 @@ public class BusinessChangeRecordRepositoryImpl implements BusinessChangeRecordR
     @Override
     public List<BusinessChangeRecord> findCheckoutRoots(CommercialCheckoutScope scope) {
         return List.copyOf(mapper.findCheckoutRoots(scope.clientId(), scope.entityNos(), scope.localPartnerIds()));
+    }
+
+    /** 读取一个聚合根的 Root 当前修订版本；Root 不存在为 null。 */
+    @Override
+    public Long findRootVersion(BusinessChangeRecordAggregateRootType rootType, String rootId) {
+        return mapper.findRootVersion(rootType, rootId);
     }
 }

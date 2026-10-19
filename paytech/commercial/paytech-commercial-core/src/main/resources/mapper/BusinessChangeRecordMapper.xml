@@ -19,4 +19,10 @@
         WHERE parent_history_id IS NULL AND record_type='AGREEMENT' AND record_id IN (SELECT CAST(agreement_id AS CHAR) FROM t_agreement WHERE client_id = #{clientId}<if test="!localPartnerIds.isEmpty() and !entityNos.isEmpty()"> OR (local_partner_id IN <foreach collection="localPartnerIds" item="partnerId" open="(" separator="," close=")">#{partnerId}</foreach> AND agreement_id IN (SELECT agreement_id FROM t_agreement_operating_entity WHERE entity_no IN <foreach collection="entityNos" item="entityNo" open="(" separator="," close=")">#{entityNo}</foreach>))</if>)
         ORDER BY history_id
     </select>
+    <!-- Root 行：record_type 等于根类型、record_id 等于根 ID 且无父记录（uk_bcr_record 保证至多一行）。 -->
+    <select id="findRootVersion" resultType="java.lang.Long">
+        SELECT current_version
+        FROM t_business_change_record
+        WHERE record_type = #{rootType} AND record_id = #{rootId} AND parent_history_id IS NULL
+    </select>
 </mapper>

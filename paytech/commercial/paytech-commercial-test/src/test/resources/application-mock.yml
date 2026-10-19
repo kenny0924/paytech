@@ -1,6 +1,6 @@
-# commercial Mock 测试的可运行配置：真实 commercial 生产链 + 本机 MySQL（mor_commercial）+ client-master 的测试 HTTP 接口。
-# 数据库使用仓库隔离的本地默认凭据（与 init/ddl.sql、local-environment/.env.example 一致），可用环境变量覆盖。
-# commercial 不使用 Redis、RabbitMQ、补偿事件或 XXL-Job（Enforcer 禁止相关依赖）。
+# commercial Mock 测试的可运行配置：真实 commercial 生产链 + 本机 MySQL（mor_commercial）/ Redis / RabbitMQ + client-master 的测试 HTTP 接口。
+# 数据库与 Redis 使用仓库隔离的本地默认凭据（与 init/ddl.sql、local-environment/.env.example 一致），可用环境变量覆盖；
+# RabbitMQ 凭据只来自 local-environment/.env.local 或同名环境变量。XXL-Job 执行器在测试中关闭，补偿任务由提交后唤醒执行。
 
 # ==================== 中间件、框架与公共组件配置 ====================
 
@@ -9,6 +9,10 @@ server:
   port: 0
 
 spring:
+  config:
+    # 复用仓库已启动的本地 RabbitMQ 凭据；唯一锚点 paytech.local-environment.dir 由父 POM 经 Surefire 注入（10 §4.4）。
+    import:
+      - "optional:file:${paytech.local-environment.dir}/.env.local[.properties]"
   application:
     name: commercial-service
   main:
@@ -41,6 +45,51 @@ spring:
       connection-timeout: 2000
       initialization-fail-timeout: 1
       pool-name: commercial-database
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 16379
+      password: "${COMMERCIAL_TEST_REDIS_PASSWORD:${PAYTECH_REDIS_PASSWORD:${MOR_REDIS_PASSWORD:c4e99fe36176a66ece55b0c23e5af0be488d409f2e89f6c5}}}"
+      connect-timeout: 2s
+      timeout: 2s
+  # 仓库 local-environment 的本机 RabbitMQ；凭据只来自 .env.local 或同名环境变量，不写默认值。
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: "${MOR_RABBITMQ_USER}"
+    password: "${MOR_RABBITMQ_PASSWORD}"
+    virtual-host: "${MOR_RABBITMQ_VHOST:/mor-local}"
+    connection-timeout: 2s
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
+
+# paytech-redis-starter：资源锁；测试专用 Key 前缀，与本地运行实例隔离。
+redis:
+  key-prefix: commercial-mock
+  coordination:
+    enabled: true
+    threads: 4
+    netty-threads: 4
+
+# paytech-compensation-event：本地补偿任务，事务内登记、提交后执行。
+compensation:
+  enabled: true
+  instance-id: commercial-test
+
+xxl:
+  job:
+    executor:
+      enabled: false
+
+# paytech-messaging 发布端：声明 commercial.events 并提供 DomainEventPublisher。测试每例绑定观察队列，未路由按默认 FAIL 严格判定。
+messaging:
+  producer:
+    service: commercial
+
+paytech:
+  instance-id: "main"
 
 management:
   server:
@@ -56,6 +105,13 @@ internal-auth:
 # ==================== commercial 系统自定义配置 ====================
 
 commercial:
+  event:
+    source-service: commercial
+    instance-id: "${paytech.instance-id}"
+  identifier:
+    # Snowflake Region / Worker 标识；生产无默认值且必填。测试进程固定 0/0。
+    region-id: 0
+    worker-id: 0
   test:
     external:
       # EnableMockHttpServer 在应用创建客户端前注入随机 Loopback 地址；client-master-service 经 SimpleDiscovery 指向它。

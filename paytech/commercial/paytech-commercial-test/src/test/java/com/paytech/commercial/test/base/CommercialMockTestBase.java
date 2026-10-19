@@ -1,15 +1,19 @@
 package com.paytech.commercial.test.base;
 
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
 import java.net.http.HttpClient;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.ZoneOffset;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -25,18 +29,27 @@ import com.paytech.commercial.domain.CheckoutQuery;
 import com.paytech.commercial.test.mocker.clientmaster.ClientMasterCandidateMocker;
 import com.paytech.commercial.test.mocker.local.checkout.CheckoutFixture;
 import com.paytech.commercial.test.mocker.local.checkout.CheckoutResolutionFixture;
+import com.paytech.commercial.test.probe.CommercialEventProbe;
+import com.paytech.foundation.compensation.core.execution.CompensationEventDispatcher;
 import com.paytech.foundation.testsupport.api.MockHttpServer;
 import com.paytech.foundation.testsupport.api.TestBase;
 
 /**
- * commercial Mock 测试基类：正式应用、真实本地 MySQL（mor_commercial），client-master 走测试 HTTP 服务。
+ * commercial Mock 测试基类：正式应用、真实本地 MySQL（mor_commercial）/ Redis / RabbitMQ，client-master 走测试 HTTP 服务。
  * <li>Risk 资格使用正式不可用端口，不注入批准替身；成功解析路径仍无覆盖（既有缺口）。</li>
+ * <li>commercial 只发布不消费，不装配分区队列基线；两个业务事件经补偿任务异步发布到真实本地 Broker，每例为 commercial.events 绑定一个
+ * 临时观察队列（测试发布端 unroutable-policy 为默认 FAIL，未路由严格判定）。</li>
+ * <li>AfterEach 先等待补偿协调器与 Handler 全部空闲，再删除观察队列并检查意外调用；Foundation TestBase 随后执行全部 Clear（含
+ * t_compensation_event）。异步未停止时禁止清理与复用环境。</li>
  */
 @ActiveProfiles("mock")
 @SpringBootTest(classes = CommercialTestApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureRestTestClient
-@Import(CommercialMockTestBase.TimeConfiguration.class)
+@Import({CommercialMockTestBase.TimeConfiguration.class, CommercialEventProbe.class})
 public abstract class CommercialMockTestBase extends TestBase {
+    /** 前例补偿发布是否已经停止；未停止时禁止清理与复用环境。 */
+    private static boolean asynchronousWorkStopped = true;
+
     @Autowired
     protected CheckoutResolutionFixture fixture;
 
@@ -46,17 +59,46 @@ public abstract class CommercialMockTestBase extends TestBase {
     @Autowired
     protected MockHttpServer ownerServer;
 
-    /** 两级初始化的公共基线检查，具体业务数据由子类 BeforeEach 准备。 */
+    @Autowired
+    protected CommercialEventProbe events;
+
+    @Autowired
+    private CompensationEventDispatcher compensationDispatcher;
+
+    @Autowired
+    @Qualifier("compensationHandlerExecutor")
+    private ThreadPoolExecutor compensationHandlers;
+
+    /** 两级初始化的公共基线检查并绑定本例事件观察队列，具体业务数据由子类 BeforeEach 准备。 */
     @BeforeEach
     protected final void setUpGlobalMocks() {
+        Assertions.assertTrue(asynchronousWorkStopped, "前例异步处理未结束，禁止复用环境");
         fixture.assertEmpty();
+        events.bind();
     }
 
-    /** 先等待 Mock 请求结束，再检查意外调用；清理由 TestBase 执行。 */
+    /** 先等待补偿发布结束再删除观察队列，然后等待 Mock 请求结束并检查意外调用；清理由 TestBase 执行。 */
     @AfterEach
     protected final void tearDownGlobalMocks() {
+        try {
+            // 同时观察协调器和真实 Handler；协调器空闲不代表 Handler 已经停止。
+            await().atMost(Duration.ofSeconds(15)).until(() -> compensationDispatcher.activeTaskCount() == 0
+                && compensationDispatcher.queuedTaskCount() == 0 && compensationHandlers.getActiveCount() == 0);
+        } catch (RuntimeException | AssertionError failure) {
+            asynchronousWorkStopped = false;
+            throw failure;
+        } finally {
+            // 发布结束后才删除观察队列，避免异步发布因无路由被退回。
+            events.unbind();
+        }
         ownerServer.awaitIdle();
         assertAll("检查外部 Mock 调用", ownerServer::assertNoUnexpectedRequests);
+    }
+
+    /** 异步无法停止时保留现场，防止公共清理之后仍被后台发布回写。 */
+    @Override
+    protected void checkClearAllowed() {
+        Assertions.assertTrue(asynchronousWorkStopped, "异步处理未结束，禁止清理环境");
     }
 
     /** 为内部入口用例构造同一固定商业时点，不读取或改变数据库。 */

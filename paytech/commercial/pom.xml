@@ -53,7 +53,10 @@
                             <rules>
                                 <bannedDependencies>
                                     <searchTransitive>true</searchTransitive>
-                                    <!-- Copied from the CCT bans (design/09 §1.4); commercial has no MQ consumer or compensation handler, so AMQP, XXL and compensation stay banned. -->
+                                    <!-- Copied from the CCT bans (design/09 §1.4). 2026-10-19 六层定价阶段 4 T0 reopens only what the approved
+                                         technique.md §2.2 / §2.8 needs (see includes): Foundation resource lock (Redis/Redisson), compensation_event
+                                         with its bounded XXL-Job fallback, and AMQP for publishing AgreementStatusChanged /
+                                         CommercialTermVersionActivated. commercial publishes only; no MQ consumer. -->
                                     <excludes>
                                         <exclude>com.paytech:*-core</exclude>
                                         <exclude>com.paytech:*-app</exclude>
@@ -87,6 +90,20 @@
                                         <include>com.paytech:paytech-commercial-core</include>
                                         <include>com.paytech:paytech-commercial-app</include>
                                         <include>org.springframework.security:spring-security-crypto</include>
+                                        <!-- 写入 Processor 的 Foundation 资源锁 AbstractLockProcessor（technique.md §2.2）。 -->
+                                        <include>com.paytech:paytech-redis-starter</include>
+                                        <include>org.redisson:redisson</include>
+                                        <include>org.springframework.boot:spring-boot-starter-data-redis</include>
+                                        <include>io.lettuce:lettuce-core</include>
+                                        <!-- 发布任务的本地 compensation_event 及其有界 XXL-Job 兜底（technique.md §2.8）。 -->
+                                        <include>com.paytech:paytech-compensation-event</include>
+                                        <include>com.paytech:paytech-xxl-job-starter</include>
+                                        <include>com.xuxueli:xxl-job-core</include>
+                                        <include>com.xuxueli:xxl-tool</include>
+                                        <!-- 只发布两个业务事件；不消费任何 MQ。 -->
+                                        <include>org.springframework.boot:spring-boot-starter-amqp</include>
+                                        <include>org.springframework.amqp:*</include>
+                                        <include>com.rabbitmq:*</include>
                                     </includes>
                                 </bannedDependencies>
                             </rules>

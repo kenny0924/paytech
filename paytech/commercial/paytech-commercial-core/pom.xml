@@ -51,6 +51,33 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
+        <!-- 写入 Processor 的资源锁 AbstractLockProcessor（technique.md §2.2）。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-redis-starter</artifactId>
+        </dependency>
+        <!-- 事件发布任务：本地 compensation_event 登记与发布 Handler（technique.md §2.8）。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-compensation-event</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-messaging-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>tools.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <!-- CommercialEventProperties（@ConfigurationProperties / @Validated）。 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+        </dependency>
     </dependencies>
 
     <build><plugins><plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId>

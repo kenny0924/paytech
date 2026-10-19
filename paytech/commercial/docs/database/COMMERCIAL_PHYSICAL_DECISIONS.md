@@ -211,7 +211,7 @@ MVP 暂不建设通用 Retention/Legal Hold 投影、Worker、归档、匿名化
 | Diagram Groups | 4 |
 | Table Cells / Relation Cells | 23 / 21 |
 | Structural Projection SHA-256 | `34c577620f6290641323d9a7b1996032e0ccda5af6cf6911ff8a1591a1cff72e` |
-| Model SHA-256 | `d0c4e9a5517b0e7076363205f6be024f0a79749b5645b6d41bd4edd76f2afb87` |
+| Model SHA-256 | `d0e69125ad6a1bb9c4a7a03cea66c2f742a355b43d0d954c2466c5df986a848b` |
 | Template SHA-256 | `51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540` |
 
 全部 203 个字段来自批准 Catalog，没有在 Catalog 之外重复注入公共字段。21 条关系均为本库关系（指向 client-master 表的 12 条 Catalog 引用只保留字段与访问索引）；4 个图组覆盖全部 20 张表，并让每条关系恰好可视化一次。

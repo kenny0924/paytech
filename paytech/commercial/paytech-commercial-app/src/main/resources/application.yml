@@ -10,6 +10,25 @@ spring:
       connection-timeout: 2000
       initialization-fail-timeout: 1
       pool-name: commercial-database
+  data:
+    redis:
+      host: "${COMMERCIAL_REDIS_HOST:127.0.0.1}"
+      port: "${COMMERCIAL_REDIS_PORT:16379}"
+      password: "${COMMERCIAL_REDIS_PASSWORD:${PAYTECH_REDIS_PASSWORD:}}"
+      connect-timeout: 2s
+      timeout: 2s
+  rabbitmq:
+    host: "${COMMERCIAL_RABBITMQ_HOST:127.0.0.1}"
+    port: "${COMMERCIAL_RABBITMQ_PORT:5672}"
+    username: "${COMMERCIAL_RABBITMQ_USERNAME:}"
+    password: "${COMMERCIAL_RABBITMQ_PASSWORD:}"
+    virtual-host: "${COMMERCIAL_RABBITMQ_VHOST:/mor-local}"
+    connection-timeout: 2s
+    # 发布确认与不可路由退回：两个发布 Handler 等待 Broker 确认后才算发布成功。
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
   cloud:
     nacos:
       discovery:
@@ -57,6 +76,45 @@ management:
       enabled: true
     readinessstate:
       enabled: true
+
+# paytech-redis-starter：写入 Processor 的 AbstractLockProcessor 资源锁（technique.md §2.2）。
+redis:
+  coordination:
+    enabled: true
+
+# paytech-compensation-event：状态变更事务内登记发布任务，提交后执行；XXL-Job 兜底唤醒默认关闭，部署时显式开启。
+compensation:
+  enabled: true
+  # 多实例 Claim/Lease 的实例标识前缀；部署多实例时由 COMMERCIAL_COMPENSATION_INSTANCE_ID 注入带实例后缀的值。
+  instance-id: "${COMMERCIAL_COMPENSATION_INSTANCE_ID:commercial}"
+
+xxl:
+  job:
+    executor:
+      enabled: "${COMMERCIAL_XXL_JOB_ENABLED:false}"
+      app-name: commercial-service
+
+# paytech-messaging 发布端：声明 commercial.events（Durable Fanout）并提供 DomainEventPublisher（design/08 §3）。commercial 不消费。
+messaging:
+  producer:
+    service: commercial
+  publisher:
+    # TODO by CLAUDE: 消费方 acquiring 尚未绑定 commercial.events；接入后改回默认 FAIL，未路由由补偿任务重试。
+    unroutable-policy: ACK_AND_WARN
+
+# 实例 ID（实例清单 instance.id，01 §5）：领域事件信封 instanceId。
+paytech:
+  instance-id: "${PAYTECH_INSTANCE_ID:main}"
+
+commercial:
+  event:
+    # 信封身份：sourceService 与 messaging.producer.service 一致。
+    source-service: commercial
+    instance-id: "${paytech.instance-id}"
+  identifier:
+    # 部署分配的 Snowflake Region / Worker 标识，必填；每个 app 独立分配。
+    region-id: "${COMMERCIAL_SNOWFLAKE_REGION_ID}"
+    worker-id: "${COMMERCIAL_SNOWFLAKE_WORKER_ID}"
 
 # 内部调用 Token（D26）：默认关闭；值必须带引号，裸 OFF 在 YAML 1.1 中是布尔 false。
 internal-auth:

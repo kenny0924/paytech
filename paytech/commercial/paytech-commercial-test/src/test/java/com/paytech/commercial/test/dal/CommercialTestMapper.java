@@ -1,5 +1,8 @@
 package com.paytech.commercial.test.dal;
 
+import java.util.List;
+import java.util.Map;
+
 import javax.sql.DataSource;
 
 import org.springframework.boot.test.context.TestComponent;
@@ -66,5 +69,19 @@ public class CommercialTestMapper {
     public void overwriteComponentCalculationBase(long termComponentId, String calculationBase) {
         jdbc.update("UPDATE t_commercial_term_component SET calculation_base=? WHERE term_component_id=?", calculationBase,
             termComponentId);
+    }
+
+    /** 插入一个聚合根的 BCR Root 行（无父记录），只用于发布 Handler 回读根修订。 */
+    public void insertBusinessChangeRoot(long historyId, String rootType, long rootId, long currentVersion) {
+        jdbc.update("INSERT INTO t_business_change_record (history_id, record_type, record_id, aggregate_root_type, "
+            + "aggregate_root_id, parent_history_id, current_version, create_time, update_time) "
+            + "VALUES (?, ?, ?, ?, ?, NULL, ?, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6))", historyId, rootType,
+            Long.toString(rootId), rootType, Long.toString(rootId), currentVersion);
+    }
+
+    /** 某补偿任务（事件键 + 类型）当前的执行状态行；任务成功后被删除，返回空列表。 */
+    public List<Map<String, Object>> compensationEvents(String eventType, String eventKey) {
+        return jdbc.queryForList("SELECT id, execute_status, execute_count, last_error_code FROM t_compensation_event "
+            + "WHERE event_type=? AND event_key=?", eventType, eventKey);
     }
 }

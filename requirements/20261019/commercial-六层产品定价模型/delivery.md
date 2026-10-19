@@ -25,7 +25,12 @@
 
 ## 当前阶段与下一确认点
 
-阶段 4 进行中：A 线（持久化层与测试基座）执行中；完成后 B / C / D 并行，E 最后。
+阶段 4 进行中（2026-10-19 夜间，用户委托自动推进）：
+- A 线完成并经主会话独立复跑（commercial 42、arch-rules 61、BUILD SUCCESS）；基点本地提交 `08c8f794`（186 文件，仅本需求路径，私有索引）。
+- 基点后主树补：`t_commercial_term_version.status` 增 PENDING_APPROVAL（技术方案 §2.1 需要）；`t_agreement` / `t_commercial_term_price` 表注释精简到 MySQL 2048 字符上限内（原生成 Schema 的 t_agreement 注释超限，从空库建表会失败；BCR 共享注释 1660 字符未超限、不改）；模型门禁 91/93（2 项为 client-master 既有）。
+- T0（消息 / 补偿事件 / Redis 锁 / XXL-Job 基础设施接入 commercial，解除模块 Enforcer 禁用）在主树执行中；D 线在 worktree `Code-MoR-lineD`（分支 `commercial/line-d`，基于 08c8f794）执行中。
+- 本机隔离测试库 `mor_commercial_lineb / linec / lined`（各 21 表，commercial_app 授权）已按 `init/ddl.sql` 建立，供三线并行测试，避免共用 `mor_commercial` 互相清库。
+- 跨会话协同：code-mor-13 无冲突；code-mor-85 今晚发 billing / channel-connector / account / ledger，互不碰容器；code-mor-9c（ledger 科目分级）也要动 ops-bff / Web / Platform（块 91），约定本需求先发（Platform 注册块 95），发完把镜像 sha256 与改动文件列表给它叠加；code-mor-32（counterparty 改名）今晚重建 acquiring / card，本需求不碰 acquiring。
 
 ## 已完成证据（登记时）
 

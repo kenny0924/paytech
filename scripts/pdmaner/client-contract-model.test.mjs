@@ -4257,9 +4257,9 @@ test("direct Agreement and Legal facts use immutable-record metadata and complet
   assert.doesNotMatch(comment("consumer_legal_document", "legal_document_id"), /Scope/u);
 
   const agreementComment = entities.get("agreement").comment;
-  assert.match(agreementComment, /DRAFT、PENDING_SIGNATURE、CANCELLED.*signed_time\/activated_time.*均为空/u);
-  assert.match(agreementComment, /按 Owner、Agreement Type、Operating Entity 的稳定顺序锁定/u);
-  assert.match(agreementComment, /CLIENT.*Client.*PARTNER.*Local Partner/u);
+  assert.match(agreementComment, /DRAFT\/PENDING_SIGNATURE\/CANCELLED 两时间为空/u);
+  assert.match(agreementComment, /按 Owner、类型、OE 稳定顺序锁定/u);
+  assert.match(agreementComment, /CLIENT 合同 client_id 非空且 local_partner_id 为空，PARTNER 反之/u);
   assert.match(entities.get("agreement_party").comment, /PLATFORM_SIGNATORY.*OPERATING_ENTITY/u);
   assert.match(
     entities.get("commercial_term_plan").comment,
@@ -4271,7 +4271,7 @@ test("direct Agreement and Legal facts use immutable-record metadata and complet
   );
   assert.match(
     entities.get("commercial_term_price").comment,
-    /PLATFORM_SERVICE_CHARGE.*Calculation Base Catalog.*残差/u,
+    /PLATFORM_SERVICE_CHARGE 使用受控 Calculation Base.*残差/u,
   );
   assert.match(
     entities.get("agreement_party").comment,
@@ -4307,10 +4307,10 @@ test("CLIENT Price freezes the complete business-day settlement term without a n
     assert.equal(fields.get(fieldKey)?.notNull, false);
     assert.match(fields.get(fieldKey)?.comment ?? "", /取值来源：/u);
   }
-  assert.match(agreementEntity.comment, /CLIENT.*四个结算字段.*全部非空/u);
-  assert.match(agreementEntity.comment, /PARTNER.*四个结算字段.*全部为空/u);
+  assert.match(agreementEntity.comment, /CLIENT 的四个结算字段全部非空/u);
+  assert.match(agreementEntity.comment, /PARTNER 全部为空/u);
   assert.match(agreementEntity.comment, /settlement_business_days>=0/u);
-  assert.match(agreementEntity.comment, /cutoff_second_of_day BETWEEN 0 AND 86399/u);
+  assert.match(agreementEntity.comment, /cutoff_second_of_day 在 0–86399/u);
   assert.equal(entities.has("settlement_maturity_policy"), false);
   assert.equal(entities.has("business_calendar"), false);
 });
