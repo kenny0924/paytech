@@ -5,7 +5,7 @@
 - Deployment status: Deployed to mor-test（2026-10-19 10:54Z，镜像 tag `subledger-20261019`，SQL 已执行，旧 `ledger.billing.*` 已删除，验收 58/58、31/31、34/34；详见需求目录 `release/release.md` 第 6 节与[当前台账](../CURRENT_IMPLEMENTATION.md)）
 - Decision date: 2026-10-18
 - 用户决定：account 与 ledger 改为「明细账在上游、总账控制科目在下游」。用户理由是记账与余额变动应只推导一次；Client / Partner 维度与余额桶属于账户系统，不应在会计系统重复维护。讨论中用户逐项确认方案 3、控制科目方案、银行现金额度归 account、六项运行约束与五项待确认事项（“按建议”）。
-- 详细设计：[account 与 ledger 模型划分（方案 3）](../../system-design/finance-account-ledger-v3.md)，闭环规则见其第 8.5–8.10 节，配套图 [finance-account-ledger-v3.pen](../../system-design/finance-account-ledger-v3.pen)。
+- 详细设计：[account 与 ledger 模型划分（方案 3）](../../design-discuss/finance-account-ledger-v3/design.md)，闭环规则见其第 8.5–8.10 节，配套图 [finance-account-ledger-v3.pen](../../design-discuss/finance-account-ledger-v3/design.pen)。
 - 实现、验证与部署状态只见[当前台账](../CURRENT_IMPLEMENTATION.md)。
 
 ## 1. 背景

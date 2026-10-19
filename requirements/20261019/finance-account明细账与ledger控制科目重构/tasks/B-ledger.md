@@ -1,6 +1,6 @@
 # 任务卡 B · ledger 控制科目实现与模型脱离生成器
 
-先读 `00-common.md`、`T0-report.md`。设计：`technique.md` 2.1（ledger 消费、首条序号校验与追平、控制科目过账、关账两段检查、枚举归属）、2.2 ledger-api、2.3 ledger；`system-design/finance-account-ledger-v3.md` 第 5、8.2、8.8、8.9 节。
+先读 `00-common.md`、`T0-report.md`。设计：`technique.md` 2.1（ledger 消费、首条序号校验与追平、控制科目过账、关账两段检查、枚举归属）、2.2 ledger-api、2.3 ledger；`design-discuss/finance-account-ledger-v3/design.md` 第 5、8.2、8.8、8.9 节。
 
 ## 允许改动的路径
 

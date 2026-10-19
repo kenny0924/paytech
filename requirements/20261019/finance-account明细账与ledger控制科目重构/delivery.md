@@ -11,7 +11,7 @@
 | 5. 综合验证与本地验收 | 已确认（2026-10-19，"继续下一阶段"）：本机 V2 全链路接口 58/58、浏览器 31/31（C-1 修复后重跑）、只读回归 27/34（7 页为未启动的 risk-decision / compliance 503）；清理后 49 张表回到基线。见 [verification/stage5-report.md](./verification/stage5-report.md) |
 | 6. test 发布准备 | 已确认（2026-10-19，"继续"：D1=A、D2=A、D4=A、D5 按建议）：[release/release.md](./release/release.md)（只读核对、D1–D5、执行顺序、恢复）、[compose-candidate.yaml](./release/compose-candidate.yaml)（6 个镜像 tag `subledger-20261019` 固定 ID）、[source-overlay.txt](./release/source-overlay.txt)（HEAD `2bae8597` + 441 文件）、验收脚本已支持 `E2E_TARGET=test`；mor-test 未改 |
 | 7. test 部署与验收 | 已确认（2026-10-19，"提交"）：release.md 第 4 节 11 步全部通过，接口 58/58、浏览器 31/31、全页面回归 34/34；备份 `~/Code-MoR-backups/20261019T104222Z-subledger-test/`；六个镜像 tag `subledger-20261019` 已替换并 healthy；`ledger.billing.*` 旧队列与交换机已删；XXL 任务 14 `accountBalanceMaturity` 已登记启用；块 99 已激活（PLATFORM_ADMIN v31）；合成数据已清理回基线。见 [release.md 第 6 节](./release/release.md#6-执行记录) 与 [tasks/G-report.md](./tasks/G-report.md) |
-| 8. 提交 | 已完成（2026-10-19）：`080909fb`（528 个文件：account / ledger / billing / Foundation 事件目录 / arch-rules / scripts/pdmaner / Operations BFF / Web / Platform 注册 SQL / test-environment / requirements-site / system-design / 决定与台账 / 需求目录，含 `design.pen`）+ 归档提交（本记录与台账）；私有索引构建，不含其他会话的 compliance 改动与未纳入范围的 `system-design/architecture-design.pen`；未推送 |
+| 8. 提交 | 已完成（2026-10-19）：`080909fb`（528 个文件：account / ledger / billing / Foundation 事件目录 / arch-rules / scripts/pdmaner / Operations BFF / Web / Platform 注册 SQL / test-environment / requirements-site / design-discuss（提交时目录名为 system-design，2026-10-19 改名）/ 决定与台账 / 需求目录，含 `design.pen`）+ 归档提交（本记录与台账）；私有索引构建，不含其他会话的 compliance 改动与未纳入范围的 `design-discuss/target-architecture-v2/architecture-design.pen`；未推送 |
 
 ## 确认记录
 

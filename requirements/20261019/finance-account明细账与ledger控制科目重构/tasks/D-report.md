@@ -9,7 +9,7 @@
 - `tasks/00-common.md`、`tasks/T0-report.md`、`tasks/D-registration-docs.md`
 - `technique.md` 2.1（聚合 ID `.` 分隔）、2.2（R19–R21）、2.3（Platform 注册 DML）、2.4（画板 13–15 命名）；`requirement.md` Q-07
 - 前序先例：`requirements/20261018/operations-console-财务基础资料与账本余额查询/db/platform-support-service/{registration-dml.sql,activation-local.sql}`、`release/{test-activate.sql,test-deactivate.sql}`，初始化 SQL 块 97 / 98
-- `system-design/finance-account-ledger-v3.md` 4.1、4.4、7、8.2、8.3、8.5、10；决定记录第 6 节
+- `design-discuss/finance-account-ledger-v3/design.md` 4.1、4.4、7、8.2、8.3、8.5、10；决定记录第 6 节
 - 本线不改 Java 生产代码与表结构，未重读 `DEVELOPMENT_CONVENTIONS.md` / `WRITE_API_EXAMPLE.md` 等实现规范；写接口第 11 节自查不适用（无接口实现）。
 
 ## 2. 改动清单
@@ -25,7 +25,7 @@
 | 修改 | `requirements-site/content/requirements.ts` | 见第 5 节 |
 | 修改 | `requirements-site/content/global-use-case-sequences.mjs` | 见第 5 节 |
 | 修改 | `requirements-site/tests/site-content.test.mjs`、`tests/global-use-case-sequences.test.mjs` | 钉住措辞改为新措辞 |
-| 修改 | `system-design/finance-account-ledger-v3.md` | 见第 6 节 |
+| 修改 | `design-discuss/finance-account-ledger-v3/design.md` | 见第 6 节 |
 | 修改 | `agent-docs/decisions/2026-10-18-account-ledger-subledger-control-account.md` | 实现状态与第 6 节阶段 2 条目 |
 | 修改（追加一条） | `agent-docs/CURRENT_IMPLEMENTATION.md` | 在「account / ledger 明细账与控制科目（2026-10-18 决定…）」后新增一条 |
 
@@ -104,7 +104,7 @@ UPDATE t_role SET version=version+1, update_time=@t WHERE role_id=90000000000000
 
 ## 6. 文档回写
 
-- `system-design/finance-account-ledger-v3.md`：4.1 表格新增 `t_account_posting_stream` 一行，表数「8 → 8（删 1 增 1）」改为「8 → 9（删 1 张，增 2 张）」；4.2 关系图新增 `t_account_posting_stream ||--o{ t_account_posting`；第 7 节聚合 ID 改为 `{OE|FE}.{entity_id}.{currency}.{shard_no}`（例 `OE.AE001.USD.0`，写明 `.` 分隔原因并链接 technique 2.1）；8.2 新增首条序号自校验、`POST /posting-streams/v1/catch-up` 按 HTTP 追平、死信重放按已消费跳过；第 10 节 account 行补 `AccountPostingApi` / `OwnerAccountQueryApi` / `BalanceMovementApi`。
+- `design-discuss/finance-account-ledger-v3/design.md`：4.1 表格新增 `t_account_posting_stream` 一行，表数「8 → 8（删 1 增 1）」改为「8 → 9（删 1 张，增 2 张）」；4.2 关系图新增 `t_account_posting_stream ||--o{ t_account_posting`；第 7 节聚合 ID 改为 `{OE|FE}.{entity_id}.{currency}.{shard_no}`（例 `OE.AE001.USD.0`，写明 `.` 分隔原因并链接 technique 2.1）；8.2 新增首条序号自校验、`POST /posting-streams/v1/catch-up` 按 HTTP 追平、死信重放按已消费跳过；第 10 节 account 行补 `AccountPostingApi` / `OwnerAccountQueryApi` / `BalanceMovementApi`。
 - 决定记录：Implementation status 改为「In progress（2026-10-19 阶段 4，需求 …；未提交、未执行 SQL，mor-test 仍为第 11b 步镜像）」；第 6 节阶段 2 条目指向本需求目录。
 - `CURRENT_IMPLEMENTATION.md`：新增一条「account 明细账与 ledger 控制科目重构（2026-10-19，阶段 4 进行中，未提交、未执行 SQL、mor-test 仍为 11b 镜像）」，链接需求与技术方案，列出合同 / 实现 / 控制台 / 块 99 / Compose 范围；其他条目未改。
 

@@ -4,7 +4,7 @@
 
 ## 1. 背景与来源
 
-[2026-10-18 决定](../../../agent-docs/decisions/2026-10-18-account-ledger-subledger-control-account.md)与[详细设计](../../../system-design/finance-account-ledger-v3.md)已确认：account 是明细账（Owner 账户、余额桶、流水、入账批次），ledger 只记控制科目并消费 account 的 `AccountPosted`；删除金额核对，一致性由构造保证。决定记录的「实现状态」为 Not started，现行代码仍是第 11b 步的双消费实现（account 与 ledger 各自消费 billing `EconomicFactRecorded`，日终比对金额）。
+[2026-10-18 决定](../../../agent-docs/decisions/2026-10-18-account-ledger-subledger-control-account.md)与[详细设计](../../../design-discuss/finance-account-ledger-v3/design.md)已确认：account 是明细账（Owner 账户、余额桶、流水、入账批次），ledger 只记控制科目并消费 account 的 `AccountPosted`；删除金额核对，一致性由构造保证。决定记录的「实现状态」为 Not started，现行代码仍是第 11b 步的双消费实现（account 与 ledger 各自消费 billing `EconomicFactRecorded`，日终比对金额）。
 
 用户 2026-10-19 指示：开始重构任务，Operations 控制台一并修改；设计与分析由主会话完成，研发由 Opus 5.5 多 agent 执行。
 
@@ -120,7 +120,7 @@
 
 ## 7. 依据
 
-- [2026-10-18 决定](../../../agent-docs/decisions/2026-10-18-account-ledger-subledger-control-account.md)、[详细设计 V3](../../../system-design/finance-account-ledger-v3.md)、[pen 图](../../../system-design/finance-account-ledger-v3.pen)
+- [2026-10-18 决定](../../../agent-docs/decisions/2026-10-18-account-ledger-subledger-control-account.md)、[详细设计 V3](../../../design-discuss/finance-account-ledger-v3/design.md)、[pen 图](../../../design-discuss/finance-account-ledger-v3/design.pen)
 - 前序：[11b 拆分方案](../../20261017/architecture-V2骨架与模块搬迁/design/04-finance-account-ledger-split.md)（已被取代部分见决定第 3 节）、[Operations 财务第一批](../../20261018/operations-console-财务基础资料与账本余额查询/requirement.md)
 - 合同：`paytech/account/paytech-account-api`、`paytech/ledger/paytech-ledger-api`、`paytech/billing/paytech-billing-api`、`paytech/foundation/paytech-messaging/catalog/events.yaml`
 - 规范：[数据库设计](../../../agent-docs/DATABASE_DESIGN_GUIDE.md)、[补偿事件](../../../agent-docs/COMPENSATION_EVENT_GUIDE.md)、[开发规范](../../../agent-docs/DEVELOPMENT_CONVENTIONS.md)第 5 节事务公理、[单元测试](../../../agent-docs/UNIT_TEST_GUIDE.md)

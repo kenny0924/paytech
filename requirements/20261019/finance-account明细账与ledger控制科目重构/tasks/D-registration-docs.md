@@ -4,7 +4,7 @@
 
 ## 允许改动的路径
 
-`paytech/platform-support/docs/database/sql/platform-support-initial-data.sql`（只追加新块）、`paytech/platform-support/**/operations/console-resource-capabilities.json`、`paytech/platform-support/paytech-platform-support-test/**`（只为新 Console Resource 的基线断言）、`test-environment/compose.applications.yaml`（只删 account 的 `ACCOUNT_LEDGER_SERVICE_URL` 一行）、`requirements-site/content/**`、`requirements-site/tests/**`、`REQ/db/platform-support/**`、`REQ/release/**`、`system-design/finance-account-ledger-v3.md`、`agent-docs/CURRENT_IMPLEMENTATION.md`、`agent-docs/decisions/2026-10-18-account-ledger-subledger-control-account.md`、`paytech/account/README.md` 与 `paytech/ledger/README.md` 不归本卡（A / B 负责）。
+`paytech/platform-support/docs/database/sql/platform-support-initial-data.sql`（只追加新块）、`paytech/platform-support/**/operations/console-resource-capabilities.json`、`paytech/platform-support/paytech-platform-support-test/**`（只为新 Console Resource 的基线断言）、`test-environment/compose.applications.yaml`（只删 account 的 `ACCOUNT_LEDGER_SERVICE_URL` 一行）、`requirements-site/content/**`、`requirements-site/tests/**`、`REQ/db/platform-support/**`、`REQ/release/**`、`design-discuss/finance-account-ledger-v3/design.md`、`agent-docs/CURRENT_IMPLEMENTATION.md`、`agent-docs/decisions/2026-10-18-account-ledger-subledger-control-account.md`、`paytech/account/README.md` 与 `paytech/ledger/README.md` 不归本卡（A / B 负责）。
 
 ## 1. Platform 注册数据
 
@@ -24,7 +24,7 @@
 
 ## 4. 文档回写
 
-- `system-design/finance-account-ledger-v3.md`：第 4.1 节表数 8 → 9（新增 `t_account_posting_stream` 一行与关系图一行）、第 7 节聚合 ID 改 `{OE|FE}.{entity_id}.{currency}.{shard_no}`（分隔符 `.`，见 technique 2.1）、第 8.2 节补「ledger 自校验首条序号；修复后经 `catch-up` 命令按 HTTP 追平，死信重放按已消费跳过」、第 10 节 account 行补「`AccountPostingApi` / `OwnerAccountQueryApi` / `BalanceMovementApi`」。只改这些点。
+- `design-discuss/finance-account-ledger-v3/design.md`：第 4.1 节表数 8 → 9（新增 `t_account_posting_stream` 一行与关系图一行）、第 7 节聚合 ID 改 `{OE|FE}.{entity_id}.{currency}.{shard_no}`（分隔符 `.`，见 technique 2.1）、第 8.2 节补「ledger 自校验首条序号；修复后经 `catch-up` 命令按 HTTP 追平，死信重放按已消费跳过」、第 10 节 account 行补「`AccountPostingApi` / `OwnerAccountQueryApi` / `BalanceMovementApi`」。只改这些点。
 - `agent-docs/decisions/2026-10-18-account-ledger-subledger-control-account.md`：Implementation status 改为「In progress（2026-10-19 阶段 4，需求 requirements/20261019/…）」，第 6 节阶段 2 条目指向本需求目录。
 - `agent-docs/CURRENT_IMPLEMENTATION.md`：在 account / Finance 相关条目下新增一条「account 明细账与 ledger 控制科目重构（2026-10-19，阶段 4 进行中，未提交、未执行 SQL、mor-test 仍为 11b 镜像）」，链接需求目录；不改其他条目。
 

@@ -1,6 +1,6 @@
 # 阶段 4 任务卡公共约定（所有线）
 
-- 需求目录：`requirements/20261019/finance-account明细账与ledger控制科目重构/`（下称 REQ）。设计以 `REQ/technique.md` 第 2 节为准，背景见 `REQ/requirement.md`、`system-design/finance-account-ledger-v3.md` 第 4–8 节、`agent-docs/decisions/2026-10-18-account-ledger-subledger-control-account.md`。
+- 需求目录：`requirements/20261019/finance-account明细账与ledger控制科目重构/`（下称 REQ）。设计以 `REQ/technique.md` 第 2 节为准，背景见 `REQ/requirement.md`、`design-discuss/finance-account-ledger-v3/design.md` 第 4–8 节、`agent-docs/decisions/2026-10-18-account-ledger-subledger-control-account.md`。
 - 工作区：直接在 `/Users/kenny/Desktop/Workspace/Code-MoR` 主工作树工作（没有 worktree；前序决定与设计文件尚未提交，worktree 拿不到）。**只改本卡列出的路径**；共享文件只做增量追加；看到其他路径有未提交改动一律不动、不还原。
 - 禁止：`git commit` / `stash` / `checkout` / `reset` / `clean` 等改变索引或工作树的 git 命令（只允许 `git status` / `git diff` / `git log`）；不操作 Docker 容器；不对任何数据库执行 SQL（本机 `mor_account` / `mor_ledger` 的重建由主会话另行授权后在卡内说明）；不调用任何 Superpowers skill；不新增 Mockito / MockBean / Testcontainers / Flyway；不推送。
 - 先读（首次改实现前实际读取并在报告中列出路径）：`AGENTS.md`「接口开发必读与自查」、`agent-docs/DEVELOPMENT_CONVENTIONS.md`、`agent-docs/JAVA_PROJECT_STRUCTURE.md`、`agent-docs/examples/WRITE_API_EXAMPLE.md`（含第 11 节自查）、`agent-docs/UNIT_TEST_GUIDE.md` 与 `agent-docs/examples/UNIT_TEST_EXAMPLE.md`、`agent-docs/DATABASE_DESIGN_GUIDE.md`（改模型 / SQL 的线）、`agent-docs/COMPENSATION_EVENT_GUIDE.md`（A 线）。

@@ -1,6 +1,6 @@
 # 04 · 账户与会计分库方案（S1，含阶段 0 最小计费事实）
 
-> **2026-10-18 取代：** 本文 §1 第 4 条、§3.2、§4「投影重建」行、§5、§6 关账相关行与 §7 的目标设计，由 [account 明细账与 ledger 总账控制科目决定](../../../../agent-docs/decisions/2026-10-18-account-ledger-subledger-control-account.md) 及其[详细设计](../../../../system-design/finance-account-ledger-v3.md)取代：链路改为 billing → account → ledger，ledger 只记控制科目，余额桶只在 account，删除金额核对。本文其余内容与第 11b 步的实现记录保留为历史；新实现未落地前，现行代码仍是本文描述的双消费实现。
+> **2026-10-18 取代：** 本文 §1 第 4 条、§3.2、§4「投影重建」行、§5、§6 关账相关行与 §7 的目标设计，由 [account 明细账与 ledger 总账控制科目决定](../../../../agent-docs/decisions/2026-10-18-account-ledger-subledger-control-account.md) 及其[详细设计](../../../../design-discuss/finance-account-ledger-v3/design.md)取代：链路改为 billing → account → ledger，ledger 只记控制科目，余额桶只在 account，删除金额核对。本文其余内容与第 11b 步的实现记录保留为历史；新实现未落地前，现行代码仍是本文描述的双消费实现。
 
 依据 D05、D16、D36（修订）与 C1（用户已定：阶段 0 引入最小计费事实，账户从一开始只消费经济事实）。现状见 [analysis/finance.md](../analysis/finance.md) 第 3、4、9 节：`t_account` 同时是过账科目账户与余额投影，六处事务同时写分录与余额。
 

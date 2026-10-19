@@ -1,6 +1,6 @@
 # account 与 ledger 模型划分（方案 3：明细账在上游，总账控制科目在下游）
 
-状态：已确认设计（未实施）· 2026-10-18 · 决定记录：[2026-10-18 account 明细账与 ledger 总账控制科目决定](../agent-docs/decisions/2026-10-18-account-ledger-subledger-control-account.md)
+状态：已确认设计（未实施）· 2026-10-18 · 决定记录：[2026-10-18 account 明细账与 ledger 总账控制科目决定](../../agent-docs/decisions/2026-10-18-account-ledger-subledger-control-account.md)
 范围：`paytech/account`（`mor_account`）与 `paytech/ledger`（`mor_ledger`）两个服务的表归属、数据流和表级变化。
 现状依据：`account.pdma.json`（8 表）、`ledger.pdma.json`（31 表）、design/04、决定 D05 / D16。
 配套图：同目录 `finance-account-ledger-v3.pen`。
@@ -550,7 +550,7 @@ ledger 只有 account 一个上游，事件按分片严格有序：一个批次�
 
 ## 9. 已定事项（2026-10-18）
 
-用户已全部确认，登记为 [account 明细账与 ledger 总账控制科目决定](../agent-docs/decisions/2026-10-18-account-ledger-subledger-control-account.md)。
+用户已全部确认，登记为 [account 明细账与 ledger 总账控制科目决定](../../agent-docs/decisions/2026-10-18-account-ledger-subledger-control-account.md)。
 
 1. **account 管哪些 Owner 类型。** Client / Partner 应付各桶、保证金、追偿应收，以及银行现金可用额度（`CASH_ACCOUNT`，见第 4.4 节）；`CHANNEL_ACCOUNT` 只留 ledger。
 2. **银行现金与出款的入账来源。** 渠道结算到账、出款完成、缴税完成都由 billing 统一登记经济事实：reconciliation、payout、tax 分别调用 billing 登记，再走 billing → account → ledger。具体合同在各自切片设计。

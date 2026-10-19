@@ -2,7 +2,7 @@
 
 账户服务（V2，第 07 步由 `finance-service` 拆出，第 11b 步分库，2026-10-19 改为明细账）：Client / Local Partner / 银行现金的 Owner
 账户明细账，是 Owner 余额与可用额度的实时权威；ledger 只记控制科目（[2026-10-18 决定](../../agent-docs/decisions/2026-10-18-account-ledger-subledger-control-account.md)、
-[设计](../../system-design/finance-account-ledger-v3.md) 第 4、8 节、[技术方案](../../requirements/20261019/finance-account明细账与ledger控制科目重构/technique.md) 第 2 节）。
+[设计](../../design-discuss/finance-account-ledger-v3/design.md) 第 4、8 节、[技术方案](../../requirements/20261019/finance-account明细账与ledger控制科目重构/technique.md) 第 2 节）。
 
 - spring.application.name：`account-service`；端口 18114，管理端口 19114。
 - 数据库：自有 `mor_account`（账号 `account_app`，只有本库 DML），9 张表：明细账 `t_owner_account`、`t_account_posting_stream`、

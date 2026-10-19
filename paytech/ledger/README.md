@@ -5,7 +5,7 @@
 account 明细账，总账每账簿每 Owner 科目一个以账簿主体为 Owner 的控制账户，分录由 account 入账批次（`AccountPosted`）驱动。
 需求与设计见 [账务内核需求](../../requirements/20261015/finance-账务内核/requirement.md)、
 [account 明细账与 ledger 控制科目重构技术方案](../../requirements/20261019/finance-account明细账与ledger控制科目重构/technique.md)、
-[account / ledger 模型划分 V3](../../system-design/finance-account-ledger-v3.md) 与
+[account / ledger 模型划分 V3](../../design-discuss/finance-account-ledger-v3/design.md) 与
 [2026-10-18 决定](../../agent-docs/decisions/2026-10-18-account-ledger-subledger-control-account.md)。
 
 - spring.application.name：`ledger-service`；端口 18105，管理端口 19105。

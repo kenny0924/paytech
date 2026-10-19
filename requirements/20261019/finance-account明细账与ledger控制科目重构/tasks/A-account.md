@@ -1,6 +1,6 @@
 # 任务卡 A · account 明细账实现
 
-先读 `00-common.md`、`T0-report.md`（合同已就绪）。设计：`technique.md` 2.1（链路与事务、序号与分片、account 规则与目录）、2.2 account-api、2.3 account 表；`system-design/finance-account-ledger-v3.md` 第 4、8.1、8.5、8.7 节。
+先读 `00-common.md`、`T0-report.md`（合同已就绪）。设计：`technique.md` 2.1（链路与事务、序号与分片、account 规则与目录）、2.2 account-api、2.3 account 表；`design-discuss/finance-account-ledger-v3/design.md` 第 4、8.1、8.5、8.7 节。
 
 ## 允许改动的路径
 

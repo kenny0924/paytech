@@ -8,7 +8,7 @@
 - `agent-docs/DEVELOPMENT_CONVENTIONS.md`、`agent-docs/JAVA_PROJECT_STRUCTURE.md`（第 5–8 节）、`agent-docs/examples/WRITE_API_EXAMPLE.md`（含第 11 节）
 - `agent-docs/UNIT_TEST_GUIDE.md`、`agent-docs/examples/UNIT_TEST_EXAMPLE.md`
 - `agent-docs/DATABASE_DESIGN_GUIDE.md`（第 5、11–15 节）、`agent-docs/COMPENSATION_EVENT_GUIDE.md`
-- 需求：`tasks/00-common.md`、`tasks/T0-report.md`、`tasks/A-account.md`、`technique.md` 第 2 节全文、`system-design/finance-account-ledger-v3.md` 第 4、8 节
+- 需求：`tasks/00-common.md`、`tasks/T0-report.md`、`tasks/A-account.md`、`technique.md` 第 2 节全文、`design-discuss/finance-account-ledger-v3/design.md` 第 4、8 节
 - 参照实现：billing `EconomicFactRecordedHandler` / `EconomicFactPayloads` / `EconomicFactEventProbe`、compliance `ClientReviewResultProbe`、Foundation `AbstractProcessor`、`AggregateKeySequencer`、`paytech-messaging` README
 
 开工前说明（第 1 节要求）：入账的 Owner 是 `BalanceApplicationService`（消费拦截器 SHARED 事务内）；桶移动由 `MoveBalanceProcessor` 事务外校验，`BalanceMovementService` 一个 `TransactionTemplate` 原子写移动、批次、两条流水、余额与补偿事件；到期任务每条事实一个短事务；AccountPosted 发布、Broker 确认均在事务外的补偿 Handler 中。

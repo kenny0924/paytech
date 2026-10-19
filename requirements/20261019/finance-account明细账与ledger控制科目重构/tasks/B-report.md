@@ -10,7 +10,7 @@
 - `agent-docs/examples/WRITE_API_EXAMPLE.md`（含第 11 节）
 - `agent-docs/UNIT_TEST_GUIDE.md`（`examples/UNIT_TEST_EXAMPLE.md` 未逐行重读，测试结构沿用 ledger-test 现有基类与规范第 12、13 节）
 - `agent-docs/DATABASE_DESIGN_GUIDE.md`：只按任务卡与 REQ `db/ledger/*.sql` 落地，未改动模型规则
-- 需求：`tasks/00-common.md`、`tasks/T0-report.md`、`tasks/B-ledger.md`、`technique.md` 第 2 节、`system-design/finance-account-ledger-v3.md` 第 5、6.3、8 节
+- 需求：`tasks/00-common.md`、`tasks/T0-report.md`、`tasks/B-ledger.md`、`technique.md` 第 2 节、`design-discuss/finance-account-ledger-v3/design.md` 第 5、6.3、8 节
 - Foundation：`paytech-messaging` 的 `IdempotentConsumeInterceptor`、`DomainEventMessageListener`、`ConsumedEventRepository`、`AggregateKey`；参照 acquiring `PaymentSucceededListener`
 
 所属 Processor / Handler 与事务位置：消费入口 `AccountPostedPostingHandler`（HANDLER_MANAGED，事务外读进度与 billing 事实，`TransactionTemplate` 内调 `TransactionPostingService.post`）；追平 `PostingStreamCatchUpProcessor`（AbstractLockProcessor，事务外分页读 account、读 billing，每批次一个本库事务内过账 + `advance`）；关账步骤 3 在 `StartPeriodCloseProcessor` 内事务外调两个接口，消费进度在本库短事务内读取。

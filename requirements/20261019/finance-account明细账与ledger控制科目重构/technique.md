@@ -43,7 +43,7 @@
 | **paytech/platform-support** | 路由、权限、Console Resource 注册 | 初始化 SQL 新增独立块（明细账 3 条路由 + 1 个 Console Resource + Header / Query / 限流）；块 97 的 R10 / R11 `ownerType` 白名单不在 SQL 中限定值（只登记参数名），**不需要改**；`console-resource-capabilities.json` +1；`OperationsCatalog` 不加权限 | 配置 / DML ✔ 代码 ✘ | 需求目录放阅读副本与本机 / mor-test 激活 SQL |
 | **test-environment** | mor-test Compose | account 新 XXL Job 无需 Compose 变更；`LEDGER_ACCOUNT_SERVICE_URL` 保留（catch-up）；`ACCOUNT_LEDGER_SERVICE_URL` 删除 | 配置 ✔（1 行删除） | 阶段 6 发布清单含 5 个镜像（account、ledger、billing、BFF、Web）+ Platform 注册 |
 | **local-environment** | 本机库 | 空库由 `init/ddl.sql` 手工建；已有库按变更 SQL | 无脚本改动 | 阶段 5 本机验收前需用户授权执行变更 SQL |
-| **agent-docs / system-design / requirements-site** | 权威文档与目录 | `CURRENT_IMPLEMENTATION.md` 台账、决定记录实现状态、ledger / account README（README 现仍描述 11b 消费与 consistency）、`DOCUMENT_GOVERNANCE.md` 是否登记（决定第 6 节待用户）、requirements-site 冲突条目（Q-07） | 文档 ✔ | — |
+| **agent-docs / design-discuss / requirements-site** | 权威文档与目录 | `CURRENT_IMPLEMENTATION.md` 台账、决定记录实现状态、ledger / account README（README 现仍描述 11b 消费与 consistency）、`DOCUMENT_GOVERNANCE.md` 是否登记（决定第 6 节待用户）、requirements-site 冲突条目（Q-07） | 文档 ✔ | — |
 | **paytech/payout、paytech/tax、paytech/reconciliation** | 出款、缴税、对账 | 本期不改（无代码）；模型中引用 ledger 账户的字段留待各自切片 | ✘ | 决定第 6 节 |
 | **paytech/billing-api 消费者 card / acquiring / client-master** | — | 不受影响（不消费 Finance 事件） | ✘ | — |
 
