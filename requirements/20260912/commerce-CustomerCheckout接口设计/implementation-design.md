@@ -13,7 +13,7 @@
 | 证据 | 实现含义 |
 |---|---|
 | [Commerce README](../../../paytech/acquiring/README.md) | 三个 Maven 模块，十个 Client 操作；基础 Checkout 只接 CCT 预检，最终准备和 Customer HTTP 未接入 |
-| [AbstractGatewayProcessor](../../../paytech/acquiring/paytech-acquiring-core/src/main/java/com/paytech/acquiring/service/processor/AbstractGatewayProcessor.java) | 复用既有基础校验/处理模板，不再造 Customer 基类 |
+| `AbstractGatewayProcessor`（2026-10-18 已无子类并删除，入口统一用 Foundation 模板，见[Processor 模板迁移](../../20261018/processor-模板迁移与R14/requirement.md)） | 复用既有基础校验/处理模板，不再造 Customer 基类 |
 | [CreateRefundProcessor](../../../paytech/acquiring/paytech-acquiring-core/src/main/java/com/paytech/acquiring/service/processor/refund/CreateRefundProcessor.java) | 已有分阶段编排、TransactionExecutor、Handler.buildEvent 与事务内登记模式 |
 | [RefundSubmissionHandler](../../../paytech/acquiring/paytech-acquiring-core/src/main/java/com/paytech/acquiring/ext/job/RefundSubmissionHandler.java) | Handler 自身是入口，两个短事务之间调用外部端口；不另设 Handler 专属 Processor |
 | [CctPrecheckConfiguration](../../../paytech/acquiring/paytech-acquiring-app/src/main/java/com/paytech/acquiring/configuration) | @ImportHttpServices、LoadBalancer、Foundation MDC/Problem 处理；最终 CCT 解析沿这一公共调用方式接入 |

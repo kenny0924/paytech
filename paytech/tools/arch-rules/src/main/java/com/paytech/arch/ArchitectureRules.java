@@ -14,6 +14,7 @@ import com.paytech.arch.rule.DomainLayerRule;
 import com.paytech.arch.rule.EnumBlankLineRule;
 import com.paytech.arch.rule.MapperTableOwnershipRule;
 import com.paytech.arch.rule.MessagingDependencyRule;
+import com.paytech.arch.rule.ProcessorTemplateRule;
 import com.paytech.arch.rule.ReactorCoordinateRule;
 import com.paytech.arch.rule.RemoteApiBindingRule;
 import com.paytech.arch.rule.RuleViolation;
@@ -26,7 +27,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * R1–R12 规则集入口（design/02）。
+ * R1–R12、R14 服务级规则与 R13 依赖图规则的入口（design/02）。
  *
  * <p>
  * 服务 {@code -test} 模块的 {@code ArchitectureAutoTest} 调用 {@link #checkService(String, Collection)}；Reactor 级测试调用
@@ -40,7 +41,7 @@ public final class ArchitectureRules {
     }
 
     /**
-     * 返回全部服务级规则 R1–R12。
+     * 返回全部服务级规则 R1–R12 与 R14。
      *
      * @return 规则
      */
@@ -48,7 +49,7 @@ public final class ArchitectureRules {
         return List.of(new CoreIsolationRule(), new ApiDependencyRule(), new DomainLayerRule(),
             new MapperTableOwnershipRule(), new CoreWebBootstrapRule(), new RemoteApiBindingRule(),
             new TransactionExternalCallRule(), new MessagingDependencyRule(), new DataObjectBoundaryRule(),
-            new EnumBlankLineRule(), new CardDataIsolationRule(), new CompensationHandlerRule());
+            new EnumBlankLineRule(), new CardDataIsolationRule(), new CompensationHandlerRule(), new ProcessorTemplateRule());
     }
 
     /**

@@ -14,7 +14,7 @@ public interface ArchitectureRule {
     /**
      * 规则编号。
      *
-     * @return R1–R12
+     * @return R1–R14
      */
     String id();
 

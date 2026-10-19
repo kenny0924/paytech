@@ -56,10 +56,11 @@ public class SubmitClientApplicationProcessor
         this.applications = applications;
     }
 
-    /** 与 @ResourceLock(prefix="client-onboarding:application") 生成同一逻辑 Key。 */
+    /** 与原注解锁 client-onboarding:application 生成同一逻辑 Key。 */
     @Override
     protected LockCommand lockCommand(SubmitClientApplicationRequest request) {
-        return LockCommand.tryLocks(List.of("client-onboarding:application:" + request.getApplicationId()), lockWait, lockLease);
+        return LockCommand.tryLocks(List.of(ClientOnboardingLocks.application(request.getApplicationId())), lockWait,
+            lockLease);
     }
 
     @Override

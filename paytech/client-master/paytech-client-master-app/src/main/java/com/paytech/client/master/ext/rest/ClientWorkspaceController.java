@@ -16,7 +16,8 @@ import com.paytech.client.contract.api.workspace.response.ClientSummariesRespons
 import com.paytech.client.contract.api.workspace.response.ClientSummaryResponseBody;
 import com.paytech.client.master.core.dal.dataobject.ClientWorkspaceSummary;
 import com.paytech.client.master.domain.onboarding.ClientDraftCommand;
-import com.paytech.client.master.service.processor.ClientWorkspaceProcessor;
+import com.paytech.client.master.service.processor.GetClientWorkspaceSummariesProcessor;
+import com.paytech.client.master.service.processor.request.GetClientWorkspaceSummariesRequest;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.common.error.InvalidParameterException;
 
@@ -30,7 +31,7 @@ public class ClientWorkspaceController implements ClientWorkspaceApi {
     private static final int MAX_CLIENT_IDS = 50;
     private static final DateTimeFormatter MICROS = new DateTimeFormatterBuilder().appendInstant(6).toFormatter();
 
-    private final ClientWorkspaceProcessor processor;
+    private final GetClientWorkspaceSummariesProcessor processor;
 
     /** 非 Client BFF 调用按不存在隐藏；账号与会话坐标无效按会话失效处理。 */
     @Override
@@ -46,7 +47,8 @@ public class ClientWorkspaceController implements ClientWorkspaceApi {
         } catch (FailException invalid) {
             throw new FailException(CLIENT_SESSION_INVALID);
         }
-        var items = processor.summaries(accountId, sessionId, clientIds(clientIds)).stream().map(this::toBody).toList();
+        var items = processor.process(new GetClientWorkspaceSummariesRequest(accountId, sessionId, clientIds(clientIds))).stream()
+            .map(this::toBody).toList();
         return new ClientSummariesResponseBody(items);
     }
 

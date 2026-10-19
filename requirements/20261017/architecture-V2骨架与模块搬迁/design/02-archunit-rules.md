@@ -17,6 +17,7 @@
 | R11 | 卡域：除 `paytech-card-core` 与 `paytech-card-app` 外，任何模块的 Mapper XML 不得引用 `t_payment_card*`、`t_payment_stored_card`；任何模块不得 import `com.paytech.card.core.crypto` | 全部 | D10、PCI |
 | R12 | 补偿事件 Handler 只能注册在 `-core`，且 `eventType` 必须在本服务的事件目录文件中登记 | 全部 | 08 |
 | R13 | Reactor 内任何模块声明的 `com.paytech` 依赖（含 test 范围）必须能归入 Reactor 命名体系（Build / Foundation / Tool / 服务目录）；旧工程坐标（如 `platform-support-api`）只会从本地仓库解析到过期制品，POM 层直接拒绝 | 全部（依赖图） | D42；2026-10-18 Gateway / BFF 旧坐标事故 |
+| R14 | 服务 `-core` 的 `..service.processor..` 包中类名以 `Processor` 结尾的具体类必须 `isAssignableTo(AbstractProcessor)`（需要资源锁时经 `AbstractLockProcessor`）；抽象中间类、接口与非 `*Processor` 协作者不检查；BFF（client-console-bff、operations-console-bff、partner-console-bff）的页面聚合 Processor 与 Foundation 排除 | 服务 core（排除 BFF） | 2026-09-16 决定第 8 条；2026-10-18「Processor 模板迁移与 R14」 |
 
 实现要点：
 
