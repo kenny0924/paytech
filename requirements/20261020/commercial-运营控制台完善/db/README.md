@@ -1,0 +1,1 @@
+-- 不涉及数据库结构变更；Platform 注册 DML 由阶段 4 I 线产出到 db/platform-support-service/。

@@ -1,0 +1,39 @@
+# commercial 运营控制台完善（第二切片）：mor-test 候选覆盖文件（阶段 6 准备稿，2026-10-20；未执行、未构建镜像）。
+# 叠加在 compose.yaml + compose.applications.yaml + compose.scheduler.yaml 之上（compose.sh 已带这三个文件，只传本文件的 -f）：
+#   test-environment/compose.sh -f <本文件绝对路径> up -d --no-deps --no-build --pull never --wait <service>
+# 基于 requirements/20261019/commercial-六层产品定价模型/release/compose-candidate.yaml：只改三个 image，commercial-service 的
+# environment 与 depends_on 原样保留（test-environment/compose.applications.yaml 的 commercial-service 段至今仍是旧形状，
+# 缺这些键时 commercial 因 Snowflake 变量缺失无法启动；2026-10-20 核对运行容器 Worker 17、XXL 执行器 commercial-service）。
+# 镜像：second-slice 在 rebase 到最新 main（≥ 5b825160，含 counterparty 改名 c661e9fc）之后的头 19ccd78a（commercial/second-slice，= main 4543bfc1 + 本需求），干净 worktree 构建，
+# tag mor-test/<服务>:commercial-20261020b。发布时主会话把三个 image 改为 `sha256:<镜像 ID>`（固定 ID，不用 tag 部署），
+# 并在 release.md 第 6 节记录 JAR SHA-256 与 Web 入口资源名。platform-support-service 不发镜像（只执行 mor_platform DML）。
+services:
+  commercial-service:
+    image: sha256:59bb000da5c0115e1cb3f5021c76322d4bf214a3dbf61cee8304942f43684adb  # mor-test/commercial-service:commercial-20261020b
+    environment:
+      COMMERCIAL_RABBITMQ_HOST: rabbitmq
+      COMMERCIAL_RABBITMQ_PORT: "5672"
+      COMMERCIAL_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
+      COMMERCIAL_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
+      COMMERCIAL_RABBITMQ_VHOST: /mor-test
+      COMMERCIAL_REDIS_HOST: redis
+      COMMERCIAL_REDIS_PORT: "6379"
+      COMMERCIAL_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?prepare test secrets}
+      COMMERCIAL_SNOWFLAKE_REGION_ID: "0"
+      COMMERCIAL_SNOWFLAKE_WORKER_ID: "17"
+      COMMERCIAL_COMPENSATION_INSTANCE_ID: commercial-test-1
+      COMMERCIAL_XXL_JOB_ENABLED: "true"
+      XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
+      XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
+      XXL_JOB_EXECUTOR_APPNAME: commercial-service
+      XXL_JOB_EXECUTOR_IP: 172.30.73.34
+      XXL_JOB_EXECUTOR_PORT: "9999"
+      XXL_JOB_EXECUTOR_LOGPATH: /tmp/xxl-job
+      XXL_JOB_EXECUTOR_EXCLUDEDPACKAGES: org.springframework.,spring.
+    depends_on:
+      rabbitmq: { condition: service_healthy }
+      redis: { condition: service_healthy }
+  operations-console-bff:
+    image: sha256:e294a4ae90bec06bd3e276cb0ab181269fbbc60af7912b22103ce781bd76505b  # mor-test/operations-console-bff:commercial-20261020b
+  operations-console-web:
+    image: sha256:f00801f59482069dfd99d309c1538d82b622e5696be644a4c47469991471675e  # mor-test/operations-console-web:commercial-20261020b
