@@ -34,3 +34,19 @@
   .commercial-row { grid-template-columns: minmax(0, 1fr); }
   .commercial-drawer .commercial-band-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 }
+.commercial-page .commercial-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 8px; }
+.commercial-page .commercial-kpi { cursor: pointer; }
+.commercial-page .commercial-kpi-label { color: #69717d; font-size: 12px; }
+.commercial-page .commercial-kpi-value { font-size: 26px; font-weight: 600; margin-top: 4px; }
+.commercial-page .commercial-kpi-value.is-pending { font-size: 16px; color: #b45309; font-weight: 500; padding: 8px 0 6px; }
+.commercial-page .commercial-worklists { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+.commercial-page .commercial-worklist { padding: 12px 16px; margin-bottom: 12px; }
+.commercial-page .commercial-block { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; }
+.commercial-page .commercial-block-head { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin-bottom: 8px; }
+.commercial-page .commercial-block-head h3 { font-size: 14px; margin: 0; }
+.commercial-page .commercial-currency { background: #f8fafc; border-radius: 6px; padding: 8px 12px; margin: 8px 0; }
+.commercial-page .commercial-fee-total { font-weight: 600; }
+@media (max-width: 900px) {
+  .commercial-page .commercial-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .commercial-page .commercial-worklists { grid-template-columns: minmax(0, 1fr); }
+}

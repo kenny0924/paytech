@@ -214,7 +214,10 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
         Map.entry("operations-commercial-term-schedule", COMMERCIAL_PRICING_MANAGE_PERMISSION_ID),
         Map.entry("operations-commercial-term-activate", COMMERCIAL_PRICING_MANAGE_PERMISSION_ID),
         Map.entry("operations-commercial-term-version-detail", COMMERCIAL_PRICING_READ_PERMISSION_ID),
-        Map.entry("operations-commercial-term-version-prices", COMMERCIAL_PRICING_READ_PERMISSION_ID));
+        Map.entry("operations-commercial-term-version-prices", COMMERCIAL_PRICING_READ_PERMISSION_ID),
+        Map.entry("operations-commercial-dashboard", COMMERCIAL_CONTRACT_READ_PERMISSION_ID),
+        Map.entry("operations-commercial-rate-card", COMMERCIAL_PRICING_READ_PERMISSION_ID),
+        Map.entry("operations-commercial-price-simulate", COMMERCIAL_PRICING_READ_PERMISSION_ID));
 
     private static final Map<String, String> ROUTE_PERMISSIONS = Map.ofEntries(
         Map.entry("operations-account-create", ACCOUNT_CREATE_PERMISSION_ID),

@@ -756,5 +756,129 @@
    ]
   },
   "routeCode": "operations-commercial-term-version-prices"
+ },
+ {
+  "id": "R01",
+  "method": "GET",
+  "path": "/commercial-admin/v1/rate-cards",
+  "ownerPath": "/rate-cards/v1",
+  "query": "?clientId=7300000000000000011&asOf=2026-10-20T00:00:00Z&currency=USD",
+  "request": null,
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "clientId": "7300000000000000011",
+   "asOf": "2026-10-20T00:00:00Z",
+   "currency": "USD",
+   "agreements": [
+    {
+     "agreementId": "7319000000000000101",
+     "agreementNo": "AGR-AE001-0001",
+     "entityNo": "AE001",
+     "businessMode": "MOR",
+     "fundMode": "SETTLE_THROUGH_PLATFORM",
+     "pricingAuthority": "PLATFORM",
+     "effectiveFrom": "2026-10-01T00:00:00Z",
+     "effectiveTo": null,
+     "products": [
+      "CARD_ACQUIRING"
+     ],
+     "capabilities": [
+      {
+       "agreementCapabilityId": "7319000000000000301",
+       "capabilityCode": "CARD_VISA",
+       "productCode": "CARD_ACQUIRING",
+       "capabilityKind": "PAYMENT_METHOD",
+       "paymentMethodCode": "CARD",
+       "dimensionCode": "CARD_BRAND",
+       "dimensionValue": "VISA",
+       "entityNo": "AE001",
+       "status": "ENABLED",
+       "effectiveFrom": "2026-10-01T00:00:00Z",
+       "effectiveTo": null,
+       "rollingReserveRate": "0.05",
+       "rollingReserveDays": 90,
+       "limits": [
+        {
+         "limitCode": "CURRENCY",
+         "limitValue": "USD"
+        }
+       ]
+      }
+     ],
+     "termVersions": [
+      {
+       "planId": "7319000000000000501",
+       "termType": "CLIENT_PRICING",
+       "versionId": "7319000000000000601",
+       "versionNo": "1",
+       "status": "ACTIVE",
+       "timing": "CURRENT",
+       "effectiveFrom": "2026-10-01T00:00:00Z",
+       "effectiveTo": null,
+       "pricingModel": "BLENDED",
+       "feeTaxTreatment": "EXCLUSIVE",
+       "capabilities": [
+        {
+         "agreementCapabilityId": "7319000000000000301",
+         "capabilityCode": "CARD_VISA",
+         "currencies": [
+          {
+           "currency": "USD",
+           "profiles": [
+            {
+             "priceId": "7319000000000000701",
+             "pricingProfileCode": "CARD_VISA_STANDARD",
+             "profileName": "Visa 标准",
+             "specificity": 1,
+             "priorityNo": 10,
+             "conditions": [
+              {
+               "dimensionCode": "CARD_BRAND",
+               "conditionValue": "VISA"
+              }
+             ],
+             "settlement": {
+              "settlementBusinessDays": 2,
+              "businessCalendarCode": "AE_BUSINESS_DAYS",
+              "settlementTimezone": "Asia/Dubai",
+              "cutoffSecondOfDay": 0
+             },
+             "feeEvents": [
+              {
+               "feeEventCode": "PAYMENT_CAPTURED",
+               "components": [
+                {
+                 "componentId": "7319000000000000811",
+                 "componentNo": 1,
+                 "componentCode": "MDR",
+                 "componentType": "PERCENTAGE",
+                 "triggerCode": "PAYMENT_CAPTURED",
+                 "calculationBase": "GROSS_AMOUNT",
+                 "refundBehavior": "RETURN_PRORATA",
+                 "rate": "0.029",
+                 "fixedAmount": null,
+                 "currency": "USD",
+                 "minAmount": "0.50",
+                 "maxAmount": null,
+                 "bandBasis": null,
+                 "bandMode": null,
+                 "bands": []
+                }
+               ]
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  "routeCode": "operations-commercial-rate-card"
  }
 ]

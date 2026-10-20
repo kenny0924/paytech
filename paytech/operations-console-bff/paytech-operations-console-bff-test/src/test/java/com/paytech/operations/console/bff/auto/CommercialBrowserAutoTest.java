@@ -109,7 +109,7 @@ class CommercialBrowserAutoTest extends CommercialBrowserAutoTestBase {
         assertForwarded(list, send(list));
     }
 
-    /** commercial 的公共业务拒绝保留公共 Code 与默认说明，不外露 Owner 原文与 Request ID。 */
+    /** commercial 的公共业务拒绝保留公共 Code，并把 Owner 的拒绝原因作为 detail 透传（F9）；Owner Request ID 不外露。 */
     @Test
     void test_businessRuleViolation() throws Exception {
         var schedule = row("T07");
@@ -121,12 +121,26 @@ class CommercialBrowserAutoTest extends CommercialBrowserAutoTestBase {
         assertEquals(400, response.statusCode(), response.body());
         var body = JSON.readTree(response.body());
         assertAll(() -> assertEquals(CommonErrorCode.BUSINESS_CHECK_FAILED.getCode(), body.path("code").asString()),
+            () -> assertEquals(CommercialOwnerSimulator.OWNER_DETAIL_CANARY, body.path("detail").asString()),
             () -> assertEquals(REQUEST_ID, body.path("requestId").asString()),
-            () -> assertFalse(response.body().contains(CommercialOwnerSimulator.OWNER_DETAIL_CANARY)),
             () -> assertFalse(response.body().contains(CommercialOwnerSimulator.OWNER_REQUEST_ID)));
     }
 
-    /** BCR 版本冲突以 409 到达浏览器，页面据此提示重新加载。 */
+    /** 查询类拒绝同样透传：Owner 404 的 detail 与公共 NOT_FOUND 一起到达浏览器。 */
+    @Test
+    void test_noDataFound() throws Exception {
+        var detail = row("T10");
+        commercial.problem("GET", detail.path("ownerPath").asString(), 404, CommonErrorCode.NOT_FOUND.getCode());
+
+        var response = send(detail);
+
+        assertEquals(404, response.statusCode(), response.body());
+        var body = JSON.readTree(response.body());
+        assertAll(() -> assertEquals(CommonErrorCode.NOT_FOUND.getCode(), body.path("code").asString()),
+            () -> assertEquals(CommercialOwnerSimulator.OWNER_DETAIL_CANARY, body.path("detail").asString()));
+    }
+
+    /** BCR 版本冲突以 409 到达浏览器并带 Owner 原因，页面据此提示重新加载。 */
     @Test
     void test_versionConflict() throws Exception {
         var activate = row("C05");
@@ -136,7 +150,30 @@ class CommercialBrowserAutoTest extends CommercialBrowserAutoTestBase {
         var response = send(activate);
 
         assertEquals(409, response.statusCode(), response.body());
-        assertEquals(CommonErrorCode.CONCURRENT_REQUEST.getCode(), JSON.readTree(response.body()).path("code").asString());
+        var body = JSON.readTree(response.body());
+        assertAll(() -> assertEquals(CommonErrorCode.CONCURRENT_REQUEST.getCode(), body.path("code").asString()),
+            () -> assertEquals(CommercialOwnerSimulator.OWNER_DETAIL_CANARY, body.path("detail").asString()));
+    }
+
+    /** 超长或空白的 Owner detail 不透传，保留公共说明。 */
+    @Test
+    void test_edgeCase() throws Exception {
+        var schedule = row("T07");
+        String longDetail = "x".repeat(1001);
+        String upstream = """
+            {"type":"about:blank","title":"Bad Request","detail":"%s","code":"%s","requestId":"%s",
+             "timestamp":"2026-10-19T06:00:00.000000Z"}
+            """.formatted(longDetail, CommonErrorCode.BUSINESS_CHECK_FAILED.getCode(),
+            CommercialOwnerSimulator.OWNER_REQUEST_ID);
+        commercial.reply("POST", schedule.path("ownerPath").asString(), 400, "application/problem+json", upstream,
+            Map.of("X-Request-Id", CommercialOwnerSimulator.OWNER_REQUEST_ID));
+
+        var response = send(schedule);
+
+        assertEquals(400, response.statusCode(), response.body());
+        var body = JSON.readTree(response.body());
+        assertAll(() -> assertEquals(CommonErrorCode.BUSINESS_CHECK_FAILED.getMessage(), body.path("detail").asString()),
+            () -> assertFalse(response.body().contains(longDetail)));
     }
 
     /** commercial 422 只保留本次请求体内存在的字段路径。 */

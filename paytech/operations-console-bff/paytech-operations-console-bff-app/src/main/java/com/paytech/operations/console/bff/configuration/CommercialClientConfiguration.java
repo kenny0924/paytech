@@ -10,6 +10,8 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 
 import com.paytech.commercial.api.agreement.AgreementApi;
+import com.paytech.commercial.api.enums.CommercialPriceErrorCode;
+import com.paytech.commercial.api.price.CommercialPriceApi;
 import com.paytech.commercial.api.price.CommercialTermVersionPriceApi;
 import com.paytech.commercial.api.pricing.PricingProfileApi;
 import com.paytech.commercial.api.ratecard.RateCardApi;
@@ -29,8 +31,10 @@ import org.slf4j.MDC;
 /**
  * commercial 的 HTTP 接口代理：Nacos 发现 commercial-service，auto 测试改为 loopback 直连
  * <li>连接 2 秒、读取 4 秒、禁止跟随重定向、不重试；传递 X-Request-Id 与 X-Caller-Service。</li>
- * <li>严格 Problem 解码并保留 Owner 422 字段路径；commercial 本组接口只使用公共错误码（BUSINESS_CHECK_FAILED、CONCURRENT_REQUEST、
- * NOT_FOUND），不登记合同错误码；超时映射 504，不可达或 503 映射 DEPENDENCY_UNAVAILABLE。</li>
+ * <li>严格 Problem 解码并保留 Owner 422 字段路径；合同、画像、条款与费率卡只使用公共错误码（BUSINESS_CHECK_FAILED、
+ * CONCURRENT_REQUEST、NOT_FOUND）；价格命中另用一个工厂登记 CommercialPriceErrorCode（422 / 409 的命中失败原因）。
+ * 超时映射 504，不可达或 503 映射 DEPENDENCY_UNAVAILABLE。</li>
+ * <li>每个代理外层包装 CommercialOwnerProblemDetail：业务拒绝把 Owner Problem 的 detail 作为浏览器 Problem 的 detail（F9）。</li>
  * <li>工厂不注册为 Bean，避免被其他 Owner 代理按类型误用。</li>
  *
  * @author Claude
@@ -44,46 +48,58 @@ public class CommercialClientConfiguration {
     static final String CALLER_SERVICE = "operations-console-bff";
 
     private final HttpServiceProxyFactory commercial;
+    private final HttpServiceProxyFactory commercialPrices;
 
     /** 发现模式或 auto 测试直连地址（只允许 auto Profile 下的 loopback）。 */
     public CommercialClientConfiguration(Environment environment, LoadBalancerClient loadBalancer,
         @Value("${operations.commercial-test-base-url:}") String testBaseUrl, ObjectProvider<InternalTokenSupplier> tokens) {
-        this.commercial = factory(environment, loadBalancer, testBaseUrl, tokens);
+        RestClient client = restClient(environment, loadBalancer, testBaseUrl);
+        this.commercial = factory(client, tokens, new CodeMessageEnum[0]);
+        this.commercialPrices = factory(client, tokens, CommercialPriceErrorCode.values());
     }
 
     /** 合同、签署、订阅与开通项。 */
     @Bean
     AgreementApi commercialAgreementApi() {
-        return commercial.createClient(AgreementApi.class);
+        return CommercialOwnerProblemDetail.wrap(AgreementApi.class, commercial.createClient(AgreementApi.class));
     }
 
     /** 定价画像。 */
     @Bean
     PricingProfileApi commercialPricingProfileApi() {
-        return commercial.createClient(PricingProfileApi.class);
+        return CommercialOwnerProblemDetail.wrap(PricingProfileApi.class,
+            commercial.createClient(PricingProfileApi.class));
     }
 
     /** 条款方案与版本的写入和版本详情读取；操作人走 X-Gateway-Actor-Subject 请求头。 */
     @Bean
     CommercialTermApi commercialTermApi() {
-        return commercial.createClient(CommercialTermApi.class);
+        return CommercialOwnerProblemDetail.wrap(CommercialTermApi.class,
+            commercial.createClient(CommercialTermApi.class));
     }
 
     /** 固定版本价格全集。 */
     @Bean
     CommercialTermVersionPriceApi commercialTermVersionPriceApi() {
-        return commercial.createClient(CommercialTermVersionPriceApi.class);
+        return CommercialOwnerProblemDetail.wrap(CommercialTermVersionPriceApi.class,
+            commercial.createClient(CommercialTermVersionPriceApi.class));
     }
 
     /** 费率卡（合同详情页的当前 / 已排期版本）。 */
     @Bean
     RateCardApi commercialRateCardApi() {
-        return commercial.createClient(RateCardApi.class);
+        return CommercialOwnerProblemDetail.wrap(RateCardApi.class, commercial.createClient(RateCardApi.class));
     }
 
-    /** 发现或直连、严格协议并映射依赖故障。 */
-    private static HttpServiceProxyFactory factory(Environment environment, LoadBalancerClient loadBalancer,
-        String testBaseUrl, ObjectProvider<InternalTokenSupplier> tokens) {
+    /** 价格命中（运营价格试算）；422 / 409 命中失败按 CommercialPriceErrorCode 保留原因。 */
+    @Bean
+    CommercialPriceApi commercialPriceApi() {
+        return CommercialOwnerProblemDetail.wrap(CommercialPriceApi.class,
+            commercialPrices.createClient(CommercialPriceApi.class));
+    }
+
+    /** 发现或直连，传递 Request ID 与调用方标识。 */
+    private static RestClient restClient(Environment environment, LoadBalancerClient loadBalancer, String testBaseUrl) {
         RestClient.Builder builder = RestClient.builder();
         if (testBaseUrl.isBlank()) {
             builder.baseUrl("http://" + COMMERCIAL_SERVICE)
@@ -92,7 +108,7 @@ public class CommercialClientConfiguration {
             ClientReviewClientConfiguration.validateTestAddress(testBaseUrl, environment);
             builder.baseUrl(testBaseUrl);
         }
-        RestClient client = builder.requestFactory(ClientReviewClientConfiguration.requestFactory())
+        return builder.requestFactory(ClientReviewClientConfiguration.requestFactory())
             .requestInterceptor((request, body, execution) -> {
                 String requestId = MDC.get(RequestIdFilter.MDC_KEY);
                 if (requestId != null) {
@@ -101,12 +117,17 @@ public class CommercialClientConfiguration {
                 request.getHeaders().set("X-Caller-Service", CALLER_SERVICE);
                 return execution.execute(request, body);
             }).build();
+    }
+
+    /** 严格协议、登记合同错误码并映射依赖故障。 */
+    private static HttpServiceProxyFactory factory(RestClient client, ObjectProvider<InternalTokenSupplier> tokens,
+        CodeMessageEnum[] contractErrors) {
         HttpServiceClientOptions options = InternalCallTokenOptions.apply(
             HttpServiceClientOptions.strict().withRequestValidationFailures(), tokens, COMMERCIAL_SERVICE)
             .withDependencyFailureMapper((kind, cause) -> switch (kind) {
                 case TIMEOUT -> new ErrorException(OperationsBffErrorCode.DEPENDENCY_TIMEOUT, null, cause);
                 case UNAVAILABLE -> new ServiceUnavailableException(OperationsBffErrorCode.DEPENDENCY_UNAVAILABLE, cause);
             });
-        return HttpServiceClientFactory.create(client, options, new CodeMessageEnum[0]);
+        return HttpServiceClientFactory.create(client, options, contractErrors);
     }
 }
