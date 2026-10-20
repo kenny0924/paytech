@@ -1,0 +1,41 @@
+/* 产品目录（层级）：工具栏、产品展开区与两组平级分组。颜色优先取 antd 主题变量，浅色 / 深色主题都可读。 */
+.catalog-page .catalog-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 12px; }
+.catalog-page .catalog-summary { color: var(--ant-color-text-secondary, #69717d); font-variant-numeric: tabular-nums; }
+.catalog-page .catalog-summary-hit { color: var(--ant-color-primary, #315dca); }
+.catalog-page .catalog-filter { display: inline-flex; align-items: center; gap: 8px; color: var(--ant-color-text-secondary, #69717d); }
+.catalog-page .catalog-filter .ant-select { width: 180px; }
+.catalog-page .catalog-code { font-weight: 600; color: var(--ant-color-text, #272b32); }
+.catalog-page .catalog-counts { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.catalog-page .catalog-counts.is-warning { color: var(--ant-color-warning-text, #b45309); }
+.catalog-page .catalog-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.catalog-page .catalog-tags .ant-tag { margin-inline-end: 0; }
+.catalog-page .catalog-expand {
+  display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 4px;
+  background: transparent; color: var(--ant-color-text-secondary, #69717d); font-size: 12px; line-height: 1; cursor: pointer;
+}
+.catalog-page .catalog-expand:hover { background: var(--ant-color-fill-secondary, #edf0f2); color: var(--ant-color-text, #272b32); }
+.catalog-page .catalog-expand:focus-visible, .catalog-page .catalog-group-head:focus-visible {
+  outline: 2px solid var(--ant-color-primary, #315dca); outline-offset: 1px;
+}
+.catalog-page .catalog-expanded { display: grid; gap: 8px; min-width: 0; padding: 4px 0; }
+.catalog-page .catalog-group {
+  min-width: 0; border: 1px solid var(--ant-color-border-secondary, #edf0f2); border-radius: 6px; background: var(--ant-color-bg-container, #fff);
+}
+.catalog-page .catalog-group-head {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; width: 100%; padding: 8px 12px; border: 0; border-radius: 6px;
+  background: var(--ant-color-fill-quaternary, #f8fafc); color: var(--ant-color-text, #272b32); font: inherit; text-align: left;
+}
+.catalog-page button.catalog-group-head { cursor: pointer; }
+.catalog-page button.catalog-group-head:hover { background: var(--ant-color-fill-tertiary, #f1f5f9); }
+.catalog-page .catalog-group.is-open .catalog-group-head { border-radius: 6px 6px 0 0; border-bottom: 1px solid var(--ant-color-border-secondary, #edf0f2); }
+.catalog-page .catalog-group-arrow { width: 12px; color: var(--ant-color-text-secondary, #69717d); }
+.catalog-page .catalog-group-head.is-static .catalog-group-arrow { color: var(--ant-color-text-quaternary, #c1c7d0); }
+.catalog-page .catalog-group-title { font-weight: 600; font-variant-numeric: tabular-nums; }
+.catalog-page .catalog-group-note { color: var(--ant-color-text-secondary, #69717d); }
+.catalog-page .catalog-group-note.is-warning { color: var(--ant-color-warning-text, #b45309); }
+.catalog-page .catalog-group-body { min-width: 0; }
+.catalog-page .catalog-group-body .ant-table-wrapper .ant-table { margin: 0 !important; background: transparent; }
+@media (max-width: 800px) {
+  .catalog-page .catalog-toolbar .commercial-spacer { display: none; }
+  .catalog-page .catalog-summary { flex-basis: 100%; }
+}

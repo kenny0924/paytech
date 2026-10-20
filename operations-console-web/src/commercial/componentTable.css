@@ -1,0 +1,48 @@
+/* 编辑价格抽屉：价格卡片折叠头与组件表格（紧凑单元格、行错误、档位子表）。颜色沿用 commercial.css。 */
+.commercial-drawer .commercial-price-card.pc-card { padding: 8px 16px; margin-bottom: 12px; }
+.commercial-drawer .pc-head { display: flex; align-items: center; gap: 8px 16px; min-height: 32px; }
+.commercial-drawer .pc-toggle { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 4px 0; border: 0; background: none; cursor: pointer;
+  text-align: left; font: inherit; color: inherit; }
+.commercial-drawer .pc-toggle:focus-visible { outline: 2px solid #1677ff; outline-offset: 2px; border-radius: 4px; }
+.commercial-drawer .pc-caret { color: #69717d; width: 12px; }
+.commercial-drawer .pc-summary { font-weight: 600; overflow-wrap: anywhere; }
+.commercial-drawer .pc-card.is-open .pc-head { margin-bottom: 8px; }
+.commercial-drawer .pc-grid-price { display: grid; grid-template-columns: 140px 96px 110px minmax(0, 1fr); gap: 0 12px; }
+.commercial-drawer .pc-grid-settlement { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 12px; }
+.commercial-drawer .pc-grid-price .ant-form-item, .commercial-drawer .pc-grid-settlement .ant-form-item { margin-bottom: 8px; }
+
+.commercial-drawer .ct-scroll { overflow-x: auto; border: 1px solid #e5e7eb; border-radius: 6px; margin-top: 4px; }
+.commercial-drawer .ct-table { width: 100%; min-width: 940px; table-layout: fixed; border-collapse: collapse; font-size: 12px; }
+.commercial-drawer .ct-col-code { width: 16%; }
+.commercial-drawer .ct-col-event { width: 12%; }
+.commercial-drawer .ct-col-type { width: 8.5%; }
+.commercial-drawer .ct-col-base { width: 11.5%; }
+.commercial-drawer .ct-col-amount { width: 8.5%; }
+.commercial-drawer .ct-col-bound { width: 7.5%; }
+.commercial-drawer .ct-col-refund { width: 10.5%; }
+.commercial-drawer .ct-col-actions { width: 9%; }
+.commercial-drawer .ct-table th { background: #f8fafc; color: #69717d; font-weight: 500; text-align: left; padding: 6px 4px; border-bottom: 1px solid #e5e7eb;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.commercial-drawer .ct-table td { padding: 4px; vertical-align: middle; }
+.commercial-drawer .ct-component + .ct-component > tr:first-child > td { border-top: 1px solid #f1f5f9; }
+.commercial-drawer .ct-table .ant-select, .commercial-drawer .ct-table .ant-input, .commercial-drawer .ct-table .ant-input-affix-wrapper { width: 100%; }
+.commercial-drawer .ct-na { color: #b6bcc5; text-align: center; background: #fafafa; }
+.commercial-drawer .ct-actions { white-space: nowrap; text-align: right; }
+.commercial-drawer .ct-actions .ant-btn { padding: 0 4px; }
+.commercial-drawer .ct-tier-toggle { padding: 0 4px; height: auto; }
+.commercial-drawer .ct-error-row > td { color: #b42318; padding: 0 8px 6px; line-height: 1.5; overflow-wrap: anywhere; }
+.commercial-drawer .ct-tier-row > td { background: #f8fafc; padding: 8px 12px 10px 24px; }
+.commercial-drawer .ct-tier-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-bottom: 6px; }
+.commercial-drawer .ct-tier-label { color: #69717d; }
+.commercial-drawer .ct-table .ct-tier-select { width: 160px; }
+.commercial-drawer .ct-band-table { width: 100%; max-width: 640px; table-layout: fixed; border-collapse: collapse; }
+.commercial-drawer .ct-band-table th { background: transparent; border-bottom: 1px solid #e5e7eb; padding: 4px; }
+.commercial-drawer .ct-band-table th:last-child { width: 56px; }
+.commercial-drawer .ct-issues { color: #b42318; font-size: 12px; margin: 4px 0 0; padding-left: 18px; }
+.commercial-drawer .ct-hint { color: #b45309; font-size: 12px; margin-top: 4px; }
+.commercial-drawer .ct-add { margin: 8px 0 4px; }
+.ct-option { display: inline-flex; gap: 8px; align-items: baseline; white-space: nowrap; }
+.ct-option-code { color: #69717d; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; }
+@media (max-width: 900px) {
+  .commercial-drawer .pc-grid-price, .commercial-drawer .pc-grid-settlement { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}

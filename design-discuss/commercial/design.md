@@ -63,6 +63,8 @@ V2 里没有 CCT 服务：原 client-contract-service 在阶段 4 第 04 步拆�
 | L4 价格与组件 | 收多少 | 百分比 + 固定 + 阶梯相加，最低 / 最高，退款时费用退不退 | 现 Price / Component / Band，加 `refund_behavior`、`band_basis` |
 | L5 条款附属 | 钱什么时候、怎么给 | 结算 T+N 按支付方式、滚动保证金比例与天数、月最低消费、费用含税口径、BLENDED / IC++ | 结算与保证金挪到 `t_agreement_capability`；`pricing_model`、`fee_tax_treatment` 在 Version |
 
+层号不是一条链：L1 能力开通与 L2 计费事件都挂在 L0 产品下，彼此平行，在 L3 画像 / L4 价格里交叉（画像条件对应开通项的细分维度，组件 `trigger_code` 对应计费事件）。
+
 ### 4.1 逐产品的收费构成
 
 - **收单**：MDR（百分比 + 每笔固定，按 L3 细分）；授权费（失败也收）；退款费与原 MDR 退不退（RETURN_ALL / RETURN_PRORATA / KEEP）；争议费按 case 与阶段；跨境附加费、DCC 分成、3DS 费、网络代币费、存卡费按 token 每月。定价模式 MoR 基本 BLENDED，PSP 大商户要 IC++。阶梯分单笔金额与月交易量两种基数。

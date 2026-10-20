@@ -1,0 +1,6 @@
+# commercial 产品目录层级展示 + 价格组件表格维护：只替换 operations-console-web（tag commercial-20261020c）。
+# 构建源：main 5f12cf3e + opsux 主工作区 34 个已上线文件（基线产物与 105afba9 的 137 个静态文件逐字节一致）+ 两需求 9 个文件；不含对账会话未验收改动。
+# 回滚：sha256:105afba9d9a4dddf2501729fb63ac3cce22ab07da0d9dfae1f7fdcdbf84d69e6（opsux-20261020n）。
+services:
+  operations-console-web:
+    image: sha256:5853565b777f4b3a9c04ff3d7cb000d99bb846d9cbd1c708945be2beb67bc4ab
