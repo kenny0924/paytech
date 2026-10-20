@@ -53,7 +53,8 @@ test('页面注册：合同、定价画像、价目及工作台、费率预览�
     [commercialButtons.agreementManage], [commercialButtons.profileManage], [commercialButtons.termManage, commercialButtons.termApprove], [], [], [], [], []]);
   const menu = (componentKey: string, frontendRoute: string) => ({ ...resource(componentKey, 'MENU'), componentKey, frontendRoute });
   assert.deepEqual(pageRoutePaths(menu('OPERATIONS_COMMERCIAL_AGREEMENTS', '/commercial/agreements')), ['/commercial/agreements', '/commercial/agreements/:agreementId']);
-  assert.deepEqual(pageRoutePaths(menu('OPERATIONS_COMMERCIAL_TERMS', '/commercial/terms')), ['/commercial/terms', '/commercial/terms/versions/:versionId']);
+  assert.deepEqual(pageRoutePaths(menu('OPERATIONS_COMMERCIAL_TERMS', '/commercial/terms')), ['/commercial/terms', '/commercial/terms/versions/:versionId',
+    '/commercial/terms/compare/:baseVersionId/:targetVersionId']);
   assert.deepEqual(pageRoutePaths(menu('OPERATIONS_COMMERCIAL_PRICING_PROFILES', '/commercial/pricing-profiles')), ['/commercial/pricing-profiles']);
 });
 

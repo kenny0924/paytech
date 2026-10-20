@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Button, Form, Input, Select, Table, Tag } from 'antd';
+import { Alert, Button, Form, Input, Select, Table } from 'antd';
 import { useSearchParams } from 'react-router-dom';
 import { session } from '../api/session';
 import type { PagingFilters } from '../api/paging';
@@ -18,7 +18,6 @@ import '../commercial/commercial.css';
 interface Props { resources: ConsoleResource[]; onAuthorizationChanged: () => void }
 interface QueryValues { aggregateRootType: AggregateRootType; reference: string }
 
-const comparisonLabels: Record<BusinessChangeEntry['comparison'], string> = { FIRST_VERSION: '首个快照', COMPARED: '已比较', NOT_COMPARED: '未比较' };
 
 /**
  * 变更历史：按聚合根（合同 / 条款方案 / 定价画像）展示 commercial BCR 快照时间线
@@ -90,7 +89,7 @@ function Timeline({ type, rootId }: { type: AggregateRootType; rootId: string })
         { title: '记录', width: 230, render: (_, row) => <div className="commercial-cell"><span>{row.recordType} · {row.operationType}</span>
           <span className="commercial-cell-meta mono">{row.recordId}</span></div> },
         { title: '操作者', width: 160, render: (_, row) => <span className="mono">{row.createBy === '0' ? '系统' : row.createBy}</span> },
-        { title: '摘要', render: (_, row) => <span>{row.comparison !== 'COMPARED' && <Tag>{comparisonLabels[row.comparison]}</Tag>}{changeSummary(row)}</span> },
+        { title: '摘要', render: (_, row) => changeSummary(row) },
       ]} />
   </section>;
 }

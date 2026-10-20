@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.TreeSet;
 
 import org.springframework.stereotype.Component;
@@ -22,6 +23,8 @@ import lombok.AllArgsConstructor;
  * <li>commercial 按聚合版本倒序返回 Root 与 Child 快照；上一快照是列表中其后第一条 recordType + recordId 相同、
  * 版本更小的快照。先在本页查找，本页之后仍有快照时按 200 条一页向后回溯，最多 MAX_LOOKBACK_PAGES 页。</li>
  * <li>回溯到列表末尾仍未找到：该行最早的快照（FIRST_VERSION，全部字段视为变化）；超出回溯上限：NOT_COMPARED，不猜测。</li>
+ * <li>条款版本快照的 priceCount、makerAccountId、checkerAccountId 是 commercial 只在部分命令追加的命令事实：本快照没有该键时
+ * 不视为变化（否则每次提交 / 排期都会多出一个"变为空"的虚假字段）；本快照记录了该键时照常比较。</li>
  * <li>只读组合；commercial 的 4xx（未知类型、非规范 ID）原样透传。</li>
  *
  * @author Claude
@@ -35,6 +38,12 @@ public class CommercialBusinessChangeProcessor
 
     /** 回溯页数上限，限制一次页面请求对 commercial 的放大。 */
     static final int MAX_LOOKBACK_PAGES = 5;
+
+    /** 条款版本快照中按命令追加的审计事实（BusinessChangeSnapshot.commercialTermVersionData 的说明）。 */
+    static final Set<String> VERSION_COMMAND_FACTS = Set.of("priceCount", "makerAccountId", "checkerAccountId");
+
+    /** 条款版本快照的受审计对象类型。 */
+    static final String TERM_VERSION_RECORD = "COMMERCIAL_TERM_VERSION";
 
     private final CommercialConsoleQueryClient client;
 
@@ -114,8 +123,14 @@ public class CommercialBusinessChangeProcessor
         entry.setComparison(BusinessChangeComparison.COMPARED.getCode());
         entry.setPreviousVersionNo(previous.getVersionNo());
         entry.setPreviousData(before);
-        entry.setChangedFields(fields.stream().filter(field -> !Objects.equals(before.get(field), entry.getData().get(field)))
-            .toList());
+        entry.setChangedFields(fields.stream().filter(field -> !absentCommandFact(entry, field))
+            .filter(field -> !Objects.equals(before.get(field), entry.getData().get(field))).toList());
+    }
+
+    /** 条款版本快照没有记录的命令事实不参与比较。 */
+    static boolean absentCommandFact(BusinessChangeEntry entry, String field) {
+        return TERM_VERSION_RECORD.equals(entry.getRecordType()) && VERSION_COMMAND_FACTS.contains(field)
+            && !entry.getData().containsKey(field);
     }
 
     /** 未找到上一快照：到达列表末尾为首版（全部字段），否则不比较。 */

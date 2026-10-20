@@ -136,6 +136,25 @@ class CommercialVersionDiffHistoryAutoTest extends CommercialBrowserAutoTestBase
             () -> assertEquals(1, commercial.requests().size()));
     }
 
+    /** 条款版本快照：本快照没有记录的命令事实（priceCount、makerAccountId）不算变化；本快照记录且不同的照常比较。 */
+    @Test
+    void test_edgeCase_versionCommandFactsNotNoise() throws Exception {
+        String version = "7319000000000000601";
+        var items = JSON.createArrayNode()
+            .add(change("5003", "COMMERCIAL_TERM_VERSION", version, 3, Map.of("status", "PENDING_APPROVAL", "makerAccountId", "10001")))
+            .add(change("5002", "COMMERCIAL_TERM_VERSION", version, 2, Map.of("status", "DRAFT", "priceCount", "8")))
+            .add(change("5001", "COMMERCIAL_TERM_VERSION", version, 1, Map.of("status", "DRAFT", "priceCount", "0")));
+        String query = "aggregateRootType=COMMERCIAL_TERM_PLAN&aggregateRootId=" + PLAN_ID;
+        commercial.reply("GET", OWNER_HISTORY + "?" + query + "&page=1&size=10", 200, JSON.writeValueAsString(page(items, 1, 10, 3)));
+
+        var response = send("GET", HISTORY + "?" + query, HISTORY_ROUTE, null);
+
+        assertEquals(200, response.statusCode(), response.body());
+        var entries = JSON.readTree(response.body()).path("items");
+        assertAll(() -> assertEquals(List.of("makerAccountId", "status"), strings(entries.get(0).path("changedFields"))),
+            () -> assertEquals(List.of("priceCount"), strings(entries.get(1).path("changedFields"))));
+    }
+
     /** 本页最后一条的上一快照在下一页：按 200 条一页从第 11 条起回溯找到并比较。 */
     @Test
     void test_edgeCase_historyLooksBackBeyondPage() throws Exception {

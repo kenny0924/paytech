@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { ApiError } from '../api/session.ts';
 import { pagingQuery } from '../api/paging.ts';
+import { pageRoutePaths } from '../navigation/menu.ts';
+import { commercialRoutes } from './commercial.ts';
 import {
   capabilityOptions, changeSummary, consolePaths, consoleRoutes, decodeAgreementPage, decodeBusinessChangePage, decodeCapabilities, decodeFeeEvents,
   decodeProducts, decodeTermPlanPage, decodeTermVersionPage, decodeVersionDiff, diffCounts, diffRows, exactAgreement, feeEventOptions, listFilters,
@@ -27,6 +29,27 @@ test('路径与页面路由：对比与带筛选的变更历史', () => {
   assert.equal(consolePaths.versionDiff('1', '2'), '/commercial-admin/v1/commercial-terms/versions/1/diff/2');
   assert.equal(consoleRoutes.compare('1', '2'), '/commercial/terms/compare/1/2');
   assert.equal(consoleRoutes.history('AGREEMENT', agreementId), `/commercial/history?aggregateRootType=AGREEMENT&aggregateRootId=${agreementId}`);
+});
+
+/** 前端路由模式是否匹配一个具体路径（:param 匹配一个非空段）。 */
+function routeMatches(pattern: string, path: string): boolean {
+  const regex = new RegExp(`^${pattern.split('/').map(part => part.startsWith(':') ? '[^/]+' : part).join('/')}$`);
+  return regex.test(path.split('?')[0]);
+}
+
+test('页面内跳转的路径都登记在对应菜单的前端路由中（防止「暂无访问权限」）', () => {
+  const menu = (componentKey: string, frontendRoute: string) => ({ resourceId: componentKey, resourceCode: componentKey, resourceType: 'MENU' as const,
+    parentResourceId: null, displayName: componentKey, frontendRoute, componentKey, sortOrder: 0 });
+  const terms = pageRoutePaths(menu('OPERATIONS_COMMERCIAL_TERMS', commercialRoutes.terms));
+  const agreements = pageRoutePaths(menu('OPERATIONS_COMMERCIAL_AGREEMENTS', commercialRoutes.agreements));
+  const history = pageRoutePaths(menu('OPERATIONS_COMMERCIAL_HISTORY', commercialRoutes.history));
+  const cases: [string[], string][] = [
+    [terms, consoleRoutes.compare('7319000000000000601', '7319000000000000602')],
+    [terms, commercialRoutes.version('7319000000000000601')],
+    [agreements, commercialRoutes.agreement(agreementId)],
+    [history, consoleRoutes.history('AGREEMENT', agreementId)],
+  ];
+  for (const [patterns, path] of cases) assert.ok(patterns.some(pattern => routeMatches(pattern, path)), `${path} 未登记`);
 });
 
 test('列表解码：合同、方案、版本分页；可空字段统一为 null，非法行视为无效响应', () => {

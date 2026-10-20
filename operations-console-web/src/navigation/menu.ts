@@ -58,7 +58,7 @@ export function pageRoutePaths(menu: ConsoleResource): string[] {
     case 'OPERATIONS_COMMERCIAL_AGREEMENTS':
       return [menu.frontendRoute, `${menu.frontendRoute}/:agreementId`];
     case 'OPERATIONS_COMMERCIAL_TERMS':
-      return [menu.frontendRoute, `${menu.frontendRoute}/versions/:versionId`];
+      return [menu.frontendRoute, `${menu.frontendRoute}/versions/:versionId`, `${menu.frontendRoute}/compare/:baseVersionId/:targetVersionId`];
     case 'OPERATIONS_EXTERNAL_INTEGRATIONS':
       return [menu.frontendRoute, `${menu.frontendRoute}/:integrationCode`, `${menu.frontendRoute}/:integrationCode/:section/:childCode`];
     default:
