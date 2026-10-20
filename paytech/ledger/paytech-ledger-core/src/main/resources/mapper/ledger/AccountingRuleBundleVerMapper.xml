@@ -40,8 +40,8 @@
 
     <update id="updateStatus">
         UPDATE t_accounting_rule_bundle_ver
-        SET status = #{status}, checker_id = #{checkerId}, approved_time = #{approvedTime}, effective_to = #{effectiveTo},
-            update_time = #{now}
+        SET status = #{status}, checker_id = #{checkerId}, approved_time = #{approvedTime}, effective_from = #{effectiveFrom},
+            effective_to = #{effectiveTo}, update_time = #{now}
         WHERE id = #{ver.id} AND status = #{ver.status}
     </update>
 </mapper>

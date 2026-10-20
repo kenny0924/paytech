@@ -19,8 +19,8 @@ import lombok.AllArgsConstructor;
 
 /**
  * 批准规则版本：Checker ≠ Maker，只能批准 PENDING_APPROVAL 版本
- * <li>批准时刻已到生效时间：版本 ACTIVE，原当前版本 RETIRED 且失效时间等于新版本生效时间，规则集当前指针原子切换；
- * 新版本生效时间必须晚于原当前版本，避免生效区间倒置。</li>
+ * <li>批准时刻已到生效时间：版本生效时间改为批准时间（不让新规则覆盖审批前已按旧规则过账的时段），版本 ACTIVE，原当前版本 RETIRED
+ * 且失效时间等于该批准时间，规则集当前指针原子切换；编制时填写的生效时间仍须晚于原当前版本，避免生效区间倒置。</li>
  * <li>未到生效时间：版本 APPROVED，当前指针不变；到期由 {@link ActivateRuleVersionProcessor} 切换。</li>
  * <li>与同一规则集的其他写入口共用资源锁并持续等待；事务内先锁规则集再锁版本，指针切换以规则集版本 CAS 保护。</li>
  */

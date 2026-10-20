@@ -25,7 +25,7 @@ const actionTexts: Record<VersionAction, { label: string; confirm: string; done:
   submit: { label: '提交审批', confirm: '提交后不能再修改，等待他人审批。确认提交？', done: '已提交，等待审批', failure: '提交规则版本失败' },
   void: { label: '作废草稿', confirm: '作废后该草稿不能再提交，可重新新建版本。确认作废？', done: '草稿已作废', failure: '作废规则版本失败' },
   reject: { label: '驳回', confirm: '驳回后制单人可重新新建版本。确认驳回？', done: '已驳回', failure: '驳回规则版本失败' },
-  approve: { label: '审批通过', confirm: '生效时间已到则立即生效、旧版本退役；否则为待生效，到时自动切换。确认审批？', done: '', failure: '审批规则版本失败' },
+  approve: { label: '审批通过', confirm: '生效时间已过则按审批时间立即生效、旧版本退役；否则为待生效，到时自动切换。确认审批？', done: '', failure: '审批规则版本失败' },
 };
 
 /** 规则行表格：按指令类型分组，科目显示编号 + 名称。 */
@@ -149,7 +149,7 @@ function RuleVersionEditor({ bundleCode, template, chartAccounts, accounts, onCl
       initialValues={{ effectiveFrom: defaultEffectiveFrom(), lines: templateRuleLines(template) }}>
       <div className="finance-form-grid">
         <Form.Item name="effectiveFrom" label="生效时间（本地时区）" rules={[{ required: true, message: '请填写生效时间' }]}
-          extra="必须晚于当前生效版本；已到的时间审批后立即生效，未来时间审批后到时自动生效。"><Input type="datetime-local" step={1} /></Form.Item>
+          extra="必须晚于当前生效版本；审批时已过的生效时间按审批时间生效，未来时间审批后到时自动生效。"><Input type="datetime-local" step={1} /></Form.Item>
         <Form.Item label="模板">{template ? `当前生效版本 ${template.bundleVer}（${template.lines.length} 行）` : '无生效版本，从空白开始'}</Form.Item>
       </div>
       <h3 className="finance-subtitle">规则行</h3>

@@ -62,7 +62,6 @@ import com.paytech.ledger.core.enums.JournalEntryType;
 import com.paytech.ledger.core.enums.LedgerEntityType;
 import com.paytech.ledger.core.enums.PeriodStatus;
 import com.paytech.ledger.core.enums.ReferenceDataStatus;
-import com.paytech.ledger.core.enums.RuleVersionStatus;
 import com.paytech.ledger.domain.AccountPostingBatch;
 import com.paytech.ledger.domain.AccountPostingCommand;
 import com.paytech.ledger.domain.JournalPostingContext;
@@ -74,7 +73,6 @@ import com.paytech.ledger.domainservice.repository.AccountNoSequenceRepository;
 import com.paytech.ledger.domainservice.repository.AccountingInstructionRepository;
 import com.paytech.ledger.domainservice.repository.AccountingPeriodRepository;
 import com.paytech.ledger.domainservice.repository.AccountingRuleBundleRepository;
-import com.paytech.ledger.domainservice.repository.AccountingRuleBundleVerRepository;
 import com.paytech.ledger.domainservice.repository.AccountingRuleLineRepository;
 import com.paytech.ledger.domainservice.repository.ChartAccountRepository;
 import com.paytech.ledger.domainservice.repository.FinanceEntityRepository;
@@ -83,6 +81,7 @@ import com.paytech.ledger.domainservice.repository.InstructionLineRepository;
 import com.paytech.ledger.domainservice.repository.JournalEntryRepository;
 import com.paytech.ledger.domainservice.repository.LedgerAccountRepository;
 import com.paytech.ledger.domainservice.repository.LedgerBookRepository;
+import com.paytech.ledger.domainservice.service.AccountingRuleService;
 import com.paytech.ledger.domainservice.service.JournalPostingService;
 import com.paytech.ledger.domainservice.service.TransactionPostingService;
 import com.paytech.ledger.domainservice.validator.account.AccountIdentityRule;
@@ -139,6 +138,7 @@ public class TransactionPostingServiceImpl implements TransactionPostingService 
     private final LedgerAccountRepository ledgerAccountRepository;
     private final LedgerBookRepository ledgerBookRepository;
     private final JournalPostingService journalPostingService;
+    private final AccountingRuleService accountingRuleService;
     private final ChartAccountRepository chartAccountRepository;
     private final JournalEntryRepository journalEntryRepository;
     private final FinanceEntityRepository financeEntityRepository;
@@ -149,7 +149,6 @@ public class TransactionPostingServiceImpl implements TransactionPostingService 
     private final AccountNoSequenceRepository accountNoSequenceRepository;
     private final AccountingRuleBundleRepository accountingRuleBundleRepository;
     private final AccountingInstructionRepository accountingInstructionRepository;
-    private final AccountingRuleBundleVerRepository accountingRuleBundleVerRepository;
 
     /** 同一批次已有指令时直接返回；否则计划全部指令并按账簿主键升序过账。 */
     @Override
@@ -249,18 +248,20 @@ public class TransactionPostingServiceImpl implements TransactionPostingService 
             accountingRuleLineRepository.findByVersion(ver.getId()));
     }
 
-    /** 指定规则集的当前版本必须 ACTIVE，且生效区间 [effective_from, effective_to) 覆盖给定时点。 */
+    /**
+     * 按事实业务时间选择规则集适用的版本（含已退役版本），同一业务时间无论何时处理都选中同一版本
+     * <li>规则集不存在、未启用或尚无当前版本：拒绝“无可用自动记账规则集”。</li>
+     * <li>没有区间覆盖业务时间的版本（早于首个版本或数据缺失）：拒绝并说明规则集与业务时间。</li>
+     */
     AccountingRuleBundleVer effectiveBundleVer(BillingFactPayload fact, String bundleCode, Instant at) {
         AccountingRuleBundle bundle = accountingRuleBundleRepository.findByCode(bundleCode);
         if (bundle == null || bundle.getStatus() != ReferenceDataStatus.ACTIVE || bundle.getCurrentVerId() == null) {
             throw new BizCheckFailException("无可用自动记账规则集: " + bundleCode + ", 计费事实 " + fact.getFactId());
         }
-        AccountingRuleBundleVer ver = accountingRuleBundleVerRepository.findById(bundle.getCurrentVerId());
-        boolean effective = ver != null && ver.getStatus() == RuleVersionStatus.ACTIVE
-            && !ver.getEffectiveFrom().isAfter(at) && (ver.getEffectiveTo() == null || at.isBefore(ver.getEffectiveTo()));
-        if (!effective) {
-            throw new BizCheckFailException("业务时间无生效的自动记账规则版本: 计费事实 " + fact.getFactId()
-                + ", 规则集 " + bundleCode + ", 当前版本 " + bundle.getCurrentVerId() + ", 业务时间 " + at);
+        AccountingRuleBundleVer ver = accountingRuleService.findApplicableVersion(bundle, at);
+        if (ver == null) {
+            throw new BizCheckFailException("业务时间无适用的自动记账规则版本: 计费事实 " + fact.getFactId()
+                + ", 规则集 " + bundleCode + ", 业务时间 " + at);
         }
         return ver;
     }

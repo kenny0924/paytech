@@ -16,7 +16,7 @@ import lombok.Setter;
 public class CreateRuleVersionRequestBody {
     /**
      * 版本开始适用的时间（UTC）
-     * <li>批准时已到该时间则直接生效，否则保持 APPROVED。</li>
+     * <li>批准时已到该时间则直接生效，生效时间记为批准时间；否则保持 APPROVED，到期生效。</li>
      */
     @NotNull
     private Instant effectiveFrom;

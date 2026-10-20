@@ -79,47 +79,52 @@ public class AccountingRuleBundleVerRepositoryImpl implements AccountingRuleBund
     /** 以原状态为条件迁移状态，成功后同步原对象。 */
     @Override
     public void updateStatus(AccountingRuleBundleVer ver, RuleVersionStatus status) {
-        transit(ver, status, ver.getCheckerId(), ver.getApprovedTime(), ver.getEffectiveTo());
+        transit(ver, status, ver.getCheckerId(), ver.getApprovedTime(), ver.getEffectiveFrom(), ver.getEffectiveTo());
     }
 
-    /** 以 PENDING_APPROVAL 为条件写入复核结果，成功后同步原对象。 */
+    /** 以 PENDING_APPROVAL 为条件写入复核结果与生效时间，成功后同步原对象。 */
     @Override
-    public void review(AccountingRuleBundleVer ver, RuleVersionStatus status, long checkerId, Instant approvedTime) {
+    public void review(AccountingRuleBundleVer ver, RuleVersionStatus status, long checkerId, Instant approvedTime,
+        Instant effectiveFrom) {
         requireStatus(ver, RuleVersionStatus.PENDING_APPROVAL);
-        transit(ver, status, checkerId, approvedTime, ver.getEffectiveTo());
+        transit(ver, status, checkerId, approvedTime, effectiveFrom, ver.getEffectiveTo());
     }
 
     /** 以 APPROVED 为条件置为 ACTIVE，复核结果不变，成功后同步原对象。 */
     @Override
     public void activate(AccountingRuleBundleVer ver) {
         requireStatus(ver, RuleVersionStatus.APPROVED);
-        transit(ver, RuleVersionStatus.ACTIVE, ver.getCheckerId(), ver.getApprovedTime(), ver.getEffectiveTo());
+        transit(ver, RuleVersionStatus.ACTIVE, ver.getCheckerId(), ver.getApprovedTime(), ver.getEffectiveFrom(),
+            ver.getEffectiveTo());
     }
 
     /** 以 APPROVED 为条件置为 RETIRED，失效时间等于自身生效时间（零长度区间），成功后同步原对象。 */
     @Override
     public void retireSuperseded(AccountingRuleBundleVer ver) {
         requireStatus(ver, RuleVersionStatus.APPROVED);
-        transit(ver, RuleVersionStatus.RETIRED, ver.getCheckerId(), ver.getApprovedTime(), ver.getEffectiveFrom());
+        transit(ver, RuleVersionStatus.RETIRED, ver.getCheckerId(), ver.getApprovedTime(), ver.getEffectiveFrom(),
+            ver.getEffectiveFrom());
     }
 
     /** 以 ACTIVE 为条件置为 RETIRED 并写入失效时间，成功后同步原对象。 */
     @Override
     public void retire(AccountingRuleBundleVer ver, Instant effectiveTo) {
         requireStatus(ver, RuleVersionStatus.ACTIVE);
-        transit(ver, RuleVersionStatus.RETIRED, ver.getCheckerId(), ver.getApprovedTime(), effectiveTo);
+        transit(ver, RuleVersionStatus.RETIRED, ver.getCheckerId(), ver.getApprovedTime(), ver.getEffectiveFrom(),
+            effectiveTo);
     }
 
-    /** 以对象当前状态为条件执行迁移，行数不为 1 时按并发冲突拒绝，成功后同步原对象。 */
+    /** 以对象当前状态为条件执行迁移（含生效与失效时间），行数不为 1 时按并发冲突拒绝，成功后同步原对象。 */
     void transit(AccountingRuleBundleVer ver, RuleVersionStatus status, Long checkerId, Instant approvedTime,
-        Instant effectiveTo) {
+        Instant effectiveFrom, Instant effectiveTo) {
         Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
-        if (mapper.updateStatus(ver, status, checkerId, approvedTime, effectiveTo, now) != 1) {
+        if (mapper.updateStatus(ver, status, checkerId, approvedTime, effectiveFrom, effectiveTo, now) != 1) {
             throw new ConcurrentRequestException("规则版本状态已变化: " + ver.getId());
         }
         ver.setStatus(status);
         ver.setCheckerId(checkerId);
         ver.setApprovedTime(approvedTime);
+        ver.setEffectiveFrom(effectiveFrom);
         ver.setEffectiveTo(effectiveTo);
         ver.setUpdateTime(now);
     }

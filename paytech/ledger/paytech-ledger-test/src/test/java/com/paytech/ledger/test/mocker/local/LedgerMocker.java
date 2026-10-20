@@ -3,6 +3,8 @@ package com.paytech.ledger.test.mocker.local;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Map;
 
 import org.springframework.boot.test.context.TestComponent;
 
@@ -10,6 +12,8 @@ import com.paytech.account.api.enums.BalanceBucket;
 import com.paytech.ledger.api.enums.LedgerOwnerType;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.ledger.core.dal.dataobject.AccountingPeriod;
+import com.paytech.ledger.core.dal.dataobject.AccountingRuleBundleVer;
+import com.paytech.ledger.core.dal.dataobject.AccountingRuleLine;
 import com.paytech.ledger.core.dal.dataobject.BookSequence;
 import com.paytech.ledger.core.dal.dataobject.ChartAccount;
 import com.paytech.ledger.core.dal.dataobject.ChartOfAccounts;
@@ -19,6 +23,8 @@ import com.paytech.ledger.core.dal.dataobject.FiscalCalendar;
 import com.paytech.ledger.core.dal.dataobject.LedgerAccount;
 import com.paytech.ledger.core.dal.dataobject.LedgerBook;
 import com.paytech.ledger.core.dal.mapper.AccountingPeriodMapper;
+import com.paytech.ledger.core.dal.mapper.AccountingRuleBundleVerMapper;
+import com.paytech.ledger.core.dal.mapper.AccountingRuleLineMapper;
 import com.paytech.ledger.core.dal.mapper.BookSequenceMapper;
 import com.paytech.ledger.core.dal.mapper.ChartAccountMapper;
 import com.paytech.ledger.core.dal.mapper.FinanceEntityMapper;
@@ -49,6 +55,9 @@ public class LedgerMocker {
     /** Mapper 直接插入的账户使用的账户号前缀（生产账户号格式见 LedgerAccountNo），后接账户主键保证唯一。 */
     public static final String MOCK_ACCOUNT_NO_PREFIX = "MOCK-";
 
+    /** Mapper 直接插入的规则版本使用的编制人。 */
+    public static final long RULE_MAKER_ID = 81001L;
+
     /** 测试主体统一使用的财务日历时区。 */
     public static final String TIMEZONE = "Asia/Dubai";
 
@@ -61,11 +70,14 @@ public class LedgerMocker {
     private final FinanceEntityMapper financeEntityMapper;
     private final FiscalCalendarMapper fiscalCalendarMapper;
     private final AccountingPeriodMapper accountingPeriodMapper;
+    private final AccountingRuleLineMapper accountingRuleLineMapper;
+    private final AccountingRuleBundleVerMapper accountingRuleBundleVerMapper;
 
     public LedgerMocker(IdGenerator idGenerator, LedgerAccountMapper ledgerAccountMapper, LedgerBookMapper ledgerBookMapper,
         AccountingTestMapper testMapper, ChartAccountMapper chartAccountMapper, BookSequenceMapper bookSequenceMapper,
         FinanceEntityMapper financeEntityMapper, FiscalCalendarMapper fiscalCalendarMapper,
-        AccountingPeriodMapper accountingPeriodMapper) {
+        AccountingPeriodMapper accountingPeriodMapper, AccountingRuleLineMapper accountingRuleLineMapper,
+        AccountingRuleBundleVerMapper accountingRuleBundleVerMapper) {
         this.idGenerator = idGenerator;
         this.ledgerAccountMapper = ledgerAccountMapper;
         this.ledgerBookMapper = ledgerBookMapper;
@@ -75,6 +87,8 @@ public class LedgerMocker {
         this.financeEntityMapper = financeEntityMapper;
         this.fiscalCalendarMapper = fiscalCalendarMapper;
         this.accountingPeriodMapper = accountingPeriodMapper;
+        this.accountingRuleLineMapper = accountingRuleLineMapper;
+        this.accountingRuleBundleVerMapper = accountingRuleBundleVerMapper;
     }
 
     /** 插入 OE 账簿（序号从 1 开始）、日历及一个覆盖今天的 OPEN 期间。 */
@@ -244,6 +258,44 @@ public class LedgerMocker {
         account.setUpdateTime(now());
         testMapper.insertChartAccount(account);
         return account;
+    }
+
+    /**
+     * 插入规则版本，规则行逐行复制模板版本；可按行代码把规则行改记到另一科目，使各版本的记账结果可区分
+     *
+     * @param ver 调用方给出规则集、版本号、状态与生效区间；主键、编制人与时间戳由本方法补齐
+     * @param templateVerId 被复制规则行的模板版本主键
+     * @param accountByLineCode 行代码 → 改记科目代码，未列出的行照抄模板
+     * @return 版本主键（Snowflake，由全局清理删除）
+     */
+    public long mockRuleVersion(AccountingRuleBundleVer ver, long templateVerId, Map<String, String> accountByLineCode) {
+        ver.setId(idGenerator.nextId());
+        ver.setMakerId(RULE_MAKER_ID);
+        ver.setCreateTime(now());
+        ver.setUpdateTime(now());
+        accountingRuleBundleVerMapper.insert(ver);
+        List<AccountingRuleLine> lines = accountingRuleLineMapper.selectByVersion(templateVerId).stream()
+            .map(template -> copyRuleLine(template, ver.getId(), accountByLineCode)).toList();
+        accountingRuleLineMapper.insertBatch(lines);
+        return ver.getId();
+    }
+
+    /** 复制一条模板规则行到目标版本，按行代码改记科目。 */
+    AccountingRuleLine copyRuleLine(AccountingRuleLine template, long bundleVerId, Map<String, String> accountByLineCode) {
+        AccountingRuleLine line = new AccountingRuleLine();
+        line.setId(idGenerator.nextId());
+        line.setBundleVerId(bundleVerId);
+        line.setInstructionType(template.getInstructionType());
+        line.setLineNo(template.getLineNo());
+        line.setLineCode(template.getLineCode());
+        line.setAmountSourceCode(template.getAmountSourceCode());
+        line.setOwnerRole(template.getOwnerRole());
+        line.setAccountCode(accountByLineCode.getOrDefault(template.getLineCode(), template.getAccountCode()));
+        line.setBalanceBucket(template.getBalanceBucket());
+        line.setEntrySide(template.getEntrySide());
+        line.setRequiredFlag(template.getRequiredFlag());
+        line.setCreateTime(now());
+        return line;
     }
 
     /** 微秒精度的当前 UTC 时间。 */

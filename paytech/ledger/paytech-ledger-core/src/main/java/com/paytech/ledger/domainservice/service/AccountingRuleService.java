@@ -33,8 +33,9 @@ public interface AccountingRuleService {
 
     /**
      * 一个事务内锁规则集与版本并写入批准结果
-     * <li>已到生效时间：版本 ACTIVE、原当前版本 RETIRED 且失效时间为新版本生效时间、规则集当前指针切换。</li>
-     * <li>未到生效时间：版本 APPROVED，当前指针不变。</li>
+     * <li>已到生效时间：版本生效时间改为批准时间（审批前已过的时段不被新规则覆盖），版本 ACTIVE、原当前版本 RETIRED 且失效时间为该批准时间、
+     * 规则集当前指针切换。</li>
+     * <li>未到生效时间：版本 APPROVED，生效时间与当前指针不变。</li>
      */
     void approveVersion(AccountingRuleVersionContext context, long checkerId, Instant approvedTime);
 
@@ -47,6 +48,17 @@ public interface AccountingRuleService {
      * <li>目标版本生效时间必须晚于当前版本，避免生效区间倒置，否则业务拒绝。</li>
      */
     AccountingRuleBundleVer findReplacedVersion(AccountingRuleVersionContext context);
+
+    /**
+     * 按业务时间选择规则集适用的版本，不加锁、只读已提交数据
+     * <li>ACTIVE 或 RETIRED 版本的生效区间 [effective_from, effective_to) 覆盖该时点即为候选；RETIRED 缺失效时间视为数据损坏，不作候选。</li>
+     * <li>已到生效时间、尚未被定时任务切换的 APPROVED 版本，在生效时间晚于当前 ACTIVE 版本（或无 ACTIVE 版本）时按切换后的区间参与，
+     * 已被取代、等待置为 RETIRED 的版本不参与。</li>
+     * <li>取生效时间最晚的候选，相同取版本号较大者；VOIDED、REJECTED、DRAFT、PENDING_APPROVAL 与零长度区间从不选中。</li>
+     *
+     * @return 适用版本；没有候选（业务时间早于首个版本或数据缺失）时返回空，由调用方按其上下文拒绝
+     */
+    AccountingRuleBundleVer findApplicableVersion(AccountingRuleBundle bundle, Instant at);
 
     /** 读取规则集当前版本；尚无当前版本时返回空，当前指针无对应版本为系统错误。 */
     AccountingRuleBundleVer findCurrentVersion(AccountingRuleBundle bundle);

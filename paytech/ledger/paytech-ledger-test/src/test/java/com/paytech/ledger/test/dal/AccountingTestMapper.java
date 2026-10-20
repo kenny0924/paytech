@@ -334,6 +334,14 @@ public interface AccountingTestMapper {
     @Update("UPDATE t_accounting_rule_bundle_ver SET status = #{status} WHERE id = #{id}")
     void updateRuleVersionStatus(@Param("id") long id, @Param("status") String status);
 
+    /** 直接把规则版本置为 RETIRED 并写入失效时间，构造“已退役版本”；只用于版本 5101，清理组件恢复初始化行。 */
+    @Update("UPDATE t_accounting_rule_bundle_ver SET status = 'RETIRED', effective_to = #{effectiveTo} WHERE id = #{id}")
+    void retireRuleVersion(@Param("id") long id, @Param("effectiveTo") Instant effectiveTo);
+
+    /** 直接把 Bundle 当前版本指针改到指定版本，构造“已切换到新版本”场景；只用于 Bundle 5001，清理组件恢复初始化行。 */
+    @Update("UPDATE t_accounting_rule_bundle SET current_ver_id = #{currentVerId} WHERE id = #{id}")
+    void updateRuleBundleCurrentVersion(@Param("id") long id, @Param("currentVerId") long currentVerId);
+
     /** 直接清空 Bundle 当前版本指针，构造“无当前版本”场景；清理组件恢复初始化行。 */
     @Update("UPDATE t_accounting_rule_bundle SET current_ver_id = NULL WHERE id = #{id}")
     void clearRuleBundleCurrentVersion(@Param("id") long id);

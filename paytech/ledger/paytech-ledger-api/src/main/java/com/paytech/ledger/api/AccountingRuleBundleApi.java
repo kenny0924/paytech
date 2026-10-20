@@ -19,7 +19,7 @@ import jakarta.validation.constraints.Pattern;
 /**
  * 交易自动记账规则 Bundle 版本管理（Maker-Checker）
  * <li>Bundle 只由初始化 DML 创建；版本以完整有序规则行集创建为 DRAFT，提交后冻结，Checker（≠ Maker）批准或驳回；DRAFT 可由编制人作废（VOIDED）。</li>
- * <li>批准时已到生效时间则成为 ACTIVE 并原子切换当前版本，原当前版本 RETIRED；未到生效时间保持 APPROVED，到期由 XXL-Job
+ * <li>批准时已到生效时间则生效时间记为批准时间、成为 ACTIVE 并原子切换当前版本，原当前版本 RETIRED；未到生效时间保持 APPROVED，到期由 XXL-Job
  * accountingRuleVersionActivation 切换为 ACTIVE。</li>
  * <li>Finance 内部接口：编制人与复核人取自 Operations BFF 从会话填入的 X-Gateway-Actor-Subject（Operations Account ID）/
  * X-Gateway-Session-Id Header，仅经 Operations BFF 转发，不得直接对外发布。</li>
@@ -69,7 +69,7 @@ public interface AccountingRuleBundleApi {
      * @param sessionId 复核人会话 ID（X-Gateway-Session-Id）；缺失时 400
      * @param bundleCode 规则集代码
      * @param bundleVer 版本号
-     * @return 200 与版本详情：已到生效时间为 ACTIVE（当前版本切换），否则 APPROVED；非 PENDING_APPROVAL 或同人复核时 400
+     * @return 200 与版本详情：已到生效时间为 ACTIVE（生效时间记为批准时间，当前版本切换），否则 APPROVED；非 PENDING_APPROVAL 或同人复核时 400
      */
     @PostExchange("/{bundleCode}/versions/{bundleVer}/approve")
     RuleVersionResponseBody approveRuleVersion(

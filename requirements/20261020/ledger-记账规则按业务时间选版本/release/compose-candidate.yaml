@@ -1,0 +1,16 @@
+# ledger 自动记账按业务时间选择规则版本（含审批回溯生效改为审批时间）：只替换 ledger-service。
+# 镜像构建自干净 worktree：main 5f12cf3e + 本需求 ledger 改动（tag mor-test/ledger-service:rulever-20261020）。
+# XXL-Job 环境沿用 requirements/20261020/finance-人工调整与计费事实/release/compose-candidate.yaml。
+# 回滚：image 改回 sha256:d846efae26f5d050d2b544f9fe0c0e512dfd91ca0018cc2427e397e67ec3fa2a 后重新 up --no-deps ledger-service。
+services:
+  ledger-service:
+    image: sha256:ff20e3358a57a280234a793db0ee029627ce8c718dccaa40f022e778676cfddb
+    environment:
+      XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
+      XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
+      XXL_JOB_EXECUTOR_ENABLED: "true"
+      XXL_JOB_EXECUTOR_APPNAME: ledger-service
+      XXL_JOB_EXECUTOR_IP: 172.30.73.38
+      XXL_JOB_EXECUTOR_PORT: "9999"
+      XXL_JOB_EXECUTOR_LOGPATH: /tmp/xxl-job
+      XXL_JOB_EXECUTOR_EXCLUDEDPACKAGES: org.springframework.,spring.

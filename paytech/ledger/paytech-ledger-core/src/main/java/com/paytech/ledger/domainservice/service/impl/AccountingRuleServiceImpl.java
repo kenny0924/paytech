@@ -1,6 +1,7 @@
 package com.paytech.ledger.domainservice.service.impl;
 
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -76,17 +77,23 @@ public class AccountingRuleServiceImpl implements AccountingRuleService {
         });
     }
 
-    /** 锁规则集与版本后写入批准结果；已到生效时间时替换当前版本并切换指针。 */
+    /**
+     * 锁规则集与版本后写入批准结果
+     * <li>未到生效时间：APPROVED，生效时间不变。</li>
+     * <li>已到生效时间：生效时间改为批准时间并置 ACTIVE（同一条件更新），再替换当前版本、切换指针，原当前版本失效时间因此等于批准时间。</li>
+     */
     @Override
     public void approveVersion(AccountingRuleVersionContext context, long checkerId, Instant approvedTime) {
         transactionTemplate.executeWithoutResult(status -> {
             lockBundleAndVersion(context);
             AccountingRuleBundleVer ver = context.getVer();
             if (!context.effectiveAt(approvedTime)) {
-                accountingRuleBundleVerRepository.review(ver, RuleVersionStatus.APPROVED, checkerId, approvedTime);
+                accountingRuleBundleVerRepository.review(ver, RuleVersionStatus.APPROVED, checkerId, approvedTime,
+                    ver.getEffectiveFrom());
                 return;
             }
-            accountingRuleBundleVerRepository.review(ver, RuleVersionStatus.ACTIVE, checkerId, approvedTime);
+            accountingRuleBundleVerRepository.review(ver, RuleVersionStatus.ACTIVE, checkerId, approvedTime,
+                approvedTime);
             switchCurrentVersion(context);
         });
     }
@@ -96,7 +103,8 @@ public class AccountingRuleServiceImpl implements AccountingRuleService {
     public void rejectVersion(AccountingRuleVersionContext context, long checkerId) {
         transactionTemplate.executeWithoutResult(status -> {
             lockBundleAndVersion(context);
-            accountingRuleBundleVerRepository.review(context.getVer(), RuleVersionStatus.REJECTED, checkerId, null);
+            accountingRuleBundleVerRepository.review(context.getVer(), RuleVersionStatus.REJECTED, checkerId, null,
+                context.getVer().getEffectiveFrom());
         });
     }
 
@@ -112,6 +120,37 @@ public class AccountingRuleServiceImpl implements AccountingRuleService {
             throw new FailException(LedgerErrorCode.RULE_EFFECTIVE_FROM_INVALID);
         }
         return currentVer;
+    }
+
+    /** 在规则集全部版本中按业务时间选择适用版本；没有候选时为空。 */
+    @Override
+    public AccountingRuleBundleVer findApplicableVersion(AccountingRuleBundle bundle, Instant at) {
+        List<AccountingRuleBundleVer> versions = accountingRuleBundleVerRepository.findByBundle(bundle.getId());
+        AccountingRuleBundleVer active = versions.stream().filter(ver -> ver.getStatus() == RuleVersionStatus.ACTIVE)
+            .findFirst().orElse(null);
+        return versions.stream().filter(ver -> intervalCovers(ver, at) || dueSuccessor(ver, active, at))
+            .max(Comparator.comparing(AccountingRuleBundleVer::getEffectiveFrom)
+                .thenComparing(AccountingRuleBundleVer::getBundleVer))
+            .orElse(null);
+    }
+
+    /** ACTIVE 或 RETIRED 版本的生效区间 [effective_from, effective_to) 覆盖该时点；RETIRED 缺失效时间视为数据损坏，不作候选。 */
+    static boolean intervalCovers(AccountingRuleBundleVer ver, Instant at) {
+        if (ver.getStatus() != RuleVersionStatus.ACTIVE && ver.getStatus() != RuleVersionStatus.RETIRED) {
+            return false;
+        }
+        if (ver.getStatus() == RuleVersionStatus.RETIRED && ver.getEffectiveTo() == null) {
+            return false;
+        }
+        return !ver.getEffectiveFrom().isAfter(at) && (ver.getEffectiveTo() == null || at.isBefore(ver.getEffectiveTo()));
+    }
+
+    /** 已到生效时间、待定时任务切换的 APPROVED 版本：生效时间须晚于当前 ACTIVE 版本，否则已被取代。 */
+    static boolean dueSuccessor(AccountingRuleBundleVer ver, AccountingRuleBundleVer active, Instant at) {
+        if (ver.getStatus() != RuleVersionStatus.APPROVED || ver.getEffectiveFrom().isAfter(at)) {
+            return false;
+        }
+        return active == null || ver.getEffectiveFrom().isAfter(active.getEffectiveFrom());
     }
 
     /** 读取规则集当前版本；尚无当前版本时为空。 */

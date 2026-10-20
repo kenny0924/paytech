@@ -12,6 +12,14 @@
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
 <a id="channel-connector-ops-console-20261020"></a>
+## ledger 自动记账按业务时间选择规则版本（2026-10-20，已部署 mor-test，已本地提交，未推送）
+
+- **范围：** [需求](<../requirements/20261020/ledger-记账规则按业务时间选版本/requirement.md>)与[方案](<../requirements/20261020/ledger-记账规则按业务时间选版本/technique.md>)：自动记账不再只看规则包当前版本，改为在全部版本中取生效区间覆盖事实业务时间的版本（含已退役版本与已到期待切换的 APPROVED 版本），规则切换后迟到事实不再被拒绝卡住分片；审批时生效时间已过则改按审批时间生效（Q1）。无接口、表结构、初始化数据变化。
+- **Implemented：** ledger `AccountingRuleService.findApplicableVersion`、`TransactionPostingServiceImpl.effectiveBundleVer`、`approveVersion` 与版本更新 SQL 写入 `effective_from`；Operations Web 记账规则页 3 处提示。
+- **Verified：** ledger 模块 319/319（研发基线 `b04b77f1` 与发布基线 `5f12cf3e` 各一次），新增 `RuleVersionSelectionPostingTest` 覆盖 AC-01—AC-06，AC-07 在 `RuleVersionLifecycleTest`；ops-web 1157 + build。本地 `mor_ledger` 经用户同意按现行 Schema 与初始化数据重建。
+- **Deployed（mor-test，2026-10-20 16:41Z，[发布 override](<../requirements/20261020/ledger-记账规则按业务时间选版本/release/compose-candidate.yaml>)）：** 只替换 ledger `sha256:ff20e335…`（回滚 `sha256:d846efae…`），环境变量不变，XXL 任务 19 正常；Operations Web 提示已随其他会话部署的 `sha256:105afba9…` 上线，本需求未单独发布 Web。
+- **Pending：** 推送另行授权；已知边界：到期未切换的 APPROVED 版本在同一分钟内被立即审批的新版本取代时，该分钟内先后处理的事实可能选中不同版本（需审批前先激活到期版本，另行处理）。
+
 ## channel-connector 运营控制台：渠道成本方案与渠道基础配置（2026-10-20，已部署 mor-test，已本地提交、未推送）
 
 - **范围：** [需求](<../requirements/20261020/channel-connector-运营控制台渠道成本与基础配置/requirement.md>)与[方案](<../requirements/20261020/channel-connector-运营控制台渠道成本与基础配置/technique.md>)：channel-connector 新表 `t_channel_config_change`（18 表）、成本方案列表 / 作废 / 渠道存在校验、变更记录查询、渠道 / 技术账号 / MID / 能力四组管理合同与 13 个写 Processor（`tryLocks`，Vault Protect 在事务外）、Platform 内部免会话接入方查询 `IntegrationLookupApi`（`GET /standard-apis/v1/integrations/{code}/existence`）、Operations BFF `/channel-admin/v1/**` 31 条路由与版本对比聚合、Web 一级菜单「渠道」三页（Pencil 15 画板）、Platform 注册块 92（402 行）、Vault PROTECT 规则（`channel-connector-service` / `CHANNEL_ACCOUNT_CONFIG_V1` / `CHANNEL_CONFIGURATION`）。路由策略、健康度、回调查询页不在本期；OE 只校验格式（client-master 无查询接口）。

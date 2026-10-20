@@ -39,11 +39,12 @@ public interface AccountingRuleBundleVerMapper {
     long countOpenVersions(@Param("bundleId") long bundleId);
 
     /**
-     * 以原状态为条件迁移状态，同时写入复核人、批准时间与失效时间
+     * 以原状态为条件迁移状态，同时写入复核人、批准时间、生效时间与失效时间
      *
      * @return 受影响行数
      */
     int updateStatus(@Param("ver") AccountingRuleBundleVer ver, @Param("status") RuleVersionStatus status,
         @Param("checkerId") Long checkerId, @Param("approvedTime") Instant approvedTime,
-        @Param("effectiveTo") Instant effectiveTo, @Param("now") Instant now);
+        @Param("effectiveFrom") Instant effectiveFrom, @Param("effectiveTo") Instant effectiveTo,
+        @Param("now") Instant now);
 }

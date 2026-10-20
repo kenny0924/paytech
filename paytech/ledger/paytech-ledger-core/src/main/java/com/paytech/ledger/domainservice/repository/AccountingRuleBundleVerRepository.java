@@ -37,12 +37,14 @@ public interface AccountingRuleBundleVerRepository {
     void updateStatus(AccountingRuleBundleVer ver, RuleVersionStatus status);
 
     /**
-     * 以 PENDING_APPROVAL 为条件写入复核结果，成功后同步原对象；状态已变化时按并发冲突拒绝
+     * 以 PENDING_APPROVAL 为条件写入复核结果与生效时间（同一条件更新），成功后同步原对象；状态已变化时按并发冲突拒绝
      *
      * @param status APPROVED、ACTIVE 或 REJECTED
      * @param approvedTime 批准时间，驳回时为空
+     * @param effectiveFrom 复核后的生效时间；审批时已过的生效时间由调用方改为批准时间，其余传入原值
      */
-    void review(AccountingRuleBundleVer ver, RuleVersionStatus status, long checkerId, Instant approvedTime);
+    void review(AccountingRuleBundleVer ver, RuleVersionStatus status, long checkerId, Instant approvedTime,
+        Instant effectiveFrom);
 
     /** 以 APPROVED 为条件把到期版本置为 ACTIVE，复核结果不变，成功后同步原对象；状态已变化时按并发冲突拒绝。 */
     void activate(AccountingRuleBundleVer ver);

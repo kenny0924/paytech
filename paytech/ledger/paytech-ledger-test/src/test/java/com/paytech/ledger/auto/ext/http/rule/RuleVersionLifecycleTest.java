@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import com.paytech.ledger.api.enums.AutoInstructionType;
 import com.paytech.ledger.api.enums.LedgerErrorCode;
 import com.paytech.ledger.api.request.RuleLineRequestBody;
+import com.paytech.ledger.core.dal.dataobject.AccountingRuleBundleVer;
 import com.paytech.ledger.core.enums.RuleVersionStatus;
 import com.paytech.ledger.test.base.AbstractRuleBundleApiTest;
 import com.paytech.ledger.test.builder.RuleVersionRequestBuilder;
@@ -22,7 +23,8 @@ import com.paytech.ledger.test.builder.RuleVersionRequestBuilder;
 import tools.jackson.databind.JsonNode;
 
 /**
- * 记账规则版本生命周期：创建 DRAFT、提交、批准切换当前版本、未到生效时间仅 APPROVED、驳回、Maker 自审、非 DRAFT 提交与查询。
+ * 记账规则版本生命周期：创建 DRAFT、提交、批准切换当前版本（已过的生效时间记为批准时间）、未到生效时间仅 APPROVED、驳回、Maker 自审、
+ * 非 DRAFT 提交与查询。
  *
  * @see com.paytech.ledger.api.AccountingRuleBundleApi#createRuleVersion(String, String, String, com.paytech.ledger.api.request.CreateRuleVersionRequestBody)
  * @see com.paytech.ledger.api.AccountingRuleBundleApi#submitRuleVersion(String, String, String, String)
@@ -50,7 +52,7 @@ class RuleVersionLifecycleTest extends AbstractRuleBundleApiTest {
         assertPointer(INITIAL_VERSION_ID, 0L);
     }
 
-    /** 提交冻结为 PENDING_APPROVAL；Checker 批准后 ACTIVE，指针切换，旧版本 RETIRED 且失效时间 = 新版本生效时间。 */
+    /** 提交冻结为 PENDING_APPROVAL；Checker 批准后 ACTIVE，指针切换，旧版本 RETIRED 且失效时间 = 新版本生效时间（即批准时间）。 */
     @Test
     void test_approveActivatesAndRetiresPrevious() {
         Instant effectiveFrom = pastEffectiveFrom();
@@ -60,7 +62,7 @@ class RuleVersionLifecycleTest extends AbstractRuleBundleApiTest {
 
         var approved = approve(2, CHECKER_ID).assertSuccess(200)
             .assertText("status", RuleVersionStatus.ACTIVE.getCode()).assertText("checkerId", CHECKER_ID);
-        assertNotNull(approved.text("approvedTime"));
+        Instant approvedTime = Instant.parse(approved.text("approvedTime"));
         assertNull(approved.text("effectiveTo"));
 
         JsonNode bundle = getBundle(BUNDLE_CODE).assertSuccess(200)
@@ -68,21 +70,48 @@ class RuleVersionLifecycleTest extends AbstractRuleBundleApiTest {
         JsonNode versions = bundle.path("versions");
         assertEquals(2, versions.size());
         assertVersionSummary(versions.get(0), versionId, 2, RuleVersionStatus.ACTIVE, null);
-        assertVersionSummary(versions.get(1), INITIAL_VERSION_ID, 1, RuleVersionStatus.RETIRED, effectiveFrom);
+        assertVersionSummary(versions.get(1), INITIAL_VERSION_ID, 1, RuleVersionStatus.RETIRED, approvedTime);
         getVersion(INITIAL_BUNDLE_VER).assertSuccess(200).assertText("status", RuleVersionStatus.RETIRED.getCode());
         assertEquals(RuleVersionStatus.RETIRED.getCode(), testMapper.selectRuleVersionStatus(INITIAL_VERSION_ID));
         assertPointer(versionId, 1L);
     }
 
-    /** 生效时间在未来：批准后只到 APPROVED，当前版本指针与旧版本保持不变。 */
+    /**
+     * AC-07：审批时生效时间已过（一小时前）：生效时间记为批准时间，旧版本失效时间为同一时间，审批前的时段仍归旧版本
+     * <li>响应、版本行与旧版本行三处一致；批准时间晚于编制时填写的生效时间。</li>
+     */
+    @Test
+    void test_pastEffectiveFromRewrittenToApprovalTime() {
+        Instant requested = Instant.now().truncatedTo(ChronoUnit.MICROS).minus(1, ChronoUnit.HOURS);
+        long versionId = createSubmitted(RuleVersionRequestBuilder.template(requested)).id("versionId");
+
+        var approved = approve(2, CHECKER_ID).assertSuccess(200)
+            .assertText("status", RuleVersionStatus.ACTIVE.getCode());
+
+        Instant approvedTime = Instant.parse(approved.text("approvedTime"));
+        AccountingRuleBundleVer activated = testMapper.selectRuleVersion(versionId);
+        AccountingRuleBundleVer retired = testMapper.selectRuleVersion(INITIAL_VERSION_ID);
+        assertAll(() -> assertTrue(approvedTime.isAfter(requested), "批准时间晚于填写的生效时间"),
+            () -> assertEquals(approvedTime, Instant.parse(approved.text("effectiveFrom")), "响应生效时间"),
+            () -> assertEquals(approvedTime, activated.getEffectiveFrom(), "版本生效时间"),
+            () -> assertEquals(approvedTime, activated.getApprovedTime()),
+            () -> assertNull(activated.getEffectiveTo()),
+            () -> assertEquals(RuleVersionStatus.RETIRED, retired.getStatus()),
+            () -> assertEquals(approvedTime, retired.getEffectiveTo(), "旧版本失效时间"));
+        assertPointer(versionId, 1L);
+    }
+
+    /** 生效时间在未来：批准后只到 APPROVED，生效时间不变，当前版本指针与旧版本保持不变。 */
     @Test
     void test_futureEffectiveApprovalStaysApproved() {
         Instant future = Instant.now().truncatedTo(ChronoUnit.MICROS).plus(1, ChronoUnit.DAYS);
-        createSubmitted(RuleVersionRequestBuilder.template(future));
+        long versionId = createSubmitted(RuleVersionRequestBuilder.template(future)).id("versionId");
 
         var approved = approve(2, CHECKER_ID).assertSuccess(200)
             .assertText("status", RuleVersionStatus.APPROVED.getCode()).assertText("checkerId", CHECKER_ID);
         assertNotNull(approved.text("approvedTime"));
+        assertAll(() -> assertEquals(future, Instant.parse(approved.text("effectiveFrom")), "响应生效时间不变"),
+            () -> assertEquals(future, testMapper.selectRuleVersion(versionId).getEffectiveFrom(), "版本生效时间不变"));
 
         getBundle(BUNDLE_CODE).assertSuccess(200).assertText("currentBundleVer", "1");
         assertEquals(RuleVersionStatus.ACTIVE.getCode(), testMapper.selectRuleVersionStatus(INITIAL_VERSION_ID));

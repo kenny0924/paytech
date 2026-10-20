@@ -12,6 +12,8 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.Instant;
+
 import org.junit.jupiter.api.Test;
 
 import com.paytech.account.api.constant.StandardAccountCodes;
@@ -33,7 +35,7 @@ import com.paytech.ledger.test.builder.RuleVersionRequestBuilder;
 
 /**
  * 控制科目过账 Fail-Closed：平台账簿缺失整体回滚、必需来源缺失、事实缺少渠道清算账户 / Finance Entity / 税务机关 / 支付成功时间 / 明细金额、
- * 无生效规则版本、没有记账规则的事实类型、流水科目不在明细账目录、批次与事实借贷不平；拒绝后不残留指令、Journal 或自动创建的账户
+ * 业务时间无适用规则版本（早于首个版本、退役版本缺失效时间）、没有记账规则的事实类型、流水科目不在明细账目录、批次与事实借贷不平；拒绝后不残留指令、Journal 或自动创建的账户
  * <li>拒绝矩阵直接调用 AccountPostedPostingHandler（事务外，Handler 自管事务），断言 {@code DomainEventRejectedException} 携带的拒绝原因；
  * {@link #test_rejectedEventGoesToDeadLetter} 经真实 Broker 证明拒绝的信封直接进入 ledger.account.dlq 且不登记消费。</li>
  *
@@ -43,6 +45,12 @@ import com.paytech.ledger.test.builder.RuleVersionRequestBuilder;
 class TransactionPostingRejectionTest extends AbstractTransactionPostingTest {
     /** 初始化 DML 预置的 Bundle 主键。 */
     private static final long BUNDLE_ID = 5001L;
+
+    /** 初始化 DML 预置的 Bundle 代码。 */
+    private static final String STANDARD_TRANSACTION_BUNDLE = "STANDARD_TRANSACTION";
+
+    /** 业务时间没有区间覆盖的规则版本时的拒绝原因。 */
+    private static final String NO_APPLICABLE_VERSION = "业务时间无适用的自动记账规则版本";
 
     /** 标准无 Partner 支付：gross 100 = 本金 97 + 手续费 3。 */
     private BillingFactPayload standardPayment() {
@@ -101,13 +109,25 @@ class TransactionPostingRejectionTest extends AbstractTransactionPostingTest {
             "SELLER_TAX 组件税务机关缺失或不唯一");
     }
 
-    /** 当前版本不再 ACTIVE：无生效规则版本（清理组件恢复 5101）。 */
+    /** 唯一版本被置为 RETIRED 却没有失效时间：视为数据损坏、不作候选，无适用规则版本（清理组件恢复 5101）。 */
     @Test
     void test_retiredCurrentVersionRejected() {
         testMapper.updateRuleVersionStatus(INITIAL_VERSION_ID, RuleVersionStatus.RETIRED.getCode());
         BillingFactPayload economics = standardPayment();
 
-        assertRejected(economics, paymentPosting(economics, 1, "97", null).build(), "无生效的自动记账规则版本");
+        assertRejected(economics, paymentPosting(economics, 1, "97", null).build(), NO_APPLICABLE_VERSION,
+            STANDARD_TRANSACTION_BUNDLE, String.valueOf(economics.getBusinessTime()));
+    }
+
+    /** AC-05：业务时间早于首个版本（5101 自 2000-01-01 起）：无适用规则版本，拒绝信息含规则集与业务时间，整笔不残留。 */
+    @Test
+    void test_businessTimeBeforeFirstVersionRejected() {
+        Instant businessTime = Instant.parse("1999-12-31T23:59:59Z");
+        BillingFactPayload economics = fact(payment("100").businessTime(businessTime),
+            clientPrincipal("97", CLIENT_ID), clientFee("3", ENTITY_NO));
+
+        assertRejected(economics, paymentPosting(economics, 1, "97", null).build(), NO_APPLICABLE_VERSION,
+            STANDARD_TRANSACTION_BUNDLE, businessTime.toString());
     }
 
     /** Bundle 当前版本指针为空：无可用规则集（清理组件恢复指针）。 */

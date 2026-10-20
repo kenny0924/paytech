@@ -70,7 +70,7 @@ export function FinanceAccountingRules({ resources, actorId, onAuthorizationChan
             ]} />
         </div>}
       </section>}
-    <FinanceNote>规则只影响生效后的新事实，不重算历史分录。审批时生效时间已到则立即生效、旧版本退役；未来生效的版本为「待生效」，由定时任务每分钟切换。{!canManage && ' 当前账号没有制单权限。'}{!canApprove && ' 当前账号没有复核权限。'}</FinanceNote>
+    <FinanceNote>规则只影响生效后的新事实，不重算历史分录。审批时生效时间已过则按审批时间立即生效、旧版本退役；迟到的事实按其业务时间所在的版本记账；未来生效的版本为「待生效」，由定时任务每分钟切换。{!canManage && ' 当前账号没有制单权限。'}{!canApprove && ' 当前账号没有复核权限。'}</FinanceNote>
     {creating && current && <CreateRuleVersionDrawer bundleCode={current.bundleCode} currentBundleVer={current.currentBundleVer} chartAccounts={chartAccounts.items}
       accounts={accountMap} onClose={() => setCreating(false)} onAuthorizationChanged={onAuthorizationChanged}
       onCreated={version => { setCreating(false); refresh(); go({ ver: version.bundleVer }); }} />}
