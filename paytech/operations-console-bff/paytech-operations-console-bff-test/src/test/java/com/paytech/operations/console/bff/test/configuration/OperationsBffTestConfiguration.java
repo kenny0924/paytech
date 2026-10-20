@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import com.paytech.operations.console.bff.test.simulator.AccountOwnerSimulator;
 import com.paytech.operations.console.bff.test.simulator.BillingOwnerSimulator;
+import com.paytech.operations.console.bff.test.simulator.ChannelConnectorOwnerSimulator;
 import com.paytech.operations.console.bff.test.simulator.ClientReviewOwnerSimulator;
 import com.paytech.operations.console.bff.test.simulator.CommercialOwnerSimulator;
 import com.paytech.operations.console.bff.test.simulator.LedgerOwnerSimulator;
@@ -24,6 +25,7 @@ public class OperationsBffTestConfiguration {
     public static final AccountOwnerSimulator ACCOUNT = new AccountOwnerSimulator();
     public static final BillingOwnerSimulator BILLING = new BillingOwnerSimulator();
     public static final CommercialOwnerSimulator COMMERCIAL = new CommercialOwnerSimulator();
+    public static final ChannelConnectorOwnerSimulator CHANNEL_CONNECTOR = new ChannelConnectorOwnerSimulator();
 
     @Bean(destroyMethod = "close")
     LedgerOwnerSimulator ledgerOwnerSimulator() { return LEDGER; }
@@ -36,6 +38,9 @@ public class OperationsBffTestConfiguration {
 
     @Bean(destroyMethod = "close")
     CommercialOwnerSimulator commercialOwnerSimulator() { return COMMERCIAL; }
+
+    @Bean(destroyMethod = "close")
+    ChannelConnectorOwnerSimulator channelConnectorOwnerSimulator() { return CHANNEL_CONNECTOR; }
 
     @Bean(destroyMethod = "close")
     ClientReviewOwnerSimulator clientReviewOwnerSimulator() { return CLIENT_REVIEW; }

@@ -382,6 +382,10 @@ internal-token:
       notification-test:
         targets: [platform-support-service]
         purposes: [GENERAL]
+      # 接入方存在性查询的测试调用方（真实调用方为 channel-connector 激活渠道前查询）。
+      integration-lookup-test:
+        targets: [platform-support-service]
+        purposes: [GENERAL]
       # Platform 自身出站：card 凭票据读卡（第 12 步自 Payment 改为 card-service）、CCT 文件，以及 Vault（02d 起 Vault Client 在存在 Supplier
       # 时附加 Token，未授权则失败关闭）。payment-service 保留给既有 Platform → Payment 目标登记。
       platform-support-service:

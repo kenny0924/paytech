@@ -2,11 +2,16 @@ package com.paytech.channel.connector.domainservice.service;
 
 import java.time.Instant;
 
+import com.paytech.channel.connector.core.dal.dataobject.ChannelConfigChange;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelCostPlan;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelCostPlanVer;
+import com.paytech.channel.connector.core.enums.ChannelCostPlanStatus;
+import com.paytech.channel.connector.domain.ChannelCostPlanSummaryView;
 import com.paytech.channel.connector.domain.ChannelCostPlanView;
 import com.paytech.channel.connector.domain.ChannelCostVersionContext;
 import com.paytech.channel.connector.domain.ChannelCostVersionView;
+import com.paytech.foundation.web.paging.PagingRequestBody;
+import com.paytech.foundation.web.paging.PagingResponseBody;
 
 /**
  * 渠道成本方案与版本的本地保存、状态迁移与查询
@@ -56,6 +61,28 @@ public interface ChannelCostPlanService {
      * <li>任一条件更新行数不符按并发冲突拒绝，整个事务回滚。</li>
      */
     void activateVersion(ChannelCostVersionContext context);
+
+    /**
+     * 一个事务内锁方案与版本，作废未到生效时间的 APPROVED 版本并写入变更记录
+     * <li>版本 APPROVED → INACTIVE、失效时间等于生效时间；条件为 status = APPROVED 且 effective_from 晚于变更记录创建时间，
+     * 行数不为 1 时按并发冲突拒绝并整体回滚。</li>
+     * <li>方案当前版本指针不指向 APPROVED 版本，不需要改动。</li>
+     *
+     * @param context 已校验可作废的版本上下文
+     * @param change 已准备主键、操作者、原因与创建时间的 CANCEL 变更记录；创建时间同时作为作废时刻
+     */
+    void cancelVersion(ChannelCostVersionContext context, ChannelConfigChange change);
+
+    /**
+     * 分页查询方案列表项
+     *
+     * @param channelId 可空 Channel 筛选
+     * @param status 可空方案状态筛选
+     * @param paging 已校验的分页参数
+     * @return 按方案更新时间、主键降序的分页结果
+     */
+    PagingResponseBody<ChannelCostPlanSummaryView> findPage(Long channelId, ChannelCostPlanStatus status,
+        PagingRequestBody paging);
 
     /** 查询方案与全部版本摘要；不存在时业务拒绝。 */
     ChannelCostPlanView getPlan(String planCode);

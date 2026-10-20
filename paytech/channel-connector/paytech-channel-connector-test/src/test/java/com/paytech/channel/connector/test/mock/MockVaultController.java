@@ -28,9 +28,15 @@ public class MockVaultController implements VaultHttpService {
         return vault.reveal(caller, request.token(), request.purpose());
     }
 
-    /** channel-connector 不 Protect，任何调用都由 Mocker 记为意外。 */
+    /** 账号配置写入的 Protect：按 Mocker 预设返回 Token 或故障，未配置记为意外。 */
     @Override
     public ProtectResponse protect(String caller, String key, String requestId, ProtectRequest request) {
-        return vault.protect(caller, request);
+        String errorRequestId = vault.protectErrorRequestId();
+        if (errorRequestId != null) {
+            var attributes = (org.springframework.web.context.request.ServletRequestAttributes)
+                org.springframework.web.context.request.RequestContextHolder.currentRequestAttributes();
+            attributes.getResponse().setHeader("X-Request-Id", errorRequestId);
+        }
+        return vault.protect(caller, key, request);
     }
 }

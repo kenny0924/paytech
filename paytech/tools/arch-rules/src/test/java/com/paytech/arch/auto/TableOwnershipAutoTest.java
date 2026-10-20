@@ -22,11 +22,12 @@ class TableOwnershipAutoTest {
     @Test
     void test_normalFlow() {
         // design/03 §4.2：17 个目标库共 265 张物理表；另加保留服务 platform-support 自身 Schema 的 56 张表。
-        Assertions.assertEquals(265 + 56 + 1 + 6 - 7 + 9 + 4 + 6 + 1 + 2, ownership.physicalTableCount(),
+        Assertions.assertEquals(265 + 56 + 1 + 6 - 7 + 9 + 4 + 6 + 1 + 2 + 1, ownership.physicalTableCount(),
             "design 03 + Platform 保留表 + 第 12 步 t_card_material_ticket + account 明细账六张业务表（2026-10-19 重构）"
                 + " - billing 经济事实三表与渠道成本四表 + billing 计费事实九表 + channel-connector 渠道成本四表（2026-10-19 计费事实重构）"
                 + " + commercial 产品目录三表与合同订阅 / 开通 / 约束三表（2026-10-19 六层产品定价模型）"
-                + " + account 账户号序列 + ledger 科目变更记录与账户号序列（2026-10-19 科目分级）");
+                + " + account 账户号序列 + ledger 科目变更记录与账户号序列（2026-10-19 科目分级）"
+                + " + channel-connector 变更记录表 t_channel_config_change（2026-10-20）");
         Assertions.assertEquals(57, ownership.databasesOf("platform-support").get("mor_platform").size());
         Assertions.assertEquals(31, ownership.databasesOf("ledger").get("mor_ledger").size());
         Assertions.assertTrue(ownership.allowedTables("ledger").containsAll(
@@ -69,7 +70,7 @@ class TableOwnershipAutoTest {
             "t_payment_card_instrument", "t_payment_stored_card"), ownership.cardTables());
     }
 
-    /** 2026-10-19 计费事实重构：mor_billing 为 11 张表；渠道成本四表归 channel-connector（17 张），billing 不再引用。 */
+    /** 2026-10-19 计费事实重构：mor_billing 为 11 张表；渠道成本四表归 channel-connector（2026-10-20 加变更记录表后 18 张），billing 不再引用。 */
     @Test
     void test_billingFactAndChannelCostOwnership() {
         Assertions.assertEquals(Set.of("t_billing_fact", "t_billing_fact_ref", "t_billing_fact_pricing",
@@ -78,7 +79,7 @@ class TableOwnershipAutoTest {
             ownership.databasesOf("billing").get("mor_billing"));
         List<String> channelCostTables = List.of("t_channel_cost_plan", "t_channel_cost_plan_ver",
             "t_channel_cost_scope", "t_channel_cost_component");
-        Assertions.assertEquals(17, ownership.databasesOf("channel-connector").get("mor_channel_connector").size());
+        Assertions.assertEquals(18, ownership.databasesOf("channel-connector").get("mor_channel_connector").size());
         Assertions.assertTrue(ownership.databasesOf("channel-connector").get("mor_channel_connector")
             .containsAll(channelCostTables));
         Assertions.assertTrue(channelCostTables.stream().noneMatch(ownership.allowedTables("billing")::contains));

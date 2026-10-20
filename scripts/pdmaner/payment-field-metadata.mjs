@@ -36,6 +36,7 @@ export const TABLE_DISPLAY_NAMES = Object.freeze({
   "channel_cost_plan_ver": "渠道成本方案版本",
   "channel_cost_scope": "渠道成本适用范围",
   "channel_cost_component": "渠道成本组件",
+  "channel_config_change": "渠道配置变更记录",
 });
 
 /*
@@ -62,6 +63,9 @@ interaction_type|交互类型|原 Action 的消费者交互类型，无交互时
 authentication_requirement|认证要求|原 PAY_RISK 获得可信 ALLOW 后冻结的认证要求。允许值：NOT_REQUIRED、THREE_DS_REQUIRED、CHALLENGE_REQUIRED；尚无确定允许结果时为空
 capture_mode|捕获模式|本次支付尝试冻结的捕获模式；新执行必填且不可修改。允许值：AUTOMATIC、MANUAL；历史未核对时为空
 source_submission_id|原支付提交标识|Commerce 原支付提交命令标识；新执行必填且全局唯一绑定一个 Attempt，历史无可靠身份时为空，不得猜测回填
+change_type|变更类型|渠道配置或成本版本人工变更的类型
+operator_id|操作者标识|执行变更的 Platform Actor 稳定业务ID
+reason|变更原因|操作者填写的非敏感原因，禁止填写凭据
 plan_code|渠道成本方案代码|跨版本稳定识别渠道成本方案的业务代码
 current_ver_id|当前成本版本|当前发布的本库渠道成本方案版本
 status|生命周期状态|渠道成本方案稳定身份的当前生命周期状态
@@ -292,8 +296,8 @@ function parseFieldMetadataSource(source) {
     }
     result[fieldKey] = metadata(defName, description);
   }
-  if (Object.keys(result).length !== 229) {
-    throw new Error(`Payment 字段元数据必须精确覆盖 229 个唯一字段键，实际 ${Object.keys(result).length}`);
+  if (Object.keys(result).length !== 232) {
+    throw new Error(`Payment 字段元数据必须精确覆盖 232 个唯一字段键，实际 ${Object.keys(result).length}`);
   }
   return Object.freeze(result);
 }
@@ -343,6 +347,8 @@ export const CLOSED_ENUM_VALUES = Object.freeze({
   "channel_cost_component.component_type": ["PROCESSING_FEE", "CROSS_BORDER_FEE", "REFUND_FEE", "DISPUTE_FEE"],
   "channel_cost_component.calculation_base": ["TRANSACTION_AMOUNT"],
   "channel_cost_component.rounding_mode": ["HALF_UP"],
+  "channel_config_change.target_type": ["CHANNEL", "CHANNEL_ACCOUNT", "CHANNEL_MID", "MID_CAPABILITY", "CHANNEL_COST_VERSION"],
+  "channel_config_change.change_type": ["CREATE", "UPDATE", "STATUS", "CONFIGURATION", "REBIND", "CANCEL"],
 });
 
 /** 开放代码的精确权威来源；这些字段不能被生成器虚构为固定枚举。 */
@@ -398,6 +404,8 @@ export const OPEN_CODE_SOURCES = Object.freeze({
   "channel_cost_scope.action_type": "Payment 动作类型目录",
   "channel_cost_component.component_code": "channel-connector 渠道成本组件代码",
   "channel_cost_component.currency": "ISO 4217 币种代码",
+  "channel_config_change.from_status": "渠道、账号、MID、能力组或成本版本的状态代码",
+  "channel_config_change.to_status": "渠道、账号、MID、能力组或成本版本的状态代码",
 });
 
 /** 表级说明显式固定每张表的职责与关键不变量。 */
@@ -433,4 +441,5 @@ export const TABLE_COMMENTS = Object.freeze({
   "channel_cost_plan_ver": "保存成本规则发布批次的生效期、内容摘要及双人审批状态，当前版本仅由方案根指针确定；APPROVED 版本到达生效时间后由到期切换 Job 原子切换为当前版本。",
   "channel_cost_scope": "冻结成本版本对 MID、经营主体、国家、币种、支付方式和动作的确定性匹配范围。",
   "channel_cost_component": "冻结渠道成本适用范围下的百分比、固定费、跨境费、退款费或争议费参数；金额由 billing 按证据计算。",
+  "channel_config_change": "渠道配置与成本版本的人工变更留痕；与业务变更同事务写入，只增不改。",
 });

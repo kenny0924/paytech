@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelCostPlanVer;
 import com.paytech.channel.connector.core.dal.mapper.ChannelCostPlanVerMapper;
 import com.paytech.channel.connector.core.enums.ChannelCostVersionStatus;
+import com.paytech.channel.connector.domain.ChannelCostVersionContentCount;
 import com.paytech.channel.connector.domainservice.repository.ChannelCostPlanVerRepository;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
 
@@ -45,6 +46,12 @@ public class ChannelCostPlanVerRepositoryImpl implements ChannelCostPlanVerRepos
     @Override
     public List<ChannelCostPlanVer> findByPlan(long planId) {
         return mapper.selectByPlan(planId);
+    }
+
+    /** CC-B 补充：方案全部版本的适用范围数与成本组成数。 */
+    @Override
+    public List<ChannelCostVersionContentCount> findContentCountsByPlan(long planId) {
+        return mapper.selectContentCountsByPlan(planId);
     }
 
     /** 方案中 ACTIVE 或 INACTIVE 且 [effective_from, effective_to) 覆盖该时间的版本，按版本号升序。 */
@@ -107,6 +114,17 @@ public class ChannelCostPlanVerRepositoryImpl implements ChannelCostPlanVerRepos
     public void deactivate(ChannelCostPlanVer ver, Instant effectiveTo) {
         requireStatus(ver, ChannelCostVersionStatus.ACTIVE);
         transit(ver, ChannelCostVersionStatus.INACTIVE, ver.getCheckerId(), effectiveTo);
+    }
+
+    /** 条件作废 APPROVED 版本，成功后同步状态、失效时间与更新时间。 */
+    @Override
+    public void cancel(ChannelCostPlanVer ver, Instant now) {
+        if (mapper.cancelApproved(ver, now) != 1) {
+            throw new ConcurrentRequestException("渠道成本版本状态或生效时间已变化，无法作废: " + ver.getId());
+        }
+        ver.setStatus(ChannelCostVersionStatus.INACTIVE);
+        ver.setEffectiveTo(ver.getEffectiveFrom());
+        ver.setUpdateTime(now);
     }
 
     /** 以对象当前状态为条件执行迁移，行数不为 1 时按并发冲突拒绝，成功后同步原对象。 */

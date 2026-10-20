@@ -542,6 +542,47 @@ export const pageCapabilities = [
     "displayName": "变更历史",
     "frontendRoute": "/commercial/history",
     "actions": []
+  },
+  {
+    "componentKey": "OPERATIONS_CHANNEL_CHANNELS",
+    "displayName": "渠道与账号",
+    "frontendRoute": "/channel/channels",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_CHANNEL_CHANNEL_MANAGE",
+        "displayName": "维护"
+      },
+      {
+        "resourceCode": "OPERATIONS_CHANNEL_ACCOUNT_CREDENTIAL",
+        "displayName": "账号凭据"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_CHANNEL_MIDS",
+    "displayName": "MID 与能力",
+    "frontendRoute": "/channel/mids",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_CHANNEL_MID_MANAGE",
+        "displayName": "维护"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_CHANNEL_COST_PLANS",
+    "displayName": "渠道成本",
+    "frontendRoute": "/channel/cost-plans",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_CHANNEL_COST_MANAGE",
+        "displayName": "维护"
+      },
+      {
+        "resourceCode": "OPERATIONS_CHANNEL_COST_APPROVE",
+        "displayName": "审批"
+      }
+    ]
   }
 ] as const;
 export type PageComponentKey = typeof pageCapabilities[number]["componentKey"];

@@ -53,6 +53,9 @@ const pages: Record<PageComponentKey, ComponentType<PageProps>> = {
   OPERATIONS_COMMERCIAL_PRICE_SIMULATOR: lazy(() => import('../pages/CommercialPriceSimulator').then(m => ({ default: m.CommercialPriceSimulator }))),
   OPERATIONS_COMMERCIAL_CATALOG: lazy(() => import('../pages/CommercialCatalog').then(m => ({ default: m.CommercialCatalog }))),
   OPERATIONS_COMMERCIAL_HISTORY: lazy(() => import('../pages/CommercialHistory').then(m => ({ default: m.CommercialHistory }))),
+  OPERATIONS_CHANNEL_CHANNELS: lazy(() => import('../pages/ChannelChannels').then(m => ({ default: m.ChannelChannels }))),
+  OPERATIONS_CHANNEL_MIDS: lazy(() => import('../pages/ChannelMids').then(m => ({ default: m.ChannelMids }))),
+  OPERATIONS_CHANNEL_COST_PLANS: lazy(() => import('../pages/ChannelCostPlans').then(m => ({ default: m.ChannelCostPlans }))),
 };
 export function ConsolePage({ componentKey, ...props }: PageProps & { componentKey: string }) {
   const Page = pages[componentKey as PageComponentKey];

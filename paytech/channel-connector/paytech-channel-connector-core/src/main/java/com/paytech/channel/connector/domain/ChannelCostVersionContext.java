@@ -7,6 +7,7 @@ import com.paytech.channel.connector.core.dal.dataobject.ChannelCostComponent;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelCostPlan;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelCostPlanVer;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelCostScope;
+import com.paytech.channel.connector.core.enums.ChannelCostVersionStatus;
 import com.paytech.foundation.common.error.BizCheckFailException;
 
 import lombok.AllArgsConstructor;
@@ -54,6 +55,23 @@ public class ChannelCostVersionContext {
         if (currentVer != null && !ver.getEffectiveFrom().isAfter(currentVer.getEffectiveFrom())) {
             throw new BizCheckFailException("新版本生效时间必须晚于当前版本: 方案 " + plan.getPlanCode() + ", 版本 "
                 + ver.getCostVer() + ", 当前版本 " + currentVer.getCostVer());
+        }
+    }
+
+    /**
+     * 目标版本可作废：只能是 APPROVED 且生效时间晚于给定时刻，否则业务拒绝
+     * <li>只依据已加载的版本判断；写入时仍以条件 SQL 复核状态与生效时间。</li>
+     *
+     * @param now 作废时刻
+     */
+    public void checkCancellableAt(Instant now) {
+        if (ver.getStatus() != ChannelCostVersionStatus.APPROVED) {
+            throw new BizCheckFailException("只能作废已批准且未到生效时间的渠道成本版本: 方案 " + plan.getPlanCode() + ", 版本 "
+                + ver.getCostVer() + ", 当前状态 " + ver.getStatus().getCode());
+        }
+        if (effectiveAt(now)) {
+            throw new BizCheckFailException("已批准版本已到生效时间，不能作废: 方案 " + plan.getPlanCode() + ", 版本 "
+                + ver.getCostVer() + ", 当前状态 " + ver.getStatus().getCode() + ", 生效时间 " + ver.getEffectiveFrom());
         }
     }
 

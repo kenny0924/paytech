@@ -5,19 +5,24 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.paytech.channel.connector.api.cost.ChannelCostPlanApi;
+import com.paytech.channel.connector.api.cost.request.CancelChannelCostVersionRequestBody;
 import com.paytech.channel.connector.api.cost.request.CreateChannelCostPlanRequestBody;
 import com.paytech.channel.connector.api.cost.request.CreateChannelCostVersionRequestBody;
 import com.paytech.channel.connector.api.cost.request.ReviewChannelCostVersionRequestBody;
 import com.paytech.channel.connector.api.cost.request.SubmitChannelCostVersionRequestBody;
 import com.paytech.channel.connector.api.cost.response.ChannelCostPlanResponseBody;
+import com.paytech.channel.connector.api.cost.response.ChannelCostPlanSummaryResponseBody;
 import com.paytech.channel.connector.api.cost.response.ChannelCostVersionResponseBody;
 import com.paytech.channel.connector.domainservice.service.ChannelCostPlanService;
 import com.paytech.channel.connector.ext.rest.converter.ChannelCostPlanConverter;
 import com.paytech.channel.connector.service.processor.ApproveChannelCostVersionProcessor;
+import com.paytech.channel.connector.service.processor.CancelChannelCostVersionProcessor;
 import com.paytech.channel.connector.service.processor.CreateChannelCostPlanProcessor;
 import com.paytech.channel.connector.service.processor.CreateChannelCostVersionProcessor;
 import com.paytech.channel.connector.service.processor.RejectChannelCostVersionProcessor;
 import com.paytech.channel.connector.service.processor.SubmitChannelCostVersionProcessor;
+import com.paytech.foundation.web.paging.PagingRequestBody;
+import com.paytech.foundation.web.paging.PagingResponseBody;
 
 import lombok.AllArgsConstructor;
 
@@ -32,6 +37,7 @@ public class ChannelCostPlanController implements ChannelCostPlanApi {
     private final RejectChannelCostVersionProcessor rejectChannelCostVersionProcessor;
     private final SubmitChannelCostVersionProcessor submitChannelCostVersionProcessor;
     private final ApproveChannelCostVersionProcessor approveChannelCostVersionProcessor;
+    private final CancelChannelCostVersionProcessor cancelChannelCostVersionProcessor;
 
     /** 创建方案并返回 201。 */
     @Override
@@ -72,6 +78,22 @@ public class ChannelCostPlanController implements ChannelCostPlanApi {
         ReviewChannelCostVersionRequestBody body) {
         return converter.toResponseBody(
             rejectChannelCostVersionProcessor.process(converter.toRequest(planCode, costVer, body)));
+    }
+
+    /** 作废未到生效时间的已批准版本。 */
+    @Override
+    public ChannelCostVersionResponseBody cancelChannelCostVersion(String planCode, String costVer,
+        CancelChannelCostVersionRequestBody body) {
+        return converter.toResponseBody(
+            cancelChannelCostVersionProcessor.process(converter.toRequest(planCode, costVer, body)));
+    }
+
+    /** 分页查询方案列表，直接委托本地 Service。 */
+    @Override
+    public PagingResponseBody<ChannelCostPlanSummaryResponseBody> listChannelCostPlans(String channelId, String status,
+        Integer page, Integer size) {
+        return channelCostPlanService.findPage(converter.optionalId(channelId), converter.planStatus(status),
+            PagingRequestBody.of(page, size)).map(converter::toSummaryResponseBody);
     }
 
     /** 查询方案与版本摘要。 */

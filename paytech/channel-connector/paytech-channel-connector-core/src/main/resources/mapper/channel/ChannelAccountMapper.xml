@@ -29,4 +29,45 @@
         <include refid="columns"/>
         FROM t_channel_account WHERE channel_account_id = #{id}
     </select>
+
+    <!-- CC-B 追加：技术账号管理写入与分页 -->
+    <insert id="insert">
+        INSERT INTO t_channel_account (<include refid="columns"/>)
+        VALUES (#{channelAccountId}, #{channelId}, #{entityNo}, #{accountName}, #{accountVaultToken},
+        #{accountStatus.code}, #{remark}, #{createTime}, #{updateTime})
+    </insert>
+    <update id="updateProfile">
+        UPDATE t_channel_account SET account_name = #{accountName}, remark = #{remark}, update_time = #{now}
+        WHERE channel_account_id = #{channelAccountId} AND account_status &lt;&gt; 'CLOSED'
+    </update>
+    <update id="updateVaultToken">
+        UPDATE t_channel_account SET account_vault_token = #{token}, update_time = #{now}
+        WHERE channel_account_id = #{channelAccountId} AND account_status &lt;&gt; 'CLOSED'
+    </update>
+    <update id="updateStatus">
+        UPDATE t_channel_account SET account_status = #{toStatus.code}, update_time = #{now}
+        WHERE channel_account_id = #{channelAccountId} AND account_status = #{fromStatus.code}
+    </update>
+    <select id="countOpenByChannel" resultType="long">
+        SELECT COUNT(*) FROM t_channel_account WHERE channel_id = #{channelId} AND account_status &lt;&gt; 'CLOSED'
+    </select>
+    <sql id="pageFilter">
+        <where>
+            <if test="channelId != null">channel_id = #{channelId}</if>
+            <if test="entityNo != null">AND entity_no = #{entityNo}</if>
+            <if test="status != null">AND account_status = #{status.code}</if>
+        </where>
+    </sql>
+    <select id="selectPage" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM t_channel_account
+        <include refid="pageFilter"/>
+        ORDER BY update_time DESC, channel_account_id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+    <select id="countPage" resultType="long">
+        SELECT COUNT(*) FROM t_channel_account
+        <include refid="pageFilter"/>
+    </select>
 </mapper>

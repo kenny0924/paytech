@@ -9,8 +9,20 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ChannelCostVersionSummaryResponseBody {
+    /**
+     * 版本主键，十进制字符串
+     * <li>查询变更记录时作为 targetType=CHANNEL_COST_VERSION 的 targetId。</li>
+     */
+    private String costVerId;
+
     /** 方案内递增的版本号。 */
     private String costVer;
+
+    /** 版本下适用范围数。 */
+    private int scopeCount;
+
+    /** 版本下全部适用范围的成本组成数。 */
+    private int componentCount;
 
     /**
      * 版本状态

@@ -26,4 +26,16 @@
         <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
         ORDER BY mid_capability_detail_id
     </select>
+
+    <!-- CC-B 追加：能力明细整组写入 -->
+    <insert id="insertAll">
+        INSERT INTO t_mid_capability_detail (<include refid="columns"/>) VALUES
+        <foreach collection="records" item="r" separator=",">
+            (#{r.midCapabilityDetailId}, #{r.midCapabilityId}, #{r.capabilityCode}, #{r.valueType.code},
+            #{r.booleanValue}, #{r.decimalValue}, #{r.codeValue}, #{r.createTime}, #{r.updateTime})
+        </foreach>
+    </insert>
+    <delete id="deleteByCapabilityId">
+        DELETE FROM t_mid_capability_detail WHERE mid_capability_id = #{midCapabilityId}
+    </delete>
 </mapper>

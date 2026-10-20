@@ -1,0 +1,1267 @@
+[
+  {
+    "id": "H01",
+    "method": "GET",
+    "path": "/channel-admin/v1/channels",
+    "ownerPath": "/channel-connector/v1/channels",
+    "query": "?status=ACTIVE&keyword=NI&page=1&size=10",
+    "request": null,
+    "ownerRequest": null,
+    "ownerActor": false,
+    "status": 200,
+    "ownerStatus": 200,
+    "response": {
+      "items": [
+        {
+          "channelId": "7400000000000000101",
+          "channelCode": "NI",
+          "channelName": "Network International",
+          "status": "ACTIVE",
+          "accountCount": 2,
+          "midCount": 3,
+          "updateTime": "2026-10-20T02:00:00Z"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    },
+    "routeCode": "operations-channel-channel-list"
+  },
+  {
+    "id": "H02",
+    "method": "GET",
+    "path": "/channel-admin/v1/channels/7400000000000000101",
+    "ownerPath": "/channel-connector/v1/channels/7400000000000000101",
+    "query": "",
+    "request": null,
+    "ownerRequest": null,
+    "ownerActor": false,
+    "status": 200,
+    "ownerStatus": 200,
+    "response": {
+      "channelId": "7400000000000000101",
+      "channelCode": "NI",
+      "channelName": "Network International",
+      "status": "ACTIVE",
+      "createTime": "2026-10-20T01:00:00Z",
+      "updateTime": "2026-10-20T02:00:00Z"
+    },
+    "routeCode": "operations-channel-channel-detail"
+  },
+  {
+    "id": "H03",
+    "method": "POST",
+    "path": "/channel-admin/v1/channels",
+    "ownerPath": "/channel-connector/v1/channels",
+    "query": "",
+    "request": {
+      "channelCode": "NI",
+      "channelName": "Network International"
+    },
+    "ownerRequest": {
+      "channelCode": "NI",
+      "channelName": "Network International"
+    },
+    "ownerActor": true,
+    "status": 201,
+    "ownerStatus": 201,
+    "response": {
+      "channelId": "7400000000000000101",
+      "channelCode": "NI",
+      "channelName": "Network International",
+      "status": "DRAFT",
+      "createTime": "2026-10-20T01:00:00Z",
+      "updateTime": "2026-10-20T02:00:00Z"
+    },
+    "routeCode": "operations-channel-channel-create"
+  },
+  {
+    "id": "H04",
+    "method": "PUT",
+    "path": "/channel-admin/v1/channels/7400000000000000101",
+    "ownerPath": "/channel-connector/v1/channels/7400000000000000101",
+    "query": "",
+    "request": {
+      "channelName": "Network International AE"
+    },
+    "ownerRequest": {
+      "channelName": "Network International AE"
+    },
+    "ownerActor": true,
+    "status": 200,
+    "ownerStatus": 200,
+    "response": {
+      "channelId": "7400000000000000101",
+      "channelCode": "NI",
+      "channelName": "Network International AE",
+      "status": "DRAFT",
+      "createTime": "2026-10-20T01:00:00Z",
+      "updateTime": "2026-10-20T02:00:00Z"
+    },
+    "routeCode": "operations-channel-channel-update"
+  },
+  {
+    "id": "H05",
+    "method": "POST",
+    "path": "/channel-admin/v1/channels/7400000000000000101/status",
+    "ownerPath": "/channel-connector/v1/channels/7400000000000000101/status",
+    "query": "",
+    "request": {
+      "targetStatus": "ACTIVE",
+      "reason": "接入方已登记"
+    },
+    "ownerRequest": {
+      "targetStatus": "ACTIVE",
+      "reason": "接入方已登记"
+    },
+    "ownerActor": true,
+    "status": 200,
+    "ownerStatus": 200,
+    "response": {
+      "channelId": "7400000000000000101",
+      "channelCode": "NI",
+      "channelName": "Network International",
+      "status": "ACTIVE",
+      "createTime": "2026-10-20T01:00:00Z",
+      "updateTime": "2026-10-20T02:00:00Z"
+    },
+    "routeCode": "operations-channel-channel-status"
+  },
+  {
+    "id": "A01",
+    "method": "GET",
+    "path": "/channel-admin/v1/channel-accounts",
+    "ownerPath": "/channel-connector/v1/channel-accounts",
+    "query": "?channelId=7400000000000000101&entityNo=AE001&status=ACTIVE&page=1&size=20",
+    "request": null,
+    "ownerRequest": null,
+    "ownerActor": false,
+    "status": 200,
+    "ownerStatus": 200,
+    "response": {
+      "items": [
+        {
+          "channelAccountId": "7400000000000000201",
+          "channelId": "7400000000000000101",
+          "entityNo": "AE001",
+          "accountName": "NI AE 主账号",
+          "status": "ACTIVE",
+          "configured": true,
+          "vaultTokenSuffix": "a1b2",
+          "updateTime": "2026-10-20T02:00:00Z"
+        }
+      ],
+      "page": 1,
+      "size": 20,
+      "total": 1
+    },
+    "routeCode": "operations-channel-account-list"
+  },
+  {
+    "id": "A02",
+    "method": "GET",
+    "path": "/channel-admin/v1/channel-accounts/7400000000000000201",
+    "ownerPath": "/channel-connector/v1/channel-accounts/7400000000000000201",
+    "query": "",
+    "request": null,
+    "ownerRequest": null,
+    "ownerActor": false,
+    "status": 200,
+    "ownerStatus": 200,
+    "response": {
+      "channelAccountId": "7400000000000000201",
+      "channelId": "7400000000000000101",
+      "entityNo": "AE001",
+      "accountName": "NI AE 主账号",
+      "status": "ACTIVE",
+      "remark": "AE001 收单",
+      "configured": true,
+      "vaultTokenSuffix": "a1b2",
+      "boundMidCount": 1,
+      "createTime": "2026-10-20T01:00:00Z",
+      "updateTime": "2026-10-20T02:00:00Z"
+    },
+    "routeCode": "operations-channel-account-detail"
+  },
+  {
+    "id": "A03",
+    "method": "POST",
+    "path": "/channel-admin/v1/channel-accounts",
+    "ownerPath": "/channel-connector/v1/channel-accounts",
+    "query": "",
+    "request": {
+      "channelId": "7400000000000000101",
+      "entityNo": "AE001",
+      "accountName": "NI AE 主账号",
+      "remark": "AE001 收单"
+    },
+    "ownerRequest": {
+      "channelId": "7400000000000000101",
+      "entityNo": "AE001",
+      "accountName": "NI AE 主账号",
+      "remark": "AE001 收单"
+    },
+    "ownerActor": true,
+    "status": 201,
+    "ownerStatus": 201,
+    "response": {
+      "channelAccountId": "7400000000000000201",
+      "channelId": "7400000000000000101",
+      "entityNo": "AE001",
+      "accountName": "NI AE 主账号",
+      "status": "DRAFT",
+      "remark": "AE001 收单",
+      "configured": false,
+      "vaultTokenSuffix": null,
+      "boundMidCount": 1,
+      "createTime": "2026-10-20T01:00:00Z",
+      "updateTime": "2026-10-20T02:00:00Z"
+    },
+    "routeCode": "operations-channel-account-create"
+  },
+  {
+    "id": "A04",
+    "method": "PUT",
+    "path": "/channel-admin/v1/channel-accounts/7400000000000000201",
+    "ownerPath": "/channel-connector/v1/channel-accounts/7400000000000000201",
+    "query": "",
+    "request": {
+      "accountName": "NI AE 备用账号",
+      "remark": null
+    },
+    "ownerRequest": {
+      "accountName": "NI AE 备用账号",
+      "remark": null
+    },
+    "ownerActor": true,
+    "status": 200,
+    "ownerStatus": 200,
+    "response": {
+      "channelAccountId": "7400000000000000201",
+      "channelId": "7400000000000000101",
+      "entityNo": "AE001",
+      "accountName": "NI AE 备用账号",
+      "status": "DRAFT",
+      "remark": null,
+      "configured": false,
+      "vaultTokenSuffix": null,
+      "boundMidCount": 1,
+      "createTime": "2026-10-20T01:00:00Z",
+      "updateTime": "2026-10-20T02:00:00Z"
+    },
+    "routeCode": "operations-channel-account-update"
+  },
+  {
+    "id": "A05",
+    "method": "PUT",
+    "path": "/channel-admin/v1/channel-accounts/7400000000000000201/configuration",
+    "ownerPath": "/channel-connector/v1/channel-accounts/7400000000000000201/configuration",
+    "query": "",
+    "request": {
+      "parameters": {
+        "merchantId": "NI-MERCHANT-01",
+        "baseUrl": "https://api.ni.example"
+      },
+      "credentials": {
+        "apiKey": "canary-credential-value"
+      }
+    },
+    "ownerRequest": {
+      "parameters": {
+        "merchantId": "NI-MERCHANT-01",
+        "baseUrl": "https://api.ni.example"
+      },
+      "credentials": {
+        "apiKey": "canary-credential-value"
+      }
+    },
+    "ownerActor": true,
+    "status": 200,
+    "ownerStatus": 200,
+    "response": {
+      "channelAccountId": "7400000000000000201",
+      "channelId": "7400000000000000101",
+      "entityNo": "AE001",
+      "accountName": "NI AE 主账号",
+      "status": "DRAFT",
+      "remark": "AE001 收单",
+      "configured": true,
+      "vaultTokenSuffix": "a1b2",
+      "boundMidCount": 1,
+      "createTime": "2026-10-20T01:00:00Z",
+      "updateTime": "2026-10-20T02:00:00Z"
+    },
+    "routeCode": "operations-channel-account-configuration"
+  },
+  {
+    "id": "A06",
+    "method": "POST",
+    "path": "/channel-admin/v1/channel-accounts/7400000000000000201/status",
+    "ownerPath": "/channel-connector/v1/channel-accounts/7400000000000000201/status",
+    "query": "",
+    "request": {
+      "targetStatus": "SUSPENDED",
+      "reason": null
+    },
+    "ownerRequest": {
+      "targetStatus": "SUSPENDED",
+      "reason": null
+    },
+    "ownerActor": true,
+    "status": 200,
+    "ownerStatus": 200,
+    "response": {
+      "channelAccountId": "7400000000000000201",
+      "channelId": "7400000000000000101",
+      "entityNo": "AE001",
+      "accountName": "NI AE 主账号",
+      "status": "SUSPENDED",
+      "remark": "AE001 收单",
+      "configured": true,
+      "vaultTokenSuffix": "a1b2",
+      "boundMidCount": 1,
+      "createTime": "2026-10-20T01:00:00Z",
+      "updateTime": "2026-10-20T02:00:00Z"
+    },
+    "routeCode": "operations-channel-account-status"
+  },
+  {
+    "id": "M01",
+    "method": "GET",
+    "path": "/channel-admin/v1/mids",
+    "ownerPath": "/channel-connector/v1/mids",
+    "query": "?channelId=7400000000000000101&channelAccountId=7400000000000000201&entityNo=AE001&status=ACTIVE&externalMidCode=NI-MID&page=2&size=10",
+    "request": null,
+    "ownerRequest": null,
+    "ownerActor": false,
+    "status": 200,
+    "ownerStatus": 200,
+    "response": {
+      "items": [
+        {
+          "midId": "7400000000000000301",
+          "channelId": "7400000000000000101",
+          "channelCode": "NI",
+          "channelAccountId": "7400000000000000201",
+          "accountName": "NI AE 主账号",
+          "externalMidCode": "NI-MID-0001",
+          "entityNo": "AE001",
+          "status": "ACTIVE",
+          "capabilityGroupCount": 2,
+          "enabledCapabilityGroupCount": 1,
+          "activatedAt": "2026-10-20T02:00:00Z",
+          "updateTime": "2026-10-20T02:00:00Z"
+        }
+      ],
+      "page": 2,
+      "size": 10,
+      "total": 11
+    },
+    "routeCode": "operations-channel-mid-list"
+  },
+  {
+    "id": "M02",
+    "method": "GET",
+    "path": "/channel-admin/v1/mids/7400000000000000301",
+    "ownerPath": "/channel-connector/v1/mids/7400000000000000301",
+    "query": "",
+    "request": null,
+    "ownerRequest": null,
+    "ownerActor": false,
+    "status": 200,
+    "ownerStatus": 200,
+    "response": {
+      "midId": "7400000000000000301",
+      "channelId": "7400000000000000101",
+      "channelAccountId": "7400000000000000201",
+      "externalMidCode": "NI-MID-0001",
+      "entityNo": "AE001",
+      "status": "ACTIVE",
+      "activatedAt": "2026-10-20T02:00:00Z",
+      "closedAt": null,
+      "createTime": "2026-10-20T01:00:00Z",
+      "updateTime": "2026-10-20T02:00:00Z",
+      "capabilities": [
+        {
+          "midCapabilityId": "7400000000000000401",
+          "midId": "7400000000000000301",
+          "paymentMethodCode": "CARD",
+          "schemeCode": "VISA",
+          "countryCode": "*",
+          "currency": "USD",
+          "mccCode": "5816",
+          "status": "ENABLED",
+          "createTime": "2026-10-20T01:00:00Z",
+          "updateTime": "2026-10-20T02:00:00Z",
+          "details": [
+            {
+              "capabilityCode": "ACTION.AUTHORIZE",
+              "valueType": "BOOLEAN",
+              "booleanValue": true,
+              "decimalValue": null,
+              "codeValue": null
+            },
+            {
+              "capabilityCode": "AMOUNT.MAX",
+              "valueType": "DECIMAL",
+              "booleanValue": null,
+              "decimalValue": "5000.00",
+              "codeValue": null
+            }
+          ]
+        }
+      ]
+    },
+    "routeCode": "operations-channel-mid-detail"
+  },
+  {
+    "id": "M03",
+    "method": "POST",
+    "path": "/channel-admin/v1/mids",
+    "ownerPath": "/channel-connector/v1/mids",
+    "query": "",
+    "request": {
+      "channelId": "7400000000000000101",
+      "channelAccountId": "7400000000000000201",
+      "externalMidCode": "NI-MID-0001",
+      "entityNo": "AE001"
+    },
+    "ownerRequest": {
+      "channelId": "7400000000000000101",
+      "channelAccountId": "7400000000000000201",
+      "externalMidCode": "NI-MID-0001",
+      "entityNo": "AE001"
+    },
+    "ownerActor": true,
+    "status": 201,
+    "ownerStatus": 201,
+    "response": {
+      "midId": "7400000000000000301",
+      "channelId": "7400000000000000101",
+      "channelAccountId": "7400000000000000201",
+      "externalMidCode": "NI-MID-0001",
+      "entityNo": "AE001",
+      "status": "DRAFT",
+      "activatedAt": null,
+      "closedAt": null,
+      "createTime": "2026-10-20T01:00:00Z",
+      "updateTime": "2026-10-20T02:00:00Z",
+      "capabilities": []
+    },
+    "routeCode": "operations-channel-mid-create"
+  },
+  {
+    "id": "M04",
+    "method": "PUT",
+    "path": "/channel-admin/v1/mids/7400000000000000301/account",
+    "ownerPath": "/channel-connector/v1/mids/7400000000000000301/account",
+    "query": "",
+    "request": {
+      "channelAccountId": "7400000000000000202"
+    },
+    "ownerRequest": {
+      "channelAccountId": "7400000000000000202"
+    },
+    "ownerActor": true,
+    "status": 200,
+    "ownerStatus": 200,
+    "response": {
+      "midId": "7400000000000000301",
+      "channelId": "7400000000000000101",
+      "channelAccountId": "7400000000000000202",
+      "externalMidCode": "NI-MID-0001",
+      "entityNo": "AE001",
+      "status": "ACTIVE",
+      "activatedAt": "2026-10-20T02:00:00Z",
+      "closedAt": null,
+      "createTime": "2026-10-20T01:00:00Z",
+      "updateTime": "2026-10-20T02:00:00Z",
+      "capabilities": [
+        {
+          "midCapabilityId": "7400000000000000401",
+          "midId": "7400000000000000301",
+          "paymentMethodCode": "CARD",
+          "schemeCode": "VISA",
+          "countryCode": "*",
+          "currency": "USD",
+          "mccCode": "5816",
+          "status": "ENABLED",
+          "createTime": "2026-10-20T01:00:00Z",
+          "updateTime": "2026-10-20T02:00:00Z",
+          "details": [
+            {
+              "capabilityCode": "ACTION.AUTHORIZE",
+              "valueType": "BOOLEAN",
+              "booleanValue": true,
+              "decimalValue": null,
+              "codeValue": null
+            },
+            {
+              "capabilityCode": "AMOUNT.MAX",
+              "valueType": "DECIMAL",
+              "booleanValue": null,
+              "decimalValue": "5000.00",
+              "codeValue": null
+            }
+          ]
+        }
+      ]
+    },
+    "routeCode": "operations-channel-mid-rebind-account"
+  },
+  {
+    "id": "M05",
+    "method": "POST",
+    "path": "/channel-admin/v1/mids/7400000000000000301/status",
+    "ownerPath": "/channel-connector/v1/mids/7400000000000000301/status",
+    "query": "",
+    "request": {
+      "targetStatus": "CLOSED",
+      "reason": "渠道终止合作"
+    },
+    "ownerRequest": {
+      "targetStatus": "CLOSED",
+      "reason": "渠道终止合作"
+    },
+    "ownerActor": true,
+    "status": 200,
+    "ownerStatus": 200,
+    "response": {
+      "midId": "7400000000000000301",
+      "channelId": "7400000000000000101",
+      "channelAccountId": "7400000000000000201",
+      "externalMidCode": "NI-MID-0001",
+      "entityNo": "AE001",
+      "status": "CLOSED",
+      "activatedAt": "2026-10-20T02:00:00Z",
+      "closedAt": "2026-10-20T02:00:00Z",
+      "createTime": "2026-10-20T01:00:00Z",
+      "updateTime": "2026-10-20T02:00:00Z",
+      "capabilities": []
+    },
+    "routeCode": "operations-channel-mid-status"
+  },
+  {
+    "id": "K01",
+    "method": "GET",
+    "path": "/channel-admin/v1/mid-capabilities/definitions",
+    "ownerPath": "/channel-connector/v1/mid-capabilities/definitions",
+    "query": "",
+    "request": null,
+    "ownerRequest": null,
+    "ownerActor": false,
+    "status": 200,
+    "ownerStatus": 200,
+    "response": {
+      "definitions": [
+        {
+          "capabilityCode": "ACTION.AUTHORIZE",
+          "valueType": "BOOLEAN",
+          "allowedCodes": []
+        },
+        {
+          "capabilityCode": "AMOUNT.MAX",
+          "valueType": "DECIMAL",
+          "allowedCodes": []
+        },
+        {
+          "capabilityCode": "THREE_DS.MODE",
+          "valueType": "CODE",
+          "allowedCodes": [
+            "NONE",
+            "FRICTIONLESS",
+            "CHALLENGE"
+          ]
+        }
+      ]
+    },
+    "routeCode": "operations-channel-capability-definitions"
+  },
+  {
+    "id": "K02",
+    "method": "POST",
+    "path": "/channel-admin/v1/mid-capabilities",
+    "ownerPath": "/channel-connector/v1/mid-capabilities",
+    "query": "",
+    "request": {
+      "midId": "7400000000000000301",
+      "paymentMethodCode": "CARD",
+      "schemeCode": "VISA",
+      "countryCode": "*",
+      "currency": "USD",
+      "mccCode": "5816",
+      "details": [
+        {
+          "capabilityCode": "ACTION.AUTHORIZE",
+          "booleanValue": true,
+          "decimalValue": null,
+          "codeValue": null
+        },
+        {
+          "capabilityCode": "AMOUNT.MAX",
+          "booleanValue": null,
+          "decimalValue": "5000.00",
+          "codeValue": null
+        }
+      ]
+    },
+    "ownerRequest": {
+      "midId": "7400000000000000301",
+      "paymentMethodCode": "CARD",
+      "schemeCode": "VISA",
+      "countryCode": "*",
+      "currency": "USD",
+      "mccCode": "5816",
+      "details": [
+        {
+          "capabilityCode": "ACTION.AUTHORIZE",
+          "booleanValue": true,
+          "decimalValue": null,
+          "codeValue": null
+        },
+        {
+          "capabilityCode": "AMOUNT.MAX",
+          "booleanValue": null,
+          "decimalValue": "5000.00",
+          "codeValue": null
+        }
+      ]
+    },
+    "ownerActor": true,
+    "status": 201,
+    "ownerStatus": 201,
+    "response": {
+      "midCapabilityId": "7400000000000000401",
+      "midId": "7400000000000000301",
+      "paymentMethodCode": "CARD",
+      "schemeCode": "VISA",
+      "countryCode": "*",
+      "currency": "USD",
+      "mccCode": "5816",
+      "status": "ENABLED",
+      "createTime": "2026-10-20T01:00:00Z",
+      "updateTime": "2026-10-20T02:00:00Z",
+      "details": [
+        {
+          "capabilityCode": "ACTION.AUTHORIZE",
+          "valueType": "BOOLEAN",
+          "booleanValue": true,
+          "decimalValue": null,
+          "codeValue": null
+        },
+        {
+          "capabilityCode": "AMOUNT.MAX",
+          "valueType": "DECIMAL",
+          "booleanValue": null,
+          "decimalValue": "5000.00",
+          "codeValue": null
+        }
+      ]
+    },
+    "routeCode": "operations-channel-capability-create"
+  },
+  {
+    "id": "K03",
+    "method": "PUT",
+    "path": "/channel-admin/v1/mid-capabilities/7400000000000000401/details",
+    "ownerPath": "/channel-connector/v1/mid-capabilities/7400000000000000401/details",
+    "query": "",
+    "request": {
+      "details": [
+        {
+          "capabilityCode": "THREE_DS.MODE",
+          "booleanValue": null,
+          "decimalValue": null,
+          "codeValue": "CHALLENGE"
+        }
+      ]
+    },
+    "ownerRequest": {
+      "details": [
+        {
+          "capabilityCode": "THREE_DS.MODE",
+          "booleanValue": null,
+          "decimalValue": null,
+          "codeValue": "CHALLENGE"
+        }
+      ]
+    },
+    "ownerActor": true,
+    "status": 200,
+    "ownerStatus": 200,
+    "response": {
+      "midCapabilityId": "7400000000000000401",
+      "midId": "7400000000000000301",
+      "paymentMethodCode": "CARD",
+      "schemeCode": "VISA",
+      "countryCode": "*",
+      "currency": "USD",
+      "mccCode": "5816",
+      "status": "ENABLED",
+      "createTime": "2026-10-20T01:00:00Z",
+      "updateTime": "2026-10-20T02:00:00Z",
+      "details": [
+        {
+          "capabilityCode": "THREE_DS.MODE",
+          "valueType": "CODE",
+          "booleanValue": null,
+          "decimalValue": null,
+          "codeValue": "CHALLENGE"
+        }
+      ]
+    },
+    "routeCode": "operations-channel-capability-details"
+  },
+  {
+    "id": "K04",
+    "method": "POST",
+    "path": "/channel-admin/v1/mid-capabilities/7400000000000000401/status",
+    "ownerPath": "/channel-connector/v1/mid-capabilities/7400000000000000401/status",
+    "query": "",
+    "request": {
+      "targetStatus": "DISABLED"
+    },
+    "ownerRequest": {
+      "targetStatus": "DISABLED"
+    },
+    "ownerActor": true,
+    "status": 200,
+    "ownerStatus": 200,
+    "response": {
+      "midCapabilityId": "7400000000000000401",
+      "midId": "7400000000000000301",
+      "paymentMethodCode": "CARD",
+      "schemeCode": "VISA",
+      "countryCode": "*",
+      "currency": "USD",
+      "mccCode": "5816",
+      "status": "DISABLED",
+      "createTime": "2026-10-20T01:00:00Z",
+      "updateTime": "2026-10-20T02:00:00Z",
+      "details": [
+        {
+          "capabilityCode": "ACTION.AUTHORIZE",
+          "valueType": "BOOLEAN",
+          "booleanValue": true,
+          "decimalValue": null,
+          "codeValue": null
+        },
+        {
+          "capabilityCode": "AMOUNT.MAX",
+          "valueType": "DECIMAL",
+          "booleanValue": null,
+          "decimalValue": "5000.00",
+          "codeValue": null
+        }
+      ]
+    },
+    "routeCode": "operations-channel-capability-status"
+  },
+  {
+    "id": "G01",
+    "method": "GET",
+    "path": "/channel-admin/v1/config-changes",
+    "ownerPath": "/channel-connector/v1/config-changes",
+    "query": "?targetType=CHANNEL&targetId=7400000000000000101&page=1&size=10",
+    "request": null,
+    "ownerRequest": null,
+    "ownerActor": false,
+    "status": 200,
+    "ownerStatus": 200,
+    "response": {
+      "items": [
+        {
+          "changeId": "7400000000000000501",
+          "targetType": "CHANNEL",
+          "targetId": "7400000000000000101",
+          "changeType": "STATUS",
+          "fromStatus": "DRAFT",
+          "toStatus": "ACTIVE",
+          "operatorId": "10001",
+          "reason": "接入方已登记",
+          "createTime": "2026-10-20T02:00:00Z"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    },
+    "routeCode": "operations-channel-change-list"
+  },
+  {
+    "id": "P01",
+    "method": "GET",
+    "path": "/channel-admin/v1/channel-cost-plans",
+    "ownerPath": "/channel-connector/v1/channel-cost-plans",
+    "query": "?channelId=7400000000000000101&status=ACTIVE&page=1&size=10",
+    "request": null,
+    "ownerRequest": null,
+    "ownerActor": false,
+    "status": 200,
+    "ownerStatus": 200,
+    "response": {
+      "items": [
+        {
+          "planId": "7400000000000000601",
+          "planCode": "NI_COST",
+          "channelId": "7400000000000000101",
+          "channelCode": "NI",
+          "channelName": "Network International",
+          "status": "ACTIVE",
+          "currentCostVer": "1",
+          "currentEffectiveFrom": "2026-10-20T01:00:00Z",
+          "pendingApprovalCount": 1,
+          "updateTime": "2026-10-20T02:00:00Z"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    },
+    "routeCode": "operations-channel-cost-plan-list"
+  },
+  {
+    "id": "P02",
+    "method": "GET",
+    "path": "/channel-admin/v1/channel-cost-plans/NI_COST",
+    "ownerPath": "/channel-connector/v1/channel-cost-plans/NI_COST",
+    "query": "",
+    "request": null,
+    "ownerRequest": null,
+    "ownerActor": false,
+    "status": 200,
+    "ownerStatus": 200,
+    "response": {
+      "planCode": "NI_COST",
+      "channelId": "7400000000000000101",
+      "status": "ACTIVE",
+      "currentCostVer": "1",
+      "versions": [
+        {
+          "costVerId": "7400000000000000702",
+          "costVer": "2",
+          "status": "PENDING_APPROVAL",
+          "effectiveFrom": "2026-11-01T00:00:00Z",
+          "effectiveTo": null,
+          "contentHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "makerId": "10002",
+          "checkerId": null,
+          "scopeCount": 1,
+          "componentCount": 1
+        },
+        {
+          "costVerId": "7400000000000000701",
+          "costVer": "1",
+          "status": "ACTIVE",
+          "effectiveFrom": "2026-10-20T01:00:00Z",
+          "effectiveTo": null,
+          "contentHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "makerId": "10002",
+          "checkerId": "10003",
+          "scopeCount": 1,
+          "componentCount": 1
+        }
+      ]
+    },
+    "routeCode": "operations-channel-cost-plan-detail"
+  },
+  {
+    "id": "P03",
+    "method": "GET",
+    "path": "/channel-admin/v1/channel-cost-plans/NI_COST/versions/2",
+    "ownerPath": "/channel-connector/v1/channel-cost-plans/NI_COST/versions/2",
+    "query": "",
+    "request": null,
+    "ownerRequest": null,
+    "ownerActor": false,
+    "status": 200,
+    "ownerStatus": 200,
+    "response": {
+      "costVerId": "7400000000000000702",
+      "planCode": "NI_COST",
+      "costVer": "2",
+      "status": "PENDING_APPROVAL",
+      "effectiveFrom": "2026-11-01T00:00:00Z",
+      "effectiveTo": null,
+      "contentHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "makerId": "10001",
+      "checkerId": null,
+      "scopes": [
+        {
+          "scopeNo": 1,
+          "midId": "7400000000000000301",
+          "entityNo": "AE001",
+          "channelAgreementRef": "NI-AGR-2026",
+          "countryCode": "AE",
+          "currency": "USD",
+          "paymentMethodCode": "CARD",
+          "actionType": "CAPTURE",
+          "components": [
+            {
+              "componentId": "7400000000000000801",
+              "componentCode": "PROCESSING_FEE",
+              "componentType": "PERCENTAGE",
+              "calculationBase": "TRANSACTION_AMOUNT",
+              "rateValue": "0.025",
+              "fixedAmount": "0.30",
+              "currency": "USD",
+              "minAmount": null,
+              "maxAmount": null,
+              "roundingMode": "HALF_UP"
+            }
+          ]
+        }
+      ]
+    },
+    "routeCode": "operations-channel-cost-version-detail"
+  },
+  {
+    "id": "P04",
+    "method": "POST",
+    "path": "/channel-admin/v1/channel-cost-plans",
+    "ownerPath": "/channel-connector/v1/channel-cost-plans",
+    "query": "",
+    "request": {
+      "channelId": "7400000000000000101",
+      "planCode": "NI_COST"
+    },
+    "ownerRequest": {
+      "channelId": "7400000000000000101",
+      "planCode": "NI_COST"
+    },
+    "ownerActor": false,
+    "status": 201,
+    "ownerStatus": 201,
+    "response": {
+      "planCode": "NI_COST",
+      "channelId": "7400000000000000101",
+      "status": "DRAFT",
+      "currentCostVer": null,
+      "versions": []
+    },
+    "routeCode": "operations-channel-cost-plan-create"
+  },
+  {
+    "id": "P05",
+    "method": "POST",
+    "path": "/channel-admin/v1/channel-cost-plans/NI_COST/versions",
+    "ownerPath": "/channel-connector/v1/channel-cost-plans/NI_COST/versions",
+    "query": "",
+    "request": {
+      "effectiveFrom": "2026-11-01T00:00:00Z",
+      "scopes": [
+        {
+          "scopeNo": 1,
+          "midId": "7400000000000000301",
+          "entityNo": "AE001",
+          "channelAgreementRef": "NI-AGR-2026",
+          "countryCode": "AE",
+          "currency": "USD",
+          "paymentMethodCode": "CARD",
+          "actionType": "CAPTURE",
+          "components": [
+            {
+              "componentCode": "PROCESSING_FEE",
+              "componentType": "PERCENTAGE",
+              "calculationBase": "TRANSACTION_AMOUNT",
+              "rateValue": "0.025",
+              "fixedAmount": "0.30",
+              "currency": "USD",
+              "minAmount": null,
+              "maxAmount": null,
+              "roundingMode": "HALF_UP"
+            }
+          ]
+        }
+      ]
+    },
+    "ownerRequest": {
+      "makerId": "10001",
+      "effectiveFrom": "2026-11-01T00:00:00Z",
+      "scopes": [
+        {
+          "scopeNo": 1,
+          "midId": "7400000000000000301",
+          "entityNo": "AE001",
+          "channelAgreementRef": "NI-AGR-2026",
+          "countryCode": "AE",
+          "currency": "USD",
+          "paymentMethodCode": "CARD",
+          "actionType": "CAPTURE",
+          "components": [
+            {
+              "componentCode": "PROCESSING_FEE",
+              "componentType": "PERCENTAGE",
+              "calculationBase": "TRANSACTION_AMOUNT",
+              "rateValue": "0.025",
+              "fixedAmount": "0.30",
+              "currency": "USD",
+              "minAmount": null,
+              "maxAmount": null,
+              "roundingMode": "HALF_UP"
+            }
+          ]
+        }
+      ]
+    },
+    "ownerActor": false,
+    "status": 201,
+    "ownerStatus": 201,
+    "response": {
+      "costVerId": "7400000000000000702",
+      "planCode": "NI_COST",
+      "costVer": "2",
+      "status": "DRAFT",
+      "effectiveFrom": "2026-11-01T00:00:00Z",
+      "effectiveTo": null,
+      "contentHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "makerId": "10001",
+      "checkerId": null,
+      "scopes": [
+        {
+          "scopeNo": 1,
+          "midId": "7400000000000000301",
+          "entityNo": "AE001",
+          "channelAgreementRef": "NI-AGR-2026",
+          "countryCode": "AE",
+          "currency": "USD",
+          "paymentMethodCode": "CARD",
+          "actionType": "CAPTURE",
+          "components": [
+            {
+              "componentId": "7400000000000000801",
+              "componentCode": "PROCESSING_FEE",
+              "componentType": "PERCENTAGE",
+              "calculationBase": "TRANSACTION_AMOUNT",
+              "rateValue": "0.025",
+              "fixedAmount": "0.30",
+              "currency": "USD",
+              "minAmount": null,
+              "maxAmount": null,
+              "roundingMode": "HALF_UP"
+            }
+          ]
+        }
+      ]
+    },
+    "routeCode": "operations-channel-cost-version-create"
+  },
+  {
+    "id": "P06",
+    "method": "POST",
+    "path": "/channel-admin/v1/channel-cost-plans/NI_COST/versions/2/submit",
+    "ownerPath": "/channel-connector/v1/channel-cost-plans/NI_COST/versions/2/submit",
+    "query": "",
+    "request": null,
+    "ownerRequest": {
+      "makerId": "10001"
+    },
+    "ownerActor": false,
+    "status": 200,
+    "ownerStatus": 200,
+    "response": {
+      "costVerId": "7400000000000000702",
+      "planCode": "NI_COST",
+      "costVer": "2",
+      "status": "PENDING_APPROVAL",
+      "effectiveFrom": "2026-11-01T00:00:00Z",
+      "effectiveTo": null,
+      "contentHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "makerId": "10001",
+      "checkerId": null,
+      "scopes": [
+        {
+          "scopeNo": 1,
+          "midId": "7400000000000000301",
+          "entityNo": "AE001",
+          "channelAgreementRef": "NI-AGR-2026",
+          "countryCode": "AE",
+          "currency": "USD",
+          "paymentMethodCode": "CARD",
+          "actionType": "CAPTURE",
+          "components": [
+            {
+              "componentId": "7400000000000000801",
+              "componentCode": "PROCESSING_FEE",
+              "componentType": "PERCENTAGE",
+              "calculationBase": "TRANSACTION_AMOUNT",
+              "rateValue": "0.025",
+              "fixedAmount": "0.30",
+              "currency": "USD",
+              "minAmount": null,
+              "maxAmount": null,
+              "roundingMode": "HALF_UP"
+            }
+          ]
+        }
+      ]
+    },
+    "routeCode": "operations-channel-cost-version-submit"
+  },
+  {
+    "id": "P07",
+    "method": "POST",
+    "path": "/channel-admin/v1/channel-cost-plans/NI_COST/versions/2/approve",
+    "ownerPath": "/channel-connector/v1/channel-cost-plans/NI_COST/versions/2/approve",
+    "query": "",
+    "request": {
+      "approvedContentHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    "ownerRequest": {
+      "checkerId": "10001",
+      "approvedContentHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    "ownerActor": false,
+    "status": 200,
+    "ownerStatus": 200,
+    "response": {
+      "costVerId": "7400000000000000702",
+      "planCode": "NI_COST",
+      "costVer": "2",
+      "status": "APPROVED",
+      "effectiveFrom": "2026-11-01T00:00:00Z",
+      "effectiveTo": null,
+      "contentHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "makerId": "10002",
+      "checkerId": "10001",
+      "scopes": [
+        {
+          "scopeNo": 1,
+          "midId": "7400000000000000301",
+          "entityNo": "AE001",
+          "channelAgreementRef": "NI-AGR-2026",
+          "countryCode": "AE",
+          "currency": "USD",
+          "paymentMethodCode": "CARD",
+          "actionType": "CAPTURE",
+          "components": [
+            {
+              "componentId": "7400000000000000801",
+              "componentCode": "PROCESSING_FEE",
+              "componentType": "PERCENTAGE",
+              "calculationBase": "TRANSACTION_AMOUNT",
+              "rateValue": "0.025",
+              "fixedAmount": "0.30",
+              "currency": "USD",
+              "minAmount": null,
+              "maxAmount": null,
+              "roundingMode": "HALF_UP"
+            }
+          ]
+        }
+      ]
+    },
+    "routeCode": "operations-channel-cost-version-approve"
+  },
+  {
+    "id": "P08",
+    "method": "POST",
+    "path": "/channel-admin/v1/channel-cost-plans/NI_COST/versions/2/reject",
+    "ownerPath": "/channel-connector/v1/channel-cost-plans/NI_COST/versions/2/reject",
+    "query": "",
+    "request": {
+      "approvedContentHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    "ownerRequest": {
+      "checkerId": "10001",
+      "approvedContentHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    "ownerActor": false,
+    "status": 200,
+    "ownerStatus": 200,
+    "response": {
+      "costVerId": "7400000000000000702",
+      "planCode": "NI_COST",
+      "costVer": "2",
+      "status": "REJECTED",
+      "effectiveFrom": "2026-11-01T00:00:00Z",
+      "effectiveTo": null,
+      "contentHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "makerId": "10002",
+      "checkerId": "10001",
+      "scopes": [
+        {
+          "scopeNo": 1,
+          "midId": "7400000000000000301",
+          "entityNo": "AE001",
+          "channelAgreementRef": "NI-AGR-2026",
+          "countryCode": "AE",
+          "currency": "USD",
+          "paymentMethodCode": "CARD",
+          "actionType": "CAPTURE",
+          "components": [
+            {
+              "componentId": "7400000000000000801",
+              "componentCode": "PROCESSING_FEE",
+              "componentType": "PERCENTAGE",
+              "calculationBase": "TRANSACTION_AMOUNT",
+              "rateValue": "0.025",
+              "fixedAmount": "0.30",
+              "currency": "USD",
+              "minAmount": null,
+              "maxAmount": null,
+              "roundingMode": "HALF_UP"
+            }
+          ]
+        }
+      ]
+    },
+    "routeCode": "operations-channel-cost-version-reject"
+  },
+  {
+    "id": "P09",
+    "method": "POST",
+    "path": "/channel-admin/v1/channel-cost-plans/NI_COST/versions/2/cancel",
+    "ownerPath": "/channel-connector/v1/channel-cost-plans/NI_COST/versions/2/cancel",
+    "query": "",
+    "request": {
+      "reason": "渠道调价延期"
+    },
+    "ownerRequest": {
+      "operatorId": "10001",
+      "reason": "渠道调价延期"
+    },
+    "ownerActor": false,
+    "status": 200,
+    "ownerStatus": 200,
+    "response": {
+      "costVerId": "7400000000000000702",
+      "planCode": "NI_COST",
+      "costVer": "2",
+      "status": "INACTIVE",
+      "effectiveFrom": "2026-11-01T00:00:00Z",
+      "effectiveTo": "2026-11-01T00:00:00Z",
+      "contentHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "makerId": "10002",
+      "checkerId": "10003",
+      "scopes": [
+        {
+          "scopeNo": 1,
+          "midId": "7400000000000000301",
+          "entityNo": "AE001",
+          "channelAgreementRef": "NI-AGR-2026",
+          "countryCode": "AE",
+          "currency": "USD",
+          "paymentMethodCode": "CARD",
+          "actionType": "CAPTURE",
+          "components": [
+            {
+              "componentId": "7400000000000000801",
+              "componentCode": "PROCESSING_FEE",
+              "componentType": "PERCENTAGE",
+              "calculationBase": "TRANSACTION_AMOUNT",
+              "rateValue": "0.025",
+              "fixedAmount": "0.30",
+              "currency": "USD",
+              "minAmount": null,
+              "maxAmount": null,
+              "roundingMode": "HALF_UP"
+            }
+          ]
+        }
+      ]
+    },
+    "routeCode": "operations-channel-cost-version-cancel"
+  }
+]

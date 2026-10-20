@@ -2,6 +2,7 @@ package com.paytech.channel.connector.test.mocker;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,6 +32,11 @@ public class VaultMocker implements Clear {
     private final Map<String, String> errorRequestIds = new HashMap<>();
     private final List<String> calls = new ArrayList<>();
     private final List<String> unexpected = new ArrayList<>();
+    private final Map<String, ArrayDeque<String>> protectTokens = new HashMap<>();
+    private final Map<String, String> protectByKey = new HashMap<>();
+    private final List<ProtectCall> protects = new ArrayList<>();
+    private MockHttpFault protectFault;
+    private String protectErrorRequestId;
 
     /** 按冻结账号生成有明确归属的合成配置。 */
     public void configure(ChannelDataMocker.Fixture fixture) {
@@ -63,10 +69,96 @@ public class VaultMocker implements Clear {
         return responses.get(token);
     }
 
-    /** channel-connector 从不 Protect；收到即记为意外调用。 */
-    public synchronized ProtectResponse protect(String caller, ProtectRequest request) {
-        unexpected.add("protect");
-        throw new AssertionError("channel-connector 不应调用 Vault Protect");
+    // ---- CC-B 追加：账号配置写入的 Protect ----
+
+    /**
+     * 为指定数据类型与用途按顺序准备 Protect 返回的 Token
+     * <li>同一幂等键重放返回该键首次分配的 Token（与 Vault REFERENCE 合同一致）；新键依次消费，耗尽即意外调用。</li>
+     */
+    public synchronized void expectProtect(String dataType, String purpose, String... tokens) {
+        protectTokens.computeIfAbsent(dataType + "|" + purpose, key -> new ArrayDeque<>()).addAll(List.of(tokens));
+    }
+
+    /** 让下一次匹配的 Protect 返回 HTTP 故障；Problem 的 Request ID 同步写入响应 Header。 */
+    public synchronized void protectProblem(int status, ApiProblemResponse problem) {
+        protectFault = MockHttpFault.json(status, problem);
+        protectErrorRequestId = problem.requestId();
+    }
+
+    /** Protect 故障的 Request ID，供测试 HTTP 层写出 Header。 */
+    public synchronized String protectErrorRequestId() {
+        return protectFault == null ? null : protectErrorRequestId;
+    }
+
+    /** HTTP Mock 实际调用此处：核对调用者与预期，记录不含原值的调用摘要。 */
+    public synchronized ProtectResponse protect(String caller, String idempotencyKey, ProtectRequest request) {
+        var queue = protectTokens.get(request.dataType() + "|" + request.purpose());
+        if (!CALLER.equals(caller) || queue == null) {
+            unexpected.add("unconfigured-protect");
+            throw new AssertionError("Vault Protect 未配置或调用者/数据类型/用途不符");
+        }
+        protects.add(ProtectCall.of(idempotencyKey, request));
+        if (protectFault != null) {
+            throw protectFault;
+        }
+        String token = protectByKey.get(idempotencyKey);
+        if (token == null) {
+            token = queue.poll();
+            if (token == null) {
+                unexpected.add("protect-exhausted");
+                throw new AssertionError("Vault Protect 预设 Token 已耗尽");
+            }
+            protectByKey.put(idempotencyKey, token);
+        }
+        return new ProtectResponse(token);
+    }
+
+    /** 本例 Protect 调用记录。 */
+    public synchronized List<ProtectCall> protectCalls() {
+        return List.copyOf(protects);
+    }
+
+    /**
+     * 一次 Protect 调用的稳定摘要；不保存原值，只保存其 SHA-256 与非凭据的结构字段
+     *
+     * @param idempotencyKey 请求头中的幂等键
+     * @param dataType 数据类型
+     * @param tokenMode Token 模式
+     * @param purpose 用途
+     * @param valueSha256 原值 UTF-8 字节的 SHA-256 hex
+     * @param structure 原值的归属字段、参数与凭据键名（不含任何参数或凭据值）
+     */
+    public record ProtectCall(String idempotencyKey, String dataType, String tokenMode, String purpose,
+        String valueSha256, Map<String, Object> structure) {
+
+        /** 由请求摘要构造，原值只用于计算摘要与读取结构。 */
+        static ProtectCall of(String idempotencyKey, ProtectRequest request) {
+            return new ProtectCall(idempotencyKey, request.dataType(), request.tokenMode(), request.purpose(),
+                sha256(request.value()), structure(request.value()));
+        }
+
+        /** 原值 SHA-256 hex。 */
+        static String sha256(String value) {
+            try {
+                return java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256")
+                    .digest(value.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+            } catch (java.security.NoSuchAlgorithmException e) {
+                throw new AssertionError(e);
+            }
+        }
+
+        /** 结构字段：schemaVersion、归属三字段与参数 / 凭据键名。 */
+        static Map<String, Object> structure(String value) {
+            var tree = JsonMapper.builder().build().readTree(value);
+            Map<String, Object> result = new java.util.LinkedHashMap<>();
+            result.put("schemaVersion", tree.path("schemaVersion").asInt());
+            result.put("channelCode", tree.path("channelCode").asString());
+            result.put("channelAccountId", tree.path("channelAccountId").asString());
+            result.put("entityNo", tree.path("entityNo").asString());
+            result.put("parameterKeys", new java.util.TreeSet<>(tree.path("parameters").propertyNames()));
+            result.put("credentialKeys", new java.util.TreeSet<>(tree.path("credentials").propertyNames()));
+            return result;
+        }
     }
 
     /** 用真实 HTTP 状态或畸形报文验证凭据读取失败，不替换生产客户端。 */
@@ -99,7 +191,8 @@ public class VaultMocker implements Clear {
     /** 每例必须从完全空的 Mock 状态开始。 */
     public synchronized void assertEmpty() {
         assertTrue(responses.isEmpty() && faults.isEmpty() && errorRequestIds.isEmpty() && calls.isEmpty()
-            && unexpected.isEmpty());
+            && unexpected.isEmpty() && protectTokens.isEmpty() && protectByKey.isEmpty() && protects.isEmpty()
+            && protectFault == null);
     }
 
     /** 即使业务捕获 HTTP 故障，也不能掩盖意外调用。 */
@@ -115,5 +208,10 @@ public class VaultMocker implements Clear {
         errorRequestIds.clear();
         calls.clear();
         unexpected.clear();
+        protectTokens.clear();
+        protectByKey.clear();
+        protects.clear();
+        protectFault = null;
+        protectErrorRequestId = null;
     }
 }

@@ -19,6 +19,7 @@
     { "callerService": "client-master-service", "action": "REVEAL", "dataType": "PHONE_E164_V1", "purposes": ["CLIENT_ONBOARDING_CONTACT"] },
     { "callerService": "card-service", "action": "PROTECT", "dataType": "PAYMENT_CARD_DEK", "purposes": ["CARD_STORAGE"] },
     { "callerService": "card-service", "action": "REVEAL", "dataType": "PAYMENT_CARD_DEK", "purposes": ["CARD_USE"] },
-    { "callerService": "channel-connector-service", "action": "REVEAL", "dataType": "CHANNEL_ACCOUNT_CONFIG_V1", "purposes": ["CHANNEL_EXECUTION"] }
+    { "callerService": "channel-connector-service", "action": "REVEAL", "dataType": "CHANNEL_ACCOUNT_CONFIG_V1", "purposes": ["CHANNEL_EXECUTION"] },
+    { "callerService": "channel-connector-service", "action": "PROTECT", "dataType": "CHANNEL_ACCOUNT_CONFIG_V1", "purposes": ["CHANNEL_CONFIGURATION"] }
   ]
 }

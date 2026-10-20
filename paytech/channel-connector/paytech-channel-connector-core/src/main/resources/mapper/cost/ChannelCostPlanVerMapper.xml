@@ -30,6 +30,16 @@
         SELECT <include refid="columns"/> FROM t_channel_cost_plan_ver WHERE plan_id = #{planId} ORDER BY cost_ver DESC
     </select>
 
+    <!-- CC-B 补充：方案详情的版本摘要计数；一次 LEFT JOIN 分组，避免逐版本查询。 -->
+    <select id="selectContentCountsByPlan" resultType="com.paytech.channel.connector.domain.ChannelCostVersionContentCount">
+        SELECT v.id AS cost_ver_id, COUNT(DISTINCT s.id) AS scope_count, COUNT(c.id) AS component_count
+        FROM t_channel_cost_plan_ver v
+        LEFT JOIN t_channel_cost_scope s ON s.cost_ver_id = v.id
+        LEFT JOIN t_channel_cost_component c ON c.scope_id = s.id
+        WHERE v.plan_id = #{planId}
+        GROUP BY v.id
+    </select>
+
     <select id="selectEffectiveAt" resultMap="row">
         SELECT <include refid="columns"/> FROM t_channel_cost_plan_ver
         WHERE plan_id = #{planId} AND status IN ('ACTIVE', 'INACTIVE') AND effective_from &lt;= #{occurredAt}
@@ -51,6 +61,12 @@
     <select id="countOpenVersions" resultType="long">
         SELECT COUNT(*) FROM t_channel_cost_plan_ver WHERE plan_id = #{planId} AND status IN ('DRAFT', 'PENDING_APPROVAL')
     </select>
+
+    <update id="cancelApproved">
+        UPDATE t_channel_cost_plan_ver
+        SET status = 'INACTIVE', effective_to = effective_from, update_time = #{now}
+        WHERE id = #{ver.id} AND status = 'APPROVED' AND effective_from &gt; #{now}
+    </update>
 
     <update id="updateStatus">
         UPDATE t_channel_cost_plan_ver

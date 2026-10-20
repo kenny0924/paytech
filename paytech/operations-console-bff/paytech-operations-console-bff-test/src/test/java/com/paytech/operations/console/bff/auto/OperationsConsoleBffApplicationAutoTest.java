@@ -139,7 +139,8 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
             "Risk 浏览器入口必须是唯一具体 Controller");
         assertEquals(List.of("/auth", "/authorization", "/iam", "/audit", "/gateway-admin", "/console-admin", "/permission-admin", "/api-credential-admin", "/api-scope-admin",
                 "/decision-dictionaries", "/decision-rule-sets", "/decision-releases", "/decision-flows", "/decision-variables", "/risk-lists", "/risk-decisions", "/external-api-admin",
-                "/client-onboarding-admin", "/vault-admin", "/notification-admin", "/webhook-admin"),
+                "/client-onboarding-admin", "/vault-admin", "/notification-admin", "/webhook-admin",
+                "/channel-admin/v1/channel-accounts"),
             applicationContext.getBean(WebLoggingProperties.class).metadataOnlyPathPrefixes(),
             "身份、管理筛选和状态原因只能写元数据日志");
         Set<String> routes = applicationContext.getBean(
@@ -398,7 +399,25 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
             "GET /commercial-admin/v1/commercial-terms/plans", "GET /commercial-admin/v1/commercial-terms/versions",
             "GET /commercial-admin/v1/commercial-terms/versions/{baseVersionId}/diff/{targetVersionId}",
             "GET /commercial-admin/v1/products", "GET /commercial-admin/v1/products/capabilities",
-            "GET /commercial-admin/v1/products/fee-events", "GET /commercial-admin/v1/business-changes"), routes);
+            "GET /commercial-admin/v1/products/fee-events", "GET /commercial-admin/v1/business-changes",
+            "GET /channel-admin/v1/channels", "GET /channel-admin/v1/channels/{channelId}", "POST /channel-admin/v1/channels",
+            "PUT /channel-admin/v1/channels/{channelId}", "POST /channel-admin/v1/channels/{channelId}/status",
+            "GET /channel-admin/v1/channel-accounts", "GET /channel-admin/v1/channel-accounts/{channelAccountId}",
+            "POST /channel-admin/v1/channel-accounts", "PUT /channel-admin/v1/channel-accounts/{channelAccountId}",
+            "PUT /channel-admin/v1/channel-accounts/{channelAccountId}/configuration",
+            "POST /channel-admin/v1/channel-accounts/{channelAccountId}/status", "GET /channel-admin/v1/mids",
+            "GET /channel-admin/v1/mids/{midId}", "POST /channel-admin/v1/mids", "PUT /channel-admin/v1/mids/{midId}/account",
+            "POST /channel-admin/v1/mids/{midId}/status", "GET /channel-admin/v1/mid-capabilities/definitions",
+            "POST /channel-admin/v1/mid-capabilities", "PUT /channel-admin/v1/mid-capabilities/{midCapabilityId}/details",
+            "POST /channel-admin/v1/mid-capabilities/{midCapabilityId}/status", "GET /channel-admin/v1/config-changes",
+            "GET /channel-admin/v1/channel-cost-plans", "GET /channel-admin/v1/channel-cost-plans/{planCode}",
+            "GET /channel-admin/v1/channel-cost-plans/{planCode}/versions/{costVer}",
+            "POST /channel-admin/v1/channel-cost-plans", "POST /channel-admin/v1/channel-cost-plans/{planCode}/versions",
+            "POST /channel-admin/v1/channel-cost-plans/{planCode}/versions/{costVer}/submit",
+            "POST /channel-admin/v1/channel-cost-plans/{planCode}/versions/{costVer}/approve",
+            "POST /channel-admin/v1/channel-cost-plans/{planCode}/versions/{costVer}/reject",
+            "POST /channel-admin/v1/channel-cost-plans/{planCode}/versions/{costVer}/cancel",
+            "GET /channel-admin/v1/channel-cost-plans/{planCode}/versions/{baseCostVer}/diff/{targetCostVer}"), routes);
 
         Path classes = appModule().resolve("target/classes/com/paytech/operations/console/bff");
         try (var files = Files.walk(classes)) {

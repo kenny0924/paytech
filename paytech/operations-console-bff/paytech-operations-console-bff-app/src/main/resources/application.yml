@@ -106,3 +106,5 @@ web:
       - /notification-admin
       # 新建端点与轮换的响应含签名密钥明文，只记元数据。
       - /webhook-admin
+      # 渠道技术账号配置请求含渠道参数与凭据明文，账号接口只记元数据。
+      - /channel-admin/v1/channel-accounts

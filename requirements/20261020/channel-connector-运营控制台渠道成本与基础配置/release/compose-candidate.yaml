@@ -1,0 +1,16 @@
+# channel-connector 运营控制台：mor-test 候选覆盖文件（2026-10-20 已执行：四服务已按下列固定镜像 ID 部署）。
+# 叠加在 compose.yaml + compose.applications.yaml + compose.scheduler.yaml 之上（compose.sh 已带这三个文件，只传本文件的 -f）：
+#   test-environment/compose.sh -f <本文件绝对路径> up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 四个服务只改 image；environment / depends_on 沿用主文件（2026-10-20 核对：主文件 channel-connector-service 段完整，Worker 26；
+# operations-console-bff 段已含 OPERATIONS_LEDGER/ACCOUNT/BILLING_BASE_URL；internal-auth 未设置即 OFF，不需要 Token 白名单）。
+# 镜像：基线 main b04b77f1 + 本需求（主工作区构建，非干净 worktree），tag channel-20261020；ops-web 为 channel-20261020b（D1 修复）。
+# 发布时主会话把四个 image 改为 `sha256:<镜像 ID>`（固定 ID，不用 tag 部署），并在 release.md 第 6 节记录 JAR SHA-256 与 Web 入口资源名。
+services:
+  channel-connector-service:
+    image: sha256:4d31d529e1d3258e5e7976f1f98d4ef24bcb8e3d3eca24d1e2aef6c432e5f054  # mor-test/channel-connector-service:channel-20261020
+  platform-support-service:
+    image: sha256:e5a06814c6ff3b79530cbfd76dbf2c7df1d9f2cd813efc385f2c9b6859526e6b  # mor-test/platform-support-service:channel-20261020
+  operations-console-bff:
+    image: sha256:bec8582633e30a28df0c6630d05b724340741072e449ef4945c1155388e36758  # mor-test/operations-console-bff:channel-20261020
+  operations-console-web:
+    image: sha256:3ae27f3d3f75f0ba6ececa69a876f217d66121c594aa33d12791c9f329d7be09  # mor-test/operations-console-web:channel-20261020b（D1 修复：未配置账号标签）

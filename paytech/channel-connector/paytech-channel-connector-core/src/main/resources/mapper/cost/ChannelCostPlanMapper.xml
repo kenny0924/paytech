@@ -30,6 +30,36 @@
         SELECT <include refid="columns"/> FROM t_channel_cost_plan WHERE plan_code = #{planCode} FOR UPDATE
     </select>
 
+    <resultMap id="summary" type="com.paytech.channel.connector.domain.ChannelCostPlanSummaryView" autoMapping="true">
+        <result column="status" property="status" javaType="com.paytech.channel.connector.core.enums.ChannelCostPlanStatus" typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+    </resultMap>
+
+    <sql id="summaryFilter">
+        <where>
+            <if test="channelId != null">AND p.channel_id = #{channelId}</if>
+            <if test="status != null">AND p.status = #{status.code}</if>
+        </where>
+    </sql>
+
+    <!-- 同库组合：Channel 编码与名称、当前版本号与生效时间、待复核版本数；排序稳定，数据库分页。 -->
+    <select id="selectSummaries" resultMap="summary">
+        SELECT p.id AS plan_id, p.plan_code, p.channel_id, c.channel_code, c.channel_name, p.status,
+               v.cost_ver AS current_cost_ver, v.effective_from AS current_effective_from,
+               (SELECT COUNT(*) FROM t_channel_cost_plan_ver pv
+                 WHERE pv.plan_id = p.id AND pv.status = 'PENDING_APPROVAL') AS pending_approval_count,
+               p.update_time
+        FROM t_channel_cost_plan p
+        LEFT JOIN t_payment_channel c ON c.channel_id = p.channel_id
+        LEFT JOIN t_channel_cost_plan_ver v ON v.id = p.current_ver_id
+        <include refid="summaryFilter"/>
+        ORDER BY p.update_time DESC, p.id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countSummaries" resultType="long">
+        SELECT COUNT(*) FROM t_channel_cost_plan p <include refid="summaryFilter"/>
+    </select>
+
     <update id="updateCurrentVersion">
         UPDATE t_channel_cost_plan
         SET current_ver_id = #{currentVerId}, status = 'ACTIVE', version = version + 1, update_time = #{now}

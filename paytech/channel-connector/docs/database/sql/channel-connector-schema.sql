@@ -283,3 +283,17 @@ CREATE TABLE `t_channel_cost_component` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_channel_cost_component` (`scope_id`, `component_code`) COMMENT '保证业务唯一性：scope_id、component_code'
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='冻结渠道成本适用范围下的百分比、固定费、跨境费、退款费或争议费参数；金额由 billing 按证据计算。';
+
+CREATE TABLE `t_channel_config_change` (
+  `id` BIGINT NOT NULL COMMENT '服务侧生成的变更记录 Snowflake 主键。',
+  `target_type` VARCHAR(64) NOT NULL COMMENT '被变更对象类型。允许值：CHANNEL、CHANNEL_ACCOUNT、CHANNEL_MID、MID_CAPABILITY、CHANNEL_COST_VERSION。',
+  `target_id` BIGINT NOT NULL COMMENT '被变更对象在本库的主键。',
+  `change_type` VARCHAR(64) NOT NULL COMMENT '变更类型。允许值：CREATE、UPDATE、STATUS、CONFIGURATION、REBIND、CANCEL。',
+  `from_status` VARCHAR(64) NULL COMMENT '状态变更前的状态；非状态变更为空。取值来源：渠道、账号、MID、能力组或成本版本的状态代码；非固定枚举。',
+  `to_status` VARCHAR(64) NULL COMMENT '状态变更后的状态；非状态变更为空。取值来源：渠道、账号、MID、能力组或成本版本的状态代码；非固定枚举。',
+  `operator_id` BIGINT NOT NULL COMMENT '执行变更的 Platform Actor 稳定业务 ID。',
+  `reason` VARCHAR(512) NULL COMMENT '操作者填写的非敏感原因；禁止填写凭据。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在本库中的 UTC 微秒创建时间。',
+  PRIMARY KEY (`id`),
+  KEY `idx_channel_config_change_target` (`target_type`, `target_id`, `id`) COMMENT '支持访问路径：target_type、target_id、id'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='渠道配置与成本版本的人工变更留痕；与业务变更同事务写入，只增不改。';

@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.paytech.channel.connector.api.cost.request.CancelChannelCostVersionRequestBody;
 import com.paytech.channel.connector.api.cost.request.CreateChannelCostPlanRequestBody;
 import com.paytech.channel.connector.api.cost.request.ReviewChannelCostVersionRequestBody;
 import com.paytech.channel.connector.api.cost.request.SubmitChannelCostVersionRequestBody;
@@ -135,6 +136,19 @@ public abstract class AbstractChannelCostApiTest extends ChannelConnectorMockTes
     /** 驳回版本。 */
     protected ChannelCostResponseChecker reject(long costVer, String checkerId, String approvedContentHash) {
         return post(versionPath(costVer) + "/reject", review(checkerId, approvedContentHash));
+    }
+
+    /** 作废标准方案下的版本。 */
+    protected ChannelCostResponseChecker cancel(long costVer, String operatorId, String reason) {
+        return cancel(PLAN_CODE, costVer, operatorId, reason);
+    }
+
+    /** 作废指定方案下的版本。 */
+    protected ChannelCostResponseChecker cancel(String planCode, long costVer, String operatorId, String reason) {
+        CancelChannelCostVersionRequestBody body = new CancelChannelCostVersionRequestBody();
+        body.setOperatorId(operatorId);
+        body.setReason(reason);
+        return post(PATH + "/" + planCode + "/versions/" + costVer + "/cancel", body);
     }
 
     /** 读取方案及版本摘要。 */

@@ -79,6 +79,12 @@ public final class OperationsErrorStatusResolver implements ApiErrorStatusResolv
                 case PRICING_FACTS_INCOMPLETE, PRICE_NOT_FOUND, INVALID_PRICING_FACT -> HttpStatus.UNPROCESSABLE_CONTENT;
             };
         }
+        // channel-connector 以 400 返回成本命中拒绝；显式固定为 400，避免未来默认状态变化改变浏览器合同。
+        if (errorCode instanceof com.paytech.channel.connector.api.enums.ChannelCostErrorCode channelCost) {
+            return switch (channelCost) {
+                case CHANNEL_COST_NOT_RESOLVED, CHANNEL_COST_AMBIGUOUS -> HttpStatus.BAD_REQUEST;
+            };
+        }
         if (errorCode instanceof com.paytech.client.contract.api.enums.ClientDraftErrorCode cct) {
             return switch (cct) {
                 case REVIEW_CASE_NOT_FOUND -> HttpStatus.NOT_FOUND;

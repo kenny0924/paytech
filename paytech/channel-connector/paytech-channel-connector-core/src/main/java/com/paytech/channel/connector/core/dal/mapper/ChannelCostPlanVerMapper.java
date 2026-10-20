@@ -7,12 +7,16 @@ import org.apache.ibatis.annotations.Param;
 
 import com.paytech.channel.connector.core.dal.dataobject.ChannelCostPlanVer;
 import com.paytech.channel.connector.core.enums.ChannelCostVersionStatus;
+import com.paytech.channel.connector.domain.ChannelCostVersionContentCount;
 
 /** t_channel_cost_plan_ver：渠道成本版本 SQL 参数绑定，SQL 仅位于 XML。 */
 public interface ChannelCostPlanVerMapper {
 
     /** 插入版本。 */
     int insert(ChannelCostPlanVer record);
+
+    /** CC-B 补充：方案全部版本的适用范围数与成本组成数，一次分组汇总。 */
+    List<ChannelCostVersionContentCount> selectContentCountsByPlan(@Param("planId") long planId);
 
     /** 按主键读取。 */
     ChannelCostPlanVer selectById(@Param("id") long id);
@@ -37,6 +41,13 @@ public interface ChannelCostPlanVerMapper {
 
     /** 统计方案中 DRAFT 或 PENDING_APPROVAL 版本数。 */
     long countOpenVersions(@Param("planId") long planId);
+
+    /**
+     * 作废未到生效时间的 APPROVED 版本：置为 INACTIVE 且失效时间等于生效时间（空区间，不参与任何时间点的命中）
+     *
+     * @return 受影响行数；版本已不是 APPROVED 或已到生效时间时为 0
+     */
+    int cancelApproved(@Param("ver") ChannelCostPlanVer ver, @Param("now") Instant now);
 
     /**
      * 以原状态为条件迁移状态，同时写入复核人与失效时间

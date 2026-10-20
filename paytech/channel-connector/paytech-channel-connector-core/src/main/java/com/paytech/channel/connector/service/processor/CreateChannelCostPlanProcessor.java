@@ -12,6 +12,7 @@ import com.paytech.channel.connector.core.dal.dataobject.ChannelCostPlan;
 import com.paytech.channel.connector.core.enums.ChannelCostPlanStatus;
 import com.paytech.channel.connector.domain.ChannelCostPlanView;
 import com.paytech.channel.connector.domainservice.repository.ChannelCostPlanRepository;
+import com.paytech.channel.connector.domainservice.repository.PaymentChannelRepository;
 import com.paytech.channel.connector.domainservice.service.ChannelCostPlanService;
 import com.paytech.channel.connector.service.processor.request.CreateChannelCostPlanRequest;
 import com.paytech.foundation.common.error.BizCheckFailException;
@@ -22,6 +23,7 @@ import lombok.AllArgsConstructor;
 
 /**
  * 创建 DRAFT 渠道成本方案，尚无当前版本
+ * <li>Channel 必须存在于本库 t_payment_channel，否则业务拒绝。</li>
  * <li>每个 Channel 只有一个方案，方案代码全局唯一；任一已存在时业务拒绝。</li>
  * <li>与同一方案代码的版本写入口共用资源锁并持续等待；Channel 与代码唯一键是最终防线，并发重复按 409 拒绝。</li>
  */
@@ -32,6 +34,7 @@ public class CreateChannelCostPlanProcessor
     private final Clock clock;
     private final IdGenerator idGenerator;
     private final ChannelCostPlanService channelCostPlanService;
+    private final PaymentChannelRepository paymentChannelRepository;
     private final ChannelCostPlanRepository channelCostPlanRepository;
 
     /** 方案资源锁，持续等待。 */
@@ -43,6 +46,7 @@ public class CreateChannelCostPlanProcessor
     @Override
     protected ChannelCostPlanView processWithinLock(CreateChannelCostPlanRequest request) {
         // 业务验证
+        checkChannelExists(request);
         checkChannelWithoutPlan(request);
         checkPlanCodeUnused(request);
 
@@ -50,6 +54,13 @@ public class CreateChannelCostPlanProcessor
         ChannelCostPlan plan = buildPlan(request);
         channelCostPlanService.createPlan(plan);
         return ChannelCostPlanView.of(plan, List.of());
+    }
+
+    /** Channel 必须存在于本库。 */
+    void checkChannelExists(CreateChannelCostPlanRequest request) {
+        if (paymentChannelRepository.findById(request.getChannelId()) == null) {
+            throw new BizCheckFailException("渠道不存在: " + request.getChannelId());
+        }
     }
 
     /** 每个 Channel 只能有一个成本方案。 */

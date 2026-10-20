@@ -490,6 +490,17 @@ min_amount DECIMAL(24,8) N
 max_amount DECIMAL(24,8) N
 rounding_mode VARCHAR(64) NN {HALF_UP}
 create_time DATETIME(6) NN
+
+[t_channel_config_change]
+id BIGINT NN
+target_type VARCHAR(64) NN {CHANNEL,CHANNEL_ACCOUNT,CHANNEL_MID,MID_CAPABILITY,CHANNEL_COST_VERSION}
+target_id BIGINT NN
+change_type VARCHAR(64) NN {CREATE,UPDATE,STATUS,CONFIGURATION,REBIND,CANCEL}
+from_status VARCHAR(64) N OPEN(渠道、账号、MID、能力组或成本版本的状态代码)
+to_status VARCHAR(64) N OPEN(渠道、账号、MID、能力组或成本版本的状态代码)
+operator_id BIGINT NN
+reason VARCHAR(512) N
+create_time DATETIME(6) NN
 `;
 const INDEX_MANIFEST = String.raw`
 t_payment_channel
@@ -613,6 +624,8 @@ UK uk_channel_cost_scope(cost_ver_id,mid_id,entity_no,country_code,currency,paym
 IDX idx_channel_cost_match(mid_id,entity_no,country_code,currency)
 t_channel_cost_component
 UK uk_channel_cost_component(scope_id,component_code)
+t_channel_config_change
+IDX idx_channel_config_change_target(target_type,target_id,id)
 `;
 const RELATION_MANIFEST = String.raw`
 n:1 channel_account.channel_id -> payment_channel.channel_id
@@ -735,6 +748,13 @@ const DIAGRAM_GROUPS = Object.freeze([
     primary: Object.freeze(["channel_cost_plan", "channel_cost_plan_ver", "channel_cost_scope", "channel_cost_component"]),
     references: Object.freeze(["payment_channel", "channel_mid"]),
   }),
+  // 2026-10-20 channel-connector 运营控制台：渠道配置与成本版本的人工变更留痕（target_id 指向多种本库对象，不建模关系）。
+  Object.freeze({
+    defKey: "channel_config_change",
+    defName: "渠道配置变更留痕",
+    primary: Object.freeze(["channel_config_change"]),
+    references: Object.freeze([]),
+  }),
 ]);
 
 const VERSION_TABLES = Object.freeze([
@@ -765,6 +785,7 @@ const IMMUTABLE_TABLES = Object.freeze([
   "channel_dispute_event",
   "channel_cost_scope",
   "channel_cost_component",
+  "channel_config_change",
 ]);
 
 function invariant(condition, message) {
@@ -1222,7 +1243,7 @@ function validateMetadata(tables) {
     .filter((field) => field.openSourceHint)
     .map((field) => `${table.defKey}.${field.defKey}`)).sort();
   invariant(JSON.stringify(openMetadataKeys) === JSON.stringify(openManifestKeys), "Open-code metadata must exactly cover the manifest");
-  invariant(openManifestKeys.length === 51, `Expected 51 true open-code rows, found ${openManifestKeys.length}`);
+  invariant(openManifestKeys.length === 53, `Expected 53 true open-code rows, found ${openManifestKeys.length}`);
   for (const [key, value] of Object.entries(FIELD_METADATA)) {
     invariant(/[\u3400-\u9fff]/u.test(value.defName), `Field display name is not Chinese: ${key}`);
     invariant(/[\u3400-\u9fff]/u.test(value.description), `Field description is not Chinese: ${key}`);
@@ -1231,18 +1252,18 @@ function validateMetadata(tables) {
 
 function validateGeneratedModel(model, tables, relations) {
   invariant(JSON.stringify(modelTotals(model)) === JSON.stringify({
-    tables: 31,
-    fields: 391,
+    tables: 32,
+    fields: 400,
     uniqueIndexes: 45,
-    accessIndexes: 45,
+    accessIndexes: 46,
     relations: 68,
-    diagramGroups: 8,
+    diagramGroups: 9,
   }), `Unexpected generated totals: ${JSON.stringify(modelTotals(model))}`);
 
   const entitiesByKey = new Map(model.entities.map((entity) => [logicalTableKey(entity.defKey), entity]));
-  invariant(tables.length === 31, `Field manifest must have 31 tables, found ${tables.length}`);
+  invariant(tables.length === 32, `Field manifest must have 32 tables, found ${tables.length}`);
   invariant(new Set(VERSION_TABLES).size === 13, "Version allowlist must have 13 tables");
-  invariant(new Set(IMMUTABLE_TABLES).size === 9, "Immutable allowlist must have 9 tables");
+  invariant(new Set(IMMUTABLE_TABLES).size === 10, "Immutable allowlist must have 10 tables");
   const actualVersionTables = model.entities
     .filter((entity) => entity.fields.some((field) => field.defKey === "version"))
     .map((entity) => logicalTableKey(entity.defKey));
@@ -1279,7 +1300,7 @@ function validateGeneratedModel(model, tables, relations) {
   }
   invariant(relations.filter((relation) => relation.cardinality === "1:1").length === 7, "Relation manifest must have 6 indexed and one application-enforced 1:1 relations");
   const primaryTables = DIAGRAM_GROUPS.flatMap((group) => group.primary);
-  invariant(primaryTables.length === 31 && new Set(primaryTables).size === 31, "Every table must have exactly one primary diagram group");
+  invariant(primaryTables.length === 32 && new Set(primaryTables).size === 32, "Every table must have exactly one primary diagram group");
   const relationCells = model.diagrams.flatMap((diagram) => diagram.canvasData.cells)
     .filter((cell) => cell.shape === "erdRelation");
   invariant(relationCells.length === 68, `Expected 68 relation cells, found ${relationCells.length}`);

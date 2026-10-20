@@ -66,6 +66,7 @@ services:
       - t_channel_account
       - t_channel_callback
       - t_channel_callback_item
+      - t_channel_config_change
       - t_channel_cost_component
       - t_channel_cost_plan
       - t_channel_cost_plan_ver

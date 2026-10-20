@@ -6,13 +6,17 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.paytech.channel.connector.core.dal.dataobject.ChannelConfigChange;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelCostPlan;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelCostPlanVer;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelCostScope;
+import com.paytech.channel.connector.core.enums.ChannelCostPlanStatus;
 import com.paytech.channel.connector.core.enums.ChannelCostVersionStatus;
+import com.paytech.channel.connector.domain.ChannelCostPlanSummaryView;
 import com.paytech.channel.connector.domain.ChannelCostPlanView;
 import com.paytech.channel.connector.domain.ChannelCostVersionContext;
 import com.paytech.channel.connector.domain.ChannelCostVersionView;
+import com.paytech.channel.connector.domainservice.repository.ChannelConfigChangeRepository;
 import com.paytech.channel.connector.domainservice.repository.ChannelCostComponentRepository;
 import com.paytech.channel.connector.domainservice.repository.ChannelCostPlanRepository;
 import com.paytech.channel.connector.domainservice.repository.ChannelCostPlanVerRepository;
@@ -21,6 +25,8 @@ import com.paytech.channel.connector.domainservice.service.ChannelCostPlanServic
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
 import com.paytech.foundation.common.error.ErrorException;
+import com.paytech.foundation.web.paging.PagingRequestBody;
+import com.paytech.foundation.web.paging.PagingResponseBody;
 
 import lombok.AllArgsConstructor;
 
@@ -32,6 +38,7 @@ public class ChannelCostPlanServiceImpl implements ChannelCostPlanService {
     private final ChannelCostPlanRepository channelCostPlanRepository;
     private final ChannelCostScopeRepository channelCostScopeRepository;
     private final ChannelCostPlanVerRepository channelCostPlanVerRepository;
+    private final ChannelConfigChangeRepository channelConfigChangeRepository;
     private final ChannelCostComponentRepository channelCostComponentRepository;
 
     /** 单行写入方案，唯一键保护 Channel 与方案代码。 */
@@ -133,11 +140,29 @@ public class ChannelCostPlanServiceImpl implements ChannelCostPlanService {
         });
     }
 
+    /** 锁方案与版本后条件作废 APPROVED 版本，并在同一事务写入 CANCEL 变更记录。 */
+    @Override
+    public void cancelVersion(ChannelCostVersionContext context, ChannelConfigChange change) {
+        transactionTemplate.executeWithoutResult(status -> {
+            lockPlanAndVersion(context);
+            channelCostPlanVerRepository.cancel(context.getVer(), change.getCreateTime());
+            channelConfigChangeRepository.insert(change);
+        });
+    }
+
+    /** 分页查询方案列表项；普通列表读取不建事务。 */
+    @Override
+    public PagingResponseBody<ChannelCostPlanSummaryView> findPage(Long channelId, ChannelCostPlanStatus status,
+        PagingRequestBody paging) {
+        return channelCostPlanRepository.findPage(channelId, status, paging);
+    }
+
     /** 查询方案与全部版本摘要。 */
     @Override
     public ChannelCostPlanView getPlan(String planCode) {
         ChannelCostPlan plan = loadPlan(planCode);
-        return ChannelCostPlanView.of(plan, channelCostPlanVerRepository.findByPlan(plan.getId()));
+        return ChannelCostPlanView.of(plan, channelCostPlanVerRepository.findByPlan(plan.getId()),
+            channelCostPlanVerRepository.findContentCountsByPlan(plan.getId()));
     }
 
     /** 查询版本详情。 */

@@ -265,6 +265,50 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
         Map.entry("operations-commercial-fee-event-list", COMMERCIAL_CONTRACT_READ_PERMISSION_ID),
         Map.entry("operations-commercial-business-change-list", COMMERCIAL_CONTRACT_READ_PERMISSION_ID));
 
+    /**
+     * 渠道路由权限（注册 DML 块 92，31 条）：渠道配置读写、账号凭据、成本读写与独立的成本审批、变更记录读取；
+     * 未登记的 operations-channel-* 视为意外调用。
+     */
+    public static final String CHANNEL_CONFIG_READ_PERMISSION_ID = "900000000000092101";
+    public static final String CHANNEL_CONFIG_MANAGE_PERMISSION_ID = "900000000000092102";
+    public static final String CHANNEL_ACCOUNT_CREDENTIAL_PERMISSION_ID = "900000000000092103";
+    public static final String CHANNEL_COST_READ_PERMISSION_ID = "900000000000092104";
+    public static final String CHANNEL_COST_MANAGE_PERMISSION_ID = "900000000000092105";
+    public static final String CHANNEL_COST_APPROVE_PERMISSION_ID = "900000000000092106";
+    public static final String CHANNEL_CHANGE_READ_PERMISSION_ID = "900000000000092107";
+    public static final Map<String, String> CHANNEL_ROUTE_PERMISSIONS = Map.ofEntries(
+        Map.entry("operations-channel-channel-list", CHANNEL_CONFIG_READ_PERMISSION_ID),
+        Map.entry("operations-channel-channel-detail", CHANNEL_CONFIG_READ_PERMISSION_ID),
+        Map.entry("operations-channel-channel-create", CHANNEL_CONFIG_MANAGE_PERMISSION_ID),
+        Map.entry("operations-channel-channel-update", CHANNEL_CONFIG_MANAGE_PERMISSION_ID),
+        Map.entry("operations-channel-channel-status", CHANNEL_CONFIG_MANAGE_PERMISSION_ID),
+        Map.entry("operations-channel-account-list", CHANNEL_CONFIG_READ_PERMISSION_ID),
+        Map.entry("operations-channel-account-detail", CHANNEL_CONFIG_READ_PERMISSION_ID),
+        Map.entry("operations-channel-account-create", CHANNEL_CONFIG_MANAGE_PERMISSION_ID),
+        Map.entry("operations-channel-account-update", CHANNEL_CONFIG_MANAGE_PERMISSION_ID),
+        Map.entry("operations-channel-account-configuration", CHANNEL_ACCOUNT_CREDENTIAL_PERMISSION_ID),
+        Map.entry("operations-channel-account-status", CHANNEL_CONFIG_MANAGE_PERMISSION_ID),
+        Map.entry("operations-channel-mid-list", CHANNEL_CONFIG_READ_PERMISSION_ID),
+        Map.entry("operations-channel-mid-detail", CHANNEL_CONFIG_READ_PERMISSION_ID),
+        Map.entry("operations-channel-mid-create", CHANNEL_CONFIG_MANAGE_PERMISSION_ID),
+        Map.entry("operations-channel-mid-rebind-account", CHANNEL_CONFIG_MANAGE_PERMISSION_ID),
+        Map.entry("operations-channel-mid-status", CHANNEL_CONFIG_MANAGE_PERMISSION_ID),
+        Map.entry("operations-channel-capability-definitions", CHANNEL_CONFIG_READ_PERMISSION_ID),
+        Map.entry("operations-channel-capability-create", CHANNEL_CONFIG_MANAGE_PERMISSION_ID),
+        Map.entry("operations-channel-capability-details", CHANNEL_CONFIG_MANAGE_PERMISSION_ID),
+        Map.entry("operations-channel-capability-status", CHANNEL_CONFIG_MANAGE_PERMISSION_ID),
+        Map.entry("operations-channel-change-list", CHANNEL_CHANGE_READ_PERMISSION_ID),
+        Map.entry("operations-channel-cost-plan-list", CHANNEL_COST_READ_PERMISSION_ID),
+        Map.entry("operations-channel-cost-plan-detail", CHANNEL_COST_READ_PERMISSION_ID),
+        Map.entry("operations-channel-cost-version-detail", CHANNEL_COST_READ_PERMISSION_ID),
+        Map.entry("operations-channel-cost-plan-create", CHANNEL_COST_MANAGE_PERMISSION_ID),
+        Map.entry("operations-channel-cost-version-create", CHANNEL_COST_MANAGE_PERMISSION_ID),
+        Map.entry("operations-channel-cost-version-submit", CHANNEL_COST_MANAGE_PERMISSION_ID),
+        Map.entry("operations-channel-cost-version-approve", CHANNEL_COST_APPROVE_PERMISSION_ID),
+        Map.entry("operations-channel-cost-version-reject", CHANNEL_COST_APPROVE_PERMISSION_ID),
+        Map.entry("operations-channel-cost-version-cancel", CHANNEL_COST_MANAGE_PERMISSION_ID),
+        Map.entry("operations-channel-cost-version-diff", CHANNEL_COST_READ_PERMISSION_ID));
+
     private static final Map<String, String> ROUTE_PERMISSIONS = Map.ofEntries(
         Map.entry("operations-account-create", ACCOUNT_CREATE_PERMISSION_ID),
         Map.entry("operations-account-disable", ACCOUNT_DISABLE_PERMISSION_ID),
@@ -421,6 +465,7 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
             permissionCatalog().forEach(permission -> grantedPermissions.add(permission.getPermissionId()));
             grantedPermissions.addAll(FINANCE_ROUTE_PERMISSIONS.values());
             grantedPermissions.addAll(COMMERCIAL_ROUTE_PERMISSIONS.values());
+            grantedPermissions.addAll(CHANNEL_ROUTE_PERMISSIONS.values());
             sessionActive = true;
             allowed = true;
             disconnect = false;
@@ -532,6 +577,16 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
                 return;
             }
             write(exchange, 200, new AuthorizationDecisionResponseBody(allowed && grantedPermissions.contains(commercialPermission)));
+            completedAuthorizationCount++;
+            return;
+        }
+        if (request.getRouteCode().startsWith("operations-channel-")) {
+            String channelPermission = CHANNEL_ROUTE_PERMISSIONS.get(request.getRouteCode());
+            if (channelPermission == null) {
+                unexpected(exchange, "未登记的渠道 Route Code");
+                return;
+            }
+            write(exchange, 200, new AuthorizationDecisionResponseBody(allowed && grantedPermissions.contains(channelPermission)));
             completedAuthorizationCount++;
             return;
         }

@@ -26,4 +26,51 @@
         <include refid="columns"/>
         FROM t_payment_channel WHERE channel_id = #{id}
     </select>
+
+    <!-- CC-B 追加：渠道管理写入与分页 -->
+    <insert id="insert">
+        INSERT INTO t_payment_channel (<include refid="columns"/>)
+        VALUES (#{channelId}, #{channelCode}, #{channelName}, #{channelStatus.code}, #{createTime}, #{updateTime})
+    </insert>
+    <update id="updateName">
+        UPDATE t_payment_channel SET channel_name = #{channelName}, update_time = #{now}
+        WHERE channel_id = #{channelId} AND channel_status &lt;&gt; 'CLOSED'
+    </update>
+    <update id="updateStatus">
+        UPDATE t_payment_channel SET channel_status = #{toStatus.code}, update_time = #{now}
+        WHERE channel_id = #{channelId} AND channel_status = #{fromStatus.code}
+    </update>
+    <resultMap id="summary" type="com.paytech.channel.connector.domain.ChannelSummaryView">
+        <result column="channel_id" property="channelId"/>
+        <result column="channel_code" property="channelCode"/>
+        <result column="channel_name" property="channelName"/>
+        <result column="channel_status" property="channelStatus"
+                javaType="com.paytech.channel.connector.core.enums.ChannelStatus"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="account_count" property="accountCount"/>
+        <result column="mid_count" property="midCount"/>
+        <result column="update_time" property="updateTime"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+    </resultMap>
+    <sql id="summaryFilter">
+        <where>
+            <if test="status != null">c.channel_status = #{status.code}</if>
+            <if test="keyword != null">
+                AND (c.channel_code LIKE CONCAT(#{keyword}, '%') OR c.channel_name LIKE CONCAT(#{keyword}, '%'))
+            </if>
+        </where>
+    </sql>
+    <select id="selectSummaries" resultMap="summary">
+        SELECT c.channel_id, c.channel_code, c.channel_name, c.channel_status, c.update_time,
+        (SELECT COUNT(*) FROM t_channel_account a WHERE a.channel_id = c.channel_id) AS account_count,
+        (SELECT COUNT(*) FROM t_channel_mid m WHERE m.channel_id = c.channel_id) AS mid_count
+        FROM t_payment_channel c
+        <include refid="summaryFilter"/>
+        ORDER BY c.update_time DESC, c.channel_id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+    <select id="countSummaries" resultType="long">
+        SELECT COUNT(*) FROM t_payment_channel c
+        <include refid="summaryFilter"/>
+    </select>
 </mapper>

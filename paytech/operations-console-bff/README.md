@@ -86,9 +86,21 @@ Route Code 为 `operations-commercial-*`，权限 `COMMERCIAL_CONTRACT_READ / MA
 
 注册 DML 为 Platform ID 块 93（8 条路由，休眠），见第二切片需求目录 `db/platform-support-service/`。
 
+#### 渠道（channel-connector，Nacos 发现）
+
+渠道控制台见[需求方案 §7–§8](../../requirements/20261020/channel-connector-运营控制台渠道成本与基础配置/technique.md)：`/channel-admin/v1` 下 31 个端点，与 Platform 注册 DML 块 92 的 31 条路由逐条一致（Query 白名单同块 92 的 `t_gateway_route_query_param`，其余路由不接受 Query）。
+
+- `ChannelConfigurationController`（21 条：渠道 5、技术账号 6、MID 5、能力 4、变更记录 1）经 `ChannelConfigurationClient` 简单转发 `PaymentChannelApi`、`ChannelAccountApi`、`ChannelMidApi`、`MidCapabilityApi`、`ChannelConfigChangeApi`；命令把会话 Account ID 填入 `X-Gateway-Actor-Subject`，查询不带操作人。回执核对对象身份，状态变更回执的状态必须等于目标状态，不一致按 502。
+- `ChannelCostController`（9 条成本 + 1 条版本对比）经 `ChannelCostClient` 转发 `ChannelCostPlanApi`：成本合同的操作人在请求体，BFF 以会话 Account ID 填入 `makerId`（创建版本、提交）、`checkerId`（批准、驳回）、`operatorId`（作废）；页面模型不含这些字段，浏览器携带即按未知属性 400。提交无 Body。
+- `GET .../channel-cost-plans/{planCode}/versions/{baseCostVer}/diff/{targetCostVer}`：`ChannelCostVersionComparisonProcessor` 并发读取两版详情（复用 `CommercialConcurrentReads`），范围按 MID、OE、国家、币种、支付方式、动作类型六维对齐（同键多个按 scopeNo 逐个配对），组成按 componentCode 对齐，输出 added / removed / changed（含组成增删与字段差异，十进制按数值）/ unchanged；任一版本读取失败整页失败。
+- 权限：`CHANNEL_CONFIG_READ / MANAGE`、`CHANNEL_ACCOUNT_CREDENTIAL`（只有账号配置写入）、`CHANNEL_COST_READ / MANAGE / APPROVE`（批准与驳回只认 APPROVE）、`CHANNEL_CHANGE_READ`（变更记录）；Route Code 为 `operations-channel-*`。
+- `ChannelConnectorClientConfiguration` 按 `channel-connector-service` 发现（auto 测试用 `operations.channel-connector-test-base-url` loopback 直连），与 commercial 相同的超时、请求头与严格 Problem 解码，开启 Foundation `withOwnerProblemDetail()`：业务拒绝（如“Platform 不存在同编码接入方”）、409 与 NOT_FOUND 的 Owner 原因到达浏览器；422 字段路径只投影到本次页面 Body（BFF 补入的操作人字段不外显）。登记 `ChannelCostErrorCode`，状态固定 400。
+- `ChannelRequestConfiguration` 严格解析 `ChannelModels` 内的写 Body，上限 65536 字节（账号配置与成本版本创建），其他写路由由 Gateway 限 8192；GET 与提交带 Body 返回 400。账号配置请求含凭据明文，`/channel-admin/v1/channel-accounts` 只记元数据日志。
+- auto 测试：`ChannelConnectorOwnerSimulator`、`channel-admin-boundary.json`（30 条转发样例）、`ChannelBrowserAutoTest`、`ChannelAggregationAutoTest`。
+
 ### 内部调用 Token（D26）
 
-依赖 `paytech-internal-auth`，`internal-auth.mode` 默认 `OFF`：不创建任何 Token Bean，入站与出站行为与引入前一致。设为 `DUAL` / `REQUIRED` 时，MVC Starter 的 `InternalAuthFilter` 校验入站 Token；`InternalCallTokenOptions` 让本 BFF 全部 `HttpServiceClientFactory.create` 客户端按显式目标服务名（`platform-support-service`、`risk-decision-service`、`compliance-service`、`client-master-service`、`ledger-service`、`account-service`、`billing-service`）附加 `Authorization: Bearer`。Token 来源为 Foundation 的 `InternalTokenSupplier`；本步只在测试中用 `internal-auth.static-key.*` 本地密钥对，Platform 签发客户端的接线留待 Platform 签发接口落地。Vault 管理客户端由 `paytech-vault-client` 自行装配，不在本接线范围内。`OperationsInternalTokenAutoTest` 覆盖 `REQUIRED` 下入站拒绝与出站附加。
+依赖 `paytech-internal-auth`，`internal-auth.mode` 默认 `OFF`：不创建任何 Token Bean，入站与出站行为与引入前一致。设为 `DUAL` / `REQUIRED` 时，MVC Starter 的 `InternalAuthFilter` 校验入站 Token；`InternalCallTokenOptions` 让本 BFF 全部 `HttpServiceClientFactory.create` 客户端按显式目标服务名（`platform-support-service`、`risk-decision-service`、`compliance-service`、`client-master-service`、`ledger-service`、`account-service`、`billing-service`、`commercial-service`、`channel-connector-service`）附加 `Authorization: Bearer`。Token 来源为 Foundation 的 `InternalTokenSupplier`；本步只在测试中用 `internal-auth.static-key.*` 本地密钥对，Platform 签发客户端的接线留待 Platform 签发接口落地。Vault 管理客户端由 `paytech-vault-client` 自行装配，不在本接线范围内。`OperationsInternalTokenAutoTest` 覆盖 `REQUIRED` 下入站拒绝与出站附加。
 
 ### Risk 配置适配边界
 

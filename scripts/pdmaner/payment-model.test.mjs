@@ -23,8 +23,8 @@ const expectedTemplateDigest = "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc
 const historicalModelTotals = Object.freeze({ tables: 27, fields: 349, uniqueIndexes: 38, accessIndexes: 44, relations: 63, oneToOneRelations: 7, diagramGroups: 7 });
 const historicalStructuralDigest = "2793402a691608c374c988e9ef2e01a24ad965d3fdec1b0f9acaf8ade026b690";
 // Current models: payment.pdma.json bytes, and the union with channel-connector.pdma.json (31 tables since the 2026-10-19
-// channel cost tables moved into the channel-connector partition).
-const currentModelTotals = Object.freeze({ tables: 31, fields: 391, uniqueIndexes: 45, accessIndexes: 45, relations: 68, oneToOneRelations: 7, diagramGroups: 8 });
+// channel cost tables moved into the channel-connector partition, 32 since the 2026-10-20 t_channel_config_change).
+const currentModelTotals = Object.freeze({ tables: 32, fields: 400, uniqueIndexes: 45, accessIndexes: 46, relations: 68, oneToOneRelations: 7, diagramGroups: 9 });
 const expectedModelDigest = "4fb5a4c88f00bd5552dc4c66de1811aee4bc73aee40c40674c264966261e4979";
 const expectedStructuralDigest = "3588e21f75a01a0563a1547a123b19168db0129039169820c7db3af19ad7abf7";
 
@@ -485,6 +485,17 @@ min_amount DECIMAL(24,8) N
 max_amount DECIMAL(24,8) N
 rounding_mode VARCHAR(64) NN {HALF_UP}
 create_time DATETIME(6) NN
+
+[t_channel_config_change]
+id BIGINT NN
+target_type VARCHAR(64) NN {CHANNEL,CHANNEL_ACCOUNT,CHANNEL_MID,MID_CAPABILITY,CHANNEL_COST_VERSION}
+target_id BIGINT NN
+change_type VARCHAR(64) NN {CREATE,UPDATE,STATUS,CONFIGURATION,REBIND,CANCEL}
+from_status VARCHAR(64) N OPEN(渠道、账号、MID、能力组或成本版本的状态代码)
+to_status VARCHAR(64) N OPEN(渠道、账号、MID、能力组或成本版本的状态代码)
+operator_id BIGINT NN
+reason VARCHAR(512) N
+create_time DATETIME(6) NN
 `;
 
 const APPROVED_INDEX_MANIFEST = String.raw`
@@ -609,6 +620,8 @@ UK uk_channel_cost_scope(cost_ver_id,mid_id,entity_no,country_code,currency,paym
 IDX idx_channel_cost_match(mid_id,entity_no,country_code,currency)
 t_channel_cost_component
 UK uk_channel_cost_component(scope_id,component_code)
+t_channel_config_change
+IDX idx_channel_config_change_target(target_type,target_id,id)
 `;
 
 const APPROVED_RELATION_MANIFEST = String.raw`
@@ -789,6 +802,8 @@ const approvedTableNames = Object.freeze([
   "t_payment_refund_position", "t_channel_refund", "t_channel_callback", "t_channel_callback_item", "t_channel_event_exception", "t_channel_dispute_notice", "t_channel_dispute_event", "t_channel_dispute_action", "t_command_idempotency", "t_compensation_event",
   // 2026-10-19 计费事实重构：渠道成本四表自 billing 迁入 channel-connector 分区。
   "t_channel_cost_plan", "t_channel_cost_plan_ver", "t_channel_cost_scope", "t_channel_cost_component",
+  // 2026-10-20 channel-connector 运营控制台：渠道配置变更留痕表。
+  "t_channel_config_change",
 ]);
 
 const forbiddenTables = Object.freeze([
@@ -810,6 +825,7 @@ const expectedTableDisplayNames = Object.freeze({
   payment_intent: "支付意图", payment_attempt: "支付尝试", payment_instrument_token: "交易级支付工具 Token", payment_action: "支付动作", channel_transaction_ref: "服务商交易引用", channel_interaction: "服务商交互记录", duplicate_payment_case: "重复支付处置",
   payment_refund_position: "渠道可退款位置", channel_refund: "渠道退款", channel_callback: "服务商回调", channel_callback_item: "服务商回调项", channel_event_exception: "服务商事件异常", channel_dispute_notice: "服务商争议通知", channel_dispute_event: "服务商争议事件", channel_dispute_action: "服务商争议动作", command_idempotency: "命令幂等记录", compensation_event: "本地补偿事件",
   channel_cost_plan: "渠道成本方案", channel_cost_plan_ver: "渠道成本方案版本", channel_cost_scope: "渠道成本适用范围", channel_cost_component: "渠道成本组件",
+  channel_config_change: "渠道配置变更记录",
 });
 const expectedTableComments = Object.freeze({
   payment_channel: "支付渠道的稳定身份和当前运行状态。",
@@ -843,6 +859,7 @@ const expectedTableComments = Object.freeze({
   channel_cost_plan_ver: "保存成本规则发布批次的生效期、内容摘要及双人审批状态，当前版本仅由方案根指针确定；APPROVED 版本到达生效时间后由到期切换 Job 原子切换为当前版本。",
   channel_cost_scope: "冻结成本版本对 MID、经营主体、国家、币种、支付方式和动作的确定性匹配范围。",
   channel_cost_component: "冻结渠道成本适用范围下的百分比、固定费、跨境费、退款费或争议费参数；金额由 billing 按证据计算。",
+  channel_config_change: "渠道配置与成本版本的人工变更留痕；与业务变更同事务写入，只增不改。",
 });
 const expectedDiagramGroups = Object.freeze({
   channel_mid: Object.freeze({ defName: "Channel 与 MID", primary: Object.freeze(["payment_channel", "channel_account", "channel_mid", "mid_capability", "mid_capability_detail"]), references: Object.freeze([]) }),
@@ -853,6 +870,7 @@ const expectedDiagramGroups = Object.freeze({
   channel_dispute: Object.freeze({ defName: "Channel Dispute", primary: Object.freeze(["channel_dispute_notice", "channel_dispute_event", "channel_dispute_action"]), references: Object.freeze(["payment_channel", "channel_account", "channel_mid", "channel_transaction_ref", "channel_interaction"]) }),
   reliability: Object.freeze({ defName: "可靠执行", primary: Object.freeze(["command_idempotency", "compensation_event"]), references: Object.freeze([]) }),
   channel_cost: Object.freeze({ defName: "渠道成本配置", primary: Object.freeze(["channel_cost_plan", "channel_cost_plan_ver", "channel_cost_scope", "channel_cost_component"]), references: Object.freeze(["payment_channel", "channel_mid"]) }),
+  channel_config_change: Object.freeze({ defName: "渠道配置变更留痕", primary: Object.freeze(["channel_config_change"]), references: Object.freeze([]) }),
 });
 
 function sha256(value) { return createHash("sha256").update(value).digest("hex"); }
@@ -1047,15 +1065,15 @@ function assertPhysicalDecisionsReady() {
 const coreArtifactsReadyAtRegistration = coreArtifactPaths.every((artifact) => existsSync(artifact));
 const physicalDecisionsReadyAtRegistration = existsSync(paths.decisions);
 
-test("Payment test-owned Oracle is internally complete for all 31 tables", () => {
+test("Payment test-owned Oracle is internally complete for all 32 tables", () => {
   const approvedFields = parseApprovedFields();
   assert.deepEqual(approvedFields.map((table) => table.defKey), approvedTableNames);
   assert.ok(approvedFields.every((table) => table.fields.length > 1));
   assert.deepEqual([...parseIndexes().keys()], approvedTableNames);
-  assert.equal(approvedFields.reduce((count, table) => count + table.fields.length, 0), 391);
+  assert.equal(approvedFields.reduce((count, table) => count + table.fields.length, 0), 400);
   const oracleIndexes = [...parseIndexes().values()].flat();
   assert.equal(oracleIndexes.filter((index) => index.unique).length, 45);
-  assert.equal(oracleIndexes.filter((index) => !index.unique).length, 45);
+  assert.equal(oracleIndexes.filter((index) => !index.unique).length, 46);
   assert.equal(parseRelations().length, 68);
   assert.equal(parseRelations().filter((relation) => relation.cardinality === "1:1").length, 7);
   const logicalTables = new Set(approvedTableNames.map(logicalTableKey));
@@ -1137,7 +1155,7 @@ test("Payment Physical Decisions freezes every approved row-level CHECK", () => 
 }
 
 if (coreArtifactsReadyAtRegistration) {
-test("Payment model has the exact approved 31-table set and no retired roots", () => {
+test("Payment model has the exact approved 32-table set and no retired roots", () => {
     assertCoreReady();
     const model = readModel();
     // The union lists payment tables before channel-connector tables (step 05 split), so compare as a set.
@@ -1261,7 +1279,7 @@ test("Payment metadata exports exactly cover approved Chinese names, comments an
     }
 });
 
-test("Payment model is deterministic and preserves eight diagram themes", async () => {
+test("Payment model is deterministic and preserves nine diagram themes", async () => {
     assertCoreReady();
     const { structuralProjectionDigest: generatorStructuralProjectionDigest } = await import(`./generate-payment-model.mjs?digest=${Date.now()}`);
     const modelBytes = readFileSync(paths.model); const model = JSON.parse(modelBytes);
@@ -1290,7 +1308,7 @@ test("Payment model is deterministic and preserves eight diagram themes", async 
       }
     }
     assert.deepEqual(primaryTables.sort(), approvedTableNames.map(logicalTableKey).sort());
-    assert.equal(new Set(primaryTables).size, 31);
+    assert.equal(new Set(primaryTables).size, 32);
     assert.deepEqual(diagramRelationIds.sort(), relationIds.sort());
     assert.equal(new Set(diagramRelationIds).size, relationIds.length);
     const result = spawnSync(process.execPath, [paths.generator, "--check"], { cwd: workspaceRoot, encoding: "utf8" });

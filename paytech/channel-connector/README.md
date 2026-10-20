@@ -21,6 +21,8 @@ channel-connector 只拥有支付渠道（D06）：渠道身份、技术账号�
 | 合同 | 路径 | 说明 |
 |---|---|---|
 | `ChannelCandidateQueryApi.queryMidCandidates` | `POST /channel-connector/v1/mid-candidates` | 入参 `entityNo` + `criteria{paymentMethodCode, schemeCode?, countryCode, currency, mccCode}`；返回启用候选 `{channelId, channelAccountId, midId, supportedOperations[], minAmount?, maxAmount?}`（ID、金额为十进制字符串）。空候选为 200 空列表；配置损坏 500；校验失败 422 |
+| `ChannelMidApi.listChannelMids` | `GET /channel-connector/v1/mids?channelId&channelAccountId&entityNo&status&page&size` | 分页 MID 列表（`PagingResponseBody`），同库联查渠道编码、当前账号名称与能力组 / 启用组计数；按 `update_time DESC, mid_id DESC`；只读、无事务 |
+| `ChannelConfigChangeApi.listConfigChanges` | `GET /channel-connector/v1/config-changes?targetType&targetId&page&size` | 分页查询 `t_channel_config_change` 中一个对象的人工变更记录，按 `id DESC`；只读、无事务 |
 | `ChannelOperationApi.execute` | `POST /channel-connector/v1/operations` | 入参冻结三元组 + `entityNo` + `operation` + `purpose` + `criteria?` + `amount?` + 标准 API `input`（支付工具句柄、尝试标识、回跳地址等，不含卡值与账号材料）；返回 `{outcome, paymentStatus?, redirectUrl?, channelTransactionRef?, channelStatus?, failureCode?, failureMessage?, rawOutputKeys[]}`。冻结坐标不可用、OE 不一致或账号未配置为 NOT_SENT；Platform 保证未发出的 Problem 为 NOT_SENT，其余失败为 ERROR |
 
 标准 API 编码取渠道操作代码（PAY → `PAY`）；Platform 接入方编码沿用渠道编码（如 `PAYERMAX`）。执行配置读取（`GetChannelExecutionConfigProcessor`，返回渠道账号明文凭据）没有生产调用方，本步不发布 HTTP 入口。
@@ -34,7 +36,7 @@ channel-connector 只拥有支付渠道（D06）：渠道身份、技术账号�
 ./mvnw -pl channel-connector/paytech-channel-connector-test -am clean verify
 ```
 
-测试前先人工审查 [测试 DDL](paytech-channel-connector-test/src/test/resources/init/ddl.sql)，用 root 应用到本机 `local-environment` MySQL（创建 `mor_channel_connector`、`channel_connector_app` 与 17 张表；已有 13 表的库只需执行 [2026-10-19 增量](docs/database/sql/changes/2026-10-19-channel-cost-tables.sql)）。测试同时连接本机 `local-environment` Redis（资源锁，前缀 `channel-connector-mock`）。PDManer 规范模型见 [channel-connector.pdma.json](docs/database/channel-connector.pdma.json)（由 `scripts/pdmaner/generate-channel-connector-model.mjs` 生成），物理决策随 Payment 维护于 [PAYMENT_ORCHESTRATION_PHYSICAL_DECISIONS.md](../payment/docs/database/PAYMENT_ORCHESTRATION_PHYSICAL_DECISIONS.md)。Nacos 模板见 [channel-connector-service.yaml](config/nacos/channel-connector-service.yaml)。
+测试前先人工审查 [测试 DDL](paytech-channel-connector-test/src/test/resources/init/ddl.sql)，用 root 应用到本机 `local-environment` MySQL（创建 `mor_channel_connector`、`channel_connector_app` 与 18 张表；已有 13 表的库依次执行 [2026-10-19 增量](docs/database/sql/changes/2026-10-19-channel-cost-tables.sql) 与 [2026-10-20 增量](docs/database/sql/changes/2026-10-20-channel-config-change.sql)，已有 17 表的库只需后者）。测试同时连接本机 `local-environment` Redis（资源锁，前缀 `channel-connector-mock`）。PDManer 规范模型见 [channel-connector.pdma.json](docs/database/channel-connector.pdma.json)（由 `scripts/pdmaner/generate-channel-connector-model.mjs` 生成），物理决策随 Payment 维护于 [PAYMENT_ORCHESTRATION_PHYSICAL_DECISIONS.md](../payment/docs/database/PAYMENT_ORCHESTRATION_PHYSICAL_DECISIONS.md)。Nacos 模板见 [channel-connector-service.yaml](config/nacos/channel-connector-service.yaml)。
 
 ## 渠道成本配置（2026-10-19 自 billing 迁入）
 
@@ -42,7 +44,9 @@ channel-connector 只拥有支付渠道（D06）：渠道身份、技术账号�
 
 | 合同 | 路径 | 说明 |
 |---|---|---|
-| `ChannelCostPlanApi.createChannelCostPlan` | `POST /channel-connector/v1/channel-cost-plans` | 每个 Channel 一个方案，DRAFT，201 |
+| `ChannelCostPlanApi.createChannelCostPlan` | `POST /channel-connector/v1/channel-cost-plans` | 每个 Channel 一个方案，DRAFT，201；Channel 须存在于本库 `t_payment_channel`，否则 400「渠道不存在」 |
+| `ChannelCostPlanApi.listChannelCostPlans` | `GET /channel-connector/v1/channel-cost-plans?channelId&status&page&size` | 分页方案列表，同库联查渠道编码 / 名称、当前版本号与生效时间、PENDING_APPROVAL 版本数；按 `update_time DESC, id DESC` |
+| `ChannelCostPlanApi.cancelChannelCostVersion` | `POST .../{planCode}/versions/{costVer}/cancel` | 只作废未到生效时间的 APPROVED 版本 → INACTIVE，`effective_to = effective_from`（空区间，命中与到期切换都不再选中）；同事务写 `CHANNEL_COST_VERSION / CANCEL` 变更记录；其他状态或已到生效时间 400 |
 | `ChannelCostPlanApi.createChannelCostVersion` | `POST .../{planCode}/versions` | 完整范围与组成一次写入为 DRAFT 并冻结 `CODE-MOR:CHANNEL_CONNECTOR:CHANNEL_COST:1` 内容摘要；范围 MID 须在本库 `t_channel_mid` 存在、属于方案 Channel 且 OE 等于范围 `entityNo` |
 | `submit` / `approve` / `reject` | `POST .../{planCode}/versions/{costVer}/submit\|approve\|reject` | Maker 提交；Checker ≠ Maker 并确认同一摘要；批准时已到生效时间即切换当前版本，否则 APPROVED |
 | `getChannelCostPlan` / `getChannelCostVersion` | `GET .../{planCode}`、`GET .../{planCode}/versions/{costVer}` | 方案与版本摘要（版本号降序）、版本详情（范围按 scopeNo、组成按 componentCode 升序） |
@@ -50,7 +54,7 @@ channel-connector 只拥有支付渠道（D06）：渠道身份、技术账号�
 
 费率与金额输出为去掉末尾零的普通十进制字符串；金额小数位不超过 8 位由入口格式保证，币种只校验格式（本库无币种表）。
 
-**写入并发：** 五个写入口与到期切换共用 Redis 资源锁 `channel-cost-plan:{planCode}`（`ChannelConnectorLocks`，LOCK 模式），事务内先锁方案行再锁版本行，状态以原状态条件更新、当前指针以方案 `version` CAS。
+**写入并发：** 六个写入口（含作废）与到期切换共用 Redis 资源锁 `channel-cost-plan:{planCode}`（`ChannelConnectorLocks`，LOCK 模式），事务内先锁方案行再锁版本行，状态以原状态条件更新、当前指针以方案 `version` CAS。
 
 **到期切换 Job：** `ChannelCostVersionActivationJobHandler`（XXL Handler `channelCostVersionActivation`，建议 Cron `0 */5 * * * ?`）每轮读取至多 200 个已到生效时间的 APPROVED 版本，按方案逐个加锁、短事务切换（新版本 ACTIVE、原当前版本 INACTIVE 且 `effective_to` = 新版本生效时间、方案指针 CAS）；重复执行幂等。生效时间不晚于当前版本的到期版本计为失败并保持 APPROVED，Job 以 `handleFail` 标记失败等待人工处理。
 
@@ -61,3 +65,22 @@ channel-connector 只拥有支付渠道（D06）：渠道身份、技术账号�
 | `paytech-redis-starter` | `AbstractLockProcessor` 资源锁 | `spring.data.redis.*`（`CHANNEL_CONNECTOR_REDIS_HOST/PORT/PASSWORD`）、`redis.coordination.enabled=true`、`redis.key-prefix`（缺省 `spring.application.name`） |
 | `paytech-snowflake-id` | 渠道成本主键 | `channel-connector.identifier.region-id` / `worker-id`（`CHANNEL_CONNECTOR_SNOWFLAKE_REGION_ID` / `_WORKER_ID`，必填无默认） |
 | `paytech-compensation-event`（含 `paytech-xxl-job-starter`） | XXL 执行器承载到期切换 Job；本服务暂无补偿事件类型（`compensation-event-catalog.yaml` 为空） | `compensation.enabled=true`、`compensation.instance-id`（`CHANNEL_CONNECTOR_COMPENSATION_INSTANCE_ID`）、`xxl.job.*`（调度中心地址与执行器参数由部署注入） |
+
+## 渠道基础配置管理（2026-10-20，CC-B）
+
+运营控制台经 operations-console-bff 调用的四组管理合同（仅私网）。写命令必带 `X-Gateway-Actor-Subject`（规范正十进制 Account ID，`ChannelConnectorHeaders.ACTOR_HEADER`），查询不带；业务拒绝 400 `BUSINESS_CHECK_FAILED`、字段校验 422、唯一冲突与并发 409。每次写入与业务变更同事务写一行 `t_channel_config_change`（经 `ChannelConfigChangeApi` 查询）。
+
+| 合同 | 路径 | 说明 |
+|---|---|---|
+| `PaymentChannelApi` | `/channel-connector/v1/channels`：`POST`、`GET ?status&keyword&page&size`、`GET /{id}`、`PUT /{id}`、`POST /{id}/status` | 编码唯一（409）；激活前在事务外经 Platform `IntegrationLookupApi`（`GET /standard-apis/v1/integrations/{code}/existence`）核对同编码接入方，不存在 400、Platform 失败 500，均不写库；关闭要求无未关闭账号与 MID |
+| `ChannelAccountApi` | `/channel-connector/v1/channel-accounts`：`POST`、`GET`、`GET /{id}`、`PUT /{id}`、`PUT /{id}/configuration`、`POST /{id}/status` | OE 只校验 `^[A-Z]{2}[0-9]{3}$`；配置写入在事务外 Vault Protect（`CHANNEL_ACCOUNT_CONFIG_V1` / `REFERENCE` / 用途 `CHANNEL_CONFIGURATION`，幂等键 `channel-account-config.{id}.{规范 JSON SHA-256}`），再以短事务条件更新 Token；响应只给 `configured` 与 Token 末 4 位；激活要求渠道 ACTIVE 且已配置，关闭要求无未关闭 MID 绑定 |
+| `ChannelMidApi`（写方法） | `/channel-connector/v1/mids`：`POST`、`GET /{id}`、`PUT /{id}/account`、`POST /{id}/status` | 同渠道外部 MID 唯一（409）；账号须同渠道、同 OE、未关闭；激活要求渠道与当前账号均 ACTIVE，首次激活写 `activated_at`，关闭写 `closed_at`；详情含能力组与明细 |
+| `MidCapabilityApi` | `/channel-connector/v1/mid-capabilities`：`GET /definitions`、`POST`、`PUT /{id}/details`、`POST /{id}/status` | 明细按 `channel-connector.capability-definitions` 校验（与候选查询的解析规则一致）；六维组合在 MID 内唯一（409）；整组替换同事务删旧插新；DISABLED 组不参与候选查询 |
+
+**状态机：** 渠道、账号、MID 共用 `DRAFT→ACTIVE`、`ACTIVE⇄SUSPENDED`、`DRAFT|ACTIVE|SUSPENDED→CLOSED`，CLOSED 为终态；状态写入以原状态为条件并校验行数。
+
+**写入并发：** 渠道 `channel:{id}`、账号 `channel-account:{id}`、MID `channel-mid:{id}`（`ChannelConnectorLocks`），全部经 `LockCommand.tryLocks` 获取（等待 10s、租约 60s）；账号关闭另锁所属渠道，MID 改绑同时锁 MID 与目标账号。单资源 `lock()` 的 Key 带 `lock:` 前缀且为 SpinLock，与 `tryLocks` 的 RLock 不互斥，所以同一资源的入口统一使用 `tryLocks`。
+
+**遗留：** 账号重新配置后旧 Vault Token 不回收（Vault Client 无 Retire）；Protect 成功但写库失败时新 Token 成为孤儿，只记录账号 ID。
+
+**补充（BW 合同缺口）：** `ChannelCostVersionResponseBody` 与 `ChannelCostVersionSummaryResponseBody` 增加 `costVerId`（版本主键，供按 `CHANNEL_COST_VERSION` 查变更记录）；版本摘要增加 `scopeCount` / `componentCount`（方案详情一次 LEFT JOIN 分组汇总）；`listChannelMids` 增加可选 `externalMidCode` 前缀筛选（`[A-Za-z0-9_.-]{1,128}`，通配符按文字处理，参数位于 `status` 之后、`page` 之前）。

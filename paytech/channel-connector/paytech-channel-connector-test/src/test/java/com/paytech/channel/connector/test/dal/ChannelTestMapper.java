@@ -1,13 +1,14 @@
 package com.paytech.channel.connector.test.dal;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.ibatis.annotations.*;
 
 import com.paytech.channel.connector.core.dal.dataobject.*;
 
-/** mor_channel_connector 的前置数据和清理 SQL；只触碰本库 17 张表（10 §3.1 与渠道成本四表），不代替被测生产 Mapper。 */
+/** mor_channel_connector 的前置数据和清理 SQL；只触碰本库 18 张表（10 §3.1、渠道成本四表与变更记录表），不代替被测生产 Mapper。 */
 public interface ChannelTestMapper {
     /** 插入本例的 PaymentChannel 配置。 */
     @Insert("INSERT INTO t_payment_channel (channel_id, channel_code, channel_name, channel_status, create_time, update_time) VALUES (#{channelId}, #{channelCode}, #{channelName}, #{channelStatus.code}, #{createTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}, #{updateTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler})")
@@ -66,6 +67,38 @@ public interface ChannelTestMapper {
     int rewriteVersionWindow(@Param("planCode") String planCode, @Param("costVer") int costVer,
         @Param("status") String status, @Param("effectiveFrom") Instant effectiveFrom,
         @Param("effectiveTo") Instant effectiveTo);
+
+    /** 插入本例的变更记录，供查询测试准备数据。 */
+    @Insert("INSERT INTO t_channel_config_change (id, target_type, target_id, change_type, from_status, to_status, operator_id, reason, create_time) VALUES (#{id}, #{targetType.code}, #{targetId}, #{changeType.code}, #{fromStatus}, #{toStatus}, #{operatorId}, #{reason}, #{createTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler})")
+    void insertConfigChange(ChannelConfigChange value);
+
+    /** 读取变更记录表总行数，空基线必须为零。 */
+    @Select("SELECT COUNT(*) FROM t_channel_config_change")
+    int countConfigChangeRows();
+
+    /** 读取一个对象的全部变更记录（按主键升序），供写入断言。 */
+    @Select("SELECT id, target_type, target_id, change_type, from_status, to_status, operator_id, reason, create_time FROM t_channel_config_change WHERE target_type = #{targetType} AND target_id = #{targetId} ORDER BY id")
+    List<Map<String, Object>> selectConfigChanges(@Param("targetType") String targetType, @Param("targetId") long targetId);
+
+    /** 读取方案下指定版本号的主键，供变更记录按对象断言。 */
+    @Select("SELECT v.id FROM t_channel_cost_plan_ver v JOIN t_channel_cost_plan p ON p.id = v.plan_id WHERE p.plan_code = #{planCode} AND v.cost_ver = #{costVer}")
+    Long selectVersionId(@Param("planCode") String planCode, @Param("costVer") int costVer);
+
+    /** 改写方案的更新时间，制造确定的列表排序。 */
+    @Update("UPDATE t_channel_cost_plan SET update_time = #{updateTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler} WHERE plan_code = #{planCode}")
+    int rewritePlanUpdateTime(@Param("planCode") String planCode, @Param("updateTime") Instant updateTime);
+
+    /** 改写 MID 的状态与更新时间，制造确定的筛选与排序。 */
+    @Update("UPDATE t_channel_mid SET mid_status = #{status}, update_time = #{updateTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler} WHERE mid_id = #{midId}")
+    int rewriteMid(@Param("midId") long midId, @Param("status") String status, @Param("updateTime") Instant updateTime);
+
+    /** 停用 MID 的全部能力组，验证启用组计数。 */
+    @Update("UPDATE t_mid_capability SET capability_status = 'DISABLED' WHERE mid_id = #{midId}")
+    int disableCapabilities(@Param("midId") long midId);
+
+    /** 仅清理本测试库的变更记录。 */
+    @Delete("DELETE FROM t_channel_config_change")
+    void clearConfigChanges();
 
     /** 仅清理本测试库的渠道成本组成。 */
     @Delete("DELETE FROM t_channel_cost_component")
@@ -162,4 +195,34 @@ public interface ChannelTestMapper {
     /** 仅清理本测试库的补偿任务（本服务尚无 Handler，防御性清理）。 */
     @Delete("DELETE FROM t_compensation_event")
     void clearCompensationEvents();
+
+    // ---- CC-B 追加：渠道基础配置写入断言 ----
+
+    /** 读取渠道行，不存在为空。 */
+    @Select("SELECT channel_code, channel_name, channel_status FROM t_payment_channel WHERE channel_id = #{channelId}")
+    Map<String, Object> selectChannel(@Param("channelId") long channelId);
+
+    /** 统计渠道行数。 */
+    @Select("SELECT COUNT(*) FROM t_payment_channel")
+    int countChannels();
+
+    /** 读取账号行，不存在为空。 */
+    @Select("SELECT channel_id, entity_no, account_name, account_vault_token, account_status, remark FROM t_channel_account WHERE channel_account_id = #{accountId}")
+    Map<String, Object> selectAccount(@Param("accountId") long accountId);
+
+    /** 读取 MID 行，不存在为空。 */
+    @Select("SELECT channel_id, channel_account_id, external_mid_code, entity_no, mid_status, activated_at, closed_at FROM t_channel_mid WHERE mid_id = #{midId}")
+    Map<String, Object> selectMid(@Param("midId") long midId);
+
+    /** 读取能力组状态，不存在为空。 */
+    @Select("SELECT capability_status FROM t_mid_capability WHERE mid_capability_id = #{capabilityId}")
+    String selectCapabilityStatus(@Param("capabilityId") long capabilityId);
+
+    /** 统计能力组行数。 */
+    @Select("SELECT COUNT(*) FROM t_mid_capability")
+    int countCapabilities();
+
+    /** 读取能力组明细，按能力代码升序。 */
+    @Select("SELECT capability_code, value_type, boolean_value, decimal_value, code_value FROM t_mid_capability_detail WHERE mid_capability_id = #{capabilityId} ORDER BY capability_code")
+    List<Map<String, Object>> selectDetails(@Param("capabilityId") long capabilityId);
 }

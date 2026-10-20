@@ -7531,6 +7531,373 @@
         }
       ],
       "type": "P"
+    },
+    {
+      "id": "433FE480-00EC-5551-890C-898B5D73A0E6",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_channel_config_change",
+      "defName": "渠道配置变更记录",
+      "comment": "渠道配置与成本版本的人工变更留痕；与业务变更同事务写入，只增不改。",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "id",
+          "defName": "补偿事件标识",
+          "comment": "服务侧生成的变更记录 Snowflake 主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "A3EB8ED2-56CC-54EA-8891-B6B3BC6DB00B"
+        },
+        {
+          "defKey": "target_type",
+          "defName": "被变更对象类型",
+          "comment": "被变更对象类型。允许值：CHANNEL、CHANNEL_ACCOUNT、CHANNEL_MID、MID_CAPABILITY、CHANNEL_COST_VERSION。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "8CCEA91A-9E81-5AB3-A149-0F5EEE5D3BF7"
+        },
+        {
+          "defKey": "target_id",
+          "defName": "被变更对象标识",
+          "comment": "被变更对象在本库的主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "D6FDE114-C4DA-517A-9D6B-274B5E4ACB40"
+        },
+        {
+          "defKey": "change_type",
+          "defName": "变更类型",
+          "comment": "变更类型。允许值：CREATE、UPDATE、STATUS、CONFIGURATION、REBIND、CANCEL。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "2CA95778-DDDE-5660-8F8A-4DDA430A93F1"
+        },
+        {
+          "defKey": "from_status",
+          "defName": "变更前状态",
+          "comment": "状态变更前的状态；非状态变更为空。取值来源：渠道、账号、MID、能力组或成本版本的状态代码；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "E5C543B4-F9BE-58AD-8086-B2064E1835BA"
+        },
+        {
+          "defKey": "to_status",
+          "defName": "变更后状态",
+          "comment": "状态变更后的状态；非状态变更为空。取值来源：渠道、账号、MID、能力组或成本版本的状态代码；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "B9465162-FD13-5E8D-A75D-E5D43C9A9B88"
+        },
+        {
+          "defKey": "operator_id",
+          "defName": "操作者标识",
+          "comment": "执行变更的 Platform Actor 稳定业务 ID。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "2C1D5DBD-3C6C-56F8-8ACB-68D738323008"
+        },
+        {
+          "defKey": "reason",
+          "defName": "变更原因",
+          "comment": "操作者填写的非敏感原因；禁止填写凭据。",
+          "type": "VARCHAR",
+          "len": 512,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "CD307D27-C03E-50DE-80A6-B3AC8908D10C"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在本库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "EB0B25A4-4736-5ED9-86EB-2F7091CC561E"
+        }
+      ],
+      "correlations": [],
+      "indexes": [
+        {
+          "defKey": "idx_channel_config_change_target",
+          "defName": "IDX CHANNEL CONFIG CHANGE TARGET",
+          "unique": false,
+          "comment": "支持访问路径：target_type、target_id、id",
+          "fields": [
+            {
+              "fieldDefKey": "8CCEA91A-9E81-5AB3-A149-0F5EEE5D3BF7",
+              "ascOrDesc": "A",
+              "id": "2297BBEF-8DDA-52FA-A0E7-1F209AD38DF7"
+            },
+            {
+              "fieldDefKey": "D6FDE114-C4DA-517A-9D6B-274B5E4ACB40",
+              "ascOrDesc": "A",
+              "id": "641FB350-F4C0-550E-A2C4-D43C5024AF8D"
+            },
+            {
+              "fieldDefKey": "A3EB8ED2-56CC-54EA-8891-B6B3BC6DB00B",
+              "ascOrDesc": "A",
+              "id": "1F3AC217-E41E-5D4C-BEBC-26D00FF448DF"
+            }
+          ],
+          "id": "33CBEA60-28EC-54C0-A67D-595BB61738DC"
+        }
+      ],
+      "type": "P"
     }
   ],
   "views": [],
@@ -8630,6 +8997,32 @@
       },
       "id": "A6B7997F-9469-539D-A45C-54139DD1F54B",
       "comment": "渠道成本配置 bounded-context view"
+    },
+    {
+      "defKey": "channel_config_change",
+      "defName": "渠道配置变更留痕",
+      "relationType": "field",
+      "canvasData": {
+        "cells": [
+          {
+            "id": "486DB77B-F10A-51E7-869C-0ED83138DE11",
+            "shape": "table",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "count": 0,
+            "originKey": "433FE480-00EC-5551-890C-898B5D73A0E6",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 284
+            }
+          }
+        ]
+      },
+      "id": "756FFC93-4777-53D7-8BA1-C1DB78FB03B8",
+      "comment": "渠道配置变更留痕 bounded-context view"
     }
   ],
   "standardFields": [],
@@ -8783,7 +9176,7 @@
       "controlIntensity": "S",
       "applyObjectType": "P",
       "applyFieldType": "entity",
-      "programCode": "let actual=data.entity.fields.map(field=>field.defKey); let immutable=[\"t_routing_policy_version\",\"t_routing_policy_mid\",\"t_routing_decision\",\"t_route_candidate_eval\",\"t_channel_transaction_ref\",\"t_channel_callback_item\",\"t_channel_dispute_event\",\"t_channel_cost_scope\",\"t_channel_cost_component\"].includes(data.entity.defKey); return actual.includes('create_time') && (immutable ? !actual.includes('update_time') : actual.includes('update_time'));",
+      "programCode": "let actual=data.entity.fields.map(field=>field.defKey); let immutable=[\"t_routing_policy_version\",\"t_routing_policy_mid\",\"t_routing_decision\",\"t_route_candidate_eval\",\"t_channel_transaction_ref\",\"t_channel_callback_item\",\"t_channel_dispute_event\",\"t_channel_cost_scope\",\"t_channel_cost_component\",\"t_channel_config_change\"].includes(data.entity.defKey); return actual.includes('create_time') && (immutable ? !actual.includes('update_time') : actual.includes('update_time'));",
       "enable": true
     },
     {

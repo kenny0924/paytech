@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.paytech.channel.connector.core.dal.dataobject.ChannelCostPlanVer;
 import com.paytech.channel.connector.core.enums.ChannelCostVersionStatus;
+import com.paytech.channel.connector.domain.ChannelCostVersionContentCount;
 
 /** t_channel_cost_plan_ver：成本版本读取、创建与状态迁移。 */
 public interface ChannelCostPlanVerRepository {
@@ -20,6 +21,9 @@ public interface ChannelCostPlanVerRepository {
 
     /** 方案全部版本，按版本号降序。 */
     List<ChannelCostPlanVer> findByPlan(long planId);
+
+    /** CC-B 补充：方案全部版本的适用范围数与成本组成数，一次查询。 */
+    List<ChannelCostVersionContentCount> findContentCountsByPlan(long planId);
 
     /** 方案中状态为 ACTIVE 或 INACTIVE 且生效区间 [effective_from, effective_to) 覆盖该时间的版本，按版本号升序。 */
     List<ChannelCostPlanVer> findEffectiveAt(long planId, Instant occurredAt);
@@ -48,6 +52,12 @@ public interface ChannelCostPlanVerRepository {
 
     /** 以 APPROVED 为条件把版本置为 ACTIVE，成功后同步原对象；状态已变化时按并发冲突拒绝。 */
     void activate(ChannelCostPlanVer ver);
+
+    /**
+     * 作废未到生效时间的 APPROVED 版本：置为 INACTIVE 且失效时间等于生效时间，成功后同步原对象
+     * <li>条件更新 status = APPROVED 且 effective_from 晚于 now；行数不为 1 时按并发冲突拒绝。</li>
+     */
+    void cancel(ChannelCostPlanVer ver, Instant now);
 
     /** 以 ACTIVE 为条件把版本置为 INACTIVE 并写入失效时间，成功后同步原对象；状态已变化时按并发冲突拒绝。 */
     void deactivate(ChannelCostPlanVer ver, Instant effectiveTo);

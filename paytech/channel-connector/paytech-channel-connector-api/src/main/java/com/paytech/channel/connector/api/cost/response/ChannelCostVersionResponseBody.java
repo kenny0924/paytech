@@ -13,6 +13,12 @@ public class ChannelCostVersionResponseBody {
     /** 方案代码。 */
     private String planCode;
 
+    /**
+     * 版本主键，十进制字符串
+     * <li>查询变更记录时作为 targetType=CHANNEL_COST_VERSION 的 targetId。</li>
+     */
+    private String costVerId;
+
     /** 方案内递增的版本号。 */
     private String costVer;
 

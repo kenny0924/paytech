@@ -12,7 +12,7 @@ import lombok.Setter;
 public class CreateChannelCostPlanRequestBody {
     /**
      * Payment Channel 稳定业务 ID
-     * <li>每个 Channel 只能有一个方案；只作匹配条件，不向 Payment 核对。</li>
+     * <li>必须存在于本库 t_payment_channel；每个 Channel 只能有一个方案。</li>
      */
     @NotBlank
     @Pattern(regexp = "[1-9][0-9]{0,18}", message = "必须是正十进制整数字符串")

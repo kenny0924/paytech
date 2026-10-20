@@ -12,7 +12,7 @@ import com.paytech.channel.connector.core.enums.ChannelCostPlanStatus;
 import com.paytech.channel.connector.test.base.AbstractChannelCostApiTest;
 
 /**
- * 渠道成本方案：创建 DRAFT、同渠道或同代码重复被拒、字段格式校验与查询（自 billing 搬入）。
+ * 渠道成本方案：创建 DRAFT、渠道不存在被拒、同渠道或同代码重复被拒、字段格式校验与查询（自 billing 搬入）。
  *
  * @see ChannelCostPlanApi#createChannelCostPlan(CreateChannelCostPlanRequestBody)
  * @see ChannelCostPlanApi#getChannelCostPlan(String)
@@ -60,6 +60,16 @@ class ChannelCostPlanApiTest extends AbstractChannelCostApiTest {
         createPlan(otherChannelId, PLAN_CODE).assertBusinessRejected(PLAN_CODE);
 
         getPlan(PLAN_CODE).assertSuccess(200).assertText("channelId", channelId());
+    }
+
+    /** Channel 不存在于本库：创建被拒，不写入方案。 */
+    @Test
+    void test_channelNotFound() {
+        String unknownChannelId = "123456789";
+
+        createPlan(unknownChannelId, PLAN_CODE).assertBusinessRejected("渠道不存在: " + unknownChannelId);
+
+        assertEquals(0, testMapper.countChannelCostRows());
     }
 
     /** 方案不存在：查询为业务错误。 */

@@ -17,7 +17,7 @@ import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.Getter;
 
-/** 只操作 mor_channel_connector 的本库 17 张表（10 §3.1 与渠道成本四表）；Fixture ID 使用正式 Snowflake 接口。 */
+/** 只操作 mor_channel_connector 的本库 18 张表（10 §3.1、渠道成本四表与变更记录表）；Fixture ID 使用正式 Snowflake 接口。 */
 @TestComponent
 @RequiredArgsConstructor
 public class ChannelDataMocker implements Clear {
@@ -31,8 +31,8 @@ public class ChannelDataMocker implements Clear {
         assertTrue(reusable, "测试库清理失败，须人工核查后重新运行");
         try {
             assertEquals("mor_channel_connector", mapper.databaseName());
-            assertEquals(0, mapper.countRows() + mapper.countSchemaOnlyRows() + mapper.countChannelCostRows(),
-                "专用库非空，不自动删除原有数据");
+            assertEquals(0, mapper.countRows() + mapper.countSchemaOnlyRows() + mapper.countChannelCostRows()
+                + mapper.countConfigChangeRows(), "专用库非空，不自动删除原有数据");
             cleanupOwned = true;
         } catch (org.springframework.dao.DataAccessException failure) {
             throw new AssertionError("请先人工审查并应用 paytech-channel-connector-test/src/test/resources/init/ddl.sql 到 mor-local MySQL",
@@ -160,6 +160,51 @@ public class ChannelDataMocker implements Clear {
         }
     }
 
+    // ---- CC-B 追加：渠道基础配置测试的指定状态夹具 ----
+
+    /** 插入指定编码与状态的渠道。 */
+    public PaymentChannel channel(String channelCode, ChannelStatus status) {
+        var channel = new PaymentChannel();
+        channel.setChannelId(ids.nextId());
+        channel.setChannelCode(channelCode);
+        channel.setChannelName("合成渠道 " + channelCode);
+        channel.setChannelStatus(status);
+        channel.setCreateTime(Instant.parse("2026-09-21T00:00:00Z"));
+        channel.setUpdateTime(channel.getCreateTime());
+        mapper.insertPaymentChannel(channel);
+        return channel;
+    }
+
+    /** 插入指定状态的技术账号；token 为空表示未配置。 */
+    public ChannelAccount account(long channelId, String entityNo, String token, ChannelStatus status) {
+        var account = new ChannelAccount();
+        account.setChannelAccountId(ids.nextId());
+        account.setChannelId(channelId);
+        account.setEntityNo(entityNo);
+        account.setAccountName("测试技术账号");
+        account.setAccountVaultToken(token);
+        account.setAccountStatus(status);
+        account.setCreateTime(Instant.parse("2026-09-21T00:00:00Z"));
+        account.setUpdateTime(account.getCreateTime());
+        mapper.insertChannelAccount(account);
+        return account;
+    }
+
+    /** 插入指定状态的 MID。 */
+    public ChannelMid mid(long channelId, long accountId, String entityNo, ChannelStatus status) {
+        var mid = new ChannelMid();
+        mid.setMidId(ids.nextId());
+        mid.setChannelId(channelId);
+        mid.setChannelAccountId(accountId);
+        mid.setEntityNo(entityNo);
+        mid.setExternalMidCode("test-mid-" + mid.getMidId());
+        mid.setMidStatus(status);
+        mid.setCreateTime(Instant.parse("2026-09-21T00:00:00Z"));
+        mid.setUpdateTime(mid.getCreateTime());
+        mapper.insertChannelMid(mid);
+        return mid;
+    }
+
     /** 按依赖顺序清理本库全部表，任一失败即禁止环境复用。 */
     @Override
     public void clear() {
@@ -168,13 +213,14 @@ public class ChannelDataMocker implements Clear {
         }
         assertEquals("mor_channel_connector", mapper.databaseName());
         try {
-            assertAll(mapper::clearChannelCostComponents, mapper::clearChannelCostScopes,
+            assertAll(mapper::clearConfigChanges, mapper::clearChannelCostComponents, mapper::clearChannelCostScopes,
                 mapper::clearChannelCostVersions, mapper::clearChannelCostPlans, mapper::clearCompensationEvents,
                 mapper::clearEventExceptions, mapper::clearCallbackItems,
                 mapper::clearCallbacks, mapper::clearInteractions, mapper::clearRoutingPolicyMids,
                 mapper::clearRoutingPolicyVersions, mapper::clearRoutingPolicies, mapper::clearDetails,
                 mapper::clearCapabilities, mapper::clearMids, mapper::clearAccounts, mapper::clearChannels);
-            assertEquals(0, mapper.countRows() + mapper.countSchemaOnlyRows() + mapper.countChannelCostRows());
+            assertEquals(0, mapper.countRows() + mapper.countSchemaOnlyRows() + mapper.countChannelCostRows()
+                + mapper.countConfigChangeRows());
             cleanupOwned = false;
         } catch (RuntimeException | AssertionError failure) {
             reusable = false;

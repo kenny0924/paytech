@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 
 import org.springframework.stereotype.Component;
 
+import com.paytech.channel.connector.api.cost.request.CancelChannelCostVersionRequestBody;
 import com.paytech.channel.connector.api.cost.request.ChannelCostComponentRequestBody;
 import com.paytech.channel.connector.api.cost.request.ChannelCostScopeRequestBody;
 import com.paytech.channel.connector.api.cost.request.CreateChannelCostPlanRequestBody;
@@ -13,13 +14,18 @@ import com.paytech.channel.connector.api.cost.request.ReviewChannelCostVersionRe
 import com.paytech.channel.connector.api.cost.request.SubmitChannelCostVersionRequestBody;
 import com.paytech.channel.connector.api.cost.response.ChannelCostComponentResponseBody;
 import com.paytech.channel.connector.api.cost.response.ChannelCostPlanResponseBody;
+import com.paytech.channel.connector.api.cost.response.ChannelCostPlanSummaryResponseBody;
 import com.paytech.channel.connector.api.cost.response.ChannelCostResolutionResponseBody;
 import com.paytech.channel.connector.api.cost.response.ChannelCostScopeResponseBody;
 import com.paytech.channel.connector.api.cost.response.ChannelCostVersionResponseBody;
 import com.paytech.channel.connector.api.cost.response.ChannelCostVersionSummaryResponseBody;
+import com.paytech.channel.connector.core.enums.ChannelCostCodes;
+import com.paytech.channel.connector.core.enums.ChannelCostPlanStatus;
+import com.paytech.channel.connector.domain.ChannelCostPlanSummaryView;
 import com.paytech.channel.connector.domain.ChannelCostPlanView;
 import com.paytech.channel.connector.domain.ChannelCostResolutionView;
 import com.paytech.channel.connector.domain.ChannelCostVersionView;
+import com.paytech.channel.connector.service.processor.request.CancelChannelCostVersionRequest;
 import com.paytech.channel.connector.service.processor.request.CreateChannelCostPlanRequest;
 import com.paytech.channel.connector.service.processor.request.CreateChannelCostVersionRequest;
 import com.paytech.channel.connector.service.processor.request.ResolveChannelCostRequest;
@@ -103,6 +109,43 @@ public class ChannelCostPlanConverter {
         return request;
     }
 
+    /** 转换作废请求。 */
+    public CancelChannelCostVersionRequest toRequest(String planCode, String costVer,
+        CancelChannelCostVersionRequestBody body) {
+        CancelChannelCostVersionRequest request = new CancelChannelCostVersionRequest();
+        request.setPlanCode(planCode);
+        request.setCostVer(Integer.valueOf(costVer));
+        request.setOperatorId(Long.valueOf(body.getOperatorId()));
+        request.setReason(body.getReason());
+        return request;
+    }
+
+    /** 可空的十进制主键查询参数；格式已由入口校验。 */
+    public Long optionalId(String value) {
+        return value == null ? null : Long.valueOf(value);
+    }
+
+    /** 可空的方案状态查询参数；未知代码以参数错误拒绝。 */
+    public ChannelCostPlanStatus planStatus(String status) {
+        return status == null ? null : ChannelCostCodes.parse(ChannelCostPlanStatus.class, "status", status);
+    }
+
+    /** 转换方案列表项。 */
+    public ChannelCostPlanSummaryResponseBody toSummaryResponseBody(ChannelCostPlanSummaryView view) {
+        ChannelCostPlanSummaryResponseBody body = new ChannelCostPlanSummaryResponseBody();
+        body.setPlanId(view.getPlanId().toString());
+        body.setPlanCode(view.getPlanCode());
+        body.setChannelId(view.getChannelId().toString());
+        body.setChannelCode(view.getChannelCode());
+        body.setChannelName(view.getChannelName());
+        body.setStatus(view.getStatus().getCode());
+        body.setCurrentCostVer(text(view.getCurrentCostVer()));
+        body.setCurrentEffectiveFrom(view.getCurrentEffectiveFrom());
+        body.setPendingApprovalCount(view.getPendingApprovalCount());
+        body.setUpdateTime(view.getUpdateTime());
+        return body;
+    }
+
     /** 转换命中请求。 */
     public ResolveChannelCostRequest toRequest(ResolveChannelCostRequestBody body) {
         ResolveChannelCostRequest request = new ResolveChannelCostRequest();
@@ -131,7 +174,10 @@ public class ChannelCostPlanConverter {
     /** 转换版本摘要。 */
     ChannelCostVersionSummaryResponseBody toSummaryBody(ChannelCostPlanView.Version version) {
         ChannelCostVersionSummaryResponseBody body = new ChannelCostVersionSummaryResponseBody();
+        body.setCostVerId(version.getCostVerId().toString());
         body.setCostVer(version.getCostVer().toString());
+        body.setScopeCount(version.getScopeCount());
+        body.setComponentCount(version.getComponentCount());
         body.setStatus(version.getStatus().getCode());
         body.setEffectiveFrom(version.getEffectiveFrom());
         body.setEffectiveTo(version.getEffectiveTo());
@@ -145,6 +191,7 @@ public class ChannelCostPlanConverter {
     public ChannelCostVersionResponseBody toResponseBody(ChannelCostVersionView view) {
         ChannelCostVersionResponseBody body = new ChannelCostVersionResponseBody();
         body.setPlanCode(view.getPlanCode());
+        body.setCostVerId(view.getCostVerId().toString());
         body.setCostVer(view.getCostVer().toString());
         body.setStatus(view.getStatus().getCode());
         body.setEffectiveFrom(view.getEffectiveFrom());

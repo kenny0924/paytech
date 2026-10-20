@@ -71,6 +71,22 @@ public final class ChannelCostResponseChecker extends AbstractHttpResponseChecke
         return node.isMissingNode() || node.isNull() ? null : node.asString();
     }
 
+    /** 断言 200 分页响应的页码、条数、总数与当前页记录数。 */
+    public ChannelCostResponseChecker assertPage(int page, int size, long total, int itemCount) {
+        assertSuccess(200);
+        JsonNode json = body();
+        assertEquals(page, json.path("page").asInt(), "page");
+        assertEquals(size, json.path("size").asInt(), "size");
+        assertEquals(total, json.path("total").asLong(), "total");
+        assertEquals(itemCount, json.path("items").size(), "items 数");
+        return this;
+    }
+
+    /** 读取分页响应的第 index 条记录。 */
+    public JsonNode item(int index) {
+        return body().path("items").get(index);
+    }
+
     /** 读取完整 JSON 响应体，用于嵌套集合断言。 */
     public JsonNode json() {
         return body();

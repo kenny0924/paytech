@@ -11,6 +11,15 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
+<a id="channel-connector-ops-console-20261020"></a>
+## channel-connector 运营控制台：渠道成本方案与渠道基础配置（2026-10-20，已部署 mor-test，已本地提交、未推送）
+
+- **范围：** [需求](<../requirements/20261020/channel-connector-运营控制台渠道成本与基础配置/requirement.md>)与[方案](<../requirements/20261020/channel-connector-运营控制台渠道成本与基础配置/technique.md>)：channel-connector 新表 `t_channel_config_change`（18 表）、成本方案列表 / 作废 / 渠道存在校验、变更记录查询、渠道 / 技术账号 / MID / 能力四组管理合同与 13 个写 Processor（`tryLocks`，Vault Protect 在事务外）、Platform 内部免会话接入方查询 `IntegrationLookupApi`（`GET /standard-apis/v1/integrations/{code}/existence`）、Operations BFF `/channel-admin/v1/**` 31 条路由与版本对比聚合、Web 一级菜单「渠道」三页（Pencil 15 画板）、Platform 注册块 92（402 行）、Vault PROTECT 规则（`channel-connector-service` / `CHANNEL_ACCOUNT_CONFIG_V1` / `CHANNEL_CONFIGURATION`）。路由策略、健康度、回调查询页不在本期；OE 只校验格式（client-master 无查询接口）。
+- **Implemented（2026-10-20 本地提交于 main，父提交 `b04b77f1`，未推送）：** channel-connector 152 文件、Platform 9 文件、ops-bff / ops-web 46 文件、arch-rules 表归属、PDManer 生成输入；研发期决定见方案第 9 节与第 6 节（锁机制、幂等键字符集、400 映射、Platform 内部接口例外）。
+- **Verified：** channel-connector-test 187、arch-rules 61 + 3、platform-support-test 定向 37 / 全量 884、ops-bff 1844、ops-web 1155 + build，全部 0 失败；本机 `*_v2e2e` 全链路：控制台登记渠道 / 账号（真实 Vault Protect）/ MID / 能力 → 候选查询返回 → REFUND 经 Platform 标准 API 到达 payermax-mock 且签名有效，API 103 / 103、浏览器 35 / 35；本机 e2e 的渠道种子 SQL 与 `channel_setup.py` 退役，Platform 接入方改为 `PAYERMAX_MOCK`。
+- **Deployed（mor-test，2026-10-20 07:24Z—07:37Z，[发布记录](<../requirements/20261020/channel-connector-运营控制台渠道成本与基础配置/release/release.md>)）：** platform-support `sha256:e5a06814…`、channel-connector `sha256:4d31d529…`、ops-bff `sha256:bec85826…`、ops-web `sha256:3ae27f3d…`（D1 修复后，tag `channel-20261020b`）；`mor_channel_connector` 18 表；`mor_vault` 策略版本 17；`mor_platform` 块 92 启用（31 / 9 / 7 / 1，PLATFORM_ADMIN 36）。验收：接口 105 / 105、浏览器 35 / 35、既有商务 / 财务页 17 / 17、Payment 侧候选查询 2 / 2；渠道执行未在 mor-test 跑（`PAYERMAX` 接入方指向真实 UAT、凭据为合成），验收数据已清理。
+- **Pending：** 推送与后续发布另行授权；mor-test 真实渠道执行需真实 UAT 凭据或内部 mock 接入方；旧 Vault Token 不回收；Platform `console-resource-capabilities.json` 既有缺 9 页；`payment.pdma.json` 过期与场景文档 `adapter_code` 两个既有 PDManer 测试失败；`internal-auth` 开启前需把 `channel-connector-service` 加进 Platform 签发白名单、channel-connector 入站接受 `operations-console-bff`。
+
 <a id="counterparty-rename-20261020"></a>
 ## counterparty：consumer 服务改名（2026-10-20，已部署 mor-test，已本地提交，未推送）
 

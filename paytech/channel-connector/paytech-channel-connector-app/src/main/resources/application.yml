@@ -51,6 +51,7 @@ mybatis:
   mapper-locations: "classpath*:mapper/**/*.xml"
 
 # paytech-redis-starter：渠道成本方案的创建、版本创建、提交、批准、驳回与到期切换按 planCode 加资源锁。
+# CC-B 追加：渠道 / 技术账号 / MID / 能力组管理写入口按 channel:{id}、channel-account:{id}、channel-mid:{id} 加锁（tryLocks，等待 10s、租约 60s，代码常量）。
 redis:
   coordination:
     enabled: true

@@ -15,6 +15,7 @@ spring:
         simple:
           instances:
             # 同一独立 Mock HTTP 服务承载 Vault 账号读取与 Platform 标准 API 执行。
+            # CC-B 追加：同一服务还承载 Vault 账号配置 Protect 与 Platform 接入方存在性查询（渠道激活前置）。
             vault-service:
               - uri: "${test.mock-http.base-url}"
             platform-support-service:

@@ -2,7 +2,8 @@
 // (requirements/20261017/architecture-V2骨架与模块搬迁/design/03 §2.3, design/09 §4.3 / §5.2).
 //
 // - channel-connector owns the channel identity, account, MID, capability, routing-policy, interaction and callback tables,
-//   and since 2026-10-19 the four channel cost configuration tables moved from billing (decision 2026-10-19-billing-fact-engine);
+//   since 2026-10-19 the four channel cost configuration tables moved from billing (decision 2026-10-19-billing-fact-engine),
+//   and since 2026-10-20 the manual configuration change log t_channel_config_change;
 // - card owns the four card tables since step 12 (design/05; mor_card, card-service);
 // - payment owns everything else, including the three channel-dispute tables until the dispute service exists;
 // - t_compensation_event is a per-database table and appears in every model.
@@ -26,6 +27,7 @@ export const CHANNEL_CONNECTOR_TABLES = Object.freeze([
   "t_channel_cost_plan_ver",
   "t_channel_cost_scope",
   "t_channel_cost_component",
+  "t_channel_config_change",
 ]);
 
 export const CARD_TABLES = Object.freeze([

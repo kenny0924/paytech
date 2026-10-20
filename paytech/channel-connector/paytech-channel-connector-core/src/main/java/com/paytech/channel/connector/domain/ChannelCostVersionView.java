@@ -26,6 +26,9 @@ public class ChannelCostVersionView {
     /** 方案代码。 */
     private String planCode;
 
+    /** 版本主键；变更记录以 CHANNEL_COST_VERSION + 该主键定位。 */
+    private Long costVerId;
+
     /** 版本号。 */
     private Integer costVer;
 
@@ -61,6 +64,7 @@ public class ChannelCostVersionView {
         List<ChannelCostComponent> components) {
         ChannelCostVersionView view = new ChannelCostVersionView();
         view.setPlanCode(planCode);
+        view.setCostVerId(ver.getId());
         view.setCostVer(ver.getCostVer());
         view.setStatus(ver.getStatus());
         view.setEffectiveFrom(ver.getEffectiveFrom());

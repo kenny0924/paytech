@@ -16,6 +16,7 @@ import org.springframework.web.client.RestClient;
 import com.paytech.foundation.httpclient.api.HttpServiceClientFactory;
 import com.paytech.foundation.httpclient.api.HttpServiceClientOptions;
 import com.paytech.platform.support.api.enums.StandardApiExecutionErrorCode;
+import com.paytech.platform.support.api.standardapi.IntegrationLookupApi;
 import com.paytech.platform.support.api.standardapi.StandardApiCommandApi;
 
 /**
@@ -37,6 +38,19 @@ public class ChannelConnectorOutboundConfiguration {
             internalToken.apply(HttpServiceClientOptions.strict().withStrictJsonResponses(65536), PLATFORM_SERVICE);
         return HttpServiceClientFactory.create(client, options, StandardApiExecutionErrorCode.values())
             .createClient(StandardApiCommandApi.class);
+    }
+
+    // ---- CC-B 追加：Platform 接入方存在性内部查询（渠道激活前置，事务外调用） ----
+
+    /** Platform 接入方存在性查询客户端；与标准 API 执行同一构造方式与内部 Token 选项，不注册额外错误码。 */
+    @Bean
+    IntegrationLookupApi integrationLookupApi(RestClient.Builder builder, ObjectProvider<LoadBalancerClient> discovery,
+        ChannelConnectorOutboundProperties properties, InternalTokenClientOptions internalToken) {
+        RestClient client = client(builder, discovery, PLATFORM_SERVICE, properties.getPlatformContextPath(),
+            properties.getPlatformReadTimeout());
+        HttpServiceClientOptions options =
+            internalToken.apply(HttpServiceClientOptions.strict().withStrictJsonResponses(65536), PLATFORM_SERVICE);
+        return HttpServiceClientFactory.create(client, options).createClient(IntegrationLookupApi.class);
     }
 
     /** 基于应用的 RestClient.Builder（保留公共观测定制）：服务发现选择实例，地址带对方应用 context path；连接 2 秒。 */

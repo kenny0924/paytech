@@ -75,6 +75,25 @@ class ChannelCostVersionLifecycleTest extends AbstractChannelCostApiTest {
         assertPlanRow(PLAN_CODE, ChannelCostPlanStatus.DRAFT.getCode(), null, 0L);
     }
 
+    /** CC-B 补充：版本详情与方案版本摘要回显版本主键；摘要给出适用范围数与成本组成数（一次汇总查询）。 */
+    @Test
+    void test_versionIdAndContentCounts() {
+        ChannelCostVersionRequestBuilder builder = version().clearScopes().addScope(
+            scope(1, midId(), component("A_FEE", ChannelCostComponentType.PROCESSING_FEE, "0.02", null),
+                component("B_FEE", ChannelCostComponentType.CROSS_BORDER_FEE, "0.01", null)),
+            scope(2, midId(), component("Z_FEE", ChannelCostComponentType.REFUND_FEE, null, "1.00")));
+        builder.scope(1).setActionType("REFUND");
+        var created = createVersion(builder).assertSuccess(201);
+
+        String costVerId = String.valueOf(testMapper.selectVersionId(PLAN_CODE, 1));
+        JsonNode summary = getPlan(PLAN_CODE).assertSuccess(200).json().path("versions").get(0);
+        assertAll(() -> assertEquals(costVerId, created.text("costVerId")),
+            () -> assertEquals(costVerId, getVersion(1).assertSuccess(200).text("costVerId")),
+            () -> assertEquals(costVerId, summary.path("costVerId").asString()),
+            () -> assertEquals(2, summary.path("scopeCount").asInt()),
+            () -> assertEquals(3, summary.path("componentCount").asInt()));
+    }
+
     /** 版本详情范围按 scopeNo 升序、范围内组成按 componentCode 升序，与提交顺序无关。 */
     @Test
     void test_queryOrdersScopesAndComponents() {

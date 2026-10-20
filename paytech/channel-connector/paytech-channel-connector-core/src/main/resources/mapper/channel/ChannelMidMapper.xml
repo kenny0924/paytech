@@ -33,4 +33,60 @@
         <include refid="columns"/>
         FROM t_channel_mid WHERE mid_id = #{id}
     </select>
+    <resultMap id="summary" type="com.paytech.channel.connector.domain.ChannelMidSummaryView" autoMapping="true">
+        <result column="mid_status" property="midStatus" javaType="com.paytech.channel.connector.core.enums.ChannelStatus"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+    </resultMap>
+    <sql id="summaryFilter">
+        <where>
+            <if test="criteria.channelId != null">AND m.channel_id = #{criteria.channelId}</if>
+            <if test="criteria.channelAccountId != null">AND m.channel_account_id = #{criteria.channelAccountId}</if>
+            <if test="criteria.entityNo != null">AND m.entity_no = #{criteria.entityNo}</if>
+            <if test="criteria.status != null">AND m.mid_status = #{criteria.status.code}</if>
+            <if test="criteria.externalMidCode != null">
+                AND m.external_mid_code LIKE CONCAT(#{criteria.externalMidCodePrefix}, '%')
+            </if>
+        </where>
+    </sql>
+    <!-- 同库组合：Channel 编码、当前账号名称与能力组计数；排序稳定，数据库分页。 -->
+    <select id="selectSummaries" resultMap="summary">
+        SELECT m.mid_id, m.channel_id, c.channel_code, m.channel_account_id, a.account_name, m.external_mid_code,
+               m.entity_no, m.mid_status,
+               (SELECT COUNT(*) FROM t_mid_capability mc WHERE mc.mid_id = m.mid_id) AS capability_group_count,
+               (SELECT COUNT(*) FROM t_mid_capability mc
+                 WHERE mc.mid_id = m.mid_id AND mc.capability_status = 'ENABLED') AS enabled_capability_group_count,
+               m.activated_at, m.update_time
+        FROM t_channel_mid m
+        LEFT JOIN t_payment_channel c ON c.channel_id = m.channel_id
+        LEFT JOIN t_channel_account a ON a.channel_account_id = m.channel_account_id
+        <include refid="summaryFilter"/>
+        ORDER BY m.update_time DESC, m.mid_id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+    <select id="countSummaries" resultType="long">
+        SELECT COUNT(*) FROM t_channel_mid m
+        <include refid="summaryFilter"/>
+    </select>
+
+    <!-- CC-B 追加：MID 管理写入 -->
+    <insert id="insert">
+        INSERT INTO t_channel_mid (<include refid="columns"/>)
+        VALUES (#{midId}, #{channelId}, #{channelAccountId}, #{externalMidCode}, #{entityNo}, #{midStatus.code},
+        #{activatedAt}, #{closedAt}, #{createTime}, #{updateTime})
+    </insert>
+    <update id="updateAccount">
+        UPDATE t_channel_mid SET channel_account_id = #{toAccountId}, update_time = #{now}
+        WHERE mid_id = #{midId} AND channel_account_id = #{fromAccountId} AND mid_status &lt;&gt; 'CLOSED'
+    </update>
+    <update id="updateStatus">
+        UPDATE t_channel_mid SET mid_status = #{toStatus.code}, activated_at = #{activatedAt}, closed_at = #{closedAt},
+        update_time = #{now}
+        WHERE mid_id = #{midId} AND mid_status = #{fromStatus.code}
+    </update>
+    <select id="countOpenByChannel" resultType="long">
+        SELECT COUNT(*) FROM t_channel_mid WHERE channel_id = #{channelId} AND mid_status &lt;&gt; 'CLOSED'
+    </select>
+    <select id="countOpenByAccount" resultType="long">
+        SELECT COUNT(*) FROM t_channel_mid WHERE channel_account_id = #{channelAccountId} AND mid_status &lt;&gt; 'CLOSED'
+    </select>
 </mapper>

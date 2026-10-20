@@ -3,6 +3,7 @@ package com.paytech.channel.connector.domainservice.repository.impl;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
@@ -10,8 +11,11 @@ import org.springframework.stereotype.Repository;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelCostPlan;
 import com.paytech.channel.connector.core.dal.mapper.ChannelCostPlanMapper;
 import com.paytech.channel.connector.core.enums.ChannelCostPlanStatus;
+import com.paytech.channel.connector.domain.ChannelCostPlanSummaryView;
 import com.paytech.channel.connector.domainservice.repository.ChannelCostPlanRepository;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
+import com.paytech.foundation.web.paging.PagingRequestBody;
+import com.paytech.foundation.web.paging.PagingResponseBody;
 
 import lombok.AllArgsConstructor;
 
@@ -44,6 +48,16 @@ public class ChannelCostPlanRepositoryImpl implements ChannelCostPlanRepository 
     @Override
     public ChannelCostPlan lockByCode(String planCode) {
         return mapper.selectByCodeForUpdate(planCode);
+    }
+
+    /** 相同筛选条件下数据库 COUNT 与 LIMIT/OFFSET 分页；无记录时不再查询列表。 */
+    @Override
+    public PagingResponseBody<ChannelCostPlanSummaryView> findPage(Long channelId, ChannelCostPlanStatus status,
+        PagingRequestBody paging) {
+        long total = mapper.countSummaries(channelId, status);
+        List<ChannelCostPlanSummaryView> items = total == 0 ? List.of()
+            : mapper.selectSummaries(channelId, status, paging.offset(), paging.size());
+        return new PagingResponseBody<>(items, paging.page(), paging.size(), total);
     }
 
     /** 写入新方案；Channel 或方案代码重复时按并发冲突拒绝。 */

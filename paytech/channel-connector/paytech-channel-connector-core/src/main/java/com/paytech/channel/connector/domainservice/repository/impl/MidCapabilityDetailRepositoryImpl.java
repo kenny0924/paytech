@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import com.paytech.channel.connector.core.dal.dataobject.MidCapabilityDetail;
 import com.paytech.channel.connector.core.dal.mapper.MidCapabilityDetailMapper;
 import com.paytech.channel.connector.domainservice.repository.MidCapabilityDetailRepository;
+import com.paytech.foundation.common.error.ErrorException;
 
 import lombok.AllArgsConstructor;
 
@@ -23,4 +24,20 @@ public class MidCapabilityDetailRepositoryImpl implements MidCapabilityDetailRep
         return ids.isEmpty() ? List.of() : mapper.findByCapabilityIds(ids);
     }
 
+    /** 批量写入明细；行数与条数不符属于系统错误。 */
+    @Override
+    public void insertAll(List<MidCapabilityDetail> details) {
+        if (details.isEmpty()) {
+            return;
+        }
+        if (mapper.insertAll(details) != details.size()) {
+            throw new ErrorException("能力明细写入行数不符: " + details.getFirst().getMidCapabilityId());
+        }
+    }
+
+    /** 删除能力组的全部明细。 */
+    @Override
+    public void deleteByCapabilityId(long midCapabilityId) {
+        mapper.deleteByCapabilityId(midCapabilityId);
+    }
 }
