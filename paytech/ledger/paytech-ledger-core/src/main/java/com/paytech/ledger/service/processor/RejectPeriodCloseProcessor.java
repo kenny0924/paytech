@@ -6,9 +6,10 @@ import java.time.temporal.ChronoUnit;
 
 import org.springframework.stereotype.Component;
 
-import com.paytech.foundation.common.error.BizCheckFailException;
+import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
+import com.paytech.ledger.api.enums.LedgerErrorCode;
 import com.paytech.ledger.core.constant.AccountingLocks;
 import com.paytech.ledger.core.dal.dataobject.CloseApproval;
 import com.paytech.ledger.core.dal.dataobject.PeriodClose;
@@ -58,13 +59,13 @@ public class RejectPeriodCloseProcessor extends AbstractLockProcessor<ReviewPeri
     /** 只能复核 PENDING_CHECK 流程；复核人不同于编制人；确认的摘要等于关账摘要。 */
     void checkReviewable(PeriodClose close, ReviewPeriodCloseRequest request) {
         if (close.getStatus() != PeriodCloseStatus.PENDING_CHECK) {
-            throw new BizCheckFailException("关账流程不在待审批状态: " + close.getId() + ", 状态 " + close.getStatus().getCode());
+            throw new FailException(LedgerErrorCode.REVIEW_STATUS_INVALID);
         }
         if (close.getMakerId().equals(request.getCheckerId())) {
-            throw new BizCheckFailException("复核人不能与编制人相同: 关账 " + close.getId() + ", 用户 " + request.getCheckerId());
+            throw new FailException(LedgerErrorCode.SELF_REVIEW_FORBIDDEN);
         }
         if (!close.getCloseHash().equals(request.getApprovedCloseHash())) {
-            throw new BizCheckFailException("复核确认的关账摘要与流程不一致: " + close.getId());
+            throw new FailException(LedgerErrorCode.REVIEW_CONTENT_CHANGED);
         }
     }
 

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
+import com.paytech.ledger.api.enums.LedgerErrorCode;
 import com.paytech.ledger.core.enums.ApprovalDecision;
 import com.paytech.ledger.core.enums.ApprovalRole;
 import com.paytech.ledger.core.enums.PeriodStatus;
@@ -16,8 +17,8 @@ import tools.jackson.databind.JsonNode;
 /**
  * 关账复核：批准关闭期间、驳回回到 OPEN、Maker-Checker 与摘要校验、重复与非待审批状态拒绝、关闭后过账被拒。
  *
- * @see com.paytech.ledger.api.PeriodCloseApi#approvePeriodClose(String, String, com.paytech.ledger.api.request.ReviewPeriodCloseRequestBody)
- * @see com.paytech.ledger.api.PeriodCloseApi#rejectPeriodClose(String, String, com.paytech.ledger.api.request.ReviewPeriodCloseRequestBody)
+ * @see com.paytech.ledger.api.PeriodCloseApi#approvePeriodClose(String, String, String, String, com.paytech.ledger.api.request.ReviewPeriodCloseRequestBody)
+ * @see com.paytech.ledger.api.PeriodCloseApi#rejectPeriodClose(String, String, String, String, com.paytech.ledger.api.request.ReviewPeriodCloseRequestBody)
  */
 class ReviewPeriodCloseTest extends AbstractPeriodCloseApiTest {
 
@@ -58,8 +59,7 @@ class ReviewPeriodCloseTest extends AbstractPeriodCloseApiTest {
         LedgerResponseChecker started = startedClose();
 
         approveClose(ledger.getOpenPeriodId(), "1", CLOSE_MAKER_ID, started.text("closeHash"))
-            .assertBusinessRejected("复核人不能与编制人相同: 关账 " + started.text("periodCloseId") + ", 用户 "
-                + CLOSE_MAKER_ID);
+            .assertRejected(LedgerErrorCode.SELF_REVIEW_FORBIDDEN);
 
         assertEquals(PeriodStatus.CLOSING.getCode(), testMapper.selectPeriodStatus(ledger.getOpenPeriodId()));
     }
@@ -69,9 +69,9 @@ class ReviewPeriodCloseTest extends AbstractPeriodCloseApiTest {
         LedgerResponseChecker started = startedClose();
 
         approveClose(ledger.getOpenPeriodId(), "1", CLOSE_CHECKER_ID, "c".repeat(64))
-            .assertBusinessRejected("复核确认的关账摘要与流程不一致: " + started.text("periodCloseId"));
+            .assertRejected(LedgerErrorCode.REVIEW_CONTENT_CHANGED);
         rejectClose(ledger.getOpenPeriodId(), "1", CLOSE_CHECKER_ID, "c".repeat(64))
-            .assertBusinessRejected("复核确认的关账摘要与流程不一致: " + started.text("periodCloseId"));
+            .assertRejected(LedgerErrorCode.REVIEW_CONTENT_CHANGED);
     }
 
     @Test
@@ -80,7 +80,7 @@ class ReviewPeriodCloseTest extends AbstractPeriodCloseApiTest {
         approveClose(ledger.getOpenPeriodId(), "1", CLOSE_CHECKER_ID, started.text("closeHash")).assertSuccess(200);
 
         approveClose(ledger.getOpenPeriodId(), "1", CLOSE_CHECKER_ID, started.text("closeHash"))
-            .assertBusinessRejected("关账流程不在待审批状态: " + started.text("periodCloseId") + ", 状态 COMPLETED");
+            .assertRejected(LedgerErrorCode.REVIEW_STATUS_INVALID);
     }
 
     @Test
@@ -89,7 +89,7 @@ class ReviewPeriodCloseTest extends AbstractPeriodCloseApiTest {
         LedgerResponseChecker failed = startClose().assertSuccess(201).assertText("status", "FAILED");
 
         approveClose(ledger.getOpenPeriodId(), "1", CLOSE_CHECKER_ID, "a".repeat(64))
-            .assertBusinessRejected("关账流程不在待审批状态: " + failed.text("periodCloseId") + ", 状态 FAILED");
+            .assertRejected(LedgerErrorCode.REVIEW_STATUS_INVALID);
     }
 
     @Test

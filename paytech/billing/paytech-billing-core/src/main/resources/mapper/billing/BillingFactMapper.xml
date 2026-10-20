@@ -58,6 +58,13 @@
         WHERE id = #{id} AND status = 'DRAFT' AND fact_version = 0
     </update>
 
+    <!-- 只有仍为 DRAFT 且版本为 0 的事实可以作废；VOIDED 为终态，不发布事件。 -->
+    <update id="voidDraft">
+        UPDATE t_billing_fact
+        SET status = 'VOIDED', update_time = #{now}
+        WHERE id = #{id} AND status = 'DRAFT' AND fact_version = 0
+    </update>
+
     <!-- 只有仍为 APPROVED 且版本未变的事实可以被替代，防止两条更正事实同时替代同一事实。 -->
     <update id="supersede">
         UPDATE t_billing_fact
@@ -86,5 +93,26 @@
             MAX(CASE WHEN published_at IS NOT NULL THEN id END) AS max_published_fact_id
         FROM t_billing_fact
         WHERE <include refid="bookScope"/> AND status IN ('APPROVED', 'SUPERSEDED')
+    </select>
+
+    <!-- 管理列表筛选：entity_no + currency 命中 idx_fact_book_oe，其余条件为空时不筛选；登记时间左闭右开。 -->
+    <sql id="searchFilter">
+        entity_no = #{criteria.entityNo} AND currency = #{criteria.currency}
+        <if test="criteria.clientId != null">AND client_id = #{criteria.clientId}</if>
+        <if test="criteria.status != null">AND `status` = #{criteria.status}</if>
+        <if test="criteria.factType != null">AND fact_type = #{criteria.factType}</if>
+        <if test="criteria.createdFrom != null">AND create_time &gt;= #{criteria.createdFrom}</if>
+        <if test="criteria.createdTo != null">AND create_time &lt; #{criteria.createdTo}</if>
+    </sql>
+
+    <select id="selectSearchPage" resultType="com.paytech.billing.core.dal.dataobject.BillingFact">
+        SELECT <include refid="columns"/> FROM t_billing_fact
+        WHERE <include refid="searchFilter"/>
+        ORDER BY id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countSearch" resultType="long">
+        SELECT COUNT(*) FROM t_billing_fact WHERE <include refid="searchFilter"/>
     </select>
 </mapper>

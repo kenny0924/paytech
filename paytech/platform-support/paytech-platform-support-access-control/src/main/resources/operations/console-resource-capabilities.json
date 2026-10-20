@@ -323,7 +323,12 @@
     "componentKey": "OPERATIONS_FINANCE_LEDGER",
     "displayName": "账本查询",
     "frontendRoute": "/finance/ledger",
-    "actions": []
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_FINANCE_LEDGER_MANAGE",
+        "displayName": "发起试算"
+      }
+    ]
   },
   {
     "componentKey": "OPERATIONS_FINANCE_BALANCES",
@@ -336,6 +341,51 @@
     "displayName": "明细账查询",
     "frontendRoute": "/finance/subledger",
     "actions": []
+  },
+  {
+    "componentKey": "OPERATIONS_FINANCE_ADJUSTMENTS",
+    "displayName": "调整",
+    "frontendRoute": "/finance/adjustments",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_FINANCE_ADJUSTMENTS_MANAGE",
+        "displayName": "制单"
+      },
+      {
+        "resourceCode": "OPERATIONS_FINANCE_ADJUSTMENTS_APPROVE",
+        "displayName": "复核"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_FINANCE_PERIOD_CLOSE",
+    "displayName": "期间关账",
+    "frontendRoute": "/finance/period-close",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_FINANCE_PERIOD_CLOSE_MANAGE",
+        "displayName": "发起"
+      },
+      {
+        "resourceCode": "OPERATIONS_FINANCE_PERIOD_CLOSE_APPROVE",
+        "displayName": "复核"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_FINANCE_ACCOUNTING_RULES",
+    "displayName": "记账规则",
+    "frontendRoute": "/finance/accounting-rules",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_FINANCE_ACCOUNTING_RULES_MANAGE",
+        "displayName": "制单"
+      },
+      {
+        "resourceCode": "OPERATIONS_FINANCE_ACCOUNTING_RULES_APPROVE",
+        "displayName": "复核"
+      }
+    ]
   },
   {
     "componentKey": "OPERATIONS_COMMERCIAL_AGREEMENTS",

@@ -1134,7 +1134,7 @@
         {
           "defKey": "status",
           "defName": "登记状态",
-          "comment": "登记状态。允许值：DRAFT（仅 MANUAL）、APPROVED、SUPERSEDED。",
+          "comment": "登记状态：MANUAL 草稿 DRAFT 经批准为 APPROVED 或作废为 VOIDED（终态、不发布事件），APPROVED 被替代后为 SUPERSEDED。允许值：DRAFT（仅 MANUAL）、APPROVED、SUPERSEDED、VOIDED（仅 MANUAL）。",
           "type": "VARCHAR",
           "len": 16,
           "scale": "",

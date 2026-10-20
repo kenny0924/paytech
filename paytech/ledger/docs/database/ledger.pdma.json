@@ -5232,7 +5232,7 @@
         {
           "defKey": "status",
           "defName": "规则版本状态",
-          "comment": "自动记账规则版本的审批和生效状态。允许值：DRAFT、PENDING_APPROVAL、APPROVED、ACTIVE、REJECTED、RETIRED。",
+          "comment": "自动记账规则版本的审批和生效状态。允许值：DRAFT、PENDING_APPROVAL、APPROVED、ACTIVE、REJECTED、RETIRED、VOIDED。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",

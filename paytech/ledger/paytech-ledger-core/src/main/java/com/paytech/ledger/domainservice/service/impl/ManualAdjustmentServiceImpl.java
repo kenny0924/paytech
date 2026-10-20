@@ -1,24 +1,33 @@
 package com.paytech.ledger.domainservice.service.impl;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.paytech.foundation.common.error.ErrorException;
+import com.paytech.foundation.common.error.FailException;
+import com.paytech.foundation.web.paging.PagingResponseBody;
+import com.paytech.ledger.api.enums.LedgerSetupErrorCode;
 import com.paytech.ledger.core.dal.dataobject.AccountingInstruction;
 import com.paytech.ledger.core.dal.dataobject.AdjustmentApproval;
 import com.paytech.ledger.core.dal.dataobject.JournalEntry;
+import com.paytech.ledger.core.dal.dataobject.LedgerBook;
 import com.paytech.ledger.core.dal.dataobject.ManualAdjustment;
 import com.paytech.ledger.core.dal.dataobject.ManualAdjustmentLine;
 import com.paytech.ledger.core.enums.AdjustmentStatus;
 import com.paytech.ledger.domain.ApproveManualAdjustmentContext;
+import com.paytech.ledger.domain.ManualAdjustmentQuery;
 import com.paytech.ledger.domain.SubmitManualAdjustmentContext;
 import com.paytech.ledger.domain.view.ManualAdjustmentDetailView;
+import com.paytech.ledger.domain.view.ManualAdjustmentView;
 import com.paytech.ledger.domainservice.repository.AccountingInstructionRepository;
 import com.paytech.ledger.domainservice.repository.AdjustmentApprovalRepository;
 import com.paytech.ledger.domainservice.repository.CurrencySpecRepository;
 import com.paytech.ledger.domainservice.repository.InstructionLineRepository;
 import com.paytech.ledger.domainservice.repository.JournalEntryRepository;
+import com.paytech.ledger.domainservice.repository.LedgerBookRepository;
 import com.paytech.ledger.domainservice.repository.ManualAdjustmentLineRepository;
 import com.paytech.ledger.domainservice.repository.ManualAdjustmentRepository;
 import com.paytech.ledger.domainservice.service.ManualAdjustmentService;
@@ -30,6 +39,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class ManualAdjustmentServiceImpl implements ManualAdjustmentService {
     private final TransactionTemplate transactionTemplate;
+    private final LedgerBookRepository ledgerBookRepository;
     private final CurrencySpecRepository currencySpecRepository;
     private final JournalEntryRepository journalEntryRepository;
     private final InstructionLineRepository instructionLineRepository;
@@ -94,6 +104,23 @@ public class ManualAdjustmentServiceImpl implements ManualAdjustmentService {
             view.setPostingDate(entry.getPostingDate());
         }
         return view;
+    }
+
+    /** 账簿必须存在；摘要金额按账簿币种精度补齐（调整币种恒等于账簿币种）。 */
+    @Override
+    public PagingResponseBody<ManualAdjustmentView> pageAdjustments(ManualAdjustmentQuery query) {
+        LedgerBook book = ledgerBookRepository.findById(query.getLedgerBookId());
+        if (book == null) {
+            throw new FailException(LedgerSetupErrorCode.LEDGER_BOOK_NOT_FOUND);
+        }
+        int minorUnit = currencySpecRepository.findByCurrency(book.getCurrency()).getMinorUnit();
+        List<ManualAdjustmentView> items = manualAdjustmentRepository.findViewPage(query);
+        for (ManualAdjustmentView item : items) {
+            item.setTotalDebit(item.getTotalDebit().setScale(minorUnit));
+            item.setTotalCredit(item.getTotalCredit().setScale(minorUnit));
+        }
+        return new PagingResponseBody<>(items, query.getPaging().page(), query.getPaging().size(),
+            manualAdjustmentRepository.countPage(query));
     }
 
     /** 复制调整头字段。 */

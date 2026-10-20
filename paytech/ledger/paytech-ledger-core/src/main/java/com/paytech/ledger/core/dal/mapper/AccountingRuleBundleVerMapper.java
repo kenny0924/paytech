@@ -29,6 +29,9 @@ public interface AccountingRuleBundleVerMapper {
     /** 规则集全部版本，按版本号降序。 */
     List<AccountingRuleBundleVer> selectByBundle(@Param("bundleId") long bundleId);
 
+    /** 已到生效时间的 APPROVED 版本，按生效时间、规则集、版本号升序。 */
+    List<AccountingRuleBundleVer> selectDueApproved(@Param("asOf") Instant asOf);
+
     /** 规则集的下一个版本号。 */
     long selectNextBundleVer(@Param("bundleId") long bundleId);
 

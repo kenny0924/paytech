@@ -1,6 +1,7 @@
 package com.paytech.ledger.domainservice.service.impl;
 
 import java.time.Instant;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -8,6 +9,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
 import com.paytech.foundation.common.error.ErrorException;
+import com.paytech.foundation.common.error.FailException;
+import com.paytech.ledger.api.enums.LedgerErrorCode;
 import com.paytech.ledger.core.dal.dataobject.AccountingRuleBundle;
 import com.paytech.ledger.core.dal.dataobject.AccountingRuleBundleVer;
 import com.paytech.ledger.core.enums.RuleVersionStatus;
@@ -84,10 +87,7 @@ public class AccountingRuleServiceImpl implements AccountingRuleService {
                 return;
             }
             accountingRuleBundleVerRepository.review(ver, RuleVersionStatus.ACTIVE, checkerId, approvedTime);
-            if (context.getCurrentVer() != null) {
-                accountingRuleBundleVerRepository.retire(context.getCurrentVer(), ver.getEffectiveFrom());
-            }
-            accountingRuleBundleRepository.switchCurrentVersion(context.getBundle(), ver.getId());
+            switchCurrentVersion(context);
         });
     }
 
@@ -98,6 +98,69 @@ public class AccountingRuleServiceImpl implements AccountingRuleService {
             lockBundleAndVersion(context);
             accountingRuleBundleVerRepository.review(context.getVer(), RuleVersionStatus.REJECTED, checkerId, null);
         });
+    }
+
+    /** 读取将被替代的当前版本；规则集尚无当前版本时为空，目标版本生效时间必须晚于它。 */
+    @Override
+    public AccountingRuleBundleVer findReplacedVersion(AccountingRuleVersionContext context) {
+        AccountingRuleBundle bundle = context.getBundle();
+        AccountingRuleBundleVer currentVer = findCurrentVersion(bundle);
+        if (currentVer == null) {
+            return null;
+        }
+        if (!context.getVer().getEffectiveFrom().isAfter(currentVer.getEffectiveFrom())) {
+            throw new FailException(LedgerErrorCode.RULE_EFFECTIVE_FROM_INVALID);
+        }
+        return currentVer;
+    }
+
+    /** 读取规则集当前版本；尚无当前版本时为空。 */
+    @Override
+    public AccountingRuleBundleVer findCurrentVersion(AccountingRuleBundle bundle) {
+        if (bundle.getCurrentVerId() == null) {
+            return null;
+        }
+        AccountingRuleBundleVer currentVer = accountingRuleBundleVerRepository.findById(bundle.getCurrentVerId());
+        if (currentVer == null) {
+            throw new ErrorException("规则集当前版本指针无对应版本: " + bundle.getBundleCode() + ", " + bundle.getCurrentVerId());
+        }
+        return currentVer;
+    }
+
+    /** 锁规则集与版本后把被取代的 APPROVED 版本置为 RETIRED，失效时间等于自身生效时间。 */
+    @Override
+    public void retireSupersededVersion(AccountingRuleVersionContext context) {
+        transactionTemplate.executeWithoutResult(status -> {
+            lockBundleAndVersion(context);
+            accountingRuleBundleVerRepository.retireSuperseded(context.getVer());
+        });
+    }
+
+    /** 锁规则集与版本后把 APPROVED 版本切换为当前版本。 */
+    @Override
+    public void activateVersion(AccountingRuleVersionContext context) {
+        transactionTemplate.executeWithoutResult(status -> {
+            lockBundleAndVersion(context);
+            accountingRuleBundleVerRepository.activate(context.getVer());
+            switchCurrentVersion(context);
+        });
+    }
+
+    /** 锁规则集与版本后作废草稿。 */
+    @Override
+    public void voidVersion(AccountingRuleVersionContext context) {
+        transactionTemplate.executeWithoutResult(status -> {
+            lockBundleAndVersion(context);
+            accountingRuleBundleVerRepository.updateStatus(context.getVer(), RuleVersionStatus.VOIDED);
+        });
+    }
+
+    /** 全部规则集及其版本摘要。 */
+    @Override
+    public List<RuleBundleView> listBundles() {
+        return accountingRuleBundleRepository.findAll().stream()
+            .map(bundle -> RuleBundleView.of(bundle, accountingRuleBundleVerRepository.findByBundle(bundle.getId())))
+            .toList();
     }
 
     /** 查询规则集与全部版本摘要。 */
@@ -111,6 +174,15 @@ public class AccountingRuleServiceImpl implements AccountingRuleService {
     @Override
     public RuleVersionView getVersion(String bundleCode, long bundleVer) {
         return loadVersion(bundleCode, bundleVer).toView();
+    }
+
+    /** 参与调用方事务：原当前版本（如有）RETIRED 且失效时间为目标版本生效时间，规则集当前指针切换到目标版本。 */
+    void switchCurrentVersion(AccountingRuleVersionContext context) {
+        AccountingRuleBundleVer ver = context.getVer();
+        if (context.getCurrentVer() != null) {
+            accountingRuleBundleVerRepository.retire(context.getCurrentVer(), ver.getEffectiveFrom());
+        }
+        accountingRuleBundleRepository.switchCurrentVersion(context.getBundle(), ver.getId());
     }
 
     /** 事务内对规则集行加排他锁。 */

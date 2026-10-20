@@ -1,0 +1,25 @@
+# 财务控制台三项：mor-test 发布覆盖文件（2026-10-20）。源码 main d565f85f + worktree ../Code-MoR-fin4，tag fin-20261020。
+# 叠加在 compose.yaml + compose.applications.yaml + compose.scheduler.yaml 之上（compose.sh 只传本文件的 -f）。
+# 配置增量与 worktree 中 compose.applications.yaml 的改动一致：ledger XXL 执行器、BFF billing 地址。不使用 --remove-orphans。
+services:
+  platform-support-service:
+    image: sha256:d800c3ce358637594d1357ec51e76003600baf7497eb3f09e552467c853ecfc9
+  ledger-service:
+    image: sha256:d846efae26f5d050d2b544f9fe0c0e512dfd91ca0018cc2427e397e67ec3fa2a
+    environment:
+      XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
+      XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
+      XXL_JOB_EXECUTOR_ENABLED: "true"
+      XXL_JOB_EXECUTOR_APPNAME: ledger-service
+      XXL_JOB_EXECUTOR_IP: 172.30.73.38
+      XXL_JOB_EXECUTOR_PORT: "9999"
+      XXL_JOB_EXECUTOR_LOGPATH: /tmp/xxl-job
+      XXL_JOB_EXECUTOR_EXCLUDEDPACKAGES: org.springframework.,spring.
+  billing-service:
+    image: sha256:998391567701743aa98ac3bf656c660d7b88ce068e371b53c6a479c85e393bae
+  operations-console-bff:
+    image: sha256:adec3f63f1ad1109373614417d1c014d88582cece2db4d1f4f5a49299d1e3a23
+    environment:
+      OPERATIONS_BILLING_BASE_URL: http://billing-service:18113
+  operations-console-web:
+    image: sha256:c6661078a8f1fdbe616109dada519c076b0511428848b6155676b3f9957ed7f9

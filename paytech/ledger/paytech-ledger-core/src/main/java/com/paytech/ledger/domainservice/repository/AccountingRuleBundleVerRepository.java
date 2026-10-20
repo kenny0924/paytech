@@ -21,6 +21,9 @@ public interface AccountingRuleBundleVerRepository {
     /** 规则集全部版本，按版本号降序。 */
     List<AccountingRuleBundleVer> findByBundle(long bundleId);
 
+    /** 已到生效时间的 APPROVED 版本（跨规则集），按生效时间、规则集、版本号升序。 */
+    List<AccountingRuleBundleVer> findDueApproved(Instant asOf);
+
     /** 规则集的下一个版本号（当前最大值 + 1）。 */
     long nextBundleVer(long bundleId);
 
@@ -40,6 +43,12 @@ public interface AccountingRuleBundleVerRepository {
      * @param approvedTime 批准时间，驳回时为空
      */
     void review(AccountingRuleBundleVer ver, RuleVersionStatus status, long checkerId, Instant approvedTime);
+
+    /** 以 APPROVED 为条件把到期版本置为 ACTIVE，复核结果不变，成功后同步原对象；状态已变化时按并发冲突拒绝。 */
+    void activate(AccountingRuleBundleVer ver);
+
+    /** 以 APPROVED 为条件把从未生效、已被取代的版本置为 RETIRED，失效时间等于自身生效时间，成功后同步原对象；状态已变化时按并发冲突拒绝。 */
+    void retireSuperseded(AccountingRuleBundleVer ver);
 
     /** 以 ACTIVE 为条件把版本置为 RETIRED 并写入失效时间，成功后同步原对象；状态已变化时按并发冲突拒绝。 */
     void retire(AccountingRuleBundleVer ver, Instant effectiveTo);

@@ -23,7 +23,8 @@
 > **2026-10-19 计费事实模型重构（需求 billing-计费事实模型重构与渠道成本迁出）：** billing 的经济事实改称计费事实，事件改为
 > `BillingFactRecorded`（聚合 `BILLING_FACT`），billing 表更名为 `t_billing_fact*`，以 billing 服务模型为准。ledger 无表结构变化：
 > `t_accounting_instruction.economic_fact_id` 列名保留，语义为计费事实 ID；`AmountSource`、`AutoInstructionType` 迁到 ledger-api，值不变。
-> 本页其余正文中的"经济事实"与 `t_economic_fact*` 均按计费事实理解。
+> 本页其余正文中的"经济事实"与 `t_economic_fact*` 均按计费事实理解。2026-10-20 起计费事实状态增加 `VOIDED`（草稿作废，不发布、
+> 不入账；需求 finance-人工调整与计费事实），ledger 只消费已批准事实，不受影响；规则版本的 `VOIDED` 见第 4.13 节。
 
 > **2026-09-11 模型切片：** 当前物理模型采用 [OE / Client / Pricing 四系统决定](../../../../agent-docs/decisions/2026-09-11-cct-commerce-oe-pricing-model.md)。本页历史正文中的数字 OE、Assignment、独立 Acceptance、Client 多 OE 合同与 Agreement-OE 结算条款由该决定精确取代；本页摘要描述当前模型产物，运行代码、SQL 执行及待迁移状态仅见 [当前实现台账](../../../../agent-docs/CURRENT_IMPLEMENTATION.md)。Risk 本期不动。
 
@@ -354,6 +355,12 @@ Rule Line；追加、提交 `PENDING_APPROVAL`、审批和 Current Pointer 切�
 Version，禁止反向取锁；提交时校验完整有序行集，离开 DRAFT 后禁止再插入。Rule Line 自创建起不可更新或删除，发现错误必须放弃该
 Version 并创建新版本；Checker 审批的就是提交时被冻结的同一行集。该跨表约束未来由应用事务和仓库 `local-environment`
 真实 MySQL 并发测试保证。
+
+> **2026-10-20 放弃草稿与到时生效（需求 finance-记账规则包维护）：** "放弃该 Version"落为状态 `VOIDED`：只有制单人可把
+> `DRAFT` 条件更新为 `VOIDED`（锁序同上），`checker_id/approved_time` 保持为空，行集保留不删；新建版本的"已有草稿 / 待审批"检查不计入
+> `VOIDED`。生效时间在未来的 `APPROVED` 版本由 ledger 定时任务 `accountingRuleVersionActivation`（XXL-Job，每分钟）复用审批时的生效逻辑
+> 切换（锁 Bundle Root、旧 `ACTIVE → RETIRED`、Current Pointer 原子切换，幂等）。表结构不变，只更新 `status` 列注释。版本新建、提交、审批、
+> 驳回与作废的操作人取自 Gateway 的 `X-Gateway-Actor-Subject`，不再由请求体传入。
 
 ### 4.14 账簿序号使用同事务行锁
 

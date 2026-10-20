@@ -25,8 +25,8 @@ import com.paytech.ledger.test.checker.LedgerResponseChecker;
  * 年末结转：财年最后期间关账时本期损益全年累计（含此前月份）转入留存收益，盈利与亏损方向、本期无收入费用仍结转，
  * 非年末期间不结转，重开年末期间一并冲回。
  *
- * @see com.paytech.ledger.api.PeriodCloseApi#startPeriodClose(String, com.paytech.ledger.api.request.StartPeriodCloseRequestBody)
- * @see com.paytech.ledger.api.PeriodCloseApi#approvePeriodClose(String, String, com.paytech.ledger.api.request.ReviewPeriodCloseRequestBody)
+ * @see com.paytech.ledger.api.PeriodCloseApi#startPeriodClose(String, String, String)
+ * @see com.paytech.ledger.api.PeriodCloseApi#approvePeriodClose(String, String, String, String, com.paytech.ledger.api.request.ReviewPeriodCloseRequestBody)
  */
 class YearEndProfitCloseTest extends AbstractPeriodReopenApiTest {
 

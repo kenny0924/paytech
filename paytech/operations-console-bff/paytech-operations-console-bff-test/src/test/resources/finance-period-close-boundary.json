@@ -1,0 +1,244 @@
+[
+  {
+    "id": "P1",
+    "method": "GET",
+    "path": "/finance/accounting-periods/v1/7312345678901236010/closes",
+    "query": "?page=1&size=10",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "periodCloseId": "7312345678901270001",
+          "periodId": "7312345678901236010",
+          "closeNo": "2",
+          "closeType": "CLOSE",
+          "status": "PENDING_CHECK",
+          "makerId": "10001",
+          "checkerId": null,
+          "closeHash": "9f2c0e6b4d1a7c35e8b2f0d94a6c1e7b3d5f8a2c4e6b0d1f3a5c7e9b2d4f6a8c",
+          "failedStepType": null,
+          "reopensCloseNo": null,
+          "reopenReasonCode": null,
+          "reopenRequestRef": null,
+          "createTime": "2026-10-20T01:00:00.123456Z"
+        },
+        {
+          "periodCloseId": "7312345678901270000",
+          "periodId": "7312345678901236010",
+          "closeNo": "1",
+          "closeType": "CLOSE",
+          "status": "FAILED",
+          "makerId": "10001",
+          "checkerId": null,
+          "closeHash": null,
+          "failedStepType": "LEDGER_RECONCILIATION",
+          "reopensCloseNo": null,
+          "reopenReasonCode": null,
+          "reopenRequestRef": null,
+          "createTime": "2026-10-20T01:00:00.123456Z"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 2
+    },
+    "routeCode": "operations-finance-period-close-list"
+  },
+  {
+    "id": "P2",
+    "method": "GET",
+    "path": "/finance/accounting-periods/v1/7312345678901236010/closes/2",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "periodCloseId": "7312345678901270001",
+      "periodId": "7312345678901236010",
+      "closeNo": "2",
+      "closeType": "CLOSE",
+      "status": "PENDING_CHECK",
+      "makerId": "10001",
+      "checkerId": null,
+      "closeHash": "9f2c0e6b4d1a7c35e8b2f0d94a6c1e7b3d5f8a2c4e6b0d1f3a5c7e9b2d4f6a8c",
+      "failedStepType": null,
+      "reopensCloseNo": null,
+      "reopenReasonCode": null,
+      "reopenRequestRef": null,
+      "createTime": "2026-10-20T01:00:00.123456Z",
+      "steps": [
+        {
+          "stepNo": 1,
+          "stepType": "PERIOD_LOCK",
+          "status": "SUCCEEDED",
+          "resultHash": "1b3d5f7a9c2e4b6d8f0a1c3e5b7d9f2a4c6e8b0d2f4a6c8e1b3d5f7a9c2e4b6d",
+          "completedTime": "2026-10-20T01:00:01.123456Z"
+        },
+        {
+          "stepNo": 2,
+          "stepType": "BILLING_ACCOUNT_RECONCILIATION",
+          "status": "SUCCEEDED",
+          "resultHash": "1b3d5f7a9c2e4b6d8f0a1c3e5b7d9f2a4c6e8b0d2f4a6c8e1b3d5f7a9c2e4b6d",
+          "completedTime": "2026-10-20T01:00:01.123456Z"
+        },
+        {
+          "stepNo": 3,
+          "stepType": "LEDGER_RECONCILIATION",
+          "status": "SUCCEEDED",
+          "resultHash": "1b3d5f7a9c2e4b6d8f0a1c3e5b7d9f2a4c6e8b0d2f4a6c8e1b3d5f7a9c2e4b6d",
+          "completedTime": "2026-10-20T01:00:01.123456Z"
+        },
+        {
+          "stepNo": 4,
+          "stepType": "EXCEPTION_CHECK",
+          "status": "SUCCEEDED",
+          "resultHash": "1b3d5f7a9c2e4b6d8f0a1c3e5b7d9f2a4c6e8b0d2f4a6c8e1b3d5f7a9c2e4b6d",
+          "completedTime": "2026-10-20T01:00:01.123456Z"
+        },
+        {
+          "stepNo": 5,
+          "stepType": "PROFIT_CLOSE",
+          "status": "SUCCEEDED",
+          "resultHash": "1b3d5f7a9c2e4b6d8f0a1c3e5b7d9f2a4c6e8b0d2f4a6c8e1b3d5f7a9c2e4b6d",
+          "completedTime": "2026-10-20T01:00:01.123456Z"
+        },
+        {
+          "stepNo": 6,
+          "stepType": "FINAL_TRIAL_BALANCE",
+          "status": "SUCCEEDED",
+          "resultHash": "1b3d5f7a9c2e4b6d8f0a1c3e5b7d9f2a4c6e8b0d2f4a6c8e1b3d5f7a9c2e4b6d",
+          "completedTime": "2026-10-20T01:00:01.123456Z"
+        },
+        {
+          "stepNo": 7,
+          "stepType": "CLOSE_HASH",
+          "status": "SUCCEEDED",
+          "resultHash": "1b3d5f7a9c2e4b6d8f0a1c3e5b7d9f2a4c6e8b0d2f4a6c8e1b3d5f7a9c2e4b6d",
+          "completedTime": "2026-10-20T01:00:01.123456Z"
+        }
+      ],
+      "books": [
+        {
+          "ledgerBookId": "7312345678901239001",
+          "asOfSequence": "1024",
+          "finalTrialRunId": "7312345678901242003",
+          "postingInstructionId": "7312345678901280001",
+          "status": "FINALIZED"
+        }
+      ],
+      "approvals": [
+        {
+          "approvalRole": "MAKER",
+          "actorId": "10001",
+          "decision": "APPROVED",
+          "approvedCloseHash": "9f2c0e6b4d1a7c35e8b2f0d94a6c1e7b3d5f8a2c4e6b0d1f3a5c7e9b2d4f6a8c",
+          "decisionTime": "2026-10-20T01:00:01.123456Z"
+        }
+      ]
+    },
+    "routeCode": "operations-finance-period-close-detail"
+  },
+  {
+    "id": "P3",
+    "method": "POST",
+    "path": "/finance/accounting-periods/v1/7312345678901236010/closes",
+    "query": "",
+    "request": null,
+    "status": 201,
+    "response": {
+      "periodCloseId": "7312345678901270001",
+      "periodId": "7312345678901236010",
+      "closeNo": "2",
+      "closeType": "CLOSE",
+      "status": "PENDING_CHECK",
+      "makerId": "10001",
+      "checkerId": null,
+      "closeHash": "9f2c0e6b4d1a7c35e8b2f0d94a6c1e7b3d5f8a2c4e6b0d1f3a5c7e9b2d4f6a8c",
+      "failedStepType": null,
+      "reopensCloseNo": null,
+      "reopenReasonCode": null,
+      "reopenRequestRef": null,
+      "createTime": "2026-10-20T01:00:00.123456Z"
+    },
+    "routeCode": "operations-finance-period-close-start"
+  },
+  {
+    "id": "P4",
+    "method": "POST",
+    "path": "/finance/accounting-periods/v1/7312345678901236010/reopens",
+    "query": "",
+    "request": {
+      "reasonCode": "LATE_TRANSACTION",
+      "requestRef": "OPS-REQ-20261020-1"
+    },
+    "status": 201,
+    "response": {
+      "periodCloseId": "7312345678901270002",
+      "periodId": "7312345678901236010",
+      "closeNo": "3",
+      "closeType": "REOPEN",
+      "status": "PENDING_CHECK",
+      "makerId": "10001",
+      "checkerId": null,
+      "closeHash": "9f2c0e6b4d1a7c35e8b2f0d94a6c1e7b3d5f8a2c4e6b0d1f3a5c7e9b2d4f6a8c",
+      "failedStepType": null,
+      "reopensCloseNo": "2",
+      "reopenReasonCode": "LATE_TRANSACTION",
+      "reopenRequestRef": "OPS-REQ-20261020-1",
+      "createTime": "2026-10-20T01:00:00.123456Z"
+    },
+    "routeCode": "operations-finance-period-reopen-start"
+  },
+  {
+    "id": "P5",
+    "method": "POST",
+    "path": "/finance/accounting-periods/v1/7312345678901236010/closes/2/approve",
+    "query": "",
+    "request": {
+      "approvedCloseHash": "9f2c0e6b4d1a7c35e8b2f0d94a6c1e7b3d5f8a2c4e6b0d1f3a5c7e9b2d4f6a8c"
+    },
+    "status": 200,
+    "response": {
+      "periodCloseId": "7312345678901270001",
+      "periodId": "7312345678901236010",
+      "closeNo": "2",
+      "closeType": "CLOSE",
+      "status": "COMPLETED",
+      "makerId": "10001",
+      "checkerId": "10002",
+      "closeHash": "9f2c0e6b4d1a7c35e8b2f0d94a6c1e7b3d5f8a2c4e6b0d1f3a5c7e9b2d4f6a8c",
+      "failedStepType": null,
+      "reopensCloseNo": null,
+      "reopenReasonCode": null,
+      "reopenRequestRef": null,
+      "createTime": "2026-10-20T01:00:00.123456Z"
+    },
+    "routeCode": "operations-finance-period-close-approve"
+  },
+  {
+    "id": "P6",
+    "method": "POST",
+    "path": "/finance/accounting-periods/v1/7312345678901236010/closes/2/reject",
+    "query": "",
+    "request": {
+      "approvedCloseHash": "9f2c0e6b4d1a7c35e8b2f0d94a6c1e7b3d5f8a2c4e6b0d1f3a5c7e9b2d4f6a8c"
+    },
+    "status": 200,
+    "response": {
+      "periodCloseId": "7312345678901270001",
+      "periodId": "7312345678901236010",
+      "closeNo": "2",
+      "closeType": "CLOSE",
+      "status": "REJECTED",
+      "makerId": "10001",
+      "checkerId": "10002",
+      "closeHash": "9f2c0e6b4d1a7c35e8b2f0d94a6c1e7b3d5f8a2c4e6b0d1f3a5c7e9b2d4f6a8c",
+      "failedStepType": null,
+      "reopensCloseNo": null,
+      "reopenReasonCode": null,
+      "reopenRequestRef": null,
+      "createTime": "2026-10-20T01:00:00.123456Z"
+    },
+    "routeCode": "operations-finance-period-close-reject"
+  }
+]

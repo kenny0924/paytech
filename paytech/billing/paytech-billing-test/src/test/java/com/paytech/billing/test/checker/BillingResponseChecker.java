@@ -9,6 +9,7 @@ import java.util.List;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.client.EntityExchangeResult;
 
+import com.paytech.foundation.common.enums.CodeMessageEnum;
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.foundation.testsupport.api.AbstractHttpResponseChecker;
 
@@ -39,6 +40,13 @@ public final class BillingResponseChecker extends AbstractHttpResponseChecker<Bi
     public BillingResponseChecker assertBusinessRejected(String detailFragment) {
         assertProblem(400, CommonErrorCode.BUSINESS_CHECK_FAILED.getCode());
         assertDetailContains(detailFragment);
+        return this;
+    }
+
+    /** 断言 400 登记错误码，detail 为该错误码的默认消息。 */
+    public BillingResponseChecker assertFailCode(CodeMessageEnum code) {
+        assertProblem(400, code.getCode());
+        assertEquals(code.getMessage(), body().path("detail").asString(), "detail");
         return this;
     }
 

@@ -39,12 +39,16 @@ const entry = { journalEntryId: line.journalEntryId, ledgerBookId: book.ledgerBo
   lines: [entryLine(1, 'DEBIT', '125.00'), entryLine(2, 'CREDIT', '120.00', '7400000000003001'), entryLine(3, 'CREDIT', '5.00')] };
 const usd = (amount: string) => ({ currency: 'USD', amount });
 
-test('页面注册：财务四页按序登记（明细账在余额之后），只有账务基础资料有维护动作', () => {
+test('页面注册：财务七页按序登记，动作与 Platform 能力清单一致（账本查询增加发起试算，三个新页各有制单 / 复核）', () => {
   const finance = pageCapabilities.filter(page => page.componentKey.startsWith('OPERATIONS_FINANCE_'));
   assert.deepEqual(finance.map(page => [page.componentKey, page.frontendRoute]), [
     ['OPERATIONS_FINANCE_SETUP', '/finance/setup'], ['OPERATIONS_FINANCE_LEDGER', '/finance/ledger'], ['OPERATIONS_FINANCE_BALANCES', '/finance/balances'],
-    ['OPERATIONS_FINANCE_SUBLEDGER', '/finance/subledger']]);
-  assert.deepEqual(finance.map(page => page.actions.map(action => action.resourceCode)), [[manageFinanceSetup], [], [], []]);
+    ['OPERATIONS_FINANCE_SUBLEDGER', '/finance/subledger'], ['OPERATIONS_FINANCE_ADJUSTMENTS', '/finance/adjustments'],
+    ['OPERATIONS_FINANCE_PERIOD_CLOSE', '/finance/period-close'], ['OPERATIONS_FINANCE_ACCOUNTING_RULES', '/finance/accounting-rules']]);
+  assert.deepEqual(finance.map(page => page.actions.map(action => action.resourceCode)), [[manageFinanceSetup], ['OPERATIONS_FINANCE_LEDGER_MANAGE'], [], [],
+    ['OPERATIONS_FINANCE_ADJUSTMENTS_MANAGE', 'OPERATIONS_FINANCE_ADJUSTMENTS_APPROVE'],
+    ['OPERATIONS_FINANCE_PERIOD_CLOSE_MANAGE', 'OPERATIONS_FINANCE_PERIOD_CLOSE_APPROVE'],
+    ['OPERATIONS_FINANCE_ACCOUNTING_RULES_MANAGE', 'OPERATIONS_FINANCE_ACCOUNTING_RULES_APPROVE']]);
 });
 
 test('基础资料解码：主键、状态、日期与枚举严格校验，未知值失败关闭', () => {
@@ -278,8 +282,9 @@ test('页面接线：维护按钮受 BUTTON 资源控制，只读页与只读标
     assert.doesNotMatch(source(readOnly), /FinanceModals|ChartAccountModals|>新建/, `${readOnly} 不得出现新建入口`);
   }
   const trial = source('./TrialBalanceTab.tsx');
-  assert.doesNotMatch(trial, />发起试算|trialBalances\([^)]*\), \{ method|method: 'POST'/, '试算平衡页签不发起试算');
-  assert.doesNotMatch(trial, /useFinanceCommand|sendFinanceCommand/, '试算平衡页签只读');
+  assert.match(trial, /\{canRun && ready && <Form\.Item><Button type="primary"/, '发起试算只对有 OPERATIONS_FINANCE_LEDGER_MANAGE 的账号显示');
+  assert.match(trial, /workflowPaths\.runTrialBalance\(book\.ledgerBookId, period\.accountingPeriodId\), undefined,/, '发起试算不带请求体');
+  assert.match(source('../pages/FinanceLedger.tsx'), /canRun=\{hasAction\(resources, financeActions\.ledgerManage\)\}/);
   const charts = source('./SetupChartsTab.tsx');
   assert.match(setup, /<SetupChartsTab canManage=\{canManage\}/);
   assert.match(charts, /canManage && chartCode && <Button type="primary"/, '新增科目按钮受维护权限控制');

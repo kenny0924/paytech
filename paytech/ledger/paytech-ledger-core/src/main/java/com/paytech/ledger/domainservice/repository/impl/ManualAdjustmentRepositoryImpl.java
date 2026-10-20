@@ -3,6 +3,7 @@ package com.paytech.ledger.domainservice.repository.impl;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
@@ -10,6 +11,8 @@ import com.paytech.foundation.common.error.ConcurrentRequestException;
 import com.paytech.ledger.core.dal.dataobject.ManualAdjustment;
 import com.paytech.ledger.core.dal.mapper.ManualAdjustmentMapper;
 import com.paytech.ledger.core.enums.AdjustmentStatus;
+import com.paytech.ledger.domain.ManualAdjustmentQuery;
+import com.paytech.ledger.domain.view.ManualAdjustmentView;
 import com.paytech.ledger.domainservice.repository.ManualAdjustmentRepository;
 
 import lombok.AllArgsConstructor;
@@ -43,6 +46,18 @@ public class ManualAdjustmentRepositoryImpl implements ManualAdjustmentRepositor
         adjustment.setStatus(status);
         adjustment.setVersion(adjustment.getVersion() + 1);
         adjustment.setUpdateTime(now);
+    }
+
+    /** 按条件分页读取调整摘要，按提交时间、主键降序。 */
+    @Override
+    public List<ManualAdjustmentView> findViewPage(ManualAdjustmentQuery query) {
+        return mapper.selectViewPage(query, query.getPaging().size(), query.getPaging().offset());
+    }
+
+    /** 统计符合条件的调整数。 */
+    @Override
+    public long countPage(ManualAdjustmentQuery query) {
+        return mapper.countPage(query);
     }
 
     /** 当前 UTC 时间，截断到数据库支持的微秒精度。 */

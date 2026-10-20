@@ -32,4 +32,13 @@ public interface BillingFactService {
      * @param now 批准时间
      */
     void approve(BillingFactContext context, long checkerId, Instant now);
+
+    /**
+     * 作废草稿：DRAFT → VOIDED；单条条件更新，不登记发布任务
+     * <li>条件更新未命中（已被批准或作废）按并发冲突拒绝。</li>
+     *
+     * @param context 已确认为 DRAFT 的事实上下文
+     * @param now 作废时间
+     */
+    void voidDraft(BillingFactContext context, Instant now);
 }

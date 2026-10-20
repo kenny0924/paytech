@@ -47,7 +47,7 @@ public abstract class AbstractPeriodReopenApiTest extends AbstractPeriodCloseApi
 
     /** 以模板 Maker、原因与申请编号发起重开。 */
     protected LedgerResponseChecker startReopen(long periodId) {
-        return post(reopensPath(periodId), reopenBody(CLOSE_MAKER_ID, REOPEN_REASON.getCode(), REOPEN_REQUEST_REF));
+        return postAs(reopensPath(periodId), CLOSE_MAKER_ID, reopenBody(REOPEN_REASON.getCode(), REOPEN_REQUEST_REF));
     }
 
     /** 对当月期间发起重开。 */
@@ -60,10 +60,9 @@ public abstract class AbstractPeriodReopenApiTest extends AbstractPeriodCloseApi
         return startReopen().assertSuccess(201).assertText("status", PeriodCloseStatus.PENDING_CHECK.getCode());
     }
 
-    /** 重开请求体；不修复负例。 */
-    protected StartPeriodReopenRequestBody reopenBody(String makerId, String reasonCode, String requestRef) {
+    /** 重开请求体；编制人以 Header 发送，不修复负例。 */
+    protected StartPeriodReopenRequestBody reopenBody(String reasonCode, String requestRef) {
         StartPeriodReopenRequestBody body = new StartPeriodReopenRequestBody();
-        body.setMakerId(makerId);
         body.setReasonCode(reasonCode);
         body.setRequestRef(requestRef);
         return body;

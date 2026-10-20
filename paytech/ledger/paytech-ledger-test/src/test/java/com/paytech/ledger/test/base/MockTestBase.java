@@ -53,10 +53,10 @@ public abstract class MockTestBase extends TestBase {
     /** 所有测试请求使用的 Request ID。 */
     protected static final String REQUEST_ID = "Ledger.Test_01";
 
-    /** 财务基础资料命令的操作人 Account Header。 */
+    /** 财务命令（基础资料、调整、关账、规则、试算）的操作人 Account Header。 */
     protected static final String ACTOR_HEADER = "X-Gateway-Actor-Subject";
 
-    /** 财务基础资料命令的操作人会话 Header。 */
+    /** 财务命令的操作人会话 Header。 */
     protected static final String SESSION_HEADER = "X-Gateway-Session-Id";
 
     /** 测试操作人 Account ID。 */
@@ -126,8 +126,13 @@ public abstract class MockTestBase extends TestBase {
 
     /** 以 Operations 操作人身份发送财务基础资料命令（BFF 填入的两个操作人 Header）。 */
     protected LedgerResponseChecker postAsOperator(String path, Object body) {
+        return postAs(path, OPERATOR_ACCOUNT_ID, body);
+    }
+
+    /** 以指定 Operations 账号（编制人 / 复核人）发送命令：BFF 从会话填入的两个操作人 Header。 */
+    protected LedgerResponseChecker postAs(String path, String actorAccountId, Object body) {
         HttpHeaders headers = TestRequestHeaders.internal(REQUEST_ID);
-        headers.set(ACTOR_HEADER, OPERATOR_ACCOUNT_ID);
+        headers.set(ACTOR_HEADER, actorAccountId);
         headers.set(SESSION_HEADER, OPERATOR_SESSION_ID);
         return new LedgerResponseChecker(http.post(path, headers, body), objectMapper, REQUEST_ID);
     }

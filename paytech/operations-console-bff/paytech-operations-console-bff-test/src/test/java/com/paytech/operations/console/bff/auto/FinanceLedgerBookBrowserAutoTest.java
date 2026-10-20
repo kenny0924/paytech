@@ -26,7 +26,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
- * 浏览器经真实 BFF 与 HttpExchange 转发账簿、账户、流水、分录详情、科目余额与试算记录的 9 个端点（R08—R13、L6、T1、T2）；ledger 由 Loopback Simulator 承担
+ * 浏览器经真实 BFF 与 HttpExchange 转发账簿、账户、流水、分录详情、科目余额、试算记录与发起试算的 10 个端点（R08—R13、L6、T1—T3）；ledger 由 Loopback Simulator 承担
  *
  * @see FinanceLedgerBookController
  * @author Claude
@@ -110,16 +110,15 @@ class FinanceLedgerBookBrowserAutoTest extends FinanceBrowserAutoTestBase {
             () -> assertEquals("Client 应付款", entryLines.path(1).path("accountName").asString()));
     }
 
-    /** 执行试算不经浏览器接入：POST 试算路径不访问 ledger。 */
+    /** 发起试算不带请求体转发，操作人 Header 来自会话；浏览器携带 Body 时在访问 ledger 前拒绝。 */
     @Test
-    void test_trialBalanceRunNotExposed() throws Exception {
-        var list = (ObjectNode) row(BOUNDARY, "T1").deepCopy();
-        list.put("method", "POST");
+    void test_trialBalanceRunWithoutBody() throws Exception {
+        var run = row(BOUNDARY, "T3");
+        replyAsOwner(ledger, run);
+        assertForwarded(ledger, run, send(run));
 
-        var response = send(list, "", JSON.nullNode(), true);
-
-        assertTrue(response.statusCode() >= 400 && response.statusCode() < 500, response.body());
-        assertTrue(ledger.requests().isEmpty(), ledger.requests().toString());
+        resetBetweenCalls();
+        assertRejectedLocally(400, ledger, send(run, "", JSON.createObjectNode(), true));
     }
 
     /** 账户核算对象类型校验与 ledger 合同 LedgerOwnerType 的全部 Code 完全一致。 */
@@ -144,9 +143,9 @@ class FinanceLedgerBookBrowserAutoTest extends FinanceBrowserAutoTestBase {
         assertRejectedLocally(422, ledger, send(create, "", body, true));
     }
 
-    /** 只有 READ 权限的操作人不能新建账簿或账户。 */
+    /** 只有 READ 权限的操作人不能新建账簿、账户或发起试算。 */
     @ParameterizedTest
-    @CsvSource({"R09", "R11"})
+    @CsvSource({"R09", "R11", "T3"})
     void test_readOnlyOperatorCannotManage(String id) throws Exception {
         platform.grantPermissions(FINANCE_READ_PERMISSION_ID);
 
@@ -248,6 +247,13 @@ class FinanceLedgerBookBrowserAutoTest extends FinanceBrowserAutoTestBase {
         noSummary.putNull("summaryLines");
         ledger.reply("GET", ownerPath(trial), 200, JSON.writeValueAsString(noSummary));
         assertEquals(502, send(trial).statusCode());
+
+        resetBetweenCalls();
+        var run = row(BOUNDARY, "T3");
+        var otherBook = (ObjectNode) run.path("response").deepCopy();
+        otherBook.put("ledgerBookId", "7312345678901239999");
+        ledger.reply("POST", ownerPath(run), 201, JSON.writeValueAsString(otherBook));
+        assertEquals(502, send(run).statusCode());
 
         resetBetweenCalls();
         var runs = row(BOUNDARY, "T1");

@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.paytech.account.api.enums.AccountEntityType;
 import com.paytech.account.api.event.AccountPostedPayload;
 import com.paytech.foundation.id.IdGenerator;
+import com.paytech.ledger.api.enums.LedgerErrorCode;
 import com.paytech.ledger.api.enums.LedgerOwnerType;
 import com.paytech.ledger.api.enums.LedgerSetupErrorCode;
 import com.paytech.ledger.core.dal.dataobject.JournalEntry;
@@ -36,7 +37,7 @@ import tools.jackson.databind.JsonNode;
 /**
  * 发起期间关账：7 个固定步骤、损益结转、最终试算与 close_hash 冻结，以及各步骤失败回滚与前置校验。
  *
- * @see com.paytech.ledger.api.PeriodCloseApi#startPeriodClose(String, com.paytech.ledger.api.request.StartPeriodCloseRequestBody)
+ * @see com.paytech.ledger.api.PeriodCloseApi#startPeriodClose(String, String, String)
  */
 class StartPeriodCloseTest extends AbstractPeriodCloseApiTest {
     private static final List<String> STEP_TYPES = List.of("LOCK_SEQUENCE", "CHECK_ASYNC_AND_JOURNAL",
@@ -127,8 +128,7 @@ class StartPeriodCloseTest extends AbstractPeriodCloseApiTest {
         startClose().assertSuccess(201).assertText("status", "PENDING_CHECK");
 
         approvePending(pending).assertBusinessRejected("会计期间未开放");
-        startClose().assertBusinessRejected("只有 OPEN 期间可以发起关账: " + ledger.getOpenPeriodId() + ", 状态 "
-            + PeriodStatus.CLOSING.getCode());
+        startClose().assertRejected(LedgerErrorCode.PERIOD_NOT_OPEN);
     }
 
     @Test
@@ -235,7 +235,7 @@ class StartPeriodCloseTest extends AbstractPeriodCloseApiTest {
         long earlier = ledgerMocker.mockPeriod(ledger.getFiscalCalendarId(), 2020, 1, LocalDate.of(2020, 1, 1),
             LocalDate.of(2020, 1, 31), PeriodStatus.OPEN);
 
-        startClose().assertBusinessRejected("前序会计期间尚未关闭: " + earlier);
+        startClose().assertRejected(LedgerErrorCode.PERIOD_CLOSE_ORDER_INVALID);
         assertEquals(0, testMapper.countPeriodCloses(ledger.getOpenPeriodId()));
 
         testMapper.updatePeriodStatus(earlier, PeriodStatus.CLOSED.getCode());
@@ -248,8 +248,7 @@ class StartPeriodCloseTest extends AbstractPeriodCloseApiTest {
 
         long future = ledgerMocker.mockPeriod(ledger.getFiscalCalendarId(), 2099, 1, LocalDate.of(2099, 1, 1),
             LocalDate.of(2099, 1, 31), PeriodStatus.FUTURE);
-        startClose(future).assertBusinessRejected("只有 OPEN 期间可以发起关账: " + future + ", 状态 "
-            + PeriodStatus.FUTURE.getCode());
+        startClose(future).assertRejected(LedgerErrorCode.PERIOD_NOT_OPEN);
     }
 
     /** 发起关账，断言在指定步骤失败、期间回到 OPEN、活动槽已释放（编号连续）。 */

@@ -13,7 +13,7 @@ public class ApproveBillingFactRequest {
     @NotNull
     private Long factId;
 
-    /** 复核人，必须不同于编制人 */
+    /** 复核人 Operations Account ID（X-Gateway-Actor-Subject），必须不同于编制人 */
     @NotNull
     private Long checkerId;
 }

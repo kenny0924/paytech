@@ -72,6 +72,12 @@ public class BillingFactServiceImpl implements BillingFactService {
         });
     }
 
+    /** 单条条件更新作废草稿，无需显式事务；不登记发布任务。 */
+    @Override
+    public void voidDraft(BillingFactContext context, Instant now) {
+        billingFactRepository.voidDraft(context.getFact(), now);
+    }
+
     /** 币种精度；已登记事实的币种缺少规则说明只读副本被破坏。 */
     int minorUnit(String currency) {
         CurrencySpec spec = currencySpecRepository.findByCurrency(currency);

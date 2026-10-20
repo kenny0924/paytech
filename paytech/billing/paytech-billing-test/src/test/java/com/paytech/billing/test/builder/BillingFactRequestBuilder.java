@@ -17,6 +17,7 @@ import com.paytech.billing.core.enums.FactTargetBucket;
  * 计费事实提交请求构建器
  * <li>template() 给出合法的人工调整：OE 向 Client 付 CLIENT_PRINCIPAL 10.00 USD，带一条 TICKET 引用，来源引用每次随机。</li>
  * <li>costAdjustment(parent) 给出合法的成本调整：OE 向渠道多付 0.40 USD CHANNEL_COST + ADJUSTMENT，引用 CLEARING_ACCOUNT。</li>
+ * <li>编制人不在请求体中：由调用方以 makerId() 填入 X-Gateway-Actor-Subject；缺省为 MAKER_ID，maker(null) 表示不传该 Header。</li>
  * <li>负例按需覆盖字段，build() 不修复非法输入。</li>
  */
 public final class BillingFactRequestBuilder {
@@ -55,6 +56,9 @@ public final class BillingFactRequestBuilder {
 
     private final SubmitBillingFactRequestBody body = new SubmitBillingFactRequestBody();
 
+    /** 编制人 Header 值；为空时不传。 */
+    private String makerId = MAKER_ID;
+
     /** 只能从模板开始。 */
     private BillingFactRequestBuilder() {
     }
@@ -68,7 +72,6 @@ public final class BillingFactRequestBuilder {
         builder.body.setClientId(CLIENT_ID);
         builder.body.setEntityNo(ENTITY_NO);
         builder.body.setCurrency(CURRENCY);
-        builder.body.setMakerId(MAKER_ID);
         builder.body.setRefs(new ArrayList<>());
         builder.body.setLines(new ArrayList<>());
         return builder.ref(FactRefType.TICKET, "OPS-" + builder.body.getSourceReference())
@@ -138,9 +141,9 @@ public final class BillingFactRequestBuilder {
         return this;
     }
 
-    /** 编制人。 */
+    /** 编制人（X-Gateway-Actor-Subject）；为空表示不传。 */
     public BillingFactRequestBuilder maker(String makerId) {
-        body.setMakerId(makerId);
+        this.makerId = makerId;
         return this;
     }
 
@@ -198,6 +201,11 @@ public final class BillingFactRequestBuilder {
         line.setTargetBucket(targetBucket);
         body.getLines().add(line);
         return this;
+    }
+
+    /** 编制人 Header 值；为空表示不传。 */
+    public String makerId() {
+        return makerId;
     }
 
     /** 本次构造的来源引用。 */

@@ -16,10 +16,11 @@ import org.w3c.dom.NodeList;
 
 /**
  * 在默认 Maven 测试中保护 ledger-service 的模块集合、依赖清单与已批准的基础设施范围（Redis 资源锁、Snowflake、MyBatis、paytech-messaging
- * 消费端与内部 HTTP 客户端）
+ * 消费端、内部 HTTP 客户端与 XXL-Job 执行器）
  * <li>由 FinanceModuleBoundaryTest 按服务拆分（design/09 §2.7）；跨服务依赖图规则由 ArchitectureAutoTest（R1–R12）检查。</li>
  * <li>ledger 消费 account 的 AccountPosted（2026-10-19 起替代 BillingFactRecorded）：RabbitTemplate 必须在 classpath；account-api 提供
  * 载荷与过账进度 / 批次合同，billing-api 提供事实详情与发布进度合同；不注册补偿 Handler，补偿组件仍不得引入。</li>
+ * <li>2026-10-20 起 app 引入 paytech-xxl-job-starter，承载规则版本到期生效任务 accountingRuleVersionActivation。</li>
  *
  * @see com.paytech.ledger.LedgerApplication
  */
@@ -46,7 +47,7 @@ class LedgerModuleBoundaryTest {
             "/project/dependencies/dependency[groupId='com.paytech']/artifactId");
         Assertions.assertEquals(Set.of("paytech-ledger-api", "paytech-ledger-core", "paytech-redis-starter", "paytech-snowflake-id",
                 "paytech-mybatis-support", "paytech-mvc-web-starter", "paytech-messaging", "paytech-account-api",
-                "paytech-billing-api", "paytech-http-client-support"), app);
+                "paytech-billing-api", "paytech-http-client-support", "paytech-xxl-job-starter"), app);
     }
 
     @Test
@@ -70,7 +71,8 @@ class LedgerModuleBoundaryTest {
             "com/zaxxer/hikari/HikariDataSource.class",
             "com/mysql/cj/jdbc/Driver.class",
             "org/redisson/Redisson.class",
-            "org/springframework/amqp/rabbit/core/RabbitTemplate.class")) {
+            "org/springframework/amqp/rabbit/core/RabbitTemplate.class",
+            "com/xxl/job/core/handler/annotation/XxlJob.class")) {
             Assertions.assertNotNull(getClass().getClassLoader().getResource(resource), resource);
         }
         for (String resource : Set.of("com/alibaba/nacos/api/NacosFactory.class",

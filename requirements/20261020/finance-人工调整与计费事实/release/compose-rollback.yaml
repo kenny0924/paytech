@@ -1,0 +1,12 @@
+# 回退覆盖文件：发布前运行中的镜像 ID（20261020T060913Z）
+services:
+  platform-support-service:
+    image: sha256:33c196ec9f9a1d18af5876f7c24b32563580bc9b5bc895ea5bc8bb4f494a5b82
+  ledger-service:
+    image: sha256:a716585bed12eab8bb5a5878cbf92e7d57755fbeb00c2ca3c54a8d928f08b790
+  billing-service:
+    image: sha256:eeec27f923b7f55f7f3f6b7a8b32528b063fe9a64197615b1e645d3f8cf6540e
+  operations-console-bff:
+    image: sha256:e294a4ae90bec06bd3e276cb0ab181269fbbc60af7912b22103ce781bd76505b
+  operations-console-web:
+    image: sha256:f00801f59482069dfd99d309c1538d82b622e5696be644a4c47469991471675e

@@ -53,10 +53,9 @@ public final class RuleVersionRequestBuilder {
     private RuleVersionRequestBuilder() {
     }
 
-    /** 标准 12 行模板。 */
-    public static RuleVersionRequestBuilder template(String makerId, Instant effectiveFrom) {
+    /** 标准 12 行模板；编制人由测试基类作为 X-Gateway-Actor-Subject 发送。 */
+    public static RuleVersionRequestBuilder template(Instant effectiveFrom) {
         RuleVersionRequestBuilder builder = new RuleVersionRequestBuilder();
-        builder.body.setMakerId(makerId);
         builder.body.setEffectiveFrom(effectiveFrom);
         builder.body.setLines(new ArrayList<>(standardLines()));
         return builder;
@@ -129,12 +128,6 @@ public final class RuleVersionRequestBuilder {
     /** 取得指定下标的规则行以便覆盖字段。 */
     public RuleLineRequestBody line(int index) {
         return body.getLines().get(index);
-    }
-
-    /** 覆盖编制人。 */
-    public RuleVersionRequestBuilder makerId(String makerId) {
-        body.setMakerId(makerId);
-        return this;
     }
 
     /** 返回请求体。 */

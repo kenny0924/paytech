@@ -34,7 +34,7 @@ import com.paytech.ledger.test.builder.SubmitManualAdjustmentRequestBuilder;
 /**
  * 批准人工调整并过账：分录与余额、Maker-Checker、重放、锁内门禁回滚和资源锁冲突。
  *
- * @see ManualAdjustmentApi#approveManualAdjustment(String, ReviewManualAdjustmentRequestBody)
+ * @see ManualAdjustmentApi#approveManualAdjustment(String, String, String, ReviewManualAdjustmentRequestBody)
  */
 class ApproveManualAdjustmentTest extends AbstractManualAdjustmentApiTest {
 
@@ -106,7 +106,7 @@ class ApproveManualAdjustmentTest extends AbstractManualAdjustmentApiTest {
 
         ledgerChecker.assertBalancedJournals(ledger.getLedgerBookId(), 1);
         assertEquals(1, testMapper.selectInstructions(id).size());
-        approve(id, "70003", submit.text("contentHash")).assertBusinessRejected("人工调整已处理");
+        approve(id, "70003", submit.text("contentHash")).assertRejected(LedgerErrorCode.REVIEW_STATUS_INVALID);
     }
 
     @Test
@@ -114,7 +114,7 @@ class ApproveManualAdjustmentTest extends AbstractManualAdjustmentApiTest {
         var submit = submitted(adjustment().transfer(bankCashAccountId, capitalAccountId, "100"));
 
         approve(submit.id("manualAdjustmentId"), SubmitManualAdjustmentRequestBuilder.MAKER_ID,
-            submit.text("contentHash")).assertBusinessRejected("复核人不能与编制人相同");
+            submit.text("contentHash")).assertRejected(LedgerErrorCode.SELF_REVIEW_FORBIDDEN);
 
         assertNothingPosted(submit.id("manualAdjustmentId"));
     }
@@ -124,7 +124,7 @@ class ApproveManualAdjustmentTest extends AbstractManualAdjustmentApiTest {
         var submit = submitted(adjustment().transfer(bankCashAccountId, capitalAccountId, "100"));
 
         approve(submit.id("manualAdjustmentId"), CHECKER_ID, "b".repeat(64))
-            .assertBusinessRejected("复核确认的内容摘要与调整不一致");
+            .assertRejected(LedgerErrorCode.REVIEW_CONTENT_CHANGED);
 
         assertNothingPosted(submit.id("manualAdjustmentId"));
     }
@@ -181,7 +181,7 @@ class ApproveManualAdjustmentTest extends AbstractManualAdjustmentApiTest {
         long id = submit.id("manualAdjustmentId");
         reject(id, CHECKER_ID, submit.text("contentHash")).assertSuccess(200);
 
-        approve(id, CHECKER_ID, submit.text("contentHash")).assertBusinessRejected("人工调整已处理");
+        approve(id, CHECKER_ID, submit.text("contentHash")).assertRejected(LedgerErrorCode.REVIEW_STATUS_INVALID);
 
         assertEquals(AdjustmentStatus.REJECTED, testMapper.selectAdjustment(id).getStatus());
     }

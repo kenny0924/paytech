@@ -7,7 +7,6 @@ import org.junit.jupiter.api.BeforeEach;
 import com.paytech.account.api.enums.BalanceBucket;
 import com.paytech.ledger.api.enums.LedgerOwnerType;
 import com.paytech.ledger.api.request.ReviewPeriodCloseRequestBody;
-import com.paytech.ledger.api.request.StartPeriodCloseRequestBody;
 import com.paytech.ledger.core.enums.LedgerEntityType;
 import com.paytech.ledger.core.enums.PeriodStatus;
 import com.paytech.ledger.test.builder.SubmitManualAdjustmentRequestBuilder;
@@ -16,7 +15,7 @@ import com.paytech.ledger.test.checker.LedgerResponseChecker;
 /**
  * 期间关账入口测试的公共前置与调用
  * <li>沿用人工调整基类的 AE001/USD 账簿与当月 OPEN 期间，另准备收入（CLIENT_FEE_REVENUE）与费用（CHANNEL_FEE_EXPENSE）账户。</li>
- * <li>请求体以 JSON 字段直接构造：关账与复核的 RequestBody 由并行实现提供，本基类只依赖 HTTP 契约。</li>
+ * <li>编制人与复核人以 X-Gateway-Actor-Subject Header 发送；发起关账没有请求体。</li>
  * <li>关账步骤 3（CHECK_ACCOUNT_POSTING_PROGRESS）的外部依赖：每例默认 billing 无已发布事实、account 没有已应用事实也没有过账流，即“已追平”；
  * 需要未追平或不可用的用例自行覆盖账簿主体配置。</li>
  */
@@ -104,7 +103,7 @@ public abstract class AbstractPeriodCloseApiTest extends AbstractManualAdjustmen
 
     /** 以模板 Maker 发起关账。 */
     protected LedgerResponseChecker startClose(long periodId) {
-        return post(closesPath(periodId), startBody(CLOSE_MAKER_ID));
+        return postAs(closesPath(periodId), CLOSE_MAKER_ID, null);
     }
 
     /** 对当月期间发起关账。 */
@@ -114,14 +113,12 @@ public abstract class AbstractPeriodCloseApiTest extends AbstractManualAdjustmen
 
     /** 批准关账。 */
     protected LedgerResponseChecker approveClose(long periodId, String closeNo, String checkerId, String closeHash) {
-        return post(closesPath(periodId) + "/" + closeNo + "/approve",
-            reviewBody(checkerId, closeHash));
+        return postAs(closesPath(periodId) + "/" + closeNo + "/approve", checkerId, reviewBody(closeHash));
     }
 
     /** 驳回关账。 */
     protected LedgerResponseChecker rejectClose(long periodId, String closeNo, String checkerId, String closeHash) {
-        return post(closesPath(periodId) + "/" + closeNo + "/reject",
-            reviewBody(checkerId, closeHash));
+        return postAs(closesPath(periodId) + "/" + closeNo + "/reject", checkerId, reviewBody(closeHash));
     }
 
     /** 读取关账详情。 */
@@ -140,17 +137,9 @@ public abstract class AbstractPeriodCloseApiTest extends AbstractManualAdjustmen
         return approve(submit.id("manualAdjustmentId"), CHECKER_ID, submit.text("contentHash"));
     }
 
-    /** 发起关账请求体。 */
-    protected StartPeriodCloseRequestBody startBody(String makerId) {
-        StartPeriodCloseRequestBody body = new StartPeriodCloseRequestBody();
-        body.setMakerId(makerId);
-        return body;
-    }
-
     /** 关账复核请求体。 */
-    protected ReviewPeriodCloseRequestBody reviewBody(String checkerId, String approvedCloseHash) {
+    protected ReviewPeriodCloseRequestBody reviewBody(String approvedCloseHash) {
         ReviewPeriodCloseRequestBody body = new ReviewPeriodCloseRequestBody();
-        body.setCheckerId(checkerId);
         body.setApprovedCloseHash(approvedCloseHash);
         return body;
     }

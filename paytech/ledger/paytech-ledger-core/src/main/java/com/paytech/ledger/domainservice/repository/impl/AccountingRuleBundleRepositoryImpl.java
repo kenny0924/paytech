@@ -3,6 +3,7 @@ package com.paytech.ledger.domainservice.repository.impl;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
@@ -19,6 +20,12 @@ import lombok.AllArgsConstructor;
 public class AccountingRuleBundleRepositoryImpl implements AccountingRuleBundleRepository {
     private final Clock clock;
     private final AccountingRuleBundleMapper mapper;
+
+    /** 全部规则集，按代码升序。 */
+    @Override
+    public List<AccountingRuleBundle> findAll() {
+        return mapper.selectAll();
+    }
 
     /** 按代码读取规则集，不存在返回空。 */
     @Override

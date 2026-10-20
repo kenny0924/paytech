@@ -1,12 +1,13 @@
 package com.paytech.ledger.test.base;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.paytech.ledger.api.request.ReviewRuleVersionRequestBody;
-import com.paytech.ledger.api.request.SubmitRuleVersionRequestBody;
 import com.paytech.ledger.core.enums.ReferenceDataStatus;
 import com.paytech.ledger.test.builder.RuleVersionRequestBuilder;
 import com.paytech.ledger.test.checker.LedgerResponseChecker;
@@ -35,7 +36,7 @@ public abstract class AbstractRuleBundleApiTest extends MockTestBase {
     /** Bundle 启用状态（Bundle 状态目录无独立枚举）。 */
     protected static final String BUNDLE_ACTIVE = ReferenceDataStatus.ACTIVE.getCode();
 
-    /** 编制人。 */
+    /** 编制人（以 X-Gateway-Actor-Subject 发送）。 */
     protected static final String MAKER_ID = "81001";
 
     /** 与编制人不同的复核人。 */
@@ -51,12 +52,12 @@ public abstract class AbstractRuleBundleApiTest extends MockTestBase {
 
     /** 标准 12 行、立即生效的请求模板。 */
     protected static RuleVersionRequestBuilder version() {
-        return RuleVersionRequestBuilder.template(MAKER_ID, pastEffectiveFrom());
+        return RuleVersionRequestBuilder.template(pastEffectiveFrom());
     }
 
-    /** 创建规则版本。 */
+    /** 以模板编制人创建规则版本。 */
     protected LedgerResponseChecker createVersion(String bundleCode, RuleVersionRequestBuilder builder) {
-        return post(PATH + "/" + bundleCode + "/versions", builder.build());
+        return postAs(PATH + "/" + bundleCode + "/versions", MAKER_ID, builder.build());
     }
 
     /** 在标准 Bundle 下创建规则版本。 */
@@ -64,21 +65,29 @@ public abstract class AbstractRuleBundleApiTest extends MockTestBase {
         return createVersion(BUNDLE_CODE, builder);
     }
 
-    /** 提交规则版本。 */
+    /** 以指定提交人（操作人 Header）提交规则版本。 */
     protected LedgerResponseChecker submit(long bundleVer, String makerId) {
-        SubmitRuleVersionRequestBody body = new SubmitRuleVersionRequestBody();
-        body.setMakerId(makerId);
-        return post(versionPath(bundleVer) + "/submit", body);
+        return postAs(versionPath(bundleVer) + "/submit", makerId, null);
     }
 
-    /** 批准规则版本。 */
+    /** 以指定复核人（操作人 Header）批准规则版本。 */
     protected LedgerResponseChecker approve(long bundleVer, String checkerId) {
-        return post(versionPath(bundleVer) + "/approve", review(checkerId));
+        return postAs(versionPath(bundleVer) + "/approve", checkerId, null);
     }
 
-    /** 驳回规则版本。 */
+    /** 以指定复核人（操作人 Header）驳回规则版本。 */
     protected LedgerResponseChecker reject(long bundleVer, String checkerId) {
-        return post(versionPath(bundleVer) + "/reject", review(checkerId));
+        return postAs(versionPath(bundleVer) + "/reject", checkerId, null);
+    }
+
+    /** 以指定操作人（Header）作废规则草稿。 */
+    protected LedgerResponseChecker voidVersion(long bundleVer, String makerId) {
+        return postAs(versionPath(bundleVer) + "/void", makerId, null);
+    }
+
+    /** 读取全部规则集。 */
+    protected LedgerResponseChecker listBundles() {
+        return get(PATH);
     }
 
     /** 读取 Bundle 及版本摘要。 */
@@ -97,15 +106,15 @@ public abstract class AbstractRuleBundleApiTest extends MockTestBase {
         return submit(bundleVer, MAKER_ID).assertSuccess(200);
     }
 
+    /** Bundle 5001 当前版本指针与乐观锁版本。 */
+    protected void assertPointer(long currentVerId, long version) {
+        Map<String, Object> pointer = testMapper.selectRuleBundlePointer(BUNDLE_ID);
+        assertEquals(currentVerId, ((Number)pointer.get("current_ver_id")).longValue(), "current_ver_id");
+        assertEquals(version, ((Number)pointer.get("version")).longValue(), "Bundle version");
+    }
+
     /** 版本资源路径。 */
     protected String versionPath(long bundleVer) {
         return PATH + "/" + BUNDLE_CODE + "/versions/" + bundleVer;
-    }
-
-    /** 复核请求体。 */
-    protected ReviewRuleVersionRequestBody review(String checkerId) {
-        ReviewRuleVersionRequestBody body = new ReviewRuleVersionRequestBody();
-        body.setCheckerId(checkerId);
-        return body;
     }
 }

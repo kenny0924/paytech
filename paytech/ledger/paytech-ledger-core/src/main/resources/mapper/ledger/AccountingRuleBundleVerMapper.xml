@@ -24,6 +24,12 @@
         SELECT <include refid="columns"/> FROM t_accounting_rule_bundle_ver WHERE bundle_id = #{bundleId} ORDER BY bundle_ver DESC
     </select>
 
+    <select id="selectDueApproved" resultType="com.paytech.ledger.core.dal.dataobject.AccountingRuleBundleVer">
+        SELECT <include refid="columns"/> FROM t_accounting_rule_bundle_ver
+        WHERE status = 'APPROVED' AND effective_from &lt;= #{asOf}
+        ORDER BY effective_from, bundle_id, bundle_ver
+    </select>
+
     <select id="selectNextBundleVer" resultType="long">
         SELECT COALESCE(MAX(bundle_ver), 0) + 1 FROM t_accounting_rule_bundle_ver WHERE bundle_id = #{bundleId}
     </select>

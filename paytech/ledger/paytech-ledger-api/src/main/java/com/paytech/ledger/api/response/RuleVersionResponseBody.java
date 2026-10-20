@@ -30,7 +30,7 @@ public class RuleVersionResponseBody {
 
     /**
      * 版本状态
-     * <li>DRAFT、PENDING_APPROVAL、APPROVED、ACTIVE、REJECTED、RETIRED。</li>
+     * <li>DRAFT、PENDING_APPROVAL、APPROVED、ACTIVE、REJECTED、RETIRED、VOIDED。</li>
      */
     private String status;
 

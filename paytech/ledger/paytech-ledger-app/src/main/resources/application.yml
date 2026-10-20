@@ -67,6 +67,13 @@ messaging:
     account:
       partitions: 4
 
+# paytech-xxl-job-starter：执行器承载 accountingRuleVersionActivation（每分钟把到期的 APPROVED 规则版本切换为生效）；
+# 默认不启用执行器；部署以 XXL_JOB_EXECUTOR_ENABLED=true 及调度中心地址、AccessToken、执行器参数等 XXL_JOB_* 环境变量启用，任务在 xxl-job-admin 登记。
+xxl:
+  job:
+    executor:
+      enabled: false
+
 management:
   server:
     # 管理端口 = 业务端口 + 1000（01 §3）。

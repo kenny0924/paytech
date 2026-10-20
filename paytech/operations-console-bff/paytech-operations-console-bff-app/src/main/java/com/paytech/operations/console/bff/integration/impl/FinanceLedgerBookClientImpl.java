@@ -31,7 +31,7 @@ import lombok.AllArgsConstructor;
 /**
  * ledger 账簿、账户与流水的 HTTP 转发：每个入口只调用一次 ledger，不重试
  * <li>命令把会话 Account ID 与 Session ID 填入操作人 Header；查询只读，不携带操作人。</li>
- * <li>分录详情、科目余额与试算详情的账簿、期间等主键必须与请求一致；试算只接入列表与详情，不接入执行。</li>
+ * <li>分录详情、科目余额、发起试算与试算详情的账簿、期间等主键必须与请求一致；发起试算无请求体，操作人只供 ledger 记日志。</li>
  *
  * @author Claude
  */
@@ -114,6 +114,17 @@ public class FinanceLedgerBookClientImpl implements FinanceLedgerBookClient {
         int page, int size) {
         return page(trialBalanceApi.listTrialBalances(ledgerBookId, periodId, page, size), page, size,
             TrialBalanceRunResponseBody.class);
+    }
+
+    /** 发起试算，无请求体；回执账簿与期间须与请求一致并带新序号。 */
+    @Override
+    public TrialBalanceRunResponseBody runTrialBalance(OperatorContext context, String ledgerBookId, String periodId) {
+        var run = convert(trialBalanceApi.runTrialBalance(context.accountId(), context.sessionId(), ledgerBookId,
+            periodId).getBody(), TrialBalanceRunResponseBody.class);
+        requireSame(ledgerBookId, run.getLedgerBookId());
+        requireSame(periodId, run.getPeriodId());
+        requireIdentity(run.getRunNo());
+        return run;
     }
 
     /** 试算详情；账簿、期间与序号须与请求一致，三个列表不可缺失。 */

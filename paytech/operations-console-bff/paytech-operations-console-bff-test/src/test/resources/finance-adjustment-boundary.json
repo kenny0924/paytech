@@ -1,0 +1,488 @@
+[
+  {
+    "id": "M1",
+    "method": "GET",
+    "path": "/finance/manual-adjustments/v1",
+    "query": "?ledgerBookId=7312345678901239001&accountingPeriodId=7312345678901236010&status=POSTED&makerId=10001&page=1&size=10",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "manualAdjustmentId": "7312345678901250001",
+          "adjustmentNo": "MA202610200001",
+          "ledgerBookId": "7312345678901239001",
+          "accountingPeriodId": "7312345678901236010",
+          "currency": "USD",
+          "reasonCode": "ACCOUNTING_CORRECTION",
+          "status": "POSTED",
+          "totalDebit": "120.00",
+          "totalCredit": "120.00",
+          "makerId": "10001",
+          "submittedTime": "2026-10-20T01:00:00.123456Z",
+          "journalEntryId": "7312345678901241009"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    },
+    "routeCode": "operations-finance-manual-adjustment-list"
+  },
+  {
+    "id": "M2",
+    "method": "POST",
+    "path": "/finance/manual-adjustments/v1",
+    "query": "",
+    "request": {
+      "ledgerBookId": "7312345678901239001",
+      "accountingPeriodId": "7312345678901236010",
+      "currency": "USD",
+      "reasonCode": "ACCOUNTING_CORRECTION",
+      "fileId": "7312345678901260001",
+      "fileContentHash": "1b3d5f7a9c2e4b6d8f0a1c3e5b7d9f2a4c6e8b0d2f4a6c8e1b3d5f7a9c2e4b6d",
+      "lines": [
+        {
+          "accountId": "7312345678901240001",
+          "entrySide": "DEBIT",
+          "amount": "120.00",
+          "lineDescription": "更正手续费"
+        },
+        {
+          "accountId": "7312345678901240002",
+          "entrySide": "CREDIT",
+          "amount": "120.00",
+          "lineDescription": "更正手续费"
+        }
+      ]
+    },
+    "status": 201,
+    "response": {
+      "manualAdjustmentId": "7312345678901250002",
+      "adjustmentNo": "MA202610200002",
+      "contentHash": "9f2c0e6b4d1a7c35e8b2f0d94a6c1e7b3d5f8a2c4e6b0d1f3a5c7e9b2d4f6a8c",
+      "status": "SUBMITTED"
+    },
+    "routeCode": "operations-finance-manual-adjustment-submit"
+  },
+  {
+    "id": "M3",
+    "method": "GET",
+    "path": "/finance/manual-adjustments/v1/7312345678901250001",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "manualAdjustmentId": "7312345678901250001",
+      "adjustmentNo": "MA202610200001",
+      "ledgerBookId": "7312345678901239001",
+      "accountingPeriodId": "7312345678901236010",
+      "currency": "USD",
+      "reasonCode": "ACCOUNTING_CORRECTION",
+      "fileId": null,
+      "fileContentHash": null,
+      "totalDebit": "120.00",
+      "totalCredit": "120.00",
+      "contentHash": "9f2c0e6b4d1a7c35e8b2f0d94a6c1e7b3d5f8a2c4e6b0d1f3a5c7e9b2d4f6a8c",
+      "status": "POSTED",
+      "makerId": "10001",
+      "submittedTime": "2026-10-20T01:00:00.123456Z",
+      "lines": [
+        {
+          "lineNo": 1,
+          "accountId": "7312345678901240001",
+          "entrySide": "DEBIT",
+          "amount": "120.00",
+          "lineDescription": "更正手续费"
+        },
+        {
+          "lineNo": 2,
+          "accountId": "7312345678901240002",
+          "entrySide": "CREDIT",
+          "amount": "120.00",
+          "lineDescription": "更正手续费"
+        }
+      ],
+      "approvals": [
+        {
+          "approvalRole": "MAKER",
+          "actorId": "10001",
+          "decision": "APPROVED",
+          "approvedContentHash": "9f2c0e6b4d1a7c35e8b2f0d94a6c1e7b3d5f8a2c4e6b0d1f3a5c7e9b2d4f6a8c",
+          "decisionTime": "2026-10-20T01:00:00.123456Z"
+        },
+        {
+          "approvalRole": "CHECKER",
+          "actorId": "10002",
+          "decision": "APPROVED",
+          "approvedContentHash": "9f2c0e6b4d1a7c35e8b2f0d94a6c1e7b3d5f8a2c4e6b0d1f3a5c7e9b2d4f6a8c",
+          "decisionTime": "2026-10-20T02:00:00.123456Z"
+        }
+      ],
+      "journalEntryId": "7312345678901241009",
+      "journalSequence": "1025",
+      "postingDate": "2026-10-20"
+    },
+    "routeCode": "operations-finance-manual-adjustment-detail"
+  },
+  {
+    "id": "M4",
+    "method": "POST",
+    "path": "/finance/manual-adjustments/v1/7312345678901250001/approve",
+    "query": "",
+    "request": {
+      "approvedContentHash": "9f2c0e6b4d1a7c35e8b2f0d94a6c1e7b3d5f8a2c4e6b0d1f3a5c7e9b2d4f6a8c"
+    },
+    "status": 200,
+    "response": {
+      "manualAdjustmentId": "7312345678901250001",
+      "status": "POSTED",
+      "journalEntryId": "7312345678901241009",
+      "journalSequence": "1025",
+      "postingDate": "2026-10-20"
+    },
+    "routeCode": "operations-finance-manual-adjustment-approve"
+  },
+  {
+    "id": "M5",
+    "method": "POST",
+    "path": "/finance/manual-adjustments/v1/7312345678901250001/reject",
+    "query": "",
+    "request": {
+      "approvedContentHash": "9f2c0e6b4d1a7c35e8b2f0d94a6c1e7b3d5f8a2c4e6b0d1f3a5c7e9b2d4f6a8c"
+    },
+    "status": 200,
+    "response": {
+      "manualAdjustmentId": "7312345678901250001",
+      "status": "REJECTED",
+      "journalEntryId": null,
+      "journalSequence": null,
+      "postingDate": null
+    },
+    "routeCode": "operations-finance-manual-adjustment-reject"
+  },
+  {
+    "id": "B1",
+    "method": "GET",
+    "path": "/finance/billing-facts/v1",
+    "query": "?entityNo=AE001&currency=USD&clientId=7300000000000001&status=DRAFT&factType=MANUAL_ADJUSTMENT&createdFrom=2026-10-01T00:00:00Z&createdTo=2026-11-01T00:00:00Z&page=1&size=10",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "factId": "7400000000000101",
+          "factType": "MANUAL_ADJUSTMENT",
+          "sourceReference": "OPS-6f1c2a3b-4d5e-4f60-8a7b-9c0d1e2f3a4b",
+          "clientId": "7300000000000001",
+          "status": "DRAFT",
+          "grossAmount": "100.00",
+          "makerId": "10001",
+          "checkerId": null,
+          "createTime": "2026-10-20T01:00:00.123456Z",
+          "approvedTime": null
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    },
+    "routeCode": "operations-finance-billing-fact-list",
+    "ownerPath": "/billing/v1/facts/search"
+  },
+  {
+    "id": "B2",
+    "method": "POST",
+    "path": "/finance/billing-facts/v1",
+    "query": "",
+    "request": {
+      "factType": "MANUAL_ADJUSTMENT",
+      "parentFactId": null,
+      "supersedesFactId": null,
+      "clientId": "7300000000000001",
+      "entityNo": "AE001",
+      "localPartnerId": null,
+      "financeEntityId": null,
+      "currency": "USD",
+      "refs": [
+        {
+          "refType": "TICKET",
+          "refId": "OPS-TICKET-1"
+        }
+      ],
+      "lines": [
+        {
+          "componentType": "MANUAL_ADJUSTMENT",
+          "payerRole": "OPERATING_ENTITY",
+          "payerId": "AE001",
+          "payeeRole": "CLIENT",
+          "payeeId": "7300000000000001",
+          "amount": "100.00",
+          "direction": "ADJUSTMENT",
+          "targetBucket": "AVAILABLE"
+        }
+      ]
+    },
+    "status": 201,
+    "response": {
+      "factId": "7400000000000101",
+      "factVersion": "0",
+      "supersedesFactId": null,
+      "parentFactId": null,
+      "factType": "MANUAL_ADJUSTMENT",
+      "originType": "MANUAL",
+      "status": "DRAFT",
+      "sourceSystem": "OPERATIONS",
+      "sourceEventKey": "OPS-6f1c2a3b-4d5e-4f60-8a7b-9c0d1e2f3a4b",
+      "sourceVersion": "1",
+      "sourcePayloadHash": "1b3d5f7a9c2e4b6d8f0a1c3e5b7d9f2a4c6e8b0d2f4a6c8e1b3d5f7a9c2e4b6d",
+      "businessTime": "2026-10-20T01:00:00.123456Z",
+      "recordedTime": "2026-10-20T01:00:00.123456Z",
+      "balanceAvailableTime": null,
+      "clientId": "7300000000000001",
+      "entityNo": "AE001",
+      "localPartnerId": null,
+      "financeEntityId": null,
+      "currency": "USD",
+      "grossAmount": "100.00",
+      "makerId": "10001",
+      "checkerId": null,
+      "approvedTime": null,
+      "publishedAt": null,
+      "pricing": null,
+      "refs": [
+        {
+          "refType": "TICKET",
+          "refId": "OPS-TICKET-1"
+        }
+      ],
+      "lines": [
+        {
+          "lineNo": "1",
+          "componentType": "MANUAL_ADJUSTMENT",
+          "payerRole": "OPERATING_ENTITY",
+          "payerId": "AE001",
+          "payeeRole": "CLIENT",
+          "payeeId": "7300000000000001",
+          "direction": "ADJUSTMENT",
+          "postedAmount": "100.00",
+          "targetBucket": "AVAILABLE",
+          "basisAmount": null,
+          "rateValue": null,
+          "rawAmount": null,
+          "sourceRuleType": "MANUAL",
+          "sourceRuleVersionId": null,
+          "sourcePriceId": null,
+          "sourceRuleComponentId": null,
+          "sourceEvidence": {
+            "ticket": "OPS-TICKET-1"
+          }
+        }
+      ],
+      "links": []
+    },
+    "routeCode": "operations-finance-billing-fact-submit",
+    "ownerPath": "/billing/v1/facts"
+  },
+  {
+    "id": "B3",
+    "method": "GET",
+    "path": "/finance/billing-facts/v1/7400000000000101",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "factId": "7400000000000101",
+      "factVersion": "0",
+      "supersedesFactId": null,
+      "parentFactId": null,
+      "factType": "MANUAL_ADJUSTMENT",
+      "originType": "MANUAL",
+      "status": "DRAFT",
+      "sourceSystem": "OPERATIONS",
+      "sourceEventKey": "OPS-6f1c2a3b-4d5e-4f60-8a7b-9c0d1e2f3a4b",
+      "sourceVersion": "1",
+      "sourcePayloadHash": "1b3d5f7a9c2e4b6d8f0a1c3e5b7d9f2a4c6e8b0d2f4a6c8e1b3d5f7a9c2e4b6d",
+      "businessTime": "2026-10-20T01:00:00.123456Z",
+      "recordedTime": "2026-10-20T01:00:00.123456Z",
+      "balanceAvailableTime": null,
+      "clientId": "7300000000000001",
+      "entityNo": "AE001",
+      "localPartnerId": null,
+      "financeEntityId": null,
+      "currency": "USD",
+      "grossAmount": "100.00",
+      "makerId": "10001",
+      "checkerId": null,
+      "approvedTime": null,
+      "publishedAt": null,
+      "pricing": null,
+      "refs": [
+        {
+          "refType": "TICKET",
+          "refId": "OPS-TICKET-1"
+        }
+      ],
+      "lines": [
+        {
+          "lineNo": "1",
+          "componentType": "MANUAL_ADJUSTMENT",
+          "payerRole": "OPERATING_ENTITY",
+          "payerId": "AE001",
+          "payeeRole": "CLIENT",
+          "payeeId": "7300000000000001",
+          "direction": "ADJUSTMENT",
+          "postedAmount": "100.00",
+          "targetBucket": "AVAILABLE",
+          "basisAmount": null,
+          "rateValue": null,
+          "rawAmount": null,
+          "sourceRuleType": "MANUAL",
+          "sourceRuleVersionId": null,
+          "sourcePriceId": null,
+          "sourceRuleComponentId": null,
+          "sourceEvidence": {
+            "ticket": "OPS-TICKET-1"
+          }
+        }
+      ],
+      "links": []
+    },
+    "routeCode": "operations-finance-billing-fact-detail",
+    "ownerPath": "/billing/v1/facts/7400000000000101"
+  },
+  {
+    "id": "B4",
+    "method": "POST",
+    "path": "/finance/billing-facts/v1/7400000000000101/approve",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "factId": "7400000000000101",
+      "factVersion": "0",
+      "supersedesFactId": null,
+      "parentFactId": null,
+      "factType": "MANUAL_ADJUSTMENT",
+      "originType": "MANUAL",
+      "status": "APPROVED",
+      "sourceSystem": "OPERATIONS",
+      "sourceEventKey": "OPS-6f1c2a3b-4d5e-4f60-8a7b-9c0d1e2f3a4b",
+      "sourceVersion": "1",
+      "sourcePayloadHash": "1b3d5f7a9c2e4b6d8f0a1c3e5b7d9f2a4c6e8b0d2f4a6c8e1b3d5f7a9c2e4b6d",
+      "businessTime": "2026-10-20T02:00:00.123456Z",
+      "recordedTime": "2026-10-20T01:00:00.123456Z",
+      "balanceAvailableTime": null,
+      "clientId": "7300000000000001",
+      "entityNo": "AE001",
+      "localPartnerId": null,
+      "financeEntityId": null,
+      "currency": "USD",
+      "grossAmount": "100.00",
+      "makerId": "10001",
+      "checkerId": "10002",
+      "approvedTime": "2026-10-20T02:00:00.123456Z",
+      "publishedAt": null,
+      "pricing": null,
+      "refs": [
+        {
+          "refType": "TICKET",
+          "refId": "OPS-TICKET-1"
+        }
+      ],
+      "lines": [
+        {
+          "lineNo": "1",
+          "componentType": "MANUAL_ADJUSTMENT",
+          "payerRole": "OPERATING_ENTITY",
+          "payerId": "AE001",
+          "payeeRole": "CLIENT",
+          "payeeId": "7300000000000001",
+          "direction": "ADJUSTMENT",
+          "postedAmount": "100.00",
+          "targetBucket": "AVAILABLE",
+          "basisAmount": null,
+          "rateValue": null,
+          "rawAmount": null,
+          "sourceRuleType": "MANUAL",
+          "sourceRuleVersionId": null,
+          "sourcePriceId": null,
+          "sourceRuleComponentId": null,
+          "sourceEvidence": {
+            "ticket": "OPS-TICKET-1"
+          }
+        }
+      ],
+      "links": []
+    },
+    "routeCode": "operations-finance-billing-fact-approve",
+    "ownerPath": "/billing/v1/facts/7400000000000101/approve"
+  },
+  {
+    "id": "B5",
+    "method": "POST",
+    "path": "/finance/billing-facts/v1/7400000000000101/void",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "factId": "7400000000000101",
+      "factVersion": "0",
+      "supersedesFactId": null,
+      "parentFactId": null,
+      "factType": "MANUAL_ADJUSTMENT",
+      "originType": "MANUAL",
+      "status": "VOIDED",
+      "sourceSystem": "OPERATIONS",
+      "sourceEventKey": "OPS-6f1c2a3b-4d5e-4f60-8a7b-9c0d1e2f3a4b",
+      "sourceVersion": "1",
+      "sourcePayloadHash": "1b3d5f7a9c2e4b6d8f0a1c3e5b7d9f2a4c6e8b0d2f4a6c8e1b3d5f7a9c2e4b6d",
+      "businessTime": "2026-10-20T01:00:00.123456Z",
+      "recordedTime": "2026-10-20T01:00:00.123456Z",
+      "balanceAvailableTime": null,
+      "clientId": "7300000000000001",
+      "entityNo": "AE001",
+      "localPartnerId": null,
+      "financeEntityId": null,
+      "currency": "USD",
+      "grossAmount": "100.00",
+      "makerId": "10001",
+      "checkerId": null,
+      "approvedTime": null,
+      "publishedAt": null,
+      "pricing": null,
+      "refs": [
+        {
+          "refType": "TICKET",
+          "refId": "OPS-TICKET-1"
+        }
+      ],
+      "lines": [
+        {
+          "lineNo": "1",
+          "componentType": "MANUAL_ADJUSTMENT",
+          "payerRole": "OPERATING_ENTITY",
+          "payerId": "AE001",
+          "payeeRole": "CLIENT",
+          "payeeId": "7300000000000001",
+          "direction": "ADJUSTMENT",
+          "postedAmount": "100.00",
+          "targetBucket": "AVAILABLE",
+          "basisAmount": null,
+          "rateValue": null,
+          "rawAmount": null,
+          "sourceRuleType": "MANUAL",
+          "sourceRuleVersionId": null,
+          "sourcePriceId": null,
+          "sourceRuleComponentId": null,
+          "sourceEvidence": {
+            "ticket": "OPS-TICKET-1"
+          }
+        }
+      ],
+      "links": []
+    },
+    "routeCode": "operations-finance-billing-fact-void",
+    "ownerPath": "/billing/v1/facts/7400000000000101/void"
+  }
+]

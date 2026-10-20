@@ -4,24 +4,29 @@ import java.math.BigDecimal;
 
 import org.springframework.stereotype.Component;
 
+import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.ledger.api.request.ReviewManualAdjustmentRequestBody;
 import com.paytech.ledger.api.request.SubmitManualAdjustmentRequestBody;
 import com.paytech.ledger.api.response.ManualAdjustmentDetailResponseBody;
+import com.paytech.ledger.api.response.ManualAdjustmentResponseBody;
 import com.paytech.ledger.api.response.ReviewManualAdjustmentResponseBody;
 import com.paytech.ledger.api.response.SubmitManualAdjustmentResponseBody;
+import com.paytech.ledger.core.enums.AdjustmentStatus;
 import com.paytech.ledger.core.enums.EntrySide;
+import com.paytech.ledger.domain.ManualAdjustmentQuery;
 import com.paytech.ledger.domain.view.ManualAdjustmentDetailView;
+import com.paytech.ledger.domain.view.ManualAdjustmentView;
 import com.paytech.ledger.service.processor.request.ReviewManualAdjustmentRequest;
 import com.paytech.ledger.service.processor.request.SubmitManualAdjustmentRequest;
 import com.paytech.ledger.service.processor.response.ReviewManualAdjustmentResponse;
 import com.paytech.ledger.service.processor.response.SubmitManualAdjustmentResponse;
 
-/** 人工调整接口的 Wire 模型与内部请求/结果转换；金额字符串与 BigDecimal 精确互转。 */
+/** 人工调整接口的 Wire 模型与内部请求/结果转换；金额字符串与 BigDecimal 精确互转，编制人 / 复核人取自操作人 Header（已由接口校验为正十进制）。 */
 @Component
 public class ManualAdjustmentConverter {
 
-    /** 转换提交请求。 */
-    public SubmitManualAdjustmentRequest toRequest(SubmitManualAdjustmentRequestBody body) {
+    /** 转换提交请求，编制人取自操作人 Header。 */
+    public SubmitManualAdjustmentRequest toRequest(SubmitManualAdjustmentRequestBody body, String operatorId) {
         SubmitManualAdjustmentRequest request = new SubmitManualAdjustmentRequest();
         request.setLedgerBookId(Long.valueOf(body.getLedgerBookId()));
         request.setAccountingPeriodId(Long.valueOf(body.getAccountingPeriodId()));
@@ -29,7 +34,7 @@ public class ManualAdjustmentConverter {
         request.setReasonCode(body.getReasonCode());
         request.setFileId(body.getFileId() == null ? null : Long.valueOf(body.getFileId()));
         request.setFileContentHash(body.getFileContentHash());
-        request.setMakerId(Long.valueOf(body.getMakerId()));
+        request.setMakerId(Long.valueOf(operatorId));
         request.setLines(body.getLines().stream().map(this::toLine).toList());
         return request;
     }
@@ -44,13 +49,39 @@ public class ManualAdjustmentConverter {
         return line;
     }
 
-    /** 转换复核请求。 */
-    public ReviewManualAdjustmentRequest toRequest(String manualAdjustmentId, ReviewManualAdjustmentRequestBody body) {
+    /** 转换复核请求，复核人取自操作人 Header。 */
+    public ReviewManualAdjustmentRequest toRequest(String manualAdjustmentId, ReviewManualAdjustmentRequestBody body,
+        String operatorId) {
         ReviewManualAdjustmentRequest request = new ReviewManualAdjustmentRequest();
         request.setManualAdjustmentId(Long.valueOf(manualAdjustmentId));
-        request.setCheckerId(Long.valueOf(body.getCheckerId()));
+        request.setCheckerId(Long.valueOf(operatorId));
         request.setApprovedContentHash(body.getApprovedContentHash());
         return request;
+    }
+
+    /** 转换列表查询条件；状态已由接口限定为 SUBMITTED、POSTED 或 REJECTED。 */
+    public ManualAdjustmentQuery toQuery(String ledgerBookId, String accountingPeriodId, String status, String makerId,
+        PagingRequestBody paging) {
+        return new ManualAdjustmentQuery(Long.parseLong(ledgerBookId), id(accountingPeriodId),
+            status == null ? null : CodeEnumConverter.parse(AdjustmentStatus.class, status), id(makerId), paging);
+    }
+
+    /** 转换列表元素。 */
+    public ManualAdjustmentResponseBody toResponseBody(ManualAdjustmentView view) {
+        ManualAdjustmentResponseBody body = new ManualAdjustmentResponseBody();
+        body.setManualAdjustmentId(view.getManualAdjustmentId().toString());
+        body.setAdjustmentNo(view.getAdjustmentNo());
+        body.setLedgerBookId(view.getLedgerBookId().toString());
+        body.setAccountingPeriodId(view.getAccountingPeriodId().toString());
+        body.setCurrency(view.getCurrency());
+        body.setReasonCode(view.getReasonCode());
+        body.setStatus(view.getStatus().getCode());
+        body.setTotalDebit(view.getTotalDebit().toPlainString());
+        body.setTotalCredit(view.getTotalCredit().toPlainString());
+        body.setMakerId(view.getMakerId().toString());
+        body.setSubmittedTime(view.getSubmittedTime());
+        body.setJournalEntryId(text(view.getJournalEntryId()));
+        return body;
     }
 
     /** 转换提交结果。 */
@@ -119,6 +150,11 @@ public class ManualAdjustmentConverter {
         body.setApprovedContentHash(approval.getApprovedContentHash());
         body.setDecisionTime(approval.getDecisionTime());
         return body;
+    }
+
+    /** 可空十进制字符串转 Long。 */
+    Long id(String value) {
+        return value == null ? null : Long.valueOf(value);
     }
 
     /** 可空 Long 转十进制字符串。 */

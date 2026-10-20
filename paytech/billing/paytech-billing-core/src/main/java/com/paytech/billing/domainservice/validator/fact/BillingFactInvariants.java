@@ -5,6 +5,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import com.paytech.billing.api.enums.BillingFactErrorCode;
 import com.paytech.billing.api.enums.BillingFactType;
 import com.paytech.billing.api.enums.FactComponentType;
 import com.paytech.billing.api.enums.FactLineDirection;
@@ -15,6 +16,7 @@ import com.paytech.billing.api.fact.BillingFactPayload;
 import com.paytech.billing.api.fact.BillingFactRefPayload;
 import com.paytech.billing.core.enums.BillingCodes;
 import com.paytech.foundation.common.error.BizCheckFailException;
+import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.common.error.InvalidParameterException;
 
 /**
@@ -26,7 +28,8 @@ import com.paytech.foundation.common.error.InvalidParameterException;
  * <li>行级：金额为正、付方 ≠ 收方；CLIENT / LOCAL_PARTNER / FINANCE_ENTITY / OPERATING_ENTITY 的标识等于头部对应字段，其余角色只校验十进制
  * 标识；合作方二元组（localPartnerId + financeEntityId）全有或全无，PARTNER_SHARE、PLATFORM_SERVICE_CHARGE 要求二元组存在，平台服务费
  * 收方为头部 Finance Entity。</li>
- * <li>只做纯内存校验，不访问数据库；引用类型不被事实类型允许为参数错误，其余为业务拒绝。</li>
+ * <li>只做纯内存校验，不访问数据库；引用类型不被事实类型允许为参数错误；行级违反为 {@link BillingFactErrorCode#FACT_LINE_INVALID}，
+ * 头部违反（Client、来源事实、CLEARING_ACCOUNT、合作方二元组不完整）为公共业务拒绝。</li>
  */
 public final class BillingFactInvariants {
     /** MANUAL_ADJUSTMENT 允许的组件类型。 */
@@ -59,7 +62,8 @@ public final class BillingFactInvariants {
      *
      * @param fact 由待登记事实头、引用与明细行组装的载荷（成本调整的 Client 已取自来源事实）
      * @throws InvalidParameterException 事实类型不允许人工登记或引用类型不被允许
-     * @throws BizCheckFailException 违反目录约束或登记不变量
+     * @throws FailException 明细行违反目录约束或行级不变量（FACT_LINE_INVALID）
+     * @throws BizCheckFailException 头部违反目录约束或登记不变量
      */
     public static void checkManualRegistration(BillingFactPayload fact) {
         BillingFactType factType = BillingCodes.parse(BillingFactType.class, "计费事实类型", fact.getFactType());
@@ -87,12 +91,10 @@ public final class BillingFactInvariants {
         for (BillingFactLinePayload line : fact.getLines()) {
             FactComponentType component = componentOf(line);
             if (!MANUAL_COMPONENTS.contains(component)) {
-                throw new BizCheckFailException("人工调整不允许组件类型 " + component.getCode() + ": 行 " + line.getLineNo()
-                    + ", 来源 " + fact.getSourceEventKey());
+                throw new FailException(BillingFactErrorCode.FACT_LINE_INVALID);
             }
             if (line.getTargetBucket() != null && !BUCKET_OWNERS.contains(roleOf(line.getPayeeRole(), "收方"))) {
-                throw new BizCheckFailException("目标余额桶只用于收方为 CLIENT 或 LOCAL_PARTNER 的行: 行 " + line.getLineNo()
-                    + ", 收方 " + line.getPayeeRole() + ", 来源 " + fact.getSourceEventKey());
+                throw new FailException(BillingFactErrorCode.FACT_LINE_INVALID);
             }
         }
     }
@@ -109,27 +111,24 @@ public final class BillingFactInvariants {
             throw new BizCheckFailException("成本调整必须引用 CLEARING_ACCOUNT 渠道清算账户: 来源 " + fact.getSourceEventKey());
         }
         for (BillingFactLinePayload line : fact.getLines()) {
-            checkCostLine(fact, line);
+            checkCostLine(line);
         }
     }
 
     /** 成本调整行：CHANNEL_COST + ADJUSTMENT，付方与收方分别是 CHANNEL 与 OPERATING_ENTITY，不给目标余额桶。 */
-    static void checkCostLine(BillingFactPayload fact, BillingFactLinePayload line) {
+    static void checkCostLine(BillingFactLinePayload line) {
         boolean costAdjustment = componentOf(line) == FactComponentType.CHANNEL_COST
             && FactLineDirection.ADJUSTMENT.getCode().equals(line.getDirection());
         if (!costAdjustment) {
-            throw new BizCheckFailException("成本调整只能登记 CHANNEL_COST + ADJUSTMENT 明细: 行 " + line.getLineNo() + ", "
-                + line.getComponentType() + "/" + line.getDirection() + ", 来源 " + fact.getSourceEventKey());
+            throw new FailException(BillingFactErrorCode.FACT_LINE_INVALID);
         }
         FactPartyRole payer = roleOf(line.getPayerRole(), "付方");
         FactPartyRole payee = roleOf(line.getPayeeRole(), "收方");
         if (!COST_PARTIES.contains(payer) || !COST_PARTIES.contains(payee) || payer == payee) {
-            throw new BizCheckFailException("成本调整的付方与收方必须是 CHANNEL 与 OPERATING_ENTITY: 行 " + line.getLineNo()
-                + ", " + line.getPayerRole() + " → " + line.getPayeeRole() + ", 来源 " + fact.getSourceEventKey());
+            throw new FailException(BillingFactErrorCode.FACT_LINE_INVALID);
         }
         if (line.getTargetBucket() != null) {
-            throw new BizCheckFailException("目标余额桶只用于人工调整: 行 " + line.getLineNo() + ", 来源 "
-                + fact.getSourceEventKey());
+            throw new FailException(BillingFactErrorCode.FACT_LINE_INVALID);
         }
     }
 
@@ -147,26 +146,22 @@ public final class BillingFactInvariants {
     /** 金额为正、付方与收方不同、头部主体角色的标识与头部一致。 */
     static void checkLineAmountAndParties(BillingFactPayload fact, BillingFactLinePayload line) {
         if (line.getPostedAmount().signum() <= 0) {
-            throw new BizCheckFailException("计费事实明细金额必须为正: 行 " + line.getLineNo() + ", 金额 "
-                + line.getPostedAmount().toPlainString());
+            throw new FailException(BillingFactErrorCode.FACT_LINE_INVALID);
         }
         if (line.getPayerRole().equals(line.getPayeeRole()) && line.getPayerId().equals(line.getPayeeId())) {
-            throw new BizCheckFailException("计费事实明细付方与收方不能相同: 行 " + line.getLineNo() + ", "
-                + line.getPayerRole() + "/" + line.getPayerId());
+            throw new FailException(BillingFactErrorCode.FACT_LINE_INVALID);
         }
-        checkPartyIdentity(fact, line, line.getPayerRole(), line.getPayerId(), "付方");
-        checkPartyIdentity(fact, line, line.getPayeeRole(), line.getPayeeId(), "收方");
+        checkPartyIdentity(fact, line.getPayerRole(), line.getPayerId(), "付方");
+        checkPartyIdentity(fact, line.getPayeeRole(), line.getPayeeId(), "收方");
     }
 
     /** 付方或收方是头部主体角色时标识必须等于头部主体，其余角色只校验十进制标识格式。 */
-    static void checkPartyIdentity(BillingFactPayload fact, BillingFactLinePayload line, String role, String id,
-        String side) {
+    static void checkPartyIdentity(BillingFactPayload fact, String role, String id, String side) {
         FactPartyRole partyRole = roleOf(role, side);
         boolean valid = HEADER_ROLES.contains(partyRole) ? Objects.equals(headerIdentity(fact, partyRole), id)
             : DECIMAL_ID.matcher(id).matches();
         if (!valid) {
-            throw new BizCheckFailException("计费事实" + side + "与头部主体不一致: 行 " + line.getLineNo() + ", " + side + " "
-                + role + "/" + id + ", 来源 " + fact.getSourceEventKey());
+            throw new FailException(BillingFactErrorCode.FACT_LINE_INVALID);
         }
     }
 
@@ -180,13 +175,11 @@ public final class BillingFactInvariants {
         for (BillingFactLinePayload line : fact.getLines()) {
             FactComponentType component = componentOf(line);
             if (!hasPartner && PARTNER_COMPONENTS.contains(component)) {
-                throw new BizCheckFailException("计费事实缺少合作方二元组，不能登记 " + component.getCode() + ": 行 "
-                    + line.getLineNo() + ", 来源 " + fact.getSourceEventKey());
+                throw new FailException(BillingFactErrorCode.FACT_LINE_INVALID);
             }
             if (component == FactComponentType.PLATFORM_SERVICE_CHARGE
                 && !FactPartyRole.FINANCE_ENTITY.getCode().equals(line.getPayeeRole())) {
-                throw new BizCheckFailException("平台服务费收方必须是 Finance Entity " + fact.getFinanceEntityId() + ": 行 "
-                    + line.getLineNo() + ", 来源 " + fact.getSourceEventKey());
+                throw new FailException(BillingFactErrorCode.FACT_LINE_INVALID);
             }
         }
     }

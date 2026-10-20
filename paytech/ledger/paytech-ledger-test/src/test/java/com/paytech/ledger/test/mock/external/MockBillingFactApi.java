@@ -1,5 +1,7 @@
 package com.paytech.ledger.test.mock.external;
 
+import java.time.Instant;
+
 import org.springframework.boot.test.context.TestComponent;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -7,6 +9,8 @@ import com.paytech.billing.api.BillingFactQueryApi;
 import com.paytech.billing.api.response.BillingFactListResponseBody;
 import com.paytech.billing.api.response.BillingFactProgressResponseBody;
 import com.paytech.billing.api.response.BillingFactResponseBody;
+import com.paytech.billing.api.response.BillingFactSummaryResponseBody;
+import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.ledger.test.mocker.external.BillingFactMocker;
 
 import lombok.AllArgsConstructor;
@@ -45,5 +49,13 @@ public class MockBillingFactApi implements BillingFactQueryApi {
         String limit) {
         MockRequestId.mark(BillingFactMocker.REQUEST_ID);
         throw mocker.unexpectedCall("listBillingFactsByRef");
+    }
+
+    @Override
+    public PagingResponseBody<BillingFactSummaryResponseBody> searchBillingFacts(String entityNo, String currency,
+        String clientId, String status, String factType, Instant createdFrom, Instant createdTo, Integer page,
+        Integer size) {
+        MockRequestId.mark(BillingFactMocker.REQUEST_ID);
+        throw mocker.unexpectedCall("searchBillingFacts");
     }
 }

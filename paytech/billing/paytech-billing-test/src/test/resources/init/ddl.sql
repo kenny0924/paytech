@@ -40,7 +40,7 @@ CREATE TABLE `t_billing_fact` (
   `gross_amount` DECIMAL(24,8) NOT NULL COMMENT '业务事实非负总额：支付为毛额，退款为退款额，资金类为银行确认额，人工调整为明细行之和。',
   `business_time` DATETIME(6) NOT NULL COMMENT '业务发生的 UTC 微秒时间：支付成功、退款成功、争议结论、银行确认、兑换成交、人工批准；ledger 过账日期统一取它。',
   `balance_available_time` DATETIME(6) NULL COMMENT '仅 PAYMENT：按命中价格的 T+N、日历、时区、截止秒算出的应付到期转可用 UTC 时间；account 定时任务读取。',
-  `status` VARCHAR(16) NOT NULL COMMENT '登记状态。允许值：DRAFT（仅 MANUAL）、APPROVED、SUPERSEDED。',
+  `status` VARCHAR(16) NOT NULL COMMENT '登记状态：MANUAL 草稿 DRAFT 经批准为 APPROVED 或作废为 VOIDED（终态、不发布事件），APPROVED 被替代后为 SUPERSEDED。允许值：DRAFT（仅 MANUAL）、APPROVED、SUPERSEDED、VOIDED（仅 MANUAL）。',
   `fact_version` BIGINT NOT NULL DEFAULT 0 COMMENT '批准时定稿：首次 1，替代事实为前版本 + 1，DRAFT 为 0；事件聚合版本。',
   `maker_id` BIGINT NULL COMMENT 'MANUAL 事实的提交人；AUTO 为空。',
   `checker_id` BIGINT NULL COMMENT 'MANUAL 事实的批准人，须不同于提交人；AUTO 为空。',

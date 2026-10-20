@@ -8,7 +8,6 @@ import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.ledger.api.PeriodCloseApi;
 import com.paytech.ledger.api.request.ReviewPeriodCloseRequestBody;
-import com.paytech.ledger.api.request.StartPeriodCloseRequestBody;
 import com.paytech.ledger.api.request.StartPeriodReopenRequestBody;
 import com.paytech.ledger.api.response.PeriodCloseDetailResponseBody;
 import com.paytech.ledger.api.response.PeriodCloseResponseBody;
@@ -21,7 +20,7 @@ import com.paytech.ledger.service.processor.StartPeriodReopenProcessor;
 
 import lombok.AllArgsConstructor;
 
-/** 期间关账与重开的 HTTP 协议适配；查询直接委托本地 Service。 */
+/** 期间关账与重开的 HTTP 协议适配：操作人 Header 作为编制人 / 复核人传入 Processor；查询直接委托本地 Service。 */
 @RestController
 @AllArgsConstructor
 public class PeriodCloseController implements PeriodCloseApi {
@@ -34,30 +33,36 @@ public class PeriodCloseController implements PeriodCloseApi {
 
     /** 发起关账并返回 201。 */
     @Override
-    public ResponseEntity<PeriodCloseResponseBody> startPeriodClose(String periodId, StartPeriodCloseRequestBody body) {
+    public ResponseEntity<PeriodCloseResponseBody> startPeriodClose(String actorAccountId, String sessionId,
+        String periodId) {
         PeriodCloseResponseBody response =
-            converter.toResponseBody(startPeriodCloseProcessor.process(converter.toRequest(periodId, body)));
+            converter.toResponseBody(startPeriodCloseProcessor.process(converter.toStartRequest(periodId, actorAccountId)));
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     /** 发起重开并返回 201。 */
     @Override
-    public ResponseEntity<PeriodCloseResponseBody> startPeriodReopen(String periodId, StartPeriodReopenRequestBody body) {
-        PeriodCloseResponseBody response =
-            converter.toResponseBody(startPeriodReopenProcessor.process(converter.toRequest(periodId, body)));
+    public ResponseEntity<PeriodCloseResponseBody> startPeriodReopen(String actorAccountId, String sessionId,
+        String periodId, StartPeriodReopenRequestBody body) {
+        PeriodCloseResponseBody response = converter.toResponseBody(
+            startPeriodReopenProcessor.process(converter.toRequest(periodId, body, actorAccountId)));
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     /** 批准关账或重开。 */
     @Override
-    public PeriodCloseResponseBody approvePeriodClose(String periodId, String closeNo, ReviewPeriodCloseRequestBody body) {
-        return converter.toResponseBody(approvePeriodCloseProcessor.process(converter.toRequest(periodId, closeNo, body)));
+    public PeriodCloseResponseBody approvePeriodClose(String actorAccountId, String sessionId, String periodId,
+        String closeNo, ReviewPeriodCloseRequestBody body) {
+        return converter.toResponseBody(
+            approvePeriodCloseProcessor.process(converter.toRequest(periodId, closeNo, body, actorAccountId)));
     }
 
     /** 驳回关账或重开。 */
     @Override
-    public PeriodCloseResponseBody rejectPeriodClose(String periodId, String closeNo, ReviewPeriodCloseRequestBody body) {
-        return converter.toResponseBody(rejectPeriodCloseProcessor.process(converter.toRequest(periodId, closeNo, body)));
+    public PeriodCloseResponseBody rejectPeriodClose(String actorAccountId, String sessionId, String periodId,
+        String closeNo, ReviewPeriodCloseRequestBody body) {
+        return converter.toResponseBody(
+            rejectPeriodCloseProcessor.process(converter.toRequest(periodId, closeNo, body, actorAccountId)));
     }
 
     /** 分页查询期间的关账流程。 */

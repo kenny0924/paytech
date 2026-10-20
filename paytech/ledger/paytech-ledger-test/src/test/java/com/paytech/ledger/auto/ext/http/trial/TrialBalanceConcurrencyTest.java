@@ -25,7 +25,7 @@ import com.paytech.ledger.test.checker.LedgerResponseChecker;
 /**
  * 试算并发：同一账簿期间的编号连续与资源锁冲突，以及试算等待在途过账持有的序号行锁后才取水位。
  *
- * @see com.paytech.ledger.api.TrialBalanceApi#runTrialBalance(String, String)
+ * @see com.paytech.ledger.api.TrialBalanceApi#runTrialBalance(String, String, String, String)
  */
 class TrialBalanceConcurrencyTest extends AbstractTrialBalanceApiTest {
 

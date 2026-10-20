@@ -12,6 +12,9 @@ import org.springframework.test.context.DynamicPropertySource;
 @SpringBootTest(classes = {OperationsConsoleBffApplication.class, OperationsBffTestConfiguration.class},
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public abstract class OperationsBffHttpTestBase {
+    /** 关账类长耗时调用的读取超时；取允许的较小值，使挂起测试只需等待约 5 秒。 */
+    protected static final String LONG_RUNNING_READ_TIMEOUT = "5s";
+
     @DynamicPropertySource
     static void platformAddress(DynamicPropertyRegistry registry) {
         registry.add("operations.platform-test-base-url", OperationsBffTestConfiguration.PLATFORM::baseUrl);
@@ -20,6 +23,8 @@ public abstract class OperationsBffHttpTestBase {
         registry.add("operations.cct-test-base-url", OperationsBffTestConfiguration.CLIENT_REVIEW::baseUrl);
         registry.add("operations.ledger-base-url", OperationsBffTestConfiguration.LEDGER::baseUrl);
         registry.add("operations.account-base-url", OperationsBffTestConfiguration.ACCOUNT::baseUrl);
+        registry.add("operations.billing-base-url", OperationsBffTestConfiguration.BILLING::baseUrl);
+        registry.add("operations.ledger-long-running-read-timeout", () -> LONG_RUNNING_READ_TIMEOUT);
         registry.add("operations.commercial-test-base-url", OperationsBffTestConfiguration.COMMERCIAL::baseUrl);
         registry.add("operations.console-origin", () -> "https://operations-console.local.test");
     }

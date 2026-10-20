@@ -46,6 +46,15 @@ account 明细账，总账每账簿每 Owner 科目一个以账簿主体为 Owne
 - 关账步骤 3 `CHECK_ACCOUNT_POSTING_PROGRESS` 在事务外调用 billing `GET /billing/v1/facts/progress` 与 account
   `GET /account-postings/v1/progress`：billing 无未发布事实、account 已应用事实数与最大 factId 等于 billing 已发布的，且 account 列出的每条过账流
   ledger 都已消费到最大序号，否则失败关闭。
+- Operations 控制台接入（2026-10-20，[技术方案](../../requirements/20261020/finance-人工调整与计费事实/technique.md) 第 2—5 节）：人工调整提交 / 审批 / 驳回、
+  关账与重开的发起 / 审批 / 驳回、规则版本新建 / 提交 / 审批 / 驳回 / 作废、试算发起的操作人只取 `X-Gateway-Actor-Subject`
+  （`X-Gateway-Session-Id` 只记日志），请求体不再接受 `makerId` / `checkerId`；复核人不能是制单人、规则版本提交人必须是制单人。新增
+  `GET /manual-adjustments/v1`（按账簿、期间、状态、制单人分页）、`GET /accounting-rule-bundles/v1`（全部规则包与当前版本）与
+  `POST /accounting-rule-bundles/v1/{bundleCode}/versions/{bundleVer}/void`（制单人作废草稿，`DRAFT → VOIDED`）。经 Operations BFF 的
+  `/finance/**` 转发，Gateway 路由与权限见 Platform 初始化 DML 块 100—102（查询 `FINANCE_ACCOUNTING_READ`、制单与发起
+  `FINANCE_ACCOUNTING_MANAGE`、审批与驳回 `FINANCE_ACCOUNTING_APPROVE`）。
+- 到时生效：XXL-Job 执行器（`ledger-service`，`XXL_JOB_*` 环境变量）承载 `accountingRuleVersionActivation`（每分钟），把
+  `effective_from` 已到的 `APPROVED` 版本按审批时同一生效逻辑切换为 `ACTIVE`（规则包锁、旧版本 `RETIRED`、当前指针切换，幂等）。
 
 ## 构建与运行
 
@@ -57,7 +66,7 @@ java -jar ledger/paytech-ledger-app/target/paytech-ledger-app-1.0.0-SNAPSHOT-exe
 ```
 
 新库在 `mor_ledger` 人工依次执行 `docs/database/sql/ledger-schema.sql` 与 `ledger-initial-data.sql`；已建库环境按顺序执行
-`docs/database/sql/changes/` 下尚未执行的变更脚本（最新为 `2026-10-19-ledger-control-accounts.sql`）。连接参数
+`docs/database/sql/changes/` 下尚未执行的变更脚本（最新为 `2026-10-20-finance-console-statuses.sql`，只改列注释）。连接参数
 `LEDGER_DB_URL` / `LEDGER_DB_USERNAME` / `LEDGER_DB_PASSWORD`，Redis `LEDGER_REDIS_HOST` / `LEDGER_REDIS_PORT` / `LEDGER_REDIS_PASSWORD`，
 RabbitMQ `LEDGER_RABBITMQ_*`，出站 `LEDGER_ACCOUNT_SERVICE_URL` / `LEDGER_BILLING_SERVICE_URL`（Finance 后继服务不接服务发现），
 Snowflake `LEDGER_SNOWFLAKE_REGION_ID` / `LEDGER_SNOWFLAKE_WORKER_ID`（缺失时启动失败）。Actuator 只在管理端口暴露
@@ -70,6 +79,6 @@ health / info / prometheus，不披露组件详情。
 
 ## 当前不包含
 
-无 Nacos 与服务发现、无补偿 Handler 与 XXL-Job（Enforcer 禁止）；不发布任何领域事件。规则包只覆盖 PAYMENT、MANUAL_ADJUSTMENT 与
-COST_ADJUSTMENT 事实，其他事实类型的批次被拒绝进入 DLQ。追平命令本期不接控制台。全部接口只能作为内部开发接口，不能直接发布给 Client、
-Partner 或 Operations。
+无 Nacos 与服务发现、无补偿 Handler（XXL-Job 只承载规则版本到时生效任务）；不发布任何领域事件。规则包只覆盖 PAYMENT、MANUAL_ADJUSTMENT 与
+COST_ADJUSTMENT 事实，其他事实类型的批次被拒绝进入 DLQ；规则包本身仍只由初始化数据创建。追平命令与试算异常处理本期不接控制台。
+接口不直接发布给 Client 或 Partner；Operations 只经 BFF 与 Gateway 登记的路由访问上述控制台能力。

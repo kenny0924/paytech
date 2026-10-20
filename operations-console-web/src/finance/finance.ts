@@ -560,13 +560,15 @@ export function ownerAccountNotFoundMessage(values: Pick<BalanceFormValues, 'own
 
 /**
  * 把 400 业务错误映射为表单落点；字段不在当前表单内时退回表单顶部。
- * 文案后附错误码，便于与 Finance 日志对照。未映射或非 400 返回 null，由调用方走通用通知。
+ * 文案优先取 Problem detail（已登记 Code 的 detail 即 Owner 默认消息），缺失时用本表文案；后附错误码，便于与 Finance 日志对照。
+ * 未映射或非 400 返回 null，由调用方走通用通知。
  */
 export function financeErrorTarget(error: unknown, formFields: readonly string[] = [],
   table: Readonly<Record<string, FinanceErrorTarget>> = financeErrorTargets): FinanceErrorTarget | null {
   if (!(error instanceof ApiError) || error.status !== 400 || !Object.hasOwn(table, error.code)) return null;
   const target = table[error.code];
-  const message = `${target.message}（${error.code}）`;
+  // 优先显示 Problem detail：同一 Code（如 SELF_REVIEW_FORBIDDEN）在 ledger 与 billing 的默认消息不同，各自显示 Owner 原文
+  const message = `${error.detail || target.message}（${error.code}）`;
   return { field: target.field && formFields.includes(target.field) ? target.field : null, message };
 }
 

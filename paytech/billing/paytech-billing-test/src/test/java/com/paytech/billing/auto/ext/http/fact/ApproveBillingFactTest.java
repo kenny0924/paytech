@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 
 import com.paytech.billing.api.BillingFactCommandApi;
+import com.paytech.billing.api.enums.BillingFactErrorCode;
 import com.paytech.billing.api.enums.BillingFactStatus;
 import com.paytech.billing.api.enums.BillingFactType;
 import com.paytech.billing.api.enums.FactComponentType;
@@ -44,7 +45,7 @@ import com.paytech.billing.test.checker.BillingResponseChecker;
  * businessTime 覆盖为批准时间、published_at 落库、补偿任务在确认后删除。</li>
  * <li>覆盖 Checker ≠ Maker、同一复核人重复批准幂等、替代链版本与被替代状态、被替代事实已变化，以及两次并发批准只发布一条事件。</li>
  *
- * @see BillingFactCommandApi#approveBillingFact(String, com.paytech.billing.api.request.ApproveBillingFactRequestBody)
+ * @see BillingFactCommandApi#approveBillingFact(String, String, String)
  */
 class ApproveBillingFactTest extends AbstractBillingFactApiTest {
 
@@ -100,12 +101,13 @@ class ApproveBillingFactTest extends AbstractBillingFactApiTest {
             .text("publishedAt"), "详情应返回发布确认时间");
     }
 
-    /** 复核人不能是编制人；不存在的事实拒绝；均不登记发布任务。 */
+    /** 复核人不能是编制人；不存在的事实拒绝；缺少操作人 Header 为参数错误；均不登记发布任务。 */
     @Test
     void test_checkerMustDifferFromMaker() {
         long factId = submitDraft(BillingFactRequestBuilder.template());
 
-        approve(factId, MAKER_ID).assertBusinessRejected("复核人不能是编制人");
+        approve(factId, null).assertInvalidRequest();
+        approve(factId, MAKER_ID).assertFailCode(BillingFactErrorCode.SELF_REVIEW_FORBIDDEN);
         approve(9_999_999L, CHECKER_ID).assertBusinessRejected("计费事实不存在");
 
         assertEquals(BillingFactStatus.DRAFT.getCode(), factRow(factId).get("status"));
@@ -120,7 +122,7 @@ class ApproveBillingFactTest extends AbstractBillingFactApiTest {
         String eventId = events.awaitEnvelope(factId).envelope(factId, 1, instanceId).eventId();
 
         BillingResponseChecker again = approve(factId, CHECKER_ID).assertSuccess(200);
-        approve(factId, OTHER_CHECKER_ID).assertBusinessRejected("已由其他复核人批准");
+        approve(factId, OTHER_CHECKER_ID).assertFailCode(BillingFactErrorCode.FACT_NOT_DRAFT);
 
         assertEquals(first.text("approvedTime"), again.text("approvedTime"));
         assertEquals(first.text("businessTime"), again.text("businessTime"));
@@ -158,9 +160,9 @@ class ApproveBillingFactTest extends AbstractBillingFactApiTest {
         long draft = submitDraft(BillingFactRequestBuilder.template());
 
         approve(first, CHECKER_ID).assertSuccess(200);
-        approve(second, CHECKER_ID).assertBusinessRejected("被替代事实已不是已批准状态");
+        approve(second, CHECKER_ID).assertFailCode(BillingFactErrorCode.FACT_SUPERSEDE_INVALID);
         submit(BillingFactRequestBuilder.template().supersedes(draft))
-            .assertBusinessRejected("被替代事实不存在、不是已批准的同类型同主体同币种事实");
+            .assertFailCode(BillingFactErrorCode.FACT_SUPERSEDE_INVALID);
 
         events.awaitEnvelope(first);
         assertAll(() -> assertEquals(BillingFactStatus.DRAFT.getCode(), factRow(second).get("status")),

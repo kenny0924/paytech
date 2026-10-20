@@ -20,7 +20,10 @@ public enum RuleVersionStatus implements CodeEnum {
     REJECTED,
 
     /** 被新版本替代 */
-    RETIRED;
+    RETIRED,
+
+    /** 草稿由编制人作废，不再可提交，也不计入“已有草稿或待复核版本”检查 */
+    VOIDED;
 
     /** 数据库与接口使用的稳定编码，与常量名一致。 */
     @Override

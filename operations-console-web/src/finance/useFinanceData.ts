@@ -3,10 +3,10 @@ import { requestAllPages } from '../api/paging';
 import { ApiError, session } from '../api/session';
 import { useErrorNotification } from '../feedback/useErrorNotification';
 import {
-  decodeAccountingPeriod, decodeChartAccount, decodeChartOfAccounts, decodeCurrency, decodeFinanceEntity, decodeFiscalCalendar, decodeLedgerBook,
+  decodeAccountingPeriod, decodeChartAccount, decodeChartOfAccounts, decodeCurrency, decodeFinanceEntity, decodeFiscalCalendar, decodeLedgerAccount, decodeLedgerBook,
   financePaths, listOf, pageOf,
 } from './finance';
-import type { AccountingPeriod, ChartAccount, ChartAccountStatus, ChartOfAccounts, Currency, FinanceEntity, LedgerBook } from './finance';
+import type { AccountingPeriod, ChartAccount, ChartAccountStatus, ChartOfAccounts, Currency, FinanceEntity, LedgerAccount, LedgerBook } from './finance';
 
 export interface ListState<T> { items: T[]; loading: boolean; error: string; reload: () => void }
 
@@ -45,6 +45,7 @@ const chartAccountList = listOf(decodeChartAccount);
 const entityPage = pageOf(decodeFinanceEntity);
 const bookPage = pageOf(decodeLedgerBook);
 const calendarPage = pageOf(decodeFiscalCalendar);
+const accountPage = pageOf(decodeLedgerAccount);
 
 /** 全部币种（含非启用项，用于金额精度）；下拉只取 ACTIVE。 */
 export function useCurrencies(onAuthorizationChanged?: () => void) {
@@ -108,4 +109,18 @@ export function useFinanceEntities(enabled = true, onAuthorizationChanged?: () =
     (path, signal) => requestAllPages(path, signal, session, {}, entityPage), onAuthorizationChanged, '财务主体加载失败');
   const byId = useMemo(() => new Map(state.items.map(item => [item.financeEntityId, item])), [state.items]);
   return { ...state, byId };
+}
+
+/** 账簿全部账户（每页 200 分批读完），供人工调整分录行选择与详情行展示；账簿未知时不请求。 */
+export function useBookAccounts(ledgerBookId: string | null, onAuthorizationChanged?: () => void) {
+  const state = useFinanceList<LedgerAccount>(ledgerBookId ? financePaths.accounts(ledgerBookId) : null,
+    (path, signal) => requestAllPages(path, signal, session, {}, accountPage), onAuthorizationChanged, '账户加载失败');
+  const byId = useMemo(() => new Map(state.items.map(item => [item.accountId, item])), [state.items]);
+  return { ...state, byId };
+}
+
+/** 全部财务日历（每页 200 分批读完），供期间关账的日历选择。 */
+export function useFiscalCalendars(onAuthorizationChanged?: () => void) {
+  return useFinanceList(financePaths.fiscalCalendars, (path, signal) => requestAllPages(path, signal, session, {}, calendarPage),
+    onAuthorizationChanged, '财务日历加载失败');
 }

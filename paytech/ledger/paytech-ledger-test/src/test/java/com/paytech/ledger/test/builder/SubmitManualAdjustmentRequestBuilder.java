@@ -8,7 +8,7 @@ import com.paytech.ledger.core.enums.EntrySide;
 
 /** 人工调整提交请求构建器：模板提供合法头字段，明细由用例显式添加；不修复负例。 */
 public final class SubmitManualAdjustmentRequestBuilder {
-    /** 模板编制人。 */
+    /** 模板编制人：由测试基类作为 X-Gateway-Actor-Subject 发送，不在请求体中。 */
     public static final String MAKER_ID = "70001";
 
     private final SubmitManualAdjustmentRequestBody body = new SubmitManualAdjustmentRequestBody();
@@ -17,14 +17,13 @@ public final class SubmitManualAdjustmentRequestBuilder {
         body.setLines(new ArrayList<>());
     }
 
-    /** USD、CORRECTION 原因、模板编制人、无附件、无明细。 */
+    /** USD、CORRECTION 原因、无附件、无明细。 */
     public static SubmitManualAdjustmentRequestBuilder template(long ledgerBookId, long accountingPeriodId) {
         SubmitManualAdjustmentRequestBuilder builder = new SubmitManualAdjustmentRequestBuilder();
         builder.body.setLedgerBookId(String.valueOf(ledgerBookId));
         builder.body.setAccountingPeriodId(String.valueOf(accountingPeriodId));
         builder.body.setCurrency("USD");
         builder.body.setReasonCode("CORRECTION");
-        builder.body.setMakerId(MAKER_ID);
         return builder;
     }
 
@@ -54,12 +53,6 @@ public final class SubmitManualAdjustmentRequestBuilder {
     public SubmitManualAdjustmentRequestBuilder file(String fileId, String fileContentHash) {
         body.setFileId(fileId);
         body.setFileContentHash(fileContentHash);
-        return this;
-    }
-
-    /** 覆盖编制人。 */
-    public SubmitManualAdjustmentRequestBuilder maker(String makerId) {
-        body.setMakerId(makerId);
         return this;
     }
 

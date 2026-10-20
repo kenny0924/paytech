@@ -4,7 +4,6 @@ import org.springframework.stereotype.Component;
 
 import com.paytech.foundation.common.enums.CodeEnum;
 import com.paytech.ledger.api.request.ReviewPeriodCloseRequestBody;
-import com.paytech.ledger.api.request.StartPeriodCloseRequestBody;
 import com.paytech.ledger.api.request.StartPeriodReopenRequestBody;
 import com.paytech.ledger.api.response.PeriodCloseDetailResponseBody;
 import com.paytech.ledger.api.response.PeriodCloseResponseBody;
@@ -14,34 +13,35 @@ import com.paytech.ledger.service.processor.request.ReviewPeriodCloseRequest;
 import com.paytech.ledger.service.processor.request.StartPeriodCloseRequest;
 import com.paytech.ledger.service.processor.request.StartPeriodReopenRequest;
 
-/** 期间关账与重开接口的 Wire 模型与内部请求/View 转换；ID 与序号输出为字符串。 */
+/** 期间关账与重开接口的 Wire 模型与内部请求/View 转换；ID 与序号输出为字符串，编制人 / 复核人取自操作人 Header（已由接口校验为正十进制）。 */
 @Component
 public class PeriodCloseConverter {
 
-    /** 转换发起请求。 */
-    public StartPeriodCloseRequest toRequest(String periodId, StartPeriodCloseRequestBody body) {
+    /** 转换发起请求，编制人取自操作人 Header。 */
+    public StartPeriodCloseRequest toStartRequest(String periodId, String operatorId) {
         StartPeriodCloseRequest request = new StartPeriodCloseRequest();
         request.setPeriodId(Long.valueOf(periodId));
-        request.setMakerId(Long.valueOf(body.getMakerId()));
+        request.setMakerId(Long.valueOf(operatorId));
         return request;
     }
 
-    /** 转换发起重开请求；原因代码合法性由 Processor 校验。 */
-    public StartPeriodReopenRequest toRequest(String periodId, StartPeriodReopenRequestBody body) {
+    /** 转换发起重开请求，编制人取自操作人 Header；原因代码合法性由 Processor 校验。 */
+    public StartPeriodReopenRequest toRequest(String periodId, StartPeriodReopenRequestBody body, String operatorId) {
         StartPeriodReopenRequest request = new StartPeriodReopenRequest();
         request.setPeriodId(Long.valueOf(periodId));
-        request.setMakerId(Long.valueOf(body.getMakerId()));
+        request.setMakerId(Long.valueOf(operatorId));
         request.setReasonCode(body.getReasonCode());
         request.setRequestRef(body.getRequestRef());
         return request;
     }
 
-    /** 转换复核请求。 */
-    public ReviewPeriodCloseRequest toRequest(String periodId, String closeNo, ReviewPeriodCloseRequestBody body) {
+    /** 转换复核请求，复核人取自操作人 Header。 */
+    public ReviewPeriodCloseRequest toRequest(String periodId, String closeNo, ReviewPeriodCloseRequestBody body,
+        String operatorId) {
         ReviewPeriodCloseRequest request = new ReviewPeriodCloseRequest();
         request.setPeriodId(Long.valueOf(periodId));
         request.setCloseNo(Integer.valueOf(closeNo));
-        request.setCheckerId(Long.valueOf(body.getCheckerId()));
+        request.setCheckerId(Long.valueOf(operatorId));
         request.setApprovedCloseHash(body.getApprovedCloseHash());
         return request;
     }

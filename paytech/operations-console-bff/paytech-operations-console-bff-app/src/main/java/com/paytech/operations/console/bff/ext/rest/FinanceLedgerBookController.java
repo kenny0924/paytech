@@ -41,8 +41,8 @@ import lombok.AllArgsConstructor;
 /**
  * 账簿、账户、账户流水、分录详情、科目余额与试算记录的浏览器入口，全部简单转发 ledger
  * <li>每个路由由 Gateway 绑定 FINANCE_ACCOUNTING_READ（GET）或 FINANCE_ACCOUNTING_MANAGE（POST），并经 PLT-I02 实时授权。</li>
- * <li>浏览器路径为 /finance + ledger 路径；Query 按路由白名单严格匹配，GET 不接受 Body。</li>
- * <li>试算只开放列表与详情查询；执行试算不经浏览器接入。</li>
+ * <li>浏览器路径为 /finance + ledger 路径；Query 按路由白名单严格匹配，GET 与发起试算不接受 Body。</li>
+ * <li>发起试算（块 101，FINANCE_ACCOUNTING_MANAGE）的操作人只供 ledger 记日志。</li>
  *
  * @author Claude
  */
@@ -149,6 +149,16 @@ public class FinanceLedgerBookController {
         requireQueryKeys(servletRequest, Set.of("page", "size"));
         PagingRequestBody paging = PagingRequestBody.of(page, size);
         return client.listTrialBalances(ledgerBookId, periodId, paging.page(), paging.size());
+    }
+
+    /** 发起一次试算；无请求体，携带 Body 时被请求边界拒绝。 */
+    @PostMapping("/{ledgerBookId}/periods/{periodId}/trial-balances")
+    @ResponseStatus(HttpStatus.CREATED)
+    public TrialBalanceRunResponseBody runTrialBalance(HttpServletRequest servletRequest, OperatorContext context,
+        @PathVariable("ledgerBookId") @Pattern(regexp = ID) String ledgerBookId,
+        @PathVariable("periodId") @Pattern(regexp = ID) String periodId) {
+        requireQueryKeys(servletRequest, Set.of());
+        return client.runTrialBalance(context, ledgerBookId, periodId);
     }
 
     /** 单次试算详情：摘要、末级试算行、级次汇总行与异常。 */

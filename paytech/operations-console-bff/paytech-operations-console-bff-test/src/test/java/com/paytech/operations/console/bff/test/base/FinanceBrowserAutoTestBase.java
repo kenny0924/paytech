@@ -29,6 +29,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 
 import com.paytech.foundation.common.enums.CodeMessageEnum;
 import com.paytech.operations.console.bff.test.simulator.AccountOwnerSimulator;
+import com.paytech.operations.console.bff.test.simulator.BillingOwnerSimulator;
 import com.paytech.operations.console.bff.test.simulator.FinanceOwnerSimulator;
 import com.paytech.operations.console.bff.test.simulator.LedgerOwnerSimulator;
 import com.paytech.operations.console.bff.test.simulator.PlatformOperationsSimulator;
@@ -39,8 +40,9 @@ import tools.jackson.databind.json.JsonMapper;
 
 /**
  * 财务转发浏览器测试的公共入口：真实 BFF 入站 → PLT-I02（Platform Simulator）→ 固定地址 Owner Simulator
- * <li>每例重置 Platform、ledger、account 三个 Simulator；AfterEach 断言三者都没有意外调用，并释放挂起响应。</li>
- * <li>边界清单每行包含 id、method、BFF path、query、request、status、response、routeCode；Owner 路径为 BFF 路径去掉 /finance。</li>
+ * <li>每例重置 Platform、ledger、account、billing 四个 Simulator；AfterEach 断言四者都没有意外调用，并释放挂起响应。</li>
+ * <li>边界清单每行包含 id、method、BFF path、query、request、status、response、routeCode；Owner 路径默认为 BFF 路径去掉 /finance，
+ * 路径不同时（billing）由 ownerPath 给出。</li>
  *
  * @author Claude
  */
@@ -58,6 +60,9 @@ public abstract class FinanceBrowserAutoTestBase extends OperationsBffHttpTestBa
     @Autowired
     protected AccountOwnerSimulator account;
 
+    @Autowired
+    protected BillingOwnerSimulator billing;
+
     @LocalServerPort
     private int port;
 
@@ -67,6 +72,7 @@ public abstract class FinanceBrowserAutoTestBase extends OperationsBffHttpTestBa
         platform.reset();
         ledger.reset();
         account.reset();
+        billing.reset();
     }
 
     /** Owner 与 Platform 不得收到未配置的请求；无论断言结果都释放挂起响应。 */
@@ -77,6 +83,7 @@ public abstract class FinanceBrowserAutoTestBase extends OperationsBffHttpTestBa
         } finally {
             ledger.reset();
             account.reset();
+            billing.reset();
         }
     }
 
@@ -86,12 +93,14 @@ public abstract class FinanceBrowserAutoTestBase extends OperationsBffHttpTestBa
         platform.reset();
         ledger.reset();
         account.reset();
+        billing.reset();
     }
 
     private void verifyNoUnexpectedCalls() {
         assertAll(() -> assertTrue(platform.unexpectedRequests().isEmpty(), platform.unexpectedRequests().toString()),
             () -> assertTrue(ledger.unexpectedRequests().isEmpty(), ledger.unexpectedRequests().toString()),
-            () -> assertTrue(account.unexpectedRequests().isEmpty(), account.unexpectedRequests().toString()));
+            () -> assertTrue(account.unexpectedRequests().isEmpty(), account.unexpectedRequests().toString()),
+            () -> assertTrue(billing.unexpectedRequests().isEmpty(), billing.unexpectedRequests().toString()));
     }
 
     /** 读取边界清单。 */
@@ -110,8 +119,11 @@ public abstract class FinanceBrowserAutoTestBase extends OperationsBffHttpTestBa
         return rows(resource).filter(row -> id.equals(row.path("id").asString())).findFirst().orElseThrow();
     }
 
-    /** Owner 路径：BFF 路径去掉 /finance。 */
+    /** Owner 路径：样例给出 ownerPath 时取之，否则为 BFF 路径去掉 /finance。 */
     protected static String ownerPath(JsonNode row) {
+        if (row.hasNonNull("ownerPath")) {
+            return row.path("ownerPath").asString();
+        }
         return row.path("path").asString().substring("/finance".length());
     }
 

@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalManagementPort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.client.EntityExchangeResult;
@@ -104,8 +105,12 @@ public abstract class MockTestBase extends TestBase {
 
     /** 发送内部 POST 请求。 */
     protected BillingResponseChecker post(String path, Object body) {
-        return new BillingResponseChecker(http.post(path, TestRequestHeaders.internal(REQUEST_ID), body),
-            objectMapper, REQUEST_ID);
+        return post(path, TestRequestHeaders.internal(REQUEST_ID), body);
+    }
+
+    /** 以给定 Header 发送内部 POST 请求。 */
+    protected BillingResponseChecker post(String path, HttpHeaders headers, Object body) {
+        return new BillingResponseChecker(http.post(path, headers, body), objectMapper, REQUEST_ID);
     }
 
     /** 发送内部 GET 请求。 */

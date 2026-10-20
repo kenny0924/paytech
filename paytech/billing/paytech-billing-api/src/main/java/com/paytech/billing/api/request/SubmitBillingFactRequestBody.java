@@ -85,14 +85,6 @@ public class SubmitBillingFactRequestBody {
     private String currency;
 
     /**
-     * 编制人平台用户标识
-     * <li>未接统一身份，由内部调用方传入；批准人必须不同。</li>
-     */
-    @NotBlank
-    @Pattern(regexp = "[1-9][0-9]{0,18}", message = "必须是正十进制整数字符串")
-    private String makerId;
-
-    /**
      * 外部业务对象引用
      * <li>可为空，最多 10 条，每种 refType 至多一条。MANUAL_ADJUSTMENT 可选 TICKET；COST_ADJUSTMENT 必须有 CLEARING_ACCOUNT
      * （Finance 渠道清算账户，替代原 channelAccountId，本期由调用方给出，billing 不向 reconciliation 核对）。</li>

@@ -26,9 +26,9 @@ public abstract class AbstractTrialBalanceApiTest extends AbstractManualAdjustme
             .transfer(debitAccountId, creditAccountId, amount));
     }
 
-    /** 对本账簿指定期间执行试算。 */
+    /** 以测试操作人对本账簿指定期间执行试算。 */
     protected LedgerResponseChecker runTrial(long periodId) {
-        return post(trialPath(ledger.getLedgerBookId(), periodId), null);
+        return postAs(trialPath(ledger.getLedgerBookId(), periodId), OPERATOR_ACCOUNT_ID, null);
     }
 
     /** 试算资源路径。 */

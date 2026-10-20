@@ -1,10 +1,14 @@
 package com.paytech.billing.domainservice.service;
 
 import com.paytech.billing.api.enums.FactRefType;
+import com.paytech.billing.core.dal.dataobject.BillingFact;
 import com.paytech.billing.domain.BillingFactBookScope;
+import com.paytech.billing.domain.BillingFactSearchCriteria;
 import com.paytech.billing.domain.view.BillingFactPageView;
 import com.paytech.billing.domain.view.BillingFactProgressView;
 import com.paytech.billing.domain.view.BillingFactView;
+import com.paytech.foundation.web.paging.PagingRequestBody;
+import com.paytech.foundation.web.paging.PagingResponseBody;
 
 /**
  * 计费事实读取：按 ID、按账簿主体、按外部引用与发布进度
@@ -24,4 +28,13 @@ public interface BillingFactQueryService {
 
     /** 账簿主体下已批准事实的发布进度。 */
     BillingFactProgressView getPublicationProgress(BillingFactBookScope scope);
+
+    /**
+     * 管理列表：按 OE、币种与可选条件分页检索任意状态事实头，按 ID 降序
+     *
+     * @param criteria 筛选条件
+     * @param paging 已校验的分页参数
+     * @return 事实头分页，总额已按币种精度补齐；同一筛选条件下统计总数
+     */
+    PagingResponseBody<BillingFact> searchFacts(BillingFactSearchCriteria criteria, PagingRequestBody paging);
 }

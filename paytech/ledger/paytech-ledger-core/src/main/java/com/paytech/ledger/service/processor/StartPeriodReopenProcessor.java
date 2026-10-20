@@ -9,9 +9,11 @@ import java.util.Map;
 import org.springframework.stereotype.Component;
 
 import com.paytech.foundation.common.error.BizCheckFailException;
+import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
+import com.paytech.ledger.api.enums.LedgerErrorCode;
 import com.paytech.ledger.core.constant.AccountingLocks;
 import com.paytech.ledger.core.dal.dataobject.AccountingPeriod;
 import com.paytech.ledger.core.dal.dataobject.CloseApproval;
@@ -91,8 +93,7 @@ public class StartPeriodReopenProcessor extends AbstractLockProcessor<StartPerio
             throw new BizCheckFailException("会计期间不存在: " + periodId);
         }
         if (period.getStatus() != PeriodStatus.CLOSED) {
-            throw new BizCheckFailException("只有 CLOSED 期间可以发起重开: " + periodId + ", 状态 "
-                + period.getStatus().getCode());
+            throw new FailException(LedgerErrorCode.PERIOD_REOPEN_NOT_ALLOWED);
         }
         return period;
     }
@@ -102,8 +103,7 @@ public class StartPeriodReopenProcessor extends AbstractLockProcessor<StartPerio
         AccountingPeriod later = accountingPeriodRepository.findFirstClosedAfter(period.getCalendarId(),
             period.getStartDate());
         if (later != null) {
-            throw new BizCheckFailException("只能重开最近关闭的会计期间: " + period.getId() + ", 更晚期间 " + later.getId()
-                + " 状态 " + later.getStatus().getCode());
+            throw new FailException(LedgerErrorCode.PERIOD_REOPEN_NOT_ALLOWED);
         }
     }
 

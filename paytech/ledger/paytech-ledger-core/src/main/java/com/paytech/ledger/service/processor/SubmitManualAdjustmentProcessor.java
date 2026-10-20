@@ -14,9 +14,11 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 
 import com.paytech.foundation.common.error.BizCheckFailException;
+import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.processor.AbstractProcessor;
+import com.paytech.ledger.api.enums.LedgerErrorCode;
 import com.paytech.ledger.core.constant.AccountingCodes;
 import com.paytech.ledger.core.dal.dataobject.AccountingPeriod;
 import com.paytech.ledger.core.dal.dataobject.AdjustmentApproval;
@@ -35,9 +37,9 @@ import com.paytech.ledger.core.enums.PeriodStatus;
 import com.paytech.ledger.domain.ManualAdjustmentContentHash;
 import com.paytech.ledger.domain.SubmitManualAdjustmentContext;
 import com.paytech.ledger.domainservice.repository.AccountingPeriodRepository;
+import com.paytech.ledger.domainservice.repository.ChartAccountRepository;
 import com.paytech.ledger.domainservice.repository.CurrencySpecRepository;
 import com.paytech.ledger.domainservice.repository.FiscalCalendarRepository;
-import com.paytech.ledger.domainservice.repository.ChartAccountRepository;
 import com.paytech.ledger.domainservice.repository.LedgerAccountRepository;
 import com.paytech.ledger.domainservice.repository.LedgerBookRepository;
 import com.paytech.ledger.domainservice.service.ManualAdjustmentService;
@@ -114,7 +116,7 @@ public class SubmitManualAdjustmentProcessor
     void checkOpenPeriod(LedgerBook book, long accountingPeriodId) {
         AccountingPeriod period = accountingPeriodRepository.findById(accountingPeriodId);
         if (period == null || period.getStatus() != PeriodStatus.OPEN) {
-            throw new BizCheckFailException("会计期间不存在或未开放: " + accountingPeriodId);
+            throw new FailException(LedgerErrorCode.ADJUSTMENT_PERIOD_NOT_OPEN);
         }
         FiscalCalendar calendar = fiscalCalendarRepository.findById(period.getCalendarId());
         if (calendar.getEntityType() != book.getEntityType() || !calendar.getEntityId().equals(book.getEntityId())) {
@@ -130,10 +132,10 @@ public class SubmitManualAdjustmentProcessor
         for (Long id : ids) {
             LedgerAccount account = accounts.get(id);
             if (account == null || !account.getLedgerBookId().equals(book.getId())) {
-                throw new BizCheckFailException("账户不存在或不属于账簿: 账户 " + id + ", 账簿 " + book.getId());
+                throw new FailException(LedgerErrorCode.ADJUSTMENT_ACCOUNT_INVALID);
             }
             if (account.getAccountStatus() != AccountStatus.ACTIVE) {
-                throw new BizCheckFailException("账户未开放过账: " + id + ", 状态 " + account.getAccountStatus().getCode());
+                throw new FailException(LedgerErrorCode.ADJUSTMENT_ACCOUNT_INVALID);
             }
         }
         List<Long> chartIds = accounts.values().stream().map(LedgerAccount::getChartAccountId).distinct().sorted().toList();
@@ -155,7 +157,7 @@ public class SubmitManualAdjustmentProcessor
             credit = line.getEntrySide() == EntrySide.CREDIT ? credit.add(amount) : credit;
         }
         if (debit.compareTo(credit) != 0 || debit.signum() <= 0) {
-            throw new BizCheckFailException("调整借贷不平衡: 借方 " + debit.toPlainString() + ", 贷方 " + credit.toPlainString());
+            throw new FailException(LedgerErrorCode.ADJUSTMENT_UNBALANCED);
         }
         return debit;
     }

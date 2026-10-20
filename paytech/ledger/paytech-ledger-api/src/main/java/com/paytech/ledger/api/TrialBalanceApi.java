@@ -2,6 +2,7 @@ package com.paytech.ledger.api;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
@@ -17,7 +18,8 @@ import jakarta.validation.constraints.Pattern;
 /**
  * 试算平衡（内部能力 Trial Balance & Period Close）
  * <li>按账簿、会计期间与分录序号水位汇总可过账科目的期初、本期借贷与期末，校验期末借贷合计并检测总账异常。</li>
- * <li>Finance 内部开发接口：未接 Gateway 与授权，不得对外发布。</li>
+ * <li>Finance 内部接口：发起试算的操作人取自 Operations BFF 从会话填入的 X-Gateway-Actor-Subject / X-Gateway-Session-Id Header，
+ * 只记操作日志、不落库；仅经 Operations BFF 转发，不得直接对外发布。</li>
  */
 @HttpExchange(url = "/ledger-books/v1", accept = "application/json")
 public interface TrialBalanceApi {
@@ -25,12 +27,16 @@ public interface TrialBalanceApi {
     /**
      * 执行一次试算
      *
+     * @param actorAccountId 操作人 Account ID（X-Gateway-Actor-Subject），正十进制整数字符串；缺失或格式错误时 400
+     * @param sessionId 操作人会话 ID（X-Gateway-Session-Id）；缺失时 400
      * @param ledgerBookId 账簿主键
      * @param periodId 会计期间主键，必须属于账簿主体且不是 FUTURE
      * @return 201 与试算摘要；账簿/期间不存在、期间不属于账簿主体或为 FUTURE 时 400；同一账簿期间并发试算时 409
      */
     @PostExchange("/{ledgerBookId}/periods/{periodId}/trial-balances")
     ResponseEntity<TrialBalanceRunResponseBody> runTrialBalance(
+        @RequestHeader("X-Gateway-Actor-Subject") @Pattern(regexp = "[1-9][0-9]{0,18}") String actorAccountId,
+        @RequestHeader("X-Gateway-Session-Id") String sessionId,
         @PathVariable("ledgerBookId") @Pattern(regexp = "[1-9][0-9]{0,18}") String ledgerBookId,
         @PathVariable("periodId") @Pattern(regexp = "[1-9][0-9]{0,18}") String periodId);
 

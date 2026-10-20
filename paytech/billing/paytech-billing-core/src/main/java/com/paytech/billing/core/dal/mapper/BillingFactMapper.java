@@ -8,6 +8,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import com.paytech.billing.core.dal.dataobject.BillingFact;
+import com.paytech.billing.domain.BillingFactSearchCriteria;
 import com.paytech.billing.domain.view.BillingFactProgressView;
 
 /** t_billing_fact：计费事实头的登记、批准、替代、发布标记与读取。 */
@@ -37,6 +38,9 @@ public interface BillingFactMapper {
     int approve(@Param("id") long id, @Param("factVersion") long factVersion, @Param("checkerId") long checkerId,
         @Param("now") Instant now);
 
+    /** DRAFT（版本 0）→ VOIDED；返回影响行数。 */
+    int voidDraft(@Param("id") long id, @Param("now") Instant now);
+
     /** APPROVED（指定版本）→ SUPERSEDED；返回影响行数。 */
     int supersede(@Param("id") long id, @Param("factVersion") long factVersion, @Param("now") Instant now);
 
@@ -51,4 +55,11 @@ public interface BillingFactMapper {
     /** 账簿主体下已批准事实的发布进度（未发布与已发布两段计数）。 */
     BillingFactProgressView selectPublicationProgress(@Param("entityNo") String entityNo,
         @Param("financeEntityId") Long financeEntityId, @Param("currency") String currency);
+
+    /** 管理列表一页：按筛选条件、ID 降序取 limit 条。 */
+    List<BillingFact> selectSearchPage(@Param("criteria") BillingFactSearchCriteria criteria, @Param("limit") int limit,
+        @Param("offset") int offset);
+
+    /** 管理列表在同一筛选条件下的总数。 */
+    long countSearch(@Param("criteria") BillingFactSearchCriteria criteria);
 }

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 
 import com.paytech.ledger.api.ManualAdjustmentApi;
+import com.paytech.ledger.api.enums.LedgerErrorCode;
 import com.paytech.ledger.api.request.ReviewManualAdjustmentRequestBody;
 import com.paytech.ledger.core.enums.AdjustmentStatus;
 import com.paytech.ledger.test.base.AbstractManualAdjustmentApiTest;
@@ -13,7 +14,7 @@ import com.paytech.ledger.test.builder.SubmitManualAdjustmentRequestBuilder;
 /**
  * 驳回人工调整：成功不过账、同复核人重放、Maker-Checker 与已处理拒绝。
  *
- * @see ManualAdjustmentApi#rejectManualAdjustment(String, ReviewManualAdjustmentRequestBody)
+ * @see ManualAdjustmentApi#rejectManualAdjustment(String, String, String, ReviewManualAdjustmentRequestBody)
  */
 class RejectManualAdjustmentTest extends AbstractManualAdjustmentApiTest {
 
@@ -41,7 +42,7 @@ class RejectManualAdjustmentTest extends AbstractManualAdjustmentApiTest {
             .assertText("status", AdjustmentStatus.REJECTED.getCode());
 
         assertEquals(2, testMapper.countApprovals(id));
-        reject(id, "70003", submit.text("contentHash")).assertBusinessRejected("人工调整已处理");
+        reject(id, "70003", submit.text("contentHash")).assertRejected(LedgerErrorCode.REVIEW_STATUS_INVALID);
     }
 
     @Test
@@ -49,7 +50,7 @@ class RejectManualAdjustmentTest extends AbstractManualAdjustmentApiTest {
         var submit = submitted(adjustment().transfer(bankCashAccountId, capitalAccountId, "100"));
 
         reject(submit.id("manualAdjustmentId"), SubmitManualAdjustmentRequestBuilder.MAKER_ID,
-            submit.text("contentHash")).assertBusinessRejected("复核人不能与编制人相同");
+            submit.text("contentHash")).assertRejected(LedgerErrorCode.SELF_REVIEW_FORBIDDEN);
     }
 
     @Test
@@ -58,7 +59,7 @@ class RejectManualAdjustmentTest extends AbstractManualAdjustmentApiTest {
         long id = submit.id("manualAdjustmentId");
         approve(id, CHECKER_ID, submit.text("contentHash")).assertSuccess(200);
 
-        reject(id, CHECKER_ID, submit.text("contentHash")).assertBusinessRejected("人工调整已处理");
+        reject(id, CHECKER_ID, submit.text("contentHash")).assertRejected(LedgerErrorCode.REVIEW_STATUS_INVALID);
 
         assertEquals(AdjustmentStatus.POSTED, testMapper.selectAdjustment(id).getStatus());
     }

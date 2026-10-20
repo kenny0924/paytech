@@ -10,13 +10,14 @@ import java.util.Set;
 import org.springframework.stereotype.Component;
 
 import com.paytech.account.api.enums.BalanceBucket;
-import com.paytech.ledger.api.enums.AmountSource;
-import com.paytech.ledger.api.enums.AutoInstructionType;
 import com.paytech.foundation.common.enums.CodeEnum;
-import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.ErrorException;
+import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
+import com.paytech.ledger.api.enums.AmountSource;
+import com.paytech.ledger.api.enums.AutoInstructionType;
+import com.paytech.ledger.api.enums.LedgerErrorCode;
 import com.paytech.ledger.api.enums.LedgerOwnerType;
 import com.paytech.ledger.api.enums.RuleOwnerRole;
 import com.paytech.ledger.core.constant.AccountingCodes;
@@ -61,22 +62,19 @@ public class CreateRuleVersionProcessor extends AbstractLockProcessor<CreateRule
     @Override
     protected void validate(CreateRuleVersionRequest request) {
         if (request.getLines().isEmpty()) {
-            throw new BizCheckFailException("规则行集不能为空: 规则集 " + request.getBundleCode());
+            throw new FailException(LedgerErrorCode.RULE_LINE_INVALID);
         }
         Set<String> lineNos = new HashSet<>();
         Set<String> lineCodes = new HashSet<>();
         for (CreateRuleVersionRequest.Line line : request.getLines()) {
             if (line.getLineNo() <= 0) {
-                throw new BizCheckFailException("规则行号必须为正整数: 指令类型 " + line.getInstructionType() + ", 行号 "
-                    + line.getLineNo());
+                throw new FailException(LedgerErrorCode.RULE_LINE_INVALID);
             }
             if (!lineNos.add(line.getInstructionType() + "|" + line.getLineNo())) {
-                throw new BizCheckFailException("同一指令类型内规则行号重复: 指令类型 " + line.getInstructionType() + ", 行号 "
-                    + line.getLineNo());
+                throw new FailException(LedgerErrorCode.RULE_LINE_INVALID);
             }
             if (!lineCodes.add(line.getInstructionType() + "|" + line.getLineCode())) {
-                throw new BizCheckFailException("同一指令类型内规则行代码重复: 指令类型 " + line.getInstructionType() + ", 行代码 "
-                    + line.getLineCode());
+                throw new FailException(LedgerErrorCode.RULE_LINE_INVALID);
             }
         }
     }
@@ -99,7 +97,7 @@ public class CreateRuleVersionProcessor extends AbstractLockProcessor<CreateRule
     /** 同一规则集不能同时存在 DRAFT 或 PENDING_APPROVAL 版本。 */
     void checkNoOpenVersion(AccountingRuleBundle bundle) {
         if (accountingRuleBundleVerRepository.existsOpenVersion(bundle.getId())) {
-            throw new BizCheckFailException("规则集已有草稿或待复核版本: " + bundle.getBundleCode());
+            throw new FailException(LedgerErrorCode.RULE_VERSION_IN_PROGRESS);
         }
     }
 
@@ -163,20 +161,17 @@ public class CreateRuleVersionProcessor extends AbstractLockProcessor<CreateRule
     void checkPostingAccount(ChartOfAccounts chart, AccountingRuleLine line) {
         ChartAccount account = chartAccountRepository.findByChartAndCode(chart.getId(), line.getAccountCode());
         if (account == null || !Boolean.TRUE.equals(account.getPostingAllowed())) {
-            throw new BizCheckFailException("科目不存在或不可过账: 科目 " + line.getAccountCode() + ", 指令类型 "
-                + line.getInstructionType().getCode() + ", 行号 " + line.getLineNo());
+            throw new FailException(LedgerErrorCode.RULE_LINE_INVALID);
         }
         if (account.getAccountStatus() != ChartAccountStatus.ACTIVE) {
-            throw new BizCheckFailException("科目已停用，不能被新规则版本引用: 科目 " + line.getAccountCode() + ", 指令类型 "
-                + line.getInstructionType().getCode() + ", 行号 " + line.getLineNo());
+            throw new FailException(LedgerErrorCode.RULE_LINE_INVALID);
         }
     }
 
     /** Owner 控制科目只由 account 入账批次的流水生成，规则行不得引用。 */
     void checkNotControlAccount(AccountingRuleLine line) {
         if (AccountIdentityRule.isControlAccount(line.getAccountCode())) {
-            throw new BizCheckFailException("规则行不得引用 Owner 控制科目，控制科目行由 account 入账批次生成: 科目 "
-                + line.getAccountCode() + ", 指令类型 " + line.getInstructionType().getCode() + ", 行号 " + line.getLineNo());
+            throw new FailException(LedgerErrorCode.RULE_LINE_INVALID);
         }
     }
 
@@ -199,6 +194,6 @@ public class CreateRuleVersionProcessor extends AbstractLockProcessor<CreateRule
                 return constant;
             }
         }
-        throw new BizCheckFailException("规则行" + field + "不在自动记账目录中: " + code);
+        throw new FailException(LedgerErrorCode.RULE_LINE_INVALID);
     }
 }

@@ -188,7 +188,7 @@ CREATE TABLE `t_accounting_rule_bundle_ver` (
   `bundle_ver` BIGINT NOT NULL COMMENT '同一规则集内严格递增的业务版本号。',
   `effective_from` DATETIME(6) NOT NULL COMMENT '该规则版本开始适用的 UTC 微秒时间。',
   `effective_to` DATETIME(6) NULL COMMENT '该规则版本停止适用的 UTC 微秒时间，空值表示尚未失效。',
-  `status` VARCHAR(64) NOT NULL COMMENT '自动记账规则版本的审批和生效状态。允许值：DRAFT、PENDING_APPROVAL、APPROVED、ACTIVE、REJECTED、RETIRED。',
+  `status` VARCHAR(64) NOT NULL COMMENT '自动记账规则版本的审批和生效状态。允许值：DRAFT、PENDING_APPROVAL、APPROVED、ACTIVE、REJECTED、RETIRED、VOIDED。',
   `maker_id` BIGINT NOT NULL COMMENT '创建并提交该规则版本的平台用户主键。',
   `checker_id` BIGINT NULL COMMENT '审批该规则版本的平台用户主键，必须与编制人不同。',
   `approved_time` DATETIME(6) NULL COMMENT '复核人批准该规则版本的 UTC 微秒时间；未批准或已驳回时为空。',

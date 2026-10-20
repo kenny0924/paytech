@@ -1,6 +1,7 @@
 package com.paytech.billing.auto.domain;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -10,6 +11,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import com.paytech.billing.api.enums.BillingFactErrorCode;
 import com.paytech.billing.api.enums.BillingFactType;
 import com.paytech.billing.api.enums.FactComponentType;
 import com.paytech.billing.api.enums.FactLineDirection;
@@ -21,6 +23,7 @@ import com.paytech.billing.api.fact.BillingFactRefPayload;
 import com.paytech.billing.core.enums.FactTargetBucket;
 import com.paytech.billing.domainservice.validator.fact.BillingFactInvariants;
 import com.paytech.foundation.common.error.BizCheckFailException;
+import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.common.error.InvalidParameterException;
 
 /**
@@ -77,20 +80,20 @@ class BillingFactInvariantsTest {
         BillingFactPayload withClearing = manual(null, null, clientPrincipal());
         withClearing.getRefs().add(ref(FactRefType.CLEARING_ACCOUNT, "1"));
         assertThrows(InvalidParameterException.class, () -> BillingFactInvariants.checkManualRegistration(withClearing));
-        assertRejected(manual(null, null, line(FactComponentType.FX_FEE, FactPartyRole.CLIENT, Long.toString(CLIENT_ID),
-            FactPartyRole.OPERATING_ENTITY, ENTITY_NO, FactLineDirection.CHARGE, null)), "人工调整不允许组件类型 FX_FEE");
+        assertLineInvalid(manual(null, null, line(FactComponentType.FX_FEE, FactPartyRole.CLIENT, Long.toString(CLIENT_ID),
+            FactPartyRole.OPERATING_ENTITY, ENTITY_NO, FactLineDirection.CHARGE, null)));
     }
 
     /** 目标余额桶只用于收方为 CLIENT / LOCAL_PARTNER 的人工调整行。 */
     @Test
     void test_targetBucketOnlyForOwnerPayee() {
-        assertRejected(manual(null, null, line(FactComponentType.CLIENT_FEE, FactPartyRole.CLIENT,
+        assertLineInvalid(manual(null, null, line(FactComponentType.CLIENT_FEE, FactPartyRole.CLIENT,
             Long.toString(CLIENT_ID), FactPartyRole.OPERATING_ENTITY, ENTITY_NO, FactLineDirection.CHARGE,
-            FactTargetBucket.AVAILABLE)), "目标余额桶只用于收方为 CLIENT 或 LOCAL_PARTNER 的行");
+            FactTargetBucket.AVAILABLE)));
         BillingFactPayload withBucket = cost(costLine(FactPartyRole.OPERATING_ENTITY, ENTITY_NO, FactPartyRole.CHANNEL,
             CHANNEL_ID));
         withBucket.getLines().getFirst().setTargetBucket(FactTargetBucket.AVAILABLE.getCode());
-        assertRejected(withBucket, "目标余额桶只用于人工调整");
+        assertLineInvalid(withBucket);
     }
 
     /** 成本调整：来源事实与 CLEARING_ACCOUNT 必填，组件与方向、付方 / 收方受限。 */
@@ -111,9 +114,8 @@ class BillingFactInvariantsTest {
         BillingFactPayload charge = cost(costLine(FactPartyRole.OPERATING_ENTITY, ENTITY_NO, FactPartyRole.CHANNEL,
             CHANNEL_ID));
         charge.getLines().getFirst().setDirection(FactLineDirection.CHARGE.getCode());
-        assertRejected(charge, "成本调整只能登记 CHANNEL_COST + ADJUSTMENT");
-        assertRejected(cost(costLine(FactPartyRole.CLIENT, Long.toString(CLIENT_ID), FactPartyRole.CHANNEL, CHANNEL_ID)),
-            "成本调整的付方与收方必须是 CHANNEL 与 OPERATING_ENTITY");
+        assertLineInvalid(charge);
+        assertLineInvalid(cost(costLine(FactPartyRole.CLIENT, Long.toString(CLIENT_ID), FactPartyRole.CHANNEL, CHANNEL_ID)));
     }
 
     /** 金额为正、付方 ≠ 收方、头部主体角色的标识与头部一致。 */
@@ -121,24 +123,30 @@ class BillingFactInvariantsTest {
     void test_lineAmountAndParties() {
         BillingFactPayload zero = manual(null, null, clientPrincipal());
         zero.getLines().getFirst().setPostedAmount(BigDecimal.ZERO);
-        assertRejected(zero, "金额必须为正");
-        assertRejected(manual(null, null, line(FactComponentType.CLIENT_FEE, FactPartyRole.CLIENT, Long.toString(CLIENT_ID),
-            FactPartyRole.CLIENT, Long.toString(CLIENT_ID), FactLineDirection.CHARGE, null)), "付方与收方不能相同");
-        assertRejected(manual(null, null, line(FactComponentType.CLIENT_FEE, FactPartyRole.CLIENT, "999",
-            FactPartyRole.OPERATING_ENTITY, ENTITY_NO, FactLineDirection.CHARGE, null)), "付方与头部主体不一致");
-        assertRejected(manual(null, null, line(FactComponentType.SELLER_TAX, FactPartyRole.CLIENT, Long.toString(CLIENT_ID),
-            FactPartyRole.TAX_AUTHORITY, "TAX", FactLineDirection.CHARGE, null)), "收方与头部主体不一致");
+        assertLineInvalid(zero);
+        assertLineInvalid(manual(null, null, line(FactComponentType.CLIENT_FEE, FactPartyRole.CLIENT, Long.toString(CLIENT_ID),
+            FactPartyRole.CLIENT, Long.toString(CLIENT_ID), FactLineDirection.CHARGE, null)));
+        assertLineInvalid(manual(null, null, line(FactComponentType.CLIENT_FEE, FactPartyRole.CLIENT, "999",
+            FactPartyRole.OPERATING_ENTITY, ENTITY_NO, FactLineDirection.CHARGE, null)));
+        assertLineInvalid(manual(null, null, line(FactComponentType.SELLER_TAX, FactPartyRole.CLIENT, Long.toString(CLIENT_ID),
+            FactPartyRole.TAX_AUTHORITY, "TAX", FactLineDirection.CHARGE, null)));
     }
 
     /** 合作方二元组同有同无；无二元组不能登记合作方组件；平台服务费收方必须是 Finance Entity。 */
     @Test
     void test_partnerConsistency() {
         assertRejected(manual(PARTNER_ID, null, clientPrincipal()), "合作方二元组不完整");
-        assertRejected(manual(null, null, line(FactComponentType.PARTNER_SHARE, FactPartyRole.OPERATING_ENTITY, ENTITY_NO,
-            FactPartyRole.LOCAL_PARTNER, Long.toString(PARTNER_ID), FactLineDirection.CHARGE, null)), "缺少合作方二元组");
-        assertRejected(manual(PARTNER_ID, FINANCE_ENTITY_ID, line(FactComponentType.PLATFORM_SERVICE_CHARGE,
+        assertLineInvalid(manual(null, null, line(FactComponentType.PARTNER_SHARE, FactPartyRole.OPERATING_ENTITY, ENTITY_NO,
+            FactPartyRole.LOCAL_PARTNER, Long.toString(PARTNER_ID), FactLineDirection.CHARGE, null)));
+        assertLineInvalid(manual(PARTNER_ID, FINANCE_ENTITY_ID, line(FactComponentType.PLATFORM_SERVICE_CHARGE,
             FactPartyRole.LOCAL_PARTNER, Long.toString(PARTNER_ID), FactPartyRole.CLIENT, Long.toString(CLIENT_ID),
-            FactLineDirection.CHARGE, null)), "平台服务费收方必须是 Finance Entity");
+            FactLineDirection.CHARGE, null)));
+    }
+
+    /** 校验明细行以 FACT_LINE_INVALID 拒绝。 */
+    private static void assertLineInvalid(BillingFactPayload fact) {
+        FailException error = assertThrows(FailException.class, () -> BillingFactInvariants.checkManualRegistration(fact));
+        assertEquals(BillingFactErrorCode.FACT_LINE_INVALID.getCode(), error.getCode());
     }
 
     /** 校验被业务拒绝且消息含给定片段。 */

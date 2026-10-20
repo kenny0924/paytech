@@ -10,6 +10,7 @@ import com.paytech.billing.api.enums.BillingFactStatus;
 import com.paytech.billing.core.dal.dataobject.BillingFact;
 import com.paytech.billing.core.dal.mapper.BillingFactMapper;
 import com.paytech.billing.domain.BillingFactBookScope;
+import com.paytech.billing.domain.BillingFactSearchCriteria;
 import com.paytech.billing.domain.view.BillingFactProgressView;
 import com.paytech.billing.domainservice.repository.BillingFactRepository;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
@@ -78,6 +79,16 @@ public class BillingFactRepositoryImpl implements BillingFactRepository {
         fact.setUpdateTime(now);
     }
 
+    /** DRAFT → VOIDED；影响行数不为 1 时并发冲突，成功后同步状态与时间。 */
+    @Override
+    public void voidDraft(BillingFact fact, Instant now) {
+        if (mapper.voidDraft(fact.getId(), now) != 1) {
+            throw new ConcurrentRequestException("计费事实已不是待批准状态: " + fact.getId());
+        }
+        fact.setStatus(BillingFactStatus.VOIDED);
+        fact.setUpdateTime(now);
+    }
+
     /** APPROVED → SUPERSEDED；影响行数不为 1 时并发冲突，成功后同步状态与时间。 */
     @Override
     public void supersede(BillingFact fact, Instant now) {
@@ -110,5 +121,17 @@ public class BillingFactRepositoryImpl implements BillingFactRepository {
     @Override
     public BillingFactProgressView publicationProgress(BillingFactBookScope scope) {
         return mapper.selectPublicationProgress(scope.getEntityNo(), scope.getFinanceEntityId(), scope.getCurrency());
+    }
+
+    /** 管理列表一页。 */
+    @Override
+    public List<BillingFact> findSearchPage(BillingFactSearchCriteria criteria, int limit, int offset) {
+        return mapper.selectSearchPage(criteria, limit, offset);
+    }
+
+    /** 管理列表总数。 */
+    @Override
+    public long countSearch(BillingFactSearchCriteria criteria) {
+        return mapper.countSearch(criteria);
     }
 }

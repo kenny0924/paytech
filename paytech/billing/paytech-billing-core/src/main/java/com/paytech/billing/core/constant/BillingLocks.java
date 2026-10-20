@@ -7,7 +7,7 @@ public final class BillingLocks {
     private BillingLocks() {
     }
 
-    /** 同一计费事实的批准入口使用的资源锁。 */
+    /** 同一计费事实的批准与作废入口共用的资源锁。 */
     public static String billingFact(long factId) {
         return "billing-fact:" + factId;
     }

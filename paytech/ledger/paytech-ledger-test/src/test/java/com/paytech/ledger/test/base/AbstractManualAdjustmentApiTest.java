@@ -58,9 +58,19 @@ public abstract class AbstractManualAdjustmentApiTest extends MockTestBase {
         return SubmitManualAdjustmentRequestBuilder.template(ledger.getLedgerBookId(), ledger.getOpenPeriodId());
     }
 
-    /** 提交并断言 201，返回响应。 */
+    /** 以模板编制人提交，返回原始响应。 */
+    protected LedgerResponseChecker submit(SubmitManualAdjustmentRequestBuilder builder) {
+        return submit(builder, SubmitManualAdjustmentRequestBuilder.MAKER_ID);
+    }
+
+    /** 以指定编制人（操作人 Header）提交，返回原始响应。 */
+    protected LedgerResponseChecker submit(SubmitManualAdjustmentRequestBuilder builder, String makerId) {
+        return postAs(PATH, makerId, builder.build());
+    }
+
+    /** 以模板编制人提交并断言 201，返回响应。 */
     protected LedgerResponseChecker submitted(SubmitManualAdjustmentRequestBuilder builder) {
-        return post(PATH, builder.build()).assertSuccess(201);
+        return submit(builder).assertSuccess(201);
     }
 
     /** 提交一笔调整并由模板复核人批准过账，返回批准响应。 */
@@ -69,20 +79,19 @@ public abstract class AbstractManualAdjustmentApiTest extends MockTestBase {
         return approve(submit.id("manualAdjustmentId"), CHECKER_ID, submit.text("contentHash")).assertSuccess(200);
     }
 
-    /** 以指定复核人和摘要批准。 */
+    /** 以指定复核人（操作人 Header）和摘要批准。 */
     protected LedgerResponseChecker approve(long adjustmentId, String checkerId, String contentHash) {
-        return post(PATH + "/" + adjustmentId + "/approve", review(checkerId, contentHash));
+        return postAs(PATH + "/" + adjustmentId + "/approve", checkerId, review(contentHash));
     }
 
-    /** 以指定复核人和摘要驳回。 */
+    /** 以指定复核人（操作人 Header）和摘要驳回。 */
     protected LedgerResponseChecker reject(long adjustmentId, String checkerId, String contentHash) {
-        return post(PATH + "/" + adjustmentId + "/reject", review(checkerId, contentHash));
+        return postAs(PATH + "/" + adjustmentId + "/reject", checkerId, review(contentHash));
     }
 
     /** 复核请求体。 */
-    protected ReviewManualAdjustmentRequestBody review(String checkerId, String contentHash) {
+    protected ReviewManualAdjustmentRequestBody review(String contentHash) {
         ReviewManualAdjustmentRequestBody body = new ReviewManualAdjustmentRequestBody();
-        body.setCheckerId(checkerId);
         body.setApprovedContentHash(contentHash);
         return body;
     }

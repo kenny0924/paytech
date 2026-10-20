@@ -12,8 +12,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.paytech.foundation.common.error.BizCheckFailException;
+import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
+import com.paytech.ledger.api.enums.LedgerErrorCode;
 import com.paytech.ledger.core.constant.AccountingCodes;
 import com.paytech.ledger.core.constant.AccountingLocks;
 import com.paytech.ledger.core.dal.dataobject.AccountingInstruction;
@@ -33,9 +35,9 @@ import com.paytech.ledger.domain.ApproveManualAdjustmentContext;
 import com.paytech.ledger.domainservice.repository.AccountingInstructionRepository;
 import com.paytech.ledger.domainservice.repository.AccountingPeriodRepository;
 import com.paytech.ledger.domainservice.repository.AdjustmentApprovalRepository;
+import com.paytech.ledger.domainservice.repository.ChartAccountRepository;
 import com.paytech.ledger.domainservice.repository.FiscalCalendarRepository;
 import com.paytech.ledger.domainservice.repository.JournalEntryRepository;
-import com.paytech.ledger.domainservice.repository.ChartAccountRepository;
 import com.paytech.ledger.domainservice.repository.LedgerAccountRepository;
 import com.paytech.ledger.domainservice.repository.ManualAdjustmentLineRepository;
 import com.paytech.ledger.domainservice.repository.ManualAdjustmentRepository;
@@ -128,8 +130,7 @@ public class ApproveManualAdjustmentProcessor
         List<AdjustmentApproval> approvals = adjustmentApprovalRepository.findByAdjustment(adjustment.getId());
         if (!ManualAdjustmentReviewValidator.isSameReview(approvals, request.getCheckerId(), ApprovalDecision.APPROVED,
             request.getApprovedContentHash())) {
-            throw new BizCheckFailException("人工调整已处理: " + adjustment.getId() + ", 状态 "
-                + adjustment.getStatus().getCode());
+            throw new FailException(LedgerErrorCode.REVIEW_STATUS_INVALID);
         }
         AccountingInstruction instruction = accountingInstructionRepository.findByManualAdjustment(adjustment.getId());
         return response(adjustment, journalEntryRepository.findByInstruction(instruction.getId()));

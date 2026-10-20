@@ -88,6 +88,12 @@ messaging:
     account:
       partitions: 4
 
+# paytech-xxl-job-starter：测试不连接调度中心，到期生效由用例直接调用 Job Handler（AccountingRuleVersionActivationJobHandler）。
+xxl:
+  job:
+    executor:
+      enabled: false
+
 management:
   server:
     # 独立管理端口；测试随机分配，由 @LocalManagementPort 读取。

@@ -1,0 +1,367 @@
+[
+  {
+    "id": "A1",
+    "method": "GET",
+    "path": "/finance/accounting-rule-bundles/v1",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "bundleCode": "TRANSACTION_POSTING",
+          "status": "ACTIVE",
+          "currentBundleVer": "2",
+          "currentEffectiveFrom": "2026-10-01T00:00:00Z"
+        },
+        {
+          "bundleCode": "SERVICE_CHARGE_POSTING",
+          "status": "DRAFT",
+          "currentBundleVer": null,
+          "currentEffectiveFrom": null
+        }
+      ]
+    },
+    "routeCode": "operations-finance-rule-bundle-list"
+  },
+  {
+    "id": "A2",
+    "method": "GET",
+    "path": "/finance/accounting-rule-bundles/v1/TRANSACTION_POSTING",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "bundleId": "7312345678901290000",
+      "bundleCode": "TRANSACTION_POSTING",
+      "status": "ACTIVE",
+      "currentBundleVer": "2",
+      "versions": [
+        {
+          "versionId": "7312345678901290003",
+          "bundleVer": "3",
+          "status": "VOIDED",
+          "effectiveFrom": "2026-11-01T00:00:00Z",
+          "effectiveTo": null
+        },
+        {
+          "versionId": "7312345678901290002",
+          "bundleVer": "2",
+          "status": "ACTIVE",
+          "effectiveFrom": "2026-10-01T00:00:00Z",
+          "effectiveTo": null
+        },
+        {
+          "versionId": "7312345678901290001",
+          "bundleVer": "1",
+          "status": "RETIRED",
+          "effectiveFrom": "2026-09-01T00:00:00Z",
+          "effectiveTo": "2026-10-01T00:00:00Z"
+        }
+      ]
+    },
+    "routeCode": "operations-finance-rule-bundle-detail"
+  },
+  {
+    "id": "A3",
+    "method": "GET",
+    "path": "/finance/accounting-rule-bundles/v1/TRANSACTION_POSTING/versions/3",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "versionId": "7312345678901290003",
+      "bundleCode": "TRANSACTION_POSTING",
+      "bundleVer": "3",
+      "effectiveFrom": "2026-11-01T00:00:00Z",
+      "effectiveTo": null,
+      "status": "DRAFT",
+      "makerId": "10001",
+      "checkerId": null,
+      "approvedTime": null,
+      "lines": [
+        {
+          "instructionType": "PAYMENT_SUCCEEDED",
+          "lineNo": 1,
+          "lineCode": "CHANNEL_RECEIVABLE",
+          "amountSourceCode": "GROSS_AMOUNT",
+          "ownerRole": "OPERATING_ENTITY",
+          "accountCode": "CHANNEL_RECEIVABLE",
+          "balanceBucket": "NONE",
+          "entrySide": "DEBIT",
+          "requiredFlag": true,
+          "ruleLineId": "7312345678901291001"
+        },
+        {
+          "instructionType": "PAYMENT_SUCCEEDED",
+          "lineNo": 2,
+          "lineCode": "CLIENT_PAYABLE",
+          "amountSourceCode": "GROSS_AMOUNT",
+          "ownerRole": "OPERATING_ENTITY",
+          "accountCode": "CLIENT_PAYABLE",
+          "balanceBucket": "NONE",
+          "entrySide": "CREDIT",
+          "requiredFlag": true,
+          "ruleLineId": "7312345678901291002"
+        }
+      ]
+    },
+    "routeCode": "operations-finance-rule-version-detail"
+  },
+  {
+    "id": "A4",
+    "method": "POST",
+    "path": "/finance/accounting-rule-bundles/v1/TRANSACTION_POSTING/versions",
+    "query": "",
+    "request": {
+      "effectiveFrom": "2026-11-01T00:00:00Z",
+      "lines": [
+        {
+          "instructionType": "PAYMENT_SUCCEEDED",
+          "lineNo": 1,
+          "lineCode": "CHANNEL_RECEIVABLE",
+          "amountSourceCode": "GROSS_AMOUNT",
+          "ownerRole": "OPERATING_ENTITY",
+          "accountCode": "CHANNEL_RECEIVABLE",
+          "balanceBucket": "NONE",
+          "entrySide": "DEBIT",
+          "requiredFlag": true
+        },
+        {
+          "instructionType": "PAYMENT_SUCCEEDED",
+          "lineNo": 2,
+          "lineCode": "CLIENT_PAYABLE",
+          "amountSourceCode": "GROSS_AMOUNT",
+          "ownerRole": "OPERATING_ENTITY",
+          "accountCode": "CLIENT_PAYABLE",
+          "balanceBucket": "NONE",
+          "entrySide": "CREDIT",
+          "requiredFlag": true
+        }
+      ]
+    },
+    "status": 201,
+    "response": {
+      "versionId": "7312345678901290003",
+      "bundleCode": "TRANSACTION_POSTING",
+      "bundleVer": "3",
+      "effectiveFrom": "2026-11-01T00:00:00Z",
+      "effectiveTo": null,
+      "status": "DRAFT",
+      "makerId": "10001",
+      "checkerId": null,
+      "approvedTime": null,
+      "lines": [
+        {
+          "instructionType": "PAYMENT_SUCCEEDED",
+          "lineNo": 1,
+          "lineCode": "CHANNEL_RECEIVABLE",
+          "amountSourceCode": "GROSS_AMOUNT",
+          "ownerRole": "OPERATING_ENTITY",
+          "accountCode": "CHANNEL_RECEIVABLE",
+          "balanceBucket": "NONE",
+          "entrySide": "DEBIT",
+          "requiredFlag": true,
+          "ruleLineId": "7312345678901291001"
+        },
+        {
+          "instructionType": "PAYMENT_SUCCEEDED",
+          "lineNo": 2,
+          "lineCode": "CLIENT_PAYABLE",
+          "amountSourceCode": "GROSS_AMOUNT",
+          "ownerRole": "OPERATING_ENTITY",
+          "accountCode": "CLIENT_PAYABLE",
+          "balanceBucket": "NONE",
+          "entrySide": "CREDIT",
+          "requiredFlag": true,
+          "ruleLineId": "7312345678901291002"
+        }
+      ]
+    },
+    "routeCode": "operations-finance-rule-version-create"
+  },
+  {
+    "id": "A5",
+    "method": "POST",
+    "path": "/finance/accounting-rule-bundles/v1/TRANSACTION_POSTING/versions/3/submit",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "versionId": "7312345678901290003",
+      "bundleCode": "TRANSACTION_POSTING",
+      "bundleVer": "3",
+      "effectiveFrom": "2026-11-01T00:00:00Z",
+      "effectiveTo": null,
+      "status": "PENDING_APPROVAL",
+      "makerId": "10001",
+      "checkerId": null,
+      "approvedTime": null,
+      "lines": [
+        {
+          "instructionType": "PAYMENT_SUCCEEDED",
+          "lineNo": 1,
+          "lineCode": "CHANNEL_RECEIVABLE",
+          "amountSourceCode": "GROSS_AMOUNT",
+          "ownerRole": "OPERATING_ENTITY",
+          "accountCode": "CHANNEL_RECEIVABLE",
+          "balanceBucket": "NONE",
+          "entrySide": "DEBIT",
+          "requiredFlag": true,
+          "ruleLineId": "7312345678901291001"
+        },
+        {
+          "instructionType": "PAYMENT_SUCCEEDED",
+          "lineNo": 2,
+          "lineCode": "CLIENT_PAYABLE",
+          "amountSourceCode": "GROSS_AMOUNT",
+          "ownerRole": "OPERATING_ENTITY",
+          "accountCode": "CLIENT_PAYABLE",
+          "balanceBucket": "NONE",
+          "entrySide": "CREDIT",
+          "requiredFlag": true,
+          "ruleLineId": "7312345678901291002"
+        }
+      ]
+    },
+    "routeCode": "operations-finance-rule-version-submit"
+  },
+  {
+    "id": "A6",
+    "method": "POST",
+    "path": "/finance/accounting-rule-bundles/v1/TRANSACTION_POSTING/versions/3/approve",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "versionId": "7312345678901290003",
+      "bundleCode": "TRANSACTION_POSTING",
+      "bundleVer": "3",
+      "effectiveFrom": "2026-11-01T00:00:00Z",
+      "effectiveTo": null,
+      "status": "APPROVED",
+      "makerId": "10001",
+      "checkerId": "10002",
+      "approvedTime": "2026-10-20T02:00:00Z",
+      "lines": [
+        {
+          "instructionType": "PAYMENT_SUCCEEDED",
+          "lineNo": 1,
+          "lineCode": "CHANNEL_RECEIVABLE",
+          "amountSourceCode": "GROSS_AMOUNT",
+          "ownerRole": "OPERATING_ENTITY",
+          "accountCode": "CHANNEL_RECEIVABLE",
+          "balanceBucket": "NONE",
+          "entrySide": "DEBIT",
+          "requiredFlag": true,
+          "ruleLineId": "7312345678901291001"
+        },
+        {
+          "instructionType": "PAYMENT_SUCCEEDED",
+          "lineNo": 2,
+          "lineCode": "CLIENT_PAYABLE",
+          "amountSourceCode": "GROSS_AMOUNT",
+          "ownerRole": "OPERATING_ENTITY",
+          "accountCode": "CLIENT_PAYABLE",
+          "balanceBucket": "NONE",
+          "entrySide": "CREDIT",
+          "requiredFlag": true,
+          "ruleLineId": "7312345678901291002"
+        }
+      ]
+    },
+    "routeCode": "operations-finance-rule-version-approve"
+  },
+  {
+    "id": "A7",
+    "method": "POST",
+    "path": "/finance/accounting-rule-bundles/v1/TRANSACTION_POSTING/versions/3/reject",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "versionId": "7312345678901290003",
+      "bundleCode": "TRANSACTION_POSTING",
+      "bundleVer": "3",
+      "effectiveFrom": "2026-11-01T00:00:00Z",
+      "effectiveTo": null,
+      "status": "REJECTED",
+      "makerId": "10001",
+      "checkerId": "10002",
+      "approvedTime": null,
+      "lines": [
+        {
+          "instructionType": "PAYMENT_SUCCEEDED",
+          "lineNo": 1,
+          "lineCode": "CHANNEL_RECEIVABLE",
+          "amountSourceCode": "GROSS_AMOUNT",
+          "ownerRole": "OPERATING_ENTITY",
+          "accountCode": "CHANNEL_RECEIVABLE",
+          "balanceBucket": "NONE",
+          "entrySide": "DEBIT",
+          "requiredFlag": true,
+          "ruleLineId": "7312345678901291001"
+        },
+        {
+          "instructionType": "PAYMENT_SUCCEEDED",
+          "lineNo": 2,
+          "lineCode": "CLIENT_PAYABLE",
+          "amountSourceCode": "GROSS_AMOUNT",
+          "ownerRole": "OPERATING_ENTITY",
+          "accountCode": "CLIENT_PAYABLE",
+          "balanceBucket": "NONE",
+          "entrySide": "CREDIT",
+          "requiredFlag": true,
+          "ruleLineId": "7312345678901291002"
+        }
+      ]
+    },
+    "routeCode": "operations-finance-rule-version-reject"
+  },
+  {
+    "id": "A8",
+    "method": "POST",
+    "path": "/finance/accounting-rule-bundles/v1/TRANSACTION_POSTING/versions/3/void",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "versionId": "7312345678901290003",
+      "bundleCode": "TRANSACTION_POSTING",
+      "bundleVer": "3",
+      "effectiveFrom": "2026-11-01T00:00:00Z",
+      "effectiveTo": null,
+      "status": "VOIDED",
+      "makerId": "10001",
+      "checkerId": null,
+      "approvedTime": null,
+      "lines": [
+        {
+          "instructionType": "PAYMENT_SUCCEEDED",
+          "lineNo": 1,
+          "lineCode": "CHANNEL_RECEIVABLE",
+          "amountSourceCode": "GROSS_AMOUNT",
+          "ownerRole": "OPERATING_ENTITY",
+          "accountCode": "CHANNEL_RECEIVABLE",
+          "balanceBucket": "NONE",
+          "entrySide": "DEBIT",
+          "requiredFlag": true,
+          "ruleLineId": "7312345678901291001"
+        },
+        {
+          "instructionType": "PAYMENT_SUCCEEDED",
+          "lineNo": 2,
+          "lineCode": "CLIENT_PAYABLE",
+          "amountSourceCode": "GROSS_AMOUNT",
+          "ownerRole": "OPERATING_ENTITY",
+          "accountCode": "CLIENT_PAYABLE",
+          "balanceBucket": "NONE",
+          "entrySide": "CREDIT",
+          "requiredFlag": true,
+          "ruleLineId": "7312345678901291002"
+        }
+      ]
+    },
+    "routeCode": "operations-finance-rule-version-void"
+  }
+]

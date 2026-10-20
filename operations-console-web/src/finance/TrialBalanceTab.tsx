@@ -9,16 +9,18 @@ import {
   financePaths, leafDrilldownSearch, localTime, pageOf, readTrialQuery, sideLabels, trialSearch, trialStatusLabels,
 } from './finance';
 import type { AccountBalanceLine, LedgerBook, TrialBalanceDetail, TrialBalanceFinding, TrialBalanceRun, TreeNode, TrialQuery } from './finance';
-import { Amount, FinanceNote, LoadFailure, StatusTag } from './FinanceParts';
+import { ledgerWorkflowErrorTargets, workflowPaths } from './financeWorkflow';
+import { Amount, ConflictBanner, FinanceNote, LoadFailure, StatusTag } from './FinanceParts';
 import { bookTitle } from './SetupBooksTab';
+import { useFinanceCommand } from './useFinanceCommand';
 import { useBookPeriods, useCurrencies, useFinanceList, useLedgerBooks } from './useFinanceData';
 
 /**
  * 账本查询「试算平衡」页签（technique 2.5）：账簿 + 期间选择，视图切换「科目余额（实时）」与「试算记录」
  * <li>科目余额（L6）与试算详情都按科目树展示末级与各级汇总行，一级科目合计校验借 = 贷；末级行点击进入账簿下钻的该科目账户。</li>
- * <li>只读：试算记录只查询列表与详情，本页不提供发起试算。</li>
+ * <li>有 OPERATIONS_FINANCE_LEDGER_MANAGE 时显示「发起试算」（无请求体，FUTURE 期间不可发起）；成功后切到试算记录并打开新记录。</li>
  */
-export function TrialBalanceTab({ onAuthorizationChanged }: { onAuthorizationChanged: () => void }) {
+export function TrialBalanceTab({ canRun, onAuthorizationChanged }: { canRun: boolean; onAuthorizationChanged: () => void }) {
   const location = useLocation(); const navigate = useNavigate();
   const query = readTrialQuery(new URLSearchParams(location.search));
   const books = useLedgerBooks(onAuthorizationChanged);
@@ -28,7 +30,18 @@ export function TrialBalanceTab({ onAuthorizationChanged }: { onAuthorizationCha
   const minorUnit = book ? currencies.minorUnits.get(book.currency) : undefined;
   const go = (next: Partial<TrialQuery>) => void navigate({ search: trialSearch(location.search, next) });
   const openLeaf = (line: AccountBalanceLine) => book && void navigate({ search: leafDrilldownSearch(book.ledgerBookId, line.accountCode) }, { state: { book } });
-  const ready = book && query.period && periods.items.some(item => item.accountingPeriodId === query.period);
+  const period = periods.items.find(item => item.accountingPeriodId === query.period);
+  const ready = book && query.period && period;
+  const command = useFinanceCommand(onAuthorizationChanged, undefined, [], ledgerWorkflowErrorTargets);
+  const [runsToken, setRunsToken] = useState(0);
+  async function runTrial() {
+    if (!book || !period) return;
+    const run = await command.run(workflowPaths.runTrialBalance(book.ledgerBookId, period.accountingPeriodId), undefined,
+      decodeTrialBalanceRun(book.ledgerBookId, period.accountingPeriodId), '发起试算失败');
+    if (!run) return;
+    setRunsToken(value => value + 1);
+    void navigate({ search: trialSearch(trialSearch(location.search, { view: 'runs' }), { run: run.runNo }) });
+  }
   return <>
     <Form layout="vertical" name="finance-trial-scope"><div className="finance-trial-head">
       <Form.Item label="账簿"><Select showSearch={{ optionFilterProp: 'label' }} placeholder="选择账簿" loading={books.loading} value={query.book ?? undefined}
@@ -39,17 +52,21 @@ export function TrialBalanceTab({ onAuthorizationChanged }: { onAuthorizationCha
             label: `${item.fiscalYear} 年第 ${item.periodNo} 期 · ${item.startDate} — ${item.endDate} · ${item.status}` }))} /></Form.Item>
       <Form.Item label="视图"><Segmented value={query.view} onChange={value => go({ view: value as TrialQuery['view'] })}
         options={[{ value: 'balances', label: '科目余额（实时）' }, { value: 'runs', label: '试算记录' }]} /></Form.Item>
+      {canRun && ready && <Form.Item><Button type="primary" loading={command.saving} disabled={period.status === 'FUTURE'}
+        title={period.status === 'FUTURE' ? '未开始（FUTURE）期间不能试算' : undefined} onClick={() => void runTrial()}>发起试算</Button></Form.Item>}
     </div></Form>
+    {command.conflict && <ConflictBanner onReload={() => setRunsToken(value => value + 1)} />}
+    {command.formError && <Alert type="error" showIcon className="finance-banner" title={command.formError} />}
     {books.error ? <LoadFailure message={books.error} onRetry={books.reload} />
       : periods.error ? <LoadFailure message={periods.error} onRetry={periods.reload} />
       : !ready || !book || !query.period ? <div className="finance-empty"><Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="选择账簿与会计期间后查看科目余额与试算记录" /></div>
       : query.view === 'balances'
         ? <LiveBalances key={`${book.ledgerBookId}:${query.period}`} book={book} periodId={query.period} minorUnit={minorUnit} onOpenLeaf={openLeaf}
           onAuthorizationChanged={onAuthorizationChanged} />
-        : <TrialRuns key={`${book.ledgerBookId}:${query.period}`} book={book} periodId={query.period} minorUnit={minorUnit} />}
+        : <TrialRuns key={`${book.ledgerBookId}:${query.period}:${runsToken}`} book={book} periodId={query.period} minorUnit={minorUnit} />}
     {ready && book && query.period && query.run && <TrialRunDrawer book={book} periodId={query.period} runNo={query.run} minorUnit={minorUnit}
       onOpenLeaf={openLeaf} onClose={() => go({ run: null })} />}
-    <FinanceNote>科目余额为实时汇总：只列有发生额或余额的末级科目及其各级上级，汇总科目等于直接下级之和；期初、期末按科目余额方向表达，负数为反向余额。试算记录为已执行试算的留存结果，本页只读、不发起试算。</FinanceNote>
+    <FinanceNote>科目余额为实时汇总：只列有发生额或余额的末级科目及其各级上级，汇总科目等于直接下级之和；期初、期末按科目余额方向表达，负数为反向余额。试算记录为已执行试算的留存结果；有「发起试算」权限时可对非 FUTURE 期间重新试算，结果追加为新记录。</FinanceNote>
   </>;
 }
 

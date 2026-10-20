@@ -1,6 +1,7 @@
 package com.paytech.ledger.core.dal.mapper;
 
 import java.time.Instant;
+import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -10,6 +11,9 @@ import com.paytech.ledger.core.dal.dataobject.AccountingRuleBundle;
 /** t_accounting_rule_bundle：规则集持久化。 */
 @Mapper
 public interface AccountingRuleBundleMapper {
+
+    /** 全部规则集，按代码升序。 */
+    List<AccountingRuleBundle> selectAll();
 
     /** 按代码读取规则集。 */
     AccountingRuleBundle selectByCode(@Param("bundleCode") String bundleCode);

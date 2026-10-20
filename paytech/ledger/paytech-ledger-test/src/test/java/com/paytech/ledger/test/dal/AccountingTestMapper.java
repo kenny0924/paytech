@@ -1,6 +1,7 @@
 package com.paytech.ledger.test.dal;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -12,6 +13,7 @@ import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
 import com.paytech.ledger.core.dal.dataobject.AccountingInstruction;
+import com.paytech.ledger.core.dal.dataobject.AccountingRuleBundleVer;
 import com.paytech.ledger.core.dal.dataobject.ChartAccount;
 import com.paytech.ledger.core.dal.dataobject.ChartAccountChange;
 import com.paytech.ledger.core.dal.dataobject.ChartOfAccounts;
@@ -181,6 +183,10 @@ public interface AccountingTestMapper {
     @Select("SELECT next_value FROM t_book_sequence WHERE ledger_book_id = #{ledgerBookId}")
     Long selectNextSequence(@Param("ledgerBookId") long ledgerBookId);
 
+    /** 统计人工调整头行数。 */
+    @Select("SELECT COUNT(*) FROM t_manual_adjustment")
+    int countAdjustments();
+
     /** 统计调整的审批记录数。 */
     @Select("SELECT COUNT(*) FROM t_adjustment_approval WHERE adjustment_id = #{adjustmentId}")
     int countApprovals(@Param("adjustmentId") long adjustmentId);
@@ -331,6 +337,14 @@ public interface AccountingTestMapper {
     /** 直接清空 Bundle 当前版本指针，构造“无当前版本”场景；清理组件恢复初始化行。 */
     @Update("UPDATE t_accounting_rule_bundle SET current_ver_id = NULL WHERE id = #{id}")
     void clearRuleBundleCurrentVersion(@Param("id") long id);
+
+    /** 把规则版本的生效时间改到指定时点，构造“已批准且到期”的版本；测试新建的版本由清理组件删除。 */
+    @Update("UPDATE t_accounting_rule_bundle_ver SET effective_from = #{effectiveFrom} WHERE id = #{id}")
+    void updateRuleVersionEffectiveFrom(@Param("id") long id, @Param("effectiveFrom") Instant effectiveFrom);
+
+    /** 读取规则版本整行。 */
+    @Select("SELECT * FROM t_accounting_rule_bundle_ver WHERE id = #{id}")
+    AccountingRuleBundleVer selectRuleVersion(@Param("id") long id);
 
     /** 读取规则版本当前状态码。 */
     @Select("SELECT status FROM t_accounting_rule_bundle_ver WHERE id = #{id}")

@@ -57,6 +57,11 @@
             </dependency>
             <dependency>
                 <groupId>com.paytech</groupId>
+                <artifactId>paytech-billing-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
                 <artifactId>paytech-commercial-api</artifactId>
                 <version>${project.version}</version>
             </dependency>

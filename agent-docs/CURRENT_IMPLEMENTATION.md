@@ -21,6 +21,15 @@
 - **清理（2026-10-20）：** mor-test 与本机已删除 `mor_consumer` / `consumer_app`、旧 consumer-service 容器与镜像、XXL group 8 / job 8；本机全链路工具 `run-service.sh` 改用 counterparty 与 `mor_counterparty_v2e2e`。
 - **Pending：** 推送（用户决定暂不推送）；切片 2（Customer 档案、资料原值只进 counterparty）与 Gateway Route 未开始。
 
+<a id="finance-console-three-20261020"></a>
+## Operations 财务：人工调整与计费事实 / 期间关账与试算 / 记账规则包（2026-10-20，已部署 mor-test，已本地提交，未推送）
+
+- **范围：** [人工调整与计费事实](<../requirements/20261020/finance-人工调整与计费事实/requirement.md>)、[期间关账与试算](<../requirements/20261020/finance-期间关账与试算/requirement.md>)、[记账规则包维护](<../requirements/20261020/finance-记账规则包维护/requirement.md>)，共用[技术方案](<../requirements/20261020/finance-人工调整与计费事实/technique.md>)：ledger / billing 命令改读 Gateway 操作人 Header；新增 `FINANCE_ACCOUNTING_APPROVE`；人工调整列表、计费事实管理列表与作废（`VOIDED`）、规则包列表与作废草稿（`VOIDED`）、`accountingRuleVersionActivation` 定时任务（ledger 首次接入 XXL）；`LedgerErrorCode` +14、`BillingFactErrorCode` 4；Operations 新增「调整」「期间关账」「记账规则」三页与试算平衡「发起试算」。
+- **Implemented（已本地提交，未推送）：** 基于 `d565f85f`，211 个文件。
+- **Verified：** 专用本机库 `mor_ledger_fin3` / `mor_billing_fin3`：ledger 312、billing 80、BFF 1766、Web 1145、arch-rules 61、PDManer 15；mor-test 接口 28/28、无头浏览器 8/8。
+- **Deployed（mor-test，2026-10-20 06:09—06:20Z）：** tag `fin-20261020`：platform-support `sha256:d800c3ce…`、ledger `sha256:d846efae…`、billing `sha256:99839156…`、operations-console-bff `sha256:adec3f63…`、operations-console-web `sha256:c6661078…`；Platform 块 120—122 启用（PLATFORM_ADMIN v35）；XXL 任务 19。Platform 镜像同时首次带上 commercial 块 93 / 95 的能力清单。
+- **Pending：** 推送；后续发布 ledger / billing / platform-support / ops-bff / ops-web 须基于含本批改动的代码；mor-test 只有一个运营账号，复核人页面操作未用第二个真人账号走查；Platform ID 块注意 mor-test 风控控制台占用的 `101xxx—104xxx`、`111xxx—114xxx`。
+
 <a id="ledger-chart-hierarchy-20261020"></a>
 ## ledger 会计科目分级与可读账户号（2026-10-20，已部署 mor-test，已本地提交，未推送）
 

@@ -1,5 +1,7 @@
 package com.paytech.billing.api;
 
+import java.time.Instant;
+
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.service.annotation.GetExchange;
@@ -8,6 +10,8 @@ import org.springframework.web.service.annotation.HttpExchange;
 import com.paytech.billing.api.response.BillingFactListResponseBody;
 import com.paytech.billing.api.response.BillingFactProgressResponseBody;
 import com.paytech.billing.api.response.BillingFactResponseBody;
+import com.paytech.billing.api.response.BillingFactSummaryResponseBody;
+import com.paytech.foundation.web.paging.PagingResponseBody;
 
 import jakarta.validation.constraints.Pattern;
 
@@ -15,7 +19,7 @@ import jakarta.validation.constraints.Pattern;
  * 计费事实读取
  * <li>账簿主体参数与 ledger 账簿身份、account 进度接口一致：OPERATING_ENTITY 按事实 entityNo 匹配，FINANCE_ENTITY 按事实
  * financeEntityId 匹配，并限定币种。</li>
- * <li>只读，不开显式事务；内部开发接口，未接 Gateway 与统一身份前不得对外发布。</li>
+ * <li>只读，不开显式事务；Finance 内部接口，仅经 Operations BFF 或内部服务调用，不得直接对外发布。</li>
  */
 @HttpExchange(url = "/billing/v1/facts", accept = "application/json")
 public interface BillingFactQueryApi {
@@ -78,4 +82,31 @@ public interface BillingFactQueryApi {
         @RequestParam("refId") @Pattern(regexp = "[A-Za-z0-9][A-Za-z0-9._-]{0,63}") String refId,
         @RequestParam(value = "fromFactId", required = false) @Pattern(regexp = "0|[1-9][0-9]{0,18}") String fromFactId,
         @RequestParam(value = "limit", required = false) @Pattern(regexp = "[1-9][0-9]{0,2}") String limit);
+
+    /**
+     * 按 Operating Entity 与币种分页检索计费事实（Operations 管理列表）
+     * <li>含任意状态（DRAFT、APPROVED、SUPERSEDED、VOIDED），按 factId 降序；返回事实头摘要，明细行与引用从详情接口读取。</li>
+     *
+     * @param entityNo Operating Entity 编号
+     * @param currency 币种
+     * @param clientId 可选 Client 筛选
+     * @param status 可选登记状态：DRAFT、APPROVED、SUPERSEDED、VOIDED
+     * @param factType 可选事实类型代码（BillingFactType）；不在目录时 400 INVALID_REQUEST
+     * @param createdFrom 可选登记时间下限（含），UTC ISO-8601
+     * @param createdTo 可选登记时间上限（不含），UTC ISO-8601；不晚于下限时 400 INVALID_REQUEST
+     * @param page 可选页码，缺省 1
+     * @param size 可选每页条数：10、20、50、100、200，缺省 10
+     * @return 事实头摘要分页，金额按币种精度补齐；无匹配返回空页
+     */
+    @GetExchange("/search")
+    PagingResponseBody<BillingFactSummaryResponseBody> searchBillingFacts(
+        @RequestParam("entityNo") @Pattern(regexp = "[A-Z]{2}(00[1-9]|0[1-9][0-9]|[1-9][0-9]{2})") String entityNo,
+        @RequestParam("currency") @Pattern(regexp = "[A-Z]{3}") String currency,
+        @RequestParam(value = "clientId", required = false) @Pattern(regexp = "[1-9][0-9]{0,18}") String clientId,
+        @RequestParam(value = "status", required = false) @Pattern(regexp = "DRAFT|APPROVED|SUPERSEDED|VOIDED") String status,
+        @RequestParam(value = "factType", required = false) @Pattern(regexp = "[A-Z][A-Z_]{0,63}") String factType,
+        @RequestParam(value = "createdFrom", required = false) Instant createdFrom,
+        @RequestParam(value = "createdTo", required = false) Instant createdTo,
+        @RequestParam(value = "page", required = false) Integer page,
+        @RequestParam(value = "size", required = false) Integer size);
 }

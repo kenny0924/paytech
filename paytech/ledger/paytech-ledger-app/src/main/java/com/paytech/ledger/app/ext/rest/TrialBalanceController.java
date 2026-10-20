@@ -1,5 +1,7 @@
 package com.paytech.ledger.app.ext.rest;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,22 +19,28 @@ import com.paytech.ledger.service.processor.request.RunTrialBalanceRequest;
 
 import lombok.AllArgsConstructor;
 
-/** 试算平衡的 HTTP 协议适配；执行委托 Processor，查询直接委托 TrialBalanceService。 */
+/** 试算平衡的 HTTP 协议适配；执行委托 Processor 并按操作人 Header 记一条 INFO 操作日志（不落库），查询直接委托 TrialBalanceService。 */
 @RestController
 @AllArgsConstructor
 public class TrialBalanceController implements TrialBalanceApi {
+    private static final Logger LOG = LoggerFactory.getLogger(TrialBalanceController.class);
+
     private final TrialBalanceService trialBalanceService;
     private final TrialBalanceConverter converter;
     private final RunTrialBalanceProcessor runTrialBalanceProcessor;
 
     /** 执行试算并返回 201。 */
     @Override
-    public ResponseEntity<TrialBalanceRunResponseBody> runTrialBalance(String ledgerBookId, String periodId) {
+    public ResponseEntity<TrialBalanceRunResponseBody> runTrialBalance(String actorAccountId, String sessionId,
+        String ledgerBookId, String periodId) {
         RunTrialBalanceRequest request = new RunTrialBalanceRequest();
         request.setLedgerBookId(Long.valueOf(ledgerBookId));
         request.setPeriodId(Long.valueOf(periodId));
-        return ResponseEntity.status(HttpStatus.CREATED)
-            .body(converter.toResponseBody(runTrialBalanceProcessor.process(request)));
+        TrialBalanceRunResponseBody response = converter.toResponseBody(runTrialBalanceProcessor.process(request));
+        LOG.info("财务试算命令 action={} actor={} session={} ledgerBook={} period={} runNo={} status={}",
+            "RUN_TRIAL_BALANCE", actorAccountId, sessionId, ledgerBookId, periodId, response.getRunNo(),
+            response.getStatus());
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     /** 分页查询试算。 */

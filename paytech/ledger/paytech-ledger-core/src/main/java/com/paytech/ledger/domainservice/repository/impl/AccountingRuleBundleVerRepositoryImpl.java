@@ -47,6 +47,12 @@ public class AccountingRuleBundleVerRepositoryImpl implements AccountingRuleBund
         return mapper.selectByBundle(bundleId);
     }
 
+    /** 已到生效时间的 APPROVED 版本，按生效时间、规则集、版本号升序。 */
+    @Override
+    public List<AccountingRuleBundleVer> findDueApproved(Instant asOf) {
+        return mapper.selectDueApproved(asOf);
+    }
+
     /** 规则集的下一个版本号。 */
     @Override
     public long nextBundleVer(long bundleId) {
@@ -81,6 +87,20 @@ public class AccountingRuleBundleVerRepositoryImpl implements AccountingRuleBund
     public void review(AccountingRuleBundleVer ver, RuleVersionStatus status, long checkerId, Instant approvedTime) {
         requireStatus(ver, RuleVersionStatus.PENDING_APPROVAL);
         transit(ver, status, checkerId, approvedTime, ver.getEffectiveTo());
+    }
+
+    /** 以 APPROVED 为条件置为 ACTIVE，复核结果不变，成功后同步原对象。 */
+    @Override
+    public void activate(AccountingRuleBundleVer ver) {
+        requireStatus(ver, RuleVersionStatus.APPROVED);
+        transit(ver, RuleVersionStatus.ACTIVE, ver.getCheckerId(), ver.getApprovedTime(), ver.getEffectiveTo());
+    }
+
+    /** 以 APPROVED 为条件置为 RETIRED，失效时间等于自身生效时间（零长度区间），成功后同步原对象。 */
+    @Override
+    public void retireSuperseded(AccountingRuleBundleVer ver) {
+        requireStatus(ver, RuleVersionStatus.APPROVED);
+        transit(ver, RuleVersionStatus.RETIRED, ver.getCheckerId(), ver.getApprovedTime(), ver.getEffectiveFrom());
     }
 
     /** 以 ACTIVE 为条件置为 RETIRED 并写入失效时间，成功后同步原对象。 */

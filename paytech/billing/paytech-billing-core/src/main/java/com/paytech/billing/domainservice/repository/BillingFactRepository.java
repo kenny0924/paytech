@@ -6,6 +6,7 @@ import java.util.List;
 
 import com.paytech.billing.core.dal.dataobject.BillingFact;
 import com.paytech.billing.domain.BillingFactBookScope;
+import com.paytech.billing.domain.BillingFactSearchCriteria;
 import com.paytech.billing.domain.view.BillingFactProgressView;
 
 /** t_billing_fact：计费事实头的登记、状态推进与读取。 */
@@ -37,6 +38,13 @@ public interface BillingFactRepository {
     void approve(BillingFact fact, long factVersion, long checkerId, Instant now);
 
     /**
+     * DRAFT → VOIDED，成功后同步原对象
+     *
+     * @throws com.paytech.foundation.common.error.ConcurrentRequestException 事实已不是 DRAFT
+     */
+    void voidDraft(BillingFact fact, Instant now);
+
+    /**
      * APPROVED → SUPERSEDED，以原对象的版本做条件，成功后同步原对象
      *
      * @throws com.paytech.foundation.common.error.ConcurrentRequestException 被替代事实已被替代或版本变化
@@ -55,4 +63,10 @@ public interface BillingFactRepository {
 
     /** 账簿主体下已批准事实的发布进度。 */
     BillingFactProgressView publicationProgress(BillingFactBookScope scope);
+
+    /** 管理列表一页：按筛选条件、ID 降序。 */
+    List<BillingFact> findSearchPage(BillingFactSearchCriteria criteria, int limit, int offset);
+
+    /** 管理列表在同一筛选条件下的总数。 */
+    long countSearch(BillingFactSearchCriteria criteria);
 }

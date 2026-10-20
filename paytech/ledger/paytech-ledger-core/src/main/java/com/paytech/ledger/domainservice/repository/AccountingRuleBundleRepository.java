@@ -1,9 +1,14 @@
 package com.paytech.ledger.domainservice.repository;
 
+import java.util.List;
+
 import com.paytech.ledger.core.dal.dataobject.AccountingRuleBundle;
 
 /** t_accounting_rule_bundle：规则集读取与当前版本指针切换。 */
 public interface AccountingRuleBundleRepository {
+
+    /** 全部规则集，按代码升序。 */
+    List<AccountingRuleBundle> findAll();
 
     /** 按代码读取规则集，不存在返回空。 */
     AccountingRuleBundle findByCode(String bundleCode);

@@ -1,16 +1,18 @@
 package com.paytech.billing.app.ext.rest.converter;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
 
+import com.paytech.billing.api.enums.BillingFactStatus;
+import com.paytech.billing.api.enums.BillingFactType;
 import com.paytech.billing.api.enums.FactRefType;
 import com.paytech.billing.api.fact.BillingFactLinePayload;
 import com.paytech.billing.api.fact.BillingFactPayload;
 import com.paytech.billing.api.fact.BillingFactRefPayload;
-import com.paytech.billing.api.request.ApproveBillingFactRequestBody;
 import com.paytech.billing.api.request.BillingFactLineRequestBody;
 import com.paytech.billing.api.request.BillingFactRefRequestBody;
 import com.paytech.billing.api.request.SubmitBillingFactRequestBody;
@@ -21,6 +23,9 @@ import com.paytech.billing.api.response.BillingFactPricingResponseBody;
 import com.paytech.billing.api.response.BillingFactProgressResponseBody;
 import com.paytech.billing.api.response.BillingFactRefResponseBody;
 import com.paytech.billing.api.response.BillingFactResponseBody;
+import com.paytech.billing.api.response.BillingFactSummaryResponseBody;
+import com.paytech.billing.core.dal.dataobject.BillingFact;
+import com.paytech.billing.domain.BillingFactSearchCriteria;
 import com.paytech.billing.domain.view.BillingFactLineEvidenceView;
 import com.paytech.billing.domain.view.BillingFactLineLinkView;
 import com.paytech.billing.domain.view.BillingFactPageView;
@@ -29,6 +34,7 @@ import com.paytech.billing.domain.view.BillingFactProgressView;
 import com.paytech.billing.domain.view.BillingFactView;
 import com.paytech.billing.service.processor.request.ApproveBillingFactRequest;
 import com.paytech.billing.service.processor.request.SubmitBillingFactRequest;
+import com.paytech.billing.service.processor.request.VoidBillingFactRequest;
 import com.paytech.foundation.common.enums.CodeEnum;
 import com.paytech.foundation.common.error.InvalidParameterException;
 
@@ -50,8 +56,8 @@ public class BillingFactConverter {
     /** 按引用列表每页条数上限。 */
     static final int MAX_REF_LIMIT = 200;
 
-    /** 转换提交请求；缺省引用为空列表。 */
-    public SubmitBillingFactRequest toRequest(SubmitBillingFactRequestBody body) {
+    /** 转换提交请求：编制人取自 X-Gateway-Actor-Subject；缺省引用为空列表。 */
+    public SubmitBillingFactRequest toRequest(String operatorId, SubmitBillingFactRequestBody body) {
         SubmitBillingFactRequest request = new SubmitBillingFactRequest();
         request.setFactType(body.getFactType());
         request.setSourceSystem(body.getSourceSystem());
@@ -63,7 +69,7 @@ public class BillingFactConverter {
         request.setLocalPartnerId(id(body.getLocalPartnerId()));
         request.setFinanceEntityId(id(body.getFinanceEntityId()));
         request.setCurrency(body.getCurrency());
-        request.setMakerId(id(body.getMakerId()));
+        request.setMakerId(Long.valueOf(operatorId));
         List<BillingFactRefRequestBody> refs = body.getRefs() == null ? List.of() : body.getRefs();
         request.setRefs(new ArrayList<>(refs.stream().map(this::toRef).toList()));
         request.setLines(body.getLines().stream().map(this::toLine).toList());
@@ -92,12 +98,56 @@ public class BillingFactConverter {
         return line;
     }
 
-    /** 转换批准请求。 */
-    public ApproveBillingFactRequest toRequest(String factId, ApproveBillingFactRequestBody body) {
+    /** 转换批准请求：复核人取自 X-Gateway-Actor-Subject。 */
+    public ApproveBillingFactRequest toApproveRequest(String operatorId, String factId) {
         ApproveBillingFactRequest request = new ApproveBillingFactRequest();
         request.setFactId(Long.valueOf(factId));
-        request.setCheckerId(Long.valueOf(body.getCheckerId()));
+        request.setCheckerId(Long.valueOf(operatorId));
         return request;
+    }
+
+    /** 转换作废请求。 */
+    public VoidBillingFactRequest toVoidRequest(String factId) {
+        VoidBillingFactRequest request = new VoidBillingFactRequest();
+        request.setFactId(Long.valueOf(factId));
+        return request;
+    }
+
+    /**
+     * 转换管理列表筛选条件；状态与事实类型按目录解析
+     *
+     * @throws InvalidParameterException 代码不在目录，或登记时间上限不晚于下限
+     */
+    public BillingFactSearchCriteria toSearchCriteria(String entityNo, String currency, String clientId, String status,
+        String factType, Instant createdFrom, Instant createdTo) {
+        if (createdFrom != null && createdTo != null && !createdTo.isAfter(createdFrom)) {
+            throw new InvalidParameterException("createdTo 必须晚于 createdFrom: " + createdFrom + " / " + createdTo);
+        }
+        BillingFactSearchCriteria criteria = new BillingFactSearchCriteria();
+        criteria.setEntityNo(entityNo);
+        criteria.setCurrency(currency);
+        criteria.setClientId(id(clientId));
+        criteria.setStatus(status == null ? null : CodeEnumConverter.parse(BillingFactStatus.class, status));
+        criteria.setFactType(factType == null ? null : CodeEnumConverter.parse(BillingFactType.class, factType));
+        criteria.setCreatedFrom(createdFrom);
+        criteria.setCreatedTo(createdTo);
+        return criteria;
+    }
+
+    /** 转换管理列表的一条事实头摘要；总额已由查询按币种精度补齐。 */
+    public BillingFactSummaryResponseBody toSummaryBody(BillingFact fact) {
+        BillingFactSummaryResponseBody body = new BillingFactSummaryResponseBody();
+        body.setFactId(text(fact.getId()));
+        body.setFactType(fact.getFactType().getCode());
+        body.setSourceReference(fact.getSourceEventKey());
+        body.setClientId(text(fact.getClientId()));
+        body.setStatus(fact.getStatus().getCode());
+        body.setGrossAmount(fact.getGrossAmount().toPlainString());
+        body.setMakerId(text(fact.getMakerId()));
+        body.setCheckerId(text(fact.getCheckerId()));
+        body.setCreateTime(fact.getCreateTime());
+        body.setApprovedTime(fact.getApprovedTime());
+        return body;
     }
 
     /** 列表游标；缺省为 0，非十进制非负整数以参数错误拒绝。 */

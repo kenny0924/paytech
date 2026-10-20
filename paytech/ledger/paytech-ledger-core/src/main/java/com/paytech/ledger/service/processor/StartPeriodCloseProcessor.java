@@ -18,9 +18,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.paytech.foundation.common.error.BizCheckFailException;
+import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.messaging.api.ConsumedEventRepository;
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
+import com.paytech.ledger.api.enums.LedgerErrorCode;
 import com.paytech.ledger.core.constant.AccountingCodes;
 import com.paytech.ledger.core.constant.AccountingLocks;
 import com.paytech.ledger.core.dal.dataobject.AccountingInstruction;
@@ -132,8 +134,7 @@ public class StartPeriodCloseProcessor extends AbstractLockProcessor<StartPeriod
             throw new BizCheckFailException("会计期间不存在: " + periodId);
         }
         if (period.getStatus() != PeriodStatus.OPEN) {
-            throw new BizCheckFailException("只有 OPEN 期间可以发起关账: " + periodId + ", 状态 "
-                + period.getStatus().getCode());
+            throw new FailException(LedgerErrorCode.PERIOD_NOT_OPEN);
         }
         return period;
     }
@@ -143,7 +144,7 @@ public class StartPeriodCloseProcessor extends AbstractLockProcessor<StartPeriod
         AccountingPeriod earlier = accountingPeriodRepository.findFirstUnclosedBefore(period.getCalendarId(),
             period.getStartDate());
         if (earlier != null) {
-            throw new BizCheckFailException("前序会计期间尚未关闭: " + earlier.getId());
+            throw new FailException(LedgerErrorCode.PERIOD_CLOSE_ORDER_INVALID);
         }
     }
 

@@ -8,9 +8,11 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpHeaders;
 
 import com.paytech.account.api.constant.StandardAccountCodes;
 import com.paytech.account.api.enums.BalanceBucket;
+import com.paytech.foundation.testsupport.api.TestRequestHeaders;
 import com.paytech.ledger.api.ManualAdjustmentApi;
 import com.paytech.ledger.api.enums.LedgerErrorCode;
 import com.paytech.ledger.api.enums.LedgerOwnerType;
@@ -24,12 +26,13 @@ import com.paytech.ledger.core.enums.LedgerEntityType;
 import com.paytech.ledger.core.enums.PeriodStatus;
 import com.paytech.ledger.test.base.AbstractManualAdjustmentApiTest;
 import com.paytech.ledger.test.builder.SubmitManualAdjustmentRequestBuilder;
+import com.paytech.ledger.test.checker.LedgerResponseChecker;
 import com.paytech.ledger.test.mocker.local.LedgerMocker;
 
 /**
- * 提交人工调整：冻结摘要与 Maker 记录，以及账簿、期间、账户、币种、精度和平衡的拒绝场景。
+ * 提交人工调整：冻结摘要与 Maker 记录（编制人取自操作人 Header），以及操作人 Header、账簿、期间、账户、币种、精度和平衡的拒绝场景。
  *
- * @see ManualAdjustmentApi#submitManualAdjustment(SubmitManualAdjustmentRequestBody)
+ * @see ManualAdjustmentApi#submitManualAdjustment(String, String, SubmitManualAdjustmentRequestBody)
  */
 class SubmitManualAdjustmentTest extends AbstractManualAdjustmentApiTest {
     private static final String FILE_HASH = "a".repeat(64);
@@ -61,9 +64,9 @@ class SubmitManualAdjustmentTest extends AbstractManualAdjustmentApiTest {
         long partner = ledgerMocker.mockAccount(ledger.getLedgerBookId(), StandardAccountCodes.PARTNER_PAYABLE,
             LedgerOwnerType.OPERATING_ENTITY, ledger.getEntityNo(), BalanceBucket.NONE);
 
-        post(PATH, adjustment().transfer(bankCashAccountId, client, "10").build()).assertRejectedWithCode(
+        submit(adjustment().transfer(bankCashAccountId, client, "10")).assertRejectedWithCode(
             LedgerErrorCode.OWNER_ACCOUNT_ADJUSTMENT_FORBIDDEN.getCode(), "MANUAL_ADJUSTMENT 计费事实");
-        post(PATH, adjustment().transfer(partner, liabilityAccountId, "10").build()).assertRejectedWithCode(
+        submit(adjustment().transfer(partner, liabilityAccountId, "10")).assertRejectedWithCode(
             LedgerErrorCode.OWNER_ACCOUNT_ADJUSTMENT_FORBIDDEN.getCode(), "账户 [" + partner + "]");
         submitted(adjustment().transfer(liabilityAccountId, capitalAccountId, "10"));
         ledgerChecker.assertBalancedJournals(ledger.getLedgerBookId(), 0);
@@ -71,15 +74,15 @@ class SubmitManualAdjustmentTest extends AbstractManualAdjustmentApiTest {
 
     @Test
     void test_unbalancedOrNonPositiveAmountRejected() {
-        post(PATH, adjustment().line(bankCashAccountId, EntrySide.DEBIT, "100")
-            .line(capitalAccountId, EntrySide.CREDIT, "99.99").build()).assertBusinessRejected("调整借贷不平衡");
-        post(PATH, adjustment().transfer(bankCashAccountId, capitalAccountId, "0").build())
+        submit(adjustment().line(bankCashAccountId, EntrySide.DEBIT, "100")
+            .line(capitalAccountId, EntrySide.CREDIT, "99.99")).assertRejected(LedgerErrorCode.ADJUSTMENT_UNBALANCED);
+        submit(adjustment().transfer(bankCashAccountId, capitalAccountId, "0"))
             .assertBusinessRejected("调整金额必须大于零");
     }
 
     @Test
     void test_amountBeyondCurrencyPrecisionRejected() {
-        post(PATH, adjustment().transfer(bankCashAccountId, capitalAccountId, "1.001").build())
+        submit(adjustment().transfer(bankCashAccountId, capitalAccountId, "1.001"))
             .assertBusinessRejected("不超过币种精度 2 位");
     }
 
@@ -89,12 +92,12 @@ class SubmitManualAdjustmentTest extends AbstractManualAdjustmentApiTest {
             LedgerMocker.STANDARD_CHART_ID);
         long foreignAccount = ledgerMocker.mockAccount(otherBook, "CAPITAL", LedgerOwnerType.OPERATING_ENTITY, "AE002",
             BalanceBucket.NONE);
-        post(PATH, adjustment().transfer(bankCashAccountId, foreignAccount, "10").build())
-            .assertBusinessRejected("账户不存在或不属于账簿: 账户 " + foreignAccount);
+        submit(adjustment().transfer(bankCashAccountId, foreignAccount, "10"))
+            .assertRejected(LedgerErrorCode.ADJUSTMENT_ACCOUNT_INVALID);
 
         testMapper.updateAccountStatus(capitalAccountId, AccountStatus.INACTIVE.getCode());
-        post(PATH, adjustment().transfer(bankCashAccountId, capitalAccountId, "10").build())
-            .assertBusinessRejected("账户未开放过账: " + capitalAccountId);
+        submit(adjustment().transfer(bankCashAccountId, capitalAccountId, "10"))
+            .assertRejected(LedgerErrorCode.ADJUSTMENT_ACCOUNT_INVALID);
     }
 
     @Test
@@ -102,28 +105,43 @@ class SubmitManualAdjustmentTest extends AbstractManualAdjustmentApiTest {
         LocalDate start = LocalDate.of(2099, 1, 1);
         long futurePeriod = ledgerMocker.mockPeriod(ledger.getFiscalCalendarId(), 2099, 1, start,
             start.plusDays(30), PeriodStatus.FUTURE);
-        post(PATH, SubmitManualAdjustmentRequestBuilder.template(ledger.getLedgerBookId(), futurePeriod)
-            .transfer(bankCashAccountId, capitalAccountId, "10").build()).assertBusinessRejected("会计期间不存在或未开放");
+        submit(SubmitManualAdjustmentRequestBuilder.template(ledger.getLedgerBookId(), futurePeriod)
+            .transfer(bankCashAccountId, capitalAccountId, "10")).assertRejected(LedgerErrorCode.ADJUSTMENT_PERIOD_NOT_OPEN);
 
         long otherCalendar = ledgerMocker.mockCalendar(LedgerEntityType.OPERATING_ENTITY, "AE002");
         long otherPeriod = ledgerMocker.mockPeriod(otherCalendar, 2099, 1, start, start.plusDays(30), PeriodStatus.OPEN);
-        post(PATH, SubmitManualAdjustmentRequestBuilder.template(ledger.getLedgerBookId(), otherPeriod)
-            .transfer(bankCashAccountId, capitalAccountId, "10").build()).assertBusinessRejected("会计期间不属于账簿主体");
+        submit(SubmitManualAdjustmentRequestBuilder.template(ledger.getLedgerBookId(), otherPeriod)
+            .transfer(bankCashAccountId, capitalAccountId, "10")).assertBusinessRejected("会计期间不属于账簿主体");
     }
 
     @Test
     void test_currencyMustMatchBook() {
-        post(PATH, adjustment().currency("AED").transfer(bankCashAccountId, capitalAccountId, "10").build())
+        submit(adjustment().currency("AED").transfer(bankCashAccountId, capitalAccountId, "10"))
             .assertBusinessRejected("调整币种与账簿币种不一致");
+    }
+
+    /** 编制人取自 X-Gateway-Actor-Subject：缺失、非正十进制或缺少会话 Header 时 400，不落库。 */
+    @Test
+    void test_invalidActorHeaderRejected() {
+        SubmitManualAdjustmentRequestBody body = adjustment().transfer(bankCashAccountId, capitalAccountId, "10").build();
+
+        post(PATH, body).assertInvalidRequest();
+        submit(adjustment().transfer(bankCashAccountId, capitalAccountId, "10"), "maker-1").assertInvalidRequest();
+        submit(adjustment().transfer(bankCashAccountId, capitalAccountId, "10"), "01").assertInvalidRequest();
+        HttpHeaders actorOnly = TestRequestHeaders.internal(REQUEST_ID);
+        actorOnly.set(ACTOR_HEADER, SubmitManualAdjustmentRequestBuilder.MAKER_ID);
+        new LedgerResponseChecker(http.post(PATH, actorOnly, body), objectMapper, REQUEST_ID).assertInvalidRequest();
+
+        assertEquals(0, testMapper.countAdjustments());
     }
 
     @Test
     void test_invalidParameter() {
-        post(PATH, adjustment().line(bankCashAccountId, EntrySide.DEBIT, "10").build())
+        submit(adjustment().line(bankCashAccountId, EntrySide.DEBIT, "10"))
             .assertProblem(422, "VALIDATION_ERROR").assertFieldError("lines");
-        post(PATH, adjustment().transfer(bankCashAccountId, capitalAccountId, "10").file("990001", null).build())
+        submit(adjustment().transfer(bankCashAccountId, capitalAccountId, "10").file("990001", null))
             .assertInvalidRequest().assertDetailContains("证据文件主键与文件内容摘要必须同时提供或同时为空");
-        post(PATH, adjustment().transfer(bankCashAccountId, capitalAccountId, "1e3").build())
+        submit(adjustment().transfer(bankCashAccountId, capitalAccountId, "1e3"))
             .assertProblem(422, "VALIDATION_ERROR");
     }
 }

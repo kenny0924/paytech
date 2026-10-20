@@ -10,6 +10,29 @@
         SELECT id, adjustment_no, ledger_book_id, accounting_period_id, currency, reason_code, file_id, file_content_hash, total_debit, total_credit, content_hash, submitted_time, status, maker_id, version, create_time, update_time FROM t_manual_adjustment WHERE id = #{id}
     </select>
 
+    <sql id="pageFilter">
+        WHERE m.ledger_book_id = #{query.ledgerBookId}
+        <if test="query.accountingPeriodId != null">AND m.accounting_period_id = #{query.accountingPeriodId}</if>
+        <if test="query.status != null">AND m.status = #{query.status}</if>
+        <if test="query.makerId != null">AND m.maker_id = #{query.makerId}</if>
+    </sql>
+
+    <select id="selectViewPage" resultType="com.paytech.ledger.domain.view.ManualAdjustmentView">
+        SELECT m.id manual_adjustment_id, m.adjustment_no, m.ledger_book_id, m.accounting_period_id, m.currency, m.reason_code, m.status,
+               m.total_debit, m.total_credit, m.maker_id, m.submitted_time, e.id journal_entry_id
+        FROM t_manual_adjustment m
+        LEFT JOIN t_accounting_instruction i ON i.manual_adjustment_id = m.id
+        LEFT JOIN t_journal_entry e ON e.instruction_id = i.id AND e.ledger_book_id = m.ledger_book_id
+        <include refid="pageFilter"/>
+        ORDER BY m.submitted_time DESC, m.id DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="long">
+        SELECT COUNT(*) FROM t_manual_adjustment m
+        <include refid="pageFilter"/>
+    </select>
+
     <update id="updateStatus">
         UPDATE t_manual_adjustment SET status = #{status}, version = version + 1, update_time = #{now}
         WHERE id = #{adjustment.id} AND status = #{adjustment.status} AND version = #{adjustment.version}

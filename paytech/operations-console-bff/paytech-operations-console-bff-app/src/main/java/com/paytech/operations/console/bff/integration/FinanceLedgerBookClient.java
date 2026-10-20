@@ -116,6 +116,16 @@ public interface FinanceLedgerBookClient {
         int size);
 
     /**
+     * 发起一次试算
+     *
+     * @param context 操作人会话
+     * @param ledgerBookId 账簿主键
+     * @param periodId 会计期间主键
+     * @return 试算摘要
+     */
+    TrialBalanceRunResponseBody runTrialBalance(OperatorContext context, String ledgerBookId, String periodId);
+
+    /**
      * 单次试算详情
      *
      * @param ledgerBookId 账簿主键

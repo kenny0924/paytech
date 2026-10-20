@@ -46,14 +46,13 @@
                                         <exclude>com.paytech:*-app</exclude>
                                         <!-- Finance bans copied from 09 §1.4. Step 11b reopens AMQP / RabbitMQ for ledger: it consumes
                                              AccountPosted through paytech-messaging (design/04 §5). Ledger registers no compensation
-                                             Handler, so compensation-event and its XXL-Job fallback stay banned. -->
+                                             Handler, so compensation-event stays banned. 2026-10-20 (finance console L4) reopens
+                                             paytech-xxl-job-starter / com.xuxueli for the accountingRuleVersionActivation Job Handler. -->
                                         <exclude>org.flywaydb:*</exclude>
                                         <exclude>org.liquibase:*</exclude>
                                         <exclude>com.alibaba.cloud:*</exclude>
                                         <exclude>com.alibaba.nacos:*</exclude>
-                                        <exclude>com.xuxueli:*</exclude>
                                         <exclude>com.paytech:paytech-compensation-event</exclude>
-                                        <exclude>com.paytech:paytech-xxl-job-starter</exclude>
                                         <exclude>org.springframework:spring-webflux</exclude>
                                         <exclude>org.springframework.cloud:spring-cloud-starter-gateway*</exclude>
                                         <exclude>org.springframework.cloud:spring-cloud-starter-openfeign</exclude>

@@ -25,7 +25,7 @@ import com.paytech.ledger.test.checker.LedgerResponseChecker;
 /**
  * 批准过账并发：同账簿不同调整由序号行锁串行，同一调整由资源锁与状态 CAS 保证只过账一次。
  *
- * @see ManualAdjustmentApi#approveManualAdjustment(String, ReviewManualAdjustmentRequestBody)
+ * @see ManualAdjustmentApi#approveManualAdjustment(String, String, String, ReviewManualAdjustmentRequestBody)
  */
 class ApproveManualAdjustmentConcurrencyTest extends AbstractManualAdjustmentApiTest {
     private static final int PARALLELISM = 4;

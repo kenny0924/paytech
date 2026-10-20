@@ -1,8 +1,10 @@
 package com.paytech.ledger.domainservice.service;
 
 import java.time.Instant;
+import java.util.List;
 
 import com.paytech.ledger.core.dal.dataobject.AccountingRuleBundle;
+import com.paytech.ledger.core.dal.dataobject.AccountingRuleBundleVer;
 import com.paytech.ledger.domain.AccountingRuleVersionContext;
 import com.paytech.ledger.domain.view.RuleBundleView;
 import com.paytech.ledger.domain.view.RuleVersionView;
@@ -38,6 +40,34 @@ public interface AccountingRuleService {
 
     /** 一个事务内锁规则集与版本，PENDING_APPROVAL → REJECTED 并写入复核人。 */
     void rejectVersion(AccountingRuleVersionContext context, long checkerId);
+
+    /**
+     * 读取目标版本生效时将被替代的当前版本
+     * <li>规则集尚无当前版本时返回空；当前指针无对应版本为系统错误。</li>
+     * <li>目标版本生效时间必须晚于当前版本，避免生效区间倒置，否则业务拒绝。</li>
+     */
+    AccountingRuleBundleVer findReplacedVersion(AccountingRuleVersionContext context);
+
+    /** 读取规则集当前版本；尚无当前版本时返回空，当前指针无对应版本为系统错误。 */
+    AccountingRuleBundleVer findCurrentVersion(AccountingRuleBundle bundle);
+
+    /**
+     * 一个事务内锁规则集与版本，把已被当前版本取代的 APPROVED 版本置为 RETIRED（从未生效）
+     * <li>失效时间写为自身生效时间，即零长度生效区间；规则集当前指针不变。</li>
+     */
+    void retireSupersededVersion(AccountingRuleVersionContext context);
+
+    /**
+     * 一个事务内锁规则集与版本，把到期的 APPROVED 版本切换为当前版本
+     * <li>版本 ACTIVE、原当前版本 RETIRED 且失效时间为新版本生效时间、规则集当前指针切换；复核结果不变。</li>
+     */
+    void activateVersion(AccountingRuleVersionContext context);
+
+    /** 一个事务内锁规则集与版本，DRAFT → VOIDED。 */
+    void voidVersion(AccountingRuleVersionContext context);
+
+    /** 全部规则集及其版本摘要，按规则集代码升序。 */
+    List<RuleBundleView> listBundles();
 
     /** 查询规则集与全部版本摘要；不存在时业务拒绝。 */
     RuleBundleView getBundle(String bundleCode);

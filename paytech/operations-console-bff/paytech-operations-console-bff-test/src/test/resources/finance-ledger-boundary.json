@@ -454,5 +454,28 @@
       ]
     },
     "routeCode": "operations-finance-trial-balance-detail"
+  },
+  {
+    "id": "T3",
+    "method": "POST",
+    "path": "/finance/ledger-books/v1/7312345678901239001/periods/7312345678901236010/trial-balances",
+    "query": "",
+    "request": null,
+    "status": 201,
+    "response": {
+      "trialBalanceRunId": "7312345678901242003",
+      "ledgerBookId": "7312345678901239001",
+      "periodId": "7312345678901236010",
+      "runNo": "3",
+      "asOfSequence": "1024",
+      "status": "SUCCEEDED",
+      "totalDebit": "357.60",
+      "totalCredit": "357.60",
+      "contentHash": "9f2c0e6b4d1a7c35e8b2f0d94a6c1e7b3d5f8a2c4e6b0d1f3a5c7e9b2d4f6a8c",
+      "lineCount": 2,
+      "exceptionCount": 1,
+      "createTime": "2026-10-19T08:30:00.123456Z"
+    },
+    "routeCode": "operations-finance-trial-balance-run"
   }
 ]

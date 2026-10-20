@@ -71,6 +71,10 @@ operations:
   # 只允许不含路径、Query 与 Fragment 的 http(s) 地址；auto 测试指向本地 Simulator。
   ledger-base-url: ${OPERATIONS_LEDGER_BASE_URL:http://127.0.0.1:18105}
   account-base-url: ${OPERATIONS_ACCOUNT_BASE_URL:http://127.0.0.1:18114}
+  # billing 同样不注册 Nacos，规则同上。
+  billing-base-url: ${OPERATIONS_BILLING_BASE_URL:http://127.0.0.1:18113}
+  # 关账发起、重开发起与关账/重开审批在 ledger 同步执行；只对这三个调用放宽读取超时，须小于 Gateway 路由响应超时上限 10 秒。
+  ledger-long-running-read-timeout: ${OPERATIONS_LEDGER_LONG_RUNNING_READ_TIMEOUT:9s}
 
 web:
   logging:

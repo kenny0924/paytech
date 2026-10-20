@@ -22,6 +22,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 import com.paytech.billing.api.BillingFactCommandApi;
+import com.paytech.billing.api.enums.BillingFactErrorCode;
 import com.paytech.billing.api.enums.BillingFactStatus;
 import com.paytech.billing.api.enums.BillingFactType;
 import com.paytech.billing.api.enums.FactComponentType;
@@ -41,7 +42,7 @@ import tools.jackson.databind.JsonNode;
  * <li>覆盖新提交（头、TICKET 引用、明细行与证据字段）、同来源引用同内容重放与改内容拒绝、两类人工登记的目录约束、合作方二元组与平台服务费
  * 主体不变量、目标余额桶、币种启用与精度、目录外代码，以及成本调整的来源支付事实与 CLEARING_ACCOUNT 要求。提交不登记发布任务。</li>
  *
- * @see BillingFactCommandApi#submitBillingFact(com.paytech.billing.api.request.SubmitBillingFactRequestBody)
+ * @see BillingFactCommandApi#submitBillingFact(String, String, com.paytech.billing.api.request.SubmitBillingFactRequestBody)
  */
 class SubmitBillingFactTest extends AbstractBillingFactApiTest {
 
@@ -127,7 +128,7 @@ class SubmitBillingFactTest extends AbstractBillingFactApiTest {
             .assertBusinessRejected("合作方二元组不完整");
         submit(BillingFactRequestBuilder.template().clearLines().addLine(FactComponentType.PARTNER_SHARE,
             FactPartyRole.OPERATING_ENTITY, ENTITY_NO, FactPartyRole.LOCAL_PARTNER, LOCAL_PARTNER_ID, "3.00",
-            FactLineDirection.CHARGE)).assertBusinessRejected("缺少合作方二元组");
+            FactLineDirection.CHARGE)).assertFailCode(BillingFactErrorCode.FACT_LINE_INVALID);
     }
 
     /** 平台服务费收方必须是头部 Finance Entity；完整二元组且收方一致时登记成功。 */
@@ -135,11 +136,11 @@ class SubmitBillingFactTest extends AbstractBillingFactApiTest {
     void test_serviceChargeSubjectInvariant() {
         submit(BillingFactRequestBuilder.template().partner().clearLines().addLine(
             FactComponentType.PLATFORM_SERVICE_CHARGE, FactPartyRole.LOCAL_PARTNER, LOCAL_PARTNER_ID, FactPartyRole.CLIENT,
-            CLIENT_ID, "2.00", FactLineDirection.CHARGE)).assertBusinessRejected("平台服务费收方必须是 Finance Entity");
+            CLIENT_ID, "2.00", FactLineDirection.CHARGE)).assertFailCode(BillingFactErrorCode.FACT_LINE_INVALID);
         submit(BillingFactRequestBuilder.template().partner().clearLines().addLine(
             FactComponentType.PLATFORM_SERVICE_CHARGE, FactPartyRole.LOCAL_PARTNER, LOCAL_PARTNER_ID,
             FactPartyRole.FINANCE_ENTITY, "529999", "2.00", FactLineDirection.CHARGE))
-            .assertBusinessRejected("收方与头部主体不一致");
+            .assertFailCode(BillingFactErrorCode.FACT_LINE_INVALID);
 
         submit(BillingFactRequestBuilder.template().partner().clearLines().addLine(
             FactComponentType.PLATFORM_SERVICE_CHARGE, FactPartyRole.LOCAL_PARTNER, LOCAL_PARTNER_ID,
@@ -155,7 +156,7 @@ class SubmitBillingFactTest extends AbstractBillingFactApiTest {
         submit(BillingFactRequestBuilder.template().parentFact(2_000_001L)).assertBusinessRejected("人工调整不得指定来源事实");
         submit(BillingFactRequestBuilder.template().clearLines().addLine(FactComponentType.PAYOUT_FEE,
             FactPartyRole.CLIENT, CLIENT_ID, FactPartyRole.OPERATING_ENTITY, ENTITY_NO, "1.00", FactLineDirection.CHARGE))
-            .assertBusinessRejected("人工调整不允许组件类型 " + FactComponentType.PAYOUT_FEE.getCode());
+            .assertFailCode(BillingFactErrorCode.FACT_LINE_INVALID);
         submit(BillingFactRequestBuilder.template().clearLines().addLine(FactComponentType.SELLER_TAX,
             FactPartyRole.CLIENT, CLIENT_ID, FactPartyRole.OPERATING_ENTITY, ENTITY_NO, "1.00", FactLineDirection.REVERSAL))
             .assertSuccess(201);
@@ -189,7 +190,7 @@ class SubmitBillingFactTest extends AbstractBillingFactApiTest {
             () -> assertEquals(FactTargetBucket.PENDING.getCode(), rows.get(1).get("target_bucket")));
         submit(BillingFactRequestBuilder.template().clearLines().addLine(FactComponentType.CLIENT_FEE,
             FactPartyRole.CLIENT, CLIENT_ID, FactPartyRole.OPERATING_ENTITY, ENTITY_NO, "1.00", FactLineDirection.CHARGE,
-            FactTargetBucket.AVAILABLE)).assertBusinessRejected("目标余额桶只用于收方为 CLIENT 或 LOCAL_PARTNER 的行");
+            FactTargetBucket.AVAILABLE)).assertFailCode(BillingFactErrorCode.FACT_LINE_INVALID);
         submit(BillingFactRequestBuilder.template().clearLines().addRawLine(FactComponentType.CLIENT_PRINCIPAL.getCode(),
             FactPartyRole.OPERATING_ENTITY.getCode(), ENTITY_NO, FactPartyRole.CLIENT.getCode(), CLIENT_ID, "1.00",
             FactLineDirection.CHARGE.getCode(), "FROZEN")).assertValidationError();
@@ -201,10 +202,11 @@ class SubmitBillingFactTest extends AbstractBillingFactApiTest {
         submit(BillingFactRequestBuilder.template().currency("EUR")).assertBusinessRejected("币种未配置或未启用");
         submit(BillingFactRequestBuilder.template().clearLines().addLine(FactComponentType.CLIENT_PRINCIPAL,
             FactPartyRole.OPERATING_ENTITY, ENTITY_NO, FactPartyRole.CLIENT, CLIENT_ID, "10.001",
-            FactLineDirection.CHARGE)).assertBusinessRejected("超过币种精度 2 位");
+            FactLineDirection.CHARGE)).assertFailCode(BillingFactErrorCode.FACT_LINE_INVALID);
     }
 
-    /** 目录外组件与角色在 Processor 以参数错误（400）拒绝；违反 Body 正则或必填的字段由入口校验以 422 拒绝；均不保存。 */
+    /** 目录外组件与角色在 Processor 以参数错误（400）拒绝；违反 Body 正则或必填的字段由入口校验以 422 拒绝；缺少或畸形的
+     * 操作人 Header 以参数错误（400）拒绝；均不保存。 */
     @Test
     void test_invalidParameter() {
         submit(BillingFactRequestBuilder.template().addRawLine("UNKNOWN_FEE", FactPartyRole.CLIENT.getCode(), CLIENT_ID,
@@ -217,7 +219,8 @@ class SubmitBillingFactTest extends AbstractBillingFactApiTest {
             FactPartyRole.CLIENT.getCode(), CLIENT_ID, FactPartyRole.OPERATING_ENTITY.getCode(), ENTITY_NO, "1.00",
             "REFUND", null)).assertValidationError();
         submit(BillingFactRequestBuilder.template().factType(BillingFactType.PAYMENT)).assertValidationError();
-        submit(BillingFactRequestBuilder.template().maker(null)).assertValidationError();
+        submit(BillingFactRequestBuilder.template().maker(null)).assertInvalidRequest();
+        submit(BillingFactRequestBuilder.template().maker("0")).assertInvalidRequest();
         submit(BillingFactRequestBuilder.template().clearLines()).assertValidationError();
     }
 
@@ -226,13 +229,13 @@ class SubmitBillingFactTest extends AbstractBillingFactApiTest {
     void test_lineAmountAndParties() {
         submit(BillingFactRequestBuilder.template().clearLines().addLine(FactComponentType.CLIENT_PRINCIPAL,
             FactPartyRole.OPERATING_ENTITY, ENTITY_NO, FactPartyRole.CLIENT, CLIENT_ID, "0.00", FactLineDirection.CHARGE))
-            .assertBusinessRejected("金额必须为正");
+            .assertFailCode(BillingFactErrorCode.FACT_LINE_INVALID);
         submit(BillingFactRequestBuilder.template().clearLines().addLine(FactComponentType.CLIENT_PRINCIPAL,
             FactPartyRole.CLIENT, CLIENT_ID, FactPartyRole.CLIENT, CLIENT_ID, "1.00", FactLineDirection.CHARGE))
-            .assertBusinessRejected("付方与收方不能相同");
+            .assertFailCode(BillingFactErrorCode.FACT_LINE_INVALID);
         submit(BillingFactRequestBuilder.template().clearLines().addLine(FactComponentType.CLIENT_PRINCIPAL,
             FactPartyRole.OPERATING_ENTITY, OTHER_ENTITY_NO, FactPartyRole.CLIENT, CLIENT_ID, "1.00",
-            FactLineDirection.CHARGE)).assertBusinessRejected("付方与头部主体不一致");
+            FactLineDirection.CHARGE)).assertFailCode(BillingFactErrorCode.FACT_LINE_INVALID);
     }
 
     /** 成本调整：来源支付事实与 CLEARING_ACCOUNT 必填，只登记 CHANNEL_COST + ADJUSTMENT，付方 / 收方为渠道与 OE；Client 取自来源事实。 */
@@ -278,16 +281,16 @@ class SubmitBillingFactTest extends AbstractBillingFactApiTest {
 
         submit(BillingFactRequestBuilder.costAdjustment(paymentFactId).clearLines().addLine(FactComponentType.CLIENT_FEE,
             FactPartyRole.OPERATING_ENTITY, ENTITY_NO, FactPartyRole.CHANNEL, CHANNEL_ID, "1.00",
-            FactLineDirection.ADJUSTMENT)).assertBusinessRejected("成本调整只能登记 CHANNEL_COST + ADJUSTMENT");
+            FactLineDirection.ADJUSTMENT)).assertFailCode(BillingFactErrorCode.FACT_LINE_INVALID);
         submit(BillingFactRequestBuilder.costAdjustment(paymentFactId).clearLines().addLine(FactComponentType.CHANNEL_COST,
             FactPartyRole.OPERATING_ENTITY, ENTITY_NO, FactPartyRole.CHANNEL, CHANNEL_ID, "1.00", FactLineDirection.CHARGE))
-            .assertBusinessRejected("成本调整只能登记 CHANNEL_COST + ADJUSTMENT");
+            .assertFailCode(BillingFactErrorCode.FACT_LINE_INVALID);
         submit(BillingFactRequestBuilder.costAdjustment(paymentFactId).clearLines().addLine(FactComponentType.CHANNEL_COST,
             FactPartyRole.CLIENT, CLIENT_ID, FactPartyRole.CHANNEL, CHANNEL_ID, "1.00", FactLineDirection.ADJUSTMENT))
-            .assertBusinessRejected("成本调整的付方与收方必须是 CHANNEL 与 OPERATING_ENTITY");
+            .assertFailCode(BillingFactErrorCode.FACT_LINE_INVALID);
         submit(BillingFactRequestBuilder.costAdjustment(paymentFactId).clearLines().addLine(FactComponentType.CHANNEL_COST,
             FactPartyRole.CHANNEL, CHANNEL_ID, FactPartyRole.OPERATING_ENTITY, ENTITY_NO, "1.00",
-            FactLineDirection.ADJUSTMENT, FactTargetBucket.AVAILABLE)).assertBusinessRejected("目标余额桶只用于人工调整");
+            FactLineDirection.ADJUSTMENT, FactTargetBucket.AVAILABLE)).assertFailCode(BillingFactErrorCode.FACT_LINE_INVALID);
         submit(BillingFactRequestBuilder.costAdjustment(paymentFactId).clearLines().addLine(FactComponentType.CHANNEL_COST,
             FactPartyRole.CHANNEL, CHANNEL_ID, FactPartyRole.OPERATING_ENTITY, ENTITY_NO, "0.25",
             FactLineDirection.ADJUSTMENT)).assertSuccess(201);

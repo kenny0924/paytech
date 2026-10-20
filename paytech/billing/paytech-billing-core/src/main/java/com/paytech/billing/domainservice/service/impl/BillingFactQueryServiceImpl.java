@@ -17,6 +17,8 @@ import com.paytech.billing.core.dal.dataobject.BillingFactRef;
 import com.paytech.billing.core.dal.dataobject.CurrencySpec;
 import com.paytech.billing.domain.BillingFactBookScope;
 import com.paytech.billing.domain.BillingFactContext;
+import com.paytech.billing.domain.BillingFactPayloads;
+import com.paytech.billing.domain.BillingFactSearchCriteria;
 import com.paytech.billing.domain.view.BillingFactPageView;
 import com.paytech.billing.domain.view.BillingFactProgressView;
 import com.paytech.billing.domain.view.BillingFactView;
@@ -29,6 +31,8 @@ import com.paytech.billing.domainservice.repository.CurrencySpecRepository;
 import com.paytech.billing.domainservice.service.BillingFactQueryService;
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.ErrorException;
+import com.paytech.foundation.web.paging.PagingRequestBody;
+import com.paytech.foundation.web.paging.PagingResponseBody;
 
 import lombok.AllArgsConstructor;
 
@@ -70,6 +74,17 @@ public class BillingFactQueryServiceImpl implements BillingFactQueryService {
     @Override
     public BillingFactProgressView getPublicationProgress(BillingFactBookScope scope) {
         return billingFactRepository.publicationProgress(scope);
+    }
+
+    /** 管理列表一页与总数；非空页按查询币种精度补齐总额。 */
+    @Override
+    public PagingResponseBody<BillingFact> searchFacts(BillingFactSearchCriteria criteria, PagingRequestBody paging) {
+        List<BillingFact> facts = billingFactRepository.findSearchPage(criteria, paging.size(), paging.offset());
+        if (!facts.isEmpty()) {
+            int minorUnit = minorUnit(criteria.getCurrency());
+            facts.forEach(fact -> fact.setGrossAmount(BillingFactPayloads.scaled(fact.getGrossAmount(), minorUnit)));
+        }
+        return new PagingResponseBody<>(facts, paging.page(), paging.size(), billingFactRepository.countSearch(criteria));
     }
 
     /** 一页事实：满 limit 条时以最后一条 ID 作为下一页游标，空页不读取其他表。 */

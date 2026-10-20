@@ -62,7 +62,7 @@ public class SubmitBillingFactRequest {
     @NotBlank
     private String currency;
 
-    /** 编制人 */
+    /** 编制人 Operations Account ID（X-Gateway-Actor-Subject） */
     @NotNull
     private Long makerId;
 

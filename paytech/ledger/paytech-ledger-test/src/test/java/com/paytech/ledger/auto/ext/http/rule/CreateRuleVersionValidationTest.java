@@ -10,6 +10,7 @@ import com.paytech.account.api.enums.BalanceBucket;
 import com.paytech.account.api.enums.OwnerType;
 import com.paytech.ledger.api.enums.AmountSource;
 import com.paytech.ledger.api.enums.AutoInstructionType;
+import com.paytech.ledger.api.enums.LedgerErrorCode;
 import com.paytech.ledger.api.enums.RuleOwnerRole;
 import com.paytech.ledger.core.enums.ChartAccountStatus;
 import com.paytech.ledger.core.enums.EntrySide;
@@ -19,7 +20,7 @@ import com.paytech.ledger.test.builder.RuleVersionRequestBuilder;
 /**
  * 创建规则版本的行集校验：非法目录代码、不存在科目、非法余额桶组合、重复行号/行代码与必填字段；被拒时不新增任何版本。
  *
- * @see com.paytech.ledger.api.AccountingRuleBundleApi#createRuleVersion(String, com.paytech.ledger.api.request.CreateRuleVersionRequestBody)
+ * @see com.paytech.ledger.api.AccountingRuleBundleApi#createRuleVersion(String, String, String, com.paytech.ledger.api.request.CreateRuleVersionRequestBody)
  */
 class CreateRuleVersionValidationTest extends AbstractRuleBundleApiTest {
     /** STANDARD 一级汇总科目“营业收入”（4001，不可过账）。 */
@@ -36,7 +37,7 @@ class CreateRuleVersionValidationTest extends AbstractRuleBundleApiTest {
         RuleVersionRequestBuilder builder = version();
         builder.line(0).setAmountSourceCode("UNKNOWN_SOURCE");
 
-        createVersion(builder).assertBusinessRejected("UNKNOWN_SOURCE");
+        createVersion(builder).assertRejected(LedgerErrorCode.RULE_LINE_INVALID);
     }
 
     @Test
@@ -44,7 +45,7 @@ class CreateRuleVersionValidationTest extends AbstractRuleBundleApiTest {
         RuleVersionRequestBuilder builder = version();
         builder.line(1).setOwnerRole("UNKNOWN_ROLE");
 
-        createVersion(builder).assertBusinessRejected("UNKNOWN_ROLE");
+        createVersion(builder).assertRejected(LedgerErrorCode.RULE_LINE_INVALID);
     }
 
     @Test
@@ -52,7 +53,7 @@ class CreateRuleVersionValidationTest extends AbstractRuleBundleApiTest {
         RuleVersionRequestBuilder builder = version();
         builder.line(2).setInstructionType("UNKNOWN_INSTRUCTION");
 
-        createVersion(builder).assertBusinessRejected("UNKNOWN_INSTRUCTION");
+        createVersion(builder).assertRejected(LedgerErrorCode.RULE_LINE_INVALID);
     }
 
     @Test
@@ -60,7 +61,7 @@ class CreateRuleVersionValidationTest extends AbstractRuleBundleApiTest {
         RuleVersionRequestBuilder builder = version();
         builder.line(2).setAccountCode("NOT_EXISTS_ACCOUNT");
 
-        createVersion(builder).assertBusinessRejected("NOT_EXISTS_ACCOUNT");
+        createVersion(builder).assertRejected(LedgerErrorCode.RULE_LINE_INVALID);
     }
 
     /** 汇总科目不可过账，不能被规则行引用。 */
@@ -69,7 +70,7 @@ class CreateRuleVersionValidationTest extends AbstractRuleBundleApiTest {
         RuleVersionRequestBuilder builder = version();
         builder.line(2).setAccountCode(OPERATING_REVENUE_CODE);
 
-        createVersion(builder).assertBusinessRejected("科目不存在或不可过账: 科目 " + OPERATING_REVENUE_CODE);
+        createVersion(builder).assertRejected(LedgerErrorCode.RULE_LINE_INVALID);
     }
 
     /** 停用的科目不能被新规则版本引用；当前生效版本不受影响。 */
@@ -79,7 +80,7 @@ class CreateRuleVersionValidationTest extends AbstractRuleBundleApiTest {
         String accountCode = builder.line(2).getAccountCode();
         testMapper.updateStandardChartAccountStatus(accountCode, ChartAccountStatus.INACTIVE.getCode());
 
-        createVersion(builder).assertBusinessRejected("科目已停用，不能被新规则版本引用: 科目 " + accountCode);
+        createVersion(builder).assertRejected(LedgerErrorCode.RULE_LINE_INVALID);
     }
 
     /** 渠道清算账户角色只能使用 NONE 桶。 */
@@ -97,7 +98,7 @@ class CreateRuleVersionValidationTest extends AbstractRuleBundleApiTest {
         RuleVersionRequestBuilder builder = version();
         builder.line(1).setOwnerRole(OwnerType.CLIENT.getCode());
 
-        createVersion(builder).assertBusinessRejected("核算对象角色不在自动记账目录中: " + OwnerType.CLIENT.getCode());
+        createVersion(builder).assertRejected(LedgerErrorCode.RULE_LINE_INVALID);
     }
 
     /** 规则行不得引用 Owner 控制科目，即使核算对象是账簿主体、桶为 NONE。 */
@@ -106,7 +107,7 @@ class CreateRuleVersionValidationTest extends AbstractRuleBundleApiTest {
         RuleVersionRequestBuilder builder = version();
         builder.line(1).setAccountCode(StandardAccountCodes.CLIENT_PAYABLE);
 
-        createVersion(builder).assertBusinessRejected("Owner 控制科目");
+        createVersion(builder).assertRejected(LedgerErrorCode.RULE_LINE_INVALID);
     }
 
     /** 总账账户一律 NONE 桶。 */
@@ -121,7 +122,7 @@ class CreateRuleVersionValidationTest extends AbstractRuleBundleApiTest {
     /** 行集为空由服务端拒绝。 */
     @Test
     void test_emptyLinesRejected() {
-        createVersion(version().clearLines()).assertProblem(400, "BUSINESS_CHECK_FAILED");
+        createVersion(version().clearLines()).assertRejected(LedgerErrorCode.RULE_LINE_INVALID);
     }
 
     /** 同一指令类型内行号重复。 */
@@ -132,7 +133,7 @@ class CreateRuleVersionValidationTest extends AbstractRuleBundleApiTest {
             AmountSource.CLIENT_FEE, RuleOwnerRole.BOOK_ENTITY, RuleVersionRequestBuilder.CLIENT_FEE_REVENUE,
             BalanceBucket.NONE, EntrySide.CREDIT, false));
 
-        createVersion(builder).assertBusinessRejected(AutoInstructionType.PAYMENT_SUCCEEDED.getCode());
+        createVersion(builder).assertRejected(LedgerErrorCode.RULE_LINE_INVALID);
     }
 
     /** 同一指令类型内行代码重复。 */
@@ -143,12 +144,17 @@ class CreateRuleVersionValidationTest extends AbstractRuleBundleApiTest {
             AmountSource.CLIENT_FEE, RuleOwnerRole.BOOK_ENTITY, RuleVersionRequestBuilder.CLIENT_FEE_REVENUE,
             BalanceBucket.NONE, EntrySide.CREDIT, false));
 
-        createVersion(builder).assertBusinessRejected("GROSS_RECEIVABLE");
+        createVersion(builder).assertRejected(LedgerErrorCode.RULE_LINE_INVALID);
     }
 
-    /** 编制人缺失属于字段校验。 */
+    /** 编制人取自操作人 Header：缺失或不是正十进制 Account ID 时 400，不创建版本。 */
     @Test
-    void test_missingMakerIdInvalid() {
-        createVersion(version().makerId(null)).assertProblem(422, "VALIDATION_ERROR").assertFieldError("makerId");
+    void test_invalidActorHeaderRejected() {
+        String path = PATH + "/" + BUNDLE_CODE + "/versions";
+        post(path, version().build()).assertInvalidRequest();
+        postAs(path, "operator-a", version().build()).assertInvalidRequest();
+        postAs(path, "0", version().build()).assertInvalidRequest();
+
+        assertEquals(1, getBundle(BUNDLE_CODE).assertSuccess(200).json().path("versions").size());
     }
 }

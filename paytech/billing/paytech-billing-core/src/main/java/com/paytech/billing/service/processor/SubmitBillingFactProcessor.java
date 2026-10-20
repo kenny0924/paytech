@@ -13,6 +13,7 @@ import java.util.Set;
 
 import org.springframework.stereotype.Component;
 
+import com.paytech.billing.api.enums.BillingFactErrorCode;
 import com.paytech.billing.api.enums.BillingFactStatus;
 import com.paytech.billing.api.enums.BillingFactType;
 import com.paytech.billing.api.enums.FactComponentType;
@@ -37,6 +38,7 @@ import com.paytech.billing.domainservice.validator.fact.BillingFactInvariants;
 import com.paytech.billing.service.processor.request.SubmitBillingFactRequest;
 import com.paytech.billing.service.processor.response.SubmitBillingFactResponse;
 import com.paytech.foundation.common.error.BizCheckFailException;
+import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
@@ -143,7 +145,7 @@ public class SubmitBillingFactProcessor
     /** 新提交的业务验证：币种与精度、目录约束与登记不变量、来源事实与被替代事实。 */
     BillingFactContext buildContext(BillingFact fact, List<BillingFactRef> refs, List<BillingFactLine> lines) {
         CurrencySpec spec = getActiveCurrencySpec(fact);
-        checkAmountScales(fact, lines, spec.getMinorUnit());
+        checkAmountScales(lines, spec.getMinorUnit());
         BillingFactContext context = new BillingFactContext(fact, refs, lines, null, spec.getMinorUnit());
         BillingFactInvariants.checkManualRegistration(context.toPayload());
         if (fact.getParentFactId() != null) {
@@ -165,12 +167,11 @@ public class SubmitBillingFactProcessor
         return spec;
     }
 
-    /** 明细金额的小数位不超过币种精度，不隐式舍入。 */
-    void checkAmountScales(BillingFact fact, List<BillingFactLine> lines, int minorUnit) {
+    /** 明细金额的小数位不超过币种精度，不隐式舍入；超出为 FACT_LINE_INVALID。 */
+    void checkAmountScales(List<BillingFactLine> lines, int minorUnit) {
         for (BillingFactLine line : lines) {
             if (line.getPostedAmount().stripTrailingZeros().scale() > minorUnit) {
-                throw new BizCheckFailException("计费事实明细金额超过币种精度 " + minorUnit + " 位: 行 " + line.getLineNo()
-                    + ", 金额 " + line.getPostedAmount().toPlainString() + ", 币种 " + fact.getCurrency());
+                throw new FailException(BillingFactErrorCode.FACT_LINE_INVALID);
             }
         }
     }
@@ -189,7 +190,7 @@ public class SubmitBillingFactProcessor
         fact.setClientId(parent.getClientId());
     }
 
-    /** 被替代事实是同类型、同 Client、OE、币种的已批准事实。 */
+    /** 被替代事实是同类型、同 Client、OE、币种的已批准事实；否则为 FACT_SUPERSEDE_INVALID。 */
     void checkSupersededFact(BillingFact fact) {
         BillingFact superseded = billingFactRepository.findById(fact.getSupersedesFactId());
         boolean valid = superseded != null && superseded.getFactType() == fact.getFactType()
@@ -197,8 +198,7 @@ public class SubmitBillingFactProcessor
             && Objects.equals(superseded.getClientId(), fact.getClientId())
             && superseded.getEntityNo().equals(fact.getEntityNo()) && superseded.getCurrency().equals(fact.getCurrency());
         if (!valid) {
-            throw new BizCheckFailException("被替代事实不存在、不是已批准的同类型同主体同币种事实: " + fact.getSupersedesFactId()
-                + ", 来源 " + fact.getSourceEventKey());
+            throw new FailException(BillingFactErrorCode.FACT_SUPERSEDE_INVALID);
         }
     }
 

@@ -155,9 +155,13 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
         Map.entry("client-onboarding-o09", "900000000000041005"),
         Map.entry("client-onboarding-o10", "900000000000041001"));
 
-    /** 财务路由权限：GET 为 FINANCE_ACCOUNTING_READ，POST 为 FINANCE_ACCOUNTING_MANAGE；未登记的 operations-finance-* 视为意外调用。 */
+    /**
+     * 财务路由权限：GET 为 FINANCE_ACCOUNTING_READ，POST 为 FINANCE_ACCOUNTING_MANAGE，审批与驳回为 FINANCE_ACCOUNTING_APPROVE（块 100）；
+     * 未登记的 operations-finance-* 视为意外调用。
+     */
     public static final String FINANCE_READ_PERMISSION_ID = "900000000000097101";
     public static final String FINANCE_MANAGE_PERMISSION_ID = "900000000000097102";
+    public static final String FINANCE_APPROVE_PERMISSION_ID = "900000000000100101";
     public static final Map<String, String> FINANCE_ROUTE_PERMISSIONS = Map.ofEntries(
         Map.entry("operations-finance-entity-list", FINANCE_READ_PERMISSION_ID),
         Map.entry("operations-finance-entity-create", FINANCE_MANAGE_PERMISSION_ID),
@@ -187,7 +191,33 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
         Map.entry("operations-finance-partner-balance", FINANCE_READ_PERMISSION_ID),
         Map.entry("operations-finance-owner-accounts", FINANCE_READ_PERMISSION_ID),
         Map.entry("operations-finance-owner-account-entries", FINANCE_READ_PERMISSION_ID),
-        Map.entry("operations-finance-account-posting", FINANCE_READ_PERMISSION_ID));
+        Map.entry("operations-finance-account-posting", FINANCE_READ_PERMISSION_ID),
+        Map.entry("operations-finance-manual-adjustment-list", FINANCE_READ_PERMISSION_ID),
+        Map.entry("operations-finance-manual-adjustment-submit", FINANCE_MANAGE_PERMISSION_ID),
+        Map.entry("operations-finance-manual-adjustment-detail", FINANCE_READ_PERMISSION_ID),
+        Map.entry("operations-finance-manual-adjustment-approve", FINANCE_APPROVE_PERMISSION_ID),
+        Map.entry("operations-finance-manual-adjustment-reject", FINANCE_APPROVE_PERMISSION_ID),
+        Map.entry("operations-finance-billing-fact-list", FINANCE_READ_PERMISSION_ID),
+        Map.entry("operations-finance-billing-fact-submit", FINANCE_MANAGE_PERMISSION_ID),
+        Map.entry("operations-finance-billing-fact-detail", FINANCE_READ_PERMISSION_ID),
+        Map.entry("operations-finance-billing-fact-approve", FINANCE_APPROVE_PERMISSION_ID),
+        Map.entry("operations-finance-billing-fact-void", FINANCE_MANAGE_PERMISSION_ID),
+        Map.entry("operations-finance-period-close-board", FINANCE_READ_PERMISSION_ID),
+        Map.entry("operations-finance-period-close-list", FINANCE_READ_PERMISSION_ID),
+        Map.entry("operations-finance-period-close-detail", FINANCE_READ_PERMISSION_ID),
+        Map.entry("operations-finance-period-close-start", FINANCE_MANAGE_PERMISSION_ID),
+        Map.entry("operations-finance-period-reopen-start", FINANCE_MANAGE_PERMISSION_ID),
+        Map.entry("operations-finance-period-close-approve", FINANCE_APPROVE_PERMISSION_ID),
+        Map.entry("operations-finance-period-close-reject", FINANCE_APPROVE_PERMISSION_ID),
+        Map.entry("operations-finance-trial-balance-run", FINANCE_MANAGE_PERMISSION_ID),
+        Map.entry("operations-finance-rule-bundle-list", FINANCE_READ_PERMISSION_ID),
+        Map.entry("operations-finance-rule-bundle-detail", FINANCE_READ_PERMISSION_ID),
+        Map.entry("operations-finance-rule-version-detail", FINANCE_READ_PERMISSION_ID),
+        Map.entry("operations-finance-rule-version-create", FINANCE_MANAGE_PERMISSION_ID),
+        Map.entry("operations-finance-rule-version-submit", FINANCE_MANAGE_PERMISSION_ID),
+        Map.entry("operations-finance-rule-version-approve", FINANCE_APPROVE_PERMISSION_ID),
+        Map.entry("operations-finance-rule-version-reject", FINANCE_APPROVE_PERMISSION_ID),
+        Map.entry("operations-finance-rule-version-void", FINANCE_MANAGE_PERMISSION_ID));
 
     // 这是 Platform Simulator 的当前目录事实；BFF 生产代码仍只传可信 Route Code。
     /**

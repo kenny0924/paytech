@@ -1,0 +1,9 @@
+# 任务卡 C：Platform 能力清单、注册 SQL、Compose 与文档
+
+先读 `00-common.md` 与 `../technique.md`（D2、D3、第 6、7 节）。范围：`paytech/platform-support/**`（仅能力清单 JSON 与初始化 SQL）、`test-environment/compose.applications.yaml`（仅 ledger、operations-console-bff 两段）、文档、`requirements-site`。不改 Java / TS 业务代码。
+
+1. **能力清单**：`paytech/platform-support/paytech-platform-support-access-control/src/main/resources/operations/console-resource-capabilities.json` 增加 3 个组件（调整、期间关账、记账规则，含各自 MANAGE / APPROVE actions）并给 LEDGER 组件 actions 加 `OPERATIONS_FINANCE_LEDGER_MANAGE`；跑 platform-support 中与能力清单相关的测试。Web 的 `pageCapabilities.ts` 由卡 E 改，组件 key 与路由在报告中写明供 E 使用。
+2. **注册 SQL**：块 100（调整：权限 `FINANCE_ACCOUNTING_APPROVE` + 授予 PLATFORM_ADMIN、菜单与 2 按钮、人工调整 5 条 + 计费事实 5 条路由）、101（期间关账：菜单与 2 按钮、LEDGER 发起试算按钮、关账 6 条路由 + 看板 1 条 + 发起试算 1 条）、102（记账规则：菜单与 2 按钮、规则包列表 / 详情 / 版本详情 / 新建 / 提交 / 审批 / 驳回 / 作废）。路径为 BFF 路径 `/finance/...`（与 technique 第 3—5 节转发一致，BFF 卡 D 以你的路由清单为准，写入报告）。格式、ID 规则、Header / 查询参数 / Guard 行、DISABLED 初始状态完全参照块 91 / 97 / 99；写入需求目录 `db/platform-support/registration-dml.sql`（阅读副本）并追加到 worktree 的 `platform-support-initial-data.sql`；另写 `activation-local.sql`、`test-activate.sql`、`test-deactivate.sql`（角色版本相对递增）。核对不与 91—95、97—99 冲突。
+3. **Compose**：ledger-service 增加 XXL 执行器环境变量（参照 account：ADMIN 地址、TOKEN、ENABLED、APPNAME `ledger-service`、IP 用 ledger 在 `mor-test-backend` 的固定 IP——先 `docker network inspect mor-test-backend` 只读确认、PORT 9999、LOGPATH、EXCLUDEDPACKAGES）；operations-console-bff 增加 `OPERATIONS_BILLING_BASE_URL: http://billing-service:18113`。
+4. **文档**：`agent-docs/database/FINANCE_DATABASE.md` 中计费事实与规则版本状态加 `VOIDED`；`FINANCE_PHYSICAL_DECISIONS.md` 对应处；ledger / billing README 现状；`requirements-site/content/requirements.ts` 相关 FIN 用例（人工调整、关账、规则维护的控制台入口与身份来源）。跑 `npm --prefix requirements-site test` 并与改前基线对比。
+5. 报告 `C-report.md`：路由清单（Method + BFF 路径 + 权限）、组件 key / 路由 / actions、IP 选择依据。

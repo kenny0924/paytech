@@ -7,9 +7,10 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
-import com.paytech.ledger.api.enums.AutoInstructionType;
-import com.paytech.foundation.common.error.BizCheckFailException;
+import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
+import com.paytech.ledger.api.enums.AutoInstructionType;
+import com.paytech.ledger.api.enums.LedgerErrorCode;
 import com.paytech.ledger.core.constant.AccountingLocks;
 import com.paytech.ledger.core.dal.dataobject.AccountingRuleBundleVer;
 import com.paytech.ledger.core.dal.dataobject.AccountingRuleLine;
@@ -51,12 +52,10 @@ public class SubmitRuleVersionProcessor extends AbstractLockProcessor<SubmitRule
     /** 只能提交 DRAFT 版本，且提交人为编制人。 */
     void checkSubmittable(SubmitRuleVersionRequest request, AccountingRuleBundleVer ver) {
         if (ver.getStatus() != RuleVersionStatus.DRAFT) {
-            throw new BizCheckFailException("规则版本不是草稿: 规则集 " + request.getBundleCode() + ", 版本 "
-                + request.getBundleVer() + ", 状态 " + ver.getStatus().getCode());
+            throw new FailException(LedgerErrorCode.RULE_VERSION_STATUS_INVALID);
         }
         if (!ver.getMakerId().equals(request.getMakerId())) {
-            throw new BizCheckFailException("提交人必须是编制人: 规则集 " + request.getBundleCode() + ", 版本 "
-                + request.getBundleVer() + ", 编制人 " + ver.getMakerId() + ", 提交人 " + request.getMakerId());
+            throw new FailException(LedgerErrorCode.RULE_SUBMITTER_NOT_MAKER);
         }
     }
 
@@ -66,8 +65,7 @@ public class SubmitRuleVersionProcessor extends AbstractLockProcessor<SubmitRule
             AccountingRuleLine::getInstructionType, Collectors.mapping(AccountingRuleLine::getEntrySide, Collectors.toSet())));
         for (Map.Entry<AutoInstructionType, Set<EntrySide>> entry : sides.entrySet()) {
             if (entry.getValue().size() < EntrySide.values().length) {
-                throw new BizCheckFailException("指令类型缺少借方或贷方规则行: 规则集 " + request.getBundleCode() + ", 版本 "
-                    + request.getBundleVer() + ", 指令类型 " + entry.getKey().getCode());
+                throw new FailException(LedgerErrorCode.RULE_LINE_INVALID);
             }
         }
     }

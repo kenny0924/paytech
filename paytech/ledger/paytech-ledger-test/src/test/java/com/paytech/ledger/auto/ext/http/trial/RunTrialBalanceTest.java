@@ -32,7 +32,7 @@ import tools.jackson.databind.JsonNode;
 /**
  * 执行试算：期初/本期/期末汇总、借贷合计、水位与期间过滤、分录借贷不平异常、期间余额投影与拒绝场景。
  *
- * @see com.paytech.ledger.api.TrialBalanceApi#runTrialBalance(String, String)
+ * @see com.paytech.ledger.api.TrialBalanceApi#runTrialBalance(String, String, String, String)
  */
 class RunTrialBalanceTest extends AbstractTrialBalanceApiTest {
     /** 初始化 DML 中 BANK_CASH 科目的固定主键。 */
@@ -148,11 +148,11 @@ class RunTrialBalanceTest extends AbstractTrialBalanceApiTest {
         long otherBook = ledgerMocker.mockBook(LedgerEntityType.OPERATING_ENTITY, "AE003", "USD",
             LedgerMocker.STANDARD_CHART_ID);
 
-        post(trialPath(123456789L, ledger.getOpenPeriodId()), null).assertBusinessRejected("账簿不存在: 123456789");
+        postAsOperator(trialPath(123456789L, ledger.getOpenPeriodId()), null).assertBusinessRejected("账簿不存在: 123456789");
         runTrial(123456789L).assertBusinessRejected("会计期间不存在: 123456789");
         runTrial(foreignPeriod).assertBusinessRejected(
             "会计期间不属于账簿主体: 期间 " + foreignPeriod + ", 账簿 " + ledger.getLedgerBookId());
-        post(trialPath(otherBook, ledger.getOpenPeriodId()), null).assertBusinessRejected("会计期间不属于账簿主体");
+        postAsOperator(trialPath(otherBook, ledger.getOpenPeriodId()), null).assertBusinessRejected("会计期间不属于账簿主体");
         runTrial(futurePeriod).assertBusinessRejected("会计期间未开放，不能试算: " + futurePeriod);
         assertEquals(0, testMapper.countTrialRuns(ledger.getLedgerBookId()));
     }

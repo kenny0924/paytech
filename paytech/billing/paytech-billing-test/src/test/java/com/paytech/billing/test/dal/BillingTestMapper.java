@@ -57,9 +57,9 @@ public interface BillingTestMapper {
     @Delete("DELETE FROM t_business_calendar WHERE calendar_code <> 'DEFAULT'")
     void deleteNonReservedCalendars();
 
-    /** 读取计费事实头的来源方式、状态、版本、主体、复核、业务时间与发布字段。 */
+    /** 读取计费事实头的来源方式、状态、版本、主体、复核、业务时间、发布字段与更新时间。 */
     @Select("SELECT origin_type, status, fact_version, client_id, maker_id, checker_id, approved_time, business_time, "
-        + "published_at, supersedes_fact_id, parent_fact_id FROM t_billing_fact WHERE id = #{factId}")
+        + "published_at, supersedes_fact_id, parent_fact_id, update_time FROM t_billing_fact WHERE id = #{factId}")
     Map<String, Object> selectBillingFact(@Param("factId") long factId);
 
     /** 计费事实的全部明细行（组件、金额、目标余额桶与来源规则字段），按行号升序。 */

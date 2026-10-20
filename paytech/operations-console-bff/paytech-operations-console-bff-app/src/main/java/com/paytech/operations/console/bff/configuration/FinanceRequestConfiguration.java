@@ -21,7 +21,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.operations.console.bff.service.model.FinanceBalanceModels;
+import com.paytech.operations.console.bff.service.model.FinanceBillingFactModels;
 import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels;
+import com.paytech.operations.console.bff.service.model.FinanceManualAdjustmentModels;
+import com.paytech.operations.console.bff.service.model.FinancePeriodCloseModels;
+import com.paytech.operations.console.bff.service.model.FinanceRuleBundleModels;
 import com.paytech.operations.console.bff.service.model.FinanceSetupModels;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -37,16 +41,24 @@ import tools.jackson.databind.type.LogicalType;
 
 /**
  * /finance 请求体的严格边界
- * <li>只读取 Finance*Models 内的 *RequestBody：拒绝重复键、未知属性、尾随内容与标量强转，写 Body 上限 8192 字节（超限 413）。</li>
- * <li>GET 与未声明 RequestBody 的命令（开放会计期间）携带 Body 时返回 400；拦截器排在 PLT-I02 授权之后执行。</li>
+ * <li>只读取 Finance*Models 内的 *RequestBody：拒绝重复键、未知属性、尾随内容与标量强转，写 Body 上限 8192 字节（超限 413）；
+ * 多行明细的人工调整提交、计费事实登记与规则版本新建上限 65536 字节，与 Gateway 路由 Body 上限一致。</li>
+ * <li>GET 与未声明 RequestBody 的命令（开放会计期间、发起关账、发起试算、计费事实批准/作废、规则版本提交/审批/驳回/作废）
+ * 携带 Body 时返回 400；拦截器排在 PLT-I02 授权之后执行。</li>
  *
  * @author Claude
  */
 @Configuration(proxyBeanMethods = false)
 public class FinanceRequestConfiguration implements WebMvcConfigurer {
     private static final int BODY_LIMIT = 8192;
+    private static final int LINES_BODY_LIMIT = 65536;
     private static final Set<Class<?>> MODEL_CONTAINERS = Set.of(FinanceSetupModels.class,
-        FinanceLedgerBookModels.class, FinanceBalanceModels.class);
+        FinanceLedgerBookModels.class, FinanceBalanceModels.class, FinanceManualAdjustmentModels.class,
+        FinanceBillingFactModels.class, FinancePeriodCloseModels.class, FinanceRuleBundleModels.class);
+    private static final Set<Class<?>> LINES_BODIES = Set.of(
+        FinanceManualAdjustmentModels.SubmitManualAdjustmentRequestBody.class,
+        FinanceBillingFactModels.SubmitBillingFactRequestBody.class,
+        FinanceRuleBundleModels.CreateRuleVersionRequestBody.class);
 
     private final JsonMapper mapper;
 
@@ -116,8 +128,9 @@ public class FinanceRequestConfiguration implements WebMvcConfigurer {
 
         @Override
         public Object read(ResolvableType type, HttpInputMessage input, Map<String, Object> hints) throws IOException {
-            byte[] body = input.getBody().readNBytes(BODY_LIMIT + 1);
-            if (body.length > BODY_LIMIT) {
+            int limit = LINES_BODIES.contains(type.resolve()) ? LINES_BODY_LIMIT : BODY_LIMIT;
+            byte[] body = input.getBody().readNBytes(limit + 1);
+            if (body.length > limit) {
                 throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE);
             }
             try {

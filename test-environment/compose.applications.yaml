@@ -608,6 +608,15 @@ services:
       LEDGER_SNOWFLAKE_WORKER_ID: "23"
       LEDGER_ACCOUNT_SERVICE_URL: http://account-service:18114
       LEDGER_BILLING_SERVICE_URL: http://billing-service:18113
+      # 规则版本到时生效执行器：任务 accountingRuleVersionActivation 在 xxl-job-admin 登记（20261020 记账规则包维护）。
+      XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
+      XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
+      XXL_JOB_EXECUTOR_ENABLED: "true"
+      XXL_JOB_EXECUTOR_APPNAME: ledger-service
+      XXL_JOB_EXECUTOR_IP: 172.30.73.38
+      XXL_JOB_EXECUTOR_PORT: "9999"
+      XXL_JOB_EXECUTOR_LOGPATH: /tmp/xxl-job
+      XXL_JOB_EXECUTOR_EXCLUDEDPACKAGES: org.springframework.,spring.
     depends_on:
       mysql: { condition: service_healthy }
       redis: { condition: service_healthy }
@@ -823,6 +832,8 @@ services:
       # ledger / account 不注册 Nacos；BFF 以固定私网地址直连（20261018 财务基础资料与账本余额查询）。
       OPERATIONS_LEDGER_BASE_URL: http://ledger-service:18105
       OPERATIONS_ACCOUNT_BASE_URL: http://account-service:18114
+      # 调整页的计费事实查询、登记、批准与作废同样以固定私网地址直连 billing（20261020 人工调整与计费事实）。
+      OPERATIONS_BILLING_BASE_URL: http://billing-service:18113
     depends_on:
       platform-support-service: { condition: service_healthy }
       risk-decision-service: { condition: service_healthy }

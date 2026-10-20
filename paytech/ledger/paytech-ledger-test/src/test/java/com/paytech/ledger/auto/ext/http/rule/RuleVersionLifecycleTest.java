@@ -9,11 +9,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
 import com.paytech.ledger.api.enums.AutoInstructionType;
+import com.paytech.ledger.api.enums.LedgerErrorCode;
 import com.paytech.ledger.api.request.RuleLineRequestBody;
 import com.paytech.ledger.core.enums.RuleVersionStatus;
 import com.paytech.ledger.test.base.AbstractRuleBundleApiTest;
@@ -24,10 +24,10 @@ import tools.jackson.databind.JsonNode;
 /**
  * 记账规则版本生命周期：创建 DRAFT、提交、批准切换当前版本、未到生效时间仅 APPROVED、驳回、Maker 自审、非 DRAFT 提交与查询。
  *
- * @see com.paytech.ledger.api.AccountingRuleBundleApi#createRuleVersion(String, com.paytech.ledger.api.request.CreateRuleVersionRequestBody)
- * @see com.paytech.ledger.api.AccountingRuleBundleApi#submitRuleVersion(String, String, com.paytech.ledger.api.request.SubmitRuleVersionRequestBody)
- * @see com.paytech.ledger.api.AccountingRuleBundleApi#approveRuleVersion(String, String, com.paytech.ledger.api.request.ReviewRuleVersionRequestBody)
- * @see com.paytech.ledger.api.AccountingRuleBundleApi#rejectRuleVersion(String, String, com.paytech.ledger.api.request.ReviewRuleVersionRequestBody)
+ * @see com.paytech.ledger.api.AccountingRuleBundleApi#createRuleVersion(String, String, String, com.paytech.ledger.api.request.CreateRuleVersionRequestBody)
+ * @see com.paytech.ledger.api.AccountingRuleBundleApi#submitRuleVersion(String, String, String, String)
+ * @see com.paytech.ledger.api.AccountingRuleBundleApi#approveRuleVersion(String, String, String, String)
+ * @see com.paytech.ledger.api.AccountingRuleBundleApi#rejectRuleVersion(String, String, String, String)
  * @see com.paytech.ledger.api.AccountingRuleBundleApi#getRuleBundle(String)
  * @see com.paytech.ledger.api.AccountingRuleBundleApi#getRuleVersion(String, String)
  */
@@ -37,7 +37,7 @@ class RuleVersionLifecycleTest extends AbstractRuleBundleApiTest {
     @Test
     void test_createDraftEchoesLines() {
         Instant effectiveFrom = pastEffectiveFrom();
-        var response = createVersion(RuleVersionRequestBuilder.template(MAKER_ID, effectiveFrom)).assertSuccess(201)
+        var response = createVersion(RuleVersionRequestBuilder.template(effectiveFrom)).assertSuccess(201)
             .assertText("bundleCode", BUNDLE_CODE).assertText("bundleVer", "2")
             .assertText("status", RuleVersionStatus.DRAFT.getCode()).assertText("makerId", MAKER_ID);
 
@@ -54,7 +54,7 @@ class RuleVersionLifecycleTest extends AbstractRuleBundleApiTest {
     @Test
     void test_approveActivatesAndRetiresPrevious() {
         Instant effectiveFrom = pastEffectiveFrom();
-        var submitted = createSubmitted(RuleVersionRequestBuilder.template(MAKER_ID, effectiveFrom))
+        var submitted = createSubmitted(RuleVersionRequestBuilder.template(effectiveFrom))
             .assertText("status", RuleVersionStatus.PENDING_APPROVAL.getCode());
         long versionId = submitted.id("versionId");
 
@@ -78,7 +78,7 @@ class RuleVersionLifecycleTest extends AbstractRuleBundleApiTest {
     @Test
     void test_futureEffectiveApprovalStaysApproved() {
         Instant future = Instant.now().truncatedTo(ChronoUnit.MICROS).plus(1, ChronoUnit.DAYS);
-        createSubmitted(RuleVersionRequestBuilder.template(MAKER_ID, future));
+        createSubmitted(RuleVersionRequestBuilder.template(future));
 
         var approved = approve(2, CHECKER_ID).assertSuccess(200)
             .assertText("status", RuleVersionStatus.APPROVED.getCode()).assertText("checkerId", CHECKER_ID);
@@ -102,13 +102,24 @@ class RuleVersionLifecycleTest extends AbstractRuleBundleApiTest {
         createVersion(version()).assertSuccess(201).assertText("bundleVer", "3");
     }
 
+    /** 已到生效时间但生效时间不晚于当前版本（2000-01-01）：批准被拒，版本保持 PENDING_APPROVAL，指针不变。 */
+    @Test
+    void test_effectiveFromNotAfterCurrentRejected() {
+        createSubmitted(RuleVersionRequestBuilder.template(Instant.parse("1999-01-01T00:00:00Z")));
+
+        approve(2, CHECKER_ID).assertRejected(LedgerErrorCode.RULE_EFFECTIVE_FROM_INVALID);
+
+        getVersion(2).assertSuccess(200).assertText("status", RuleVersionStatus.PENDING_APPROVAL.getCode());
+        assertPointer(INITIAL_VERSION_ID, 0L);
+    }
+
     /** Maker 不能批准或驳回自己的版本，版本保持 PENDING_APPROVAL。 */
     @Test
     void test_makerSelfReviewRejected() {
         createSubmitted(version());
 
-        approve(2, MAKER_ID).assertBusinessRejected(MAKER_ID);
-        reject(2, MAKER_ID).assertBusinessRejected(MAKER_ID);
+        approve(2, MAKER_ID).assertRejected(LedgerErrorCode.SELF_REVIEW_FORBIDDEN);
+        reject(2, MAKER_ID).assertRejected(LedgerErrorCode.SELF_REVIEW_FORBIDDEN);
 
         getVersion(2).assertSuccess(200).assertText("status", RuleVersionStatus.PENDING_APPROVAL.getCode());
         assertPointer(INITIAL_VERSION_ID, 0L);
@@ -119,11 +130,11 @@ class RuleVersionLifecycleTest extends AbstractRuleBundleApiTest {
     void test_nonDraftSubmitRejected() {
         createVersion(version()).assertSuccess(201);
 
-        submit(2, CHECKER_ID).assertBusinessRejected(CHECKER_ID);
+        submit(2, CHECKER_ID).assertRejected(LedgerErrorCode.RULE_SUBMITTER_NOT_MAKER);
         submit(2, MAKER_ID).assertSuccess(200);
-        submit(2, MAKER_ID).assertBusinessRejected(RuleVersionStatus.PENDING_APPROVAL.getCode());
-        submit(INITIAL_BUNDLE_VER, MAKER_ID).assertBusinessRejected(RuleVersionStatus.ACTIVE.getCode());
-        approve(INITIAL_BUNDLE_VER, CHECKER_ID).assertBusinessRejected(RuleVersionStatus.ACTIVE.getCode());
+        submit(2, MAKER_ID).assertRejected(LedgerErrorCode.RULE_VERSION_STATUS_INVALID);
+        submit(INITIAL_BUNDLE_VER, MAKER_ID).assertRejected(LedgerErrorCode.RULE_VERSION_STATUS_INVALID);
+        approve(INITIAL_BUNDLE_VER, CHECKER_ID).assertRejected(LedgerErrorCode.RULE_VERSION_STATUS_INVALID);
 
         getVersion(2).assertSuccess(200).assertText("status", RuleVersionStatus.PENDING_APPROVAL.getCode());
     }
@@ -132,10 +143,10 @@ class RuleVersionLifecycleTest extends AbstractRuleBundleApiTest {
     @Test
     void test_pendingVersionBlocksCreate() {
         createVersion(version()).assertSuccess(201);
-        createVersion(version()).assertBusinessRejected(BUNDLE_CODE);
+        createVersion(version()).assertRejected(LedgerErrorCode.RULE_VERSION_IN_PROGRESS);
 
         submit(2, MAKER_ID).assertSuccess(200);
-        createVersion(version()).assertBusinessRejected(BUNDLE_CODE);
+        createVersion(version()).assertRejected(LedgerErrorCode.RULE_VERSION_IN_PROGRESS);
 
         assertEquals(2, getBundle(BUNDLE_CODE).assertSuccess(200).json().path("versions").size());
     }
@@ -147,7 +158,7 @@ class RuleVersionLifecycleTest extends AbstractRuleBundleApiTest {
         builder.removeLine(RuleVersionRequestBuilder.standardLines().size() - 1);
         createVersion(builder).assertSuccess(201).assertText("status", RuleVersionStatus.DRAFT.getCode());
 
-        submit(2, MAKER_ID).assertBusinessRejected(AutoInstructionType.PLATFORM_SERVICE_CHARGE_PLATFORM.getCode());
+        submit(2, MAKER_ID).assertRejected(LedgerErrorCode.RULE_LINE_INVALID);
 
         getVersion(2).assertSuccess(200).assertText("status", RuleVersionStatus.DRAFT.getCode());
     }
@@ -215,12 +226,5 @@ class RuleVersionLifecycleTest extends AbstractRuleBundleApiTest {
             () -> assertEquals(status.getCode(), node.path("status").asString()),
             () -> assertEquals(expectedEffectiveTo,
                 effectiveTo.isMissingNode() || effectiveTo.isNull() ? null : Instant.parse(effectiveTo.asString())));
-    }
-
-    /** Bundle 当前版本指针与乐观锁版本。 */
-    private void assertPointer(long currentVerId, long version) {
-        Map<String, Object> pointer = testMapper.selectRuleBundlePointer(BUNDLE_ID);
-        assertEquals(currentVerId, ((Number)pointer.get("current_ver_id")).longValue(), "current_ver_id");
-        assertEquals(version, ((Number)pointer.get("version")).longValue(), "Bundle version");
     }
 }
