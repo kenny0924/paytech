@@ -11,6 +11,11 @@ public final class AccountingLocks {
         return "manual-adjustment:" + manualAdjustmentId;
     }
 
+    /** 同一科目表的科目维护与新建账簿（采用科目表）共用的资源锁：“检查未采用 → 修改结构”与“采用”互斥。 */
+    public static String chart(long chartId) {
+        return "chart:" + chartId;
+    }
+
     /** 同一财务日历下创建期间的资源锁。 */
     public static String fiscalCalendar(long fiscalCalendarId) {
         return "fiscal-calendar:" + fiscalCalendarId;

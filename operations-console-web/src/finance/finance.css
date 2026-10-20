@@ -37,6 +37,11 @@
 .finance-page .finance-charts h2 { font-size: 15px; margin: 0 0 10px; }
 .finance-page .finance-charts-side h2 + section, .finance-page .finance-charts-side .finance-side-meta { margin-bottom: 16px; }
 .finance-page .finance-charts-main .finance-section-head h2 { margin: 0; }
+.finance-page .finance-tree-search { width: 220px; }
+.finance-page .finance-inactive-row > td { color: rgba(0, 0, 0, 0.4); }
+.finance-page .finance-trial-head { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0 16px; }
+.finance-page .finance-trial-head .ant-form-item { min-width: 220px; }
+.finance-page .finance-trial-totals { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px 24px; margin-top: 12px; font-weight: 600; }
 .finance-page .finance-balance-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-top: 8px; }
 .finance-page .finance-balance-card { background: #f8fafc; border-radius: 8px; padding: 16px; }
 .finance-page .finance-balance-label { color: #69717d; font-size: 12px; }

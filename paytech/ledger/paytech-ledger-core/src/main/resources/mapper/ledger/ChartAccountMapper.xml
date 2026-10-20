@@ -1,24 +1,52 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.paytech.ledger.core.dal.mapper.ChartAccountMapper">
+    <sql id="columns">id, chart_id, parent_account_id, account_no, account_code, account_name, account_class, normal_side, posting_allowed, account_status, create_time, update_time</sql>
+
+    <insert id="insert">
+        INSERT INTO t_chart_account (<include refid="columns"/>)
+        VALUES (#{id}, #{chartId}, #{parentAccountId}, #{accountNo}, #{accountCode}, #{accountName}, #{accountClass}, #{normalSide}, #{postingAllowed}, #{accountStatus}, #{createTime}, #{updateTime})
+    </insert>
+
     <select id="selectByIds" resultType="com.paytech.ledger.core.dal.dataobject.ChartAccount">
-        SELECT id, chart_id, parent_account_id, account_code, account_name, account_class, normal_side, posting_allowed, create_time, update_time FROM t_chart_account WHERE id IN
+        SELECT <include refid="columns"/> FROM t_chart_account WHERE id IN
         <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
         ORDER BY id
     </select>
 
     <select id="selectById" resultType="com.paytech.ledger.core.dal.dataobject.ChartAccount">
-        SELECT id, chart_id, parent_account_id, account_code, account_name, account_class, normal_side, posting_allowed, create_time, update_time FROM t_chart_account WHERE id = #{id}
+        SELECT <include refid="columns"/> FROM t_chart_account WHERE id = #{id}
     </select>
 
     <select id="selectByChartAndCode" resultType="com.paytech.ledger.core.dal.dataobject.ChartAccount">
-        SELECT id, chart_id, parent_account_id, account_code, account_name, account_class, normal_side, posting_allowed, create_time, update_time FROM t_chart_account WHERE chart_id = #{chartId} AND account_code = #{accountCode}
+        SELECT <include refid="columns"/> FROM t_chart_account WHERE chart_id = #{chartId} AND account_code = #{accountCode}
+    </select>
+
+    <select id="selectByChartAndNo" resultType="com.paytech.ledger.core.dal.dataobject.ChartAccount">
+        SELECT <include refid="columns"/> FROM t_chart_account WHERE chart_id = #{chartId} AND account_no = #{accountNo}
     </select>
 
     <select id="selectByChart" resultType="com.paytech.ledger.core.dal.dataobject.ChartAccount">
-        SELECT id, chart_id, parent_account_id, account_code, account_name, account_class, normal_side, posting_allowed, create_time, update_time FROM t_chart_account
+        SELECT <include refid="columns"/> FROM t_chart_account
         WHERE chart_id = #{chartId}
         <if test="postingAllowed != null">AND posting_allowed = #{postingAllowed}</if>
-        ORDER BY account_code
+        <if test="accountStatus != null">AND account_status = #{accountStatus}</if>
+        ORDER BY account_no
     </select>
+
+    <select id="selectChildren" resultType="com.paytech.ledger.core.dal.dataobject.ChartAccount">
+        SELECT <include refid="columns"/> FROM t_chart_account WHERE parent_account_id = #{parentAccountId} ORDER BY account_no
+    </select>
+
+    <!-- 维护在科目表资源锁内执行；条件限定科目与科目表，行数不为 1 即失败。 -->
+    <update id="updateStructure">
+        UPDATE t_chart_account
+        SET account_name = #{accountName}, account_no = #{accountNo}, parent_account_id = #{parentAccountId}, update_time = #{now}
+        WHERE id = #{account.id} AND chart_id = #{account.chartId}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE t_chart_account SET account_status = #{to}, update_time = #{now}
+        WHERE id = #{account.id} AND chart_id = #{account.chartId} AND account_status = #{account.accountStatus}
+    </update>
 </mapper>

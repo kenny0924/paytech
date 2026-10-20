@@ -11,6 +11,15 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
+<a id="ledger-chart-hierarchy-20261020"></a>
+## ledger 会计科目分级与可读账户号（2026-10-20，已部署 mor-test，已本地提交，未推送）
+
+- **范围：** 按[需求](<../requirements/20261019/ledger-会计科目分级维护/requirement.md>)、[技术方案](<../requirements/20261019/ledger-会计科目分级维护/technique.md>)与[决定](./decisions/2026-10-19-ledger-chart-hierarchy-and-account-numbers.md)：科目 4-2-2-2 分级编号与启停状态、STANDARD 改为三级树（一级 19、二级 26、三级末级 29，共 74 个，系统代码不变；2026-10-20 由两级改为三级）、科目维护（新增 / 修改 / 停用 / 启用，直接生效并写 `t_chart_account_change`）、采用后结构冻结、科目余额与试算平衡详情按级次汇总、ledger 与 account 账户可读账户号（`AE001-USD-22010101-0001` / `AE001-USD-22010101-S000001`）及控制台显示与搜索；「发起试算」按钮本期不做。
+- **Implemented（已本地提交，未推送）：** 2026-10-20 合入 main（在 `cf39a1ee` 上实现，合入时基于 `4204a8d9`），201 个文件：ledger 118、account 33、Operations BFF 22、Web 18、Platform 初始化 SQL 块 91、arch-rules 3、文档与 requirements-site。
+- **Verified：** 专用本机库 `mor_ledger_chart` / `mor_account_chart` 与 vhost `/mor-chart`：ledger 294、account 63、BFF 1592、Web 1109、arch-rules 61、PDManer 21 全部通过；mor-test 接口验收 26/26 与浏览器验收通过。
+- **Deployed（mor-test，2026-10-20 03:14Z UTC 三级重发）：** ledger `sha256:a716585b…`、account `sha256:dfa6254c…`、operations-console-web `sha256:a8feab2c…`（tag `chart3-20261020`），operations-console-bff `sha256:971c9238…`（`chart-20261020`）；`mor_ledger` 33 表、`mor_account` 10 表、`mor_platform` 块 91 注册并启用（PLATFORM_ADMIN v33）；保留 AE001 演示数据。发布记录见需求目录 `release/release.md`。
+- **Pending：** 推送；后续发布 ledger / account / ops-bff / ops-web 的会话须基于包含本需求的代码构建（新列 `account_no` 为 NOT NULL）。mor-test 与 local RabbitMQ 曾被 OOM Kill（高水位按宿主机内存计算），`mor-local-rabbitmq-1` 仍为退出状态；mor-test XXL-Job Admin 接近 512 MiB 上限、当晚重启 19 次，account 执行器注册间歇超时。
+
 <a id="v2-skeleton-module-migration-20261018"></a>
 ## V2 骨架与模块搬迁（阶段 0，refactor-main，2026-10-17—18，未合入 main、未推送、未部署）
 

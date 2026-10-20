@@ -12,6 +12,9 @@ import {
   manageFinanceSetup, ownerAccountLookupPath, ownerAccountNotFoundMessage, ownerIdError, ownerTypes, pageOf, periodBody, periodRangeError, postingTotals, readLedgerQuery,
   readSetupTab, readSubledgerQuery, subledgerEntityIdError, subledgerErrorTargets, subledgerFilters, subledgerLevelSearch, subledgerPostingLink,
   subledgerQuerySearch, sumDecimals, timezoneOptions,
+  accountFilters, balanceTotals, buildAccountTree, chartAccountBody, chartAccountLevel, chartAccountNoError, chartAccountUpdateBody, chartChangeFields,
+  decodeAccountBalanceList, decodeChartAccountChange, decodeMaintainedChartAccount, decodeTrialBalanceDetail, decodeTrialBalanceRun, defaultNormalSide,
+  expandableKeys, filterAccountTree, leafDrilldownSearch, ledgerTabSearch, readLedgerTab, readTrialQuery, trialSearch,
 } from './finance.ts';
 
 const time = '2026-10-18T05:12:00Z';
@@ -20,14 +23,15 @@ const calendar = { fiscalCalendarId: '7312000000000000001', entityType: 'OPERATI
 const period = { accountingPeriodId: '7312000000000000011', fiscalCalendarId: calendar.fiscalCalendarId, fiscalYear: 2026, periodNo: 11,
   startDate: '2026-11-01', endDate: '2026-11-30', status: 'FUTURE', reopenCount: 0 };
 const book = { ledgerBookId: '7318800000000000101', entityType: 'OPERATING_ENTITY', entityId: 'AE001', currency: 'USD', chartCode: 'STANDARD', bookStatus: 'OPEN' };
-const account = { accountId: '7318800000000000201', accountCode: 'CLIENT_PAYABLE', ownerType: 'OPERATING_ENTITY', ownerId: 'AE001', balanceBucket: 'NONE',
+const account = { accountId: '7318800000000000201', accountNo: 'AE001-USD-22010101-0001', accountCode: 'CLIENT_PAYABLE', accountName: 'Client 应付款',
+  ownerType: 'OPERATING_ENTITY', ownerId: 'AE001', balanceBucket: 'NONE',
   normalSide: 'CREDIT', accountStatus: 'ACTIVE', debitTotal: '0.00', creditTotal: '1970.00', netBalance: '1970.00', lastJournalSequence: '1024' };
 const postingId = '7318802201114002018';
 const line = { journalEntryId: '7318802201114001024', journalSequence: '1024', postingDate: '2026-10-18', entryType: 'STANDARD', lineNo: 2, entrySide: 'CREDIT',
   amount: '120.00', balanceAfter: '1970.00', instructionType: 'PAYMENT_SUCCEEDED', originType: 'ACCOUNT_POSTING', sourceSystem: 'account',
   sourceEventKey: postingId, adjustmentNo: null, accountPostingId: postingId, accountPostingSequence: '18' };
 const entryLine = (lineNo: number, entrySide: string, amount: string, accountEntryId: string | null = null) => ({ lineNo, accountId: '7318800000000000201',
-  accountCode: 'CLIENT_PAYABLE', ownerType: 'OPERATING_ENTITY', ownerId: 'AE001', balanceBucket: 'NONE', entrySide, amount, accountEntryId });
+  accountNo: 'AE001-USD-22010101-0001', accountCode: 'CLIENT_PAYABLE', accountName: 'Client 应付款', ownerType: 'OPERATING_ENTITY', ownerId: 'AE001', balanceBucket: 'NONE', entrySide, amount, accountEntryId });
 const entry = { journalEntryId: line.journalEntryId, ledgerBookId: book.ledgerBookId, accountingPeriodId: '7312000000000000010', journalSequence: '1024',
   postingDate: '2026-10-18', entryType: 'STANDARD', reversalOfEntryId: null, instructionId: '7318802201114000987', instructionType: 'PAYMENT_SUCCEEDED',
   originType: 'ACCOUNT_POSTING', sourceSystem: 'account', sourceEventKey: postingId, manualAdjustmentId: null, adjustmentNo: null,
@@ -57,9 +61,17 @@ test('基础资料解码：主键、状态、日期与枚举严格校验，未�
   assert.throws(() => decodeAccountingPeriod({ ...period, status: 'LOCKED' }), ApiError);
   assert.equal(listOf(decodeChartOfAccounts)({ items: [{ chartId: '1', chartCode: 'STANDARD', chartName: '标准科目表', status: 'ACTIVE' }] }).length, 1);
   assert.throws(() => listOf(decodeChartOfAccounts)([]), ApiError);
-  const chartAccount = { chartAccountId: '11', chartId: '1', accountCode: 'CLIENT_PAYABLE', accountName: 'Client 应付', accountClass: 'LIABILITY', normalSide: 'CREDIT', postingAllowed: true };
+  const chartAccount = { chartAccountId: '11', chartId: '1', accountNo: '22010101', accountCode: 'CLIENT_PAYABLE', accountName: 'Client 应付',
+    accountClass: 'LIABILITY', normalSide: 'CREDIT', postingAllowed: true, parentChartAccountId: '10', level: 3, accountStatus: 'ACTIVE' };
   assert.equal(decodeChartAccount(chartAccount).postingAllowed, true);
   assert.throws(() => decodeChartAccount({ ...chartAccount, postingAllowed: 'true' }), ApiError);
+  assert.throws(() => decodeChartAccount({ ...chartAccount, level: 1 }), ApiError, '级次必须与编号长度一致');
+  assert.throws(() => decodeChartAccount({ ...chartAccount, parentChartAccountId: null }), ApiError, '下级科目必须有上级');
+  assert.equal(decodeChartAccount({ ...chartAccount, accountNo: '2201', level: 1, parentChartAccountId: undefined }).parentChartAccountId, null);
+  assert.throws(() => decodeChartAccount({ ...chartAccount, accountNo: '0201', level: 1, parentChartAccountId: null }), ApiError);
+  assert.throws(() => decodeChartAccount({ ...chartAccount, accountStatus: 'CLOSED' }), ApiError);
+  assert.equal(decodeMaintainedChartAccount('11')(chartAccount).chartAccountId, '11');
+  assert.throws(() => decodeMaintainedChartAccount('12')(chartAccount), ApiError, '维护回执必须是所操作的科目');
   assert.equal(decodeCurrency({ currency: 'USD', minorUnit: 2, roundingMode: 'HALF_UP', status: 'ACTIVE' }).minorUnit, 2);
   assert.throws(() => decodeCurrency({ currency: 'usd', minorUnit: 2, roundingMode: 'HALF_UP', status: 'ACTIVE' }), ApiError);
 });
@@ -68,6 +80,8 @@ test('账簿、账户、流水与分录解码；可空字段缺失视为 null', 
   assert.equal(pageOf(decodeLedgerBook)({ items: [book], page: 1, size: 10, total: 1 }).items[0].chartCode, 'STANDARD');
   assert.throws(() => decodeLedgerBook({ ...book, bookStatus: 'ACTIVE' }), ApiError);
   assert.equal(decodeLedgerAccount(account).netBalance, '1970.00');
+  assert.throws(() => decodeLedgerAccount({ ...account, accountNo: undefined }), ApiError, '账户号必填');
+  assert.throws(() => decodeLedgerAccount({ ...account, accountName: '' }), ApiError);
   assert.deepEqual(ownerTypes, ['OPERATING_ENTITY', 'FINANCE_ENTITY', 'CHANNEL_ACCOUNT', 'CASH_ACCOUNT', 'TAX_AUTHORITY'], 'LedgerOwnerType 五值');
   assert.throws(() => decodeLedgerAccount({ ...account, ownerType: 'CLIENT', ownerId: '880000000000079001' }), ApiError, 'Client 不再是总账核算对象');
   assert.equal(decodeLedgerAccount({ ...account, lastJournalSequence: undefined }).lastJournalSequence, null);
@@ -85,6 +99,8 @@ test('账簿、账户、流水与分录解码；可空字段缺失视为 null', 
   assert.throws(() => decodeJournalLine({ ...line, postingDate: '2026/10/18' }), ApiError);
   const detail = decodeJournalEntryDetail(entry, book.ledgerBookId, entry.journalEntryId);
   assert.deepEqual(detail.lines.map(item => item.accountEntryId), [null, '7400000000003001', null]);
+  assert.deepEqual([detail.lines[0].accountNo, detail.lines[0].accountName], ['AE001-USD-22010101-0001', 'Client 应付款']);
+  assert.throws(() => decodeJournalEntryDetail({ ...entry, lines: [{ ...entryLine(1, 'DEBIT', '1'), accountNo: null }] }, book.ledgerBookId, entry.journalEntryId), ApiError);
   assert.equal(subledgerPostingLink(detail.accountPostingId ?? '', '7400000000003001'), `/finance/subledger?posting=${postingId}&entry=7400000000003001`);
   assert.throws(() => decodeJournalEntryDetail({ ...entry, accountPostingSequence: null }, book.ledgerBookId, entry.journalEntryId), ApiError);
   assert.throws(() => decodeJournalEntryDetail(entry, '9', entry.journalEntryId), ApiError, '账簿必须与请求一致');
@@ -148,8 +164,16 @@ test('表单校验：核算对象标识按类型、期间起止、时区下拉',
   assert.ok(timezoneOptions().includes('Asia/Dubai'));
 });
 
-test('错误码映射：ledger 15 个 Code 都有落点，字段不在表单内时退回表单顶部；余额页 OWNER_ACCOUNT_NOT_FOUND 落在 Owner ID', () => {
-  assert.equal(Object.keys(financeErrorTargets).length, 15, 'ledger LedgerSetupErrorCode');
+test('错误码映射：ledger 23 个 Code 都有落点，字段不在表单内时退回表单顶部；余额页 OWNER_ACCOUNT_NOT_FOUND 落在 Owner ID', () => {
+  assert.equal(Object.keys(financeErrorTargets).length, 23, 'ledger LedgerSetupErrorCode');
+  const chartForm = ['parentAccountNo', 'accountNo', 'accountCode', 'accountName', 'accountClass', 'normalSide', 'postingAllowed'];
+  assert.deepEqual(['CHART_ACCOUNT_NO_INVALID', 'CHART_ACCOUNT_NO_DUPLICATE', 'CHART_ACCOUNT_CODE_DUPLICATE', 'CHART_PARENT_INVALID',
+    'CHART_ACCOUNT_NOT_FOUND', 'CHART_STRUCTURE_FROZEN', 'CHART_ACCOUNT_IN_USE'].map(code => financeErrorTarget(new ApiError(400, code, 'r'), chartForm)?.field),
+    ['accountNo', 'accountNo', 'accountCode', 'parentAccountNo', null, null, null], '科目维护按 technique 2.3 落点');
+  assert.equal(financeErrorTarget(new ApiError(400, 'CHART_ACCOUNT_INACTIVE', 'r'), ['accountCode', 'ownerType', 'ownerId', 'balanceBucket'])?.field,
+    'accountCode', '停用科目落在建账户表单的科目');
+  assert.equal(financeErrorTarget(new ApiError(400, 'CHART_ACCOUNT_IN_USE', 'r'))?.message,
+    '科目仍被规则、结转规则、账户类型目录或启用中的下级引用，不能停用（CHART_ACCOUNT_IN_USE）');
   assert.deepEqual(Object.keys(balanceErrorTargets), ['OWNER_ACCOUNT_NOT_FOUND'], 'account BalanceQueryErrorCode');
   assert.deepEqual(Object.keys(subledgerErrorTargets).sort(), ['ACCOUNT_NOT_FOUND', 'POSTING_NOT_FOUND'], '明细账查询会收到的 account Code');
   const error = (code: string, status = 400) => new ApiError(status, code, 'req-1');
@@ -249,10 +273,19 @@ test('页面接线：维护按钮受 BUTTON 资源控制，只读页与只读标
   assert.match(source('./SetupCalendarsTab.tsx'), /row\.status === 'FUTURE'/);
   assert.match(source('./SetupCalendarsTab.tsx'), /\.\.\.\(canManage \?/);
   assert.match(source('./SetupBooksTab.tsx'), /extra=\{canManage &&/);
-  for (const readOnly of ['./SetupChartsTab.tsx', './LedgerDrilldown.tsx', '../pages/FinanceLedger.tsx', '../pages/FinanceBalances.tsx',
+  for (const readOnly of ['./LedgerDrilldown.tsx', '../pages/FinanceLedger.tsx', '../pages/FinanceBalances.tsx', './TrialBalanceTab.tsx',
     '../pages/FinanceSubledger.tsx', './SubledgerAccounts.tsx', './SubledgerEntries.tsx', './SubledgerPostingDrawer.tsx']) {
-    assert.doesNotMatch(source(readOnly), /FinanceModals|>新建/, `${readOnly} 不得出现新建入口`);
+    assert.doesNotMatch(source(readOnly), /FinanceModals|ChartAccountModals|>新建/, `${readOnly} 不得出现新建入口`);
   }
+  const trial = source('./TrialBalanceTab.tsx');
+  assert.doesNotMatch(trial, />发起试算|trialBalances\([^)]*\), \{ method|method: 'POST'/, '试算平衡页签不发起试算');
+  assert.doesNotMatch(trial, /useFinanceCommand|sendFinanceCommand/, '试算平衡页签只读');
+  const charts = source('./SetupChartsTab.tsx');
+  assert.match(setup, /<SetupChartsTab canManage=\{canManage\}/);
+  assert.match(charts, /canManage && chartCode && <Button type="primary"/, '新增科目按钮受维护权限控制');
+  assert.match(charts, /\.\.\.\(canManage \? \[\{ key: 'edit'/, '编辑、新增下级、停用 / 启用受维护权限控制');
+  assert.match(charts, /key: 'changes', label: '变更记录'/, '变更记录对只读账号也可见');
+  assert.match(source('./ChartAccountModals.tsx'), /停用后不能新建账户、不能被新规则引用，已有账户不受影响/);
   assert.match(source('./LedgerDrilldown.tsx'), /行后余额按全量历史累计，筛选不改变起点/);
   const balances = source('../pages/FinanceBalances.tsx');
   assert.match(balances, /Available 不等于可出款资格/);
@@ -263,7 +296,7 @@ test('页面接线：维护按钮受 BUTTON 资源控制，只读页与只读标
   assert.match(source('./SetupEntitiesTab.tsx'), /还没有财务主体/);
 });
 
-const ownerAccount = { accountId: '7200000000000001', accountCode: 'CLIENT_PAYABLE', ownerType: 'CLIENT', ownerId: '1001', balanceBucket: 'PENDING',
+const ownerAccount = { accountId: '7200000000000001', accountNo: 'AE001-USD-22010101-S000001', accountCode: 'CLIENT_PAYABLE', ownerType: 'CLIENT', ownerId: '1001', balanceBucket: 'PENDING',
   normalSide: 'CREDIT', accountStatus: 'ACTIVE', debitTotal: usd('500.00'), creditTotal: usd('920.00'), netBalance: usd('420.00'), balanceVersion: '5' };
 const factEntry = { entryId: '7400000000000009', postingId: '7300000000000009', postingSequence: '9', sourceType: 'ECONOMIC_FACT', factId: '8790',
   factVersion: '2', factType: 'PAYMENT', movementSourceType: null, lineNo: '1', factLineNo: '1', entrySide: 'DEBIT', amount: usd('200.00'), reversesEntryId: '7400000000000003',
@@ -271,7 +304,7 @@ const factEntry = { entryId: '7400000000000009', postingId: '7300000000000009', 
 const movementEntry = { ...factEntry, entryId: '7400000000000015', sourceType: 'BALANCE_MOVEMENT', factId: undefined, factVersion: null, factType: null,
   movementSourceType: 'FACT_MATURITY', factLineNo: null, reversesEntryId: null };
 const postingEntry = (entryId: string, lineNo: string, accountCode: string, ownerType: string, ownerId: string, amount: string) => ({ entryId, lineNo,
-  accountId: '7200000000000001', accountCode, ownerType, ownerId, balanceBucket: 'PENDING', entrySide: 'CREDIT', amount: usd(amount), factLineNo: lineNo,
+  accountId: '7200000000000001', accountNo: 'AE001-USD-22010101-S000001', accountCode, ownerType, ownerId, balanceBucket: 'PENDING', entrySide: 'CREDIT', amount: usd(amount), factLineNo: lineNo,
   reversesEntryId: null });
 const posting = { postingId, entityType: 'OPERATING_ENTITY', entityId: 'AE001', currency: 'USD', shardNo: '0', postingSequence: '18',
   sourceType: 'ECONOMIC_FACT', postedTime: '2026-10-18T10:21:07.123456Z', publishedTime: '2026-10-18T10:21:08.500Z', factId: '9001', factVersion: '1', factType: 'PAYMENT', supersedesFactId: null,
@@ -287,6 +320,7 @@ test('明细账解码：Owner 账户、流水与批次严格校验，来源字�
   assert.throws(() => decodeOwnerAccount('AED')(ownerAccount), ApiError, '金额必须同查询币种');
   assert.throws(() => decodeOwnerAccount('USD')({ ...ownerAccount, ownerType: 'OPERATING_ENTITY' }), ApiError, '明细账没有平台类 Owner');
   assert.throws(() => decodeOwnerAccount('USD')({ ...ownerAccount, accountStatus: 'INACTIVE' }), ApiError);
+  assert.throws(() => decodeOwnerAccount('USD')({ ...ownerAccount, accountNo: 'ae001-usd' }), ApiError, '账户号为大写字母、数字与连字符');
   assert.equal(decodeOwnerAccount('USD')({ ...ownerAccount, accountCode: 'BANK_CASH', ownerType: 'CASH_ACCOUNT', balanceBucket: 'AVAILABLE',
     netBalance: usd('-1.00') }).netBalance.amount, '-1.00');
   const fact = decodeAccountEntry('USD')(factEntry);
@@ -324,6 +358,11 @@ test('明细账查询条件：主体三项必填且合法，可选筛选只保�
   assert.throws(() => subledgerFilters({ entityType: 'OPERATING_ENTITY', entityId: 'AE001' }), /主体类型、主体标识与币种/);
   assert.throws(() => subledgerFilters({ entityType: 'OPERATING_ENTITY', entityId: 'AE001', currency: 'USD', ownerType: 'CHANNEL_ACCOUNT' }), /筛选/);
   assert.throws(() => subledgerFilters({ entityType: 'OPERATING_ENTITY', entityId: 'AE001', currency: 'USD', ownerId: 'P-1' }), /筛选/);
+  assert.deepEqual(subledgerFilters({ entityType: 'OPERATING_ENTITY', entityId: 'AE001', currency: 'USD', accountNo: ' AE001-USD-22010101-S000001 ' }),
+    { entityType: 'OPERATING_ENTITY', entityId: 'AE001', currency: 'USD', accountNo: 'AE001-USD-22010101-S000001' }, '账户号精确筛选');
+  assert.throws(() => subledgerFilters({ entityType: 'OPERATING_ENTITY', entityId: 'AE001', currency: 'USD', accountNo: 'ae001 usd' }), /筛选/);
+  assert.deepEqual(accountFilters({ accountNo: ' AE001-USD-22010101-0001 ', accountCode: '' }), { accountNo: 'AE001-USD-22010101-0001' }, '总账账户号精确筛选');
+  assert.equal(readLedgerQuery(new URLSearchParams(`book=1&accountNo=${'A'.repeat(49)}`)).accountFilters.accountNo, undefined, '超长账户号忽略');
 });
 
 test('明细账 URL 状态：逐级下钻、非法值忽略、面包屑回退保留筛选、批次抽屉可独立打开', () => {
@@ -379,4 +418,115 @@ test('从批次抽屉进入流水：按 R19 精确筛选补齐账户摘要，列
   assert.throws(() => decodeOwnerAccountLookup({ ...one, items: [ownerAccount, ownerAccount], total: 2 }, partial.accountId, 'USD'), ApiError);
   assert.throws(() => decodeOwnerAccountLookup(one, '7200000000000009', 'USD'), ApiError, '必须是同一账户');
   assert.match(source('../pages/FinanceSubledger.tsx'), /const account = useAccountSummary\(query\.scope, drilled\)/);
+});
+
+const chart = (chartAccountId: string, accountNo: string, accountCode: string, parentChartAccountId: string | null, postingAllowed: boolean,
+  accountStatus = 'ACTIVE') => decodeChartAccount({ chartAccountId, chartId: '1', accountNo, accountCode, accountName: `${accountCode} 名称`,
+  accountClass: accountNo.startsWith('1') ? 'ASSET' : 'LIABILITY', normalSide: accountNo.startsWith('1') ? 'DEBIT' : 'CREDIT', postingAllowed,
+  parentChartAccountId, level: chartAccountLevel(accountNo), accountStatus });
+
+test('科目树：按上级组装、同级按编号排序，搜索保留命中路径，只有汇总节点可展开', () => {
+  const accounts = [chart('3009', '22010101', 'CLIENT_PAYABLE', '3207', true), chart('3106', '2201', 'CUSTOMER_FUNDS_PAYABLE', null, false),
+    chart('3207', '220101', 'CLIENT_FUNDS_PAYABLE', '3106', false), chart('3208', '220102', 'PARTNER_FUNDS_PAYABLE', '3106', false),
+    chart('3003', '10010101', 'BANK_CASH', '3201', true), chart('3201', '100101', 'BANK_DEPOSITS', '3101', false),
+    chart('3010', '22010201', 'PARTNER_PAYABLE', '3208', true, 'INACTIVE'), chart('3101', '1001', 'CASH_AND_BANK', null, false)];
+  const tree = buildAccountTree(accounts);
+  assert.deepEqual(tree.map(node => node.accountNo), ['1001', '2201']);
+  assert.deepEqual(tree[1].children?.map(node => node.accountNo), ['220101', '220102']);
+  assert.deepEqual(tree[1].children?.map(node => node.children?.map(child => child.accountNo)), [['22010101'], ['22010201']]);
+  assert.equal(tree[0].children?.[0].children?.[0].children, undefined, '末级节点不带 children');
+  assert.deepEqual(expandableKeys(tree), ['3101', '3201', '3106', '3207', '3208']);
+  assert.deepEqual(filterAccountTree(tree, 'partner').map(node => [node.accountNo, node.children?.map(child => child.accountNo)]), [['2201', ['220102']]]);
+  assert.equal(filterAccountTree(tree, '1001')[0].children?.length, 1, '命中汇总科目保留整棵子树');
+  assert.equal(filterAccountTree(tree, ' ').length, 2);
+  assert.deepEqual(buildAccountTree(accounts.filter(item => item.accountNo !== '2201')).map(node => node.accountNo), ['1001', '220101', '220102'],
+    '上级被筛掉的科目作为根');
+});
+
+test('科目编号分级规则与维护请求体', () => {
+  assert.equal(chartAccountNoError('2201', 'LIABILITY', null), null);
+  assert.equal(chartAccountNoError('220104', 'LIABILITY', '2201'), null);
+  assert.match(chartAccountNoError('22010', 'LIABILITY', '2201') ?? '', /4、6、8 或 10 位/);
+  assert.match(chartAccountNoError('1201', 'LIABILITY', null) ?? '', /以 2 开头/);
+  assert.match(chartAccountNoError('220201', 'LIABILITY', '2201') ?? '', /上级 2201 后加 2 位/);
+  assert.match(chartAccountNoError('220101', 'LIABILITY', null) ?? '', /一级科目编号为 4 位/);
+  assert.equal(chartAccountNoError('', 'ASSET'), '请填写科目编号');
+  assert.deepEqual([defaultNormalSide('ASSET'), defaultNormalSide('EXPENSE'), defaultNormalSide('EQUITY')], ['DEBIT', 'DEBIT', 'CREDIT']);
+  assert.deepEqual(chartAccountBody({ parentAccountNo: '2201', accountNo: ' 220104', accountCode: 'MERCHANT_RESERVE_PAYABLE ', accountName: ' Client 风险准备金 ',
+    accountClass: 'LIABILITY', normalSide: 'CREDIT', postingAllowed: true }), { accountNo: '220104', accountCode: 'MERCHANT_RESERVE_PAYABLE',
+    accountName: 'Client 风险准备金', accountClass: 'LIABILITY', normalSide: 'CREDIT', postingAllowed: true, parentAccountNo: '2201' });
+  assert.equal('parentAccountNo' in chartAccountBody({ accountNo: '2301', accountCode: 'X', accountName: 'x', accountClass: 'LIABILITY',
+    normalSide: 'CREDIT', postingAllowed: false, parentAccountNo: undefined }), false, '一级科目不带上级');
+  assert.deepEqual(chartAccountUpdateBody({ accountName: ' 新名称 ', accountNo: '2301', parentAccountNo: undefined }),
+    { accountName: '新名称', accountNo: '2301', parentAccountNo: null }, '修改时一级科目的上级显式为 null');
+  assert.equal(financePaths.chartAccount('STANDARD', '7', 'disable'), '/finance/chart-of-accounts/v1/STANDARD/accounts/7/disable');
+  assert.equal(financePaths.chartChanges('STANDARD'), '/finance/chart-of-accounts/v1/STANDARD/changes');
+  const disable = financeCommand(financePaths.chartAccount('STANDARD', '7', 'disable'), undefined);
+  assert.deepEqual([disable.method, disable.body], ['POST', ''], '停用 / 启用不带请求体');
+});
+
+test('科目变更记录：解码、只列有变化的字段', () => {
+  const change = { changeId: '91', chartAccountId: '7', accountNo: '220105', changeType: 'UPDATE', beforeAccountNo: '220104', afterAccountNo: '220105',
+    beforeParentAccountNo: '2201', afterParentAccountNo: '2201', beforeAccountName: '旧', afterAccountName: '新', beforeAccountStatus: 'ACTIVE',
+    afterAccountStatus: 'ACTIVE', operatorId: 'account_10001', changeTime: time };
+  assert.deepEqual(chartChangeFields(decodeChartAccountChange('7')(change)), [{ label: '编号', before: '220104', after: '220105' },
+    { label: '名称', before: '旧', after: '新' }]);
+  const created = decodeChartAccountChange()({ ...change, changeType: 'CREATE', beforeAccountNo: null, beforeParentAccountNo: undefined, beforeAccountName: null,
+    beforeAccountStatus: null });
+  assert.deepEqual(chartChangeFields(created).map(field => [field.label, field.before]), [['编号', '—'], ['上级', '—'], ['名称', '—'], ['状态', '—']]);
+  assert.deepEqual(chartChangeFields({ ...decodeChartAccountChange()(change), changeType: 'DISABLE', beforeAccountNo: '220105', beforeAccountName: '新',
+    afterAccountStatus: 'INACTIVE' }), [{ label: '状态', before: '启用', after: '停用' }]);
+  assert.throws(() => decodeChartAccountChange('8')(change), ApiError, '必须属于所查科目');
+  assert.throws(() => decodeChartAccountChange()({ ...change, changeType: 'DELETE' }), ApiError);
+});
+
+const balanceLine = (chartAccountId: string, accountNo: string, parentChartAccountId: string | null, postingAllowed: boolean, normalSide: string,
+  periodDebit: string, periodCredit: string, closingBalance: string) => ({ chartAccountId, accountNo, accountCode: `C${accountNo}`, accountName: `科目 ${accountNo}`,
+  accountClass: accountNo.startsWith('1') ? 'ASSET' : accountNo.startsWith('4') ? 'REVENUE' : 'LIABILITY', normalSide, parentChartAccountId,
+  level: chartAccountLevel(accountNo), postingAllowed, openingBalance: '0.00', periodDebit, periodCredit, closingBalance });
+const balanceLines = [balanceLine('3101', '1001', null, false, 'DEBIT', '357.60', '0.00', '357.60'),
+  balanceLine('3003', '10010101', '3201', true, 'DEBIT', '357.60', '0.00', '357.60'),
+  balanceLine('3106', '2201', null, false, 'CREDIT', '14.40', '357.60', '343.20'),
+  balanceLine('3117', '4001', null, false, 'CREDIT', '0.00', '14.40', '14.40')];
+
+test('科目余额与试算：解码、一级合计借 = 贷、详情汇总行不可过账', () => {
+  const list = decodeAccountBalanceList({ ledgerBookId: book.ledgerBookId, periodId: '9', currency: 'USD', lines: balanceLines }, book.ledgerBookId, '9');
+  assert.equal(list.lines.length, 4);
+  assert.throws(() => decodeAccountBalanceList({ ledgerBookId: book.ledgerBookId, periodId: '8', currency: 'USD', lines: [] }, book.ledgerBookId, '9'), ApiError);
+  assert.throws(() => decodeAccountBalanceList({ ledgerBookId: book.ledgerBookId, periodId: '9', currency: 'USD',
+    lines: [{ ...balanceLines[1], closingBalance: 1 }] }, book.ledgerBookId, '9'), ApiError);
+  assert.deepEqual(balanceTotals(list.lines), { periodDebit: '372.00', periodCredit: '372.00', closingDebit: '357.60', closingCredit: '357.60', balanced: true });
+  assert.equal(balanceTotals([{ ...list.lines[0], closingBalance: '357.59' }, list.lines[2], list.lines[3]]).balanced, false);
+  assert.deepEqual(balanceTotals([{ ...list.lines[2], closingBalance: '-5.00', periodDebit: '5.00', periodCredit: '0.00' },
+    { ...list.lines[0], closingBalance: '-5.00', periodDebit: '0.00', periodCredit: '5.00' }]).balanced, true, '反向余额折算后仍平衡');
+  const run = { trialBalanceRunId: '77', ledgerBookId: book.ledgerBookId, periodId: '9', runNo: '2', asOfSequence: '1024', status: 'SUCCEEDED',
+    totalDebit: '357.60', totalCredit: '357.60', contentHash: 'ab12', lineCount: 1, exceptionCount: 0, createTime: time };
+  assert.equal(pageOf(decodeTrialBalanceRun(book.ledgerBookId, '9'))({ items: [run], page: 1, size: 10, total: 1 }).items[0].runNo, '2');
+  assert.throws(() => decodeTrialBalanceRun(book.ledgerBookId, '9')({ ...run, status: 'BALANCED' }), ApiError);
+  const detail = { ...run, lines: [balanceLines[1]], summaryLines: [balanceLines[0]], exceptions: [{ exceptionType: 'GENERAL_LEDGER_MISMATCH',
+    referenceType: 'ACCOUNT', referenceId: '1', differenceAmount: '0.01', status: 'OPEN' }] };
+  assert.equal(decodeTrialBalanceDetail(detail, book.ledgerBookId, '9', '2').exceptions.length, 1);
+  assert.throws(() => decodeTrialBalanceDetail(detail, book.ledgerBookId, '9', '3'), ApiError, '序号必须与请求一致');
+  assert.throws(() => decodeTrialBalanceDetail({ ...detail, summaryLines: [balanceLines[1]] }, book.ledgerBookId, '9', '2'), ApiError, '汇总行不可过账');
+  assert.throws(() => decodeTrialBalanceDetail({ ...detail, summaryLines: undefined }, book.ledgerBookId, '9', '2'), ApiError);
+  assert.equal(financePaths.accountBalances('1', '9'), '/finance/ledger-books/v1/1/periods/9/account-balances');
+  assert.equal(financePaths.trialBalance('1', '9', '2'), '/finance/ledger-books/v1/1/periods/9/trial-balances/2');
+});
+
+test('试算平衡 URL：页签、账簿 › 期间 › 视图 › 试算，换上级清下级；末级行进入账簿下钻', () => {
+  assert.equal(readLedgerTab(new URLSearchParams('tab=trial')), 'trial');
+  assert.equal(readLedgerTab(new URLSearchParams('tab=x')), 'drilldown');
+  assert.deepEqual(readTrialQuery(new URLSearchParams('tbBook=1&tbPeriod=9&tbView=runs&tbRun=2')), { book: '1', period: '9', view: 'runs', run: '2' });
+  assert.deepEqual(readTrialQuery(new URLSearchParams('tbPeriod=9&tbRun=2')), { book: null, period: null, view: 'balances', run: null });
+  assert.equal(readTrialQuery(new URLSearchParams('tbBook=1&tbPeriod=9&tbRun=2')).run, null, '实时余额视图没有试算');
+  assert.equal(readTrialQuery(new URLSearchParams('tbBook=1&tbPeriod=9&tbView=runs&tbRun=0')).run, null);
+  const search = '?tab=trial&tbBook=1&tbPeriod=9&tbView=runs&tbRun=2';
+  assert.equal(trialSearch(search, { book: '5' }), '?tab=trial&tbBook=5&tbView=runs');
+  assert.equal(trialSearch(search, { period: '8' }), '?tab=trial&tbBook=1&tbPeriod=8&tbView=runs');
+  assert.equal(trialSearch(search, { view: 'balances' }), '?tab=trial&tbBook=1&tbPeriod=9');
+  assert.equal(trialSearch(search, { run: null }), '?tab=trial&tbBook=1&tbPeriod=9&tbView=runs');
+  assert.equal(ledgerTabSearch('?book=3&tab=trial&tbBook=1', 'drilldown'), '?book=3');
+  assert.equal(ledgerTabSearch('?book=3', 'trial'), '?book=3&tab=trial');
+  assert.equal(leafDrilldownSearch('1', 'CLIENT_PAYABLE'), '?book=1&accountCode=CLIENT_PAYABLE');
+  assert.equal(readLedgerQuery(new URLSearchParams(leafDrilldownSearch('1', 'CLIENT_PAYABLE'))).accountFilters.accountCode, 'CLIENT_PAYABLE');
 });

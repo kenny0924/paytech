@@ -52,7 +52,31 @@ public enum LedgerSetupErrorCode implements CodeMessageEnum {
     ACCOUNT_IDENTITY_INVALID("ACCOUNT_IDENTITY_INVALID", "核算对象或余额桶不符合账户身份矩阵"),
 
     /** 同账簿同科目同核算对象同余额桶的账户已存在 */
-    ACCOUNT_ALREADY_EXISTS("ACCOUNT_ALREADY_EXISTS", "账户已存在");
+    ACCOUNT_ALREADY_EXISTS("ACCOUNT_ALREADY_EXISTS", "账户已存在"),
+
+    /** 维护或查询变更记录时科目不存在或不属于路径科目表 */
+    CHART_ACCOUNT_NOT_FOUND("CHART_ACCOUNT_NOT_FOUND", "科目不存在"),
+
+    /** 科目编号不符合 4-2-2-2 分级、类别首位或上级前缀规则 */
+    CHART_ACCOUNT_NO_INVALID("CHART_ACCOUNT_NO_INVALID", "科目编号不符合分级规则"),
+
+    /** 同一科目表内科目编号重复 */
+    CHART_ACCOUNT_NO_DUPLICATE("CHART_ACCOUNT_NO_DUPLICATE", "科目编号已存在"),
+
+    /** 同一科目表内科目代码重复 */
+    CHART_ACCOUNT_CODE_DUPLICATE("CHART_ACCOUNT_CODE_DUPLICATE", "科目代码已存在"),
+
+    /** 上级科目不存在、不是汇总科目、已停用、类别不同或会形成循环；有下级的科目不能调整编号或上级 */
+    CHART_PARENT_INVALID("CHART_PARENT_INVALID", "上级科目不存在、不是汇总科目、已停用、类别不同或会形成循环"),
+
+    /** 科目表已被账簿采用，既有科目的编号与上级冻结 */
+    CHART_STRUCTURE_FROZEN("CHART_STRUCTURE_FROZEN", "科目表已被账簿采用，不能修改编号或上级"),
+
+    /** 停用的科目仍被当前规则、结转规则、account 账户类型目录或启用中的下级引用 */
+    CHART_ACCOUNT_IN_USE("CHART_ACCOUNT_IN_USE", "科目仍被规则、结转规则、账户类型目录或启用中的下级引用，不能停用"),
+
+    /** 创建账户时科目已停用 */
+    CHART_ACCOUNT_INACTIVE("CHART_ACCOUNT_INACTIVE", "科目已停用");
 
     private final String code;
 

@@ -19,6 +19,8 @@ import com.paytech.ledger.core.enums.AdjustmentStatus;
 import com.paytech.ledger.core.enums.ApprovalDecision;
 import com.paytech.ledger.core.enums.ApprovalRole;
 import com.paytech.ledger.core.enums.BookStatus;
+import com.paytech.ledger.core.enums.ChartAccountChangeType;
+import com.paytech.ledger.core.enums.ChartAccountStatus;
 import com.paytech.ledger.core.enums.CloseBookStatus;
 import com.paytech.ledger.core.enums.CloseStepStatus;
 import com.paytech.ledger.core.enums.CloseStepType;
@@ -70,6 +72,8 @@ public class LedgerPersistenceConfiguration {
             registry.register(ApprovalRole.class, new CodeEnumTypeHandler<>(ApprovalRole.class));
             registry.register(BalanceBucket.class, new CodeEnumTypeHandler<>(BalanceBucket.class));
             registry.register(BookStatus.class, new CodeEnumTypeHandler<>(BookStatus.class));
+            registry.register(ChartAccountStatus.class, new CodeEnumTypeHandler<>(ChartAccountStatus.class));
+            registry.register(ChartAccountChangeType.class, new CodeEnumTypeHandler<>(ChartAccountChangeType.class));
             registry.register(EntrySide.class, new CodeEnumTypeHandler<>(EntrySide.class));
             registry.register(FinanceEntityStatus.class, new CodeEnumTypeHandler<>(FinanceEntityStatus.class));
             registry.register(InstructionOrigin.class, new CodeEnumTypeHandler<>(InstructionOrigin.class));

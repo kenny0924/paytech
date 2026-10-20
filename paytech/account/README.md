@@ -33,6 +33,9 @@
 - **到期转可用**：XXL-Job `accountBalanceMaturity` 扫描 `maturity_status = PENDING` 且到期的事实，按每个 PENDING 应付账户在该事实上的
   净贷方金额（扣除冲回）做 `FACT_MATURITY` 移动（`source_ref = {factId}:{factVersion}:{accountId}`），完成后标记 MATURED。
 - **账户状态**：`ACTIVE / FROZEN / CLOSED` 只约束桶移动命令；事实照常入账，CLOSED 账户入账记 WARN。本期没有改状态接口。
+- **账户号**：`OwnerAccountType` 目录带科目分级编号（静态属性，ledger 测试核对与 STANDARD 一致）；开户的同一事务按「主体 + 币种 + 科目代码」
+  序列生成 `t_owner_account.account_no`（如 `AE001-USD-22010101-S000001`，Finance Entity 主体段为 `FE{entityId}`），创建后不变，只用于显示与搜索，
+  不进入 `AccountPosted` 载荷（[2026-10-19 决定](../../agent-docs/decisions/2026-10-19-ledger-chart-hierarchy-and-account-numbers.md)第 2 节第 7、8 条）。
 - **重建**：`POST /account-postings/v1/streams/rebuild` 每条流锁流行后按 `t_account_entry` 重算账户余额，以旧版本 CAS 加一；不删不改流水。
 
 ## 接口

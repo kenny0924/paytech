@@ -6,15 +6,21 @@ import java.time.temporal.ChronoUnit;
 
 import org.springframework.stereotype.Component;
 
+import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.processor.AbstractProcessor;
 import com.paytech.ledger.api.enums.LedgerSetupErrorCode;
 import com.paytech.ledger.core.dal.dataobject.ChartAccount;
+import com.paytech.ledger.core.dal.dataobject.FinanceEntity;
 import com.paytech.ledger.core.dal.dataobject.LedgerAccount;
 import com.paytech.ledger.core.dal.dataobject.LedgerBook;
 import com.paytech.ledger.core.enums.AccountStatus;
+import com.paytech.ledger.core.enums.ChartAccountStatus;
+import com.paytech.ledger.core.enums.LedgerEntityType;
+import com.paytech.ledger.domain.LedgerAccountNo;
 import com.paytech.ledger.domainservice.repository.ChartAccountRepository;
+import com.paytech.ledger.domainservice.repository.FinanceEntityRepository;
 import com.paytech.ledger.domainservice.repository.LedgerBookRepository;
 import com.paytech.ledger.domainservice.service.LedgerSetupService;
 import com.paytech.ledger.domainservice.validator.account.AccountIdentityRule;
@@ -25,7 +31,8 @@ import lombok.AllArgsConstructor;
 
 /**
  * 在账簿下创建 ACTIVE 统一账户
- * <li>科目必须属于账簿采用的科目表且可过账；正常方向从科目复制并冻结。</li>
+ * <li>科目必须属于账簿采用的科目表且可过账；停用的科目拒绝（CHART_ACCOUNT_INACTIVE）；正常方向从科目复制并冻结。</li>
+ * <li>账户号 {主体段}-{币种}-{科目编号}-{序号} 在保存事务内分配序号后生成；FE 账簿的主体段为财务主体代码。</li>
  * <li>科目、Owner 类型与余额桶组合按账户身份矩阵校验：余额桶一律 NONE；Owner 控制科目只能以账簿主体为 Owner（每账簿每科目一个
  * 控制账户），其余科目只允许平台类 Owner；账户身份唯一由唯一键保护。</li>
  */
@@ -37,6 +44,7 @@ public class CreateAccountProcessor extends AbstractProcessor<CreateAccountReque
     private final LedgerSetupService ledgerSetupService;
     private final LedgerBookRepository ledgerBookRepository;
     private final ChartAccountRepository chartAccountRepository;
+    private final FinanceEntityRepository financeEntityRepository;
 
     /** 仅依赖输入、首次与重放通用的附加校验。 */
     @Override
@@ -56,7 +64,7 @@ public class CreateAccountProcessor extends AbstractProcessor<CreateAccountReque
         }
         ChartAccount chartAccount = getPostableChartAccount(book, request.getAccountCode());
         LedgerAccount account = buildAccount(request, chartAccount);
-        ledgerSetupService.createAccount(account);
+        ledgerSetupService.createAccount(account, LedgerAccountNo.of(book, chartAccount, getBookFinanceEntity(book)));
         CreatedResourceResponse response = new CreatedResourceResponse();
         response.setId(account.getId());
         return response;
@@ -68,7 +76,22 @@ public class CreateAccountProcessor extends AbstractProcessor<CreateAccountReque
         if (chartAccount == null || !Boolean.TRUE.equals(chartAccount.getPostingAllowed())) {
             throw new FailException(LedgerSetupErrorCode.CHART_ACCOUNT_NOT_POSTABLE);
         }
+        if (chartAccount.getAccountStatus() != ChartAccountStatus.ACTIVE) {
+            throw new FailException(LedgerSetupErrorCode.CHART_ACCOUNT_INACTIVE);
+        }
         return chartAccount;
+    }
+
+    /** FE 账簿的财务主体（账户号主体段）；OE 账簿返回空。 */
+    FinanceEntity getBookFinanceEntity(LedgerBook book) {
+        if (book.getEntityType() != LedgerEntityType.FINANCE_ENTITY) {
+            return null;
+        }
+        FinanceEntity entity = financeEntityRepository.findById(Long.parseLong(book.getEntityId()));
+        if (entity == null) {
+            throw new ErrorException("账簿的财务主体不存在: 账簿 " + book.getId() + ", 主体 " + book.getEntityId());
+        }
+        return entity;
     }
 
     /** 构建账户身份；余额由分录聚合得出。 */

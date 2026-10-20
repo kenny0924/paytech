@@ -30,6 +30,7 @@ public interface OwnerAccountQueryApi {
      * @param ownerId 可选核算对象标识
      * @param accountCode 可选科目代码
      * @param balanceBucket 可选余额桶：PENDING、AVAILABLE、LOCKED 或 NONE
+     * @param accountNo 可选可读账户号，精确匹配；主体、币种仍必填
      * @param page 可选页码
      * @param size 可选每页条数
      * @return Owner 账户分页；没有匹配账户时为空页
@@ -43,6 +44,7 @@ public interface OwnerAccountQueryApi {
         @RequestParam(value = "ownerId", required = false) @Pattern(regexp = "[1-9][0-9]{0,18}") String ownerId,
         @RequestParam(value = "accountCode", required = false) @Pattern(regexp = "[A-Z][A-Z0-9_]{0,63}") String accountCode,
         @RequestParam(value = "balanceBucket", required = false) @Pattern(regexp = "PENDING|AVAILABLE|LOCKED|NONE") String balanceBucket,
+        @RequestParam(value = "accountNo", required = false) @Pattern(regexp = "[A-Z0-9][A-Z0-9-]{0,47}") String accountNo,
         @RequestParam(value = "page", required = false) Integer page,
         @RequestParam(value = "size", required = false) Integer size);
 

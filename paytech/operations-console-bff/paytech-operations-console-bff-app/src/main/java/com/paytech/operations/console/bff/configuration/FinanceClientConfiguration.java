@@ -28,11 +28,13 @@ import com.paytech.foundation.httpclient.api.HttpServiceClientOptions;
 import com.paytech.foundation.internalauth.api.InternalTokenSupplier;
 import com.paytech.foundation.web.request.RequestIdFilter;
 import com.paytech.ledger.api.AccountingPeriodCommandApi;
+import com.paytech.ledger.api.ChartOfAccountsCommandApi;
 import com.paytech.ledger.api.FinanceEntityCommandApi;
 import com.paytech.ledger.api.FiscalCalendarCommandApi;
 import com.paytech.ledger.api.LedgerBookCommandApi;
 import com.paytech.ledger.api.LedgerBookQueryApi;
 import com.paytech.ledger.api.LedgerSetupQueryApi;
+import com.paytech.ledger.api.TrialBalanceApi;
 import com.paytech.ledger.api.enums.LedgerSetupErrorCode;
 import com.paytech.operations.console.bff.domain.enums.OperationsBffErrorCode;
 
@@ -89,6 +91,12 @@ public class FinanceClientConfiguration {
         return ledger.createClient(AccountingPeriodCommandApi.class);
     }
 
+    /** ledger 科目维护命令。 */
+    @Bean
+    ChartOfAccountsCommandApi chartOfAccountsCommandApi() {
+        return ledger.createClient(ChartOfAccountsCommandApi.class);
+    }
+
     /** ledger 账簿与账户命令。 */
     @Bean
     LedgerBookCommandApi ledgerBookCommandApi() {
@@ -99,6 +107,12 @@ public class FinanceClientConfiguration {
     @Bean
     LedgerBookQueryApi ledgerBookQueryApi() {
         return ledger.createClient(LedgerBookQueryApi.class);
+    }
+
+    /** ledger 科目余额与试算记录查询；BFF 不使用执行试算。 */
+    @Bean
+    TrialBalanceApi trialBalanceApi() {
+        return ledger.createClient(TrialBalanceApi.class);
     }
 
     /** account Owner 余额查询。 */

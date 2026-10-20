@@ -44,14 +44,16 @@
     "id": "R10",
     "method": "GET",
     "path": "/finance/ledger-books/v1/7312345678901239001/accounts",
-    "query": "?accountCode=CLIENT_PAYABLE&ownerType=OPERATING_ENTITY&ownerId=AE001&balanceBucket=NONE&page=1&size=10",
+    "query": "?accountNo=AE001-USD-22010101-0001&accountCode=CLIENT_PAYABLE&ownerType=OPERATING_ENTITY&ownerId=AE001&balanceBucket=NONE&page=1&size=10",
     "request": null,
     "status": 200,
     "response": {
       "items": [
         {
           "accountId": "7312345678901240001",
+          "accountNo": "AE001-USD-22010101-0001",
           "accountCode": "CLIENT_PAYABLE",
+          "accountName": "Client 应付款",
           "ownerType": "OPERATING_ENTITY",
           "ownerId": "AE001",
           "balanceBucket": "NONE",
@@ -164,7 +166,9 @@
         {
           "lineNo": 1,
           "accountId": "7312345678901240009",
+          "accountNo": "AE001-USD-11010101-0001",
           "accountCode": "CHANNEL_UNSETTLED_RECEIVABLE",
+          "accountName": "渠道未结算应收",
           "ownerType": "CHANNEL_ACCOUNT",
           "ownerId": "9001",
           "balanceBucket": "NONE",
@@ -175,7 +179,9 @@
         {
           "lineNo": 2,
           "accountId": "7312345678901240001",
+          "accountNo": "AE001-USD-22010101-0001",
           "accountCode": "CLIENT_PAYABLE",
+          "accountName": "Client 应付款",
           "ownerType": "OPERATING_ENTITY",
           "ownerId": "AE001",
           "balanceBucket": "NONE",
@@ -186,5 +192,267 @@
       ]
     },
     "routeCode": "operations-finance-journal-entry-detail"
+  },
+  {
+    "id": "L6",
+    "method": "GET",
+    "path": "/finance/ledger-books/v1/7312345678901239001/periods/7312345678901236010/account-balances",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "ledgerBookId": "7312345678901239001",
+      "periodId": "7312345678901236010",
+      "currency": "USD",
+      "lines": [
+        {
+          "chartAccountId": "3106",
+          "accountNo": "2201",
+          "accountCode": "CUSTOMER_FUNDS_PAYABLE",
+          "accountName": "应付客户款项",
+          "accountClass": "LIABILITY",
+          "normalSide": "CREDIT",
+          "parentChartAccountId": null,
+          "level": 1,
+          "postingAllowed": false,
+          "openingBalance": "0.00",
+          "periodDebit": "14.40",
+          "periodCredit": "343.20",
+          "closingBalance": "328.80"
+        },
+        {
+          "chartAccountId": "3207",
+          "accountNo": "220101",
+          "accountCode": "CLIENT_FUNDS_PAYABLE",
+          "accountName": "应付 Client 款项",
+          "accountClass": "LIABILITY",
+          "normalSide": "CREDIT",
+          "parentChartAccountId": "3106",
+          "level": 2,
+          "postingAllowed": false,
+          "openingBalance": "0.00",
+          "periodDebit": "14.40",
+          "periodCredit": "343.20",
+          "closingBalance": "328.80"
+        },
+        {
+          "chartAccountId": "3009",
+          "accountNo": "22010101",
+          "accountCode": "CLIENT_PAYABLE",
+          "accountName": "Client 应付款",
+          "accountClass": "LIABILITY",
+          "normalSide": "CREDIT",
+          "parentChartAccountId": "3207",
+          "level": 3,
+          "postingAllowed": true,
+          "openingBalance": "0.00",
+          "periodDebit": "14.40",
+          "periodCredit": "343.20",
+          "closingBalance": "328.80"
+        },
+        {
+          "chartAccountId": "3117",
+          "accountNo": "4001",
+          "accountCode": "OPERATING_REVENUE",
+          "accountName": "营业收入",
+          "accountClass": "REVENUE",
+          "normalSide": "CREDIT",
+          "parentChartAccountId": null,
+          "level": 1,
+          "postingAllowed": false,
+          "openingBalance": "0.00",
+          "periodDebit": "0.00",
+          "periodCredit": "14.40",
+          "closingBalance": "14.40"
+        },
+        {
+          "chartAccountId": "3220",
+          "accountNo": "400101",
+          "accountCode": "TRANSACTION_SERVICE_REVENUE",
+          "accountName": "交易服务收入",
+          "accountClass": "REVENUE",
+          "normalSide": "CREDIT",
+          "parentChartAccountId": "3117",
+          "level": 2,
+          "postingAllowed": false,
+          "openingBalance": "0.00",
+          "periodDebit": "0.00",
+          "periodCredit": "14.40",
+          "closingBalance": "14.40"
+        },
+        {
+          "chartAccountId": "3023",
+          "accountNo": "40010101",
+          "accountCode": "CLIENT_FEE_REVENUE",
+          "accountName": "Client 手续费收入",
+          "accountClass": "REVENUE",
+          "normalSide": "CREDIT",
+          "parentChartAccountId": "3220",
+          "level": 3,
+          "postingAllowed": true,
+          "openingBalance": "0.00",
+          "periodDebit": "0.00",
+          "periodCredit": "14.40",
+          "closingBalance": "14.40"
+        }
+      ]
+    },
+    "routeCode": "operations-finance-account-balance-list"
+  },
+  {
+    "id": "T1",
+    "method": "GET",
+    "path": "/finance/ledger-books/v1/7312345678901239001/periods/7312345678901236010/trial-balances",
+    "query": "?page=1&size=10",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "trialBalanceRunId": "7312345678901242002",
+          "ledgerBookId": "7312345678901239001",
+          "periodId": "7312345678901236010",
+          "runNo": "2",
+          "asOfSequence": "1024",
+          "status": "SUCCEEDED",
+          "totalDebit": "357.60",
+          "totalCredit": "357.60",
+          "contentHash": "9f2c0e6b4d1a7c35e8b2f0d94a6c1e7b3d5f8a2c4e6b0d1f3a5c7e9b2d4f6a8c",
+          "lineCount": 2,
+          "exceptionCount": 1,
+          "createTime": "2026-10-19T08:30:00.123456Z"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    },
+    "routeCode": "operations-finance-trial-balance-list"
+  },
+  {
+    "id": "T2",
+    "method": "GET",
+    "path": "/finance/ledger-books/v1/7312345678901239001/periods/7312345678901236010/trial-balances/2",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "trialBalanceRunId": "7312345678901242002",
+      "ledgerBookId": "7312345678901239001",
+      "periodId": "7312345678901236010",
+      "runNo": "2",
+      "asOfSequence": "1024",
+      "status": "SUCCEEDED",
+      "totalDebit": "357.60",
+      "totalCredit": "357.60",
+      "contentHash": "9f2c0e6b4d1a7c35e8b2f0d94a6c1e7b3d5f8a2c4e6b0d1f3a5c7e9b2d4f6a8c",
+      "lineCount": 2,
+      "exceptionCount": 1,
+      "createTime": "2026-10-19T08:30:00.123456Z",
+      "lines": [
+        {
+          "chartAccountId": "3009",
+          "accountNo": "22010101",
+          "accountCode": "CLIENT_PAYABLE",
+          "accountName": "Client 应付款",
+          "accountClass": "LIABILITY",
+          "normalSide": "CREDIT",
+          "parentChartAccountId": "3207",
+          "level": 3,
+          "postingAllowed": true,
+          "openingBalance": "0.00",
+          "periodDebit": "14.40",
+          "periodCredit": "343.20",
+          "closingBalance": "328.80"
+        },
+        {
+          "chartAccountId": "3023",
+          "accountNo": "40010101",
+          "accountCode": "CLIENT_FEE_REVENUE",
+          "accountName": "Client 手续费收入",
+          "accountClass": "REVENUE",
+          "normalSide": "CREDIT",
+          "parentChartAccountId": "3220",
+          "level": 3,
+          "postingAllowed": true,
+          "openingBalance": "0.00",
+          "periodDebit": "0.00",
+          "periodCredit": "14.40",
+          "closingBalance": "14.40"
+        }
+      ],
+      "summaryLines": [
+        {
+          "chartAccountId": "3106",
+          "accountNo": "2201",
+          "accountCode": "CUSTOMER_FUNDS_PAYABLE",
+          "accountName": "应付客户款项",
+          "accountClass": "LIABILITY",
+          "normalSide": "CREDIT",
+          "parentChartAccountId": null,
+          "level": 1,
+          "postingAllowed": false,
+          "openingBalance": "0.00",
+          "periodDebit": "14.40",
+          "periodCredit": "343.20",
+          "closingBalance": "328.80"
+        },
+        {
+          "chartAccountId": "3207",
+          "accountNo": "220101",
+          "accountCode": "CLIENT_FUNDS_PAYABLE",
+          "accountName": "应付 Client 款项",
+          "accountClass": "LIABILITY",
+          "normalSide": "CREDIT",
+          "parentChartAccountId": "3106",
+          "level": 2,
+          "postingAllowed": false,
+          "openingBalance": "0.00",
+          "periodDebit": "14.40",
+          "periodCredit": "343.20",
+          "closingBalance": "328.80"
+        },
+        {
+          "chartAccountId": "3117",
+          "accountNo": "4001",
+          "accountCode": "OPERATING_REVENUE",
+          "accountName": "营业收入",
+          "accountClass": "REVENUE",
+          "normalSide": "CREDIT",
+          "parentChartAccountId": null,
+          "level": 1,
+          "postingAllowed": false,
+          "openingBalance": "0.00",
+          "periodDebit": "0.00",
+          "periodCredit": "14.40",
+          "closingBalance": "14.40"
+        },
+        {
+          "chartAccountId": "3220",
+          "accountNo": "400101",
+          "accountCode": "TRANSACTION_SERVICE_REVENUE",
+          "accountName": "交易服务收入",
+          "accountClass": "REVENUE",
+          "normalSide": "CREDIT",
+          "parentChartAccountId": "3117",
+          "level": 2,
+          "postingAllowed": false,
+          "openingBalance": "0.00",
+          "periodDebit": "0.00",
+          "periodCredit": "14.40",
+          "closingBalance": "14.40"
+        }
+      ],
+      "exceptions": [
+        {
+          "exceptionType": "GENERAL_LEDGER_MISMATCH",
+          "referenceType": "ACCOUNT",
+          "referenceId": "7312345678901240001",
+          "differenceAmount": "0.01",
+          "status": "OPEN"
+        }
+      ]
+    },
+    "routeCode": "operations-finance-trial-balance-detail"
   }
 ]

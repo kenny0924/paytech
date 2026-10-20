@@ -1,0 +1,76 @@
+-- mor-test 一次性转换：STANDARD 由已部署的两级树（2026-10-20 发布）改为三级树（technique 2.1，2026-10-20 用户变更）。
+-- 目标库：mor_ledger（root）。全新环境不需要本文件：change 文件 2026-10-19-ledger-chart-hierarchy.sql 已直接生成三级树。
+-- 前置：cleanup-demo-20261020.sql 已执行，没有账簿采用 STANDARD；不可重跑（固定 ID 插入冲突即整体回滚）。
+-- 结果：新增二级 26 个（ID 3201—3226），29 个末级改 8 位编号并挂到二级；一级 19 个不变；共 74 个科目。
+
+START TRANSACTION;
+SET @adopted = (SELECT COUNT(*) FROM `t_ledger_book` WHERE `chart_id` = 2001);
+SELECT @adopted AS `books_adopting_standard`;
+
+-- 先改 29 个末级的编号与上级（释放原 6 位编号，避免与新二级冲突；库内无物理外键，上级可先指向随后插入的二级）
+UPDATE `t_chart_account` c
+JOIN (
+            SELECT 3003 AS `id`, '10010101' AS `no`, 3201 AS `parent`
+  UNION ALL SELECT 3001, '11010101', 3202 UNION ALL SELECT 3002, '11010102', 3202
+  UNION ALL SELECT 3004, '11310101', 3203 UNION ALL SELECT 3005, '11310102', 3203 UNION ALL SELECT 3008, '11310201', 3204
+  UNION ALL SELECT 3006, '11710101', 3205
+  UNION ALL SELECT 3007, '19010101', 3206
+  UNION ALL SELECT 3009, '22010101', 3207 UNION ALL SELECT 3010, '22010201', 3208 UNION ALL SELECT 3017, '22010301', 3209
+  UNION ALL SELECT 3011, '22110101', 3210
+  UNION ALL SELECT 3012, '22210101', 3211
+  UNION ALL SELECT 3014, '22310101', 3212 UNION ALL SELECT 3015, '22310102', 3212
+  UNION ALL SELECT 3013, '22410101', 3213
+  UNION ALL SELECT 3018, '22510101', 3214
+  UNION ALL SELECT 3016, '29010101', 3215
+  UNION ALL SELECT 3019, '30010101', 3216
+  UNION ALL SELECT 3021, '31010101', 3217
+  UNION ALL SELECT 3020, '31030101', 3218
+  UNION ALL SELECT 3022, '32010101', 3219
+  UNION ALL SELECT 3023, '40010101', 3220 UNION ALL SELECT 3024, '40010201', 3221
+  UNION ALL SELECT 3027, '50010101', 3222 UNION ALL SELECT 3026, '50010201', 3223 UNION ALL SELECT 3025, '50010301', 3224
+  UNION ALL SELECT 3028, '51010101', 3225 UNION ALL SELECT 3029, '51010201', 3226
+) m ON m.`id` = c.`id`
+SET c.`account_no` = m.`no`, c.`parent_account_id` = m.`parent`, c.`update_time` = UTC_TIMESTAMP(6)
+WHERE c.`chart_id` = 2001 AND LENGTH(c.`account_no`) = 6 AND @adopted = 0;
+
+-- 再插入 26 个二级汇总科目
+INSERT INTO `t_chart_account`
+  (`id`, `chart_id`, `parent_account_id`, `account_no`, `account_code`, `account_name`, `account_class`, `normal_side`, `posting_allowed`, `account_status`, `create_time`, `update_time`)
+SELECT * FROM (
+            SELECT 3201 AS `id`, 2001 AS `chart_id`, 3101 AS `parent_account_id`, '100101' AS `account_no`, 'BANK_DEPOSITS' AS `account_code`, '银行存款' AS `account_name`,
+                   'ASSET' AS `account_class`, 'DEBIT' AS `normal_side`, 0 AS `posting_allowed`, 'ACTIVE' AS `account_status`, UTC_TIMESTAMP(6) AS `create_time`, UTC_TIMESTAMP(6) AS `update_time`
+  UNION ALL SELECT 3202, 2001, 3102, '110101', 'CHANNEL_CLEARING_RECEIVABLES', '渠道清算应收',     'ASSET',     'DEBIT',  0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3203, 2001, 3103, '113101', 'RECOVERY_RECEIVABLES',         '追偿应收',         'ASSET',     'DEBIT',  0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3204, 2001, 3103, '113102', 'INTERCOMPANY_RECEIVABLES',     '关联方应收',       'ASSET',     'DEBIT',  0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3205, 2001, 3104, '117101', 'INPUT_TAX',                    '进项税额',         'ASSET',     'DEBIT',  0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3206, 2001, 3105, '190101', 'RECON_SUSPENSE',               '对账待处理',       'ASSET',     'DEBIT',  0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3207, 2001, 3106, '220101', 'CLIENT_FUNDS_PAYABLE',         '应付 Client 款项', 'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3208, 2001, 3106, '220102', 'PARTNER_FUNDS_PAYABLE',        '应付合作方款项',   'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3209, 2001, 3106, '220103', 'CONSUMER_FUNDS_PAYABLE',       '应付 Consumer 款项', 'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3210, 2001, 3107, '221101', 'CLIENT_DEPOSITS',              'Client 保证金',    'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3211, 2001, 3108, '222101', 'OUTPUT_TAX',                   '销项税额',         'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3212, 2001, 3109, '223101', 'CHANNEL_CLEARING_PAYABLES',    '渠道清算应付',     'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3213, 2001, 3110, '224101', 'CHANNEL_FEE_ACCRUALS',         '渠道费用预提',     'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3214, 2001, 3111, '225101', 'INTERCOMPANY_PAYABLES',        '关联方应付',       'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3215, 2001, 3112, '290101', 'UNIDENTIFIED_RECEIPTS',        '待识别款项',       'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3216, 2001, 3113, '300101', 'ORDINARY_CAPITAL',             '普通股本',         'EQUITY',    'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3217, 2001, 3114, '310101', 'UNDISTRIBUTED_PROFIT',         '未分配利润',       'EQUITY',    'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3218, 2001, 3115, '310301', 'PERIOD_RESULT',                '本期损益',         'EQUITY',    'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3219, 2001, 3116, '320101', 'OWNER_DISTRIBUTIONS',          '股东分配',         'EQUITY',    'DEBIT',  0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3220, 2001, 3117, '400101', 'TRANSACTION_SERVICE_REVENUE',  '交易服务收入',     'REVENUE',   'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3221, 2001, 3117, '400102', 'PLATFORM_SERVICE_INCOME',      '平台服务收入',     'REVENUE',   'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3222, 2001, 3118, '500101', 'CHANNEL_COSTS',                '渠道成本',         'EXPENSE',   'DEBIT',  0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3223, 2001, 3118, '500102', 'PARTNER_COSTS',                '合作方分成',       'EXPENSE',   'DEBIT',  0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3224, 2001, 3118, '500103', 'PLATFORM_SERVICE_COSTS',       '平台服务费用',     'EXPENSE',   'DEBIT',  0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3225, 2001, 3119, '510101', 'ROUNDING_DIFFERENCES',         '舍入差异',         'EXPENSE',   'DEBIT',  0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3226, 2001, 3119, '510102', 'RECONCILIATION_LOSSES',        '对账差异损失',     'EXPENSE',   'DEBIT',  0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+) s WHERE @adopted = 0;
+
+-- 核对：74 个科目（19 / 26 / 29），每个非一级科目的上级为汇总科目、类别一致、编号以上级开头且长 2 位
+SELECT LENGTH(`account_no`) AS `digits`, COUNT(*) AS `n`, SUM(`posting_allowed`) AS `postable` FROM `t_chart_account` WHERE `chart_id` = 2001 GROUP BY 1 ORDER BY 1;
+SELECT COUNT(*) AS `bad_parent` FROM `t_chart_account` c JOIN `t_chart_account` p ON p.`id` = c.`parent_account_id`
+WHERE c.`chart_id` = 2001 AND (p.`posting_allowed` = 1 OR p.`account_class` <> c.`account_class`
+  OR LENGTH(c.`account_no`) <> LENGTH(p.`account_no`) + 2 OR LEFT(c.`account_no`, LENGTH(p.`account_no`)) <> p.`account_no`);
+SELECT COUNT(*) AS `leaf_not_level3` FROM `t_chart_account` WHERE `chart_id` = 2001 AND `posting_allowed` = 1 AND LENGTH(`account_no`) <> 8;
+
+COMMIT;

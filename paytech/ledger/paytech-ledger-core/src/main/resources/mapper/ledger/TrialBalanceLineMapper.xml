@@ -6,12 +6,13 @@
         <foreach collection="rows" item="row" separator=",">(#{row.id}, #{row.runId}, #{row.chartAccountId}, #{row.openingBalance}, #{row.periodDebit}, #{row.periodCredit}, #{row.closingBalance}, #{row.createTime})</foreach>
     </insert>
 
-    <select id="selectViews" resultType="com.paytech.ledger.domain.view.TrialBalanceLineView">
-        SELECT l.chart_account_id, c.account_code, c.account_name, c.account_class, c.normal_side,
+    <select id="selectViews" resultType="com.paytech.ledger.domain.view.AccountBalanceView">
+        SELECT l.chart_account_id, c.account_no, c.account_code, c.account_name, c.account_class, c.normal_side,
+               c.parent_account_id parent_chart_account_id, c.posting_allowed,
                l.opening_balance, l.period_debit, l.period_credit, l.closing_balance
         FROM t_trial_balance_line l
         JOIN t_chart_account c ON c.id = l.chart_account_id
         WHERE l.run_id = #{runId}
-        ORDER BY c.account_code
+        ORDER BY c.account_no
     </select>
 </mapper>

@@ -3,7 +3,7 @@ import { Button, Empty, Form, Input, Select, Table } from 'antd';
 import type { PagingRequestBody } from '../api/paging';
 import { usePaging } from '../hooks/usePaging';
 import {
-  activeOnly, balanceBuckets, decodeOwnerAccount, entityTypeLabels, financeErrorTarget, financePaths, ledgerEntityTypes, ownerAccountStatusLabels,
+  activeOnly, balanceBuckets, decodeOwnerAccount, entityTypeLabels, financeErrorTarget, financePaths, ledgerEntityTypes, ownerAccountNoPattern, ownerAccountStatusLabels,
   pageOf, subledgerAccountNames, subledgerEntityIdError, subledgerErrorTargets, subledgerFilters, subledgerOwnerTypes,
 } from './finance';
 import type { Currency, OwnerAccount, SubledgerScope } from './finance';
@@ -15,7 +15,7 @@ const options = (values: readonly string[]) => values.map(value => ({ value, lab
 const accountCodeOptions = Object.entries(subledgerAccountNames).map(([value, name]) => ({ value, label: `${value} · ${name}` }));
 
 /**
- * 明细账查询条件（画板 13）：主体类型 / 主体标识 / 币种必填一行，科目 / Owner 类型 / Owner ID / 余额桶筛选一行
+ * 明细账查询条件（画板 13）：主体类型 / 主体标识 / 币种必填一行，账户号 / 科目 / Owner 类型 / Owner ID / 余额桶筛选一行
  * <li>提交后整组条件写入 URL，由页面按 URL 重建账户列表；重置清空筛选但保留主体。</li>
  */
 export function SubledgerSearchForm({ scope, filters, currencies, onSearch }: {
@@ -24,7 +24,7 @@ export function SubledgerSearchForm({ scope, filters, currencies, onSearch }: {
 }) {
   const [form] = Form.useForm();
   const reset = () => {
-    form.setFieldsValue({ accountCode: undefined, ownerType: undefined, ownerId: undefined, balanceBucket: undefined });
+    form.setFieldsValue({ accountNo: undefined, accountCode: undefined, ownerType: undefined, ownerId: undefined, balanceBucket: undefined });
     if (scope) onSearch(subledgerFilters(form.getFieldsValue()));
   };
   return <Form form={form} name="finance-subledger-filters" layout="vertical" initialValues={{ entityType: 'OPERATING_ENTITY', ...scope, ...filters }}
@@ -40,6 +40,9 @@ export function SubledgerSearchForm({ scope, filters, currencies, onSearch }: {
         <Select placeholder="启用币种" options={activeOnly(currencies).map(item => ({ value: item.currency, label: item.currency }))} /></Form.Item>
     </div>
     <div className="finance-search">
+      <Form.Item name="accountNo" label="账户号" normalize={(value: string) => value?.toUpperCase()}
+        rules={[{ pattern: ownerAccountNoPattern, message: '大写字母、数字与连字符，如 AE001-USD-22010101-S000001' }]}>
+        <Input allowClear maxLength={48} placeholder="精确匹配" /></Form.Item>
       <Form.Item name="accountCode" label="科目"><Select allowClear placeholder="全部" options={accountCodeOptions} /></Form.Item>
       <Form.Item name="ownerType" label="Owner 类型"><Select allowClear placeholder="全部" options={options(subledgerOwnerTypes)} /></Form.Item>
       <Form.Item name="ownerId" label="Owner ID" rules={[{ pattern: /^[1-9][0-9]{0,18}$/, message: '必须是正十进制整数字符串' }]}>
@@ -62,10 +65,11 @@ export function SubledgerAccountList({ scope, filters, paging, minorUnit, onQuer
   const hint = financeErrorTarget(page.failure, [], subledgerErrorTargets)?.message;
   if (page.error) return <LoadFailure message={hint ?? page.error} onRetry={page.refresh} />;
   return <section className="table-panel">
-    <Table<OwnerAccount> rowKey="accountId" tableLayout="fixed" dataSource={page.data.items} loading={page.loading} scroll={{ x: 1100 }}
+    <Table<OwnerAccount> rowKey="accountId" tableLayout="fixed" dataSource={page.data.items} loading={page.loading} scroll={{ x: 1340 }}
       pagination={{ ...page.pagination, showTotal: total => `共 ${total} 条` }} onRow={row => ({ onClick: () => onSelect(row), className: 'clickable-row' })}
       locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE}
         description={Object.keys(filters).length ? '没有符合条件的 Owner 账户' : '该主体与币种下还没有 Owner 账户'} /> }} columns={[
+        { title: '账户号', width: 240, render: (_, row) => <span className="mono">{row.accountNo}</span> },
         { title: '科目', width: 240, render: (_, row) => <div><div className="finance-code">{row.accountCode}</div>
           {subledgerAccountNames[row.accountCode] && <div className="cell-meta">{subledgerAccountNames[row.accountCode]}</div>}</div> },
         { title: 'Owner', width: 200, render: (_, row) => <div><div>{row.ownerType}</div><div className="cell-meta">{row.ownerId}</div></div> },

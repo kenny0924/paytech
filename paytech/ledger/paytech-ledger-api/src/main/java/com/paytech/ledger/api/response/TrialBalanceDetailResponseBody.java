@@ -6,7 +6,7 @@ import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 
-/** 试算详情：摘要、按科目代码排序的试算行与异常。 */
+/** 试算详情：摘要、按科目编号排序的试算行、级次汇总行与异常。 */
 @Getter
 @Setter
 public class TrialBalanceDetailResponseBody {
@@ -46,49 +46,20 @@ public class TrialBalanceDetailResponseBody {
     /** 创建时间（UTC）。 */
     private Instant createTime;
 
-    /** 按科目代码排序的试算行。 */
-    private List<Line> lines;
+    /**
+     * 按科目编号排序的试算行
+     * <li>末级可过账科目，与内容摘要覆盖的持久化行一致。</li>
+     */
+    private List<AccountBalanceLine> lines;
+
+    /**
+     * 按科目编号排序的级次汇总行
+     * <li>查询时由科目树向上汇总，postingAllowed 为 false；任一汇总行的借、贷与余额等于其直接下级之和；不进入内容摘要。</li>
+     */
+    private List<AccountBalanceLine> summaryLines;
 
     /** 异常发现事实。 */
     private List<Finding> exceptions;
-
-    /** 试算行：一个可过账科目在账簿内的汇总。 */
-    @Getter
-    @Setter
-    public static class Line {
-        /** 会计科目主键。 */
-        private String chartAccountId;
-
-        /** 科目代码。 */
-        private String accountCode;
-
-        /** 科目名称。 */
-        private String accountName;
-
-        /** 科目类别：ASSET、LIABILITY、EQUITY、REVENUE、EXPENSE。 */
-        private String accountClass;
-
-        /** 科目正常方向：DEBIT 或 CREDIT。 */
-        private String normalSide;
-
-        /**
-         * 期初余额
-         * <li>按正常方向有符号，负数表示反向余额。</li>
-         */
-        private String openingBalance;
-
-        /** 本期借方发生额。 */
-        private String periodDebit;
-
-        /** 本期贷方发生额。 */
-        private String periodCredit;
-
-        /**
-         * 期末余额
-         * <li>期初加本期正常方向净额，按正常方向有符号。</li>
-         */
-        private String closingBalance;
-    }
 
     /** 异常发现事实。 */
     @Getter

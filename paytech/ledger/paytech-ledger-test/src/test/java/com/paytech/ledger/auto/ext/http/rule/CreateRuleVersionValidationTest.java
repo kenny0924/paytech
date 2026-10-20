@@ -11,6 +11,7 @@ import com.paytech.account.api.enums.OwnerType;
 import com.paytech.ledger.api.enums.AmountSource;
 import com.paytech.ledger.api.enums.AutoInstructionType;
 import com.paytech.ledger.api.enums.RuleOwnerRole;
+import com.paytech.ledger.core.enums.ChartAccountStatus;
 import com.paytech.ledger.core.enums.EntrySide;
 import com.paytech.ledger.test.base.AbstractRuleBundleApiTest;
 import com.paytech.ledger.test.builder.RuleVersionRequestBuilder;
@@ -21,6 +22,8 @@ import com.paytech.ledger.test.builder.RuleVersionRequestBuilder;
  * @see com.paytech.ledger.api.AccountingRuleBundleApi#createRuleVersion(String, com.paytech.ledger.api.request.CreateRuleVersionRequestBody)
  */
 class CreateRuleVersionValidationTest extends AbstractRuleBundleApiTest {
+    /** STANDARD 一级汇总科目“营业收入”（4001，不可过账）。 */
+    private static final String OPERATING_REVENUE_CODE = "OPERATING_REVENUE";
 
     /** 每例被拒后 Bundle 仍只有初始化第 1 版。 */
     @AfterEach
@@ -58,6 +61,25 @@ class CreateRuleVersionValidationTest extends AbstractRuleBundleApiTest {
         builder.line(2).setAccountCode("NOT_EXISTS_ACCOUNT");
 
         createVersion(builder).assertBusinessRejected("NOT_EXISTS_ACCOUNT");
+    }
+
+    /** 汇总科目不可过账，不能被规则行引用。 */
+    @Test
+    void test_summaryAccountRejected() {
+        RuleVersionRequestBuilder builder = version();
+        builder.line(2).setAccountCode(OPERATING_REVENUE_CODE);
+
+        createVersion(builder).assertBusinessRejected("科目不存在或不可过账: 科目 " + OPERATING_REVENUE_CODE);
+    }
+
+    /** 停用的科目不能被新规则版本引用；当前生效版本不受影响。 */
+    @Test
+    void test_inactiveAccountRejected() {
+        RuleVersionRequestBuilder builder = version();
+        String accountCode = builder.line(2).getAccountCode();
+        testMapper.updateStandardChartAccountStatus(accountCode, ChartAccountStatus.INACTIVE.getCode());
+
+        createVersion(builder).assertBusinessRejected("科目已停用，不能被新规则版本引用: 科目 " + accountCode);
     }
 
     /** 渠道清算账户角色只能使用 NONE 桶。 */

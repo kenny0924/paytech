@@ -99,8 +99,14 @@ public class JournalEntryDetailView {
         /** 账户主键。 */
         private Long accountId;
 
+        /** 财务人员可读账户号。 */
+        private String accountNo;
+
         /** 科目代码。 */
         private String accountCode;
+
+        /** 科目名称。 */
+        private String accountName;
 
         /** 核算对象类型。 */
         private LedgerOwnerType ownerType;

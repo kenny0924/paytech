@@ -12,6 +12,9 @@ public class OwnerAccountResponseBody {
     /** Owner 账户主键（account t_owner_account.id，不是 ledger 账户主键）。 */
     private String accountId;
 
+    /** 财务人员可读账户号：{主体段}-{币种}-{科目编号}-S{序号}，开户时生成后不变，只用于显示与搜索。 */
+    private String accountNo;
+
     /** 科目代码，取值见 {@code OwnerAccountType}。 */
     private String accountCode;
 

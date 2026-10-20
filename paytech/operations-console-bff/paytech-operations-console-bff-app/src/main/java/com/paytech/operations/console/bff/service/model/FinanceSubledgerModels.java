@@ -37,6 +37,9 @@ public final class FinanceSubledgerModels {
         /** Owner 账户主键（account 账户，不是 ledger 账户）。 */
         private String accountId;
 
+        /** 可读账户号：{主体段}-{币种}-{科目编号}-S{序号}，开户后不变。 */
+        private String accountNo;
+
         /** 科目代码。 */
         private String accountCode;
 
@@ -192,6 +195,9 @@ public final class FinanceSubledgerModels {
 
         /** Owner 账户主键。 */
         private String accountId;
+
+        /** Owner 账户的可读账户号。 */
+        private String accountNo;
 
         /** 科目代码。 */
         private String accountCode;

@@ -11,6 +11,7 @@ import com.paytech.ledger.api.response.ChartAccountResponseBody;
 import com.paytech.ledger.api.response.LedgerBookDetailResponseBody;
 import com.paytech.ledger.core.dal.dataobject.ChartAccount;
 import com.paytech.ledger.domain.view.LedgerBookView;
+import com.paytech.ledger.domainservice.validator.chart.ChartAccountNoRule;
 
 /** 内部读取接口（/ledger/v1）的参数解析与 View 到 ResponseBody 的转换；ID 与金额输出为字符串。 */
 @Component
@@ -41,16 +42,21 @@ public class LedgerReadConverter {
         return body;
     }
 
-    /** 转换科目。 */
-    ChartAccountResponseBody toChartBody(ChartAccount account) {
+    /** 转换科目；级次由科目编号长度推出。 */
+    public ChartAccountResponseBody toChartBody(ChartAccount account) {
         ChartAccountResponseBody body = new ChartAccountResponseBody();
         body.setChartAccountId(account.getId().toString());
         body.setChartId(account.getChartId().toString());
+        body.setAccountNo(account.getAccountNo());
         body.setAccountCode(account.getAccountCode());
         body.setAccountName(account.getAccountName());
         body.setAccountClass(account.getAccountClass().getCode());
         body.setNormalSide(account.getNormalSide().getCode());
         body.setPostingAllowed(account.getPostingAllowed());
+        body.setParentChartAccountId(account.getParentAccountId() == null ? null
+            : account.getParentAccountId().toString());
+        body.setLevel(ChartAccountNoRule.level(account.getAccountNo()));
+        body.setAccountStatus(account.getAccountStatus().getCode());
         return body;
     }
 

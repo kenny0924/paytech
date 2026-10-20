@@ -76,16 +76,17 @@ public class OwnerAccountRepositoryImpl implements OwnerAccountRepository {
     /** 数据库 LIMIT / OFFSET 分页。 */
     @Override
     public List<OwnerAccount> findPage(AccountEntityType entityType, String entityId, String currency,
-        OwnerType ownerType, String ownerId, String accountCode, BalanceBucket bucket, PagingRequestBody paging) {
-        return mapper.selectPage(entityType, entityId, currency, ownerType, ownerId, accountCode, bucket,
+        OwnerType ownerType, String ownerId, String accountCode, BalanceBucket bucket, String accountNo,
+        PagingRequestBody paging) {
+        return mapper.selectPage(entityType, entityId, currency, ownerType, ownerId, accountCode, bucket, accountNo,
             paging.offset(), paging.size());
     }
 
     /** 同筛选条件的总数。 */
     @Override
     public long count(AccountEntityType entityType, String entityId, String currency, OwnerType ownerType,
-        String ownerId, String accountCode, BalanceBucket bucket) {
-        return mapper.countPage(entityType, entityId, currency, ownerType, ownerId, accountCode, bucket);
+        String ownerId, String accountCode, BalanceBucket bucket, String accountNo) {
+        return mapper.countPage(entityType, entityId, currency, ownerType, ownerId, accountCode, bucket, accountNo);
     }
 
     /** 以余额版本 CAS 写入，成功后同步原对象。 */

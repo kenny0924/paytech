@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- t_owner_account_no_sequence：账户号序号，只读写 mor_account；序列唯一键行锁串行同主体同币种同科目的开户。last_value 是 MySQL 8 保留字（窗口函数），必须加反引号。 -->
+<mapper namespace="com.paytech.account.core.dal.mapper.OwnerAccountNoSequenceMapper">
+    <insert id="upsertNext">
+        INSERT INTO t_owner_account_no_sequence (id, entity_type, entity_id, currency, account_code, `last_value`, create_time, update_time)
+        VALUES (#{id}, #{entityType}, #{entityId}, #{currency}, #{accountCode}, LAST_INSERT_ID(1), #{createTime}, #{updateTime})
+        ON DUPLICATE KEY UPDATE `last_value` = LAST_INSERT_ID(`last_value` + 1), update_time = #{updateTime}
+    </insert>
+
+    <select id="selectLastInsertId" resultType="long" flushCache="true" useCache="false">
+        SELECT LAST_INSERT_ID()
+    </select>
+</mapper>

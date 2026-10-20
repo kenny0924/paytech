@@ -32,10 +32,10 @@ public class FinanceSubledgerClientImpl implements FinanceSubledgerClient {
     /** Owner 账户分页，核对分页回执。 */
     @Override
     public PagingResponseBody<OwnerAccountResponseBody> listOwnerAccounts(String entityType, String entityId,
-        String currency, String ownerType, String ownerId, String accountCode, String balanceBucket, int page,
-        int size) {
+        String currency, String ownerType, String ownerId, String accountCode, String balanceBucket, String accountNo,
+        int page, int size) {
         return page(accountApi.listOwnerAccounts(entityType, entityId, currency, ownerType, ownerId, accountCode,
-            balanceBucket, page, size), page, size, OwnerAccountResponseBody.class);
+            balanceBucket, accountNo, page, size), page, size, OwnerAccountResponseBody.class);
     }
 
     /** 明细流水分页，核对分页回执。 */

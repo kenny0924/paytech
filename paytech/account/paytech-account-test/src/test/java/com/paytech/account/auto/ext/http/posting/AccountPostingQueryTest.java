@@ -120,7 +120,7 @@ class AccountPostingQueryTest extends AbstractBalanceTest {
         posted.await(3);
     }
 
-    /** 批次详情：批次头（含 Broker 确认后的发布时间）、来源事实与带科目、Owner、桶的流水；不存在为 POSTING_NOT_FOUND。 */
+    /** 批次详情：批次头（含 Broker 确认后的发布时间）、来源事实与带账户号、科目、Owner、桶的流水；不存在为 POSTING_NOT_FOUND。 */
     @Test
     void test_getPostingDetail() {
         BillingFactPayload fact = partnerPayment();
@@ -143,6 +143,8 @@ class AccountPostingQueryTest extends AbstractBalanceTest {
             () -> assertEquals(publishedTime, body.getPublishedTime()),
             () -> assertNull(body.getMovementId()), () -> assertEquals(2, body.getEntries().size()),
             () -> assertEquals(OwnerAccountType.CLIENT_PAYABLE.getCode(), client.getAccountCode()),
+            () -> assertEquals(account(OwnerAccountType.CLIENT_PAYABLE, CLIENT, BalanceBucket.PENDING).get("account_no"),
+                client.getAccountNo()),
             () -> assertEquals(CLIENT, client.getOwnerId()),
             () -> assertEquals(BalanceBucket.PENDING.getCode(), client.getBalanceBucket()),
             () -> assertEquals(EntrySide.CREDIT.getCode(), client.getEntrySide()),

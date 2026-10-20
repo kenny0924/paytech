@@ -3,6 +3,7 @@ package com.paytech.ledger.auto.ext.http.close;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
@@ -19,7 +20,9 @@ import com.paytech.account.api.enums.AccountEntityType;
 import com.paytech.account.api.event.AccountPostedPayload;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.ledger.api.enums.LedgerOwnerType;
+import com.paytech.ledger.api.enums.LedgerSetupErrorCode;
 import com.paytech.ledger.core.dal.dataobject.JournalEntry;
+import com.paytech.ledger.core.enums.ChartAccountStatus;
 import com.paytech.ledger.core.enums.JournalEntryType;
 import com.paytech.ledger.core.enums.LedgerEntityType;
 import com.paytech.ledger.core.enums.PeriodStatus;
@@ -66,6 +69,8 @@ class StartPeriodCloseTest extends AbstractPeriodCloseApiTest {
         Long resultAccountId = testMapper.selectAccountId(ledger.getLedgerBookId(), CURRENT_RESULT_CODE,
             LedgerOwnerType.OPERATING_ENTITY.getCode(), ledger.getEntityNo());
         assertNotNull(resultAccountId, "结转应自动创建账簿主体的本期损益账户");
+        assertEquals(ledger.getEntityNo() + "-USD-31030101-0001", testMapper.selectAccount(resultAccountId).getAccountNo(),
+            "关账建户的账户号");
         assertAll(() -> assertEquals(0, BigDecimal.ZERO.compareTo(testMapper.selectAccountNetBalance(revenueAccountId))),
             () -> assertEquals(0, BigDecimal.ZERO.compareTo(testMapper.selectAccountNetBalance(expenseAccountId))),
             () -> assertEquals(0, new BigDecimal("180").compareTo(testMapper.selectAccountNetBalance(resultAccountId))));
@@ -81,6 +86,19 @@ class StartPeriodCloseTest extends AbstractPeriodCloseApiTest {
         assertAll(() -> assertEquals(JournalEntryType.CLOSING, closing.getEntryType()),
             () -> assertEquals(LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth()), closing.getPostingDate()),
             () -> assertEquals(String.valueOf(closing.getJournalSequence()), book.path("asOfSequence").asString()));
+    }
+
+    /** 本期损益科目停用后关账需要新建损益账户：以 CHART_ACCOUNT_INACTIVE 失败，期间回到 OPEN，不建户。 */
+    @Test
+    void test_inactiveResultAccountRejectsClose() {
+        postRevenue("300");
+        testMapper.updateStandardChartAccountStatus(CURRENT_RESULT_CODE, ChartAccountStatus.INACTIVE.getCode());
+
+        startClose().assertRejectedWithCode(LedgerSetupErrorCode.CHART_ACCOUNT_INACTIVE.getCode(), CURRENT_RESULT_CODE);
+
+        assertEquals(PeriodStatus.OPEN.getCode(), testMapper.selectPeriodStatus(ledger.getOpenPeriodId()));
+        assertNull(testMapper.selectAccountId(ledger.getLedgerBookId(), CURRENT_RESULT_CODE,
+            LedgerOwnerType.OPERATING_ENTITY.getCode(), ledger.getEntityNo()), "不应残留损益账户");
     }
 
     @Test

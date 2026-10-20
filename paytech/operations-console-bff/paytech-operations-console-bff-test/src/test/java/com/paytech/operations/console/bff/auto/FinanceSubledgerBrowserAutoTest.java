@@ -137,7 +137,7 @@ class FinanceSubledgerBrowserAutoTest extends FinanceBrowserAutoTestBase {
 
     /**
      * Query 白名单与格式在访问 account 前拒绝
-     * <li>缺少必填主体参数、ledger 专有的核算对象类型、未知 Query、非法分页、非法路径变量、批次详情带 Query、查询带 Body。</li>
+     * <li>缺少必填主体参数、ledger 专有的核算对象类型、非法账户号、未知 Query、非法分页、非法路径变量、批次详情带 Query、查询带 Body。</li>
      */
     @Test
     void test_invalidParameter() throws Exception {
@@ -147,6 +147,10 @@ class FinanceSubledgerBrowserAutoTest extends FinanceBrowserAutoTestBase {
         resetBetweenCalls();
         assertRejectedLocally(400, account, send(accounts, "?entityType=OPERATING_ENTITY&entityId=AE001&currency=USD"
             + "&ownerType=" + LedgerOwnerType.OPERATING_ENTITY.getCode(), null, true));
+
+        resetBetweenCalls();
+        assertRejectedLocally(400, account, send(accounts, "?entityType=OPERATING_ENTITY&entityId=AE001&currency=USD"
+            + "&accountNo=ae001-usd", null, true));
 
         resetBetweenCalls();
         assertRejectedLocally(400, account, send(accounts, accounts.path("query").asString() + "&normalSide=CREDIT",

@@ -39,7 +39,7 @@
     </select>
 
     <select id="selectEntryLines" resultType="com.paytech.ledger.domain.view.JournalEntryDetailView$Line">
-        SELECT l.line_no, l.account_id, c.account_code, a.owner_type, a.owner_id, a.balance_bucket, l.entry_side,
+        SELECT l.line_no, l.account_id, a.account_no, c.account_code, c.account_name, a.owner_type, a.owner_id, a.balance_bucket, l.entry_side,
                l.amount, il.account_entry_id
         FROM t_journal_line l
         JOIN t_instruction_line il ON il.id = l.instruction_line_id

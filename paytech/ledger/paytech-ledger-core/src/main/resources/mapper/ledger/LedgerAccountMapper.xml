@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <!-- t_ledger_account 只保存账户身份（design/04 §3.1）；累计借贷、净额与最后分录序号一律由本库 Journal 聚合得出。 -->
 <mapper namespace="com.paytech.ledger.core.dal.mapper.LedgerAccountMapper">
-    <sql id="columns">id, ledger_book_id, chart_account_id, owner_type, owner_id, balance_bucket, normal_side, account_status, create_time, update_time</sql>
+    <sql id="columns">id, account_no, ledger_book_id, chart_account_id, owner_type, owner_id, balance_bucket, normal_side, account_status, create_time, update_time</sql>
 
     <!-- 账簿内每个账户的分录借贷合计与最大分录序号。 -->
     <sql id="bookJournalTotals">
@@ -26,7 +26,7 @@
 
     <insert id="insert">
         INSERT INTO t_ledger_account (<include refid="columns"/>)
-        VALUES (#{id}, #{ledgerBookId}, #{chartAccountId}, #{ownerType}, #{ownerId}, #{balanceBucket}, #{normalSide}, #{accountStatus}, #{createTime}, #{updateTime})
+        VALUES (#{id}, #{accountNo}, #{ledgerBookId}, #{chartAccountId}, #{ownerType}, #{ownerId}, #{balanceBucket}, #{normalSide}, #{accountStatus}, #{createTime}, #{updateTime})
     </insert>
 
     <select id="selectById" resultType="com.paytech.ledger.core.dal.dataobject.LedgerAccount">
@@ -47,12 +47,13 @@
 
     <select id="selectPage" resultType="com.paytech.ledger.domain.view.AccountView">
         <bind name="ledgerBookId" value="query.ledgerBookId"/>
-        SELECT a.id account_id, c.account_code, a.owner_type, a.owner_id, a.balance_bucket, a.normal_side,
+        SELECT a.id account_id, a.account_no, c.account_code, c.account_name, a.owner_type, a.owner_id, a.balance_bucket, a.normal_side,
                a.account_status, <include refid="totalColumns"/>
         FROM t_ledger_account a
         JOIN t_chart_account c ON c.id = a.chart_account_id
         LEFT JOIN (<include refid="bookJournalTotals"/>) j ON j.account_id = a.id
         WHERE a.ledger_book_id = #{query.ledgerBookId}
+        <if test="query.accountNo != null">AND a.account_no = #{query.accountNo}</if>
         <if test="query.accountCode != null">AND c.account_code = #{query.accountCode}</if>
         <if test="query.ownerType != null">AND a.owner_type = #{query.ownerType}</if>
         <if test="query.ownerId != null">AND a.owner_id = #{query.ownerId}</if>
@@ -65,6 +66,7 @@
         SELECT COUNT(*) FROM t_ledger_account a
         JOIN t_chart_account c ON c.id = a.chart_account_id
         WHERE a.ledger_book_id = #{query.ledgerBookId}
+        <if test="query.accountNo != null">AND a.account_no = #{query.accountNo}</if>
         <if test="query.accountCode != null">AND c.account_code = #{query.accountCode}</if>
         <if test="query.ownerType != null">AND a.owner_type = #{query.ownerType}</if>
         <if test="query.ownerId != null">AND a.owner_id = #{query.ownerId}</if>

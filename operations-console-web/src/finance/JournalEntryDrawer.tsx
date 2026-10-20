@@ -61,7 +61,8 @@ export function JournalEntryDrawer({ book, bookLabel, journalEntryId, minorUnit,
       <section className="table-panel finance-entry-lines">
         <Table<JournalEntryLine> rowKey="lineNo" size="small" tableLayout="fixed" dataSource={detail.lines} pagination={false} scroll={{ x: 600 }} columns={[
           { title: '行号', dataIndex: 'lineNo', width: 56 },
-          { title: '科目', render: (_, row) => <span className="finance-code">{row.accountCode}</span> },
+          { title: '账户号 / 科目', render: (_, row) => <div><div className="mono">{row.accountNo}</div>
+            <div className="cell-meta">{row.accountCode} · {row.accountName}</div></div> },
           { title: '核算对象', width: 170, render: (_, row) => <div><div>{row.ownerType}</div><div className="cell-meta">{row.ownerId}</div>
             {row.accountEntryId && detail.accountPostingId && <Link className="finance-entry-link" to={subledgerPostingLink(detail.accountPostingId, row.accountEntryId)}>
               流水 …{row.accountEntryId.slice(-4)} ↗</Link>}</div> },

@@ -33,10 +33,10 @@ public class LedgerBookQueryController implements LedgerBookQueryApi {
 
     /** 分页查询账户。 */
     @Override
-    public PagingResponseBody<AccountResponseBody> listAccounts(String ledgerBookId, String accountCode,
-        String ownerType, String ownerId, String balanceBucket, Integer page, Integer size) {
-        return ledgerQueryService.pageAccounts(converter.toAccountQuery(ledgerBookId, accountCode, ownerType, ownerId,
-            balanceBucket, PagingRequestBody.of(page, size))).map(converter::toResponseBody);
+    public PagingResponseBody<AccountResponseBody> listAccounts(String ledgerBookId, String accountNo,
+        String accountCode, String ownerType, String ownerId, String balanceBucket, Integer page, Integer size) {
+        return ledgerQueryService.pageAccounts(converter.toAccountQuery(ledgerBookId, accountNo, accountCode, ownerType,
+            ownerId, balanceBucket, PagingRequestBody.of(page, size))).map(converter::toResponseBody);
     }
 
     /** 分页查询账户流水。 */

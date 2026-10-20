@@ -8,6 +8,7 @@ import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
 
 import com.paytech.foundation.web.paging.PagingResponseBody;
+import com.paytech.ledger.api.response.AccountBalanceListResponseBody;
 import com.paytech.ledger.api.response.TrialBalanceDetailResponseBody;
 import com.paytech.ledger.api.response.TrialBalanceRunResponseBody;
 
@@ -55,11 +56,23 @@ public interface TrialBalanceApi {
      * @param ledgerBookId 账簿主键
      * @param periodId 会计期间主键
      * @param runNo 试算序号
-     * @return 摘要、试算行与异常；不存在时 400
+     * @return 摘要、末级试算行、查询时汇总的级次汇总行与异常；不存在时 400
      */
     @GetExchange("/{ledgerBookId}/periods/{periodId}/trial-balances/{runNo}")
     TrialBalanceDetailResponseBody getTrialBalance(
         @PathVariable("ledgerBookId") @Pattern(regexp = "[1-9][0-9]{0,18}") String ledgerBookId,
         @PathVariable("periodId") @Pattern(regexp = "[1-9][0-9]{0,18}") String periodId,
         @PathVariable("runNo") @Pattern(regexp = "[1-9][0-9]{0,8}") String runNo);
+
+    /**
+     * 实时查询账簿某期间的科目余额（末级 + 级次汇总）
+     *
+     * @param ledgerBookId 账簿主键
+     * @param periodId 会计期间主键，必须属于账簿主体
+     * @return 有发生额或余额的末级科目及其各级上级，按科目编号排序；任一汇总科目等于其直接下级之和；账簿或期间不存在、期间不属于账簿主体时 400
+     */
+    @GetExchange("/{ledgerBookId}/periods/{periodId}/account-balances")
+    AccountBalanceListResponseBody listAccountBalances(
+        @PathVariable("ledgerBookId") @Pattern(regexp = "[1-9][0-9]{0,18}") String ledgerBookId,
+        @PathVariable("periodId") @Pattern(regexp = "[1-9][0-9]{0,18}") String periodId);
 }

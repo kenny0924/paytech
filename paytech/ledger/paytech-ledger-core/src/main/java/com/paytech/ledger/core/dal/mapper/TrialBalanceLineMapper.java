@@ -6,7 +6,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import com.paytech.ledger.core.dal.dataobject.TrialBalanceLine;
-import com.paytech.ledger.domain.view.TrialBalanceLineView;
+import com.paytech.ledger.domain.view.AccountBalanceView;
 
 /** t_trial_balance_line：试算行持久化（只追加）。 */
 @Mapper
@@ -15,6 +15,6 @@ public interface TrialBalanceLineMapper {
     /** 批量插入试算行。 */
     int insertBatch(@Param("rows") List<TrialBalanceLine> rows);
 
-    /** 读取一次试算的全部行及其科目，按科目代码排序。 */
-    List<TrialBalanceLineView> selectViews(@Param("runId") long runId);
+    /** 读取一次试算的全部行及其科目，按科目编号排序。 */
+    List<AccountBalanceView> selectViews(@Param("runId") long runId);
 }

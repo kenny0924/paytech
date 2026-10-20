@@ -44,6 +44,10 @@
         </where>
     </select>
 
+    <select id="countByChart" resultType="long">
+        SELECT COUNT(*) FROM t_ledger_book WHERE chart_id = #{chartId}
+    </select>
+
     <select id="selectAllByEntity" resultType="com.paytech.ledger.core.dal.dataobject.LedgerBook">
         SELECT id, entity_type, entity_id, currency, chart_id, book_status, version, create_time, update_time FROM t_ledger_book WHERE entity_type = #{entityType} AND entity_id = #{entityId} ORDER BY id
     </select>

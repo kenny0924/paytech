@@ -26,6 +26,7 @@ import com.paytech.ledger.core.dal.dataobject.AccountingRuleBundleVer;
 import com.paytech.ledger.core.dal.dataobject.AccountingRuleLine;
 import com.paytech.ledger.core.dal.dataobject.ChartAccount;
 import com.paytech.ledger.core.dal.dataobject.ChartOfAccounts;
+import com.paytech.ledger.core.enums.ChartAccountStatus;
 import com.paytech.ledger.core.enums.EntrySide;
 import com.paytech.ledger.core.enums.RuleVersionStatus;
 import com.paytech.ledger.domain.AccountingRuleVersionContext;
@@ -158,11 +159,15 @@ public class CreateRuleVersionProcessor extends AbstractLockProcessor<CreateRule
         return line;
     }
 
-    /** 科目必须在 STANDARD 科目表中存在且允许过账。 */
+    /** 科目必须在 STANDARD 科目表中存在、允许过账且未停用。 */
     void checkPostingAccount(ChartOfAccounts chart, AccountingRuleLine line) {
         ChartAccount account = chartAccountRepository.findByChartAndCode(chart.getId(), line.getAccountCode());
         if (account == null || !Boolean.TRUE.equals(account.getPostingAllowed())) {
             throw new BizCheckFailException("科目不存在或不可过账: 科目 " + line.getAccountCode() + ", 指令类型 "
+                + line.getInstructionType().getCode() + ", 行号 " + line.getLineNo());
+        }
+        if (account.getAccountStatus() != ChartAccountStatus.ACTIVE) {
+            throw new BizCheckFailException("科目已停用，不能被新规则版本引用: 科目 " + line.getAccountCode() + ", 指令类型 "
                 + line.getInstructionType().getCode() + ", 行号 " + line.getLineNo());
         }
     }

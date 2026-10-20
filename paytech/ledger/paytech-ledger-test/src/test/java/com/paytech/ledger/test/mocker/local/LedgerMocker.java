@@ -28,6 +28,7 @@ import com.paytech.ledger.core.dal.mapper.LedgerBookMapper;
 import com.paytech.ledger.core.enums.AccountClass;
 import com.paytech.ledger.core.enums.AccountStatus;
 import com.paytech.ledger.core.enums.BookStatus;
+import com.paytech.ledger.core.enums.ChartAccountStatus;
 import com.paytech.ledger.core.enums.FinanceEntityStatus;
 import com.paytech.ledger.core.enums.LedgerEntityType;
 import com.paytech.ledger.core.enums.NormalSide;
@@ -44,6 +45,9 @@ import com.paytech.platform.support.api.enums.CurrencySpecStatus;
 public class LedgerMocker {
     /** 初始化 DML 中 STANDARD 科目表的固定主键。 */
     public static final long STANDARD_CHART_ID = 2001L;
+
+    /** Mapper 直接插入的账户使用的账户号前缀（生产账户号格式见 LedgerAccountNo），后接账户主键保证唯一。 */
+    public static final String MOCK_ACCOUNT_NO_PREFIX = "MOCK-";
 
     /** 测试主体统一使用的财务日历时区。 */
     public static final String TIMEZONE = "Asia/Dubai";
@@ -164,6 +168,7 @@ public class LedgerMocker {
         account.setBalanceBucket(bucket);
         account.setNormalSide(chartAccount.getNormalSide());
         account.setAccountStatus(AccountStatus.ACTIVE);
+        account.setAccountNo(MOCK_ACCOUNT_NO_PREFIX + account.getId());
         account.setCreateTime(now());
         account.setUpdateTime(now());
         ledgerAccountMapper.insert(account);
@@ -215,20 +220,30 @@ public class LedgerMocker {
         return chart.getId();
     }
 
-    /** 在测试科目表下插入资产类借方科目，返回主键。 */
-    public long mockChartAccount(long chartId, String accountCode, boolean postingAllowed) {
+    /** 在测试科目表下插入资产类借方一级科目，返回主键。 */
+    public long mockChartAccount(long chartId, String accountNo, String accountCode, boolean postingAllowed) {
+        return mockChartAccount(chartId, null, accountNo, accountCode, AccountClass.ASSET, NormalSide.DEBIT,
+            postingAllowed).getId();
+    }
+
+    /** 在测试科目表下插入 ACTIVE 科目，返回插入的科目。 */
+    public ChartAccount mockChartAccount(long chartId, Long parentAccountId, String accountNo, String accountCode,
+        AccountClass accountClass, NormalSide normalSide, boolean postingAllowed) {
         ChartAccount account = new ChartAccount();
         account.setId(idGenerator.nextId());
         account.setChartId(chartId);
+        account.setParentAccountId(parentAccountId);
+        account.setAccountNo(accountNo);
         account.setAccountCode(accountCode);
         account.setAccountName("Test " + accountCode);
-        account.setAccountClass(AccountClass.ASSET);
-        account.setNormalSide(NormalSide.DEBIT);
+        account.setAccountClass(accountClass);
+        account.setNormalSide(normalSide);
         account.setPostingAllowed(postingAllowed);
+        account.setAccountStatus(ChartAccountStatus.ACTIVE);
         account.setCreateTime(now());
         account.setUpdateTime(now());
         testMapper.insertChartAccount(account);
-        return account.getId();
+        return account;
     }
 
     /** 微秒精度的当前 UTC 时间。 */

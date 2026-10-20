@@ -1,6 +1,6 @@
 -- ledger-service Mock 测试环境准备（管理员手工执行；应用与测试从不自动执行）。
 -- 测试复用仓库 local-environment 的 MySQL；账号与 application-mock.yml 一致，只授予本库最小 DML 权限（design/10 §4.2）。
--- 已有库和账号不删除、不重置。表结构逐字取自 paytech/ledger/docs/database/sql/ledger-schema.sql 的全部 31 张表。
+-- 已有库和账号不删除、不重置。表结构逐字取自 paytech/ledger/docs/database/sql/ledger-schema.sql 的全部 33 张表。
 -- 保留行逐字取自 paytech/ledger/docs/database/sql/ledger-initial-data.sql（测试只删除 ID ≥ 1,000,000 的行）。
 CREATE DATABASE IF NOT EXISTS mor_ledger DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 CREATE USER IF NOT EXISTS 'ledger_app'@'%' IDENTIFIED BY '05a148d75d6913440f13b66dd4f793519923433100eb1d0a';
@@ -35,18 +35,41 @@ CREATE TABLE `t_chart_account` (
   `id` BIGINT NOT NULL COMMENT '服务侧生成的会计科目 Snowflake 主键。',
   `chart_id` BIGINT NOT NULL COMMENT '该科目所属的本库会计科目表。',
   `parent_account_id` BIGINT NULL COMMENT '该科目的直接上级科目，顶级科目为空；科目表被任一账簿采用后既有父子关系不可修改。',
+  `account_no` VARCHAR(10) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '财务人员使用的分级数字科目编号：4-2-2-2，一级 4 位、每下一级加 2 位，最多 4 级；下级以上级编号开头；一级首位 1 资产、2 负债、3 权益、4 收入、5 费用。科目表被账簿采用后不可修改。',
   `account_code` VARCHAR(64) NOT NULL COMMENT '在同一会计科目表内唯一且激活后不可改变的科目代码。取值来源：Finance 会计科目代码；非固定枚举。',
   `account_name` VARCHAR(255) NOT NULL COMMENT '财务报表和记账界面使用的科目名称。',
   `account_class` VARCHAR(64) NOT NULL COMMENT '会计恒等式中的五类科目分类。允许值：ASSET、LIABILITY、EQUITY、REVENUE、EXPENSE。',
   `normal_side` VARCHAR(64) NOT NULL COMMENT '该科目余额增加时采用的借贷方向。允许值：DEBIT、CREDIT。',
   `posting_allowed` BOOLEAN NOT NULL COMMENT '是否允许 Journal Line 直接记入该科目的结构属性；汇总父科目必须为否，科目表被账簿采用后不可修改。1 表示是，0 表示否。',
+  `account_status` VARCHAR(16) NOT NULL DEFAULT 'ACTIVE' COMMENT '科目启停状态。允许值：ACTIVE、INACTIVE。停用后不能新建账户、不能被新规则版本引用，已有账户照常记账与查询；与永久结构属性 posting_allowed 无关。',
   `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
   `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_chart_acct` (`chart_id`, `account_code`) COMMENT '保证业务唯一性：chart_id、account_code',
   KEY `idx_chart_acct_parent` (`parent_account_id`) COMMENT '支持访问路径：parent_account_id',
-  KEY `idx_chart_acct_class` (`chart_id`, `account_class`) COMMENT '支持访问路径：chart_id、account_class'
+  KEY `idx_chart_acct_class` (`chart_id`, `account_class`) COMMENT '支持访问路径：chart_id、account_class',
+  UNIQUE KEY `uk_chart_acct_no` (`chart_id`, `account_no`) COMMENT '保证业务唯一性：chart_id、account_no'
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='定义稳定会计科目表中的五类多级科目及其正常余额方向和可过账属性。';
+
+CREATE TABLE `t_chart_account_change` (
+  `id` BIGINT NOT NULL COMMENT '科目变更记录的服务侧雪花主键。',
+  `chart_id` BIGINT NOT NULL COMMENT '被变更科目所属的科目表。',
+  `chart_account_id` BIGINT NOT NULL COMMENT '被变更的科目。',
+  `change_type` VARCHAR(16) NOT NULL COMMENT '变更类型。允许值：CREATE、UPDATE、DISABLE、ENABLE。',
+  `before_account_no` VARCHAR(10) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT '变更前科目编号；CREATE 为空。',
+  `after_account_no` VARCHAR(10) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '变更后科目编号。',
+  `before_parent_account_id` BIGINT NULL COMMENT '变更前上级科目；CREATE 或原为一级科目时为空。',
+  `after_parent_account_id` BIGINT NULL COMMENT '变更后上级科目；一级科目为空。',
+  `before_account_name` VARCHAR(255) NULL COMMENT '变更前科目名称；CREATE 为空。',
+  `after_account_name` VARCHAR(255) NOT NULL COMMENT '变更后科目名称。',
+  `before_account_status` VARCHAR(16) NULL COMMENT '变更前科目状态；CREATE 为空。允许值：ACTIVE、INACTIVE。',
+  `after_account_status` VARCHAR(16) NOT NULL COMMENT '变更后科目状态。允许值：ACTIVE、INACTIVE。',
+  `operator_id` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '执行变更的运营人员账号标识，取自 Gateway 传递的 X-Gateway-Actor-Subject。',
+  `change_time` DATETIME(6) NOT NULL COMMENT '变更在 Finance 数据库中生效的 UTC 微秒时间；记录只追加，不更新、不删除。',
+  PRIMARY KEY (`id`),
+  KEY `idx_chart_acct_change_account` (`chart_id`, `chart_account_id`, `change_time`) COMMENT '支持访问路径：chart_id、chart_account_id、change_time',
+  KEY `idx_chart_acct_change_time` (`chart_id`, `change_time`) COMMENT '支持访问路径：chart_id、change_time'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='科目新增、修改、停用、启用的不可变变更记录；科目维护不审批、直接生效，以本表留痕。';
 
 CREATE TABLE `t_finance_entity` (
   `id` BIGINT NOT NULL COMMENT '服务侧生成的内部财务主体 Snowflake 主键。',
@@ -79,6 +102,7 @@ CREATE TABLE `t_ledger_book` (
 
 CREATE TABLE `t_ledger_account` (
   `id` BIGINT NOT NULL COMMENT '服务侧生成的会计科目账户 Snowflake 主键，也是全局账户 ID。',
+  `account_no` VARCHAR(48) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '财务人员可读账户号：{主体}-{币种}-{科目编号}-{序号}，序号按账簿与科目从 1 递增、至少 4 位；创建时生成后不再改变，只用于显示与搜索，不作为跨系统关联键。',
   `ledger_book_id` BIGINT NOT NULL COMMENT '该账户严格归属的本库经营主体或财务主体币种账簿。',
   `chart_account_id` BIGINT NOT NULL COMMENT '该账户使用且必须允许过账的本库会计科目定义。',
   `owner_type` VARCHAR(64) NOT NULL COMMENT '决定账户按经营主体、内部财务主体、渠道账户、银行账户或税务机关隔离的类型；Client / Local Partner 不再在总账开户，其科目以账簿主体为 Owner 的控制账户表达。允许值：OPERATING_ENTITY、FINANCE_ENTITY、CHANNEL_ACCOUNT、CASH_ACCOUNT、TAX_AUTHORITY。',
@@ -91,7 +115,8 @@ CREATE TABLE `t_ledger_account` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_account_identity` (`ledger_book_id`, `chart_account_id`, `owner_type`, `owner_id`, `balance_bucket`) COMMENT '保证业务唯一性：ledger_book_id、chart_account_id、owner_type、owner_id、balance_bucket',
   KEY `idx_account_owner` (`owner_type`, `owner_id`, `ledger_book_id`, `balance_bucket`) COMMENT '支持访问路径：owner_type、owner_id、ledger_book_id、balance_bucket',
-  KEY `idx_account_chart_status` (`chart_account_id`, `ledger_book_id`, `account_status`) COMMENT '支持访问路径：chart_account_id、ledger_book_id、account_status'
+  KEY `idx_account_chart_status` (`chart_account_id`, `ledger_book_id`, `account_status`) COMMENT '支持访问路径：chart_account_id、ledger_book_id、account_status',
+  UNIQUE KEY `uk_ledger_account_no` (`account_no`) COMMENT '保证业务唯一性：account_no'
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='在具体账簿和可过账科目下按核算对象建立唯一会计科目账户（只保存身份，不保存余额）；余额由不可变 Journal 聚合得出。Owner 科目（CLIENT_PAYABLE、CLIENT_SECURITY_DEPOSIT、CLIENT_RECOVERY_RECEIVABLE、PARTNER_PAYABLE、PARTNER_RECOVERY_RECEIVABLE）每账簿每科目一个控制账户，Owner 取账簿主体、桶 NONE，明细在 account 的 t_owner_account（2026-10-18 决定第 3 条）；Channel 使用 CHANNEL_UNSETTLED_RECEIVABLE、CHANNEL_SETTLEMENT_RECEIVABLE、CHANNEL_UNSETTLED_PAYABLE、CHANNEL_SETTLEMENT_PAYABLE 与 CHANNEL_FEE_ACCRUAL，银行存款使用 BANK_CASH / CASH_ACCOUNT，税务机关使用 TAX_PAYABLE。';
 
 CREATE TABLE `t_fiscal_calendar` (
@@ -135,6 +160,17 @@ CREATE TABLE `t_book_sequence` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_book_seq` (`ledger_book_id`) COMMENT '保证业务唯一性：ledger_book_id'
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='为每个总账账簿在 Journal 过账本地事务中通过行锁分配严格递增的 Journal 序号；已提交 Journal 的序号不可复用。';
+
+CREATE TABLE `t_account_no_sequence` (
+  `id` BIGINT NOT NULL COMMENT '账户号序列的服务侧雪花主键。',
+  `ledger_book_id` BIGINT NOT NULL COMMENT '账户所属总账账簿。',
+  `chart_account_id` BIGINT NOT NULL COMMENT '账户所属科目。',
+  `last_value` BIGINT NOT NULL COMMENT '同账簿同科目最近一次分配给账户号的序号；在建户本地事务中以 INSERT … ON DUPLICATE KEY UPDATE 原子递增，已分配序号不复用，允许空洞。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_account_no_seq` (`ledger_book_id`, `chart_account_id`) COMMENT '保证业务唯一性：ledger_book_id、chart_account_id'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='按账簿与科目为总账账户分配可读账户号序号。';
 
 CREATE TABLE `t_accounting_rule_bundle` (
   `id` BIGINT NOT NULL COMMENT '自动记账规则集的服务侧雪花主键。',
@@ -533,38 +569,86 @@ VALUES (1001, 'USD', 2, 'HALF_UP', 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6))
 INSERT INTO `t_chart_of_accounts` (`id`, `chart_code`, `chart_name`, `status`, `create_time`, `update_time`)
 VALUES (2001, 'STANDARD', 'Code-MoR 标准会计科目表', 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6));
 
+-- STANDARD chart tree (2026-10-20 three levels, ledger 会计科目分级维护): 19 level-1 summary accounts 3101-3119 (4 digits),
+-- 26 level-2 summary accounts 3201-3226 (6 digits), both posting_allowed = 0, and the 29 level-3 posting leaf accounts
+-- 3001-3029 (8 digits); IDs and account codes of the leaves are unchanged. Level 2 and 3 inherit class and side from level 1.
 INSERT INTO `t_chart_account`
-  (`id`, `chart_id`, `parent_account_id`, `account_code`, `account_name`, `account_class`, `normal_side`, `posting_allowed`, `create_time`, `update_time`)
+  (`id`, `chart_id`, `parent_account_id`, `account_no`, `account_code`, `account_name`, `account_class`, `normal_side`, `posting_allowed`, `account_status`, `create_time`, `update_time`)
 VALUES
-  (3001, 2001, NULL, 'CHANNEL_UNSETTLED_RECEIVABLE',  '渠道待清算应收',       'ASSET',     'DEBIT',  1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
-  (3002, 2001, NULL, 'CHANNEL_SETTLEMENT_RECEIVABLE', '渠道结算应收',         'ASSET',     'DEBIT',  1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
-  (3003, 2001, NULL, 'BANK_CASH',                     '银行现金',             'ASSET',     'DEBIT',  1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
-  (3004, 2001, NULL, 'CLIENT_RECOVERY_RECEIVABLE',    'Client 追偿应收',      'ASSET',     'DEBIT',  1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
-  (3005, 2001, NULL, 'PARTNER_RECOVERY_RECEIVABLE',   'Local Partner 追偿应收', 'ASSET',   'DEBIT',  1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
-  (3006, 2001, NULL, 'TAX_RECOVERABLE',               '可抵扣进项税',         'ASSET',     'DEBIT',  1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
-  (3007, 2001, NULL, 'RECON_SUSPENSE_ASSET',          '对账悬挂资产',         'ASSET',     'DEBIT',  1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
-  (3008, 2001, NULL, 'PLATFORM_SERVICE_RECEIVABLE',   '平台服务费应收',       'ASSET',     'DEBIT',  1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
-  (3009, 2001, NULL, 'CLIENT_PAYABLE',                'Client 应付款',        'LIABILITY', 'CREDIT', 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
-  (3010, 2001, NULL, 'PARTNER_PAYABLE',               'Local Partner 应付款', 'LIABILITY', 'CREDIT', 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
-  (3011, 2001, NULL, 'CLIENT_SECURITY_DEPOSIT',       'Client 保证金',        'LIABILITY', 'CREDIT', 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
-  (3012, 2001, NULL, 'TAX_PAYABLE',                   '应交税费',             'LIABILITY', 'CREDIT', 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
-  (3013, 2001, NULL, 'CHANNEL_FEE_ACCRUAL',           '渠道费用预提',         'LIABILITY', 'CREDIT', 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
-  (3014, 2001, NULL, 'CHANNEL_UNSETTLED_PAYABLE',     '渠道待清算应付',       'LIABILITY', 'CREDIT', 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
-  (3015, 2001, NULL, 'CHANNEL_SETTLEMENT_PAYABLE',    '渠道结算应付',         'LIABILITY', 'CREDIT', 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
-  (3016, 2001, NULL, 'UNIDENTIFIED_CASH',             '待识别资金',           'LIABILITY', 'CREDIT', 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
-  (3017, 2001, NULL, 'CONSUMER_COMPENSATION_PAYABLE', 'Consumer 补偿应付',    'LIABILITY', 'CREDIT', 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
-  (3018, 2001, NULL, 'PLATFORM_SERVICE_PAYABLE',      '平台服务费应付',       'LIABILITY', 'CREDIT', 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
-  (3019, 2001, NULL, 'CAPITAL',                       '实收资本',             'EQUITY',    'CREDIT', 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
-  (3020, 2001, NULL, 'CURRENT_PERIOD_RESULT',         '本期损益',             'EQUITY',    'CREDIT', 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
-  (3021, 2001, NULL, 'RETAINED_EARNINGS',             '留存收益',             'EQUITY',    'CREDIT', 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
-  (3022, 2001, NULL, 'OWNER_DISTRIBUTION',            '所有者分配',           'EQUITY',    'DEBIT',  1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
-  (3023, 2001, NULL, 'CLIENT_FEE_REVENUE',            'Client 手续费收入',    'REVENUE',   'CREDIT', 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
-  (3024, 2001, NULL, 'PLATFORM_SERVICE_REVENUE',      '平台服务费收入',       'REVENUE',   'CREDIT', 1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
-  (3025, 2001, NULL, 'PLATFORM_SERVICE_FEE_EXPENSE',  '平台服务费费用',       'EXPENSE',   'DEBIT',  1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
-  (3026, 2001, NULL, 'PARTNER_SHARE_EXPENSE',         'Local Partner 分润费用', 'EXPENSE', 'DEBIT',  1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
-  (3027, 2001, NULL, 'CHANNEL_FEE_EXPENSE',           '渠道成本',             'EXPENSE',   'DEBIT',  1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
-  (3028, 2001, NULL, 'ROUNDING_ADJUSTMENT',           '舍入尾差',             'EXPENSE',   'DEBIT',  1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
-  (3029, 2001, NULL, 'RECON_ADJUSTMENT_EXPENSE',      '对账调整损失',         'EXPENSE',   'DEBIT',  1, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6));
+  (3101, 2001, NULL, '1001',    'CASH_AND_BANK',                '现金及银行存款',         'ASSET',     'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3102, 2001, NULL, '1101',    'CHANNEL_RECEIVABLES',          '渠道应收款',             'ASSET',     'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3103, 2001, NULL, '1131',    'OTHER_RECEIVABLES',            '其他应收款',             'ASSET',     'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3104, 2001, NULL, '1171',    'TAX_RECEIVABLES',              '应收税费',               'ASSET',     'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3105, 2001, NULL, '1901',    'SUSPENSE_ASSETS',              '待处理资产',             'ASSET',     'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3106, 2001, NULL, '2201',    'CUSTOMER_FUNDS_PAYABLE',       '应付客户款项',           'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3107, 2001, NULL, '2211',    'CUSTOMER_DEPOSITS',            '客户保证金',             'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3108, 2001, NULL, '2221',    'TAXES_PAYABLE',                '应交税费',               'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3109, 2001, NULL, '2231',    'CHANNEL_PAYABLES',             '渠道应付款',             'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3110, 2001, NULL, '2241',    'ACCRUED_EXPENSES',             '预提费用',               'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3111, 2001, NULL, '2251',    'OTHER_PAYABLES',               '其他应付款',             'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3112, 2001, NULL, '2901',    'SUSPENSE_LIABILITIES',         '待处理负债',             'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3113, 2001, NULL, '3001',    'SHARE_CAPITAL',                '实收资本',               'EQUITY',    'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3114, 2001, NULL, '3101',    'RETAINED_EARNINGS_TOTAL',      '留存收益',               'EQUITY',    'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3115, 2001, NULL, '3103',    'PROFIT_FOR_PERIOD',            '本期利润',               'EQUITY',    'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3116, 2001, NULL, '3201',    'DISTRIBUTIONS',                '所有者分配',             'EQUITY',    'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3117, 2001, NULL, '4001',    'OPERATING_REVENUE',            '营业收入',               'REVENUE',   'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3118, 2001, NULL, '5001',    'COST_OF_SERVICES',             '营业成本',               'EXPENSE',   'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3119, 2001, NULL, '5101',    'OTHER_LOSSES',                 '其他损失',               'EXPENSE',   'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3201, 2001, 3101, '100101',  'BANK_DEPOSITS',                '银行存款',               'ASSET',     'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3202, 2001, 3102, '110101',  'CHANNEL_CLEARING_RECEIVABLES', '渠道清算应收',           'ASSET',     'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3203, 2001, 3103, '113101',  'RECOVERY_RECEIVABLES',         '追偿应收',               'ASSET',     'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3204, 2001, 3103, '113102',  'INTERCOMPANY_RECEIVABLES',     '关联方应收',             'ASSET',     'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3205, 2001, 3104, '117101',  'INPUT_TAX',                    '进项税额',               'ASSET',     'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3206, 2001, 3105, '190101',  'RECON_SUSPENSE',               '对账待处理',             'ASSET',     'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3207, 2001, 3106, '220101',  'CLIENT_FUNDS_PAYABLE',         '应付 Client 款项',       'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3208, 2001, 3106, '220102',  'PARTNER_FUNDS_PAYABLE',        '应付合作方款项',         'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3209, 2001, 3106, '220103',  'CONSUMER_FUNDS_PAYABLE',       '应付 Consumer 款项',     'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3210, 2001, 3107, '221101',  'CLIENT_DEPOSITS',              'Client 保证金',          'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3211, 2001, 3108, '222101',  'OUTPUT_TAX',                   '销项税额',               'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3212, 2001, 3109, '223101',  'CHANNEL_CLEARING_PAYABLES',    '渠道清算应付',           'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3213, 2001, 3110, '224101',  'CHANNEL_FEE_ACCRUALS',         '渠道费用预提',           'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3214, 2001, 3111, '225101',  'INTERCOMPANY_PAYABLES',        '关联方应付',             'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3215, 2001, 3112, '290101',  'UNIDENTIFIED_RECEIPTS',        '待识别款项',             'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3216, 2001, 3113, '300101',  'ORDINARY_CAPITAL',             '普通股本',               'EQUITY',    'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3217, 2001, 3114, '310101',  'UNDISTRIBUTED_PROFIT',         '未分配利润',             'EQUITY',    'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3218, 2001, 3115, '310301',  'PERIOD_RESULT',                '本期损益',               'EQUITY',    'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3219, 2001, 3116, '320101',  'OWNER_DISTRIBUTIONS',          '股东分配',               'EQUITY',    'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3220, 2001, 3117, '400101',  'TRANSACTION_SERVICE_REVENUE',  '交易服务收入',           'REVENUE',   'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3221, 2001, 3117, '400102',  'PLATFORM_SERVICE_INCOME',      '平台服务收入',           'REVENUE',   'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3222, 2001, 3118, '500101',  'CHANNEL_COSTS',                '渠道成本',               'EXPENSE',   'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3223, 2001, 3118, '500102',  'PARTNER_COSTS',                '合作方分成',             'EXPENSE',   'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3224, 2001, 3118, '500103',  'PLATFORM_SERVICE_COSTS',       '平台服务费用',           'EXPENSE',   'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3225, 2001, 3119, '510101',  'ROUNDING_DIFFERENCES',         '舍入差异',               'EXPENSE',   'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3226, 2001, 3119, '510102',  'RECONCILIATION_LOSSES',        '对账差异损失',           'EXPENSE',   'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3003, 2001, 3201, '10010101', 'BANK_CASH',                    '银行现金',               'ASSET',     'DEBIT', 1, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3001, 2001, 3202, '11010101', 'CHANNEL_UNSETTLED_RECEIVABLE', '渠道待清算应收',         'ASSET',     'DEBIT', 1, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3002, 2001, 3202, '11010102', 'CHANNEL_SETTLEMENT_RECEIVABLE','渠道结算应收',           'ASSET',     'DEBIT', 1, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3004, 2001, 3203, '11310101', 'CLIENT_RECOVERY_RECEIVABLE',   'Client 追偿应收',        'ASSET',     'DEBIT', 1, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3005, 2001, 3203, '11310102', 'PARTNER_RECOVERY_RECEIVABLE',  'Local Partner 追偿应收', 'ASSET',     'DEBIT', 1, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3008, 2001, 3204, '11310201', 'PLATFORM_SERVICE_RECEIVABLE',  '平台服务费应收',         'ASSET',     'DEBIT', 1, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3006, 2001, 3205, '11710101', 'TAX_RECOVERABLE',              '可抵扣进项税',           'ASSET',     'DEBIT', 1, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3007, 2001, 3206, '19010101', 'RECON_SUSPENSE_ASSET',         '对账悬挂资产',           'ASSET',     'DEBIT', 1, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3009, 2001, 3207, '22010101', 'CLIENT_PAYABLE',               'Client 应付款',          'LIABILITY', 'CREDIT', 1, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3010, 2001, 3208, '22010201', 'PARTNER_PAYABLE',              'Local Partner 应付款',   'LIABILITY', 'CREDIT', 1, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3017, 2001, 3209, '22010301', 'CONSUMER_COMPENSATION_PAYABLE','Consumer 补偿应付',      'LIABILITY', 'CREDIT', 1, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3011, 2001, 3210, '22110101', 'CLIENT_SECURITY_DEPOSIT',      'Client 保证金',          'LIABILITY', 'CREDIT', 1, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3012, 2001, 3211, '22210101', 'TAX_PAYABLE',                  '应交税费',               'LIABILITY', 'CREDIT', 1, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3014, 2001, 3212, '22310101', 'CHANNEL_UNSETTLED_PAYABLE',    '渠道待清算应付',         'LIABILITY', 'CREDIT', 1, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3015, 2001, 3212, '22310102', 'CHANNEL_SETTLEMENT_PAYABLE',   '渠道结算应付',           'LIABILITY', 'CREDIT', 1, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3013, 2001, 3213, '22410101', 'CHANNEL_FEE_ACCRUAL',          '渠道费用预提',           'LIABILITY', 'CREDIT', 1, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3018, 2001, 3214, '22510101', 'PLATFORM_SERVICE_PAYABLE',     '平台服务费应付',         'LIABILITY', 'CREDIT', 1, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3016, 2001, 3215, '29010101', 'UNIDENTIFIED_CASH',            '待识别资金',             'LIABILITY', 'CREDIT', 1, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3019, 2001, 3216, '30010101', 'CAPITAL',                      '实收资本',               'EQUITY',    'CREDIT', 1, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3021, 2001, 3217, '31010101', 'RETAINED_EARNINGS',            '留存收益',               'EQUITY',    'CREDIT', 1, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3020, 2001, 3218, '31030101', 'CURRENT_PERIOD_RESULT',        '本期损益',               'EQUITY',    'CREDIT', 1, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3022, 2001, 3219, '32010101', 'OWNER_DISTRIBUTION',           '所有者分配',             'EQUITY',    'DEBIT', 1, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3023, 2001, 3220, '40010101', 'CLIENT_FEE_REVENUE',           'Client 手续费收入',      'REVENUE',   'CREDIT', 1, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3024, 2001, 3221, '40010201', 'PLATFORM_SERVICE_REVENUE',     '平台服务费收入',         'REVENUE',   'CREDIT', 1, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3027, 2001, 3222, '50010101', 'CHANNEL_FEE_EXPENSE',          '渠道成本',               'EXPENSE',   'DEBIT', 1, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3026, 2001, 3223, '50010201', 'PARTNER_SHARE_EXPENSE',        'Local Partner 分润费用', 'EXPENSE',   'DEBIT', 1, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3025, 2001, 3224, '50010301', 'PLATFORM_SERVICE_FEE_EXPENSE', '平台服务费费用',         'EXPENSE',   'DEBIT', 1, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3028, 2001, 3225, '51010101', 'ROUNDING_ADJUSTMENT',          '舍入尾差',               'EXPENSE',   'DEBIT', 1, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)),
+  (3029, 2001, 3226, '51010201', 'RECON_ADJUSTMENT_EXPENSE',     '对账调整损失',           'EXPENSE',   'DEBIT', 1, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6));
 
 -- Period close: every REVENUE/EXPENSE leaf of STANDARD -> CURRENT_PERIOD_RESULT (3020) / RETAINED_EARNINGS (3021).
 INSERT INTO `t_close_account_rule`

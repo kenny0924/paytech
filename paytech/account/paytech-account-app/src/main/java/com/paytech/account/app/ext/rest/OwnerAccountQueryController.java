@@ -23,10 +23,10 @@ public class OwnerAccountQueryController implements OwnerAccountQueryApi {
     /** 分页查询 Owner 账户。 */
     @Override
     public PagingResponseBody<OwnerAccountResponseBody> listOwnerAccounts(String entityType, String entityId,
-        String currency, String ownerType, String ownerId, String accountCode, String balanceBucket, Integer page,
-        Integer size) {
+        String currency, String ownerType, String ownerId, String accountCode, String balanceBucket, String accountNo,
+        Integer page, Integer size) {
         return accountsProcessor.process(converter.toListRequest(entityType, entityId, currency, ownerType, ownerId,
-            accountCode, balanceBucket, page, size)).map(converter::toResponseBody);
+            accountCode, balanceBucket, accountNo, page, size)).map(converter::toResponseBody);
     }
 
     /** 分页查询账户流水。 */

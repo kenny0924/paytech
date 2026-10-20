@@ -36,13 +36,13 @@ public interface OwnerAccountRepository {
     List<OwnerAccount> findByOwner(AccountEntityType entityType, String entityId, String currency, OwnerType ownerType,
         String ownerId);
 
-    /** 按可选筛选条件分页读取主体与币种下的账户。 */
+    /** 按可选筛选条件分页读取主体与币种下的账户；账户号为精确匹配。 */
     List<OwnerAccount> findPage(AccountEntityType entityType, String entityId, String currency, OwnerType ownerType,
-        String ownerId, String accountCode, BalanceBucket bucket, PagingRequestBody paging);
+        String ownerId, String accountCode, BalanceBucket bucket, String accountNo, PagingRequestBody paging);
 
     /** 与 findPage 相同筛选条件的总数。 */
     long count(AccountEntityType entityType, String entityId, String currency, OwnerType ownerType, String ownerId,
-        String accountCode, BalanceBucket bucket);
+        String accountCode, BalanceBucket bucket, String accountNo);
 
     /** 以余额版本 CAS 写入新的累计值，成功后同步原对象；版本不符时以并发冲突失败。 */
     void applyChange(OwnerAccount account, BigDecimal debitTotal, BigDecimal creditTotal, BigDecimal netBalance,

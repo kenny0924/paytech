@@ -5,6 +5,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.ledger.core.dal.dataobject.AccountingPeriod;
 import com.paytech.ledger.core.dal.dataobject.BookSequence;
+import com.paytech.ledger.core.dal.dataobject.FiscalCalendar;
 import com.paytech.ledger.core.dal.dataobject.LedgerBook;
 import com.paytech.ledger.core.dal.dataobject.LedgerPeriodBalance;
 import com.paytech.ledger.core.dal.dataobject.TrialBalanceException;
@@ -27,16 +29,20 @@ import com.paytech.ledger.core.enums.TrialBalanceStatus;
 import com.paytech.ledger.core.enums.TrialExceptionStatus;
 import com.paytech.ledger.core.enums.TrialExceptionType;
 import com.paytech.ledger.core.enums.TrialReferenceType;
+import com.paytech.ledger.domain.ChartBalanceRollup;
 import com.paytech.ledger.domain.TrialBalanceContentHash;
 import com.paytech.ledger.domain.TrialBalanceContext;
+import com.paytech.ledger.domain.view.AccountBalanceListView;
+import com.paytech.ledger.domain.view.AccountBalanceView;
 import com.paytech.ledger.domain.view.TrialBalanceAggregateView;
 import com.paytech.ledger.domain.view.TrialBalanceDetailView;
 import com.paytech.ledger.domain.view.TrialBalanceFindingView;
-import com.paytech.ledger.domain.view.TrialBalanceLineView;
 import com.paytech.ledger.domain.view.TrialBalanceRunView;
 import com.paytech.ledger.domainservice.repository.AccountingPeriodRepository;
 import com.paytech.ledger.domainservice.repository.BookSequenceRepository;
+import com.paytech.ledger.domainservice.repository.ChartAccountRepository;
 import com.paytech.ledger.domainservice.repository.CurrencySpecRepository;
+import com.paytech.ledger.domainservice.repository.FiscalCalendarRepository;
 import com.paytech.ledger.domainservice.repository.JournalLineRepository;
 import com.paytech.ledger.domainservice.repository.LedgerBookRepository;
 import com.paytech.ledger.domainservice.repository.LedgerPeriodBalanceRepository;
@@ -63,7 +69,9 @@ public class TrialBalanceServiceImpl implements TrialBalanceService {
     private final LedgerBookRepository ledgerBookRepository;
     private final JournalLineRepository journalLineRepository;
     private final BookSequenceRepository bookSequenceRepository;
+    private final ChartAccountRepository chartAccountRepository;
     private final CurrencySpecRepository currencySpecRepository;
+    private final FiscalCalendarRepository fiscalCalendarRepository;
     private final TrialBalanceRunRepository trialBalanceRunRepository;
     private final AccountingPeriodRepository accountingPeriodRepository;
     private final TrialBalanceLineRepository trialBalanceLineRepository;
@@ -257,26 +265,73 @@ public class TrialBalanceServiceImpl implements TrialBalanceService {
             trialBalanceRunRepository.countPage(ledgerBookId, periodId));
     }
 
-    /** 读取摘要、行与异常并规范金额。 */
+    /** 读取摘要、行与异常并规范金额；汇总行在查询时计算，不改变持久化行与内容摘要。 */
     @Override
     public TrialBalanceDetailView getRun(long ledgerBookId, long periodId, int runNo) {
-        int minorUnit = minorUnit(getBook(ledgerBookId));
+        LedgerBook book = getBook(ledgerBookId);
+        int minorUnit = minorUnit(book);
         getPeriod(periodId);
         TrialBalanceRunView run = trialBalanceRunRepository.findView(ledgerBookId, periodId, runNo);
         if (run == null) {
             throw new BizCheckFailException("试算不存在: 账簿 " + ledgerBookId + ", 期间 " + periodId + ", 序号 " + runNo);
         }
         scaleRun(run, minorUnit);
-        List<TrialBalanceLineView> lines = trialBalanceLineRepository.findViews(run.getTrialBalanceRunId());
-        lines.forEach(line -> {
-            line.setOpeningBalance(line.getOpeningBalance().setScale(minorUnit));
-            line.setPeriodDebit(line.getPeriodDebit().setScale(minorUnit));
-            line.setPeriodCredit(line.getPeriodCredit().setScale(minorUnit));
-            line.setClosingBalance(line.getClosingBalance().setScale(minorUnit));
-        });
+        List<AccountBalanceView> lines = trialBalanceLineRepository.findViews(run.getTrialBalanceRunId());
+        lines.forEach(line -> scaleLine(line, minorUnit));
+        List<AccountBalanceView> summaryLines = rollup(book).summarize(lines);
         List<TrialBalanceFindingView> findings = trialBalanceExceptionRepository.findViews(run.getTrialBalanceRunId());
         findings.forEach(finding -> finding.setDifferenceAmount(finding.getDifferenceAmount().setScale(minorUnit)));
-        return new TrialBalanceDetailView(run, lines, findings);
+        return new TrialBalanceDetailView(run, lines, summaryLines, findings);
+    }
+
+    /** 期间必须属于账簿主体；末级金额沿用试算聚合口径，汇总行与末级行合并后按编号排序。 */
+    @Override
+    public AccountBalanceListView listAccountBalances(long ledgerBookId, long periodId) {
+        LedgerBook book = getBook(ledgerBookId);
+        AccountingPeriod period = getPeriod(periodId);
+        checkPeriodOfBook(book, period);
+        int minorUnit = minorUnit(book);
+        List<AccountBalanceView> leaves = journalLineRepository.findTrialAggregates(ledgerBookId, Long.MAX_VALUE,
+            period.getStartDate(), period.getEndDate()).stream().map(aggregate -> leaf(aggregate, minorUnit)).toList();
+        List<AccountBalanceView> lines = new ArrayList<>(leaves);
+        lines.addAll(rollup(book).summarize(leaves));
+        lines.sort(Comparator.comparing(AccountBalanceView::getAccountNo));
+        return new AccountBalanceListView(book.getId(), period.getId(), book.getCurrency(), lines);
+    }
+
+    /** 期间必须属于账簿主体的财务日历。 */
+    void checkPeriodOfBook(LedgerBook book, AccountingPeriod period) {
+        FiscalCalendar calendar = fiscalCalendarRepository.findById(period.getCalendarId());
+        if (calendar == null || calendar.getEntityType() != book.getEntityType()
+            || !calendar.getEntityId().equals(book.getEntityId())) {
+            throw new BizCheckFailException("会计期间不属于账簿主体: 期间 " + period.getId() + ", 账簿 " + book.getId());
+        }
+    }
+
+    /** 由聚合结果构造末级行，期末 = 期初 + 正常方向净额；科目描述由汇总器补齐。 */
+    AccountBalanceView leaf(TrialBalanceAggregateView aggregate, int minorUnit) {
+        AccountBalanceView line = new AccountBalanceView();
+        line.setChartAccountId(aggregate.getChartAccountId());
+        line.setNormalSide(aggregate.getNormalSide());
+        line.setOpeningBalance(aggregate.getOpeningBalance().setScale(minorUnit));
+        line.setPeriodDebit(aggregate.getPeriodDebit().setScale(minorUnit));
+        line.setPeriodCredit(aggregate.getPeriodCredit().setScale(minorUnit));
+        line.setClosingBalance(line.getOpeningBalance()
+            .add(net(aggregate.getNormalSide(), line.getPeriodDebit(), line.getPeriodCredit())));
+        return line;
+    }
+
+    /** 账簿科目表的级次汇总器。 */
+    ChartBalanceRollup rollup(LedgerBook book) {
+        return ChartBalanceRollup.of(chartAccountRepository.findByChart(book.getChartId(), null, null));
+    }
+
+    /** 规范一行的四个金额。 */
+    void scaleLine(AccountBalanceView line, int minorUnit) {
+        line.setOpeningBalance(line.getOpeningBalance().setScale(minorUnit));
+        line.setPeriodDebit(line.getPeriodDebit().setScale(minorUnit));
+        line.setPeriodCredit(line.getPeriodCredit().setScale(minorUnit));
+        line.setClosingBalance(line.getClosingBalance().setScale(minorUnit));
     }
 
     /** 规范摘要金额。 */

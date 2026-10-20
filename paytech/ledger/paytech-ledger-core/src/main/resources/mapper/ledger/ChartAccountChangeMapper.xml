@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- t_chart_account_change 只追加，不更新、不删除。 -->
+<mapper namespace="com.paytech.ledger.core.dal.mapper.ChartAccountChangeMapper">
+    <sql id="columns">id, chart_id, chart_account_id, change_type, before_account_no, after_account_no, before_parent_account_id, after_parent_account_id, before_account_name, after_account_name, before_account_status, after_account_status, operator_id, change_time</sql>
+
+    <insert id="insert">
+        INSERT INTO t_chart_account_change (<include refid="columns"/>)
+        VALUES (#{id}, #{chartId}, #{chartAccountId}, #{changeType}, #{beforeAccountNo}, #{afterAccountNo}, #{beforeParentAccountId}, #{afterParentAccountId}, #{beforeAccountName}, #{afterAccountName}, #{beforeAccountStatus}, #{afterAccountStatus}, #{operatorId}, #{changeTime})
+    </insert>
+
+    <!-- 上级只存主键，展示时取上级科目的当前编号。 -->
+    <select id="selectPage" resultType="com.paytech.ledger.domain.view.ChartAccountChangeView">
+        SELECT h.id change_id, h.chart_account_id, h.change_type, h.before_account_no, h.after_account_no,
+               bp.account_no before_parent_account_no, ap.account_no after_parent_account_no,
+               h.before_account_name, h.after_account_name, h.before_account_status, h.after_account_status,
+               h.operator_id, h.change_time
+        FROM t_chart_account_change h
+        LEFT JOIN t_chart_account bp ON bp.id = h.before_parent_account_id
+        LEFT JOIN t_chart_account ap ON ap.id = h.after_parent_account_id
+        WHERE h.chart_id = #{chartId}
+        <if test="chartAccountId != null">AND h.chart_account_id = #{chartAccountId}</if>
+        ORDER BY h.change_time DESC, h.id DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="long">
+        SELECT COUNT(*) FROM t_chart_account_change
+        WHERE chart_id = #{chartId}
+        <if test="chartAccountId != null">AND chart_account_id = #{chartAccountId}</if>
+    </select>
+</mapper>

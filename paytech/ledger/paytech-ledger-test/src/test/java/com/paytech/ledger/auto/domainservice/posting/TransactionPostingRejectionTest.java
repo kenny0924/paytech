@@ -25,9 +25,11 @@ import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.messaging.api.DomainEventRejectedException;
 import com.paytech.ledger.api.enums.AmountSource;
 import com.paytech.ledger.api.enums.AutoInstructionType;
+import com.paytech.ledger.core.enums.ChartAccountStatus;
 import com.paytech.ledger.core.enums.RuleVersionStatus;
 import com.paytech.ledger.test.base.AbstractTransactionPostingTest;
 import com.paytech.ledger.test.builder.BillingFactBuilder;
+import com.paytech.ledger.test.builder.RuleVersionRequestBuilder;
 
 /**
  * 控制科目过账 Fail-Closed：平台账簿缺失整体回滚、必需来源缺失、事实缺少渠道清算账户 / Finance Entity / 税务机关 / 支付成功时间 / 明细金额、
@@ -67,6 +69,17 @@ class TransactionPostingRejectionTest extends AbstractTransactionPostingTest {
 
         assertRejected(economics, paymentPosting(economics, 1, "100", null).build(), "必需金额来源缺失",
             AmountSource.CLIENT_FEE.getCode());
+    }
+
+    /** 记账需要新建账户而科目已停用：整笔回滚，已建的其他账户一并撤销。 */
+    @Test
+    void test_inactiveChartAccountRejectsNewAccount() {
+        testMapper.updateStandardChartAccountStatus(RuleVersionRequestBuilder.CLIENT_FEE_REVENUE,
+            ChartAccountStatus.INACTIVE.getCode());
+        BillingFactPayload economics = standardPayment();
+
+        assertRejected(economics, paymentPosting(economics, 1, "97", null).build(), "科目已停用",
+            RuleVersionRequestBuilder.CLIENT_FEE_REVENUE);
     }
 
     /** 事实头缺少渠道清算账户主键。 */

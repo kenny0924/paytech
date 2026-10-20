@@ -31,18 +31,41 @@ CREATE TABLE `t_chart_account` (
   `id` BIGINT NOT NULL COMMENT '服务侧生成的会计科目 Snowflake 主键。',
   `chart_id` BIGINT NOT NULL COMMENT '该科目所属的本库会计科目表。',
   `parent_account_id` BIGINT NULL COMMENT '该科目的直接上级科目，顶级科目为空；科目表被任一账簿采用后既有父子关系不可修改。',
+  `account_no` VARCHAR(10) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '财务人员使用的分级数字科目编号：4-2-2-2，一级 4 位、每下一级加 2 位，最多 4 级；下级以上级编号开头；一级首位 1 资产、2 负债、3 权益、4 收入、5 费用。科目表被账簿采用后不可修改。',
   `account_code` VARCHAR(64) NOT NULL COMMENT '在同一会计科目表内唯一且激活后不可改变的科目代码。取值来源：Finance 会计科目代码；非固定枚举。',
   `account_name` VARCHAR(255) NOT NULL COMMENT '财务报表和记账界面使用的科目名称。',
   `account_class` VARCHAR(64) NOT NULL COMMENT '会计恒等式中的五类科目分类。允许值：ASSET、LIABILITY、EQUITY、REVENUE、EXPENSE。',
   `normal_side` VARCHAR(64) NOT NULL COMMENT '该科目余额增加时采用的借贷方向。允许值：DEBIT、CREDIT。',
   `posting_allowed` BOOLEAN NOT NULL COMMENT '是否允许 Journal Line 直接记入该科目的结构属性；汇总父科目必须为否，科目表被账簿采用后不可修改。1 表示是，0 表示否。',
+  `account_status` VARCHAR(16) NOT NULL DEFAULT 'ACTIVE' COMMENT '科目启停状态。允许值：ACTIVE、INACTIVE。停用后不能新建账户、不能被新规则版本引用，已有账户照常记账与查询；与永久结构属性 posting_allowed 无关。',
   `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
   `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_chart_acct` (`chart_id`, `account_code`) COMMENT '保证业务唯一性：chart_id、account_code',
   KEY `idx_chart_acct_parent` (`parent_account_id`) COMMENT '支持访问路径：parent_account_id',
-  KEY `idx_chart_acct_class` (`chart_id`, `account_class`) COMMENT '支持访问路径：chart_id、account_class'
+  KEY `idx_chart_acct_class` (`chart_id`, `account_class`) COMMENT '支持访问路径：chart_id、account_class',
+  UNIQUE KEY `uk_chart_acct_no` (`chart_id`, `account_no`) COMMENT '保证业务唯一性：chart_id、account_no'
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='定义稳定会计科目表中的五类多级科目及其正常余额方向和可过账属性。';
+
+CREATE TABLE `t_chart_account_change` (
+  `id` BIGINT NOT NULL COMMENT '科目变更记录的服务侧雪花主键。',
+  `chart_id` BIGINT NOT NULL COMMENT '被变更科目所属的科目表。',
+  `chart_account_id` BIGINT NOT NULL COMMENT '被变更的科目。',
+  `change_type` VARCHAR(16) NOT NULL COMMENT '变更类型。允许值：CREATE、UPDATE、DISABLE、ENABLE。',
+  `before_account_no` VARCHAR(10) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT '变更前科目编号；CREATE 为空。',
+  `after_account_no` VARCHAR(10) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '变更后科目编号。',
+  `before_parent_account_id` BIGINT NULL COMMENT '变更前上级科目；CREATE 或原为一级科目时为空。',
+  `after_parent_account_id` BIGINT NULL COMMENT '变更后上级科目；一级科目为空。',
+  `before_account_name` VARCHAR(255) NULL COMMENT '变更前科目名称；CREATE 为空。',
+  `after_account_name` VARCHAR(255) NOT NULL COMMENT '变更后科目名称。',
+  `before_account_status` VARCHAR(16) NULL COMMENT '变更前科目状态；CREATE 为空。允许值：ACTIVE、INACTIVE。',
+  `after_account_status` VARCHAR(16) NOT NULL COMMENT '变更后科目状态。允许值：ACTIVE、INACTIVE。',
+  `operator_id` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '执行变更的运营人员账号标识，取自 Gateway 传递的 X-Gateway-Actor-Subject。',
+  `change_time` DATETIME(6) NOT NULL COMMENT '变更在 Finance 数据库中生效的 UTC 微秒时间；记录只追加，不更新、不删除。',
+  PRIMARY KEY (`id`),
+  KEY `idx_chart_acct_change_account` (`chart_id`, `chart_account_id`, `change_time`) COMMENT '支持访问路径：chart_id、chart_account_id、change_time',
+  KEY `idx_chart_acct_change_time` (`chart_id`, `change_time`) COMMENT '支持访问路径：chart_id、change_time'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='科目新增、修改、停用、启用的不可变变更记录；科目维护不审批、直接生效，以本表留痕。';
 
 CREATE TABLE `t_finance_entity` (
   `id` BIGINT NOT NULL COMMENT '服务侧生成的内部财务主体 Snowflake 主键。',
@@ -75,6 +98,7 @@ CREATE TABLE `t_ledger_book` (
 
 CREATE TABLE `t_ledger_account` (
   `id` BIGINT NOT NULL COMMENT '服务侧生成的会计科目账户 Snowflake 主键，也是全局账户 ID。',
+  `account_no` VARCHAR(48) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '财务人员可读账户号：{主体}-{币种}-{科目编号}-{序号}，序号按账簿与科目从 1 递增、至少 4 位；创建时生成后不再改变，只用于显示与搜索，不作为跨系统关联键。',
   `ledger_book_id` BIGINT NOT NULL COMMENT '该账户严格归属的本库经营主体或财务主体币种账簿。',
   `chart_account_id` BIGINT NOT NULL COMMENT '该账户使用且必须允许过账的本库会计科目定义。',
   `owner_type` VARCHAR(64) NOT NULL COMMENT '决定账户按经营主体、内部财务主体、渠道账户、银行账户或税务机关隔离的类型；Client / Local Partner 不再在总账开户，其科目以账簿主体为 Owner 的控制账户表达。允许值：OPERATING_ENTITY、FINANCE_ENTITY、CHANNEL_ACCOUNT、CASH_ACCOUNT、TAX_AUTHORITY。',
@@ -87,7 +111,8 @@ CREATE TABLE `t_ledger_account` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_account_identity` (`ledger_book_id`, `chart_account_id`, `owner_type`, `owner_id`, `balance_bucket`) COMMENT '保证业务唯一性：ledger_book_id、chart_account_id、owner_type、owner_id、balance_bucket',
   KEY `idx_account_owner` (`owner_type`, `owner_id`, `ledger_book_id`, `balance_bucket`) COMMENT '支持访问路径：owner_type、owner_id、ledger_book_id、balance_bucket',
-  KEY `idx_account_chart_status` (`chart_account_id`, `ledger_book_id`, `account_status`) COMMENT '支持访问路径：chart_account_id、ledger_book_id、account_status'
+  KEY `idx_account_chart_status` (`chart_account_id`, `ledger_book_id`, `account_status`) COMMENT '支持访问路径：chart_account_id、ledger_book_id、account_status',
+  UNIQUE KEY `uk_ledger_account_no` (`account_no`) COMMENT '保证业务唯一性：account_no'
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='在具体账簿和可过账科目下按核算对象建立唯一会计科目账户（只保存身份，不保存余额）；余额由不可变 Journal 聚合得出。Owner 科目（CLIENT_PAYABLE、CLIENT_SECURITY_DEPOSIT、CLIENT_RECOVERY_RECEIVABLE、PARTNER_PAYABLE、PARTNER_RECOVERY_RECEIVABLE）每账簿每科目一个控制账户，Owner 取账簿主体、桶 NONE，明细在 account 的 t_owner_account（2026-10-18 决定第 3 条）；Channel 使用 CHANNEL_UNSETTLED_RECEIVABLE、CHANNEL_SETTLEMENT_RECEIVABLE、CHANNEL_UNSETTLED_PAYABLE、CHANNEL_SETTLEMENT_PAYABLE 与 CHANNEL_FEE_ACCRUAL，银行存款使用 BANK_CASH / CASH_ACCOUNT，税务机关使用 TAX_PAYABLE。';
 
 CREATE TABLE `t_fiscal_calendar` (
@@ -131,6 +156,17 @@ CREATE TABLE `t_book_sequence` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_book_seq` (`ledger_book_id`) COMMENT '保证业务唯一性：ledger_book_id'
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='为每个总账账簿在 Journal 过账本地事务中通过行锁分配严格递增的 Journal 序号；已提交 Journal 的序号不可复用。';
+
+CREATE TABLE `t_account_no_sequence` (
+  `id` BIGINT NOT NULL COMMENT '账户号序列的服务侧雪花主键。',
+  `ledger_book_id` BIGINT NOT NULL COMMENT '账户所属总账账簿。',
+  `chart_account_id` BIGINT NOT NULL COMMENT '账户所属科目。',
+  `last_value` BIGINT NOT NULL COMMENT '同账簿同科目最近一次分配给账户号的序号；在建户本地事务中以 INSERT … ON DUPLICATE KEY UPDATE 原子递增，已分配序号不复用，允许空洞。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_account_no_seq` (`ledger_book_id`, `chart_account_id`) COMMENT '保证业务唯一性：ledger_book_id、chart_account_id'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='按账簿与科目为总账账户分配可读账户号序号。';
 
 CREATE TABLE `t_accounting_rule_bundle` (
   `id` BIGINT NOT NULL COMMENT '自动记账规则集的服务侧雪花主键。',

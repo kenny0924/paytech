@@ -11,13 +11,14 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
-/** Account 测试专用读写：只读断言、前置数据插入、篡改构造与全局清理；只触碰 mor_account 的 9 张表。 */
+/** Account 测试专用读写：只读断言、前置数据插入、篡改构造与全局清理；只触碰 mor_account 的 10 张表。 */
 @Mapper
 public interface AccountTestMapper {
 
-    /** 统计 mor_account 全部 9 张表的行数，按表返回。 */
+    /** 统计 mor_account 全部 10 张表的行数，按表返回。 */
     @Select("""
         SELECT 't_owner_account' t, COUNT(*) c FROM t_owner_account UNION ALL
+        SELECT 't_owner_account_no_sequence', COUNT(*) FROM t_owner_account_no_sequence UNION ALL
         SELECT 't_account_posting_stream', COUNT(*) FROM t_account_posting_stream UNION ALL
         SELECT 't_account_posting', COUNT(*) FROM t_account_posting UNION ALL
         SELECT 't_account_entry', COUNT(*) FROM t_account_entry UNION ALL
@@ -90,12 +91,13 @@ public interface AccountTestMapper {
     List<Map<String, Object>> selectCompensationEvents();
 
     /** 插入一个 Owner 账户前置数据；余额以净额给出，借贷合计按正常方向写入。 */
-    @Insert("INSERT INTO t_owner_account (id, entity_type, entity_id, currency, account_code, owner_type, owner_id, "
-        + "balance_bucket, normal_side, debit_total, credit_total, net_balance, balance_version, account_status, create_time, "
-        + "update_time) VALUES (#{id}, #{entityType}, #{entityId}, #{currency}, #{accountCode}, #{ownerType}, #{ownerId}, "
-        + "#{bucket}, #{normalSide}, #{debitTotal}, #{creditTotal}, #{netBalance}, 0, #{status}, UTC_TIMESTAMP(6), "
-        + "UTC_TIMESTAMP(6))")
-    void insertAccount(@Param("id") long id, @Param("entityType") String entityType, @Param("entityId") String entityId,
+    @Insert("INSERT INTO t_owner_account (id, account_no, entity_type, entity_id, currency, account_code, owner_type, "
+        + "owner_id, balance_bucket, normal_side, debit_total, credit_total, net_balance, balance_version, account_status, "
+        + "create_time, update_time) VALUES (#{id}, #{accountNo}, #{entityType}, #{entityId}, #{currency}, #{accountCode}, "
+        + "#{ownerType}, #{ownerId}, #{bucket}, #{normalSide}, #{debitTotal}, #{creditTotal}, #{netBalance}, 0, #{status}, "
+        + "UTC_TIMESTAMP(6), UTC_TIMESTAMP(6))")
+    void insertAccount(@Param("id") long id, @Param("accountNo") String accountNo, @Param("entityType") String entityType,
+        @Param("entityId") String entityId,
         @Param("currency") String currency, @Param("accountCode") String accountCode, @Param("ownerType") String ownerType,
         @Param("ownerId") String ownerId, @Param("bucket") String bucket, @Param("normalSide") String normalSide,
         @Param("debitTotal") BigDecimal debitTotal, @Param("creditTotal") BigDecimal creditTotal,

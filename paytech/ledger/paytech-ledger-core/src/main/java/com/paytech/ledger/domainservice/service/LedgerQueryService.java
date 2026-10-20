@@ -11,12 +11,14 @@ import com.paytech.ledger.core.dal.dataobject.ChartOfAccounts;
 import com.paytech.ledger.core.dal.dataobject.CurrencySpec;
 import com.paytech.ledger.core.dal.dataobject.FinanceEntity;
 import com.paytech.ledger.core.dal.dataobject.FiscalCalendar;
+import com.paytech.ledger.core.enums.ChartAccountStatus;
 import com.paytech.ledger.domain.AccountQuery;
 import com.paytech.ledger.domain.AccountingPeriodQuery;
 import com.paytech.ledger.domain.FinanceEntityQuery;
 import com.paytech.ledger.domain.FiscalCalendarQuery;
 import com.paytech.ledger.domain.LedgerBookQuery;
 import com.paytech.ledger.domain.view.AccountJournalLineView;
+import com.paytech.ledger.domain.view.ChartAccountChangeView;
 import com.paytech.ledger.domain.view.AccountView;
 import com.paytech.ledger.domain.view.JournalEntryDetailView;
 import com.paytech.ledger.domain.view.LedgerBookView;
@@ -80,9 +82,21 @@ public interface LedgerQueryService {
      *
      * @param chartCode 科目表代码；不存在时以 CHART_NOT_ACTIVE 拒绝
      * @param postingAllowed 是否可过账，为空时不过滤
-     * @return 按科目代码升序的科目
+     * @param accountStatus 启停状态，为空时不过滤
+     * @return 按科目编号升序的科目
      */
-    List<ChartAccount> listChartAccountsByChart(String chartCode, Boolean postingAllowed);
+    List<ChartAccount> listChartAccountsByChart(String chartCode, Boolean postingAllowed, ChartAccountStatus accountStatus);
+
+    /**
+     * 分页查询科目变更记录，按变更时间倒序
+     *
+     * @param chartCode 科目表代码；不存在时以 CHART_NOT_ACTIVE 拒绝
+     * @param chartAccountId 可选科目主键；不属于该科目表时以 CHART_ACCOUNT_NOT_FOUND 拒绝
+     * @param paging 已校验的分页参数
+     * @return 变更记录分页
+     */
+    PagingResponseBody<ChartAccountChangeView> pageChartAccountChanges(String chartCode, Long chartAccountId,
+        PagingRequestBody paging);
 
     /** 查询币种规则，status 为空时不过滤，按币种代码升序。 */
     List<CurrencySpec> listCurrencies(CurrencySpecStatus status);

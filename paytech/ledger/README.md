@@ -38,6 +38,10 @@ account 明细账，总账每账簿每 Owner 科目一个以账簿主体为 Owne
   试算、关账与过账流追平另用 Foundation `AbstractLockProcessor` 的 Redis 资源锁（`AccountingLocks`）。
 - 账户身份矩阵（`AccountIdentityRule`）：桶一律 NONE；Owner 控制科目（`CLIENT_PAYABLE`、`CLIENT_SECURITY_DEPOSIT`、`CLIENT_RECOVERY_RECEIVABLE`、
   `PARTNER_PAYABLE`、`PARTNER_RECOVERY_RECEIVABLE`）只能以账簿主体为 Owner，且规则行不得引用；其余科目只允许平台类 Owner。
+- 科目分级与账户号（[2026-10-19 决定](../../agent-docs/decisions/2026-10-19-ledger-chart-hierarchy-and-account-numbers.md)、
+  [技术方案](../../requirements/20261019/ledger-会计科目分级维护/technique.md) 第 2 节）：科目带 4-2-2-2 分级编号 `account_no` 与启停状态，
+  STANDARD 为三级树（一级 19、二级 26 个汇总科目，三级 29 个末级科目，共 74 个）；科目维护（新增、修改、停用、启用）
+  不审批、直接生效并写变更记录，科目表被账簿采用后既有科目的编号与结构冻结；科目余额与试算平衡详情在查询时按级次汇总；`t_ledger_account.account_no`（如 `AE001-USD-22010101-0001`）只用于显示与搜索。
 - 人工调整不得涉及 Owner 控制科目（`OWNER_ACCOUNT_ADJUSTMENT_FORBIDDEN`），影响 Owner 余额的调整经 billing 登记 `MANUAL_ADJUSTMENT` 计费事实。
 - 关账步骤 3 `CHECK_ACCOUNT_POSTING_PROGRESS` 在事务外调用 billing `GET /billing/v1/facts/progress` 与 account
   `GET /account-postings/v1/progress`：billing 无未发布事实、account 已应用事实数与最大 factId 等于 billing 已发布的，且 account 列出的每条过账流

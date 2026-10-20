@@ -22,10 +22,11 @@ public class OwnerAccountConverter {
 
     /** 账户列表参数。 */
     public ListOwnerAccountsRequest toListRequest(String entityType, String entityId, String currency, String ownerType,
-        String ownerId, String accountCode, String balanceBucket, Integer page, Integer size) {
+        String ownerId, String accountCode, String balanceBucket, String accountNo, Integer page, Integer size) {
         return new ListOwnerAccountsRequest(CodeEnumConverter.parse(AccountEntityType.class, entityType), entityId,
             currency, CodeEnumConverter.parseOptional(OwnerType.class, ownerType), ownerId, accountCode,
-            CodeEnumConverter.parseOptional(BalanceBucket.class, balanceBucket), PagingRequestBody.of(page, size));
+            CodeEnumConverter.parseOptional(BalanceBucket.class, balanceBucket), accountNo,
+            PagingRequestBody.of(page, size));
     }
 
     /** 流水列表参数。 */
@@ -37,6 +38,7 @@ public class OwnerAccountConverter {
     public OwnerAccountResponseBody toResponseBody(OwnerAccount account) {
         OwnerAccountResponseBody body = new OwnerAccountResponseBody();
         body.setAccountId(account.getId().toString());
+        body.setAccountNo(account.getAccountNo());
         body.setAccountCode(account.getAccountCode());
         body.setOwnerType(account.getOwnerType().getCode());
         body.setOwnerId(account.getOwnerId());

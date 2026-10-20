@@ -49,13 +49,14 @@ public class FinanceSubledgerController {
         @RequestParam(value = "ownerId", required = false) @Pattern(regexp = ID) String ownerId,
         @RequestParam(value = "accountCode", required = false) @Pattern(regexp = "[A-Z][A-Z0-9_]{0,63}") String accountCode,
         @RequestParam(value = "balanceBucket", required = false) @Pattern(regexp = BALANCE_BUCKET_PATTERN) String balanceBucket,
+        @RequestParam(value = "accountNo", required = false) @Pattern(regexp = "[A-Z0-9][A-Z0-9-]{0,47}") String accountNo,
         @RequestParam(value = "page", required = false) Integer page,
         @RequestParam(value = "size", required = false) Integer size) {
         requireQueryKeys(servletRequest, Set.of("entityType", "entityId", "currency", "ownerType", "ownerId",
-            "accountCode", "balanceBucket", "page", "size"));
+            "accountCode", "balanceBucket", "accountNo", "page", "size"));
         PagingRequestBody paging = PagingRequestBody.of(page, size);
         return client.listOwnerAccounts(entityType, entityId, currency, ownerType, ownerId, accountCode, balanceBucket,
-            paging.page(), paging.size());
+            accountNo, paging.page(), paging.size());
     }
 
     /** R20 Owner 账户明细流水分页，按批次序号、行号升序。 */

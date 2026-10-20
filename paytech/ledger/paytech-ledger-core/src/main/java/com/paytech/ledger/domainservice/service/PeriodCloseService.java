@@ -40,7 +40,10 @@ public interface PeriodCloseService {
      */
     void fail(PeriodCloseContext context, CloseStep step, String resultSummary);
 
-    /** 读取账簿主体的本期损益账户（科目 + 主体 + NONE），不存在时按身份矩阵创建；必须加入调用方事务。 */
+    /**
+     * 读取账簿主体的本期损益账户（科目 + 主体 + NONE），不存在时按身份矩阵创建；必须加入调用方事务
+     * <li>新建时科目必须启用（否则 CHART_ACCOUNT_INACTIVE），并在同一事务分配账户号。</li>
+     */
     LedgerAccount ensureResultAccount(LedgerBook book, long resultChartAccountId);
 
     /** 保存损益结转指令及其行（VALIDATED）；必须加入调用方事务。 */

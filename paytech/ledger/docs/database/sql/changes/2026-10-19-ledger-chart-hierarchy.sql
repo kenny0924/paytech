@@ -1,0 +1,216 @@
+-- 2026-10-19 ledger 会计科目分级与可读账户号：mor_ledger 变更脚本
+-- 由需求目录 db/ledger/ddl.sql 与 db/ledger/dml.sql 合并，按其规定的执行顺序排列：ddl.sql 第 1 段 → dml.sql → ddl.sql 第 2 段（含恢复段）；各段内容与需求目录逐字一致。
+-- 需求目录：requirements/20261019/ledger-会计科目分级维护/。完整建库文件见 ../ledger-schema.sql 与 ../ledger-initial-data.sql。
+-- 前置：33 表模型之前的 31 张表（含 2026-10-19-ledger-control-accounts.sql）；没有账簿采用 STANDARD（chart_id = 2001）。
+SET NAMES utf8mb4;
+
+-- ===================== ddl.sql 第 1 段 =====================
+-- ledger 会计科目分级与可读账户号：结构变更（待执行文件，未在任何环境执行）
+-- 目标库：mor_ledger（本机 local-environment / mor-test，分别授权）
+-- 执行顺序：本文件第 1 段 → db/ledger/dml.sql → 本文件第 2 段
+-- 是否可重跑：否（ALTER ADD COLUMN / CREATE TABLE 重跑会报错，报错即停止，不影响已执行部分）
+-- 恢复：第 2 段之前可直接执行文末「恢复」段；第 2 段之后恢复会丢失变更记录与账户号
+-- 阶段 4 以 ledger.pdma.json 为设计源重新生成完整 Schema，本文件与之逐字段一致
+
+-- ===================== 第 1 段：加列与新表 =====================
+
+ALTER TABLE `t_chart_account`
+  ADD COLUMN `account_no` VARCHAR(10) CHARACTER SET ascii COLLATE ascii_bin NULL
+    COMMENT '财务人员使用的分级数字科目编号：4-2-2-2，一级 4 位、每下一级加 2 位，最多 4 级；下级以上级编号开头；一级首位 1 资产、2 负债、3 权益、4 收入、5 费用。科目表被账簿采用后不可修改。' AFTER `parent_account_id`,
+  ADD COLUMN `account_status` VARCHAR(16) NOT NULL DEFAULT 'ACTIVE'
+    COMMENT '科目启停状态。允许值：ACTIVE、INACTIVE。停用后不能新建账户、不能被新规则版本引用，已有账户照常记账与查询；与永久结构属性 posting_allowed 无关。' AFTER `posting_allowed`;
+
+ALTER TABLE `t_ledger_account`
+  ADD COLUMN `account_no` VARCHAR(48) CHARACTER SET ascii COLLATE ascii_bin NULL
+    COMMENT '财务人员可读账户号：{主体}-{币种}-{科目编号}-{序号}，序号按账簿与科目从 1 递增、至少 4 位；创建时生成后不再改变，只用于显示与搜索，不作为跨系统关联键。' AFTER `id`;
+
+CREATE TABLE `t_chart_account_change` (
+  `id` BIGINT NOT NULL COMMENT '科目变更记录的服务侧雪花主键。',
+  `chart_id` BIGINT NOT NULL COMMENT '被变更科目所属的科目表。',
+  `chart_account_id` BIGINT NOT NULL COMMENT '被变更的科目。',
+  `change_type` VARCHAR(16) NOT NULL COMMENT '变更类型。允许值：CREATE、UPDATE、DISABLE、ENABLE。',
+  `before_account_no` VARCHAR(10) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT '变更前科目编号；CREATE 为空。',
+  `after_account_no` VARCHAR(10) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '变更后科目编号。',
+  `before_parent_account_id` BIGINT NULL COMMENT '变更前上级科目；CREATE 或原为一级科目时为空。',
+  `after_parent_account_id` BIGINT NULL COMMENT '变更后上级科目；一级科目为空。',
+  `before_account_name` VARCHAR(255) NULL COMMENT '变更前科目名称；CREATE 为空。',
+  `after_account_name` VARCHAR(255) NOT NULL COMMENT '变更后科目名称。',
+  `before_account_status` VARCHAR(16) NULL COMMENT '变更前科目状态；CREATE 为空。允许值：ACTIVE、INACTIVE。',
+  `after_account_status` VARCHAR(16) NOT NULL COMMENT '变更后科目状态。允许值：ACTIVE、INACTIVE。',
+  `operator_id` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '执行变更的运营人员账号标识，取自 Gateway 传递的 X-Gateway-Actor-Subject。',
+  `change_time` DATETIME(6) NOT NULL COMMENT '变更在 Finance 数据库中生效的 UTC 微秒时间；记录只追加，不更新、不删除。',
+  PRIMARY KEY (`id`),
+  KEY `idx_chart_acct_change_account` (`chart_id`, `chart_account_id`, `change_time`) COMMENT '支持访问路径：chart_id、chart_account_id、change_time',
+  KEY `idx_chart_acct_change_time` (`chart_id`, `change_time`) COMMENT '支持访问路径：chart_id、change_time'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='科目新增、修改、停用、启用的不可变变更记录；科目维护不审批、直接生效，以本表留痕。';
+
+CREATE TABLE `t_account_no_sequence` (
+  `id` BIGINT NOT NULL COMMENT '账户号序列的服务侧雪花主键。',
+  `ledger_book_id` BIGINT NOT NULL COMMENT '账户所属总账账簿。',
+  `chart_account_id` BIGINT NOT NULL COMMENT '账户所属科目。',
+  `last_value` BIGINT NOT NULL COMMENT '同账簿同科目最近一次分配给账户号的序号；在建户本地事务中以 INSERT … ON DUPLICATE KEY UPDATE 原子递增，已分配序号不复用，允许空洞。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_account_no_seq` (`ledger_book_id`, `chart_account_id`) COMMENT '保证业务唯一性：ledger_book_id、chart_account_id'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='按账簿与科目为总账账户分配可读账户号序号。';
+
+-- ===================== dml.sql =====================
+-- ledger STANDARD 科目表重建为三级科目树（待执行文件，未在任何环境执行；2026-10-20 由两级改为三级）
+-- 目标库：mor_ledger；在 ddl.sql 第 1 段之后、第 2 段之前执行
+-- 前置条件：没有任何账簿采用 STANDARD（chart_id = 2001）。mor-test 先清理 AE001 演示数据（用户 2026-10-19 已同意）。
+-- 是否可重跑：否（插入固定 ID 重跑会主键冲突并整体回滚）
+-- 结果：新增 19 个一级汇总科目（ID 3101—3119，4 位）与 26 个二级汇总科目（ID 3201—3226，6 位），更新 29 个既有科目（ID 3001—3029）为 8 位三级末级的编号与上级；account_code、类别、余额方向不变。共 74 个科目。
+-- 同步：阶段 4 将同样的树写入 paytech/ledger/docs/database/sql/ledger-initial-data.sql 与测试 DDL。
+
+START TRANSACTION;
+
+-- 前置检查：有账簿采用 STANDARD 时 @adopted > 0，下面的 INSERT 与 UPDATE 都不写入任何行，核对结果会显示 numbered = 0
+SET @adopted = (SELECT COUNT(*) FROM `t_ledger_book` WHERE `chart_id` = 2001);
+SELECT @adopted AS `books_adopting_standard`;
+
+-- 一级（上级为空）与二级汇总科目；二级的类别、余额方向同其一级
+INSERT INTO `t_chart_account`
+  (`id`, `chart_id`, `parent_account_id`, `account_no`, `account_code`, `account_name`, `account_class`, `normal_side`, `posting_allowed`, `account_status`, `create_time`, `update_time`)
+SELECT * FROM (
+  SELECT 3101 AS `id`, 2001 AS `chart_id`, NULL AS `parent_account_id`, '1001' AS `account_no`, 'CASH_AND_BANK' AS `account_code`, '现金及银行存款' AS `account_name`,
+         'ASSET' AS `account_class`, 'DEBIT' AS `normal_side`, 0 AS `posting_allowed`, 'ACTIVE' AS `account_status`, UTC_TIMESTAMP(6) AS `create_time`, UTC_TIMESTAMP(6) AS `update_time`
+  UNION ALL SELECT 3102, 2001, NULL, '1101',  'CHANNEL_RECEIVABLES',         '渠道应收款',         'ASSET',     'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3103, 2001, NULL, '1131',  'OTHER_RECEIVABLES',           '其他应收款',         'ASSET',     'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3104, 2001, NULL, '1171',  'TAX_RECEIVABLES',             '应收税费',           'ASSET',     'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3105, 2001, NULL, '1901',  'SUSPENSE_ASSETS',             '待处理资产',         'ASSET',     'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3106, 2001, NULL, '2201',  'CUSTOMER_FUNDS_PAYABLE',      '应付客户款项',       'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3107, 2001, NULL, '2211',  'CUSTOMER_DEPOSITS',           '客户保证金',         'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3108, 2001, NULL, '2221',  'TAXES_PAYABLE',               '应交税费',           'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3109, 2001, NULL, '2231',  'CHANNEL_PAYABLES',            '渠道应付款',         'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3110, 2001, NULL, '2241',  'ACCRUED_EXPENSES',            '预提费用',           'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3111, 2001, NULL, '2251',  'OTHER_PAYABLES',              '其他应付款',         'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3112, 2001, NULL, '2901',  'SUSPENSE_LIABILITIES',        '待处理负债',         'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3113, 2001, NULL, '3001',  'SHARE_CAPITAL',               '实收资本',           'EQUITY',    'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3114, 2001, NULL, '3101',  'RETAINED_EARNINGS_TOTAL',     '留存收益',           'EQUITY',    'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3115, 2001, NULL, '3103',  'PROFIT_FOR_PERIOD',           '本期利润',           'EQUITY',    'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3116, 2001, NULL, '3201',  'DISTRIBUTIONS',               '所有者分配',         'EQUITY',    'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3117, 2001, NULL, '4001',  'OPERATING_REVENUE',           '营业收入',           'REVENUE',   'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3118, 2001, NULL, '5001',  'COST_OF_SERVICES',            '营业成本',           'EXPENSE',   'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3119, 2001, NULL, '5101',  'OTHER_LOSSES',                '其他损失',           'EXPENSE',   'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3201, 2001, 3101, '100101', 'BANK_DEPOSITS',               '银行存款',           'ASSET',     'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3202, 2001, 3102, '110101', 'CHANNEL_CLEARING_RECEIVABLES','渠道清算应收',       'ASSET',     'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3203, 2001, 3103, '113101', 'RECOVERY_RECEIVABLES',        '追偿应收',           'ASSET',     'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3204, 2001, 3103, '113102', 'INTERCOMPANY_RECEIVABLES',    '关联方应收',         'ASSET',     'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3205, 2001, 3104, '117101', 'INPUT_TAX',                   '进项税额',           'ASSET',     'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3206, 2001, 3105, '190101', 'RECON_SUSPENSE',              '对账待处理',         'ASSET',     'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3207, 2001, 3106, '220101', 'CLIENT_FUNDS_PAYABLE',        '应付 Client 款项',   'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3208, 2001, 3106, '220102', 'PARTNER_FUNDS_PAYABLE',       '应付合作方款项',     'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3209, 2001, 3106, '220103', 'CONSUMER_FUNDS_PAYABLE',      '应付 Consumer 款项', 'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3210, 2001, 3107, '221101', 'CLIENT_DEPOSITS',             'Client 保证金',      'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3211, 2001, 3108, '222101', 'OUTPUT_TAX',                  '销项税额',           'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3212, 2001, 3109, '223101', 'CHANNEL_CLEARING_PAYABLES',   '渠道清算应付',       'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3213, 2001, 3110, '224101', 'CHANNEL_FEE_ACCRUALS',        '渠道费用预提',       'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3214, 2001, 3111, '225101', 'INTERCOMPANY_PAYABLES',       '关联方应付',         'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3215, 2001, 3112, '290101', 'UNIDENTIFIED_RECEIPTS',       '待识别款项',         'LIABILITY', 'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3216, 2001, 3113, '300101', 'ORDINARY_CAPITAL',            '普通股本',           'EQUITY',    'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3217, 2001, 3114, '310101', 'UNDISTRIBUTED_PROFIT',        '未分配利润',         'EQUITY',    'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3218, 2001, 3115, '310301', 'PERIOD_RESULT',               '本期损益',           'EQUITY',    'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3219, 2001, 3116, '320101', 'OWNER_DISTRIBUTIONS',         '股东分配',           'EQUITY',    'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3220, 2001, 3117, '400101', 'TRANSACTION_SERVICE_REVENUE', '交易服务收入',       'REVENUE',   'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3221, 2001, 3117, '400102', 'PLATFORM_SERVICE_INCOME',     '平台服务收入',       'REVENUE',   'CREDIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3222, 2001, 3118, '500101', 'CHANNEL_COSTS',               '渠道成本',           'EXPENSE',   'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3223, 2001, 3118, '500102', 'PARTNER_COSTS',               '合作方分成',         'EXPENSE',   'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3224, 2001, 3118, '500103', 'PLATFORM_SERVICE_COSTS',      '平台服务费用',       'EXPENSE',   'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3225, 2001, 3119, '510101', 'ROUNDING_DIFFERENCES',        '舍入差异',           'EXPENSE',   'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+  UNION ALL SELECT 3226, 2001, 3119, '510102', 'RECONCILIATION_LOSSES',       '对账差异损失',       'EXPENSE',   'DEBIT', 0, 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+) s WHERE @adopted = 0;
+
+-- 29 个既有科目改为三级末级：(id, 编号, 二级上级)
+UPDATE `t_chart_account` c
+JOIN (
+            SELECT 3003 AS `id`, '10010101' AS `no`, 3201 AS `parent`
+  UNION ALL SELECT 3001, '11010101', 3202 UNION ALL SELECT 3002, '11010102', 3202
+  UNION ALL SELECT 3004, '11310101', 3203 UNION ALL SELECT 3005, '11310102', 3203
+  UNION ALL SELECT 3008, '11310201', 3204
+  UNION ALL SELECT 3006, '11710101', 3205
+  UNION ALL SELECT 3007, '19010101', 3206
+  UNION ALL SELECT 3009, '22010101', 3207
+  UNION ALL SELECT 3010, '22010201', 3208
+  UNION ALL SELECT 3017, '22010301', 3209
+  UNION ALL SELECT 3011, '22110101', 3210
+  UNION ALL SELECT 3012, '22210101', 3211
+  UNION ALL SELECT 3014, '22310101', 3212 UNION ALL SELECT 3015, '22310102', 3212
+  UNION ALL SELECT 3013, '22410101', 3213
+  UNION ALL SELECT 3018, '22510101', 3214
+  UNION ALL SELECT 3016, '29010101', 3215
+  UNION ALL SELECT 3019, '30010101', 3216
+  UNION ALL SELECT 3021, '31010101', 3217
+  UNION ALL SELECT 3020, '31030101', 3218
+  UNION ALL SELECT 3022, '32010101', 3219
+  UNION ALL SELECT 3023, '40010101', 3220
+  UNION ALL SELECT 3024, '40010201', 3221
+  UNION ALL SELECT 3027, '50010101', 3222
+  UNION ALL SELECT 3026, '50010201', 3223
+  UNION ALL SELECT 3025, '50010301', 3224
+  UNION ALL SELECT 3028, '51010101', 3225
+  UNION ALL SELECT 3029, '51010201', 3226
+) m ON m.`id` = c.`id`
+SET c.`account_no` = m.`no`, c.`parent_account_id` = m.`parent`, c.`update_time` = UTC_TIMESTAMP(6)
+WHERE c.`chart_id` = 2001 AND c.`parent_account_id` IS NULL AND c.`account_no` IS NULL AND @adopted = 0;
+
+-- 核对：应为 74 行全部有编号；末级 29 个都是 8 位；上级都是汇总科目、类别一致，编号以上级编号开头且比上级多 2 位
+SELECT COUNT(*) AS `total`, SUM(`account_no` IS NOT NULL) AS `numbered`, SUM(`posting_allowed` = 1 AND LENGTH(`account_no`) = 8) AS `level3_leaves`
+FROM `t_chart_account` WHERE `chart_id` = 2001;
+SELECT COUNT(*) AS `bad_parent` FROM `t_chart_account` c JOIN `t_chart_account` p ON p.`id` = c.`parent_account_id`
+WHERE c.`chart_id` = 2001 AND (p.`posting_allowed` = 1 OR p.`account_class` <> c.`account_class`
+  OR LEFT(c.`account_no`, LENGTH(p.`account_no`)) <> p.`account_no` OR LENGTH(c.`account_no`) <> LENGTH(p.`account_no`) + 2);
+
+COMMIT;
+
+-- ===================== 恢复（仅在需要回退时执行；仍要求无账簿采用 STANDARD） =====================
+-- START TRANSACTION;
+-- UPDATE `t_chart_account` SET `account_no` = NULL, `parent_account_id` = NULL, `update_time` = UTC_TIMESTAMP(6) WHERE `id` BETWEEN 3001 AND 3029;
+-- DELETE FROM `t_chart_account` WHERE `id` BETWEEN 3201 AND 3226;
+-- DELETE FROM `t_chart_account` WHERE `id` BETWEEN 3101 AND 3119;
+-- COMMIT;
+
+-- ===================== ddl.sql 第 2 段 =====================
+-- ===================== 第 2 段：回填与约束（在 dml.sql 之后执行） =====================
+
+-- 2.1 存量总账账户回填账户号（按账簿 + 科目内 create_time、id 顺序编号）
+UPDATE `t_ledger_account` a
+JOIN (
+  SELECT la.`id`,
+         CONCAT(IF(b.`entity_type` = 'FINANCE_ENTITY', fe.`entity_code`, b.`entity_id`), '-', b.`currency`, '-', c.`account_no`, '-',
+                LPAD(ROW_NUMBER() OVER (PARTITION BY la.`ledger_book_id`, la.`chart_account_id` ORDER BY la.`create_time`, la.`id`), 4, '0')) AS `account_no`
+  FROM `t_ledger_account` la
+  JOIN `t_ledger_book` b ON b.`id` = la.`ledger_book_id`
+  JOIN `t_chart_account` c ON c.`id` = la.`chart_account_id`
+  LEFT JOIN `t_finance_entity` fe ON b.`entity_type` = 'FINANCE_ENTITY' AND fe.`id` = CAST(b.`entity_id` AS UNSIGNED)
+) n ON n.`id` = a.`id`
+SET a.`account_no` = n.`account_no`;
+
+-- 2.2 初始化序列，使后续新户从存量最大序号之后继续
+INSERT INTO `t_account_no_sequence` (`id`, `ledger_book_id`, `chart_account_id`, `last_value`, `create_time`, `update_time`)
+SELECT 990000000000000000 + ROW_NUMBER() OVER (ORDER BY `ledger_book_id`, `chart_account_id`),
+       `ledger_book_id`, `chart_account_id`, COUNT(*), UTC_TIMESTAMP(6), UTC_TIMESTAMP(6)
+FROM `t_ledger_account`
+GROUP BY `ledger_book_id`, `chart_account_id`;
+
+-- 2.3 核对：以下两条都应返回 0，否则停止并按「恢复」处理
+SELECT COUNT(*) AS `chart_account_without_no` FROM `t_chart_account` WHERE `account_no` IS NULL;
+SELECT COUNT(*) AS `ledger_account_without_no` FROM `t_ledger_account` WHERE `account_no` IS NULL;
+
+-- 2.4 改为必填并加唯一索引
+ALTER TABLE `t_chart_account`
+  MODIFY COLUMN `account_no` VARCHAR(10) CHARACTER SET ascii COLLATE ascii_bin NOT NULL
+    COMMENT '财务人员使用的分级数字科目编号：4-2-2-2，一级 4 位、每下一级加 2 位，最多 4 级；下级以上级编号开头；一级首位 1 资产、2 负债、3 权益、4 收入、5 费用。科目表被账簿采用后不可修改。',
+  ADD UNIQUE KEY `uk_chart_acct_no` (`chart_id`, `account_no`) COMMENT '保证业务唯一性：chart_id、account_no';
+
+ALTER TABLE `t_ledger_account`
+  MODIFY COLUMN `account_no` VARCHAR(48) CHARACTER SET ascii COLLATE ascii_bin NOT NULL
+    COMMENT '财务人员可读账户号：{主体}-{币种}-{科目编号}-{序号}，序号按账簿与科目从 1 递增、至少 4 位；创建时生成后不再改变，只用于显示与搜索，不作为跨系统关联键。',
+  ADD UNIQUE KEY `uk_ledger_account_no` (`account_no`) COMMENT '保证业务唯一性：account_no';
+
+-- ===================== 恢复（仅在需要回退时执行） =====================
+-- ALTER TABLE `t_ledger_account` DROP INDEX `uk_ledger_account_no`, DROP COLUMN `account_no`;
+-- ALTER TABLE `t_chart_account` DROP INDEX `uk_chart_acct_no`, DROP COLUMN `account_no`, DROP COLUMN `account_status`;
+-- DROP TABLE `t_account_no_sequence`;
+-- DROP TABLE `t_chart_account_change`;
+-- 注意：恢复前先执行 dml.sql 的恢复段；删除 t_chart_account_change 会丢失全部科目变更记录。

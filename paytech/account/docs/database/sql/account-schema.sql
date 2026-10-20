@@ -6,6 +6,7 @@ SET NAMES utf8mb4;
 
 CREATE TABLE `t_owner_account` (
   `id` BIGINT NOT NULL COMMENT '账户服务生成的 Owner 账户 Snowflake 主键；ledger 分录行经 t_account_entry 下钻，不复用 ledger 账户 ID。',
+  `account_no` VARCHAR(48) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '财务人员可读账户号：{主体}-{币种}-{科目编号}-S{序号}，S 表示明细账账户，序号按主体、币种与科目代码从 1 递增、至少 6 位；主体段 OE 为 entityNo、Finance Entity 为 FE 加主体主键；创建时生成后不再改变，只用于显示与搜索，不进入事件载荷、不作为跨系统关联键。',
   `entity_type` VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '账户所属法律主体类型。允许值：OPERATING_ENTITY、FINANCE_ENTITY。',
   `entity_id` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '账户所属主体标识：OE 为 CCT entityNo，Finance Entity 为 ledger 主数据主键十进制字符串；不建立跨库外键。',
   `currency` CHAR(3) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '账户的大写 ISO 4217 币种。',
@@ -23,9 +24,23 @@ CREATE TABLE `t_owner_account` (
   `update_time` DATETIME(6) NOT NULL COMMENT '记录最近一次持久化更新的 UTC 微秒时间。',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_owner_account_identity` (`entity_type`, `entity_id`, `currency`, `account_code`, `owner_type`, `owner_id`, `balance_bucket`) COMMENT '保证业务唯一性：entity_type、entity_id、currency、account_code、owner_type、owner_id、balance_bucket',
+  UNIQUE KEY `uk_owner_account_no` (`account_no`) COMMENT '保证业务唯一性：account_no',
   KEY `idx_owner_account_owner` (`owner_type`, `owner_id`, `entity_id`, `currency`) COMMENT '支持访问路径：owner_type、owner_id、entity_id、currency',
   KEY `idx_owner_account_code` (`entity_type`, `entity_id`, `currency`, `account_code`) COMMENT '支持访问路径：entity_type、entity_id、currency、account_code'
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='明细账 Owner 账户（2026-10-18 决定第 2 条）：Client / Local Partner / 银行现金在每个主体 + 币种 + 科目代码 + 余额桶下的唯一账户主数据与实时余额；余额只由本库流水维护并可从流水重算。';
+
+CREATE TABLE `t_owner_account_no_sequence` (
+  `id` BIGINT NOT NULL COMMENT '账户号序列的服务侧雪花主键。',
+  `entity_type` VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '账户所属法律主体类型。允许值：OPERATING_ENTITY、FINANCE_ENTITY。',
+  `entity_id` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '账户所属主体标识：OE 为 CCT entityNo，Finance Entity 为 ledger 主数据主键十进制字符串。',
+  `currency` CHAR(3) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '账户币种，ISO 4217 大写三位代码。',
+  `account_code` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '账户类型目录中的科目代码。',
+  `last_value` BIGINT NOT NULL COMMENT '同主体同币种同科目最近一次分配给账户号的序号；在开户本地事务中以 INSERT … ON DUPLICATE KEY UPDATE 原子递增，已分配序号不复用，允许空洞。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 account 数据库中的 UTC 微秒创建时间。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_owner_account_no_seq` (`entity_type`, `entity_id`, `currency`, `account_code`) COMMENT '保证业务唯一性：entity_type、entity_id、currency、account_code'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='按主体、币种与科目代码为明细账账户分配可读账户号序号。';
 
 CREATE TABLE `t_account_posting_stream` (
   `id` BIGINT NOT NULL COMMENT '账户服务生成的 Snowflake 主键。',

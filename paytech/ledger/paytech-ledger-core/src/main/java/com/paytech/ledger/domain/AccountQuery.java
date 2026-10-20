@@ -14,6 +14,9 @@ public class AccountQuery {
     /** 账簿主键。 */
     private final long ledgerBookId;
 
+    /** 账户号，可空；精确匹配。 */
+    private final String accountNo;
+
     /** 科目代码，可空。 */
     private final String accountCode;
 

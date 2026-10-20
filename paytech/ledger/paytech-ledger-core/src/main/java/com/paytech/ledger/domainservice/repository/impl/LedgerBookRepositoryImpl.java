@@ -67,4 +67,10 @@ public class LedgerBookRepositoryImpl implements LedgerBookRepository {
     public List<LedgerBook> findAllByEntity(LedgerEntityType entityType, String entityId) {
         return mapper.selectAllByEntity(entityType, entityId);
     }
+
+    /** 是否已有账簿采用该科目表。 */
+    @Override
+    public boolean existsByChart(long chartId) {
+        return mapper.countByChart(chartId) > 0;
+    }
 }

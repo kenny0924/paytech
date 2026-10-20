@@ -19,16 +19,19 @@ import com.paytech.ledger.core.dal.dataobject.FinanceEntity;
 import com.paytech.ledger.core.dal.dataobject.FiscalCalendar;
 import com.paytech.ledger.core.dal.dataobject.LedgerAccount;
 import com.paytech.ledger.core.dal.dataobject.LedgerBook;
+import com.paytech.ledger.core.enums.ChartAccountStatus;
 import com.paytech.ledger.domain.AccountQuery;
 import com.paytech.ledger.domain.AccountingPeriodQuery;
 import com.paytech.ledger.domain.FinanceEntityQuery;
 import com.paytech.ledger.domain.FiscalCalendarQuery;
 import com.paytech.ledger.domain.LedgerBookQuery;
 import com.paytech.ledger.domain.view.AccountJournalLineView;
+import com.paytech.ledger.domain.view.ChartAccountChangeView;
 import com.paytech.ledger.domain.view.AccountView;
 import com.paytech.ledger.domain.view.JournalEntryDetailView;
 import com.paytech.ledger.domain.view.LedgerBookView;
 import com.paytech.ledger.domainservice.repository.AccountingPeriodRepository;
+import com.paytech.ledger.domainservice.repository.ChartAccountChangeRepository;
 import com.paytech.ledger.domainservice.repository.ChartAccountRepository;
 import com.paytech.ledger.domainservice.repository.ChartOfAccountsRepository;
 import com.paytech.ledger.domainservice.repository.CurrencySpecRepository;
@@ -57,6 +60,7 @@ public class LedgerQueryServiceImpl implements LedgerQueryService {
     private final FiscalCalendarRepository fiscalCalendarRepository;
     private final ChartOfAccountsRepository chartOfAccountsRepository;
     private final AccountingPeriodRepository accountingPeriodRepository;
+    private final ChartAccountChangeRepository chartAccountChangeRepository;
 
     /** 账簿列表无金额，直接分页返回。 */
     @Override
@@ -162,12 +166,33 @@ public class LedgerQueryServiceImpl implements LedgerQueryService {
 
     /** 科目表存在后读取其科目；科目表状态不过滤，供页面展示全部已发布科目表。 */
     @Override
-    public List<ChartAccount> listChartAccountsByChart(String chartCode, Boolean postingAllowed) {
+    public List<ChartAccount> listChartAccountsByChart(String chartCode, Boolean postingAllowed,
+        ChartAccountStatus accountStatus) {
+        return chartAccountRepository.findByChart(getChart(chartCode).getId(), postingAllowed, accountStatus);
+    }
+
+    /** 科目表存在、限定科目时科目属于该科目表，再分页读取变更记录。 */
+    @Override
+    public PagingResponseBody<ChartAccountChangeView> pageChartAccountChanges(String chartCode, Long chartAccountId,
+        PagingRequestBody paging) {
+        ChartOfAccounts chart = getChart(chartCode);
+        if (chartAccountId != null) {
+            ChartAccount account = chartAccountRepository.findById(chartAccountId);
+            if (account == null || !account.getChartId().equals(chart.getId())) {
+                throw new FailException(LedgerSetupErrorCode.CHART_ACCOUNT_NOT_FOUND);
+            }
+        }
+        return page(chartAccountChangeRepository.findPage(chart.getId(), chartAccountId, paging), paging,
+            chartAccountChangeRepository.countPage(chart.getId(), chartAccountId));
+    }
+
+    /** 读取科目表，不存在时以 CHART_NOT_ACTIVE 拒绝。 */
+    ChartOfAccounts getChart(String chartCode) {
         ChartOfAccounts chart = chartOfAccountsRepository.findByChartCode(chartCode);
         if (chart == null) {
             throw new FailException(LedgerSetupErrorCode.CHART_NOT_ACTIVE);
         }
-        return chartAccountRepository.findByChart(chart.getId(), postingAllowed);
+        return chart;
     }
 
     /** 币种规则数量有限，不分页。 */

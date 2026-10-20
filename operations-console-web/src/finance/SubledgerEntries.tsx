@@ -23,6 +23,7 @@ export function SubledgerEntries({ account, currency, paging, minorUnit, onQuery
   const hint = financeErrorTarget(page.failure, [], subledgerErrorTargets)?.message;
   return <>
     {account.accountCode && <dl className="finance-summary">
+      {account.accountNo && <div><dt>账户号</dt><dd className="mono">{account.accountNo}</dd></div>}
       <div><dt>科目</dt><dd>{account.accountCode}{subledgerAccountNames[account.accountCode] ? ` · ${subledgerAccountNames[account.accountCode]}` : ''}</dd></div>
       <div><dt>Owner</dt><dd>{account.ownerType} · {account.ownerId}</dd></div>
       <div><dt>余额桶</dt><dd>{account.balanceBucket}</dd></div>

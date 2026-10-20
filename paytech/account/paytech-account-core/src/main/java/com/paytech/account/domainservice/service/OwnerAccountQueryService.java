@@ -12,12 +12,13 @@ import com.paytech.foundation.web.paging.PagingResponseBody;
 public interface OwnerAccountQueryService {
 
     /**
-     * 分页读取主体与币种下的 Owner 账户
+     * 分页读取主体与币种下的 Owner 账户；可选筛选为空表示不过滤，账户号为精确匹配
      *
      * @return 按科目代码、核算对象类型、核算对象标识、余额桶排序的账户分页
      */
     PagingResponseBody<OwnerAccount> pageAccounts(AccountEntityType entityType, String entityId, String currency,
-        OwnerType ownerType, String ownerId, String accountCode, BalanceBucket bucket, PagingRequestBody paging);
+        OwnerType ownerType, String ownerId, String accountCode, BalanceBucket bucket, String accountNo,
+        PagingRequestBody paging);
 
     /**
      * 按主键读取账户

@@ -7,6 +7,7 @@ import org.springframework.web.service.annotation.HttpExchange;
 
 import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.ledger.api.response.AccountingPeriodResponseBody;
+import com.paytech.ledger.api.response.ChartAccountChangeResponseBody;
 import com.paytech.ledger.api.response.ChartAccountListResponseBody;
 import com.paytech.ledger.api.response.ChartOfAccountsListResponseBody;
 import com.paytech.ledger.api.response.CurrencyListResponseBody;
@@ -80,16 +81,34 @@ public interface LedgerSetupQueryApi {
     ChartOfAccountsListResponseBody listChartsOfAccounts();
 
     /**
-     * 查询科目表下的科目，按科目代码升序
+     * 查询科目表下的科目，按科目编号升序（父科目在其下级之前）
      *
      * @param chartCode 科目表代码
      * @param postingAllowed 可选是否可过账；省略时返回全部科目
+     * @param accountStatus 可选启停状态：ACTIVE 或 INACTIVE；省略时返回全部
      * @return 科目列表，不分页；科目表不存在时 400 CHART_NOT_ACTIVE
      */
     @GetExchange("/chart-of-accounts/v1/{chartCode}/accounts")
     ChartAccountListResponseBody listChartAccounts(
         @PathVariable("chartCode") @Pattern(regexp = "[A-Z][A-Z0-9_]{0,63}") String chartCode,
-        @RequestParam(value = "postingAllowed", required = false) Boolean postingAllowed);
+        @RequestParam(value = "postingAllowed", required = false) Boolean postingAllowed,
+        @RequestParam(value = "accountStatus", required = false) @Pattern(regexp = "ACTIVE|INACTIVE") String accountStatus);
+
+    /**
+     * 分页查询科目变更记录，按变更时间倒序
+     *
+     * @param chartCode 科目表代码；不存在时 400 CHART_NOT_ACTIVE
+     * @param chartAccountId 可选科目主键；不属于该科目表时 400 CHART_ACCOUNT_NOT_FOUND
+     * @param page 可选页码
+     * @param size 可选每页条数
+     * @return 变更记录分页：操作人、时间与变更前后的编号、上级、名称和状态
+     */
+    @GetExchange("/chart-of-accounts/v1/{chartCode}/changes")
+    PagingResponseBody<ChartAccountChangeResponseBody> listChartAccountChanges(
+        @PathVariable("chartCode") @Pattern(regexp = "[A-Z][A-Z0-9_]{0,63}") String chartCode,
+        @RequestParam(value = "chartAccountId", required = false) @Pattern(regexp = "[1-9][0-9]{0,18}") String chartAccountId,
+        @RequestParam(value = "page", required = false) Integer page,
+        @RequestParam(value = "size", required = false) Integer size);
 
     /**
      * 查询币种，按币种代码升序

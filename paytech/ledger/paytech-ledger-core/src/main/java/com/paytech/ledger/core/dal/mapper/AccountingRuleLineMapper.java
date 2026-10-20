@@ -16,4 +16,7 @@ public interface AccountingRuleLineMapper {
 
     /** 版本全部规则行，按指令类型、行号升序。 */
     List<AccountingRuleLine> selectByVersion(@Param("bundleVerId") long bundleVerId);
+
+    /** 统计各规则集当前生效版本中引用该科目代码的规则行数。 */
+    long countCurrentByAccountCode(@Param("accountCode") String accountCode);
 }

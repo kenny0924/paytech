@@ -284,10 +284,18 @@ Book 结转，gross/net 收入列报仍由合同和 principal/agent 会计政策
 ### 4.11 科目表保留稳定 Root，不保留闭包表
 
 `t_chart_of_accounts` 仍是 Ledger Book 引用的稳定科目目录 Root，但 V1 不对整套科目表维护 Version、有效期或乐观锁。科目层级只由
-`t_chart_account.parent_account_id` 表达；汇总查询使用递归 CTE 或应用层遍历。Chart 尚未被账簿采用时，新增或移动科目须在同一事务校验同
-Chart、父节点存在和无环；一旦被任一 Ledger Book 采用，既有科目的代码、父级、类别、正常方向和 `posting_allowed`
-全部冻结，只允许追加新科目。具体核算账户的停用通过 `t_account.account_status` 完成，避免历史分组随当前树变化，也不再维护容易与父子关系漂移的
-`t_account_tree_path`。
+`t_chart_account.parent_account_id` 表达；科目余额与试算平衡的级次汇总在查询时于应用层自下而上累加，试算平衡仍只持久化末级科目行。
+每个科目另有 `account_no` 分级数字编号（4-2-2-2：一级 4 位、每下一级加 2 位、最多 4 级；一级首位 1 资产 / 2 负债 / 3 权益 /
+4 收入 / 5 费用；下级以上级编号开头；`uk_chart_acct_no(chart_id, account_no)`），级次由编号长度推出；`account_code` 仍是程序引用的稳定键。
+Chart 尚未被账簿采用时，新增或调整科目编号与上级须在同一事务校验同 Chart、父节点存在且为启用的汇总科目、类别相同、编号前缀一致和无环；
+一旦被任一 Ledger Book 采用，既有科目的编号、代码、父级、类别、正常方向和 `posting_allowed` 全部冻结，只允许追加新科目、修改名称、停用与启用。
+科目通过 `t_chart_account.account_status`（`ACTIVE` / `INACTIVE`）启停（修订原"科目没有状态"）：停用后不能新建账户、不能被新规则版本引用，
+已有账户照常记账与查询；被当前生效规则版本、损益结转规则或 account 账户类型目录引用的科目不能停用，父科目须下级全部停用后才能停用，
+启用下级时上级须为启用状态。科目维护不审批、直接生效，每次变更追加一条不可变的 `t_chart_account_change`；同一 Chart 的维护与账簿采用共用科目表资源锁。
+具体核算账户的停用仍通过 `t_account.account_status` 完成，避免历史分组随当前树变化，也不再维护容易与父子关系漂移的 `t_account_tree_path`。
+`t_ledger_account.account_no` 是财务人员可读的账户号（`{主体}-{币种}-{科目编号}-{序号}`，序号由 `t_account_no_sequence` 按"账簿 + 科目"
+在建户同一事务内递增，至少 4 位），表内唯一、创建后不变，只用于显示与搜索，不进入事件载荷，不作为跨系统关联键。依据见
+[2026-10-19 科目分级与可读账户号决定](../../../../agent-docs/decisions/2026-10-19-ledger-chart-hierarchy-and-account-numbers.md)。
 
 ### 4.12 统一记账账户，不维护双份余额真相
 
@@ -490,7 +498,7 @@ Source 封顶。Accounting Rule 不再拥有通用 Condition；规则行只允�
 
 以下跨行或跨表条件必须在单一数据库事务中通过实际资源锁、完整 Tuple 查询、唯一索引和 CAS 校验，并由仓库自有 `local-environment` 真实 MySQL 自动测试证明：
 
-- Chart Account 父子必须属于同一 Chart、不得形成长环，父科目必须 `posting_allowed=false`；Chart 被账簿采用后既有结构字段不可修改；
+- Chart Account 父子必须属于同一 Chart、不得形成长环，父科目必须 `posting_allowed=false`、子科目类别与父科目相同、`account_no` 以上级编号开头且位数符合级次；Chart 被账簿采用后既有科目的编号与结构字段不可修改；停用科目不得新建账户或被新规则版本引用，仍被引用或有启用下级的科目不得停用；
 - Journal 借贷平衡及严格全额冲销；
 - Account、Instruction/Journal Line 的 Book、Chart、Owner、Bucket、账簿主体与 Currency 逐值一致；行内 Owner/Bucket Sidecar 表达式
   只定义逻辑形状，账户创建事务必须锁定 Chart Account 并验证 `PARTNER_PAYABLE -> PENDING/AVAILABLE/LOCKED`、

@@ -9,34 +9,47 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
+import com.paytech.account.api.constant.StandardAccountCodes;
 import com.paytech.ledger.api.LedgerSetupQueryApi;
 import com.paytech.ledger.api.enums.LedgerSetupErrorCode;
+import com.paytech.ledger.core.dal.dataobject.ChartAccount;
 import com.paytech.ledger.core.enums.AccountClass;
+import com.paytech.ledger.core.enums.ChartAccountStatus;
 import com.paytech.ledger.core.enums.NormalSide;
 import com.paytech.ledger.core.enums.ReferenceDataStatus;
 import com.paytech.ledger.test.base.MockTestBase;
+import com.paytech.ledger.test.dal.AccountingTestMapper;
 import com.paytech.ledger.test.mocker.local.LedgerMocker;
 
 import tools.jackson.databind.JsonNode;
 
 /**
- * 科目表与科目只读列表：科目表按代码排序、科目按代码排序与可过账过滤、科目表不存在。
+ * 科目表与科目只读列表：科目表按代码排序、科目按编号排序与可过账 / 启停过滤、科目表不存在。
  *
  * @see LedgerSetupQueryApi#listChartsOfAccounts()
- * @see LedgerSetupQueryApi#listChartAccounts(String, Boolean)
+ * @see LedgerSetupQueryApi#listChartAccounts(String, Boolean, String)
  */
 class ListChartOfAccountsTest extends MockTestBase {
-    /** 初始化 DML 中 STANDARD 科目表的科目数量，全部可过账。 */
-    private static final int STANDARD_ACCOUNT_COUNT = 29;
+    /** 初始化 DML 中 STANDARD 科目表的科目数量：一级汇总 19 + 二级汇总 26 + 三级末级 29。 */
+    private static final int STANDARD_ACCOUNT_COUNT = 74;
+
+    /** STANDARD 汇总科目数量（一级 19 + 二级 26）。 */
+    private static final int STANDARD_SUMMARY_COUNT = 45;
+
+    @Autowired
+    private AccountingTestMapper testMapper;
 
     private long localChart;
 
     @BeforeEach
     void setUpClassMocks() {
         localChart = ledgerMocker.mockChart("LOCAL", ReferenceDataStatus.DRAFT);
-        ledgerMocker.mockChartAccount(localChart, "LOCAL_PARENT", false);
-        ledgerMocker.mockChartAccount(localChart, "LOCAL_CASH", true);
+        ChartAccount parent = ledgerMocker.mockChartAccount(localChart, null, "1001", "LOCAL_PARENT",
+            AccountClass.ASSET, NormalSide.DEBIT, false);
+        ledgerMocker.mockChartAccount(localChart, parent.getId(), "100101", "LOCAL_CASH", AccountClass.ASSET,
+            NormalSide.DEBIT, true);
     }
 
     @Test
@@ -55,19 +68,36 @@ class ListChartOfAccountsTest extends MockTestBase {
     void test_listChartAccountsSortedAndFiltered() {
         List<JsonNode> standard = items(get(accountsPath("STANDARD")).assertSuccess(200).json());
         assertEquals(STANDARD_ACCOUNT_COUNT, standard.size());
-        List<String> codes = standard.stream().map(item -> item.path("accountCode").asString()).toList();
-        assertEquals(codes.stream().sorted().toList(), codes, "按科目代码升序");
-        JsonNode bankCash = standard.stream().filter(item -> "BANK_CASH".equals(item.path("accountCode").asString()))
+        List<String> numbers = standard.stream().map(item -> item.path("accountNo").asString()).toList();
+        assertEquals(numbers.stream().sorted().toList(), numbers, "按科目编号升序");
+        JsonNode bankCash = standard.stream()
+            .filter(item -> StandardAccountCodes.BANK_CASH.equals(item.path("accountCode").asString()))
             .findFirst().orElseThrow();
         assertAll(() -> assertEquals(String.valueOf(LedgerMocker.STANDARD_CHART_ID), bankCash.path("chartId").asString()),
+            () -> assertEquals("10010101", bankCash.path("accountNo").asString()),
+            () -> assertEquals(3, bankCash.path("level").asInt()),
+            () -> assertEquals(ChartAccountStatus.ACTIVE.getCode(), bankCash.path("accountStatus").asString()),
             () -> assertEquals(AccountClass.ASSET.getCode(), bankCash.path("accountClass").asString()),
             () -> assertEquals(NormalSide.DEBIT.getCode(), bankCash.path("normalSide").asString()),
             () -> assertTrue(bankCash.path("postingAllowed").asBoolean()));
 
-        assertEquals(List.of("LOCAL_CASH", "LOCAL_PARENT"), codes(accountsPath("LOCAL")));
+        assertEquals(List.of("LOCAL_PARENT", "LOCAL_CASH"), codes(accountsPath("LOCAL")));
         assertEquals(List.of("LOCAL_CASH"), codes(accountsPath("LOCAL") + "?postingAllowed=true"));
         assertEquals(List.of("LOCAL_PARENT"), codes(accountsPath("LOCAL") + "?postingAllowed=false"));
-        assertEquals(List.of(), codes(accountsPath("STANDARD") + "?postingAllowed=false"));
+        assertEquals(STANDARD_SUMMARY_COUNT, codes(accountsPath("STANDARD") + "?postingAllowed=false").size());
+    }
+
+    /** 启停过滤：停用科目只出现在 INACTIVE 结果中。 */
+    @Test
+    void test_listChartAccountsFilteredByStatus() {
+        testMapper.updateStandardChartAccountStatus(StandardAccountCodes.CHANNEL_FEE_ACCRUAL,
+            ChartAccountStatus.INACTIVE.getCode());
+
+        assertEquals(List.of(StandardAccountCodes.CHANNEL_FEE_ACCRUAL),
+            codes(accountsPath("STANDARD") + "?accountStatus=" + ChartAccountStatus.INACTIVE.getCode()));
+        assertEquals(STANDARD_ACCOUNT_COUNT - 1,
+            codes(accountsPath("STANDARD") + "?accountStatus=" + ChartAccountStatus.ACTIVE.getCode()).size());
+        get(accountsPath("STANDARD") + "?accountStatus=CLOSED").assertStatus(400);
     }
 
     @Test

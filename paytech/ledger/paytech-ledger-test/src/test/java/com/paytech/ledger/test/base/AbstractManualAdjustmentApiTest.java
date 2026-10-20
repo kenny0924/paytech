@@ -24,6 +24,9 @@ public abstract class AbstractManualAdjustmentApiTest extends MockTestBase {
     /** 贷方正常的经营主体负债科目：待识别资金。 */
     protected static final String LIABILITY_CODE = "UNIDENTIFIED_CASH";
 
+    /** 测试使用的权益科目（STANDARD 30010101）。 */
+    protected static final String CAPITAL_CODE = "CAPITAL";
+
     /** 与模板编制人不同的复核人。 */
     protected static final String CHECKER_ID = "70002";
 
@@ -44,7 +47,7 @@ public abstract class AbstractManualAdjustmentApiTest extends MockTestBase {
         ledger = ledgerMocker.mockOperatingEntityLedger("AE001", "USD");
         bankCashAccountId = ledgerMocker.mockAccount(ledger.getLedgerBookId(), "BANK_CASH", LedgerOwnerType.CASH_ACCOUNT,
             "5001", BalanceBucket.NONE);
-        capitalAccountId = ledgerMocker.mockAccount(ledger.getLedgerBookId(), "CAPITAL", LedgerOwnerType.OPERATING_ENTITY,
+        capitalAccountId = ledgerMocker.mockAccount(ledger.getLedgerBookId(), CAPITAL_CODE, LedgerOwnerType.OPERATING_ENTITY,
             "AE001", BalanceBucket.NONE);
         liabilityAccountId = ledgerMocker.mockAccount(ledger.getLedgerBookId(), LIABILITY_CODE,
             LedgerOwnerType.OPERATING_ENTITY, "AE001", BalanceBucket.NONE);

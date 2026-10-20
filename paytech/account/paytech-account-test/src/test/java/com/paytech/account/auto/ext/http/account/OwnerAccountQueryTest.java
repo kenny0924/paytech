@@ -29,10 +29,10 @@ import tools.jackson.databind.JsonNode;
 
 /**
  * Owner 账户与明细流水分页查询：经真实 HTTP 入口读取本地 MySQL
- * <li>账户按科目代码、核算对象排序，可按 Owner 类型、Owner、科目、桶筛选，分页走公共 page/size；流水按批次序号、行号升序，事实流水带事实类型，
+ * <li>账户按科目代码、核算对象排序，可按 Owner 类型、Owner、科目、桶与可读账户号（精确）筛选，分页走公共 page/size；流水按批次序号、行号升序，事实流水带事实类型，
  * 桶移动流水带移动来源类型；账户不存在为 ACCOUNT_NOT_FOUND。</li>
  *
- * @see OwnerAccountQueryApi#listOwnerAccounts(String, String, String, String, String, String, String, Integer, Integer)
+ * @see OwnerAccountQueryApi#listOwnerAccounts(String, String, String, String, String, String, String, String, Integer, Integer)
  * @see OwnerAccountQueryApi#listOwnerAccountEntries(String, Integer, Integer)
  */
 class OwnerAccountQueryTest extends AbstractBalanceTest {
@@ -60,6 +60,8 @@ class OwnerAccountQueryTest extends AbstractBalanceTest {
             OwnerAccountType.PARTNER_PAYABLE.getCode()), all.stream().map(node -> node.path("accountCode").asString()).toList()),
             () -> assertEquals(OwnerType.CLIENT.getCode(), client.path("ownerType").asString()),
             () -> assertEquals(CLIENT, client.path("ownerId").asString()),
+            () -> assertEquals(account(OwnerAccountType.CLIENT_PAYABLE, CLIENT, BalanceBucket.PENDING).get("account_no"),
+                client.path("accountNo").asString()),
             () -> assertEquals(BalanceBucket.PENDING.getCode(), client.path("balanceBucket").asString()),
             () -> assertEquals(EntrySide.CREDIT.getCode(), client.path("normalSide").asString()),
             () -> assertEquals(AccountStatus.ACTIVE.getCode(), client.path("accountStatus").asString()),
@@ -69,6 +71,29 @@ class OwnerAccountQueryTest extends AbstractBalanceTest {
             () -> assertTrue(beyond.isEmpty()));
         get(ACCOUNTS + "&size=7").assertInvalidRequest();
         get(ACCOUNTS.replace(AccountEntityType.OPERATING_ENTITY.getCode(), AccountEntityType.FINANCE_ENTITY.getCode())).assertInvalidRequest();
+        posted.await(1);
+    }
+
+    /** 按账户号精确筛选：命中唯一账户并返回账户号；不存在的账户号为空页、前缀不匹配；非法格式为 INVALID_REQUEST。 */
+    @Test
+    void test_filterByAccountNo() {
+        consumed(payment("100").partner(PARTNER_ID, FINANCE_ENTITY_ID)
+            .component(FactComponentType.CLIENT_PRINCIPAL, FactPartyRole.OPERATING_ENTITY, FactPartyRole.CLIENT, "94")
+            .component(FactComponentType.PARTNER_SHARE, FactPartyRole.OPERATING_ENTITY,
+                FactPartyRole.LOCAL_PARTNER, "1").build());
+        String clientNo = (String)account(OwnerAccountType.CLIENT_PAYABLE, CLIENT, BalanceBucket.PENDING).get("account_no");
+
+        List<JsonNode> hit = get(ACCOUNTS + "&accountNo=" + clientNo).assertSuccess(200).assertPage(1, 10, 1);
+        List<JsonNode> miss = get(ACCOUNTS + "&accountNo=" + clientNo.replace("-S000001", "-S000009")).assertSuccess(200)
+            .assertPage(1, 10, 0);
+        List<JsonNode> prefix = get(ACCOUNTS + "&accountNo=" + clientNo.substring(0, clientNo.length() - 1))
+            .assertSuccess(200).assertPage(1, 10, 0);
+
+        assertAll(() -> assertEquals(clientNo, hit.getFirst().path("accountNo").asString()),
+            () -> assertEquals(OwnerAccountType.CLIENT_PAYABLE.getCode(), hit.getFirst().path("accountCode").asString()),
+            () -> assertEquals(CLIENT, hit.getFirst().path("ownerId").asString()),
+            () -> assertTrue(miss.isEmpty()), () -> assertTrue(prefix.isEmpty()));
+        get(ACCOUNTS + "&accountNo=" + clientNo.toLowerCase()).assertInvalidRequest();
         posted.await(1);
     }
 

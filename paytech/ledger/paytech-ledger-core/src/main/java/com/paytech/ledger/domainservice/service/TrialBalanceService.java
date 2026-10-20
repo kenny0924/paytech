@@ -5,6 +5,7 @@ import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.ledger.core.dal.dataobject.AccountingPeriod;
 import com.paytech.ledger.core.dal.dataobject.LedgerBook;
 import com.paytech.ledger.domain.TrialBalanceContext;
+import com.paytech.ledger.domain.view.AccountBalanceListView;
 import com.paytech.ledger.domain.view.TrialBalanceDetailView;
 import com.paytech.ledger.domain.view.TrialBalanceRunView;
 
@@ -38,6 +39,15 @@ public interface TrialBalanceService {
     /** 按序号降序分页查询试算摘要；账簿或期间不存在时拒绝。 */
     PagingResponseBody<TrialBalanceRunView> pageRuns(long ledgerBookId, long periodId, PagingRequestBody paging);
 
-    /** 查询单次试算详情；账簿、期间或试算不存在时拒绝。 */
+    /** 查询单次试算详情（末级行与级次汇总行）；账簿、期间或试算不存在时拒绝。 */
     TrialBalanceDetailView getRun(long ledgerBookId, long periodId, int runNo);
+
+    /**
+     * 实时查询账簿某期间的科目余额（末级 + 级次汇总）
+     * <li>期初 = 期间开始前的全部分录，本期借贷 = 期间内分录；只返回有发生额或余额的末级科目及其各级上级。</li>
+     * <li>不加锁、不开事务，读取已提交分录；不写入试算平衡或期间余额。</li>
+     *
+     * @return 科目余额；账簿、期间不存在或期间不属于账簿主体时拒绝
+     */
+    AccountBalanceListView listAccountBalances(long ledgerBookId, long periodId);
 }

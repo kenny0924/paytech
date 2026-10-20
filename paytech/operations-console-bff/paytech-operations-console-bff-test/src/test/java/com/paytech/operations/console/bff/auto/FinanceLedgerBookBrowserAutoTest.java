@@ -4,6 +4,7 @@ import static com.paytech.operations.console.bff.test.simulator.PlatformOperatio
 import static com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.LEDGER_OWNER_TYPE_PATTERN;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
@@ -25,7 +26,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
- * 浏览器经真实 BFF 与 HttpExchange 转发账簿、账户、流水与分录详情的 6 个端点（R08—R13）；ledger 由 Loopback Simulator 承担
+ * 浏览器经真实 BFF 与 HttpExchange 转发账簿、账户、流水、分录详情、科目余额与试算记录的 9 个端点（R08—R13、L6、T1、T2）；ledger 由 Loopback Simulator 承担
  *
  * @see FinanceLedgerBookController
  * @author Claude
@@ -78,6 +79,49 @@ class FinanceLedgerBookBrowserAutoTest extends FinanceBrowserAutoTestBase {
             () -> assertEquals("7400000000000001", detail.path("lines").path(1).path("accountEntryId").asString()));
     }
 
+    /** 科目余额与试算详情透传科目编号、上级、级次与汇总行；账户与分录行透传账户号与科目名称。 */
+    @Test
+    void test_chartHierarchyFieldsForwarded() throws Exception {
+        var balances = row(BOUNDARY, "L6");
+        replyAsOwner(ledger, balances);
+        var lines = JSON.readTree(send(balances).body()).path("lines");
+        assertAll(() -> assertEquals("2201", lines.path(0).path("accountNo").asString()),
+            () -> assertTrue(lines.path(0).path("parentChartAccountId").isNull()),
+            () -> assertFalse(lines.path(0).path("postingAllowed").asBoolean()),
+            () -> assertEquals(lines.path(0).path("chartAccountId"), lines.path(1).path("parentChartAccountId")),
+            () -> assertEquals(2, lines.path(1).path("level").asInt()),
+            () -> assertEquals(lines.path(1).path("chartAccountId"), lines.path(2).path("parentChartAccountId")),
+            () -> assertEquals(3, lines.path(2).path("level").asInt()));
+
+        resetBetweenCalls();
+        var trial = row(BOUNDARY, "T2");
+        replyAsOwner(ledger, trial);
+        var detail = JSON.readTree(send(trial).body());
+        assertAll(() -> assertEquals(2, detail.path("lines").size()),
+            () -> assertEquals(4, detail.path("summaryLines").size()),
+            () -> assertFalse(detail.path("summaryLines").path(0).path("postingAllowed").asBoolean()),
+            () -> assertEquals(1, detail.path("exceptions").size()));
+
+        resetBetweenCalls();
+        var entry = row(BOUNDARY, "R13");
+        replyAsOwner(ledger, entry);
+        var entryLines = JSON.readTree(send(entry).body()).path("lines");
+        assertAll(() -> assertEquals("AE001-USD-22010101-0001", entryLines.path(1).path("accountNo").asString()),
+            () -> assertEquals("Client 应付款", entryLines.path(1).path("accountName").asString()));
+    }
+
+    /** 执行试算不经浏览器接入：POST 试算路径不访问 ledger。 */
+    @Test
+    void test_trialBalanceRunNotExposed() throws Exception {
+        var list = (ObjectNode) row(BOUNDARY, "T1").deepCopy();
+        list.put("method", "POST");
+
+        var response = send(list, "", JSON.nullNode(), true);
+
+        assertTrue(response.statusCode() >= 400 && response.statusCode() < 500, response.body());
+        assertTrue(ledger.requests().isEmpty(), ledger.requests().toString());
+    }
+
     /** 账户核算对象类型校验与 ledger 合同 LedgerOwnerType 的全部 Code 完全一致。 */
     @Test
     void test_ownerTypePatternMatchesLedgerContract() {
@@ -114,7 +158,7 @@ class FinanceLedgerBookBrowserAutoTest extends FinanceBrowserAutoTestBase {
     @CsvSource({"R09,LEDGER_BOOK_ALREADY_EXISTS", "R09,CURRENCY_NOT_ACTIVE", "R09,CHART_NOT_ACTIVE",
         "R09,FINANCE_ENTITY_UNAVAILABLE", "R11,LEDGER_BOOK_NOT_FOUND", "R11,CHART_ACCOUNT_NOT_POSTABLE",
         "R11,ACCOUNT_IDENTITY_INVALID", "R11,ACCOUNT_ALREADY_EXISTS", "R10,LEDGER_BOOK_NOT_FOUND",
-        "R13,LEDGER_BOOK_NOT_FOUND"})
+        "R13,LEDGER_BOOK_NOT_FOUND", "R11,CHART_ACCOUNT_INACTIVE"})
     void test_businessRuleViolation(String id, LedgerSetupErrorCode code) throws Exception {
         var row = row(BOUNDARY, id);
         ledger.problem(row.path("method").asString(), ownerPath(row), 400, code.getCode());
@@ -150,6 +194,18 @@ class FinanceLedgerBookBrowserAutoTest extends FinanceBrowserAutoTestBase {
         var unknown = (ObjectNode) create.path("request").deepCopy();
         unknown.put("normalSide", "CREDIT");
         assertRejectedLocally(400, ledger, send(create, "", unknown, true));
+
+        resetBetweenCalls();
+        assertRejectedLocally(400, ledger, send(accounts, "?accountNo=" + "A".repeat(49), accounts.path("request"), true));
+
+        resetBetweenCalls();
+        var balances = row(BOUNDARY, "L6");
+        assertRejectedLocally(400, ledger, send(balances, "?page=1", balances.path("request"), true));
+
+        resetBetweenCalls();
+        var trial = (ObjectNode) row(BOUNDARY, "T2").deepCopy();
+        trial.put("path", trial.path("path").asString().replaceFirst("/2$", "/0"));
+        assertRejectedLocally(400, ledger, send(trial, "", trial.path("request"), true));
     }
 
     /** 分录或账簿主键与请求不一致、分页总数不自洽时视为上游无效响应 502。 */
@@ -172,5 +228,32 @@ class FinanceLedgerBookBrowserAutoTest extends FinanceBrowserAutoTestBase {
         var create = row(BOUNDARY, "R09");
         ledger.reply("POST", ownerPath(create), 201, "{\"ledgerBookId\":\"0\"}");
         assertEquals(502, send(create).statusCode());
+
+        resetBetweenCalls();
+        var balances = row(BOUNDARY, "L6");
+        var otherPeriod = (ObjectNode) balances.path("response").deepCopy();
+        otherPeriod.put("periodId", "7312345678901236999");
+        ledger.reply("GET", ownerPath(balances), 200, JSON.writeValueAsString(otherPeriod));
+        assertEquals(502, send(balances).statusCode());
+
+        resetBetweenCalls();
+        var trial = row(BOUNDARY, "T2");
+        var otherRun = (ObjectNode) trial.path("response").deepCopy();
+        otherRun.put("runNo", "3");
+        ledger.reply("GET", ownerPath(trial), 200, JSON.writeValueAsString(otherRun));
+        assertEquals(502, send(trial).statusCode());
+
+        resetBetweenCalls();
+        var noSummary = (ObjectNode) trial.path("response").deepCopy();
+        noSummary.putNull("summaryLines");
+        ledger.reply("GET", ownerPath(trial), 200, JSON.writeValueAsString(noSummary));
+        assertEquals(502, send(trial).statusCode());
+
+        resetBetweenCalls();
+        var runs = row(BOUNDARY, "T1");
+        var runsPage = (ObjectNode) runs.path("response").deepCopy();
+        runsPage.put("size", 20);
+        ledger.reply("GET", ownerPath(runs), 200, JSON.writeValueAsString(runsPage));
+        assertEquals(502, send(runs).statusCode());
     }
 }

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- last_value 是 MySQL 8 保留字（窗口函数），列名必须加反引号。 -->
+<!-- t_account_no_sequence：同账簿同科目的账户号序号；首行以 LAST_INSERT_ID(1) 写入，已存在时原子加一，结果都写进本连接的 LAST_INSERT_ID()。 -->
+<mapper namespace="com.paytech.ledger.core.dal.mapper.AccountNoSequenceMapper">
+    <insert id="allocate">
+        INSERT INTO t_account_no_sequence (id, ledger_book_id, chart_account_id, `last_value`, create_time, update_time)
+        VALUES (#{id}, #{ledgerBookId}, #{chartAccountId}, LAST_INSERT_ID(1), #{now}, #{now})
+        ON DUPLICATE KEY UPDATE `last_value` = LAST_INSERT_ID(`last_value` + 1), update_time = #{now}
+    </insert>
+
+    <!-- 必须与 allocate 处于同一连接（同一事务）；不走一级缓存。 -->
+    <select id="selectAllocated" resultType="long" flushCache="true" useCache="false">
+        SELECT LAST_INSERT_ID()
+    </select>
+</mapper>

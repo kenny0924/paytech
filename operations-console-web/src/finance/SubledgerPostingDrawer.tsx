@@ -70,7 +70,8 @@ export function SubledgerPostingDrawer({ postingId, highlightEntryId, minorUnits
           rowClassName={row => row.entryId === highlightEntryId ? 'finance-row-selected' : ''}
           locale={{ emptyText: posting.factApplyStatus === 'SKIPPED' ? '事实已跳过，没有流水' : '该批次没有 Owner 流水' }} columns={[
             { title: '行号', dataIndex: 'lineNo', width: 56 },
-            { title: '科目', render: (_, row) => <span className="finance-code">{row.accountCode}</span> },
+            { title: '账户号 / 科目', render: (_, row) => <div><div className="mono">{row.accountNo}</div>
+              <div className="cell-meta finance-code">{row.accountCode}</div></div> },
             { title: 'Owner', width: 150, render: (_, row) => <div><div>{row.ownerType}</div><div className="cell-meta">{row.ownerId}</div></div> },
             { title: '余额桶', dataIndex: 'balanceBucket', width: 96 },
             { title: '方向', width: 56, render: (_, row) => sideLabels[row.entrySide] },

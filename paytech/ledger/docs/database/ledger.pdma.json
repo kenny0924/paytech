@@ -1168,6 +1168,27 @@
           "id": "5BECCBE3-C106-5A01-95D6-638795FBFEA1"
         },
         {
+          "defKey": "account_no",
+          "defName": "科目编号",
+          "comment": "财务人员使用的分级数字科目编号：4-2-2-2，一级 4 位、每下一级加 2 位，最多 4 级；下级以上级编号开头；一级首位 1 资产、2 负债、3 权益、4 收入、5 费用。科目表被账簿采用后不可修改。",
+          "type": "VARCHAR",
+          "len": 10,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "5E289ECD-F678-4021-AED3-058CB8FA7ECE"
+        },
+        {
           "defKey": "account_code",
           "defName": "科目代码",
           "comment": "在同一会计科目表内唯一且激活后不可改变的科目代码。取值来源：Finance 会计科目代码；非固定枚举。",
@@ -1256,6 +1277,24 @@
           "extProps": {},
           "domain": "",
           "id": "69B3F01E-EB55-560F-8F78-67A2DEBE0F85"
+        },
+        {
+          "defKey": "account_status",
+          "defName": "科目状态",
+          "comment": "科目启停状态。允许值：ACTIVE、INACTIVE。停用后不能新建账户、不能被新规则版本引用，已有账户照常记账与查询；与永久结构属性 posting_allowed 无关。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "'ACTIVE'",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "C7A79886-FBBD-4CD2-BC9F-2F79928D0381"
         },
         {
           "defKey": "create_time",
@@ -1366,6 +1405,520 @@
             }
           ],
           "id": "2DFD1E3A-BBFA-58CE-8AFC-19CF1DFFB4C6"
+        },
+        {
+          "defKey": "uk_chart_acct_no",
+          "defName": "唯一索引 chart_id、account_no",
+          "unique": true,
+          "comment": "保证业务唯一性：chart_id、account_no",
+          "fields": [
+            {
+              "fieldDefKey": "68CA5439-10C9-5EB2-9FBD-5964ED6DCC2D",
+              "ascOrDesc": "A",
+              "id": "73F1FD86-9C62-4654-9D24-7AE12C603815"
+            },
+            {
+              "fieldDefKey": "5E289ECD-F678-4021-AED3-058CB8FA7ECE",
+              "ascOrDesc": "A",
+              "id": "DEDC6FF4-67B4-4CA7-897B-18D4976DD51B"
+            }
+          ],
+          "id": "910A8855-688A-40D4-AE9C-01AAFE362CF9"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "B80D2E55-C8C7-4D2D-86E4-FA633E1386BD",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_chart_account_change",
+      "defName": "科目变更记录",
+      "comment": "科目新增、修改、停用、启用的不可变变更记录；科目维护不审批、直接生效，以本表留痕。",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "id",
+          "defName": "科目变更记录ID",
+          "comment": "科目变更记录的服务侧雪花主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "8B756DBB-DE8D-4791-96C0-881BB3094EFB"
+        },
+        {
+          "defKey": "chart_id",
+          "defName": "会计科目表ID",
+          "comment": "被变更科目所属的科目表。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "F976676E-4665-4300-ADE8-FBB2C4E2A7B3"
+        },
+        {
+          "defKey": "chart_account_id",
+          "defName": "会计科目ID",
+          "comment": "被变更的科目。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "A87E6329-8A9B-4F6C-85B2-57AD12163A76"
+        },
+        {
+          "defKey": "change_type",
+          "defName": "变更类型",
+          "comment": "变更类型。允许值：CREATE、UPDATE、DISABLE、ENABLE。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "4C613A0B-EE31-4065-B8A4-83F8EBB49D26"
+        },
+        {
+          "defKey": "before_account_no",
+          "defName": "变更前科目编号",
+          "comment": "变更前科目编号；CREATE 为空。",
+          "type": "VARCHAR",
+          "len": 10,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "F75C6FC1-28BC-4816-B4C3-508145B778BC"
+        },
+        {
+          "defKey": "after_account_no",
+          "defName": "变更后科目编号",
+          "comment": "变更后科目编号。",
+          "type": "VARCHAR",
+          "len": 10,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "DCE642BD-233E-40C2-88BE-57617E9BABCC"
+        },
+        {
+          "defKey": "before_parent_account_id",
+          "defName": "变更前上级科目ID",
+          "comment": "变更前上级科目；CREATE 或原为一级科目时为空。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "6CF0E297-C9B0-47AD-8C52-6760D3B70324"
+        },
+        {
+          "defKey": "after_parent_account_id",
+          "defName": "变更后上级科目ID",
+          "comment": "变更后上级科目；一级科目为空。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "677D8451-9732-4BE2-8D7E-E4E55B85CBBC"
+        },
+        {
+          "defKey": "before_account_name",
+          "defName": "变更前科目名称",
+          "comment": "变更前科目名称；CREATE 为空。",
+          "type": "VARCHAR",
+          "len": 255,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "E2C21065-B22F-4F88-8C58-53FF3DC0AF9D"
+        },
+        {
+          "defKey": "after_account_name",
+          "defName": "变更后科目名称",
+          "comment": "变更后科目名称。",
+          "type": "VARCHAR",
+          "len": 255,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "4C494161-C3EF-4810-A46D-705E6E0A2234"
+        },
+        {
+          "defKey": "before_account_status",
+          "defName": "变更前科目状态",
+          "comment": "变更前科目状态；CREATE 为空。允许值：ACTIVE、INACTIVE。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "BD67F80E-80DB-4692-8230-2D213CA4C535"
+        },
+        {
+          "defKey": "after_account_status",
+          "defName": "变更后科目状态",
+          "comment": "变更后科目状态。允许值：ACTIVE、INACTIVE。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "86DC79C8-08F8-4223-9C3B-439885F3A961"
+        },
+        {
+          "defKey": "operator_id",
+          "defName": "操作人",
+          "comment": "执行变更的运营人员账号标识，取自 Gateway 传递的 X-Gateway-Actor-Subject。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "3F32372F-A030-4060-82FB-E2AF21BBA83D"
+        },
+        {
+          "defKey": "change_time",
+          "defName": "变更时间",
+          "comment": "变更在 Finance 数据库中生效的 UTC 微秒时间；记录只追加，不更新、不删除。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "5577509E-93BB-4D1B-887C-1B84F1B2E8C3"
+        }
+      ],
+      "correlations": [
+        {
+          "id": "32E9AFC6-7F6F-4ACA-90E4-61834DF929CB",
+          "myField": "F976676E-4665-4300-ADE8-FBB2C4E2A7B3",
+          "refEntity": "164E8511-8D07-52D8-A593-2EC5E67F1FD9",
+          "refField": "8AFFD256-A125-52B2-AE27-1DA6D92F8736",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ],
+      "indexes": [
+        {
+          "defKey": "idx_chart_acct_change_account",
+          "defName": "访问索引 chart_id、chart_account_id、change_time",
+          "unique": false,
+          "comment": "支持访问路径：chart_id、chart_account_id、change_time",
+          "fields": [
+            {
+              "fieldDefKey": "F976676E-4665-4300-ADE8-FBB2C4E2A7B3",
+              "ascOrDesc": "A",
+              "id": "79385BA1-67D9-46FF-802E-E6C1D734F8B0"
+            },
+            {
+              "fieldDefKey": "A87E6329-8A9B-4F6C-85B2-57AD12163A76",
+              "ascOrDesc": "A",
+              "id": "74C29BC8-F01B-49BE-8CC4-BCBB889ECEC0"
+            },
+            {
+              "fieldDefKey": "5577509E-93BB-4D1B-887C-1B84F1B2E8C3",
+              "ascOrDesc": "A",
+              "id": "78322436-2C15-4ACB-BE27-8DAE09D76CB7"
+            }
+          ],
+          "id": "937E5654-2355-4ED8-9CC7-A822F1989F8A"
+        },
+        {
+          "defKey": "idx_chart_acct_change_time",
+          "defName": "访问索引 chart_id、change_time",
+          "unique": false,
+          "comment": "支持访问路径：chart_id、change_time",
+          "fields": [
+            {
+              "fieldDefKey": "F976676E-4665-4300-ADE8-FBB2C4E2A7B3",
+              "ascOrDesc": "A",
+              "id": "993EF841-A842-4770-BCA2-E73489C4CED6"
+            },
+            {
+              "fieldDefKey": "5577509E-93BB-4D1B-887C-1B84F1B2E8C3",
+              "ascOrDesc": "A",
+              "id": "16962ADD-48A4-4FAE-8372-C283ED94EA70"
+            }
+          ],
+          "id": "BAED877D-5B24-41EE-84D3-8654A3C9E335"
         }
       ],
       "type": "P"
@@ -2307,6 +2860,27 @@
           "id": "A45ABC6D-6561-5843-B8DB-1C07076C0027"
         },
         {
+          "defKey": "account_no",
+          "defName": "账户号",
+          "comment": "财务人员可读账户号：{主体}-{币种}-{科目编号}-{序号}，序号按账簿与科目从 1 递增、至少 4 位；创建时生成后不再改变，只用于显示与搜索，不作为跨系统关联键。",
+          "type": "VARCHAR",
+          "len": 48,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "705B56EB-7CCB-4D15-97AA-905D64703E1D"
+        },
+        {
           "defKey": "ledger_book_id",
           "defName": "总账账簿ID",
           "comment": "该账户严格归属的本库经营主体或财务主体币种账簿。",
@@ -2579,6 +3153,20 @@
             }
           ],
           "id": "5D503D29-F6BF-5F3F-A369-BD376E3DCB9A"
+        },
+        {
+          "defKey": "uk_ledger_account_no",
+          "defName": "唯一索引 account_no",
+          "unique": true,
+          "comment": "保证业务唯一性：account_no",
+          "fields": [
+            {
+              "fieldDefKey": "705B56EB-7CCB-4D15-97AA-905D64703E1D",
+              "ascOrDesc": "A",
+              "id": "714B26E7-9674-4659-81D9-6EC28AA3354D"
+            }
+          ],
+          "id": "3A9FF38C-8BD6-4CA1-B88F-0E6DF05FEEA2"
         }
       ],
       "type": "P"
@@ -3695,6 +4283,324 @@
             }
           ],
           "id": "6D5059EC-AD22-565F-BF48-FA451D525100"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "787AC82D-9505-4B7E-B413-036050FAFFEC",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_account_no_sequence",
+      "defName": "账户号序列",
+      "comment": "按账簿与科目为总账账户分配可读账户号序号。",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "id",
+          "defName": "账户号序列ID",
+          "comment": "账户号序列的服务侧雪花主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "577EA97F-8179-4AE3-BA78-E6F59056AFD5"
+        },
+        {
+          "defKey": "ledger_book_id",
+          "defName": "总账账簿ID",
+          "comment": "账户所属总账账簿。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "7A05EB38-BB9D-4BEF-84BC-5D36FF51387F"
+        },
+        {
+          "defKey": "chart_account_id",
+          "defName": "会计科目ID",
+          "comment": "账户所属科目。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "5AAF984C-CD08-4140-8BB0-BFF17F1BF3D0"
+        },
+        {
+          "defKey": "last_value",
+          "defName": "最近序号",
+          "comment": "同账簿同科目最近一次分配给账户号的序号；在建户本地事务中以 INSERT … ON DUPLICATE KEY UPDATE 原子递增，已分配序号不复用，允许空洞。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "3020268D-74A6-4F36-8B8D-FD47C3C4867C"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在 Finance 数据库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "5026EDCA-2FF7-4069-8B17-8CCBA549FE69"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "FA8A05EC-1580-464C-BF9E-3A327D9753B6"
+        }
+      ],
+      "correlations": [
+        {
+          "id": "CE1672F7-6F0B-407A-8299-CFEE85456EAD",
+          "myField": "7A05EB38-BB9D-4BEF-84BC-5D36FF51387F",
+          "refEntity": "699A3662-63B9-555A-B714-7A9C99B3CDE9",
+          "refField": "AA9046B8-B42D-5F9E-8FB5-A10C90826BEF",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ],
+      "indexes": [
+        {
+          "defKey": "uk_account_no_seq",
+          "defName": "唯一索引 ledger_book_id、chart_account_id",
+          "unique": true,
+          "comment": "保证业务唯一性：ledger_book_id、chart_account_id",
+          "fields": [
+            {
+              "fieldDefKey": "7A05EB38-BB9D-4BEF-84BC-5D36FF51387F",
+              "ascOrDesc": "A",
+              "id": "97706805-2FF7-4358-9C9D-ECE6D60C3CFB"
+            },
+            {
+              "fieldDefKey": "5AAF984C-CD08-4140-8BB0-BFF17F1BF3D0",
+              "ascOrDesc": "A",
+              "id": "11116DAF-B6A6-4838-8AA1-D2149DA8CE19"
+            }
+          ],
+          "id": "C5D6C3EE-B4A3-4383-9EE7-56EA1492014B"
         }
       ],
       "type": "P"
@@ -13777,7 +14683,7 @@
             "type": "P",
             "size": {
               "width": 390,
-              "height": 306
+              "height": 350
             }
           },
           {
@@ -13822,7 +14728,7 @@
             "type": "P",
             "size": {
               "width": 390,
-              "height": 416
+              "height": 438
             }
           },
           {
@@ -15254,6 +16160,80 @@
               }
             },
             "isLock": true
+          },
+          {
+            "id": "6EFFB91F-1B29-4E1F-B14B-49D07D081EC7",
+            "shape": "table",
+            "position": {
+              "x": 0,
+              "y": 3134
+            },
+            "count": 0,
+            "originKey": "B80D2E55-C8C7-4D2D-86E4-FA633E1386BD",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 420
+            }
+          },
+          {
+            "id": "475FBC21-EF82-4905-BCC5-5E6FB07AE273",
+            "shape": "table",
+            "position": {
+              "x": 430,
+              "y": 3134
+            },
+            "count": 0,
+            "originKey": "787AC82D-9505-4B7E-B413-036050FAFFEC",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 244
+            }
+          },
+          {
+            "id": "81B096F4-F10E-420D-A1B9-144574A1EB0C",
+            "shape": "erdRelation",
+            "originKey": "32E9AFC6-7F6F-4ACA-90E4-61834DF929CB",
+            "source": {
+              "cell": "6EFFB91F-1B29-4E1F-B14B-49D07D081EC7",
+              "port": "F976676E-4665-4300-ADE8-FBB2C4E2A7B3%out"
+            },
+            "target": {
+              "cell": "9AF49952-E264-57ED-914C-3E56ED78BDC6",
+              "port": "8AFFD256-A125-52B2-AE27-1DA6D92F8736%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "A9516ED9-651B-48C6-9411-84A8A3F63031",
+            "shape": "erdRelation",
+            "originKey": "CE1672F7-6F0B-407A-8299-CFEE85456EAD",
+            "source": {
+              "cell": "475FBC21-EF82-4905-BCC5-5E6FB07AE273",
+              "port": "7A05EB38-BB9D-4BEF-84BC-5D36FF51387F%out"
+            },
+            "target": {
+              "cell": "9DA982DA-CEAD-5BE5-A446-692C77E88D74",
+              "port": "AA9046B8-B42D-5F9E-8FB5-A10C90826BEF%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
           }
         ]
       },
@@ -15262,12 +16242,14 @@
           "t_currency_spec",
           "t_chart_of_accounts",
           "t_chart_account",
+          "t_chart_account_change",
           "t_finance_entity",
           "t_ledger_book",
           "t_ledger_account",
           "t_fiscal_calendar",
           "t_accounting_period",
           "t_book_sequence",
+          "t_account_no_sequence",
           "t_accounting_rule_bundle",
           "t_accounting_rule_bundle_ver",
           "t_accounting_rule_line",

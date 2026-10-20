@@ -11,7 +11,7 @@ import lombok.Setter;
 /**
  * 一个过账批次及其全部流水
  * <li>字段与 AccountPosted 载荷（{@code AccountPostedPayload}）一一对应，ledger 追平与消费按同一逻辑过账；ID、版本、序号与行号为十进制字符串，
- * 金额为 Money。</li>
+ * 金额为 Money。唯一例外是流水行的 accountNo：只用于显示，不进入事件载荷。</li>
  * <li>事实批次填 fact* 与 financeEntityId，桶移动批次填 movement*，另一组为空。</li>
  */
 @Getter
@@ -86,6 +86,9 @@ public class AccountPostingResponseBody {
 
         /** Owner 账户主键。 */
         private String accountId;
+
+        /** Owner 账户的可读账户号，只用于显示；AccountPosted 载荷没有该字段。 */
+        private String accountNo;
 
         /** 科目代码。 */
         private String accountCode;

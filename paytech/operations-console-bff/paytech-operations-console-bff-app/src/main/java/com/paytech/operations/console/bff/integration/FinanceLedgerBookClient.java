@@ -1,6 +1,7 @@
 package com.paytech.operations.console.bff.integration;
 
 import com.paytech.foundation.web.paging.PagingResponseBody;
+import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.AccountBalanceListResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.AccountJournalLineResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.CreateLedgerAccountRequestBody;
 import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.CreateLedgerAccountResponseBody;
@@ -9,6 +10,8 @@ import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.
 import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.JournalEntryDetailResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.LedgerAccountResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.LedgerBookResponseBody;
+import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.TrialBalanceDetailResponseBody;
+import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.TrialBalanceRunResponseBody;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
 
 /**
@@ -45,6 +48,7 @@ public interface FinanceLedgerBookClient {
      * 账簿内账户分页
      *
      * @param ledgerBookId 账簿主键
+     * @param accountNo 可选账户号，精确匹配
      * @param accountCode 可选科目代码
      * @param ownerType 可选核算对象类型
      * @param ownerId 可选核算对象标识
@@ -53,8 +57,8 @@ public interface FinanceLedgerBookClient {
      * @param size 已校验每页条数
      * @return 账户分页
      */
-    PagingResponseBody<LedgerAccountResponseBody> listAccounts(String ledgerBookId, String accountCode,
-        String ownerType, String ownerId, String balanceBucket, int page, int size);
+    PagingResponseBody<LedgerAccountResponseBody> listAccounts(String ledgerBookId, String accountNo,
+        String accountCode, String ownerType, String ownerId, String balanceBucket, int page, int size);
 
     /**
      * 新建账户
@@ -89,4 +93,35 @@ public interface FinanceLedgerBookClient {
      * @return 分录头与全部分录行
      */
     JournalEntryDetailResponseBody getJournalEntry(String ledgerBookId, String journalEntryId);
+
+    /**
+     * 账簿某期间的实时科目余额（末级 + 级次汇总）
+     *
+     * @param ledgerBookId 账簿主键
+     * @param periodId 会计期间主键
+     * @return 科目余额
+     */
+    AccountBalanceListResponseBody listAccountBalances(String ledgerBookId, String periodId);
+
+    /**
+     * 试算记录分页，按序号降序
+     *
+     * @param ledgerBookId 账簿主键
+     * @param periodId 会计期间主键
+     * @param page 已校验页码
+     * @param size 已校验每页条数
+     * @return 试算摘要分页
+     */
+    PagingResponseBody<TrialBalanceRunResponseBody> listTrialBalances(String ledgerBookId, String periodId, int page,
+        int size);
+
+    /**
+     * 单次试算详情
+     *
+     * @param ledgerBookId 账簿主键
+     * @param periodId 会计期间主键
+     * @param runNo 试算序号
+     * @return 摘要、末级试算行、级次汇总行与异常
+     */
+    TrialBalanceDetailResponseBody getTrialBalance(String ledgerBookId, String periodId, String runNo);
 }

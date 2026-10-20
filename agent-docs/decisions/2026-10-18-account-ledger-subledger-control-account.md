@@ -26,7 +26,7 @@
 4. **余额桶只在 account。** 桶移动（成熟释放、出款锁定、银行现金占用与释放）不产生总账分录；`BalanceMoved` 删除。
 5. **余额归属原则：会实时卡住业务命令的余额在 account，其余所有余额都在 ledger 并由分录推导。** account 管 Client / Partner 应付各桶、保证金、追偿应收与银行现金可用额度；财务主体收入与应收、控制科目总额、经营主体收入与费用等均在 ledger。平台利润由收入、费用科目推导，期末经损益结转固化，account 中没有利润账户。
 6. **银行现金可用额度归 account。** `owner_type = CASH_ACCOUNT`，每个银行账户一个账户，以 AVAILABLE / LOCKED 两个桶表达可承诺与已占用；`UNKNOWN` 不释放。ledger 按银行账户保留「银行存款」科目账户用于报表与对账。银行账户主数据仍归 reconciliation。
-7. **科目与账户类型。** 科目的存在、名称、类别与正常方向以 ledger 科目表为准；account 在 account-api 中维护 Owner 账户类型目录（科目代码、正常方向、允许的桶与 Owner 类型），ledger 初始化与测试时校验一致。account 按需开户，运行时不读 ledger 科目。
+7. **科目与账户类型。** 科目的存在、名称、类别与正常方向以 ledger 科目表为准；account 在 account-api 中维护 Owner 账户类型目录（科目代码、正常方向、允许的桶与 Owner 类型），ledger 初始化与测试时校验一致。account 按需开户，运行时不读 ledger 科目。（2026-10-19 补充：目录另增科目分级编号这一静态属性，用于生成可读账户号，ledger 测试核对它与 STANDARD 科目表一致，见 [科目分级与可读账户号决定](./2026-10-19-ledger-chart-hierarchy-and-account-numbers.md)第 2 节第 8 条。）
 8. **经济事实唯一来源不变。** 渠道结算到账、出款完成、缴税完成等改变余额的金额，由 reconciliation、payout、tax 调用 billing 登记经济事实后走同一链路；不影响 Owner 的事实也经过 account，生成 0 条流水的入账批次，ledger 只有一个上游。
 9. **一致性由构造保证，删除金额核对。** 删除 `t_balance_discrepancy`、日终核对任务与 ledger `account-totals` 接口。关账步骤 `RECONCILE_ACCOUNT_BALANCES` 改为 `CHECK_ACCOUNT_POSTING_PROGRESS`，在一个步骤内做两段检查，任一段未追平即失败关闭：billing → account（已批准事实全部入账），account → ledger（各分片 `posting_sequence` 已追平）。`t_trial_balance_exception.resolution_type` 删除 `PROJECTION_REBUILD`。
 10. **余额重建以 account 流水为唯一来源。** 重建按本库 `t_account_entry` 重算；billing 重放只用于核对事实入账是否齐全。

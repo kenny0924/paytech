@@ -20,11 +20,13 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 import com.paytech.account.api.constant.StandardAccountCodes;
+import com.paytech.account.api.enums.BalanceBucket;
 import com.paytech.account.api.event.AccountPostedPayload;
 import com.paytech.billing.api.fact.BillingFactPayload;
 import com.paytech.ledger.api.enums.AutoInstructionType;
 import com.paytech.ledger.api.enums.LedgerOwnerType;
 import com.paytech.ledger.core.dal.dataobject.AccountingInstruction;
+import com.paytech.ledger.core.enums.ChartAccountStatus;
 import com.paytech.ledger.domain.view.PostedInstructionView;
 import com.paytech.ledger.test.base.AbstractTransactionPostingTest;
 import com.paytech.ledger.test.builder.RuleVersionRequestBuilder;
@@ -64,6 +66,32 @@ class TransactionPostingTest extends AbstractTransactionPostingTest {
             .assertAccount(clientControl, "0", "97", "97", 1).assertAccount(feeRevenue, "0", "3", "3", 1);
         assertEquals(1, consumedSequence(posting));
         assertEquals(1, billingFacts.factCalls(economics.getFactId()));
+        // 记账自动建户：账户号 {entityNo}-{币种}-{科目编号}-{同账簿同科目序号}
+        assertAll(() -> assertEquals("AE001-USD-11010101-0001", accountNo(receivable)),
+            () -> assertEquals("AE001-USD-40010101-0001", accountNo(feeRevenue)),
+            () -> assertEquals("AE001-USD-22010101-0001", accountNo(clientControl)));
+    }
+
+    /** 科目停用不影响已有账户记账：已存在的收入账户照常过账，不新建账户。 */
+    @Test
+    void test_inactiveChartAccountKeepsExistingAccountPosting() {
+        long book = oeLedger.getLedgerBookId();
+        long feeRevenue = ledgerMocker.mockAccount(book, RuleVersionRequestBuilder.CLIENT_FEE_REVENUE,
+            LedgerOwnerType.OPERATING_ENTITY, ENTITY_NO, BalanceBucket.NONE);
+        testMapper.updateStandardChartAccountStatus(RuleVersionRequestBuilder.CLIENT_FEE_REVENUE,
+            ChartAccountStatus.INACTIVE.getCode());
+        BillingFactPayload economics = fact(payment("100"), clientPrincipal("97", CLIENT_ID), clientFee("3", ENTITY_NO));
+
+        postBatch(economics, paymentPosting(economics, 1, "97", null).build());
+
+        assertEquals(feeRevenue, existingAccount(book, RuleVersionRequestBuilder.CLIENT_FEE_REVENUE,
+            LedgerOwnerType.OPERATING_ENTITY, ENTITY_NO));
+        ledgerChecker.assertBalancedJournals(book, 1).assertAccount(feeRevenue, "0", "3", "3", 1);
+    }
+
+    /** 账户号。 */
+    String accountNo(long accountId) {
+        return testMapper.selectAccount(accountId).getAccountNo();
     }
 
     /** 有 Partner：OE 账簿支付指令含分润费用规则行与两条控制科目流水行、Partner 侧服务费指令；平台 FE 账簿 1 条服务费指令。 */
@@ -110,6 +138,8 @@ class TransactionPostingTest extends AbstractTransactionPostingTest {
             RuleVersionRequestBuilder.PLATFORM_SERVICE_RECEIVABLE, LedgerOwnerType.OPERATING_ENTITY, ENTITY_NO), "0.5"),
             credit(5212, serviceRevenue, "0.5"));
 
+        assertAll(() -> assertEquals(PLATFORM_ENTITY_CODE + "-USD-40010201-0001", accountNo(serviceRevenue)),
+            () -> assertEquals("AE001-USD-22510101-0001", accountNo(servicePayable)));
         ledgerChecker.assertBalancedJournals(book, 2).assertBalancedJournals(platformBook, 1)
             .assertAccount(partnerControl, "0", "1", "1", 1).assertAccount(servicePayable, "0", "0.5", "0.5", 2)
             .assertAccount(serviceRevenue, "0", "0.5", "0.5", 1);

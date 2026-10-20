@@ -28,6 +28,7 @@ import com.paytech.ledger.core.dal.dataobject.ChartOfAccounts;
 import com.paytech.ledger.core.dal.dataobject.CurrencySpec;
 import com.paytech.ledger.core.dal.dataobject.FinanceEntity;
 import com.paytech.ledger.core.dal.dataobject.FiscalCalendar;
+import com.paytech.ledger.core.enums.ChartAccountStatus;
 import com.paytech.ledger.core.enums.FinanceEntityStatus;
 import com.paytech.ledger.core.enums.LedgerEntityType;
 import com.paytech.ledger.domain.AccountQuery;
@@ -53,9 +54,9 @@ public class LedgerQueryConverter {
     }
 
     /** 解析账户列表条件。 */
-    public AccountQuery toAccountQuery(String ledgerBookId, String accountCode, String ownerType, String ownerId,
-        String balanceBucket, PagingRequestBody paging) {
-        return new AccountQuery(Long.parseLong(ledgerBookId), blankToNull(accountCode),
+    public AccountQuery toAccountQuery(String ledgerBookId, String accountNo, String accountCode, String ownerType,
+        String ownerId, String balanceBucket, PagingRequestBody paging) {
+        return new AccountQuery(Long.parseLong(ledgerBookId), blankToNull(accountNo), blankToNull(accountCode),
             optionalCode(LedgerOwnerType.class, ownerType), blankToNull(ownerId),
             optionalCode(BalanceBucket.class, balanceBucket), paging);
     }
@@ -80,6 +81,11 @@ public class LedgerQueryConverter {
     /** 解析可选币种状态。 */
     public CurrencySpecStatus toCurrencyStatus(String status) {
         return optionalCode(CurrencySpecStatus.class, status);
+    }
+
+    /** 解析可选科目启停状态。 */
+    public ChartAccountStatus toChartAccountStatus(String status) {
+        return optionalCode(ChartAccountStatus.class, status);
     }
 
     /** 解析可选 ISO 日期；格式合法但不存在的日期（如 02-30）按参数错误拒绝。 */
@@ -170,7 +176,9 @@ public class LedgerQueryConverter {
     public AccountResponseBody toResponseBody(AccountView view) {
         AccountResponseBody body = new AccountResponseBody();
         body.setAccountId(view.getAccountId().toString());
+        body.setAccountNo(view.getAccountNo());
         body.setAccountCode(view.getAccountCode());
+        body.setAccountName(view.getAccountName());
         body.setOwnerType(view.getOwnerType().getCode());
         body.setOwnerId(view.getOwnerId());
         body.setBalanceBucket(view.getBalanceBucket().getCode());
@@ -232,7 +240,9 @@ public class LedgerQueryConverter {
         JournalEntryDetailResponseBody.Line body = new JournalEntryDetailResponseBody.Line();
         body.setLineNo(line.getLineNo());
         body.setAccountId(line.getAccountId().toString());
+        body.setAccountNo(line.getAccountNo());
         body.setAccountCode(line.getAccountCode());
+        body.setAccountName(line.getAccountName());
         body.setOwnerType(line.getOwnerType().getCode());
         body.setOwnerId(line.getOwnerId());
         body.setBalanceBucket(line.getBalanceBucket().getCode());

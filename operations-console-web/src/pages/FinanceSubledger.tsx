@@ -36,7 +36,8 @@ export function FinanceSubledger({ onAuthorizationChanged }: { onAuthorizationCh
   const openFromPosting = (posting: AccountPosting, entry: AccountPostingEntry) => {
     const scope: SubledgerScope = { entityType: posting.entityType, entityId: posting.entityId, currency: posting.currency };
     go(subledgerLevelSearch(location.search, 'entries', { account: entry.accountId, scope }), { account: {
-      accountId: entry.accountId, accountCode: entry.accountCode, ownerType: entry.ownerType, ownerId: entry.ownerId, balanceBucket: entry.balanceBucket } });
+      accountId: entry.accountId, accountNo: entry.accountNo, accountCode: entry.accountCode, ownerType: entry.ownerType, ownerId: entry.ownerId,
+      balanceBucket: entry.balanceBucket } });
   };
   return <div className="configuration-page finance-page"><div className="page-heading"><h1>明细账查询</h1></div>
     <SubledgerBreadcrumb query={query} account={account} onLevel={level => go(subledgerLevelSearch(location.search, level))} />

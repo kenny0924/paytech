@@ -1,0 +1,13 @@
+# ledger 会计科目分级与维护：mor-test 发布覆盖文件（2026-10-20）
+# 叠加在 compose.yaml + compose.applications.yaml + compose.scheduler.yaml 之上（compose.sh 已带这三个文件，只传本文件的 -f）。
+# 源码：main cf39a1ee（含 billing 8b7b4e7a 与 commercial E 线）干净 worktree + 本需求 201 个文件；tag mor-test/<服务>:chart-20261020。
+# 只固定镜像 ID，无配置增量。部署顺序：ledger → account → operations-console-bff → operations-console-web。
+services:
+  ledger-service:
+    image: sha256:c1ab307d888e06eceeb731af5875b5905e796a3315167f405d30d62d9b313ba1
+  account-service:
+    image: sha256:8bc8f8588729bd40241ec5582c872a974d3163678ff07fc2c35e8d49159c9f9e
+  operations-console-bff:
+    image: sha256:971c9238091c61eba5002133d167ca6a55521171214b00b1be45cca8248dbc92
+  operations-console-web:
+    image: sha256:db35544fa2d60d33efbf1af2d850b95f1d9d3703b747cbcfce048ddaf213aa43

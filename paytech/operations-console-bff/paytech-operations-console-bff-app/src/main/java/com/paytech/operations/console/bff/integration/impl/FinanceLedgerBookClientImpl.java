@@ -11,7 +11,9 @@ import org.springframework.stereotype.Component;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.ledger.api.LedgerBookCommandApi;
 import com.paytech.ledger.api.LedgerBookQueryApi;
+import com.paytech.ledger.api.TrialBalanceApi;
 import com.paytech.operations.console.bff.integration.FinanceLedgerBookClient;
+import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.AccountBalanceListResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.AccountJournalLineResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.CreateLedgerAccountRequestBody;
 import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.CreateLedgerAccountResponseBody;
@@ -20,6 +22,8 @@ import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.
 import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.JournalEntryDetailResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.LedgerAccountResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.LedgerBookResponseBody;
+import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.TrialBalanceDetailResponseBody;
+import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.TrialBalanceRunResponseBody;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
 
 import lombok.AllArgsConstructor;
@@ -27,7 +31,7 @@ import lombok.AllArgsConstructor;
 /**
  * ledger 账簿、账户与流水的 HTTP 转发：每个入口只调用一次 ledger，不重试
  * <li>命令把会话 Account ID 与 Session ID 填入操作人 Header；查询只读，不携带操作人。</li>
- * <li>分录详情的分录与账簿主键必须与请求一致。</li>
+ * <li>分录详情、科目余额与试算详情的账簿、期间等主键必须与请求一致；试算只接入列表与详情，不接入执行。</li>
  *
  * @author Claude
  */
@@ -36,6 +40,7 @@ import lombok.AllArgsConstructor;
 public class FinanceLedgerBookClientImpl implements FinanceLedgerBookClient {
     private final LedgerBookQueryApi queryApi;
     private final LedgerBookCommandApi commandApi;
+    private final TrialBalanceApi trialBalanceApi;
 
     /** 账簿分页，核对分页回执。 */
     @Override
@@ -57,10 +62,10 @@ public class FinanceLedgerBookClientImpl implements FinanceLedgerBookClient {
 
     /** 账户分页，核对分页回执。 */
     @Override
-    public PagingResponseBody<LedgerAccountResponseBody> listAccounts(String ledgerBookId, String accountCode,
-        String ownerType, String ownerId, String balanceBucket, int page, int size) {
-        return page(queryApi.listAccounts(ledgerBookId, accountCode, ownerType, ownerId, balanceBucket, page, size),
-            page, size, LedgerAccountResponseBody.class);
+    public PagingResponseBody<LedgerAccountResponseBody> listAccounts(String ledgerBookId, String accountNo,
+        String accountCode, String ownerType, String ownerId, String balanceBucket, int page, int size) {
+        return page(queryApi.listAccounts(ledgerBookId, accountNo, accountCode, ownerType, ownerId, balanceBucket, page,
+            size), page, size, LedgerAccountResponseBody.class);
     }
 
     /** 新建账户；回执须带新主键。 */
@@ -90,5 +95,37 @@ public class FinanceLedgerBookClientImpl implements FinanceLedgerBookClient {
         requireSame(ledgerBookId, entry.getLedgerBookId());
         FinanceContractConverter.require(entry.getLines() != null);
         return entry;
+    }
+
+    /** 实时科目余额；账簿与期间须与请求一致，行列表不可缺失。 */
+    @Override
+    public AccountBalanceListResponseBody listAccountBalances(String ledgerBookId, String periodId) {
+        var balances = convert(trialBalanceApi.listAccountBalances(ledgerBookId, periodId),
+            AccountBalanceListResponseBody.class);
+        requireSame(ledgerBookId, balances.getLedgerBookId());
+        requireSame(periodId, balances.getPeriodId());
+        FinanceContractConverter.require(balances.getLines() != null);
+        return balances;
+    }
+
+    /** 试算记录分页，核对分页回执。 */
+    @Override
+    public PagingResponseBody<TrialBalanceRunResponseBody> listTrialBalances(String ledgerBookId, String periodId,
+        int page, int size) {
+        return page(trialBalanceApi.listTrialBalances(ledgerBookId, periodId, page, size), page, size,
+            TrialBalanceRunResponseBody.class);
+    }
+
+    /** 试算详情；账簿、期间与序号须与请求一致，三个列表不可缺失。 */
+    @Override
+    public TrialBalanceDetailResponseBody getTrialBalance(String ledgerBookId, String periodId, String runNo) {
+        var detail = convert(trialBalanceApi.getTrialBalance(ledgerBookId, periodId, runNo),
+            TrialBalanceDetailResponseBody.class);
+        requireSame(ledgerBookId, detail.getLedgerBookId());
+        requireSame(periodId, detail.getPeriodId());
+        requireSame(runNo, detail.getRunNo());
+        FinanceContractConverter.require(detail.getLines() != null && detail.getSummaryLines() != null
+            && detail.getExceptions() != null);
+        return detail;
     }
 }

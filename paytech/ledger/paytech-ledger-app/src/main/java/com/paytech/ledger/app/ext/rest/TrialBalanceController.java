@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.ledger.api.TrialBalanceApi;
+import com.paytech.ledger.api.response.AccountBalanceListResponseBody;
 import com.paytech.ledger.api.response.TrialBalanceDetailResponseBody;
 import com.paytech.ledger.api.response.TrialBalanceRunResponseBody;
 import com.paytech.ledger.app.ext.rest.converter.TrialBalanceConverter;
@@ -47,5 +48,12 @@ public class TrialBalanceController implements TrialBalanceApi {
     public TrialBalanceDetailResponseBody getTrialBalance(String ledgerBookId, String periodId, String runNo) {
         return converter.toResponseBody(trialBalanceService.getRun(Long.parseLong(ledgerBookId),
             Long.parseLong(periodId), Integer.parseInt(runNo)));
+    }
+
+    /** 实时查询科目余额（末级 + 级次汇总）。 */
+    @Override
+    public AccountBalanceListResponseBody listAccountBalances(String ledgerBookId, String periodId) {
+        return converter.toResponseBody(trialBalanceService.listAccountBalances(Long.parseLong(ledgerBookId),
+            Long.parseLong(periodId)));
     }
 }

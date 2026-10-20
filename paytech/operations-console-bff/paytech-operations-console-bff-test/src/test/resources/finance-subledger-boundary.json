@@ -3,13 +3,14 @@
     "id": "R19",
     "method": "GET",
     "path": "/finance/owner-accounts/v1",
-    "query": "?entityType=OPERATING_ENTITY&entityId=AE001&currency=USD&ownerType=CLIENT&ownerId=1001&accountCode=CLIENT_PAYABLE&balanceBucket=PENDING&page=1&size=10",
+    "query": "?entityType=OPERATING_ENTITY&entityId=AE001&currency=USD&ownerType=CLIENT&ownerId=1001&accountCode=CLIENT_PAYABLE&balanceBucket=PENDING&accountNo=AE001-USD-22010101-S000001&page=1&size=10",
     "request": null,
     "status": 200,
     "response": {
       "items": [
         {
           "accountId": "7200000000000001",
+          "accountNo": "AE001-USD-22010101-S000001",
           "accountCode": "CLIENT_PAYABLE",
           "ownerType": "CLIENT",
           "ownerId": "1001",
@@ -141,6 +142,7 @@
           "entryId": "7400000000000018",
           "lineNo": "1",
           "accountId": "7200000000000001",
+          "accountNo": "AE001-USD-22010101-S000001",
           "accountCode": "CLIENT_PAYABLE",
           "ownerType": "CLIENT",
           "ownerId": "1001",
@@ -157,6 +159,7 @@
           "entryId": "7400000000000019",
           "lineNo": "2",
           "accountId": "7200000000000004",
+          "accountNo": "AE001-USD-22010201-S000002",
           "accountCode": "PARTNER_PAYABLE",
           "ownerType": "LOCAL_PARTNER",
           "ownerId": "2001",

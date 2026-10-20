@@ -24,7 +24,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
- * 浏览器经真实 BFF 与 HttpExchange 转发账务基础资料的 10 个端点（R01—R07、R14—R16）；ledger 由 Loopback Simulator 承担
+ * 浏览器经真实 BFF 与 HttpExchange 转发账务基础资料的 15 个端点（R01—R07、R14—R16、科目维护 L1—L5）；ledger 由 Loopback Simulator 承担
  *
  * @see FinanceSetupController
  * @author Claude
@@ -54,16 +54,17 @@ class FinanceSetupBrowserAutoTest extends FinanceBrowserAutoTestBase {
         assertDenied(ledger, send(row));
     }
 
-    /** 只有 READ 权限的操作人能查询，不能执行 MANAGE 命令。 */
-    @Test
-    void test_readOnlyOperatorCannotManage() throws Exception {
+    /** 只有 READ 权限的操作人能查询（含科目变更记录），不能执行 MANAGE 命令（含科目维护）。 */
+    @ParameterizedTest
+    @CsvSource({"R02,R01", "L1,L5", "L2,R15", "L3,L5", "L4,R15"})
+    void test_readOnlyOperatorCannotManage(String commandId, String queryId) throws Exception {
         platform.grantPermissions(FINANCE_READ_PERMISSION_ID);
 
-        assertDenied(ledger, send(row(BOUNDARY, "R02")));
+        assertDenied(ledger, send(row(BOUNDARY, commandId)));
 
         resetBetweenCalls();
         platform.grantPermissions(FINANCE_READ_PERMISSION_ID);
-        var list = row(BOUNDARY, "R01");
+        var list = row(BOUNDARY, queryId);
         replyAsOwner(ledger, list);
         assertForwarded(ledger, list, send(list));
     }
@@ -73,7 +74,10 @@ class FinanceSetupBrowserAutoTest extends FinanceBrowserAutoTestBase {
     @CsvSource({"R02,FINANCE_ENTITY_ALREADY_EXISTS", "R04,FISCAL_CALENDAR_ALREADY_EXISTS",
         "R04,FINANCE_ENTITY_UNAVAILABLE", "R05,FISCAL_CALENDAR_NOT_FOUND", "R06,ACCOUNTING_PERIOD_OVERLAP",
         "R06,ACCOUNTING_PERIOD_NO_DUPLICATE", "R07,ACCOUNTING_PERIOD_NOT_FOUND", "R07,ACCOUNTING_PERIOD_NOT_FUTURE",
-        "R15,CHART_NOT_ACTIVE"})
+        "R15,CHART_NOT_ACTIVE", "L1,CHART_NOT_ACTIVE", "L1,CHART_ACCOUNT_NO_INVALID", "L1,CHART_ACCOUNT_NO_DUPLICATE",
+        "L1,CHART_ACCOUNT_CODE_DUPLICATE", "L1,CHART_PARENT_INVALID", "L2,CHART_ACCOUNT_NOT_FOUND",
+        "L2,CHART_STRUCTURE_FROZEN", "L2,CHART_PARENT_INVALID", "L3,CHART_ACCOUNT_IN_USE", "L4,CHART_PARENT_INVALID",
+        "L5,CHART_ACCOUNT_NOT_FOUND"})
     void test_businessRuleViolation(String id, LedgerSetupErrorCode code) throws Exception {
         var row = row(BOUNDARY, id);
         ledger.problem(row.path("method").asString(), ownerPath(row), 400, code.getCode());
@@ -167,6 +171,41 @@ class FinanceSetupBrowserAutoTest extends FinanceBrowserAutoTestBase {
         assertEquals(0, ledger.requests().size());
     }
 
+    /** 科目维护：非法启停状态筛选、变更记录未知 Query、停用/启用带 Body、非法科目编号与上级编号、改科目类型均在访问 ledger 前拒绝。 */
+    @Test
+    void test_invalidChartMaintenanceParameter() throws Exception {
+        var accounts = row(BOUNDARY, "R15");
+        assertRejectedLocally(400, ledger, send(accounts, "?accountStatus=CLOSED", accounts.path("request"), true));
+
+        resetBetweenCalls();
+        var changes = row(BOUNDARY, "L5");
+        assertRejectedLocally(400, ledger, send(changes, changes.path("query").asString() + "&changeType=UPDATE",
+            changes.path("request"), true));
+
+        resetBetweenCalls();
+        assertRejectedLocally(400, ledger, send(row(BOUNDARY, "L3"), "", JSON.createObjectNode(), true));
+
+        resetBetweenCalls();
+        assertRejectedLocally(400, ledger, send(row(BOUNDARY, "L4"), "", JSON.createObjectNode(), true));
+
+        resetBetweenCalls();
+        var create = row(BOUNDARY, "L1");
+        var badNo = (ObjectNode) create.path("request").deepCopy();
+        badNo.put("accountNo", "22010");
+        assertRejectedLocally(422, ledger, send(create, "", badNo, true));
+
+        resetBetweenCalls();
+        var leafParent = (ObjectNode) create.path("request").deepCopy();
+        leafParent.put("parentAccountNo", "2201010101");
+        assertRejectedLocally(422, ledger, send(create, "", leafParent, true));
+
+        resetBetweenCalls();
+        var update = row(BOUNDARY, "L2");
+        var postingChange = (ObjectNode) update.path("request").deepCopy();
+        postingChange.put("postingAllowed", false);
+        assertRejectedLocally(400, ledger, send(update, "", postingChange, true));
+    }
+
     /** 分页回执与请求不一致、命令回执身份不一致或缺主键时视为上游无效响应 502；上游多出字段不投影。 */
     @Test
     void test_invalidUpstreamResponse() throws Exception {
@@ -198,6 +237,25 @@ class FinanceSetupBrowserAutoTest extends FinanceBrowserAutoTestBase {
         ((ObjectNode) foreign.path("items").get(0)).put("fiscalCalendarId", "7312345678901235999");
         ledger.reply("GET", ownerPath(periods), 200, JSON.writeValueAsString(foreign));
         assertEquals(502, send(periods).statusCode());
+
+        resetBetweenCalls();
+        var created = row(BOUNDARY, "L1");
+        ledger.reply("POST", ownerPath(created), 201, "{\"chartAccountId\":\"0\"}");
+        assertEquals(502, send(created).statusCode());
+
+        resetBetweenCalls();
+        var disable = row(BOUNDARY, "L3");
+        var otherAccount = (ObjectNode) disable.path("response").deepCopy();
+        otherAccount.put("chartAccountId", "7312345678901238999");
+        ledger.reply("POST", ownerPath(disable), 200, JSON.writeValueAsString(otherAccount));
+        assertEquals(502, send(disable).statusCode());
+
+        resetBetweenCalls();
+        var changes = row(BOUNDARY, "L5");
+        var foreignChange = (ObjectNode) changes.path("response").deepCopy();
+        ((ObjectNode) foreignChange.path("items").get(1)).put("chartAccountId", "7312345678901238999");
+        ledger.reply("GET", ownerPath(changes), 200, JSON.writeValueAsString(foreignChange));
+        assertEquals(502, send(changes).statusCode());
 
         resetBetweenCalls();
         var currencies = row(BOUNDARY, "R16");

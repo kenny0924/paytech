@@ -1,5 +1,6 @@
 package com.paytech.operations.console.bff.service.model;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -107,8 +108,14 @@ public final class FinanceLedgerBookModels {
         /** 账户主键。 */
         private String accountId;
 
+        /** 可读账户号：{主体段}-{币种}-{科目编号}-{序号}，开户后不变。 */
+        private String accountNo;
+
         /** 科目代码。 */
         private String accountCode;
+
+        /** 科目名称。 */
+        private String accountName;
 
         /** 核算对象类型。 */
         private String ownerType;
@@ -249,8 +256,14 @@ public final class FinanceLedgerBookModels {
         /** 账户主键。 */
         private String accountId;
 
+        /** 账户的可读账户号。 */
+        private String accountNo;
+
         /** 科目代码。 */
         private String accountCode;
+
+        /** 科目名称。 */
+        private String accountName;
 
         /** 核算对象类型。 */
         private String ownerType;
@@ -325,5 +338,141 @@ public final class FinanceLedgerBookModels {
 
         /** 全部分录行，按行号升序。 */
         private List<JournalEntryLineResponseBody> lines;
+    }
+
+    /** 科目余额行：末级科目或级次汇总科目。 */
+    @Getter
+    @Setter
+    public static class AccountBalanceLineResponseBody {
+        /** 科目主键。 */
+        private String chartAccountId;
+
+        /** 科目编号。 */
+        private String accountNo;
+
+        /** 科目代码。 */
+        private String accountCode;
+
+        /** 科目名称。 */
+        private String accountName;
+
+        /** 科目类别。 */
+        private String accountClass;
+
+        /** 正常余额方向；期初与期末余额按此方向表达。 */
+        private String normalSide;
+
+        /** 上级科目主键；一级科目为空。 */
+        private String parentChartAccountId;
+
+        /** 级次，1..4。 */
+        private Integer level;
+
+        /** 是否末级（可过账）；汇总行为 false。 */
+        private Boolean postingAllowed;
+
+        /** 期初余额。 */
+        private String openingBalance;
+
+        /** 本期借方发生额。 */
+        private String periodDebit;
+
+        /** 本期贷方发生额。 */
+        private String periodCredit;
+
+        /** 期末余额。 */
+        private String closingBalance;
+    }
+
+    /** 账簿某期间的实时科目余额。 */
+    @Getter
+    @Setter
+    public static class AccountBalanceListResponseBody {
+        /** 账簿主键，与请求一致。 */
+        private String ledgerBookId;
+
+        /** 会计期间主键，与请求一致。 */
+        private String periodId;
+
+        /** 账簿币种。 */
+        private String currency;
+
+        /** 有发生额或余额的末级科目及其各级上级，按科目编号排序。 */
+        private List<AccountBalanceLineResponseBody> lines;
+    }
+
+    /** 试算摘要。 */
+    @Getter
+    @Setter
+    public static class TrialBalanceRunResponseBody {
+        /** 试算主键。 */
+        private String trialBalanceRunId;
+
+        /** 账簿主键。 */
+        private String ledgerBookId;
+
+        /** 会计期间主键。 */
+        private String periodId;
+
+        /** 账簿期间内的试算序号。 */
+        private String runNo;
+
+        /** 试算时的分录序号水位。 */
+        private String asOfSequence;
+
+        /** 试算状态。 */
+        private String status;
+
+        /** 借方合计。 */
+        private String totalDebit;
+
+        /** 贷方合计。 */
+        private String totalCredit;
+
+        /** 试算内容摘要。 */
+        private String contentHash;
+
+        /** 末级试算行数。 */
+        private Integer lineCount;
+
+        /** 异常数。 */
+        private Integer exceptionCount;
+
+        /** 试算时间，UTC。 */
+        private Instant createTime;
+    }
+
+    /** 试算异常。 */
+    @Getter
+    @Setter
+    public static class TrialBalanceFindingResponseBody {
+        /** 异常类型。 */
+        private String exceptionType;
+
+        /** 关联对象类型。 */
+        private String referenceType;
+
+        /** 关联对象主键。 */
+        private String referenceId;
+
+        /** 差额。 */
+        private String differenceAmount;
+
+        /** 异常状态。 */
+        private String status;
+    }
+
+    /** 试算详情：摘要、末级试算行、级次汇总行与异常。 */
+    @Getter
+    @Setter
+    public static class TrialBalanceDetailResponseBody extends TrialBalanceRunResponseBody {
+        /** 末级试算行，按科目编号排序。 */
+        private List<AccountBalanceLineResponseBody> lines;
+
+        /** 查询时汇总的级次汇总行，postingAllowed 为 false。 */
+        private List<AccountBalanceLineResponseBody> summaryLines;
+
+        /** 异常。 */
+        private List<TrialBalanceFindingResponseBody> exceptions;
     }
 }

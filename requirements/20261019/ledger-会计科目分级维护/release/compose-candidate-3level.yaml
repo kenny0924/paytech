@@ -1,0 +1,11 @@
+# ledger 会计科目分级：三级科目树重发（2026-10-20）。源码同 compose-candidate.yaml 加任务卡 E（三级树），tag chart3-20261020。
+# BFF 无代码变化，沿用 chart-20261020 镜像；回退位点为 compose-candidate.yaml 中的两级版本镜像。
+services:
+  ledger-service:
+    image: sha256:a716585bed12eab8bb5a5878cbf92e7d57755fbeb00c2ca3c54a8d928f08b790
+  account-service:
+    image: sha256:dfa6254cb889bf5287af8652554b570b8e01082ca9ff2f0b0b1a52f40abd78d7
+  operations-console-bff:
+    image: sha256:971c9238091c61eba5002133d167ca6a55521171214b00b1be45cca8248dbc92
+  operations-console-web:
+    image: sha256:a8feab2c14f405e8794482d3c154a5cef5578ca258bde64405e85e3b1e408a40

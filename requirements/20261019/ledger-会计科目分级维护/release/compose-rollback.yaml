@@ -1,0 +1,10 @@
+# 回退覆盖文件：发布前运行中的镜像 ID（2026-10-20 核对）
+services:
+  ledger-service:
+    image: sha256:0e9390666b839739d7b418783d70682040d761d0e3e5634be86f89076d4de020
+  account-service:
+    image: sha256:ad0621b12a80731ed550729ff7709383a7dee28017bc736c3ea9e2152a58ce00
+  operations-console-bff:
+    image: sha256:2bd2afee26092ff41ad69b19af40c04c97a053921c1eb5b61cde13fcdc1706aa
+  operations-console-web:
+    image: sha256:edf140b9e25b1a682e9b60fd8954fa36b4906334d26fd924a66ba2e5a5882bc2

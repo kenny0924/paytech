@@ -23,7 +23,7 @@ const entityTypeOptions = ledgerEntityTypes.map(value => ({ value, label: `${ent
 const required = (message: string) => ({ required: true, whitespace: true, message });
 
 /** 弹窗外壳：保存中禁止关闭；409 横幅与表单顶部错误统一放在表单上方。 */
-function CommandModal({ title, command, okText = '保存', onOk, onClose, onDone, children, width = 560 }: {
+export function CommandModal({ title, command, okText = '保存', onOk, onClose, onDone, children, width = 560 }: {
   title: ReactNode; command: Command; okText?: string; onOk: () => void; onClose: () => void; onDone: () => void; children: ReactNode; width?: number;
 }) {
   return <Modal open title={title} okText={okText} cancelText="取消" confirmLoading={command.saving} okButtonProps={{ disabled: command.conflict }}
@@ -183,7 +183,7 @@ export function CreateAccountModal({ book, entities, onClose, onDone, onAuthoriz
 }) {
   const [form] = Form.useForm<AccountFormValues>();
   const command = useFinanceCommand(onAuthorizationChanged, form, ['accountCode', 'ownerType', 'ownerId', 'balanceBucket']);
-  const chartAccounts = useChartAccounts(book.chartCode, true, onAuthorizationChanged);
+  const chartAccounts = useChartAccounts(book.chartCode, { postingAllowed: true, accountStatus: 'ACTIVE' }, onAuthorizationChanged);
   async function submit() {
     const values = await form.validateFields();
     const result = await command.run(financePaths.accounts(book.ledgerBookId), accountBody(values), decodeCreated('accountId'), '新建账户失败');
@@ -192,11 +192,11 @@ export function CreateAccountModal({ book, entities, onClose, onDone, onAuthoriz
   return <CommandModal title={`新建账户 · ${entityLabel(book.entityType, book.entityId, entities)} / ${book.currency}`} command={command}
     onOk={() => void submit()} onClose={onClose} onDone={onDone}>
     <Form form={form} name="finance-create-account" layout="vertical" disabled={command.saving || command.conflict} initialValues={{ balanceBucket: 'NONE' }}>
-      <Form.Item name="accountCode" label="科目" extra={chartAccounts.error ? '科目加载失败，请关闭后重试' : `只列出 ${book.chartCode} 科目表中可过账的科目`}
+      <Form.Item name="accountCode" label="科目" extra={chartAccounts.error ? '科目加载失败，请关闭后重试' : `只列出 ${book.chartCode} 科目表中启用的末级科目`}
         rules={[{ required: true, message: '请选择科目' }]}>
-        <Select showSearch={{ optionFilterProp: 'label' }} loading={chartAccounts.loading} placeholder="选择可过账科目"
-          options={chartAccounts.items.filter(item => item.postingAllowed).map(item => ({ value: item.accountCode,
-            label: `${item.accountCode} · ${item.accountName}（${sideLabels[item.normalSide]}）` }))} /></Form.Item>
+        <Select showSearch={{ optionFilterProp: 'label' }} loading={chartAccounts.loading} placeholder="选择启用的末级科目"
+          options={chartAccounts.items.map(item => ({ value: item.accountCode,
+            label: `${item.accountNo} ${item.accountName}（${sideLabels[item.normalSide]}）` }))} /></Form.Item>
       <div className="finance-form-grid">
         <Form.Item name="ownerType" label="核算对象类型" rules={[{ required: true, message: '请选择核算对象类型' }]}>
           <Select options={ownerTypes.map(value => ({ value, label: value }))} /></Form.Item>
@@ -208,6 +208,6 @@ export function CreateAccountModal({ book, entities, onClose, onDone, onAuthoriz
       {/* 余额桶固定 NONE、不可编辑；保留字段用于承接 ACCOUNT_ALREADY_EXISTS 的字段错误（画板 05）。 */}
       <Form.Item name="balanceBucket" label="余额桶"><Select disabled options={[{ value: 'NONE', label: 'NONE' }]} /></Form.Item>
     </Form>
-    <FinanceNote>核算对象只能是经营主体、财务主体、渠道账户、银行账户或税务机关，余额桶固定 NONE；Client / Partner 余额在明细账，不在总账开户。核算对象为经营主体时填 entityNo。</FinanceNote>
+    <FinanceNote>核算对象只能是经营主体、财务主体、渠道账户、银行账户或税务机关，余额桶固定 NONE；Client / Partner 余额在明细账，不在总账开户。核算对象为经营主体时填 entityNo。账户号由系统生成，开户后不变。</FinanceNote>
   </CommandModal>;
 }

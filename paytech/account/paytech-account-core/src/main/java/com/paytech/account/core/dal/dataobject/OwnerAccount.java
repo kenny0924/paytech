@@ -19,6 +19,12 @@ public class OwnerAccount {
     /** 账户服务生成的 Owner 账户 Snowflake 主键。 */
     private Long id;
 
+    /**
+     * 财务人员可读账户号
+     * <li>{主体段}-{币种}-{科目编号}-S{序号}，开户时生成后不变；只用于显示与搜索，不进入事件载荷、不作为关联键。</li>
+     */
+    private String accountNo;
+
     /** 账户所属法律主体类型。 */
     private AccountEntityType entityType;
 

@@ -8,9 +8,10 @@ import org.springframework.stereotype.Component;
 
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.id.IdGenerator;
-import com.paytech.foundation.processor.AbstractProcessor;
+import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
 import com.paytech.ledger.api.enums.LedgerSetupErrorCode;
 import com.paytech.ledger.core.constant.AccountingCodes;
+import com.paytech.ledger.core.constant.AccountingLocks;
 import com.paytech.ledger.core.dal.dataobject.BookSequence;
 import com.paytech.ledger.core.dal.dataobject.ChartOfAccounts;
 import com.paytech.ledger.core.dal.dataobject.CurrencySpec;
@@ -34,11 +35,12 @@ import lombok.AllArgsConstructor;
 /**
  * 创建 OPEN 账簿并初始化其序号行
  * <li>OE 主体只校验 entityNo 格式，本期不向 CCT 核对 OE 是否存在；Finance Entity 必须本地存在且 ACTIVE。</li>
- * <li>同主体同币种唯一由唯一键保护，无需资源锁。</li>
+ * <li>同主体同币种唯一由唯一键保护。</li>
+ * <li>新建账簿即“采用”科目表，科目表结构自此冻结：与科目维护共用科目表资源锁（LOCK），使维护入口的“检查未采用 → 修改结构”与采用互斥。</li>
  */
 @Component
 @AllArgsConstructor
-public class CreateLedgerBookProcessor extends AbstractProcessor<CreateLedgerBookRequest, CreatedResourceResponse> {
+public class CreateLedgerBookProcessor extends AbstractLockProcessor<CreateLedgerBookRequest, CreatedResourceResponse> {
     private final Clock clock;
     private final IdGenerator idGenerator;
     private final LedgerSetupService ledgerSetupService;
@@ -52,8 +54,14 @@ public class CreateLedgerBookProcessor extends AbstractProcessor<CreateLedgerBoo
         AccountIdentityRule.checkEntityId(request.getEntityType().getCode(), request.getEntityId());
     }
 
+    /** 与科目维护共用科目表资源锁，持续等待。 */
     @Override
-    protected CreatedResourceResponse processRequest(CreateLedgerBookRequest request) {
+    protected LockCommand lockCommand(CreateLedgerBookRequest request) {
+        return LockCommand.lock(AccountingLocks.chart(getActiveChart(request.getChartCode()).getId()));
+    }
+
+    @Override
+    protected CreatedResourceResponse processWithinLock(CreateLedgerBookRequest request) {
         checkActiveCurrency(request.getCurrency());
         ChartOfAccounts chart = getActiveChart(request.getChartCode());
         checkFinanceEntity(request);

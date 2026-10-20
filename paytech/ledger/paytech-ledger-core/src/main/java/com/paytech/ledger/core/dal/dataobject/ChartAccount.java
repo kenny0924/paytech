@@ -1,6 +1,7 @@
 package com.paytech.ledger.core.dal.dataobject;
 
 import com.paytech.ledger.core.enums.AccountClass;
+import com.paytech.ledger.core.enums.ChartAccountStatus;
 import com.paytech.ledger.core.enums.NormalSide;
 import java.time.Instant;
 
@@ -26,6 +27,13 @@ public class ChartAccount {
      * <li>可为空。</li>
      */
     private Long parentAccountId;
+
+    /**
+     * 财务人员使用的分级数字科目编号
+     * <li>4-2-2-2：一级 4 位、每下一级加 2 位，最多 4 级；下级以上级编号开头；一级首位 1 资产、2 负债、3 权益、4 收入、5 费用。</li>
+     * <li>科目表内唯一；科目表被账簿采用后不可修改。</li>
+     */
+    private String accountNo;
 
     /**
      * 在同一会计科目表内唯一且激活后不可改变的科目代码
@@ -55,6 +63,12 @@ public class ChartAccount {
      * <li>1 表示是，0 表示否。</li>
      */
     private Boolean postingAllowed;
+
+    /**
+     * 科目启停状态
+     * <li>允许值：ACTIVE、INACTIVE。停用后不能新建账户、不能被新规则版本引用，已有账户照常记账与查询。</li>
+     */
+    private ChartAccountStatus accountStatus;
 
     /**
      * 该记录在 Finance 数据库中的 UTC 微秒创建时间

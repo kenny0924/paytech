@@ -46,6 +46,7 @@ import com.paytech.ledger.core.dal.dataobject.AccountingRuleBundle;
 import com.paytech.ledger.core.dal.dataobject.AccountingRuleBundleVer;
 import com.paytech.ledger.core.dal.dataobject.AccountingRuleLine;
 import com.paytech.ledger.core.dal.dataobject.ChartAccount;
+import com.paytech.ledger.core.dal.dataobject.FinanceEntity;
 import com.paytech.ledger.core.dal.dataobject.FiscalCalendar;
 import com.paytech.ledger.core.dal.dataobject.InstructionLine;
 import com.paytech.ledger.core.dal.dataobject.JournalEntry;
@@ -53,6 +54,7 @@ import com.paytech.ledger.core.dal.dataobject.LedgerAccount;
 import com.paytech.ledger.core.dal.dataobject.LedgerBook;
 import com.paytech.ledger.core.enums.AccountStatus;
 import com.paytech.ledger.core.enums.BookStatus;
+import com.paytech.ledger.core.enums.ChartAccountStatus;
 import com.paytech.ledger.core.enums.EntrySide;
 import com.paytech.ledger.core.enums.InstructionOrigin;
 import com.paytech.ledger.core.enums.InstructionStatus;
@@ -64,15 +66,18 @@ import com.paytech.ledger.core.enums.RuleVersionStatus;
 import com.paytech.ledger.domain.AccountPostingBatch;
 import com.paytech.ledger.domain.AccountPostingCommand;
 import com.paytech.ledger.domain.JournalPostingContext;
+import com.paytech.ledger.domain.LedgerAccountNo;
 import com.paytech.ledger.domain.PeriodCloseContentHash;
 import com.paytech.ledger.domain.TransactionPostingContext;
 import com.paytech.ledger.domain.view.PostedInstructionView;
+import com.paytech.ledger.domainservice.repository.AccountNoSequenceRepository;
 import com.paytech.ledger.domainservice.repository.AccountingInstructionRepository;
 import com.paytech.ledger.domainservice.repository.AccountingPeriodRepository;
 import com.paytech.ledger.domainservice.repository.AccountingRuleBundleRepository;
 import com.paytech.ledger.domainservice.repository.AccountingRuleBundleVerRepository;
 import com.paytech.ledger.domainservice.repository.AccountingRuleLineRepository;
 import com.paytech.ledger.domainservice.repository.ChartAccountRepository;
+import com.paytech.ledger.domainservice.repository.FinanceEntityRepository;
 import com.paytech.ledger.domainservice.repository.FiscalCalendarRepository;
 import com.paytech.ledger.domainservice.repository.InstructionLineRepository;
 import com.paytech.ledger.domainservice.repository.JournalEntryRepository;
@@ -136,10 +141,12 @@ public class TransactionPostingServiceImpl implements TransactionPostingService 
     private final JournalPostingService journalPostingService;
     private final ChartAccountRepository chartAccountRepository;
     private final JournalEntryRepository journalEntryRepository;
+    private final FinanceEntityRepository financeEntityRepository;
     private final FiscalCalendarRepository fiscalCalendarRepository;
     private final InstructionLineRepository instructionLineRepository;
     private final AccountingPeriodRepository accountingPeriodRepository;
     private final AccountingRuleLineRepository accountingRuleLineRepository;
+    private final AccountNoSequenceRepository accountNoSequenceRepository;
     private final AccountingRuleBundleRepository accountingRuleBundleRepository;
     private final AccountingInstructionRepository accountingInstructionRepository;
     private final AccountingRuleBundleVerRepository accountingRuleBundleVerRepository;
@@ -514,7 +521,8 @@ public class TransactionPostingServiceImpl implements TransactionPostingService 
 
     /**
      * 按科目、核算对象与余额桶解析唯一账户；不存在时在当前事务内创建 ACTIVE 账户身份（只写 ledger 本库）
-     * <li>科目须在账簿科目表中且可过账，身份须符合账户身份矩阵。</li>
+     * <li>科目须在账簿科目表中且可过账，身份须符合账户身份矩阵；已有账户照常记账，不检查科目启停。</li>
+     * <li>新建分支：停用的科目拒绝；在同一事务分配账户号序号，唯一键冲突时整笔回滚由消息重投重来，序号空洞允许。</li>
      */
     LedgerAccount resolveAccount(TransactionPostingContext context, AutoInstructionType type, LedgerBook book,
         String accountCode, BalanceBucket bucket, Owner owner) {
@@ -528,9 +536,26 @@ public class TransactionPostingServiceImpl implements TransactionPostingService 
         if (account != null) {
             return account;
         }
+        if (chart.getAccountStatus() != ChartAccountStatus.ACTIVE) {
+            throw reject(context, type, "科目已停用，不能新建账户 " + accountCode + ", 账簿 " + book.getId());
+        }
         account = newAccount(book, chart, owner, bucket);
+        long sequence = accountNoSequenceRepository.next(book.getId(), chart.getId());
+        account.setAccountNo(LedgerAccountNo.of(book, chart, bookFinanceEntity(book)).withSequence(sequence));
         ledgerAccountRepository.insertConcurrently(account);
         return account;
+    }
+
+    /** FE 账簿的财务主体（账户号主体段）；OE 账簿返回空。 */
+    FinanceEntity bookFinanceEntity(LedgerBook book) {
+        if (book.getEntityType() != LedgerEntityType.FINANCE_ENTITY) {
+            return null;
+        }
+        FinanceEntity entity = financeEntityRepository.findById(Long.parseLong(book.getEntityId()));
+        if (entity == null) {
+            throw new ErrorException("账簿的财务主体不存在: 账簿 " + book.getId() + ", 主体 " + book.getEntityId());
+        }
+        return entity;
     }
 
     /** 按固定解释器把交易规则行的 Owner Role 解析为账户 owner_type / owner_id。 */

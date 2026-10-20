@@ -10,4 +10,11 @@
         SELECT id, bundle_ver_id, instruction_type, line_no, line_code, amount_source_code, owner_role, account_code, balance_bucket, entry_side, required_flag, create_time
         FROM t_accounting_rule_line WHERE bundle_ver_id = #{bundleVerId} ORDER BY instruction_type, line_no
     </select>
+
+    <!-- 规则集当前生效版本（current_ver_id）中引用该科目代码的规则行数。 -->
+    <select id="countCurrentByAccountCode" resultType="long">
+        SELECT COUNT(*) FROM t_accounting_rule_line l
+        JOIN t_accounting_rule_bundle b ON b.current_ver_id = l.bundle_ver_id
+        WHERE l.account_code = #{accountCode}
+    </select>
 </mapper>

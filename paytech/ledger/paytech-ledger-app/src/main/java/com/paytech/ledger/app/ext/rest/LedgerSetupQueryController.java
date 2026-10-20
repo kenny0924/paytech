@@ -2,14 +2,17 @@ package com.paytech.ledger.app.ext.rest;
 
 import org.springframework.web.bind.annotation.RestController;
 
+import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.ledger.api.LedgerSetupQueryApi;
 import com.paytech.ledger.api.response.AccountingPeriodResponseBody;
+import com.paytech.ledger.api.response.ChartAccountChangeResponseBody;
 import com.paytech.ledger.api.response.ChartAccountListResponseBody;
 import com.paytech.ledger.api.response.ChartOfAccountsListResponseBody;
 import com.paytech.ledger.api.response.CurrencyListResponseBody;
 import com.paytech.ledger.api.response.FinanceEntityResponseBody;
 import com.paytech.ledger.api.response.FiscalCalendarResponseBody;
+import com.paytech.ledger.app.ext.rest.converter.ChartOfAccountsConverter;
 import com.paytech.ledger.app.ext.rest.converter.LedgerQueryConverter;
 import com.paytech.ledger.app.ext.rest.converter.LedgerReadConverter;
 import com.paytech.ledger.domainservice.service.LedgerQueryService;
@@ -23,6 +26,7 @@ public class LedgerSetupQueryController implements LedgerSetupQueryApi {
     private final LedgerQueryService ledgerQueryService;
     private final LedgerQueryConverter converter;
     private final LedgerReadConverter readConverter;
+    private final ChartOfAccountsConverter chartConverter;
 
     /** 分页查询财务主体。 */
     @Override
@@ -56,8 +60,19 @@ public class LedgerSetupQueryController implements LedgerSetupQueryApi {
 
     /** 查询科目表下的科目，复用科目批量读取的响应转换。 */
     @Override
-    public ChartAccountListResponseBody listChartAccounts(String chartCode, Boolean postingAllowed) {
-        return readConverter.toResponseBody(ledgerQueryService.listChartAccountsByChart(chartCode, postingAllowed));
+    public ChartAccountListResponseBody listChartAccounts(String chartCode, Boolean postingAllowed,
+        String accountStatus) {
+        return readConverter.toResponseBody(ledgerQueryService.listChartAccountsByChart(chartCode, postingAllowed,
+            converter.toChartAccountStatus(accountStatus)));
+    }
+
+    /** 分页查询科目变更记录。 */
+    @Override
+    public PagingResponseBody<ChartAccountChangeResponseBody> listChartAccountChanges(String chartCode,
+        String chartAccountId, Integer page, Integer size) {
+        return ledgerQueryService.pageChartAccountChanges(chartCode,
+            chartAccountId == null ? null : Long.valueOf(chartAccountId), PagingRequestBody.of(page, size))
+            .map(chartConverter::toResponseBody);
     }
 
     /** 查询币种规则。 */

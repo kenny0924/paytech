@@ -41,16 +41,17 @@ public interface OwnerAccountMapper {
     List<OwnerAccount> selectByOwner(@Param("entityType") AccountEntityType entityType, @Param("entityId") String entityId,
         @Param("currency") String currency, @Param("ownerType") OwnerType ownerType, @Param("ownerId") String ownerId);
 
-    /** 按筛选条件分页读取，按科目代码、核算对象类型、核算对象标识、余额桶、主键排序。 */
+    /** 按筛选条件分页读取，按科目代码、核算对象类型、核算对象标识、余额桶、主键排序；账户号为精确匹配。 */
     List<OwnerAccount> selectPage(@Param("entityType") AccountEntityType entityType, @Param("entityId") String entityId,
         @Param("currency") String currency, @Param("ownerType") OwnerType ownerType, @Param("ownerId") String ownerId,
-        @Param("accountCode") String accountCode, @Param("bucket") BalanceBucket bucket, @Param("offset") int offset,
-        @Param("limit") int limit);
+        @Param("accountCode") String accountCode, @Param("bucket") BalanceBucket bucket,
+        @Param("accountNo") String accountNo, @Param("offset") int offset, @Param("limit") int limit);
 
     /** 与 selectPage 相同筛选条件的总数。 */
     long countPage(@Param("entityType") AccountEntityType entityType, @Param("entityId") String entityId,
         @Param("currency") String currency, @Param("ownerType") OwnerType ownerType, @Param("ownerId") String ownerId,
-        @Param("accountCode") String accountCode, @Param("bucket") BalanceBucket bucket);
+        @Param("accountCode") String accountCode, @Param("bucket") BalanceBucket bucket,
+        @Param("accountNo") String accountNo);
 
     /**
      * 以余额版本 CAS 写入新的累计值并加一

@@ -42,10 +42,12 @@ public class OwnerAccountQueryServiceImpl implements OwnerAccountQueryService {
     /** 同筛选条件下分页与计数。 */
     @Override
     public PagingResponseBody<OwnerAccount> pageAccounts(AccountEntityType entityType, String entityId, String currency,
-        OwnerType ownerType, String ownerId, String accountCode, BalanceBucket bucket, PagingRequestBody paging) {
+        OwnerType ownerType, String ownerId, String accountCode, BalanceBucket bucket, String accountNo,
+        PagingRequestBody paging) {
         List<OwnerAccount> items = ownerAccountRepository.findPage(entityType, entityId, currency, ownerType, ownerId,
-            accountCode, bucket, paging);
-        long total = ownerAccountRepository.count(entityType, entityId, currency, ownerType, ownerId, accountCode, bucket);
+            accountCode, bucket, accountNo, paging);
+        long total = ownerAccountRepository.count(entityType, entityId, currency, ownerType, ownerId, accountCode, bucket,
+            accountNo);
         return new PagingResponseBody<>(items, paging.page(), paging.size(), total);
     }
 

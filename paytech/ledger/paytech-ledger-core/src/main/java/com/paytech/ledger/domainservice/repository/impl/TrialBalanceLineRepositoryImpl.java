@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import com.paytech.ledger.core.dal.dataobject.TrialBalanceLine;
 import com.paytech.ledger.core.dal.mapper.TrialBalanceLineMapper;
-import com.paytech.ledger.domain.view.TrialBalanceLineView;
+import com.paytech.ledger.domain.view.AccountBalanceView;
 import com.paytech.ledger.domainservice.repository.TrialBalanceLineRepository;
 
 import lombok.AllArgsConstructor;
@@ -27,7 +27,7 @@ public class TrialBalanceLineRepositoryImpl implements TrialBalanceLineRepositor
 
     /** 读取一次试算的全部行及科目。 */
     @Override
-    public List<TrialBalanceLineView> findViews(long runId) {
+    public List<AccountBalanceView> findViews(long runId) {
         return mapper.selectViews(runId);
     }
 }

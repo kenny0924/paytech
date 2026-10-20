@@ -22,7 +22,7 @@ import com.paytech.ledger.test.base.AbstractManualAdjustmentApiTest;
 import com.paytech.ledger.test.mocker.local.LedgerMocker;
 
 /**
- * 分录详情：分录头、来源追溯到人工调整、全部分录行借贷相等，以及账簿归属校验。
+ * 分录详情：分录头、来源追溯到人工调整、分录行账户号与科目名称、借贷相等，以及账簿归属校验。
  *
  * @see LedgerBookQueryApi#getJournalEntry(String, String)
  */
@@ -54,6 +54,10 @@ class GetJournalEntryTest extends AbstractManualAdjustmentApiTest {
         var credit = detail.getLines().get(1);
         assertAll(() -> assertEquals(String.valueOf(bankCashAccountId), debit.getAccountId()),
             () -> assertEquals("BANK_CASH", debit.getAccountCode()),
+            () -> assertEquals(LedgerMocker.MOCK_ACCOUNT_NO_PREFIX + bankCashAccountId, debit.getAccountNo()),
+            () -> assertEquals("银行现金", debit.getAccountName()),
+            () -> assertEquals(LedgerMocker.MOCK_ACCOUNT_NO_PREFIX + liabilityAccountId, credit.getAccountNo()),
+            () -> assertEquals("待识别资金", credit.getAccountName()),
             () -> assertEquals(LedgerOwnerType.CASH_ACCOUNT.getCode(), debit.getOwnerType()),
             () -> assertEquals(EntrySide.DEBIT.getCode(), debit.getEntrySide()),
             () -> assertEquals("42.10", debit.getAmount()),

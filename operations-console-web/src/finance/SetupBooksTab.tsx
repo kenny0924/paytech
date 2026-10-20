@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Button, Empty, Form, Input, Select, Table } from 'antd';
 import type { PagingRequestBody } from '../api/paging';
@@ -65,8 +65,7 @@ export function AccountList({ book, minorUnit, initialFilters = {}, initialPagin
 }) {
   const [form] = Form.useForm();
   const page = usePaging<LedgerAccount>(financePaths.accounts(book.ledgerBookId), accountPage, initialFilters, { initialPaging, onQueryChange });
-  const chartAccounts = useChartAccounts(book.chartCode ?? null, false, onAuthorizationChanged);
-  const names = useMemo(() => new Map(chartAccounts.items.map(item => [item.accountCode, item.accountName])), [chartAccounts.items]);
+  const chartAccounts = useChartAccounts(book.chartCode ?? null, { postingAllowed: true }, onAuthorizationChanged);
   useEffect(() => { if (reloadToken) page.refresh(); }, [reloadToken]);
   const amount = (value: string) => <Amount value={value} minorUnit={minorUnit} />;
   return <>
@@ -74,24 +73,27 @@ export function AccountList({ book, minorUnit, initialFilters = {}, initialPagin
       <div className="finance-section-head finance-account-head">
         {heading}
         <div className="finance-search finance-search-inline">
+          <Form.Item name="accountNo" label="账户号" normalize={(value: string) => value?.toUpperCase()}>
+            <Input allowClear maxLength={48} placeholder="精确匹配，如 AE001-USD-22010101-0001" /></Form.Item>
           <Form.Item name="accountCode" label="科目"><Select allowClear showSearch={{ optionFilterProp: 'label' }} placeholder="全部" loading={chartAccounts.loading}
-            options={chartAccounts.items.filter(item => item.postingAllowed).map(item => ({ value: item.accountCode, label: `${item.accountCode} · ${item.accountName}` }))} /></Form.Item>
+            options={chartAccounts.items.map(item => ({ value: item.accountCode, label: `${item.accountNo} ${item.accountName}` }))} /></Form.Item>
           <Form.Item name="ownerType" label="核算对象类型"><Select allowClear placeholder="全部" options={options(ownerTypes)} /></Form.Item>
           <Form.Item name="ownerId" label="核算对象标识"><Input allowClear maxLength={64} placeholder="请输入标识" /></Form.Item>
           <Form.Item name="balanceBucket" label="余额桶"><Select allowClear placeholder="全部" options={options(balanceBuckets)} /></Form.Item>
           <div className="configuration-actions"><Button htmlType="submit">查询</Button>
-            <Button onClick={() => { form.setFieldsValue({ accountCode: undefined, ownerType: undefined, ownerId: undefined, balanceBucket: undefined }); page.applyFilters({}); }}>重置</Button></div>
+            <Button onClick={() => { form.setFieldsValue({ accountNo: undefined, accountCode: undefined, ownerType: undefined, ownerId: undefined, balanceBucket: undefined }); page.applyFilters({}); }}>重置</Button></div>
         </div>
         {extra}
       </div>
     </Form>
     {page.error ? <LoadFailure message={page.error} onRetry={page.refresh} /> : <section className="table-panel">
-      <Table<LedgerAccount> rowKey="accountId" tableLayout="fixed" dataSource={page.data.items} loading={page.loading} scroll={{ x: 1100 }}
+      <Table<LedgerAccount> rowKey="accountId" tableLayout="fixed" dataSource={page.data.items} loading={page.loading} scroll={{ x: 1320 }}
         pagination={{ ...page.pagination, showTotal: total => `共 ${total} 条` }}
         onRow={row => onSelect ? { onClick: () => onSelect(row), className: 'clickable-row' } : {}}
         locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={Object.keys(initialFilters).length ? '没有符合条件的账户' : '该账簿还没有账户'} /> }} columns={[
+          { title: '账户号', width: 220, render: (_, row) => <span className="mono">{row.accountNo}</span> },
           { title: '科目', width: 250, render: (_, row) => <div><div className="finance-code">{row.accountCode}</div>
-            {names.has(row.accountCode) && <div className="cell-meta">{names.get(row.accountCode)}</div>}</div> },
+            <div className="cell-meta">{row.accountName}</div></div> },
           { title: '核算对象', width: 200, render: (_, row) => <div><div>{row.ownerType}</div><div className="cell-meta">{row.ownerId}</div></div> },
           { title: '余额桶', dataIndex: 'balanceBucket', width: 110 },
           { title: '方向', width: 70, render: (_, row) => <SideTag side={row.normalSide} /> },

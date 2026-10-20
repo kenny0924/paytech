@@ -7,7 +7,9 @@ import { fileURLToPath } from "node:url";
 // account 模型脱离 Finance 生成器后直接维护 JSON；本测试只读 JSON，保留生成器原有的图组与关系结构门禁。
 const workspaceRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const modelPath = path.join(workspaceRoot, "paytech/account/docs/database/account.pdma.json");
+const schemaPath = path.join(workspaceRoot, "paytech/account/docs/database/sql/account-schema.sql");
 const model = JSON.parse(readFileSync(modelPath, "utf8"));
+const schema = readFileSync(schemaPath, "utf8");
 const entitiesById = new Map(model.entities.map((entity) => [entity.id, entity]));
 const fieldOwner = new Map(model.entities.flatMap((entity) => entity.fields.map((field) => [field.id, entity])));
 
@@ -24,6 +26,7 @@ const UNINDEXED_RELATIONS = new Set(["t_balance_applied_fact.posting_id -> t_acc
 test("account tables match the subledger schema", () => {
   assert.deepEqual(model.entities.map((entity) => entity.defKey), [
     "t_owner_account",
+    "t_owner_account_no_sequence",
     "t_account_posting_stream",
     "t_account_posting",
     "t_account_entry",
@@ -34,6 +37,32 @@ test("account tables match the subledger schema", () => {
     "t_compensation_event",
   ]);
   assert.deepEqual(model.diagrams.map((diagram) => diagram.defName), ["明细账：账户、批次与流水", "可靠执行与消费幂等"]);
+});
+
+// Schema 手工维护：逐表核对列与索引名称、顺序和模型一致。
+test("account schema file matches the model columns and indexes", () => {
+  const tables = [...schema.matchAll(/^CREATE TABLE `(\w+)` \(\n([\s\S]*?)\n\) ENGINE/gmu)];
+  assert.deepEqual(tables.map((match) => match[1]), model.entities.map((entity) => entity.defKey));
+  for (const [, table, body] of tables) {
+    const entity = model.entities.find((item) => item.defKey === table);
+    const columns = [...body.matchAll(/^  `(\w+)` /gmu)].map((match) => match[1]);
+    const indexes = [...body.matchAll(/^  (?:UNIQUE )?KEY `(\w+)`/gmu)].map((match) => match[1]);
+    assert.deepEqual(columns, entity.fields.map((field) => field.defKey), `${table} 列与模型不一致`);
+    assert.deepEqual(indexes, entity.indexes.map((index) => index.defKey), `${table} 索引与模型不一致`);
+  }
+});
+
+// 可读账户号：表内唯一，序列按主体 + 币种 + 科目代码唯一（2026-10-19 科目分级与可读账户号决定第 7 条）。
+test("owner account number is unique and allocated per entity, currency and account code", () => {
+  const indexFields = (table, indexKey) => {
+    const entity = model.entities.find((item) => item.defKey === table);
+    const index = entity.indexes.find((item) => item.defKey === indexKey);
+    assert.ok(index?.unique, `${table}.${indexKey} 必须是唯一索引`);
+    return index.fields.map((field) => entity.fields.find((item) => item.id === field.fieldDefKey).defKey);
+  };
+  assert.deepEqual(indexFields("t_owner_account", "uk_owner_account_no"), ["account_no"]);
+  assert.deepEqual(indexFields("t_owner_account_no_sequence", "uk_owner_account_no_seq"),
+    ["entity_type", "entity_id", "currency", "account_code"]);
 });
 
 test("account relations are internal, point at primary keys and are indexed", () => {

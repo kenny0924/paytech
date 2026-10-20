@@ -17,14 +17,15 @@ import com.paytech.ledger.core.enums.AccountStatus;
 import com.paytech.ledger.core.enums.LedgerEntityType;
 import com.paytech.ledger.core.enums.NormalSide;
 import com.paytech.ledger.test.base.AbstractManualAdjustmentApiTest;
+import com.paytech.ledger.test.builder.AccountingSetupRequestBuilder;
 import com.paytech.ledger.test.mocker.local.LedgerMocker;
 
 import tools.jackson.databind.JsonNode;
 
 /**
- * 账户列表：过滤、余额由分录聚合、排序、账簿隔离与不存在拒绝。
+ * 账户列表：过滤（含账户号精确筛选）、账户号与科目名称、余额由分录聚合、排序、账簿隔离与不存在拒绝。
  *
- * @see LedgerBookQueryApi#listAccounts(String, String, String, String, String, Integer, Integer)
+ * @see LedgerBookQueryApi#listAccounts(String, String, String, String, String, String, Integer, Integer)
  */
 class ListAccountsTest extends AbstractManualAdjustmentApiTest {
 
@@ -66,6 +67,27 @@ class ListAccountsTest extends AbstractManualAdjustmentApiTest {
         get(path() + "?balanceBucket=NONE").assertSuccess(200).assertPage(1, 10, 6);
         JsonNode bank = get(path() + "?ownerType=CASH_ACCOUNT").assertSuccess(200).assertPage(1, 10, 1).getFirst();
         assertEquals(String.valueOf(bankCashAccountId), bank.path("accountId").asString());
+    }
+
+    /** 账户号与科目名称随列表返回；按账户号精确筛选。 */
+    @Test
+    void test_accountNoReturnedAndFiltered() {
+        long created = postAsOperator(path(), AccountingSetupRequestBuilder.account(StandardAccountCodes.BANK_CASH,
+            LedgerOwnerType.CASH_ACCOUNT.getCode(), "6001", BalanceBucket.NONE.getCode())).assertSuccess(201)
+            .id("accountId");
+
+        List<JsonNode> matched = get(path() + "?accountNo=AE001-USD-10010101-0001").assertSuccess(200).assertPage(1, 10, 1);
+        JsonNode account = matched.getFirst();
+        assertAll(() -> assertEquals(String.valueOf(created), account.path("accountId").asString()),
+            () -> assertEquals("AE001-USD-10010101-0001", account.path("accountNo").asString()),
+            () -> assertEquals(StandardAccountCodes.BANK_CASH, account.path("accountCode").asString()),
+            () -> assertEquals("银行现金", account.path("accountName").asString()));
+        get(path() + "?accountNo=AE001-USD-10010101-0001&accountCode=" + StandardAccountCodes.CLIENT_PAYABLE)
+            .assertSuccess(200).assertPage(1, 10, 0);
+        get(path() + "?accountNo=AE001-USD-10010101-9999").assertSuccess(200).assertPage(1, 10, 0);
+        JsonNode mocked = get(path() + "?accountNo=" + LedgerMocker.MOCK_ACCOUNT_NO_PREFIX + bankCashAccountId)
+            .assertSuccess(200).assertPage(1, 10, 1).getFirst();
+        assertEquals(String.valueOf(bankCashAccountId), mocked.path("accountId").asString());
     }
 
     /** Client / Local Partner 不再是总账核算对象类型：过滤值非法。 */

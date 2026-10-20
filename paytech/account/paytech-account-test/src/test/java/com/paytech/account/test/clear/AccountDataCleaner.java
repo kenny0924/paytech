@@ -15,15 +15,15 @@ import com.paytech.foundation.testsupport.api.Clear;
 
 /**
  * Account 自有库 mor_account 测试数据的基线检查与全局清理
- * <li>清理范围等于测试 DDL 的 9 张表：六张明细账表、t_consumed_event、t_consumed_aggregate_version 与 t_compensation_event；没有保留数据。</li>
+ * <li>清理范围等于测试 DDL 的 10 张表：六张明细账表、账户号序列、t_consumed_event、t_consumed_aggregate_version 与 t_compensation_event；没有保留数据。</li>
  * <li>BeforeEach 只检查空基线，发现非测试遗留数据时失败而不删除；AfterEach 按引用逆序删除，清理失败后环境标记为不可复用。</li>
  */
 @TestComponent
 @Order(1)
 public class AccountDataCleaner implements Clear {
     private static final List<String> TABLES = List.of("t_account_entry", "t_balance_movement", "t_balance_applied_fact",
-        "t_account_posting", "t_account_posting_stream", "t_owner_account", "t_consumed_event",
-        "t_consumed_aggregate_version", "t_compensation_event");
+        "t_account_posting", "t_account_posting_stream", "t_owner_account", "t_owner_account_no_sequence",
+        "t_consumed_event", "t_consumed_aggregate_version", "t_compensation_event");
 
     private static boolean reusable = true;
 

@@ -22,12 +22,14 @@ public interface FinanceSubledgerClient {
      * @param ownerId 可选核算对象标识
      * @param accountCode 可选科目代码
      * @param balanceBucket 可选余额桶
+     * @param accountNo 可选账户号，精确匹配
      * @param page 已校验页码
      * @param size 已校验每页条数
      * @return Owner 账户分页
      */
     PagingResponseBody<OwnerAccountResponseBody> listOwnerAccounts(String entityType, String entityId, String currency,
-        String ownerType, String ownerId, String accountCode, String balanceBucket, int page, int size);
+        String ownerType, String ownerId, String accountCode, String balanceBucket, String accountNo, int page,
+        int size);
 
     /**
      * Owner 账户明细流水分页，按批次序号、行号升序

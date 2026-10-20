@@ -41,6 +41,9 @@ public class ListOwnerAccountsRequest {
     /** 可选余额桶。 */
     private final BalanceBucket balanceBucket;
 
+    /** 可选可读账户号，精确匹配。 */
+    private final String accountNo;
+
     /** 已校验的分页参数。 */
     @NotNull
     private final PagingRequestBody paging;

@@ -4,7 +4,7 @@
 # Retained: platform-support mor_platform from paytech/platform-support/docs/database/sql/platform-support-schema.sql.
 # 56 retained-service tables added on top of design 03 (not part of the §4.2 count).
 # 7 step-removed tables (approved later refactors, e.g. 2026-10-19 billing fact model; applied after the §4.2 count).
-# 26 step-added tables (approved refactor-step designs, e.g. design/05 t_card_material_ticket; not part of the §4.2 count).
+# 29 step-added tables (approved refactor-step designs, e.g. design/05 t_card_material_ticket; not part of the §4.2 count).
 # Structure: services.<service>.<database> = tables owned (or copied / per-database infrastructure);
 # Renamed: t_transaction_economics -> t_economic_fact, t_transaction_economic_component -> t_economic_fact_line, t_transaction_economic_comp_link -> t_economic_fact_line_link, t_account -> t_ledger_account, t_payment_method_profile -> t_pricing_profile, t_payment_method_profile_cond -> t_pricing_profile_cond.
 sharedInfrastructureTables:
@@ -22,6 +22,7 @@ services:
       - t_balance_movement
       - t_compensation_event
       - t_owner_account
+      - t_owner_account_no_sequence
   acquiring:
     mor_acquiring:
       - t_checkout_network_evidence
@@ -174,6 +175,7 @@ services:
       - t_dispute_submission_request
   ledger:
     mor_ledger:
+      - t_account_no_sequence
       - t_accounting_instruction
       - t_accounting_period
       - t_accounting_rule_bundle
@@ -182,6 +184,7 @@ services:
       - t_adjustment_approval
       - t_book_sequence
       - t_chart_account
+      - t_chart_account_change
       - t_chart_of_accounts
       - t_close_account_rule
       - t_close_approval

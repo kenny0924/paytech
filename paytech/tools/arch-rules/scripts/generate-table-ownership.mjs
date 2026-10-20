@@ -73,11 +73,12 @@ const stepAddedTables = [
   // Step 11b (design/04 §3.2) reshaped by the 2026-10-19 subledger refactor (decision 2026-10-18, technique 2.3):
   // account is the Owner subledger in mor_account - Owner accounts, posting streams, postings, entries, applied facts and
   // bucket movements. t_account_balance, t_balance_applied_entry and t_balance_discrepancy are dropped.
+  // 2026-10-19 chart hierarchy (decision 2026-10-19 item 7): t_owner_account_no_sequence allocates readable account numbers.
   {
     service: 'account',
     database: 'mor_account',
     tables: ['t_owner_account', 't_account_posting_stream', 't_account_posting', 't_account_entry',
-      't_balance_applied_fact', 't_balance_movement'],
+      't_balance_applied_fact', 't_balance_movement', 't_owner_account_no_sequence'],
   },
   // 2026-10-19 billing fact model refactor (REQ technique 2.3): mor_billing holds 11 tables - five billing fact tables,
   // the business calendar copy, the Foundation consume-idempotency pair, t_currency_spec and t_compensation_event.
@@ -94,6 +95,9 @@ const stepAddedTables = [
     database: 'mor_channel_connector',
     tables: ['t_channel_cost_plan', 't_channel_cost_plan_ver', 't_channel_cost_scope', 't_channel_cost_component'],
   },
+  // 2026-10-19 chart hierarchy (decision 2026-10-19 items 5 and 7): immutable chart account change records and the
+  // per book and chart account sequence of readable ledger account numbers in mor_ledger.
+  { service: 'ledger', database: 'mor_ledger', tables: ['t_chart_account_change', 't_account_no_sequence'] },
 ];
 
 const lines = readFileSync(designDocument, 'utf8').split('\n');

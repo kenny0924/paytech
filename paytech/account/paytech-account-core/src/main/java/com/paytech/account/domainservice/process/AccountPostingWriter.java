@@ -22,6 +22,7 @@ import com.paytech.account.core.dal.dataobject.AccountPosting;
 import com.paytech.account.core.dal.dataobject.AccountPostingStream;
 import com.paytech.account.core.dal.dataobject.BalanceMovement;
 import com.paytech.account.core.dal.dataobject.OwnerAccount;
+import com.paytech.account.core.dal.dataobject.OwnerAccountNoSequence;
 import com.paytech.account.core.enums.AccountStatus;
 import com.paytech.account.core.enums.MovementStatus;
 import com.paytech.account.domain.PostingLine;
@@ -29,6 +30,7 @@ import com.paytech.account.domainservice.repository.AccountEntryRepository;
 import com.paytech.account.domainservice.repository.AccountPostingRepository;
 import com.paytech.account.domainservice.repository.AccountPostingStreamRepository;
 import com.paytech.account.domainservice.repository.BalanceMovementRepository;
+import com.paytech.account.domainservice.repository.OwnerAccountNoSequenceRepository;
 import com.paytech.account.domainservice.repository.OwnerAccountRepository;
 import com.paytech.account.service.handler.AccountPostedHandler;
 import com.paytech.foundation.common.error.ErrorException;
@@ -42,6 +44,7 @@ import lombok.AllArgsConstructor;
  * <li>只在调用方已开启的 mor_account 本地事务内执行，不访问外部依赖；AccountPosted 以补偿事件登记，提交后由 Handler 发布。</li>
  * <li>锁顺序由调用方保证为：已处理事实行（事实入账、到期）→ 入账流行 → Owner 账户按主键升序；本类只负责后两步。</li>
  * <li>入账流当前固定分片 0：同一主体 + 币种内全部入账串行分配连续序号（设计 8.1）。</li>
+ * <li>新开户在同一事务内按主体 + 币种 + 科目代码取账户号序号；序列键是入账流键的细分，调用方已持有流行锁，序列行锁不引入新的锁顺序。</li>
  */
 @Component
 @AllArgsConstructor
@@ -58,6 +61,7 @@ public class AccountPostingWriter {
     private final BalanceMovementRepository balanceMovementRepository;
     private final CompensationEventRegistrar compensationEventRegistrar;
     private final AccountPostingStreamRepository accountPostingStreamRepository;
+    private final OwnerAccountNoSequenceRepository ownerAccountNoSequenceRepository;
 
     /**
      * 锁定入账流，不存在时创建
@@ -89,7 +93,7 @@ public class AccountPostingWriter {
     }
 
     /**
-     * 读取 Owner 账户，不存在时按账户类型目录开立 ACTIVE 零余额账户
+     * 读取 Owner 账户，不存在时按账户类型目录开立 ACTIVE 零余额账户；已存在的账户（含账户号）不做任何修改
      *
      * @param entityType 主体类型
      * @param entityId 主体标识
@@ -110,8 +114,17 @@ public class AccountPostingWriter {
         if (account != null) {
             return account;
         }
-        account = new OwnerAccount();
+        return openAccount(entityType, entityId, currency, accountType, ownerId, bucket, now);
+    }
+
+    /** 开立零余额账户：在调用方事务内取账户号序号后插入；并发开立同一账户由唯一键转为并发冲突，序号随事务回滚。 */
+    OwnerAccount openAccount(AccountEntityType entityType, String entityId, String currency, OwnerAccountType accountType,
+        String ownerId, BalanceBucket bucket, Instant now) {
+        requireTransaction();
+        OwnerAccount account = new OwnerAccount();
         account.setId(idGenerator.nextId());
+        account.setAccountNo(accountNo(entityType, entityId, currency, accountType,
+            allocateAccountNoSequence(entityType, entityId, currency, accountType, now)));
         account.setEntityType(entityType);
         account.setEntityId(entityId);
         account.setCurrency(currency);
@@ -129,6 +142,38 @@ public class AccountPostingWriter {
         account.setUpdateTime(now);
         ownerAccountRepository.insert(account);
         return account;
+    }
+
+    /** 主体 + 币种 + 科目代码的下一个账户号序号。 */
+    long allocateAccountNoSequence(AccountEntityType entityType, String entityId, String currency,
+        OwnerAccountType accountType, Instant now) {
+        OwnerAccountNoSequence sequence = new OwnerAccountNoSequence();
+        sequence.setId(idGenerator.nextId());
+        sequence.setEntityType(entityType);
+        sequence.setEntityId(entityId);
+        sequence.setCurrency(currency);
+        sequence.setAccountCode(accountType.getCode());
+        sequence.setCreateTime(now);
+        sequence.setUpdateTime(now);
+        return ownerAccountNoSequenceRepository.allocate(sequence);
+    }
+
+    /**
+     * 组装可读账户号 {主体段}-{币种}-{科目编号}-S{序号}
+     * <li>主体段：OE 为 entityNo，Finance Entity 为 FE 加主体主键；序号至少 6 位、不足补零（2026-10-19 科目分级与可读账户号决定第 7 条）。</li>
+     *
+     * @param entityType 主体类型
+     * @param entityId 主体标识
+     * @param currency 币种
+     * @param accountType 账户类型，提供科目编号
+     * @param sequence 序号，从 1 起
+     * @return 账户号，例如 AE001-USD-22010101-S000001
+     */
+    public static String accountNo(AccountEntityType entityType, String entityId, String currency,
+        OwnerAccountType accountType, long sequence) {
+        String entitySegment = entityType == AccountEntityType.FINANCE_ENTITY
+            ? entityType.getAggregatePrefix() + entityId : entityId;
+        return String.format("%s-%s-%s-S%06d", entitySegment, currency, accountType.getChartAccountNo(), sequence);
     }
 
     /**

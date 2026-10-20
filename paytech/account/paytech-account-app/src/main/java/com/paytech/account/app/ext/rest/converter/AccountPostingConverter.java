@@ -122,6 +122,7 @@ public class AccountPostingConverter {
         body.setEntryId(entry.getId().toString());
         body.setLineNo(entry.getLineNo().toString());
         body.setAccountId(account.getId().toString());
+        body.setAccountNo(account.getAccountNo());
         body.setAccountCode(account.getAccountCode());
         body.setOwnerType(account.getOwnerType().getCode());
         body.setOwnerId(account.getOwnerId());

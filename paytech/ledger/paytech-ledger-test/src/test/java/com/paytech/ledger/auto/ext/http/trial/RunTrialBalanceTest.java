@@ -2,6 +2,7 @@ package com.paytech.ledger.auto.ext.http.trial;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
@@ -58,11 +59,45 @@ class RunTrialBalanceTest extends AbstractTrialBalanceApiTest {
             () -> assertTrue(run.text("contentHash").matches("[0-9a-f]{64}")),
             () -> assertTrue(run.text("createTime") != null));
         List<JsonNode> lines = detailArray(run.text("runNo"), "lines");
-        assertEquals(List.of("BANK_CASH", "CAPITAL", LIABILITY_CODE),
-            lines.stream().map(line -> line.path("accountCode").asString()).toList(), "无发生额的保证金科目不落行");
+        assertEquals(List.of(StandardAccountCodes.BANK_CASH, LIABILITY_CODE, CAPITAL_CODE),
+            lines.stream().map(line -> line.path("accountCode").asString()).toList(), "按科目编号排序，无发生额的保证金科目不落行");
         assertLine(lines.get(0), AccountClass.ASSET, NormalSide.DEBIT, "100.00", "50.00", "30.00", "120.00");
-        assertLine(lines.get(1), AccountClass.EQUITY, NormalSide.CREDIT, "100.00", "0.00", "50.00", "150.00");
-        assertLine(lines.get(2), AccountClass.LIABILITY, NormalSide.CREDIT, "0.00", "30.00", "0.00", "-30.00");
+        assertLine(lines.get(1), AccountClass.LIABILITY, NormalSide.CREDIT, "0.00", "30.00", "0.00", "-30.00");
+        assertLine(lines.get(2), AccountClass.EQUITY, NormalSide.CREDIT, "100.00", "0.00", "50.00", "150.00");
+        assertEquals(List.of("10010101", "29010101", "30010101"),
+            lines.stream().map(line -> line.path("accountNo").asString()).toList());
+        lines.forEach(line -> assertEquals(3, line.path("level").asInt(), "末级行级次"));
+    }
+
+    /** M4：试算详情附加各级汇总行，金额等于其下级之和、一级合计借贷平衡；持久化行数与内容摘要不变。 */
+    @Test
+    void test_detailSummaryLinesRollUpToLevelOne() {
+        postedIn(ledger.getOpenPeriodId(), bankCashAccountId, capitalAccountId, "50");
+        postedIn(ledger.getOpenPeriodId(), liabilityAccountId, bankCashAccountId, "30");
+        var run = runTrial(ledger.getOpenPeriodId()).assertSuccess(201).assertText("lineCount", "3");
+
+        List<JsonNode> summaries = detailArray(run.text("runNo"), "summaryLines");
+        assertEquals(List.of("1001", "100101", "2901", "290101", "3001", "300101"),
+            summaries.stream().map(line -> line.path("accountNo").asString()).toList());
+        for (int index = 0; index < summaries.size(); index += 2) {
+            JsonNode levelOne = summaries.get(index);
+            JsonNode levelTwo = summaries.get(index + 1);
+            assertAll(() -> assertEquals(1, levelOne.path("level").asInt()),
+                () -> assertEquals(2, levelTwo.path("level").asInt()),
+                () -> assertTrue(levelOne.path("parentChartAccountId").isNull()),
+                () -> assertEquals(levelOne.path("chartAccountId").asString(),
+                    levelTwo.path("parentChartAccountId").asString()),
+                () -> assertEquals(levelOne.path("closingBalance"), levelTwo.path("closingBalance"), "唯一下级时汇总金额相同"));
+        }
+        assertLine(summaries.get(0), AccountClass.ASSET, NormalSide.DEBIT, "0.00", "50.00", "30.00", "20.00");
+        assertLine(summaries.get(2), AccountClass.LIABILITY, NormalSide.CREDIT, "0.00", "30.00", "0.00", "-30.00");
+        assertLine(summaries.get(4), AccountClass.EQUITY, NormalSide.CREDIT, "0.00", "0.00", "50.00", "50.00");
+        summaries.forEach(line -> assertFalse(line.path("postingAllowed").asBoolean()));
+        assertEquals(summaries.get(1).path("chartAccountId").asString(),
+            detailArray(run.text("runNo"), "lines").get(0).path("parentChartAccountId").asString(), "末级行指向二级汇总科目");
+        // 一级科目合计借贷平衡：资产借方 20 + 负债反向余额 30 = 权益贷方 50
+        assertEquals("50.00", run.text("totalDebit"));
+        assertEquals("50.00", run.text("totalCredit"));
     }
 
     /** 第 11b 步起试算不再核对账户投影（ledger 不保存余额）：篡改已过账分录行使借贷不平，试算以科目表级异常失败且不刷新期间余额。 */

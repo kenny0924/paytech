@@ -18,10 +18,14 @@ import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.operations.console.bff.integration.FinanceSetupClient;
 import com.paytech.operations.console.bff.service.model.FinanceSetupModels.AccountingPeriodResponseBody;
+import com.paytech.operations.console.bff.service.model.FinanceSetupModels.ChartAccountChangeResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceSetupModels.ChartAccountListResponseBody;
+import com.paytech.operations.console.bff.service.model.FinanceSetupModels.ChartAccountResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceSetupModels.ChartOfAccountsListResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceSetupModels.CreateAccountingPeriodRequestBody;
 import com.paytech.operations.console.bff.service.model.FinanceSetupModels.CreateAccountingPeriodResponseBody;
+import com.paytech.operations.console.bff.service.model.FinanceSetupModels.CreateChartAccountRequestBody;
+import com.paytech.operations.console.bff.service.model.FinanceSetupModels.CreateChartAccountResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceSetupModels.CreateFinanceEntityRequestBody;
 import com.paytech.operations.console.bff.service.model.FinanceSetupModels.CreateFinanceEntityResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceSetupModels.CreateFiscalCalendarRequestBody;
@@ -30,6 +34,7 @@ import com.paytech.operations.console.bff.service.model.FinanceSetupModels.Curre
 import com.paytech.operations.console.bff.service.model.FinanceSetupModels.FinanceEntityResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceSetupModels.FiscalCalendarResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceSetupModels.OpenAccountingPeriodResponseBody;
+import com.paytech.operations.console.bff.service.model.FinanceSetupModels.UpdateChartAccountRequestBody;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -40,9 +45,9 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 
 /**
- * 账务基础资料的浏览器入口：财务主体、财务日历、会计期间、科目表与币种，全部简单转发 ledger
+ * 账务基础资料的浏览器入口：财务主体、财务日历、会计期间、科目表与科目维护、币种，全部简单转发 ledger
  * <li>每个路由由 Gateway 绑定 FINANCE_ACCOUNTING_READ（GET）或 FINANCE_ACCOUNTING_MANAGE（POST），并经 PLT-I02 实时授权。</li>
- * <li>浏览器路径为 /finance + ledger 路径；Query 按路由白名单严格匹配，GET 与开放期间不接受 Body。</li>
+ * <li>浏览器路径为 /finance + ledger 路径；Query 按路由白名单严格匹配，GET、开放期间与科目停用/启用不接受 Body。</li>
  * <li>财务数据不含个人原值，不加入元数据日志前缀。</li>
  *
  * @author Claude
@@ -54,6 +59,7 @@ public class FinanceSetupController {
     private static final String ID = "[1-9][0-9]{0,18}";
     private static final String CHART_CODE = "[A-Z][A-Z0-9_]{0,63}";
     private static final String ENTITY_TYPE = "OPERATING_ENTITY|FINANCE_ENTITY";
+    private static final String ACCOUNT_STATUS = "ACTIVE|INACTIVE";
 
     private final FinanceSetupClient client;
 
@@ -135,13 +141,64 @@ public class FinanceSetupController {
         return client.listChartsOfAccounts();
     }
 
-    /** R15 科目表下的科目，按代码升序；postingAllowed 省略时返回全部。 */
+    /** R15 科目表下的科目，按科目编号升序；postingAllowed、accountStatus 省略时不筛选。 */
     @GetMapping("/chart-of-accounts/v1/{chartCode}/accounts")
     public ChartAccountListResponseBody listChartAccounts(HttpServletRequest servletRequest,
         @PathVariable("chartCode") @Pattern(regexp = CHART_CODE) String chartCode,
-        @RequestParam(value = "postingAllowed", required = false) Boolean postingAllowed) {
-        requireQueryKeys(servletRequest, Set.of("postingAllowed"));
-        return client.listChartAccounts(chartCode, postingAllowed);
+        @RequestParam(value = "postingAllowed", required = false) Boolean postingAllowed,
+        @RequestParam(value = "accountStatus", required = false) @Pattern(regexp = ACCOUNT_STATUS) String accountStatus) {
+        requireQueryKeys(servletRequest, Set.of("postingAllowed", "accountStatus"));
+        return client.listChartAccounts(chartCode, postingAllowed, accountStatus);
+    }
+
+    /** L1 新增 ACTIVE 科目。 */
+    @PostMapping("/chart-of-accounts/v1/{chartCode}/accounts")
+    @ResponseStatus(HttpStatus.CREATED)
+    public CreateChartAccountResponseBody createChartAccount(HttpServletRequest servletRequest,
+        OperatorContext context, @PathVariable("chartCode") @Pattern(regexp = CHART_CODE) String chartCode,
+        @RequestBody @NotNull @Valid CreateChartAccountRequestBody body) {
+        requireQueryKeys(servletRequest, Set.of());
+        return client.createChartAccount(context, chartCode, body);
+    }
+
+    /** L2 修改科目名称、编号与上级；与当前值相同时 ledger 直接返回。 */
+    @PostMapping("/chart-of-accounts/v1/{chartCode}/accounts/{chartAccountId}/update")
+    public ChartAccountResponseBody updateChartAccount(HttpServletRequest servletRequest, OperatorContext context,
+        @PathVariable("chartCode") @Pattern(regexp = CHART_CODE) String chartCode,
+        @PathVariable("chartAccountId") @Pattern(regexp = ID) String chartAccountId,
+        @RequestBody @NotNull @Valid UpdateChartAccountRequestBody body) {
+        requireQueryKeys(servletRequest, Set.of());
+        return client.updateChartAccount(context, chartCode, chartAccountId, body);
+    }
+
+    /** L3 停用科目；无请求体，携带 Body 时被请求边界拒绝。 */
+    @PostMapping("/chart-of-accounts/v1/{chartCode}/accounts/{chartAccountId}/disable")
+    public ChartAccountResponseBody disableChartAccount(HttpServletRequest servletRequest, OperatorContext context,
+        @PathVariable("chartCode") @Pattern(regexp = CHART_CODE) String chartCode,
+        @PathVariable("chartAccountId") @Pattern(regexp = ID) String chartAccountId) {
+        requireQueryKeys(servletRequest, Set.of());
+        return client.disableChartAccount(context, chartCode, chartAccountId);
+    }
+
+    /** L4 启用科目；无请求体，携带 Body 时被请求边界拒绝。 */
+    @PostMapping("/chart-of-accounts/v1/{chartCode}/accounts/{chartAccountId}/enable")
+    public ChartAccountResponseBody enableChartAccount(HttpServletRequest servletRequest, OperatorContext context,
+        @PathVariable("chartCode") @Pattern(regexp = CHART_CODE) String chartCode,
+        @PathVariable("chartAccountId") @Pattern(regexp = ID) String chartAccountId) {
+        requireQueryKeys(servletRequest, Set.of());
+        return client.enableChartAccount(context, chartCode, chartAccountId);
+    }
+
+    /** L5 科目变更记录分页，按变更时间倒序；chartAccountId 省略时返回整张科目表的记录。 */
+    @GetMapping("/chart-of-accounts/v1/{chartCode}/changes")
+    public PagingResponseBody<ChartAccountChangeResponseBody> listChartAccountChanges(HttpServletRequest servletRequest,
+        @PathVariable("chartCode") @Pattern(regexp = CHART_CODE) String chartCode,
+        @RequestParam(value = "chartAccountId", required = false) @Pattern(regexp = ID) String chartAccountId,
+        @RequestParam(value = "page", required = false) Integer page,
+        @RequestParam(value = "size", required = false) Integer size) {
+        requireQueryKeys(servletRequest, Set.of("chartAccountId", "page", "size"));
+        PagingRequestBody paging = PagingRequestBody.of(page, size);
+        return client.listChartAccountChanges(chartCode, chartAccountId, paging.page(), paging.size());
     }
 
     /** R16 币种列表，按代码升序。 */

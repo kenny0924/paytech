@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Breadcrumb, Button, Empty, Form, Table, Tag } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { DatePicker } from '../components/DatePicker';
@@ -11,7 +10,7 @@ import type { AccountRef, BookRef, JournalLine, LedgerAccount, LedgerBook, Ledge
 import { Amount, FinanceNote, LoadFailure, SideTag } from './FinanceParts';
 import { JournalEntryDrawer } from './JournalEntryDrawer';
 import { AccountList, BookList, bookTitle } from './SetupBooksTab';
-import { useChartAccounts, useCurrencies } from './useFinanceData';
+import { useCurrencies } from './useFinanceData';
 
 const linePage = pageOf(decodeJournalLine);
 /** 下钻时随浏览器历史保存的展示信息；直接粘贴 URL 进入时不存在，页面只用主键降级展示。 */
@@ -47,8 +46,7 @@ export function LedgerDrilldown({ onAuthorizationChanged }: { onAuthorizationCha
       <FinanceNote>点击账户行进入流水。总账只有以账簿主体为核算对象的控制账户（余额桶 NONE）；Client / Partner 明细与余额桶在「明细账查询」。账本查询只读，不显示新建按钮。</FinanceNote>
     </>}
     {query.level === 'lines' && book && account && <JournalLines key={keyOf(query, 'lines')} book={book} account={account} minorUnit={minorUnit} query={query}
-      onQueryChange={writeQuery('lines')} onOpenEntry={entry => go(replaceQuery(location.search, { entry }), state)}
-      onAuthorizationChanged={onAuthorizationChanged} />}
+      onQueryChange={writeQuery('lines')} onOpenEntry={entry => go(replaceQuery(location.search, { entry }), state)} />}
     {book && query.entry && <JournalEntryDrawer book={book} bookLabel={bookTitle(book)} journalEntryId={query.entry} minorUnit={minorUnit}
       onClose={() => go(replaceQuery(location.search, { entry: null }), state)} onAuthorizationChanged={onAuthorizationChanged} />}
   </>;
@@ -61,25 +59,27 @@ function keyOf(query: LedgerQuery, level: LedgerLevel): string {
   return JSON.stringify([query.book, query.account, query.lineFilters, query.linePaging]);
 }
 
+/** 面包屑账户：有账户号时以账户号开头，其后科目与核算对象；直接粘贴 URL 进入时只有主键。 */
 function accountTitle(account: AccountRef): string {
   if (!account.accountCode) return `账户 ${account.accountId}`;
-  return [account.accountCode, account.ownerType && account.ownerId ? `${account.ownerType} ${account.ownerId}` : null, account.balanceBucket].filter(Boolean).join(' · ');
+  return [account.accountNo, account.accountCode, account.ownerType && account.ownerId ? `${account.ownerType} ${account.ownerId}` : null, account.balanceBucket]
+    .filter(Boolean).join(' · ');
 }
 
-function JournalLines({ book, account, minorUnit, query, onQueryChange, onOpenEntry, onAuthorizationChanged }: {
+function JournalLines({ book, account, minorUnit, query, onQueryChange, onOpenEntry }: {
   book: BookRef; account: AccountRef; minorUnit?: number; query: LedgerQuery;
   onQueryChange: (next: { paging: { page: number; size: number }; filters: Readonly<Record<string, string>> }) => void;
-  onOpenEntry: (journalEntryId: string) => void; onAuthorizationChanged: () => void;
+  onOpenEntry: (journalEntryId: string) => void;
 }) {
   const [form] = Form.useForm<{ postingDateFrom?: string; postingDateTo?: string }>();
   const page = usePaging<JournalLine>(financePaths.journalLines(book.ledgerBookId, account.accountId), linePage, query.lineFilters,
     { initialPaging: query.linePaging, onQueryChange });
-  const chartAccounts = useChartAccounts(book.chartCode ?? null, false, onAuthorizationChanged);
-  const accountName = useMemo(() => chartAccounts.items.find(item => item.accountCode === account.accountCode)?.accountName, [chartAccounts.items, account.accountCode]);
+  const accountName = account.accountName;
   const pageHint = financeErrorTarget(page.failure)?.message;
   const amount = (value: string) => <Amount value={value} minorUnit={minorUnit} />;
   return <>
     {account.accountCode && <dl className="finance-summary">
+      {account.accountNo && <div><dt>账户号</dt><dd className="mono">{account.accountNo}</dd></div>}
       <div><dt>科目</dt><dd>{account.accountCode}{accountName ? ` · ${accountName}` : ''}</dd></div>
       <div><dt>核算对象</dt><dd>{account.ownerType} · {account.ownerId}</dd></div>
       <div><dt>余额桶</dt><dd>{account.balanceBucket}</dd></div>

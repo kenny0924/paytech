@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.operations.console.bff.integration.FinanceLedgerBookClient;
+import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.AccountBalanceListResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.AccountJournalLineResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.CreateLedgerAccountRequestBody;
 import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.CreateLedgerAccountResponseBody;
@@ -26,6 +27,8 @@ import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.
 import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.JournalEntryDetailResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.LedgerAccountResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.LedgerBookResponseBody;
+import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.TrialBalanceDetailResponseBody;
+import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.TrialBalanceRunResponseBody;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,9 +39,10 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 
 /**
- * 账簿、账户、账户流水与分录详情的浏览器入口，全部简单转发 ledger
+ * 账簿、账户、账户流水、分录详情、科目余额与试算记录的浏览器入口，全部简单转发 ledger
  * <li>每个路由由 Gateway 绑定 FINANCE_ACCOUNTING_READ（GET）或 FINANCE_ACCOUNTING_MANAGE（POST），并经 PLT-I02 实时授权。</li>
  * <li>浏览器路径为 /finance + ledger 路径；Query 按路由白名单严格匹配，GET 不接受 Body。</li>
+ * <li>试算只开放列表与详情查询；执行试算不经浏览器接入。</li>
  *
  * @author Claude
  */
@@ -48,6 +52,7 @@ import lombok.AllArgsConstructor;
 public class FinanceLedgerBookController {
     private static final String ID = "[1-9][0-9]{0,18}";
     private static final String DATE = "[0-9]{4}-[0-9]{2}-[0-9]{2}";
+    private static final String RUN_NO = "[1-9][0-9]{0,8}";
 
     private final FinanceLedgerBookClient client;
 
@@ -77,16 +82,18 @@ public class FinanceLedgerBookController {
     @GetMapping("/{ledgerBookId}/accounts")
     public PagingResponseBody<LedgerAccountResponseBody> listAccounts(HttpServletRequest servletRequest,
         @PathVariable("ledgerBookId") @Pattern(regexp = ID) String ledgerBookId,
+        @RequestParam(value = "accountNo", required = false) @Size(max = 48) String accountNo,
         @RequestParam(value = "accountCode", required = false) @Size(max = 64) String accountCode,
         @RequestParam(value = "ownerType", required = false) @Pattern(regexp = LEDGER_OWNER_TYPE_PATTERN) String ownerType,
         @RequestParam(value = "ownerId", required = false) @Size(max = 64) String ownerId,
         @RequestParam(value = "balanceBucket", required = false) @Pattern(regexp = "PENDING|AVAILABLE|LOCKED|NONE") String balanceBucket,
         @RequestParam(value = "page", required = false) Integer page,
         @RequestParam(value = "size", required = false) Integer size) {
-        requireQueryKeys(servletRequest, Set.of("accountCode", "ownerType", "ownerId", "balanceBucket", "page", "size"));
+        requireQueryKeys(servletRequest, Set.of("accountNo", "accountCode", "ownerType", "ownerId", "balanceBucket", "page",
+            "size"));
         PagingRequestBody paging = PagingRequestBody.of(page, size);
-        return client.listAccounts(ledgerBookId, accountCode, ownerType, ownerId, balanceBucket, paging.page(),
-            paging.size());
+        return client.listAccounts(ledgerBookId, accountNo, accountCode, ownerType, ownerId, balanceBucket,
+            paging.page(), paging.size());
     }
 
     /** R11 在账簿下新建 ACTIVE 账户。 */
@@ -121,5 +128,36 @@ public class FinanceLedgerBookController {
         @PathVariable("journalEntryId") @Pattern(regexp = ID) String journalEntryId) {
         requireQueryKeys(servletRequest, Set.of());
         return client.getJournalEntry(ledgerBookId, journalEntryId);
+    }
+
+    /** L6 账簿某期间的实时科目余额：有发生额或余额的末级科目及其各级上级，按科目编号排序。 */
+    @GetMapping("/{ledgerBookId}/periods/{periodId}/account-balances")
+    public AccountBalanceListResponseBody listAccountBalances(HttpServletRequest servletRequest,
+        @PathVariable("ledgerBookId") @Pattern(regexp = ID) String ledgerBookId,
+        @PathVariable("periodId") @Pattern(regexp = ID) String periodId) {
+        requireQueryKeys(servletRequest, Set.of());
+        return client.listAccountBalances(ledgerBookId, periodId);
+    }
+
+    /** 试算记录分页，按序号降序。 */
+    @GetMapping("/{ledgerBookId}/periods/{periodId}/trial-balances")
+    public PagingResponseBody<TrialBalanceRunResponseBody> listTrialBalances(HttpServletRequest servletRequest,
+        @PathVariable("ledgerBookId") @Pattern(regexp = ID) String ledgerBookId,
+        @PathVariable("periodId") @Pattern(regexp = ID) String periodId,
+        @RequestParam(value = "page", required = false) Integer page,
+        @RequestParam(value = "size", required = false) Integer size) {
+        requireQueryKeys(servletRequest, Set.of("page", "size"));
+        PagingRequestBody paging = PagingRequestBody.of(page, size);
+        return client.listTrialBalances(ledgerBookId, periodId, paging.page(), paging.size());
+    }
+
+    /** 单次试算详情：摘要、末级试算行、级次汇总行与异常。 */
+    @GetMapping("/{ledgerBookId}/periods/{periodId}/trial-balances/{runNo}")
+    public TrialBalanceDetailResponseBody getTrialBalance(HttpServletRequest servletRequest,
+        @PathVariable("ledgerBookId") @Pattern(regexp = ID) String ledgerBookId,
+        @PathVariable("periodId") @Pattern(regexp = ID) String periodId,
+        @PathVariable("runNo") @Pattern(regexp = RUN_NO) String runNo) {
+        requireQueryKeys(servletRequest, Set.of());
+        return client.getTrialBalance(ledgerBookId, periodId, runNo);
     }
 }

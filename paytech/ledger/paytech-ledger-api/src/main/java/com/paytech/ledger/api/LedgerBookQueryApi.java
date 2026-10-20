@@ -12,6 +12,7 @@ import com.paytech.ledger.api.response.JournalEntryDetailResponseBody;
 import com.paytech.ledger.api.response.LedgerBookResponseBody;
 
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 /**
  * FIN-I05：账本流水与账户查询（内部能力 Ledger & Account Balance）
@@ -44,6 +45,7 @@ public interface LedgerBookQueryApi {
      * 分页查询账簿内账户及余额，按科目代码、核算对象、余额桶排序
      *
      * @param ledgerBookId 账簿主键
+     * @param accountNo 可选账户号，精确匹配
      * @param accountCode 可选科目代码
      * @param ownerType 可选核算对象类型，取值见 {@code LedgerOwnerType}：OPERATING_ENTITY、FINANCE_ENTITY、CHANNEL_ACCOUNT、CASH_ACCOUNT、TAX_AUTHORITY；
      *        Client / Partner 明细在 account，控制科目账户的 Owner 为账簿主体
@@ -56,6 +58,7 @@ public interface LedgerBookQueryApi {
     @GetExchange("/{ledgerBookId}/accounts")
     PagingResponseBody<AccountResponseBody> listAccounts(
         @PathVariable("ledgerBookId") @Pattern(regexp = "[1-9][0-9]{0,18}") String ledgerBookId,
+        @RequestParam(value = "accountNo", required = false) @Size(max = 48) String accountNo,
         @RequestParam(value = "accountCode", required = false) String accountCode,
         @RequestParam(value = "ownerType", required = false) @Pattern(regexp = "OPERATING_ENTITY|FINANCE_ENTITY|CHANNEL_ACCOUNT|CASH_ACCOUNT|TAX_AUTHORITY") String ownerType,
         @RequestParam(value = "ownerId", required = false) String ownerId,

@@ -20,6 +20,13 @@ public class LedgerAccount {
     private Long id;
 
     /**
+     * 财务人员可读账户号：{主体}-{币种}-{科目编号}-{序号}
+     * <li>序号按账簿与科目从 1 递增、至少 4 位；创建时生成后不再改变、全局唯一。</li>
+     * <li>只用于显示与搜索，不作为跨系统关联键，不进入事件载荷。</li>
+     */
+    private String accountNo;
+
+    /**
      * 该账户严格归属的本库经营主体币种账簿
      */
     private Long ledgerBookId;
@@ -58,11 +65,6 @@ public class LedgerAccount {
      * <li>允许值：ACTIVE、INACTIVE、CLOSED。</li>
      */
     private AccountStatus accountStatus;
-
-
-
-
-
 
     /**
      * 该记录在 Ledger 数据库中的 UTC 微秒创建时间

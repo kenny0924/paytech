@@ -1,6 +1,6 @@
 {
   "name": "account",
-  "describe": "account 明细账（9 张表）：Owner 账户、入账流、入账批次与流水，经济事实应用与余额桶移动；消费幂等与补偿发布。已有 mor_account 按 docs/database/sql/changes/2026-10-19-account-subledger.sql 变更",
+  "describe": "account 明细账（10 张表）：Owner 账户与账户号序列、入账流、入账批次与流水，经济事实应用与余额桶移动；消费幂等与补偿发布。已有 mor_account 按 docs/database/sql/changes/2026-10-19-account-subledger.sql、changes/2026-10-19-owner-account-no.sql 依次变更",
   "avatar": "",
   "version": "4.9.3",
   "createdTime": "2025-5-28 13:36:15",
@@ -508,6 +508,27 @@
           "id": "809B79B6-2C55-5FED-B02B-522011DC8DEB"
         },
         {
+          "defKey": "account_no",
+          "defName": "账户号",
+          "comment": "财务人员可读账户号：{主体}-{币种}-{科目编号}-S{序号}，S 表示明细账账户，序号按主体、币种与科目代码从 1 递增、至少 6 位；主体段 OE 为 entityNo、Finance Entity 为 FE 加主体主键；创建时生成后不再改变，只用于显示与搜索，不进入事件载荷、不作为跨系统关联键。",
+          "type": "VARCHAR",
+          "len": 48,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "6CCA1534-1438-5354-A8C2-88E7F62DD7B1"
+        },
+        {
           "defKey": "entity_type",
           "defName": "主体类型",
           "comment": "账户所属法律主体类型。允许值：OPERATING_ENTITY、FINANCE_ENTITY。",
@@ -840,6 +861,20 @@
           "id": "26D50B62-CFAE-5089-BD09-1AC8D71EEA97"
         },
         {
+          "defKey": "uk_owner_account_no",
+          "defName": "唯一索引 account_no",
+          "unique": true,
+          "comment": "保证业务唯一性：account_no",
+          "fields": [
+            {
+              "fieldDefKey": "6CCA1534-1438-5354-A8C2-88E7F62DD7B1",
+              "ascOrDesc": "A",
+              "id": "EB1C639E-FE0E-50B9-A4EF-85198A273A7D"
+            }
+          ],
+          "id": "49A8A301-080D-5323-95CA-7BBDE7A1982C"
+        },
+        {
           "defKey": "idx_owner_account_owner",
           "defName": "访问索引 owner_type、owner_id、entity_id、currency",
           "unique": false,
@@ -896,6 +931,372 @@
             }
           ],
           "id": "C870EBE7-F785-5C60-AD0C-A5DC92B0EEBF"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "3AACFAFC-D696-5365-A221-0F425167C462",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_owner_account_no_sequence",
+      "defName": "账户号序列",
+      "comment": "按主体、币种与科目代码为明细账账户分配可读账户号序号。",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "id",
+          "defName": "账户号序列ID",
+          "comment": "账户号序列的服务侧雪花主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "1EAEBCF8-ACFA-5075-B358-43331E1EAD60"
+        },
+        {
+          "defKey": "entity_type",
+          "defName": "主体类型",
+          "comment": "账户所属法律主体类型。允许值：OPERATING_ENTITY、FINANCE_ENTITY。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "CB186BB9-CC33-5F32-B8BD-1A9158916874"
+        },
+        {
+          "defKey": "entity_id",
+          "defName": "主体标识",
+          "comment": "账户所属主体标识：OE 为 CCT entityNo，Finance Entity 为 ledger 主数据主键十进制字符串。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "8FEE69B3-4C48-5B34-A921-A640E7D9A5EA"
+        },
+        {
+          "defKey": "currency",
+          "defName": "币种",
+          "comment": "账户币种，ISO 4217 大写三位代码。",
+          "type": "CHAR",
+          "len": 3,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "4629ED77-822E-4610-86D1-82426E63066E",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "7107154F-CF2B-4D2A-AC43-514D4027E5C6",
+          "id": "C88631E7-79CA-54B7-989C-A9C130986A0B"
+        },
+        {
+          "defKey": "account_code",
+          "defName": "科目代码",
+          "comment": "账户类型目录中的科目代码。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "C89D6FAE-5CE9-50C9-916D-A322875BDDD8"
+        },
+        {
+          "defKey": "last_value",
+          "defName": "最近序号",
+          "comment": "同主体同币种同科目最近一次分配给账户号的序号；在开户本地事务中以 INSERT … ON DUPLICATE KEY UPDATE 原子递增，已分配序号不复用，允许空洞。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "FA9EF00B-5876-5E6E-9C1C-5224E7F3028A"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在 account 数据库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "76C34068-D33D-5785-99DB-3164ED2FBC93"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "11457C27-4865-5C6F-8C8E-183BE93D6AC0"
+        }
+      ],
+      "correlations": [],
+      "indexes": [
+        {
+          "defKey": "uk_owner_account_no_seq",
+          "defName": "唯一索引 entity_type、entity_id、currency、account_code",
+          "unique": true,
+          "comment": "保证业务唯一性：entity_type、entity_id、currency、account_code",
+          "fields": [
+            {
+              "fieldDefKey": "CB186BB9-CC33-5F32-B8BD-1A9158916874",
+              "ascOrDesc": "A",
+              "id": "CD1F084E-89C9-5077-A1DF-FB937D7902AF"
+            },
+            {
+              "fieldDefKey": "8FEE69B3-4C48-5B34-A921-A640E7D9A5EA",
+              "ascOrDesc": "A",
+              "id": "4000ACE4-43E0-5A38-B800-584E5EF41FBE"
+            },
+            {
+              "fieldDefKey": "C88631E7-79CA-54B7-989C-A9C130986A0B",
+              "ascOrDesc": "A",
+              "id": "FCB6C266-8097-52C9-8C9E-6A367A5FAE1E"
+            },
+            {
+              "fieldDefKey": "C89D6FAE-5CE9-50C9-916D-A322875BDDD8",
+              "ascOrDesc": "A",
+              "id": "7DDCB560-BFD3-5BE5-8A33-15E190A7C598"
+            }
+          ],
+          "id": "A80BB288-8253-5163-AEAA-2BCECA12E632"
         }
       ],
       "type": "P"
@@ -4660,7 +5061,7 @@
             "type": "P",
             "size": {
               "width": 390,
-              "height": 438
+              "height": 460
             }
           },
           {
@@ -4847,12 +5248,28 @@
               }
             },
             "isLock": true
+          },
+          {
+            "id": "1EB51119-1257-5BCA-A077-984BA895B277",
+            "shape": "table",
+            "position": {
+              "x": 0,
+              "y": 1018
+            },
+            "count": 0,
+            "originKey": "3AACFAFC-D696-5365-A221-0F425167C462",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 284
+            }
           }
         ]
       },
       "properties": {
         "primaryTables": [
           "t_owner_account",
+          "t_owner_account_no_sequence",
           "t_account_entry",
           "t_account_posting",
           "t_account_posting_stream",
@@ -4862,7 +5279,7 @@
         "referenceTables": []
       },
       "id": "54C1931F-0997-56AE-8844-86CD665D567F",
-      "comment": "明细账：账户、批次与流水边界关系图。连线只表示库内主键引用：账户流水 n:1 入账批次、n:1 Owner 账户，冲回行 1:1 指向被冲回的原流水；已处理经济事实与余额桶移动各 1:1 指向其生成的入账批次。未连线的逻辑关联：t_account_posting_stream 与 t_account_posting 按流身份 (entity_type, entity_id, currency, shard_no) 对应，流行的 last_sequence 等于该流最大 posting_sequence，不是主键引用；t_balance_movement 按 (entity_type, entity_id, currency, account_code, owner_type, owner_id, 转出 / 转入桶) 组合身份对应两个 Owner 账户；fact_id、supersedes_fact_id、superseded_by_fact_id 为 billing 经济事实 ID，库内按 fact_id 解析；entity_id、finance_entity_id、owner_id 指向 CCT、ledger 或 reconciliation，不建立跨库关系。"
+      "comment": "明细账：账户、批次与流水边界关系图。连线只表示库内主键引用：账户流水 n:1 入账批次、n:1 Owner 账户，冲回行 1:1 指向被冲回的原流水；已处理经济事实与余额桶移动各 1:1 指向其生成的入账批次。未连线的逻辑关联：t_owner_account_no_sequence 按 (entity_type, entity_id, currency, account_code) 为 Owner 账户分配 account_no 序号，不是主键引用；t_account_posting_stream 与 t_account_posting 按流身份 (entity_type, entity_id, currency, shard_no) 对应，流行的 last_sequence 等于该流最大 posting_sequence，不是主键引用；t_balance_movement 按 (entity_type, entity_id, currency, account_code, owner_type, owner_id, 转出 / 转入桶) 组合身份对应两个 Owner 账户；fact_id、supersedes_fact_id、superseded_by_fact_id 为 billing 经济事实 ID，库内按 fact_id 解析；entity_id、finance_entity_id、owner_id 指向 CCT、ledger 或 reconciliation，不建立跨库关系。"
     },
     {
       "defKey": "reliability",

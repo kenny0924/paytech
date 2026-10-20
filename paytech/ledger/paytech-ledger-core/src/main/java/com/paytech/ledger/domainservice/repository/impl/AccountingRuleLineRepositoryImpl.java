@@ -23,6 +23,12 @@ public class AccountingRuleLineRepositoryImpl implements AccountingRuleLineRepos
         return mapper.selectByVersion(bundleVerId);
     }
 
+    /** 是否有规则集当前生效版本的规则行引用该科目代码。 */
+    @Override
+    public boolean existsCurrentByAccountCode(String accountCode) {
+        return mapper.countCurrentByAccountCode(accountCode) > 0;
+    }
+
     /** 批量写入一个版本的规则行，写入行数必须与输入一致。 */
     @Override
     public void insertAll(List<AccountingRuleLine> lines) {

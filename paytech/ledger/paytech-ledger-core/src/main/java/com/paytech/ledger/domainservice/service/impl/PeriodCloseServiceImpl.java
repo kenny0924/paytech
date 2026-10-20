@@ -14,26 +14,32 @@ import org.springframework.transaction.support.TransactionTemplate;
 import com.paytech.account.api.enums.BalanceBucket;
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.ErrorException;
+import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.ledger.api.enums.LedgerOwnerType;
+import com.paytech.ledger.api.enums.LedgerSetupErrorCode;
 import com.paytech.ledger.core.dal.dataobject.AccountingInstruction;
 import com.paytech.ledger.core.dal.dataobject.AccountingPeriod;
 import com.paytech.ledger.core.dal.dataobject.BookSequence;
 import com.paytech.ledger.core.dal.dataobject.ChartAccount;
 import com.paytech.ledger.core.dal.dataobject.CloseApproval;
 import com.paytech.ledger.core.dal.dataobject.CloseStep;
+import com.paytech.ledger.core.dal.dataobject.FinanceEntity;
 import com.paytech.ledger.core.dal.dataobject.InstructionLine;
 import com.paytech.ledger.core.dal.dataobject.LedgerAccount;
 import com.paytech.ledger.core.dal.dataobject.LedgerBook;
 import com.paytech.ledger.core.dal.dataobject.PeriodClose;
 import com.paytech.ledger.core.dal.dataobject.PeriodCloseBook;
 import com.paytech.ledger.core.enums.AccountStatus;
+import com.paytech.ledger.core.enums.ChartAccountStatus;
 import com.paytech.ledger.core.enums.CloseStepStatus;
 import com.paytech.ledger.core.enums.CloseStepType;
+import com.paytech.ledger.core.enums.LedgerEntityType;
 import com.paytech.ledger.core.enums.PeriodCloseStatus;
 import com.paytech.ledger.core.enums.PeriodStatus;
+import com.paytech.ledger.domain.LedgerAccountNo;
 import com.paytech.ledger.domain.PeriodCloseContentHash;
 import com.paytech.ledger.domain.PeriodCloseContext;
 import com.paytech.ledger.domain.PeriodReopenContentHash;
@@ -41,12 +47,14 @@ import com.paytech.ledger.domain.PeriodReopenContext;
 import com.paytech.ledger.domain.PeriodReopenPlan;
 import com.paytech.ledger.domain.view.PeriodCloseDetailView;
 import com.paytech.ledger.domain.view.PeriodCloseView;
+import com.paytech.ledger.domainservice.repository.AccountNoSequenceRepository;
 import com.paytech.ledger.domainservice.repository.AccountingInstructionRepository;
 import com.paytech.ledger.domainservice.repository.AccountingPeriodRepository;
 import com.paytech.ledger.domainservice.repository.BookSequenceRepository;
 import com.paytech.ledger.domainservice.repository.ChartAccountRepository;
 import com.paytech.ledger.domainservice.repository.CloseApprovalRepository;
 import com.paytech.ledger.domainservice.repository.CloseStepRepository;
+import com.paytech.ledger.domainservice.repository.FinanceEntityRepository;
 import com.paytech.ledger.domainservice.repository.InstructionLineRepository;
 import com.paytech.ledger.domainservice.repository.JournalEntryRepository;
 import com.paytech.ledger.domainservice.repository.LedgerAccountRepository;
@@ -72,10 +80,12 @@ public class PeriodCloseServiceImpl implements PeriodCloseService {
     private final BookSequenceRepository bookSequenceRepository;
     private final ChartAccountRepository chartAccountRepository;
     private final JournalEntryRepository journalEntryRepository;
+    private final FinanceEntityRepository financeEntityRepository;
     private final CloseApprovalRepository closeApprovalRepository;
     private final InstructionLineRepository instructionLineRepository;
     private final PeriodCloseBookRepository periodCloseBookRepository;
     private final AccountingPeriodRepository accountingPeriodRepository;
+    private final AccountNoSequenceRepository accountNoSequenceRepository;
     private final AccountingInstructionRepository accountingInstructionRepository;
 
     /** 期间 OPEN → CLOSING 与流程登记、水位冻结同一事务提交。 */
@@ -153,9 +163,28 @@ public class PeriodCloseServiceImpl implements PeriodCloseService {
         if (existing != null) {
             return existing;
         }
-        LedgerAccount account = newAccount(book, chartAccountRepository.findById(resultChartAccountId), ownerType);
+        ChartAccount chartAccount = chartAccountRepository.findById(resultChartAccountId);
+        if (chartAccount.getAccountStatus() != ChartAccountStatus.ACTIVE) {
+            throw new FailException(LedgerSetupErrorCode.CHART_ACCOUNT_INACTIVE, "本期损益科目已停用，不能新建账户: "
+                + chartAccount.getAccountCode() + ", 账簿 " + book.getId());
+        }
+        LedgerAccount account = newAccount(book, chartAccount, ownerType);
+        long sequence = accountNoSequenceRepository.next(book.getId(), chartAccount.getId());
+        account.setAccountNo(LedgerAccountNo.of(book, chartAccount, bookFinanceEntity(book)).withSequence(sequence));
         ledgerAccountRepository.insert(account);
         return account;
+    }
+
+    /** FE 账簿的财务主体（账户号主体段）；OE 账簿返回空。 */
+    FinanceEntity bookFinanceEntity(LedgerBook book) {
+        if (book.getEntityType() != LedgerEntityType.FINANCE_ENTITY) {
+            return null;
+        }
+        FinanceEntity entity = financeEntityRepository.findById(Long.parseLong(book.getEntityId()));
+        if (entity == null) {
+            throw new ErrorException("账簿的财务主体不存在: 账簿 " + book.getId() + ", 主体 " + book.getEntityId());
+        }
+        return entity;
     }
 
     /** 构造 ACTIVE 账户身份，正常方向取自科目；余额由分录聚合得出。 */

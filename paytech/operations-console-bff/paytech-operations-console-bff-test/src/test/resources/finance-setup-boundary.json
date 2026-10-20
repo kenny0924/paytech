@@ -171,7 +171,7 @@
     "id": "R15",
     "method": "GET",
     "path": "/finance/chart-of-accounts/v1/STANDARD/accounts",
-    "query": "?postingAllowed=true",
+    "query": "?postingAllowed=true&accountStatus=ACTIVE",
     "request": null,
     "status": 200,
     "response": {
@@ -179,15 +179,157 @@
         {
           "chartAccountId": "7312345678901238001",
           "chartId": "7312345678901237001",
+          "accountNo": "22010101",
           "accountCode": "CLIENT_PAYABLE",
           "accountName": "Client 应付（控制科目）",
           "accountClass": "LIABILITY",
           "normalSide": "CREDIT",
-          "postingAllowed": true
+          "postingAllowed": true,
+          "parentChartAccountId": "7312345678901238100",
+          "level": 3,
+          "accountStatus": "ACTIVE"
         }
       ]
     },
     "routeCode": "operations-finance-chart-account-list"
+  },
+  {
+    "id": "L1",
+    "method": "POST",
+    "path": "/finance/chart-of-accounts/v1/STANDARD/accounts",
+    "query": "",
+    "request": {
+      "accountNo": "220104",
+      "accountCode": "MERCHANT_RESERVE_PAYABLE",
+      "accountName": "Client 风险准备金",
+      "accountClass": "LIABILITY",
+      "normalSide": "CREDIT",
+      "postingAllowed": true,
+      "parentAccountNo": "2201"
+    },
+    "status": 201,
+    "response": {
+      "chartAccountId": "7312345678901238104"
+    },
+    "routeCode": "operations-finance-chart-account-create"
+  },
+  {
+    "id": "L2",
+    "method": "POST",
+    "path": "/finance/chart-of-accounts/v1/STANDARD/accounts/7312345678901238104/update",
+    "query": "",
+    "request": {
+      "accountName": "Client 风险准备金（应付）",
+      "accountNo": "220105",
+      "parentAccountNo": "2201"
+    },
+    "status": 200,
+    "response": {
+      "chartAccountId": "7312345678901238104",
+      "chartId": "7312345678901237001",
+      "accountNo": "220105",
+      "accountCode": "MERCHANT_RESERVE_PAYABLE",
+      "accountName": "Client 风险准备金（应付）",
+      "accountClass": "LIABILITY",
+      "normalSide": "CREDIT",
+      "postingAllowed": true,
+      "parentChartAccountId": "7312345678901238100",
+      "level": 2,
+      "accountStatus": "ACTIVE"
+    },
+    "routeCode": "operations-finance-chart-account-update"
+  },
+  {
+    "id": "L3",
+    "method": "POST",
+    "path": "/finance/chart-of-accounts/v1/STANDARD/accounts/7312345678901238104/disable",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "chartAccountId": "7312345678901238104",
+      "chartId": "7312345678901237001",
+      "accountNo": "220105",
+      "accountCode": "MERCHANT_RESERVE_PAYABLE",
+      "accountName": "Client 风险准备金（应付）",
+      "accountClass": "LIABILITY",
+      "normalSide": "CREDIT",
+      "postingAllowed": true,
+      "parentChartAccountId": "7312345678901238100",
+      "level": 2,
+      "accountStatus": "INACTIVE"
+    },
+    "routeCode": "operations-finance-chart-account-disable"
+  },
+  {
+    "id": "L4",
+    "method": "POST",
+    "path": "/finance/chart-of-accounts/v1/STANDARD/accounts/7312345678901238104/enable",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "chartAccountId": "7312345678901238104",
+      "chartId": "7312345678901237001",
+      "accountNo": "220105",
+      "accountCode": "MERCHANT_RESERVE_PAYABLE",
+      "accountName": "Client 风险准备金（应付）",
+      "accountClass": "LIABILITY",
+      "normalSide": "CREDIT",
+      "postingAllowed": true,
+      "parentChartAccountId": "7312345678901238100",
+      "level": 2,
+      "accountStatus": "ACTIVE"
+    },
+    "routeCode": "operations-finance-chart-account-enable"
+  },
+  {
+    "id": "L5",
+    "method": "GET",
+    "path": "/finance/chart-of-accounts/v1/STANDARD/changes",
+    "query": "?chartAccountId=7312345678901238104&page=1&size=10",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "changeId": "7312345678901238202",
+          "chartAccountId": "7312345678901238104",
+          "accountNo": "220105",
+          "changeType": "UPDATE",
+          "beforeAccountNo": "220104",
+          "afterAccountNo": "220105",
+          "beforeParentAccountNo": "2201",
+          "afterParentAccountNo": "2201",
+          "beforeAccountName": "Client 风险准备金",
+          "afterAccountName": "Client 风险准备金（应付）",
+          "beforeAccountStatus": "ACTIVE",
+          "afterAccountStatus": "ACTIVE",
+          "operatorId": "900000000000010001",
+          "changeTime": "2026-10-19T09:10:00.123456Z"
+        },
+        {
+          "changeId": "7312345678901238201",
+          "chartAccountId": "7312345678901238104",
+          "accountNo": "220104",
+          "changeType": "CREATE",
+          "beforeAccountNo": null,
+          "afterAccountNo": "220104",
+          "beforeParentAccountNo": null,
+          "afterParentAccountNo": "2201",
+          "beforeAccountName": null,
+          "afterAccountName": "Client 风险准备金",
+          "beforeAccountStatus": null,
+          "afterAccountStatus": "ACTIVE",
+          "operatorId": "900000000000010001",
+          "changeTime": "2026-10-19T09:00:00Z"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 2
+    },
+    "routeCode": "operations-finance-chart-account-change-list"
   },
   {
     "id": "R16",

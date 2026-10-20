@@ -263,3 +263,7 @@ POST 使用去重权限与幂等键，PUT 携带当前版本，每次保存只�
 需求与设计见[技术方案](../requirements/20261019/finance-account明细账与ledger控制科目重构/technique.md) 2.2 / 2.4。新增只读页面 `OPERATIONS_FINANCE_SUBLEDGER → /finance/subledger`（父 `OPERATIONS_FINANCE`，READ 权限），由 `src/pages/FinanceSubledger.tsx` 与 `src/finance/Subledger*.tsx` 实现：主体类型 / 主体标识 / 币种必填后查询 Owner 账户（`GET /finance/owner-accounts/v1`），点击账户进入明细流水（`.../{accountId}/entries`，只接受分页），点击批次序号打开入账批次抽屉（`GET /finance/account-postings/v1/{postingId}`）。主体、筛选、账户、分页与打开的批次都在 URL，面包屑逐级返回保留筛选。
 
 账本查询与账务基础资料同步改为控制科目口径：ledger 账户核算对象只剩 `OPERATING_ENTITY`、`FINANCE_ENTITY`、`CHANNEL_ACCOUNT`、`CASH_ACCOUNT`、`TAX_AUTHORITY`，新建账户的余额桶固定 NONE；流水与分录详情显示 `ACCOUNT_POSTING · account` 来源与 account 批次，控制科目行的「流水 …后 4 位 ↗」以 `/finance/subledger?posting=&entry=` 打开明细账批次抽屉并高亮该流水。余额查询的无账户错误 `OWNER_ACCOUNT_NOT_FOUND` 挂在 Owner ID 字段。
+
+## 会计科目分级维护与可读账户号（2026-10-20）
+
+需求与设计见[技术方案](../requirements/20261019/ledger-会计科目分级维护/technique.md) 2.5。账务基础资料「科目表与币种」页签的科目改为按编号排序的科目树（`SetupChartsTab.tsx`）：展开 / 折叠、按编号 / 名称 / 代码搜索、「显示已停用」开关，科目表被账簿采用时显示提示条；拥有 `OPERATIONS_FINANCE_SETUP_MANAGE` 时显示新增科目与操作菜单（编辑、新增下级、停用 / 启用），只读账号只保留变更记录。新增 / 编辑弹窗、停用 / 启用确认与变更记录抽屉在 `ChartAccountModals.tsx`，科目维护的 8 个 ledger 错误码按 technique 2.3 落到表单字段或弹窗顶部（`financeErrorTargets` 共 23 个）。账本查询新增「试算平衡」页签（`TrialBalanceTab.tsx`，URL `?tab=trial&tbBook=&tbPeriod=&tbView=&tbRun=`）：选择账簿与期间后查看实时科目余额或试算记录（列表 → 详情抽屉含汇总行与异常），一级科目合计校验借 = 贷，末级行进入账簿下钻；本页不发起试算。账簿账户、账本下钻（列表与面包屑）、明细账账户与流水 / 批次抽屉、分录详情显示账户号，两处账户列表可按账户号精确筛选；建账户弹窗的科目选择为「编号 名称」且只列启用的末级科目。

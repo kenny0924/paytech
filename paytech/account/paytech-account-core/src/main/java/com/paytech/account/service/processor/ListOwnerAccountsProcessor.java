@@ -29,6 +29,6 @@ public class ListOwnerAccountsProcessor extends AbstractProcessor<ListOwnerAccou
     protected PagingResponseBody<OwnerAccount> processRequest(ListOwnerAccountsRequest request) {
         return ownerAccountQueryService.pageAccounts(request.getEntityType(), request.getEntityId(),
             request.getCurrency(), request.getOwnerType(), request.getOwnerId(), request.getAccountCode(),
-            request.getBalanceBucket(), request.getPaging());
+            request.getBalanceBucket(), request.getAccountNo(), request.getPaging());
     }
 }

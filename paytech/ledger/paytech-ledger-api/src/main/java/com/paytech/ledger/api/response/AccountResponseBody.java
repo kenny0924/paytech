@@ -10,8 +10,17 @@ public class AccountResponseBody {
     /** 账户主键。 */
     private String accountId;
 
+    /**
+     * 财务人员可读账户号
+     * <li>{主体}-{币种}-{科目编号}-{序号}；只用于显示与搜索，不作为关联键。</li>
+     */
+    private String accountNo;
+
     /** 科目代码。 */
     private String accountCode;
+
+    /** 科目名称。 */
+    private String accountName;
 
     /** 核算对象类型。 */
     private String ownerType;

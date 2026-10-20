@@ -13,6 +13,7 @@ import org.apache.ibatis.annotations.Update;
 
 import com.paytech.ledger.core.dal.dataobject.AccountingInstruction;
 import com.paytech.ledger.core.dal.dataobject.ChartAccount;
+import com.paytech.ledger.core.dal.dataobject.ChartAccountChange;
 import com.paytech.ledger.core.dal.dataobject.ChartOfAccounts;
 import com.paytech.ledger.core.dal.dataobject.CurrencySpec;
 import com.paytech.ledger.core.dal.dataobject.InstructionLine;
@@ -22,7 +23,7 @@ import com.paytech.ledger.core.dal.dataobject.LedgerAccount;
 import com.paytech.ledger.core.dal.dataobject.ManualAdjustment;
 
 /**
- * Ledger 测试专用读写：前置状态构造、只读断言与全局清理；只触碰 mor_ledger 的 31 张表
+ * Ledger 测试专用读写：前置状态构造、只读断言与全局清理；只触碰 mor_ledger 的 33 张表
  * <li>初始化 DML 的固定 ID 行（小于 1,000,000）是只读全局基础数据，清理时保留。</li>
  */
 @Mapper
@@ -30,7 +31,7 @@ public interface AccountingTestMapper {
     /** 初始化 DML 保留行的 ID 上界。 */
     long RESERVED_ID_LIMIT = 1_000_000L;
 
-    /** 统计 mor_ledger 全部 31 张表中测试可写入的行数（保留表只统计 ID ≥ 1,000,000 的行），按表返回。 */
+    /** 统计 mor_ledger 全部 33 张表中测试可写入的行数（保留表只统计 ID ≥ 1,000,000 的行），按表返回。 */
     @Select("""
         SELECT 't_close_approval' t, COUNT(*) c FROM t_close_approval UNION ALL
         SELECT 't_close_step', COUNT(*) FROM t_close_step UNION ALL
@@ -44,6 +45,8 @@ public interface AccountingTestMapper {
         SELECT 't_ledger_book', COUNT(*) FROM t_ledger_book UNION ALL
         SELECT 't_book_sequence', COUNT(*) FROM t_book_sequence UNION ALL
         SELECT 't_ledger_account', COUNT(*) FROM t_ledger_account UNION ALL
+        SELECT 't_account_no_sequence', COUNT(*) FROM t_account_no_sequence UNION ALL
+        SELECT 't_chart_account_change', COUNT(*) FROM t_chart_account_change UNION ALL
         SELECT 't_fiscal_calendar', COUNT(*) FROM t_fiscal_calendar UNION ALL
         SELECT 't_accounting_period', COUNT(*) FROM t_accounting_period UNION ALL
         SELECT 't_accounting_instruction', COUNT(*) FROM t_accounting_instruction UNION ALL
@@ -95,10 +98,48 @@ public interface AccountingTestMapper {
     void insertChartOfAccounts(ChartOfAccounts chart);
 
     /** 插入测试科目（主键须 >= 1000000，由全局清理删除）。 */
-    @Insert("INSERT INTO t_chart_account (id, chart_id, parent_account_id, account_code, account_name, account_class, "
-        + "normal_side, posting_allowed, create_time, update_time) VALUES (#{id}, #{chartId}, #{parentAccountId}, "
-        + "#{accountCode}, #{accountName}, #{accountClass}, #{normalSide}, #{postingAllowed}, #{createTime}, #{updateTime})")
+    @Insert("INSERT INTO t_chart_account (id, chart_id, parent_account_id, account_no, account_code, account_name, "
+        + "account_class, normal_side, posting_allowed, account_status, create_time, update_time) VALUES (#{id}, "
+        + "#{chartId}, #{parentAccountId}, #{accountNo}, #{accountCode}, #{accountName}, #{accountClass}, #{normalSide}, "
+        + "#{postingAllowed}, #{accountStatus}, #{createTime}, #{updateTime})")
     void insertChartAccount(ChartAccount account);
+
+    /** 直接改变 STANDARD 保留科目的启停状态，构造“规则已引用的科目被停用”场景；清理组件恢复为 ACTIVE。 */
+    @Update("UPDATE t_chart_account SET account_status = #{status} WHERE chart_id = 2001 AND account_code = #{accountCode}")
+    void updateStandardChartAccountStatus(@Param("accountCode") String accountCode, @Param("status") String status);
+
+    /** 直接改变测试科目（主键 >= 1000000）的启停状态，构造停用上级等前置场景。 */
+    @Update("UPDATE t_chart_account SET account_status = #{status} WHERE id = #{id} AND id >= 1000000")
+    void updateChartAccountStatus(@Param("id") long id, @Param("status") String status);
+
+    /** 按代码读取 STANDARD 科目主键。 */
+    @Select("SELECT id FROM t_chart_account WHERE chart_id = 2001 AND account_code = #{accountCode}")
+    long selectStandardChartAccountId(@Param("accountCode") String accountCode);
+
+    /** 统计科目表的变更记录数。 */
+    @Select("SELECT COUNT(*) FROM t_chart_account_change WHERE chart_id = #{chartId}")
+    int countChartAccountChanges(@Param("chartId") long chartId);
+
+    /** 统计非 ACTIVE 的保留科目，用于确认 STANDARD 科目处于初始化状态。 */
+    @Select("SELECT COUNT(*) FROM t_chart_account WHERE id < 1000000 AND account_status <> 'ACTIVE'")
+    int countInactiveReservedChartAccounts();
+
+    /** 把全部保留科目恢复为 ACTIVE。 */
+    @Update("UPDATE t_chart_account SET account_status = 'ACTIVE' WHERE id < 1000000 AND account_status <> 'ACTIVE'")
+    void restoreReservedChartAccounts();
+
+    /** 读取科目当前状态。 */
+    @Select("SELECT * FROM t_chart_account WHERE id = #{id}")
+    ChartAccount selectChartAccount(@Param("id") long id);
+
+    /** 读取科目的全部变更记录，按变更时间、主键升序。 */
+    @Select("SELECT * FROM t_chart_account_change WHERE chart_account_id = #{chartAccountId} ORDER BY change_time, id")
+    List<ChartAccountChange> selectChartAccountChanges(@Param("chartAccountId") long chartAccountId);
+
+    /** 读取账簿与科目的账户号序列最近值，不存在返回空。 */
+    @Select("SELECT `last_value` FROM t_account_no_sequence WHERE ledger_book_id = #{ledgerBookId} "
+        + "AND chart_account_id = #{chartAccountId}")
+    Long selectAccountNoSequence(@Param("ledgerBookId") long ledgerBookId, @Param("chartAccountId") long chartAccountId);
 
     /** 直接改变账户状态，构造停用账户场景（本期无停用入口）。 */
     @Update("UPDATE t_ledger_account SET account_status = #{status} WHERE id = #{id}")

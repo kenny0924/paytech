@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <!-- t_owner_account：Owner 账户与实时余额，只读写 mor_account。 -->
 <mapper namespace="com.paytech.account.core.dal.mapper.OwnerAccountMapper">
-    <sql id="columns">id, entity_type, entity_id, currency, account_code, owner_type, owner_id, balance_bucket, normal_side, debit_total, credit_total, net_balance, balance_version, account_status, create_time, update_time</sql>
+    <sql id="columns">id, account_no, entity_type, entity_id, currency, account_code, owner_type, owner_id, balance_bucket, normal_side, debit_total, credit_total, net_balance, balance_version, account_status, create_time, update_time</sql>
 
     <sql id="entityWhere">entity_type = #{entityType} AND entity_id = #{entityId} AND currency = #{currency}</sql>
 
@@ -12,11 +12,12 @@
         <if test="ownerId != null">AND owner_id = #{ownerId}</if>
         <if test="accountCode != null">AND account_code = #{accountCode}</if>
         <if test="bucket != null">AND balance_bucket = #{bucket}</if>
+        <if test="accountNo != null">AND account_no = #{accountNo}</if>
     </sql>
 
     <insert id="insert">
         INSERT INTO t_owner_account (<include refid="columns"/>)
-        VALUES (#{id}, #{entityType}, #{entityId}, #{currency}, #{accountCode}, #{ownerType}, #{ownerId}, #{balanceBucket}, #{normalSide}, #{debitTotal}, #{creditTotal}, #{netBalance}, #{balanceVersion}, #{accountStatus}, #{createTime}, #{updateTime})
+        VALUES (#{id}, #{accountNo}, #{entityType}, #{entityId}, #{currency}, #{accountCode}, #{ownerType}, #{ownerId}, #{balanceBucket}, #{normalSide}, #{debitTotal}, #{creditTotal}, #{netBalance}, #{balanceVersion}, #{accountStatus}, #{createTime}, #{updateTime})
     </insert>
 
     <select id="selectByIdentity" resultType="com.paytech.account.core.dal.dataobject.OwnerAccount">

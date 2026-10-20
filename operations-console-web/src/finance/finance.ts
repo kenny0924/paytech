@@ -17,6 +17,13 @@ export const financePaths = {
   journalEntry: (ledgerBookId: string, journalEntryId: string) => `/finance/ledger-books/v1/${ledgerBookId}/journal-entries/${journalEntryId}`,
   charts: '/finance/chart-of-accounts/v1',
   chartAccounts: (chartCode: string) => `/finance/chart-of-accounts/v1/${chartCode}/accounts`,
+  chartAccount: (chartCode: string, chartAccountId: string, action: 'update' | 'disable' | 'enable') =>
+    `/finance/chart-of-accounts/v1/${chartCode}/accounts/${chartAccountId}/${action}`,
+  chartChanges: (chartCode: string) => `/finance/chart-of-accounts/v1/${chartCode}/changes`,
+  accountBalances: (ledgerBookId: string, periodId: string) => `/finance/ledger-books/v1/${ledgerBookId}/periods/${periodId}/account-balances`,
+  trialBalances: (ledgerBookId: string, periodId: string) => `/finance/ledger-books/v1/${ledgerBookId}/periods/${periodId}/trial-balances`,
+  trialBalance: (ledgerBookId: string, periodId: string, runNo: string) =>
+    `/finance/ledger-books/v1/${ledgerBookId}/periods/${periodId}/trial-balances/${runNo}`,
   currencies: '/finance/currencies/v1',
   clientBalance: (clientId: string) => `/finance/balances/v1/clients/${clientId}`,
   partnerBalance: (partnerId: string) => `/finance/balances/v1/partners/${partnerId}`,
@@ -25,12 +32,17 @@ export const financePaths = {
   accountPosting: (postingId: string) => `/finance/account-postings/v1/${postingId}`,
 } as const;
 
-/** 五类创建与期间开放的按钮资源；只读账号看不到任何新建 / 开放按钮。 */
+/** 五类创建、期间开放与科目维护的按钮资源；只读账号看不到任何新建 / 开放 / 维护按钮。 */
 export const manageFinanceSetup = 'OPERATIONS_FINANCE_SETUP_MANAGE';
 
 export const entityNoPattern = /^[A-Z]{2}[0-9]{3}$/;
 export const decimalIdPattern = /^[1-9][0-9]{0,18}$/;
 const chartCodePattern = /^[A-Z][A-Z0-9_]{0,63}$/;
+/** 科目编号 4-2-2-2：一级 4 位，每下一级加 2 位，最多 4 级（ledger ChartAccountNoRule）。 */
+export const chartAccountNoPattern = /^[1-9][0-9]{3}([0-9]{2}){0,3}$/;
+/** ledger 账户号最长 48 位（LedgerBookQueryApi）；account 账户号为大写字母、数字与连字符（OwnerAccountQueryApi）。 */
+const ledgerAccountNoMax = 48;
+export const ownerAccountNoPattern = /^[A-Z0-9][A-Z0-9-]{0,47}$/;
 const currencyPattern = /^[A-Z]{3}$/;
 const decimalPattern = /^-?(0|[1-9][0-9]*)(\.[0-9]+)?$/;
 const isoDatePattern = /^\d{4}-\d{2}-\d{2}$/;
@@ -62,6 +74,10 @@ export type OriginType = 'AUTO' | 'MANUAL' | 'ACCOUNT_POSTING';
 export type PostingSourceType = 'ECONOMIC_FACT' | 'BALANCE_MOVEMENT';
 export type OwnerAccountStatus = 'ACTIVE' | 'FROZEN' | 'CLOSED';
 export type SetupTab = 'entities' | 'calendars' | 'books' | 'charts';
+export type AccountClass = 'ASSET' | 'LIABILITY' | 'EQUITY' | 'REVENUE' | 'EXPENSE';
+export type ChartAccountStatus = 'ACTIVE' | 'INACTIVE';
+export type ChartAccountChangeType = 'CREATE' | 'UPDATE' | 'DISABLE' | 'ENABLE';
+export type TrialBalanceStatus = 'CREATED' | 'RUNNING' | 'SUCCEEDED' | 'FAILED';
 export type BalanceOwnerType = 'CLIENT' | 'PARTNER';
 
 export interface FinanceEntity { financeEntityId: string; entityCode: string; legalPartyId: string; displayName: string; status: FinanceEntityStatus; createTime: string }
@@ -71,8 +87,17 @@ export interface AccountingPeriod {
   status: PeriodStatus; reopenCount: number;
 }
 export interface ChartOfAccounts { chartId: string; chartCode: string; chartName: string; status: ReferenceDataStatus }
+/** 科目：postingAllowed 为 true 是末级科目，false 是汇总科目；一级科目没有上级。 */
 export interface ChartAccount {
-  chartAccountId: string; chartId: string; accountCode: string; accountName: string; accountClass: string; normalSide: Side; postingAllowed: boolean;
+  chartAccountId: string; chartId: string; accountNo: string; accountCode: string; accountName: string; accountClass: AccountClass; normalSide: Side;
+  postingAllowed: boolean; parentChartAccountId: string | null; level: number; accountStatus: ChartAccountStatus;
+}
+/** 科目变更记录：before* 为变更前值（CREATE 为空），after* 为变更后值。 */
+export interface ChartAccountChange {
+  changeId: string; chartAccountId: string; accountNo: string; changeType: ChartAccountChangeType;
+  beforeAccountNo: string | null; afterAccountNo: string; beforeParentAccountNo: string | null; afterParentAccountNo: string | null;
+  beforeAccountName: string | null; afterAccountName: string; beforeAccountStatus: ChartAccountStatus | null; afterAccountStatus: ChartAccountStatus;
+  operatorId: string; changeTime: string;
 }
 export interface Currency { currency: string; minorUnit: number; roundingMode: string; status: ReferenceDataStatus }
 export interface LedgerBook { ledgerBookId: string; entityType: LedgerEntityType; entityId: string; currency: string; chartCode: string; bookStatus: BookStatus }
@@ -80,8 +105,8 @@ export interface LedgerBook { ledgerBookId: string; entityType: LedgerEntityType
 export type BookRef = Pick<LedgerBook, 'ledgerBookId'> & Partial<Omit<LedgerBook, 'ledgerBookId'>>;
 export type AccountRef = Pick<LedgerAccount, 'accountId'> & Partial<Omit<LedgerAccount, 'accountId'>>;
 export interface LedgerAccount {
-  accountId: string; accountCode: string; ownerType: OwnerType; ownerId: string; balanceBucket: BalanceBucket; normalSide: Side;
-  accountStatus: AccountStatus; debitTotal: string; creditTotal: string; netBalance: string; lastJournalSequence: string | null;
+  accountId: string; accountNo: string; accountCode: string; accountName: string; ownerType: OwnerType; ownerId: string; balanceBucket: BalanceBucket;
+  normalSide: Side; accountStatus: AccountStatus; debitTotal: string; creditTotal: string; netBalance: string; lastJournalSequence: string | null;
 }
 export interface JournalLine {
   journalEntryId: string; journalSequence: string; postingDate: string; entryType: JournalEntryType; lineNo: number; entrySide: Side;
@@ -89,14 +114,30 @@ export interface JournalLine {
   sourceEventKey: string | null; adjustmentNo: string | null; accountPostingId: string | null; accountPostingSequence: string | null;
 }
 export interface JournalEntryLine {
-  lineNo: number; accountId: string; accountCode: string; ownerType: OwnerType; ownerId: string; balanceBucket: BalanceBucket; entrySide: Side; amount: string;
-  accountEntryId: string | null;
+  lineNo: number; accountId: string; accountNo: string; accountCode: string; accountName: string; ownerType: OwnerType; ownerId: string;
+  balanceBucket: BalanceBucket; entrySide: Side; amount: string; accountEntryId: string | null;
 }
 export interface JournalEntryDetail {
   journalEntryId: string; ledgerBookId: string; accountingPeriodId: string; journalSequence: string; postingDate: string; entryType: JournalEntryType;
   reversalOfEntryId: string | null; instructionId: string; instructionType: string; originType: OriginType; sourceSystem: string | null;
   sourceEventKey: string | null; manualAdjustmentId: string | null; adjustmentNo: string | null; accountPostingId: string | null;
   accountPostingSequence: string | null; lines: JournalEntryLine[];
+}
+/** 科目余额行（L6 与试算详情共用）：期初、期末按科目自身余额方向表达，负数为反向余额。 */
+export interface AccountBalanceLine {
+  chartAccountId: string; accountNo: string; accountCode: string; accountName: string; accountClass: AccountClass; normalSide: Side;
+  parentChartAccountId: string | null; level: number; postingAllowed: boolean; openingBalance: string; periodDebit: string; periodCredit: string;
+  closingBalance: string;
+}
+export interface AccountBalanceList { ledgerBookId: string; periodId: string; currency: string; lines: AccountBalanceLine[] }
+export interface TrialBalanceRun {
+  trialBalanceRunId: string; ledgerBookId: string; periodId: string; runNo: string; asOfSequence: string; status: TrialBalanceStatus;
+  totalDebit: string; totalCredit: string; contentHash: string; lineCount: number; exceptionCount: number; createTime: string;
+}
+export interface TrialBalanceFinding { exceptionType: string; referenceType: string; referenceId: string; differenceAmount: string; status: string }
+/** 试算详情：lines 为末级试算行，summaryLines 为查询时汇总的级次汇总行。 */
+export interface TrialBalanceDetail extends TrialBalanceRun {
+  lines: AccountBalanceLine[]; summaryLines: AccountBalanceLine[]; exceptions: TrialBalanceFinding[];
 }
 export interface Money { currency: string; amount: string }
 export interface ClientBalance {
@@ -108,7 +149,7 @@ export interface PartnerBalance {
 }
 /** 明细账 Owner 账户（account）；金额为 Money。 */
 export interface OwnerAccount {
-  accountId: string; accountCode: string; ownerType: SubledgerOwnerType; ownerId: string; balanceBucket: BalanceBucket; normalSide: Side;
+  accountId: string; accountNo: string; accountCode: string; ownerType: SubledgerOwnerType; ownerId: string; balanceBucket: BalanceBucket; normalSide: Side;
   accountStatus: OwnerAccountStatus; debitTotal: Money; creditTotal: Money; netBalance: Money; balanceVersion: string;
 }
 export type OwnerAccountRef = Pick<OwnerAccount, 'accountId'> & Partial<Omit<OwnerAccount, 'accountId'>>;
@@ -118,8 +159,8 @@ export interface AccountEntry {
   factType: string | null; movementSourceType: string | null; lineNo: string; factLineNo: string | null; entrySide: Side; amount: Money; reversesEntryId: string | null; postedTime: string;
 }
 export interface AccountPostingEntry {
-  entryId: string; lineNo: string; accountId: string; accountCode: string; ownerType: SubledgerOwnerType; ownerId: string; balanceBucket: BalanceBucket;
-  entrySide: Side; amount: Money; factLineNo: string | null; reversesEntryId: string | null;
+  entryId: string; lineNo: string; accountId: string; accountNo: string; accountCode: string; ownerType: SubledgerOwnerType; ownerId: string;
+  balanceBucket: BalanceBucket; entrySide: Side; amount: Money; factLineNo: string | null; reversesEntryId: string | null;
 }
 /** 过账批次：批次头、来源事实或桶移动，以及全部流水。 */
 export interface AccountPosting {
@@ -134,6 +175,10 @@ export const financeEntityStatusLabels: Record<FinanceEntityStatus, string> = { 
 export const referenceStatusLabels: Record<ReferenceDataStatus, string> = { DRAFT: '草稿', ACTIVE: '启用', INACTIVE: '停用' };
 export const accountStatusLabels: Record<AccountStatus, string> = { ACTIVE: '启用', INACTIVE: '停用', CLOSED: '已关闭' };
 export const sideLabels: Record<Side, string> = { DEBIT: '借', CREDIT: '贷' };
+export const accountClassLabels: Record<AccountClass, string> = { ASSET: '资产', LIABILITY: '负债', EQUITY: '权益', REVENUE: '收入', EXPENSE: '费用' };
+export const chartAccountStatusLabels: Record<ChartAccountStatus, string> = { ACTIVE: '启用', INACTIVE: '停用' };
+export const changeTypeLabels: Record<ChartAccountChangeType, string> = { CREATE: '新增', UPDATE: '修改', DISABLE: '停用', ENABLE: '启用' };
+export const trialStatusLabels: Record<TrialBalanceStatus, string> = { CREATED: '已创建', RUNNING: '试算中', SUCCEEDED: '已完成', FAILED: '失败' };
 export const entryTypeLabels: Record<JournalEntryType, string> = { STANDARD: '标准', REVERSAL: '冲回', ADJUSTMENT: '调整', CLOSING: '结账', REOPENING: '重开' };
 export const ownerAccountStatusLabels: Record<OwnerAccountStatus, string> = { ACTIVE: '启用', FROZEN: '冻结', CLOSED: '已关闭' };
 export const postingSourceLabels: Record<PostingSourceType, string> = { ECONOMIC_FACT: '事实', BALANCE_MOVEMENT: '桶移动' };
@@ -141,7 +186,7 @@ export const postingSourceColors: Record<PostingSourceType, string> = { ECONOMIC
 /** 统一标签色：启用/开放为绿，未来/草稿为蓝/橙，停用/关闭为灰，异常为红。 */
 export const statusColors: Record<string, string> = {
   ACTIVE: 'green', OPEN: 'green', FUTURE: 'blue', DRAFT: 'orange', CLOSING: 'gold', REOPENING: 'gold',
-  SUSPENDED: 'orange', INACTIVE: 'default', CLOSED: 'default', FROZEN: 'orange',
+  SUSPENDED: 'orange', INACTIVE: 'default', CLOSED: 'default', FROZEN: 'orange', SUCCEEDED: 'green', RUNNING: 'gold', CREATED: 'blue', FAILED: 'red',
 };
 export const sideColors: Record<Side, string> = { DEBIT: 'blue', CREDIT: 'orange' };
 export const entryTypeColors: Record<JournalEntryType, string> = { STANDARD: 'default', REVERSAL: 'red', ADJUSTMENT: 'orange', CLOSING: 'purple', REOPENING: 'purple' };
@@ -150,7 +195,10 @@ const periodStatuses: readonly string[] = ['FUTURE', 'OPEN', 'CLOSING', 'CLOSED'
 const referenceStatuses: readonly string[] = ['DRAFT', 'ACTIVE', 'INACTIVE'];
 const bookStatuses: readonly string[] = ['OPEN', 'SUSPENDED', 'CLOSED'];
 const accountStatuses: readonly string[] = ['ACTIVE', 'INACTIVE', 'CLOSED'];
-const accountClasses: readonly string[] = ['ASSET', 'LIABILITY', 'EQUITY', 'REVENUE', 'EXPENSE'];
+export const accountClasses = ['ASSET', 'LIABILITY', 'EQUITY', 'REVENUE', 'EXPENSE'] as const;
+const chartAccountStatuses: readonly string[] = ['ACTIVE', 'INACTIVE'];
+const changeTypes: readonly string[] = ['CREATE', 'UPDATE', 'DISABLE', 'ENABLE'];
+const trialStatuses: readonly string[] = ['CREATED', 'RUNNING', 'SUCCEEDED', 'FAILED'];
 const sides: readonly string[] = ['DEBIT', 'CREDIT'];
 const entryTypes: readonly string[] = ['STANDARD', 'REVERSAL', 'ADJUSTMENT', 'CLOSING', 'REOPENING'];
 const originTypes: readonly string[] = ['AUTO', 'MANUAL', 'ACCOUNT_POSTING'];
@@ -205,11 +253,40 @@ export function decodeChartOfAccounts(value: unknown): ChartOfAccounts {
   return v;
 }
 
+const chartAccountNo = (v: unknown) => typeof v === 'string' && chartAccountNoPattern.test(v);
+const level = (v: unknown) => integer(v, 1, 4);
+
+/** 科目：级次与编号长度一致，一级科目没有上级、下级必须有上级。 */
 export function decodeChartAccount(value: unknown): ChartAccount {
   const v = value as ChartAccount;
-  require(object(v) && id(v.chartAccountId) && id(v.chartId) && text(v.accountCode, 64) && text(v.accountName)
-    && oneOf(accountClasses)(v.accountClass) && oneOf(sides)(v.normalSide) && typeof v.postingAllowed === 'boolean');
-  return v;
+  require(object(v) && id(v.chartAccountId) && id(v.chartId) && chartAccountNo(v.accountNo) && text(v.accountCode, 64) && text(v.accountName, 255)
+    && oneOf(accountClasses)(v.accountClass) && oneOf(sides)(v.normalSide) && typeof v.postingAllowed === 'boolean'
+    && level(v.level) && v.level === chartAccountLevel(v.accountNo) && (v.level === 1 ? v.parentChartAccountId == null : id(v.parentChartAccountId))
+    && oneOf(chartAccountStatuses)(v.accountStatus));
+  return { ...v, parentChartAccountId: orNull(v.parentChartAccountId) };
+}
+
+/** 科目变更记录：指定科目时必须属于该科目。 */
+export function decodeChartAccountChange(chartAccountId?: string) {
+  return (value: unknown): ChartAccountChange => {
+    const v = value as ChartAccountChange;
+    require(object(v) && id(v.changeId) && id(v.chartAccountId) && (!chartAccountId || v.chartAccountId === chartAccountId)
+      && chartAccountNo(v.accountNo) && oneOf(changeTypes)(v.changeType) && optional(chartAccountNo)(v.beforeAccountNo)
+      && chartAccountNo(v.afterAccountNo) && optional(chartAccountNo)(v.beforeParentAccountNo) && optional(chartAccountNo)(v.afterParentAccountNo)
+      && optional(text)(v.beforeAccountName) && text(v.afterAccountName, 255) && optional(oneOf(chartAccountStatuses))(v.beforeAccountStatus)
+      && oneOf(chartAccountStatuses)(v.afterAccountStatus) && text(v.operatorId, 64) && instant(v.changeTime));
+    return { ...v, beforeAccountNo: orNull(v.beforeAccountNo), beforeParentAccountNo: orNull(v.beforeParentAccountNo),
+      afterParentAccountNo: orNull(v.afterParentAccountNo), beforeAccountName: orNull(v.beforeAccountName), beforeAccountStatus: orNull(v.beforeAccountStatus) };
+  };
+}
+
+/** 科目维护回执：必须是所操作的科目。 */
+export function decodeMaintainedChartAccount(chartAccountId: string) {
+  return (value: unknown): ChartAccount => {
+    const account = decodeChartAccount(value);
+    require(account.chartAccountId === chartAccountId);
+    return account;
+  };
 }
 
 export function decodeCurrency(value: unknown): Currency {
@@ -228,7 +305,8 @@ export function decodeLedgerBook(value: unknown): LedgerBook {
 
 export function decodeLedgerAccount(value: unknown): LedgerAccount {
   const v = value as LedgerAccount;
-  require(object(v) && id(v.accountId) && text(v.accountCode, 64) && oneOf(ownerTypes)(v.ownerType) && text(v.ownerId, 64)
+  require(object(v) && id(v.accountId) && text(v.accountNo, ledgerAccountNoMax) && text(v.accountCode, 64) && text(v.accountName, 255)
+    && oneOf(ownerTypes)(v.ownerType) && text(v.ownerId, 64)
     && oneOf(balanceBuckets)(v.balanceBucket) && oneOf(sides)(v.normalSide) && oneOf(accountStatuses)(v.accountStatus)
     && decimal(v.debitTotal) && decimal(v.creditTotal) && decimal(v.netBalance) && optional(digits)(v.lastJournalSequence));
   return { ...v, lastJournalSequence: orNull(v.lastJournalSequence) };
@@ -252,7 +330,8 @@ function accountPostingRef(v: { originType: unknown; accountPostingId?: unknown;
 
 function decodeEntryLine(value: unknown): JournalEntryLine {
   const v = value as JournalEntryLine;
-  require(object(v) && integer(v.lineNo, 1, 2147483647) && id(v.accountId) && text(v.accountCode, 64) && oneOf(ownerTypes)(v.ownerType)
+  require(object(v) && integer(v.lineNo, 1, 2147483647) && id(v.accountId) && text(v.accountNo, ledgerAccountNoMax) && text(v.accountCode, 64)
+    && text(v.accountName, 255) && oneOf(ownerTypes)(v.ownerType)
     && text(v.ownerId, 64) && oneOf(balanceBuckets)(v.balanceBucket) && oneOf(sides)(v.entrySide) && decimal(v.amount)
     && optional(id)(v.accountEntryId));
   return { ...v, accountEntryId: orNull(v.accountEntryId) };
@@ -269,6 +348,51 @@ export function decodeJournalEntryDetail(value: unknown, ledgerBookId: string, j
   return { ...v, reversalOfEntryId: orNull(v.reversalOfEntryId), sourceSystem: orNull(v.sourceSystem), sourceEventKey: orNull(v.sourceEventKey),
     manualAdjustmentId: orNull(v.manualAdjustmentId), adjustmentNo: orNull(v.adjustmentNo), accountPostingId: orNull(v.accountPostingId),
     accountPostingSequence: orNull(v.accountPostingSequence), lines: v.lines.map(decodeEntryLine) };
+}
+
+function decodeBalanceLine(value: unknown): AccountBalanceLine {
+  const v = value as AccountBalanceLine;
+  require(object(v) && id(v.chartAccountId) && chartAccountNo(v.accountNo) && text(v.accountCode, 64) && text(v.accountName, 255)
+    && oneOf(accountClasses)(v.accountClass) && oneOf(sides)(v.normalSide) && level(v.level) && v.level === chartAccountLevel(v.accountNo)
+    && (v.level === 1 ? v.parentChartAccountId == null : id(v.parentChartAccountId)) && typeof v.postingAllowed === 'boolean'
+    && [v.openingBalance, v.periodDebit, v.periodCredit, v.closingBalance].every(decimal));
+  return { ...v, parentChartAccountId: orNull(v.parentChartAccountId) };
+}
+
+/** 实时科目余额（L6）：账簿与期间必须与请求一致。 */
+export function decodeAccountBalanceList(value: unknown, ledgerBookId: string, periodId: string): AccountBalanceList {
+  const v = value as AccountBalanceList;
+  require(object(v) && v.ledgerBookId === ledgerBookId && v.periodId === periodId && typeof v.currency === 'string' && currencyPattern.test(v.currency)
+    && Array.isArray(v.lines));
+  return { ...v, lines: v.lines.map(decodeBalanceLine) };
+}
+
+/** 试算摘要：属于所查账簿与期间。 */
+export function decodeTrialBalanceRun(ledgerBookId: string, periodId: string) {
+  return (value: unknown): TrialBalanceRun => {
+    const v = value as TrialBalanceRun;
+    require(object(v) && id(v.trialBalanceRunId) && v.ledgerBookId === ledgerBookId && v.periodId === periodId && digits(v.runNo)
+      && digits(v.asOfSequence) && oneOf(trialStatuses)(v.status) && decimal(v.totalDebit) && decimal(v.totalCredit) && text(v.contentHash, 128)
+      && integer(v.lineCount, 0, 2147483647) && integer(v.exceptionCount, 0, 2147483647) && instant(v.createTime));
+    return v;
+  };
+}
+
+function decodeFinding(value: unknown): TrialBalanceFinding {
+  const v = value as TrialBalanceFinding;
+  require(object(v) && text(v.exceptionType, 64) && text(v.referenceType, 64) && text(v.referenceId, 64) && decimal(v.differenceAmount)
+    && text(v.status, 32));
+  return v;
+}
+
+/** 试算详情：序号与请求一致；汇总行一律不可过账。 */
+export function decodeTrialBalanceDetail(value: unknown, ledgerBookId: string, periodId: string, runNo: string): TrialBalanceDetail {
+  const v = value as TrialBalanceDetail;
+  const run = decodeTrialBalanceRun(ledgerBookId, periodId)(v);
+  require(run.runNo === runNo && Array.isArray(v.lines) && Array.isArray(v.summaryLines) && Array.isArray(v.exceptions));
+  const summaryLines = v.summaryLines.map(decodeBalanceLine);
+  require(summaryLines.every(line => !line.postingAllowed));
+  return { ...run, lines: v.lines.map(decodeBalanceLine), summaryLines, exceptions: v.exceptions.map(decodeFinding) };
 }
 
 function money(v: unknown, currency: string) {
@@ -297,11 +421,13 @@ export function decodePartnerBalance(value: unknown, partnerId: string, entityNo
 const moneyIn = (currency?: string) => (v: unknown) => object(v) && typeof v.currency === 'string' && currencyPattern.test(v.currency)
   && (!currency || v.currency === currency) && decimal(v.amount);
 
+const ownerAccountNo = (v: unknown) => typeof v === 'string' && ownerAccountNoPattern.test(v);
+
 /** Owner 账户：三类 Owner、四个余额桶，金额同查询币种。 */
 export function decodeOwnerAccount(currency: string) {
   return (value: unknown): OwnerAccount => {
     const v = value as OwnerAccount;
-    require(object(v) && id(v.accountId) && typeof v.accountCode === 'string' && chartCodePattern.test(v.accountCode)
+    require(object(v) && id(v.accountId) && ownerAccountNo(v.accountNo) && typeof v.accountCode === 'string' && chartCodePattern.test(v.accountCode)
       && oneOf(subledgerOwnerTypes)(v.ownerType) && id(v.ownerId) && oneOf(balanceBuckets)(v.balanceBucket) && oneOf(sides)(v.normalSide)
       && oneOf(ownerAccountStatuses)(v.accountStatus) && [v.debitTotal, v.creditTotal, v.netBalance].every(moneyIn(currency))
       && digits(v.balanceVersion));
@@ -330,7 +456,8 @@ export function decodeAccountEntry(currency?: string) {
 function decodePostingEntry(currency: string) {
   return (value: unknown): AccountPostingEntry => {
     const v = value as AccountPostingEntry;
-    require(object(v) && id(v.entryId) && digits(v.lineNo) && id(v.accountId) && typeof v.accountCode === 'string' && chartCodePattern.test(v.accountCode)
+    require(object(v) && id(v.entryId) && digits(v.lineNo) && id(v.accountId) && ownerAccountNo(v.accountNo)
+      && typeof v.accountCode === 'string' && chartCodePattern.test(v.accountCode)
       && oneOf(subledgerOwnerTypes)(v.ownerType) && id(v.ownerId) && oneOf(balanceBuckets)(v.balanceBucket) && oneOf(sides)(v.entrySide)
       && moneyIn(currency)(v.amount) && optional(digits)(v.factLineNo) && optional(id)(v.reversesEntryId));
     return { ...v, factLineNo: orNull(v.factLineNo), reversesEntryId: orNull(v.reversesEntryId) };
@@ -404,6 +531,15 @@ export const financeErrorTargets: Readonly<Record<string, FinanceErrorTarget>> =
   ACCOUNT_IDENTITY_INVALID: { field: 'ownerType', message: '核算对象或余额桶不符合账户身份矩阵' },
   // 设计画板 05：账户重复落在余额桶字段下（余额桶固定 NONE，同一核算对象 + 科目即重复）。
   ACCOUNT_ALREADY_EXISTS: { field: 'balanceBucket', message: '该核算对象与余额桶的账户已存在' },
+  // 科目维护（technique 2.3）：编号、代码、上级落到表单字段，其余为页面提示；停用科目在建账户表单的科目字段。
+  CHART_ACCOUNT_NOT_FOUND: { field: null, message: '科目不存在' },
+  CHART_ACCOUNT_NO_INVALID: { field: 'accountNo', message: '科目编号不符合分级规则' },
+  CHART_ACCOUNT_NO_DUPLICATE: { field: 'accountNo', message: '科目编号已存在' },
+  CHART_ACCOUNT_CODE_DUPLICATE: { field: 'accountCode', message: '科目代码已存在' },
+  CHART_PARENT_INVALID: { field: 'parentAccountNo', message: '上级科目不存在、不是汇总科目、已停用、类别不同或会形成循环' },
+  CHART_STRUCTURE_FROZEN: { field: null, message: '科目表已被账簿采用，不能修改编号或上级' },
+  CHART_ACCOUNT_IN_USE: { field: null, message: '科目仍被规则、结转规则、账户类型目录或启用中的下级引用，不能停用' },
+  CHART_ACCOUNT_INACTIVE: { field: 'accountCode', message: '科目已停用' },
 };
 
 /** 余额查询（account BalanceQueryErrorCode）的落点：Owner 在该主体与币种下没有账户时挂在 Owner ID（画板 11）。 */
@@ -534,6 +670,153 @@ export function activeOnly<T extends { status: string }>(items: readonly T[]): T
   return items.filter(item => item.status === 'ACTIVE');
 }
 
+// ---------- 科目树与科目维护 ----------
+
+/** 由编号长度推出的级次：4 位为 1 级，每加 2 位加 1 级。 */
+export function chartAccountLevel(accountNo: string): number {
+  return (accountNo.length - 4) / 2 + 1;
+}
+
+/** 一级编号首位与类别对应：1 资产、2 负债、3 权益、4 收入、5 费用。 */
+const classDigits: Record<AccountClass, string> = { ASSET: '1', LIABILITY: '2', EQUITY: '3', REVENUE: '4', EXPENSE: '5' };
+
+/** 汇总科目默认余额方向：资产、费用为借，负债、权益、收入为贷。 */
+export function defaultNormalSide(accountClass: AccountClass): Side {
+  return accountClass === 'ASSET' || accountClass === 'EXPENSE' ? 'DEBIT' : 'CREDIT';
+}
+
+/** 科目编号分级校验（与 ledger ChartAccountNoRule 一致）：返回错误文案或 null；ledger 仍以 CHART_ACCOUNT_NO_INVALID 兜底。 */
+export function chartAccountNoError(accountNo: string | undefined, accountClass: AccountClass | undefined, parentAccountNo?: string | null): string | null {
+  const value = accountNo?.trim() ?? '';
+  if (!value) return '请填写科目编号';
+  if (!chartAccountNoPattern.test(value)) return '科目编号为 4、6、8 或 10 位数字，首位不能为 0';
+  if (accountClass && value[0] !== classDigits[accountClass]) return `${accountClassLabels[accountClass]}类科目编号以 ${classDigits[accountClass]} 开头`;
+  if (!parentAccountNo) return value.length === 4 ? null : '一级科目编号为 4 位';
+  if (value.length !== parentAccountNo.length + 2 || !value.startsWith(parentAccountNo)) return `编号应为上级 ${parentAccountNo} 后加 2 位`;
+  return null;
+}
+
+export interface ChartAccountFormValues {
+  parentAccountNo?: string | null; accountNo: string; accountCode: string; accountName: string; accountClass: AccountClass; normalSide: Side;
+  postingAllowed: boolean;
+}
+
+/** 新增科目请求体：一级科目不带上级编号。 */
+export function chartAccountBody(values: ChartAccountFormValues) {
+  return { accountNo: values.accountNo.trim(), accountCode: values.accountCode.trim(), accountName: values.accountName.trim(),
+    accountClass: values.accountClass, normalSide: values.normalSide, postingAllowed: values.postingAllowed,
+    ...(values.parentAccountNo ? { parentAccountNo: values.parentAccountNo } : {}) };
+}
+
+/** 修改科目请求体：名称、编号与上级三项都给出完整新值，一级科目的上级显式为 null。 */
+export function chartAccountUpdateBody(values: Pick<ChartAccountFormValues, 'accountName' | 'accountNo' | 'parentAccountNo'>) {
+  return { accountName: values.accountName.trim(), accountNo: values.accountNo.trim(), parentAccountNo: values.parentAccountNo || null };
+}
+
+interface TreeItem { chartAccountId: string; parentChartAccountId: string | null; accountNo: string }
+/** 树节点：只有存在下级时才带 children，末级行不显示展开图标。 */
+export type TreeNode<T extends TreeItem> = T & { children?: TreeNode<T>[] };
+
+/** 按上级主键组装科目树，同级按编号升序；上级不在列表内（被筛掉）的科目作为根。 */
+export function buildAccountTree<T extends TreeItem>(items: readonly T[]): TreeNode<T>[] {
+  const nodes = new Map<string, TreeNode<T>>(items.map(item => [item.chartAccountId, { ...item }]));
+  const roots: TreeNode<T>[] = [];
+  for (const node of [...nodes.values()].sort((a, b) => a.accountNo.localeCompare(b.accountNo))) {
+    const parent = node.parentChartAccountId ? nodes.get(node.parentChartAccountId) : undefined;
+    if (parent) (parent.children ??= []).push(node); else roots.push(node);
+  }
+  return roots;
+}
+
+/** 关键字匹配编号、名称或代码（不区分大小写）：命中节点保留整棵子树，未命中节点只在有命中的下级时保留。 */
+export function filterAccountTree<T extends TreeItem & { accountName: string; accountCode: string }>(nodes: readonly TreeNode<T>[], keyword: string): TreeNode<T>[] {
+  const needle = keyword.trim().toLowerCase();
+  if (!needle) return [...nodes];
+  const result: TreeNode<T>[] = [];
+  for (const node of nodes) {
+    if ([node.accountNo, node.accountName, node.accountCode].some(value => value.toLowerCase().includes(needle))) { result.push(node); continue; }
+    const children = filterAccountTree(node.children ?? [], keyword);
+    if (children.length) result.push({ ...node, children });
+  }
+  return result;
+}
+
+/** 有下级的节点主键，供「全部展开」。 */
+export function expandableKeys<T extends TreeItem>(nodes: readonly TreeNode<T>[]): string[] {
+  return nodes.flatMap(node => node.children?.length ? [node.chartAccountId, ...expandableKeys(node.children)] : []);
+}
+
+/** 变更记录只列有变化的字段：编号、上级、名称、状态。 */
+export function chartChangeFields(change: ChartAccountChange): { label: string; before: string; after: string }[] {
+  const fields: [string, string | null, string | null][] = [
+    ['编号', change.beforeAccountNo, change.afterAccountNo],
+    ['上级', change.beforeParentAccountNo, change.afterParentAccountNo],
+    ['名称', change.beforeAccountName, change.afterAccountName],
+    ['状态', change.beforeAccountStatus && chartAccountStatusLabels[change.beforeAccountStatus], chartAccountStatusLabels[change.afterAccountStatus]],
+  ];
+  return fields.filter(([, before, after]) => before !== after).map(([label, before, after]) => ({ label, before: before ?? '—', after: after ?? '—' }));
+}
+
+// ---------- 科目余额与试算 ----------
+
+const negate = (value: string) => value.startsWith('-') ? value.slice(1) : `-${value}`;
+const isZero = (value: string) => value.replace(/[-.0]/g, '') === '';
+
+/**
+ * 一级科目合计：本期借贷发生额与期末借贷余额；期末余额先按科目方向折成借方方向再分借、贷两侧
+ * <li>balanced 表示本期借 = 贷且期末借 = 贷。</li>
+ */
+export function balanceTotals(lines: readonly Pick<AccountBalanceLine, 'level' | 'normalSide' | 'periodDebit' | 'periodCredit' | 'closingBalance'>[]) {
+  const roots = lines.filter(line => line.level === 1);
+  const periodDebit = sumDecimals(roots.map(line => line.periodDebit));
+  const periodCredit = sumDecimals(roots.map(line => line.periodCredit));
+  const debitward = roots.map(line => line.normalSide === 'DEBIT' ? line.closingBalance : negate(line.closingBalance));
+  const closingDebit = sumDecimals(debitward.filter(value => !value.startsWith('-')));
+  const closingCredit = sumDecimals(debitward.filter(value => value.startsWith('-')).map(negate));
+  const balanced = isZero(sumDecimals([periodDebit, negate(periodCredit)])) && isZero(sumDecimals([closingDebit, negate(closingCredit)]));
+  return { periodDebit, periodCredit, closingDebit, closingCredit, balanced };
+}
+
+/** 账本查询页签：drilldown 账簿下钻（默认），trial 试算平衡。 */
+export type LedgerTab = 'drilldown' | 'trial';
+export type TrialView = 'balances' | 'runs';
+export interface TrialQuery { book: string | null; period: string | null; view: TrialView; run: string | null }
+const trialKeys = ['tbBook', 'tbPeriod', 'tbView', 'tbRun'] as const;
+
+export function readLedgerTab(params: URLSearchParams): LedgerTab {
+  return params.get('tab') === 'trial' ? 'trial' : 'drilldown';
+}
+
+/** 试算平衡 URL：账簿、期间、视图与打开的试算序号；非法值视为未选择。 */
+export function readTrialQuery(params: URLSearchParams): TrialQuery {
+  const pick = (key: string) => { const value = params.get(key); return value && decimalIdPattern.test(value) ? value : null; };
+  const book = pick('tbBook'); const period = book ? pick('tbPeriod') : null;
+  const view: TrialView = params.get('tbView') === 'runs' ? 'runs' : 'balances';
+  const run = period && view === 'runs' ? params.get('tbRun') : null;
+  return { book, period, view, run: run && /^[1-9][0-9]{0,8}$/.test(run) ? run : null };
+}
+
+/** 切换页签：进入试算保留下钻条件，回到下钻清掉试算条件。 */
+export function ledgerTabSearch(search: string, tab: LedgerTab): string {
+  return tab === 'trial' ? replaceQuery(search, { tab: 'trial' }) : replaceQuery(search, { tab: null, ...clear(trialKeys) });
+}
+
+/** 试算条件写回 URL：换账簿清期间与试算，换期间或视图清试算。 */
+export function trialSearch(search: string, next: Partial<TrialQuery>): string {
+  const current = readTrialQuery(new URLSearchParams(search));
+  const book = next.book !== undefined ? next.book : current.book;
+  const period = next.book !== undefined && next.book !== current.book ? null : next.period !== undefined ? next.period : current.period;
+  const view = next.view ?? current.view;
+  const run = (next.book !== undefined && next.book !== current.book) || (next.period !== undefined && next.period !== current.period)
+    || (next.view !== undefined && next.view !== current.view) ? null : next.run !== undefined ? next.run : current.run;
+  return replaceQuery(search, { tab: 'trial', tbBook: book, tbPeriod: period, tbView: view === 'runs' ? 'runs' : null, tbRun: run });
+}
+
+/** 末级科目行进入账簿下钻：选中账簿并按科目代码筛选账户。 */
+export function leafDrilldownSearch(ledgerBookId: string, accountCode: string): string {
+  return `?${new URLSearchParams({ book: ledgerBookId, accountCode })}`;
+}
+
 // ---------- 查询条件 ----------
 
 const trimmed = (values: Readonly<Record<string, unknown>>, keys: readonly string[]) => {
@@ -547,7 +830,7 @@ const trimmed = (values: Readonly<Record<string, unknown>>, keys: readonly strin
 };
 
 export const bookFilterKeys = ['entityType', 'entityId', 'currency'] as const;
-export const accountFilterKeys = ['accountCode', 'ownerType', 'ownerId', 'balanceBucket'] as const;
+export const accountFilterKeys = ['accountNo', 'accountCode', 'ownerType', 'ownerId', 'balanceBucket'] as const;
 export const lineFilterKeys = ['postingDateFrom', 'postingDateTo'] as const;
 
 export function bookFilters(values: Readonly<Record<string, unknown>>) { return trimmed(values, bookFilterKeys); }
@@ -598,7 +881,7 @@ export function readLedgerQuery(params: URLSearchParams): LedgerQuery {
     bookFilters: readFilters(params, bookFilterKeys, (key, value) => key !== 'entityType' || (ledgerEntityTypes as readonly string[]).includes(value)),
     bookPaging: readPaging(params, pagingKeys.books, 10),
     accountFilters: readFilters(params, accountFilterKeys, (key, value) => (key !== 'ownerType' || (ownerTypes as readonly string[]).includes(value))
-      && (key !== 'balanceBucket' || (balanceBuckets as readonly string[]).includes(value))),
+      && (key !== 'balanceBucket' || (balanceBuckets as readonly string[]).includes(value)) && (key !== 'accountNo' || value.length <= ledgerAccountNoMax)),
     accountPaging: readPaging(params, pagingKeys.accounts, 10),
     lineFilters: readFilters(params, lineFilterKeys, (_, value) => isoDate(value)),
     linePaging: readPaging(params, pagingKeys.lines, 20),
@@ -640,7 +923,7 @@ export function ledgerQuerySearch(search: string, level: LedgerLevel, filters: R
 // ---------- 明细账查询条件与 URL 状态 ----------
 
 export const subledgerScopeKeys = ['entityType', 'entityId', 'currency'] as const;
-export const subledgerAccountFilterKeys = ['accountCode', 'ownerType', 'ownerId', 'balanceBucket'] as const;
+export const subledgerAccountFilterKeys = ['accountNo', 'accountCode', 'ownerType', 'ownerId', 'balanceBucket'] as const;
 export interface SubledgerScope { entityType: LedgerEntityType; entityId: string; currency: string }
 export type SubledgerLevel = 'idle' | 'accounts' | 'entries';
 export interface SubledgerQuery {
@@ -659,7 +942,8 @@ export function subledgerEntityIdError(entityType: string | undefined, entityId:
 
 const subledgerFilterValid = (key: string, value: string) => (key !== 'ownerType' || (subledgerOwnerTypes as readonly string[]).includes(value))
   && (key !== 'balanceBucket' || (balanceBuckets as readonly string[]).includes(value))
-  && (key !== 'ownerId' || decimalIdPattern.test(value)) && (key !== 'accountCode' || chartCodePattern.test(value));
+  && (key !== 'ownerId' || decimalIdPattern.test(value)) && (key !== 'accountCode' || chartCodePattern.test(value))
+  && (key !== 'accountNo' || ownerAccountNoPattern.test(value));
 
 /** 明细账查询：主体三项必填且合法才查询；可选筛选只保留合法值（BFF 白名单 R19）。 */
 export function subledgerFilters(values: Readonly<Record<string, unknown>>): Record<string, string> {
