@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -19,8 +18,6 @@ import com.paytech.commercial.api.enums.CalculationBase;
 import com.paytech.commercial.api.enums.CommercialPriceErrorCode;
 import com.paytech.commercial.api.enums.PricingDimension;
 import com.paytech.foundation.common.error.CommonErrorCode;
-import com.paytech.operations.console.bff.domain.enums.CommercialDashboardMetric;
-import com.paytech.operations.console.bff.domain.enums.CommercialDashboardMetricStatus;
 import com.paytech.operations.console.bff.ext.rest.CommercialPricePreviewController;
 import com.paytech.operations.console.bff.test.base.CommercialBrowserAutoTestBase;
 import com.paytech.operations.console.bff.test.simulator.CommercialOwnerSimulator;
@@ -32,7 +29,7 @@ import tools.jackson.databind.node.ObjectNode;
 /**
  * 商务工作台、费率卡预览与价格试算：经真实 BFF 入口与真实 commercial 客户端执行，commercial 由 Loopback Simulator 返回配置的 DTO
  * <li>试算覆盖命中转发、示例费用（百分比 + 下限、固定、WHOLE_BASE、PROGRESSIVE、不可计算组件）、命中失败原因透传与本地拒绝。</li>
- * <li>费率卡的原样转发由 CommercialBrowserAutoTest 的边界清单 R01 覆盖，这里只覆盖回执身份不一致。</li>
+ * <li>费率卡的原样转发由 CommercialBrowserAutoTest 的边界清单 R01 覆盖，这里只覆盖回执身份不一致；工作台数据见 CommercialConsoleQueryAutoTest。</li>
  *
  * @see CommercialPricePreviewController
  * @author Claude
@@ -178,20 +175,6 @@ class CommercialPricePreviewAutoTest extends CommercialBrowserAutoTestBase {
         resetBetweenCalls();
         platform.grantPermissions(COMMERCIAL_PRICING_READ_PERMISSION_ID);
         assertDenied(send("GET", DASHBOARD_PATH, DASHBOARD_ROUTE, null));
-    }
-
-    /** 工作台：列表接口接入前每张卡片 count 为 null、状态为待接入，不调用 commercial。 */
-    @Test
-    void test_noDataFound() throws Exception {
-        var response = send("GET", DASHBOARD_PATH, DASHBOARD_ROUTE, null);
-
-        assertEquals(200, response.statusCode(), response.body());
-        var metrics = JSON.readTree(response.body()).path("metrics");
-        assertEquals(Arrays.stream(CommercialDashboardMetric.values()).map(CommercialDashboardMetric::getCode).toList(),
-            metrics.valueStream().map(metric -> metric.path("metricCode").asString()).toList());
-        metrics.forEach(metric -> assertAll(() -> assertTrue(metric.path("count").isNull()),
-            () -> assertEquals(CommercialDashboardMetricStatus.PENDING_INTEGRATION.getCode(), metric.path("status").asString())));
-        assertTrue(commercial.requests().isEmpty(), commercial.requests().toString());
     }
 
     /** 费率卡回执的 Client 与请求不一致按上游无效响应 502 处理。 */

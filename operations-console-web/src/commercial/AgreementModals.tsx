@@ -9,7 +9,10 @@ import type {
   AcceptanceFormValues, Agreement, AgreementCapability, AgreementFormValues, AgreementParty, AgreementWriteResult, CapabilityFormValues, PlanFormValues,
   TermPlan,
 } from './commercial';
+import { ClientIdInput } from './ClientIdInput';
+import { browserStorage, capabilityOptions, rememberClient, subscribableProductOptions } from './commercialConsole';
 import { CommandModal, CommercialNote } from './CommercialParts';
+import { useCatalogCapabilities, useCatalogProducts } from './useCatalog';
 import { useCommercialCommand } from './useCommercialCommand';
 
 interface Base { onClose: () => void; onReload: () => void; onAuthorizationChanged: () => void }
@@ -26,7 +29,9 @@ export function CreateAgreementModal({ onClose, onCreated, onAuthorizationChange
   const submit = async () => {
     const values = await form.validateFields();
     const result = await command.run(commercialPaths.agreements, 'POST', agreementBody(values), decodeAgreementWrite(), '合同创建失败');
-    if (result) onCreated(result.agreementId);
+    if (!result) return;
+    if (values.agreementType === 'CLIENT' && values.clientId) rememberClient(browserStorage(), values.clientId);
+    onCreated(result.agreementId);
   };
   return <CommandModal title="新建合同" command={command} okText="创建" onOk={() => void submit()} onClose={onClose} onReload={onClose} width={760}>
     <Form form={form} name="commercial-agreement-create" layout="vertical" initialValues={{ agreementType: 'CLIENT', businessMode: 'MOR',
@@ -40,7 +45,8 @@ export function CreateAgreementModal({ onClose, onCreated, onAuthorizationChange
           ? <Form.Item name="businessMode" label="业务模式" rules={[{ required: true, message: '请选择业务模式' }]}><Radio.Group optionType="button" options={businessModes.map(v => ({ value: v, label: v }))} /></Form.Item>
           : <div />}
         {type === 'CLIENT' ? <>
-          <Form.Item name="clientId" label="Client ID" rules={[required('请填写 Client ID'), idRule]}><Input maxLength={19} /></Form.Item>
+          <Form.Item name="clientId" label="Client ID" extra="可选最近使用或审核通过的 Client；暂不支持按名称搜索" rules={[required('请填写 Client ID'), idRule]}>
+            <ClientIdInput /></Form.Item>
           <Form.Item name="entityNo" label="经营主体 OE" normalize={(v: string) => v?.toUpperCase()} rules={[required('请填写 OE'), { pattern: entityNoPattern, message: '两位国家码加三位序号，如 AE001' }]}>
             <Input maxLength={5} placeholder="AE001" /></Form.Item>
           <Form.Item name="referralPartnerId" label="推荐伙伴 ID（可空）" rules={[idRule]}><Input maxLength={19} /></Form.Item>
@@ -152,13 +158,13 @@ export function TerminateModal({ agreement, onDone, onClose, onReload, onAuthori
   </CommandModal>;
 }
 
-const productOptions = ['ACQUIRING', 'PAYOUT', 'FX', 'DISPUTE', 'DATA_ANALYTICS'];
 /** 整体替换订阅产品；基座产品（TAX_INVOICE、PLATFORM）不在此维护。 */
 export function ProductsModal({ agreement, onDone, onClose, onReload, onAuthorizationChanged }: Base & {
   agreement: Agreement; onDone: (result: AgreementWriteResult) => void;
 }) {
   const [form] = Form.useForm<{ productCodes: string[] }>();
   const command = useCommercialCommand(onAuthorizationChanged, 'agreement', form);
+  const products = useCatalogProducts(onAuthorizationChanged);
   const submit = async () => {
     const values = await form.validateFields();
     const result = await command.run(commercialPaths.products(agreement.agreementId), 'PUT', {
@@ -168,19 +174,20 @@ export function ProductsModal({ agreement, onDone, onClose, onReload, onAuthoriz
   };
   return <CommandModal title="订阅产品" command={command} onOk={() => void submit()} onClose={onClose} onReload={onReload} width={520}>
     <Form form={form} name="commercial-products" layout="vertical" initialValues={{ productCodes: agreement.productCodes }}>
-      <Form.Item name="productCodes" label="产品" extra="整体替换；仍有开通项的产品不能移除"><Select mode="tags" options={productOptions.map(value => ({ value, label: value }))} /></Form.Item>
+      <Form.Item name="productCodes" label="产品" extra={products.failed ? '产品目录读取失败，可直接输入产品代码；整体替换，仍有开通项的产品不能移除'
+        : '选项来自产品目录（启用的非基础产品）；整体替换，仍有开通项的产品不能移除'}>
+        <Select mode="tags" loading={products.loading} options={subscribableProductOptions(products.items)} /></Form.Item>
     </Form>
   </CommandModal>;
 }
 
-const capabilityOptions = ['CARD_VISA', 'CARD_MC', 'CARD_AMEX', 'CARD_UNIONPAY', 'APPLE_PAY', 'GOOGLE_PAY', 'PAYOUT_LOCAL', 'PAYOUT_SWIFT', 'FX_SPOT',
-  'DISPUTE_HANDLING', 'ANALYTICS_SUBSCRIPTION'];
 /** 新增或整体改写开通项：OE、可开通项、区间、保证金与约束行。 */
 export function CapabilityModal({ agreement, capability, onDone, onClose, onReload, onAuthorizationChanged }: Base & {
   agreement: Agreement; capability?: AgreementCapability; onDone: () => void;
 }) {
   const [form] = Form.useForm<CapabilityFormValues>();
   const command = useCommercialCommand(onAuthorizationChanged, 'agreement', form);
+  const catalog = useCatalogCapabilities(onAuthorizationChanged);
   const entities = agreement.agreementType === 'CLIENT' ? [agreement.entityNo ?? ''] : agreement.operatingEntityNos;
   const submit = async () => {
     const values = await form.validateFields();
@@ -199,8 +206,10 @@ export function CapabilityModal({ agreement, capability, onDone, onClose, onRelo
       <div className="commercial-form-grid">
         <Form.Item name="entityNo" label="OE" rules={[{ required: true, message: '请选择 OE' }]}>
           <Select disabled={!!capability} options={entities.map(value => ({ value, label: value }))} /></Form.Item>
-        <Form.Item name="capabilityCode" label="可开通项" rules={[{ required: true, message: '请选择可开通项' }]}>
-          <Select disabled={!!capability} showSearch options={capabilityOptions.map(value => ({ value, label: value }))} /></Form.Item>
+        <Form.Item name="capabilityCode" label="可开通项" normalize={(v: string) => v?.toUpperCase()} rules={[{ required: true, whitespace: true, message: '请选择可开通项' }]}
+          extra={catalog.failed ? '目录读取失败，请直接输入可开通项代码' : undefined}>
+          {catalog.failed ? <Input disabled={!!capability} maxLength={64} />
+            : <Select disabled={!!capability} showSearch={{ optionFilterProp: 'label' }} loading={catalog.loading} options={capabilityOptions(catalog.items)} />}</Form.Item>
         {capability && <Form.Item name="status" label="状态"><Radio.Group optionType="button" options={options(capabilityStatusLabels, capabilityStatuses)} /></Form.Item>}
         {capability && <div />}
         <Form.Item name="effectiveFrom" label="生效起点" rules={[{ required: true, message: '请选择生效起点' }]}><DatePicker showTime /></Form.Item>

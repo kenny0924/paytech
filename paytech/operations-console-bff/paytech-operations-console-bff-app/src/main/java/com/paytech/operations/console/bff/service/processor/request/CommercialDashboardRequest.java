@@ -13,7 +13,7 @@ public class CommercialDashboardRequest {
 
     /**
      * 统计时点
-     * <li>"已排期待生效"按该时点之后生效计数。</li>
+     * <li>只作为响应 asOf 回显；各卡片数量是 commercial 在调用时刻的状态计数。</li>
      */
     @NotNull(message = "统计时点不能为空")
     private final Instant asOf;

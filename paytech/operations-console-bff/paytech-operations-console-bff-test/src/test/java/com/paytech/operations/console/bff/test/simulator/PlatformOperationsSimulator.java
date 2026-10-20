@@ -225,7 +225,15 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
         Map.entry("operations-commercial-term-version-prices", COMMERCIAL_PRICING_READ_PERMISSION_ID),
         Map.entry("operations-commercial-dashboard", COMMERCIAL_CONTRACT_READ_PERMISSION_ID),
         Map.entry("operations-commercial-rate-card", COMMERCIAL_PRICING_READ_PERMISSION_ID),
-        Map.entry("operations-commercial-price-simulate", COMMERCIAL_PRICING_READ_PERMISSION_ID));
+        Map.entry("operations-commercial-price-simulate", COMMERCIAL_PRICING_READ_PERMISSION_ID),
+        Map.entry("operations-commercial-agreement-list", COMMERCIAL_CONTRACT_READ_PERMISSION_ID),
+        Map.entry("operations-commercial-term-plan-list", COMMERCIAL_PRICING_READ_PERMISSION_ID),
+        Map.entry("operations-commercial-term-version-list", COMMERCIAL_PRICING_READ_PERMISSION_ID),
+        Map.entry("operations-commercial-term-version-diff", COMMERCIAL_PRICING_READ_PERMISSION_ID),
+        Map.entry("operations-commercial-product-list", COMMERCIAL_CONTRACT_READ_PERMISSION_ID),
+        Map.entry("operations-commercial-capability-catalog", COMMERCIAL_CONTRACT_READ_PERMISSION_ID),
+        Map.entry("operations-commercial-fee-event-list", COMMERCIAL_CONTRACT_READ_PERMISSION_ID),
+        Map.entry("operations-commercial-business-change-list", COMMERCIAL_CONTRACT_READ_PERMISSION_ID));
 
     private static final Map<String, String> ROUTE_PERMISSIONS = Map.ofEntries(
         Map.entry("operations-account-create", ACCOUNT_CREATE_PERMISSION_ID),

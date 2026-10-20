@@ -33,8 +33,3 @@ export function CommandModal({ title, command, okText = '保存', onOk, onClose,
     {children}
   </Modal>;
 }
-
-/** 列表或详情的「按 ID 打开」入口说明：commercial 本期没有列表接口。 */
-export function NoListNotice({ subject }: { subject: string }) {
-  return <CommercialNote>commercial 本期没有{subject}列表接口：请按 ID 打开，或从合同详情的条款版本进入。新建成功后页面会直接跳转到新对象。</CommercialNote>;
-}

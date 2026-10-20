@@ -2,6 +2,7 @@ package com.paytech.operations.console.bff.ext.rest;
 
 import static com.paytech.operations.console.bff.ext.rest.RiskListController.requireQueryKeys;
 
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.http.HttpStatus;
@@ -15,8 +16,17 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.paytech.foundation.common.error.InvalidParameterException;
+import com.paytech.foundation.web.paging.PagingRequestBody;
+import com.paytech.foundation.web.paging.PagingResponseBody;
+import com.paytech.operations.console.bff.integration.CommercialConsoleQueryClient;
 import com.paytech.operations.console.bff.integration.CommercialPricingClient;
 import com.paytech.operations.console.bff.integration.CommercialPricingClient.VersionAction;
+import com.paytech.operations.console.bff.service.model.CommercialChangeModels.CommercialTermVersionDiffResponseBody;
+import com.paytech.operations.console.bff.service.model.CommercialListModels.TermPlanListItem;
+import com.paytech.operations.console.bff.service.model.CommercialListModels.TermPlanListRequestBody;
+import com.paytech.operations.console.bff.service.model.CommercialListModels.TermVersionListItem;
+import com.paytech.operations.console.bff.service.model.CommercialListModels.TermVersionListRequestBody;
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels.CommercialTermPlanResponseBody;
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels.CommercialTermVersionCommandRequestBody;
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels.CommercialTermVersionPricesResponseBody;
@@ -32,7 +42,9 @@ import com.paytech.operations.console.bff.service.model.CommercialPricingModels.
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels.ScheduleCommercialTermVersionRequestBody;
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels.UpdatePricingProfileRequestBody;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
+import com.paytech.operations.console.bff.service.processor.CommercialTermVersionDiffProcessor;
 import com.paytech.operations.console.bff.service.processor.CommercialTermWorkspaceProcessor;
+import com.paytech.operations.console.bff.service.processor.request.CommercialTermVersionDiffRequest;
 import com.paytech.operations.console.bff.service.processor.request.CommercialTermWorkspaceRequest;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -46,7 +58,8 @@ import lombok.AllArgsConstructor;
  * <li>Gateway 绑定：GET 为 COMMERCIAL_PRICING_READ；画像写入与条款创建、价格、提交、排期、激活为 COMMERCIAL_PRICING_MANAGE；
  * 批准与驳回为独立的 COMMERCIAL_PRICING_APPROVE，保证 Maker 与 Checker 可由不同角色承担。</li>
  * <li>版本编辑页经 Processor 聚合版本、合同范围与全部 OE 的价格；写入简单转发 commercial，操作人取自会话。</li>
- * <li>commercial 本期没有方案 / 版本列表接口，页面从合同详情的当前 / 已排期版本或版本 ID 进入。</li>
+ * <li>方案 / 版本列表（第二切片 I2）简单转发 commercial CommercialTermQueryApi，版本 status 可重复；版本对比经 Processor 读取两版价格后在
+ * BFF 比较。三者均为 COMMERCIAL_PRICING_READ。</li>
  *
  * @author Claude
  */
@@ -55,9 +68,18 @@ import lombok.AllArgsConstructor;
 @RequestMapping("/commercial-admin/v1")
 public class CommercialPricingController {
     private static final String ID = "[1-9][0-9]{0,18}";
+    private static final String CODE = "[A-Z][A-Z0-9_]{0,63}";
+    private static final String OFFSET_INSTANT = "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?(Z|[+-]\\d{2}:\\d{2})";
+    private static final String VERSION_STATUS = "DRAFT|PENDING_APPROVAL|APPROVED|SCHEDULED|ACTIVE|SUPERSEDED|EXPIRED";
+    private static final Set<String> PLAN_KEYS = Set.of("agreementId", "clientId", "localPartnerId", "termType", "status",
+        "page", "size");
+    private static final Set<String> VERSION_KEYS = Set.of("planId", "agreementId", "status", "effectiveFrom", "effectiveTo",
+        "page", "size");
 
     private final CommercialPricingClient client;
+    private final CommercialConsoleQueryClient queryClient;
     private final CommercialTermWorkspaceProcessor workspaceProcessor;
+    private final CommercialTermVersionDiffProcessor diffProcessor;
 
     /** P01 画像列表。 */
     @GetMapping("/pricing-profiles")
@@ -175,6 +197,50 @@ public class CommercialPricingController {
         @RequestBody @NotNull @Valid CommercialTermVersionCommandRequestBody body) {
         requireQueryKeys(servletRequest, Set.of());
         return client.transitionVersion(operator, versionId, VersionAction.ACTIVATE, body);
+    }
+
+    /** T11 方案列表：按合同、Client、Partner、条款类型与方案状态筛选分页，带当前 / 已排期版本。 */
+    @GetMapping("/commercial-terms/plans")
+    public PagingResponseBody<TermPlanListItem> listPlans(HttpServletRequest servletRequest,
+        @RequestParam(value = "agreementId", required = false) @Pattern(regexp = ID) String agreementId,
+        @RequestParam(value = "clientId", required = false) @Pattern(regexp = ID) String clientId,
+        @RequestParam(value = "localPartnerId", required = false) @Pattern(regexp = ID) String localPartnerId,
+        @RequestParam(value = "termType", required = false) @Pattern(regexp = CODE) String termType,
+        @RequestParam(value = "status", required = false) @Pattern(regexp = "DRAFT|ACTIVE|RETIRED") String status,
+        @RequestParam(value = "page", required = false) Integer page,
+        @RequestParam(value = "size", required = false) Integer size) {
+        CommercialQueryParameters.require(servletRequest, PLAN_KEYS, Set.of());
+        PagingRequestBody paging = PagingRequestBody.of(page, size);
+        return queryClient.listPlans(new TermPlanListRequestBody(agreementId, clientId, localPartnerId, termType, status,
+            paging.page(), paging.size()));
+    }
+
+    /** T12 版本列表：按方案、合同、状态（可多选）与生效窗口筛选分页。 */
+    @GetMapping("/commercial-terms/versions")
+    public PagingResponseBody<TermVersionListItem> listVersions(HttpServletRequest servletRequest,
+        @RequestParam(value = "planId", required = false) @Pattern(regexp = ID) String planId,
+        @RequestParam(value = "agreementId", required = false) @Pattern(regexp = ID) String agreementId,
+        @RequestParam(value = "status", required = false) List<@Pattern(regexp = VERSION_STATUS) String> status,
+        @RequestParam(value = "effectiveFrom", required = false) @Pattern(regexp = OFFSET_INSTANT) String effectiveFrom,
+        @RequestParam(value = "effectiveTo", required = false) @Pattern(regexp = OFFSET_INSTANT) String effectiveTo,
+        @RequestParam(value = "page", required = false) Integer page,
+        @RequestParam(value = "size", required = false) Integer size) {
+        CommercialQueryParameters.require(servletRequest, VERSION_KEYS, Set.of("status"));
+        PagingRequestBody paging = PagingRequestBody.of(page, size);
+        return queryClient.listVersions(new TermVersionListRequestBody(planId, agreementId,
+            status == null ? List.of() : List.copyOf(status), effectiveFrom, effectiveTo, paging.page(), paging.size()));
+    }
+
+    /** T13 同一方案两个版本的价格对比：新增 / 删除 / 修改（字段级）/ 未变。 */
+    @GetMapping("/commercial-terms/versions/{baseVersionId}/diff/{targetVersionId}")
+    public CommercialTermVersionDiffResponseBody diff(HttpServletRequest servletRequest,
+        @PathVariable("baseVersionId") @Pattern(regexp = ID) String baseVersionId,
+        @PathVariable("targetVersionId") @Pattern(regexp = ID) String targetVersionId) {
+        requireQueryKeys(servletRequest, Set.of());
+        if (baseVersionId.equals(targetVersionId)) {
+            throw new InvalidParameterException("对比的两个版本不能相同");
+        }
+        return diffProcessor.process(new CommercialTermVersionDiffRequest(baseVersionId, targetVersionId));
     }
 
     /** T09 版本编辑页聚合：版本、合同范围与全部 OE 的价格。 */

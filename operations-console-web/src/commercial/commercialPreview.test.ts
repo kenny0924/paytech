@@ -34,12 +34,21 @@ const form: SimulationFormValues = { termVersionId: ' 7319000000000000601 ', ent
   dimensions: [{ dimensionCode: 'CARD_BRAND', value: 'visa' }, { dimensionCode: 'THREE_DS_RESULT', notApplicable: true },
     { dimensionCode: 'ISSUER_COUNTRY', value: ' ' }, { dimensionCode: 'CARD_BRAND', value: 'MASTERCARD' }], amount: ' 1000.00 ' };
 
-test('工作台：未接入卡片 count 必须为 null，已接入必须为非负整数', () => {
-  const pending = { asOf: '2026-10-20T00:00:00Z', metrics: dashboardMetrics.map(metricCode => ({ metricCode, count: null, status: 'PENDING_INTEGRATION' })) };
-  assert.equal(decodeDashboard(pending).metrics.length, 4);
-  assert.equal(decodeDashboard({ ...pending, metrics: [{ metricCode: 'ACTIVE_AGREEMENTS', count: 3, status: 'AVAILABLE' }] }).metrics[0].count, 3);
-  assert.throws(() => decodeDashboard({ ...pending, metrics: [{ metricCode: 'ACTIVE_AGREEMENTS', count: 0, status: 'PENDING_INTEGRATION' }] }), ApiError);
-  assert.throws(() => decodeDashboard({ ...pending, metrics: [{ metricCode: 'UNKNOWN', count: null, status: 'PENDING_INTEGRATION' }] }), ApiError);
+test('工作台：五张卡片数量为非负整数，审批队列只含待审批版本', () => {
+  const queueItem = { versionId: '7319000000000000603', planId: '7319000000000000501', planCode: 'CP-1', termType: 'CLIENT_PRICING',
+    agreementId: '7319000000000000101', entityNo: null, clientId, localPartnerId: null, versionNo: '3', status: 'PENDING_APPROVAL',
+    effectiveFrom: '2026-10-18T00:00:00Z', effectiveTo: null, roundingMode: 'HALF_UP', pricingModel: 'BLENDED', feeTaxTreatment: 'EXCLUSIVE',
+    makerAccountId: '10001', checkerAccountId: null, submittedTime: '2026-10-19T09:00:00Z', priceCount: 8, changeVersion: '6', updateTime: '2026-10-19T09:00:00Z' };
+  const dashboard = { asOf: '2026-10-20T00:00:00Z', metrics: dashboardMetrics.map((metricCode, index) => ({ metricCode, count: index })), approvalQueue: [queueItem] };
+  const decoded = decodeDashboard(dashboard);
+  assert.equal(decoded.metrics.length, 5);
+  assert.equal(decoded.metrics[4].count, 4);
+  assert.equal(decoded.approvalQueue[0].makerAccountId, '10001');
+  assert.throws(() => decodeDashboard({ ...dashboard, metrics: [{ metricCode: 'ACTIVE_AGREEMENTS', count: null }] }), ApiError);
+  assert.throws(() => decodeDashboard({ ...dashboard, metrics: [{ metricCode: 'ACTIVE_AGREEMENTS', count: -1 }] }), ApiError);
+  assert.throws(() => decodeDashboard({ ...dashboard, metrics: [{ metricCode: 'UNKNOWN', count: 1 }] }), ApiError);
+  assert.throws(() => decodeDashboard({ ...dashboard, approvalQueue: [{ ...queueItem, status: 'DRAFT' }] }), ApiError);
+  assert.throws(() => decodeDashboard({ asOf: dashboard.asOf, metrics: [] }), ApiError);
 });
 
 test('费率卡：Client 一致时解码合同、开通项、版本与币种块；Client 不一致视为无效响应', () => {

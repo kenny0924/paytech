@@ -11,6 +11,7 @@ import type { AgreementCapability, AgreementParty, AgreementTermVersion, TermPla
 import { AcceptanceModal, CapabilityModal, CreatePlanModal, ProductsModal, TerminateModal, TransitionModal } from './AgreementModals';
 import { CommercialNote, StatusTag } from './CommercialParts';
 import { CreateVersionModal } from './TermModals';
+import { consoleRoutes } from './commercialConsole';
 
 interface Props { agreementId: string; resources: ConsoleResource[]; onAuthorizationChanged: () => void }
 type Dialog =
@@ -40,6 +41,7 @@ export function AgreementDetail({ agreementId, resources, onAuthorizationChanged
       <div className="commercial-actions">
         <Button onClick={() => void navigate(commercialRoutes.agreements)}>返回</Button>
         <Button onClick={detail.refresh} loading={detail.loading}>刷新</Button>
+        <Button onClick={() => void navigate(consoleRoutes.history('AGREEMENT', agreement.agreementId))}>变更历史</Button>
         {actions.submit && <Button type="primary" onClick={() => setDialog({ kind: 'submit' })}>提交签署</Button>}
         {actions.activate && <Button type="primary" onClick={() => setDialog({ kind: 'activate' })}>激活</Button>}
         {actions.terminate && <Button danger onClick={() => setDialog({ kind: 'terminate' })}>终止</Button>}
@@ -105,7 +107,7 @@ export function AgreementDetail({ agreementId, resources, onAuthorizationChanged
           {canManageTerms && <Button onClick={() => setDialog({ kind: 'plan' })}>新建条款方案</Button>}</div>
         {termVersionsStatus === 'UNAVAILABLE' && <Alert type="warning" showIcon className="commercial-banner" title="条款版本暂时无法加载（费率卡读取失败），合同信息不受影响。"
           action={<Button size="small" onClick={detail.refresh}>重试</Button>} />}
-        {termVersionsStatus === 'NOT_APPLICABLE' && <CommercialNote>当前与已排期版本只对生效中的 Client 合同汇总；Partner 条款与草稿版本请按版本 ID 打开。</CommercialNote>}
+        {termVersionsStatus === 'NOT_APPLICABLE' && <CommercialNote>当前与已排期版本只对生效中的 Client 合同汇总；Partner 条款与草稿版本请到「价目」按合同 ID 筛选方案或版本。</CommercialNote>}
         {termVersionsStatus === 'AVAILABLE' && <Table<AgreementTermVersion> rowKey="versionId" size="middle" pagination={false} dataSource={termVersions}
           locale={{ emptyText: '没有当前或已排期的版本' }} onRow={row => ({ className: 'clickable-row', onClick: () => void navigate(commercialRoutes.version(row.versionId)) })}
           columns={[

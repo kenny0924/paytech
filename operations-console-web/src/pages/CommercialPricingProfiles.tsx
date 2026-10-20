@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Button, Empty, Form, Input, Radio, Select, Table, Tag } from 'antd';
+import { useNavigate } from 'react-router-dom';
 import type { ConsoleResource } from '../api/types';
+import { consoleRoutes } from '../commercial/commercialConsole';
 import { Loading, QueryFailure, useDetail } from '../tenantAccess/TenantAccessView';
 import {
   commercialButtons, commercialPaths, decodeProfile, decodeProfileList, hasButton, kindDimensions, profileBody, profileKindLabels, profileKinds,
@@ -18,6 +20,7 @@ const options = (labels: Readonly<Record<string, string>>, values: readonly stri
 
 /** 定价画像：按种类与状态筛选；草稿可编辑与启用，启用后冻结，只能退役。 */
 export function CommercialPricingProfiles({ resources, onAuthorizationChanged }: Props) {
+  const navigate = useNavigate();
   const [filters, setFilters] = useState<{ kind?: string; status?: string }>({});
   const query = new URLSearchParams(Object.entries(filters).filter(([, value]) => value) as [string, string][]).toString();
   const list = useDetail(`${commercialPaths.profiles}${query ? `?${query}` : ''}`, decodeProfileList);
@@ -46,10 +49,11 @@ export function CommercialPricingProfiles({ resources, onAuthorizationChanged }:
           { title: '条件', render: (_, row) => row.conditions.length ? <div className="commercial-limits">{row.conditions.map(c =>
             <Tag key={`${c.dimensionCode}-${c.conditionValue}`}>{c.dimensionCode}={c.conditionValue}</Tag>)}</div> : <span className="commercial-cell-meta">无条件</span> },
           { title: '状态', width: 100, render: (_, row) => <StatusTag status={row.status} labels={profileStatusLabels} /> },
-          { title: '操作', width: 180, render: (_, row) => canManage && <div className="commercial-actions">
-            {row.status === 'DRAFT' && <Button size="small" onClick={() => setDialog({ kind: 'edit', profile: row })}>编辑</Button>}
-            {row.status === 'DRAFT' && <Button size="small" type="primary" onClick={() => setDialog({ kind: 'activate', profile: row })}>启用</Button>}
-            {row.status === 'ACTIVE' && <Button size="small" danger onClick={() => setDialog({ kind: 'retire', profile: row })}>退役</Button>}
+          { title: '操作', width: 230, render: (_, row) => <div className="commercial-actions">
+            {canManage && row.status === 'DRAFT' && <Button size="small" onClick={() => setDialog({ kind: 'edit', profile: row })}>编辑</Button>}
+            {canManage && row.status === 'DRAFT' && <Button size="small" type="primary" onClick={() => setDialog({ kind: 'activate', profile: row })}>启用</Button>}
+            {canManage && row.status === 'ACTIVE' && <Button size="small" danger onClick={() => setDialog({ kind: 'retire', profile: row })}>退役</Button>}
+            <Button size="small" onClick={() => void navigate(consoleRoutes.history('PAYMENT_METHOD_PROFILE', row.pricingProfileId))}>历史</Button>
           </div> },
         ]} /></section>}
     <CommercialNote>画像全局复用：启用后种类、支付方式与条件永久冻结；退役只阻止新价格引用，已引用的价格不受影响。同维度多值为 OR，异维度为 AND。</CommercialNote>

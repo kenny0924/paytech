@@ -2,6 +2,7 @@ package com.paytech.operations.console.bff.ext.rest;
 
 import static com.paytech.operations.console.bff.ext.rest.RiskListController.requireQueryKeys;
 
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.http.HttpStatus;
@@ -11,10 +12,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.paytech.foundation.web.paging.PagingRequestBody;
+import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.operations.console.bff.integration.CommercialAgreementClient;
+import com.paytech.operations.console.bff.integration.CommercialConsoleQueryClient;
 import com.paytech.operations.console.bff.service.model.CommercialAgreementModels.AddAgreementCapabilityRequestBody;
 import com.paytech.operations.console.bff.service.model.CommercialAgreementModels.AgreementCapabilityResponseBody;
 import com.paytech.operations.console.bff.service.model.CommercialAgreementModels.AgreementOverviewResponseBody;
@@ -25,6 +30,8 @@ import com.paytech.operations.console.bff.service.model.CommercialAgreementModel
 import com.paytech.operations.console.bff.service.model.CommercialAgreementModels.ReplaceAgreementProductsRequestBody;
 import com.paytech.operations.console.bff.service.model.CommercialAgreementModels.TerminateAgreementRequestBody;
 import com.paytech.operations.console.bff.service.model.CommercialAgreementModels.UpdateAgreementCapabilityRequestBody;
+import com.paytech.operations.console.bff.service.model.CommercialListModels.AgreementListItem;
+import com.paytech.operations.console.bff.service.model.CommercialListModels.AgreementListRequestBody;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
 import com.paytech.operations.console.bff.service.processor.CommercialAgreementOverviewProcessor;
 import com.paytech.operations.console.bff.service.processor.request.CommercialAgreementOverviewRequest;
@@ -36,10 +43,10 @@ import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 
 /**
- * 合同运营入口：合同详情聚合、创建、提交签署、签署登记、激活、终止、订阅与开通项
+ * 合同运营入口：合同列表、合同详情聚合、创建、提交签署、签署登记、激活、终止、订阅与开通项
  * <li>Gateway 为每个路由绑定 COMMERCIAL_CONTRACT_READ（GET）或 COMMERCIAL_CONTRACT_MANAGE（写入），并经 PLT-I02 实时授权。</li>
  * <li>详情经 Processor 聚合合同与当前 / 已排期条款版本；写入简单转发 commercial，操作人取自会话，不编排跨系统事务。</li>
- * <li>commercial 本期没有合同列表接口，页面按合同 ID 打开详情。</li>
+ * <li>合同列表（第二切片 I2）简单转发 commercial AgreementQueryApi；status 可重复，分页按公共 PagingRequestBody 校验。</li>
  *
  * @author Claude
  */
@@ -48,9 +55,30 @@ import lombok.AllArgsConstructor;
 @RequestMapping("/commercial-admin/v1/agreements")
 public class CommercialAgreementController {
     private static final String ID = "[1-9][0-9]{0,18}";
+    private static final String STATUS = "DRAFT|PENDING_SIGNATURE|SIGNED|ACTIVE|EXPIRED|TERMINATED|CANCELLED";
+    private static final Set<String> LIST_KEYS = Set.of("clientId", "localPartnerId", "agreementType", "status", "entityNo",
+        "agreementNo", "page", "size");
 
     private final CommercialAgreementClient client;
+    private final CommercialConsoleQueryClient queryClient;
     private final CommercialAgreementOverviewProcessor overviewProcessor;
+
+    /** C10 合同列表：按 Client、Partner、类型、状态（可多选）、OE、合同号前缀筛选分页。 */
+    @GetMapping
+    public PagingResponseBody<AgreementListItem> list(HttpServletRequest servletRequest,
+        @RequestParam(value = "clientId", required = false) @Pattern(regexp = ID) String clientId,
+        @RequestParam(value = "localPartnerId", required = false) @Pattern(regexp = ID) String localPartnerId,
+        @RequestParam(value = "agreementType", required = false) @Pattern(regexp = "CLIENT|PARTNER") String agreementType,
+        @RequestParam(value = "status", required = false) List<@Pattern(regexp = STATUS) String> status,
+        @RequestParam(value = "entityNo", required = false) @Pattern(regexp = "[A-Z]{2}[0-9]{3}") String entityNo,
+        @RequestParam(value = "agreementNo", required = false) @Pattern(regexp = "[A-Za-z0-9._-]{1,64}") String agreementNo,
+        @RequestParam(value = "page", required = false) Integer page,
+        @RequestParam(value = "size", required = false) Integer size) {
+        CommercialQueryParameters.require(servletRequest, LIST_KEYS, Set.of("status"));
+        PagingRequestBody paging = PagingRequestBody.of(page, size);
+        return queryClient.listAgreements(new AgreementListRequestBody(clientId, localPartnerId, agreementType,
+            status == null ? List.of() : List.copyOf(status), entityNo, agreementNo, paging.page(), paging.size()));
+    }
 
     /** C01 合同详情聚合。 */
     @GetMapping("/{agreementId}")

@@ -16,3 +16,18 @@ UPDATE t_role SET version=version+1, update_time=@commercial_i1_act_time WHERE r
 SELECT ROW_COUNT() AS role;
 COMMIT;
 -- 回滚：同一组 ID 反向置 DISABLED，version+1，并再次递增角色 900000000000000510 的 version。
+
+-- ---------------------------------------------------------------------------
+-- 第二切片 I2（合同列表 / 方案与版本列表 / 版本对比 / 产品目录 / 变更历史）：本机全链路激活，只写不执行
+-- 前置：已执行 initial-data 的 I2 块（ID 块 93）并 COMMIT；operations-console-bff 已含 I2 端点。
+-- 只激活 8 条只读 GET 路由；不新增权限、授权与菜单（复用 COMMERCIAL_CONTRACT_READ / COMMERCIAL_PRICING_READ 与既有菜单）。
+-- 预期影响行数：8 / 1。
+START TRANSACTION;
+SET @commercial_i2_act_time = UTC_TIMESTAMP(6);
+UPDATE t_gateway_route SET status='ACTIVE', version=version+1, update_time=@commercial_i2_act_time
+ WHERE route_id BETWEEN 900000000000093401 AND 900000000000093408 AND status='DISABLED';
+SELECT ROW_COUNT() AS routes;
+UPDATE t_role SET version=version+1, update_time=@commercial_i2_act_time WHERE role_id=900000000000000510;
+SELECT ROW_COUNT() AS role;
+COMMIT;
+-- 回滚：同一组路由反向置 DISABLED，version+1，并再次递增角色 900000000000000510 的 version。

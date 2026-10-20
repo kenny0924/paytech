@@ -47,7 +47,8 @@ test('background authorization refresh preserves mounted routes and last valid r
 
 test('paging accepts initial filters before its first effect and keeps legacy empty defaults', () => {
   const hook = readFileSync(new URL('../hooks/usePaging.ts', import.meta.url), 'utf8');
-  assert.match(hook, /initialFilters: Readonly<Record<string, string>> = \{\}/);
+  assert.match(hook, /F extends PagingFilters = Readonly<Record<string, string>>>/);
+  assert.match(hook, /initialFilters: F = \{\} as F/);
   assert.match(hook, /filters: \{ \.\.\.initialFilters \}/);
 });
 test('page canonicalizes search and mounts only the active list', () => {

@@ -3,17 +3,20 @@ import {
   currencyPattern, decodeComponent, decodeCondition, decodePrice, decodeSettlement, entityNoPattern, idPattern, ownerReason,
 } from './commercial.ts';
 import type { Dimension, Price, PriceComponent, PriceSettlement, ProfileCondition } from './commercial.ts';
+import { decodeTermVersionListItem } from './commercialConsole.ts';
+import type { TermVersionListItem } from './commercialConsole.ts';
 
 // ---------- 工作台 ----------
 
 /** 工作台指标卡片，声明顺序即卡片顺序（与 BFF CommercialDashboardMetric 一致）。 */
-export const dashboardMetrics = ['PENDING_APPROVAL_VERSIONS', 'SCHEDULED_VERSIONS', 'PENDING_SIGNATURE_AGREEMENTS', 'ACTIVE_AGREEMENTS'] as const;
+export const dashboardMetrics = ['PENDING_APPROVAL_VERSIONS', 'SCHEDULED_VERSIONS', 'DRAFT_AGREEMENTS', 'PENDING_SIGNATURE_AGREEMENTS', 'ACTIVE_AGREEMENTS'] as const;
 export type DashboardMetricCode = typeof dashboardMetrics[number];
 export const dashboardMetricLabels: Record<DashboardMetricCode, string> = {
-  PENDING_APPROVAL_VERSIONS: '待审批版本', SCHEDULED_VERSIONS: '已排期待生效', PENDING_SIGNATURE_AGREEMENTS: '待签署合同', ACTIVE_AGREEMENTS: '生效合同',
+  PENDING_APPROVAL_VERSIONS: '待审批版本', SCHEDULED_VERSIONS: '已排期待生效', DRAFT_AGREEMENTS: '草稿合同', PENDING_SIGNATURE_AGREEMENTS: '待签署合同',
+  ACTIVE_AGREEMENTS: '生效合同',
 };
-export interface DashboardMetric { metricCode: DashboardMetricCode; count: number | null; status: 'AVAILABLE' | 'PENDING_INTEGRATION' }
-export interface Dashboard { asOf: string; metrics: DashboardMetric[] }
+export interface DashboardMetric { metricCode: DashboardMetricCode; count: number }
+export interface Dashboard { asOf: string; metrics: DashboardMetric[]; approvalQueue: TermVersionListItem[] }
 
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
 const array = (v: unknown): v is unknown[] => Array.isArray(v);
@@ -26,17 +29,18 @@ const orNull = <T,>(v: T | undefined | null): T | null => v ?? null;
 /** 解码失败只给通用错误，不回显响应内容。 */
 const require = (valid: boolean) => { if (!valid) throw new ApiError(502, 'INVALID_RESPONSE'); };
 
-/** 工作台：未接入的卡片 count 必须为 null，不以 0 冒充没有待办。 */
+/** 工作台：五张卡片按约定顺序、数量为非负整数；审批队列只含待审批版本。 */
 export function decodeDashboard(value: unknown): Dashboard {
   const v = value as Dashboard;
-  require(object(v) && instant(v.asOf) && array(v.metrics));
+  require(object(v) && instant(v.asOf) && array(v.metrics) && array(v.approvalQueue));
   const metrics = v.metrics.map(metric => {
-    require(object(metric) && (dashboardMetrics as readonly string[]).includes(metric.metricCode)
-      && (metric.status === 'AVAILABLE' ? Number.isInteger(metric.count) && Number(metric.count) >= 0
-        : metric.status === 'PENDING_INTEGRATION' && metric.count === null));
-    return metric;
+    require(object(metric) && (dashboardMetrics as readonly string[]).includes(metric.metricCode) && Number.isSafeInteger(metric.count)
+      && Number(metric.count) >= 0);
+    return { metricCode: metric.metricCode, count: metric.count };
   });
-  return { asOf: v.asOf, metrics };
+  const approvalQueue = v.approvalQueue.map(decodeTermVersionListItem);
+  require(approvalQueue.every(item => item.status === 'PENDING_APPROVAL'));
+  return { asOf: v.asOf, metrics, approvalQueue };
 }
 
 // ---------- 费率卡 ----------

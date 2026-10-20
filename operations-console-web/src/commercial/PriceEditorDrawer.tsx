@@ -7,14 +7,15 @@ import {
   defaultBusinessCalendar, newPriceDraft, partnerTermTypes, priceDraft, pricesBody, refundBehaviors,
 } from './commercial';
 import type { BandDraft, ComponentDraft, Price, PriceDraft, PricingProfile, TermScope, TermVersion } from './commercial';
+import { feeEventOptions } from './commercialConsole';
+import type { CodeOption } from './commercialConsole';
 import { ConflictBanner, CommercialNote } from './CommercialParts';
+import { useCatalogFeeEvents } from './useCatalog';
 import { useCommercialCommand } from './useCommercialCommand';
 
 interface Props {
   version: TermVersion; scope: TermScope; prices: readonly Price[]; onClose: () => void; onSaved: () => void; onAuthorizationChanged: () => void;
 }
-/** 已登记的计费事件代码（t_product_fee_event）；可输入其他已登记代码。 */
-const feeEvents = ['AUTH', 'CAPTURE', 'SALE', 'REFUND', 'CHARGEBACK', 'TOKEN_STORED', 'PAYOUT_SUBMITTED', 'PAYOUT_RETURNED', 'FX_DEAL', 'MONTHLY_CYCLE', 'SETUP', 'KYB_REVIEW'];
 const decimalRule = { pattern: /^(0|[1-9][0-9]{0,15})(\.[0-9]{1,8})?$/, message: '十进制金额，最多 8 位小数' };
 const rateRule = { pattern: /^(0|1)(\.[0-9]{1,10})?$/, message: '0 至 1 的小数，例如 0.029' };
 const list = (values: readonly string[]) => values.map(value => ({ value, label: value }));
@@ -42,6 +43,8 @@ export function PriceEditorDrawer({ version, scope, prices, onClose, onSaved, on
   const [form] = Form.useForm<{ prices: PriceDraft[] }>();
   const command = useCommercialCommand(onAuthorizationChanged, 'version', form);
   const profiles = useProfiles(onAuthorizationChanged);
+  const catalogEvents = useCatalogFeeEvents(version.termType, onAuthorizationChanged);
+  const eventChoices = catalogEvents.failed ? null : feeEventOptions(catalogEvents.items);
   const partner = partnerTermTypes.includes(version.termType);
   const save = async () => {
     const values = await form.validateFields();
@@ -81,7 +84,7 @@ export function PriceEditorDrawer({ version, scope, prices, onClose, onSaved, on
             <Form.Item name={[field.name, 'cutoffSecondOfDay']} label="日截止秒数" extra="0–86399" rules={[{ required: true, message: '必填' }]}>
               <InputNumber className="commercial-number" min={0} max={86399} precision={0} /></Form.Item>
           </div>}
-          <ComponentList form={form} priceName={field.name} />
+          <ComponentList form={form} priceName={field.name} eventChoices={eventChoices} />
         </div>)}
         <Button onClick={() => add(newPriceDraft(version.termType, scope.entityNos[0] ?? '', 'USD', profileOptions[0]?.value ?? '', fields.length + 1))}>
           添加价格</Button>
@@ -91,27 +94,30 @@ export function PriceEditorDrawer({ version, scope, prices, onClose, onSaved, on
   </Drawer>;
 }
 
-/** 一条价格下的组件列表。 */
-function ComponentList({ form, priceName }: { form: FormInstance; priceName: number }) {
+/** 一条价格下的组件列表；eventChoices 为 null 表示目录读取失败，计费事件改为手输。 */
+function ComponentList({ form, priceName, eventChoices }: { form: FormInstance; priceName: number; eventChoices: CodeOption[] | null }) {
   return <Form.List name={[priceName, 'components']}>{(fields, { add, remove }) => <>
     {fields.map(field => <ComponentEditor key={field.key} form={form} path={['prices', priceName, 'components', field.name]} name={field.name}
-      onRemove={fields.length > 1 ? () => remove(field.name) : undefined} />)}
+      eventChoices={eventChoices} onRemove={fields.length > 1 ? () => remove(field.name) : undefined} />)}
     <Button size="small" onClick={() => add({ componentCode: '', componentType: 'FIXED', triggerCode: 'CAPTURE', calculationBase: 'FIXED_PER_EVENT',
       refundBehavior: 'KEEP', rate: null, fixedAmount: null, currency: null, minAmount: null, maxAmount: null, bandBasis: null, bandMode: null,
       bands: null } satisfies ComponentDraft)}>添加组件</Button>
   </>}</Form.List>;
 }
 
-/** 单个组件：按类型显示字段，阶梯组件附档位表。 */
-function ComponentEditor({ form, path, name, onRemove }: { form: FormInstance; path: (string | number)[]; name: number; onRemove?: () => void }) {
+/** 单个组件：按类型显示字段，阶梯组件附档位表；计费事件下拉来自产品目录（按条款类型）。 */
+function ComponentEditor({ form, path, name, eventChoices, onRemove }: {
+  form: FormInstance; path: (string | number)[]; name: number; eventChoices: CodeOption[] | null; onRemove?: () => void;
+}) {
   const type = Form.useWatch([...path, 'componentType'], form) as ComponentDraft['componentType'] | undefined;
   return <div className="commercial-component">
     <div className="commercial-form-grid-3">
       <Form.Item name={[name, 'componentCode']} label="组件代码" normalize={(v: string) => v?.toUpperCase()}
         rules={[{ required: true, pattern: /^[A-Z][A-Z0-9_]{0,63}$/, message: '大写代码，如 MDR' }]}><Input maxLength={64} /></Form.Item>
       <Form.Item name={[name, 'componentType']} label="类型"><Select options={componentTypes.map(value => ({ value, label: componentTypeLabels[value] }))} /></Form.Item>
-      <Form.Item name={[name, 'triggerCode']} label="计费事件" normalize={(v: string) => v?.toUpperCase()} rules={[{ required: true, message: '请选择计费事件' }]}>
-        <Select showSearch options={list(feeEvents)} /></Form.Item>
+      <Form.Item name={[name, 'triggerCode']} label="计费事件" normalize={(v: string) => v?.toUpperCase()} rules={[{ required: true, message: '请选择计费事件' }]}
+        extra={eventChoices === null ? '目录读取失败，请直接输入计费事件代码' : undefined}>
+        {eventChoices === null ? <Input maxLength={64} /> : <Select showSearch={{ optionFilterProp: 'label' }} options={eventChoices} />}</Form.Item>
       <Form.Item name={[name, 'calculationBase']} label="计算基数"><Select options={list(calculationBases)} /></Form.Item>
       <Form.Item name={[name, 'refundBehavior']} label="退款处理" extra="非支付类事件填 KEEP"><Select options={list(refundBehaviors)} /></Form.Item>
       <Form.Item name={[name, 'currency']} label="金额币种" extra="固定额、上下限、阶梯必填，须等于价格币种" normalize={(v: string) => v?.toUpperCase() || null}>

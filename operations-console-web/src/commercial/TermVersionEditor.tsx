@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
-import { Alert, Button, Empty, Table, Tag } from 'antd';
+import { useEffect, useMemo, useState } from 'react';
+import { Alert, Button, Empty, Select, Table, Tag } from 'antd';
+import { session } from '../api/session';
 import { useNavigate } from 'react-router-dom';
 import type { ConsoleResource } from '../api/types';
 import { Loading, QueryFailure, useDetail } from '../tenantAccess/TenantAccessView';
@@ -9,6 +10,8 @@ import {
 } from './commercial';
 import type { MatrixRow, VersionAction } from './commercial';
 import { CommercialNote, StatusTag } from './CommercialParts';
+import { consolePaths, consoleRoutes, decodeTermVersionPage } from './commercialConsole';
+import type { TermVersionListItem } from './commercialConsole';
 import { PriceEditorDrawer } from './PriceEditorDrawer';
 import { CreateVersionModal, ScheduleModal, VersionTransitionModal } from './TermModals';
 
@@ -40,6 +43,8 @@ export function TermVersionEditor({ versionId, resources, onAuthorizationChanged
       <div className="commercial-actions">
         <Button onClick={() => void navigate(commercialRoutes.terms)}>返回</Button>
         <Button onClick={detail.refresh} loading={detail.loading}>刷新</Button>
+        <CompareWith versionId={version.versionId} planId={version.planId} />
+        <Button onClick={() => void navigate(consoleRoutes.history('COMMERCIAL_TERM_PLAN', version.planId))}>变更历史</Button>
         {actions.editPrices && <Button onClick={() => setDialog({ kind: 'edit' })}>编辑价格</Button>}
         {actions.submit && <Button type="primary" disabled={prices.length === 0} onClick={() => setDialog({ kind: 'submit' })}>提交审批</Button>}
         {actions.approve && <Button type="primary" onClick={() => setDialog({ kind: 'approve' })}>批准</Button>}
@@ -91,4 +96,27 @@ export function TermVersionEditor({ versionId, resources, onAuthorizationChanged
       agreementId={version.agreementId} copyFromVersionId={version.versionId} onClose={close} onAuthorizationChanged={onAuthorizationChanged}
       onCreated={created => { setDialog(null); void navigate(commercialRoutes.version(created.versionId)); }} />}
   </div>;
+}
+
+/** 与同方案的另一个版本对比：较小版本号为基准；读取方案版本列表失败时不显示。 */
+function CompareWith({ versionId, planId }: { versionId: string; planId: string }) {
+  const navigate = useNavigate();
+  const [versions, setVersions] = useState<TermVersionListItem[]>([]);
+  useEffect(() => {
+    const controller = new AbortController();
+    session.request(`${consolePaths.versions}?planId=${planId}&page=1&size=50`, { signal: controller.signal }, decodeTermVersionPage)
+      .then(page => { if (!controller.signal.aborted) setVersions(page.items); })
+      .catch(() => { if (!controller.signal.aborted) setVersions([]); });
+    return () => controller.abort();
+  }, [planId]);
+  const current = versions.find(item => item.versionId === versionId);
+  const others = versions.filter(item => item.versionId !== versionId);
+  if (!current || others.length === 0) return null;
+  const compare = (otherId: string) => {
+    const other = others.find(item => item.versionId === otherId)!;
+    const [base, target] = Number(other.versionNo) < Number(current.versionNo) ? [other, current] : [current, other];
+    void navigate(consoleRoutes.compare(base.versionId, target.versionId));
+  };
+  return <Select className="commercial-compare-select" placeholder="与版本对比" value={null} onChange={compare}
+    options={others.map(item => ({ value: item.versionId, label: `对比 v${item.versionNo}（${item.status}）` }))} />;
 }

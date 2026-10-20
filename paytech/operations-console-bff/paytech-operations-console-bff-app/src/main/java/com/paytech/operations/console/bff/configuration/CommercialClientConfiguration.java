@@ -10,12 +10,16 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 
 import com.paytech.commercial.api.agreement.AgreementApi;
+import com.paytech.commercial.api.agreement.AgreementQueryApi;
+import com.paytech.commercial.api.catalog.ProductCatalogApi;
 import com.paytech.commercial.api.enums.CommercialPriceErrorCode;
+import com.paytech.commercial.api.history.BusinessChangeQueryApi;
 import com.paytech.commercial.api.price.CommercialPriceApi;
 import com.paytech.commercial.api.price.CommercialTermVersionPriceApi;
 import com.paytech.commercial.api.pricing.PricingProfileApi;
 import com.paytech.commercial.api.ratecard.RateCardApi;
 import com.paytech.commercial.api.term.CommercialTermApi;
+import com.paytech.commercial.api.term.CommercialTermQueryApi;
 import com.paytech.foundation.common.enums.CodeMessageEnum;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.common.error.ServiceUnavailableException;
@@ -31,7 +35,7 @@ import org.slf4j.MDC;
 /**
  * commercial 的 HTTP 接口代理：Nacos 发现 commercial-service，auto 测试改为 loopback 直连
  * <li>连接 2 秒、读取 4 秒、禁止跟随重定向、不重试；传递 X-Request-Id 与 X-Caller-Service。</li>
- * <li>严格 Problem 解码并保留 Owner 422 字段路径；合同、画像、条款与费率卡只使用公共错误码（BUSINESS_CHECK_FAILED、
+ * <li>严格 Problem 解码并保留 Owner 422 字段路径；合同、画像、条款、费率卡、只读列表、目录与变更历史只使用公共错误码（BUSINESS_CHECK_FAILED、
  * CONCURRENT_REQUEST、NOT_FOUND）；价格命中另用一个工厂登记 CommercialPriceErrorCode（422 / 409 的命中失败原因）。
  * 超时映射 504，不可达或 503 映射 DEPENDENCY_UNAVAILABLE。</li>
  * <li>两个工厂都显式开启 Foundation 的 Owner Problem detail：业务拒绝、版本冲突、NOT_FOUND 与价格命中合同码把 commercial 已校验的
@@ -93,6 +97,30 @@ public class CommercialClientConfiguration {
     @Bean
     CommercialPriceApi commercialPriceApi() {
         return commercialPrices.createClient(CommercialPriceApi.class);
+    }
+
+    /** 合同列表（第二切片 I2）。 */
+    @Bean
+    AgreementQueryApi commercialAgreementQueryApi() {
+        return commercial.createClient(AgreementQueryApi.class);
+    }
+
+    /** 条款方案与版本列表（第二切片 I2）。 */
+    @Bean
+    CommercialTermQueryApi commercialTermQueryApi() {
+        return commercial.createClient(CommercialTermQueryApi.class);
+    }
+
+    /** 产品目录（第二切片 I2）。 */
+    @Bean
+    ProductCatalogApi commercialProductCatalogApi() {
+        return commercial.createClient(ProductCatalogApi.class);
+    }
+
+    /** 业务变更历史（第二切片 I2）。 */
+    @Bean
+    BusinessChangeQueryApi commercialBusinessChangeQueryApi() {
+        return commercial.createClient(BusinessChangeQueryApi.class);
     }
 
     /** 发现或直连，传递 Request ID 与调用方标识。 */

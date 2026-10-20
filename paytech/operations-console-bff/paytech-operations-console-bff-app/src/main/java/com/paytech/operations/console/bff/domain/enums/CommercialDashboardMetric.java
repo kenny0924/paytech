@@ -10,6 +10,9 @@ public enum CommercialDashboardMetric implements CodeEnum {
     /** 已排期待生效的条款版本 */
     SCHEDULED_VERSIONS("SCHEDULED_VERSIONS"),
 
+    /** 草稿合同 */
+    DRAFT_AGREEMENTS("DRAFT_AGREEMENTS"),
+
     /** 待签署的合同 */
     PENDING_SIGNATURE_AGREEMENTS("PENDING_SIGNATURE_AGREEMENTS"),
 

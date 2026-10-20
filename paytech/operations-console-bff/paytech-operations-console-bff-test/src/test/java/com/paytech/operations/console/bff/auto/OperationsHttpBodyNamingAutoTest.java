@@ -73,6 +73,7 @@ class OperationsHttpBodyNamingAutoTest {
         com.paytech.operations.console.bff.ext.rest.CommercialAgreementController.class,
         com.paytech.operations.console.bff.ext.rest.CommercialPricingController.class,
         com.paytech.operations.console.bff.ext.rest.CommercialPricePreviewController.class,
+        com.paytech.operations.console.bff.ext.rest.CommercialCatalogController.class,
         com.paytech.commercial.api.agreement.AgreementApi.class, com.paytech.commercial.api.pricing.PricingProfileApi.class})
     void test_httpBodyTypesUseExplicitRequestAndResponseSuffixes(Class<?> contract) {
         if (contract.isInterface()) {

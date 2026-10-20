@@ -50,3 +50,12 @@
   .commercial-page .commercial-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .commercial-page .commercial-worklists { grid-template-columns: minmax(0, 1fr); }
 }
+.commercial-page .commercial-filters { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0 12px; align-items: end; margin-bottom: 8px; }
+.commercial-page .commercial-filters .ant-form-item { margin-bottom: 12px; }
+.commercial-page .commercial-filter-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.commercial-page .commercial-kpis { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+.commercial-page .commercial-compare-select { min-width: 160px; }
+.commercial-page .commercial-diff-changed > td { background: #fff7ed; }
+.commercial-page .commercial-diff-added > td { background: #f0fdf4; }
+.commercial-page .commercial-diff-removed > td { background: #fef2f2; }
+.commercial-page .commercial-diff-fields { margin: 0; padding-left: 18px; font-size: 12px; }

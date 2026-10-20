@@ -880,5 +880,216 @@
    ]
   },
   "routeCode": "operations-commercial-rate-card"
+ },
+ {
+  "id": "C10",
+  "method": "GET",
+  "path": "/commercial-admin/v1/agreements",
+  "ownerPath": "/agreements/v1",
+  "query": "?clientId=7300000000000000011&agreementType=CLIENT&status=ACTIVE&entityNo=AE001&agreementNo=AGR-AE001&page=1&size=20",
+  "request": null,
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "items": [
+    {
+     "agreementId": "7319000000000000101",
+     "agreementNo": "AGR-AE001-0001",
+     "agreementName": "示例 Client 合同",
+     "agreementType": "CLIENT",
+     "status": "ACTIVE",
+     "businessMode": "MOR",
+     "fundMode": "SETTLE_THROUGH_PLATFORM",
+     "clientId": "7300000000000000011",
+     "localPartnerId": null,
+     "entityNo": "AE001",
+     "effectiveFrom": "2026-10-01T00:00:00Z",
+     "effectiveTo": null,
+     "signedTime": "2026-09-30T08:00:00Z",
+     "activatedTime": "2026-10-01T00:00:00Z",
+     "changeVersion": 7,
+     "updateTime": "2026-10-01T00:00:00Z"
+    }
+   ],
+   "page": 1,
+   "size": 20,
+   "total": 1
+  },
+  "routeCode": "operations-commercial-agreement-list"
+ },
+ {
+  "id": "T11",
+  "method": "GET",
+  "path": "/commercial-admin/v1/commercial-terms/plans",
+  "ownerPath": "/commercial-terms/v1/plans",
+  "query": "?agreementId=7319000000000000101&termType=CLIENT_PRICING&status=ACTIVE&page=2&size=10",
+  "request": null,
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "items": [
+    {
+     "planId": "7319000000000000501",
+     "planCode": "CP-AE001-0001",
+     "termType": "CLIENT_PRICING",
+     "agreementId": "7319000000000000101",
+     "entityNo": null,
+     "clientId": "7300000000000000011",
+     "localPartnerId": null,
+     "status": "ACTIVE",
+     "changeVersion": "5",
+     "activeVersionId": "7319000000000000601",
+     "activeVersionNo": "1",
+     "activeEffectiveFrom": "2026-10-01T00:00:00Z",
+     "scheduledVersionId": "7319000000000000602",
+     "scheduledVersionNo": "2",
+     "scheduledEffectiveFrom": "2026-11-01T00:00:00Z",
+     "createTime": "2026-09-20T00:00:00Z",
+     "updateTime": "2026-10-15T00:00:00Z"
+    }
+   ],
+   "page": 2,
+   "size": 10,
+   "total": 11
+  },
+  "routeCode": "operations-commercial-term-plan-list"
+ },
+ {
+  "id": "T12",
+  "method": "GET",
+  "path": "/commercial-admin/v1/commercial-terms/versions",
+  "ownerPath": "/commercial-terms/v1/versions",
+  "query": "?planId=7319000000000000501&status=PENDING_APPROVAL&effectiveFrom=2026-10-01T00:00:00Z&effectiveTo=2026-11-01T00:00:00%2B04:00&page=1&size=50",
+  "request": null,
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "items": [
+    {
+     "versionId": "7319000000000000603",
+     "planId": "7319000000000000501",
+     "planCode": "CP-AE001-0001",
+     "termType": "CLIENT_PRICING",
+     "agreementId": "7319000000000000101",
+     "entityNo": null,
+     "clientId": "7300000000000000011",
+     "localPartnerId": null,
+     "versionNo": "3",
+     "status": "PENDING_APPROVAL",
+     "effectiveFrom": "2026-10-18T00:00:00Z",
+     "effectiveTo": null,
+     "roundingMode": "HALF_UP",
+     "pricingModel": "BLENDED",
+     "feeTaxTreatment": "EXCLUSIVE",
+     "makerAccountId": "10001",
+     "checkerAccountId": null,
+     "submittedTime": "2026-10-19T09:00:00Z",
+     "priceCount": 8,
+     "changeVersion": "6",
+     "updateTime": "2026-10-19T09:00:00Z"
+    }
+   ],
+   "page": 1,
+   "size": 50,
+   "total": 1
+  },
+  "routeCode": "operations-commercial-term-version-list"
+ },
+ {
+  "id": "K01",
+  "method": "GET",
+  "path": "/commercial-admin/v1/products",
+  "ownerPath": "/products/v1",
+  "query": "?status=ACTIVE",
+  "request": null,
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "products": [
+    {
+     "productId": "9100000000000001001",
+     "productCode": "ACQUIRING",
+     "productName": "Acquiring",
+     "businessModeScope": "BOTH",
+     "baseProduct": false,
+     "status": "ACTIVE"
+    },
+    {
+     "productId": "9100000000000001005",
+     "productCode": "TAX_INVOICE",
+     "productName": "Tax and Invoice",
+     "businessModeScope": "BOTH",
+     "baseProduct": true,
+     "status": "ACTIVE"
+    }
+   ]
+  },
+  "routeCode": "operations-commercial-product-list"
+ },
+ {
+  "id": "K02",
+  "method": "GET",
+  "path": "/commercial-admin/v1/products/capabilities",
+  "ownerPath": "/products/v1/capabilities",
+  "query": "?productCode=ACQUIRING&status=ACTIVE",
+  "request": null,
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "capabilities": [
+    {
+     "productCapabilityId": "9100000000000002001",
+     "productCode": "ACQUIRING",
+     "capabilityCode": "CARD_VISA",
+     "capabilityName": "Visa",
+     "capabilityKind": "PAYMENT_METHOD",
+     "paymentMethodCode": "CARD",
+     "dimensionCode": "CARD_BRAND",
+     "dimensionValue": "VISA",
+     "status": "ACTIVE"
+    },
+    {
+     "productCapabilityId": "9100000000000002005",
+     "productCode": "ACQUIRING",
+     "capabilityCode": "APPLE_PAY",
+     "capabilityName": "Apple Pay",
+     "capabilityKind": "PAYMENT_METHOD",
+     "paymentMethodCode": "APPLE_PAY",
+     "dimensionCode": null,
+     "dimensionValue": null,
+     "status": "ACTIVE"
+    }
+   ]
+  },
+  "routeCode": "operations-commercial-capability-catalog"
+ },
+ {
+  "id": "K03",
+  "method": "GET",
+  "path": "/commercial-admin/v1/products/fee-events",
+  "ownerPath": "/products/v1/fee-events",
+  "query": "?productCode=ACQUIRING&termType=CLIENT_PRICING",
+  "request": null,
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "feeEvents": [
+    {
+     "productFeeEventId": "9100000000000003004",
+     "productCode": "ACQUIRING",
+     "feeEventCode": "CAPTURE",
+     "termType": "CLIENT_PRICING",
+     "billingFactType": "PAYMENT"
+    },
+    {
+     "productFeeEventId": "9100000000000003010",
+     "productCode": "ACQUIRING",
+     "feeEventCode": "REFUND",
+     "termType": "CLIENT_PRICING",
+     "billingFactType": "REFUND"
+    }
+   ]
+  },
+  "routeCode": "operations-commercial-fee-event-list"
  }
 ]

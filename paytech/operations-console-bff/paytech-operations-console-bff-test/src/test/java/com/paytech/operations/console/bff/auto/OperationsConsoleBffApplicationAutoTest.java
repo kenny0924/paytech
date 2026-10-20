@@ -374,7 +374,11 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
             "GET /commercial-admin/v1/commercial-terms/versions/{versionId}",
             "GET /commercial-admin/v1/commercial-terms/versions/{versionId}/prices",
             "GET /commercial-admin/v1/dashboard", "GET /commercial-admin/v1/rate-cards",
-            "POST /commercial-admin/v1/commercial-prices/simulate"), routes);
+            "POST /commercial-admin/v1/commercial-prices/simulate", "GET /commercial-admin/v1/agreements",
+            "GET /commercial-admin/v1/commercial-terms/plans", "GET /commercial-admin/v1/commercial-terms/versions",
+            "GET /commercial-admin/v1/commercial-terms/versions/{baseVersionId}/diff/{targetVersionId}",
+            "GET /commercial-admin/v1/products", "GET /commercial-admin/v1/products/capabilities",
+            "GET /commercial-admin/v1/products/fee-events", "GET /commercial-admin/v1/business-changes"), routes);
 
         Path classes = appModule().resolve("target/classes/com/paytech/operations/console/bff");
         try (var files = Files.walk(classes)) {

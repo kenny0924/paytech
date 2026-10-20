@@ -8,6 +8,8 @@ import {
 import type { CapabilityStatus, VersionStatus } from '../commercial/commercial';
 import { capabilityLabel, cutoffTime, decodeRateCard, rateCardPath } from '../commercial/commercialPreview';
 import type { AgreementRateCard, CurrencyPrices, ProfilePrice, RateCard, RateCardCapability, RateCardQuery, TermVersionRateCard } from '../commercial/commercialPreview';
+import { ClientIdInput } from '../commercial/ClientIdInput';
+import { browserStorage, rememberClient } from '../commercial/commercialConsole';
 import { CommercialNote, StatusTag } from '../commercial/CommercialParts';
 import '../configuration/configuration.css';
 import '../commercial/commercial.css';
@@ -20,11 +22,13 @@ export function CommercialRateCards(_props: Props) {
   const [query, setQuery] = useState<RateCardQuery | null>(null);
   return <div className="configuration-page commercial-page">
     <div className="page-heading"><h1>费率预览</h1></div>
-    <Form name="commercial-rate-card-query" layout="vertical" onFinish={(values: QueryForm) => setQuery({ clientId: values.clientId.trim(),
-      asOf: values.asOf ? utcInstant(values.asOf) : null, currency: values.currency?.trim() || null })}>
+    <Form name="commercial-rate-card-query" layout="vertical" onFinish={(values: QueryForm) => {
+      rememberClient(browserStorage(), values.clientId);
+      setQuery({ clientId: values.clientId.trim(), asOf: values.asOf ? utcInstant(values.asOf) : null, currency: values.currency?.trim() || null });
+    }}>
       <div className="commercial-open">
         <Form.Item name="clientId" label="Client ID" rules={[{ required: true, whitespace: true, message: '请输入 Client ID' },
-          { pattern: idPattern, message: 'Client ID 是正十进制整数' }]}><Input allowClear maxLength={19} placeholder="例如 7300000000000000011" /></Form.Item>
+          { pattern: idPattern, message: 'Client ID 是正十进制整数' }]}><ClientIdInput placeholder="输入或选择，例如 7300000000000000011" /></Form.Item>
         <Form.Item name="asOf" label="时点（可选，默认当前）"><Input type="datetime-local" step={1} /></Form.Item>
         <Form.Item name="currency" label="币种（可选）" normalize={(v: string) => v?.toUpperCase()}
           rules={[{ pattern: currencyPattern, message: '三位大写币种' }]}><Input allowClear maxLength={3} placeholder="USD" /></Form.Item>
@@ -32,7 +36,7 @@ export function CommercialRateCards(_props: Props) {
       </div>
     </Form>
     {query ? <RateCardResult key={rateCardPath(commercialPaths.rateCards, query)} query={query} />
-      : <CommercialNote>输入 Client ID 预览其 ACTIVE 合同在时点的费率卡：订阅产品、开通项（约束与保证金）、当前与已排期版本的价格。Client 选择器将在接入客户主档查询后提供。</CommercialNote>}
+      : <CommercialNote>输入 Client ID 预览其 ACTIVE 合同在时点的费率卡：订阅产品、开通项（约束与保证金）、当前与已排期版本的价格。Client 可选本机最近使用或审核通过的 Client；按名称搜索待 client-master 提供运营查询接口。</CommercialNote>}
   </div>;
 }
 

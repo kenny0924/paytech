@@ -55,7 +55,8 @@ const transitionTexts: Record<Exclude<VersionAction, 'schedule'>, { title: strin
 
 /** 无额外字段的版本状态推进：提交、批准、驳回、激活。 */
 export function VersionTransitionModal({ version, action, onDone, onClose, onReload, onAuthorizationChanged }: Base & {
-  version: TermVersion; action: Exclude<VersionAction, 'schedule'>; onDone: () => void; onReload: () => void;
+  version: Pick<TermVersion, 'versionId' | 'versionNo' | 'status' | 'changeVersion'>; action: Exclude<VersionAction, 'schedule'>; onDone: () => void;
+  onReload: () => void;
 }) {
   const command = useCommercialCommand(onAuthorizationChanged, 'version');
   const text = transitionTexts[action];
