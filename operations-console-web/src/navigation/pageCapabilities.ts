@@ -462,6 +462,36 @@ export const pageCapabilities = [
         "displayName": "审批"
       }
     ]
+  },
+  {
+    "componentKey": "OPERATIONS_COMMERCIAL_WORKBENCH",
+    "displayName": "工作台",
+    "frontendRoute": "/commercial/workbench",
+    "actions": []
+  },
+  {
+    "componentKey": "OPERATIONS_COMMERCIAL_RATE_CARDS",
+    "displayName": "费率预览",
+    "frontendRoute": "/commercial/rate-cards",
+    "actions": []
+  },
+  {
+    "componentKey": "OPERATIONS_COMMERCIAL_PRICE_SIMULATOR",
+    "displayName": "价格试算",
+    "frontendRoute": "/commercial/price-simulator",
+    "actions": []
+  },
+  {
+    "componentKey": "OPERATIONS_COMMERCIAL_CATALOG",
+    "displayName": "产品目录",
+    "frontendRoute": "/commercial/catalog",
+    "actions": []
+  },
+  {
+    "componentKey": "OPERATIONS_COMMERCIAL_HISTORY",
+    "displayName": "变更历史",
+    "frontendRoute": "/commercial/history",
+    "actions": []
   }
 ] as const;
 export type PageComponentKey = typeof pageCapabilities[number]["componentKey"];

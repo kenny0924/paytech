@@ -24,15 +24,23 @@ export const commercialPaths = {
   version: (versionId: string) => `/commercial-admin/v1/commercial-terms/versions/${versionId}`,
   prices: (versionId: string) => `/commercial-admin/v1/commercial-terms/versions/${versionId}/prices`,
   versionAction: (versionId: string, action: VersionAction) => `/commercial-admin/v1/commercial-terms/versions/${versionId}/${action}`,
+  dashboard: '/commercial-admin/v1/dashboard',
+  rateCards: '/commercial-admin/v1/rate-cards',
+  simulate: '/commercial-admin/v1/commercial-prices/simulate',
 } as const;
 
 /** 页面路由（与 Console Resource frontend_route 一致）。 */
 export const commercialRoutes = {
+  workbench: '/commercial/workbench',
   agreements: '/commercial/agreements',
   agreement: (agreementId: string) => `/commercial/agreements/${agreementId}`,
   profiles: '/commercial/pricing-profiles',
   terms: '/commercial/terms',
   version: (versionId: string) => `/commercial/terms/versions/${versionId}`,
+  rateCards: '/commercial/rate-cards',
+  priceSimulator: '/commercial/price-simulator',
+  catalog: '/commercial/catalog',
+  history: '/commercial/history',
 } as const;
 
 /** 按钮资源：合同维护、画像维护、价目维护（创建 / 价格 / 提交 / 排期 / 激活）与价目审批（批准 / 驳回）。 */
@@ -283,7 +291,7 @@ export function decodeCapabilityWrite(agreementId: string) {
   };
 }
 
-function decodeCondition(value: unknown): ProfileCondition {
+export function decodeCondition(value: unknown): ProfileCondition {
   require(object(value) && oneOf(dimensionCodes)(value.dimensionCode) && text(value.conditionValue, 128));
   return value as unknown as ProfileCondition;
 }
@@ -324,7 +332,7 @@ function decodeBand(value: unknown): PriceBand {
   return { ...v, upperBound: orNull(v.upperBound), rate: orNull(v.rate), fixedAmount: orNull(v.fixedAmount), currency: orNull(v.currency) };
 }
 
-function decodeComponent(value: unknown): PriceComponent {
+export function decodeComponent(value: unknown): PriceComponent {
   const v = value as PriceComponent;
   require(object(v) && positiveInteger(v.componentNo) && text(v.componentCode, 64) && oneOf(componentTypes)(v.componentType) && text(v.triggerCode, 64)
     && text(v.calculationBase, 64) && text(v.refundBehavior, 32) && optional(decimal)(v.rate) && optional(decimal)(v.fixedAmount)
@@ -333,7 +341,7 @@ function decodeComponent(value: unknown): PriceComponent {
     maxAmount: orNull(v.maxAmount), bandBasis: orNull(v.bandBasis), bandMode: orNull(v.bandMode), bands: (v.bands ?? []).map(decodeBand) };
 }
 
-function decodeSettlement(value: unknown): PriceSettlement | null {
+export function decodeSettlement(value: unknown): PriceSettlement | null {
   if (value === null || value === undefined) return null;
   require(object(value) && Number.isInteger(value.settlementBusinessDays) && text(value.businessCalendarCode, 64) && text(value.settlementTimezone, 64)
     && Number.isInteger(value.cutoffSecondOfDay));
@@ -673,21 +681,32 @@ export function localTime(value: string | null): string {
 
 // ---------- 错误提示 ----------
 
+/** commercial 原因未透传时 BFF 给出的公共说明（Foundation BUSINESS_CHECK_FAILED 默认消息）。 */
+const genericBusinessDetail = '业务校验未通过';
+
 /**
- * 商务写命令的错误说明：commercial 的业务拒绝经 BFF 只保留公共 Code（不含 commercial 原文），
- * 页面按 Code 给出可操作的提示；409 为并发版本冲突。未识别返回 null，由调用方走通用通知。
+ * 商务写命令的错误说明：BFF 把 commercial 的业务拒绝原因作为 Problem detail 透传（F9），页面直接显示该原因，
+ * 例如「激活校验：开通项 AE001/APPLE_PAY/AED 无价格」；原因缺失时按场景给出可操作的提示。409 为并发版本冲突。
+ * 未识别返回 null，由调用方走通用通知。
  */
 export function commercialErrorMessage(error: unknown, context: 'agreement' | 'profile' | 'version'): string | null {
   if (!(error instanceof ApiError)) return null;
   if (error.status === 409) return '数据已被其他操作修改，请重新加载后再试。';
   if (error.status === 404) return '目标不存在。';
   if (error.status !== 400 || error.code !== 'BUSINESS_CHECK_FAILED') return null;
+  const owner = ownerReason(error);
+  if (owner) return `业务校验未通过：${owner}`;
   const hints = {
     agreement: '合同状态、参与方、文件或开通项不满足 commercial 的业务规则（例如：提交签署需恰好一份签署文件，PARTNER 合同需覆盖至少一个 OE）。',
     profile: '画像状态或条件不满足规则（例如：只有草稿可修改，维度须与画像种类相容）。',
     version: '版本状态或激活校验未通过（例如：Checker 不能与 Maker 相同、画像须启用、OE 须被合同覆盖、开通项币种须全部有价格、阶梯须连续）。',
   } as const;
   return `业务校验未通过：${hints[context]}（BUSINESS_CHECK_FAILED）`;
+}
+
+/** commercial 透传的具体原因；只有公共默认说明时返回 null。 */
+export function ownerReason(error: ApiError): string | null {
+  return error.detail && error.detail !== genericBusinessDetail ? error.detail : null;
 }
 
 // ---------- 命令 ----------

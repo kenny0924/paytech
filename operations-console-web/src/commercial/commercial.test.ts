@@ -4,7 +4,7 @@ import { ApiError } from '../api/session.ts';
 import { pageCapabilities } from '../navigation/pageCapabilities.ts';
 import { pageRoutePaths } from '../navigation/menu.ts';
 import {
-  acceptanceBody, agreementActions, agreementBody, bandIssues, capabilityBody, commercialButtons, commercialErrorMessage, commercialPaths, componentSummary,
+  acceptanceBody, agreementActions, agreementBody, bandIssues, capabilityBody, commercialButtons, commercialErrorMessage, commercialPaths, commercialRoutes, componentSummary,
   coverageGaps, decodeAgreementOverview, decodeAgreementWrite, decodeCapabilityWrite, decodePlan, decodeProfileList, decodeVersion, decodeWorkspace,
   fieldPath, hasButton, newPriceDraft, percent, planBody, priceDraft, priceMatrix, pricesBody, profileBody, reserveError, utcInstant, versionActions,
 } from './commercial.ts';
@@ -42,13 +42,15 @@ const workspace = (prices: unknown[]) => ({ version, prices, agreement: { agreem
 const resource = (resourceCode: string, resourceType: 'MENU' | 'BUTTON' = 'BUTTON') => ({ resourceId: resourceCode, resourceCode, resourceType,
   parentResourceId: null, displayName: resourceCode, frontendRoute: null, componentKey: null, sortOrder: 0 });
 
-test('页面注册：合同、定价画像、价目三页及其按钮资源；详情路由登记在菜单路径', () => {
+test('页面注册：合同、定价画像、价目及工作台、费率预览、价格试算、产品目录、变更历史；详情路由登记在菜单路径', () => {
   const pages = pageCapabilities.filter(page => page.componentKey.startsWith('OPERATIONS_COMMERCIAL_'));
   assert.deepEqual(pages.map(page => [page.componentKey, page.frontendRoute]), [
-    ['OPERATIONS_COMMERCIAL_AGREEMENTS', '/commercial/agreements'], ['OPERATIONS_COMMERCIAL_PRICING_PROFILES', '/commercial/pricing-profiles'],
-    ['OPERATIONS_COMMERCIAL_TERMS', '/commercial/terms']]);
+    ['OPERATIONS_COMMERCIAL_AGREEMENTS', commercialRoutes.agreements], ['OPERATIONS_COMMERCIAL_PRICING_PROFILES', commercialRoutes.profiles],
+    ['OPERATIONS_COMMERCIAL_TERMS', commercialRoutes.terms], ['OPERATIONS_COMMERCIAL_WORKBENCH', commercialRoutes.workbench],
+    ['OPERATIONS_COMMERCIAL_RATE_CARDS', commercialRoutes.rateCards], ['OPERATIONS_COMMERCIAL_PRICE_SIMULATOR', commercialRoutes.priceSimulator],
+    ['OPERATIONS_COMMERCIAL_CATALOG', commercialRoutes.catalog], ['OPERATIONS_COMMERCIAL_HISTORY', commercialRoutes.history]]);
   assert.deepEqual(pages.map(page => page.actions.map(action => action.resourceCode)), [
-    [commercialButtons.agreementManage], [commercialButtons.profileManage], [commercialButtons.termManage, commercialButtons.termApprove]]);
+    [commercialButtons.agreementManage], [commercialButtons.profileManage], [commercialButtons.termManage, commercialButtons.termApprove], [], [], [], [], []]);
   const menu = (componentKey: string, frontendRoute: string) => ({ ...resource(componentKey, 'MENU'), componentKey, frontendRoute });
   assert.deepEqual(pageRoutePaths(menu('OPERATIONS_COMMERCIAL_AGREEMENTS', '/commercial/agreements')), ['/commercial/agreements', '/commercial/agreements/:agreementId']);
   assert.deepEqual(pageRoutePaths(menu('OPERATIONS_COMMERCIAL_TERMS', '/commercial/terms')), ['/commercial/terms', '/commercial/terms/versions/:versionId']);
@@ -238,6 +240,9 @@ test('排期时刻：本地时间转换为 UTC RFC 3339（Z 结尾、无毫秒�
 test('错误提示：409 提示重新加载，BUSINESS_CHECK_FAILED 按场景给出可操作说明，其他错误交给通用通知', () => {
   assert.match(commercialErrorMessage(new ApiError(409, 'CONCURRENT_REQUEST'), 'version') ?? '', /重新加载/);
   assert.match(commercialErrorMessage(new ApiError(400, 'BUSINESS_CHECK_FAILED'), 'version') ?? '', /Checker 不能与 Maker 相同/);
+  assert.match(commercialErrorMessage(new ApiError(400, 'BUSINESS_CHECK_FAILED', 'r', '业务校验未通过'), 'version') ?? '', /Checker 不能与 Maker 相同/);
+  assert.equal(commercialErrorMessage(new ApiError(400, 'BUSINESS_CHECK_FAILED', 'r', '激活校验：开通项 AE001/APPLE_PAY/AED 无价格'), 'version'),
+    '业务校验未通过：激活校验：开通项 AE001/APPLE_PAY/AED 无价格');
   assert.match(commercialErrorMessage(new ApiError(400, 'BUSINESS_CHECK_FAILED'), 'agreement') ?? '', /签署文件/);
   assert.equal(commercialErrorMessage(new ApiError(503, 'DEPENDENCY_UNAVAILABLE'), 'profile'), null);
   assert.equal(commercialErrorMessage(new Error('x'), 'profile'), null);

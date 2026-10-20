@@ -73,6 +73,12 @@ public final class OperationsErrorStatusResolver implements ApiErrorStatusResolv
                 default -> defaultStatus;
             };
         }
+        if (errorCode instanceof com.paytech.commercial.api.enums.CommercialPriceErrorCode price) {
+            return switch (price) {
+                case PRICE_AMBIGUOUS -> HttpStatus.CONFLICT;
+                case PRICING_FACTS_INCOMPLETE, PRICE_NOT_FOUND, INVALID_PRICING_FACT -> HttpStatus.UNPROCESSABLE_CONTENT;
+            };
+        }
         if (errorCode instanceof com.paytech.client.contract.api.enums.ClientDraftErrorCode cct) {
             return switch (cct) {
                 case REVIEW_CASE_NOT_FOUND -> HttpStatus.NOT_FOUND;

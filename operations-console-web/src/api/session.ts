@@ -198,6 +198,8 @@ export class ApiError extends Error {
   readonly status: number;
   readonly code: string;
   readonly requestId: string;
+  /** 服务端 Problem 的 detail 原文；没有 Problem 或旧格式时为空串。页面按业务语义自行决定是否展示。 */
+  readonly detail: string;
   readonly fieldErrors: readonly { readonly field: string; readonly message: string }[];
   constructor(status: number, code: string, requestId = '', responseMessage?: unknown,
     fieldErrors: readonly { readonly field: string; readonly message: string }[] = emptyFieldErrors) {
@@ -211,7 +213,8 @@ export class ApiError extends Error {
       : status === 429 ? '操作过于频繁，请稍后再试。'
       : status >= 500 ? '服务暂时不可用，请稍后重试。'
       : '操作未完成，请检查输入后重试。');
-    super(message); this.status = status; this.code = code; this.requestId = requestId; this.fieldErrors = copyFieldErrors(fieldErrors);
+    super(message); this.status = status; this.code = code; this.requestId = requestId;
+    this.detail = typeof responseMessage === 'string' ? responseMessage.trim() : ''; this.fieldErrors = copyFieldErrors(fieldErrors);
   }
 }
 

@@ -21,6 +21,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.operations.console.bff.service.model.CommercialAgreementModels;
+import com.paytech.operations.console.bff.service.model.CommercialPricePreviewModels;
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,7 +37,7 @@ import tools.jackson.databind.type.LogicalType;
 
 /**
  * /commercial-admin 请求体的严格边界
- * <li>只读取 CommercialAgreementModels、CommercialPricingModels 内的 *RequestBody：拒绝重复键、未知属性、尾随内容与标量强转。</li>
+ * <li>只读取 CommercialAgreementModels、CommercialPricingModels、CommercialPricePreviewModels 内的 *RequestBody：拒绝重复键、未知属性、尾随内容与标量强转。</li>
  * <li>写 Body 上限 65536 字节（价格集合整体替换的 Gateway 上限，超限 413）；其他写路由由 Gateway 以 8192 字节先行限制。</li>
  * <li>GET 携带 Body 时返回 400；拦截器排在 PLT-I02 授权之后执行。</li>
  *
@@ -46,7 +47,7 @@ import tools.jackson.databind.type.LogicalType;
 public class CommercialRequestConfiguration implements WebMvcConfigurer {
     private static final int BODY_LIMIT = 65536;
     private static final Set<Class<?>> MODEL_CONTAINERS = Set.of(CommercialAgreementModels.class,
-        CommercialPricingModels.class);
+        CommercialPricingModels.class, CommercialPricePreviewModels.class);
 
     private final JsonMapper mapper;
 

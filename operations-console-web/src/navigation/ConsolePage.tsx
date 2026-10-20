@@ -45,6 +45,11 @@ const pages: Record<PageComponentKey, ComponentType<PageProps>> = {
   OPERATIONS_COMMERCIAL_AGREEMENTS: lazy(() => import('../pages/CommercialAgreements').then(m => ({ default: m.CommercialAgreements }))),
   OPERATIONS_COMMERCIAL_PRICING_PROFILES: lazy(() => import('../pages/CommercialPricingProfiles').then(m => ({ default: m.CommercialPricingProfiles }))),
   OPERATIONS_COMMERCIAL_TERMS: lazy(() => import('../pages/CommercialTerms').then(m => ({ default: m.CommercialTerms }))),
+  OPERATIONS_COMMERCIAL_WORKBENCH: lazy(() => import('../pages/CommercialWorkbench').then(m => ({ default: m.CommercialWorkbench }))),
+  OPERATIONS_COMMERCIAL_RATE_CARDS: lazy(() => import('../pages/CommercialRateCards').then(m => ({ default: m.CommercialRateCards }))),
+  OPERATIONS_COMMERCIAL_PRICE_SIMULATOR: lazy(() => import('../pages/CommercialPriceSimulator').then(m => ({ default: m.CommercialPriceSimulator }))),
+  OPERATIONS_COMMERCIAL_CATALOG: lazy(() => import('../pages/CommercialCatalog').then(m => ({ default: m.CommercialCatalog }))),
+  OPERATIONS_COMMERCIAL_HISTORY: lazy(() => import('../pages/CommercialHistory').then(m => ({ default: m.CommercialHistory }))),
 };
 export function ConsolePage({ componentKey, ...props }: PageProps & { componentKey: string }) {
   const Page = pages[componentKey as PageComponentKey];
