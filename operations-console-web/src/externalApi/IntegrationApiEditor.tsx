@@ -127,7 +127,7 @@ function ApiForm({ integration, detail, readOnly, canManage, capabilities, scrip
   const scriptParamPaths = draft.params.filter(param => param.name.trim()).map(param => `params.${param.name.trim()}`);
   const code = detail?.apiCode;
   const workspace = `${integrationRoute}/${integrationCode}`;
-  const crumbs = [{ label: '外部 API' }, { label: '接入方', to: integrationRoute }, { label: integrationCode, to: workspace },
+  const crumbs = [{ label: '渠道' }, { label: '接入方', to: integrationRoute }, { label: integrationCode, to: workspace },
     { label: '原子 API', to: `${workspace}?tab=apis` }, ...(creating ? [{ label: '新建' }]
       : readOnly ? [{ label: code! }, { label: '详情' }] : [{ label: code!, to: `${workspace}/apis/${code}` }, { label: '编辑' }])];
   const title = creating ? '新建原子 API' : readOnly ? `原子 API · ${code}` : `编辑原子 API · ${code}`;

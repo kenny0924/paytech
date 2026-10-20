@@ -8,6 +8,8 @@ import { RequiredAction } from './auth/RequiredAction';
 import { useOperationsTools } from './auth/webmcp';
 import { useErrorNotification } from './feedback/useErrorNotification';
 import { buildMenuTree, menuPages, pageRoutePaths } from './navigation/menu';
+import { menuTrail } from './navigation/menuTrail';
+import { useTrailTitleHeading } from './navigation/useTrailTitleHeading';
 import { NavigationCollapseControl } from './navigation/NavigationCollapseControl';
 import { getBrowserLocalStorage, loadNavigationCollapsed, saveNavigationCollapsed } from './navigation/navigationPreference';
 import { SidebarMenu } from './navigation/SidebarMenu';
@@ -75,6 +77,8 @@ function Console({ context }: { context: SessionContextResponseBody }) {
   }, [reload, notifyError]);
   const menuTree = useMemo(() => buildMenuTree(resources), [resources]);
   const menus = useMemo(() => menuPages(menuTree), [menuTree]);
+  const trail = useMemo(() => menuTrail(menuTree, location.pathname), [menuTree, location.pathname]);
+  useTrailTitleHeading(trail.at(-1)?.displayName);
   useOperationsTools(menus, navigate);
   async function logout() {
     setLoggingOut(true);
@@ -95,7 +99,8 @@ function Console({ context }: { context: SessionContextResponseBody }) {
       {!viewportCollapsed && <NavigationCollapseControl collapsed={userCollapsed} onToggle={toggleNavigation} />}
     </Layout.Sider>
     <Layout>
-      <Layout.Header className="console-header"><span className="workspace-title">运营平台</span>
+      <Layout.Header className="console-header"><nav className="console-trail" aria-label="当前位置"><span className="workspace-title">运营平台</span>
+        {trail.map((item, index) => <span key={item.resourceId} className={index === trail.length - 1 ? 'console-trail-current' : 'console-trail-item'}>{item.displayName}</span>)}</nav>
         <div className="header-account">{context.integrationMode !== 'PRODUCTION' && <Tag className="environment-tag">开发环境</Tag>}
           <span>{context.emailMasked || '管理员'}</span><Button type="text" onClick={() => void logout()} loading={loggingOut}>退出</Button></div>
       </Layout.Header>

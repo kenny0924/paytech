@@ -6,7 +6,7 @@ import { pageRoutePaths } from '../navigation/menu.ts';
 import {
   acceptanceBody, agreementActions, agreementBody, bandIssues, capabilityBody, commercialButtons, commercialErrorMessage, commercialPaths, commercialRoutes, componentSummary,
   coverageGaps, decodeAgreementOverview, decodeAgreementWrite, decodeCapabilityWrite, decodePlan, decodeProfileList, decodeVersion, decodeWorkspace,
-  fieldPath, hasButton, newPriceDraft, percent, planBody, priceDraft, priceMatrix, pricesBody, profileBody, reserveError, utcInstant, versionActions,
+  fieldPath, groupRowSpan, hasButton, newPriceDraft, percent, planBody, priceDraft, priceMatrix, pricesBody, profileBody, reserveError, utcInstant, versionActions,
 } from './commercial.ts';
 import type { AgreementCapability, Price } from './commercial.ts';
 
@@ -134,6 +134,12 @@ test('价格矩阵：按 OE、币种、优先级排行，按计费事件分列�
   assert.deepEqual(matrix.rows.map(row => `${row.currency}/${row.priorityNo}`), ['AED/1', 'USD/1', 'USD/2']);
   assert.equal(matrix.rows[2].events.CAPTURE.length, 2);
   assert.equal(matrix.rows[0].events.CAPTURE, undefined);
+});
+
+test('价格矩阵合并单元格：OE 跨整组，币种在同一 OE 内跨整组', () => {
+  const rows = [['AE001', 'AED'], ['AE001', 'AED'], ['AE001', 'USD'], ['AE002', 'USD']].map(([entityNo, currency]) => ({ entityNo, currency }));
+  assert.deepEqual(rows.map((_, index) => groupRowSpan(rows, index, row => row.entityNo)), [3, 0, 0, 1]);
+  assert.deepEqual(rows.map((_, index) => groupRowSpan(rows, index, row => `${row.entityNo}|${row.currency}`)), [2, 0, 1, 1]);
 });
 
 test('组件摘要与费率显示：不做浮点舍入', () => {

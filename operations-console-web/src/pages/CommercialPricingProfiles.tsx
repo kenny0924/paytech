@@ -29,13 +29,14 @@ export function CommercialPricingProfiles({ resources, onAuthorizationChanged }:
   const close = () => setDialog(null);
   const done = () => { setDialog(null); list.refresh(); };
   return <div className="configuration-page commercial-page">
-    <div className="page-heading"><h1>定价画像</h1>{canManage && <Button type="primary" onClick={() => setDialog({ kind: 'create' })}>新建画像</Button>}</div>
+    <div className="page-heading"><h1>定价画像</h1></div>
     <Form name="commercial-profile-filters" layout="vertical" initialValues={{ kind: '', status: '' }}
       onFinish={(values: { kind: string; status: string }) => setFilters({ kind: values.kind || undefined, status: values.status || undefined })}>
       <div className="commercial-open">
         <Form.Item name="kind" label="种类"><Select style={{ width: 200 }} options={[{ value: '', label: '全部' }, ...options(profileKindLabels, profileKinds)]} /></Form.Item>
         <Form.Item name="status" label="状态"><Select style={{ width: 160 }} options={[{ value: '', label: '全部' }, ...options(profileStatusLabels, profileStatuses)]} /></Form.Item>
         <Button htmlType="submit">查询</Button>
+        {canManage && <Button className="commercial-open-extra" type="primary" onClick={() => setDialog({ kind: 'create' })}>新建画像</Button>}
       </div>
     </Form>
     {list.loading && !list.data ? <Loading /> : list.failure || !list.data ? <QueryFailure failure={list.failure} retry={list.refresh} />
@@ -80,11 +81,12 @@ function ProfileModal({ profile, onDone, onClose, onAuthorizationChanged }: { pr
     <Form form={form} name="commercial-profile" layout="vertical" initialValues={profile
       ? { profileKind: profile.profileKind, profileName: profile.profileName, paymentMethodCode: profile.paymentMethodCode ?? undefined, conditions: profile.conditions }
       : { profileKind: 'PAYMENT_METHOD', paymentMethodCode: 'CARD', conditions: [] }}>
+      <Form.Item name="profileKind" label="种类" extra={profile ? '创建后不可修改' : undefined}>
+        <Radio.Group disabled={!!profile} optionType="button" options={profileKinds.map(value => ({ value, label: profileKindLabels[value], title: value }))} /></Form.Item>
       <div className="commercial-form-grid">
         <Form.Item name="pricingProfileCode" label="画像代码" extra="全局唯一，创建后不可修改" hidden={!!profile} normalize={(v: string) => v?.toUpperCase()}
           rules={profile ? [] : [{ required: true, pattern: /^[A-Z][A-Z0-9_]{0,63}$/, message: '大写稳定代码，如 CARD_VISA_CREDIT' }]}><Input maxLength={64} /></Form.Item>
         <Form.Item name="profileName" label="名称" rules={[{ required: true, whitespace: true, message: '请填写名称' }]}><Input maxLength={128} /></Form.Item>
-        <Form.Item name="profileKind" label="种类"><Radio.Group disabled={!!profile} options={options(profileKindLabels, profileKinds)} /></Form.Item>
         {kind === 'PAYMENT_METHOD' && <Form.Item name="paymentMethodCode" label="支付方式代码" normalize={(v: string) => v?.toUpperCase()}
           rules={[{ required: true, pattern: /^[A-Z][A-Z0-9_]{0,63}$/, message: '大写代码，如 CARD' }]}><Input maxLength={64} /></Form.Item>}
       </div>

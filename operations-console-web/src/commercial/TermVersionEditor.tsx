@@ -6,7 +6,7 @@ import type { ConsoleResource } from '../api/types';
 import { Loading, QueryFailure, useDetail } from '../tenantAccess/TenantAccessView';
 import {
   agreementStatusLabels, commercialButtons, commercialPaths, commercialRoutes, componentSummary, coverageGaps, decodeWorkspace, hasButton, localTime,
-  partnerTermTypes, priceMatrix, termTypeLabels, versionActions, versionStatusLabels,
+  groupRowSpan, partnerTermTypes, priceMatrix, termTypeLabels, versionActions, versionBasisLabel, versionStatusLabels,
 } from './commercial';
 import type { MatrixRow, VersionAction } from './commercial';
 import { CommercialNote, StatusTag } from './CommercialParts';
@@ -63,7 +63,7 @@ export function TermVersionEditor({ versionId, resources, onAuthorizationChanged
       <div><dt>可定价 OE</dt><dd>{agreement.entityNos.join('、') || '—'}</dd></div>
       <div><dt>生效</dt><dd>{['DRAFT', 'PENDING_APPROVAL', 'APPROVED'].includes(version.status) ? '排期时确定'
         : `${localTime(version.effectiveFrom)} ～ ${version.effectiveTo ? localTime(version.effectiveTo) : '未定'}`}</dd></div>
-      <div><dt>口径</dt><dd>{version.pricingModel} · {version.feeTaxTreatment} · {version.roundingMode}</dd></div>
+      <div><dt>口径</dt><dd>{versionBasisLabel(version.pricingModel, version.feeTaxTreatment)} · {version.roundingMode}</dd></div>
       <div><dt>版本令牌</dt><dd>{version.changeVersion}</dd></div>
     </dl>
     {!partner && gaps.length > 0 && <Alert type="warning" showIcon className="commercial-banner" title="以下开通项币种还没有价格，排期时将被拒绝"
@@ -73,9 +73,9 @@ export function TermVersionEditor({ versionId, resources, onAuthorizationChanged
       locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={actions.editPrices ? '还没有价格，点击「编辑价格」添加' : '该版本没有价格'} /> }}
       columns={[
         { title: 'OE', dataIndex: 'entityNo', width: 80, fixed: 'left',
-          onCell: (row, index) => ({ rowSpan: index !== undefined && index > 0 && matrix.rows[index - 1].entityNo === row.entityNo ? 0
-            : matrix.rows.filter(other => other.entityNo === row.entityNo).length }) },
-        { title: '币种', dataIndex: 'currency', width: 70, fixed: 'left' },
+          onCell: (_, index = 0) => ({ rowSpan: groupRowSpan(matrix.rows, index, row => row.entityNo) }) },
+        { title: '币种', dataIndex: 'currency', width: 70, fixed: 'left',
+          onCell: (_, index = 0) => ({ rowSpan: groupRowSpan(matrix.rows, index, row => `${row.entityNo}|${row.currency}`) }) },
         { title: '画像', width: 220, render: (_, row) => <div className="commercial-cell"><span className="mono">{row.pricingProfileCode}</span>
           <span className="commercial-cell-meta">{row.price.paymentMethodCode ?? '—'} · 优先级 {row.priorityNo}
             {row.price.conditions.length ? ` · ${row.price.conditions.map(c => `${c.dimensionCode}=${c.conditionValue}`).join(', ')}` : ''}</span></div> },

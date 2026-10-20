@@ -40,7 +40,7 @@ const tabKeys: Tab[] = ['basic', 'apis', 'scripts', 'implementations', 'verify']
 const verifyKinds = ['verify-accounts', 'verify-cases'];
 const childKinds = ['apis', 'scripts', 'implementations'];
 const summaryPage = (value: unknown) => decodePage(value, decodeIntegrationSummary, item => item.integrationCode);
-const rootCrumbs: Crumb[] = [{ label: '外部 API' }, { label: '接入方', to: integrationRoute }];
+const rootCrumbs: Crumb[] = [{ label: '渠道' }, { label: '接入方', to: integrationRoute }];
 const noManage = '只读 · 无“外部 API 管理”权限';
 
 /** 接入方仍有的下级配置：删除前读取，有下级配置时不能删除。 */

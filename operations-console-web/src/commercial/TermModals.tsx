@@ -1,7 +1,8 @@
 import { Form, Input, Radio } from 'antd';
 import { DatePicker } from '../components/DatePicker';
 import {
-  commercialPaths, decodeVersion, feeTaxTreatments, idPattern, partnerTermTypes, pricingModels, utcInstant, versionStatusLabels,
+  commercialPaths, decodeVersion, feeTaxTreatmentLabels, feeTaxTreatments, idPattern, partnerTermTypes, pricingModelLabels, pricingModels, utcInstant,
+  versionStatusLabels,
 } from './commercial';
 import type { TermVersion, VersionAction } from './commercial';
 import { CommandModal, CommercialNote } from './CommercialParts';
@@ -9,6 +10,8 @@ import { useCommercialCommand } from './useCommercialCommand';
 
 interface Base { onClose: () => void; onAuthorizationChanged: () => void }
 const idRule = { pattern: idPattern, message: '必须是正十进制整数' };
+/** 复制时的「沿用来源」选项值；提交前转成 null。 */
+const inherit = '';
 
 /** 新建 DRAFT 版本：可复制已有版本的全部价格；不复制时必须给出定价模型与含税口径。Partner 条款需冻结 PARTNER 合同。 */
 export function CreateVersionModal({ planId, termType, expectedChangeVersion, agreementId, copyFromVersionId, onCreated, onClose, onAuthorizationChanged }: Base & {
@@ -24,22 +27,24 @@ export function CreateVersionModal({ planId, termType, expectedChangeVersion, ag
     const copy = values.copyFromVersionId?.trim() || null;
     const version = await command.run(commercialPaths.versions(planId), 'POST', {
       expectedChangeVersion, copyFromVersionId: copy, agreementId: partner ? values.agreementId?.trim() || null : null,
-      pricingModel: values.pricingModel ?? null, feeTaxTreatment: values.feeTaxTreatment ?? null,
+      pricingModel: values.pricingModel || null, feeTaxTreatment: values.feeTaxTreatment || null,
     }, decodeVersion(), '版本创建失败');
     if (version) onCreated(version);
   };
   return <CommandModal title={copyFromVersionId ? '复制为新草稿版本' : '新建草稿版本'} command={command} okText="创建" onOk={() => void submit()} onClose={onClose} onReload={onClose}>
     <Form form={form} name="commercial-version-create" layout="vertical" initialValues={{ copyFromVersionId, agreementId: agreementId ?? undefined,
-      pricingModel: copyFromVersionId ? undefined : 'BLENDED', feeTaxTreatment: copyFromVersionId ? undefined : 'EXCLUSIVE' }}>
+      pricingModel: copyFromVersionId ? inherit : 'BLENDED', feeTaxTreatment: copyFromVersionId ? inherit : 'EXCLUSIVE' }}>
       <div className="commercial-form-grid">
         <Form.Item name="copyFromVersionId" label="复制来源版本 ID（可空）" rules={[idRule]}><Input maxLength={19} /></Form.Item>
         {partner ? <Form.Item name="agreementId" label="冻结的 PARTNER 合同 ID" rules={[{ required: true, whitespace: true, message: 'Partner 条款必须指定合同' }, idRule]}>
           <Input maxLength={19} /></Form.Item> : <div />}
-        <Form.Item name="pricingModel" label="定价模型" extra={copying ? '留空沿用来源版本' : '本期排期只接受 BLENDED'}
+        <Form.Item name="pricingModel" label="定价模型" tooltip="混合费率 BLENDED：按约定费率收费；IC++ INTERCHANGE_PLUS_PLUS：交换费 + 卡组织费 + 加价，本期排期只接受混合费率"
           rules={[{ required: !copying, message: '不复制时必须选择' }]}>
-          <Radio.Group optionType="button" options={pricingModels.map(value => ({ value, label: value }))} /></Form.Item>
-        <Form.Item name="feeTaxTreatment" label="含税口径" extra={copying ? '留空沿用来源版本' : undefined} rules={[{ required: !copying, message: '不复制时必须选择' }]}>
-          <Radio.Group optionType="button" options={feeTaxTreatments.map(value => ({ value, label: value === 'INCLUSIVE' ? '含税 INCLUSIVE' : '不含税 EXCLUSIVE' }))} /></Form.Item>
+          <Radio.Group optionType="button" options={[...(copying ? [{ value: inherit, label: '沿用来源' }] : []),
+            ...pricingModels.map(value => ({ value, label: pricingModelLabels[value], title: value }))]} /></Form.Item>
+        <Form.Item name="feeTaxTreatment" label="含税口径" tooltip="含税 INCLUSIVE：价格已含税；不含税 EXCLUSIVE：税费另计" rules={[{ required: !copying, message: '不复制时必须选择' }]}>
+          <Radio.Group optionType="button" options={[...(copying ? [{ value: inherit, label: '沿用来源' }] : []),
+            ...feeTaxTreatments.map(value => ({ value, label: feeTaxTreatmentLabels[value], title: value }))]} /></Form.Item>
       </div>
       <CommercialNote>版本号由 commercial 递增；复制会带上来源版本的全部价格、组件与档位。</CommercialNote>
     </Form>

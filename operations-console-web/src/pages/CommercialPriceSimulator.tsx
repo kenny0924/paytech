@@ -61,34 +61,35 @@ export function CommercialPriceSimulator({ onAuthorizationChanged }: Props) {
     <Form form={form} name="commercial-price-simulation" layout="vertical" onFinish={values => void submit(values)}
       initialValues={{ termType: 'CLIENT_PRICING', currency: 'USD', paymentMethodCode: 'CARD', contextAsOfTime: localInput(new Date().toISOString()),
         dimensions: [], ...prefill, ownerId: prefill.clientId }}>
-      <div className="commercial-form-grid-3">
-        <Form.Item name="termVersionId" label="条款版本 ID" rules={[{ required: true, pattern: idPattern, message: '正十进制版本 ID' }]}><Input maxLength={19} /></Form.Item>
-        <Form.Item name="agreementId" label="合同 ID" rules={[{ required: true, pattern: idPattern, message: '正十进制合同 ID' }]}><Input maxLength={19} /></Form.Item>
-        <Form.Item name="termType" label="条款类型"><Select options={termTypes.map(value => ({ value, label: `${termTypeLabels[value]} ${value}` }))} /></Form.Item>
-        <Form.Item name="ownerId" label={partner ? 'Local Partner ID' : 'Client ID'} rules={[{ required: true, pattern: idPattern, message: '正十进制 ID' }]}>
+      <div className="commercial-sim-fields">
+        <Form.Item name="termVersionId" label="条款版本 ID" className="sim-id" rules={[{ required: true, pattern: idPattern, message: '正十进制版本 ID' }]}><Input maxLength={19} /></Form.Item>
+        <Form.Item name="agreementId" label="合同 ID" className="sim-id" rules={[{ required: true, pattern: idPattern, message: '正十进制合同 ID' }]}><Input maxLength={19} /></Form.Item>
+        <Form.Item name="termType" label="条款类型" className="sim-type"><Select options={termTypes.map(value => ({ value, label: `${termTypeLabels[value]} ${value}` }))} /></Form.Item>
+        <Form.Item name="ownerId" label={partner ? 'Local Partner ID' : 'Client ID'} className="sim-id" rules={[{ required: true, pattern: idPattern, message: '正十进制 ID' }]}>
           <Input maxLength={19} /></Form.Item>
-        <Form.Item name="entityNo" label="OE" normalize={(v: string) => v?.toUpperCase()} rules={[{ required: true, pattern: entityNoPattern, message: '如 AE001' }]}>
-          <Input maxLength={5} /></Form.Item>
-        <Form.Item name="currency" label="交易币种" normalize={(v: string) => v?.toUpperCase()} rules={[{ required: true, pattern: currencyPattern, message: '三位大写币种' }]}>
+        <Form.Item name="entityNo" label="OE" className="sim-short" normalize={(v: string) => v?.toUpperCase()} rules={[{ required: true, pattern: entityNoPattern, message: '如 AE001' }]}>
+          <Input maxLength={5} placeholder="AE001" /></Form.Item>
+        <Form.Item name="currency" label="币种" className="sim-short" normalize={(v: string) => v?.toUpperCase()} rules={[{ required: true, pattern: currencyPattern, message: '三位大写币种' }]}>
           <Input maxLength={3} /></Form.Item>
-        <Form.Item name="contextAsOfTime" label="商业时点" rules={[{ required: true, message: '请选择时点' }]}><Input type="datetime-local" step={1} /></Form.Item>
-        <Form.Item name="paymentMethodCode" label="支付方式（可空）" normalize={(v: string) => v?.toUpperCase()} rules={[{ pattern: codePattern, message: '大写代码，如 CARD' }]}>
-          <Input maxLength={64} /></Form.Item>
-        <Form.Item name="amount" label="示例金额（可空）" extra="主单位，如 1000.00；为空只看命中价格" rules={[{ pattern: amountPattern, message: '非负十进制，最多 6 位小数' }]}>
-          <Input maxLength={22} /></Form.Item>
+        <Form.Item name="contextAsOfTime" label="商业时点" className="sim-time" rules={[{ required: true, message: '请选择时点' }]}><Input type="datetime-local" step={1} /></Form.Item>
+        <Form.Item name="paymentMethodCode" label="支付方式" className="sim-code" normalize={(v: string) => v?.toUpperCase()} rules={[{ pattern: codePattern, message: '大写代码，如 CARD' }]}>
+          <Input maxLength={64} placeholder="可空" /></Form.Item>
+        <Form.Item name="amount" label="示例金额" className="sim-code" tooltip="主单位，如 1000.00；为空只看命中价格" rules={[{ pattern: amountPattern, message: '非负十进制，最多 6 位小数' }]}>
+          <Input maxLength={22} placeholder="可空" /></Form.Item>
       </div>
-      <h4 className="commercial-subtitle">维度事实</h4>
-      <Form.List name="dimensions">{(fields, { add, remove }) => <div className="commercial-row-list">
-        {fields.map(field => <div className="commercial-row" key={field.key}>
+      <Form.List name="dimensions">{(fields, { add, remove }) => <div className="commercial-sim-dimensions">
+        {fields.map(field => <div className="commercial-sim-dimension" key={field.key}>
           <Form.Item name={[field.name, 'dimensionCode']} rules={[{ required: true, message: '维度' }]}>
-            <Select options={dimensionCodes.map(value => ({ value, label: value }))} /></Form.Item>
+            <Select aria-label="维度" options={dimensionCodes.map(value => ({ value, label: value }))} /></Form.Item>
           <Form.Item name={[field.name, 'value']} normalize={(v: string) => v?.toUpperCase()}><Input placeholder="VISA / CREDIT / AE；留空=未知" /></Form.Item>
           <Form.Item name={[field.name, 'notApplicable']} valuePropName="checked"><Checkbox>不适用</Checkbox></Form.Item>
-          <Button onClick={() => remove(field.name)}>移除</Button>
+          <Button type="link" danger onClick={() => remove(field.name)}>移除</Button>
         </div>)}
-        <Button onClick={() => add({ dimensionCode: 'CARD_BRAND' })}>添加维度</Button>
+        <div className="commercial-sim-actions">
+          <Button type="dashed" onClick={() => add({ dimensionCode: 'CARD_BRAND' })}>+ 维度事实</Button>
+          <Button type="primary" htmlType="submit" loading={running}>试算</Button>
+        </div>
       </div>}</Form.List>
-      <Button type="primary" htmlType="submit" loading={running}>试算</Button>
     </Form>
     {failure && <Alert type="warning" showIcon className="commercial-banner" style={{ marginTop: 16 }} title={failure} />}
     {result && <SimulationResult result={result} />}

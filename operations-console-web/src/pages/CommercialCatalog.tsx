@@ -54,8 +54,8 @@ function CatalogGroup({ title, count, note, open, onToggle, children }: {
 /** 可开通项子表。 */
 function CapabilityTable({ items }: { items: CatalogCapability[] }) {
   return <Table<CatalogCapability> rowKey="productCapabilityId" size="small" pagination={false} dataSource={items} scroll={{ x: 760 }} columns={[
-    { title: '能力码 / 名称', render: (_, row) => <div className="commercial-cell">
-      <span className="mono catalog-code">{row.capabilityCode}</span><span className="commercial-cell-meta">{row.capabilityName}</span></div> },
+    { title: '能力码 / 名称', render: (_, row) => <span className="catalog-name-cell">
+      <span className="mono catalog-code">{row.capabilityCode}</span><span className="commercial-cell-meta">{row.capabilityName}</span></span> },
     { title: '种类', width: 110, render: (_, row) => catalogLabel(capabilityKindLabels, row.capabilityKind) },
     { title: '支付方式', width: 130, render: (_, row) => row.paymentMethodCode ? <span className="mono">{row.paymentMethodCode}</span> : '—' },
     { title: '维度条件', width: 220, render: (_, row) => row.dimensionCode

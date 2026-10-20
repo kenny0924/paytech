@@ -87,7 +87,7 @@ function ScriptForm({ integrationCode, detail, readOnly, canManage, capabilities
   const functions = (capabilities?.functions ?? []).filter(item => item.kind === 'SCRIPT');
   const code = detail?.scriptCode;
   const workspace = `${integrationRoute}/${integrationCode}`;
-  const crumbs = [{ label: '外部 API' }, { label: '接入方', to: integrationRoute }, { label: integrationCode, to: workspace },
+  const crumbs = [{ label: '渠道' }, { label: '接入方', to: integrationRoute }, { label: integrationCode, to: workspace },
     { label: '公共脚本', to: `${workspace}?tab=scripts` }, ...(creating ? [{ label: '新建' }]
       : readOnly ? [{ label: code! }] : [{ label: code!, to: `${workspace}/scripts/${code}` }, { label: '编辑' }])];
   const title = creating ? '新建公共脚本' : readOnly ? `公共脚本 · ${code}` : `编辑公共脚本 · ${code}`;

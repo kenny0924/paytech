@@ -142,7 +142,7 @@ function FlowWorkspace({ integrationCode, standardApiCode, context, functions, d
   const panelProps = { flow, context, functions, readOnly: disabled, standardApiCode, onChange: change, onSelect: select };
   const workspace = `${integrationRoute}/${integrationCode}`;
   return <>
-    <PageHeader crumbs={[{ label: '外部 API' }, { label: `接入方 ${integrationCode}`, to: workspace },
+    <PageHeader crumbs={[{ label: '渠道' }, { label: `接入方 ${integrationCode}`, to: workspace },
       { label: '标准 API 实现', to: `${workspace}?tab=implementations` }, { label: standardApiCode }]}
       title={`${integrationCode} 实现 ${standardApiCode}`} readOnlyHint={!canManage ? noManage : undefined}
       actions={<><span className="xapi-field-label">流程总预算</span>

@@ -20,6 +20,9 @@ const required = (message: string) => ({ required: true, whitespace: true, messa
 const idRule = { pattern: idPattern, message: '必须是正十进制整数' };
 const hashRule = { pattern: /^[0-9a-fA-F]{64}$/, message: '必须是 64 位十六进制 SHA-256' };
 const options = (labels: Readonly<Record<string, string>>, values: readonly string[]) => values.map(value => ({ value, label: `${labels[value] ?? value} ${value}` }));
+/** 按钮组只显示中文，代码放悬停提示，避免长代码把按钮挤到第二行。 */
+const buttonOptions = (labels: Readonly<Record<string, string>>, values: readonly string[]) =>
+  values.map(value => ({ value, label: labels[value] ?? value, title: value }));
 
 /** 新建合同：CLIENT 绑定一个 OE，PARTNER 覆盖多个 OE；资金模式与定价权本期固定，不在表单中选择。 */
 export function CreateAgreementModal({ onClose, onCreated, onAuthorizationChanged }: { onClose: () => void; onCreated: (agreementId: string) => void; onAuthorizationChanged: () => void }) {
@@ -40,7 +43,7 @@ export function CreateAgreementModal({ onClose, onCreated, onAuthorizationChange
         <Form.Item name="agreementNo" label="合同编号" rules={[required('请填写合同编号'), { pattern: /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/, message: '字母数字及 . _ -，最长 64 位' }]}>
           <Input maxLength={64} placeholder="AGR-AE001-0001" /></Form.Item>
         <Form.Item name="agreementName" label="合同名称" rules={[required('请填写合同名称')]}><Input maxLength={255} /></Form.Item>
-        <Form.Item name="agreementType" label="合同类型"><Radio.Group optionType="button" options={options(agreementTypeLabels, ['CLIENT', 'PARTNER'])} /></Form.Item>
+        <Form.Item name="agreementType" label="合同类型"><Radio.Group optionType="button" options={buttonOptions(agreementTypeLabels, ['CLIENT', 'PARTNER'])} /></Form.Item>
         {type === 'CLIENT'
           ? <Form.Item name="businessMode" label="业务模式" rules={[{ required: true, message: '请选择业务模式' }]}><Radio.Group optionType="button" options={businessModes.map(v => ({ value: v, label: v }))} /></Form.Item>
           : <div />}
@@ -116,7 +119,7 @@ export function AcceptanceModal({ agreement, party, onDone, onClose, onReload, o
   };
   return <CommandModal title={`登记签署 · Party ${party.partyId}`} command={command} okText="登记" onOk={() => void submit()} onClose={onClose} onReload={onReload}>
     <Form form={form} name="commercial-acceptance" layout="vertical" initialValues={{ acceptanceMethod: 'E_SIGNATURE' }}>
-      <Form.Item name="acceptanceMethod" label="签署方式"><Radio.Group optionType="button" options={options(acceptanceMethodLabels, acceptanceMethods)} /></Form.Item>
+      <Form.Item name="acceptanceMethod" label="签署方式"><Radio.Group optionType="button" options={buttonOptions(acceptanceMethodLabels, acceptanceMethods)} /></Form.Item>
       <div className="commercial-form-grid">
         <Form.Item name="acceptanceReference" label="签署编号" extra="全局唯一；同编号重放返回原结果" rules={[required('请填写签署编号'),
           { pattern: /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/, message: '字母数字及 . _ : -' }]}><Input maxLength={128} /></Form.Item>
@@ -210,7 +213,7 @@ export function CapabilityModal({ agreement, capability, onDone, onClose, onRelo
           extra={catalog.failed ? '目录读取失败，请直接输入可开通项代码' : undefined}>
           {catalog.failed ? <Input disabled={!!capability} maxLength={64} />
             : <Select disabled={!!capability} showSearch={{ optionFilterProp: 'label' }} loading={catalog.loading} options={capabilityOptions(catalog.items)} />}</Form.Item>
-        {capability && <Form.Item name="status" label="状态"><Radio.Group optionType="button" options={options(capabilityStatusLabels, capabilityStatuses)} /></Form.Item>}
+        {capability && <Form.Item name="status" label="状态"><Radio.Group optionType="button" options={buttonOptions(capabilityStatusLabels, capabilityStatuses)} /></Form.Item>}
         {capability && <div />}
         <Form.Item name="effectiveFrom" label="生效起点" rules={[{ required: true, message: '请选择生效起点' }]}><DatePicker showTime /></Form.Item>
         <Form.Item name="effectiveTo" label="生效终点（可空）"><DatePicker showTime /></Form.Item>

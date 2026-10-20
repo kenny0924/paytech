@@ -16,14 +16,14 @@ import '../finance/finance.css';
 interface Props { resources: ConsoleResource[]; onAuthorizationChanged: () => void }
 const createLabels: Partial<Record<SetupTab, string>> = { entities: '新建财务主体', calendars: '新建日历', books: '新建账簿' };
 
-/** 账务基础资料：财务主体、日历与期间、账簿与账户、科目表与币种四个标签页，标签存于 URL ?tab=；科目维护入口在科目表标签页内。 */
+/** 账务基础资料：财务主体、日历与期间、账簿与账户、科目表四个标签页，标签存于 URL ?tab=；科目维护入口在科目表标签页内。 */
 export function FinanceSetup({ resources, onAuthorizationChanged }: Props) {
   const canManage = resources.some(r => r.resourceType === 'BUTTON' && r.resourceCode === manageFinanceSetup);
   const [params, setParams] = useSearchParams();
   const tab = readSetupTab(params);
   const [creating, setCreating] = useState<SetupTab | null>(null);
   const [reloadTokens, setReloadTokens] = useState<Record<SetupTab, number>>({ entities: 0, calendars: 0, books: 0, charts: 0 });
-  // 日历与账簿的主体列显示财务主体代码；币种同时提供账簿筛选、金额精度与只读标签页。
+  // 日历与账簿的主体列显示财务主体代码；币种提供账簿筛选与金额精度。
   const entities = useFinanceEntities(tab === 'calendars' || tab === 'books', onAuthorizationChanged);
   const currencies = useCurrencies(onAuthorizationChanged);
   const done = (target: SetupTab) => {
@@ -40,7 +40,7 @@ export function FinanceSetup({ resources, onAuthorizationChanged }: Props) {
           entities={entities.byId} onAuthorizationChanged={onAuthorizationChanged} /> },
         { key: 'books', label: '账簿与账户', children: <SetupBooksTab canManage={canManage} reloadToken={reloadTokens.books} entities={entities.byId}
           currencies={currencies.items} minorUnits={currencies.minorUnits} onAuthorizationChanged={onAuthorizationChanged} /> },
-        { key: 'charts', label: '科目表与币种', children: <SetupChartsTab canManage={canManage} currencies={currencies} onAuthorizationChanged={onAuthorizationChanged} /> },
+        { key: 'charts', label: '科目表', children: <SetupChartsTab canManage={canManage} onAuthorizationChanged={onAuthorizationChanged} /> },
       ]} destroyOnHidden />
     {creating === 'entities' && <CreateEntityModal onClose={() => setCreating(null)} onDone={() => done('entities')} onAuthorizationChanged={onAuthorizationChanged} />}
     {creating === 'calendars' && <CreateCalendarModal onClose={() => setCreating(null)} onDone={() => done('calendars')} onAuthorizationChanged={onAuthorizationChanged} />}

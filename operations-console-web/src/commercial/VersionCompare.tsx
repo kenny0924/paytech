@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Button, Segmented, Table, Tag } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { Loading, QueryFailure, useDetail } from '../tenantAccess/TenantAccessView';
-import { commercialRoutes, localTime, termTypeLabels, versionStatusLabels } from './commercial';
+import { commercialRoutes, localTime, termTypeLabels, versionBasisLabel, versionStatusLabels } from './commercial';
 import type { TermVersion } from './commercial';
 import { consolePaths, consoleRoutes, decodeVersionDiff, diffChangeColors, diffChangeLabels, diffCounts, diffRows } from './commercialConsole';
 import type { DiffChange, DiffRow } from './commercialConsole';
@@ -42,7 +42,7 @@ export function VersionCompare({ baseVersionId, targetVersionId }: Props) {
       <div><dt>目标 v{target.versionNo}</dt><dd><StatusTag status={target.status} labels={versionStatusLabels} /> {versionWindow(target)}</dd></div>
       <div><dt>价格差异</dt><dd>修改 {counts.CHANGED} · 新增 {counts.ADDED} · 删除 {counts.REMOVED} · 未变 {counts.UNCHANGED}</dd></div>
       <div><dt>口径</dt><dd>{versionDifferences.length ? versionDifferences.map(d => `${d.field} ${d.baseValue ?? '—'} → ${d.targetValue ?? '—'}`).join('；')
-        : `${target.pricingModel} · ${target.feeTaxTreatment} · ${target.roundingMode}（无变化）`}</dd></div>
+        : `${versionBasisLabel(target.pricingModel, target.feeTaxTreatment)} · ${target.roundingMode}（无变化）`}</dd></div>
     </dl>
     <div className="commercial-section-head">
       <Segmented<Filter> value={filter} onChange={setFilter} options={[{ value: 'ALL', label: `全部 ${rows.length}` },

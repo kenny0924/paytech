@@ -18,7 +18,7 @@ interface Values {
   parameters: EntryRow[]; credentials: EntryRow[];
 }
 
-const crumbsFor = (code: string): Crumb[] => [{ label: '外部 API' }, { label: '接入方', to: integrationRoute },
+const crumbsFor = (code: string): Crumb[] => [{ label: '渠道' }, { label: '接入方', to: integrationRoute },
   { label: code, to: `${integrationRoute}/${code}` }, { label: '验证', to: `${integrationRoute}/${code}?tab=verify` }];
 
 /** 验证账号：详情（/:accountCode）、编辑（?mode=edit）与新建（/new）。凭据是用户决定的非敏感沙箱材料。 */

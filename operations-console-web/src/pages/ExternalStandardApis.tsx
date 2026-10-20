@@ -22,7 +22,7 @@ import type { Crumb } from '../externalApi/ui';
 interface Props { resources: ConsoleResource[]; onAuthorizationChanged: () => void }
 const bodyOnly: FieldLocation[] = ['BODY'];
 const summaryPage = (value: unknown) => decodePage(value, decodeStandardApiSummary, item => item.standardApiCode);
-const rootCrumbs: Crumb[] = [{ label: '外部 API' }, { label: '标准 API', to: standardApiRoute }];
+const rootCrumbs: Crumb[] = [{ label: '渠道' }, { label: '标准 API', to: standardApiRoute }];
 const noManage = '只读 · 无“外部 API 管理”权限';
 
 /** 标准 API 当前被哪些接入方实现：删除前读取，有实现时不能删除。 */

@@ -5,7 +5,7 @@ import type { ConsoleResource } from '../api/types';
 import { Loading, QueryFailure, useDetail } from '../tenantAccess/TenantAccessView';
 import {
   acceptanceMethodLabels, agreementActions, agreementStatusLabels, agreementTypeLabels, capabilityStatusLabels, commercialButtons, commercialPaths,
-  commercialRoutes, decodeAgreementOverview, hasButton, localTime, partyRoleLabels, termTypeLabels, versionStatusLabels,
+  commercialRoutes, decodeAgreementOverview, hasButton, localTime, partyRoleLabels, termTypeLabels, versionBasisLabel, versionStatusLabels,
 } from './commercial';
 import type { AgreementCapability, AgreementParty, AgreementTermVersion, TermPlan } from './commercial';
 import { AcceptanceModal, CapabilityModal, CreatePlanModal, ProductsModal, TerminateModal, TransitionModal } from './AgreementModals';
@@ -116,7 +116,7 @@ export function AgreementDetail({ agreementId, resources, onAuthorizationChanged
             { title: '状态', width: 110, render: (_, row) => <StatusTag status={row.status} labels={versionStatusLabels} /> },
             { title: '时点', width: 100, render: (_, row) => row.timing === 'CURRENT' ? <Tag color="green">当前</Tag> : <Tag color="blue">已排期</Tag> },
             { title: '生效', render: (_, row) => `${localTime(row.effectiveFrom)} ～ ${row.effectiveTo ? localTime(row.effectiveTo) : '未定'}` },
-            { title: '口径', width: 200, render: (_, row) => `${row.pricingModel} · ${row.feeTaxTreatment}` },
+            { title: '口径', width: 200, render: (_, row) => versionBasisLabel(row.pricingModel, row.feeTaxTreatment) },
           ]} />}
       </> },
     ]} />

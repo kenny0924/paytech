@@ -30,7 +30,7 @@ export function VerifyRunDetail({ integrationCode, runCode }: { integrationCode:
   const run = detail.data; const base = verifyRoute(integrationCode);
   const reason = typeof run.caseSnapshot.reason === 'string' ? run.caseSnapshot.reason : '—';
   return <>
-    <PageHeader crumbs={[{ label: '外部 API' }, { label: '接入方', to: integrationRoute }, { label: integrationCode, to: `${integrationRoute}/${integrationCode}` },
+    <PageHeader crumbs={[{ label: '渠道' }, { label: '接入方', to: integrationRoute }, { label: integrationCode, to: `${integrationRoute}/${integrationCode}` },
       { label: '验证', to: `${integrationRoute}/${integrationCode}?tab=verify` }, { label: `运行 ${run.runCode}` }]}
       title={`运行 ${run.runCode}`} code={run.caseCode} />
     {running && <Alert type="info" showIcon title="运行在后台执行中，本页每 2 秒刷新。" />}

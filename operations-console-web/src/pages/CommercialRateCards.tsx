@@ -3,7 +3,8 @@ import { Button, Empty, Form, Input, Table, Tag } from 'antd';
 import type { ConsoleResource } from '../api/types';
 import { Loading, QueryFailure, useDetail } from '../tenantAccess/TenantAccessView';
 import {
-  capabilityStatusLabels, commercialPaths, componentSummary, currencyPattern, idPattern, localTime, termTypeLabels, utcInstant, versionStatusLabels,
+  capabilityStatusLabels, commercialPaths, componentSummary, currencyPattern, idPattern, localTime, termTypeLabels, utcInstant, versionBasisLabel,
+  versionStatusLabels,
 } from '../commercial/commercial';
 import type { CapabilityStatus, VersionStatus } from '../commercial/commercial';
 import { capabilityLabel, cutoffTime, decodeRateCard, rateCardPath } from '../commercial/commercialPreview';
@@ -94,7 +95,7 @@ function VersionBlock({ version, capabilities }: { version: TermVersionRateCard;
       <Tag color={version.timing === 'CURRENT' ? 'green' : 'blue'}>{version.timing === 'CURRENT' ? '当前' : '已排期'}</Tag>
       <StatusTag status={version.status} labels={versionStatusLabels as Record<VersionStatus, string>} />
       <span className="commercial-cell-meta">生效 {localTime(version.effectiveFrom)}{version.effectiveTo ? ` – ${localTime(version.effectiveTo)}` : ''}</span>
-      <span className="commercial-cell-meta">{version.pricingModel} · {version.feeTaxTreatment}</span>
+      <span className="commercial-cell-meta">{versionBasisLabel(version.pricingModel, version.feeTaxTreatment)}</span>
     </div>
     {version.capabilities.map(capability => <div key={capability.agreementCapabilityId}>
       <h4 className="commercial-subtitle">{capabilities.get(capability.agreementCapabilityId)

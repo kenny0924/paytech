@@ -120,6 +120,11 @@ export const acceptanceMethodLabels: Record<AcceptanceMethod, string> = { E_SIGN
 export const profileKindLabels: Record<ProfileKind, string> = {
   PAYMENT_METHOD: '支付方式', PAYOUT_RAIL: '出款通道', FX_PAIR: '换汇币对', DISPUTE: '争议', PERIODIC: '周期费',
 };
+export const pricingModelLabels: Readonly<Record<string, string>> = { BLENDED: '混合费率', INTERCHANGE_PLUS_PLUS: 'IC++' };
+export const feeTaxTreatmentLabels: Readonly<Record<string, string>> = { INCLUSIVE: '含税', EXCLUSIVE: '不含税' };
+/** 版本口径展示：定价模型 · 含税口径，未知代码原样显示。 */
+export const versionBasisLabel = (pricingModel: string, feeTaxTreatment: string) =>
+  `${pricingModelLabels[pricingModel] ?? pricingModel} · ${feeTaxTreatmentLabels[feeTaxTreatment] ?? feeTaxTreatment}`;
 export const componentTypeLabels: Record<ComponentType, string> = { PERCENTAGE: '百分比', FIXED: '固定额', TIERED: '阶梯' };
 export const termTypeLabels: Readonly<Record<string, string>> = {
   CLIENT_PRICING: 'Client 定价', PARTNER_SHARE: 'Partner 分润', PLATFORM_SERVICE_CHARGE: '平台服务费', PARTNER_BUY_RATE: 'Partner 底价',
@@ -423,6 +428,15 @@ export function priceMatrix(prices: readonly Price[]): PriceMatrix {
       pricingProfileCode: price.pricingProfileCode, priorityNo: price.priorityNo, price, events: byEvent };
   }).sort((a, b) => a.entityNo.localeCompare(b.entityNo) || a.currency.localeCompare(b.currency) || a.priorityNo - b.priorityNo);
   return { events: [...events].sort(), rows };
+}
+
+/** 已排序矩阵里按分组键合并单元格：组内首行跨整组，其余行为 0。 */
+export function groupRowSpan<T>(rows: readonly T[], index: number, groupKey: (row: T) => string): number {
+  const key = groupKey(rows[index]);
+  if (index > 0 && groupKey(rows[index - 1]) === key) return 0;
+  let span = 1;
+  while (index + span < rows.length && groupKey(rows[index + span]) === key) span++;
+  return span;
 }
 
 /** 组件的一句话摘要：2.9% (min 0.50 USD) + …；阶梯显示档数与基数。 */

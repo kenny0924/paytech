@@ -45,8 +45,8 @@ function TermsHome({ resources, onAuthorizationChanged }: Props) {
   const canManage = hasButton(resources, commercialButtons.termManage);
   const showVersions = (planId: string) => { setVersionFilters({ planId }); setTab('versions'); };
   return <div className="configuration-page commercial-page">
-    <div className="page-heading"><h1>价目</h1>{canManage && <Button type="primary" onClick={() => setStep({ kind: 'plan' })}>新建条款方案</Button>}</div>
-    <Tabs activeKey={tab} onChange={key => setTab(key as 'plans' | 'versions')} items={[
+    <div className="page-heading"><h1>价目</h1></div>
+    <Tabs activeKey={tab} onChange={key => setTab(key as 'plans' | 'versions')} tabBarExtraContent={canManage && <Button type="primary" onClick={() => setStep({ kind: 'plan' })}>新建条款方案</Button>} items={[
       { key: 'plans', label: '条款方案', children: <PlanList onShowVersions={showVersions} /> },
       { key: 'versions', label: '版本', children: <VersionList key={versionFilters.planId ?? 'all'} planId={versionFilters.planId} /> },
     ]} />

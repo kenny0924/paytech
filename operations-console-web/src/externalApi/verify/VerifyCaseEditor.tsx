@@ -26,7 +26,7 @@ import { JsonBlock, StartRunDialog, VerifyTag } from './VerifyParts';
 interface Props { resources: ConsoleResource[]; onAuthorizationChanged: () => void; integrationCode: string; caseCode: string | null }
 interface Meta { caseCode: string; caseName: string; description?: string; accountCode: string }
 
-const crumbsFor = (code: string): Crumb[] => [{ label: '外部 API' }, { label: '接入方', to: integrationRoute },
+const crumbsFor = (code: string): Crumb[] => [{ label: '渠道' }, { label: '接入方', to: integrationRoute },
   { label: code, to: `${integrationRoute}/${code}` }, { label: '验证', to: `${integrationRoute}/${code}?tab=verify` }];
 const runPage = (value: unknown) => decodePage(value, decodeRunSummary, item => item.runCode);
 

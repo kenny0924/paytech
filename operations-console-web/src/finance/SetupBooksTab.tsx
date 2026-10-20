@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Button, Empty, Form, Input, Select, Table } from 'antd';
+import type { TableColumnsType } from 'antd';
+import { useNavigate } from 'react-router-dom';
 import type { PagingRequestBody } from '../api/paging';
 import { usePaging } from '../hooks/usePaging';
 import {
@@ -57,17 +59,35 @@ export function BookList({ entities, currencies, initialFilters = {}, initialPag
   </>;
 }
 
-/** 账户列表（共用）：按科目、核算对象类型 / 标识、余额桶筛选并分页；金额按币种精度右对齐，负净额标识反向。 */
-export function AccountList({ book, minorUnit, initialFilters = {}, initialPaging, onQueryChange, onSelect, reloadToken = 0, heading, extra, onAuthorizationChanged }: {
+/**
+ * 账户列表（共用）：按科目、核算对象类型 / 标识、余额桶筛选并分页；金额按币种精度右对齐，负净额标识反向。
+ * <li>基础资料只维护开户，传 showBalances=false 隐藏借贷合计与净余额，并以 rowAction 跳转账本查询看流水。</li>
+ */
+export function AccountList({ book, minorUnit, initialFilters = {}, initialPaging, onQueryChange, onSelect, reloadToken = 0, heading, extra, showBalances = true, rowAction, onAuthorizationChanged }: {
   book: BookRef; minorUnit?: number; initialFilters?: Readonly<Record<string, string>>; initialPaging?: PagingRequestBody;
   onQueryChange?: (query: Query) => void; onSelect?: (account: LedgerAccount) => void; reloadToken?: number; heading?: ReactNode; extra?: ReactNode;
-  onAuthorizationChanged?: () => void;
+  showBalances?: boolean; rowAction?: (account: LedgerAccount) => ReactNode; onAuthorizationChanged?: () => void;
 }) {
   const [form] = Form.useForm();
   const page = usePaging<LedgerAccount>(financePaths.accounts(book.ledgerBookId), accountPage, initialFilters, { initialPaging, onQueryChange });
   const chartAccounts = useChartAccounts(book.chartCode ?? null, { postingAllowed: true }, onAuthorizationChanged);
   useEffect(() => { if (reloadToken) page.refresh(); }, [reloadToken]);
   const amount = (value: string) => <Amount value={value} minorUnit={minorUnit} />;
+  const columns: TableColumnsType<LedgerAccount> = [
+    { title: '账户号', width: 220, render: (_, row) => <span className="mono">{row.accountNo}</span> },
+    { title: '科目', width: 250, render: (_, row) => <div><div className="finance-code">{row.accountCode}</div>
+      <div className="cell-meta">{row.accountName}</div></div> },
+    { title: '核算对象', width: 200, render: (_, row) => <div><div>{row.ownerType}</div><div className="cell-meta">{row.ownerId}</div></div> },
+    { title: '余额桶', dataIndex: 'balanceBucket', width: 110 },
+    { title: '方向', width: 70, render: (_, row) => <SideTag side={row.normalSide} /> },
+    { title: '状态', width: 80, render: (_, row) => <StatusTag status={row.accountStatus} labels={accountStatusLabels} /> },
+    ...(showBalances ? [
+      { title: '借方合计', width: 140, align: 'right' as const, render: (_: unknown, row: LedgerAccount) => amount(row.debitTotal) },
+      { title: '贷方合计', width: 140, align: 'right' as const, render: (_: unknown, row: LedgerAccount) => amount(row.creditTotal) },
+      { title: '净余额', width: 160, align: 'right' as const, render: (_: unknown, row: LedgerAccount) => amount(row.netBalance) },
+    ] : []),
+    ...(rowAction ? [{ title: '操作', width: 100, render: (_: unknown, row: LedgerAccount) => rowAction(row) }] : []),
+  ];
   return <>
     <Form form={form} name="finance-account-filters" layout="vertical" initialValues={initialFilters} onFinish={values => page.applyFilters(accountFilters(values))}>
       <div className="finance-section-head finance-account-head">
@@ -87,21 +107,10 @@ export function AccountList({ book, minorUnit, initialFilters = {}, initialPagin
       </div>
     </Form>
     {page.error ? <LoadFailure message={page.error} onRetry={page.refresh} /> : <section className="table-panel">
-      <Table<LedgerAccount> rowKey="accountId" tableLayout="fixed" dataSource={page.data.items} loading={page.loading} scroll={{ x: 1320 }}
+      <Table<LedgerAccount> rowKey="accountId" tableLayout="fixed" dataSource={page.data.items} loading={page.loading} scroll={{ x: showBalances ? 1320 : 930 }}
         pagination={{ ...page.pagination, showTotal: total => `共 ${total} 条` }}
         onRow={row => onSelect ? { onClick: () => onSelect(row), className: 'clickable-row' } : {}}
-        locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={Object.keys(initialFilters).length ? '没有符合条件的账户' : '该账簿还没有账户'} /> }} columns={[
-          { title: '账户号', width: 220, render: (_, row) => <span className="mono">{row.accountNo}</span> },
-          { title: '科目', width: 250, render: (_, row) => <div><div className="finance-code">{row.accountCode}</div>
-            <div className="cell-meta">{row.accountName}</div></div> },
-          { title: '核算对象', width: 200, render: (_, row) => <div><div>{row.ownerType}</div><div className="cell-meta">{row.ownerId}</div></div> },
-          { title: '余额桶', dataIndex: 'balanceBucket', width: 110 },
-          { title: '方向', width: 70, render: (_, row) => <SideTag side={row.normalSide} /> },
-          { title: '状态', width: 80, render: (_, row) => <StatusTag status={row.accountStatus} labels={accountStatusLabels} /> },
-          { title: '借方合计', width: 140, align: 'right', render: (_, row) => amount(row.debitTotal) },
-          { title: '贷方合计', width: 140, align: 'right', render: (_, row) => amount(row.creditTotal) },
-          { title: '净余额', width: 160, align: 'right', render: (_, row) => amount(row.netBalance) },
-        ]} />
+        locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={Object.keys(initialFilters).length ? '没有符合条件的账户' : '该账簿还没有账户'} /> }} columns={columns} />
     </section>}
   </>;
 }
@@ -111,18 +120,25 @@ interface Props {
   minorUnits: ReadonlyMap<string, number>; onAuthorizationChanged: () => void;
 }
 
-/** 账簿与账户：上半账簿列表（选中高亮），下半所选账簿的统一账户；新建账户仅维护权限可见。 */
+const ledgerRoute = '/finance/ledger';
+
+/** 账簿与账户（开户维护）：上半账簿列表（选中高亮），下半所选账簿的总账账户，不显示余额，「查看流水」跳转账本查询；新建账户仅维护权限可见。 */
 export function SetupBooksTab({ canManage, reloadToken, entities, currencies, minorUnits, onAuthorizationChanged }: Props) {
   const [selected, setSelected] = useState<LedgerBook | null>(null);
   const [creating, setCreating] = useState(false); const [accountReload, setAccountReload] = useState(0);
+  const navigate = useNavigate();
+  // 跳到账本查询的流水层级；随历史状态带上账簿与账户，面包屑直接显示名称。
+  const openLines = (book: LedgerBook, account: LedgerAccount) => void navigate(
+    { pathname: ledgerRoute, search: `?book=${book.ledgerBookId}&account=${account.accountId}` }, { state: { book, account } });
   return <>
     <BookList entities={entities} currencies={currencies} selectedId={selected?.ledgerBookId} onSelect={setSelected} reloadToken={reloadToken} />
     {selected ? <section className="finance-section">
       <AccountList key={selected.ledgerBookId} book={selected} minorUnit={minorUnits.get(selected.currency)} reloadToken={accountReload}
-        onAuthorizationChanged={onAuthorizationChanged} heading={<h2>统一账户 · {bookTitle(selected, entities)}</h2>}
+        showBalances={false} rowAction={row => <Button type="link" size="small" onClick={() => openLines(selected, row)}>查看流水</Button>}
+        onAuthorizationChanged={onAuthorizationChanged} heading={<div className="finance-account-title"><h2>总账账户 · {bookTitle(selected, entities)}</h2><span className="cell-meta">Client / Partner 余额见「明细账查询」</span></div>}
         extra={canManage && <Button type="primary" className="finance-head-action" onClick={() => setCreating(true)}>新建账户</Button>} />
     </section> : <div className="finance-empty"><Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="选择一个账簿查看账户" /></div>}
-    <FinanceNote>账簿按主体 + 币种唯一，币种和科目表只能选 Finance 已启用项；账户只按核算对象开立（经营主体、财务主体、渠道账户、银行账户、税务机关），余额桶一律 NONE。Client / Partner 应付、保证金、追偿在总账是以账簿主体为核算对象的控制账户，明细与余额桶见「明细账查询」。净余额按正常方向计算，负数表示反向余额。</FinanceNote>
+    <FinanceNote>账簿按主体 + 币种唯一，币种和科目表只能选 Finance 已启用项；账户只按核算对象开立（经营主体、财务主体、渠道账户、银行账户、税务机关），余额桶一律 NONE。Client / Partner 应付、保证金、追偿在总账是以账簿主体为核算对象的控制账户，明细与余额桶见「明细账查询」。余额、流水与分录在「账本查询」查看。</FinanceNote>
     {creating && selected && <CreateAccountModal book={selected} entities={entities} onClose={() => setCreating(false)}
       onDone={() => { setCreating(false); setAccountReload(value => value + 1); }} onAuthorizationChanged={onAuthorizationChanged} />}
   </>;

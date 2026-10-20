@@ -14,6 +14,7 @@ import type { Channel, ChannelAccountSummary, ChannelMidSummary, ChannelSummary,
 import { AccountConfigurationModal } from '../channel/AccountConfigurationModal';
 import { ChangeList, ChannelNote, CommandModal, StatusChangeModal, StatusTag, Summary } from '../channel/ChannelParts';
 import { useChannelCommand } from '../channel/useChannelCommand';
+import { integrationRoute } from '../externalApi/externalApiModel';
 import '../configuration/configuration.css';
 import '../channel/channel.css';
 
@@ -123,6 +124,7 @@ function ChannelDetail({ channelId, resources, onAuthorizationChanged }: Props &
   const [changeTarget, setChangeTarget] = useState<{ type: 'CHANNEL' | 'CHANNEL_ACCOUNT'; id: string; label: string }>({ type: 'CHANNEL', id: channelId, label: '渠道' });
   const canManage = hasButton(resources, channelButtons.channelManage);
   const canConfigure = hasButton(resources, channelButtons.accountCredential);
+  const canViewIntegration = resources.some(resource => resource.componentKey === 'OPERATIONS_EXTERNAL_INTEGRATIONS');
   if (detail.loading && !detail.data) return <Loading />;
   if (detail.failure || !detail.data) return <QueryFailure failure={detail.failure} retry={detail.refresh} />;
   const channel = detail.data;
@@ -141,7 +143,10 @@ function ChannelDetail({ channelId, resources, onAuthorizationChanged }: Props &
       { label: '渠道编码', value: <span className="mono">{channel.channelCode}</span> },
       { label: '名称', value: channel.channelName },
       { label: '渠道 ID', value: <span className="mono">{channel.channelId}</span> },
-      { label: 'Platform 接入方', value: <span className="mono">{channel.channelCode}（激活时核对）</span> },
+      { label: 'Platform 接入方', value: canViewIntegration
+        ? <Button type="link" size="small" className="mono" onClick={() => void navigate(`${integrationRoute}/${encodeURIComponent(channel.channelCode)}`)}>
+          {channel.channelCode}（激活时核对）</Button>
+        : <span className="mono">{channel.channelCode}（激活时核对）</span> },
       { label: '创建', value: localTime(channel.createTime) },
       { label: '更新', value: localTime(channel.updateTime) },
     ]} />

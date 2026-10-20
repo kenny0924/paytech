@@ -43,24 +43,26 @@ function AgreementList({ resources, onAuthorizationChanged }: Props) {
       status: values.status, entityNo: values.entityNo?.toUpperCase(), localPartnerId: values.localPartnerId }));
   };
   return <div className="configuration-page commercial-page">
-    <div className="page-heading"><h1>合同</h1>{canManage && <Button type="primary" onClick={() => setCreating(true)}>新建合同</Button>}</div>
-    <Form form={form} name="commercial-agreement-filter" layout="vertical" onFinish={search}>
-      <div className="commercial-filters">
-        <Form.Item name="clientId" label="Client" rules={[{ pattern: idPattern, message: 'Client ID 是正十进制整数' }]}><ClientIdInput /></Form.Item>
-        <Form.Item name="agreementNo" label="合同号（前缀）" rules={[{ pattern: /^[A-Za-z0-9._-]{1,64}$/, message: '字母数字及 . _ -' }]}>
-          <Input allowClear maxLength={64} placeholder="AGR-AE001" /></Form.Item>
-        <Form.Item name="agreementType" label="类型"><Select allowClear options={agreementTypes.map(value => ({ value, label: agreementTypeLabels[value] }))} /></Form.Item>
-        <Form.Item name="status" label="状态"><Select mode="multiple" allowClear maxTagCount="responsive"
-          options={agreementStatuses.map(value => ({ value, label: agreementStatusLabels[value] }))} /></Form.Item>
-        <Form.Item name="entityNo" label="OE" rules={[{ pattern: entityNoPattern, message: '如 AE001' }]} normalize={(v?: string) => v?.toUpperCase()}>
-          <Input allowClear maxLength={5} placeholder="AE001" /></Form.Item>
-        <Form.Item name="localPartnerId" label="Local Partner" rules={[{ pattern: idPattern, message: '正十进制整数' }]}><Input allowClear maxLength={19} /></Form.Item>
-        <div className="commercial-filter-actions">
-          <Button type="primary" htmlType="submit">查询</Button>
-          <Button onClick={() => { form.resetFields(); page.applyFilters({}); }}>重置</Button>
+    <div className="page-heading"><h1>合同</h1></div>
+    <div className="commercial-toolbar">
+      <Form form={form} name="commercial-agreement-filter" layout="vertical" onFinish={search}>
+        <div className="commercial-filters">
+          <Form.Item name="clientId" label="Client" rules={[{ pattern: idPattern, message: 'Client ID 是正十进制整数' }]}><ClientIdInput /></Form.Item>
+          <Form.Item name="agreementNo" label="合同号（前缀）" rules={[{ pattern: /^[A-Za-z0-9._-]{1,64}$/, message: '字母数字及 . _ -' }]}>
+            <Input allowClear maxLength={64} placeholder="AGR-AE001" /></Form.Item>
+          <Form.Item name="agreementType" label="类型"><Select allowClear options={agreementTypes.map(value => ({ value, label: agreementTypeLabels[value] }))} /></Form.Item>
+          <Form.Item name="status" label="状态"><Select mode="multiple" allowClear maxTagCount="responsive"
+            options={agreementStatuses.map(value => ({ value, label: agreementStatusLabels[value] }))} /></Form.Item>
+          <Form.Item name="entityNo" label="OE" rules={[{ pattern: entityNoPattern, message: '如 AE001' }]} normalize={(v?: string) => v?.toUpperCase()}>
+            <Input allowClear maxLength={5} placeholder="AE001" /></Form.Item>
+          <Form.Item name="localPartnerId" label="Local Partner" rules={[{ pattern: idPattern, message: '正十进制整数' }]}><Input allowClear maxLength={19} /></Form.Item>
+          <div className="commercial-filter-actions">
+            <Button type="primary" htmlType="submit">查询</Button>
+            <Button onClick={() => { form.resetFields(); page.applyFilters({}); }}>重置</Button>
+          </div>
         </div>
-      </div>
-    </Form>
+      </Form>
+      {canManage && <Button type="primary" onClick={() => setCreating(true)}>新建合同</Button>}</div>
     {page.failure ? <QueryFailure failure={page.failure} retry={page.refresh} /> : <section className="table-panel">
       <Table<AgreementListItem> rowKey="agreementId" size="middle" loading={page.loading} dataSource={page.data.items} pagination={page.pagination}
         scroll={{ x: 1180 }} onRow={row => ({ className: 'clickable-row', onClick: () => void navigate(commercialRoutes.agreement(row.agreementId)) })}
