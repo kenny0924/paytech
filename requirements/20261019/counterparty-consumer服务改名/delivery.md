@@ -17,6 +17,7 @@
 
 | 日期 | 阶段 | 用户原意 | 获准的下一步 |
 |---|---|---|---|
+| 2026-10-20 | 8 后清理 | "先不推送吧，可以直接删除了" | 删除旧库、旧账号、旧容器与旧 XXL 登记（见下"旧资源清理"）；不推送 |
 | 2026-10-19 | 1–7 | "我准备睡觉了，等下你可以帮我把这个需求做完发到test环境吗？注意别的chat别冲突了。"：授权本需求阶段 1–7 连续推进（本机迁库、mor-test 部署与迁库），不推送；按惯例完成后本地提交（私有 index，不推送） | 阶段 2–3 合并设计 → 阶段 4–5 agent 在 worktree `Code-MoR-counterparty`（分支 `feature/counterparty-rename`）实现与本机验证 → 门禁合入 → 阶段 6–7 mor-test |
 | 2026-10-19 | 立项前讨论 | "可以，counterparty 吧"；Q1–Q3、Q5、Q6"可以"（按建议） | 登记决定记录与本需求，交付阶段 1 评审稿 |
 
@@ -35,8 +36,13 @@
 - **本机：** `mor_counterparty` 与 `counterparty_app` 已建（agent 执行），两表 0 = 0；`paytech-counterparty-app` 本机启动 UP，`/counterparty/v1/customers/resolve` 建或取幂等，旧前缀 404，冒烟行已删除。本机 RabbitMQ 容器曾被强杀（137），2026-10-20 06:45 用 `docker start` 原样拉起。
 - **mor-test：** 见 [release/release.md](./release/release.md)。
 
+## 旧资源清理（2026-10-20）
+
+- **mor-test：** 删除已停止的 `mor-test-consumer-service-1` 容器与镜像 `mor-test/consumer-service:development`（`sha256:ea962e94…`）；`DROP DATABASE mor_consumer`、`DROP USER consumer_app`；XXL 删除 job 8 及其日志、group 8 与 `consumer-service` 注册行；`.env.test` 删除 `MOR_CONSUMER_DB_PASSWORD`，`compose.sh config --quiet` 通过。删除前 `mor_consumer` 两表均 0 行，备份在 `~/Code-MoR-backups/20261020T031956Z-counterparty-test/`。
+- **本机：** 备份后 `DROP DATABASE mor_consumer`（0 行）与 `consumer_app`；本机全链路验收工具 `requirements/20261017/…/verification/local-e2e/run-service.sh` 与 `sql/00-e2e-databases.sql` 改为 counterparty（模块已改名，原样会启动失败），新建空库 `mor_counterparty_v2e2e` 并授权 `counterparty_app`，删除空的 `mor_consumer_v2e2e`。
+- 回退能力随之取消：如需回到 consumer，只能从备份恢复库并回退代码与镜像。
+
 ## 遗留项
 
-- 旧库 `mor_consumer` / `consumer_app`（本机、mor-test）、mor-test 已停止的 `consumer-service` 容器、XXL group 8 / job 8（已停用）：删除时机另行确认。
-- 推送：未授权，未执行。
+- 推送：用户 2026-10-20 决定先不推送。
 - 切片 2（档案与保护、资料提交入口改到 counterparty）与 Gateway Route 另行登记需求。

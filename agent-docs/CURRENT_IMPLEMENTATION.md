@@ -18,7 +18,8 @@
 - **Implemented（已本地提交，未推送）：** main `c661e9fc`（146 个文件：counterparty 模块、acquiring 与 card 调用方、arch-rules、instance-manifest、PDManer 生成器与测试、local-environment、test-environment、现行验收脚本 `e2e_http.py`）。
 - **Verified：** acquiring 804、counterparty 21、card-test 38、card-core 11、arch-rules 61、instance-manifest 16 全部通过，与改名前基线一致；全 Reactor `test-compile` 通过；未跑全 Reactor 测试（避免清空并行会话的本机测试库）。本机 `mor_counterparty` 已建并冒烟。
 - **Deployed（mor-test，2026-10-20 03:19Z—03:24Z）：** counterparty-service `sha256:c7143680…`、acquiring-service `sha256:03729ba8…`、card-service `sha256:68d67684…`（tag `counterparty-20261020`）；`mor_consumer` → `mor_counterparty`（0 行，旧库保留）；XXL group 15 / job 18 启用、consumer job 8 停用。私网冒烟与 acquiring 建单关联 Customer 通过，见[发布记录](<../requirements/20261019/counterparty-consumer服务改名/release/release.md>)。
-- **Pending：** 推送；删除 `mor_consumer`、旧容器与 XXL group 8 / job 8；切片 2（Customer 档案、资料原值只进 counterparty）与 Gateway Route 未开始。
+- **清理（2026-10-20）：** mor-test 与本机已删除 `mor_consumer` / `consumer_app`、旧 consumer-service 容器与镜像、XXL group 8 / job 8；本机全链路工具 `run-service.sh` 改用 counterparty 与 `mor_counterparty_v2e2e`。
+- **Pending：** 推送（用户决定暂不推送）；切片 2（Customer 档案、资料原值只进 counterparty）与 Gateway Route 未开始。
 
 <a id="ledger-chart-hierarchy-20261020"></a>
 ## ledger 会计科目分级与可读账户号（2026-10-20，已部署 mor-test，已本地提交，未推送）

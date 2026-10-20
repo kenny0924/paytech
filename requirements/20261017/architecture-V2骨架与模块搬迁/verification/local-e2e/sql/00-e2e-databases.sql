@@ -9,7 +9,7 @@ CREATE DATABASE IF NOT EXISTS mor_commercial_v2e2e CHARACTER SET utf8mb4 COLLATE
 CREATE DATABASE IF NOT EXISTS mor_compliance_v2e2e CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 CREATE DATABASE IF NOT EXISTS mor_risk_decision_v2e2e CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 CREATE DATABASE IF NOT EXISTS mor_acquiring_v2e2e CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
-CREATE DATABASE IF NOT EXISTS mor_consumer_v2e2e CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+CREATE DATABASE IF NOT EXISTS mor_counterparty_v2e2e CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 CREATE DATABASE IF NOT EXISTS mor_payment_v2e2e CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 CREATE DATABASE IF NOT EXISTS mor_card_v2e2e CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 CREATE DATABASE IF NOT EXISTS mor_channel_connector_v2e2e CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
@@ -25,7 +25,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON mor_commercial_v2e2e.* TO 'commercial_ap
 GRANT SELECT, INSERT, UPDATE, DELETE ON mor_compliance_v2e2e.* TO 'compliance_app'@'%';
 GRANT SELECT, INSERT, UPDATE, DELETE ON mor_risk_decision_v2e2e.* TO 'risk_decision_app'@'%';
 GRANT SELECT, INSERT, UPDATE, DELETE ON mor_acquiring_v2e2e.* TO 'acquiring_app'@'%';
-GRANT SELECT, INSERT, UPDATE, DELETE ON mor_consumer_v2e2e.* TO 'consumer_app'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE ON mor_counterparty_v2e2e.* TO 'counterparty_app'@'%';
 GRANT SELECT, INSERT, UPDATE, DELETE ON mor_payment_v2e2e.* TO 'payment_app'@'%';
 GRANT SELECT, INSERT, UPDATE, DELETE ON mor_card_v2e2e.* TO 'card_app'@'%';
 GRANT SELECT, INSERT, UPDATE, DELETE ON mor_channel_connector_v2e2e.* TO 'channel_connector_app'@'%';

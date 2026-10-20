@@ -7,7 +7,7 @@
 #   run-service.sh check                        启动前检查：端口空闲、库存在且账号可登录、vhost 存在、Vault 规则、Nacos 无同名实例
 #   run-service.sh jars                         把 paytech/*/paytech-*-app/target/*-exec.jar 复制到运行目录（之后源码重建不影响运行中的进程）
 #
-# 服务名：platform client-master commercial compliance risk-decision consumer card channel-connector payment acquiring
+# 服务名：platform client-master commercial compliance risk-decision counterparty card channel-connector payment acquiring
 #         billing ledger account reconciliation tax client-bff ops-bff gateway data-service(不在 all 内，依赖 Doris)
 #         payermax-mock nginx client-web ops-web vault(只查状态：沿用 local-environment 的 Vault 容器，不另起)
 #
@@ -52,7 +52,7 @@ CLIENT_ISSUER="https://customer-auth.local.test"
 OPERATIONS_ISSUER="https://platform-support.local.test"
 PAYERMAX_MOCK_PORT="${E2E_PAYERMAX_MOCK_PORT:-18190}"
 
-JAVA_SERVICES=(platform client-master commercial compliance risk-decision consumer card channel-connector payment acquiring
+JAVA_SERVICES=(platform client-master commercial compliance risk-decision counterparty card channel-connector payment acquiring
   billing ledger account reconciliation tax client-bff ops-bff gateway)
 ALL=("${JAVA_SERVICES[@]}" payermax-mock nginx)
 
@@ -66,7 +66,7 @@ module_of() {
 port_of() {
   case "$1" in
     client-master) echo 18101 ;; acquiring) echo 18102 ;; payment) echo 18103 ;; risk-decision) echo 18104 ;;
-    ledger) echo 18105 ;; platform) echo 18106 ;; vault) echo 18107 ;; commercial) echo 18108 ;; consumer) echo 18109 ;;
+    ledger) echo 18105 ;; platform) echo 18106 ;; vault) echo 18107 ;; commercial) echo 18108 ;; counterparty) echo 18109 ;;
     channel-connector) echo 18110 ;; card) echo 18111 ;; compliance) echo 18112 ;; billing) echo 18113 ;;
     account) echo 18114 ;; reconciliation) echo 18115 ;; tax) echo 18116 ;; data-service) echo 18120 ;;
     gateway) echo 18080 ;; ops-bff) echo 18201 ;; client-bff) echo 18202 ;; payermax-mock) echo "$PAYERMAX_MOCK_PORT" ;;
@@ -99,7 +99,7 @@ COMMON=(--server.address=127.0.0.1 "--spring.data.redis.database=$REDIS_DB"
 export PAYTECH_INSTANCE_ID=local-e2e
 # 一致性修正：internal-auth 全部 OFF（本步不验证 D26 切换）；带 *_INTERNAL_AUTH_MODE 键的服务显式设置，其余在 application.yml 固定 "OFF"。
 export ACQUIRING_INTERNAL_AUTH_MODE=OFF CARD_INTERNAL_AUTH_MODE=OFF CHANNEL_CONNECTOR_INTERNAL_AUTH_MODE=OFF \
-  COMPLIANCE_INTERNAL_AUTH_MODE=OFF CONSUMER_INTERNAL_AUTH_MODE=OFF PAYMENT_INTERNAL_AUTH_MODE=OFF \
+  COMPLIANCE_INTERNAL_AUTH_MODE=OFF COUNTERPARTY_INTERNAL_AUTH_MODE=OFF PAYMENT_INTERNAL_AUTH_MODE=OFF \
   PLATFORM_SUPPORT_INTERNAL_AUTH_MODE=OFF RISK_DECISION_INTERNAL_AUTH_MODE=OFF
 # RabbitMQ 账号经 Spring 通用键注入（各服务自有前缀键默认值为空，二者都设）
 export SPRING_RABBITMQ_USERNAME="$MOR_RABBITMQ_USER" SPRING_RABBITMQ_PASSWORD="$MOR_RABBITMQ_PASSWORD"
@@ -189,11 +189,11 @@ start_one() {
       RISK_DB_PASSWORD="$(db_password MOR_RISK_DECISION_DB_PASSWORD risk-decision)" RISK_REDIS_PASSWORD="$MOR_REDIS_PASSWORD" \
       RISK_SNOWFLAKE_REGION_ID=0 RISK_SNOWFLAKE_WORKER_ID=4 RISK_DECISION_ENVIRONMENT=TEST \
         java_app risk-decision "${NACOS[@]}" --compensation.instance-id=risk-decision-local-e2e ;;
-    consumer)
-      MOR_CONSUMER_DB_URL="$(db_url consumer)" MOR_CONSUMER_DB_USERNAME=consumer_app \
-      MOR_CONSUMER_DB_PASSWORD="$(db_password MOR_CONSUMER_DB_PASSWORD consumer)" \
-      CONSUMER_SNOWFLAKE_REGION_ID=0 CONSUMER_SNOWFLAKE_WORKER_ID=10 \
-        java_app consumer "${NACOS[@]}" ;;
+    counterparty)
+      MOR_COUNTERPARTY_DB_URL="$(db_url counterparty)" MOR_COUNTERPARTY_DB_USERNAME=counterparty_app \
+      MOR_COUNTERPARTY_DB_PASSWORD="$(db_password MOR_COUNTERPARTY_DB_PASSWORD counterparty)" \
+      COUNTERPARTY_SNOWFLAKE_REGION_ID=0 COUNTERPARTY_SNOWFLAKE_WORKER_ID=10 \
+        java_app counterparty "${NACOS[@]}" ;;
     card)
       [[ -f "$RUNTIME/card-fingerprint.key" ]] || (umask 077; /opt/homebrew/bin/openssl rand -base64 32 > "$RUNTIME/card-fingerprint.key")
       MOR_CARD_DB_URL="$(db_url card)" MOR_CARD_DB_USERNAME=card_app MOR_CARD_DB_PASSWORD="$(db_password MOR_CARD_DB_PASSWORD card)" \
@@ -380,7 +380,7 @@ check() {
   check_db payment_app "$MOR_PAYMENT_DB_PASSWORD" payment || bad=1
   for pair in client-master:client_master_app:MOR_CLIENT_MASTER_DB_PASSWORD commercial:commercial_app:MOR_COMMERCIAL_DB_PASSWORD \
       compliance:compliance_app:MOR_COMPLIANCE_DB_PASSWORD risk-decision:risk_decision_app:MOR_RISK_DECISION_DB_PASSWORD \
-      acquiring:acquiring_app:MOR_ACQUIRING_DB_PASSWORD consumer:consumer_app:MOR_CONSUMER_DB_PASSWORD card:card_app:MOR_CARD_DB_PASSWORD \
+      acquiring:acquiring_app:MOR_ACQUIRING_DB_PASSWORD counterparty:counterparty_app:MOR_COUNTERPARTY_DB_PASSWORD card:card_app:MOR_CARD_DB_PASSWORD \
       channel-connector:channel_connector_app:MOR_CHANNEL_CONNECTOR_DB_PASSWORD billing:billing_app:MOR_BILLING_DB_PASSWORD \
       ledger:ledger_app:MOR_LEDGER_DB_PASSWORD account:account_app:MOR_ACCOUNT_DB_PASSWORD \
       reconciliation:reconciliation_app:MOR_RECONCILIATION_DB_PASSWORD tax:tax_app:MOR_TAX_DB_PASSWORD; do

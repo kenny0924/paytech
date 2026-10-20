@@ -53,4 +53,4 @@ JAR 核对：acquiring 打包 `paytech-counterparty-api`，`application.yml` 为
 
 ## 5. 遗留
 
-- `mor-test-consumer-service-1` 容器保持停止未删除（回退用），`mor_consumer` / `consumer_app` 与 XXL group 8 / job 8（已停用）保留；删除时机另行确认。合入 main 后该容器在 Compose 中成为孤儿，`compose up` 可能提示 orphan，可忽略或带 `--remove-orphans` 时注意它会被删除。
+- 2026-10-20 用户确认后已删除旧容器、旧镜像、`mor_consumer` / `consumer_app`、XXL group 8 / job 8，见 [delivery.md](../delivery.md)"旧资源清理"。第 4 节"启动旧 consumer-service"的回退路径随之失效。
