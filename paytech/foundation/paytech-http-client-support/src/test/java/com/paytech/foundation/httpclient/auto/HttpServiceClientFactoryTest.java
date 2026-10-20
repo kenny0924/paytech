@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -61,6 +62,7 @@ public class HttpServiceClientFactoryTest {
 
     private static final String PRIVATE_DETAIL = "private-password-must-not-leak";
     private static final String REQUEST_ID = "upstream-request-01";
+    private static final String OWNER_DETAIL = "审批人不能是提交人: 7319000000000000101";
 
     private HttpServiceSimulator simulator;
     private ResourceApi api;
@@ -904,6 +906,127 @@ public class HttpServiceClientFactoryTest {
     void test_defaultMethodIsNotTreatedAsRemoteEmptyBody() {
         assertNull(api.localDefault());
         assertEquals(0, simulator.requests().size());
+    }
+
+    /** 未开启 Owner detail 时，公共类别与合同 Code 仍只使用本地默认消息，远端 detail 不外显。 */
+    @ParameterizedTest
+    @MethodSource("ownerDetailCategories")
+    void test_ownerProblemDetailIsNotExposedByDefault(int status, CodeMessageEnum code) {
+        respondProblem(status, problem(status, code.getCode(), OWNER_DETAIL));
+
+        FailException failure = assertThrows(FailException.class, api::read);
+
+        assertEquals(code.getCode(), failure.getCode());
+        assertEquals(code.getMessage(), failure.getMessage());
+    }
+
+    /** 显式开启后，业务检查、并发冲突、NOT_FOUND 与已登记合同 Code 以 Owner detail 为消息，类型、Code 与 Cause 不变。 */
+    @ParameterizedTest
+    @MethodSource("ownerDetailCategories")
+    void test_ownerProblemDetailEnabledUsesValidatedDetail(int status, CodeMessageEnum code) {
+        String body = problem(status, code.getCode(), OWNER_DETAIL);
+        respondProblem(status, body);
+        FailException defaultFailure = assertThrows(FailException.class, api::read);
+        respondProblem(status, body);
+
+        FailException failure = assertThrows(FailException.class, ownerDetailApi()::read);
+
+        assertEquals(defaultFailure.getClass(), failure.getClass());
+        assertEquals(code.getCode(), failure.getCode());
+        assertEquals(OWNER_DETAIL, failure.getMessage());
+        RestClientResponseException cause = assertInstanceOf(RestClientResponseException.class, failure.getCause());
+        assertEquals(body, cause.getResponseBodyAsString());
+    }
+
+    static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> ownerDetailCategories() {
+        return java.util.stream.Stream.of(
+            org.junit.jupiter.params.provider.Arguments.of(400, CommonErrorCode.BUSINESS_CHECK_FAILED),
+            org.junit.jupiter.params.provider.Arguments.of(409, CommonErrorCode.CONCURRENT_REQUEST),
+            org.junit.jupiter.params.provider.Arguments.of(404, CommonErrorCode.NOT_FOUND),
+            org.junit.jupiter.params.provider.Arguments.of(422, ContractError.SESSION_EXPIRED));
+    }
+
+    /** 开启后 INVALID_REQUEST、字段校验失败与 5xx 仍保持原分类和默认消息。 */
+    @Test
+    void test_ownerProblemDetailKeepsInvalidRequestFieldErrorsAndServerErrorsUnchanged() {
+        ResourceApi enabled = ownerDetailApi();
+        respondProblem(400, problem(400, CommonErrorCode.INVALID_REQUEST.getCode(), OWNER_DETAIL));
+        assertEquals(CommonErrorCode.INVALID_REQUEST.getMessage(),
+            assertThrows(InvalidParameterException.class, enabled::read).getMessage());
+
+        var bodyApi = HttpServiceClientFactory.create(client(Duration.ofSeconds(2)),
+            HttpServiceClientOptions.strict().withRequestValidationFailures().withOwnerProblemDetail(),
+            ContractError.values()).createClient(ValidationApi.class);
+        respondProblem(422, problem(422, CommonErrorCode.VALIDATION_ERROR.getCode(), OWNER_DETAIL));
+        assertEquals(CommonErrorCode.VALIDATION_ERROR.getMessage(),
+            assertThrows(HttpRequestValidationException.class, () -> bodyApi.save(new ValidationBody("a"))).getMessage());
+        respondProblem(422, problem(422, ContractError.SESSION_EXPIRED.getCode(), OWNER_DETAIL));
+        assertEquals(ContractError.SESSION_EXPIRED.getMessage(), assertThrows(RequestBodyValidationException.class,
+            () -> bodyApi.save(new ValidationBody("a"))).getMessage());
+
+        respondProblem(503, problem(503, CommonErrorCode.SERVICE_UNAVAILABLE.getCode(), OWNER_DETAIL));
+        ServiceUnavailableException unavailable = assertThrows(ServiceUnavailableException.class, enabled::read);
+        assertFalse(String.valueOf(unavailable.getMessage()).contains(OWNER_DETAIL));
+    }
+
+    /** 旧四字段错误体没有经过严格 Problem 校验，开启后也不外显其 message。 */
+    @Test
+    void test_ownerProblemDetailIgnoresLegacyErrorResponse() {
+        ResourceApi enabled = HttpServiceClientFactory.create(client(Duration.ofSeconds(2)),
+            HttpServiceClientOptions.migrationWithLegacyErrorResponse().withOwnerProblemDetail(), ContractError.values())
+            .createClient(ResourceApi.class);
+        simulator.respond(400, legacy(CommonErrorCode.BUSINESS_CHECK_FAILED.getCode()), "application/json");
+
+        BizCheckFailException failure = assertThrows(BizCheckFailException.class, enabled::read);
+
+        assertEquals(CommonErrorCode.BUSINESS_CHECK_FAILED.getMessage(), failure.getMessage());
+    }
+
+    /** 512 个码点以内（含补充平面字符）原样外显；超长或含控制字符回退公共默认消息。 */
+    @Test
+    void test_ownerProblemDetailFallsBackWhenTooLongOrContainsControlCharacters() {
+        ResourceApi enabled = ownerDetailApi();
+        String supplementary = new String(Character.toChars(0x20000));
+        for (String accepted : List.of("审".repeat(512), supplementary.repeat(512))) {
+            respondProblem(400, problem(400, CommonErrorCode.BUSINESS_CHECK_FAILED.getCode(), accepted));
+            assertEquals(accepted, assertThrows(BizCheckFailException.class, enabled::read).getMessage());
+        }
+        for (String rejected : List.of("审".repeat(513), "拒绝\\n原因", "拒绝\\u0007原因", "拒绝\\u0085原因",
+            "拒绝\\t原因")) {
+            respondProblem(409, problem(409, CommonErrorCode.CONCURRENT_REQUEST.getCode(), rejected));
+            assertEquals(CommonErrorCode.CONCURRENT_REQUEST.getMessage(),
+                assertThrows(ConcurrentRequestException.class, enabled::read).getMessage());
+            respondProblem(404, problem(404, CommonErrorCode.NOT_FOUND.getCode(), rejected));
+            assertEquals(CommonErrorCode.NOT_FOUND.getMessage(), assertThrows(FailException.class, enabled::read).getMessage());
+        }
+    }
+
+    /** HTTP Service Group 入口同样按选项安装开关。 */
+    @Test
+    void test_ownerProblemDetailAppliesToHttpServiceGroups() {
+        try (var context = new org.springframework.context.annotation.AnnotationConfigApplicationContext()) {
+            context.registerBean("transport", org.springframework.web.client.support.RestClientHttpServiceGroupConfigurer.class,
+                () -> groups -> groups.forEachClient((group, builder) -> builder.baseUrl(simulator.baseUrl())));
+            context.registerBean("errors", org.springframework.web.client.support.RestClientHttpServiceGroupConfigurer.class,
+                () -> HttpServiceClientFactory.configureGroup("resource-service",
+                    HttpServiceClientOptions.strict().withOwnerProblemDetail(), ContractError.values()));
+            context.register(ImportedResourceConfiguration.class);
+            context.refresh();
+            var imported = context.getBean(ResourceApi.class);
+            respondProblem(400, problem(400, CommonErrorCode.BUSINESS_CHECK_FAILED.getCode(), OWNER_DETAIL));
+
+            assertEquals(OWNER_DETAIL, assertThrows(BizCheckFailException.class, imported::read).getMessage());
+        }
+    }
+
+    private ResourceApi ownerDetailApi() {
+        return HttpServiceClientFactory.create(client(Duration.ofSeconds(2)),
+            HttpServiceClientOptions.strict().withOwnerProblemDetail(), ContractError.values())
+            .createClient(ResourceApi.class);
+    }
+
+    private String problem(int status, String code, String jsonEscapedDetail) {
+        return problem(status, code).replace("safe-detail", jsonEscapedDetail);
     }
 
     private void respondProblem(int status, String body) {

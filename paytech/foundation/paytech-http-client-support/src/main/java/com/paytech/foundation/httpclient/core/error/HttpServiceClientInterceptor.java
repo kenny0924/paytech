@@ -39,9 +39,13 @@ import com.paytech.foundation.httpproblem.api.RequestBodyValidationException;
  */
 public final class HttpServiceClientInterceptor implements MethodInterceptor {
 
+    /** 外显 Owner detail 的字符上限（按 Unicode 码点计），超出视为不适合直接展示而回退默认消息。 */
+    static final int MAX_OWNER_DETAIL_LENGTH = 512;
+
     private final Map<String, CodeMessageEnum> contractErrors;
     private final boolean legacyErrorResponseEnabled;
     private final boolean requestValidationFailuresEnabled;
+    private final boolean ownerProblemDetailEnabled;
     private final DependencyFailureMapper dependencyFailureMapper;
     private final HttpProblemDecoder problemDecoder = new HttpProblemDecoder();
 
@@ -53,7 +57,15 @@ public final class HttpServiceClientInterceptor implements MethodInterceptor {
     /** 保留旧构造入口，字段校验失败必须由调用方显式接入。 */
     public HttpServiceClientInterceptor(CodeMessageEnum[] contractErrors, boolean legacyErrorResponseEnabled,
         DependencyFailureMapper dependencyFailureMapper, boolean requestValidationFailuresEnabled) {
+        this(contractErrors, legacyErrorResponseEnabled, dependencyFailureMapper, requestValidationFailuresEnabled, false);
+    }
+
+    /** Owner Problem detail 外显同样必须由调用方显式开启，见 HttpServiceClientOptions#withOwnerProblemDetail。 */
+    public HttpServiceClientInterceptor(CodeMessageEnum[] contractErrors, boolean legacyErrorResponseEnabled,
+        DependencyFailureMapper dependencyFailureMapper, boolean requestValidationFailuresEnabled,
+        boolean ownerProblemDetailEnabled) {
         this.requestValidationFailuresEnabled = requestValidationFailuresEnabled;
+        this.ownerProblemDetailEnabled = ownerProblemDetailEnabled;
         Objects.requireNonNull(contractErrors, "contractErrors must not be null");
         this.legacyErrorResponseEnabled = legacyErrorResponseEnabled;
         this.dependencyFailureMapper = Objects.requireNonNull(dependencyFailureMapper,
@@ -165,22 +177,24 @@ public final class HttpServiceClientInterceptor implements MethodInterceptor {
     /**
      * 合规 4xx 只把公共类别和显式注册的合同 Code 保留为本地明确失败，其余视为上游协议错误。
      * 显式启用字段校验失败、请求带 Body 时，合同 Code 携带的 errors[] 随 {@link RequestBodyValidationException}
-     * 保留，使消费方 MVC 边界继续输出同一字段清单；远端 detail 仍不外显，使用合同默认消息。
+     * 保留，使消费方 MVC 边界继续输出同一字段清单，消息仍为合同默认消息。
+     * 默认不外显远端 detail；显式开启 Owner detail 后，业务检查、并发冲突、NOT_FOUND 与普通合同 Code 改用已校验的远端 detail，
+     * INVALID_REQUEST 与字段校验失败保持默认消息（字段问题由 errors 投影表达）。
      */
     private RuntimeException classifyClientCode(HttpProblemDecoder.DecodedProblem decoded, boolean requestBody,
         RestClientResponseException failure) {
         String code = decoded.code();
         if (CommonErrorCode.BUSINESS_CHECK_FAILED.getCode().equals(code)) {
-            return new BizCheckFailException(CommonErrorCode.BUSINESS_CHECK_FAILED.getMessage(), failure);
+            return new BizCheckFailException(messageOrDefault(decoded, CommonErrorCode.BUSINESS_CHECK_FAILED), failure);
         }
         if (CommonErrorCode.INVALID_REQUEST.getCode().equals(code)) {
             return new InvalidParameterException(CommonErrorCode.INVALID_REQUEST.getMessage(), failure);
         }
         if (CommonErrorCode.CONCURRENT_REQUEST.getCode().equals(code)) {
-            return new ConcurrentRequestException(CommonErrorCode.CONCURRENT_REQUEST.getMessage(), failure);
+            return new ConcurrentRequestException(messageOrDefault(decoded, CommonErrorCode.CONCURRENT_REQUEST), failure);
         }
         if (CommonErrorCode.NOT_FOUND.getCode().equals(code) && failure.getStatusCode().value() == 404) {
-            return new FailException(CommonErrorCode.NOT_FOUND, null, failure);
+            return new FailException(CommonErrorCode.NOT_FOUND, ownerDetail(decoded), failure);
         }
         CodeMessageEnum contractError = contractErrors.get(code);
         if (contractError == null) {
@@ -189,7 +203,24 @@ public final class HttpServiceClientInterceptor implements MethodInterceptor {
         if (requestValidationFailuresEnabled && requestBody && decoded.strictProfile() && !decoded.errors().isEmpty()) {
             return new RequestBodyValidationException(contractError, decoded.errors(), failure);
         }
-        return new FailException(contractError, null, failure);
+        return new FailException(contractError, ownerDetail(decoded), failure);
+    }
+
+    private String messageOrDefault(HttpProblemDecoder.DecodedProblem decoded, CodeMessageEnum fallback) {
+        String detail = ownerDetail(decoded);
+        return detail != null ? detail : fallback.getMessage();
+    }
+
+    /** 显式开启且为严格 Problem 时返回可外显的远端 detail；空白、超长或含控制字符返回 null，由调用处回退默认消息。 */
+    private String ownerDetail(HttpProblemDecoder.DecodedProblem decoded) {
+        if (!ownerProblemDetailEnabled || !decoded.strictProfile()) {
+            return null;
+        }
+        String detail = decoded.detail();
+        if (!hasText(detail) || detail.codePointCount(0, detail.length()) > MAX_OWNER_DETAIL_LENGTH) {
+            return null;
+        }
+        return detail.codePoints().anyMatch(Character::isISOControl) ? null : detail;
     }
 
     /** 公共字段错误只对应显式 Body；GET/DELETE 等无 Body 请求保持协议错误处理。 */

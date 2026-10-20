@@ -27,7 +27,7 @@ public final class CommercialOwnerSimulator implements AutoCloseable {
     /** Owner Problem 的 Request ID，浏览器响应不得出现。 */
     public static final String OWNER_REQUEST_ID = "commercial-owner-request";
 
-    /** Owner Problem 的 detail：公共业务拒绝与合同错误码透传给浏览器（F9），字段校验、5xx 与协议错误不得出现。 */
+    /** Owner Problem 的 detail：公共业务拒绝、NOT_FOUND 与合同错误码经 Foundation Owner detail 开关到达浏览器（F9），字段校验、5xx 与协议错误不得出现。 */
     public static final String OWNER_DETAIL_CANARY = "COMMERCIAL-OWNER-DETAIL-CANARY";
 
     /** 一次 Owner 调用。 */

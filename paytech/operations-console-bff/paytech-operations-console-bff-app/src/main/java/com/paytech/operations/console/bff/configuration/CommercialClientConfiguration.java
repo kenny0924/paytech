@@ -34,7 +34,8 @@ import org.slf4j.MDC;
  * <li>严格 Problem 解码并保留 Owner 422 字段路径；合同、画像、条款与费率卡只使用公共错误码（BUSINESS_CHECK_FAILED、
  * CONCURRENT_REQUEST、NOT_FOUND）；价格命中另用一个工厂登记 CommercialPriceErrorCode（422 / 409 的命中失败原因）。
  * 超时映射 504，不可达或 503 映射 DEPENDENCY_UNAVAILABLE。</li>
- * <li>每个代理外层包装 CommercialOwnerProblemDetail：业务拒绝把 Owner Problem 的 detail 作为浏览器 Problem 的 detail（F9）。</li>
+ * <li>两个工厂都显式开启 Foundation 的 Owner Problem detail：业务拒绝、版本冲突、NOT_FOUND 与价格命中合同码把 commercial 已校验的
+ * detail 作为本地异常消息，BFF 的 MVC 边界据此输出 Owner 原因（F9）；INVALID_REQUEST、字段校验、5xx 与协议错误不变。</li>
  * <li>工厂不注册为 Bean，避免被其他 Owner 代理按类型误用。</li>
  *
  * @author Claude
@@ -61,41 +62,37 @@ public class CommercialClientConfiguration {
     /** 合同、签署、订阅与开通项。 */
     @Bean
     AgreementApi commercialAgreementApi() {
-        return CommercialOwnerProblemDetail.wrap(AgreementApi.class, commercial.createClient(AgreementApi.class));
+        return commercial.createClient(AgreementApi.class);
     }
 
     /** 定价画像。 */
     @Bean
     PricingProfileApi commercialPricingProfileApi() {
-        return CommercialOwnerProblemDetail.wrap(PricingProfileApi.class,
-            commercial.createClient(PricingProfileApi.class));
+        return commercial.createClient(PricingProfileApi.class);
     }
 
     /** 条款方案与版本的写入和版本详情读取；操作人走 X-Gateway-Actor-Subject 请求头。 */
     @Bean
     CommercialTermApi commercialTermApi() {
-        return CommercialOwnerProblemDetail.wrap(CommercialTermApi.class,
-            commercial.createClient(CommercialTermApi.class));
+        return commercial.createClient(CommercialTermApi.class);
     }
 
     /** 固定版本价格全集。 */
     @Bean
     CommercialTermVersionPriceApi commercialTermVersionPriceApi() {
-        return CommercialOwnerProblemDetail.wrap(CommercialTermVersionPriceApi.class,
-            commercial.createClient(CommercialTermVersionPriceApi.class));
+        return commercial.createClient(CommercialTermVersionPriceApi.class);
     }
 
     /** 费率卡（合同详情页的当前 / 已排期版本）。 */
     @Bean
     RateCardApi commercialRateCardApi() {
-        return CommercialOwnerProblemDetail.wrap(RateCardApi.class, commercial.createClient(RateCardApi.class));
+        return commercial.createClient(RateCardApi.class);
     }
 
     /** 价格命中（运营价格试算）；422 / 409 命中失败按 CommercialPriceErrorCode 保留原因。 */
     @Bean
     CommercialPriceApi commercialPriceApi() {
-        return CommercialOwnerProblemDetail.wrap(CommercialPriceApi.class,
-            commercialPrices.createClient(CommercialPriceApi.class));
+        return commercialPrices.createClient(CommercialPriceApi.class);
     }
 
     /** 发现或直连，传递 Request ID 与调用方标识。 */
@@ -119,11 +116,12 @@ public class CommercialClientConfiguration {
             }).build();
     }
 
-    /** 严格协议、登记合同错误码并映射依赖故障。 */
+    /** 严格协议、Owner detail 外显、登记合同错误码并映射依赖故障。 */
     private static HttpServiceProxyFactory factory(RestClient client, ObjectProvider<InternalTokenSupplier> tokens,
         CodeMessageEnum[] contractErrors) {
         HttpServiceClientOptions options = InternalCallTokenOptions.apply(
-            HttpServiceClientOptions.strict().withRequestValidationFailures(), tokens, COMMERCIAL_SERVICE)
+            HttpServiceClientOptions.strict().withRequestValidationFailures().withOwnerProblemDetail(), tokens,
+            COMMERCIAL_SERVICE)
             .withDependencyFailureMapper((kind, cause) -> switch (kind) {
                 case TIMEOUT -> new ErrorException(OperationsBffErrorCode.DEPENDENCY_TIMEOUT, null, cause);
                 case UNAVAILABLE -> new ServiceUnavailableException(OperationsBffErrorCode.DEPENDENCY_UNAVAILABLE, cause);

@@ -144,6 +144,10 @@ Nacos Discovery 提供实例列表。内部服务 Group 不设置 `base-url`，�
   `strict()` 或 `migrationWithLegacyErrorResponse()` 返回的 Options 上调用 `.withDependencyFailureMapper(...)`，映射为自己的安全异常。
 - 合法 `4xx` 的三个公共业务类别保留安全本地默认消息；显式注册的特殊错误码也只使用枚举默认消息。未知码、
   缺字段、ID/时间/title 不一致或无法解码的错误体，以及正常 DTO 的 JSON/媒体类型解码失败均归入安全的 `502`。
+- 默认不外显远端 `detail`。Owner 已承诺 detail 为可安全外显提示时，宿主可对该客户端显式选择
+  `.withOwnerProblemDetail()`：严格 Problem 的 `BUSINESS_CHECK_FAILED`、`CONCURRENT_REQUEST`、`NOT_FOUND` 与已注册合同码
+  以远端已校验 detail 作为本地异常消息（异常类型、Code 与 Cause 不变）；detail 超过 512 个码点或含控制字符时回退默认消息。
+  `INVALID_REQUEST`、字段校验失败（含携带 errors 的合同码）、5xx、`HEAD` 与旧四字段 Reader 不受影响。
 - `HEAD` 错误只校验 4xx/5xx 状态、Problem 媒体类型和一个合法 Request ID Header，不读取或要求 Body。
 - `HttpServiceClientOptions.strict()` 是默认值。Legacy Reader 只在已知第一方 Target 显式选择
   `migrationWithLegacyErrorResponse()` 时接受 `application/json` 的精确 `{code,message,requestId,timestamp}`；它只转换入站错误，

@@ -45,11 +45,14 @@ final class HttpProblemDecoder {
         if (hasProblemContentType(failure.getResponseHeaders())) {
             return readProblem(failure);
         }
-        return new DecodedProblem(readLegacy(failure), List.of(), false);
+        return new DecodedProblem(readLegacy(failure), List.of(), false, null);
     }
 
-    /** 已校验的 Problem 摘要；errors 为去重后的远端字段错误（field 与 message），旧格式恒为空。 */
-    record DecodedProblem(String code, List<ProblemFieldError> errors, boolean strictProfile) {
+    /**
+     * 已校验的 Problem 摘要；errors 为去重后的远端字段错误（field 与 message），旧格式恒为空。
+     * detail 为严格 Problem 中已校验的非空说明，旧四字段格式恒为 null；是否外显由拦截器的显式开关决定。
+     */
+    record DecodedProblem(String code, List<ProblemFieldError> errors, boolean strictProfile, String detail) {
 
         /** 去重后的字段路径。 */
         List<String> fields() {
@@ -83,7 +86,7 @@ final class HttpProblemDecoder {
         }
         ApiProblemProfile.validate(problem, status.getReasonPhrase(), requestId);
         return new DecodedProblem(problem.code(), problem.errors() == null ? List.of()
-            : problem.errors().stream().distinct().toList(), true);
+            : problem.errors().stream().distinct().toList(), true, problem.detail());
     }
 
     private String readLegacy(RestClientResponseException failure) {

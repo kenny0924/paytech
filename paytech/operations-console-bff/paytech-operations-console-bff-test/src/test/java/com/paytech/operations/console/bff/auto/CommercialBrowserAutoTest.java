@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -109,7 +110,7 @@ class CommercialBrowserAutoTest extends CommercialBrowserAutoTestBase {
         assertForwarded(list, send(list));
     }
 
-    /** commercial 的公共业务拒绝保留公共 Code，并把 Owner 的拒绝原因作为 detail 透传（F9）；Owner Request ID 不外露。 */
+    /** commercial 的公共业务拒绝保留公共 Code，Owner 的拒绝原因经 Foundation Owner detail 开关到达浏览器（F9）；Owner Request ID 不外露。 */
     @Test
     void test_businessRuleViolation() throws Exception {
         var schedule = row("T07");
@@ -137,7 +138,9 @@ class CommercialBrowserAutoTest extends CommercialBrowserAutoTestBase {
         assertEquals(404, response.statusCode(), response.body());
         var body = JSON.readTree(response.body());
         assertAll(() -> assertEquals(CommonErrorCode.NOT_FOUND.getCode(), body.path("code").asString()),
-            () -> assertEquals(CommercialOwnerSimulator.OWNER_DETAIL_CANARY, body.path("detail").asString()));
+            () -> assertEquals(CommercialOwnerSimulator.OWNER_DETAIL_CANARY, body.path("detail").asString()),
+            () -> assertEquals(REQUEST_ID, body.path("requestId").asString()),
+            () -> assertFalse(response.body().contains(CommercialOwnerSimulator.OWNER_REQUEST_ID)));
     }
 
     /** BCR 版本冲突以 409 到达浏览器并带 Owner 原因，页面据此提示重新加载。 */
@@ -152,28 +155,38 @@ class CommercialBrowserAutoTest extends CommercialBrowserAutoTestBase {
         assertEquals(409, response.statusCode(), response.body());
         var body = JSON.readTree(response.body());
         assertAll(() -> assertEquals(CommonErrorCode.CONCURRENT_REQUEST.getCode(), body.path("code").asString()),
-            () -> assertEquals(CommercialOwnerSimulator.OWNER_DETAIL_CANARY, body.path("detail").asString()));
+            () -> assertEquals(CommercialOwnerSimulator.OWNER_DETAIL_CANARY, body.path("detail").asString()),
+            () -> assertEquals(REQUEST_ID, body.path("requestId").asString()),
+            () -> assertFalse(response.body().contains(CommercialOwnerSimulator.OWNER_REQUEST_ID)));
     }
 
-    /** 超长或空白的 Owner detail 不透传，保留公共说明。 */
+    /** 超过 512 字符或含控制字符的 Owner detail 不透传，保留公共说明；512 字符以内原样到达。 */
     @Test
     void test_edgeCase() throws Exception {
         var schedule = row("T07");
-        String longDetail = "x".repeat(1001);
+        String boundary = "审".repeat(512);
+        assertEquals(boundary, rejectDetail(schedule, boundary).path("detail").asString());
+        for (String unsafe : List.of("审".repeat(513), "拒绝\\n原因")) {
+            resetBetweenCalls();
+            var body = rejectDetail(schedule, unsafe);
+            assertAll(() -> assertEquals(CommonErrorCode.BUSINESS_CHECK_FAILED.getMessage(), body.path("detail").asString()),
+                () -> assertEquals(REQUEST_ID, body.path("requestId").asString()));
+        }
+    }
+
+    /** Owner 以 400 BUSINESS_CHECK_FAILED 拒绝且 detail 为给定 JSON 文本，返回浏览器 Problem。 */
+    private JsonNode rejectDetail(JsonNode route, String jsonDetail)
+        throws Exception {
         String upstream = """
             {"type":"about:blank","title":"Bad Request","detail":"%s","code":"%s","requestId":"%s",
              "timestamp":"2026-10-19T06:00:00.000000Z"}
-            """.formatted(longDetail, CommonErrorCode.BUSINESS_CHECK_FAILED.getCode(),
+            """.formatted(jsonDetail, CommonErrorCode.BUSINESS_CHECK_FAILED.getCode(),
             CommercialOwnerSimulator.OWNER_REQUEST_ID);
-        commercial.reply("POST", schedule.path("ownerPath").asString(), 400, "application/problem+json", upstream,
+        commercial.reply("POST", route.path("ownerPath").asString(), 400, "application/problem+json", upstream,
             Map.of("X-Request-Id", CommercialOwnerSimulator.OWNER_REQUEST_ID));
-
-        var response = send(schedule);
-
+        var response = send(route);
         assertEquals(400, response.statusCode(), response.body());
-        var body = JSON.readTree(response.body());
-        assertAll(() -> assertEquals(CommonErrorCode.BUSINESS_CHECK_FAILED.getMessage(), body.path("detail").asString()),
-            () -> assertFalse(response.body().contains(longDetail)));
+        return JSON.readTree(response.body());
     }
 
     /** commercial 422 只保留本次请求体内存在的字段路径。 */

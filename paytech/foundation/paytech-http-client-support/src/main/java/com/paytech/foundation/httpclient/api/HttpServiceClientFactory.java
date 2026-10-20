@@ -46,7 +46,7 @@ public final class HttpServiceClientFactory {
      * 创建统一转换 HTTP、网络与解码失败的接口工厂。
      *
      * @param client 已配置传输策略和 JSON 转换器的客户端
-     * @param contractErrors 调用方明确理解的特殊 4xx 错误码，仅公开其默认消息
+     * @param contractErrors 调用方明确理解的特殊 4xx 错误码，默认只公开其默认消息
      * @return 供宿主创建 typed API Bean 的 Spring 工厂
      */
     public static HttpServiceProxyFactory create(RestClient client, CodeMessageEnum... contractErrors) {
@@ -66,7 +66,8 @@ public final class HttpServiceClientFactory {
         Objects.requireNonNull(client, "client must not be null");
         Objects.requireNonNull(options, "options must not be null");
         HttpServiceClientInterceptor interceptor = new HttpServiceClientInterceptor(contractErrors,
-            options.legacyErrorResponseEnabled(), options.dependencyFailureMapper(), options.requestValidationFailuresEnabled());
+            options.legacyErrorResponseEnabled(), options.dependencyFailureMapper(), options.requestValidationFailuresEnabled(),
+            options.ownerProblemDetailEnabled());
         RestClient guardedClient = guard(client.mutate(), options, null).build();
         HttpServiceProxyFactory.Builder builder = HttpServiceProxyFactory.builderFor(RestClientAdapter.create(guardedClient))
             .proxyFactoryCustomizer((factory, serviceType) -> factory.addAdvice(0, interceptor));
@@ -85,7 +86,8 @@ public final class HttpServiceClientFactory {
         Objects.requireNonNull(groupName, "groupName must not be null");
         Objects.requireNonNull(options, "options must not be null");
         HttpServiceClientInterceptor interceptor = new HttpServiceClientInterceptor(contractErrors,
-            options.legacyErrorResponseEnabled(), options.dependencyFailureMapper(), options.requestValidationFailuresEnabled());
+            options.legacyErrorResponseEnabled(), options.dependencyFailureMapper(), options.requestValidationFailuresEnabled(),
+            options.ownerProblemDetailEnabled());
         return groups -> groups.filterByName(groupName).forEachGroup((group, client, proxy) -> {
             guard(client, options, groupName);
             proxy.proxyFactoryCustomizer((factory, serviceType) -> factory.addAdvice(0, interceptor));

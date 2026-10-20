@@ -98,7 +98,7 @@ class CommercialPricePreviewAutoTest extends CommercialBrowserAutoTestBase {
         assertTrue(JSON.readTree(withoutAmount.body()).path("illustration").isNull());
     }
 
-    /** 命中失败：422 无命中 / 事实缺失与 409 歧义保留 commercial 错误码，并透传 Owner 的原因说明。 */
+    /** 命中失败：422 无命中 / 事实缺失与 409 歧义保留 commercial 错误码，Owner 原因经 Foundation 开关到达浏览器。 */
     @Test
     void test_businessRuleViolation() throws Exception {
         for (var error : List.of(CommercialPriceErrorCode.PRICE_NOT_FOUND, CommercialPriceErrorCode.PRICING_FACTS_INCOMPLETE,
@@ -112,6 +112,7 @@ class CommercialPricePreviewAutoTest extends CommercialBrowserAutoTestBase {
             var body = JSON.readTree(response.body());
             assertAll(() -> assertEquals(error.getCode(), body.path("code").asString()),
                 () -> assertEquals(CommercialOwnerSimulator.OWNER_DETAIL_CANARY, body.path("detail").asString()),
+                () -> assertEquals(REQUEST_ID, body.path("requestId").asString()),
                 () -> assertFalse(response.body().contains(CommercialOwnerSimulator.OWNER_REQUEST_ID)));
             resetBetweenCalls();
         }

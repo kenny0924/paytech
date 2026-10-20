@@ -15,9 +15,9 @@ public final class HttpServiceClientOptions {
     private static final DependencyFailureMapper DEFAULT_DEPENDENCY_FAILURE_MAPPER =
         (kind, cause) -> new ServiceUnavailableException(cause);
     private static final HttpServiceClientOptions STRICT = new HttpServiceClientOptions(false,
-        DEFAULT_DEPENDENCY_FAILURE_MAPPER, 0, false, null, null);
+        DEFAULT_DEPENDENCY_FAILURE_MAPPER, 0, false, null, null, false);
     private static final HttpServiceClientOptions MIGRATION_WITH_LEGACY_ERROR_RESPONSE =
-        new HttpServiceClientOptions(true, DEFAULT_DEPENDENCY_FAILURE_MAPPER, 0, false, null, null);
+        new HttpServiceClientOptions(true, DEFAULT_DEPENDENCY_FAILURE_MAPPER, 0, false, null, null, false);
 
     private final boolean legacyErrorResponseEnabled;
     private final DependencyFailureMapper dependencyFailureMapper;
@@ -25,10 +25,12 @@ public final class HttpServiceClientOptions {
     private final boolean requestValidationFailuresEnabled;
     private final Function<String, ClientHttpRequestInterceptor> internalTokenInterceptor;
     private final String internalTokenTarget;
+    private final boolean ownerProblemDetailEnabled;
 
     private HttpServiceClientOptions(boolean legacyErrorResponseEnabled, DependencyFailureMapper dependencyFailureMapper,
         int strictJsonResponseBytes, boolean requestValidationFailuresEnabled,
-        Function<String, ClientHttpRequestInterceptor> internalTokenInterceptor, String internalTokenTarget) {
+        Function<String, ClientHttpRequestInterceptor> internalTokenInterceptor, String internalTokenTarget,
+        boolean ownerProblemDetailEnabled) {
         this.legacyErrorResponseEnabled = legacyErrorResponseEnabled;
         this.dependencyFailureMapper = Objects.requireNonNull(dependencyFailureMapper,
             "dependencyFailureMapper must not be null");
@@ -36,6 +38,7 @@ public final class HttpServiceClientOptions {
         this.requestValidationFailuresEnabled = requestValidationFailuresEnabled;
         this.internalTokenInterceptor = internalTokenInterceptor;
         this.internalTokenTarget = internalTokenTarget;
+        this.ownerProblemDetailEnabled = ownerProblemDetailEnabled;
     }
 
     public static HttpServiceClientOptions strict() {
@@ -52,7 +55,7 @@ public final class HttpServiceClientOptions {
      */
     public HttpServiceClientOptions withDependencyFailureMapper(DependencyFailureMapper mapper) {
         return new HttpServiceClientOptions(legacyErrorResponseEnabled, mapper, strictJsonResponseBytes,
-            requestValidationFailuresEnabled, internalTokenInterceptor, internalTokenTarget);
+            requestValidationFailuresEnabled, internalTokenInterceptor, internalTokenTarget, ownerProblemDetailEnabled);
     }
 
     /**
@@ -65,7 +68,7 @@ public final class HttpServiceClientOptions {
             throw new IllegalArgumentException("maximumBytes must be between 1 and Integer.MAX_VALUE - 1");
         }
         return new HttpServiceClientOptions(legacyErrorResponseEnabled, dependencyFailureMapper, maximumBytes,
-            requestValidationFailuresEnabled, internalTokenInterceptor, internalTokenTarget);
+            requestValidationFailuresEnabled, internalTokenInterceptor, internalTokenTarget, ownerProblemDetailEnabled);
     }
 
     /**
@@ -74,7 +77,18 @@ public final class HttpServiceClientOptions {
      */
     public HttpServiceClientOptions withRequestValidationFailures() {
         return new HttpServiceClientOptions(legacyErrorResponseEnabled, dependencyFailureMapper,
-            strictJsonResponseBytes, true, internalTokenInterceptor, internalTokenTarget);
+            strictJsonResponseBytes, true, internalTokenInterceptor, internalTokenTarget, ownerProblemDetailEnabled);
+    }
+
+    /**
+     * 显式外显 Owner 的业务拒绝说明：严格 Problem 的 BUSINESS_CHECK_FAILED、CONCURRENT_REQUEST、NOT_FOUND 与已登记合同码
+     * 以远端已校验的 detail 作为本地异常消息，宿主 MVC 边界据此输出 Owner 原因。detail 空白、超过 512 字符或含控制字符时
+     * 回退公共默认消息；INVALID_REQUEST、字段校验失败、5xx 与旧四字段格式保持原有分类和消息。
+     * 默认关闭；只应对已承诺 detail 为可安全外显提示的第一方 Owner 开启。
+     */
+    public HttpServiceClientOptions withOwnerProblemDetail() {
+        return new HttpServiceClientOptions(legacyErrorResponseEnabled, dependencyFailureMapper, strictJsonResponseBytes,
+            requestValidationFailuresEnabled, internalTokenInterceptor, internalTokenTarget, true);
     }
 
     /**
@@ -88,7 +102,7 @@ public final class HttpServiceClientOptions {
         Objects.requireNonNull(supplier, "supplier must not be null");
         return new HttpServiceClientOptions(legacyErrorResponseEnabled, dependencyFailureMapper,
             strictJsonResponseBytes, requestValidationFailuresEnabled,
-            target -> new InternalTokenExchangeInterceptor(supplier, target), null);
+            target -> new InternalTokenExchangeInterceptor(supplier, target), null, ownerProblemDetailEnabled);
     }
 
     /**
@@ -103,7 +117,8 @@ public final class HttpServiceClientOptions {
         Objects.requireNonNull(targetService, "targetService must not be null");
         return new HttpServiceClientOptions(legacyErrorResponseEnabled, dependencyFailureMapper,
             strictJsonResponseBytes, requestValidationFailuresEnabled,
-            target -> new InternalTokenExchangeInterceptor(supplier, target), targetService);
+            target -> new InternalTokenExchangeInterceptor(supplier, target), targetService,
+            ownerProblemDetailEnabled);
     }
 
     /**
@@ -123,6 +138,10 @@ public final class HttpServiceClientOptions {
                 + "use withInternalToken(supplier, targetService) with create()");
         }
         return internalTokenInterceptor.apply(target);
+    }
+
+    boolean ownerProblemDetailEnabled() {
+        return ownerProblemDetailEnabled;
     }
 
     boolean requestValidationFailuresEnabled() {
