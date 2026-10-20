@@ -272,7 +272,7 @@ V2 服务端口（2026-10-17/18 搬迁后，取自各 `paytech/<service>/paytech
 | Platform Support（`platform-support-service`） | 18106 | — | `/platform-support` | platform-support-service |
 | Vault（`vault-service`，Go） | 18107 | — | — | vault-service |
 | commercial（`commercial-service`） | 18108 | 19108 | — | client-contract-service |
-| consumer（`consumer-service`） | 18109 | 19109 | — | commerce-service |
+| counterparty（`counterparty-service`） | 18109 | 19109 | — | commerce-service |
 | channel-connector（`channel-connector-service`） | 18110 | 19110 | — | payment-orchestration-service |
 | card（`card-service`） | 18111 | 19111 | — | payment-orchestration-service |
 | compliance（`compliance-service`） | 18112 | 19112 | — | risk-compliance-service |
@@ -328,7 +328,7 @@ xxl_job
 | client-master | `mor_client_master` | `client_master_app` | `mor_cct` |
 | commercial | `mor_commercial` | `commercial_app` | `mor_cct` |
 | acquiring | `mor_acquiring` | `acquiring_app` | `mor_commerce` |
-| consumer | `mor_consumer` | `consumer_app` | `mor_commerce` |
+| counterparty | `mor_counterparty` | `counterparty_app` | `mor_commerce` |
 | payment | `mor_payment`（沿用） | `payment_app` | — |
 | channel-connector | `mor_channel_connector` | `channel_connector_app` | `mor_payment` 渠道表 |
 | card | `mor_card` | `card_app` | `mor_payment` 卡 4 表 |
@@ -458,7 +458,7 @@ Java 服务至少验证：
 | 变量 | 用途 | 引入步骤 |
 |---|---|---|
 | `MOR_CLIENT_MASTER_DB_PASSWORD`、`MOR_COMMERCIAL_DB_PASSWORD` | client-master、commercial 库账号 | 04 |
-| `MOR_ACQUIRING_DB_PASSWORD`、`MOR_CONSUMER_DB_PASSWORD` | acquiring、consumer 库账号 | 03 |
+| `MOR_ACQUIRING_DB_PASSWORD`、`MOR_COUNTERPARTY_DB_PASSWORD` | acquiring、counterparty 库账号 | 03 |
 | `MOR_CHANNEL_CONNECTOR_DB_PASSWORD` | channel-connector 库账号 | 05 |
 | `MOR_RISK_DECISION_DB_PASSWORD`、`MOR_COMPLIANCE_DB_PASSWORD` | risk-decision、compliance 库账号 | 06 |
 | `MOR_LEDGER_DB_PASSWORD`、`MOR_BILLING_DB_PASSWORD`、`MOR_ACCOUNT_DB_PASSWORD`、`MOR_RECONCILIATION_DB_PASSWORD`、`MOR_TAX_DB_PASSWORD` | Finance 五个服务库账号 | 07 |

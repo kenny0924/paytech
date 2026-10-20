@@ -32,8 +32,8 @@ spring:
         connect-timeout: 2s
         read-timeout: 5s
         redirects: dont-follow
-      consumer-service:
-        base-url: lb://consumer-service
+      counterparty-service:
+        base-url: lb://counterparty-service
         connect-timeout: 2s
         read-timeout: 3s
         redirects: dont-follow

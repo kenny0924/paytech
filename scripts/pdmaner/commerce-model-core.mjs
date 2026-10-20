@@ -20,7 +20,7 @@ const templatePath = path.join(
 
 // Shared Commerce-family PDManer core (design/03 §2.5, design/09 §4.3 / §5.2): one manifest for the tables split from
 // commerce-service, emitted as one canonical model per owning service. acquiring owns the transaction / checkout / command
-// tables; consumer owns t_customer; t_compensation_event is per database and appears in both models. The stable-ID key is
+// tables; counterparty (named consumer until 2026-10-19) owns t_customer; t_compensation_event is per database and appears in both models. The stable-ID key is
 // kept from the Commerce V1 model so unchanged tables keep their entity / field / index IDs.
 // Removed by S10 / C7: t_command_idempotency, t_commerce_order.context_format and preparation_command_id.
 // t_client_stored_card_setting moved to client-master (D42); cross-database relations (order.customer_id) are not modelled.
@@ -472,7 +472,7 @@ const ACQUIRING_DIAGRAM_GROUPS = Object.freeze([
   }),
 ]);
 
-const CONSUMER_DIAGRAM_GROUPS = Object.freeze([
+const COUNTERPARTY_DIAGRAM_GROUPS = Object.freeze([
   Object.freeze({
     defKey: "customer",
     defName: "Customer",
@@ -543,13 +543,13 @@ export const COMMERCE_SERVICE_MODELS = Object.freeze({
       diagramGroups: 4,
     }),
   }),
-  consumer: Object.freeze({
-    label: "Consumer",
-    modelName: "Code-MoR Consumer Database V1",
-    describe: "Deterministic PDManer physical model for mor_consumer (Customer), split from the Commerce V1 manifest",
-    outputPath: "paytech/consumer/docs/database/consumer.pdma.json",
+  counterparty: Object.freeze({
+    label: "Counterparty",
+    modelName: "counterparty",
+    describe: "Customer 主档",
+    outputPath: "paytech/counterparty/docs/database/counterparty.pdma.json",
     tables: Object.freeze(["customer", "compensation_event"]),
-    diagramGroups: CONSUMER_DIAGRAM_GROUPS,
+    diagramGroups: COUNTERPARTY_DIAGRAM_GROUPS,
     versionTables: Object.freeze(["customer"]),
     immutableTables: Object.freeze([]),
     totals: Object.freeze({

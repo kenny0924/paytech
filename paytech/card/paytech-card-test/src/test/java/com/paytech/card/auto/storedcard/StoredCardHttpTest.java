@@ -17,8 +17,8 @@ import com.paytech.card.test.base.AbstractStoredCardTest;
  * 以及以已存卡加新 CVV 创建工具并凭票据读卡。
  *
  * <p>
- * 覆盖：列表只有 Token、前 6 后 4、有效期与创建时间；跨 Customer 删除 404、重复删除幂等；失效可重复；调用方白名单（列出 acquiring / consumer，
- * 删除与失效只 consumer）；已存卡支付不新增卡与凭证，读卡得到保存的卡值与本次 CVV；已存卡不属于该 Customer 或已删除为 400。
+ * 覆盖：列表只有 Token、前 6 后 4、有效期与创建时间；跨 Customer 删除 404、重复删除幂等；失效可重复；调用方白名单（列出 acquiring / counterparty，
+ * 删除与失效只 counterparty）；已存卡支付不新增卡与凭证，读卡得到保存的卡值与本次 CVV；已存卡不属于该 Customer 或已删除为 400。
  *
  * @see StoredCardApi
  */
@@ -27,21 +27,21 @@ class StoredCardHttpTest extends AbstractStoredCardTest {
     private static final String OTHER_CUSTOMER_ID = "70002";
     private static final String NEW_CVV = "4321";
 
-    /** 列出：acquiring 与 consumer 均可，只返回 Token、掩码卡号、后四位、有效期与创建时间。 */
+    /** 列出：acquiring 与 counterparty 均可，只返回 Token、掩码卡号、后四位、有效期与创建时间。 */
     @Test
     void test_listStoredCards() {
         paySucceeded(CUSTOMER_ID, true, EXPIRY_YEAR);
 
         var byAcquiring = list(CardApiConstants.ACQUIRING_SERVICE, CUSTOMER_ID);
-        var byConsumer = list(CardApiConstants.CONSUMER_SERVICE, CUSTOMER_ID);
+        var byCounterparty = list(CardApiConstants.COUNTERPARTY_SERVICE, CUSTOMER_ID);
 
         var listed = byAcquiring.getFirst();
-        assertAll(() -> assertEquals(byAcquiring, byConsumer), () -> assertEquals(1, byAcquiring.size()),
+        assertAll(() -> assertEquals(byAcquiring, byCounterparty), () -> assertEquals(1, byAcquiring.size()),
             () -> assertEquals(mapper.storedCards().getFirst().get("token"), listed.get("storedCardToken")),
             () -> assertEquals("411111******1111", listed.get("maskedPan")), () -> assertEquals("1111", listed.get("last4")),
             () -> assertEquals(EXPIRY_MONTH, listed.get("expiryMonth")), () -> assertEquals(EXPIRY_YEAR, listed.get("expiryYear")),
             () -> assertEquals(6, listed.size(), "列表字段只有 Token、掩码、后四位、有效期与创建时间"),
-            () -> assertTrue(list(CardApiConstants.CONSUMER_SERVICE, OTHER_CUSTOMER_ID).isEmpty()));
+            () -> assertTrue(list(CardApiConstants.COUNTERPARTY_SERVICE, OTHER_CUSTOMER_ID).isEmpty()));
     }
 
     /** 删除：跨 Customer 404；首次与重复删除 204；删除后列表为空。 */
@@ -50,12 +50,12 @@ class StoredCardHttpTest extends AbstractStoredCardTest {
         paySucceeded(CUSTOMER_ID, true, EXPIRY_YEAR);
         String token = (String)mapper.storedCards().getFirst().get("token");
 
-        int crossCustomer = delete(CardApiConstants.CONSUMER_SERVICE, OTHER_CUSTOMER_ID, token);
-        int first = delete(CardApiConstants.CONSUMER_SERVICE, CUSTOMER_ID, token);
-        int again = delete(CardApiConstants.CONSUMER_SERVICE, CUSTOMER_ID, token);
+        int crossCustomer = delete(CardApiConstants.COUNTERPARTY_SERVICE, OTHER_CUSTOMER_ID, token);
+        int first = delete(CardApiConstants.COUNTERPARTY_SERVICE, CUSTOMER_ID, token);
+        int again = delete(CardApiConstants.COUNTERPARTY_SERVICE, CUSTOMER_ID, token);
 
         assertAll(() -> assertEquals(List.of(404, 204, 204), List.of(crossCustomer, first, again)),
-            () -> assertTrue(list(CardApiConstants.CONSUMER_SERVICE, CUSTOMER_ID).isEmpty()),
+            () -> assertTrue(list(CardApiConstants.COUNTERPARTY_SERVICE, CUSTOMER_ID).isEmpty()),
             () -> assertEquals("DELETED", mapper.storedCards().getFirst().get("status")));
     }
 
@@ -68,7 +68,7 @@ class StoredCardHttpTest extends AbstractStoredCardTest {
         int again = invalidate(CUSTOMER_ID);
 
         assertAll(() -> assertEquals(List.of(1, 0), List.of(first, again)),
-            () -> assertTrue(list(CardApiConstants.CONSUMER_SERVICE, CUSTOMER_ID).isEmpty()));
+            () -> assertTrue(list(CardApiConstants.COUNTERPARTY_SERVICE, CUSTOMER_ID).isEmpty()));
     }
 
     /** 调用方白名单：acquiring 删除与失效、Payment 与 Platform 列出均 404，已存卡不受影响。 */
@@ -116,7 +116,7 @@ class StoredCardHttpTest extends AbstractStoredCardTest {
         var saveAgain = storedBody(submission(), token, CUSTOMER_ID, NEW_CVV);
         saveAgain.put("consentToSave", true);
         int saveStored = create(saveAgain);
-        delete(CardApiConstants.CONSUMER_SERVICE, CUSTOMER_ID, token);
+        delete(CardApiConstants.COUNTERPARTY_SERVICE, CUSTOMER_ID, token);
         int deleted = create(storedBody(submission(), token, CUSTOMER_ID, NEW_CVV));
 
         assertAll(() -> assertEquals(List.of(400, 400, 400), List.of(otherCustomer, saveStored, deleted)),
@@ -146,7 +146,7 @@ class StoredCardHttpTest extends AbstractStoredCardTest {
     /** 按 Customer 失效，返回失效条数。 */
     int invalidate(String customerId) {
         var body = exchange(HttpMethod.POST, "/card/v1/customers/" + customerId + "/stored-cards/invalidation",
-            CardApiConstants.CONSUMER_SERVICE, Map.of("clientId", CLIENT_ID)).getBody();
+            CardApiConstants.COUNTERPARTY_SERVICE, Map.of("clientId", CLIENT_ID)).getBody();
         return ((Number)body.get("invalidatedCount")).intValue();
     }
 

@@ -62,7 +62,7 @@ PRIVATE_TEST = {
     "commercial": "http://commercial-service:18108",
     "compliance": "http://compliance-service:18112",
     "risk-decision": "http://risk-decision-service:18104",
-    "consumer": "http://consumer-service:18109",
+    "counterparty": "http://counterparty-service:18109",
     "card": "http://card-service:18111",
     "channel-connector": "http://channel-connector-service:18110",
     "payment": "http://payment-service:18103/payment",
@@ -82,7 +82,7 @@ PRIVATE = PRIVATE_TEST if TARGET == "test" else {
     "commercial": "http://127.0.0.1:18108",
     "compliance": "http://127.0.0.1:18112",
     "risk-decision": "http://127.0.0.1:18104",
-    "consumer": "http://127.0.0.1:18109",
+    "counterparty": "http://127.0.0.1:18109",
     "card": "http://127.0.0.1:18111",
     "channel-connector": "http://127.0.0.1:18110",
     "payment": "http://127.0.0.1:18103/payment",
@@ -129,7 +129,7 @@ DATABASES = {
     "payment": (f"mor_payment{DB_SUFFIX}", "payment_app", "MOR_PAYMENT_DB_PASSWORD"),
     "vault": ("mor_vault", "vault_app", "MOR_VAULT_DB_PASSWORD"),
 }
-for _svc in ("client-master", "commercial", "compliance", "risk-decision", "acquiring", "consumer", "card",
+for _svc in ("client-master", "commercial", "compliance", "risk-decision", "acquiring", "counterparty", "card",
              "channel-connector", "billing", "ledger", "account", "reconciliation", "tax"):
     _key = _svc.replace("-", "_")
     DATABASES[_svc] = (f"mor_{_key}{DB_SUFFIX}", f"{_key}_app", f"MOR_{_key.upper()}_DB_PASSWORD")

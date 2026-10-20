@@ -308,30 +308,30 @@ services:
     networks:
       backend: { ipv4_address: 172.30.73.30 }
 
-  consumer-service:
+  counterparty-service:
     <<: *java
     mem_limit: 448m
     entrypoint: *jvm-small
-    image: mor-test/consumer-service:development
+    image: mor-test/counterparty-service:development
     build:
       context: ./artifacts
       dockerfile: ../java/Dockerfile
-      args: { JAR_FILE: consumer-service.jar }
+      args: { JAR_FILE: counterparty-service.jar }
     environment:
       <<: *discovery
       SERVER_ADDRESS: 0.0.0.0
       SPRING_CLOUD_NACOS_DISCOVERY_IP: 172.30.73.33
-      MOR_CONSUMER_DB_URL: jdbc:mysql://mysql:3306/mor_consumer?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false
-      MOR_CONSUMER_DB_USERNAME: consumer_app
-      MOR_CONSUMER_DB_PASSWORD: ${MOR_CONSUMER_DB_PASSWORD:?prepare test secrets}
-      CONSUMER_SNOWFLAKE_REGION_ID: "0"
-      CONSUMER_SNOWFLAKE_WORKER_ID: "27"
+      MOR_COUNTERPARTY_DB_URL: jdbc:mysql://mysql:3306/mor_counterparty?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false
+      MOR_COUNTERPARTY_DB_USERNAME: counterparty_app
+      MOR_COUNTERPARTY_DB_PASSWORD: ${MOR_COUNTERPARTY_DB_PASSWORD:?prepare test secrets}
+      COUNTERPARTY_SNOWFLAKE_REGION_ID: "0"
+      COUNTERPARTY_SNOWFLAKE_WORKER_ID: "27"
       # 补偿扫描执行器：任务 compensationEventScan 在 xxl-job-admin 登记（20261018 任务卡 03）。
-      COMPENSATION_INSTANCEID: consumer-test
+      COMPENSATION_INSTANCEID: counterparty-test
       XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
       XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
       XXL_JOB_EXECUTOR_ENABLED: "true"
-      XXL_JOB_EXECUTOR_APPNAME: consumer-service
+      XXL_JOB_EXECUTOR_APPNAME: counterparty-service
       XXL_JOB_EXECUTOR_IP: 172.30.73.33
       XXL_JOB_EXECUTOR_PORT: "9999"
       XXL_JOB_EXECUTOR_LOGPATH: /tmp/xxl-job

@@ -21,7 +21,7 @@ public final class CardApiConstants {
     public static final String ACQUIRING_SERVICE = "acquiring-service";
 
     /** 已存卡列出、删除与失效的调用方之一（Client API Customer）。 */
-    public static final String CONSUMER_SERVICE = "consumer-service";
+    public static final String COUNTERPARTY_SERVICE = "counterparty-service";
 
     private CardApiConstants() {
     }

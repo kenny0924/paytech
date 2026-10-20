@@ -19,7 +19,7 @@ public final class ServiceCatalog {
     private static final Map<String, ServiceLayer> SERVICES = new LinkedHashMap<>();
 
     static {
-        for (String service : new String[] {"client-master", "commercial", "consumer", "card", "risk-decision",
+        for (String service : new String[] {"client-master", "commercial", "counterparty", "card", "risk-decision",
             "compliance", "channel-connector", "billing", "account", "ledger", "reconciliation", "tax",
             "data-service"}) {
             SERVICES.put(service, ServiceLayer.DOMAIN);

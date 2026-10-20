@@ -226,7 +226,7 @@
     },
     {
       "from": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/ClientContractApplication.java",
-      "to": "paytech/consumer/paytech-consumer-app/src/main/java/com/paytech/consumer/ConsumerApplication.java"
+      "to": "paytech/counterparty/paytech-counterparty-app/src/main/java/com/paytech/counterparty/CounterpartyApplication.java"
     },
     {
       "from": "client-contract-service/client-contract-web/src/main/java/com/paytech/client/contract/configuration/CheckoutHttpBoundaryConfiguration.java",
@@ -730,7 +730,7 @@
     },
     {
       "from": "commerce-service/paytech-commerce-client-api/src/main/java/com/paytech/commerce/client/api/v1/customer/",
-      "to": "paytech/consumer/paytech-consumer-api/src/main/java/com/paytech/consumer/api/client/v1/customer/"
+      "to": "paytech/counterparty/paytech-counterparty-api/src/main/java/com/paytech/counterparty/api/client/v1/customer/"
     },
     {
       "from": "commerce-service/paytech-commerce-client-api/src/main/java/com/paytech/commerce/client/api/v1/enums/",
@@ -750,7 +750,7 @@
     },
     {
       "from": "commerce-service/paytech-commerce-customer-api/pom.xml",
-      "to": "paytech/consumer/paytech-consumer-api/pom.xml"
+      "to": "paytech/counterparty/paytech-counterparty-api/pom.xml"
     },
     {
       "from": "commerce-service/paytech-commerce-customer-api/src/main/java/com/paytech/commerce/customer/api/",
@@ -770,7 +770,7 @@
     },
     {
       "from": "commerce-service/paytech-commerce-test/src/test/java/com/paytech/commerce/auto/ext/http/clientapi/v1/customer/",
-      "to": "paytech/consumer/paytech-consumer-test/src/test/java/com/paytech/consumer/auto/ext/http/clientapi/v1/customer/"
+      "to": "paytech/counterparty/paytech-counterparty-test/src/test/java/com/paytech/counterparty/auto/ext/http/clientapi/v1/customer/"
     },
     {
       "from": "commerce-service/paytech-commerce-test/src/test/java/com/paytech/commerce/auto/ext/http/clientapi/v1/order/",
@@ -798,7 +798,7 @@
     },
     {
       "from": "commerce-service/paytech-commerce-test/src/test/java/com/paytech/commerce/test/base/customer/",
-      "to": "paytech/consumer/paytech-consumer-test/src/test/java/com/paytech/consumer/test/base/customer/"
+      "to": "paytech/counterparty/paytech-counterparty-test/src/test/java/com/paytech/counterparty/test/base/customer/"
     },
     {
       "from": "commerce-service/paytech-commerce-test/src/test/java/com/paytech/commerce/test/base/ManualTestBase.java",
@@ -842,7 +842,7 @@
     },
     {
       "from": "commerce-service/paytech-commerce-test/src/test/java/com/paytech/commerce/test/dal/CustomerTestMapper.java",
-      "to": "paytech/consumer/paytech-consumer-test/src/test/java/com/paytech/consumer/test/dal/CustomerTestMapper.java"
+      "to": "paytech/counterparty/paytech-counterparty-test/src/test/java/com/paytech/counterparty/test/dal/CustomerTestMapper.java"
     },
     {
       "from": "commerce-service/paytech-commerce-test/src/test/java/com/paytech/commerce/test/dal/OrderCancellationTestMapper.java",
@@ -878,7 +878,7 @@
     },
     {
       "from": "commerce-service/paytech-commerce-test/src/test/java/com/paytech/commerce/test/mock/external/MockStoredCardApi.java",
-      "to": "paytech/consumer/paytech-consumer-test/src/test/java/com/paytech/consumer/test/mock/external/MockStoredCardApi.java"
+      "to": "paytech/counterparty/paytech-counterparty-test/src/test/java/com/paytech/counterparty/test/mock/external/MockStoredCardApi.java"
     },
     {
       "from": "commerce-service/paytech-commerce-test/src/test/java/com/paytech/commerce/test/mock/external/MockWebhookEventApi.java",
@@ -922,7 +922,7 @@
     },
     {
       "from": "commerce-service/paytech-commerce-test/src/test/java/com/paytech/commerce/test/mocker/external/StoredCardMocker.java",
-      "to": "paytech/consumer/paytech-consumer-test/src/test/java/com/paytech/consumer/test/mocker/external/StoredCardMocker.java"
+      "to": "paytech/counterparty/paytech-counterparty-test/src/test/java/com/paytech/counterparty/test/mocker/external/StoredCardMocker.java"
     },
     {
       "from": "commerce-service/paytech-commerce-test/src/test/java/com/paytech/commerce/test/mocker/local/",
@@ -934,7 +934,7 @@
     },
     {
       "from": "commerce-service/paytech-commerce-web/pom.xml",
-      "to": "paytech/consumer/paytech-consumer-app/pom.xml"
+      "to": "paytech/counterparty/paytech-counterparty-app/pom.xml"
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/CommerceApplication.java",
@@ -974,7 +974,7 @@
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/configuration/HttpClientConfiguration.java",
-      "to": "paytech/consumer/paytech-consumer-app/src/main/java/com/paytech/consumer/configuration/HttpClientConfiguration.java"
+      "to": "paytech/counterparty/paytech-counterparty-app/src/main/java/com/paytech/counterparty/configuration/HttpClientConfiguration.java"
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/configuration/PaymentClientConfiguration.java",
@@ -1030,7 +1030,7 @@
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/core/dal/dataobject/customer/Customer.java",
-      "to": "paytech/consumer/paytech-consumer-core/src/main/java/com/paytech/consumer/core/dal/dataobject/Customer.java"
+      "to": "paytech/counterparty/paytech-counterparty-core/src/main/java/com/paytech/counterparty/core/dal/dataobject/Customer.java"
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/core/dal/dataobject/customer/CustomerSessionView.java",
@@ -1078,7 +1078,7 @@
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/core/dal/mapper/customer/CustomerMapper.java",
-      "to": "paytech/consumer/paytech-consumer-core/src/main/java/com/paytech/consumer/core/dal/mapper/CustomerMapper.java"
+      "to": "paytech/counterparty/paytech-counterparty-core/src/main/java/com/paytech/counterparty/core/dal/mapper/CustomerMapper.java"
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/core/dal/mapper/order/",
@@ -1110,7 +1110,7 @@
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/domain/customer/ConsumerReferencePolicy.java",
-      "to": "paytech/consumer/paytech-consumer-api/src/main/java/com/paytech/consumer/api/customer/ConsumerReferencePolicy.java"
+      "to": "paytech/counterparty/paytech-counterparty-api/src/main/java/com/paytech/counterparty/api/customer/ConsumerReferencePolicy.java"
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/domain/customer/CustomerCheckoutModels.java",
@@ -1150,7 +1150,7 @@
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/domain/enums/CustomerStatus.java",
-      "to": "paytech/consumer/paytech-consumer-api/src/main/java/com/paytech/consumer/api/enums/CustomerStatus.java"
+      "to": "paytech/counterparty/paytech-counterparty-api/src/main/java/com/paytech/counterparty/api/enums/CustomerStatus.java"
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/domain/enums/EntitySourceType.java",
@@ -1246,11 +1246,11 @@
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/domainservice/repository/customer/CustomerRepository.java",
-      "to": "paytech/consumer/paytech-consumer-core/src/main/java/com/paytech/consumer/domainservice/repository/CustomerRepository.java"
+      "to": "paytech/counterparty/paytech-counterparty-core/src/main/java/com/paytech/counterparty/domainservice/repository/CustomerRepository.java"
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/domainservice/repository/customer/CustomerRepositoryImpl.java",
-      "to": "paytech/consumer/paytech-consumer-core/src/main/java/com/paytech/consumer/domainservice/repository/CustomerRepositoryImpl.java"
+      "to": "paytech/counterparty/paytech-counterparty-core/src/main/java/com/paytech/counterparty/domainservice/repository/CustomerRepositoryImpl.java"
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/domainservice/repository/order/",
@@ -1278,7 +1278,7 @@
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/domainservice/service/customer/CustomerService.java",
-      "to": "paytech/consumer/paytech-consumer-core/src/main/java/com/paytech/consumer/domainservice/service/CustomerService.java"
+      "to": "paytech/counterparty/paytech-counterparty-core/src/main/java/com/paytech/counterparty/domainservice/service/CustomerService.java"
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/domainservice/service/customer/impl/CheckoutSubmissionServiceImpl.java",
@@ -1290,11 +1290,11 @@
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/domainservice/service/customer/impl/CustomerCommandServiceImpl.java",
-      "to": "paytech/consumer/paytech-consumer-core/src/main/java/com/paytech/consumer/domainservice/service/impl/"
+      "to": "paytech/counterparty/paytech-counterparty-core/src/main/java/com/paytech/counterparty/domainservice/service/impl/"
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/domainservice/service/customer/impl/CustomerServiceImpl.java",
-      "to": "paytech/consumer/paytech-consumer-core/src/main/java/com/paytech/consumer/domainservice/service/impl/CustomerServiceImpl.java"
+      "to": "paytech/counterparty/paytech-counterparty-core/src/main/java/com/paytech/counterparty/domainservice/service/impl/CustomerServiceImpl.java"
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/domainservice/service/order/",
@@ -1314,7 +1314,7 @@
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/ext/job/StoredCardInvalidationHandler.java",
-      "to": "paytech/consumer/paytech-consumer-core/src/main/java/com/paytech/consumer/ext/job/StoredCardInvalidationHandler.java"
+      "to": "paytech/counterparty/paytech-counterparty-core/src/main/java/com/paytech/counterparty/ext/job/StoredCardInvalidationHandler.java"
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/ext/mq/",
@@ -1326,7 +1326,7 @@
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/ext/rest/external/clientapi/v1/customer/",
-      "to": "paytech/consumer/paytech-consumer-app/src/main/java/com/paytech/consumer/ext/rest/external/clientapi/v1/customer/"
+      "to": "paytech/counterparty/paytech-counterparty-app/src/main/java/com/paytech/counterparty/ext/rest/external/clientapi/v1/customer/"
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/ext/rest/external/clientapi/v1/order/",
@@ -1366,7 +1366,7 @@
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/integration/payment/impl/PaymentStoredCardClientImpl.java",
-      "to": "paytech/consumer/paytech-consumer-core/src/main/java/com/paytech/consumer/integration/payment/impl/PaymentStoredCardClientImpl.java"
+      "to": "paytech/counterparty/paytech-counterparty-core/src/main/java/com/paytech/counterparty/integration/card/impl/StoredCardClientImpl.java"
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/integration/payment/PaymentCheckoutClient.java",
@@ -1382,7 +1382,7 @@
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/integration/payment/PaymentStoredCardClient.java",
-      "to": "paytech/consumer/paytech-consumer-core/src/main/java/com/paytech/consumer/integration/payment/PaymentStoredCardClient.java"
+      "to": "paytech/counterparty/paytech-counterparty-core/src/main/java/com/paytech/counterparty/integration/card/StoredCardClient.java"
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/integration/payment/PaymentTerminationClient.java",
@@ -1406,15 +1406,15 @@
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/service/processor/customer/CreateCustomerProcessor.java",
-      "to": "paytech/consumer/paytech-consumer-core/src/main/java/com/paytech/consumer/service/processor/CreateCustomerProcessor.java"
+      "to": "paytech/counterparty/paytech-counterparty-core/src/main/java/com/paytech/counterparty/service/processor/CreateCustomerProcessor.java"
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/service/processor/customer/DeleteCustomerProcessor.java",
-      "to": "paytech/consumer/paytech-consumer-core/src/main/java/com/paytech/consumer/service/processor/DeleteCustomerProcessor.java"
+      "to": "paytech/counterparty/paytech-counterparty-core/src/main/java/com/paytech/counterparty/service/processor/DeleteCustomerProcessor.java"
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/service/processor/customer/DeleteStoredCardProcessor.java",
-      "to": "paytech/consumer/paytech-consumer-core/src/main/java/com/paytech/consumer/service/processor/DeleteStoredCardProcessor.java"
+      "to": "paytech/counterparty/paytech-counterparty-core/src/main/java/com/paytech/counterparty/service/processor/DeleteStoredCardProcessor.java"
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/service/processor/customer/GetCustomerCheckoutProcessor.java",
@@ -1426,15 +1426,15 @@
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/service/processor/customer/GetCustomerProcessor.java",
-      "to": "paytech/consumer/paytech-consumer-core/src/main/java/com/paytech/consumer/service/processor/GetCustomerProcessor.java"
+      "to": "paytech/counterparty/paytech-counterparty-core/src/main/java/com/paytech/counterparty/service/processor/GetCustomerProcessor.java"
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/service/processor/customer/ListStoredCardsProcessor.java",
-      "to": "paytech/consumer/paytech-consumer-core/src/main/java/com/paytech/consumer/service/processor/ListStoredCardsProcessor.java"
+      "to": "paytech/counterparty/paytech-counterparty-core/src/main/java/com/paytech/counterparty/service/processor/ListStoredCardsProcessor.java"
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/service/processor/customer/request/ClientCustomerRequest.java",
-      "to": "paytech/consumer/paytech-consumer-core/src/main/java/com/paytech/consumer/service/processor/request/ClientCustomerRequest.java"
+      "to": "paytech/counterparty/paytech-counterparty-core/src/main/java/com/paytech/counterparty/service/processor/request/ClientCustomerRequest.java"
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/service/processor/customer/request/GetCheckoutRequest.java",
@@ -1454,7 +1454,7 @@
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/service/processor/customer/response/ClientCustomerResponse.java",
-      "to": "paytech/consumer/paytech-consumer-core/src/main/java/com/paytech/consumer/service/processor/response/ClientCustomerResponse.java"
+      "to": "paytech/counterparty/paytech-counterparty-core/src/main/java/com/paytech/counterparty/service/processor/response/ClientCustomerResponse.java"
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/java/com/paytech/commerce/service/processor/customer/response/CustomerPaymentResponse.java",
@@ -1522,7 +1522,7 @@
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/resources/mapper/customer/CustomerMapper.xml",
-      "to": "paytech/consumer/paytech-consumer-core/src/main/resources/mapper/CustomerMapper.xml"
+      "to": "paytech/counterparty/paytech-counterparty-core/src/main/resources/mapper/CustomerMapper.xml"
     },
     {
       "from": "commerce-service/paytech-commerce-web/src/main/resources/mapper/order/",

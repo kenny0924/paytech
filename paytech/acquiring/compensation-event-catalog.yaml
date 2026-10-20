@@ -1,6 +1,6 @@
 # acquiring 本地补偿事件类型目录（design/02 R12）：每个 CompensationEventHandler 的 eventType() 必须在此登记。
 # 新增 Handler 时同步追加；与 MQ 领域事件目录 foundation/paytech-messaging/catalog/events.yaml 不是同一集合。
-# STORED_CARD_INVALIDATION 已随 Customer 归 consumer。
+# STORED_CARD_INVALIDATION 已随 Customer 归 counterparty。
 eventTypes:
   - CLIENT_WEBHOOK_REQUESTED
   - SUBMISSION_EVENT_TYPE

@@ -1,4 +1,4 @@
-// Shared contract for the two PDManer models split from commerce-service in step 03 (acquiring, consumer).
+// Shared contract for the two PDManer models split from commerce-service in step 03 (acquiring, counterparty — named consumer until 2026-10-19).
 // Each service test supplies its own frozen oracle (ordered tables, fields, indexes), totals and digests; this module only
 // checks them against the checked-in artifacts. It is not a test file and is not matched by *.test.mjs.
 import assert from "node:assert/strict";

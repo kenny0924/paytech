@@ -39,7 +39,7 @@
         <module>client-master</module>
         <module>commercial</module>
         <module>acquiring</module>
-        <module>consumer</module>
+        <module>counterparty</module>
         <module>payment</module>
         <module>channel-connector</module>
         <module>card</module>

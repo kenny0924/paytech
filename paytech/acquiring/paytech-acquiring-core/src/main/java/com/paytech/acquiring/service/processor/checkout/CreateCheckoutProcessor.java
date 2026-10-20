@@ -35,10 +35,10 @@ import com.paytech.acquiring.domainservice.port.customer.CheckoutRiskPort;
 import com.paytech.acquiring.domainservice.port.customer.CheckoutTaxPort;
 import com.paytech.acquiring.domainservice.repository.order.CommerceOrderRepository;
 import com.paytech.acquiring.domainservice.service.checkout.CheckoutCreationService;
-import com.paytech.acquiring.integration.consumer.ConsumerCustomerClient;
+import com.paytech.acquiring.integration.counterparty.CounterpartyCustomerClient;
 import com.paytech.acquiring.service.processor.checkout.request.CreateCheckoutRequest;
 import com.paytech.acquiring.service.processor.checkout.response.CreateCheckoutResponse;
-import com.paytech.consumer.api.customer.ConsumerReferencePolicy;
+import com.paytech.counterparty.api.customer.ConsumerReferencePolicy;
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.common.error.FailException;
@@ -63,7 +63,7 @@ public final class CreateCheckoutProcessor extends AbstractProcessor<CreateCheck
     private final CheckoutCreationService checkoutCreationService;
     private final CommerceOrderRepository commerceOrderRepository;
     private final CommerceIdentifierGenerator identifierGenerator;
-    private final ConsumerCustomerClient consumer;
+    private final CounterpartyCustomerClient counterparty;
 
     /** 检查商品标识唯一性及金额关系；字段约束由 HTTP 入口和公共模板触发。 */
     @Override
@@ -156,15 +156,15 @@ public final class CreateCheckoutProcessor extends AbstractProcessor<CreateCheck
     }
 
     /**
-     * 访客订单不建 Customer；有引用时在订单事务前经 consumer 建或取有效 Customer，并把主键写入订单（软引用，只存 ID）。
-     * <li>consumer 建或取与订单保存不是原子的：订单保存失败时 Customer 保留，可被后续订单复用。</li>
+     * 访客订单不建 Customer；有引用时在订单事务前经 counterparty 建或取有效 Customer，并把主键写入订单（软引用，只存 ID）。
+     * <li>counterparty 建或取与订单保存不是原子的：订单保存失败时 Customer 保留，可被后续订单复用。</li>
      */
     void attachCustomer(CreateCheckoutContext context, CreateCheckoutRequest request) {
         if (request.getConsumerReference() == null) {
             return;
         }
         var order = context.getOrder();
-        order.setCustomerId(consumer.resolveCustomerId(order.getClientId(), request.getConsumerReference()));
+        order.setCustomerId(counterparty.resolveCustomerId(order.getClientId(), request.getConsumerReference()));
     }
 
     /** 保存失败后事务已回滚；只有已存在同 Client 业务订单时才转换为业务冲突。 */

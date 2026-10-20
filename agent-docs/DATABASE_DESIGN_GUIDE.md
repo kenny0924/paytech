@@ -73,7 +73,7 @@
 paytech/client-master/docs/database/client-master.pdma.json          # Client & Contract
 paytech/commercial/docs/database/commercial.pdma.json
 paytech/acquiring/docs/database/acquiring.pdma.json                  # Commerce
-paytech/consumer/docs/database/consumer.pdma.json
+paytech/counterparty/docs/database/counterparty.pdma.json
 paytech/payment/docs/database/payment.pdma.json                      # Payment Orchestration
 paytech/channel-connector/docs/database/channel-connector.pdma.json
 paytech/card/docs/database/card.pdma.json

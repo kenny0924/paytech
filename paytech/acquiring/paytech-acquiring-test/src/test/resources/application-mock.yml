@@ -32,7 +32,7 @@ spring:
               - uri: "${acquiring.test.external.base-url}"
             card-service:
               - uri: "${acquiring.test.external.base-url}"
-            consumer-service:
+            counterparty-service:
               - uri: "${acquiring.test.external.base-url}"
             risk-decision-service:
               - uri: "${acquiring.test.external.base-url}"
@@ -58,8 +58,8 @@ spring:
         connect-timeout: 2s
         read-timeout: 5s
         redirects: dont-follow
-      consumer-service:
-        base-url: lb://consumer-service
+      counterparty-service:
+        base-url: lb://counterparty-service
         connect-timeout: 2s
         read-timeout: 3s
         redirects: dont-follow

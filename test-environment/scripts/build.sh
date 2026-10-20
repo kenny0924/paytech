@@ -52,7 +52,7 @@ readonly -a java_services=(
   client-master-service:client-master
   commercial-service:commercial
   acquiring-service:acquiring
-  consumer-service:consumer
+  counterparty-service:counterparty
   payment-service:payment
   channel-connector-service:channel-connector
   card-service:card
@@ -97,6 +97,6 @@ fi
 
 [[ "${BASH_SOURCE[0]}" != "$0" ]] || "$environment_dir/compose.sh" build \
   nacos risk-decision-service compliance-service platform-support-service operations-console-bff api-gateway \
-  client-console-bff client-master-service commercial-service acquiring-service consumer-service payment-service \
+  client-console-bff client-master-service commercial-service acquiring-service counterparty-service payment-service \
   channel-connector-service card-service ledger-service billing-service account-service reconciliation-service \
   tax-service operations-console-web

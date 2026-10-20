@@ -14,7 +14,7 @@
     <artifactId>paytech-acquiring-app</artifactId>
     <name>PayTech Acquiring App</name>
     <description>Deployable acquiring service: Spring Boot entry, Client / Customer API controllers, DataSource and MyBatis scan,
-        outbound HTTP clients (payment, consumer, risk, platform), Payment result queue declaration and compensation wiring.</description>
+        outbound HTTP clients (payment, counterparty, risk, platform), Payment result queue declaration and compensation wiring.</description>
 
     <dependencies>
         <dependency>
@@ -27,7 +27,7 @@
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
-            <artifactId>paytech-consumer-api</artifactId>
+            <artifactId>paytech-counterparty-api</artifactId>
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>

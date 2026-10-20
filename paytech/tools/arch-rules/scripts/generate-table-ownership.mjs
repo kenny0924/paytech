@@ -44,6 +44,10 @@ const renamedTables = new Map([
   ['t_payment_method_profile', 't_pricing_profile'],
   ['t_payment_method_profile_cond', 't_pricing_profile_cond'],
 ]);
+// Service renames after design 03 (design 03 keeps the source names): 2026-10-19 consumer -> counterparty
+// (decision 2026-10-19-counterparty-repositioning, requirements/20261019/counterparty-consumer服务改名).
+const renamedServices = new Map([['consumer', 'counterparty']]);
+const renamedDatabases = new Map([['mor_consumer', 'mor_counterparty']]);
 // Shared-database transition reads (not owned, not counted). Step 07 let account read mor_ledger; step 11b gives account
 // its own mor_account (design/04 §3.2, §6) and removes that allowance, so no transition is registered now.
 const transitionalSharedReads = [];
@@ -112,7 +116,9 @@ if ([sectionStart, sectionEnd, countStart, countEnd].some((index) => index < 0))
 const cells = (line) => line.split('|').slice(1, -1).map((cell) => cell.trim());
 const databaseOf = (service) => `mor_${service.replaceAll('-', '_')}`;
 const ownership = new Map();
-const add = (service, database, sourceTable) => {
+const add = (sourceService, sourceDatabase, sourceTable) => {
+  const service = renamedServices.get(sourceService) ?? sourceService;
+  const database = renamedDatabases.get(sourceDatabase) ?? sourceDatabase;
   const table = renamedTables.get(sourceTable) ?? sourceTable;
   if (!ownership.has(service)) ownership.set(service, new Map());
   const databases = ownership.get(service);
@@ -154,7 +160,7 @@ const expectedCounts = new Map();
 for (const line of lines.slice(countStart, countEnd)) {
   const row = cells(line);
   if (!line.startsWith('| mor_') || row.length !== 4) continue;
-  expectedCounts.set(row[0], Number(row[3]));
+  expectedCounts.set(renamedDatabases.get(row[0]) ?? row[0], Number(row[3]));
 }
 const actualCounts = new Map();
 for (const databases of ownership.values()) {
@@ -207,6 +213,7 @@ const output = [
   `# ${stepAdded} step-added tables (approved refactor-step designs, e.g. design/05 t_card_material_ticket; not part of the §4.2 count).`,
   '# Structure: services.<service>.<database> = tables owned (or copied / per-database infrastructure);',
   `# Renamed: ${[...renamedTables].map(([from, to]) => `${from} -> ${to}`).join(', ')}.`,
+  `# Renamed services: ${[...renamedServices].map(([from, to]) => `${from} -> ${to}`).join(', ')}; databases: ${[...renamedDatabases].map(([from, to]) => `${from} -> ${to}`).join(', ')}.`,
   'sharedInfrastructureTables:',
   ...sharedInfrastructureTables.map((table) => `  - ${table}`),
   '# Shared-database transition reads (not owned, not counted); removed when the service gets its own database.',

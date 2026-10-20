@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 
 import com.paytech.acquiring.api.client.v1.enums.CommerceCheckoutErrorCode;
-import com.paytech.consumer.api.enums.ConsumerErrorCode;
+import com.paytech.counterparty.api.enums.CounterpartyErrorCode;
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.foundation.web.api.ApiErrorStatusResolver;
 
@@ -19,8 +19,8 @@ public class CommerceApiErrorConfiguration {
             if (errorCode == CommonErrorCode.VALIDATION_ERROR) {
                 return HttpStatus.UNPROCESSABLE_CONTENT;
             }
-            // 建单前拦截个人原值引用（规则来自 consumer-api）：仍按原 Client API 合同返回 422。
-            if (errorCode == ConsumerErrorCode.INVALID_CONSUMER_REFERENCE) {
+            // 建单前拦截个人原值引用（规则来自 counterparty-api）：仍按原 Client API 合同返回 422。
+            if (errorCode == CounterpartyErrorCode.INVALID_CONSUMER_REFERENCE) {
                 return HttpStatus.UNPROCESSABLE_CONTENT;
             }
             if (errorCode instanceof com.paytech.acquiring.api.checkout.v1.enums.CustomerCheckoutErrorCode customerError) {

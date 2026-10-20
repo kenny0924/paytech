@@ -558,7 +558,7 @@ class JavaImageHealthProbeTest(unittest.TestCase):
                     "client-master-service",
                     "client-console-bff",
                     "acquiring-service",
-                    "consumer-service",
+                    "counterparty-service",
                     "commercial-service",
                     "payment-service",
                     "channel-connector-service",

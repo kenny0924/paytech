@@ -2,7 +2,7 @@ package com.paytech.acquiring.api.client.v1.enums;
 
 import com.paytech.foundation.common.enums.CodeMessageEnum;
 
-/** acquiring Client API 对外稳定错误码目录；Customer 相关的三个错误码已归 consumer-api 的 ConsumerErrorCode（Code 值不变）。 */
+/** acquiring Client API 对外稳定错误码目录；Customer 相关的三个错误码已归 counterparty-api 的 CounterpartyErrorCode（Code 值不变）。 */
 public enum CommerceCheckoutErrorCode implements CodeMessageEnum {
     /** Original command for this idempotency key has not completed yet. */
     IDEMPOTENCY_REQUEST_IN_PROGRESS("IDEMPOTENCY_REQUEST_IN_PROGRESS", "相同命令正在处理，请稍后重试"),

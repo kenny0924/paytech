@@ -2,7 +2,7 @@
 # applicationName: spring.application.name / service-discovery name; database: null when the service owns no database.
 services:
   - {name: acquiring, applicationName: acquiring-service, port: 18102, database: mor_acquiring, source: commerce-service}
-  - {name: consumer, applicationName: consumer-service, port: 18109, database: mor_consumer, source: commerce-service}
+  - {name: counterparty, applicationName: counterparty-service, port: 18109, database: mor_counterparty, source: commerce-service}
   - {name: payment, applicationName: payment-service, port: 18103, database: mor_payment, source: payment-orchestration-service}
   - {name: channel-connector, applicationName: channel-connector-service, port: 18110, database: mor_channel_connector, source: payment-orchestration-service}
   - {name: card, applicationName: card-service, port: 18111, database: mor_card, source: payment-orchestration-service}

@@ -27,7 +27,7 @@ public class StoredCardController implements StoredCardApi {
     @Override
     public StoredCardListResponseBody listStoredCards(String caller, String clientId, String customerId) {
         cardCallerService.require(callers.resolve(caller), CardApiConstants.ACQUIRING_SERVICE,
-            CardApiConstants.CONSUMER_SERVICE);
+            CardApiConstants.COUNTERPARTY_SERVICE);
         return converter.convertList(storedCardService.listStoredCards(Long.parseLong(clientId), Long.parseLong(customerId)));
     }
 
@@ -35,7 +35,7 @@ public class StoredCardController implements StoredCardApi {
     @Override
     public ResponseEntity<Void> deleteStoredCard(String caller, String storedCardToken, String clientId,
         String customerId) {
-        cardCallerService.require(callers.resolve(caller), CardApiConstants.CONSUMER_SERVICE);
+        cardCallerService.require(callers.resolve(caller), CardApiConstants.COUNTERPARTY_SERVICE);
         storedCardService.deleteStoredCard(Long.parseLong(clientId), Long.parseLong(customerId), storedCardToken);
         return ResponseEntity.noContent().build();
     }
@@ -44,7 +44,7 @@ public class StoredCardController implements StoredCardApi {
     @Override
     public InvalidateStoredCardsResponseBody invalidateStoredCards(String caller, String customerId,
         InvalidateStoredCardsRequestBody body) {
-        cardCallerService.require(callers.resolve(caller), CardApiConstants.CONSUMER_SERVICE);
+        cardCallerService.require(callers.resolve(caller), CardApiConstants.COUNTERPARTY_SERVICE);
         return converter.convertInvalidation(
             storedCardService.invalidateCustomer(Long.parseLong(body.getClientId()), Long.parseLong(customerId)));
     }

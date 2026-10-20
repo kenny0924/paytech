@@ -63,7 +63,7 @@
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
-            <artifactId>paytech-consumer-api</artifactId>
+            <artifactId>paytech-counterparty-api</artifactId>
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>

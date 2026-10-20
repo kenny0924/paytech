@@ -39,7 +39,7 @@ SERVICE_DATABASES = (
     ServiceDatabase("client-master", "mor_client_master", "client_master_app", "MOR_CLIENT_MASTER_DB_PASSWORD", True),
     ServiceDatabase("commercial", "mor_commercial", "commercial_app", "MOR_COMMERCIAL_DB_PASSWORD", True),
     ServiceDatabase("acquiring", "mor_acquiring", "acquiring_app", "MOR_ACQUIRING_DB_PASSWORD", True),
-    ServiceDatabase("consumer", "mor_consumer", "consumer_app", "MOR_CONSUMER_DB_PASSWORD", True),
+    ServiceDatabase("counterparty", "mor_counterparty", "counterparty_app", "MOR_COUNTERPARTY_DB_PASSWORD", True),
     ServiceDatabase("payment", "mor_payment", "payment_app", "MOR_PAYMENT_DB_PASSWORD", True),
     ServiceDatabase("channel-connector", "mor_channel_connector", "channel_connector_app", "MOR_CHANNEL_CONNECTOR_DB_PASSWORD", True),
     ServiceDatabase("card", "mor_card", "card_app", "MOR_CARD_DB_PASSWORD", True),

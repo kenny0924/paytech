@@ -11,7 +11,7 @@ spring:
         # 启用 nacos Profile 后，从配置中心加载服务配置。
         enabled: false
       discovery:
-        # 注册本服务（Payment、Platform、acquiring、consumer 经服务发现调用）并发现 Vault；地址与命名空间由部署环境注入。
+        # 注册本服务（Payment、Platform、acquiring、counterparty 经服务发现调用）并发现 Vault；地址与命名空间由部署环境注入。
         server-addr: "${NACOS_SERVER_ADDR:127.0.0.1:8848}"
         namespace: "${NACOS_NAMESPACE:mor-local}"
   datasource:

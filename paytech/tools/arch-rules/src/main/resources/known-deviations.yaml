@@ -13,7 +13,7 @@ deviations:
   - rule: R2
     subject: com.paytech:paytech-platform-support-api
     message: "api 模块存在不允许的依赖: tools.jackson.core:jackson-databind (compile)"
-  # 第 03 步：acquiring / consumer 的 Client API 线上 DTO 沿用 Commerce 合同的 Jackson 注解（isRequired、NON_NULL、ignoreUnknown），
+  # 第 03 步：acquiring / counterparty 的 Client API 线上 DTO 沿用 Commerce 合同的 Jackson 注解（isRequired、NON_NULL、ignoreUnknown），
   # acquiring-api 的 CreateCheckout / CreateRefund 请求体另用 jackson-databind 做严格绑定；去除会改变已发布合同，与 Platform 同口径待评审 R2 允许清单。
   - rule: R2
     subject: com.paytech:paytech-acquiring-api
@@ -22,5 +22,5 @@ deviations:
     subject: com.paytech:paytech-acquiring-api
     message: "api 模块存在不允许的依赖: tools.jackson.core:jackson-databind (compile)"
   - rule: R2
-    subject: com.paytech:paytech-consumer-api
+    subject: com.paytech:paytech-counterparty-api
     message: "api 模块存在不允许的依赖: com.fasterxml.jackson.core:jackson-annotations (compile)"

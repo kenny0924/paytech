@@ -11,7 +11,7 @@ const modelContracts = [
   ["paytech/client-master", "client-master.pdma.json", "scripts/pdmaner/generate-client-master-model.mjs"],
   ["paytech/commercial", "commercial.pdma.json", "scripts/pdmaner/generate-commercial-model.mjs"],
   ["paytech/acquiring", "acquiring.pdma.json", "scripts/pdmaner/generate-acquiring-model.mjs"],
-  ["paytech/consumer", "consumer.pdma.json", "scripts/pdmaner/generate-consumer-model.mjs"],
+  ["paytech/counterparty", "counterparty.pdma.json", "scripts/pdmaner/generate-counterparty-model.mjs"],
   ["paytech/payment", "payment.pdma.json", "scripts/pdmaner/generate-payment-model.mjs"],
   ["paytech/channel-connector", "channel-connector.pdma.json", "scripts/pdmaner/generate-channel-connector-model.mjs"],
   // 第 12 步：卡域 4 表迁出 payment，归 card-service（mor_card）。

@@ -85,7 +85,7 @@
 
 公共 Lease 是技术 CAS 条件，与 Redis 的 Intent 锁不同；Claim Owner、到期时刻仍须提供。完成时使用实际当前时刻；超过租约导致完成失败，应回滚本次受理。当前无需调用续租、接管或 advanceStage，也不增加扫描任务。本期命令 Lease 为 30 秒，本地事务超时为 5 秒；每个新 Claim 使用随机 UUID 作为 Owner。操作时刻在事务前冻结，完成时刻取当前 UTC 微秒时间。
 
-Commerce 已有[原子 Customer 命令](../../../consumer/paytech-consumer-core/src/main/java/com/paytech/consumer/domainservice/service/impl)采用公共 Claim/Complete，证明公共包不要求所有消费者都复制 Create Checkout 的多阶段恢复流程。
+Commerce 已有[原子 Customer 命令](../../../counterparty/paytech-counterparty-core/src/main/java/com/paytech/counterparty/domainservice/service/impl)采用公共 Claim/Complete，证明公共包不要求所有消费者都复制 Create Checkout 的多阶段恢复流程。
 
 ### 必须保留的语义
 

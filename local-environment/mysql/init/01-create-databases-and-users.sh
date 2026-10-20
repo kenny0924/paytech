@@ -110,7 +110,7 @@ create_v2_finance_database mor_tax tax_app MOR_TAX_DB_PASSWORD "SELECT, INSERT, 
 # V2 Commerce successors (refactor step 03, design/10 §5.1): same optional rule as above until compose.yaml passes the
 # variables to the mysql container. mor_commerce and commerce_app stay for the main branch.
 create_v2_finance_database mor_acquiring acquiring_app MOR_ACQUIRING_DB_PASSWORD "SELECT, INSERT, UPDATE, DELETE" mor_acquiring
-create_v2_finance_database mor_consumer consumer_app MOR_CONSUMER_DB_PASSWORD "SELECT, INSERT, UPDATE, DELETE" mor_consumer
+create_v2_finance_database mor_counterparty counterparty_app MOR_COUNTERPARTY_DB_PASSWORD "SELECT, INSERT, UPDATE, DELETE" mor_counterparty
 
 # V2 Risk successors (refactor step 06, design/10 §5.1): same optional rule. mor_risk and risk_app stay for the main branch;
 # mor_dispute only owns Schema in step 06 and is not created.

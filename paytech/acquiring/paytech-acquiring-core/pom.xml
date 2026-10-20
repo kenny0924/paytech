@@ -22,10 +22,10 @@
             <groupId>com.paytech</groupId>
             <artifactId>paytech-acquiring-api</artifactId>
         </dependency>
-        <!-- 服务间合同：consumer（Customer 建或取、存卡资格）、payment（Intent / 卡工具 / 已存卡列表）、risk、platform（Webhook）。 -->
+        <!-- 服务间合同：counterparty（Customer 建或取、存卡资格）、payment（Intent / 卡工具 / 已存卡列表）、risk、platform（Webhook）。 -->
         <dependency>
             <groupId>com.paytech</groupId>
-            <artifactId>paytech-consumer-api</artifactId>
+            <artifactId>paytech-counterparty-api</artifactId>
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>

@@ -3,13 +3,13 @@
 - spring.application.name：`acquiring-service`（原 `commerce-service`）；Context Path 保持 `/commerce`（Gateway 路由不变，改名在第 13 步评估）
 - 端口：18102，管理端口 19102
 - 数据库：`mor_acquiring`（原 `mor_commerce`），账号 `acquiring_app`
-- 来源现有工程：`commerce-service`（第 03 步拆为 acquiring 与 [consumer](../consumer/README.md)）
+- 来源现有工程：`commerce-service`（第 03 步拆为 acquiring 与 consumer，2026-10-19 改名 [counterparty](../counterparty/README.md)）
 
 ## 第 03 步拆分（2026-10-18）
 
 - 模块：`paytech-acquiring-api`（Client API 订单 / Checkout / 退款 / 取消合同，及消费者端 Hosted Checkout 合同包 `checkout`）、`paytech-acquiring-core`（transaction / checkout / command 三个内部模块共用，共库 mor_acquiring）、`paytech-acquiring-app`（启动类、Controller、DataSource / MyBatis、出站客户端、paytech-messaging 消费端配置）、`paytech-acquiring-test`。
-- Customer 归 consumer：建单时在订单事务前经 `POST /consumer/v1/customers/resolve` 建或取 Customer，订单只存 `customer_id`；GET checkout 与 SubmitPayment 经 `GET /consumer/v1/card-saving-eligibility` 读取存卡资格，任何失败降级为不可存卡并记 WARN（S6）；付款人引用经 `GET /consumer/v1/customers/{customerId}` 取 `customerNo`。已存卡列表仍经 Payment `StoredCardApi` 读取，不可用时为空。
-- 出站发现名：`payment-service`（`/payment`）、`consumer-service`、`risk-decision-service`、`platform-support-service`；`internal-auth.mode` 默认 `"OFF"`。Checkout 商业端口仍为固定 Mock（目标 `commercial-service`）。
+- Customer 归 counterparty：建单时在订单事务前经 `POST /counterparty/v1/customers/resolve` 建或取 Customer，订单只存 `customer_id`；GET checkout 与 SubmitPayment 经 `GET /counterparty/v1/card-saving-eligibility` 读取存卡资格，任何失败降级为不可存卡并记 WARN（S6）；付款人引用经 `GET /counterparty/v1/customers/{customerId}` 取 `customerNo`。已存卡列表仍经 Payment `StoredCardApi` 读取，不可用时为空。
+- 出站发现名：`payment-service`（`/payment`）、`counterparty-service`、`risk-decision-service`、`platform-support-service`；`internal-auth.mode` 默认 `"OFF"`。Checkout 商业端口仍为固定 Mock（目标 `commercial-service`）。
 - 支付结果消费第 08 步切到 paytech-messaging：订阅 `payment.events`，分区队列 `acquiring.payment.p0..p3`（DLQ `acquiring.payment.dlq`）；第 03 步的旧队列与旧 Topic 已不再声明。
 - 配置前缀 `acquiring.*`；环境变量名（`COMMERCE_*`、`MOR_COMMERCE_DB_*`）暂沿用，以免影响现有部署描述。
 - PDManer 模型 `docs/database/acquiring.pdma.json` 由 `scripts/pdmaner/generate-acquiring-model.mjs` 生成；Schema `docs/database/sql/acquiring-schema.sql`。

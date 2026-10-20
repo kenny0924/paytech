@@ -7,7 +7,7 @@ import { renderSchema, schemaTargets } from "./generate-oe-client-schemas.mjs";
 import { generateClientMasterModel } from "./generate-client-master-model.mjs";
 import { generateCommercialModel } from "./generate-commercial-model.mjs";
 import { generateAcquiringModel } from "./generate-acquiring-model.mjs";
-import { generateConsumerModel } from "./generate-consumer-model.mjs";
+import { generateCounterpartyModel } from "./generate-counterparty-model.mjs";
 import { generatePaymentModel } from "./generate-payment-model.mjs";
 import { generateFinanceModel } from "./finance/generate-finance-model.mjs";
 
@@ -50,7 +50,7 @@ test("Polymorphic identities can carry OE codes without converting numeric Party
 test("Four manual schemas exactly preserve model metadata, types and physical constraints", () => {
   const root = path.resolve(import.meta.dirname, "../..");
   assert.deepEqual(schemaTargets.map(([repository]) => repository), [
-    "paytech/client-master", "paytech/commercial", "paytech/acquiring", "paytech/consumer", "paytech/payment",
+    "paytech/client-master", "paytech/commercial", "paytech/acquiring", "paytech/counterparty", "paytech/payment",
     "paytech/channel-connector",
     "paytech/ledger", "paytech/account", "paytech/billing", "paytech/reconciliation", "paytech/tax", "paytech/payout",
   ]);
@@ -124,7 +124,7 @@ test("Basic Checkout can exist before seller and final tax; preparation-era colu
   for (const name of ["preparation_command_id", "context_format"]) {
     assert.ok(!order.fields.some((f) => f.defKey === name), `${name} is removed by C7`);
   }
-  assert.ok(!generateConsumerModel().entities.some((entity) => entity.defKey === "t_commerce_order"));
+  assert.ok(!generateCounterpartyModel().entities.some((entity) => entity.defKey === "t_commerce_order"));
   const context = table(model, "t_order_context");
   for (const name of ["affiliation_id", "entity_scope_id", "entity_source_relation_id", "client_pricing_version_id"]) field(context, name);
   assert.ok(!context.fields.some((f) => f.defKey === "assignment_id"));
@@ -154,7 +154,7 @@ test("Finance keeps typed book identity and separate legacy channel-cost and new
 });
 
 test("Every changed model retains valid local relations, indexes and diagram endpoints", () => {
-  for (const generate of [generateClientMasterModel, generateCommercialModel, generateAcquiringModel, generateConsumerModel,
+  for (const generate of [generateClientMasterModel, generateCommercialModel, generateAcquiringModel, generateCounterpartyModel,
     generatePaymentModel, generateFinanceModel]) {
     const model = generate();
     const entities = new Map(model.entities.map((e) => [e.id, e]));

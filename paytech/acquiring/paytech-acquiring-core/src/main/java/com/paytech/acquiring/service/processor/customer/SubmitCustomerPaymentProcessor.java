@@ -40,7 +40,7 @@ import com.paytech.acquiring.domainservice.repository.order.CommerceOrderReposit
 import com.paytech.acquiring.domainservice.repository.order.OrderContextRepository;
 import com.paytech.acquiring.domainservice.repository.order.OrderPaymentProjectionRepository;
 import com.paytech.acquiring.domainservice.service.customer.CheckoutSubmissionService;
-import com.paytech.acquiring.integration.consumer.ConsumerCustomerClient;
+import com.paytech.acquiring.integration.counterparty.CounterpartyCustomerClient;
 import com.paytech.acquiring.service.processor.customer.request.SubmitCustomerPaymentRequest;
 import com.paytech.acquiring.service.processor.customer.response.CustomerPaymentResponse;
 import com.paytech.foundation.common.error.CommonErrorCode;
@@ -69,7 +69,7 @@ public class SubmitCustomerPaymentProcessor
     private final OrderPaymentProjectionRepository paymentRepository;
     private final CheckoutNetworkEvidenceRepository evidenceRepository;
     private final CardSavingEligibility cardSavingEligibility;
-    private final ConsumerCustomerClient consumer;
+    private final CounterpartyCustomerClient counterparty;
 
     /** 非 HTTP 调用同样执行字段约束；不访问数据库，不复制模板的事务检查。 */
     @Override
@@ -128,12 +128,12 @@ public class SubmitCustomerPaymentProcessor
     }
 
     /**
-     * 付款人引用不传 Client 原始引用：有 Customer 时用公开 Customer 编号（事务外经 consumer 读取，含已删除），访客用订单号；回跳到本 Checkout 页面。
-     * <li>consumer 返回 Customer 不存在时按访客处理；consumer 不可用时失败，已提交的接受与 Intent 关联由重试复用。</li>
+     * 付款人引用不传 Client 原始引用：有 Customer 时用公开 Customer 编号（事务外经 counterparty 读取，含已删除），访客用订单号；回跳到本 Checkout 页面。
+     * <li>counterparty 返回 Customer 不存在时按访客处理；counterparty 不可用时失败，已提交的接受与 Intent 关联由重试复用。</li>
      */
     Payer buildPayer(SubmitCustomerPaymentRequest request, SubmitCustomerPaymentContext context) {
         var order = context.getOrder();
-        var customerNo = order.getCustomerId() == null ? null : consumer.customerNo(order.getCustomerId());
+        var customerNo = order.getCustomerId() == null ? null : counterparty.customerNo(order.getCustomerId());
         var session = context.getSession();
         var evidence = request.getEvidence();
         String userAgent = evidence.userAgent() == null || evidence.userAgent().isBlank() ? null : evidence.userAgent();

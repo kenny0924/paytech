@@ -7,6 +7,7 @@
 # 29 step-added tables (approved refactor-step designs, e.g. design/05 t_card_material_ticket; not part of the §4.2 count).
 # Structure: services.<service>.<database> = tables owned (or copied / per-database infrastructure);
 # Renamed: t_transaction_economics -> t_economic_fact, t_transaction_economic_component -> t_economic_fact_line, t_transaction_economic_comp_link -> t_economic_fact_line_link, t_account -> t_ledger_account, t_payment_method_profile -> t_pricing_profile, t_payment_method_profile_cond -> t_pricing_profile_cond.
+# Renamed services: consumer -> counterparty; databases: mor_consumer -> mor_counterparty.
 sharedInfrastructureTables:
   - t_consumed_event
   - t_consumed_aggregate_version
@@ -156,8 +157,8 @@ services:
       - t_settle_control_state_change
       - t_settlement_control
       - t_settlement_control_scope
-  consumer:
-    mor_consumer:
+  counterparty:
+    mor_counterparty:
       - t_compensation_event
       - t_customer
   dispute:

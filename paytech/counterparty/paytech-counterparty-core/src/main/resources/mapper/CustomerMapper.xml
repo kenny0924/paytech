@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.counterparty.core.dal.mapper.CustomerMapper">
+    <resultMap id="Customer" type="com.paytech.counterparty.core.dal.dataobject.Customer">
+        <id column="customer_id" property="customerId" javaType="_long"/>
+        <result column="customer_no" property="customerNo" javaType="java.lang.String"/>
+        <result column="client_id" property="clientId" javaType="_long"/>
+        <result column="consumer_reference" property="consumerReference" javaType="java.lang.String"/>
+        <result column="active_reference" property="activeReference" javaType="java.lang.String"/>
+        <result column="customer_status" property="customerStatus" javaType="com.paytech.counterparty.api.enums.CustomerStatus"/>
+        <result column="deleted_time" property="deletedTime" javaType="java.time.Instant"/>
+        <result column="version" property="version" javaType="_long"/>
+        <result column="create_time" property="createTime" javaType="java.time.Instant"/>
+        <result column="update_time" property="updateTime" javaType="java.time.Instant"/>
+    </resultMap>
+    <sql id="columns">customer_id,customer_no,client_id,consumer_reference,active_reference,customer_status,deleted_time,version,create_time,update_time</sql>
+    <insert id="insert">
+        INSERT INTO t_customer (<include refid="columns"/>)
+        VALUES (#{customer.customerId},#{customer.customerNo},#{customer.clientId},#{customer.consumerReference},
+            #{customer.activeReference},#{customer.customerStatus},#{customer.deletedTime},#{customer.version},
+            #{customer.createTime},#{customer.updateTime})
+    </insert>
+    <select id="findById" resultMap="Customer">
+        SELECT <include refid="columns"/> FROM t_customer WHERE customer_id=#{customerId}
+    </select>
+    <select id="findByNo" resultMap="Customer">
+        SELECT <include refid="columns"/> FROM t_customer WHERE customer_no=#{customerNo} AND client_id=#{clientId}
+    </select>
+    <select id="findActive" resultMap="Customer">
+        SELECT <include refid="columns"/> FROM t_customer WHERE client_id=#{clientId} AND active_reference=#{consumerReference}
+    </select>
+    <update id="delete">
+        UPDATE t_customer SET customer_status='DELETED',active_reference=NULL,deleted_time=#{now},version=version+1,update_time=#{now}
+        WHERE customer_id=#{customer.customerId} AND client_id=#{customer.clientId} AND version=#{customer.version}
+            AND customer_status='ACTIVE'
+    </update>
+</mapper>

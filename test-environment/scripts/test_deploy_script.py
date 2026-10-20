@@ -776,7 +776,7 @@ JAVA_SERVICES = (
     ("client-master-service", "client-master"),
     ("commercial-service", "commercial"),
     ("acquiring-service", "acquiring"),
-    ("consumer-service", "consumer"),
+    ("counterparty-service", "counterparty"),
     ("payment-service", "payment"),
     ("channel-connector-service", "channel-connector"),
     ("card-service", "card"),

@@ -129,7 +129,7 @@ no-trunc container ID。MySQL、Redis、RabbitMQ 使用 `--no-recreate --no-buil
 | `client-master-service` | `mor_client_master` / `client_master_app` | 172.30.73.26 | 26 |
 | `commercial-service` | `mor_commercial` / `commercial_app` | 172.30.73.34 | — |
 | `acquiring-service` | `mor_acquiring` / `acquiring_app` | 172.30.73.30 | 28 |
-| `consumer-service` | `mor_consumer` / `consumer_app` | 172.30.73.33 | 27 |
+| `counterparty-service` | `mor_counterparty` / `counterparty_app` | 172.30.73.33 | 27 |
 | `payment-service` | `mor_payment` / `payment_app` | 172.30.73.35 | 21 |
 | `channel-connector-service` | `mor_channel_connector` / `channel_connector_app` | 172.30.73.36 | — |
 | `card-service` | `mor_card` / `card_app` | 172.30.73.37 | 22 |
