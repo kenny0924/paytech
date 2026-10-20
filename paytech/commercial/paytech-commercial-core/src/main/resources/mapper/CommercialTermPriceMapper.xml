@@ -66,4 +66,9 @@
     <delete id="deleteByVersionId">
         DELETE FROM t_commercial_term_price WHERE term_version_id = #{termVersionId}
     </delete>
+
+    <select id="selectVersionIdsOfPrices" resultType="long">
+        SELECT term_version_id FROM t_commercial_term_price
+        WHERE term_version_id IN <foreach collection="termVersionIds" item="termVersionId" open="(" separator="," close=")">#{termVersionId}</foreach>
+    </select>
 </mapper>

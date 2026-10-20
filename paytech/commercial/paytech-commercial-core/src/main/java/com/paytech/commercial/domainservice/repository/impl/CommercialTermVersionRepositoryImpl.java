@@ -3,12 +3,14 @@ package com.paytech.commercial.domainservice.repository.impl;
 import static com.paytech.commercial.domainservice.repository.impl.PersistenceTimes.micros;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 
 import com.paytech.commercial.core.dal.dataobject.CheckoutRecords;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermVersion;
 import com.paytech.commercial.core.dal.mapper.CommercialTermVersionMapper;
 import com.paytech.commercial.domain.CommercialCheckoutScope;
+import com.paytech.commercial.domain.CommercialTermVersionListQuery;
 import com.paytech.commercial.domain.enums.CommercialTermVersionStatus;
 import com.paytech.commercial.domainservice.repository.CommercialTermVersionRepository;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
@@ -99,5 +101,27 @@ public class CommercialTermVersionRepositoryImpl implements CommercialTermVersio
         version.setEffectiveFrom(from);
         version.setEffectiveTo(to);
         version.setUpdateTime(time);
+    }
+
+    /** 一页版本。 */
+    @Override
+    public List<CommercialTermVersion> findPage(CommercialTermVersionListQuery query) {
+        return List.copyOf(mapper.selectPage(query, query.order(), query.getPaging().offset(), query.getPaging().size()));
+    }
+
+    /** 相同条件的总数。 */
+    @Override
+    public long count(CommercialTermVersionListQuery query) {
+        return mapper.countPage(query);
+    }
+
+    /** 任一集合为空不访问数据库。 */
+    @Override
+    public List<CommercialTermVersion> findByPlanIdsAndStatuses(Collection<Long> termPlanIds,
+        Collection<CommercialTermVersionStatus> statuses) {
+        if (termPlanIds.isEmpty() || statuses.isEmpty()) {
+            return List.of();
+        }
+        return List.copyOf(mapper.selectByPlanIdsAndStatuses(termPlanIds, statuses));
     }
 }

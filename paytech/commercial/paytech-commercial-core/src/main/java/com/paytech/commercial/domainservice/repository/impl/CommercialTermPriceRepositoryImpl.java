@@ -2,7 +2,11 @@ package com.paytech.commercial.domainservice.repository.impl;
 
 import static com.paytech.commercial.domainservice.repository.impl.PersistenceTimes.micros;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import com.paytech.commercial.core.dal.dataobject.CheckoutRecords;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermPrice;
@@ -62,5 +66,15 @@ public class CommercialTermPriceRepositoryImpl implements CommercialTermPriceRep
     @Override
     public int deleteByVersionId(long termVersionId) {
         return mapper.deleteByVersionId(termVersionId);
+    }
+
+    /** 按每条价格的版本 ID 分组计数。 */
+    @Override
+    public Map<Long, Integer> countByVersionIds(Collection<Long> termVersionIds) {
+        if (termVersionIds.isEmpty()) {
+            return Map.of();
+        }
+        return mapper.selectVersionIdsOfPrices(termVersionIds).stream()
+            .collect(Collectors.toMap(Function.identity(), versionId -> 1, Integer::sum));
     }
 }

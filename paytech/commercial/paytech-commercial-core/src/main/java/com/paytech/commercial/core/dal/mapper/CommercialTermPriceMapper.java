@@ -1,5 +1,6 @@
 package com.paytech.commercial.core.dal.mapper;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
@@ -27,4 +28,7 @@ public interface CommercialTermPriceMapper {
 
     /** 删除一个版本的全部价格，用于 DRAFT 内整体替换；组件与档位由调用方先删除，返回删除行数。 */
     int deleteByVersionId(@Param("termVersionId") long termVersionId);
+
+    /** 一组版本下每条价格所属的版本 ID（每条价格一行），供列表统计价格条数。 */
+    List<Long> selectVersionIdsOfPrices(@Param("termVersionIds") Collection<Long> termVersionIds);
 }

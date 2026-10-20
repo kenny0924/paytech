@@ -91,4 +91,33 @@
             activated_time = #{activatedTime}, update_time = #{now}
         WHERE agreement_id = #{row.agreementId} AND status = #{row.status}
     </update>
+
+    <!-- 合同列表条件：entityNo 同时匹配 CLIENT 合同 OE 与 PARTNER 合同覆盖 OE；agreementNoPrefix 已由 Repository 转义 \ % _。 -->
+    <sql id="listConditions">
+        <where>
+            <if test="query.clientId != null">AND client_id = #{query.clientId}</if>
+            <if test="query.localPartnerId != null">AND local_partner_id = #{query.localPartnerId}</if>
+            <if test="query.agreementType != null">AND agreement_type = #{query.agreementType}</if>
+            <if test="!query.statuses.isEmpty()">
+                AND status IN <foreach collection="query.statuses" item="status" open="(" separator="," close=")">#{status}</foreach>
+            </if>
+            <if test="query.entityNo != null">
+                AND (entity_no = #{query.entityNo}
+                    OR agreement_id IN (SELECT agreement_id FROM t_agreement_operating_entity WHERE entity_no = #{query.entityNo}))
+            </if>
+            <if test="agreementNoPrefix != null">AND agreement_no LIKE CONCAT(#{agreementNoPrefix}, '%')</if>
+        </where>
+    </sql>
+
+    <select id="selectPage" resultMap="AgreementRow">
+        SELECT <include refid="agreementColumns"/> FROM t_agreement
+        <include refid="listConditions"/>
+        ORDER BY create_time DESC, agreement_id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="long">
+        SELECT COUNT(*) FROM t_agreement
+        <include refid="listConditions"/>
+    </select>
 </mapper>

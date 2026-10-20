@@ -1,12 +1,14 @@
 package com.paytech.commercial.domainservice.repository;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 
 import com.paytech.commercial.api.enums.CommercialTermPlanStatus;
 import com.paytech.commercial.core.dal.dataobject.CheckoutRecords;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermPlan;
 import com.paytech.commercial.domain.CommercialCheckoutScope;
+import com.paytech.commercial.domain.CommercialTermPlanListQuery;
 
 /** t_commercial_term_plan 的本地仓储；不负责其他表的加载或事务。 */
 public interface CommercialTermPlanRepository {
@@ -72,4 +74,28 @@ public interface CommercialTermPlanRepository {
      * @param now 本次更新时间
      */
     void updateStatus(CommercialTermPlan commercialTermPlan, CommercialTermPlanStatus status, Instant now);
+
+    /**
+     * 按列表条件读取一页方案，按创建时间、方案 ID 倒序。
+     *
+     * @param query 已校验的列表条件与分页
+     * @return 当前页方案
+     */
+    List<CommercialTermPlan> findPage(CommercialTermPlanListQuery query);
+
+    /**
+     * 相同列表条件下的方案总数。
+     *
+     * @param query 列表条件
+     * @return 总数
+     */
+    long count(CommercialTermPlanListQuery query);
+
+    /**
+     * 按一组主键读取方案；空集合不访问数据库。
+     *
+     * @param termPlanIds 方案 ID
+     * @return 按 term_plan_id 升序
+     */
+    List<CommercialTermPlan> findByIds(Collection<Long> termPlanIds);
 }

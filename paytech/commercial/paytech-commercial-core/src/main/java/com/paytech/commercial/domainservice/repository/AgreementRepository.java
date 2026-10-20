@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.paytech.commercial.core.dal.dataobject.Agreement;
 import com.paytech.commercial.core.dal.dataobject.CheckoutRecords;
+import com.paytech.commercial.domain.AgreementListQuery;
 import com.paytech.commercial.domain.CommercialCheckoutScope;
 import com.paytech.commercial.domain.enums.AgreementStatus;
 
@@ -75,4 +76,20 @@ public interface AgreementRepository {
      */
     void updateLifecycle(Agreement agreement, AgreementStatus status, Instant effectiveTo, Instant signedTime,
         Instant activatedTime, Instant now);
+
+    /**
+     * 按列表条件读取一页合同，按创建时间、合同 ID 倒序。
+     *
+     * @param query 已校验的列表条件与分页
+     * @return 当前页合同
+     */
+    List<Agreement> findPage(AgreementListQuery query);
+
+    /**
+     * 相同列表条件下的合同总数。
+     *
+     * @param query 列表条件
+     * @return 总数
+     */
+    long count(AgreementListQuery query);
 }

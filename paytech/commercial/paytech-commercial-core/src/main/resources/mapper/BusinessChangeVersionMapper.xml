@@ -23,4 +23,22 @@
         WHERE history_id = #{historyId}
         ORDER BY version_no
     </select>
+    <select id="findByHistoryIds" resultMap="VersionRow">
+        SELECT change_version_id, history_id, version_no, operation_type, snapshot_json, snapshot_format, create_by, create_time
+        FROM t_business_change_version
+        WHERE history_id IN <foreach collection="historyIds" item="historyId" open="(" separator="," close=")">#{historyId}</foreach>
+        ORDER BY history_id, version_no
+    </select>
+    <!-- 时间线分页：uk_bcv_history_ver(history_id, version_no) 保证排序稳定；同一命令的 Root 快照排在其 Child 之前。 -->
+    <select id="selectPageByHistoryIds" resultMap="VersionRow">
+        SELECT change_version_id, history_id, version_no, operation_type, snapshot_json, snapshot_format, create_by, create_time
+        FROM t_business_change_version
+        WHERE history_id IN <foreach collection="historyIds" item="historyId" open="(" separator="," close=")">#{historyId}</foreach>
+        ORDER BY version_no DESC, history_id &lt;&gt; #{rootHistoryId}, history_id
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+    <select id="countByHistoryIds" resultType="long">
+        SELECT COUNT(*) FROM t_business_change_version
+        WHERE history_id IN <foreach collection="historyIds" item="historyId" open="(" separator="," close=")">#{historyId}</foreach>
+    </select>
 </mapper>

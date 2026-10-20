@@ -30,4 +30,7 @@ public interface ProductCapabilityMapper {
     /** 仅当状态仍为 capability.status 时迁移状态，返回影响行数。 */
     int updateStatus(@Param("capability") ProductCapability capability, @Param("status") ProductStatus status,
         @Param("now") Instant now);
+
+    /** 按可选产品代码与状态读取可开通项，按 product_capability_id 升序；参数为空不筛选。 */
+    List<ProductCapability> selectFiltered(@Param("productCode") ProductCode productCode, @Param("status") ProductStatus status);
 }

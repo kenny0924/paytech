@@ -48,4 +48,12 @@ public interface ProductRepository {
      * @param now 本次更新时间
      */
     void updateStatus(Product product, ProductStatus status, Instant now);
+
+    /**
+     * 按可选状态读取产品。
+     *
+     * @param status 状态，空不筛选
+     * @return 按 product_id 升序
+     */
+    List<Product> findByStatus(ProductStatus status);
 }

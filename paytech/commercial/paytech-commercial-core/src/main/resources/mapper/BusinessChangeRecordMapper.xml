@@ -68,4 +68,18 @@
         UPDATE t_business_change_record SET current_version = #{nextVersion}, update_time = #{now}
         WHERE history_id = #{historyId} AND parent_history_id IS NOT NULL AND current_version &lt; #{nextVersion}
     </update>
+    <!-- 聚合根下的全部历史身份，走 idx (aggregate_root_type, aggregate_root_id, history_id)。 -->
+    <select id="findByAggregateRoot" resultMap="HistoryRow">
+        SELECT <include refid="HistoryColumns"/>
+        FROM t_business_change_record
+        WHERE aggregate_root_type = #{rootType} AND aggregate_root_id = #{rootId}
+        ORDER BY history_id
+    </select>
+    <select id="findByRecords" resultMap="HistoryRow">
+        SELECT <include refid="HistoryColumns"/>
+        FROM t_business_change_record
+        WHERE record_type = #{recordType} AND record_id IN
+        <foreach collection="recordIds" item="recordId" open="(" separator="," close=")">#{recordId}</foreach>
+        ORDER BY history_id
+    </select>
 </mapper>

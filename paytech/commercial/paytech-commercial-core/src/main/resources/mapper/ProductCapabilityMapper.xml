@@ -49,4 +49,13 @@
         UPDATE t_product_capability SET status = #{status}, update_time = #{now}
         WHERE product_capability_id = #{capability.productCapabilityId} AND status = #{capability.status}
     </update>
+
+    <select id="selectFiltered" resultMap="ProductCapability">
+        SELECT <include refid="columns"/> FROM t_product_capability
+        <where>
+            <if test="productCode != null">AND product_code = #{productCode}</if>
+            <if test="status != null">AND status = #{status}</if>
+        </where>
+        ORDER BY product_capability_id
+    </select>
 </mapper>

@@ -8,6 +8,7 @@ import java.util.List;
 import com.paytech.commercial.core.dal.dataobject.Agreement;
 import com.paytech.commercial.core.dal.dataobject.CheckoutRecords;
 import com.paytech.commercial.core.dal.mapper.AgreementMapper;
+import com.paytech.commercial.domain.AgreementListQuery;
 import com.paytech.commercial.domain.CommercialCheckoutScope;
 import com.paytech.commercial.domain.enums.AgreementStatus;
 import com.paytech.commercial.domainservice.repository.AgreementRepository;
@@ -88,5 +89,26 @@ public class AgreementRepositoryImpl implements AgreementRepository {
         agreement.setSignedTime(signed);
         agreement.setActivatedTime(activated);
         agreement.setUpdateTime(time);
+    }
+
+    /** 一页合同；合同编号前缀先转义 LIKE 通配符。 */
+    @Override
+    public List<Agreement> findPage(AgreementListQuery query) {
+        return List.copyOf(mapper.selectPage(query, likePrefix(query.getAgreementNoPrefix()), query.getPaging().offset(),
+            query.getPaging().size()));
+    }
+
+    /** 相同条件的总数。 */
+    @Override
+    public long count(AgreementListQuery query) {
+        return mapper.countPage(query, likePrefix(query.getAgreementNoPrefix()));
+    }
+
+    /** 把字面前缀中的 LIKE 转义符与通配符（\ % _）转义为普通字符；空返回 null。 */
+    static String likePrefix(String prefix) {
+        if (prefix == null) {
+            return null;
+        }
+        return prefix.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
     }
 }

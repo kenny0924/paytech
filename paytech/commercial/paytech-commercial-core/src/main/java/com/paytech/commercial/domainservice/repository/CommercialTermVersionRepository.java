@@ -1,11 +1,13 @@
 package com.paytech.commercial.domainservice.repository;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 
 import com.paytech.commercial.core.dal.dataobject.CheckoutRecords;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermVersion;
 import com.paytech.commercial.domain.CommercialCheckoutScope;
+import com.paytech.commercial.domain.CommercialTermVersionListQuery;
 import com.paytech.commercial.domain.enums.CommercialTermVersionStatus;
 
 /** t_commercial_term_version 的本地仓储；不负责其他表的加载或事务。 */
@@ -92,4 +94,30 @@ public interface CommercialTermVersionRepository {
      * @param now 本次更新时间
      */
     void updateEffectivePeriod(CommercialTermVersion version, Instant effectiveFrom, Instant effectiveTo, Instant now);
+
+    /**
+     * 按列表条件读取一页版本，排序见 {@link CommercialTermVersionListQuery#order()}。
+     *
+     * @param query 已校验的列表条件与分页
+     * @return 当前页版本
+     */
+    List<CommercialTermVersion> findPage(CommercialTermVersionListQuery query);
+
+    /**
+     * 相同列表条件下的版本总数。
+     *
+     * @param query 列表条件
+     * @return 总数
+     */
+    long count(CommercialTermVersionListQuery query);
+
+    /**
+     * 读取一组方案下指定状态的版本；任一集合为空不访问数据库。
+     *
+     * @param termPlanIds 方案 ID
+     * @param statuses 版本状态
+     * @return 按 term_plan_id、version_no 升序
+     */
+    List<CommercialTermVersion> findByPlanIdsAndStatuses(Collection<Long> termPlanIds,
+        Collection<CommercialTermVersionStatus> statuses);
 }

@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.List;
 
 import com.paytech.foundation.common.enums.CodeEnum;
 import com.paytech.foundation.common.error.InvalidParameterException;
@@ -91,5 +92,38 @@ final class WireValues {
     /** 枚举稳定 Code；空返回 null。 */
     static String text(CodeEnum value) {
         return value == null ? null : value.getCode();
+    }
+
+    /**
+     * 可重复查询参数的稳定 Code 集合；空返回空集合，未知 Code 失败关闭
+     *
+     * @param type 枚举类型
+     * @param field 参数名
+     * @param values Wire 值，可空
+     * @return 去重后保持请求顺序的枚举
+     */
+    static <E extends Enum<E> & CodeEnum> List<E> codes(Class<E> type, String field, List<String> values) {
+        if (values == null) {
+            return List.of();
+        }
+        return values.stream().map(value -> code(type, field, value)).distinct().toList();
+    }
+
+    /**
+     * 按格式校验的查询文本；空或空白返回 null
+     *
+     * @param field 参数名
+     * @param value Wire 值
+     * @param regex 完整匹配的格式
+     * @return 原值
+     */
+    static String matching(String field, String value, String regex) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        if (!value.matches(regex)) {
+            throw new InvalidParameterException(field + " 格式不正确");
+        }
+        return value;
     }
 }

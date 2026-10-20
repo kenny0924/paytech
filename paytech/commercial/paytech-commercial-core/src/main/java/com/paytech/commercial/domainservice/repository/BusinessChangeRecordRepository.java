@@ -3,6 +3,7 @@ package com.paytech.commercial.domainservice.repository;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import com.paytech.commercial.core.dal.dataobject.BusinessChangeRecord;
 import com.paytech.commercial.core.dal.dataobject.CheckoutRecords;
@@ -67,4 +68,32 @@ public interface BusinessChangeRecordRepository {
      * @param now 本次更新时间
      */
     void advanceChild(BusinessChangeRecord child, long nextVersion, Instant now);
+
+    /**
+     * 读取一个聚合根下的全部历史身份（Root 与受审计 Child）。
+     *
+     * @param rootType 聚合根类型
+     * @param rootId 聚合根 ID
+     * @return 按 history_id 升序
+     */
+    List<BusinessChangeRecord> findByAggregateRoot(BusinessChangeRecordAggregateRootType rootType, String rootId);
+
+    /**
+     * 按记录类型与一组记录 ID 读取历史身份；空集合不访问数据库。
+     *
+     * @param recordType 记录类型
+     * @param recordIds 记录 ID
+     * @return 按 history_id 升序
+     */
+    List<BusinessChangeRecord> findByRecords(BusinessChangeRecordRecordType recordType, Collection<String> recordIds);
+
+    /**
+     * 读取一组同类型聚合根的 Root 当前版本；空集合不访问数据库。
+     * <li>业务行存在而 Root 缺失违反写入不变量，抛出系统异常。</li>
+     *
+     * @param rootType 聚合根类型
+     * @param rootIds 聚合根 ID
+     * @return 聚合根 ID → Root 当前版本，覆盖全部入参
+     */
+    Map<Long, Long> findRootVersions(BusinessChangeRecordAggregateRootType rootType, Collection<Long> rootIds);
 }

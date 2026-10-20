@@ -68,4 +68,10 @@ public class ProductCapabilityRepositoryImpl implements ProductCapabilityReposit
         capability.setStatus(status);
         capability.setUpdateTime(time);
     }
+
+    /** 按可选条件读取可开通项。 */
+    @Override
+    public List<ProductCapability> findFiltered(ProductCode productCode, ProductStatus status) {
+        return List.copyOf(mapper.selectFiltered(productCode, status));
+    }
 }

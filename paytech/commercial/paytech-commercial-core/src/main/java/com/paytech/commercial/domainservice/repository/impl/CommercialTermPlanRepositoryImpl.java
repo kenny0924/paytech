@@ -3,6 +3,7 @@ package com.paytech.commercial.domainservice.repository.impl;
 import static com.paytech.commercial.domainservice.repository.impl.PersistenceTimes.micros;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 
 import com.paytech.commercial.api.enums.CommercialTermPlanStatus;
@@ -10,6 +11,7 @@ import com.paytech.commercial.core.dal.dataobject.CheckoutRecords;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermPlan;
 import com.paytech.commercial.core.dal.mapper.CommercialTermPlanMapper;
 import com.paytech.commercial.domain.CommercialCheckoutScope;
+import com.paytech.commercial.domain.CommercialTermPlanListQuery;
 import com.paytech.commercial.domainservice.repository.CommercialTermPlanRepository;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
 import com.paytech.foundation.common.error.ErrorException;
@@ -76,5 +78,26 @@ public class CommercialTermPlanRepositoryImpl implements CommercialTermPlanRepos
         }
         commercialTermPlan.setStatus(status);
         commercialTermPlan.setUpdateTime(time);
+    }
+
+    /** 一页方案。 */
+    @Override
+    public List<CommercialTermPlan> findPage(CommercialTermPlanListQuery query) {
+        return List.copyOf(mapper.selectPage(query, query.getPaging().offset(), query.getPaging().size()));
+    }
+
+    /** 相同条件的总数。 */
+    @Override
+    public long count(CommercialTermPlanListQuery query) {
+        return mapper.countPage(query);
+    }
+
+    /** 空集合不访问数据库。 */
+    @Override
+    public List<CommercialTermPlan> findByIds(Collection<Long> termPlanIds) {
+        if (termPlanIds.isEmpty()) {
+            return List.of();
+        }
+        return List.copyOf(mapper.selectByIds(termPlanIds));
     }
 }
