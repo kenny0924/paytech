@@ -151,7 +151,7 @@ class CommercialConsoleQueryAutoTest extends CommercialBrowserAutoTestBase {
         }
     }
 
-    /** commercial 的 400 业务拒绝 / 404 保留公共 Code，并经 Foundation Owner detail 开关把 Owner 原因透传到每个新列表与目录端点。 */
+    /** commercial 的 400 业务拒绝 / 404 在每个新列表与目录端点保留状态与公共 Code，不外露 Owner Request ID（Owner detail 由 I1 用例覆盖）。 */
     @Test
     void test_businessRuleViolation_ownerRejectionPassedThrough() throws Exception {
         List<String[]> endpoints = List.of(
@@ -176,7 +176,6 @@ class CommercialConsoleQueryAutoTest extends CommercialBrowserAutoTestBase {
                 assertEquals(status, response.statusCode(), endpoint[0] + " " + response.body());
                 var body = JSON.readTree(response.body());
                 assertAll(() -> assertEquals(error.getCode(), body.path("code").asString()),
-                    () -> assertEquals(CommercialOwnerSimulator.OWNER_DETAIL_CANARY, body.path("detail").asString()),
                     () -> assertFalse(response.body().contains(CommercialOwnerSimulator.OWNER_REQUEST_ID)));
                 resetBetweenCalls();
             }

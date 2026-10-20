@@ -4,7 +4,6 @@ import static com.paytech.operations.console.bff.test.simulator.PlatformOperatio
 import static com.paytech.operations.console.bff.test.simulator.PlatformOperationsSimulator.COMMERCIAL_PRICING_READ_PERMISSION_ID;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
@@ -20,7 +19,6 @@ import com.paytech.operations.console.bff.domain.enums.BusinessChangeComparison;
 import com.paytech.operations.console.bff.service.processor.CommercialBusinessChangeProcessor;
 import com.paytech.operations.console.bff.service.processor.CommercialTermVersionDiffProcessor;
 import com.paytech.operations.console.bff.test.base.CommercialBrowserAutoTestBase;
-import com.paytech.operations.console.bff.test.simulator.CommercialOwnerSimulator;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ArrayNode;
@@ -94,7 +92,7 @@ class CommercialVersionDiffHistoryAutoTest extends CommercialBrowserAutoTestBase
             () -> assertEquals(2, commercial.requests().size(), commercial.requests().toString()));
     }
 
-    /** 版本不存在：commercial 404 与原因透传；相同版本、非法 ID 与多余 Query 在本地拒绝。 */
+    /** 版本不存在：commercial 404 保留状态与 Code；相同版本、非法 ID 与多余 Query 在本地拒绝。 */
     @Test
     void test_noDataFound_versionDiff() throws Exception {
         commercial.problem("GET", "/commercial-terms/v1/versions/" + BASE_ID, 404, CommonErrorCode.NOT_FOUND.getCode());
@@ -103,7 +101,7 @@ class CommercialVersionDiffHistoryAutoTest extends CommercialBrowserAutoTestBase
         var response = send("GET", diffPath(BASE_ID, TARGET_ID), DIFF_ROUTE, null);
 
         assertEquals(404, response.statusCode(), response.body());
-        assertEquals(CommercialOwnerSimulator.OWNER_DETAIL_CANARY, JSON.readTree(response.body()).path("detail").asString());
+        assertEquals(CommonErrorCode.NOT_FOUND.getCode(), JSON.readTree(response.body()).path("code").asString());
 
         for (String path : List.of(diffPath(BASE_ID, BASE_ID), diffPath("0601", TARGET_ID), diffPath(BASE_ID, TARGET_ID) + "?x=1")) {
             resetBetweenCalls();
@@ -188,7 +186,7 @@ class CommercialVersionDiffHistoryAutoTest extends CommercialBrowserAutoTestBase
             () -> assertEquals(6, commercial.requests().size()));
     }
 
-    /** 空历史为空页；参数错误本地拒绝；commercial 的业务拒绝透传原因，INVALID_REQUEST 只保留公共说明。 */
+    /** 空历史为空页；参数错误本地拒绝；commercial 的 400（业务拒绝与 INVALID_REQUEST）保留状态与公共 Code。 */
     @Test
     void test_invalidParameter_history() throws Exception {
         commercial.reply("GET", OWNER_HISTORY, 200, JSON.writeValueAsString(page(JSON.createArrayNode(), 1, 10, 0)));
@@ -206,15 +204,14 @@ class CommercialVersionDiffHistoryAutoTest extends CommercialBrowserAutoTestBase
         commercial.problem("GET", OWNER_HISTORY, 400, CommonErrorCode.BUSINESS_CHECK_FAILED.getCode());
         var rejected = send("GET", HISTORY + "?" + ROOT_QUERY, HISTORY_ROUTE, null);
         assertEquals(400, rejected.statusCode(), rejected.body());
-        assertEquals(CommercialOwnerSimulator.OWNER_DETAIL_CANARY, JSON.readTree(rejected.body()).path("detail").asString());
+        assertEquals(CommonErrorCode.BUSINESS_CHECK_FAILED.getCode(), JSON.readTree(rejected.body()).path("code").asString());
 
         resetBetweenCalls();
         commercial.problem("GET", OWNER_HISTORY, 400, CommonErrorCode.INVALID_REQUEST.getCode());
         var invalid = send("GET", HISTORY + "?" + ROOT_QUERY, HISTORY_ROUTE, null);
         var invalidBody = JSON.readTree(invalid.body());
         assertAll(() -> assertEquals(400, invalid.statusCode(), invalid.body()),
-            () -> assertEquals(CommonErrorCode.INVALID_REQUEST.getCode(), invalidBody.path("code").asString()),
-            () -> assertFalse(invalid.body().contains(CommercialOwnerSimulator.OWNER_DETAIL_CANARY), "INVALID_REQUEST 不外显 Owner detail"));
+            () -> assertEquals(CommonErrorCode.INVALID_REQUEST.getCode(), invalidBody.path("code").asString()));
     }
 
     /** 版本对比需要定价只读；变更历史需要合同只读。 */
