@@ -25,4 +25,7 @@ public interface ProductMapper {
 
     /** 仅当状态仍为 product.status 时迁移状态，返回影响行数。 */
     int updateStatus(@Param("product") Product product, @Param("status") ProductStatus status, @Param("now") Instant now);
+
+    /** 按可选状态读取产品，按 product_id 升序；status 为空不筛选。 */
+    List<Product> selectFiltered(@Param("status") ProductStatus status);
 }

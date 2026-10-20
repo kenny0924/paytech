@@ -13,6 +13,10 @@
 | `auto/ext/http/agreement/AgreementLifecycleHttpTest` | 激活与终止：区间与冲突规则、保存失败整体回滚、提交后发布 AgreementStatusChanged（真实本地 Broker） |
 | `auto/ext/http/agreement/AgreementSubscriptionHttpTest` | 订阅替换与开通项新增 / 改写：目录与覆盖规则、约束规范、唯一冲突、Child 快照 |
 | `auto/ext/http/pricing/PricingProfileHttpTest` | 定价画像创建、DRAFT 改写、激活、退役与列表 |
+| `auto/ext/http/agreement/AgreementListHttpTest` | 合同列表：各筛选与组合、PARTNER 覆盖 OE、合同编号字面前缀（下划线不是通配符）、创建时间倒序分页与总数、Root 版本、参数校验 |
+| `auto/ext/http/term/CommercialTermListHttpTest` | 方案 / 版本列表：工作台排序、生效窗口相交、ACTIVE / SCHEDULED 指针、经正式写入 API 推导的 Maker / Checker / 提交时刻与价格条数、方案聚合 BCR 时间线、参数校验 |
+| `auto/ext/http/catalog/ProductCatalogHttpTest` | 产品目录三接口：全集逐字段等于种子固件、筛选、参数校验 |
+| `auto/ext/http/history/BusinessChangeHistoryHttpTest` | 变更历史：合同经正式写入 API 创建→签署→激活的时间线、分页、空聚合、参数校验 |
 | `auto/repository/ProductCatalogRepositoryTest` | 产品目录三表：种子目录读回、唯一键、条件状态迁移 |
 | `auto/repository/AgreementSubscriptionRepositoryTest` | 合同订阅、开通项与约束：唯一键、按父读取、删除、以状态 / update_time 为条件的更新 |
 | `auto/repository/AgreementWriteRepositoryTest`、`PricingProfileWriteRepositoryTest`、`CommercialTermWriteRepositoryTest` | 既有 11 张表的完整行写入映射：插入、唯一键、按父读取、条件更新与整体替换 |

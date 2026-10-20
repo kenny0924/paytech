@@ -46,4 +46,13 @@ public interface ProductFeeEventRepository {
      * @return 按主键升序的计费事件
      */
     List<ProductFeeEvent> findByTermType(String termType);
+
+    /**
+     * 按可选产品代码与条款类型读取计费事件。
+     *
+     * @param productCode 产品代码，空不筛选
+     * @param termType 条款类型，空不筛选
+     * @return 按 product_fee_event_id 升序
+     */
+    List<ProductFeeEvent> findFiltered(ProductCode productCode, String termType);
 }

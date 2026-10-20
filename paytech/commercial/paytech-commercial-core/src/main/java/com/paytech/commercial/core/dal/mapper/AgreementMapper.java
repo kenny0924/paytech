@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Param;
 
 import com.paytech.commercial.core.dal.dataobject.Agreement;
 import com.paytech.commercial.core.dal.dataobject.CheckoutRecords;
+import com.paytech.commercial.domain.AgreementListQuery;
 import com.paytech.commercial.domain.enums.AgreementStatus;
 
 /** t_agreement 的持久化查询。 */
@@ -37,4 +38,11 @@ public interface AgreementMapper {
     int updateLifecycle(@Param("row") Agreement row, @Param("status") AgreementStatus status,
         @Param("effectiveTo") Instant effectiveTo, @Param("signedTime") Instant signedTime,
         @Param("activatedTime") Instant activatedTime, @Param("now") Instant now);
+
+    /** 按列表条件读取一页合同，按创建时间、合同 ID 倒序；agreementNoPrefix 须已转义 LIKE 通配符。 */
+    List<Agreement> selectPage(@Param("query") AgreementListQuery query, @Param("agreementNoPrefix") String agreementNoPrefix,
+        @Param("offset") int offset, @Param("limit") int limit);
+
+    /** 相同列表条件下的合同总数。 */
+    long countPage(@Param("query") AgreementListQuery query, @Param("agreementNoPrefix") String agreementNoPrefix);
 }

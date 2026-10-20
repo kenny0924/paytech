@@ -68,4 +68,32 @@
         UPDATE t_commercial_term_plan SET status = #{status}, update_time = #{now}
         WHERE term_plan_id = #{row.termPlanId} AND status = #{row.status}
     </update>
+
+    <sql id="listConditions">
+        <where>
+            <if test="query.agreementId != null">AND agreement_id = #{query.agreementId}</if>
+            <if test="query.clientId != null">AND client_id = #{query.clientId}</if>
+            <if test="query.localPartnerId != null">AND local_partner_id = #{query.localPartnerId}</if>
+            <if test="query.termType != null">AND term_type = #{query.termType}</if>
+            <if test="query.status != null">AND status = #{query.status}</if>
+        </where>
+    </sql>
+
+    <select id="selectPage" resultMap="CommercialTermPlanRow">
+        SELECT <include refid="commercialTermPlanColumns"/> FROM t_commercial_term_plan
+        <include refid="listConditions"/>
+        ORDER BY create_time DESC, term_plan_id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="long">
+        SELECT COUNT(*) FROM t_commercial_term_plan
+        <include refid="listConditions"/>
+    </select>
+
+    <select id="selectByIds" resultMap="CommercialTermPlanRow">
+        SELECT <include refid="commercialTermPlanColumns"/> FROM t_commercial_term_plan
+        WHERE term_plan_id IN <foreach collection="termPlanIds" item="termPlanId" open="(" separator="," close=")">#{termPlanId}</foreach>
+        ORDER BY term_plan_id
+    </select>
 </mapper>

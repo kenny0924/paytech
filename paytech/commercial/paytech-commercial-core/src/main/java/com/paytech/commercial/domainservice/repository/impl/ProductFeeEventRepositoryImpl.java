@@ -51,4 +51,10 @@ public class ProductFeeEventRepositoryImpl implements ProductFeeEventRepository 
     public List<ProductFeeEvent> findByTermType(String termType) {
         return List.copyOf(mapper.selectByTermType(termType));
     }
+
+    /** 按可选条件读取计费事件。 */
+    @Override
+    public List<ProductFeeEvent> findFiltered(ProductCode productCode, String termType) {
+        return List.copyOf(mapper.selectFiltered(productCode, termType));
+    }
 }

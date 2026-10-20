@@ -39,4 +39,10 @@
         UPDATE t_product SET status = #{status}, update_time = #{now}
         WHERE product_id = #{product.productId} AND status = #{product.status}
     </update>
+
+    <select id="selectFiltered" resultMap="Product">
+        SELECT <include refid="columns"/> FROM t_product
+        <where><if test="status != null">status = #{status}</if></where>
+        ORDER BY product_id
+    </select>
 </mapper>

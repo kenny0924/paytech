@@ -57,4 +57,13 @@ public interface ProductCapabilityRepository {
      * @param now 本次更新时间
      */
     void updateStatus(ProductCapability capability, ProductStatus status, Instant now);
+
+    /**
+     * 按可选产品代码与状态读取可开通项。
+     *
+     * @param productCode 产品代码，空不筛选
+     * @param status 状态，空不筛选
+     * @return 按 product_capability_id 升序
+     */
+    List<ProductCapability> findFiltered(ProductCode productCode, ProductStatus status);
 }

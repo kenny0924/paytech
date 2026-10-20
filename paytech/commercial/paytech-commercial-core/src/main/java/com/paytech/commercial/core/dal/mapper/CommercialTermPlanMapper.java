@@ -1,6 +1,7 @@
 package com.paytech.commercial.core.dal.mapper;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
@@ -8,6 +9,7 @@ import org.apache.ibatis.annotations.Param;
 import com.paytech.commercial.api.enums.CommercialTermPlanStatus;
 import com.paytech.commercial.core.dal.dataobject.CheckoutRecords;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermPlan;
+import com.paytech.commercial.domain.CommercialTermPlanListQuery;
 
 /** t_commercial_term_plan 的持久化查询。 */
 public interface CommercialTermPlanMapper {
@@ -35,4 +37,14 @@ public interface CommercialTermPlanMapper {
 
     /** 仅当状态仍为 row.status 时迁移状态，返回影响行数。 */
     int updateStatus(@Param("row") CommercialTermPlan row, @Param("status") CommercialTermPlanStatus status, @Param("now") Instant now);
+
+    /** 按列表条件读取一页方案，按创建时间、方案 ID 倒序。 */
+    List<CommercialTermPlan> selectPage(@Param("query") CommercialTermPlanListQuery query, @Param("offset") int offset,
+        @Param("limit") int limit);
+
+    /** 相同列表条件下的方案总数。 */
+    long countPage(@Param("query") CommercialTermPlanListQuery query);
+
+    /** 按一组主键读取方案，按 term_plan_id 升序。 */
+    List<CommercialTermPlan> selectByIds(@Param("termPlanIds") Collection<Long> termPlanIds);
 }

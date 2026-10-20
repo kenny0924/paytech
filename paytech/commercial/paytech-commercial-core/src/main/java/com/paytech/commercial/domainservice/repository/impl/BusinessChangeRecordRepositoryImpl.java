@@ -3,6 +3,8 @@ package com.paytech.commercial.domainservice.repository.impl;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.paytech.commercial.core.dal.dataobject.BusinessChangeRecord;
 import com.paytech.commercial.core.dal.dataobject.CheckoutRecords;
@@ -81,5 +83,36 @@ public class BusinessChangeRecordRepositoryImpl implements BusinessChangeRecordR
         }
         child.setCurrentVersion(nextVersion);
         child.setUpdateTime(time);
+    }
+
+    /** 聚合根下的全部历史身份。 */
+    @Override
+    public List<BusinessChangeRecord> findByAggregateRoot(BusinessChangeRecordAggregateRootType rootType, String rootId) {
+        return List.copyOf(mapper.findByAggregateRoot(rootType, rootId));
+    }
+
+    /** 空集合不访问数据库。 */
+    @Override
+    public List<BusinessChangeRecord> findByRecords(BusinessChangeRecordRecordType recordType, Collection<String> recordIds) {
+        if (recordIds.isEmpty()) {
+            return List.of();
+        }
+        return List.copyOf(mapper.findByRecords(recordType, recordIds));
+    }
+
+    /** 一次读取全部 Root，缺任何一个即系统异常。 */
+    @Override
+    public Map<Long, Long> findRootVersions(BusinessChangeRecordAggregateRootType rootType, Collection<Long> rootIds) {
+        if (rootIds.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, Long> versions = mapper.findRoots(rootType, rootIds.stream().map(String::valueOf).toList()).stream()
+            .collect(Collectors.toMap(root -> Long.valueOf(root.getRecordId()), BusinessChangeRecord::getCurrentVersion));
+        for (Long rootId : rootIds) {
+            if (!versions.containsKey(rootId)) {
+                throw new ErrorException("聚合缺少 BCR 根: " + rootType.getCode() + " " + rootId);
+            }
+        }
+        return versions;
     }
 }

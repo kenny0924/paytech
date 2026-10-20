@@ -1,12 +1,14 @@
 package com.paytech.commercial.core.dal.mapper;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 
 import com.paytech.commercial.core.dal.dataobject.CheckoutRecords;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermVersion;
+import com.paytech.commercial.domain.CommercialTermVersionListQuery;
 import com.paytech.commercial.domain.enums.CommercialTermVersionStatus;
 
 /** t_commercial_term_version 的持久化查询。 */
@@ -42,4 +44,15 @@ public interface CommercialTermVersionMapper {
     /** 仅当状态与 update_time 均未变化时改写生效区间，返回影响行数。 */
     int updateEffectivePeriod(@Param("row") CommercialTermVersion row, @Param("effectiveFrom") Instant effectiveFrom,
         @Param("effectiveTo") Instant effectiveTo, @Param("now") Instant now);
+
+    /** 按列表条件读取一页版本，排序由 order（CommercialTermVersionListQuery.ORDER_*）决定，相同排序值按版本 ID 升序。 */
+    List<CommercialTermVersion> selectPage(@Param("query") CommercialTermVersionListQuery query, @Param("order") String order,
+        @Param("offset") int offset, @Param("limit") int limit);
+
+    /** 相同列表条件下的版本总数。 */
+    long countPage(@Param("query") CommercialTermVersionListQuery query);
+
+    /** 读取一组方案下指定状态的版本，按 term_plan_id、version_no 升序。 */
+    List<CommercialTermVersion> selectByPlanIdsAndStatuses(@Param("termPlanIds") Collection<Long> termPlanIds,
+        @Param("statuses") Collection<CommercialTermVersionStatus> statuses);
 }

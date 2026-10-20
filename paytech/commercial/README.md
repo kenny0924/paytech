@@ -12,7 +12,7 @@
 
 | 模块 | 内容 |
 |---|---|
-| `paytech-commercial-api` | `CheckoutContextApi`（路径不变）、`CheckoutErrorCode`、`AgreementPartyQueryApi`、运营写入 `AgreementApi`（`/agreements/v1`）与 `PricingProfileApi`（`/pricing-profiles/v1`）；六层定价闭合枚举（`api/enums`）与开放目录稳定代码 `CommercialCodes`（`api/constant`） |
+| `paytech-commercial-api` | `CheckoutContextApi`（路径不变）、`CheckoutErrorCode`、`AgreementPartyQueryApi`、运营写入 `AgreementApi`（`/agreements/v1`）与 `PricingProfileApi`（`/pricing-profiles/v1`）；运营只读 `AgreementQueryApi`、`CommercialTermQueryApi`、`ProductCatalogApi`、`BusinessChangeQueryApi`；六层定价闭合枚举（`api/enums`）与开放目录稳定代码 `CommercialCodes`（`api/constant`） |
 | `paytech-commercial-core` | 参数化商务查询、两段式解析 `CheckoutResolutionProcessor`、client-master 出站端口、Risk 资格端口（仍为 503 占位，risk-decision 尚无对应合同）；全部 17 张商务表的完整行 DataObject 与写入映射（Mapper XML + Repository）；合同 / 签署 / 订阅 / 开通项 / 画像的写入 Processor、`AgreementService`、`PricingProfileService` 与 BCR 写入协作者 `BusinessChangeHistoryWriter`；`CheckoutRecords` 保留为 Checkout 只读投影 |
 | `paytech-commercial-app` | 启动类、Controller、DataSource / 事务 / MyBatis、client-master HTTP 客户端、`application.yml` |
 | `paytech-commercial-test` | 全部 `auto` 测试，见[测试说明](paytech-commercial-test/README.md) |
@@ -51,6 +51,18 @@
 | `GET /rate-cards/v1` | Client 费率卡结构化数据 |
 
 定时激活作业 `commercialTermVersionActivation`（XXL-Job，测试中执行器关闭）以系统命令调用与 `activate` 接口相同的用例。
+
+## 运营控制台只读接口（2026-10-20 第二切片 H 线）
+
+接口合同见 [technique.md §2](../../requirements/20261020/commercial-运营控制台完善/technique.md)；调用方 operations-console-bff。全部只读，不加锁、不开事务；列表复用公共分页 `page`（默认 1）/ `size`（默认 10，只允许 10、20、50、100、200），响应 `{items, page, size, total}`，ID 为十进制字符串、时间为 UTC ISO 8601，未知代码或非规范 ID 400 `INVALID_REQUEST`。
+
+| 接口 | 查询参数 | 说明 |
+|---|---|---|
+| `GET /agreements/v1` | `clientId`、`localPartnerId`、`agreementType`、`status`（可重复）、`entityNo`（含 PARTNER 覆盖 OE）、`agreementNo`（字面前缀）、`page`、`size` | `AgreementQueryApi`；按创建时间倒序，每行带合同 BCR Root `changeVersion` |
+| `GET /commercial-terms/v1/plans` | `agreementId`、`clientId`、`localPartnerId`、`termType`、`status`、`page`、`size` | `CommercialTermQueryApi`；按创建时间倒序，带方案根版本与当前 ACTIVE / SCHEDULED 版本 |
+| `GET /commercial-terms/v1/versions` | `planId`、`agreementId`、`status`（可重复）、`effectiveFrom` / `effectiveTo`（窗口相交）、`page`、`size` | 只筛 `PENDING_APPROVAL` 按提交时刻升序，只筛 `SCHEDULED` 按生效起点升序，其他按方案、版本号倒序；带 Maker / Checker / 提交时刻（由版本快照推导）、价格条数、方案根版本 |
+| `GET /products/v1` · `/capabilities` · `/fee-events` | `status`；`productCode`、`status`；`productCode`、`termType` | `ProductCatalogApi`；目录不分页，按 ID 升序 |
+| `GET /business-changes/v1` | `aggregateRootType`（AGREEMENT、COMMERCIAL_TERM_PLAN、PAYMENT_METHOD_PROFILE）、`aggregateRootId`（必填）、`page`、`size` | `BusinessChangeQueryApi`；Root 与受审计 Child 快照按版本倒序（同版本 Root 在前），`meta` 只含 triggerType / triggerId / reasonCode，`data` 为白名单审计视图 |
 
 ## 数据库与 PDManer
 

@@ -88,4 +88,41 @@
         UPDATE t_commercial_term_version SET effective_from = #{effectiveFrom}, effective_to = #{effectiveTo}, update_time = #{now}
         WHERE term_version_id = #{row.termVersionId} AND status = #{row.status} AND update_time = #{row.updateTime}
     </update>
+
+    <!-- 窗口 [windowFrom, windowTo) 与生效区间 [effective_from, effective_to) 相交；effective_to 为空表示无终点。 -->
+    <sql id="listConditions">
+        <where>
+            <if test="query.planId != null">AND term_plan_id = #{query.planId}</if>
+            <if test="query.agreementId != null">AND agreement_id = #{query.agreementId}</if>
+            <if test="!query.statuses.isEmpty()">
+                AND status IN <foreach collection="query.statuses" item="status" open="(" separator="," close=")">#{status}</foreach>
+            </if>
+            <if test="query.windowTo != null">AND effective_from &lt; #{query.windowTo}</if>
+            <if test="query.windowFrom != null">AND (effective_to IS NULL OR effective_to &gt; #{query.windowFrom})</if>
+        </where>
+    </sql>
+
+    <!-- 待审批按提交时刻（PENDING_APPROVAL 行的 update_time）升序；待生效按生效起点升序；其他按方案、版本号倒序。 -->
+    <select id="selectPage" resultMap="CommercialTermVersionRow">
+        SELECT <include refid="commercialTermVersionColumns"/> FROM t_commercial_term_version
+        <include refid="listConditions"/>
+        <choose>
+            <when test="order == 'SUBMITTED'">ORDER BY update_time, term_version_id</when>
+            <when test="order == 'EFFECTIVE'">ORDER BY effective_from, term_version_id</when>
+            <otherwise>ORDER BY term_plan_id DESC, version_no DESC, term_version_id</otherwise>
+        </choose>
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="long">
+        SELECT COUNT(*) FROM t_commercial_term_version
+        <include refid="listConditions"/>
+    </select>
+
+    <select id="selectByPlanIdsAndStatuses" resultMap="CommercialTermVersionRow">
+        SELECT <include refid="commercialTermVersionColumns"/> FROM t_commercial_term_version
+        WHERE term_plan_id IN <foreach collection="termPlanIds" item="termPlanId" open="(" separator="," close=")">#{termPlanId}</foreach>
+          AND status IN <foreach collection="statuses" item="status" open="(" separator="," close=")">#{status}</foreach>
+        ORDER BY term_plan_id, version_no
+    </select>
 </mapper>

@@ -58,4 +58,10 @@ public class ProductRepositoryImpl implements ProductRepository {
         product.setStatus(status);
         product.setUpdateTime(time);
     }
+
+    /** 按可选状态读取产品。 */
+    @Override
+    public List<Product> findByStatus(ProductStatus status) {
+        return List.copyOf(mapper.selectFiltered(status));
+    }
 }

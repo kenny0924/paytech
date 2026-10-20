@@ -38,4 +38,12 @@ public interface BusinessChangeRecordMapper {
     /** Child 版本指针：只允许向前推进到 Root 的下一版本。 */
     int advanceChild(@Param("historyId") long historyId, @Param("nextVersion") long nextVersion,
         @Param("now") Instant now);
+
+    /** 读取一个聚合根下的全部历史身份（Root 与受审计 Child），按 history_id 升序。 */
+    List<BusinessChangeRecord> findByAggregateRoot(@Param("rootType") BusinessChangeRecordAggregateRootType rootType,
+        @Param("rootId") String rootId);
+
+    /** 按记录类型与一组记录 ID 读取历史身份，按 history_id 升序。 */
+    List<BusinessChangeRecord> findByRecords(@Param("recordType") BusinessChangeRecordRecordType recordType,
+        @Param("recordIds") Collection<String> recordIds);
 }

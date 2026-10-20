@@ -24,4 +24,7 @@ public interface ProductFeeEventMapper {
 
     /** 读取某条款类型下可收费的全部计费事件，按主键升序。 */
     List<ProductFeeEvent> selectByTermType(@Param("termType") String termType);
+
+    /** 按可选产品代码与条款类型读取计费事件，按 product_fee_event_id 升序；参数为空不筛选。 */
+    List<ProductFeeEvent> selectFiltered(@Param("productCode") ProductCode productCode, @Param("termType") String termType);
 }

@@ -1,6 +1,8 @@
 package com.paytech.commercial.domainservice.repository;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import com.paytech.commercial.core.dal.dataobject.CheckoutRecords;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermPrice;
@@ -53,4 +55,12 @@ public interface CommercialTermPriceRepository {
      * @return 删除行数
      */
     int deleteByVersionId(long termVersionId);
+
+    /**
+     * 统计一组版本各自的价格条数；空集合不访问数据库。
+     *
+     * @param termVersionIds 版本 ID
+     * @return 版本 ID → 价格条数；没有价格的版本不出现
+     */
+    Map<Long, Integer> countByVersionIds(Collection<Long> termVersionIds);
 }

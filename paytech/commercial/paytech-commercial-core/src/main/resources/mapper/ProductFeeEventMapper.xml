@@ -38,4 +38,13 @@
     <select id="selectByTermType" resultMap="ProductFeeEvent">
         SELECT <include refid="columns"/> FROM t_product_fee_event WHERE term_type = #{termType} ORDER BY product_fee_event_id
     </select>
+
+    <select id="selectFiltered" resultMap="ProductFeeEvent">
+        SELECT <include refid="columns"/> FROM t_product_fee_event
+        <where>
+            <if test="productCode != null">AND product_code = #{productCode}</if>
+            <if test="termType != null">AND term_type = #{termType}</if>
+        </where>
+        ORDER BY product_fee_event_id
+    </select>
 </mapper>
