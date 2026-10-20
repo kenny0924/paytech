@@ -7,7 +7,7 @@
 | 中文 | 英文 | 定义 | 不是 |
 |---|---|---|---|
 | Client | Client | 平台客户，`INDIVIDUAL` / `ORGANIZATION` 两类（沿用现行定义，不改为商户） | Merchant |
-| 消费者 | Consumer | 在收银台或 Client 系统发起支付的最终付款人 | Customer（Platform 人类身份 Realm） |
+| 消费者 | Consumer | 在收银台或 Client 系统发起支付的最终付款人（业务概念，含访客；不作服务名） | 用 Customer 指代全部付款人（Customer 只指 counterparty 中 Client 已登录用户的付款角色，另见 Platform 人类身份 Realm） |
 | 合作伙伴 | Local Partner | 提供 OE 主体并获得独立配置分润的外部合作方 | Client |
 | 签约主体 | Operating Entity (OE) | 与支付渠道签约、持有 MID 的法律卖方；`entity_no` 为国家码 + 序号 | Finance Entity |
 | 平台法人 | Platform Legal Party | 收服务费、持平台账簿的法人；是客户主档的 Party（D28） | 单独的 Finance Entity 主档 |
@@ -31,7 +31,7 @@
 |---|---|---|
 | 商务 | Commercial / `commercial-service` | 产品目录、价目、报价、合同；业务模式 MoR / PSP 在合同层定义 |
 | 客户主档 | Client Master | Party、Client、合作伙伴、OE 与 Scope、Affiliation；所有法律主体的唯一权威 |
-| 消费者 | Consumer | 付款人可变档案、联系方式 Token、删除编排 Owner（D30） |
+| 交易相对方 | Counterparty / `counterparty-service`（2026-10-19 由 consumer 改名，见 [counterparty 决定](../../../agent-docs/decisions/2026-10-19-counterparty-repositioning.md)） | Client 命名空间内、不与平台签约的交易相对方主档：付款角色 Customer 的身份与可变档案、个人资料进出 Vault 的唯一边界、删除编排 Owner（D30，MVP 不实施）；将来扩展收款角色 Payee |
 | 卡 · PCI | Card | 受控卡数据域：存储、平台卡令牌、CVV 瞬时处理；独立服务条件见 D10 |
 | 风控决策 | Risk Decision | 实时决策引擎：规则、模型、名单、限额、结账点与出款检查点评估 |
 | 合规与案件 | Compliance & Case | KYB / KYC 审核决定、Case、AML / 制裁、结算限制、最低保证金要求、监管报送 |

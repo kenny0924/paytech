@@ -1,0 +1,8 @@
+# counterparty 改名 · mor-test 候选镜像（阶段 6，2026-10-20）。只固定镜像 ID；服务定义取分支 feature/counterparty-rename（ae6dadd5）的 compose 文件。
+services:
+  counterparty-service:
+    image: sha256:c71436804e2f3400e5f5b078216821d4de5473965340df46a21ba2d27df31a20
+  acquiring-service:
+    image: sha256:03729ba82e28d0776570c4ff12864dda6380ac49bc1deea785aaf426e68dae91
+  card-service:
+    image: sha256:68d676840ac2d5331c49637f9522c9f714548bed6aec60d2812318d5823d77c0

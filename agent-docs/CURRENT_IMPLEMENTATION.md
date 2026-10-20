@@ -11,6 +11,15 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
+<a id="counterparty-rename-20261020"></a>
+## counterparty：consumer 服务改名（2026-10-20，已部署 mor-test，已本地提交，未推送）
+
+- **范围：** 按[决定](./decisions/2026-10-19-counterparty-repositioning.md)切片 1 与[需求](<../requirements/20261019/counterparty-consumer服务改名/requirement.md>)：`paytech/consumer` → `paytech/counterparty`，服务 / 发现名 `counterparty-service`，内部合同前缀 `/counterparty/v1`，库 `mor_counterparty` / 账号 `counterparty_app`；只改名不改行为，Client API `/client-gateway-api/v1/customers…` 与错误码不变。
+- **Implemented（已本地提交，未推送）：** main `c661e9fc`（146 个文件：counterparty 模块、acquiring 与 card 调用方、arch-rules、instance-manifest、PDManer 生成器与测试、local-environment、test-environment、现行验收脚本 `e2e_http.py`）。
+- **Verified：** acquiring 804、counterparty 21、card-test 38、card-core 11、arch-rules 61、instance-manifest 16 全部通过，与改名前基线一致；全 Reactor `test-compile` 通过；未跑全 Reactor 测试（避免清空并行会话的本机测试库）。本机 `mor_counterparty` 已建并冒烟。
+- **Deployed（mor-test，2026-10-20 03:19Z—03:24Z）：** counterparty-service `sha256:c7143680…`、acquiring-service `sha256:03729ba8…`、card-service `sha256:68d67684…`（tag `counterparty-20261020`）；`mor_consumer` → `mor_counterparty`（0 行，旧库保留）；XXL group 15 / job 18 启用、consumer job 8 停用。私网冒烟与 acquiring 建单关联 Customer 通过，见[发布记录](<../requirements/20261019/counterparty-consumer服务改名/release/release.md>)。
+- **Pending：** 推送；删除 `mor_consumer`、旧容器与 XXL group 8 / job 8；切片 2（Customer 档案、资料原值只进 counterparty）与 Gateway Route 未开始。
+
 <a id="ledger-chart-hierarchy-20261020"></a>
 ## ledger 会计科目分级与可读账户号（2026-10-20，已部署 mor-test，已本地提交，未推送）
 
@@ -26,12 +35,12 @@
 - **范围：** 按 [V2 决定草案](./decisions/2026-10-17-target-architecture-v2.md) D09、D11、D22、D24–D26、D31–D36 与[需求](<../requirements/20261017/architecture-V2骨架与模块搬迁/requirement.md>)，把 12 个旧工程根并入单一 Maven Reactor `paytech/`（唯一 Wrapper `paytech/mvnw`）。各步任务卡与报告见 [tasks/](<../requirements/20261017/architecture-V2骨架与模块搬迁/tasks/>)。本节只登记事实，规范正文仍以 `DOCUMENT_GOVERNANCE.md` 路由的 Owner 为准。
 - **Implemented：**
   - **目录与模块：** `paytech/` 下有 24 个服务目录。
-    - 18 个已建工程：platform-support、api-gateway、operations-console-bff、client-console-bff、vault、client-master、commercial、acquiring、consumer、payment、channel-connector、card、risk-decision、compliance、billing、account、ledger、data-service。
+    - 18 个已建工程：platform-support、api-gateway、operations-console-bff、client-console-bff、vault、client-master、commercial、acquiring、counterparty（2026-10-20 由 consumer 改名）、payment、channel-connector、card、risk-decision、compliance、billing、account、ledger、data-service。
     - 另有 reconciliation、tax 两个空壳服务。
     - dispute、payout 只有模型；fx、workflow-approval 只有 README 占位。
     - 另有 `paytech/build`（BOM、父 POM）、`paytech/foundation`（17 个模块，含 `paytech-messaging(-api)`、`paytech-internal-auth`）与 `paytech/tools/{arch-rules,arch-rules-reactor-test,instance-manifest,migration-runner}`。
   - **模块坐标：** `com.paytech:paytech-<服务>-{api,core,app,test}`（Gateway 与两个 BFF 无 api / core）。服务名、业务端口与管理端口见 [LOCAL_DEVELOPMENT_ENVIRONMENT.md](./LOCAL_DEVELOPMENT_ENVIRONMENT.md) 8.2 节；服务目录见 `paytech/tools/instance-manifest/src/main/resources/catalog/services.yaml`。
-  - **库：** 每个服务独立库：`mor_client_master`、`mor_commercial`、`mor_acquiring`、`mor_consumer`、`mor_payment`、`mor_channel_connector`、`mor_card`、`mor_risk_decision`、`mor_compliance`、`mor_ledger`、`mor_billing`、`mor_account`、`mor_reconciliation`、`mor_tax`；`mor_platform`、`mor_vault` 不变。模型为 `paytech/<服务>/docs/database/<服务>.pdma.json`（18 份），R4 表归属由 `paytech/tools/arch-rules/src/main/resources/table-ownership.yaml` 强制（265 张物理表 + 56 张保留表 + 6 张 step-added；2026-10-19 计费事实重构后为 −7 step-removed + 20 step-added）。
+  - **库：** 每个服务独立库：`mor_client_master`、`mor_commercial`、`mor_acquiring`、`mor_counterparty`（2026-10-20 由 `mor_consumer` 改名）、`mor_payment`、`mor_channel_connector`、`mor_card`、`mor_risk_decision`、`mor_compliance`、`mor_ledger`、`mor_billing`、`mor_account`、`mor_reconciliation`、`mor_tax`；`mor_platform`、`mor_vault` 不变。模型为 `paytech/<服务>/docs/database/<服务>.pdma.json`（18 份），R4 表归属由 `paytech/tools/arch-rules/src/main/resources/table-ownership.yaml` 强制（265 张物理表 + 56 张保留表 + 6 张 step-added；2026-10-19 计费事实重构后为 −7 step-removed + 20 step-added）。
   - **过渡与清理：** 第 07 步 account 对 `mor_ledger` 的共库只读已于第 11b 步结束，`transitionalSharedReads` 已删除，account 改用自有 `mor_account`。第 05 步卡表暂居 `mor_payment` 的过渡已于第 12 步结束。旧根在 git 中为 0 个文件；文档链接已改写到新路径。
   - **消息：** `<producer>.events` Fanout 加订阅方一致性哈希分区队列（D34）。payment、compliance 只发新信封；acquiring、client-master、card、ledger、account 为消费者；billing 发布 `EconomicFactRecorded`（2026-10-19 改名 `BillingFactRecorded`，代码已改、未部署，见下方计费事实重构一节）。旧 `topic_*` / `cg_*` 不再由代码声明。
   - **test-environment：** Compose 已按上述服务拆分（18 个 Java 服务，每个服务一个 `JAR_FILE`）；`build.sh` 单 Reactor 打包；`initialize.py` 新增 V2 库建库与 Schema 动作。2026-10-18 mor-test 已按 V2 部署，见下方"mor-test V2 部署"。
