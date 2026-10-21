@@ -72,7 +72,6 @@ function ChannelList({ resources, onAuthorizationChanged }: Props) {
             </span>;
           } },
         ]} />}
-    <ChannelNote>账号 / MID 数为非 CLOSED 计数；激活时 channel-connector 实时核对 Platform 是否存在同编码接入方。没有「维护」按钮权限时，新建与状态操作不显示。</ChannelNote>
     {step?.kind === 'create' && <CreateChannelModal onClose={() => setStep(null)} onAuthorizationChanged={onAuthorizationChanged}
       onCreated={channel => void navigate(channelRoutes.channel(channel.channelId))} />}
     {step?.kind === 'status' && <ChannelStatusModal channel={step.channel} action={step.action} onAuthorizationChanged={onAuthorizationChanged}

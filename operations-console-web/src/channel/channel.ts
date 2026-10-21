@@ -451,24 +451,13 @@ export function detailValue(detail: Pick<CapabilityDetail, 'valueType' | 'boolea
   if (detail.valueType === 'BOOLEAN') return detail.booleanValue === null ? '—' : String(detail.booleanValue);
   return (detail.valueType === 'DECIMAL' ? detail.decimalValue : detail.codeValue) ?? '—';
 }
-/** 能力组明细摘要：ACTION.* 显示 ✓ / ✗，金额上下限合并为区间，其余为 代码=值。 */
-export function capabilitySummary(details: readonly CapabilityDetail[]): string {
-  const actions = details.filter(d => d.capabilityCode.startsWith('ACTION.') && d.valueType === 'BOOLEAN')
-    .map(d => `${d.capabilityCode.slice(7)} ${d.booleanValue ? '✓' : '✗'}`);
-  const min = details.find(d => d.capabilityCode === 'AMOUNT.MIN')?.decimalValue;
-  const max = details.find(d => d.capabilityCode === 'AMOUNT.MAX')?.decimalValue;
-  const range = min || max ? [`${min ?? '0'}–${max ?? '∞'}`] : [];
-  const others = details.filter(d => !d.capabilityCode.startsWith('ACTION.') && d.capabilityCode !== 'AMOUNT.MIN' && d.capabilityCode !== 'AMOUNT.MAX')
-    .map(d => `${d.capabilityCode}=${detailValue(d)}`);
-  return [actions.join(' '), ...range, ...others].filter(Boolean).join(' · ') || '—';
-}
 
 export interface CapabilityFormValues { paymentMethodCode: string; schemeCode: string; countryCode: string; currency: string; mccCode: string }
-/** 六维条件：支付方式精确代码；体系 / 国家 / 币种可为 *；MCC 四位数字。 */
+/** 六维条件：支付方式精确代码；卡组 / 国家 / 币种可为 *；MCC 四位数字。 */
 export function capabilityConditionIssues(values: Partial<CapabilityFormValues>): Partial<Record<keyof CapabilityFormValues, string>> {
   const issues: Partial<Record<keyof CapabilityFormValues, string>> = {};
   if (!paymentMethodPattern.test(values.paymentMethodCode ?? '')) issues.paymentMethodCode = '支付方式须为大写目录代码';
-  if (!(values.schemeCode === '*' || paymentMethodPattern.test(values.schemeCode ?? ''))) issues.schemeCode = '体系须为目录代码或 *';
+  if (!(values.schemeCode === '*' || paymentMethodPattern.test(values.schemeCode ?? ''))) issues.schemeCode = '卡组须为目录代码或 *';
   if (!(values.countryCode === '*' || countryPattern.test(values.countryCode ?? ''))) issues.countryCode = '国家须为两位大写代码或 *';
   if (!(values.currency === '*' || currencyPattern.test(values.currency ?? ''))) issues.currency = '币种须为三位大写代码或 *';
   if (!mccPattern.test(values.mccCode ?? '')) issues.mccCode = 'MCC 须为四位数字';

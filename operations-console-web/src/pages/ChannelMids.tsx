@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Form, Input, Select, Table } from 'antd';
+import { Button, Form, Input, Select, Table, Tabs } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { requestAllPages } from '../api/paging';
 import { ApiError, session } from '../api/session';
@@ -7,7 +7,7 @@ import type { ConsoleResource } from '../api/types';
 import { usePaging } from '../hooks/usePaging';
 import { Loading, QueryFailure, useDetail } from '../tenantAccess/TenantAccessView';
 import {
-  capabilityStatusLabels, capabilitySummary, capabilityToggle, channelButtons, channelPaths, channelRoutes, decodeAccountPage, decodeCapability,
+  capabilityStatusLabels, capabilityToggle, channelButtons, channelPaths, channelRoutes, decodeAccountPage, decodeCapability,
   decodeChannel, decodeDefinitions, decodeMid, decodeMidPage, detailValue, editable, entityNoPattern, hasButton, isId, lifecycleActions,
   lifecycleStatuses, lifecycleStatusLabels, listFilters, localTime, primaryLifecycleAction,
 } from '../channel/channel';
@@ -83,7 +83,6 @@ function MidList({ resources, onAuthorizationChanged }: Props) {
             </span>;
           } },
         ]} />}
-    <ChannelNote>MID 的 OE 创建后不可改；改绑只能选同渠道同 OE 且非 CLOSED 的账号，Payment 已冻结的 Attempt 不受影响。「激活」要求渠道与当前账号均为 ACTIVE。</ChannelNote>
     {step?.kind === 'create' && <CreateMidModal onClose={() => setStep(null)} onAuthorizationChanged={onAuthorizationChanged}
       onCreated={mid => void navigate(channelRoutes.mid(mid.midId))} />}
     {step?.kind === 'rebind' && <RebindModal mid={step.mid} onClose={() => setStep(null)} onAuthorizationChanged={onAuthorizationChanged} onDone={done} />}
@@ -165,7 +164,7 @@ function RebindModal({ mid, onDone, ...base }: Base & { mid: Pick<ChannelMid, 'm
 type DetailStep = { kind: 'rebind' } | { kind: 'status'; action: LifecycleAction } | { kind: 'capability'; capability?: MidCapability }
   | { kind: 'toggle'; capability: MidCapability } | null;
 
-/** MID 详情（画板 07）：信息条、能力组表（六维 + 状态 + 明细摘要 + 编辑明细 / 启停）、选中组的明细表、变更记录。 */
+/** MID 详情（画板 07）：信息条；页签“能力组”（六维 + 状态 + 编辑明细 / 启停，选中组的明细表）与“变更记录”。 */
 function MidDetail({ midId, resources, onAuthorizationChanged }: Props & { midId: string }) {
   const navigate = useNavigate();
   const detail = useDetail(channelPaths.mid(midId), decodeMid);
@@ -173,6 +172,7 @@ function MidDetail({ midId, resources, onAuthorizationChanged }: Props & { midId
   const [channel, setChannel] = useState<Channel>();
   const [step, setStep] = useState<DetailStep>(null);
   const [selectedId, setSelectedId] = useState<string>();
+  const [tab, setTab] = useState('capabilities');
   const [revision, setRevision] = useState(0);
   const canManage = hasButton(resources, channelButtons.midManage);
   const channelId = detail.data?.channelId;
@@ -209,44 +209,47 @@ function MidDetail({ midId, resources, onAuthorizationChanged }: Props & { midId
       ...(mid.closedAt ? [{ label: '关闭时间', value: localTime(mid.closedAt) }] : []),
       { label: '更新', value: localTime(mid.updateTime) },
     ]} />
-    <div className="channel-section-head"><h2>能力组</h2><span className="channel-spacer" />
-      {manageable && <Button type="primary" disabled={!definitions.length} onClick={() => setStep({ kind: 'capability' })}>新建能力组</Button>}</div>
-    {definitionsDetail.failure && <ChannelNote tone="warning">能力目录加载失败，暂不能新建或编辑明细。</ChannelNote>}
-    <Table<MidCapability> rowKey="midCapabilityId" size="middle" pagination={false} dataSource={mid.capabilities} scroll={{ x: 1100 }}
-      locale={{ emptyText: '还没有能力组' }} rowClassName={row => `clickable-row${row.midCapabilityId === selected?.midCapabilityId ? ' channel-selected-row' : ''}`}
-      onRow={row => ({ onClick: () => setSelectedId(row.midCapabilityId) })} columns={[
-        { title: '支付方式', width: 110, dataIndex: 'paymentMethodCode' },
-        { title: '体系', width: 120, dataIndex: 'schemeCode' },
-        { title: '国家', width: 70, dataIndex: 'countryCode' },
-        { title: '币种', width: 70, dataIndex: 'currency' },
-        { title: 'MCC', width: 70, dataIndex: 'mccCode' },
-        { title: '状态', width: 110, render: (_, row) => <StatusTag status={row.status} /> },
-        { title: '明细摘要', width: 360, render: (_, row) => capabilitySummary(row.details) },
-        { title: '操作', width: 160, render: (_, row) => {
-          const toggle = capabilityToggle(row, mid.status, canManage);
-          return <span className="channel-actions">
-            {manageable && <Button type="link" size="small" disabled={!definitions.length}
-              onClick={event => { event.stopPropagation(); setStep({ kind: 'capability', capability: row }); }}>编辑明细</Button>}
-            {toggle && <Button type="link" size="small" onClick={event => { event.stopPropagation(); setStep({ kind: 'toggle', capability: row }); }}>
-              {toggle === 'ENABLED' ? '启用' : '停用'}</Button>}
-          </span>;
-        } },
-      ]} />
-    {selected && <>
-      <div className="channel-section-head"><h2>明细 · {[selected.paymentMethodCode, selected.schemeCode, selected.countryCode, selected.currency, selected.mccCode].join(' / ')}</h2></div>
-      <Table rowKey="capabilityCode" size="middle" pagination={false} dataSource={selected.details} columns={[
-        { title: '能力代码', dataIndex: 'capabilityCode', width: 220, render: (code: string) => <span className="mono">{code}</span> },
-        { title: '类型', dataIndex: 'valueType', width: 110 },
-        { title: '值', width: 160, render: (_, row) => detailValue(row) },
-        { title: '说明', render: (_, row) => {
-          const allowed = definitions.find(d => d.capabilityCode === row.capabilityCode)?.allowedCodes ?? [];
-          return row.valueType === 'CODE' && allowed.length ? `允许值 ${allowed.join(' / ')}` : '—';
-        } },
-      ]} />
-    </>}
-    <div className="channel-section-head"><h2>变更记录 · MID</h2></div>
-    <ChangeList key={revision} targetType="CHANNEL_MID" targetId={mid.midId} />
-    <ChannelNote>六维组合在 MID 内唯一；明细按能力目录渲染，类型与目录不一致被拒绝。整组停用后候选查询不再返回该组能力。</ChannelNote>
+    <Tabs activeKey={tab} onChange={setTab}
+      tabBarExtraContent={tab === 'capabilities' && manageable
+        && <Button type="primary" disabled={!definitions.length} onClick={() => setStep({ kind: 'capability' })}>新建能力组</Button>}
+      items={[
+      { key: 'capabilities', label: '能力组', children: <>
+        {definitionsDetail.failure && <ChannelNote tone="warning">能力目录加载失败，暂不能新建或编辑明细。</ChannelNote>}
+        <Table<MidCapability> rowKey="midCapabilityId" size="middle" pagination={false} dataSource={mid.capabilities} scroll={{ x: 760 }}
+          locale={{ emptyText: '还没有能力组' }} rowClassName={row => `clickable-row${row.midCapabilityId === selected?.midCapabilityId ? ' channel-selected-row' : ''}`}
+          onRow={row => ({ onClick: () => setSelectedId(row.midCapabilityId) })} columns={[
+            { title: '支付方式', width: 110, dataIndex: 'paymentMethodCode' },
+            { title: '卡组', width: 120, dataIndex: 'schemeCode' },
+            { title: '国家', width: 70, dataIndex: 'countryCode' },
+            { title: '币种', width: 70, dataIndex: 'currency' },
+            { title: 'MCC', width: 70, dataIndex: 'mccCode' },
+            { title: '状态', width: 110, render: (_, row) => <StatusTag status={row.status} /> },
+            { title: '操作', width: 160, render: (_, row) => {
+              const toggle = capabilityToggle(row, mid.status, canManage);
+              return <span className="channel-actions">
+                {manageable && <Button type="link" size="small" disabled={!definitions.length}
+                  onClick={event => { event.stopPropagation(); setStep({ kind: 'capability', capability: row }); }}>编辑明细</Button>}
+                {toggle && <Button type="link" size="small" onClick={event => { event.stopPropagation(); setStep({ kind: 'toggle', capability: row }); }}>
+                  {toggle === 'ENABLED' ? '启用' : '停用'}</Button>}
+              </span>;
+            } },
+          ]} />
+        {selected && <>
+          <div className="channel-section-head"><h2>明细 · {[selected.paymentMethodCode, selected.schemeCode, selected.countryCode, selected.currency, selected.mccCode].join(' / ')}</h2></div>
+          <Table rowKey="capabilityCode" size="middle" pagination={false} dataSource={selected.details} columns={[
+            { title: '能力代码', dataIndex: 'capabilityCode', width: 220, render: (code: string) => <span className="mono">{code}</span> },
+            { title: '类型', dataIndex: 'valueType', width: 110 },
+            { title: '值', width: 160, render: (_, row) => detailValue(row) },
+            { title: '说明', render: (_, row) => {
+              const allowed = definitions.find(d => d.capabilityCode === row.capabilityCode)?.allowedCodes ?? [];
+              return row.valueType === 'CODE' && allowed.length ? `允许值 ${allowed.join(' / ')}` : '—';
+            } },
+          ]} />
+        </>}
+        <ChannelNote>六维组合在 MID 内唯一；明细按能力目录渲染，类型与目录不一致被拒绝。整组停用后候选查询不再返回该组能力。</ChannelNote>
+      </> },
+      { key: 'changes', label: '变更记录', children: <ChangeList key={revision} targetType="CHANNEL_MID" targetId={mid.midId} /> },
+    ]} />
     {step?.kind === 'rebind' && <RebindModal mid={mid} onClose={() => setStep(null)} onAuthorizationChanged={onAuthorizationChanged} onDone={reload} />}
     {step?.kind === 'status' && <MidStatusModal mid={mid} action={step.action} onClose={() => setStep(null)} onAuthorizationChanged={onAuthorizationChanged} onDone={reload} />}
     {step?.kind === 'capability' && <CapabilityEditor midId={mid.midId} definitions={definitions} capability={step.capability} onClose={() => setStep(null)}

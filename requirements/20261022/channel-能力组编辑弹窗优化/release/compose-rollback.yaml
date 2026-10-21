@@ -1,0 +1,4 @@
+# 回滚到替换前的现网 ops-web（reconciliation 详情页发布版本）。
+services:
+  operations-console-web:
+    image: sha256:70829a3a9213f680b4ce8c100115996799fd3a800997faa1a85414dcfca19ef8  # mor-test/operations-console-web:recon-detail-20261021

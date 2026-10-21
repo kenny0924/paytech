@@ -4,7 +4,7 @@ import { ApiError } from '../api/session.ts';
 import { pageRoutePaths } from '../navigation/menu.ts';
 import { pageCapabilities } from '../navigation/pageCapabilities.ts';
 import {
-  canCreateVersion, capabilityConditionIssues, capabilityDetailIssues, capabilityDetailsBody, capabilitySummary, channelButtons, channelErrorMessage,
+  canCreateVersion, capabilityConditionIssues, capabilityDetailIssues, capabilityDetailsBody, channelButtons, channelErrorMessage,
   channelPaths, channelRoutes, componentSummary, configEntryIssues, configurationBody, costVersionActions, costVersionBody, costVersionIssues,
   decodeAccount, decodeChannelPage, decodeCostVersion, decodeMid, decodePlan, decodeVersionDiff, defaultCompareBase, diffRows, diffSummary, editable,
   fieldPath, lifecycleActions, percent, primaryLifecycleAction, scopeDrafts, tokenSuffixLabel,
@@ -134,7 +134,6 @@ test('能力组：六维条件格式与明细按目录类型只取一个值', ()
   assert.match(capabilityDetailIssues([], definitions) ?? '', /至少一项/);
   assert.deepEqual(capabilityDetailsBody([{ capabilityCode: 'AMOUNT.MIN', decimalValue: ' 10 ', booleanValue: true }], definitions),
     [{ capabilityCode: 'AMOUNT.MIN', booleanValue: null, decimalValue: '10', codeValue: null }]);
-  assert.equal(capabilitySummary(decodeMid(mid).capabilities[0].details), 'PAY ✓ REFUND ✗ · 10–50000 · SECURITY.3DS_MODE=REQUIRED');
 });
 
 test('版本编制：MCC 以外的范围格式、十进制费率与金额、组成唯一与币种要求', () => {

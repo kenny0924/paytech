@@ -16,7 +16,7 @@ import {
   integrationRoute, listSizes, manageStandardApis, replaceQuery, standardApiPath, standardApiRoute, toFieldBodies,
 } from '../externalApi/externalApiModel';
 import type { ApiField, FieldLocation, StandardApiDetail, StandardApiSummary } from '../externalApi/externalApiModel';
-import { ExternalApiFrame, Field, Mono, Note, PageHeader, Panel, ReadOnlyValue, counted, formatTime } from '../externalApi/ui';
+import { ExternalApiFrame, Field, Mono, PageHeader, Panel, ReadOnlyValue, counted, formatTime } from '../externalApi/ui';
 import type { Crumb } from '../externalApi/ui';
 
 interface Props { resources: ConsoleResource[]; onAuthorizationChanged: () => void }
@@ -84,8 +84,6 @@ function StandardApiList({ resources, onAuthorizationChanged }: Props) {
             ] : []),
           ] }}><button type="button" className="xapi-more" aria-label="更多操作">···</button></Dropdown> },
         ]} /></div>}
-    <Note items={['点击已实现接入方可直接进入该接入方的标准 API 实现。', '被接入方实现的标准 API 不能删除；删除前会列出引用的接入方。',
-      '保存即对新调用生效，没有发布环节；正在执行的调用使用已加载的配置。']} />
     {deleting && <DeleteDialog target={deleting} onClose={() => setDeleting(null)} onAuthorizationChanged={onAuthorizationChanged}
       onDeleted={() => { setDeleting(null); page.refresh(); }} />}
   </>;

@@ -141,8 +141,6 @@ function IntegrationList({ resources, onAuthorizationChanged }: Props) {
             ] : []),
           ] }}><button type="button" className="xapi-more" aria-label="更多操作">···</button></Dropdown> },
         ]} /></div>}
-    <Note items={['出站地址数是本环境维护的地址数量；实际出站仍受部署网络白名单限制。',
-      '删除接入方前须先删除其原子 API、公共脚本与标准 API 实现；删除时会列出仍存在的下级配置。']} />
     {deleting && <DeleteDialog target={deleting} onClose={() => setDeleting(null)} onAuthorizationChanged={onAuthorizationChanged}
       onDeleted={() => { setDeleting(null); page.refresh(); }} />}
   </>;

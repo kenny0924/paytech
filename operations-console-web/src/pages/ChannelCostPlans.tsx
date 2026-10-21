@@ -80,7 +80,6 @@ function PlanList({ resources, onAuthorizationChanged }: Props) {
             <Button type="link" size="small" onClick={() => void navigate(channelRoutes.costPlan(row.planCode))}>详情</Button>
             {canManage && <Button type="link" size="small" onClick={() => void navigate(channelRoutes.newCostVersion(row.planCode))}>新建版本</Button>}</span> },
         ]} />}
-    <ChannelNote>每个渠道只有一个方案；创建方案时校验渠道存在。「待审批」为 PENDING_APPROVAL 版本数；审批人需要「审批」按钮权限，且不能是版本编制人。</ChannelNote>
     {creating && <CreatePlanModal onClose={() => setCreating(false)} onAuthorizationChanged={onAuthorizationChanged}
       onCreated={plan => void navigate(channelRoutes.costPlan(plan.planCode))} />}
   </>;
