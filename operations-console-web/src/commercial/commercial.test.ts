@@ -4,7 +4,7 @@ import { ApiError } from '../api/session.ts';
 import { pageCapabilities } from '../navigation/pageCapabilities.ts';
 import { pageRoutePaths } from '../navigation/menu.ts';
 import {
-  acceptanceBody, agreementActions, agreementBody, bandIssues, capabilityBody, commercialButtons, commercialErrorMessage, commercialPaths, commercialRoutes, componentSummary,
+  acceptanceBody, agreementActions, agreementBody, bandIssues, commercialButtons, commercialErrorMessage, commercialPaths, commercialRoutes, componentSummary,
   coverageGaps, decodeAgreementOverview, decodeAgreementWrite, decodeCapabilityWrite, decodePlan, decodeProfileList, decodeVersion, decodeWorkspace,
   fieldPath, groupRowSpan, hasButton, newPriceDraft, percent, planBody, priceDraft, priceMatrix, pricesBody, profileBody, reserveError, utcInstant, versionActions,
 } from './commercial.ts';
@@ -14,7 +14,7 @@ const agreementId = '7319000000000000101';
 const versionId = '7319000000000000601';
 const capability = (entityNo: string, currencies: string[], status = 'ENABLED') => ({ agreementCapabilityId: '7319000000000000301', entityNo,
   capabilityCode: 'CARD_VISA', status, effectiveFrom: '2026-10-01T00:00:00Z', effectiveTo: null, rollingReserveRate: null, rollingReserveDays: null,
-  limits: currencies.map(limitValue => ({ limitCode: 'CURRENCY', limitValue })) });
+  conditions: [{ dimensionCode: 'CURRENCY', values: currencies }], require3ds: false });
 const agreement = {
   agreementId, agreementNo: 'AGR-1', agreementName: '示例合同', agreementType: 'CLIENT', businessMode: 'MOR', fundMode: 'SETTLE_THROUGH_PLATFORM',
   pricingAuthority: 'PLATFORM', referralPartnerId: null, clientId: '7300000000000000011', localPartnerId: null, entityNo: 'AE001', operatingEntityNos: [],
@@ -42,15 +42,17 @@ const workspace = (prices: unknown[]) => ({ version, prices, agreement: { agreem
 const resource = (resourceCode: string, resourceType: 'MENU' | 'BUTTON' = 'BUTTON') => ({ resourceId: resourceCode, resourceCode, resourceType,
   parentResourceId: null, displayName: resourceCode, frontendRoute: null, componentKey: null, sortOrder: 0 });
 
-test('页面注册：合同、定价画像、价目及工作台、费率预览、价格试算、产品目录、变更历史；详情路由登记在菜单路径', () => {
+test('页面注册：合同、定价画像、价目、标准价目及工作台、费率预览、价格试算、产品目录、变更历史；详情路由登记在菜单路径', () => {
   const pages = pageCapabilities.filter(page => page.componentKey.startsWith('OPERATIONS_COMMERCIAL_'));
   assert.deepEqual(pages.map(page => [page.componentKey, page.frontendRoute]), [
     ['OPERATIONS_COMMERCIAL_AGREEMENTS', commercialRoutes.agreements], ['OPERATIONS_COMMERCIAL_PRICING_PROFILES', commercialRoutes.profiles],
-    ['OPERATIONS_COMMERCIAL_TERMS', commercialRoutes.terms], ['OPERATIONS_COMMERCIAL_WORKBENCH', commercialRoutes.workbench],
+    ['OPERATIONS_COMMERCIAL_TERMS', commercialRoutes.terms], ['OPERATIONS_COMMERCIAL_TEMPLATES', commercialRoutes.templates],
+    ['OPERATIONS_COMMERCIAL_WORKBENCH', commercialRoutes.workbench],
     ['OPERATIONS_COMMERCIAL_RATE_CARDS', commercialRoutes.rateCards], ['OPERATIONS_COMMERCIAL_PRICE_SIMULATOR', commercialRoutes.priceSimulator],
     ['OPERATIONS_COMMERCIAL_CATALOG', commercialRoutes.catalog], ['OPERATIONS_COMMERCIAL_HISTORY', commercialRoutes.history]]);
   assert.deepEqual(pages.map(page => page.actions.map(action => action.resourceCode)), [
-    [commercialButtons.agreementManage], [commercialButtons.profileManage], [commercialButtons.termManage, commercialButtons.termApprove], [], [], [], [], []]);
+    [commercialButtons.agreementManage], [commercialButtons.profileManage], [commercialButtons.termManage, commercialButtons.termApprove, commercialButtons.termSign],
+    [commercialButtons.templateManage, commercialButtons.templateApprove], [], [], [], [commercialButtons.catalogManage], []]);
   const menu = (componentKey: string, frontendRoute: string) => ({ ...resource(componentKey, 'MENU'), componentKey, frontendRoute });
   assert.deepEqual(pageRoutePaths(menu('OPERATIONS_COMMERCIAL_AGREEMENTS', '/commercial/agreements')), ['/commercial/agreements', '/commercial/agreements/:agreementId']);
   assert.deepEqual(pageRoutePaths(menu('OPERATIONS_COMMERCIAL_TERMS', '/commercial/terms')), ['/commercial/terms', '/commercial/terms/versions/:versionId',
@@ -85,7 +87,8 @@ test('按钮权限：只认 BUTTON 资源；Maker 与 Checker 动作分属维护
 
 test('合同详情聚合解码：合同 ID 一致、可空字段归一为 null、版本部分状态与列表一致', () => {
   const overview = decodeAgreementOverview(agreementId)({ agreement, termVersionsStatus: 'AVAILABLE', termVersions: [termVersion] });
-  assert.equal(overview.agreement.capabilities[0].limits.length, 2);
+  assert.deepEqual(overview.agreement.capabilities[0].conditions, [{ dimensionCode: 'CURRENCY', values: ['USD', 'AED'] }]);
+  assert.equal(overview.agreement.capabilities[0].require3ds, false);
   assert.equal(overview.termVersions[0].timing, 'CURRENT');
   const partner = decodeAgreementOverview(agreementId)({ agreement: { ...agreement, agreementType: 'PARTNER', entityNo: undefined, operatingEntityNos: undefined },
     termVersionsStatus: 'NOT_APPLICABLE', termVersions: [] });
@@ -155,7 +158,7 @@ test('组件摘要与费率显示：不做浮点舍入', () => {
     bands: [{ bandId: '1', bandNo: 1, lowerBound: '0', upperBound: '1000', rate: '0.01', fixedAmount: null, currency: 'USD' }] }), '阶梯 1 档 · WHOLE_BASE');
 });
 
-test('覆盖提示：ENABLED 开通项的每个约束币种都应有同 OE 价格，暂停项与非币种约束不计', () => {
+test('覆盖提示：ENABLED 开通项的每个 CURRENCY 条件币种都应有同 OE 价格，暂停项与非币种条件不计', () => {
   const capabilities = [capability('AE001', ['USD', 'AED']), capability('AE001', ['EUR'], 'SUSPENDED')] as AgreementCapability[];
   assert.deepEqual(coverageGaps(capabilities, [{ entityNo: 'AE001', currency: 'USD' }]), ['AE001/AED（CARD_VISA）']);
   assert.deepEqual(coverageGaps(capabilities, [{ entityNo: 'AE001', currency: 'USD' }, { entityNo: 'AE001', currency: 'AED' }]), []);
@@ -212,18 +215,11 @@ test('合同请求：CLIENT 固定资金模式与定价权，PARTNER 清空 Clie
   assert.deepEqual(partner.operatingEntityNos, ['AE001', 'SA001']);
 });
 
-test('签署、开通项、画像与方案请求的条件字段', () => {
+test('签署、保证金成组、画像与方案请求的条件字段', () => {
   const click = acceptanceBody(3, { acceptanceReference: 'R-1', acceptanceMethod: 'CLICK_ACCEPTANCE', acceptedByActorId: '9', acceptedAt: '2026-10-19T10:00:00Z', fileId: '1', contentHash: 'x' });
   assert.deepEqual([click.acceptedByActorId, click.executedDocument], ['9', null]);
   const esign = acceptanceBody(3, { acceptanceReference: 'R-2', acceptanceMethod: 'E_SIGNATURE', acceptedByActorId: '9', acceptedAt: '2026-10-19T10:00:00Z', fileId: '1', contentHash: 'AB' });
   assert.deepEqual([esign.acceptedByActorId, esign.executedDocument], [null, { fileId: '1', contentHash: 'ab' }]);
-  const created = capabilityBody(6, { entityNo: 'AE001', capabilityCode: 'CARD_VISA', effectiveFrom: '2026-11-01T00:00:00Z', rollingReserveRate: ' ', rollingReserveDays: null,
-    limits: [{ limitCode: 'CURRENCY', limitValue: 'usd' }, { limitCode: 'CURRENCY', limitValue: 'USD' }, { limitCode: 'CONSUMER_COUNTRY', limitValue: ' ' }] }, false);
-  assert.deepEqual(created.limits, [{ limitCode: 'CURRENCY', limitValue: 'USD' }], '去空白、转大写并去重');
-  assert.equal(created.rollingReserveRate, null);
-  assert.equal(Object.hasOwn(created, 'status'), false);
-  const updated = capabilityBody(7, { entityNo: 'AE001', capabilityCode: 'CARD_VISA', status: 'SUSPENDED', effectiveFrom: '2026-11-01T00:00:00Z', limits: [] }, true);
-  assert.deepEqual([(updated as { status?: string }).status, Object.hasOwn(updated, 'entityNo')], ['SUSPENDED', false]);
   assert.equal(reserveError('0.1', null), '保证金比例与天数必须同时填写或同时留空');
   assert.equal(reserveError('0.1', 90), null);
   assert.equal(reserveError(undefined, undefined), null);

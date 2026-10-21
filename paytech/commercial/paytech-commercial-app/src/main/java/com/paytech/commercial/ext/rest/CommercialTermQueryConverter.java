@@ -9,6 +9,11 @@ import static com.paytech.commercial.ext.rest.WireValues.time;
 
 import java.util.List;
 
+import com.paytech.commercial.domain.CommercialTermTemplateSummaryView;
+import com.paytech.commercial.domain.CommercialTermTemplateListQuery;
+import com.paytech.commercial.api.term.response.CommercialTermTemplateSummary;
+import com.paytech.commercial.api.term.response.CommercialTermTemplateListResponseBody;
+import com.paytech.commercial.api.enums.CommercialTermOwnerType;
 import com.paytech.commercial.api.enums.CommercialTermPlanStatus;
 import com.paytech.commercial.api.term.response.CommercialTermPlanSummary;
 import com.paytech.commercial.api.term.response.CommercialTermVersionSummary;
@@ -37,10 +42,10 @@ final class CommercialTermQueryConverter {
     }
 
     /** 版本列表查询条件。 */
-    static CommercialTermVersionListQuery versionQuery(String planId, String agreementId, List<String> status,
-        String effectiveFrom, String effectiveTo, Integer page, Integer size) {
+    static CommercialTermVersionListQuery versionQuery(String planId, String agreementId, String ownerType,
+        List<String> status, String effectiveFrom, String effectiveTo, Integer page, Integer size) {
         return new CommercialTermVersionListQuery(id("planId", planId), id("agreementId", agreementId),
-            codes(CommercialTermVersionStatus.class, "status", status), time("effectiveFrom", effectiveFrom),
+            code(CommercialTermOwnerType.class, "ownerType", ownerType), codes(CommercialTermVersionStatus.class, "status", status), time("effectiveFrom", effectiveFrom),
             time("effectiveTo", effectiveTo), PagingRequestBody.of(page, size));
     }
 
@@ -50,6 +55,8 @@ final class CommercialTermQueryConverter {
         summary.setPlanId(Long.toString(view.getPlanId()));
         summary.setPlanCode(view.getPlanCode());
         summary.setTermType(view.getTermType());
+        summary.setOwnerType(text(view.getOwnerType()));
+        summary.setTemplateName(view.getTemplateName());
         summary.setAgreementId(text(view.getAgreementId()));
         summary.setEntityNo(view.getEntityNo());
         summary.setClientId(text(view.getClientId()));
@@ -95,6 +102,46 @@ final class CommercialTermQueryConverter {
         summary.setPriceCount(view.getPriceCount());
         summary.setChangeVersion(Long.toString(view.getChangeVersion()));
         summary.setUpdateTime(text(view.getUpdateTime()));
+        summary.setOwnerType(text(view.getOwnerType()));
+        summary.setTemplateName(view.getTemplateName());
+        summary.setSourceTemplateVersionId(text(view.getSourceTemplateVersionId()));
+        summary.setBelowStandardCount(view.getBelowStandardCount());
+        summary.setSignatureExempt(view.isSignatureExempt());
+        summary.setHasAcceptance(view.isHasAcceptance());
         return summary;
+    }
+
+    /** 模板列表查询条件。 */
+    static CommercialTermTemplateListQuery templateQuery(String entityNo, String termType, String status) {
+        return new CommercialTermTemplateListQuery(matching("entityNo", entityNo, "[A-Z]{2}[0-9]{3}"),
+            matching("termType", termType, TERM_TYPE), code(CommercialTermPlanStatus.class, "status", status));
+    }
+
+    /** 模板列表。 */
+    static CommercialTermTemplateListResponseBody templates(List<CommercialTermTemplateSummaryView> views) {
+        CommercialTermTemplateListResponseBody body = new CommercialTermTemplateListResponseBody();
+        body.setTemplates(views.stream().map(view -> {
+            CommercialTermTemplateSummary summary = new CommercialTermTemplateSummary();
+            summary.setPlanId(text(view.getPlan().getTermPlanId()));
+            summary.setPlanCode(view.getPlan().getPlanCode());
+            summary.setTemplateName(view.getPlan().getTemplateName());
+            summary.setTermType(view.getPlan().getTermType());
+            summary.setEntityNo(view.getPlan().getEntityNo());
+            summary.setStatus(text(view.getPlan().getStatus()));
+            summary.setChangeVersion(Long.toString(view.getChangeVersion()));
+            if (view.getActiveVersion() != null) {
+                summary.setActiveVersionId(text(view.getActiveVersion().getTermVersionId()));
+                summary.setActiveVersionNo(text(view.getActiveVersion().getVersionNo()));
+            }
+            if (view.getLatestVersion() != null) {
+                summary.setLatestVersionId(text(view.getLatestVersion().getTermVersionId()));
+                summary.setLatestVersionNo(text(view.getLatestVersion().getVersionNo()));
+                summary.setLatestVersionStatus(text(view.getLatestVersion().getStatus()));
+            }
+            summary.setCreateTime(text(view.getPlan().getCreateTime()));
+            summary.setUpdateTime(text(view.getPlan().getUpdateTime()));
+            return summary;
+        }).toList());
+        return body;
     }
 }

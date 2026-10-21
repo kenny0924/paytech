@@ -18,7 +18,7 @@
     <select id="findForCheckout" resultMap="CommercialTermPrice">
         SELECT term_price_id, term_version_id, entity_no, currency, pricing_profile_code, priority_no, settlement_business_days, business_calendar_code, settlement_timezone, cutoff_second_of_day
         FROM t_commercial_term_price
-        WHERE term_version_id IN (SELECT term_version_id FROM t_commercial_term_version WHERE term_plan_id IN (SELECT term_plan_id FROM t_commercial_term_plan WHERE client_id = #{clientId}<if test="!localPartnerIds.isEmpty()"> OR local_partner_id IN <foreach collection="localPartnerIds" item="partnerId" open="(" separator="," close=")">#{partnerId}</foreach></if>)) AND <choose><when test="entityNos.isEmpty()">1 = 0</when><otherwise>entity_no IN <foreach collection="entityNos" item="entityNo" open="(" separator="," close=")">#{entityNo}</foreach></otherwise></choose>
+        WHERE term_version_id IN (SELECT term_version_id FROM t_commercial_term_version WHERE term_plan_id IN (SELECT term_plan_id FROM t_commercial_term_plan WHERE owner_type &lt;&gt; 'PLATFORM_TEMPLATE' AND (client_id = #{clientId}<if test="!localPartnerIds.isEmpty()"> OR local_partner_id IN <foreach collection="localPartnerIds" item="partnerId" open="(" separator="," close=")">#{partnerId}</foreach></if>))) AND <choose><when test="entityNos.isEmpty()">1 = 0</when><otherwise>entity_no IN <foreach collection="entityNos" item="entityNo" open="(" separator="," close=")">#{entityNo}</foreach></otherwise></choose>
         ORDER BY term_price_id
     </select>
 
@@ -34,6 +34,7 @@
         <result column="business_calendar_code" property="businessCalendarCode"/>
         <result column="settlement_timezone" property="settlementTimezone"/>
         <result column="cutoff_second_of_day" property="cutoffSecondOfDay"/>
+        <result column="source_template_price_id" property="sourceTemplatePriceId"/>
         <result column="create_time" property="createTime"/>
         <result column="update_time" property="updateTime"/>
     </resultMap>
@@ -41,13 +42,13 @@
     <sql id="commercialTermPriceColumns">
         term_price_id, term_version_id, entity_no, currency, pricing_profile_code, priority_no,
         settlement_business_days, business_calendar_code, settlement_timezone, cutoff_second_of_day,
-        create_time, update_time
+        source_template_price_id, create_time, update_time
     </sql>
 
     <insert id="insertAll">
         INSERT INTO t_commercial_term_price (<include refid="commercialTermPriceColumns"/>) VALUES
         <foreach collection="rows" item="row" separator=",">
-            (#{row.termPriceId}, #{row.termVersionId}, #{row.entityNo}, #{row.currency}, #{row.pricingProfileCode}, #{row.priorityNo}, #{row.settlementBusinessDays}, #{row.businessCalendarCode}, #{row.settlementTimezone}, #{row.cutoffSecondOfDay}, #{row.createTime}, #{row.updateTime})
+            (#{row.termPriceId}, #{row.termVersionId}, #{row.entityNo}, #{row.currency}, #{row.pricingProfileCode}, #{row.priorityNo}, #{row.settlementBusinessDays}, #{row.businessCalendarCode}, #{row.settlementTimezone}, #{row.cutoffSecondOfDay}, #{row.sourceTemplatePriceId}, #{row.createTime}, #{row.updateTime})
         </foreach>
     </insert>
 
@@ -66,6 +67,18 @@
     <delete id="deleteByVersionId">
         DELETE FROM t_commercial_term_price WHERE term_version_id = #{termVersionId}
     </delete>
+
+    <select id="selectByIds" resultMap="CommercialTermPriceRow">
+        SELECT <include refid="commercialTermPriceColumns"/> FROM t_commercial_term_price
+        WHERE term_price_id IN <foreach collection="termPriceIds" item="termPriceId" open="(" separator="," close=")">#{termPriceId}</foreach>
+        ORDER BY term_price_id
+    </select>
+
+    <select id="selectByVersionIds" resultMap="CommercialTermPriceRow">
+        SELECT <include refid="commercialTermPriceColumns"/> FROM t_commercial_term_price
+        WHERE term_version_id IN <foreach collection="termVersionIds" item="termVersionId" open="(" separator="," close=")">#{termVersionId}</foreach>
+        ORDER BY term_price_id
+    </select>
 
     <select id="selectVersionIdsOfPrices" resultType="long">
         SELECT term_version_id FROM t_commercial_term_price

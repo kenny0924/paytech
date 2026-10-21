@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.springframework.boot.test.context.TestComponent;
 
-import com.paytech.commercial.api.enums.CapabilityLimitCode;
+import com.paytech.commercial.api.enums.PricingDimension;
 import com.paytech.commercial.core.dal.dataobject.AgreementCapability;
 import com.paytech.commercial.core.dal.dataobject.AgreementCapabilityLimit;
 import com.paytech.commercial.core.dal.dataobject.AgreementProduct;
@@ -63,13 +63,13 @@ public class AgreementSubscriptionMocker {
         }
 
         /**
-         * 追加一条约束。
+         * 追加一条接受条件取值。
          *
-         * @param limitCode 约束类别
+         * @param limitCode 条件维度
          * @param limitValue 规范化值
          * @return 本 Mocker
          */
-        public Mocker limit(CapabilityLimitCode limitCode, String limitValue) {
+        public Mocker limit(PricingDimension limitCode, String limitValue) {
             AgreementCapabilityLimit limit = AgreementCapabilityLimitBuilder.template()
                 .agreementCapabilityLimitId(capability.getAgreementCapabilityId() * 100 + limits.size() + 1)
                 .agreementCapabilityId(capability.getAgreementCapabilityId())
@@ -84,7 +84,7 @@ public class AgreementSubscriptionMocker {
         /** 追加一组 CURRENCY 约束。 */
         public Mocker currencies(String... currencies) {
             for (String currency : currencies) {
-                limit(CapabilityLimitCode.CURRENCY, currency);
+                limit(PricingDimension.CURRENCY, currency);
             }
             return this;
         }

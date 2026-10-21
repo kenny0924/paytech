@@ -4,6 +4,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.paytech.commercial.service.processor.RecordTermVersionAcceptanceProcessor;
+import com.paytech.commercial.service.processor.FillCommercialTermVersionProcessor;
+import com.paytech.commercial.service.processor.CreateCommercialTermTemplateProcessor;
+import com.paytech.commercial.domainservice.service.CommercialTermInsightService;
+import com.paytech.commercial.domain.CommercialTermVersionView;
+import com.paytech.commercial.api.term.request.RecordTermVersionAcceptanceRequestBody;
+import com.paytech.commercial.api.term.request.FillCommercialTermVersionFromTemplateRequestBody;
+import com.paytech.commercial.api.term.request.CreateCommercialTermTemplateRequestBody;
 import com.paytech.commercial.api.term.CommercialTermApi;
 import com.paytech.commercial.api.term.request.CommercialTermVersionCommandRequestBody;
 import com.paytech.commercial.api.term.request.CreateCommercialTermPlanRequestBody;
@@ -30,6 +38,10 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class CommercialTermController implements CommercialTermApi {
     private final CommercialTermService commercialTermService;
+    private final CommercialTermInsightService commercialTermInsightService;
+    private final CreateCommercialTermTemplateProcessor createTemplateProcessor;
+    private final FillCommercialTermVersionProcessor fillFromTemplateProcessor;
+    private final RecordTermVersionAcceptanceProcessor recordAcceptanceProcessor;
     private final CreateCommercialTermPlanProcessor createPlanProcessor;
     private final CreateCommercialTermVersionProcessor createVersionProcessor;
     private final RejectCommercialTermVersionProcessor rejectProcessor;
@@ -49,11 +61,35 @@ public class CommercialTermController implements CommercialTermApi {
             .body(CommercialTermConverter.toPlanResponseBody(response.getView()));
     }
 
+    /** 新建模板返回 201，同号同内容重放返回 200。 */
+    @Override
+    public ResponseEntity<CommercialTermPlanResponseBody> createTemplate(String actorId,
+        CreateCommercialTermTemplateRequestBody body) {
+        CreateCommercialTermPlanResponse response =
+            createTemplateProcessor.process(CommercialTermConverter.toRequest(actorId, body));
+        return ResponseEntity.status(response.isCreated() ? HttpStatus.CREATED : HttpStatus.OK)
+            .body(CommercialTermConverter.toPlanResponseBody(response.getView()));
+    }
+
+    /** 从标准价目模板补齐。 */
+    @Override
+    public CommercialTermVersionResponseBody fillFromTemplate(String actorId, String versionId,
+        FillCommercialTermVersionFromTemplateRequestBody body) {
+        return version(fillFromTemplateProcessor.process(CommercialTermConverter.toRequest(actorId, versionId, body)));
+    }
+
+    /** 登记客户签署。 */
+    @Override
+    public CommercialTermVersionResponseBody recordAcceptance(String actorId, String versionId,
+        RecordTermVersionAcceptanceRequestBody body) {
+        return version(recordAcceptanceProcessor.process(CommercialTermConverter.toRequest(actorId, versionId, body)));
+    }
+
     /** 创建版本并返回 201。 */
     @Override
     public ResponseEntity<CommercialTermVersionResponseBody> createVersion(String actorId, String planId,
         CreateCommercialTermVersionRequestBody body) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(CommercialTermConverter.toVersionResponseBody(
+        return ResponseEntity.status(HttpStatus.CREATED).body(version(
             createVersionProcessor.process(CommercialTermConverter.toRequest(actorId, planId, body))));
     }
 
@@ -61,7 +97,7 @@ public class CommercialTermController implements CommercialTermApi {
     @Override
     public CommercialTermVersionResponseBody replacePrices(String actorId,
         String versionId, ReplaceCommercialTermPricesRequestBody body) {
-        return CommercialTermConverter.toVersionResponseBody(
+        return version(
             replacePricesProcessor.process(CommercialTermConverter.toRequest(actorId, versionId, body)));
     }
 
@@ -69,7 +105,7 @@ public class CommercialTermController implements CommercialTermApi {
     @Override
     public CommercialTermVersionResponseBody submitVersion(String actorId,
         String versionId, CommercialTermVersionCommandRequestBody body) {
-        return CommercialTermConverter.toVersionResponseBody(
+        return version(
             submitProcessor.process(CommercialTermConverter.toRequest(actorId, versionId, body)));
     }
 
@@ -77,7 +113,7 @@ public class CommercialTermController implements CommercialTermApi {
     @Override
     public CommercialTermVersionResponseBody approveVersion(String actorId,
         String versionId, CommercialTermVersionCommandRequestBody body) {
-        return CommercialTermConverter.toVersionResponseBody(
+        return version(
             approveProcessor.process(CommercialTermConverter.toRequest(actorId, versionId, body)));
     }
 
@@ -85,7 +121,7 @@ public class CommercialTermController implements CommercialTermApi {
     @Override
     public CommercialTermVersionResponseBody rejectVersion(String actorId,
         String versionId, CommercialTermVersionCommandRequestBody body) {
-        return CommercialTermConverter.toVersionResponseBody(
+        return version(
             rejectProcessor.process(CommercialTermConverter.toRequest(actorId, versionId, body)));
     }
 
@@ -93,7 +129,7 @@ public class CommercialTermController implements CommercialTermApi {
     @Override
     public CommercialTermVersionResponseBody scheduleVersion(String actorId,
         String versionId, ScheduleCommercialTermVersionRequestBody body) {
-        return CommercialTermConverter.toVersionResponseBody(
+        return version(
             scheduleProcessor.process(CommercialTermConverter.toRequest(actorId, versionId, body)));
     }
 
@@ -101,13 +137,18 @@ public class CommercialTermController implements CommercialTermApi {
     @Override
     public CommercialTermVersionResponseBody activateVersion(String actorId,
         String versionId, CommercialTermVersionCommandRequestBody body) {
-        return CommercialTermConverter.toVersionResponseBody(
+        return version(
             activateProcessor.process(CommercialTermConverter.toRequest(actorId, versionId, body)));
     }
 
     /** 版本详情。 */
     @Override
     public CommercialTermVersionResponseBody getVersion(String versionId) {
-        return CommercialTermConverter.toVersionResponseBody(commercialTermService.getVersion(Long.parseLong(versionId)));
+        return version(commercialTermService.getVersion(Long.parseLong(versionId)));
+    }
+
+    /** 版本响应：写入结果或详情附加破标、标准价更新、签署与相关性提示。 */
+    CommercialTermVersionResponseBody version(CommercialTermVersionView view) {
+        return CommercialTermConverter.toVersionResponseBody(view, commercialTermInsightService.describe(view));
     }
 }

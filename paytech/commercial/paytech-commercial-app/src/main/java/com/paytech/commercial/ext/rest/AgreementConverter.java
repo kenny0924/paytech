@@ -10,7 +10,7 @@ import java.util.List;
 
 import com.paytech.commercial.api.agreement.request.AddAgreementCapabilityRequestBody;
 import com.paytech.commercial.api.agreement.request.AgreementTransitionRequestBody;
-import com.paytech.commercial.api.agreement.request.CapabilityLimitEntry;
+import com.paytech.commercial.api.agreement.request.CapabilityConditionEntry;
 import com.paytech.commercial.api.agreement.request.CreateAgreementRequestBody;
 import com.paytech.commercial.api.agreement.request.RecordAgreementAcceptanceRequestBody;
 import com.paytech.commercial.api.agreement.request.ReplaceAgreementProductsRequestBody;
@@ -22,10 +22,10 @@ import com.paytech.commercial.api.agreement.response.AgreementDetailResponseBody
 import com.paytech.commercial.api.agreement.response.AgreementDocumentDetail;
 import com.paytech.commercial.api.agreement.response.AgreementPartyDetail;
 import com.paytech.commercial.api.agreement.response.AgreementResponseBody;
-import com.paytech.commercial.api.agreement.response.CapabilityLimitDetail;
+import com.paytech.commercial.api.agreement.response.CapabilityConditionDetail;
 import com.paytech.commercial.api.enums.AgreementCapabilityStatus;
 import com.paytech.commercial.api.enums.BusinessMode;
-import com.paytech.commercial.api.enums.CapabilityLimitCode;
+import com.paytech.commercial.api.enums.PricingDimension;
 import com.paytech.commercial.api.enums.FundMode;
 import com.paytech.commercial.api.enums.PricingAuthority;
 import com.paytech.commercial.api.enums.ProductCode;
@@ -149,7 +149,7 @@ final class AgreementConverter {
         request.setEntityNo(body.getEntityNo());
         request.setCapabilityCode(body.getCapabilityCode());
         terms(request, body.getEffectiveFrom(), body.getEffectiveTo(), body.getRollingReserveRate(),
-            body.getRollingReserveDays(), body.getLimits());
+            body.getRollingReserveDays(), body.getConditions(), body.getRequire3ds());
         return request;
     }
 
@@ -163,7 +163,7 @@ final class AgreementConverter {
         request.setExpectedChangeVersion(body.getExpectedChangeVersion());
         request.setStatus(code(AgreementCapabilityStatus.class, "status", body.getStatus()));
         terms(request, body.getEffectiveFrom(), body.getEffectiveTo(), body.getRollingReserveRate(),
-            body.getRollingReserveDays(), body.getLimits());
+            body.getRollingReserveDays(), body.getConditions(), body.getRequire3ds());
         return request;
     }
 
@@ -223,18 +223,23 @@ final class AgreementConverter {
         return id("X-Gateway-Actor-Subject", actorId);
     }
 
-    /** 开通项条款与约束行。 */
+    /** 开通项条款、接受条件与 3DS 要求。 */
     static void terms(AgreementCapabilityTermsRequest request, String effectiveFrom, String effectiveTo, String rate,
-        Integer days, List<CapabilityLimitEntry> limits) {
+        Integer days, List<CapabilityConditionEntry> conditions, Boolean require3ds) {
         request.setEffectiveFrom(time("effectiveFrom", effectiveFrom));
         request.setEffectiveTo(time("effectiveTo", effectiveTo));
         request.setRollingReserveRate(decimal("rollingReserveRate", rate));
         request.setRollingReserveDays(days);
-        request.setLimits(limits.stream().map(entry -> {
-            AgreementCapabilityTermsRequest.Limit limit = new AgreementCapabilityTermsRequest.Limit();
-            limit.setLimitCode(code(CapabilityLimitCode.class, "limitCode", entry.getLimitCode()));
-            limit.setLimitValue(entry.getLimitValue());
-            return limit;
+        request.setRequire3ds(require3ds);
+        request.setConditions(conditions.stream().map(entry -> {
+            PricingDimension dimension = code(PricingDimension.class, "dimensionCode", entry.getDimensionCode());
+            if (!dimension.isAcceptanceAllowed()) {
+                throw new InvalidParameterException("维度不可用于开通接受条件: " + entry.getDimensionCode());
+            }
+            AgreementCapabilityTermsRequest.Condition condition = new AgreementCapabilityTermsRequest.Condition();
+            condition.setDimensionCode(dimension);
+            condition.setValues(List.copyOf(entry.getValues()));
+            return condition;
         }).toList());
     }
 
@@ -274,12 +279,21 @@ final class AgreementConverter {
         detail.setEffectiveTo(text(capability.getEffectiveTo()));
         detail.setRollingReserveRate(text(capability.getRollingReserveRate()));
         detail.setRollingReserveDays(capability.getRollingReserveDays());
-        detail.setLimits(capability.getLimits().stream().map(limit -> {
-            CapabilityLimitDetail item = new CapabilityLimitDetail();
-            item.setLimitCode(text(limit.getLimitCode()));
-            item.setLimitValue(limit.getLimitValue());
-            return item;
-        }).toList());
+        detail.setRequire3ds(capability.isRequire3ds());
+        detail.setConditions(conditions(capability.getLimits()));
         return detail;
+    }
+
+    /** 条件行按维度归并为接受条件，维度与取值按代码排序。 */
+    static List<CapabilityConditionDetail> conditions(List<AgreementDetailView.Limit> limits) {
+        java.util.Map<String, java.util.TreeSet<String>> grouped = new java.util.TreeMap<>();
+        limits.forEach(limit -> grouped.computeIfAbsent(limit.getLimitCode().getCode(), key -> new java.util.TreeSet<>())
+            .add(limit.getLimitValue()));
+        return grouped.entrySet().stream().map(entry -> {
+            CapabilityConditionDetail item = new CapabilityConditionDetail();
+            item.setDimensionCode(entry.getKey());
+            item.setValues(List.copyOf(entry.getValue()));
+            return item;
+        }).toList();
     }
 }

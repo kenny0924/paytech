@@ -561,6 +561,25 @@ export const pageCapabilities = [
       {
         "resourceCode": "OPERATIONS_COMMERCIAL_TERM_APPROVE",
         "displayName": "审批"
+      },
+      {
+        "resourceCode": "OPERATIONS_COMMERCIAL_TERM_SIGN",
+        "displayName": "登记签署"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_COMMERCIAL_TEMPLATES",
+    "displayName": "标准价目",
+    "frontendRoute": "/commercial/templates",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_COMMERCIAL_TEMPLATE_MANAGE",
+        "displayName": "维护"
+      },
+      {
+        "resourceCode": "OPERATIONS_COMMERCIAL_TEMPLATE_APPROVE",
+        "displayName": "复核"
       }
     ]
   },
@@ -586,7 +605,12 @@ export const pageCapabilities = [
     "componentKey": "OPERATIONS_COMMERCIAL_CATALOG",
     "displayName": "产品目录",
     "frontendRoute": "/commercial/catalog",
-    "actions": []
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_COMMERCIAL_CATALOG_MANAGE",
+        "displayName": "维护"
+      }
+    ]
   },
   {
     "componentKey": "OPERATIONS_COMMERCIAL_HISTORY",

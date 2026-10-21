@@ -144,7 +144,7 @@ class CommercialTermListHttpTest extends AbstractCommercialTermApiTest {
         assertAll(() -> assertEquals(Long.toString(MAKER), approved.path("makerAccountId").asString()),
             () -> assertEquals(Long.toString(CHECKER), approved.path("checkerAccountId").asString()));
 
-        JsonNode active = command(ok(200, scheduleResult(approvedVersion, NOW)), "activate", CHECKER);
+        JsonNode active = command(ok(200, scheduleResult(signed(approvedVersion), NOW)), "activate", CHECKER);
         JsonNode activeRow = only(list(byPlan));
         JsonNode planRow = only(list(PLANS + "?agreementId=" + AgreementBuilder.AGREEMENT_ID));
         assertAll(() -> assertEquals(CommercialTermVersionStatus.ACTIVE.getCode(), activeRow.path("status").asString()),

@@ -77,4 +77,22 @@ public class CommercialTermPriceRepositoryImpl implements CommercialTermPriceRep
         return mapper.selectVersionIdsOfPrices(termVersionIds).stream()
             .collect(Collectors.toMap(Function.identity(), versionId -> 1, Integer::sum));
     }
+
+    /** 空集合不访问数据库。 */
+    @Override
+    public List<CommercialTermPrice> findByIds(Collection<Long> termPriceIds) {
+        if (termPriceIds.isEmpty()) {
+            return List.of();
+        }
+        return List.copyOf(mapper.selectByIds(termPriceIds));
+    }
+
+    /** 空集合不访问数据库。 */
+    @Override
+    public List<CommercialTermPrice> findByVersionIds(Collection<Long> termVersionIds) {
+        if (termVersionIds.isEmpty()) {
+            return List.of();
+        }
+        return List.copyOf(mapper.selectByVersionIds(termVersionIds));
+    }
 }

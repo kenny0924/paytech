@@ -21,4 +21,13 @@ public class ProductFeeEventSummary {
 
     /** 计费事实类型（开放目录代码） */
     private String billingFactType;
+
+    /** 挂接的开通项种类；为空表示无需开通的基础产品事件 */
+    private String capabilityKind;
+
+    /** 挂接的功能开通项代码；仅 FEATURE 非空 */
+    private String capabilityCode;
+
+    /** 目录行版本，下一次写入的 expectedChangeVersion */
+    private Long changeVersion;
 }

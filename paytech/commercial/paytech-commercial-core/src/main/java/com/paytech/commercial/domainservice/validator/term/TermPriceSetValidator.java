@@ -60,8 +60,8 @@ public final class TermPriceSetValidator {
     /** OE 被合同覆盖且画像存在。 */
     static void checkOwnership(CommercialTermVersionContext context, CommercialTermPrice price) {
         if (!context.covers(price.getEntityNo())) {
-            throw new BizCheckFailException("合同不覆盖 OE: " + price.getEntityNo() + ", 合同 "
-                + context.getAgreement().getAgreementId());
+            throw new BizCheckFailException(context.template() ? "模板价格 OE 必须等于模板 OE: " + price.getEntityNo()
+                : "合同不覆盖 OE: " + price.getEntityNo() + ", 合同 " + context.getAgreement().getAgreementId());
         }
         boolean profileExists = context.getProfiles().stream().map(PricingProfile::getPricingProfileCode)
             .anyMatch(price.getPricingProfileCode()::equals);

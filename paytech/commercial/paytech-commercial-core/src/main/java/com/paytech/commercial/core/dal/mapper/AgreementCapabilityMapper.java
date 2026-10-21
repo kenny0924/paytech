@@ -32,8 +32,9 @@ public interface AgreementCapabilityMapper {
     int updateStatus(@Param("capability") AgreementCapability capability,
         @Param("status") AgreementCapabilityStatus status, @Param("now") Instant now);
 
-    /** 仅当 update_time 仍为 capability.updateTime 时改写生效区间与保证金条款，返回影响行数。 */
+    /** 仅当 update_time 仍为 capability.updateTime 时改写生效区间、保证金条款与 3DS 要求，返回影响行数。 */
     int updateTerms(@Param("capability") AgreementCapability capability, @Param("effectiveFrom") Instant effectiveFrom,
         @Param("effectiveTo") Instant effectiveTo, @Param("rollingReserveRate") BigDecimal rollingReserveRate,
-        @Param("rollingReserveDays") Integer rollingReserveDays, @Param("now") Instant now);
+        @Param("rollingReserveDays") Integer rollingReserveDays, @Param("require3ds") Boolean require3ds,
+        @Param("now") Instant now);
 }

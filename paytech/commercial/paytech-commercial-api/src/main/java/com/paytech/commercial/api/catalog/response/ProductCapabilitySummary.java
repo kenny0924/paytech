@@ -1,9 +1,11 @@
 package com.paytech.commercial.api.catalog.response;
 
+import java.util.List;
+
 import lombok.Getter;
 import lombok.Setter;
 
-/** 产品目录 L1 可开通项一行，字段与初始化 DML t_product_capability 一致（不含技术时间）。 */
+/** 产品目录 L1 可开通项一行，字段与 t_product_capability 一致（不含技术时间），含可配维度。 */
 @Getter
 @Setter
 public class ProductCapabilitySummary {
@@ -13,7 +15,7 @@ public class ProductCapabilitySummary {
     /** 所属产品代码 */
     private String productCode;
 
-    /** 可开通项代码（开放目录代码，如 CARD_VISA） */
+    /** 可开通项代码（开放目录代码，如 CARD） */
     private String capabilityCode;
 
     /** 可开通项名称 */
@@ -28,18 +30,21 @@ public class ProductCapabilitySummary {
      */
     private String paymentMethodCode;
 
-    /**
-     * 附加维度代码
-     * <li>例如 CARD_BRAND；没有维度为空。</li>
-     */
+    /** 已废弃，恒为 null（细分维度改为合同开通项接受条件） */
     private String dimensionCode;
 
-    /** 附加维度值，与 dimensionCode 同时出现 */
+    /** 已废弃，恒为 null */
     private String dimensionValue;
+
+    /** 可配维度，按维度代码排序 */
+    private List<CapabilityDimensionDetail> dimensions;
 
     /**
      * 状态
      * <li>DRAFT、ACTIVE、RETIRED。</li>
      */
     private String status;
+
+    /** 目录行版本，下一次写入的 expectedChangeVersion */
+    private Long changeVersion;
 }

@@ -123,16 +123,19 @@ public class CheckoutCandidateContext {
             subscription.capabilities().stream().map(CheckoutCandidateContext::capabilityView).toList());
     }
 
-    /** 一个命中开通项的投影；维度来自目录行，保证金比例去掉尾随零。 */
+    /** 一个命中开通项的投影；支付方式与种类来自目录行，保证金比例去掉尾随零。 */
     private static CheckoutContextView.Capability capabilityView(CheckoutSubscriptionContext.MatchedCapability matched) {
         AgreementCapability capability = matched.capability();
         return new CheckoutContextView.Capability(id(capability.getAgreementCapabilityId()),
             capability.getCapabilityCode(), capability.getStatus().getCode(),
-            matched.catalog().getDimensionCode() == null ? null : matched.catalog().getDimensionCode().getCode(),
-            matched.catalog().getDimensionValue(),
             capability.getRollingReserveRate() == null ? null
                 : capability.getRollingReserveRate().stripTrailingZeros().toPlainString(),
-            capability.getRollingReserveDays());
+            capability.getRollingReserveDays(), matched.catalog().getPaymentMethodCode(),
+            matched.catalog().getCapabilityKind().getCode(),
+            matched.conditions().values().entrySet().stream()
+                .map(entry -> new CheckoutContextView.CapabilityCondition(entry.getKey().getCode(), List.copyOf(entry.getValue())))
+                .toList(),
+            Boolean.TRUE.equals(capability.getRequire3ds()));
     }
 
     /**

@@ -69,8 +69,10 @@ public interface AgreementCapabilityRepository {
      * @param effectiveTo 新的生效终点（不含），可空
      * @param rollingReserveRate 滚动保证金比例，可空，与天数成组
      * @param rollingReserveDays 滚动保证金天数，可空，与比例成组
+     * @param require3ds 是否要求 3DS
      * @param now 本次更新时间
      */
     void updateTerms(AgreementCapability capability, Instant effectiveFrom, Instant effectiveTo,
-        BigDecimal rollingReserveRate, Integer rollingReserveDays, Instant now);
+        BigDecimal rollingReserveRate, Integer rollingReserveDays, Boolean require3ds,
+        Instant now);
 }

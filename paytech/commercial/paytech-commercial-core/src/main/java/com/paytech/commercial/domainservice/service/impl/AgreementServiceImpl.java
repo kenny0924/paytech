@@ -150,7 +150,7 @@ public class AgreementServiceImpl implements AgreementService {
             }
             if (termsChanged(capability, change)) {
                 agreementCapabilityRepository.updateTerms(capability, change.getEffectiveFrom(), change.getEffectiveTo(),
-                    change.getRollingReserveRate(), change.getRollingReserveDays(), context.getNow());
+                    change.getRollingReserveRate(), change.getRollingReserveDays(), change.getRequire3ds(), context.getNow());
             }
             agreementCapabilityLimitRepository.deleteByAgreementCapabilityId(capability.getAgreementCapabilityId());
             agreementCapabilityLimitRepository.insertAll(context.getCapabilityLimits());
@@ -202,7 +202,8 @@ public class AgreementServiceImpl implements AgreementService {
         return !Objects.equals(current.getEffectiveFrom(), change.getEffectiveFrom())
             || !Objects.equals(current.getEffectiveTo(), change.getEffectiveTo())
             || !sameDecimal(current.getRollingReserveRate(), change.getRollingReserveRate())
-            || !Objects.equals(current.getRollingReserveDays(), change.getRollingReserveDays());
+            || !Objects.equals(current.getRollingReserveDays(), change.getRollingReserveDays())
+            || !Objects.equals(current.getRequire3ds(), change.getRequire3ds());
     }
 
     /** 十进制按数值比较，忽略尾零。 */

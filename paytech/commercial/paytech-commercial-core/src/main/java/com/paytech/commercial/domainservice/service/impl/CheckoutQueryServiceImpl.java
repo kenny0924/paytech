@@ -10,6 +10,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import com.paytech.commercial.core.dal.dataobject.AgreementCapability;
 import com.paytech.commercial.core.dal.dataobject.CheckoutRecords.Agreement;
+import com.paytech.commercial.core.dal.dataobject.CheckoutRecords.PricingProfile;
 import com.paytech.commercial.domain.CommercialCheckoutFacts;
 import com.paytech.commercial.domain.CommercialCheckoutScope;
 import com.paytech.commercial.domainservice.repository.*;
@@ -41,6 +42,7 @@ public class CheckoutQueryServiceImpl implements CheckoutQueryService {
     private final AgreementCapabilityRepository agreementCapabilityRepository;
     private final AgreementCapabilityLimitRepository agreementCapabilityLimitRepository;
     private final ProductCapabilityRepository productCapabilityRepository;
+    private final PricingProfileCondRepository pricingProfileCondRepository;
 
     /** 数据库故障保持不可用语义；业务冲突在内存判断阶段产生，不在这里转换。 */
     @Override
@@ -57,16 +59,18 @@ public class CheckoutQueryServiceImpl implements CheckoutQueryService {
         List<Agreement> agreements = agreementRepository.findForCheckout(scope);
         List<Long> agreementIds = agreements.stream().map(Agreement::agreementId).toList();
         List<AgreementCapability> capabilities = agreementCapabilityRepository.findByAgreementIds(agreementIds);
+        List<PricingProfile> profiles = pricingProfileRepository.findForCheckout(scope);
         return new CommercialCheckoutFacts(agreements, agreementOperatingEntityRepository.findForCheckout(scope),
             agreementPartyRepository.findForCheckout(scope), agreementDocumentRefRepository.findForCheckout(scope),
             commercialTermPlanRepository.findForCheckout(scope), commercialTermVersionRepository.findForCheckout(scope),
             commercialTermPriceRepository.findForCheckout(scope), commercialTermComponentRepository.findForCheckout(scope),
-            commercialTermComponentBandRepository.findForCheckout(scope), pricingProfileRepository.findForCheckout(scope),
+            commercialTermComponentBandRepository.findForCheckout(scope), profiles,
             businessChangeRecordRepository.findCheckoutRoots(scope),
             agreementProductRepository.findByAgreementIds(agreementIds), capabilities,
             agreementCapabilityLimitRepository.findByAgreementCapabilityIds(
                 capabilities.stream().map(AgreementCapability::getAgreementCapabilityId).toList()),
             productCapabilityRepository.findByCodes(
-                capabilities.stream().map(AgreementCapability::getCapabilityCode).distinct().toList()));
+                capabilities.stream().map(AgreementCapability::getCapabilityCode).distinct().toList()),
+            pricingProfileCondRepository.findByProfileIds(profiles.stream().map(PricingProfile::pricingProfileId).toList()));
     }
 }

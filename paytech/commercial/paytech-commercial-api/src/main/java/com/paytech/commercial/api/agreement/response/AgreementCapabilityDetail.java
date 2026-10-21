@@ -5,7 +5,7 @@ import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 
-/** 开通项及其约束。 */
+/** 开通项及其接受条件。 */
 @Getter
 @Setter
 public class AgreementCapabilityDetail {
@@ -33,6 +33,9 @@ public class AgreementCapabilityDetail {
     /** 滚动保证金天数，可空 */
     private Integer rollingReserveDays;
 
-    /** 约束行，按 limitCode、limitValue 排序 */
-    private List<CapabilityLimitDetail> limits;
+    /** 接受条件，按维度代码排序 */
+    private List<CapabilityConditionDetail> conditions;
+
+    /** 是否要求 3DS 认证 */
+    private Boolean require3ds;
 }

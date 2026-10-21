@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.commercial.core.dal.mapper.ProductCapabilityDimensionMapper">
+    <resultMap id="ProductCapabilityDimension" type="com.paytech.commercial.core.dal.dataobject.ProductCapabilityDimension">
+        <id column="capability_dimension_id" property="capabilityDimensionId"/>
+        <result column="capability_code" property="capabilityCode"/>
+        <result column="dimension_code" property="dimensionCode"/>
+        <result column="required" property="required"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="columns">
+        capability_dimension_id, capability_code, dimension_code, required, create_time, update_time
+    </sql>
+
+    <insert id="insertAll">
+        INSERT INTO t_product_capability_dimension (<include refid="columns"/>) VALUES
+        <foreach collection="rows" item="row" separator=",">
+            (#{row.capabilityDimensionId}, #{row.capabilityCode}, #{row.dimensionCode}, #{row.required}, #{row.createTime},
+            #{row.updateTime})
+        </foreach>
+    </insert>
+
+    <select id="selectByCapabilityCodes" resultMap="ProductCapabilityDimension">
+        SELECT <include refid="columns"/> FROM t_product_capability_dimension
+        WHERE capability_code IN <foreach collection="capabilityCodes" item="code" open="(" separator="," close=")">#{code}</foreach>
+        ORDER BY capability_code, dimension_code
+    </select>
+
+    <delete id="deleteByCapabilityCode">
+        DELETE FROM t_product_capability_dimension WHERE capability_code = #{capabilityCode}
+    </delete>
+</mapper>

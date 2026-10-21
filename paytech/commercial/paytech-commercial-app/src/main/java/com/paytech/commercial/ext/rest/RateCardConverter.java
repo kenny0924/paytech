@@ -73,6 +73,7 @@ final class RateCardConverter {
             item.setLimitValue(limit.getLimitValue());
             return item;
         }).toList());
+        body.setRequire3ds(Boolean.TRUE.equals(capability.getRequire3ds()));
         return body;
     }
 

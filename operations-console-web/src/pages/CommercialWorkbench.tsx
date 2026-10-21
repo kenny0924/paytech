@@ -12,7 +12,7 @@ import { consolePaths, decodeAgreementPage, decodeTermVersionPage } from '../com
 import type { AgreementListItem, TermVersionListItem } from '../commercial/commercialConsole';
 import { dashboardMetricLabels, decodeDashboard } from '../commercial/commercialPreview';
 import type { DashboardMetric } from '../commercial/commercialPreview';
-import { CommercialNote, StatusTag } from '../commercial/CommercialParts';
+import { BelowStandardTag, CommercialNote, StatusTag } from '../commercial/CommercialParts';
 import { VersionTransitionModal } from '../commercial/TermModals';
 import '../configuration/configuration.css';
 import '../commercial/commercial.css';
@@ -71,7 +71,7 @@ function ApprovalQueue({ items, total, canApprove, onDecide }: {
 }) {
   const navigate = useNavigate();
   return <>
-    <Table<TermVersionListItem> rowKey="versionId" size="middle" pagination={false} dataSource={items} scroll={{ x: 1100 }}
+    <Table<TermVersionListItem> rowKey="versionId" size="middle" pagination={false} dataSource={items} scroll={{ x: 1190 }}
       locale={{ emptyText: '没有待审批的版本' }} columns={[
         { title: '方案 / 版本', width: 240, render: (_, row) => <div className="commercial-cell"><span className="mono">{row.planCode} · v{row.versionNo}</span>
           <span className="commercial-cell-meta">{termTypeLabels[row.termType] ?? row.termType}</span></div> },
@@ -80,6 +80,7 @@ function ApprovalQueue({ items, total, canApprove, onDecide }: {
         { title: 'Maker', width: 160, render: (_, row) => <span className="mono">{row.makerAccountId ?? '—'}</span> },
         { title: '提交时刻', width: 150, render: (_, row) => localTime(row.submittedTime) },
         { title: '价格数', width: 80, render: (_, row) => <Tag>{row.priceCount}</Tag> },
+        { title: '破标', width: 90, render: (_, row) => <BelowStandardTag count={row.belowStandardCount} /> },
         { title: '状态', width: 100, render: (_, row) => <StatusTag status={row.status} labels={versionStatusLabels} /> },
         { title: '操作', width: 200, render: (_, row) => <span className="commercial-actions">
           <Button size="small" onClick={() => void navigate(commercialRoutes.version(row.versionId))}>查看</Button>

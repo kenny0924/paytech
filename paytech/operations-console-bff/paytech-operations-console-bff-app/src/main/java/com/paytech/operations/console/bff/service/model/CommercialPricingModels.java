@@ -179,7 +179,7 @@ public final class CommercialPricingModels {
         private String localPartnerId;
     }
 
-    /** 在方案下创建 DRAFT 版本，可复制已有版本。 */
+    /** 在方案下创建 DRAFT 版本：复制已有版本、基于标准价目模板版本生成或空白。 */
     @Getter
     @Setter
     public static class CreateCommercialTermVersionRequestBody {
@@ -190,13 +190,16 @@ public final class CommercialPricingModels {
         /** 复制来源版本 ID，可空 */
         private String copyFromVersionId;
 
+        /** 基于标准价目模板版本生成（与复制互斥，只用于合同方案），可空 */
+        private String sourceTemplateVersionId;
+
         /** 版本冻结的合同 ID（Partner 条款必填） */
         private String agreementId;
 
-        /** 定价模型：BLENDED、INTERCHANGE_PLUS_PLUS；不复制时必填 */
+        /** 定价模型：BLENDED、INTERCHANGE_PLUS_PLUS；不复制、不基于模板时必填 */
         private String pricingModel;
 
-        /** 费用含税口径：INCLUSIVE、EXCLUSIVE；不复制时必填 */
+        /** 费用含税口径：INCLUSIVE、EXCLUSIVE；不复制、不基于模板时必填 */
         private String feeTaxTreatment;
     }
 
@@ -252,6 +255,9 @@ public final class CommercialPricingModels {
         @Size(max = 50, message = "组件最多 50 项")
         @Valid
         private List<CommercialTermComponent> components;
+
+        /** 来源模板价格 ID：基于模板生成或补齐的价格原样回传以保持来源，手工新增为空 */
+        private String sourceTemplatePriceId;
     }
 
     /** 价格下的一个计算组件。 */
@@ -345,6 +351,76 @@ public final class CommercialPricingModels {
         private String effectiveFrom;
     }
 
+    /** 创建平台标准价目模板方案（DRAFT）。 */
+    @Getter
+    @Setter
+    public static class CreateCommercialTermTemplateRequestBody {
+        /** 方案编号，同一条款类型内唯一 */
+        @NotBlank(message = "方案编号必填")
+        @Size(max = 64, message = "方案编号最长 64 位")
+        private String planCode;
+
+        /** 模板显示名，如「标准价 · AE001」 */
+        @NotBlank(message = "模板名称必填")
+        @Size(max = 128, message = "模板名称最长 128 字符")
+        private String templateName;
+
+        /** 条款类型，只允许 Client 条款类型 */
+        @NotBlank(message = "条款类型必填")
+        private String termType;
+
+        /** 模板适用的准确 OE */
+        @NotBlank(message = "OE 必填")
+        private String entityNo;
+    }
+
+    /** 从标准价目模板版本补齐 DRAFT 合同版本。 */
+    @Getter
+    @Setter
+    public static class FillCommercialTermVersionFromTemplateRequestBody {
+        /** 方案当前 changeVersion */
+        @NotBlank(message = "expectedChangeVersion 必填")
+        private String expectedChangeVersion;
+
+        /** 模板版本 ID */
+        @NotBlank(message = "模板版本必填")
+        private String templateVersionId;
+    }
+
+    /** 登记客户对 APPROVED 合同价格版本的签署。 */
+    @Getter
+    @Setter
+    public static class RecordTermVersionAcceptanceRequestBody {
+        /** 方案当前 changeVersion */
+        @NotBlank(message = "expectedChangeVersion 必填")
+        private String expectedChangeVersion;
+
+        /** 签署 Party：Client 方案为合同 CLIENT 角色，Partner 方案为合同 LOCAL_PARTNER 角色 */
+        @NotBlank(message = "签署方必填")
+        private String partyId;
+
+        /** 签署方式：E_SIGNATURE、CLICK_ACCEPTANCE、MANUAL_SIGNATURE */
+        @NotBlank(message = "签署方式必填")
+        private String acceptanceMethod;
+
+        /** 签署成立时刻，带时区偏移的 ISO 8601 */
+        @NotBlank(message = "签署时刻必填")
+        private String acceptedAt;
+
+        /** 全局唯一的签署编号 */
+        @NotBlank(message = "签署编号必填")
+        @Size(max = 128, message = "签署编号最长 128 位")
+        private String acceptanceReference;
+
+        /** 已签署价格附件的文件 ID */
+        @NotBlank(message = "价格附件文件必填")
+        private String fileId;
+
+        /** 价格附件 SHA-256 */
+        @NotBlank(message = "价格附件摘要必填")
+        private String contentHash;
+    }
+
     // ---------- 商业条款读取 ----------
 
     /** 商业条款方案。 */
@@ -360,10 +436,10 @@ public final class CommercialPricingModels {
         /** 条款类型 */
         private String termType;
 
-        /** CLIENT 合同 ID；Partner 条款为空 */
+        /** CLIENT 合同 ID；Partner 条款与模板为空 */
         private String agreementId;
 
-        /** CLIENT 合同 OE；Partner 条款为空 */
+        /** CLIENT 合同 OE 或模板 OE；Partner 条款为空 */
         private String entityNo;
 
         /** Client Owner */
@@ -371,6 +447,12 @@ public final class CommercialPricingModels {
 
         /** Local Partner Owner */
         private String localPartnerId;
+
+        /** 方案 Owner 类型：CLIENT、LOCAL_PARTNER、PLATFORM_TEMPLATE */
+        private String ownerType;
+
+        /** 模板显示名，仅 PLATFORM_TEMPLATE */
+        private String templateName;
 
         /** 方案状态 */
         private String status;
@@ -418,6 +500,142 @@ public final class CommercialPricingModels {
 
         /** 方案当前 changeVersion */
         private String changeVersion;
+
+        /** 方案 Owner 类型：CLIENT、LOCAL_PARTNER、PLATFORM_TEMPLATE */
+        private String ownerType;
+
+        /** 基于模板生成时的来源模板版本 ID */
+        private String sourceTemplateVersionId;
+
+        /** 存量版本免签 */
+        private Boolean signatureExempt;
+
+        /** 破标组件数 */
+        private Integer belowStandardCount;
+
+        /** 来源模板方案已有更新生效版本时的提示，没有为 null */
+        private TemplateUpdateDetail templateUpdate;
+
+        /** 客户签署记录，没有为 null */
+        private TermVersionAcceptanceDetail acceptance;
+
+        /** 与合同开通项不相关的价格（按当前开通状态计算） */
+        private List<PriceRelevanceWarning> relevanceWarnings;
+    }
+
+    /** 来源模板方案的更新提示（标准价已更新）。 */
+    @Getter
+    @Setter
+    public static class TemplateUpdateDetail {
+        /** 模板方案当前生效的较新版本 ID */
+        private String latestTemplateVersionId;
+
+        /** 该版本的版本号 */
+        private String latestVersionNo;
+    }
+
+    /** 价格协议签署记录。 */
+    @Getter
+    @Setter
+    public static class TermVersionAcceptanceDetail {
+        /** 签署记录 ID */
+        private String versionAcceptanceId;
+
+        /** 签署 Party ID */
+        private String partyId;
+
+        /** 签署方式 */
+        private String acceptanceMethod;
+
+        /** 签署成立时刻 */
+        private String acceptedAt;
+
+        /** 签署编号 */
+        private String acceptanceReference;
+
+        /** 价格附件文件 ID */
+        private String fileId;
+
+        /** 价格附件 SHA-256 */
+        private String contentHash;
+
+        /** 登记人 Account ID */
+        private String recordedBy;
+    }
+
+    /** 与合同开通项不相关的一条价格。 */
+    @Getter
+    @Setter
+    public static class PriceRelevanceWarning {
+        /** 价格 OE */
+        private String entityNo;
+
+        /** 价格币种 */
+        private String currency;
+
+        /** 定价画像代码 */
+        private String pricingProfileCode;
+
+        /** 原因代码：PAYMENT_METHOD_NOT_ENABLED、CURRENCY_NOT_ENABLED、CONDITION_OUT_OF_SCOPE、FEATURE_NOT_ENABLED、NO_CAPABILITY_ON_ENTITY */
+        private String reasonCode;
+
+        /** 中文说明 */
+        private String message;
+    }
+
+    /** 标准价目模板方案列表。 */
+    @Getter
+    @Setter
+    public static class CommercialTermTemplateListResponseBody {
+        /** 按 OE、方案编号升序 */
+        private List<CommercialTermTemplateSummary> templates;
+    }
+
+    /** 一个标准价目模板方案及其当前生效与最新版本。 */
+    @Getter
+    @Setter
+    public static class CommercialTermTemplateSummary {
+        /** 方案 ID */
+        private String planId;
+
+        /** 方案编号 */
+        private String planCode;
+
+        /** 模板显示名 */
+        private String templateName;
+
+        /** 条款类型 */
+        private String termType;
+
+        /** 模板适用的准确 OE */
+        private String entityNo;
+
+        /** 方案状态 */
+        private String status;
+
+        /** 方案当前 changeVersion */
+        private String changeVersion;
+
+        /** 当前生效版本 ID */
+        private String activeVersionId;
+
+        /** 当前生效版本号 */
+        private String activeVersionNo;
+
+        /** 最新版本 ID */
+        private String latestVersionId;
+
+        /** 最新版本号 */
+        private String latestVersionNo;
+
+        /** 最新版本状态 */
+        private String latestVersionStatus;
+
+        /** 方案创建时间 */
+        private String createTime;
+
+        /** 方案最近更新时间 */
+        private String updateTime;
     }
 
     /** 固定版本下某 OE 的价格全集。 */
@@ -489,6 +707,9 @@ public final class CommercialPricingModels {
         /** 计算组件 */
         private List<CommercialPriceComponent> components;
 
+        /** 来源模板价格 ID；手工维护或命中结果为空 */
+        private String sourceTemplatePriceId;
+
         /** 结算四字段；Partner 条款为 null */
         private CommercialPriceSettlement settlement;
     }
@@ -552,6 +773,29 @@ public final class CommercialPricingModels {
 
         /** 档位 */
         private List<CommercialPriceBand> bands;
+
+        /** 与来源模板同组件的比较（破标）；命中结果为 null */
+        private CommercialPriceBenchmark benchmark;
+    }
+
+    /** 合同价格组件与来源模板同组件的比较。 */
+    @Getter
+    @Setter
+    public static class CommercialPriceBenchmark {
+        /** BELOW_STANDARD、AT_OR_ABOVE、NO_BENCHMARK */
+        private String status;
+
+        /** 模板费率 */
+        private String standardRate;
+
+        /** 模板固定金额 */
+        private String standardFixedAmount;
+
+        /** 模板最低收费 */
+        private String standardMinAmount;
+
+        /** 模板最高收费 */
+        private String standardMaxAmount;
     }
 
     /** 阶梯档位。 */
@@ -598,8 +842,9 @@ public final class CommercialPricingModels {
     }
 
     /**
-     * 条款版本编辑页聚合：版本概要、所属合同范围与版本下全部 OE 的价格
+     * 条款版本编辑页聚合：版本概要、所属合同范围（或标准价目模板）与版本下全部 OE 的价格
      * <li>合同范围给出可定价的 OE（CLIENT 为合同 OE，PARTNER 为覆盖 OE）与开通项，供价格矩阵与覆盖提示使用。</li>
+     * <li>标准价目模板版本没有合同：agreement 为 null，template 给出模板方案，价格只读取模板 OE。</li>
      * <li>价格按 OE 逐个读取后合并，按 OE、币种、优先级排序。</li>
      */
     @Getter
@@ -608,8 +853,11 @@ public final class CommercialPricingModels {
         /** 版本概要 */
         private CommercialTermVersionResponseBody version;
 
-        /** 版本冻结合同的定价范围 */
+        /** 版本冻结合同的定价范围；模板版本为 null */
         private TermAgreementScope agreement;
+
+        /** 模板版本所属的标准价目模板方案；合同版本为 null */
+        private CommercialTermTemplateSummary template;
 
         /** 版本下全部 OE 的价格 */
         private List<CommercialPrice> prices;
@@ -643,7 +891,7 @@ public final class CommercialPricingModels {
         /** 可定价 OE，升序 */
         private List<String> entityNos;
 
-        /** 合同开通项（含约束），用于覆盖提示 */
+        /** 合同开通项（含接受条件与 3DS 要求），用于覆盖与相关性提示 */
         private List<CommercialAgreementModels.AgreementCapabilityDetail> capabilities;
     }
 }

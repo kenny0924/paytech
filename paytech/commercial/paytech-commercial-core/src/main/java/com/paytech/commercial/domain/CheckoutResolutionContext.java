@@ -123,6 +123,10 @@ public final class CheckoutResolutionContext {
         if (clientTerms == null) {
             return null;
         }
+        subscription = subscription.priced(this, clientTerms.version(), candidate.entityNo());
+        if (subscription == null) {
+            return null;
+        }
         CheckoutCandidateContext.PartnerTerms partner = partner(candidate);
         if ("PARTNER".equals(candidate.sourceType()) && partner == null) {
             return null;

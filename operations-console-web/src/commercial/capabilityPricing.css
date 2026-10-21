@@ -1,0 +1,72 @@
+/* 开通与定价一期：开通项卡片、目录维护、价格分组、来源 / 破标标记与签署信息。弹窗与抽屉挂在 body 下，类名不依赖页面作用域。 */
+.cc-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.cc-card {
+  display: grid; gap: 2px; padding: 8px 12px; border: 1px solid var(--ant-color-border, #d9dde3); border-radius: 6px; background: var(--ant-color-bg-container, #fff);
+  color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.cc-card:hover { border-color: var(--ant-color-primary, #315dca); }
+.cc-card:focus-visible { outline: 2px solid var(--ant-color-primary, #315dca); outline-offset: 1px; }
+.cc-card.is-selected { border-color: var(--ant-color-primary, #315dca); background: var(--ant-color-primary-bg, #eef3ff); }
+.cc-card-name { font-weight: 600; }
+.cc-card-code { color: var(--ant-color-text-secondary, #69717d); }
+/* 卡片三行固定：名称 + 标记 / 代码 + 种类 / 可配维度，没有维度时也占一行，避免卡片高度错位。 */
+.cc-card { grid-template-rows: auto auto auto; align-content: start; }
+.cc-card-top, .cc-card-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; min-height: 22px; }
+.cc-card-top .cc-card-name { flex: 1; min-width: 0; }
+.cc-card-mark, .cc-card-kind { margin-inline-end: 0; }
+.cc-card-dims { overflow-wrap: anywhere; }
+.cc-card.is-existing { background: var(--ant-color-fill-quaternary, #f5f6f8); border-style: dashed; color: var(--ant-color-text-secondary, #69717d); }
+.cc-card.is-existing .cc-card-name { font-weight: 500; }
+.cc-card.is-existing:hover { border-color: var(--ant-color-border, #d9dde3); background: var(--ant-color-fill-tertiary, #f1f5f9); }
+
+/* 抽屉分段、底部按钮与接受条件逐维度一行 */
+.cc-command-drawer .cc-drawer-footer { display: flex; justify-content: flex-end; width: 100%; }
+.cc-drawer-section { padding: 4px 0 12px; border-bottom: 1px solid var(--ant-color-border-secondary, #edf0f2); margin-bottom: 12px; }
+.cc-drawer-section:last-of-type { border-bottom: 0; }
+.cc-drawer-section-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin-bottom: 8px; }
+.cc-drawer-section-head h3 { font-size: 14px; margin: 0; }
+.cc-conditions { display: grid; gap: 2px; }
+.cc-condition-row.ant-form-item { margin-bottom: 10px; }
+.cc-condition-row .ant-form-item-label > label { color: var(--ant-color-text, #272b32); }
+.cc-choice-tags { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 32px; }
+.cc-choice-tags .ant-tag { margin-inline-end: 0; }
+.cc-choice-tags .ant-tag-checkable { border: 1px solid var(--ant-color-border, #d9dde3); padding: 1px 8px; }
+.cc-choice-tags .ant-tag-checkable-checked { border-color: var(--ant-color-primary, #315dca); }
+.cc-other-tag { cursor: pointer; border-style: dashed; background: transparent; }
+.cc-other-input { width: 96px; }
+.cc-condition-summary {
+  margin-top: 4px; padding: 8px 12px; border-radius: 6px; background: var(--ant-color-fill-quaternary, #f8fafc); color: var(--ant-color-text, #272b32);
+  font-size: 12px; overflow-wrap: anywhere;
+}
+@media (max-width: 640px) {
+  .cc-condition-row.ant-form-item .ant-row { flex-direction: column; }
+  .cc-condition-row.ant-form-item .ant-form-item-label { flex: none !important; text-align: left; }
+}
+.cc-dimension-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.cc-dimension-list { display: grid; gap: 6px; }
+.cc-tags { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.cc-tags .ant-tag { margin-inline-end: 0; }
+.cc-required { color: var(--ant-color-error, #b42318); margin-left: 2px; }
+.cc-event-list { display: grid; gap: 4px; margin: 0; padding-left: 18px; font-size: 12px; }
+
+/* 价格矩阵按开通项分组 */
+.cc-group { margin-bottom: 16px; }
+.cc-group-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 4px 0 8px; }
+.cc-group-title { font-weight: 600; }
+.cc-group.is-unmatched .cc-group-title { color: var(--ant-color-error, #b42318); }
+.cc-group.is-unmatched .ant-table-wrapper .ant-table { border: 1px solid var(--ant-color-error-border, #fca5a5); border-radius: 6px; }
+.cc-cell-line { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 2px 4px; }
+.cc-below { color: var(--ant-color-error, #b42318); }
+.cc-source { font-size: 11px; }
+.cc-warning-list { margin: 0; padding-left: 18px; }
+.cc-mode-group { display: grid; gap: 8px; }
+.cc-mode-group .ant-radio-wrapper { align-items: flex-start; }
+.cc-mode-extra { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 12px; margin-top: 4px; }
+@media (max-width: 900px) {
+  .cc-mode-extra { grid-template-columns: minmax(0, 1fr); }
+}
+.commercial-drawer .ct-benchmark { margin: 0; padding: 0 4px; font-size: 11px; line-height: 16px; }
+.cc-currency-select { flex: 1 1 240px; min-width: 240px; }
+.cc-product-block .ant-alert { margin-top: 4px; }
+.cc-product-block.is-other { border-style: dashed; }
+.cc-product-footnote { margin: 4px 0 12px; }

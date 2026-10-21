@@ -7,6 +7,7 @@ import com.paytech.commercial.core.dal.dataobject.AgreementCapability;
 import com.paytech.commercial.core.dal.dataobject.AgreementCapabilityLimit;
 import com.paytech.commercial.core.dal.dataobject.AgreementProduct;
 import com.paytech.commercial.core.dal.dataobject.CheckoutRecords.*;
+import com.paytech.commercial.core.dal.dataobject.PricingProfileCond;
 import com.paytech.commercial.core.dal.dataobject.ProductCapability;
 
 import lombok.Value;
@@ -42,10 +43,13 @@ public class CommercialCheckoutFacts {
     List<AgreementProduct> agreementProducts;
     /** CLIENT 合同在各 OE 下的开通项。 */
     List<AgreementCapability> agreementCapabilities;
-    /** 上述开通项的约束行。 */
+    /** 上述开通项的接受条件行。 */
     List<AgreementCapabilityLimit> capabilityLimits;
     /** 上述开通项引用的可开通项目录。 */
     List<ProductCapability> productCapabilities;
+
+    /** 支付方式 Profile 的条件行（判断开通项是否有生效价格）。 */
+    List<PricingProfileCond> profileConditions;
 
     /** 合同参与方引用的资料 ID，去重升序；签署校验据此向 client-master 读取资料。 */
     public List<Long> partyProfileIds() {

@@ -13,7 +13,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 /**
  * 商业条款版本本轮审批事实：Maker、Checker 与提交时刻，由版本 Child 的不可变快照推导
- * <li>从最新快照向前：排期 / 激活 / 替代快照跳过；批准快照记 Checker；遇到提交快照取 Maker（快照操作者）与提交时刻后结束；
+ * <li>从最新快照向前：客户签署 / 排期 / 激活 / 替代快照跳过；批准快照记 Checker；遇到提交快照取 Maker（快照操作者）与提交时刻后结束；
  * 先遇到驳回、创建或改价快照说明本轮未提交，全部为空。纯函数，不访问数据库。</li>
  */
 @Getter
@@ -74,7 +74,8 @@ public class CommercialTermReviewFacts {
 
     /** 批准之后的排期与激活（含替代）快照不改变本轮审批事实。 */
     static boolean isPostApproval(String reason) {
-        return BusinessChangeReason.TERM_VERSION_SCHEDULED.getCode().equals(reason)
+        return BusinessChangeReason.TERM_VERSION_ACCEPTED.getCode().equals(reason)
+            || BusinessChangeReason.TERM_VERSION_SCHEDULED.getCode().equals(reason)
             || BusinessChangeReason.TERM_VERSION_ACTIVATED.getCode().equals(reason);
     }
 }

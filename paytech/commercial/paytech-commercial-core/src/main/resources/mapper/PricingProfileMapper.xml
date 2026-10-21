@@ -13,7 +13,7 @@
     <select id="findForCheckout" resultMap="PricingProfile">
         SELECT pricing_profile_id, pricing_profile_code, profile_kind, payment_method_code, status
         FROM t_pricing_profile
-        WHERE pricing_profile_code IN (SELECT pricing_profile_code FROM t_commercial_term_price WHERE term_price_id IN (SELECT term_price_id FROM t_commercial_term_price WHERE term_version_id IN (SELECT term_version_id FROM t_commercial_term_version WHERE term_plan_id IN (SELECT term_plan_id FROM t_commercial_term_plan WHERE client_id = #{clientId}<if test="!localPartnerIds.isEmpty()"> OR local_partner_id IN <foreach collection="localPartnerIds" item="partnerId" open="(" separator="," close=")">#{partnerId}</foreach></if>)) AND <choose><when test="entityNos.isEmpty()">1 = 0</when><otherwise>entity_no IN <foreach collection="entityNos" item="entityNo" open="(" separator="," close=")">#{entityNo}</foreach></otherwise></choose>))
+        WHERE pricing_profile_code IN (SELECT pricing_profile_code FROM t_commercial_term_price WHERE term_price_id IN (SELECT term_price_id FROM t_commercial_term_price WHERE term_version_id IN (SELECT term_version_id FROM t_commercial_term_version WHERE term_plan_id IN (SELECT term_plan_id FROM t_commercial_term_plan WHERE owner_type &lt;&gt; 'PLATFORM_TEMPLATE' AND (client_id = #{clientId}<if test="!localPartnerIds.isEmpty()"> OR local_partner_id IN <foreach collection="localPartnerIds" item="partnerId" open="(" separator="," close=")">#{partnerId}</foreach></if>))) AND <choose><when test="entityNos.isEmpty()">1 = 0</when><otherwise>entity_no IN <foreach collection="entityNos" item="entityNo" open="(" separator="," close=")">#{entityNo}</foreach></otherwise></choose>))
         ORDER BY pricing_profile_id
     </select>
 

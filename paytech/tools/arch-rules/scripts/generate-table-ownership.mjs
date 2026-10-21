@@ -92,6 +92,15 @@ const stepAddedTables = [
     tables: ['t_product', 't_product_capability', 't_product_fee_event', 't_agreement_product',
       't_agreement_capability', 't_agreement_capability_limit'],
   },
+  // 2026-10-20 channel console (requirement 20261020 channel-connector 运营控制台): channel configuration change records.
+  { service: 'channel-connector', database: 'mor_channel_connector', tables: ['t_channel_config_change'] },
+  // 2026-10-20 capability conditions and price templates (decision 2026-10-20-commercial-capability-conditions-and-price-
+  // templates, requirement 20261020 technique §3.2): capability configurable dimensions and price-version acceptance.
+  {
+    service: 'commercial',
+    database: 'mor_commercial',
+    tables: ['t_product_capability_dimension', 't_term_version_acceptance'],
+  },
   // Step 12 (design/05 §2.1, S3): one-time card material tickets in mor_card.
   { service: 'card', database: 'mor_card', tables: ['t_card_material_ticket'] },
   // Step 11b (design/04 §3.2) reshaped by the 2026-10-19 subledger refactor (decision 2026-10-18, technique 2.3):

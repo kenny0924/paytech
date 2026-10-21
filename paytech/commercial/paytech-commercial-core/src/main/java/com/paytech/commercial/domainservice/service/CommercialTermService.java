@@ -33,6 +33,20 @@ public interface CommercialTermService {
     void replacePrices(CommercialTermVersionContext context);
 
     /**
+     * 从标准价目模板补齐：根 CAS，追加价格、组件与档位，首次补齐时写入来源模板版本，版本 Child 记 UPDATE 快照。
+     *
+     * @param context 含版本、追加行与可选的来源模板版本
+     */
+    void fillFromTemplate(CommercialTermVersionContext context);
+
+    /**
+     * 登记客户签署：根 CAS，插入签署记录，APPROVED → CLIENT_SIGNED，版本 Child 记 UPDATE 快照。
+     *
+     * @param context 含版本与新签署记录
+     */
+    void recordAcceptance(CommercialTermVersionContext context);
+
+    /**
      * 提交：DRAFT → PENDING_APPROVAL，快照记 Maker。
      *
      * @param context 含版本与操作人

@@ -110,8 +110,11 @@ public class RateCardResponseBody {
         /** 滚动保证金天数 */
         private Integer rollingReserveDays;
 
-        /** 约束，按代码与值排序 */
+        /** 接受条件行（limitCode 为维度代码），按代码与值排序 */
         private List<CapabilityLimit> limits;
+
+        /** 是否要求 3DS 认证 */
+        private Boolean require3ds;
     }
 
     /** 开通项约束 */

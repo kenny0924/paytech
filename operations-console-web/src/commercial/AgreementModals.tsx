@@ -1,19 +1,25 @@
-import { Button, Form, Input, InputNumber, Radio, Select } from 'antd';
+import { Button, Form, Input, InputNumber, Radio, Select, Tag } from 'antd';
 import { DatePicker } from '../components/DatePicker';
 import {
-  acceptanceBody, acceptanceMethodLabels, acceptanceMethods, agreementBody, agreementTypeLabels, businessModes, capabilityBody, capabilityStatusLabels,
-  capabilityStatuses, commercialPaths, decodeAgreementWrite, decodeCapabilityWrite, decodePlan, entityNoPattern, idPattern, limitCodes, localInput,
+  acceptanceBody, acceptanceMethodLabels, acceptanceMethods, agreementBody, agreementTypeLabels, businessModes, capabilityStatusLabels,
+  capabilityStatuses, commercialPaths, decodeAgreementWrite, decodeCapabilityWrite, decodePlan, entityNoPattern, idPattern, localInput,
   offsetInstant, partnerTermTypes, partyRoleLabels, partyRoles, planBody, reserveError, termTypeLabels, termTypes,
 } from './commercial';
 import type {
-  AcceptanceFormValues, Agreement, AgreementCapability, AgreementFormValues, AgreementParty, AgreementWriteResult, CapabilityFormValues, PlanFormValues,
-  TermPlan,
+  AcceptanceFormValues, Agreement, AgreementCapability, AgreementFormValues, AgreementParty, AgreementWriteResult, PlanFormValues, TermPlan,
 } from './commercial';
+import {
+  capabilityBody, capabilityChoices, capabilityDimensions, capabilityFormPatch, dimensionNames, existingMark, reservePercentIssue,
+} from './capabilityConditions';
+import type { CapabilityChoice, CapabilityFormValues, DimensionDefinition } from './capabilityConditions';
+import { ConditionFields } from './ConditionFields';
+import { capabilityKindLabels, catalogLabel } from './catalogTree';
 import { ClientIdInput } from './ClientIdInput';
-import { browserStorage, capabilityOptions, rememberClient, subscribableProductOptions } from './commercialConsole';
-import { CommandModal, CommercialNote } from './CommercialParts';
-import { useCatalogCapabilities, useCatalogProducts } from './useCatalog';
+import { browserStorage, rememberClient, subscribableProductOptions } from './commercialConsole';
+import { CommandDrawer, CommandModal, CommercialNote, DrawerSection } from './CommercialParts';
+import { useCatalogCapabilities, useCatalogDimensions, useCatalogProducts } from './useCatalog';
 import { useCommercialCommand } from './useCommercialCommand';
+import './capabilityPricing.css';
 
 interface Base { onClose: () => void; onReload: () => void; onAuthorizationChanged: () => void }
 const required = (message: string) => ({ required: true, whitespace: true, message });
@@ -184,58 +190,99 @@ export function ProductsModal({ agreement, onDone, onClose, onReload, onAuthoriz
   </CommandModal>;
 }
 
-/** 新增或整体改写开通项：OE、可开通项、区间、保证金与约束行。 */
-export function CapabilityModal({ agreement, capability, onDone, onClose, onReload, onAuthorizationChanged }: Base & {
-  agreement: Agreement; capability?: AgreementCapability; onDone: () => void;
+/**
+ * 新增或整体改写开通项（右侧抽屉，三段）：基本（OE、可开通项卡片 / 状态）、接受条件（逐维度一行 + 3DS + 汇总）、有效期与保证金。
+ * <li>卡片列出已订阅产品下全部启用的目录项（给出 productCode 时只列该产品）；该 OE 已有的项置灰并标「已开通」，点击切换为编辑那条开通项（onEdit）。</li>
+ */
+export function CapabilityDrawer({ agreement, capability, productCode, onEdit, onDone, onClose, onReload, onAuthorizationChanged }: Base & {
+  agreement: Agreement; capability?: AgreementCapability; productCode?: string; onEdit: (capability: AgreementCapability) => void; onDone: () => void;
 }) {
   const [form] = Form.useForm<CapabilityFormValues>();
   const command = useCommercialCommand(onAuthorizationChanged, 'agreement', form);
   const catalog = useCatalogCapabilities(onAuthorizationChanged);
+  const products = useCatalogProducts(onAuthorizationChanged);
+  const definitions = useCatalogDimensions(onAuthorizationChanged).items;
   const entities = agreement.agreementType === 'CLIENT' ? [agreement.entityNo ?? ''] : agreement.operatingEntityNos;
+  const entityNo = Form.useWatch('entityNo', form) ?? capability?.entityNo ?? entities[0];
+  const code = Form.useWatch('capabilityCode', form) ?? capability?.capabilityCode;
+  const catalogItem = catalog.items.find(item => item.capabilityCode === code);
+  const dimensions = capabilityDimensions(catalogItem, capability?.conditions ?? [{ dimensionCode: 'CURRENCY', values: [] }]);
+  const choices = capabilityChoices(catalog.items, agreement.productCodes, agreement.capabilities, entityNo ?? '', productCode);
+  const productName = productCode ? products.items.find(item => item.productCode === productCode)?.productName ?? productCode : null;
+  const choose = (next: string) => {
+    const currencies = form.getFieldValue(['conditions', 'CURRENCY']) as string[] | undefined;
+    form.setFieldsValue({ capabilityCode: next, conditions: currencies?.length ? { CURRENCY: currencies } : {} });
+  };
   const submit = async () => {
     const values = await form.validateFields();
-    const body = capabilityBody(agreement.changeVersion, values, !!capability);
+    const body = capabilityBody(agreement.changeVersion, values, dimensions, !!capability);
     const path = capability ? commercialPaths.capability(agreement.agreementId, capability.agreementCapabilityId) : commercialPaths.capabilities(agreement.agreementId);
     const result = await command.run(path, capability ? 'PUT' : 'POST', body, decodeCapabilityWrite(agreement.agreementId), '开通项保存失败');
     if (result) onDone();
   };
-  return <CommandModal title={capability ? `编辑开通项 · ${capability.capabilityCode}` : '新增开通项'} command={command} onOk={() => void submit()}
-    onClose={onClose} onReload={onReload} width={720}>
+  return <CommandDrawer title={capability ? `编辑开通项 · ${capability.entityNo} / ${catalogItem?.capabilityName ?? capability.capabilityCode}`
+    : productName ? `开通 · ${productName}` : '新增开通项'}
+    command={command} onOk={() => void submit()} onClose={onClose} onReload={onReload}>
     <Form form={form} name="commercial-capability" layout="vertical" initialValues={capability ? {
       entityNo: capability.entityNo, capabilityCode: capability.capabilityCode, status: capability.status, effectiveFrom: localInput(capability.effectiveFrom),
-      effectiveTo: localInput(capability.effectiveTo), rollingReserveRate: capability.rollingReserveRate ?? undefined, rollingReserveDays: capability.rollingReserveDays,
-      limits: capability.limits,
-    } : { entityNo: entities[0], limits: [{ limitCode: 'CURRENCY', limitValue: 'USD' }] }}>
-      <div className="commercial-form-grid">
-        <Form.Item name="entityNo" label="OE" rules={[{ required: true, message: '请选择 OE' }]}>
-          <Select disabled={!!capability} options={entities.map(value => ({ value, label: value }))} /></Form.Item>
-        <Form.Item name="capabilityCode" label="可开通项" normalize={(v: string) => v?.toUpperCase()} rules={[{ required: true, whitespace: true, message: '请选择可开通项' }]}
-          extra={catalog.failed ? '目录读取失败，请直接输入可开通项代码' : undefined}>
-          {catalog.failed ? <Input disabled={!!capability} maxLength={64} />
-            : <Select disabled={!!capability} showSearch={{ optionFilterProp: 'label' }} loading={catalog.loading} options={capabilityOptions(catalog.items)} />}</Form.Item>
-        {capability && <Form.Item name="status" label="状态"><Radio.Group optionType="button" options={buttonOptions(capabilityStatusLabels, capabilityStatuses)} /></Form.Item>}
-        {capability && <div />}
-        <Form.Item name="effectiveFrom" label="生效起点" rules={[{ required: true, message: '请选择生效起点' }]}><DatePicker showTime /></Form.Item>
-        <Form.Item name="effectiveTo" label="生效终点（可空）"><DatePicker showTime /></Form.Item>
-        <Form.Item name="rollingReserveRate" label="滚动保证金比例" extra="0–1，例如 0.1" rules={[{ pattern: /^(0(\.[0-9]{1,10})?|1(\.0{1,10})?)$/, message: '0 到 1 的小数' }]}>
-          <Input placeholder="0.1" /></Form.Item>
-        <Form.Item name="rollingReserveDays" label="保证金天数" dependencies={['rollingReserveRate']} rules={[({ getFieldValue }) => ({ validator: async (_, days?: number | null) => {
-          const error = reserveError(getFieldValue('rollingReserveRate'), days); if (error) throw new Error(error);
-        } })]}><InputNumber className="commercial-number" min={1} max={3650} precision={0} /></Form.Item>
-      </div>
-      <h3 className="commercial-subtitle">约束（同类 OR，异类 AND）</h3>
-      <Form.List name="limits">{(fields, { add, remove }) => <div className="commercial-row-list">
-        {fields.map(field => <div className="commercial-row" key={field.key}>
-          <Form.Item name={[field.name, 'limitCode']} rules={[{ required: true, message: '约束类别' }]}><Select options={limitCodes.map(value => ({ value, label: value }))} /></Form.Item>
-          <Form.Item name={[field.name, 'limitValue']} normalize={(v: string) => v?.toUpperCase()} rules={[required('约束值')]}><Input placeholder="USD / AE / 1" maxLength={128} /></Form.Item>
-          <div />
-          <Button onClick={() => remove(field.name)}>移除</Button>
-        </div>)}
-        <Button onClick={() => add({ limitCode: 'CURRENCY' })}>添加约束</Button>
-      </div>}</Form.List>
-      <CommercialNote>CURRENCY 为三位币种，CONSUMER_COUNTRY 为两位国家码，REQUIRE_3DS 固定填 1。开通项的每个约束币种在条款版本排期时都必须有价格。</CommercialNote>
+      effectiveTo: localInput(capability.effectiveTo), ...capabilityFormPatch(capability),
+    } : { entityNo: entities[0], conditions: {}, require3ds: false }}>
+      <DrawerSection title="基本">
+        <div className="commercial-form-grid">
+          <Form.Item name="entityNo" label="OE" rules={[{ required: true, message: '请选择 OE' }]}>
+            <Select disabled={!!capability} options={entities.map(value => ({ value, label: value }))} /></Form.Item>
+          {capability ? <Form.Item name="status" label="状态"><Radio.Group optionType="button" options={buttonOptions(capabilityStatusLabels, capabilityStatuses)} /></Form.Item>
+            : <div />}
+        </div>
+        {capability ? <Form.Item name="capabilityCode" hidden><Input /></Form.Item>
+          : <Form.Item name="capabilityCode" label="可开通项" rules={[{ required: true, whitespace: true, message: '请选择可开通项' }]}
+            extra={catalog.failed ? '目录读取失败，请直接输入可开通项代码'
+              : `列出${productName ? `「${productName}」` : '已订阅产品'}下启用的项；已开通的项置灰，点击可编辑`} normalize={(v: string) => v?.toUpperCase()}>
+            {catalog.failed ? <Input maxLength={64} />
+              : <CapabilityCards choices={choices} loading={catalog.loading} definitions={definitions} onChoose={choose} onEdit={onEdit} />}</Form.Item>}
+      </DrawerSection>
+      {code && <DrawerSection title="接受条件" extra={<span className="commercial-cell-meta">同维度任一取值，异维度同时满足</span>}>
+        <ConditionFields form={form} dimensions={dimensions} definitions={definitions} />
+      </DrawerSection>}
+      <DrawerSection title="有效期与保证金">
+        <div className="commercial-form-grid">
+          <Form.Item name="effectiveFrom" label="生效起点" rules={[{ required: true, message: '请选择生效起点' }]}><DatePicker showTime /></Form.Item>
+          <Form.Item name="effectiveTo" label="生效终点（可空）"><DatePicker showTime /></Form.Item>
+          <Form.Item name="reservePercent" label="滚动保证金比例（%）" extra="按百分比填写，5 即 5%" rules={[{ validator: async (_, value?: string) => {
+            const issue = reservePercentIssue(value); if (issue) throw new Error(issue);
+          } }]}><Input placeholder="5" suffix="%" /></Form.Item>
+          <Form.Item name="rollingReserveDays" label="保证金天数" dependencies={['reservePercent']} rules={[({ getFieldValue }) => ({ validator: async (_, days?: number | null) => {
+            const error = reserveError(getFieldValue('reservePercent'), days); if (error) throw new Error(error);
+          } })]}><InputNumber className="commercial-number" min={1} max={3650} precision={0} /></Form.Item>
+        </div>
+      </DrawerSection>
+      <CommercialNote>币种为必填条件；开通项的每个币种（及有条件维度的取值组合）在条款版本激活时都必须有价格。停用目录项不影响已开通的合同。</CommercialNote>
     </Form>
-  </CommandModal>;
+  </CommandDrawer>;
+}
+
+/** 可开通项卡片单选：名称、代码、种类 Tag 与可配维度中文名；该 OE 已有的项置灰带标记，点击编辑那条开通项。受控于 Form.Item。 */
+function CapabilityCards({ choices, loading, definitions, value, onChoose, onEdit }: {
+  choices: CapabilityChoice[]; loading: boolean; definitions: DimensionDefinition[]; value?: string; onChoose: (code: string) => void;
+  onEdit: (capability: AgreementCapability) => void;
+}) {
+  if (loading) return <div className="commercial-cell-meta">目录加载中…</div>;
+  if (!choices.length) return <CommercialNote tone="warning">没有可开通的项：请先订阅产品，或该产品下没有启用的可开通项。</CommercialNote>;
+  return <div className="cc-cards" role="radiogroup">{choices.map(({ item, existing }) => {
+    const mark = existingMark(existing);
+    const selected = value === item.capabilityCode;
+    return <button key={item.capabilityCode} type="button" role="radio" aria-checked={selected}
+      title={existing ? '已开通，点击编辑该开通项' : undefined}
+      className={`cc-card${selected ? ' is-selected' : ''}${existing ? ' is-existing' : ''}`}
+      onClick={() => existing ? onEdit(existing) : onChoose(item.capabilityCode)}>
+      <span className="cc-card-top"><span className="cc-card-name">{item.capabilityName}</span>
+        {mark && <Tag color={existing?.status === 'ENABLED' ? 'green' : 'default'} className="cc-card-mark">{mark}</Tag>}</span>
+      <span className="cc-card-line"><span className="mono cc-card-code">{item.capabilityCode}</span>
+        <Tag className="cc-card-kind">{catalogLabel(capabilityKindLabels, item.capabilityKind)}</Tag>
+        {item.paymentMethodCode && item.paymentMethodCode !== item.capabilityCode && <span className="mono cc-card-code">{item.paymentMethodCode}</span>}</span>
+      <span className="commercial-cell-meta cc-card-dims">{dimensionNames(item.dimensions, definitions)}</span>
+    </button>;
+  })}</div>;
 }
 
 /** 新建条款方案：Client 条款引用 CLIENT 合同，Partner 条款引用同一 Local Partner 的 PARTNER 合同。 */

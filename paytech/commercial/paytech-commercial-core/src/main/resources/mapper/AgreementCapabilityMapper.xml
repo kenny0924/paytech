@@ -11,19 +11,20 @@
         <result column="effective_to" property="effectiveTo"/>
         <result column="rolling_reserve_rate" property="rollingReserveRate"/>
         <result column="rolling_reserve_days" property="rollingReserveDays"/>
+        <result column="require_3ds" property="require3ds"/>
         <result column="create_time" property="createTime"/>
         <result column="update_time" property="updateTime"/>
     </resultMap>
 
     <sql id="columns">
         agreement_capability_id, agreement_id, entity_no, capability_code, status, effective_from, effective_to,
-        rolling_reserve_rate, rolling_reserve_days, create_time, update_time
+        rolling_reserve_rate, rolling_reserve_days, require_3ds, create_time, update_time
     </sql>
 
     <insert id="insert">
         INSERT INTO t_agreement_capability (<include refid="columns"/>)
         VALUES (#{agreementCapabilityId}, #{agreementId}, #{entityNo}, #{capabilityCode}, #{status}, #{effectiveFrom},
-            #{effectiveTo}, #{rollingReserveRate}, #{rollingReserveDays}, #{createTime}, #{updateTime})
+            #{effectiveTo}, #{rollingReserveRate}, #{rollingReserveDays}, #{require3ds}, #{createTime}, #{updateTime})
     </insert>
 
     <select id="selectById" resultMap="AgreementCapability">
@@ -54,7 +55,7 @@
     <update id="updateTerms">
         UPDATE t_agreement_capability
         SET effective_from = #{effectiveFrom}, effective_to = #{effectiveTo}, rolling_reserve_rate = #{rollingReserveRate},
-            rolling_reserve_days = #{rollingReserveDays}, update_time = #{now}
+            rolling_reserve_days = #{rollingReserveDays}, require_3ds = #{require3ds}, update_time = #{now}
         WHERE agreement_capability_id = #{capability.agreementCapabilityId} AND update_time = #{capability.updateTime}
     </update>
 </mapper>

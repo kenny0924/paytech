@@ -248,11 +248,15 @@ public final class CommercialAgreementModels {
         /** 滚动保证金持有天数 */
         private Integer rollingReserveDays;
 
-        /** 约束行，整体提交，最多 50 条 */
-        @NotNull(message = "约束行必填，可为空列表")
-        @Size(max = 50, message = "约束行最多 50 条")
+        /** 接受条件，整体提交，每个维度一项（同维度多值 OR、异维度 AND），最多 20 个维度 */
+        @NotNull(message = "接受条件必填")
+        @Size(max = 20, message = "接受条件最多 20 个维度")
         @Valid
-        private List<CapabilityLimitEntry> limits;
+        private List<CapabilityConditionEntry> conditions;
+
+        /** 是否要求 3DS 认证 */
+        @NotNull(message = "3DS 要求必填")
+        private Boolean require3ds;
     }
 
     /** 整体改写开通项。 */
@@ -281,25 +285,29 @@ public final class CommercialAgreementModels {
         /** 滚动保证金持有天数 */
         private Integer rollingReserveDays;
 
-        /** 约束行，整体提交，最多 50 条 */
-        @NotNull(message = "约束行必填，可为空列表")
-        @Size(max = 50, message = "约束行最多 50 条")
+        /** 接受条件，整体提交，每个维度一项（同维度多值 OR、异维度 AND），最多 20 个维度 */
+        @NotNull(message = "接受条件必填")
+        @Size(max = 20, message = "接受条件最多 20 个维度")
         @Valid
-        private List<CapabilityLimitEntry> limits;
+        private List<CapabilityConditionEntry> conditions;
+
+        /** 是否要求 3DS 认证 */
+        @NotNull(message = "3DS 要求必填")
+        private Boolean require3ds;
     }
 
-    /** 开通项约束的一个值。 */
+    /** 开通项的一个接受条件：一个维度及其取值。 */
     @Getter
     @Setter
-    public static class CapabilityLimitEntry {
-        /** 约束类别：CURRENCY、CONSUMER_COUNTRY、REQUIRE_3DS */
-        @NotBlank(message = "约束类别必填")
-        private String limitCode;
+    public static class CapabilityConditionEntry {
+        /** 维度代码，如 CURRENCY、CARD_BRAND */
+        @NotBlank(message = "维度代码必填")
+        private String dimensionCode;
 
-        /** 规范化值 */
-        @NotBlank(message = "约束值必填")
-        @Size(max = 128, message = "约束值最长 128 字符")
-        private String limitValue;
+        /** 取值，至少一个，最多 50 个 */
+        @NotEmpty(message = "条件取值至少一个")
+        @Size(max = 50, message = "条件取值最多 50 个")
+        private List<@NotBlank(message = "条件取值不得为空") String> values;
     }
 
     // ---------- 响应 ----------
@@ -458,7 +466,7 @@ public final class CommercialAgreementModels {
         private String contentHash;
     }
 
-    /** 开通项及其约束。 */
+    /** 开通项及其接受条件。 */
     @Getter
     @Setter
     public static class AgreementCapabilityDetail {
@@ -486,19 +494,22 @@ public final class CommercialAgreementModels {
         /** 滚动保证金天数，可空 */
         private Integer rollingReserveDays;
 
-        /** 约束行 */
-        private List<CapabilityLimitDetail> limits;
+        /** 接受条件，按维度代码排序 */
+        private List<CapabilityConditionDetail> conditions;
+
+        /** 是否要求 3DS 认证 */
+        private Boolean require3ds;
     }
 
-    /** 开通项约束的一个值。 */
+    /** 开通项的一个接受条件。 */
     @Getter
     @Setter
-    public static class CapabilityLimitDetail {
-        /** 约束类别 */
-        private String limitCode;
+    public static class CapabilityConditionDetail {
+        /** 维度代码 */
+        private String dimensionCode;
 
-        /** 规范化值 */
-        private String limitValue;
+        /** 取值，按字典序 */
+        private List<String> values;
     }
 
     /**

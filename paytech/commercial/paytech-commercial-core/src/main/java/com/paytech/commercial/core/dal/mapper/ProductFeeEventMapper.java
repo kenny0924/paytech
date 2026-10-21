@@ -6,6 +6,8 @@ import org.apache.ibatis.annotations.Param;
 
 import com.paytech.commercial.api.enums.ProductCode;
 import com.paytech.commercial.core.dal.dataobject.ProductFeeEvent;
+import java.time.Instant;
+import com.paytech.commercial.api.enums.CapabilityKind;
 
 /** t_product_fee_event 的持久化访问。 */
 public interface ProductFeeEventMapper {
@@ -27,4 +29,11 @@ public interface ProductFeeEventMapper {
 
     /** 按可选产品代码与条款类型读取计费事件，按 product_fee_event_id 升序；参数为空不筛选。 */
     List<ProductFeeEvent> selectFiltered(@Param("productCode") ProductCode productCode, @Param("termType") String termType);
+
+    /** 仅当 change_version 仍为 feeEvent.changeVersion 时改写挂接开通项并版本加一，返回影响行数。 */
+    int updateCapability(@Param("feeEvent") ProductFeeEvent feeEvent, @Param("capabilityKind") CapabilityKind capabilityKind,
+        @Param("capabilityCode") String capabilityCode, @Param("now") Instant now);
+
+    /** 读取精确挂接到某功能开通项的计费事件，按主键升序。 */
+    List<ProductFeeEvent> selectByCapabilityCode(@Param("capabilityCode") String capabilityCode);
 }

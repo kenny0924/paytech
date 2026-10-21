@@ -17,6 +17,7 @@ export const consolePaths = {
   products: '/commercial-admin/v1/products',
   capabilities: '/commercial-admin/v1/products/capabilities',
   feeEvents: '/commercial-admin/v1/products/fee-events',
+  dimensions: '/commercial-admin/v1/products/dimensions',
   businessChanges: '/commercial-admin/v1/business-changes',
 } as const;
 
@@ -45,19 +46,29 @@ export interface TermPlanListItem {
   localPartnerId: string | null; status: string; changeVersion: string; activeVersionId: string | null; activeVersionNo: string | null;
   activeEffectiveFrom: string | null; scheduledVersionId: string | null; scheduledVersionNo: string | null; scheduledEffectiveFrom: string | null;
   createTime: string; updateTime: string;
+  /** 一期：Owner 类型与模板名称；旧 BFF 缺省为 null。 */
+  ownerType: string | null; templateName: string | null;
 }
 export interface TermVersionListItem {
   versionId: string; planId: string; planCode: string; termType: string; agreementId: string | null; entityNo: string | null; clientId: string | null;
   localPartnerId: string | null; versionNo: string; status: VersionStatus; effectiveFrom: string; effectiveTo: string | null; roundingMode: string;
   pricingModel: string; feeTaxTreatment: string; makerAccountId: string | null; checkerAccountId: string | null; submittedTime: string | null;
   priceCount: number; changeVersion: string; updateTime: string;
+  /** 一期：破标组件数、历史免签、是否已登记客户签署、Owner 类型；旧 BFF 缺省为 null / false。 */
+  belowStandardCount: number | null; signatureExempt: boolean; hasAcceptance: boolean; ownerType: string | null;
 }
 export interface CatalogProduct { productId: string; productCode: string; productName: string; businessModeScope: string; baseProduct: boolean; status: string }
+/** 开通项可配维度（目录维护）：required 为开通时必填。 */
+export interface CapabilityDimension { dimensionCode: string; required: boolean }
 export interface CatalogCapability {
   productCapabilityId: string; productCode: string; capabilityCode: string; capabilityName: string; capabilityKind: string; paymentMethodCode: string | null;
-  dimensionCode: string | null; dimensionValue: string | null; status: string;
+  dimensionCode: string | null; dimensionValue: string | null; status: string; dimensions: CapabilityDimension[]; changeVersion: number | string | null;
 }
-export interface CatalogFeeEvent { productFeeEventId: string; productCode: string; feeEventCode: string; termType: string; billingFactType: string }
+/** 计费事件；capabilityKind / capabilityCode 为挂接的开通项种类与功能开通项（均空 = 无需开通）。 */
+export interface CatalogFeeEvent {
+  productFeeEventId: string; productCode: string; feeEventCode: string; termType: string; billingFactType: string; capabilityKind: string | null;
+  capabilityCode: string | null; changeVersion: number | string | null;
+}
 export type ChangeComparison = 'FIRST_VERSION' | 'COMPARED' | 'NOT_COMPARED';
 export interface BusinessChangeEntry {
   historyId: string; recordType: string; recordId: string; versionNo: number; operationType: string; createBy: string; createTime: string;
@@ -81,6 +92,9 @@ const optional = (check: (v: unknown) => boolean) => (v: unknown) => v === undef
 const oneOf = (values: readonly string[]) => (v: unknown) => typeof v === 'string' && values.includes(v);
 const entity = (v: unknown) => typeof v === 'string' && entityNoPattern.test(v);
 const orNull = <T,>(v: T | undefined | null): T | null => v ?? null;
+const count = (v: unknown) => Number.isSafeInteger(v) && Number(v) >= 0;
+const flag = (v: unknown) => typeof v === 'boolean';
+const changeVersion = (v: unknown) => Number.isSafeInteger(v) || id(v);
 /** 解码失败只给通用错误，不回显响应内容。 */
 const require = (valid: boolean) => { if (!valid) throw new ApiError(502, 'INVALID_RESPONSE'); };
 
@@ -109,7 +123,7 @@ export function decodeTermPlanListItem(value: unknown): TermPlanListItem {
   return { ...v, agreementId: orNull(v.agreementId), entityNo: orNull(v.entityNo), clientId: orNull(v.clientId), localPartnerId: orNull(v.localPartnerId),
     activeVersionId: orNull(v.activeVersionId), activeVersionNo: orNull(v.activeVersionNo), activeEffectiveFrom: orNull(v.activeEffectiveFrom),
     scheduledVersionId: orNull(v.scheduledVersionId), scheduledVersionNo: orNull(v.scheduledVersionNo),
-    scheduledEffectiveFrom: orNull(v.scheduledEffectiveFrom) };
+    scheduledEffectiveFrom: orNull(v.scheduledEffectiveFrom), ownerType: orNull(v.ownerType), templateName: orNull(v.templateName) };
 }
 
 export function decodeTermVersionListItem(value: unknown): TermVersionListItem {
@@ -117,10 +131,12 @@ export function decodeTermVersionListItem(value: unknown): TermVersionListItem {
   require(object(v) && id(v.versionId) && id(v.planId) && text(v.planCode, 64) && text(v.termType, 64) && optional(id)(v.agreementId)
     && text(v.versionNo, 19) && oneOf(versionStatuses)(v.status) && instant(v.effectiveFrom) && optional(instant)(v.effectiveTo)
     && optional(id)(v.makerAccountId) && optional(id)(v.checkerAccountId) && optional(instant)(v.submittedTime) && Number.isInteger(v.priceCount)
-    && v.priceCount >= 0 && id(v.changeVersion));
+    && v.priceCount >= 0 && id(v.changeVersion) && optional(count)(v.belowStandardCount) && optional(flag)(v.signatureExempt)
+    && optional(flag)(v.hasAcceptance));
   return { ...v, agreementId: orNull(v.agreementId), entityNo: orNull(v.entityNo), clientId: orNull(v.clientId), localPartnerId: orNull(v.localPartnerId),
     effectiveTo: orNull(v.effectiveTo), makerAccountId: orNull(v.makerAccountId), checkerAccountId: orNull(v.checkerAccountId),
-    submittedTime: orNull(v.submittedTime) };
+    submittedTime: orNull(v.submittedTime), belowStandardCount: orNull(v.belowStandardCount), signatureExempt: v.signatureExempt === true,
+    hasAcceptance: v.hasAcceptance === true, ownerType: orNull(v.ownerType) };
 }
 
 export const decodeAgreementPage = decodePage(decodeAgreementListItem);
@@ -134,19 +150,37 @@ export function decodeProducts(value: unknown): CatalogProduct[] {
   return v.products;
 }
 
+/** 一个目录开通项；dimensions / changeVersion 为一期新增，旧 BFF 缺省为空。 */
+export function decodeCatalogCapability(c: unknown): CatalogCapability {
+  const v = c as CatalogCapability;
+  require(object(v) && id(v.productCapabilityId) && text(v.productCode, 64) && text(v.capabilityCode, 64) && text(v.capabilityName, 128)
+    && text(v.status, 32) && optional(array)(v.dimensions) && optional(changeVersion)(v.changeVersion));
+  const dimensions = (v.dimensions ?? []).map(item => {
+    require(object(item) && text(item.dimensionCode, 64) && optional(flag)(item.required));
+    return { dimensionCode: item.dimensionCode, required: item.required === true };
+  });
+  return { ...v, paymentMethodCode: orNull(v.paymentMethodCode), dimensionCode: orNull(v.dimensionCode), dimensionValue: orNull(v.dimensionValue),
+    dimensions, changeVersion: orNull(v.changeVersion) };
+}
+
 export function decodeCapabilities(value: unknown): CatalogCapability[] {
-  const v = value as { capabilities: CatalogCapability[] };
-  require(object(v) && array(v.capabilities) && v.capabilities.every(c => object(c) && id(c.productCapabilityId) && text(c.productCode, 64)
-    && text(c.capabilityCode, 64) && text(c.capabilityName, 128) && text(c.status, 32)));
-  return v.capabilities.map(c => ({ ...c, paymentMethodCode: orNull(c.paymentMethodCode), dimensionCode: orNull(c.dimensionCode),
-    dimensionValue: orNull(c.dimensionValue) }));
+  const v = value as { capabilities: unknown[] };
+  require(object(v) && array(v.capabilities));
+  return v.capabilities.map(decodeCatalogCapability);
+}
+
+/** 一个计费事件登记；挂接两字段与 changeVersion 为一期新增，旧 BFF 缺省为空。 */
+export function decodeFeeEvent(e: unknown): CatalogFeeEvent {
+  const v = e as CatalogFeeEvent;
+  require(object(v) && id(v.productFeeEventId) && text(v.productCode, 64) && text(v.feeEventCode, 64) && text(v.termType, 64)
+    && text(v.billingFactType, 64) && optional(text)(v.capabilityKind) && optional(text)(v.capabilityCode) && optional(changeVersion)(v.changeVersion));
+  return { ...v, capabilityKind: orNull(v.capabilityKind), capabilityCode: orNull(v.capabilityCode), changeVersion: orNull(v.changeVersion) };
 }
 
 export function decodeFeeEvents(value: unknown): CatalogFeeEvent[] {
-  const v = value as { feeEvents: CatalogFeeEvent[] };
-  require(object(v) && array(v.feeEvents) && v.feeEvents.every(e => object(e) && id(e.productFeeEventId) && text(e.productCode, 64)
-    && text(e.feeEventCode, 64) && text(e.termType, 64) && text(e.billingFactType, 64)));
-  return v.feeEvents;
+  const v = value as { feeEvents: unknown[] };
+  require(object(v) && array(v.feeEvents));
+  return v.feeEvents.map(decodeFeeEvent);
 }
 
 export function decodeBusinessChange(value: unknown): BusinessChangeEntry {

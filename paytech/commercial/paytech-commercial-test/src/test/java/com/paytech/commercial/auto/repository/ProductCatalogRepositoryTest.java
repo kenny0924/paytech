@@ -15,12 +15,10 @@ import org.springframework.dao.DuplicateKeyException;
 
 import com.paytech.commercial.api.constant.CommercialCodes.BillingFactType;
 import com.paytech.commercial.api.constant.CommercialCodes.Capability;
-import com.paytech.commercial.api.constant.CommercialCodes.CardBrand;
 import com.paytech.commercial.api.constant.CommercialCodes.FeeEvent;
 import com.paytech.commercial.api.constant.CommercialCodes.PaymentMethod;
 import com.paytech.commercial.api.constant.CommercialCodes.TermType;
 import com.paytech.commercial.api.enums.CapabilityKind;
-import com.paytech.commercial.api.enums.PricingDimension;
 import com.paytech.commercial.api.enums.ProductBusinessModeScope;
 import com.paytech.commercial.api.enums.ProductCode;
 import com.paytech.commercial.api.enums.ProductStatus;
@@ -73,7 +71,8 @@ class ProductCatalogRepositoryTest extends CommercialMockTestBase {
 
         List<Product> products = productRepository.findAll();
         Product tax = productRepository.findByCode(ProductCode.TAX_INVOICE);
-        ProductCapability amex = capabilityRepository.findByCode(Capability.CARD_AMEX);
+        ProductCapability card = capabilityRepository.findByCode(Capability.CARD);
+        ProductCapability tokenStorage = capabilityRepository.findByCode(Capability.TOKEN_STORAGE);
         ProductCapability payout = capabilityRepository.findByCode(Capability.PAYOUT_SWIFT);
         ProductFeeEvent chargeback = feeEventRepository.findByFeeEventAndTermType(FeeEvent.CHARGEBACK, TermType.DISPUTE_FEE);
         assertAll(() -> assertEquals(7, products.size()),
@@ -82,20 +81,25 @@ class ProductCatalogRepositoryTest extends CommercialMockTestBase {
             () -> assertTrue(products.stream().allMatch(p -> p.getBusinessModeScope() == ProductBusinessModeScope.BOTH
                 && p.getStatus() == ProductStatus.ACTIVE)),
             () -> assertEquals(tax.getProductId(), productRepository.findById(tax.getProductId()).getProductId()),
-            () -> assertEquals(ProductCode.ACQUIRING, amex.getProductCode()),
-            () -> assertEquals(CapabilityKind.PAYMENT_METHOD, amex.getCapabilityKind()),
-            () -> assertEquals(PaymentMethod.CARD, amex.getPaymentMethodCode()),
-            () -> assertEquals(PricingDimension.CARD_BRAND, amex.getDimensionCode()),
-            () -> assertEquals(CardBrand.AMEX, amex.getDimensionValue()),
+            () -> assertEquals(ProductCode.ACQUIRING, card.getProductCode()),
+            () -> assertEquals(CapabilityKind.PAYMENT_METHOD, card.getCapabilityKind()),
+            () -> assertEquals(PaymentMethod.CARD, card.getPaymentMethodCode()),
+            () -> assertNull(card.getDimensionCode()), () -> assertNull(card.getDimensionValue()),
+            () -> assertEquals(1L, card.getChangeVersion()),
+            () -> assertEquals(CapabilityKind.FEATURE, tokenStorage.getCapabilityKind()),
+            () -> assertNull(tokenStorage.getPaymentMethodCode()),
             () -> assertEquals(CapabilityKind.PAYOUT_RAIL, payout.getCapabilityKind()),
             () -> assertNull(payout.getPaymentMethodCode()), () -> assertNull(payout.getDimensionCode()),
-            () -> assertEquals(6, capabilityRepository.findByProductCode(ProductCode.ACQUIRING).size()),
-            () -> assertEquals(List.of(Capability.CARD_VISA, Capability.FX_SPOT),
-                capabilityRepository.findByCodes(List.of(Capability.FX_SPOT, Capability.CARD_VISA, "UNKNOWN")).stream()
+            () -> assertEquals(4, capabilityRepository.findByProductCode(ProductCode.ACQUIRING).size()),
+            () -> assertEquals(List.of(Capability.FX_SPOT, Capability.CARD),
+                capabilityRepository.findByCodes(List.of(Capability.FX_SPOT, Capability.CARD, "UNKNOWN")).stream()
                     .map(ProductCapability::getCapabilityCode).toList()),
             () -> assertEquals(List.of(), capabilityRepository.findByCodes(List.of())),
             () -> assertEquals(ProductCode.DISPUTE, chargeback.getProductCode()),
             () -> assertEquals(BillingFactType.DISPUTE, chargeback.getBillingFactType()),
+            () -> assertEquals(CapabilityKind.DISPUTE, chargeback.getCapabilityKind()),
+            () -> assertEquals(Capability.TOKEN_STORAGE, feeEventRepository.findByFeeEventAndTermType(FeeEvent.TOKEN_STORED,
+                TermType.CLIENT_PRICING).getCapabilityCode()),
             () -> assertEquals(6, feeEventRepository.findByTermType(TermType.CLIENT_PRICING).size()),
             () -> assertEquals(3, feeEventRepository.findByProductCode(ProductCode.PLATFORM).size()),
             () -> assertEquals(List.of(), feeEventRepository.findByTermType(TermType.PARTNER_BUY_RATE)),

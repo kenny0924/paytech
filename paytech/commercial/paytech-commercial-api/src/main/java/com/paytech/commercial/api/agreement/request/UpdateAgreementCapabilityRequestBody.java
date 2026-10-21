@@ -14,7 +14,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
-/** 整体改写开通项的状态、区间、保证金与约束行；内容不变时不产生变更。 */
+/** 整体改写开通项的状态、区间、保证金与接受条件；内容不变时不产生变更。 */
 @Getter
 @Setter
 public class UpdateAgreementCapabilityRequestBody {
@@ -58,9 +58,16 @@ public class UpdateAgreementCapabilityRequestBody {
     @Max(value = 3650, message = "rollingReserveDays 最大为 3650")
     private Integer rollingReserveDays;
 
-    /** 约束行，整体提交，最多 50 条，不得重复 */
-    @NotNull(message = "limits 必填，可为空列表")
-    @Size(max = 50, message = "limits 最多 50 条")
+    /**
+     * 接受条件，整体提交，每个维度一项，不得重复
+     * <li>维度须在该可开通项可配维度内，必填维度（CURRENCY）必须出现。</li>
+     */
+    @NotNull(message = "conditions 必填")
+    @Size(max = 20, message = "conditions 最多 20 个维度")
     @Valid
-    private List<CapabilityLimitEntry> limits;
+    private List<CapabilityConditionEntry> conditions;
+
+    /** 是否要求 3DS 认证 */
+    @NotNull(message = "require3ds 必填")
+    private Boolean require3ds;
 }

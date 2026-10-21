@@ -53,7 +53,7 @@ public class CheckoutResolutionConfiguration {
         CommercialTermComponentBandRepository commercialTermComponentBandRepository,
         AgreementProductRepository agreementProductRepository, AgreementCapabilityRepository agreementCapabilityRepository,
         AgreementCapabilityLimitRepository agreementCapabilityLimitRepository,
-        ProductCapabilityRepository productCapabilityRepository) {
+        ProductCapabilityRepository productCapabilityRepository, PricingProfileCondRepository pricingProfileCondRepository) {
         TransactionTemplate reads = new TransactionTemplate(transactions);
         reads.setReadOnly(true);
         reads.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
@@ -64,7 +64,7 @@ public class CheckoutResolutionConfiguration {
             businessChangeRecordRepository, pricingProfileRepository, commercialTermVersionRepository,
             commercialTermComponentRepository, agreementOperatingEntityRepository, commercialTermComponentBandRepository,
             agreementProductRepository, agreementCapabilityRepository, agreementCapabilityLimitRepository,
-            productCapabilityRepository);
+            productCapabilityRepository, pricingProfileCondRepository);
     }
 
     /** 合同参与方引用查询，供 client-master 人员共享标记。 */

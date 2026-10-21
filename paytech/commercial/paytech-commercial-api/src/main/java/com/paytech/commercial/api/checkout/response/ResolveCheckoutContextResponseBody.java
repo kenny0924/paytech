@@ -119,8 +119,8 @@ public class ResolveCheckoutContextResponseBody {
         private java.util.List<String> agreementProducts;
 
         /**
-         * 本次支付方式命中的全部开通项，按开通项代码升序
-         * <li>请求未给支付方式时为空数组；给出时至少一项，卡品牌等维度在支付尝试时再按实际品牌选用。</li>
+         * 本次支付方式命中、且有生效价格的全部开通项，按开通项代码升序
+         * <li>请求未给支付方式时为空数组；给出时至少一项。接受条件与 3DS 要求由收单在执行时使用（二期）。</li>
          */
         private java.util.List<Capability> capabilities;
     }
@@ -134,16 +134,16 @@ public class ResolveCheckoutContextResponseBody {
         /** 开通项 ID。 */
         private String agreementCapabilityId;
 
-        /** 可开通项代码，如 CARD_VISA、APPLE_PAY。 */
+        /** 可开通项代码，如 CARD、APPLE_PAY。 */
         private String capabilityCode;
 
         /** 开通项状态 Code；命中时恒为 ENABLED。 */
         private String status;
 
-        /** 目录维度 Code，如 CARD_BRAND；不分维度时为 null。 */
+        /** 已废弃，恒为 null（细分维度改为 conditions）。 */
         private String dimensionCode;
 
-        /** 目录维度值，如 VISA；不分维度时为 null。 */
+        /** 已废弃，恒为 null。 */
         private String dimensionValue;
 
         /** 滚动保证金比例，0 至 1 的十进制字符串；未约定时为 null。 */
@@ -151,6 +151,31 @@ public class ResolveCheckoutContextResponseBody {
 
         /** 滚动保证金天数；未约定时为 null。 */
         private Integer rollingReserveDays;
+
+        /** 可开通项绑定的支付方式代码，如 CARD；非支付方式类为 null。 */
+        private String paymentMethodCode;
+
+        /** 可开通项种类 Code：PAYMENT_METHOD、FEATURE 等。 */
+        private String capabilityKind;
+
+        /** 接受条件，按维度代码排序：同维度多值 OR，异维度 AND；未写的维度不限。 */
+        private java.util.List<CapabilityCondition> conditions;
+
+        /** 是否要求 3DS 认证。 */
+        private boolean require3ds;
+    }
+
+    /** 开通项的一个接受条件。 */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CapabilityCondition {
+        /** 维度 Code，如 CURRENCY、CARD_BRAND。 */
+        private String dimensionCode;
+
+        /** 取值，按字典序。 */
+        private java.util.List<String> values;
     }
 
     /**

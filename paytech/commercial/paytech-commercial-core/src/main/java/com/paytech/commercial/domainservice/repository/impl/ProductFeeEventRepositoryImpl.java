@@ -11,6 +11,9 @@ import com.paytech.commercial.domainservice.repository.ProductFeeEventRepository
 import com.paytech.foundation.common.error.ErrorException;
 
 import lombok.AllArgsConstructor;
+import java.time.Instant;
+import com.paytech.commercial.api.enums.CapabilityKind;
+import com.paytech.foundation.common.error.ConcurrentRequestException;
 
 /** 只通过 ProductFeeEventMapper 访问 t_product_fee_event。 */
 @AllArgsConstructor
@@ -56,5 +59,25 @@ public class ProductFeeEventRepositoryImpl implements ProductFeeEventRepository 
     @Override
     public List<ProductFeeEvent> findFiltered(ProductCode productCode, String termType) {
         return List.copyOf(mapper.selectFiltered(productCode, termType));
+    }
+
+    /** 版本条件改写，成功后同步原对象。 */
+    @Override
+    public void updateCapability(ProductFeeEvent feeEvent, CapabilityKind capabilityKind, String capabilityCode, Instant now) {
+        Instant time = micros(now);
+        if (mapper.updateCapability(feeEvent, capabilityKind, capabilityCode, time) != 1) {
+            throw new ConcurrentRequestException("计费事件已变化，请刷新后重试: " + feeEvent.getFeeEventCode() + "/"
+                + feeEvent.getTermType());
+        }
+        feeEvent.setCapabilityKind(capabilityKind);
+        feeEvent.setCapabilityCode(capabilityCode);
+        feeEvent.setChangeVersion(feeEvent.getChangeVersion() + 1);
+        feeEvent.setUpdateTime(time);
+    }
+
+    /** 读取精确挂接到某功能开通项的计费事件。 */
+    @Override
+    public List<ProductFeeEvent> findByCapabilityCode(String capabilityCode) {
+        return List.copyOf(mapper.selectByCapabilityCode(capabilityCode));
     }
 }

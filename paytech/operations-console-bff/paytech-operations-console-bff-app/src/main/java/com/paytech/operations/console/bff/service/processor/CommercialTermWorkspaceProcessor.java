@@ -6,12 +6,15 @@ import java.util.TreeSet;
 
 import org.springframework.stereotype.Component;
 
+import com.paytech.commercial.api.enums.CommercialTermOwnerType;
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.processor.AbstractProcessor;
 import com.paytech.operations.console.bff.integration.CommercialAgreementClient;
+import com.paytech.operations.console.bff.integration.CommercialConsoleQueryClient;
 import com.paytech.operations.console.bff.integration.CommercialPricingClient;
 import com.paytech.operations.console.bff.service.model.CommercialAgreementModels.AgreementDetail;
+import com.paytech.operations.console.bff.service.model.CommercialPricingModels.CommercialTermTemplateSummary;
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels.CommercialTermVersionResponseBody;
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels.CommercialTermWorkspaceResponseBody;
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels.TermAgreementScope;
@@ -20,8 +23,9 @@ import com.paytech.operations.console.bff.service.processor.request.CommercialTe
 import lombok.AllArgsConstructor;
 
 /**
- * 条款版本编辑页聚合：版本概要 → 版本冻结的合同（可定价 OE 与开通项）→ 每个 OE 的价格全集
+ * 条款版本编辑页聚合：版本概要 → 版本冻结的合同（可定价 OE 与开通项）或标准价目模板方案 → 每个 OE 的价格全集
  * <li>commercial 的价格读取要求准确 OE，本聚合按合同覆盖的 OE 经 CommercialConcurrentReads 并发读取后合并，按 OE、币种、优先级排序。</li>
+ * <li>标准价目模板版本没有合同：按模板方案列表取得模板 OE，只读取该 OE 的价格；agreement 为 null。</li>
  * <li>任一部分失败整页失败：价格矩阵缺一个 OE 会让运营误以为该 OE 没有价格，不做部分降级。</li>
  * <li>只读组合，不编排任何写入；子线程沿用当前请求 ID。</li>
  *
@@ -33,11 +37,18 @@ public class CommercialTermWorkspaceProcessor
     extends AbstractProcessor<CommercialTermWorkspaceRequest, CommercialTermWorkspaceResponseBody> {
     private final CommercialPricingClient pricing;
     private final CommercialAgreementClient agreements;
+    private final CommercialConsoleQueryClient queries;
 
     @Override
     protected CommercialTermWorkspaceResponseBody processRequest(CommercialTermWorkspaceRequest request) {
         CommercialTermVersionResponseBody version = pricing.version(request.getVersionId());
-        if (version.getAgreementId() == null || version.getTermType() == null) {
+        if (version.getTermType() == null) {
+            throw new ErrorException(CommonErrorCode.UPSTREAM_INVALID_RESPONSE);
+        }
+        if (CommercialTermOwnerType.PLATFORM_TEMPLATE.getCode().equals(version.getOwnerType())) {
+            return templateWorkspace(version);
+        }
+        if (version.getAgreementId() == null) {
             throw new ErrorException(CommonErrorCode.UPSTREAM_INVALID_RESPONSE);
         }
         AgreementDetail agreement = agreements.detail(version.getAgreementId());
@@ -46,6 +57,18 @@ public class CommercialTermWorkspaceProcessor
         workspace.setVersion(version);
         workspace.setAgreement(scope);
         workspace.setPrices(CommercialConcurrentReads.termPrices(pricing, version, scope.getEntityNos()));
+        return workspace;
+    }
+
+    /** 模板版本：模板方案必须在模板列表中，价格只读取模板 OE。 */
+    CommercialTermWorkspaceResponseBody templateWorkspace(CommercialTermVersionResponseBody version) {
+        CommercialTermTemplateSummary template = queries.listTemplates(null, version.getTermType(), null).getTemplates()
+            .stream().filter(candidate -> version.getPlanId() != null && version.getPlanId().equals(candidate.getPlanId()))
+            .findFirst().orElseThrow(() -> new ErrorException(CommonErrorCode.UPSTREAM_INVALID_RESPONSE));
+        var workspace = new CommercialTermWorkspaceResponseBody();
+        workspace.setVersion(version);
+        workspace.setTemplate(template);
+        workspace.setPrices(CommercialConcurrentReads.termPrices(pricing, version, List.of(template.getEntityNo())));
         return workspace;
     }
 

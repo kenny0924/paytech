@@ -4,6 +4,9 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.paytech.commercial.core.dal.dataobject.ProductCapability;
+import com.paytech.commercial.core.dal.dataobject.ProductCapabilityDimension;
+import com.paytech.commercial.domainservice.repository.ProductCapabilityDimensionRepository;
 import com.paytech.commercial.api.enums.ProductCode;
 import com.paytech.commercial.api.enums.ProductStatus;
 import com.paytech.commercial.domain.ProductCapabilityView;
@@ -23,6 +26,7 @@ public class ProductCatalogQueryServiceImpl implements ProductCatalogQueryServic
     private final ProductRepository productRepository;
     private final ProductFeeEventRepository productFeeEventRepository;
     private final ProductCapabilityRepository productCapabilityRepository;
+    private final ProductCapabilityDimensionRepository productCapabilityDimensionRepository;
 
     /** 按可选状态读取产品。 */
     @Override
@@ -30,10 +34,13 @@ public class ProductCatalogQueryServiceImpl implements ProductCatalogQueryServic
         return productRepository.findByStatus(status).stream().map(ProductView::new).toList();
     }
 
-    /** 按可选产品与状态读取可开通项。 */
+    /** 按可选产品与状态读取可开通项，并组合其可配维度。 */
     @Override
     public List<ProductCapabilityView> listCapabilities(ProductCode productCode, ProductStatus status) {
-        return productCapabilityRepository.findFiltered(productCode, status).stream().map(ProductCapabilityView::new).toList();
+        List<ProductCapability> capabilities = productCapabilityRepository.findFiltered(productCode, status);
+        List<ProductCapabilityDimension> dimensions = productCapabilityDimensionRepository.findByCapabilityCodes(
+            capabilities.stream().map(ProductCapability::getCapabilityCode).toList());
+        return capabilities.stream().map(capability -> new ProductCapabilityView(capability, dimensions)).toList();
     }
 
     /** 按可选产品与条款类型读取计费事件。 */

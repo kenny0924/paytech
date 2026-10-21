@@ -2530,7 +2530,7 @@
       },
       "defKey": "t_agreement_capability",
       "defName": "合同开通项",
-      "comment": "合同在准确OE下的开通项与保证金条款；uk_agreement_capability(agreement_id,entity_no,capability_code)；所属产品必须已在合同订阅；capability_code引用时须为ACTIVE目录项；CLIENT合同entity_no等于合同entity_no，PARTNER合同须在合同覆盖OE内；状态ENABLED/SUSPENDED/DISABLED，有效区间半开；保证金比例与天数成组为空或非空，执行归account/risk；应用校验，不创建 CHECK/FK；所属产品必须已在 agreement_product 订阅；capability_code 引用时目录项须为 ACTIVE。；CLIENT 合同的 entity_no 必须等于 agreement.entity_no；PARTNER 合同的 entity_no 必须在 agreement_operating_entity 内。；CHECK (effective_to IS NULL OR effective_from < effective_to)，解析时要求 status=ENABLED 且 effective_from <= contextAsOfTime < effective_to。；rolling_reserve_rate 与 rolling_reserve_days 成组为空或成组非空；比例取值 0 至 1，保证金执行归 account / risk。",
+      "comment": "合同在准确OE下的开通项与保证金条款；uk_agreement_capability(agreement_id,entity_no,capability_code)；require_3ds 为开通项的 3DS 要求；所属产品必须已在合同订阅；capability_code引用时须为ACTIVE目录项；CLIENT合同entity_no等于合同entity_no，PARTNER合同须在合同覆盖OE内；状态ENABLED/SUSPENDED/DISABLED，有效区间半开；保证金比例与天数成组为空或非空，执行归account/risk；应用校验，不创建 CHECK/FK；所属产品必须已在 agreement_product 订阅；capability_code 引用时目录项须为 ACTIVE。；CLIENT 合同的 entity_no 必须等于 agreement.entity_no；PARTNER 合同的 entity_no 必须在 agreement_operating_entity 内。；CHECK (effective_to IS NULL OR effective_from < effective_to)，解析时要求 status=ENABLED 且 effective_from <= contextAsOfTime < effective_to。；rolling_reserve_rate 与 rolling_reserve_days 成组为空或成组非空；比例取值 0 至 1，保证金执行归 account / risk。",
       "properties": {},
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -2861,6 +2861,24 @@
           "id": "BC3C78BC-D001-54CC-9804-A64B3EADA92D"
         },
         {
+          "defKey": "require_3ds",
+          "defName": "要求3DS",
+          "comment": "1 表示该开通项要求 3DS 认证，0 表示不要求；执行归收单与支付。",
+          "type": "TINYINT",
+          "len": 1,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "0",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "6C8E8F07-E11D-588C-BCC9-2A20FC751061"
+        },
+        {
           "defKey": "create_time",
           "defName": "创建时间",
           "comment": "数据库记录创建的 UTC 时间，精确到微秒。",
@@ -2990,8 +3008,8 @@
         }
       },
       "defKey": "t_agreement_capability_limit",
-      "defName": "开通项约束",
-      "comment": "开通项约束，一值一行；uk_agreement_capability_limit(agreement_capability_id,limit_code,limit_value)；同码多行按OR、异码按AND；金额限额归风控决策，不在此表；随开通项冻结，不单独审计；CURRENCY 用 ISO 4217，CONSUMER_COUNTRY 用 ISO 3166-1 alpha-2，REQUIRE_3DS 固定为 1。",
+      "defName": "开通项接受条件",
+      "comment": "开通项接受条件，一值一行；uk_agreement_capability_limit(agreement_capability_id,limit_code,limit_value)；limit_code为可用于开通的PricingDimension维度代码（CURRENCY必填），同维度多行按OR、异维度按AND，未写维度不限；3DS要求在agreement_capability.require_3ds；金额限额归风控决策，不在此表；随开通项冻结，不单独审计；limit_code 须在该可开通项 product_capability_dimension 内且可用于开通；必填维度（CURRENCY）必须有值；CURRENCY 用 ISO 4217，国家类用 ISO 3166-1 alpha-2，其他为大写稳定代码。",
       "properties": {},
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -3194,8 +3212,8 @@
         },
         {
           "defKey": "limit_code",
-          "defName": "约束代码",
-          "comment": "开通项约束的类别代码；同码多行按 OR，异码按 AND。允许值：CURRENCY、CONSUMER_COUNTRY、REQUIRE_3DS。",
+          "defName": "条件维度",
+          "comment": "开通项接受条件的维度代码，须在该可开通项可配维度内；同维度多行按 OR，异维度按 AND，未写维度不限。允许值：CARD_BRAND、FUNDING_TYPE、CARD_LEVEL、CARD_PRODUCT、ISSUER_REGION、ISSUER_COUNTRY、CURRENCY、CONSUMER_COUNTRY、PAYOUT_RAIL、DESTINATION_COUNTRY、CURRENCY_PAIR。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -3212,8 +3230,8 @@
         },
         {
           "defKey": "limit_value",
-          "defName": "约束值",
-          "comment": "约束的规范化值：ISO 4217 币种、ISO 3166-1 alpha-2 国家或固定值 1。",
+          "defName": "条件取值",
+          "comment": "该维度的一个规范化取值：币种为 ISO 4217，国家为 ISO 3166-1 alpha-2，其他为大写稳定代码。",
           "type": "VARCHAR",
           "len": 128,
           "scale": "",
@@ -3652,7 +3670,7 @@
       },
       "defKey": "t_product_capability",
       "defName": "可开通项目录",
-      "comment": "L1可开通项目录；uk_product_capability_code(capability_code)；capability_code全局唯一稳定；PAYMENT_METHOD种类payment_method_code必填，其他种类为空；dimension_code与dimension_value成组为空或非空；随产品发版维护，不接入BCR；capability_kind=PAYMENT_METHOD 要求 payment_method_code IS NOT NULL，其他种类要求 payment_method_code IS NULL。；dimension_code 与 dimension_value 成组为空或成组非空。",
+      "comment": "L1可开通项目录；uk_product_capability_code(capability_code)；capability_code全局唯一稳定，代码与种类创建后不可改；PAYMENT_METHOD种类payment_method_code必填，其他种类（含FEATURE）为空；dimension_code与dimension_value已废弃恒为NULL；运营维护，写入以change_version做CAS，BCR聚合根PRODUCT_CATALOG；capability_kind=PAYMENT_METHOD 要求 payment_method_code IS NOT NULL，其他种类要求 payment_method_code IS NULL。；dimension_code 与 dimension_value 已废弃，恒为 NULL；capability_code 与 capability_kind 创建后不可修改，RETIRED 阻止新增开通，已开通不受影响。",
       "properties": {},
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -3856,7 +3874,7 @@
         {
           "defKey": "capability_code",
           "defName": "可开通项代码",
-          "comment": "全局唯一且稳定的可开通项代码，如 CARD_VISA、PAYOUT_LOCAL。取值来源：产品发版维护的能力目录；非固定枚举。",
+          "comment": "全局唯一且稳定的可开通项代码，如 CARD、TOKEN_STORAGE、PAYOUT_LOCAL。取值来源：产品发版维护的能力目录；非固定枚举。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -3892,7 +3910,7 @@
         {
           "defKey": "capability_kind",
           "defName": "可开通项种类",
-          "comment": "可开通项所属的能力种类，决定其是否绑定 Payment Method。允许值：PAYMENT_METHOD、PAYOUT_RAIL、FX、DISPUTE、PERIODIC_SERVICE。",
+          "comment": "可开通项所属的能力种类；PAYMENT_METHOD 绑定 Payment Method，FEATURE 为功能项（如存卡）；创建后不可修改。允许值：PAYMENT_METHOD、FEATURE、PAYOUT_RAIL、FX、DISPUTE、PERIODIC_SERVICE。",
           "type": "VARCHAR",
           "len": 32,
           "scale": "",
@@ -3928,7 +3946,7 @@
         {
           "defKey": "dimension_code",
           "defName": "维度代码",
-          "comment": "把开通项细分到画像维度的单一条件维度，与 dimension_value 成组为空或非空。允许值：CARD_BRAND、FUNDING_TYPE、CARD_LEVEL、CARD_PRODUCT、ISSUER_REGION、ISSUER_COUNTRY、THREE_DS_RESULT、CURRENCY、CONSUMER_COUNTRY、TRANSACTION_TYPE、PAYOUT_RAIL、DESTINATION_COUNTRY、CURRENCY_PAIR、DISPUTE_STAGE。",
+          "comment": "已废弃，恒为 NULL；细分维度改为合同开通项接受条件。允许值：CARD_BRAND、FUNDING_TYPE、CARD_LEVEL、CARD_PRODUCT、ISSUER_REGION、ISSUER_COUNTRY、THREE_DS_RESULT、CURRENCY、CONSUMER_COUNTRY、TRANSACTION_TYPE、PAYOUT_RAIL、DESTINATION_COUNTRY、CURRENCY_PAIR、DISPUTE_STAGE。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -3946,7 +3964,7 @@
         {
           "defKey": "dimension_value",
           "defName": "维度值",
-          "comment": "开通项细分维度的单个规范化值，如 AMEX。",
+          "comment": "已废弃，恒为 NULL；细分维度改为合同开通项接受条件。",
           "type": "VARCHAR",
           "len": 128,
           "scale": "",
@@ -3978,6 +3996,24 @@
           "extProps": {},
           "domain": "",
           "id": "0BDB8698-CAA2-500D-83ED-610CD6C8CB3E"
+        },
+        {
+          "defKey": "change_version",
+          "defName": "目录行版本",
+          "comment": "运营维护目录行的乐观锁版本，初始 1，每次写入加一。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "1",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "59390C14-9163-5C5C-86DA-414CAA11CBF2"
         },
         {
           "defKey": "create_time",
@@ -4073,7 +4109,7 @@
       },
       "defKey": "t_product_fee_event",
       "defName": "计费事件目录",
-      "comment": "L2计费事件目录；uk_product_fee_event(fee_event_code,term_type)；fee_event_code为组件trigger_code值域，term_type为方案term_type值域，一个事件可在哪类条款下收费一值一行；随产品发版维护，不接入BCR；fee_event_code 是 commercial_term_component.trigger_code 的值域，term_type 是 commercial_term_plan.term_type 的值域；均为值引用，不建关系。",
+      "comment": "L2计费事件目录；uk_product_fee_event(fee_event_code,term_type)；fee_event_code为组件trigger_code值域，term_type为方案term_type值域，一个事件可在哪类条款下收费一值一行；capability_kind为空表示无需开通的基础产品事件，FEATURE时capability_code指向同产品功能开通项，其他种类capability_code为空；运营维护挂接，写入以change_version做CAS，BCR聚合根PRODUCT_CATALOG；fee_event_code 是 commercial_term_component.trigger_code 的值域，term_type 是 commercial_term_plan.term_type 的值域；均为值引用，不建关系。；capability_kind=FEATURE 时 capability_code 必须是同产品下的 FEATURE 可开通项；其他种类与空种类 capability_code 为空。",
       "properties": {},
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -4329,6 +4365,60 @@
           "id": "8772D69A-F39D-5363-AF59-58DF16F17306"
         },
         {
+          "defKey": "capability_kind",
+          "defName": "可开通项种类",
+          "comment": "该计费事件挂接的开通项种类；为空表示无需开通的基础产品事件。允许值：PAYMENT_METHOD、FEATURE、PAYOUT_RAIL、FX、DISPUTE、PERIODIC_SERVICE。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "E31CFD9E-8DA5-57E1-814A-31DE6FD0C498"
+        },
+        {
+          "defKey": "capability_code",
+          "defName": "可开通项代码",
+          "comment": "capability_kind=FEATURE 时精确挂接的功能开通项代码，其他种类为空（任一该种类开通项）。取值来源：t_product_capability.capability_code 中 FEATURE 种类可开通项；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "3F57FA56-CA78-541E-B7DD-352744A3C2BC"
+        },
+        {
+          "defKey": "change_version",
+          "defName": "目录行版本",
+          "comment": "运营维护目录行的乐观锁版本，初始 1，每次写入加一。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "1",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "BD5AAEB8-A6BE-5C10-87E4-1C0284C266E8"
+        },
+        {
           "defKey": "create_time",
           "defName": "创建时间",
           "comment": "数据库记录创建的 UTC 时间，精确到微秒。",
@@ -4408,6 +4498,323 @@
             }
           ],
           "id": "6DD36D6C-E84E-51B1-8B5B-0381D535DB0B"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "84713771-04F5-5F17-9898-F66CFDC8EBAB",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_product_capability_dimension",
+      "defName": "可开通项可配维度",
+      "comment": "可开通项的可配维度；uk_capability_dimension(capability_code,dimension_code)；dimension_code须为可用于开通接受条件的PricingDimension；required=1表示合同开通时必须给出该维度条件；随可开通项整体替换，审计归PRODUCT_CATALOG；随可开通项整体替换；dimension_code 须为可用于开通接受条件的维度。",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "capability_dimension_id",
+          "defName": "可配维度标识",
+          "comment": "可开通项可配维度行的内部唯一标识。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "F9265F54-F7AB-51E1-B0A6-0D11558E4374"
+        },
+        {
+          "defKey": "capability_code",
+          "defName": "可开通项代码",
+          "comment": "可配维度所属的可开通项代码。取值来源：t_product_capability.capability_code 可开通项目录；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "C4406C0F-D319-5F4E-8B83-BEEC9A524C47"
+        },
+        {
+          "defKey": "dimension_code",
+          "defName": "维度代码",
+          "comment": "合同开通该项时可配置接受条件的维度代码，须可用于开通。允许值：CARD_BRAND、FUNDING_TYPE、CARD_LEVEL、CARD_PRODUCT、ISSUER_REGION、ISSUER_COUNTRY、CURRENCY、CONSUMER_COUNTRY、PAYOUT_RAIL、DESTINATION_COUNTRY、CURRENCY_PAIR。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "B4C7A0CB-7999-5736-8368-92376BA55FD5"
+        },
+        {
+          "defKey": "required",
+          "defName": "必填标志",
+          "comment": "1 表示合同开通该项时必须给出该维度条件，0 表示可选。",
+          "type": "TINYINT",
+          "len": 1,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "0",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "74849B1E-ED5F-5A81-86AE-713C43035AEF"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "数据库记录创建的 UTC 时间，精确到微秒。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "20624E5D-82E6-5341-BC6B-7FA12078D187"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "FEF978F3-C914-52D0-85AA-E4433F629D32"
+        }
+      ],
+      "correlations": [
+        {
+          "myField": "C4406C0F-D319-5F4E-8B83-BEEC9A524C47",
+          "refEntity": "CF7B0C53-47F7-584E-99EC-EFE71CE7913E",
+          "refField": "CD658D92-DAF0-586E-A808-1A78E72A945E",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ],
+      "indexes": [
+        {
+          "defKey": "uk_capability_dimension",
+          "defName": "Uk Capability Dimension",
+          "unique": true,
+          "comment": "Unique index for product_capability_dimension on capability_code, dimension_code",
+          "fields": [
+            {
+              "fieldDefKey": "C4406C0F-D319-5F4E-8B83-BEEC9A524C47",
+              "ascOrDesc": "A",
+              "id": "733010DF-583C-5DE4-959E-E660EDE21ED9"
+            },
+            {
+              "fieldDefKey": "B4C7A0CB-7999-5736-8368-92376BA55FD5",
+              "ascOrDesc": "A",
+              "id": "22BB0647-6F87-5E55-8BA0-674F757B8042"
+            }
+          ],
+          "id": "4FB7003C-D0B2-57F6-A8F8-A4065489EAD5"
         }
       ],
       "type": "P"
@@ -5131,7 +5538,7 @@
       },
       "defKey": "t_commercial_term_plan",
       "defName": "商业条款方案",
-      "comment": "Client Pricing、Partner Share 或 Platform Service Charge 的稳定方案根；uk_comm_term_code(term_type,plan_code)、uk_comm_term_agreement(agreement_id,term_type)、uk_comm_term_partner(local_partner_id,term_type)；CLIENT_PRICING时agreement_id/entity_no/client_id非空且由同一CLIENT合同派生，local_partner_id为空；Partner两类时仅local_partner_id非空，agreement_id/entity_no/client_id为空；不限制Client全局只有一个Plan；Owner XOR：term_type=CLIENT_PRICING 要求 client_id IS NOT NULL AND local_partner_id IS NULL；term_type IN (PARTNER_SHARE,PLATFORM_SERVICE_CHARGE) 要求 client_id IS NULL AND local_partner_id IS NOT NULL。；term_type、client_id 与 local_partner_id 创建后不可修改；MVP 每份 Client Agreement 一个 Client Pricing Plan，每个 Local Partner 可分别拥有一个 Partner Share Plan 和一个 PLATFORM_SERVICE_CHARGE Plan，通过 local_partner_id + term_type 复合唯一。；CLIENT_PRICING 的 agreement_id/entity_no/client_id 必须与同一 Client Agreement 一致，local_partner_id 为空；Partner 两类只填 local_partner_id，Version 冻结其 Partner Agreement。；PARTNER_BUY_RATE 属于 Partner 合同，Owner 规则同 PARTNER_SHARE；结构同 CLIENT_PRICING，按画像 × 币种定价。",
+      "comment": "Client Pricing、Partner Share 或 Platform Service Charge 的稳定方案根；uk_comm_term_code(term_type,plan_code)、uk_comm_term_agreement(agreement_id,term_type)、uk_comm_term_partner(local_partner_id,term_type)；owner_type为CLIENT、LOCAL_PARTNER或PLATFORM_TEMPLATE；PLATFORM_TEMPLATE为平台标准价目模板，agreement_id/client_id/local_partner_id为空、entity_no非空、template_name非空，不参与运行时取价；CLIENT_PRICING时agreement_id/entity_no/client_id非空且由同一CLIENT合同派生，local_partner_id为空；Partner两类时仅local_partner_id非空，agreement_id/entity_no/client_id为空；不限制Client全局只有一个Plan；Owner XOR：term_type=CLIENT_PRICING 要求 client_id IS NOT NULL AND local_partner_id IS NULL；term_type IN (PARTNER_SHARE,PLATFORM_SERVICE_CHARGE) 要求 client_id IS NULL AND local_partner_id IS NOT NULL。；term_type、client_id 与 local_partner_id 创建后不可修改；MVP 每份 Client Agreement 一个 Client Pricing Plan，每个 Local Partner 可分别拥有一个 Partner Share Plan 和一个 PLATFORM_SERVICE_CHARGE Plan，通过 local_partner_id + term_type 复合唯一。；CLIENT_PRICING 的 agreement_id/entity_no/client_id 必须与同一 Client Agreement 一致，local_partner_id 为空；Partner 两类只填 local_partner_id，Version 冻结其 Partner Agreement。；PARTNER_BUY_RATE 属于 Partner 合同，Owner 规则同 PARTNER_SHARE；结构同 CLIENT_PRICING，按画像 × 币种定价。；owner_type=PLATFORM_TEMPLATE 时 agreement_id、client_id、local_partner_id 为空，entity_no 与 template_name 非空；价格命中、费率卡与 Checkout 解析排除模板方案。",
       "properties": {},
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -5349,6 +5756,42 @@
           "extProps": {},
           "domain": "",
           "id": "FD96519E-BFFE-58D9-B6FD-31B5DC53F105"
+        },
+        {
+          "defKey": "owner_type",
+          "defName": "方案归属类型",
+          "comment": "方案 Owner 类型；CLIENT 属于 CLIENT 合同，LOCAL_PARTNER 版本冻结 PARTNER 合同，PLATFORM_TEMPLATE 为按 OE 维护的标准价目模板，不参与运行时取价。允许值：CLIENT、LOCAL_PARTNER、PLATFORM_TEMPLATE。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "'CLIENT'",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "16A33F6B-554E-5579-B22E-38CBB6FE86FE"
+        },
+        {
+          "defKey": "template_name",
+          "defName": "模板名称",
+          "comment": "平台标准价目模板的显示名，如标准价 · AE001；非模板方案为空。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "BCF1F13F-ED96-5777-9986-C38003FE8293"
         },
         {
           "defKey": "agreement_id",
@@ -5589,7 +6032,7 @@
       },
       "defKey": "t_commercial_term_version",
       "defName": "商业条款版本",
-      "comment": "商业条款版本；uk_comm_term_ver(term_plan_id,version_no)、uk_comm_term_active(term_plan_id,active_slot)；仅 ACTIVE slot=1；Client Pricing 引用同 Client 的 CLIENT Agreement，Partner Share 与 Platform Service Charge 引用同 Local Partner 的 PARTNER Agreement；同一交易命中的两类 Partner Term 必须属于同一 Agreement；Agreement 覆盖全部 Price 的准确 OE，计划有效区间不得超出合同；APPROVED 后 Owner、Agreement、Version No、effective_from、舍入方式、Price、Component 与 Band 冻结；CHECK ((status='ACTIVE' AND active_slot=1) OR (status<>'ACTIVE' AND active_slot IS NULL))；CHECK (effective_to IS NULL OR effective_from < effective_to)；同一 Root 已批准或生效的有效区间不得重叠。；CLIENT_PRICING 必须引用同一 Client 的 CLIENT Agreement；PARTNER_SHARE 与 PLATFORM_SERVICE_CHARGE 必须引用同一 Local Partner 的 PARTNER Agreement，同一交易命中的两类 Partner Term 必须属于同一 Agreement。；Agreement 必须覆盖全部 Price 的准确 Operating Entity，Version 有效区间不得超出 Agreement；APPROVED 后 Version、Price、Component 与 Band 业务字段不可修改。；本期 pricing_model 只接受 BLENDED；激活前 Version 下每个开通项至少命中一条 Price。",
+      "comment": "商业条款版本；uk_comm_term_ver(term_plan_id,version_no)、uk_comm_term_active(term_plan_id,active_slot)；仅 ACTIVE slot=1；模板版本 agreement_id 为空；合同方案非免签版本须经 CLIENT_SIGNED 才能排期；Client Pricing 引用同 Client 的 CLIENT Agreement，Partner Share 与 Platform Service Charge 引用同 Local Partner 的 PARTNER Agreement；同一交易命中的两类 Partner Term 必须属于同一 Agreement；Agreement 覆盖全部 Price 的准确 OE，计划有效区间不得超出合同；APPROVED 后 Owner、Agreement、Version No、effective_from、舍入方式、Price、Component 与 Band 冻结；CHECK ((status='ACTIVE' AND active_slot=1) OR (status<>'ACTIVE' AND active_slot IS NULL))；CHECK (effective_to IS NULL OR effective_from < effective_to)；同一 Root 已批准或生效的有效区间不得重叠。；CLIENT_PRICING 必须引用同一 Client 的 CLIENT Agreement；PARTNER_SHARE 与 PLATFORM_SERVICE_CHARGE 必须引用同一 Local Partner 的 PARTNER Agreement，同一交易命中的两类 Partner Term 必须属于同一 Agreement。；Agreement 必须覆盖全部 Price 的准确 Operating Entity，Version 有效区间不得超出 Agreement；APPROVED 后 Version、Price、Component 与 Band 业务字段不可修改。；本期 pricing_model 只接受 BLENDED；激活前 Version 下每个开通项至少命中一条 Price。；合同方案非免签版本 APPROVED 后须登记 term_version_acceptance 进入 CLIENT_SIGNED 才能排期；模板版本 agreement_id 为空、无签署要求；signature_exempt=1 仅用于迁移前已排期或生效的存量版本。",
       "properties": {},
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -5793,12 +6236,12 @@
         {
           "defKey": "agreement_id",
           "defName": "合同标识",
-          "comment": "商业合同稳定身份的内部唯一标识。",
+          "comment": "版本冻结的商业合同；标准价目模板版本为空。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoIncrement": false,
           "defaultValue": "",
           "hideInGraph": false,
@@ -5829,7 +6272,7 @@
         {
           "defKey": "status",
           "defName": "生命周期状态",
-          "comment": "当前业务记录在其所属聚合生命周期中的状态代码。允许值：DRAFT、PENDING_APPROVAL、APPROVED、SCHEDULED、ACTIVE、SUPERSEDED、EXPIRED。",
+          "comment": "版本生命周期状态；合同方案非免签版本 APPROVED 后须登记客户签署进入 CLIENT_SIGNED 才能排期。允许值：DRAFT、PENDING_APPROVAL、APPROVED、CLIENT_SIGNED、SCHEDULED、ACTIVE、SUPERSEDED、EXPIRED。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -5951,6 +6394,42 @@
           "extProps": {},
           "domain": "",
           "id": "C0B0669B-8E84-5D1B-810E-C995ADE6836E"
+        },
+        {
+          "defKey": "source_template_version_id",
+          "defName": "来源模板版本",
+          "comment": "基于标准价目模板生成时的来源模板版本标识；手工或复制创建为空。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "6CC4FF9F-9EEC-5AE1-9748-50B43E36F8AA"
+        },
+        {
+          "defKey": "signature_exempt",
+          "defName": "免签标志",
+          "comment": "1 表示迁移前已排期或生效的存量版本免客户签署，0 表示须签署。",
+          "type": "TINYINT",
+          "len": 1,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "0",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "0E091251-F3B7-5FD6-A6AC-C7F7FC992C73"
         },
         {
           "defKey": "create_time",
@@ -6449,6 +6928,24 @@
           "extProps": {},
           "domain": "",
           "id": "1B2229CA-9861-5665-BB9E-6495E0C5C916"
+        },
+        {
+          "defKey": "source_template_price_id",
+          "defName": "来源模板价格",
+          "comment": "基于模板生成或补齐时的来源模板价格标识，用于破标比较；手工维护为空。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "A965BF89-937B-56F5-B9A5-C018D457D560"
         },
         {
           "defKey": "create_time",
@@ -7530,6 +8027,422 @@
             }
           ],
           "id": "E9CE17EB-18C9-57EC-87B3-4C249A47561B"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "F1037719-3CD2-54C0-A749-5CD0AF7756C5",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_term_version_acceptance",
+      "defName": "价格版本客户签署",
+      "comment": "价格版本的客户签署记录；uk_version_acceptance(term_version_id)、uk_version_acceptance_ref(acceptance_reference)；一期一个版本一次签署；party_id为合同CLIENT（Client方案）或LOCAL_PARTNER（Partner方案）角色Party；file_id+content_hash为已签署价格附件；登记后版本APPROVED→CLIENT_SIGNED；追加式证据，随方案BCR快照审计；版本须为 APPROVED 的合同方案版本；party_id 须为合同 CLIENT（Client 方案）或 LOCAL_PARTNER（Partner 方案）角色 Party；登记后不可修改。",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "version_acceptance_id",
+          "defName": "价格签署标识",
+          "comment": "价格版本客户签署记录的内部唯一标识。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "D2507F25-A3B4-5F88-8ED0-CAD87E8EFAE5"
+        },
+        {
+          "defKey": "term_version_id",
+          "defName": "商业条款版本标识",
+          "comment": "签署的价格版本；一期一个版本一次签署。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "0518CC07-0B97-5590-B40A-2181728F5A09"
+        },
+        {
+          "defKey": "party_id",
+          "defName": "Party 标识",
+          "comment": "签署方 Party：Client 方案为合同 CLIENT 角色 Party，Partner 方案为合同 LOCAL_PARTNER 角色 Party。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "816C79E1-43B9-5A96-B47A-CBF693807876"
+        },
+        {
+          "defKey": "acceptance_method",
+          "defName": "接受方式",
+          "comment": "价格协议签署方式，同合同签署。允许值：E_SIGNATURE、CLICK_ACCEPTANCE、MANUAL_SIGNATURE。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "C17FBB92-1F4E-567E-8286-371ADDCAE79B"
+        },
+        {
+          "defKey": "accepted_at",
+          "defName": "签署时间",
+          "comment": "签署成立的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "47A79662-C848-5441-A265-D022B73E5174"
+        },
+        {
+          "defKey": "acceptance_reference",
+          "defName": "接受参考编号",
+          "comment": "全局唯一的签署编号；同编号同内容重放返回原结果。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "D758BA16-C3FD-5720-A7F0-A8D3B6737F5F"
+        },
+        {
+          "defKey": "file_id",
+          "defName": "文件标识",
+          "comment": "已签署价格附件的 Platform Support 文件逻辑引用，与 content_hash 成组冻结。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "1ABDE847-9A1D-525C-8B18-DBC025B718CA"
+        },
+        {
+          "defKey": "content_hash",
+          "defName": "封存内容哈希",
+          "comment": "价格附件 SHA-256 小写 64 位 Hex。",
+          "type": "CHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "4629ED77-822E-4610-86D1-82426E63066E",
+          "extProps": {},
+          "domain": "",
+          "id": "AD743EA4-8CE5-58B4-AD5D-0A207934DB28"
+        },
+        {
+          "defKey": "recorded_by",
+          "defName": "登记人",
+          "comment": "登记签署证据的 Operations Account 标识。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "7713224F-C5EB-5E9D-AAA6-0CBA3B5876F5"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "数据库记录创建的 UTC 时间，精确到微秒。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "17640895-8592-5C4A-890B-41C9AF6C30E8"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "3EE2FF74-2742-58E4-ABB7-D41CD5144AC8"
+        }
+      ],
+      "correlations": [
+        {
+          "myField": "0518CC07-0B97-5590-B40A-2181728F5A09",
+          "refEntity": "0F8760E7-978F-5B99-A039-A296A85A9DBF",
+          "refField": "2E559F12-5B5A-536B-901E-EB9F9B9DD6D4",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ],
+      "indexes": [
+        {
+          "defKey": "uk_version_acceptance",
+          "defName": "Uk Version Acceptance",
+          "unique": true,
+          "comment": "Unique index for term_version_acceptance on term_version_id",
+          "fields": [
+            {
+              "fieldDefKey": "0518CC07-0B97-5590-B40A-2181728F5A09",
+              "ascOrDesc": "A",
+              "id": "25148CCD-95AA-5388-B1BC-7FDBEFF485F9"
+            }
+          ],
+          "id": "17849416-F06C-5B4D-A31E-FB202C6D3ED8"
+        },
+        {
+          "defKey": "uk_version_acceptance_ref",
+          "defName": "Uk Version Acceptance Ref",
+          "unique": true,
+          "comment": "Unique index for term_version_acceptance on acceptance_reference",
+          "fields": [
+            {
+              "fieldDefKey": "D758BA16-C3FD-5720-A7F0-A8D3B6737F5F",
+              "ascOrDesc": "A",
+              "id": "A23FB907-F397-52BB-94F4-FBF4007213C0"
+            }
+          ],
+          "id": "7A9640F8-E2AA-5965-8F26-EA3B05E9CC79"
         }
       ],
       "type": "P"
@@ -9080,7 +9993,7 @@
             "type": "P",
             "size": {
               "width": 390,
-              "height": 328
+              "height": 350
             }
           },
           {
@@ -9118,14 +10031,14 @@
             "shape": "table",
             "position": {
               "x": 0,
-              "y": 974
+              "y": 996
             },
             "count": 0,
             "originKey": "CF7B0C53-47F7-584E-99EC-EFE71CE7913E",
             "type": "P",
             "size": {
               "width": 390,
-              "height": 328
+              "height": 350
             }
           },
           {
@@ -9355,7 +10268,7 @@
             "type": "P",
             "size": {
               "width": 390,
-              "height": 328
+              "height": 350
             }
           },
           {
@@ -9370,7 +10283,22 @@
             "type": "P",
             "size": {
               "width": 390,
-              "height": 240
+              "height": 306
+            }
+          },
+          {
+            "id": "2CBBAA37-C449-542E-9254-AE56536EE5ED",
+            "shape": "table",
+            "position": {
+              "x": 1290,
+              "y": 0
+            },
+            "count": 0,
+            "originKey": "84713771-04F5-5F17-9898-F66CFDC8EBAB",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 220
             }
           },
           {
@@ -9404,6 +10332,27 @@
             "target": {
               "cell": "73C7B7C5-C83B-5047-94E3-DEBA12C5B4F0",
               "port": "CFF4E952-D5BA-54B1-8841-35FB1AD8581C%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "0D1A6B24-4C0F-5A62-9D72-899E18FDBFD4",
+            "shape": "erdRelation",
+            "source": {
+              "cell": "2CBBAA37-C449-542E-9254-AE56536EE5ED",
+              "port": "C4406C0F-D319-5F4E-8B83-BEEC9A524C47%out"
+            },
+            "target": {
+              "cell": "71CCE317-55CB-5A8F-84B8-291A0FE46D8F",
+              "port": "CD658D92-DAF0-586E-A808-1A78E72A945E%in"
             },
             "relation": "n:1",
             "vertices": [],
@@ -9468,7 +10417,7 @@
             "type": "P",
             "size": {
               "width": 390,
-              "height": 306
+              "height": 350
             }
           },
           {
@@ -9483,7 +10432,7 @@
             "type": "P",
             "size": {
               "width": 390,
-              "height": 372
+              "height": 416
             }
           },
           {
@@ -9491,14 +10440,14 @@
             "shape": "table",
             "position": {
               "x": 0,
-              "y": 432
+              "y": 476
             },
             "count": 0,
             "originKey": "35DD6172-3265-5D8E-996E-C422CD0CAA21",
             "type": "P",
             "size": {
               "width": 390,
-              "height": 350
+              "height": 372
             }
           },
           {
@@ -9506,7 +10455,7 @@
             "shape": "table",
             "position": {
               "x": 430,
-              "y": 432
+              "y": 476
             },
             "count": 0,
             "originKey": "C5E9100A-1926-561F-9DA7-84ACEF125C4F",
@@ -9521,7 +10470,7 @@
             "shape": "table",
             "position": {
               "x": 860,
-              "y": 432
+              "y": 476
             },
             "count": 0,
             "originKey": "F0FA87D4-2EE6-5A6E-B2B5-4F5B1D2F141E",
@@ -9532,11 +10481,26 @@
             }
           },
           {
-            "id": "0CFEDB61-6D08-59DE-8197-A53185342B6D",
+            "id": "F247EEAF-6918-5CC8-85F2-AD9BC3844FE3",
             "shape": "table",
             "position": {
               "x": 1290,
-              "y": 432
+              "y": 476
+            },
+            "count": 0,
+            "originKey": "F1037719-3CD2-54C0-A749-5CD0AF7756C5",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 328
+            }
+          },
+          {
+            "id": "0CFEDB61-6D08-59DE-8197-A53185342B6D",
+            "shape": "table",
+            "position": {
+              "x": 0,
+              "y": 996
             },
             "count": 0,
             "originKey": "643E7F30-F813-598D-8CAF-A1C5EAEF6BCD",
@@ -9558,6 +10522,27 @@
               "port": "2B8D03B5-0E8E-5728-B80D-93C5A4F75C14%in"
             },
             "relation": "1:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "DE3C6D93-D681-546E-821C-FCF93DB27AFA",
+            "shape": "erdRelation",
+            "source": {
+              "cell": "F247EEAF-6918-5CC8-85F2-AD9BC3844FE3",
+              "port": "0518CC07-0B97-5590-B40A-2181728F5A09%out"
+            },
+            "target": {
+              "cell": "A2AF84C8-8A04-5A68-85C9-E08EAF66051E",
+              "port": "2E559F12-5B5A-536B-901E-EB9F9B9DD6D4%in"
+            },
+            "relation": "n:1",
             "vertices": [],
             "fillColor": "#ACDAFC",
             "attrs": {

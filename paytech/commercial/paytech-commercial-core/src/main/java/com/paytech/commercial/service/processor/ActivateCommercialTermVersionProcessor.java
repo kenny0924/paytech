@@ -25,6 +25,7 @@ import lombok.AllArgsConstructor;
  * <li>锁内重新执行激活校验 1–5；同方案存在更早的未激活排期版本时拒绝，作业按生效起点顺序逐个激活。</li>
  * <li>一个本地事务：根 CAS、先释放旧槽位再占新槽位、方案首次生效转 ACTIVE、审计快照，并登记 CommercialTermVersionActivated
  * 发布任务；提交后由补偿执行器发布，事务回滚则不发布。</li>
+ * <li>标准价目模板版本不参与运行时取价，激活不登记 CommercialTermVersionActivated 发布任务。</li>
  */
 @Component
 @AllArgsConstructor
@@ -53,8 +54,10 @@ public class ActivateCommercialTermVersionProcessor
         // 保存并登记发布任务
         transactionTemplate.executeWithoutResult(status -> {
             commercialTermService.activate(context);
-            compensationEventRegistrar.register(CommercialTermVersionActivatedHandler.buildEvent(
-                context.getPlan().getTermPlanId(), context.nextChangeVersion()));
+            if (!context.template()) {
+                compensationEventRegistrar.register(CommercialTermVersionActivatedHandler.buildEvent(
+                    context.getPlan().getTermPlanId(), context.nextChangeVersion()));
+            }
         });
         return context.toVersionView();
     }

@@ -13,7 +13,7 @@ final class TermPriceRows {
     private TermPriceRows() {
     }
 
-    /** 复制价格。 */
+    /** 复制价格（含来源模板价格）。 */
     static CommercialTermPrice copy(CommercialTermPrice source, long priceId, long versionId, Instant now) {
         CommercialTermPrice price = new CommercialTermPrice();
         price.setTermPriceId(priceId);
@@ -26,6 +26,7 @@ final class TermPriceRows {
         price.setBusinessCalendarCode(source.getBusinessCalendarCode());
         price.setSettlementTimezone(source.getSettlementTimezone());
         price.setCutoffSecondOfDay(source.getCutoffSecondOfDay());
+        price.setSourceTemplatePriceId(source.getSourceTemplatePriceId());
         price.setCreateTime(now);
         price.setUpdateTime(now);
         return price;
@@ -83,6 +84,7 @@ final class TermPriceRows {
         price.setBusinessCalendarCode(item.getBusinessCalendarCode());
         price.setSettlementTimezone(item.getSettlementTimezone());
         price.setCutoffSecondOfDay(item.getCutoffSecondOfDay());
+        price.setSourceTemplatePriceId(item.getSourceTemplatePriceId());
         price.setCreateTime(now);
         price.setUpdateTime(now);
         return price;

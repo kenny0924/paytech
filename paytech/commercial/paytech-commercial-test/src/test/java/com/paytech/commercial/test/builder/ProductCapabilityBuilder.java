@@ -24,7 +24,7 @@ public final class ProductCapabilityBuilder {
     }
 
     /**
-     * ACQUIRING 下 ACTIVE 的 Visa 卡开通项（PAYMENT_METHOD / CARD，维度 CARD_BRAND=VISA）。
+     * ACQUIRING 下 ACTIVE 的银行卡开通项（PAYMENT_METHOD / CARD，版本 1；废弃维度列为空）。
      *
      * @return 新 Builder
      */
@@ -32,15 +32,20 @@ public final class ProductCapabilityBuilder {
         return new ProductCapabilityBuilder()
             .productCapabilityId(PRODUCT_CAPABILITY_ID)
             .productCode(ProductCode.ACQUIRING)
-            .capabilityCode(CommercialCodes.Capability.CARD_VISA)
-            .capabilityName("Visa")
+            .capabilityCode(CommercialCodes.Capability.CARD)
+            .capabilityName("银行卡")
             .capabilityKind(CapabilityKind.PAYMENT_METHOD)
             .paymentMethodCode(CommercialCodes.PaymentMethod.CARD)
-            .dimensionCode(PricingDimension.CARD_BRAND)
-            .dimensionValue(CommercialCodes.CardBrand.VISA)
             .status(ProductStatus.ACTIVE)
+            .changeVersion(1L)
             .createTime(CheckoutFixture.NOW)
             .updateTime(CheckoutFixture.NOW);
+    }
+
+    /** 设置目录行版本。 */
+    public ProductCapabilityBuilder changeVersion(Long value) {
+        productCapability.setChangeVersion(value);
+        return this;
     }
 
     /** 设置可开通项目录行的内部唯一标识。 */

@@ -4,13 +4,13 @@ import { ApiError } from '../api/session';
 import type { ConfigurationCommand } from '../configuration/configurationModel';
 import { useErrorNotification } from '../feedback/useErrorNotification';
 import { commercialCommand, commercialErrorMessage, fieldPath, sendCommercialCommand } from './commercial';
-import type { CommandMethod } from './commercial';
+import type { CommandMethod, CommercialContext } from './commercial';
 
 /**
  * 商务写命令：单飞；403 刷新授权；409 置冲突横幅；422 字段清单就地显示；BUSINESS_CHECK_FAILED 显示在表单 / 弹窗顶部；
  * 其余交给通用通知。同一目标与正文的重试复用 Idempotency-Key。
  */
-export function useCommercialCommand(onAuthorizationChanged: () => void, context: 'agreement' | 'profile' | 'version', form?: FormInstance) {
+export function useCommercialCommand(onAuthorizationChanged: () => void, context: CommercialContext, form?: FormInstance) {
   const notify = useErrorNotification();
   const [saving, setSaving] = useState(false); const [conflict, setConflict] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);

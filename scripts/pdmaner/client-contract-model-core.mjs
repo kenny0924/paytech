@@ -50,6 +50,7 @@ const LOCAL_DATE_FIELDS = new Set([
 const EXPLICIT_BIGINT_FIELDS = new Set([
   "base_entity_change_version",
   "acceptance_recorded_by",
+  "change_version",
   "create_by",
   "current_version",
   "lock_version",
@@ -93,6 +94,9 @@ const FLAG_OR_SLOT_FIELDS = new Set([
   "primary_slot",
   "required_acceptance_flag",
   "base_product",
+  "required",
+  "require_3ds",
+  "signature_exempt",
 ]);
 const TEXT_FIELDS = new Set(["last_error_summary"]);
 const VARCHAR_LENGTH_OVERRIDES = new Map(Object.entries({
@@ -143,6 +147,21 @@ const VARCHAR_LENGTH_OVERRIDES = new Map(Object.entries({
   "commercial_term_version.fee_tax_treatment": 16,
   "commercial_term_component.refund_behavior": 32,
   "commercial_term_component.band_basis": 32,
+  "product_fee_event.capability_kind": 32,
+  "commercial_term_plan.owner_type": 32,
+  "commercial_term_plan.template_name": 128,
+  "term_version_acceptance.acceptance_method": 32,
+  "term_version_acceptance.acceptance_reference": 128,
+}));
+
+// 本次显式默认值（ADD COLUMN 对存量行的回填值与新表默认值）；其他字段无默认值。
+const COMMERCIAL_FIELD_DEFAULTS = new Map(Object.entries({
+  "product_capability.change_version": "1",
+  "product_fee_event.change_version": "1",
+  "product_capability_dimension.required": "0",
+  "agreement_capability.require_3ds": "0",
+  "commercial_term_plan.owner_type": "'CLIENT'",
+  "commercial_term_version.signature_exempt": "0",
 }));
 const NULLABLE_FIELD_PATHS = new Set([
   "agreement.entity_no",
@@ -253,6 +272,10 @@ const NULLABLE_FIELD_PATHS = new Set([
   "commercial_term_component.band_basis",
   "product_capability.payment_method_code", "product_capability.dimension_code", "product_capability.dimension_value",
   "agreement_capability.effective_to", "agreement_capability.rolling_reserve_rate", "agreement_capability.rolling_reserve_days",
+  "product_fee_event.capability_kind", "product_fee_event.capability_code",
+  "commercial_term_plan.template_name",
+  "commercial_term_version.agreement_id", "commercial_term_version.source_template_version_id",
+  "commercial_term_price.source_template_price_id",
 ]);
 
 const VERSION_TABLES = new Set([
@@ -299,17 +322,21 @@ const TABLE_COMMENT_CLAUSES = Object.freeze({
     "rolling_reserve_rate 与 rolling_reserve_days 成组为空或成组非空；比例取值 0 至 1，保证金执行归 account / risk。",
   ],
   agreement_capability_limit: [
-    "CURRENCY 用 ISO 4217，CONSUMER_COUNTRY 用 ISO 3166-1 alpha-2，REQUIRE_3DS 固定为 1。",
+    "limit_code 须在该可开通项 product_capability_dimension 内且可用于开通；必填维度（CURRENCY）必须有值；CURRENCY 用 ISO 4217，国家类用 ISO 3166-1 alpha-2，其他为大写稳定代码。",
   ],
   product: [
     "base_product 只允许 0 或 1，基座产品对所有合同默认生效。",
   ],
   product_capability: [
     "capability_kind=PAYMENT_METHOD 要求 payment_method_code IS NOT NULL，其他种类要求 payment_method_code IS NULL。",
-    "dimension_code 与 dimension_value 成组为空或成组非空。",
+    "dimension_code 与 dimension_value 已废弃，恒为 NULL；capability_code 与 capability_kind 创建后不可修改，RETIRED 阻止新增开通，已开通不受影响。",
+  ],
+  product_capability_dimension: [
+    "随可开通项整体替换；dimension_code 须为可用于开通接受条件的维度。",
   ],
   product_fee_event: [
     "fee_event_code 是 commercial_term_component.trigger_code 的值域，term_type 是 commercial_term_plan.term_type 的值域；均为值引用，不建关系。",
+    "capability_kind=FEATURE 时 capability_code 必须是同产品下的 FEATURE 可开通项；其他种类与空种类 capability_code 为空。",
   ],
   agreement_party: [
     "party_profile_id 必须属于 party_id 且提交签署时已封存；CLIENT/LOCAL_PARTNER 签约方必须分别匹配合同 Owner，PLATFORM_SIGNATORY 为平台授权签约主体，OPERATING_ENTITY 必须属于合同覆盖经营主体。",
@@ -333,6 +360,7 @@ const TABLE_COMMENT_CLAUSES = Object.freeze({
     "term_type、client_id 与 local_partner_id 创建后不可修改；MVP 每份 Client Agreement 一个 Client Pricing Plan，每个 Local Partner 可分别拥有一个 Partner Share Plan 和一个 PLATFORM_SERVICE_CHARGE Plan，通过 local_partner_id + term_type 复合唯一。",
     "CLIENT_PRICING 的 agreement_id/entity_no/client_id 必须与同一 Client Agreement 一致，local_partner_id 为空；Partner 两类只填 local_partner_id，Version 冻结其 Partner Agreement。",
     "PARTNER_BUY_RATE 属于 Partner 合同，Owner 规则同 PARTNER_SHARE；结构同 CLIENT_PRICING，按画像 × 币种定价。",
+    "owner_type=PLATFORM_TEMPLATE 时 agreement_id、client_id、local_partner_id 为空，entity_no 与 template_name 非空；价格命中、费率卡与 Checkout 解析排除模板方案。",
   ],
   application_document: [
     "CHECK ((client_application_id IS NOT NULL) + (partner_application_id IS NOT NULL) + (operating_entity_application_id IS NOT NULL) = 1)",
@@ -360,6 +388,10 @@ const TABLE_COMMENT_CLAUSES = Object.freeze({
     "CLIENT_PRICING 必须引用同一 Client 的 CLIENT Agreement；PARTNER_SHARE 与 PLATFORM_SERVICE_CHARGE 必须引用同一 Local Partner 的 PARTNER Agreement，同一交易命中的两类 Partner Term 必须属于同一 Agreement。",
     "Agreement 必须覆盖全部 Price 的准确 Operating Entity，Version 有效区间不得超出 Agreement；APPROVED 后 Version、Price、Component 与 Band 业务字段不可修改。",
     "本期 pricing_model 只接受 BLENDED；激活前 Version 下每个开通项至少命中一条 Price。",
+    "合同方案非免签版本 APPROVED 后须登记 term_version_acceptance 进入 CLIENT_SIGNED 才能排期；模板版本 agreement_id 为空、无签署要求；signature_exempt=1 仅用于迁移前已排期或生效的存量版本。",
+  ],
+  term_version_acceptance: [
+    "版本须为 APPROVED 的合同方案版本；party_id 须为合同 CLIENT（Client 方案）或 LOCAL_PARTNER（Partner 方案）角色 Party；登记后不可修改。",
   ],
   pricing_profile: [
     "状态只允许 DRAFT、ACTIVE、RETIRED；DRAFT 可在 Profile Root BCR/CAS 下编辑，ACTIVE 后 pricing_profile_code、payment_method_code 与全部 Condition 永久冻结。",
@@ -487,6 +519,8 @@ const ACCESS_INDEXES = {
   product_fee_event: [
     { defKey: "idx_product_fee_event_product", fields: ["product_code"] },
   ],
+  product_capability_dimension: [],
+  term_version_acceptance: [],
   consumer_legal_document: [
     { defKey: "idx_legal_doc_resolve", fields: ["entity_no", "country_code", "locale", "document_type", "effective_from", "effective_to"] },
   ],
@@ -559,6 +593,8 @@ export const LOCAL_RELATIONS = Object.freeze([
   ["agreement_capability_limit", "agreement_capability_id", "agreement_capability", "agreement_capability_id", "n"],
   ["product_capability", "product_code", "product", "product_code", "n"],
   ["product_fee_event", "product_code", "product", "product_code", "n"],
+  ["product_capability_dimension", "capability_code", "product_capability", "capability_code", "n"],
+  ["term_version_acceptance", "term_version_id", "commercial_term_version", "term_version_id", "n"],
   ["application_document", "client_application_id", "client_application", "application_id", "n"],
   ["application_document", "partner_application_id", "partner_application", "application_id", "n"],
   ["application_document", "operating_entity_application_id", "operating_entity_application", "application_id", "n"],
@@ -1136,7 +1172,8 @@ function buildEntities(model, catalog) {
         primaryKey,
         notNull: !isNullable(table.defKey, fieldKey, primaryKey),
         autoIncrement: false,
-        defaultValue: CLIENT_COMPENSATION_FIELD_STORAGE[`${table.defKey}.${fieldKey}`]?.defaultValue ?? "",
+        defaultValue: CLIENT_COMPENSATION_FIELD_STORAGE[`${table.defKey}.${fieldKey}`]?.defaultValue
+          ?? COMMERCIAL_FIELD_DEFAULTS.get(`${table.defKey}.${fieldKey}`) ?? "",
         hideInGraph: false,
         refDict: "",
         baseType: physicalType.baseType,

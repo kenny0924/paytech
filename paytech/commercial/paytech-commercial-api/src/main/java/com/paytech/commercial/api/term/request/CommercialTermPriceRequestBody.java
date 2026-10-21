@@ -63,4 +63,11 @@ public class CommercialTermPriceRequestBody {
     @Size(max = 50, message = "components 最多 50 项")
     @Valid
     private List<CommercialTermComponentRequestBody> components;
+
+    /**
+     * 来源模板价格 ID
+     * <li>基于模板生成或补齐的价格由 Web 原样回传以保持来源；必须属于版本来源模板版本，否则 400。手工新增为空。</li>
+     */
+    @Pattern(regexp = "[1-9][0-9]{0,18}", message = "sourceTemplatePriceId 格式不正确")
+    private String sourceTemplatePriceId;
 }

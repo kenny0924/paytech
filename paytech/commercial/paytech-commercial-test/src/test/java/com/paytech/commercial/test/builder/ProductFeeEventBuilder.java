@@ -3,6 +3,7 @@ package com.paytech.commercial.test.builder;
 import java.time.Instant;
 
 import com.paytech.commercial.api.constant.CommercialCodes;
+import com.paytech.commercial.api.enums.CapabilityKind;
 import com.paytech.commercial.api.enums.ProductCode;
 import com.paytech.commercial.core.dal.dataobject.ProductFeeEvent;
 import com.paytech.commercial.test.mocker.local.checkout.CheckoutFixture;
@@ -32,8 +33,28 @@ public final class ProductFeeEventBuilder {
             .feeEventCode(CommercialCodes.FeeEvent.SALE)
             .termType(CommercialCodes.TermType.CLIENT_PRICING)
             .billingFactType(CommercialCodes.BillingFactType.PAYMENT)
+            .capabilityKind(CapabilityKind.PAYMENT_METHOD)
+            .changeVersion(1L)
             .createTime(CheckoutFixture.NOW)
             .updateTime(CheckoutFixture.NOW);
+    }
+
+    /** 设置挂接的开通项种类。 */
+    public ProductFeeEventBuilder capabilityKind(CapabilityKind value) {
+        productFeeEvent.setCapabilityKind(value);
+        return this;
+    }
+
+    /** 设置挂接的功能开通项代码。 */
+    public ProductFeeEventBuilder capabilityCode(String value) {
+        productFeeEvent.setCapabilityCode(value);
+        return this;
+    }
+
+    /** 设置目录行版本。 */
+    public ProductFeeEventBuilder changeVersion(Long value) {
+        productFeeEvent.setChangeVersion(value);
+        return this;
     }
 
     /** 设置计费事件目录行的内部唯一标识。 */

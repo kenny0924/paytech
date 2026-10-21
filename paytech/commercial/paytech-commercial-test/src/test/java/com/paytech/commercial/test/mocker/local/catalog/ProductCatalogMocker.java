@@ -1,7 +1,11 @@
 package com.paytech.commercial.test.mocker.local.catalog;
 
+import java.util.List;
 import org.springframework.boot.test.context.TestComponent;
 
+import com.paytech.commercial.domainservice.repository.ProductCapabilityDimensionRepository;
+import com.paytech.commercial.core.dal.dataobject.ProductCapabilityDimension;
+import com.paytech.commercial.api.enums.PricingDimension;
 import com.paytech.commercial.core.dal.dataobject.Product;
 import com.paytech.commercial.core.dal.dataobject.ProductCapability;
 import com.paytech.commercial.core.dal.dataobject.ProductFeeEvent;
@@ -24,9 +28,10 @@ public class ProductCatalogMocker {
     private final ProductRepository productRepository;
     private final ProductFeeEventRepository productFeeEventRepository;
     private final ProductCapabilityRepository productCapabilityRepository;
+    private final ProductCapabilityDimensionRepository productCapabilityDimensionRepository;
 
     /**
-     * 插入与初始化 DML 相同的完整种子目录（7 个产品、11 个可开通项、21 个计费事件）。
+     * 插入与初始化 DML 相同的完整种子目录（7 个产品、9 个可开通项、21 个计费事件、20 个可配维度）。
      *
      * @return 已插入的目录
      */
@@ -35,6 +40,7 @@ public class ProductCatalogMocker {
         catalog.products().forEach(productRepository::insert);
         catalog.capabilities().forEach(productCapabilityRepository::insert);
         catalog.feeEvents().forEach(productFeeEventRepository::insert);
+        productCapabilityDimensionRepository.insertAll(catalog.dimensions());
         return catalog;
     }
 
@@ -60,6 +66,37 @@ public class ProductCatalogMocker {
         ProductCapability capability = builder.build();
         productCapabilityRepository.insert(capability);
         return capability;
+    }
+
+    /**
+     * 为一个可开通项插入可配维度。
+     *
+     * @param capabilityCode 可开通项代码
+     * @param required 必填维度
+     * @param optional 可选维度
+     * @return 已插入的维度行
+     */
+    public List<ProductCapabilityDimension> mockDimensions(String capabilityCode, List<PricingDimension> required,
+        List<PricingDimension> optional) {
+        java.util.concurrent.atomic.AtomicLong ids = new java.util.concurrent.atomic.AtomicLong(
+            920000000000900L + Math.floorMod(capabilityCode.hashCode(), 1000) * 100L);
+        List<ProductCapabilityDimension> rows = new java.util.ArrayList<>();
+        required.forEach(dimension -> rows.add(dimension(ids.incrementAndGet(), capabilityCode, dimension, true)));
+        optional.forEach(dimension -> rows.add(dimension(ids.incrementAndGet(), capabilityCode, dimension, false)));
+        productCapabilityDimensionRepository.insertAll(rows);
+        return rows;
+    }
+
+    /** 一行可配维度。 */
+    static ProductCapabilityDimension dimension(long id, String capabilityCode, PricingDimension dimension, boolean required) {
+        ProductCapabilityDimension row = new ProductCapabilityDimension();
+        row.setCapabilityDimensionId(id);
+        row.setCapabilityCode(capabilityCode);
+        row.setDimensionCode(dimension);
+        row.setRequired(required);
+        row.setCreateTime(com.paytech.commercial.test.mocker.local.checkout.CheckoutFixture.NOW);
+        row.setUpdateTime(com.paytech.commercial.test.mocker.local.checkout.CheckoutFixture.NOW);
+        return row;
     }
 
     /**

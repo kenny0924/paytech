@@ -120,4 +120,21 @@ public interface CommercialTermVersionRepository {
      */
     List<CommercialTermVersion> findByPlanIdsAndStatuses(Collection<Long> termPlanIds,
         Collection<CommercialTermVersionStatus> statuses);
+
+    /**
+     * DRAFT 版本首次从模板补齐时写入来源模板版本；成功后同步原对象。
+     *
+     * @param version 已读取的版本
+     * @param sourceTemplateVersionId 模板版本 ID
+     * @param now 本次更新时间
+     */
+    void updateSourceTemplate(CommercialTermVersion version, long sourceTemplateVersionId, Instant now);
+
+    /**
+     * 按一组主键读取；空集合不访问数据库。
+     *
+     * @param termVersionIds 版本 ID
+     * @return 按 term_version_id 升序
+     */
+    List<CommercialTermVersion> findByIds(Collection<Long> termVersionIds);
 }

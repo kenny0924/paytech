@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 
+import com.paytech.commercial.api.enums.CommercialTermOwnerType;
 import com.paytech.commercial.api.enums.CommercialTermPlanStatus;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermPlan;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermVersion;
@@ -25,6 +26,12 @@ public class CommercialTermPlanSummaryView {
 
     /** 条款类型 */
     private final String termType;
+
+    /** 方案 Owner 类型 */
+    private final CommercialTermOwnerType ownerType;
+
+    /** 模板显示名，仅模板 */
+    private final String templateName;
 
     /** 合同 ID，可空 */
     private final Long agreementId;
@@ -65,6 +72,8 @@ public class CommercialTermPlanSummaryView {
      * @param versions 该方案状态为 ACTIVE 或 SCHEDULED 的版本
      */
     public CommercialTermPlanSummaryView(CommercialTermPlan plan, long changeVersion, List<CommercialTermVersion> versions) {
+        this.ownerType = plan.getOwnerType();
+        this.templateName = plan.getTemplateName();
         this.planId = plan.getTermPlanId();
         this.planCode = plan.getPlanCode();
         this.termType = plan.getTermType();

@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import com.paytech.commercial.api.constant.CommercialCodes;
 import com.paytech.commercial.api.enums.CommercialTermPlanStatus;
+import com.paytech.commercial.api.enums.PricingDimension;
 import com.paytech.commercial.api.enums.ProductCode;
 import com.paytech.commercial.api.ratecard.RateCardApi;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermVersion;
@@ -29,7 +30,8 @@ import tools.jackson.databind.JsonNode;
 
 /**
  * Client 费率卡结构（technique.md §2.7）：ACTIVE 合同的订阅、开通项（约束）、当前与已排期版本，价格按开通项 × 币种分块、块内按具体度排序
- * <li>CARD_VISA 开通 USD + AED、CARD_MC 开通 USD；第 1 版（当前）USD 四个卡画像价格与 AED 通用卡价格，第 2 版（已排期）USD 通用卡价格。</li>
+ * <li>CARD 开通 USD + AED 且限 VISA、GOOGLE_PAY 开通 USD；第 1 版（当前）USD 四个卡画像价格与 AED 通用卡价格，第 2 版（已排期）USD
+ * 通用卡价格。价格按画像条件与开通项接受条件相容归入开通项。</li>
  *
  * @see RateCardApi
  */
@@ -44,10 +46,10 @@ class RateCardHttpTest extends AbstractCommercialTermApiTest {
         mockCardProfiles(PricingProfileStatus.ACTIVE);
         subscriptions.mockProduct(AgreementProductBuilder.template().agreementId(AgreementBuilder.AGREEMENT_ID));
         subscriptions.mockCapability(AgreementCapabilityBuilder.template().agreementId(AgreementBuilder.AGREEMENT_ID)
-            .entityNo(ENTITY_NO)).currencies("USD", "AED");
+            .entityNo(ENTITY_NO)).currencies("USD", "AED").limit(PricingDimension.CARD_BRAND, CommercialCodes.CardBrand.VISA);
         subscriptions.mockCapability(AgreementCapabilityBuilder.template()
             .agreementCapabilityId(AgreementCapabilityBuilder.AGREEMENT_CAPABILITY_ID + 1)
-            .agreementId(AgreementBuilder.AGREEMENT_ID).entityNo(ENTITY_NO).capabilityCode(CommercialCodes.Capability.CARD_MC))
+            .agreementId(AgreementBuilder.AGREEMENT_ID).entityNo(ENTITY_NO).capabilityCode(CommercialCodes.Capability.GOOGLE_PAY))
             .currencies("USD");
         List<CommercialTermVersion> versions = pricing.mockPlan(
             CommercialTermPlanBuilder.template().status(CommercialTermPlanStatus.ACTIVE), 3,
@@ -71,14 +73,15 @@ class RateCardHttpTest extends AbstractCommercialTermApiTest {
         JsonNode agreement = card.path("agreements").get(0);
         JsonNode currentVersion = agreement.path("termVersions").get(0);
         JsonNode visa = currentVersion.path("capabilities").get(0);
-        JsonNode mastercard = currentVersion.path("capabilities").get(1);
+        JsonNode googlePay = currentVersion.path("capabilities").get(1);
         assertAll(() -> assertEquals(1, card.path("agreements").size()),
             () -> assertEquals(List.of(ProductCode.ACQUIRING.getCode()), texts(agreement.path("products"))),
             () -> assertEquals("MOR", agreement.path("businessMode").asString()),
-            () -> assertEquals(List.of("AED", "USD"),
+            () -> assertEquals(List.of("VISA", "AED", "USD"),
                 texts(agreement.path("capabilities").get(0).path("limits"), "limitValue")),
+            () -> assertEquals(false, agreement.path("capabilities").get(0).path("require3ds").asBoolean()),
             () -> assertEquals(List.of("CURRENT", "SCHEDULED"), texts(agreement.path("termVersions"), "timing")),
-            () -> assertEquals(CommercialCodes.Capability.CARD_VISA, visa.path("capabilityCode").asString()),
+            () -> assertEquals(CommercialCodes.Capability.CARD, visa.path("capabilityCode").asString()),
             () -> assertEquals(List.of("AED", "USD"), texts(visa.path("currencies"), "currency")),
             () -> assertEquals(List.of(CARD), texts(visa.path("currencies").get(0).path("profiles"), "pricingProfileCode")),
             () -> assertEquals(List.of(CARD_VISA_CREDIT, CARD_VISA, CARD),
@@ -86,13 +89,13 @@ class RateCardHttpTest extends AbstractCommercialTermApiTest {
             () -> assertEquals(2, visa.path("currencies").get(1).path("profiles").get(0).path("specificity").asInt()),
             () -> assertEquals(CommercialCodes.FeeEvent.SALE, visa.path("currencies").get(1).path("profiles").get(0)
                 .path("feeEvents").get(0).path("feeEventCode").asString()),
-            () -> assertEquals(List.of(CARD), texts(mastercard.path("currencies").get(0).path("profiles"),
-                "pricingProfileCode")),
+            () -> assertEquals(List.of("USD"), texts(googlePay.path("currencies"), "currency")),
+            () -> assertEquals(0, googlePay.path("currencies").get(0).path("profiles").size()),
             () -> assertEquals("0.028", agreement.path("termVersions").get(1).path("capabilities").get(0).path("currencies")
                 .get(1).path("profiles").get(0).path("feeEvents").get(0).path("components").get(0).path("rate").asString()));
     }
 
-    /** 币种筛选：只返回 AED 块；CARD_MC 只开通 USD，因此没有币种块。 */
+    /** 币种筛选：只返回 AED 块；GOOGLE_PAY 只开通 USD，因此没有币种块。 */
     @Test
     void test_currencyFilter() {
         JsonNode card = ok(200, http.get("/rate-cards/v1?clientId=" + AgreementBuilder.CLIENT_ID + "&asOf=" + NOW

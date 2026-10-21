@@ -59,58 +59,12 @@
   ],
   "product_capability": [
     {
-      "product_capability_id": 9100000000000002001,
-      "product_code": "ACQUIRING",
-      "capability_code": "CARD_VISA",
-      "capability_name": "Visa",
-      "capability_kind": "PAYMENT_METHOD",
-      "payment_method_code": "CARD",
-      "dimension_code": "CARD_BRAND",
-      "dimension_value": "VISA",
-      "status": "ACTIVE"
-    },
-    {
-      "product_capability_id": 9100000000000002002,
-      "product_code": "ACQUIRING",
-      "capability_code": "CARD_MC",
-      "capability_name": "Mastercard",
-      "capability_kind": "PAYMENT_METHOD",
-      "payment_method_code": "CARD",
-      "dimension_code": "CARD_BRAND",
-      "dimension_value": "MASTERCARD",
-      "status": "ACTIVE"
-    },
-    {
-      "product_capability_id": 9100000000000002003,
-      "product_code": "ACQUIRING",
-      "capability_code": "CARD_AMEX",
-      "capability_name": "American Express",
-      "capability_kind": "PAYMENT_METHOD",
-      "payment_method_code": "CARD",
-      "dimension_code": "CARD_BRAND",
-      "dimension_value": "AMEX",
-      "status": "ACTIVE"
-    },
-    {
-      "product_capability_id": 9100000000000002004,
-      "product_code": "ACQUIRING",
-      "capability_code": "CARD_UNIONPAY",
-      "capability_name": "UnionPay",
-      "capability_kind": "PAYMENT_METHOD",
-      "payment_method_code": "CARD",
-      "dimension_code": "CARD_BRAND",
-      "dimension_value": "UNIONPAY",
-      "status": "ACTIVE"
-    },
-    {
       "product_capability_id": 9100000000000002005,
       "product_code": "ACQUIRING",
       "capability_code": "APPLE_PAY",
       "capability_name": "Apple Pay",
       "capability_kind": "PAYMENT_METHOD",
       "payment_method_code": "APPLE_PAY",
-      "dimension_code": null,
-      "dimension_value": null,
       "status": "ACTIVE"
     },
     {
@@ -120,8 +74,6 @@
       "capability_name": "Google Pay",
       "capability_kind": "PAYMENT_METHOD",
       "payment_method_code": "GOOGLE_PAY",
-      "dimension_code": null,
-      "dimension_value": null,
       "status": "ACTIVE"
     },
     {
@@ -131,8 +83,6 @@
       "capability_name": "Local Payout",
       "capability_kind": "PAYOUT_RAIL",
       "payment_method_code": null,
-      "dimension_code": null,
-      "dimension_value": null,
       "status": "ACTIVE"
     },
     {
@@ -142,8 +92,6 @@
       "capability_name": "SWIFT Payout",
       "capability_kind": "PAYOUT_RAIL",
       "payment_method_code": null,
-      "dimension_code": null,
-      "dimension_value": null,
       "status": "ACTIVE"
     },
     {
@@ -153,8 +101,6 @@
       "capability_name": "FX Spot",
       "capability_kind": "FX",
       "payment_method_code": null,
-      "dimension_code": null,
-      "dimension_value": null,
       "status": "ACTIVE"
     },
     {
@@ -164,8 +110,6 @@
       "capability_name": "Dispute Handling",
       "capability_kind": "DISPUTE",
       "payment_method_code": null,
-      "dimension_code": null,
-      "dimension_value": null,
       "status": "ACTIVE"
     },
     {
@@ -175,8 +119,24 @@
       "capability_name": "Analytics Subscription",
       "capability_kind": "PERIODIC_SERVICE",
       "payment_method_code": null,
-      "dimension_code": null,
-      "dimension_value": null,
+      "status": "ACTIVE"
+    },
+    {
+      "product_capability_id": 9100000000000002012,
+      "product_code": "ACQUIRING",
+      "capability_code": "CARD",
+      "capability_name": "银行卡",
+      "capability_kind": "PAYMENT_METHOD",
+      "payment_method_code": "CARD",
+      "status": "ACTIVE"
+    },
+    {
+      "product_capability_id": 9100000000000002013,
+      "product_code": "ACQUIRING",
+      "capability_code": "TOKEN_STORAGE",
+      "capability_name": "存卡",
+      "capability_kind": "FEATURE",
+      "payment_method_code": null,
       "status": "ACTIVE"
     }
   ],
@@ -186,147 +146,311 @@
       "product_code": "ACQUIRING",
       "fee_event_code": "AUTH",
       "term_type": "CLIENT_PRICING",
-      "billing_fact_type": "PAYMENT"
+      "billing_fact_type": "PAYMENT",
+      "capability_kind": "PAYMENT_METHOD",
+      "capability_code": null
     },
     {
       "product_fee_event_id": 9100000000000003002,
       "product_code": "ACQUIRING",
       "fee_event_code": "AUTH",
       "term_type": "PARTNER_SHARE",
-      "billing_fact_type": "PAYMENT"
+      "billing_fact_type": "PAYMENT",
+      "capability_kind": "PAYMENT_METHOD",
+      "capability_code": null
     },
     {
       "product_fee_event_id": 9100000000000003003,
       "product_code": "ACQUIRING",
       "fee_event_code": "AUTH",
       "term_type": "PLATFORM_SERVICE_CHARGE",
-      "billing_fact_type": "PAYMENT"
+      "billing_fact_type": "PAYMENT",
+      "capability_kind": "PAYMENT_METHOD",
+      "capability_code": null
     },
     {
       "product_fee_event_id": 9100000000000003004,
       "product_code": "ACQUIRING",
       "fee_event_code": "CAPTURE",
       "term_type": "CLIENT_PRICING",
-      "billing_fact_type": "PAYMENT"
+      "billing_fact_type": "PAYMENT",
+      "capability_kind": "PAYMENT_METHOD",
+      "capability_code": null
     },
     {
       "product_fee_event_id": 9100000000000003005,
       "product_code": "ACQUIRING",
       "fee_event_code": "CAPTURE",
       "term_type": "PARTNER_SHARE",
-      "billing_fact_type": "PAYMENT"
+      "billing_fact_type": "PAYMENT",
+      "capability_kind": "PAYMENT_METHOD",
+      "capability_code": null
     },
     {
       "product_fee_event_id": 9100000000000003006,
       "product_code": "ACQUIRING",
       "fee_event_code": "CAPTURE",
       "term_type": "PLATFORM_SERVICE_CHARGE",
-      "billing_fact_type": "PAYMENT"
+      "billing_fact_type": "PAYMENT",
+      "capability_kind": "PAYMENT_METHOD",
+      "capability_code": null
     },
     {
       "product_fee_event_id": 9100000000000003007,
       "product_code": "ACQUIRING",
       "fee_event_code": "SALE",
       "term_type": "CLIENT_PRICING",
-      "billing_fact_type": "PAYMENT"
+      "billing_fact_type": "PAYMENT",
+      "capability_kind": "PAYMENT_METHOD",
+      "capability_code": null
     },
     {
       "product_fee_event_id": 9100000000000003008,
       "product_code": "ACQUIRING",
       "fee_event_code": "SALE",
       "term_type": "PARTNER_SHARE",
-      "billing_fact_type": "PAYMENT"
+      "billing_fact_type": "PAYMENT",
+      "capability_kind": "PAYMENT_METHOD",
+      "capability_code": null
     },
     {
       "product_fee_event_id": 9100000000000003009,
       "product_code": "ACQUIRING",
       "fee_event_code": "SALE",
       "term_type": "PLATFORM_SERVICE_CHARGE",
-      "billing_fact_type": "PAYMENT"
+      "billing_fact_type": "PAYMENT",
+      "capability_kind": "PAYMENT_METHOD",
+      "capability_code": null
     },
     {
       "product_fee_event_id": 9100000000000003010,
       "product_code": "ACQUIRING",
       "fee_event_code": "REFUND",
       "term_type": "CLIENT_PRICING",
-      "billing_fact_type": "REFUND"
+      "billing_fact_type": "REFUND",
+      "capability_kind": "PAYMENT_METHOD",
+      "capability_code": null
     },
     {
       "product_fee_event_id": 9100000000000003011,
       "product_code": "ACQUIRING",
       "fee_event_code": "REFUND",
       "term_type": "PARTNER_SHARE",
-      "billing_fact_type": "REFUND"
+      "billing_fact_type": "REFUND",
+      "capability_kind": "PAYMENT_METHOD",
+      "capability_code": null
     },
     {
       "product_fee_event_id": 9100000000000003012,
       "product_code": "ACQUIRING",
       "fee_event_code": "REFUND",
       "term_type": "PLATFORM_SERVICE_CHARGE",
-      "billing_fact_type": "REFUND"
+      "billing_fact_type": "REFUND",
+      "capability_kind": "PAYMENT_METHOD",
+      "capability_code": null
     },
     {
       "product_fee_event_id": 9100000000000003013,
       "product_code": "ACQUIRING",
       "fee_event_code": "CHARGEBACK",
       "term_type": "CLIENT_PRICING",
-      "billing_fact_type": "DISPUTE"
+      "billing_fact_type": "DISPUTE",
+      "capability_kind": "PAYMENT_METHOD",
+      "capability_code": null
     },
     {
       "product_fee_event_id": 9100000000000003014,
       "product_code": "ACQUIRING",
       "fee_event_code": "TOKEN_STORED",
       "term_type": "CLIENT_PRICING",
-      "billing_fact_type": "PAYMENT"
+      "billing_fact_type": "PAYMENT",
+      "capability_kind": "FEATURE",
+      "capability_code": "TOKEN_STORAGE"
     },
     {
       "product_fee_event_id": 9100000000000003015,
       "product_code": "PAYOUT",
       "fee_event_code": "PAYOUT_SUBMITTED",
       "term_type": "PAYOUT_FEE",
-      "billing_fact_type": "PAYOUT_FEE"
+      "billing_fact_type": "PAYOUT_FEE",
+      "capability_kind": "PAYOUT_RAIL",
+      "capability_code": null
     },
     {
       "product_fee_event_id": 9100000000000003016,
       "product_code": "PAYOUT",
       "fee_event_code": "PAYOUT_RETURNED",
       "term_type": "PAYOUT_FEE",
-      "billing_fact_type": "PAYOUT_FEE"
+      "billing_fact_type": "PAYOUT_FEE",
+      "capability_kind": "PAYOUT_RAIL",
+      "capability_code": null
     },
     {
       "product_fee_event_id": 9100000000000003017,
       "product_code": "FX",
       "fee_event_code": "FX_DEAL",
       "term_type": "FX_SPREAD",
-      "billing_fact_type": "FX_SELL"
+      "billing_fact_type": "FX_SELL",
+      "capability_kind": "FX",
+      "capability_code": null
     },
     {
       "product_fee_event_id": 9100000000000003018,
       "product_code": "DISPUTE",
       "fee_event_code": "CHARGEBACK",
       "term_type": "DISPUTE_FEE",
-      "billing_fact_type": "DISPUTE"
+      "billing_fact_type": "DISPUTE",
+      "capability_kind": "DISPUTE",
+      "capability_code": null
     },
     {
       "product_fee_event_id": 9100000000000003019,
       "product_code": "PLATFORM",
       "fee_event_code": "MONTHLY_CYCLE",
       "term_type": "PLATFORM_FEE",
-      "billing_fact_type": "PLATFORM_FEE"
+      "billing_fact_type": "PLATFORM_FEE",
+      "capability_kind": null,
+      "capability_code": null
     },
     {
       "product_fee_event_id": 9100000000000003020,
       "product_code": "PLATFORM",
       "fee_event_code": "SETUP",
       "term_type": "PLATFORM_FEE",
-      "billing_fact_type": "PLATFORM_FEE"
+      "billing_fact_type": "PLATFORM_FEE",
+      "capability_kind": null,
+      "capability_code": null
     },
     {
       "product_fee_event_id": 9100000000000003021,
       "product_code": "PLATFORM",
       "fee_event_code": "KYB_REVIEW",
       "term_type": "PLATFORM_FEE",
-      "billing_fact_type": "PLATFORM_FEE"
+      "billing_fact_type": "PLATFORM_FEE",
+      "capability_kind": null,
+      "capability_code": null
+    }
+  ],
+  "product_capability_dimension": [
+    {
+      "capability_dimension_id": 9100000000000004001,
+      "capability_code": "CARD",
+      "dimension_code": "CURRENCY",
+      "required": 1
+    },
+    {
+      "capability_dimension_id": 9100000000000004002,
+      "capability_code": "CARD",
+      "dimension_code": "CONSUMER_COUNTRY",
+      "required": 0
+    },
+    {
+      "capability_dimension_id": 9100000000000004003,
+      "capability_code": "CARD",
+      "dimension_code": "CARD_BRAND",
+      "required": 0
+    },
+    {
+      "capability_dimension_id": 9100000000000004004,
+      "capability_code": "CARD",
+      "dimension_code": "FUNDING_TYPE",
+      "required": 0
+    },
+    {
+      "capability_dimension_id": 9100000000000004005,
+      "capability_code": "CARD",
+      "dimension_code": "ISSUER_COUNTRY",
+      "required": 0
+    },
+    {
+      "capability_dimension_id": 9100000000000004006,
+      "capability_code": "CARD",
+      "dimension_code": "ISSUER_REGION",
+      "required": 0
+    },
+    {
+      "capability_dimension_id": 9100000000000004007,
+      "capability_code": "CARD",
+      "dimension_code": "CARD_LEVEL",
+      "required": 0
+    },
+    {
+      "capability_dimension_id": 9100000000000004008,
+      "capability_code": "APPLE_PAY",
+      "dimension_code": "CURRENCY",
+      "required": 1
+    },
+    {
+      "capability_dimension_id": 9100000000000004009,
+      "capability_code": "APPLE_PAY",
+      "dimension_code": "CONSUMER_COUNTRY",
+      "required": 0
+    },
+    {
+      "capability_dimension_id": 9100000000000004010,
+      "capability_code": "APPLE_PAY",
+      "dimension_code": "CARD_BRAND",
+      "required": 0
+    },
+    {
+      "capability_dimension_id": 9100000000000004011,
+      "capability_code": "APPLE_PAY",
+      "dimension_code": "FUNDING_TYPE",
+      "required": 0
+    },
+    {
+      "capability_dimension_id": 9100000000000004012,
+      "capability_code": "GOOGLE_PAY",
+      "dimension_code": "CURRENCY",
+      "required": 1
+    },
+    {
+      "capability_dimension_id": 9100000000000004013,
+      "capability_code": "GOOGLE_PAY",
+      "dimension_code": "CONSUMER_COUNTRY",
+      "required": 0
+    },
+    {
+      "capability_dimension_id": 9100000000000004014,
+      "capability_code": "GOOGLE_PAY",
+      "dimension_code": "CARD_BRAND",
+      "required": 0
+    },
+    {
+      "capability_dimension_id": 9100000000000004015,
+      "capability_code": "GOOGLE_PAY",
+      "dimension_code": "FUNDING_TYPE",
+      "required": 0
+    },
+    {
+      "capability_dimension_id": 9100000000000004016,
+      "capability_code": "PAYOUT_LOCAL",
+      "dimension_code": "CURRENCY",
+      "required": 1
+    },
+    {
+      "capability_dimension_id": 9100000000000004017,
+      "capability_code": "PAYOUT_LOCAL",
+      "dimension_code": "DESTINATION_COUNTRY",
+      "required": 0
+    },
+    {
+      "capability_dimension_id": 9100000000000004018,
+      "capability_code": "PAYOUT_SWIFT",
+      "dimension_code": "CURRENCY",
+      "required": 1
+    },
+    {
+      "capability_dimension_id": 9100000000000004019,
+      "capability_code": "PAYOUT_SWIFT",
+      "dimension_code": "DESTINATION_COUNTRY",
+      "required": 0
+    },
+    {
+      "capability_dimension_id": 9100000000000004020,
+      "capability_code": "FX_SPOT",
+      "dimension_code": "CURRENCY_PAIR",
+      "required": 0
     }
   ]
 }

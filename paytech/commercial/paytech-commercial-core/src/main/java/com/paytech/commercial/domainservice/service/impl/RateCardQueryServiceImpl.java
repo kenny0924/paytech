@@ -11,7 +11,8 @@ import java.util.stream.Stream;
 import org.springframework.stereotype.Service;
 
 import com.paytech.commercial.api.constant.CommercialCodes;
-import com.paytech.commercial.api.enums.CapabilityLimitCode;
+import com.paytech.commercial.api.enums.CommercialTermOwnerType;
+import com.paytech.commercial.api.enums.PricingDimension;
 import com.paytech.commercial.api.enums.ProductCode;
 import com.paytech.commercial.core.dal.dataobject.Agreement;
 import com.paytech.commercial.core.dal.dataobject.AgreementCapability;
@@ -21,6 +22,8 @@ import com.paytech.commercial.core.dal.dataobject.CommercialTermPlan;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermVersion;
 import com.paytech.commercial.core.dal.dataobject.ProductCapability;
 import com.paytech.commercial.core.dal.dataobject.ProductFeeEvent;
+import com.paytech.commercial.domain.CapabilityAcceptance;
+import com.paytech.commercial.domain.CapabilityConditions;
 import com.paytech.commercial.domain.CommercialPriceCandidate;
 import com.paytech.commercial.domain.CommercialPriceView;
 import com.paytech.commercial.domain.RateCardQuery;
@@ -90,7 +93,7 @@ public class RateCardQueryServiceImpl implements RateCardQueryService {
         List<RateCardView.CapabilityCard> capabilities = capabilityCards(agreement);
         List<RateCardView.VersionCard> versions = new ArrayList<>();
         for (CommercialTermPlan plan : commercialTermPlanRepository.findByAgreementId(agreement.getAgreementId())) {
-            if (EXCLUDED_TERM_TYPES.contains(plan.getTermType())) {
+            if (EXCLUDED_TERM_TYPES.contains(plan.getTermType()) || plan.getOwnerType() == CommercialTermOwnerType.PLATFORM_TEMPLATE) {
                 continue;
             }
             Set<ProductCode> planProducts = productFeeEventRepository.findByTermType(plan.getTermType()).stream()
@@ -146,7 +149,7 @@ public class RateCardQueryServiceImpl implements RateCardQueryService {
     static List<RateCardView.CurrencyPrices> currencyBlocks(RateCardView.CapabilityCard card, List<CommercialPriceView> views,
         String currencyFilter) {
         List<CommercialPriceView> applicable = views.stream().filter(view -> applies(card, view.candidate())).toList();
-        List<String> limited = card.getLimits().stream().filter(limit -> limit.getLimitCode() == CapabilityLimitCode.CURRENCY)
+        List<String> limited = card.getLimits().stream().filter(limit -> limit.getLimitCode() == PricingDimension.CURRENCY)
             .map(AgreementCapabilityLimit::getLimitValue).toList();
         Stream<String> currencies = limited.isEmpty()
             ? applicable.stream().map(view -> view.candidate().price().getCurrency()) : limited.stream();
@@ -158,12 +161,12 @@ public class RateCardQueryServiceImpl implements RateCardQueryService {
             .toList();
     }
 
-    /** 价格适用于开通项：同 OE、支付方式精确、画像与开通项细分维度相容。 */
+    /** 价格适用于开通项：同 OE、支付方式精确、画像条件与开通项接受条件相容（币种由币种块筛选）。 */
     static boolean applies(RateCardView.CapabilityCard card, CommercialPriceCandidate candidate) {
         ProductCapability catalog = card.getCatalog();
         return candidate.price().getEntityNo().equals(card.getCapability().getEntityNo())
             && candidate.appliesTo(catalog.getPaymentMethodCode())
-            && candidate.compatibleWith(catalog.getDimensionCode(), catalog.getDimensionValue());
+            && CapabilityConditions.of(card.getLimits()).compatibleWith(CapabilityAcceptance.profileConditions(candidate));
     }
 
     /** 带展示时机的版本。 */

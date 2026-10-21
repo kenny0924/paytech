@@ -4,16 +4,17 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
-import com.paytech.commercial.api.enums.CapabilityLimitCode;
+import com.paytech.commercial.api.enums.PricingDimension;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 import lombok.Getter;
 import lombok.Setter;
 
-/** 开通项新增与修改共用的条款：生效区间、保证金与整体约束行。 */
+/** 开通项新增与修改共用的条款：生效区间、保证金、整体接受条件与 3DS 要求。 */
 @Getter
 @Setter
 public abstract class AgreementCapabilityTermsRequest {
@@ -30,21 +31,25 @@ public abstract class AgreementCapabilityTermsRequest {
     /** 滚动保证金天数，可空，与比例成组 */
     private Integer rollingReserveDays;
 
-    /** 约束行整体 */
+    /** 接受条件整体，每个维度一项 */
     @NotNull
     @Valid
-    private List<Limit> limits;
+    private List<Condition> conditions;
 
-    /** 开通项约束的一个值 */
+    /** 是否要求 3DS 认证 */
+    @NotNull
+    private Boolean require3ds;
+
+    /** 开通项的一个接受条件：同维度多值按 OR */
     @Getter
     @Setter
-    public static class Limit {
-        /** 约束类别 */
+    public static class Condition {
+        /** 维度 */
         @NotNull
-        private CapabilityLimitCode limitCode;
+        private PricingDimension dimensionCode;
 
-        /** 规范化值 */
-        @NotBlank
-        private String limitValue;
+        /** 取值，至少一个 */
+        @NotEmpty
+        private List<@NotBlank String> values;
     }
 }

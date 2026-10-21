@@ -110,7 +110,7 @@ public class CheckoutContextView {
 
         /**
          * 本次支付方式命中的全部开通项，按开通项代码升序
-         * <li>请求未给支付方式时为空数组；给出时至少一项，卡品牌等维度在支付尝试时再按实际品牌选用。</li>
+         * <li>请求未给支付方式时为空数组；给出时至少一项，且都有生效价格。</li>
          */
         java.util.List<Capability> capabilities;
     }
@@ -128,17 +128,34 @@ public class CheckoutContextView {
         /** 开通项状态 Code；命中时恒为 ENABLED。 */
         String status;
 
-        /** 目录维度 Code，如 CARD_BRAND；不分维度时为 null。 */
-        String dimensionCode;
-
-        /** 目录维度值，如 VISA；不分维度时为 null。 */
-        String dimensionValue;
-
         /** 滚动保证金比例，0 至 1 的十进制字符串；未约定时为 null。 */
         String rollingReserveRate;
 
         /** 滚动保证金天数；未约定时为 null。 */
         Integer rollingReserveDays;
+
+        /** 目录支付方式代码；非支付方式类为 null。 */
+        String paymentMethodCode;
+
+        /** 目录种类 Code。 */
+        String capabilityKind;
+
+        /** 接受条件，按维度登记顺序。 */
+        java.util.List<CapabilityCondition> conditions;
+
+        /** 是否要求 3DS 认证。 */
+        boolean require3ds;
+    }
+
+    /** 开通项的一个接受条件。 */
+    @Value
+    @Accessors(fluent = true)
+    public static class CapabilityCondition {
+        /** 维度 Code。 */
+        String dimensionCode;
+
+        /** 取值，按字典序。 */
+        java.util.List<String> values;
     }
 
     /** 按合同业务模式派生、由收单冻结的四项主体。 */

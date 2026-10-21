@@ -17,7 +17,7 @@
     <select id="findForCheckout" resultMap="CommercialTermVersion">
         SELECT term_version_id, term_plan_id, agreement_id, status, active_slot, effective_from, effective_to, pricing_model, fee_tax_treatment
         FROM t_commercial_term_version
-        WHERE term_plan_id IN (SELECT term_plan_id FROM t_commercial_term_plan WHERE client_id = #{clientId}<if test="!localPartnerIds.isEmpty()"> OR local_partner_id IN <foreach collection="localPartnerIds" item="partnerId" open="(" separator="," close=")">#{partnerId}</foreach></if>)
+        WHERE term_plan_id IN (SELECT term_plan_id FROM t_commercial_term_plan WHERE owner_type &lt;&gt; 'PLATFORM_TEMPLATE' AND (client_id = #{clientId}<if test="!localPartnerIds.isEmpty()"> OR local_partner_id IN <foreach collection="localPartnerIds" item="partnerId" open="(" separator="," close=")">#{partnerId}</foreach></if>))
         ORDER BY term_version_id
     </select>
 
@@ -34,20 +34,23 @@
         <result column="rounding_mode" property="roundingMode"/>
         <result column="pricing_model" property="pricingModel"/>
         <result column="fee_tax_treatment" property="feeTaxTreatment"/>
+        <result column="source_template_version_id" property="sourceTemplateVersionId"/>
+        <result column="signature_exempt" property="signatureExempt"/>
         <result column="create_time" property="createTime"/>
         <result column="update_time" property="updateTime"/>
     </resultMap>
 
     <sql id="commercialTermVersionColumns">
         term_version_id, term_plan_id, agreement_id, version_no, status, active_slot, effective_from,
-        effective_to, rounding_mode, pricing_model, fee_tax_treatment, create_time, update_time
+        effective_to, rounding_mode, pricing_model, fee_tax_treatment, source_template_version_id, signature_exempt,
+        create_time, update_time
     </sql>
 
     <insert id="insert">
         INSERT INTO t_commercial_term_version (<include refid="commercialTermVersionColumns"/>)
         VALUES (#{termVersionId}, #{termPlanId}, #{agreementId}, #{versionNo}, #{status}, #{activeSlot},
-            #{effectiveFrom}, #{effectiveTo}, #{roundingMode}, #{pricingModel}, #{feeTaxTreatment}, #{createTime},
-            #{updateTime})
+            #{effectiveFrom}, #{effectiveTo}, #{roundingMode}, #{pricingModel}, #{feeTaxTreatment},
+            #{sourceTemplateVersionId}, #{signatureExempt}, #{createTime}, #{updateTime})
     </insert>
 
     <select id="selectById" resultMap="CommercialTermVersionRow">
@@ -89,11 +92,25 @@
         WHERE term_version_id = #{row.termVersionId} AND status = #{row.status} AND update_time = #{row.updateTime}
     </update>
 
+    <update id="updateSourceTemplate">
+        UPDATE t_commercial_term_version SET source_template_version_id = #{sourceTemplateVersionId}, update_time = #{now}
+        WHERE term_version_id = #{row.termVersionId} AND status = #{row.status} AND source_template_version_id IS NULL
+    </update>
+
+    <select id="selectByIds" resultMap="CommercialTermVersionRow">
+        SELECT <include refid="commercialTermVersionColumns"/> FROM t_commercial_term_version
+        WHERE term_version_id IN <foreach collection="termVersionIds" item="termVersionId" open="(" separator="," close=")">#{termVersionId}</foreach>
+        ORDER BY term_version_id
+    </select>
+
     <!-- 窗口 [windowFrom, windowTo) 与生效区间 [effective_from, effective_to) 相交；effective_to 为空表示无终点。 -->
     <sql id="listConditions">
         <where>
             <if test="query.planId != null">AND term_plan_id = #{query.planId}</if>
             <if test="query.agreementId != null">AND agreement_id = #{query.agreementId}</if>
+            <if test="query.ownerType != null">
+                AND term_plan_id IN (SELECT term_plan_id FROM t_commercial_term_plan WHERE owner_type = #{query.ownerType})
+            </if>
             <if test="!query.statuses.isEmpty()">
                 AND status IN <foreach collection="query.statuses" item="status" open="(" separator="," close=")">#{status}</foreach>
             </if>

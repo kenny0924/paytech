@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.paytech.commercial.api.constant.CommercialCodes;
 import com.paytech.commercial.api.enums.AgreementCapabilityStatus;
 import com.paytech.commercial.api.enums.BusinessMode;
+import com.paytech.commercial.api.enums.CapabilityKind;
 import com.paytech.commercial.api.enums.FundMode;
 import com.paytech.commercial.api.enums.PricingDimension;
 import com.paytech.commercial.api.enums.PricingAuthority;
@@ -25,26 +26,32 @@ import com.paytech.commercial.domain.CheckoutContextView;
 import com.paytech.commercial.domain.CheckoutQuery;
 import com.paytech.commercial.domain.CheckoutResolutionContext;
 import com.paytech.commercial.domain.enums.CommercialTermVersionStatus;
+import com.paytech.commercial.domain.enums.PricingProfileStatus;
 import com.paytech.commercial.test.base.checkout.AbstractCheckoutApiTest;
-import com.paytech.commercial.test.builder.AgreementCapabilityBuilder;
-import com.paytech.commercial.test.builder.ProductCapabilityBuilder;
+import com.paytech.commercial.test.builder.CommercialTermComponentBuilder;
+import com.paytech.commercial.test.builder.CommercialTermPriceBuilder;
+import com.paytech.commercial.test.builder.PricingProfileBuilder;
+import com.paytech.commercial.test.builder.PricingProfileCondBuilder;
 import com.paytech.commercial.test.dal.CommercialTestMapper;
 import com.paytech.commercial.test.mocker.local.agreement.AgreementSubscriptionMocker;
-import com.paytech.commercial.test.mocker.local.catalog.ProductCatalogMocker;
 import com.paytech.commercial.test.mocker.local.checkout.CheckoutTermVersionMocker;
+import com.paytech.commercial.test.mocker.local.term.TermPricingMocker;
 
 /**
  * 解析矩阵（technique §2.3、§2.5、§2.11）：订阅、开通项、约束、资金模式、版本区间与派生四项。
  * <li>HTTP 解析链在 Risk 正式不可用端口处以 503 结束，成功候选无法经 HTTP 返回；这里与 {@link CheckoutVerificationTest}
  * 相同，从公开端口与本库只读 Service 构造 {@link CheckoutResolutionContext}，以首个候选和 {@link CheckoutCandidateContext#toView()}
  * 观察真实解析结果。</li>
- * <li>夹具：AE991（优先级 1，合同 106 订阅 ACQUIRING / PAYOUT，CARD_VISA 限 USD、EUR 且带保证金，APPLE_PAY 无约束）与
- * AE992（优先级 2，合同 206 订阅 ACQUIRING，CARD_VISA 限 USD 与 AE）。AE991 落空即由 AE992 接替。</li>
+ * <li>夹具：AE991（优先级 1，合同 106 订阅 ACQUIRING / PAYOUT，CARD 限 VISA、USD / EUR 且带保证金，APPLE_PAY 无约束且无价格）与
+ * AE992（优先级 2，合同 206 订阅 ACQUIRING，CARD 限 USD 与 AE）；两份 Client 版本各有一条 USD 的 CARD 画像价格。AE991 落空即由 AE992
+ * 接替。开通项只在有生效价格时输出（开通与定价模型调整 AC-09）。</li>
  */
 class CheckoutResolutionMatrixTest extends AbstractCheckoutApiTest {
     private static final long FIRST_AGREEMENT_ID = CheckoutTermVersionMocker.AGREEMENT_ID;
     private static final long FIRST_CARD_CAPABILITY_ID = 910000000000331L;
     private static final long FIRST_CARD_USD_LIMIT_ID = 910000000000341L;
+    private static final long FIRST_CARD_BRAND_LIMIT_ID = 910000000000345L;
+    private static final long FIRST_PRICE_ID = 910000000000114L;
     private static final long FIRST_ENTITY_PARTY_ID = 910000000000102L;
     private static final long CLIENT_PARTY_ID = 910000000000002L;
     private static final long SUCCESSOR_VERSION_ID = 910000000000351L;
@@ -56,9 +63,9 @@ class CheckoutResolutionMatrixTest extends AbstractCheckoutApiTest {
     @Autowired
     CheckoutTermVersionMocker versions;
     @Autowired
-    ProductCatalogMocker catalog;
-    @Autowired
     AgreementSubscriptionMocker subscriptions;
+    @Autowired
+    TermPricingMocker pricing;
 
     /** 每例准备商务事实与默认主档候选。 */
     @BeforeEach
@@ -88,20 +95,63 @@ class CheckoutResolutionMatrixTest extends AbstractCheckoutApiTest {
             () -> assertEquals(ResponsiblePartyType.OPERATING_ENTITY.getCode(), derived.fundsBookOwner()));
     }
 
-    /** 给出 CARD：命中带维度的 CARD_VISA（按支付方式匹配），返回开通项、维度与保证金条款。 */
+    /** 给出 CARD：命中 CARD（按支付方式匹配），返回开通项、支付方式、种类、完整接受条件、3DS 要求与保证金条款。 */
     @Test
     void test_normalFlow_withPaymentMethod() {
+        data.overwriteCapabilityRequire3ds(FIRST_CARD_CAPABILITY_ID, true);
+
         var capabilities = first(query(CommercialCodes.PaymentMethod.CARD)).toView().clientTerms().capabilities();
         var capability = capabilities.getFirst();
 
         assertAll(() -> assertEquals(1, capabilities.size()),
             () -> assertEquals(Long.toString(FIRST_CARD_CAPABILITY_ID), capability.agreementCapabilityId()),
-            () -> assertEquals(CommercialCodes.Capability.CARD_VISA, capability.capabilityCode()),
+            () -> assertEquals(CommercialCodes.Capability.CARD, capability.capabilityCode()),
             () -> assertEquals(AgreementCapabilityStatus.ENABLED.getCode(), capability.status()),
-            () -> assertEquals(PricingDimension.CARD_BRAND.getCode(), capability.dimensionCode()),
-            () -> assertEquals(CommercialCodes.CardBrand.VISA, capability.dimensionValue()),
+            () -> assertEquals(CommercialCodes.PaymentMethod.CARD, capability.paymentMethodCode()),
+            () -> assertEquals(CapabilityKind.PAYMENT_METHOD.getCode(), capability.capabilityKind()),
+            () -> assertEquals(List.of(PricingDimension.CARD_BRAND.getCode(), PricingDimension.CURRENCY.getCode()),
+                capability.conditions().stream().map(CheckoutContextView.CapabilityCondition::dimensionCode).toList()),
+            () -> assertEquals(List.of(CommercialCodes.CardBrand.VISA), capability.conditions().get(0).values()),
+            () -> assertEquals(List.of("EUR", "USD"), capability.conditions().get(1).values()),
+            () -> assertEquals(true, capability.require3ds()),
             () -> assertEquals("0.1", capability.rollingReserveRate()),
             () -> assertEquals(90, capability.rollingReserveDays()));
+    }
+
+    /** 新开通但版本中没有生效价格的开通项不输出：APPLE_PAY 无价格时落空，补一条 APPLE_PAY 画像价格后命中 AE991。 */
+    @Test
+    void test_capabilityWithoutPriceIsNotReturned() {
+        assertFalse(context(query(CommercialCodes.PaymentMethod.APPLE_PAY)).candidates().iterator().hasNext());
+
+        pricing.mockProfile(PricingProfileBuilder.template().pricingProfileId(910000000000008L)
+            .pricingProfileCode("CCTQUERY_APPLE").paymentMethodCode(CommercialCodes.PaymentMethod.APPLE_PAY)
+            .status(PricingProfileStatus.ACTIVE));
+        pricing.mockPrice(CommercialTermPriceBuilder.template().termPriceId(910000000000115L)
+                .termVersionId(CheckoutTermVersionMocker.TERM_VERSION_ID).entityNo(FIRST_ENTITY)
+                .pricingProfileCode("CCTQUERY_APPLE").priorityNo(2),
+            CommercialTermComponentBuilder.template().termComponentId(910000000000116L));
+
+        var capabilities = first(query(CommercialCodes.PaymentMethod.APPLE_PAY)).toView().clientTerms().capabilities();
+        assertAll(() -> assertEquals(List.of(CommercialCodes.Capability.APPLE_PAY),
+                capabilities.stream().map(CheckoutContextView.Capability::capabilityCode).toList()),
+            () -> assertEquals(List.of(), capabilities.getFirst().conditions()),
+            () -> assertEquals(false, capabilities.getFirst().require3ds()));
+    }
+
+    /** 价格画像条件与接受条件不相容（价格只限 VISA，开通项只收 AMEX）时 AE991 的 CARD 视为无生效价格，落到 AE992。 */
+    @Test
+    void test_priceConditionOutOfScopeFallsThrough() {
+        pricing.mockProfile(PricingProfileBuilder.template().pricingProfileId(910000000000009L)
+            .pricingProfileCode("CCTQUERY_VISA").paymentMethodCode(CommercialCodes.PaymentMethod.CARD)
+            .status(PricingProfileStatus.ACTIVE),
+            PricingProfileCondBuilder.template().dimensionCode(PricingDimension.CARD_BRAND)
+                .conditionValue(CommercialCodes.CardBrand.VISA));
+        data.overwritePriceProfile(FIRST_PRICE_ID, "CCTQUERY_VISA");
+        assertEquals(FIRST_ENTITY, first(query(CommercialCodes.PaymentMethod.CARD)).entityNo());
+
+        data.overwriteCapabilityLimitValue(FIRST_CARD_BRAND_LIMIT_ID, CommercialCodes.CardBrand.AMEX);
+
+        assertEquals(SECOND_ENTITY, first(query(CommercialCodes.PaymentMethod.CARD)).entityNo());
     }
 
     /** PSP：卖方为 Client Party，税务责任在 Client，资金账簿仍归收单 OE。 */
@@ -126,7 +176,7 @@ class CheckoutResolutionMatrixTest extends AbstractCheckoutApiTest {
         assertEquals(SECOND_ENTITY, first(query()).entityNo());
     }
 
-    /** 未开通：两份合同都没有 GOOGLE_PAY，没有候选；APPLE_PAY 只在 AE991 开通。 */
+    /** 未开通：两份合同都没有 GOOGLE_PAY，没有候选；APPLE_PAY 只在 AE991 开通且没有价格。 */
     @Test
     void test_notEnabledFallsThrough() {
         assertFalse(context(query(CommercialCodes.PaymentMethod.GOOGLE_PAY)).candidates().iterator().hasNext());
@@ -134,7 +184,7 @@ class CheckoutResolutionMatrixTest extends AbstractCheckoutApiTest {
         assertFalse(context(query(CommercialCodes.PaymentMethod.APPLE_PAY)).candidates().iterator().hasNext());
     }
 
-    /** 币种不在约束：AE991 的 CARD_VISA 只剩 EUR，USD 请求落到 AE992。 */
+    /** 币种不在条件内：AE991 的 CARD 只剩 EUR，USD 请求落到 AE992。 */
     @Test
     void test_currencyOutsideLimitsFallsThrough() {
         data.deleteCapabilityLimit(FIRST_CARD_USD_LIMIT_ID);
@@ -217,39 +267,28 @@ class CheckoutResolutionMatrixTest extends AbstractCheckoutApiTest {
         assertEquals(SECOND_ENTITY, first(query()).entityNo());
     }
 
-    /** Visa 与 Mastercard 同时开通是常态：候选通过，两个开通项连同品牌维度全部返回，由支付尝试按实际品牌选用。 */
+    /** 一个 CARD 开通项可接受多个卡组织：条件按维度与取值排序整体返回，由收单在录卡时使用。 */
     @Test
-    void test_multipleCardBrandsAllReturned() {
-        catalog.mockCapability(ProductCapabilityBuilder.template().capabilityCode(CommercialCodes.Capability.CARD_MC)
-            .dimensionValue(CommercialCodes.CardBrand.MASTERCARD));
-        subscriptions.mockCapability(AgreementCapabilityBuilder.template().capabilityCode(CommercialCodes.Capability.CARD_MC));
+    void test_multipleCardBrandsInOneCapability() {
+        data.overwriteCapabilityLimitValue(FIRST_CARD_BRAND_LIMIT_ID, CommercialCodes.CardBrand.MASTERCARD);
+        data.insertCapabilityLimit(910000000000346L, FIRST_CARD_CAPABILITY_ID, PricingDimension.CARD_BRAND.getCode(),
+            CommercialCodes.CardBrand.VISA);
 
         CheckoutContextView view = first(query(CommercialCodes.PaymentMethod.CARD)).toView();
 
         var capabilities = view.clientTerms().capabilities();
         assertAll(() -> assertEquals(FIRST_ENTITY, view.entityNo()),
-            () -> assertEquals(List.of(CommercialCodes.Capability.CARD_MC, CommercialCodes.Capability.CARD_VISA),
+            () -> assertEquals(List.of(CommercialCodes.Capability.CARD),
                 capabilities.stream().map(CheckoutContextView.Capability::capabilityCode).toList()),
             () -> assertEquals(List.of(CommercialCodes.CardBrand.MASTERCARD, CommercialCodes.CardBrand.VISA),
-                capabilities.stream().map(CheckoutContextView.Capability::dimensionValue).toList()));
+                capabilities.getFirst().conditions().getFirst().values()));
     }
 
-    /** 只开通 Amex 时 CARD 仍通过，返回唯一的 CARD_AMEX；停用后无卡开通项则落空。 */
+    /** CARD 停用后 AE991 没有卡开通项，落到 AE992。 */
     @Test
-    void test_singleOtherCardBrandStillPasses() {
+    void test_disabledCardFallsThrough() {
         data.overwriteCapabilityStatus(FIRST_CARD_CAPABILITY_ID, AgreementCapabilityStatus.DISABLED);
-        catalog.mockCapability(ProductCapabilityBuilder.template().capabilityCode(CommercialCodes.Capability.CARD_AMEX)
-            .dimensionValue(CommercialCodes.CardBrand.AMEX));
-        var amex = subscriptions
-            .mockCapability(AgreementCapabilityBuilder.template().capabilityCode(CommercialCodes.Capability.CARD_AMEX))
-            .capability();
 
-        CheckoutContextView view = first(query(CommercialCodes.PaymentMethod.CARD)).toView();
-        assertAll(() -> assertEquals(FIRST_ENTITY, view.entityNo()),
-            () -> assertEquals(List.of(CommercialCodes.Capability.CARD_AMEX), view.clientTerms().capabilities().stream()
-                .map(CheckoutContextView.Capability::capabilityCode).toList()));
-
-        data.overwriteCapabilityStatus(amex.getAgreementCapabilityId(), AgreementCapabilityStatus.DISABLED);
         assertEquals(SECOND_ENTITY, first(query(CommercialCodes.PaymentMethod.CARD)).entityNo());
     }
 

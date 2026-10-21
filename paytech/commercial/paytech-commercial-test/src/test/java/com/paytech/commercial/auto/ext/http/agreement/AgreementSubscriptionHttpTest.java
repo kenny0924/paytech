@@ -19,7 +19,7 @@ import com.paytech.commercial.api.agreement.request.ReplaceAgreementProductsRequ
 import com.paytech.commercial.api.agreement.request.UpdateAgreementCapabilityRequestBody;
 import com.paytech.commercial.api.constant.CommercialCodes;
 import com.paytech.commercial.api.enums.AgreementCapabilityStatus;
-import com.paytech.commercial.api.enums.CapabilityLimitCode;
+import com.paytech.commercial.api.enums.PricingDimension;
 import com.paytech.commercial.api.enums.ProductBusinessModeScope;
 import com.paytech.commercial.api.enums.ProductCode;
 import com.paytech.commercial.api.enums.ProductStatus;
@@ -35,9 +35,12 @@ import com.paytech.commercial.test.checker.write.BusinessChangeChecker;
 import com.paytech.commercial.test.mocker.local.agreement.AgreementSubscriptionMocker;
 import com.paytech.commercial.test.mocker.local.agreement.AgreementWriteMocker;
 
+import tools.jackson.databind.JsonNode;
+
 /**
  * 订阅产品与开通项（technique.md §2.2、database.md §5）：集合替换与等价不变、基座 / 未启用 / 模式不符产品、移除仍有开通项的产品、
- * 开通项的 OE 覆盖、目录资格、条款与约束规范、唯一身份冲突、整体改写与不变重放、归属错误、版本冲突，以及 Child 快照与 Root 关联
+ * 开通项的 OE 覆盖、目录资格、接受条件（可配维度、必填维度、取值格式）与 3DS 要求、唯一身份冲突、整体改写与不变重放、归属错误、版本冲突，
+ * 以及 Child 快照与 Root 关联（开通与定价模型调整 AC-03）
  *
  * @see AgreementApi#replaceProducts(String, String, ReplaceAgreementProductsRequestBody)
  * @see AgreementApi#addCapability(String, String, AddAgreementCapabilityRequestBody)
@@ -129,25 +132,40 @@ class AgreementSubscriptionHttpTest extends AbstractCommercialWriteApiTest {
         assertEquals(List.of(ProductCode.ACQUIRING.getCode()), testMapper.agreementProductCodes(AGREEMENT_ID));
     }
 
-    /** 新增开通项：ENABLED、约束两行、保证金成组、版本 6，开通项 Child CREATE 快照含约束。 */
+    /** 新增开通项：CARD + VISA,MASTERCARD + DEBIT + AED,USD + 3DS，读回一致；保证金成组、版本 6，Child CREATE 快照含条件与 3DS。 */
     @Test
     void test_capability_add_normalFlow() {
         mockAcquiringSubscription();
 
         long capabilityId = post(BASE + "/capabilities", AgreementCapabilityBodyBuilder.template().reserve("0.05", 180)
-            .buildAdd(5)).assertOk().assertText("status", AgreementCapabilityStatus.ENABLED.getCode()).assertVersion(6)
-            .id("agreementCapabilityId");
+            .conditions(AgreementCapabilityBodyBuilder.condition(PricingDimension.CARD_BRAND, CommercialCodes.CardBrand.VISA,
+                    CommercialCodes.CardBrand.MASTERCARD),
+                AgreementCapabilityBodyBuilder.condition(PricingDimension.FUNDING_TYPE, "DEBIT"),
+                AgreementCapabilityBodyBuilder.condition(PricingDimension.CURRENCY, "AED", "USD"))
+            .require3ds(true).buildAdd(5)).assertOk().assertText("status", AgreementCapabilityStatus.ENABLED.getCode())
+            .assertVersion(6).id("agreementCapabilityId");
 
         Map<String, Object> row = testMapper.agreementCapability(capabilityId);
         assertAll(() -> assertEquals(AgreementBuilder.ENTITY_NO, row.get("entity_no")),
+            () -> assertEquals(CommercialCodes.Capability.CARD, row.get("capability_code")),
             () -> assertEquals(0, new BigDecimal("0.05").compareTo((BigDecimal) row.get("rolling_reserve_rate"))),
             () -> assertEquals(180, ((Number) row.get("rolling_reserve_days")).intValue()),
-            () -> assertEquals(List.of("CURRENCY:AED", "CURRENCY:USD"), testMapper.capabilityLimitValues(capabilityId)));
+            () -> assertEquals(Boolean.TRUE, row.get("require_3ds")),
+            () -> assertEquals(List.of("CARD_BRAND:MASTERCARD", "CARD_BRAND:VISA", "CURRENCY:AED", "CURRENCY:USD",
+                "FUNDING_TYPE:DEBIT"), testMapper.capabilityLimitValues(capabilityId)));
         BusinessChangeChecker.Record root = history.record(BusinessChangeRecordRecordType.AGREEMENT.getCode(), AGREEMENT_ID);
         history.record(BusinessChangeRecordRecordType.AGREEMENT_CAPABILITY.getCode(), capabilityId).assertParent(root)
             .assertVersions("6:CREATE").assertLastReason(BusinessChangeReason.AGREEMENT_CAPABILITY_ADDED.getCode())
-            .assertLastData("rollingReserveRate", "0.05").assertIntegrity();
-        get(BASE).assertOk().assertVersion(6);
+            .assertLastData("rollingReserveRate", "0.05").assertLastData("require3ds", "true").assertIntegrity();
+        JsonNode readBack = get(BASE).assertOk().assertVersion(6).node("capabilities").get(0);
+        assertAll(() -> assertEquals(List.of(PricingDimension.CARD_BRAND.getCode(), PricingDimension.CURRENCY.getCode(),
+                PricingDimension.FUNDING_TYPE.getCode()), readBack.path("conditions").valueStream()
+                .map(condition -> condition.path("dimensionCode").asString()).toList()),
+            () -> assertEquals(List.of(CommercialCodes.CardBrand.MASTERCARD, CommercialCodes.CardBrand.VISA),
+                readBack.path("conditions").get(0).path("values").valueStream().map(JsonNode::asString).toList()),
+            () -> assertEquals(List.of("AED", "USD"),
+                readBack.path("conditions").get(1).path("values").valueStream().map(JsonNode::asString).toList()),
+            () -> assertEquals(true, readBack.path("require3ds").asBoolean()));
     }
 
     /** 同 (OE, 可开通项) 已存在为 409；OE 未覆盖、产品未订阅、目录项未启用、合同已结束为业务检查失败。 */
@@ -158,9 +176,16 @@ class AgreementSubscriptionHttpTest extends AbstractCommercialWriteApiTest {
         mockAcquiringSubscription();
         post(BASE + "/capabilities", AgreementCapabilityBodyBuilder.template().entityNo("AE999").buildAdd(5))
             .assertBusinessCheckFailed("合同不覆盖该 OE");
-        testMapper.updateProductCapabilityStatus(CommercialCodes.Capability.CARD_MC, ProductStatus.RETIRED.getCode());
-        post(BASE + "/capabilities", AgreementCapabilityBodyBuilder.template().capabilityCode(CommercialCodes.Capability.CARD_MC)
-            .buildAdd(5)).assertBusinessCheckFailed("可开通项不存在或未启用");
+        testMapper.updateProductCapabilityStatus(CommercialCodes.Capability.APPLE_PAY, ProductStatus.RETIRED.getCode());
+        post(BASE + "/capabilities", AgreementCapabilityBodyBuilder.template()
+            .capabilityCode(CommercialCodes.Capability.APPLE_PAY).buildAdd(5)).assertBusinessCheckFailed("可开通项不存在或未启用");
+        post(BASE + "/capabilities", AgreementCapabilityBodyBuilder.template()
+            .conditions(AgreementCapabilityBodyBuilder.condition(PricingDimension.CARD_BRAND, CommercialCodes.CardBrand.VISA))
+            .buildAdd(5)).assertBusinessCheckFailed("缺少必填接受条件: CURRENCY");
+        post(BASE + "/capabilities", AgreementCapabilityBodyBuilder.template()
+            .conditions(AgreementCapabilityBodyBuilder.condition(PricingDimension.CURRENCY, "USD"),
+                AgreementCapabilityBodyBuilder.condition(PricingDimension.DESTINATION_COUNTRY, "AE"))
+            .buildAdd(5)).assertBusinessCheckFailed("维度不在可开通项可配维度内: DESTINATION_COUNTRY");
         post(BASE + "/capabilities", AgreementCapabilityBodyBuilder.template().buildAdd(5)).assertOk();
         post(BASE + "/capabilities", AgreementCapabilityBodyBuilder.template().buildAdd(6)).assertConflict();
 
@@ -173,7 +198,7 @@ class AgreementSubscriptionHttpTest extends AbstractCommercialWriteApiTest {
         assertEquals(1, testMapper.countAgreementCapabilities(AGREEMENT_ID));
     }
 
-    /** 条款与约束规范只依赖输入：保证金不成组、比例越界、约束值格式、REQUIRE_3DS 取值、重复约束与倒置区间。 */
+    /** 条款与条件规范只依赖输入：保证金不成组、比例越界、取值格式、不可用于开通的维度、维度重复、取值重复与倒置区间。 */
     @Test
     void test_capability_add_invalidParameter() {
         mockAcquiringSubscription();
@@ -182,14 +207,18 @@ class AgreementSubscriptionHttpTest extends AbstractCommercialWriteApiTest {
         post(BASE + "/capabilities", AgreementCapabilityBodyBuilder.template().reserve("1.5", 30).buildAdd(5))
             .assertValidationError("rollingReserveRate");
         post(BASE + "/capabilities", AgreementCapabilityBodyBuilder.template()
-            .limits(AgreementCapabilityBodyBuilder.limit(CapabilityLimitCode.CURRENCY, "usd")).buildAdd(5))
-            .assertBusinessCheckFailed("约束值不符合类别格式");
+            .conditions(AgreementCapabilityBodyBuilder.condition(PricingDimension.CURRENCY, "usd")).buildAdd(5))
+            .assertBusinessCheckFailed("接受条件取值不符合维度格式");
         post(BASE + "/capabilities", AgreementCapabilityBodyBuilder.template()
-            .limits(AgreementCapabilityBodyBuilder.limit(CapabilityLimitCode.REQUIRE_3DS, "0")).buildAdd(5))
-            .assertBusinessCheckFailed("约束值不符合类别格式");
+            .conditions(AgreementCapabilityBodyBuilder.condition(PricingDimension.CURRENCY, "USD"),
+                AgreementCapabilityBodyBuilder.condition(PricingDimension.THREE_DS_RESULT, "Y")).buildAdd(5))
+            .assertInvalidRequest();
         post(BASE + "/capabilities", AgreementCapabilityBodyBuilder.template()
-            .limits(AgreementCapabilityBodyBuilder.limit(CapabilityLimitCode.CURRENCY, "USD"),
-                AgreementCapabilityBodyBuilder.limit(CapabilityLimitCode.CURRENCY, "USD")).buildAdd(5))
+            .conditions(AgreementCapabilityBodyBuilder.condition(PricingDimension.CURRENCY, "USD", "USD")).buildAdd(5))
+            .assertInvalidRequest();
+        post(BASE + "/capabilities", AgreementCapabilityBodyBuilder.template()
+            .conditions(AgreementCapabilityBodyBuilder.condition(PricingDimension.CURRENCY, "USD"),
+                AgreementCapabilityBodyBuilder.condition(PricingDimension.CURRENCY, "AED")).buildAdd(5))
             .assertInvalidRequest();
         post(BASE + "/capabilities", AgreementCapabilityBodyBuilder.template().effectiveTo("2026-08-01T00:00:00Z")
             .buildAdd(5)).assertBusinessCheckFailed("开通项生效终点必须晚于起点");
@@ -197,20 +226,40 @@ class AgreementSubscriptionHttpTest extends AbstractCommercialWriteApiTest {
         assertEquals(0, testMapper.countAgreementCapabilities(AGREEMENT_ID));
     }
 
-    /** 改写开通项：SUSPENDED、终点与单个约束，版本 6，开通项 Child UPDATE 快照为改写后的完整内容。 */
+    /** 币种对条件取「三位/三位」：FX_SPOT 开通 USD/AED 成功并读回；USDAED 与小写为取值格式错误。 */
+    @Test
+    void test_capability_add_currencyPair() {
+        long fxProductRowId = PRODUCT_ROW_ID + 1;
+        subscriptions.mockProduct(AgreementProductBuilder.template().agreementProductId(fxProductRowId)
+            .agreementId(AGREEMENT_ID).productCode(ProductCode.FX));
+        agreement.auditedChild(BusinessChangeRecordRecordType.AGREEMENT_PRODUCT, fxProductRowId);
+        AgreementCapabilityBodyBuilder fxSpot = AgreementCapabilityBodyBuilder.template()
+            .capabilityCode(CommercialCodes.Capability.FX_SPOT);
+
+        post(BASE + "/capabilities", fxSpot.conditions(AgreementCapabilityBodyBuilder.condition(PricingDimension.CURRENCY_PAIR,
+            "USDAED")).buildAdd(5)).assertBusinessCheckFailed("接受条件取值不符合维度格式");
+        post(BASE + "/capabilities", fxSpot.conditions(AgreementCapabilityBodyBuilder.condition(PricingDimension.CURRENCY_PAIR,
+            "usd/aed")).buildAdd(5)).assertBusinessCheckFailed("接受条件取值不符合维度格式");
+        long capabilityId = post(BASE + "/capabilities", fxSpot.conditions(AgreementCapabilityBodyBuilder.condition(
+            PricingDimension.CURRENCY_PAIR, "USD/AED")).buildAdd(5)).assertOk().assertVersion(6).id("agreementCapabilityId");
+
+        assertEquals(List.of("CURRENCY_PAIR:USD/AED"), testMapper.capabilityLimitValues(capabilityId));
+    }
+
+    /** 改写开通项：SUSPENDED、终点、单币种与要求 3DS，版本 6，开通项 Child UPDATE 快照为改写后的完整内容。 */
     @Test
     void test_capability_update_normalFlow() {
         mockExistingCapability();
 
         put(BASE + "/capabilities/" + CAPABILITY_ID, AgreementCapabilityBodyBuilder.template()
             .status(AgreementCapabilityStatus.SUSPENDED).effectiveTo("2027-01-01T00:00:00Z")
-            .limits(AgreementCapabilityBodyBuilder.limit(CapabilityLimitCode.CURRENCY, "USD"),
-                AgreementCapabilityBodyBuilder.limit(CapabilityLimitCode.REQUIRE_3DS, "1"))
+            .conditions(AgreementCapabilityBodyBuilder.condition(PricingDimension.CURRENCY, "USD")).require3ds(true)
             .buildUpdate(5)).assertOk().assertText("status", AgreementCapabilityStatus.SUSPENDED.getCode()).assertVersion(6);
 
         Map<String, Object> row = testMapper.agreementCapability(CAPABILITY_ID);
         assertAll(() -> assertEquals(AgreementCapabilityStatus.SUSPENDED.getCode(), row.get("status")),
-            () -> assertEquals(List.of("CURRENCY:USD", "REQUIRE_3DS:1"), testMapper.capabilityLimitValues(CAPABILITY_ID)),
+            () -> assertEquals(List.of("CURRENCY:USD"), testMapper.capabilityLimitValues(CAPABILITY_ID)),
+            () -> assertEquals(Boolean.TRUE, row.get("require_3ds")),
             () -> assertNull(row.get("rolling_reserve_rate")));
         history.record(BusinessChangeRecordRecordType.AGREEMENT_CAPABILITY.getCode(), CAPABILITY_ID)
             .assertCurrentVersion(6).assertVersions("6:UPDATE")
@@ -244,7 +293,7 @@ class AgreementSubscriptionHttpTest extends AbstractCommercialWriteApiTest {
         agreement.auditedChild(BusinessChangeRecordRecordType.AGREEMENT_PRODUCT, PRODUCT_ROW_ID);
     }
 
-    /** 存量开通项：AE993 上 ENABLED 的 CARD_VISA，约束 USD 与 AED（带受审计 Child 身份）。 */
+    /** 存量开通项：AE993 上 ENABLED 的 CARD，CURRENCY=USD,AED（带受审计 Child 身份）。 */
     void mockExistingCapability() {
         mockAcquiringSubscription();
         subscriptions.mockCapability(AgreementCapabilityBuilder.template().agreementCapabilityId(CAPABILITY_ID)

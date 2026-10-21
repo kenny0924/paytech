@@ -63,4 +63,7 @@ public class CommercialPriceResponseBody {
 
     /** Client 条款的结算四字段；Partner 条款为 null */
     private CommercialPriceSettlementResponseBody settlement;
+
+    /** 来源模板价格 ID；手工维护或命中结果为空 */
+    private String sourceTemplatePriceId;
 }

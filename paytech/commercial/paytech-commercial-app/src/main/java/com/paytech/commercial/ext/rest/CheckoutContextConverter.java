@@ -51,8 +51,11 @@ final class CheckoutContextConverter {
                 t.businessMode(), t.fundMode(), t.pricingAuthority(), t.referralPartnerId(), t.agreementProducts(),
                 t.capabilities().stream()
                         .map(k -> new ResolveCheckoutContextResponseBody.Capability(k.agreementCapabilityId(),
-                                k.capabilityCode(), k.status(), k.dimensionCode(), k.dimensionValue(),
-                                k.rollingReserveRate(), k.rollingReserveDays()))
+                                k.capabilityCode(), k.status(), null, null, k.rollingReserveRate(),
+                                k.rollingReserveDays(), k.paymentMethodCode(), k.capabilityKind(),
+                                k.conditions().stream().map(c -> new ResolveCheckoutContextResponseBody.CapabilityCondition(
+                                        c.dimensionCode(), c.values())).toList(),
+                                k.require3ds()))
                         .toList());
     }
 

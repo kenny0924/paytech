@@ -115,7 +115,7 @@ public interface AgreementApi {
         @PathVariable("agreementId") String agreementId, @Valid @RequestBody ReplaceAgreementProductsRequestBody body);
 
     /**
-     * 新增开通项（ENABLED）及其约束行
+     * 新增开通项（ENABLED）及其接受条件与 3DS 要求
      *
      * @param actorId 操作者 Account ID
      * @param agreementId 合同 ID
@@ -127,7 +127,7 @@ public interface AgreementApi {
         @PathVariable("agreementId") String agreementId, @Valid @RequestBody AddAgreementCapabilityRequestBody body);
 
     /**
-     * 整体改写开通项状态、区间、保证金与约束行；内容不变时不产生变更并返回当前版本
+     * 整体改写开通项状态、区间、保证金、接受条件与 3DS 要求；内容不变时不产生变更并返回当前版本
      *
      * @param actorId 操作者 Account ID
      * @param agreementId 合同 ID

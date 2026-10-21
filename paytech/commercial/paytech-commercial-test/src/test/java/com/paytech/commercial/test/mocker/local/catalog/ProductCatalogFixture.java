@@ -11,6 +11,7 @@ import com.paytech.commercial.api.enums.ProductCode;
 import com.paytech.commercial.api.enums.ProductStatus;
 import com.paytech.commercial.core.dal.dataobject.Product;
 import com.paytech.commercial.core.dal.dataobject.ProductCapability;
+import com.paytech.commercial.core.dal.dataobject.ProductCapabilityDimension;
 import com.paytech.commercial.core.dal.dataobject.ProductFeeEvent;
 import com.paytech.commercial.test.mocker.local.checkout.CheckoutFixture;
 import com.paytech.foundation.common.enums.CodeEnum;
@@ -23,11 +24,12 @@ import tools.jackson.databind.json.JsonMapper;
  * <li>只构造 DataObject，不访问数据库；创建与更新时间使用固定测试时点。未知 Code 直接失败，不映射为 null。</li>
  *
  * @param products 7 个产品
- * @param capabilities 11 个可开通项
+ * @param capabilities 9 个可开通项
  * @param feeEvents 21 个计费事件
+ * @param dimensions 20 个可配维度
  */
 public record ProductCatalogFixture(List<Product> products, List<ProductCapability> capabilities,
-    List<ProductFeeEvent> feeEvents) {
+    List<ProductFeeEvent> feeEvents, List<ProductCapabilityDimension> dimensions) {
     /** 测试资源路径。 */
     public static final String RESOURCE = "/fixtures/commercial/product-catalog.json";
 
@@ -46,7 +48,8 @@ public record ProductCatalogFixture(List<Product> products, List<ProductCapabili
         }
         return new ProductCatalogFixture(rows.get("product").stream().map(ProductCatalogFixture::product).toList(),
             rows.get("product_capability").stream().map(ProductCatalogFixture::capability).toList(),
-            rows.get("product_fee_event").stream().map(ProductCatalogFixture::feeEvent).toList());
+            rows.get("product_fee_event").stream().map(ProductCatalogFixture::feeEvent).toList(),
+            rows.get("product_capability_dimension").stream().map(ProductCatalogFixture::dimension).toList());
     }
 
     private static Product product(Map<String, Object> row) {
@@ -70,10 +73,8 @@ public record ProductCatalogFixture(List<Product> products, List<ProductCapabili
         capability.setCapabilityName((String) row.get("capability_name"));
         capability.setCapabilityKind(code(CapabilityKind.class, row.get("capability_kind")));
         capability.setPaymentMethodCode((String) row.get("payment_method_code"));
-        capability.setDimensionCode(row.get("dimension_code") == null ? null
-            : code(PricingDimension.class, row.get("dimension_code")));
-        capability.setDimensionValue((String) row.get("dimension_value"));
         capability.setStatus(code(ProductStatus.class, row.get("status")));
+        capability.setChangeVersion(1L);
         capability.setCreateTime(CheckoutFixture.NOW);
         capability.setUpdateTime(CheckoutFixture.NOW);
         return capability;
@@ -86,9 +87,24 @@ public record ProductCatalogFixture(List<Product> products, List<ProductCapabili
         feeEvent.setFeeEventCode((String) row.get("fee_event_code"));
         feeEvent.setTermType((String) row.get("term_type"));
         feeEvent.setBillingFactType((String) row.get("billing_fact_type"));
+        feeEvent.setCapabilityKind(row.get("capability_kind") == null ? null
+            : code(CapabilityKind.class, row.get("capability_kind")));
+        feeEvent.setCapabilityCode((String) row.get("capability_code"));
+        feeEvent.setChangeVersion(1L);
         feeEvent.setCreateTime(CheckoutFixture.NOW);
         feeEvent.setUpdateTime(CheckoutFixture.NOW);
         return feeEvent;
+    }
+
+    private static ProductCapabilityDimension dimension(Map<String, Object> row) {
+        ProductCapabilityDimension dimension = new ProductCapabilityDimension();
+        dimension.setCapabilityDimensionId(((Number) row.get("capability_dimension_id")).longValue());
+        dimension.setCapabilityCode((String) row.get("capability_code"));
+        dimension.setDimensionCode(code(PricingDimension.class, row.get("dimension_code")));
+        dimension.setRequired(((Number) row.get("required")).intValue() == 1);
+        dimension.setCreateTime(CheckoutFixture.NOW);
+        dimension.setUpdateTime(CheckoutFixture.NOW);
+        return dimension;
     }
 
     private static <T extends CodeEnum> T code(Class<T> type, Object value) {

@@ -66,7 +66,7 @@ public class CommercialPersistenceConfiguration {
         handlers.register(ProductStatus.class, CodeEnumTypeHandler.class);
         handlers.register(CapabilityKind.class, CodeEnumTypeHandler.class);
         handlers.register(AgreementCapabilityStatus.class, CodeEnumTypeHandler.class);
-        handlers.register(CapabilityLimitCode.class, CodeEnumTypeHandler.class);
+        handlers.register(CommercialTermOwnerType.class, CodeEnumTypeHandler.class);
         handlers.register(PricingProfileKind.class, CodeEnumTypeHandler.class);
         handlers.register(PricingDimension.class, CodeEnumTypeHandler.class);
         handlers.register(PricingModel.class, CodeEnumTypeHandler.class);

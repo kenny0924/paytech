@@ -13,6 +13,9 @@ public enum CommercialTermVersionStatus implements CodeEnum {
     /** 已批准 */
     APPROVED("APPROVED"),
 
+    /** 客户已签署价格协议（合同方案非免签版本排期前） */
+    CLIENT_SIGNED("CLIENT_SIGNED"),
+
     /** 已排期 */
     SCHEDULED("SCHEDULED"),
 

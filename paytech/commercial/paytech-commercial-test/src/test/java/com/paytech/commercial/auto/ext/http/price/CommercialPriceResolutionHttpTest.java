@@ -27,12 +27,14 @@ import com.paytech.commercial.api.term.request.CreateCommercialTermVersionReques
 import com.paytech.commercial.core.dal.dataobject.CommercialTermPrice;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermVersion;
 import com.paytech.commercial.domain.enums.AgreementAgreementType;
+import com.paytech.commercial.domain.enums.AgreementPartyPartyRole;
 import com.paytech.commercial.domain.enums.AgreementStatus;
 import com.paytech.commercial.domain.enums.PricingProfileStatus;
 import com.paytech.commercial.domainservice.repository.AgreementOperatingEntityRepository;
 import com.paytech.commercial.test.base.term.AbstractCommercialTermApiTest;
 import com.paytech.commercial.test.builder.AgreementBuilder;
 import com.paytech.commercial.test.builder.AgreementOperatingEntityBuilder;
+import com.paytech.commercial.test.builder.AgreementPartyBuilder;
 import com.paytech.commercial.test.builder.CommercialTermPlanBuilder;
 import com.paytech.commercial.test.builder.PricingProfileBuilder;
 import com.paytech.commercial.test.builder.PricingProfileCondBuilder;
@@ -49,6 +51,9 @@ import tools.jackson.databind.JsonNode;
  */
 class CommercialPriceResolutionHttpTest extends AbstractCommercialTermApiTest {
     private static final String RESOLUTIONS = "/commercial-prices/v1/resolutions";
+
+    /** Partner 合同的 LOCAL_PARTNER 签署 Party。 */
+    private static final long PARTNER_PARTY_ID = 930000000000905L;
 
     /** 借记卡画像（FUNDING_TYPE=DEBIT）。 */
     private static final String CARD_DEBIT = "WRITE_CARD_DEBIT";
@@ -209,7 +214,7 @@ class CommercialPriceResolutionHttpTest extends AbstractCommercialTermApiTest {
     void test_historicalVersionUnaffected() {
         JsonNode second = ok(201, createVersionResult(Long.toString(CommercialTermPlanBuilder.TERM_PLAN_ID), "2", null));
         JsonNode priced = replacePrices(second, price("USD", CARD, 1, percentage("MDR", "0.01")));
-        command(ok(200, scheduleResult(approved(priced), NOW)), "activate", CHECKER);
+        command(ok(200, scheduleResult(approvedAndSigned(priced), NOW)), "activate", CHECKER);
 
         ResolveCommercialPriceRequestBody historical = request("USD", facts("VISA", "CREDIT"));
         historical.setContextAsOfTime("2026-09-05T00:00:00Z");
@@ -233,7 +238,7 @@ class CommercialPriceResolutionHttpTest extends AbstractCommercialTermApiTest {
     @Test
     void test_scheduledEffectiveBeforeFlip() {
         JsonNode second = ok(201, createVersionResult(Long.toString(CommercialTermPlanBuilder.TERM_PLAN_ID), "2", null));
-        JsonNode scheduled = ok(200, scheduleResult(approved(replacePrices(second,
+        JsonNode scheduled = ok(200, scheduleResult(approvedAndSigned(replacePrices(second,
             price("USD", CARD, 1, percentage("MDR", "0.01")))), NOW));
         ResolveCommercialPriceRequestBody atNow = request("USD", facts("VISA", "CREDIT"));
         atNow.setTermVersionId(text(scheduled, "versionId"));
@@ -259,7 +264,9 @@ class CommercialPriceResolutionHttpTest extends AbstractCommercialTermApiTest {
         long localPartnerId = 930000000000950L;
         graph.mockAgreement(AgreementBuilder.template().agreementId(partnerAgreementId).agreementNo("WRITE-PARTNER-1")
             .agreementType(AgreementAgreementType.PARTNER).businessMode(null).fundMode(null).pricingAuthority(null)
-            .clientId(null).localPartnerId(localPartnerId).entityNo(null).status(AgreementStatus.ACTIVE));
+            .clientId(null).localPartnerId(localPartnerId).entityNo(null).status(AgreementStatus.ACTIVE))
+            .party(AgreementPartyBuilder.template().agreementPartyId(AgreementPartyBuilder.AGREEMENT_PARTY_ID + 1)
+                .partyId(PARTNER_PARTY_ID).partyRole(AgreementPartyPartyRole.LOCAL_PARTNER));
         agreementOperatingEntityRepository.insertAll(List.of(AgreementOperatingEntityBuilder.template()
             .agreementId(partnerAgreementId).build()));
         CreateCommercialTermPlanRequestBody planBody = planRequest();
@@ -281,7 +288,8 @@ class CommercialPriceResolutionHttpTest extends AbstractCommercialTermApiTest {
         share.setBusinessCalendarCode(null);
         share.setSettlementTimezone(null);
         share.setCutoffSecondOfDay(null);
-        JsonNode active = command(ok(200, scheduleResult(approved(replacePrices(version, share)), NOW)), "activate", CHECKER);
+        JsonNode active = command(ok(200, scheduleResult(signed(approved(replacePrices(version, share)), PARTNER_PARTY_ID), NOW)),
+            "activate", CHECKER);
         ResolveCommercialPriceRequestBody request = request("USD", facts("VISA", "CREDIT"));
         request.setTermVersionId(text(active, "versionId"));
         request.setAgreementId(Long.toString(partnerAgreementId));

@@ -12,6 +12,7 @@ import com.paytech.commercial.core.dal.dataobject.CommercialTermPlan;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermPrice;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermVersion;
 import com.paytech.commercial.core.dal.dataobject.PricingProfile;
+import com.paytech.commercial.domainservice.repository.AgreementPartyRepository;
 import com.paytech.commercial.domainservice.repository.AgreementRepository;
 import com.paytech.commercial.domainservice.repository.CommercialTermComponentBandRepository;
 import com.paytech.commercial.domainservice.repository.CommercialTermComponentRepository;
@@ -20,6 +21,7 @@ import com.paytech.commercial.domainservice.repository.CommercialTermPriceReposi
 import com.paytech.commercial.domainservice.repository.CommercialTermVersionRepository;
 import com.paytech.commercial.domainservice.repository.PricingProfileRepository;
 import com.paytech.commercial.test.builder.AgreementBuilder;
+import com.paytech.commercial.test.builder.AgreementPartyBuilder;
 import com.paytech.commercial.test.builder.CommercialTermComponentBandBuilder;
 import com.paytech.commercial.test.builder.CommercialTermComponentBuilder;
 import com.paytech.commercial.test.builder.CommercialTermPlanBuilder;
@@ -38,6 +40,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class CommercialGraphMocker {
     private final AgreementRepository agreementRepository;
+    private final AgreementPartyRepository agreementPartyRepository;
     private final PricingProfileRepository pricingProfileRepository;
     private final CommercialTermPlanRepository commercialTermPlanRepository;
     private final CommercialTermPriceRepository commercialTermPriceRepository;
@@ -80,6 +83,12 @@ public class CommercialGraphMocker {
 
         private Graph(Agreement agreement) {
             this.agreement = agreement;
+        }
+
+        /** 插入合同的一条参与方角色（价格签署的签署方）。 */
+        public Graph party(AgreementPartyBuilder builder) {
+            agreementPartyRepository.insertAll(List.of(builder.agreementId(agreement.getAgreementId()).build()));
+            return this;
         }
 
         /** 插入一个定价画像（全局，不挂父行）；价格默认引用 PricingProfileBuilder 的代码。 */

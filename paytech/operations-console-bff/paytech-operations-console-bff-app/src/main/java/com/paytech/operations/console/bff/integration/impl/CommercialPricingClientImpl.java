@@ -10,6 +10,7 @@ import java.util.function.Supplier;
 
 import org.springframework.stereotype.Component;
 
+import com.paytech.commercial.api.enums.CommercialTermOwnerType;
 import com.paytech.commercial.api.price.CommercialTermVersionPriceApi;
 import com.paytech.commercial.api.pricing.PricingProfileApi;
 import com.paytech.commercial.api.term.CommercialTermApi;
@@ -19,11 +20,14 @@ import com.paytech.operations.console.bff.service.model.CommercialPricingModels.
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels.CommercialTermVersionPricesResponseBody;
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels.CommercialTermVersionResponseBody;
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels.CreateCommercialTermPlanRequestBody;
+import com.paytech.operations.console.bff.service.model.CommercialPricingModels.CreateCommercialTermTemplateRequestBody;
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels.CreateCommercialTermVersionRequestBody;
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels.CreatePricingProfileRequestBody;
+import com.paytech.operations.console.bff.service.model.CommercialPricingModels.FillCommercialTermVersionFromTemplateRequestBody;
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels.PricingProfileListResponseBody;
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels.PricingProfileResponseBody;
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels.PricingProfileTransitionRequestBody;
+import com.paytech.operations.console.bff.service.model.CommercialPricingModels.RecordTermVersionAcceptanceRequestBody;
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels.ReplaceCommercialTermPricesRequestBody;
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels.ScheduleCommercialTermVersionRequestBody;
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels.UpdatePricingProfileRequestBody;
@@ -34,7 +38,7 @@ import lombok.AllArgsConstructor;
 /**
  * commercial 定价画像与条款接口的 HTTP 转发：每个入口只调用一次 commercial，不重试
  * <li>命令把会话 Account ID 填入 X-Gateway-Actor-Subject；Maker / Checker 由 commercial 依据该操作人判定。</li>
- * <li>回执的画像、方案与版本身份必须与请求一致；画像列表与价格全集必须带集合。</li>
+ * <li>回执的画像、方案与版本身份必须与请求一致；模板方案回执必须为 PLATFORM_TEMPLATE；画像列表与价格全集必须带集合。</li>
  *
  * @author Claude
  */
@@ -98,6 +102,20 @@ public class CommercialPricingClientImpl implements CommercialPricingClient {
         return plan;
     }
 
+    /** 创建模板方案；回执方案编号、条款类型、OE 与请求一致且为 PLATFORM_TEMPLATE。 */
+    @Override
+    public CommercialTermPlanResponseBody createTemplate(OperatorContext operator,
+        CreateCommercialTermTemplateRequestBody request) {
+        var plan = write(request, () -> body(termApi.createTemplate(operator.accountId(), request(request,
+            com.paytech.commercial.api.term.request.CreateCommercialTermTemplateRequestBody.class))),
+            CommercialTermPlanResponseBody.class);
+        requireSame(request.getPlanCode(), plan.getPlanCode());
+        requireSame(request.getTermType(), plan.getTermType());
+        requireSame(request.getEntityNo(), plan.getEntityNo());
+        requireSame(CommercialTermOwnerType.PLATFORM_TEMPLATE.getCode(), plan.getOwnerType());
+        return plan;
+    }
+
     /** 创建版本；回执方案 ID 与路径一致。 */
     @Override
     public CommercialTermVersionResponseBody createVersion(OperatorContext operator, String planId,
@@ -115,6 +133,22 @@ public class CommercialPricingClientImpl implements CommercialPricingClient {
         ReplaceCommercialTermPricesRequestBody request) {
         return sameVersion(versionId, request, () -> termApi.replacePrices(operator.accountId(), versionId,
             request(request, com.paytech.commercial.api.term.request.ReplaceCommercialTermPricesRequestBody.class)));
+    }
+
+    /** 从模板补齐。 */
+    @Override
+    public CommercialTermVersionResponseBody fillFromTemplate(OperatorContext operator, String versionId,
+        FillCommercialTermVersionFromTemplateRequestBody request) {
+        return sameVersion(versionId, request, () -> termApi.fillFromTemplate(operator.accountId(), versionId,
+            request(request, com.paytech.commercial.api.term.request.FillCommercialTermVersionFromTemplateRequestBody.class)));
+    }
+
+    /** 登记客户签署。 */
+    @Override
+    public CommercialTermVersionResponseBody recordAcceptance(OperatorContext operator, String versionId,
+        RecordTermVersionAcceptanceRequestBody request) {
+        return sameVersion(versionId, request, () -> termApi.recordAcceptance(operator.accountId(), versionId,
+            request(request, com.paytech.commercial.api.term.request.RecordTermVersionAcceptanceRequestBody.class)));
     }
 
     /** 版本状态推进。 */

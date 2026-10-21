@@ -23,7 +23,7 @@ public class CommercialTermVersion {
     /** 所属方案 */
     private Long termPlanId;
 
-    /** 版本冻结引用的合同 */
+    /** 版本冻结引用的合同；模板版本为空 */
     private Long agreementId;
 
     /** 方案内版本序号 */
@@ -49,6 +49,12 @@ public class CommercialTermVersion {
 
     /** 费用金额是否含税 */
     private FeeTaxTreatment feeTaxTreatment;
+
+    /** 基于标准价目模板生成时的来源模板版本；手工或复制创建为空 */
+    private Long sourceTemplateVersionId;
+
+    /** 迁移前已排期或生效的存量版本免客户签署 */
+    private Boolean signatureExempt;
 
     /** 记录创建的 UTC 微秒时间 */
     private Instant createTime;

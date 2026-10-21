@@ -36,7 +36,7 @@ public class CommercialTermVersionSummary {
 
     /**
      * 版本状态
-     * <li>DRAFT、PENDING_APPROVAL、APPROVED、SCHEDULED、ACTIVE、SUPERSEDED、EXPIRED。</li>
+     * <li>DRAFT、PENDING_APPROVAL、APPROVED、CLIENT_SIGNED、SCHEDULED、ACTIVE、SUPERSEDED、EXPIRED。</li>
      */
     private String status;
 
@@ -78,4 +78,22 @@ public class CommercialTermVersionSummary {
 
     /** 版本行最近更新时间，UTC ISO 8601 */
     private String updateTime;
+
+    /** 方案 Owner 类型：CLIENT、LOCAL_PARTNER、PLATFORM_TEMPLATE */
+    private String ownerType;
+
+    /** 模板显示名，仅 PLATFORM_TEMPLATE */
+    private String templateName;
+
+    /** 基于模板生成时的来源模板版本 ID，没有为空 */
+    private String sourceTemplateVersionId;
+
+    /** 破标组件数 */
+    private Integer belowStandardCount;
+
+    /** 存量版本免签 */
+    private Boolean signatureExempt;
+
+    /** 是否已登记客户签署 */
+    private Boolean hasAcceptance;
 }

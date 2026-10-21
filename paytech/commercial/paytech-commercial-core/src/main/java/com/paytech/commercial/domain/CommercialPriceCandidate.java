@@ -87,22 +87,6 @@ public class CommercialPriceCandidate {
         return true;
     }
 
-    /**
-     * 与开通项细分维度相容：画像不限制该维度，或条件值包含开通项的维度值（费率卡把画像归到开通项下）。
-     *
-     * @param dimension 开通项维度，可空
-     * @param value 开通项维度值
-     * @return 是否相容
-     */
-    public boolean compatibleWith(PricingDimension dimension, String value) {
-        if (dimension == null) {
-            return true;
-        }
-        List<PricingProfileCond> onDimension =
-            conditions.stream().filter(condition -> condition.getDimensionCode() == dimension).toList();
-        return onDimension.isEmpty() || onDimension.stream().anyMatch(condition -> condition.getConditionValue().equals(value));
-    }
-
     /** 命中排序：具体度降序、priorityNo 升序。 */
     public static int compareForHit(CommercialPriceCandidate left, CommercialPriceCandidate right) {
         int bySpecificity = Integer.compare(right.specificity(), left.specificity());

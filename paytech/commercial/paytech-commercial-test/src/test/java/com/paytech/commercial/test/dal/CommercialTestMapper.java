@@ -94,6 +94,44 @@ public class CommercialTestMapper {
             java.sql.Timestamp.from(effectiveTo), agreementCapabilityId);
     }
 
+    /** 改写版本状态（构造状态前置条件）。 */
+    public void overwriteVersionStatus(long termVersionId, String status) {
+        jdbc.update("UPDATE t_commercial_term_version SET status=?, active_slot=NULL WHERE term_version_id=?", status,
+            termVersionId);
+    }
+
+    /** 改写版本的存量免签标志。 */
+    public void overwriteVersionSignatureExempt(long termVersionId, boolean exempt) {
+        jdbc.update("UPDATE t_commercial_term_version SET signature_exempt=? WHERE term_version_id=?", exempt ? 1 : 0,
+            termVersionId);
+    }
+
+    /** 插入一条开通项条件行。 */
+    public void insertCapabilityLimit(long agreementCapabilityLimitId, long agreementCapabilityId, String limitCode,
+        String limitValue) {
+        jdbc.update("INSERT INTO t_agreement_capability_limit (agreement_capability_limit_id, agreement_capability_id, "
+            + "limit_code, limit_value, create_time, update_time) VALUES (?, ?, ?, ?, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6))",
+            agreementCapabilityLimitId, agreementCapabilityId, limitCode, limitValue);
+    }
+
+    /** 改写开通项的 3DS 要求。 */
+    public void overwriteCapabilityRequire3ds(long agreementCapabilityId, boolean require3ds) {
+        jdbc.update("UPDATE t_agreement_capability SET require_3ds=? WHERE agreement_capability_id=?", require3ds ? 1 : 0,
+            agreementCapabilityId);
+    }
+
+    /** 改写一条开通项条件行的取值。 */
+    public void overwriteCapabilityLimitValue(long agreementCapabilityLimitId, String limitValue) {
+        jdbc.update("UPDATE t_agreement_capability_limit SET limit_value=? WHERE agreement_capability_limit_id=?", limitValue,
+            agreementCapabilityLimitId);
+    }
+
+    /** 改写一条价格引用的画像代码。 */
+    public void overwritePriceProfile(long termPriceId, String pricingProfileCode) {
+        jdbc.update("UPDATE t_commercial_term_price SET pricing_profile_code=? WHERE term_price_id=?", pricingProfileCode,
+            termPriceId);
+    }
+
     /** 删除一条开通项约束。 */
     public void deleteCapabilityLimit(long agreementCapabilityLimitId) {
         jdbc.update("DELETE FROM t_agreement_capability_limit WHERE agreement_capability_limit_id=?",

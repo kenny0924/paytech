@@ -49,7 +49,8 @@ class CommercialTermWriteHttpTest extends AbstractCommercialTermApiTest {
         JsonNode priced = replacePrices(version, price("USD", CARD, 1, percentage("MDR", "0.025")));
         JsonNode submitted = command(priced, "submit", MAKER);
         JsonNode approvedVersion = command(submitted, "approve", CHECKER);
-        JsonNode scheduled = ok(200, scheduleResult(approvedVersion, NOW));
+        JsonNode signedVersion = signed(approvedVersion);
+        JsonNode scheduled = ok(200, scheduleResult(signedVersion, NOW));
         JsonNode active = command(scheduled, "activate", CHECKER);
 
         long planId = Long.parseLong(text(plan, "planId"));
@@ -58,15 +59,17 @@ class CommercialTermWriteHttpTest extends AbstractCommercialTermApiTest {
             () -> assertEquals("1", text(version, "versionNo")), () -> assertEquals("2", text(version, "changeVersion")),
             () -> assertEquals("PENDING_APPROVAL", text(submitted, "status")),
             () -> assertEquals("APPROVED", text(approvedVersion, "status")),
+            () -> assertEquals("CLIENT_SIGNED", text(signedVersion, "status")),
+            () -> assertEquals("SIGN-" + versionId, signedVersion.path("acceptance").path("acceptanceReference").asString()),
             () -> assertEquals("SCHEDULED", text(scheduled, "status")),
             () -> assertEquals(NOW.toString(), text(scheduled, "effectiveFrom")),
-            () -> assertEquals("ACTIVE", text(active, "status")), () -> assertEquals("7", text(active, "changeVersion")),
+            () -> assertEquals("ACTIVE", text(active, "status")), () -> assertEquals("8", text(active, "changeVersion")),
             () -> assertEquals("ACTIVE", testMapper.termPlanStatus(planId)),
             () -> assertEquals(Boolean.TRUE, testMapper.termVersion(versionId).get("active_slot")));
 
-        // 版本 Child 快照：CREATE、价格替换、提交（Maker）、批准（Checker）、排期、激活
+        // 版本 Child 快照：CREATE、价格替换、提交（Maker）、批准（Checker）、客户签署、排期、激活
         List<Map<String, Object>> snapshots = testMapper.businessChangeSnapshots("COMMERCIAL_TERM_VERSION", versionId);
-        assertAll(() -> assertEquals(List.of(2L, 3L, 4L, 5L, 6L, 7L),
+        assertAll(() -> assertEquals(List.of(2L, 3L, 4L, 5L, 6L, 7L, 8L),
                 snapshots.stream().map(row -> ((Number)row.get("version_no")).longValue()).toList()),
             () -> assertEquals(MAKER, ((Number)snapshots.get(2).get("create_by")).longValue()),
             () -> assertEquals(BusinessChangeReason.TERM_VERSION_SUBMITTED.getCode(), snapshot(snapshots.get(2)).path("_meta").path("reasonCode").asString()),
@@ -74,16 +77,18 @@ class CommercialTermWriteHttpTest extends AbstractCommercialTermApiTest {
             () -> assertEquals(Long.toString(MAKER), snapshot(snapshots.get(3)).path("data").path("makerAccountId").asString()),
             () -> assertEquals(Long.toString(CHECKER),
                 snapshot(snapshots.get(3)).path("data").path("checkerAccountId").asString()),
-            () -> assertEquals(7L, testMapper.businessChangeVersion("COMMERCIAL_TERM_PLAN", planId)));
+            () -> assertEquals(BusinessChangeReason.TERM_VERSION_ACCEPTED.getCode(),
+                snapshot(snapshots.get(4)).path("_meta").path("reasonCode").asString()),
+            () -> assertEquals(8L, testMapper.businessChangeVersion("COMMERCIAL_TERM_PLAN", planId)));
 
         // 提交后发布：信封版本为本次激活后的方案根版本，首次生效无被替代版本
-        String eventKey = CommercialTermVersionActivatedHandler.buildEvent(planId, 7).eventKey();
+        String eventKey = CommercialTermVersionActivatedHandler.buildEvent(planId, 8).eventKey();
         JsonNode envelope = events.awaitEnvelope(CommercialTermVersionActivatedHandler.EVENT_TYPE, eventKey);
         JsonNode payload = envelope.path("payload");
         assertAll(() -> assertEquals(Long.toString(versionId), payload.path("versionId").asString()),
             () -> assertEquals(CommercialTermVersionActivatedPayload.EVENT_TYPE, envelope.path("eventType").asString()),
             () -> assertTrue(payload.path("supersededVersionId").isNull()),
-            () -> assertEquals("7", payload.path("changeVersion").asString()));
+            () -> assertEquals("8", payload.path("changeVersion").asString()));
     }
 
     /** 方案同身份重放：同内容返回原方案 200；同编号不同 Owner 409；合同已有该条款类型方案时换编号 400。 */

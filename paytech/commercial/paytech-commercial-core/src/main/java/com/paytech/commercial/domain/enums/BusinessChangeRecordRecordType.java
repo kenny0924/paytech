@@ -18,7 +18,10 @@ public enum BusinessChangeRecordRecordType implements CodeEnum {
 
     COMMERCIAL_TERM_PLAN("COMMERCIAL_TERM_PLAN"),
 
-    PAYMENT_METHOD_PROFILE("PAYMENT_METHOD_PROFILE");
+    PAYMENT_METHOD_PROFILE("PAYMENT_METHOD_PROFILE"),
+
+    /** 产品目录 Root。 */
+    PRODUCT_CATALOG("PRODUCT_CATALOG");
 
     private final String code;
     BusinessChangeRecordRecordType(String code) {

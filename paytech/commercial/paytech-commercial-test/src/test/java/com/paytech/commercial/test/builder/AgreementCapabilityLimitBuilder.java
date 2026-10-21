@@ -2,7 +2,7 @@ package com.paytech.commercial.test.builder;
 
 import java.time.Instant;
 
-import com.paytech.commercial.api.enums.CapabilityLimitCode;
+import com.paytech.commercial.api.enums.PricingDimension;
 import com.paytech.commercial.core.dal.dataobject.AgreementCapabilityLimit;
 import com.paytech.commercial.test.mocker.local.checkout.CheckoutFixture;
 
@@ -28,7 +28,7 @@ public final class AgreementCapabilityLimitBuilder {
         return new AgreementCapabilityLimitBuilder()
             .agreementCapabilityLimitId(AGREEMENT_CAPABILITY_LIMIT_ID)
             .agreementCapabilityId(AgreementCapabilityBuilder.AGREEMENT_CAPABILITY_ID)
-            .limitCode(CapabilityLimitCode.CURRENCY)
+            .limitCode(PricingDimension.CURRENCY)
             .limitValue("USD")
             .createTime(CheckoutFixture.NOW)
             .updateTime(CheckoutFixture.NOW);
@@ -46,8 +46,8 @@ public final class AgreementCapabilityLimitBuilder {
         return this;
     }
 
-    /** 设置约束类别。 */
-    public AgreementCapabilityLimitBuilder limitCode(CapabilityLimitCode value) {
+    /** 设置条件维度。 */
+    public AgreementCapabilityLimitBuilder limitCode(PricingDimension value) {
         agreementCapabilityLimit.setLimitCode(value);
         return this;
     }

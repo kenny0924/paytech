@@ -23,6 +23,14 @@ public class CreateCommercialTermVersionRequestBody {
     private String copyFromVersionId;
 
     /**
+     * 基于标准价目模板版本生成
+     * <li>与 copyFromVersionId 互斥；只能用于合同方案。模板版本须为同条款类型 PLATFORM_TEMPLATE 方案的 SCHEDULED / ACTIVE / SUPERSEDED 版本。</li>
+     * <li>只生成合同 OE 下已开通项 × 开通币种、与接受条件相容的价格；未给出的定价模型与含税口径沿用模板版本。</li>
+     */
+    @Pattern(regexp = "[1-9][0-9]{0,18}", message = "sourceTemplateVersionId 格式不正确")
+    private String sourceTemplateVersionId;
+
+    /**
      * 版本冻结的合同 ID
      * <li>Client 条款为空或等于方案合同；Partner 条款（方案不存合同）必填，须为同一 Local Partner 的 ACTIVE 或待签 PARTNER 合同。</li>
      */
@@ -31,14 +39,14 @@ public class CreateCommercialTermVersionRequestBody {
 
     /**
      * 定价模型
-     * <li>BLENDED、INTERCHANGE_PLUS_PLUS；不复制时必填。本期排期与激活只接受 BLENDED。</li>
+     * <li>BLENDED、INTERCHANGE_PLUS_PLUS；不复制、不基于模板时必填。本期排期与激活只接受 BLENDED。</li>
      */
     @Pattern(regexp = "BLENDED|INTERCHANGE_PLUS_PLUS", message = "pricingModel 只能为 BLENDED 或 INTERCHANGE_PLUS_PLUS")
     private String pricingModel;
 
     /**
      * 费用含税口径
-     * <li>INCLUSIVE、EXCLUSIVE；不复制时必填。</li>
+     * <li>INCLUSIVE、EXCLUSIVE；不复制、不基于模板时必填。</li>
      */
     @Pattern(regexp = "INCLUSIVE|EXCLUSIVE", message = "feeTaxTreatment 只能为 INCLUSIVE 或 EXCLUSIVE")
     private String feeTaxTreatment;

@@ -8,6 +8,7 @@ import java.util.List;
 
 import com.paytech.commercial.api.price.request.ResolveCommercialPriceRequestBody;
 import com.paytech.commercial.api.price.response.CommercialPriceBandResponseBody;
+import com.paytech.commercial.api.price.response.CommercialPriceBenchmarkResponseBody;
 import com.paytech.commercial.api.price.response.CommercialPriceComponentResponseBody;
 import com.paytech.commercial.api.price.response.CommercialPriceConditionResponseBody;
 import com.paytech.commercial.api.price.response.CommercialPriceResponseBody;
@@ -18,6 +19,7 @@ import com.paytech.commercial.core.dal.dataobject.CommercialTermPrice;
 import com.paytech.commercial.core.dal.dataobject.PricingProfileCond;
 import com.paytech.commercial.domain.CommercialPriceQuery;
 import com.paytech.commercial.domain.CommercialPriceView;
+import com.paytech.commercial.domain.PriceBenchmark;
 import com.paytech.foundation.common.enums.CodeEnum;
 
 /**
@@ -56,8 +58,9 @@ final class CommercialPriceConverter {
         body.setPricingModel(CodeEnum.defaultCode(view.version().getPricingModel()));
         body.setFeeTaxTreatment(CodeEnum.defaultCode(view.version().getFeeTaxTreatment()));
         body.setConditions(conditions(view.candidate().conditions()));
+        body.setSourceTemplatePriceId(text(price.getSourceTemplatePriceId()));
         body.setComponents(view.components().stream().map(component -> component(view, component)).toList());
-        body.setSettlement(view.plan().getClientId() == null ? null : settlement(price));
+        body.setSettlement(view.clientTerm() ? settlement(price) : null);
         return body;
     }
 
@@ -93,6 +96,21 @@ final class CommercialPriceConverter {
         body.setBandBasis(CodeEnum.defaultCode(component.getBandBasis()));
         body.setBandMode(CodeEnum.defaultCode(component.getBandMode()));
         body.setBands(view.bandsOf(component).stream().map(band -> band(band, currency)).toList());
+        body.setBenchmark(benchmark(view.benchmarkOf(component), view.candidate().price().getCurrency()));
+        return body;
+    }
+
+    /** 与来源模板的比较；命中结果与按 ID 回读为 null，模板金额按价格币种补齐小数位。 */
+    static CommercialPriceBenchmarkResponseBody benchmark(PriceBenchmark benchmark, String currency) {
+        if (benchmark == null) {
+            return null;
+        }
+        CommercialPriceBenchmarkResponseBody body = new CommercialPriceBenchmarkResponseBody();
+        body.setStatus(benchmark.getStatus().getCode());
+        body.setStandardRate(rate(benchmark.getStandardRate()));
+        body.setStandardFixedAmount(amount(benchmark.getStandardFixedAmount(), currency));
+        body.setStandardMinAmount(amount(benchmark.getStandardMinAmount(), currency));
+        body.setStandardMaxAmount(amount(benchmark.getStandardMaxAmount(), currency));
         return body;
     }
 

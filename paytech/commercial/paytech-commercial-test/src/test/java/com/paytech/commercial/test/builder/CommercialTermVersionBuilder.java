@@ -40,6 +40,7 @@ public final class CommercialTermVersionBuilder {
             .roundingMode(CommercialTermRoundingMode.HALF_UP)
             .pricingModel(PricingModel.BLENDED)
             .feeTaxTreatment(FeeTaxTreatment.EXCLUSIVE)
+            .signatureExempt(false)
             .createTime(CheckoutFixture.NOW)
             .updateTime(CheckoutFixture.NOW);
     }
@@ -107,6 +108,18 @@ public final class CommercialTermVersionBuilder {
     /** 设置费用金额是否含税。 */
     public CommercialTermVersionBuilder feeTaxTreatment(FeeTaxTreatment value) {
         commercialTermVersion.setFeeTaxTreatment(value);
+        return this;
+    }
+
+    /** 设置存量免签标志。 */
+    public CommercialTermVersionBuilder signatureExempt(Boolean value) {
+        commercialTermVersion.setSignatureExempt(value);
+        return this;
+    }
+
+    /** 设置来源模板版本。 */
+    public CommercialTermVersionBuilder sourceTemplateVersionId(Long value) {
+        commercialTermVersion.setSourceTemplateVersionId(value);
         return this;
     }
 

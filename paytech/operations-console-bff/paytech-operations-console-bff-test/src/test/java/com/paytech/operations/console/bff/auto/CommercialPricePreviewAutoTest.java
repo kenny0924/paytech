@@ -223,7 +223,8 @@ class CommercialPricePreviewAutoTest extends CommercialBrowserAutoTestBase {
             .put("planId", "7319000000000000501").put("termVersionId", VERSION_ID).put("entityNo", "AE001")
             .put("clientId", CLIENT_ID).putNull("localPartnerId").put("priceId", "7319000000000000701")
             .put("pricingProfileCode", "CARD_VISA_STANDARD").put("paymentMethodCode", "CARD").put("priorityNo", 10)
-            .put("currency", "USD").put("pricingModel", "BLENDED").put("feeTaxTreatment", "EXCLUSIVE");
+            .put("currency", "USD").put("pricingModel", "BLENDED").put("feeTaxTreatment", "EXCLUSIVE")
+            .putNull("sourceTemplatePriceId");
         price.putArray("conditions").addObject().put("dimensionCode", PricingDimension.CARD_BRAND.getCode())
             .put("conditionValue", "VISA");
         var components = price.putArray("components");
@@ -251,7 +252,7 @@ class CommercialPricePreviewAutoTest extends CommercialBrowserAutoTestBase {
             .put("componentCode", code).put("componentType", type).put("triggerCode", trigger)
             .put("calculationBase", base.getCode()).put("refundBehavior", "RETURN_PRORATA").putNull("rate")
             .putNull("fixedAmount").put("currency", "USD").putNull("minAmount").putNull("maxAmount").putNull("bandBasis")
-            .putNull("bandMode").set("bands", JSON.createArrayNode());
+            .putNull("bandMode").putNull("benchmark").set("bands", JSON.createArrayNode());
     }
 
     private static void band(ArrayNode bands, int bandNo, String lower, String upper, String rate, String fixedAmount) {

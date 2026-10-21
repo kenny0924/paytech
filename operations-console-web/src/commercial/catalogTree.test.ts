@@ -18,7 +18,7 @@ let capabilitySequence = 2000;
 const capability = (productCode: string, capabilityCode: string, capabilityKind: string, paymentMethodCode: string | null = null,
   dimensionValue: string | null = null): CatalogCapability => ({
   productCapabilityId: `91000000000000${++capabilitySequence}`, productCode, capabilityCode, capabilityName: capabilityCode, capabilityKind,
-  paymentMethodCode, dimensionCode: dimensionValue ? 'CARD_BRAND' : null, dimensionValue, status: 'ACTIVE' });
+  paymentMethodCode, dimensionCode: dimensionValue ? 'CARD_BRAND' : null, dimensionValue, status: 'ACTIVE', dimensions: [], changeVersion: 1 });
 const capabilities: CatalogCapability[] = [
   capability('ACQUIRING', 'CARD_VISA', 'PAYMENT_METHOD', 'CARD', 'VISA'), capability('ACQUIRING', 'CARD_MC', 'PAYMENT_METHOD', 'CARD', 'MASTERCARD'),
   capability('ACQUIRING', 'CARD_AMEX', 'PAYMENT_METHOD', 'CARD', 'AMEX'), capability('ACQUIRING', 'CARD_UNIONPAY', 'PAYMENT_METHOD', 'CARD', 'UNIONPAY'),
@@ -28,7 +28,8 @@ const capabilities: CatalogCapability[] = [
 ];
 let eventSequence = 3000;
 const feeEvent = (productCode: string, feeEventCode: string, termType: string, billingFactType: string): CatalogFeeEvent => ({
-  productFeeEventId: `91000000000000${++eventSequence}`, productCode, feeEventCode, termType, billingFactType });
+  productFeeEventId: `91000000000000${++eventSequence}`, productCode, feeEventCode, termType, billingFactType, capabilityKind: null,
+  capabilityCode: null, changeVersion: 1 });
 const acquiringTermTypes = ['CLIENT_PRICING', 'PARTNER_SHARE', 'PLATFORM_SERVICE_CHARGE'];
 const feeEvents: CatalogFeeEvent[] = [
   ...['AUTH', 'CAPTURE', 'SALE'].flatMap(code => acquiringTermTypes.map(termType => feeEvent('ACQUIRING', code, termType, 'PAYMENT'))),

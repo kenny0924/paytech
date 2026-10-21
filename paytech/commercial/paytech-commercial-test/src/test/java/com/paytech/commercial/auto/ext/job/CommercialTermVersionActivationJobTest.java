@@ -95,7 +95,7 @@ class CommercialTermVersionActivationJobTest extends AbstractCommercialTermApiTe
     JsonNode scheduledSecond() {
         JsonNode second = ok(201, createVersionResult(Long.toString(CommercialTermPlanBuilder.TERM_PLAN_ID), "2",
             Long.toString(first.getTermVersionId())));
-        JsonNode scheduled = ok(200, scheduleResult(approved(second), NOW));
+        JsonNode scheduled = ok(200, scheduleResult(approvedAndSigned(second), NOW));
         assertEquals(Instant.parse(text(scheduled, "effectiveFrom")), NOW);
         return scheduled;
     }

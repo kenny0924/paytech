@@ -7,6 +7,9 @@ public enum CapabilityKind implements CodeEnum {
     /** 支付方式；payment_method_code 必填 */
     PAYMENT_METHOD("PAYMENT_METHOD"),
 
+    /** 功能（如存卡、周期扣款）；payment_method_code 为空 */
+    FEATURE("FEATURE"),
+
     /** 出款通道 */
     PAYOUT_RAIL("PAYOUT_RAIL"),
 

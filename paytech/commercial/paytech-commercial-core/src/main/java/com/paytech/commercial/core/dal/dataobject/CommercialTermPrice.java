@@ -42,6 +42,9 @@ public class CommercialTermPrice {
     /** 日内截止秒数 0–86399 */
     private Integer cutoffSecondOfDay;
 
+    /** 基于模板生成或补齐时的来源模板价格，用于破标比较；手工维护为空 */
+    private Long sourceTemplatePriceId;
+
     /** 记录创建的 UTC 微秒时间 */
     private Instant createTime;
 

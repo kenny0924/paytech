@@ -13,7 +13,7 @@ import type { TermPlan } from '../commercial/commercial';
 import { consolePaths, consoleRoutes, decodeTermPlanPage, decodeTermVersionPage, listFilters } from '../commercial/commercialConsole';
 import type { PagingFilters } from '../api/paging';
 import type { TermPlanListItem, TermVersionListItem } from '../commercial/commercialConsole';
-import { CommercialNote, StatusTag } from '../commercial/CommercialParts';
+import { BelowStandardTag, CommercialNote, SignatureTag, StatusTag } from '../commercial/CommercialParts';
 import { CreateVersionModal } from '../commercial/TermModals';
 import { TermVersionEditor } from '../commercial/TermVersionEditor';
 import { VersionCompare } from '../commercial/VersionCompare';
@@ -50,11 +50,12 @@ function TermsHome({ resources, onAuthorizationChanged }: Props) {
       { key: 'plans', label: '条款方案', children: <PlanList onShowVersions={showVersions} /> },
       { key: 'versions', label: '版本', children: <VersionList key={versionFilters.planId ?? 'all'} planId={versionFilters.planId} /> },
     ]} />
-    <CommercialNote>状态流：草稿 → 待审批 → 已批准 → 已排期 → 生效 → 已替代 / 已到期。在版本页签勾选同一方案的两个版本可进入价格对比。</CommercialNote>
+    <CommercialNote>状态流：草稿 → 待审批 → 已批准 → 客户已签署（历史版本免签）→ 已排期 → 生效 → 已替代 / 已到期。在版本页签勾选同一方案的两个版本可进入价格对比。标准价目在「标准价目」页维护。</CommercialNote>
     {step?.kind === 'plan' && <CreatePlanModal onClose={() => setStep(null)} onAuthorizationChanged={onAuthorizationChanged}
       onCreated={plan => setStep({ kind: 'version', plan })} />}
     {step?.kind === 'version' && <CreateVersionModal planId={step.plan.planId} termType={step.plan.termType} expectedChangeVersion={step.plan.changeVersion}
-      agreementId={step.plan.agreementId} onClose={() => setStep(null)} onAuthorizationChanged={onAuthorizationChanged}
+      agreementId={step.plan.agreementId} entityNos={step.plan.entityNo ? [step.plan.entityNo] : []} onClose={() => setStep(null)}
+      onAuthorizationChanged={onAuthorizationChanged}
       onCreated={version => { setStep(null); void navigate(commercialRoutes.version(version.versionId)); }} />}
   </div>;
 }
@@ -128,7 +129,7 @@ function VersionList({ planId }: { planId?: string }) {
     {selected.length === 2 && !comparable && <CommercialNote tone="warning">只能对比同一方案的两个版本。</CommercialNote>}
     {page.failure ? <QueryFailure failure={page.failure} retry={page.refresh} />
       : <Table<TermVersionListItem> rowKey="versionId" size="middle" loading={page.loading} dataSource={page.data.items} pagination={page.pagination}
-        scroll={{ x: 1260 }} locale={{ emptyText: '没有符合条件的版本' }}
+        scroll={{ x: 1460 }} locale={{ emptyText: '没有符合条件的版本' }}
         rowSelection={{ selectedRowKeys: selected.map(item => item.versionId), onChange: (_, rows) => setSelected(rows.slice(-2)), hideSelectAll: true }}
         onRow={row => ({ className: 'clickable-row', onDoubleClick: () => void navigate(commercialRoutes.version(row.versionId)) })} columns={[
           { title: '方案', width: 200, render: (_, row) => <div className="commercial-cell"><span className="mono">{row.planCode}</span>
@@ -138,6 +139,8 @@ function VersionList({ planId }: { planId?: string }) {
           { title: '生效区间', width: 250, render: (_, row) => ['DRAFT', 'PENDING_APPROVAL', 'APPROVED'].includes(row.status) ? '排期时确定'
             : `${localTime(row.effectiveFrom)} ～ ${row.effectiveTo ? localTime(row.effectiveTo) : '未定'}` },
           { title: '价格数', width: 80, render: (_, row) => <Tag>{row.priceCount}</Tag> },
+          { title: '破标', width: 90, render: (_, row) => <BelowStandardTag count={row.belowStandardCount} /> },
+          { title: '签署', width: 110, render: (_, row) => <SignatureTag row={row} /> },
           { title: 'Maker / Checker', width: 200, render: (_, row) => <span className="mono">{row.makerAccountId ?? '—'} / {row.checkerAccountId ?? '—'}</span> },
           { title: '提交时刻', width: 150, render: (_, row) => localTime(row.submittedTime) },
           { title: '操作', width: 90, render: (_, row) => <Button size="small" onClick={() => void navigate(commercialRoutes.version(row.versionId))}>打开</Button> },

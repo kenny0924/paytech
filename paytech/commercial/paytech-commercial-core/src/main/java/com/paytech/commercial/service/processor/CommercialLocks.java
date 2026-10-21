@@ -24,6 +24,16 @@ public final class CommercialLocks {
         return "term-plan:" + termPlanId;
     }
 
+    /** 产品目录维护（可开通项、可配维度与计费事件挂接）：目录规模小、写入低频，单一目录锁。 */
+    public static String catalog() {
+        return "product-catalog";
+    }
+
+    /** 标准价目模板创建：按条款类型与方案编号串行化。 */
+    public static String termPlanCode(String termType, String planCode) {
+        return "term-plan-code:" + termType + ":" + planCode;
+    }
+
     /** 画像创建：按不可变代码串行化。 */
     public static String pricingProfileCode(String pricingProfileCode) {
         return "pricing-profile:" + pricingProfileCode;

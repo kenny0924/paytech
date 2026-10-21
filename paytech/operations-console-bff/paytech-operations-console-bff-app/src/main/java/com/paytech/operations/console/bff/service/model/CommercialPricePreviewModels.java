@@ -130,15 +130,18 @@ public final class CommercialPricePreviewModels {
         /** 滚动保证金天数 */
         private Integer rollingReserveDays;
 
-        /** 约束 */
+        /** 接受条件行（limitCode 为维度代码） */
         private List<CapabilityLimit> limits;
+
+        /** 是否要求 3DS 认证 */
+        private Boolean require3ds;
     }
 
-    /** 开通项约束。 */
+    /** 开通项接受条件的一个取值。 */
     @Getter
     @Setter
     public static class CapabilityLimit {
-        /** 约束代码 */
+        /** 维度代码 */
         private String limitCode;
 
         /** 约束值 */

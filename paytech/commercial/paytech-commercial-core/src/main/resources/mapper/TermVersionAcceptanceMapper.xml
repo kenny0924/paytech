@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.commercial.core.dal.mapper.TermVersionAcceptanceMapper">
+    <resultMap id="TermVersionAcceptance" type="com.paytech.commercial.core.dal.dataobject.TermVersionAcceptance">
+        <id column="version_acceptance_id" property="versionAcceptanceId"/>
+        <result column="term_version_id" property="termVersionId"/>
+        <result column="party_id" property="partyId"/>
+        <result column="acceptance_method" property="acceptanceMethod"/>
+        <result column="accepted_at" property="acceptedAt"/>
+        <result column="acceptance_reference" property="acceptanceReference"/>
+        <result column="file_id" property="fileId"/>
+        <result column="content_hash" property="contentHash"/>
+        <result column="recorded_by" property="recordedBy"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="columns">
+        version_acceptance_id, term_version_id, party_id, acceptance_method, accepted_at, acceptance_reference, file_id,
+        content_hash, recorded_by, create_time, update_time
+    </sql>
+
+    <insert id="insert">
+        INSERT INTO t_term_version_acceptance (<include refid="columns"/>)
+        VALUES (#{versionAcceptanceId}, #{termVersionId}, #{partyId}, #{acceptanceMethod}, #{acceptedAt},
+            #{acceptanceReference}, #{fileId}, #{contentHash}, #{recordedBy}, #{createTime}, #{updateTime})
+    </insert>
+
+    <select id="selectByReference" resultMap="TermVersionAcceptance">
+        SELECT <include refid="columns"/> FROM t_term_version_acceptance WHERE acceptance_reference = #{acceptanceReference}
+    </select>
+
+    <select id="selectByVersionIds" resultMap="TermVersionAcceptance">
+        SELECT <include refid="columns"/> FROM t_term_version_acceptance
+        WHERE term_version_id IN <foreach collection="termVersionIds" item="termVersionId" open="(" separator="," close=")">#{termVersionId}</foreach>
+        ORDER BY term_version_id
+    </select>
+</mapper>

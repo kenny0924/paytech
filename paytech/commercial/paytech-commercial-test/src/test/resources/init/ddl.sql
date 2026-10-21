@@ -1,5 +1,5 @@
 -- 仅供人工审阅并初始化 local-environment 的空本地 Schema；应用和测试绝不自动执行，已有库勿重复建表或重置。
--- 2026-10-19 第三轮：全部 20 张商务表与生成 Schema 一致（含六张产品/开通表与 t_commercial_term_price.currency）。
+-- 2026-10-20 开通与定价模型调整：全部 22 张商务表与生成 Schema 一致（新增 t_product_capability_dimension、t_term_version_acceptance）。
 -- 完整表定义逐字摘自 paytech/commercial/docs/database/sql/commercial-schema.sql；t_consumed_event 逐字摘自
 -- paytech/foundation/paytech-messaging/src/main/resources/schema/messaging-consumed-event.sql（每库一份，design/01 §3）。
 -- commercial_app 为仓库隔离的本地测试账号，密码与 application-mock.yml 的默认值及 local-environment/.env.example 一致；真实/共享环境不得使用本文件。
@@ -108,24 +108,25 @@ CREATE TABLE `t_agreement_capability` (
   `effective_to` DATETIME(6) NULL COMMENT '开通生效区间的 UTC 微秒精度终点，不包含该时刻；为空表示未预定结束。',
   `rolling_reserve_rate` DECIMAL(18,10) NULL COMMENT '滚动保证金按交易金额计提的小数比例，取值范围为 0 至 1；无保证金时为空。',
   `rolling_reserve_days` INT NULL COMMENT '滚动保证金的持有天数；与比例成组为空或非空。',
+  `require_3ds` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '1 表示该开通项要求 3DS 认证，0 表示不要求；执行归收单与支付。',
   `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 时间，精确到微秒。',
   `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最后一次更新的 UTC 时间，精确到微秒。',
   PRIMARY KEY (`agreement_capability_id`),
   UNIQUE KEY `uk_agreement_capability` (`agreement_id`, `entity_no`, `capability_code`) COMMENT 'Unique index for agreement_capability on agreement_id, entity_no, capability_code',
   KEY `idx_agreement_capability_lookup` (`entity_no`, `capability_code`, `status`) COMMENT 'Access index for agreement_capability on entity_no, capability_code, status',
   KEY `idx_agreement_capability_code` (`capability_code`) COMMENT 'Access index for agreement_capability on capability_code'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='合同在准确OE下的开通项与保证金条款；uk_agreement_capability(agreement_id,entity_no,capability_code)；所属产品必须已在合同订阅；capability_code引用时须为ACTIVE目录项；CLIENT合同entity_no等于合同entity_no，PARTNER合同须在合同覆盖OE内；状态ENABLED/SUSPENDED/DISABLED，有效区间半开；保证金比例与天数成组为空或非空，执行归account/risk；应用校验，不创建 CHECK/FK；所属产品必须已在 agreement_product 订阅；capability_code 引用时目录项须为 ACTIVE。；CLIENT 合同的 entity_no 必须等于 agreement.entity_no；PARTNER 合同的 entity_no 必须在 agreement_operating_entity 内。；CHECK (effective_to IS NULL OR effective_from < effective_to)，解析时要求 status=ENABLED 且 effective_from <= contextAsOfTime < effective_to。；rolling_reserve_rate 与 rolling_reserve_days 成组为空或成组非空；比例取值 0 至 1，保证金执行归 account / risk。';
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='合同在准确OE下的开通项与保证金条款；uk_agreement_capability(agreement_id,entity_no,capability_code)；require_3ds 为开通项的 3DS 要求；所属产品必须已在合同订阅；capability_code引用时须为ACTIVE目录项；CLIENT合同entity_no等于合同entity_no，PARTNER合同须在合同覆盖OE内；状态ENABLED/SUSPENDED/DISABLED，有效区间半开；保证金比例与天数成组为空或非空，执行归account/risk；应用校验，不创建 CHECK/FK；所属产品必须已在 agreement_product 订阅；capability_code 引用时目录项须为 ACTIVE。；CLIENT 合同的 entity_no 必须等于 agreement.entity_no；PARTNER 合同的 entity_no 必须在 agreement_operating_entity 内。；CHECK (effective_to IS NULL OR effective_from < effective_to)，解析时要求 status=ENABLED 且 effective_from <= contextAsOfTime < effective_to。；rolling_reserve_rate 与 rolling_reserve_days 成组为空或成组非空；比例取值 0 至 1，保证金执行归 account / risk。';
 
 CREATE TABLE `t_agreement_capability_limit` (
   `agreement_capability_limit_id` BIGINT NOT NULL COMMENT '开通项约束行的内部唯一标识。',
   `agreement_capability_id` BIGINT NOT NULL COMMENT '合同在准确 OE 下开通项行的内部唯一标识。',
-  `limit_code` VARCHAR(64) NOT NULL COMMENT '开通项约束的类别代码；同码多行按 OR，异码按 AND。允许值：CURRENCY、CONSUMER_COUNTRY、REQUIRE_3DS。',
-  `limit_value` VARCHAR(128) NOT NULL COMMENT '约束的规范化值：ISO 4217 币种、ISO 3166-1 alpha-2 国家或固定值 1。',
+  `limit_code` VARCHAR(64) NOT NULL COMMENT '开通项接受条件的维度代码，须在该可开通项可配维度内；同维度多行按 OR，异维度按 AND，未写维度不限。允许值：CARD_BRAND、FUNDING_TYPE、CARD_LEVEL、CARD_PRODUCT、ISSUER_REGION、ISSUER_COUNTRY、CURRENCY、CONSUMER_COUNTRY、PAYOUT_RAIL、DESTINATION_COUNTRY、CURRENCY_PAIR。',
+  `limit_value` VARCHAR(128) NOT NULL COMMENT '该维度的一个规范化取值：币种为 ISO 4217，国家为 ISO 3166-1 alpha-2，其他为大写稳定代码。',
   `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 时间，精确到微秒。',
   `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最后一次更新的 UTC 时间，精确到微秒。',
   PRIMARY KEY (`agreement_capability_limit_id`),
   UNIQUE KEY `uk_agreement_capability_limit` (`agreement_capability_id`, `limit_code`, `limit_value`) COMMENT 'Unique index for agreement_capability_limit on agreement_capability_id, limit_code, limit_value'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='开通项约束，一值一行；uk_agreement_capability_limit(agreement_capability_id,limit_code,limit_value)；同码多行按OR、异码按AND；金额限额归风控决策，不在此表；随开通项冻结，不单独审计；CURRENCY 用 ISO 4217，CONSUMER_COUNTRY 用 ISO 3166-1 alpha-2，REQUIRE_3DS 固定为 1。';
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='开通项接受条件，一值一行；uk_agreement_capability_limit(agreement_capability_id,limit_code,limit_value)；limit_code为可用于开通的PricingDimension维度代码（CURRENCY必填），同维度多行按OR、异维度按AND，未写维度不限；3DS要求在agreement_capability.require_3ds；金额限额归风控决策，不在此表；随开通项冻结，不单独审计；limit_code 须在该可开通项 product_capability_dimension 内且可用于开通；必填维度（CURRENCY）必须有值；CURRENCY 用 ISO 4217，国家类用 ISO 3166-1 alpha-2，其他为大写稳定代码。';
 
 CREATE TABLE `t_product` (
   `product_id` BIGINT NOT NULL COMMENT '产品目录行的内部唯一标识。',
@@ -143,19 +144,20 @@ CREATE TABLE `t_product` (
 CREATE TABLE `t_product_capability` (
   `product_capability_id` BIGINT NOT NULL COMMENT '可开通项目录行的内部唯一标识。',
   `product_code` VARCHAR(64) NOT NULL COMMENT '可开通项所属产品的稳定代码。允许值：ACQUIRING、PAYOUT、FX、DISPUTE、TAX_INVOICE、DATA_ANALYTICS、PLATFORM。',
-  `capability_code` VARCHAR(64) NOT NULL COMMENT '全局唯一且稳定的可开通项代码，如 CARD_VISA、PAYOUT_LOCAL。取值来源：产品发版维护的能力目录；非固定枚举。',
+  `capability_code` VARCHAR(64) NOT NULL COMMENT '全局唯一且稳定的可开通项代码，如 CARD、TOKEN_STORAGE、PAYOUT_LOCAL。取值来源：产品发版维护的能力目录；非固定枚举。',
   `capability_name` VARCHAR(128) NOT NULL COMMENT '供 Operations 识别可开通项的展示名称。',
-  `capability_kind` VARCHAR(32) NOT NULL COMMENT '可开通项所属的能力种类，决定其是否绑定 Payment Method。允许值：PAYMENT_METHOD、PAYOUT_RAIL、FX、DISPUTE、PERIODIC_SERVICE。',
+  `capability_kind` VARCHAR(32) NOT NULL COMMENT '可开通项所属的能力种类；PAYMENT_METHOD 绑定 Payment Method，FEATURE 为功能项（如存卡）；创建后不可修改。允许值：PAYMENT_METHOD、FEATURE、PAYOUT_RAIL、FX、DISPUTE、PERIODIC_SERVICE。',
   `payment_method_code` VARCHAR(64) NULL COMMENT 'capability_kind=PAYMENT_METHOD 时必填的 Payment Method 稳定代码，其他种类为空。取值来源：Payment 拥有的 Payment Method 稳定代码目录；非固定枚举。',
-  `dimension_code` VARCHAR(64) NULL COMMENT '把开通项细分到画像维度的单一条件维度，与 dimension_value 成组为空或非空。允许值：CARD_BRAND、FUNDING_TYPE、CARD_LEVEL、CARD_PRODUCT、ISSUER_REGION、ISSUER_COUNTRY、THREE_DS_RESULT、CURRENCY、CONSUMER_COUNTRY、TRANSACTION_TYPE、PAYOUT_RAIL、DESTINATION_COUNTRY、CURRENCY_PAIR、DISPUTE_STAGE。',
-  `dimension_value` VARCHAR(128) NULL COMMENT '开通项细分维度的单个规范化值，如 AMEX。',
+  `dimension_code` VARCHAR(64) NULL COMMENT '已废弃，恒为 NULL；细分维度改为合同开通项接受条件。允许值：CARD_BRAND、FUNDING_TYPE、CARD_LEVEL、CARD_PRODUCT、ISSUER_REGION、ISSUER_COUNTRY、THREE_DS_RESULT、CURRENCY、CONSUMER_COUNTRY、TRANSACTION_TYPE、PAYOUT_RAIL、DESTINATION_COUNTRY、CURRENCY_PAIR、DISPUTE_STAGE。',
+  `dimension_value` VARCHAR(128) NULL COMMENT '已废弃，恒为 NULL；细分维度改为合同开通项接受条件。',
   `status` VARCHAR(64) NOT NULL COMMENT '可开通项目录行的生命周期状态；合同引用时须为 ACTIVE。允许值：DRAFT、ACTIVE、RETIRED。',
+  `change_version` BIGINT NOT NULL DEFAULT 1 COMMENT '运营维护目录行的乐观锁版本，初始 1，每次写入加一。',
   `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 时间，精确到微秒。',
   `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最后一次更新的 UTC 时间，精确到微秒。',
   PRIMARY KEY (`product_capability_id`),
   UNIQUE KEY `uk_product_capability_code` (`capability_code`) COMMENT 'Unique index for product_capability on capability_code',
   KEY `idx_product_capability_product` (`product_code`, `status`) COMMENT 'Access index for product_capability on product_code, status'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='L1可开通项目录；uk_product_capability_code(capability_code)；capability_code全局唯一稳定；PAYMENT_METHOD种类payment_method_code必填，其他种类为空；dimension_code与dimension_value成组为空或非空；随产品发版维护，不接入BCR；capability_kind=PAYMENT_METHOD 要求 payment_method_code IS NOT NULL，其他种类要求 payment_method_code IS NULL。；dimension_code 与 dimension_value 成组为空或成组非空。';
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='L1可开通项目录；uk_product_capability_code(capability_code)；capability_code全局唯一稳定，代码与种类创建后不可改；PAYMENT_METHOD种类payment_method_code必填，其他种类（含FEATURE）为空；dimension_code与dimension_value已废弃恒为NULL；运营维护，写入以change_version做CAS，BCR聚合根PRODUCT_CATALOG；capability_kind=PAYMENT_METHOD 要求 payment_method_code IS NOT NULL，其他种类要求 payment_method_code IS NULL。；dimension_code 与 dimension_value 已废弃，恒为 NULL；capability_code 与 capability_kind 创建后不可修改，RETIRED 阻止新增开通，已开通不受影响。';
 
 CREATE TABLE `t_product_fee_event` (
   `product_fee_event_id` BIGINT NOT NULL COMMENT '计费事件目录行的内部唯一标识。',
@@ -163,12 +165,26 @@ CREATE TABLE `t_product_fee_event` (
   `fee_event_code` VARCHAR(64) NOT NULL COMMENT '触发收费的业务动作代码，是组件 trigger_code 的值域。取值来源：产品发版维护的计费事件目录；非固定枚举。',
   `term_type` VARCHAR(64) NOT NULL COMMENT '该计费事件可在哪类商业条款下收费；一值一行，本表登记即为方案 term_type 值域。取值来源：本表登记；非固定枚举。',
   `billing_fact_type` VARCHAR(64) NOT NULL COMMENT '该计费事件对应的 billing 事实类型代码。取值来源：billing 事实类型目录；非固定枚举。',
+  `capability_kind` VARCHAR(32) NULL COMMENT '该计费事件挂接的开通项种类；为空表示无需开通的基础产品事件。允许值：PAYMENT_METHOD、FEATURE、PAYOUT_RAIL、FX、DISPUTE、PERIODIC_SERVICE。',
+  `capability_code` VARCHAR(64) NULL COMMENT 'capability_kind=FEATURE 时精确挂接的功能开通项代码，其他种类为空（任一该种类开通项）。取值来源：t_product_capability.capability_code 中 FEATURE 种类可开通项；非固定枚举。',
+  `change_version` BIGINT NOT NULL DEFAULT 1 COMMENT '运营维护目录行的乐观锁版本，初始 1，每次写入加一。',
   `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 时间，精确到微秒。',
   `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最后一次更新的 UTC 时间，精确到微秒。',
   PRIMARY KEY (`product_fee_event_id`),
   UNIQUE KEY `uk_product_fee_event` (`fee_event_code`, `term_type`) COMMENT 'Unique index for product_fee_event on fee_event_code, term_type',
   KEY `idx_product_fee_event_product` (`product_code`) COMMENT 'Access index for product_fee_event on product_code'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='L2计费事件目录；uk_product_fee_event(fee_event_code,term_type)；fee_event_code为组件trigger_code值域，term_type为方案term_type值域，一个事件可在哪类条款下收费一值一行；随产品发版维护，不接入BCR；fee_event_code 是 commercial_term_component.trigger_code 的值域，term_type 是 commercial_term_plan.term_type 的值域；均为值引用，不建关系。';
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='L2计费事件目录；uk_product_fee_event(fee_event_code,term_type)；fee_event_code为组件trigger_code值域，term_type为方案term_type值域，一个事件可在哪类条款下收费一值一行；capability_kind为空表示无需开通的基础产品事件，FEATURE时capability_code指向同产品功能开通项，其他种类capability_code为空；运营维护挂接，写入以change_version做CAS，BCR聚合根PRODUCT_CATALOG；fee_event_code 是 commercial_term_component.trigger_code 的值域，term_type 是 commercial_term_plan.term_type 的值域；均为值引用，不建关系。；capability_kind=FEATURE 时 capability_code 必须是同产品下的 FEATURE 可开通项；其他种类与空种类 capability_code 为空。';
+
+CREATE TABLE `t_product_capability_dimension` (
+  `capability_dimension_id` BIGINT NOT NULL COMMENT '可开通项可配维度行的内部唯一标识。',
+  `capability_code` VARCHAR(64) NOT NULL COMMENT '可配维度所属的可开通项代码。取值来源：t_product_capability.capability_code 可开通项目录；非固定枚举。',
+  `dimension_code` VARCHAR(64) NOT NULL COMMENT '合同开通该项时可配置接受条件的维度代码，须可用于开通。允许值：CARD_BRAND、FUNDING_TYPE、CARD_LEVEL、CARD_PRODUCT、ISSUER_REGION、ISSUER_COUNTRY、CURRENCY、CONSUMER_COUNTRY、PAYOUT_RAIL、DESTINATION_COUNTRY、CURRENCY_PAIR。',
+  `required` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '1 表示合同开通该项时必须给出该维度条件，0 表示可选。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 时间，精确到微秒。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最后一次更新的 UTC 时间，精确到微秒。',
+  PRIMARY KEY (`capability_dimension_id`),
+  UNIQUE KEY `uk_capability_dimension` (`capability_code`, `dimension_code`) COMMENT 'Unique index for product_capability_dimension on capability_code, dimension_code'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='可开通项的可配维度；uk_capability_dimension(capability_code,dimension_code)；dimension_code须为可用于开通接受条件的PricingDimension；required=1表示合同开通时必须给出该维度条件；随可开通项整体替换，审计归PRODUCT_CATALOG；随可开通项整体替换；dimension_code 须为可用于开通接受条件的维度。';
 
 CREATE TABLE `t_pricing_profile` (
   `pricing_profile_id` BIGINT NOT NULL COMMENT '定价画像聚合在本库内部使用的唯一标识。',
@@ -200,6 +216,8 @@ CREATE TABLE `t_commercial_term_plan` (
   `term_plan_id` BIGINT NOT NULL COMMENT 'Client Pricing、Partner Share 或 Platform Service Charge 方案根的内部唯一标识。',
   `plan_code` VARCHAR(64) NOT NULL COMMENT '定价、分润或平台服务费计划的唯一稳定业务编号。',
   `term_type` VARCHAR(64) NOT NULL COMMENT '方案所属的商业条款类型；必须在计费事件目录登记，CLIENT_PRICING、PARTNER_SHARE、PLATFORM_SERVICE_CHARGE 继续有效；PARTNER_BUY_RATE 为 Partner 合同下按画像 × 币种的买入价，结构同 CLIENT_PRICING。取值来源：t_product_fee_event.term_type 登记目录，示例 CLIENT_PRICING、PARTNER_SHARE、PLATFORM_SERVICE_CHARGE、PARTNER_BUY_RATE；非固定枚举。',
+  `owner_type` VARCHAR(32) NOT NULL DEFAULT 'CLIENT' COMMENT '方案 Owner 类型；CLIENT 属于 CLIENT 合同，LOCAL_PARTNER 版本冻结 PARTNER 合同，PLATFORM_TEMPLATE 为按 OE 维护的标准价目模板，不参与运行时取价。允许值：CLIENT、LOCAL_PARTNER、PLATFORM_TEMPLATE。',
+  `template_name` VARCHAR(128) NULL COMMENT '平台标准价目模板的显示名，如标准价 · AE001；非模板方案为空。',
   `agreement_id` BIGINT NULL COMMENT '商业合同稳定身份的内部唯一标识。',
   `entity_no` CHAR(5) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT 'CCT唯一不可变OE身份，CHAR(5)，创建时经营国家二位代码加001–999，如AE001；编号不参与路由、不复用。',
   `client_id` BIGINT NULL COMMENT '平台 Client 角色的内部唯一标识。',
@@ -213,20 +231,22 @@ CREATE TABLE `t_commercial_term_plan` (
   UNIQUE KEY `uk_comm_term_partner` (`local_partner_id`, `term_type`) COMMENT 'Unique index for commercial_term_plan on local_partner_id, term_type',
   KEY `idx_commercial_term_pla_27ac6d7b` (`entity_no`) COMMENT 'Access index for commercial_term_plan on entity_no',
   KEY `idx_commercial_term_pla_098917d9` (`client_id`) COMMENT 'Access index for commercial_term_plan on client_id'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='Client Pricing、Partner Share 或 Platform Service Charge 的稳定方案根；uk_comm_term_code(term_type,plan_code)、uk_comm_term_agreement(agreement_id,term_type)、uk_comm_term_partner(local_partner_id,term_type)；CLIENT_PRICING时agreement_id/entity_no/client_id非空且由同一CLIENT合同派生，local_partner_id为空；Partner两类时仅local_partner_id非空，agreement_id/entity_no/client_id为空；不限制Client全局只有一个Plan；Owner XOR：term_type=CLIENT_PRICING 要求 client_id IS NOT NULL AND local_partner_id IS NULL；term_type IN (PARTNER_SHARE,PLATFORM_SERVICE_CHARGE) 要求 client_id IS NULL AND local_partner_id IS NOT NULL。；term_type、client_id 与 local_partner_id 创建后不可修改；MVP 每份 Client Agreement 一个 Client Pricing Plan，每个 Local Partner 可分别拥有一个 Partner Share Plan 和一个 PLATFORM_SERVICE_CHARGE Plan，通过 local_partner_id + term_type 复合唯一。；CLIENT_PRICING 的 agreement_id/entity_no/client_id 必须与同一 Client Agreement 一致，local_partner_id 为空；Partner 两类只填 local_partner_id，Version 冻结其 Partner Agreement。；PARTNER_BUY_RATE 属于 Partner 合同，Owner 规则同 PARTNER_SHARE；结构同 CLIENT_PRICING，按画像 × 币种定价。';
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='Client Pricing、Partner Share 或 Platform Service Charge 的稳定方案根；uk_comm_term_code(term_type,plan_code)、uk_comm_term_agreement(agreement_id,term_type)、uk_comm_term_partner(local_partner_id,term_type)；owner_type为CLIENT、LOCAL_PARTNER或PLATFORM_TEMPLATE；PLATFORM_TEMPLATE为平台标准价目模板，agreement_id/client_id/local_partner_id为空、entity_no非空、template_name非空，不参与运行时取价；CLIENT_PRICING时agreement_id/entity_no/client_id非空且由同一CLIENT合同派生，local_partner_id为空；Partner两类时仅local_partner_id非空，agreement_id/entity_no/client_id为空；不限制Client全局只有一个Plan；Owner XOR：term_type=CLIENT_PRICING 要求 client_id IS NOT NULL AND local_partner_id IS NULL；term_type IN (PARTNER_SHARE,PLATFORM_SERVICE_CHARGE) 要求 client_id IS NULL AND local_partner_id IS NOT NULL。；term_type、client_id 与 local_partner_id 创建后不可修改；MVP 每份 Client Agreement 一个 Client Pricing Plan，每个 Local Partner 可分别拥有一个 Partner Share Plan 和一个 PLATFORM_SERVICE_CHARGE Plan，通过 local_partner_id + term_type 复合唯一。；CLIENT_PRICING 的 agreement_id/entity_no/client_id 必须与同一 Client Agreement 一致，local_partner_id 为空；Partner 两类只填 local_partner_id，Version 冻结其 Partner Agreement。；PARTNER_BUY_RATE 属于 Partner 合同，Owner 规则同 PARTNER_SHARE；结构同 CLIENT_PRICING，按画像 × 币种定价。；owner_type=PLATFORM_TEMPLATE 时 agreement_id、client_id、local_partner_id 为空，entity_no 与 template_name 非空；价格命中、费率卡与 Checkout 解析排除模板方案。';
 
 CREATE TABLE `t_commercial_term_version` (
   `term_version_id` BIGINT NOT NULL COMMENT '商业条款不可变业务版本的内部唯一标识。',
   `term_plan_id` BIGINT NOT NULL COMMENT 'Client Pricing、Partner Share 或 Platform Service Charge 方案根的内部唯一标识。',
-  `agreement_id` BIGINT NOT NULL COMMENT '商业合同稳定身份的内部唯一标识。',
+  `agreement_id` BIGINT NULL COMMENT '版本冻结的商业合同；标准价目模板版本为空。',
   `version_no` BIGINT NOT NULL COMMENT '同一业务聚合内部不可变版本的序号。',
-  `status` VARCHAR(64) NOT NULL COMMENT '当前业务记录在其所属聚合生命周期中的状态代码。允许值：DRAFT、PENDING_APPROVAL、APPROVED、SCHEDULED、ACTIVE、SUPERSEDED、EXPIRED。',
+  `status` VARCHAR(64) NOT NULL COMMENT '版本生命周期状态；合同方案非免签版本 APPROVED 后须登记客户签署进入 CLIENT_SIGNED 才能排期。允许值：DRAFT、PENDING_APPROVAL、APPROVED、CLIENT_SIGNED、SCHEDULED、ACTIVE、SUPERSEDED、EXPIRED。',
   `active_slot` TINYINT(1) NULL COMMENT '以 1 或 NULL 实现条件稀疏唯一约束的技术槽位，具体占槽含义由表级规则定义。允许值：1 或 NULL。取值规则：状态为 ACTIVE 时为 1，其他状态为 NULL。',
   `effective_from` DATETIME(6) NOT NULL COMMENT '业务记录生效区间的 UTC 微秒精度起点，包含该时刻。',
   `effective_to` DATETIME(6) NULL COMMENT '业务记录生效区间的 UTC 微秒精度终点，不包含该时刻；为空表示未预定结束。',
   `rounding_mode` VARCHAR(64) NOT NULL COMMENT '金额计算采用的确定性十进制舍入规则。允许值：HALF_UP。',
   `pricing_model` VARCHAR(32) NOT NULL COMMENT '该版本采用的定价模型；本期应用只接受 BLENDED。允许值：BLENDED、INTERCHANGE_PLUS_PLUS。',
   `fee_tax_treatment` VARCHAR(16) NOT NULL COMMENT '该版本费用金额是否已包含税额。允许值：INCLUSIVE、EXCLUSIVE。',
+  `source_template_version_id` BIGINT NULL COMMENT '基于标准价目模板生成时的来源模板版本标识；手工或复制创建为空。',
+  `signature_exempt` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '1 表示迁移前已排期或生效的存量版本免客户签署，0 表示须签署。',
   `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 时间，精确到微秒。',
   `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最后一次更新的 UTC 时间，精确到微秒。',
   PRIMARY KEY (`term_version_id`),
@@ -234,7 +254,7 @@ CREATE TABLE `t_commercial_term_version` (
   UNIQUE KEY `uk_comm_term_active` (`term_plan_id`, `active_slot`) COMMENT 'Unique index for commercial_term_version on term_plan_id, active_slot',
   KEY `idx_commercial_term_ver_c99980b6` (`term_plan_id`, `status`, `effective_from`, `effective_to`) COMMENT 'Access index for commercial_term_version on term_plan_id, status, effective_from, effective_to',
   KEY `idx_comm_term_agreement` (`agreement_id`) COMMENT 'Access index for commercial_term_version on agreement_id'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='商业条款版本；uk_comm_term_ver(term_plan_id,version_no)、uk_comm_term_active(term_plan_id,active_slot)；仅 ACTIVE slot=1；Client Pricing 引用同 Client 的 CLIENT Agreement，Partner Share 与 Platform Service Charge 引用同 Local Partner 的 PARTNER Agreement；同一交易命中的两类 Partner Term 必须属于同一 Agreement；Agreement 覆盖全部 Price 的准确 OE，计划有效区间不得超出合同；APPROVED 后 Owner、Agreement、Version No、effective_from、舍入方式、Price、Component 与 Band 冻结；CHECK ((status=''ACTIVE'' AND active_slot=1) OR (status<>''ACTIVE'' AND active_slot IS NULL))；CHECK (effective_to IS NULL OR effective_from < effective_to)；同一 Root 已批准或生效的有效区间不得重叠。；CLIENT_PRICING 必须引用同一 Client 的 CLIENT Agreement；PARTNER_SHARE 与 PLATFORM_SERVICE_CHARGE 必须引用同一 Local Partner 的 PARTNER Agreement，同一交易命中的两类 Partner Term 必须属于同一 Agreement。；Agreement 必须覆盖全部 Price 的准确 Operating Entity，Version 有效区间不得超出 Agreement；APPROVED 后 Version、Price、Component 与 Band 业务字段不可修改。；本期 pricing_model 只接受 BLENDED；激活前 Version 下每个开通项至少命中一条 Price。';
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='商业条款版本；uk_comm_term_ver(term_plan_id,version_no)、uk_comm_term_active(term_plan_id,active_slot)；仅 ACTIVE slot=1；模板版本 agreement_id 为空；合同方案非免签版本须经 CLIENT_SIGNED 才能排期；Client Pricing 引用同 Client 的 CLIENT Agreement，Partner Share 与 Platform Service Charge 引用同 Local Partner 的 PARTNER Agreement；同一交易命中的两类 Partner Term 必须属于同一 Agreement；Agreement 覆盖全部 Price 的准确 OE，计划有效区间不得超出合同；APPROVED 后 Owner、Agreement、Version No、effective_from、舍入方式、Price、Component 与 Band 冻结；CHECK ((status=''ACTIVE'' AND active_slot=1) OR (status<>''ACTIVE'' AND active_slot IS NULL))；CHECK (effective_to IS NULL OR effective_from < effective_to)；同一 Root 已批准或生效的有效区间不得重叠。；CLIENT_PRICING 必须引用同一 Client 的 CLIENT Agreement；PARTNER_SHARE 与 PLATFORM_SERVICE_CHARGE 必须引用同一 Local Partner 的 PARTNER Agreement，同一交易命中的两类 Partner Term 必须属于同一 Agreement。；Agreement 必须覆盖全部 Price 的准确 Operating Entity，Version 有效区间不得超出 Agreement；APPROVED 后 Version、Price、Component 与 Band 业务字段不可修改。；本期 pricing_model 只接受 BLENDED；激活前 Version 下每个开通项至少命中一条 Price。；合同方案非免签版本 APPROVED 后须登记 term_version_acceptance 进入 CLIENT_SIGNED 才能排期；模板版本 agreement_id 为空、无签署要求；signature_exempt=1 仅用于迁移前已排期或生效的存量版本。';
 
 CREATE TABLE `t_commercial_term_price` (
   `term_price_id` BIGINT NOT NULL COMMENT 'Commercial Term Version 下准确 OE、币种与定价画像价格绑定的内部唯一标识。',
@@ -247,6 +267,7 @@ CREATE TABLE `t_commercial_term_price` (
   `business_calendar_code` VARCHAR(64) NULL COMMENT '计算 Client 合同 T+N 工作日结算到期日使用的受控业务日历代码。取值来源：Finance工作日日历目录；非固定枚举。',
   `settlement_timezone` VARCHAR(64) NULL COMMENT '解释 Client 合同工作日和截止秒数使用的 IANA 时区代码。取值来源：IANA时区目录，本期仅UTC；非固定枚举。',
   `cutoff_second_of_day` INT NULL COMMENT '解释 Client 合同结算基准日的本地日内截止秒数，范围为 0 至 86399。',
+  `source_template_price_id` BIGINT NULL COMMENT '基于模板生成或补齐时的来源模板价格标识，用于破标比较；手工维护为空。',
   `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 时间，精确到微秒。',
   `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最后一次更新的 UTC 时间，精确到微秒。',
   PRIMARY KEY (`term_price_id`),
@@ -293,6 +314,23 @@ CREATE TABLE `t_commercial_term_component_band` (
   UNIQUE KEY `uk_comm_term_band_no` (`term_component_id`, `band_no`) COMMENT 'Unique index for commercial_term_component_band on term_component_id, band_no',
   UNIQUE KEY `uk_comm_term_band_lower` (`term_component_id`, `lower_bound`) COMMENT 'Unique index for commercial_term_component_band on term_component_id, lower_bound'
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='阶梯定价组件的金额区间与档位参数；uk_comm_term_band_no(term_component_id,band_no)、uk_comm_term_band_lower(term_component_id,lower_bound)；区间为 [lower_bound,upper_bound)，从 0 开始、连续、无重叠且最后一档上界为空；每档按组件矩阵填写 rate 或 fixed_amount，PROGRESSIVE 首期只允许 rate；区间使用 [lower_bound,upper_bound)，第一档从 0 开始、连续且无重叠，最后一档 upper_bound 为空。；每档 rate 与 fixed_amount 恰好一个非空；PROGRESSIVE 首期只允许 rate，固定金额组合使用独立 FIXED Component。；Band 继承 Component 的 currency 与 calculation_base；同一组件 band_no 从 1 连续编号，所属 Version APPROVED 后不可修改。';
+
+CREATE TABLE `t_term_version_acceptance` (
+  `version_acceptance_id` BIGINT NOT NULL COMMENT '价格版本客户签署记录的内部唯一标识。',
+  `term_version_id` BIGINT NOT NULL COMMENT '签署的价格版本；一期一个版本一次签署。',
+  `party_id` BIGINT NOT NULL COMMENT '签署方 Party：Client 方案为合同 CLIENT 角色 Party，Partner 方案为合同 LOCAL_PARTNER 角色 Party。',
+  `acceptance_method` VARCHAR(32) NOT NULL COMMENT '价格协议签署方式，同合同签署。允许值：E_SIGNATURE、CLICK_ACCEPTANCE、MANUAL_SIGNATURE。',
+  `accepted_at` DATETIME(6) NOT NULL COMMENT '签署成立的 UTC 微秒时间。',
+  `acceptance_reference` VARCHAR(128) NOT NULL COMMENT '全局唯一的签署编号；同编号同内容重放返回原结果。',
+  `file_id` BIGINT NOT NULL COMMENT '已签署价格附件的 Platform Support 文件逻辑引用，与 content_hash 成组冻结。',
+  `content_hash` CHAR(64) NOT NULL COMMENT '价格附件 SHA-256 小写 64 位 Hex。',
+  `recorded_by` VARCHAR(64) NOT NULL COMMENT '登记签署证据的 Operations Account 标识。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 时间，精确到微秒。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最后一次更新的 UTC 时间，精确到微秒。',
+  PRIMARY KEY (`version_acceptance_id`),
+  UNIQUE KEY `uk_version_acceptance` (`term_version_id`) COMMENT 'Unique index for term_version_acceptance on term_version_id',
+  UNIQUE KEY `uk_version_acceptance_ref` (`acceptance_reference`) COMMENT 'Unique index for term_version_acceptance on acceptance_reference'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='价格版本的客户签署记录；uk_version_acceptance(term_version_id)、uk_version_acceptance_ref(acceptance_reference)；一期一个版本一次签署；party_id为合同CLIENT（Client方案）或LOCAL_PARTNER（Partner方案）角色Party；file_id+content_hash为已签署价格附件；登记后版本APPROVED→CLIENT_SIGNED；追加式证据，随方案BCR快照审计；版本须为 APPROVED 的合同方案版本；party_id 须为合同 CLIENT（Client 方案）或 LOCAL_PARTNER（Partner 方案）角色 Party；登记后不可修改。';
 
 CREATE TABLE `t_business_change_record` (
   `history_id` BIGINT NOT NULL COMMENT '一条受审计业务行稳定历史身份的内部唯一标识。',

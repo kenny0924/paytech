@@ -9,6 +9,7 @@ import {
 import type { CapabilityStatus, VersionStatus } from '../commercial/commercial';
 import { capabilityLabel, cutoffTime, decodeRateCard, rateCardPath } from '../commercial/commercialPreview';
 import type { AgreementRateCard, CurrencyPrices, ProfilePrice, RateCard, RateCardCapability, RateCardQuery, TermVersionRateCard } from '../commercial/commercialPreview';
+import { conditionTags, require3dsTag, reserveText } from '../commercial/capabilityConditions';
 import { ClientIdInput } from '../commercial/ClientIdInput';
 import { browserStorage, rememberClient } from '../commercial/commercialConsole';
 import { CommercialNote, StatusTag } from '../commercial/CommercialParts';
@@ -78,9 +79,10 @@ function AgreementCard({ agreement }: { agreement: AgreementRateCard }) {
         { title: '开通项', render: (_, row) => <span className="mono">{capabilityLabel(row)}</span> },
         { title: 'OE', width: 80, dataIndex: 'entityNo' },
         { title: '状态', width: 90, render: (_, row) => <StatusTag status={row.status} labels={capabilityStatusLabels as Record<CapabilityStatus, string>} /> },
-        { title: '约束', render: (_, row) => <div className="commercial-limits">{row.limits.map(limit =>
-          <Tag key={`${limit.limitCode}-${limit.limitValue}`}>{limit.limitCode}={limit.limitValue}</Tag>)}</div> },
-        { title: '保证金', width: 140, render: (_, row) => row.rollingReserveRate ? `${row.rollingReserveRate} / ${row.rollingReserveDays} 天` : '—' },
+        { title: '接受条件', render: (_, row) => <div className="commercial-limits">{row.conditions.length || row.require3ds
+          ? conditionTags(row).map(tag => <Tag key={tag} color={tag === require3dsTag ? 'blue' : undefined}>{tag}</Tag>)
+          : row.limits.map(limit => <Tag key={`${limit.limitCode}-${limit.limitValue}`}>{limit.limitCode}={limit.limitValue}</Tag>)}</div> },
+        { title: '保证金', width: 140, render: (_, row) => reserveText(row) },
       ]} />
     {agreement.termVersions.length === 0
       ? <CommercialNote tone="warning">该合同在时点没有适用或已排期的条款版本。</CommercialNote>

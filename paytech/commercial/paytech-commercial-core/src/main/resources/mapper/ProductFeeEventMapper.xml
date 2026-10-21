@@ -7,19 +7,22 @@
         <result column="fee_event_code" property="feeEventCode"/>
         <result column="term_type" property="termType"/>
         <result column="billing_fact_type" property="billingFactType"/>
+        <result column="capability_kind" property="capabilityKind"/>
+        <result column="capability_code" property="capabilityCode"/>
+        <result column="change_version" property="changeVersion"/>
         <result column="create_time" property="createTime"/>
         <result column="update_time" property="updateTime"/>
     </resultMap>
 
     <sql id="columns">
-        product_fee_event_id, product_code, fee_event_code, term_type, billing_fact_type, create_time,
-        update_time
+        product_fee_event_id, product_code, fee_event_code, term_type, billing_fact_type, capability_kind,
+        capability_code, change_version, create_time, update_time
     </sql>
 
     <insert id="insert">
         INSERT INTO t_product_fee_event (<include refid="columns"/>)
-        VALUES (#{productFeeEventId}, #{productCode}, #{feeEventCode}, #{termType}, #{billingFactType}, #{createTime},
-            #{updateTime})
+        VALUES (#{productFeeEventId}, #{productCode}, #{feeEventCode}, #{termType}, #{billingFactType},
+            #{capabilityKind}, #{capabilityCode}, #{changeVersion}, #{createTime}, #{updateTime})
     </insert>
 
     <select id="selectById" resultMap="ProductFeeEvent">
@@ -37,6 +40,18 @@
 
     <select id="selectByTermType" resultMap="ProductFeeEvent">
         SELECT <include refid="columns"/> FROM t_product_fee_event WHERE term_type = #{termType} ORDER BY product_fee_event_id
+    </select>
+
+    <update id="updateCapability">
+        UPDATE t_product_fee_event
+        SET capability_kind = #{capabilityKind}, capability_code = #{capabilityCode}, change_version = change_version + 1,
+            update_time = #{now}
+        WHERE product_fee_event_id = #{feeEvent.productFeeEventId} AND change_version = #{feeEvent.changeVersion}
+    </update>
+
+    <select id="selectByCapabilityCode" resultMap="ProductFeeEvent">
+        SELECT <include refid="columns"/> FROM t_product_fee_event WHERE capability_code = #{capabilityCode}
+        ORDER BY product_fee_event_id
     </select>
 
     <select id="selectFiltered" resultMap="ProductFeeEvent">

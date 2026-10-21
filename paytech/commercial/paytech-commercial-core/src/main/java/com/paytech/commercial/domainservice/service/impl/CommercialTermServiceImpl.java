@@ -5,6 +5,8 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.paytech.commercial.domainservice.repository.TermVersionAcceptanceRepository;
+import com.paytech.commercial.core.dal.dataobject.TermVersionAcceptance;
 import com.paytech.commercial.api.enums.CommercialTermPlanStatus;
 import com.paytech.commercial.core.dal.dataobject.BusinessChangeRecord;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermPlan;
@@ -46,6 +48,7 @@ public class CommercialTermServiceImpl implements CommercialTermService {
     private final CommercialTermVersionRepository commercialTermVersionRepository;
     private final CommercialTermComponentRepository commercialTermComponentRepository;
     private final CommercialTermComponentBandRepository commercialTermComponentBandRepository;
+    private final TermVersionAcceptanceRepository termVersionAcceptanceRepository;
 
     /** 方案、BCR Root（版本 1）与 CREATE 快照同事务插入。 */
     @Override
@@ -88,6 +91,42 @@ public class CommercialTermServiceImpl implements CommercialTermService {
             insertPriceSet(context);
             changeVersion(context, context.getVersion(), triggerId, BusinessChangeReason.TERM_VERSION_PRICES_REPLACED,
                 withPriceCount(context, context.getVersion()));
+        });
+    }
+
+    /** Root CAS 后追加模板价格集合，首次补齐写入来源模板版本。 */
+    @Override
+    public void fillFromTemplate(CommercialTermVersionContext context) {
+        transactionTemplate.executeWithoutResult(status -> {
+            long triggerId = advanceRoot(context, BusinessChangeReason.TERM_VERSION_FILLED_FROM_TEMPLATE);
+            insertPriceSet(context);
+            CommercialTermVersion version = context.getVersion();
+            if (context.getFillSourceTemplateVersionId() != null) {
+                commercialTermVersionRepository.updateSourceTemplate(version, context.getFillSourceTemplateVersionId(),
+                    context.getNow());
+            }
+            Map<String, Object> data = BusinessChangeSnapshot.commercialTermVersionData(version);
+            data.put("addedPriceCount", Integer.toString(context.getPrices().size()));
+            changeVersion(context, version, triggerId, BusinessChangeReason.TERM_VERSION_FILLED_FROM_TEMPLATE, data);
+        });
+    }
+
+    /** Root CAS 后插入签署记录，APPROVED → CLIENT_SIGNED。 */
+    @Override
+    public void recordAcceptance(CommercialTermVersionContext context) {
+        transactionTemplate.executeWithoutResult(status -> {
+            long triggerId = advanceRoot(context, BusinessChangeReason.TERM_VERSION_ACCEPTED);
+            TermVersionAcceptance acceptance = context.getAcceptance();
+            termVersionAcceptanceRepository.insert(acceptance);
+            commercialTermVersionRepository.updateStatus(context.getVersion(), CommercialTermVersionStatus.CLIENT_SIGNED, null,
+                context.getNow());
+            Map<String, Object> data = BusinessChangeSnapshot.commercialTermVersionData(context.getVersion());
+            data.put("versionAcceptanceId", Long.toString(acceptance.getVersionAcceptanceId()));
+            data.put("partyId", Long.toString(acceptance.getPartyId()));
+            data.put("acceptanceReference", acceptance.getAcceptanceReference());
+            data.put("fileId", Long.toString(acceptance.getFileId()));
+            data.put("contentHash", acceptance.getContentHash());
+            changeVersion(context, context.getVersion(), triggerId, BusinessChangeReason.TERM_VERSION_ACCEPTED, data);
         });
     }
 

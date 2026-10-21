@@ -100,4 +100,10 @@ public class CommercialTermPlanRepositoryImpl implements CommercialTermPlanRepos
         }
         return List.copyOf(mapper.selectByIds(termPlanIds));
     }
+
+    /** 按可选条件读取标准价目模板方案。 */
+    @Override
+    public List<CommercialTermPlan> findTemplates(String entityNo, String termType, CommercialTermPlanStatus status) {
+        return List.copyOf(mapper.selectTemplates(entityNo, termType, status));
+    }
 }

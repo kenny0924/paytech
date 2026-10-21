@@ -4,6 +4,8 @@ import java.util.List;
 
 import com.paytech.commercial.api.enums.ProductCode;
 import com.paytech.commercial.core.dal.dataobject.ProductFeeEvent;
+import java.time.Instant;
+import com.paytech.commercial.api.enums.CapabilityKind;
 
 /** t_product_fee_event 的本地仓储；目录随发版维护，不接入 BCR。 */
 public interface ProductFeeEventRepository {
@@ -55,4 +57,22 @@ public interface ProductFeeEventRepository {
      * @return 按 product_fee_event_id 升序
      */
     List<ProductFeeEvent> findFiltered(ProductCode productCode, String termType);
+
+    /**
+     * 以对象 changeVersion 为条件改写挂接的开通项种类与功能开通项；成功后同步原对象，版本加一。
+     *
+     * @param feeEvent 已读取的计费事件
+     * @param capabilityKind 挂接种类，可空
+     * @param capabilityCode 功能开通项代码，仅 FEATURE 非空
+     * @param now 本次更新时间
+     */
+    void updateCapability(ProductFeeEvent feeEvent, CapabilityKind capabilityKind, String capabilityCode, Instant now);
+
+    /**
+     * 读取精确挂接到某功能开通项的计费事件。
+     *
+     * @param capabilityCode 功能开通项代码
+     * @return 按主键升序
+     */
+    List<ProductFeeEvent> findByCapabilityCode(String capabilityCode);
 }

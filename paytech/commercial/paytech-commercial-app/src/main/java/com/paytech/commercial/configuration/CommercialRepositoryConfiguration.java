@@ -123,6 +123,20 @@ public class CommercialRepositoryConfiguration {
             new SqlSessionTemplate(factory).getMapper(ProductFeeEventMapper.class));
     }
 
+    /** 装配 t_product_capability_dimension 仓储。 */
+    @Bean
+    public ProductCapabilityDimensionRepository productCapabilityDimensionRepository(SqlSessionFactory factory) {
+        return new ProductCapabilityDimensionRepositoryImpl(
+            new SqlSessionTemplate(factory).getMapper(ProductCapabilityDimensionMapper.class));
+    }
+
+    /** 装配 t_term_version_acceptance 仓储。 */
+    @Bean
+    public TermVersionAcceptanceRepository termVersionAcceptanceRepository(SqlSessionFactory factory) {
+        return new TermVersionAcceptanceRepositoryImpl(
+            new SqlSessionTemplate(factory).getMapper(TermVersionAcceptanceMapper.class));
+    }
+
     /** 装配 t_agreement_product 仓储。 */
     @Bean
     public AgreementProductRepository agreementProductRepository(SqlSessionFactory factory) {

@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.springframework.stereotype.Component;
 
+import com.paytech.commercial.api.enums.CommercialTermOwnerType;
 import com.paytech.commercial.api.enums.FeeTaxTreatment;
 import com.paytech.commercial.api.enums.PricingModel;
 import com.paytech.commercial.core.dal.dataobject.Agreement;
@@ -32,8 +33,9 @@ import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
 import lombok.AllArgsConstructor;
 
 /**
- * 在方案下创建 DRAFT 版本：版本号服务端递增，可复制同方案已有版本的全部价格、组件与档位（新 ID）
- * <li>Client 条款版本冻结方案合同；Partner 条款版本冻结请求给出的同 Local Partner PARTNER 合同。</li>
+ * 在方案下创建 DRAFT 版本：版本号服务端递增，可复制同方案已有版本的全部价格、组件与档位（新 ID，保留来源模板记录），或基于标准价目模板
+ * 版本生成（只生成与合同已开通项相关的价格，记录来源模板版本与来源模板价格）
+ * <li>Client 条款版本冻结方案合同；Partner 条款版本冻结请求给出的同 Local Partner PARTNER 合同；模板版本不冻结合同。</li>
  * <li>生效起点 NOT NULL，DRAFT 至 APPROVED 期间以创建时刻占位，排期时写入真实起点；舍入方式本期固定 HALF_UP。</li>
  * <li>方案锁 term-plan:{planId} 持续等待；根 CAS、版本、BCR Child、CREATE 快照与复制行同事务写入。</li>
  */
@@ -60,15 +62,21 @@ public class CreateCommercialTermVersionProcessor
         long expected = loader.expectedVersion(root, request.getExpectedChangeVersion());
         Agreement agreement = versionAgreement(plan, request);
 
-        // 复制来源与新版本
+        // 复制来源或来源模板与新版本
         CommercialTermVersion source = source(plan, request);
+        CommercialTermVersion template = template(plan, request);
         Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
-        CommercialTermVersion version = newVersion(plan, agreement, source, request, now);
+        CommercialTermVersion version = newVersion(plan, agreement, source != null ? source : template, request, now);
         CommercialTermVersionContext.CommercialTermVersionContextBuilder builder = CommercialTermVersionContext.builder()
             .now(now).operatorAccountId(request.getOperatorAccountId())
             .expectedChangeVersion(expected).plan(plan).planRoot(root).agreement(agreement).version(version);
         if (source != null) {
             copyPriceSet(builder, source, version, now);
+        }
+        if (template != null) {
+            version.setSourceTemplateVersionId(template.getTermVersionId());
+            TemplatePriceSelection selection = loader.templateSelection(plan, template, version, List.of(), now);
+            builder.prices(selection.getPrices()).components(selection.getComponents()).bands(selection.getBands());
         }
 
         // 保存
@@ -77,9 +85,15 @@ public class CreateCommercialTermVersionProcessor
         return context.toVersionView();
     }
 
-    /** Client 条款取方案合同（请求合同须为空或相等）；Partner 条款取请求合同，须为同 Local Partner 的 PARTNER 合同。 */
+    /** Client 条款取方案合同（请求合同须为空或相等）；Partner 条款取请求合同，须为同 Local Partner 的 PARTNER 合同；模板不冻结合同。 */
     Agreement versionAgreement(CommercialTermPlan plan, CreateCommercialTermVersionRequest request) {
-        if (plan.getAgreementId() != null) {
+        if (plan.getOwnerType() == CommercialTermOwnerType.PLATFORM_TEMPLATE) {
+            if (request.getAgreementId() != null) {
+                throw new BizCheckFailException("标准价目模板版本不冻结合同: 方案 " + plan.getTermPlanId());
+            }
+            return null;
+        }
+        if (plan.getOwnerType() == CommercialTermOwnerType.CLIENT) {
             if (request.getAgreementId() != null && !request.getAgreementId().equals(plan.getAgreementId())) {
                 throw new BizCheckFailException("Client 条款版本只能冻结方案合同: " + plan.getAgreementId());
             }
@@ -96,10 +110,14 @@ public class CreateCommercialTermVersionProcessor
         return agreement;
     }
 
-    /** 复制来源须属于同一方案；未复制时定价模型与含税口径必填。 */
+    /** 复制来源须属于同一方案；未复制、未基于模板时定价模型与含税口径必填。 */
     CommercialTermVersion source(CommercialTermPlan plan, CreateCommercialTermVersionRequest request) {
+        if (request.getCopyFromVersionId() != null && request.getSourceTemplateVersionId() != null) {
+            throw new BizCheckFailException("copyFromVersionId 与 sourceTemplateVersionId 只能给出一个");
+        }
         if (request.getCopyFromVersionId() == null) {
-            if (request.getPricingModel() == null || request.getFeeTaxTreatment() == null) {
+            boolean definitionMissing = request.getPricingModel() == null || request.getFeeTaxTreatment() == null;
+            if (request.getSourceTemplateVersionId() == null && definitionMissing) {
                 throw new BizCheckFailException("不复制时 pricingModel 与 feeTaxTreatment 必填");
             }
             return null;
@@ -111,7 +129,18 @@ public class CreateCommercialTermVersionProcessor
         return source;
     }
 
-    /** 新 DRAFT 版本。 */
+    /** 来源模板版本：只用于 Client 合同方案，须为同条款类型的已生效模板版本。 */
+    CommercialTermVersion template(CommercialTermPlan plan, CreateCommercialTermVersionRequest request) {
+        if (request.getSourceTemplateVersionId() == null) {
+            return null;
+        }
+        if (plan.getOwnerType() != CommercialTermOwnerType.CLIENT) {
+            throw new BizCheckFailException("只有 Client 合同方案可以基于标准价目模板生成: 方案 " + plan.getTermPlanId());
+        }
+        return loader.templateVersion(request.getSourceTemplateVersionId(), plan.getTermType());
+    }
+
+    /** 新 DRAFT 版本；定价模型与含税口径未给出时沿用复制来源或来源模板。 */
     CommercialTermVersion newVersion(CommercialTermPlan plan, Agreement agreement, CommercialTermVersion source,
         CreateCommercialTermVersionRequest request, Instant now) {
         Long maxVersionNo = commercialTermVersionRepository.findMaxVersionNo(plan.getTermPlanId());
@@ -121,7 +150,7 @@ public class CreateCommercialTermVersionProcessor
         CommercialTermVersion version = new CommercialTermVersion();
         version.setTermVersionId(loader.nextId());
         version.setTermPlanId(plan.getTermPlanId());
-        version.setAgreementId(agreement.getAgreementId());
+        version.setAgreementId(agreement == null ? null : agreement.getAgreementId());
         version.setVersionNo(maxVersionNo == null ? 1L : maxVersionNo + 1);
         version.setStatus(CommercialTermVersionStatus.DRAFT);
         version.setActiveSlot(null);
@@ -130,9 +159,16 @@ public class CreateCommercialTermVersionProcessor
         version.setRoundingMode(CommercialTermRoundingMode.HALF_UP);
         version.setPricingModel(pricingModel);
         version.setFeeTaxTreatment(feeTaxTreatment);
+        version.setSourceTemplateVersionId(isCopy(source, plan) ? source.getSourceTemplateVersionId() : null);
+        version.setSignatureExempt(false);
         version.setCreateTime(now);
         version.setUpdateTime(now);
         return version;
+    }
+
+    /** 来源是同方案的复制来源（而非模板版本）。 */
+    static boolean isCopy(CommercialTermVersion source, CommercialTermPlan plan) {
+        return source != null && source.getTermPlanId().equals(plan.getTermPlanId());
     }
 
     /** 以新 ID 复制来源版本的价格、组件与档位。 */

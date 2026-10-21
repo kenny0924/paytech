@@ -93,17 +93,11 @@ public final class CommercialCodes {
 
     /** 可开通项（t_product_capability.capability_code、t_agreement_capability.capability_code）。 */
     public static final class Capability {
-        /** Visa 卡 */
-        public static final String CARD_VISA = "CARD_VISA";
+        /** 银行卡（卡组织、借贷记等由合同开通项接受条件限定；2026-10-20 起替代 CARD_VISA / MC / AMEX / UNIONPAY） */
+        public static final String CARD = "CARD";
 
-        /** Mastercard 卡 */
-        public static final String CARD_MC = "CARD_MC";
-
-        /** American Express 卡 */
-        public static final String CARD_AMEX = "CARD_AMEX";
-
-        /** 银联卡 */
-        public static final String CARD_UNIONPAY = "CARD_UNIONPAY";
+        /** 存卡（功能开通项，TOKEN_STORED 计费事件挂接） */
+        public static final String TOKEN_STORAGE = "TOKEN_STORAGE";
 
         /** Apple Pay */
         public static final String APPLE_PAY = "APPLE_PAY";

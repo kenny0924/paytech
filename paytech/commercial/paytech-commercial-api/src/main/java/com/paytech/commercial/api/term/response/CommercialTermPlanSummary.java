@@ -31,6 +31,12 @@ public class CommercialTermPlanSummary {
     /** Local Partner ID，Partner 条款非空 */
     private String localPartnerId;
 
+    /** 方案 Owner 类型：CLIENT、LOCAL_PARTNER、PLATFORM_TEMPLATE */
+    private String ownerType;
+
+    /** 模板显示名，仅 PLATFORM_TEMPLATE */
+    private String templateName;
+
     /**
      * 方案状态
      * <li>DRAFT、ACTIVE、RETIRED。</li>

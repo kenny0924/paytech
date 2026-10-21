@@ -1,0 +1,38 @@
+# commercial 开通与定价模型调整（一期）：mor-test 候选覆盖文件（2026-10-21）。
+# 叠加在 compose.sh 已带的基础文件之上，只传本文件：test-environment/compose.sh -f <本文件绝对路径> up -d --no-deps --no-build --pull never --wait <service>
+# 构建源：集成 worktree .claude/worktrees/cp-int 6570ef73（main 4ab205e0 + A 84377cb2 + B 56ba38fe + C f48fe526 + 表归属修正）。
+# commercial-service 的 environment / depends_on 沿用上一版候选（compose.applications.yaml 仍为旧形状）。
+# 回滚：commercial sha256:59bb000d…（commercial-20261020b）、ops-bff sha256:bec85826…（channel-20261020）、
+#        ops-web sha256:bbb88dd8…（opsux-20261020o）、platform sha256:e5a06814…（channel-20261020）。
+services:
+  commercial-service:
+    image: sha256:c6c9b8f663aeb69c09cf2e2d494429bff2dbc38c8aaf632d88cbcbaaa5d0221b  # mor-test/commercial-service:capability-20261021c（缺陷修复 9ed4c39c + a9828758）
+    environment:
+      COMMERCIAL_RABBITMQ_HOST: rabbitmq
+      COMMERCIAL_RABBITMQ_PORT: "5672"
+      COMMERCIAL_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
+      COMMERCIAL_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
+      COMMERCIAL_RABBITMQ_VHOST: /mor-test
+      COMMERCIAL_REDIS_HOST: redis
+      COMMERCIAL_REDIS_PORT: "6379"
+      COMMERCIAL_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?prepare test secrets}
+      COMMERCIAL_SNOWFLAKE_REGION_ID: "0"
+      COMMERCIAL_SNOWFLAKE_WORKER_ID: "17"
+      COMMERCIAL_COMPENSATION_INSTANCE_ID: commercial-test-1
+      COMMERCIAL_XXL_JOB_ENABLED: "true"
+      XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
+      XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
+      XXL_JOB_EXECUTOR_APPNAME: commercial-service
+      XXL_JOB_EXECUTOR_IP: 172.30.73.34
+      XXL_JOB_EXECUTOR_PORT: "9999"
+      XXL_JOB_EXECUTOR_LOGPATH: /tmp/xxl-job
+      XXL_JOB_EXECUTOR_EXCLUDEDPACKAGES: org.springframework.,spring.
+    depends_on:
+      rabbitmq: { condition: service_healthy }
+      redis: { condition: service_healthy }
+  operations-console-bff:
+    image: sha256:9520a54538277ce7f4b90bca1f61712bbbce3559601d20b17697e028709e8971  # recon-slice1-20261021（对账会话 2026-10-21 替换，含本需求 c6eea71a；本需求原版 9708ccdb…）
+  operations-console-web:
+    image: sha256:139c157e50fa117524080e47a950fe322879255423e4d06af76dd51106a1b99a  # capability-20261021e（验收反馈 F1–F6，源 = 对账 recon-slice1 edfb6628 基线 + commercial 文件；回滚 333e7f2b…，再前 edfb6628…）
+  platform-support-service:
+    image: sha256:79e33d43a2c3d4e64ac8e2a95109f46b86b8a1beeba6ba987e5d2f9b8f7de3b1  # recon-slice1-20261021（对账会话替换，含块 124 键；本需求原版 95348566…）

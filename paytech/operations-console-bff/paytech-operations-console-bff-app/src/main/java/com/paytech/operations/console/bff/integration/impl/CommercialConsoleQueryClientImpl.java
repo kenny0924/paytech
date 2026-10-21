@@ -18,17 +18,19 @@ import com.paytech.operations.console.bff.service.model.CommercialChangeModels.B
 import com.paytech.operations.console.bff.service.model.CommercialListModels.AgreementListItem;
 import com.paytech.operations.console.bff.service.model.CommercialListModels.AgreementListRequestBody;
 import com.paytech.operations.console.bff.service.model.CommercialListModels.CatalogCapabilityListResponseBody;
+import com.paytech.operations.console.bff.service.model.CommercialListModels.CatalogDimensionListResponseBody;
 import com.paytech.operations.console.bff.service.model.CommercialListModels.CatalogFeeEventListResponseBody;
 import com.paytech.operations.console.bff.service.model.CommercialListModels.CatalogProductListResponseBody;
 import com.paytech.operations.console.bff.service.model.CommercialListModels.TermPlanListItem;
 import com.paytech.operations.console.bff.service.model.CommercialListModels.TermPlanListRequestBody;
 import com.paytech.operations.console.bff.service.model.CommercialListModels.TermVersionListItem;
 import com.paytech.operations.console.bff.service.model.CommercialListModels.TermVersionListRequestBody;
+import com.paytech.operations.console.bff.service.model.CommercialPricingModels.CommercialTermTemplateListResponseBody;
 
 import lombok.AllArgsConstructor;
 
 /**
- * commercial 运营只读列表、产品目录与变更历史的 HTTP 转发
+ * commercial 运营只读列表、产品目录、维度清单、标准价目模板与变更历史的 HTTP 转发
  * <li>列表行严格转换为 BFF 页面模型；分页回执的 page / size 与请求不一致、total 为负或条目为 null 视为上游无效响应（502）。</li>
  * <li>Owner 4xx 由开启 Owner Problem detail 的代理工厂转为带 Owner 原因的本地异常，本类不捕获。</li>
  *
@@ -62,9 +64,20 @@ public class CommercialConsoleQueryClientImpl implements CommercialConsoleQueryC
     /** 版本分页。 */
     @Override
     public PagingResponseBody<TermVersionListItem> listVersions(TermVersionListRequestBody request) {
-        var page = termQueryApi.listVersions(request.getPlanId(), request.getAgreementId(), emptyToNull(request.getStatus()),
-            request.getEffectiveFrom(), request.getEffectiveTo(), request.getPage(), request.getSize());
+        var page = termQueryApi.listVersions(request.getPlanId(), request.getAgreementId(), null,
+            emptyToNull(request.getStatus()), request.getEffectiveFrom(), request.getEffectiveTo(), request.getPage(),
+            request.getSize());
         return page(page, request.getPage(), request.getSize(), TermVersionListItem.class);
+    }
+
+    /** 模板方案列表；集合必须存在且每行为模板方案。 */
+    @Override
+    public CommercialTermTemplateListResponseBody listTemplates(String entityNo, String termType, String status) {
+        var templates = convert(termQueryApi.listTemplates(entityNo, termType, status),
+            CommercialTermTemplateListResponseBody.class);
+        require(templates.getTemplates() != null && templates.getTemplates().stream()
+            .allMatch(template -> template != null && template.getPlanId() != null && template.getEntityNo() != null));
+        return templates;
     }
 
     /** 产品列表；集合必须存在。 */
@@ -89,6 +102,14 @@ public class CommercialConsoleQueryClientImpl implements CommercialConsoleQueryC
         var feeEvents = convert(catalogApi.listFeeEvents(productCode, termType), CatalogFeeEventListResponseBody.class);
         require(feeEvents.getFeeEvents() != null && !feeEvents.getFeeEvents().contains(null));
         return feeEvents;
+    }
+
+    /** 维度清单；集合必须存在。 */
+    @Override
+    public CatalogDimensionListResponseBody listDimensions() {
+        var dimensions = convert(catalogApi.listDimensions(), CatalogDimensionListResponseBody.class);
+        require(dimensions.getDimensions() != null && !dimensions.getDimensions().contains(null));
+        return dimensions;
     }
 
     /** 变更快照分页；每条快照必须带版本与审计视图。 */

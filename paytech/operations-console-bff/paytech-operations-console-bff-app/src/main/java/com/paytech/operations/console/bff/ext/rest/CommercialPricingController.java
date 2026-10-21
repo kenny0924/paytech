@@ -4,6 +4,7 @@ import static com.paytech.operations.console.bff.ext.rest.RiskListController.req
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,15 +36,20 @@ import com.paytech.operations.console.bff.service.model.CommercialPricingModels.
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels.CreateCommercialTermPlanRequestBody;
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels.CreateCommercialTermVersionRequestBody;
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels.CreatePricingProfileRequestBody;
+import com.paytech.operations.console.bff.service.model.CommercialPricingModels.FillCommercialTermVersionFromTemplateRequestBody;
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels.PricingProfileListResponseBody;
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels.PricingProfileResponseBody;
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels.PricingProfileTransitionRequestBody;
+import com.paytech.operations.console.bff.service.model.CommercialPricingModels.RecordTermVersionAcceptanceRequestBody;
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels.ReplaceCommercialTermPricesRequestBody;
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels.ScheduleCommercialTermVersionRequestBody;
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels.UpdatePricingProfileRequestBody;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
+import com.paytech.operations.console.bff.service.processor.CommercialTermScopedCommandProcessor;
 import com.paytech.operations.console.bff.service.processor.CommercialTermVersionDiffProcessor;
 import com.paytech.operations.console.bff.service.processor.CommercialTermWorkspaceProcessor;
+import com.paytech.operations.console.bff.service.processor.request.CommercialTermScopedCommandRequest;
+import com.paytech.operations.console.bff.service.processor.request.CommercialTermScopedCommandRequest.Scope;
 import com.paytech.operations.console.bff.service.processor.request.CommercialTermVersionDiffRequest;
 import com.paytech.operations.console.bff.service.processor.request.CommercialTermWorkspaceRequest;
 
@@ -55,9 +61,11 @@ import lombok.AllArgsConstructor;
 
 /**
  * 定价画像与商业条款的运营入口
- * <li>Gateway 绑定：GET 为 COMMERCIAL_PRICING_READ；画像写入与条款创建、价格、提交、排期、激活为 COMMERCIAL_PRICING_MANAGE；
- * 批准与驳回为独立的 COMMERCIAL_PRICING_APPROVE，保证 Maker 与 Checker 可由不同角色承担。</li>
- * <li>版本编辑页经 Processor 聚合版本、合同范围与全部 OE 的价格；写入简单转发 commercial，操作人取自会话。</li>
+ * <li>Gateway 绑定：GET 为 COMMERCIAL_PRICING_READ；画像写入与条款创建、价格、提交、排期、激活、从模板补齐、登记客户签署为
+ * COMMERCIAL_PRICING_MANAGE；批准与驳回为独立的 COMMERCIAL_PRICING_APPROVE，保证 Maker 与 Checker 可由不同角色承担。</li>
+ * <li>版本编辑页经 Processor 聚合版本、合同范围（或模板方案）与全部 OE 的价格；写入转发 commercial，操作人取自会话。</li>
+ * <li>建版本、价格与状态推进经 CommercialTermScopedCommandProcessor 校验方案为合同方案：标准价目模板只能经
+ * CommercialTemplateController 的模板路由（COMMERCIAL_TEMPLATE_*）写入。从模板补齐与签署登记由 commercial 拒绝模板版本。</li>
  * <li>方案 / 版本列表（第二切片 I2）简单转发 commercial CommercialTermQueryApi，版本 status 可重复；版本对比经 Processor 读取两版价格后在
  * BFF 比较。三者均为 COMMERCIAL_PRICING_READ。</li>
  *
@@ -70,7 +78,7 @@ public class CommercialPricingController {
     private static final String ID = "[1-9][0-9]{0,18}";
     private static final String CODE = "[A-Z][A-Z0-9_]{0,63}";
     private static final String OFFSET_INSTANT = "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?(Z|[+-]\\d{2}:\\d{2})";
-    private static final String VERSION_STATUS = "DRAFT|PENDING_APPROVAL|APPROVED|SCHEDULED|ACTIVE|SUPERSEDED|EXPIRED";
+    private static final String VERSION_STATUS = "DRAFT|PENDING_APPROVAL|APPROVED|CLIENT_SIGNED|SCHEDULED|ACTIVE|SUPERSEDED|EXPIRED";
     private static final Set<String> PLAN_KEYS = Set.of("agreementId", "clientId", "localPartnerId", "termType", "status",
         "page", "size");
     private static final Set<String> VERSION_KEYS = Set.of("planId", "agreementId", "status", "effectiveFrom", "effectiveTo",
@@ -80,6 +88,7 @@ public class CommercialPricingController {
     private final CommercialConsoleQueryClient queryClient;
     private final CommercialTermWorkspaceProcessor workspaceProcessor;
     private final CommercialTermVersionDiffProcessor diffProcessor;
+    private final CommercialTermScopedCommandProcessor scopedProcessor;
 
     /** P01 画像列表。 */
     @GetMapping("/pricing-profiles")
@@ -142,7 +151,8 @@ public class CommercialPricingController {
         @PathVariable("planId") @Pattern(regexp = ID) String planId,
         @RequestBody @NotNull @Valid CreateCommercialTermVersionRequestBody body) {
         requireQueryKeys(servletRequest, Set.of());
-        return client.createVersion(operator, planId, body);
+        return scopedProcessor.process(CommercialTermScopedCommandRequest.onPlan(Scope.CONTRACT, planId,
+            () -> client.createVersion(operator, planId, body)));
     }
 
     /** T03 整体替换 DRAFT 版本的价格集合。 */
@@ -151,7 +161,7 @@ public class CommercialPricingController {
         @PathVariable("versionId") @Pattern(regexp = ID) String versionId,
         @RequestBody @NotNull @Valid ReplaceCommercialTermPricesRequestBody body) {
         requireQueryKeys(servletRequest, Set.of());
-        return client.replacePrices(operator, versionId, body);
+        return contractVersion(versionId, () -> client.replacePrices(operator, versionId, body));
     }
 
     /** T04 提交审批（Maker）。 */
@@ -160,7 +170,7 @@ public class CommercialPricingController {
         @PathVariable("versionId") @Pattern(regexp = ID) String versionId,
         @RequestBody @NotNull @Valid CommercialTermVersionCommandRequestBody body) {
         requireQueryKeys(servletRequest, Set.of());
-        return client.transitionVersion(operator, versionId, VersionAction.SUBMIT, body);
+        return contractVersion(versionId, () -> client.transitionVersion(operator, versionId, VersionAction.SUBMIT, body));
     }
 
     /** T05 批准（Checker）。 */
@@ -169,7 +179,7 @@ public class CommercialPricingController {
         @PathVariable("versionId") @Pattern(regexp = ID) String versionId,
         @RequestBody @NotNull @Valid CommercialTermVersionCommandRequestBody body) {
         requireQueryKeys(servletRequest, Set.of());
-        return client.transitionVersion(operator, versionId, VersionAction.APPROVE, body);
+        return contractVersion(versionId, () -> client.transitionVersion(operator, versionId, VersionAction.APPROVE, body));
     }
 
     /** T06 驳回（Checker）。 */
@@ -178,7 +188,7 @@ public class CommercialPricingController {
         @PathVariable("versionId") @Pattern(regexp = ID) String versionId,
         @RequestBody @NotNull @Valid CommercialTermVersionCommandRequestBody body) {
         requireQueryKeys(servletRequest, Set.of());
-        return client.transitionVersion(operator, versionId, VersionAction.REJECT, body);
+        return contractVersion(versionId, () -> client.transitionVersion(operator, versionId, VersionAction.REJECT, body));
     }
 
     /** T07 排期并执行激活校验。 */
@@ -187,7 +197,25 @@ public class CommercialPricingController {
         @PathVariable("versionId") @Pattern(regexp = ID) String versionId,
         @RequestBody @NotNull @Valid ScheduleCommercialTermVersionRequestBody body) {
         requireQueryKeys(servletRequest, Set.of());
-        return client.scheduleVersion(operator, versionId, body);
+        return contractVersion(versionId, () -> client.scheduleVersion(operator, versionId, body));
+    }
+
+    /** T14 从标准价目模板版本补齐 DRAFT 合同版本（只追加缺失价格行）。 */
+    @PostMapping("/commercial-terms/versions/{versionId}/fill-from-template")
+    public CommercialTermVersionResponseBody fillFromTemplate(HttpServletRequest servletRequest, OperatorContext operator,
+        @PathVariable("versionId") @Pattern(regexp = ID) String versionId,
+        @RequestBody @NotNull @Valid FillCommercialTermVersionFromTemplateRequestBody body) {
+        requireQueryKeys(servletRequest, Set.of());
+        return client.fillFromTemplate(operator, versionId, body);
+    }
+
+    /** T15 登记客户对 APPROVED 合同版本的签署（价格附件 + 签署记录）。 */
+    @PostMapping("/commercial-terms/versions/{versionId}/acceptance")
+    public CommercialTermVersionResponseBody recordAcceptance(HttpServletRequest servletRequest, OperatorContext operator,
+        @PathVariable("versionId") @Pattern(regexp = ID) String versionId,
+        @RequestBody @NotNull @Valid RecordTermVersionAcceptanceRequestBody body) {
+        requireQueryKeys(servletRequest, Set.of());
+        return client.recordAcceptance(operator, versionId, body);
     }
 
     /** T08 手工激活已到期的排期版本。 */
@@ -196,7 +224,13 @@ public class CommercialPricingController {
         @PathVariable("versionId") @Pattern(regexp = ID) String versionId,
         @RequestBody @NotNull @Valid CommercialTermVersionCommandRequestBody body) {
         requireQueryKeys(servletRequest, Set.of());
-        return client.transitionVersion(operator, versionId, VersionAction.ACTIVATE, body);
+        return contractVersion(versionId, () -> client.transitionVersion(operator, versionId, VersionAction.ACTIVATE, body));
+    }
+
+    /** 版本级合同命令：版本须属于合同方案。 */
+    private CommercialTermVersionResponseBody contractVersion(String versionId,
+        Supplier<CommercialTermVersionResponseBody> command) {
+        return scopedProcessor.process(CommercialTermScopedCommandRequest.onVersion(Scope.CONTRACT, versionId, command));
     }
 
     /** T11 方案列表：按合同、Client、Partner、条款类型与方案状态筛选分页，带当前 / 已排期版本。 */

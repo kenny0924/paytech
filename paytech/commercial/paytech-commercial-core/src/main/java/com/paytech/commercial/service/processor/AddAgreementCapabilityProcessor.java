@@ -18,6 +18,7 @@ import com.paytech.commercial.domainservice.repository.AgreementOperatingEntityR
 import com.paytech.commercial.domainservice.repository.AgreementProductRepository;
 import com.paytech.commercial.domainservice.repository.AgreementRepository;
 import com.paytech.commercial.domainservice.repository.BusinessChangeRecordRepository;
+import com.paytech.commercial.domainservice.repository.ProductCapabilityDimensionRepository;
 import com.paytech.commercial.domainservice.repository.ProductCapabilityRepository;
 import com.paytech.commercial.domainservice.repository.ProductRepository;
 import com.paytech.commercial.domainservice.service.AgreementService;
@@ -32,7 +33,8 @@ import com.paytech.foundation.id.IdGenerator;
  * 新增开通项（POST /agreements/v1/{agreementId}/capabilities），锁 {@code agreement:{id}}
  * <li>业务唯一身份 uk(agreement, entityNo, capabilityCode)：已存在返回 409（technique.md §2.2 重复语义）。</li>
  * <li>新请求：期望版本一致、合同未结束；entityNo 被合同覆盖（CLIENT 等于合同 OE，PARTNER 在覆盖 OE 内）；可开通项存在且 ACTIVE，所属
- * 产品已订阅或为基座产品。开通项（ENABLED）、约束行、Root CAS 与 AGREEMENT_CAPABILITY CREATE 快照同一事务写入。</li>
+ * 产品已订阅或为基座产品；接受条件维度在可开通项可配维度内且必填维度给出。开通项（ENABLED，含 3DS 要求）、条件行、Root CAS 与
+ * AGREEMENT_CAPABILITY CREATE 快照同一事务写入。</li>
  */
 public class AddAgreementCapabilityProcessor
     extends AbstractAgreementWriteProcessor<AddAgreementCapabilityRequest, AgreementCapabilityResponse> {
@@ -43,6 +45,7 @@ public class AddAgreementCapabilityProcessor
     private final ProductCapabilityRepository productCapabilityRepository;
     private final AgreementCapabilityRepository agreementCapabilityRepository;
     private final AgreementOperatingEntityRepository agreementOperatingEntityRepository;
+    private final ProductCapabilityDimensionRepository productCapabilityDimensionRepository;
 
     /**
      * 注入依赖
@@ -57,13 +60,15 @@ public class AddAgreementCapabilityProcessor
      * @param agreementCapabilityRepository 开通项仓储
      * @param businessChangeRecordRepository BCR 仓储
      * @param agreementOperatingEntityRepository 覆盖 OE 仓储
+     * @param productCapabilityDimensionRepository 可配维度仓储
      */
     public AddAgreementCapabilityProcessor(Clock clock, IdGenerator idGenerator, AgreementService agreementService,
         ProductRepository productRepository, AgreementRepository agreementRepository,
         AgreementProductRepository agreementProductRepository, ProductCapabilityRepository productCapabilityRepository,
         AgreementCapabilityRepository agreementCapabilityRepository,
         BusinessChangeRecordRepository businessChangeRecordRepository,
-        AgreementOperatingEntityRepository agreementOperatingEntityRepository) {
+        AgreementOperatingEntityRepository agreementOperatingEntityRepository,
+        ProductCapabilityDimensionRepository productCapabilityDimensionRepository) {
         super(clock, agreementRepository, businessChangeRecordRepository);
         this.idGenerator = idGenerator;
         this.agreementService = agreementService;
@@ -72,6 +77,7 @@ public class AddAgreementCapabilityProcessor
         this.productCapabilityRepository = productCapabilityRepository;
         this.agreementCapabilityRepository = agreementCapabilityRepository;
         this.agreementOperatingEntityRepository = agreementOperatingEntityRepository;
+        this.productCapabilityDimensionRepository = productCapabilityDimensionRepository;
     }
 
     /** 请求所指合同。 */
@@ -80,7 +86,7 @@ public class AddAgreementCapabilityProcessor
         return request.getAgreementId();
     }
 
-    /** 生效区间、保证金成组与约束行规范化只依赖输入。 */
+    /** 生效区间、保证金成组与接受条件规范化只依赖输入。 */
     @Override
     protected void validate(AddAgreementCapabilityRequest request) {
         AgreementCapabilityValidator.checkTerms(request);
@@ -107,12 +113,15 @@ public class AddAgreementCapabilityProcessor
         return capabilityResponse(context);
     }
 
-    /** 校验版本、状态、OE 覆盖与目录资格后构造开通项与约束行。 */
+    /** 校验版本、状态、OE 覆盖、目录资格与接受条件后构造开通项与条件行。 */
     AgreementContext buildContext(Agreement agreement, BusinessChangeRecord root, AddAgreementCapabilityRequest request) {
         checkVersion(root, request.getExpectedChangeVersion());
         checkOpen(agreement, "新增开通项");
         checkEntityCovered(agreement, request.getEntityNo());
         checkCatalog(agreement, request.getCapabilityCode());
+        AgreementCapabilityValidator.checkConditionsAllowed(request.getConditions(),
+            productCapabilityDimensionRepository.findByCapabilityCodes(List.of(request.getCapabilityCode())),
+            request.getCapabilityCode());
         Instant now = now();
         AgreementContext context = new AgreementContext(agreement, root, request.getActorId(), now,
             request.getExpectedChangeVersion());
@@ -158,32 +167,33 @@ public class AddAgreementCapabilityProcessor
         capability.setEffectiveTo(request.getEffectiveTo());
         capability.setRollingReserveRate(request.getRollingReserveRate());
         capability.setRollingReserveDays(request.getRollingReserveDays());
+        capability.setRequire3ds(request.getRequire3ds());
         capability.setCreateTime(now);
         capability.setUpdateTime(now);
         return capability;
     }
 
     /**
-     * 约束行新行；新增与修改共用
+     * 条件行新行（每个取值一行）；新增与修改共用
      *
      * @param idGenerator 主键生成器
      * @param agreementCapabilityId 所属开通项
      * @param terms 条款请求
      * @param now 业务时刻
-     * @return 约束行
+     * @return 条件行
      */
     static List<AgreementCapabilityLimit> buildLimits(IdGenerator idGenerator, long agreementCapabilityId,
         AgreementCapabilityTermsRequest terms, Instant now) {
-        return terms.getLimits().stream().map(limit -> {
+        return terms.getConditions().stream().flatMap(condition -> condition.getValues().stream().map(value -> {
             AgreementCapabilityLimit row = new AgreementCapabilityLimit();
             row.setAgreementCapabilityLimitId(idGenerator.nextId());
             row.setAgreementCapabilityId(agreementCapabilityId);
-            row.setLimitCode(limit.getLimitCode());
-            row.setLimitValue(limit.getLimitValue());
+            row.setLimitCode(condition.getDimensionCode());
+            row.setLimitValue(value);
             row.setCreateTime(now);
             row.setUpdateTime(now);
             return row;
-        }).toList();
+        })).toList();
     }
 
     /**

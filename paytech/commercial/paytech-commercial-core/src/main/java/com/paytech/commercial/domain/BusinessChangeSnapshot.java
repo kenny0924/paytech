@@ -24,6 +24,9 @@ import com.paytech.commercial.core.dal.dataobject.CommercialTermPlan;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermVersion;
 import com.paytech.commercial.core.dal.dataobject.PricingProfile;
 import com.paytech.commercial.core.dal.dataobject.PricingProfileCond;
+import com.paytech.commercial.core.dal.dataobject.ProductCapability;
+import com.paytech.commercial.core.dal.dataobject.ProductCapabilityDimension;
+import com.paytech.commercial.core.dal.dataobject.ProductFeeEvent;
 import com.paytech.commercial.domain.enums.BusinessChangeReason;
 import com.paytech.foundation.common.enums.CodeEnum;
 import com.paytech.foundation.common.error.ErrorException;
@@ -148,7 +151,7 @@ public final class BusinessChangeSnapshot {
     }
 
     /**
-     * 合同开通项 Child 审计视图：开通项字段与随之冻结的约束行（按 limitCode、limitValue 排序）
+     * 合同开通项 Child 审计视图：开通项字段、3DS 要求与随之冻结的接受条件行（按 limitCode、limitValue 排序）
      *
      * @param capability 开通项
      * @param limits 约束行
@@ -167,6 +170,7 @@ public final class BusinessChangeSnapshot {
         data.put("rollingReserveRate", decimal(capability.getRollingReserveRate()));
         data.put("rollingReserveDays", capability.getRollingReserveDays() == null ? null
             : capability.getRollingReserveDays().toString());
+        data.put("require3ds", Boolean.toString(Boolean.TRUE.equals(capability.getRequire3ds())));
         List<Map<String, Object>> rows = new ArrayList<>();
         limits.stream().sorted(Comparator.comparing((AgreementCapabilityLimit limit) -> limit.getLimitCode().getCode())
             .thenComparing(AgreementCapabilityLimit::getLimitValue)).forEach(limit -> {
@@ -217,6 +221,8 @@ public final class BusinessChangeSnapshot {
         data.put("termPlanId", id(plan.getTermPlanId()));
         data.put("planCode", plan.getPlanCode());
         data.put("termType", plan.getTermType());
+        data.put("ownerType", code(plan.getOwnerType()));
+        data.put("templateName", plan.getTemplateName());
         data.put("agreementId", id(plan.getAgreementId()));
         data.put("entityNo", plan.getEntityNo());
         data.put("clientId", id(plan.getClientId()));
@@ -244,6 +250,58 @@ public final class BusinessChangeSnapshot {
         data.put("roundingMode", code(version.getRoundingMode()));
         data.put("pricingModel", code(version.getPricingModel()));
         data.put("feeTaxTreatment", code(version.getFeeTaxTreatment()));
+        data.put("sourceTemplateVersionId", id(version.getSourceTemplateVersionId()));
+        data.put("signatureExempt", Boolean.toString(Boolean.TRUE.equals(version.getSignatureExempt())));
+        return data;
+    }
+
+    /**
+     * 产品目录 Root 审计视图：本次写入的可开通项与其可配维度
+     *
+     * @param capability 可开通项（写入后状态）
+     * @param dimensions 可配维度（写入后）
+     * @return data
+     */
+    public static Map<String, Object> productCapabilityData(ProductCapability capability,
+        List<ProductCapabilityDimension> dimensions) {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("productCapabilityId", id(capability.getProductCapabilityId()));
+        row.put("productCode", code(capability.getProductCode()));
+        row.put("capabilityCode", capability.getCapabilityCode());
+        row.put("capabilityName", capability.getCapabilityName());
+        row.put("capabilityKind", code(capability.getCapabilityKind()));
+        row.put("paymentMethodCode", capability.getPaymentMethodCode());
+        row.put("status", code(capability.getStatus()));
+        row.put("changeVersion", id(capability.getChangeVersion()));
+        row.put("dimensions", dimensions.stream().sorted(Comparator.comparing(item -> item.getDimensionCode().getCode()))
+            .map(item -> {
+                Map<String, Object> dimension = new LinkedHashMap<>();
+                dimension.put("dimensionCode", code(item.getDimensionCode()));
+                dimension.put("required", Boolean.toString(Boolean.TRUE.equals(item.getRequired())));
+                return dimension;
+            }).toList());
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("capability", row);
+        return data;
+    }
+
+    /**
+     * 产品目录 Root 审计视图：本次写入的计费事件挂接
+     *
+     * @param feeEvent 计费事件（写入后）
+     * @return data
+     */
+    public static Map<String, Object> productFeeEventData(ProductFeeEvent feeEvent) {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("productFeeEventId", id(feeEvent.getProductFeeEventId()));
+        row.put("productCode", code(feeEvent.getProductCode()));
+        row.put("feeEventCode", feeEvent.getFeeEventCode());
+        row.put("termType", feeEvent.getTermType());
+        row.put("capabilityKind", code(feeEvent.getCapabilityKind()));
+        row.put("capabilityCode", feeEvent.getCapabilityCode());
+        row.put("changeVersion", id(feeEvent.getChangeVersion()));
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("feeEvent", row);
         return data;
     }
 

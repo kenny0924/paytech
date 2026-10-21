@@ -15,7 +15,8 @@
     <select id="findForCheckout" resultMap="CommercialTermPlan">
         SELECT term_plan_id, term_type, agreement_id, entity_no, client_id, local_partner_id, status
         FROM t_commercial_term_plan
-        WHERE client_id = #{clientId}<if test="!localPartnerIds.isEmpty()"> OR local_partner_id IN <foreach collection="localPartnerIds" item="partnerId" open="(" separator="," close=")">#{partnerId}</foreach></if>
+        WHERE owner_type &lt;&gt; 'PLATFORM_TEMPLATE'
+          AND (client_id = #{clientId}<if test="!localPartnerIds.isEmpty()"> OR local_partner_id IN <foreach collection="localPartnerIds" item="partnerId" open="(" separator="," close=")">#{partnerId}</foreach></if>)
         ORDER BY term_plan_id
     </select>
 
@@ -24,6 +25,8 @@
         <id column="term_plan_id" property="termPlanId"/>
         <result column="plan_code" property="planCode"/>
         <result column="term_type" property="termType"/>
+        <result column="owner_type" property="ownerType"/>
+        <result column="template_name" property="templateName"/>
         <result column="agreement_id" property="agreementId"/>
         <result column="entity_no" property="entityNo"/>
         <result column="client_id" property="clientId"/>
@@ -34,14 +37,14 @@
     </resultMap>
 
     <sql id="commercialTermPlanColumns">
-        term_plan_id, plan_code, term_type, agreement_id, entity_no, client_id, local_partner_id, status,
-        create_time, update_time
+        term_plan_id, plan_code, term_type, owner_type, template_name, agreement_id, entity_no, client_id,
+        local_partner_id, status, create_time, update_time
     </sql>
 
     <insert id="insert">
         INSERT INTO t_commercial_term_plan (<include refid="commercialTermPlanColumns"/>)
-        VALUES (#{termPlanId}, #{planCode}, #{termType}, #{agreementId}, #{entityNo}, #{clientId}, #{localPartnerId},
-            #{status}, #{createTime}, #{updateTime})
+        VALUES (#{termPlanId}, #{planCode}, #{termType}, #{ownerType}, #{templateName}, #{agreementId}, #{entityNo},
+            #{clientId}, #{localPartnerId}, #{status}, #{createTime}, #{updateTime})
     </insert>
 
     <select id="selectById" resultMap="CommercialTermPlanRow">
@@ -69,8 +72,10 @@
         WHERE term_plan_id = #{row.termPlanId} AND status = #{row.status}
     </update>
 
+    <!-- 合同方案列表不含标准价目模板（模板经 selectTemplates 读取）。 -->
     <sql id="listConditions">
         <where>
+            owner_type &lt;&gt; 'PLATFORM_TEMPLATE'
             <if test="query.agreementId != null">AND agreement_id = #{query.agreementId}</if>
             <if test="query.clientId != null">AND client_id = #{query.clientId}</if>
             <if test="query.localPartnerId != null">AND local_partner_id = #{query.localPartnerId}</if>
@@ -89,6 +94,15 @@
     <select id="countPage" resultType="long">
         SELECT COUNT(*) FROM t_commercial_term_plan
         <include refid="listConditions"/>
+    </select>
+
+    <select id="selectTemplates" resultMap="CommercialTermPlanRow">
+        SELECT <include refid="commercialTermPlanColumns"/> FROM t_commercial_term_plan
+        WHERE owner_type = 'PLATFORM_TEMPLATE'
+            <if test="entityNo != null">AND entity_no = #{entityNo}</if>
+            <if test="termType != null">AND term_type = #{termType}</if>
+            <if test="status != null">AND status = #{status}</if>
+        ORDER BY entity_no, plan_code
     </select>
 
     <select id="selectByIds" resultMap="CommercialTermPlanRow">

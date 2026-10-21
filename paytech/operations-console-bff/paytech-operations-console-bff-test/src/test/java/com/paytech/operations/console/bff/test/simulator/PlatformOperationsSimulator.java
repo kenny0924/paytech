@@ -263,13 +263,17 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
 
     // 这是 Platform Simulator 的当前目录事实；BFF 生产代码仍只传可信 Route Code。
     /**
-     * 商务路由权限（注册 DML 块 95）：合同读写、定价读写与独立的定价审批；未登记的 operations-commercial-* 视为意外调用。
+     * 商务路由权限（注册 DML 块 95 / 93 / 124）：合同读写、定价读写与独立的定价审批，目录维护、标准价目维护与独立的标准价目复核；
+     * 未登记的 operations-commercial-* 视为意外调用。
      */
     public static final String COMMERCIAL_CONTRACT_READ_PERMISSION_ID = "900000000000095101";
     public static final String COMMERCIAL_CONTRACT_MANAGE_PERMISSION_ID = "900000000000095102";
     public static final String COMMERCIAL_PRICING_READ_PERMISSION_ID = "900000000000095103";
     public static final String COMMERCIAL_PRICING_MANAGE_PERMISSION_ID = "900000000000095104";
     public static final String COMMERCIAL_PRICING_APPROVE_PERMISSION_ID = "900000000000095105";
+    public static final String COMMERCIAL_CATALOG_MANAGE_PERMISSION_ID = "900000000000124101";
+    public static final String COMMERCIAL_TEMPLATE_MANAGE_PERMISSION_ID = "900000000000124102";
+    public static final String COMMERCIAL_TEMPLATE_APPROVE_PERMISSION_ID = "900000000000124103";
     public static final Map<String, String> COMMERCIAL_ROUTE_PERMISSIONS = Map.ofEntries(
         Map.entry("operations-commercial-agreement-detail", COMMERCIAL_CONTRACT_READ_PERMISSION_ID),
         Map.entry("operations-commercial-agreement-create", COMMERCIAL_CONTRACT_MANAGE_PERMISSION_ID),
@@ -305,7 +309,24 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
         Map.entry("operations-commercial-product-list", COMMERCIAL_CONTRACT_READ_PERMISSION_ID),
         Map.entry("operations-commercial-capability-catalog", COMMERCIAL_CONTRACT_READ_PERMISSION_ID),
         Map.entry("operations-commercial-fee-event-list", COMMERCIAL_CONTRACT_READ_PERMISSION_ID),
-        Map.entry("operations-commercial-business-change-list", COMMERCIAL_CONTRACT_READ_PERMISSION_ID));
+        Map.entry("operations-commercial-business-change-list", COMMERCIAL_CONTRACT_READ_PERMISSION_ID),
+        Map.entry("operations-commercial-catalog-capability-create", COMMERCIAL_CATALOG_MANAGE_PERMISSION_ID),
+        Map.entry("operations-commercial-catalog-capability-update", COMMERCIAL_CATALOG_MANAGE_PERMISSION_ID),
+        Map.entry("operations-commercial-catalog-capability-retire", COMMERCIAL_CATALOG_MANAGE_PERMISSION_ID),
+        Map.entry("operations-commercial-catalog-capability-activate", COMMERCIAL_CATALOG_MANAGE_PERMISSION_ID),
+        Map.entry("operations-commercial-catalog-fee-event-capability", COMMERCIAL_CATALOG_MANAGE_PERMISSION_ID),
+        Map.entry("operations-commercial-dimension-list", COMMERCIAL_CONTRACT_READ_PERMISSION_ID),
+        Map.entry("operations-commercial-template-list", COMMERCIAL_PRICING_READ_PERMISSION_ID),
+        Map.entry("operations-commercial-template-create", COMMERCIAL_TEMPLATE_MANAGE_PERMISSION_ID),
+        Map.entry("operations-commercial-template-version-create", COMMERCIAL_TEMPLATE_MANAGE_PERMISSION_ID),
+        Map.entry("operations-commercial-template-prices", COMMERCIAL_TEMPLATE_MANAGE_PERMISSION_ID),
+        Map.entry("operations-commercial-template-submit", COMMERCIAL_TEMPLATE_MANAGE_PERMISSION_ID),
+        Map.entry("operations-commercial-template-approve", COMMERCIAL_TEMPLATE_APPROVE_PERMISSION_ID),
+        Map.entry("operations-commercial-template-reject", COMMERCIAL_TEMPLATE_APPROVE_PERMISSION_ID),
+        Map.entry("operations-commercial-template-schedule", COMMERCIAL_TEMPLATE_MANAGE_PERMISSION_ID),
+        Map.entry("operations-commercial-template-activate", COMMERCIAL_TEMPLATE_MANAGE_PERMISSION_ID),
+        Map.entry("operations-commercial-term-fill-from-template", COMMERCIAL_PRICING_MANAGE_PERMISSION_ID),
+        Map.entry("operations-commercial-term-acceptance", COMMERCIAL_PRICING_MANAGE_PERMISSION_ID));
 
     /**
      * 渠道路由权限（注册 DML 块 92，31 条）：渠道配置读写、账号凭据、成本读写与独立的成本审批、变更记录读取；

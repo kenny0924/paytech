@@ -124,4 +124,24 @@ public class CommercialTermVersionRepositoryImpl implements CommercialTermVersio
         }
         return List.copyOf(mapper.selectByPlanIdsAndStatuses(termPlanIds, statuses));
     }
+
+    /** 条件写入来源模板版本，成功后同步原对象。 */
+    @Override
+    public void updateSourceTemplate(CommercialTermVersion version, long sourceTemplateVersionId, Instant now) {
+        Instant time = micros(now);
+        if (mapper.updateSourceTemplate(version, sourceTemplateVersionId, time) != 1) {
+            throw new ConcurrentRequestException("商业条款版本已变化: " + version.getTermVersionId());
+        }
+        version.setSourceTemplateVersionId(sourceTemplateVersionId);
+        version.setUpdateTime(time);
+    }
+
+    /** 空集合不访问数据库。 */
+    @Override
+    public List<CommercialTermVersion> findByIds(Collection<Long> termVersionIds) {
+        if (termVersionIds.isEmpty()) {
+            return List.of();
+        }
+        return List.copyOf(mapper.selectByIds(termVersionIds));
+    }
 }

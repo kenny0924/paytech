@@ -3,6 +3,7 @@ package com.paytech.commercial.test.builder;
 import java.time.Instant;
 
 import com.paytech.commercial.api.constant.CommercialCodes;
+import com.paytech.commercial.api.enums.CommercialTermOwnerType;
 import com.paytech.commercial.api.enums.CommercialTermPlanStatus;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermPlan;
 import com.paytech.commercial.test.mocker.local.checkout.CheckoutFixture;
@@ -33,6 +34,7 @@ public final class CommercialTermPlanBuilder {
             .termPlanId(TERM_PLAN_ID)
             .planCode(PLAN_CODE)
             .termType(CommercialCodes.TermType.CLIENT_PRICING)
+            .ownerType(CommercialTermOwnerType.CLIENT)
             .agreementId(AgreementBuilder.AGREEMENT_ID)
             .entityNo(AgreementBuilder.ENTITY_NO)
             .clientId(AgreementBuilder.CLIENT_ID)
@@ -81,6 +83,18 @@ public final class CommercialTermPlanBuilder {
     /** 设置Partner 类方案的 Local Partner。 */
     public CommercialTermPlanBuilder localPartnerId(Long value) {
         commercialTermPlan.setLocalPartnerId(value);
+        return this;
+    }
+
+    /** 设置方案 Owner 类型。 */
+    public CommercialTermPlanBuilder ownerType(CommercialTermOwnerType value) {
+        commercialTermPlan.setOwnerType(value);
+        return this;
+    }
+
+    /** 设置模板显示名。 */
+    public CommercialTermPlanBuilder templateName(String value) {
+        commercialTermPlan.setTemplateName(value);
         return this;
     }
 

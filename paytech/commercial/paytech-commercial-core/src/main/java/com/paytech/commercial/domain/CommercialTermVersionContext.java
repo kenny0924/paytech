@@ -3,6 +3,7 @@ package com.paytech.commercial.domain;
 import java.time.Instant;
 import java.util.List;
 
+import com.paytech.commercial.api.enums.CommercialTermOwnerType;
 import com.paytech.commercial.core.dal.dataobject.Agreement;
 import com.paytech.commercial.core.dal.dataobject.AgreementCapability;
 import com.paytech.commercial.core.dal.dataobject.AgreementCapabilityLimit;
@@ -16,6 +17,7 @@ import com.paytech.commercial.core.dal.dataobject.PricingProfile;
 import com.paytech.commercial.core.dal.dataobject.PricingProfileCond;
 import com.paytech.commercial.core.dal.dataobject.ProductCapability;
 import com.paytech.commercial.core.dal.dataobject.ProductFeeEvent;
+import com.paytech.commercial.core.dal.dataobject.TermVersionAcceptance;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -48,10 +50,10 @@ public class CommercialTermVersionContext {
     /** 已读取的方案 BCR Root；创建方案时为空（由保存事务创建）。 */
     private final BusinessChangeRecord planRoot;
 
-    /** 方案或版本引用的合同。 */
+    /** 方案或版本引用的合同；标准价目模板为空。 */
     private final Agreement agreement;
 
-    /** 合同覆盖的准确 OE（CLIENT 合同 entity_no 与覆盖表的并集）。 */
+    /** 合同覆盖的准确 OE（CLIENT 合同 entity_no 与覆盖表的并集）；模板为模板 OE。 */
     @Singular
     private final List<String> coveredEntityNos;
 
@@ -115,14 +117,41 @@ public class CommercialTermVersionContext {
     @Singular
     private final List<CommercialTermVersion> planVersions;
 
+    /** 登记客户签署时的新签署记录。 */
+    private final TermVersionAcceptance acceptance;
+
+    /** 从模板补齐时首次写入的来源模板版本 ID，可空。 */
+    private final Long fillSourceTemplateVersionId;
+
     /** 本次命令提交后的方案根版本。 */
     public long nextChangeVersion() {
         return expectedChangeVersion + 1;
     }
 
-    /** 方案是否 Client 条款（Owner 为 Client）。 */
+    /** 方案是否 Client 条款结构（Client 方案与标准价目模板；结算四字段必填）。 */
     public boolean clientTerm() {
-        return plan.getClientId() != null;
+        return clientTerm(plan);
+    }
+
+    /**
+     * Client 条款结构的唯一判断：按方案归属，Client 方案与标准价目模板为 Client 结构（价格带结算四字段），Local Partner 方案不是；
+     * 不以 clientId 是否为空判断（模板没有 clientId）
+     *
+     * @param plan 方案
+     * @return 是否 Client 条款结构
+     */
+    public static boolean clientTerm(CommercialTermPlan plan) {
+        return plan.getOwnerType() != CommercialTermOwnerType.LOCAL_PARTNER;
+    }
+
+    /** 方案是否标准价目模板。 */
+    public boolean template() {
+        return plan.getOwnerType() == CommercialTermOwnerType.PLATFORM_TEMPLATE;
+    }
+
+    /** 方案是否 Client 合同方案（受开通相关性与零开通约束）。 */
+    public boolean clientContract() {
+        return plan.getOwnerType() == CommercialTermOwnerType.CLIENT;
     }
 
     /** 某准确 OE 是否被合同覆盖。 */

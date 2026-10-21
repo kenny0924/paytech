@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.springframework.web.bind.annotation.RestController;
 
+import com.paytech.commercial.service.processor.CommercialTermTemplateListQueryProcessor;
+import com.paytech.commercial.api.term.response.CommercialTermTemplateListResponseBody;
 import com.paytech.commercial.api.term.CommercialTermQueryApi;
 import com.paytech.commercial.api.term.response.CommercialTermPlanSummary;
 import com.paytech.commercial.api.term.response.CommercialTermVersionSummary;
@@ -19,6 +21,14 @@ import lombok.AllArgsConstructor;
 public class CommercialTermQueryController implements CommercialTermQueryApi {
     private final CommercialTermPlanListQueryProcessor commercialTermPlanListQueryProcessor;
     private final CommercialTermVersionListQueryProcessor commercialTermVersionListQueryProcessor;
+    private final CommercialTermTemplateListQueryProcessor commercialTermTemplateListQueryProcessor;
+
+    /** 标准价目模板方案列表。 */
+    @Override
+    public CommercialTermTemplateListResponseBody listTemplates(String entityNo, String termType, String status) {
+        return CommercialTermQueryConverter.templates(commercialTermTemplateListQueryProcessor.process(
+            CommercialTermQueryConverter.templateQuery(entityNo, termType, status)));
+    }
 
     /** 方案分页列表。 */
     @Override
@@ -31,8 +41,9 @@ public class CommercialTermQueryController implements CommercialTermQueryApi {
     /** 版本分页列表与审批工作台。 */
     @Override
     public PagingResponseBody<CommercialTermVersionSummary> listVersions(String planId, String agreementId,
-        List<String> status, String effectiveFrom, String effectiveTo, Integer page, Integer size) {
+        String ownerType, List<String> status, String effectiveFrom, String effectiveTo, Integer page, Integer size) {
         return commercialTermVersionListQueryProcessor.process(CommercialTermQueryConverter.versionQuery(planId,
-            agreementId, status, effectiveFrom, effectiveTo, page, size)).map(CommercialTermQueryConverter::versionSummary);
+            agreementId, ownerType, status, effectiveFrom, effectiveTo, page, size))
+            .map(CommercialTermQueryConverter::versionSummary);
     }
 }

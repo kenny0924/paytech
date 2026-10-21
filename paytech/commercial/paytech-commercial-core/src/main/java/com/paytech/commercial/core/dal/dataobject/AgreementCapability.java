@@ -64,6 +64,9 @@ public class AgreementCapability {
      */
     private Integer rollingReserveDays;
 
+    /** 是否要求 3DS 认证 */
+    private Boolean require3ds;
+
     /** 记录创建的 UTC 微秒时间 */
     private Instant createTime;
 

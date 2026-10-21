@@ -46,7 +46,7 @@ class ProductCatalogHttpTest extends AbstractCommercialWriteApiTest {
 
         assertAll(() -> assertEquals(seed.products().stream().map(ProductCatalogHttpTest::row).map(json::readTree).toList(),
                 products.valueStream().toList()),
-            () -> assertEquals(seed.capabilities().stream().map(ProductCatalogHttpTest::row).map(json::readTree).toList(),
+            () -> assertEquals(seed.capabilities().stream().map(this::row).map(json::readTree).toList(),
                 capabilities.valueStream().toList()),
             () -> assertEquals(seed.feeEvents().stream().map(ProductCatalogHttpTest::row).map(json::readTree).toList(),
                 feeEvents.valueStream().toList()));
@@ -91,13 +91,19 @@ class ProductCatalogHttpTest extends AbstractCommercialWriteApiTest {
     }
 
     /** 种子可开通项的期望 JSON（按树比较）。 */
-    private static String row(ProductCapability capability) {
+    private String row(ProductCapability capability) {
+        String dimensions = seed.dimensions().stream()
+            .filter(dimension -> dimension.getCapabilityCode().equals(capability.getCapabilityCode()))
+            .sorted(java.util.Comparator.comparing(dimension -> dimension.getDimensionCode().getCode()))
+            .map(dimension -> "{\"dimensionCode\":\"" + dimension.getDimensionCode().getCode() + "\",\"required\":"
+                + dimension.getRequired() + "}")
+            .collect(java.util.stream.Collectors.joining(",", "[", "]"));
         return "{\"productCapabilityId\":\"" + capability.getProductCapabilityId() + "\",\"productCode\":\""
             + capability.getProductCode().getCode() + "\",\"capabilityCode\":\"" + capability.getCapabilityCode()
             + "\",\"capabilityName\":\"" + capability.getCapabilityName() + "\",\"capabilityKind\":"
             + quoted(capability.getCapabilityKind()) + ",\"paymentMethodCode\":" + quoted(capability.getPaymentMethodCode())
-            + ",\"dimensionCode\":" + quoted(capability.getDimensionCode()) + ",\"dimensionValue\":"
-            + quoted(capability.getDimensionValue()) + ",\"status\":" + quoted(capability.getStatus()) + "}";
+            + ",\"dimensionCode\":null,\"dimensionValue\":null,\"dimensions\":" + dimensions + ",\"status\":"
+            + quoted(capability.getStatus()) + ",\"changeVersion\":1}";
     }
 
     /** 种子计费事件的期望 JSON（按树比较）。 */
@@ -105,7 +111,8 @@ class ProductCatalogHttpTest extends AbstractCommercialWriteApiTest {
         return "{\"productFeeEventId\":\"" + feeEvent.getProductFeeEventId() + "\",\"productCode\":\""
             + feeEvent.getProductCode().getCode() + "\",\"feeEventCode\":\"" + feeEvent.getFeeEventCode()
             + "\",\"termType\":\"" + feeEvent.getTermType() + "\",\"billingFactType\":\"" + feeEvent.getBillingFactType()
-            + "\"}";
+            + "\",\"capabilityKind\":" + quoted(feeEvent.getCapabilityKind()) + ",\"capabilityCode\":"
+            + quoted(feeEvent.getCapabilityCode()) + ",\"changeVersion\":1}";
     }
 
     /** JSON 字符串或 null。 */

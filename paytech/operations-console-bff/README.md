@@ -88,6 +88,15 @@ Route Code 为 `operations-commercial-*`，权限 `COMMERCIAL_CONTRACT_READ / MA
 
 注册 DML 为 Platform ID 块 93（8 条路由，休眠），见第二切片需求目录 `db/platform-support-service/`。
 
+开通与定价模型调整一期（[需求](../../requirements/20261020/commercial-开通与定价模型调整/requirement.md)，[技术方案 §5](../../requirements/20261020/commercial-开通与定价模型调整/technique.md)）新增 17 个端点（共 52 个），合同开通项请求与读取的 `limits` 改为 `conditions[]{dimensionCode, values[]}` + `require3ds`，版本与价格读取增加 `ownerType`、来源模板、破标（组件 `benchmark`、版本 `belowStandardCount`）、`templateUpdate`、`acceptance`、`relevanceWarnings`，版本状态增 `CLIENT_SIGNED`：
+
+- 产品目录维护（`CommercialCatalogController` → `CommercialCatalogClient` → `ProductCatalogApi`，`COMMERCIAL_CATALOG_MANAGE`）：`POST /products/capabilities`、`PUT /products/capabilities/{productCapabilityId}`、`POST .../{productCapabilityId}/retire|activate`、`PUT /products/fee-events/{productFeeEventId}/capability`；维度清单 `GET /products/dimensions`（`COMMERCIAL_CONTRACT_READ`）。
+- 标准价目模板（`CommercialTemplateController`）：`GET /commercial-terms/templates`（`COMMERCIAL_PRICING_READ`）、`POST /commercial-terms/templates` 与模板专用版本路由 `POST /commercial-terms/templates/{planId}/versions`、`PUT|POST /commercial-terms/template-versions/{versionId}/prices|submit|schedule|activate`（`COMMERCIAL_TEMPLATE_MANAGE`）、`.../approve|reject`（`COMMERCIAL_TEMPLATE_APPROVE`），内部转发到与合同同一组 commercial 版本接口。
+- 路由范围隔离：`CommercialTermScopedCommandProcessor` 在转发前读取版本概要的 `ownerType`（建版本时按模板方案列表判定 planId），模板路由只接受 `PLATFORM_TEMPLATE`，块 95 的合同版本写入路由（建版本、价格、提交、批准、驳回、排期、激活）拒绝模板，均为 400 `BUSINESS_CHECK_FAILED` 且不写入。模板版本的详情、价格全集、版本列表与对比复用价目只读路由：编辑页与对比对模板版本不读合同，按模板方案列表取模板 OE（响应 `agreement=null`、`template` 为模板方案）。
+- 合同版本：`POST /commercial-terms/versions/{versionId}/fill-from-template` 与 `POST .../acceptance`（登记客户签署，`COMMERCIAL_PRICING_MANAGE`），由 commercial 拒绝模板版本。
+
+注册 DML 为 Platform ID 块 124（3 权限、5 资源、17 路由，休眠），见本需求目录 `db/platform-support-service/`。auto 测试 `CommercialTemplateCatalogAutoTest` 覆盖权限分离、范围隔离、Owner 原因透传与本地边界，边界清单逐行覆盖转发与授权拒绝。
+
 #### 渠道（channel-connector，Nacos 发现）
 
 渠道控制台见[需求方案 §7–§8](../../requirements/20261020/channel-connector-运营控制台渠道成本与基础配置/technique.md)：`/channel-admin/v1` 下 31 个端点，与 Platform 注册 DML 块 92 的 31 条路由逐条一致（Query 白名单同块 92 的 `t_gateway_route_query_param`，其余路由不接受 Query）。

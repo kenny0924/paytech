@@ -8,7 +8,7 @@ import com.paytech.commercial.api.enums.ProductCode;
 import com.paytech.commercial.api.enums.ProductStatus;
 import com.paytech.commercial.core.dal.dataobject.ProductCapability;
 
-/** t_product_capability 的本地仓储；目录随发版维护，不接入 BCR。 */
+/** t_product_capability 的本地仓储；写入以 change_version 做 CAS，审计归 PRODUCT_CATALOG。 */
 public interface ProductCapabilityRepository {
     /**
      * 插入可开通项目录行；影响行数不为 1 时抛出系统异常。
@@ -50,7 +50,7 @@ public interface ProductCapabilityRepository {
     List<ProductCapability> findByProductCode(ProductCode productCode);
 
     /**
-     * 以对象当前状态为条件迁移状态；成功后同步原对象的状态与更新时间。
+     * 以对象当前状态与 changeVersion 为条件迁移状态；成功后同步原对象的状态、版本与更新时间。
      *
      * @param capability 已读取的可开通项
      * @param status 目标状态
@@ -66,4 +66,14 @@ public interface ProductCapabilityRepository {
      * @return 按 product_capability_id 升序
      */
     List<ProductCapability> findFiltered(ProductCode productCode, ProductStatus status);
+
+    /**
+     * 以对象 changeVersion 为条件改写名称与归属产品；成功后同步原对象，版本加一。
+     *
+     * @param capability 已读取的可开通项
+     * @param capabilityName 新名称
+     * @param productCode 新归属产品
+     * @param now 本次更新时间
+     */
+    void updateDefinition(ProductCapability capability, String capabilityName, ProductCode productCode, Instant now);
 }

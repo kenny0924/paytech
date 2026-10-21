@@ -2,6 +2,8 @@ import { ApiError, session } from '../api/session.ts';
 import type { ConsoleResource } from '../api/types.ts';
 import { configurationCommand } from '../configuration/configurationModel.ts';
 import type { ConfigurationCommand } from '../configuration/configurationModel.ts';
+import { decodeBenchmark, decodeCapabilityCondition, decodeVersionReview } from './termReview.ts';
+import type { CapabilityCondition, ComponentBenchmark, VersionReview } from './termReview.ts';
 
 // ---------- 路径与权限 ----------
 
@@ -27,6 +29,8 @@ export const commercialPaths = {
   dashboard: '/commercial-admin/v1/dashboard',
   rateCards: '/commercial-admin/v1/rate-cards',
   simulate: '/commercial-admin/v1/commercial-prices/simulate',
+  fillFromTemplate: (versionId: string) => `/commercial-admin/v1/commercial-terms/versions/${versionId}/fill-from-template`,
+  versionAcceptance: (versionId: string) => `/commercial-admin/v1/commercial-terms/versions/${versionId}/acceptance`,
 } as const;
 
 /** 页面路由（与 Console Resource frontend_route 一致）。 */
@@ -41,14 +45,22 @@ export const commercialRoutes = {
   priceSimulator: '/commercial/price-simulator',
   catalog: '/commercial/catalog',
   history: '/commercial/history',
+  templates: '/commercial/templates',
 } as const;
 
-/** 按钮资源：合同维护、画像维护、价目维护（创建 / 价格 / 提交 / 排期 / 激活）与价目审批（批准 / 驳回）。 */
+/**
+ * 按钮资源：合同维护、画像维护、价目维护（创建 / 价格 / 提交 / 排期 / 激活）与价目审批（批准 / 驳回）；
+ * 一期新增目录维护、标准价目维护 / 复核与价格协议签署登记。
+ */
 export const commercialButtons = {
   agreementManage: 'OPERATIONS_COMMERCIAL_AGREEMENT_MANAGE',
   profileManage: 'OPERATIONS_COMMERCIAL_PROFILE_MANAGE',
   termManage: 'OPERATIONS_COMMERCIAL_TERM_MANAGE',
   termApprove: 'OPERATIONS_COMMERCIAL_TERM_APPROVE',
+  catalogManage: 'OPERATIONS_COMMERCIAL_CATALOG_MANAGE',
+  templateManage: 'OPERATIONS_COMMERCIAL_TEMPLATE_MANAGE',
+  templateApprove: 'OPERATIONS_COMMERCIAL_TEMPLATE_APPROVE',
+  termSign: 'OPERATIONS_COMMERCIAL_TERM_SIGN',
 } as const;
 
 export function hasButton(resources: readonly ConsoleResource[], code: string): boolean {
@@ -62,7 +74,6 @@ export const businessModes = ['MOR', 'PSP'] as const;
 export const partyRoles = ['CLIENT', 'LOCAL_PARTNER', 'PLATFORM_SIGNATORY', 'OPERATING_ENTITY'] as const;
 export const acceptanceMethods = ['E_SIGNATURE', 'CLICK_ACCEPTANCE', 'MANUAL_SIGNATURE'] as const;
 export const capabilityStatuses = ['ENABLED', 'SUSPENDED', 'DISABLED'] as const;
-export const limitCodes = ['CURRENCY', 'CONSUMER_COUNTRY', 'REQUIRE_3DS'] as const;
 export const profileKinds = ['PAYMENT_METHOD', 'PAYOUT_RAIL', 'FX_PAIR', 'DISPUTE', 'PERIODIC'] as const;
 export const profileStatuses = ['DRAFT', 'ACTIVE', 'RETIRED'] as const;
 export const dimensionCodes = ['CARD_BRAND', 'FUNDING_TYPE', 'CARD_LEVEL', 'CARD_PRODUCT', 'ISSUER_REGION', 'ISSUER_COUNTRY', 'THREE_DS_RESULT',
@@ -86,7 +97,7 @@ export const bandBases = ['TRANSACTION_AMOUNT', 'PERIOD_VOLUME'] as const;
 export const bandModes = ['WHOLE_BASE', 'PROGRESSIVE', 'RETROACTIVE'] as const;
 export const pricingModels = ['BLENDED', 'INTERCHANGE_PLUS_PLUS'] as const;
 export const feeTaxTreatments = ['INCLUSIVE', 'EXCLUSIVE'] as const;
-export const versionStatuses = ['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'SCHEDULED', 'ACTIVE', 'SUPERSEDED', 'EXPIRED'] as const;
+export const versionStatuses = ['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'CLIENT_SIGNED', 'SCHEDULED', 'ACTIVE', 'SUPERSEDED', 'EXPIRED'] as const;
 export const agreementStatuses = ['DRAFT', 'PENDING_SIGNATURE', 'SIGNED', 'ACTIVE', 'EXPIRED', 'TERMINATED', 'CANCELLED'] as const;
 /** 本期结算日历固定码（technique §2.10）。 */
 export const defaultBusinessCalendar = 'AE_BUSINESS_DAYS';
@@ -95,7 +106,6 @@ export type AgreementType = typeof agreementTypes[number];
 export type PartyRole = typeof partyRoles[number];
 export type AcceptanceMethod = typeof acceptanceMethods[number];
 export type CapabilityStatus = typeof capabilityStatuses[number];
-export type LimitCode = typeof limitCodes[number];
 export type ProfileKind = typeof profileKinds[number];
 export type ProfileStatus = typeof profileStatuses[number];
 export type Dimension = typeof dimensionCodes[number];
@@ -108,7 +118,7 @@ export const agreementStatusLabels: Record<AgreementStatus, string> = {
   DRAFT: '草稿', PENDING_SIGNATURE: '待签署', SIGNED: '已签署', ACTIVE: '生效', EXPIRED: '已到期', TERMINATED: '已终止', CANCELLED: '已取消',
 };
 export const versionStatusLabels: Record<VersionStatus, string> = {
-  DRAFT: '草稿', PENDING_APPROVAL: '待审批', APPROVED: '已批准', SCHEDULED: '已排期', ACTIVE: '生效', SUPERSEDED: '已替代', EXPIRED: '已到期',
+  DRAFT: '草稿', PENDING_APPROVAL: '待审批', APPROVED: '已批准', CLIENT_SIGNED: '客户已签署', SCHEDULED: '已排期', ACTIVE: '生效', SUPERSEDED: '已替代', EXPIRED: '已到期',
 };
 export const profileStatusLabels: Record<ProfileStatus, string> = { DRAFT: '草稿', ACTIVE: '启用', RETIRED: '已退役' };
 export const capabilityStatusLabels: Record<CapabilityStatus, string> = { ENABLED: '开通', SUSPENDED: '暂停', DISABLED: '关闭' };
@@ -131,13 +141,12 @@ export const termTypeLabels: Readonly<Record<string, string>> = {
 };
 /** 状态标签色：生效 / 开通为绿，待办为橙或蓝，结束为灰，暂停为金。 */
 export const commercialStatusColors: Readonly<Record<string, string>> = {
-  ACTIVE: 'green', ENABLED: 'green', SIGNED: 'cyan', APPROVED: 'cyan', SCHEDULED: 'blue', PENDING_SIGNATURE: 'orange', PENDING_APPROVAL: 'orange',
+  ACTIVE: 'green', ENABLED: 'green', SIGNED: 'cyan', APPROVED: 'cyan', CLIENT_SIGNED: 'cyan', SCHEDULED: 'blue', PENDING_SIGNATURE: 'orange', PENDING_APPROVAL: 'orange',
   DRAFT: 'default', SUSPENDED: 'gold', DISABLED: 'default', RETIRED: 'default', SUPERSEDED: 'default', EXPIRED: 'default', TERMINATED: 'red', CANCELLED: 'default',
 };
 
 // ---------- 读模型 ----------
 
-export interface CapabilityLimit { limitCode: LimitCode; limitValue: string }
 export interface AgreementParty {
   agreementPartyId: string; partyId: string; partyProfileId: string; partyRole: PartyRole; acceptanceMethod: AcceptanceMethod | null;
   acceptedByActorId: string | null; acceptedAt: string | null; acceptanceReference: string | null; evidenceDocumentId: string | null;
@@ -145,7 +154,7 @@ export interface AgreementParty {
 export interface AgreementDocument { agreementDocumentId: string; documentType: string; fileId: string; contentHash: string }
 export interface AgreementCapability {
   agreementCapabilityId: string; entityNo: string; capabilityCode: string; status: CapabilityStatus; effectiveFrom: string; effectiveTo: string | null;
-  rollingReserveRate: string | null; rollingReserveDays: number | null; limits: CapabilityLimit[];
+  rollingReserveRate: string | null; rollingReserveDays: number | null; conditions: CapabilityCondition[]; require3ds: boolean;
 }
 export interface Agreement {
   agreementId: string; agreementNo: string; agreementName: string; agreementType: AgreementType; businessMode: string | null; fundMode: string | null;
@@ -170,22 +179,29 @@ export interface PricingProfile {
 }
 export interface TermPlan {
   planId: string; planCode: string; termType: string; agreementId: string | null; entityNo: string | null; clientId: string | null;
-  localPartnerId: string | null; status: string; changeVersion: string;
+  localPartnerId: string | null; status: string; changeVersion: string; ownerType: string | null; templateName: string | null;
 }
-export interface TermVersion {
-  versionId: string; planId: string; termType: string; agreementId: string; versionNo: string; status: VersionStatus; effectiveFrom: string;
-  effectiveTo: string | null; roundingMode: string; pricingModel: string; feeTaxTreatment: string; changeVersion: string;
+/**
+ * 条款版本；模板版本没有合同（agreementId 为 null，ownerType=PLATFORM_TEMPLATE）。
+ * VersionReview 为一期新增的破标 / 来源 / 签署 / 相关性字段；ownerType 旧回执缺省为 null。
+ */
+export interface TermVersion extends VersionReview {
+  versionId: string; planId: string; termType: string; agreementId: string | null; versionNo: string; status: VersionStatus; effectiveFrom: string;
+  effectiveTo: string | null; roundingMode: string; pricingModel: string; feeTaxTreatment: string; changeVersion: string; ownerType: OwnerType | null;
 }
+/** 方案 Owner 类型：Client、Local Partner 或平台标准价目。 */
+export const ownerTypes = ['CLIENT', 'LOCAL_PARTNER', 'PLATFORM_TEMPLATE'] as const;
+export type OwnerType = typeof ownerTypes[number];
 export interface PriceBand { bandId: string; bandNo: number; lowerBound: string; upperBound: string | null; rate: string | null; fixedAmount: string | null; currency: string | null }
 export interface PriceComponent {
   componentId: string; componentNo: number; componentCode: string; componentType: ComponentType; triggerCode: string; calculationBase: string;
   refundBehavior: string; rate: string | null; fixedAmount: string | null; currency: string | null; minAmount: string | null; maxAmount: string | null;
-  bandBasis: string | null; bandMode: string | null; bands: PriceBand[];
+  bandBasis: string | null; bandMode: string | null; bands: PriceBand[]; benchmark: ComponentBenchmark | null;
 }
 export interface PriceSettlement { settlementBusinessDays: number; businessCalendarCode: string; settlementTimezone: string; cutoffSecondOfDay: number }
 export interface Price {
   priceId: string; entityNo: string; currency: string; pricingProfileCode: string; paymentMethodCode: string | null; priorityNo: number;
-  conditions: ProfileCondition[]; components: PriceComponent[]; settlement: PriceSettlement | null;
+  conditions: ProfileCondition[]; components: PriceComponent[]; settlement: PriceSettlement | null; sourceTemplatePriceId: string | null;
 }
 export interface TermScope {
   agreementId: string; agreementNo: string; agreementName: string; agreementType: AgreementType; status: AgreementStatus; clientId: string | null;
@@ -214,18 +230,13 @@ const array = (v: unknown): v is unknown[] => Array.isArray(v);
 /** 解码失败只给通用错误，不回显响应内容。 */
 const require = (valid: boolean) => { if (!valid) throw new ApiError(502, 'INVALID_RESPONSE'); };
 
-function decodeLimit(value: unknown): CapabilityLimit {
-  require(object(value) && oneOf(limitCodes)(value.limitCode) && text(value.limitValue, 128));
-  return value as unknown as CapabilityLimit;
-}
-
 export function decodeCapability(value: unknown): AgreementCapability {
   const v = value as AgreementCapability;
   require(object(v) && id(v.agreementCapabilityId) && typeof v.entityNo === 'string' && entityNoPattern.test(v.entityNo) && text(v.capabilityCode, 64)
     && oneOf(capabilityStatuses)(v.status) && instant(v.effectiveFrom) && optional(instant)(v.effectiveTo) && optional(decimal)(v.rollingReserveRate)
-    && optional(positiveInteger)(v.rollingReserveDays) && array(v.limits));
+    && optional(positiveInteger)(v.rollingReserveDays) && array(v.conditions) && optional((x: unknown) => typeof x === 'boolean')(v.require3ds));
   return { ...v, effectiveTo: orNull(v.effectiveTo), rollingReserveRate: orNull(v.rollingReserveRate), rollingReserveDays: orNull(v.rollingReserveDays),
-    limits: v.limits.map(decodeLimit) };
+    conditions: v.conditions.map(decodeCapabilityCondition), require3ds: v.require3ds === true };
 }
 
 function decodeParty(value: unknown): AgreementParty {
@@ -317,16 +328,18 @@ export function decodeProfileList(value: unknown): PricingProfile[] {
 export function decodePlan(value: unknown): TermPlan {
   const v = value as TermPlan;
   require(object(v) && id(v.planId) && text(v.planCode, 64) && text(v.termType, 64) && optional(id)(v.agreementId) && text(v.status, 32) && id(v.changeVersion));
-  return { ...v, agreementId: orNull(v.agreementId), entityNo: orNull(v.entityNo), clientId: orNull(v.clientId), localPartnerId: orNull(v.localPartnerId) };
+  return { ...v, agreementId: orNull(v.agreementId), entityNo: orNull(v.entityNo), clientId: orNull(v.clientId), localPartnerId: orNull(v.localPartnerId),
+    ownerType: orNull(v.ownerType), templateName: orNull(v.templateName) };
 }
 
 export function decodeVersion(versionId?: string) {
   return (value: unknown): TermVersion => {
     const v = value as TermVersion;
-    require(object(v) && id(v.versionId) && (!versionId || v.versionId === versionId) && id(v.planId) && text(v.termType, 64) && id(v.agreementId)
+    require(object(v) && id(v.versionId) && (!versionId || v.versionId === versionId) && id(v.planId) && text(v.termType, 64) && optional(id)(v.agreementId)
       && text(v.versionNo, 19) && oneOf(versionStatuses)(v.status) && instant(v.effectiveFrom) && optional(instant)(v.effectiveTo)
-      && text(v.pricingModel, 32) && text(v.feeTaxTreatment, 32) && id(v.changeVersion));
-    return { ...v, effectiveTo: orNull(v.effectiveTo) };
+      && text(v.pricingModel, 32) && text(v.feeTaxTreatment, 32) && id(v.changeVersion) && optional(oneOf(ownerTypes))(v.ownerType));
+    return { ...v, agreementId: orNull(v.agreementId), effectiveTo: orNull(v.effectiveTo), ownerType: orNull(v.ownerType),
+      ...decodeVersionReview(v as unknown as Record<string, unknown>) };
   };
 }
 
@@ -343,7 +356,8 @@ export function decodeComponent(value: unknown): PriceComponent {
     && text(v.calculationBase, 64) && text(v.refundBehavior, 32) && optional(decimal)(v.rate) && optional(decimal)(v.fixedAmount)
     && optional(decimal)(v.minAmount) && optional(decimal)(v.maxAmount) && optional(array)(v.bands));
   return { ...v, rate: orNull(v.rate), fixedAmount: orNull(v.fixedAmount), currency: orNull(v.currency), minAmount: orNull(v.minAmount),
-    maxAmount: orNull(v.maxAmount), bandBasis: orNull(v.bandBasis), bandMode: orNull(v.bandMode), bands: (v.bands ?? []).map(decodeBand) };
+    maxAmount: orNull(v.maxAmount), bandBasis: orNull(v.bandBasis), bandMode: orNull(v.bandMode), bands: (v.bands ?? []).map(decodeBand),
+    benchmark: decodeBenchmark(v.benchmark) };
 }
 
 export function decodeSettlement(value: unknown): PriceSettlement | null {
@@ -356,10 +370,11 @@ export function decodeSettlement(value: unknown): PriceSettlement | null {
 export function decodePrice(value: unknown): Price {
   const v = value as Price;
   require(object(v) && typeof v.entityNo === 'string' && entityNoPattern.test(v.entityNo) && typeof v.currency === 'string' && currencyPattern.test(v.currency)
-    && text(v.pricingProfileCode, 64) && positiveInteger(v.priorityNo) && array(v.conditions) && array(v.components) && v.components.length > 0);
+    && text(v.pricingProfileCode, 64) && positiveInteger(v.priorityNo) && array(v.conditions) && array(v.components) && v.components.length > 0
+    && optional(id)(v.sourceTemplatePriceId));
   return { priceId: String(v.priceId ?? ''), entityNo: v.entityNo, currency: v.currency, pricingProfileCode: v.pricingProfileCode,
     paymentMethodCode: orNull(v.paymentMethodCode), priorityNo: v.priorityNo, conditions: v.conditions.map(decodeCondition),
-    components: v.components.map(decodeComponent), settlement: decodeSettlement(v.settlement) };
+    components: v.components.map(decodeComponent), settlement: decodeSettlement(v.settlement), sourceTemplatePriceId: orNull(v.sourceTemplatePriceId) };
 }
 
 /** 版本编辑页聚合：版本 ID 与请求一致，价格只属于合同范围内的 OE。 */
@@ -460,7 +475,7 @@ export function percent(rate: string | null): string {
 }
 
 /**
- * 覆盖提示（对应激活校验 3 的近似）：合同下每个 ENABLED 开通项 × 其每个 CURRENCY 约束，在同 OE 同币种下至少应有一条价格。
+ * 覆盖提示（对应激活校验 3 的近似）：合同下每个 ENABLED 开通项 × 其 CURRENCY 接受条件的每个币种，在同 OE 同币种下至少应有一条价格。
  * 只按 OE + 币种粗查，不模拟画像条件命中；最终以 commercial 排期校验为准。
  */
 export function coverageGaps(capabilities: readonly AgreementCapability[], prices: readonly Pick<Price, 'entityNo' | 'currency'>[]): string[] {
@@ -468,9 +483,8 @@ export function coverageGaps(capabilities: readonly AgreementCapability[], price
   const gaps = new Set<string>();
   for (const capability of capabilities) {
     if (capability.status !== 'ENABLED') continue;
-    for (const limit of capability.limits) {
-      if (limit.limitCode !== 'CURRENCY') continue;
-      const key = `${capability.entityNo}/${limit.limitValue}`;
+    for (const currency of capability.conditions.find(condition => condition.dimensionCode === 'CURRENCY')?.values ?? []) {
+      const key = `${capability.entityNo}/${currency}`;
       if (!priced.has(key)) gaps.add(`${key}（${capability.capabilityCode}）`);
     }
   }
@@ -488,6 +502,8 @@ export interface ComponentDraft {
 export interface PriceDraft {
   entityNo: string; currency: string; pricingProfileCode: string; priorityNo: number; settlementBusinessDays: number | null;
   businessCalendarCode: string | null; settlementTimezone: string | null; cutoffSecondOfDay: number | null; components: ComponentDraft[];
+  /** 来源模板价格（基于模板生成 / 补齐）；保存时原样回传以保持来源，手工新增为空。 */
+  sourceTemplatePriceId?: string | null;
 }
 
 const blank = (value: string | null | undefined) => {
@@ -501,6 +517,7 @@ export function priceDraft(price: Price): PriceDraft {
     entityNo: price.entityNo, currency: price.currency, pricingProfileCode: price.pricingProfileCode, priorityNo: price.priorityNo,
     settlementBusinessDays: price.settlement?.settlementBusinessDays ?? null, businessCalendarCode: price.settlement?.businessCalendarCode ?? null,
     settlementTimezone: price.settlement?.settlementTimezone ?? null, cutoffSecondOfDay: price.settlement?.cutoffSecondOfDay ?? null,
+    sourceTemplatePriceId: price.sourceTemplatePriceId,
     components: price.components.map(component => ({
       componentCode: component.componentCode, componentType: component.componentType, triggerCode: component.triggerCode,
       calculationBase: component.calculationBase, refundBehavior: component.refundBehavior, rate: component.rate, fixedAmount: component.fixedAmount,
@@ -533,6 +550,7 @@ export function pricesBody(expectedChangeVersion: string, drafts: readonly Price
       entityNo: draft.entityNo, currency: draft.currency, pricingProfileCode: draft.pricingProfileCode, priorityNo: draft.priorityNo,
       settlementBusinessDays: draft.settlementBusinessDays, businessCalendarCode: blank(draft.businessCalendarCode),
       settlementTimezone: blank(draft.settlementTimezone), cutoffSecondOfDay: draft.cutoffSecondOfDay,
+      sourceTemplatePriceId: draft.sourceTemplatePriceId ?? null,
       components: draft.components.map(component => {
         const tiered = component.componentType === 'TIERED';
         const percentage = component.componentType === 'PERCENTAGE';
@@ -611,23 +629,6 @@ export function acceptanceBody(expectedChangeVersion: number, values: Acceptance
   };
 }
 
-export interface CapabilityFormValues {
-  entityNo: string; capabilityCode: string; status?: CapabilityStatus; effectiveFrom: string; effectiveTo?: string; rollingReserveRate?: string;
-  rollingReserveDays?: number | null; limits?: CapabilityLimit[];
-}
-/** 开通项写入：保证金两字段成组为空或非空；约束行去空白并去重。 */
-export function capabilityBody(expectedChangeVersion: number, values: CapabilityFormValues, update: boolean) {
-  const rate = blank(values.rollingReserveRate);
-  const days = values.rollingReserveDays ?? null;
-  const seen = new Set<string>();
-  const limits = (values.limits ?? []).map(limit => ({ limitCode: limit.limitCode, limitValue: limit.limitValue.trim().toUpperCase() }))
-    .filter(limit => limit.limitValue && !seen.has(`${limit.limitCode}|${limit.limitValue}`) && seen.add(`${limit.limitCode}|${limit.limitValue}`));
-  const common = { expectedChangeVersion, effectiveFrom: offsetInstant(values.effectiveFrom), effectiveTo: optionalInstant(values.effectiveTo),
-    rollingReserveRate: rate, rollingReserveDays: days, limits };
-  return update ? { ...common, status: values.status ?? 'ENABLED' }
-    : { ...common, entityNo: values.entityNo.trim(), capabilityCode: values.capabilityCode.trim() };
-}
-
 /** 保证金两字段必须成组；返回错误文案或 null。 */
 export function reserveError(rate: string | undefined | null, days: number | undefined | null): string | null {
   const hasRate = !!blank(rate); const hasDays = days !== undefined && days !== null;
@@ -695,6 +696,9 @@ export function localTime(value: string | null): string {
 
 // ---------- 错误提示 ----------
 
+/** 错误提示场景：合同、画像、条款版本（含标准价目）与产品目录。 */
+export type CommercialContext = 'agreement' | 'profile' | 'version' | 'catalog';
+
 /** commercial 原因未透传时 BFF 给出的公共说明（Foundation BUSINESS_CHECK_FAILED 默认消息）。 */
 const genericBusinessDetail = '业务校验未通过';
 
@@ -703,7 +707,7 @@ const genericBusinessDetail = '业务校验未通过';
  * 例如「激活校验：开通项 AE001/APPLE_PAY/AED 无价格」；原因缺失时按场景给出可操作的提示。409 为并发版本冲突。
  * 未识别返回 null，由调用方走通用通知。
  */
-export function commercialErrorMessage(error: unknown, context: 'agreement' | 'profile' | 'version'): string | null {
+export function commercialErrorMessage(error: unknown, context: CommercialContext): string | null {
   if (!(error instanceof ApiError)) return null;
   if (error.status === 409) return '数据已被其他操作修改，请重新加载后再试。';
   if (error.status === 404) return '目标不存在。';
@@ -714,6 +718,7 @@ export function commercialErrorMessage(error: unknown, context: 'agreement' | 'p
     agreement: '合同状态、参与方、文件或开通项不满足 commercial 的业务规则（例如：提交签署需恰好一份签署文件，PARTNER 合同需覆盖至少一个 OE）。',
     profile: '画像状态或条件不满足规则（例如：只有草稿可修改，维度须与画像种类相容）。',
     version: '版本状态或激活校验未通过（例如：Checker 不能与 Maker 相同、画像须启用、OE 须被合同覆盖、开通项币种须全部有价格、阶梯须连续）。',
+    catalog: '目录状态或维度不满足规则（例如：代码不可重复、维度须可用于开通、支付方式开通项必须带支付方式代码、产品须启用）。',
   } as const;
   return `业务校验未通过：${hints[context]}（BUSINESS_CHECK_FAILED）`;
 }

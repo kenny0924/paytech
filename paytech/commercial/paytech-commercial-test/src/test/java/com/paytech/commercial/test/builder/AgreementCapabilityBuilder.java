@@ -28,7 +28,7 @@ public final class AgreementCapabilityBuilder {
     }
 
     /**
-     * 合成 CLIENT 合同在 AE991 下 ENABLED 的 CARD_VISA，自 2026-09-01 起无结束，无保证金。
+     * 合成 CLIENT 合同在 AE991 下 ENABLED 的 CARD，自 2026-09-01 起无结束，无保证金、不要求 3DS。
      *
      * @return 新 Builder
      */
@@ -37,14 +37,21 @@ public final class AgreementCapabilityBuilder {
             .agreementCapabilityId(AGREEMENT_CAPABILITY_ID)
             .agreementId(AgreementProductBuilder.AGREEMENT_ID)
             .entityNo(ENTITY_NO)
-            .capabilityCode(CommercialCodes.Capability.CARD_VISA)
+            .capabilityCode(CommercialCodes.Capability.CARD)
             .status(AgreementCapabilityStatus.ENABLED)
             .effectiveFrom(EFFECTIVE_FROM)
             .effectiveTo(null)
             .rollingReserveRate(null)
             .rollingReserveDays(null)
+            .require3ds(false)
             .createTime(CheckoutFixture.NOW)
             .updateTime(CheckoutFixture.NOW);
+    }
+
+    /** 设置是否要求 3DS。 */
+    public AgreementCapabilityBuilder require3ds(Boolean value) {
+        agreementCapability.setRequire3ds(value);
+        return this;
     }
 
     /** 设置开通项行的内部唯一标识。 */

@@ -1,9 +1,22 @@
 package com.paytech.commercial.ext.rest;
 
+import java.time.OffsetDateTime;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
+import com.paytech.commercial.service.processor.request.RecordTermVersionAcceptanceRequest;
+import com.paytech.commercial.service.processor.request.FillCommercialTermVersionRequest;
+import com.paytech.commercial.service.processor.request.CreateCommercialTermTemplateRequest;
+import com.paytech.commercial.domain.enums.AgreementPartyAcceptanceMethod;
+import com.paytech.commercial.domain.CommercialTermVersionInsight;
+import com.paytech.commercial.core.dal.dataobject.TermVersionAcceptance;
+import com.paytech.commercial.api.term.response.TermVersionAcceptanceDetail;
+import com.paytech.commercial.api.term.response.TemplateUpdateDetail;
+import com.paytech.commercial.api.term.response.PriceRelevanceWarning;
+import com.paytech.commercial.api.term.request.RecordTermVersionAcceptanceRequestBody;
+import com.paytech.commercial.api.term.request.FillCommercialTermVersionFromTemplateRequestBody;
+import com.paytech.commercial.api.term.request.CreateCommercialTermTemplateRequestBody;
 import com.paytech.commercial.api.enums.BandBasis;
 import com.paytech.commercial.api.enums.CalculationBase;
 import com.paytech.commercial.api.enums.FeeTaxTreatment;
@@ -50,7 +63,31 @@ final class CommercialTermConverter {
         String planId, CreateCommercialTermVersionRequestBody body) {
         return new CreateCommercialTermVersionRequest(Long.parseLong(planId), Long.parseLong(body.getExpectedChangeVersion()),
             AgreementConverter.actor(actorId), id(body.getCopyFromVersionId()), id(body.getAgreementId()),
-            code(PricingModel.class, body.getPricingModel()), code(FeeTaxTreatment.class, body.getFeeTaxTreatment()));
+            code(PricingModel.class, body.getPricingModel()), code(FeeTaxTreatment.class, body.getFeeTaxTreatment()),
+            id(body.getSourceTemplateVersionId()));
+    }
+
+    /** 创建标准价目模板方案。 */
+    static CreateCommercialTermTemplateRequest toRequest(String actorId, CreateCommercialTermTemplateRequestBody body) {
+        return new CreateCommercialTermTemplateRequest(body.getPlanCode(), body.getTemplateName(), body.getTermType(),
+            body.getEntityNo(), AgreementConverter.actor(actorId));
+    }
+
+    /** 从模板补齐。 */
+    static FillCommercialTermVersionRequest toRequest(String actorId, String versionId,
+        FillCommercialTermVersionFromTemplateRequestBody body) {
+        return new FillCommercialTermVersionRequest(Long.parseLong(versionId), Long.parseLong(body.getExpectedChangeVersion()),
+            AgreementConverter.actor(actorId), Long.parseLong(body.getTemplateVersionId()));
+    }
+
+    /** 登记客户签署。 */
+    static RecordTermVersionAcceptanceRequest toRequest(String actorId, String versionId,
+        RecordTermVersionAcceptanceRequestBody body) {
+        return new RecordTermVersionAcceptanceRequest(Long.parseLong(versionId), Long.parseLong(body.getExpectedChangeVersion()),
+            AgreementConverter.actor(actorId), Long.parseLong(body.getPartyId()),
+            code(AgreementPartyAcceptanceMethod.class, body.getAcceptanceMethod()),
+            OffsetDateTime.parse(body.getAcceptedAt()).toInstant(), body.getAcceptanceReference(),
+            Long.parseLong(body.getFileId()), body.getContentHash());
     }
 
     /** 整体替换价格集合。 */
@@ -81,6 +118,8 @@ final class CommercialTermConverter {
         body.setPlanId(text(plan.getTermPlanId()));
         body.setPlanCode(plan.getPlanCode());
         body.setTermType(plan.getTermType());
+        body.setOwnerType(CodeEnum.defaultCode(plan.getOwnerType()));
+        body.setTemplateName(plan.getTemplateName());
         body.setAgreementId(text(plan.getAgreementId()));
         body.setEntityNo(plan.getEntityNo());
         body.setClientId(text(plan.getClientId()));
@@ -90,8 +129,9 @@ final class CommercialTermConverter {
         return body;
     }
 
-    /** 版本响应。 */
-    static CommercialTermVersionResponseBody toVersionResponseBody(CommercialTermVersionView view) {
+    /** 版本响应与附加信息。 */
+    static CommercialTermVersionResponseBody toVersionResponseBody(CommercialTermVersionView view,
+        CommercialTermVersionInsight insight) {
         CommercialTermVersion version = view.version();
         CommercialTermVersionResponseBody body = new CommercialTermVersionResponseBody();
         body.setVersionId(text(version.getTermVersionId()));
@@ -106,7 +146,50 @@ final class CommercialTermConverter {
         body.setPricingModel(CodeEnum.defaultCode(version.getPricingModel()));
         body.setFeeTaxTreatment(CodeEnum.defaultCode(version.getFeeTaxTreatment()));
         body.setChangeVersion(Long.toString(view.changeVersion()));
+        body.setOwnerType(CodeEnum.defaultCode(view.plan().getOwnerType()));
+        body.setSourceTemplateVersionId(text(version.getSourceTemplateVersionId()));
+        body.setSignatureExempt(Boolean.TRUE.equals(version.getSignatureExempt()));
+        body.setBelowStandardCount(insight.getBelowStandardCount());
+        body.setTemplateUpdate(templateUpdate(insight.getTemplateUpdate()));
+        body.setAcceptance(acceptance(insight.getAcceptance()));
+        body.setRelevanceWarnings(insight.getRelevanceIssues().stream().map(issue -> {
+            PriceRelevanceWarning warning = new PriceRelevanceWarning();
+            warning.setEntityNo(issue.getEntityNo());
+            warning.setCurrency(issue.getCurrency());
+            warning.setPricingProfileCode(issue.getPricingProfileCode());
+            warning.setReasonCode(issue.getReason().getCode());
+            warning.setMessage(issue.getMessage());
+            return warning;
+        }).toList());
         return body;
+    }
+
+    /** 标准价已更新提示。 */
+    static TemplateUpdateDetail templateUpdate(CommercialTermVersion latest) {
+        if (latest == null) {
+            return null;
+        }
+        TemplateUpdateDetail detail = new TemplateUpdateDetail();
+        detail.setLatestTemplateVersionId(text(latest.getTermVersionId()));
+        detail.setLatestVersionNo(text(latest.getVersionNo()));
+        return detail;
+    }
+
+    /** 客户签署记录。 */
+    static TermVersionAcceptanceDetail acceptance(TermVersionAcceptance acceptance) {
+        if (acceptance == null) {
+            return null;
+        }
+        TermVersionAcceptanceDetail detail = new TermVersionAcceptanceDetail();
+        detail.setVersionAcceptanceId(text(acceptance.getVersionAcceptanceId()));
+        detail.setPartyId(text(acceptance.getPartyId()));
+        detail.setAcceptanceMethod(CodeEnum.defaultCode(acceptance.getAcceptanceMethod()));
+        detail.setAcceptedAt(text(acceptance.getAcceptedAt()));
+        detail.setAcceptanceReference(acceptance.getAcceptanceReference());
+        detail.setFileId(text(acceptance.getFileId()));
+        detail.setContentHash(acceptance.getContentHash());
+        detail.setRecordedBy(acceptance.getRecordedBy());
+        return detail;
     }
 
     /** 一条价格。 */
@@ -114,7 +197,8 @@ final class CommercialTermConverter {
         return new ReplaceCommercialTermPricesRequest.PriceItem(body.getEntityNo(), body.getCurrency(),
             body.getPricingProfileCode(), body.getPriorityNo(), body.getSettlementBusinessDays(),
             body.getBusinessCalendarCode(), body.getSettlementTimezone(), body.getCutoffSecondOfDay(),
-            body.getComponents().stream().map(CommercialTermConverter::component).toList());
+            body.getComponents().stream().map(CommercialTermConverter::component).toList(),
+            id(body.getSourceTemplatePriceId()));
     }
 
     /** 一个组件。 */

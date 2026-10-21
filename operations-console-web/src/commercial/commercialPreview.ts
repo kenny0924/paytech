@@ -4,6 +4,8 @@ import {
 } from './commercial.ts';
 import type { Dimension, Price, PriceComponent, PriceSettlement, ProfileCondition } from './commercial.ts';
 import { decodeTermVersionListItem } from './commercialConsole.ts';
+import { decodeCapabilityCondition } from './termReview.ts';
+import type { CapabilityCondition } from './termReview.ts';
 import type { TermVersionListItem } from './commercialConsole.ts';
 
 // ---------- 工作台 ----------
@@ -50,6 +52,8 @@ export interface RateCardCapability {
   agreementCapabilityId: string; capabilityCode: string; productCode: string | null; capabilityKind: string | null; paymentMethodCode: string | null;
   dimensionCode: string | null; dimensionValue: string | null; entityNo: string; status: string; effectiveFrom: string; effectiveTo: string | null;
   rollingReserveRate: string | null; rollingReserveDays: number | null; limits: RateCardLimit[];
+  /** 一期接受条件与 3DS 开关；旧 BFF 只有 limits。 */
+  conditions: CapabilityCondition[]; require3ds: boolean;
 }
 export interface FeeEventComponents { feeEventCode: string; components: PriceComponent[] }
 export interface ProfilePrice {
@@ -71,11 +75,12 @@ export interface RateCard { clientId: string; asOf: string; currency: string | n
 function decodeRateCardCapability(value: unknown): RateCardCapability {
   const v = value as RateCardCapability;
   require(object(v) && id(v.agreementCapabilityId) && text(v.capabilityCode, 64) && typeof v.entityNo === 'string' && entityNoPattern.test(v.entityNo)
-    && text(v.status, 32) && instant(v.effectiveFrom) && optional(instant)(v.effectiveTo) && optional(decimal)(v.rollingReserveRate) && array(v.limits)
-    && v.limits.every(limit => object(limit) && text(limit.limitCode, 64) && text(limit.limitValue, 128)));
+    && text(v.status, 32) && instant(v.effectiveFrom) && optional(instant)(v.effectiveTo) && optional(decimal)(v.rollingReserveRate) && optional(array)(v.limits)
+    && (v.limits ?? []).every(limit => object(limit) && text(limit.limitCode, 64) && text(limit.limitValue, 128)) && optional(array)(v.conditions));
   return { ...v, productCode: orNull(v.productCode), capabilityKind: orNull(v.capabilityKind), paymentMethodCode: orNull(v.paymentMethodCode),
     dimensionCode: orNull(v.dimensionCode), dimensionValue: orNull(v.dimensionValue), effectiveTo: orNull(v.effectiveTo),
-    rollingReserveRate: orNull(v.rollingReserveRate), rollingReserveDays: orNull(v.rollingReserveDays) };
+    rollingReserveRate: orNull(v.rollingReserveRate), rollingReserveDays: orNull(v.rollingReserveDays), limits: v.limits ?? [],
+    conditions: (v.conditions ?? []).map(decodeCapabilityCondition), require3ds: v.require3ds === true };
 }
 
 function decodeProfilePrice(value: unknown): ProfilePrice {

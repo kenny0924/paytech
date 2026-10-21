@@ -170,21 +170,34 @@
   "request": {
    "expectedChangeVersion": 6,
    "entityNo": "AE001",
-   "capabilityCode": "CARD_VISA",
+   "capabilityCode": "CARD",
    "effectiveFrom": "2026-11-01T00:00:00+04:00",
    "effectiveTo": null,
    "rollingReserveRate": "0.1",
    "rollingReserveDays": 90,
-   "limits": [
+   "conditions": [
     {
-     "limitCode": "CURRENCY",
-     "limitValue": "USD"
+     "dimensionCode": "CARD_BRAND",
+     "values": [
+      "MASTERCARD",
+      "VISA"
+     ]
     },
     {
-     "limitCode": "CURRENCY",
-     "limitValue": "AED"
+     "dimensionCode": "CURRENCY",
+     "values": [
+      "AED",
+      "USD"
+     ]
+    },
+    {
+     "dimensionCode": "FUNDING_TYPE",
+     "values": [
+      "DEBIT"
+     ]
     }
-   ]
+   ],
+   "require3ds": true
   },
   "status": 201,
   "ownerStatus": 200,
@@ -209,12 +222,15 @@
    "effectiveTo": null,
    "rollingReserveRate": null,
    "rollingReserveDays": null,
-   "limits": [
+   "conditions": [
     {
-     "limitCode": "CURRENCY",
-     "limitValue": "USD"
+     "dimensionCode": "CURRENCY",
+     "values": [
+      "USD"
+     ]
     }
-   ]
+   ],
+   "require3ds": false
   },
   "status": 200,
   "ownerStatus": 200,
@@ -437,7 +453,9 @@
    "clientId": "7300000000000000011",
    "localPartnerId": null,
    "status": "DRAFT",
-   "changeVersion": "1"
+   "changeVersion": "1",
+   "ownerType": "CLIENT",
+   "templateName": null
   },
   "routeCode": "operations-commercial-term-plan-create"
  },
@@ -450,6 +468,7 @@
   "request": {
    "expectedChangeVersion": "4",
    "copyFromVersionId": "7319000000000000600",
+   "sourceTemplateVersionId": null,
    "agreementId": null,
    "pricingModel": null,
    "feeTaxTreatment": null
@@ -468,9 +487,42 @@
    "roundingMode": "HALF_UP",
    "pricingModel": "BLENDED",
    "feeTaxTreatment": "EXCLUSIVE",
-   "changeVersion": "5"
+   "changeVersion": "5",
+   "ownerType": "CLIENT",
+   "sourceTemplateVersionId": null,
+   "signatureExempt": false,
+   "belowStandardCount": 0,
+   "templateUpdate": null,
+   "acceptance": null,
+   "relevanceWarnings": []
   },
-  "routeCode": "operations-commercial-term-version-create"
+  "routeCode": "operations-commercial-term-version-create",
+  "preReads": [
+   {
+    "method": "GET",
+    "ownerPath": "/commercial-terms/v1/templates",
+    "response": {
+     "templates": [
+      {
+       "planId": "7319000000000000551",
+       "planCode": "TPL-AE001-STD",
+       "templateName": "标准价 · AE001",
+       "termType": "CLIENT_PRICING",
+       "entityNo": "AE001",
+       "status": "ACTIVE",
+       "changeVersion": "3",
+       "activeVersionId": "7319000000000000650",
+       "activeVersionNo": "1",
+       "latestVersionId": "7319000000000000651",
+       "latestVersionNo": "2",
+       "latestVersionStatus": "DRAFT",
+       "createTime": "2026-10-20T00:00:00Z",
+       "updateTime": "2026-10-20T01:00:00Z"
+      }
+     ]
+    }
+   }
+  ]
  },
  {
   "id": "T03",
@@ -534,7 +586,8 @@
         }
        ]
       }
-     ]
+     ],
+     "sourceTemplatePriceId": "7319000000000000751"
     }
    ]
   },
@@ -552,9 +605,51 @@
    "roundingMode": "HALF_UP",
    "pricingModel": "BLENDED",
    "feeTaxTreatment": "EXCLUSIVE",
-   "changeVersion": "6"
+   "changeVersion": "6",
+   "ownerType": "CLIENT",
+   "sourceTemplateVersionId": null,
+   "signatureExempt": false,
+   "belowStandardCount": 0,
+   "templateUpdate": null,
+   "acceptance": null,
+   "relevanceWarnings": [
+    {
+     "entityNo": "AE001",
+     "currency": "USD",
+     "pricingProfileCode": "CARD_VISA_CREDIT",
+     "reasonCode": "CONDITION_OUT_OF_SCOPE",
+     "message": "画像条件 CARD_BRAND=VISA 不在开通项接受条件内"
+    }
+   ]
   },
-  "routeCode": "operations-commercial-term-prices"
+  "routeCode": "operations-commercial-term-prices",
+  "preReads": [
+   {
+    "method": "GET",
+    "ownerPath": "/commercial-terms/v1/versions/7319000000000000601",
+    "response": {
+     "versionId": "7319000000000000601",
+     "planId": "7319000000000000501",
+     "termType": "CLIENT_PRICING",
+     "agreementId": "7319000000000000101",
+     "versionNo": "2",
+     "status": "DRAFT",
+     "effectiveFrom": "2026-10-19T08:00:00Z",
+     "effectiveTo": null,
+     "roundingMode": "HALF_UP",
+     "pricingModel": "BLENDED",
+     "feeTaxTreatment": "EXCLUSIVE",
+     "changeVersion": "7",
+     "ownerType": "CLIENT",
+     "sourceTemplateVersionId": null,
+     "signatureExempt": false,
+     "belowStandardCount": 0,
+     "templateUpdate": null,
+     "acceptance": null,
+     "relevanceWarnings": []
+    }
+   }
+  ]
  },
  {
   "id": "T04",
@@ -579,9 +674,43 @@
    "roundingMode": "HALF_UP",
    "pricingModel": "BLENDED",
    "feeTaxTreatment": "EXCLUSIVE",
-   "changeVersion": "7"
+   "changeVersion": "7",
+   "ownerType": "CLIENT",
+   "sourceTemplateVersionId": null,
+   "signatureExempt": false,
+   "belowStandardCount": 0,
+   "templateUpdate": null,
+   "acceptance": null,
+   "relevanceWarnings": []
   },
-  "routeCode": "operations-commercial-term-submit"
+  "routeCode": "operations-commercial-term-submit",
+  "preReads": [
+   {
+    "method": "GET",
+    "ownerPath": "/commercial-terms/v1/versions/7319000000000000601",
+    "response": {
+     "versionId": "7319000000000000601",
+     "planId": "7319000000000000501",
+     "termType": "CLIENT_PRICING",
+     "agreementId": "7319000000000000101",
+     "versionNo": "2",
+     "status": "DRAFT",
+     "effectiveFrom": "2026-10-19T08:00:00Z",
+     "effectiveTo": null,
+     "roundingMode": "HALF_UP",
+     "pricingModel": "BLENDED",
+     "feeTaxTreatment": "EXCLUSIVE",
+     "changeVersion": "7",
+     "ownerType": "CLIENT",
+     "sourceTemplateVersionId": null,
+     "signatureExempt": false,
+     "belowStandardCount": 0,
+     "templateUpdate": null,
+     "acceptance": null,
+     "relevanceWarnings": []
+    }
+   }
+  ]
  },
  {
   "id": "T05",
@@ -606,9 +735,43 @@
    "roundingMode": "HALF_UP",
    "pricingModel": "BLENDED",
    "feeTaxTreatment": "EXCLUSIVE",
-   "changeVersion": "8"
+   "changeVersion": "8",
+   "ownerType": "CLIENT",
+   "sourceTemplateVersionId": null,
+   "signatureExempt": false,
+   "belowStandardCount": 0,
+   "templateUpdate": null,
+   "acceptance": null,
+   "relevanceWarnings": []
   },
-  "routeCode": "operations-commercial-term-approve"
+  "routeCode": "operations-commercial-term-approve",
+  "preReads": [
+   {
+    "method": "GET",
+    "ownerPath": "/commercial-terms/v1/versions/7319000000000000601",
+    "response": {
+     "versionId": "7319000000000000601",
+     "planId": "7319000000000000501",
+     "termType": "CLIENT_PRICING",
+     "agreementId": "7319000000000000101",
+     "versionNo": "2",
+     "status": "DRAFT",
+     "effectiveFrom": "2026-10-19T08:00:00Z",
+     "effectiveTo": null,
+     "roundingMode": "HALF_UP",
+     "pricingModel": "BLENDED",
+     "feeTaxTreatment": "EXCLUSIVE",
+     "changeVersion": "7",
+     "ownerType": "CLIENT",
+     "sourceTemplateVersionId": null,
+     "signatureExempt": false,
+     "belowStandardCount": 0,
+     "templateUpdate": null,
+     "acceptance": null,
+     "relevanceWarnings": []
+    }
+   }
+  ]
  },
  {
   "id": "T06",
@@ -633,9 +796,43 @@
    "roundingMode": "HALF_UP",
    "pricingModel": "BLENDED",
    "feeTaxTreatment": "EXCLUSIVE",
-   "changeVersion": "8"
+   "changeVersion": "8",
+   "ownerType": "CLIENT",
+   "sourceTemplateVersionId": null,
+   "signatureExempt": false,
+   "belowStandardCount": 0,
+   "templateUpdate": null,
+   "acceptance": null,
+   "relevanceWarnings": []
   },
-  "routeCode": "operations-commercial-term-reject"
+  "routeCode": "operations-commercial-term-reject",
+  "preReads": [
+   {
+    "method": "GET",
+    "ownerPath": "/commercial-terms/v1/versions/7319000000000000601",
+    "response": {
+     "versionId": "7319000000000000601",
+     "planId": "7319000000000000501",
+     "termType": "CLIENT_PRICING",
+     "agreementId": "7319000000000000101",
+     "versionNo": "2",
+     "status": "DRAFT",
+     "effectiveFrom": "2026-10-19T08:00:00Z",
+     "effectiveTo": null,
+     "roundingMode": "HALF_UP",
+     "pricingModel": "BLENDED",
+     "feeTaxTreatment": "EXCLUSIVE",
+     "changeVersion": "7",
+     "ownerType": "CLIENT",
+     "sourceTemplateVersionId": null,
+     "signatureExempt": false,
+     "belowStandardCount": 0,
+     "templateUpdate": null,
+     "acceptance": null,
+     "relevanceWarnings": []
+    }
+   }
+  ]
  },
  {
   "id": "T07",
@@ -661,9 +858,52 @@
    "roundingMode": "HALF_UP",
    "pricingModel": "BLENDED",
    "feeTaxTreatment": "EXCLUSIVE",
-   "changeVersion": "9"
+   "changeVersion": "9",
+   "ownerType": "CLIENT",
+   "sourceTemplateVersionId": null,
+   "signatureExempt": false,
+   "belowStandardCount": 0,
+   "templateUpdate": null,
+   "acceptance": {
+    "versionAcceptanceId": "7319000000000000951",
+    "partyId": "7319000000000000201",
+    "acceptanceMethod": "E_SIGNATURE",
+    "acceptedAt": "2026-10-20T08:00:00Z",
+    "acceptanceReference": "PRICE-ESIGN-2026-0001",
+    "fileId": "7319000000000000711",
+    "contentHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "recordedBy": "10002"
+   },
+   "relevanceWarnings": []
   },
-  "routeCode": "operations-commercial-term-schedule"
+  "routeCode": "operations-commercial-term-schedule",
+  "preReads": [
+   {
+    "method": "GET",
+    "ownerPath": "/commercial-terms/v1/versions/7319000000000000601",
+    "response": {
+     "versionId": "7319000000000000601",
+     "planId": "7319000000000000501",
+     "termType": "CLIENT_PRICING",
+     "agreementId": "7319000000000000101",
+     "versionNo": "2",
+     "status": "DRAFT",
+     "effectiveFrom": "2026-10-19T08:00:00Z",
+     "effectiveTo": null,
+     "roundingMode": "HALF_UP",
+     "pricingModel": "BLENDED",
+     "feeTaxTreatment": "EXCLUSIVE",
+     "changeVersion": "7",
+     "ownerType": "CLIENT",
+     "sourceTemplateVersionId": null,
+     "signatureExempt": false,
+     "belowStandardCount": 0,
+     "templateUpdate": null,
+     "acceptance": null,
+     "relevanceWarnings": []
+    }
+   }
+  ]
  },
  {
   "id": "T08",
@@ -688,9 +928,43 @@
    "roundingMode": "HALF_UP",
    "pricingModel": "BLENDED",
    "feeTaxTreatment": "EXCLUSIVE",
-   "changeVersion": "10"
+   "changeVersion": "10",
+   "ownerType": "CLIENT",
+   "sourceTemplateVersionId": null,
+   "signatureExempt": false,
+   "belowStandardCount": 0,
+   "templateUpdate": null,
+   "acceptance": null,
+   "relevanceWarnings": []
   },
-  "routeCode": "operations-commercial-term-activate"
+  "routeCode": "operations-commercial-term-activate",
+  "preReads": [
+   {
+    "method": "GET",
+    "ownerPath": "/commercial-terms/v1/versions/7319000000000000601",
+    "response": {
+     "versionId": "7319000000000000601",
+     "planId": "7319000000000000501",
+     "termType": "CLIENT_PRICING",
+     "agreementId": "7319000000000000101",
+     "versionNo": "2",
+     "status": "DRAFT",
+     "effectiveFrom": "2026-10-19T08:00:00Z",
+     "effectiveTo": null,
+     "roundingMode": "HALF_UP",
+     "pricingModel": "BLENDED",
+     "feeTaxTreatment": "EXCLUSIVE",
+     "changeVersion": "7",
+     "ownerType": "CLIENT",
+     "sourceTemplateVersionId": null,
+     "signatureExempt": false,
+     "belowStandardCount": 0,
+     "templateUpdate": null,
+     "acceptance": null,
+     "relevanceWarnings": []
+    }
+   }
+  ]
  },
  {
   "id": "T10",
@@ -743,7 +1017,14 @@
        "maxAmount": null,
        "bandBasis": null,
        "bandMode": null,
-       "bands": []
+       "bands": [],
+       "benchmark": {
+        "status": "BELOW_STANDARD",
+        "standardRate": "0.032",
+        "standardFixedAmount": null,
+        "standardMinAmount": "0.50",
+        "standardMaxAmount": null
+       }
       }
      ],
      "settlement": {
@@ -751,7 +1032,8 @@
       "businessCalendarCode": "AE_BUSINESS_DAYS",
       "settlementTimezone": "UTC",
       "cutoffSecondOfDay": 0
-     }
+     },
+     "sourceTemplatePriceId": "7319000000000000751"
     }
    ]
   },
@@ -786,12 +1068,12 @@
      "capabilities": [
       {
        "agreementCapabilityId": "7319000000000000301",
-       "capabilityCode": "CARD_VISA",
+       "capabilityCode": "CARD",
        "productCode": "CARD_ACQUIRING",
        "capabilityKind": "PAYMENT_METHOD",
        "paymentMethodCode": "CARD",
-       "dimensionCode": "CARD_BRAND",
-       "dimensionValue": "VISA",
+       "dimensionCode": null,
+       "dimensionValue": null,
        "entityNo": "AE001",
        "status": "ENABLED",
        "effectiveFrom": "2026-10-01T00:00:00Z",
@@ -800,10 +1082,15 @@
        "rollingReserveDays": 90,
        "limits": [
         {
+         "limitCode": "CARD_BRAND",
+         "limitValue": "VISA"
+        },
+        {
          "limitCode": "CURRENCY",
          "limitValue": "USD"
         }
-       ]
+       ],
+       "require3ds": true
       }
      ],
      "termVersions": [
@@ -821,7 +1108,7 @@
        "capabilities": [
         {
          "agreementCapabilityId": "7319000000000000301",
-         "capabilityCode": "CARD_VISA",
+         "capabilityCode": "CARD",
          "currencies": [
           {
            "currency": "USD",
@@ -863,7 +1150,8 @@
                  "maxAmount": null,
                  "bandBasis": null,
                  "bandMode": null,
-                 "bands": []
+                 "bands": [],
+                 "benchmark": null
                 }
                ]
               }
@@ -945,7 +1233,9 @@
      "scheduledVersionNo": "2",
      "scheduledEffectiveFrom": "2026-11-01T00:00:00Z",
      "createTime": "2026-09-20T00:00:00Z",
-     "updateTime": "2026-10-15T00:00:00Z"
+     "updateTime": "2026-10-15T00:00:00Z",
+     "ownerType": "CLIENT",
+     "templateName": null
     }
    ],
    "page": 2,
@@ -959,7 +1249,7 @@
   "method": "GET",
   "path": "/commercial-admin/v1/commercial-terms/versions",
   "ownerPath": "/commercial-terms/v1/versions",
-  "query": "?planId=7319000000000000501&status=PENDING_APPROVAL&effectiveFrom=2026-10-01T00:00:00Z&effectiveTo=2026-11-01T00:00:00%2B04:00&page=1&size=50",
+  "query": "?planId=7319000000000000501&status=CLIENT_SIGNED&effectiveFrom=2026-10-01T00:00:00Z&effectiveTo=2026-11-01T00:00:00%2B04:00&page=1&size=50",
   "request": null,
   "status": 200,
   "ownerStatus": 200,
@@ -975,7 +1265,7 @@
      "clientId": "7300000000000000011",
      "localPartnerId": null,
      "versionNo": "3",
-     "status": "PENDING_APPROVAL",
+     "status": "CLIENT_SIGNED",
      "effectiveFrom": "2026-10-18T00:00:00Z",
      "effectiveTo": null,
      "roundingMode": "HALF_UP",
@@ -986,7 +1276,13 @@
      "submittedTime": "2026-10-19T09:00:00Z",
      "priceCount": 8,
      "changeVersion": "6",
-     "updateTime": "2026-10-19T09:00:00Z"
+     "updateTime": "2026-10-19T09:00:00Z",
+     "ownerType": "CLIENT",
+     "templateName": null,
+     "sourceTemplateVersionId": "7319000000000000650",
+     "belowStandardCount": 2,
+     "signatureExempt": false,
+     "hasAcceptance": true
     }
    ],
    "page": 1,
@@ -1040,13 +1336,28 @@
     {
      "productCapabilityId": "9100000000000002001",
      "productCode": "ACQUIRING",
-     "capabilityCode": "CARD_VISA",
-     "capabilityName": "Visa",
+     "capabilityCode": "CARD",
+     "capabilityName": "银行卡",
      "capabilityKind": "PAYMENT_METHOD",
      "paymentMethodCode": "CARD",
-     "dimensionCode": "CARD_BRAND",
-     "dimensionValue": "VISA",
-     "status": "ACTIVE"
+     "dimensionCode": null,
+     "dimensionValue": null,
+     "status": "ACTIVE",
+     "dimensions": [
+      {
+       "dimensionCode": "CARD_BRAND",
+       "required": false
+      },
+      {
+       "dimensionCode": "CURRENCY",
+       "required": true
+      },
+      {
+       "dimensionCode": "FUNDING_TYPE",
+       "required": false
+      }
+     ],
+     "changeVersion": 2
     },
     {
      "productCapabilityId": "9100000000000002005",
@@ -1057,7 +1368,14 @@
      "paymentMethodCode": "APPLE_PAY",
      "dimensionCode": null,
      "dimensionValue": null,
-     "status": "ACTIVE"
+     "status": "ACTIVE",
+     "dimensions": [
+      {
+       "dimensionCode": "CURRENCY",
+       "required": true
+      }
+     ],
+     "changeVersion": 1
     }
    ]
   },
@@ -1079,17 +1397,871 @@
      "productCode": "ACQUIRING",
      "feeEventCode": "CAPTURE",
      "termType": "CLIENT_PRICING",
-     "billingFactType": "PAYMENT"
+     "billingFactType": "PAYMENT",
+     "capabilityKind": "PAYMENT_METHOD",
+     "capabilityCode": null,
+     "changeVersion": 1
     },
     {
      "productFeeEventId": "9100000000000003010",
      "productCode": "ACQUIRING",
      "feeEventCode": "REFUND",
      "termType": "CLIENT_PRICING",
-     "billingFactType": "REFUND"
+     "billingFactType": "REFUND",
+     "capabilityKind": "PAYMENT_METHOD",
+     "capabilityCode": null,
+     "changeVersion": 1
     }
    ]
   },
   "routeCode": "operations-commercial-fee-event-list"
+ },
+ {
+  "id": "K04",
+  "method": "GET",
+  "path": "/commercial-admin/v1/products/dimensions",
+  "ownerPath": "/products/v1/dimensions",
+  "query": "",
+  "request": null,
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "dimensions": [
+    {
+     "dimensionCode": "CURRENCY",
+     "displayName": "币种",
+     "factSource": "ORDER",
+     "evaluationPoint": "CHECKOUT",
+     "acceptanceAllowed": true,
+     "pricingAllowed": true
+    },
+    {
+     "dimensionCode": "THREE_DS_RESULT",
+     "displayName": "3DS 结果",
+     "factSource": "THREE_DS",
+     "evaluationPoint": "AUTHENTICATION",
+     "acceptanceAllowed": false,
+     "pricingAllowed": true
+    }
+   ]
+  },
+  "routeCode": "operations-commercial-dimension-list"
+ },
+ {
+  "id": "K05",
+  "method": "POST",
+  "path": "/commercial-admin/v1/products/capabilities",
+  "ownerPath": "/products/v1/capabilities",
+  "query": "",
+  "request": {
+   "productCode": "ACQUIRING",
+   "capabilityCode": "STC_PAY",
+   "capabilityName": "STC Pay",
+   "capabilityKind": "PAYMENT_METHOD",
+   "paymentMethodCode": "STC_PAY",
+   "dimensions": [
+    {
+     "dimensionCode": "CURRENCY",
+     "required": true
+    },
+    {
+     "dimensionCode": "CONSUMER_COUNTRY",
+     "required": false
+    }
+   ]
+  },
+  "status": 201,
+  "ownerStatus": 201,
+  "response": {
+   "productCapabilityId": "9100000000000002101",
+   "productCode": "ACQUIRING",
+   "capabilityCode": "STC_PAY",
+   "capabilityName": "STC Pay",
+   "capabilityKind": "PAYMENT_METHOD",
+   "paymentMethodCode": "STC_PAY",
+   "dimensionCode": null,
+   "dimensionValue": null,
+   "dimensions": [
+    {
+     "dimensionCode": "CONSUMER_COUNTRY",
+     "required": false
+    },
+    {
+     "dimensionCode": "CURRENCY",
+     "required": true
+    }
+   ],
+   "status": "ACTIVE",
+   "changeVersion": 1
+  },
+  "routeCode": "operations-commercial-catalog-capability-create"
+ },
+ {
+  "id": "K06",
+  "method": "PUT",
+  "path": "/commercial-admin/v1/products/capabilities/9100000000000002101",
+  "ownerPath": "/products/v1/capabilities/9100000000000002101",
+  "query": "",
+  "request": {
+   "expectedChangeVersion": 1,
+   "capabilityName": "STC Pay 钱包",
+   "productCode": "ACQUIRING",
+   "dimensions": [
+    {
+     "dimensionCode": "CURRENCY",
+     "required": true
+    }
+   ]
+  },
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "productCapabilityId": "9100000000000002101",
+   "productCode": "ACQUIRING",
+   "capabilityCode": "STC_PAY",
+   "capabilityName": "STC Pay 钱包",
+   "capabilityKind": "PAYMENT_METHOD",
+   "paymentMethodCode": "STC_PAY",
+   "dimensionCode": null,
+   "dimensionValue": null,
+   "dimensions": [
+    {
+     "dimensionCode": "CURRENCY",
+     "required": true
+    }
+   ],
+   "status": "ACTIVE",
+   "changeVersion": 2
+  },
+  "routeCode": "operations-commercial-catalog-capability-update"
+ },
+ {
+  "id": "K07",
+  "method": "POST",
+  "path": "/commercial-admin/v1/products/capabilities/9100000000000002101/retire",
+  "ownerPath": "/products/v1/capabilities/9100000000000002101/retire",
+  "query": "",
+  "request": {
+   "expectedChangeVersion": 2
+  },
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "productCapabilityId": "9100000000000002101",
+   "productCode": "ACQUIRING",
+   "capabilityCode": "STC_PAY",
+   "capabilityName": "STC Pay",
+   "capabilityKind": "PAYMENT_METHOD",
+   "paymentMethodCode": "STC_PAY",
+   "dimensionCode": null,
+   "dimensionValue": null,
+   "dimensions": [
+    {
+     "dimensionCode": "CONSUMER_COUNTRY",
+     "required": false
+    },
+    {
+     "dimensionCode": "CURRENCY",
+     "required": true
+    }
+   ],
+   "status": "RETIRED",
+   "changeVersion": 3
+  },
+  "routeCode": "operations-commercial-catalog-capability-retire"
+ },
+ {
+  "id": "K08",
+  "method": "POST",
+  "path": "/commercial-admin/v1/products/capabilities/9100000000000002101/activate",
+  "ownerPath": "/products/v1/capabilities/9100000000000002101/activate",
+  "query": "",
+  "request": {
+   "expectedChangeVersion": 3
+  },
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "productCapabilityId": "9100000000000002101",
+   "productCode": "ACQUIRING",
+   "capabilityCode": "STC_PAY",
+   "capabilityName": "STC Pay",
+   "capabilityKind": "PAYMENT_METHOD",
+   "paymentMethodCode": "STC_PAY",
+   "dimensionCode": null,
+   "dimensionValue": null,
+   "dimensions": [
+    {
+     "dimensionCode": "CONSUMER_COUNTRY",
+     "required": false
+    },
+    {
+     "dimensionCode": "CURRENCY",
+     "required": true
+    }
+   ],
+   "status": "ACTIVE",
+   "changeVersion": 4
+  },
+  "routeCode": "operations-commercial-catalog-capability-activate"
+ },
+ {
+  "id": "K09",
+  "method": "PUT",
+  "path": "/commercial-admin/v1/products/fee-events/9100000000000003020/capability",
+  "ownerPath": "/products/v1/fee-events/9100000000000003020/capability",
+  "query": "",
+  "request": {
+   "expectedChangeVersion": 1,
+   "capabilityKind": "FEATURE",
+   "capabilityCode": "TOKEN_STORAGE"
+  },
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "productFeeEventId": "9100000000000003020",
+   "productCode": "ACQUIRING",
+   "feeEventCode": "TOKEN_STORED",
+   "termType": "CLIENT_PRICING",
+   "billingFactType": "TOKEN",
+   "capabilityKind": "FEATURE",
+   "capabilityCode": "TOKEN_STORAGE",
+   "changeVersion": 2
+  },
+  "routeCode": "operations-commercial-catalog-fee-event-capability"
+ },
+ {
+  "id": "M01",
+  "method": "GET",
+  "path": "/commercial-admin/v1/commercial-terms/templates",
+  "ownerPath": "/commercial-terms/v1/templates",
+  "query": "?entityNo=AE001&termType=CLIENT_PRICING&status=ACTIVE",
+  "request": null,
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "templates": [
+    {
+     "planId": "7319000000000000551",
+     "planCode": "TPL-AE001-STD",
+     "templateName": "标准价 · AE001",
+     "termType": "CLIENT_PRICING",
+     "entityNo": "AE001",
+     "status": "ACTIVE",
+     "changeVersion": "3",
+     "activeVersionId": "7319000000000000650",
+     "activeVersionNo": "1",
+     "latestVersionId": "7319000000000000651",
+     "latestVersionNo": "2",
+     "latestVersionStatus": "DRAFT",
+     "createTime": "2026-10-20T00:00:00Z",
+     "updateTime": "2026-10-20T01:00:00Z"
+    }
+   ]
+  },
+  "routeCode": "operations-commercial-template-list"
+ },
+ {
+  "id": "M02",
+  "method": "POST",
+  "path": "/commercial-admin/v1/commercial-terms/templates",
+  "ownerPath": "/commercial-terms/v1/templates",
+  "query": "",
+  "request": {
+   "planCode": "TPL-AE001-STD",
+   "templateName": "标准价 · AE001",
+   "termType": "CLIENT_PRICING",
+   "entityNo": "AE001"
+  },
+  "status": 201,
+  "ownerStatus": 201,
+  "response": {
+   "planId": "7319000000000000551",
+   "planCode": "TPL-AE001-STD",
+   "termType": "CLIENT_PRICING",
+   "agreementId": null,
+   "entityNo": "AE001",
+   "clientId": null,
+   "localPartnerId": null,
+   "ownerType": "PLATFORM_TEMPLATE",
+   "templateName": "标准价 · AE001",
+   "status": "DRAFT",
+   "changeVersion": "1"
+  },
+  "routeCode": "operations-commercial-template-create"
+ },
+ {
+  "id": "M03",
+  "method": "POST",
+  "path": "/commercial-admin/v1/commercial-terms/templates/7319000000000000551/versions",
+  "ownerPath": "/commercial-terms/v1/plans/7319000000000000551/versions",
+  "query": "",
+  "request": {
+   "expectedChangeVersion": "3",
+   "copyFromVersionId": "7319000000000000650",
+   "sourceTemplateVersionId": null,
+   "agreementId": null,
+   "pricingModel": null,
+   "feeTaxTreatment": null
+  },
+  "status": 201,
+  "ownerStatus": 201,
+  "response": {
+   "versionId": "7319000000000000651",
+   "planId": "7319000000000000551",
+   "termType": "CLIENT_PRICING",
+   "agreementId": null,
+   "versionNo": "2",
+   "status": "DRAFT",
+   "effectiveFrom": "2026-10-20T08:00:00Z",
+   "effectiveTo": null,
+   "roundingMode": "HALF_UP",
+   "pricingModel": "BLENDED",
+   "feeTaxTreatment": "EXCLUSIVE",
+   "changeVersion": "4",
+   "ownerType": "PLATFORM_TEMPLATE",
+   "sourceTemplateVersionId": null,
+   "signatureExempt": false,
+   "belowStandardCount": 0,
+   "templateUpdate": null,
+   "acceptance": null,
+   "relevanceWarnings": []
+  },
+  "routeCode": "operations-commercial-template-version-create",
+  "preReads": [
+   {
+    "method": "GET",
+    "ownerPath": "/commercial-terms/v1/templates",
+    "response": {
+     "templates": [
+      {
+       "planId": "7319000000000000551",
+       "planCode": "TPL-AE001-STD",
+       "templateName": "标准价 · AE001",
+       "termType": "CLIENT_PRICING",
+       "entityNo": "AE001",
+       "status": "ACTIVE",
+       "changeVersion": "3",
+       "activeVersionId": "7319000000000000650",
+       "activeVersionNo": "1",
+       "latestVersionId": "7319000000000000651",
+       "latestVersionNo": "2",
+       "latestVersionStatus": "DRAFT",
+       "createTime": "2026-10-20T00:00:00Z",
+       "updateTime": "2026-10-20T01:00:00Z"
+      }
+     ]
+    }
+   }
+  ]
+ },
+ {
+  "id": "M04",
+  "method": "PUT",
+  "path": "/commercial-admin/v1/commercial-terms/template-versions/7319000000000000651/prices",
+  "ownerPath": "/commercial-terms/v1/versions/7319000000000000651/prices",
+  "query": "",
+  "request": {
+   "expectedChangeVersion": "4",
+   "prices": [
+    {
+     "entityNo": "AE001",
+     "currency": "USD",
+     "pricingProfileCode": "CARD_DEFAULT",
+     "priorityNo": 1,
+     "settlementBusinessDays": 2,
+     "businessCalendarCode": "AE_BUSINESS_DAYS",
+     "settlementTimezone": "UTC",
+     "cutoffSecondOfDay": 0,
+     "components": [
+      {
+       "componentCode": "MDR",
+       "componentType": "PERCENTAGE",
+       "triggerCode": "PAYMENT_CAPTURED",
+       "calculationBase": "GROSS_AMOUNT",
+       "refundBehavior": "RETURN_PRORATA",
+       "rate": "0.029",
+       "fixedAmount": null,
+       "currency": "USD",
+       "minAmount": "0.50",
+       "maxAmount": null,
+       "bandBasis": null,
+       "bandMode": null,
+       "bands": null
+      },
+      {
+       "componentCode": "VOLUME",
+       "componentType": "TIERED",
+       "triggerCode": "PAYMENT_CAPTURED",
+       "calculationBase": "GROSS_AMOUNT",
+       "refundBehavior": "KEEP",
+       "rate": null,
+       "fixedAmount": null,
+       "currency": "USD",
+       "minAmount": null,
+       "maxAmount": null,
+       "bandBasis": "TRANSACTION_AMOUNT",
+       "bandMode": "WHOLE_BASE",
+       "bands": [
+        {
+         "lowerBound": "0",
+         "upperBound": "1000",
+         "rate": "0.01",
+         "fixedAmount": null
+        },
+        {
+         "lowerBound": "1000",
+         "upperBound": null,
+         "rate": "0.005",
+         "fixedAmount": null
+        }
+       ]
+      }
+     ],
+     "sourceTemplatePriceId": null
+    }
+   ]
+  },
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "versionId": "7319000000000000651",
+   "planId": "7319000000000000551",
+   "termType": "CLIENT_PRICING",
+   "agreementId": null,
+   "versionNo": "2",
+   "status": "DRAFT",
+   "effectiveFrom": "2026-10-20T08:00:00Z",
+   "effectiveTo": null,
+   "roundingMode": "HALF_UP",
+   "pricingModel": "BLENDED",
+   "feeTaxTreatment": "EXCLUSIVE",
+   "changeVersion": "5",
+   "ownerType": "PLATFORM_TEMPLATE",
+   "sourceTemplateVersionId": null,
+   "signatureExempt": false,
+   "belowStandardCount": 0,
+   "templateUpdate": null,
+   "acceptance": null,
+   "relevanceWarnings": []
+  },
+  "routeCode": "operations-commercial-template-prices",
+  "preReads": [
+   {
+    "method": "GET",
+    "ownerPath": "/commercial-terms/v1/versions/7319000000000000651",
+    "response": {
+     "versionId": "7319000000000000651",
+     "planId": "7319000000000000551",
+     "termType": "CLIENT_PRICING",
+     "agreementId": null,
+     "versionNo": "2",
+     "status": "DRAFT",
+     "effectiveFrom": "2026-10-20T08:00:00Z",
+     "effectiveTo": null,
+     "roundingMode": "HALF_UP",
+     "pricingModel": "BLENDED",
+     "feeTaxTreatment": "EXCLUSIVE",
+     "changeVersion": "4",
+     "ownerType": "PLATFORM_TEMPLATE",
+     "sourceTemplateVersionId": null,
+     "signatureExempt": false,
+     "belowStandardCount": 0,
+     "templateUpdate": null,
+     "acceptance": null,
+     "relevanceWarnings": []
+    }
+   }
+  ]
+ },
+ {
+  "id": "M05",
+  "method": "POST",
+  "path": "/commercial-admin/v1/commercial-terms/template-versions/7319000000000000651/submit",
+  "ownerPath": "/commercial-terms/v1/versions/7319000000000000651/submit",
+  "query": "",
+  "request": {
+   "expectedChangeVersion": "4"
+  },
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "versionId": "7319000000000000651",
+   "planId": "7319000000000000551",
+   "termType": "CLIENT_PRICING",
+   "agreementId": null,
+   "versionNo": "2",
+   "status": "PENDING_APPROVAL",
+   "effectiveFrom": "2026-10-20T08:00:00Z",
+   "effectiveTo": null,
+   "roundingMode": "HALF_UP",
+   "pricingModel": "BLENDED",
+   "feeTaxTreatment": "EXCLUSIVE",
+   "changeVersion": "5",
+   "ownerType": "PLATFORM_TEMPLATE",
+   "sourceTemplateVersionId": null,
+   "signatureExempt": false,
+   "belowStandardCount": 0,
+   "templateUpdate": null,
+   "acceptance": null,
+   "relevanceWarnings": []
+  },
+  "routeCode": "operations-commercial-template-submit",
+  "preReads": [
+   {
+    "method": "GET",
+    "ownerPath": "/commercial-terms/v1/versions/7319000000000000651",
+    "response": {
+     "versionId": "7319000000000000651",
+     "planId": "7319000000000000551",
+     "termType": "CLIENT_PRICING",
+     "agreementId": null,
+     "versionNo": "2",
+     "status": "DRAFT",
+     "effectiveFrom": "2026-10-20T08:00:00Z",
+     "effectiveTo": null,
+     "roundingMode": "HALF_UP",
+     "pricingModel": "BLENDED",
+     "feeTaxTreatment": "EXCLUSIVE",
+     "changeVersion": "4",
+     "ownerType": "PLATFORM_TEMPLATE",
+     "sourceTemplateVersionId": null,
+     "signatureExempt": false,
+     "belowStandardCount": 0,
+     "templateUpdate": null,
+     "acceptance": null,
+     "relevanceWarnings": []
+    }
+   }
+  ]
+ },
+ {
+  "id": "M06",
+  "method": "POST",
+  "path": "/commercial-admin/v1/commercial-terms/template-versions/7319000000000000651/approve",
+  "ownerPath": "/commercial-terms/v1/versions/7319000000000000651/approve",
+  "query": "",
+  "request": {
+   "expectedChangeVersion": "4"
+  },
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "versionId": "7319000000000000651",
+   "planId": "7319000000000000551",
+   "termType": "CLIENT_PRICING",
+   "agreementId": null,
+   "versionNo": "2",
+   "status": "APPROVED",
+   "effectiveFrom": "2026-10-20T08:00:00Z",
+   "effectiveTo": null,
+   "roundingMode": "HALF_UP",
+   "pricingModel": "BLENDED",
+   "feeTaxTreatment": "EXCLUSIVE",
+   "changeVersion": "5",
+   "ownerType": "PLATFORM_TEMPLATE",
+   "sourceTemplateVersionId": null,
+   "signatureExempt": false,
+   "belowStandardCount": 0,
+   "templateUpdate": null,
+   "acceptance": null,
+   "relevanceWarnings": []
+  },
+  "routeCode": "operations-commercial-template-approve",
+  "preReads": [
+   {
+    "method": "GET",
+    "ownerPath": "/commercial-terms/v1/versions/7319000000000000651",
+    "response": {
+     "versionId": "7319000000000000651",
+     "planId": "7319000000000000551",
+     "termType": "CLIENT_PRICING",
+     "agreementId": null,
+     "versionNo": "2",
+     "status": "DRAFT",
+     "effectiveFrom": "2026-10-20T08:00:00Z",
+     "effectiveTo": null,
+     "roundingMode": "HALF_UP",
+     "pricingModel": "BLENDED",
+     "feeTaxTreatment": "EXCLUSIVE",
+     "changeVersion": "4",
+     "ownerType": "PLATFORM_TEMPLATE",
+     "sourceTemplateVersionId": null,
+     "signatureExempt": false,
+     "belowStandardCount": 0,
+     "templateUpdate": null,
+     "acceptance": null,
+     "relevanceWarnings": []
+    }
+   }
+  ]
+ },
+ {
+  "id": "M07",
+  "method": "POST",
+  "path": "/commercial-admin/v1/commercial-terms/template-versions/7319000000000000651/reject",
+  "ownerPath": "/commercial-terms/v1/versions/7319000000000000651/reject",
+  "query": "",
+  "request": {
+   "expectedChangeVersion": "4"
+  },
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "versionId": "7319000000000000651",
+   "planId": "7319000000000000551",
+   "termType": "CLIENT_PRICING",
+   "agreementId": null,
+   "versionNo": "2",
+   "status": "DRAFT",
+   "effectiveFrom": "2026-10-20T08:00:00Z",
+   "effectiveTo": null,
+   "roundingMode": "HALF_UP",
+   "pricingModel": "BLENDED",
+   "feeTaxTreatment": "EXCLUSIVE",
+   "changeVersion": "5",
+   "ownerType": "PLATFORM_TEMPLATE",
+   "sourceTemplateVersionId": null,
+   "signatureExempt": false,
+   "belowStandardCount": 0,
+   "templateUpdate": null,
+   "acceptance": null,
+   "relevanceWarnings": []
+  },
+  "routeCode": "operations-commercial-template-reject",
+  "preReads": [
+   {
+    "method": "GET",
+    "ownerPath": "/commercial-terms/v1/versions/7319000000000000651",
+    "response": {
+     "versionId": "7319000000000000651",
+     "planId": "7319000000000000551",
+     "termType": "CLIENT_PRICING",
+     "agreementId": null,
+     "versionNo": "2",
+     "status": "DRAFT",
+     "effectiveFrom": "2026-10-20T08:00:00Z",
+     "effectiveTo": null,
+     "roundingMode": "HALF_UP",
+     "pricingModel": "BLENDED",
+     "feeTaxTreatment": "EXCLUSIVE",
+     "changeVersion": "4",
+     "ownerType": "PLATFORM_TEMPLATE",
+     "sourceTemplateVersionId": null,
+     "signatureExempt": false,
+     "belowStandardCount": 0,
+     "templateUpdate": null,
+     "acceptance": null,
+     "relevanceWarnings": []
+    }
+   }
+  ]
+ },
+ {
+  "id": "M08",
+  "method": "POST",
+  "path": "/commercial-admin/v1/commercial-terms/template-versions/7319000000000000651/schedule",
+  "ownerPath": "/commercial-terms/v1/versions/7319000000000000651/schedule",
+  "query": "",
+  "request": {
+   "expectedChangeVersion": "4",
+   "effectiveFrom": "2026-11-01T00:00:00Z"
+  },
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "versionId": "7319000000000000651",
+   "planId": "7319000000000000551",
+   "termType": "CLIENT_PRICING",
+   "agreementId": null,
+   "versionNo": "2",
+   "status": "SCHEDULED",
+   "effectiveFrom": "2026-11-01T00:00:00Z",
+   "effectiveTo": null,
+   "roundingMode": "HALF_UP",
+   "pricingModel": "BLENDED",
+   "feeTaxTreatment": "EXCLUSIVE",
+   "changeVersion": "5",
+   "ownerType": "PLATFORM_TEMPLATE",
+   "sourceTemplateVersionId": null,
+   "signatureExempt": false,
+   "belowStandardCount": 0,
+   "templateUpdate": null,
+   "acceptance": null,
+   "relevanceWarnings": []
+  },
+  "routeCode": "operations-commercial-template-schedule",
+  "preReads": [
+   {
+    "method": "GET",
+    "ownerPath": "/commercial-terms/v1/versions/7319000000000000651",
+    "response": {
+     "versionId": "7319000000000000651",
+     "planId": "7319000000000000551",
+     "termType": "CLIENT_PRICING",
+     "agreementId": null,
+     "versionNo": "2",
+     "status": "DRAFT",
+     "effectiveFrom": "2026-10-20T08:00:00Z",
+     "effectiveTo": null,
+     "roundingMode": "HALF_UP",
+     "pricingModel": "BLENDED",
+     "feeTaxTreatment": "EXCLUSIVE",
+     "changeVersion": "4",
+     "ownerType": "PLATFORM_TEMPLATE",
+     "sourceTemplateVersionId": null,
+     "signatureExempt": false,
+     "belowStandardCount": 0,
+     "templateUpdate": null,
+     "acceptance": null,
+     "relevanceWarnings": []
+    }
+   }
+  ]
+ },
+ {
+  "id": "M09",
+  "method": "POST",
+  "path": "/commercial-admin/v1/commercial-terms/template-versions/7319000000000000651/activate",
+  "ownerPath": "/commercial-terms/v1/versions/7319000000000000651/activate",
+  "query": "",
+  "request": {
+   "expectedChangeVersion": "4"
+  },
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "versionId": "7319000000000000651",
+   "planId": "7319000000000000551",
+   "termType": "CLIENT_PRICING",
+   "agreementId": null,
+   "versionNo": "2",
+   "status": "ACTIVE",
+   "effectiveFrom": "2026-11-01T00:00:00Z",
+   "effectiveTo": null,
+   "roundingMode": "HALF_UP",
+   "pricingModel": "BLENDED",
+   "feeTaxTreatment": "EXCLUSIVE",
+   "changeVersion": "5",
+   "ownerType": "PLATFORM_TEMPLATE",
+   "sourceTemplateVersionId": null,
+   "signatureExempt": false,
+   "belowStandardCount": 0,
+   "templateUpdate": null,
+   "acceptance": null,
+   "relevanceWarnings": []
+  },
+  "routeCode": "operations-commercial-template-activate",
+  "preReads": [
+   {
+    "method": "GET",
+    "ownerPath": "/commercial-terms/v1/versions/7319000000000000651",
+    "response": {
+     "versionId": "7319000000000000651",
+     "planId": "7319000000000000551",
+     "termType": "CLIENT_PRICING",
+     "agreementId": null,
+     "versionNo": "2",
+     "status": "DRAFT",
+     "effectiveFrom": "2026-10-20T08:00:00Z",
+     "effectiveTo": null,
+     "roundingMode": "HALF_UP",
+     "pricingModel": "BLENDED",
+     "feeTaxTreatment": "EXCLUSIVE",
+     "changeVersion": "4",
+     "ownerType": "PLATFORM_TEMPLATE",
+     "sourceTemplateVersionId": null,
+     "signatureExempt": false,
+     "belowStandardCount": 0,
+     "templateUpdate": null,
+     "acceptance": null,
+     "relevanceWarnings": []
+    }
+   }
+  ]
+ },
+ {
+  "id": "T14",
+  "method": "POST",
+  "path": "/commercial-admin/v1/commercial-terms/versions/7319000000000000601/fill-from-template",
+  "ownerPath": "/commercial-terms/v1/versions/7319000000000000601/fill-from-template",
+  "query": "",
+  "request": {
+   "expectedChangeVersion": "5",
+   "templateVersionId": "7319000000000000650"
+  },
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "versionId": "7319000000000000601",
+   "planId": "7319000000000000501",
+   "termType": "CLIENT_PRICING",
+   "agreementId": "7319000000000000101",
+   "versionNo": "2",
+   "status": "DRAFT",
+   "effectiveFrom": "2026-10-19T08:00:00Z",
+   "effectiveTo": null,
+   "roundingMode": "HALF_UP",
+   "pricingModel": "BLENDED",
+   "feeTaxTreatment": "EXCLUSIVE",
+   "changeVersion": "6",
+   "ownerType": "CLIENT",
+   "sourceTemplateVersionId": "7319000000000000650",
+   "signatureExempt": false,
+   "belowStandardCount": 1,
+   "templateUpdate": null,
+   "acceptance": null,
+   "relevanceWarnings": []
+  },
+  "routeCode": "operations-commercial-term-fill-from-template"
+ },
+ {
+  "id": "T15",
+  "method": "POST",
+  "path": "/commercial-admin/v1/commercial-terms/versions/7319000000000000601/acceptance",
+  "ownerPath": "/commercial-terms/v1/versions/7319000000000000601/acceptance",
+  "query": "",
+  "request": {
+   "expectedChangeVersion": "7",
+   "partyId": "7319000000000000201",
+   "acceptanceMethod": "E_SIGNATURE",
+   "acceptedAt": "2026-10-20T12:00:00+04:00",
+   "acceptanceReference": "PRICE-ESIGN-2026-0001",
+   "fileId": "7319000000000000711",
+   "contentHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "versionId": "7319000000000000601",
+   "planId": "7319000000000000501",
+   "termType": "CLIENT_PRICING",
+   "agreementId": "7319000000000000101",
+   "versionNo": "2",
+   "status": "CLIENT_SIGNED",
+   "effectiveFrom": "2026-10-19T08:00:00Z",
+   "effectiveTo": null,
+   "roundingMode": "HALF_UP",
+   "pricingModel": "BLENDED",
+   "feeTaxTreatment": "EXCLUSIVE",
+   "changeVersion": "8",
+   "ownerType": "CLIENT",
+   "sourceTemplateVersionId": null,
+   "signatureExempt": false,
+   "belowStandardCount": 0,
+   "templateUpdate": null,
+   "acceptance": {
+    "versionAcceptanceId": "7319000000000000951",
+    "partyId": "7319000000000000201",
+    "acceptanceMethod": "E_SIGNATURE",
+    "acceptedAt": "2026-10-20T08:00:00Z",
+    "acceptanceReference": "PRICE-ESIGN-2026-0001",
+    "fileId": "7319000000000000711",
+    "contentHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "recordedBy": "10002"
+   },
+   "relevanceWarnings": []
+  },
+  "routeCode": "operations-commercial-term-acceptance"
  }
 ]

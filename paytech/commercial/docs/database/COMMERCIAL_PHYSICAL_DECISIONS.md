@@ -2,6 +2,8 @@
 
 > **2026-10-19 六层产品定价模型：** 按[决定记录](../../../../agent-docs/decisions/2026-10-19-commercial-six-layer-product-pricing.md)与[数据库设计稿](../../../../design-discuss/commercial/database.md)，本库由 14 张表增至 20 张表。新增产品目录 `t_product`、`t_product_capability`、`t_product_fee_event`，以及合同订阅与开通 `t_agreement_product`、`t_agreement_capability`、`t_agreement_capability_limit`。既有表新增字段：`t_agreement.business_mode`、`t_payment_method_profile.profile_kind`（`payment_method_code` 改可空，显示名改为定价画像，物理名不变）、`t_commercial_term_version.pricing_model/fee_tax_treatment`、`t_commercial_term_component.refund_behavior/band_basis`；`dimension_code`、`calculation_base`、Plan `status` 收口为闭合值，`band_mode` 增 RETROACTIVE，`term_type`/`trigger_code` 改由计费事件目录登记。多币种方案 B：`t_commercial_term_price` 紧随 `entity_no` 新增 `currency CHAR(3) NOT NULL`（ISO 4217，费用币种 = 交易币种，同一画像按币种各一条 Price），两个 Price 唯一键与 `idx_term_price_oe` 加入 `currency`。模型与 [commercial-schema.sql](./sql/commercial-schema.sql) 为设计产物，**未在 mor-test 或任何共享环境执行**；2026-10-19 经用户授权，仅对本机 local-environment 测试库 `mor_commercial` 执行了 [local-mor_commercial-round2.sql](../../../../design-discuss/commercial/local-mor_commercial-round2.sql)（两张画像表改名、Price 画像列改名、`t_agreement` 加四列、画像表加 `profile_kind`，与 `paytech-commercial-test/src/test/resources/init/ddl.sql` 形状一致），之后 commercial 测试链 24/24 通过。BCR 白名单待办：`record_type` 闭合值由 client-master 与 commercial 共享同一列表，本次未改；共享注释列表按服务拆分时，须把 AGREEMENT_PRODUCT、AGREEMENT_CAPABILITY（Root 均为 AGREEMENT）加入本库 `record_type` 白名单。第二轮（设计稿第 8 节）：`t_payment_method_profile` / `t_payment_method_profile_cond` 改名为 `t_pricing_profile` / `t_pricing_profile_cond`，主键 `pricing_profile_id`、代码列与 Price 引用列 `pricing_profile_code`，键名改为 `uk_pricing_profile_code`、`uk_pricing_profile_cond_value`、`idx_pricing_profile_lookup`、`idx_pricing_cond_lookup`；`dimension_code` 增 ISSUER_COUNTRY、CARD_PRODUCT（14 值）；`t_agreement` 在 `business_mode` 后新增 `fund_mode`、`pricing_authority`、`referral_partner_id`（跨库 Local Partner 值引用）与 `idx_agreement_referral`；`term_type` 目录示例增 PARTNER_BUY_RATE；`calculation_base` 增 BUY_RATE_DIFFERENCE；`t_commercial_term_version.status` 增 PENDING_APPROVAL（本地 Maker-Checker 提交态，technique §2.1 / §2.2）。共享 BCR 白名单中的 PAYMENT_METHOD_PROFILE 本次未改名为 PRICING_PROFILE（改动会改变 client-master 生成结果），与 AGREEMENT_PRODUCT / AGREEMENT_CAPABILITY 一并在白名单按服务拆分时处理。下文正文中的 Payment Method Profile 表名与字段名为改名前记录。第 9 节统计已按本次产物更新；下文其他段落的 14 表描述属于前身记录。
 
+> **2026-10-20 开通与定价模型调整（一期）：** 按[需求](../../../../requirements/20261020/commercial-开通与定价模型调整/requirement.md)与[技术方案](../../../../requirements/20261020/commercial-开通与定价模型调整/technique.md)，本库由 20 张表增至 22 张表：新增 `t_product_capability_dimension`（能力可用接受维度）与 `t_term_version_acceptance`（价格协议客户签署）；`t_agreement_capability` 新增 `require_3ds`；`t_commercial_term_plan` 新增 `owner_type`（CLIENT / PARTNER / PLATFORM_TEMPLATE），`t_commercial_term_version` 新增 `source_template_version_id`、`signature_exempt`，`agreement_id` 改可空（模板无合同）；`t_commercial_term_price` 新增 `source_template_price_id`；版本 `status` 增 CLIENT_SIGNED；CARD_* 能力合并为 CARD，REQUIRE_3DS 限制迁到 `require_3ds`。变更 SQL 与迁移脚本见需求目录 `db/commercial/`，**未在 mor-test 或任何共享环境执行**，仅本机 `mor_commercial` 测试库执行了 ddl.sql。第 9 节统计已按本次产物更新。
+
 > **2026-10-17 服务拆分：** 本文由原 `client-contract-service/docs/database/CLIENT_CONTRACT_PHYSICAL_DECISIONS.md` 按[模块与表归属](../../../../requirements/20261017/architecture-V2骨架与模块搬迁/design/03-module-and-table-ownership.md) §2.5 拆出；决策正文逐字保留，只调整标题、归属说明、相对链接与本库生成统计。commercial（`mor_commercial`）拥有 14 张表：Agreement 四表、Payment Method Profile 与 Commercial Term 七表，以及本库独立副本 `business_change_record`、`business_change_version`、`compensation_event`。Party、角色、入驻、OE Scope/Affiliation/Source、Consumer Legal 与 Seller Disclosure 见 [Client Master 物理数据库决策](../../../client-master/docs/database/CLIENT_MASTER_PHYSICAL_DECISIONS.md)；指向这些 client-master 表的引用（Client、Local Partner、Operating Entity、Party、Party Profile）成为跨库引用，只保留字段与访问索引，不再是本库模型关系。`command_idempotency` 按决定 S10 删除，不进入任何模型或 Schema。手工 Schema SQL 为 [commercial-schema.sql](./sql/commercial-schema.sql)（由 [generate-oe-client-schemas.mjs](../../../../scripts/pdmaner/generate-oe-client-schemas.mjs) 从模型生成）。
 
 > **2026-09-14 Client 入驻修订：** Client 申请使用单份资料和 current_submission_id；Party/Profile/Relation 稳定标识及 Checkout 实际消费的批准 Hash 保留。本文旧的 Profile Version、Base/Target、Client Submission Hash 与 Relation Version 段落仅作前身设计记录；Partner/OE/Agreement 的共享引用不自动合并。完整合同见[数据设计](../../../../requirements/20260914/client-console-注册与客户入驻/data-design.md)和[迁移方案](../../../../requirements/20260914/client-console-注册与客户入驻/migration-plan.md)。当前模型、验证和执行状态见[台账](../../../../agent-docs/CURRENT_IMPLEMENTATION.md#client-console-onboarding-20260914)。
@@ -197,24 +199,24 @@ MVP 暂不建设通用 Retention/Legal Hold 投影、Worker、归档、匿名化
 - `BIGINT -> Long`、`DECIMAL -> BigDecimal`、`DATETIME(6) -> Instant`；
 - 新增派生 `localDate`，映射 `DATE -> LocalDate`；
 - 注入完整中文显示元数据、闭合/开放值域和 Slot 规则；
-- 生成本库 20 张表的字段、唯一索引、普通索引、本库关系、关系图与稳定结构投影；
+- 生成本库 22 张表的字段、唯一索引、普通索引、本库关系、关系图与稳定结构投影；
 - 禁用模板自增主键假设，保留 Snowflake 非自增和空数据库连接。
 
-以下为 2026-10-19 六层产品定价模型后的 commercial 模型统计快照（2026-10-17 拆分时为 14 / 145；拆分前合并模型的 38 / 413 统计只属于历史基线）；现行生成统计及运行数据库迁移状态只见[当前实现台账](../../../../agent-docs/CURRENT_IMPLEMENTATION.md#client-console-onboarding-20260914)。下方模型与结构指纹随当前产物更新：
+以下为 2026-10-20 开通与定价模型调整后的 commercial 模型统计快照（2026-10-19 六层产品定价模型后为 20 / 203，2026-10-17 拆分时为 14 / 145；拆分前合并模型的 38 / 413 统计只属于历史基线）；现行生成统计及运行数据库迁移状态只见[当前实现台账](../../../../agent-docs/CURRENT_IMPLEMENTATION.md#client-console-onboarding-20260914)。下方模型与结构指纹随当前产物更新：
 
 | 项目 | 最终结果 |
 |---|---|
-| 表 / 字段 | 20 / 203 |
-| 必填 / 可空字段 | 151 / 52 |
-| 唯一键 / 访问索引 | 28 / 25 |
-| 本库关系 / 1:1 关系 | 21 / 1 |
+| 表 / 字段 | 22 / 230 |
+| 必填 / 可空字段 | 172 / 58 |
+| 唯一键 / 访问索引 | 31 / 25 |
+| 本库关系 / 1:1 关系 | 23 / 1 |
 | Diagram Groups | 4 |
-| Table Cells / Relation Cells | 23 / 21 |
-| Structural Projection SHA-256 | `34c577620f6290641323d9a7b1996032e0ccda5af6cf6911ff8a1591a1cff72e` |
-| Model SHA-256 | `d0e69125ad6a1bb9c4a7a03cea66c2f742a355b43d0d954c2466c5df986a848b` |
+| Table Cells / Relation Cells | 25 / 23 |
+| Structural Projection SHA-256 | `fa296dd8cfd6c00cb13ef52c6f42fe8887dab8858491a644ce0e672fc9721b45` |
+| Model SHA-256 | `dd6ace224f0568e78ea1d4c6efdc10716546aa4db3f3603b3b9cf1b868ba7a22` |
 | Template SHA-256 | `51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540` |
 
-全部 203 个字段来自批准 Catalog，没有在 Catalog 之外重复注入公共字段。21 条关系均为本库关系（指向 client-master 表的 12 条 Catalog 引用只保留字段与访问索引）；4 个图组覆盖全部 20 张表，并让每条关系恰好可视化一次。
+全部 230 个字段来自批准 Catalog，没有在 Catalog 之外重复注入公共字段。23 条关系均为本库关系（指向 client-master 表的 12 条 Catalog 引用只保留字段与访问索引）；4 个图组覆盖全部 22 张表，并让每条关系恰好可视化一次。
 
 ## 10. 验证与后续门禁
 

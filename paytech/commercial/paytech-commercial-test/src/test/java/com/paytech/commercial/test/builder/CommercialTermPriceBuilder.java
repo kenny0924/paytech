@@ -100,6 +100,12 @@ public final class CommercialTermPriceBuilder {
         return this;
     }
 
+    /** 设置来源模板价格。 */
+    public CommercialTermPriceBuilder sourceTemplatePriceId(Long value) {
+        commercialTermPrice.setSourceTemplatePriceId(value);
+        return this;
+    }
+
     /** 设置记录创建的 UTC 微秒时间。 */
     public CommercialTermPriceBuilder createTime(Instant value) {
         commercialTermPrice.setCreateTime(value);

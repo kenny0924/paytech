@@ -10,6 +10,7 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.paytech.commercial.domainservice.repository.AgreementCapabilityLimitRepository;
+import com.paytech.commercial.domainservice.repository.ProductCapabilityDimensionRepository;
 import com.paytech.commercial.domainservice.repository.AgreementCapabilityRepository;
 import com.paytech.commercial.domainservice.repository.AgreementDocumentRefRepository;
 import com.paytech.commercial.domainservice.repository.AgreementOperatingEntityRepository;
@@ -153,10 +154,11 @@ public class CommercialWriteConfiguration {
         AgreementProductRepository agreementProductRepository, ProductCapabilityRepository productCapabilityRepository,
         AgreementCapabilityRepository agreementCapabilityRepository,
         BusinessChangeRecordRepository businessChangeRecordRepository,
-        AgreementOperatingEntityRepository agreementOperatingEntityRepository) {
+        AgreementOperatingEntityRepository agreementOperatingEntityRepository,
+        ProductCapabilityDimensionRepository productCapabilityDimensionRepository) {
         return new AddAgreementCapabilityProcessor(clock, idGenerator, agreementService, productRepository,
             agreementRepository, agreementProductRepository, productCapabilityRepository, agreementCapabilityRepository,
-            businessChangeRecordRepository, agreementOperatingEntityRepository);
+            businessChangeRecordRepository, agreementOperatingEntityRepository, productCapabilityDimensionRepository);
     }
 
     /** PUT /agreements/v1/{id}/capabilities/{capabilityId}。 */
@@ -165,9 +167,11 @@ public class CommercialWriteConfiguration {
         AgreementService agreementService, AgreementRepository agreementRepository,
         AgreementCapabilityRepository agreementCapabilityRepository,
         BusinessChangeRecordRepository businessChangeRecordRepository,
-        AgreementCapabilityLimitRepository agreementCapabilityLimitRepository) {
+        AgreementCapabilityLimitRepository agreementCapabilityLimitRepository,
+        ProductCapabilityDimensionRepository productCapabilityDimensionRepository) {
         return new UpdateAgreementCapabilityProcessor(clock, idGenerator, agreementService, agreementRepository,
-            agreementCapabilityRepository, businessChangeRecordRepository, agreementCapabilityLimitRepository);
+            agreementCapabilityRepository, businessChangeRecordRepository, agreementCapabilityLimitRepository,
+            productCapabilityDimensionRepository);
     }
 
     /** POST /pricing-profiles/v1。 */

@@ -63,4 +63,20 @@ public interface CommercialTermPriceRepository {
      * @return 版本 ID → 价格条数；没有价格的版本不出现
      */
     Map<Long, Integer> countByVersionIds(Collection<Long> termVersionIds);
+
+    /**
+     * 按一组主键读取；空集合不访问数据库。
+     *
+     * @param termPriceIds 价格 ID
+     * @return 按 term_price_id 升序
+     */
+    List<CommercialTermPrice> findByIds(Collection<Long> termPriceIds);
+
+    /**
+     * 读取一组版本的全部价格；空集合不访问数据库。
+     *
+     * @param termVersionIds 版本 ID
+     * @return 按 term_price_id 升序
+     */
+    List<CommercialTermPrice> findByVersionIds(Collection<Long> termVersionIds);
 }

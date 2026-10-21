@@ -34,4 +34,7 @@ public class CreateCommercialTermVersionRequest {
 
     /** 费用含税口径，可空（复制时沿用来源） */
     private final FeeTaxTreatment feeTaxTreatment;
+
+    /** 基于模板生成的来源模板版本 ID，可空；与 copyFromVersionId 互斥 */
+    private final Long sourceTemplateVersionId;
 }

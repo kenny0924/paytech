@@ -98,4 +98,14 @@ public interface CommercialTermPlanRepository {
      * @return 按 term_plan_id 升序
      */
     List<CommercialTermPlan> findByIds(Collection<Long> termPlanIds);
+
+    /**
+     * 按可选条件读取标准价目模板方案（owner_type=PLATFORM_TEMPLATE）。
+     *
+     * @param entityNo OE，空不筛选
+     * @param termType 条款类型，空不筛选
+     * @param status 方案状态，空不筛选
+     * @return 按 OE、方案编号升序
+     */
+    List<CommercialTermPlan> findTemplates(String entityNo, String termType, CommercialTermPlanStatus status);
 }

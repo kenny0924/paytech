@@ -22,13 +22,14 @@ class TableOwnershipAutoTest {
     @Test
     void test_normalFlow() {
         // design/03 §4.2：17 个目标库共 265 张物理表；另加保留服务 platform-support 自身 Schema 的 56 张表。
-        Assertions.assertEquals(265 + 56 + 1 + 6 - 7 + 9 + 4 + 6 + 1 + 2 + 1 - 13 + 10, ownership.physicalTableCount(),
+        Assertions.assertEquals(265 + 56 + 1 + 6 - 7 + 9 + 4 + 6 + 1 + 2 + 1 - 13 + 10 + 2, ownership.physicalTableCount(),
             "design 03 + Platform 保留表 + 第 12 步 t_card_material_ticket + account 明细账六张业务表（2026-10-19 重构）"
                 + " - billing 经济事实三表与渠道成本四表 + billing 计费事实九表 + channel-connector 渠道成本四表（2026-10-19 计费事实重构）"
                 + " + commercial 产品目录三表与合同订阅 / 开通 / 约束三表（2026-10-19 六层产品定价模型）"
                 + " + account 账户号序列 + ledger 科目变更记录与账户号序列（2026-10-19 科目分级）"
                 + " + channel-connector 变更记录表 t_channel_config_change（2026-10-20）"
-                + " - reconciliation 旧对账十三表 + 新模型八张业务表与消费幂等两表（2026-10-20 对账切片 1）");
+                + " - reconciliation 旧对账十三表 + 新模型八张业务表与消费幂等两表（2026-10-20 对账切片 1）"
+                + " + commercial 可配维度与价格协议签署两表（2026-10-20 开通与定价模型调整）");
         Assertions.assertEquals(57, ownership.databasesOf("platform-support").get("mor_platform").size());
         Assertions.assertEquals(31, ownership.databasesOf("ledger").get("mor_ledger").size());
         Assertions.assertTrue(ownership.allowedTables("ledger").containsAll(

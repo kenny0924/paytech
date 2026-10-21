@@ -66,6 +66,7 @@ public class ProductCapabilityRepositoryImpl implements ProductCapabilityReposit
             throw new ConcurrentRequestException("可开通项状态已变化: " + capability.getCapabilityCode());
         }
         capability.setStatus(status);
+        capability.setChangeVersion(capability.getChangeVersion() + 1);
         capability.setUpdateTime(time);
     }
 
@@ -73,5 +74,18 @@ public class ProductCapabilityRepositoryImpl implements ProductCapabilityReposit
     @Override
     public List<ProductCapability> findFiltered(ProductCode productCode, ProductStatus status) {
         return List.copyOf(mapper.selectFiltered(productCode, status));
+    }
+
+    /** 版本条件改写，成功后同步原对象。 */
+    @Override
+    public void updateDefinition(ProductCapability capability, String capabilityName, ProductCode productCode, Instant now) {
+        Instant time = micros(now);
+        if (mapper.updateDefinition(capability, capabilityName, productCode, time) != 1) {
+            throw new ConcurrentRequestException("可开通项已变化，请刷新后重试: " + capability.getCapabilityCode());
+        }
+        capability.setCapabilityName(capabilityName);
+        capability.setProductCode(productCode);
+        capability.setChangeVersion(capability.getChangeVersion() + 1);
+        capability.setUpdateTime(time);
     }
 }

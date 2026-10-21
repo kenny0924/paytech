@@ -1,20 +1,27 @@
 import { useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
-import { Alert, Button, Drawer, Form, Input, InputNumber, Select, Space } from 'antd';
+import { Alert, Button, Drawer, Form, Input, InputNumber, Select, Space, Tag, Tooltip } from 'antd';
 import type { FormInstance, FormListFieldData } from 'antd';
 import { ApiError, session } from '../api/session';
 import { commercialPaths, decodeProfileList, decodeVersion, defaultBusinessCalendar, newPriceDraft, partnerTermTypes, pricesBody } from './commercial';
-import type { Price, PriceDraft, PricingProfile, TermScope, TermVersion } from './commercial';
+import type { AgreementCapability, Price, PriceDraft, PricingProfile, TermVersion } from './commercial';
+import { priceKey, priceMatchesCapability } from './benchmark';
 import { feeEventOptions } from './commercialConsole';
-import type { CodeOption } from './commercialConsole';
+import type { CatalogCapability, CodeOption } from './commercialConsole';
+import type { ComponentBenchmark } from './termReview';
 import { ConflictBanner, CommercialNote } from './CommercialParts';
 import { ComponentTable } from './ComponentTable.tsx';
 import { priceSummary, toFormDrafts, toSubmitDrafts } from './componentTable.ts';
 import { useCatalogFeeEvents } from './useCatalog';
 import { useCommercialCommand } from './useCommercialCommand';
 
+/** 卡片头的开通项标签依据；不传则不显示（Partner 条款、标准价目）。 */
+export interface DrawerGrouping { capabilities: readonly AgreementCapability[]; catalog: readonly CatalogCapability[] }
 interface Props {
-  version: TermVersion; scope: TermScope; prices: readonly Price[]; onClose: () => void; onSaved: () => void; onAuthorizationChanged: () => void;
+  version: TermVersion; entityNos: readonly string[]; prices: readonly Price[]; onClose: () => void; onSaved: (result: TermVersion) => void;
+  onAuthorizationChanged: () => void;
+  /** 保存路径；标准价目走模板专用路由。 */
+  savePath?: string; grouping?: DrawerGrouping;
 }
 interface ValidationFailure { errorFields?: { name: (string | number)[]; errors: string[] }[] }
 const list = (values: readonly string[]) => values.map(value => ({ value, label: value }));
@@ -57,9 +64,10 @@ function usePriceCollapse(initialCount: number) {
  * 价格集合编辑：整体替换 DRAFT 版本的全部价格
  * <li>每条价格 = OE + 币种 + 画像 + 优先级；Client 条款带结算四字段，Partner 条款不带；卡片可折叠，头部显示一行摘要。</li>
  * <li>组件为每行一个的可编辑表格（ComponentTable）；费率按百分比输入，组件币种保存时自动取价格币种。</li>
- * <li>保存：校验失败时展开出错价格并滚动到第一处错误；通过后换回小数费率、推导币种，再按原 pricesBody 提交。</li>
+ * <li>保存：校验失败时展开出错价格并滚动到第一处错误；通过后换回小数费率、推导币种，再按原 pricesBody 提交（来源模板价格原样回传）。</li>
+ * <li>卡片头显示对应开通项（挂不上标红）与来源标签；组件代码旁显示上次保存时的破标标记。保存后的相关性提示由编辑器展示。</li>
  */
-export function PriceEditorDrawer({ version, scope, prices, onClose, onSaved, onAuthorizationChanged }: Props) {
+export function PriceEditorDrawer({ version, entityNos, prices, onClose, onSaved, onAuthorizationChanged, savePath, grouping }: Props) {
   const [form] = Form.useForm<{ prices: PriceDraft[] }>();
   const command = useCommercialCommand(onAuthorizationChanged, 'version', form);
   const profiles = useProfiles(onAuthorizationChanged);
@@ -81,25 +89,30 @@ export function PriceEditorDrawer({ version, scope, prices, onClose, onSaved, on
   const save = async () => {
     try { await form.validateFields(); } catch (failure) { revealFirstError(failure as ValidationFailure); return; }
     const drafts = toSubmitDrafts((form.getFieldsValue(true) as { prices?: PriceDraft[] }).prices ?? []);
-    const result = await command.run(commercialPaths.prices(version.versionId), 'PUT', pricesBody(version.changeVersion, drafts),
+    const result = await command.run(savePath ?? commercialPaths.prices(version.versionId), 'PUT', pricesBody(version.changeVersion, drafts),
       decodeVersion(version.versionId), '价格保存失败');
-    if (result) onSaved();
+    if (result) onSaved(result);
+  };
+  const benchmarks = (draft: PriceDraft | undefined) => (componentCode: string): ComponentBenchmark | null => {
+    if (!draft) return null;
+    const original = prices.find(price => priceKey(price) === priceKey(draft));
+    return original?.components.find(component => component.componentCode === componentCode)?.benchmark ?? null;
   };
   const profileOptions = profiles.map(profile => ({ value: profile.pricingProfileCode,
     label: `${profile.pricingProfileCode} · ${profile.profileName}${profile.status === 'DRAFT' ? '（草稿）' : ''}` }));
   return <Drawer open size="min(1080px, 100vw)" rootClassName="commercial-drawer" title={`编辑价格 · v${version.versionNo}`} onClose={() => { if (!command.saving) onClose(); }}
     destroyOnHidden extra={<Space><Button onClick={onClose} disabled={command.saving}>取消</Button>
       <Button type="primary" loading={command.saving} disabled={command.conflict} onClick={() => void save()}>保存全部价格</Button></Space>}>
-    {command.conflict && <ConflictBanner onReload={onSaved} />}
+    {command.conflict && <ConflictBanner onReload={onClose} />}
     {command.formError && <Alert type="error" showIcon className="commercial-banner" title={command.formError} />}
     <Form form={form} name="commercial-prices" layout="vertical" initialValues={initialValues}>
       <Form.List name="prices">{(fields, { add, remove }) => {
         collapse.register(fields); priceFields.current = fields;
         return <>
-          {fields.map(field => <PriceCard key={field.key} form={form} field={field} open={collapse.isOpen(field.key)} partner={partner} scope={scope}
+          {fields.map(field => <PriceCard key={field.key} form={form} field={field} open={collapse.isOpen(field.key)} partner={partner} entityNos={entityNos}
             profileOptions={profileOptions} eventChoices={eventChoices} onToggle={() => collapse.setOpen([field.key], !collapse.isOpen(field.key))}
-            onRemove={() => remove(field.name)} />)}
-          <Button onClick={() => add(newPriceDraft(version.termType, scope.entityNos[0] ?? '', 'USD', profileOptions[0]?.value ?? '', fields.length + 1))}>
+            onRemove={() => remove(field.name)} grouping={grouping} profiles={profiles} benchmarks={benchmarks} />)}
+          <Button onClick={() => add(newPriceDraft(version.termType, entityNos[0] ?? '', 'USD', profileOptions[0]?.value ?? '', fields.length + 1))}>
             添加价格</Button>
         </>;
       }}</Form.List>
@@ -111,10 +124,22 @@ export function PriceEditorDrawer({ version, scope, prices, onClose, onSaved, on
 
 const priceCardId = (index: string | number) => `commercial-price-card-${index}`;
 
-/** 一条价格：折叠头（摘要 + 删除），展开后 OE / 币种 / 优先级 / 画像一行、结算四字段一行（Partner 无）与组件表格；折叠时仍挂载以参与校验。 */
-function PriceCard({ form, field, open, partner, scope, profileOptions, eventChoices, onToggle, onRemove }: {
-  form: FormInstance; field: FormListFieldData; open: boolean; partner: boolean; scope: TermScope; profileOptions: CodeOption[];
-  eventChoices: CodeOption[] | null; onToggle: () => void; onRemove: () => void;
+/** 卡片头的开通项标签：画像支付方式 + 条件与合同开通项比较（近似）；无支付方式的价格不判断。 */
+function capabilityTag(draft: PriceDraft | undefined, grouping: DrawerGrouping | undefined, profiles: readonly PricingProfile[]) {
+  if (!draft || !grouping) return null;
+  const profile = profiles.find(item => item.pricingProfileCode === draft.pricingProfileCode);
+  if (!profile?.paymentMethodCode) return null;
+  const price = { entityNo: draft.entityNo, currency: draft.currency, paymentMethodCode: profile.paymentMethodCode, conditions: profile.conditions };
+  const matched = grouping.capabilities.find(item => item.status === 'ENABLED' && priceMatchesCapability(price, item, grouping.catalog))
+    ?? grouping.capabilities.find(item => priceMatchesCapability(price, item, grouping.catalog));
+  return matched ? <Tag>{matched.capabilityCode}</Tag> : <Tag color="red">未对应开通项</Tag>;
+}
+
+/** 一条价格：折叠头（摘要 + 开通项 / 来源标签 + 删除），展开后 OE / 币种 / 优先级 / 画像一行、结算四字段一行（Partner 无）与组件表格；折叠时仍挂载以参与校验。 */
+function PriceCard({ form, field, open, partner, entityNos, profileOptions, eventChoices, onToggle, onRemove, grouping, profiles, benchmarks }: {
+  form: FormInstance; field: FormListFieldData; open: boolean; partner: boolean; entityNos: readonly string[]; profileOptions: CodeOption[];
+  eventChoices: CodeOption[] | null; onToggle: () => void; onRemove: () => void; grouping?: DrawerGrouping; profiles: readonly PricingProfile[];
+  benchmarks: (draft: PriceDraft | undefined) => (componentCode: string) => ComponentBenchmark | null;
 }) {
   const draft = Form.useWatch(['prices', field.name], form) as PriceDraft | undefined;
   return <div className={`commercial-price-card pc-card${open ? ' is-open' : ''}`} id={priceCardId(field.name)}>
@@ -122,12 +147,14 @@ function PriceCard({ form, field, open, partner, scope, profileOptions, eventCho
       <button type="button" className="pc-toggle" aria-expanded={open} onClick={onToggle}>
         <span className="pc-caret">{open ? '▾' : '▸'}</span><span className="pc-summary">{priceSummary(draft, field.name)}</span>
       </button>
+      {capabilityTag(draft, grouping, profiles)}
+      {draft?.sourceTemplatePriceId && <Tooltip title={`来源模板价格 ${draft.sourceTemplatePriceId}；保存时保持来源`}><Tag color="geekblue">标准价目</Tag></Tooltip>}
       <Button size="small" danger onClick={onRemove}>删除价格</Button>
     </div>
     <div className="pc-body" hidden={!open}>
       <div className="pc-grid-price">
         <Form.Item name={[field.name, 'entityNo']} label="OE" rules={[{ required: true, message: '请选择 OE' }]}>
-          <Select options={list(scope.entityNos)} /></Form.Item>
+          <Select options={list(entityNos)} /></Form.Item>
         <Form.Item name={[field.name, 'currency']} label="币种" normalize={(v: string) => v?.toUpperCase()}
           rules={[{ required: true, pattern: /^[A-Z]{3}$/, message: '三位币种' }]}><Input maxLength={3} placeholder="USD" /></Form.Item>
         <Form.Item name={[field.name, 'priorityNo']} label="优先级" tooltip="同 OE + 币种内唯一，越小越优先" rules={[{ required: true, message: '请填写优先级' }]}>
@@ -145,7 +172,7 @@ function PriceCard({ form, field, open, partner, scope, profileOptions, eventCho
         <Form.Item name={[field.name, 'cutoffSecondOfDay']} label="日截止秒数" tooltip="0–86399" rules={[{ required: true, message: '必填' }]}>
           <InputNumber className="commercial-number" min={0} max={86399} precision={0} /></Form.Item>
       </div>}
-      <ComponentTable form={form} priceName={field.name} eventChoices={eventChoices} />
+      <ComponentTable form={form} priceName={field.name} eventChoices={eventChoices} benchmarkOf={benchmarks(draft)} />
     </div>
   </div>;
 }

@@ -11,11 +11,11 @@ let componentNo = 0;
 const component = (componentCode: string, componentType: ComponentType, extra: Partial<PriceComponent> = {}): PriceComponent => ({
   componentId: `73190000000000009${++componentNo}`, componentNo, componentCode, componentType, triggerCode: 'CAPTURE', calculationBase: 'GROSS_AMOUNT',
   refundBehavior: 'RETURN_PRORATA', rate: null, fixedAmount: null, currency: null, minAmount: null, maxAmount: null, bandBasis: null, bandMode: null,
-  bands: [], ...extra });
+  bands: [], benchmark: null, ...extra });
 const settlement = { settlementBusinessDays: 2, businessCalendarCode: 'AE_BUSINESS_DAYS', settlementTimezone: 'UTC', cutoffSecondOfDay: 86399 };
 const price = (priceId: string, currency: string, pricingProfileCode: string, priorityNo: number, components: PriceComponent[], client = true): Price => ({
   priceId, entityNo: 'AE001', currency, pricingProfileCode, paymentMethodCode: 'CARD', priorityNo, conditions: [], components,
-  settlement: client ? settlement : null });
+  settlement: client ? settlement : null, sourceTemplatePriceId: null });
 const acquiring = (currency: string) => [
   component('CAPTURE_TIERED', 'TIERED', { currency, bandBasis: 'TRANSACTION_AMOUNT', bandMode: 'WHOLE_BASE', bands: [
     { bandId: '1', bandNo: 1, lowerBound: '0', upperBound: '1000', rate: '0.029', fixedAmount: null, currency },

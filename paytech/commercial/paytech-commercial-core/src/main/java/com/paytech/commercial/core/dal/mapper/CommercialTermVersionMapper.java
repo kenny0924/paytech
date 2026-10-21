@@ -55,4 +55,11 @@ public interface CommercialTermVersionMapper {
     /** 读取一组方案下指定状态的版本，按 term_plan_id、version_no 升序。 */
     List<CommercialTermVersion> selectByPlanIdsAndStatuses(@Param("termPlanIds") Collection<Long> termPlanIds,
         @Param("statuses") Collection<CommercialTermVersionStatus> statuses);
+
+    /** 仅当状态仍为 row.status 且来源模板为空时写入来源模板版本，返回影响行数。 */
+    int updateSourceTemplate(@Param("row") CommercialTermVersion row, @Param("sourceTemplateVersionId") long sourceTemplateVersionId,
+        @Param("now") Instant now);
+
+    /** 按一组主键读取版本，按 term_version_id 升序；termVersionIds 必须非空。 */
+    List<CommercialTermVersion> selectByIds(@Param("termVersionIds") Collection<Long> termVersionIds);
 }

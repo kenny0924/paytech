@@ -5,15 +5,17 @@ import com.paytech.operations.console.bff.service.model.CommercialChangeModels.B
 import com.paytech.operations.console.bff.service.model.CommercialListModels.AgreementListItem;
 import com.paytech.operations.console.bff.service.model.CommercialListModels.AgreementListRequestBody;
 import com.paytech.operations.console.bff.service.model.CommercialListModels.CatalogCapabilityListResponseBody;
+import com.paytech.operations.console.bff.service.model.CommercialListModels.CatalogDimensionListResponseBody;
 import com.paytech.operations.console.bff.service.model.CommercialListModels.CatalogFeeEventListResponseBody;
 import com.paytech.operations.console.bff.service.model.CommercialListModels.CatalogProductListResponseBody;
 import com.paytech.operations.console.bff.service.model.CommercialListModels.TermPlanListItem;
 import com.paytech.operations.console.bff.service.model.CommercialListModels.TermPlanListRequestBody;
 import com.paytech.operations.console.bff.service.model.CommercialListModels.TermVersionListItem;
 import com.paytech.operations.console.bff.service.model.CommercialListModels.TermVersionListRequestBody;
+import com.paytech.operations.console.bff.service.model.CommercialPricingModels.CommercialTermTemplateListResponseBody;
 
 /**
- * commercial 运营只读列表、产品目录与变更历史的本地端口（第二切片 H 线接口）；筛选、排序、分页与授权事实归 commercial
+ * commercial 运营只读列表、产品目录、维度清单、标准价目模板与变更历史的本地端口；筛选、排序、分页与授权事实归 commercial
  * <li>全部为查询，不携带操作人；每个入口只调用一次 commercial，不重试。</li>
  * <li>分页回执的 page / size 必须与请求一致，否则按上游无效响应处理。</li>
  *
@@ -46,6 +48,16 @@ public interface CommercialConsoleQueryClient {
     PagingResponseBody<TermVersionListItem> listVersions(TermVersionListRequestBody request);
 
     /**
+     * 标准价目模板方案列表（不分页）
+     *
+     * @param entityNo 可选 OE
+     * @param termType 可选条款类型
+     * @param status 可选方案状态
+     * @return 模板方案，含当前生效版本与最新版本
+     */
+    CommercialTermTemplateListResponseBody listTemplates(String entityNo, String termType, String status);
+
+    /**
      * 产品（L0）列表
      *
      * @param status 可选状态
@@ -70,6 +82,13 @@ public interface CommercialConsoleQueryClient {
      * @return 计费事件列表
      */
     CatalogFeeEventListResponseBody listFeeEvents(String productCode, String termType);
+
+    /**
+     * 维度清单（代码登记的维度元数据）
+     *
+     * @return 全部维度，按登记顺序
+     */
+    CatalogDimensionListResponseBody listDimensions();
 
     /**
      * 一个聚合根的变更快照分页，按聚合版本倒序；比较字段未填充

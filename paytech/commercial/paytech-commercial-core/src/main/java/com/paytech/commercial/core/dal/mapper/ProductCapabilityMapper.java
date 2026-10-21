@@ -33,4 +33,8 @@ public interface ProductCapabilityMapper {
 
     /** 按可选产品代码与状态读取可开通项，按 product_capability_id 升序；参数为空不筛选。 */
     List<ProductCapability> selectFiltered(@Param("productCode") ProductCode productCode, @Param("status") ProductStatus status);
+
+    /** 仅当 change_version 仍为 capability.changeVersion 时改写名称与归属产品并版本加一，返回影响行数。 */
+    int updateDefinition(@Param("capability") ProductCapability capability, @Param("capabilityName") String capabilityName,
+        @Param("productCode") ProductCode productCode, @Param("now") Instant now);
 }

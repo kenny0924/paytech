@@ -10,6 +10,7 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Component;
 
 import com.paytech.commercial.api.constant.CommercialCodes;
+import com.paytech.commercial.api.enums.CommercialTermOwnerType;
 import com.paytech.commercial.api.enums.CommercialTermPlanStatus;
 import com.paytech.commercial.core.dal.dataobject.Agreement;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermPlan;
@@ -87,7 +88,8 @@ public class CreateCommercialTermPlanProcessor
     /** 同号重放：归属一致返回原方案，否则 409。 */
     CreateCommercialTermPlanResponse replay(CommercialTermPlan existing, CreateCommercialTermPlanRequest request) {
         boolean sameAgreement = existing.getAgreementId() == null || existing.getAgreementId() == request.getAgreementId();
-        boolean same = sameAgreement && Objects.equals(existing.getClientId(), request.getClientId())
+        boolean same = existing.getOwnerType() != CommercialTermOwnerType.PLATFORM_TEMPLATE && sameAgreement
+            && Objects.equals(existing.getClientId(), request.getClientId())
             && Objects.equals(existing.getLocalPartnerId(), request.getLocalPartnerId());
         if (!same) {
             throw new ConcurrentRequestException("方案编号已被不同归属的方案使用: " + request.getTermType() + "/"
@@ -141,6 +143,7 @@ public class CreateCommercialTermPlanProcessor
         plan.setTermPlanId(loader.nextId());
         plan.setPlanCode(request.getPlanCode());
         plan.setTermType(request.getTermType());
+        plan.setOwnerType(clientTerm ? CommercialTermOwnerType.CLIENT : CommercialTermOwnerType.LOCAL_PARTNER);
         plan.setAgreementId(clientTerm ? agreement.getAgreementId() : null);
         plan.setEntityNo(clientTerm ? agreement.getEntityNo() : null);
         plan.setClientId(request.getClientId());

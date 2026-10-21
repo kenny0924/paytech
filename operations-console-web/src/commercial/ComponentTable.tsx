@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { Button, Form, Input, Select } from 'antd';
+import { Button, Form, Input, Select, Tag, Tooltip } from 'antd';
 import type { FormInstance, FormRule as Rule, SelectProps } from 'antd';
 import { bandBases, bandIssues, bandModes, calculationBases, componentTypeLabels, componentTypes, refundBehaviors } from './commercial';
 import type { BandDraft, ComponentDraft, ComponentType } from './commercial';
+import { benchmarkDetail, benchmarkMark } from './benchmark';
 import type { CodeOption } from './commercialConsole';
+import type { ComponentBenchmark } from './termReview';
 import {
   amountPattern, bandBasisLabels, bandModeLabels, calculationBaseLabels, componentTypePatch, copyComponentDraft, isEditable, labeledOptions,
   newComponentDraft, percentIssue, refundBehaviorLabels, tierSummary,
@@ -43,8 +45,11 @@ const startsWith = (name: readonly (string | number)[], prefix: NamePath) => pre
  * <li>类型决定可编辑列：百分比（费率 / 最低 / 最高）、固定额（固定金额）、阶梯（档位子表）；不适用列显示「—」。</li>
  * <li>费率按百分比输入；组件币种不在此填写，保存时由 toSubmitDrafts 推导。</li>
  * <li>单元格只显示红框，错误文字汇总在该行下方；eventChoices 为 null 表示目录读取失败，计费事件改为手输。</li>
+ * <li>benchmarkOf 给出上次保存时的破标比较：组件代码旁标「破标」（悬停看模板值）。</li>
  */
-export function ComponentTable({ form, priceName, eventChoices }: { form: FormInstance; priceName: number; eventChoices: CodeOption[] | null }) {
+export function ComponentTable({ form, priceName, eventChoices, benchmarkOf }: {
+  form: FormInstance; priceName: number; eventChoices: CodeOption[] | null; benchmarkOf?: (componentCode: string) => ComponentBenchmark | null;
+}) {
   return <Form.List name={[priceName, 'components']}>{(fields, { add, remove }) => <>
     <div className="ct-scroll">
       <table className="ct-table">
@@ -58,7 +63,7 @@ export function ComponentTable({ form, priceName, eventChoices }: { form: FormIn
         </tr></thead>
         {fields.map((field, index) => {
           const path = ['prices', priceName, 'components', field.name];
-          return <ComponentRows key={field.key} form={form} path={path} name={field.name} eventChoices={eventChoices}
+          return <ComponentRows key={field.key} form={form} path={path} name={field.name} eventChoices={eventChoices} benchmarkOf={benchmarkOf}
             onCopy={() => add(copyComponentDraft(form.getFieldValue(path) as ComponentDraft), index + 1)}
             onRemove={fields.length > 1 ? () => remove(field.name) : undefined} />;
         })}
@@ -70,13 +75,17 @@ export function ComponentTable({ form, priceName, eventChoices }: { form: FormIn
 }
 
 /** 一个组件：主行 + 行错误 + 阶梯档位子行（阶梯组件始终挂载以参与校验，收起时隐藏；档位有错时自动展开）。 */
-function ComponentRows({ form, path, name, eventChoices, onCopy, onRemove }: {
-  form: FormInstance; path: NamePath; name: number; eventChoices: CodeOption[] | null; onCopy: () => void; onRemove?: () => void;
+function ComponentRows({ form, path, name, eventChoices, benchmarkOf, onCopy, onRemove }: {
+  form: FormInstance; path: NamePath; name: number; eventChoices: CodeOption[] | null; benchmarkOf?: (componentCode: string) => ComponentBenchmark | null;
+  onCopy: () => void; onRemove?: () => void;
 }) {
   const [tierOpen, setTierOpen] = useState(false);
   const type = Form.useWatch([...path, 'componentType'], form) as ComponentType | undefined;
   const bands = Form.useWatch([...path, 'bands'], form) as BandDraft[] | null | undefined;
   const bandMode = Form.useWatch([...path, 'bandMode'], form) as string | null | undefined;
+  const code = Form.useWatch([...path, 'componentCode'], form) as string | undefined;
+  const benchmark = code && benchmarkOf ? benchmarkOf(code) : null;
+  const mark = benchmarkMark(benchmark);
   const changeType = (next: ComponentType) => {
     const patch = componentTypePatch(next, form.getFieldValue(path) as ComponentDraft);
     Object.entries(patch).forEach(([key, value]) => form.setFieldValue([...path, key], value));
@@ -88,7 +97,9 @@ function ComponentRows({ form, path, name, eventChoices, onCopy, onRemove }: {
   return <tbody className="ct-component">
     <tr className="ct-row">
       <td><Form.Item name={[name, 'componentCode']} normalize={upper} noStyle
-        rules={[required('请填写'), { pattern: /^[A-Z][A-Z0-9_]{0,63}$/, message: '大写代码，如 MDR' }]}><Input size="small" maxLength={64} /></Form.Item></td>
+        rules={[required('请填写'), { pattern: /^[A-Z][A-Z0-9_]{0,63}$/, message: '大写代码，如 MDR' }]}><Input size="small" maxLength={64}
+          suffix={mark?.below ? <Tooltip title={`${benchmarkDetail(benchmark)}（按上次保存计算）`}><Tag color="red" className="ct-benchmark">破标</Tag></Tooltip>
+            : undefined} /></Form.Item></td>
       <td><Form.Item name={[name, 'triggerCode']} normalize={upper} noStyle rules={[required('请选择')]}>
         {eventChoices === null ? <Input size="small" maxLength={64} placeholder="事件代码" />
           : <Select size="small" popupMatchSelectWidth={false} showSearch={{ optionFilterProp: 'label' }} options={eventChoices}

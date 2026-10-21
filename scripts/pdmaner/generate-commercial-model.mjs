@@ -26,6 +26,7 @@ export const COMMERCIAL_TABLES = Object.freeze([
   "product",
   "product_capability",
   "product_fee_event",
+  "product_capability_dimension",
   "pricing_profile",
   "pricing_profile_cond",
   "commercial_term_plan",
@@ -33,6 +34,7 @@ export const COMMERCIAL_TABLES = Object.freeze([
   "commercial_term_price",
   "commercial_term_component",
   "commercial_term_component_band",
+  "term_version_acceptance",
   "business_change_record",
   "business_change_version",
   "compensation_event",
@@ -59,6 +61,7 @@ export const COMMERCIAL_DIAGRAM_GROUPS = Object.freeze([
       "product",
       "product_capability",
       "product_fee_event",
+      "product_capability_dimension",
     ],
   },
   {
@@ -72,6 +75,7 @@ export const COMMERCIAL_DIAGRAM_GROUPS = Object.freeze([
       "commercial_term_price",
       "commercial_term_component",
       "commercial_term_component_band",
+      "term_version_acceptance",
     ],
   },
   {

@@ -10,7 +10,7 @@ export const catalogTermTypeLabels: Readonly<Record<string, string>> = {
 
 /** 可开通项种类标签。 */
 export const capabilityKindLabels: Readonly<Record<string, string>> = {
-  PAYMENT_METHOD: '支付方式', PAYOUT_RAIL: '出款通道', FX: '外汇', DISPUTE: '争议', PERIODIC_SERVICE: '周期服务',
+  PAYMENT_METHOD: '支付方式', FEATURE: '功能', PAYOUT_RAIL: '出款通道', FX: '外汇', DISPUTE: '争议', PERIODIC_SERVICE: '周期服务',
 };
 
 /** 产品适用业务模式范围标签。 */
@@ -26,8 +26,10 @@ export function catalogLabel(labels: Readonly<Record<string, string>>, code: str
 
 // ---------- 分组模型 ----------
 
-/** 合并后的计费事件行：同产品同事件代码一行，条款类型按目录出现顺序，计费事实类型去重。 */
-export interface CatalogEventRow { key: string; productCode: string; feeEventCode: string; termTypes: string[]; billingFactTypes: string[] }
+/** 合并后的计费事件行：同产品同事件代码一行，条款类型按目录出现顺序，计费事实类型去重；feeEvents 为合并前的各条登记（挂接开通项按登记维护）。 */
+export interface CatalogEventRow {
+  key: string; productCode: string; feeEventCode: string; termTypes: string[]; billingFactTypes: string[]; feeEvents: CatalogFeeEvent[];
+}
 
 /** 产品节点：该产品下的可开通项与（筛选后的）合并事件行；totalEventCount 为不筛选时的合并行数。 */
 export interface CatalogProductNode {
@@ -45,8 +47,9 @@ export function mergeFeeEvents(feeEvents: readonly CatalogFeeEvent[]): CatalogEv
   const rows = new Map<string, CatalogEventRow>();
   for (const event of feeEvents) {
     const key = `${event.productCode}:${event.feeEventCode}`;
-    const row = rows.get(key) ?? { key, productCode: event.productCode, feeEventCode: event.feeEventCode, termTypes: [], billingFactTypes: [] };
+    const row = rows.get(key) ?? { key, productCode: event.productCode, feeEventCode: event.feeEventCode, termTypes: [], billingFactTypes: [], feeEvents: [] };
     rows.set(key, row);
+    row.feeEvents.push(event);
     if (!row.termTypes.includes(event.termType)) row.termTypes.push(event.termType);
     if (!row.billingFactTypes.includes(event.billingFactType)) row.billingFactTypes.push(event.billingFactType);
   }

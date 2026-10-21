@@ -75,6 +75,9 @@ public class ReplaceCommercialTermPricesRequest {
         @Size(min = 1)
         @Valid
         private final List<ComponentItem> components;
+
+        /** 来源模板价格 ID，可空 */
+        private final Long sourceTemplatePriceId;
     }
 
     /** 一个组件 */

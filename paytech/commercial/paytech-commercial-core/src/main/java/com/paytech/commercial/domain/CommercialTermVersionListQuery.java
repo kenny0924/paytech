@@ -3,6 +3,7 @@ package com.paytech.commercial.domain;
 import java.time.Instant;
 import java.util.List;
 
+import com.paytech.commercial.api.enums.CommercialTermOwnerType;
 import com.paytech.commercial.domain.enums.CommercialTermVersionStatus;
 import com.paytech.foundation.web.paging.PagingRequestBody;
 
@@ -31,6 +32,9 @@ public class CommercialTermVersionListQuery {
 
     /** 合同 ID，可空 */
     private final Long agreementId;
+
+    /** 方案 Owner 类型，可空不筛选 */
+    private final CommercialTermOwnerType ownerType;
 
     /** 版本状态集合，空集合不筛选 */
     @NotNull

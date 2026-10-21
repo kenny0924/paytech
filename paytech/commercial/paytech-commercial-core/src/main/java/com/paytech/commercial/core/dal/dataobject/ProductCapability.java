@@ -14,7 +14,7 @@ import lombok.ToString;
 
 /**
  * t_product_capability：L1 可开通项目录。
- * <li>随产品发版维护，不接入 BCR；capability_code 全局唯一稳定。</li>
+ * <li>运营维护，写入以 changeVersion 做 CAS，BCR 聚合根 PRODUCT_CATALOG；capability_code 与 capabilityKind 创建后不可修改。</li>
  */
 @Getter
 @Setter
@@ -46,12 +46,12 @@ public class ProductCapability {
     private String paymentMethodCode;
 
     /**
-     * 把开通项细分到画像维度的单一条件维度
-     * <li>与 dimensionValue 成组为空或非空。</li>
+     * 已废弃的细分维度
+     * <li>恒为 NULL；细分改为合同开通项接受条件，列保留。</li>
      */
     private PricingDimension dimensionCode;
 
-    /** 细分维度的单个规范化值，如 AMEX */
+    /** 已废弃的细分维度值，恒为 NULL */
     private String dimensionValue;
 
     /**
@@ -59,6 +59,9 @@ public class ProductCapability {
      * <li>合同引用时须为 ACTIVE。</li>
      */
     private ProductStatus status;
+
+    /** 目录行乐观锁版本，初始 1，每次写入加一 */
+    private Long changeVersion;
 
     /** 记录创建的 UTC 微秒时间 */
     private Instant createTime;

@@ -1,5 +1,6 @@
 package com.paytech.commercial.domain;
 
+import com.paytech.commercial.api.enums.CapabilityKind;
 import com.paytech.commercial.api.enums.ProductCode;
 import com.paytech.commercial.core.dal.dataobject.ProductFeeEvent;
 
@@ -23,6 +24,15 @@ public class ProductFeeEventView {
     /** 计费事实类型 */
     private final String billingFactType;
 
+    /** 挂接的开通项种类，可空 */
+    private final CapabilityKind capabilityKind;
+
+    /** 挂接的功能开通项代码，可空 */
+    private final String capabilityCode;
+
+    /** 目录行版本 */
+    private final long changeVersion;
+
     /**
      * 由目录行构造
      *
@@ -34,5 +44,8 @@ public class ProductFeeEventView {
         this.feeEventCode = feeEvent.getFeeEventCode();
         this.termType = feeEvent.getTermType();
         this.billingFactType = feeEvent.getBillingFactType();
+        this.capabilityKind = feeEvent.getCapabilityKind();
+        this.capabilityCode = feeEvent.getCapabilityCode();
+        this.changeVersion = feeEvent.getChangeVersion();
     }
 }

@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import com.paytech.commercial.api.enums.CommercialTermOwnerType;
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.operations.console.bff.service.processor.CommercialAgreementOverviewProcessor;
 import com.paytech.operations.console.bff.service.processor.CommercialTermWorkspaceProcessor;
@@ -32,6 +33,7 @@ class CommercialAggregationAutoTest extends CommercialBrowserAutoTestBase {
     private static final String VERSION_ID = "7319000000000000601";
     private static final String DETAIL_ROUTE = "operations-commercial-agreement-detail";
     private static final String WORKSPACE_ROUTE = "operations-commercial-term-version-detail";
+    private static final String TEMPLATE_PLAN_ID = "7319000000000000551";
 
     /** ACTIVE 的 CLIENT 合同：合同详情原样返回，费率卡只保留本合同的版本概要（丢弃价格块与其他合同）。 */
     @Test
@@ -111,6 +113,41 @@ class CommercialAggregationAutoTest extends CommercialBrowserAutoTestBase {
             () -> assertEquals(4, commercial.requests().size()));
     }
 
+    /** 模板版本编辑页：不读取合同，按模板方案列表取得模板 OE，只读取该 OE 的价格；agreement 为 null，template 为模板方案。 */
+    @Test
+    void test_normalFlow_templateWorkspaceReadsTemplateEntityOnly() throws Exception {
+        commercial.reply("GET", "/commercial-terms/v1/versions/" + VERSION_ID, 200, JSON.writeValueAsString(templateVersion()));
+        commercial.reply("GET", "/commercial-terms/v1/templates?termType=CLIENT_PRICING", 200, JSON.writeValueAsString(templates()));
+        commercial.reply("GET", "/commercial-term-versions/v1/" + VERSION_ID + "/prices?entityNo=AE001&termType=CLIENT_PRICING", 200,
+            JSON.writeValueAsString(prices("AE001", "AED", "USD").put("termType", "CLIENT_PRICING")));
+
+        var response = send("GET", "/commercial-admin/v1/commercial-terms/versions/" + VERSION_ID, WORKSPACE_ROUTE, null);
+
+        assertEquals(200, response.statusCode(), response.body());
+        var body = JSON.readTree(response.body());
+        assertAll(() -> assertEquals(templateVersion(), body.path("version")),
+            () -> assertTrue(body.path("agreement").isNull()),
+            () -> assertEquals(TEMPLATE_PLAN_ID, body.path("template").path("planId").asString()),
+            () -> assertEquals("AE001", body.path("template").path("entityNo").asString()),
+            () -> assertEquals(2, body.path("prices").size()),
+            () -> assertEquals(List.of("/commercial-terms/v1/versions/" + VERSION_ID, "/commercial-terms/v1/templates",
+                "/commercial-term-versions/v1/" + VERSION_ID + "/prices"),
+                commercial.requests().stream().map(request -> request.path()).toList()));
+    }
+
+    /** 模板版本的方案不在模板列表中：Owner 回执自相矛盾，按上游无效响应 502，不读取价格。 */
+    @Test
+    void test_edgeCase_templateWorkspaceWithoutTemplatePlan() throws Exception {
+        commercial.reply("GET", "/commercial-terms/v1/versions/" + VERSION_ID, 200,
+            JSON.writeValueAsString(templateVersion().put("planId", "7319000000000000599")));
+        commercial.reply("GET", "/commercial-terms/v1/templates?termType=CLIENT_PRICING", 200, JSON.writeValueAsString(templates()));
+
+        var response = send("GET", "/commercial-admin/v1/commercial-terms/versions/" + VERSION_ID, WORKSPACE_ROUTE, null);
+
+        assertEquals(502, response.statusCode(), response.body());
+        assertEquals(2, commercial.requests().size());
+    }
+
     /** 任一 OE 的价格读取失败整页失败，不返回缺 OE 的矩阵。 */
     @Test
     void test_businessRuleViolation_termWorkspaceFailsWhenAnyEntityFails() throws Exception {
@@ -150,7 +187,8 @@ class CommercialAggregationAutoTest extends CommercialBrowserAutoTestBase {
         var capability = node.putArray("capabilities").addObject().put("agreementCapabilityId", "7319000000000000301")
             .put("entityNo", "AE001").put("capabilityCode", "CARD_VISA").put("status", "ENABLED")
             .put("effectiveFrom", "2026-10-01T00:00:00Z").putNull("effectiveTo").putNull("rollingReserveRate").putNull("rollingReserveDays");
-        capability.putArray("limits").addObject().put("limitCode", "CURRENCY").put("limitValue", "USD");
+        capability.putArray("conditions").addObject().put("dimensionCode", "CURRENCY").putArray("values").add("USD");
+        capability.put("require3ds", false);
         return node;
     }
 
@@ -185,11 +223,38 @@ class CommercialAggregationAutoTest extends CommercialBrowserAutoTestBase {
     }
 
     private static ObjectNode version() {
-        return JSON.createObjectNode().put("versionId", VERSION_ID).put("planId", "7319000000000000502")
+        var version = JSON.createObjectNode().put("versionId", VERSION_ID).put("planId", "7319000000000000502")
             .put("termType", "PARTNER_SHARE").put("agreementId", PARTNER_AGREEMENT_ID).put("versionNo", "1")
             .put("status", "DRAFT").put("effectiveFrom", "2026-10-19T08:00:00Z").putNull("effectiveTo")
             .put("roundingMode", "HALF_UP").put("pricingModel", "BLENDED").put("feeTaxTreatment", "EXCLUSIVE")
-            .put("changeVersion", "3");
+            .put("changeVersion", "3").put("ownerType", CommercialTermOwnerType.LOCAL_PARTNER.getCode())
+            .putNull("sourceTemplateVersionId").put("signatureExempt", false).put("belowStandardCount", 0)
+            .putNull("templateUpdate").putNull("acceptance");
+        version.putArray("relevanceWarnings");
+        return version;
+    }
+
+    /** 标准价目模板版本：没有合同，Owner 类型为 PLATFORM_TEMPLATE。 */
+    private static ObjectNode templateVersion() {
+        var version = version().put("planId", TEMPLATE_PLAN_ID).put("termType", "CLIENT_PRICING")
+            .put("ownerType", CommercialTermOwnerType.PLATFORM_TEMPLATE.getCode());
+        version.putNull("agreementId");
+        return version;
+    }
+
+    /** 模板方案列表：另一套模板与本模板（AE001）。 */
+    private static ObjectNode templates() {
+        var body = JSON.createObjectNode();
+        var templates = body.putArray("templates");
+        for (String[] plan : new String[][] {{"7319000000000000550", "SA001", "标准价 · SA001"},
+            {TEMPLATE_PLAN_ID, "AE001", "标准价 · AE001"}}) {
+            templates.addObject().put("planId", plan[0]).put("planCode", "TPL-" + plan[1]).put("templateName", plan[2])
+                .put("termType", "CLIENT_PRICING").put("entityNo", plan[1]).put("status", "ACTIVE").put("changeVersion", "3")
+                .putNull("activeVersionId").putNull("activeVersionNo").put("latestVersionId", VERSION_ID)
+                .put("latestVersionNo", "1").put("latestVersionStatus", "DRAFT").put("createTime", "2026-10-20T00:00:00Z")
+                .put("updateTime", "2026-10-20T00:00:00Z");
+        }
+        return body;
     }
 
     private static ObjectNode prices(String entityNo, String... currencies) {

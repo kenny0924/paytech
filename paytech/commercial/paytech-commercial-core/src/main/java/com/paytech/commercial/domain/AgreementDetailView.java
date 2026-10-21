@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 
 import com.paytech.commercial.api.enums.AgreementCapabilityStatus;
 import com.paytech.commercial.api.enums.BusinessMode;
-import com.paytech.commercial.api.enums.CapabilityLimitCode;
+import com.paytech.commercial.api.enums.PricingDimension;
 import com.paytech.commercial.api.enums.FundMode;
 import com.paytech.commercial.api.enums.PricingAuthority;
 import com.paytech.commercial.api.enums.ProductCode;
@@ -243,7 +243,10 @@ public class AgreementDetailView {
         /** 滚动保证金天数 */
         private final Integer rollingReserveDays;
 
-        /** 约束，按类别与值排序 */
+        /** 是否要求 3DS 认证 */
+        private final boolean require3ds;
+
+        /** 接受条件行，按维度与值排序 */
         private final List<Limit> limits;
 
         /** 由开通项与其约束构造。 */
@@ -256,6 +259,7 @@ public class AgreementDetailView {
             this.effectiveTo = capability.getEffectiveTo();
             this.rollingReserveRate = capability.getRollingReserveRate();
             this.rollingReserveDays = capability.getRollingReserveDays();
+            this.require3ds = Boolean.TRUE.equals(capability.getRequire3ds());
             this.limits = limits.stream()
                 .sorted(Comparator.comparing((AgreementCapabilityLimit limit) -> limit.getLimitCode().getCode())
                     .thenComparing(AgreementCapabilityLimit::getLimitValue))
@@ -263,17 +267,17 @@ public class AgreementDetailView {
         }
     }
 
-    /** 开通项约束的一个值。 */
+    /** 开通项接受条件的一个取值。 */
     @Getter
     public static class Limit {
-        /** 约束类别 */
-        private final CapabilityLimitCode limitCode;
+        /** 条件维度 */
+        private final PricingDimension limitCode;
 
-        /** 规范化值 */
+        /** 规范化取值 */
         private final String limitValue;
 
-        /** 构造约束。 */
-        Limit(CapabilityLimitCode limitCode, String limitValue) {
+        /** 构造条件取值。 */
+        Limit(PricingDimension limitCode, String limitValue) {
             this.limitCode = limitCode;
             this.limitValue = limitValue;
         }

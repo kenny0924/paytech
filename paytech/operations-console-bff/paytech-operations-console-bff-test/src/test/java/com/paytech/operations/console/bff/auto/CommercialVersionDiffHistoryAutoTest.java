@@ -13,6 +13,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 import com.paytech.commercial.api.enums.CalculationBase;
+import com.paytech.commercial.api.enums.CommercialTermOwnerType;
 import com.paytech.commercial.api.enums.FeeTaxTreatment;
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.operations.console.bff.domain.enums.BusinessChangeComparison;
@@ -26,7 +27,8 @@ import tools.jackson.databind.node.ObjectNode;
 
 /**
  * 第二切片 I2 的版本对比与变更历史：经真实 BFF 入口与真实 commercial 客户端执行，commercial 由 Loopback Simulator 返回配置的 DTO
- * <li>版本对比：按 OE + 币种 + 画像配对，新增 / 删除 / 修改（字段级，十进制按数值）/ 未变；不同方案 400；Owner 错误透传。</li>
+ * <li>版本对比：按 OE + 币种 + 画像配对，新增 / 删除 / 修改（字段级，十进制按数值）/ 未变；不同方案 400；Owner 错误透传；
+ * 标准价目模板版本只读取模板 OE。</li>
  * <li>变更历史：本页内比较、向后回溯、首版与超出回溯上限四种比较结果；参数错误与 Owner 错误透传。</li>
  *
  * @see CommercialTermVersionDiffProcessor
@@ -75,6 +77,36 @@ class CommercialVersionDiffHistoryAutoTest extends CommercialBrowserAutoTestBase
             () -> assertEquals("0.60", changed.path("differences").get(2).path("targetValue").asString()),
             () -> assertTrue(changed.path("differences").get(3).path("baseValue").isNull()),
             () -> assertEquals("FIXED · CAPTURE", changed.path("differences").get(4).path("baseValue").asString()),
+            () -> assertEquals(5, commercial.requests().size(), commercial.requests().toString()));
+    }
+
+    /** 标准价目模板两个版本对比：不读取合同，两版都只读取模板方案的 OE。 */
+    @Test
+    void test_normalFlow_templateVersionDiff() throws Exception {
+        for (String versionId : List.of(BASE_ID, TARGET_ID)) {
+            var template = version(versionId, PLAN_ID).put("ownerType", CommercialTermOwnerType.PLATFORM_TEMPLATE.getCode());
+            template.putNull("agreementId");
+            commercial.reply("GET", "/commercial-terms/v1/versions/" + versionId, 200, JSON.writeValueAsString(template));
+        }
+        var templates = JSON.createObjectNode();
+        templates.putArray("templates").addObject().put("planId", PLAN_ID).put("planCode", "TPL-AE001-STD")
+            .put("templateName", "标准价 · AE001").put("termType", "CLIENT_PRICING").put("entityNo", "AE001")
+            .put("status", "ACTIVE").put("changeVersion", "5").put("activeVersionId", BASE_ID).put("activeVersionNo", "1")
+            .put("latestVersionId", TARGET_ID).put("latestVersionNo", "2").put("latestVersionStatus", "DRAFT")
+            .put("createTime", "2026-10-20T00:00:00Z").put("updateTime", "2026-10-20T00:00:00Z");
+        commercial.reply("GET", "/commercial-terms/v1/templates?termType=CLIENT_PRICING", 200, JSON.writeValueAsString(templates));
+        commercial.reply("GET", "/commercial-term-versions/v1/" + BASE_ID + "/prices?entityNo=AE001&termType=CLIENT_PRICING", 200,
+            JSON.writeValueAsString(prices(BASE_ID, basePrices())));
+        commercial.reply("GET", "/commercial-term-versions/v1/" + TARGET_ID + "/prices?entityNo=AE001&termType=CLIENT_PRICING", 200,
+            JSON.writeValueAsString(prices(TARGET_ID, targetPrices())));
+
+        var response = send("GET", diffPath(BASE_ID, TARGET_ID), DIFF_ROUTE, null);
+
+        assertEquals(200, response.statusCode(), response.body());
+        var body = JSON.readTree(response.body());
+        assertAll(() -> assertEquals(List.of("APPLE_PAY_STD"), profiles(body.path("added"))),
+            () -> assertEquals(1, body.path("changed").size()),
+            () -> assertTrue(commercial.requests().stream().noneMatch(call -> call.path().startsWith("/agreements/"))),
             () -> assertEquals(5, commercial.requests().size(), commercial.requests().toString()));
     }
 
@@ -318,7 +350,8 @@ class CommercialVersionDiffHistoryAutoTest extends CommercialBrowserAutoTestBase
         return JSON.createObjectNode().put("versionId", versionId).put("planId", planId).put("termType", "CLIENT_PRICING")
             .put("agreementId", AGREEMENT_ID).put("versionNo", BASE_ID.equals(versionId) ? "1" : "2").put("status", "ACTIVE")
             .put("effectiveFrom", "2026-10-01T00:00:00Z").putNull("effectiveTo").put("roundingMode", "HALF_UP")
-            .put("pricingModel", "BLENDED").put("feeTaxTreatment", FeeTaxTreatment.EXCLUSIVE.getCode()).put("changeVersion", "5");
+            .put("pricingModel", "BLENDED").put("feeTaxTreatment", FeeTaxTreatment.EXCLUSIVE.getCode()).put("changeVersion", "5")
+            .put("ownerType", CommercialTermOwnerType.CLIENT.getCode());
     }
 
     private static ObjectNode agreement() {

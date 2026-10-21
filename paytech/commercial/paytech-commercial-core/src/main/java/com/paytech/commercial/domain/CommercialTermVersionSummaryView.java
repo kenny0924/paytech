@@ -2,6 +2,7 @@ package com.paytech.commercial.domain;
 
 import java.time.Instant;
 
+import com.paytech.commercial.api.enums.CommercialTermOwnerType;
 import com.paytech.commercial.api.enums.FeeTaxTreatment;
 import com.paytech.commercial.api.enums.PricingModel;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermPlan;
@@ -68,6 +69,24 @@ public class CommercialTermVersionSummaryView {
     /** 价格条数 */
     private final int priceCount;
 
+    /** 方案 Owner 类型 */
+    private final CommercialTermOwnerType ownerType;
+
+    /** 模板显示名，仅模板 */
+    private final String templateName;
+
+    /** 来源模板版本，可空 */
+    private final Long sourceTemplateVersionId;
+
+    /** 存量版本免签 */
+    private final boolean signatureExempt;
+
+    /** 破标组件数 */
+    private final int belowStandardCount;
+
+    /** 是否已登记客户签署 */
+    private final boolean hasAcceptance;
+
     /** 方案 BCR 根当前版本 */
     private final long changeVersion;
 
@@ -82,9 +101,10 @@ public class CommercialTermVersionSummaryView {
      * @param changeVersion 方案 BCR 根当前版本
      * @param priceCount 价格条数
      * @param review 本轮审批事实
+     * @param insight 破标数与签署情况
      */
     public CommercialTermVersionSummaryView(CommercialTermPlan plan, CommercialTermVersion version, long changeVersion,
-        int priceCount, CommercialTermReviewFacts review) {
+        int priceCount, CommercialTermReviewFacts review, CommercialTermVersionInsight insight) {
         this.versionId = version.getTermVersionId();
         this.planId = plan.getTermPlanId();
         this.planCode = plan.getPlanCode();
@@ -104,5 +124,11 @@ public class CommercialTermVersionSummaryView {
         this.priceCount = priceCount;
         this.changeVersion = changeVersion;
         this.updateTime = version.getUpdateTime();
+        this.ownerType = plan.getOwnerType();
+        this.templateName = plan.getTemplateName();
+        this.sourceTemplateVersionId = version.getSourceTemplateVersionId();
+        this.signatureExempt = Boolean.TRUE.equals(version.getSignatureExempt());
+        this.belowStandardCount = insight.getBelowStandardCount();
+        this.hasAcceptance = insight.getAcceptance() != null;
     }
 }

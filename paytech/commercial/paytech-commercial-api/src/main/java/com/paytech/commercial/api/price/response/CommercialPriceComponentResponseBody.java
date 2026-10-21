@@ -53,4 +53,10 @@ public class CommercialPriceComponentResponseBody {
 
     /** 档位，按 bandNo 排序；非 TIERED 为空列表 */
     private List<CommercialPriceBandResponseBody> bands;
+
+    /**
+     * 与来源模板同组件的比较（破标）
+     * <li>只在固定版本价格全集中给出；价格没有来源模板时为 NO_BENCHMARK，命中结果为 null。</li>
+     */
+    private CommercialPriceBenchmarkResponseBody benchmark;
 }

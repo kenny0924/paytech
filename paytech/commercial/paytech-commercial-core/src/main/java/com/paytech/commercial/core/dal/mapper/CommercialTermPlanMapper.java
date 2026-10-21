@@ -47,4 +47,8 @@ public interface CommercialTermPlanMapper {
 
     /** 按一组主键读取方案，按 term_plan_id 升序。 */
     List<CommercialTermPlan> selectByIds(@Param("termPlanIds") Collection<Long> termPlanIds);
+
+    /** 按可选 OE、条款类型与状态读取标准价目模板方案，按 OE、方案编号升序。 */
+    List<CommercialTermPlan> selectTemplates(@Param("entityNo") String entityNo, @Param("termType") String termType,
+        @Param("status") CommercialTermPlanStatus status);
 }

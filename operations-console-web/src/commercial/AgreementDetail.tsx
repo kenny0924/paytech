@@ -1,23 +1,25 @@
 import { useMemo, useState } from 'react';
-import { Alert, Button, Empty, Table, Tabs, Tag } from 'antd';
+import { Alert, Button, Table, Tabs, Tag } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import type { ConsoleResource } from '../api/types';
 import { Loading, QueryFailure, useDetail } from '../tenantAccess/TenantAccessView';
 import {
-  acceptanceMethodLabels, agreementActions, agreementStatusLabels, agreementTypeLabels, capabilityStatusLabels, commercialButtons, commercialPaths,
+  acceptanceMethodLabels, agreementActions, agreementStatusLabels, agreementTypeLabels, commercialButtons, commercialPaths,
   commercialRoutes, decodeAgreementOverview, hasButton, localTime, partyRoleLabels, termTypeLabels, versionBasisLabel, versionStatusLabels,
 } from './commercial';
 import type { AgreementCapability, AgreementParty, AgreementTermVersion, TermPlan } from './commercial';
-import { AcceptanceModal, CapabilityModal, CreatePlanModal, ProductsModal, TerminateModal, TransitionModal } from './AgreementModals';
+import { AcceptanceModal, CapabilityDrawer, CreatePlanModal, ProductsModal, TerminateModal, TransitionModal } from './AgreementModals';
 import { CommercialNote, StatusTag } from './CommercialParts';
 import { CreateVersionModal } from './TermModals';
 import { consoleRoutes } from './commercialConsole';
+import { ProductCapabilitySections } from './ProductCapabilitySections';
+import { useCatalogCapabilities, useCatalogDimensions, useCatalogProducts } from './useCatalog';
 
 interface Props { agreementId: string; resources: ConsoleResource[]; onAuthorizationChanged: () => void }
 type Dialog =
   | { kind: 'submit' | 'activate' | 'terminate' | 'products' | 'plan' }
   | { kind: 'accept'; party: AgreementParty }
-  | { kind: 'capability'; capability?: AgreementCapability }
+  | { kind: 'capability'; capability?: AgreementCapability; productCode?: string }
   | { kind: 'version'; plan: TermPlan };
 
 /** 合同详情：主档、参与方与签署、订阅产品、开通项、当前与已排期条款版本；按钮按合同状态与按钮资源显示。 */
@@ -26,6 +28,9 @@ export function AgreementDetail({ agreementId, resources, onAuthorizationChanged
   const decode = useMemo(() => decodeAgreementOverview(agreementId), [agreementId]);
   const detail = useDetail(commercialPaths.agreement(agreementId), decode);
   const [dialog, setDialog] = useState<Dialog | null>(null);
+  const dimensions = useCatalogDimensions(onAuthorizationChanged);
+  const products = useCatalogProducts(onAuthorizationChanged);
+  const catalog = useCatalogCapabilities(onAuthorizationChanged);
   if (detail.loading && !detail.data) return <Loading />;
   if (detail.failure || !detail.data) return <QueryFailure failure={detail.failure} retry={detail.refresh} />;
   const { agreement, termVersions, termVersionsStatus } = detail.data;
@@ -79,28 +84,15 @@ export function AgreementDetail({ agreementId, resources, onAuthorizationChanged
             { title: 'SHA-256', render: (_, row) => <span className="mono">{row.contentHash.slice(0, 16)}…</span> },
           ]} />
       </> },
-      { key: 'products', label: `订阅产品（${agreement.productCodes.length}）`, children: <>
-        <div className="commercial-section-head"><div className="commercial-limits">
-          {agreement.productCodes.length ? agreement.productCodes.map(code => <Tag key={code}>{code}</Tag>) : <span>尚未订阅可选产品</span>}
-        </div><span className="commercial-spacer" />
+      { key: 'products', label: `产品与开通（${agreement.capabilities.length}）`, children: <>
+        <div className="commercial-section-head">
+          <span className="commercial-cell-meta">订阅 {agreement.productCodes.length} 个产品；开通项按归属产品分组</span><span className="commercial-spacer" />
+          {actions.capabilities && agreement.productCodes.length > 0 && <Button onClick={() => setDialog({ kind: 'capability' })}>新增开通项</Button>}
           {actions.products && <Button onClick={() => setDialog({ kind: 'products' })}>修改订阅</Button>}</div>
-        <CommercialNote>基座产品（税票、平台）默认包含，不在此维护；产品须启用且业务模式匹配。</CommercialNote>
-      </> },
-      { key: 'capabilities', label: `开通项（${agreement.capabilities.length}）`, children: <>
-        <div className="commercial-section-head"><span className="commercial-spacer" />
-          {actions.capabilities && <Button type="primary" onClick={() => setDialog({ kind: 'capability' })}>新增开通项</Button>}</div>
-        <Table<AgreementCapability> rowKey="agreementCapabilityId" size="middle" pagination={false} dataSource={agreement.capabilities} scroll={{ x: 980 }}
-          locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="还没有开通项" /> }} columns={[
-            { title: 'OE', dataIndex: 'entityNo', width: 90 },
-            { title: '可开通项', dataIndex: 'capabilityCode', width: 170 },
-            { title: '状态', width: 100, render: (_, row) => <StatusTag status={row.status} labels={capabilityStatusLabels} /> },
-            { title: '约束', render: (_, row) => <div className="commercial-limits">{row.limits.map(limit =>
-              <Tag key={`${limit.limitCode}-${limit.limitValue}`}>{limit.limitCode}={limit.limitValue}</Tag>)}</div> },
-            { title: '保证金', width: 130, render: (_, row) => row.rollingReserveRate ? `${row.rollingReserveRate} / ${row.rollingReserveDays} 天` : '—' },
-            { title: '生效', width: 220, render: (_, row) => `${localTime(row.effectiveFrom)} ～ ${row.effectiveTo ? localTime(row.effectiveTo) : '未定'}` },
-            { title: '操作', width: 90, render: (_, row) => actions.capabilities
-              ? <Button size="small" onClick={() => setDialog({ kind: 'capability', capability: row })}>编辑</Button> : null },
-          ]} />
+        <ProductCapabilitySections agreement={agreement} products={products.items} catalog={catalog.items} definitions={dimensions.items}
+          canAdd={actions.capabilities} canEdit={actions.capabilities} canSubscribe={actions.products}
+          onAdd={productCode => setDialog({ kind: 'capability', productCode })} onEdit={capability => setDialog({ kind: 'capability', capability })}
+          onSubscribe={() => setDialog({ kind: 'products' })} />
       </> },
       { key: 'terms', label: '条款版本', children: <>
         <div className="commercial-section-head"><span className="commercial-spacer" />
@@ -124,11 +116,12 @@ export function AgreementDetail({ agreementId, resources, onAuthorizationChanged
     {dialog?.kind === 'terminate' && <TerminateModal agreement={agreement} onDone={done} {...base} />}
     {dialog?.kind === 'products' && <ProductsModal agreement={agreement} onDone={done} {...base} />}
     {dialog?.kind === 'accept' && <AcceptanceModal agreement={agreement} party={dialog.party} onDone={done} {...base} />}
-    {dialog?.kind === 'capability' && <CapabilityModal agreement={agreement} capability={dialog.capability} onDone={done} {...base} />}
+    {dialog?.kind === 'capability' && <CapabilityDrawer key={dialog.capability?.agreementCapabilityId ?? `new-${dialog.productCode ?? 'all'}`}
+      agreement={agreement} capability={dialog.capability} productCode={dialog.productCode} onEdit={capability => setDialog({ kind: 'capability', capability })} onDone={done} {...base} />}
     {dialog?.kind === 'plan' && <CreatePlanModal agreement={agreement} onClose={close} onAuthorizationChanged={onAuthorizationChanged}
       onCreated={plan => setDialog({ kind: 'version', plan })} />}
     {dialog?.kind === 'version' && <CreateVersionModal planId={dialog.plan.planId} termType={dialog.plan.termType} expectedChangeVersion={dialog.plan.changeVersion}
-      agreementId={agreement.agreementId} onClose={close} onAuthorizationChanged={onAuthorizationChanged}
+      agreementId={agreement.agreementId} entityNos={entities} onClose={close} onAuthorizationChanged={onAuthorizationChanged}
       onCreated={version => void navigate(commercialRoutes.version(version.versionId))} />}
   </div>;
 }

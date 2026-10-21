@@ -72,17 +72,18 @@ public class AgreementCapabilityRepositoryImpl implements AgreementCapabilityRep
     /** 以 update_time 为条件改写，成功后同步原对象。 */
     @Override
     public void updateTerms(AgreementCapability capability, Instant effectiveFrom, Instant effectiveTo,
-        BigDecimal rollingReserveRate, Integer rollingReserveDays, Instant now) {
+        BigDecimal rollingReserveRate, Integer rollingReserveDays, Boolean require3ds, Instant now) {
         Instant from = micros(effectiveFrom);
         Instant to = micros(effectiveTo);
         Instant time = micros(now);
-        if (mapper.updateTerms(capability, from, to, rollingReserveRate, rollingReserveDays, time) != 1) {
+        if (mapper.updateTerms(capability, from, to, rollingReserveRate, rollingReserveDays, require3ds, time) != 1) {
             throw new ConcurrentRequestException("开通项已变化: " + describe(capability));
         }
         capability.setEffectiveFrom(from);
         capability.setEffectiveTo(to);
         capability.setRollingReserveRate(rollingReserveRate);
         capability.setRollingReserveDays(rollingReserveDays);
+        capability.setRequire3ds(require3ds);
         capability.setUpdateTime(time);
     }
 

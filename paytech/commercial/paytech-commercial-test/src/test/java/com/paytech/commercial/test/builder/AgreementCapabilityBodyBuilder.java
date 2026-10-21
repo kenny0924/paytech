@@ -4,26 +4,27 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.paytech.commercial.api.agreement.request.AddAgreementCapabilityRequestBody;
-import com.paytech.commercial.api.agreement.request.CapabilityLimitEntry;
+import com.paytech.commercial.api.agreement.request.CapabilityConditionEntry;
 import com.paytech.commercial.api.agreement.request.UpdateAgreementCapabilityRequestBody;
 import com.paytech.commercial.api.constant.CommercialCodes;
 import com.paytech.commercial.api.enums.AgreementCapabilityStatus;
-import com.paytech.commercial.api.enums.CapabilityLimitCode;
+import com.paytech.commercial.api.enums.PricingDimension;
 
 /**
- * 开通项新增 / 修改请求体 Builder：默认 AE993 上的 CARD_VISA，2026-09-01 起，USD 与 AED 两个币种约束、无保证金
+ * 开通项新增 / 修改请求体 Builder：默认 AE993 上的 CARD，2026-09-01 起，CURRENCY=USD,AED 接受条件、不要求 3DS、无保证金
  * <li>不访问数据库；build() 不修复负例。</li>
  */
 public final class AgreementCapabilityBodyBuilder {
     private String entityNo = AgreementBuilder.ENTITY_NO;
-    private String capabilityCode = CommercialCodes.Capability.CARD_VISA;
+    private String capabilityCode = CommercialCodes.Capability.CARD;
     private String status = AgreementCapabilityStatus.ENABLED.getCode();
     private String effectiveFrom = "2026-09-01T00:00:00Z";
     private String effectiveTo;
     private String rollingReserveRate;
     private Integer rollingReserveDays;
-    private final List<CapabilityLimitEntry> limits = new ArrayList<>(List.of(limit(CapabilityLimitCode.CURRENCY, "USD"),
-        limit(CapabilityLimitCode.CURRENCY, "AED")));
+    private final List<CapabilityConditionEntry> conditions = new ArrayList<>(List.of(condition(PricingDimension.CURRENCY,
+        "USD", "AED")));
+    private boolean require3ds;
 
     private AgreementCapabilityBodyBuilder() {
     }
@@ -33,11 +34,11 @@ public final class AgreementCapabilityBodyBuilder {
         return new AgreementCapabilityBodyBuilder();
     }
 
-    /** 一条约束。 */
-    public static CapabilityLimitEntry limit(CapabilityLimitCode code, String value) {
-        CapabilityLimitEntry entry = new CapabilityLimitEntry();
-        entry.setLimitCode(code.getCode());
-        entry.setLimitValue(value);
+    /** 一个维度的接受条件。 */
+    public static CapabilityConditionEntry condition(PricingDimension dimension, String... values) {
+        CapabilityConditionEntry entry = new CapabilityConditionEntry();
+        entry.setDimensionCode(dimension.getCode());
+        entry.setValues(List.of(values));
         return entry;
     }
 
@@ -72,10 +73,16 @@ public final class AgreementCapabilityBodyBuilder {
         return this;
     }
 
-    /** 整体替换约束行。 */
-    public AgreementCapabilityBodyBuilder limits(CapabilityLimitEntry... values) {
-        limits.clear();
-        limits.addAll(List.of(values));
+    /** 整体替换接受条件。 */
+    public AgreementCapabilityBodyBuilder conditions(CapabilityConditionEntry... values) {
+        conditions.clear();
+        conditions.addAll(List.of(values));
+        return this;
+    }
+
+    /** 设置是否要求 3DS。 */
+    public AgreementCapabilityBodyBuilder require3ds(boolean value) {
+        require3ds = value;
         return this;
     }
 
@@ -89,7 +96,8 @@ public final class AgreementCapabilityBodyBuilder {
         body.setEffectiveTo(effectiveTo);
         body.setRollingReserveRate(rollingReserveRate);
         body.setRollingReserveDays(rollingReserveDays);
-        body.setLimits(new ArrayList<>(limits));
+        body.setConditions(new ArrayList<>(conditions));
+        body.setRequire3ds(require3ds);
         return body;
     }
 
@@ -102,7 +110,8 @@ public final class AgreementCapabilityBodyBuilder {
         body.setEffectiveTo(effectiveTo);
         body.setRollingReserveRate(rollingReserveRate);
         body.setRollingReserveDays(rollingReserveDays);
-        body.setLimits(new ArrayList<>(limits));
+        body.setConditions(new ArrayList<>(conditions));
+        body.setRequire3ds(require3ds);
         return body;
     }
 }

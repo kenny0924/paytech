@@ -13,6 +13,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.test.web.servlet.client.EntityExchangeResult;
 
+import com.paytech.commercial.test.builder.AgreementPartyBuilder;
+import com.paytech.commercial.domain.enums.AgreementPartyAcceptanceMethod;
+import com.paytech.commercial.api.term.request.RecordTermVersionAcceptanceRequestBody;
 import com.paytech.commercial.api.constant.CommercialCodes;
 import com.paytech.commercial.api.enums.BandBasis;
 import com.paytech.commercial.api.enums.CalculationBase;
@@ -60,8 +63,9 @@ import tools.jackson.databind.json.JsonMapper;
 
 /**
  * 商业条款写入、价格命中与费率卡入口测试的公共部分：HTTP 路径、请求模板、标准前置数据与经正式 API 推进版本的步骤
- * <li>标准前置数据：种子产品目录、ACTIVE CLIENT 合同（AE993）、三个 ACTIVE 卡画像（通用、VISA、VISA + CREDIT）与 CARD_VISA 开通项
- * （USD）。不含方案与版本，它们由被测 API 创建。</li>
+ * <li>标准前置数据：种子产品目录、ACTIVE CLIENT 合同（AE993，含 CLIENT 角色签署 Party）、三个 ACTIVE 卡画像（通用、VISA、VISA + CREDIT）
+ * 与 CARD 开通项（CURRENCY=USD）。不含方案与版本，它们由被测 API 创建。</li>
+ * <li>合同方案版本经 APPROVED → 登记客户签署（CLIENT_SIGNED）后才能排期。</li>
  */
 public abstract class AbstractCommercialTermApiTest extends CommercialMockTestBase {
     /** 条款写入路径前缀。 */
@@ -112,17 +116,25 @@ public abstract class AbstractCommercialTermApiTest extends CommercialMockTestBa
     protected AgreementSubscriptionMocker subscriptions;
 
     /**
-     * 标准前置数据：目录、ACTIVE 合同、三个 ACTIVE 卡画像与 CARD_VISA（USD）开通项。
+     * 标准前置数据：目录、ACTIVE 合同（含 CLIENT 签署 Party）、三个 ACTIVE 卡画像与 CARD（USD）开通项。
      *
      * @return 已插入的合同
      */
     protected Agreement mockBaseline() {
         catalog.mockSeedCatalog();
-        Agreement agreement = graph.mockAgreement(AgreementBuilder.template().status(AgreementStatus.ACTIVE)).agreement();
+        Agreement agreement = graph.mockAgreement(AgreementBuilder.template().status(AgreementStatus.ACTIVE))
+            .party(AgreementPartyBuilder.template()).agreement();
         mockCardProfiles(PricingProfileStatus.ACTIVE);
         subscriptions.mockCapability(AgreementCapabilityBuilder.template().agreementId(AgreementBuilder.AGREEMENT_ID)
             .entityNo(ENTITY_NO)).currencies("USD");
         return agreement;
+    }
+
+    /** AE991 下 ENABLED 的功能开通项 TOKEN_STORAGE（挂接存卡计费事件 TOKEN_STORED）。 */
+    protected void mockTokenStorage() {
+        subscriptions.mockCapability(AgreementCapabilityBuilder.template()
+            .agreementCapabilityId(AgreementCapabilityBuilder.AGREEMENT_CAPABILITY_ID + 1).agreementId(AgreementBuilder.AGREEMENT_ID)
+            .entityNo(ENTITY_NO).capabilityCode(CommercialCodes.Capability.TOKEN_STORAGE));
     }
 
     /** 三个卡画像：通用、VISA、VISA + CREDIT。 */
@@ -207,6 +219,14 @@ public abstract class AbstractCommercialTermApiTest extends CommercialMockTestBa
     protected static CommercialTermComponentRequestBody percentage(String code, String rate) {
         CommercialTermComponentRequestBody body = component(code, CommercialTermComponentComponentType.PERCENTAGE);
         body.setRate(rate);
+        return body;
+    }
+
+    /** 存卡费组件：TOKEN_STORED 触发（挂接功能开通项 TOKEN_STORAGE），固定 0.10。 */
+    protected static CommercialTermComponentRequestBody tokenFee(String currency) {
+        CommercialTermComponentRequestBody body = fixed("TOKEN_FEE", "0.10", currency);
+        body.setTriggerCode(CommercialCodes.FeeEvent.TOKEN_STORED);
+        body.setRefundBehavior(RefundBehavior.KEEP.getCode());
         return body;
     }
 
@@ -309,10 +329,38 @@ public abstract class AbstractCommercialTermApiTest extends CommercialMockTestBa
         return command(command(version, "submit", MAKER), "approve", CHECKER);
     }
 
-    /** 方案、版本、价格、提交、批准、排期（NOW）、激活，返回 ACTIVE 版本。 */
+    /** 登记客户签署的原始结果：签署方为默认合同的 CLIENT 角色 Party，编号按版本 ID 生成。 */
+    protected EntityExchangeResult<byte[]> acceptanceResult(JsonNode version, long partyId, String reference) {
+        RecordTermVersionAcceptanceRequestBody body = new RecordTermVersionAcceptanceRequestBody();
+        body.setExpectedChangeVersion(text(version, "changeVersion"));
+        body.setPartyId(Long.toString(partyId));
+        body.setAcceptanceMethod(AgreementPartyAcceptanceMethod.E_SIGNATURE.getCode());
+        body.setAcceptedAt(NOW.minusSeconds(60).toString());
+        body.setAcceptanceReference(reference);
+        body.setFileId("930000000000961");
+        body.setContentHash("a".repeat(64));
+        return http.post(TERMS + "/versions/" + text(version, "versionId") + "/acceptance", headers(MAKER), body);
+    }
+
+    /** 登记客户签署：APPROVED → CLIENT_SIGNED，签署方为默认合同的 CLIENT 角色 Party。 */
+    protected JsonNode signed(JsonNode version) {
+        return signed(version, AgreementPartyBuilder.PARTY_ID);
+    }
+
+    /** 由指定 Party 登记客户签署。 */
+    protected JsonNode signed(JsonNode version, long partyId) {
+        return ok(200, acceptanceResult(version, partyId, "SIGN-" + text(version, "versionId")));
+    }
+
+    /** 提交、批准并登记客户签署：DRAFT → CLIENT_SIGNED。 */
+    protected JsonNode approvedAndSigned(JsonNode version) {
+        return signed(approved(version));
+    }
+
+    /** 方案、版本、价格、提交、批准、签署、排期（NOW）、激活，返回 ACTIVE 版本。 */
     protected JsonNode activeVersion(CommercialTermPriceRequestBody... prices) {
         JsonNode version = replacePrices(createVersion(createPlan()), prices);
-        JsonNode scheduled = ok(200, scheduleResult(approved(version), NOW));
+        JsonNode scheduled = ok(200, scheduleResult(signed(approved(version)), NOW));
         return command(scheduled, "activate", CHECKER);
     }
 

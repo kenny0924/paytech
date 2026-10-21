@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * 商务列表与产品目录的页面模型（第二切片 I2：合同列表、方案 / 版本列表、产品目录）
+ * 商务列表与产品目录的页面模型（第二切片 I2：合同列表、方案 / 版本列表、产品目录；开通与定价模型调整：可配维度、维度清单）
  * <li>列表行与 commercial 列表合同字段一一对应，由 CommercialContractConverter 严格转换：Owner 多出或缺少字段视为合同漂移（502）。</li>
  * <li>查询条件类只在 BFF 内部从 Controller 传到 Client Port，不作为 HTTP Body。</li>
  *
@@ -178,6 +178,12 @@ public final class CommercialListModels {
         /** Local Partner ID，Partner 条款非空 */
         private String localPartnerId;
 
+        /** 方案 Owner 类型：CLIENT、LOCAL_PARTNER、PLATFORM_TEMPLATE */
+        private String ownerType;
+
+        /** 模板显示名，仅 PLATFORM_TEMPLATE */
+        private String templateName;
+
         /** 方案状态：DRAFT、ACTIVE、RETIRED */
         private String status;
 
@@ -237,6 +243,12 @@ public final class CommercialListModels {
         /** 方案 Local Partner ID，可空 */
         private String localPartnerId;
 
+        /** 方案 Owner 类型：CLIENT、LOCAL_PARTNER、PLATFORM_TEMPLATE */
+        private String ownerType;
+
+        /** 模板显示名，仅 PLATFORM_TEMPLATE */
+        private String templateName;
+
         /** 方案内版本号 */
         private String versionNo;
 
@@ -269,6 +281,18 @@ public final class CommercialListModels {
 
         /** 版本内价格条数 */
         private Integer priceCount;
+
+        /** 基于模板生成时的来源模板版本 ID，没有为空 */
+        private String sourceTemplateVersionId;
+
+        /** 破标组件数 */
+        private Integer belowStandardCount;
+
+        /** 存量版本免签 */
+        private Boolean signatureExempt;
+
+        /** 是否已登记客户签署 */
+        private Boolean hasAcceptance;
 
         /** 方案 BCR 根当前版本：批准 / 驳回等写入的 expectedChangeVersion */
         private String changeVersion;
@@ -338,14 +362,31 @@ public final class CommercialListModels {
         /** 支付方式代码；非支付方式类为空 */
         private String paymentMethodCode;
 
-        /** 附加维度代码，可空 */
+        /** 已废弃，恒为 null（细分维度改为合同开通项接受条件） */
         private String dimensionCode;
 
-        /** 附加维度值，与 dimensionCode 同时出现 */
+        /** 已废弃，恒为 null */
         private String dimensionValue;
+
+        /** 可配维度，按维度代码排序 */
+        private List<CatalogCapabilityDimension> dimensions;
 
         /** 状态：DRAFT、ACTIVE、RETIRED */
         private String status;
+
+        /** 目录行版本，下一次写入的 expectedChangeVersion */
+        private Long changeVersion;
+    }
+
+    /** 可开通项的一个可配维度。 */
+    @Getter
+    @Setter
+    public static class CatalogCapabilityDimension {
+        /** 维度代码 */
+        private String dimensionCode;
+
+        /** 合同开通时是否必填 */
+        private Boolean required;
     }
 
     /** 计费事件（L2）列表。 */
@@ -374,5 +415,45 @@ public final class CommercialListModels {
 
         /** 计费事实类型 */
         private String billingFactType;
+
+        /** 挂接的开通项种类；为空表示无需开通的基础产品事件 */
+        private String capabilityKind;
+
+        /** 挂接的功能开通项代码；仅 FEATURE 非空 */
+        private String capabilityCode;
+
+        /** 目录行版本，下一次写入的 expectedChangeVersion */
+        private Long changeVersion;
+    }
+
+    /** 维度清单。 */
+    @Getter
+    @Setter
+    public static class CatalogDimensionListResponseBody {
+        /** 按登记顺序 */
+        private List<CatalogDimension> dimensions;
+    }
+
+    /** 一个维度的元数据（代码登记）。 */
+    @Getter
+    @Setter
+    public static class CatalogDimension {
+        /** 维度代码 */
+        private String dimensionCode;
+
+        /** 运营展示名 */
+        private String displayName;
+
+        /** 事实来源：ORDER、CARD_BIN、THREE_DS、TRANSACTION、PAYOUT、FX */
+        private String factSource;
+
+        /** 判定时点：CHECKOUT、CARD_ENTRY、AUTHORIZATION、AUTHENTICATION、PAYOUT_CREATION、FX_DEAL */
+        private String evaluationPoint;
+
+        /** 是否可用于开通接受条件 */
+        private Boolean acceptanceAllowed;
+
+        /** 是否可用于定价画像条件 */
+        private Boolean pricingAllowed;
     }
 }

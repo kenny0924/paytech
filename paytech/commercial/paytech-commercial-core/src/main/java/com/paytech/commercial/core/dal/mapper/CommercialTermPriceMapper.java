@@ -31,4 +31,10 @@ public interface CommercialTermPriceMapper {
 
     /** 一组版本下每条价格所属的版本 ID（每条价格一行），供列表统计价格条数。 */
     List<Long> selectVersionIdsOfPrices(@Param("termVersionIds") Collection<Long> termVersionIds);
+
+    /** 按一组主键读取价格，按 term_price_id 升序；termPriceIds 必须非空。 */
+    List<CommercialTermPrice> selectByIds(@Param("termPriceIds") Collection<Long> termPriceIds);
+
+    /** 读取一组版本的全部价格，按 term_price_id 升序；termVersionIds 必须非空。 */
+    List<CommercialTermPrice> selectByVersionIds(@Param("termVersionIds") Collection<Long> termVersionIds);
 }

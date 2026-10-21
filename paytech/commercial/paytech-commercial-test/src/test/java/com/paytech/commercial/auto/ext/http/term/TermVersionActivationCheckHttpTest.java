@@ -16,6 +16,7 @@ import com.paytech.commercial.domain.enums.AgreementStatus;
 import com.paytech.commercial.domain.enums.PricingProfileStatus;
 import com.paytech.commercial.test.base.term.AbstractCommercialTermApiTest;
 import com.paytech.commercial.test.builder.AgreementBuilder;
+import com.paytech.commercial.test.builder.AgreementPartyBuilder;
 import com.paytech.commercial.test.builder.AgreementCapabilityBuilder;
 import com.paytech.foundation.common.error.CommonErrorCode;
 
@@ -34,10 +35,10 @@ class TermVersionActivationCheckHttpTest extends AbstractCommercialTermApiTest {
     @Test
     void test_check1_agreementNotActive() {
         catalog.mockSeedCatalog();
-        graph.mockAgreement(AgreementBuilder.template().status(AgreementStatus.SIGNED));
+        graph.mockAgreement(AgreementBuilder.template().status(AgreementStatus.SIGNED)).party(AgreementPartyBuilder.template());
         mockCardProfiles(PricingProfileStatus.ACTIVE);
 
-        JsonNode approvedVersion = approved(replacePrices(createVersion(createPlan()),
+        JsonNode approvedVersion = approvedAndSigned(replacePrices(createVersion(createPlan()),
             price("USD", CARD, 1, percentage("MDR", "0.025"))));
 
         assertRejected(approvedVersion, NOW, "激活校验 1");
@@ -47,28 +48,28 @@ class TermVersionActivationCheckHttpTest extends AbstractCommercialTermApiTest {
     @Test
     void test_check2_profileNotActive() {
         catalog.mockSeedCatalog();
-        graph.mockAgreement(AgreementBuilder.template().status(AgreementStatus.ACTIVE));
+        graph.mockAgreement(AgreementBuilder.template().status(AgreementStatus.ACTIVE)).party(AgreementPartyBuilder.template());
         mockCardProfiles(PricingProfileStatus.DRAFT);
 
-        JsonNode approvedVersion = approved(replacePrices(createVersion(createPlan()),
+        JsonNode approvedVersion = approvedAndSigned(replacePrices(createVersion(createPlan()),
             price("USD", CARD, 1, percentage("MDR", "0.025"))));
 
         assertRejected(approvedVersion, NOW, "激活校验 2");
     }
 
-    /** 3：CARD_VISA 开通 USD 与 AED，只有 USD 价格，AED 覆盖缺口。 */
+    /** 3：CARD 开通 USD 与 AED，只有 USD 的 VISA 价格，AED 覆盖缺口（按币种字典序先报）。 */
     @Test
     void test_check3_coverageGap() {
         catalog.mockSeedCatalog();
-        graph.mockAgreement(AgreementBuilder.template().status(AgreementStatus.ACTIVE));
+        graph.mockAgreement(AgreementBuilder.template().status(AgreementStatus.ACTIVE)).party(AgreementPartyBuilder.template());
         mockCardProfiles(PricingProfileStatus.ACTIVE);
         subscriptions.mockCapability(AgreementCapabilityBuilder.template().agreementId(AgreementBuilder.AGREEMENT_ID)
             .entityNo(ENTITY_NO)).currencies("USD", "AED");
 
-        JsonNode approvedVersion = approved(replacePrices(createVersion(createPlan()),
+        JsonNode approvedVersion = approvedAndSigned(replacePrices(createVersion(createPlan()),
             price("USD", CARD_VISA, 1, percentage("MDR", "0.025"))));
 
-        assertRejected(approvedVersion, NOW, "激活校验 3（覆盖完整）：开通项没有命中的价格: AE993/CARD_VISA/AED");
+        assertRejected(approvedVersion, NOW, "激活校验 3（覆盖完整）：开通项没有命中的价格: AE993/CARD/AED");
     }
 
     /** 3：只有 VISA + CREDIT 价格时，未知资金类型的 VISA 交易无价可依，同样是覆盖缺口。 */
@@ -76,7 +77,7 @@ class TermVersionActivationCheckHttpTest extends AbstractCommercialTermApiTest {
     void test_check3_onlyNarrowProfile() {
         mockBaseline();
 
-        JsonNode approvedVersion = approved(replacePrices(createVersion(createPlan()),
+        JsonNode approvedVersion = approvedAndSigned(replacePrices(createVersion(createPlan()),
             price("USD", CARD_VISA_CREDIT, 1, percentage("MDR", "0.025"))));
 
         assertRejected(approvedVersion, NOW, "激活校验 3");
@@ -87,7 +88,7 @@ class TermVersionActivationCheckHttpTest extends AbstractCommercialTermApiTest {
     void test_check4_bandGap() {
         mockBaseline();
 
-        JsonNode approvedVersion = approved(replacePrices(createVersion(createPlan()), price("USD", CARD, 1,
+        JsonNode approvedVersion = approvedAndSigned(replacePrices(createVersion(createPlan()), price("USD", CARD, 1,
             tiered("TIER", "USD", BandBasis.TRANSACTION_AMOUNT, "WHOLE_BASE", band("0", "100", "0.03"),
                 band("200", null, "0.02")))));
 
@@ -99,7 +100,7 @@ class TermVersionActivationCheckHttpTest extends AbstractCommercialTermApiTest {
     void test_check4_sliceRestrictions() {
         mockBaseline();
         JsonNode plan = createPlan();
-        JsonNode periodVolume = approved(replacePrices(createVersion(plan), price("USD", CARD, 1,
+        JsonNode periodVolume = approvedAndSigned(replacePrices(createVersion(plan), price("USD", CARD, 1,
             tiered("TIER", "USD", BandBasis.PERIOD_VOLUME, "RETROACTIVE", band("0", null, "0.02")))));
         assertRejected(periodVolume, NOW, "本期阶梯基数只接受 TRANSACTION_AMOUNT");
 
@@ -108,7 +109,7 @@ class TermVersionActivationCheckHttpTest extends AbstractCommercialTermApiTest {
         icpp.setPricingModel(PricingModel.INTERCHANGE_PLUS_PLUS.getCode());
         icpp.setFeeTaxTreatment("EXCLUSIVE");
         JsonNode icppVersion = ok(201, http.post(TERMS + "/plans/" + text(plan, "planId") + "/versions", headers(MAKER), icpp));
-        JsonNode approvedIcpp = approved(replacePrices(icppVersion, price("USD", CARD, 1, percentage("MDR", "0.025"))));
+        JsonNode approvedIcpp = approvedAndSigned(replacePrices(icppVersion, price("USD", CARD, 1, percentage("MDR", "0.025"))));
 
         assertRejected(approvedIcpp, NOW, "本期定价模型只接受 BLENDED");
     }
@@ -118,7 +119,7 @@ class TermVersionActivationCheckHttpTest extends AbstractCommercialTermApiTest {
     void test_check4_componentCurrency() {
         mockBaseline();
 
-        JsonNode approvedVersion = approved(replacePrices(createVersion(createPlan()),
+        JsonNode approvedVersion = approvedAndSigned(replacePrices(createVersion(createPlan()),
             price("USD", CARD, 1, percentage("MDR", "0.025"), fixed("FEE", "1.10", "AED"))));
 
         assertRejected(approvedVersion, NOW, "组件币种与价格币种不一致");
@@ -132,7 +133,7 @@ class TermVersionActivationCheckHttpTest extends AbstractCommercialTermApiTest {
         JsonNode second = ok(201, createVersionResult(text(active, "planId"), text(active, "changeVersion"),
             text(active, "versionId")));
 
-        JsonNode approvedSecond = approved(second);
+        JsonNode approvedSecond = approvedAndSigned(second);
 
         // 生效起点等于第 1 版起点（不早于当前时间但与 ACTIVE 重叠）
         assertRejected(approvedSecond, NOW, "激活校验 5（区间不重叠）");
@@ -146,11 +147,11 @@ class TermVersionActivationCheckHttpTest extends AbstractCommercialTermApiTest {
         Instant secondFrom = NOW.plus(1, ChronoUnit.DAYS);
         JsonNode second = ok(201, createVersionResult(text(active, "planId"), text(active, "changeVersion"),
             text(active, "versionId")));
-        JsonNode scheduledSecond = ok(200, scheduleResult(approved(second), secondFrom));
+        JsonNode scheduledSecond = ok(200, scheduleResult(approvedAndSigned(second), secondFrom));
         JsonNode third = ok(201, createVersionResult(text(active, "planId"), text(scheduledSecond, "changeVersion"),
             text(active, "versionId")));
 
-        JsonNode approvedThird = approved(third);
+        JsonNode approvedThird = approvedAndSigned(third);
 
         var first = testMapper.termVersion(Long.parseLong(text(active, "versionId")));
         assertAll(() -> assertEquals("ACTIVE", first.get("status")),
@@ -162,7 +163,7 @@ class TermVersionActivationCheckHttpTest extends AbstractCommercialTermApiTest {
     @Test
     void test_check1_notYetEffective() {
         mockBaseline();
-        JsonNode approvedVersion = approved(replacePrices(createVersion(createPlan()),
+        JsonNode approvedVersion = approvedAndSigned(replacePrices(createVersion(createPlan()),
             price("USD", CARD, 1, percentage("MDR", "0.025"))));
         assertRejected(approvedVersion, NOW.minus(1, ChronoUnit.SECONDS), "不能早于当前时间");
 
@@ -174,10 +175,10 @@ class TermVersionActivationCheckHttpTest extends AbstractCommercialTermApiTest {
             testMapper.termVersion(Long.parseLong(text(scheduled, "versionId"))).get("status"));
     }
 
-    /** 排期失败 400，消息含校验编号，版本仍为 APPROVED。 */
+    /** 排期失败 400，消息含校验编号，版本仍为 CLIENT_SIGNED。 */
     void assertRejected(JsonNode approvedVersion, Instant effectiveFrom, String detail) {
         assertAll(() -> assertProblem(scheduleResult(approvedVersion, effectiveFrom), 400, BIZ, detail),
-            () -> assertEquals("APPROVED",
+            () -> assertEquals("CLIENT_SIGNED",
                 testMapper.termVersion(Long.parseLong(text(approvedVersion, "versionId"))).get("status")));
     }
 }

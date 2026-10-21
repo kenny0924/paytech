@@ -32,6 +32,17 @@ public class CommercialWriteResponseChecker extends AbstractHttpResponseChecker<
         return this;
     }
 
+    /** 201 且为 JSON。 */
+    public CommercialWriteResponseChecker assertCreated() {
+        assertEquals(201, status(), () -> "期望 201，实际 " + status() + " " + new String(result.getResponseBody()));
+        return this;
+    }
+
+    /** 404 NOT_FOUND。 */
+    public CommercialWriteResponseChecker assertNotFound() {
+        return assertProblem(404, CommonErrorCode.NOT_FOUND.getCode());
+    }
+
     /** 400 BUSINESS_CHECK_FAILED，detail 含给定片段。 */
     public CommercialWriteResponseChecker assertBusinessCheckFailed(String detailFragment) {
         assertProblem(400, CommonErrorCode.BUSINESS_CHECK_FAILED.getCode());

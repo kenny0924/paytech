@@ -11,19 +11,20 @@
         <result column="dimension_code" property="dimensionCode"/>
         <result column="dimension_value" property="dimensionValue"/>
         <result column="status" property="status"/>
+        <result column="change_version" property="changeVersion"/>
         <result column="create_time" property="createTime"/>
         <result column="update_time" property="updateTime"/>
     </resultMap>
 
     <sql id="columns">
         product_capability_id, product_code, capability_code, capability_name, capability_kind, payment_method_code,
-        dimension_code, dimension_value, status, create_time, update_time
+        dimension_code, dimension_value, status, change_version, create_time, update_time
     </sql>
 
     <insert id="insert">
         INSERT INTO t_product_capability (<include refid="columns"/>)
         VALUES (#{productCapabilityId}, #{productCode}, #{capabilityCode}, #{capabilityName}, #{capabilityKind},
-            #{paymentMethodCode}, #{dimensionCode}, #{dimensionValue}, #{status}, #{createTime}, #{updateTime})
+            #{paymentMethodCode}, #{dimensionCode}, #{dimensionValue}, #{status}, #{changeVersion}, #{createTime}, #{updateTime})
     </insert>
 
     <select id="selectById" resultMap="ProductCapability">
@@ -46,8 +47,16 @@
     </select>
 
     <update id="updateStatus">
-        UPDATE t_product_capability SET status = #{status}, update_time = #{now}
+        UPDATE t_product_capability SET status = #{status}, change_version = change_version + 1, update_time = #{now}
         WHERE product_capability_id = #{capability.productCapabilityId} AND status = #{capability.status}
+          AND change_version = #{capability.changeVersion}
+    </update>
+
+    <update id="updateDefinition">
+        UPDATE t_product_capability
+        SET capability_name = #{capabilityName}, product_code = #{productCode}, change_version = change_version + 1,
+            update_time = #{now}
+        WHERE product_capability_id = #{capability.productCapabilityId} AND change_version = #{capability.changeVersion}
     </update>
 
     <select id="selectFiltered" resultMap="ProductCapability">

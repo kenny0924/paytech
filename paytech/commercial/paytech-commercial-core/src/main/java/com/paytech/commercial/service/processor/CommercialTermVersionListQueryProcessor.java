@@ -7,6 +7,8 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
+import com.paytech.commercial.domainservice.service.CommercialTermInsightService;
+import com.paytech.commercial.domain.CommercialTermVersionInsight;
 import com.paytech.commercial.core.dal.dataobject.BusinessChangeRecord;
 import com.paytech.commercial.core.dal.dataobject.BusinessChangeVersion;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermPlan;
@@ -30,7 +32,7 @@ import lombok.AllArgsConstructor;
 /**
  * 商业条款版本列表与审批工作台（运营控制台第二切片 technique.md §2）：只读，不加锁、不开显式事务
  * <li>每行附带所属方案摘要、方案 BCR 根当前版本（批准 / 驳回 / 排期的 expectedChangeVersion）、价格条数，以及由版本审计快照推导的
- * 本轮 Maker / Checker / 提交时刻。各查询为相邻的一致性读。</li>
+ * 本轮 Maker / Checker / 提交时刻、破标数与客户签署情况。各查询为相邻的一致性读。</li>
  */
 @Component
 @AllArgsConstructor
@@ -41,6 +43,7 @@ public class CommercialTermVersionListQueryProcessor
     private final BusinessChangeRecordRepository businessChangeRecordRepository;
     private final BusinessChangeVersionRepository businessChangeVersionRepository;
     private final CommercialTermVersionRepository commercialTermVersionRepository;
+    private final CommercialTermInsightService commercialTermInsightService;
 
     /** 时间窗口两端都给出时终点必须晚于起点。 */
     @Override
@@ -63,10 +66,12 @@ public class CommercialTermVersionListQueryProcessor
             BusinessChangeRecordAggregateRootType.COMMERCIAL_TERM_PLAN, planIds);
         Map<Long, Integer> priceCounts = commercialTermPriceRepository.countByVersionIds(versionIds);
         Map<Long, CommercialTermReviewFacts> reviews = reviewFacts(versionIds);
+        Map<Long, CommercialTermVersionInsight> insights = commercialTermInsightService.summarize(versions);
         List<CommercialTermVersionSummaryView> items = versions.stream().map(version -> new CommercialTermVersionSummaryView(
             plans.get(version.getTermPlanId()), version, changeVersions.get(version.getTermPlanId()),
             priceCounts.getOrDefault(version.getTermVersionId(), 0),
-            reviews.getOrDefault(version.getTermVersionId(), CommercialTermReviewFacts.NONE))).toList();
+            reviews.getOrDefault(version.getTermVersionId(), CommercialTermReviewFacts.NONE),
+            insights.getOrDefault(version.getTermVersionId(), CommercialTermVersionInsight.NONE))).toList();
         return new PagingResponseBody<>(items, query.getPaging().page(), query.getPaging().size(), total);
     }
 

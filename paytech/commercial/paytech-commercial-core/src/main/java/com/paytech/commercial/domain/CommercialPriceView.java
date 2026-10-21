@@ -2,6 +2,7 @@ package com.paytech.commercial.domain;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 import com.paytech.commercial.core.dal.dataobject.CommercialTermComponent;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermComponentBand;
@@ -23,6 +24,8 @@ public class CommercialPriceView {
 
     private final List<CommercialTermComponentBand> bands;
 
+    private final Map<Long, PriceBenchmark> benchmarks;
+
     /**
      * 组合一条价格的完整内容。
      *
@@ -39,11 +42,37 @@ public class CommercialPriceView {
         this.candidate = candidate;
         this.components = components.stream().sorted(Comparator.comparing(CommercialTermComponent::getComponentNo)).toList();
         this.bands = bands.stream().sorted(Comparator.comparing(CommercialTermComponentBand::getBandNo)).toList();
+        this.benchmarks = null;
+    }
+
+    /**
+     * 同一价格附加组件与来源模板的比较（固定版本价格全集使用）。
+     *
+     * @param view 价格
+     * @param benchmarks 组件 ID → 比较结果
+     */
+    public CommercialPriceView(CommercialPriceView view, Map<Long, PriceBenchmark> benchmarks) {
+        this.plan = view.plan;
+        this.version = view.version;
+        this.candidate = view.candidate;
+        this.components = view.components;
+        this.bands = view.bands;
+        this.benchmarks = Map.copyOf(benchmarks);
+    }
+
+    /** 某组件与来源模板的比较；命中结果与按 ID 回读为 null。 */
+    public PriceBenchmark benchmarkOf(CommercialTermComponent component) {
+        return benchmarks == null ? null : benchmarks.getOrDefault(component.getTermComponentId(), PriceBenchmark.NONE);
     }
 
     /** 方案。 */
     public CommercialTermPlan plan() {
         return plan;
+    }
+
+    /** 方案是否 Client 条款结构（价格带结算四字段），与保存校验同一判断。 */
+    public boolean clientTerm() {
+        return CommercialTermVersionContext.clientTerm(plan);
     }
 
     /** 版本。 */

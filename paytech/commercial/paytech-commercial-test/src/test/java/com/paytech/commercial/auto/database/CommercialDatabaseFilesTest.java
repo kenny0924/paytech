@@ -50,7 +50,7 @@ class CommercialDatabaseFilesTest {
 
         Set<String> businessTables = new LinkedHashSet<>(ddl.keySet());
         businessTables.remove("t_consumed_event");
-        assertAll(() -> assertEquals(20, schema.size()), () -> assertEquals(schema.keySet(), businessTables),
+        assertAll(() -> assertEquals(22, schema.size()), () -> assertEquals(schema.keySet(), businessTables),
             () -> schema.forEach((table, definition) -> assertEquals(definition, ddl.get(table), table + " 与生成 Schema 不一致")),
             () -> assertEquals(ddl.keySet(), new LinkedHashSet<>(CommercialDataCleaner.TABLES)));
     }
@@ -65,9 +65,12 @@ class CommercialDatabaseFilesTest {
         }
         Map<String, List<Map<String, String>>> dml = inserts(read(root().resolve("docs/database/sql/commercial-initial-data.sql")));
 
-        assertAll(() -> assertEquals(List.of("t_product", "t_product_capability", "t_product_fee_event"), List.copyOf(dml.keySet())),
-            () -> assertEquals(7, dml.get("t_product").size()), () -> assertEquals(11, dml.get("t_product_capability").size()),
+        assertAll(() -> assertEquals(List.of("t_product", "t_product_capability", "t_product_fee_event",
+                "t_product_capability_dimension"), List.copyOf(dml.keySet())),
+            () -> assertEquals(7, dml.get("t_product").size()), () -> assertEquals(9, dml.get("t_product_capability").size()),
             () -> assertEquals(21, dml.get("t_product_fee_event").size()),
+            () -> assertEquals(20, dml.get("t_product_capability_dimension").size()),
+            () -> assertEquals(normalize(fixture.get("product_capability_dimension")), dml.get("t_product_capability_dimension")),
             () -> assertEquals(normalize(fixture.get("product")), dml.get("t_product")),
             () -> assertEquals(normalize(fixture.get("product_capability")), dml.get("t_product_capability")),
             () -> assertEquals(normalize(fixture.get("product_fee_event")), dml.get("t_product_fee_event")),

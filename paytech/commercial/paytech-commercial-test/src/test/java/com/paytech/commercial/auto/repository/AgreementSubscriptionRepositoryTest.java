@@ -15,7 +15,7 @@ import org.springframework.dao.DuplicateKeyException;
 
 import com.paytech.commercial.api.constant.CommercialCodes.Capability;
 import com.paytech.commercial.api.enums.AgreementCapabilityStatus;
-import com.paytech.commercial.api.enums.CapabilityLimitCode;
+import com.paytech.commercial.api.enums.PricingDimension;
 import com.paytech.commercial.api.enums.ProductCode;
 import com.paytech.commercial.core.dal.dataobject.AgreementCapability;
 import com.paytech.commercial.core.dal.dataobject.AgreementCapabilityLimit;
@@ -98,14 +98,14 @@ class AgreementSubscriptionRepositoryTest extends CommercialMockTestBase {
     void test_capabilityWithLimitsReadBack() {
         var mocker = subscriptionMocker.mockCapability(AgreementCapabilityBuilder.template()
             .rollingReserveRate(new BigDecimal("0.1000000000")).rollingReserveDays(90))
-            .currencies("USD", "AED").limit(CapabilityLimitCode.CONSUMER_COUNTRY, "AE");
+            .currencies("USD", "AED").limit(PricingDimension.CONSUMER_COUNTRY, "AE");
         subscriptionMocker.mockCapability(AgreementCapabilityBuilder.template()
-            .agreementCapabilityId(AgreementCapabilityBuilder.AGREEMENT_CAPABILITY_ID + 1).capabilityCode(Capability.CARD_AMEX))
+            .agreementCapabilityId(AgreementCapabilityBuilder.AGREEMENT_CAPABILITY_ID + 1).capabilityCode(Capability.APPLE_PAY))
             .currencies("USD");
         long capabilityId = mocker.capability().getAgreementCapabilityId();
 
         AgreementCapability read = capabilityRepository.findByUniqueKey(AGREEMENT_ID, AgreementCapabilityBuilder.ENTITY_NO,
-            Capability.CARD_VISA);
+            Capability.CARD);
         List<AgreementCapabilityLimit> limits = limitRepository.findByAgreementCapabilityId(capabilityId);
         assertAll(() -> assertEquals(capabilityId, read.getAgreementCapabilityId()),
             () -> assertEquals(AgreementCapabilityStatus.ENABLED, read.getStatus()),
@@ -116,15 +116,15 @@ class AgreementSubscriptionRepositoryTest extends CommercialMockTestBase {
             () -> assertEquals(2, capabilityRepository.findByAgreementId(AGREEMENT_ID).size()),
             () -> assertEquals(2, capabilityRepository.findByAgreementIds(List.of(AGREEMENT_ID)).size()),
             () -> assertEquals(List.of(), capabilityRepository.findByAgreementIds(List.of())),
-            () -> assertNull(capabilityRepository.findByUniqueKey(AGREEMENT_ID, "AE992", Capability.CARD_VISA)),
+            () -> assertNull(capabilityRepository.findByUniqueKey(AGREEMENT_ID, "AE992", Capability.CARD)),
             () -> assertEquals(List.of("USD", "AED", "AE"),
                 limits.stream().map(AgreementCapabilityLimit::getLimitValue).toList()),
-            () -> assertEquals(List.of(CapabilityLimitCode.CURRENCY, CapabilityLimitCode.CURRENCY,
-                CapabilityLimitCode.CONSUMER_COUNTRY), limits.stream().map(AgreementCapabilityLimit::getLimitCode).toList()),
+            () -> assertEquals(List.of(PricingDimension.CURRENCY, PricingDimension.CURRENCY,
+                PricingDimension.CONSUMER_COUNTRY), limits.stream().map(AgreementCapabilityLimit::getLimitCode).toList()),
             () -> assertEquals(4, limitRepository.findByAgreementCapabilityIds(
                 List.of(capabilityId, capabilityId + 1)).size()),
             () -> assertEquals(List.of(), limitRepository.findByAgreementCapabilityIds(List.of())),
-            () -> assertThrows(DuplicateKeyException.class, () -> mocker.limit(CapabilityLimitCode.CURRENCY, "USD")));
+            () -> assertThrows(DuplicateKeyException.class, () -> mocker.limit(PricingDimension.CURRENCY, "USD")));
 
         limitRepository.insertAll(List.of());
         int deleted = limitRepository.deleteByAgreementCapabilityId(capabilityId);
@@ -142,25 +142,26 @@ class AgreementSubscriptionRepositoryTest extends CommercialMockTestBase {
 
         capabilityRepository.updateStatus(capability, AgreementCapabilityStatus.SUSPENDED, LATER);
         capabilityRepository.updateTerms(capability, AgreementCapabilityBuilder.EFFECTIVE_FROM, effectiveTo,
-            new BigDecimal("0.05"), 30, LATER.plusSeconds(1));
+            new BigDecimal("0.05"), 30, true, LATER.plusSeconds(1));
 
         AgreementCapability read = capabilityRepository.findById(capability.getAgreementCapabilityId());
         assertAll(() -> assertEquals(AgreementCapabilityStatus.SUSPENDED, read.getStatus()),
             () -> assertEquals(effectiveTo, read.getEffectiveTo()),
             () -> assertEquals(0, new BigDecimal("0.05").compareTo(read.getRollingReserveRate())),
             () -> assertEquals(30, read.getRollingReserveDays()),
+            () -> assertEquals(Boolean.TRUE, read.getRequire3ds()),
             () -> assertEquals(capability.getUpdateTime(), read.getUpdateTime()),
             () -> assertEquals(Instant.parse("2026-09-12T08:30:01.123456Z"), read.getUpdateTime()),
             () -> assertThrows(ConcurrentRequestException.class,
                 () -> capabilityRepository.updateStatus(stale, AgreementCapabilityStatus.DISABLED, LATER)),
             () -> assertThrows(ConcurrentRequestException.class, () -> capabilityRepository.updateTerms(stale,
-                AgreementCapabilityBuilder.EFFECTIVE_FROM, null, null, null, LATER)),
+                AgreementCapabilityBuilder.EFFECTIVE_FROM, null, null, null, false, LATER)),
             () -> assertEquals(AgreementCapabilityStatus.ENABLED, stale.getStatus()));
 
         testMapper.touchAgreementCapability(capability.getAgreementCapabilityId(), LATER.plusSeconds(5));
 
         assertAll(() -> assertThrows(ConcurrentRequestException.class, () -> capabilityRepository.updateTerms(capability,
-            AgreementCapabilityBuilder.EFFECTIVE_FROM, null, null, null, LATER.plusSeconds(6))),
+            AgreementCapabilityBuilder.EFFECTIVE_FROM, null, null, null, false, LATER.plusSeconds(6))),
             () -> assertEquals(effectiveTo, capability.getEffectiveTo()),
             () -> assertEquals(effectiveTo,
                 capabilityRepository.findById(capability.getAgreementCapabilityId()).getEffectiveTo()));

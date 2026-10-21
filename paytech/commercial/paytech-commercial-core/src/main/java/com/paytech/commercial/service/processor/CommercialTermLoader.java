@@ -1,5 +1,6 @@
 package com.paytech.commercial.service.processor;
 
+import java.time.Instant;
 import java.time.Clock;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -9,6 +10,12 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
+import com.paytech.commercial.domainservice.validator.term.TermPriceRelevance;
+import com.paytech.commercial.core.dal.dataobject.PricingProfileCond;
+import com.paytech.commercial.core.dal.dataobject.ProductFeeEvent;
+import com.paytech.commercial.domain.CommercialPriceCandidate;
+import com.paytech.commercial.domain.CapabilityAcceptance;
+import com.paytech.commercial.api.enums.CommercialTermOwnerType;
 import com.paytech.commercial.core.dal.dataobject.Agreement;
 import com.paytech.commercial.core.dal.dataobject.AgreementCapability;
 import com.paytech.commercial.core.dal.dataobject.AgreementOperatingEntity;
@@ -163,15 +170,19 @@ public class CommercialTermLoader {
         CommercialTermVersionCommandRequest request, CommercialTermVersion version) {
         CommercialTermPlan plan = plan(version.getTermPlanId());
         BusinessChangeRecord root = planRoot(plan);
+        CommercialTermVersionContext.CommercialTermVersionContextBuilder builder = CommercialTermVersionContext.builder()
+            .now(clock.instant().truncatedTo(ChronoUnit.MICROS)).systemCommand(request.systemCommand())
+            .operatorAccountId(request.systemCommand() ? 0L : request.getOperatorAccountId())
+            .expectedChangeVersion(expectedVersion(root, request.getExpectedChangeVersion())).plan(plan).planRoot(root)
+            .version(version);
+        if (plan.getOwnerType() == CommercialTermOwnerType.PLATFORM_TEMPLATE) {
+            return builder.coveredEntityNo(plan.getEntityNo());
+        }
         Agreement agreement = agreementRepository.findById(version.getAgreementId());
         if (agreement == null) {
             throw new ErrorException("版本冻结的合同不存在: " + version.getTermVersionId());
         }
-        return CommercialTermVersionContext.builder().now(clock.instant().truncatedTo(ChronoUnit.MICROS))
-            .systemCommand(request.systemCommand())
-            .operatorAccountId(request.systemCommand() ? 0L : request.getOperatorAccountId())
-            .expectedChangeVersion(expectedVersion(root, request.getExpectedChangeVersion())).plan(plan).planRoot(root)
-            .agreement(agreement).coveredEntityNos(coveredEntityNos(agreement)).version(version);
+        return builder.agreement(agreement).coveredEntityNos(coveredEntityNos(agreement));
     }
 
     /** 版本的全部价格。 */
@@ -205,7 +216,8 @@ public class CommercialTermLoader {
         List<CommercialTermComponent> components = components(prices);
         List<PricingProfile> profiles = pricingProfileRepository.findByCodes(
             prices.stream().map(CommercialTermPrice::getPricingProfileCode).collect(Collectors.toSet()));
-        List<AgreementCapability> capabilities = agreementCapabilityRepository.findByAgreementId(version.getAgreementId());
+        List<AgreementCapability> capabilities = version.getAgreementId() == null ? List.of()
+            : agreementCapabilityRepository.findByAgreementId(version.getAgreementId());
         return builder.prices(prices).components(components).bands(bands(components)).profiles(profiles)
             .profileConditions(pricingProfileCondRepository.findByProfileIds(
                 profiles.stream().map(PricingProfile::getPricingProfileId).toList()))
@@ -250,6 +262,85 @@ public class CommercialTermLoader {
             builder.supersededVersion(previous);
         }
         return builder;
+    }
+
+    /**
+     * 合同全部开通项与其接受条件、目录行。
+     *
+     * @param agreementId 合同 ID
+     * @return 开通项组合
+     */
+    public List<CapabilityAcceptance> capabilityAcceptances(long agreementId) {
+        List<AgreementCapability> capabilities = agreementCapabilityRepository.findByAgreementId(agreementId);
+        return CapabilityAcceptance.of(capabilities, agreementCapabilityLimitRepository.findByAgreementCapabilityIds(
+                capabilities.stream().map(AgreementCapability::getAgreementCapabilityId).toList()),
+            productCapabilityRepository.findByCodes(
+                capabilities.stream().map(AgreementCapability::getCapabilityCode).collect(Collectors.toSet())));
+    }
+
+    /** 条款类型登记的计费事件。 */
+    public List<ProductFeeEvent> feeEvents(String termType) {
+        return productFeeEventRepository.findByTermType(termType);
+    }
+
+    /**
+     * 价格的命中候选（画像与条件）；画像缺失的价格不出现。
+     *
+     * @param prices 价格
+     * @return 候选
+     */
+    public List<CommercialPriceCandidate> candidates(List<CommercialTermPrice> prices) {
+        List<PricingProfile> profiles = pricingProfileRepository.findByCodes(
+            prices.stream().map(CommercialTermPrice::getPricingProfileCode).collect(Collectors.toSet()));
+        List<PricingProfileCond> conditions = pricingProfileCondRepository.findByProfileIds(
+            profiles.stream().map(PricingProfile::getPricingProfileId).toList());
+        return prices.stream().map(price -> profiles.stream()
+                .filter(profile -> profile.getPricingProfileCode().equals(price.getPricingProfileCode())).findFirst()
+                .map(profile -> new CommercialPriceCandidate(price, profile, conditions.stream()
+                    .filter(condition -> condition.getPricingProfileId().equals(profile.getPricingProfileId())).toList()))
+                .orElse(null))
+            .filter(java.util.Objects::nonNull).toList();
+    }
+
+    /**
+     * 读取可作为生成来源的模板版本：属于同条款类型的 PLATFORM_TEMPLATE 方案，状态 SCHEDULED / ACTIVE / SUPERSEDED
+     *
+     * @param templateVersionId 模板版本 ID
+     * @param termType 目标方案条款类型
+     * @return 模板版本
+     */
+    public CommercialTermVersion templateVersion(long templateVersionId, String termType) {
+        CommercialTermVersion template = version(templateVersionId);
+        CommercialTermPlan templatePlan = plan(template.getTermPlanId());
+        if (templatePlan.getOwnerType() != CommercialTermOwnerType.PLATFORM_TEMPLATE
+            || !templatePlan.getTermType().equals(termType)) {
+            throw new BizCheckFailException("来源版本不是同条款类型的标准价目模板版本: " + templateVersionId);
+        }
+        if (!CommercialTermVersionStatus.RESOLVABLE.contains(template.getStatus())) {
+            throw new BizCheckFailException("标准价目模板版本尚未生效: " + templateVersionId + ", 状态 "
+                + template.getStatus().getCode());
+        }
+        return template;
+    }
+
+    /**
+     * 按合同开通项从模板版本选出价格行；基于模板新建与从模板补齐共用
+     *
+     * @param plan Client 合同方案
+     * @param template 模板版本
+     * @param version 目标版本
+     * @param existing 目标版本已有价格
+     * @param now 业务时刻
+     * @return 选出的新行
+     */
+    TemplatePriceSelection templateSelection(CommercialTermPlan plan, CommercialTermVersion template,
+        CommercialTermVersion version, List<CommercialTermPrice> existing, Instant now) {
+        List<CommercialTermPrice> templatePrices = prices(template.getTermVersionId());
+        List<CommercialTermComponent> templateComponents = components(templatePrices);
+        TermPriceRelevance relevance = new TermPriceRelevance(capabilityAcceptances(plan.getAgreementId()),
+            feeEvents(plan.getTermType()));
+        return TemplatePriceSelection.select(candidates(templatePrices), templateComponents, bands(templateComponents),
+            relevance, plan.getEntityNo(), existing, version.getTermVersionId(), this::nextId, now);
     }
 
     /** 新的本地 ID。 */

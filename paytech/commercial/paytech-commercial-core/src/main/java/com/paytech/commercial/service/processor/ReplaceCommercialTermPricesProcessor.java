@@ -1,10 +1,14 @@
 package com.paytech.commercial.service.processor;
 
+import java.util.Set;
+import java.util.Objects;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
+import com.paytech.commercial.domainservice.repository.CommercialTermPriceRepository;
+import com.paytech.commercial.api.enums.CommercialTermOwnerType;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermComponent;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermPrice;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermVersion;
@@ -24,7 +28,8 @@ import lombok.AllArgsConstructor;
 
 /**
  * 整体替换 DRAFT 版本的价格集合（technique.md §2.2）
- * <li>写入校验：OE 被版本合同覆盖、画像存在、同 OE + 币种画像与优先级唯一、结算字段与条款类型匹配、计费事件已登记、组件矩阵；
+ * <li>写入校验：OE 被版本合同覆盖（模板为模板 OE）、画像存在、同 OE + 币种画像与优先级唯一、结算字段与条款类型匹配、计费事件已登记、
+ * 组件矩阵、回传的来源模板价格属于同条款类型模板；与开通项的相关性只作为响应提示（relevanceWarnings），排期 / 激活时拦截；
  * 档位连续、画像 ACTIVE 与本期取值限制在排期 / 激活时重新校验。</li>
  * <li>方案锁持续等待；根 CAS 后按档位 → 组件 → 价格删除旧集合、按价格 → 组件 → 档位插入新集合，版本 Child 记 UPDATE 快照。</li>
  */
@@ -36,6 +41,7 @@ public class ReplaceCommercialTermPricesProcessor
     private final CommercialTermService commercialTermService;
     private final PricingProfileRepository pricingProfileRepository;
     private final ProductFeeEventRepository productFeeEventRepository;
+    private final CommercialTermPriceRepository commercialTermPriceRepository;
 
     /** 方案资源锁，持续等待。 */
     @Override
@@ -55,10 +61,32 @@ public class ReplaceCommercialTermPricesProcessor
         // 构建上下文并校验新集合
         CommercialTermVersionContext context = buildContext(request, version);
         TermPriceSetValidator.check(context);
+        checkTemplateSources(context, request);
 
         // 保存
         commercialTermService.replacePrices(context);
         return context.toVersionView();
+    }
+
+    /** 回传的来源模板价格须是同条款类型标准价目模板的价格（Web 保持来源，供破标比较）。 */
+    void checkTemplateSources(CommercialTermVersionContext context, ReplaceCommercialTermPricesRequest request) {
+        Set<Long> sourceIds = request.getPrices().stream().map(ReplaceCommercialTermPricesRequest.PriceItem::getSourceTemplatePriceId)
+            .filter(Objects::nonNull).collect(Collectors.toSet());
+        if (sourceIds.isEmpty()) {
+            return;
+        }
+        if (context.template()) {
+            throw new BizCheckFailException("标准价目模板价格不能引用来源模板价格");
+        }
+        List<CommercialTermPrice> sources = commercialTermPriceRepository.findByIds(sourceIds);
+        Set<Long> versionIds = sources.stream().map(CommercialTermPrice::getTermVersionId).collect(Collectors.toSet());
+        boolean valid = sources.size() == sourceIds.size() && versionIds.stream().map(loader::version)
+            .map(source -> loader.plan(source.getTermPlanId()))
+            .allMatch(plan -> plan.getOwnerType() == CommercialTermOwnerType.PLATFORM_TEMPLATE
+                && plan.getTermType().equals(context.getPlan().getTermType()));
+        if (!valid) {
+            throw new BizCheckFailException("sourceTemplatePriceId 不是同条款类型标准价目模板的价格: " + sourceIds);
+        }
     }
 
     /** 公共部分、旧行 ID、画像、计费事件与新行。 */
