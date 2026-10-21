@@ -34,10 +34,6 @@
             <groupId>com.paytech</groupId>
             <artifactId>paytech-platform-support-delivery</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.paytech</groupId>
-            <artifactId>paytech-platform-support-integration</artifactId>
-        </dependency>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-compensation-event</artifactId></dependency>
         <dependency>
             <groupId>com.paytech</groupId>

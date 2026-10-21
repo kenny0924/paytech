@@ -2,7 +2,6 @@ package com.paytech.channel.connector.domainservice.service;
 
 import java.time.Instant;
 
-import com.paytech.channel.connector.core.dal.dataobject.ChannelConfigChange;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelCostPlan;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelCostPlanVer;
 import com.paytech.channel.connector.core.enums.ChannelCostPlanStatus;
@@ -63,15 +62,16 @@ public interface ChannelCostPlanService {
     void activateVersion(ChannelCostVersionContext context);
 
     /**
-     * 一个事务内锁方案与版本，作废未到生效时间的 APPROVED 版本并写入变更记录
-     * <li>版本 APPROVED → INACTIVE、失效时间等于生效时间；条件为 status = APPROVED 且 effective_from 晚于变更记录创建时间，
+     * 锁方案与版本，作废未到生效时间的 APPROVED 版本
+     * <li>必须在调用方 Processor 的事务内执行；CANCEL 变更记录由 Processor 在同一事务中写入。</li>
+     * <li>版本 APPROVED → INACTIVE、失效时间等于生效时间；条件为 status = APPROVED 且 effective_from 晚于作废时刻，
      * 行数不为 1 时按并发冲突拒绝并整体回滚。</li>
      * <li>方案当前版本指针不指向 APPROVED 版本，不需要改动。</li>
      *
      * @param context 已校验可作废的版本上下文
-     * @param change 已准备主键、操作者、原因与创建时间的 CANCEL 变更记录；创建时间同时作为作废时刻
+     * @param now 作废时刻，与 CANCEL 变更记录的创建时间相同
      */
-    void cancelVersion(ChannelCostVersionContext context, ChannelConfigChange change);
+    void cancelVersion(ChannelCostVersionContext context, Instant now);
 
     /**
      * 分页查询方案列表项

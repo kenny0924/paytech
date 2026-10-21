@@ -13,7 +13,7 @@
     <packaging>jar</packaging>
     <name>PayTech Channel Connector Core</name>
     <description>Channel / account / MID repositories, capability resolution, candidate query, frozen-target checks,
-        Platform standard API execution with result mapping, and channel cost plan Maker-Checker / resolution / activation.</description>
+        in-process standard API execution with result mapping, and channel cost plan Maker-Checker / resolution / activation.</description>
     <dependencies>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-channel-connector-api</artifactId></dependency>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-common-core</artifactId></dependency>
@@ -32,8 +32,8 @@
         <dependency><groupId>tools.jackson.core</groupId><artifactId>jackson-databind</artifactId></dependency>
         <!-- 执行配置读取经 Vault 还原冻结账号（无生产调用方，保留 Processor 与测试）。 -->
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-vault-client</artifactId></dependency>
-        <!-- 渠道操作经 Platform 标准 API 执行（requirements/20261014/payment-PayerMax卡直付对接）。 -->
-        <dependency><groupId>com.paytech</groupId><artifactId>paytech-platform-support-api</artifactId></dependency>
+        <!-- 渠道协议能力（2026-10-20 统一对外出口第一段）：进程内执行标准 API、接入方存在性查询与变更记录服务；core → protocol 单向。 -->
+        <dependency><groupId>com.paytech</groupId><artifactId>paytech-channel-connector-protocol</artifactId></dependency>
         <dependency><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><scope>provided</scope></dependency>
     </dependencies>
     <build>

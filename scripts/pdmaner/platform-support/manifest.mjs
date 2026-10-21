@@ -5,7 +5,6 @@ import { TABLES as WEBHOOK_TABLES } from "./manifests/04-webhook.mjs";
 import { TABLES as AUDIT_SECURITY_TABLES } from "./manifests/05-audit-security.mjs";
 import { TABLES as GATEWAY_CONTROL_TABLES } from "./manifests/06-gateway.mjs";
 import { TABLES as RELIABILITY_TABLES } from "./manifests/08-reliability.mjs";
-import { TABLES as INTEGRATION_TABLES } from "./manifests/09-integration.mjs";
 import { TABLES as REFERENCE_DATA_TABLES } from "./manifests/10-reference-data.mjs";
 
 export const TABLE_GROUPS = Object.freeze({
@@ -16,7 +15,6 @@ export const TABLE_GROUPS = Object.freeze({
   audit_security: AUDIT_SECURITY_TABLES,
   gateway_control: GATEWAY_CONTROL_TABLES,
   reliability: RELIABILITY_TABLES,
-  integration: INTEGRATION_TABLES,
   reference_data: REFERENCE_DATA_TABLES,
 });
 
@@ -31,7 +29,6 @@ const expectedGroupSizes = Object.freeze({
   audit_security: 8,
   gateway_control: 6,
   reliability: 2,
-  integration: 10,
   reference_data: 1,
 });
 

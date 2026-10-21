@@ -1,0 +1,7 @@
+2026-10-21T03:21:43Z	mor_channel_connector_v2e2e	执行 2026-10-20-protocol-tables.sql（ALTER t_channel_config_change + CREATE 10 表）
+2026-10-21T03:21:49Z	mor_channel_connector_v2e2e	导入 mor_platform_v2e2e 10 张表数据（mysqldump --no-create-info --skip-triggers --complete-insert）
+2026-10-21T03:21:59Z	mor_ccu_stage5_droptrial	CREATE DATABASE
+2026-10-21T03:22:00Z	mor_ccu_stage5_droptrial	CREATE 10 张空表（增量 DDL 的 CREATE TABLE 部分）
+2026-10-21T03:22:00Z	mor_ccu_stage5_droptrial	执行 drop-integration.sql（库名替换为临时库）
+2026-10-21T03:22:00Z	mor_ccu_stage5_droptrial	DROP DATABASE
+2026-10-21T03:22:08Z	mor_channel_connector	执行 2026-10-20-protocol-tables.sql（ALTER t_channel_config_change + CREATE 10 表，不导入数据）

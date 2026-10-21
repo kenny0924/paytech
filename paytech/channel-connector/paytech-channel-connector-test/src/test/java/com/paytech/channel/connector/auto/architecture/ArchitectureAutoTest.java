@@ -30,7 +30,8 @@ class ArchitectureAutoTest {
 
     private static final String MODULE_PREFIX = "com.paytech:paytech-" + SERVICE + "-";
 
-    private static final List<String> MODULES = List.of("paytech-channel-connector-api", "paytech-channel-connector-core", "paytech-channel-connector-app",
+    private static final List<String> MODULES = List.of("paytech-channel-connector-api",
+        "paytech-channel-connector-protocol", "paytech-channel-connector-core", "paytech-channel-connector-app",
         "paytech-channel-connector-test");
 
     /** 除登记的既有偏差外零违规；违规清单逐条输出，便于定位模块与类。 */

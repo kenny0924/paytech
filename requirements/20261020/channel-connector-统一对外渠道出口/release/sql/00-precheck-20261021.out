@@ -1,0 +1,116 @@
++-----------------------+-------------+
+| TABLE_SCHEMA          | table_count |
++-----------------------+-------------+
+| mor_card              |           8 |
+| mor_channel_connector |          18 |
+| mor_platform          |          57 |
++-----------------------+-------------+
++-----------------------------+
+| change_detail_column_exists |
++-----------------------------+
+|                           0 |
++-----------------------------+
++-------------------------------+-----------+----------------------------+
+| t                             | row_count | last_write                 |
++-------------------------------+-----------+----------------------------+
+| t_standard_api                |         6 | 2026-10-16 07:56:16.537103 |
+| t_api_field                   |       444 | 2026-10-17 05:36:26.555006 |
+| t_integration                 |         6 | 2026-10-21 03:46:44.653609 |
+| t_integration_api             |        22 | 2026-10-17 05:36:26.555006 |
+| t_integration_script          |        12 | 2026-10-17 05:36:26.109905 |
+| t_integration_standard_api    |        22 | 2026-10-17 05:36:27.077935 |
+| t_integration_verify_account  |         5 | 2026-10-17 06:53:58.373900 |
+| t_integration_verify_case     |        27 | 2026-10-17 06:53:58.498117 |
+| t_integration_verify_run      |        94 | 2026-10-17 06:53:59.960301 |
+| t_integration_verify_run_step |       141 | 2026-10-17 06:53:59.960274 |
++-------------------------------+-----------+----------------------------+
++--------------------------------------------+------------+
+| Table                                      | Checksum   |
++--------------------------------------------+------------+
+| mor_platform.t_standard_api                | 3296783415 |
+| mor_platform.t_api_field                   | 1349200492 |
+| mor_platform.t_integration                 | 2766165837 |
+| mor_platform.t_integration_api             | 2720004120 |
+| mor_platform.t_integration_script          |  328051224 |
+| mor_platform.t_integration_standard_api    | 2013319938 |
+| mor_platform.t_integration_verify_account  |  698840965 |
+| mor_platform.t_integration_verify_case     |  589218690 |
+| mor_platform.t_integration_verify_run      | 3797490316 |
+| mor_platform.t_integration_verify_run_step |  617002053 |
++--------------------------------------------+------------+
++------------------+---------+-----------------------------------------------------------------------------------------------------------------------------------+----------------------------+----------------------------+
+| integration_code | version | endpoints                                                                                                                         | create_time                | update_time                |
++------------------+---------+-----------------------------------------------------------------------------------------------------------------------------------+----------------------------+----------------------------+
+| ALIPAY_PLUS      |       2 | [{"baseUrl": "https://open-sea.alipayplus.com", "sandbox": true, "endpointCode": "ALIPAY_PLUS_OPEN"}]                             | 2026-10-16 07:56:16.588996 | 2026-10-16 07:57:30.411618 |
+| DEMO_NI          |       1 | [{"baseUrl": "https://demo-ni.example.test/api", "sandbox": true, "endpointCode": "DEMO_NI_API"}]                                 | 2026-10-21 03:46:44.653609 | 2026-10-21 03:46:44.653609 |
+| DLOCAL           |       2 | [{"baseUrl": "https://sandbox.dlocal.com", "sandbox": true, "endpointCode": "DLOCAL_API"}]                                        | 2026-10-16 20:34:30.308298 | 2026-10-16 20:34:45.673013 |
+| PAYBY            |       5 | [{"baseUrl": "https://uat.test2pay.com/sgs/api", "sandbox": true, "endpointCode": "PAYBY_SGS"}]                                   | 2026-10-14 13:26:59.712368 | 2026-10-14 13:29:22.959869 |
+| PAYERMAX         |       3 | [{"baseUrl": "https://pay-gate-uat.payermax.com/aggregate-pay/api/gateway", "sandbox": true, "endpointCode": "PAYERMAX_GATEWAY"}] | 2026-10-14 09:50:52.131230 | 2026-10-14 09:51:05.791172 |
+| TOSS_PAY         |       1 | [{"baseUrl": "https://pay.toss.im", "sandbox": true, "endpointCode": "TOSS_API"}]                                                 | 2026-10-17 05:36:25.930047 | 2026-10-17 05:36:25.930047 |
++------------------+---------+-----------------------------------------------------------------------------------------------------------------------------------+----------------------------+----------------------------+
++------------+------+
+| run_status | runs |
++------------+------+
+| FAILED     |    3 |
+| PASSED     |   91 |
++------------+------+
++------------------+-------------------+---------+
+| integration_code | standard_api_code | version |
++------------------+-------------------+---------+
+| ALIPAY_PLUS      | PAY               |       2 |
+| ALIPAY_PLUS      | PAY_QUERY         |       2 |
+| ALIPAY_PLUS      | REFUND            |       2 |
+| ALIPAY_PLUS      | REFUND_QUERY      |       2 |
+| DLOCAL           | PAY               |       1 |
+| DLOCAL           | PAY_CANCEL        |       1 |
+| DLOCAL           | PAY_QUERY         |       1 |
+| DLOCAL           | REFUND            |       1 |
+| DLOCAL           | REFUND_QUERY      |       1 |
+| PAYBY            | BALANCE_QUERY     |       2 |
+| PAYBY            | PAY_CANCEL        |       2 |
+| PAYBY            | PAY_QUERY         |       2 |
+| PAYBY            | REFUND            |       2 |
+| PAYBY            | REFUND_QUERY      |       2 |
+| PAYERMAX         | PAY               |       1 |
+| PAYERMAX         | PAY_QUERY         |       1 |
+| PAYERMAX         | REFUND            |       1 |
+| PAYERMAX         | REFUND_QUERY      |       1 |
+| TOSS_PAY         | PAY               |       1 |
+| TOSS_PAY         | PAY_QUERY         |       1 |
+| TOSS_PAY         | REFUND            |       1 |
+| TOSS_PAY         | REFUND_QUERY      |       1 |
++------------------+-------------------+---------+
++-------------------------+-----------+
+| t                       | row_count |
++-------------------------+-----------+
+| t_payment_channel       |         2 |
+| t_channel_account       |         2 |
+| t_channel_mid           |         2 |
+| t_mid_capability        |         2 |
+| t_channel_config_change |        13 |
+| t_compensation_event    |         0 |
++-------------------------+-----------+
++--------------+----------------+----------------------------+
+| channel_code | channel_status | create_time                |
++--------------+----------------+----------------------------+
+| AAAA         | DRAFT          | 2026-10-20 19:11:25.915667 |
+| DEMO_NI      | ACTIVE         | 2026-10-21 03:46:44.721718 |
++--------------+----------------+----------------------------+
++---------------------------+---------+---------------------------+-----------------------+--------+
+| caller_service            | action  | data_type_code            | purpose_code          | status |
++---------------------------+---------+---------------------------+-----------------------+--------+
+| channel-connector-service | PROTECT | CHANNEL_ACCOUNT_CONFIG_V1 | CHANNEL_CONFIGURATION | ACTIVE |
+| channel-connector-service | REVEAL  | CHANNEL_ACCOUNT_CONFIG_V1 | CHANNEL_EXECUTION     | ACTIVE |
+| platform-support-service  | REVEAL  | CHANNEL_ACCOUNT_CONFIG_V1 | CHANNEL_EXECUTION     | ACTIVE |
++---------------------------+---------+---------------------------+-----------------------+--------+
++---------+--------+------------------+-------------+
+| tickets | unused | unused_unexpired | last_issued |
++---------+--------+------------------+-------------+
+|       0 |   NULL |             NULL | NULL        |
++---------+--------+------------------+-------------+
++---------------------------+------+------------------------------+----------------+
+| app_name                  | id   | executor_handler             | trigger_status |
++---------------------------+------+------------------------------+----------------+
+| channel-connector-service |   15 | channelCostVersionActivation |              1 |
+| platform-support-service  |    2 | compensationEventScan        |              1 |
++---------------------------+------+------------------------------+----------------+

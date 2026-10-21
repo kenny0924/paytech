@@ -1,24 +1,31 @@
 // Writes the channel-connector part of the Payment Orchestration PDManer model
 // (paytech/channel-connector/docs/database/channel-connector.pdma.json); see payment-service-partition.mjs.
+// Since 2026-10-20 (统一对外渠道出口第一段) the ten channel protocol tables moved from platform-support are appended from
+// channel-connector/protocol-tables.mjs, see channel-connector/protocol-model.mjs.
 //
 // Usage: node scripts/pdmaner/generate-channel-connector-model.mjs [--check]
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { appendProtocolTables } from "./channel-connector/protocol-model.mjs";
 import { serializePaymentServiceModel } from "./generate-payment-model.mjs";
 
 const workspaceRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const outputPath = path.join(workspaceRoot, "paytech/channel-connector/docs/database/channel-connector.pdma.json");
 
 export function generateChannelConnectorModel() {
-  return JSON.parse(serializePaymentServiceModel("channel-connector"));
+  return appendProtocolTables(JSON.parse(serializePaymentServiceModel("channel-connector")));
+}
+
+function serializeChannelConnectorModel() {
+  return `${JSON.stringify(generateChannelConnectorModel(), null, 2)}\n`;
 }
 
 function runCli() {
   const unknown = process.argv.slice(2).filter((argument) => argument !== "--check");
   if (unknown.length > 0) throw new Error(`Unknown argument(s): ${unknown.join(", ")}`);
-  const expected = serializePaymentServiceModel("channel-connector");
+  const expected = serializeChannelConnectorModel();
   const tables = JSON.parse(expected).entities.length;
   if (process.argv.includes("--check")) {
     if (!existsSync(outputPath)) throw new Error(`Channel connector model does not exist: ${outputPath}`);

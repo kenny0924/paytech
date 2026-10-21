@@ -170,8 +170,6 @@
                                                     <fileset
                                                             dir="${project.basedir}/../paytech-platform-support-delivery/target/classes"/>
                                                     <fileset
-                                                            dir="${project.basedir}/../paytech-platform-support-integration/target/classes"/>
-                                                    <fileset
                                                             dir="${project.basedir}/../paytech-platform-support-core/target/classes"/>
                                                     <fileset
                                                             dir="${project.basedir}/../paytech-platform-support-app/target/classes"/>
@@ -187,8 +185,6 @@
                                                             dir="${project.basedir}/../paytech-platform-support-file-document/src/main/java"/>
                                                     <fileset
                                                             dir="${project.basedir}/../paytech-platform-support-delivery/src/main/java"/>
-                                                    <fileset
-                                                            dir="${project.basedir}/../paytech-platform-support-integration/src/main/java"/>
                                                     <fileset
                                                             dir="${project.basedir}/../paytech-platform-support-core/src/main/java"/>
                                                     <fileset

@@ -47,14 +47,12 @@ spring:
       client:
         simple:
           instances:
-            # 同一独立 Mock HTTP 服务承载 Vault、CCT 与 Payment 读卡正式合同，地址由 EnableMockHttpServer 运行时注入。
+            # 同一独立 Mock HTTP 服务承载 Vault 与 CCT 正式合同，地址由 EnableMockHttpServer 运行时注入。
             vault-service:
               - uri: "${test.mock-http.base-url}"
             client-master-service:
               - uri: "${test.mock-http.base-url}"
             payment-service:
-              - uri: "${test.mock-http.base-url}"
-            card-service:
               - uri: "${test.mock-http.base-url}"
     nacos:
       discovery:
@@ -202,7 +200,6 @@ web:
       - /api-scope-admin
       - /api-credentials
       - /tenant-projections
-      - /external-api-admin
       - /notification-admin
       - /webhook-admin
       - /platform/v1/internal-tokens
@@ -284,13 +281,6 @@ ps:
     console-resource:
       lock-wait-time: 500ms
       lock-lease-time: 30s
-  integration:
-    configuration:
-      lock-wait-time: 500ms # 外部 API 配置写入的 TRY_LOCK 等待；全模块共用 lock:external-api-config。
-      lock-lease-time: 30s # 资源锁租约；版本 CAS 仍为最终保护。
-    execution:
-      allowed-schemes: [https, http] # 只在本机 mock 允许 http，执行测试的出站地址指向本机 Mock 渠道。
-      card-context-path: "" # 测试 Mock HTTP 服务以 card-service 承载读卡合同；card 本身也无 context path。
   reference-data:
     currency-spec:
       lock-wait-time: 500ms # 币种规则维护的 TRY_LOCK 等待；新建、修改与启停共用 currency-spec:{currency}。
@@ -386,14 +376,10 @@ internal-token:
       notification-test:
         targets: [platform-support-service]
         purposes: [GENERAL]
-      # 接入方存在性查询的测试调用方（真实调用方为 channel-connector 激活渠道前查询）。
-      integration-lookup-test:
-        targets: [platform-support-service]
-        purposes: [GENERAL]
-      # Platform 自身出站：card 凭票据读卡（第 12 步自 Payment 改为 card-service）、CCT 文件，以及 Vault（02d 起 Vault Client 在存在 Supplier
-      # 时附加 Token，未授权则失败关闭）。payment-service 保留给既有 Platform → Payment 目标登记。
+      # Platform 自身出站：CCT 文件与 Vault（02d 起 Vault Client 在存在 Supplier 时附加 Token，未授权则失败关闭）。
+      # payment-service 保留给既有 Platform → Payment 目标登记。
       platform-support-service:
-        targets: [payment-service, client-master-service, vault-service, card-service]
+        targets: [payment-service, client-master-service, vault-service]
         purposes: [GENERAL]
       # Payment 出站（第 12 步）：卡工具创建与一次性读卡票据签发访问 card-service（design/05 §4）。
       payment-service:

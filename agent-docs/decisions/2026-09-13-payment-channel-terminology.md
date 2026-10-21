@@ -3,6 +3,7 @@
 - Decision status: Confirmed
 - Decision date: 2026-09-13
 - Superseded sections: 现行文档、模型与自有合同中表示支付渠道的 Provider 命名，以及模块方案中仅改 JAR 名而保留支付 Provider 实体名的限制；不取代业务事实或历史协议的解释。
+- 2026-10-20 后继："Channel 仅指支付渠道、非支付供应商保留 Provider"的边界由[2026-10-20 统一对外出口决定](./2026-10-20-channel-connector-unified-outbound.md)取代：渠道分支付渠道（`PAYMENT`）与服务渠道（`SERVICE`）；本决定的支付命名迁移结果不变。
 
 用户确认范围覆盖所有系统中的支付渠道命名，并在审阅[跨系统清单](../../requirements/20260913/payment-支付渠道命名统一/technique.md)后要求“改一下”，授权本地文档、模型、SQL 文件、代码与测试同步更名。实际实现、验证和环境迁移状态仅见[当前台账](../CURRENT_IMPLEMENTATION.md)，交付证据见[需求记录](../../requirements/20260913/payment-支付渠道命名统一/delivery.md)。
 

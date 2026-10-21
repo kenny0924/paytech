@@ -1,0 +1,57 @@
+{
+ "case": "CCU_S7_AFTER",
+ "validate": 200,
+ "create": {
+  "httpStatus": 200,
+  "version": 1,
+  "code": null
+ },
+ "run": {
+  "integration": "PAYERMAX",
+  "case": "CCU_S7_AFTER",
+  "startStatus": 200,
+  "runCode": "238610501867773952",
+  "code": null,
+  "runStatus": "PASSED",
+  "failureSummary": null,
+  "steps": [
+   {
+    "stepNo": 1,
+    "stepStatus": "PASSED",
+    "executeStatus": "FAIL",
+    "returnId": null,
+    "assertions": [
+     [
+      "executeStatus",
+      true
+     ],
+     [
+      "outputs.paymentStatus",
+      true
+     ]
+    ]
+   }
+  ],
+  "rowIn": {
+   "mor_platform": false,
+   "mor_channel_connector": true
+  }
+ },
+ "delete": {
+  "httpStatus": 200,
+  "code": null
+ },
+ "getAfterDelete": 404,
+ "channelConfigChanges": [
+  {
+   "targetType": "VERIFY_CASE",
+   "changeType": "CREATE",
+   "hasDetail": "1"
+  },
+  {
+   "targetType": "VERIFY_CASE",
+   "changeType": "DELETE",
+   "hasDetail": "1"
+  }
+ ]
+}

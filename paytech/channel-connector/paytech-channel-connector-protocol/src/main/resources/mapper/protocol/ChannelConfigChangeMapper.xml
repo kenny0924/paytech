@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.channel.connector.protocol.core.dal.mapper.ChannelConfigChangeMapper">
+    <!-- 闭合枚举列以内联 CodeEnumTypeHandler 按 javaType 绑定（未知 Code 读取失败），其余列按下划线转驼峰自动映射。 -->
+    <resultMap id="row" type="com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelConfigChange" autoMapping="true">
+        <result column="target_type" property="targetType" javaType="com.paytech.channel.connector.protocol.core.enums.ChangeTargetType" typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="change_type" property="changeType" javaType="com.paytech.channel.connector.protocol.core.enums.ChangeType" typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+    </resultMap>
+
+    <sql id="columns">id, target_type, target_id, change_type, from_status, to_status, operator_id, reason, change_detail, create_time</sql>
+
+    <insert id="insert">
+        INSERT INTO t_channel_config_change (<include refid="columns"/>)
+        VALUES (#{id}, #{targetType.code}, #{targetId}, #{changeType.code}, #{fromStatus}, #{toStatus}, #{operatorId}, #{reason}, #{changeDetail}, #{createTime})
+    </insert>
+
+    <select id="selectByTarget" resultMap="row">
+        SELECT <include refid="columns"/> FROM t_channel_config_change
+        WHERE target_type = #{targetType.code} AND target_id = #{targetId}
+        ORDER BY id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countByTarget" resultType="long">
+        SELECT COUNT(*) FROM t_channel_config_change WHERE target_type = #{targetType.code} AND target_id = #{targetId}
+    </select>
+</mapper>

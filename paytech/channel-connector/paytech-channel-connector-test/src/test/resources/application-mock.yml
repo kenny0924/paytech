@@ -14,11 +14,11 @@ spring:
       client:
         simple:
           instances:
-            # 同一独立 Mock HTTP 服务承载 Vault 账号读取与 Platform 标准 API 执行。
-            # CC-B 追加：同一服务还承载 Vault 账号配置 Protect 与 Platform 接入方存在性查询（渠道激活前置）。
+            # 同一独立 Mock HTTP 服务承载 Vault（账号配置读取与 Protect）与 card-service 读卡正式合同；
+            # 合成外部渠道也在同一服务的 /channel 前缀下，接入方出站地址由用例写入。
             vault-service:
               - uri: "${test.mock-http.base-url}"
-            platform-support-service:
+            card-service:
               - uri: "${test.mock-http.base-url}"
     loadbalancer:
       retry:
@@ -39,7 +39,7 @@ spring:
       connection-timeout: 2000
       validation-timeout: 1000
       connection-init-sql: "SET time_zone = '+00:00'"
-  # 仓库 local-environment 的本机 Redis：渠道成本写入口资源锁；凭据可用环境变量覆盖。
+  # 仓库 local-environment 的本机 Redis：渠道配置、成本与外部 API 配置写入口资源锁；凭据可用环境变量覆盖。
   data:
     redis:
       host: 127.0.0.1
@@ -74,11 +74,21 @@ redis:
     threads: 4
     netty-threads: 4
 
-# paytech-compensation-event：本服务暂无补偿事件类型；引入组件只为带上 XXL-Job 执行器。
+# paytech-compensation-event：沙箱验证运行 INTEGRATION_VERIFY_RUN（2026-10-20 自 Platform 迁入）。
+# 验证运行测试依赖真实执行器在提交后异步执行，因此保持启用；XXL 兜底扫描不启用，由用例有界等待任务结束。
 compensation:
   enabled: true
   # 多实例 Claim/Lease 的实例标识；测试固定值。
   instance-id: channel-connector-test
+  lease-duration: 2m
+  scanner-batch-size: 100
+  coordinator:
+    core-size: 10
+    maximum-size: 20
+    queue-capacity: 80
+    keep-alive: 60s
+  handler:
+    maximum-concurrency: 20
 
 # paytech-xxl-job-starter（随 compensation-event 引入）：测试不连接调度中心，到期切换由用例直接调用 Job Handler。
 xxl:
@@ -86,8 +96,12 @@ xxl:
     executor:
       enabled: false
 
+# 实例 ID（内部调用 Token 的 inst）：mode=OFF 时不使用；DUAL 读卡出站测试以独立上下文注入。
+paytech:
+  instance-id: ""
+
 internal-auth:
-  # 裸 OFF 会被 YAML 解析为布尔 false，必须带引号。
+  # 裸 OFF 会被 YAML 解析为布尔 false，必须带引号。共享 Mock 上下文为 OFF；DUAL 由独立上下文的动态属性覆盖并注入本地静态密钥对。
   mode: "OFF"
 
 channel-connector:
@@ -101,11 +115,16 @@ channel-connector:
     "[AMOUNT.MIN]": { value-type: DECIMAL }
     "[AMOUNT.MAX]": { value-type: DECIMAL }
     "[SECURITY.3DS_MODE]": { value-type: CODE, allowed-codes: [REQUIRED, SUPPORTED, UNSUPPORTED] }
-  outbound:
-    platform-context-path: "" # 测试 Mock HTTP 服务无 Platform 的 /platform-support 前缀。
-    platform-read-timeout: 30s
+  # 渠道协议（2026-10-20 自 Platform ps.integration.* 迁入）；修改需重启。
+  protocol:
+    configuration:
+      lock-wait-time: 500ms # 外部 API 配置写入的 TRY_LOCK 等待；全模块共用 lock:external-api-config，默认 500ms。
+      lock-lease-time: 30s # 资源锁租约，默认 30s；版本 CAS 仍为最终保护。
+    execution:
+      allowed-schemes: [https, http] # 默认只允许 https；只在本机 mock 加入 http，执行测试的出站地址指向本机 Mock 渠道。
+      card-context-path: "" # 读卡请求地址 http://card-service{本值}/...；测试 Mock HTTP 服务承载 card 合同，card 本身也无 context path。
   identifier:
-    # Snowflake Region / Worker 标识（渠道成本主键与测试 Fixture 主键）；生产无默认值且必填，修改需重启。测试进程固定 31/29。
+    # Snowflake Region / Worker 标识（渠道配置、成本、外部 API 配置主键与测试 Fixture 主键）；生产无默认值且必填，修改需重启。测试进程固定 31/29。
     region-id: 31
     worker-id: 29
 

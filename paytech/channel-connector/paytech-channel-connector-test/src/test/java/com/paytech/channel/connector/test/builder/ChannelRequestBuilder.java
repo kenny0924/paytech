@@ -15,6 +15,9 @@ import com.paytech.channel.connector.test.mocker.ChannelDataMocker.Fixture;
 
 /** 只组装可直接修改的请求；不会把测试刻意设置的非法值补回默认值。 */
 public final class ChannelRequestBuilder {
+    /** 合成读卡票据：满足 card 读卡 Wire 的 43 位 [A-Za-z0-9_-] 格式，进程内执行时经真实读卡客户端发往 card Mock。 */
+    public static final String CARD_TICKET = "tkt_operation_00000000000000000000000000001";
+
     /** 默认交易的消费者国家和 MCC 明确，不从 MID 反推。 */
     public static MidCriteria criteria() {
         var criteria = new MidCriteria();
@@ -83,7 +86,7 @@ public final class ChannelRequestBuilder {
         payment.put("amount", Map.of("value", "10.00", "currency", "AED"));
         payment.put("returnUrl", "https://merchant.local.invalid/return");
         var input = new LinkedHashMap<String, Object>();
-        input.put("card", Map.of("token", "synthetic-instrument-token"));
+        input.put("card", Map.of("token", CARD_TICKET));
         input.put("payment", payment);
         request.setInput(input);
         return request;

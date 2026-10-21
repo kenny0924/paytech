@@ -18,7 +18,7 @@ import com.paytech.arch.support.KnownDeviations;
  * 对 Platform Support 的全部模块执行共享规则 R1–R12（design/02）；类从各模块 {@code target/classes} 导入。
  *
  * <p>
- * 五个业务 core 模块与应用编排层 core 同属本服务，按 R1 口径可以互相依赖；其他服务的 core / app 一律禁止。
+ * 四个业务 core 模块与应用编排层 core 同属本服务，按 R1 口径可以互相依赖；其他服务的 core / app 一律禁止。
  * <p>
  * 搬迁前即存在、本步不改合同而保留的偏差登记在 arch-rules 的 {@code known-deviations.yaml}：新增违规失败；
  * 登记中属于本服务的条目必须仍然出现，偏差消除后同步删除登记。
@@ -35,8 +35,7 @@ class ArchitectureAutoTest {
     private static final List<String> MODULES = List.of("paytech-platform-support-api",
         "paytech-platform-support-access-control", "paytech-platform-support-audit-security",
         "paytech-platform-support-file-document", "paytech-platform-support-delivery",
-        "paytech-platform-support-integration", "paytech-platform-support-core", "paytech-platform-support-app",
-        "paytech-platform-support-test");
+        "paytech-platform-support-core", "paytech-platform-support-app", "paytech-platform-support-test");
 
     /** 除登记的既有偏差外零违规；违规清单逐条输出，便于定位模块与类。 */
     @Test

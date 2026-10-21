@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import test from "node:test";
+import { PROTOCOL_TABLES } from "./channel-connector/protocol-model.mjs";
 import { serviceOfTable } from "./payment-service-partition.mjs";
 
 const workspaceRoot = path.resolve(import.meta.dirname, "../..");
@@ -24,7 +25,7 @@ const historicalModelTotals = Object.freeze({ tables: 27, fields: 349, uniqueInd
 const historicalStructuralDigest = "2793402a691608c374c988e9ef2e01a24ad965d3fdec1b0f9acaf8ade026b690";
 // Current models: payment.pdma.json bytes, and the union with channel-connector.pdma.json (31 tables since the 2026-10-19
 // channel cost tables moved into the channel-connector partition, 32 since the 2026-10-20 t_channel_config_change).
-const currentModelTotals = Object.freeze({ tables: 32, fields: 400, uniqueIndexes: 45, accessIndexes: 46, relations: 68, oneToOneRelations: 7, diagramGroups: 9 });
+const currentModelTotals = Object.freeze({ tables: 32, fields: 401, uniqueIndexes: 45, accessIndexes: 46, relations: 68, oneToOneRelations: 7, diagramGroups: 9 });
 const expectedModelDigest = "4fb5a4c88f00bd5552dc4c66de1811aee4bc73aee40c40674c264966261e4979";
 const expectedStructuralDigest = "3588e21f75a01a0563a1547a123b19168db0129039169820c7db3af19ad7abf7";
 
@@ -488,13 +489,14 @@ create_time DATETIME(6) NN
 
 [t_channel_config_change]
 id BIGINT NN
-target_type VARCHAR(64) NN {CHANNEL,CHANNEL_ACCOUNT,CHANNEL_MID,MID_CAPABILITY,CHANNEL_COST_VERSION}
+target_type VARCHAR(64) NN {CHANNEL,CHANNEL_ACCOUNT,CHANNEL_MID,MID_CAPABILITY,CHANNEL_COST_VERSION,STANDARD_API,INTEGRATION,INTEGRATION_API,INTEGRATION_SCRIPT,INTEGRATION_IMPLEMENTATION,VERIFY_ACCOUNT,VERIFY_CASE}
 target_id BIGINT NN
-change_type VARCHAR(64) NN {CREATE,UPDATE,STATUS,CONFIGURATION,REBIND,CANCEL}
+change_type VARCHAR(64) NN {CREATE,UPDATE,STATUS,CONFIGURATION,REBIND,CANCEL,DELETE}
 from_status VARCHAR(64) N OPEN(渠道、账号、MID、能力组或成本版本的状态代码)
 to_status VARCHAR(64) N OPEN(渠道、账号、MID、能力组或成本版本的状态代码)
 operator_id BIGINT NN
 reason VARCHAR(512) N
+change_detail JSON N
 create_time DATETIME(6) NN
 `;
 
@@ -859,7 +861,7 @@ const expectedTableComments = Object.freeze({
   channel_cost_plan_ver: "保存成本规则发布批次的生效期、内容摘要及双人审批状态，当前版本仅由方案根指针确定；APPROVED 版本到达生效时间后由到期切换 Job 原子切换为当前版本。",
   channel_cost_scope: "冻结成本版本对 MID、经营主体、国家、币种、支付方式和动作的确定性匹配范围。",
   channel_cost_component: "冻结渠道成本适用范围下的百分比、固定费、跨境费、退款费或争议费参数；金额由 billing 按证据计算。",
-  channel_config_change: "渠道配置与成本版本的人工变更留痕；与业务变更同事务写入，只增不改。",
+  channel_config_change: "渠道配置、成本版本与外部 API 配置的人工变更留痕；与业务变更同事务写入，只增不改。",
 });
 const expectedDiagramGroups = Object.freeze({
   channel_mid: Object.freeze({ defName: "Channel 与 MID", primary: Object.freeze(["payment_channel", "channel_account", "channel_mid", "mid_capability", "mid_capability_detail"]), references: Object.freeze([]) }),
@@ -937,12 +939,16 @@ function physicalDecisionManifest() {
   assert.ok(match, "Payment Physical Decisions 缺少物理 Manifest 标记区");
   return JSON.parse(match[1]);
 }
+// 2026-10-20 起 channel-connector 模型另含自 Platform 迁入的 10 张渠道协议表与其图组，由 channel-connector-protocol-model.test.mjs
+// 校验；它们不属于本 Payment Orchestration Oracle，并集只取 Payment 分区生成的部分。
 function readModel() {
   const payment = JSON.parse(readFileSync(paths.model, "utf8"));
   const channelConnector = JSON.parse(readFileSync(paths.channelConnectorModel, "utf8"));
-  const names = new Set(payment.entities.map((entity) => entity.defKey));
+  const names = new Set([...payment.entities.map((entity) => entity.defKey), ...PROTOCOL_TABLES]);
+  const protocolIds = new Set(channelConnector.entities.filter((entity) => PROTOCOL_TABLES.includes(entity.defKey)).map((entity) => entity.id));
   return { ...payment, entities: [...payment.entities, ...channelConnector.entities.filter((entity) => !names.has(entity.defKey))],
-    diagrams: [...payment.diagrams, ...channelConnector.diagrams] };
+    diagrams: [...payment.diagrams, ...channelConnector.diagrams.filter((diagram) => !diagram.canvasData.cells
+      .some((cell) => cell.shape === "table" && protocolIds.has(cell.originKey)))] };
 }
 // 跨服务（跨库）关系在拆分后不再出现在任一模型中；本地关系 = 两端同属一个服务库。
 function isLocalRelation(relation) {
@@ -1070,7 +1076,7 @@ test("Payment test-owned Oracle is internally complete for all 32 tables", () =>
   assert.deepEqual(approvedFields.map((table) => table.defKey), approvedTableNames);
   assert.ok(approvedFields.every((table) => table.fields.length > 1));
   assert.deepEqual([...parseIndexes().keys()], approvedTableNames);
-  assert.equal(approvedFields.reduce((count, table) => count + table.fields.length, 0), 400);
+  assert.equal(approvedFields.reduce((count, table) => count + table.fields.length, 0), 401);
   const oracleIndexes = [...parseIndexes().values()].flat();
   assert.equal(oracleIndexes.filter((index) => index.unique).length, 45);
   assert.equal(oracleIndexes.filter((index) => !index.unique).length, 46);

@@ -11,7 +11,8 @@
     </parent>
     <artifactId>paytech-channel-connector-api</artifactId>
     <name>PayTech Channel Connector API</name>
-    <description>@HttpExchange contracts, DTOs and stable code enums for MID candidate query, channel operation execution and channel cost plans and resolution.</description>
+    <description>@HttpExchange contracts, DTOs and stable code enums for MID candidate query, channel operation execution, channel cost plans
+        and resolution, and external API (channel protocol) administration.</description>
     <dependencies>
         <dependency>
             <groupId>com.paytech</groupId>
@@ -20,6 +21,15 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-web</artifactId>
+        </dependency>
+        <!-- 外部 API 管理合同的 DTO 随 Platform 原样迁入（Jackson 注解与 JsonNode），HTTP Wire 不变；R2 偏差登记于 known-deviations.yaml。 -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>tools.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
         </dependency>
         <dependency>
             <groupId>jakarta.validation</groupId>

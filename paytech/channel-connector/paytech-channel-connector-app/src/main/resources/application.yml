@@ -11,7 +11,7 @@ spring:
         # 启用 nacos Profile 后，从配置中心加载服务配置。
         enabled: false
       discovery:
-        # 注册本服务（Payment 经服务发现调用）并发现 Platform、Vault；地址与命名空间由部署环境注入。
+        # 注册本服务（Payment 经服务发现调用）并发现 Vault、card；地址与命名空间由部署环境注入。
         server-addr: "${NACOS_SERVER_ADDR:127.0.0.1:8848}"
         namespace: "${NACOS_NAMESPACE:mor-local}"
   datasource:
@@ -23,7 +23,7 @@ spring:
       connection-timeout: 2000
       validation-timeout: 1000
       connection-init-sql: "SET time_zone = '+00:00'"
-  # 渠道成本方案写入口的 AbstractLockProcessor 资源锁（paytech-redis-starter）；地址与密码由部署环境注入。
+  # 渠道成本方案与外部 API 配置写入口的 AbstractLockProcessor 资源锁（paytech-redis-starter）；地址与密码由部署环境注入。
   data:
     redis:
       host: "${CHANNEL_CONNECTOR_REDIS_HOST:127.0.0.1}"
@@ -43,7 +43,7 @@ logging:
 
 web:
   logging:
-    # 渠道操作输入含支付工具 Token，输出含临时跳转地址：均不进入普通访问日志。
+    # 渠道操作输入含支付工具 Token，输出含临时跳转地址；外部 API 管理含脚本与验证账号凭据：均不进入普通访问日志。
     metadata-only-path-prefixes:
       - /
 
@@ -56,7 +56,7 @@ redis:
   coordination:
     enabled: true
 
-# paytech-compensation-event：本服务暂无补偿事件类型（compensation-event-catalog.yaml 为空），引入它是为了带上 XXL-Job 执行器；
+# paytech-compensation-event：沙箱验证运行 INTEGRATION_VERIFY_RUN（2026-10-20 自 Platform 迁入）的本地补偿任务，以及 XXL-Job 执行器；
 # 执行器承载补偿兜底扫描与渠道成本到期切换任务 channelCostVersionActivation，调度中心地址与执行器参数沿用组件默认，由部署注入。
 compensation:
   enabled: true
@@ -83,10 +83,16 @@ channel-connector:
     "[AMOUNT.MIN]": { value-type: DECIMAL }
     "[AMOUNT.MAX]": { value-type: DECIMAL }
     "[SECURITY.3DS_MODE]": { value-type: CODE, allowed-codes: [REQUIRED, SUPPORTED, UNSUPPORTED] }
-  outbound:
-    # Platform 标准 API 执行的对方 context path 与读取超时；修改需重启。
-    platform-context-path: /platform-support
-    platform-read-timeout: 30s
+  # 渠道协议（2026-10-20 自 Platform ps.integration.* 迁入，键名后缀与默认值不变）；修改需重启。
+  protocol:
+    configuration:
+      # 外部 API 配置写入共用一把资源锁（lock:external-api-config，TRY_LOCK）。
+      lock-wait-time: 500ms
+      lock-lease-time: 30s
+    execution:
+      # 出站地址只允许 https；读卡 card-service 无 context path。
+      allowed-schemes: [https]
+      card-context-path: ""
   identifier:
     # 部署分配的 Snowflake Region / Worker 标识（渠道成本主键），必填、无默认值；每个 app 独立分配，修改需重启。
     region-id: "${CHANNEL_CONNECTOR_SNOWFLAKE_REGION_ID}"

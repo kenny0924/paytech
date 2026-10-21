@@ -10,11 +10,11 @@ import org.springframework.stereotype.Component;
 
 import com.paytech.channel.connector.core.constant.ChannelConnectorLocks;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelAccount;
-import com.paytech.channel.connector.core.enums.ChangeTargetType;
+import com.paytech.channel.connector.protocol.core.enums.ChangeTargetType;
 import com.paytech.channel.connector.core.enums.ChannelStatus;
 import com.paytech.channel.connector.domain.ChannelAccountContext;
 import com.paytech.channel.connector.domain.ChannelAccountDetailView;
-import com.paytech.channel.connector.domain.ChannelConfigChanges;
+import com.paytech.channel.connector.protocol.domain.ChannelConfigChanges;
 import com.paytech.channel.connector.domainservice.repository.ChannelAccountRepository;
 import com.paytech.channel.connector.domainservice.repository.ChannelMidRepository;
 import com.paytech.channel.connector.domainservice.service.ChannelAccountService;
@@ -42,6 +42,7 @@ public class ChangeChannelAccountStatusProcessor
     private final ChannelAccountService channelAccountService;
     private final PaymentChannelService paymentChannelService;
     private final ChannelAccountRepository channelAccountRepository;
+    private final ChannelConfigTransactions channelConfigTransactions;
 
     /** 账号资源锁；关闭时读取不可变的所属渠道并一并加锁。 */
     @Override
@@ -73,7 +74,8 @@ public class ChangeChannelAccountStatusProcessor
         checkPrerequisite(context, target, boundMids);
 
         // 本地保存
-        channelAccountService.changeAccountStatus(context, target);
+        channelConfigTransactions.write(context.getChange(),
+            () -> channelAccountService.changeAccountStatus(context, target));
         return new ChannelAccountDetailView(account, boundMids);
     }
 

@@ -1,0 +1,131 @@
+{
+ "chain": {
+  "candidates": {
+   "equal": true,
+   "diff": [],
+   "vaultCallers": [
+    [],
+    []
+   ]
+  },
+  "refund": {
+   "equal": true,
+   "diff": [],
+   "vaultCallers": [
+    [
+     "platform-support-service"
+    ],
+    [
+     "channel-connector-service"
+    ]
+   ]
+  },
+  "payWithCardRead": {
+   "equal": true,
+   "diff": [],
+   "vaultCallers": [
+    [
+     "platform-support-service"
+    ],
+    [
+     "channel-connector-service"
+    ]
+   ]
+  },
+  "notSentStandardApiMissing": {
+   "equal": true,
+   "diff": [],
+   "vaultCallers": [
+    [],
+    []
+   ]
+  },
+  "notSentInvalidInput": {
+   "equal": true,
+   "diff": [],
+   "vaultCallers": [
+    [],
+    []
+   ]
+  }
+ },
+ "cardGate": {
+  "baseline": {
+   "platform-support-service": {
+    "httpStatus": 500,
+    "code": "INTERNAL_ERROR"
+   },
+   "channel-connector-service": {
+    "httpStatus": 404,
+    "code": "NOT_FOUND"
+   },
+   "other-service": {
+    "httpStatus": 404,
+    "code": "NOT_FOUND"
+   }
+  },
+  "after": {
+   "platform-support-service": {
+    "httpStatus": 500,
+    "code": "INTERNAL_ERROR"
+   },
+   "channel-connector-service": {
+    "httpStatus": 500,
+    "code": "INTERNAL_ERROR"
+   },
+   "other-service": {
+    "httpStatus": 404,
+    "code": "NOT_FOUND"
+   }
+  },
+  "cardLogDuringRun": [
+   [
+    "POST 500"
+   ],
+   [
+    "POST 500",
+    "POST 500",
+    "POST 500",
+    "POST 404"
+   ]
+  ]
+ },
+ "sandbox": {
+  "equal": true,
+  "diff": [],
+  "codes": [
+   [
+    "S5_BASELINE2_ACCT",
+    "S5_BASELINE2_CASE",
+    "238501454321553408"
+   ],
+   [
+    "S5_AFTER_ACCT",
+    "S5_AFTER_CASE",
+    "238502870792601600"
+   ]
+  ]
+ },
+ "snapshot": {
+  "calls": [
+   34,
+   37
+  ],
+  "callsEqualAfterRemovingNew": true,
+  "nonOkCalls": [],
+  "equalAfterRemovingNew": true,
+  "diff": [],
+  "newRunVsBaselineRun": {
+   "equal": true,
+   "diff": []
+  },
+  "new-verify-accounts-detail": {
+   "equal": true,
+   "diff": []
+  },
+  "new-verify-cases-detail": {
+   "equal": true,
+   "diff": []
+  }
+ }
+}

@@ -6,7 +6,6 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import com.paytech.channel.connector.core.configuration.CapabilityDefinition;
 import com.paytech.channel.connector.core.configuration.ChannelProperties;
@@ -15,7 +14,6 @@ import com.paytech.channel.connector.core.dal.dataobject.MidCapabilityDetail;
 import com.paytech.channel.connector.core.enums.CapabilityStatus;
 import com.paytech.channel.connector.domain.MidCapabilityView;
 import com.paytech.channel.connector.domain.MidCapabilityWriteContext;
-import com.paytech.channel.connector.domainservice.repository.ChannelConfigChangeRepository;
 import com.paytech.channel.connector.domainservice.repository.MidCapabilityDetailRepository;
 import com.paytech.channel.connector.domainservice.repository.MidCapabilityRepository;
 import com.paytech.channel.connector.domainservice.service.MidCapabilityService;
@@ -23,14 +21,12 @@ import com.paytech.foundation.common.error.BizCheckFailException;
 
 import lombok.AllArgsConstructor;
 
-/** MID 能力组的本地保存与查询；写入与变更记录同事务提交。 */
+/** MID 能力组的本地保存与查询；写入方法加入调用方 Processor 的事务，变更记录由 Processor 在同一事务中写入。 */
 @Service
 @AllArgsConstructor
 public class MidCapabilityServiceImpl implements MidCapabilityService {
     private final ChannelProperties properties;
-    private final TransactionTemplate transactionTemplate;
     private final MidCapabilityRepository midCapabilityRepository;
-    private final ChannelConfigChangeRepository channelConfigChangeRepository;
     private final MidCapabilityDetailRepository midCapabilityDetailRepository;
 
     /** 已注册的能力目录，按能力代码升序；每次读取当前配置。 */
@@ -58,33 +54,24 @@ public class MidCapabilityServiceImpl implements MidCapabilityService {
         return new MidCapabilityView(capability, details);
     }
 
-    /** 写入能力组、明细与变更记录。 */
+    /** 写入能力组、明细；须在调用方事务内执行。 */
     @Override
     public void createCapability(MidCapabilityWriteContext context) {
-        transactionTemplate.executeWithoutResult(status -> {
-            midCapabilityRepository.insert(context.getCapability());
-            midCapabilityDetailRepository.insertAll(context.getDetails());
-            channelConfigChangeRepository.insert(context.getChange());
-        });
+        midCapabilityRepository.insert(context.getCapability());
+        midCapabilityDetailRepository.insertAll(context.getDetails());
     }
 
-    /** 删旧插新并写入变更记录。 */
+    /** 删旧插新；须在调用方事务内执行。 */
     @Override
     public void replaceDetails(MidCapabilityWriteContext context) {
-        transactionTemplate.executeWithoutResult(status -> {
-            midCapabilityRepository.touch(context.getCapability(), context.getNow());
-            midCapabilityDetailRepository.deleteByCapabilityId(context.getCapability().getMidCapabilityId());
-            midCapabilityDetailRepository.insertAll(context.getDetails());
-            channelConfigChangeRepository.insert(context.getChange());
-        });
+        midCapabilityRepository.touch(context.getCapability(), context.getNow());
+        midCapabilityDetailRepository.deleteByCapabilityId(context.getCapability().getMidCapabilityId());
+        midCapabilityDetailRepository.insertAll(context.getDetails());
     }
 
-    /** 启停并写入变更记录。 */
+    /** 启停；须在调用方事务内执行。 */
     @Override
     public void changeCapabilityStatus(MidCapabilityWriteContext context, CapabilityStatus targetStatus) {
-        transactionTemplate.executeWithoutResult(status -> {
-            midCapabilityRepository.updateStatus(context.getCapability(), targetStatus, context.getNow());
-            channelConfigChangeRepository.insert(context.getChange());
-        });
+        midCapabilityRepository.updateStatus(context.getCapability(), targetStatus, context.getNow());
     }
 }

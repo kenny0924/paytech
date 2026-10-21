@@ -121,7 +121,6 @@ web:
       - /api-scope-admin
       - /api-credentials
       - /tenant-projections
-      - /external-api-admin
       - /notification-admin
       - /webhook-admin
       - /platform/v1/internal-tokens
@@ -142,13 +141,8 @@ tenant:
 compensation:
   enabled: ${PLATFORM_SUPPORT_COMPENSATION_ENABLED:${files.onboarding.enabled:false}}
 
-# 外部 API 配置写入共用一把资源锁（lock:external-api-config）；修改需重启。
 # 币种规则维护按币种代码加锁（currency-spec:{currency}），新建、修改与启停共用；修改需重启。
 ps:
-  integration:
-    configuration:
-      lock-wait-time: 500ms
-      lock-lease-time: 30s
   reference-data:
     currency-spec:
       lock-wait-time: 500ms

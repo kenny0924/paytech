@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
-/** 经 Platform 执行一次渠道操作；不得携带卡值或账号材料，卡只以支付工具 Token 出现在输入中。 */
+/** 在本进程执行一次渠道操作；不得携带卡值或账号材料，卡只以支付工具 Token 出现在输入中。 */
 @Getter
 @Setter
 public class ExecuteChannelOperationRequest {

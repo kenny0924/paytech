@@ -3,6 +3,7 @@
 - Decision status: Confirmed（Owner 和跨系统调用方式）；物理字段、HTTP Wire 和运行材料交接继续细化。
 - Decision date: 2026-09-21
 - Superseded sections: 第 1 节“单次最多一个目标外部操作……跨 API 业务编排”及配置对象列举、第 3 节“Integration 五表草案”，由 [2026-10-13 标准 API 与流程决定](./2026-10-13-platform-standard-api-flow.md)取代；其余 Owner、内部 HTTP、Gateway、Vault/Card 边界继续有效。
+- 2026-10-20 后继：Owner 与"业务系统经 Platform 内部 HTTP 调用"由[2026-10-20 统一对外出口决定](./2026-10-20-channel-connector-unified-outbound.md)取代，外部 API 配置与执行整体迁入 channel-connector。
 - 用户决定：通用 API 配置和执行放在 Platform，Payment 调用 Platform 暴露的 HTTP 接口完成渠道调用。
 - 详细合同：[Platform HTTP 执行修订](../../requirements/20260914/platform-support-外部API配置与执行/platform-http-execution-amendment.md)。
 - 实施、验证和部署状态：[当前台账](../CURRENT_IMPLEMENTATION.md#platform-integration-http-execution-20260921)。

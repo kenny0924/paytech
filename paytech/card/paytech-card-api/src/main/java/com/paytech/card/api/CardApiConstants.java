@@ -14,8 +14,11 @@ public final class CardApiConstants {
     /** 工具创建与读卡票据签发的唯一调用方。 */
     public static final String PAYMENT_SERVICE = "payment-service";
 
-    /** 凭票据读卡的唯一调用方。 */
+    /** 凭票据读卡的调用方之一：外部 API 执行迁往 channel-connector 前的原调用方，第一段过渡期保留以便回退，第二段收回。 */
     public static final String PLATFORM_SUPPORT_SERVICE = "platform-support-service";
+
+    /** 凭票据读卡的调用方之一：channel-connector 进程内执行标准 API 时读卡（2026-10-20 统一对外渠道出口第一段起）。 */
+    public static final String CHANNEL_CONNECTOR_SERVICE = "channel-connector-service";
 
     /** 已存卡列出的调用方之一（GET checkout / SubmitPayment）。 */
     public static final String ACQUIRING_SERVICE = "acquiring-service";

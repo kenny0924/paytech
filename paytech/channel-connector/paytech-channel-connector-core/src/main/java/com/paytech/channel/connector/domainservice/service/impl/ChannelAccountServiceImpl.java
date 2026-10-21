@@ -1,14 +1,12 @@
 package com.paytech.channel.connector.domainservice.service.impl;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import com.paytech.channel.connector.core.dal.dataobject.ChannelAccount;
 import com.paytech.channel.connector.core.enums.ChannelStatus;
 import com.paytech.channel.connector.domain.ChannelAccountContext;
 import com.paytech.channel.connector.domain.ChannelAccountDetailView;
 import com.paytech.channel.connector.domainservice.repository.ChannelAccountRepository;
-import com.paytech.channel.connector.domainservice.repository.ChannelConfigChangeRepository;
 import com.paytech.channel.connector.domainservice.repository.ChannelMidRepository;
 import com.paytech.channel.connector.domainservice.service.ChannelAccountService;
 import com.paytech.foundation.common.error.BizCheckFailException;
@@ -17,14 +15,12 @@ import com.paytech.foundation.web.paging.PagingResponseBody;
 
 import lombok.AllArgsConstructor;
 
-/** 渠道技术账号的本地保存与查询；写入与变更记录同事务提交。 */
+/** 渠道技术账号的本地保存与查询；写入方法加入调用方 Processor 的事务，变更记录由 Processor 在同一事务中写入。 */
 @Service
 @AllArgsConstructor
 public class ChannelAccountServiceImpl implements ChannelAccountService {
     private final ChannelMidRepository channelMidRepository;
-    private final TransactionTemplate transactionTemplate;
     private final ChannelAccountRepository channelAccountRepository;
-    private final ChannelConfigChangeRepository channelConfigChangeRepository;
 
     /** 读取账号；不存在时业务拒绝。 */
     @Override
@@ -50,39 +46,27 @@ public class ChannelAccountServiceImpl implements ChannelAccountService {
         return channelAccountRepository.findPage(channelId, entityNo, status, paging);
     }
 
-    /** 写入新账号与变更记录。 */
+    /** 写入新账号；须在调用方事务内执行。 */
     @Override
     public void createAccount(ChannelAccountContext context) {
-        transactionTemplate.executeWithoutResult(status -> {
-            channelAccountRepository.insert(context.getAccount());
-            channelConfigChangeRepository.insert(context.getChange());
-        });
+        channelAccountRepository.insert(context.getAccount());
     }
 
-    /** 修改名称与备注并写入变更记录。 */
+    /** 修改名称与备注；须在调用方事务内执行。 */
     @Override
     public void updateProfile(ChannelAccountContext context, String accountName, String remark) {
-        transactionTemplate.executeWithoutResult(status -> {
-            channelAccountRepository.updateProfile(context.getAccount(), accountName, remark, context.getNow());
-            channelConfigChangeRepository.insert(context.getChange());
-        });
+        channelAccountRepository.updateProfile(context.getAccount(), accountName, remark, context.getNow());
     }
 
-    /** 写入新 Token 并写入变更记录。 */
+    /** 写入新 Token ；须在调用方事务内执行。 */
     @Override
     public void updateVaultToken(ChannelAccountContext context, String token) {
-        transactionTemplate.executeWithoutResult(status -> {
-            channelAccountRepository.updateVaultToken(context.getAccount(), token, context.getNow());
-            channelConfigChangeRepository.insert(context.getChange());
-        });
+        channelAccountRepository.updateVaultToken(context.getAccount(), token, context.getNow());
     }
 
-    /** 变更状态并写入变更记录。 */
+    /** 变更状态；须在调用方事务内执行。 */
     @Override
     public void changeAccountStatus(ChannelAccountContext context, ChannelStatus targetStatus) {
-        transactionTemplate.executeWithoutResult(status -> {
-            channelAccountRepository.updateStatus(context.getAccount(), targetStatus, context.getNow());
-            channelConfigChangeRepository.insert(context.getChange());
-        });
+        channelAccountRepository.updateStatus(context.getAccount(), targetStatus, context.getNow());
     }
 }

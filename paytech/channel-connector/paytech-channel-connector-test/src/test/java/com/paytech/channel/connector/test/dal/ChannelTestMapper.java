@@ -7,8 +7,12 @@ import java.util.Map;
 import org.apache.ibatis.annotations.*;
 
 import com.paytech.channel.connector.core.dal.dataobject.*;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelConfigChange;
 
-/** mor_channel_connector 的前置数据和清理 SQL；只触碰本库 18 张表（10 §3.1、渠道成本四表与变更记录表），不代替被测生产 Mapper。 */
+/**
+ * mor_channel_connector 的前置数据和清理 SQL；不代替被测生产 Mapper
+ * <li>只触碰本库 28 张表：10 §3.1 渠道表、渠道成本四表、变更记录表，以及 2026-10-20 自 Platform 迁入的 10 张渠道协议表。</li>
+ */
 public interface ChannelTestMapper {
     /** 插入本例的 PaymentChannel 配置。 */
     @Insert("INSERT INTO t_payment_channel (channel_id, channel_code, channel_name, channel_status, create_time, update_time) VALUES (#{channelId}, #{channelCode}, #{channelName}, #{channelStatus.code}, #{createTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}, #{updateTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler})")
@@ -46,7 +50,7 @@ public interface ChannelTestMapper {
     @Select("SELECT (SELECT COUNT(*) FROM t_payment_channel) + (SELECT COUNT(*) FROM t_channel_account) + (SELECT COUNT(*) FROM t_channel_mid) + (SELECT COUNT(*) FROM t_mid_capability) + (SELECT COUNT(*) FROM t_mid_capability_detail)")
     int countRows();
 
-    /** 读取本库其余八张表（仅 Schema 的路由策略、交互、回调、异常与补偿任务）总行数，空基线必须为零。 */
+    /** 读取本库其余八张表（仅 Schema 的路由策略、交互、回调、异常，以及补偿任务）总行数，空基线必须为零。 */
     @Select("SELECT (SELECT COUNT(*) FROM t_routing_policy) + (SELECT COUNT(*) FROM t_routing_policy_version) + (SELECT COUNT(*) FROM t_routing_policy_mid) + (SELECT COUNT(*) FROM t_channel_interaction) + (SELECT COUNT(*) FROM t_channel_callback) + (SELECT COUNT(*) FROM t_channel_callback_item) + (SELECT COUNT(*) FROM t_channel_event_exception) + (SELECT COUNT(*) FROM t_compensation_event)")
     int countSchemaOnlyRows();
 
@@ -69,7 +73,7 @@ public interface ChannelTestMapper {
         @Param("effectiveTo") Instant effectiveTo);
 
     /** 插入本例的变更记录，供查询测试准备数据。 */
-    @Insert("INSERT INTO t_channel_config_change (id, target_type, target_id, change_type, from_status, to_status, operator_id, reason, create_time) VALUES (#{id}, #{targetType.code}, #{targetId}, #{changeType.code}, #{fromStatus}, #{toStatus}, #{operatorId}, #{reason}, #{createTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler})")
+    @Insert("INSERT INTO t_channel_config_change (id, target_type, target_id, change_type, from_status, to_status, operator_id, reason, change_detail, create_time) VALUES (#{id}, #{targetType.code}, #{targetId}, #{changeType.code}, #{fromStatus}, #{toStatus}, #{operatorId}, #{reason}, #{changeDetail}, #{createTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler})")
     void insertConfigChange(ChannelConfigChange value);
 
     /** 读取变更记录表总行数，空基线必须为零。 */
@@ -192,7 +196,7 @@ public interface ChannelTestMapper {
     @Delete("DELETE FROM t_channel_event_exception")
     void clearEventExceptions();
 
-    /** 仅清理本测试库的补偿任务（本服务尚无 Handler，防御性清理）。 */
+    /** 仅清理本测试库的补偿任务（沙箱验证运行 INTEGRATION_VERIFY_RUN 等）。 */
     @Delete("DELETE FROM t_compensation_event")
     void clearCompensationEvents();
 
@@ -225,4 +229,50 @@ public interface ChannelTestMapper {
     /** 读取能力组明细，按能力代码升序。 */
     @Select("SELECT capability_code, value_type, boolean_value, decimal_value, code_value FROM t_mid_capability_detail WHERE mid_capability_id = #{capabilityId} ORDER BY capability_code")
     List<Map<String, Object>> selectDetails(@Param("capabilityId") long capabilityId);
+
+    // ---- 2026-10-20 统一对外渠道出口第一段：渠道协议 10 表 ----
+
+    /** 读取渠道协议 10 张表总行数，空基线必须为零。 */
+    @Select("SELECT (SELECT COUNT(*) FROM t_standard_api) + (SELECT COUNT(*) FROM t_api_field) + (SELECT COUNT(*) FROM t_integration) + (SELECT COUNT(*) FROM t_integration_api) + (SELECT COUNT(*) FROM t_integration_script) + (SELECT COUNT(*) FROM t_integration_standard_api) + (SELECT COUNT(*) FROM t_integration_verify_account) + (SELECT COUNT(*) FROM t_integration_verify_case) + (SELECT COUNT(*) FROM t_integration_verify_run) + (SELECT COUNT(*) FROM t_integration_verify_run_step)")
+    int countProtocolRows();
+
+    /** 仅清理本测试库的验证运行步骤。 */
+    @Delete("DELETE FROM t_integration_verify_run_step")
+    void clearVerifyRunSteps();
+
+    /** 仅清理本测试库的验证运行。 */
+    @Delete("DELETE FROM t_integration_verify_run")
+    void clearVerifyRuns();
+
+    /** 仅清理本测试库的验证用例。 */
+    @Delete("DELETE FROM t_integration_verify_case")
+    void clearVerifyCases();
+
+    /** 仅清理本测试库的验证账号。 */
+    @Delete("DELETE FROM t_integration_verify_account")
+    void clearVerifyAccounts();
+
+    /** 仅清理本测试库的标准 API 实现。 */
+    @Delete("DELETE FROM t_integration_standard_api")
+    void clearImplementations();
+
+    /** 仅清理本测试库的原子 API。 */
+    @Delete("DELETE FROM t_integration_api")
+    void clearIntegrationApis();
+
+    /** 仅清理本测试库的公共脚本。 */
+    @Delete("DELETE FROM t_integration_script")
+    void clearIntegrationScripts();
+
+    /** 仅清理本测试库的 API 字段。 */
+    @Delete("DELETE FROM t_api_field")
+    void clearApiFields();
+
+    /** 仅清理本测试库的接入方。 */
+    @Delete("DELETE FROM t_integration")
+    void clearIntegrations();
+
+    /** 仅清理本测试库的标准 API。 */
+    @Delete("DELETE FROM t_standard_api")
+    void clearStandardApis();
 }

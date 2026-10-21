@@ -6,7 +6,6 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import com.paytech.channel.connector.core.dal.dataobject.ChannelConfigChange;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelCostPlan;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelCostPlanVer;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelCostScope;
@@ -16,7 +15,6 @@ import com.paytech.channel.connector.domain.ChannelCostPlanSummaryView;
 import com.paytech.channel.connector.domain.ChannelCostPlanView;
 import com.paytech.channel.connector.domain.ChannelCostVersionContext;
 import com.paytech.channel.connector.domain.ChannelCostVersionView;
-import com.paytech.channel.connector.domainservice.repository.ChannelConfigChangeRepository;
 import com.paytech.channel.connector.domainservice.repository.ChannelCostComponentRepository;
 import com.paytech.channel.connector.domainservice.repository.ChannelCostPlanRepository;
 import com.paytech.channel.connector.domainservice.repository.ChannelCostPlanVerRepository;
@@ -38,7 +36,6 @@ public class ChannelCostPlanServiceImpl implements ChannelCostPlanService {
     private final ChannelCostPlanRepository channelCostPlanRepository;
     private final ChannelCostScopeRepository channelCostScopeRepository;
     private final ChannelCostPlanVerRepository channelCostPlanVerRepository;
-    private final ChannelConfigChangeRepository channelConfigChangeRepository;
     private final ChannelCostComponentRepository channelCostComponentRepository;
 
     /** 单行写入方案，唯一键保护 Channel 与方案代码。 */
@@ -140,14 +137,11 @@ public class ChannelCostPlanServiceImpl implements ChannelCostPlanService {
         });
     }
 
-    /** 锁方案与版本后条件作废 APPROVED 版本，并在同一事务写入 CANCEL 变更记录。 */
+    /** 锁方案与版本后条件作废 APPROVED 版本；须在调用方事务内执行，CANCEL 变更记录由 Processor 在同一事务中写入。 */
     @Override
-    public void cancelVersion(ChannelCostVersionContext context, ChannelConfigChange change) {
-        transactionTemplate.executeWithoutResult(status -> {
-            lockPlanAndVersion(context);
-            channelCostPlanVerRepository.cancel(context.getVer(), change.getCreateTime());
-            channelConfigChangeRepository.insert(change);
-        });
+    public void cancelVersion(ChannelCostVersionContext context, Instant now) {
+        lockPlanAndVersion(context);
+        channelCostPlanVerRepository.cancel(context.getVer(), now);
     }
 
     /** 分页查询方案列表项；普通列表读取不建事务。 */

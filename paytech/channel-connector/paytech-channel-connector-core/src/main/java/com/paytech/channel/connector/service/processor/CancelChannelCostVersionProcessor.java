@@ -7,9 +7,9 @@ import java.time.temporal.ChronoUnit;
 import org.springframework.stereotype.Component;
 
 import com.paytech.channel.connector.core.constant.ChannelConnectorLocks;
-import com.paytech.channel.connector.core.dal.dataobject.ChannelConfigChange;
-import com.paytech.channel.connector.core.enums.ChangeTargetType;
-import com.paytech.channel.connector.core.enums.ChangeType;
+import com.paytech.channel.connector.protocol.domain.ChannelConfigChangeRecord;
+import com.paytech.channel.connector.protocol.core.enums.ChangeTargetType;
+import com.paytech.channel.connector.protocol.core.enums.ChangeType;
 import com.paytech.channel.connector.core.enums.ChannelCostVersionStatus;
 import com.paytech.channel.connector.domain.ChannelCostVersionContext;
 import com.paytech.channel.connector.domain.ChannelCostVersionView;
@@ -34,6 +34,7 @@ public class CancelChannelCostVersionProcessor
     private final Clock clock;
     private final IdGenerator idGenerator;
     private final ChannelCostPlanService channelCostPlanService;
+    private final ChannelConfigTransactions channelConfigTransactions;
 
     /** 方案资源锁，持续等待。 */
     @Override
@@ -50,14 +51,15 @@ public class CancelChannelCostVersionProcessor
         context.checkCancellableAt(now);
 
         // 本地保存
-        channelCostPlanService.cancelVersion(context, buildChange(context, request, now));
+        channelConfigTransactions.write(buildChange(context, request, now),
+            () -> channelCostPlanService.cancelVersion(context, now));
         return context.toView();
     }
 
     /** 构建 CHANNEL_COST_VERSION / CANCEL 变更记录，创建时间即作废时刻。 */
-    ChannelConfigChange buildChange(ChannelCostVersionContext context, CancelChannelCostVersionRequest request,
+    ChannelConfigChangeRecord buildChange(ChannelCostVersionContext context, CancelChannelCostVersionRequest request,
         Instant now) {
-        ChannelConfigChange change = new ChannelConfigChange();
+        ChannelConfigChangeRecord change = new ChannelConfigChangeRecord();
         change.setId(idGenerator.nextId());
         change.setTargetType(ChangeTargetType.CHANNEL_COST_VERSION);
         change.setTargetId(context.getVer().getId());

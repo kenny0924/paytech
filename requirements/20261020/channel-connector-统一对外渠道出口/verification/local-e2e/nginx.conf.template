@@ -1,0 +1,90 @@
+# 阶段 5 本机全链路 Nginx（任务卡 14，以 20260914 客户入驻 local-e2e 模板为蓝本）：四个 HTTPS 站点覆盖可信客户端 IP 与入口通道后
+# 转发 Gateway（127.0.0.1:18080）；Client / 运营站点的页面转 Vite 开发服务器。由 run-service.sh nginx 替换 __STATE__ / __LOGS__ 后启动。
+#   18443 CLIENT（Client Console）   18444 OPERATIONS（运营后台）
+#   18445 CLIENT_API（对外 Client API，mor-test 为 28444）   18446 CHECKOUT（Hosted Checkout 的 /api/，本步无页面）
+worker_processes 1;
+pid __STATE__/nginx/nginx.pid;
+error_log __LOGS__/nginx-error.log warn;
+events { worker_connections 256; }
+http {
+  access_log __LOGS__/nginx-access.log;
+  client_body_temp_path __STATE__/nginx/tmp/body;
+  proxy_temp_path __STATE__/nginx/tmp/proxy;
+  fastcgi_temp_path __STATE__/nginx/tmp/fastcgi;
+  uwsgi_temp_path __STATE__/nginx/tmp/uwsgi;
+  scgi_temp_path __STATE__/nginx/tmp/scgi;
+  client_max_body_size 1m;
+  map $http_upgrade $connection_upgrade { default upgrade; '' close; }
+  ssl_certificate __STATE__/nginx/local.crt;
+  ssl_certificate_key __STATE__/nginx/local.key;
+
+  server {
+    listen 127.0.0.1:18443 ssl;
+    location /api/ {
+      proxy_pass http://127.0.0.1:18080;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Entry-Channel CLIENT;
+      proxy_set_header Forwarded "";
+      proxy_set_header X-Forwarded-For "";
+      proxy_set_header X-Forwarded-Host "";
+      proxy_set_header X-Forwarded-Proto "";
+      proxy_set_header X-Forwarded-Port "";
+    }
+    location / {
+      proxy_pass http://127.0.0.1:18302;
+      proxy_http_version 1.1;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection $connection_upgrade;
+    }
+  }
+
+  server {
+    listen 127.0.0.1:18444 ssl;
+    location /api/ {
+      proxy_pass http://127.0.0.1:18080;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Entry-Channel OPERATIONS;
+      proxy_set_header Forwarded "";
+      proxy_set_header X-Forwarded-For "";
+      proxy_set_header X-Forwarded-Host "";
+      proxy_set_header X-Forwarded-Proto "";
+      proxy_set_header X-Forwarded-Port "";
+    }
+    location / {
+      proxy_pass http://127.0.0.1:18301;
+      proxy_http_version 1.1;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection $connection_upgrade;
+    }
+  }
+
+  server {
+    listen 127.0.0.1:18445 ssl;
+    location /api/ {
+      proxy_pass http://127.0.0.1:18080;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Entry-Channel CLIENT_API;
+      proxy_set_header Forwarded "";
+      proxy_set_header X-Forwarded-For "";
+      proxy_set_header X-Forwarded-Host "";
+      proxy_set_header X-Forwarded-Proto "";
+      proxy_set_header X-Forwarded-Port "";
+    }
+    location / { return 404; }
+  }
+
+  server {
+    listen 127.0.0.1:18446 ssl;
+    location /api/ {
+      proxy_pass http://127.0.0.1:18080;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Entry-Channel CHECKOUT;
+      proxy_set_header Forwarded "";
+      proxy_set_header X-Forwarded-For "";
+      proxy_set_header X-Forwarded-Host "";
+      proxy_set_header X-Forwarded-Proto "";
+      proxy_set_header X-Forwarded-Port "";
+    }
+    location / { return 404; }
+  }
+}

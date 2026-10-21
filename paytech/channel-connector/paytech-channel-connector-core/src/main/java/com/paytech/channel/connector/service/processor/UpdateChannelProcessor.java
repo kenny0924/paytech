@@ -9,9 +9,9 @@ import org.springframework.stereotype.Component;
 
 import com.paytech.channel.connector.core.constant.ChannelConnectorLocks;
 import com.paytech.channel.connector.core.dal.dataobject.PaymentChannel;
-import com.paytech.channel.connector.core.enums.ChangeTargetType;
-import com.paytech.channel.connector.core.enums.ChangeType;
-import com.paytech.channel.connector.domain.ChannelConfigChanges;
+import com.paytech.channel.connector.protocol.core.enums.ChangeTargetType;
+import com.paytech.channel.connector.protocol.core.enums.ChangeType;
+import com.paytech.channel.connector.protocol.domain.ChannelConfigChanges;
 import com.paytech.channel.connector.domain.ChannelContext;
 import com.paytech.channel.connector.domainservice.service.PaymentChannelService;
 import com.paytech.channel.connector.service.processor.request.UpdateChannelRequest;
@@ -31,6 +31,7 @@ public class UpdateChannelProcessor extends AbstractLockProcessor<UpdateChannelR
     private final Clock clock;
     private final IdGenerator idGenerator;
     private final PaymentChannelService paymentChannelService;
+    private final ChannelConfigTransactions channelConfigTransactions;
 
     /** 渠道资源锁。 */
     @Override
@@ -51,7 +52,8 @@ public class UpdateChannelProcessor extends AbstractLockProcessor<UpdateChannelR
         }
 
         // 本地保存
-        paymentChannelService.renameChannel(context, request.getChannelName());
+        channelConfigTransactions.write(context.getChange(),
+            () -> paymentChannelService.renameChannel(context, request.getChannelName()));
         return channel;
     }
 }

@@ -2,6 +2,5 @@
 # 新增 Handler 时同步追加；与 MQ 领域事件目录 foundation/paytech-messaging/catalog/events.yaml 不是同一集合。
 eventTypes:
   - FILE_SCAN
-  - INTEGRATION_VERIFY_RUN
   - NOTIFICATION_DELIVERY
   - WEBHOOK_DELIVERY

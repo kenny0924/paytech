@@ -9,9 +9,9 @@ import org.springframework.stereotype.Component;
 
 import com.paytech.channel.connector.core.constant.ChannelConnectorLocks;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelMid;
-import com.paytech.channel.connector.core.enums.ChangeTargetType;
+import com.paytech.channel.connector.protocol.core.enums.ChangeTargetType;
 import com.paytech.channel.connector.core.enums.ChannelStatus;
-import com.paytech.channel.connector.domain.ChannelConfigChanges;
+import com.paytech.channel.connector.protocol.domain.ChannelConfigChanges;
 import com.paytech.channel.connector.domain.ChannelMidContext;
 import com.paytech.channel.connector.domain.ChannelMidDetailView;
 import com.paytech.channel.connector.domainservice.service.ChannelAccountService;
@@ -39,6 +39,7 @@ public class ChangeChannelMidStatusProcessor
     private final ChannelMidService channelMidService;
     private final ChannelAccountService channelAccountService;
     private final PaymentChannelService paymentChannelService;
+    private final ChannelConfigTransactions channelConfigTransactions;
 
     /** MID 资源锁。 */
     @Override
@@ -68,7 +69,7 @@ public class ChangeChannelMidStatusProcessor
         }
 
         // 本地保存
-        channelMidService.changeMidStatus(context, target);
+        channelConfigTransactions.write(context.getChange(), () -> channelMidService.changeMidStatus(context, target));
         return view;
     }
 }

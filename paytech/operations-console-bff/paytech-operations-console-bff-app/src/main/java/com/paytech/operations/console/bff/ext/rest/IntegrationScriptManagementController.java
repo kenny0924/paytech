@@ -4,7 +4,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import com.paytech.foundation.web.paging.PagingResponseBody;
-import com.paytech.operations.console.bff.integration.PlatformIntegrationScriptManagementClient;
+import com.paytech.operations.console.bff.integration.IntegrationScriptManagementClient;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
 import com.paytech.operations.console.bff.service.model.externalapi.request.CreateIntegrationScriptRequestBody;
 import com.paytech.operations.console.bff.service.model.externalapi.request.DeleteExternalApiConfigRequestBody;
@@ -18,34 +18,32 @@ import com.paytech.operations.console.bff.service.model.externalapi.response.Val
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 
-/** 公共脚本管理的浏览器入口：实时 PLT-I02 授权后原样转发 Platform，不接收或转发 Idempotency-Key。 */
+/** 公共脚本管理的浏览器入口：实时 PLT-I02 授权后原样转发 channel-connector，不接收或转发 Idempotency-Key。 */
 @RestController
 @Validated
 @AllArgsConstructor
 @RequestMapping("/external-api-admin/v1")
 public class IntegrationScriptManagementController {
 
-    private final PlatformIntegrationScriptManagementClient client;
+    private final IntegrationScriptManagementClient client;
 
     /** 分页查询接入方下的公共脚本，按编码稳定排序。 */
     @GetMapping("/integrations/{integrationCode}/scripts")
     public PagingResponseBody<IntegrationScriptSummary> listIntegrationScripts(
-        OperatorContext context,
         @PathVariable("integrationCode") String integrationCode,
         @RequestParam(value = "page", required = false) Integer page,
         @RequestParam(value = "size", required = false) Integer size,
         @RequestParam(value = "keyword", required = false) String keyword,
         @RequestParam(value = "executionStage", required = false) String executionStage) {
-        return client.listIntegrationScripts(context, integrationCode, page, size, keyword, executionStage);
+        return client.listIntegrationScripts(integrationCode, page, size, keyword, executionStage);
     }
 
     /** 读取公共脚本详情，含引用方。 */
     @GetMapping("/integrations/{integrationCode}/scripts/{scriptCode}")
     public IntegrationScriptResponseBody getIntegrationScript(
-        OperatorContext context,
         @PathVariable("integrationCode") String integrationCode,
         @PathVariable("scriptCode") String scriptCode) {
-        return client.getIntegrationScript(context, integrationCode, scriptCode);
+        return client.getIntegrationScript(integrationCode, scriptCode);
     }
 
     /** 创建公共脚本。 */
@@ -80,9 +78,8 @@ public class IntegrationScriptManagementController {
     /** 只做静态校验，不保存；问题通过 issues 返回而不是错误响应。 */
     @PostMapping("/integrations/{integrationCode}/scripts/validate")
     public ValidationResponseBody validateIntegrationScript(
-        OperatorContext context,
         @PathVariable("integrationCode") String integrationCode,
         @Valid @RequestBody ValidateIntegrationScriptRequestBody request) {
-        return client.validateIntegrationScript(context, integrationCode, request);
+        return client.validateIntegrationScript(integrationCode, request);
     }
 }

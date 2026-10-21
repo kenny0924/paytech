@@ -4,6 +4,7 @@
 - Implementation status: Not started
 - Deployment status: Not applicable
 - Decision date: 2026-10-13
+- 2026-10-20 后继：Owner 部分（Platform 提供并执行标准 API）由[2026-10-20 统一对外出口决定](./2026-10-20-channel-connector-unified-outbound.md)取代为 channel-connector；本决定的分层、流程、资金反向操作排除与不保存执行记录等能力规则继续有效。
 - 用户决定：对内提供标准 API，渠道可以按标准 API 进行接口编排；冲正属于危险操作，不在流程中编排。
 - 详细合同：[外部 API 配置与执行现行需求](../../requirements/20260914/platform-support-外部API配置与执行/requirement.md)、[六表数据设计](../../requirements/20260914/platform-support-外部API配置与执行/data-design.md)、[流程与运行上下文](../../requirements/20260914/platform-support-外部API配置与执行/flow-design.md)。
 - 迁移记录：[渠道 API 配置资料迁移](../../requirements/20261013/platform-support-渠道API配置资料迁移/requirement.md)；实施与验证状态只见[当前台账](../CURRENT_IMPLEMENTATION.md#platform-standard-api-flow-20261013)。

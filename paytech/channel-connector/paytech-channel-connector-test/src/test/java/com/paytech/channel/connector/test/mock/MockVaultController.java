@@ -9,7 +9,10 @@ import com.paytech.vault.client.internal.wire.*;
 
 import lombok.AllArgsConstructor;
 
-/** 仅存在于独立测试 HTTP 服务的 Vault 契约实现（channel-connector 只读取渠道账号配置）。 */
+/**
+ * 仅存在于独立测试 HTTP 服务的 Vault 契约实现：channel-connector 读取渠道账号配置（含渠道协议执行的 CHANNEL_ACCOUNT_CONFIG 初始化）与写入账号配置
+ * <li>Mock 服务只能有一个 VaultHttpService 实现，全部 Vault 场景委托同一个 VaultMocker。</li>
+ */
 @RestController
 @TestComponent
 @AllArgsConstructor

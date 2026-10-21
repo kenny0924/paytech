@@ -69,7 +69,3 @@ JAVA_HOME=$(/usr/libexec/java_home -v 25) ./mvnw -pl platform-support/paytech-pl
 - 外部依赖：Client 接收端是独立 Mock HTTP 服务的 `/webhook-receiver/{name}`（`WebhookReceiverMocker` 按接收端配置状态码、延迟或断连）；签名密钥经正式 VaultClient 访问 `WebhookVaultMock`。验签由测试侧 `WebhookSignatures` 独立计算。
 - 数据：五张 Webhook 表由 `PlatformDataCleaner` 整表回收；`WebhookFixture` 只清理保留段租户（`88000000000007100x`）与 `WEBHOOK_DELIVERY` 补偿任务。测试配置把尝试上限降为 3、超时降为 1 秒，并只在本机放行 `http` 与 `127.0.0.1/32`。
 - 与其他 Platform 测试共用同一本地库，必须串行运行。
-
-## 接入方存在性内部查询
-
-`IntegrationLookupApiTest`（internal-auth=OFF：存在、不存在、编码非法 400）与 `internalauth/IntegrationLookupInternalAuthTest`（REQUIRED：合法 Token、缺失与篡改 401）经真实 HTTP 调用 `IntegrationLookupApi#integrationExistence`；接入方由 `ExternalApiMocker` 插入 `t_integration`，签发测试调用方为 `integration-lookup-test`。

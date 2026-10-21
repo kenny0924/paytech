@@ -4,7 +4,6 @@ import java.util.Comparator;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import com.paytech.channel.connector.core.dal.dataobject.ChannelMid;
 import com.paytech.channel.connector.core.dal.dataobject.MidCapability;
@@ -13,7 +12,6 @@ import com.paytech.channel.connector.core.enums.ChannelStatus;
 import com.paytech.channel.connector.domain.ChannelMidContext;
 import com.paytech.channel.connector.domain.ChannelMidDetailView;
 import com.paytech.channel.connector.domain.MidCapabilityView;
-import com.paytech.channel.connector.domainservice.repository.ChannelConfigChangeRepository;
 import com.paytech.channel.connector.domainservice.repository.ChannelMidRepository;
 import com.paytech.channel.connector.domainservice.repository.MidCapabilityDetailRepository;
 import com.paytech.channel.connector.domainservice.repository.MidCapabilityRepository;
@@ -22,14 +20,12 @@ import com.paytech.foundation.common.error.BizCheckFailException;
 
 import lombok.AllArgsConstructor;
 
-/** MID 的本地保存与查询；写入与变更记录同事务提交。 */
+/** MID 的本地保存与查询；写入方法加入调用方 Processor 的事务，变更记录由 Processor 在同一事务中写入。 */
 @Service
 @AllArgsConstructor
 public class ChannelMidServiceImpl implements ChannelMidService {
     private final ChannelMidRepository channelMidRepository;
-    private final TransactionTemplate transactionTemplate;
     private final MidCapabilityRepository midCapabilityRepository;
-    private final ChannelConfigChangeRepository channelConfigChangeRepository;
     private final MidCapabilityDetailRepository midCapabilityDetailRepository;
 
     /** 读取 MID；不存在时业务拒绝。 */
@@ -53,33 +49,24 @@ public class ChannelMidServiceImpl implements ChannelMidService {
             .map(capability -> new MidCapabilityView(capability, detailsOf(capability, details))).toList());
     }
 
-    /** 写入新 MID 与变更记录。 */
+    /** 写入新 MID ；须在调用方事务内执行。 */
     @Override
     public void createMid(ChannelMidContext context) {
-        transactionTemplate.executeWithoutResult(status -> {
-            channelMidRepository.insert(context.getMid());
-            channelConfigChangeRepository.insert(context.getChange());
-        });
+        channelMidRepository.insert(context.getMid());
     }
 
-    /** 改绑并写入变更记录。 */
+    /** 改绑；须在调用方事务内执行。 */
     @Override
     public void rebindAccount(ChannelMidContext context) {
-        transactionTemplate.executeWithoutResult(status -> {
-            channelMidRepository.updateAccount(context.getMid(), context.getAccount().getChannelAccountId(),
-                context.getNow());
-            channelConfigChangeRepository.insert(context.getChange());
-        });
+        channelMidRepository.updateAccount(context.getMid(), context.getAccount().getChannelAccountId(),
+            context.getNow());
     }
 
-    /** 变更状态、激活 / 关闭时间并写入变更记录。 */
+    /** 变更状态、激活 / 关闭时间；须在调用方事务内执行。 */
     @Override
     public void changeMidStatus(ChannelMidContext context, ChannelStatus targetStatus) {
-        transactionTemplate.executeWithoutResult(status -> {
-            channelMidRepository.updateStatus(context.getMid(), targetStatus, context.activatedAtAfter(targetStatus),
-                context.closedAtAfter(targetStatus), context.getNow());
-            channelConfigChangeRepository.insert(context.getChange());
-        });
+        channelMidRepository.updateStatus(context.getMid(), targetStatus, context.activatedAtAfter(targetStatus),
+            context.closedAtAfter(targetStatus), context.getNow());
     }
 
     /** 属于能力组的明细，按能力代码升序。 */

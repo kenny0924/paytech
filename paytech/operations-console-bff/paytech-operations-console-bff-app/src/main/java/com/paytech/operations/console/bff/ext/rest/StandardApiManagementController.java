@@ -4,7 +4,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import com.paytech.foundation.web.paging.PagingResponseBody;
-import com.paytech.operations.console.bff.integration.PlatformStandardApiManagementClient;
+import com.paytech.operations.console.bff.integration.StandardApiManagementClient;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
 import com.paytech.operations.console.bff.service.model.externalapi.request.CreateStandardApiRequestBody;
 import com.paytech.operations.console.bff.service.model.externalapi.request.DeleteExternalApiConfigRequestBody;
@@ -16,31 +16,29 @@ import com.paytech.operations.console.bff.service.model.externalapi.response.Sta
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 
-/** 标准 API管理的浏览器入口：实时 PLT-I02 授权后原样转发 Platform，不接收或转发 Idempotency-Key。 */
+/** 标准 API管理的浏览器入口：实时 PLT-I02 授权后原样转发 channel-connector，不接收或转发 Idempotency-Key。 */
 @RestController
 @Validated
 @AllArgsConstructor
 @RequestMapping("/external-api-admin/v1")
 public class StandardApiManagementController {
 
-    private final PlatformStandardApiManagementClient client;
+    private final StandardApiManagementClient client;
 
     /** 分页查询标准 API，按编码稳定排序。 */
     @GetMapping("/standard-apis")
     public PagingResponseBody<StandardApiSummary> standardApis(
-        OperatorContext context,
         @RequestParam(value = "page", required = false) Integer page,
         @RequestParam(value = "size", required = false) Integer size,
         @RequestParam(value = "keyword", required = false) String keyword) {
-        return client.standardApis(context, page, size, keyword);
+        return client.standardApis(page, size, keyword);
     }
 
     /** 读取标准 API 详情，含字段与实现方。 */
     @GetMapping("/standard-apis/{standardApiCode}")
     public StandardApiResponseBody standardApi(
-        OperatorContext context,
         @PathVariable("standardApiCode") String standardApiCode) {
-        return client.standardApi(context, standardApiCode);
+        return client.standardApi(standardApiCode);
     }
 
     /** 创建标准 API 及其字段。 */

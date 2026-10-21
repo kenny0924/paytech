@@ -25,11 +25,18 @@ public class CardDataMocker implements Clear {
     private boolean reusable = true;
     private boolean cleanupOwned;
 
+    /** 只允许本服务专用测试库 mor_card，或并行任务隔离用的 mor_card_{后缀}（经 SPRING_DATASOURCE_URL 指定）。 */
+    void assertDedicatedDatabase() {
+        String name = mapper.databaseName();
+        assertTrue(DATABASE.equals(name) || name != null && name.matches(DATABASE + "_[a-z0-9]{1,16}"),
+            "card 测试只允许本地 mor_card 或其隔离副本: " + name);
+    }
+
     /** 拒绝共享库和脏基线；缺表时明确提示手工初始化入口。 */
     public void assertEmpty() {
         assertTrue(reusable, "测试库清理失败，须人工核查后重新运行");
         try {
-            assertEquals(DATABASE, mapper.databaseName());
+            assertDedicatedDatabase();
             assertEquals(0, mapper.countRows(), "专用库非空，不自动删除原有数据");
             cleanupOwned = true;
         } catch (DataAccessException failure) {
@@ -44,7 +51,7 @@ public class CardDataMocker implements Clear {
         if (!cleanupOwned) {
             return;
         }
-        assertEquals(DATABASE, mapper.databaseName());
+        assertDedicatedDatabase();
         try {
             for (Long instrumentId : mapper.cardInstrumentIds()) {
                 redis.delete(CardSecurityCodeClientImpl.key(instrumentId));

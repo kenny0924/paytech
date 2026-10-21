@@ -21,7 +21,7 @@ import com.paytech.foundation.processor.AbstractProcessor;
 import lombok.AllArgsConstructor;
 
 /**
- * 凭一次性票据读卡（design/05 §2.1，替代 Payment 的读卡回调）：Platform 执行支付类标准 API 时调用。
+ * 凭一次性票据读卡（design/05 §2.1，替代 Payment 的读卡回调）：channel-connector 执行支付类标准 API 时调用。
  *
  * <p>
  * 校验调用方 → 按票据摘要读票据（不存在 404）→ 已用、已过期、用途不符拒绝 → 单条条件更新标记已用（并发使用只有一方成功）→ 事务外交
@@ -37,10 +37,12 @@ public class RevealChannelCardMaterialProcessor
     private final CardMaterialTicketRepository cardMaterialTicketRepository;
     private final ClaimChannelCardMaterialProcessor claimChannelCardMaterialProcessor;
 
-    /** 只接受 Platform。 */
+    /** 只接受 channel-connector 与 Platform；其他调用方按资源不存在返回 404。 */
     @Override
     protected void validate(RevealCardMaterialRequest request) {
-        cardCallerService.require(request.getCaller(), CardApiConstants.PLATFORM_SUPPORT_SERVICE);
+        // 第一段过渡，便于回退：外部 API 执行迁往 channel-connector 后仍接受 platform-support-service；第二段收回 platform-support-service。
+        cardCallerService.require(request.getCaller(), CardApiConstants.CHANNEL_CONNECTOR_SERVICE,
+            CardApiConstants.PLATFORM_SUPPORT_SERVICE);
     }
 
     @Override

@@ -13,8 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.paytech.channel.connector.api.cost.ChannelCostPlanApi;
 import com.paytech.channel.connector.api.cost.request.CancelChannelCostVersionRequestBody;
-import com.paytech.channel.connector.core.enums.ChangeTargetType;
-import com.paytech.channel.connector.core.enums.ChangeType;
+import com.paytech.channel.connector.protocol.core.enums.ChangeTargetType;
+import com.paytech.channel.connector.protocol.core.enums.ChangeType;
 import com.paytech.channel.connector.core.enums.ChannelCostPlanStatus;
 import com.paytech.channel.connector.core.enums.ChannelCostVersionStatus;
 import com.paytech.channel.connector.ext.job.ChannelCostVersionActivationJobHandler;

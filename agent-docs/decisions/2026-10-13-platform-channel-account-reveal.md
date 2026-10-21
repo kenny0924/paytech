@@ -4,6 +4,7 @@
 - Implementation status: Not started
 - Deployment status: Not deployed（Vault 策略未变更）
 - Decision date: 2026-10-13
+- 2026-10-20 后继：本例外由[2026-10-20 统一对外出口决定](./2026-10-20-channel-connector-unified-outbound.md)整体撤销，渠道账号由 channel-connector 自行 Reveal。
 - 用户决定：渠道账号材料交接采用方案 C。Payment 只传 Vault 引用 Token 与账号身份，Platform 直接向 Vault Reveal；其余按建议。
 - 详细合同：[渠道账号材料交接](../../requirements/20260914/platform-support-外部API配置与执行/material-handoff.md)
 - 实施与部署状态：[当前台账](../CURRENT_IMPLEMENTATION.md#platform-standard-api-flow-20261013)

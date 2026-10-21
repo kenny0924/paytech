@@ -96,8 +96,6 @@ const stepAddedTables = [
     tables: ['t_product', 't_product_capability', 't_product_fee_event', 't_agreement_product',
       't_agreement_capability', 't_agreement_capability_limit'],
   },
-  // 2026-10-20 channel console (requirement 20261020 channel-connector 运营控制台): channel configuration change records.
-  { service: 'channel-connector', database: 'mor_channel_connector', tables: ['t_channel_config_change'] },
   // 2026-10-20 capability conditions and price templates (decision 2026-10-20-commercial-capability-conditions-and-price-
   // templates, requirement 20261020 technique §3.2): capability configurable dimensions and price-version acceptance.
   {
@@ -127,11 +125,19 @@ const stepAddedTables = [
       't_consumed_aggregate_version'],
   },
   // Same refactor: the channel cost plan, version, scope and component tables are owned by channel-connector (17 tables).
+  // 2026-10-20 统一对外渠道出口第一段：渠道协议 10 表自 platform-support 迁入（连同下方变更记录表共 28 张）；
+  // Platform 的表由其 Schema 自动推导。
   {
     service: 'channel-connector',
     database: 'mor_channel_connector',
-    tables: ['t_channel_cost_plan', 't_channel_cost_plan_ver', 't_channel_cost_scope', 't_channel_cost_component'],
+    tables: ['t_channel_cost_plan', 't_channel_cost_plan_ver', 't_channel_cost_scope', 't_channel_cost_component',
+      't_standard_api', 't_api_field', 't_integration', 't_integration_api', 't_integration_script',
+      't_integration_standard_api', 't_integration_verify_account', 't_integration_verify_case',
+      't_integration_verify_run', 't_integration_verify_run_step'],
   },
+  // 2026-10-20 channel-connector Operations console (commit 5f12cf3e listed it in the YAML by hand; registered here so the
+  // generator reproduces the committed file): channel configuration change records in mor_channel_connector.
+  { service: 'channel-connector', database: 'mor_channel_connector', tables: ['t_channel_config_change'] },
   // 2026-10-19 chart hierarchy (decision 2026-10-19 items 5 and 7): immutable chart account change records and the
   // per book and chart account sequence of readable ledger account numbers in mor_ledger.
   { service: 'ledger', database: 'mor_ledger', tables: ['t_chart_account_change', 't_account_no_sequence'] },

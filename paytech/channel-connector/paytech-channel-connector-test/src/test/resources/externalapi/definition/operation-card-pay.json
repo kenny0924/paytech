@@ -1,0 +1,49 @@
+{
+  "params": [
+    {"name": "apiKey", "dataType": "PROTECTED_HANDLE", "required": true}
+  ],
+  "fixedValues": {},
+  "transport": {
+    "protocol": "HTTP",
+    "method": "POST",
+    "endpointCode": "DEMO_GATEWAY",
+    "pathTemplate": "/merchants/{merchantId}/payments",
+    "connectTimeoutMs": 2000,
+    "responseTimeoutMs": 1000
+  },
+  "requestEncoding": "JSON",
+  "responseDecoding": "JSON",
+  "cardFields": ["BODY:card.number", "BODY:card.expMonth", "BODY:card.expYear", "BODY:card.cvv"],
+  "scripts": [
+    {"id": "auth", "scriptCode": "BEARER", "stage": "REQUEST",
+     "params": {"token": {"kind": "PATH", "path": "params.apiKey"}}}
+  ],
+  "statusRules": [
+    {"condition": "http.responseStatus == 200 && http.responseBody.result == 'ACCEPTED'", "executeStatus": "SUCCESS"},
+    {"condition": "http.responseStatus == 200 && http.responseBody.result == 'REJECTED'", "executeStatus": "FAIL"}
+  ],
+  "outputs": {
+    "SUCCESS": [
+      {"name": "reference", "dataType": "STRING", "required": true,
+       "value": {"kind": "PATH", "path": "http.responseBody.reference"}},
+      {"name": "paymentStatus", "dataType": "STRING", "required": true,
+       "value": {"kind": "PATH", "path": "http.responseBody.paymentStatus"}},
+      {"name": "state", "dataType": "STRING", "required": false,
+       "value": {"kind": "PATH", "path": "http.responseBody.state"}},
+      {"name": "redirectUrl", "dataType": "STRING", "required": false,
+       "value": {"kind": "PATH", "path": "http.responseBody.redirectUrl"}},
+      {"name": "errorCode", "dataType": "STRING", "required": false,
+       "value": {"kind": "PATH", "path": "http.responseBody.errorCode"}},
+      {"name": "errorMessage", "dataType": "STRING", "required": false,
+       "value": {"kind": "PATH", "path": "http.responseBody.errorMessage"}}
+    ],
+    "FAIL": [
+      {"name": "state", "dataType": "STRING", "required": false,
+       "value": {"kind": "PATH", "path": "http.responseBody.state"}},
+      {"name": "errorCode", "dataType": "STRING", "required": false,
+       "value": {"kind": "PATH", "path": "http.responseBody.errorCode"}},
+      {"name": "errorMessage", "dataType": "STRING", "required": false,
+       "value": {"kind": "PATH", "path": "http.responseBody.errorMessage"}}
+    ]
+  }
+}

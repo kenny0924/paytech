@@ -10,12 +10,12 @@ import org.springframework.stereotype.Component;
 import com.paytech.channel.connector.core.constant.ChannelConnectorLocks;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelAccount;
 import com.paytech.channel.connector.core.dal.dataobject.PaymentChannel;
-import com.paytech.channel.connector.core.enums.ChangeTargetType;
-import com.paytech.channel.connector.core.enums.ChangeType;
+import com.paytech.channel.connector.protocol.core.enums.ChangeTargetType;
+import com.paytech.channel.connector.protocol.core.enums.ChangeType;
 import com.paytech.channel.connector.core.enums.ChannelStatus;
 import com.paytech.channel.connector.domain.ChannelAccountContext;
 import com.paytech.channel.connector.domain.ChannelAccountDetailView;
-import com.paytech.channel.connector.domain.ChannelConfigChanges;
+import com.paytech.channel.connector.protocol.domain.ChannelConfigChanges;
 import com.paytech.channel.connector.domainservice.service.ChannelAccountService;
 import com.paytech.channel.connector.domainservice.service.PaymentChannelService;
 import com.paytech.channel.connector.service.processor.request.CreateChannelAccountRequest;
@@ -38,6 +38,7 @@ public class CreateChannelAccountProcessor
     private final IdGenerator idGenerator;
     private final ChannelAccountService channelAccountService;
     private final PaymentChannelService paymentChannelService;
+    private final ChannelConfigTransactions channelConfigTransactions;
 
     /** 所属渠道资源锁。 */
     @Override
@@ -62,7 +63,7 @@ public class CreateChannelAccountProcessor
             request.getActorId(), now), now);
 
         // 本地保存
-        channelAccountService.createAccount(context);
+        channelConfigTransactions.write(context.getChange(), () -> channelAccountService.createAccount(context));
         return new ChannelAccountDetailView(account, 0);
     }
 

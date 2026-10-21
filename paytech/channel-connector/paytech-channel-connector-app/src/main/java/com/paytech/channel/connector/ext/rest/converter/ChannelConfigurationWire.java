@@ -17,15 +17,15 @@ import com.paytech.foundation.common.error.InvalidParameterException;
  * 渠道 / 账号 / MID / 能力管理接口共用的协议转换
  * <li>操作者请求头与路径 ID 必须是规范正十进制（不允许前导零与符号），否则 400 INVALID_REQUEST。</li>
  */
-final class ChannelConfigurationWire {
+public final class ChannelConfigurationWire {
     private static final String DECIMAL_ID = "[1-9][0-9]{0,18}";
 
     /** 工具类不实例化。 */
     private ChannelConfigurationWire() {
     }
 
-    /** 解析操作者 Account ID 请求头。 */
-    static long actor(String actorId) {
+    /** 解析操作者 Account ID 请求头；渠道配置与外部 API 管理的写命令共用。 */
+    public static long actor(String actorId) {
         if (actorId == null || !actorId.matches(DECIMAL_ID)) {
             throw new InvalidParameterException("操作者请求头 " + ChannelConnectorHeaders.ACTOR_HEADER + " 必须是规范正十进制");
         }

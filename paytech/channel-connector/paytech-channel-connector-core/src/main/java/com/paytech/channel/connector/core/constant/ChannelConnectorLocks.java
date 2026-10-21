@@ -24,7 +24,7 @@ public final class ChannelConnectorLocks {
 
     /**
      * 渠道配置写入口统一的有限锁租约
-     * <li>须覆盖锁内最长外部调用（Platform 接入方查询、Vault Protect）与本地短事务；租约失效时由条件 SQL 兜底。</li>
+     * <li>须覆盖锁内最长外部调用（Vault Protect）与接入方存在性本地查询与本地短事务；租约失效时由条件 SQL 兜底。</li>
      */
     public static final Duration CHANNEL_CONFIG_LEASE = Duration.ofSeconds(60);
 

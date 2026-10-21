@@ -12,12 +12,12 @@ import org.springframework.stereotype.Component;
 
 import com.paytech.channel.connector.core.constant.ChannelConnectorLocks;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelAccount;
-import com.paytech.channel.connector.core.enums.ChangeTargetType;
-import com.paytech.channel.connector.core.enums.ChangeType;
+import com.paytech.channel.connector.protocol.core.enums.ChangeTargetType;
+import com.paytech.channel.connector.protocol.core.enums.ChangeType;
 import com.paytech.channel.connector.domain.ChannelAccountConfigPayload;
 import com.paytech.channel.connector.domain.ChannelAccountContext;
 import com.paytech.channel.connector.domain.ChannelAccountDetailView;
-import com.paytech.channel.connector.domain.ChannelConfigChanges;
+import com.paytech.channel.connector.protocol.domain.ChannelConfigChanges;
 import com.paytech.channel.connector.domainservice.repository.ChannelMidRepository;
 import com.paytech.channel.connector.domainservice.service.ChannelAccountService;
 import com.paytech.channel.connector.domainservice.service.PaymentChannelService;
@@ -53,6 +53,7 @@ public class ConfigureChannelAccountProcessor
     private final ChannelMidRepository channelMidRepository;
     private final ChannelAccountService channelAccountService;
     private final PaymentChannelService paymentChannelService;
+    private final ChannelConfigTransactions channelConfigTransactions;
 
     /** 账号资源锁。 */
     @Override
@@ -105,7 +106,8 @@ public class ConfigureChannelAccountProcessor
     /** 短事务写入 Token；失败时只记录账号 ID，原样抛出，不重试。 */
     void saveToken(ChannelAccountContext context, String token) {
         try {
-            channelAccountService.updateVaultToken(context, token);
+            channelConfigTransactions.write(context.getChange(),
+                () -> channelAccountService.updateVaultToken(context, token));
         } catch (RuntimeException failure) {
             log.warn("Vault Protect 已成功但账号配置引用写库失败，账号 {}", context.getAccount().getChannelAccountId());
             throw failure;

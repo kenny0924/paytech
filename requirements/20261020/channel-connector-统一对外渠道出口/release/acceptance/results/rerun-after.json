@@ -1,0 +1,242 @@
+{
+ "takenAt": "2026-10-21T10:32:56.215073+00:00",
+ "runs": [
+  {
+   "integration": "PAYERMAX",
+   "case": "UAT_QUERY_NOT_FOUND",
+   "startStatus": 200,
+   "runCode": "238610392232861696",
+   "code": null,
+   "runStatus": "PASSED",
+   "failureSummary": null,
+   "steps": [
+    {
+     "stepNo": 1,
+     "stepStatus": "PASSED",
+     "executeStatus": "FAIL",
+     "returnId": null,
+     "assertions": [
+      [
+       "executeStatus",
+       true
+      ],
+      [
+       "outputs.paymentStatus",
+       true
+      ]
+     ]
+    }
+   ],
+   "rowIn": {
+    "mor_platform": false,
+    "mor_channel_connector": true
+   }
+  },
+  {
+   "integration": "PAYERMAX",
+   "case": "UAT_REFUND_QUERY_NOT_FOUND",
+   "startStatus": 200,
+   "runCode": "238610402768953344",
+   "code": null,
+   "runStatus": "PASSED",
+   "failureSummary": null,
+   "steps": [
+    {
+     "stepNo": 1,
+     "stepStatus": "PASSED",
+     "executeStatus": "FAIL",
+     "returnId": null,
+     "assertions": [
+      [
+       "executeStatus",
+       true
+      ],
+      [
+       "outputs.refundStatus",
+       true
+      ]
+     ]
+    }
+   ],
+   "rowIn": {
+    "mor_platform": false,
+    "mor_channel_connector": true
+   }
+  },
+  {
+   "integration": "PAYERMAX",
+   "case": "UAT_REFUND_NOT_EXIST",
+   "startStatus": 200,
+   "runCode": "238610412151611392",
+   "code": null,
+   "runStatus": "PASSED",
+   "failureSummary": null,
+   "steps": [
+    {
+     "stepNo": 1,
+     "stepStatus": "PASSED",
+     "executeStatus": "FAIL",
+     "returnId": null,
+     "assertions": [
+      [
+       "executeStatus",
+       true
+      ],
+      [
+       "outputs.refundStatus",
+       true
+      ],
+      [
+       "outputs.failureCode",
+       true
+      ]
+     ]
+    }
+   ],
+   "rowIn": {
+    "mor_platform": false,
+    "mor_channel_connector": true
+   }
+  },
+  {
+   "integration": "PAYBY",
+   "case": "UAT_PAY_QUERY_NOT_FOUND",
+   "startStatus": 200,
+   "runCode": "238610421806899200",
+   "code": null,
+   "runStatus": "PASSED",
+   "failureSummary": null,
+   "steps": [
+    {
+     "stepNo": 1,
+     "stepStatus": "PASSED",
+     "executeStatus": "FAIL",
+     "returnId": null,
+     "assertions": [
+      [
+       "executeStatus",
+       true
+      ],
+      [
+       "outputs.paymentStatus",
+       true
+      ],
+      [
+       "outputs.failureCode",
+       true
+      ]
+     ]
+    }
+   ],
+   "rowIn": {
+    "mor_platform": false,
+    "mor_channel_connector": true
+   }
+  },
+  {
+   "integration": "DLOCAL",
+   "case": "SBX_PAY_QUERY_NOT_FOUND",
+   "startStatus": 200,
+   "runCode": "238610432212967424",
+   "code": null,
+   "runStatus": "PASSED",
+   "failureSummary": null,
+   "steps": [
+    {
+     "stepNo": 1,
+     "stepStatus": "PASSED",
+     "executeStatus": "FAIL",
+     "returnId": null,
+     "assertions": [
+      [
+       "executeStatus",
+       true
+      ],
+      [
+       "outputs.paymentStatus",
+       true
+      ],
+      [
+       "outputs.failureCode",
+       true
+      ]
+     ]
+    }
+   ],
+   "rowIn": {
+    "mor_platform": false,
+    "mor_channel_connector": true
+   }
+  },
+  {
+   "integration": "ALIPAY_PLUS",
+   "case": "SBX_PAY_QUERY_NOT_FOUND",
+   "startStatus": 200,
+   "runCode": "238610450818899968",
+   "code": null,
+   "runStatus": "PASSED",
+   "failureSummary": null,
+   "steps": [
+    {
+     "stepNo": 1,
+     "stepStatus": "PASSED",
+     "executeStatus": "FAIL",
+     "returnId": null,
+     "assertions": [
+      [
+       "executeStatus",
+       true
+      ],
+      [
+       "outputs.paymentStatus",
+       true
+      ],
+      [
+       "outputs.failureCode",
+       true
+      ]
+     ]
+    }
+   ],
+   "rowIn": {
+    "mor_platform": false,
+    "mor_channel_connector": true
+   }
+  },
+  {
+   "integration": "TOSS_PAY",
+   "case": "SBX_PAY_QUERY_NOT_FOUND",
+   "startStatus": 200,
+   "runCode": "238610473019351040",
+   "code": null,
+   "runStatus": "PASSED",
+   "failureSummary": null,
+   "steps": [
+    {
+     "stepNo": 1,
+     "stepStatus": "PASSED",
+     "executeStatus": "FAIL",
+     "returnId": null,
+     "assertions": [
+      [
+       "executeStatus",
+       true
+      ],
+      [
+       "outputs.paymentStatus",
+       true
+      ],
+      [
+       "outputs.failureCode",
+       true
+      ]
+     ]
+    }
+   ],
+   "rowIn": {
+    "mor_platform": false,
+    "mor_channel_connector": true
+   }
+  }
+ ]
+}

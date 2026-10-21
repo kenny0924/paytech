@@ -13,6 +13,14 @@ deviations:
   - rule: R2
     subject: com.paytech:paytech-platform-support-api
     message: "api 模块存在不允许的依赖: tools.jackson.core:jackson-databind (compile)"
+  # 2026-10-20 统一对外渠道出口第一段：外部 API 管理合同（externalapi/*）的 DTO 自 platform-support-api 原样迁入 channel-connector-api，
+  # 沿用 Jackson 注解与 JsonNode；去除会改变已发布合同，与 Platform 同口径待评审 R2 允许清单。
+  - rule: R2
+    subject: com.paytech:paytech-channel-connector-api
+    message: "api 模块存在不允许的依赖: com.fasterxml.jackson.core:jackson-annotations (compile)"
+  - rule: R2
+    subject: com.paytech:paytech-channel-connector-api
+    message: "api 模块存在不允许的依赖: tools.jackson.core:jackson-databind (compile)"
   # 第 03 步：acquiring / counterparty 的 Client API 线上 DTO 沿用 Commerce 合同的 Jackson 注解（isRequired、NON_NULL、ignoreUnknown），
   # acquiring-api 的 CreateCheckout / CreateRefund 请求体另用 jackson-databind 做严格绑定；去除会改变已发布合同，与 Platform 同口径待评审 R2 允许清单。
   - rule: R2

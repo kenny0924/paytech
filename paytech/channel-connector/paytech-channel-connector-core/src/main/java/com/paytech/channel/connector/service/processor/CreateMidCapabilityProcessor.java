@@ -11,10 +11,10 @@ import com.paytech.channel.connector.core.constant.ChannelConnectorLocks;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelMid;
 import com.paytech.channel.connector.core.dal.dataobject.MidCapability;
 import com.paytech.channel.connector.core.enums.CapabilityStatus;
-import com.paytech.channel.connector.core.enums.ChangeTargetType;
-import com.paytech.channel.connector.core.enums.ChangeType;
+import com.paytech.channel.connector.protocol.core.enums.ChangeTargetType;
+import com.paytech.channel.connector.protocol.core.enums.ChangeType;
 import com.paytech.channel.connector.core.enums.ChannelStatus;
-import com.paytech.channel.connector.domain.ChannelConfigChanges;
+import com.paytech.channel.connector.protocol.domain.ChannelConfigChanges;
 import com.paytech.channel.connector.domain.MidCapabilityView;
 import com.paytech.channel.connector.domain.MidCapabilityWriteContext;
 import com.paytech.channel.connector.domainservice.service.ChannelMidService;
@@ -38,6 +38,7 @@ public class CreateMidCapabilityProcessor extends AbstractLockProcessor<CreateMi
     private final IdGenerator idGenerator;
     private final ChannelMidService channelMidService;
     private final MidCapabilityService midCapabilityService;
+    private final ChannelConfigTransactions channelConfigTransactions;
 
     /** MID 资源锁。 */
     @Override
@@ -64,7 +65,7 @@ public class CreateMidCapabilityProcessor extends AbstractLockProcessor<CreateMi
                 capability.getMidCapabilityId(), ChangeType.CREATE, request.getActorId(), now), now);
 
         // 本地保存
-        midCapabilityService.createCapability(context);
+        channelConfigTransactions.write(context.getChange(), () -> midCapabilityService.createCapability(context));
         return context.toView();
     }
 

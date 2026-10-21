@@ -1,5 +1,7 @@
 # Channel Connector 本地补偿事件类型目录：每个 CompensationEventHandler 的 eventType() 必须在此登记。
 # 新增 Handler 时同步追加；与 MQ 领域事件目录 foundation/paytech-messaging/catalog/events.yaml 不是同一集合。
-# 2026-10-19 渠道成本迁入（需求 billing-计费事实模型重构与渠道成本迁出）：引入 paytech-compensation-event 只为复用其 XXL 执行器
-# 与渠道成本版本到期切换 Job（channelCostVersionActivation），本期没有补偿 Handler，故目录为空。
-eventTypes: []
+# 2026-10-19 渠道成本迁入（需求 billing-计费事实模型重构与渠道成本迁出）：引入 paytech-compensation-event 复用其 XXL 执行器
+# 与渠道成本版本到期切换 Job（channelCostVersionActivation）。
+# 2026-10-20 统一对外渠道出口第一段：沙箱验证运行 INTEGRATION_VERIFY_RUN 随协议模块自 Platform 迁入（Handler 位于 protocol ext/eventhandler）。
+eventTypes:
+  - INTEGRATION_VERIFY_RUN

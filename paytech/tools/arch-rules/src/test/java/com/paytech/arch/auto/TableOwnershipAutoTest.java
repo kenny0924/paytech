@@ -21,8 +21,9 @@ class TableOwnershipAutoTest {
 
     @Test
     void test_normalFlow() {
-        // design/03 §4.2：17 个目标库共 265 张物理表；另加保留服务 platform-support 自身 Schema 的 56 张表。
-        Assertions.assertEquals(265 + 56 + 1 + 6 - 7 + 9 + 4 + 6 + 1 + 2 + 1 - 13 + 10 + 2 - 2, ownership.physicalTableCount(),
+        // design/03 §4.2：17 个目标库共 265 张物理表；另加保留服务 platform-support 自身 Schema 的 46 张表
+        // （2026-10-20 渠道协议 10 表迁往 channel-connector 后由 56 张减为 46 张，总表数不变）。
+        Assertions.assertEquals(265 + 46 + 1 + 6 - 7 + 9 + 4 + 6 + 1 + 2 + 1 - 13 + 10 + 2 + 10 - 2, ownership.physicalTableCount(),
             "design 03 + Platform 保留表 + 第 12 步 t_card_material_ticket + account 明细账六张业务表（2026-10-19 重构）"
                 + " - billing 经济事实三表与渠道成本四表 + billing 计费事实九表 + channel-connector 渠道成本四表（2026-10-19 计费事实重构）"
                 + " + commercial 产品目录三表与合同订阅 / 开通 / 约束三表（2026-10-19 六层产品定价模型）"
@@ -30,8 +31,10 @@ class TableOwnershipAutoTest {
                 + " + channel-connector 变更记录表 t_channel_config_change（2026-10-20）"
                 + " - reconciliation 旧对账十三表 + 新模型八张业务表与消费幂等两表（2026-10-20 对账切片 1）"
                 + " + commercial 可配维度与价格协议签署两表（2026-10-20 开通与定价模型调整）"
+                + " + channel-connector 渠道协议 10 表（2026-10-20 统一对外渠道出口第一段，自 Platform 迁入）"
                 + " - ledger 与 billing 的 t_currency_spec 只读副本（2026-10-20 币种快照读取）");
-        Assertions.assertEquals(57, ownership.databasesOf("platform-support").get("mor_platform").size());
+        // mor_platform：2026-10-20 渠道协议 10 表迁往 channel-connector，由 57 张减为 47 张。
+        Assertions.assertEquals(47, ownership.databasesOf("platform-support").get("mor_platform").size());
         Assertions.assertEquals(30, ownership.databasesOf("ledger").get("mor_ledger").size());
         Assertions.assertTrue(ownership.allowedTables("ledger").containsAll(
             List.of("t_chart_account_change", "t_account_no_sequence")), "2026-10-19 科目分级新增的 ledger 表");
@@ -75,7 +78,10 @@ class TableOwnershipAutoTest {
             "t_payment_card_instrument", "t_payment_stored_card"), ownership.cardTables());
     }
 
-    /** 2026-10-19 计费事实重构：mor_billing 为 10 张表（2026-10-20 删除 t_currency_spec 副本）；渠道成本四表归 channel-connector（2026-10-20 加变更记录表后 18 张），billing 不再引用。 */
+    /**
+     * 2026-10-19 计费事实重构：mor_billing 为 10 张表（2026-10-20 删除 t_currency_spec 副本）；渠道成本四表归 channel-connector，billing 不再引用。
+     * mor_channel_connector 2026-10-20 加变更记录表后 18 张，同日统一对外渠道出口第一段迁入渠道协议 10 表后 28 张。
+     */
     @Test
     void test_billingFactAndChannelCostOwnership() {
         Assertions.assertEquals(Set.of("t_billing_fact", "t_billing_fact_ref", "t_billing_fact_pricing",
@@ -84,7 +90,7 @@ class TableOwnershipAutoTest {
             ownership.databasesOf("billing").get("mor_billing"));
         List<String> channelCostTables = List.of("t_channel_cost_plan", "t_channel_cost_plan_ver",
             "t_channel_cost_scope", "t_channel_cost_component");
-        Assertions.assertEquals(18, ownership.databasesOf("channel-connector").get("mor_channel_connector").size());
+        Assertions.assertEquals(28, ownership.databasesOf("channel-connector").get("mor_channel_connector").size());
         Assertions.assertTrue(ownership.databasesOf("channel-connector").get("mor_channel_connector")
             .containsAll(channelCostTables));
         Assertions.assertTrue(channelCostTables.stream().noneMatch(ownership.allowedTables("billing")::contains));
@@ -105,6 +111,17 @@ class TableOwnershipAutoTest {
             .noneMatch(ownership.allowedTables("reconciliation")::contains));
         Assertions.assertTrue(ownership.allowedTables("channel-connector").contains("t_channel_account"),
             "channel-connector 的渠道技术账号表与已删除的旧清算账户同名，归属不受影响");
+    }
+
+    /** 2026-10-20 统一对外渠道出口第一段：渠道协议 10 表只归 channel-connector，Platform 不再拥有。 */
+    @Test
+    void test_channelProtocolTablesOwnedByChannelConnector() {
+        List<String> protocolTables = List.of("t_standard_api", "t_api_field", "t_integration", "t_integration_api",
+            "t_integration_script", "t_integration_standard_api", "t_integration_verify_account",
+            "t_integration_verify_case", "t_integration_verify_run", "t_integration_verify_run_step");
+        Assertions.assertTrue(ownership.databasesOf("channel-connector").get("mor_channel_connector")
+            .containsAll(protocolTables));
+        Assertions.assertTrue(protocolTables.stream().noneMatch(ownership.allowedTables("platform-support")::contains));
     }
 
     /** 第 12 步起卡表只在 mor_card：card 的 R4 白名单含卡表与读卡票据表，payment 与 channel-connector 不含。 */

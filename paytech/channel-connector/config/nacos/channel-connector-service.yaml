@@ -26,10 +26,16 @@ channel-connector:
     "[AMOUNT.MIN]": { value-type: DECIMAL }
     "[AMOUNT.MAX]": { value-type: DECIMAL }
     "[SECURITY.3DS_MODE]": { value-type: CODE, allowed-codes: [REQUIRED, SUPPORTED, UNSUPPORTED] }
-  outbound:
-    # Platform 标准 API 执行的对方 context path 与读取超时；修改需重启。
-    platform-context-path: /platform-support
-    platform-read-timeout: 30s
+  # 渠道协议（2026-10-20 自 Platform ps.integration.* 迁入，键名后缀与默认值不变）；修改需重启。
+  protocol:
+    configuration:
+      # 外部 API 配置写入共用一把资源锁（lock:external-api-config，TRY_LOCK）。
+      lock-wait-time: 500ms
+      lock-lease-time: 30s
+    execution:
+      # 出站地址只允许 https；读卡 card-service 无 context path。
+      allowed-schemes: [https]
+      card-context-path: ""
 
 vault:
   client:

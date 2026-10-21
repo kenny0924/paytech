@@ -10,9 +10,9 @@ import org.springframework.stereotype.Component;
 import com.paytech.channel.connector.core.constant.ChannelConnectorLocks;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelAccount;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelMid;
-import com.paytech.channel.connector.core.enums.ChangeTargetType;
-import com.paytech.channel.connector.core.enums.ChangeType;
-import com.paytech.channel.connector.domain.ChannelConfigChanges;
+import com.paytech.channel.connector.protocol.core.enums.ChangeTargetType;
+import com.paytech.channel.connector.protocol.core.enums.ChangeType;
+import com.paytech.channel.connector.protocol.domain.ChannelConfigChanges;
 import com.paytech.channel.connector.domain.ChannelMidContext;
 import com.paytech.channel.connector.domain.ChannelMidDetailView;
 import com.paytech.channel.connector.domainservice.service.ChannelAccountService;
@@ -40,6 +40,7 @@ public class RebindChannelMidAccountProcessor
     private final ChannelMidService channelMidService;
     private final ChannelAccountService channelAccountService;
     private final PaymentChannelService paymentChannelService;
+    private final ChannelConfigTransactions channelConfigTransactions;
 
     /** MID 与目标账号资源锁。 */
     @Override
@@ -64,7 +65,7 @@ public class RebindChannelMidAccountProcessor
         checkRebindable(context);
 
         // 本地保存
-        channelMidService.rebindAccount(context);
+        channelConfigTransactions.write(context.getChange(), () -> channelMidService.rebindAccount(context));
         return view;
     }
 

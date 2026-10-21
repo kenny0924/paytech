@@ -6,36 +6,50 @@ import java.util.Map;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import com.paytech.foundation.common.error.BizCheckFailException;
+import com.paytech.channel.connector.api.enums.ChannelOperationOutcome;
 import com.paytech.channel.connector.core.configuration.ChannelProperties;
 import com.paytech.channel.connector.domain.ChannelExecutionContext;
 import com.paytech.channel.connector.domain.ChannelOperationResult;
+import com.paytech.channel.connector.domain.PayOutputs;
 import com.paytech.channel.connector.domainservice.repository.*;
-import com.paytech.channel.connector.integration.PlatformStandardApiClient;
+import com.paytech.channel.connector.protocol.domain.execution.ExecutionResult;
+import com.paytech.channel.connector.protocol.domain.execution.JsonValues;
+import com.paytech.channel.connector.protocol.domain.execution.StandardApiNotSentException;
+import com.paytech.channel.connector.protocol.service.processor.ExecuteStandardApiProcessor;
+import com.paytech.channel.connector.protocol.service.processor.request.ExecuteStandardApiRequest;
 import com.paytech.channel.connector.service.processor.request.ExecuteChannelOperationRequest;
 import com.paytech.channel.connector.service.processor.request.GetChannelExecutionConfigRequest;
+import com.paytech.foundation.common.error.BizCheckFailException;
+
+import lombok.extern.slf4j.Slf4j;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
- * 经 Platform 执行一次渠道操作（PayerMax 卡直付对接技术方案第 5.1 节）：按用途校验冻结的 Channel/Account/MID 后，
- * 把账号身份与 Vault 引用交给 Platform，由 Platform 读取账号与卡数据并执行渠道协议；channel-connector 不 Reveal。
+ * 执行一次渠道操作（PayerMax 卡直付对接技术方案第 5.1 节；2026-10-20 统一对外出口第一段改为进程内执行）：按用途校验冻结的
+ * Channel/Account/MID 后，把账号身份与 Vault 引用作为标准 API 输入，在事务外调用 protocol 的标准 API 执行入口。
  *
  * <p>
- * Platform 接入方编码沿用渠道编码（channel_code，例如 PAYERMAX）；标准 API 编码取渠道操作代码（PAY → PAY）。冻结坐标不可用、
- * 账号或 MID 的 OE 与请求不一致、账号未配置时不发出请求，返回 NOT_SENT。Platform 输出由 {@link PlatformStandardApiClient} 解释为
- * 已映射结论（D06）。本入口无数据库写入，在调用方事务之外执行。
+ * 接入方编码沿用渠道编码（channel_code，例如 PAYERMAX）；标准 API 编码取渠道操作代码（PAY → PAY）。账号配置的 Vault Reveal 与读卡由
+ * protocol 初始化函数以 channel-connector-service 身份完成，本类不接触明文。冻结坐标不可用、账号或 MID 的 OE 与请求不一致、账号未配置时
+ * 不发出请求，返回 NOT_SENT；protocol 保证未发出的失败（{@link StandardApiNotSentException}）同为 NOT_SENT，其余失败一律结果未知。
+ * 输出按 PAY 合同解释为已映射结论（{@link PayOutputs}，D06）。本入口无数据库写入，在调用方事务之外执行，不自动重试。
  */
+@Slf4j
 @Component
 public class ExecuteChannelOperationProcessor
     extends AbstractChannelExecutionProcessor<ExecuteChannelOperationRequest, ChannelOperationResult> {
-    private final PlatformStandardApiClient platformStandardApiClient;
+    private static final JsonMapper JSON = JsonMapper.builder().build();
 
-    /** 注入冻结坐标校验与 Platform 执行客户端。 */
+    private final ExecuteStandardApiProcessor executeStandardApiProcessor;
+
+    /** 注入冻结坐标校验与 protocol 标准 API 执行入口。 */
     public ExecuteChannelOperationProcessor(ChannelProperties properties, ChannelMidRepository mids,
         MidCapabilityRepository capabilities, ChannelAccountRepository accounts, PaymentChannelRepository channels,
         PlatformTransactionManager transactionManager, MidCapabilityDetailRepository details,
-        PlatformStandardApiClient platformStandardApiClient) {
+        ExecuteStandardApiProcessor executeStandardApiProcessor) {
         super(properties, mids, capabilities, accounts, channels, transactionManager, details);
-        this.platformStandardApiClient = platformStandardApiClient;
+        this.executeStandardApiProcessor = executeStandardApiProcessor;
     }
 
     /** 冻结坐标在请求的 target 中。 */
@@ -44,7 +58,7 @@ public class ExecuteChannelOperationProcessor
         return request.getTarget();
     }
 
-    /** 校验冻结坐标（本地一致读取）后在事务外调用 Platform；坐标不可用时不发出请求。 */
+    /** 校验冻结坐标（本地一致读取）后在事务外执行标准 API；坐标不可用时不发出请求。 */
     @Override
     protected ChannelOperationResult processRequest(ExecuteChannelOperationRequest request) {
         ChannelExecutionContext context;
@@ -58,7 +72,54 @@ public class ExecuteChannelOperationProcessor
         }
         String integrationCode = context.getChannel().getChannelCode();
         String standardApiCode = request.getTarget().getOperation().getCode();
-        return platformStandardApiClient.execute(standardApiCode, integrationCode, input(context, request));
+        return execute(standardApiCode, integrationCode, input(context, request));
+    }
+
+    /**
+     * 进程内执行标准 API
+     * <li>未发出类失败（标准 API 或实现不存在、配置无效、初始化失败、预算耗尽、输入不满足请求字段）映射为 NOT_SENT 并带原代码。</li>
+     * <li>其余异常可能发生在渠道请求发出之后，一律按结果未知处理并只记录异常类型，不带请求或响应报文。</li>
+     *
+     * @param standardApiCode 标准 API 编码
+     * @param integrationCode 接入方编码（渠道编码）
+     * @param input 标准 API 输入，含账号身份与 Vault 引用，不含卡值与账号明文
+     * @return 已映射的执行结论
+     */
+    ChannelOperationResult execute(String standardApiCode, String integrationCode, Map<String, Object> input) {
+        ExecutionResult result;
+        try {
+            result = executeStandardApiProcessor.process(
+                new ExecuteStandardApiRequest(standardApiCode, integrationCode, JSON.valueToTree(input)));
+        } catch (StandardApiNotSentException notSent) {
+            return ChannelOperationResult.notSent(notSent.getCode());
+        } catch (RuntimeException failure) {
+            log.warn("渠道操作执行结果未知 standardApiCode={} integrationCode={} type={}", standardApiCode,
+                integrationCode, failure.getClass().getSimpleName());
+            return ChannelOperationResult.unknown();
+        }
+        return result(result);
+    }
+
+    /** 执行状态原样映射：ERROR 或无法识别的状态视为结果未知，不猜测成功或失败。 */
+    static ChannelOperationResult result(ExecutionResult result) {
+        ChannelOperationOutcome outcome = switch (result == null ? "" : result.getExecuteStatus().getCode()) {
+            case "SUCCESS" -> ChannelOperationOutcome.SUCCESS;
+            case "FAIL" -> ChannelOperationOutcome.FAIL;
+            default -> ChannelOperationOutcome.ERROR;
+        };
+        if (outcome == ChannelOperationOutcome.ERROR) {
+            return ChannelOperationResult.unknown();
+        }
+        return ChannelOperationResult.answered(outcome, PayOutputs.of(outputs(JsonValues.toJson(result.getOutputs()))));
+    }
+
+    /** 输出按原内部接口的 JSON 口径（十进制写为字符串）转为普通映射；不是对象时视为空输出。 */
+    @SuppressWarnings("unchecked")
+    static Map<String, Object> outputs(JsonNode outputs) {
+        if (outputs == null || !outputs.isObject()) {
+            return Map.of();
+        }
+        return new LinkedHashMap<>(JSON.convertValue(outputs, Map.class));
     }
 
     /** 业务输入加上冻结账号的身份与 Vault 引用。 */

@@ -28,8 +28,8 @@ import com.paytech.channel.connector.api.channel.request.CreateChannelAccountReq
 import com.paytech.channel.connector.api.channel.request.UpdateChannelAccountRequestBody;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelAccount;
 import com.paytech.channel.connector.core.dal.dataobject.PaymentChannel;
-import com.paytech.channel.connector.core.enums.ChangeTargetType;
-import com.paytech.channel.connector.core.enums.ChangeType;
+import com.paytech.channel.connector.protocol.core.enums.ChangeTargetType;
+import com.paytech.channel.connector.protocol.core.enums.ChangeType;
 import com.paytech.channel.connector.core.enums.ChannelStatus;
 import com.paytech.channel.connector.domain.ChannelAccountConfigPayload;
 import com.paytech.channel.connector.test.base.AbstractChannelConfigApiTest;

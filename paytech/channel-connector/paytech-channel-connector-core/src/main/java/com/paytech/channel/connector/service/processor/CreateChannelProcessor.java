@@ -7,10 +7,10 @@ import java.time.temporal.ChronoUnit;
 import org.springframework.stereotype.Component;
 
 import com.paytech.channel.connector.core.dal.dataobject.PaymentChannel;
-import com.paytech.channel.connector.core.enums.ChangeTargetType;
-import com.paytech.channel.connector.core.enums.ChangeType;
+import com.paytech.channel.connector.protocol.core.enums.ChangeTargetType;
+import com.paytech.channel.connector.protocol.core.enums.ChangeType;
 import com.paytech.channel.connector.core.enums.ChannelStatus;
-import com.paytech.channel.connector.domain.ChannelConfigChanges;
+import com.paytech.channel.connector.protocol.domain.ChannelConfigChanges;
 import com.paytech.channel.connector.domain.ChannelContext;
 import com.paytech.channel.connector.domainservice.service.PaymentChannelService;
 import com.paytech.channel.connector.service.processor.request.CreateChannelRequest;
@@ -22,7 +22,7 @@ import lombok.AllArgsConstructor;
 /**
  * 创建 DRAFT 支付渠道
  * <li>渠道尚不存在，没有可锁的资源；渠道编码唯一索引是唯一防线，重复按 409 拒绝。</li>
- * <li>与渠道同事务写入 CREATE 变更记录；不调用外部服务，Platform 接入方只在激活时核对。</li>
+ * <li>与渠道同事务写入 CREATE 变更记录；不调用外部服务，同编码接入方只在激活时核对。</li>
  */
 @Component
 @AllArgsConstructor
@@ -30,6 +30,7 @@ public class CreateChannelProcessor extends AbstractProcessor<CreateChannelReque
     private final Clock clock;
     private final IdGenerator idGenerator;
     private final PaymentChannelService paymentChannelService;
+    private final ChannelConfigTransactions channelConfigTransactions;
 
     @Override
     protected PaymentChannel processRequest(CreateChannelRequest request) {
@@ -40,7 +41,7 @@ public class CreateChannelProcessor extends AbstractProcessor<CreateChannelReque
             ChangeTargetType.CHANNEL, channel.getChannelId(), ChangeType.CREATE, request.getActorId(), now), now);
 
         // 本地保存
-        paymentChannelService.createChannel(context);
+        channelConfigTransactions.write(context.getChange(), () -> paymentChannelService.createChannel(context));
         return channel;
     }
 

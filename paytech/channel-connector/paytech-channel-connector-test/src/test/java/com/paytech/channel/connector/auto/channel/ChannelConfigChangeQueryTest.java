@@ -11,9 +11,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.paytech.channel.connector.api.change.ChannelConfigChangeApi;
-import com.paytech.channel.connector.core.dal.dataobject.ChannelConfigChange;
-import com.paytech.channel.connector.core.enums.ChangeTargetType;
-import com.paytech.channel.connector.core.enums.ChangeType;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelConfigChange;
+import com.paytech.channel.connector.protocol.core.enums.ChangeTargetType;
+import com.paytech.channel.connector.protocol.core.enums.ChangeType;
 import com.paytech.channel.connector.core.enums.ChannelStatus;
 import com.paytech.channel.connector.test.base.AbstractChannelCostApiTest;
 import com.paytech.channel.connector.test.checker.ChannelCostResponseChecker;

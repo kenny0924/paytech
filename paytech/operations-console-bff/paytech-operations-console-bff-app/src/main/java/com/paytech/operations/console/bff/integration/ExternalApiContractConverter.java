@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 /**
- * 外部 API 管理合同的 BFF 本地模型与 Platform DTO 逐字段转换。
+ * 外部 API 管理合同的 BFF 本地模型与 channel-connector DTO 逐字段转换。
  *
  * <p>{@code definition}、{@code flowDefinition} 是 Owner 解释的 JSON 对象，原样传递；上游新增字段不会投影到浏览器。
  */
@@ -16,11 +16,11 @@ public final class ExternalApiContractConverter {
     }
 
     /** ApiFieldBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.platform.support.api.externalapi.request.ApiFieldBody toPlatform(com.paytech.operations.console.bff.service.model.externalapi.request.ApiFieldBody value) {
+    public static com.paytech.channel.connector.api.externalapi.request.ApiFieldBody toOwner(com.paytech.operations.console.bff.service.model.externalapi.request.ApiFieldBody value) {
         if (value == null) {
             return null;
         }
-        return new com.paytech.platform.support.api.externalapi.request.ApiFieldBody(
+        return new com.paytech.channel.connector.api.externalapi.request.ApiFieldBody(
             value.getFieldLocation(),
             value.getFieldPath(),
             value.getFieldName(),
@@ -30,7 +30,7 @@ public final class ExternalApiContractConverter {
     }
 
     /** ApiFieldDetail 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.ApiFieldDetail toBff(com.paytech.platform.support.api.externalapi.response.ApiFieldDetail value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.ApiFieldDetail toBff(com.paytech.channel.connector.api.externalapi.response.ApiFieldDetail value) {
         if (value == null) {
             return null;
         }
@@ -44,7 +44,7 @@ public final class ExternalApiContractConverter {
     }
 
     /** ApiReferenceDetail 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.ApiReferenceDetail toBff(com.paytech.platform.support.api.externalapi.response.ApiReferenceDetail value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.ApiReferenceDetail toBff(com.paytech.channel.connector.api.externalapi.response.ApiReferenceDetail value) {
         if (value == null) {
             return null;
         }
@@ -54,85 +54,85 @@ public final class ExternalApiContractConverter {
     }
 
     /** CreateImplementationRequestBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.platform.support.api.externalapi.request.CreateImplementationRequestBody toPlatform(com.paytech.operations.console.bff.service.model.externalapi.request.CreateImplementationRequestBody value) {
+    public static com.paytech.channel.connector.api.externalapi.request.CreateImplementationRequestBody toOwner(com.paytech.operations.console.bff.service.model.externalapi.request.CreateImplementationRequestBody value) {
         if (value == null) {
             return null;
         }
-        return new com.paytech.platform.support.api.externalapi.request.CreateImplementationRequestBody(
+        return new com.paytech.channel.connector.api.externalapi.request.CreateImplementationRequestBody(
             value.getStandardApiCode(),
             value.getFlowDefinition(),
             value.getReason());
     }
 
     /** CreateIntegrationApiRequestBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.platform.support.api.externalapi.request.CreateIntegrationApiRequestBody toPlatform(com.paytech.operations.console.bff.service.model.externalapi.request.CreateIntegrationApiRequestBody value) {
+    public static com.paytech.channel.connector.api.externalapi.request.CreateIntegrationApiRequestBody toOwner(com.paytech.operations.console.bff.service.model.externalapi.request.CreateIntegrationApiRequestBody value) {
         if (value == null) {
             return null;
         }
-        return new com.paytech.platform.support.api.externalapi.request.CreateIntegrationApiRequestBody(
+        return new com.paytech.channel.connector.api.externalapi.request.CreateIntegrationApiRequestBody(
             value.getApiCode(),
             value.getApiName(),
             value.getDescription(),
-            list(value.getRequestFields(), ExternalApiContractConverter::toPlatform),
-            list(value.getResponseFields(), ExternalApiContractConverter::toPlatform),
+            list(value.getRequestFields(), ExternalApiContractConverter::toOwner),
+            list(value.getResponseFields(), ExternalApiContractConverter::toOwner),
             value.getDefinition(),
             value.getReason());
     }
 
     /** CreateIntegrationRequestBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.platform.support.api.externalapi.request.CreateIntegrationRequestBody toPlatform(com.paytech.operations.console.bff.service.model.externalapi.request.CreateIntegrationRequestBody value) {
+    public static com.paytech.channel.connector.api.externalapi.request.CreateIntegrationRequestBody toOwner(com.paytech.operations.console.bff.service.model.externalapi.request.CreateIntegrationRequestBody value) {
         if (value == null) {
             return null;
         }
-        return new com.paytech.platform.support.api.externalapi.request.CreateIntegrationRequestBody(
+        return new com.paytech.channel.connector.api.externalapi.request.CreateIntegrationRequestBody(
             value.getIntegrationCode(),
             value.getIntegrationName(),
             value.getDescription(),
-            list(value.getEndpoints(), ExternalApiContractConverter::toPlatform),
+            list(value.getEndpoints(), ExternalApiContractConverter::toOwner),
             value.getReason());
     }
 
     /** CreateIntegrationScriptRequestBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.platform.support.api.externalapi.request.CreateIntegrationScriptRequestBody toPlatform(com.paytech.operations.console.bff.service.model.externalapi.request.CreateIntegrationScriptRequestBody value) {
+    public static com.paytech.channel.connector.api.externalapi.request.CreateIntegrationScriptRequestBody toOwner(com.paytech.operations.console.bff.service.model.externalapi.request.CreateIntegrationScriptRequestBody value) {
         if (value == null) {
             return null;
         }
-        return new com.paytech.platform.support.api.externalapi.request.CreateIntegrationScriptRequestBody(
+        return new com.paytech.channel.connector.api.externalapi.request.CreateIntegrationScriptRequestBody(
             value.getScriptCode(),
             value.getScriptName(),
             value.getExecutionStage(),
-            list(value.getParameterDefinition(), ExternalApiContractConverter::toPlatform),
+            list(value.getParameterDefinition(), ExternalApiContractConverter::toOwner),
             value.getSourceCode(),
             value.getDescription(),
             value.getReason());
     }
 
     /** CreateStandardApiRequestBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.platform.support.api.externalapi.request.CreateStandardApiRequestBody toPlatform(com.paytech.operations.console.bff.service.model.externalapi.request.CreateStandardApiRequestBody value) {
+    public static com.paytech.channel.connector.api.externalapi.request.CreateStandardApiRequestBody toOwner(com.paytech.operations.console.bff.service.model.externalapi.request.CreateStandardApiRequestBody value) {
         if (value == null) {
             return null;
         }
-        return new com.paytech.platform.support.api.externalapi.request.CreateStandardApiRequestBody(
+        return new com.paytech.channel.connector.api.externalapi.request.CreateStandardApiRequestBody(
             value.getStandardApiCode(),
             value.getStandardApiName(),
             value.getDescription(),
-            list(value.getRequestFields(), ExternalApiContractConverter::toPlatform),
-            list(value.getResponseFields(), ExternalApiContractConverter::toPlatform),
+            list(value.getRequestFields(), ExternalApiContractConverter::toOwner),
+            list(value.getResponseFields(), ExternalApiContractConverter::toOwner),
             value.getReason());
     }
 
     /** DeleteExternalApiConfigRequestBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.platform.support.api.externalapi.request.DeleteExternalApiConfigRequestBody toPlatform(com.paytech.operations.console.bff.service.model.externalapi.request.DeleteExternalApiConfigRequestBody value) {
+    public static com.paytech.channel.connector.api.externalapi.request.DeleteExternalApiConfigRequestBody toOwner(com.paytech.operations.console.bff.service.model.externalapi.request.DeleteExternalApiConfigRequestBody value) {
         if (value == null) {
             return null;
         }
-        return new com.paytech.platform.support.api.externalapi.request.DeleteExternalApiConfigRequestBody(
+        return new com.paytech.channel.connector.api.externalapi.request.DeleteExternalApiConfigRequestBody(
             value.getExpectedVersion(),
             value.getReason());
     }
 
     /** EditorCapabilitiesResponseBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.EditorCapabilitiesResponseBody toBff(com.paytech.platform.support.api.externalapi.response.EditorCapabilitiesResponseBody value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.EditorCapabilitiesResponseBody toBff(com.paytech.channel.connector.api.externalapi.response.EditorCapabilitiesResponseBody value) {
         if (value == null) {
             return null;
         }
@@ -143,7 +143,7 @@ public final class ExternalApiContractConverter {
     }
 
     /** ExternalApiMutationResponseBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.ExternalApiMutationResponseBody toBff(com.paytech.platform.support.api.externalapi.response.ExternalApiMutationResponseBody value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.ExternalApiMutationResponseBody toBff(com.paytech.channel.connector.api.externalapi.response.ExternalApiMutationResponseBody value) {
         if (value == null) {
             return null;
         }
@@ -154,7 +154,7 @@ public final class ExternalApiContractConverter {
     }
 
     /** FlowApiContractDetail 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.FlowApiContractDetail toBff(com.paytech.platform.support.api.externalapi.response.FlowApiContractDetail value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.FlowApiContractDetail toBff(com.paytech.channel.connector.api.externalapi.response.FlowApiContractDetail value) {
         if (value == null) {
             return null;
         }
@@ -167,7 +167,7 @@ public final class ExternalApiContractConverter {
     }
 
     /** FlowEditorContextResponseBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.FlowEditorContextResponseBody toBff(com.paytech.platform.support.api.externalapi.response.FlowEditorContextResponseBody value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.FlowEditorContextResponseBody toBff(com.paytech.channel.connector.api.externalapi.response.FlowEditorContextResponseBody value) {
         if (value == null) {
             return null;
         }
@@ -177,7 +177,7 @@ public final class ExternalApiContractConverter {
     }
 
     /** FlowRequestFieldDetail 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.FlowRequestFieldDetail toBff(com.paytech.platform.support.api.externalapi.response.FlowRequestFieldDetail value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.FlowRequestFieldDetail toBff(com.paytech.channel.connector.api.externalapi.response.FlowRequestFieldDetail value) {
         if (value == null) {
             return null;
         }
@@ -192,7 +192,7 @@ public final class ExternalApiContractConverter {
     }
 
     /** FlowStandardApiDetail 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.FlowStandardApiDetail toBff(com.paytech.platform.support.api.externalapi.response.FlowStandardApiDetail value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.FlowStandardApiDetail toBff(com.paytech.channel.connector.api.externalapi.response.FlowStandardApiDetail value) {
         if (value == null) {
             return null;
         }
@@ -202,7 +202,7 @@ public final class ExternalApiContractConverter {
     }
 
     /** ImplementationListResponseBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.ImplementationListResponseBody toBff(com.paytech.platform.support.api.externalapi.response.ImplementationListResponseBody value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.ImplementationListResponseBody toBff(com.paytech.channel.connector.api.externalapi.response.ImplementationListResponseBody value) {
         if (value == null) {
             return null;
         }
@@ -211,7 +211,7 @@ public final class ExternalApiContractConverter {
     }
 
     /** ImplementationResponseBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.ImplementationResponseBody toBff(com.paytech.platform.support.api.externalapi.response.ImplementationResponseBody value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.ImplementationResponseBody toBff(com.paytech.channel.connector.api.externalapi.response.ImplementationResponseBody value) {
         if (value == null) {
             return null;
         }
@@ -225,7 +225,7 @@ public final class ExternalApiContractConverter {
     }
 
     /** ImplementationSummary 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.ImplementationSummary toBff(com.paytech.platform.support.api.externalapi.response.ImplementationSummary value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.ImplementationSummary toBff(com.paytech.channel.connector.api.externalapi.response.ImplementationSummary value) {
         if (value == null) {
             return null;
         }
@@ -241,7 +241,7 @@ public final class ExternalApiContractConverter {
     }
 
     /** IntegrationApiResponseBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.IntegrationApiResponseBody toBff(com.paytech.platform.support.api.externalapi.response.IntegrationApiResponseBody value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.IntegrationApiResponseBody toBff(com.paytech.channel.connector.api.externalapi.response.IntegrationApiResponseBody value) {
         if (value == null) {
             return null;
         }
@@ -260,7 +260,7 @@ public final class ExternalApiContractConverter {
     }
 
     /** IntegrationApiSummary 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.IntegrationApiSummary toBff(com.paytech.platform.support.api.externalapi.response.IntegrationApiSummary value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.IntegrationApiSummary toBff(com.paytech.channel.connector.api.externalapi.response.IntegrationApiSummary value) {
         if (value == null) {
             return null;
         }
@@ -278,18 +278,18 @@ public final class ExternalApiContractConverter {
     }
 
     /** IntegrationEndpointBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.platform.support.api.externalapi.request.IntegrationEndpointBody toPlatform(com.paytech.operations.console.bff.service.model.externalapi.request.IntegrationEndpointBody value) {
+    public static com.paytech.channel.connector.api.externalapi.request.IntegrationEndpointBody toOwner(com.paytech.operations.console.bff.service.model.externalapi.request.IntegrationEndpointBody value) {
         if (value == null) {
             return null;
         }
-        return new com.paytech.platform.support.api.externalapi.request.IntegrationEndpointBody(
+        return new com.paytech.channel.connector.api.externalapi.request.IntegrationEndpointBody(
             value.getEndpointCode(),
             value.getBaseUrl(),
             value.getSandbox());
     }
 
     /** IntegrationEndpointDetail 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.IntegrationEndpointDetail toBff(com.paytech.platform.support.api.externalapi.response.IntegrationEndpointDetail value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.IntegrationEndpointDetail toBff(com.paytech.channel.connector.api.externalapi.response.IntegrationEndpointDetail value) {
         if (value == null) {
             return null;
         }
@@ -301,7 +301,7 @@ public final class ExternalApiContractConverter {
     }
 
     /** IntegrationReference 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.IntegrationReference toBff(com.paytech.platform.support.api.externalapi.response.IntegrationReference value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.IntegrationReference toBff(com.paytech.channel.connector.api.externalapi.response.IntegrationReference value) {
         if (value == null) {
             return null;
         }
@@ -311,7 +311,7 @@ public final class ExternalApiContractConverter {
     }
 
     /** IntegrationResponseBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.IntegrationResponseBody toBff(com.paytech.platform.support.api.externalapi.response.IntegrationResponseBody value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.IntegrationResponseBody toBff(com.paytech.channel.connector.api.externalapi.response.IntegrationResponseBody value) {
         if (value == null) {
             return null;
         }
@@ -330,7 +330,7 @@ public final class ExternalApiContractConverter {
     }
 
     /** IntegrationScriptResponseBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.IntegrationScriptResponseBody toBff(com.paytech.platform.support.api.externalapi.response.IntegrationScriptResponseBody value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.IntegrationScriptResponseBody toBff(com.paytech.channel.connector.api.externalapi.response.IntegrationScriptResponseBody value) {
         if (value == null) {
             return null;
         }
@@ -349,7 +349,7 @@ public final class ExternalApiContractConverter {
     }
 
     /** IntegrationScriptSummary 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.IntegrationScriptSummary toBff(com.paytech.platform.support.api.externalapi.response.IntegrationScriptSummary value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.IntegrationScriptSummary toBff(com.paytech.channel.connector.api.externalapi.response.IntegrationScriptSummary value) {
         if (value == null) {
             return null;
         }
@@ -364,7 +364,7 @@ public final class ExternalApiContractConverter {
     }
 
     /** IntegrationSummary 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.IntegrationSummary toBff(com.paytech.platform.support.api.externalapi.response.IntegrationSummary value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.IntegrationSummary toBff(com.paytech.channel.connector.api.externalapi.response.IntegrationSummary value) {
         if (value == null) {
             return null;
         }
@@ -380,7 +380,7 @@ public final class ExternalApiContractConverter {
     }
 
     /** RegisteredFunctionDetail 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.RegisteredFunctionDetail toBff(com.paytech.platform.support.api.externalapi.response.RegisteredFunctionDetail value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.RegisteredFunctionDetail toBff(com.paytech.channel.connector.api.externalapi.response.RegisteredFunctionDetail value) {
         if (value == null) {
             return null;
         }
@@ -394,18 +394,18 @@ public final class ExternalApiContractConverter {
     }
 
     /** ScriptParameterBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.platform.support.api.externalapi.request.ScriptParameterBody toPlatform(com.paytech.operations.console.bff.service.model.externalapi.request.ScriptParameterBody value) {
+    public static com.paytech.channel.connector.api.externalapi.request.ScriptParameterBody toOwner(com.paytech.operations.console.bff.service.model.externalapi.request.ScriptParameterBody value) {
         if (value == null) {
             return null;
         }
-        return new com.paytech.platform.support.api.externalapi.request.ScriptParameterBody(
+        return new com.paytech.channel.connector.api.externalapi.request.ScriptParameterBody(
             value.getName(),
             value.getDataType(),
             value.getRequired());
     }
 
     /** ScriptParameterDetail 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.ScriptParameterDetail toBff(com.paytech.platform.support.api.externalapi.response.ScriptParameterDetail value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.ScriptParameterDetail toBff(com.paytech.channel.connector.api.externalapi.response.ScriptParameterDetail value) {
         if (value == null) {
             return null;
         }
@@ -416,7 +416,7 @@ public final class ExternalApiContractConverter {
     }
 
     /** StandardApiReference 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.StandardApiReference toBff(com.paytech.platform.support.api.externalapi.response.StandardApiReference value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.StandardApiReference toBff(com.paytech.channel.connector.api.externalapi.response.StandardApiReference value) {
         if (value == null) {
             return null;
         }
@@ -426,7 +426,7 @@ public final class ExternalApiContractConverter {
     }
 
     /** StandardApiResponseBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.StandardApiResponseBody toBff(com.paytech.platform.support.api.externalapi.response.StandardApiResponseBody value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.StandardApiResponseBody toBff(com.paytech.channel.connector.api.externalapi.response.StandardApiResponseBody value) {
         if (value == null) {
             return null;
         }
@@ -444,7 +444,7 @@ public final class ExternalApiContractConverter {
     }
 
     /** StandardApiSummary 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.StandardApiSummary toBff(com.paytech.platform.support.api.externalapi.response.StandardApiSummary value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.StandardApiSummary toBff(com.paytech.channel.connector.api.externalapi.response.StandardApiSummary value) {
         if (value == null) {
             return null;
         }
@@ -459,53 +459,53 @@ public final class ExternalApiContractConverter {
     }
 
     /** UpdateImplementationRequestBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.platform.support.api.externalapi.request.UpdateImplementationRequestBody toPlatform(com.paytech.operations.console.bff.service.model.externalapi.request.UpdateImplementationRequestBody value) {
+    public static com.paytech.channel.connector.api.externalapi.request.UpdateImplementationRequestBody toOwner(com.paytech.operations.console.bff.service.model.externalapi.request.UpdateImplementationRequestBody value) {
         if (value == null) {
             return null;
         }
-        return new com.paytech.platform.support.api.externalapi.request.UpdateImplementationRequestBody(
+        return new com.paytech.channel.connector.api.externalapi.request.UpdateImplementationRequestBody(
             value.getFlowDefinition(),
             value.getExpectedVersion(),
             value.getReason());
     }
 
     /** UpdateIntegrationApiRequestBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.platform.support.api.externalapi.request.UpdateIntegrationApiRequestBody toPlatform(com.paytech.operations.console.bff.service.model.externalapi.request.UpdateIntegrationApiRequestBody value) {
+    public static com.paytech.channel.connector.api.externalapi.request.UpdateIntegrationApiRequestBody toOwner(com.paytech.operations.console.bff.service.model.externalapi.request.UpdateIntegrationApiRequestBody value) {
         if (value == null) {
             return null;
         }
-        return new com.paytech.platform.support.api.externalapi.request.UpdateIntegrationApiRequestBody(
+        return new com.paytech.channel.connector.api.externalapi.request.UpdateIntegrationApiRequestBody(
             value.getApiName(),
             value.getDescription(),
-            list(value.getRequestFields(), ExternalApiContractConverter::toPlatform),
-            list(value.getResponseFields(), ExternalApiContractConverter::toPlatform),
+            list(value.getRequestFields(), ExternalApiContractConverter::toOwner),
+            list(value.getResponseFields(), ExternalApiContractConverter::toOwner),
             value.getDefinition(),
             value.getExpectedVersion(),
             value.getReason());
     }
 
     /** UpdateIntegrationRequestBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.platform.support.api.externalapi.request.UpdateIntegrationRequestBody toPlatform(com.paytech.operations.console.bff.service.model.externalapi.request.UpdateIntegrationRequestBody value) {
+    public static com.paytech.channel.connector.api.externalapi.request.UpdateIntegrationRequestBody toOwner(com.paytech.operations.console.bff.service.model.externalapi.request.UpdateIntegrationRequestBody value) {
         if (value == null) {
             return null;
         }
-        return new com.paytech.platform.support.api.externalapi.request.UpdateIntegrationRequestBody(
+        return new com.paytech.channel.connector.api.externalapi.request.UpdateIntegrationRequestBody(
             value.getIntegrationName(),
             value.getDescription(),
-            list(value.getEndpoints(), ExternalApiContractConverter::toPlatform),
+            list(value.getEndpoints(), ExternalApiContractConverter::toOwner),
             value.getExpectedVersion(),
             value.getReason());
     }
 
     /** UpdateIntegrationScriptRequestBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.platform.support.api.externalapi.request.UpdateIntegrationScriptRequestBody toPlatform(com.paytech.operations.console.bff.service.model.externalapi.request.UpdateIntegrationScriptRequestBody value) {
+    public static com.paytech.channel.connector.api.externalapi.request.UpdateIntegrationScriptRequestBody toOwner(com.paytech.operations.console.bff.service.model.externalapi.request.UpdateIntegrationScriptRequestBody value) {
         if (value == null) {
             return null;
         }
-        return new com.paytech.platform.support.api.externalapi.request.UpdateIntegrationScriptRequestBody(
+        return new com.paytech.channel.connector.api.externalapi.request.UpdateIntegrationScriptRequestBody(
             value.getScriptName(),
             value.getExecutionStage(),
-            list(value.getParameterDefinition(), ExternalApiContractConverter::toPlatform),
+            list(value.getParameterDefinition(), ExternalApiContractConverter::toOwner),
             value.getSourceCode(),
             value.getDescription(),
             value.getExpectedVersion(),
@@ -513,62 +513,62 @@ public final class ExternalApiContractConverter {
     }
 
     /** UpdateStandardApiRequestBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.platform.support.api.externalapi.request.UpdateStandardApiRequestBody toPlatform(com.paytech.operations.console.bff.service.model.externalapi.request.UpdateStandardApiRequestBody value) {
+    public static com.paytech.channel.connector.api.externalapi.request.UpdateStandardApiRequestBody toOwner(com.paytech.operations.console.bff.service.model.externalapi.request.UpdateStandardApiRequestBody value) {
         if (value == null) {
             return null;
         }
-        return new com.paytech.platform.support.api.externalapi.request.UpdateStandardApiRequestBody(
+        return new com.paytech.channel.connector.api.externalapi.request.UpdateStandardApiRequestBody(
             value.getStandardApiName(),
             value.getDescription(),
-            list(value.getRequestFields(), ExternalApiContractConverter::toPlatform),
-            list(value.getResponseFields(), ExternalApiContractConverter::toPlatform),
+            list(value.getRequestFields(), ExternalApiContractConverter::toOwner),
+            list(value.getResponseFields(), ExternalApiContractConverter::toOwner),
             value.getExpectedVersion(),
             value.getReason());
     }
 
     /** ValidateImplementationRequestBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.platform.support.api.externalapi.request.ValidateImplementationRequestBody toPlatform(com.paytech.operations.console.bff.service.model.externalapi.request.ValidateImplementationRequestBody value) {
+    public static com.paytech.channel.connector.api.externalapi.request.ValidateImplementationRequestBody toOwner(com.paytech.operations.console.bff.service.model.externalapi.request.ValidateImplementationRequestBody value) {
         if (value == null) {
             return null;
         }
-        return new com.paytech.platform.support.api.externalapi.request.ValidateImplementationRequestBody(
+        return new com.paytech.channel.connector.api.externalapi.request.ValidateImplementationRequestBody(
             value.getStandardApiCode(),
             value.getFlowDefinition(),
             value.getExpectedVersion());
     }
 
     /** ValidateIntegrationApiRequestBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.platform.support.api.externalapi.request.ValidateIntegrationApiRequestBody toPlatform(com.paytech.operations.console.bff.service.model.externalapi.request.ValidateIntegrationApiRequestBody value) {
+    public static com.paytech.channel.connector.api.externalapi.request.ValidateIntegrationApiRequestBody toOwner(com.paytech.operations.console.bff.service.model.externalapi.request.ValidateIntegrationApiRequestBody value) {
         if (value == null) {
             return null;
         }
-        return new com.paytech.platform.support.api.externalapi.request.ValidateIntegrationApiRequestBody(
+        return new com.paytech.channel.connector.api.externalapi.request.ValidateIntegrationApiRequestBody(
             value.getApiCode(),
             value.getApiName(),
             value.getDescription(),
-            list(value.getRequestFields(), ExternalApiContractConverter::toPlatform),
-            list(value.getResponseFields(), ExternalApiContractConverter::toPlatform),
+            list(value.getRequestFields(), ExternalApiContractConverter::toOwner),
+            list(value.getResponseFields(), ExternalApiContractConverter::toOwner),
             value.getDefinition(),
             value.getExpectedVersion());
     }
 
     /** ValidateIntegrationScriptRequestBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.platform.support.api.externalapi.request.ValidateIntegrationScriptRequestBody toPlatform(com.paytech.operations.console.bff.service.model.externalapi.request.ValidateIntegrationScriptRequestBody value) {
+    public static com.paytech.channel.connector.api.externalapi.request.ValidateIntegrationScriptRequestBody toOwner(com.paytech.operations.console.bff.service.model.externalapi.request.ValidateIntegrationScriptRequestBody value) {
         if (value == null) {
             return null;
         }
-        return new com.paytech.platform.support.api.externalapi.request.ValidateIntegrationScriptRequestBody(
+        return new com.paytech.channel.connector.api.externalapi.request.ValidateIntegrationScriptRequestBody(
             value.getScriptCode(),
             value.getScriptName(),
             value.getExecutionStage(),
-            list(value.getParameterDefinition(), ExternalApiContractConverter::toPlatform),
+            list(value.getParameterDefinition(), ExternalApiContractConverter::toOwner),
             value.getSourceCode(),
             value.getDescription(),
             value.getExpectedVersion());
     }
 
     /** ValidationIssueDetail 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.ValidationIssueDetail toBff(com.paytech.platform.support.api.externalapi.response.ValidationIssueDetail value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.ValidationIssueDetail toBff(com.paytech.channel.connector.api.externalapi.response.ValidationIssueDetail value) {
         if (value == null) {
             return null;
         }
@@ -580,7 +580,7 @@ public final class ExternalApiContractConverter {
     }
 
     /** ValidationResponseBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.ValidationResponseBody toBff(com.paytech.platform.support.api.externalapi.response.ValidationResponseBody value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.ValidationResponseBody toBff(com.paytech.channel.connector.api.externalapi.response.ValidationResponseBody value) {
         if (value == null) {
             return null;
         }
@@ -607,20 +607,20 @@ public final class ExternalApiContractConverter {
     // 渠道沙箱验证（V01～V14）
 
     /** StartVerifyRunRequestBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.platform.support.api.externalapi.request.StartVerifyRunRequestBody toPlatform(com.paytech.operations.console.bff.service.model.externalapi.request.StartVerifyRunRequestBody value) {
+    public static com.paytech.channel.connector.api.externalapi.request.StartVerifyRunRequestBody toOwner(com.paytech.operations.console.bff.service.model.externalapi.request.StartVerifyRunRequestBody value) {
         if (value == null) {
             return null;
         }
-        return new com.paytech.platform.support.api.externalapi.request.StartVerifyRunRequestBody(
+        return new com.paytech.channel.connector.api.externalapi.request.StartVerifyRunRequestBody(
             value.getReason());
     }
 
     /** CreateVerifyAccountRequestBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.platform.support.api.externalapi.request.CreateVerifyAccountRequestBody toPlatform(com.paytech.operations.console.bff.service.model.externalapi.request.CreateVerifyAccountRequestBody value) {
+    public static com.paytech.channel.connector.api.externalapi.request.CreateVerifyAccountRequestBody toOwner(com.paytech.operations.console.bff.service.model.externalapi.request.CreateVerifyAccountRequestBody value) {
         if (value == null) {
             return null;
         }
-        return new com.paytech.platform.support.api.externalapi.request.CreateVerifyAccountRequestBody(
+        return new com.paytech.channel.connector.api.externalapi.request.CreateVerifyAccountRequestBody(
             value.getAccountCode(),
             value.getAccountName(),
             value.getChannelCode(),
@@ -632,11 +632,11 @@ public final class ExternalApiContractConverter {
     }
 
     /** UpdateVerifyAccountRequestBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.platform.support.api.externalapi.request.UpdateVerifyAccountRequestBody toPlatform(com.paytech.operations.console.bff.service.model.externalapi.request.UpdateVerifyAccountRequestBody value) {
+    public static com.paytech.channel.connector.api.externalapi.request.UpdateVerifyAccountRequestBody toOwner(com.paytech.operations.console.bff.service.model.externalapi.request.UpdateVerifyAccountRequestBody value) {
         if (value == null) {
             return null;
         }
-        return new com.paytech.platform.support.api.externalapi.request.UpdateVerifyAccountRequestBody(
+        return new com.paytech.channel.connector.api.externalapi.request.UpdateVerifyAccountRequestBody(
             value.getAccountName(),
             value.getChannelCode(),
             value.getChannelAccountId(),
@@ -648,11 +648,11 @@ public final class ExternalApiContractConverter {
     }
 
     /** CreateVerifyCaseRequestBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.platform.support.api.externalapi.request.CreateVerifyCaseRequestBody toPlatform(com.paytech.operations.console.bff.service.model.externalapi.request.CreateVerifyCaseRequestBody value) {
+    public static com.paytech.channel.connector.api.externalapi.request.CreateVerifyCaseRequestBody toOwner(com.paytech.operations.console.bff.service.model.externalapi.request.CreateVerifyCaseRequestBody value) {
         if (value == null) {
             return null;
         }
-        return new com.paytech.platform.support.api.externalapi.request.CreateVerifyCaseRequestBody(
+        return new com.paytech.channel.connector.api.externalapi.request.CreateVerifyCaseRequestBody(
             value.getCaseCode(),
             value.getCaseName(),
             value.getDescription(),
@@ -662,11 +662,11 @@ public final class ExternalApiContractConverter {
     }
 
     /** UpdateVerifyCaseRequestBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.platform.support.api.externalapi.request.UpdateVerifyCaseRequestBody toPlatform(com.paytech.operations.console.bff.service.model.externalapi.request.UpdateVerifyCaseRequestBody value) {
+    public static com.paytech.channel.connector.api.externalapi.request.UpdateVerifyCaseRequestBody toOwner(com.paytech.operations.console.bff.service.model.externalapi.request.UpdateVerifyCaseRequestBody value) {
         if (value == null) {
             return null;
         }
-        return new com.paytech.platform.support.api.externalapi.request.UpdateVerifyCaseRequestBody(
+        return new com.paytech.channel.connector.api.externalapi.request.UpdateVerifyCaseRequestBody(
             value.getCaseName(),
             value.getDescription(),
             value.getAccountCode(),
@@ -676,17 +676,17 @@ public final class ExternalApiContractConverter {
     }
 
     /** ValidateVerifyCaseRequestBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.platform.support.api.externalapi.request.ValidateVerifyCaseRequestBody toPlatform(com.paytech.operations.console.bff.service.model.externalapi.request.ValidateVerifyCaseRequestBody value) {
+    public static com.paytech.channel.connector.api.externalapi.request.ValidateVerifyCaseRequestBody toOwner(com.paytech.operations.console.bff.service.model.externalapi.request.ValidateVerifyCaseRequestBody value) {
         if (value == null) {
             return null;
         }
-        return new com.paytech.platform.support.api.externalapi.request.ValidateVerifyCaseRequestBody(
+        return new com.paytech.channel.connector.api.externalapi.request.ValidateVerifyCaseRequestBody(
             value.getAccountCode(),
             value.getSteps());
     }
 
     /** VerifyAccountSummary 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.VerifyAccountSummary toBff(com.paytech.platform.support.api.externalapi.response.VerifyAccountSummary value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.VerifyAccountSummary toBff(com.paytech.channel.connector.api.externalapi.response.VerifyAccountSummary value) {
         if (value == null) {
             return null;
         }
@@ -701,7 +701,7 @@ public final class ExternalApiContractConverter {
     }
 
     /** VerifyAccountResponseBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.VerifyAccountResponseBody toBff(com.paytech.platform.support.api.externalapi.response.VerifyAccountResponseBody value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.VerifyAccountResponseBody toBff(com.paytech.channel.connector.api.externalapi.response.VerifyAccountResponseBody value) {
         if (value == null) {
             return null;
         }
@@ -721,7 +721,7 @@ public final class ExternalApiContractConverter {
     }
 
     /** VerifyRunBrief 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.VerifyRunBrief toBff(com.paytech.platform.support.api.externalapi.response.VerifyRunBrief value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.VerifyRunBrief toBff(com.paytech.channel.connector.api.externalapi.response.VerifyRunBrief value) {
         if (value == null) {
             return null;
         }
@@ -733,7 +733,7 @@ public final class ExternalApiContractConverter {
     }
 
     /** VerifyCaseSummary 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.VerifyCaseSummary toBff(com.paytech.platform.support.api.externalapi.response.VerifyCaseSummary value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.VerifyCaseSummary toBff(com.paytech.channel.connector.api.externalapi.response.VerifyCaseSummary value) {
         if (value == null) {
             return null;
         }
@@ -750,7 +750,7 @@ public final class ExternalApiContractConverter {
     }
 
     /** VerifyCaseResponseBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.VerifyCaseResponseBody toBff(com.paytech.platform.support.api.externalapi.response.VerifyCaseResponseBody value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.VerifyCaseResponseBody toBff(com.paytech.channel.connector.api.externalapi.response.VerifyCaseResponseBody value) {
         if (value == null) {
             return null;
         }
@@ -769,7 +769,7 @@ public final class ExternalApiContractConverter {
     }
 
     /** VerifyRunStartResponseBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.VerifyRunStartResponseBody toBff(com.paytech.platform.support.api.externalapi.response.VerifyRunStartResponseBody value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.VerifyRunStartResponseBody toBff(com.paytech.channel.connector.api.externalapi.response.VerifyRunStartResponseBody value) {
         if (value == null) {
             return null;
         }
@@ -779,7 +779,7 @@ public final class ExternalApiContractConverter {
     }
 
     /** VerifyRunSummary 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.VerifyRunSummary toBff(com.paytech.platform.support.api.externalapi.response.VerifyRunSummary value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.VerifyRunSummary toBff(com.paytech.channel.connector.api.externalapi.response.VerifyRunSummary value) {
         if (value == null) {
             return null;
         }
@@ -795,7 +795,7 @@ public final class ExternalApiContractConverter {
     }
 
     /** VerifyRunStepDetail 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.VerifyRunStepDetail toBff(com.paytech.platform.support.api.externalapi.response.VerifyRunStepDetail value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.VerifyRunStepDetail toBff(com.paytech.channel.connector.api.externalapi.response.VerifyRunStepDetail value) {
         if (value == null) {
             return null;
         }
@@ -812,7 +812,7 @@ public final class ExternalApiContractConverter {
     }
 
     /** VerifyRunResponseBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.VerifyRunResponseBody toBff(com.paytech.platform.support.api.externalapi.response.VerifyRunResponseBody value) {
+    public static com.paytech.operations.console.bff.service.model.externalapi.response.VerifyRunResponseBody toBff(com.paytech.channel.connector.api.externalapi.response.VerifyRunResponseBody value) {
         if (value == null) {
             return null;
         }

@@ -9,11 +9,11 @@ import org.springframework.stereotype.Component;
 
 import com.paytech.channel.connector.core.constant.ChannelConnectorLocks;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelAccount;
-import com.paytech.channel.connector.core.enums.ChangeTargetType;
-import com.paytech.channel.connector.core.enums.ChangeType;
+import com.paytech.channel.connector.protocol.core.enums.ChangeTargetType;
+import com.paytech.channel.connector.protocol.core.enums.ChangeType;
 import com.paytech.channel.connector.domain.ChannelAccountContext;
 import com.paytech.channel.connector.domain.ChannelAccountDetailView;
-import com.paytech.channel.connector.domain.ChannelConfigChanges;
+import com.paytech.channel.connector.protocol.domain.ChannelConfigChanges;
 import com.paytech.channel.connector.domainservice.repository.ChannelMidRepository;
 import com.paytech.channel.connector.domainservice.service.ChannelAccountService;
 import com.paytech.channel.connector.domainservice.service.PaymentChannelService;
@@ -37,6 +37,7 @@ public class UpdateChannelAccountProcessor
     private final ChannelMidRepository channelMidRepository;
     private final ChannelAccountService channelAccountService;
     private final PaymentChannelService paymentChannelService;
+    private final ChannelConfigTransactions channelConfigTransactions;
 
     /** 账号资源锁。 */
     @Override
@@ -59,7 +60,8 @@ public class UpdateChannelAccountProcessor
         }
 
         // 本地保存
-        channelAccountService.updateProfile(context, request.getAccountName(), request.getRemark());
+        channelConfigTransactions.write(context.getChange(),
+            () -> channelAccountService.updateProfile(context, request.getAccountName(), request.getRemark()));
         return new ChannelAccountDetailView(account, channelMidRepository.countOpenByAccount(account.getChannelAccountId()));
     }
 }

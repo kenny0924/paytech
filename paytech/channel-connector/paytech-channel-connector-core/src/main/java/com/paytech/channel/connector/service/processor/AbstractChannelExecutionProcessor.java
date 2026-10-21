@@ -26,7 +26,7 @@ import com.paytech.channel.connector.service.processor.request.GetChannelExecuti
  * 冻结坐标执行入口的公共校验：按用途检查三元组归属、状态与新支付能力，在一致快照中读取，不持有跨网络事务。
  *
  * <p>
- * 执行配置读取（Reveal）与经 Platform 执行渠道操作（不 Reveal，2026-10-13 账号读取决定）共用同一套规则。
+ * 执行配置读取（Reveal）与进程内执行渠道操作（Reveal 由 protocol 初始化函数完成）共用同一套规则。
  */
 public abstract class AbstractChannelExecutionProcessor<Q, R> extends AbstractProcessor<Q, R> {
     private final ChannelProperties properties;

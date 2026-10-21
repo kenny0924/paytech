@@ -1,0 +1,99 @@
+{
+ "startedAt": "2026-10-21T03:31:17.854705+00:00",
+ "channel": {
+  "channelId": "238501215359533056",
+  "channelAccountId": "238501216471023616",
+  "midId": "238501217200832512"
+ },
+ "instrument": {
+  "httpStatus": 200,
+  "instrumentRef": "238504392603504640",
+  "maskedPan": "444433******1111",
+  "code": null
+ },
+ "ticket": {
+  "httpStatus": 200,
+  "issued": true,
+  "code": null
+ },
+ "pay": {
+  "httpStatus": 200,
+  "outcome": "SUCCESS",
+  "failureCode": null,
+  "channelStatus": "SUCCESS",
+  "paymentStatus": "SUCCEEDED",
+  "hasChannelTransactionRef": true,
+  "failureMessage": null,
+  "channelJournal": {
+   "count": 1,
+   "entries": [
+    {
+     "operation": "orderAndPay",
+     "outcome": "1",
+     "code": "APPLY_SUCCESS",
+     "signatureValid": true,
+     "envelopeValid": true,
+     "requestTimeValid": true,
+     "amountValid": true
+    }
+   ]
+  },
+  "cardLog": [
+   "POST 200"
+  ]
+ },
+ "ticketRow": [
+  {
+   "purpose": "CHANNEL_EXECUTION",
+   "issuedByCaller": "payment-service",
+   "used": "1",
+   "attemptMatches": "1",
+   "actionMatches": "1"
+  }
+ ],
+ "reuseTicket": {
+  "httpStatus": 400,
+  "code": "BUSINESS_CHECK_FAILED",
+  "returnedCardFields": false
+ },
+ "vaultEvents": [
+  {
+   "callerService": "card-service",
+   "action": "PROTECT",
+   "dataType": "PAYMENT_CARD_DEK",
+   "purpose": "CARD_STORAGE",
+   "outcome": "SUCCESS",
+   "resultCode": "SUCCESS"
+  },
+  {
+   "callerService": "channel-connector-service",
+   "action": "REVEAL",
+   "dataType": "CHANNEL_ACCOUNT_CONFIG_V1",
+   "purpose": "CHANNEL_EXECUTION",
+   "outcome": "SUCCESS",
+   "resultCode": "SUCCESS"
+  },
+  {
+   "callerService": "card-service",
+   "action": "REVEAL",
+   "dataType": "PAYMENT_CARD_DEK",
+   "purpose": "CARD_USE",
+   "outcome": "SUCCESS",
+   "resultCode": "SUCCESS"
+  }
+ ],
+ "cardAccessLog": [
+  "POST 200",
+  "POST 200",
+  "POST 200",
+  "POST 400"
+ ],
+ "panOrCvvPresent": {
+  "log:card": false,
+  "log:channel-connector": false,
+  "log:platform": false,
+  "log:ops-bff": false,
+  "payermaxJournal": false
+ },
+ "channelRequestCarriesFullPan": true
+}

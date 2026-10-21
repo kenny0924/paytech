@@ -11,7 +11,7 @@ import org.springframework.http.HttpMethod;
 
 import com.paytech.channel.connector.api.ChannelConnectorHeaders;
 import com.paytech.channel.connector.api.channel.request.ChangeChannelStatusRequestBody;
-import com.paytech.channel.connector.core.enums.ChangeTargetType;
+import com.paytech.channel.connector.protocol.core.enums.ChangeTargetType;
 import com.paytech.channel.connector.core.enums.ChannelStatus;
 import com.paytech.channel.connector.test.checker.ChannelCostResponseChecker;
 import com.paytech.channel.connector.test.dal.ChannelTestMapper;

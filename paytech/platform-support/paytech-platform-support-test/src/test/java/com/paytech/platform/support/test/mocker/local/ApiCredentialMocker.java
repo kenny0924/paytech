@@ -38,9 +38,11 @@ public class ApiCredentialMocker implements Clear {
             "上一例测试状态未清理");
         try (var connection = dataSource.getConnection()) {
             String url = connection.getMetaData().getURL();
-            assertTrue(url.startsWith("jdbc:mysql://127.0.0.1:13306/mor_platform?"),
+            String database = mapper.databaseName();
+            assertTrue(url.startsWith("jdbc:mysql://127.0.0.1:13306/" + database + "?"),
                 "PLT-I03 测试只允许仓库本地 MySQL mor_platform");
-            assertEquals("mor_platform", mapper.databaseName());
+            assertTrue("mor_platform".equals(database) || database.matches("mor_platform_[a-z0-9]{1,16}"),
+                "PLT-I03 测试只允许 mor_platform 或并行任务隔离用的 mor_platform_{后缀}");
             mapper.checkSchema();
             mapper.tenants(List.of(-1L));
             mapper.scopes(List.of(-1L));

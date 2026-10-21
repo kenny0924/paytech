@@ -6,7 +6,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import com.paytech.foundation.web.paging.PagingResponseBody;
-import com.paytech.operations.console.bff.integration.PlatformIntegrationVerifyManagementClient;
+import com.paytech.operations.console.bff.integration.IntegrationVerifyManagementClient;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
 import com.paytech.operations.console.bff.service.model.externalapi.request.CreateVerifyAccountRequestBody;
 import com.paytech.operations.console.bff.service.model.externalapi.request.StartVerifyRunRequestBody;
@@ -28,30 +28,28 @@ import com.paytech.operations.console.bff.service.model.externalapi.response.Ver
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 
-/** 渠道沙箱验证管理的浏览器入口：实时 PLT-I02 授权后原样转发 Platform，不接收或转发 Idempotency-Key。 */
+/** 渠道沙箱验证管理的浏览器入口：实时 PLT-I02 授权后原样转发 channel-connector，不接收或转发 Idempotency-Key。 */
 @RestController
 @Validated
 @AllArgsConstructor
 @RequestMapping("/external-api-admin/v1")
 public class IntegrationVerifyManagementController {
 
-    private final PlatformIntegrationVerifyManagementClient client;
+    private final IntegrationVerifyManagementClient client;
 
     /** V01 列出验证账号。 */
     @GetMapping("/integrations/{integrationCode}/verify-accounts")
     public List<VerifyAccountSummary> listVerifyAccounts(
-        OperatorContext context,
         @PathVariable("integrationCode") String integrationCode) {
-        return client.listVerifyAccounts(context, integrationCode);
+        return client.listVerifyAccounts(integrationCode);
     }
 
     /** V02 读取验证账号详情。 */
     @GetMapping("/integrations/{integrationCode}/verify-accounts/{accountCode}")
     public VerifyAccountResponseBody getVerifyAccount(
-        OperatorContext context,
         @PathVariable("integrationCode") String integrationCode,
         @PathVariable("accountCode") String accountCode) {
-        return client.getVerifyAccount(context, integrationCode, accountCode);
+        return client.getVerifyAccount(integrationCode, accountCode);
     }
 
     /** V03 创建验证账号。 */
@@ -86,21 +84,19 @@ public class IntegrationVerifyManagementController {
     /** V06 分页查询验证用例。 */
     @GetMapping("/integrations/{integrationCode}/verify-cases")
     public PagingResponseBody<VerifyCaseSummary> listVerifyCases(
-        OperatorContext context,
         @PathVariable("integrationCode") String integrationCode,
         @RequestParam(value = "page", required = false) Integer page,
         @RequestParam(value = "size", required = false) Integer size,
         @RequestParam(value = "keyword", required = false) String keyword) {
-        return client.listVerifyCases(context, integrationCode, page, size, keyword);
+        return client.listVerifyCases(integrationCode, page, size, keyword);
     }
 
     /** V07 读取验证用例详情。 */
     @GetMapping("/integrations/{integrationCode}/verify-cases/{caseCode}")
     public VerifyCaseResponseBody getVerifyCase(
-        OperatorContext context,
         @PathVariable("integrationCode") String integrationCode,
         @PathVariable("caseCode") String caseCode) {
-        return client.getVerifyCase(context, integrationCode, caseCode);
+        return client.getVerifyCase(integrationCode, caseCode);
     }
 
     /** V08 创建验证用例。 */
@@ -135,10 +131,9 @@ public class IntegrationVerifyManagementController {
     /** V11 只校验验证用例，不保存。 */
     @PostMapping("/integrations/{integrationCode}/verify-cases/validate")
     public ValidationResponseBody validateVerifyCase(
-        OperatorContext context,
         @PathVariable("integrationCode") String integrationCode,
         @Valid @RequestBody ValidateVerifyCaseRequestBody request) {
-        return client.validateVerifyCase(context, integrationCode, request);
+        return client.validateVerifyCase(integrationCode, request);
     }
 
     /** V12 发起沙箱验证运行。 */
@@ -154,20 +149,18 @@ public class IntegrationVerifyManagementController {
     /** V13 分页查询验证运行。 */
     @GetMapping("/integrations/{integrationCode}/verify-runs")
     public PagingResponseBody<VerifyRunSummary> listVerifyRuns(
-        OperatorContext context,
         @PathVariable("integrationCode") String integrationCode,
         @RequestParam(value = "caseCode", required = false) String caseCode,
         @RequestParam(value = "page", required = false) Integer page,
         @RequestParam(value = "size", required = false) Integer size) {
-        return client.listVerifyRuns(context, integrationCode, caseCode, page, size);
+        return client.listVerifyRuns(integrationCode, caseCode, page, size);
     }
 
     /** V14 读取验证运行详情与证据。 */
     @GetMapping("/integrations/{integrationCode}/verify-runs/{runCode}")
     public VerifyRunResponseBody getVerifyRun(
-        OperatorContext context,
         @PathVariable("integrationCode") String integrationCode,
         @PathVariable("runCode") String runCode) {
-        return client.getVerifyRun(context, integrationCode, runCode);
+        return client.getVerifyRun(integrationCode, runCode);
     }
 }

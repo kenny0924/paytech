@@ -1,0 +1,25 @@
+# 统一对外渠道出口第一段：mor-test 候选覆盖文件（2026-10-21 阶段 6 准备；阶段 7 经用户确认后执行）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件：
+#   ./test-environment/compose.sh -f "$PWD/requirements/20261020/channel-connector-统一对外渠道出口/release/compose-candidate.yaml" \
+#     up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 不加 --remove-orphans。部署只认下列固定 sha256（tag ccu-20261021 仅供辨认，:development 未改动）。
+# 构建源：干净 worktree /Users/kenny/Desktop/Workspace/Code-MoR-ccu-release = main 1b60ae43（与 mor-test 运行版逐项比对见 release.md 第 2 节）
+#   + Code-MoR-ccu 相对 4ab205e0 的本需求改动（1010 个路径；11 个共享文件三方合并，结果与主工作区逐字节一致）。
+#   Java 镜像用 test-environment/java/Dockerfile，health-probe 取自运行容器（四个服务逐字节一致）。
+# 环境变量：本需求不新增、不删除、不修改任何容器环境变量（release.md 第 3 节）；四个服务只换 image。
+# 回滚目标（阶段 6 读取的运行镜像，阶段 7 第 1 步须再核对一致）：
+#   card-service              sha256:68d676840ac2d5331c49637f9522c9f714548bed6aec60d2812318d5823d77c0（counterparty-20261020）
+#   channel-connector-service sha256:4d31d529e1d3258e5e7976f1f98d4ef24bcb8e3d3eca24d1e2aef6c432e5f054（channel-20261020）
+#   platform-support-service  sha256:3d8bc3752c37da4f57e6bfad764a6712758bef45b484980262ddbe68414ebd72（recon-detail-20261021）
+#   operations-console-bff    sha256:e822301cf35cab0dbce8ea87619d37d86c6ca5bed51c04fb2b3fa5b16968eab4（recon-detail-20261021）
+#   回滚文件：同目录 compose-rollback.yaml。
+services:
+  card-service:
+    image: sha256:aee937997621b6246ca4fed8eed7233019246f2a1ecaa3d6e4056b7823b8adb5  # mor-test/card-service:ccu-20261021（JAR bb118a6b5c1d71b7）
+  channel-connector-service:
+    image: sha256:1571ce18b74987b4566ce1786af1a2bc50da14b2bd9cf96d688c69c438702abb  # mor-test/channel-connector-service:ccu-20261021（JAR 3f3f6e326030aca5）
+  operations-console-bff:
+    image: sha256:4839c249e59c86d1f507b75ed25858ad7dbeabcfd816c1885fcb62d200ff206b  # mor-test/operations-console-bff:ccu-20261021（JAR 274fed6fb50ed779）
+  platform-support-service:
+    # 最后一步（验收通过后）才替换；替换后才执行 sql/40-drop-integration.sql。
+    image: sha256:2d40c1ba7f9aa1cc0f4da838b23e880f414201574cba36fc4d4dc1587d7ba330  # mor-test/platform-support-service:ccu-20261021（JAR aa66765d3bf1139c）

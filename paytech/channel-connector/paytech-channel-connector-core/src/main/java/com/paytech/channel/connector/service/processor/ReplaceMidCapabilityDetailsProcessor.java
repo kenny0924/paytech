@@ -10,10 +10,10 @@ import org.springframework.stereotype.Component;
 import com.paytech.channel.connector.core.constant.ChannelConnectorLocks;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelMid;
 import com.paytech.channel.connector.core.dal.dataobject.MidCapability;
-import com.paytech.channel.connector.core.enums.ChangeTargetType;
-import com.paytech.channel.connector.core.enums.ChangeType;
+import com.paytech.channel.connector.protocol.core.enums.ChangeTargetType;
+import com.paytech.channel.connector.protocol.core.enums.ChangeType;
 import com.paytech.channel.connector.core.enums.ChannelStatus;
-import com.paytech.channel.connector.domain.ChannelConfigChanges;
+import com.paytech.channel.connector.protocol.domain.ChannelConfigChanges;
 import com.paytech.channel.connector.domain.MidCapabilityView;
 import com.paytech.channel.connector.domain.MidCapabilityWriteContext;
 import com.paytech.channel.connector.domainservice.repository.MidCapabilityRepository;
@@ -40,6 +40,7 @@ public class ReplaceMidCapabilityDetailsProcessor
     private final ChannelMidService channelMidService;
     private final MidCapabilityService midCapabilityService;
     private final MidCapabilityRepository midCapabilityRepository;
+    private final ChannelConfigTransactions channelConfigTransactions;
 
     /** 能力组所属 MID 的资源锁；能力组不存在时锁定能力组主键对应的空资源，由锁内读取业务拒绝。 */
     @Override
@@ -68,7 +69,7 @@ public class ReplaceMidCapabilityDetailsProcessor
                 capability.getMidCapabilityId(), ChangeType.UPDATE, request.getActorId(), now), now);
 
         // 本地保存
-        midCapabilityService.replaceDetails(context);
+        channelConfigTransactions.write(context.getChange(), () -> midCapabilityService.replaceDetails(context));
         return context.toView();
     }
 }

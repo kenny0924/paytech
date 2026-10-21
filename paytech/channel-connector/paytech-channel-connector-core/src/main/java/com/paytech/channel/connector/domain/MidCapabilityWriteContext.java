@@ -3,7 +3,7 @@ package com.paytech.channel.connector.domain;
 import java.time.Instant;
 import java.util.List;
 
-import com.paytech.channel.connector.core.dal.dataobject.ChannelConfigChange;
+import com.paytech.channel.connector.protocol.domain.ChannelConfigChangeRecord;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelMid;
 import com.paytech.channel.connector.core.dal.dataobject.MidCapability;
 import com.paytech.channel.connector.core.dal.dataobject.MidCapabilityDetail;
@@ -29,7 +29,7 @@ public class MidCapabilityWriteContext {
     private final List<MidCapabilityDetail> details;
 
     /** 与本次写入同事务插入的变更记录。 */
-    private final ChannelConfigChange change;
+    private final ChannelConfigChangeRecord change;
 
     /** 本次写入时间，UTC 微秒。 */
     private final Instant now;

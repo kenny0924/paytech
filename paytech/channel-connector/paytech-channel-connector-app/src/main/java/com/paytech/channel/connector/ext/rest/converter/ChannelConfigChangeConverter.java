@@ -3,9 +3,9 @@ package com.paytech.channel.connector.ext.rest.converter;
 import org.springframework.stereotype.Component;
 
 import com.paytech.channel.connector.api.change.response.ChannelConfigChangeResponseBody;
-import com.paytech.channel.connector.core.dal.dataobject.ChannelConfigChange;
-import com.paytech.channel.connector.core.enums.ChangeTargetType;
 import com.paytech.channel.connector.core.enums.ChannelCostCodes;
+import com.paytech.channel.connector.protocol.core.enums.ChangeTargetType;
+import com.paytech.channel.connector.protocol.domain.ChannelConfigChangeRecord;
 
 /** 变更记录接口的查询参数解析与 Wire 转换；ID 输出为十进制字符串。 */
 @Component
@@ -17,7 +17,7 @@ public class ChannelConfigChangeConverter {
     }
 
     /** 转换一条变更记录。 */
-    public ChannelConfigChangeResponseBody toResponseBody(ChannelConfigChange change) {
+    public ChannelConfigChangeResponseBody toResponseBody(ChannelConfigChangeRecord change) {
         ChannelConfigChangeResponseBody body = new ChannelConfigChangeResponseBody();
         body.setChangeId(change.getId().toString());
         body.setTargetType(change.getTargetType().getCode());

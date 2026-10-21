@@ -15,14 +15,19 @@
     <packaging>pom</packaging>
 
     <name>PayTech Channel Connector</name>
-    <description>Channel connector service aggregator: payment channel / account / MID configuration, candidate query and
-        channel operation execution through the Platform standard API (D06).</description>
+    <description>Channel connector service aggregator: payment channel / account / MID configuration, candidate query,
+        channel protocol configuration and in-process channel operation execution (D06, 2026-10-20 unified outbound).</description>
 
     <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>com.paytech</groupId>
                 <artifactId>paytech-channel-connector-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>paytech-channel-connector-protocol</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -35,7 +40,7 @@
                 <artifactId>paytech-channel-connector-app</artifactId>
                 <version>${project.version}</version>
             </dependency>
-            <!-- Reactor 内的 Vault Java Client 与 Platform 合同（02a / 02d 新坐标）。 -->
+            <!-- Reactor 内的 Vault Java Client 与 card 读卡合同。 -->
             <dependency>
                 <groupId>com.paytech</groupId>
                 <artifactId>paytech-vault-client</artifactId>
@@ -43,8 +48,14 @@
             </dependency>
             <dependency>
                 <groupId>com.paytech</groupId>
-                <artifactId>paytech-platform-support-api</artifactId>
+                <artifactId>paytech-card-api</artifactId>
                 <version>${project.version}</version>
+            </dependency>
+            <!-- 外部 API 配置的表达式与公共脚本（随协议模块自 Platform 迁入）；使用边界见 agent-docs/TECHNOLOGY_STACK.md -->
+            <dependency>
+                <groupId>com.googlecode.aviator</groupId>
+                <artifactId>aviator</artifactId>
+                <version>5.3.3</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -105,6 +116,7 @@
 
     <modules>
         <module>paytech-channel-connector-api</module>
+        <module>paytech-channel-connector-protocol</module>
         <module>paytech-channel-connector-core</module>
         <module>paytech-channel-connector-app</module>
         <module>paytech-channel-connector-test</module>

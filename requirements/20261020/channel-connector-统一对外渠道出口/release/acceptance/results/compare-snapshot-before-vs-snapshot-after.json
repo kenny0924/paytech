@@ -1,0 +1,8 @@
+{
+ "a": "snapshot-before.json",
+ "b": "snapshot-after.json",
+ "common": 277,
+ "different": [],
+ "missingInB": [],
+ "extraInB": []
+}

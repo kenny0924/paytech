@@ -167,31 +167,9 @@ Audit append 在 Chain 行上串行分配序号；`previous_event_hash` 必须�
 | `t_compensation_event` | `id=900001，event_key=320001，event_type=FILE_SCAN，sub_event_type=-，payload_json=NULL，execute_status=PROCESSING，execute_count=2，next_execute_at=2026-09-01T16:30:00Z，lock_owner=platform-02，lock_until=2026-09-01T16:31:00Z，last_error_code=NULL，last_error_summary=NULL，lock_version=3`；Handler 从原 fileId 恢复冻结策略，确定完成并提交结果后删除任务；`lock_version` 防止旧 Worker 完成新 Claim。 |
 | `t_command_idempotency` | 【Succeeded： id=900011，caller_scope=tenant-210001，operation_type=CREATE_WEBHOOK_REPLAY，idempotency_key=idem-replay-610011-1，request_hash=h-idem-request，response_ref=delivery-610012，status=SUCCEEDED，expire_time=2026-10-01T00:00:00Z】；【Conflict input： id=900012，caller_scope=tenant-210001，operation_type=CREATE_WEBHOOK_REPLAY，idempotency_key=idem-replay-610011-1，request_hash=h-different-request，response_ref=NULL，status=FAILED，expire_time=2026-10-01T00:00:00Z】；成功只返回稳定 Response Ref。 |
 
-## 9. SCN-PLT-08：标准 API PAY 的 NI 渠道流程
+## 9. SCN-PLT-08：标准 API 与外部接入（已迁出）
 
-Payment 校验冻结账号后调用 Platform 标准 API `PAY`，请求体带 `integrationCode=NI` 与 Vault 引用 Token。Platform 在短只读事务中加载以下六表配置，事务外先初始化账号资料，再执行下单节点；下单返回 ERROR 时按渠道合同查询一次，查到已扣款才返回 SUCCESS，其余返回 ERROR，由 Payment 按原操作身份处理。流程不编排冲正，不保存流程实例、节点记录或报文。设计见[外部 API 配置与执行](../../../requirements/20260914/platform-support-外部API配置与执行/requirement.md)。
-
-### 9.1 外部 API 配置 6 表
-
-| 物理表 | 代表性记录与判定 |
-| --- | --- |
-| `t_standard_api` | `standard_api_id=810001，standard_api_code=PAY，standard_api_name=支付，description=NULL，version=1，created_by=220001，updated_by=220001`；字段由 `t_api_field` 维护，不保存调用方白名单。 |
-| `t_api_field` | 【标准请求： api_field_id=810101，api_id=810001，direction=STANDARD_API_REQUEST，field_location=BODY，field_path=paymentContext.amount.value，field_name=支付金额，data_type=STRING，required_flag=1，sort_no=1，description=NULL】；【渠道请求： api_field_id=810102，api_id=820101，direction=INTEGRATION_API_REQUEST，field_location=PATH，field_path=outletRef，field_name=门店引用，data_type=STRING，required_flag=1，sort_no=1，description=NULL】；同一 `api_id` 按方向区分标准 API 与原子 API，唯一键防止同位置同路径重复。 |
-| `t_integration` | `integration_id=820001，integration_code=NI，integration_name=NI渠道，description=NULL，endpoints=[{endpointCode:NI_GATEWAY,baseUrl:https://api-gateway.ni.example}]，version=3，created_by=220001，updated_by=220001`；与 Client Integration Readiness 无关，实际出站仍受部署网络白名单限制。 |
-| `t_integration_api` | 【下单： integration_api_id=820101，integration_id=820001，api_code=CREATE_ORDER，api_name=创建订单，description=NULL，definition_json={transport:{endpointCode:NI_GATEWAY},statusRules:2,outputs:SUCCESS/FAIL}，version=2，created_by=220001，updated_by=220001】；【查单： integration_api_id=820102，integration_id=820001，api_code=QUERY_ORDER，api_name=查询订单，description=NULL，definition_json={transport:{endpointCode:NI_GATEWAY},statusRules:1,outputs:SUCCESS}，version=1，created_by=220001，updated_by=220001】；凭据只通过 `params` 受控句柄进入签名函数，不写入定义。 |
-| `t_integration_script` | `integration_script_id=820201，integration_id=820001，script_code=NI_SIGN，script_name=请求签名，execution_stage=REQUEST，parameter_definition=[{name:key,dataType:PROTECTED_HANDLE,required:true}]，source_code=functions.sign(params.key)，description=NULL，version=1，created_by=220001，updated_by=220001`；被 `CREATE_ORDER` 引用时不能删除。 |
-| `t_integration_standard_api` | `integration_standard_api_id=830001，integration_id=820001，standard_api_id=810001，flow_definition_json={timeoutMs:25000,entry:createPayment,nodes:2,returns:4}，version=4，created_by=220001，updated_by=220001`；`(integration_id,standard_api_id)` 唯一；删除后 Payment 调用得到保证未发送的 404。 |
-
-### 9.2 沙箱验证 4 表
-
-Operations 管理员在接入方 `PAYERMAX` 下维护验证账号与用例并发起运行；运行先以 RUNNING 落库和补偿任务，事务外按与正式执行相同的链路调用沙箱，结束时一次写入步骤与结论。账号只用于验证运行，正式执行仍从 Vault 读取；轨迹与脱敏报文只来自验证运行。设计见[渠道沙箱验证](../../../requirements/20261014/platform-support-渠道沙箱验证/technique.md)。
-
-| 物理表 | 代表性记录与判定 |
-| --- | --- |
-| `t_integration_verify_account` | `verify_account_id=840001，integration_id=820002，account_code=UAT_MAIN，account_name=PayerMax UAT 主账号，channel_code=PAYERMAX，channel_account_id=900000000000000002，entity_no=UAT01，parameters={appId:uat-app,merchantNo:SP0001,keyVersion:1,payermaxPublicKey:MIIB...}，credentials={merchantPrivateKey:MIIE...}，version=1，created_by=220001，updated_by=220001`；沙箱材料按用户决定明文保存，被用例引用时不能删除。 |
-| `t_integration_verify_case` | `verify_case_id=840101，integration_id=820002，case_code=PAY_THEN_QUERY，case_name=下单后查询为待支付，description=NULL，verify_account_id=840001，steps_json=[{id:pay,standardApiCode:PAY},{id:query,standardApiCode:PAY_QUERY}]，version=2，created_by=220001，updated_by=220001`；第二步以 `${steps.pay.input.payment.attemptId}` 引用前一步订单号。 |
-| `t_integration_verify_run` | `verify_run_id=840201，verify_case_id=840101，integration_id=820002，run_status=PASSED，case_snapshot_json={caseVersion:2,accountCode:UAT_MAIN,accountVersion:1}，config_versions_json={standardApis:{PAY:3,PAY_QUERY:2},integration:4}，endpoints_json=[{endpointCode:PAYERMAX_GATEWAY,sandbox:true}]，failure_summary=NULL，started_by=220001，start_time=2026-10-14T08:00:00Z，finish_time=2026-10-14T08:00:03Z`；之后任一引用配置版本变化即显示需重新验证。 |
-| `t_integration_verify_run_step` | `verify_run_step_id=840301，verify_run_id=840201，step_no=1，step_key=pay，standard_api_code=PAY，step_status=PASSED，resolved_input_json={payment:{attemptId:VR840201}}，result_json={kind:EXECUTED,executeStatus:SUCCESS}，assertions_json=[{path:paymentStatus,match:EQUALS,passed:true}]，trace_json={nodes:[{id:createOrder,executeStatus:SUCCESS,httpStatus:200}]}，elapsed_ms=1830`；运行结束时一次写入，认证类 Header 记为 [REDACTED]。 |
+2026-10-20 统一对外渠道出口第一段起，标准 API、外部接入方、原子 API、公共脚本、标准 API 实现与沙箱验证共 10 张表原样迁入 channel-connector（`mor_channel_connector`），不再属于 Platform Support；迁移依据见[统一对外渠道出口技术方案](../../../requirements/20261020/channel-connector-统一对外渠道出口/technique.md)第 3、4 节。
 
 ## 10. SCN-PLT-09：全平台币种规则参考数据
 

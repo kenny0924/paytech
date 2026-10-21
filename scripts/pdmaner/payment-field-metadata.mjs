@@ -66,6 +66,7 @@ source_submission_id|原支付提交标识|Commerce 原支付提交命令标识�
 change_type|变更类型|渠道配置或成本版本人工变更的类型
 operator_id|操作者标识|执行变更的 Platform Actor 稳定业务ID
 reason|变更原因|操作者填写的非敏感原因，禁止填写凭据
+change_detail|变更明细|外部 API 配置变更的字段摘要，只记字段名称、编码与 SHA-256 摘要，不含定义原文、参数或凭据值
 plan_code|渠道成本方案代码|跨版本稳定识别渠道成本方案的业务代码
 current_ver_id|当前成本版本|当前发布的本库渠道成本方案版本
 status|生命周期状态|渠道成本方案稳定身份的当前生命周期状态
@@ -296,8 +297,8 @@ function parseFieldMetadataSource(source) {
     }
     result[fieldKey] = metadata(defName, description);
   }
-  if (Object.keys(result).length !== 232) {
-    throw new Error(`Payment 字段元数据必须精确覆盖 232 个唯一字段键，实际 ${Object.keys(result).length}`);
+  if (Object.keys(result).length !== 233) {
+    throw new Error(`Payment 字段元数据必须精确覆盖 233 个唯一字段键，实际 ${Object.keys(result).length}`);
   }
   return Object.freeze(result);
 }
@@ -347,8 +348,9 @@ export const CLOSED_ENUM_VALUES = Object.freeze({
   "channel_cost_component.component_type": ["PROCESSING_FEE", "CROSS_BORDER_FEE", "REFUND_FEE", "DISPUTE_FEE"],
   "channel_cost_component.calculation_base": ["TRANSACTION_AMOUNT"],
   "channel_cost_component.rounding_mode": ["HALF_UP"],
-  "channel_config_change.target_type": ["CHANNEL", "CHANNEL_ACCOUNT", "CHANNEL_MID", "MID_CAPABILITY", "CHANNEL_COST_VERSION"],
-  "channel_config_change.change_type": ["CREATE", "UPDATE", "STATUS", "CONFIGURATION", "REBIND", "CANCEL"],
+  "channel_config_change.target_type": ["CHANNEL", "CHANNEL_ACCOUNT", "CHANNEL_MID", "MID_CAPABILITY", "CHANNEL_COST_VERSION",
+    "STANDARD_API", "INTEGRATION", "INTEGRATION_API", "INTEGRATION_SCRIPT", "INTEGRATION_IMPLEMENTATION", "VERIFY_ACCOUNT", "VERIFY_CASE"],
+  "channel_config_change.change_type": ["CREATE", "UPDATE", "STATUS", "CONFIGURATION", "REBIND", "CANCEL", "DELETE"],
 });
 
 /** 开放代码的精确权威来源；这些字段不能被生成器虚构为固定枚举。 */
@@ -441,5 +443,5 @@ export const TABLE_COMMENTS = Object.freeze({
   "channel_cost_plan_ver": "保存成本规则发布批次的生效期、内容摘要及双人审批状态，当前版本仅由方案根指针确定；APPROVED 版本到达生效时间后由到期切换 Job 原子切换为当前版本。",
   "channel_cost_scope": "冻结成本版本对 MID、经营主体、国家、币种、支付方式和动作的确定性匹配范围。",
   "channel_cost_component": "冻结渠道成本适用范围下的百分比、固定费、跨境费、退款费或争议费参数；金额由 billing 按证据计算。",
-  "channel_config_change": "渠道配置与成本版本的人工变更留痕；与业务变更同事务写入，只增不改。",
+  "channel_config_change": "渠道配置、成本版本与外部 API 配置的人工变更留痕；与业务变更同事务写入，只增不改。",
 });

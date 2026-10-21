@@ -4,7 +4,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import com.paytech.foundation.web.paging.PagingResponseBody;
-import com.paytech.operations.console.bff.integration.PlatformIntegrationApiManagementClient;
+import com.paytech.operations.console.bff.integration.IntegrationApiManagementClient;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
 import com.paytech.operations.console.bff.service.model.externalapi.request.CreateIntegrationApiRequestBody;
 import com.paytech.operations.console.bff.service.model.externalapi.request.DeleteExternalApiConfigRequestBody;
@@ -18,33 +18,31 @@ import com.paytech.operations.console.bff.service.model.externalapi.response.Val
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 
-/** 原子 API管理的浏览器入口：实时 PLT-I02 授权后原样转发 Platform，不接收或转发 Idempotency-Key。 */
+/** 原子 API管理的浏览器入口：实时 PLT-I02 授权后原样转发 channel-connector，不接收或转发 Idempotency-Key。 */
 @RestController
 @Validated
 @AllArgsConstructor
 @RequestMapping("/external-api-admin/v1")
 public class IntegrationApiManagementController {
 
-    private final PlatformIntegrationApiManagementClient client;
+    private final IntegrationApiManagementClient client;
 
     /** 分页查询接入方下的原子 API，按编码稳定排序。 */
     @GetMapping("/integrations/{integrationCode}/apis")
     public PagingResponseBody<IntegrationApiSummary> listIntegrationApis(
-        OperatorContext context,
         @PathVariable("integrationCode") String integrationCode,
         @RequestParam(value = "page", required = false) Integer page,
         @RequestParam(value = "size", required = false) Integer size,
         @RequestParam(value = "keyword", required = false) String keyword) {
-        return client.listIntegrationApis(context, integrationCode, page, size, keyword);
+        return client.listIntegrationApis(integrationCode, page, size, keyword);
     }
 
     /** 读取原子 API详情，含引用方。 */
     @GetMapping("/integrations/{integrationCode}/apis/{apiCode}")
     public IntegrationApiResponseBody getIntegrationApi(
-        OperatorContext context,
         @PathVariable("integrationCode") String integrationCode,
         @PathVariable("apiCode") String apiCode) {
-        return client.getIntegrationApi(context, integrationCode, apiCode);
+        return client.getIntegrationApi(integrationCode, apiCode);
     }
 
     /** 创建原子 API。 */
@@ -79,9 +77,8 @@ public class IntegrationApiManagementController {
     /** 只做静态校验，不保存；问题通过 issues 返回而不是错误响应。 */
     @PostMapping("/integrations/{integrationCode}/apis/validate")
     public ValidationResponseBody validateIntegrationApi(
-        OperatorContext context,
         @PathVariable("integrationCode") String integrationCode,
         @Valid @RequestBody ValidateIntegrationApiRequestBody request) {
-        return client.validateIntegrationApi(context, integrationCode, request);
+        return client.validateIntegrationApi(integrationCode, request);
     }
 }

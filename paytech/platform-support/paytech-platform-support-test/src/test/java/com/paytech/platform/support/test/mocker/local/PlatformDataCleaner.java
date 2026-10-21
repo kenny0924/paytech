@@ -46,9 +46,6 @@ public class PlatformDataCleaner implements Clear {
         "t_gateway_route", "t_gateway_target", "t_command_idempotency",
         "t_file_scan_result", "t_file_owner_ref", "t_file_upload", "t_file_object", "t_security_event",
         "t_audit_event_attr", "t_audit_event", "t_audit_chain",
-        "t_integration_verify_run_step", "t_integration_verify_run", "t_integration_verify_case",
-        "t_integration_verify_account", "t_api_field", "t_integration_standard_api", "t_integration_script",
-        "t_integration_api", "t_integration", "t_standard_api",
         "t_webhook_attempt", "t_webhook_delivery", "t_webhook_event", "t_webhook_signing_secret", "t_webhook_endpoint");
 
     private static final Set<String> ALLOWED_DATABASES = Set.of("mor_platform");
@@ -62,7 +59,9 @@ public class PlatformDataCleaner implements Clear {
     /** 全局 BeforeEach 调用：确认本地库与空基线后取得本例回收权。 */
     public void assertEmpty() {
         assertFalse(unusable, "上一例 Platform 测试数据回收失败，当前环境不可复用");
-        assertTrue(ALLOWED_DATABASES.contains(mapper.databaseName()), "Platform 测试只允许本地 mor_platform");
+        String database = mapper.databaseName();
+        assertTrue(ALLOWED_DATABASES.contains(database) || database != null && database.matches("mor_platform_[a-z0-9]{1,16}"),
+            "Platform 测试只允许本地 mor_platform 或并行任务隔离用的 mor_platform_{后缀}");
         var residual = new ArrayList<String>();
         for (String table : OWNED_TABLES) {
             if (mapper.count(table) > 0) {

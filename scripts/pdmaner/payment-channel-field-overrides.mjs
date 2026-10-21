@@ -37,13 +37,15 @@ export const CHANNEL_FIELD_OVERRIDES = Object.freeze({
   // 2026-10-20 渠道配置变更留痕（requirements/20261020/channel-connector-运营控制台渠道成本与基础配置/db/channel-connector/ddl.sql）：
   // target_type / target_id / from_status / to_status 与回调项、争议事件共用字段键，以表级名称与注释保持评审 DDL 原文。
   "channel_config_change.id": { comment: "服务侧生成的变更记录 Snowflake 主键。" },
-  "channel_config_change.target_type": { defName: "被变更对象类型", comment: "被变更对象类型。允许值：CHANNEL、CHANNEL_ACCOUNT、CHANNEL_MID、MID_CAPABILITY、CHANNEL_COST_VERSION。" },
+  "channel_config_change.target_type": { defName: "被变更对象类型", comment: "被变更对象类型。允许值：CHANNEL、CHANNEL_ACCOUNT、CHANNEL_MID、MID_CAPABILITY、CHANNEL_COST_VERSION、STANDARD_API、INTEGRATION、INTEGRATION_API、INTEGRATION_SCRIPT、INTEGRATION_IMPLEMENTATION、VERIFY_ACCOUNT、VERIFY_CASE。" },
   "channel_config_change.target_id": { defName: "被变更对象标识", comment: "被变更对象在本库的主键。" },
-  "channel_config_change.change_type": { comment: "变更类型。允许值：CREATE、UPDATE、STATUS、CONFIGURATION、REBIND、CANCEL。" },
+  "channel_config_change.change_type": { comment: "变更类型。允许值：CREATE、UPDATE、STATUS、CONFIGURATION、REBIND、CANCEL、DELETE。" },
   "channel_config_change.from_status": { defName: "变更前状态", comment: "状态变更前的状态；非状态变更为空。取值来源：渠道、账号、MID、能力组或成本版本的状态代码；非固定枚举。" },
   "channel_config_change.to_status": { defName: "变更后状态", comment: "状态变更后的状态；非状态变更为空。取值来源：渠道、账号、MID、能力组或成本版本的状态代码；非固定枚举。" },
   "channel_config_change.operator_id": { comment: "执行变更的 Platform Actor 稳定业务 ID。" },
   "channel_config_change.reason": { comment: "操作者填写的非敏感原因；禁止填写凭据。" },
+  // 2026-10-20 统一对外渠道出口第一段：外部 API 配置迁入后，原 Platform 审计的字段摘要改记在本表。
+  "channel_config_change.change_detail": { comment: "外部 API 配置变更的字段摘要：{objectCode, beforeVersion, afterVersion, changes[{field, before, after}]}，字段取值只记名称、编码与 SHA-256 摘要，不含定义原文、参数或凭据值；渠道、账号、MID、能力与成本版本的变更为空。" },
   "channel_config_change.create_time": { comment: "该记录在本库中的 UTC 微秒创建时间。" }
 });
 

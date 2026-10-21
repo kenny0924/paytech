@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 
 import com.paytech.channel.connector.api.channel.PaymentChannelApi;
@@ -14,18 +15,16 @@ import com.paytech.channel.connector.api.channel.request.ChangeChannelStatusRequ
 import com.paytech.channel.connector.api.channel.request.CreateChannelRequestBody;
 import com.paytech.channel.connector.api.channel.request.UpdateChannelRequestBody;
 import com.paytech.channel.connector.core.dal.dataobject.PaymentChannel;
-import com.paytech.channel.connector.core.enums.ChangeTargetType;
-import com.paytech.channel.connector.core.enums.ChangeType;
+import com.paytech.channel.connector.protocol.core.enums.ChangeTargetType;
+import com.paytech.channel.connector.protocol.core.enums.ChangeType;
 import com.paytech.channel.connector.core.enums.ChannelStatus;
 import com.paytech.channel.connector.test.base.AbstractChannelConfigApiTest;
 import com.paytech.channel.connector.test.builder.ChannelConfigRequestBuilder;
 import com.paytech.channel.connector.test.checker.ChannelCostResponseChecker;
-import com.paytech.foundation.common.error.CommonErrorCode;
-import com.paytech.foundation.httpproblem.api.ApiProblemResponse;
-import com.paytech.foundation.testsupport.api.MockHttpFault;
+import com.paytech.channel.connector.test.mocker.ExternalApiMocker;
 
 /**
- * 支付渠道管理：创建与编码唯一、列表筛选分页、改名、激活（Platform 接入方核对）、暂停恢复、关闭前置与 CLOSED 终态、变更记录。
+ * 支付渠道管理：创建与编码唯一、列表筛选分页、改名、激活（核对本库同编码接入方 t_integration）、暂停恢复、关闭前置与 CLOSED 终态、变更记录。
  *
  * @see PaymentChannelApi#createChannel(String, CreateChannelRequestBody)
  * @see PaymentChannelApi#listChannels(String, String, Integer, Integer)
@@ -35,7 +34,10 @@ import com.paytech.foundation.testsupport.api.MockHttpFault;
  */
 class PaymentChannelApiTest extends AbstractChannelConfigApiTest {
 
-    /** 创建 DRAFT 渠道，同事务写入 CREATE 变更记录；不调用 Platform。 */
+    @Autowired
+    private ExternalApiMocker externalApi;
+
+    /** 创建 DRAFT 渠道，同事务写入 CREATE 变更记录；创建不核对接入方。 */
     @Test
     void test_createChannel() {
         ChannelCostResponseChecker created =
@@ -49,7 +51,6 @@ class PaymentChannelApiTest extends AbstractChannelConfigApiTest {
             () -> assertEquals(1, changes.size()),
             () -> assertChange(changes.getFirst(), ChangeType.CREATE.getCode(), null, null));
         get(CHANNEL_PATH + "/" + channelId).assertSuccess(200).assertText("channelName", "合成渠道 NI");
-        assertEquals(List.of(), platform.integrationLookups());
     }
 
     /** 渠道编码重复由唯一索引拒绝为 409，不写第二行与变更记录。 */
@@ -112,56 +113,40 @@ class PaymentChannelApiTest extends AbstractChannelConfigApiTest {
         assertEquals(List.of(), changes(ChangeTargetType.CHANNEL, closed.getChannelId()));
     }
 
-    /** 激活前事务外查询 Platform 同编码接入方；存在则 ACTIVE 并记录 DRAFT→ACTIVE 与原因。 */
+    /** 激活前经 protocol 公开查询核对本库同编码接入方；存在则 ACTIVE 并记录 DRAFT→ACTIVE 与原因。 */
     @Test
     void test_activateChannel() {
         PaymentChannel channel = data.channel("NI", ChannelStatus.DRAFT);
-        platform.integrationExists("NI");
+        externalApi.integration("NI");
 
         command(HttpMethod.POST, statusPath(channel), status(ChannelStatus.ACTIVE, "上线")).assertSuccess(200)
             .assertText("status", ChannelStatus.ACTIVE.getCode());
 
         var change = changes(ChangeTargetType.CHANNEL, channel.getChannelId()).getFirst();
-        assertAll(() -> assertEquals(List.of("NI"), platform.integrationLookups()),
-            () -> assertEquals(ChannelStatus.ACTIVE.getCode(), testMapper.selectChannel(channel.getChannelId())
+        assertAll(() -> assertEquals(ChannelStatus.ACTIVE.getCode(), testMapper.selectChannel(channel.getChannelId())
                 .get("channel_status")),
             () -> assertChange(change, ChangeType.STATUS.getCode(), ChannelStatus.DRAFT.getCode(), ChannelStatus.ACTIVE.getCode()),
             () -> assertEquals("上线", change.get("reason")));
         transactions.assertOutsideTransactions();
     }
 
-    /** Platform 不存在同编码接入方时业务拒绝，渠道保持 DRAFT、不写变更记录。 */
+    /** 本库不存在同编码接入方（只有其他编码）时业务拒绝，渠道保持 DRAFT、不写变更记录。 */
     @Test
     void test_activateRejectedWhenIntegrationMissing() {
         PaymentChannel channel = data.channel("NI", ChannelStatus.DRAFT);
-        platform.integrationMissing("NI");
+        externalApi.integration("GEIDEA");
 
         command(HttpMethod.POST, statusPath(channel), status(ChannelStatus.ACTIVE))
-            .assertBusinessRejected("Platform 不存在同编码接入方: NI");
+            .assertBusinessRejected("不存在同编码接入方: NI");
 
         assertUnchanged(channel, ChannelStatus.DRAFT);
     }
 
-    /** Platform 不可用（503）按系统错误失败，不写库。 */
-    @Test
-    void test_activateFailsWhenPlatformUnavailable() {
-        PaymentChannel channel = data.channel("NI", ChannelStatus.DRAFT);
-        platform.integrationFault("NI", MockHttpFault.json(503, new ApiProblemResponse("about:blank",
-            "Service Unavailable", "服务暂时不可用", CommonErrorCode.SERVICE_UNAVAILABLE.getCode(), REQUEST_ID,
-            "2026-09-21T00:00:00.000000Z", null)));
-
-        command(HttpMethod.POST, statusPath(channel), status(ChannelStatus.ACTIVE))
-            .assertProblem(500, CommonErrorCode.INTERNAL_ERROR.getCode());
-
-        assertUnchanged(channel, ChannelStatus.DRAFT);
-        assertEquals(List.of("NI"), platform.integrationLookups());
-    }
-
-    /** ACTIVE → SUSPENDED → ACTIVE；恢复同样核对 Platform；两条 STATUS 记录。 */
+    /** ACTIVE → SUSPENDED → ACTIVE；恢复同样核对本库同编码接入方；两条 STATUS 记录。 */
     @Test
     void test_suspendAndResume() {
         PaymentChannel channel = data.channel("NI", ChannelStatus.ACTIVE);
-        platform.integrationExists("NI");
+        externalApi.integration("NI");
 
         command(HttpMethod.POST, statusPath(channel), status(ChannelStatus.SUSPENDED)).assertSuccess(200)
             .assertText("status", ChannelStatus.SUSPENDED.getCode());

@@ -44,6 +44,10 @@
 > 在其上增加六张最小当前配置表，并继续禁止旧 92/97 表阶段的 Gateway Policy/Release、通用技术配置和持久化 Integration
 > Readiness。统一人工认证、Tenant IAM、Google 登录、Gateway 静态安全边界与 Redis Runtime 所有权继续有效。
 
+> **渠道协议迁出（2026-10-20）：** integration 图组 10 表随[统一对外出口决定](../../../../agent-docs/decisions/2026-10-20-channel-connector-unified-outbound.md)迁往
+> channel-connector（`platform-support-schema.sql` 现为 47 表，`platform-support.pdma.json` 已删去 10 个实体与 integration 图）。下文 Manifest
+> 与图组统计早于该迁移且与生成器已有漂移，不作为当前表数依据；当前表归属以 `paytech/tools/arch-rules` 的 `table-ownership.yaml` 为准。
+
 ## 1. 定位与实施边界
 
 本文记录 [Platform Support 逻辑数据库规范](../../../../agent-docs/database/PLATFORM_SUPPORT_DATABASE.md) 到 PDManer 4.9.3

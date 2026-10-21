@@ -73,12 +73,13 @@ V2 骨架（第 02a 步）下本服务位于 `paytech/platform-support/`，由�
 | `paytech-platform-support-audit-security` | core（业务模块） | 不可变审计事实、审计查询与独立提交的审计写入 |
 | `paytech-platform-support-file-document` | core（业务模块） | 文件持久化、上传策略、扫描规则与存储端口 |
 | `paytech-platform-support-delivery` | core（业务模块） | 通知与 Webhook 投递 |
-| `paytech-platform-support-integration` | core（业务模块） | 外部 API 配置与执行 |
 | `paytech-platform-support-core` | core（应用编排层） | 原 web 的 `core`、`service` 包与出站适配（`core.integration`）：跨业务模块 Processor、审计生命周期、存量命令幂等、内部 Token 签发 |
 | `paytech-platform-support-app` | app | 启动类、`configuration`、`ext`（Controller、审计切面）、`application.yml`；唯一 `spring-boot-maven-plugin` |
 | `paytech-platform-support-test` | test | 全部 auto / manual 测试与 `ArchitectureAutoTest`（R1–R12） |
 
-依赖单向：app → core → 五个业务模块 → api；同服务内 core 模块可互相依赖（R1 只禁止其他服务的 core / app）。
+外部 API 配置与执行（原 `paytech-platform-support-integration` 模块、`/external-api-admin/v1/**` 与标准 API 执行入口）自 2026-10-20 统一对外渠道出口第一段迁入 channel-connector；`initial-data` 中的 `EXTERNAL_API_*` 权限、菜单与 Route 注册行继续由 Platform 维护。
+
+依赖单向：app → core → 四个业务模块 → api；同服务内 core 模块可互相依赖（R1 只禁止其他服务的 core / app）。
 所有模块在同一进程，共用 Platform 数据库、主 DataSource 与事务管理器；审计写入的单连接池仍是唯一专用池。
 
 Production Mapper XML follows its Owner:

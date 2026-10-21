@@ -2,9 +2,9 @@
 # Source: requirements/20261017/architecture-V2骨架与模块搬迁/design/03-module-and-table-ownership.md §2 and §4.2.
 # 255 source tables, 17 databases, 265 physical tables.
 # Retained: platform-support mor_platform from paytech/platform-support/docs/database/sql/platform-support-schema.sql.
-# 56 retained-service tables added on top of design 03 (not part of the §4.2 count).
+# 46 retained-service tables added on top of design 03 (not part of the §4.2 count).
 # 22 step-removed tables (approved later refactors, e.g. 2026-10-19 billing fact model; applied after the §4.2 count).
-# 42 step-added tables (approved refactor-step designs, e.g. design/05 t_card_material_ticket; not part of the §4.2 count).
+# 52 step-added tables (approved refactor-step designs, e.g. design/05 t_card_material_ticket; not part of the §4.2 count).
 # Structure: services.<service>.<database> = tables owned (or copied / per-database infrastructure);
 # Renamed: t_transaction_economics -> t_economic_fact, t_transaction_economic_component -> t_economic_fact_line, t_transaction_economic_comp_link -> t_economic_fact_line_link, t_account -> t_ledger_account, t_payment_method_profile -> t_pricing_profile, t_payment_method_profile_cond -> t_pricing_profile_cond.
 # Renamed services: consumer -> counterparty; databases: mor_consumer -> mor_counterparty.
@@ -62,6 +62,7 @@ services:
       - t_payment_stored_card
   channel-connector:
     mor_channel_connector:
+      - t_api_field
       - t_channel_account
       - t_channel_callback
       - t_channel_callback_item
@@ -74,12 +75,21 @@ services:
       - t_channel_interaction
       - t_channel_mid
       - t_compensation_event
+      - t_integration
+      - t_integration_api
+      - t_integration_script
+      - t_integration_standard_api
+      - t_integration_verify_account
+      - t_integration_verify_case
+      - t_integration_verify_run
+      - t_integration_verify_run_step
       - t_mid_capability
       - t_mid_capability_detail
       - t_payment_channel
       - t_routing_policy
       - t_routing_policy_mid
       - t_routing_policy_version
+      - t_standard_api
   client-master:
     mor_client_master:
       - t_application_document
@@ -236,7 +246,6 @@ services:
       - t_access_tenant
       - t_api_credential
       - t_api_credential_scope
-      - t_api_field
       - t_api_scope
       - t_audit_chain
       - t_audit_event
@@ -258,14 +267,6 @@ services:
       - t_gateway_route_header
       - t_gateway_route_query_param
       - t_gateway_target
-      - t_integration
-      - t_integration_api
-      - t_integration_script
-      - t_integration_standard_api
-      - t_integration_verify_account
-      - t_integration_verify_case
-      - t_integration_verify_run
-      - t_integration_verify_run_step
       - t_jwt_signing_key
       - t_notification_attempt
       - t_notification_delivery
@@ -280,7 +281,6 @@ services:
       - t_role
       - t_role_permission
       - t_security_event
-      - t_standard_api
       - t_tenant_invitation
       - t_tenant_member
       - t_tenant_member_role

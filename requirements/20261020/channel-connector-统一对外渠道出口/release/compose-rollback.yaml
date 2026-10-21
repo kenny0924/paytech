@@ -1,0 +1,12 @@
+# 统一对外渠道出口第一段：mor-test 回滚覆盖文件（阶段 6 读取的运行镜像；2026-10-21 09:39Z 核对）。
+# 用法同 compose-candidate.yaml，只传本文件：./test-environment/compose.sh -f <本文件绝对路径> up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 若阶段 7 第 1 步发现运行镜像已变化（其他会话又发布过），本文件与候选包一起作废，须在新基线上重建。
+services:
+  card-service:
+    image: sha256:68d676840ac2d5331c49637f9522c9f714548bed6aec60d2812318d5823d77c0  # counterparty-20261020（源 c661e9fc，JAR fe6a2cd8ce298d48）
+  channel-connector-service:
+    image: sha256:4d31d529e1d3258e5e7976f1f98d4ef24bcb8e3d3eca24d1e2aef6c432e5f054  # channel-20261020（源 5f12cf3e，JAR e7ede2d4e360f7d3）
+  operations-console-bff:
+    image: sha256:e822301cf35cab0dbce8ea87619d37d86c6ca5bed51c04fb2b3fa5b16968eab4  # recon-detail-20261021（源 1b60ae43，JAR 35c31f76cee2ed22）
+  platform-support-service:
+    image: sha256:3d8bc3752c37da4f57e6bfad764a6712758bef45b484980262ddbe68414ebd72  # recon-detail-20261021（源 1b60ae43，JAR 6e44506745810b7d）

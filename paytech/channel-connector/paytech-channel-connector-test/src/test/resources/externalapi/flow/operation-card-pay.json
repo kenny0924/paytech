@@ -1,0 +1,75 @@
+{
+  "timeoutMs": 10000,
+  "initializers": [
+    {
+      "id": "channelAccount",
+      "function": "CHANNEL_ACCOUNT_CONFIG",
+      "required": true,
+      "args": {
+        "vaultToken": {"kind": "PATH", "path": "input.channelAccount.accountVaultToken"},
+        "channelCode": {"kind": "PATH", "path": "input.channelAccount.channelCode"},
+        "channelAccountId": {"kind": "PATH", "path": "input.channelAccount.channelAccountId"},
+        "entityNo": {"kind": "PATH", "path": "input.channelAccount.entityNo"}
+      }
+    },
+    {
+      "id": "card",
+      "function": "PAYMENT_CARD",
+      "required": true,
+      "args": {
+        "paymentInstrumentToken": {"kind": "PATH", "path": "input.card.token"},
+        "paymentAttemptId": {"kind": "PATH", "path": "input.payment.attemptId"}
+      }
+    }
+  ],
+  "entry": "pay",
+  "nodes": [
+    {
+      "id": "pay",
+      "integrationApi": "CARD_PAY",
+      "request": {
+        "PATH:merchantId": {"kind": "PATH", "path": "resources.channelAccount.parameters.outletId"},
+        "BODY:orderRef": {"kind": "PATH", "path": "input.payment.attemptId"},
+        "BODY:amount": {"kind": "PATH", "path": "input.payment.amount.value"},
+        "BODY:currency": {"kind": "PATH", "path": "input.payment.amount.currency"},
+        "BODY:returnUrl": {"kind": "PATH", "path": "input.payment.returnUrl"},
+        "BODY:card.number": {"kind": "PATH", "path": "resources.card.pan"},
+        "BODY:card.expMonth": {"kind": "PATH", "path": "resources.card.expiryMonth"},
+        "BODY:card.expYear": {"kind": "PATH", "path": "resources.card.expiryYear"},
+        "BODY:card.cvv": {"kind": "PATH", "path": "resources.card.cvv"}
+      },
+      "params": {
+        "apiKey": {"kind": "PATH", "path": "resources.channelAccount.credentials.apiKey"}
+      }
+    }
+  ],
+  "returns": [
+    {
+      "id": "answered",
+      "executeStatus": "SUCCESS",
+      "outputs": {
+        "paymentStatus": {"kind": "PATH", "path": "steps.pay.outputs.paymentStatus"},
+        "channelTransactionRef": {"kind": "PATH", "path": "steps.pay.outputs.reference"},
+        "channelStatus": {"kind": "PATH", "path": "steps.pay.outputs.state"},
+        "failureCode": {"kind": "PATH", "path": "steps.pay.outputs.errorCode"},
+        "failureMessage": {"kind": "PATH", "path": "steps.pay.outputs.errorMessage"},
+        "nextAction.redirectUrl": {"kind": "PATH", "path": "steps.pay.outputs.redirectUrl"}
+      }
+    },
+    {
+      "id": "rejected",
+      "executeStatus": "FAIL",
+      "outputs": {
+        "channelStatus": {"kind": "PATH", "path": "steps.pay.outputs.state"},
+        "failureCode": {"kind": "PATH", "path": "steps.pay.outputs.errorCode"},
+        "failureMessage": {"kind": "PATH", "path": "steps.pay.outputs.errorMessage"}
+      }
+    },
+    {"id": "unknown", "executeStatus": "ERROR"}
+  ],
+  "edges": [
+    {"from": "pay", "to": "answered", "condition": "steps.pay.executeStatus == 'SUCCESS'", "priority": 1},
+    {"from": "pay", "to": "rejected", "condition": "steps.pay.executeStatus == 'FAIL'", "priority": 2},
+    {"from": "pay", "to": "unknown", "default": true}
+  ]
+}

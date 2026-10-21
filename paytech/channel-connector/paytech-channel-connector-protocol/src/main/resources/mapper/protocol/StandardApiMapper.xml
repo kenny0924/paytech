@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.channel.connector.protocol.core.dal.mapper.StandardApiMapper">
+    <sql id="columns">standard_api_id standardApiId, standard_api_code standardApiCode, standard_api_name standardApiName, description description, version version, created_by createdBy, updated_by updatedBy, create_time createTime, update_time updateTime</sql>
+    <!-- 名称允许 Unicode；编码转为 utf8mb4 二进制排序，保留大小写语义并避免与 ascii_bin 冲突。 -->
+    <sql id="filter"><if test="keyword != null">WHERE (CONVERT(standard_api_code USING utf8mb4) COLLATE utf8mb4_bin LIKE #{keyword} ESCAPE '!' OR standard_api_name LIKE #{keyword} ESCAPE '!')</if></sql>
+    <select id="byCode" resultType="com.paytech.channel.connector.protocol.core.dal.dataobject.StandardApi" useCache="false">
+        SELECT <include refid="columns"/> FROM t_standard_api WHERE standard_api_code=#{code}
+    </select>
+    <select id="lock" resultType="com.paytech.channel.connector.protocol.core.dal.dataobject.StandardApi" useCache="false" flushCache="true">
+        SELECT <include refid="columns"/> FROM t_standard_api WHERE standard_api_code=#{code} FOR UPDATE
+    </select>
+    <select id="byIds" resultType="com.paytech.channel.connector.protocol.core.dal.dataobject.StandardApi" useCache="false">
+        SELECT <include refid="columns"/> FROM t_standard_api WHERE standard_api_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY standard_api_code
+    </select>
+    <select id="list" resultType="com.paytech.channel.connector.protocol.core.dal.dataobject.StandardApi" useCache="false">
+        SELECT <include refid="columns"/> FROM t_standard_api <include refid="filter"/>
+        ORDER BY standard_api_code, standard_api_id LIMIT #{size} OFFSET #{offset}
+    </select>
+    <select id="count" resultType="long" useCache="false">SELECT COUNT(*) FROM t_standard_api <include refid="filter"/></select>
+    <insert id="insert">
+        INSERT INTO t_standard_api(standard_api_id,standard_api_code,standard_api_name,description,version,created_by,updated_by,create_time,update_time)
+        VALUES(#{row.standardApiId},#{row.standardApiCode},#{row.standardApiName},#{row.description},#{row.version},#{row.createdBy},#{row.updatedBy},#{row.createTime},#{row.updateTime})
+    </insert>
+    <update id="update">
+        UPDATE t_standard_api SET standard_api_name=#{standardApiName}, description=#{description},
+        version=version+1, updated_by=#{updatedBy}, update_time=#{updateTime}
+        WHERE standard_api_id=#{row.standardApiId} AND version=#{row.version}
+    </update>
+    <delete id="delete">
+        DELETE FROM t_standard_api WHERE standard_api_id=#{row.standardApiId} AND version=#{row.version}
+    </delete>
+</mapper>

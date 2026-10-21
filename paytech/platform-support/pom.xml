@@ -46,11 +46,6 @@
             </dependency>
             <dependency>
                 <groupId>com.paytech</groupId>
-                <artifactId>paytech-platform-support-integration</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.paytech</groupId>
                 <artifactId>paytech-platform-support-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -64,12 +59,6 @@
                 <groupId>com.paytech</groupId>
                 <artifactId>paytech-vault-client</artifactId>
                 <version>${project.version}</version>
-            </dependency>
-            <!-- 外部 API 配置的表达式与公共脚本；使用边界见 agent-docs/TECHNOLOGY_STACK.md -->
-            <dependency>
-                <groupId>com.googlecode.aviator</groupId>
-                <artifactId>aviator</artifactId>
-                <version>5.3.3</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -132,7 +121,6 @@
         <module>paytech-platform-support-audit-security</module>
         <module>paytech-platform-support-file-document</module>
         <module>paytech-platform-support-delivery</module>
-        <module>paytech-platform-support-integration</module>
         <module>paytech-platform-support-core</module>
         <module>paytech-platform-support-app</module>
         <module>paytech-platform-support-test</module>

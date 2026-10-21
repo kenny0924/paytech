@@ -17,22 +17,37 @@ import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.Getter;
 
-/** 只操作 mor_channel_connector 的本库 18 张表（10 §3.1、渠道成本四表与变更记录表）；Fixture ID 使用正式 Snowflake 接口。 */
+/**
+ * 只操作 mor_channel_connector 的本库 28 张表；Fixture ID 使用正式 Snowflake 接口
+ * <li>10 §3.1 渠道表、渠道成本四表、变更记录表，以及 2026-10-20 自 Platform 迁入的 10 张渠道协议表。</li>
+ * <li>清理按子表在前的依赖顺序执行；异步验证运行由 VerifyRunFixture（更高优先级）先确认结束。</li>
+ */
 @TestComponent
 @RequiredArgsConstructor
 public class ChannelDataMocker implements Clear {
+    private static final String DATABASE = "mor_channel_connector";
+
     private final IdGenerator ids;
     private final ChannelTestMapper mapper;
     private boolean reusable = true;
     private boolean cleanupOwned;
 
+    /**
+     * 只允许本服务专用测试库：mor_channel_connector，或并行任务隔离用的 mor_channel_connector_{后缀}
+     * <li>隔离库经 SPRING_DATASOURCE_URL 指定；不允许指向其他服务的库。</li>
+     */
+    void assertDedicatedDatabase() {
+        String name = mapper.databaseName();
+        assertTrue(DATABASE.equals(name) || name != null && name.matches(DATABASE + "_[a-z0-9]{1,16}"),
+            "channel-connector 测试只允许本地 mor_channel_connector 或其隔离副本: " + name);
+    }
+
     /** 拒绝共享库和脏基线；缺表时明确提示手工初始化入口。 */
     public void assertEmpty() {
         assertTrue(reusable, "测试库清理失败，须人工核查后重新运行");
         try {
-            assertEquals("mor_channel_connector", mapper.databaseName());
-            assertEquals(0, mapper.countRows() + mapper.countSchemaOnlyRows() + mapper.countChannelCostRows()
-                + mapper.countConfigChangeRows(), "专用库非空，不自动删除原有数据");
+            assertDedicatedDatabase();
+            assertEquals(0, totalRows(), "专用库非空，不自动删除原有数据");
             cleanupOwned = true;
         } catch (org.springframework.dao.DataAccessException failure) {
             throw new AssertionError("请先人工审查并应用 paytech-channel-connector-test/src/test/resources/init/ddl.sql 到 mor-local MySQL",
@@ -211,21 +226,30 @@ public class ChannelDataMocker implements Clear {
         if (!cleanupOwned) {
             return;
         }
-        assertEquals("mor_channel_connector", mapper.databaseName());
+        assertDedicatedDatabase();
         try {
             assertAll(mapper::clearConfigChanges, mapper::clearChannelCostComponents, mapper::clearChannelCostScopes,
                 mapper::clearChannelCostVersions, mapper::clearChannelCostPlans, mapper::clearCompensationEvents,
                 mapper::clearEventExceptions, mapper::clearCallbackItems,
                 mapper::clearCallbacks, mapper::clearInteractions, mapper::clearRoutingPolicyMids,
                 mapper::clearRoutingPolicyVersions, mapper::clearRoutingPolicies, mapper::clearDetails,
-                mapper::clearCapabilities, mapper::clearMids, mapper::clearAccounts, mapper::clearChannels);
-            assertEquals(0, mapper.countRows() + mapper.countSchemaOnlyRows() + mapper.countChannelCostRows()
-                + mapper.countConfigChangeRows());
+                mapper::clearCapabilities, mapper::clearMids, mapper::clearAccounts, mapper::clearChannels,
+                mapper::clearVerifyRunSteps, mapper::clearVerifyRuns, mapper::clearVerifyCases,
+                mapper::clearVerifyAccounts, mapper::clearImplementations, mapper::clearIntegrationApis,
+                mapper::clearIntegrationScripts, mapper::clearApiFields, mapper::clearIntegrations,
+                mapper::clearStandardApis);
+            assertEquals(0, totalRows());
             cleanupOwned = false;
         } catch (RuntimeException | AssertionError failure) {
             reusable = false;
             throw failure;
         }
+    }
+
+    /** 本库 28 张表的总行数。 */
+    int totalRows() {
+        return mapper.countRows() + mapper.countSchemaOnlyRows() + mapper.countChannelCostRows()
+            + mapper.countConfigChangeRows() + mapper.countProtocolRows();
     }
 
     /** 保留本例三元组供请求 Builder 和断言使用，不作为生产模型。 */

@@ -1,0 +1,42 @@
+{
+ "label": "before",
+ "startedAt": "2026-10-21T10:10:51.581693+00:00",
+ "demoNi": {
+  "refundImplementationMissing": {
+   "httpStatus": 200,
+   "outcome": "NOT_SENT",
+   "failureCode": "INTEGRATION_IMPLEMENTATION_NOT_FOUND",
+   "channelStatus": null,
+   "paymentStatus": null,
+   "hasChannelTransactionRef": false,
+   "vaultEvents": []
+  },
+  "queryStandardApiMissing": {
+   "httpStatus": 200,
+   "outcome": "NOT_SENT",
+   "failureCode": "STANDARD_API_NOT_FOUND",
+   "channelStatus": null,
+   "paymentStatus": null,
+   "hasChannelTransactionRef": false,
+   "vaultEvents": []
+  }
+ },
+ "payermaxUatRefund": {
+  "httpStatus": 200,
+  "outcome": "ERROR",
+  "failureCode": null,
+  "channelStatus": null,
+  "paymentStatus": null,
+  "hasChannelTransactionRef": false,
+  "vaultEvents": [
+   {
+    "callerService": "platform-support-service",
+    "action": "REVEAL",
+    "dataType": "CHANNEL_ACCOUNT_CONFIG_V1",
+    "purpose": "CHANNEL_EXECUTION",
+    "outcome": "SUCCESS"
+   }
+  ]
+ },
+ "finishedAt": "2026-10-21T10:11:01.713996+00:00"
+}

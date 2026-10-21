@@ -29,12 +29,6 @@ export const APPROVED_TABLE_GROUPS = Object.freeze({
     "t_gateway_route_query_param", "t_gateway_guard_rule", "t_console_resource",
   ]),
   reliability: Object.freeze(["t_compensation_event", "t_command_idempotency"]),
-  integration: Object.freeze([
-    "t_standard_api", "t_api_field", "t_integration", "t_integration_api",
-    "t_integration_script", "t_integration_standard_api",
-    "t_integration_verify_account", "t_integration_verify_case",
-    "t_integration_verify_run", "t_integration_verify_run_step",
-  ]),
   reference_data: Object.freeze(["t_currency_spec"]),
 });
 
@@ -46,11 +40,10 @@ export const EXPECTED_GROUP_SIZES = Object.freeze({
   audit_security: 8,
   gateway_control: 6,
   reliability: 2,
-  integration: 10,
   reference_data: 1,
 });
 
-export const EXPECTED_TABLE_TOTAL = 70;
+export const EXPECTED_TABLE_TOTAL = 60;
 export const APPROVED_TABLES = Object.freeze(Object.values(APPROVED_TABLE_GROUPS).flat());
 
 export const APPROVED_DIAGRAMS = Object.freeze({
@@ -61,7 +54,6 @@ export const APPROVED_DIAGRAMS = Object.freeze({
   audit_security: "审计与安全",
   gateway_control: "公共 API 控制面",
   reliability: "可靠执行",
-  integration: "外部 API 配置",
   reference_data: "全平台参考数据",
 });
 

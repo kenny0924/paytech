@@ -3,7 +3,7 @@ package com.paytech.channel.connector.domain;
 import java.time.Instant;
 
 import com.paytech.channel.connector.core.dal.dataobject.ChannelAccount;
-import com.paytech.channel.connector.core.dal.dataobject.ChannelConfigChange;
+import com.paytech.channel.connector.protocol.domain.ChannelConfigChangeRecord;
 import com.paytech.channel.connector.core.dal.dataobject.PaymentChannel;
 import com.paytech.channel.connector.core.enums.ChannelStatus;
 
@@ -21,7 +21,7 @@ public class ChannelAccountContext {
     private final PaymentChannel channel;
 
     /** 与本次写入同事务插入的变更记录。 */
-    private final ChannelConfigChange change;
+    private final ChannelConfigChangeRecord change;
 
     /** 本次写入时间，UTC 微秒。 */
     private final Instant now;

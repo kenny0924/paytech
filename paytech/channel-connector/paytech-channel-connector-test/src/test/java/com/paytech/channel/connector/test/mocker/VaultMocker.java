@@ -2,7 +2,11 @@ package com.paytech.channel.connector.test.mocker;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayDeque;
+import java.util.Base64;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,7 +25,9 @@ import com.paytech.vault.client.internal.wire.RevealResponse;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * 按账号 Token 配置合成 Vault Reveal DTO：只接受 channel-connector 以 CHANNEL_EXECUTION 用途读取已配置的账号，其他请求都使测试失败。
+ * 按账号 Token 配置合成 Vault Reveal DTO：只接受 channel-connector 以 CHANNEL_EXECUTION 用途读取已配置的账号，其他请求都使测试失败
+ * <li>同时承载渠道协议执行的账号读取（2026-10-20 自 Platform ChannelAccountVaultMocker 合并）：登记账号配置、Vault 故障与响应延迟。</li>
+ * <li>调用记录只保存 Token，不保存配置原文。</li>
  */
 @TestComponent
 public class VaultMocker implements Clear {
@@ -30,6 +36,7 @@ public class VaultMocker implements Clear {
     private final Map<String, RevealResponse> responses = new HashMap<>();
     private final Map<String, MockHttpFault> faults = new HashMap<>();
     private final Map<String, String> errorRequestIds = new HashMap<>();
+    private final Map<String, Long> delays = new HashMap<>();
     private final List<String> calls = new ArrayList<>();
     private final List<String> unexpected = new ArrayList<>();
     private final Map<String, ArrayDeque<String>> protectTokens = new HashMap<>();
@@ -55,8 +62,76 @@ public class VaultMocker implements Clear {
         responses.put(token, new RevealResponse(value));
     }
 
-    /** HTTP Mock 实际调用此处，测试只记录合成 Token，不记录 Payload。 */
-    public synchronized RevealResponse reveal(String caller, String token, String purpose) {
+    /**
+     * 合成的 43 位 Base64URL 引用 Token
+     *
+     * @param seed 生成种子，同一种子得到同一 Token
+     * @return 合成 Token
+     */
+    public static String token(String seed) {
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest(seed.getBytes(StandardCharsets.UTF_8));
+            return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
+        } catch (NoSuchAlgorithmException impossible) {
+            throw new IllegalStateException(impossible);
+        }
+    }
+
+    /**
+     * 登记 Token 对应的账号配置原文（渠道协议执行的 CHANNEL_ACCOUNT_CONFIG 初始化读取）
+     *
+     * @param token 账号 Vault Token
+     * @param configuration 账号配置 JSON 原文
+     */
+    public synchronized void allow(String token, String configuration) {
+        respond(token, configuration);
+    }
+
+    /**
+     * 登记 Token 的 Vault 故障状态码
+     *
+     * @param token 账号 Vault Token
+     * @param status HTTP 状态码
+     */
+    public synchronized void fail(String token, int status) {
+        fault(token, MockHttpFault.json(status, Map.of("code", "VAULT_UNAVAILABLE", "message", "Vault 不可用")));
+    }
+
+    /**
+     * 登记 Token 的响应延迟，用于流程预算耗尽场景
+     *
+     * @param token 账号 Vault Token
+     * @param millis 返回前等待的毫秒数
+     */
+    public synchronized void delay(String token, long millis) {
+        delays.put(token, millis);
+    }
+
+    /**
+     * HTTP Mock 实际调用此处：按登记延迟等待（不持有锁）后返回预设响应
+     *
+     * @param caller 调用方服务名
+     * @param token 账号 Vault Token
+     * @param purpose 读取用途
+     * @return 预设 Reveal 响应
+     */
+    public RevealResponse reveal(String caller, String token, String purpose) {
+        long delay;
+        synchronized (this) {
+            delay = delays.getOrDefault(token, 0L);
+        }
+        if (delay > 0) {
+            try {
+                Thread.sleep(delay);
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        return answer(caller, token, purpose);
+    }
+
+    /** 测试只记录合成 Token，不记录 Payload。 */
+    synchronized RevealResponse answer(String caller, String token, String purpose) {
         if (!CALLER.equals(caller) || !"CHANNEL_EXECUTION".equals(purpose)
             || !(responses.containsKey(token) || faults.containsKey(token))) {
             unexpected.add("unconfigured-reveal");
@@ -183,6 +258,11 @@ public class VaultMocker implements Clear {
         assertTrue(calls.getFirst().equals(token), "读取了非冻结账号");
     }
 
+    /** 本例 Reveal 次数（含按配置返回故障的读取）。 */
+    public synchronized int revealCount() {
+        return calls.size();
+    }
+
     /** 候选查询和前置失败不得触发秘密读取。 */
     public synchronized void assertNoCalls() {
         assertEquals(0, calls.size());
@@ -190,7 +270,7 @@ public class VaultMocker implements Clear {
 
     /** 每例必须从完全空的 Mock 状态开始。 */
     public synchronized void assertEmpty() {
-        assertTrue(responses.isEmpty() && faults.isEmpty() && errorRequestIds.isEmpty() && calls.isEmpty()
+        assertTrue(responses.isEmpty() && faults.isEmpty() && errorRequestIds.isEmpty() && delays.isEmpty() && calls.isEmpty()
             && unexpected.isEmpty() && protectTokens.isEmpty() && protectByKey.isEmpty() && protects.isEmpty()
             && protectFault == null);
     }
@@ -206,6 +286,7 @@ public class VaultMocker implements Clear {
         responses.clear();
         faults.clear();
         errorRequestIds.clear();
+        delays.clear();
         calls.clear();
         unexpected.clear();
         protectTokens.clear();

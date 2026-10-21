@@ -493,13 +493,14 @@ create_time DATETIME(6) NN
 
 [t_channel_config_change]
 id BIGINT NN
-target_type VARCHAR(64) NN {CHANNEL,CHANNEL_ACCOUNT,CHANNEL_MID,MID_CAPABILITY,CHANNEL_COST_VERSION}
+target_type VARCHAR(64) NN {CHANNEL,CHANNEL_ACCOUNT,CHANNEL_MID,MID_CAPABILITY,CHANNEL_COST_VERSION,STANDARD_API,INTEGRATION,INTEGRATION_API,INTEGRATION_SCRIPT,INTEGRATION_IMPLEMENTATION,VERIFY_ACCOUNT,VERIFY_CASE}
 target_id BIGINT NN
-change_type VARCHAR(64) NN {CREATE,UPDATE,STATUS,CONFIGURATION,REBIND,CANCEL}
+change_type VARCHAR(64) NN {CREATE,UPDATE,STATUS,CONFIGURATION,REBIND,CANCEL,DELETE}
 from_status VARCHAR(64) N OPEN(渠道、账号、MID、能力组或成本版本的状态代码)
 to_status VARCHAR(64) N OPEN(渠道、账号、MID、能力组或成本版本的状态代码)
 operator_id BIGINT NN
 reason VARCHAR(512) N
+change_detail JSON N
 create_time DATETIME(6) NN
 `;
 const INDEX_MANIFEST = String.raw`
@@ -1253,7 +1254,7 @@ function validateMetadata(tables) {
 function validateGeneratedModel(model, tables, relations) {
   invariant(JSON.stringify(modelTotals(model)) === JSON.stringify({
     tables: 32,
-    fields: 400,
+    fields: 401,
     uniqueIndexes: 45,
     accessIndexes: 46,
     relations: 68,

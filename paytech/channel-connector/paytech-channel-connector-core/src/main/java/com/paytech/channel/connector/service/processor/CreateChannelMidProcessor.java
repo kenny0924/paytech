@@ -11,10 +11,10 @@ import com.paytech.channel.connector.core.constant.ChannelConnectorLocks;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelAccount;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelMid;
 import com.paytech.channel.connector.core.dal.dataobject.PaymentChannel;
-import com.paytech.channel.connector.core.enums.ChangeTargetType;
-import com.paytech.channel.connector.core.enums.ChangeType;
+import com.paytech.channel.connector.protocol.core.enums.ChangeTargetType;
+import com.paytech.channel.connector.protocol.core.enums.ChangeType;
 import com.paytech.channel.connector.core.enums.ChannelStatus;
-import com.paytech.channel.connector.domain.ChannelConfigChanges;
+import com.paytech.channel.connector.protocol.domain.ChannelConfigChanges;
 import com.paytech.channel.connector.domain.ChannelMidContext;
 import com.paytech.channel.connector.domain.ChannelMidDetailView;
 import com.paytech.channel.connector.domainservice.service.ChannelAccountService;
@@ -40,6 +40,7 @@ public class CreateChannelMidProcessor extends AbstractLockProcessor<CreateChann
     private final ChannelMidService channelMidService;
     private final ChannelAccountService channelAccountService;
     private final PaymentChannelService paymentChannelService;
+    private final ChannelConfigTransactions channelConfigTransactions;
 
     /** 所属渠道资源锁。 */
     @Override
@@ -69,7 +70,7 @@ public class CreateChannelMidProcessor extends AbstractLockProcessor<CreateChann
         }
 
         // 本地保存
-        channelMidService.createMid(context);
+        channelConfigTransactions.write(context.getChange(), () -> channelMidService.createMid(context));
         return new ChannelMidDetailView(mid, List.of());
     }
 

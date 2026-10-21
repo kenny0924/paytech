@@ -4,7 +4,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import com.paytech.foundation.web.paging.PagingResponseBody;
-import com.paytech.operations.console.bff.integration.PlatformIntegrationManagementClient;
+import com.paytech.operations.console.bff.integration.IntegrationManagementClient;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
 import com.paytech.operations.console.bff.service.model.externalapi.request.CreateIntegrationRequestBody;
 import com.paytech.operations.console.bff.service.model.externalapi.request.DeleteExternalApiConfigRequestBody;
@@ -16,31 +16,29 @@ import com.paytech.operations.console.bff.service.model.externalapi.response.Int
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 
-/** 接入方管理的浏览器入口：实时 PLT-I02 授权后原样转发 Platform，不接收或转发 Idempotency-Key。 */
+/** 接入方管理的浏览器入口：实时 PLT-I02 授权后原样转发 channel-connector，不接收或转发 Idempotency-Key。 */
 @RestController
 @Validated
 @AllArgsConstructor
 @RequestMapping("/external-api-admin/v1")
 public class IntegrationManagementController {
 
-    private final PlatformIntegrationManagementClient client;
+    private final IntegrationManagementClient client;
 
     /** 分页查询接入方，按编码稳定排序。 */
     @GetMapping("/integrations")
     public PagingResponseBody<IntegrationSummary> integrations(
-        OperatorContext context,
         @RequestParam(value = "page", required = false) Integer page,
         @RequestParam(value = "size", required = false) Integer size,
         @RequestParam(value = "keyword", required = false) String keyword) {
-        return client.integrations(context, page, size, keyword);
+        return client.integrations(page, size, keyword);
     }
 
     /** 读取接入方详情，含出站地址的引用方与下级对象数量。 */
     @GetMapping("/integrations/{integrationCode}")
     public IntegrationResponseBody integration(
-        OperatorContext context,
         @PathVariable("integrationCode") String integrationCode) {
-        return client.integration(context, integrationCode);
+        return client.integration(integrationCode);
     }
 
     /** 创建接入方及其出站地址。 */

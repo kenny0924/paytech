@@ -13,13 +13,13 @@ import tools.jackson.databind.cfg.CoercionAction;
 import tools.jackson.databind.cfg.CoercionInputShape;
 
 /**
- * 本服务数据源只扫描 channel-connector core 的 Mapper；DataSource 与事务管理器由 Spring Boot 提供
- * <li>全部 Mapper XML 以内联 CodeEnumTypeHandler（按 javaType）映射闭合枚举列，参数写入枚举的稳定 Code；不全局登记 CodeEnumTypeHandler：
- * MyBatis 按 Handler 类缓存实例，全局登记会让 XML 内联引用取到另一枚举类型的实例。</li>
+ * 本服务数据源扫描 channel-connector core 与 protocol 的 Mapper；DataSource 与唯一的事务管理器由 Spring Boot 提供
+ * <li>全部 Mapper XML（含自 Platform 迁入的协议表 Mapper）以内联 CodeEnumTypeHandler（按 javaType）映射闭合枚举列，参数写入枚举的稳定
+ * Code；不全局登记 CodeEnumTypeHandler：MyBatis 按 Handler 类缓存实例，全局登记会让 XML 内联引用取到另一枚举类型的实例。</li>
  * <li>全局只登记 UTC InstantTypeHandler 并开启下划线转驼峰（渠道成本 Mapper 自动映射其余列）；主键由应用分配。</li>
  */
 @Configuration(proxyBeanMethods = false)
-@MapperScan("com.paytech.channel.connector.core.dal.mapper")
+@MapperScan({"com.paytech.channel.connector.core.dal.mapper", "com.paytech.channel.connector.protocol.core.dal.mapper"})
 public class ChannelConnectorConfiguration {
     /** 禁止把数字 ID、字符串 Boolean 或未知字段静默转换为合法请求（与 Payment 合同口径一致）。 */
     @Bean

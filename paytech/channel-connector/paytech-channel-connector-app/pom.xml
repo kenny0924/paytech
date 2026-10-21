@@ -11,10 +11,13 @@
     </parent>
     <artifactId>paytech-channel-connector-app</artifactId>
     <name>PayTech Channel Connector App</name>
-    <description>Deployable channel connector: Spring Boot entry, controllers, DataSource / MyBatis scan, Platform client wiring,
-        channel cost activation XXL-Job.</description>
+    <description>Deployable channel connector: Spring Boot entry, controllers (incl. external API administration), DataSource /
+        MyBatis scan, card material client wiring, channel cost activation XXL-Job.</description>
     <dependencies>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-channel-connector-core</artifactId></dependency>
+        <!-- 渠道协议能力（外部 API 管理入口、执行引擎与沙箱验证）及卡直付读卡合同（读卡客户端装配）。 -->
+        <dependency><groupId>com.paytech</groupId><artifactId>paytech-channel-connector-protocol</artifactId></dependency>
+        <dependency><groupId>com.paytech</groupId><artifactId>paytech-card-api</artifactId></dependency>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-channel-connector-api</artifactId></dependency>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-mvc-web-starter</artifactId></dependency>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-http-client-support</artifactId></dependency>
@@ -31,7 +34,7 @@
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-restclient</artifactId></dependency>
         <dependency><groupId>io.micrometer</groupId><artifactId>micrometer-registry-prometheus</artifactId></dependency>
         <dependency><groupId>org.springframework.cloud</groupId><artifactId>spring-cloud-starter-loadbalancer</artifactId></dependency>
-        <!-- 注册到 Nacos 并经 Nacos 发现 Platform、Vault（Payment 经服务发现调用本服务）。 -->
+        <!-- 注册到 Nacos 并经 Nacos 发现 Vault、card（Payment 经服务发现调用本服务）。 -->
         <dependency><groupId>com.alibaba.cloud</groupId><artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId></dependency>
         <dependency><groupId>com.alibaba.cloud</groupId><artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId></dependency>
         <dependency><groupId>org.mybatis.spring.boot</groupId><artifactId>mybatis-spring-boot-starter</artifactId></dependency>

@@ -3,7 +3,7 @@ package com.paytech.operations.console.bff.ext.rest;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import com.paytech.operations.console.bff.integration.PlatformIntegrationImplementationManagementClient;
+import com.paytech.operations.console.bff.integration.IntegrationImplementationManagementClient;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
 import com.paytech.operations.console.bff.service.model.externalapi.request.CreateImplementationRequestBody;
 import com.paytech.operations.console.bff.service.model.externalapi.request.DeleteExternalApiConfigRequestBody;
@@ -17,30 +17,28 @@ import com.paytech.operations.console.bff.service.model.externalapi.response.Val
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 
-/** 渠道标准 API 实现管理的浏览器入口：实时 PLT-I02 授权后原样转发 Platform，不接收或转发 Idempotency-Key。 */
+/** 渠道标准 API 实现管理的浏览器入口：实时 PLT-I02 授权后原样转发 channel-connector，不接收或转发 Idempotency-Key。 */
 @RestController
 @Validated
 @AllArgsConstructor
 @RequestMapping("/external-api-admin/v1")
 public class IntegrationImplementationManagementController {
 
-    private final PlatformIntegrationImplementationManagementClient client;
+    private final IntegrationImplementationManagementClient client;
 
     /** 查询接入方的全部标准 API 实现，按标准 API 编码排序，不分页。 */
     @GetMapping("/integrations/{integrationCode}/implementations")
     public ImplementationListResponseBody listImplementations(
-        OperatorContext context,
         @PathVariable("integrationCode") String integrationCode) {
-        return client.listImplementations(context, integrationCode);
+        return client.listImplementations(integrationCode);
     }
 
     /** 读取一个标准 API 实现的流程定义。 */
     @GetMapping("/integrations/{integrationCode}/implementations/{standardApiCode}")
     public ImplementationResponseBody getImplementation(
-        OperatorContext context,
         @PathVariable("integrationCode") String integrationCode,
         @PathVariable("standardApiCode") String standardApiCode) {
-        return client.getImplementation(context, integrationCode, standardApiCode);
+        return client.getImplementation(integrationCode, standardApiCode);
     }
 
     /** 创建标准 API 实现。 */
@@ -75,9 +73,8 @@ public class IntegrationImplementationManagementController {
     /** 只做流程静态校验，不保存；问题通过 issues 返回而不是错误响应。 */
     @PostMapping("/integrations/{integrationCode}/implementations/validate")
     public ValidationResponseBody validateImplementation(
-        OperatorContext context,
         @PathVariable("integrationCode") String integrationCode,
         @Valid @RequestBody ValidateImplementationRequestBody request) {
-        return client.validateImplementation(context, integrationCode, request);
+        return client.validateImplementation(integrationCode, request);
     }
 }
