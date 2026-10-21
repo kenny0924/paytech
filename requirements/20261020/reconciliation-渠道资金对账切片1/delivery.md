@@ -10,7 +10,7 @@
 | 4. 研发实现 | 已确认（2026-10-20）：T0、A、B、C、D、E1–E3 七线报告见 [tasks/](./tasks/)；实施决定 I-01–I-18 见 [technique.md §2.10](./technique.md)；门禁见下 |
 | 5. 综合验证与本地验收 | 已确认（2026-10-21）：[verification/stage5-report.md](./verification/stage5-report.md)（含 §8 D-1 修复与复测）、[tasks/F-report.md](./tasks/F-report.md) |
 | 6–7. mor-test 发布与验收 | 已确认（2026-10-21）：mor-test 验收 69/69、浏览器 27/27，执行记录见 [release/release.md 第 8 节](./release/release.md)：发布包 [release/release.md](./release/release.md)、[tasks/G-report.md](./tasks/G-report.md)；阶段 7 执行另行授权 |
-| 8. 提交 | 进行中（2026-10-21）：本地提交，私有索引，共享文件按 hunk 拆分，不推送 |
+| 8. 提交 | 已完成（2026-10-21）：本地提交 `2f5f37f7`（566 个文件，父 `4ab205e0`），未推送；见 [tasks/H-report.md](./tasks/H-report.md) |
 
 ## 确认记录
 
@@ -29,7 +29,7 @@
 
 ## 当前阶段与下一确认点
 
-当前：阶段 8 提交中。
+当前：阶段 1—8 完成（2026-10-21）。本地提交 `2f5f37f7`，未推送。**后续材料**（2026-10-21 用户授权，作为单独的本地提交，父 `13c02c87`）：本文件、需求索引行与台账的提交号登记、`tasks/H-report.md`、`release/demo/**`（演示数据脚本，已在 mor-test 执行）；`test-environment/compose.applications.yaml` 补回 reconciliation-service 的 MQ / Redis / XXL 变量与依赖、ops-bff `OPERATIONS_RECONCILIATION_BASE_URL`（阶段 7 只写在发布覆盖文件里，漏进主 compose；币种会话 2026-10-21 替换 ops-bff 时因此对账页 503 约 10 分钟，已由对方补上；主 compose 已于 2026-10-21 修正，`compose.sh config --quiet` 通过）。
 
 ## 变更记录
 
@@ -50,6 +50,7 @@
 | 2026-10-20 | 本机 e2e 库 / 本机 Vault | `mor_platform_v2e2e` 执行 db/platform-support/registration-dml.sql（块 123 休眠行）与 activation-local.sql（影响 38 / 10 / 3 / 1）；本机 `mor_vault` 执行 db/vault/dml.sql（数据类型 `CASH_ACCOUNT_NUMBER_V1` + reconciliation PROTECT 规则 + 策略变更记录） | 首次被工具权限拦截，用户追问"你能执行吗"后执行 |
 | 2026-10-20 | 本机 local-environment MySQL | `mor_reconciliation` 执行 [db/reconciliation/ddl.sql](./db/reconciliation/ddl.sql) 中 `t_consumed_event`、`t_consumed_aggregate_version` 两段 CREATE（13 → 15 表） | 用户 2026-10-20 授权 |
 | 2026-10-21 03:11–03:3xZ | mor-test | 按 release.md 第 5 节：备份 `~/Code-MoR-backups/20261021T031139Z-recon-slice1-mor-test/`；`mor_billing` ALTER；替换 ledger `b84f8f97…`、billing `b773d2cd…`；`mor_reconciliation` 删旧 18 表（全空）建 15 表；`mor_vault` 3 行；替换 reconciliation `f181a04c…`；`mor_platform` 块 123 注册 + 激活（38 / 10 / 3 / 1）；替换 platform `79e33d43…`、ops-bff `9520a545…`、ops-web `edfb6628…`；XXL 分组 17、任务 20 / 21；验收 69/69、浏览器 27/27；清理回基线 | 用户 2026-10-21 阶段 7 授权 |
+| 2026-10-21 03:46—03:52Z | mor-test 演示数据 | 用户要求"帮我造一些数据"：[release/demo/demo_seed.py](./release/demo/demo_seed.py) `--backdate-exceptions`，记录 `~/Code-MoR-backups/recon-demo/demo-20261021074643.json`（0600）。新建接入方与渠道 `DEMO_NI`（AE001 技术账号、2 个 MID）、清算账户 `NI-AE001-USD` / `NI-AE001-USD-B`、结算户（末四位 6021，ACTIVE）与出款户（7710，待复核）、平台流水 17、渠道账单 7（已到账 / 在途 / 匹配中 / 被拒 / 作废）、银行对账单 4（连续 2、被拒 1、断档 1）、各状态异常与处置；未结异常 `opened_time` 前移以填满账龄段。演示复核人 `DEMO_RECON_CHECKER_202610210746` 已停用（脚本最后一步按 ID 读账户的路由不存在而失败，主会话改为列表查找后单独停用并修正脚本；`--resume` 不跳过已结案步骤，勿续跑）。数据保留；删除用 `demo_cleanup.py <记录> [--dry-run]`。事件无订阅方，补偿任务留存 FAILED（I-08） | 用户 2026-10-21 要求 |
 
 ## 测试 / 验收证据
 
@@ -86,9 +87,17 @@
 
 ## 提交记录
 
-无。
+| 提交 | 内容 |
+|---|---|
+| `2f5f37f7` | feat(reconciliation)：渠道资金对账切片 1，部署 mor-test（父 `4ab205e0`；566 个文件；私有索引构建，11 个与商务会话共用的文件、AGENTS.md、两个 README 与台账只取本需求改动块；`configurationModel.test.ts` 页数取 BASE 48 + 7 = 55，`TableOwnershipAutoTest` 取 BASE − 13 + 10） |
+| （后续） | docs：登记提交号、H 报告、演示数据脚本 |
+
+未推送。
 
 ## 遗留项及后续需求
+
+- 发布前端后，已打开的控制台标签页仍跑旧包，会静默略过未登记的新菜单；需刷新或重新登录（2026-10-21 用户在 mor-test 遇到，刷新后正常）。
+- `table-ownership.yaml` 的 `--check` 在 BASE `4ab205e0` 即有一行差异（`t_channel_config_change` 手写、生成器在商务提交 6570ef73 才补），本提交沿袭，非本需求引入。
 
 - 2026-10-21 03:25:35Z 商务会话在本需求之后替换 mor-test ops-web 为 `sha256:333e7f2b…`（`capability-20261021d` = 本需求 `edfb6628` 源 + 其 9 个 `src/commercial` 文件），回滚目标为本需求 `edfb6628`。本需求下次发 ops-web 以它为基线。
 

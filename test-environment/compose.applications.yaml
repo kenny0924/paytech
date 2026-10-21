@@ -753,9 +753,32 @@ services:
       RECONCILIATION_DB_PASSWORD: ${MOR_RECONCILIATION_DB_PASSWORD:?prepare test secrets}
       RECONCILIATION_SNOWFLAKE_REGION_ID: "0"
       RECONCILIATION_SNOWFLAKE_WORKER_ID: "19"
+      # 对账切片 1（2026-10-21，requirements/20261020/reconciliation-渠道资金对账切片1）：消费 BillingFactRecorded、发布 reconciliation.events、
+      # 写入口资源锁、补偿事件与 XXL 执行器（compensationEventScan、channelLineWaitExpiry）；Vault、channel-connector 经 Nacos 发现。
+      RECONCILIATION_RABBITMQ_HOST: rabbitmq
+      RECONCILIATION_RABBITMQ_PORT: "5672"
+      RECONCILIATION_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
+      RECONCILIATION_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
+      RECONCILIATION_RABBITMQ_VHOST: /mor-test
+      RECONCILIATION_REDIS_HOST: redis
+      RECONCILIATION_REDIS_PORT: "6379"
+      RECONCILIATION_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?prepare test secrets}
+      RECONCILIATION_COMPENSATION_INSTANCE_ID: reconciliation-test
+      PAYTECH_INSTANCE_ID: reconciliation-test
+      XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
+      XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
+      XXL_JOB_EXECUTOR_ENABLED: "true"
+      XXL_JOB_EXECUTOR_APPNAME: reconciliation-service
+      XXL_JOB_EXECUTOR_IP: 172.30.73.41
+      XXL_JOB_EXECUTOR_PORT: "9999"
+      XXL_JOB_EXECUTOR_LOGPATH: /tmp/xxl-job
+      XXL_JOB_EXECUTOR_EXCLUDEDPACKAGES: org.springframework.,spring.
     depends_on:
       mysql: { condition: service_healthy }
       nacos: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      vault-service: { condition: service_healthy }
     healthcheck:
       test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:19115/actuator/health/readiness]
       interval: 10s
@@ -840,6 +863,7 @@ services:
       OPERATIONS_ACCOUNT_BASE_URL: http://account-service:18114
       # 调整页的计费事实查询、登记、批准与作废同样以固定私网地址直连 billing（20261020 人工调整与计费事实）。
       OPERATIONS_BILLING_BASE_URL: http://billing-service:18113
+      OPERATIONS_RECONCILIATION_BASE_URL: http://reconciliation-service:18115
     depends_on:
       platform-support-service: { condition: service_healthy }
       risk-decision-service: { condition: service_healthy }
