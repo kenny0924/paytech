@@ -140,7 +140,7 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
         assertEquals(List.of("/auth", "/authorization", "/iam", "/audit", "/gateway-admin", "/console-admin", "/permission-admin", "/api-credential-admin", "/api-scope-admin",
                 "/decision-dictionaries", "/decision-rule-sets", "/decision-releases", "/decision-flows", "/decision-variables", "/risk-lists", "/risk-decisions", "/external-api-admin",
                 "/client-onboarding-admin", "/vault-admin", "/notification-admin", "/webhook-admin",
-                "/channel-admin/v1/channel-accounts"),
+                "/channel-admin/v1/channel-accounts", "/finance/reconciliation/v1/cash-accounts"),
             applicationContext.getBean(WebLoggingProperties.class).metadataOnlyPathPrefixes(),
             "身份、管理筛选和状态原因只能写元数据日志");
         Set<String> routes = applicationContext.getBean(
@@ -417,7 +417,26 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
             "POST /channel-admin/v1/channel-cost-plans/{planCode}/versions/{costVer}/approve",
             "POST /channel-admin/v1/channel-cost-plans/{planCode}/versions/{costVer}/reject",
             "POST /channel-admin/v1/channel-cost-plans/{planCode}/versions/{costVer}/cancel",
-            "GET /channel-admin/v1/channel-cost-plans/{planCode}/versions/{baseCostVer}/diff/{targetCostVer}"), routes);
+            "GET /channel-admin/v1/channel-cost-plans/{planCode}/versions/{baseCostVer}/diff/{targetCostVer}",
+            "GET /finance/reconciliation/v1/clearing-accounts", "POST /finance/reconciliation/v1/clearing-accounts",
+            "GET /finance/reconciliation/v1/clearing-accounts/unassigned-mids", "GET /finance/reconciliation/v1/clearing-accounts/{clearingAccountId}",
+            "PUT /finance/reconciliation/v1/clearing-accounts/{clearingAccountId}/settings", "POST /finance/reconciliation/v1/clearing-accounts/{clearingAccountId}/mids",
+            "DELETE /finance/reconciliation/v1/clearing-accounts/{clearingAccountId}/mids/{midId}", "POST /finance/reconciliation/v1/clearing-accounts/{clearingAccountId}/status",
+            "GET /finance/reconciliation/v1/cash-accounts", "POST /finance/reconciliation/v1/cash-accounts",
+            "GET /finance/reconciliation/v1/cash-accounts/{cashAccountId}", "POST /finance/reconciliation/v1/cash-accounts/{cashAccountId}/closure",
+            "POST /finance/reconciliation/v1/cash-accounts/{cashAccountId}/approval", "GET /finance/reconciliation/v1/channel-statements",
+            "POST /finance/reconciliation/v1/channel-statements", "GET /finance/reconciliation/v1/channel-statements/{statementId}",
+            "GET /finance/reconciliation/v1/channel-statements/{statementId}/lines", "POST /finance/reconciliation/v1/channel-statements/{statementId}/lines",
+            "POST /finance/reconciliation/v1/channel-statements/{statementId}/completion", "POST /finance/reconciliation/v1/channel-statements/{statementId}/void",
+            "GET /finance/reconciliation/v1/platform-txns", "GET /finance/reconciliation/v1/bank-statements",
+            "POST /finance/reconciliation/v1/bank-statements", "GET /finance/reconciliation/v1/bank-statements/{bankStatementId}/lines",
+            "POST /finance/reconciliation/v1/bank-statements/{bankStatementId}/lines", "POST /finance/reconciliation/v1/bank-statements/{bankStatementId}/completion",
+            "GET /finance/reconciliation/v1/bank-statement-lines", "GET /finance/reconciliation/v1/expected-bank-movements",
+            "GET /finance/reconciliation/v1/bank-matches", "POST /finance/reconciliation/v1/bank-matches",
+            "POST /finance/reconciliation/v1/bank-matches/{bankMatchId}/confirmation", "POST /finance/reconciliation/v1/bank-matches/{bankMatchId}/rejection",
+            "GET /finance/reconciliation/v1/recon-exceptions", "POST /finance/reconciliation/v1/recon-exceptions",
+            "GET /finance/reconciliation/v1/recon-exceptions/{exceptionId}", "POST /finance/reconciliation/v1/recon-exceptions/{exceptionId}/resolutions",
+            "POST /finance/reconciliation/v1/recon-resolutions/{resolutionId}/approval", "GET /finance/reconciliation/v1/summary"), routes);
 
         Path classes = appModule().resolve("target/classes/com/paytech/operations/console/bff");
         try (var files = Files.walk(classes)) {

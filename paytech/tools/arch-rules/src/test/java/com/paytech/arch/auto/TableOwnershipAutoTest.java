@@ -22,12 +22,13 @@ class TableOwnershipAutoTest {
     @Test
     void test_normalFlow() {
         // design/03 §4.2：17 个目标库共 265 张物理表；另加保留服务 platform-support 自身 Schema 的 56 张表。
-        Assertions.assertEquals(265 + 56 + 1 + 6 - 7 + 9 + 4 + 6 + 1 + 2 + 1, ownership.physicalTableCount(),
+        Assertions.assertEquals(265 + 56 + 1 + 6 - 7 + 9 + 4 + 6 + 1 + 2 + 1 - 13 + 10, ownership.physicalTableCount(),
             "design 03 + Platform 保留表 + 第 12 步 t_card_material_ticket + account 明细账六张业务表（2026-10-19 重构）"
                 + " - billing 经济事实三表与渠道成本四表 + billing 计费事实九表 + channel-connector 渠道成本四表（2026-10-19 计费事实重构）"
                 + " + commercial 产品目录三表与合同订阅 / 开通 / 约束三表（2026-10-19 六层产品定价模型）"
                 + " + account 账户号序列 + ledger 科目变更记录与账户号序列（2026-10-19 科目分级）"
-                + " + channel-connector 变更记录表 t_channel_config_change（2026-10-20）");
+                + " + channel-connector 变更记录表 t_channel_config_change（2026-10-20）"
+                + " - reconciliation 旧对账十三表 + 新模型八张业务表与消费幂等两表（2026-10-20 对账切片 1）");
         Assertions.assertEquals(57, ownership.databasesOf("platform-support").get("mor_platform").size());
         Assertions.assertEquals(31, ownership.databasesOf("ledger").get("mor_ledger").size());
         Assertions.assertTrue(ownership.allowedTables("ledger").containsAll(
@@ -85,6 +86,21 @@ class TableOwnershipAutoTest {
         Assertions.assertTrue(channelCostTables.stream().noneMatch(ownership.allowedTables("billing")::contains));
         Assertions.assertTrue(ownership.allowedTables("billing").containsAll(
             List.of("t_consumed_event", "t_consumed_aggregate_version")));
+    }
+
+    /** 2026-10-20 对账切片 1：mor_reconciliation 重建为 15 张表（12 张业务表 + 补偿事件 + 消费幂等两表），旧对账表全部移除。 */
+    @Test
+    void test_reconciliationOwnership() {
+        Assertions.assertEquals(Set.of("t_clearing_account", "t_clearing_account_mid", "t_platform_txn",
+            "t_channel_statement", "t_channel_statement_line", "t_cash_account", "t_bank_statement",
+            "t_bank_statement_line", "t_expected_bank_movement", "t_bank_match", "t_recon_exception",
+            "t_recon_resolution", "t_compensation_event", "t_consumed_event", "t_consumed_aggregate_version"),
+            ownership.databasesOf("reconciliation").get("mor_reconciliation"));
+        Assertions.assertTrue(List.of("t_channel_account", "t_channel_settle_batch", "t_bank_recon_match",
+            "t_cash_account_binding", "t_channel_cost_confirm").stream()
+            .noneMatch(ownership.allowedTables("reconciliation")::contains));
+        Assertions.assertTrue(ownership.allowedTables("channel-connector").contains("t_channel_account"),
+            "channel-connector 的渠道技术账号表与已删除的旧清算账户同名，归属不受影响");
     }
 
     /** 第 12 步起卡表只在 mor_card：card 的 R4 白名单含卡表与读卡票据表，payment 与 channel-connector 不含。 */

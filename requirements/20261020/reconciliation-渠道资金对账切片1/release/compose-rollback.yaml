@@ -1,0 +1,19 @@
+# reconciliation 渠道资金对账切片 1：mor-test 回滚覆盖文件（2026-10-21 阶段 6 只读核对时的运行镜像）。
+# 用法同 compose-candidate.yaml，只传本文件：
+#   ./test-environment/compose.sh -f "$PWD/requirements/20261020/reconciliation-渠道资金对账切片1/release/compose-rollback.yaml" \
+#     up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 只钉镜像；environment 回到主文件（旧 reconciliation 镜像不含 RabbitMQ / Redis / XXL 组件，主文件即其原形状；BFF 旧镜像不读对账地址）。
+# 阶段 7 执行前须再核对一次运行镜像；若与下列不同（他人已替换），以执行前的运行镜像为准并改本文件。
+services:
+  reconciliation-service:
+    image: sha256:a3642134d3649ffe8b094e3fda649a53bb745fb946e7fc1850372da0e703a09b  # 2026-10-18 构建的空壳（只有旧 t_channel_account 只读映射），:development
+  ledger-service:
+    image: sha256:ff20e3358a57a280234a793db0ee029627ce8c718dccaa40f022e778676cfddb  # 2026-10-20 16:41Z 起运行（88551da9 规则版本按业务时间），回滚须与 billing 一起回
+  billing-service:
+    image: sha256:998391567701743aa98ac3bf656c660d7b88ce068e371b53c6a479c85e393bae  # mor-test/billing-service:fin-20261020
+  operations-console-bff:
+    image: sha256:9708ccdb8fa733754bd5142e2fc072ac33599b627b6c257ac75ca7308cf2360e  # mor-test/operations-console-bff:capability-20261021（商务会话 code-mor-98）
+  operations-console-web:
+    image: sha256:abab7475643d1960b74c1cd0e42d458154c222967f1eba9224ddaa36f4befa7e  # mor-test/operations-console-web:capability-20261021（商务会话 code-mor-98）
+  platform-support-service:
+    image: sha256:95348566542d280aa0cb56039860b909c0e13de3f45d56ddeb1b2a82bbe0a8cd  # mor-test/platform-support-service:capability-20261021（商务会话 code-mor-98）

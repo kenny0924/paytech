@@ -70,6 +70,7 @@ test("billing-schema.sql is the exact rendering of the model and the test DDL re
 
 test("billing fact columns follow the approved design", () => {
   assert.equal(entitiesByKey.get("t_billing_fact").fields.length, 25);
+  assert.equal(entitiesByKey.get("t_billing_fact_ref").fields.length, 7);
   assert.equal(entitiesByKey.get("t_billing_fact_line").fields.length, 20);
   for (const [table, key, type, notNull] of [
     ["t_billing_fact", "origin_type", "VARCHAR", true],
@@ -77,6 +78,8 @@ test("billing fact columns follow the approved design", () => {
     ["t_billing_fact", "client_id", "BIGINT", false],
     ["t_billing_fact", "parent_fact_id", "BIGINT", false],
     ["t_billing_fact_ref", "ref_id", "VARCHAR", true],
+    ["t_billing_fact_ref", "external_reference_type", "VARCHAR", false],
+    ["t_billing_fact_ref", "external_transaction_id", "VARCHAR", false],
     ["t_billing_fact_pricing", "commercial_price_id", "BIGINT", true],
     ["t_billing_fact_line", "target_bucket", "VARCHAR", false],
     ["t_billing_fact_line", "source_evidence", "JSON", false],
@@ -87,7 +90,10 @@ test("billing fact columns follow the approved design", () => {
     assert.deepEqual([field.type, field.notNull], [type, notNull], `${table}.${key}`);
   }
   assert.equal(fieldOf("t_billing_fact", "fact_version").defaultValue, "0");
-  assert.match(fieldOf("t_billing_fact_ref", "ref_type").comment, /TICKET、FX_DEAL、FX_QUOTE。$/u);
+  assert.match(fieldOf("t_billing_fact_ref", "ref_type").comment, /TICKET、FX_DEAL、FX_QUOTE、CHANNEL_TRANSACTION_REF、RECON_RESOLUTION。$/u);
+  assert.deepEqual(entitiesByKey.get("t_billing_fact_ref").fields.map((field) => field.defKey),
+    ["id", "fact_id", "ref_type", "ref_id", "external_reference_type", "external_transaction_id", "create_time"]);
+  assert.equal(fieldOf("t_billing_fact_ref", "external_transaction_id").len, 128);
   assert.match(fieldOf("t_billing_fact_line", "component_type").comment, /CHANNEL_COST \+ ADJUSTMENT/u);
   assert.ok(fieldOf("t_business_calendar", "calendar_code").primaryKey);
   assert.ok(fieldOf("t_billing_fact_pricing", "fact_id").primaryKey);

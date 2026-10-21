@@ -82,6 +82,8 @@ public final class BillingFactPayloads {
         BillingFactRefPayload payload = new BillingFactRefPayload();
         payload.setRefType(ref.getRefType().getCode());
         payload.setRefId(ref.getRefId());
+        payload.setExternalReferenceType(ref.getExternalReferenceType());
+        payload.setExternalTransactionId(ref.getExternalTransactionId());
         return payload;
     }
 
@@ -129,7 +131,9 @@ public final class BillingFactPayloads {
         node.put("currency", payload.getCurrency());
         node.put("grossAmount", text(payload.getGrossAmount()));
         ArrayNode refs = node.putArray("refs");
-        payload.getRefs().forEach(ref -> refs.addObject().put("refType", ref.getRefType()).put("refId", ref.getRefId()));
+        payload.getRefs().forEach(ref -> refs.addObject().put("refType", ref.getRefType()).put("refId", ref.getRefId())
+            .put("externalReferenceType", ref.getExternalReferenceType())
+            .put("externalTransactionId", ref.getExternalTransactionId()));
         ArrayNode lines = node.putArray("lines");
         payload.getLines().forEach(line -> lines.add(json(line)));
         return node;
@@ -173,7 +177,7 @@ public final class BillingFactPayloads {
         node.put("currency", fact.getCurrency());
         node.put("makerId", text(fact.getMakerId()));
         ArrayNode refArray = node.putArray("refs");
-        refs.forEach(ref -> refArray.addObject().put("refType", ref.getRefType().getCode()).put("refId", ref.getRefId()));
+        refs.forEach(ref -> refItem(refArray.addObject(), ref));
         ArrayNode lineArray = node.putArray("lines");
         for (BillingFactLine line : lines) {
             ObjectNode item = lineArray.addObject();
@@ -187,6 +191,17 @@ public final class BillingFactPayloads {
             item.put("targetBucket", CodeEnum.defaultCode(line.getTargetBucket()));
         }
         return sha256(Rfc8785JsonCanonicalizer.canonicalizeObject(JSON.writeValueAsBytes(node)));
+    }
+
+    /** 摘要中的一条引用；渠道外部交易号两项只在非空时写入，未携带它们的既有提交摘要保持不变。 */
+    static void refItem(ObjectNode item, BillingFactRef ref) {
+        item.put("refType", ref.getRefType().getCode()).put("refId", ref.getRefId());
+        if (ref.getExternalReferenceType() != null) {
+            item.put("externalReferenceType", ref.getExternalReferenceType());
+        }
+        if (ref.getExternalTransactionId() != null) {
+            item.put("externalTransactionId", ref.getExternalTransactionId());
+        }
     }
 
     /** 金额按币种精度补齐；数据库金额已在登记时校验精度，超出即为数据不变量被破坏。 */

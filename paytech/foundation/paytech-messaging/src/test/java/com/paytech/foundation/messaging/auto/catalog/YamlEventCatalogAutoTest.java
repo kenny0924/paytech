@@ -42,7 +42,8 @@ class YamlEventCatalogAutoTest {
         YamlEventCatalog catalog = YamlEventCatalog.fromClasspath();
 
         assertEquals(List.of("PaymentSucceeded", "ClientReviewDecided", "BillingFactRecorded", "AccountPosted",
-            "SettlementRestrictionChanged", "AgreementStatusChanged", "CommercialTermVersionActivated"),
+            "SettlementRestrictionChanged", "AgreementStatusChanged", "CommercialTermVersionActivated",
+            "ActualChannelCostConfirmed", "ChannelBatchReconciled", "ChannelSettlementConfirmed", "ReconAdjustmentApproved"),
             catalog.entries().stream().map(EventCatalogEntry::eventType).toList());
         EventCatalogEntry payment = catalog.find("PaymentSucceeded").orElseThrow();
         assertEquals(2, payment.schemaVersion());
@@ -52,7 +53,7 @@ class YamlEventCatalogAutoTest {
         assertFalse(payment.strictOrder());
         EventCatalogEntry economic = catalog.find("BillingFactRecorded").orElseThrow();
         assertEquals("billing", economic.producer());
-        assertEquals(List.of("account"), economic.consumers());
+        assertEquals(List.of("account", "reconciliation"), economic.consumers());
         assertEquals(List.of("payout", "account"), catalog.find("SettlementRestrictionChanged").orElseThrow().consumers());
         EventCatalogEntry posted = catalog.find("AccountPosted").orElseThrow();
         assertEquals("account", posted.producer());
@@ -69,6 +70,14 @@ class YamlEventCatalogAutoTest {
         assertEquals("COMMERCIAL_TERM_PLAN", termVersion.aggregateType());
         assertEquals(List.of("acquiring"), termVersion.consumers());
         assertFalse(termVersion.strictOrder());
+        for (String reconEvent : List.of("ActualChannelCostConfirmed", "ChannelBatchReconciled", "ChannelSettlementConfirmed",
+            "ReconAdjustmentApproved")) {
+            EventCatalogEntry entry = catalog.find(reconEvent).orElseThrow();
+            assertEquals("reconciliation", entry.producer());
+            assertEquals(List.of(), entry.consumers());
+            assertFalse(entry.strictOrder());
+        }
+        assertEquals("BANK_MATCH", catalog.find("ChannelSettlementConfirmed").orElseThrow().aggregateType());
         assertTrue(catalog.find("Unknown").isEmpty());
     }
 

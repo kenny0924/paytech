@@ -227,6 +227,8 @@ public class BillingFactConverter {
         BillingFactRefResponseBody body = new BillingFactRefResponseBody();
         body.setRefType(payload.getRefType());
         body.setRefId(payload.getRefId());
+        body.setExternalReferenceType(payload.getExternalReferenceType());
+        body.setExternalTransactionId(payload.getExternalTransactionId());
         return body;
     }
 

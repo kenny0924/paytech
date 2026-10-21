@@ -34,13 +34,14 @@ import com.paytech.operations.console.bff.test.simulator.FinanceOwnerSimulator;
 import com.paytech.operations.console.bff.test.simulator.LedgerOwnerSimulator;
 import com.paytech.operations.console.bff.test.simulator.PlatformOperationsSimulator;
 import com.paytech.operations.console.bff.test.simulator.PlatformOperationsSimulator.RecordedRequest;
+import com.paytech.operations.console.bff.test.simulator.ReconciliationOwnerSimulator;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
  * 财务转发浏览器测试的公共入口：真实 BFF 入站 → PLT-I02（Platform Simulator）→ 固定地址 Owner Simulator
- * <li>每例重置 Platform、ledger、account、billing 四个 Simulator；AfterEach 断言四者都没有意外调用，并释放挂起响应。</li>
+ * <li>每例重置 Platform、ledger、account、billing、reconciliation 五个 Simulator；AfterEach 断言五者都没有意外调用，并释放挂起响应。</li>
  * <li>边界清单每行包含 id、method、BFF path、query、request、status、response、routeCode；Owner 路径默认为 BFF 路径去掉 /finance，
  * 路径不同时（billing）由 ownerPath 给出。</li>
  *
@@ -63,6 +64,9 @@ public abstract class FinanceBrowserAutoTestBase extends OperationsBffHttpTestBa
     @Autowired
     protected BillingOwnerSimulator billing;
 
+    @Autowired
+    protected ReconciliationOwnerSimulator reconciliation;
+
     @LocalServerPort
     private int port;
 
@@ -73,6 +77,7 @@ public abstract class FinanceBrowserAutoTestBase extends OperationsBffHttpTestBa
         ledger.reset();
         account.reset();
         billing.reset();
+        reconciliation.reset();
     }
 
     /** Owner 与 Platform 不得收到未配置的请求；无论断言结果都释放挂起响应。 */
@@ -84,6 +89,7 @@ public abstract class FinanceBrowserAutoTestBase extends OperationsBffHttpTestBa
             ledger.reset();
             account.reset();
             billing.reset();
+            reconciliation.reset();
         }
     }
 
@@ -94,13 +100,16 @@ public abstract class FinanceBrowserAutoTestBase extends OperationsBffHttpTestBa
         ledger.reset();
         account.reset();
         billing.reset();
+        reconciliation.reset();
     }
 
     private void verifyNoUnexpectedCalls() {
         assertAll(() -> assertTrue(platform.unexpectedRequests().isEmpty(), platform.unexpectedRequests().toString()),
             () -> assertTrue(ledger.unexpectedRequests().isEmpty(), ledger.unexpectedRequests().toString()),
             () -> assertTrue(account.unexpectedRequests().isEmpty(), account.unexpectedRequests().toString()),
-            () -> assertTrue(billing.unexpectedRequests().isEmpty(), billing.unexpectedRequests().toString()));
+            () -> assertTrue(billing.unexpectedRequests().isEmpty(), billing.unexpectedRequests().toString()),
+            () -> assertTrue(reconciliation.unexpectedRequests().isEmpty(),
+                reconciliation.unexpectedRequests().toString()));
     }
 
     /** 读取边界清单。 */

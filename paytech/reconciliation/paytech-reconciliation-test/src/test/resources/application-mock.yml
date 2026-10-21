@@ -1,5 +1,6 @@
 # reconciliation-service 配置字段清单，同时作为 Mock 测试的可运行配置。
-# 只连接仓库 local-environment 的 Loopback MySQL；固定凭据为隔离本地测试账号，可用环境变量覆盖。
+# 只连接仓库 local-environment 的 Loopback MySQL（mor_reconciliation）、Redis 与 RabbitMQ；固定凭据为隔离本地测试账号，可用环境变量覆盖。
+# 出站 HTTP（channel-connector MID 查询、Vault Protect）经 simple discovery 指向测试 Mock HTTP 服务，不连接 Nacos。
 
 # ==================== 中间件、框架与公共组件配置 ====================
 
@@ -8,25 +9,133 @@ server:
   port: 0
 
 spring:
+  config:
+    # 复用仓库已启动的本地 RabbitMQ / Redis 凭据；唯一锚点 paytech.local-environment.dir 由父 POM 经 Surefire 注入（10 §4.4）。
+    import:
+      - "optional:file:${paytech.local-environment.dir}/.env.local[.properties]"
   application:
     name: reconciliation-service
   main:
     banner-mode: "off"
   jmx:
     enabled: false
+  cloud:
+    discovery:
+      client:
+        simple:
+          instances:
+            # 同一独立 Mock HTTP 服务承载 channel-connector MID 查询与 Vault Protect。
+            channel-connector-service:
+              - uri: "${test.mock-http.base-url}"
+            vault-service:
+              - uri: "${test.mock-http.base-url}"
+    loadbalancer:
+      retry:
+        enabled: false
+    nacos:
+      config:
+        enabled: false
+      discovery:
+        # 自动测试不连接 Nacos，外部服务由 simple discovery 指向测试 Mock HTTP 服务。
+        enabled: false
+        register-enabled: false
   datasource:
     url: "${RECONCILIATION_TEST_DB_URL:jdbc:mysql://127.0.0.1:13306/mor_reconciliation?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}"
     username: "${RECONCILIATION_TEST_DB_USERNAME:reconciliation_app}"
     password: "${RECONCILIATION_TEST_DB_PASSWORD:2ddccce1369869710096b620a2c04a7cbcee8f4e41160f4a}"
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
+      connection-timeout: 2000
       connection-init-sql: "SET time_zone = '+00:00'"
       data-source-properties:
         connectionTimeZone: UTC
         forceConnectionTimeZoneToSession: true
+  # 仓库 local-environment 的本机 RabbitMQ；凭据只来自 .env.local 或同名环境变量。reconciliation 发布四类对账事件、测试扮演 billing 发布，
+  # 都需要发布确认。
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: "${MOR_RABBITMQ_USER}"
+    password: "${MOR_RABBITMQ_PASSWORD}"
+    virtual-host: "${MOR_RABBITMQ_VHOST:/mor-local}"
+    connection-timeout: 2s
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
+  # 仓库 local-environment 的本机 Redis：写入口资源锁；凭据可用环境变量覆盖。
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 16379
+      password: "${RECONCILIATION_TEST_REDIS_PASSWORD:${PAYTECH_REDIS_PASSWORD:${MOR_REDIS_PASSWORD:c4e99fe36176a66ece55b0c23e5af0be488d409f2e89f6c5}}}"
+      connect-timeout: 2s
+      timeout: 2s
+  http:
+    clients:
+      imperative:
+        factory: jdk
+    serviceclient:
+      channel-connector-service:
+        # 经 simple discovery 解析为测试 Mock HTTP 服务。
+        base-url: lb://channel-connector-service
+        connect-timeout: 2s
+        read-timeout: 5s
+        redirects: dont-follow
+
+web:
+  logging:
+    metadata-only-path-prefixes:
+      - /reconciliation/v1/cash-accounts
 
 mybatis:
   mapper-locations: classpath*:mapper/**/*.xml
+
+# paytech-redis-starter
+redis:
+  # 测试专用 Key 前缀，与本地运行实例隔离；生产缺省使用 spring.application.name。
+  key-prefix: reconciliation-mock
+  coordination:
+    enabled: true
+    threads: 4
+    netty-threads: 4
+
+# paytech-messaging 消费端：Handler 装配后为 reconciliation.billing.hash 与 reconciliation.billing.p0..p3；重投退避缩短到 200ms。
+# 发布端：reconciliation.events；未路由 FAIL 与生产一致（测试 ReconciliationEventProbe 为每例绑定临时观察队列）。
+messaging:
+  consumer:
+    service: reconciliation
+    retry-backoff: 200ms
+  # BillingFactRecordedPlatformTxnHandler 订阅 billing，分区数 4（与生产一致）。
+  consumers:
+    billing:
+      partitions: 4
+  producer:
+    service: reconciliation
+  publisher:
+    unroutable-policy: FAIL
+
+# paytech-compensation-event：本库 t_compensation_event；业务事务内登记事件发布与本地任务，提交后执行。
+compensation:
+  enabled: true
+  instance-id: reconciliation-test
+
+# 实例 ID：领域事件信封 instanceId。
+paytech:
+  instance-id: reconciliation-test
+
+# paytech-xxl-job-starter（随 compensation-event 引入）：测试不连接调度中心，Job 由用例直接调用 Handler。
+xxl:
+  job:
+    executor:
+      enabled: false
+
+vault:
+  client:
+    caller-service: reconciliation-service
+    service-id: vault-service
+    connect-timeout: 2s
+    read-timeout: 5s
 
 management:
   server:
@@ -63,7 +172,16 @@ management:
 # ==================== Reconciliation 系统自定义配置 ====================
 
 reconciliation:
+  bank-match:
+    # 银行匹配建议：起息日与预期日相差的工作日上限 ±N（只排除周末）；默认 3，取值 0–30，每次建议任务执行时读取。Mock 同默认。
+    suggestion-window-business-days: 3
+  event:
+    # 对账事件信封身份：sourceService 必须与 messaging.producer.service 一致；instanceId 取实例 ID。生产默认值同此。
+    source-service: reconciliation
+    instance-id: "${paytech.instance-id}"
   identifier:
     # Snowflake Region / Worker 标识；生产无默认值且必填，修改需重启。测试进程固定 0/0。
     region-id: 0
     worker-id: 0
+
+# test.mock-http.base-url 由 EnableMockHttpServer 在创建真实客户端之前注入随机 Loopback 端口。

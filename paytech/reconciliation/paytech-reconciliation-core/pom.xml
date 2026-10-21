@@ -15,13 +15,46 @@
     <packaging>jar</packaging>
 
     <name>PayTech Reconciliation Core</name>
-    <description>Reconciliation business implementation: dal, domain, domainservice and processors; no boot class or controller.</description>
+    <description>Reconciliation business implementation: dal, domain, domainservice, processors, BillingFactRecorded consumer, compensation handlers and outbound integrations; no boot class or controller.</description>
 
     <dependencies>
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-reconciliation-api</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <!-- 只用 BillingFactRecorded 的 Payload 合同与引用 / 事实类型代码；reconciliation 不调用 billing 的 HTTP 接口。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-billing-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- 挂 MID 与未归属 MID：事务外经 ChannelMidApi 读 MID 渠道、经营主体、状态与能力组币种（technique 1.2）。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-channel-connector-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- 银行账户新建：事务外 Vault Protect（CASH_ACCOUNT_NUMBER_V1，REFERENCE）。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-vault-client</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- 四类对账事件发布与匹配 / 建议本地任务：与业务变化在同一本地事务登记，提交后执行。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-compensation-event</artifactId>
+        </dependency>
+        <!-- BillingFactRecorded 消费 Handler 与对账事件发布端口（拓扑、容器与发布实现由 app 的 paytech-messaging 提供）。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-messaging-api</artifactId>
+        </dependency>
+        <!-- 写 Processor 的 AbstractLockProcessor 资源锁（D-11）。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-redis-starter</artifactId>
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
@@ -32,8 +65,32 @@
             <artifactId>paytech-mybatis-support</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-snowflake-id</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>tools.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-tx</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
         </dependency>
         <dependency>
             <groupId>org.mybatis</groupId>

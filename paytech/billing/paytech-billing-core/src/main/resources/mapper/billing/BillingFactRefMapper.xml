@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.paytech.billing.core.dal.mapper.BillingFactRefMapper">
-    <sql id="columns">id, fact_id, ref_type, ref_id, create_time</sql>
+    <sql id="columns">id, fact_id, ref_type, ref_id, external_reference_type, external_transaction_id, create_time</sql>
 
     <insert id="batchInsert">
-        INSERT INTO t_billing_fact_ref (id, fact_id, ref_type, ref_id, create_time)
+        INSERT INTO t_billing_fact_ref (id, fact_id, ref_type, ref_id, external_reference_type,
+            external_transaction_id, create_time)
         VALUES
         <foreach collection="refs" item="ref" separator=",">
-            (#{ref.id}, #{ref.factId}, #{ref.refType}, #{ref.refId}, #{ref.createTime})
+            (#{ref.id}, #{ref.factId}, #{ref.refType}, #{ref.refId}, #{ref.externalReferenceType},
+            #{ref.externalTransactionId}, #{ref.createTime})
         </foreach>
     </insert>
 

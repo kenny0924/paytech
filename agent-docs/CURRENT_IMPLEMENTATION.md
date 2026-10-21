@@ -11,6 +11,14 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
+## reconciliation 渠道资金对账切片 1（2026-10-21，已部署 mor-test，已本地提交，未推送）
+
+- **决定与需求：** [决定记录](./decisions/2026-10-20-reconciliation-facts-via-billing.md)（Confirmed，两轮；实施修订：库内 15 张 = 13 业务表 + 2 张消息去重表）；[需求](<../requirements/20261020/reconciliation-渠道资金对账切片1/requirement.md>)、[技术方案](<../requirements/20261020/reconciliation-渠道资金对账切片1/technique.md>)（§2.10 实施决定 I-01—I-18）、[交付记录](<../requirements/20261020/reconciliation-渠道资金对账切片1/delivery.md>)；阶段 1—8 完成。
+- **Implemented：** `paytech/reconciliation` 由空壳改为完整服务：`mor_reconciliation` 18 → 15 表（PDManer 脱离 Finance 生成器，`reconciliation-model.test.mjs`）；清算账户与 MID（channel-connector 核对）、解析接口；消费 `BillingFactRecorded`（PAYMENT / REFUND）生成平台流水；渠道账单分段 JSON 导入（Gateway 64 KiB 上限，D-01）、批量匹配（2 万行约 5 秒）、跨账单查重、作废、对平门禁；银行账户（Vault `CASH_ACCOUNT_NUMBER_V1`，复核）、银行对账单导入与连续性检查、一对一建议与手工多选匹配；异常与三种处置（`RE_MATCH` / `ACCEPT_TIMING_DIFFERENCE` / `CLASSIFY`，Maker ≠ Checker）；四类事件 `ActualChannelCostConfirmed`、`ChannelBatchReconciled`、`ChannelSettlementConfirmed`、`ReconAdjustmentApproved`（目录 `consumers: []`，未路由 `FAIL`）；XXL `compensationEventScan`、`channelLineWaitExpiry`。billing 合同：`FactRefType` + `CHANNEL_TRANSACTION_REF` / `RECON_RESOLUTION`、`t_billing_fact_ref` 两列（ledger 读取同步）。Operations BFF `/finance/reconciliation/v1/**` 38 路由、Web「财务 → 对账」7 页、Platform 块 123。
+- **Verified：** 本机 reconciliation 93、billing 81、ledger 319、BFF 对账相关 117（全模块 1939）、Web 1194 + tsc、arch-rules 10、PDManer 24；本机全链路 78 + 6、浏览器 AC-V1—V6；mor-test 验收 69/69、浏览器只读 27/27（[阶段 5](<../requirements/20261020/reconciliation-渠道资金对账切片1/verification/stage5-report.md>)、[发布记录](<../requirements/20261020/reconciliation-渠道资金对账切片1/release/release.md>)）。
+- **Deployed（mor-test，2026-10-21 03:11—03:3xZ，tag `recon-slice1-20261021`）：** reconciliation `sha256:f181a04c…`、ledger `sha256:b84f8f97…`、billing `sha256:b773d2cd…`、platform-support `sha256:79e33d43…`、ops-bff `sha256:9520a545…`、ops-web `sha256:edfb6628…`（03:25Z 起被商务会话 `333e7f2b…` 取代，源码含本需求）；`mor_reconciliation` 15 表、`mor_billing` 引用表 7 列、`mor_vault` 3 行、`mor_platform` 块 123 激活（PLATFORM_ADMIN v38）；XXL 分组 17、任务 20 / 21；验收数据已清理。备份 `~/Code-MoR-backups/20261021T031139Z-recon-slice1-mor-test/`。
+- **Pending / 遗留：** billing 需求 B（PAYMENT / REFUND 自动事实、接收四类对账事件、ledger 归类码映射）未开始，在此之前四类事件无订阅方、发布留存 FAILED；切片 2（超期检测、借方暂记、拒付与重复扣款）、切片 3（出款 / 缴税）未开始；D-2 补偿超时只中断不等待（Foundation）；requirements-site FIN-12 / FIN-24 / E2E-08 旧口径待改；本机 `mor_account` 缺 `t_owner_account_no_sequence`（环境）。推送另行授权。
+
 <a id="channel-connector-ops-console-20261020"></a>
 ## ledger 自动记账按业务时间选择规则版本（2026-10-20，已部署 mor-test，已本地提交，未推送）
 

@@ -12,7 +12,8 @@ import lombok.Setter;
 public class BillingFactRefRequestBody {
     /**
      * 引用类型代码（FactRefType）
-     * <li>MANUAL_ADJUSTMENT 只允许可选 TICKET；COST_ADJUSTMENT 必须有 CLEARING_ACCOUNT。同一事实内每种类型至多一条。</li>
+     * <li>MANUAL_ADJUSTMENT 只允许可选 TICKET；COST_ADJUSTMENT 必须有 CLEARING_ACCOUNT。同一事实内每种类型至多一条。CHANNEL_TRANSACTION_REF、
+     * RECON_RESOLUTION 只由自动事实登记，人工登记一律拒绝（400 INVALID_REQUEST）。</li>
      */
     @NotBlank
     @Pattern(regexp = "[A-Z][A-Z_]{0,31}", message = "必须是大写字母开头的大写字母或下划线，最长 32 位")

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- t_bank_match：银行匹配，只读写 mor_reconciliation。 -->
+<mapper namespace="com.paytech.reconciliation.core.dal.mapper.BankMatchMapper">
+    <sql id="columns">id, bank_statement_line_id, expected_movement_id, matched_amount, match_method, payout_component_type, status, resolution_id, operator_id, decision_time, version, create_time, update_time</sql>
+
+    <insert id="insert">
+        INSERT INTO t_bank_match (<include refid="columns"/>)
+        VALUES (#{id}, #{bankStatementLineId}, #{expectedMovementId}, #{matchedAmount}, #{matchMethod}, #{payoutComponentType}, #{status}, #{resolutionId}, #{operatorId}, #{decisionTime}, #{version}, #{createTime}, #{updateTime})
+    </insert>
+
+    <select id="selectById" resultType="com.paytech.reconciliation.core.dal.dataobject.BankMatch">
+        SELECT <include refid="columns"/> FROM t_bank_match WHERE id = #{id}
+    </select>
+
+    <select id="selectByLine" resultType="com.paytech.reconciliation.core.dal.dataobject.BankMatch">
+        SELECT <include refid="columns"/> FROM t_bank_match WHERE bank_statement_line_id = #{bankStatementLineId}
+        <if test="status != null">AND status = #{status}</if>
+        ORDER BY id
+    </select>
+
+    <select id="selectByExpected" resultType="com.paytech.reconciliation.core.dal.dataobject.BankMatch">
+        SELECT <include refid="columns"/> FROM t_bank_match WHERE expected_movement_id = #{expectedMovementId}
+        <if test="status != null">AND status = #{status}</if>
+        ORDER BY id
+    </select>
+
+    <sql id="pageWhere">
+        <where>
+            <if test="bankStatementLineId != null">AND bank_statement_line_id = #{bankStatementLineId}</if>
+            <if test="expectedMovementId != null">AND expected_movement_id = #{expectedMovementId}</if>
+            <if test="status != null">AND status = #{status}</if>
+        </where>
+    </sql>
+
+    <select id="selectPage" resultType="com.paytech.reconciliation.core.dal.dataobject.BankMatch">
+        SELECT <include refid="columns"/> FROM t_bank_match <include refid="pageWhere"/>
+        ORDER BY create_time, id LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="long">
+        SELECT COUNT(*) FROM t_bank_match <include refid="pageWhere"/>
+    </select>
+
+    <update id="decide">
+        UPDATE t_bank_match
+        SET status = #{status}, operator_id = #{operatorId}, decision_time = #{decisionTime}, version = version + 1, update_time = #{now}
+        WHERE id = #{record.id} AND version = #{record.version} AND status = 'PROPOSED'
+    </update>
+</mapper>

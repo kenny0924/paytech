@@ -247,7 +247,12 @@ test("Finance service artifacts are exact per-database projections of the logica
   for (const table of ["t_account", "t_ledger_book", "t_accounting_instruction", "t_period_close"]) {
     assert.ok(!owners.has(table), `${table} 属于 ledger，不再投影`);
   }
-  assert.equal(owners.size, 84 - 1 - 27 - 7 - 1, "其余每张逻辑表恰属一个生成器维护的服务库");
+  // 2026-10-20 对账切片 1：reconciliation 模型脱离生成器（由 reconciliation-model.test.mjs 校验），05 的 15 张与 02 的成本确认 / 分配两表不再投影。
+  for (const table of ["t_channel_account", "t_channel_settle_batch", "t_recon_exception", "t_channel_cost_confirm",
+    "t_channel_cost_alloc"]) {
+    assert.ok(!owners.has(table), `${table} 属于 reconciliation，不再由 Finance 生成器投影`);
+  }
+  assert.equal(owners.size, 84 - 1 - 27 - 7 - 1 - 17, "其余每张逻辑表恰属一个生成器维护的服务库");
   for (const [table, services] of owners) {
     if (!["t_compensation_event", "t_currency_spec"].includes(table)) {
       assert.equal(services.length, 1, `${table} 只能属于一个服务库`);

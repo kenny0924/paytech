@@ -68,7 +68,7 @@ class BillingFactInvariantsTest {
         assertThrows(InvalidParameterException.class, () -> BillingFactInvariants.checkManualRegistration(fact));
     }
 
-    /** 人工调整：Client 必填、不得有来源事实、只允许 TICKET、组件限六类。 */
+    /** 人工调整：Client 必填、不得有来源事实、只允许 TICKET（自动专用引用 CHANNEL_TRANSACTION_REF、RECON_RESOLUTION 拒绝）、组件限六类。 */
     @Test
     void test_manualAdjustmentCatalog() {
         BillingFactPayload noClient = manual(null, null, clientPrincipal());
@@ -80,6 +80,12 @@ class BillingFactInvariantsTest {
         BillingFactPayload withClearing = manual(null, null, clientPrincipal());
         withClearing.getRefs().add(ref(FactRefType.CLEARING_ACCOUNT, "1"));
         assertThrows(InvalidParameterException.class, () -> BillingFactInvariants.checkManualRegistration(withClearing));
+        for (FactRefType automaticOnly : List.of(FactRefType.CHANNEL_TRANSACTION_REF, FactRefType.RECON_RESOLUTION)) {
+            BillingFactPayload withAutomaticRef = manual(null, null, clientPrincipal());
+            withAutomaticRef.getRefs().add(ref(automaticOnly, "1"));
+            assertThrows(InvalidParameterException.class,
+                () -> BillingFactInvariants.checkManualRegistration(withAutomaticRef));
+        }
         assertLineInvalid(manual(null, null, line(FactComponentType.FX_FEE, FactPartyRole.CLIENT, Long.toString(CLIENT_ID),
             FactPartyRole.OPERATING_ENTITY, ENTITY_NO, FactLineDirection.CHARGE, null)));
     }
@@ -96,7 +102,7 @@ class BillingFactInvariantsTest {
         assertLineInvalid(withBucket);
     }
 
-    /** 成本调整：来源事实与 CLEARING_ACCOUNT 必填，组件与方向、付方 / 收方受限。 */
+    /** 成本调整：来源事实与 CLEARING_ACCOUNT 必填，自动专用引用拒绝，组件与方向、付方 / 收方受限。 */
     @Test
     void test_costAdjustmentCatalog() {
         BillingFactPayload noParent = cost(costLine(FactPartyRole.OPERATING_ENTITY, ENTITY_NO, FactPartyRole.CHANNEL,
@@ -111,6 +117,13 @@ class BillingFactInvariantsTest {
             CHANNEL_ID));
         withOrder.getRefs().add(ref(FactRefType.ORDER, "1"));
         assertThrows(InvalidParameterException.class, () -> BillingFactInvariants.checkManualRegistration(withOrder));
+        for (FactRefType automaticOnly : List.of(FactRefType.CHANNEL_TRANSACTION_REF, FactRefType.RECON_RESOLUTION)) {
+            BillingFactPayload withAutomaticRef = cost(costLine(FactPartyRole.OPERATING_ENTITY, ENTITY_NO,
+                FactPartyRole.CHANNEL, CHANNEL_ID));
+            withAutomaticRef.getRefs().add(ref(automaticOnly, "1"));
+            assertThrows(InvalidParameterException.class,
+                () -> BillingFactInvariants.checkManualRegistration(withAutomaticRef));
+        }
         BillingFactPayload charge = cost(costLine(FactPartyRole.OPERATING_ENTITY, ENTITY_NO, FactPartyRole.CHANNEL,
             CHANNEL_ID));
         charge.getLines().getFirst().setDirection(FactLineDirection.CHARGE.getCode());

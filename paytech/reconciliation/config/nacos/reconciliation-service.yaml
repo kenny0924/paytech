@@ -1,0 +1,61 @@
+# Data ID: reconciliation-service.yaml
+# Namespace: 按环境选择；本地为 mor-local。Group: DEFAULT_GROUP。
+# 本地参数模板；上传前按目标环境调整。数据库、RabbitMQ 与 Redis 密码和实例 Snowflake 坐标由进程环境提供，不写入模板。
+# 进程以 nacos Profile 启动时由 application.yml 导入本文件；连接、拓扑与执行器参数只在启动时生效，修改需重启。
+
+server:
+  address: 127.0.0.1
+  port: 18115
+
+spring:
+  datasource:
+    url: jdbc:mysql://127.0.0.1:13306/mor_reconciliation?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: reconciliation_app
+  # 消费 billing.events 的 BillingFactRecorded，发布 reconciliation.events；账号密码由 RECONCILIATION_RABBITMQ_USERNAME / _PASSWORD 提供。
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    virtual-host: /mor-local
+    connection-timeout: 2s
+  # 写入口资源锁；密码由 RECONCILIATION_REDIS_PASSWORD 提供。
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 16379
+      connect-timeout: 2s
+      timeout: 2s
+  # channel-connector MID 查询：经服务发现选实例。
+  http:
+    serviceclient:
+      channel-connector-service:
+        base-url: lb://channel-connector-service
+        connect-timeout: 2s
+        read-timeout: 5s
+        redirects: dont-follow
+
+messaging:
+  consumer:
+    service: reconciliation
+  # BillingFactRecordedPlatformTxnHandler 订阅 billing 的分区数 4，与 application.yml 一致。
+  consumers:
+    billing:
+      partitions: 4
+  producer:
+    service: reconciliation
+  publisher:
+    unroutable-policy: FAIL
+
+compensation:
+  enabled: true
+
+vault:
+  client:
+    caller-service: reconciliation-service
+    service-id: vault-service
+    connect-timeout: 2s
+    read-timeout: 5s
+
+reconciliation:
+  bank-match:
+    # 银行匹配建议：起息日与预期日相差的工作日上限 ±N（只排除周末），与 application.yml 默认一致；刷新后下次建议任务生效。
+    suggestion-window-business-days: 3

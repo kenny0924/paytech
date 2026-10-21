@@ -1,0 +1,187 @@
+{
+  "results": [
+    {
+      "page": "登录",
+      "ok": true,
+      "note": "管理员登录"
+    },
+    {
+      "page": "对账/清算账户",
+      "ok": true,
+      "note": "列表 2 行，详情抽屉已打开"
+    },
+    {
+      "page": "对账/银行账户",
+      "ok": true,
+      "note": "列表 2 行，详情抽屉已打开"
+    },
+    {
+      "page": "对账/渠道账单",
+      "ok": true,
+      "note": "列表 3 行，详情抽屉已打开，门禁项 5 条：✗ 交易行都已匹配到平台流水 / ✓ 调整行与无交易号费用行都已归类 / ✗ 没有阻塞对平的开放异常 / ✓ 各行回放与账单头合计一致 / ✗ 清算账户已配置到账银行账户"
+    },
+    {
+      "page": "对账/平台流水",
+      "ok": true,
+      "note": "列表 2 行，平台流水页按设计无详情抽屉（ReconPlatformTxns.tsx 无 Drawer）"
+    },
+    {
+      "page": "对账/银行对账",
+      "ok": true,
+      "note": "列表 0 行，银行账户：AE001 settlement C71870 · AE001 · USD · 尾号 4321，银行流水 0 行，对账单 0 行，预期银行流水 0 行"
+    },
+    {
+      "page": "对账/对账异常",
+      "ok": true,
+      "note": "列表 1 行，账龄列存在，详情抽屉已打开"
+    },
+    {
+      "page": "对账/在途汇总",
+      "ok": true,
+      "note": "列表 0 行，查询后汇总 4 行"
+    },
+    {
+      "page": "商务/agreements",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "商务/pricing-profiles",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "商务/terms",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "商务/templates",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "商务/workbench",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "商务/rate-cards",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "商务/price-simulator",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "商务/catalog",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "商务/history",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "财务/setup",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "财务/ledger",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "财务/balances",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "财务/subledger",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "财务/adjustments",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "财务/period-close",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "财务/accounting-rules",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "渠道/channels",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "渠道/mids",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "渠道/cost-plans",
+      "ok": true,
+      "note": "渲染正常"
+    }
+  ],
+  "consoleErrors": [],
+  "consoleWarnings": [],
+  "knownSpinTip": 0,
+  "network": [],
+  "shots": [
+    "r01-clearing-accounts.png",
+    "r01-clearing-accounts-detail.png",
+    "r02-cash-accounts.png",
+    "r02-cash-accounts-detail.png",
+    "r03-statements.png",
+    "r03-statements-detail.png",
+    "r04-platform-txns.png",
+    "r05-bank-lines.png",
+    "r05-bank-statements.png",
+    "r05-bank-movements.png",
+    "r05-bank.png",
+    "r06-exceptions.png",
+    "r06-exceptions-detail.png",
+    "r07-summary.png",
+    "c01-agreements.png",
+    "c02-pricing-profiles.png",
+    "c03-terms.png",
+    "c04-templates.png",
+    "c05-workbench.png",
+    "c06-rate-cards.png",
+    "c07-price-simulator.png",
+    "c08-catalog.png",
+    "c09-history.png",
+    "f01-setup.png",
+    "f02-ledger.png",
+    "f03-balances.png",
+    "f04-subledger.png",
+    "f05-adjustments.png",
+    "f06-period-close.png",
+    "f07-accounting-rules.png",
+    "ch01-channels.png",
+    "ch02-mids.png",
+    "ch03-cost-plans.png"
+  ],
+  "menu": [
+    "租户访问",
+    "渠道与账号",
+    "MID 与能力",
+    "渠道成本",
+    "接入方",
+    "标准 API",
+    "客户入驻审核"
+  ]
+}

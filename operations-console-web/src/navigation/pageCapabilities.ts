@@ -477,6 +477,57 @@ export const pageCapabilities = [
     ]
   },
   {
+    "componentKey": "OPERATIONS_FINANCE_RECON_CLEARING",
+    "displayName": "清算账户",
+    "frontendRoute": "/finance/reconciliation/clearing-accounts",
+    "actions": []
+  },
+  {
+    "componentKey": "OPERATIONS_FINANCE_RECON_CASH",
+    "displayName": "银行账户",
+    "frontendRoute": "/finance/reconciliation/cash-accounts",
+    "actions": []
+  },
+  {
+    "componentKey": "OPERATIONS_FINANCE_RECON_STATEMENTS",
+    "displayName": "渠道账单",
+    "frontendRoute": "/finance/reconciliation/statements",
+    "actions": []
+  },
+  {
+    "componentKey": "OPERATIONS_FINANCE_RECON_PLATFORM_TXNS",
+    "displayName": "平台流水",
+    "frontendRoute": "/finance/reconciliation/platform-txns",
+    "actions": []
+  },
+  {
+    "componentKey": "OPERATIONS_FINANCE_RECON_BANK",
+    "displayName": "银行对账",
+    "frontendRoute": "/finance/reconciliation/bank",
+    "actions": []
+  },
+  {
+    "componentKey": "OPERATIONS_FINANCE_RECON_EXCEPTIONS",
+    "displayName": "对账异常",
+    "frontendRoute": "/finance/reconciliation/exceptions",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_FINANCE_RECON_OPERATE",
+        "displayName": "对账操作"
+      },
+      {
+        "resourceCode": "OPERATIONS_FINANCE_RECON_APPROVE",
+        "displayName": "对账审批"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_FINANCE_RECON_SUMMARY",
+    "displayName": "在途汇总",
+    "frontendRoute": "/finance/reconciliation/summary",
+    "actions": []
+  },
+  {
     "componentKey": "OPERATIONS_COMMERCIAL_AGREEMENTS",
     "displayName": "合同",
     "frontendRoute": "/commercial/agreements",

@@ -75,6 +75,8 @@ operations:
   billing-base-url: ${OPERATIONS_BILLING_BASE_URL:http://127.0.0.1:18113}
   # 关账发起、重开发起与关账/重开审批在 ledger 同步执行；只对这三个调用放宽读取超时，须小于 Gateway 路由响应超时上限 10 秒。
   ledger-long-running-read-timeout: ${OPERATIONS_LEDGER_LONG_RUNNING_READ_TIMEOUT:9s}
+  # reconciliation 运营接口固定私网地址（与 ledger / account / billing 同一接入方式），规则同上；auto 测试指向本地 Simulator。
+  reconciliation-base-url: ${OPERATIONS_RECONCILIATION_BASE_URL:http://127.0.0.1:18115}
 
 web:
   logging:
@@ -108,3 +110,5 @@ web:
       - /webhook-admin
       # 渠道技术账号配置请求含渠道参数与凭据明文，账号接口只记元数据。
       - /channel-admin/v1/channel-accounts
+      # 银行账户新建请求含银行账号明文（I-05），银行账户接口只记元数据。
+      - /finance/reconciliation/v1/cash-accounts

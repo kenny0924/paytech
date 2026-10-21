@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- t_expected_bank_movement：预期银行流水，只读写 mor_reconciliation。 -->
+<mapper namespace="com.paytech.reconciliation.core.dal.mapper.ExpectedBankMovementMapper">
+    <sql id="columns">id, movement_type, source_id, cash_account_id, entity_no, direction, currency, expected_amount, expected_date, bank_payment_ref, confirmed_amount, classified_amount, status, version, create_time, update_time</sql>
+
+    <insert id="insert">
+        INSERT INTO t_expected_bank_movement (<include refid="columns"/>)
+        VALUES (#{id}, #{movementType}, #{sourceId}, #{cashAccountId}, #{entityNo}, #{direction}, #{currency}, #{expectedAmount}, #{expectedDate}, #{bankPaymentRef}, #{confirmedAmount}, #{classifiedAmount}, #{status}, #{version}, #{createTime}, #{updateTime})
+    </insert>
+
+    <select id="selectById" resultType="com.paytech.reconciliation.core.dal.dataobject.ExpectedBankMovement">
+        SELECT <include refid="columns"/> FROM t_expected_bank_movement WHERE id = #{id}
+    </select>
+
+    <select id="selectByIds" resultType="com.paytech.reconciliation.core.dal.dataobject.ExpectedBankMovement">
+        SELECT <include refid="columns"/> FROM t_expected_bank_movement WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY id
+    </select>
+
+    <select id="selectBySource" resultType="com.paytech.reconciliation.core.dal.dataobject.ExpectedBankMovement">
+        SELECT <include refid="columns"/> FROM t_expected_bank_movement WHERE movement_type = #{movementType} AND source_id = #{sourceId}
+    </select>
+
+    <select id="selectOpen" resultType="com.paytech.reconciliation.core.dal.dataobject.ExpectedBankMovement">
+        SELECT <include refid="columns"/> FROM t_expected_bank_movement
+        WHERE cash_account_id = #{cashAccountId} AND status IN ('OPEN', 'PARTIALLY_CONFIRMED')
+        ORDER BY expected_date, id
+    </select>
+
+    <sql id="pageWhere">
+        <where>
+            <if test="cashAccountId != null">AND cash_account_id = #{cashAccountId}</if>
+            <if test="movementType != null">AND movement_type = #{movementType}</if>
+            <if test="sourceId != null">AND source_id = #{sourceId}</if>
+            <if test="status != null">AND status = #{status}</if>
+        </where>
+    </sql>
+
+    <select id="selectPage" resultType="com.paytech.reconciliation.core.dal.dataobject.ExpectedBankMovement">
+        SELECT <include refid="columns"/> FROM t_expected_bank_movement <include refid="pageWhere"/>
+        ORDER BY expected_date, id LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="long">
+        SELECT COUNT(*) FROM t_expected_bank_movement <include refid="pageWhere"/>
+    </select>
+
+    <update id="updateProgress">
+        UPDATE t_expected_bank_movement
+        SET confirmed_amount = #{confirmedAmount}, classified_amount = #{classifiedAmount}, status = #{status}, version = version + 1, update_time = #{now}
+        WHERE id = #{record.id} AND version = #{record.version}
+    </update>
+</mapper>

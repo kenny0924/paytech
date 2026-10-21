@@ -53,6 +53,15 @@ class BillingFactQueryTest extends AbstractBillingFactApiTest {
     /** 前置 REFUND 事实 ID。 */
     private static final long REFUND_FACT_ID = 2_100_002L;
 
+    /** 前置 PAYMENT 事实的渠道交易引用 ID。 */
+    static final String CHANNEL_TRANSACTION_REF_ID = "7300001";
+
+    /** 渠道外部交易号类型（Payment 渠道交易引用类型目录，billing 不持有该枚举）。 */
+    static final String EXTERNAL_REFERENCE_TYPE = "PAY";
+
+    /** 渠道外部交易号。 */
+    static final String EXTERNAL_TRANSACTION_ID = "NI-TXN-0001";
+
     /** 分页：DRAFT 与其他 OE 的事实不出现；limit 1 逐页读取，满页返回下一页游标，末页游标为空；Finance Entity 账簿只含合作方事实。 */
     @Test
     void test_listByBookPagination() {
@@ -104,7 +113,10 @@ class BillingFactQueryTest extends AbstractBillingFactApiTest {
             .assertText("maxPublishedFactId", null);
     }
 
-    /** 按 ID：规则行返回费率、基数、原始金额、规则族与 JSON 计算证据；行链接只出现在以其明细行为新行的事实上。 */
+    /**
+     * 按 ID：规则行返回费率、基数、原始金额、规则族与 JSON 计算证据；行链接只出现在以其明细行为新行的事实上
+     * <li>引用按类型升序：CHANNEL_TRANSACTION_REF 带渠道外部交易号两项，ORDER 两项为空。</li>
+     */
     @Test
     void test_getFactWithRuleEvidenceAndLinks() {
         insertPaymentWithRefundLink();
@@ -114,7 +126,17 @@ class BillingFactQueryTest extends AbstractBillingFactApiTest {
         JsonNode refund = getFact(REFUND_FACT_ID).assertSuccess(200).json();
         JsonNode line = payment.path("lines").get(0);
         JsonNode link = refund.path("links").get(0);
-        assertAll(() -> assertEquals(FactComponentType.CHANNEL_COST.getCode(), line.path("componentType").asString()),
+        JsonNode channelRef = payment.path("refs").get(0);
+        JsonNode orderRef = payment.path("refs").get(1);
+        assertAll(() -> assertEquals(2, payment.path("refs").size()),
+            () -> assertEquals(FactRefType.CHANNEL_TRANSACTION_REF.getCode(), channelRef.path("refType").asString()),
+            () -> assertEquals(CHANNEL_TRANSACTION_REF_ID, channelRef.path("refId").asString()),
+            () -> assertEquals(EXTERNAL_REFERENCE_TYPE, channelRef.path("externalReferenceType").asString()),
+            () -> assertEquals(EXTERNAL_TRANSACTION_ID, channelRef.path("externalTransactionId").asString()),
+            () -> assertEquals(FactRefType.ORDER.getCode(), orderRef.path("refType").asString()),
+            () -> assertTrue(absent(orderRef.path("externalReferenceType"))),
+            () -> assertTrue(absent(orderRef.path("externalTransactionId"))),
+() -> assertEquals(FactComponentType.CHANNEL_COST.getCode(), line.path("componentType").asString()),
             () -> assertEquals("0.029", line.path("rateValue").asString()),
             () -> assertEquals("100.00000000", line.path("basisAmount").asString()),
             () -> assertEquals("2.90000000", line.path("rawAmount").asString()),
@@ -200,13 +222,15 @@ class BillingFactQueryTest extends AbstractBillingFactApiTest {
     }
 
     /**
-     * 前置数据：一条 AUTO PAYMENT（引用 ORDER，渠道成本规则行带 JSON 证据）与一条以其为来源的 REFUND（同一 ORDER，冲回行链接到原行）
+     * 前置数据：一条 AUTO PAYMENT（引用 ORDER 与带外部交易号的 CHANNEL_TRANSACTION_REF，渠道成本规则行带 JSON 证据）与一条以其为来源的 REFUND（同一 ORDER，冲回行链接到原行）
      * <li>后续自动事实切片才会产生这些事实；本期只验证读取路径。</li>
      */
     void insertPaymentWithRefundLink() {
         insertFact(PAYMENT_FACT_ID, BillingFactType.PAYMENT, BillingFactStatus.APPROVED, Instant.now());
         insertFact(REFUND_FACT_ID, BillingFactType.REFUND, BillingFactStatus.APPROVED, Instant.now());
         testMapper.insertBillingFactRef(2_100_101L, PAYMENT_FACT_ID, FactRefType.ORDER.getCode(), "ORD-1");
+        testMapper.insertBillingFactRef(2_100_103L, PAYMENT_FACT_ID, FactRefType.CHANNEL_TRANSACTION_REF.getCode(),
+            CHANNEL_TRANSACTION_REF_ID, EXTERNAL_REFERENCE_TYPE, EXTERNAL_TRANSACTION_ID);
         testMapper.insertBillingFactRef(2_100_102L, REFUND_FACT_ID, FactRefType.ORDER.getCode(), "ORD-1");
         testMapper.insertRuleLine(2_100_011L, PAYMENT_FACT_ID, 1, FactComponentType.CHANNEL_COST.getCode(),
             FactPartyRole.OPERATING_ENTITY.getCode(), ENTITY_NO, FactPartyRole.CHANNEL.getCode(), CHANNEL_ID,

@@ -30,13 +30,15 @@ events:
   # paytech-billing-api 的 com.paytech.billing.api.fact.BillingFactPayload，含头 + 外部引用（refs）+ 全部明细行（每行付方 / 收方）。
   # aggregateId 为 factId，aggregateVersion 取 t_billing_fact.fact_version（替代链递增），occurredAt 为批准（AUTO 为登记）时间。
   # businessTime 是 ledger 过账日期来源；refs 的 CLEARING_ACCOUNT 是 ledger 渠道账户 Owner 来源。不同事实之间无顺序依赖，故 strictOrder=false。
-  # 唯一消费方为 account（SHARED 事务）维护 Owner 明细账；ledger 不消费本事件，改消费 AccountPosted 并经 billing-api 读取事实。
+  # 消费方：account（SHARED 事务）维护 Owner 明细账；reconciliation（2026-10-20 对账切片 1）只处理 PAYMENT / REFUND 生成平台流水，渠道交易引用
+  # 取 refs 的 CHANNEL_TRANSACTION_REF（refId + 可空 externalReferenceType / externalTransactionId，只新增可空字段故 schemaVersion 仍为 1）。
+  # ledger 不消费本事件，改消费 AccountPosted 并经 billing-api 读取事实。
   - eventType: BillingFactRecorded
     schemaVersion: 1
     producer: billing
     aggregateType: BILLING_FACT
     aggregateVersionField: factVersion
-    consumers: [account]
+    consumers: [account, reconciliation]
     strictOrder: false
     payloadSchemaRef: paytech-billing-api/event/BillingFactRecorded/v1
   # account 过账批次（决定 2026-10-18，2026-10-19 技术方案 2.1 / 2.2）：account 每生成一个 t_account_posting（事实入账或余额桶移动）
@@ -88,3 +90,44 @@ events:
     consumers: [acquiring]
     strictOrder: false
     payloadSchemaRef: paytech-commercial-api/event/CommercialTermVersionActivated/v1
+  # 对账四类事件（2026-10-20 需求 reconciliation-渠道资金对账切片1，technique.md §2.4）：reconciliation 在本地事务登记同名补偿发布任务，
+  # 提交后由 Handler 回读本库发布到 reconciliation.events。四个事件的聚合都只发一次，aggregateVersion 固定为 1（载荷类常量
+  # AGGREGATE_VERSION，载荷不带版本字段，故 aggregateVersionField 记为 none）；不同聚合之间无顺序依赖，strictOrder=false。
+  # 消费方暂为空（technique D-08）：billing 接入 COST_ADJUSTMENT / CHANNEL_BATCH_RECONCILED / CHANNEL_SETTLEMENT / RECON_ADJUSTMENT 时
+  # 随 billing 需求 B 登记。Payload 见 paytech-reconciliation-api 的 com.paytech.reconciliation.api.event 包。
+  # 实际渠道费与预估不同：渠道账单对平时，本账单使其变为 SETTLED 的每笔平台流水发一条；aggregateId 为平台流水 ID。
+  - eventType: ActualChannelCostConfirmed
+    schemaVersion: 1
+    producer: reconciliation
+    aggregateType: PLATFORM_TXN
+    aggregateVersionField: none
+    consumers: []
+    strictOrder: false
+    payloadSchemaRef: paytech-reconciliation-api/event/ActualChannelCostConfirmed/v1
+  # 渠道账单对平：aggregateId 为渠道账单 ID（一个批次号的一个导入版本），含已归类调整行与本账单结清的平台流水。
+  - eventType: ChannelBatchReconciled
+    schemaVersion: 1
+    producer: reconciliation
+    aggregateType: CHANNEL_STATEMENT
+    aggregateVersionField: none
+    consumers: []
+    strictOrder: false
+    payloadSchemaRef: paytech-reconciliation-api/event/ChannelBatchReconciled/v1
+  # 渠道到账确认：每条已确认的渠道预期银行流水匹配一条；aggregateId 为银行匹配 ID（按匹配 ID 幂等）。
+  - eventType: ChannelSettlementConfirmed
+    schemaVersion: 1
+    producer: reconciliation
+    aggregateType: BANK_MATCH
+    aggregateVersionField: none
+    consumers: []
+    strictOrder: false
+    payloadSchemaRef: paytech-reconciliation-api/event/ChannelSettlementConfirmed/v1
+  # 对账调整批准：平台流水、预期银行流水、银行流水的 CLASSIFY 处置批准时发一次；aggregateId 为处置 ID。
+  - eventType: ReconAdjustmentApproved
+    schemaVersion: 1
+    producer: reconciliation
+    aggregateType: RECON_RESOLUTION
+    aggregateVersionField: none
+    consumers: []
+    strictOrder: false
+    payloadSchemaRef: paytech-reconciliation-api/event/ReconAdjustmentApproved/v1

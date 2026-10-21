@@ -214,6 +214,18 @@ public final class FinanceBillingFactModels {
 
         /** 引用标识。 */
         private String refId;
+
+        /**
+         * 渠道外部交易号类型
+         * <li>仅 refType = CHANNEL_TRANSACTION_REF 时非空（billing 合同 2026-10-20 新增，对账切片 1 Q-02）。</li>
+         */
+        private String externalReferenceType;
+
+        /**
+         * 渠道外部交易号
+         * <li>仅 refType = CHANNEL_TRANSACTION_REF 时非空。</li>
+         */
+        private String externalTransactionId;
     }
 
     /** 明细行及其计算证据。 */

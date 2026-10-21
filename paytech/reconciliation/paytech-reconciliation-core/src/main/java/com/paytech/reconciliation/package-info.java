@@ -1,6 +1,7 @@
 /**
- * 对账服务（reconciliation-service）业务实现：拥有 Finance 渠道清算账户、渠道与银行对账、现金账户三表（D42）。
- * <li>本期只有 {@code t_channel_account} 的只读代码，其余 16 张表仅 Schema 归属；账面余额不在本服务。</li>
- * <li>原 finance-service 空壳 {@code paytech-finance-treasury} 的对账职责由本服务承接，出款职责归 payout。</li>
+ * 对账服务（reconciliation-service）业务实现：mor_reconciliation 的 12 张业务表（清算账户与 MID、平台流水、渠道账单与行、银行账户、
+ * 银行对账单与流水、预期银行流水、银行匹配、对账异常与处置），以及本库补偿事件与消费幂等表（2026-10-20 对账切片 1）。
+ * <li>对账只认定事实，不记账：四类对账事件经本地补偿任务发布给 billing；账面余额不在本服务。</li>
+ * <li>channel-connector（MID）与 Vault（银行账号 Protect）只在本地事务之外调用。</li>
  */
 package com.paytech.reconciliation;

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- t_platform_txn：平台流水，只读写 mor_reconciliation。 -->
+<mapper namespace="com.paytech.reconciliation.core.dal.mapper.PlatformTxnMapper">
+    <sql id="columns">id, clearing_account_id, direction, txn_source, billing_fact_id, entity_no, source_ref_type, source_ref_id, channel_transaction_ref_id, reference_type, external_transaction_id, currency, expected_amount, expected_fee, matched_amount, actual_fee, settled_amount, status, business_time, version, create_time, update_time</sql>
+
+    <insert id="insert">
+        INSERT INTO t_platform_txn (<include refid="columns"/>)
+        VALUES (#{id}, #{clearingAccountId}, #{direction}, #{txnSource}, #{billingFactId}, #{entityNo}, #{sourceRefType}, #{sourceRefId}, #{channelTransactionRefId}, #{referenceType}, #{externalTransactionId}, #{currency}, #{expectedAmount}, #{expectedFee}, #{matchedAmount}, #{actualFee}, #{settledAmount}, #{status}, #{businessTime}, #{version}, #{createTime}, #{updateTime})
+    </insert>
+
+    <select id="selectById" resultType="com.paytech.reconciliation.core.dal.dataobject.PlatformTxn">
+        SELECT <include refid="columns"/> FROM t_platform_txn WHERE id = #{id}
+    </select>
+
+    <select id="selectByIds" resultType="com.paytech.reconciliation.core.dal.dataobject.PlatformTxn">
+        SELECT <include refid="columns"/> FROM t_platform_txn WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY id
+    </select>
+
+    <select id="selectByBillingFactId" resultType="com.paytech.reconciliation.core.dal.dataobject.PlatformTxn">
+        SELECT <include refid="columns"/> FROM t_platform_txn WHERE billing_fact_id = #{billingFactId}
+    </select>
+
+    <select id="selectByReference" resultType="com.paytech.reconciliation.core.dal.dataobject.PlatformTxn">
+        SELECT <include refid="columns"/> FROM t_platform_txn
+        WHERE clearing_account_id = #{clearingAccountId} AND reference_type = #{referenceType} AND external_transaction_id = #{externalTransactionId}
+        ORDER BY id
+    </select>
+
+    <select id="selectByReferences" resultType="com.paytech.reconciliation.core.dal.dataobject.PlatformTxn">
+        SELECT <include refid="columns"/> FROM t_platform_txn
+        WHERE (clearing_account_id, reference_type, external_transaction_id) IN
+        <foreach collection="references" item="r" open="(" separator="," close=")">(#{clearingAccountId}, #{r.referenceType}, #{r.externalTransactionId})</foreach>
+        ORDER BY id
+    </select>
+
+    <sql id="pageWhere">
+        <where>
+            <if test="clearingAccountId != null">AND clearing_account_id = #{clearingAccountId}</if>
+            <if test="statementId != null">AND id IN (SELECT platform_txn_id FROM t_channel_statement_line WHERE statement_id = #{statementId} AND platform_txn_id IS NOT NULL)</if>
+            <if test="status != null">AND status = #{status}</if>
+            <if test="direction != null">AND direction = #{direction}</if>
+            <if test="externalTransactionId != null">AND external_transaction_id = #{externalTransactionId}</if>
+            <if test="businessTimeFrom != null">AND business_time &gt;= #{businessTimeFrom}</if>
+            <if test="businessTimeTo != null">AND business_time &lt; #{businessTimeTo}</if>
+        </where>
+    </sql>
+
+    <select id="selectPage" resultType="com.paytech.reconciliation.core.dal.dataobject.PlatformTxn">
+        SELECT <include refid="columns"/> FROM t_platform_txn <include refid="pageWhere"/>
+        ORDER BY business_time DESC, id DESC LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="long">
+        SELECT COUNT(*) FROM t_platform_txn <include refid="pageWhere"/>
+    </select>
+
+    <update id="updateProgress">
+        UPDATE t_platform_txn
+        SET matched_amount = #{matchedAmount}, actual_fee = #{actualFee}, settled_amount = #{settledAmount}, status = #{status}, version = version + 1, update_time = #{now}
+        WHERE id = #{record.id} AND version = #{record.version}
+    </update>
+
+    <!-- 匹配与对平批量写回：VALUES 行构造器逐笔带目标值，按 id + version 条件更新；id IN 让外层走主键范围。 -->
+    <update id="updateProgressBatch">
+        UPDATE t_platform_txn t
+        JOIN (VALUES
+        <foreach collection="changes" item="c" separator=",">ROW(#{c.record.id}, #{c.record.version}, #{c.matchedAmount}, #{c.actualFee}, #{c.settledAmount}, #{c.status})</foreach>
+        ) AS v (id, version, matched_amount, actual_fee, settled_amount, status)
+          ON t.id = v.id AND t.version = v.version
+        SET t.matched_amount = v.matched_amount, t.actual_fee = v.actual_fee, t.settled_amount = v.settled_amount, t.status = v.status, t.version = t.version + 1, t.update_time = #{now}
+        WHERE t.id IN <foreach collection="changes" item="c" open="(" separator="," close=")">#{c.record.id}</foreach>
+    </update>
+</mapper>

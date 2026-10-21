@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- t_recon_exception：对账异常，只读写 mor_reconciliation。 -->
+<mapper namespace="com.paytech.reconciliation.core.dal.mapper.ReconExceptionMapper">
+    <sql id="columns">id, exception_type, recon_layer, blocking, source_type, source_id, statement_id, clearing_account_id, cash_account_id, entity_type, entity_id, currency, difference_amount, detail, status, active_slot, opened_by, opened_time, closed_time, version, create_time, update_time</sql>
+
+    <insert id="insert">
+        INSERT INTO t_recon_exception (<include refid="columns"/>)
+        VALUES (#{id}, #{exceptionType}, #{reconLayer}, #{blocking}, #{sourceType}, #{sourceId}, #{statementId}, #{clearingAccountId}, #{cashAccountId}, #{entityType}, #{entityId}, #{currency}, #{differenceAmount}, #{detail}, #{status}, #{activeSlot}, #{openedBy}, #{openedTime}, #{closedTime}, #{version}, #{createTime}, #{updateTime})
+    </insert>
+
+    <insert id="insertBatch">
+        INSERT INTO t_recon_exception (<include refid="columns"/>) VALUES
+        <foreach collection="records" item="r" separator=",">(#{r.id}, #{r.exceptionType}, #{r.reconLayer}, #{r.blocking}, #{r.sourceType}, #{r.sourceId}, #{r.statementId}, #{r.clearingAccountId}, #{r.cashAccountId}, #{r.entityType}, #{r.entityId}, #{r.currency}, #{r.differenceAmount}, #{r.detail}, #{r.status}, #{r.activeSlot}, #{r.openedBy}, #{r.openedTime}, #{r.closedTime}, #{r.version}, #{r.createTime}, #{r.updateTime})</foreach>
+    </insert>
+
+    <select id="selectById" resultType="com.paytech.reconciliation.core.dal.dataobject.ReconException">
+        SELECT <include refid="columns"/> FROM t_recon_exception WHERE id = #{id}
+    </select>
+
+    <select id="selectActive" resultType="com.paytech.reconciliation.core.dal.dataobject.ReconException">
+        SELECT <include refid="columns"/> FROM t_recon_exception
+        WHERE source_type = #{sourceType} AND source_id = #{sourceId} AND exception_type = #{exceptionType} AND active_slot = 1
+    </select>
+
+    <select id="selectLatestBySource" resultType="com.paytech.reconciliation.core.dal.dataobject.ReconException">
+        SELECT <include refid="columns"/> FROM t_recon_exception
+        WHERE source_type = #{sourceType} AND source_id = #{sourceId} AND exception_type = #{exceptionType}
+        ORDER BY opened_time DESC, id DESC LIMIT 1
+    </select>
+
+    <select id="selectActiveBySources" resultType="com.paytech.reconciliation.core.dal.dataobject.ReconException">
+        SELECT <include refid="columns"/> FROM t_recon_exception
+        WHERE source_type = #{sourceType} AND exception_type = #{exceptionType} AND active_slot = 1 AND source_id IN
+        <foreach collection="sourceIds" item="sourceId" open="(" separator="," close=")">#{sourceId}</foreach>
+        ORDER BY id
+    </select>
+
+    <!-- 每个对象取 opened_time、id 最大的一条，口径同 selectLatestBySource。 -->
+    <select id="selectLatestBySources" resultType="com.paytech.reconciliation.core.dal.dataobject.ReconException">
+        SELECT <include refid="columns"/> FROM (
+            SELECT <include refid="columns"/>, ROW_NUMBER() OVER (PARTITION BY source_id ORDER BY opened_time DESC, id DESC) AS rn
+            FROM t_recon_exception
+            WHERE source_type = #{sourceType} AND exception_type = #{exceptionType} AND source_id IN
+            <foreach collection="sourceIds" item="sourceId" open="(" separator="," close=")">#{sourceId}</foreach>
+        ) ranked
+        WHERE rn = 1 ORDER BY id
+    </select>
+
+    <select id="selectActiveByStatement" resultType="com.paytech.reconciliation.core.dal.dataobject.ReconException">
+        SELECT <include refid="columns"/> FROM t_recon_exception WHERE statement_id = #{statementId} AND active_slot = 1 ORDER BY id
+    </select>
+
+    <sql id="pageWhere">
+        <where>
+            <if test="statuses != null and !statuses.isEmpty()">AND status IN
+                <foreach collection="statuses" item="s" open="(" separator="," close=")">#{s}</foreach>
+            </if>
+            <if test="exceptionType != null">AND exception_type = #{exceptionType}</if>
+            <if test="reconLayer != null">AND recon_layer = #{reconLayer}</if>
+            <if test="clearingAccountId != null">AND clearing_account_id = #{clearingAccountId}</if>
+            <if test="cashAccountId != null">AND cash_account_id = #{cashAccountId}</if>
+            <if test="statementId != null">AND statement_id = #{statementId}</if>
+        </where>
+    </sql>
+
+    <select id="selectPage" resultType="com.paytech.reconciliation.core.dal.dataobject.ReconException">
+        SELECT <include refid="columns"/> FROM t_recon_exception <include refid="pageWhere"/>
+        ORDER BY opened_time, id LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="long">
+        SELECT COUNT(*) FROM t_recon_exception <include refid="pageWhere"/>
+    </select>
+
+    <update id="changeStatus">
+        UPDATE t_recon_exception
+        SET status = #{status}, active_slot = #{activeSlot}, closed_time = #{closedTime}, version = version + 1, update_time = #{now}
+        WHERE id = #{record.id} AND version = #{record.version} AND status = #{record.status}
+    </update>
+    <update id="changeStatusBatch">
+        UPDATE t_recon_exception
+        SET status = #{status}, active_slot = #{activeSlot}, closed_time = #{closedTime}, version = version + 1, update_time = #{now}
+        WHERE id IN <foreach collection="records" item="r" open="(" separator="," close=")">#{r.id}</foreach>
+          AND (id, version, status) IN <foreach collection="records" item="r" open="(" separator="," close=")">(#{r.id}, #{r.version}, #{r.status})</foreach>
+    </update>
+
+    <select id="sumOpenByAge" resultType="com.paytech.reconciliation.domain.view.ReconSummaryView$ExceptionAgeTotal">
+        SELECT bucket, COUNT(*) AS exception_count, SUM(blocking) AS blocking_count
+        FROM (
+            SELECT blocking,
+                CASE WHEN TIMESTAMPDIFF(DAY, opened_time, #{now}) &lt;= 3 THEN 'D0_3'
+                    WHEN TIMESTAMPDIFF(DAY, opened_time, #{now}) &lt;= 7 THEN 'D4_7'
+                    WHEN TIMESTAMPDIFF(DAY, opened_time, #{now}) &lt;= 30 THEN 'D8_30'
+                    ELSE 'D31_PLUS' END AS bucket
+            FROM t_recon_exception
+            WHERE active_slot = 1 AND currency = #{currency}
+            <if test="entityNo != null">AND entity_type = 'OPERATING_ENTITY' AND entity_id = #{entityNo}</if>
+        ) aged
+        GROUP BY bucket
+    </select>
+</mapper>

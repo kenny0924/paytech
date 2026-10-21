@@ -94,6 +94,8 @@ public class BillingFactClientImpl implements BillingFactClient {
         BillingFactRefPayload ref = new BillingFactRefPayload();
         ref.setRefType(body.getRefType());
         ref.setRefId(body.getRefId());
+        ref.setExternalReferenceType(body.getExternalReferenceType());
+        ref.setExternalTransactionId(body.getExternalTransactionId());
         return ref;
     }
 

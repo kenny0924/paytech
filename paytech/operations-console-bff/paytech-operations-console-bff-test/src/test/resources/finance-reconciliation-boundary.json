@@ -1,0 +1,1304 @@
+[
+  {
+    "id": "R01",
+    "method": "GET",
+    "path": "/finance/reconciliation/v1/clearing-accounts",
+    "query": "?entityNo=AE001&channelCode=NI&currency=USD&status=ACTIVE&page=1&size=10",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "clearingAccountId": "7500000000000000101",
+          "clearingAccountCode": "NI-AE001-USD",
+          "channelCode": "NI",
+          "entityNo": "AE001",
+          "currency": "USD",
+          "settlementCashAccountId": "7500000000000000201",
+          "status": "ACTIVE",
+          "midCount": 1,
+          "updateTime": "2026-10-20T02:00:00.123456Z"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    },
+    "routeCode": "operations-finance-recon-clearing-account-list"
+  },
+  {
+    "id": "R02",
+    "method": "GET",
+    "path": "/finance/reconciliation/v1/clearing-accounts/unassigned-mids",
+    "query": "?entityNo=AE001&channelCode=NI&currency=USD",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "midId": "7400000000000000302",
+          "externalMidCode": "NI-MID-0002",
+          "channelCode": "NI",
+          "entityNo": "AE001",
+          "currency": "USD"
+        }
+      ]
+    },
+    "routeCode": "operations-finance-recon-clearing-account-unassigned-mids"
+  },
+  {
+    "id": "R03",
+    "method": "GET",
+    "path": "/finance/reconciliation/v1/clearing-accounts/7500000000000000101",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "clearingAccountId": "7500000000000000101",
+      "clearingAccountCode": "NI-AE001-USD",
+      "channelCode": "NI",
+      "entityNo": "AE001",
+      "currency": "USD",
+      "settlementCashAccountId": "7500000000000000201",
+      "unmatchedWaitDays": 3,
+      "costToleranceAmount": "0.10",
+      "cashGraceDays": 2,
+      "status": "ACTIVE",
+      "version": "2",
+      "createTime": "2026-10-20T01:00:00.123456Z",
+      "updateTime": "2026-10-20T02:00:00.123456Z",
+      "mids": [
+        {
+          "midId": "7400000000000000301",
+          "createTime": "2026-10-20T01:00:00.123456Z"
+        }
+      ]
+    },
+    "routeCode": "operations-finance-recon-clearing-account-detail"
+  },
+  {
+    "id": "R04",
+    "method": "POST",
+    "path": "/finance/reconciliation/v1/clearing-accounts",
+    "query": "",
+    "request": {
+      "clearingAccountCode": "NI-AE001-USD",
+      "channelCode": "NI",
+      "entityNo": "AE001",
+      "currency": "USD",
+      "settlementCashAccountId": "7500000000000000201",
+      "unmatchedWaitDays": 3,
+      "costToleranceAmount": "0.10",
+      "cashGraceDays": 2
+    },
+    "status": 201,
+    "response": {
+      "clearingAccountId": "7500000000000000101",
+      "clearingAccountCode": "NI-AE001-USD",
+      "channelCode": "NI",
+      "entityNo": "AE001",
+      "currency": "USD",
+      "settlementCashAccountId": "7500000000000000201",
+      "unmatchedWaitDays": 3,
+      "costToleranceAmount": "0.10",
+      "cashGraceDays": 2,
+      "status": "ACTIVE",
+      "version": "1",
+      "createTime": "2026-10-20T01:00:00.123456Z",
+      "updateTime": "2026-10-20T01:00:00.123456Z",
+      "mids": []
+    },
+    "routeCode": "operations-finance-recon-clearing-account-create"
+  },
+  {
+    "id": "R05",
+    "method": "PUT",
+    "path": "/finance/reconciliation/v1/clearing-accounts/7500000000000000101/settings",
+    "query": "",
+    "request": {
+      "settlementCashAccountId": "7500000000000000201",
+      "unmatchedWaitDays": 5,
+      "costToleranceAmount": "0.20",
+      "cashGraceDays": 3
+    },
+    "status": 200,
+    "response": {
+      "clearingAccountId": "7500000000000000101",
+      "clearingAccountCode": "NI-AE001-USD",
+      "channelCode": "NI",
+      "entityNo": "AE001",
+      "currency": "USD",
+      "settlementCashAccountId": "7500000000000000201",
+      "unmatchedWaitDays": 5,
+      "costToleranceAmount": "0.20",
+      "cashGraceDays": 3,
+      "status": "ACTIVE",
+      "version": "3",
+      "createTime": "2026-10-20T01:00:00.123456Z",
+      "updateTime": "2026-10-20T02:00:00.123456Z",
+      "mids": [
+        {
+          "midId": "7400000000000000301",
+          "createTime": "2026-10-20T01:00:00.123456Z"
+        }
+      ]
+    },
+    "routeCode": "operations-finance-recon-clearing-account-settings"
+  },
+  {
+    "id": "R06",
+    "method": "POST",
+    "path": "/finance/reconciliation/v1/clearing-accounts/7500000000000000101/mids",
+    "query": "",
+    "request": {
+      "midId": "7400000000000000302"
+    },
+    "status": 200,
+    "response": {
+      "clearingAccountId": "7500000000000000101",
+      "clearingAccountCode": "NI-AE001-USD",
+      "channelCode": "NI",
+      "entityNo": "AE001",
+      "currency": "USD",
+      "settlementCashAccountId": "7500000000000000201",
+      "unmatchedWaitDays": 3,
+      "costToleranceAmount": "0.10",
+      "cashGraceDays": 2,
+      "status": "ACTIVE",
+      "version": "3",
+      "createTime": "2026-10-20T01:00:00.123456Z",
+      "updateTime": "2026-10-20T02:00:00.123456Z",
+      "mids": [
+        {
+          "midId": "7400000000000000301",
+          "createTime": "2026-10-20T01:00:00.123456Z"
+        },
+        {
+          "midId": "7400000000000000302",
+          "createTime": "2026-10-20T01:00:00.123456Z"
+        }
+      ]
+    },
+    "routeCode": "operations-finance-recon-clearing-account-mid-add"
+  },
+  {
+    "id": "R07",
+    "method": "DELETE",
+    "path": "/finance/reconciliation/v1/clearing-accounts/7500000000000000101/mids/7400000000000000301",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "clearingAccountId": "7500000000000000101",
+      "clearingAccountCode": "NI-AE001-USD",
+      "channelCode": "NI",
+      "entityNo": "AE001",
+      "currency": "USD",
+      "settlementCashAccountId": "7500000000000000201",
+      "unmatchedWaitDays": 3,
+      "costToleranceAmount": "0.10",
+      "cashGraceDays": 2,
+      "status": "ACTIVE",
+      "version": "3",
+      "createTime": "2026-10-20T01:00:00.123456Z",
+      "updateTime": "2026-10-20T02:00:00.123456Z",
+      "mids": []
+    },
+    "routeCode": "operations-finance-recon-clearing-account-mid-remove"
+  },
+  {
+    "id": "R08",
+    "method": "POST",
+    "path": "/finance/reconciliation/v1/clearing-accounts/7500000000000000101/status",
+    "query": "",
+    "request": {
+      "status": "INACTIVE"
+    },
+    "status": 200,
+    "response": {
+      "clearingAccountId": "7500000000000000101",
+      "clearingAccountCode": "NI-AE001-USD",
+      "channelCode": "NI",
+      "entityNo": "AE001",
+      "currency": "USD",
+      "settlementCashAccountId": "7500000000000000201",
+      "unmatchedWaitDays": 3,
+      "costToleranceAmount": "0.10",
+      "cashGraceDays": 2,
+      "status": "INACTIVE",
+      "version": "3",
+      "createTime": "2026-10-20T01:00:00.123456Z",
+      "updateTime": "2026-10-20T02:00:00.123456Z",
+      "mids": [
+        {
+          "midId": "7400000000000000301",
+          "createTime": "2026-10-20T01:00:00.123456Z"
+        }
+      ]
+    },
+    "routeCode": "operations-finance-recon-clearing-account-status"
+  },
+  {
+    "id": "R09",
+    "method": "GET",
+    "path": "/finance/reconciliation/v1/cash-accounts",
+    "query": "?entityType=OPERATING_ENTITY&entityId=AE001&currency=USD&accountPurpose=CHANNEL_SETTLEMENT&status=PENDING_VERIFICATION&page=1&size=10",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "cashAccountId": "7500000000000000201",
+          "entityType": "OPERATING_ENTITY",
+          "entityId": "AE001",
+          "accountPurpose": "CHANNEL_SETTLEMENT",
+          "bankCode": "ENBD",
+          "accountName": "AE001 USD 结算户",
+          "currency": "USD",
+          "accountLast4": "4321",
+          "status": "PENDING_VERIFICATION",
+          "pendingAction": null,
+          "contentHash": "9f2c0e6b4d1a7c35e8b2f0d94a6c1e7b3d5f8a2c4e6b0d1f3a5c7e9b2d4f6a8c",
+          "makerId": "10001",
+          "checkerId": null,
+          "version": "1",
+          "createTime": "2026-10-20T01:00:00.123456Z",
+          "updateTime": "2026-10-20T01:00:00.123456Z"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    },
+    "routeCode": "operations-finance-recon-cash-account-list"
+  },
+  {
+    "id": "R10",
+    "method": "GET",
+    "path": "/finance/reconciliation/v1/cash-accounts/7500000000000000201",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "cashAccountId": "7500000000000000201",
+      "entityType": "OPERATING_ENTITY",
+      "entityId": "AE001",
+      "accountPurpose": "CHANNEL_SETTLEMENT",
+      "bankCode": "ENBD",
+      "accountName": "AE001 USD 结算户",
+      "currency": "USD",
+      "accountLast4": "4321",
+      "status": "PENDING_VERIFICATION",
+      "pendingAction": null,
+      "contentHash": "9f2c0e6b4d1a7c35e8b2f0d94a6c1e7b3d5f8a2c4e6b0d1f3a5c7e9b2d4f6a8c",
+      "makerId": "10001",
+      "checkerId": null,
+      "version": "1",
+      "createTime": "2026-10-20T01:00:00.123456Z",
+      "updateTime": "2026-10-20T01:00:00.123456Z"
+    },
+    "routeCode": "operations-finance-recon-cash-account-detail"
+  },
+  {
+    "id": "R11",
+    "method": "POST",
+    "path": "/finance/reconciliation/v1/cash-accounts",
+    "query": "",
+    "request": {
+      "entityType": "OPERATING_ENTITY",
+      "entityId": "AE001",
+      "accountPurpose": "CHANNEL_SETTLEMENT",
+      "bankCode": "ENBD",
+      "accountName": "AE001 USD 结算户",
+      "currency": "USD",
+      "accountNumber": "AE070331234567890124321"
+    },
+    "status": 201,
+    "response": {
+      "cashAccountId": "7500000000000000201",
+      "entityType": "OPERATING_ENTITY",
+      "entityId": "AE001",
+      "accountPurpose": "CHANNEL_SETTLEMENT",
+      "bankCode": "ENBD",
+      "accountName": "AE001 USD 结算户",
+      "currency": "USD",
+      "accountLast4": "4321",
+      "status": "PENDING_VERIFICATION",
+      "pendingAction": null,
+      "contentHash": "9f2c0e6b4d1a7c35e8b2f0d94a6c1e7b3d5f8a2c4e6b0d1f3a5c7e9b2d4f6a8c",
+      "makerId": "10001",
+      "checkerId": null,
+      "version": "1",
+      "createTime": "2026-10-20T01:00:00.123456Z",
+      "updateTime": "2026-10-20T01:00:00.123456Z"
+    },
+    "routeCode": "operations-finance-recon-cash-account-create"
+  },
+  {
+    "id": "R12",
+    "method": "POST",
+    "path": "/finance/reconciliation/v1/cash-accounts/7500000000000000201/closure",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "cashAccountId": "7500000000000000201",
+      "entityType": "OPERATING_ENTITY",
+      "entityId": "AE001",
+      "accountPurpose": "CHANNEL_SETTLEMENT",
+      "bankCode": "ENBD",
+      "accountName": "AE001 USD 结算户",
+      "currency": "USD",
+      "accountLast4": "4321",
+      "status": "ACTIVE",
+      "pendingAction": "CLOSE",
+      "contentHash": "9f2c0e6b4d1a7c35e8b2f0d94a6c1e7b3d5f8a2c4e6b0d1f3a5c7e9b2d4f6a8c",
+      "makerId": "10001",
+      "checkerId": null,
+      "version": "3",
+      "createTime": "2026-10-20T01:00:00.123456Z",
+      "updateTime": "2026-10-20T01:00:00.123456Z"
+    },
+    "routeCode": "operations-finance-recon-cash-account-closure"
+  },
+  {
+    "id": "R13",
+    "method": "POST",
+    "path": "/finance/reconciliation/v1/cash-accounts/7500000000000000201/approval",
+    "query": "",
+    "request": {
+      "decision": "APPROVED",
+      "approvedContentHash": "9f2c0e6b4d1a7c35e8b2f0d94a6c1e7b3d5f8a2c4e6b0d1f3a5c7e9b2d4f6a8c"
+    },
+    "status": 200,
+    "response": {
+      "cashAccountId": "7500000000000000201",
+      "entityType": "OPERATING_ENTITY",
+      "entityId": "AE001",
+      "accountPurpose": "CHANNEL_SETTLEMENT",
+      "bankCode": "ENBD",
+      "accountName": "AE001 USD 结算户",
+      "currency": "USD",
+      "accountLast4": "4321",
+      "status": "ACTIVE",
+      "pendingAction": null,
+      "contentHash": "9f2c0e6b4d1a7c35e8b2f0d94a6c1e7b3d5f8a2c4e6b0d1f3a5c7e9b2d4f6a8c",
+      "makerId": "10001",
+      "checkerId": "10002",
+      "version": "2",
+      "createTime": "2026-10-20T01:00:00.123456Z",
+      "updateTime": "2026-10-20T01:00:00.123456Z"
+    },
+    "routeCode": "operations-finance-recon-cash-account-approval"
+  },
+  {
+    "id": "R14",
+    "method": "GET",
+    "path": "/finance/reconciliation/v1/channel-statements",
+    "query": "?clearingAccountId=7500000000000000101&channelBatchRef=NI-20261019-001&status=MATCHING&settlementDateFrom=2026-10-01&settlementDateTo=2026-10-31&page=1&size=10",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "statementId": "7500000000000000301",
+          "clearingAccountId": "7500000000000000101",
+          "clearingAccountCode": "NI-AE001-USD",
+          "channelBatchRef": "NI-20261019-001",
+          "revision": 1,
+          "settlementDate": "2026-10-19",
+          "currency": "USD",
+          "grossAmount": "70.00",
+          "feeAmount": "2.45",
+          "netAmount": "67.55",
+          "cashDirection": "CREDIT",
+          "declaredLineCount": 4,
+          "importedLineCount": 4,
+          "fileName": "ni-20261019.csv",
+          "fileContentHash": "1b3d5f7a9c2e4b6d8f0a1c3e5b7d9f2a4c6e8b0d2f4a6c8e1b3d5f7a9c2e4b6d",
+          "rejectReason": null,
+          "status": "MATCHING",
+          "cashConfirmedAmount": "0.00",
+          "reconciledTime": null,
+          "makerId": "10001",
+          "version": "1",
+          "createTime": "2026-10-20T01:00:00.123456Z",
+          "updateTime": "2026-10-20T01:00:00.123456Z"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    },
+    "routeCode": "operations-finance-recon-channel-statement-list"
+  },
+  {
+    "id": "R15",
+    "method": "GET",
+    "path": "/finance/reconciliation/v1/channel-statements/7500000000000000301",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "statement": {
+        "statementId": "7500000000000000301",
+        "clearingAccountId": "7500000000000000101",
+        "clearingAccountCode": "NI-AE001-USD",
+        "channelBatchRef": "NI-20261019-001",
+        "revision": 1,
+        "settlementDate": "2026-10-19",
+        "currency": "USD",
+        "grossAmount": "70.00",
+        "feeAmount": "2.45",
+        "netAmount": "67.55",
+        "cashDirection": "CREDIT",
+        "declaredLineCount": 4,
+        "importedLineCount": 4,
+        "fileName": "ni-20261019.csv",
+        "fileContentHash": "1b3d5f7a9c2e4b6d8f0a1c3e5b7d9f2a4c6e8b0d2f4a6c8e1b3d5f7a9c2e4b6d",
+        "rejectReason": null,
+        "status": "MATCHING",
+        "cashConfirmedAmount": "0.00",
+        "reconciledTime": null,
+        "makerId": "10001",
+        "version": "1",
+        "createTime": "2026-10-20T01:00:00.123456Z",
+        "updateTime": "2026-10-20T01:00:00.123456Z"
+      },
+      "unmatchedLineCount": 1,
+      "matchedLineCount": 3,
+      "exceptionLineCount": 1,
+      "openExceptionCount": 1,
+      "expectedMovementId": null,
+      "gate": {
+        "transactionLinesMatched": true,
+        "adjustmentLinesClassified": false,
+        "noBlockingException": false,
+        "totalsConsistent": true,
+        "settlementCashAccountConfigured": true
+      }
+    },
+    "routeCode": "operations-finance-recon-channel-statement-detail"
+  },
+  {
+    "id": "R16",
+    "method": "GET",
+    "path": "/finance/reconciliation/v1/channel-statements/7500000000000000301/lines",
+    "query": "?matchStatus=MATCHED&lineType=PAYMENT&page=1&size=10",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "lineId": "7500000000000000401",
+          "statementId": "7500000000000000301",
+          "lineNo": 1,
+          "lineType": "PAYMENT",
+          "direction": "CREDIT",
+          "amount": "100.00",
+          "feeAmount": "0.45",
+          "referenceType": "NI_ORDER_REF",
+          "externalTransactionId": "NI-ORD-0001",
+          "transactionDate": "2026-10-18",
+          "rawAttributes": {
+            "terminal": "T01"
+          },
+          "platformTxnId": "7500000000000000501",
+          "matchMethod": "AUTO",
+          "matchedTime": "2026-10-20T02:00:00.123456Z",
+          "actualFee": "0.45",
+          "resolutionId": null,
+          "matchStatus": "MATCHED"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    },
+    "routeCode": "operations-finance-recon-channel-statement-lines"
+  },
+  {
+    "id": "R17",
+    "method": "POST",
+    "path": "/finance/reconciliation/v1/channel-statements",
+    "query": "",
+    "request": {
+      "clearingAccountCode": "NI-AE001-USD",
+      "channelBatchRef": "NI-20261019-001",
+      "settlementDate": "2026-10-19",
+      "currency": "USD",
+      "grossAmount": "70.00",
+      "feeAmount": "2.45",
+      "netAmount": "67.55",
+      "cashDirection": "CREDIT",
+      "fileName": "ni-20261019.csv",
+      "fileContentHash": "1b3d5f7a9c2e4b6d8f0a1c3e5b7d9f2a4c6e8b0d2f4a6c8e1b3d5f7a9c2e4b6d",
+      "declaredLineCount": 4
+    },
+    "status": 201,
+    "response": {
+      "statementId": "7500000000000000301",
+      "clearingAccountId": "7500000000000000101",
+      "clearingAccountCode": "NI-AE001-USD",
+      "channelBatchRef": "NI-20261019-001",
+      "revision": 1,
+      "settlementDate": "2026-10-19",
+      "currency": "USD",
+      "grossAmount": "70.00",
+      "feeAmount": "2.45",
+      "netAmount": "67.55",
+      "cashDirection": "CREDIT",
+      "declaredLineCount": 4,
+      "importedLineCount": 0,
+      "fileName": "ni-20261019.csv",
+      "fileContentHash": "1b3d5f7a9c2e4b6d8f0a1c3e5b7d9f2a4c6e8b0d2f4a6c8e1b3d5f7a9c2e4b6d",
+      "rejectReason": null,
+      "status": "RECEIVING",
+      "cashConfirmedAmount": "0.00",
+      "reconciledTime": null,
+      "makerId": "10001",
+      "version": "1",
+      "createTime": "2026-10-20T01:00:00.123456Z",
+      "updateTime": "2026-10-20T01:00:00.123456Z"
+    },
+    "routeCode": "operations-finance-recon-channel-statement-start"
+  },
+  {
+    "id": "R18",
+    "method": "POST",
+    "path": "/finance/reconciliation/v1/channel-statements/7500000000000000301/lines",
+    "query": "",
+    "request": {
+      "lines": [
+        {
+          "lineNo": 1,
+          "lineType": "PAYMENT",
+          "direction": "CREDIT",
+          "amount": "100.00",
+          "feeAmount": "0.45",
+          "referenceType": "NI_ORDER_REF",
+          "externalTransactionId": "NI-ORD-0001",
+          "transactionDate": "2026-10-18",
+          "rawAttributes": {
+            "terminal": "T01"
+          }
+        },
+        {
+          "lineNo": 2,
+          "lineType": "REFUND",
+          "direction": "DEBIT",
+          "amount": "30.00",
+          "feeAmount": "0.00",
+          "referenceType": "NI_REFUND_REF",
+          "externalTransactionId": "NI-RFD-0001",
+          "transactionDate": "2026-10-18",
+          "rawAttributes": null
+        }
+      ]
+    },
+    "status": 200,
+    "response": {
+      "statementId": "7500000000000000301",
+      "clearingAccountId": "7500000000000000101",
+      "clearingAccountCode": "NI-AE001-USD",
+      "channelBatchRef": "NI-20261019-001",
+      "revision": 1,
+      "settlementDate": "2026-10-19",
+      "currency": "USD",
+      "grossAmount": "70.00",
+      "feeAmount": "2.45",
+      "netAmount": "67.55",
+      "cashDirection": "CREDIT",
+      "declaredLineCount": 4,
+      "importedLineCount": 2,
+      "fileName": "ni-20261019.csv",
+      "fileContentHash": "1b3d5f7a9c2e4b6d8f0a1c3e5b7d9f2a4c6e8b0d2f4a6c8e1b3d5f7a9c2e4b6d",
+      "rejectReason": null,
+      "status": "RECEIVING",
+      "cashConfirmedAmount": "0.00",
+      "reconciledTime": null,
+      "makerId": "10001",
+      "version": "2",
+      "createTime": "2026-10-20T01:00:00.123456Z",
+      "updateTime": "2026-10-20T01:00:00.123456Z"
+    },
+    "routeCode": "operations-finance-recon-channel-statement-lines-append"
+  },
+  {
+    "id": "R19",
+    "method": "POST",
+    "path": "/finance/reconciliation/v1/channel-statements/7500000000000000301/completion",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "statementId": "7500000000000000301",
+      "status": "REJECTED",
+      "importedLineCount": 4,
+      "rejectReason": "明细合计与账单头不一致",
+      "rejections": [
+        {
+          "lineNo": null,
+          "reason": "gross_amount 与明细合计不一致：账单头 70.00，明细 71.00"
+        },
+        {
+          "lineNo": 3,
+          "reason": "REFUND 行缺少外部交易号"
+        }
+      ]
+    },
+    "routeCode": "operations-finance-recon-channel-statement-complete"
+  },
+  {
+    "id": "R20",
+    "method": "POST",
+    "path": "/finance/reconciliation/v1/channel-statements/7500000000000000301/void",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "statementId": "7500000000000000301",
+      "clearingAccountId": "7500000000000000101",
+      "clearingAccountCode": "NI-AE001-USD",
+      "channelBatchRef": "NI-20261019-001",
+      "revision": 1,
+      "settlementDate": "2026-10-19",
+      "currency": "USD",
+      "grossAmount": "70.00",
+      "feeAmount": "2.45",
+      "netAmount": "67.55",
+      "cashDirection": "CREDIT",
+      "declaredLineCount": 4,
+      "importedLineCount": 4,
+      "fileName": "ni-20261019.csv",
+      "fileContentHash": "1b3d5f7a9c2e4b6d8f0a1c3e5b7d9f2a4c6e8b0d2f4a6c8e1b3d5f7a9c2e4b6d",
+      "rejectReason": null,
+      "status": "VOIDED",
+      "cashConfirmedAmount": "0.00",
+      "reconciledTime": null,
+      "makerId": "10001",
+      "version": "3",
+      "createTime": "2026-10-20T01:00:00.123456Z",
+      "updateTime": "2026-10-20T01:00:00.123456Z"
+    },
+    "routeCode": "operations-finance-recon-channel-statement-void"
+  },
+  {
+    "id": "R21",
+    "method": "GET",
+    "path": "/finance/reconciliation/v1/platform-txns",
+    "query": "?clearingAccountId=7500000000000000101&statementId=7500000000000000301&status=MATCHED&direction=RECEIVABLE&externalTransactionId=NI-ORD-0001&businessDateFrom=2026-10-01&businessDateTo=2026-10-31&page=1&size=10",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "platformTxnId": "7500000000000000501",
+          "clearingAccountId": "7500000000000000101",
+          "direction": "RECEIVABLE",
+          "txnSource": "PAYMENT",
+          "billingFactId": "7400000000000000101",
+          "entityNo": "AE001",
+          "sourceRefType": "PAYMENT_ATTEMPT",
+          "sourceRefId": "7300000000000000901",
+          "channelTransactionRefId": "7300000000000000902",
+          "referenceType": "NI_ORDER_REF",
+          "externalTransactionId": "NI-ORD-0001",
+          "currency": "USD",
+          "expectedAmount": "100.00",
+          "expectedFee": "0.45",
+          "matchedAmount": "100.00",
+          "actualFee": "0.45",
+          "settledAmount": "0.00",
+          "status": "MATCHED",
+          "businessTime": "2026-10-20T01:00:00.123456Z",
+          "version": "3",
+          "createTime": "2026-10-20T01:00:00.123456Z",
+          "updateTime": "2026-10-20T02:00:00.123456Z"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    },
+    "routeCode": "operations-finance-recon-platform-txn-list"
+  },
+  {
+    "id": "R22",
+    "method": "GET",
+    "path": "/finance/reconciliation/v1/bank-statements",
+    "query": "?cashAccountId=7500000000000000201&status=IMPORTED&page=1&size=10",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "bankStatementId": "7500000000000000601",
+          "cashAccountId": "7500000000000000201",
+          "statementRef": "ENBD-202610-19",
+          "periodStart": "2026-10-19",
+          "periodEnd": "2026-10-19",
+          "currency": "USD",
+          "openingBalance": "1000.00",
+          "closingBalance": "1067.40",
+          "declaredLineCount": 1,
+          "importedLineCount": 1,
+          "duplicateLineCount": 0,
+          "fileName": "enbd-20261019.csv",
+          "fileContentHash": "1b3d5f7a9c2e4b6d8f0a1c3e5b7d9f2a4c6e8b0d2f4a6c8e1b3d5f7a9c2e4b6d",
+          "rejectReason": null,
+          "status": "IMPORTED",
+          "makerId": "10001",
+          "createTime": "2026-10-20T01:00:00.123456Z",
+          "updateTime": "2026-10-20T01:00:00.123456Z"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    },
+    "routeCode": "operations-finance-recon-bank-statement-list"
+  },
+  {
+    "id": "R23",
+    "method": "GET",
+    "path": "/finance/reconciliation/v1/bank-statements/7500000000000000601/lines",
+    "query": "?page=1&size=10",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "bankStatementLineId": "7500000000000000701",
+          "bankStatementId": "7500000000000000601",
+          "cashAccountId": "7500000000000000201",
+          "lineNo": 1,
+          "bankTransactionRef": "ENBD-TXN-0001",
+          "valueDate": "2026-10-19",
+          "direction": "CREDIT",
+          "amount": "67.40",
+          "currency": "USD",
+          "counterpartyName": "NETWORK INTERNATIONAL",
+          "referenceText": "SETTLEMENT NI-20261019-001",
+          "matchedAmount": "0.00",
+          "matchStatus": "UNMATCHED",
+          "version": "1"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    },
+    "routeCode": "operations-finance-recon-bank-statement-lines"
+  },
+  {
+    "id": "R24",
+    "method": "GET",
+    "path": "/finance/reconciliation/v1/bank-statement-lines",
+    "query": "?cashAccountId=7500000000000000201&matchStatus=UNMATCHED&direction=CREDIT&valueDateFrom=2026-10-01&valueDateTo=2026-10-31&page=1&size=10",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "bankStatementLineId": "7500000000000000701",
+          "bankStatementId": "7500000000000000601",
+          "cashAccountId": "7500000000000000201",
+          "lineNo": 1,
+          "bankTransactionRef": "ENBD-TXN-0001",
+          "valueDate": "2026-10-19",
+          "direction": "CREDIT",
+          "amount": "67.40",
+          "currency": "USD",
+          "counterpartyName": "NETWORK INTERNATIONAL",
+          "referenceText": "SETTLEMENT NI-20261019-001",
+          "matchedAmount": "0.00",
+          "matchStatus": "UNMATCHED",
+          "version": "1"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    },
+    "routeCode": "operations-finance-recon-bank-statement-line-list"
+  },
+  {
+    "id": "R25",
+    "method": "POST",
+    "path": "/finance/reconciliation/v1/bank-statements",
+    "query": "",
+    "request": {
+      "cashAccountId": "7500000000000000201",
+      "bankAccountLast4": "4321",
+      "statementRef": "ENBD-202610-19",
+      "periodStart": "2026-10-19",
+      "periodEnd": "2026-10-19",
+      "currency": "USD",
+      "openingBalance": "1000.00",
+      "closingBalance": "1067.40",
+      "fileName": "enbd-20261019.csv",
+      "fileContentHash": "1b3d5f7a9c2e4b6d8f0a1c3e5b7d9f2a4c6e8b0d2f4a6c8e1b3d5f7a9c2e4b6d",
+      "declaredLineCount": 1
+    },
+    "status": 201,
+    "response": {
+      "bankStatementId": "7500000000000000601",
+      "cashAccountId": "7500000000000000201",
+      "statementRef": "ENBD-202610-19",
+      "periodStart": "2026-10-19",
+      "periodEnd": "2026-10-19",
+      "currency": "USD",
+      "openingBalance": "1000.00",
+      "closingBalance": "1067.40",
+      "declaredLineCount": 1,
+      "importedLineCount": 0,
+      "duplicateLineCount": 0,
+      "fileName": "enbd-20261019.csv",
+      "fileContentHash": "1b3d5f7a9c2e4b6d8f0a1c3e5b7d9f2a4c6e8b0d2f4a6c8e1b3d5f7a9c2e4b6d",
+      "rejectReason": null,
+      "status": "RECEIVING",
+      "makerId": "10001",
+      "createTime": "2026-10-20T01:00:00.123456Z",
+      "updateTime": "2026-10-20T01:00:00.123456Z"
+    },
+    "routeCode": "operations-finance-recon-bank-statement-start"
+  },
+  {
+    "id": "R26",
+    "method": "POST",
+    "path": "/finance/reconciliation/v1/bank-statements/7500000000000000601/lines",
+    "query": "",
+    "request": {
+      "lines": [
+        {
+          "lineNo": 1,
+          "bankTransactionRef": "ENBD-TXN-0001",
+          "valueDate": "2026-10-19",
+          "direction": "CREDIT",
+          "amount": "67.40",
+          "counterpartyName": "NETWORK INTERNATIONAL",
+          "referenceText": "SETTLEMENT NI-20261019-001"
+        }
+      ]
+    },
+    "status": 200,
+    "response": {
+      "bankStatementId": "7500000000000000601",
+      "cashAccountId": "7500000000000000201",
+      "statementRef": "ENBD-202610-19",
+      "periodStart": "2026-10-19",
+      "periodEnd": "2026-10-19",
+      "currency": "USD",
+      "openingBalance": "1000.00",
+      "closingBalance": "1067.40",
+      "declaredLineCount": 1,
+      "importedLineCount": 1,
+      "duplicateLineCount": 0,
+      "fileName": "enbd-20261019.csv",
+      "fileContentHash": "1b3d5f7a9c2e4b6d8f0a1c3e5b7d9f2a4c6e8b0d2f4a6c8e1b3d5f7a9c2e4b6d",
+      "rejectReason": null,
+      "status": "RECEIVING",
+      "makerId": "10001",
+      "createTime": "2026-10-20T01:00:00.123456Z",
+      "updateTime": "2026-10-20T01:00:00.123456Z"
+    },
+    "routeCode": "operations-finance-recon-bank-statement-lines-append"
+  },
+  {
+    "id": "R27",
+    "method": "POST",
+    "path": "/finance/reconciliation/v1/bank-statements/7500000000000000601/completion",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "bankStatementId": "7500000000000000601",
+      "status": "IMPORTED",
+      "importedLineCount": 1,
+      "duplicateLineCount": 0,
+      "gapExceptionId": null,
+      "rejectReason": null,
+      "rejections": []
+    },
+    "routeCode": "operations-finance-recon-bank-statement-complete"
+  },
+  {
+    "id": "R28",
+    "method": "GET",
+    "path": "/finance/reconciliation/v1/expected-bank-movements",
+    "query": "?cashAccountId=7500000000000000201&movementType=CHANNEL_SETTLEMENT&sourceId=7500000000000000301&status=OPEN&page=1&size=10",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "expectedMovementId": "7500000000000000801",
+          "movementType": "CHANNEL_SETTLEMENT",
+          "sourceId": "7500000000000000301",
+          "cashAccountId": "7500000000000000201",
+          "entityNo": "AE001",
+          "direction": "CREDIT",
+          "currency": "USD",
+          "expectedAmount": "67.55",
+          "expectedDate": "2026-10-21",
+          "bankPaymentRef": null,
+          "confirmedAmount": "0.00",
+          "classifiedAmount": "0.00",
+          "status": "OPEN",
+          "version": "1",
+          "createTime": "2026-10-20T01:00:00.123456Z",
+          "updateTime": "2026-10-20T01:00:00.123456Z"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    },
+    "routeCode": "operations-finance-recon-expected-bank-movement-list"
+  },
+  {
+    "id": "R29",
+    "method": "GET",
+    "path": "/finance/reconciliation/v1/bank-matches",
+    "query": "?bankStatementLineId=7500000000000000701&status=PROPOSED&page=1&size=10",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "bankMatchId": "7500000000000000901",
+          "bankStatementLineId": "7500000000000000701",
+          "expectedMovementId": "7500000000000000801",
+          "matchedAmount": "67.40",
+          "matchMethod": "AUTO",
+          "payoutComponentType": null,
+          "status": "PROPOSED",
+          "resolutionId": null,
+          "operatorId": null,
+          "decisionTime": null,
+          "createTime": "2026-10-20T01:00:00.123456Z"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    },
+    "routeCode": "operations-finance-recon-bank-match-list"
+  },
+  {
+    "id": "R30",
+    "method": "POST",
+    "path": "/finance/reconciliation/v1/bank-matches/7500000000000000901/confirmation",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "bankMatchId": "7500000000000000901",
+      "bankStatementLineId": "7500000000000000701",
+      "expectedMovementId": "7500000000000000801",
+      "matchedAmount": "67.40",
+      "matchMethod": "AUTO",
+      "payoutComponentType": null,
+      "status": "CONFIRMED",
+      "resolutionId": null,
+      "operatorId": "10001",
+      "decisionTime": "2026-10-20T02:00:00.123456Z",
+      "createTime": "2026-10-20T01:00:00.123456Z"
+    },
+    "routeCode": "operations-finance-recon-bank-match-confirm"
+  },
+  {
+    "id": "R31",
+    "method": "POST",
+    "path": "/finance/reconciliation/v1/bank-matches/7500000000000000901/rejection",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "bankMatchId": "7500000000000000901",
+      "bankStatementLineId": "7500000000000000701",
+      "expectedMovementId": "7500000000000000801",
+      "matchedAmount": "67.40",
+      "matchMethod": "AUTO",
+      "payoutComponentType": null,
+      "status": "REJECTED",
+      "resolutionId": null,
+      "operatorId": "10001",
+      "decisionTime": "2026-10-20T02:00:00.123456Z",
+      "createTime": "2026-10-20T01:00:00.123456Z"
+    },
+    "routeCode": "operations-finance-recon-bank-match-reject"
+  },
+  {
+    "id": "R32",
+    "method": "POST",
+    "path": "/finance/reconciliation/v1/bank-matches",
+    "query": "",
+    "request": {
+      "bankStatementLineId": "7500000000000000701",
+      "allocations": [
+        {
+          "expectedMovementId": "7500000000000000801",
+          "amount": "67.40"
+        }
+      ]
+    },
+    "status": 201,
+    "response": {
+      "items": [
+        {
+          "bankMatchId": "7500000000000000901",
+          "bankStatementLineId": "7500000000000000701",
+          "expectedMovementId": "7500000000000000801",
+          "matchedAmount": "67.40",
+          "matchMethod": "MANUAL",
+          "payoutComponentType": null,
+          "status": "CONFIRMED",
+          "resolutionId": null,
+          "operatorId": "10001",
+          "decisionTime": "2026-10-20T02:00:00.123456Z",
+          "createTime": "2026-10-20T01:00:00.123456Z"
+        }
+      ]
+    },
+    "routeCode": "operations-finance-recon-bank-match-create"
+  },
+  {
+    "id": "R33",
+    "method": "GET",
+    "path": "/finance/reconciliation/v1/recon-exceptions",
+    "query": "?status=OPEN&exceptionType=BANK_AMOUNT_MISMATCH&reconLayer=BANK&cashAccountId=7500000000000000201&page=1&size=10",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "exceptionId": "7500000000000001001",
+          "exceptionType": "BANK_AMOUNT_MISMATCH",
+          "reconLayer": "BANK",
+          "blocking": false,
+          "sourceType": "EXPECTED_BANK_MOVEMENT",
+          "sourceId": "7500000000000000801",
+          "statementId": null,
+          "clearingAccountId": null,
+          "cashAccountId": "7500000000000000201",
+          "entityType": "OPERATING_ENTITY",
+          "entityId": "AE001",
+          "currency": "USD",
+          "differenceAmount": "0.15",
+          "detail": "预期 67.55，已确认 67.40",
+          "status": "OPEN",
+          "openedBy": "10001",
+          "openedTime": "2026-10-20T01:00:00.123456Z",
+          "ageDays": 0,
+          "closedTime": null,
+          "version": "1"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    },
+    "routeCode": "operations-finance-recon-exception-list"
+  },
+  {
+    "id": "R34",
+    "method": "GET",
+    "path": "/finance/reconciliation/v1/recon-exceptions/7500000000000001001",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "exception": {
+        "exceptionId": "7500000000000001001",
+        "exceptionType": "BANK_AMOUNT_MISMATCH",
+        "reconLayer": "BANK",
+        "blocking": false,
+        "sourceType": "EXPECTED_BANK_MOVEMENT",
+        "sourceId": "7500000000000000801",
+        "statementId": null,
+        "clearingAccountId": null,
+        "cashAccountId": "7500000000000000201",
+        "entityType": "OPERATING_ENTITY",
+        "entityId": "AE001",
+        "currency": "USD",
+        "differenceAmount": "0.15",
+        "detail": "预期 67.55，已确认 67.40",
+        "status": "OPEN",
+        "openedBy": "10001",
+        "openedTime": "2026-10-20T01:00:00.123456Z",
+        "ageDays": 0,
+        "closedTime": null,
+        "version": "1"
+      },
+      "source": {
+        "sourceType": "EXPECTED_BANK_MOVEMENT",
+        "sourceId": "7500000000000000801",
+        "reference": "CHANNEL_SETTLEMENT 7500000000000000301",
+        "direction": "CREDIT",
+        "amount": "67.55",
+        "status": "PARTIALLY_CONFIRMED",
+        "businessDate": "2026-10-21"
+      },
+      "availableResolutionTypes": [
+        "RE_MATCH",
+        "ACCEPT_TIMING_DIFFERENCE",
+        "CLASSIFY"
+      ],
+      "availableClassificationCodes": [
+        "BANK_FEE",
+        "RECON_DIFFERENCE"
+      ],
+      "resolutions": []
+    },
+    "routeCode": "operations-finance-recon-exception-detail"
+  },
+  {
+    "id": "R35",
+    "method": "POST",
+    "path": "/finance/reconciliation/v1/recon-exceptions",
+    "query": "",
+    "request": {
+      "sourceType": "EXPECTED_BANK_MOVEMENT",
+      "sourceId": "7500000000000000801"
+    },
+    "status": 201,
+    "response": {
+      "exceptionId": "7500000000000001001",
+      "exceptionType": "BANK_AMOUNT_MISMATCH",
+      "reconLayer": "BANK",
+      "blocking": false,
+      "sourceType": "EXPECTED_BANK_MOVEMENT",
+      "sourceId": "7500000000000000801",
+      "statementId": null,
+      "clearingAccountId": null,
+      "cashAccountId": "7500000000000000201",
+      "entityType": "OPERATING_ENTITY",
+      "entityId": "AE001",
+      "currency": "USD",
+      "differenceAmount": "0.15",
+      "detail": "预期 67.55，已确认 67.40",
+      "status": "OPEN",
+      "openedBy": "10001",
+      "openedTime": "2026-10-20T01:00:00.123456Z",
+      "ageDays": 0,
+      "closedTime": null,
+      "version": "1"
+    },
+    "routeCode": "operations-finance-recon-exception-open"
+  },
+  {
+    "id": "R36",
+    "method": "POST",
+    "path": "/finance/reconciliation/v1/recon-exceptions/7500000000000001001/resolutions",
+    "query": "",
+    "request": {
+      "resolutionType": "CLASSIFY",
+      "classificationCode": "BANK_FEE",
+      "amount": "0.15",
+      "rematchTargetType": null,
+      "rematchTargetId": null,
+      "rematchAmount": null,
+      "note": "银行扣收的到账手续费"
+    },
+    "status": 201,
+    "response": {
+      "resolutionId": "7500000000000001101",
+      "exceptionId": "7500000000000001001",
+      "resolutionNo": 1,
+      "resolutionType": "CLASSIFY",
+      "classificationCode": "BANK_FEE",
+      "amount": "0.15",
+      "rematchTargetType": null,
+      "rematchTargetId": null,
+      "rematchAmount": null,
+      "note": "银行扣收的到账手续费",
+      "contentHash": "9f2c0e6b4d1a7c35e8b2f0d94a6c1e7b3d5f8a2c4e6b0d1f3a5c7e9b2d4f6a8c",
+      "makerId": "10001",
+      "checkerId": null,
+      "checkerDecision": null,
+      "decisionTime": null,
+      "status": "PENDING_CHECK",
+      "createTime": "2026-10-20T01:00:00.123456Z"
+    },
+    "routeCode": "operations-finance-recon-resolution-submit"
+  },
+  {
+    "id": "R37",
+    "method": "POST",
+    "path": "/finance/reconciliation/v1/recon-resolutions/7500000000000001101/approval",
+    "query": "",
+    "request": {
+      "decision": "APPROVED",
+      "approvedContentHash": "9f2c0e6b4d1a7c35e8b2f0d94a6c1e7b3d5f8a2c4e6b0d1f3a5c7e9b2d4f6a8c"
+    },
+    "status": 200,
+    "response": {
+      "resolutionId": "7500000000000001101",
+      "exceptionId": "7500000000000001001",
+      "resolutionNo": 1,
+      "resolutionType": "CLASSIFY",
+      "classificationCode": "BANK_FEE",
+      "amount": "0.15",
+      "rematchTargetType": null,
+      "rematchTargetId": null,
+      "rematchAmount": null,
+      "note": "银行扣收的到账手续费",
+      "contentHash": "9f2c0e6b4d1a7c35e8b2f0d94a6c1e7b3d5f8a2c4e6b0d1f3a5c7e9b2d4f6a8c",
+      "makerId": "10001",
+      "checkerId": "10002",
+      "checkerDecision": "APPROVED",
+      "decisionTime": "2026-10-20T02:00:00.123456Z",
+      "status": "APPLIED",
+      "createTime": "2026-10-20T01:00:00.123456Z"
+    },
+    "routeCode": "operations-finance-recon-resolution-approval"
+  },
+  {
+    "id": "R38",
+    "method": "GET",
+    "path": "/finance/reconciliation/v1/summary",
+    "query": "?entityNo=AE001&currency=USD",
+    "request": null,
+    "status": 200,
+    "response": {
+      "entityNo": "AE001",
+      "currency": "USD",
+      "inTransitStatements": {
+        "matchingCount": 1,
+        "matchingNetAmount": "67.55",
+        "reconciledCount": 0,
+        "reconciledUnconfirmedAmount": "0.00"
+      },
+      "openExceptionsByAge": [
+        {
+          "bucket": "D0_3",
+          "count": 1,
+          "blockingCount": 0
+        },
+        {
+          "bucket": "D4_7",
+          "count": 0,
+          "blockingCount": 0
+        },
+        {
+          "bucket": "D8_30",
+          "count": 0,
+          "blockingCount": 0
+        },
+        {
+          "bucket": "D31_PLUS",
+          "count": 0,
+          "blockingCount": 0
+        }
+      ],
+      "unmatchedBankLines": {
+        "count": 1,
+        "creditAmount": "67.40",
+        "debitAmount": "0.00"
+      }
+    },
+    "routeCode": "operations-finance-recon-summary"
+  }
+]

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- t_clearing_account：渠道清算账户，只读写 mor_reconciliation。 -->
+<mapper namespace="com.paytech.reconciliation.core.dal.mapper.ClearingAccountMapper">
+    <sql id="columns">id, clearing_account_code, channel_code, entity_no, currency, settlement_cash_account_id, unmatched_wait_days, cost_tolerance_amount, cash_grace_days, status, version, create_time, update_time</sql>
+
+    <insert id="insert">
+        INSERT INTO t_clearing_account (<include refid="columns"/>)
+        VALUES (#{id}, #{clearingAccountCode}, #{channelCode}, #{entityNo}, #{currency}, #{settlementCashAccountId}, #{unmatchedWaitDays}, #{costToleranceAmount}, #{cashGraceDays}, #{status}, #{version}, #{createTime}, #{updateTime})
+    </insert>
+
+    <select id="selectById" resultType="com.paytech.reconciliation.core.dal.dataobject.ClearingAccount">
+        SELECT <include refid="columns"/> FROM t_clearing_account WHERE id = #{id}
+    </select>
+
+    <select id="selectByIds" resultType="com.paytech.reconciliation.core.dal.dataobject.ClearingAccount">
+        SELECT <include refid="columns"/> FROM t_clearing_account WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY id
+    </select>
+
+    <select id="selectByCode" resultType="com.paytech.reconciliation.core.dal.dataobject.ClearingAccount">
+        SELECT <include refid="columns"/> FROM t_clearing_account WHERE clearing_account_code = #{clearingAccountCode}
+    </select>
+
+    <sql id="pageWhere">
+        <where>
+            <if test="entityNo != null">AND entity_no = #{entityNo}</if>
+            <if test="channelCode != null">AND channel_code = #{channelCode}</if>
+            <if test="currency != null">AND currency = #{currency}</if>
+            <if test="status != null">AND status = #{status}</if>
+        </where>
+    </sql>
+
+    <select id="selectPage" resultType="com.paytech.reconciliation.core.dal.dataobject.ClearingAccount">
+        SELECT <include refid="columns"/> FROM t_clearing_account <include refid="pageWhere"/>
+        ORDER BY update_time DESC, id DESC LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="long">
+        SELECT COUNT(*) FROM t_clearing_account <include refid="pageWhere"/>
+    </select>
+
+    <update id="updateSettings">
+        UPDATE t_clearing_account
+        SET unmatched_wait_days = #{unmatchedWaitDays}, cost_tolerance_amount = #{costToleranceAmount}, cash_grace_days = #{cashGraceDays}, settlement_cash_account_id = #{settlementCashAccountId}, version = version + 1, update_time = #{now}
+        WHERE id = #{record.id} AND version = #{record.version}
+    </update>
+
+    <update id="changeStatus">
+        UPDATE t_clearing_account
+        SET status = #{status}, version = version + 1, update_time = #{now}
+        WHERE id = #{record.id} AND version = #{record.version} AND status = #{record.status}
+    </update>
+
+    <update id="increaseVersion">
+        UPDATE t_clearing_account
+        SET version = version + 1, update_time = #{now}
+        WHERE id = #{record.id} AND version = #{record.version}
+    </update>
+</mapper>

@@ -162,6 +162,10 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
     public static final String FINANCE_READ_PERMISSION_ID = "900000000000097101";
     public static final String FINANCE_MANAGE_PERMISSION_ID = "900000000000097102";
     public static final String FINANCE_APPROVE_PERMISSION_ID = "900000000000100101";
+    /** 对账读、操作、审批权限（块 123）；对账路由同样以 operations-finance- 开头，按财务路由表判定。 */
+    public static final String RECON_READ_PERMISSION_ID = "900000000000123101";
+    public static final String RECON_OPERATE_PERMISSION_ID = "900000000000123102";
+    public static final String RECON_APPROVE_PERMISSION_ID = "900000000000123103";
     public static final Map<String, String> FINANCE_ROUTE_PERMISSIONS = Map.ofEntries(
         Map.entry("operations-finance-entity-list", FINANCE_READ_PERMISSION_ID),
         Map.entry("operations-finance-entity-create", FINANCE_MANAGE_PERMISSION_ID),
@@ -217,7 +221,45 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
         Map.entry("operations-finance-rule-version-submit", FINANCE_MANAGE_PERMISSION_ID),
         Map.entry("operations-finance-rule-version-approve", FINANCE_APPROVE_PERMISSION_ID),
         Map.entry("operations-finance-rule-version-reject", FINANCE_APPROVE_PERMISSION_ID),
-        Map.entry("operations-finance-rule-version-void", FINANCE_MANAGE_PERMISSION_ID));
+        Map.entry("operations-finance-rule-version-void", FINANCE_MANAGE_PERMISSION_ID),
+        Map.entry("operations-finance-recon-clearing-account-list", RECON_READ_PERMISSION_ID),
+        Map.entry("operations-finance-recon-clearing-account-unassigned-mids", RECON_READ_PERMISSION_ID),
+        Map.entry("operations-finance-recon-clearing-account-detail", RECON_READ_PERMISSION_ID),
+        Map.entry("operations-finance-recon-clearing-account-create", RECON_OPERATE_PERMISSION_ID),
+        Map.entry("operations-finance-recon-clearing-account-settings", RECON_OPERATE_PERMISSION_ID),
+        Map.entry("operations-finance-recon-clearing-account-mid-add", RECON_OPERATE_PERMISSION_ID),
+        Map.entry("operations-finance-recon-clearing-account-mid-remove", RECON_OPERATE_PERMISSION_ID),
+        Map.entry("operations-finance-recon-clearing-account-status", RECON_OPERATE_PERMISSION_ID),
+        Map.entry("operations-finance-recon-cash-account-list", RECON_READ_PERMISSION_ID),
+        Map.entry("operations-finance-recon-cash-account-detail", RECON_READ_PERMISSION_ID),
+        Map.entry("operations-finance-recon-cash-account-create", RECON_OPERATE_PERMISSION_ID),
+        Map.entry("operations-finance-recon-cash-account-closure", RECON_OPERATE_PERMISSION_ID),
+        Map.entry("operations-finance-recon-cash-account-approval", RECON_APPROVE_PERMISSION_ID),
+        Map.entry("operations-finance-recon-channel-statement-list", RECON_READ_PERMISSION_ID),
+        Map.entry("operations-finance-recon-channel-statement-detail", RECON_READ_PERMISSION_ID),
+        Map.entry("operations-finance-recon-channel-statement-lines", RECON_READ_PERMISSION_ID),
+        Map.entry("operations-finance-recon-channel-statement-start", RECON_OPERATE_PERMISSION_ID),
+        Map.entry("operations-finance-recon-channel-statement-lines-append", RECON_OPERATE_PERMISSION_ID),
+        Map.entry("operations-finance-recon-channel-statement-complete", RECON_OPERATE_PERMISSION_ID),
+        Map.entry("operations-finance-recon-channel-statement-void", RECON_OPERATE_PERMISSION_ID),
+        Map.entry("operations-finance-recon-platform-txn-list", RECON_READ_PERMISSION_ID),
+        Map.entry("operations-finance-recon-bank-statement-list", RECON_READ_PERMISSION_ID),
+        Map.entry("operations-finance-recon-bank-statement-lines", RECON_READ_PERMISSION_ID),
+        Map.entry("operations-finance-recon-bank-statement-line-list", RECON_READ_PERMISSION_ID),
+        Map.entry("operations-finance-recon-bank-statement-start", RECON_OPERATE_PERMISSION_ID),
+        Map.entry("operations-finance-recon-bank-statement-lines-append", RECON_OPERATE_PERMISSION_ID),
+        Map.entry("operations-finance-recon-bank-statement-complete", RECON_OPERATE_PERMISSION_ID),
+        Map.entry("operations-finance-recon-expected-bank-movement-list", RECON_READ_PERMISSION_ID),
+        Map.entry("operations-finance-recon-bank-match-list", RECON_READ_PERMISSION_ID),
+        Map.entry("operations-finance-recon-bank-match-confirm", RECON_OPERATE_PERMISSION_ID),
+        Map.entry("operations-finance-recon-bank-match-reject", RECON_OPERATE_PERMISSION_ID),
+        Map.entry("operations-finance-recon-bank-match-create", RECON_OPERATE_PERMISSION_ID),
+        Map.entry("operations-finance-recon-exception-list", RECON_READ_PERMISSION_ID),
+        Map.entry("operations-finance-recon-exception-detail", RECON_READ_PERMISSION_ID),
+        Map.entry("operations-finance-recon-exception-open", RECON_OPERATE_PERMISSION_ID),
+        Map.entry("operations-finance-recon-resolution-submit", RECON_OPERATE_PERMISSION_ID),
+        Map.entry("operations-finance-recon-resolution-approval", RECON_APPROVE_PERMISSION_ID),
+        Map.entry("operations-finance-recon-summary", RECON_READ_PERMISSION_ID));
 
     // 这是 Platform Simulator 的当前目录事实；BFF 生产代码仍只传可信 Route Code。
     /**

@@ -12,4 +12,16 @@ public class BillingFactRefPayload {
 
     /** 按 refType 解释的稳定标识；数字 ID 为规范十进制字符串。 */
     private String refId;
+
+    /**
+     * 渠道外部交易号类型
+     * <li>仅 refType = CHANNEL_TRANSACTION_REF 时非空，取值来自 Payment 渠道交易引用类型目录（非固定枚举）；其余为 JSON null。</li>
+     */
+    private String externalReferenceType;
+
+    /**
+     * 渠道外部交易号
+     * <li>仅 refType = CHANNEL_TRANSACTION_REF 时非空；reconciliation 按它匹配渠道账单行。其余为 JSON null。</li>
+     */
+    private String externalTransactionId;
 }

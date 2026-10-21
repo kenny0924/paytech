@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- t_bank_statement：银行对账单头，只读写 mor_reconciliation。 -->
+<mapper namespace="com.paytech.reconciliation.core.dal.mapper.BankStatementMapper">
+    <sql id="columns">id, cash_account_id, statement_ref, period_start, period_end, currency, opening_balance, closing_balance, declared_line_count, imported_line_count, duplicate_line_count, file_name, file_content_hash, reject_reason, status, maker_id, version, create_time, update_time</sql>
+
+    <insert id="insert">
+        INSERT INTO t_bank_statement (<include refid="columns"/>)
+        VALUES (#{id}, #{cashAccountId}, #{statementRef}, #{periodStart}, #{periodEnd}, #{currency}, #{openingBalance}, #{closingBalance}, #{declaredLineCount}, #{importedLineCount}, #{duplicateLineCount}, #{fileName}, #{fileContentHash}, #{rejectReason}, #{status}, #{makerId}, #{version}, #{createTime}, #{updateTime})
+    </insert>
+
+    <select id="selectById" resultType="com.paytech.reconciliation.core.dal.dataobject.BankStatement">
+        SELECT <include refid="columns"/> FROM t_bank_statement WHERE id = #{id}
+    </select>
+
+    <select id="selectByRef" resultType="com.paytech.reconciliation.core.dal.dataobject.BankStatement">
+        SELECT <include refid="columns"/> FROM t_bank_statement WHERE cash_account_id = #{cashAccountId} AND statement_ref = #{statementRef}
+    </select>
+
+    <select id="selectLatestImported" resultType="com.paytech.reconciliation.core.dal.dataobject.BankStatement">
+        SELECT <include refid="columns"/> FROM t_bank_statement WHERE cash_account_id = #{cashAccountId} AND status = 'IMPORTED'
+        ORDER BY period_end DESC, id DESC LIMIT 1
+    </select>
+
+    <sql id="pageWhere">
+        <where>
+            <if test="cashAccountId != null">AND cash_account_id = #{cashAccountId}</if>
+            <if test="status != null">AND status = #{status}</if>
+        </where>
+    </sql>
+
+    <select id="selectPage" resultType="com.paytech.reconciliation.core.dal.dataobject.BankStatement">
+        SELECT <include refid="columns"/> FROM t_bank_statement <include refid="pageWhere"/>
+        ORDER BY period_end DESC, id DESC LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="long">
+        SELECT COUNT(*) FROM t_bank_statement <include refid="pageWhere"/>
+    </select>
+
+    <update id="updateImportProgress">
+        UPDATE t_bank_statement
+        SET imported_line_count = #{importedLineCount}, duplicate_line_count = #{duplicateLineCount}, reject_reason = #{rejectReason}, version = version + 1, update_time = #{now}
+        WHERE id = #{record.id} AND version = #{record.version} AND status = 'RECEIVING'
+    </update>
+
+    <update id="restart">
+        UPDATE t_bank_statement
+        SET period_start = #{replacement.periodStart}, period_end = #{replacement.periodEnd}, opening_balance = #{replacement.openingBalance}, closing_balance = #{replacement.closingBalance}, declared_line_count = #{replacement.declaredLineCount}, imported_line_count = 0, duplicate_line_count = 0, file_name = #{replacement.fileName}, file_content_hash = #{replacement.fileContentHash}, reject_reason = NULL, status = 'RECEIVING', maker_id = #{replacement.makerId}, version = version + 1, update_time = #{now}
+        WHERE id = #{record.id} AND version = #{record.version} AND status = 'REJECTED'
+    </update>
+
+    <update id="changeStatus">
+        UPDATE t_bank_statement
+        SET status = #{status}, reject_reason = #{rejectReason}, version = version + 1, update_time = #{now}
+        WHERE id = #{record.id} AND version = #{record.version} AND status = #{record.status}
+    </update>
+</mapper>

@@ -1,0 +1,58 @@
+# reconciliation 渠道资金对账切片 1：mor-test 候选覆盖文件（2026-10-21 阶段 6 评审稿；阶段 7 另行授权后执行）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件：
+#   ./test-environment/compose.sh -f "$PWD/requirements/20261020/reconciliation-渠道资金对账切片1/release/compose-candidate.yaml" \
+#     up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 不加 --remove-orphans。镜像一律用固定 sha256 ID（tag recon-slice1-20261021 仅供辨认，可能被他人重建，不得据此部署）。
+# 构建源：c6eea71a（商务集成头，含 mor-test 现行商务内容）+ 本需求 448 个文件（release/source-overlay.txt），干净 worktree 构建；
+#   Java 用 test-environment/java/Dockerfile，health-probe 取自运行容器（逐字节一致）；Web 用 operations-console-web/Dockerfile。
+# 上一版（回滚目标）见 compose-rollback.yaml。
+services:
+  reconciliation-service:
+    image: sha256:f181a04cad2db3fc41eaadca51d04c7a3ca586264d08c62bd9e7a264f7b4b353  # mor-test/reconciliation-service:recon-slice1-20261021（JAR c66e59bd935d64e5）
+    # 主文件已有 DB、Nacos 发现、Snowflake Region 0 / Worker 19（mor-test 0–31 中唯一，沿用本服务原值）、IP 172.30.73.41；以下为本期新增。
+    environment:
+      # BillingFactRecorded 消费（reconciliation.billing.hash → p0..p3、DLQ reconciliation.billing.dlq）与 reconciliation.events 发布。
+      RECONCILIATION_RABBITMQ_HOST: rabbitmq
+      RECONCILIATION_RABBITMQ_PORT: "5672"
+      RECONCILIATION_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
+      RECONCILIATION_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
+      RECONCILIATION_RABBITMQ_VHOST: /mor-test
+      # 写入口 AbstractLockProcessor 资源锁（paytech-redis-starter）。
+      RECONCILIATION_REDIS_HOST: redis
+      RECONCILIATION_REDIS_PORT: "6379"
+      RECONCILIATION_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?prepare test secrets}
+      # 补偿事件 Claim/Lease 实例标识与领域事件信封 instanceId。
+      RECONCILIATION_COMPENSATION_INSTANCE_ID: reconciliation-test
+      PAYTECH_INSTANCE_ID: reconciliation-test
+      # XXL 执行器：compensationEventScan（每 30 秒，分片广播）与 channelLineWaitExpiry（每 10 分钟）在 xxl-job-admin 登记（release/xxl-job-reconciliation.md）。
+      XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
+      XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
+      XXL_JOB_EXECUTOR_ENABLED: "true"
+      XXL_JOB_EXECUTOR_APPNAME: reconciliation-service
+      XXL_JOB_EXECUTOR_IP: 172.30.73.41
+      XXL_JOB_EXECUTOR_PORT: "9999"
+      XXL_JOB_EXECUTOR_LOGPATH: /tmp/xxl-job
+      XXL_JOB_EXECUTOR_EXCLUDEDPACKAGES: org.springframework.,spring.
+      # Vault（vault-service）与 channel-connector-service 经 Nacos 服务发现（application.yml 默认），不需另设地址。
+      # mor-test 只用 test Profile，不加载 Nacos 配置中心（config/nacos/reconciliation-service.yaml 只用于 nacos Profile）。
+    depends_on:
+      rabbitmq: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      vault-service: { condition: service_healthy }
+  ledger-service:
+    # 必须先于 billing 替换：ledger 读 billing GET /billing/v1/facts 用 Foundation 严格 JSON（FAIL_ON_UNKNOWN_PROPERTIES），
+    # 新 billing 响应的引用项多出 externalReferenceType / externalTransactionId（null 也会输出），旧 ledger 会读失败。
+    # JAR 与运行版逐类比较只差 billing-api 引用类 4 个、BillingFactClientImpl（toRef 透传两列）与 events.yaml。
+    image: sha256:b84f8f97a1ec740fbd0b08bdb11463516acfde301f3afbd20dc32dbc3b10a294  # mor-test/ledger-service:recon-slice1-20261021（JAR b984c18bd2cd2d27）
+  billing-service:
+    image: sha256:b773d2cdb7a8077ecac181619093d2466cd05172810ecc83060174349a42dc2f  # mor-test/billing-service:recon-slice1-20261021（JAR 5a70aaaaf0b9adb2）
+  operations-console-bff:
+    image: sha256:9520a54538277ce7f4b90bca1f61712bbbce3559601d20b17697e028709e8971  # mor-test/operations-console-bff:recon-slice1-20261021（JAR d3db3584e2113511）
+    environment:
+      # 对账运营接口以固定私网地址直连 reconciliation（与 ledger / account / billing 同一接入方式，property operations.reconciliation-base-url）。
+      OPERATIONS_RECONCILIATION_BASE_URL: http://reconciliation-service:18115
+  operations-console-web:
+    image: sha256:edfb66284e2507727b4fe8707653ae71456c3dae2ec054e543b140985aea4007  # mor-test/operations-console-web:recon-slice1-20261021（入口 assets/index-CanEcPBr.js）
+  platform-support-service:
+    # 只为 console-resource-capabilities.json 加对账 7 页 + 2 个按钮（配置页新增绑定时校验部署能力）；JAR 其余逐类与运行版一致。
+    image: sha256:79e33d43a2c3d4e64ac8e2a95109f46b86b8a1beeba6ba987e5d2f9b8f7de3b1  # mor-test/platform-support-service:recon-slice1-20261021（JAR 51c153676e54da98）

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- t_recon_resolution：异常处置，只读写 mor_reconciliation。 -->
+<mapper namespace="com.paytech.reconciliation.core.dal.mapper.ReconResolutionMapper">
+    <sql id="columns">id, exception_id, resolution_no, resolution_type, classification_code, amount, rematch_target_type, rematch_target_id, rematch_amount, note, content_hash, maker_id, checker_id, checker_decision, approved_content_hash, decision_time, status, version, create_time, update_time</sql>
+
+    <insert id="insert">
+        INSERT INTO t_recon_resolution (<include refid="columns"/>)
+        VALUES (#{id}, #{exceptionId}, #{resolutionNo}, #{resolutionType}, #{classificationCode}, #{amount}, #{rematchTargetType}, #{rematchTargetId}, #{rematchAmount}, #{note}, #{contentHash}, #{makerId}, #{checkerId}, #{checkerDecision}, #{approvedContentHash}, #{decisionTime}, #{status}, #{version}, #{createTime}, #{updateTime})
+    </insert>
+
+    <select id="selectById" resultType="com.paytech.reconciliation.core.dal.dataobject.ReconResolution">
+        SELECT <include refid="columns"/> FROM t_recon_resolution WHERE id = #{id}
+    </select>
+
+    <select id="selectByIds" resultType="com.paytech.reconciliation.core.dal.dataobject.ReconResolution">
+        SELECT <include refid="columns"/> FROM t_recon_resolution WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY id
+    </select>
+
+    <select id="selectByException" resultType="com.paytech.reconciliation.core.dal.dataobject.ReconResolution">
+        SELECT <include refid="columns"/> FROM t_recon_resolution WHERE exception_id = #{exceptionId} ORDER BY resolution_no
+    </select>
+
+    <sql id="pageWhere">
+        <where>
+            <if test="status != null">AND status = #{status}</if>
+        </where>
+    </sql>
+
+    <select id="selectPage" resultType="com.paytech.reconciliation.core.dal.dataobject.ReconResolution">
+        SELECT <include refid="columns"/> FROM t_recon_resolution <include refid="pageWhere"/>
+        ORDER BY create_time, id LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="long">
+        SELECT COUNT(*) FROM t_recon_resolution <include refid="pageWhere"/>
+    </select>
+
+    <update id="review">
+        UPDATE t_recon_resolution
+        SET status = #{status}, checker_id = #{checkerId}, checker_decision = #{checkerDecision}, approved_content_hash = #{approvedContentHash}, decision_time = #{decisionTime}, version = version + 1, update_time = #{now}
+        WHERE id = #{record.id} AND version = #{record.version} AND status = 'PENDING_CHECK'
+    </update>
+</mapper>

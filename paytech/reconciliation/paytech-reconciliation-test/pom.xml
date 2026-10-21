@@ -15,7 +15,7 @@
     <packaging>jar</packaging>
 
     <name>PayTech Reconciliation Test</name>
-    <description>auto tests of reconciliation-service including the shared architecture rules R1-R12.</description>
+    <description>auto tests of reconciliation-service: HTTP / MQ / job entries against local MySQL, Redis and RabbitMQ with channel-connector and Vault DTO mocks, plus the shared architecture rules R1-R12.</description>
 
     <properties>
         <maven.install.skip>true</maven.install.skip>
@@ -23,6 +23,13 @@
     </properties>
 
     <dependencies>
+        <!-- 分区队列基线（PartitionQueueBaselineConfiguration）：监听容器启动前清空 reconciliation.billing.p* 与 DLQ（UNIT_TEST_GUIDE 7.3）。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-messaging</artifactId>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-reconciliation-app</artifactId>

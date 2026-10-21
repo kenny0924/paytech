@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- t_clearing_account_mid：清算账户所含 MID，只读写 mor_reconciliation。 -->
+<mapper namespace="com.paytech.reconciliation.core.dal.mapper.ClearingAccountMidMapper">
+    <sql id="columns">id, clearing_account_id, mid_id, currency, create_time</sql>
+
+    <insert id="insert">
+        INSERT INTO t_clearing_account_mid (<include refid="columns"/>)
+        VALUES (#{id}, #{clearingAccountId}, #{midId}, #{currency}, #{createTime})
+    </insert>
+
+    <delete id="deleteById">
+        DELETE FROM t_clearing_account_mid WHERE id = #{id}
+    </delete>
+
+    <select id="selectByMidAndCurrency" resultType="com.paytech.reconciliation.core.dal.dataobject.ClearingAccountMid">
+        SELECT <include refid="columns"/> FROM t_clearing_account_mid WHERE mid_id = #{midId} AND currency = #{currency}
+    </select>
+
+    <select id="selectByClearingAccount" resultType="com.paytech.reconciliation.core.dal.dataobject.ClearingAccountMid">
+        SELECT <include refid="columns"/> FROM t_clearing_account_mid WHERE clearing_account_id = #{clearingAccountId} ORDER BY id
+    </select>
+
+    <select id="selectByMidIds" resultType="com.paytech.reconciliation.core.dal.dataobject.ClearingAccountMid">
+        SELECT <include refid="columns"/> FROM t_clearing_account_mid WHERE mid_id IN
+        <foreach collection="midIds" item="midId" open="(" separator="," close=")">#{midId}</foreach>
+        ORDER BY id
+    </select>
+</mapper>

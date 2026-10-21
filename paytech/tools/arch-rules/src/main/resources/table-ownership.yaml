@@ -3,8 +3,8 @@
 # 255 source tables, 17 databases, 265 physical tables.
 # Retained: platform-support mor_platform from paytech/platform-support/docs/database/sql/platform-support-schema.sql.
 # 56 retained-service tables added on top of design 03 (not part of the §4.2 count).
-# 7 step-removed tables (approved later refactors, e.g. 2026-10-19 billing fact model; applied after the §4.2 count).
-# 29 step-added tables (approved refactor-step designs, e.g. design/05 t_card_material_ticket; not part of the §4.2 count).
+# 20 step-removed tables (approved later refactors, e.g. 2026-10-19 billing fact model; applied after the §4.2 count).
+# 39 step-added tables (approved refactor-step designs, e.g. design/05 t_card_material_ticket; not part of the §4.2 count).
 # Structure: services.<service>.<database> = tables owned (or copied / per-database infrastructure);
 # Renamed: t_transaction_economics -> t_economic_fact, t_transaction_economic_component -> t_economic_fact_line, t_transaction_economic_comp_link -> t_economic_fact_line_link, t_account -> t_ledger_account, t_payment_method_profile -> t_pricing_profile, t_payment_method_profile_cond -> t_pricing_profile_cond.
 # Renamed services: consumer -> counterparty; databases: mor_consumer -> mor_counterparty.
@@ -292,22 +292,19 @@ services:
       - t_webhook_signing_secret
   reconciliation:
     mor_reconciliation:
-      - t_bank_recon_match
+      - t_bank_match
       - t_bank_statement
-      - t_bank_statement_item
+      - t_bank_statement_line
       - t_cash_account
-      - t_cash_account_binding
-      - t_cash_account_binding_ver
-      - t_channel_account
-      - t_channel_cost_alloc
-      - t_channel_cost_confirm
-      - t_channel_debit_item
-      - t_channel_open_item
-      - t_channel_settle_batch
-      - t_channel_settle_item
-      - t_channel_transaction_match
+      - t_channel_statement
+      - t_channel_statement_line
+      - t_clearing_account
+      - t_clearing_account_mid
       - t_compensation_event
-      - t_duplicate_capture_item
+      - t_consumed_aggregate_version
+      - t_consumed_event
+      - t_expected_bank_movement
+      - t_platform_txn
       - t_recon_exception
       - t_recon_resolution
   risk-decision:

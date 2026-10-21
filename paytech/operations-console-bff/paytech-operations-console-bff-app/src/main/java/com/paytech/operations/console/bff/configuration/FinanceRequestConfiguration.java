@@ -27,6 +27,11 @@ import com.paytech.operations.console.bff.service.model.FinanceManualAdjustmentM
 import com.paytech.operations.console.bff.service.model.FinancePeriodCloseModels;
 import com.paytech.operations.console.bff.service.model.FinanceRuleBundleModels;
 import com.paytech.operations.console.bff.service.model.FinanceSetupModels;
+import com.paytech.operations.console.bff.service.model.ReconciliationBankModels;
+import com.paytech.operations.console.bff.service.model.ReconciliationCashModels;
+import com.paytech.operations.console.bff.service.model.ReconciliationClearingModels;
+import com.paytech.operations.console.bff.service.model.ReconciliationExceptionModels;
+import com.paytech.operations.console.bff.service.model.ReconciliationStatementModels;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -43,6 +48,7 @@ import tools.jackson.databind.type.LogicalType;
  * /finance 请求体的严格边界
  * <li>只读取 Finance*Models 内的 *RequestBody：拒绝重复键、未知属性、尾随内容与标量强转，写 Body 上限 8192 字节（超限 413）；
  * 多行明细的人工调整提交、计费事实登记与规则版本新建上限 65536 字节，与 Gateway 路由 Body 上限一致。</li>
+ * <li>/finance/reconciliation 的 Reconciliation*Models 同样只走本边界；渠道账单与银行对账单分段追加行（每段 ≤ 100 行）上限 65536 字节。</li>
  * <li>GET 与未声明 RequestBody 的命令（开放会计期间、发起关账、发起试算、计费事实批准/作废、规则版本提交/审批/驳回/作废）
  * 携带 Body 时返回 400；拦截器排在 PLT-I02 授权之后执行。</li>
  *
@@ -54,11 +60,15 @@ public class FinanceRequestConfiguration implements WebMvcConfigurer {
     private static final int LINES_BODY_LIMIT = 65536;
     private static final Set<Class<?>> MODEL_CONTAINERS = Set.of(FinanceSetupModels.class,
         FinanceLedgerBookModels.class, FinanceBalanceModels.class, FinanceManualAdjustmentModels.class,
-        FinanceBillingFactModels.class, FinancePeriodCloseModels.class, FinanceRuleBundleModels.class);
+        FinanceBillingFactModels.class, FinancePeriodCloseModels.class, FinanceRuleBundleModels.class,
+        ReconciliationClearingModels.class, ReconciliationCashModels.class, ReconciliationStatementModels.class,
+        ReconciliationBankModels.class, ReconciliationExceptionModels.class);
     private static final Set<Class<?>> LINES_BODIES = Set.of(
         FinanceManualAdjustmentModels.SubmitManualAdjustmentRequestBody.class,
         FinanceBillingFactModels.SubmitBillingFactRequestBody.class,
-        FinanceRuleBundleModels.CreateRuleVersionRequestBody.class);
+        FinanceRuleBundleModels.CreateRuleVersionRequestBody.class,
+        ReconciliationStatementModels.AppendChannelStatementLinesRequestBody.class,
+        ReconciliationBankModels.AppendBankStatementLinesRequestBody.class);
 
     private final JsonMapper mapper;
 

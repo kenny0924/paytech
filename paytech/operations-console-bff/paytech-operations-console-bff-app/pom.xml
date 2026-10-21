@@ -53,6 +53,10 @@
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
+            <artifactId>paytech-reconciliation-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.paytech</groupId>
             <artifactId>paytech-vault-client</artifactId>
         </dependency>
         <dependency>

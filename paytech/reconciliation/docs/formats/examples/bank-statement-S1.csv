@@ -1,0 +1,4 @@
+#HEADER,bank_account_last4,statement_ref,period_start,period_end,currency,opening_balance,closing_balance
+#HEADER,4321,ENBD-20261019,2026-10-19,2026-10-19,USD,1000.00,1067.40
+line_no,bank_transaction_ref,value_date,direction,amount,counterparty_name,reference_text
+1,ENBD-TXN-0001,2026-10-19,CREDIT,67.40,NETWORK INTERNATIONAL,SETTLEMENT NI-20261019-001

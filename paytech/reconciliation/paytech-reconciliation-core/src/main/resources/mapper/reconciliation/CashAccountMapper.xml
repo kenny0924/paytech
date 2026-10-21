@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- t_cash_account：平台银行账户，只读写 mor_reconciliation。 -->
+<mapper namespace="com.paytech.reconciliation.core.dal.mapper.CashAccountMapper">
+    <sql id="columns">id, entity_type, entity_id, account_purpose, bank_code, account_name, currency, account_vault_token, account_last4, status, pending_action, content_hash, maker_id, checker_id, version, create_time, update_time</sql>
+
+    <insert id="insert">
+        INSERT INTO t_cash_account (<include refid="columns"/>)
+        VALUES (#{id}, #{entityType}, #{entityId}, #{accountPurpose}, #{bankCode}, #{accountName}, #{currency}, #{accountVaultToken}, #{accountLast4}, #{status}, #{pendingAction}, #{contentHash}, #{makerId}, #{checkerId}, #{version}, #{createTime}, #{updateTime})
+    </insert>
+
+    <select id="selectById" resultType="com.paytech.reconciliation.core.dal.dataobject.CashAccount">
+        SELECT <include refid="columns"/> FROM t_cash_account WHERE id = #{id}
+    </select>
+
+    <select id="selectByIds" resultType="com.paytech.reconciliation.core.dal.dataobject.CashAccount">
+        SELECT <include refid="columns"/> FROM t_cash_account WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY id
+    </select>
+
+    <select id="selectByScope" resultType="com.paytech.reconciliation.core.dal.dataobject.CashAccount">
+        SELECT <include refid="columns"/> FROM t_cash_account
+        WHERE entity_type = #{entityType} AND entity_id = #{entityId} AND currency = #{currency} AND account_purpose = #{accountPurpose} AND status = #{status}
+        ORDER BY id
+    </select>
+
+    <sql id="pageWhere">
+        <where>
+            <if test="entityType != null">AND entity_type = #{entityType}</if>
+            <if test="entityId != null">AND entity_id = #{entityId}</if>
+            <if test="currency != null">AND currency = #{currency}</if>
+            <if test="accountPurpose != null">AND account_purpose = #{accountPurpose}</if>
+            <if test="status != null">AND status = #{status}</if>
+        </where>
+    </sql>
+
+    <select id="selectPage" resultType="com.paytech.reconciliation.core.dal.dataobject.CashAccount">
+        SELECT <include refid="columns"/> FROM t_cash_account <include refid="pageWhere"/>
+        ORDER BY update_time DESC, id DESC LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="long">
+        SELECT COUNT(*) FROM t_cash_account <include refid="pageWhere"/>
+    </select>
+
+    <update id="updateReview">
+        UPDATE t_cash_account
+        SET status = #{status}, pending_action = #{pendingAction}, content_hash = #{contentHash}, maker_id = #{makerId}, checker_id = #{checkerId}, version = version + 1, update_time = #{now}
+        WHERE id = #{record.id} AND version = #{record.version} AND status = #{record.status}
+    </update>
+</mapper>

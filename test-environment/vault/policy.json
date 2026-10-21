@@ -4,7 +4,8 @@
     "TEST_STABLE_V1": { "tokenMode": "STABLE" },
     "TEST_REFERENCE_V1": { "tokenMode": "REFERENCE" },
     "EMAIL_ADDRESS_V1": { "tokenMode": "STABLE" },
-    "PHONE_E164_V1": { "tokenMode": "STABLE" }
+    "PHONE_E164_V1": { "tokenMode": "STABLE" },
+    "CASH_ACCOUNT_NUMBER_V1": { "tokenMode": "REFERENCE" }
   },
   "rules": [
     { "callerService": "vault-test-smoke", "action": "PROTECT", "dataType": "TEST_STABLE_V1", "purposes": ["TEST_DEPLOYMENT"] },
@@ -17,6 +18,7 @@
     { "callerService": "client-contract-service", "action": "PROTECT", "dataType": "EMAIL_ADDRESS_V1", "purposes": ["CLIENT_ONBOARDING_CONTACT"] },
     { "callerService": "client-contract-service", "action": "REVEAL", "dataType": "EMAIL_ADDRESS_V1", "purposes": ["CLIENT_ONBOARDING_CONTACT"] },
     { "callerService": "client-contract-service", "action": "PROTECT", "dataType": "PHONE_E164_V1", "purposes": ["CLIENT_ONBOARDING_CONTACT"] },
-    { "callerService": "client-contract-service", "action": "REVEAL", "dataType": "PHONE_E164_V1", "purposes": ["CLIENT_ONBOARDING_CONTACT"] }
+    { "callerService": "client-contract-service", "action": "REVEAL", "dataType": "PHONE_E164_V1", "purposes": ["CLIENT_ONBOARDING_CONTACT"] },
+    { "callerService": "reconciliation-service", "action": "PROTECT", "dataType": "CASH_ACCOUNT_NUMBER_V1", "purposes": ["RECON_CASH_ACCOUNT"] }
   ]
 }

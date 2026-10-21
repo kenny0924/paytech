@@ -15,9 +15,10 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
 /**
- * 在默认 Maven 测试中保护 reconciliation-service 的模块集合、依赖清单与已批准的基础设施范围（Snowflake 与 MyBatis）
+ * 在默认 Maven 测试中保护 reconciliation-service 的模块集合、依赖清单与已批准的基础设施范围
  * <li>由 FinanceModuleBoundaryTest 按服务拆分（design/09 §2.7）；跨服务依赖图规则由 ArchitectureAutoTest（R1–R12）检查。</li>
- * <li>本服务第 11 步前不得引入 MQ：RabbitTemplate 不在 classpath。</li>
+ * <li>2026-10-20 对账切片 1（technique 2.8）开放：paytech-messaging（BillingFactRecorded 消费与对账事件发布）、compensation-event 与
+ * XXL-Job、Redis 资源锁、Nacos 服务发现（channel-connector 与 Vault 出站调用），以及 billing-api、channel-connector-api、vault-client 合同。</li>
  *
  * @see com.paytech.reconciliation.ReconciliationApplication
  */
@@ -26,22 +27,29 @@ class ReconciliationModuleBoundaryTest {
     @Test
     void test_reactorContainsOnlyApprovedModules() throws Exception {
         Assertions.assertEquals(
-            Set.of("paytech-reconciliation-api", "paytech-reconciliation-core", "paytech-reconciliation-app", "paytech-reconciliation-test"),
+            Set.of("paytech-reconciliation-api", "paytech-reconciliation-core", "paytech-reconciliation-app",
+                "paytech-reconciliation-test"),
             values(readPom(""), "/project/modules/module"));
     }
 
     @Test
     void test_businessLibrariesHaveApprovedDependencies() throws Exception {
         Assertions.assertEquals(
-            Set.of("paytech-reconciliation-api", "paytech-common-core", "paytech-mybatis-support",
-                "spring-context", "mybatis", "lombok"),
+            Set.of("paytech-reconciliation-api", "paytech-billing-api", "paytech-channel-connector-api",
+                "paytech-vault-client", "paytech-compensation-event", "paytech-messaging-api", "paytech-redis-starter",
+                "paytech-common-core", "paytech-mybatis-support", "paytech-snowflake-id", "spring-boot",
+                    "jackson-databind",
+                "jakarta.validation-api", "spring-context", "spring-tx", "slf4j-api", "mybatis", "lombok"),
             values(readPom("paytech-reconciliation-core"), "/project/dependencies/dependency/artifactId"));
-        Assertions.assertEquals(Set.of("lombok"),
+        Assertions.assertEquals(Set.of("paytech-common-core", "spring-web", "jakarta.validation-api", "lombok"),
             values(readPom("paytech-reconciliation-api"), "/project/dependencies/dependency/artifactId"));
         Set<String> app = values(readPom("paytech-reconciliation-app"),
             "/project/dependencies/dependency[groupId='com.paytech']/artifactId");
-        Assertions.assertEquals(Set.of("paytech-reconciliation-api", "paytech-reconciliation-core", "paytech-snowflake-id",
-                "paytech-mybatis-support", "paytech-mvc-web-starter"), app);
+        Assertions.assertEquals(Set.of("paytech-reconciliation-api", "paytech-reconciliation-core",
+            "paytech-snowflake-id",
+                "paytech-mybatis-support", "paytech-mvc-web-starter", "paytech-messaging", "paytech-compensation-event",
+                "paytech-xxl-job-starter", "paytech-redis-starter", "paytech-channel-connector-api",
+                "paytech-http-client-support"), app);
     }
 
     @Test
@@ -63,13 +71,16 @@ class ReconciliationModuleBoundaryTest {
     void test_runtimeContainsOnlyApprovedInfrastructure() {
         for (String resource : Set.of("org/apache/ibatis/session/SqlSession.class",
             "com/zaxxer/hikari/HikariDataSource.class",
-            "com/mysql/cj/jdbc/Driver.class")) {
+            "com/mysql/cj/jdbc/Driver.class",
+            "com/alibaba/nacos/api/NacosFactory.class",
+            "org/springframework/amqp/rabbit/core/RabbitTemplate.class",
+            "org/redisson/Redisson.class",
+            "com/xxl/job/core/handler/annotation/XxlJob.class")) {
             Assertions.assertNotNull(getClass().getClassLoader().getResource(resource), resource);
         }
-        for (String resource : Set.of("com/alibaba/nacos/api/NacosFactory.class",
-            "org/springframework/amqp/rabbit/core/RabbitTemplate.class",
-            "org/mockito/Mockito.class",
-            "org/redisson/Redisson.class")) {
+        for (String resource : Set.of("org/mockito/Mockito.class",
+            "org/flywaydb/core/Flyway.class",
+            "com/paytech/foundation/idempotency/api/CommandIdempotencyService.class")) {
             Assertions.assertNull(getClass().getClassLoader().getResource(resource), resource);
         }
     }

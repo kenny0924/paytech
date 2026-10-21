@@ -67,8 +67,9 @@ public interface BillingTestMapper {
         + "source_rule_type, source_evidence FROM t_billing_fact_line WHERE fact_id = #{factId} ORDER BY line_no")
     List<Map<String, Object>> selectBillingFactLines(@Param("factId") long factId);
 
-    /** 计费事实的全部引用，按引用类型升序。 */
-    @Select("SELECT ref_type, ref_id FROM t_billing_fact_ref WHERE fact_id = #{factId} ORDER BY ref_type")
+    /** 计费事实的全部引用（含渠道外部交易号两项），按引用类型升序。 */
+    @Select("SELECT ref_type, ref_id, external_reference_type, external_transaction_id FROM t_billing_fact_ref "
+        + "WHERE fact_id = #{factId} ORDER BY ref_type")
     List<Map<String, Object>> selectBillingFactRefs(@Param("factId") long factId);
 
     /** 某计费事实的 BILLING_FACT_RECORDED 补偿任务（任意版本）及其执行状态。 */
@@ -93,11 +94,21 @@ public interface BillingTestMapper {
         @Param("financeEntityId") Long financeEntityId, @Param("currency") String currency, @Param("status") String status,
         @Param("factVersion") long factVersion, @Param("publishedAt") Instant publishedAt);
 
-    /** 插入一条计费事实引用（前置数据）。 */
-    @Insert("INSERT INTO t_billing_fact_ref (id, fact_id, ref_type, ref_id, create_time) "
-        + "VALUES (#{id}, #{factId}, #{refType}, #{refId}, UTC_TIMESTAMP(6))")
+    /** 插入一条计费事实引用（前置数据），不带渠道外部交易号。 */
+    default void insertBillingFactRef(long id, long factId, String refType, String refId) {
+        insertBillingFactRef(id, factId, refType, refId, null, null);
+    }
+
+    /**
+     * 插入一条计费事实引用（前置数据）
+     * <li>模拟后续自动事实切片登记的 CHANNEL_TRANSACTION_REF：外部交易号两项仅此类型非空。</li>
+     */
+    @Insert("INSERT INTO t_billing_fact_ref (id, fact_id, ref_type, ref_id, external_reference_type, "
+        + "external_transaction_id, create_time) VALUES (#{id}, #{factId}, #{refType}, #{refId}, "
+        + "#{externalReferenceType}, #{externalTransactionId}, UTC_TIMESTAMP(6))")
     void insertBillingFactRef(@Param("id") long id, @Param("factId") long factId, @Param("refType") String refType,
-        @Param("refId") String refId);
+        @Param("refId") String refId, @Param("externalReferenceType") String externalReferenceType,
+        @Param("externalTransactionId") String externalTransactionId);
 
     /**
      * 插入一条规则计算明细行（前置数据）：模拟后续自动事实切片写入的费率、基数与 JSON 计算证据

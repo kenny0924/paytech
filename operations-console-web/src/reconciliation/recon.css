@@ -1,0 +1,10 @@
+.finance-drawer .recon-import-body { margin-top: 16px; display: grid; gap: 12px; }
+.finance-page .recon-gate { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; margin: 12px 0; }
+.finance-page .recon-gate-item { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid var(--ant-color-border-secondary, #f0f0f0); border-radius: 6px; }
+.finance-page .recon-gate-item.is-pass { color: var(--ant-color-success, #389e0d); }
+.finance-page .recon-gate-item.is-fail { color: var(--ant-color-error, #cf1322); }
+.finance-page .recon-match-totals { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+.finance-page .recon-summary-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.finance-page .recon-summary-card { border: 1px solid var(--ant-color-border-secondary, #f0f0f0); border-radius: 8px; padding: 16px; }
+.finance-page .recon-summary-card h2 { font-size: 15px; margin: 0 0 8px; }
+.finance-drawer .recon-allocation { display: grid; grid-template-columns: minmax(0, 1fr) 160px; gap: 8px; align-items: center; }

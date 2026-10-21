@@ -7,6 +7,19 @@ spring:
     name: reconciliation-service
   jmx:
     enabled: false
+  cloud:
+    nacos:
+      config:
+        # 启用 nacos Profile 后，从配置中心加载服务配置。
+        enabled: false
+      discovery:
+        # 注册本服务（billing 解析清算账户、payout / tax 取当前银行账户经服务发现调用）并发现 channel-connector、Vault；
+        # 地址与命名空间由部署环境注入。
+        server-addr: "${NACOS_SERVER_ADDR:127.0.0.1:8848}"
+        namespace: "${NACOS_NAMESPACE:mor-local}"
+    loadbalancer:
+      retry:
+        enabled: false
   datasource:
     url: "${RECONCILIATION_DB_URL:jdbc:mysql://127.0.0.1:13306/mor_reconciliation?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}"
     username: "${RECONCILIATION_DB_USERNAME:reconciliation_app}"
@@ -17,9 +30,85 @@ spring:
       data-source-properties:
         connectionTimeZone: UTC
         forceConnectionTimeZoneToSession: true
+  # BillingFactRecorded 消费与四类对账事件发布：发布确认与不可路由退回，发布 Handler 等待 Broker 确认后才算发布成功。
+  rabbitmq:
+    host: "${RECONCILIATION_RABBITMQ_HOST:127.0.0.1}"
+    port: "${RECONCILIATION_RABBITMQ_PORT:5672}"
+    username: "${RECONCILIATION_RABBITMQ_USERNAME:}"
+    password: "${RECONCILIATION_RABBITMQ_PASSWORD:}"
+    virtual-host: "${RECONCILIATION_RABBITMQ_VHOST:/mor-local}"
+    connection-timeout: 2s
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
+  # 写入口 AbstractLockProcessor 的资源锁（paytech-redis-starter）；地址与密码由部署环境注入。
+  data:
+    redis:
+      host: "${RECONCILIATION_REDIS_HOST:127.0.0.1}"
+      port: "${RECONCILIATION_REDIS_PORT:16379}"
+      password: "${RECONCILIATION_REDIS_PASSWORD:}"
+      connect-timeout: 2s
+      timeout: 2s
+  # 内部 HTTP 客户端：channel-connector MID 查询（挂 MID 核对、未归属 MID）；经服务发现选实例，JDK HttpClient 不自动重试。
+  http:
+    clients:
+      imperative:
+        factory: jdk
+    serviceclient:
+      channel-connector-service:
+        base-url: lb://channel-connector-service
+        connect-timeout: 2s
+        read-timeout: 5s
+        redirects: dont-follow
+
+web:
+  logging:
+    # 银行账户新建请求带明文账号（决定 I-05）：该前缀的请求只记元数据，不记请求体。
+    metadata-only-path-prefixes:
+      - /reconciliation/v1/cash-accounts
 
 mybatis:
   mapper-locations: classpath*:mapper/**/*.xml
+
+# paytech-redis-starter：账单级、银行流水级、异常级、清算账户级资源锁（technique D-11）使用 AbstractLockProcessor。
+redis:
+  coordination:
+    enabled: true
+
+# paytech-messaging：消费端按 Handler 声明 reconciliation.billing.hash 与分区队列 reconciliation.billing.p0..p3；
+# 发布端声明 reconciliation.events（design/08 §3）。
+messaging:
+  consumer:
+    service: reconciliation
+  # 订阅 billing 的分区数 4（technique 2.4）：BillingFactRecordedPlatformTxnHandler 消费 BillingFactRecorded 生成平台流水。
+  consumers:
+    billing:
+      partitions: 4
+  producer:
+    service: reconciliation
+  publisher:
+    # 四类对账事件当前没有订阅方（D-08，consumers: []）：未路由按发布失败处理，由补偿任务保留重试，订阅方接入后补发。
+    unroutable-policy: FAIL
+
+# paytech-compensation-event：业务事务内登记四类事件发布与 CHANNEL_STATEMENT_MATCH、BANK_MATCH_SUGGEST 本地任务，提交后执行；
+# XXL-Job 执行器同时承载兜底扫描 compensationEventScan 与等待期满任务 channelLineWaitExpiry，调度中心地址与执行器参数沿用组件默认，由部署注入。
+compensation:
+  enabled: true
+  # 多实例 Claim/Lease 的实例标识前缀；部署多实例时由 RECONCILIATION_COMPENSATION_INSTANCE_ID 注入带实例后缀的值。
+  instance-id: "${RECONCILIATION_COMPENSATION_INSTANCE_ID:reconciliation}"
+
+# 实例 ID（实例清单 instance.id，01 §5）：领域事件信封 instanceId。
+paytech:
+  instance-id: "${PAYTECH_INSTANCE_ID:main}"
+
+vault:
+  client:
+    # 银行账号 Protect（CASH_ACCOUNT_NUMBER_V1，REFERENCE，用途 RECON_CASH_ACCOUNT）；Vault 按调用服务名授权。
+    caller-service: reconciliation-service
+    service-id: vault-service
+    connect-timeout: 2s
+    read-timeout: 5s
 
 management:
   server:
@@ -54,7 +143,32 @@ management:
       access: read-only
 
 reconciliation:
+  bank-match:
+    # 银行匹配建议（BANK_MATCH_SUGGEST）：起息日与预期日相差的工作日上限 ±N，只排除周末；默认 3，可经 Nacos 刷新，下次建议任务生效。
+    suggestion-window-business-days: 3
+  event:
+    # 对账事件信封身份：sourceService 与 messaging.producer.service 一致；instanceId 取实例 ID。
+    source-service: reconciliation
+    instance-id: "${paytech.instance-id}"
   identifier:
     # 部署分配的 Snowflake Region / Worker 标识，必填；每个 app 独立分配。
     region-id: "${RECONCILIATION_SNOWFLAKE_REGION_ID}"
     worker-id: "${RECONCILIATION_SNOWFLAKE_WORKER_ID}"
+
+---
+spring:
+  config:
+    activate:
+      on-profile: nacos
+    import:
+      - "optional:nacos:mor-common.yaml?group=${NACOS_GROUP:DEFAULT_GROUP}&refreshEnabled=false"
+      - "nacos:reconciliation-service.yaml?group=${NACOS_GROUP:DEFAULT_GROUP}&refreshEnabled=true"
+  cloud:
+    nacos:
+      config:
+        enabled: true
+        server-addr: "${NACOS_SERVER_ADDR:127.0.0.1:8848}"
+        namespace: "${NACOS_NAMESPACE:mor-local}"
+        group: "${NACOS_GROUP:DEFAULT_GROUP}"
+        username: "${NACOS_USERNAME:}"
+        password: "${NACOS_PASSWORD:}"

@@ -15,7 +15,7 @@
     <packaging>jar</packaging>
 
     <name>PayTech Reconciliation App</name>
-    <description>Deployable reconciliation-service: Spring Boot entry, controllers, persistence and runtime configuration.</description>
+    <description>Deployable reconciliation-service: Spring Boot entry, controllers, BillingFactRecorded consumption, reconciliation event publication, jobs, outbound clients, persistence and runtime configuration.</description>
 
     <dependencies>
         <dependency>
@@ -39,6 +39,55 @@
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-mvc-web-starter</artifactId>
+        </dependency>
+        <!-- BillingFactRecorded 消费（reconciliation.billing.hash 分区拓扑、单活消费者容器、t_consumed_event 幂等拦截器）与对账事件发布（reconciliation.events）。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-messaging</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
+        <!-- 本库 t_compensation_event 与其 XXL-Job 兜底扫描；等待期满任务 channelLineWaitExpiry 也注册为 XXL-Job Handler。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-compensation-event</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-xxl-job-starter</artifactId>
+        </dependency>
+        <!-- 写入口 AbstractLockProcessor 的 Redisson 资源锁（redis.coordination.enabled）。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-redis-starter</artifactId>
+        </dependency>
+        <!-- channel-connector ChannelMidApi 出站代理：Foundation 公共出站边界 + 服务发现负载均衡（Vault 客户端同样经服务发现）。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-channel-connector-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-http-client-support</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-restclient</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -69,13 +69,14 @@ public class BillingFactEnvelopeChecker {
         return this;
     }
 
-    /** Payload 与明细行字段顺序固定，所有标量为字符串或 null；引用为 {refType, refId}。 */
+    /** Payload 与明细行字段顺序固定，所有标量为字符串或 null；引用为 {refType, refId, externalReferenceType, externalTransactionId}。 */
     public BillingFactEnvelopeChecker payloadShape() {
         JsonNode payload = envelope.path("payload");
         assertEquals(PAYLOAD_FIELDS, names(payload));
         payload.properties().stream().filter(entry -> !List.of("refs", "lines").contains(entry.getKey()))
             .forEach(entry -> assertTrue(entry.getValue().isString() || entry.getValue().isNull(), entry.getKey()));
-        payload.path("refs").forEach(ref -> assertEquals(List.of("refType", "refId"), names(ref)));
+        payload.path("refs").forEach(ref -> assertEquals(
+            List.of("refType", "refId", "externalReferenceType", "externalTransactionId"), names(ref)));
         payload.path("lines").forEach(line -> {
             assertEquals(LINE_FIELDS, names(line));
             line.properties().forEach(entry -> assertTrue(entry.getValue().isString() || entry.getValue().isNull(),

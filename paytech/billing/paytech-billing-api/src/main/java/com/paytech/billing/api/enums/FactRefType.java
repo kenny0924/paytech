@@ -69,7 +69,16 @@ public enum FactRefType implements CodeEnum {
     FX_DEAL,
 
     /** 外汇报价；Owner fx */
-    FX_QUOTE;
+    FX_QUOTE,
+
+    /**
+     * Payment 渠道交易引用（内部 ID）；Owner payment
+     * <li>引用行同时带 externalReferenceType 与 externalTransactionId，reconciliation 按它们匹配渠道账单行；只由自动事实登记，人工登记不允许。</li>
+     */
+    CHANNEL_TRANSACTION_REF,
+
+    /** 对账异常处置（RECON_ADJUSTMENT 的来源）；Owner reconciliation；只由自动事实登记，人工登记不允许 */
+    RECON_RESOLUTION;
 
     /** 数据库与接口使用的稳定编码，与常量名一致。 */
     @Override

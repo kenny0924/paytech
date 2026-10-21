@@ -61,9 +61,29 @@ const stepRemovedTables = [
     tables: ['t_economic_fact', 't_economic_fact_line', 't_economic_fact_line_link', 't_channel_cost_plan',
       't_channel_cost_plan_ver', 't_channel_cost_scope', 't_channel_cost_component'],
   },
+  // 2026-10-20 reconciliation slice 1 (decision 2026-10-20-reconciliation-facts-via-billing, REQ technique 1.1 / 2.2): the old
+  // Finance monolith reconciliation tables are dropped; the database is rebuilt with the new model (step-added below).
+  {
+    service: 'reconciliation',
+    database: 'mor_reconciliation',
+    tables: ['t_channel_account', 't_channel_open_item', 't_channel_debit_item', 't_duplicate_capture_item',
+      't_channel_settle_batch', 't_channel_settle_item', 't_channel_transaction_match', 't_channel_cost_confirm',
+      't_channel_cost_alloc', 't_cash_account_binding', 't_cash_account_binding_ver', 't_bank_statement_item',
+      't_bank_recon_match'],
+  },
 ];
 // Tables introduced by a refactor step's approved design on top of design 03 §2 (not part of the §4.2 count).
 const stepAddedTables = [
+  // 2026-10-20 reconciliation slice 1 (REQ technique 2.2): mor_reconciliation holds 15 tables - twelve business tables
+  // (t_cash_account, t_bank_statement, t_recon_exception, t_recon_resolution kept by name), t_compensation_event and the
+  // Foundation consume-idempotency pair used by the BillingFactRecorded consumer.
+  {
+    service: 'reconciliation',
+    database: 'mor_reconciliation',
+    tables: ['t_clearing_account', 't_clearing_account_mid', 't_platform_txn', 't_channel_statement',
+      't_channel_statement_line', 't_bank_statement_line', 't_expected_bank_movement', 't_bank_match', 't_consumed_event',
+      't_consumed_aggregate_version'],
+  },
   // 2026-10-19 commercial six-layer product pricing model (decision 2026-10-19-commercial-six-layer-product-pricing,
   // design-discuss/commercial/database.md §2): product catalog and agreement subscription / capability tables.
   {

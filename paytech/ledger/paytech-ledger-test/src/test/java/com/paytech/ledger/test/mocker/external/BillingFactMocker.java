@@ -193,6 +193,8 @@ public class BillingFactMocker implements Clear {
         BillingFactRefResponseBody body = new BillingFactRefResponseBody();
         body.setRefType(ref.getRefType());
         body.setRefId(ref.getRefId());
+        body.setExternalReferenceType(ref.getExternalReferenceType());
+        body.setExternalTransactionId(ref.getExternalTransactionId());
         return body;
     }
 

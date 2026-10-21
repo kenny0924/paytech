@@ -1,0 +1,16 @@
+# reconciliation 本地补偿事件类型目录（ArchUnit R12）：每个 CompensationEventHandler 的 eventType() 必须在此登记；
+# 与 MQ 领域事件目录 foundation/paytech-messaging/catalog/events.yaml 不是同一集合。
+# 2026-10-20 需求 reconciliation-渠道资金对账切片1（technique.md §2.4、D-10）：
+# - 四个 MQ 发布型 Handler，与业务变化在同一本地事务登记，event_key = <aggregateType>:<id>:<EventType>:1（AggregateKey.eventKey，
+#   四个事件的聚合版本固定为 1）；提交后回读本库重建载荷发布到 reconciliation.events：
+#   ACTUAL_CHANNEL_COST_CONFIRMED → ActualChannelCostConfirmed，CHANNEL_BATCH_RECONCILED → ChannelBatchReconciled，
+#   CHANNEL_SETTLEMENT_CONFIRMED → ChannelSettlementConfirmed，RECON_ADJUSTMENT_APPROVED → ReconAdjustmentApproved。
+# - 两个本地任务：CHANNEL_STATEMENT_MATCH（账单完成导入、或新平台流水到达同清算账户有等待期内的行时登记；锁账单逐行匹配、开异常、
+#   尝试对平），BANK_MATCH_SUGGEST（对账单导入、或预期银行流水生成后登记；对同一银行账户未匹配流水出一对一匹配建议）。
+eventTypes:
+  - ACTUAL_CHANNEL_COST_CONFIRMED
+  - CHANNEL_BATCH_RECONCILED
+  - CHANNEL_SETTLEMENT_CONFIRMED
+  - RECON_ADJUSTMENT_APPROVED
+  - CHANNEL_STATEMENT_MATCH
+  - BANK_MATCH_SUGGEST

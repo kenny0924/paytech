@@ -4,7 +4,7 @@
   "avatar": "",
   "version": "4.9.3",
   "createdTime": "2025-5-28 13:36:15",
-  "updatedTime": "2026-10-19 00:00:00",
+  "updatedTime": "2026-10-20 00:00:00",
   "dbConns": [],
   "profile": {
     "default": {
@@ -1633,7 +1633,7 @@
         {
           "defKey": "ref_type",
           "defName": "引用类型",
-          "comment": "引用的外部业务对象类型。允许值：ORDER、ORDER_CONTEXT、PAYMENT_INTENT、PAYMENT_ATTEMPT、PAYMENT_CHANNEL_ACCOUNT、MID、REFUND_REQUEST、CHANNEL_REFUND、DUPLICATE_ITEM、DISPUTE_NOTICE、DISPUTE_CASE、TAX_SNAPSHOT、CLEARING_ACCOUNT、SETTLEMENT_BATCH、SETTLEMENT_ITEM、CASH_ACCOUNT、PAYOUT、TAX_PAYMENT、TICKET、FX_DEAL、FX_QUOTE。",
+          "comment": "引用的外部业务对象类型。允许值：ORDER、ORDER_CONTEXT、PAYMENT_INTENT、PAYMENT_ATTEMPT、PAYMENT_CHANNEL_ACCOUNT、MID、REFUND_REQUEST、CHANNEL_REFUND、DUPLICATE_ITEM、DISPUTE_NOTICE、DISPUTE_CASE、TAX_SNAPSHOT、CLEARING_ACCOUNT、SETTLEMENT_BATCH、SETTLEMENT_ITEM、CASH_ACCOUNT、PAYOUT、TAX_PAYMENT、TICKET、FX_DEAL、FX_QUOTE、CHANNEL_TRANSACTION_REF、RECON_RESOLUTION。",
           "type": "VARCHAR",
           "len": 32,
           "scale": "",
@@ -1671,6 +1671,48 @@
           },
           "domain": "",
           "id": "3C6BBDAC-A121-5172-91BF-989F286777F6"
+        },
+        {
+          "defKey": "external_reference_type",
+          "defName": "外部交易号类型",
+          "comment": "渠道外部交易号类型，仅 ref_type = CHANNEL_TRANSACTION_REF 时非空。取值来源：Payment 渠道交易引用类型目录；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "6D68D977-2269-4E2A-8FB3-C2D70A199EF6"
+        },
+        {
+          "defKey": "external_transaction_id",
+          "defName": "外部交易号",
+          "comment": "渠道外部交易号，仅 ref_type = CHANNEL_TRANSACTION_REF 时非空；对账按它匹配渠道账单行。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "59E1CB62-EFB9-4F9E-8B38-45223E615E4C"
         },
         {
           "defKey": "create_time",

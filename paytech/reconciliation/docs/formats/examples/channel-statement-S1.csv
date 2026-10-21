@@ -1,0 +1,6 @@
+#HEADER,clearing_account_code,channel_batch_ref,settlement_date,currency,gross_amount,fee_amount,net_amount,cash_direction
+#HEADER,NI-AE001-USD,NI-20261019-001,2026-10-19,USD,68.00,0.45,67.55,CREDIT
+line_no,line_type,direction,amount,fee_amount,reference_type,external_transaction_id,transaction_date,terminal_id,remark
+1,PAYMENT,CREDIT,100.00,0.45,NI_ORDER_REF,NI-ORD-0001,2026-10-17,T01,
+2,REFUND,DEBIT,30.00,0,NI_REFUND_REF,NI-RFD-0001,2026-10-17,T01,"partial, customer"
+3,ADJUSTMENT,DEBIT,2.00,0,,,2026-10-19,,monthly fee

@@ -26,6 +26,18 @@ public class BillingFactRef {
      */
     private String refId;
 
+    /**
+     * 渠道外部交易号类型
+     * <li>仅 refType = CHANNEL_TRANSACTION_REF 时非空；取值来自 Payment 渠道交易引用类型目录，非固定枚举。</li>
+     */
+    private String externalReferenceType;
+
+    /**
+     * 渠道外部交易号
+     * <li>仅 refType = CHANNEL_TRANSACTION_REF 时非空；reconciliation 按它匹配渠道账单行。</li>
+     */
+    private String externalTransactionId;
+
     /** 记录创建的 UTC 微秒时间 */
     private Instant createTime;
 }

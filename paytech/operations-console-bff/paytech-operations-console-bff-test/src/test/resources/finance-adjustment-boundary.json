@@ -253,7 +253,9 @@
       "refs": [
         {
           "refType": "TICKET",
-          "refId": "OPS-TICKET-1"
+          "refId": "OPS-TICKET-1",
+          "externalReferenceType": null,
+          "externalTransactionId": null
         }
       ],
       "lines": [
@@ -320,7 +322,9 @@
       "refs": [
         {
           "refType": "TICKET",
-          "refId": "OPS-TICKET-1"
+          "refId": "OPS-TICKET-1",
+          "externalReferenceType": null,
+          "externalTransactionId": null
         }
       ],
       "lines": [
@@ -387,7 +391,9 @@
       "refs": [
         {
           "refType": "TICKET",
-          "refId": "OPS-TICKET-1"
+          "refId": "OPS-TICKET-1",
+          "externalReferenceType": null,
+          "externalTransactionId": null
         }
       ],
       "lines": [
@@ -454,7 +460,9 @@
       "refs": [
         {
           "refType": "TICKET",
-          "refId": "OPS-TICKET-1"
+          "refId": "OPS-TICKET-1",
+          "externalReferenceType": null,
+          "externalTransactionId": null
         }
       ],
       "lines": [

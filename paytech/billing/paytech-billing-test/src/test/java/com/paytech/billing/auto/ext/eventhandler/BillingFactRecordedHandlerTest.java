@@ -1,12 +1,15 @@
 package com.paytech.billing.auto.ext.eventhandler;
 
+import static com.paytech.billing.test.builder.BillingFactRequestBuilder.CHANNEL_ID;
 import static com.paytech.billing.test.builder.BillingFactRequestBuilder.CLIENT_ID;
+import static com.paytech.billing.test.builder.BillingFactRequestBuilder.CURRENCY;
 import static com.paytech.billing.test.builder.BillingFactRequestBuilder.ENTITY_NO;
 import static com.paytech.billing.test.builder.BillingFactRequestBuilder.LOCAL_PARTNER_ID;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Map;
 
@@ -14,12 +17,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.paytech.billing.api.enums.BillingFactStatus;
+import com.paytech.billing.api.enums.BillingFactType;
 import com.paytech.billing.api.enums.FactComponentType;
 import com.paytech.billing.api.enums.FactLineDirection;
 import com.paytech.billing.api.enums.FactOriginType;
 import com.paytech.billing.api.enums.FactPartyRole;
 import com.paytech.billing.api.enums.FactRefType;
 import com.paytech.billing.api.fact.BillingFactPayload;
+import com.paytech.billing.api.fact.BillingFactRefPayload;
 import com.paytech.billing.core.enums.FactTargetBucket;
 import com.paytech.billing.service.handler.BillingFactRecordedHandler;
 import com.paytech.billing.test.base.AbstractBillingFactApiTest;
@@ -30,13 +35,20 @@ import com.paytech.foundation.compensation.api.CompensationHandlerResult;
 
 /**
  * BillingFactRecordedHandler 入口：直接以补偿任务输入调用真实 Handler，发布到真实本地 Broker
- * <li>载荷含 refs、lines（含 targetBucket）、businessTime 与 balanceAvailableTime；信封聚合类型 BILLING_FACT。</li>
+ * <li>载荷含 refs（CHANNEL_TRANSACTION_REF 带渠道外部交易号两项）、lines（含 targetBucket）、businessTime 与 balanceAvailableTime；
+ * 信封聚合类型 BILLING_FACT。</li>
  * <li>补偿重试（确认后、删除前崩溃）再次发布同一 eventId，published_at 保持首次确认时间。</li>
  * <li>事实未批准、版本不符或事件键格式非法为终态失败，不发布。</li>
  *
  * @see BillingFactRecordedHandler#handle(CompensationEvent)
  */
 class BillingFactRecordedHandlerTest extends AbstractBillingFactApiTest {
+    /** 渠道外部交易号类型（Payment 渠道交易引用类型目录，billing 不持有该枚举）。 */
+    private static final String EXTERNAL_REFERENCE_TYPE = "PAY";
+
+    /** 渠道外部交易号。 */
+    private static final String EXTERNAL_TRANSACTION_ID = "NI-TXN-0001";
+
     @Autowired
     private BillingFactRecordedHandler handler;
 
@@ -74,6 +86,38 @@ class BillingFactRecordedHandlerTest extends AbstractBillingFactApiTest {
             () -> assertEquals(FactTargetBucket.AVAILABLE.getCode(), payload.getLines().get(0).getTargetBucket()),
             () -> assertNull(payload.getLines().get(1).getTargetBucket()),
             () -> assertNull(envelope.payloadText("balanceAvailableTime")));
+    }
+
+    /**
+     * 自动事实的渠道交易引用：CHANNEL_TRANSACTION_REF 的外部交易号类型与交易号原样进入载荷，其他引用两项为 JSON null
+     * <li>人工登记不允许该引用类型，前置数据模拟后续自动事实切片登记的 APPROVED PAYMENT。</li>
+     */
+    @Test
+    void test_payloadCarriesChannelTransactionRef() {
+        long factId = 2_200_001L;
+        testMapper.insertBillingFact(factId, BillingFactType.PAYMENT.getCode(), FactOriginType.AUTO.getCode(),
+            "SRC-" + factId, Long.valueOf(CLIENT_ID), ENTITY_NO, null, null, CURRENCY,
+            BillingFactStatus.APPROVED.getCode(), 1, null);
+        testMapper.insertBillingFactRef(2_200_101L, factId, FactRefType.ORDER.getCode(), "ORD-1");
+        testMapper.insertBillingFactRef(2_200_102L, factId, FactRefType.CHANNEL_TRANSACTION_REF.getCode(), "7300001",
+            EXTERNAL_REFERENCE_TYPE, EXTERNAL_TRANSACTION_ID);
+        testMapper.insertRuleLine(2_200_011L, factId, 1, FactComponentType.CHANNEL_COST.getCode(),
+            FactPartyRole.OPERATING_ENTITY.getCode(), ENTITY_NO, FactPartyRole.CHANNEL.getCode(), CHANNEL_ID,
+            new BigDecimal("100"), new BigDecimal("0.0045"), new BigDecimal("0.45"), new BigDecimal("0.45"), FactLineDirection.CHARGE.getCode(), null, null, null, null);
+
+        CompensationHandlerResult result = handler.handle(event(key(factId, 1)));
+
+        BillingFactEnvelopeChecker envelope = events.awaitEnvelope(factId).envelope(factId, 1, instanceId).payloadShape();
+        BillingFactRefPayload channelRef = envelope.payload().getRefs().get(0);
+        BillingFactRefPayload orderRef = envelope.payload().getRefs().get(1);
+        assertAll(() -> assertEquals(CompensationHandlerResult.success(), result),
+            () -> assertEquals(FactRefType.CHANNEL_TRANSACTION_REF.getCode(), channelRef.getRefType()),
+            () -> assertEquals("7300001", channelRef.getRefId()),
+            () -> assertEquals(EXTERNAL_REFERENCE_TYPE, channelRef.getExternalReferenceType()),
+            () -> assertEquals(EXTERNAL_TRANSACTION_ID, channelRef.getExternalTransactionId()),
+            () -> assertEquals(FactRefType.ORDER.getCode(), orderRef.getRefType()),
+            () -> assertNull(orderRef.getExternalReferenceType()),
+            () -> assertNull(orderRef.getExternalTransactionId()));
     }
 
     /** 事实头带余额到期时间：Payload 的 balanceAvailableTime 为 UTC RFC 3339 字符串，并按 billing-api 载荷类反序列化为同一时刻。 */

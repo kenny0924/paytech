@@ -4,7 +4,8 @@
     "EMAIL_ADDRESS_V1": { "tokenMode": "STABLE" },
     "PHONE_E164_V1": { "tokenMode": "STABLE" },
     "PAYMENT_CARD_DEK": { "tokenMode": "REFERENCE" },
-    "CHANNEL_ACCOUNT_CONFIG_V1": { "tokenMode": "REFERENCE" }
+    "CHANNEL_ACCOUNT_CONFIG_V1": { "tokenMode": "REFERENCE" },
+    "CASH_ACCOUNT_NUMBER_V1": { "tokenMode": "REFERENCE" }
   },
   "rules": [
     { "callerService": "platform-support-service", "action": "PROTECT", "dataType": "EMAIL_ADDRESS_V1", "purposes": ["PLATFORM_LOGIN_EMAIL_V1"] },
@@ -20,6 +21,7 @@
     { "callerService": "card-service", "action": "PROTECT", "dataType": "PAYMENT_CARD_DEK", "purposes": ["CARD_STORAGE"] },
     { "callerService": "card-service", "action": "REVEAL", "dataType": "PAYMENT_CARD_DEK", "purposes": ["CARD_USE"] },
     { "callerService": "channel-connector-service", "action": "REVEAL", "dataType": "CHANNEL_ACCOUNT_CONFIG_V1", "purposes": ["CHANNEL_EXECUTION"] },
-    { "callerService": "channel-connector-service", "action": "PROTECT", "dataType": "CHANNEL_ACCOUNT_CONFIG_V1", "purposes": ["CHANNEL_CONFIGURATION"] }
+    { "callerService": "channel-connector-service", "action": "PROTECT", "dataType": "CHANNEL_ACCOUNT_CONFIG_V1", "purposes": ["CHANNEL_CONFIGURATION"] },
+    { "callerService": "reconciliation-service", "action": "PROTECT", "dataType": "CASH_ACCOUNT_NUMBER_V1", "purposes": ["RECON_CASH_ACCOUNT"] }
   ]
 }

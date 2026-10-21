@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- t_channel_statement：渠道账单，只读写 mor_reconciliation。 -->
+<mapper namespace="com.paytech.reconciliation.core.dal.mapper.ChannelStatementMapper">
+    <sql id="columns">id, clearing_account_id, channel_batch_ref, revision, settlement_date, currency, gross_amount, fee_amount, net_amount, cash_direction, declared_line_count, imported_line_count, file_name, file_content_hash, reject_reason, status, cash_confirmed_amount, reconciled_time, maker_id, version, create_time, update_time</sql>
+
+    <insert id="insert">
+        INSERT INTO t_channel_statement (<include refid="columns"/>)
+        VALUES (#{id}, #{clearingAccountId}, #{channelBatchRef}, #{revision}, #{settlementDate}, #{currency}, #{grossAmount}, #{feeAmount}, #{netAmount}, #{cashDirection}, #{declaredLineCount}, #{importedLineCount}, #{fileName}, #{fileContentHash}, #{rejectReason}, #{status}, #{cashConfirmedAmount}, #{reconciledTime}, #{makerId}, #{version}, #{createTime}, #{updateTime})
+    </insert>
+
+    <select id="selectById" resultType="com.paytech.reconciliation.core.dal.dataobject.ChannelStatement">
+        SELECT <include refid="columns"/> FROM t_channel_statement WHERE id = #{id}
+    </select>
+
+    <select id="selectByIds" resultType="com.paytech.reconciliation.core.dal.dataobject.ChannelStatement">
+        SELECT <include refid="columns"/> FROM t_channel_statement WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY id
+    </select>
+
+    <select id="selectByBatch" resultType="com.paytech.reconciliation.core.dal.dataobject.ChannelStatement">
+        SELECT <include refid="columns"/> FROM t_channel_statement
+        WHERE clearing_account_id = #{clearingAccountId} AND channel_batch_ref = #{channelBatchRef} ORDER BY revision
+    </select>
+
+    <sql id="pageWhere">
+        <where>
+            <if test="clearingAccountId != null">AND clearing_account_id = #{clearingAccountId}</if>
+            <if test="channelBatchRef != null">AND channel_batch_ref = #{channelBatchRef}</if>
+            <if test="status != null">AND status = #{status}</if>
+            <if test="settlementDateFrom != null">AND settlement_date &gt;= #{settlementDateFrom}</if>
+            <if test="settlementDateTo != null">AND settlement_date &lt;= #{settlementDateTo}</if>
+        </where>
+    </sql>
+
+    <select id="selectPage" resultType="com.paytech.reconciliation.core.dal.dataobject.ChannelStatement">
+        SELECT <include refid="columns"/> FROM t_channel_statement <include refid="pageWhere"/>
+        ORDER BY settlement_date DESC, id DESC LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="long">
+        SELECT COUNT(*) FROM t_channel_statement <include refid="pageWhere"/>
+    </select>
+
+    <update id="updateImportedLineCount">
+        UPDATE t_channel_statement
+        SET imported_line_count = #{importedLineCount}, version = version + 1, update_time = #{now}
+        WHERE id = #{record.id} AND version = #{record.version} AND status = 'RECEIVING'
+    </update>
+
+    <update id="changeStatus">
+        UPDATE t_channel_statement
+        SET status = #{status}, reject_reason = #{rejectReason}, reconciled_time = #{reconciledTime}, version = version + 1, update_time = #{now}
+        WHERE id = #{record.id} AND version = #{record.version} AND status = #{record.status}
+    </update>
+
+    <update id="updateCashConfirmed">
+        UPDATE t_channel_statement
+        SET cash_confirmed_amount = #{cashConfirmedAmount}, status = #{status}, version = version + 1, update_time = #{now}
+        WHERE id = #{record.id} AND version = #{record.version}
+    </update>
+    <select id="sumInTransit" resultType="com.paytech.reconciliation.domain.view.ReconSummaryView$StatementTotal">
+        SELECT status, COUNT(*) AS statement_count,
+            SUM(CASE cash_direction WHEN 'CREDIT' THEN net_amount WHEN 'DEBIT' THEN -net_amount ELSE 0 END) AS signed_net_amount,
+            SUM(cash_confirmed_amount) AS cash_confirmed_amount
+        FROM t_channel_statement
+        WHERE currency = #{currency} AND status IN ('MATCHING', 'RECONCILED')
+        <if test="entityNo != null">
+            AND clearing_account_id IN (SELECT c.id FROM t_clearing_account c WHERE c.entity_no = #{entityNo})
+        </if>
+        GROUP BY status
+        ORDER BY status
+    </select>
+</mapper>

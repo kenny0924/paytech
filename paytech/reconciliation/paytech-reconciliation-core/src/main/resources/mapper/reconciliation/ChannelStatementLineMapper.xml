@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- t_channel_statement_line：渠道账单行，只读写 mor_reconciliation。 -->
+<mapper namespace="com.paytech.reconciliation.core.dal.mapper.ChannelStatementLineMapper">
+    <sql id="columns">id, statement_id, clearing_account_id, line_no, line_type, direction, amount, fee_amount, reference_type, external_transaction_id, transaction_date, raw_attributes, platform_txn_id, match_method, matched_time, actual_fee, resolution_id, match_status, version, create_time, update_time</sql>
+
+    <sql id="lineColumns">l.id, l.statement_id, l.clearing_account_id, l.line_no, l.line_type, l.direction, l.amount, l.fee_amount, l.reference_type, l.external_transaction_id, l.transaction_date, l.raw_attributes, l.platform_txn_id, l.match_method, l.matched_time, l.actual_fee, l.resolution_id, l.match_status, l.version, l.create_time, l.update_time</sql>
+
+    <insert id="insertBatch">
+        INSERT INTO t_channel_statement_line (<include refid="columns"/>) VALUES
+        <foreach collection="records" item="r" separator=",">(#{r.id}, #{r.statementId}, #{r.clearingAccountId}, #{r.lineNo}, #{r.lineType}, #{r.direction}, #{r.amount}, #{r.feeAmount}, #{r.referenceType}, #{r.externalTransactionId}, #{r.transactionDate}, #{r.rawAttributes}, #{r.platformTxnId}, #{r.matchMethod}, #{r.matchedTime}, #{r.actualFee}, #{r.resolutionId}, #{r.matchStatus}, #{r.version}, #{r.createTime}, #{r.updateTime})</foreach>
+    </insert>
+
+    <select id="selectById" resultType="com.paytech.reconciliation.core.dal.dataobject.ChannelStatementLine">
+        SELECT <include refid="columns"/> FROM t_channel_statement_line WHERE id = #{id}
+    </select>
+
+    <select id="selectByStatementAndLineNos" resultType="com.paytech.reconciliation.core.dal.dataobject.ChannelStatementLine">
+        SELECT <include refid="columns"/> FROM t_channel_statement_line WHERE statement_id = #{statementId} AND line_no IN
+        <foreach collection="lineNos" item="lineNo" open="(" separator="," close=")">#{lineNo}</foreach>
+        ORDER BY line_no
+    </select>
+
+    <select id="selectByStatement" resultType="com.paytech.reconciliation.core.dal.dataobject.ChannelStatementLine">
+        SELECT <include refid="columns"/> FROM t_channel_statement_line WHERE statement_id = #{statementId} ORDER BY line_no
+    </select>
+
+    <select id="selectByReference" resultType="com.paytech.reconciliation.core.dal.dataobject.ChannelStatementLine">
+        SELECT <include refid="columns"/> FROM t_channel_statement_line
+        WHERE clearing_account_id = #{clearingAccountId} AND reference_type = #{referenceType} AND external_transaction_id = #{externalTransactionId}
+        ORDER BY id
+    </select>
+
+    <select id="selectByReferences" resultType="com.paytech.reconciliation.core.dal.dataobject.ChannelStatementLine">
+        SELECT <include refid="columns"/> FROM t_channel_statement_line
+        WHERE (clearing_account_id, reference_type, external_transaction_id) IN
+        <foreach collection="references" item="r" open="(" separator="," close=")">(#{clearingAccountId}, #{r.referenceType}, #{r.externalTransactionId})</foreach>
+        ORDER BY id
+    </select>
+
+    <select id="selectByPlatformTxn" resultType="com.paytech.reconciliation.core.dal.dataobject.ChannelStatementLine">
+        SELECT <include refid="columns"/> FROM t_channel_statement_line WHERE platform_txn_id = #{platformTxnId} ORDER BY id
+    </select>
+
+    <select id="selectUnmatchedCreatedBefore" resultType="com.paytech.reconciliation.core.dal.dataobject.ChannelStatementLine">
+        SELECT <include refid="columns"/> FROM t_channel_statement_line
+        WHERE clearing_account_id = #{clearingAccountId} AND match_status = 'UNMATCHED' AND create_time &lt; #{createdBefore}
+        ORDER BY create_time, id LIMIT #{limit}
+    </select>
+
+    <select id="selectWaitExpired" resultType="com.paytech.reconciliation.core.dal.dataobject.ChannelStatementLine">
+        SELECT <include refid="lineColumns"/> FROM t_channel_statement_line l
+        JOIN t_channel_statement s ON s.id = l.statement_id AND s.status = 'MATCHING'
+        WHERE l.clearing_account_id = #{clearingAccountId} AND l.match_status = 'UNMATCHED'
+          AND l.line_type IN ('PAYMENT', 'REFUND', 'CHARGEBACK') AND l.create_time &lt; #{createdBefore}
+        ORDER BY l.create_time, l.id LIMIT #{limit}
+    </select>
+
+    <sql id="pageWhere">
+        <where>
+            <if test="statementId != null">AND statement_id = #{statementId}</if>
+            <if test="matchStatus != null">AND match_status = #{matchStatus}</if>
+            <if test="lineType != null">AND line_type = #{lineType}</if>
+        </where>
+    </sql>
+
+    <select id="selectPage" resultType="com.paytech.reconciliation.core.dal.dataobject.ChannelStatementLine">
+        SELECT <include refid="columns"/> FROM t_channel_statement_line <include refid="pageWhere"/>
+        ORDER BY statement_id, line_no LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="long">
+        SELECT COUNT(*) FROM t_channel_statement_line <include refid="pageWhere"/>
+    </select>
+
+    <update id="updateMatch">
+        UPDATE t_channel_statement_line
+        SET platform_txn_id = #{platformTxnId}, match_method = #{matchMethod}, matched_time = #{matchedTime}, actual_fee = #{actualFee}, resolution_id = #{resolutionId}, match_status = #{matchStatus}, version = version + 1, update_time = #{now}
+        WHERE id = #{record.id} AND version = #{record.version}
+    </update>
+
+    <!-- 匹配任务批量写回：VALUES 行构造器逐行带目标值，按 id + version 条件更新；id IN 让外层走主键范围。 -->
+    <update id="updateMatchBatch">
+        UPDATE t_channel_statement_line l
+        JOIN (VALUES
+        <foreach collection="changes" item="c" separator=",">ROW(#{c.record.id}, #{c.record.version}, #{c.platformTxnId}, #{c.matchMethod}, #{c.matchedTime}, #{c.actualFee}, #{c.resolutionId}, #{c.matchStatus})</foreach>
+        ) AS v (id, version, platform_txn_id, match_method, matched_time, actual_fee, resolution_id, match_status)
+          ON l.id = v.id AND l.version = v.version
+        SET l.platform_txn_id = v.platform_txn_id, l.match_method = v.match_method, l.matched_time = v.matched_time, l.actual_fee = v.actual_fee, l.resolution_id = v.resolution_id, l.match_status = v.match_status, l.version = l.version + 1, l.update_time = #{now}
+        WHERE l.id IN <foreach collection="changes" item="c" open="(" separator="," close=")">#{c.record.id}</foreach>
+    </update>
+</mapper>

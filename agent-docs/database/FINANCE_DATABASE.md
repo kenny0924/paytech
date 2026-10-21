@@ -399,6 +399,8 @@ available_cash = bank_cash_account.net_balance - active_payout_cash - active_tax
 
 ### 4.5 Channel 应收、银行账户与对账
 
+> **2026-10-20 取代：** 本节由 [对账决定](../decisions/2026-10-20-reconciliation-facts-via-billing.md) 取代（历史内容保留，不再作为实现依据）：对账只认定事实、以四类事件交给 billing，不生成 `CHANNEL_BATCH_SETTLEMENT`、`CHANNEL_BANK_MATCH`、`LATE_DEBIT` Journal，处置不挂 Instruction；`mor_reconciliation` 改为 13 张业务表 + 2 张消息去重表，现行物理模型为 `paytech/reconciliation/docs/database/reconciliation.pdma.json`（Schema `paytech/reconciliation/docs/database/sql/reconciliation-schema.sql`），详细设计见 `design-discuss/reconciliation/design.md`。两层对账分离、批次对平门禁、同一流水累计不超额、净额不跨清算账户等规则继续成立。
+
 | 表 | 用途 | 关键字段 | 唯一、检查与并发约束 |
 |---|---|---|---|
 | `channel_account` | OE 下 Channel/MID/币种清算账户 | `channel_id`、`mid_id`、`operating_entity_id`、`currency`、`status` | `uk_channel_acct(channel_id,mid_id,operating_entity_id,currency)` 与 `uk_channel_mid_currency(mid_id,currency)`；同一 Payment MID/币种在 Finance 只能有一个清算账户，应用还必须逐值校验该 MID 的 Channel 与 OE，不能通过改变 Channel/OE 复制同一 MID；V1 统一按单一净现金腿处理，不暴露无法由当前模型表达的 GROSS 双腿模式；未来若 Channel 真正提供独立 Gross Credit 与 Fee Debit，再增加明确的多现金腿模型 |
@@ -642,6 +644,8 @@ stateDiagram-v2
 `POSTED` 后禁止回退。更正创建新 Instruction 和 Reversal/Adjustment Journal。
 
 ### 6.2 Channel 应收与银行匹配
+
+> **2026-10-20 取代：** 本节状态机由 [对账决定](../decisions/2026-10-20-reconciliation-facts-via-billing.md) 取代（历史内容保留）：平台流水、渠道账单、银行流水、预期银行流水、银行匹配、对账异常与处置的现行状态与枚举见 `design-discuss/reconciliation/design.md` 第 7 节与 `paytech/reconciliation/docs/database/reconciliation.pdma.json`。
 
 ```mermaid
 stateDiagram-v2

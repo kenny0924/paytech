@@ -15,7 +15,7 @@
     <packaging>pom</packaging>
 
     <name>PayTech Reconciliation</name>
-    <description>Reconciliation service aggregator: Finance channel clearing accounts and channel / bank reconciliation schema (moved from finance-service, step 07).</description>
+    <description>Reconciliation service aggregator: channel clearing accounts, platform transactions, channel statements, bank statements, expected bank movements, exceptions and resolutions (2026-10-20 slice 1).</description>
 
     <modules>
         <module>paytech-reconciliation-api</module>
@@ -44,16 +44,12 @@
                                         <!-- No other service's core/app; cross-service calls go through *-api only (D09). -->
                                         <exclude>com.paytech:*-core</exclude>
                                         <exclude>com.paytech:*-app</exclude>
-                                        <!-- Finance bans copied verbatim (09 §1.4); AMQP / compensation-event reopen for account and ledger in step 11. -->
+                                        <!-- Finance bans copied from 09 §1.4. The 2026-10-20 reconciliation slice 1 (REQ technique 2.8) reopens AMQP,
+                                             RabbitMQ, compensation-event, XXL-Job and Nacos discovery / config: reconciliation consumes
+                                             BillingFactRecorded, publishes its four events through paytech-messaging, runs the line wait
+                                             expiry job and calls channel-connector and Vault through service discovery. -->
                                         <exclude>org.flywaydb:*</exclude>
                                         <exclude>org.liquibase:*</exclude>
-                                        <exclude>com.alibaba.cloud:*</exclude>
-                                        <exclude>com.alibaba.nacos:*</exclude>
-                                        <exclude>org.springframework.amqp:*</exclude>
-                                        <exclude>com.rabbitmq:*</exclude>
-                                        <exclude>com.xuxueli:*</exclude>
-                                        <exclude>com.paytech:paytech-compensation-event</exclude>
-                                        <exclude>com.paytech:paytech-xxl-job-starter</exclude>
                                         <exclude>org.springframework:spring-webflux</exclude>
                                         <exclude>org.springframework.cloud:spring-cloud-starter-gateway*</exclude>
                                         <exclude>org.springframework.cloud:spring-cloud-starter-openfeign</exclude>

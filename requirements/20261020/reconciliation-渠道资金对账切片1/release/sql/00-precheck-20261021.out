@@ -1,0 +1,58 @@
+-- 2026-10-21 阶段 6 在 mor-test 执行 sql/00-precheck.sql 的输出（只读，root）
++-------------------------+----+
+| k                       | v  |
++-------------------------+----+
+| recon_tables            | 18 |
+| recon_new_table_present |  0 |
++-------------------------+----+
++-----------------------------+---+
+| t                           | n |
++-----------------------------+---+
+| t_bank_recon_match          | 0 |
+| t_bank_statement            | 0 |
+| t_bank_statement_item       | 0 |
+| t_cash_account              | 0 |
+| t_cash_account_binding      | 0 |
+| t_cash_account_binding_ver  | 0 |
+| t_channel_account           | 0 |
+| t_channel_cost_alloc        | 0 |
+| t_channel_cost_confirm      | 0 |
+| t_channel_debit_item        | 0 |
+| t_channel_open_item         | 0 |
+| t_channel_settle_batch      | 0 |
+| t_channel_settle_item       | 0 |
+| t_channel_transaction_match | 0 |
+| t_compensation_event        | 0 |
+| t_duplicate_capture_item    | 0 |
+| t_recon_exception           | 0 |
+| t_recon_resolution          | 0 |
++-----------------------------+---+
++-------------------------+---+
+| k                       | v |
++-------------------------+---+
+| billing_ref_columns     | 5 |
+| billing_ref_new_columns | 0 |
+| billing_ref_rows        | 0 |
++-------------------------+---+
++---------------------------+----+
+| t                         | n  |
++---------------------------+----+
+| permission                |  0 |
+| role_permission           |  0 |
+| console_resource          |  0 |
+| gateway_route             |  0 |
+| route_header              |  0 |
+| query_param               |  0 |
+| guard_rule                |  0 |
+| finance_menu_97301_active |  1 |
+| gateway_target_1          |  1 |
+| platform_admin_version    | 37 |
++---------------------------+----+
++--------------------------+------+
+| k                        | v    |
++--------------------------+------+
+| vault_data_type          |    0 |
+| vault_access_rule        |    0 |
+| vault_policy_change      |    0 |
+| vault_policy_version_max |   17 |
++--------------------------+------+

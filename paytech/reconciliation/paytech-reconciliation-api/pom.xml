@@ -15,9 +15,21 @@
     <packaging>jar</packaging>
 
     <name>PayTech Reconciliation API</name>
-    <description>Reconciliation HTTP contracts, request/response DTOs and shared codes; no core or Foundation starter.</description>
+    <description>Reconciliation @HttpExchange contracts, request/response DTOs, stable code enums and MQ event payloads; no core or Foundation starter.</description>
 
     <dependencies>
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-common-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
