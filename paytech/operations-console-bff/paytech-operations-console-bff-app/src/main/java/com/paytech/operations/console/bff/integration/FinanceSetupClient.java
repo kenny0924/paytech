@@ -14,7 +14,6 @@ import com.paytech.operations.console.bff.service.model.FinanceSetupModels.Creat
 import com.paytech.operations.console.bff.service.model.FinanceSetupModels.CreateFinanceEntityResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceSetupModels.CreateFiscalCalendarRequestBody;
 import com.paytech.operations.console.bff.service.model.FinanceSetupModels.CreateFiscalCalendarResponseBody;
-import com.paytech.operations.console.bff.service.model.FinanceSetupModels.CurrencyListResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceSetupModels.FinanceEntityResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceSetupModels.FiscalCalendarResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceSetupModels.OpenAccountingPeriodResponseBody;
@@ -173,12 +172,4 @@ public interface FinanceSetupClient {
      */
     PagingResponseBody<ChartAccountChangeResponseBody> listChartAccountChanges(String chartCode, String chartAccountId,
         int page, int size);
-
-    /**
-     * 币种列表
-     *
-     * @param status 可选状态
-     * @return 币种列表
-     */
-    CurrencyListResponseBody listCurrencies(String status);
 }

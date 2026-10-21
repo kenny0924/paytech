@@ -43,10 +43,10 @@ class CurrencySpecQueryApiTest extends MockTestBase {
     void setUpCurrencySpecs() {
         currencies.assertReady();
         currencies.currency("JPY", 0, CurrencySpecStatus.ACTIVE, NOW);
-        currencies.currency("XTS", 2, CurrencySpecStatus.INACTIVE, NOW);
+        currencies.currency("XTS", 2, CurrencySpecStatus.INACTIVE, 3, NOW);
     }
 
-    /** 全部规则按币种代码升序，字段与表列一致，停用规则同样返回。 */
+    /** 全部规则按币种代码升序，字段（含乐观并发版本）与表列一致，停用规则同样返回。 */
     @Test
     void test_normalFlow() {
         var body = get(PATH).assertOk().as(CurrencySpecListResponseBody.class);
@@ -56,8 +56,10 @@ class CurrencySpecQueryApiTest extends MockTestBase {
         assertAll(() -> assertEquals(0, jpy.getMinorUnit()),
             () -> assertEquals(CurrencyRoundingMode.HALF_UP.getCode(), jpy.getRoundingMode()),
             () -> assertEquals(CurrencySpecStatus.ACTIVE.getCode(), jpy.getStatus()),
+            () -> assertEquals(1, jpy.getVersion()),
             () -> assertEquals(NOW.toString(), jpy.getUpdateTime()),
-            () -> assertEquals(CurrencySpecStatus.INACTIVE.getCode(), body.getItems().get(2).getStatus()));
+            () -> assertEquals(CurrencySpecStatus.INACTIVE.getCode(), body.getItems().get(2).getStatus()),
+            () -> assertEquals(3, body.getItems().get(2).getVersion()));
     }
 
     /** 按币种代码查询单条规则：人工初始化的 USD 种子。 */
@@ -67,7 +69,8 @@ class CurrencySpecQueryApiTest extends MockTestBase {
 
         assertAll(() -> assertEquals("USD", usd.getCurrency()), () -> assertEquals(2, usd.getMinorUnit()),
             () -> assertEquals(CurrencyRoundingMode.HALF_UP.getCode(), usd.getRoundingMode()),
-            () -> assertEquals(CurrencySpecStatus.ACTIVE.getCode(), usd.getStatus()));
+            () -> assertEquals(CurrencySpecStatus.ACTIVE.getCode(), usd.getStatus()),
+            () -> assertEquals(1, usd.getVersion()));
     }
 
     /** 未登记的币种：404。 */

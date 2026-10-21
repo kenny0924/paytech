@@ -17,7 +17,8 @@ import org.w3c.dom.NodeList;
 /**
  * 在默认 Maven 测试中保护 billing-service 的模块集合、依赖清单与已批准的基础设施范围（Redis 资源锁、Snowflake 与 MyBatis）
  * <li>由 FinanceModuleBoundaryTest 按服务拆分（design/09 §2.7）；跨服务依赖图规则由 ArchitectureAutoTest（R1–R12）检查。</li>
- * <li>BillingFactRecorded 由补偿 Handler 经 paytech-messaging 发布到 RabbitMQ；Nacos 与 Mockito 不得进入 classpath。</li>
+ * <li>BillingFactRecorded 由补偿 Handler 经 paytech-messaging 发布到 RabbitMQ；币种快照经 paytech-http-client-support 读取 platform-support；
+ * Nacos 与 Mockito 不得进入 classpath。</li>
  *
  * @see com.paytech.billing.BillingApplication
  */
@@ -43,7 +44,8 @@ class BillingModuleBoundaryTest {
         Set<String> app = values(readPom("paytech-billing-app"),
             "/project/dependencies/dependency[groupId='com.paytech']/artifactId");
         Assertions.assertEquals(Set.of("paytech-billing-api", "paytech-billing-core", "paytech-redis-starter", "paytech-snowflake-id",
-                "paytech-mybatis-support", "paytech-mvc-web-starter", "paytech-compensation-event", "paytech-messaging"), app);
+                "paytech-mybatis-support", "paytech-mvc-web-starter", "paytech-compensation-event", "paytech-messaging",
+                "paytech-http-client-support"), app);
     }
 
     @Test

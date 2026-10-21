@@ -17,7 +17,7 @@
 | `t_billing_fact_line_link` | 冲回 / 调整行到原行的链接与封顶 | 改名，结构不变 |
 | `t_channel_cost_plan` / `_ver` / `_scope` / `_component` | 渠道成本配置（Maker-Checker） | **迁出 billing** 到渠道 Owner（design.md Q12）；billing 只经命中接口取组件并冻结在行证据 |
 | `t_business_calendar` / `t_business_calendar_day` | 工作日日历只读副本 | **新增** |
-| `t_currency_spec` | 币种只读副本 | 不变 |
+| `t_currency_spec` | 币种只读副本 | **已删除**（2026-10-20 需求 platform-support-币种主数据维护与读取缓存）：改读 Platform 并放进程内全量快照 |
 | `t_consumed_event` / `t_consumed_aggregate_version` | 消息消费幂等（标准表） | **新增** |
 | `t_compensation_event` | 本地补偿事件 | 不变 |
 
@@ -124,7 +124,7 @@
 
 - **`t_billing_fact_line_link`**：`source_line_id`、`target_line_id`、`link_type`（`REVERSAL` / `ADJUSTMENT`）、`linked_amount`；唯一 `(source_line_id, target_line_id, link_type)`。冲回行累计 ≤ 原行 `posted_amount`。
 - **渠道成本四表**：随 Q12 迁到渠道 Owner，本库不再有；到期自动切换由新 Owner 的 Job 做。
-- **`t_business_calendar`**（`calendar_code` PK、`display_name`、`timezone`、`status`）与 **`t_business_calendar_day`**（`calendar_code`、`calendar_date`、`day_type` WORKING / NON_WORKING；唯一 `(calendar_code, calendar_date)`）：只登记例外日，默认周一至周五为工作日。Owner 建议为平台参考数据，billing 只读副本（同币种，D41）。
+- **`t_business_calendar`**（`calendar_code` PK、`display_name`、`timezone`、`status`）与 **`t_business_calendar_day`**（`calendar_code`、`calendar_date`、`day_type` WORKING / NON_WORKING；唯一 `(calendar_code, calendar_date)`）：只登记例外日，默认周一至周五为工作日。Owner 建议为平台参考数据，billing 只读副本（D41；币种副本已于 2026-10-20 取消，改读 Platform 快照）。
 - **消息两表**：逐字复用 `messaging-consumed-event.sql`。
 
 ## 6a. 枚举目录（精简版，2026-10-19）
@@ -144,10 +144,10 @@
 | `FactTargetBucket`（新，billing-core） | `t_billing_fact_line.target_bucket` | `PENDING`、`AVAILABLE` | 仅人工调整行；为空按 `AVAILABLE` |
 | `LineLinkType` | `t_billing_fact_line_link.link_type` | `REVERSAL`、`ADJUSTMENT` | 不变 |
 | `CalendarDayType`（新） | `t_business_calendar_day.day_type` | `WORKING`、`NON_WORKING` | 例外日 |
-| `CalendarStatus`（新） | `t_business_calendar.status` | `ACTIVE`、`INACTIVE` | 与币种表同形 |
-| `RoundingMode`（证据内） | `source_evidence.roundingMode`、`t_currency_spec.rounding_mode` | `HALF_UP` | 固定一个值 |
+| `CalendarStatus`（新） | `t_business_calendar.status` | `ACTIVE`、`INACTIVE` | 与 Platform 币种状态同形 |
+| `RoundingMode`（证据内） | `source_evidence.roundingMode`；Platform 币种规则 `roundingMode` | `HALF_UP` | 固定一个值 |
 | `CalculationMethod`（证据内） | `source_evidence.calculationMethod` | `PERCENTAGE`、`FIXED`、`TIERED_WHOLE_BASE`、`TIERED_PROGRESSIVE`、`PASS_THROUGH` | 规则行必填；`PASS_THROUGH` 用于税额、实际成本等直接取值 |
-| `CurrencySpecStatus` | `t_currency_spec.status` | `ACTIVE`、`INACTIVE` | 平台副本，不变 |
+| `CurrencySpecStatus` | Platform 币种规则 `status`（本库无列） | `DRAFT`、`ACTIVE`、`INACTIVE` | 取自 `paytech-platform-support-api`；登记接受 ACTIVE 或 INACTIVE |
 
 代码级常量（不落库）：事件 `BillingFactRecorded`（原 `EconomicFactRecorded`）、聚合类型 `BILLING_FACT`、Schema 版本 1、补偿事件类型 `BILLING_FACT_RECORDED`、`source_evidence.schemaVersion = 1`。
 
@@ -160,7 +160,7 @@
 3. 替代事实与被替代事实同 `client_id`、`entity_no`、`currency`；被替代事实 `APPROVED → SUPERSEDED` 与批准同事务。
 4. 每种 `fact_type` 的必填 `ref_type` 集合与标准行集合由代码目录约束；PAYMENT：`gross = CLIENT_PRINCIPAL + CLIENT_FEE + SELLER_TAX`，有合作伙伴时 `PARTNER_SHARE` 与 `PLATFORM_SERVICE_CHARGE` 同有同无且服务费收方 = `finance_entity_id`。
 5. 反向行必须 `link` 到原事实的同类型行并受原金额封顶。
-6. 行：`payer ≠ payee`，`posted_amount > 0`，精度 ≤ `t_currency_spec.minor_unit`。
+6. 行：`payer ≠ payee`，`posted_amount > 0`，精度 ≤ 币种规则 `minorUnit`（Platform 币种快照）。
 7. 事实内容登记后不改；只推进 `status`、`fact_version`、`checker_id`、`approved_time`、`published_at`。
 8. 不建 CHECK、外键；跨库引用只存 ID。
 

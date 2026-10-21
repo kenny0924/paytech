@@ -291,6 +291,10 @@ ps:
     execution:
       allowed-schemes: [https, http] # 只在本机 mock 允许 http，执行测试的出站地址指向本机 Mock 渠道。
       card-context-path: "" # 测试 Mock HTTP 服务以 card-service 承载读卡合同；card 本身也无 context path。
+  reference-data:
+    currency-spec:
+      lock-wait-time: 500ms # 币种规则维护的 TRY_LOCK 等待；新建、修改与启停共用 currency-spec:{currency}。
+      lock-lease-time: 30s # 资源锁租约；版本 CAS 与币种唯一索引仍为最终保护。
 # 保留正式 application.yml 的旧键清单；当前 Properties 消费 ps.access-control。
 api-scope:
   management:

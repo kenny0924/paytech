@@ -330,30 +330,5 @@
       "total": 2
     },
     "routeCode": "operations-finance-chart-account-change-list"
-  },
-  {
-    "id": "R16",
-    "method": "GET",
-    "path": "/finance/currencies/v1",
-    "query": "?status=ACTIVE",
-    "request": null,
-    "status": 200,
-    "response": {
-      "items": [
-        {
-          "currency": "AED",
-          "minorUnit": 2,
-          "roundingMode": "HALF_EVEN",
-          "status": "ACTIVE"
-        },
-        {
-          "currency": "USD",
-          "minorUnit": 2,
-          "roundingMode": "HALF_EVEN",
-          "status": "ACTIVE"
-        }
-      ]
-    },
-    "routeCode": "operations-finance-currency-list"
   }
 ]

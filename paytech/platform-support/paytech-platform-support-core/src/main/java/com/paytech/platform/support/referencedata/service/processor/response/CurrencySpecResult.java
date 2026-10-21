@@ -26,12 +26,15 @@ public class CurrencySpecResult {
     /** 状态。 */
     private final CurrencySpecStatus status;
 
+    /** 乐观并发版本。 */
+    private final int version;
+
     /** 最后更新时间（UTC）。 */
     private final Instant updateTime;
 
     /** 由本模块 DataObject 构造。 */
     public static CurrencySpecResult of(CurrencySpec spec) {
         return new CurrencySpecResult(spec.getCurrency(), spec.getMinorUnit(), spec.getRoundingMode(),
-            spec.getStatus(), spec.getUpdateTime());
+            spec.getStatus(), spec.getVersion(), spec.getUpdateTime());
     }
 }

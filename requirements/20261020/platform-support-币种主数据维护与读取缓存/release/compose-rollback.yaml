@@ -1,0 +1,20 @@
+# 币种主数据维护与读取缓存：mor-test 回滚覆盖文件（2026-10-21 04:0xZ 阶段 6 只读核对时的运行镜像）。
+# 用法同 compose-candidate.yaml，只传本文件：
+#   ./test-environment/compose.sh -f "$PWD/requirements/20261020/platform-support-币种主数据维护与读取缓存/release/compose-rollback.yaml" \
+#     up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 只钉镜像；environment 回到主文件（旧 ledger / billing 读本库副本，不读 *_PLATFORM_SERVICE_URL，多出的变量无害）。
+# 前提：mor_ledger / mor_billing 的 t_currency_spec 副本还在（删除是最后一步）；删除之后回滚须先按 sql/90、91 回退段重建副本。
+# 阶段 7 执行前须再核对一次运行镜像；若与下列不同（他人已替换），以执行前的运行镜像为准并改本文件，候选包也要在新基线上重建。
+services:
+  platform-support-service:
+    image: sha256:79e33d43a2c3d4e64ac8e2a95109f46b86b8a1beeba6ba987e5d2f9b8f7de3b1  # mor-test/platform-support-service:recon-slice1-20261021（JAR 51c153676e54da98）
+  operations-console-bff:
+    image: sha256:9520a54538277ce7f4b90bca1f61712bbbce3559601d20b17697e028709e8971  # mor-test/operations-console-bff:recon-slice1-20261021（JAR d3db3584e2113511）
+    environment:
+      OPERATIONS_RECONCILIATION_BASE_URL: http://reconciliation-service:18115  # 对账切片 1 覆盖项，回滚时同样保留
+  ledger-service:
+    image: sha256:b84f8f97a1ec740fbd0b08bdb11463516acfde301f3afbd20dc32dbc3b10a294  # mor-test/ledger-service:recon-slice1-20261021（JAR b984c18bd2cd2d27）
+  billing-service:
+    image: sha256:b773d2cdb7a8077ecac181619093d2466cd05172810ecc83060174349a42dc2f  # mor-test/billing-service:recon-slice1-20261021（JAR 5a70aaaaf0b9adb2）
+  operations-console-web:
+    image: sha256:139c157e50fa117524080e47a950fe322879255423e4d06af76dd51106a1b99a  # mor-test/operations-console-web:capability-20261021e（商务 03:58Z 发布）

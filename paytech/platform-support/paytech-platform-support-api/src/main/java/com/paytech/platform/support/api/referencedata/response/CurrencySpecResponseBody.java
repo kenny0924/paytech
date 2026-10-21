@@ -33,6 +33,12 @@ public class CurrencySpecResponseBody {
     private String status;
 
     /**
+     * 乐观并发版本
+     * <li>正整数；维护接口按此版本校验并发修改。</li>
+     */
+    private int version;
+
+    /**
      * 最后更新时间
      * <li>UTC ISO-8601，微秒精度。</li>
      */

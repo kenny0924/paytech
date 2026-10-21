@@ -40,7 +40,6 @@ import com.paytech.ledger.core.enums.TrialBalanceStatus;
 import com.paytech.ledger.core.enums.TrialExceptionStatus;
 import com.paytech.ledger.core.enums.TrialExceptionType;
 import com.paytech.ledger.core.enums.TrialReferenceType;
-import com.paytech.platform.support.api.enums.CurrencySpecStatus;
 
 /**
  * 会计服务（ledger-service） MyBatis 装配
@@ -92,7 +91,6 @@ public class LedgerPersistenceConfiguration {
             registry.register(TrialExceptionType.class, new CodeEnumTypeHandler<>(TrialExceptionType.class));
             registry.register(TrialExceptionStatus.class, new CodeEnumTypeHandler<>(TrialExceptionStatus.class));
             registry.register(TrialBalanceStatus.class, new CodeEnumTypeHandler<>(TrialBalanceStatus.class));
-            registry.register(CurrencySpecStatus.class, new CodeEnumTypeHandler<>(CurrencySpecStatus.class));
         };
     }
 }

@@ -1,0 +1,235 @@
+{
+  "results": [
+    {
+      "page": "登录",
+      "ok": true,
+      "note": "管理员登录"
+    },
+    {
+      "page": "平台配置/币种",
+      "ok": true,
+      "note": "USD 行：USD\t2\t四舍五入（HALF_UP）\t启用\t2026/10/18 17:35:43\t 停 用，新建按钮可见，USD 停用入口可见"
+    },
+    {
+      "page": "对账/clearing-accounts",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "对账/cash-accounts",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "对账/statements",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "对账/platform-txns",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "对账/bank",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "对账/exceptions",
+      "ok": false,
+      "note": "错误提示：! 会话恢复失败  操作过于频繁，请稍后再试。  code GATEWAY_RATE_LIMITED requestId 03c55566-6f3b-4a26-bd02-392f3451d1a4 复制错误信息"
+    },
+    {
+      "page": "对账/summary",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "商务/agreements",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "商务/pricing-profiles",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "商务/terms",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "商务/templates",
+      "ok": false,
+      "note": "错误提示：! 会话恢复失败  操作过于频繁，请稍后再试。  code GATEWAY_RATE_LIMITED requestId dab1fa23-7da8-496f-9171-8a484482b571 复制错误信息"
+    },
+    {
+      "page": "商务/workbench",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "商务/rate-cards",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "商务/price-simulator",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "商务/catalog",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "商务/history",
+      "ok": false,
+      "note": "错误提示：! 会话恢复失败  操作过于频繁，请稍后再试。  code GATEWAY_RATE_LIMITED requestId a83d967c-90b6-4f41-974c-fb5aecc2a32f 复制错误信息"
+    },
+    {
+      "page": "财务/setup",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "财务/ledger",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "财务/balances",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "财务/subledger",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "财务/adjustments",
+      "ok": false,
+      "note": "错误提示：! 会话恢复失败  操作过于频繁，请稍后再试。  code GATEWAY_RATE_LIMITED requestId e7816404-23ed-415d-8df4-eccdca1960b7 复制错误信息"
+    },
+    {
+      "page": "财务/period-close",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "财务/accounting-rules",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "渠道/channels",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "渠道/mids",
+      "ok": true,
+      "note": "渲染正常"
+    },
+    {
+      "page": "渠道/cost-plans",
+      "ok": false,
+      "note": "错误提示：! 会话恢复失败  操作过于频繁，请稍后再试。  code GATEWAY_RATE_LIMITED requestId 68a0c671-4bc3-42e4-8109-89e4a1582e2f 复制错误信息"
+    }
+  ],
+  "consoleErrors": [
+    [
+      "/finance/reconciliation/exceptions",
+      "error",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+    ],
+    [
+      "/commercial/templates",
+      "error",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+    ],
+    [
+      "/commercial/history",
+      "error",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+    ],
+    [
+      "/finance/adjustments",
+      "error",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+    ],
+    [
+      "/channel/cost-plans",
+      "error",
+      "Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+    ]
+  ],
+  "consoleWarnings": [],
+  "knownSpinTip": 0,
+  "network": [
+    [
+      "/finance/reconciliation/exceptions",
+      429,
+      "GET",
+      "http://localhost:28080/api/operations/auth/v1/context"
+    ],
+    [
+      "/commercial/templates",
+      429,
+      "GET",
+      "http://localhost:28080/api/operations/auth/v1/context"
+    ],
+    [
+      "/commercial/history",
+      429,
+      "GET",
+      "http://localhost:28080/api/operations/auth/v1/context"
+    ],
+    [
+      "/finance/adjustments",
+      429,
+      "GET",
+      "http://localhost:28080/api/operations/auth/v1/context"
+    ],
+    [
+      "/channel/cost-plans",
+      429,
+      "GET",
+      "http://localhost:28080/api/operations/auth/v1/context"
+    ]
+  ],
+  "shots": [
+    "p01-currency-specs.png",
+    "r01-clearing-accounts.png",
+    "r02-cash-accounts.png",
+    "r03-statements.png",
+    "r04-platform-txns.png",
+    "r05-bank.png",
+    "r06-exceptions.png",
+    "r07-summary.png",
+    "c01-agreements.png",
+    "c02-pricing-profiles.png",
+    "c03-terms.png",
+    "c04-templates.png",
+    "c05-workbench.png",
+    "c06-rate-cards.png",
+    "c07-price-simulator.png",
+    "c08-catalog.png",
+    "c09-history.png",
+    "f01-setup.png",
+    "f02-ledger.png",
+    "f03-balances.png",
+    "f04-subledger.png",
+    "f05-adjustments.png",
+    "f06-period-close.png",
+    "f07-accounting-rules.png",
+    "ch01-channels.png",
+    "ch02-mids.png",
+    "ch03-cost-plans.png"
+  ],
+  "menu": []
+}

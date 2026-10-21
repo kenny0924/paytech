@@ -25,15 +25,15 @@ import com.paytech.billing.core.constant.BillingLocks;
 import com.paytech.billing.core.dal.dataobject.BillingFact;
 import com.paytech.billing.core.dal.dataobject.BillingFactLine;
 import com.paytech.billing.core.dal.dataobject.BillingFactRef;
-import com.paytech.billing.core.dal.dataobject.CurrencySpec;
 import com.paytech.billing.core.enums.BillingCodes;
 import com.paytech.billing.core.enums.FactTargetBucket;
 import com.paytech.billing.domain.BillingFactContext;
 import com.paytech.billing.domain.BillingFactPayloads;
+import com.paytech.billing.domain.CurrencyRule;
 import com.paytech.billing.domain.view.BillingFactView;
 import com.paytech.billing.domainservice.repository.BillingFactRepository;
-import com.paytech.billing.domainservice.repository.CurrencySpecRepository;
 import com.paytech.billing.domainservice.service.BillingFactService;
+import com.paytech.billing.domainservice.service.CurrencyRuleService;
 import com.paytech.billing.domainservice.validator.fact.BillingFactInvariants;
 import com.paytech.billing.service.processor.request.SubmitBillingFactRequest;
 import com.paytech.billing.service.processor.response.SubmitBillingFactResponse;
@@ -42,7 +42,6 @@ import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
-import com.paytech.platform.support.api.enums.CurrencySpecStatus;
 
 import lombok.AllArgsConstructor;
 
@@ -50,7 +49,7 @@ import lombok.AllArgsConstructor;
  * Maker 提交人工或成本调整计费事实（originType = MANUAL，DRAFT）
  * <li>业务唯一身份为 sourceSystem + sourceReference：同内容重复提交返回原事实，不同内容拒绝；与同一来源引用的提交共用资源锁并持续等待，
  * 来源唯一键为最终防线。</li>
- * <li>新提交：币种在只读副本中为 ACTIVE 且金额不超过币种精度；目录约束与登记不变量按 {@link BillingFactInvariants}；COST_ADJUSTMENT 的
+ * <li>新提交：币种在 Platform 币种快照中启用过（ACTIVE 或 INACTIVE，停用只拦新用途，Q2/Q7）且金额不超过币种精度；目录约束与登记不变量按 {@link BillingFactInvariants}；COST_ADJUSTMENT 的
  * 来源事实是同 OE、同币种的已批准 PAYMENT，Client 取自来源事实（请求给出时必须一致）；被替代事实是同类型、同 Client、同 OE、同币种的
  * 已批准事实。</li>
  * <li>事实头、引用与全部明细行在同一本地事务写入，business_time 暂写提交时间（批准时覆盖）；本入口没有外部调用，也不登记事件
@@ -63,8 +62,8 @@ public class SubmitBillingFactProcessor
     private final Clock clock;
     private final IdGenerator idGenerator;
     private final BillingFactService billingFactService;
+    private final CurrencyRuleService currencyRuleService;
     private final BillingFactRepository billingFactRepository;
-    private final CurrencySpecRepository currencySpecRepository;
 
     /** 事实类型、引用与明细行代码只依赖输入，在加锁前按目录解析；同一引用类型至多一条。 */
     @Override
@@ -144,9 +143,9 @@ public class SubmitBillingFactProcessor
 
     /** 新提交的业务验证：币种与精度、目录约束与登记不变量、来源事实与被替代事实。 */
     BillingFactContext buildContext(BillingFact fact, List<BillingFactRef> refs, List<BillingFactLine> lines) {
-        CurrencySpec spec = getActiveCurrencySpec(fact);
-        checkAmountScales(lines, spec.getMinorUnit());
-        BillingFactContext context = new BillingFactContext(fact, refs, lines, null, spec.getMinorUnit());
+        CurrencyRule currencyRule = currencyRuleService.requireUsable(fact.getCurrency());
+        checkAmountScales(lines, currencyRule.getMinorUnit());
+        BillingFactContext context = new BillingFactContext(fact, refs, lines, null, currencyRule.getMinorUnit());
         BillingFactInvariants.checkManualRegistration(context.toPayload());
         if (fact.getParentFactId() != null) {
             checkParentFact(fact);
@@ -155,16 +154,6 @@ public class SubmitBillingFactProcessor
             checkSupersededFact(fact);
         }
         return context;
-    }
-
-    /** 事实币种在只读副本中为 ACTIVE。 */
-    CurrencySpec getActiveCurrencySpec(BillingFact fact) {
-        CurrencySpec spec = currencySpecRepository.findByCurrency(fact.getCurrency());
-        if (spec == null || spec.getStatus() != CurrencySpecStatus.ACTIVE) {
-            throw new BizCheckFailException("计费事实币种未配置或未启用: " + fact.getCurrency() + ", 来源 "
-                + fact.getSourceEventKey());
-        }
-        return spec;
     }
 
     /** 明细金额的小数位不超过币种精度，不隐式舍入；超出为 FACT_LINE_INVALID。 */

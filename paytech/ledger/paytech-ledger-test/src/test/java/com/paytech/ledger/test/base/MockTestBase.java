@@ -2,6 +2,7 @@ package com.paytech.ledger.test.base;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.time.Duration;
 
@@ -23,6 +24,8 @@ import com.paytech.foundation.testsupport.api.MockHttpServer;
 import com.paytech.foundation.testsupport.api.TestBase;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
 import com.paytech.ledger.LedgerApplication;
+import com.paytech.ledger.app.ext.job.CurrencySnapshotRefreshScheduler;
+import com.paytech.ledger.integration.platform.CurrencySpecSnapshot;
 import com.paytech.ledger.test.checker.LedgerChecker;
 import com.paytech.ledger.test.checker.LedgerResponseChecker;
 import com.paytech.ledger.test.clear.LedgerDataCleaner;
@@ -30,16 +33,20 @@ import com.paytech.ledger.test.clear.LedgerRedisCleaner;
 import com.paytech.ledger.test.configuration.LedgerTestMockConfiguration;
 import com.paytech.ledger.test.mocker.external.AccountPostingMocker;
 import com.paytech.ledger.test.mocker.external.BillingFactMocker;
+import com.paytech.ledger.test.mocker.external.CurrencySpecMocker;
 import com.paytech.ledger.test.mocker.local.LedgerMocker;
 import com.paytech.ledger.test.probe.AccountPostedPublisher;
+import com.paytech.platform.support.api.referencedata.response.CurrencySpecResponseBody;
 
 import tools.jackson.databind.ObjectMapper;
 
 /**
  * Ledger 服务级入口测试基类
  * <li>复用正式启动类 LedgerApplication 与生产组件扫描，只附加 mock Profile 与测试组件；本地 MySQL（mor_ledger）/Redis/RabbitMQ 需预先就绪。</li>
- * <li>外部依赖：account 过账进度与批次、billing 事实详情与发布进度由独立 Loopback Mock HTTP 服务返回配置的 DTO；AccountPosted 由
- * {@link AccountPostedPublisher} 扮演 account 发到真实本机 RabbitMQ，经正式消费链路处理。</li>
+ * <li>外部依赖：account 过账进度与批次、billing 事实详情与发布进度、platform-support 币种规则由独立 Loopback Mock HTTP 服务返回配置的
+ * DTO；AccountPosted 由 {@link AccountPostedPublisher} 扮演 account 发到真实本机 RabbitMQ，经正式消费链路处理。</li>
+ * <li>币种规则快照的进程内调度在测试中关闭：每例开始前配置 Platform 返回 USD 并经正式刷新入口刷新一次快照，用例需要其他币种时调用
+ * {@link #refreshCurrencies}。</li>
  * <li>{@link PartitionQueueBaselineConfiguration} 在监听容器启动前清空 ledger.account.p0..p3 与 DLQ（其他模块测试的残留消息）。</li>
  * <li>每例开始前检查空基线并清空本服务的 account 分区队列；结束时等待队列与 Mock 请求静止、检查意外调用，再由 Foundation 统一清理。</li>
  * <li>Actuator 在独立管理端口（业务端口 + 1000，测试随机），由 {@link #management(String)} 访问。</li>
@@ -90,6 +97,15 @@ public abstract class MockTestBase extends TestBase {
     protected BillingFactMocker billingFacts;
 
     @Autowired
+    protected CurrencySpecMocker currencySpecs;
+
+    @Autowired
+    protected CurrencySpecSnapshot currencySnapshot;
+
+    @Autowired
+    protected CurrencySnapshotRefreshScheduler currencySnapshotRefresher;
+
+    @Autowired
     protected MockHttpServer mockHttpServer;
 
     @Autowired
@@ -98,11 +114,16 @@ public abstract class MockTestBase extends TestBase {
     @LocalManagementPort
     private int managementPort;
 
-    /** 全局初始化：清空本服务的 account 分区队列并检查空基线，不承接上一例状态，也不删除任何业务数据。 */
+    /**
+     * 全局初始化：清空本服务的 account 分区队列并检查空基线，不承接上一例状态，也不删除任何业务数据；Platform 返回 USD 并整体刷新币种快照，
+     * 覆盖上一例留下的快照内容与刷新请求。
+     */
     @BeforeEach
     protected final void setUpGlobalMocks() {
         accountEvents.purge();
         dataCleaner.assertEmpty();
+        refreshCurrencies(CurrencySpecMocker.usd());
+        assertNotNull(currencySnapshot.find(CurrencySpecMocker.USD), "币种快照未能从 Platform Mock 加载 USD");
     }
 
     /** 等待分区队列消费完毕与 Mock 请求结束、检查意外调用后清空本服务队列，父类继续执行全部 Clear。 */
@@ -112,10 +133,17 @@ public abstract class MockTestBase extends TestBase {
             await().atMost(CONSUME_WAIT).until(() -> accountEvents.pending() == 0);
             mockHttpServer.awaitIdle();
             assertAll("检查外部 Mock 调用", accountPostings::assertNoUnexpectedCalls,
-                billingFacts::assertNoUnexpectedCalls, mockHttpServer::assertNoUnexpectedRequests);
+                billingFacts::assertNoUnexpectedCalls, currencySpecs::assertNoUnexpectedCalls,
+                mockHttpServer::assertNoUnexpectedRequests);
         } finally {
             accountEvents.purge();
         }
+    }
+
+    /** 配置 Platform 返回的全部币种规则，并经正式刷新入口立即整体替换本进程快照。 */
+    protected void refreshCurrencies(CurrencySpecResponseBody... currencies) {
+        currencySpecs.mockCurrencies(currencies);
+        currencySnapshotRefresher.refresh();
     }
 
     /** 发送内部 POST 请求。 */

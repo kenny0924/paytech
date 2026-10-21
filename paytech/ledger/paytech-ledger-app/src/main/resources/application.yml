@@ -32,7 +32,8 @@ spring:
     password: "${LEDGER_RABBITMQ_PASSWORD:}"
     virtual-host: "${LEDGER_RABBITMQ_VHOST:/mor-local}"
     connection-timeout: 2s
-  # 内部 HTTP 客户端：account 过账进度与批次（关账步骤 3、过账流追平），billing 计费事实与发布进度（AccountPosted 消费读事实、关账步骤 3）。
+  # 内部 HTTP 客户端：account 过账进度与批次（关账步骤 3、过账流追平），billing 计费事实与发布进度（AccountPosted 消费读事实、关账步骤 3），
+  # platform-support 币种规则（快照刷新，基址含 Platform Context Path /platform-support）。
   # JDK HttpClient 不自动重试；Finance 后继服务不接服务发现，基址直接配置。
   http:
     clients:
@@ -46,6 +47,11 @@ spring:
         redirects: dont-follow
       billing-service:
         base-url: "${LEDGER_BILLING_SERVICE_URL:http://127.0.0.1:18113}"
+        connect-timeout: 2s
+        read-timeout: 5s
+        redirects: dont-follow
+      platform-support-service:
+        base-url: "${LEDGER_PLATFORM_SERVICE_URL:http://127.0.0.1:18106/platform-support}"
         connect-timeout: 2s
         read-timeout: 5s
         redirects: dont-follow
@@ -100,7 +106,8 @@ management:
         liveness:
           include: livenessState
         readiness:
-          include: readinessState
+          # currencySnapshot：首次成功加载 Platform 币种规则快照前为 DOWN。
+          include: readinessState,currencySnapshot
     info:
       access: read-only
     prometheus:
@@ -111,3 +118,12 @@ ledger:
     # 部署分配的 Snowflake Region / Worker 标识，必填；每个 app 独立分配。
     region-id: "${LEDGER_SNOWFLAKE_REGION_ID}"
     worker-id: "${LEDGER_SNOWFLAKE_WORKER_ID}"
+  # Platform 币种规则进程内快照（不持本地副本，不用 Caffeine）：启动后立即加载，未加载或有刷新请求时每个检查周期回源，
+  # 就绪后按刷新间隔全量刷新；刷新失败保留上一份快照。
+  currency-snapshot:
+    # 是否开启进程内调度；关闭时只能经刷新入口手动触发（自动测试）。
+    scheduling-enabled: true
+    # 检查周期（固定延迟）。
+    check-interval: PT5S
+    # 就绪后的全量刷新间隔。
+    refresh-interval: PT60S

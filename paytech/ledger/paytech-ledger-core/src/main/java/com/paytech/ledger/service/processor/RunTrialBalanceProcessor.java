@@ -12,8 +12,8 @@ import com.paytech.ledger.core.dal.dataobject.TrialBalanceRun;
 import com.paytech.ledger.core.enums.PeriodStatus;
 import com.paytech.ledger.domain.TrialBalanceContext;
 import com.paytech.ledger.domain.view.TrialBalanceRunView;
-import com.paytech.ledger.domainservice.repository.CurrencySpecRepository;
 import com.paytech.ledger.domainservice.repository.FiscalCalendarRepository;
+import com.paytech.ledger.domainservice.service.CurrencyRuleService;
 import com.paytech.ledger.domainservice.service.TrialBalanceService;
 import com.paytech.ledger.service.processor.request.RunTrialBalanceRequest;
 
@@ -27,8 +27,8 @@ import lombok.AllArgsConstructor;
 @Component
 @AllArgsConstructor
 public class RunTrialBalanceProcessor extends AbstractLockProcessor<RunTrialBalanceRequest, TrialBalanceRunView> {
+    private final CurrencyRuleService currencyRuleService;
     private final TrialBalanceService trialBalanceService;
-    private final CurrencySpecRepository currencySpecRepository;
     private final FiscalCalendarRepository fiscalCalendarRepository;
 
     /** 同一账簿期间的试算共用资源锁，未取得立即返回并发冲突。 */
@@ -42,7 +42,7 @@ public class RunTrialBalanceProcessor extends AbstractLockProcessor<RunTrialBala
         LedgerBook book = trialBalanceService.getBook(request.getLedgerBookId());
         AccountingPeriod period = trialBalanceService.getPeriod(request.getPeriodId());
         checkPeriod(book, period);
-        int minorUnit = currencySpecRepository.findByCurrency(book.getCurrency()).getMinorUnit();
+        int minorUnit = currencyRuleService.requireUsable(book.getCurrency()).getMinorUnit();
         TrialBalanceContext context = new TrialBalanceContext(book, period, minorUnit);
         trialBalanceService.run(context);
         return response(context);

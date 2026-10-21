@@ -167,7 +167,13 @@ public sealed interface OperationsAuditFact permits OperationsAuditFact.Outcome,
         TEST_RESULT,
 
         /** 通知发送账号测试收件邮箱的 SHA-256 摘要。 */
-        TEST_RECIPIENT_DIGEST
+        TEST_RECIPIENT_DIGEST,
+
+        /** 币种最小货币单位位数。 */
+        MINOR_UNIT,
+
+        /** 币种金额舍入方式。 */
+        ROUNDING_MODE
     }
 
     /** 集合使用规范化指纹，防止完整子集合突破既有审计属性容量。 */

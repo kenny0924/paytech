@@ -24,7 +24,8 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
- * 浏览器经真实 BFF 与 HttpExchange 转发账务基础资料的 15 个端点（R01—R07、R14—R16、科目维护 L1—L5）；ledger 由 Loopback Simulator 承担
+ * 浏览器经真实 BFF 与 HttpExchange 转发账务基础资料的 14 个端点（R01—R07、R14—R15、科目维护 L1—L5）；ledger 由 Loopback Simulator 承担
+ * <li>R16 币种下拉改读 Platform，见 {@link CurrencySpecBrowserAutoTest}。</li>
  *
  * @see FinanceSetupController
  * @author Claude
@@ -206,7 +207,7 @@ class FinanceSetupBrowserAutoTest extends FinanceBrowserAutoTestBase {
         assertRejectedLocally(400, ledger, send(update, "", postingChange, true));
     }
 
-    /** 分页回执与请求不一致、命令回执身份不一致或缺主键时视为上游无效响应 502；上游多出字段不投影。 */
+    /** 分页回执与请求不一致、命令回执身份不一致或缺主键时视为上游无效响应 502。 */
     @Test
     void test_invalidUpstreamResponse() throws Exception {
         var list = row(BOUNDARY, "R01");
@@ -256,15 +257,6 @@ class FinanceSetupBrowserAutoTest extends FinanceBrowserAutoTestBase {
         ((ObjectNode) foreignChange.path("items").get(1)).put("chartAccountId", "7312345678901238999");
         ledger.reply("GET", ownerPath(changes), 200, JSON.writeValueAsString(foreignChange));
         assertEquals(502, send(changes).statusCode());
-
-        resetBetweenCalls();
-        var currencies = row(BOUNDARY, "R16");
-        var extra = (ObjectNode) currencies.path("response").deepCopy();
-        ((ObjectNode) extra.path("items").get(0)).put("internalNote", "OWNER-ONLY-CANARY");
-        ledger.reply("GET", ownerPath(currencies), 200, JSON.writeValueAsString(extra));
-        var response = send(currencies);
-        assertEquals(200, response.statusCode(), response.body());
-        assertEquals(currencies.path("response"), JSON.readTree(response.body()));
     }
 
     /** ledger 读取超时映射 504 DEPENDENCY_TIMEOUT，不外露地址。 */

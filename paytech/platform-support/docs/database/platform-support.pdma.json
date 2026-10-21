@@ -33264,7 +33264,7 @@
       },
       "defKey": "t_currency_spec",
       "defName": "币种规则",
-      "comment": "保存全平台使用的 ISO 4217 币种精度、舍入方式和启停状态；Platform 为 Owner，Ledger 与 Billing 持只读副本。",
+      "comment": "保存全平台使用的 ISO 4217 币种精度、舍入方式和启停状态；Platform 唯一持有，ledger、billing 经内部 HTTP 读取并在进程内缓存快照。",
       "properties": {
         "logicalTableKey": "currency_spec",
         "compositeForeignKeys": []
@@ -33521,6 +33521,24 @@
           "extProps": {},
           "domain": "",
           "id": "C106688E-A8E8-5CD8-BB29-8E6D69B8296F"
+        },
+        {
+          "defKey": "version",
+          "defName": "并发版本",
+          "comment": "币种规则乐观并发版本，从 1 开始，每次维护成功加一。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "1",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "8F2E409C-EED5-5CEA-B44F-53A64316EDB8"
         },
         {
           "defKey": "create_time",

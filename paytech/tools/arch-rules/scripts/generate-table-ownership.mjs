@@ -71,6 +71,10 @@ const stepRemovedTables = [
       't_channel_cost_alloc', 't_cash_account_binding', 't_cash_account_binding_ver', 't_bank_statement_item',
       't_bank_recon_match'],
   },
+  // 2026-10-20 currency spec snapshot read (decision 2026-10-20-currency-spec-platform-snapshot-read): ledger and billing
+  // drop their read-only t_currency_spec copies and read Platform into an in-process snapshot instead.
+  { service: 'ledger', database: 'mor_ledger', tables: ['t_currency_spec'] },
+  { service: 'billing', database: 'mor_billing', tables: ['t_currency_spec'] },
 ];
 // Tables introduced by a refactor step's approved design on top of design 03 §2 (not part of the §4.2 count).
 const stepAddedTables = [
@@ -113,8 +117,8 @@ const stepAddedTables = [
     tables: ['t_owner_account', 't_account_posting_stream', 't_account_posting', 't_account_entry',
       't_balance_applied_fact', 't_balance_movement', 't_owner_account_no_sequence'],
   },
-  // 2026-10-19 billing fact model refactor (REQ technique 2.3): mor_billing holds 11 tables - five billing fact tables,
-  // the business calendar copy, the Foundation consume-idempotency pair, t_currency_spec and t_compensation_event.
+  // 2026-10-19 billing fact model refactor (REQ technique 2.3): mor_billing holds five billing fact tables, the business
+  // calendar copy, the Foundation consume-idempotency pair and t_compensation_event (t_currency_spec dropped 2026-10-20).
   {
     service: 'billing',
     database: 'mor_billing',
@@ -171,7 +175,7 @@ for (const line of lines.slice(sectionStart, sectionEnd)) {
     continue;
   }
   if (table === 't_currency_spec') {
-    // Owner platform-support; read-only copies in mor_ledger and mor_billing (design 03 §3).
+    // Owner platform-support; design 03 §3 copies in mor_ledger and mor_billing are step-removed on 2026-10-20.
     add('platform-support', 'mor_platform', table);
     add('ledger', 'mor_ledger', table);
     add('billing', 'mor_billing', table);

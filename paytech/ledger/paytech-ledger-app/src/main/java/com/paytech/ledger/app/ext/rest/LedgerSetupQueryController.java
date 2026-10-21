@@ -9,7 +9,6 @@ import com.paytech.ledger.api.response.AccountingPeriodResponseBody;
 import com.paytech.ledger.api.response.ChartAccountChangeResponseBody;
 import com.paytech.ledger.api.response.ChartAccountListResponseBody;
 import com.paytech.ledger.api.response.ChartOfAccountsListResponseBody;
-import com.paytech.ledger.api.response.CurrencyListResponseBody;
 import com.paytech.ledger.api.response.FinanceEntityResponseBody;
 import com.paytech.ledger.api.response.FiscalCalendarResponseBody;
 import com.paytech.ledger.app.ext.rest.converter.ChartOfAccountsConverter;
@@ -73,11 +72,5 @@ public class LedgerSetupQueryController implements LedgerSetupQueryApi {
         return ledgerQueryService.pageChartAccountChanges(chartCode,
             chartAccountId == null ? null : Long.valueOf(chartAccountId), PagingRequestBody.of(page, size))
             .map(chartConverter::toResponseBody);
-    }
-
-    /** 查询币种规则。 */
-    @Override
-    public CurrencyListResponseBody listCurrencies(String status) {
-        return converter.toCurrenciesResponseBody(ledgerQueryService.listCurrencies(converter.toCurrencyStatus(status)));
     }
 }

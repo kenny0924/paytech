@@ -1,24 +1,12 @@
 -- ledger-service Mock 测试环境准备（管理员手工执行；应用与测试从不自动执行）。
 -- 测试复用仓库 local-environment 的 MySQL；账号与 application-mock.yml 一致，只授予本库最小 DML 权限（design/10 §4.2）。
--- 已有库和账号不删除、不重置。表结构逐字取自 paytech/ledger/docs/database/sql/ledger-schema.sql 的全部 33 张表。
+-- 已有库和账号不删除、不重置。表结构逐字取自 paytech/ledger/docs/database/sql/ledger-schema.sql 的全部 32 张表。
 -- 保留行逐字取自 paytech/ledger/docs/database/sql/ledger-initial-data.sql（测试只删除 ID ≥ 1,000,000 的行）。
 CREATE DATABASE IF NOT EXISTS mor_ledger DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 CREATE USER IF NOT EXISTS 'ledger_app'@'%' IDENTIFIED BY '05a148d75d6913440f13b66dd4f793519923433100eb1d0a';
 GRANT SELECT, INSERT, UPDATE, DELETE ON mor_ledger.* TO 'ledger_app'@'%';
 USE mor_ledger;
 SET NAMES utf8mb4;
-
-CREATE TABLE `t_currency_spec` (
-  `id` BIGINT NOT NULL COMMENT '服务侧生成的币种规则 Snowflake 主键。',
-  `currency` CHAR(3) NOT NULL COMMENT 'ISO 4217 三位币种代码。取值来源：ISO 4217 币种代码；非固定枚举。',
-  `minor_unit` TINYINT NOT NULL COMMENT '记账与结算金额允许保留的小数位数，取值范围为零至八。',
-  `rounding_mode` VARCHAR(64) NOT NULL COMMENT '金额从八位计算精度归整到币种精度时采用的固定方式。允许值：HALF_UP。',
-  `status` VARCHAR(64) NOT NULL COMMENT '币种规则当前是否允许被新业务使用。允许值：DRAFT、ACTIVE、INACTIVE。',
-  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
-  `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_currency` (`currency`) COMMENT '保证业务唯一性：currency'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='只读副本，Owner platform-support（D41）：保存 Finance 使用的 ISO 4217 币种精度、舍入方式和启停状态；ledger 与 billing 各持一份，不在本服务写入。';
 
 CREATE TABLE `t_chart_of_accounts` (
   `id` BIGINT NOT NULL COMMENT '服务侧生成的会计科目表 Snowflake 主键。',
@@ -562,9 +550,6 @@ CREATE TABLE `t_consumed_aggregate_version` (
   `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最近一次持久化更新的 UTC 微秒精度时间。',
   PRIMARY KEY (`aggregate_type`, `aggregate_id`)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='已消费聚合版本：paytech-messaging 消费端按聚合记录已处理的最大版本，用于判定乱序、重放与缺口（design/08 §4）；列、类型与主键与 messaging-consumed-event.sql 一致。';
-
-INSERT INTO `t_currency_spec` (`id`, `currency`, `minor_unit`, `rounding_mode`, `status`, `create_time`, `update_time`)
-VALUES (1001, 'USD', 2, 'HALF_UP', 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6));
 
 INSERT INTO `t_chart_of_accounts` (`id`, `chart_code`, `chart_name`, `status`, `create_time`, `update_time`)
 VALUES (2001, 'STANDARD', 'Code-MoR 标准会计科目表', 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6));

@@ -1,8 +1,8 @@
 -- Code-MoR Ledger initialization DML (moved from finance-service finance-initial-data.sql, step 07).
 -- Apply manually to mor_ledger after ledger-schema.sql; the application and auto tests never execute this file.
--- t_currency_spec is a read-only copy owned by platform-support (D41); its USD row is copied verbatim from
--- paytech/platform-support/docs/database/sql/platform-support-initial-data.sql.
--- Contents: USD currency rule, the standard chart of accounts as a three-level tree (19 + 26 summary + 29 posting accounts),
+-- Currency rules are not stored here: since 2026-10-20 ledger reads them from platform-support (in-memory snapshot) and
+-- t_currency_spec was dropped (sql/changes/2026-10-20-drop-currency-spec-copy.sql).
+-- Contents: the standard chart of accounts as a three-level tree (19 + 26 summary + 29 posting accounts),
 -- the period-close transfer rules of every REVENUE/EXPENSE leaf account, and the STANDARD_TRANSACTION
 -- automatic posting rule bundle version 1, plus (step 11b) the STANDARD_ADJUSTMENT rule bundle version 1 that posts
 -- MANUAL_ADJUSTMENT and COST_ADJUSTMENT economic facts by payer / payee role
@@ -11,9 +11,6 @@
 -- control-account lines come from account posting entries (AccountPosted). Fixed IDs are reserved below 1,000,000 and never
 -- produced by the Snowflake generator. Re-running fails on primary/unique keys by design.
 SET NAMES utf8mb4;
-
-INSERT INTO `t_currency_spec` (`id`, `currency`, `minor_unit`, `rounding_mode`, `status`, `create_time`, `update_time`)
-VALUES (1001, 'USD', 2, 'HALF_UP', 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6));
 
 INSERT INTO `t_chart_of_accounts` (`id`, `chart_code`, `chart_name`, `status`, `create_time`, `update_time`)
 VALUES (2001, 'STANDARD', 'Code-MoR 标准会计科目表', 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6));

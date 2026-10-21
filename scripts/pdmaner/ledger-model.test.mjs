@@ -22,10 +22,10 @@ function relationKey(entity, relation) {
   return `${entity.defKey}.${child.defKey} -> ${parent.defKey}.${parentField.defKey}`;
 }
 
-test("ledger tables match the schema file and keep 33 tables", () => {
+test("ledger tables match the schema file and keep 32 tables", () => {
   const schemaTables = [...schema.matchAll(/^CREATE TABLE `(\w+)`/gmu)].map((match) => match[1]);
   assert.deepEqual(model.entities.map((entity) => entity.defKey), schemaTables);
-  assert.equal(model.entities.length, 33);
+  assert.equal(model.entities.length, 32);
   assert.equal(model.dbConn.length, 0, "模型不得保存数据库连接");
 });
 

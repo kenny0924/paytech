@@ -3,8 +3,9 @@
 > **2026-10-17 第 07 步服务切分：** Finance 逻辑模型（84 表）仍由 `scripts/pdmaner/finance/` 确定性生成并在内存校验，不再提交单一
 > `finance.pdma.json`；按 [design/03 表归属](../../../../requirements/20261017/architecture-V2骨架与模块搬迁/design/03-module-and-table-ownership.md)
 > 投影为 ledger（29）、account（1）、billing（9）、reconciliation（18）、tax（24）、payout（8）六个服务库模型，各自位于
-> `paytech/<svc>/docs/database/<svc>.pdma.json`，Schema 由同一模型生成。`t_compensation_event` 每库一份，`t_currency_spec` 为
-> platform-support 的只读副本（ledger 与 billing 各一份），`t_command_idempotency` 删除。经济事实三表更名为 `t_economic_fact`、
+> `paytech/<svc>/docs/database/<svc>.pdma.json`，Schema 由同一模型生成。`t_compensation_event` 每库一份，`t_currency_spec` 当时为
+> platform-support 的只读副本（ledger 与 billing 各一份；2026-10-20 起删除，两服务改为读取 Platform 币种规则的进程内快照，见
+> [币种主数据维护与读取缓存](../../../../requirements/20261020/platform-support-币种主数据维护与读取缓存/technique.md)），`t_command_idempotency` 删除。经济事实三表更名为 `t_economic_fact`、
 > `t_economic_fact_line`、`t_economic_fact_line_link`（`fact_type` 原名 `economics_type` 并增加 `MANUAL_ADJUSTMENT`，新增
 > `supersedes_fact_id`、`status`），`t_accounting_instruction.transaction_economics_id` 更名 `economic_fact_id`；跨服务关系只保留在逻辑模型。
 > 下表为逻辑模型统计；本页其余正文中的旧表名按上述更名理解。

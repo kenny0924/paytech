@@ -608,6 +608,8 @@ services:
       LEDGER_SNOWFLAKE_WORKER_ID: "23"
       LEDGER_ACCOUNT_SERVICE_URL: http://account-service:18114
       LEDGER_BILLING_SERVICE_URL: http://billing-service:18113
+      # 币种规则进程内快照：启动加载、每 60 秒刷新 GET /platform/v1/currency-specs；首次加载成功前就绪探针 DOWN（20261020 币种主数据）。
+      LEDGER_PLATFORM_SERVICE_URL: http://platform-support-service:18106/platform-support
       # 规则版本到时生效执行器：任务 accountingRuleVersionActivation 在 xxl-job-admin 登记（20261020 记账规则包维护）。
       XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
       XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
@@ -622,6 +624,7 @@ services:
       redis: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
       nacos: { condition: service_healthy }
+      platform-support-service: { condition: service_healthy }
     healthcheck:
       test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:19105/actuator/health/readiness]
       interval: 10s
@@ -659,6 +662,8 @@ services:
       BILLING_SNOWFLAKE_WORKER_ID: "30"
       BILLING_COMPENSATION_INSTANCE_ID: billing-test
       PAYTECH_INSTANCE_ID: billing-test
+      # 币种规则进程内快照：启动加载、每 60 秒刷新 GET /platform/v1/currency-specs；首次加载成功前就绪探针 DOWN（20261020 币种主数据）。
+      BILLING_PLATFORM_SERVICE_URL: http://platform-support-service:18106/platform-support
       # 补偿扫描执行器：任务 compensationEventScan 在 xxl-job-admin 登记（20261018 任务卡 03）。
       XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
       XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
@@ -673,6 +678,7 @@ services:
       redis: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
       nacos: { condition: service_healthy }
+      platform-support-service: { condition: service_healthy }
     healthcheck:
       test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:19113/actuator/health/readiness]
       interval: 10s

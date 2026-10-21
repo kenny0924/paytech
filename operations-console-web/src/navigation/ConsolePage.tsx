@@ -25,6 +25,7 @@ const pages: Record<PageComponentKey, ComponentType<PageProps>> = {
   OPERATIONS_TENANT_ACCESS: lazy(() => import('../pages/TenantAccess').then(m => ({ default: m.TenantAccess }))),
   OPERATIONS_API_SCOPES: lazy(() => import('../pages/ApiScopes').then(m => ({ default: m.ApiScopes }))),
   OPERATIONS_PERMISSIONS: lazy(() => import('../pages/Permissions').then(m => ({ default: m.Permissions }))),
+  OPERATIONS_CURRENCY_SPECS: lazy(() => import('../pages/CurrencySpecs').then(m => ({ default: m.CurrencySpecs }))),
   OPERATIONS_EXTERNAL_STANDARD_APIS: lazy(() => import('../pages/ExternalStandardApis').then(m => ({ default: m.ExternalStandardApis }))),
   OPERATIONS_EXTERNAL_INTEGRATIONS: lazy(() => import('../pages/ExternalIntegrations').then(m => ({ default: m.ExternalIntegrations }))),
   OPERATIONS_CLIENT_ONBOARDING_REVIEW: lazy(() => import('../pages/ClientOnboardingReview').then(m => ({ default: m.ClientOnboardingReview }))),

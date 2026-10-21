@@ -10,7 +10,6 @@ import com.paytech.ledger.api.response.AccountingPeriodResponseBody;
 import com.paytech.ledger.api.response.ChartAccountChangeResponseBody;
 import com.paytech.ledger.api.response.ChartAccountListResponseBody;
 import com.paytech.ledger.api.response.ChartOfAccountsListResponseBody;
-import com.paytech.ledger.api.response.CurrencyListResponseBody;
 import com.paytech.ledger.api.response.FinanceEntityResponseBody;
 import com.paytech.ledger.api.response.FiscalCalendarResponseBody;
 
@@ -109,14 +108,4 @@ public interface LedgerSetupQueryApi {
         @RequestParam(value = "chartAccountId", required = false) @Pattern(regexp = "[1-9][0-9]{0,18}") String chartAccountId,
         @RequestParam(value = "page", required = false) Integer page,
         @RequestParam(value = "size", required = false) Integer size);
-
-    /**
-     * 查询币种，按币种代码升序
-     *
-     * @param status 可选状态：DRAFT、ACTIVE 或 INACTIVE
-     * @return 币种列表，不分页
-     */
-    @GetExchange("/currencies/v1")
-    CurrencyListResponseBody listCurrencies(
-        @RequestParam(value = "status", required = false) @Pattern(regexp = "DRAFT|ACTIVE|INACTIVE") String status);
 }

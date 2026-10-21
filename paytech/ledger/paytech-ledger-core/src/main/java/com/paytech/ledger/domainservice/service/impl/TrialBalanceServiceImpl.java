@@ -41,7 +41,6 @@ import com.paytech.ledger.domain.view.TrialBalanceRunView;
 import com.paytech.ledger.domainservice.repository.AccountingPeriodRepository;
 import com.paytech.ledger.domainservice.repository.BookSequenceRepository;
 import com.paytech.ledger.domainservice.repository.ChartAccountRepository;
-import com.paytech.ledger.domainservice.repository.CurrencySpecRepository;
 import com.paytech.ledger.domainservice.repository.FiscalCalendarRepository;
 import com.paytech.ledger.domainservice.repository.JournalLineRepository;
 import com.paytech.ledger.domainservice.repository.LedgerBookRepository;
@@ -49,6 +48,7 @@ import com.paytech.ledger.domainservice.repository.LedgerPeriodBalanceRepository
 import com.paytech.ledger.domainservice.repository.TrialBalanceExceptionRepository;
 import com.paytech.ledger.domainservice.repository.TrialBalanceLineRepository;
 import com.paytech.ledger.domainservice.repository.TrialBalanceRunRepository;
+import com.paytech.ledger.domainservice.service.CurrencyRuleService;
 import com.paytech.ledger.domainservice.service.TrialBalanceService;
 
 import lombok.AllArgsConstructor;
@@ -66,11 +66,11 @@ public class TrialBalanceServiceImpl implements TrialBalanceService {
     private final Clock clock;
     private final IdGenerator idGenerator;
     private final TransactionTemplate transactionTemplate;
+    private final CurrencyRuleService currencyRuleService;
     private final LedgerBookRepository ledgerBookRepository;
     private final JournalLineRepository journalLineRepository;
     private final BookSequenceRepository bookSequenceRepository;
     private final ChartAccountRepository chartAccountRepository;
-    private final CurrencySpecRepository currencySpecRepository;
     private final FiscalCalendarRepository fiscalCalendarRepository;
     private final TrialBalanceRunRepository trialBalanceRunRepository;
     private final AccountingPeriodRepository accountingPeriodRepository;
@@ -342,6 +342,6 @@ public class TrialBalanceServiceImpl implements TrialBalanceService {
 
     /** 账簿币种小数位。 */
     int minorUnit(LedgerBook book) {
-        return currencySpecRepository.findByCurrency(book.getCurrency()).getMinorUnit();
+        return currencyRuleService.requireUsable(book.getCurrency()).getMinorUnit();
     }
 }

@@ -36,6 +36,18 @@ spring:
     publisher-returns: true
     template:
       mandatory: true
+  # 内部 HTTP 客户端：platform-support 币种规则（币种快照刷新，事务外）。JDK HttpClient 不自动重试；不接服务发现，基址直接配置，
+  # 含 Platform Context Path /platform-support。
+  http:
+    clients:
+      imperative:
+        factory: jdk
+    serviceclient:
+      platform-support-service:
+        base-url: "${BILLING_PLATFORM_SERVICE_URL:http://127.0.0.1:18106/platform-support}"
+        connect-timeout: 2s
+        read-timeout: 5s
+        redirects: dont-follow
 
 mybatis:
   mapper-locations: classpath*:mapper/**/*.xml
@@ -88,7 +100,8 @@ management:
         liveness:
           include: livenessState
         readiness:
-          include: readinessState
+          # 币种快照首次加载成功前不就绪（Q3）。
+          include: readinessState,currencySnapshot
     info:
       access: read-only
     prometheus:
@@ -103,3 +116,12 @@ billing:
     # 部署分配的 Snowflake Region / Worker 标识，必填；每个 app 独立分配。
     region-id: "${BILLING_SNOWFLAKE_REGION_ID}"
     worker-id: "${BILLING_SNOWFLAKE_WORKER_ID}"
+  # Platform 币种规则的进程内全量快照（技术方案 2.3）：启动即加载，未加载或业务查不到币种时按检查周期回源，就绪后按刷新间隔全量刷新；
+  # 刷新失败保留上一份快照。
+  currency-snapshot:
+    # 定时检查开关；关闭时不自动刷新（只用于自动测试），生产保持 true。
+    scheduling-enabled: true
+    # 检查周期。
+    check-interval: PT5S
+    # 就绪后的全量刷新间隔。
+    refresh-interval: PT60S

@@ -20,7 +20,6 @@ import com.paytech.billing.core.enums.CalendarStatus;
 import com.paytech.billing.core.enums.FactTargetBucket;
 import com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler;
 import com.paytech.foundation.mybatis.typehandler.InstantTypeHandler;
-import com.paytech.platform.support.api.enums.CurrencySpecStatus;
 
 /**
  * 计费服务（billing-service） MyBatis 装配
@@ -53,7 +52,6 @@ public class BillingPersistenceConfiguration {
             registry.register(LineLinkType.class, new CodeEnumTypeHandler<>(LineLinkType.class));
             registry.register(CalendarStatus.class, new CodeEnumTypeHandler<>(CalendarStatus.class));
             registry.register(CalendarDayType.class, new CodeEnumTypeHandler<>(CalendarDayType.class));
-            registry.register(CurrencySpecStatus.class, new CodeEnumTypeHandler<>(CurrencySpecStatus.class));
         };
     }
 }

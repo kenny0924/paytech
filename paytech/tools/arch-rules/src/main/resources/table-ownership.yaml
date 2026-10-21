@@ -3,7 +3,7 @@
 # 255 source tables, 17 databases, 265 physical tables.
 # Retained: platform-support mor_platform from paytech/platform-support/docs/database/sql/platform-support-schema.sql.
 # 56 retained-service tables added on top of design 03 (not part of the §4.2 count).
-# 20 step-removed tables (approved later refactors, e.g. 2026-10-19 billing fact model; applied after the §4.2 count).
+# 22 step-removed tables (approved later refactors, e.g. 2026-10-19 billing fact model; applied after the §4.2 count).
 # 42 step-added tables (approved refactor-step designs, e.g. design/05 t_card_material_ticket; not part of the §4.2 count).
 # Structure: services.<service>.<database> = tables owned (or copied / per-database infrastructure);
 # Renamed: t_transaction_economics -> t_economic_fact, t_transaction_economic_component -> t_economic_fact_line, t_transaction_economic_comp_link -> t_economic_fact_line_link, t_account -> t_ledger_account, t_payment_method_profile -> t_pricing_profile, t_payment_method_profile_cond -> t_pricing_profile_cond.
@@ -52,7 +52,6 @@ services:
       - t_compensation_event
       - t_consumed_aggregate_version
       - t_consumed_event
-      - t_currency_spec
   card:
     mor_card:
       - t_card_material_ticket
@@ -194,7 +193,6 @@ services:
       - t_close_approval
       - t_close_step
       - t_compensation_event
-      - t_currency_spec
       - t_finance_entity
       - t_fiscal_calendar
       - t_instruction_line

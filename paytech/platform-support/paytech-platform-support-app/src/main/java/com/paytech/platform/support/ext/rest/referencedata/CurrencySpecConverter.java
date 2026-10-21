@@ -38,6 +38,7 @@ public class CurrencySpecConverter {
         body.setMinorUnit(result.getMinorUnit());
         body.setRoundingMode(result.getRoundingMode().getCode());
         body.setStatus(result.getStatus().getCode());
+        body.setVersion(result.getVersion());
         body.setUpdateTime(result.getUpdateTime().toString());
         return body;
     }

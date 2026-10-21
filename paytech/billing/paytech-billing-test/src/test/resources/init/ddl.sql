@@ -1,7 +1,8 @@
 -- billing-service Mock 测试环境准备（管理员手工执行；应用与测试从不自动执行）。
 -- 测试复用仓库 local-environment 的 MySQL；账号与 application-mock.yml 一致，只授予本库最小 DML 权限（design/10 §4.2）。
--- 已有库和账号不删除、不重置。表结构逐字取自 paytech/billing/docs/database/sql/billing-schema.sql 的全部 11 张表。
--- 保留行逐字取自 paytech/billing/docs/database/sql/billing-initial-data.sql（测试只删除币种 ID ≥ 1,000,000 与非 DEFAULT 日历的行）。
+-- 已有库和账号不删除、不重置。表结构逐字取自 paytech/billing/docs/database/sql/billing-schema.sql 的全部 10 张表。
+-- 保留行逐字取自 paytech/billing/docs/database/sql/billing-initial-data.sql（测试只删除非 DEFAULT 日历的行）；币种规则由 Platform Mock 提供，
+-- 已有库按 docs/database/sql/changes/2026-10-20-drop-currency-spec-copy.sql 删除旧副本表。
 -- 由旧 9 表结构重建时，先在 mor_billing 依次执行需求 requirements/20261019/billing-计费事实模型重构与渠道成本迁出 的 db/billing/ddl.sql
 -- 与 dml.sql（DROP 旧 7 表、CREATE 新 9 表、插入日历），或删库后执行本文件。
 CREATE DATABASE IF NOT EXISTS mor_billing DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
@@ -9,18 +10,6 @@ CREATE USER IF NOT EXISTS 'billing_app'@'%' IDENTIFIED BY '92f01bf0c17cbbdc07914
 GRANT SELECT, INSERT, UPDATE, DELETE ON mor_billing.* TO 'billing_app'@'%';
 USE mor_billing;
 SET NAMES utf8mb4;
-
-CREATE TABLE `t_currency_spec` (
-  `id` BIGINT NOT NULL COMMENT '服务侧生成的币种规则 Snowflake 主键。',
-  `currency` CHAR(3) NOT NULL COMMENT 'ISO 4217 三位币种代码。取值来源：ISO 4217 币种代码；非固定枚举。',
-  `minor_unit` TINYINT NOT NULL COMMENT '记账与结算金额允许保留的小数位数，取值范围为零至八。',
-  `rounding_mode` VARCHAR(64) NOT NULL COMMENT '金额从八位计算精度归整到币种精度时采用的固定方式。允许值：HALF_UP。',
-  `status` VARCHAR(64) NOT NULL COMMENT '币种规则当前是否允许被新业务使用。允许值：DRAFT、ACTIVE、INACTIVE。',
-  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
-  `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_currency` (`currency`) COMMENT '保证业务唯一性：currency'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='只读副本，Owner platform-support（D41）：保存 Finance 使用的 ISO 4217 币种精度、舍入方式和启停状态；ledger 与 billing 各持一份，不在本服务写入。';
 
 CREATE TABLE `t_billing_fact` (
   `id` BIGINT NOT NULL COMMENT '计费事实 Snowflake 主键；BillingFactRecorded 的聚合 ID。',
@@ -194,9 +183,6 @@ CREATE TABLE `t_compensation_event` (
   KEY `idx_comp_event_ready` (`execute_status`, `next_execute_at`, `id`) COMMENT '支持访问路径：execute_status、next_execute_at、id',
   KEY `idx_comp_event_lease` (`execute_status`, `lock_until`, `id`) COMMENT '支持访问路径：execute_status、lock_until、id'
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='与本库业务事实在同一事务登记的本地可靠执行记录（paytech-compensation-event 现行模型，COMPENSATION_EVENT_GUIDE 第 3 节）；成功后删除，FAILED 保留并可受控重开';
-
-INSERT INTO `t_currency_spec` (`id`, `currency`, `minor_unit`, `rounding_mode`, `status`, `create_time`, `update_time`)
-VALUES (1001, 'USD', 2, 'HALF_UP', 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6));
 
 INSERT INTO `t_business_calendar` (`calendar_code`, `display_name`, `timezone`, `status`, `create_time`, `update_time`)
 VALUES ('DEFAULT', '默认工作日日历（周一至周五）', 'UTC', 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6));

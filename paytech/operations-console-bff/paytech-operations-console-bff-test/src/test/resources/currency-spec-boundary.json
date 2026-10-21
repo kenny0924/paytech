@@ -1,0 +1,101 @@
+[
+  {
+    "id": "C01",
+    "method": "GET",
+    "path": "/currency-admin/v1/currency-specs",
+    "ownerPath": "/platform/v1/currency-specs",
+    "query": "",
+    "routeCode": "operations-currency-spec-list",
+    "request": null,
+    "response": {
+      "items": [
+        {
+          "currency": "AED",
+          "minorUnit": 2,
+          "roundingMode": "HALF_UP",
+          "status": "DRAFT",
+          "version": 1,
+          "updateTime": "2026-10-20T01:02:03.123456Z"
+        },
+        {
+          "currency": "JPY",
+          "minorUnit": 0,
+          "roundingMode": "HALF_UP",
+          "status": "INACTIVE",
+          "version": 3,
+          "updateTime": "2026-10-20T02:03:04.654321Z"
+        },
+        {
+          "currency": "USD",
+          "minorUnit": 2,
+          "roundingMode": "HALF_UP",
+          "status": "ACTIVE",
+          "version": 2,
+          "updateTime": "2026-10-19T00:00:00.000001Z"
+        }
+      ]
+    }
+  },
+  {
+    "id": "C02",
+    "method": "POST",
+    "path": "/currency-admin/v1/currency-specs",
+    "ownerPath": "/currency-admin/v1/currency-specs",
+    "query": "",
+    "routeCode": "operations-currency-spec-create",
+    "request": {
+      "currency": "AED",
+      "minorUnit": 2,
+      "roundingMode": "HALF_UP",
+      "reason": "新增迪拉姆"
+    },
+    "response": {
+      "objectType": "CURRENCY_SPEC",
+      "objectId": "7312345678901234567",
+      "objectCode": "AED",
+      "status": "DRAFT",
+      "version": 1
+    }
+  },
+  {
+    "id": "C03",
+    "method": "PUT",
+    "path": "/currency-admin/v1/currency-specs/AED",
+    "ownerPath": "/currency-admin/v1/currency-specs/AED",
+    "query": "",
+    "routeCode": "operations-currency-spec-update",
+    "request": {
+      "minorUnit": 3,
+      "roundingMode": "HALF_UP",
+      "expectedVersion": 1,
+      "reason": "修正小数位"
+    },
+    "response": {
+      "objectType": "CURRENCY_SPEC",
+      "objectId": "7312345678901234567",
+      "objectCode": "AED",
+      "status": "DRAFT",
+      "version": 2
+    }
+  },
+  {
+    "id": "C04",
+    "method": "PATCH",
+    "path": "/currency-admin/v1/currency-specs/AED/status",
+    "ownerPath": "/currency-admin/v1/currency-specs/AED/status",
+    "query": "",
+    "routeCode": "operations-currency-spec-status",
+    "request": {
+      "status": "ACTIVE",
+      "expectedVersion": 2,
+      "reason": "核对后启用"
+    },
+    "response": {
+      "objectType": "CURRENCY_SPEC",
+      "objectId": "7312345678901234567",
+      "objectCode": "AED",
+      "status": "ACTIVE",
+      "version": 3
+    }
+  }
+]

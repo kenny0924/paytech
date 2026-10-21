@@ -5,18 +5,23 @@
 渠道成本方案 / 版本 / 范围 / 组件的配置与审批已迁至 channel-connector（需求 `requirements/20261019/billing-计费事实模型重构与渠道成本迁出`）。
 
 - spring.application.name：`billing-service`；端口 18113，管理端口 19113。
-- 数据库：`mor_billing`（11 张表）：计费事实五表 `t_billing_fact`、`t_billing_fact_ref`、`t_billing_fact_pricing`、`t_billing_fact_line`、
-  `t_billing_fact_line_link`；参考数据只读副本 `t_currency_spec`（Owner platform-support，D41）、`t_business_calendar`、
-  `t_business_calendar_day`；可靠执行与消费幂等 `t_compensation_event`、`t_consumed_event`、`t_consumed_aggregate_version`（本期无消费者）。
+- 数据库：`mor_billing`（10 张表）：计费事实五表 `t_billing_fact`、`t_billing_fact_ref`、`t_billing_fact_pricing`、`t_billing_fact_line`、
+  `t_billing_fact_line_link`；参考数据只读副本 `t_business_calendar`、`t_business_calendar_day`；可靠执行与消费幂等 `t_compensation_event`、`t_consumed_event`、`t_consumed_aggregate_version`（本期无消费者）。
 - 物理模型：[billing.pdma.json](docs/database/billing.pdma.json)，直接维护 JSON（不再由 Finance 生成器产出），门禁
-  `node --test scripts/pdmaner/billing-model.test.mjs`；Schema 与初始化 DML 在 [docs/database/sql](docs/database/sql)，本次结构变更见
-  [changes/2026-10-19-billing-fact-model.sql](docs/database/sql/changes/2026-10-19-billing-fact-model.sql)。
+  `node --test scripts/pdmaner/billing-model.test.mjs`；Schema 与初始化 DML 在 [docs/database/sql](docs/database/sql)，结构变更见
+  [changes/](docs/database/sql/changes)（最近一次：[2026-10-20-drop-currency-spec-copy.sql](docs/database/sql/changes/2026-10-20-drop-currency-spec-copy.sql)
+  删除币种副本表）。
+- 币种规则：Owner platform-support（`mor_platform.t_currency_spec`），本服务不持副本。启动后经 `CurrencySpecQueryApi`
+  （`GET /platform/v1/currency-specs`，HTTP 分组 `platform-support-service`）整体读取到进程内全量快照 `CurrencySpecSnapshot`，业务只经
+  `CurrencyRuleService.requireUsable` 读内存（可在事务内）；`CurrencySnapshotRefreshScheduler` 每 5 秒检查，未加载或业务查不到币种时回源，
+  就绪后每 60 秒全量刷新，失败保留上一份快照；首次加载成功前 readiness（`currencySnapshot`）为 DOWN。计费事实登记接受启用过（ACTIVE 或
+  INACTIVE）的币种，DRAFT 与未知币种拒绝（Q2/Q7）。
 
 | 模块 | 职责 |
 |---|---|
 | paytech-billing-api | `/billing/v1/facts` 合同：`BillingFactCommandApi`（提交、批准、作废草稿）、`BillingFactQueryApi`（按 ID、按账簿主体、发布进度、按引用、Operations 管理列表）；枚举 `BillingFactType`、`BillingFactStatus`、`FactOriginType`、`FactRefType`、`FactComponentType`、`FactPartyRole`、`FactLineDirection`、`SourceRuleType`、`LineLinkType`、`CalculationMethod`；载荷 `BillingFactPayload` / `BillingFactRefPayload` / `BillingFactLinePayload`（同时是 `BillingFactRecorded` v1 Payload） |
 | paytech-billing-core | 计费事实 Maker-Checker 登记（`SubmitBillingFactProcessor`、`ApproveBillingFactProcessor`、`VoidBillingFactProcessor`）、目录约束与登记不变量 `BillingFactInvariants`、读取 `BillingFactQueryService`、发布 Handler `BillingFactRecordedHandler`；渠道成本"组件 → 金额"纯计算器 `ChannelCostCalculator`（本期无调用方，保留给自动 PAYMENT 事实）；`BillingLocks`；包根 `com.paytech.billing` |
-| paytech-billing-app | 启动类、`BillingFactController` / `BillingFactConverter`、DataSource / MyBatis / TypeHandler、Snowflake、Redis 锁、RabbitMQ 与 `paytech-messaging` 发布端、`paytech-compensation-event` |
+| paytech-billing-app | 启动类、`BillingFactController` / `BillingFactConverter`、DataSource / MyBatis / TypeHandler、Snowflake、Redis 锁、RabbitMQ 与 `paytech-messaging` 发布端、`paytech-compensation-event`、platform-support HTTP 客户端与币种快照刷新调度 / 就绪探针 |
 | paytech-billing-test | auto 测试、清理器、`init/ddl.sql` |
 
 ## 接口
@@ -52,5 +57,6 @@ aggregateId = factId，aggregateVersion = factVersion，occurredAt = approvedTim
 
 ## 其他
 
-- `t_currency_spec` 与 `t_business_calendar*` 是只读副本，种子行（USD、DEFAULT 日历）在 `billing-initial-data.sql`；币种状态值类型取自 `paytech-platform-support-api`。
-- 运行：`BILLING_DB_*`、`BILLING_REDIS_*`、`BILLING_RABBITMQ_*`、`BILLING_SNOWFLAKE_*`、`PAYTECH_INSTANCE_ID`；测试库账号 `billing_app`，Redis 前缀 `billing-mock`，RabbitMQ 凭据取自 `local-environment/.env.local`。
+- `t_business_calendar*` 是只读副本，种子行（DEFAULT 日历）在 `billing-initial-data.sql`；币种规则与状态值类型取自 `paytech-platform-support-api`。
+- 运行：`BILLING_DB_*`、`BILLING_REDIS_*`、`BILLING_RABBITMQ_*`、`BILLING_SNOWFLAKE_*`、`BILLING_PLATFORM_SERVICE_URL`（默认
+  `http://127.0.0.1:18106/platform-support`）、`PAYTECH_INSTANCE_ID`；测试库账号 `billing_app`，Redis 前缀 `billing-mock`，RabbitMQ 凭据取自 `local-environment/.env.local`。

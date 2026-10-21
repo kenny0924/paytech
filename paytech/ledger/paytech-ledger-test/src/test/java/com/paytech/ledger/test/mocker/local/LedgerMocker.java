@@ -17,7 +17,6 @@ import com.paytech.ledger.core.dal.dataobject.AccountingRuleLine;
 import com.paytech.ledger.core.dal.dataobject.BookSequence;
 import com.paytech.ledger.core.dal.dataobject.ChartAccount;
 import com.paytech.ledger.core.dal.dataobject.ChartOfAccounts;
-import com.paytech.ledger.core.dal.dataobject.CurrencySpec;
 import com.paytech.ledger.core.dal.dataobject.FinanceEntity;
 import com.paytech.ledger.core.dal.dataobject.FiscalCalendar;
 import com.paytech.ledger.core.dal.dataobject.LedgerAccount;
@@ -41,7 +40,6 @@ import com.paytech.ledger.core.enums.NormalSide;
 import com.paytech.ledger.core.enums.PeriodStatus;
 import com.paytech.ledger.core.enums.ReferenceDataStatus;
 import com.paytech.ledger.test.dal.AccountingTestMapper;
-import com.paytech.platform.support.api.enums.CurrencySpecStatus;
 
 /**
  * 通过 Mapper 直接插入账簿、日历、期间与账户前置事实，不调用被测 HTTP 入口
@@ -201,24 +199,6 @@ public class LedgerMocker {
         entity.setUpdateTime(now());
         financeEntityMapper.insert(entity);
         return entity.getId();
-    }
-
-    /** 插入启用的测试币种规则，用于非 USD 精度场景。 */
-    public void mockCurrency(String currency, int minorUnit) {
-        mockCurrency(currency, minorUnit, CurrencySpecStatus.ACTIVE);
-    }
-
-    /** 插入指定状态的测试币种规则。 */
-    public void mockCurrency(String currency, int minorUnit, CurrencySpecStatus status) {
-        CurrencySpec spec = new CurrencySpec();
-        spec.setId(idGenerator.nextId());
-        spec.setCurrency(currency);
-        spec.setMinorUnit(minorUnit);
-        spec.setRoundingMode("HALF_UP");
-        spec.setStatus(status);
-        spec.setCreateTime(now());
-        spec.setUpdateTime(now());
-        testMapper.insertCurrencySpec(spec);
     }
 
     /** 插入指定状态的测试科目表，返回主键（Snowflake，>= 1000000）。 */

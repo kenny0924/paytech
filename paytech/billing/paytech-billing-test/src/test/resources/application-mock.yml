@@ -47,6 +47,18 @@ spring:
     publisher-returns: true
     template:
       mandatory: true
+  # platform-support 币种规则：指向测试注入的独立 Loopback Mock HTTP 服务（billing.test.external.base-url 由 @EnableMockHttpServer 在
+  # 应用创建客户端前注入；Mock 服务无 Context Path）。传输策略与生产一致。
+  http:
+    clients:
+      imperative:
+        factory: jdk
+    serviceclient:
+      platform-support-service:
+        base-url: "${billing.test.external.base-url}"
+        connect-timeout: 2s
+        read-timeout: 5s
+        redirects: dont-follow
 
 mybatis:
   mapper-locations: classpath*:mapper/**/*.xml
@@ -100,7 +112,7 @@ management:
         liveness:
           include: livenessState
         readiness:
-          include: readinessState
+          include: readinessState,currencySnapshot
     info:
       access: read-only
     prometheus:
@@ -116,3 +128,11 @@ billing:
     # Snowflake Region / Worker 标识；生产无默认值且必填，修改需重启。测试进程固定 0/0。
     region-id: 0
     worker-id: 0
+  # Platform 币种快照。
+  currency-snapshot:
+    # 定时检查开关：生产 true；自动测试关闭，由 MockTestBase 全局 BeforeEach 与用例经同一刷新入口显式刷新，避免后台调用 Platform Mock。
+    scheduling-enabled: false
+    # 检查周期（调度关闭时不生效），与生产相同。
+    check-interval: PT5S
+    # 就绪后的全量刷新间隔，与生产相同。
+    refresh-interval: PT60S

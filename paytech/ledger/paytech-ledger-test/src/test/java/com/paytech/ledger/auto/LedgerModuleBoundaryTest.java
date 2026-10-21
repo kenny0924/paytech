@@ -20,7 +20,8 @@ import org.w3c.dom.NodeList;
  * <li>由 FinanceModuleBoundaryTest 按服务拆分（design/09 §2.7）；跨服务依赖图规则由 ArchitectureAutoTest（R1–R12）检查。</li>
  * <li>ledger 消费 account 的 AccountPosted（2026-10-19 起替代 BillingFactRecorded）：RabbitTemplate 必须在 classpath；account-api 提供
  * 载荷与过账进度 / 批次合同，billing-api 提供事实详情与发布进度合同；不注册补偿 Handler，补偿组件仍不得引入。</li>
- * <li>2026-10-20 起 app 引入 paytech-xxl-job-starter，承载规则版本到期生效任务 accountingRuleVersionActivation。</li>
+ * <li>2026-10-20 起 app 引入 paytech-xxl-job-starter，承载规则版本到期生效任务 accountingRuleVersionActivation；同日 app 直接依赖
+ * paytech-platform-support-api，注册币种规则查询客户端（快照刷新）。</li>
  *
  * @see com.paytech.ledger.LedgerApplication
  */
@@ -47,7 +48,8 @@ class LedgerModuleBoundaryTest {
             "/project/dependencies/dependency[groupId='com.paytech']/artifactId");
         Assertions.assertEquals(Set.of("paytech-ledger-api", "paytech-ledger-core", "paytech-redis-starter", "paytech-snowflake-id",
                 "paytech-mybatis-support", "paytech-mvc-web-starter", "paytech-messaging", "paytech-account-api",
-                "paytech-billing-api", "paytech-http-client-support", "paytech-xxl-job-starter"), app);
+                "paytech-billing-api", "paytech-platform-support-api", "paytech-http-client-support",
+                "paytech-xxl-job-starter"), app);
     }
 
     @Test

@@ -139,7 +139,7 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
             "Risk 浏览器入口必须是唯一具体 Controller");
         assertEquals(List.of("/auth", "/authorization", "/iam", "/audit", "/gateway-admin", "/console-admin", "/permission-admin", "/api-credential-admin", "/api-scope-admin",
                 "/decision-dictionaries", "/decision-rule-sets", "/decision-releases", "/decision-flows", "/decision-variables", "/risk-lists", "/risk-decisions", "/external-api-admin",
-                "/client-onboarding-admin", "/vault-admin", "/notification-admin", "/webhook-admin",
+                "/client-onboarding-admin", "/vault-admin", "/notification-admin", "/webhook-admin", "/currency-admin",
                 "/channel-admin/v1/channel-accounts", "/finance/reconciliation/v1/cash-accounts"),
             applicationContext.getBean(WebLoggingProperties.class).metadataOnlyPathPrefixes(),
             "身份、管理筛选和状态原因只能写元数据日志");
@@ -229,6 +229,10 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
             "GET /gateway-admin/v1/capabilities",
             "GET /console-admin/v1/resource-capabilities",
             "GET /permission-admin/v1/permission-options",
+            "GET /currency-admin/v1/currency-specs",
+            "POST /currency-admin/v1/currency-specs",
+            "PUT /currency-admin/v1/currency-specs/{currency}",
+            "PATCH /currency-admin/v1/currency-specs/{currency}/status",
             "GET /api-credential-admin/v1/credentials",
             "GET /api-credential-admin/v1/credentials/{credentialId}",
             "GET /api-credential-admin/v1/credentials/{credentialId}/scopes",

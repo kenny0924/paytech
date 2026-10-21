@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.operations.console.bff.integration.FinanceSetupClient;
+import com.paytech.operations.console.bff.integration.PlatformCurrencySpecClient;
 import com.paytech.operations.console.bff.service.model.FinanceSetupModels.AccountingPeriodResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceSetupModels.ChartAccountChangeResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceSetupModels.ChartAccountListResponseBody;
@@ -45,7 +46,7 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 
 /**
- * 账务基础资料的浏览器入口：财务主体、财务日历、会计期间、科目表与科目维护、币种，全部简单转发 ledger
+ * 账务基础资料的浏览器入口：财务主体、财务日历、会计期间、科目表与科目维护简单转发 ledger，币种下拉读取 Platform
  * <li>每个路由由 Gateway 绑定 FINANCE_ACCOUNTING_READ（GET）或 FINANCE_ACCOUNTING_MANAGE（POST），并经 PLT-I02 实时授权。</li>
  * <li>浏览器路径为 /finance + ledger 路径；Query 按路由白名单严格匹配，GET、开放期间与科目停用/启用不接受 Body。</li>
  * <li>财务数据不含个人原值，不加入元数据日志前缀。</li>
@@ -62,6 +63,7 @@ public class FinanceSetupController {
     private static final String ACCOUNT_STATUS = "ACTIVE|INACTIVE";
 
     private final FinanceSetupClient client;
+    private final PlatformCurrencySpecClient currencyClient;
 
     /** R01 财务主体分页，按主键升序。 */
     @GetMapping("/finance-entities/v1")
@@ -201,11 +203,11 @@ public class FinanceSetupController {
         return client.listChartAccountChanges(chartCode, chartAccountId, paging.page(), paging.size());
     }
 
-    /** R16 币种列表，按代码升序。 */
+    /** R16 币种列表，按代码升序；Platform 为币种 Owner，status 在 BFF 筛选，响应形态保持不变。 */
     @GetMapping("/currencies/v1")
     public CurrencyListResponseBody listCurrencies(HttpServletRequest servletRequest,
         @RequestParam(value = "status", required = false) @Pattern(regexp = "DRAFT|ACTIVE|INACTIVE") String status) {
         requireQueryKeys(servletRequest, Set.of("status"));
-        return client.listCurrencies(status);
+        return currencyClient.listCurrencies(status);
     }
 }

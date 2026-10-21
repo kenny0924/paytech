@@ -30,6 +30,7 @@ import com.paytech.ledger.core.enums.PeriodStatus;
 import com.paytech.ledger.test.base.AbstractPeriodCloseApiTest;
 import com.paytech.ledger.test.mocker.external.AccountPostingMocker;
 import com.paytech.ledger.test.mocker.external.BillingFactMocker;
+import com.paytech.ledger.test.mocker.external.CurrencySpecMocker;
 import com.paytech.ledger.test.mocker.local.LedgerMocker;
 
 import tools.jackson.databind.JsonNode;
@@ -104,7 +105,7 @@ class StartPeriodCloseTest extends AbstractPeriodCloseApiTest {
 
     @Test
     void test_bookWithoutProfitHasNoClosingInstruction() {
-        ledgerMocker.mockCurrency("AED", 2);
+        refreshCurrencies(CurrencySpecMocker.usd(), CurrencySpecMocker.active("AED", 2));
         long aedBook = ledgerMocker.mockBook(LedgerEntityType.OPERATING_ENTITY, ledger.getEntityNo(), "AED",
             LedgerMocker.STANDARD_CHART_ID);
         postRevenue("50");

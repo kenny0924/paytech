@@ -20,13 +20,18 @@ account 明细账，总账每账簿每 Owner 科目一个以账簿主体为 Owne
 | 模块 | 职责 |
 |---|---|
 | paytech-ledger-api | 内部 HTTP 契约：Finance Entity、财务日历与期间、账簿与科目账户、规则集、人工调整、试算与关账、过账流追平 `PostingStreamCommandApi`；`LedgerReadApi`（`/ledger/v1`：账簿、批量科目）；`LedgerOwnerType`、`RuleOwnerRole`、`LedgerErrorCode`、`AmountSource`、`AutoInstructionType` |
-| paytech-ledger-core | 过账内核、`AccountPosted` 消费 Handler 与控制科目过账、追平、规则、人工调整、试算、关账、account / billing 出站客户端；包根 `com.paytech.ledger` |
-| paytech-ledger-app | 唯一 Spring Boot 启动模块：Controller、DataSource / MyBatis / TypeHandler、Snowflake、Redis 锁、paytech-messaging 消费端、account / billing HTTP 客户端 |
-| paytech-ledger-test | auto 测试、Mocker / Checker / 清理器、扮演 account 的 `AccountPosted` 发布 Probe、account / billing DTO Mock、`init/ddl.sql` |
+| paytech-ledger-core | 过账内核、`AccountPosted` 消费 Handler 与控制科目过账、追平、规则、人工调整、试算、关账、account / billing / platform-support 出站客户端、币种规则快照 `CurrencySpecSnapshot` 与 `CurrencyRuleService`；包根 `com.paytech.ledger` |
+| paytech-ledger-app | 唯一 Spring Boot 启动模块：Controller、DataSource / MyBatis / TypeHandler、Snowflake、Redis 锁、paytech-messaging 消费端、account / billing / platform-support HTTP 客户端、币种快照刷新调度与就绪探针 |
+| paytech-ledger-test | auto 测试、Mocker / Checker / 清理器、扮演 account 的 `AccountPosted` 发布 Probe、account / billing / platform-support DTO Mock、`init/ddl.sql` |
 
 - ledger-core 依赖 `paytech-account-api`（`AccountPosted` 载荷与过账流身份、过账进度 / 批次合同、`OwnerAccountType` 目录、余额桶与标准科目代码）、
   `paytech-billing-api`（计费事实类型、外部引用类型与事实详情 / 进度查询合同 `BillingFactQueryApi`）、`paytech-ledger-api`
-  （金额来源 `AmountSource`、自动指令类型 `AutoInstructionType`）与 `paytech-platform-support-api`（币种规则状态）；不依赖其他服务的 core。
+  （金额来源 `AmountSource`、自动指令类型 `AutoInstructionType`）与 `paytech-platform-support-api`（币种规则查询合同 `CurrencySpecQueryApi` 与状态、舍入枚举）；不依赖其他服务的 core。
+- 币种规则（2026-10-20，[币种主数据维护与读取缓存](../../requirements/20261020/platform-support-币种主数据维护与读取缓存/technique.md) §2.3）：本库不再持有
+  `t_currency_spec` 副本，业务只经 `CurrencyRuleService` 读进程内全量快照（`requireUsable`：ACTIVE / INACTIVE，用于过账、调整、试算、关账与查询；
+  `requireActive`：只用于新开账簿），从不在事务内回源；查不到币种时拒绝并置“待刷新”。`CurrencySnapshotRefreshScheduler` 在事务外调用 Platform
+  `GET /platform/v1/currency-specs`：启动后立即加载，未加载或有刷新请求时每 5 秒回源，就绪后每 60 秒全量刷新，失败保留上一份快照；就绪组
+  `currencySnapshot` 在首次加载成功前为 DOWN。被拒的过账批次由死信 + 追平恢复。
 - 控制科目过账：`AccountPostedPostingHandler`（`HANDLER_MANAGED`、按过账流 `strictOrder`）消费 `account.events`（分区队列 `ledger.account.p0..p3`）。
   事务外：过账流尚无消费进度且序号不是 1 时等待重投；桶移动批次与 SKIPPED 批次只推进进度；其余经 billing `GET /billing/v1/facts/{factId}`
   读事实（版本不一致等待重投）。事务内生成 `origin_type = ACCOUNT_POSTING` 的指令并过账：Owner 行逐条来自 account 流水（`account_entry_id`），
@@ -66,14 +71,15 @@ java -jar ledger/paytech-ledger-app/target/paytech-ledger-app-1.0.0-SNAPSHOT-exe
 ```
 
 新库在 `mor_ledger` 人工依次执行 `docs/database/sql/ledger-schema.sql` 与 `ledger-initial-data.sql`；已建库环境按顺序执行
-`docs/database/sql/changes/` 下尚未执行的变更脚本（最新为 `2026-10-20-finance-console-statuses.sql`，只改列注释）。连接参数
+`docs/database/sql/changes/` 下尚未执行的变更脚本（最新为 `2026-10-20-drop-currency-spec-copy.sql`，删除币种副本表，须在新镜像验收后执行）。连接参数
 `LEDGER_DB_URL` / `LEDGER_DB_USERNAME` / `LEDGER_DB_PASSWORD`，Redis `LEDGER_REDIS_HOST` / `LEDGER_REDIS_PORT` / `LEDGER_REDIS_PASSWORD`，
-RabbitMQ `LEDGER_RABBITMQ_*`，出站 `LEDGER_ACCOUNT_SERVICE_URL` / `LEDGER_BILLING_SERVICE_URL`（Finance 后继服务不接服务发现），
+RabbitMQ `LEDGER_RABBITMQ_*`，出站 `LEDGER_ACCOUNT_SERVICE_URL` / `LEDGER_BILLING_SERVICE_URL` / `LEDGER_PLATFORM_SERVICE_URL`（含 Context Path，默认
+`http://127.0.0.1:18106/platform-support`；Finance 后继服务不接服务发现），
 Snowflake `LEDGER_SNOWFLAKE_REGION_ID` / `LEDGER_SNOWFLAKE_WORKER_ID`（缺失时启动失败）。Actuator 只在管理端口暴露
 health / info / prometheus，不披露组件详情。
 
 默认 auto 测试连接 local-environment 的 `mor_ledger`（账号 `ledger_app`，只有 SELECT / INSERT / UPDATE / DELETE）、Redis（前缀 `ledger-mock`）
-与 RabbitMQ；account / billing 由 Loopback Mock HTTP 服务返回配置的 DTO。每例 BeforeEach 清空本服务的 account 分区队列并检查空基线与 78 行
+与 RabbitMQ；account / billing / platform-support 由 Loopback Mock HTTP 服务返回配置的 DTO（币种快照调度关闭，每例 BeforeEach 配置 USD 并刷新一次）。每例 BeforeEach 清空本服务的 account 分区队列并检查空基线与 78 行
 初始化保留数据，AfterEach 清空 31 张表的测试写入。测试环境准备见 `paytech-ledger-test/src/test/resources/init/ddl.sql`；与其他服务并行跑测试时
 用 `MOR_RABBITMQ_VHOST` 分开 vhost。
 

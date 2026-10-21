@@ -69,6 +69,12 @@
             <artifactId>paytech-billing-api</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- 币种规则快照刷新的 platform-support-api 内部 HTTP 客户端（币种主数据维护与读取缓存 technique §2.3）。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-platform-support-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-http-client-support</artifactId>

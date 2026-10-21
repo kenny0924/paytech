@@ -14,7 +14,6 @@ import com.paytech.billing.core.dal.dataobject.BillingFactLine;
 import com.paytech.billing.core.dal.dataobject.BillingFactLineLink;
 import com.paytech.billing.core.dal.dataobject.BillingFactPricing;
 import com.paytech.billing.core.dal.dataobject.BillingFactRef;
-import com.paytech.billing.core.dal.dataobject.CurrencySpec;
 import com.paytech.billing.domain.BillingFactBookScope;
 import com.paytech.billing.domain.BillingFactContext;
 import com.paytech.billing.domain.BillingFactPayloads;
@@ -27,10 +26,9 @@ import com.paytech.billing.domainservice.repository.BillingFactLineRepository;
 import com.paytech.billing.domainservice.repository.BillingFactPricingRepository;
 import com.paytech.billing.domainservice.repository.BillingFactRefRepository;
 import com.paytech.billing.domainservice.repository.BillingFactRepository;
-import com.paytech.billing.domainservice.repository.CurrencySpecRepository;
 import com.paytech.billing.domainservice.service.BillingFactQueryService;
+import com.paytech.billing.domainservice.service.CurrencyRuleService;
 import com.paytech.foundation.common.error.BizCheckFailException;
-import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 
@@ -40,8 +38,8 @@ import lombok.AllArgsConstructor;
 @Service
 @AllArgsConstructor
 public class BillingFactQueryServiceImpl implements BillingFactQueryService {
+    private final CurrencyRuleService currencyRuleService;
     private final BillingFactRepository billingFactRepository;
-    private final CurrencySpecRepository currencySpecRepository;
     private final BillingFactRefRepository billingFactRefRepository;
     private final BillingFactLineRepository billingFactLineRepository;
     private final BillingFactPricingRepository billingFactPricingRepository;
@@ -122,12 +120,8 @@ public class BillingFactQueryServiceImpl implements BillingFactQueryService {
             .collect(Collectors.groupingBy(link -> factOfLine.get(link.getTargetLineId())));
     }
 
-    /** 币种精度；已登记事实的币种缺少规则说明只读副本被破坏。 */
+    /** 币种精度：读 Platform 币种快照（只读内存），已登记事实的币种按启用过判断。 */
     int minorUnit(String currency) {
-        CurrencySpec spec = currencySpecRepository.findByCurrency(currency);
-        if (spec == null) {
-            throw new ErrorException("计费事实币种缺少币种规则: " + currency);
-        }
-        return spec.getMinorUnit();
+        return currencyRuleService.requireUsable(currency).getMinorUnit();
     }
 }

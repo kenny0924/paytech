@@ -24,12 +24,13 @@ import com.paytech.ledger.test.dal.AccountingTestMapper;
 @Order(1)
 public class LedgerDataCleaner implements Clear {
     /**
-     * 初始化 DML 保留行数：USD 1 + STANDARD 1 + 科目 74（一级汇总 19 + 二级汇总 26 + 三级末级 29）+ 结转规则 7
+     * 初始化 DML 保留行数：STANDARD 1 + 科目 74（一级汇总 19 + 二级汇总 26 + 三级末级 29）+ 结转规则 7
      * + 规则 Bundle 2 + 规则版本 2 + 规则行 10 + 26（第 11b 步增加 STANDARD_ADJUSTMENT Bundle 5002、版本 5102 与规则行
      * 5301–5332；2026-10-19 删除 Owner 角色规则行 5202、5208、5315–5320，Owner 控制科目行改由 account 入账批次流水生成；
-     * 同日 STANDARD 重建为分级科目树，2026-10-20 改为三级：一级汇总 3101–3119、二级汇总 3201–3226）。
+     * 同日 STANDARD 重建为分级科目树，2026-10-20 改为三级：一级汇总 3101–3119、二级汇总 3201–3226；同日删除 t_currency_spec 副本的 USD 行，
+     * 币种规则改由 Platform 快照提供）。
      */
-    static final int RESERVED_ROWS = 123;
+    static final int RESERVED_ROWS = 122;
 
     private static final List<String> FULLY_OWNED_TABLES = List.of("t_consumed_event", "t_consumed_aggregate_version",
         "t_compensation_event", "t_close_approval",
@@ -42,8 +43,7 @@ public class LedgerDataCleaner implements Clear {
         "t_fiscal_calendar", "t_finance_entity");
 
     private static final List<String> RESERVED_TABLES = List.of("t_close_account_rule", "t_accounting_rule_line",
-        "t_accounting_rule_bundle_ver", "t_accounting_rule_bundle", "t_chart_account", "t_chart_of_accounts",
-        "t_currency_spec");
+        "t_accounting_rule_bundle_ver", "t_accounting_rule_bundle", "t_chart_account", "t_chart_of_accounts");
 
     private static boolean reusable = true;
 

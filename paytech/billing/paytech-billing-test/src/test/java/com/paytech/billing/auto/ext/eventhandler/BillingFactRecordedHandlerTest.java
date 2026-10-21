@@ -5,9 +5,12 @@ import static com.paytech.billing.test.builder.BillingFactRequestBuilder.CLIENT_
 import static com.paytech.billing.test.builder.BillingFactRequestBuilder.CURRENCY;
 import static com.paytech.billing.test.builder.BillingFactRequestBuilder.ENTITY_NO;
 import static com.paytech.billing.test.builder.BillingFactRequestBuilder.LOCAL_PARTNER_ID;
+import static com.paytech.billing.test.builder.CurrencySpecResponseBuilder.GBP;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -31,6 +34,7 @@ import com.paytech.billing.test.base.AbstractBillingFactApiTest;
 import com.paytech.billing.test.builder.BillingFactRequestBuilder;
 import com.paytech.billing.test.checker.BillingFactEnvelopeChecker;
 import com.paytech.foundation.compensation.api.CompensationEvent;
+import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.compensation.api.CompensationHandlerResult;
 
 /**
@@ -39,6 +43,7 @@ import com.paytech.foundation.compensation.api.CompensationHandlerResult;
  * 信封聚合类型 BILLING_FACT。</li>
  * <li>补偿重试（确认后、删除前崩溃）再次发布同一 eventId，published_at 保持首次确认时间。</li>
  * <li>事实未批准、版本不符或事件键格式非法为终态失败，不发布。</li>
+ * <li>本实例币种快照尚未包含事实币种时抛系统异常（补偿调度按可重试处理），不发布，并请求刷新快照。</li>
  *
  * @see BillingFactRecordedHandler#handle(CompensationEvent)
  */
@@ -152,6 +157,21 @@ class BillingFactRecordedHandlerTest extends AbstractBillingFactApiTest {
             () -> assertEquals(BillingFactStatus.DRAFT.getCode(), draftRow.get("status")),
             () -> assertNull(draftRow.get("published_at")));
         events.assertNoEnvelope(draft);
+    }
+
+    /** 已批准事实的币种不在本实例快照中（多实例刷新先后不一致）：系统异常可重试，不发布、不写 published_at，并请求刷新。 */
+    @Test
+    void test_currencyMissingFromSnapshotIsRetryable() {
+        long factId = 2_000_101L;
+        testMapper.insertBillingFact(factId, BillingFactType.PAYMENT.getCode(), FactOriginType.AUTO.getCode(),
+            "PAY-" + factId, Long.valueOf(CLIENT_ID), ENTITY_NO, null, null, GBP, BillingFactStatus.APPROVED.getCode(), 1,
+            null);
+
+        assertThrows(ErrorException.class, () -> handler.handle(event(key(factId, 1))));
+
+        assertAll(() -> assertTrue(currencySnapshot.refreshRequested()),
+            () -> assertNull(factRow(factId).get("published_at")));
+        events.assertNoEnvelope(factId);
     }
 
     /** 事件键格式、聚合类型、事件类型或子类型不符，以及带 payloadJson：终态失败。 */

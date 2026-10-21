@@ -195,7 +195,7 @@ Operations 管理员在接入方 `PAYERMAX` 下维护验证账号与用例并发
 
 ## 10. SCN-PLT-09：全平台币种规则参考数据
 
-Platform 是 `t_currency_spec` 的 Owner（D41）；Ledger 与 Billing 持同结构只读副本，过账与计费舍入不依赖远程调用。内部服务经 `GET /platform-support/platform/v1/currency-specs` 读取；只有 ACTIVE 规则允许被新业务使用。
+Platform 是 `t_currency_spec` 的唯一持有者（D41，副本部分由 [2026-10-20 决定](../../decisions/2026-10-20-currency-spec-platform-snapshot-read.md) 取代）。Operations 经「平台配置 → 币种」维护，只有 DRAFT 可改小数位与舍入方式。Ledger 与 Billing 经 `GET /platform-support/platform/v1/currency-specs` 读取全量规则，并持进程内快照；事务内只读快照，不回源。ACTIVE 允许新用途；INACTIVE 只拦新用途，已有账簿与计费事实照常处理；DRAFT 不可使用。
 
 ### 10.1 全平台参考数据 1 表
 

@@ -14,16 +14,15 @@ import com.paytech.billing.test.dal.BillingTestMapper;
 import com.paytech.foundation.testsupport.api.Clear;
 
 /**
- * Billing 本地 mor_billing 测试数据的基线检查与全局清理（11 张表）
+ * Billing 本地 mor_billing 测试数据的基线检查与全局清理（10 张表）
  * <li>BeforeEach 只检查空基线，发现非测试遗留数据时失败而不删除，避免误清本地开发数据。</li>
- * <li>AfterEach 按依赖逆序删除全部测试写入；t_currency_spec 与 t_business_calendar 为只读副本保留表，只删除非保留行（币种 ID ≥
- * 1,000,000、非 DEFAULT 日历）。清理失败后环境标记为不可复用。</li>
+ * <li>AfterEach 按依赖逆序删除全部测试写入；t_business_calendar 为只读副本保留表，只删除非 DEFAULT 日历。清理失败后环境标记为不可复用。</li>
  */
 @TestComponent
 @Order(1)
 public class BillingDataCleaner implements Clear {
-    /** 初始化 DML 保留行数：USD 币种 1 + DEFAULT 日历 1。 */
-    static final int RESERVED_ROWS = 2;
+    /** 初始化 DML 保留行数：DEFAULT 日历 1。 */
+    static final int RESERVED_ROWS = 1;
 
     private static final List<String> FULLY_OWNED_TABLES = List.of("t_billing_fact_line_link", "t_billing_fact_line",
         "t_billing_fact_pricing", "t_billing_fact_ref", "t_billing_fact", "t_business_calendar_day", "t_consumed_event",
@@ -53,7 +52,6 @@ public class BillingDataCleaner implements Clear {
     public void clear() {
         try {
             FULLY_OWNED_TABLES.forEach(mapper::deleteAll);
-            mapper.deleteNonReservedCurrencies();
             mapper.deleteNonReservedCalendars();
         } catch (RuntimeException e) {
             reusable = false;

@@ -11,6 +11,26 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
+## platform-support 币种主数据维护与读取缓存（2026-10-20—21，已部署 mor-test，已本地提交，未推送）
+
+- **决定与需求：** [决定记录](./decisions/2026-10-20-currency-spec-platform-snapshot-read.md)（取代 D41 副本部分）；[需求](<../requirements/20261020/platform-support-币种主数据维护与读取缓存/requirement.md>)、[技术方案](<../requirements/20261020/platform-support-币种主数据维护与读取缓存/technique.md>)、[交付记录](<../requirements/20261020/platform-support-币种主数据维护与读取缓存/delivery.md>)；阶段 1—8 完成。
+- **Implemented：**
+  - **Platform：** `t_currency_spec` 加 `version`。新增维护接口 `/currency-admin/v1/currency-specs`：新建草稿、修改草稿、启停。实现上用资源锁加 `CURRENCY_SPEC_MANAGE` 二次授权、行锁、版本 CAS，并写统一审计。只有 DRAFT 可改，启用后冻结。块 125：权限 2、资源 2、路由 4。
+  - **ledger、billing：** 删除本库 `t_currency_spec` 副本与仓储，改为经 `CurrencySpecQueryApi` 读进程内全量快照。启动即加载，首次成功前就绪探针为 DOWN；每 60 秒刷新，失败保留上次快照；事务内只读内存。查不到币种时报可重试异常并请求刷新。ledger 删除 `/currencies/v1`，billing 新增出站 HTTP。
+  - **Operations：** BFF 新增币种转发，财务币种列表改读 Platform；Web 新增「平台配置 → 币种」页。
+  - **规则：** arch-rules 表归属 step-removed ledger、billing 各 1 张。
+- **Verified：**
+  - **本机：** Platform 115、ledger 340、billing 99、ops-bff 1964、Web 1199、arch-rules 62、PDManer 12；含商务内容的发布树 BFF 2009、Web 1230。
+  - **mor-test：** 验收 32/34 + 补验 4/4，两项失败为脚本缺陷；AC-08 中 ledger 43.7 秒、billing 59.6 秒内读到新币种；浏览器只读回归通过（[发布记录](<../requirements/20261020/platform-support-币种主数据维护与读取缓存/release/release.md>) 第 8 节）。
+- **Deployed（mor-test，2026-10-21 05:00—05:16Z）：**
+  - **镜像：** platform-support `sha256:b2a63ff4…`、ops-bff `sha256:fddb1993…`（带对账的 `OPERATIONS_RECONCILIATION_BASE_URL`）、ledger `sha256:fa21520d…`、billing `sha256:90d7401a…`、ops-web `sha256:366f8b95…`。05:2xZ 起 ops-web 被商务 `46227f3d…` 取代，其源码包含本需求。
+  - **数据库：** `mor_platform` 块 125 已激活（PLATFORM_ADMIN v39）；`mor_ledger`、`mor_billing` 的 `t_currency_spec` 已删除，旧 ledger、billing 镜像不可再回滚使用。
+  - **验收数据与备份：** 验收数据（XTS、合成人员）已清理。备份 `~/Code-MoR-backups/20261021T050027Z-currency-spec-mor-test/`。
+- **Known gaps：**
+  - ledger 读取 Platform 币种响应的严格 JSON 上限是 8 KB，约 60 个币种会超限（billing 为 64 KB）。
+  - 本机 `local-environment` 的 `mor_ledger`、`mor_billing` 仍保留副本表，等其他会话的旧代码不再使用后再删。
+  - `data-service/cdc/whitelist.yaml` 与本地 Flink 示例仍指向不存在的 `mor_finance.t_currency_spec`。
+
 ## reconciliation 渠道资金对账切片 1（2026-10-21，已部署 mor-test，已本地提交，未推送）
 
 - **决定与需求：** [决定记录](./decisions/2026-10-20-reconciliation-facts-via-billing.md)（Confirmed，两轮；实施修订：库内 15 张 = 13 业务表 + 2 张消息去重表）；[需求](<../requirements/20261020/reconciliation-渠道资金对账切片1/requirement.md>)、[技术方案](<../requirements/20261020/reconciliation-渠道资金对账切片1/technique.md>)（§2.10 实施决定 I-01—I-18）、[交付记录](<../requirements/20261020/reconciliation-渠道资金对账切片1/delivery.md>)；阶段 1—8 完成。

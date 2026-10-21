@@ -60,11 +60,11 @@ import com.paytech.ledger.domain.view.PeriodCloseView;
 import com.paytech.ledger.domain.view.ProfitCloseBalanceView;
 import com.paytech.ledger.domainservice.repository.AccountingPeriodRepository;
 import com.paytech.ledger.domainservice.repository.CloseAccountRuleRepository;
-import com.paytech.ledger.domainservice.repository.CurrencySpecRepository;
 import com.paytech.ledger.domainservice.repository.FiscalCalendarRepository;
 import com.paytech.ledger.domainservice.repository.JournalLineRepository;
 import com.paytech.ledger.domainservice.repository.LedgerBookRepository;
 import com.paytech.ledger.domainservice.repository.TrialBalanceExceptionRepository;
+import com.paytech.ledger.domainservice.service.CurrencyRuleService;
 import com.paytech.ledger.domainservice.service.JournalPostingService;
 import com.paytech.ledger.domainservice.service.PeriodCloseService;
 import com.paytech.ledger.domainservice.service.TrialBalanceService;
@@ -97,10 +97,10 @@ public class StartPeriodCloseProcessor extends AbstractLockProcessor<StartPeriod
     private final BillingFactClient billingFactClient;
     private final AccountPostingClient accountPostingClient;
     private final ConsumedEventRepository consumedEventRepository;
+    private final CurrencyRuleService currencyRuleService;
     private final LedgerBookRepository ledgerBookRepository;
     private final JournalLineRepository journalLineRepository;
     private final JournalPostingService journalPostingService;
-    private final CurrencySpecRepository currencySpecRepository;
     private final FiscalCalendarRepository fiscalCalendarRepository;
     private final AccountingPeriodRepository accountingPeriodRepository;
     private final CloseAccountRuleRepository closeAccountRuleRepository;
@@ -153,7 +153,7 @@ public class StartPeriodCloseProcessor extends AbstractLockProcessor<StartPeriod
         FiscalCalendar calendar = fiscalCalendarRepository.findById(period.getCalendarId());
         List<LedgerBook> books = ledgerBookRepository.findAllByEntity(calendar.getEntityType(), calendar.getEntityId());
         Map<Long, Integer> minorUnits = books.stream().collect(Collectors.toMap(LedgerBook::getId,
-            book -> currencySpecRepository.findByCurrency(book.getCurrency()).getMinorUnit()));
+            book -> currencyRuleService.requireUsable(book.getCurrency()).getMinorUnit()));
         Instant now = now();
         PeriodClose close = buildClose(period, makerId, now);
         List<PeriodCloseBook> closeBooks = books.stream().map(book -> buildCloseBook(close, book, now)).toList();

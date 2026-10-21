@@ -36,7 +36,7 @@ public final class BillingFactRequestBuilder {
     /** 另一个 Operating Entity。 */
     public static final String OTHER_ENTITY_NO = "SA001";
 
-    /** 标准币种（初始化 DML 中 ACTIVE，精度 2）。 */
+    /** 标准币种（Platform Mock 默认 ACTIVE，精度 2）。 */
     public static final String CURRENCY = "USD";
 
     /** 编制人。 */

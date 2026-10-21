@@ -24,12 +24,12 @@ import com.paytech.ledger.domain.view.ManualAdjustmentDetailView;
 import com.paytech.ledger.domain.view.ManualAdjustmentView;
 import com.paytech.ledger.domainservice.repository.AccountingInstructionRepository;
 import com.paytech.ledger.domainservice.repository.AdjustmentApprovalRepository;
-import com.paytech.ledger.domainservice.repository.CurrencySpecRepository;
 import com.paytech.ledger.domainservice.repository.InstructionLineRepository;
 import com.paytech.ledger.domainservice.repository.JournalEntryRepository;
 import com.paytech.ledger.domainservice.repository.LedgerBookRepository;
 import com.paytech.ledger.domainservice.repository.ManualAdjustmentLineRepository;
 import com.paytech.ledger.domainservice.repository.ManualAdjustmentRepository;
+import com.paytech.ledger.domainservice.service.CurrencyRuleService;
 import com.paytech.ledger.domainservice.service.ManualAdjustmentService;
 
 import lombok.AllArgsConstructor;
@@ -39,8 +39,8 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class ManualAdjustmentServiceImpl implements ManualAdjustmentService {
     private final TransactionTemplate transactionTemplate;
+    private final CurrencyRuleService currencyRuleService;
     private final LedgerBookRepository ledgerBookRepository;
-    private final CurrencySpecRepository currencySpecRepository;
     private final JournalEntryRepository journalEntryRepository;
     private final InstructionLineRepository instructionLineRepository;
     private final ManualAdjustmentRepository manualAdjustmentRepository;
@@ -91,7 +91,7 @@ public class ManualAdjustmentServiceImpl implements ManualAdjustmentService {
         if (adjustment == null) {
             return null;
         }
-        int minorUnit = currencySpecRepository.findByCurrency(adjustment.getCurrency()).getMinorUnit();
+        int minorUnit = currencyRuleService.requireUsable(adjustment.getCurrency()).getMinorUnit();
         ManualAdjustmentDetailView view = header(adjustment, minorUnit);
         view.setLines(manualAdjustmentLineRepository.findByAdjustment(manualAdjustmentId).stream()
             .map(source -> line(source, minorUnit)).toList());
@@ -113,7 +113,7 @@ public class ManualAdjustmentServiceImpl implements ManualAdjustmentService {
         if (book == null) {
             throw new FailException(LedgerSetupErrorCode.LEDGER_BOOK_NOT_FOUND);
         }
-        int minorUnit = currencySpecRepository.findByCurrency(book.getCurrency()).getMinorUnit();
+        int minorUnit = currencyRuleService.requireUsable(book.getCurrency()).getMinorUnit();
         List<ManualAdjustmentView> items = manualAdjustmentRepository.findViewPage(query);
         for (ManualAdjustmentView item : items) {
             item.setTotalDebit(item.getTotalDebit().setScale(minorUnit));

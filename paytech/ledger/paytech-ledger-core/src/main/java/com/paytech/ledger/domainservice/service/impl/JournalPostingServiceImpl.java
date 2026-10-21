@@ -34,12 +34,12 @@ import com.paytech.ledger.domain.JournalPostingContext;
 import com.paytech.ledger.domainservice.repository.AccountingInstructionRepository;
 import com.paytech.ledger.domainservice.repository.AccountingPeriodRepository;
 import com.paytech.ledger.domainservice.repository.BookSequenceRepository;
-import com.paytech.ledger.domainservice.repository.CurrencySpecRepository;
 import com.paytech.ledger.domainservice.repository.FiscalCalendarRepository;
 import com.paytech.ledger.domainservice.repository.JournalEntryRepository;
 import com.paytech.ledger.domainservice.repository.JournalLineRepository;
 import com.paytech.ledger.domainservice.repository.LedgerAccountRepository;
 import com.paytech.ledger.domainservice.repository.LedgerBookRepository;
+import com.paytech.ledger.domainservice.service.CurrencyRuleService;
 import com.paytech.ledger.domainservice.service.JournalPostingService;
 
 import lombok.AllArgsConstructor;
@@ -54,10 +54,10 @@ public class JournalPostingServiceImpl implements JournalPostingService {
     private final Clock clock;
     private final IdGenerator idGenerator;
     private final LedgerAccountRepository ledgerAccountRepository;
+    private final CurrencyRuleService currencyRuleService;
     private final LedgerBookRepository ledgerBookRepository;
     private final JournalLineRepository journalLineRepository;
     private final BookSequenceRepository bookSequenceRepository;
-    private final CurrencySpecRepository currencySpecRepository;
     private final JournalEntryRepository journalEntryRepository;
     private final FiscalCalendarRepository fiscalCalendarRepository;
     private final AccountingPeriodRepository accountingPeriodRepository;
@@ -153,9 +153,13 @@ public class JournalPostingServiceImpl implements JournalPostingService {
         }
     }
 
-    /** 每行金额大于零且不超过币种精度，借贷合计相等且大于零。 */
+    /**
+     * 每行金额大于零且不超过币种精度，借贷合计相等且大于零
+     * <li>币种精度只读 Platform 币种规则的进程内快照（事务内不外呼）；INACTIVE 币种照常过账。快照中没有该币种时以可重试的系统异常失败并
+     * 请求刷新，本事务回滚，由消费重投或追平在回源后恢复。</li>
+     */
     void checkBalanced(LedgerBook book, List<InstructionLine> lines) {
-        int minorUnit = currencySpecRepository.findByCurrency(book.getCurrency()).getMinorUnit();
+        int minorUnit = currencyRuleService.requireUsable(book.getCurrency()).getMinorUnit();
         BigDecimal debit = BigDecimal.ZERO;
         BigDecimal credit = BigDecimal.ZERO;
         for (InstructionLine line : lines) {

@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { renderSchema } from "./generate-oe-client-schemas.mjs";
 
 // billing 模型自 2026-10-19（需求 billing-计费事实模型重构与渠道成本迁出）脱离 Finance 生成器后直接维护 JSON；本测试只读 JSON 与建库
-// SQL，核对 11 张表、关键列、索引、库内关系、图组、标识唯一，以及 billing-schema.sql 与模型渲染逐字一致、测试 DDL 与 Schema 逐表一致。
+// SQL，核对 10 张表、关键列、索引、库内关系、图组、标识唯一，以及 billing-schema.sql 与模型渲染逐字一致、测试 DDL 与 Schema 逐表一致。
 const workspaceRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const modelSource = "paytech/billing/docs/database/billing.pdma.json";
 const model = JSON.parse(readFileSync(path.join(workspaceRoot, modelSource), "utf8"));
@@ -44,9 +44,9 @@ function createStatements(sql) {
   return [...sql.matchAll(/^CREATE TABLE `(\w+)` \([\s\S]*?\) ENGINE=[^\n]*;$/gmu)].map((match) => [match[1], match[0]]);
 }
 
-test("billing keeps 11 tables in schema order and no database connection", () => {
+test("billing keeps 10 tables in schema order and no database connection", () => {
+  // 币种规则由 Platform 快照提供，本库不持副本（需求 20261020 platform-support-币种主数据维护与读取缓存）。
   assert.deepEqual(model.entities.map((entity) => entity.defKey), [
-    "t_currency_spec",
     "t_billing_fact",
     "t_billing_fact_ref",
     "t_billing_fact_pricing",
@@ -115,7 +115,7 @@ test("billing indexes support the documented access paths", () => {
   assert.deepEqual(indexOf("t_business_calendar_day", "uk_calendar_day"),
     { unique: true, fields: ["calendar_code", "calendar_date"] });
   const total = model.entities.reduce((sum, entity) => sum + entity.indexes.length, 0);
-  assert.equal(total, 21);
+  assert.equal(total, 20);
 });
 
 test("billing relations are internal, point at primary keys and are indexed", () => {
@@ -142,7 +142,7 @@ test("billing relations are internal, point at primary keys and are indexed", ()
 
 test("billing diagrams cover each table and each relation exactly once", () => {
   assert.deepEqual(model.diagrams.map((diagram) => [diagram.defName, diagram.properties.primaryTables.length]),
-    [["计费事实", 5], ["参考数据副本", 3], ["可靠执行与消费幂等", 3]]);
+    [["计费事实", 5], ["参考数据副本", 2], ["可靠执行与消费幂等", 3]]);
   const primaryTables = model.diagrams.flatMap((diagram) => diagram.properties.primaryTables);
   assert.deepEqual([...primaryTables].sort(), model.entities.map((entity) => entity.defKey).sort());
   const relationIds = model.entities.flatMap((entity) => entity.correlations.map((relation) => relation.id));

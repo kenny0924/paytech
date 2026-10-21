@@ -4,18 +4,6 @@
 -- Source: paytech/billing/docs/database/billing.pdma.json
 SET NAMES utf8mb4;
 
-CREATE TABLE `t_currency_spec` (
-  `id` BIGINT NOT NULL COMMENT '服务侧生成的币种规则 Snowflake 主键。',
-  `currency` CHAR(3) NOT NULL COMMENT 'ISO 4217 三位币种代码。取值来源：ISO 4217 币种代码；非固定枚举。',
-  `minor_unit` TINYINT NOT NULL COMMENT '记账与结算金额允许保留的小数位数，取值范围为零至八。',
-  `rounding_mode` VARCHAR(64) NOT NULL COMMENT '金额从八位计算精度归整到币种精度时采用的固定方式。允许值：HALF_UP。',
-  `status` VARCHAR(64) NOT NULL COMMENT '币种规则当前是否允许被新业务使用。允许值：DRAFT、ACTIVE、INACTIVE。',
-  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
-  `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_currency` (`currency`) COMMENT '保证业务唯一性：currency'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='只读副本，Owner platform-support（D41）：保存 Finance 使用的 ISO 4217 币种精度、舍入方式和启停状态；ledger 与 billing 各持一份，不在本服务写入。';
-
 CREATE TABLE `t_billing_fact` (
   `id` BIGINT NOT NULL COMMENT '计费事实 Snowflake 主键；BillingFactRecorded 的聚合 ID。',
   `fact_type` VARCHAR(64) NOT NULL COMMENT '事实类型。允许值：PAYMENT、REFUND、DUPLICATE_CAPTURE、DUPLICATE_COMPENSATION、DISPUTE、COST_ADJUSTMENT、CHANNEL_SETTLEMENT、PAYOUT_SETTLED、TAX_PAID、MANUAL_ADJUSTMENT、FX_SELL、FX_BUY。',

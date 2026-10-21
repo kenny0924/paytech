@@ -22,30 +22,33 @@ class TableOwnershipAutoTest {
     @Test
     void test_normalFlow() {
         // design/03 §4.2：17 个目标库共 265 张物理表；另加保留服务 platform-support 自身 Schema 的 56 张表。
-        Assertions.assertEquals(265 + 56 + 1 + 6 - 7 + 9 + 4 + 6 + 1 + 2 + 1 - 13 + 10 + 2, ownership.physicalTableCount(),
+        Assertions.assertEquals(265 + 56 + 1 + 6 - 7 + 9 + 4 + 6 + 1 + 2 + 1 - 13 + 10 + 2 - 2, ownership.physicalTableCount(),
             "design 03 + Platform 保留表 + 第 12 步 t_card_material_ticket + account 明细账六张业务表（2026-10-19 重构）"
                 + " - billing 经济事实三表与渠道成本四表 + billing 计费事实九表 + channel-connector 渠道成本四表（2026-10-19 计费事实重构）"
                 + " + commercial 产品目录三表与合同订阅 / 开通 / 约束三表（2026-10-19 六层产品定价模型）"
                 + " + account 账户号序列 + ledger 科目变更记录与账户号序列（2026-10-19 科目分级）"
                 + " + channel-connector 变更记录表 t_channel_config_change（2026-10-20）"
                 + " - reconciliation 旧对账十三表 + 新模型八张业务表与消费幂等两表（2026-10-20 对账切片 1）"
-                + " + commercial 可配维度与价格协议签署两表（2026-10-20 开通与定价模型调整）");
+                + " + commercial 可配维度与价格协议签署两表（2026-10-20 开通与定价模型调整）"
+                + " - ledger 与 billing 的 t_currency_spec 只读副本（2026-10-20 币种快照读取）");
         Assertions.assertEquals(57, ownership.databasesOf("platform-support").get("mor_platform").size());
-        Assertions.assertEquals(31, ownership.databasesOf("ledger").get("mor_ledger").size());
+        Assertions.assertEquals(30, ownership.databasesOf("ledger").get("mor_ledger").size());
         Assertions.assertTrue(ownership.allowedTables("ledger").containsAll(
             List.of("t_chart_account_change", "t_account_no_sequence")), "2026-10-19 科目分级新增的 ledger 表");
         Assertions.assertEquals(Set.of("mor_platform"), ownership.databasesOf("platform-support").keySet());
         Assertions.assertTrue(ownership.allowedTables("ledger").containsAll(
-            List.of("t_journal_entry", "t_currency_spec", "t_compensation_event", "t_consumed_event",
+            List.of("t_journal_entry", "t_compensation_event", "t_consumed_event",
                 "t_consumed_aggregate_version")));
     }
 
     @Test
     void test_edgeCase() {
-        // 两边各一份与只读副本。
+        // 两边各一份；t_currency_spec 只在 Platform（2026-10-20 起 ledger、billing 读快照，不持副本）。
         Assertions.assertTrue(ownership.allowedTables("client-master").contains("t_business_change_record"));
         Assertions.assertTrue(ownership.allowedTables("commercial").contains("t_business_change_record"));
-        Assertions.assertTrue(ownership.allowedTables("billing").contains("t_currency_spec"));
+        Assertions.assertTrue(ownership.allowedTables("platform-support").contains("t_currency_spec"));
+        Assertions.assertFalse(ownership.allowedTables("billing").contains("t_currency_spec"));
+        Assertions.assertFalse(ownership.allowedTables("ledger").contains("t_currency_spec"));
         Assertions.assertFalse(ownership.allowedTables("tax").contains("t_currency_spec"));
         // 第 07 步更名的经济事实三表已由 2026-10-19 计费事实重构删除，来源表名与第 07 步表名都不再出现。
         Assertions.assertTrue(ownership.services().stream()
@@ -72,12 +75,12 @@ class TableOwnershipAutoTest {
             "t_payment_card_instrument", "t_payment_stored_card"), ownership.cardTables());
     }
 
-    /** 2026-10-19 计费事实重构：mor_billing 为 11 张表；渠道成本四表归 channel-connector（2026-10-20 加变更记录表后 18 张），billing 不再引用。 */
+    /** 2026-10-19 计费事实重构：mor_billing 为 10 张表（2026-10-20 删除 t_currency_spec 副本）；渠道成本四表归 channel-connector（2026-10-20 加变更记录表后 18 张），billing 不再引用。 */
     @Test
     void test_billingFactAndChannelCostOwnership() {
         Assertions.assertEquals(Set.of("t_billing_fact", "t_billing_fact_ref", "t_billing_fact_pricing",
             "t_billing_fact_line", "t_billing_fact_line_link", "t_business_calendar", "t_business_calendar_day",
-            "t_consumed_event", "t_consumed_aggregate_version", "t_currency_spec", "t_compensation_event"),
+            "t_consumed_event", "t_consumed_aggregate_version", "t_compensation_event"),
             ownership.databasesOf("billing").get("mor_billing"));
         List<String> channelCostTables = List.of("t_channel_cost_plan", "t_channel_cost_plan_ver",
             "t_channel_cost_scope", "t_channel_cost_component");

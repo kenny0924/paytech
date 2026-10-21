@@ -28,7 +28,6 @@ import com.paytech.operations.console.bff.service.model.FinanceSetupModels.Creat
 import com.paytech.operations.console.bff.service.model.FinanceSetupModels.CreateFinanceEntityResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceSetupModels.CreateFiscalCalendarRequestBody;
 import com.paytech.operations.console.bff.service.model.FinanceSetupModels.CreateFiscalCalendarResponseBody;
-import com.paytech.operations.console.bff.service.model.FinanceSetupModels.CurrencyListResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceSetupModels.FinanceEntityResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceSetupModels.FiscalCalendarResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceSetupModels.OpenAccountingPeriodResponseBody;
@@ -192,13 +191,5 @@ public class FinanceSetupClientImpl implements FinanceSetupClient {
             changes.items().forEach(change -> requireSame(chartAccountId, change.getChartAccountId()));
         }
         return changes;
-    }
-
-    /** 币种列表。 */
-    @Override
-    public CurrencyListResponseBody listCurrencies(String status) {
-        var currencies = convert(queryApi.listCurrencies(status), CurrencyListResponseBody.class);
-        FinanceContractConverter.require(currencies.getItems() != null);
-        return currencies;
     }
 }

@@ -14,7 +14,6 @@ import com.paytech.ledger.api.enums.LedgerSetupErrorCode;
 import com.paytech.ledger.core.dal.dataobject.AccountingPeriod;
 import com.paytech.ledger.core.dal.dataobject.ChartAccount;
 import com.paytech.ledger.core.dal.dataobject.ChartOfAccounts;
-import com.paytech.ledger.core.dal.dataobject.CurrencySpec;
 import com.paytech.ledger.core.dal.dataobject.FinanceEntity;
 import com.paytech.ledger.core.dal.dataobject.FiscalCalendar;
 import com.paytech.ledger.core.dal.dataobject.LedgerAccount;
@@ -34,15 +33,14 @@ import com.paytech.ledger.domainservice.repository.AccountingPeriodRepository;
 import com.paytech.ledger.domainservice.repository.ChartAccountChangeRepository;
 import com.paytech.ledger.domainservice.repository.ChartAccountRepository;
 import com.paytech.ledger.domainservice.repository.ChartOfAccountsRepository;
-import com.paytech.ledger.domainservice.repository.CurrencySpecRepository;
 import com.paytech.ledger.domainservice.repository.FinanceEntityRepository;
 import com.paytech.ledger.domainservice.repository.FiscalCalendarRepository;
 import com.paytech.ledger.domainservice.repository.JournalEntryRepository;
 import com.paytech.ledger.domainservice.repository.JournalLineRepository;
 import com.paytech.ledger.domainservice.repository.LedgerAccountRepository;
 import com.paytech.ledger.domainservice.repository.LedgerBookRepository;
+import com.paytech.ledger.domainservice.service.CurrencyRuleService;
 import com.paytech.ledger.domainservice.service.LedgerQueryService;
-import com.paytech.platform.support.api.enums.CurrencySpecStatus;
 
 import lombok.AllArgsConstructor;
 
@@ -50,11 +48,11 @@ import lombok.AllArgsConstructor;
 @Service
 @AllArgsConstructor
 public class LedgerQueryServiceImpl implements LedgerQueryService {
+    private final CurrencyRuleService currencyRuleService;
     private final ChartAccountRepository chartAccountRepository;
     private final LedgerAccountRepository ledgerAccountRepository;
     private final LedgerBookRepository ledgerBookRepository;
     private final JournalLineRepository journalLineRepository;
-    private final CurrencySpecRepository currencySpecRepository;
     private final JournalEntryRepository journalEntryRepository;
     private final FinanceEntityRepository financeEntityRepository;
     private final FiscalCalendarRepository fiscalCalendarRepository;
@@ -195,12 +193,6 @@ public class LedgerQueryServiceImpl implements LedgerQueryService {
         return chart;
     }
 
-    /** 币种规则数量有限，不分页。 */
-    @Override
-    public List<CurrencySpec> listCurrencies(CurrencySpecStatus status) {
-        return currencySpecRepository.findAll(status);
-    }
-
     /** 读取账簿，不存在时以 LEDGER_BOOK_NOT_FOUND 拒绝（LedgerBookQueryApi 的页面区分处理）。 */
     LedgerBook getBook(long ledgerBookId) {
         LedgerBook book = ledgerBookRepository.findById(ledgerBookId);
@@ -217,7 +209,7 @@ public class LedgerQueryServiceImpl implements LedgerQueryService {
 
     /** 币种的小数位。 */
     int minorUnit(String currency) {
-        return currencySpecRepository.findByCurrency(currency).getMinorUnit();
+        return currencyRuleService.requireUsable(currency).getMinorUnit();
     }
 
     /** 组装分页结果。 */

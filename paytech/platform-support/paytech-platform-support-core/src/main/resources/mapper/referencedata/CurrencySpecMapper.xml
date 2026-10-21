@@ -5,7 +5,7 @@
 <mapper namespace="com.paytech.platform.support.referencedata.core.dal.mapper.CurrencySpecMapper">
 
     <sql id="columns">
-        id, currency, minor_unit AS minorUnit, rounding_mode AS roundingMode, status,
+        id, currency, minor_unit AS minorUnit, rounding_mode AS roundingMode, status, version,
         create_time AS createTime, update_time AS updateTime
     </sql>
 
@@ -22,4 +22,31 @@
         FROM t_currency_spec
         WHERE currency = #{currency}
     </select>
+
+    <select id="lockByCurrency" flushCache="true" useCache="false"
+            resultType="com.paytech.platform.support.referencedata.core.dal.dataobject.CurrencySpec">
+        SELECT <include refid="columns"/>
+        FROM t_currency_spec
+        WHERE currency = #{currency}
+        FOR UPDATE
+    </select>
+
+    <insert id="insert">
+        INSERT INTO t_currency_spec (id, currency, minor_unit, rounding_mode, status, version, create_time, update_time)
+        VALUES (#{row.id}, #{row.currency}, #{row.minorUnit}, #{row.roundingMode}, #{row.status}, #{row.version},
+            #{row.createTime}, #{row.updateTime})
+    </insert>
+
+    <update id="updateRule">
+        UPDATE t_currency_spec
+        SET minor_unit = #{minorUnit}, rounding_mode = #{roundingMode}, version = version + 1,
+            update_time = #{updateTime}
+        WHERE id = #{row.id} AND version = #{row.version} AND status = 'DRAFT'
+    </update>
+
+    <update id="updateStatus">
+        UPDATE t_currency_spec
+        SET status = #{status}, version = version + 1, update_time = #{updateTime}
+        WHERE id = #{row.id} AND version = #{row.version} AND status = #{row.status}
+    </update>
 </mapper>

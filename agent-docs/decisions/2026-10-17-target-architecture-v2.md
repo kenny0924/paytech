@@ -58,7 +58,7 @@
 | D38 | 结算控制归属（阶段 3 C3） | 已定（2026-10-17） | `t_settlement_control`、`t_settlement_control_scope`、`t_settle_control_state_change` 归合规服务（`mor_compliance`）。风控决策 Action Effect 产生控制时经 compliance-api 创建（幂等键 `source_action_effect_id`），出款检查点评估在事务前经 compliance-api 读取 ACTIVE 控制集合并冻结 `control_set_hash`；合规不可用则评估失败关闭。变更经 `SettlementRestrictionChanged` 事件通知出款与账户。 |
 | D39 | 消费者法律文档与卖方披露归属（阶段 3 C4） | 已定（2026-10-17） | `t_consumer_legal_document`、`t_seller_disclosure` 归客户主档（`mor_client_master`）。候选接口按消费者国家与语言随每个候选返回三份法律文档引用与卖方披露，商务两段式解析直接取候选自带值，不再读这两表。 |
 | D40 | `risk-api` 拆分方式（阶段 3 C6） | 已定（2026-10-17） | `risk-api` 一次性拆为 `risk-decision-api` 与 `compliance-api`，不保留聚合坐标与兼容期；研发计划第 6 步在同一分支内同步修改五个消费方的坐标与 import，是阶段 0 唯一允许一步改多个系统的例外，排在收单、客户主档、支付三步之后执行。 |
-| D41 | 全平台参考数据归属（阶段 3） | 已定（2026-10-17） | `t_currency_spec` 等全平台参考数据归平台支撑（Platform）持有并提供查询 API；会计与计费为保证过账与舍入不依赖远程调用，各持同结构只读副本，用同一份评审 SQL 初始化；副本同步机制在后续切片定义。 |
+| D41 | 全平台参考数据归属（阶段 3） | 已定（2026-10-17） | `t_currency_spec` 等全平台参考数据归平台支撑（Platform）持有并提供查询 API；会计与计费为保证过账与舍入不依赖远程调用，各持同结构只读副本，用同一份评审 SQL 初始化；副本同步机制在后续切片定义。**2026-10-20 起副本部分由 [币种快照读取决定](./2026-10-20-currency-spec-platform-snapshot-read.md) 取代：不再持副本，改为读 Platform 并持进程内快照。** |
 | D42 | 阶段 3 其余表归属与服务改名口径 | 已定（2026-10-17） | 尚无代码的渠道相关表按建议归属（路由策略、渠道交互与回调归渠道连接；渠道交易引用归支付；渠道争议归争议库）；现金账户三表归对账；订单法律文档快照与退款头寸归收单；`t_client_stored_card_setting` 为 Client 级配置归客户主档并随候选接口返回。改名服务不在 Nacos 保留旧名别名，改名步骤同分支改完全部调用方。 |
 
 ## 3. 取代范围

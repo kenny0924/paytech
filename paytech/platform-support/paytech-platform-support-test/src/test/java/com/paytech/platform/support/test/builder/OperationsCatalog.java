@@ -70,7 +70,9 @@ public final class OperationsCatalog {
         new Permission(900000000000124101L, "COMMERCIAL_CATALOG_MANAGE", "COMMERCIAL_CATALOG", "MANAGE", "HIGH", false),
         new Permission(900000000000124102L, "COMMERCIAL_TEMPLATE_MANAGE", "COMMERCIAL_TEMPLATE", "MANAGE", "HIGH", false),
         new Permission(900000000000124103L, "COMMERCIAL_TEMPLATE_APPROVE", "COMMERCIAL_TEMPLATE", "APPROVE", "HIGH",
-            false));
+            false),
+        new Permission(900000000000125101L, "CURRENCY_SPEC_READ", "CURRENCY_SPEC", "READ", "LOW", false),
+        new Permission(900000000000125102L, "CURRENCY_SPEC_MANAGE", "CURRENCY_SPEC", "MANAGE", "HIGH", false));
 
     private OperationsCatalog() {
     }

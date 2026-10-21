@@ -7,16 +7,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.paytech.billing.core.dal.dataobject.BillingFact;
-import com.paytech.billing.core.dal.dataobject.CurrencySpec;
 import com.paytech.billing.domain.BillingFactContext;
 import com.paytech.billing.domainservice.repository.BillingFactLineRepository;
 import com.paytech.billing.domainservice.repository.BillingFactRefRepository;
 import com.paytech.billing.domainservice.repository.BillingFactRepository;
-import com.paytech.billing.domainservice.repository.CurrencySpecRepository;
 import com.paytech.billing.domainservice.service.BillingFactService;
+import com.paytech.billing.domainservice.service.CurrencyRuleService;
 import com.paytech.billing.service.handler.BillingFactRecordedHandler;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
-import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.compensation.api.CompensationEventRegistrar;
 
 import lombok.AllArgsConstructor;
@@ -25,14 +23,14 @@ import lombok.AllArgsConstructor;
 @Service
 @AllArgsConstructor
 public class BillingFactServiceImpl implements BillingFactService {
+    private final CurrencyRuleService currencyRuleService;
     private final TransactionTemplate transactionTemplate;
     private final BillingFactRepository billingFactRepository;
-    private final CurrencySpecRepository currencySpecRepository;
     private final BillingFactRefRepository billingFactRefRepository;
     private final BillingFactLineRepository billingFactLineRepository;
     private final CompensationEventRegistrar compensationEventRegistrar;
 
-    /** 读取事实头、引用、明细行与币种精度；不存在返回空。 */
+    /** 读取事实头、引用、明细行与币种精度（Platform 币种快照，只读内存）；不存在返回空。 */
     @Override
     public BillingFactContext loadContext(long factId) {
         BillingFact fact = billingFactRepository.findById(factId);
@@ -40,7 +38,8 @@ public class BillingFactServiceImpl implements BillingFactService {
             return null;
         }
         return new BillingFactContext(fact, billingFactRefRepository.findByFactId(factId),
-            billingFactLineRepository.findByFactId(factId), null, minorUnit(fact.getCurrency()));
+            billingFactLineRepository.findByFactId(factId), null,
+            currencyRuleService.requireUsable(fact.getCurrency()).getMinorUnit());
     }
 
     /** 同一事务写入头、引用与全部明细行；来源唯一键冲突转为并发冲突。 */
@@ -76,14 +75,5 @@ public class BillingFactServiceImpl implements BillingFactService {
     @Override
     public void voidDraft(BillingFactContext context, Instant now) {
         billingFactRepository.voidDraft(context.getFact(), now);
-    }
-
-    /** 币种精度；已登记事实的币种缺少规则说明只读副本被破坏。 */
-    int minorUnit(String currency) {
-        CurrencySpec spec = currencySpecRepository.findByCurrency(currency);
-        if (spec == null) {
-            throw new ErrorException("计费事实币种缺少币种规则: " + currency);
-        }
-        return spec.getMinorUnit();
     }
 }

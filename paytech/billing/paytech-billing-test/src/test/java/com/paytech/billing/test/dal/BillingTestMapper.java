@@ -14,8 +14,8 @@ import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
 /**
- * Billing 测试专用读取、前置数据与全局清理；只触碰 mor_billing 的 11 张表
- * <li>初始化 DML 的保留行（币种 ID 小于 1,000,000、DEFAULT 日历）是只读全局基础数据，清理时保留。</li>
+ * Billing 测试专用读取、前置数据与全局清理；只触碰 mor_billing 的 10 张表
+ * <li>初始化 DML 的保留行（DEFAULT 日历）是只读全局基础数据，清理时保留。</li>
  * <li>前置数据只模拟后续业务切片才会产生的事实、引用、规则行、行链接与日历例外日；本期人工登记均经真实接口写入。</li>
  */
 @Mapper
@@ -24,7 +24,7 @@ public interface BillingTestMapper {
     /** 保留的日历代码（初始化 DML）。 */
     String RESERVED_CALENDAR = "DEFAULT";
 
-    /** 统计 mor_billing 全部 11 张表中测试可写入的行数（保留表只统计非保留行），按表返回。 */
+    /** 统计 mor_billing 全部 10 张表中测试可写入的行数（保留表只统计非保留行），按表返回。 */
     @Select("""
         SELECT 't_billing_fact' t, COUNT(*) c FROM t_billing_fact UNION ALL
         SELECT 't_billing_fact_ref', COUNT(*) FROM t_billing_fact_ref UNION ALL
@@ -35,23 +35,17 @@ public interface BillingTestMapper {
         SELECT 't_consumed_event', COUNT(*) FROM t_consumed_event UNION ALL
         SELECT 't_consumed_aggregate_version', COUNT(*) FROM t_consumed_aggregate_version UNION ALL
         SELECT 't_compensation_event', COUNT(*) FROM t_compensation_event UNION ALL
-        SELECT 't_currency_spec', COUNT(*) FROM t_currency_spec WHERE id >= 1000000 UNION ALL
         SELECT 't_business_calendar', COUNT(*) FROM t_business_calendar WHERE calendar_code <> 'DEFAULT'
         """)
     List<Map<String, Object>> countWritableRows();
 
-    /** 统计初始化 DML 的保留行数（USD 币种 + DEFAULT 日历），用于确认 mor_billing 已执行 billing-initial-data.sql。 */
-    @Select("SELECT (SELECT COUNT(*) FROM t_currency_spec WHERE id < 1000000) "
-        + "+ (SELECT COUNT(*) FROM t_business_calendar WHERE calendar_code = 'DEFAULT')")
+    /** 统计初始化 DML 的保留行数（DEFAULT 日历），用于确认 mor_billing 已执行 billing-initial-data.sql。 */
+    @Select("SELECT COUNT(*) FROM t_business_calendar WHERE calendar_code = 'DEFAULT'")
     int countReservedRows();
 
     /** 删除一张测试可写表的全部行；表名只来自清理组件的固定清单。 */
     @Delete("DELETE FROM ${table}")
     void deleteAll(@Param("table") String table);
-
-    /** 删除币种只读副本中非保留 ID 的测试行。 */
-    @Delete("DELETE FROM t_currency_spec WHERE id >= 1000000")
-    void deleteNonReservedCurrencies();
 
     /** 删除非保留日历。 */
     @Delete("DELETE FROM t_business_calendar WHERE calendar_code <> 'DEFAULT'")

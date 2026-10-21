@@ -34,6 +34,8 @@ import com.paytech.platform.support.api.enums.OperationsErrorCode;
 import com.paytech.platform.support.api.enums.WebhookEndpointErrorCode;
 import com.paytech.platform.support.api.gatewayconfiguration.management.GatewayConfigurationManagementApi;
 import com.paytech.platform.support.api.operations.OperationsManagementApi;
+import com.paytech.platform.support.api.referencedata.CurrencySpecManagementApi;
+import com.paytech.platform.support.api.referencedata.CurrencySpecQueryApi;
 import com.paytech.platform.support.api.reviewfiles.ReviewFileApi;
 
 /** Platform HTTP 接口代理的单例注册，以及发现、超时和关联标识配置。 @author Codex */
@@ -87,6 +89,20 @@ public class PlatformClientConfiguration {
     @Bean
     com.paytech.platform.support.api.permissionmanagement.PermissionManagementApi permissionManagementApi(HttpServiceProxyFactory operationsConfigurationPlatformProxyFactory) {
         return operationsConfigurationPlatformProxyFactory.createClient(com.paytech.platform.support.api.permissionmanagement.PermissionManagementApi.class);
+    }
+
+    /** 币种列表复用 Platform 私网发现与 Problem 解码；该查询不携带操作人。 */
+    @Bean
+    CurrencySpecQueryApi currencySpecQueryApi(HttpServiceProxyFactory operationsPlatformProxyFactory) {
+        return operationsPlatformProxyFactory.createClient(CurrencySpecQueryApi.class);
+    }
+
+    /** 币种维护沿用配置写操作的发现与字段错误解码，并外显 Platform 业务拒绝原因（如币种已存在、已启用不可修改）。 */
+    @Bean
+    CurrencySpecManagementApi currencySpecManagementApi(Environment environment, PlatformDiscoveryInterceptor discovery,
+        @Value("${operations.platform-test-base-url:}") String testBaseUrl, ObjectProvider<InternalTokenSupplier> tokens) {
+        return platformProxy(environment, discovery, testBaseUrl, tokens, true, true)
+            .createClient(CurrencySpecManagementApi.class);
     }
 
     /** 外部 API 配置管理复用 Platform 私网发现与字段错误解码。 */
@@ -176,6 +192,13 @@ public class PlatformClientConfiguration {
     private HttpServiceProxyFactory platformProxy(Environment environment, PlatformDiscoveryInterceptor discovery,
         String testBaseUrl, ObjectProvider<InternalTokenSupplier> tokens, boolean configurationValidation,
         CodeMessageEnum... extraErrors) {
+        return platformProxy(environment, discovery, testBaseUrl, tokens, configurationValidation, false, extraErrors);
+    }
+
+    /** ownerProblemDetail 只对已承诺 detail 可安全外显的 Platform 合同开启。 */
+    private HttpServiceProxyFactory platformProxy(Environment environment, PlatformDiscoveryInterceptor discovery,
+        String testBaseUrl, ObjectProvider<InternalTokenSupplier> tokens, boolean configurationValidation,
+        boolean ownerProblemDetail, CodeMessageEnum... extraErrors) {
         RestClient.Builder builder = RestClient.builder();
         if (testBaseUrl.isBlank()) {
             builder.baseUrl(PLATFORM_BASE_URL).requestInterceptor(discovery);
@@ -195,7 +218,8 @@ public class PlatformClientConfiguration {
                 case UNAVAILABLE ->
                     new ServiceUnavailableException(OperationsBffErrorCode.DEPENDENCY_UNAVAILABLE, cause);
             });
-        return HttpServiceClientFactory.create(client, configurationValidation ? options.withRequestValidationFailures() : options, errors);
+        options = configurationValidation ? options.withRequestValidationFailures() : options;
+        return HttpServiceClientFactory.create(client, ownerProblemDetail ? options.withOwnerProblemDetail() : options, errors);
     }
 
     private JdkClientHttpRequestFactory requestFactory() {

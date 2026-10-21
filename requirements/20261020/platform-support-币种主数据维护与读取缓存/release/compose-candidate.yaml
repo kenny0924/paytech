@@ -1,0 +1,35 @@
+# 币种主数据维护与读取缓存：mor-test 候选覆盖文件（2026-10-21 阶段 6 评审稿；阶段 7 另行授权后执行）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件：
+#   ./test-environment/compose.sh -f "$PWD/requirements/20261020/platform-support-币种主数据维护与读取缓存/release/compose-candidate.yaml" \
+#     up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 不加 --remove-orphans。镜像一律用固定 sha256 ID（tag currency-20261021 / currency-20261021b 仅供辨认，可能被他人重建，不得据此部署）。
+# 构建源：worktree Code-MoR-currency-rel = main 2f5f37f7 合并商务集成 c216ff92（Java）/ aa259ea8（Web，多 F4–F6 的 9 个 src/commercial 文件）
+#   + 本需求补丁；Java 用 test-environment/java/Dockerfile，health-probe 取自运行容器；Web 用 operations-console-web/Dockerfile。
+# 上一版（回滚目标）见 compose-rollback.yaml。替换顺序见 release.md 第 5 节：platform → ops-bff → ledger → billing → ops-web。
+services:
+  platform-support-service:
+    # 新增币种维护接口 /currency-admin/v1/currency-specs，查询响应多出 version；console-resource-capabilities.json 多 OPERATIONS_CURRENCY_SPECS。
+    image: sha256:b2a63ff4eadc6bafa67d27f94e8adf0c13928dec3b0b67cd62fec9b51a2dec38  # mor-test/platform-support-service:currency-20261021（JAR 90d10c2ba8620ed6）
+  operations-console-bff:
+    # 新增 /currency-admin/v1/currency-specs 转发；/finance/currencies/v1 改读 Platform（不再调 ledger /currencies/v1）。
+    image: sha256:fddb1993f88f5712b13683836d4829253f6502ed3ee421e2ca17a5e68f9c7f1b  # mor-test/operations-console-bff:currency-20261021（JAR 044e43c12bb6d2a6）
+    environment:
+      # 沿用对账切片 1 覆盖文件里的对账直连地址：主 compose.applications.yaml 没有这一项，漏掉会让对账 7 页 503（2026-10-21 阶段 7 冒烟发现）。
+      OPERATIONS_RECONCILIATION_BASE_URL: http://reconciliation-service:18115
+  ledger-service:
+    # 不再读 mor_ledger.t_currency_spec，改读 Platform 快照；删除 /currencies/v1。就绪组含 currencySnapshot（首次加载成功前 DOWN）。
+    image: sha256:fa21520def8c319d32798d89d739fb752ae4fdcc27723df2bbb39f34a9a17053  # mor-test/ledger-service:currency-20261021（JAR 7d8d2466c872018d）
+    environment:
+      LEDGER_PLATFORM_SERVICE_URL: http://platform-support-service:18106/platform-support
+    depends_on:
+      platform-support-service: { condition: service_healthy }
+  billing-service:
+    # 不再读 mor_billing.t_currency_spec，改读 Platform 快照；就绪组含 currencySnapshot。
+    image: sha256:90d7401abdd689bee94e149880bf419890a8ede59bb0b5be5119a88cb47053e8  # mor-test/billing-service:currency-20261021（JAR 72987591c0d3b3e0）
+    environment:
+      BILLING_PLATFORM_SERVICE_URL: http://platform-support-service:18106/platform-support
+    depends_on:
+      platform-support-service: { condition: service_healthy }
+  operations-console-web:
+    # 平台配置 → 币种页（OPERATIONS_CURRENCY_SPECS，/currency-specs）。基线 = 现网 capability-20261021e（139c157e…，157 个文件逐字节一致）。
+    image: sha256:366f8b956dfe50ef6ed5a74c0037f4aa27d83eb3de84ca09344da02c60210031  # mor-test/operations-console-web:currency-20261021b（入口 assets/index-GSwx0qPN.js）

@@ -6,6 +6,8 @@ import java.time.temporal.ChronoUnit;
 
 import org.springframework.stereotype.Component;
 
+import com.paytech.foundation.common.error.BizCheckFailException;
+import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
@@ -14,7 +16,6 @@ import com.paytech.ledger.core.constant.AccountingCodes;
 import com.paytech.ledger.core.constant.AccountingLocks;
 import com.paytech.ledger.core.dal.dataobject.BookSequence;
 import com.paytech.ledger.core.dal.dataobject.ChartOfAccounts;
-import com.paytech.ledger.core.dal.dataobject.CurrencySpec;
 import com.paytech.ledger.core.dal.dataobject.FinanceEntity;
 import com.paytech.ledger.core.dal.dataobject.LedgerBook;
 import com.paytech.ledger.core.enums.BookStatus;
@@ -22,13 +23,12 @@ import com.paytech.ledger.core.enums.FinanceEntityStatus;
 import com.paytech.ledger.core.enums.LedgerEntityType;
 import com.paytech.ledger.core.enums.ReferenceDataStatus;
 import com.paytech.ledger.domainservice.repository.ChartOfAccountsRepository;
-import com.paytech.ledger.domainservice.repository.CurrencySpecRepository;
 import com.paytech.ledger.domainservice.repository.FinanceEntityRepository;
+import com.paytech.ledger.domainservice.service.CurrencyRuleService;
 import com.paytech.ledger.domainservice.service.LedgerSetupService;
 import com.paytech.ledger.domainservice.validator.account.AccountIdentityRule;
 import com.paytech.ledger.service.processor.request.CreateLedgerBookRequest;
 import com.paytech.ledger.service.processor.response.CreatedResourceResponse;
-import com.paytech.platform.support.api.enums.CurrencySpecStatus;
 
 import lombok.AllArgsConstructor;
 
@@ -44,7 +44,7 @@ public class CreateLedgerBookProcessor extends AbstractLockProcessor<CreateLedge
     private final Clock clock;
     private final IdGenerator idGenerator;
     private final LedgerSetupService ledgerSetupService;
-    private final CurrencySpecRepository currencySpecRepository;
+    private final CurrencyRuleService currencyRuleService;
     private final FinanceEntityRepository financeEntityRepository;
     private final ChartOfAccountsRepository chartOfAccountsRepository;
 
@@ -72,11 +72,16 @@ public class CreateLedgerBookProcessor extends AbstractLockProcessor<CreateLedge
         return response;
     }
 
-    /** 币种必须已在币种规则中启用。 */
+    /**
+     * 币种必须在 Platform 币种规则快照中为 ACTIVE（新开账簿属于新用途，INACTIVE、DRAFT 与未知币种均拒绝）
+     * <li>转换为调用方区分处理的 CURRENCY_NOT_ACTIVE（沿用原默认提示），具体原因保留为 Cause；对新用途而言快照中没有的币种同样视为未启用，
+     * 同时触发快照刷新。</li>
+     */
     void checkActiveCurrency(String currency) {
-        CurrencySpec spec = currencySpecRepository.findByCurrency(currency);
-        if (spec == null || spec.getStatus() != CurrencySpecStatus.ACTIVE) {
-            throw new FailException(LedgerSetupErrorCode.CURRENCY_NOT_ACTIVE);
+        try {
+            currencyRuleService.requireActive(currency);
+        } catch (BizCheckFailException | ErrorException rejected) {
+            throw new FailException(LedgerSetupErrorCode.CURRENCY_NOT_ACTIVE, null, rejected);
         }
     }
 

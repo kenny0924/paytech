@@ -17,7 +17,6 @@ import com.paytech.ledger.core.dal.dataobject.AccountingRuleBundleVer;
 import com.paytech.ledger.core.dal.dataobject.ChartAccount;
 import com.paytech.ledger.core.dal.dataobject.ChartAccountChange;
 import com.paytech.ledger.core.dal.dataobject.ChartOfAccounts;
-import com.paytech.ledger.core.dal.dataobject.CurrencySpec;
 import com.paytech.ledger.core.dal.dataobject.InstructionLine;
 import com.paytech.ledger.core.dal.dataobject.JournalEntry;
 import com.paytech.ledger.core.dal.dataobject.JournalLine;
@@ -25,7 +24,7 @@ import com.paytech.ledger.core.dal.dataobject.LedgerAccount;
 import com.paytech.ledger.core.dal.dataobject.ManualAdjustment;
 
 /**
- * Ledger 测试专用读写：前置状态构造、只读断言与全局清理；只触碰 mor_ledger 的 33 张表
+ * Ledger 测试专用读写：前置状态构造、只读断言与全局清理；只触碰 mor_ledger 的 32 张表
  * <li>初始化 DML 的固定 ID 行（小于 1,000,000）是只读全局基础数据，清理时保留。</li>
  */
 @Mapper
@@ -33,7 +32,7 @@ public interface AccountingTestMapper {
     /** 初始化 DML 保留行的 ID 上界。 */
     long RESERVED_ID_LIMIT = 1_000_000L;
 
-    /** 统计 mor_ledger 全部 33 张表中测试可写入的行数（保留表只统计 ID ≥ 1,000,000 的行），按表返回。 */
+    /** 统计 mor_ledger 全部 32 张表中测试可写入的行数（保留表只统计 ID ≥ 1,000,000 的行），按表返回。 */
     @Select("""
         SELECT 't_close_approval' t, COUNT(*) c FROM t_close_approval UNION ALL
         SELECT 't_close_step', COUNT(*) FROM t_close_step UNION ALL
@@ -65,15 +64,13 @@ public interface AccountingTestMapper {
         SELECT 't_accounting_rule_line', COUNT(*) FROM t_accounting_rule_line WHERE id >= 1000000 UNION ALL
         SELECT 't_accounting_rule_bundle_ver', COUNT(*) FROM t_accounting_rule_bundle_ver WHERE id >= 1000000 UNION ALL
         SELECT 't_accounting_rule_bundle', COUNT(*) FROM t_accounting_rule_bundle WHERE id >= 1000000 UNION ALL
-        SELECT 't_currency_spec', COUNT(*) FROM t_currency_spec WHERE id >= 1000000 UNION ALL
         SELECT 't_chart_of_accounts', COUNT(*) FROM t_chart_of_accounts WHERE id >= 1000000 UNION ALL
         SELECT 't_chart_account', COUNT(*) FROM t_chart_account WHERE id >= 1000000
         """)
     List<Map<String, Object>> countWritableRows();
 
     /** 统计初始化 DML 的保留行数，用于确认 mor_ledger 已执行 ledger-initial-data.sql。 */
-    @Select("SELECT (SELECT COUNT(*) FROM t_currency_spec WHERE id < 1000000) "
-        + "+ (SELECT COUNT(*) FROM t_chart_of_accounts WHERE id < 1000000) "
+    @Select("SELECT (SELECT COUNT(*) FROM t_chart_of_accounts WHERE id < 1000000) "
         + "+ (SELECT COUNT(*) FROM t_chart_account WHERE id < 1000000) "
         + "+ (SELECT COUNT(*) FROM t_close_account_rule WHERE id < 1000000) "
         + "+ (SELECT COUNT(*) FROM t_accounting_rule_bundle WHERE id < 1000000) "
@@ -88,11 +85,6 @@ public interface AccountingTestMapper {
     /** 删除初始化表中非保留 ID 的测试行。 */
     @Delete("DELETE FROM ${table} WHERE id >= 1000000")
     void deleteNonReserved(@Param("table") String table);
-
-    /** 插入测试币种规则。 */
-    @Insert("INSERT INTO t_currency_spec (id, currency, minor_unit, rounding_mode, status, create_time, update_time) "
-        + "VALUES (#{id}, #{currency}, #{minorUnit}, #{roundingMode}, #{status}, #{createTime}, #{updateTime})")
-    void insertCurrencySpec(CurrencySpec spec);
 
     /** 插入测试科目表（主键须 >= 1000000，由全局清理删除）。 */
     @Insert("INSERT INTO t_chart_of_accounts (id, chart_code, chart_name, status, create_time, update_time) "
@@ -382,6 +374,10 @@ public interface AccountingTestMapper {
     /** 统计全部分录头数，用于整体回滚断言。 */
     @Select("SELECT COUNT(*) FROM t_journal_entry")
     int countAllJournalEntries();
+
+    /** 统计全部账簿数，用于拒绝后无残留断言。 */
+    @Select("SELECT COUNT(*) FROM t_ledger_book")
+    int countLedgerBooks();
 
     /** 统计全部账户数，用于整体回滚后确认自动建户也已撤销。 */
     @Select("SELECT COUNT(*) FROM t_ledger_account")

@@ -17,15 +17,12 @@ import com.paytech.ledger.api.response.AccountResponseBody;
 import com.paytech.ledger.api.response.AccountingPeriodResponseBody;
 import com.paytech.ledger.api.response.ChartOfAccountsListResponseBody;
 import com.paytech.ledger.api.response.ChartOfAccountsResponseBody;
-import com.paytech.ledger.api.response.CurrencyListResponseBody;
-import com.paytech.ledger.api.response.CurrencyResponseBody;
 import com.paytech.ledger.api.response.FinanceEntityResponseBody;
 import com.paytech.ledger.api.response.FiscalCalendarResponseBody;
 import com.paytech.ledger.api.response.JournalEntryDetailResponseBody;
 import com.paytech.ledger.api.response.LedgerBookResponseBody;
 import com.paytech.ledger.core.dal.dataobject.AccountingPeriod;
 import com.paytech.ledger.core.dal.dataobject.ChartOfAccounts;
-import com.paytech.ledger.core.dal.dataobject.CurrencySpec;
 import com.paytech.ledger.core.dal.dataobject.FinanceEntity;
 import com.paytech.ledger.core.dal.dataobject.FiscalCalendar;
 import com.paytech.ledger.core.enums.ChartAccountStatus;
@@ -40,7 +37,6 @@ import com.paytech.ledger.domain.view.AccountJournalLineView;
 import com.paytech.ledger.domain.view.AccountView;
 import com.paytech.ledger.domain.view.JournalEntryDetailView;
 import com.paytech.ledger.domain.view.LedgerBookView;
-import com.paytech.platform.support.api.enums.CurrencySpecStatus;
 
 /** 账本与账务基础资料查询的 Query 参数解析与查询结果到 ResponseBody 的转换；ID 与金额输出为字符串。 */
 @Component
@@ -76,11 +72,6 @@ public class LedgerQueryConverter {
     public AccountingPeriodQuery toAccountingPeriodQuery(String fiscalCalendarId, Integer fiscalYear, Integer page,
         Integer size) {
         return new AccountingPeriodQuery(Long.parseLong(fiscalCalendarId), fiscalYear, PagingRequestBody.of(page, size));
-    }
-
-    /** 解析可选币种状态。 */
-    public CurrencySpecStatus toCurrencyStatus(String status) {
-        return optionalCode(CurrencySpecStatus.class, status);
     }
 
     /** 解析可选科目启停状态。 */
@@ -162,13 +153,6 @@ public class LedgerQueryConverter {
     public ChartOfAccountsListResponseBody toChartsResponseBody(List<ChartOfAccounts> charts) {
         ChartOfAccountsListResponseBody body = new ChartOfAccountsListResponseBody();
         body.setItems(charts.stream().map(this::toChartBody).toList());
-        return body;
-    }
-
-    /** 转换币种列表。 */
-    public CurrencyListResponseBody toCurrenciesResponseBody(List<CurrencySpec> currencies) {
-        CurrencyListResponseBody body = new CurrencyListResponseBody();
-        body.setItems(currencies.stream().map(this::toCurrencyBody).toList());
         return body;
     }
 
@@ -259,16 +243,6 @@ public class LedgerQueryConverter {
         body.setChartCode(chart.getChartCode());
         body.setChartName(chart.getChartName());
         body.setStatus(chart.getStatus().getCode());
-        return body;
-    }
-
-    /** 转换币种规则。 */
-    CurrencyResponseBody toCurrencyBody(CurrencySpec spec) {
-        CurrencyResponseBody body = new CurrencyResponseBody();
-        body.setCurrency(spec.getCurrency());
-        body.setMinorUnit(spec.getMinorUnit());
-        body.setRoundingMode(spec.getRoundingMode());
-        body.setStatus(spec.getStatus().getCode());
         return body;
     }
 

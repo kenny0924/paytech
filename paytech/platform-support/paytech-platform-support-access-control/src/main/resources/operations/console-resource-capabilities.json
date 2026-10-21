@@ -180,6 +180,17 @@
     ]
   },
   {
+    "componentKey": "OPERATIONS_CURRENCY_SPECS",
+    "displayName": "币种",
+    "frontendRoute": "/currency-specs",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_CURRENCY_SPEC_MANAGE",
+        "displayName": "维护"
+      }
+    ]
+  },
+  {
     "componentKey": "OPERATIONS_API_CREDENTIALS",
     "displayName": "API 凭证",
     "frontendRoute": "/api-credentials",

@@ -31,6 +31,12 @@ public class CurrencySpec {
     /** 状态。 */
     private CurrencySpecStatus status;
 
+    /**
+     * 乐观并发版本
+     * <li>新建为 1，每次成功修改递增 1。</li>
+     */
+    private Integer version;
+
     /** 创建时间（UTC）。 */
     private Instant createTime;
 

@@ -8,7 +8,6 @@ import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.ledger.core.dal.dataobject.AccountingPeriod;
 import com.paytech.ledger.core.dal.dataobject.ChartAccount;
 import com.paytech.ledger.core.dal.dataobject.ChartOfAccounts;
-import com.paytech.ledger.core.dal.dataobject.CurrencySpec;
 import com.paytech.ledger.core.dal.dataobject.FinanceEntity;
 import com.paytech.ledger.core.dal.dataobject.FiscalCalendar;
 import com.paytech.ledger.core.enums.ChartAccountStatus;
@@ -22,7 +21,6 @@ import com.paytech.ledger.domain.view.ChartAccountChangeView;
 import com.paytech.ledger.domain.view.AccountView;
 import com.paytech.ledger.domain.view.JournalEntryDetailView;
 import com.paytech.ledger.domain.view.LedgerBookView;
-import com.paytech.platform.support.api.enums.CurrencySpecStatus;
 
 /**
  * 账簿、账户、账户流水与分录详情的只读查询
@@ -97,9 +95,6 @@ public interface LedgerQueryService {
      */
     PagingResponseBody<ChartAccountChangeView> pageChartAccountChanges(String chartCode, Long chartAccountId,
         PagingRequestBody paging);
-
-    /** 查询币种规则，status 为空时不过滤，按币种代码升序。 */
-    List<CurrencySpec> listCurrencies(CurrencySpecStatus status);
 
     /** 批量读取科目的最大主键数。 */
     int MAX_CHART_ACCOUNT_IDS = 200;

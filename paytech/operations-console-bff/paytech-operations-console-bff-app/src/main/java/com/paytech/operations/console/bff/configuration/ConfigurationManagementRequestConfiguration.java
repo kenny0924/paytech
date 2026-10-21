@@ -69,7 +69,7 @@ public class ConfigurationManagementRequestConfiguration implements WebMvcConfig
                     throw new InvalidParameterException("该请求不接受 Body");
                 return true;
             }
-        }).addPathPatterns("/gateway-admin/v1/**", "/console-admin/v1/**", "/permission-admin/v1/**", "/api-credential-admin/v1/**", "/api-scope-admin/v1/**", "/tenant-access-admin/v1/**", "/external-api-admin/v1/**", "/notification-admin/v1/**", "/webhook-admin/v1/**");
+        }).addPathPatterns("/gateway-admin/v1/**", "/console-admin/v1/**", "/permission-admin/v1/**", "/api-credential-admin/v1/**", "/api-scope-admin/v1/**", "/tenant-access-admin/v1/**", "/external-api-admin/v1/**", "/notification-admin/v1/**", "/webhook-admin/v1/**", "/currency-admin/v1/**");
     }
 
     /** Controller 方法是否声明 RequestBody。 */
@@ -91,7 +91,7 @@ public class ConfigurationManagementRequestConfiguration implements WebMvcConfig
         @Override
         public boolean canRead(ResolvableType type, MediaType mediaType) {
             Class<?> value = type.resolve();
-            return value != null && value.getSimpleName().endsWith("RequestBody") && (value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.GatewayConfigurationModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.ConsoleResourceModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.PermissionManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.ApiScopeManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.ApiCredentialManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.TenantAccessManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.NotificationManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.WebhookManagementModels.class)
+            return value != null && value.getSimpleName().endsWith("RequestBody") && (value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.GatewayConfigurationModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.ConsoleResourceModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.PermissionManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.ApiScopeManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.ApiCredentialManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.TenantAccessManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.NotificationManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.WebhookManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.CurrencySpecManagementModels.class)
                 && super.canRead(type, mediaType);
         }
 
@@ -106,9 +106,11 @@ public class ConfigurationManagementRequestConfiguration implements WebMvcConfig
                 if (tree == null || !tree.isObject()) throw new HttpMessageNotReadableException("配置 Body 必须为对象", input);
                 if (type.resolve() == com.paytech.operations.console.bff.service.model.ApiScopeManagementModels.UpdateApiScopeRequestBody.class && !tree.has("description"))
                     { throw new HttpMessageNotReadableException("修改说明必须显式传值或 null", input); }
-                for (var field : type.resolve().getRecordComponents())
-                    if (field.getType().isPrimitive() && !tree.has(field.getName()))
-                        throw new HttpMessageNotReadableException("配置 Body 缺少必填字段", input);
+                // 普通 class 模型以包装类型加 @NotNull 表达必填，只有 record 需要检查缺失的基本类型字段。
+                if (type.resolve().isRecord())
+                    for (var field : type.resolve().getRecordComponents())
+                        if (field.getType().isPrimitive() && !tree.has(field.getName()))
+                            throw new HttpMessageNotReadableException("配置 Body 缺少必填字段", input);
                 return getMapper().readValue(body, type.resolve());
             } catch (tools.jackson.core.JacksonException failure) {
                 throw new HttpMessageNotReadableException("配置请求不符合 JSON 协议", input);
