@@ -80,6 +80,15 @@ public interface ReconExceptionRepository {
         ReconExceptionType exceptionType);
 
     /**
+     * 读取一个对象上全部类型的未结异常（OPEN、UNDER_REVIEW）。
+     * 
+     * @param sourceType 挂靠对象类型
+     * @param sourceId 挂靠对象 ID
+     * @return 按主键升序
+     */
+    List<ReconException> listActiveBySource(ReconExceptionSourceType sourceType, Long sourceId);
+
+    /**
      * 读取一张渠道账单的未结异常（对平门禁、作废时自动结案）。
      * 
      * @param statementId 渠道账单主键

@@ -1,0 +1,32 @@
++-----------------------------------------------+----+
+| k                                             | v  |
++-----------------------------------------------+----+
+| b126_permission(=0)                           |  0 |
+| b126_role_permission(=0)                      |  0 |
+| b126_console_resource(=0)                     |  0 |
+| b126_gateway_route(=0)                        |  0 |
+| b126_route_header(=0)                         |  0 |
+| b126_query_param(=0)                          |  0 |
+| b126_guard_rule(=0)                           |  0 |
+| b126_route_codes(=0)                          |  0 |
+| b126_route_paths(=0)                          |  0 |
+| b126_resource_code(=0)                        |  0 |
+| b123_route_active(=38)                        | 38 |
+| b123_resource_active(=10)                     | 10 |
+| b123_grant_active(=3)                         |  3 |
+| b123_parent_menu_active(=1)                   |  1 |
+| b123_read_permission(=1)                      |  1 |
+| target_900000000000000001(=1)                 |  1 |
+| platform_admin_version(记录；激活后 +1)       | 39 |
+| recon_tables(=15)                             | 15 |
+| recon_clearing_account(rows)                  |  2 |
+| recon_cash_account(rows)                      |  2 |
+| recon_channel_statement(rows)                 |  7 |
+| recon_channel_statement_line(rows)            | 25 |
+| recon_platform_txn(rows)                      | 17 |
+| recon_bank_statement(rows)                    |  4 |
+| recon_bank_statement_line(rows)               |  5 |
+| recon_bank_match(rows)                        |  2 |
+| recon_exception(rows)                         | 11 |
+| recon_exception_open(rows)                    |  8 |
++-----------------------------------------------+----+

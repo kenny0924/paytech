@@ -259,7 +259,10 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
         Map.entry("operations-finance-recon-exception-open", RECON_OPERATE_PERMISSION_ID),
         Map.entry("operations-finance-recon-resolution-submit", RECON_OPERATE_PERMISSION_ID),
         Map.entry("operations-finance-recon-resolution-approval", RECON_APPROVE_PERMISSION_ID),
-        Map.entry("operations-finance-recon-summary", RECON_READ_PERMISSION_ID));
+        Map.entry("operations-finance-recon-summary", RECON_READ_PERMISSION_ID),
+        Map.entry("operations-finance-recon-channel-line-search", RECON_READ_PERMISSION_ID),
+        Map.entry("operations-finance-recon-bank-statement-detail", RECON_READ_PERMISSION_ID),
+        Map.entry("operations-finance-recon-bank-statement-line-detail", RECON_READ_PERMISSION_ID));
 
     // 这是 Platform Simulator 的当前目录事实；BFF 生产代码仍只传可信 Route Code。
     /**

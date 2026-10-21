@@ -14,6 +14,7 @@ import com.paytech.reconciliation.api.ReconciliationHeaders;
 import com.paytech.reconciliation.api.bank.request.AppendBankStatementLinesRequestBody;
 import com.paytech.reconciliation.api.bank.request.StartBankStatementImportRequestBody;
 import com.paytech.reconciliation.api.bank.response.BankStatementCompletionResponseBody;
+import com.paytech.reconciliation.api.bank.response.BankStatementLineDetailResponseBody;
 import com.paytech.reconciliation.api.bank.response.BankStatementLineResponseBody;
 import com.paytech.reconciliation.api.bank.response.BankStatementResponseBody;
 
@@ -93,6 +94,16 @@ public interface BankStatementApi {
         @RequestParam(value = "size", required = false) Integer size);
 
     /**
+     * 读取银行对账单头
+     *
+     * @param bankStatementId 银行对账单主键
+     * @return 对账单头与导入进度；不存在时 404 BANK_STATEMENT_NOT_FOUND
+     */
+    @GetExchange("/bank-statements/{bankStatementId}")
+    BankStatementResponseBody getBankStatement(
+        @PathVariable("bankStatementId") @Pattern(regexp = "[1-9][0-9]{0,18}") String bankStatementId);
+
+    /**
      * 分页查询一张对账单的银行流水
      *
      * @param bankStatementId 银行对账单主键
@@ -128,4 +139,14 @@ public interface BankStatementApi {
         @RequestParam(value = "valueDateTo", required = false) @Pattern(regexp = "[0-9]{4}-[0-9]{2}-[0-9]{2}") String valueDateTo,
         @RequestParam(value = "page", required = false) Integer page,
         @RequestParam(value = "size", required = false) Integer size);
+
+    /**
+     * 读取银行流水详情
+     *
+     * @param bankStatementLineId 银行流水主键
+     * @return 流水、所属对账单、全部银行匹配（含预期银行流水）与未结异常；不存在时 404 BANK_STATEMENT_LINE_NOT_FOUND
+     */
+    @GetExchange("/bank-statement-lines/{bankStatementLineId}")
+    BankStatementLineDetailResponseBody getBankStatementLine(
+        @PathVariable("bankStatementLineId") @Pattern(regexp = "[1-9][0-9]{0,18}") String bankStatementLineId);
 }

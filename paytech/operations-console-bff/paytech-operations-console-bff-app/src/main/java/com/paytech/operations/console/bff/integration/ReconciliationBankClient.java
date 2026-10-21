@@ -6,6 +6,7 @@ import com.paytech.operations.console.bff.service.model.ReconciliationBankModels
 import com.paytech.operations.console.bff.service.model.ReconciliationBankModels.BankMatchListResponseBody;
 import com.paytech.operations.console.bff.service.model.ReconciliationBankModels.BankMatchResponseBody;
 import com.paytech.operations.console.bff.service.model.ReconciliationBankModels.BankStatementCompletionResponseBody;
+import com.paytech.operations.console.bff.service.model.ReconciliationBankModels.BankStatementLineDetailResponseBody;
 import com.paytech.operations.console.bff.service.model.ReconciliationBankModels.BankStatementLineResponseBody;
 import com.paytech.operations.console.bff.service.model.ReconciliationBankModels.BankStatementResponseBody;
 import com.paytech.operations.console.bff.service.model.ReconciliationBankModels.CreateBankMatchesRequestBody;
@@ -19,6 +20,23 @@ import com.paytech.operations.console.bff.service.model.ReconciliationBankModels
  * @author Claude
  */
 public interface ReconciliationBankClient {
+
+    /**
+     * 银行对账单头（详情页）
+     *
+     * @param bankStatementId 对账单主键
+     * @return 对账单头与导入进度；不存在时 reconciliation 返回 404 BANK_STATEMENT_NOT_FOUND
+     */
+    BankStatementResponseBody getBankStatement(String bankStatementId);
+
+    /**
+     * 银行流水详情（详情页）
+     *
+     * @param bankStatementLineId 银行流水主键
+     * @return 流水、所属对账单、全部银行匹配（含预期银行流水）与未结异常；不存在时 reconciliation 返回 404
+     *         BANK_STATEMENT_LINE_NOT_FOUND
+     */
+    BankStatementLineDetailResponseBody getBankStatementLine(String bankStatementLineId);
 
     /**
      * 银行对账单分页

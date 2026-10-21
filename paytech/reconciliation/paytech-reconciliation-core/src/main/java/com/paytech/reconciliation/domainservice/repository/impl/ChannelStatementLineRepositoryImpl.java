@@ -18,6 +18,7 @@ import com.paytech.reconciliation.api.enums.MatchMethod;
 import com.paytech.reconciliation.core.dal.dataobject.ChannelStatementLine;
 import com.paytech.reconciliation.core.dal.mapper.ChannelStatementLineMapper;
 import com.paytech.reconciliation.domain.ChannelLineMatchChange;
+import com.paytech.reconciliation.domain.ChannelLineSearch;
 import com.paytech.reconciliation.domain.ExternalReference;
 import com.paytech.reconciliation.domainservice.repository.ChannelStatementLineRepository;
 
@@ -105,6 +106,18 @@ public class ChannelStatementLineRepositoryImpl implements ChannelStatementLineR
     @Override
     public long countPage(Long statementId, LineMatchStatus matchStatus, ChannelLineType lineType) {
         return mapper.countPage(statementId, matchStatus, lineType);
+    }
+
+    /** 跨账单按条件分页读取。 */
+    @Override
+    public List<ChannelStatementLine> searchPage(ChannelLineSearch criteria, long offset, int limit) {
+        return mapper.selectSearchPage(criteria, offset, limit);
+    }
+
+    /** 与 searchPage 相同条件的总数。 */
+    @Override
+    public long countSearch(ChannelLineSearch criteria) {
+        return mapper.countSearch(criteria);
     }
 
     /** 按版本写入一行的匹配结果；释放匹配时把引用列传 null、状态传 UNMATCHED。 */

@@ -10,6 +10,7 @@ import com.paytech.reconciliation.api.enums.LineMatchStatus;
 import com.paytech.reconciliation.api.enums.MatchMethod;
 import com.paytech.reconciliation.core.dal.dataobject.ChannelStatementLine;
 import com.paytech.reconciliation.domain.ChannelLineMatchChange;
+import com.paytech.reconciliation.domain.ChannelLineSearch;
 import com.paytech.reconciliation.domain.ExternalReference;
 
 /** t_channel_statement_line（渠道账单行）仓储：一张表一个仓储，只做本表读写与行数检查，不开事务。 */
@@ -117,6 +118,24 @@ public interface ChannelStatementLineRepository {
      * @return 总数
      */
     long countPage(Long statementId, LineMatchStatus matchStatus, ChannelLineType lineType);
+
+    /**
+     * 跨账单按条件分页读取（渠道流水页），交易日期降序（无交易日期在最后）、主键降序。
+     * 
+     * @param criteria 查询条件（含账单状态口径）
+     * @param offset 已校验分页请求的偏移量
+     * @param limit 每页条数
+     * @return 当前页记录
+     */
+    List<ChannelStatementLine> searchPage(ChannelLineSearch criteria, long offset, int limit);
+
+    /**
+     * 与 searchPage 相同条件的总数。
+     * 
+     * @param criteria 查询条件
+     * @return 总数
+     */
+    long countSearch(ChannelLineSearch criteria);
 
     /**
      * 按版本写入一行的匹配结果；释放匹配时把引用列传 null、状态传 UNMATCHED。

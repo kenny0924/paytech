@@ -82,6 +82,12 @@ public class ReconExceptionRepositoryImpl implements ReconExceptionRepository {
         return RepositoryBatches.query(sourceIds, part -> mapper.selectLatestBySources(sourceType, part, exceptionType));
     }
 
+    /** 读取一个对象上全部类型的未结异常。 */
+    @Override
+    public List<ReconException> listActiveBySource(ReconExceptionSourceType sourceType, Long sourceId) {
+        return mapper.selectActiveBySource(sourceType, sourceId);
+    }
+
     /** 读取一张渠道账单的未结异常（对平门禁、作废时自动结案）。 */
     @Override
     public List<ReconException> listActiveByStatement(Long statementId) {

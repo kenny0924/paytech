@@ -73,6 +73,36 @@
         SELECT COUNT(*) FROM t_channel_statement_line <include refid="pageWhere"/>
     </select>
 
+    <!-- 跨账单查询（渠道流水页）：JOIN 账单只为按账单状态过滤；交易日期降序时 NULL 排在最后（MySQL 降序 NULL 最小），同日按主键降序。 -->
+    <sql id="searchWhere">
+        <where>
+            <if test="c.clearingAccountId != null">AND l.clearing_account_id = #{c.clearingAccountId}</if>
+            <if test="c.statementStatus != null">AND s.status = #{c.statementStatus}</if>
+            <if test="!c.excludedStatementStatuses.isEmpty()">AND s.status NOT IN
+                <foreach collection="c.excludedStatementStatuses" item="excluded" open="(" separator="," close=")">#{excluded}</foreach>
+            </if>
+            <if test="c.matchStatus != null">AND l.match_status = #{c.matchStatus}</if>
+            <if test="c.lineType != null">AND l.line_type = #{c.lineType}</if>
+            <if test="c.referenceType != null">AND l.reference_type = #{c.referenceType}</if>
+            <if test="c.externalTransactionId != null">AND l.external_transaction_id = #{c.externalTransactionId}</if>
+            <if test="c.transactionDateFrom != null">AND l.transaction_date &gt;= #{c.transactionDateFrom}</if>
+            <if test="c.transactionDateTo != null">AND l.transaction_date &lt;= #{c.transactionDateTo}</if>
+        </where>
+    </sql>
+
+    <select id="selectSearchPage" resultType="com.paytech.reconciliation.core.dal.dataobject.ChannelStatementLine">
+        SELECT <include refid="lineColumns"/> FROM t_channel_statement_line l
+        JOIN t_channel_statement s ON s.id = l.statement_id
+        <include refid="searchWhere"/>
+        ORDER BY l.transaction_date DESC, l.id DESC LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countSearch" resultType="long">
+        SELECT COUNT(*) FROM t_channel_statement_line l
+        JOIN t_channel_statement s ON s.id = l.statement_id
+        <include refid="searchWhere"/>
+    </select>
+
     <update id="updateMatch">
         UPDATE t_channel_statement_line
         SET platform_txn_id = #{platformTxnId}, match_method = #{matchMethod}, matched_time = #{matchedTime}, actual_fee = #{actualFee}, resolution_id = #{resolutionId}, match_status = #{matchStatus}, version = version + 1, update_time = #{now}

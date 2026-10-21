@@ -31,6 +31,14 @@
   - 本机 `local-environment` 的 `mor_ledger`、`mor_billing` 仍保留副本表，等其他会话的旧代码不再使用后再删。
   - `data-service/cdc/whitelist.yaml` 与本地 Flink 示例仍指向不存在的 `mor_finance.t_currency_spec`。
 
+## reconciliation 对账控制台详情页与渠道流水（2026-10-21，已部署 mor-test，已本地提交，未推送）
+
+- **需求：** [需求](<../requirements/20261021/reconciliation-对账控制台详情页与渠道流水/requirement.md>)、[技术方案](<../requirements/20261021/reconciliation-对账控制台详情页与渠道流水/technique.md>)、[交付记录](<../requirements/20261021/reconciliation-对账控制台详情页与渠道流水/delivery.md>)；切片 1 后续，阶段 1—8 完成。
+- **Implemented：** reconciliation 新增只读接口 `GET /reconciliation/v1/channel-statement-lines`（跨账单查渠道账单行，缺省排除 `VOIDED` / `REJECTED` / `RECEIVING` 账单，`size` ≤ 100）、`GET /bank-statements/{id}`、`GET /bank-statement-lines/{id}`（不存在 → 404 `BANK_STATEMENT_NOT_FOUND` / `BANK_STATEMENT_LINE_NOT_FOUND`）；BFF 三条转发；Web 对账 6 类详情由抽屉改为子路由详情页（录入表单仍用抽屉）、列表筛选保存在 URL，新增「财务 → 对账 → 渠道流水」页；Platform 块 126（菜单 1、路由 3，沿用 `FINANCE_RECONCILIATION_READ`）。不改表、不改事件。
+- **Verified：** 本机 reconciliation 100、BFF 对账相关 152、Web 1242 + tsc + build、arch-rules 63；本机浏览器 82/83（W-1 / W-2 已修）、接口 27/27；mor-test 冒烟与浏览器只读 66 项（[阶段 5](<../requirements/20261021/reconciliation-对账控制台详情页与渠道流水/verification/stage5-report.md>)、[发布记录](<../requirements/20261021/reconciliation-对账控制台详情页与渠道流水/release/release.md>) 第 8 节）。
+- **Deployed（mor-test，2026-10-21 05:53—06:1xZ，tag `recon-detail-20261021`）：** reconciliation `sha256:b31a853d…`、platform-support `sha256:3d8bc375…`、ops-bff `sha256:e822301c…`、ops-web `sha256:70829a3a…`；`mor_platform` 块 126 已激活（PLATFORM_ADMIN v40）。备份 `~/Code-MoR-backups/20261021T055349Z-recon-detail-mor-test/`。
+- **Known gaps：** 渠道流水沿用块 123 GET 限流（每人每路由 30 次/分钟），快速连续筛选可能 429；只按外部交易号或不带清算账户查询会扫描账单行表。推送另行授权。
+
 ## reconciliation 渠道资金对账切片 1（2026-10-21，已部署 mor-test，已本地提交，未推送）
 
 - **决定与需求：** [决定记录](./decisions/2026-10-20-reconciliation-facts-via-billing.md)（Confirmed，两轮；实施修订：库内 15 张 = 13 业务表 + 2 张消息去重表）；[需求](<../requirements/20261020/reconciliation-渠道资金对账切片1/requirement.md>)、[技术方案](<../requirements/20261020/reconciliation-渠道资金对账切片1/technique.md>)（§2.10 实施决定 I-01—I-18）、[交付记录](<../requirements/20261020/reconciliation-渠道资金对账切片1/delivery.md>)；阶段 1—8 完成。

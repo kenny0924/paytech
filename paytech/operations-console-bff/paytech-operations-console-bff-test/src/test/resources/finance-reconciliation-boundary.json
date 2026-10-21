@@ -1300,5 +1300,181 @@
       }
     },
     "routeCode": "operations-finance-recon-summary"
+  },
+  {
+    "id": "R39",
+    "method": "GET",
+    "path": "/finance/reconciliation/v1/channel-statement-lines",
+    "query": "?clearingAccountId=7500000000000000101&statementStatus=MATCHING&matchStatus=MATCHED&lineType=PAYMENT&referenceType=NI_ORDER_REF&externalTransactionId=NI-ORD-1&transactionDateFrom=2026-10-01&transactionDateTo=2026-10-31&page=1&size=10",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "lineId": "7500000000000000501",
+          "statementId": "7500000000000000401",
+          "channelBatchRef": "NI-20261018-01",
+          "revision": 1,
+          "statementStatus": "MATCHING",
+          "settlementDate": "2026-10-19",
+          "clearingAccountId": "7500000000000000101",
+          "clearingAccountCode": "NI-AE001-USD",
+          "currency": "USD",
+          "lineNo": 1,
+          "lineType": "PAYMENT",
+          "direction": "CREDIT",
+          "amount": "100.00",
+          "feeAmount": "0.45",
+          "referenceType": "NI_ORDER_REF",
+          "externalTransactionId": "NI-ORD-1",
+          "transactionDate": "2026-10-18",
+          "platformTxnId": "7500000000000000801",
+          "matchMethod": "AUTO",
+          "matchedTime": "2026-10-20T02:00:00.123456Z",
+          "actualFee": "0.45",
+          "resolutionId": null,
+          "matchStatus": "MATCHED"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    },
+    "routeCode": "operations-finance-recon-channel-line-search"
+  },
+  {
+    "id": "R40",
+    "method": "GET",
+    "path": "/finance/reconciliation/v1/bank-statements/7500000000000000601",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "bankStatementId": "7500000000000000601",
+      "cashAccountId": "7500000000000000201",
+      "statementRef": "ENBD-202610-19",
+      "periodStart": "2026-10-19",
+      "periodEnd": "2026-10-19",
+      "currency": "USD",
+      "openingBalance": "1000.00",
+      "closingBalance": "1067.40",
+      "declaredLineCount": 1,
+      "importedLineCount": 1,
+      "duplicateLineCount": 0,
+      "fileName": "enbd-20261019.csv",
+      "fileContentHash": "1b3d5f7a9c2e4b6d8f0a1c3e5b7d9f2a4c6e8b0d2f4a6c8e1b3d5f7a9c2e4b6d",
+      "rejectReason": null,
+      "status": "IMPORTED",
+      "makerId": "10001",
+      "createTime": "2026-10-20T01:00:00.123456Z",
+      "updateTime": "2026-10-20T01:00:00.123456Z"
+    },
+    "routeCode": "operations-finance-recon-bank-statement-detail"
+  },
+  {
+    "id": "R41",
+    "method": "GET",
+    "path": "/finance/reconciliation/v1/bank-statement-lines/7500000000000000701",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "line": {
+        "bankStatementLineId": "7500000000000000701",
+        "bankStatementId": "7500000000000000601",
+        "cashAccountId": "7500000000000000201",
+        "lineNo": 1,
+        "bankTransactionRef": "ENBD-TXN-0001",
+        "valueDate": "2026-10-19",
+        "direction": "CREDIT",
+        "amount": "67.40",
+        "currency": "USD",
+        "counterpartyName": "NETWORK INTERNATIONAL",
+        "referenceText": "SETTLEMENT NI-20261019-001",
+        "matchedAmount": "0.00",
+        "matchStatus": "UNMATCHED",
+        "version": "1"
+      },
+      "statement": {
+        "bankStatementId": "7500000000000000601",
+        "cashAccountId": "7500000000000000201",
+        "statementRef": "ENBD-202610-19",
+        "periodStart": "2026-10-19",
+        "periodEnd": "2026-10-19",
+        "currency": "USD",
+        "openingBalance": "1000.00",
+        "closingBalance": "1067.40",
+        "declaredLineCount": 1,
+        "importedLineCount": 1,
+        "duplicateLineCount": 0,
+        "fileName": "enbd-20261019.csv",
+        "fileContentHash": "1b3d5f7a9c2e4b6d8f0a1c3e5b7d9f2a4c6e8b0d2f4a6c8e1b3d5f7a9c2e4b6d",
+        "rejectReason": null,
+        "status": "IMPORTED",
+        "makerId": "10001",
+        "createTime": "2026-10-20T01:00:00.123456Z",
+        "updateTime": "2026-10-20T01:00:00.123456Z"
+      },
+      "matches": [
+        {
+          "match": {
+            "bankMatchId": "7500000000000000901",
+            "bankStatementLineId": "7500000000000000701",
+            "expectedMovementId": "7500000000000000801",
+            "matchedAmount": "67.40",
+            "matchMethod": "AUTO",
+            "payoutComponentType": null,
+            "status": "PROPOSED",
+            "resolutionId": null,
+            "operatorId": null,
+            "decisionTime": null,
+            "createTime": "2026-10-20T01:00:00.123456Z"
+          },
+          "expectedMovement": {
+            "expectedMovementId": "7500000000000000801",
+            "movementType": "CHANNEL_SETTLEMENT",
+            "sourceId": "7500000000000000301",
+            "cashAccountId": "7500000000000000201",
+            "entityNo": "AE001",
+            "direction": "CREDIT",
+            "currency": "USD",
+            "expectedAmount": "67.55",
+            "expectedDate": "2026-10-21",
+            "bankPaymentRef": null,
+            "confirmedAmount": "0.00",
+            "classifiedAmount": "0.00",
+            "status": "OPEN",
+            "version": "1",
+            "createTime": "2026-10-20T01:00:00.123456Z",
+            "updateTime": "2026-10-20T01:00:00.123456Z"
+          }
+        }
+      ],
+      "openExceptions": [
+        {
+          "exceptionId": "7500000000000001001",
+          "exceptionType": "BANK_AMOUNT_MISMATCH",
+          "reconLayer": "BANK",
+          "blocking": false,
+          "sourceType": "BANK_STATEMENT_LINE",
+          "sourceId": "7500000000000000701",
+          "statementId": null,
+          "clearingAccountId": null,
+          "cashAccountId": "7500000000000000201",
+          "entityType": "OPERATING_ENTITY",
+          "entityId": "AE001",
+          "currency": "USD",
+          "differenceAmount": "0.15",
+          "detail": "预期 67.55，已确认 67.40",
+          "status": "OPEN",
+          "openedBy": "10001",
+          "openedTime": "2026-10-20T01:00:00.123456Z",
+          "ageDays": 0,
+          "closedTime": null,
+          "version": "1"
+        }
+      ]
+    },
+    "routeCode": "operations-finance-recon-bank-statement-line-detail"
   }
 ]

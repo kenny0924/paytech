@@ -40,6 +40,10 @@ public interface ReconExceptionMapper {
     List<ReconException> selectLatestBySources(@Param("sourceType") ReconExceptionSourceType sourceType,
         @Param("sourceIds") List<Long> sourceIds, @Param("exceptionType") ReconExceptionType exceptionType);
 
+    /** 读取一个对象上全部类型的未结异常（OPEN、UNDER_REVIEW），按主键升序。 */
+    List<ReconException> selectActiveBySource(@Param("sourceType") ReconExceptionSourceType sourceType,
+        @Param("sourceId") Long sourceId);
+
     /** 读取一张渠道账单的未结异常。 */
     List<ReconException> selectActiveByStatement(@Param("statementId") Long statementId);
 

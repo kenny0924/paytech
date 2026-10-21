@@ -496,4 +496,32 @@ public final class ReconciliationBankModels {
         /** 已确认的银行匹配 */
         private List<BankMatchResponseBody> items;
     }
+
+    /** 银行流水详情：流水、所属对账单、全部银行匹配（含预期银行流水）与流水上的未结异常。 */
+    @Getter
+    @Setter
+    public static class BankStatementLineDetailResponseBody {
+        /** 银行流水 */
+        private BankStatementLineResponseBody line;
+
+        /** 所属银行对账单 */
+        private BankStatementResponseBody statement;
+
+        /** 本流水的全部银行匹配（PROPOSED、CONFIRMED、REJECTED），按匹配主键升序 */
+        private List<Match> matches;
+
+        /** 挂在本流水上的未结异常（OPEN、UNDER_REVIEW），按异常主键升序 */
+        private List<ReconciliationExceptionModels.ReconExceptionResponseBody> openExceptions;
+
+        /** 一条银行匹配与它分配到的预期银行流水。 */
+        @Getter
+        @Setter
+        public static class Match {
+            /** 银行匹配 */
+            private BankMatchResponseBody match;
+
+            /** 匹配的预期银行流水 */
+            private ExpectedBankMovementResponseBody expectedMovement;
+        }
+    }
 }

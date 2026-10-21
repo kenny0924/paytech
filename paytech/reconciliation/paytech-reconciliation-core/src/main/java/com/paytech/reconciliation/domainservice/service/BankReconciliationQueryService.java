@@ -20,6 +20,7 @@ import com.paytech.reconciliation.core.dal.dataobject.BankStatementLine;
 import com.paytech.reconciliation.core.dal.dataobject.CashAccount;
 import com.paytech.reconciliation.core.dal.dataobject.ExpectedBankMovement;
 import com.paytech.reconciliation.domain.BankMatchContext;
+import com.paytech.reconciliation.domain.view.BankStatementLineDetailView;
 
 /**
  * 银行层查询（UC-R17，#10、#11、#19–#21）与确认匹配上下文的装载；只读，不开启事务
@@ -81,6 +82,22 @@ public interface BankReconciliationQueryService {
      * @return 对账单
      */
     BankStatement getBankStatement(long bankStatementId);
+
+    /**
+     * 按主键读取银行对账单（详情页）
+     *
+     * @param bankStatementId 对账单主键
+     * @return 对账单；不存在时 404 BANK_STATEMENT_NOT_FOUND
+     */
+    BankStatement readBankStatement(long bankStatementId);
+
+    /**
+     * 按主键读取银行流水详情：所属对账单与银行账户、全部银行匹配（含预期银行流水）与流水上的未结异常
+     *
+     * @param bankStatementLineId 银行流水主键
+     * @return 详情；不存在时 404 BANK_STATEMENT_LINE_NOT_FOUND
+     */
+    BankStatementLineDetailView readBankStatementLine(long bankStatementLineId);
 
     /**
      * 分页查询银行对账单

@@ -1,0 +1,32 @@
+{
+  "results": [
+    {
+      "area": "登录",
+      "ok": true,
+      "note": "管理员登录"
+    },
+    {
+      "area": "回归",
+      "ok": false,
+      "note": "对账/platform-txns 渲染、无错误提示"
+    },
+    {
+      "area": "回归",
+      "ok": false,
+      "note": "对账/summary 渲染、无错误提示"
+    },
+    {
+      "area": "回归",
+      "ok": true,
+      "note": "平台配置/币种 渲染、无错误提示"
+    }
+  ],
+  "consoleErrors": [],
+  "network": [],
+  "expectedNotFound": [],
+  "shots": [
+    "g-recon-platform-txns.png",
+    "g-recon-summary.png",
+    "g01-currency-specs.png"
+  ]
+}

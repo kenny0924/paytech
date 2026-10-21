@@ -59,8 +59,8 @@
 | 清算账户解析（内部，billing） | `POST /clearing-accounts/resolutions`：MID + 币种 → 清算账户与经营主体；命中不到返回 `CLEARING_ACCOUNT_NOT_RESOLVED` |
 | 银行账户 | `POST /cash-accounts`（明文账号先经 Vault Protect，请求日志只记元数据）；`POST /{id}/closure`；`POST /{id}/approval`；`GET /cash-accounts`、`/{id}` |
 | 当前银行账户（内部，payout / tax） | `GET /cash-accounts/current?entityType&entityId&currency&purpose`：只返回 ID 与末四位 |
-| 渠道账单 | `POST /channel-statements` → `/{id}/lines` → `/{id}/completion`（分段导入）；`POST /{id}/void`；`GET /channel-statements`、`/{id}`、`/{id}/lines`；`GET /platform-txns` |
-| 银行对账 | `POST /bank-statements` → `/{id}/lines` → `/{id}/completion`（期初 + 流水 ≠ 期末、起息日不在期间内、交易号与已导入流水或本文件重复时整单拒绝；被拒的可用同一编号重传；接不上上一张开 `BANK_STATEMENT_GAP`）；`GET /bank-statements`、`/{id}/lines`、`/bank-statement-lines`；`GET /expected-bank-movements`；`GET /bank-matches`；`POST /bank-matches`（手工多选匹配）、`/{id}/confirmation`、`/{id}/rejection` |
+| 渠道账单 | `POST /channel-statements` → `/{id}/lines` → `/{id}/completion`（分段导入）；`POST /{id}/void`；`GET /channel-statements`、`/{id}`、`/{id}/lines`；`GET /platform-txns`；`GET /channel-statement-lines`（跨账单查账单行，渠道流水页：未指定 `statementStatus` 时排除 `VOIDED`、`REJECTED`、`RECEIVING` 账单的行，按交易日期降序、无日期在最后，每页 ≤ 100） |
+| 银行对账 | `POST /bank-statements` → `/{id}/lines` → `/{id}/completion`（期初 + 流水 ≠ 期末、起息日不在期间内、交易号与已导入流水或本文件重复时整单拒绝；被拒的可用同一编号重传；接不上上一张开 `BANK_STATEMENT_GAP`）；`GET /bank-statements`、`/{id}`（不存在 404 `BANK_STATEMENT_NOT_FOUND`）、`/{id}/lines`、`/bank-statement-lines`、`/bank-statement-lines/{id}`（流水 + 全部银行匹配与预期银行流水 + 未结异常；不存在 404 `BANK_STATEMENT_LINE_NOT_FOUND`）；`GET /expected-bank-movements`；`GET /bank-matches`；`POST /bank-matches`（手工多选匹配）、`/{id}/confirmation`、`/{id}/rejection` |
 | 异常与处置 | `POST /recon-exceptions`（人工开异常）；`GET /recon-exceptions`、`/{id}`；`POST /recon-exceptions/{id}/resolutions`；`POST /recon-resolutions/{id}/approval` |
 | 汇总 | `GET /summary?entityNo&currency` |
 

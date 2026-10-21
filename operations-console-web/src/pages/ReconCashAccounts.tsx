@@ -1,17 +1,19 @@
-import { useMemo, useState } from 'react';
-import { App, Button, Descriptions, Drawer, Form, Input, Select, Table } from 'antd';
-import { useSearchParams } from 'react-router-dom';
+import { useState } from 'react';
+import { App, Button, Drawer, Form, Input, Select, Table } from 'antd';
+import { Navigate, useParams, useSearchParams } from 'react-router-dom';
 import type { ConsoleResource } from '../api/types';
-import { localTime, replaceQuery } from '../finance/finance';
 import { FinanceNote, LoadFailure } from '../finance/FinanceParts';
-import { ActorText, HashText, ReviewActions, useDetail } from '../finance/WorkflowParts';
-import { usePaging } from '../hooks/usePaging';
+import { ActorText } from '../finance/WorkflowParts';
+import { CashAccountDetail } from '../reconciliation/detail/CashAccountDetail';
+import { useOpenDetail } from '../reconciliation/ReconDetail';
 import {
   accountPurposeLabels, cashStatusLabels, decimalIdPattern, decodeWithId, entityTypeLabels, hasReconAction, pageOf, reconActions, reconPaths,
 } from '../reconciliation/reconModel';
 import type { CashAccount } from '../reconciliation/reconModel';
 import { EmptyHint, ReconCommandFeedback, ReconTag } from '../reconciliation/ReconParts';
+import { compactFilters, isReconId, reconRoutes } from '../reconciliation/reconRoutes';
 import { useReconCommand } from '../reconciliation/useReconCommand';
+import { resetForm, useReconListQuery } from '../reconciliation/useReconListQuery';
 import '../configuration/configuration.css';
 import '../finance/finance.css';
 import '../reconciliation/recon.css';
@@ -20,24 +22,32 @@ interface Props { resources: ConsoleResource[]; actorId: string; onAuthorization
 interface CreateValues { entityType: string; entityId: string; accountPurpose: string; bankCode: string; accountName: string; currency: string; accountNumber: string }
 
 const decodePage = pageOf(decodeWithId<CashAccount>('cashAccountId'));
+const filterKeys = ['entityType', 'entityId', 'currency', 'accountPurpose', 'status'] as const;
 const options = (labels: Record<string, string>) => Object.entries(labels).map(([value, label]) => ({ value, label }));
 
 /**
- * 银行账户（UC-R02）：列表、提交新建、申请关闭、复核
+ * 银行账户（UC-R02）：列表、提交新建；点行进入详情页（/cash-accounts/:cashAccountId）申请关闭与复核
  * <li>新建与关闭要经复核才生效，提交人不能复核（reconciliation 判断，页面对本人隐藏复核按钮）；账号明文只在提交时发送一次，之后只显示末四位。</li>
+ * <li>筛选与页码存于 URL 查询串；旧链接 ?account= 转到详情页。</li>
  */
-export function ReconCashAccounts({ resources, actorId, onAuthorizationChanged }: Props) {
-  const [params, setParams] = useSearchParams();
+export function ReconCashAccounts(props: Props) {
+  const { cashAccountId } = useParams();
+  const [params] = useSearchParams();
+  const legacy = params.get('account');
+  if (cashAccountId !== undefined) return <CashAccountDetail key={cashAccountId} cashAccountId={cashAccountId} {...props} />;
+  if (isReconId(legacy ?? undefined)) return <Navigate replace to={reconRoutes.cashAccount(legacy!)} />;
+  return <CashList {...props} />;
+}
+
+function CashList({ resources, actorId, onAuthorizationChanged }: Props) {
+  const openDetail = useOpenDetail();
   const canOperate = hasReconAction(resources, reconActions.operate);
   const canApprove = hasReconAction(resources, reconActions.approve);
   const [creating, setCreating] = useState(false);
-  const page = usePaging<CashAccount>(reconPaths.cashAccounts, decodePage);
+  const page = useReconListQuery<CashAccount>(reconPaths.cashAccounts, decodePage, filterKeys);
   const [form] = Form.useForm<Record<string, string | undefined>>();
-  const accountId = params.get('account');
-  const open = (id: string | null) => setParams(new URLSearchParams(replaceQuery(params.toString(), { account: id })));
   return <div className="configuration-page finance-page"><div className="page-heading"><h1>银行账户</h1></div>
-    <Form form={form} name="recon-cash-filters" layout="vertical" onFinish={values => page.applyFilters(Object.fromEntries(
-      Object.entries(values).filter(([, value]) => value?.trim()).map(([key, value]) => [key, value!.trim()])) as Record<string, string>)}>
+    <Form form={form} name="recon-cash-filters" layout="vertical" initialValues={page.filters} onFinish={values => page.applyFilters(compactFilters(values))}>
       <div className="finance-search">
         <Form.Item name="entityType" label="主体类型"><Select allowClear placeholder="全部" options={options(entityTypeLabels)} /></Form.Item>
         <Form.Item name="entityId" label="主体"><Input allowClear placeholder="AE001" maxLength={64} /></Form.Item>
@@ -45,13 +55,13 @@ export function ReconCashAccounts({ resources, actorId, onAuthorizationChanged }
         <Form.Item name="accountPurpose" label="用途"><Select allowClear placeholder="全部" options={options(accountPurposeLabels)} /></Form.Item>
         <Form.Item name="status" label="状态"><Select allowClear placeholder="全部" options={options(cashStatusLabels)} /></Form.Item>
         <div className="configuration-actions"><Button htmlType="submit">查询</Button>
-          <Button onClick={() => { form.resetFields(); page.applyFilters({}); }}>重置</Button>
+          <Button onClick={() => { resetForm(form); page.applyFilters({}); }}>重置</Button>
           {canOperate && <Button type="primary" onClick={() => setCreating(true)}>新建银行账户</Button>}</div>
       </div>
     </Form>
     {page.error ? <LoadFailure message={page.error} onRetry={page.refresh} /> : <section className="table-panel">
       <Table<CashAccount> rowKey="cashAccountId" tableLayout="fixed" dataSource={page.data.items} loading={page.loading} scroll={{ x: 1080 }}
-        pagination={{ ...page.pagination, showTotal: total => `共 ${total} 条` }} onRow={row => ({ onClick: () => open(row.cashAccountId), className: 'clickable-row' })}
+        pagination={{ ...page.pagination, showTotal: total => `共 ${total} 条` }} onRow={row => ({ onClick: () => openDetail(reconRoutes.cashAccount(row.cashAccountId)), className: 'clickable-row' })}
         locale={{ emptyText: <EmptyHint text={canOperate ? '还没有银行账户。新建并经复核后，才能作为到账账户与上传银行对账单。' : '没有符合条件的银行账户'} /> }}
         columns={[
           { title: '名称', width: 200, render: (_, row) => <a>{row.accountName}</a> },
@@ -66,9 +76,7 @@ export function ReconCashAccounts({ resources, actorId, onAuthorizationChanged }
     </section>}
     <FinanceNote>同一主体 + 币种 + 用途只允许一个有效账户；换用途请关闭旧账户再新建。{!canOperate && ' 当前账号没有对账操作权限。'}{!canApprove && ' 当前账号没有对账审批权限。'}</FinanceNote>
     {creating && <CreateCashDrawer onClose={() => setCreating(false)} onAuthorizationChanged={onAuthorizationChanged}
-      onCreated={id => { setCreating(false); page.refresh(); open(id); }} />}
-    {accountId && decimalIdPattern.test(accountId) && <CashDrawer cashAccountId={accountId} canOperate={canOperate} canApprove={canApprove} actorId={actorId}
-      onClose={() => open(null)} onChanged={page.refresh} onAuthorizationChanged={onAuthorizationChanged} />}
+      onCreated={id => { setCreating(false); openDetail(reconRoutes.cashAccount(id)); }} />}
   </div>;
 }
 
@@ -107,50 +115,5 @@ function CreateCashDrawer({ onClose, onCreated, onAuthorizationChanged }: { onCl
           <Input.Password visibilityToggle maxLength={34} autoComplete="off" /></Form.Item>
       </div>
     </Form>
-  </Drawer>;
-}
-
-/** 银行账户详情：申请关闭（操作）与复核（审批，提交人本人不显示）。 */
-function CashDrawer({ cashAccountId, canOperate, canApprove, actorId, onClose, onChanged, onAuthorizationChanged }: {
-  cashAccountId: string; canOperate: boolean; canApprove: boolean; actorId: string; onClose: () => void; onChanged: () => void; onAuthorizationChanged: () => void;
-}) {
-  const { message } = App.useApp();
-  const decode = useMemo(() => decodeWithId<CashAccount>('cashAccountId', cashAccountId), [cashAccountId]);
-  const detail = useDetail<CashAccount>(reconPaths.cashAccount(cashAccountId), decode, onAuthorizationChanged, '银行账户详情加载失败');
-  const command = useReconCommand(onAuthorizationChanged);
-  const item = detail.item;
-  const pending = item && (item.status === 'PENDING_VERIFICATION' || item.pendingAction === 'CLOSE');
-  async function act(path: string, body: unknown, success: string, failure: string) {
-    const result = await command.run(path, 'POST', body, decodeWithId<CashAccount>('cashAccountId', cashAccountId), failure);
-    if (!result) return;
-    void message.success(success); detail.reload(); onChanged();
-  }
-  const actions = !item || !pending || !canApprove || item.makerId === actorId ? [] : [
-    { key: 'approve', label: '通过', primary: true, confirm: item.pendingAction === 'CLOSE' ? '通过后账户关闭。确认？' : '通过后账户生效。确认？',
-      onConfirm: () => void act(reconPaths.cashApproval(cashAccountId), { decision: 'APPROVED', approvedContentHash: item.contentHash }, '已通过', '复核失败') },
-    { key: 'reject', label: '拒绝', danger: true, confirm: item.pendingAction === 'CLOSE' ? '拒绝后关闭申请撤销。确认？' : '拒绝后该账户关闭。确认？',
-      onConfirm: () => void act(reconPaths.cashApproval(cashAccountId), { decision: 'REJECTED', approvedContentHash: item.contentHash }, '已拒绝', '复核失败') },
-  ];
-  return <Drawer open size="min(820px, 100vw)" rootClassName="finance-drawer finance-page" destroyOnHidden onClose={onClose}
-    title={item ? `银行账户 · ${item.accountName}` : '银行账户'}>
-    {detail.error ? <LoadFailure message={detail.error} onRetry={detail.reload} /> : item && <>
-      <ReconCommandFeedback command={command} onReload={() => { command.clearConflict(); detail.reload(); }} />
-      <Descriptions size="small" column={2} items={[
-        { key: 'entity', label: '主体', children: `${entityTypeLabels[item.entityType] ?? item.entityType} · ${item.entityId}` },
-        { key: 'purpose', label: '用途', children: accountPurposeLabels[item.accountPurpose] ?? item.accountPurpose },
-        { key: 'bank', label: '开户银行', children: item.bankCode }, { key: 'currency', label: '币种', children: item.currency },
-        { key: 'last4', label: '账号末四位', children: <span className="mono">{item.accountLast4}</span> },
-        { key: 'status', label: '状态', children: <ReconTag status={item.status} labels={cashStatusLabels} /> },
-        { key: 'pending', label: '待复核变更', children: item.status === 'PENDING_VERIFICATION' ? '新建' : item.pendingAction === 'CLOSE' ? '关闭' : '无' },
-        { key: 'hash', label: '提交内容摘要', children: <HashText value={item.contentHash} /> },
-        { key: 'maker', label: '提交人', children: <ActorText value={item.makerId} actorId={actorId} /> },
-        { key: 'checker', label: '复核人', children: <ActorText value={item.checkerId} actorId={actorId} /> },
-        { key: 'time', label: '更新时间', children: localTime(item.updateTime) },
-      ]} />
-      <ReviewActions saving={command.saving} actions={actions} note={pending && canApprove && item.makerId === actorId ? '提交人不能复核自己的提交。' : undefined} />
-      {canOperate && item.status === 'ACTIVE' && !item.pendingAction && <ReviewActions saving={command.saving} actions={[{ key: 'close', label: '申请关闭', danger: true,
-        confirm: '关闭申请经复核后账户关闭，清算账户如以它为到账账户需另行更换。确认申请？',
-        onConfirm: () => void act(reconPaths.cashClosure(cashAccountId), undefined, '已提交关闭申请，等待复核', '申请关闭失败') }]} />}
-    </>}
   </Drawer>;
 }

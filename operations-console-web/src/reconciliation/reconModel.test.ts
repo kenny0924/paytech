@@ -38,10 +38,10 @@ test('路径：BFF 对账路径为 /finance + reconciliation 路径', () => {
   assert.equal(reconPaths.summary, '/finance/reconciliation/v1/summary');
 });
 
-test('能力清单：七个对账页面与两个按钮登记在 pageCapabilities，按钮挂在对账异常页', () => {
+test('能力清单：八个对账页面（含渠道流水）与两个按钮登记在 pageCapabilities，按钮挂在对账异常页', () => {
   const pages = pageCapabilities.filter(page => page.componentKey.startsWith('OPERATIONS_FINANCE_RECON_'));
   assert.deepEqual(pages.map(page => page.componentKey), ['OPERATIONS_FINANCE_RECON_CLEARING', 'OPERATIONS_FINANCE_RECON_CASH',
-    'OPERATIONS_FINANCE_RECON_STATEMENTS', 'OPERATIONS_FINANCE_RECON_PLATFORM_TXNS', 'OPERATIONS_FINANCE_RECON_BANK',
+    'OPERATIONS_FINANCE_RECON_STATEMENTS', 'OPERATIONS_FINANCE_RECON_PLATFORM_TXNS', 'OPERATIONS_FINANCE_RECON_CHANNEL_LINES', 'OPERATIONS_FINANCE_RECON_BANK',
     'OPERATIONS_FINANCE_RECON_EXCEPTIONS', 'OPERATIONS_FINANCE_RECON_SUMMARY']);
   assert.ok(pages.every(page => page.frontendRoute.startsWith('/finance/reconciliation/')));
   const actions = pages.flatMap(page => page.actions.map(action => action.resourceCode));

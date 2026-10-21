@@ -8,3 +8,10 @@
 .finance-page .recon-summary-card { border: 1px solid var(--ant-color-border-secondary, #f0f0f0); border-radius: 8px; padding: 16px; }
 .finance-page .recon-summary-card h2 { font-size: 15px; margin: 0 0 8px; }
 .finance-drawer .recon-allocation { display: grid; grid-template-columns: minmax(0, 1fr) 160px; gap: 8px; align-items: center; }
+.recon-detail .recon-detail-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.recon-detail .finance-review-bar { display: flex; align-items: center; gap: 12px; margin-top: 20px; padding-top: 12px; border-top: 1px solid #e5e7eb; }
+.recon-detail .finance-review-note { color: #b45309; font-size: 13px; }
+.recon-detail .recon-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.recon-detail .recon-line-highlight > td { background: #fffbe6 !important; }
+.recon-detail .ant-descriptions { margin-bottom: 8px; }
+.finance-page .recon-link-list { display: flex; flex-wrap: wrap; gap: 4px 16px; }

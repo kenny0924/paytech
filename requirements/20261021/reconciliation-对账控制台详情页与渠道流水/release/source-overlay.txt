@@ -1,0 +1,80 @@
+# 对账控制台详情页与渠道流水 · 发布镜像源码叠加清单（2026-10-21 阶段 6）
+# BASE：main 13c02c87（币种会话提交，父 5a103f36 商务提交）。干净 worktree 只用 BASE 构建：platform b2a63ff4 / ops-bff fddb1993 / reconciliation f181a04c 的 JAR 与运行版逐项相同（0 差异）。
+# B 行：基线差异（不是本需求）——商务会话未提交的 commercialPreview.ts(+test)。BASE + B 构建的 ops-web dist 与运行 c6d2118f 的 158 个文件逐字节一致。
+# A/M 行：本需求（A 新增 / M 修改，相对 BASE）。第三列为叠加时文件的 git blob（构建 worktree 内的实际内容）。
+# 共享文件只取本需求 hunk：paytech/operations-console-bff/README.md 只叠加 20261021 一段（另一段 channel-connector 会话的 hunk 不取）；
+#   OperationsErrorStatusResolver、OperationsConsoleBffApplicationAutoTest、PlatformOperationsSimulator、console-resource-capabilities.json、
+#   platform-support-initial-data.sql（只有块 126 一段）、menu.ts、pageCapabilities.ts、ConsolePage.tsx 相对 BASE 的差异全部属于本需求，整文件取用。
+# 不取：主工作区其他会话的 channel-connector / Integration* / ExternalApi* / platform-support 迁移、arch-rules、compose.applications.yaml、docs/design.pen 等。
+B	operations-console-web/src/commercial/commercialPreview.ts	95bb845f40fddbc5e214bb30aa51f3f063e6d1f1
+B	operations-console-web/src/commercial/commercialPreview.test.ts	e0f1e15b945e40feee6e09861db93e68d24119e5
+M	operations-console-web/src/navigation/ConsolePage.tsx	69d58b62036d52061b095a5eff5d7cbb5590f4f4
+M	operations-console-web/src/navigation/menu.ts	61717cd6cf67a5e6581072892fdd83d6d9de2dcb
+M	operations-console-web/src/navigation/pageCapabilities.ts	6eae071f92d7371d94643585419e8f1abb27b58b
+M	operations-console-web/src/pages/ReconBank.tsx	005708fb5efb03cb8a95b8160db760b9370a1549
+M	operations-console-web/src/pages/ReconCashAccounts.tsx	6e0119c7120d137a0d41b8c18defd1113a32ef6d
+A	operations-console-web/src/pages/ReconChannelLines.tsx	cab40128214aebf0153449ff5d3648ff6431753b
+M	operations-console-web/src/pages/ReconClearingAccounts.tsx	a93fe5d155cae8e92db48a4f369cdb17274747d5
+M	operations-console-web/src/pages/ReconExceptions.tsx	0ac55a3c6d7c075fce69b160b46cb3f1a8a8943d
+M	operations-console-web/src/pages/ReconPlatformTxns.tsx	2559057521966b8d1ca9b1bdedce97d3454fae4c
+M	operations-console-web/src/pages/ReconStatements.tsx	293425f1f35f980a93146802447295332db499e4
+A	operations-console-web/src/reconciliation/ClearingSettings.tsx	7f702f3cb28b490212fbfba30bba2694343e0ed7
+A	operations-console-web/src/reconciliation/detail/BankLineDetail.tsx	04351118be962f2f2389e170fee5f7dd173b1d2b
+A	operations-console-web/src/reconciliation/detail/BankStatementDetail.tsx	c9a2fdeb9a2d4595555ee11776a8d52b4e7e6152
+A	operations-console-web/src/reconciliation/detail/CashAccountDetail.tsx	e40d7e2081618d9da1dc6ede08f432a9403f1921
+A	operations-console-web/src/reconciliation/detail/ChannelStatementDetail.tsx	e29147c30c2f0f1cd99d69123e6b51bc9ea1d00e
+A	operations-console-web/src/reconciliation/detail/ClearingAccountDetail.tsx	1be355321ef1b92e15cd2113723e8183abc3e5b8
+A	operations-console-web/src/reconciliation/detail/ExceptionDetail.tsx	34bd335d5d092ddcd3284a9d67c2cdb4bc19b838
+M	operations-console-web/src/reconciliation/recon.css	098f0fabdf5ac6f2d69c8a8a202a5edda34df660
+A	operations-console-web/src/reconciliation/ReconDetail.tsx	1f8eb23c269fea5ff4c95b72677d14a2f7c4fa86
+M	operations-console-web/src/reconciliation/reconModel.test.ts	6e8c8ce243df827c852621ee2e27d253e4034d2a
+M	operations-console-web/src/reconciliation/reconModel.ts	53f7819c41887c3cb7c842567c85d6dd5102e925
+A	operations-console-web/src/reconciliation/reconRoutes.test.ts	7d47054f3669e4e76dfa6bba7cfa791e982733d8
+A	operations-console-web/src/reconciliation/reconRoutes.ts	cab234b6019686ebc4ed064d28da01debdf985f0
+A	operations-console-web/src/reconciliation/useReconDetail.ts	1c5b7f466eaa40b40f80840593ffe614be6cf5e3
+A	operations-console-web/src/reconciliation/useReconListQuery.ts	f992a7ba39d6e1c6b16c2a3e8d92433292b880bf
+M	paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/configuration/OperationsErrorStatusResolver.java	cc2e54992d10cc7724af1551d721fb054e5cdf26
+M	paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/configuration/ReconciliationClientConfiguration.java	9d3b7d7dda9b6ef17f8664adb0707472da35b09c
+M	paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/ext/rest/ReconciliationBankController.java	aa7868418f6467ec4cac6d25e4551258b0e2f893
+M	paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/ext/rest/ReconciliationStatementController.java	2a710dbd8f269b9f366efa363c87d45cf1e29d06
+M	paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/integration/impl/ReconciliationBankClientImpl.java	12924deea586bbba873e64e886b64a4e7c31abea
+M	paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/integration/impl/ReconciliationStatementClientImpl.java	d91315bc3ea0583e8568240c55b5bec533ab35e9
+M	paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/integration/ReconciliationBankClient.java	c5635c18e716d2d6bee469875240c7c2feb6edf6
+M	paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/integration/ReconciliationStatementClient.java	926592ffe92d8d36e82b5c3bbc15d8908c62135b
+M	paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/ReconciliationBankModels.java	70344592f746eb0f1ea3e339178005a5728f1dc8
+M	paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/ReconciliationStatementModels.java	1bf76e6d976a88fabfba133331f75a0b2e9dc843
+M	paytech/operations-console-bff/paytech-operations-console-bff-test/src/test/java/com/paytech/operations/console/bff/auto/OperationsConsoleBffApplicationAutoTest.java	dc97062fc656496c8ce9f95c92947a94c161a2f0
+M	paytech/operations-console-bff/paytech-operations-console-bff-test/src/test/java/com/paytech/operations/console/bff/auto/ReconciliationBrowserAutoTest.java	9575bedf760694f9097efd60f09280740d98302e
+M	paytech/operations-console-bff/paytech-operations-console-bff-test/src/test/java/com/paytech/operations/console/bff/test/simulator/PlatformOperationsSimulator.java	e4f9223be7851b57cc646c75235fb0eb1a65c716
+M	paytech/operations-console-bff/paytech-operations-console-bff-test/src/test/resources/finance-reconciliation-boundary.json	347c1d9c32f283c589e79c33c7df2d1dfeed99a5
+M	paytech/operations-console-bff/README.md	5a6ba179d1cefeb1de6d30c64b05e0818c875821
+M	paytech/platform-support/docs/database/sql/platform-support-initial-data.sql	83b48f48dd1be36a8e854ab560d4bf1014dc7709
+M	paytech/platform-support/paytech-platform-support-access-control/src/main/resources/operations/console-resource-capabilities.json	8e27106c4a9f0ff2c3f2bad1e310a684e8871bbc
+M	paytech/reconciliation/paytech-reconciliation-api/src/main/java/com/paytech/reconciliation/api/bank/BankStatementApi.java	95185140fc4325450ee35469f72a378fa407c125
+A	paytech/reconciliation/paytech-reconciliation-api/src/main/java/com/paytech/reconciliation/api/bank/response/BankStatementLineDetailResponseBody.java	13b9b6a41184a68d4bf69c7f34e5fbfe3284b05c
+M	paytech/reconciliation/paytech-reconciliation-api/src/main/java/com/paytech/reconciliation/api/enums/ReconciliationErrorCode.java	ba922b514310e0a230bf23379353dbb51431d9b7
+A	paytech/reconciliation/paytech-reconciliation-api/src/main/java/com/paytech/reconciliation/api/statement/ChannelStatementLineApi.java	c61ed4f6dac571990e0492737ebb947705307d02
+A	paytech/reconciliation/paytech-reconciliation-api/src/main/java/com/paytech/reconciliation/api/statement/response/ChannelStatementLineSearchItemResponseBody.java	7a069beb89c1d0ccce937b5520a6096e5b5fade5
+A	paytech/reconciliation/paytech-reconciliation-app/src/main/java/com/paytech/reconciliation/app/configuration/ReconciliationApiErrorConfiguration.java	df88345e0f15b192cc0eff22fe71533349534ce2
+M	paytech/reconciliation/paytech-reconciliation-app/src/main/java/com/paytech/reconciliation/app/ext/rest/BankStatementController.java	4960fbfce6f34c7c1593e54b5a5ffce17fac231e
+A	paytech/reconciliation/paytech-reconciliation-app/src/main/java/com/paytech/reconciliation/app/ext/rest/ChannelStatementLineController.java	45f09c525048fbfc4073571fb307e5efd0b40a5d
+M	paytech/reconciliation/paytech-reconciliation-app/src/main/java/com/paytech/reconciliation/app/ext/rest/converter/BankReconciliationConverter.java	4e662800f82d085935e40b839a20edf315edb6eb
+M	paytech/reconciliation/paytech-reconciliation-app/src/main/java/com/paytech/reconciliation/app/ext/rest/converter/ChannelStatementConverter.java	a625efcc77c7a5e8237a237f4b3934238375bdef
+M	paytech/reconciliation/paytech-reconciliation-core/src/main/java/com/paytech/reconciliation/core/dal/mapper/ChannelStatementLineMapper.java	41098f4d84859e799030a3fc6f1565ad5fa1b9fe
+M	paytech/reconciliation/paytech-reconciliation-core/src/main/java/com/paytech/reconciliation/core/dal/mapper/ReconExceptionMapper.java	ab98ac74d2efacf31a00846c48f6f381369b0cbd
+A	paytech/reconciliation/paytech-reconciliation-core/src/main/java/com/paytech/reconciliation/domain/ChannelLineSearch.java	02110a9336319bd4b6f12794a48d56d78a5916c5
+A	paytech/reconciliation/paytech-reconciliation-core/src/main/java/com/paytech/reconciliation/domain/view/BankStatementLineDetailView.java	7793af795006279164ebcc4b70132186bd96e342
+A	paytech/reconciliation/paytech-reconciliation-core/src/main/java/com/paytech/reconciliation/domain/view/ChannelStatementLineView.java	af6e33e95168c71761ec7b44674f9ab7109ec14a
+M	paytech/reconciliation/paytech-reconciliation-core/src/main/java/com/paytech/reconciliation/domainservice/repository/ChannelStatementLineRepository.java	9261b8b8705df7b1b9416bd3c25c657a84244f60
+M	paytech/reconciliation/paytech-reconciliation-core/src/main/java/com/paytech/reconciliation/domainservice/repository/impl/ChannelStatementLineRepositoryImpl.java	daf2f6f200762dc39f7b8af46f9ac910797fd57f
+M	paytech/reconciliation/paytech-reconciliation-core/src/main/java/com/paytech/reconciliation/domainservice/repository/impl/ReconExceptionRepositoryImpl.java	54c2dbddbafa9fa3f510333a3c36d4379867a21b
+M	paytech/reconciliation/paytech-reconciliation-core/src/main/java/com/paytech/reconciliation/domainservice/repository/ReconExceptionRepository.java	892eebdf7c42d5a7cb0937347a1b106f32501303
+M	paytech/reconciliation/paytech-reconciliation-core/src/main/java/com/paytech/reconciliation/domainservice/service/BankReconciliationQueryService.java	47c2061f2ac43f0888e346f64169d1e65e6630be
+M	paytech/reconciliation/paytech-reconciliation-core/src/main/java/com/paytech/reconciliation/domainservice/service/ChannelStatementQueryService.java	5e64450fe7691f9e397199ac25bf2302476dd98f
+M	paytech/reconciliation/paytech-reconciliation-core/src/main/java/com/paytech/reconciliation/domainservice/service/impl/BankReconciliationQueryServiceImpl.java	a0aae11897ee8195d0a2df9824fbe59fc2d1170e
+M	paytech/reconciliation/paytech-reconciliation-core/src/main/java/com/paytech/reconciliation/domainservice/service/impl/ChannelStatementQueryServiceImpl.java	9e37b4dd2993140a92ce7468b1df4a51489e1dbe
+M	paytech/reconciliation/paytech-reconciliation-core/src/main/resources/mapper/reconciliation/ChannelStatementLineMapper.xml	e9840b5883d67cca7c68fe78a33463d73b5fc45f
+M	paytech/reconciliation/paytech-reconciliation-core/src/main/resources/mapper/reconciliation/ReconExceptionMapper.xml	5373fcfeeb8d9d9dbb9307264ab3a37492ba07c3
+A	paytech/reconciliation/paytech-reconciliation-test/src/test/java/com/paytech/reconciliation/auto/ext/http/ReconciliationDetailQueryTest.java	a3c1d154b489c52f711d0907f96bc73a03e6e923
+M	paytech/reconciliation/paytech-reconciliation-test/src/test/java/com/paytech/reconciliation/auto/repository/PersistenceMappingTest.java	39b3a2a330c8da2f43abb8739551032a3c1982b1
+M	paytech/reconciliation/README.md	410a7c9b07948a224b7ddd487bcd258acb7cf1ed

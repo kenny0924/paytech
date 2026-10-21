@@ -455,7 +455,9 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
             "POST /finance/reconciliation/v1/bank-matches/{bankMatchId}/confirmation", "POST /finance/reconciliation/v1/bank-matches/{bankMatchId}/rejection",
             "GET /finance/reconciliation/v1/recon-exceptions", "POST /finance/reconciliation/v1/recon-exceptions",
             "GET /finance/reconciliation/v1/recon-exceptions/{exceptionId}", "POST /finance/reconciliation/v1/recon-exceptions/{exceptionId}/resolutions",
-            "POST /finance/reconciliation/v1/recon-resolutions/{resolutionId}/approval", "GET /finance/reconciliation/v1/summary"), routes);
+            "POST /finance/reconciliation/v1/recon-resolutions/{resolutionId}/approval", "GET /finance/reconciliation/v1/summary",
+            "GET /finance/reconciliation/v1/channel-statement-lines", "GET /finance/reconciliation/v1/bank-statements/{bankStatementId}",
+            "GET /finance/reconciliation/v1/bank-statement-lines/{bankStatementLineId}"), routes);
 
         Path classes = appModule().resolve("target/classes/com/paytech/operations/console/bff");
         try (var files = Files.walk(classes)) {

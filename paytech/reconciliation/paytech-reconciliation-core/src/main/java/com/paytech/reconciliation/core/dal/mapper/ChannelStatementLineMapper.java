@@ -9,6 +9,7 @@ import com.paytech.reconciliation.api.enums.LineMatchStatus;
 import com.paytech.reconciliation.api.enums.MatchMethod;
 import com.paytech.reconciliation.core.dal.dataobject.ChannelStatementLine;
 import com.paytech.reconciliation.domain.ChannelLineMatchChange;
+import com.paytech.reconciliation.domain.ChannelLineSearch;
 import com.paytech.reconciliation.domain.ExternalReference;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -56,6 +57,13 @@ public interface ChannelStatementLineMapper {
     /** 与 selectPage 相同条件的总数。 */
     long countPage(@Param("statementId") Long statementId, @Param("matchStatus") LineMatchStatus matchStatus,
         @Param("lineType") ChannelLineType lineType);
+
+    /** 跨账单按条件分页读取（连接所属账单按账单状态过滤），交易日期降序、主键降序。 */
+    List<ChannelStatementLine> selectSearchPage(@Param("c") ChannelLineSearch criteria, @Param("offset") long offset,
+        @Param("limit") int limit);
+
+    /** 与 selectSearchPage 相同条件的总数。 */
+    long countSearch(@Param("c") ChannelLineSearch criteria);
 
     /** 按版本写入匹配结果（匹配、费用、归类处置与状态）。 */
     int updateMatch(@Param("record") ChannelStatementLine record, @Param("platformTxnId") Long platformTxnId,

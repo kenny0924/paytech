@@ -85,6 +85,13 @@ public final class OperationsErrorStatusResolver implements ApiErrorStatusResolv
                 case CHANNEL_COST_NOT_RESOLVED, CHANNEL_COST_AMBIGUOUS -> HttpStatus.BAD_REQUEST;
             };
         }
+        // reconciliation 按主键读取的详情页对象不存在为 404；清算账户未解析保持默认 400。
+        if (errorCode instanceof com.paytech.reconciliation.api.enums.ReconciliationErrorCode reconciliation) {
+            return switch (reconciliation) {
+                case BANK_STATEMENT_NOT_FOUND, BANK_STATEMENT_LINE_NOT_FOUND -> HttpStatus.NOT_FOUND;
+                case CLEARING_ACCOUNT_NOT_RESOLVED -> defaultStatus;
+            };
+        }
         if (errorCode instanceof com.paytech.client.contract.api.enums.ClientDraftErrorCode cct) {
             return switch (cct) {
                 case REVIEW_CASE_NOT_FOUND -> HttpStatus.NOT_FOUND;

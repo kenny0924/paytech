@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
@@ -49,6 +50,7 @@ import com.paytech.reconciliation.core.dal.dataobject.PlatformTxn;
 import com.paytech.reconciliation.core.dal.dataobject.ReconException;
 import com.paytech.reconciliation.core.dal.dataobject.ReconResolution;
 import com.paytech.reconciliation.domain.ChannelLineMatchChange;
+import com.paytech.reconciliation.domain.ChannelLineSearch;
 import com.paytech.reconciliation.domain.ExternalReference;
 import com.paytech.reconciliation.domain.PlatformTxnProgressChange;
 import com.paytech.reconciliation.domainservice.repository.BankMatchRepository;
@@ -329,6 +331,51 @@ class PersistenceMappingTest extends MockTestBase {
         reconExceptions.insert(ReconExceptionBuilder.onChannelLine(line, ReconExceptionType.CHANNEL_LINE_UNMATCHED,
             "5.00").build());
         assertEquals(1, reconExceptions.listActiveByStatement(statement.getId()).size());
+    }
+
+    /** 跨账单查询（渠道流水页）：连接账单按状态过滤、默认排除口径、交易号精确、交易日期区间、排序与计数；对象上全部类型的未结异常。 */
+    @Test
+    void test_channelLineSearchAndActiveBySource() {
+        ClearingAccount account = data.clearingAccount(ClearingAccountBuilder.template().build());
+        ChannelStatement matching = ChannelStatementBuilder.matching(account, "BATCH-S1", "3.00", "0", "3.00",
+            CashDirection.CREDIT, 2).build();
+        ChannelStatementLine early = ChannelStatementBuilder.line(matching, 1, ChannelLineType.PAYMENT,
+            SettlementDirection.CREDIT, "1.00", "0", ReconciliationTestConstants.PAY_REFERENCE_TYPE, "SRCH-1");
+        early.setTransactionDate(LocalDate.of(2026, 10, 1));
+        ChannelStatementLine undated = ChannelStatementBuilder.line(matching, 2, ChannelLineType.ADJUSTMENT,
+            SettlementDirection.CREDIT, "2.00", "0", null, null);
+        undated.setTransactionDate(null);
+        data.channelStatement(matching, List.of(early, undated));
+        ChannelStatement voided = ChannelStatementBuilder.matching(account, "BATCH-S2", "1.00", "0", "1.00",
+            CashDirection.CREDIT, 1).with(item -> item.setStatus(ChannelStatementStatus.VOIDED)).build();
+        ChannelStatementLine voidedLine = ChannelStatementBuilder.line(voided, 1, ChannelLineType.PAYMENT,
+            SettlementDirection.CREDIT, "1.00", "0", ReconciliationTestConstants.PAY_REFERENCE_TYPE, "SRCH-1");
+        voidedLine.setTransactionDate(LocalDate.of(2026, 10, 5));
+        data.channelStatement(voided, List.of(voidedLine));
+
+        ChannelLineSearch defaults = ChannelLineSearch.builder().clearingAccountId(account.getId()).build();
+        assertEquals(List.of(early.getId(), undated.getId()), channelStatementLines.searchPage(defaults, 0, 10).stream()
+            .map(ChannelStatementLine::getId).toList());
+        assertEquals(2, channelStatementLines.countSearch(defaults));
+        ChannelLineSearch byReference = ChannelLineSearch.builder().statementStatus(ChannelStatementStatus.VOIDED)
+            .referenceType(ReconciliationTestConstants.PAY_REFERENCE_TYPE).externalTransactionId("SRCH-1")
+            .transactionDateFrom(LocalDate.of(2026, 10, 5)).transactionDateTo(LocalDate.of(2026, 10, 5))
+            .matchStatus(LineMatchStatus.UNMATCHED).lineType(ChannelLineType.PAYMENT).build();
+        assertEquals(List.of(voidedLine.getId()), channelStatementLines.searchPage(byReference, 0, 10).stream()
+            .map(ChannelStatementLine::getId).toList());
+        assertEquals(1, channelStatementLines.countSearch(byReference));
+
+        ReconException open = ReconExceptionBuilder.onChannelLine(early, ReconExceptionType.CHANNEL_LINE_UNMATCHED,
+            "1.00").build();
+        reconExceptions.insert(open);
+        ReconException other = ReconExceptionBuilder.onChannelLine(early, ReconExceptionType.AMOUNT_MISMATCH, "1.00")
+            .build();
+        reconExceptions.insert(other);
+        reconExceptions.changeStatus(other, ReconExceptionStatus.RESOLVED, Instant.now().truncatedTo(ChronoUnit.MICROS));
+        assertEquals(List.of(open.getId()), reconExceptions.listActiveBySource(
+            ReconExceptionSourceType.CHANNEL_STATEMENT_LINE, early.getId()).stream().map(ReconException::getId).toList());
+        assertEquals(List.of(), reconExceptions.listActiveBySource(ReconExceptionSourceType.CHANNEL_STATEMENT_LINE,
+            undated.getId()));
     }
 
     /** 匹配任务的批量读写（缺陷 D-1）：按交易号集合读取、多行条件更新成功同步对象、任一行版本不符抛并发冲突且不同步对象。 */

@@ -28,6 +28,7 @@ import com.paytech.reconciliation.api.enums.ReconciliationErrorCode;
 import com.paytech.reconciliation.api.exception.ReconExceptionApi;
 import com.paytech.reconciliation.api.exception.ReconResolutionApi;
 import com.paytech.reconciliation.api.statement.ChannelStatementApi;
+import com.paytech.reconciliation.api.statement.ChannelStatementLineApi;
 import com.paytech.reconciliation.api.statement.PlatformTxnApi;
 import com.paytech.reconciliation.api.summary.ReconSummaryApi;
 
@@ -75,6 +76,12 @@ public class ReconciliationClientConfiguration {
     @Bean
     ChannelStatementApi channelStatementApi() {
         return reconciliation.createClient(ChannelStatementApi.class);
+    }
+
+    /** 跨账单渠道账单行查询（渠道流水页）。 */
+    @Bean
+    ChannelStatementLineApi channelStatementLineApi() {
+        return reconciliation.createClient(ChannelStatementLineApi.class);
     }
 
     /** 平台流水查询。 */

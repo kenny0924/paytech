@@ -35,6 +35,7 @@ import com.paytech.operations.console.bff.test.base.FinanceBrowserAutoTestBase;
 import com.paytech.operations.console.bff.test.simulator.ChannelConnectorOwnerSimulator;
 import com.paytech.reconciliation.api.enums.ReconExceptionSourceType;
 import com.paytech.reconciliation.api.enums.ReconLayer;
+import com.paytech.reconciliation.api.enums.ReconciliationErrorCode;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ArrayNode;
@@ -238,6 +239,13 @@ class ReconciliationBrowserAutoTest extends FinanceBrowserAutoTestBase {
         assertRejectedLocally(400, reconciliation, send(complete, "", JSON.readTree("{}"), true));
 
         resetBetweenCalls();
+        var search = row(BOUNDARY, "R39");
+        assertRejectedLocally(400, reconciliation, send(search, "?statementId=1", search.path("request"), true));
+
+        resetBetweenCalls();
+        assertRejectedLocally(400, reconciliation, send(search, "?referenceType=ni", search.path("request"), true));
+
+        resetBetweenCalls();
         var summary = row(BOUNDARY, "R38");
         assertRejectedLocally(400, reconciliation, send(summary, "?entityNo=AE001", summary.path("request"), true));
     }
@@ -297,6 +305,50 @@ class ReconciliationBrowserAutoTest extends FinanceBrowserAutoTestBase {
         assertEquals(502, send(start).statusCode());
     }
 
+    /** 详情页对象不存在：reconciliation 的 404 合同错误码原样到达浏览器为 404。 */
+    @ParameterizedTest
+    @CsvSource({"R40,BANK_STATEMENT_NOT_FOUND", "R41,BANK_STATEMENT_LINE_NOT_FOUND"})
+    void test_noDataFound(String id, ReconciliationErrorCode code) throws Exception {
+        var detail = row(BOUNDARY, id);
+        reconciliation.reply("GET", ownerPath(detail), 404, "application/problem+json",
+            "{\"type\":\"about:blank\",\"title\":\"Not Found\",\"detail\":\"不存在\",\"code\":\"" + code.getCode()
+                + "\",\"requestId\":\"owner-request\",\"timestamp\":\"2026-10-21T00:00:00.000000Z\"}",
+            Map.of("X-Request-Id", "owner-request"));
+
+        var response = send(detail);
+
+        assertEquals(404, response.statusCode(), response.body());
+        assertEquals(code.getCode(), JSON.readTree(response.body()).path("code").asString());
+    }
+
+    /** 渠道流水与银行流水详情的上游回执不一致时 502：元素不属于请求清算账户、匹配不属于请求流水、匹配与预期流水不对应、对账单不是流水所属。 */
+    @Test
+    void test_detailInvalidUpstreamResponse() throws Exception {
+        var search = row(BOUNDARY, "R39");
+        var foreign = (ObjectNode) search.path("response").deepCopy();
+        ((ObjectNode) foreign.path("items").get(0)).put("clearingAccountId", "7500000000000000199");
+        reconciliation.reply("GET", ownerPath(search), 200, JSON.writeValueAsString(foreign));
+        assertEquals(502, send(search).statusCode());
+
+        var detail = row(BOUNDARY, "R41");
+        for (String broken : List.of("match.bankStatementLineId", "match.expectedMovementId", "statement.bankStatementId")) {
+            resetBetweenCalls();
+            var body = (ObjectNode) detail.path("response").deepCopy();
+            if (broken.equals("statement.bankStatementId")) {
+                ((ObjectNode) body.path("statement")).put("bankStatementId", "7500000000000000699");
+            } else {
+                ((ObjectNode) body.path("matches").get(0).path("match")).put(broken.substring(6), "7500000000000000999");
+            }
+            reconciliation.reply("GET", ownerPath(detail), 200, JSON.writeValueAsString(body));
+            assertEquals(502, send(detail).statusCode(), broken);
+        }
+
+        resetBetweenCalls();
+        var missing = ((ObjectNode) detail.path("response").deepCopy()).putNull("openExceptions");
+        reconciliation.reply("GET", ownerPath(detail), 200, JSON.writeValueAsString(missing));
+        assertEquals(502, send(detail).statusCode());
+    }
+
     /** channel-connector MID 详情 DTO。 */
     private static String mid(String midId, String externalMidCode, String status) {
         return "{\"midId\":\"" + midId + "\",\"channelId\":\"7400000000000000101\",\"channelAccountId\":\"7400000000000000201\","
@@ -325,12 +377,12 @@ class ReconciliationBrowserAutoTest extends FinanceBrowserAutoTestBase {
         return body;
     }
 
-    /** 边界清单 38 条路由码唯一且都属于对账路由前缀，与注册块 123 的路由一一对应。 */
+    /** 边界清单 41 条路由码唯一且都属于对账路由前缀，与注册块 123（38 条）、块 126（3 条）的路由一一对应。 */
     @Test
     void test_boundaryMatchesRegisteredRoutes() {
         List<String> codes = rows(BOUNDARY).map(row -> row.path("routeCode").asString()).toList();
-        assertEquals(38, codes.size());
-        assertEquals(38, Set.copyOf(codes).size());
+        assertEquals(41, codes.size());
+        assertEquals(41, Set.copyOf(codes).size());
         assertNull(codes.stream().filter(code -> !code.startsWith("operations-finance-recon-")).findFirst().orElse(null));
     }
 }

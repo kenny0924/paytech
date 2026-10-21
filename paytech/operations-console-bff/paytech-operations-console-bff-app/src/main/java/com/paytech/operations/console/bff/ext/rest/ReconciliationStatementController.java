@@ -22,6 +22,7 @@ import com.paytech.operations.console.bff.service.model.ReconciliationStatementM
 import com.paytech.operations.console.bff.service.model.ReconciliationStatementModels.ChannelStatementCompletionResponseBody;
 import com.paytech.operations.console.bff.service.model.ReconciliationStatementModels.ChannelStatementDetailResponseBody;
 import com.paytech.operations.console.bff.service.model.ReconciliationStatementModels.ChannelStatementLineResponseBody;
+import com.paytech.operations.console.bff.service.model.ReconciliationStatementModels.ChannelStatementLineSearchItemResponseBody;
 import com.paytech.operations.console.bff.service.model.ReconciliationStatementModels.ChannelStatementResponseBody;
 import com.paytech.operations.console.bff.service.model.ReconciliationStatementModels.PlatformTxnResponseBody;
 import com.paytech.operations.console.bff.service.model.ReconciliationStatementModels.StartChannelStatementImportRequestBody;
@@ -34,6 +35,7 @@ import lombok.AllArgsConstructor;
 
 /**
  * 渠道账单与平台流水的浏览器入口（块 123），全部简单转发 reconciliation ChannelStatementApi、PlatformTxnApi
+ * <li>渠道流水页的跨账单账单行查询（块 126）同样只读，绑定 FINANCE_RECONCILIATION_READ；每页上限 100 由 reconciliation 校验。</li>
  * <li>Gateway 绑定：查询 FINANCE_RECONCILIATION_READ；开始导入、追加行、完成导入、作废 FINANCE_RECONCILIATION_OPERATE。</li>
  * <li>分段导入（D-01）：浏览器本地解析 CSV，每段 ≤ 100 行；追加行与开始导入 Body 上限 65536 字节，与 Gateway 路由上限一致。</li>
  *
@@ -87,6 +89,30 @@ public class ReconciliationStatementController {
         requireQueryKeys(servletRequest, Set.of("matchStatus", "lineType", "page", "size"));
         PagingRequestBody paging = PagingRequestBody.of(page, size);
         return client.listChannelStatementLines(statementId, matchStatus, lineType, paging.page(), paging.size());
+    }
+
+    /** 跨账单查询渠道账单行（渠道流水页）。 */
+    @GetMapping("/channel-statement-lines")
+    public PagingResponseBody<ChannelStatementLineSearchItemResponseBody> searchChannelStatementLines(
+        HttpServletRequest servletRequest,
+        @RequestParam(value = "clearingAccountId", required = false) @Pattern(regexp = ID) String clearingAccountId,
+        @RequestParam(value = "statementStatus", required = false)
+        @Pattern(regexp = "RECEIVING|REJECTED|MATCHING|VOIDED|RECONCILED|CASH_CONFIRMED") String statementStatus,
+        @RequestParam(value = "matchStatus", required = false) @Pattern(regexp = "UNMATCHED|MATCHED|EXCEPTION") String matchStatus,
+        @RequestParam(value = "lineType", required = false)
+        @Pattern(regexp = "PAYMENT|REFUND|CHARGEBACK|FEE|ADJUSTMENT") String lineType,
+        @RequestParam(value = "referenceType", required = false) @Pattern(regexp = "[A-Z][A-Z0-9_]{0,31}") String referenceType,
+        @RequestParam(value = "externalTransactionId", required = false) @Pattern(regexp = REFERENCE)
+        String externalTransactionId,
+        @RequestParam(value = "transactionDateFrom", required = false) @Pattern(regexp = DATE) String transactionDateFrom,
+        @RequestParam(value = "transactionDateTo", required = false) @Pattern(regexp = DATE) String transactionDateTo,
+        @RequestParam(value = "page", required = false) Integer page,
+        @RequestParam(value = "size", required = false) Integer size) {
+        requireQueryKeys(servletRequest, Set.of("clearingAccountId", "statementStatus", "matchStatus", "lineType",
+            "referenceType", "externalTransactionId", "transactionDateFrom", "transactionDateTo", "page", "size"));
+        PagingRequestBody paging = PagingRequestBody.of(page, size);
+        return client.searchChannelStatementLines(clearingAccountId, statementStatus, matchStatus, lineType,
+            referenceType, externalTransactionId, transactionDateFrom, transactionDateTo, paging.page(), paging.size());
     }
 
     /** 开始导入渠道账单。 */

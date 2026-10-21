@@ -16,10 +16,12 @@ import com.paytech.operations.console.bff.service.model.ReconciliationStatementM
 import com.paytech.operations.console.bff.service.model.ReconciliationStatementModels.ChannelStatementCompletionResponseBody;
 import com.paytech.operations.console.bff.service.model.ReconciliationStatementModels.ChannelStatementDetailResponseBody;
 import com.paytech.operations.console.bff.service.model.ReconciliationStatementModels.ChannelStatementLineResponseBody;
+import com.paytech.operations.console.bff.service.model.ReconciliationStatementModels.ChannelStatementLineSearchItemResponseBody;
 import com.paytech.operations.console.bff.service.model.ReconciliationStatementModels.ChannelStatementResponseBody;
 import com.paytech.operations.console.bff.service.model.ReconciliationStatementModels.PlatformTxnResponseBody;
 import com.paytech.operations.console.bff.service.model.ReconciliationStatementModels.StartChannelStatementImportRequestBody;
 import com.paytech.reconciliation.api.statement.ChannelStatementApi;
+import com.paytech.reconciliation.api.statement.ChannelStatementLineApi;
 import com.paytech.reconciliation.api.statement.PlatformTxnApi;
 
 import lombok.AllArgsConstructor;
@@ -35,6 +37,7 @@ import lombok.AllArgsConstructor;
 public class ReconciliationStatementClientImpl implements ReconciliationStatementClient {
     private final ChannelStatementApi statementApi;
     private final PlatformTxnApi platformTxnApi;
+    private final ChannelStatementLineApi lineApi;
 
     /** 账单分页，核对分页回执。 */
     @Override
@@ -60,6 +63,24 @@ public class ReconciliationStatementClientImpl implements ReconciliationStatemen
         var lines = page(statementApi.listChannelStatementLines(statementId, matchStatus, lineType, page, size), page,
             size, ChannelStatementLineResponseBody.class);
         lines.items().forEach(line -> requireSame(statementId, line.getStatementId()));
+        return lines;
+    }
+
+    /** 跨账单查询账单行，核对分页回执；指定清算账户时元素须属于该清算账户。 */
+    @Override
+    public PagingResponseBody<ChannelStatementLineSearchItemResponseBody> searchChannelStatementLines(
+        String clearingAccountId, String statementStatus, String matchStatus, String lineType, String referenceType,
+        String externalTransactionId, String transactionDateFrom, String transactionDateTo, int page, int size) {
+        var lines = page(lineApi.searchChannelStatementLines(clearingAccountId, statementStatus, matchStatus, lineType,
+            referenceType, externalTransactionId, transactionDateFrom, transactionDateTo, page, size), page, size,
+            ChannelStatementLineSearchItemResponseBody.class);
+        lines.items().forEach(line -> {
+            requireIdentity(line.getLineId());
+            requireIdentity(line.getStatementId());
+            if (clearingAccountId != null) {
+                requireSame(clearingAccountId, line.getClearingAccountId());
+            }
+        });
         return lines;
     }
 

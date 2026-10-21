@@ -29,7 +29,7 @@
 
 ## 当前阶段与下一确认点
 
-当前：阶段 1—8 完成（2026-10-21）。本地提交 `2f5f37f7`，未推送。**后续材料**（2026-10-21 用户授权，作为单独的本地提交，父 `13c02c87`）：本文件、需求索引行与台账的提交号登记、`tasks/H-report.md`、`release/demo/**`（演示数据脚本，已在 mor-test 执行）；`test-environment/compose.applications.yaml` 补回 reconciliation-service 的 MQ / Redis / XXL 变量与依赖、ops-bff `OPERATIONS_RECONCILIATION_BASE_URL`（阶段 7 只写在发布覆盖文件里，漏进主 compose；币种会话 2026-10-21 替换 ops-bff 时因此对账页 503 约 10 分钟，已由对方补上；主 compose 已于 2026-10-21 修正，`compose.sh config --quiet` 通过）。
+当前：阶段 1—8 完成（2026-10-21）。本地提交 `2f5f37f7`，未推送。**后续材料**（2026-10-21 用户授权，作为单独的本地提交，父 `13c02c87`，提交号 `faf72ff9`）：本文件、需求索引行与台账的提交号登记、`tasks/H-report.md`、`release/demo/**`（演示数据脚本，已在 mor-test 执行）；`test-environment/compose.applications.yaml` 补回 reconciliation-service 的 MQ / Redis / XXL 变量与依赖、ops-bff `OPERATIONS_RECONCILIATION_BASE_URL`（阶段 7 只写在发布覆盖文件里，漏进主 compose；币种会话 2026-10-21 替换 ops-bff 时因此对账页 503 约 10 分钟，已由对方补上；主 compose 已于 2026-10-21 修正，`compose.sh config --quiet` 通过）。
 
 ## 变更记录
 

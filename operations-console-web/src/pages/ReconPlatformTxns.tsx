@@ -1,14 +1,15 @@
 import { App, Button, Form, Input, Popconfirm, Select, Table } from 'antd';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import type { ConsoleResource } from '../api/types';
 import { localTime } from '../finance/finance';
 import { FinanceNote, LoadFailure } from '../finance/FinanceParts';
-import { usePaging } from '../hooks/usePaging';
 import { decodeWithId, directionLabels, hasReconAction, pageOf, platformTxnStatusLabels, reconActions, reconPaths } from '../reconciliation/reconModel';
 import type { PlatformTxn, ReconException } from '../reconciliation/reconModel';
 import { EmptyHint, Money, ReconCommandFeedback, ReconTag } from '../reconciliation/ReconParts';
+import { channelLinesOfTxn, compactFilters, reconRoutes } from '../reconciliation/reconRoutes';
 import { useClearingAccounts } from '../reconciliation/useReconData';
 import { useReconCommand } from '../reconciliation/useReconCommand';
+import { resetForm, useReconListQuery } from '../reconciliation/useReconListQuery';
 import '../configuration/configuration.css';
 import '../finance/finance.css';
 import '../reconciliation/recon.css';
@@ -16,10 +17,12 @@ import '../reconciliation/recon.css';
 interface Props { resources: ConsoleResource[]; onAuthorizationChanged: () => void }
 
 const decodePage = pageOf(decodeWithId<PlatformTxn>('platformTxnId'));
+const filterKeys = ['clearingAccountId', 'status', 'direction', 'externalTransactionId', 'businessDateFrom', 'businessDateTo'] as const;
 const statusOptions = Object.entries(platformTxnStatusLabels).map(([value, label]) => ({ value, label }));
 
 /**
  * 平台流水（UC-R05、R17）：由 billing PAYMENT / REFUND 事实生成的待清算应收 / 应付；查询与人工开异常（D-02）
+ * <li>筛选与页码存于 URL 查询串（账单行、异常等页面可带筛选链接过来）；已匹配的流水可跳到渠道流水页查看对应账单行。</li>
  * <li>人工开异常只给来源对象，异常类型（PLATFORM_ITEM_UNSETTLED）与差异金额由对账服务按未完成金额算出；开立后去「对账异常」处置。</li>
  */
 export function ReconPlatformTxns({ resources, onAuthorizationChanged }: Props) {
@@ -27,7 +30,7 @@ export function ReconPlatformTxns({ resources, onAuthorizationChanged }: Props) 
   const navigate = useNavigate();
   const canOperate = hasReconAction(resources, reconActions.operate);
   const clearing = useClearingAccounts(onAuthorizationChanged);
-  const page = usePaging<PlatformTxn>(reconPaths.platformTxns, decodePage);
+  const page = useReconListQuery<PlatformTxn>(reconPaths.platformTxns, decodePage, filterKeys);
   const command = useReconCommand(onAuthorizationChanged);
   const [form] = Form.useForm<Record<string, string | undefined>>();
   async function openException(row: PlatformTxn) {
@@ -36,12 +39,11 @@ export function ReconPlatformTxns({ resources, onAuthorizationChanged }: Props) 
     if (!result) return;
     void message.success(`已开立异常，差异 ${result.differenceAmount} ${result.currency}`);
     page.refresh();
-    navigate(`/finance/reconciliation/exceptions?exception=${result.exceptionId}`);
+    void navigate(reconRoutes.exception(result.exceptionId));
   }
   return <div className="configuration-page finance-page"><div className="page-heading"><h1>平台流水</h1></div>
     <ReconCommandFeedback command={command} onReload={() => { command.clearConflict(); page.refresh(); }} />
-    <Form form={form} name="recon-platform-filters" layout="vertical" onFinish={values => page.applyFilters(Object.fromEntries(
-      Object.entries(values).filter(([, value]) => value?.trim()).map(([key, value]) => [key, value!.trim()])) as Record<string, string>)}>
+    <Form form={form} name="recon-platform-filters" layout="vertical" initialValues={page.filters} onFinish={values => page.applyFilters(compactFilters(values))}>
       <div className="finance-search">
         <Form.Item name="clearingAccountId" label="清算账户"><Select allowClear showSearch={{ optionFilterProp: 'label' }} placeholder="全部" loading={clearing.loading}
           options={clearing.items.map(item => ({ value: item.clearingAccountId, label: item.clearingAccountCode }))} /></Form.Item>
@@ -51,7 +53,7 @@ export function ReconPlatformTxns({ resources, onAuthorizationChanged }: Props) 
         <Form.Item name="businessDateFrom" label="业务日起" rules={[{ pattern: /^\d{4}-\d{2}-\d{2}$/, message: 'YYYY-MM-DD' }]}><Input allowClear placeholder="YYYY-MM-DD" /></Form.Item>
         <Form.Item name="businessDateTo" label="业务日止" rules={[{ pattern: /^\d{4}-\d{2}-\d{2}$/, message: 'YYYY-MM-DD' }]}><Input allowClear placeholder="YYYY-MM-DD" /></Form.Item>
         <div className="configuration-actions"><Button htmlType="submit">查询</Button>
-          <Button onClick={() => { form.resetFields(); page.applyFilters({}); }}>重置</Button></div>
+          <Button onClick={() => { resetForm(form); page.applyFilters({}); }}>重置</Button></div>
       </div>
     </Form>
     {page.error ? <LoadFailure message={page.error} onRetry={page.refresh} /> : <section className="table-panel">
@@ -59,8 +61,9 @@ export function ReconPlatformTxns({ resources, onAuthorizationChanged }: Props) 
         pagination={{ ...page.pagination, showTotal: total => `共 ${total} 条` }}
         locale={{ emptyText: <EmptyHint text="没有平台流水。billing 记录支付或退款事实后，对应清算账户下会出现待清算的应收或应付。" /> }}
         columns={[
-          { title: '外部交易号', width: 200, render: (_, row) => <span className="mono">{row.externalTransactionId}<div className="cell-meta">{row.referenceType}</div></span> },
-          { title: '清算账户', width: 150, render: (_, row) => clearing.byId.get(row.clearingAccountId)?.clearingAccountCode ?? row.clearingAccountId },
+          { title: '外部交易号', width: 200, render: (_, row) => <span className="mono">{row.externalTransactionId}<div className="cell-meta">{row.referenceType}
+            {!/^0(\.0+)?$/.test(row.matchedAmount) && <> · <Link to={channelLinesOfTxn(row)}>渠道流水</Link></>}</div></span> },
+          { title: '清算账户', width: 150, render: (_, row) => <Link to={reconRoutes.clearingAccount(row.clearingAccountId)}>{clearing.byId.get(row.clearingAccountId)?.clearingAccountCode ?? row.clearingAccountId}</Link> },
           { title: '方向', width: 80, render: (_, row) => directionLabels[row.direction] ?? row.direction },
           { title: '来源', width: 90, dataIndex: 'txnSource' },
           { title: '应清算', width: 120, align: 'right', render: (_, row) => <><Money value={row.expectedAmount} /> {row.currency}</> },

@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 import com.paytech.foundation.common.error.BizCheckFailException;
+import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.reconciliation.api.enums.ChannelLineType;
@@ -24,8 +25,10 @@ import com.paytech.reconciliation.core.dal.dataobject.ClearingAccount;
 import com.paytech.reconciliation.core.dal.dataobject.ExpectedBankMovement;
 import com.paytech.reconciliation.core.dal.dataobject.PlatformTxn;
 import com.paytech.reconciliation.core.dal.dataobject.ReconException;
+import com.paytech.reconciliation.domain.ChannelLineSearch;
 import com.paytech.reconciliation.domain.ReconcileGate;
 import com.paytech.reconciliation.domain.view.ChannelStatementDetailView;
+import com.paytech.reconciliation.domain.view.ChannelStatementLineView;
 import com.paytech.reconciliation.domain.view.ChannelStatementView;
 import com.paytech.reconciliation.domainservice.repository.ChannelStatementLineRepository;
 import com.paytech.reconciliation.domainservice.repository.ChannelStatementRepository;
@@ -41,6 +44,9 @@ import lombok.AllArgsConstructor;
 @Service
 @AllArgsConstructor
 public class ChannelStatementQueryServiceImpl implements ChannelStatementQueryService {
+    /** 跨账单查询每页条数上限。 */
+    static final int MAX_SEARCH_PAGE_SIZE = 100;
+
     private final PlatformTxnRepository platformTxnRepository;
     private final ReconExceptionRepository reconExceptionRepository;
     private final ClearingAccountRepository clearingAccountRepository;
@@ -96,6 +102,27 @@ public class ChannelStatementQueryServiceImpl implements ChannelStatementQuerySe
             paging.offset(), paging.size());
         long total = channelStatementLineRepository.countPage(statementId, matchStatus, lineType);
         return new PagingResponseBody<>(items, paging.page(), paging.size(), total);
+    }
+
+    /** 跨账单查询账单行：一次分页查询 + 一次总数，所属账单与清算账户按本页主键批量补齐。 */
+    @Override
+    public PagingResponseBody<ChannelStatementLineView> searchLines(ChannelLineSearch criteria,
+        PagingRequestBody paging) {
+        if (paging.size() > MAX_SEARCH_PAGE_SIZE) {
+            throw new InvalidParameterException("每页条数必须为 10、20、50 或 100: " + paging.size());
+        }
+        List<ChannelStatementLine> lines = channelStatementLineRepository.searchPage(criteria, paging.offset(),
+            paging.size());
+        Map<Long, ChannelStatement> statements = channelStatementRepository.findByIds(lines.stream()
+            .map(ChannelStatementLine::getStatementId).distinct().toList()).stream()
+            .collect(Collectors.toMap(ChannelStatement::getId, Function.identity()));
+        Map<Long, ClearingAccount> accounts = clearingAccountRepository.findByIds(lines.stream()
+            .map(ChannelStatementLine::getClearingAccountId).distinct().toList()).stream()
+            .collect(Collectors.toMap(ClearingAccount::getId, Function.identity()));
+        List<ChannelStatementLineView> items = lines.stream().map(line -> new ChannelStatementLineView(line,
+            statements.get(line.getStatementId()), accounts.get(line.getClearingAccountId()))).toList();
+        return new PagingResponseBody<>(items, paging.page(), paging.size(),
+            channelStatementLineRepository.countSearch(criteria));
     }
 
     /** 分页查询平台流水。 */

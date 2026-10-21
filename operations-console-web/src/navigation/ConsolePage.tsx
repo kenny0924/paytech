@@ -50,6 +50,7 @@ const pages: Record<PageComponentKey, ComponentType<PageProps>> = {
   OPERATIONS_FINANCE_RECON_CASH: lazy(() => import('../pages/ReconCashAccounts').then(m => ({ default: m.ReconCashAccounts }))),
   OPERATIONS_FINANCE_RECON_STATEMENTS: lazy(() => import('../pages/ReconStatements').then(m => ({ default: m.ReconStatements }))),
   OPERATIONS_FINANCE_RECON_PLATFORM_TXNS: lazy(() => import('../pages/ReconPlatformTxns').then(m => ({ default: m.ReconPlatformTxns }))),
+  OPERATIONS_FINANCE_RECON_CHANNEL_LINES: lazy(() => import('../pages/ReconChannelLines').then(m => ({ default: m.ReconChannelLines }))),
   OPERATIONS_FINANCE_RECON_BANK: lazy(() => import('../pages/ReconBank').then(m => ({ default: m.ReconBank }))),
   OPERATIONS_FINANCE_RECON_EXCEPTIONS: lazy(() => import('../pages/ReconExceptions').then(m => ({ default: m.ReconExceptions }))),
   OPERATIONS_FINANCE_RECON_SUMMARY: lazy(() => import('../pages/ReconSummary').then(m => ({ default: m.ReconSummary }))),

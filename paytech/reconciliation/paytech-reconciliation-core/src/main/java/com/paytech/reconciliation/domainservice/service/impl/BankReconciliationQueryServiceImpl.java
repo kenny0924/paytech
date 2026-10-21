@@ -4,8 +4,12 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Service;
 import com.paytech.foundation.common.error.BizCheckFailException;
+import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
@@ -18,6 +22,8 @@ import com.paytech.reconciliation.api.enums.ExpectedMovementType;
 import com.paytech.reconciliation.api.enums.LineMatchStatus;
 import com.paytech.reconciliation.api.enums.MatchMethod;
 import com.paytech.reconciliation.api.enums.ReconEntityType;
+import com.paytech.reconciliation.api.enums.ReconExceptionSourceType;
+import com.paytech.reconciliation.api.enums.ReconciliationErrorCode;
 import com.paytech.reconciliation.api.enums.SettlementDirection;
 import com.paytech.reconciliation.core.dal.dataobject.BankMatch;
 import com.paytech.reconciliation.core.dal.dataobject.BankStatement;
@@ -26,12 +32,14 @@ import com.paytech.reconciliation.core.dal.dataobject.CashAccount;
 import com.paytech.reconciliation.core.dal.dataobject.ChannelStatement;
 import com.paytech.reconciliation.core.dal.dataobject.ExpectedBankMovement;
 import com.paytech.reconciliation.domain.BankMatchContext;
+import com.paytech.reconciliation.domain.view.BankStatementLineDetailView;
 import com.paytech.reconciliation.domainservice.repository.BankMatchRepository;
 import com.paytech.reconciliation.domainservice.repository.BankStatementLineRepository;
 import com.paytech.reconciliation.domainservice.repository.BankStatementRepository;
 import com.paytech.reconciliation.domainservice.repository.CashAccountRepository;
 import com.paytech.reconciliation.domainservice.repository.ChannelStatementRepository;
 import com.paytech.reconciliation.domainservice.repository.ExpectedBankMovementRepository;
+import com.paytech.reconciliation.domainservice.repository.ReconExceptionRepository;
 import com.paytech.reconciliation.domainservice.service.BankReconciliationQueryService;
 import lombok.AllArgsConstructor;
 
@@ -45,6 +53,7 @@ public class BankReconciliationQueryServiceImpl implements BankReconciliationQue
     private final ChannelStatementRepository channelStatementRepository;
     private final BankStatementLineRepository bankStatementLineRepository;
     private final ExpectedBankMovementRepository expectedBankMovementRepository;
+    private final ReconExceptionRepository reconExceptionRepository;
 
     /** 装载流水、对账单、预期流水与渠道来源账单。 */
     @Override
@@ -116,6 +125,36 @@ public class BankReconciliationQueryServiceImpl implements BankReconciliationQue
             throw new BizCheckFailException("银行对账单不存在: " + bankStatementId);
         }
         return statement;
+    }
+
+    /** 详情页读取对账单，不存在为 404。 */
+    @Override
+    public BankStatement readBankStatement(long bankStatementId) {
+        BankStatement statement = bankStatementRepository.findById(bankStatementId);
+        if (statement == null) {
+            throw new FailException(ReconciliationErrorCode.BANK_STATEMENT_NOT_FOUND, "银行对账单不存在: " + bankStatementId);
+        }
+        return statement;
+    }
+
+    /** 银行流水详情：流水、对账单、银行账户、匹配（预期流水按主键批量读取）与未结异常，共 6 次查询。 */
+    @Override
+    public BankStatementLineDetailView readBankStatementLine(long bankStatementLineId) {
+        BankStatementLine line = bankStatementLineRepository.findById(bankStatementLineId);
+        if (line == null) {
+            throw new FailException(ReconciliationErrorCode.BANK_STATEMENT_LINE_NOT_FOUND,
+                "银行流水不存在: " + bankStatementLineId);
+        }
+        List<BankMatch> matches = bankMatchRepository.listByLine(line.getId(), null);
+        Map<Long, ExpectedBankMovement> movements = expectedBankMovementRepository.findByIds(matches.stream()
+            .map(BankMatch::getExpectedMovementId).distinct().toList()).stream()
+            .collect(Collectors.toMap(ExpectedBankMovement::getId, Function.identity()));
+        List<BankStatementLineDetailView.MatchItem> items = matches.stream()
+            .map(match -> new BankStatementLineDetailView.MatchItem(match, movements.get(match.getExpectedMovementId())))
+            .toList();
+        return new BankStatementLineDetailView(line, bankStatementRepository.findById(line.getStatementId()),
+            cashAccountRepository.findById(line.getCashAccountId()), items,
+            reconExceptionRepository.listActiveBySource(ReconExceptionSourceType.BANK_STATEMENT_LINE, line.getId()));
     }
 
     /** 分页查询银行对账单。 */

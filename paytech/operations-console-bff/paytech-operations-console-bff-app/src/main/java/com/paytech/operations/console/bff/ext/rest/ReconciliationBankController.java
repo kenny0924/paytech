@@ -22,6 +22,7 @@ import com.paytech.operations.console.bff.service.model.ReconciliationBankModels
 import com.paytech.operations.console.bff.service.model.ReconciliationBankModels.BankMatchListResponseBody;
 import com.paytech.operations.console.bff.service.model.ReconciliationBankModels.BankMatchResponseBody;
 import com.paytech.operations.console.bff.service.model.ReconciliationBankModels.BankStatementCompletionResponseBody;
+import com.paytech.operations.console.bff.service.model.ReconciliationBankModels.BankStatementLineDetailResponseBody;
 import com.paytech.operations.console.bff.service.model.ReconciliationBankModels.BankStatementLineResponseBody;
 import com.paytech.operations.console.bff.service.model.ReconciliationBankModels.BankStatementResponseBody;
 import com.paytech.operations.console.bff.service.model.ReconciliationBankModels.CreateBankMatchesRequestBody;
@@ -60,6 +61,22 @@ public class ReconciliationBankController {
         requireQueryKeys(servletRequest, Set.of("cashAccountId", "status", "page", "size"));
         PagingRequestBody paging = PagingRequestBody.of(page, size);
         return client.listBankStatements(cashAccountId, status, paging.page(), paging.size());
+    }
+
+    /** 银行对账单头（详情页）。 */
+    @GetMapping("/bank-statements/{bankStatementId}")
+    public BankStatementResponseBody getBankStatement(HttpServletRequest servletRequest,
+        @PathVariable("bankStatementId") @Pattern(regexp = ID) String bankStatementId) {
+        requireQueryKeys(servletRequest, Set.of());
+        return client.getBankStatement(bankStatementId);
+    }
+
+    /** 银行流水详情（详情页）：匹配建议与已确认匹配、未结异常。 */
+    @GetMapping("/bank-statement-lines/{bankStatementLineId}")
+    public BankStatementLineDetailResponseBody getBankStatementLine(HttpServletRequest servletRequest,
+        @PathVariable("bankStatementLineId") @Pattern(regexp = ID) String bankStatementLineId) {
+        requireQueryKeys(servletRequest, Set.of());
+        return client.getBankStatementLine(bankStatementLineId);
     }
 
     /** 一张对账单的流水分页。 */

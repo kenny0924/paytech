@@ -512,6 +512,12 @@ export const pageCapabilities = [
     "actions": []
   },
   {
+    "componentKey": "OPERATIONS_FINANCE_RECON_CHANNEL_LINES",
+    "displayName": "渠道流水",
+    "frontendRoute": "/finance/reconciliation/channel-lines",
+    "actions": []
+  },
+  {
     "componentKey": "OPERATIONS_FINANCE_RECON_BANK",
     "displayName": "银行对账",
     "frontendRoute": "/finance/reconciliation/bank",

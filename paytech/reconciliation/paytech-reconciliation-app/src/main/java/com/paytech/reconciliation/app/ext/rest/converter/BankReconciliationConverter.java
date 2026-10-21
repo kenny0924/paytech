@@ -1,6 +1,8 @@
 package com.paytech.reconciliation.app.ext.rest.converter;
 
 import java.util.List;
+import java.util.function.Function;
+
 import org.springframework.stereotype.Component;
 import com.paytech.reconciliation.api.bank.request.AppendBankStatementLinesRequestBody;
 import com.paytech.reconciliation.api.bank.request.CreateBankMatchesRequestBody;
@@ -8,15 +10,19 @@ import com.paytech.reconciliation.api.bank.request.StartBankStatementImportReque
 import com.paytech.reconciliation.api.bank.response.BankMatchListResponseBody;
 import com.paytech.reconciliation.api.bank.response.BankMatchResponseBody;
 import com.paytech.reconciliation.api.bank.response.BankStatementCompletionResponseBody;
+import com.paytech.reconciliation.api.bank.response.BankStatementLineDetailResponseBody;
 import com.paytech.reconciliation.api.bank.response.BankStatementLineResponseBody;
 import com.paytech.reconciliation.api.bank.response.BankStatementResponseBody;
 import com.paytech.reconciliation.api.bank.response.ExpectedBankMovementResponseBody;
 import com.paytech.reconciliation.api.enums.BankStatementStatus;
 import com.paytech.reconciliation.api.enums.SettlementDirection;
+import com.paytech.reconciliation.api.exception.response.ReconExceptionResponseBody;
 import com.paytech.reconciliation.core.dal.dataobject.BankMatch;
 import com.paytech.reconciliation.core.dal.dataobject.BankStatement;
 import com.paytech.reconciliation.core.dal.dataobject.BankStatementLine;
 import com.paytech.reconciliation.core.dal.dataobject.ExpectedBankMovement;
+import com.paytech.reconciliation.core.dal.dataobject.ReconException;
+import com.paytech.reconciliation.domain.view.BankStatementLineDetailView;
 import com.paytech.reconciliation.service.processor.request.AppendBankStatementLinesRequest;
 import com.paytech.reconciliation.service.processor.request.CreateBankMatchesRequest;
 import com.paytech.reconciliation.service.processor.request.StartBankStatementImportRequest;
@@ -126,6 +132,23 @@ public class BankReconciliationConverter {
         body.setMatchedAmount(ReconciliationWire.amount(currency, line.getMatchedAmount()));
         body.setMatchStatus(line.getMatchStatus().getCode());
         body.setVersion(line.getVersion().toString());
+        return body;
+    }
+
+    /** 银行流水详情响应；未结异常的转换（含账龄）由调用方提供。 */
+    public BankStatementLineDetailResponseBody toLineDetailBody(BankStatementLineDetailView view,
+        Function<ReconException, ReconExceptionResponseBody> exceptionConverter) {
+        String currency = view.getCashAccount().getCurrency();
+        BankStatementLineDetailResponseBody body = new BankStatementLineDetailResponseBody();
+        body.setLine(toLineBody(view.getLine(), currency));
+        body.setStatement(toStatementBody(view.getStatement()));
+        body.setMatches(view.getMatches().stream().map(item -> {
+            BankStatementLineDetailResponseBody.Match match = new BankStatementLineDetailResponseBody.Match();
+            match.setMatch(toMatchBody(item.getMatch(), item.getExpectedMovement().getCurrency()));
+            match.setExpectedMovement(toMovementBody(item.getExpectedMovement()));
+            return match;
+        }).toList());
+        body.setOpenExceptions(view.getOpenExceptions().stream().map(exceptionConverter).toList());
         return body;
     }
 

@@ -47,6 +47,11 @@
         WHERE rn = 1 ORDER BY id
     </select>
 
+    <select id="selectActiveBySource" resultType="com.paytech.reconciliation.core.dal.dataobject.ReconException">
+        SELECT <include refid="columns"/> FROM t_recon_exception
+        WHERE source_type = #{sourceType} AND source_id = #{sourceId} AND active_slot = 1 ORDER BY id
+    </select>
+
     <select id="selectActiveByStatement" resultType="com.paytech.reconciliation.core.dal.dataobject.ReconException">
         SELECT <include refid="columns"/> FROM t_recon_exception WHERE statement_id = #{statementId} AND active_slot = 1 ORDER BY id
     </select>

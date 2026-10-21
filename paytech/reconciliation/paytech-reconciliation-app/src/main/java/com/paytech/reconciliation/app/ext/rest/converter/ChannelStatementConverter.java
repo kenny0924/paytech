@@ -13,11 +13,13 @@ import com.paytech.reconciliation.api.statement.request.StartChannelStatementImp
 import com.paytech.reconciliation.api.statement.response.ChannelStatementCompletionResponseBody;
 import com.paytech.reconciliation.api.statement.response.ChannelStatementDetailResponseBody;
 import com.paytech.reconciliation.api.statement.response.ChannelStatementLineResponseBody;
+import com.paytech.reconciliation.api.statement.response.ChannelStatementLineSearchItemResponseBody;
 import com.paytech.reconciliation.api.statement.response.ChannelStatementResponseBody;
 import com.paytech.reconciliation.api.statement.response.PlatformTxnResponseBody;
 import com.paytech.reconciliation.core.dal.dataobject.ChannelStatement;
 import com.paytech.reconciliation.core.dal.dataobject.ChannelStatementLine;
 import com.paytech.reconciliation.core.dal.dataobject.PlatformTxn;
+import com.paytech.reconciliation.domain.view.ChannelStatementLineView;
 import com.paytech.reconciliation.domain.ReconcileGate;
 import com.paytech.reconciliation.domain.view.ChannelStatementDetailView;
 import com.paytech.reconciliation.domain.view.ChannelStatementView;
@@ -139,6 +141,38 @@ public class ChannelStatementConverter {
         body.setTransactionDate(line.getTransactionDate());
         body.setRawAttributes(line.getRawAttributes() == null ? null
             : JSON.readValue(line.getRawAttributes(), new TypeReference<Map<String, String>>() {}));
+        body.setPlatformTxnId(ReconciliationWire.text(line.getPlatformTxnId()));
+        body.setMatchMethod(ReconciliationWire.code(line.getMatchMethod()));
+        body.setMatchedTime(line.getMatchedTime());
+        body.setActualFee(ReconciliationWire.amount(currency, line.getActualFee()));
+        body.setResolutionId(ReconciliationWire.text(line.getResolutionId()));
+        body.setMatchStatus(line.getMatchStatus().getCode());
+        return body;
+    }
+
+    /** 跨账单查询的账单行：行内容加所属账单与清算账户摘要，金额按所属账单币种补齐。 */
+    public ChannelStatementLineSearchItemResponseBody toSearchItemBody(ChannelStatementLineView view) {
+        ChannelStatementLine line = view.getLine();
+        ChannelStatement statement = view.getStatement();
+        String currency = statement.getCurrency();
+        ChannelStatementLineSearchItemResponseBody body = new ChannelStatementLineSearchItemResponseBody();
+        body.setLineId(line.getId().toString());
+        body.setStatementId(statement.getId().toString());
+        body.setChannelBatchRef(statement.getChannelBatchRef());
+        body.setRevision(statement.getRevision());
+        body.setStatementStatus(statement.getStatus().getCode());
+        body.setSettlementDate(statement.getSettlementDate());
+        body.setClearingAccountId(line.getClearingAccountId().toString());
+        body.setClearingAccountCode(view.getClearingAccount().getClearingAccountCode());
+        body.setCurrency(currency);
+        body.setLineNo(line.getLineNo());
+        body.setLineType(line.getLineType().getCode());
+        body.setDirection(line.getDirection().getCode());
+        body.setAmount(ReconciliationWire.amount(currency, line.getAmount()));
+        body.setFeeAmount(ReconciliationWire.amount(currency, line.getFeeAmount()));
+        body.setReferenceType(line.getReferenceType());
+        body.setExternalTransactionId(line.getExternalTransactionId());
+        body.setTransactionDate(line.getTransactionDate());
         body.setPlatformTxnId(ReconciliationWire.text(line.getPlatformTxnId()));
         body.setMatchMethod(ReconciliationWire.code(line.getMatchMethod()));
         body.setMatchedTime(line.getMatchedTime());

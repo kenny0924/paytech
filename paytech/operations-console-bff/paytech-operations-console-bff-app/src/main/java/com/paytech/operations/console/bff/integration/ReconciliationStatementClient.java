@@ -6,6 +6,7 @@ import com.paytech.operations.console.bff.service.model.ReconciliationStatementM
 import com.paytech.operations.console.bff.service.model.ReconciliationStatementModels.ChannelStatementCompletionResponseBody;
 import com.paytech.operations.console.bff.service.model.ReconciliationStatementModels.ChannelStatementDetailResponseBody;
 import com.paytech.operations.console.bff.service.model.ReconciliationStatementModels.ChannelStatementLineResponseBody;
+import com.paytech.operations.console.bff.service.model.ReconciliationStatementModels.ChannelStatementLineSearchItemResponseBody;
 import com.paytech.operations.console.bff.service.model.ReconciliationStatementModels.ChannelStatementResponseBody;
 import com.paytech.operations.console.bff.service.model.ReconciliationStatementModels.PlatformTxnResponseBody;
 import com.paytech.operations.console.bff.service.model.ReconciliationStatementModels.StartChannelStatementImportRequestBody;
@@ -53,6 +54,25 @@ public interface ReconciliationStatementClient {
      */
     PagingResponseBody<ChannelStatementLineResponseBody> listChannelStatementLines(String statementId,
         String matchStatus, String lineType, int page, int size);
+
+    /**
+     * 跨账单查询渠道账单行（渠道流水页）；未指定账单状态时 reconciliation 排除 VOIDED、REJECTED、RECEIVING 账单的行
+     *
+     * @param clearingAccountId 可选清算账户主键
+     * @param statementStatus 可选所属账单状态
+     * @param matchStatus 可选匹配状态
+     * @param lineType 可选行类型
+     * @param referenceType 可选外部交易号类型（精确）
+     * @param externalTransactionId 可选外部交易号（精确）
+     * @param transactionDateFrom 可选交易日期起（YYYY-MM-DD）
+     * @param transactionDateTo 可选交易日期止（YYYY-MM-DD）
+     * @param page 已校验页码
+     * @param size 已校验每页条数（≤ 100）
+     * @return 账单行分页，每项带所属账单与清算账户编码
+     */
+    PagingResponseBody<ChannelStatementLineSearchItemResponseBody> searchChannelStatementLines(String clearingAccountId,
+        String statementStatus, String matchStatus, String lineType, String referenceType, String externalTransactionId,
+        String transactionDateFrom, String transactionDateTo, int page, int size);
 
     /**
      * 开始导入渠道账单

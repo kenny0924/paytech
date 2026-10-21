@@ -65,6 +65,16 @@ export function pageRoutePaths(menu: ConsoleResource): string[] {
       return [menu.frontendRoute, `${menu.frontendRoute}/:midId`];
     case 'OPERATIONS_CHANNEL_COST_PLANS':
       return [menu.frontendRoute, `${menu.frontendRoute}/:planCode`, `${menu.frontendRoute}/:planCode/versions/:costVer`];
+    case 'OPERATIONS_FINANCE_RECON_CLEARING':
+      return [menu.frontendRoute, `${menu.frontendRoute}/:clearingAccountId`];
+    case 'OPERATIONS_FINANCE_RECON_CASH':
+      return [menu.frontendRoute, `${menu.frontendRoute}/:cashAccountId`];
+    case 'OPERATIONS_FINANCE_RECON_STATEMENTS':
+      return [menu.frontendRoute, `${menu.frontendRoute}/:statementId`];
+    case 'OPERATIONS_FINANCE_RECON_BANK':
+      return [menu.frontendRoute, `${menu.frontendRoute}/statements/:bankStatementId`, `${menu.frontendRoute}/lines/:bankStatementLineId`];
+    case 'OPERATIONS_FINANCE_RECON_EXCEPTIONS':
+      return [menu.frontendRoute, `${menu.frontendRoute}/:exceptionId`];
     case 'OPERATIONS_EXTERNAL_INTEGRATIONS':
       return [menu.frontendRoute, `${menu.frontendRoute}/:integrationCode`, `${menu.frontendRoute}/:integrationCode/:section/:childCode`];
     default:

@@ -13,7 +13,9 @@ import com.paytech.reconciliation.api.enums.PlatformTxnStatus;
 import com.paytech.reconciliation.core.dal.dataobject.ChannelStatement;
 import com.paytech.reconciliation.core.dal.dataobject.ChannelStatementLine;
 import com.paytech.reconciliation.core.dal.dataobject.PlatformTxn;
+import com.paytech.reconciliation.domain.ChannelLineSearch;
 import com.paytech.reconciliation.domain.view.ChannelStatementDetailView;
+import com.paytech.reconciliation.domain.view.ChannelStatementLineView;
 import com.paytech.reconciliation.domain.view.ChannelStatementView;
 
 /** 渠道账单、账单行与平台流水查询（UC-R17，#16、#17）；只读，不开启事务。 */
@@ -60,6 +62,15 @@ public interface ChannelStatementQueryService {
      */
     PagingResponseBody<ChannelStatementLine> listLines(long statementId, LineMatchStatus matchStatus,
         ChannelLineType lineType, PagingRequestBody paging);
+
+    /**
+     * 跨账单分页查询账单行（渠道流水页），交易日期降序（无交易日期在最后）、主键降序
+     *
+     * @param criteria 查询条件；未指定账单状态时排除作废、被拒与导入中账单的行
+     * @param paging 已校验的分页参数；每页条数超过 100 时参数错误
+     * @return 分页结果，每项带所属账单与清算账户
+     */
+    PagingResponseBody<ChannelStatementLineView> searchLines(ChannelLineSearch criteria, PagingRequestBody paging);
 
     /**
      * 分页查询平台流水（业务时间降序、主键降序）

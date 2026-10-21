@@ -20,11 +20,14 @@ export const reconPaths = {
   channelStatementLines: (id: string) => `${base}/channel-statements/${id}/lines`,
   channelStatementCompletion: (id: string) => `${base}/channel-statements/${id}/completion`,
   channelStatementVoid: (id: string) => `${base}/channel-statements/${id}/void`,
+  channelLines: `${base}/channel-statement-lines`,
   platformTxns: `${base}/platform-txns`,
   bankStatements: `${base}/bank-statements`,
+  bankStatement: (id: string) => `${base}/bank-statements/${id}`,
   bankStatementLines: (id: string) => `${base}/bank-statements/${id}/lines`,
   bankStatementCompletion: (id: string) => `${base}/bank-statements/${id}/completion`,
   bankLines: `${base}/bank-statement-lines`,
+  bankLine: (id: string) => `${base}/bank-statement-lines/${id}`,
   expectedMovements: `${base}/expected-bank-movements`,
   bankMatches: `${base}/bank-matches`,
   bankMatchConfirmation: (id: string) => `${base}/bank-matches/${id}/confirmation`,
@@ -128,6 +131,14 @@ export interface ReconExceptionDetail {
   exception: ReconException; source: SourceSummary; availableResolutionTypes: string[]; availableClassificationCodes: string[];
   resolutions: ReconResolution[]; account: AccountLabel | null;
 }
+/** 渠道流水（跨账单的账单行）：行字段 + 所属账单与清算账户。 */
+export interface ChannelLineView extends ChannelStatementLine {
+  clearingAccountId: string; clearingAccountCode: string; channelBatchRef: string; revision: number; statementStatus: string;
+  settlementDate: string; currency: string | null;
+}
+/** 银行流水详情（reconciliation BankStatementLineDetailResponseBody）：流水、所属对账单、全部匹配（含预期银行流水）、未结异常。 */
+export interface BankLineMatch { match: BankMatch; expectedMovement: ExpectedMovement | null }
+export interface BankLineDetail { line: BankStatementLine; statement: BankStatement | null; matches: BankLineMatch[]; openExceptions: ReconException[] }
 export interface ReconSummary {
   entityNo: string | null; currency: string;
   inTransitStatements: { matchingCount: number; matchingNetAmount: string; reconciledCount: number; reconciledUnconfirmedAmount: string };
@@ -202,6 +213,22 @@ export function decodeBankMatchList(value: unknown): BankMatch[] {
   return (value as { items: BankMatch[] }).items;
 }
 
+/** 渠道流水行：行主键与所属账单主键。 */
+export function decodeChannelLine(value: unknown): ChannelLineView {
+  const v = decodeWithId<ChannelLineView>('lineId')(value);
+  require(id(v.statementId));
+  return v;
+}
+
+export function decodeBankLineDetail(expected: string) {
+  return (value: unknown): BankLineDetail => {
+    require(object(value) && Array.isArray(value.matches));
+    decodeWithId('bankStatementLineId', expected)((value as { line: unknown }).line);
+    const detail = value as unknown as BankLineDetail;
+    return { ...detail, openExceptions: Array.isArray(detail.openExceptions) ? detail.openExceptions : [] };
+  };
+}
+
 export function decodeSummary(currency: string) {
   return (value: unknown): ReconSummary => {
     require(object(value) && value.currency === currency && object(value.inTransitStatements) && Array.isArray(value.openExceptionsByAge)
@@ -223,6 +250,8 @@ export const bankStatementStatusLabels: Record<string, string> = { RECEIVING: '�
 export const lineMatchStatusLabels: Record<string, string> = {
   UNMATCHED: '未匹配', PARTIALLY_MATCHED: '部分匹配', MATCHED: '已匹配', EXCEPTION: '异常', SUSPENDED: '暂记',
 };
+/** 渠道账单行只有三种匹配状态（接口只接受这三种筛选）。 */
+export const channelLineMatchStatusLabels: Record<string, string> = { UNMATCHED: '未匹配', MATCHED: '已匹配', EXCEPTION: '异常' };
 export const lineTypeLabels: Record<string, string> = { PAYMENT: '收款', REFUND: '退款', CHARGEBACK: '拒付', FEE: '费用', ADJUSTMENT: '调整' };
 export const directionLabels: Record<string, string> = { CREDIT: '贷（收）', DEBIT: '借（付）', RECEIVABLE: '应收', PAYABLE: '应付', NONE: '无' };
 export const platformTxnStatusLabels: Record<string, string> = {

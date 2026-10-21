@@ -16,6 +16,7 @@ import com.paytech.operations.console.bff.service.model.ReconciliationBankModels
 import com.paytech.operations.console.bff.service.model.ReconciliationBankModels.BankMatchListResponseBody;
 import com.paytech.operations.console.bff.service.model.ReconciliationBankModels.BankMatchResponseBody;
 import com.paytech.operations.console.bff.service.model.ReconciliationBankModels.BankStatementCompletionResponseBody;
+import com.paytech.operations.console.bff.service.model.ReconciliationBankModels.BankStatementLineDetailResponseBody;
 import com.paytech.operations.console.bff.service.model.ReconciliationBankModels.BankStatementLineResponseBody;
 import com.paytech.operations.console.bff.service.model.ReconciliationBankModels.BankStatementResponseBody;
 import com.paytech.operations.console.bff.service.model.ReconciliationBankModels.CreateBankMatchesRequestBody;
@@ -31,6 +32,7 @@ import lombok.AllArgsConstructor;
  * reconciliation 银行对账的 HTTP 转发：每个入口只调用一次 reconciliation，不重试
  * <li>对账单流水列表的元素须属于请求对账单，银行账户流水列表的元素须属于请求银行账户；命令回执主键须与请求一致。</li>
  * <li>人工多选匹配的回执条数须等于请求分配条数且同属请求流水。</li>
+ * <li>对账单头回执主键须一致；流水详情的流水、对账单、匹配与预期流水须互相对应，匹配须属于请求流水。</li>
  *
  * @author Claude
  */
@@ -47,6 +49,31 @@ public class ReconciliationBankClientImpl implements ReconciliationBankClient {
         int page, int size) {
         return page(statementApi.listBankStatements(cashAccountId, status, page, size), page, size,
             BankStatementResponseBody.class);
+    }
+
+    /** 对账单头；回执主键一致。 */
+    @Override
+    public BankStatementResponseBody getBankStatement(String bankStatementId) {
+        var statement = convert(statementApi.getBankStatement(bankStatementId), BankStatementResponseBody.class);
+        requireSame(bankStatementId, statement.getBankStatementId());
+        return statement;
+    }
+
+    /** 流水详情；流水主键一致，对账单为流水所属，每条匹配属于本流水且带对应的预期流水，集合不可缺失。 */
+    @Override
+    public BankStatementLineDetailResponseBody getBankStatementLine(String bankStatementLineId) {
+        var detail = convert(statementApi.getBankStatementLine(bankStatementLineId),
+            BankStatementLineDetailResponseBody.class);
+        require(detail.getLine() != null && detail.getStatement() != null && detail.getMatches() != null
+            && detail.getOpenExceptions() != null);
+        requireSame(bankStatementLineId, detail.getLine().getBankStatementLineId());
+        requireSame(detail.getLine().getBankStatementId(), detail.getStatement().getBankStatementId());
+        detail.getMatches().forEach(item -> {
+            require(item.getMatch() != null && item.getExpectedMovement() != null);
+            requireSame(bankStatementLineId, item.getMatch().getBankStatementLineId());
+            requireSame(item.getMatch().getExpectedMovementId(), item.getExpectedMovement().getExpectedMovementId());
+        });
+        return detail;
     }
 
     /** 对账单流水分页；元素须属于请求对账单。 */

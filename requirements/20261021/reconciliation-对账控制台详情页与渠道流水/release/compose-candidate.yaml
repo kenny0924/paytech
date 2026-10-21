@@ -1,0 +1,40 @@
+# reconciliation 对账控制台详情页与渠道流水：mor-test 候选覆盖文件（2026-10-21 阶段 6 准备；阶段 7 由主会话执行）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件：
+#   ./test-environment/compose.sh -f "$PWD/requirements/20261021/reconciliation-对账控制台详情页与渠道流水/release/compose-candidate.yaml" \
+#     up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 不加 --remove-orphans。镜像一律用固定 sha256 ID（tag recon-detail-20261021 仅供辨认，不得据此部署）。
+# 构建源：main 13c02c87 + 商务未提交 commercialPreview.ts（基线差异，ops-web 现网 c6d2118f 逐字节复现所需）+ 本需求文件
+#   （release/source-overlay.txt），干净 worktree 构建；Java 用 test-environment/java/Dockerfile，health-probe 取自运行容器；Web 用 operations-console-web/Dockerfile。
+# 环境变量：本需求不新增、不修改。下面两组变量与运行容器现值相同，只为防止主工作区 compose.applications.yaml 里切片 1 的
+#   未提交 hunk（13c02c87 不含）丢失时渲染结果变化；渲染后逐键比较与运行容器一致（release.md 第 3 节）。
+services:
+  reconciliation-service:
+    image: sha256:b31a853da15c90e6e6f7b0e95a681ac6f5c0784aa97b1a4513244998343501e3  # mor-test/reconciliation-service:recon-detail-20261021（JAR 7b66f7dd78133bd3）
+    environment:
+      RECONCILIATION_RABBITMQ_HOST: rabbitmq
+      RECONCILIATION_RABBITMQ_PORT: "5672"
+      RECONCILIATION_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
+      RECONCILIATION_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
+      RECONCILIATION_RABBITMQ_VHOST: /mor-test
+      RECONCILIATION_REDIS_HOST: redis
+      RECONCILIATION_REDIS_PORT: "6379"
+      RECONCILIATION_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?prepare test secrets}
+      RECONCILIATION_COMPENSATION_INSTANCE_ID: reconciliation-test
+      PAYTECH_INSTANCE_ID: reconciliation-test
+      XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
+      XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
+      XXL_JOB_EXECUTOR_ENABLED: "true"
+      XXL_JOB_EXECUTOR_APPNAME: reconciliation-service
+      XXL_JOB_EXECUTOR_IP: 172.30.73.41
+      XXL_JOB_EXECUTOR_PORT: "9999"
+      XXL_JOB_EXECUTOR_LOGPATH: /tmp/xxl-job
+      XXL_JOB_EXECUTOR_EXCLUDEDPACKAGES: org.springframework.,spring.
+  operations-console-bff:
+    image: sha256:e822301cf35cab0dbce8ea87619d37d86c6ca5bed51c04fb2b3fa5b16968eab4  # mor-test/operations-console-bff:recon-detail-20261021（JAR 35c31f76cee2ed22）
+    environment:
+      OPERATIONS_RECONCILIATION_BASE_URL: http://reconciliation-service:18115
+  operations-console-web:
+    image: sha256:70829a3a9213f680b4ce8c100115996799fd3a800997faa1a85414dcfca19ef8  # mor-test/operations-console-web:recon-detail-20261021
+  platform-support-service:
+    # 只多 console-resource-capabilities.json 的 OPERATIONS_FINANCE_RECON_CHANNEL_LINES 一项；JAR 其余逐类与运行版一致。
+    image: sha256:3d8bc3752c37da4f57e6bfad764a6712758bef45b484980262ddbe68414ebd72  # mor-test/platform-support-service:recon-detail-20261021（JAR 6e44506745810b7d）

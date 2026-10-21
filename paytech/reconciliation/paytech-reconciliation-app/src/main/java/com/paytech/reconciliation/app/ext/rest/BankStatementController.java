@@ -9,12 +9,14 @@ import com.paytech.reconciliation.api.bank.BankStatementApi;
 import com.paytech.reconciliation.api.bank.request.AppendBankStatementLinesRequestBody;
 import com.paytech.reconciliation.api.bank.request.StartBankStatementImportRequestBody;
 import com.paytech.reconciliation.api.bank.response.BankStatementCompletionResponseBody;
+import com.paytech.reconciliation.api.bank.response.BankStatementLineDetailResponseBody;
 import com.paytech.reconciliation.api.bank.response.BankStatementLineResponseBody;
 import com.paytech.reconciliation.api.bank.response.BankStatementResponseBody;
 import com.paytech.reconciliation.api.enums.BankStatementStatus;
 import com.paytech.reconciliation.api.enums.LineMatchStatus;
 import com.paytech.reconciliation.api.enums.SettlementDirection;
 import com.paytech.reconciliation.app.ext.rest.converter.BankReconciliationConverter;
+import com.paytech.reconciliation.app.ext.rest.converter.ReconExceptionConverter;
 import com.paytech.reconciliation.app.ext.rest.converter.ReconciliationWire;
 import com.paytech.reconciliation.domainservice.service.BankReconciliationQueryService;
 import com.paytech.reconciliation.service.processor.AppendBankStatementLinesProcessor;
@@ -28,6 +30,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class BankStatementController implements BankStatementApi {
     private final BankReconciliationConverter converter;
+    private final ReconExceptionConverter reconExceptionConverter;
     private final BankReconciliationQueryService bankReconciliationQueryService;
     private final StartBankStatementImportProcessor startBankStatementImportProcessor;
     private final AppendBankStatementLinesProcessor appendBankStatementLinesProcessor;
@@ -65,6 +68,20 @@ public class BankStatementController implements BankStatementApi {
         return bankReconciliationQueryService.listBankStatements(ReconciliationWire.id(cashAccountId),
             ReconciliationWire.parse(BankStatementStatus.class, status), PagingRequestBody.of(page, size))
             .map(converter::toStatementBody);
+    }
+
+    /** 对账单头（详情页）。 */
+    @Override
+    public BankStatementResponseBody getBankStatement(String bankStatementId) {
+        return converter.toStatementBody(bankReconciliationQueryService.readBankStatement(Long.parseLong(bankStatementId)));
+    }
+
+    /** 银行流水详情（详情页）。 */
+    @Override
+    public BankStatementLineDetailResponseBody getBankStatementLine(String bankStatementLineId) {
+        return converter.toLineDetailBody(
+            bankReconciliationQueryService.readBankStatementLine(Long.parseLong(bankStatementLineId)),
+            reconExceptionConverter::toExceptionBody);
     }
 
     /** 一张对账单的流水（行号升序）。 */
