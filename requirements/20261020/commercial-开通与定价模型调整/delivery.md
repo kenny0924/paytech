@@ -62,3 +62,8 @@
 ## 阶段 8（2026-10-21）
 
 - 用户确认「可以，提交吧」：本地提交，不推送。父提交 `2f5f37f7`（对账切片 1）；在独立 worktree 组装：集成 `4ab205e0..b7b37de3` 代码三方应用，4 个共享文件只叠加本需求部分（配置页数 56、表归属 +2 与生成器输出、Platform 初始化 SQL 块 124 并补回块 123 结尾 `COMMIT;`），文档只加本需求条目 / 行；不含 `合同页交互优化` 评审稿、`design.pen` 与其他会话改动。组装树验证：arch-rules 62/62（含表归属生成 --check）、ops-web 1226/1226 + build。
+
+## 提交后（2026-10-21）
+
+- 05:17Z ops-web `46227f3d…`（O2 / O3）上线，验收 §10 通过；验收发现 O4（费率预览开通项开启 3DS 时丢接受条件，原有缺陷），主会话修复 commercialPreview.ts（limits 按维度合并为条件）+ 单测，ops-web 1237/1237 + build；05:36Z ops-web `c6d2118f…`（capability-20261021g）。这两处为提交 `5a103f36` 之后的改动，随补充提交入库（父 `13c02c87`，不推送）。
+- 06:1xZ 对账会话 code-mor-93 发布 recon-detail-20261021，替换共享 ops-web `70829a3a…` / ops-bff `e822301c…` / platform `3d8bc375…`（源 = main `13c02c87` + 本需求 O4 commercialPreview.ts + 对账改动；对方核对商务 9 页正常，块 124 与 `mor_commercial` 未动），为 mor-test 当前基线；候选 compose 已改指，commercial 仍为 `c6c9b8f6…`。

@@ -161,3 +161,31 @@
 
 - 回归脚本 [stage7_browser.py](./stage7_browser.py) 随 F6 调整一处定位：合同详情页签由「开通项」改为匹配「产品与开通|开通项」。
 - 本节未写数据，未使用合成审批人。
+
+## 10. 观察 O2 / O3 修复（ops-web capability-20261021f）
+
+> 2026-10-21 05:20–05:34Z。ops-web 05:17:27Z 替换为 `sha256:46227f3d…`（入口 `index-BrDxuwBS.js`，源码 main `5a103f36`）。脚本 [stage7_feedback_f3.py](./stage7_feedback_f3.py)，A 登录真实入口，**全程只读**：非 GET 请求一律拦截，本次 0 次触发，写入 0。**结论：O2、O3 修复通过（7 / 7 项）；另发现 O4（费率预览开通项条件被 3DS 遮蔽，见下）；商务页 18 / 18、运营页 57 / 57 回归通过；控制台错误与 HTTP ≥ 400 均为 0。**
+
+| 项 | 结果 | 证据 |
+|---|---|---|
+| O2 下拉不含快捷币种 | 通过 | DEMO2-CL-101 编辑 CARD：「更多币种」选项无 AED / USD / SAR / EUR / GBP（`f3-01`） |
+| O2 多选展开 | 通过 | 选 KWD、QAR、BHD 后下拉内三项全部显示，无「+N」折叠（`f3-02`） |
+| O2 汇总同步 | 通过 | 汇总「币种 AED、KWD、QAR、BHD」 |
+| O2 切换快捷标签不丢下拉选择 | 通过 | 选 USD、取消 AED 后快捷标签只剩 USD，下拉三项仍在，汇总「币种 USD、KWD、QAR、BHD」（`f3-03`）；取消，未保存 |
+| O3 产品与开通条件标签中文 | 通过 | DEMO2-CL-101 收单区块 CARD 行：「卡组织 VISA」「币种 AED」「借贷记类型 借记」「要求 3DS」（蓝色 `ant-tag-blue`），无 DEBIT 原码（`f3-04`） |
+| O3 费率预览 3DS 蓝色 | 通过 | 费率预览 Client 237573476041465857：CARD 行「要求 3DS」为蓝色 `ant-tag-blue`（`f3-05`） |
+| 回归 | 通过 | 商务页 18 / 18（`commercial-capability-stage7-browser-pages-feedback-f3.json`）；运营页按**已部署包**的页面清单回归 **57 / 57**（`…-browser-regression-feedback-f3.json`）。已部署包 57 个页面：比此前 49 页多出币种会话与对账会话的页面；与 main `pageCapabilities.ts`（也是 57 条）相比，部署包多 `/currency-specs`、少 `/finance/reconciliation/channel-lines`，故以部署包为准 |
+| 观察 | 正常 | 05:17Z 起 commercial / ops-bff / ops-web / platform 日志 ERROR 0、重启 0 |
+
+**新发现 O4（费率预览开通项条件被遮蔽，不属本次 O2 / O3 范围）：** 费率预览页 DEMO2-CL-101 的 CARD 行「接受条件」只显示「要求 3DS」，缺少卡组织 VISA、币种 AED、借贷记类型 借记（`f3-05`）。
+- 原因：BFF `GET /commercial-admin/v1/rate-cards` 的开通项仍返回旧形态 `limits[]`（CARD_BRAND=VISA、CURRENCY=AED、FUNDING_TYPE=DEBIT），`conditions` 为 null；Web `CommercialRateCards.tsx` 在 `row.conditions.length || row.require3ds` 时走新分支，`require3ds=true` 使 `limits` 被忽略。
+- 影响：所有开启 3DS 的开通项在费率预览中条件不全；未开 3DS 的开通项仍按 `limits` 显示（原码形态）。
+- 建议：BFF 费率卡返回 `conditions`（与合同详情一致），或 Web 在 `conditions` 为空时把 `limits` 换成条件标签再追加「要求 3DS」。
+- 运行记录 `commercial-capability-stage7-feedback-f3.json` 中「费率预览 … 条件标签中文」一项为失败，即此发现；3DS 蓝色本身通过。
+- **O4 已修复并复验通过（05:37–05:39Z）**：ops-web 05:36:06Z 替换为 capability-20261021g（`sha256:c6d2118f…`，入口 `index-Bl5tVr7r.js`；费率卡开通项只有 `limits` 时前端按维度合并为接受条件）。脚本 [stage7_feedback_o4.py](./stage7_feedback_o4.py)，只读，3 / 3 通过（`commercial-capability-stage7-feedback-o4.json`）：
+  - DEMO2-CL-101（Client 237573476041465857）费率预览 CARD 行：「卡组织 VISA」「币种 AED」「借贷记类型 借记」「要求 3DS」，仅「要求 3DS」为蓝色（`f3-06`）。
+  - DEMO2-CL-103（Client 237573267559391233，不开 3DS）：CARD「币种 AED / USD」、GOOGLE_PAY「币种 AED」、STC_PAY「币种 AED」，无 3DS 标签（`f3-07`）。
+  - 商务页回归 18 / 18（`commercial-capability-stage7-browser-pages-o4.json`）；控制台错误、HTTP ≥ 400、写请求均为 0；05:36Z 起 ops-web / ops-bff / commercial 日志 ERROR 0。
+
+- 回归脚本 [stage7_browser.py](./stage7_browser.py) 随 O3 调整一处断言：合同开通项表格接受「借记」或「DEBIT」。
+- 本节未写数据，未使用合成审批人。

@@ -31,8 +31,8 @@ services:
       rabbitmq: { condition: service_healthy }
       redis: { condition: service_healthy }
   operations-console-bff:
-    image: sha256:9520a54538277ce7f4b90bca1f61712bbbce3559601d20b17697e028709e8971  # recon-slice1-20261021（对账会话 2026-10-21 替换，含本需求 c6eea71a；本需求原版 9708ccdb…）
+    image: sha256:e822301cf35cab0dbce8ea87619d37d86c6ca5bed51c04fb2b3fa5b16968eab4  # recon-detail-20261021（对账会话 2026-10-21 06:1xZ 替换，含本需求与币种；整体重建须带 OPERATIONS_RECONCILIATION_BASE_URL，见对账候选）
   operations-console-web:
-    image: sha256:139c157e50fa117524080e47a950fe322879255423e4d06af76dd51106a1b99a  # capability-20261021e（验收反馈 F1–F6，源 = 对账 recon-slice1 edfb6628 基线 + commercial 文件；回滚 333e7f2b…，再前 edfb6628…）
+    image: sha256:70829a3a9213f680b4ce8c100115996799fd3a800997faa1a85414dcfca19ef8  # recon-detail-20261021（对账会话替换，源含本需求 O4 commercialPreview.ts；本需求最后一版 c6d2118f…）
   platform-support-service:
-    image: sha256:79e33d43a2c3d4e64ac8e2a95109f46b86b8a1beeba6ba987e5d2f9b8f7de3b1  # recon-slice1-20261021（对账会话替换，含块 124 键；本需求原版 95348566…）
+    image: sha256:3d8bc3752c37da4f57e6bfad764a6712758bef45b484980262ddbe68414ebd72  # recon-detail-20261021（对账会话替换，含块 124 / 125 / 126 键）

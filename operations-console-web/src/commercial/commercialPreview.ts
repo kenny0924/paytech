@@ -80,7 +80,14 @@ function decodeRateCardCapability(value: unknown): RateCardCapability {
   return { ...v, productCode: orNull(v.productCode), capabilityKind: orNull(v.capabilityKind), paymentMethodCode: orNull(v.paymentMethodCode),
     dimensionCode: orNull(v.dimensionCode), dimensionValue: orNull(v.dimensionValue), effectiveTo: orNull(v.effectiveTo),
     rollingReserveRate: orNull(v.rollingReserveRate), rollingReserveDays: orNull(v.rollingReserveDays), limits: v.limits ?? [],
-    conditions: (v.conditions ?? []).map(decodeCapabilityCondition), require3ds: v.require3ds === true };
+    conditions: v.conditions ? v.conditions.map(decodeCapabilityCondition) : limitConditions(v.limits ?? []), require3ds: v.require3ds === true };
+}
+
+/** 费率卡开通项只返回 limits（每个维度取值一行）时，按维度合并为接受条件，维度顺序与取值顺序保持返回顺序。 */
+export function limitConditions(limits: readonly RateCardLimit[]): CapabilityCondition[] {
+  const grouped = new Map<string, string[]>();
+  for (const limit of limits) grouped.set(limit.limitCode, [...(grouped.get(limit.limitCode) ?? []), limit.limitValue]);
+  return [...grouped].map(([dimensionCode, values]) => ({ dimensionCode, values }));
 }
 
 function decodeProfilePrice(value: unknown): ProfilePrice {

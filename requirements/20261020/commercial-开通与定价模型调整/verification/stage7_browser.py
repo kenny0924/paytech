@@ -125,7 +125,8 @@ def commercial_pages(visit, modal_shot):
             page.wait_for_timeout(1500)
             page.screenshot(path=str(OUT / "05a-agreement-101-capabilities-tab.png"), full_page=True)
             tab_text = page.locator("body").inner_text()
-            listed = {k: k in tab_text for k in ("CARD", "VISA", "DEBIT", "AED", "3DS", "TOKEN_STORAGE")}
+            listed = {k: k in tab_text for k in ("CARD", "VISA", "AED", "3DS", "TOKEN_STORAGE")}
+            listed["借记/DEBIT"] = "借记" in tab_text or "DEBIT" in tab_text
             card_row = page.locator("tr", has=page.get_by_text("CARD", exact=True))
             text = modal_shot(card_row.get_by_role("button", name=re.compile("编\\s?辑")), "05b-agreement-capability-conditions-modal")
             ok = all(listed.values()) and all(k in text for k in ("VISA", "AED")) and ("DEBIT" in text or "借记" in text) and "3DS" in text

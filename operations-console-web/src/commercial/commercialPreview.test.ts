@@ -3,7 +3,7 @@ import test from 'node:test';
 import { ApiError } from '../api/session.ts';
 import { commercialPaths } from './commercial.ts';
 import {
-  capabilityLabel, cutoffTime, dashboardMetrics, decodeDashboard, decodeRateCard, decodeSimulation, priceErrorLabels, rateCardPath, simulationBody,
+  capabilityLabel, cutoffTime, dashboardMetrics, decodeDashboard, decodeRateCard, decodeSimulation, limitConditions, priceErrorLabels, rateCardPath, simulationBody,
   simulationErrorMessage, simulationFieldName,
 } from './commercialPreview.ts';
 import type { SimulationFormValues } from './commercialPreview.ts';
@@ -59,6 +59,22 @@ test('费率卡：Client 一致时解码合同、开通项、版本与币种块�
   assert.equal(block.profiles[0].settlement?.settlementTimezone, 'Asia/Dubai');
   assert.throws(() => decodeRateCard('7300000000000000099')(rateCard), ApiError);
   assert.throws(() => decodeRateCard(clientId)({ ...rateCard, agreements: [{ ...rateCard.agreements[0], entityNo: 'X1' }] }), ApiError);
+});
+
+test('费率卡开通项：只有 limits 时按维度合并为接受条件（3DS 开启也不丢条件）；返回 conditions 时以其为准', () => {
+  const limits = [{ limitCode: 'CARD_BRAND', limitValue: 'VISA' }, { limitCode: 'CURRENCY', limitValue: 'AED' },
+    { limitCode: 'CARD_BRAND', limitValue: 'MASTERCARD' }, { limitCode: 'FUNDING_TYPE', limitValue: 'DEBIT' }];
+  assert.deepEqual(limitConditions(limits), [{ dimensionCode: 'CARD_BRAND', values: ['VISA', 'MASTERCARD'] },
+    { dimensionCode: 'CURRENCY', values: ['AED'] }, { dimensionCode: 'FUNDING_TYPE', values: ['DEBIT'] }]);
+  assert.deepEqual(limitConditions([]), []);
+  const agreement = rateCard.agreements[0];
+  const withLimits = { ...rateCard, agreements: [{ ...agreement, capabilities: [{ ...agreement.capabilities[0], limits, require3ds: true }] }] };
+  const capability = decodeRateCard(clientId)(withLimits).agreements[0].capabilities[0];
+  assert.equal(capability.require3ds, true);
+  assert.deepEqual(capability.conditions.map(c => c.dimensionCode), ['CARD_BRAND', 'CURRENCY', 'FUNDING_TYPE']);
+  const withConditions = { ...rateCard, agreements: [{ ...agreement, capabilities: [{ ...agreement.capabilities[0], limits,
+    conditions: [{ dimensionCode: 'CURRENCY', values: ['USD'] }] }] }] };
+  assert.deepEqual(decodeRateCard(clientId)(withConditions).agreements[0].capabilities[0].conditions, [{ dimensionCode: 'CURRENCY', values: ['USD'] }]);
 });
 
 test('费率卡查询路径：空值不带参数，币种转大写', () => {
