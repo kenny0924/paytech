@@ -69,7 +69,7 @@ test('tenant page owns only its three approved routes', () => {
   assert.deepEqual(pageRoutePaths({ ...menu, frontendRoute: '/external-api/standard-apis', componentKey: 'OPERATIONS_EXTERNAL_STANDARD_APIS' }),
     ['/external-api/standard-apis', '/external-api/standard-apis/:standardApiCode']);
   assert.deepEqual(pageRoutePaths({ ...menu, frontendRoute: '/external-api/integrations', componentKey: 'OPERATIONS_EXTERNAL_INTEGRATIONS' }),
-    ['/external-api/integrations', '/external-api/integrations/:integrationCode', '/external-api/integrations/:integrationCode/:section/:childCode']);
+    ['/external-api/integrations']);
 });
 
 test('数据查询：模板页登记编辑器子路由（:templateId 含 new），数据源页只有根路径', () => {

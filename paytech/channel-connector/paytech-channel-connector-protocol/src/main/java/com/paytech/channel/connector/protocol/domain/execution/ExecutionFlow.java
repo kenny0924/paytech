@@ -86,7 +86,7 @@ public class ExecutionFlow {
         /** 节点 ID。 */
         private final String id;
 
-        /** 同一接入方下的原子 API 编码。 */
+        /** 同一渠道下的原子 API 编码。 */
         private final String integrationApi;
 
         /** 请求字段取值，键为 &lt;LOCATION&gt;:&lt;path&gt;；缺省为 MissingNode。 */

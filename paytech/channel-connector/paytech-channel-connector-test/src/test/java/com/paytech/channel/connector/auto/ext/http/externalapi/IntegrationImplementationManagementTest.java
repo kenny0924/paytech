@@ -22,7 +22,7 @@ import com.paytech.channel.connector.api.externalapi.response.ImplementationList
 import com.paytech.channel.connector.api.externalapi.response.ImplementationResponseBody;
 import com.paytech.channel.connector.api.externalapi.response.ImplementationSummary;
 import com.paytech.channel.connector.api.externalapi.response.ValidationResponseBody;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.Integration;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.Channel;
 import com.paytech.channel.connector.protocol.core.dal.dataobject.StandardApi;
 import com.paytech.channel.connector.protocol.domain.ValidationIssue;
 import com.paytech.channel.connector.protocol.core.enums.ChangeTargetType;
@@ -51,14 +51,14 @@ class IntegrationImplementationManagementTest extends ExternalApiTestBase {
 
     private static final String PATH = BASE + "/integrations/DEMO/implementations";
 
-    private Integration demo;
+    private Channel demo;
     private StandardApi pay;
 
-    /** 本类公共：标准 API PAY、接入方 DEMO 及其下单原子 API。 */
+    /** 本类公共：标准 API PAY、渠道 DEMO 及其下单原子 API。 */
     @BeforeEach
     void setUpClassMocks() {
         pay = externalApi.standardApi("PAY");
-        demo = externalApi.integration("DEMO");
+        demo = externalApi.channel("DEMO");
         externalApi.createOrderApi(demo);
     }
 
@@ -69,7 +69,7 @@ class IntegrationImplementationManagementTest extends ExternalApiTestBase {
 
         assertMutation(post(PATH, ExternalApiRequests.createImplementation("PAY", flow)),
             "INTEGRATION_IMPLEMENTATION", "DEMO/PAY", 1);
-        var change = assertChange(ChangeTargetType.INTEGRATION_IMPLEMENTATION,
+        var change = assertChange(ChangeTargetType.CHANNEL_IMPLEMENTATION,
             externalApiData.implementationId("DEMO", "PAY"), ChangeType.CREATE, "DEMO/PAY", 0, 1,
             ExternalApiRequests.REASON);
         assertTrue(changedFields(change).contains(ConfigurationField.DEFINITION_DIGEST.getCode()));
@@ -86,7 +86,7 @@ class IntegrationImplementationManagementTest extends ExternalApiTestBase {
             () -> assertEquals(20000, summary.getTimeoutMs()));
     }
 
-    /** 同一接入方重复实现、引用不存在的标准 API 都是业务校验失败。 */
+    /** 同一渠道重复实现、引用不存在的标准 API 都是业务校验失败。 */
     @Test
     void test_duplicateAndMissingStandardApi() {
         externalApi.implementation(demo, pay, ExternalApiSamples.payFlow());
@@ -150,7 +150,7 @@ class IntegrationImplementationManagementTest extends ExternalApiTestBase {
                 (Consumer<ObjectNode>)flow -> returns(flow)
                     .add(ExternalApiSamples.object("{\"id\":\"orphan\",\"executeStatus\":\"ERROR\"}")),
                 "UNREACHABLE", "flowDefinition"),
-            Arguments.of("原子 API 不属于本接入方", (Consumer<ObjectNode>)flow -> node(flow, 0).put("integrationApi", "NOPE"),
+            Arguments.of("原子 API 不属于本渠道", (Consumer<ObjectNode>)flow -> node(flow, 0).put("integrationApi", "NOPE"),
                 "INTEGRATION_API_NOT_FOUND", "flowDefinition.nodes[0].integrationApi"));
     }
 
@@ -204,7 +204,7 @@ class IntegrationImplementationManagementTest extends ExternalApiTestBase {
 
         assertMutation(delete(PATH + "/PAY", ExternalApiRequests.delete(1)), "INTEGRATION_IMPLEMENTATION",
             "DEMO/PAY", 1);
-        assertChange(ChangeTargetType.INTEGRATION_IMPLEMENTATION, implementation.getIntegrationStandardApiId(),
+        assertChange(ChangeTargetType.CHANNEL_IMPLEMENTATION, implementation.getChannelStandardApiId(),
             ChangeType.DELETE, "DEMO/PAY", 1, 1, ExternalApiRequests.REASON);
 
         get(PATH + "/PAY").assertProblem(404, CommonErrorCode.NOT_FOUND);

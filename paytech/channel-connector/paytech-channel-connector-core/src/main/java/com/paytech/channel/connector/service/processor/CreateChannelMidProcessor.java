@@ -10,16 +10,16 @@ import org.springframework.stereotype.Component;
 import com.paytech.channel.connector.core.constant.ChannelConnectorLocks;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelAccount;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelMid;
-import com.paytech.channel.connector.core.dal.dataobject.PaymentChannel;
+import com.paytech.channel.connector.protocol.domain.ChannelIdentity;
 import com.paytech.channel.connector.protocol.core.enums.ChangeTargetType;
 import com.paytech.channel.connector.protocol.core.enums.ChangeType;
-import com.paytech.channel.connector.core.enums.ChannelStatus;
+import com.paytech.channel.connector.protocol.core.enums.ChannelStatus;
 import com.paytech.channel.connector.protocol.domain.ChannelConfigChanges;
 import com.paytech.channel.connector.domain.ChannelMidContext;
 import com.paytech.channel.connector.domain.ChannelMidDetailView;
 import com.paytech.channel.connector.domainservice.service.ChannelAccountService;
 import com.paytech.channel.connector.domainservice.service.ChannelMidService;
-import com.paytech.channel.connector.domainservice.service.PaymentChannelService;
+import com.paytech.channel.connector.protocol.domainservice.service.ChannelService;
 import com.paytech.channel.connector.service.processor.request.CreateChannelMidRequest;
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.id.IdGenerator;
@@ -39,7 +39,7 @@ public class CreateChannelMidProcessor extends AbstractLockProcessor<CreateChann
     private final IdGenerator idGenerator;
     private final ChannelMidService channelMidService;
     private final ChannelAccountService channelAccountService;
-    private final PaymentChannelService paymentChannelService;
+    private final ChannelService channelService;
     private final ChannelConfigTransactions channelConfigTransactions;
 
     /** 所属渠道资源锁。 */
@@ -52,7 +52,10 @@ public class CreateChannelMidProcessor extends AbstractLockProcessor<CreateChann
     @Override
     protected ChannelMidDetailView processWithinLock(CreateChannelMidRequest request) {
         // 业务验证
-        PaymentChannel channel = paymentChannelService.loadChannel(request.getChannelId());
+        ChannelIdentity channel = channelService.loadChannel(request.getChannelId());
+        if (channel.service()) {
+            throw new BizCheckFailException("服务渠道没有 MID: " + channel.getChannelCode());
+        }
         if (channel.getChannelStatus() == ChannelStatus.CLOSED) {
             throw new BizCheckFailException("渠道已关闭，不能创建 MID: " + channel.getChannelId());
         }

@@ -11,61 +11,60 @@ import { decodeValidation } from '../editorModel';
 import type { ValidationIssue } from '../editorModel';
 import { ConflictBanner, Loading, LoadFailure, hasButton, useCopyDraft, useDetail, useEditorSave } from '../externalApiHooks';
 import {
-  codePattern, decodeImplementationList, decodeMutation, decodePage, integrationRoute, listSizes, manageIntegrations, replaceQuery,
+  codePattern, decodeImplementationList, decodeMutation, decodePage, listSizes, manageProtocol, replaceQuery,
 } from '../externalApiModel';
 import type { ImplementationSummary } from '../externalApiModel';
 import { Field, Mono, Note, PageHeader, Panel, ReadOnlyValue, formatTime } from '../ui';
 import type { Crumb } from '../ui';
 import {
   caseStatusLabels, decodeAccounts, decodeCase, decodeRunSummary, emptyStep, executeStatuses, hasTemplateVariable, issueStep, matchLabels, matches,
-  runStatusLabels, templateVariables, toStepDrafts, toSteps, verifyPath, verifyRoute,
+  runStatusLabels, templateVariables, toStepDrafts, toSteps, verifyPath,
 } from './verifyModel';
+import { workspaceCrumbs, workspaceRoutes } from '../../channel/channelWorkspace';
 import type { Match, OutputRow, StepDraft, VerifyAccountSummary, VerifyCaseDetail, VerifyRunSummary } from './verifyModel';
 import { JsonBlock, StartRunDialog, VerifyTag } from './VerifyParts';
 
-interface Props { resources: ConsoleResource[]; onAuthorizationChanged: () => void; integrationCode: string; caseCode: string | null }
+interface Props { resources: ConsoleResource[]; onAuthorizationChanged: () => void; channelId: string; integrationCode: string; caseCode: string | null }
 interface Meta { caseCode: string; caseName: string; description?: string; accountCode: string }
 
-const crumbsFor = (code: string): Crumb[] => [{ label: '渠道' }, { label: '接入方', to: integrationRoute },
-  { label: code, to: `${integrationRoute}/${code}` }, { label: '验证', to: `${integrationRoute}/${code}?tab=verify` }];
+const crumbsFor = (channelId: string, code: string): Crumb[] => workspaceCrumbs(channelId, code, 'verify');
 const runPage = (value: unknown) => decodePage(value, decodeRunSummary, item => item.runCode);
 
 /** 验证用例：详情（/:caseCode）、编辑（?mode=edit）与新建（/new）。步骤按顺序执行，后一步可引用前一步的输入与输出。 */
-export function VerifyCaseEditor({ resources, onAuthorizationChanged, integrationCode, caseCode }: Props) {
+export function VerifyCaseEditor({ resources, onAuthorizationChanged, channelId, integrationCode, caseCode }: Props) {
   const location = useLocation();
-  const canManage = hasButton(resources, manageIntegrations);
+  const canManage = hasButton(resources, manageProtocol);
   const editing = caseCode === null || canManage && new URLSearchParams(location.search).get('mode') === 'edit';
   const decode = useMemo(() => (value: unknown) => decodeCase(value, caseCode ?? ''), [caseCode]);
   const detail = useDetail<VerifyCaseDetail>(caseCode ? `${verifyPath(integrationCode)}/verify-cases/${caseCode}` : null, decode);
-  if (caseCode === null && !canManage) return <Alert type="warning" showIcon title="当前没有接入方维护权限" />;
+  if (caseCode === null && !canManage) return <Alert type="warning" showIcon title="当前没有沙箱验证维护权限" />;
   if (caseCode && detail.loading && !detail.data) return <Loading />;
   if (caseCode && (detail.failure && !detail.data || !detail.data)) {
     return <LoadFailure title="验证用例加载失败" failure={detail.failure} retry={detail.refresh} />;
   }
   if (editing) {
-    return <CaseForm key={detail.data?.version ?? 'new'} integrationCode={integrationCode} detail={detail.data}
+    return <CaseForm key={detail.data?.version ?? 'new'} channelId={channelId} integrationCode={integrationCode} detail={detail.data}
       onAuthorizationChanged={onAuthorizationChanged} onReload={detail.refresh} />;
   }
-  return <CaseView integrationCode={integrationCode} verifyCase={detail.data!} canManage={canManage} onAuthorizationChanged={onAuthorizationChanged} />;
+  return <CaseView channelId={channelId} integrationCode={integrationCode} verifyCase={detail.data!} canManage={canManage} onAuthorizationChanged={onAuthorizationChanged} />;
 }
 
-function CaseView({ integrationCode, verifyCase, canManage, onAuthorizationChanged }: {
-  integrationCode: string; verifyCase: VerifyCaseDetail; canManage: boolean; onAuthorizationChanged: () => void;
+function CaseView({ channelId, integrationCode, verifyCase, canManage, onAuthorizationChanged }: {
+  channelId: string; integrationCode: string; verifyCase: VerifyCaseDetail; canManage: boolean; onAuthorizationChanged: () => void;
 }) {
   const navigate = useNavigate(); const [running, setRunning] = useState(false);
-  const base = verifyRoute(integrationCode);
   const runs = usePaging<VerifyRunSummary>(`${verifyPath(integrationCode)}/verify-runs`, runPage, { caseCode: verifyCase.caseCode },
     { initialPaging: { page: 1, size: 10 }, notifyOnError: false });
   const steps = toStepDrafts(verifyCase.steps);
   return <>
-    <PageHeader crumbs={[...crumbsFor(integrationCode), { label: verifyCase.caseCode }]} title={verifyCase.caseName} code={verifyCase.caseCode}
+    <PageHeader crumbs={[...crumbsFor(channelId, integrationCode), { label: verifyCase.caseCode }]} title={verifyCase.caseName} code={verifyCase.caseCode}
       actions={canManage && <>
         <Button onClick={() => void navigate(replaceQuery('', { mode: 'edit' }))}>编辑</Button>
         <Button type="primary" disabled={verifyCase.verifyStatus === 'RUNNING'} onClick={() => setRunning(true)}>运行</Button></>} />
     <div className="xapi-facts">
       <Field label="验证状态"><VerifyTag {...caseStatusLabels[verifyCase.verifyStatus]} /></Field>
       <Field label="验证账号">{verifyCase.accountCode
-        ? <Link to={`${base}/verify-accounts/${verifyCase.accountCode}`}><Mono>{verifyCase.accountCode}</Mono></Link> : '已删除'}</Field>
+        ? <Link to={workspaceRoutes(channelId).verifyAccount(verifyCase.accountCode)}><Mono>{verifyCase.accountCode}</Mono></Link> : '已删除'}</Field>
       <Field label="说明">{verifyCase.description || '—'}</Field>
       <Field label="最近修改">{formatTime(verifyCase.updateTime)} · 账号 {verifyCase.updatedBy} · 版本 {verifyCase.version}</Field>
     </div>
@@ -90,19 +89,19 @@ function CaseView({ integrationCode, verifyCase, canManage, onAuthorizationChang
       <Table<VerifyRunSummary> rowKey="runCode" tableLayout="fixed" dataSource={runs.data.items} loading={runs.loading}
         pagination={{ ...runs.pagination, pageSizeOptions: listSizes, showTotal: total => `共 ${total} 条` }}
         locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="尚未运行" /> }} columns={[
-          { title: '运行编号', width: 190, render: (_, row) => <Link className="xapi-link-code" to={`${base}/verify-runs/${row.runCode}`}><Mono>{row.runCode}</Mono></Link> },
+          { title: '运行编号', width: 190, render: (_, row) => <Link className="xapi-link-code" to={workspaceRoutes(channelId).verifyRun(row.runCode)}><Mono>{row.runCode}</Mono></Link> },
           { title: '结论', width: 100, render: (_, row) => <VerifyTag {...runStatusLabels[row.runStatus]} /> },
           { title: '失败摘要', ellipsis: true, render: (_, row) => row.failureSummary ?? '—' },
           { title: '开始时间', width: 150, render: (_, row) => formatTime(row.startTime) },
           { title: '发起账号', width: 110, dataIndex: 'startedBy' },
         ]} /></div>}
-    {running && <StartRunDialog integrationCode={integrationCode} caseCode={verifyCase.caseCode} onClose={() => setRunning(false)}
+    {running && <StartRunDialog channelId={channelId} integrationCode={integrationCode} caseCode={verifyCase.caseCode} onClose={() => setRunning(false)}
       onAuthorizationChanged={onAuthorizationChanged} />}
   </>;
 }
 
-function CaseForm({ integrationCode, detail, onAuthorizationChanged, onReload }: {
-  integrationCode: string; detail?: VerifyCaseDetail; onAuthorizationChanged: () => void; onReload: () => void;
+function CaseForm({ channelId, integrationCode, detail, onAuthorizationChanged, onReload }: {
+  channelId: string; integrationCode: string; detail?: VerifyCaseDetail; onAuthorizationChanged: () => void; onReload: () => void;
 }) {
   const [form] = Form.useForm<Meta>(); const navigate = useNavigate(); const notify = useErrorNotification();
   const editor = useEditorSave(onAuthorizationChanged); const copy = useCopyDraft();
@@ -139,7 +138,7 @@ function CaseForm({ integrationCode, detail, onAuthorizationChanged, onReload }:
       value => decodeMutation(value, 'INTEGRATION_VERIFY_CASE', `${integrationCode}/${code}`));
     if (!result) { if (editor.fieldErrors.length) void validate(); return false; }
     flushSync(() => editor.setDirty(false));
-    if (!leaving.current) void navigate(`${verifyRoute(integrationCode)}/verify-cases/${code}`, { replace: true });
+    if (!leaving.current) void navigate(workspaceRoutes(channelId).verifyCase(code), { replace: true });
     return true;
   }, async () => {
     const valid = await form.validateFields().then(() => true, () => false);
@@ -156,7 +155,7 @@ function CaseForm({ integrationCode, detail, onAuthorizationChanged, onReload }:
     editor.setDirty(true);
   };
   return <>
-    <PageHeader crumbs={[...crumbsFor(integrationCode), { label: creating ? '新建验证用例' : `编辑 ${detail.caseCode}` }]}
+    <PageHeader crumbs={[...crumbsFor(channelId, integrationCode), { label: creating ? '新建验证用例' : `编辑 ${detail.caseCode}` }]}
       title={creating ? '新建验证用例' : `编辑验证用例 · ${detail.caseCode}`}
       actions={<><Button onClick={() => void validate()}>校验</Button>
         <Button type="primary" loading={editor.saving} onClick={() => void reasonFlow.start()}>保存</Button></>} />
@@ -209,7 +208,7 @@ function StepPanel({ index, step, total, focused, problems, issues, standardApis
       <div className="xapi-grid xapi-grid-3">
         <Field label="步骤 ID" hint="小写字母开头；后续步骤以 ${steps.<ID>...} 引用">
           <Input value={step.id} maxLength={64} className="xapi-mono-input" onChange={event => onChange({ id: event.target.value })} /></Field>
-        <Field label="标准 API" hint="本接入方已实现的标准 API">
+        <Field label="标准 API" hint="本渠道已实现的标准 API">
           <Select value={step.standardApiCode || undefined} placeholder="选择标准 API" onChange={value => onChange({ standardApiCode: value })}
             options={standardApis.map(item => ({ value: item.standardApiCode, label: `${item.standardApiCode} · ${item.standardApiName}` }))} /></Field>
         <Field label="期望类型">

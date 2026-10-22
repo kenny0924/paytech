@@ -1,0 +1,277 @@
+{
+ "versions": [
+  1,
+  2
+ ],
+ "chain": {
+  "candidates": {
+   "equal": true,
+   "diff": []
+  },
+  "refund": {
+   "equal": true,
+   "diff": []
+  },
+  "payWithCardRead": {
+   "equal": true,
+   "diff": []
+  },
+  "notSentStandardApiMissing": {
+   "equal": true,
+   "diff": []
+  },
+  "notSentInvalidInput": {
+   "equal": true,
+   "diff": []
+  }
+ },
+ "realCard": {
+  "equal": true,
+  "diff": [],
+  "afterPlatformCallerReveal": {
+   "httpStatus": 404,
+   "code": "NOT_FOUND",
+   "returnedCardFields": false,
+   "ticketUsedAfter": [
+    "0"
+   ]
+  }
+ },
+ "cardGate": {
+  "equal": true,
+  "baseline": {
+   "platform-support-service": {
+    "httpStatus": 404,
+    "code": "NOT_FOUND"
+   },
+   "channel-connector-service": {
+    "httpStatus": 404,
+    "code": "NOT_FOUND"
+   },
+   "other-service": {
+    "httpStatus": 404,
+    "code": "NOT_FOUND"
+   }
+  },
+  "after": {
+   "platform-support-service": {
+    "httpStatus": 404,
+    "code": "NOT_FOUND"
+   },
+   "channel-connector-service": {
+    "httpStatus": 404,
+    "code": "NOT_FOUND"
+   },
+   "other-service": {
+    "httpStatus": 404,
+    "code": "NOT_FOUND"
+   }
+  }
+ },
+ "sandbox": {
+  "equal": true,
+  "diff": [],
+  "codes": [
+   [
+    "S5_P2BASELINE3_ACCT",
+    "S5_P2BASELINE3_CASE",
+    "238878871359913984"
+   ],
+   [
+    "S5_P2AFTER_ACCT",
+    "S5_P2AFTER_CASE",
+    "238880140006850560"
+   ]
+  ]
+ },
+ "snapshot": {
+  "calls": [
+   46,
+   47
+  ],
+  "callsEqualAfterRemovingNewAndRemoved": true,
+  "nonOkCalls": [],
+  "removedIntegrationCrud": {
+   "baseline": {
+    "integrations": 200,
+    "integrations/PAYERMAX_MOCK": 200
+   },
+   "after": {
+    "integrations": {
+     "status": 404,
+     "code": "GATEWAY_ROUTE_NOT_FOUND"
+    },
+    "integrations/PAYERMAX_MOCK": {
+     "status": 404,
+     "code": "GATEWAY_ROUTE_NOT_FOUND"
+    }
+   }
+  },
+  "equalAfterRemovingNew": false,
+  "diff": [
+   [
+    "/editor-capabilities/body/functions[0]/params[3]/required",
+    "value",
+    "True",
+    "False"
+   ],
+   [
+    "/standard-apis/items[0]/implementedBy[0]/integrationName",
+    "value",
+    "PayerMax（PAYERMAX_MOCK）",
+    "本机合成 PayerMax（阶段 5 10210318）"
+   ],
+   [
+    "/standard-apis/items[1]/implementedBy[0]/integrationName",
+    "value",
+    "PayerMax（PAYERMAX_MOCK）",
+    "本机合成 PayerMax（阶段 5 10210318）"
+   ],
+   [
+    "/standard-apis/items[2]/implementedBy[0]/integrationName",
+    "value",
+    "PayerMax（PAYERMAX_MOCK）",
+    "本机合成 PayerMax（阶段 5 10210318）"
+   ],
+   [
+    "/standard-apis/items[3]/implementedBy[0]/integrationName",
+    "value",
+    "PayerMax（PAYERMAX_MOCK）",
+    "本机合成 PayerMax（阶段 5 10210318）"
+   ],
+   [
+    "/standard-apis/PAY/body/implementations[0]/integrationName",
+    "value",
+    "PayerMax（PAYERMAX_MOCK）",
+    "本机合成 PayerMax（阶段 5 10210318）"
+   ],
+   [
+    "/standard-apis/PAY_QUERY/body/implementations[0]/integrationName",
+    "value",
+    "PayerMax（PAYERMAX_MOCK）",
+    "本机合成 PayerMax（阶段 5 10210318）"
+   ],
+   [
+    "/standard-apis/REFUND/body/implementations[0]/integrationName",
+    "value",
+    "PayerMax（PAYERMAX_MOCK）",
+    "本机合成 PayerMax（阶段 5 10210318）"
+   ],
+   [
+    "/standard-apis/REFUND_QUERY/body/implementations[0]/integrationName",
+    "value",
+    "PayerMax（PAYERMAX_MOCK）",
+    "本机合成 PayerMax（阶段 5 10210318）"
+   ]
+  ],
+  "newRunVsBaselineRun": {
+   "equal": true,
+   "diff": []
+  },
+  "new-verify-accounts-detail": {
+   "equal": true,
+   "diff": []
+  },
+  "new-verify-cases-detail": {
+   "equal": true,
+   "diff": []
+  }
+ },
+ "channelAdmin": {
+  "channels": {
+   "allowed": [
+    [
+     "/body/items[0]/activeGrantCount",
+     "missing",
+     false,
+     true,
+     "第二段新增字段"
+    ],
+    [
+     "/body/items[0]/channelType",
+     "missing",
+     false,
+     true,
+     "第二段新增字段"
+    ],
+    [
+     "/body/items[0]/endpointCount",
+     "missing",
+     false,
+     true,
+     "第二段新增字段"
+    ]
+   ],
+   "unexplained": []
+  },
+  "channels/{id}": {
+   "allowed": [
+    [
+     "/body/channelType",
+     "missing",
+     false,
+     true,
+     "第二段新增字段"
+    ],
+    [
+     "/body/description",
+     "missing",
+     false,
+     true,
+     "第二段新增字段"
+    ],
+    [
+     "/body/endpoints",
+     "missing",
+     false,
+     true,
+     "第二段新增字段"
+    ],
+    [
+     "/body/version",
+     "missing",
+     false,
+     true,
+     "第二段新增字段"
+    ]
+   ],
+   "unexplained": []
+  },
+  "channel-accounts": {
+   "allowed": [],
+   "unexplained": []
+  },
+  "channel-accounts/{id}": {
+   "allowed": [],
+   "unexplained": []
+  },
+  "mids": {
+   "allowed": [],
+   "unexplained": []
+  },
+  "mids/{id}": {
+   "allowed": [],
+   "unexplained": []
+  },
+  "mid-capabilities/definitions": {
+   "allowed": [],
+   "unexplained": []
+  },
+  "config-changes/CHANNEL": {
+   "allowed": [],
+   "unexplained": []
+  },
+  "config-changes/CHANNEL_ACCOUNT": {
+   "allowed": [],
+   "unexplained": []
+  },
+  "config-changes/CHANNEL_MID": {
+   "allowed": [],
+   "unexplained": []
+  },
+  "config-changes/MID_CAPABILITY": {
+   "allowed": [],
+   "unexplained": []
+  }
+ }
+}

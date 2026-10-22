@@ -3,7 +3,7 @@ package com.paytech.channel.connector.service.processor.request;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-import com.paytech.channel.connector.core.enums.ChannelStatus;
+import com.paytech.channel.connector.protocol.core.enums.ChannelStatus;
 
 import lombok.Getter;
 import lombok.Setter;

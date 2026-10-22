@@ -13,7 +13,7 @@ import com.paytech.channel.connector.service.processor.request.ChangeChannelStat
 import com.paytech.channel.connector.service.processor.request.CreateChannelMidRequest;
 import com.paytech.channel.connector.service.processor.request.RebindChannelMidAccountRequest;
 import com.paytech.channel.connector.core.enums.ChannelCostCodes;
-import com.paytech.channel.connector.core.enums.ChannelStatus;
+import com.paytech.channel.connector.protocol.core.enums.ChannelStatus;
 import com.paytech.channel.connector.domain.ChannelMidListCriteria;
 import com.paytech.channel.connector.domain.ChannelMidSummaryView;
 import com.paytech.foundation.web.paging.PagingRequestBody;

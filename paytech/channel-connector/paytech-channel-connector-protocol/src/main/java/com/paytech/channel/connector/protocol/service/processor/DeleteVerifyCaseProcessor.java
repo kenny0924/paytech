@@ -10,15 +10,15 @@ import com.paytech.channel.connector.protocol.core.enums.ChangeTargetType;
 import com.paytech.channel.connector.protocol.core.enums.ChangeType;
 import com.paytech.channel.connector.protocol.domainservice.service.ChannelConfigChangeService;
 import com.paytech.channel.connector.protocol.core.configuration.ExternalApiConfigurationProperties;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.Integration;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationVerifyAccount;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationVerifyCase;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.Channel;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelVerifyAccount;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelVerifyCase;
 import com.paytech.channel.connector.protocol.domain.ExternalApiConfigurationCodec;
 import com.paytech.channel.connector.protocol.domain.ExternalApiMutation;
 import com.paytech.channel.connector.protocol.domain.ExternalApiLocks;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationVerifyAccountRepository;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationVerifyCaseRepository;
-import com.paytech.channel.connector.protocol.domainservice.service.IntegrationVerifyConfigService;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelVerifyAccountRepository;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelVerifyCaseRepository;
+import com.paytech.channel.connector.protocol.domainservice.service.ChannelVerifyConfigService;
 
 import lombok.AllArgsConstructor;
 import com.paytech.channel.connector.protocol.service.processor.request.DeleteIntegrationChildRequest;
@@ -35,9 +35,9 @@ public class DeleteVerifyCaseProcessor extends AbstractLockProcessor<DeleteInteg
     private final IntegrationChildSupport children;
     private final ExternalApiTransactions transactions;
     private final ExternalApiProcessorSupport support;
-    private final IntegrationVerifyAccountRepository accounts;
-    private final IntegrationVerifyCaseRepository cases;
-    private final IntegrationVerifyConfigService service;
+    private final ChannelVerifyAccountRepository accounts;
+    private final ChannelVerifyCaseRepository cases;
+    private final ChannelVerifyConfigService service;
     private final ExternalApiConfigurationProperties properties;
 
     @Override
@@ -50,13 +50,13 @@ public class DeleteVerifyCaseProcessor extends AbstractLockProcessor<DeleteInteg
     @Override
     protected ExternalApiMutation processWithinLock(DeleteIntegrationChildRequest request) {
         return transactions.write(() -> {
-            Integration integration = children.lockIntegration(request.getIntegrationCode());
-            IntegrationVerifyCase row = support.requireFound(cases.lock(integration.getIntegrationId(), request.getCode()));
+            Channel integration = children.lockChannel(request.getIntegrationCode());
+            ChannelVerifyCase row = support.requireFound(cases.lock(integration.getChannelId(), request.getCode()));
             support.requireVersion(row.getVersion(), request.getExpectedVersion());
-            IntegrationVerifyAccount account = accounts.byId(row.getVerifyAccountId());
+            ChannelVerifyAccount account = accounts.byId(row.getVerifyAccountId());
             int version = row.getVersion();
             service.deleteCase(row);
-            String objectCode = integration.getIntegrationCode() + "/" + row.getCaseCode();
+            String objectCode = integration.getChannelCode() + "/" + row.getCaseCode();
             var changes = VerifyCaseChecks.changes(row, account == null ? null : account.getAccountCode(), null, null,
                 codec);
             changeService.record(support.changed(ChangeTargetType.VERIFY_CASE, row.getVerifyCaseId(), ChangeType.DELETE,

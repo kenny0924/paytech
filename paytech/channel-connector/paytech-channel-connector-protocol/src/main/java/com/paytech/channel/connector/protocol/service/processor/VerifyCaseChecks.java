@@ -8,11 +8,11 @@ import org.springframework.stereotype.Component;
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.channel.connector.protocol.core.enums.ConfigurationField;
 import com.paytech.channel.connector.protocol.domain.ConfigurationFieldChange;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationVerifyAccount;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationVerifyCase;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelVerifyAccount;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelVerifyCase;
 import com.paytech.channel.connector.protocol.domain.ExternalApiConfigurationCodec;
 import com.paytech.channel.connector.protocol.domain.ValidationIssue;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationVerifyAccountRepository;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelVerifyAccountRepository;
 import com.paytech.channel.connector.protocol.domainservice.validator.VerifyCaseValidator;
 
 import lombok.AllArgsConstructor;
@@ -31,11 +31,11 @@ public class VerifyCaseChecks {
 
     private final VerifySupport verify;
     private final VerifyCaseValidator validator;
-    private final IntegrationVerifyAccountRepository accounts;
+    private final ChannelVerifyAccountRepository accounts;
 
-    /** 账号必须存在于本接入方。 */
-    IntegrationVerifyAccount account(long integrationId, String accountCode) {
-        IntegrationVerifyAccount account = accounts.byCode(integrationId, accountCode);
+    /** 账号必须存在于本渠道。 */
+    ChannelVerifyAccount account(long channelId, String accountCode) {
+        ChannelVerifyAccount account = accounts.byCode(channelId, accountCode);
         if (account == null) {
             throw new BizCheckFailException("验证账号不存在：" + accountCode);
         }
@@ -43,7 +43,7 @@ public class VerifyCaseChecks {
     }
 
     /** 步骤的全部问题，位置以 steps 开头。 */
-    List<ValidationIssue> issues(String integrationCode, IntegrationVerifyAccount account, JsonNode steps) {
+    List<ValidationIssue> issues(String integrationCode, ChannelVerifyAccount account, JsonNode steps) {
         var issues = new ArrayList<ValidationIssue>();
         String text = verify.text(steps);
         if (text != null && text.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > MAX_STEPS_BYTES) {
@@ -55,8 +55,8 @@ public class VerifyCaseChecks {
     }
 
     /** 用例变更：编码、名称、说明、账号与步骤摘要。 */
-    static List<ConfigurationFieldChange> changes(IntegrationVerifyCase before, String beforeAccount,
-        IntegrationVerifyCase after, String afterAccount, ExternalApiConfigurationCodec codec) {
+    static List<ConfigurationFieldChange> changes(ChannelVerifyCase before, String beforeAccount,
+        ChannelVerifyCase after, String afterAccount, ExternalApiConfigurationCodec codec) {
         return List.of(
             new ConfigurationFieldChange(ConfigurationField.CODE, before == null ? null : before.getCaseCode(),
                 after == null ? null : after.getCaseCode()),

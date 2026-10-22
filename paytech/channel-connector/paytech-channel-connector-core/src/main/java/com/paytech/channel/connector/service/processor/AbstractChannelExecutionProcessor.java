@@ -14,12 +14,13 @@ import com.paytech.foundation.processor.AbstractProcessor;
 import com.paytech.channel.connector.core.configuration.ChannelProperties;
 import com.paytech.channel.connector.core.dal.dataobject.MidCapability;
 import com.paytech.channel.connector.api.enums.ChannelOperation;
-import com.paytech.channel.connector.core.enums.ChannelStatus;
+import com.paytech.channel.connector.protocol.core.enums.ChannelStatus;
 import com.paytech.channel.connector.api.enums.ExecutionPurpose;
 import com.paytech.channel.connector.domain.CapabilityView;
 import com.paytech.channel.connector.domain.ChannelExecutionContext;
 import com.paytech.channel.connector.domain.MidCapabilityContext;
 import com.paytech.channel.connector.domainservice.repository.*;
+import com.paytech.channel.connector.protocol.domainservice.service.ChannelService;
 import com.paytech.channel.connector.service.processor.request.GetChannelExecutionConfigRequest;
 
 /**
@@ -33,13 +34,13 @@ public abstract class AbstractChannelExecutionProcessor<Q, R> extends AbstractPr
     private final ChannelMidRepository mids;
     private final MidCapabilityRepository capabilities;
     private final ChannelAccountRepository accounts;
-    private final PaymentChannelRepository channels;
+    private final ChannelService channels;
     private final PlatformTransactionManager transactionManager;
     private final MidCapabilityDetailRepository details;
 
     /** 注入冻结坐标校验所需的本模块仓储。 */
     protected AbstractChannelExecutionProcessor(ChannelProperties properties, ChannelMidRepository mids,
-        MidCapabilityRepository capabilities, ChannelAccountRepository accounts, PaymentChannelRepository channels,
+        MidCapabilityRepository capabilities, ChannelAccountRepository accounts, ChannelService channels,
         PlatformTransactionManager transactionManager, MidCapabilityDetailRepository details) {
         this.properties = properties;
         this.mids = mids;
@@ -48,6 +49,12 @@ public abstract class AbstractChannelExecutionProcessor<Q, R> extends AbstractPr
         this.channels = channels;
         this.transactionManager = transactionManager;
         this.details = details;
+    }
+
+    /** 冻结渠道是否为服务渠道；服务渠道只能经通用执行入口执行。渠道不存在返回 false，由冻结坐标校验拒绝。 */
+    protected boolean serviceChannel(long channelId) {
+        var channel = channels.findChannel(channelId);
+        return channel != null && channel.service();
     }
 
     /** 本次请求的冻结坐标与用途。 */
@@ -80,11 +87,14 @@ public abstract class AbstractChannelExecutionProcessor<Q, R> extends AbstractPr
 
     /** 指定坐标缺失、跨 OE 或跨 Channel 均拒绝，绝不重选三元组。 */
     ChannelExecutionContext loadAndCheck(GetChannelExecutionConfigRequest request) {
-        var channel = channels.findById(request.getChannelId());
+        var channel = channels.findChannel(request.getChannelId());
         var account = accounts.findById(request.getChannelAccountId());
         var mid = mids.findById(request.getMidId());
         if (channel == null || account == null || mid == null) {
             throw new BizCheckFailException("冻结渠道、账号或 MID 不存在");
+        }
+        if (channel.service()) {
+            throw new BizCheckFailException("服务渠道不能经支付入口执行: " + channel.getChannelCode());
         }
         if (!Objects.equals(channel.getChannelId(), account.getChannelId())
             || !Objects.equals(channel.getChannelId(), mid.getChannelId())

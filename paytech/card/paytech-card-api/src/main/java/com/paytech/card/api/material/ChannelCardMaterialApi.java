@@ -26,7 +26,7 @@ public interface ChannelCardMaterialApi {
      * 凭票据读取渠道执行所需的卡数据
      *
      * @param caller
-     *            调用方服务名，接受 channel-connector-service 与 platform-support-service（统一对外出口第一段过渡，第二段收回 platform-support-service）
+     *            调用方服务名，只接受 channel-connector-service（统一对外出口第二段起收回 platform-support-service）
      * @param body
      *            一次性票据
      * @return 卡数据

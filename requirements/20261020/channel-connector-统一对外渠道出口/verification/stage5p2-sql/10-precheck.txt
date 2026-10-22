@@ -1,0 +1,157 @@
+UTC 2026-10-22T04:21:26Z mor_channel_connector_v2e2e phase2-10-precheck.sql
+--------------
+SET NAMES utf8mb4
+--------------
+
+Query OK, 0 rows affected (0.00 sec)
+
+--------------
+SELECT 't_payment_channel' AS source_table, channel_id AS row_id, CONVERT(channel_code USING utf8mb4) AS code
+FROM t_payment_channel
+WHERE NOT REGEXP_LIKE(channel_code, '^[A-Z][A-Z0-9_]{1,63}$', 'c')
+UNION ALL
+SELECT 't_integration', integration_id, CONVERT(integration_code USING utf8mb4)
+FROM t_integration
+WHERE NOT REGEXP_LIKE(integration_code, '^[A-Z][A-Z0-9_]{1,63}$', 'c')
+--------------
+
+Empty set (0.01 sec)
+
+--------------
+SELECT 't_payment_channel' AS source_table, CONVERT(UPPER(channel_code) USING utf8mb4) AS upper_code, COUNT(*) AS row_count
+FROM t_payment_channel
+GROUP BY CAST(UPPER(channel_code) AS BINARY), CONVERT(UPPER(channel_code) USING utf8mb4)
+HAVING COUNT(*) > 1
+UNION ALL
+SELECT 't_integration', CONVERT(UPPER(integration_code) USING utf8mb4), COUNT(*)
+FROM t_integration
+GROUP BY CAST(UPPER(integration_code) AS BINARY), CONVERT(UPPER(integration_code) USING utf8mb4)
+HAVING COUNT(*) > 1
+--------------
+
+Empty set (0.01 sec)
+
+--------------
+SELECT p.channel_id, CONVERT(p.channel_code USING utf8mb4) AS channel_code,
+       i.integration_id, CONVERT(i.integration_code USING utf8mb4) AS integration_code
+FROM t_payment_channel p
+JOIN t_integration i ON CAST(UPPER(p.channel_code) AS BINARY) = CAST(UPPER(i.integration_code) AS BINARY)
+WHERE CAST(p.channel_code AS BINARY) <> CAST(i.integration_code AS BINARY)
+--------------
+
+Empty set (0.00 sec)
+
+--------------
+WITH matched AS (
+    SELECT i.integration_id, p.channel_id
+    FROM t_integration i
+    JOIN t_payment_channel p ON CAST(UPPER(p.channel_code) AS BINARY) = CAST(UPPER(i.integration_code) AS BINARY)
+), mapping AS (
+    SELECT integration_id, channel_id FROM matched
+    UNION ALL
+    SELECT NULL, p.channel_id FROM t_payment_channel p WHERE p.channel_id NOT IN (SELECT channel_id FROM matched)
+    UNION ALL
+    SELECT i.integration_id, i.integration_id FROM t_integration i
+    WHERE i.integration_id NOT IN (SELECT integration_id FROM matched)
+)
+SELECT 'DUPLICATE_CHANNEL_ID' AS conflict, channel_id AS id, COUNT(*) AS row_count
+FROM mapping GROUP BY channel_id HAVING COUNT(*) > 1
+UNION ALL
+SELECT 'INTEGRATION_ID_TAKEN', m1.integration_id, 1
+FROM mapping m1
+JOIN mapping m2 ON m2.channel_id = m1.integration_id AND m2.channel_id <> m1.channel_id
+--------------
+
+Empty set (0.10 sec)
+
+--------------
+SELECT 't_integration_api' AS source_table, integration_api_id AS row_id, integration_id
+FROM t_integration_api WHERE integration_id NOT IN (SELECT integration_id FROM t_integration)
+UNION ALL
+SELECT 't_integration_script', integration_script_id, integration_id
+FROM t_integration_script WHERE integration_id NOT IN (SELECT integration_id FROM t_integration)
+UNION ALL
+SELECT 't_integration_standard_api', integration_standard_api_id, integration_id
+FROM t_integration_standard_api WHERE integration_id NOT IN (SELECT integration_id FROM t_integration)
+UNION ALL
+SELECT 't_integration_verify_account', verify_account_id, integration_id
+FROM t_integration_verify_account WHERE integration_id NOT IN (SELECT integration_id FROM t_integration)
+UNION ALL
+SELECT 't_integration_verify_case', verify_case_id, integration_id
+FROM t_integration_verify_case WHERE integration_id NOT IN (SELECT integration_id FROM t_integration)
+UNION ALL
+SELECT 't_integration_verify_run', verify_run_id, integration_id
+FROM t_integration_verify_run WHERE integration_id NOT IN (SELECT integration_id FROM t_integration)
+--------------
+
+Empty set (0.00 sec)
+
+--------------
+WITH matched AS (
+    SELECT i.integration_id, p.channel_id
+    FROM t_integration i
+    JOIN t_payment_channel p ON CAST(UPPER(p.channel_code) AS BINARY) = CAST(UPPER(i.integration_code) AS BINARY)
+)
+SELECT 'MATCHED' AS match_type, m.integration_id, m.channel_id AS target_channel_id,
+       CONVERT(p.channel_code USING utf8mb4) AS channel_code, p.channel_status AS target_status,
+       JSON_LENGTH(i.endpoints) AS endpoint_count
+FROM matched m
+JOIN t_payment_channel p ON p.channel_id = m.channel_id
+JOIN t_integration i ON i.integration_id = m.integration_id
+UNION ALL
+SELECT 'CHANNEL_ONLY', NULL, p.channel_id, CONVERT(p.channel_code USING utf8mb4), p.channel_status, NULL
+FROM t_payment_channel p WHERE p.channel_id NOT IN (SELECT channel_id FROM matched)
+UNION ALL
+SELECT 'INTEGRATION_ONLY', i.integration_id, i.integration_id, CONVERT(i.integration_code USING utf8mb4), 'DRAFT',
+       JSON_LENGTH(i.endpoints)
+FROM t_integration i WHERE i.integration_id NOT IN (SELECT integration_id FROM matched)
+ORDER BY channel_code
+--------------
+
++------------+--------------------+--------------------+---------------+---------------+----------------+
+| match_type | integration_id     | target_channel_id  | channel_code  | target_status | endpoint_count |
++------------+--------------------+--------------------+---------------+---------------+----------------+
+| MATCHED    | 238184963231453184 | 238501215359533056 | PAYERMAX_MOCK | ACTIVE        |              1 |
++------------+--------------------+--------------------+---------------+---------------+----------------+
+1 row in set (0.00 sec)
+
+--------------
+SELECT 't_payment_channel' AS table_name, COUNT(*) AS row_count FROM t_payment_channel
+UNION ALL SELECT 't_integration', COUNT(*) FROM t_integration
+UNION ALL SELECT 't_integration_api', COUNT(*) FROM t_integration_api
+UNION ALL SELECT 't_integration_script', COUNT(*) FROM t_integration_script
+UNION ALL SELECT 't_integration_standard_api', COUNT(*) FROM t_integration_standard_api
+UNION ALL SELECT 't_integration_verify_account', COUNT(*) FROM t_integration_verify_account
+UNION ALL SELECT 't_integration_verify_case', COUNT(*) FROM t_integration_verify_case
+UNION ALL SELECT 't_integration_verify_run', COUNT(*) FROM t_integration_verify_run
+UNION ALL SELECT 't_integration_verify_run_step', COUNT(*) FROM t_integration_verify_run_step
+UNION ALL SELECT 't_channel_config_change', COUNT(*) FROM t_channel_config_change
+--------------
+
++-------------------------------+-----------+
+| table_name                    | row_count |
++-------------------------------+-----------+
+| t_payment_channel             |         1 |
+| t_integration                 |         1 |
+| t_integration_api             |         4 |
+| t_integration_script          |         2 |
+| t_integration_standard_api    |         4 |
+| t_integration_verify_account  |         6 |
+| t_integration_verify_case     |         6 |
+| t_integration_verify_run      |         6 |
+| t_integration_verify_run_step |         6 |
+| t_channel_config_change       |        16 |
++-------------------------------+-----------+
+10 rows in set (0.01 sec)
+
+--------------
+SELECT target_type, COUNT(*) AS row_count,
+       SUM(target_type = 'INTEGRATION' AND target_id NOT IN (SELECT integration_id FROM t_integration)) AS unmapped_integration_rows
+FROM t_channel_config_change
+WHERE target_type IN ('INTEGRATION', 'INTEGRATION_API', 'INTEGRATION_SCRIPT', 'INTEGRATION_IMPLEMENTATION')
+GROUP BY target_type
+--------------
+
+Empty set (0.00 sec)
+
+Bye

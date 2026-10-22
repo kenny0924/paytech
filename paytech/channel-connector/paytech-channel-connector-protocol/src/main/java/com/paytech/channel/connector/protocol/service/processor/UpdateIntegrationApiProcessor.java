@@ -15,22 +15,22 @@ import com.paytech.channel.connector.protocol.core.enums.ConfigurationField;
 import com.paytech.channel.connector.protocol.domain.ConfigurationFieldChange;
 import com.paytech.channel.connector.protocol.core.configuration.ExternalApiConfigurationProperties;
 import com.paytech.channel.connector.protocol.core.dal.dataobject.ApiField;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.Integration;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationApi;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.Channel;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelApi;
 import com.paytech.channel.connector.protocol.core.enums.ApiFieldDirection;
 import com.paytech.channel.connector.protocol.domain.ExternalApiConfigurationCodec;
 import com.paytech.channel.connector.protocol.domain.ExternalApiMutation;
 import com.paytech.channel.connector.protocol.domain.ExternalApiLocks;
 import com.paytech.channel.connector.protocol.domain.IntegrationApiDefinition;
 import com.paytech.channel.connector.protocol.domain.UpdateIntegrationApiContext;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationApiRepository;
-import com.paytech.channel.connector.protocol.domainservice.service.IntegrationApiManagementService;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelApiRepository;
+import com.paytech.channel.connector.protocol.domainservice.service.ChannelApiManagementService;
 import com.paytech.channel.connector.protocol.service.processor.request.UpdateIntegrationApiRequest;
 
 import lombok.AllArgsConstructor;
 
 /**
- * E14 修改原子 API：全模块配置锁内锁定接入方与原行、核对版本、整体静态校验，按原版本更新主表并整组替换字段。
+ * E14 修改原子 API：全模块配置锁内锁定渠道与原行、核对版本、整体静态校验，按原版本更新主表并整组替换字段。
  *
  * <p>编码不可修改；修改会使引用本 API 的任一流程失效时拒绝，流程保存同样持有该配置锁。
  */
@@ -45,8 +45,8 @@ public class UpdateIntegrationApiProcessor
     private final ImplementationSupport flows;
     private final ExternalApiTransactions transactions;
     private final ExternalApiProcessorSupport support;
-    private final IntegrationApiRepository integrationApis;
-    private final IntegrationApiManagementService service;
+    private final ChannelApiRepository channelApis;
+    private final ChannelApiManagementService service;
     private final ExternalApiConfigurationProperties properties;
 
     @Override
@@ -59,20 +59,20 @@ public class UpdateIntegrationApiProcessor
     @Override
     protected ExternalApiMutation processWithinLock(UpdateIntegrationApiRequest request) {
         return transactions.write(() -> {
-            Integration integration = children.lockIntegration(request.getIntegrationCode());
-            IntegrationApi row = support.requireFound(integrationApis.lock(integration.getIntegrationId(),
+            Channel integration = children.lockChannel(request.getIntegrationCode());
+            ChannelApi row = support.requireFound(channelApis.lock(integration.getChannelId(),
                 request.getCode()));
             support.requireVersion(row.getVersion(), request.getExpectedVersion());
             var result = children.check(integration, request.getRequestFields(), request.getResponseFields(),
-                request.getDefinition(), children.scriptSignatures(integration.getIntegrationId()));
+                request.getDefinition(), children.scriptSignatures(integration.getChannelId()));
             support.requireValid(result.getIssues());
             requireFlowsIntact(integration, row, request, result.getDefinition());
             var changes = changes(row, request, result.getDefinition());
             int beforeVersion = row.getVersion();
             var context = buildContext(row, request, result.getDefinition(), request.getActorId());
             service.update(context);
-            String objectCode = integration.getIntegrationCode() + "/" + row.getApiCode();
-            changeService.record(support.changed(ChangeTargetType.INTEGRATION_API, row.getIntegrationApiId(), ChangeType.UPDATE,
+            String objectCode = integration.getChannelCode() + "/" + row.getApiCode();
+            changeService.record(support.changed(ChangeTargetType.CHANNEL_API, row.getChannelApiId(), ChangeType.UPDATE,
                 request.getActorId(), objectCode, beforeVersion, row.getVersion(), changes,
                 request.getReason(), context.getUpdateTime()));
             return new ExternalApiMutation("INTEGRATION_API", objectCode, row.getVersion());
@@ -80,30 +80,30 @@ public class UpdateIntegrationApiProcessor
     }
 
     /** 用修改后的合同复核引用本原子 API 的流程（请求覆盖、固定值冲突、参数与输出引用），会使任一流程失效时拒绝。 */
-    void requireFlowsIntact(Integration integration, IntegrationApi row, UpdateIntegrationApiRequest request,
+    void requireFlowsIntact(Channel integration, ChannelApi row, UpdateIntegrationApiRequest request,
         IntegrationApiDefinition definition) {
         var contract = codec.apiContract(row.getApiCode(), request.getName(), request.getRequestFields(),
             definition.getNormalizedJson());
-        var broken = flows.brokenByIntegrationApi(integration.getIntegrationId(), contract);
+        var broken = flows.brokenByIntegrationApi(integration.getChannelId(), contract);
         if (!broken.isEmpty()) {
             throw new BizCheckFailException("修改会使以下标准 API 实现失效，请先调整流程：" + String.join("、", broken));
         }
     }
 
     /** 新字段行沿用原 API 标识，旧行由 Service 整组删除。 */
-    UpdateIntegrationApiContext buildContext(IntegrationApi row, UpdateIntegrationApiRequest request,
+    UpdateIntegrationApiContext buildContext(ChannelApi row, UpdateIntegrationApiRequest request,
         IntegrationApiDefinition definition, long actorId) {
         Instant now = support.now();
-        var rows = new ArrayList<ApiField>(support.apiFields(row.getIntegrationApiId(),
+        var rows = new ArrayList<ApiField>(support.apiFields(row.getChannelApiId(),
             ApiFieldDirection.INTEGRATION_API_REQUEST, request.getRequestFields(), now));
-        rows.addAll(support.apiFields(row.getIntegrationApiId(), ApiFieldDirection.INTEGRATION_API_RESPONSE,
+        rows.addAll(support.apiFields(row.getChannelApiId(), ApiFieldDirection.INTEGRATION_API_RESPONSE,
             request.getResponseFields(), now));
         return new UpdateIntegrationApiContext(row, request.getName(), request.getDescription(),
             definition.getNormalizedJson(), rows, actorId, now);
     }
 
     /** 在更新前冻结名称、说明、字段与定义摘要的前后值。 */
-    List<ConfigurationFieldChange> changes(IntegrationApi row, UpdateIntegrationApiRequest request,
+    List<ConfigurationFieldChange> changes(ChannelApi row, UpdateIntegrationApiRequest request,
         IntegrationApiDefinition definition) {
         var before = children.savedFields(row);
         return List.of(new ConfigurationFieldChange(ConfigurationField.CODE, row.getApiCode(), row.getApiCode()),

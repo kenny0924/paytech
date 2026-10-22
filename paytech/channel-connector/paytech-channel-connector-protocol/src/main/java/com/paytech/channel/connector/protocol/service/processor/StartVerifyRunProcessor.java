@@ -5,14 +5,14 @@ import org.springframework.stereotype.Component;
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.processor.AbstractProcessor;
 import com.paytech.channel.connector.api.enums.VerifyRunStatus;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationVerifyAccount;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationVerifyCase;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationVerifyRun;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelVerifyAccount;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelVerifyCase;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelVerifyRun;
 import com.paytech.channel.connector.protocol.domain.ExternalApiLocks;
 import com.paytech.channel.connector.protocol.domain.verify.VerifyRunBriefView;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationVerifyAccountRepository;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationVerifyCaseRepository;
-import com.paytech.channel.connector.protocol.domainservice.service.IntegrationVerifyRunService;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelVerifyAccountRepository;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelVerifyCaseRepository;
+import com.paytech.channel.connector.protocol.domainservice.service.ChannelVerifyRunService;
 import com.paytech.channel.connector.protocol.service.processor.request.StartVerifyRunRequest;
 
 import lombok.AllArgsConstructor;
@@ -29,24 +29,24 @@ public class StartVerifyRunProcessor extends AbstractProcessor<StartVerifyRunReq
     private final IntegrationChildSupport children;
     private final ExternalApiTransactions transactions;
     private final ExternalApiProcessorSupport support;
-    private final IntegrationVerifyCaseRepository cases;
-    private final IntegrationVerifyAccountRepository accounts;
-    private final IntegrationVerifyRunService service;
+    private final ChannelVerifyCaseRepository cases;
+    private final ChannelVerifyAccountRepository accounts;
+    private final ChannelVerifyRunService service;
 
     @Override
     protected VerifyRunBriefView processRequest(StartVerifyRunRequest request) {
         return transactions.write(() -> {
-            var integration = children.integration(request.getIntegrationCode());
-            IntegrationVerifyCase verifyCase =
-                support.requireFound(cases.byCode(integration.getIntegrationId(), request.getCaseCode()));
-            IntegrationVerifyAccount account = accounts.byId(verifyCase.getVerifyAccountId());
+            var integration = children.channel(request.getIntegrationCode());
+            ChannelVerifyCase verifyCase =
+                support.requireFound(cases.byCode(integration.getChannelId(), request.getCaseCode()));
+            ChannelVerifyAccount account = accounts.byId(verifyCase.getVerifyAccountId());
             if (account == null) {
                 throw new BizCheckFailException("验证用例引用的验证账号不存在：" + verifyCase.getCaseCode());
             }
             var now = support.now();
-            var run = new IntegrationVerifyRun(support.nextId(), verifyCase.getVerifyCaseId(),
-                integration.getIntegrationId(), VerifyRunStatus.RUNNING,
-                verify.caseSnapshot(verifyCase, account, integration.getIntegrationCode(), request.getReason()), null, null, null,
+            var run = new ChannelVerifyRun(support.nextId(), verifyCase.getVerifyCaseId(),
+                integration.getChannelId(), VerifyRunStatus.RUNNING,
+                verify.caseSnapshot(verifyCase, account, integration.getChannelCode(), request.getReason()), null, null, null,
                 request.getActorId(), now, null, now, now);
             service.start(run);
             return VerifySupport.brief(run);

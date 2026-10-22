@@ -19,13 +19,13 @@ import com.paytech.channel.connector.api.change.ChannelConfigChangeApi;
 import com.paytech.channel.connector.api.channel.ChannelAccountApi;
 import com.paytech.channel.connector.api.channel.ChannelMidApi;
 import com.paytech.channel.connector.api.channel.MidCapabilityApi;
-import com.paytech.channel.connector.api.channel.PaymentChannelApi;
+import com.paytech.channel.connector.api.channel.ChannelApi;
 import com.paytech.channel.connector.api.cost.ChannelCostPlanApi;
 import com.paytech.channel.connector.api.enums.ChannelCostErrorCode;
+import com.paytech.channel.connector.api.grant.ChannelCallGrantApi;
 import com.paytech.channel.connector.api.externalapi.ExternalApiEditorApi;
 import com.paytech.channel.connector.api.externalapi.IntegrationApiManagementApi;
 import com.paytech.channel.connector.api.externalapi.IntegrationImplementationManagementApi;
-import com.paytech.channel.connector.api.externalapi.IntegrationManagementApi;
 import com.paytech.channel.connector.api.externalapi.IntegrationScriptManagementApi;
 import com.paytech.channel.connector.api.externalapi.IntegrationVerifyManagementApi;
 import com.paytech.channel.connector.api.externalapi.StandardApiManagementApi;
@@ -42,11 +42,11 @@ import com.paytech.operations.console.bff.integration.OwnerDiscoveryInterceptor;
  * channel-connector 的 HTTP 接口代理：Nacos 发现 channel-connector-service，auto 测试改为 loopback 直连
  * <li>连接 2 秒、读取 4 秒、禁止跟随重定向、不重试；传递 X-Request-Id 与 X-Caller-Service。</li>
  * <li>严格 Problem 解码并保留 Owner 422 字段路径；显式开启 Foundation 的 Owner Problem detail：业务拒绝、并发冲突、NOT_FOUND
- * 与已登记合同码把 channel-connector 已校验的 detail（例如“Platform 不存在同编码接入方”）作为本地异常消息到达浏览器；
+ * 与已登记合同码把 channel-connector 已校验的 detail（例如“渠道未配置出站地址”“出站地址仍被原子 API 引用”）作为本地异常消息到达浏览器；
  * INVALID_REQUEST、字段校验、5xx 与协议错误不变。超时映射 504，不可达或 503 映射 DEPENDENCY_UNAVAILABLE。</li>
  * <li>登记 api 模块唯一的 CodeMessageEnum（ChannelCostErrorCode）；管理接口目前只返回公共错误码，登记使未来该码到达时保留 Owner
  * 原因而不是降级为 500。</li>
- * <li>外部 API 配置管理（/external-api-admin/v1，2026-10-20 自 Platform 迁入）使用独立工厂，见 {@link #externalApiFactory}。</li>
+ * <li>外部 API 配置管理（/external-api-admin/v1，2026-10-20 自 Platform 迁入；第二段下线接入方 CRUD，其余以渠道编码为 integrationCode）使用独立工厂，见 {@link #externalApiFactory}。</li>
  * <li>工厂不注册为 Bean，避免被其他 Owner 代理按类型误用。</li>
  *
  * @author Claude
@@ -88,10 +88,16 @@ public class ChannelConnectorClientConfiguration {
         return channelConnector.createClient(ChannelConfigChangeApi.class);
     }
 
-    /** 支付渠道。 */
+    /** 渠道（支付渠道与服务渠道）及其出站地址。 */
     @Bean
-    PaymentChannelApi paymentChannelApi() {
-        return channelConnector.createClient(PaymentChannelApi.class);
+    ChannelApi channelApi() {
+        return channelConnector.createClient(ChannelApi.class);
+    }
+
+    /** 服务渠道调用授权。 */
+    @Bean
+    ChannelCallGrantApi channelCallGrantApi() {
+        return channelConnector.createClient(ChannelCallGrantApi.class);
     }
 
     /** 渠道技术账号。 */
@@ -116,12 +122,6 @@ public class ChannelConnectorClientConfiguration {
     @Bean
     StandardApiManagementApi standardApiManagementApi() {
         return externalApi.createClient(StandardApiManagementApi.class);
-    }
-
-    /** 接入方管理（E06～E10）。 */
-    @Bean
-    IntegrationManagementApi integrationManagementApi() {
-        return externalApi.createClient(IntegrationManagementApi.class);
     }
 
     /** 原子 API 管理与静态校验（E11～E16）。 */

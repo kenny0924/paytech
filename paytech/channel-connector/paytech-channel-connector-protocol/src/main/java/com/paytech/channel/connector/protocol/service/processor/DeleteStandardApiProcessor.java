@@ -12,13 +12,13 @@ import com.paytech.channel.connector.protocol.domainservice.service.ChannelConfi
 import com.paytech.channel.connector.protocol.core.enums.ConfigurationField;
 import com.paytech.channel.connector.protocol.domain.ConfigurationFieldChange;
 import com.paytech.channel.connector.protocol.core.configuration.ExternalApiConfigurationProperties;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.Integration;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationImplementation;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.Channel;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelImplementation;
 import com.paytech.channel.connector.protocol.core.dal.dataobject.StandardApi;
 import com.paytech.channel.connector.protocol.domain.ExternalApiMutation;
 import com.paytech.channel.connector.protocol.domain.ExternalApiLocks;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationImplementationRepository;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationRepository;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelImplementationRepository;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelRepository;
 import com.paytech.channel.connector.protocol.domainservice.repository.StandardApiRepository;
 import com.paytech.channel.connector.protocol.domainservice.service.StandardApiManagementService;
 import com.paytech.channel.connector.protocol.service.processor.request.DeleteExternalApiConfigRequest;
@@ -26,7 +26,7 @@ import com.paytech.channel.connector.protocol.service.processor.request.DeleteEx
 import lombok.AllArgsConstructor;
 
 /**
- * E05 删除标准 API：全模块配置锁内锁定原行、核对版本；仍被接入方实现时拒绝并列出实现方，否则物理删除主表与字段。
+ * E05 删除标准 API：全模块配置锁内锁定原行、核对版本；仍被渠道实现时拒绝并列出实现方，否则物理删除主表与字段。
  *
  * <p>实现的新增同样持有该配置锁，锁内读取的引用关系在提交前不会变化；版本 CAS 仍是最终保护。
  */
@@ -35,14 +35,14 @@ import lombok.AllArgsConstructor;
 public class DeleteStandardApiProcessor
     extends AbstractLockProcessor<DeleteExternalApiConfigRequest, ExternalApiMutation> {
 
-    private final IntegrationRepository integrations;
+    private final ChannelRepository channels;
     private final StandardApiRepository standardApis;
     private final ExternalApiTransactions transactions;
     private final ChannelConfigChangeService changeService;
     private final ExternalApiProcessorSupport support;
     private final StandardApiManagementService service;
     private final ExternalApiConfigurationProperties properties;
-    private final IntegrationImplementationRepository implementations;
+    private final ChannelImplementationRepository implementations;
 
     @Override
     protected LockCommand lockCommand(DeleteExternalApiConfigRequest request) {
@@ -68,14 +68,14 @@ public class DeleteStandardApiProcessor
         });
     }
 
-    /** 被接入方实现时拒绝，提示中列出实现方编码。 */
+    /** 被渠道实现时拒绝，提示中列出实现方编码。 */
     void requireUnreferenced(StandardApi row) {
         var ids = implementations.allByStandardApi(row.getStandardApiId()).stream()
-            .map(IntegrationImplementation::getIntegrationId).toList();
+            .map(ChannelImplementation::getChannelId).toList();
         if (ids.isEmpty()) {
             return;
         }
-        String codes = String.join("、", integrations.byIds(ids).stream().map(Integration::getIntegrationCode).toList());
-        throw new BizCheckFailException("标准 API 仍被接入方实现，不能删除：" + codes);
+        String codes = String.join("、", channels.byIds(ids).stream().map(Channel::getChannelCode).toList());
+        throw new BizCheckFailException("标准 API 仍被渠道实现，不能删除：" + codes);
     }
 }

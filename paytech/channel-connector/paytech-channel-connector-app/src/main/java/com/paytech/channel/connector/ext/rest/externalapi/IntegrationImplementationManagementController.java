@@ -29,7 +29,7 @@ public class IntegrationImplementationManagementController implements Integratio
     private final DeleteImplementationProcessor deleteProcessor;
     private final ValidateImplementationProcessor validateProcessor;
 
-    /** 校验接入方编码后委托列表用例。 */
+    /** 校验渠道编码后委托列表用例。 */
     @Override
     public ImplementationListResponseBody listImplementations(String integrationCode) {
         return converter.toList(listProcessor.process(common.toGetRequest(integrationCode)));

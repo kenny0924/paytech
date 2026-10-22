@@ -1,0 +1,763 @@
+{
+ "results": {
+  "E2.listFilterBefore": {
+   "ok": true,
+   "lists": {
+    "ALL": {
+     "httpStatus": 200,
+     "total": 2,
+     "items": [
+      [
+       "S5P2_ECHO",
+       "SERVICE",
+       "DRAFT",
+       1,
+       0
+      ],
+      [
+       "PAYERMAX_MOCK",
+       "PAYMENT",
+       "ACTIVE",
+       1,
+       null
+      ]
+     ]
+    },
+    "PAYMENT": {
+     "httpStatus": 200,
+     "total": 1,
+     "items": [
+      [
+       "PAYERMAX_MOCK",
+       "PAYMENT",
+       "ACTIVE",
+       1,
+       null
+      ]
+     ]
+    },
+    "SERVICE": {
+     "httpStatus": 200,
+     "total": 1,
+     "items": [
+      [
+       "S5P2_ECHO",
+       "SERVICE",
+       "DRAFT",
+       1,
+       0
+      ]
+     ]
+    }
+   }
+  },
+  "E2.create": {
+   "ok": true,
+   "firstAttempt": {
+    "httpStatus": 201,
+    "channelType": "SERVICE",
+    "status": "DRAFT",
+    "version": 1,
+    "endpoints": []
+   }
+  },
+  "E2.activateWithoutEndpoints": {
+   "ok": true,
+   "firstAttempt": {
+    "httpStatus": 400,
+    "problem": {
+     "code": "BUSINESS_CHECK_FAILED",
+     "title": "Bad Request",
+     "detail": "渠道未配置出站地址: S5P2_ECHO"
+    }
+   }
+  },
+  "E2.firstAttemptAccountActivationWhileDraft": {
+   "ok": true,
+   "httpStatus": 400,
+   "code": "BUSINESS_CHECK_FAILED",
+   "detail": "技术账号激活前置不满足（渠道须为 ACTIVE 且账号已写入配置）: 账号 238881240718049280, 渠道状态 DRAFT, 已配置 true"
+  },
+  "E2.endpoints": {
+   "ok": true,
+   "httpStatus": 200,
+   "versionBefore": 2,
+   "version": 3,
+   "endpoints": [
+    {
+     "baseUrl": "http://127.0.0.1:62924",
+     "endpointCode": "ECHO",
+     "sandbox": false
+    }
+   ],
+   "firstAttempt": {
+    "httpStatus": 200,
+    "version": 2,
+    "endpointCount": 1
+   }
+  },
+  "E2.activate": {
+   "ok": true,
+   "httpStatus": 200,
+   "status": "ACTIVE",
+   "note": "激活只要求已配置出站地址：此时尚无凭据、标准 API 实现与授权"
+  },
+  "E2.credential": {
+   "ok": true,
+   "accountEntityNo": null,
+   "dbEntityNo": "<null>",
+   "configureSuffixLen": 4,
+   "listSuffixMatchesDbTokenLast4": true,
+   "listContainsFullToken": false,
+   "listContainsSecret": false,
+   "listItemKeys": [
+    "accountName",
+    "channelAccountId",
+    "channelId",
+    "configured",
+    "entityNo",
+    "status",
+    "updateTime",
+    "vaultTokenSuffix"
+   ],
+   "listStatus": "ACTIVE",
+   "vaultEvents": [
+    {
+     "callerService": "channel-connector-service",
+     "action": "PROTECT",
+     "dataType": "CHANNEL_ACCOUNT_CONFIG_V1",
+     "purpose": "CHANNEL_CONFIGURATION",
+     "outcome": "SUCCESS"
+    }
+   ]
+  },
+  "E2.standardApi": {
+   "ok": true,
+   "httpStatus": 200,
+   "problem": null
+  },
+  "E2.atomicApi": {
+   "ok": true,
+   "httpStatus": 200,
+   "problem": null
+  },
+  "E2.implementation": {
+   "ok": true,
+   "httpStatus": 200,
+   "problem": null
+  },
+  "E2.listFilterAfter": {
+   "ok": true,
+   "lists": {
+    "ALL": {
+     "httpStatus": 200,
+     "total": 2,
+     "items": [
+      [
+       "S5P2_ECHO",
+       "SERVICE",
+       "ACTIVE",
+       1,
+       0
+      ],
+      [
+       "PAYERMAX_MOCK",
+       "PAYMENT",
+       "ACTIVE",
+       1,
+       null
+      ]
+     ]
+    },
+    "PAYMENT": {
+     "httpStatus": 200,
+     "total": 1,
+     "items": [
+      [
+       "PAYERMAX_MOCK",
+       "PAYMENT",
+       "ACTIVE",
+       1,
+       null
+      ]
+     ]
+    },
+    "SERVICE": {
+     "httpStatus": 200,
+     "total": 1,
+     "items": [
+      [
+       "S5P2_ECHO",
+       "SERVICE",
+       "ACTIVE",
+       1,
+       0
+      ]
+     ]
+    }
+   }
+  },
+  "E3.notGranted": {
+   "ok": true,
+   "httpStatus": 403,
+   "problem": {
+    "code": "CHANNEL_CALL_NOT_GRANTED",
+    "title": "Forbidden",
+    "detail": "调用方未获授权: counterparty-service, 渠道: S5P2_ECHO, 标准 API: S5P2_ECHO_PING"
+   },
+   "echoRequests": 0,
+   "accessLogLines": 0
+  },
+  "E3.missingCaller": {
+   "ok": true,
+   "httpStatus": 400,
+   "problem": {
+    "code": "INVALID_REQUEST",
+    "title": "Bad Request",
+    "detail": "缺少有效的调用方身份 X-Caller-Service"
+   },
+   "echoRequests": 0
+  },
+  "E3.createGrant": {
+   "ok": true,
+   "httpStatus": 201,
+   "grant": {
+    "callerService": "counterparty-service",
+    "standardApiCode": "S5P2_ECHO_PING",
+    "standardApiName": "阶段 5 回显探测",
+    "grantStatus": "ACTIVE",
+    "version": 1
+   }
+  },
+  "E3.grantedSuccess": {
+   "ok": true,
+   "httpStatus": 200,
+   "executeStatus": "SUCCESS",
+   "outputs": {
+    "echo": "s5p2-granted-ff9a41"
+   },
+   "echo": {
+    "method": "POST",
+    "path": "/echo",
+    "headerNames": [
+     "content-length",
+     "content-type",
+     "host",
+     "user-agent"
+    ]
+   },
+   "echoBodyKeys": [
+    "apiKey",
+    "ping"
+   ],
+   "credentialInjected": true,
+   "credentialLast4Matches": true,
+   "accessLog": [
+    "callerService=counterparty-service channelCode=S5P2_ECHO channelType=SERVICE standardApiCode=S5P2_ECHO_PING apiCode=ECHO_CALL executeStatus=SUCCESS httpStatus=200 elapsedMs=18 requestId=7c9097da-b646-4149-8513-6f08b8eb0109"
+   ],
+   "vaultEvents": [
+    {
+     "callerService": "channel-connector-service",
+     "action": "REVEAL",
+     "dataType": "CHANNEL_ACCOUNT_CONFIG_V1",
+     "purpose": "CHANNEL_EXECUTION",
+     "outcome": "SUCCESS"
+    }
+   ]
+  },
+  "E3.otherCallerNotGranted": {
+   "ok": true,
+   "httpStatus": 403,
+   "problem": {
+    "code": "CHANNEL_CALL_NOT_GRANTED",
+    "title": "Forbidden",
+    "detail": "调用方未获授权: risk-decision-service, 渠道: S5P2_ECHO, 标准 API: S5P2_ECHO_PING"
+   },
+   "echoRequests": 0
+  },
+  "E3.duplicateGrant": {
+   "ok": true,
+   "httpStatus": 409,
+   "problem": {
+    "code": "CONCURRENT_REQUEST",
+    "title": "Conflict",
+    "detail": "调用授权已存在: 授权 ID 238881429730164736, 状态 ACTIVE；停用的授权请改为再启用"
+   }
+  },
+  "E3.disableGrant": {
+   "ok": true,
+   "httpStatus": 200,
+   "grantStatus": "DISABLED",
+   "version": 2
+  },
+  "E3.disabledRejected": {
+   "ok": true,
+   "httpStatus": 403,
+   "problem": {
+    "code": "CHANNEL_CALL_NOT_GRANTED",
+    "title": "Forbidden",
+    "detail": "调用方未获授权: counterparty-service, 渠道: S5P2_ECHO, 标准 API: S5P2_ECHO_PING"
+   },
+   "echoRequests": 0
+  },
+  "E3.staleGrantVersion": {
+   "ok": true,
+   "httpStatus": 409,
+   "problem": {
+    "code": "CONCURRENT_REQUEST",
+    "title": "Conflict",
+    "detail": "外部 API 配置已被其他操作修改，请刷新后重试"
+   }
+  },
+  "E3.enableGrant": {
+   "ok": true,
+   "httpStatus": 200,
+   "grantStatus": "ACTIVE",
+   "version": 3
+  },
+  "E3.reenabledSuccess": {
+   "ok": true,
+   "httpStatus": 200,
+   "executeStatus": "SUCCESS",
+   "outputs": {
+    "echo": "s5p2-reenabled-ad2f4b"
+   },
+   "echoRequests": 1
+  },
+  "E3.grantChanges": {
+   "ok": true,
+   "httpStatus": 200,
+   "total": 3,
+   "changes": [
+    {
+     "changeId": "238881439419006976",
+     "changeType": "STATUS",
+     "fromStatus": "DISABLED",
+     "operatorId": "236033080844881920",
+     "reason": "统一对外渠道出口第二段阶段 5 服务渠道验证",
+     "targetId": "238881429730164736",
+     "targetType": "CHANNEL_CALL_GRANT",
+     "toStatus": "ACTIVE"
+    },
+    {
+     "changeId": "238881436961144832",
+     "changeType": "STATUS",
+     "fromStatus": "ACTIVE",
+     "operatorId": "236033080844881920",
+     "reason": "统一对外渠道出口第二段阶段 5 服务渠道验证",
+     "targetId": "238881429730164736",
+     "targetType": "CHANNEL_CALL_GRANT",
+     "toStatus": "DISABLED"
+    },
+    {
+     "changeId": "238881429797273600",
+     "changeType": "CREATE",
+     "fromStatus": null,
+     "operatorId": "236033080844881920",
+     "reason": null,
+     "targetId": "238881429730164736",
+     "targetType": "CHANNEL_CALL_GRANT",
+     "toStatus": null
+    }
+   ]
+  },
+  "E3.invalidCaller[Counterparty_Service]": {
+   "ok": true,
+   "httpStatus": 422,
+   "problem": {
+    "code": "VALIDATION_ERROR",
+    "title": "Unprocessable Content",
+    "detail": "请求字段校验未通过",
+    "errors": [
+     {
+      "field": "callerService",
+      "message": "has an invalid format"
+     }
+    ]
+   }
+  },
+  "E3.invalidCaller[x]": {
+   "ok": true,
+   "httpStatus": 422,
+   "problem": {
+    "code": "VALIDATION_ERROR",
+    "title": "Unprocessable Content",
+    "detail": "请求字段校验未通过",
+    "errors": [
+     {
+      "field": "callerService",
+      "message": "has an invalid format"
+     }
+    ]
+   }
+  },
+  "E3.invalidCaller[counterparty.service]": {
+   "ok": true,
+   "httpStatus": 422,
+   "problem": {
+    "code": "VALIDATION_ERROR",
+    "title": "Unprocessable Content",
+    "detail": "请求字段校验未通过",
+    "errors": [
+     {
+      "field": "callerService",
+      "message": "has an invalid format"
+     }
+    ]
+   }
+  },
+  "E3.grantList": {
+   "ok": true,
+   "httpStatus": 200,
+   "total": 1,
+   "items": [
+    [
+     "counterparty-service",
+     "S5P2_ECHO_PING",
+     "阶段 5 回显探测",
+     "ACTIVE",
+     3
+    ]
+   ]
+  },
+  "E3.activeGrantCount": {
+   "ok": true,
+   "activeGrantCount": 1,
+   "endpointCount": 1
+  },
+  "E4.paymentChannelViaServiceEntry": {
+   "ok": true,
+   "httpStatus": 400,
+   "problem": {
+    "code": "BUSINESS_CHECK_FAILED",
+    "title": "Bad Request",
+    "detail": "支付渠道只能经支付入口执行: PAYERMAX_MOCK"
+   }
+  },
+  "E4.serviceChannelViaPaymentEntry": {
+   "ok": true,
+   "httpStatus": 200,
+   "outcome": "NOT_SENT",
+   "failureCode": "INTEGRATION_CONFIG_INVALID",
+   "echoRequests": 0,
+   "payermaxRequests": 0
+  },
+  "E5.privateNetwork": {
+   "ok": true,
+   "httpStatus": 422,
+   "problem": {
+    "code": "VALIDATION_ERROR",
+    "title": "Unprocessable Content",
+    "detail": "请求字段校验未通过",
+    "errors": [
+     {
+      "field": "endpoints[1].baseUrl",
+      "message": "请检查此处配置"
+     }
+    ]
+   }
+  },
+  "E5.localhost": {
+   "ok": true,
+   "httpStatus": 422,
+   "problem": {
+    "code": "VALIDATION_ERROR",
+    "title": "Unprocessable Content",
+    "detail": "请求字段校验未通过",
+    "errors": [
+     {
+      "field": "endpoints[0].baseUrl",
+      "message": "请检查此处配置"
+     }
+    ]
+   }
+  },
+  "E5.linkLocal": {
+   "ok": true,
+   "httpStatus": 422,
+   "problem": {
+    "code": "VALIDATION_ERROR",
+    "title": "Unprocessable Content",
+    "detail": "请求字段校验未通过",
+    "errors": [
+     {
+      "field": "endpoints[0].baseUrl",
+      "message": "请检查此处配置"
+     }
+    ]
+   }
+  },
+  "E5.referencedEndpointRemoved": {
+   "ok": true,
+   "httpStatus": 409,
+   "problem": {
+    "code": "CONCURRENT_REQUEST",
+    "title": "Conflict",
+    "detail": "出站地址仍被原子 API 引用，不能删除: ECHO_CALL（ECHO）"
+   }
+  },
+  "E5.staleVersion": {
+   "ok": true,
+   "httpStatus": 409,
+   "problem": {
+    "code": "CONCURRENT_REQUEST",
+    "title": "Conflict",
+    "detail": "外部 API 配置已被其他操作修改，请刷新后重试"
+   }
+  },
+  "E5.unchangedAfterRejections": {
+   "ok": true,
+   "version": 3
+  },
+  "E5.channelChanges": {
+   "ok": true,
+   "httpStatus": 200,
+   "changes": [
+    {
+     "changeId": "238881422109114368",
+     "changeType": "STATUS",
+     "fromStatus": "DRAFT",
+     "operatorId": "236033080844881920",
+     "reason": "统一对外渠道出口第二段阶段 5 服务渠道验证",
+     "targetId": "238881239803691008",
+     "targetType": "CHANNEL",
+     "toStatus": "ACTIVE"
+    },
+    {
+     "changeId": "238881421920370688",
+     "changeType": "CONFIGURATION",
+     "fromStatus": null,
+     "operatorId": "236033080844881920",
+     "reason": null,
+     "targetId": "238881239803691008",
+     "targetType": "CHANNEL",
+     "toStatus": null
+    },
+    {
+     "changeId": "238881240558665728",
+     "changeType": "CONFIGURATION",
+     "fromStatus": null,
+     "operatorId": "236033080844881920",
+     "reason": null,
+     "targetId": "238881239803691008",
+     "targetType": "CHANNEL",
+     "toStatus": null
+    },
+    {
+     "changeId": "238881239803691009",
+     "changeType": "CREATE",
+     "fromStatus": null,
+     "operatorId": "236033080844881920",
+     "reason": null,
+     "targetId": "238881239803691008",
+     "targetType": "CHANNEL",
+     "toStatus": null
+    }
+   ]
+  },
+  "E6.suspend": {
+   "ok": true,
+   "httpStatus": 200,
+   "status": "SUSPENDED"
+  },
+  "E6.suspendedRejected": {
+   "ok": true,
+   "httpStatus": 400,
+   "problem": {
+    "code": "BUSINESS_CHECK_FAILED",
+    "title": "Bad Request",
+    "detail": "渠道未激活: S5P2_ECHO, 状态: SUSPENDED"
+   },
+   "echoRequests": 0
+  },
+  "E6.resume": {
+   "ok": true,
+   "httpStatus": 200,
+   "status": "ACTIVE"
+  },
+  "E6.resumedSuccess": {
+   "ok": true,
+   "httpStatus": 200,
+   "executeStatus": "SUCCESS",
+   "outputs": {
+    "echo": "s5p2-resumed-db9655"
+   },
+   "echoRequests": 1
+  },
+  "E8.navigation": {
+   "ok": true,
+   "httpStatus": 200,
+   "hasIntegrationsPage": false,
+   "channelPage": {
+    "resourceId": "900000000000092302",
+    "displayName": "渠道",
+    "frontendRoute": "/channel/channels"
+   },
+   "callGrantButton": {
+    "resourceId": "900000000000129301",
+    "displayName": "调用授权",
+    "resourceType": "BUTTON",
+    "parentResourceId": "900000000000092302"
+   },
+   "standardApiPage": {
+    "displayName": "标准 API",
+    "frontendRoute": "/external-api/standard-apis"
+   }
+  },
+  "D2.removedIntegrationCrud": {
+   "ok": true,
+   "probes": {
+    "gateway.list": [
+     404,
+     "GATEWAY_ROUTE_NOT_FOUND"
+    ],
+    "gateway.detail": [
+     404,
+     "GATEWAY_ROUTE_NOT_FOUND"
+    ],
+    "gateway.create": [
+     404,
+     "GATEWAY_ROUTE_NOT_FOUND"
+    ],
+    "gateway.update": [
+     404,
+     "GATEWAY_ROUTE_NOT_FOUND"
+    ],
+    "gateway.delete": [
+     404,
+     "GATEWAY_ROUTE_NOT_FOUND"
+    ],
+    "ops-bff.list": [
+     404
+    ],
+    "channel-connector.list": [
+     404
+    ],
+    "ops-bff.detail": [
+     404
+    ],
+    "channel-connector.detail": [
+     404
+    ],
+    "ops-bff.create": [
+     404
+    ],
+    "channel-connector.create": [
+     404
+    ],
+    "ops-bff.delete": [
+     404
+    ],
+    "channel-connector.delete": [
+     404
+    ]
+   }
+  },
+  "_meta": {
+   "adminActor": "236033080844881920",
+   "channelId": "238881239803691008",
+   "echoPort": 62924,
+   "startedAt": "2026-10-22T04:29:37.685326+00:00"
+  },
+  "E7.repointEndpoint": {
+   "ok": true,
+   "httpStatus": 200,
+   "version": 4
+  },
+  "E7.warmup": {
+   "ok": true,
+   "httpStatus": 200,
+   "executeStatus": "SUCCESS",
+   "outputs": {
+    "echo": "s5p2-warmup-d128af"
+   }
+  },
+  "E7.compartment": {
+   "ok": true,
+   "results": {
+    "service2": {
+     "httpStatus": 503,
+     "problem": {
+      "code": "CHANNEL_EXECUTION_BUSY",
+      "title": "Service Unavailable",
+      "detail": "渠道执行繁忙"
+     },
+     "elapsedMs": 59
+    },
+    "paymentRefund": {
+     "httpStatus": 200,
+     "outcome": "SUCCESS",
+     "failureCode": null,
+     "channelJournal": 1,
+     "elapsedMs": 1928
+    },
+    "service1": {
+     "httpStatus": 200,
+     "executeStatus": "SUCCESS",
+     "outputs": {
+      "echo": "s5p2-busy1-e19b12"
+     },
+     "elapsedMs": 3048
+    }
+   },
+   "echoRequests": 1,
+   "accessLog": [
+    "callerService=payment-service channelCode=PAYERMAX_MOCK channelType=PAYMENT standardApiCode=REFUND apiCode=REFUND executeStatus=SUCCESS httpStatus=200 elapsedMs=82 requestId=221b91c6-efbd-488b-9719-bae85673dad0",
+    "callerService=counterparty-service channelCode=S5P2_ECHO channelType=SERVICE standardApiCode=S5P2_ECHO_PING apiCode=ECHO_CALL executeStatus=SUCCESS httpStatus=200 elapsedMs=3009 requestId=fb9af830-6a7d-42c5-a0b1-59955e4accd0"
+   ]
+  },
+  "G.endpointsDigestChained": {
+   "ok": true,
+   "startVersion": 4,
+   "puts": [
+    [
+     200,
+     5
+    ],
+    [
+     200,
+     6
+    ],
+    [
+     200,
+     7
+    ]
+   ],
+   "records": [
+    [
+     4,
+     5,
+     "266b2792adce",
+     "aecbf8de9854"
+    ],
+    [
+     5,
+     6,
+     "aecbf8de9854",
+     "97e9b661ce58"
+    ],
+    [
+     6,
+     7,
+     "97e9b661ce58",
+     "aecbf8de9854"
+    ]
+   ],
+   "beforeEqualsPreviousAfter": true,
+   "afterMatchesLocalRecompute": true
+  },
+  "G.serviceCallAfterRestart": {
+   "ok": true,
+   "httpStatus": 200,
+   "executeStatus": "SUCCESS",
+   "outputs": {
+    "echo": "s5p2-afterfix-5f6bdb"
+   },
+   "echoRequests": 1,
+   "accessLog": [
+    "callerService=counterparty-service channelCode=S5P2_ECHO channelType=SERVICE standardApiCode=S5P2_ECHO_PING apiCode=ECHO_CALL executeStatus=SUCCESS httpStatus=200 elapsedMs=7 requestId=7cc4fa21-42ab-4903-ac77-f55f1d4be2bd"
+   ]
+  }
+ },
+ "finishedAt": "2026-10-22T04:42:57.393452+00:00"
+}

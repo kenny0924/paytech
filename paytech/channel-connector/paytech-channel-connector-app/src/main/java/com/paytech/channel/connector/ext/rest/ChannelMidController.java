@@ -10,11 +10,11 @@ import com.paytech.channel.connector.api.channel.request.CreateChannelMidRequest
 import com.paytech.channel.connector.api.channel.request.RebindChannelMidAccountRequestBody;
 import com.paytech.channel.connector.api.channel.response.ChannelMidResponseBody;
 import com.paytech.channel.connector.api.channel.response.ChannelMidSummaryResponseBody;
-import com.paytech.channel.connector.domainservice.service.ChannelMidQueryService;
 import com.paytech.channel.connector.domainservice.service.ChannelMidService;
 import com.paytech.channel.connector.ext.rest.converter.ChannelMidConverter;
 import com.paytech.channel.connector.service.processor.ChangeChannelMidStatusProcessor;
 import com.paytech.channel.connector.service.processor.CreateChannelMidProcessor;
+import com.paytech.channel.connector.service.processor.ListChannelMidsProcessor;
 import com.paytech.channel.connector.service.processor.RebindChannelMidAccountProcessor;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 
@@ -25,7 +25,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class ChannelMidController implements ChannelMidApi {
     private final ChannelMidConverter converter;
-    private final ChannelMidQueryService channelMidQueryService;
+    private final ListChannelMidsProcessor listChannelMidsProcessor;
 
     // ---- CC-B 追加：MID 写入口与详情 ----
     private final ChannelMidService channelMidService;
@@ -37,7 +37,7 @@ public class ChannelMidController implements ChannelMidApi {
     @Override
     public PagingResponseBody<ChannelMidSummaryResponseBody> listChannelMids(String channelId, String channelAccountId,
         String entityNo, String status, String externalMidCode, Integer page, Integer size) {
-        return channelMidQueryService.listMids(
+        return listChannelMidsProcessor.process(
             converter.toCriteria(channelId, channelAccountId, entityNo, status, externalMidCode, page, size))
             .map(converter::toSummaryResponseBody);
     }

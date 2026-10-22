@@ -1,7 +1,8 @@
 // 把渠道协议模块的 10 张表（protocol-tables.mjs）追加到 channel-connector 的 PDManer 模型。
 // 2026-10-20 统一对外渠道出口第一段自 Platform Support 原样迁入：字段、注释、索引、关系与稳定 ID 的生成规则沿用迁移前的
-// Platform 生成器（scripts/pdmaner/platform-support/generate-platform-support-model.mjs），因此 10 张表的实体、字段、索引与
-// 关系 ID 与迁移前的 Platform 模型一致；关系只在 10 张表之间，不与 Payment 分区的表相连。
+// Platform 生成器（scripts/pdmaner/platform-support/generate-platform-support-model.mjs）。
+// 2026-10-22 第二段：t_integration 并入 t_channel，7 张表改名，新增 t_channel_call_grant；父表为 channel 的关系指向分区模型中
+// 已由 channel-model.mjs 改造的 t_channel 实体（同属 protocol 模块），该实体在协议图组中一并显示。
 import { createHash } from "node:crypto";
 
 import { TABLES } from "./protocol-tables.mjs";
@@ -11,10 +12,13 @@ const ID_NAMESPACE = "code-mor/platform-support/database/v1";
 
 const DIAGRAM = Object.freeze({ defKey: "channel_protocol", defName: "渠道协议与外部 API 配置" });
 
-const DESCRIBE_SUFFIX = "、标准 API、外部接入方与沙箱验证配置";
+const DESCRIBE_SUFFIX = "、标准 API 与渠道协议、服务渠道调用授权与沙箱验证配置";
 
-/** 渠道协议模块拥有的 10 张物理表，按 DSL 声明顺序。 */
+/** 渠道协议模块以 DSL 声明的 10 张物理表，按声明顺序；渠道表 t_channel 同属 protocol 模块，但实体来自分区模型。 */
 export const PROTOCOL_TABLES = Object.freeze(TABLES.map((table) => `t_${table.physicalKey}`));
+
+/** 关系中引用、但实体来自分区模型的父表：逻辑名 → 物理表名。 */
+const EXTERNAL_PARENTS = Object.freeze({ channel: "t_channel" });
 
 const tablesByLogicalKey = new Map(TABLES.map((table) => [table.defKey, table]));
 const RELATIONS = Object.freeze(TABLES.flatMap((table) => table.relations));
@@ -152,9 +156,9 @@ function applyRelations(entitiesByKey) {
   }
 }
 
-/** 与迁移前 Platform 图组相同的四列布局；图上只有 10 张协议表及其之间的关系。 */
+/** 四列布局；图上为渠道表与 10 张协议表及其之间的关系，渠道表排在首位。 */
 function buildDiagram(entitiesByKey) {
-  const tableKeys = TABLES.map((table) => table.defKey);
+  const tableKeys = [...Object.keys(EXTERNAL_PARENTS), ...TABLES.map((table) => table.defKey)];
   const columnCount = 4;
   const heights = tableKeys.map((tableKey) => Math.max(220, 86 + entitiesByKey.get(tableKey).fields.length * 22));
   const rowOffsets = [];
@@ -214,6 +218,11 @@ export function appendProtocolTables(model) {
   invariant(!model.diagrams.some((diagram) => diagram.defKey === DIAGRAM.defKey), `图组重名：${DIAGRAM.defKey}`);
   const entities = buildEntities(model);
   const entitiesByKey = new Map(TABLES.map((table, index) => [table.defKey, entities[index]]));
+  for (const [logicalKey, physicalKey] of Object.entries(EXTERNAL_PARENTS)) {
+    const parent = model.entities.find((entity) => entity.defKey === physicalKey);
+    invariant(parent, `协议表关系的父表不在分区模型中：${physicalKey}`);
+    entitiesByKey.set(logicalKey, parent);
+  }
   applyRelations(entitiesByKey);
   model.entities.push(...entities);
   model.diagrams.push(buildDiagram(entitiesByKey));

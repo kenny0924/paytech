@@ -2,7 +2,7 @@ package com.paytech.channel.connector.domain;
 
 import com.paytech.channel.connector.core.dal.dataobject.ChannelAccount;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelMid;
-import com.paytech.channel.connector.core.dal.dataobject.PaymentChannel;
+import com.paytech.channel.connector.protocol.domain.ChannelIdentity;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -12,7 +12,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public class ChannelExecutionContext {
     /** 冻结渠道。 */
-    private final PaymentChannel channel;
+    private final ChannelIdentity channel;
 
     /** 冻结账号，不能用 MID 的当前绑定替换。 */
     private final ChannelAccount account;

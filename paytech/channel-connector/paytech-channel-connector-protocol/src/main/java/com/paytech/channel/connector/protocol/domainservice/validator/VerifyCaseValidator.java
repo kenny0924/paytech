@@ -19,7 +19,7 @@ import lombok.Getter;
 import tools.jackson.databind.JsonNode;
 
 /**
- * 验证用例步骤的静态校验（沙箱验证技术方案第 4 节）：结构、步骤 ID、标准 API 已由本接入方实现、模板变量、
+ * 验证用例步骤的静态校验（沙箱验证技术方案第 4 节）：结构、步骤 ID、标准 API 已由本渠道实现、模板变量、
  * 期望与输出路径。输入不引用前序步骤、且期望不是执行前问题时，以示例值渲染后按标准 API 请求字段校验；
  * 引用前序步骤时运行时再校验；期望问题（如 422）的负向用例本就有意提交不合法输入，不做结构校验。
  * 纯内存校验，不执行流程或外部请求。
@@ -46,7 +46,7 @@ public class VerifyCaseValidator {
     private final VerifyTemplateRenderer renderer;
 
     /**
-     * 本接入方对某个标准 API 的实现所提供的合同。
+     * 本渠道对某个标准 API 的实现所提供的合同。
      */
     @Getter
     @AllArgsConstructor
@@ -66,7 +66,7 @@ public class VerifyCaseValidator {
      * 校验步骤。
      *
      * @param steps steps_json
-     * @param contracts 标准 API 编码 → 本接入方实现的合同；没有实现时不在映射中
+     * @param contracts 标准 API 编码 → 本渠道实现的合同；没有实现时不在映射中
      * @param sample 示例渲染值（运行编号、时间与账号身份）
      * @return 发现的问题；为空表示通过
      */
@@ -101,7 +101,7 @@ public class VerifyCaseValidator {
         StepContract contract = contracts.get(code);
         if (!CODE.matcher(code).matches() || contract == null) {
             issues.add(new ValidationIssue("STANDARD_API_NOT_IMPLEMENTED", location + ".standardApiCode",
-                "本接入方没有实现该标准 API，或实现配置未通过运行前校验：" + code));
+                "本渠道没有实现该标准 API，或实现配置未通过运行前校验：" + code));
         }
         input(step.path("input"), location + ".input", previous, step.path("expect").has("problem") ? null : contract,
             sample, issues);

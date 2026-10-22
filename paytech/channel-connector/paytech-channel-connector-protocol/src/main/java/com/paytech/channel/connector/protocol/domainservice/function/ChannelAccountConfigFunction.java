@@ -23,6 +23,7 @@ import tools.jackson.databind.json.JsonMapper;
 /**
  * CHANNEL_ACCOUNT_CONFIG（账号材料交接第 3、4 节，方案 C）：以 Caller channel-connector-service（Vault Client 配置的本服务身份）、
  * Purpose CHANNEL_EXECUTION 向 Vault 读取 CHANNEL_ACCOUNT_CONFIG_V1，核对渠道、账号与经营主体与传入身份一致。
+ * 服务渠道账号不绑定经营主体：负载中 entityNo 为 null，此时传入身份也不得带 entityNo（schemaVersion 仍为 1）。
  *
  * <p>parameters 为字符串映射；credentials 的值包装为受控句柄。账号状态与用途合法性由 Payment 判断，
  * 本函数只拒绝错绑的 Token。不缓存读取结果；任何失败只报固定文字，不带 Vault 原文或 Jackson 定位。
@@ -69,7 +70,7 @@ public class ChannelAccountConfigFunction implements InitializerFunction {
         if (!Objects.equals(config.path("schemaVersion").asInt(0), 1) || !config.path("schemaVersion").isIntegralNumber()
             || !text(config, "channelCode").equals(args.get("channelCode"))
             || !text(config, "channelAccountId").equals(args.get("channelAccountId"))
-            || !text(config, "entityNo").equals(args.get("entityNo"))) {
+            || !Objects.equals(nullableText(config, "entityNo"), args.get("entityNo"))) {
             throw new ExecutionErrorException("Vault 账号配置版本或归属与传入身份不一致");
         }
         var result = new LinkedHashMap<String, Object>();
@@ -91,6 +92,15 @@ public class ChannelAccountConfigFunction implements InitializerFunction {
         }
     }
 
+    /** 可空字符串属性：服务渠道账号的 entityNo 为 null；存在时必须是字符串。 */
+    static String nullableText(JsonNode config, String name) {
+        if (config.path(name).isNull()) {
+            return null;
+        }
+        return text(config, name);
+    }
+
+    /** 必填字符串属性。 */
     static String text(JsonNode config, String name) {
         if (!config.path(name).isString()) {
             throw new ExecutionErrorException("Vault 账号配置缺少字符串属性：" + name);

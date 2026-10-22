@@ -1,7 +1,7 @@
 package com.paytech.channel.connector.domainservice.service;
 
 import com.paytech.channel.connector.core.dal.dataobject.ChannelMid;
-import com.paytech.channel.connector.core.enums.ChannelStatus;
+import com.paytech.channel.connector.protocol.core.enums.ChannelStatus;
 import com.paytech.channel.connector.domain.ChannelMidContext;
 import com.paytech.channel.connector.domain.ChannelMidDetailView;
 

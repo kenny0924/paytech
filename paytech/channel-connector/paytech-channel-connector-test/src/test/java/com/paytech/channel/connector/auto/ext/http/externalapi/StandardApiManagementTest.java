@@ -64,12 +64,12 @@ class StandardApiManagementTest extends ExternalApiTestBase {
             () -> assertFalse(change.toString().contains("paymentContext"), "变更摘要不应包含字段定义原文"));
     }
 
-    /** 列表按编码或名称包含筛选，统计字段数与已实现接入方。 */
+    /** 列表按编码或名称包含筛选，统计字段数与已实现渠道。 */
     @Test
     void test_listWithKeyword() {
         var pay = externalApi.standardApi("PAY");
         externalApi.standardApi("REFUND");
-        var integration = externalApi.integration("DEMO");
+        var integration = externalApi.channel("DEMO");
         externalApi.createOrderApi(integration);
         externalApi.implementation(integration, pay, ExternalApiSamples.payFlow());
 
@@ -129,11 +129,11 @@ class StandardApiManagementTest extends ExternalApiTestBase {
         get(PATH + "/PAY").assertProblem(404, CommonErrorCode.NOT_FOUND);
     }
 
-    /** 修改会使已有实现失效时拒绝并列出接入方；改为兼容修改后可以保存。 */
+    /** 修改会使已有实现失效时拒绝并列出渠道；改为兼容修改后可以保存。 */
     @Test
     void test_updateBreakingImplementation() {
         var pay = externalApi.standardApi("PAY");
-        var integration = externalApi.integration("DEMO");
+        var integration = externalApi.channel("DEMO");
         externalApi.createOrderApi(integration);
         externalApi.implementation(integration, pay, ExternalApiSamples.payFlow());
         var requiredRef =
@@ -156,7 +156,7 @@ class StandardApiManagementTest extends ExternalApiTestBase {
     void test_delete() {
         var pay = externalApi.standardApi("PAY");
         var refund = externalApi.standardApi("REFUND");
-        var integration = externalApi.integration("DEMO");
+        var integration = externalApi.channel("DEMO");
         externalApi.createOrderApi(integration);
         externalApi.implementation(integration, pay, ExternalApiSamples.payFlow());
 

@@ -50,7 +50,7 @@ function MidList({ resources, onAuthorizationChanged }: Props) {
     <div className="channel-toolbar">
       <Form form={form} name="channel-mid-filter" layout="vertical" onFinish={(values: FilterValues) => page.applyFilters(listFilters({ ...values }))}>
         <div className="channel-filters">
-          <Form.Item name="channelId" label="渠道"><ChannelSelect /></Form.Item>
+          <Form.Item name="channelId" label="渠道"><ChannelSelect channelType="PAYMENT" /></Form.Item>
           <Form.Item name="entityNo" label="OE" normalize={(v?: string) => v?.trim().toUpperCase()} rules={[{ pattern: entityNoPattern, message: '如 AE001' }]}>
             <Input allowClear maxLength={5} placeholder="全部" /></Form.Item>
           <Form.Item name="status" label="状态"><Select allowClear placeholder="全部"
@@ -126,11 +126,11 @@ function CreateMidModal({ onCreated, ...base }: Base & { onCreated: (mid: Channe
   return <CommandModal title="新建 MID" command={command} okText="创建" onOk={() => void submit()} onClose={base.onClose} onReload={base.onClose}>
     <Form form={form} name="channel-mid-create" layout="vertical">
       <Form.Item name="channelId" label="渠道" rules={[{ required: true, message: '请选择渠道' }]}>
-        <ChannelSelect allowClear={false} placeholder="选择渠道" excludeClosed onChange={value => form.setFieldsValue({ channelId: value, channelAccountId: undefined })} />
+        <ChannelSelect allowClear={false} placeholder="选择渠道" excludeClosed channelType="PAYMENT" onChange={value => form.setFieldsValue({ channelId: value, channelAccountId: undefined })} />
       </Form.Item>
       <Form.Item name="channelAccountId" label="技术账号" rules={[{ required: true, message: '请选择账号' }]}>
         <Select placeholder={channelId ? '选择账号' : '先选择渠道'} options={accounts.map(a => ({ value: a.channelAccountId, label: `${a.accountName} · ${a.entityNo} · ${a.status}` }))}
-          onChange={value => form.setFieldsValue({ entityNo: accounts.find(a => a.channelAccountId === value)?.entityNo })} /></Form.Item>
+          onChange={value => form.setFieldsValue({ entityNo: accounts.find(a => a.channelAccountId === value)?.entityNo ?? undefined })} /></Form.Item>
       <div className="channel-form-grid">
         <Form.Item name="externalMidCode" label="外部 MID" rules={[{ required: true, whitespace: true, message: '必填' }, { max: 128, message: '最长 128' }]}>
           <Input maxLength={128} /></Form.Item>

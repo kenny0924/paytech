@@ -4,11 +4,11 @@ import org.springframework.stereotype.Component;
 
 import com.paytech.foundation.processor.AbstractProcessor;
 import com.paytech.foundation.web.paging.PagingResponseBody;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationVerifyRun;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelVerifyRun;
 import com.paytech.channel.connector.protocol.domain.ExternalApiLocks;
 import com.paytech.channel.connector.protocol.domain.verify.VerifyRunSummaryView;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationVerifyCaseRepository;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationVerifyRunRepository;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelVerifyCaseRepository;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelVerifyRunRepository;
 import com.paytech.channel.connector.protocol.service.processor.request.ListVerifyRunsRequest;
 
 import lombok.AllArgsConstructor;
@@ -23,21 +23,21 @@ public class ListVerifyRunsProcessor
     private final VerifySupport verify;
     private final IntegrationChildSupport children;
     private final ExternalApiProcessorSupport support;
-    private final IntegrationVerifyCaseRepository cases;
-    private final IntegrationVerifyRunRepository runs;
+    private final ChannelVerifyCaseRepository cases;
+    private final ChannelVerifyRunRepository runs;
 
     @Override
     protected PagingResponseBody<VerifyRunSummaryView> processRequest(ListVerifyRunsRequest request) {
-        long integrationId = children.integration(request.getIntegrationCode()).getIntegrationId();
+        long channelId = children.channel(request.getIntegrationCode()).getChannelId();
         Long caseId = request.getCaseCode() == null ? null
-            : support.requireFound(cases.byCode(integrationId, request.getCaseCode())).getVerifyCaseId();
+            : support.requireFound(cases.byCode(channelId, request.getCaseCode())).getVerifyCaseId();
         var paging = request.getPaging();
-        var items = runs.list(integrationId, caseId, paging.offset(), paging.size()).stream().map(this::summary)
+        var items = runs.list(channelId, caseId, paging.offset(), paging.size()).stream().map(this::summary)
             .toList();
-        return new PagingResponseBody<>(items, paging.page(), paging.size(), runs.count(integrationId, caseId));
+        return new PagingResponseBody<>(items, paging.page(), paging.size(), runs.count(channelId, caseId));
     }
 
-    VerifyRunSummaryView summary(IntegrationVerifyRun run) {
+    VerifyRunSummaryView summary(ChannelVerifyRun run) {
         JsonNode snapshot = verify.tree(run.getCaseSnapshotJson());
         return new VerifyRunSummaryView(run.getVerifyRunId(), snapshot.path("caseCode").asString(),
             snapshot.path("caseName").asString(), run.getRunStatus(), run.getFailureSummary(), run.getStartedBy(),

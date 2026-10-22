@@ -11,14 +11,14 @@ import org.springframework.stereotype.Component;
 import com.paytech.foundation.processor.AbstractProcessor;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.channel.connector.api.enums.VerifyRunStatus;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationVerifyAccount;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationVerifyCase;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationVerifyRun;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelVerifyAccount;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelVerifyCase;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelVerifyRun;
 import com.paytech.channel.connector.protocol.domain.ExternalApiLocks;
 import com.paytech.channel.connector.protocol.domain.verify.VerifyCaseView;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationVerifyAccountRepository;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationVerifyCaseRepository;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationVerifyRunRepository;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelVerifyAccountRepository;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelVerifyCaseRepository;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelVerifyRunRepository;
 import com.paytech.channel.connector.protocol.service.processor.request.ListIntegrationChildrenRequest;
 
 import lombok.AllArgsConstructor;
@@ -36,28 +36,28 @@ public class ListVerifyCasesProcessor
 
     private final VerifySupport verify;
     private final IntegrationChildSupport children;
-    private final IntegrationVerifyCaseRepository cases;
-    private final IntegrationVerifyRunRepository runs;
-    private final IntegrationVerifyAccountRepository accounts;
+    private final ChannelVerifyCaseRepository cases;
+    private final ChannelVerifyRunRepository runs;
+    private final ChannelVerifyAccountRepository accounts;
 
     @Override
     protected PagingResponseBody<VerifyCaseView> processRequest(ListIntegrationChildrenRequest request) {
-        var integration = children.integration(request.getIntegrationCode());
-        long integrationId = integration.getIntegrationId();
+        var integration = children.channel(request.getIntegrationCode());
+        long channelId = integration.getChannelId();
         var paging = request.getPaging();
-        List<IntegrationVerifyCase> rows = cases.list(integrationId, request.getKeyword(), paging.offset(), paging.size());
-        long total = cases.count(integrationId, request.getKeyword());
-        var caseIds = rows.stream().map(IntegrationVerifyCase::getVerifyCaseId).toList();
-        Map<Long, IntegrationVerifyRun> latest = runs.latestByCases(caseIds);
-        Map<Long, IntegrationVerifyRun> finished = runs.latestFinishedByCases(caseIds);
-        Map<Long, IntegrationVerifyAccount> accountById = accounts.allByIntegration(integrationId).stream()
-            .collect(Collectors.toMap(IntegrationVerifyAccount::getVerifyAccountId, Function.identity()));
+        List<ChannelVerifyCase> rows = cases.list(channelId, request.getKeyword(), paging.offset(), paging.size());
+        long total = cases.count(channelId, request.getKeyword());
+        var caseIds = rows.stream().map(ChannelVerifyCase::getVerifyCaseId).toList();
+        Map<Long, ChannelVerifyRun> latest = runs.latestByCases(caseIds);
+        Map<Long, ChannelVerifyRun> finished = runs.latestFinishedByCases(caseIds);
+        Map<Long, ChannelVerifyAccount> accountById = accounts.allByChannel(channelId).stream()
+            .collect(Collectors.toMap(ChannelVerifyAccount::getVerifyAccountId, Function.identity()));
         Map<String, JsonNode> current = new HashMap<>();
         var items = rows.stream().map(row -> {
-            IntegrationVerifyAccount account = accountById.get(row.getVerifyAccountId());
-            IntegrationVerifyRun done = finished.get(row.getVerifyCaseId());
+            ChannelVerifyAccount account = accountById.get(row.getVerifyAccountId());
+            ChannelVerifyRun done = finished.get(row.getVerifyCaseId());
             boolean stale = done != null && done.getRunStatus() == VerifyRunStatus.PASSED
-                && verify.stale(done, row, account, integration.getIntegrationCode(), current);
+                && verify.stale(done, row, account, integration.getChannelCode(), current);
             return verify.caseView(row, account == null ? null : account.getAccountCode(),
                 VerifySupport.status(latest.get(row.getVerifyCaseId()), done, stale), latest.get(row.getVerifyCaseId()));
         }).toList();

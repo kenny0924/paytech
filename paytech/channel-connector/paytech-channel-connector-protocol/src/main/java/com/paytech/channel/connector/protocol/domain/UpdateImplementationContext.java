@@ -2,7 +2,7 @@ package com.paytech.channel.connector.protocol.domain;
 
 import java.time.Instant;
 
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationImplementation;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelImplementation;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -13,7 +13,7 @@ import lombok.Getter;
 public class UpdateImplementationContext {
 
     /** 已锁定并核对版本的实现，保存成功后同步新版本。 */
-    private final IntegrationImplementation implementation;
+    private final ChannelImplementation implementation;
 
     /** 规范化后的新流程定义。 */
     private final String flowDefinitionJson;

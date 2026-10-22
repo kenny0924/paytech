@@ -16,6 +16,7 @@
 ## 决定
 
 1. **唯一出口：** 面向外部第三方的业务调用统一由 channel-connector 发出。其他服务不新增直连第三方的出站客户端；已登记的例外（Platform 通知 SES/SQS、文件 S3、Client Webhook 推送、Vault/KMS 与云 SDK 等，以需求技术方案的例外清单为准）保留在原 Owner，各自维持专项安全控制。网络层出口强制另立需求。
+   - 例外清单与架构门禁 R15 白名单逐项对应，见 [唯一出口例外清单](./2026-10-22-unified-outbound-exception-list.md)。
 2. **术语：** Channel / 渠道指任何外部第三方对接方，分两类：**支付渠道**（`PAYMENT`，NI、Geidea、PayerMax 等）与**服务渠道**（`SERVICE`，地图、KYC 筛查、短信、汇率等第三方服务）。类型创建后不可改。Platform 的访问 Channel（`OPERATIONS`/`CLIENT`/`PARTNER`）与 Gateway Route Channel 是另外的概念，不受影响。
 3. **Owner 迁移：** 标准 API、共用字段、接入方、原子 API、公共脚本、标准 API 实现、沙箱验证及执行引擎、注册函数、出站与读卡客户端整体从 Platform 迁入 channel-connector；Platform 不再拥有外部 API 定义与执行。
 4. **一个渠道一个身份：** 接入方与渠道合并为一张渠道表（含类型、状态、出站配置），支付渠道的技术账号、MID、能力、成本挂在其下；不再跨库按编码对齐。

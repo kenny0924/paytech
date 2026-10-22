@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.channel.connector.protocol.core.dal.mapper.ChannelCallGrantMapper">
+    <resultMap id="row" type="com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelCallGrant">
+        <id column="call_grant_id" property="callGrantId"/>
+        <result column="caller_service" property="callerService"/>
+        <result column="channel_id" property="channelId"/>
+        <result column="standard_api_id" property="standardApiId"/>
+        <result column="grant_status" property="grantStatus"
+                javaType="com.paytech.channel.connector.api.enums.ChannelCallGrantStatus"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="version" property="version"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="updated_by" property="updatedBy"/>
+        <result column="create_time" property="createTime"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        <result column="update_time" property="updateTime"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+    </resultMap>
+    <sql id="columns">call_grant_id, caller_service, channel_id, standard_api_id, grant_status, version, created_by, updated_by, create_time, update_time</sql>
+    <select id="byId" resultMap="row" useCache="false">
+        SELECT <include refid="columns"/> FROM t_channel_call_grant WHERE call_grant_id = #{callGrantId}
+    </select>
+    <select id="byKey" resultMap="row" useCache="false">
+        SELECT <include refid="columns"/> FROM t_channel_call_grant
+        WHERE caller_service = #{callerService} AND channel_id = #{channelId} AND standard_api_id = #{standardApiId}
+    </select>
+    <insert id="insert">
+        INSERT INTO t_channel_call_grant (<include refid="columns"/>)
+        VALUES (#{row.callGrantId}, #{row.callerService}, #{row.channelId}, #{row.standardApiId},
+        #{row.grantStatus.code}, #{row.version}, #{row.createdBy}, #{row.updatedBy}, #{row.createTime},
+        #{row.updateTime})
+    </insert>
+    <update id="updateStatus">
+        UPDATE t_channel_call_grant SET grant_status = #{toStatus.code}, version = version + 1,
+        updated_by = #{updatedBy}, update_time = #{now}
+        WHERE call_grant_id = #{callGrantId} AND version = #{version} AND grant_status = #{fromStatus.code}
+    </update>
+    <select id="countActive" resultType="long" useCache="false">
+        SELECT COUNT(*) FROM t_channel_call_grant g
+        JOIN t_standard_api s ON s.standard_api_id = g.standard_api_id
+        WHERE g.caller_service = #{callerService} AND g.channel_id = #{channelId}
+        AND s.standard_api_code = #{standardApiCode} AND g.grant_status = 'ACTIVE'
+    </select>
+    <select id="countActiveByStandardApi" resultType="long" useCache="false">
+        SELECT COUNT(*) FROM t_channel_call_grant
+        WHERE channel_id = #{channelId} AND standard_api_id = #{standardApiId} AND grant_status = 'ACTIVE'
+    </select>
+    <resultMap id="view" type="com.paytech.channel.connector.protocol.domain.ChannelCallGrantView">
+        <id column="call_grant_id" property="callGrantId"/>
+        <result column="channel_id" property="channelId"/>
+        <result column="caller_service" property="callerService"/>
+        <result column="standard_api_code" property="standardApiCode"/>
+        <result column="standard_api_name" property="standardApiName"/>
+        <result column="grant_status" property="grantStatus"
+                javaType="com.paytech.channel.connector.api.enums.ChannelCallGrantStatus"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="version" property="version"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="updated_by" property="updatedBy"/>
+        <result column="create_time" property="createTime"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        <result column="update_time" property="updateTime"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+    </resultMap>
+    <sql id="viewFilter">
+        <where>
+            <if test="channelId != null">g.channel_id = #{channelId}</if>
+            <if test="callerService != null">AND g.caller_service = #{callerService}</if>
+            <if test="standardApiCode != null">AND s.standard_api_code = #{standardApiCode}</if>
+            <if test="grantStatus != null">AND g.grant_status = #{grantStatus.code}</if>
+        </where>
+    </sql>
+    <select id="selectViews" resultMap="view" useCache="false">
+        SELECT g.call_grant_id, g.channel_id, g.caller_service, s.standard_api_code, s.standard_api_name,
+        g.grant_status, g.version, g.created_by, g.updated_by, g.create_time, g.update_time
+        FROM t_channel_call_grant g
+        JOIN t_standard_api s ON s.standard_api_id = g.standard_api_id
+        <include refid="viewFilter"/>
+        ORDER BY g.update_time DESC, g.call_grant_id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+    <select id="countViews" resultType="long" useCache="false">
+        SELECT COUNT(*) FROM t_channel_call_grant g
+        JOIN t_standard_api s ON s.standard_api_id = g.standard_api_id
+        <include refid="viewFilter"/>
+    </select>
+</mapper>

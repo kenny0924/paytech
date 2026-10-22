@@ -102,7 +102,7 @@ public class ExternalApiProcessorSupport {
      * @param targetId 被变更对象主键；删除时为删除前的主键
      * @param changeType CREATE、UPDATE 或 DELETE
      * @param actorId 操作者 Account ID
-     * @param objectCode 对象编码，下级对象为 {接入方编码}/{对象编码}
+     * @param objectCode 对象编码，下级对象为 {渠道编码}/{对象编码}
      * @param beforeVersion 变更前版本，创建为 0
      * @param afterVersion 变更后版本；删除为删除前版本
      * @param changes 受控字段的前后摘要

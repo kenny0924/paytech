@@ -17,7 +17,7 @@ public class ChannelCostPlan {
     private Long id;
 
     /**
-     * Payment Channel（本库 t_payment_channel.id）
+     * 渠道（本库 t_channel.channel_id，支付渠道）
      */
     private Long channelId;
 

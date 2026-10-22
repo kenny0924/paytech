@@ -27,7 +27,7 @@ import com.paytech.foundation.internalauth.core.token.InternalTokenSigner;
 
 /**
  * internal-auth.mode=REQUIRED（本地静态密钥对，D26，design/05 §4）：card 入口只认内部 Token 的调用方，错调用方被拒且不返回卡数据。
- * <li>测试以同一私钥签出不同调用方的 Token（aud=card-service、inst=main），模拟 Platform 与 Payment 经 Platform 签发端取得的 Token。</li>
+ * <li>测试以同一私钥签出不同调用方的 Token（aud=card-service、inst=main），模拟 channel-connector、Payment 与 Platform 经 Platform 签发端取得的 Token。</li>
  * <li>以动态属性开启，独立 Spring 上下文；mode=OFF 的 X-Caller-Service 行为由其他测试类覆盖。</li>
  */
 class CardInternalAuthRequiredTest extends AbstractCardApiTest {
@@ -42,30 +42,31 @@ class CardInternalAuthRequiredTest extends AbstractCardApiTest {
         registry.add("internal-auth.static-key.public-jwk", () -> KEY.toPublicJWK().toJSONString());
     }
 
-    /** 读卡：Platform 的 Token 读到卡数据；Payment、acquiring 的 Token 404 且无卡数据，票据不被消耗。 */
+    /** 读卡：channel-connector 的 Token 读到卡数据；Payment、acquiring、Platform 的 Token 404 且无卡数据，票据不被消耗。 */
     @Test
-    void test_revealRequiresPlatformToken() {
+    void test_revealRequiresChannelConnectorToken() {
         String ticket = newTicket();
 
         int payment = reveal(CardApiConstants.PAYMENT_SERVICE, InternalTokenClaims.GENERAL_PURPOSE, ticket);
         int acquiring = reveal(CardApiConstants.ACQUIRING_SERVICE, InternalTokenClaims.GENERAL_PURPOSE, ticket);
         int platform = reveal(CardApiConstants.PLATFORM_SUPPORT_SERVICE, InternalTokenClaims.GENERAL_PURPOSE, ticket);
+        int connector = reveal(CardApiConstants.CHANNEL_CONNECTOR_SERVICE, InternalTokenClaims.GENERAL_PURPOSE, ticket);
 
-        assertEquals(List.of(404, 404, 200), List.of(payment, acquiring, platform));
+        assertEquals(List.of(404, 404, 404, 200), List.of(payment, acquiring, platform, connector));
     }
 
     /** 缺少 Token：401 INTERNAL_TOKEN_INVALID；X-Caller-Service 与 Token 调用方不一致：400；Purpose 不是 GENERAL：404。 */
     @Test
     void test_missingOrMismatchedTokenRejected() {
         String ticket = newTicket();
-        String platformToken = token(CardApiConstants.PLATFORM_SUPPORT_SERVICE, InternalTokenClaims.GENERAL_PURPOSE);
+        String connectorToken = token(CardApiConstants.CHANNEL_CONNECTOR_SERVICE, InternalTokenClaims.GENERAL_PURPOSE);
 
-        int missing = status(null, CardApiConstants.PLATFORM_SUPPORT_SERVICE, ticket);
-        int mismatched = status(platformToken, CardApiConstants.PAYMENT_SERVICE, ticket);
-        int otherPurpose = reveal(CardApiConstants.PLATFORM_SUPPORT_SERVICE, "CARD_READ", ticket);
+        int missing = status(null, CardApiConstants.CHANNEL_CONNECTOR_SERVICE, ticket);
+        int mismatched = status(connectorToken, CardApiConstants.PAYMENT_SERVICE, ticket);
+        int otherPurpose = reveal(CardApiConstants.CHANNEL_CONNECTOR_SERVICE, "CARD_READ", ticket);
 
         assertEquals(List.of(401, 400, 404), List.of(missing, mismatched, otherPurpose));
-        assertEquals(200, status(platformToken, CardApiConstants.PLATFORM_SUPPORT_SERVICE, ticket), "被拒的请求不得消耗票据");
+        assertEquals(200, status(connectorToken, CardApiConstants.CHANNEL_CONNECTOR_SERVICE, ticket), "被拒的请求不得消耗票据");
     }
 
     /** 以 Payment 的 Token 创建工具并签发票据。 */

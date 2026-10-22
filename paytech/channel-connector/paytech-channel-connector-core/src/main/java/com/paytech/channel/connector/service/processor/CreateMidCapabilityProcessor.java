@@ -13,7 +13,7 @@ import com.paytech.channel.connector.core.dal.dataobject.MidCapability;
 import com.paytech.channel.connector.core.enums.CapabilityStatus;
 import com.paytech.channel.connector.protocol.core.enums.ChangeTargetType;
 import com.paytech.channel.connector.protocol.core.enums.ChangeType;
-import com.paytech.channel.connector.core.enums.ChannelStatus;
+import com.paytech.channel.connector.protocol.core.enums.ChannelStatus;
 import com.paytech.channel.connector.protocol.domain.ChannelConfigChanges;
 import com.paytech.channel.connector.domain.MidCapabilityView;
 import com.paytech.channel.connector.domain.MidCapabilityWriteContext;
@@ -23,6 +23,9 @@ import com.paytech.channel.connector.service.processor.request.CreateMidCapabili
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
+
+import com.paytech.channel.connector.protocol.domain.ChannelIdentity;
+import com.paytech.channel.connector.protocol.domainservice.service.ChannelService;
 
 import lombok.AllArgsConstructor;
 
@@ -36,6 +39,7 @@ import lombok.AllArgsConstructor;
 public class CreateMidCapabilityProcessor extends AbstractLockProcessor<CreateMidCapabilityRequest, MidCapabilityView> {
     private final Clock clock;
     private final IdGenerator idGenerator;
+    private final ChannelService channelService;
     private final ChannelMidService channelMidService;
     private final MidCapabilityService midCapabilityService;
     private final ChannelConfigTransactions channelConfigTransactions;
@@ -53,6 +57,10 @@ public class CreateMidCapabilityProcessor extends AbstractLockProcessor<CreateMi
         ChannelMid mid = channelMidService.loadMid(request.getMidId());
         if (mid.getMidStatus() == ChannelStatus.CLOSED) {
             throw new BizCheckFailException("MID 已关闭，不能新增能力组: " + mid.getMidId());
+        }
+        ChannelIdentity channel = channelService.loadChannel(mid.getChannelId());
+        if (channel.service()) {
+            throw new BizCheckFailException("服务渠道没有 MID 能力: " + channel.getChannelCode());
         }
 
         // 构建上下文

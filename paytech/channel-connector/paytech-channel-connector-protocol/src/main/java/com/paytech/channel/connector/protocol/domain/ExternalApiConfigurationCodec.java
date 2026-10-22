@@ -38,11 +38,14 @@ public class ExternalApiConfigurationCodec {
         return json.writeValueAsString(rows);
     }
 
-    /** 解析已保存的出站地址；结构不符视为数据损坏。 */
+    /** 解析已保存的出站地址；未配置（null）为空列表，结构不符视为数据损坏。 */
     public List<EndpointDefinition> endpoints(String value) {
+        if (value == null) {
+            return List.of();
+        }
         JsonNode root = json.readTree(value);
         if (root == null || !root.isArray()) {
-            throw new ErrorException("接入方出站地址数据损坏");
+            throw new ErrorException("渠道出站地址数据损坏");
         }
         var endpoints = new ArrayList<EndpointDefinition>();
         for (JsonNode node : root) {
@@ -51,7 +54,7 @@ public class ExternalApiConfigurationCodec {
             JsonNode sandbox = node.get("sandbox");
             if (code == null || url == null || !code.isString() || !url.isString()
                 || sandbox != null && !sandbox.isBoolean()) {
-                throw new ErrorException("接入方出站地址数据损坏");
+                throw new ErrorException("渠道出站地址数据损坏");
             }
             endpoints.add(new EndpointDefinition(code.asString(), url.asString(), sandbox != null && sandbox.booleanValue()));
         }

@@ -1,0 +1,30 @@
+UTC 2026-10-22T04:22:14Z mor_channel_connector_v2e2e phase2-30-verify.sql 第 7 段清理（P2 报告第 8 节：全部符合后手工删除两张辅助表）
+--------------
+DROP TABLE tmp_phase2_channel_map
+--------------
+
+Query OK, 0 rows affected
+
+--------------
+DROP TABLE tmp_phase2_row_count
+--------------
+
+Query OK, 0 rows affected
+
+--------------
+SELECT COUNT(*) AS table_count FROM information_schema.tables WHERE table_schema=DATABASE()
+--------------
+
+table_count
+28
+1 row in set
+
+--------------
+SELECT COUNT(*) AS integration_cols FROM information_schema.columns WHERE table_schema=DATABASE() AND column_name LIKE 'integration\_%'
+--------------
+
+integration_cols
+0
+1 row in set
+
+Bye

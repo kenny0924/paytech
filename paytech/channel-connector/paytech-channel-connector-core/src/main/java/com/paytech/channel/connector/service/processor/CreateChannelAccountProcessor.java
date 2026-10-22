@@ -9,15 +9,15 @@ import org.springframework.stereotype.Component;
 
 import com.paytech.channel.connector.core.constant.ChannelConnectorLocks;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelAccount;
-import com.paytech.channel.connector.core.dal.dataobject.PaymentChannel;
+import com.paytech.channel.connector.protocol.domain.ChannelIdentity;
 import com.paytech.channel.connector.protocol.core.enums.ChangeTargetType;
 import com.paytech.channel.connector.protocol.core.enums.ChangeType;
-import com.paytech.channel.connector.core.enums.ChannelStatus;
+import com.paytech.channel.connector.protocol.core.enums.ChannelStatus;
 import com.paytech.channel.connector.domain.ChannelAccountContext;
 import com.paytech.channel.connector.domain.ChannelAccountDetailView;
 import com.paytech.channel.connector.protocol.domain.ChannelConfigChanges;
 import com.paytech.channel.connector.domainservice.service.ChannelAccountService;
-import com.paytech.channel.connector.domainservice.service.PaymentChannelService;
+import com.paytech.channel.connector.protocol.domainservice.service.ChannelService;
 import com.paytech.channel.connector.service.processor.request.CreateChannelAccountRequest;
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.id.IdGenerator;
@@ -37,7 +37,7 @@ public class CreateChannelAccountProcessor
     private final Clock clock;
     private final IdGenerator idGenerator;
     private final ChannelAccountService channelAccountService;
-    private final PaymentChannelService paymentChannelService;
+    private final ChannelService channelService;
     private final ChannelConfigTransactions channelConfigTransactions;
 
     /** 所属渠道资源锁。 */
@@ -50,10 +50,11 @@ public class CreateChannelAccountProcessor
     @Override
     protected ChannelAccountDetailView processWithinLock(CreateChannelAccountRequest request) {
         // 业务验证
-        PaymentChannel channel = paymentChannelService.loadChannel(request.getChannelId());
+        ChannelIdentity channel = channelService.loadChannel(request.getChannelId());
         if (channel.getChannelStatus() == ChannelStatus.CLOSED) {
             throw new BizCheckFailException("渠道已关闭，不能创建技术账号: " + channel.getChannelId());
         }
+        checkEntityBinding(channel, request.getEntityNo());
 
         // 构建上下文
         Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
@@ -65,6 +66,16 @@ public class CreateChannelAccountProcessor
         // 本地保存
         channelConfigTransactions.write(context.getChange(), () -> channelAccountService.createAccount(context));
         return new ChannelAccountDetailView(account, 0);
+    }
+
+    /** 支付渠道的账号必须绑定 OE；服务渠道的账号（凭据）不绑定 OE。 */
+    void checkEntityBinding(ChannelIdentity channel, String entityNo) {
+        if (!channel.service() && entityNo == null) {
+            throw new BizCheckFailException("支付渠道的技术账号必须指定 OE: 渠道 " + channel.getChannelCode());
+        }
+        if (channel.service() && entityNo != null) {
+            throw new BizCheckFailException("服务渠道的凭据不绑定 OE: 渠道 " + channel.getChannelCode() + ", OE " + entityNo);
+        }
     }
 
     /** 构建 DRAFT 账号，无 Vault Token。 */

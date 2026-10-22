@@ -210,12 +210,14 @@ start_one() {
       # 2026-10-19 渠道成本迁入（requirements/20261019/billing-计费事实模型重构与渠道成本迁出 B-report 第 6 节第 9 项）：
       # Snowflake 必填（Worker 16 未被其他服务占用）、Redis 资源锁、补偿实例；XXL 执行器同 billing 本机不连调度中心，显式禁用。
       # 2026-10-20 统一对外出口第一段：外部 API 执行自 Platform 迁入；合成 PayerMax 在 http://127.0.0.1:18190（仅本机放开 http）
+      # 2026-10-22 第二段：出站地址默认拦截回环与私网，本机放行 127.0.0.1/32（只放行合成 PayerMax 所在地址）
       MOR_CHANNEL_CONNECTOR_DB_URL="$(db_url channel-connector)" MOR_CHANNEL_CONNECTOR_DB_USERNAME=channel_connector_app \
       MOR_CHANNEL_CONNECTOR_DB_PASSWORD="$(db_password MOR_CHANNEL_CONNECTOR_DB_PASSWORD channel-connector)" \
       CHANNEL_CONNECTOR_SNOWFLAKE_REGION_ID=0 CHANNEL_CONNECTOR_SNOWFLAKE_WORKER_ID=16 \
       CHANNEL_CONNECTOR_REDIS_HOST=127.0.0.1 CHANNEL_CONNECTOR_REDIS_PORT=16379 CHANNEL_CONNECTOR_REDIS_PASSWORD="$MOR_REDIS_PASSWORD" \
       CHANNEL_CONNECTOR_COMPENSATION_INSTANCE_ID=channel-connector-local-e2e \
       CHANNELCONNECTOR_PROTOCOL_EXECUTION_ALLOWEDSCHEMES=https,http CHANNELCONNECTOR_PROTOCOL_EXECUTION_CARDCONTEXTPATH= \
+      CHANNELCONNECTOR_PROTOCOL_EXECUTION_TRUSTEDNETWORKS=127.0.0.1/32 \
         java_app channel-connector "${NACOS[@]}" --xxl.job.executor.enabled=false ;;
     payment)
       MOR_PAYMENT_DB_URL="$(db_url payment)" MOR_PAYMENT_DB_USERNAME=payment_app MOR_PAYMENT_DB_PASSWORD="$MOR_PAYMENT_DB_PASSWORD" \

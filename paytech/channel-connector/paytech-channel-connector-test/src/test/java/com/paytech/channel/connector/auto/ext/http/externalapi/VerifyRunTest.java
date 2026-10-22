@@ -24,7 +24,7 @@ import com.paytech.channel.connector.api.externalapi.request.UpdateIntegrationAp
 import com.paytech.channel.connector.api.externalapi.response.VerifyCaseResponseBody;
 import com.paytech.channel.connector.api.externalapi.response.VerifyRunResponseBody;
 import com.paytech.channel.connector.api.externalapi.response.VerifyRunStartResponseBody;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.Integration;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.Channel;
 import com.paytech.channel.connector.protocol.core.dal.dataobject.StandardApi;
 import com.paytech.channel.connector.test.base.ExternalApiTestBase;
 import com.paytech.channel.connector.test.builder.ExternalApiFixtures;
@@ -63,7 +63,7 @@ class VerifyRunTest extends ExternalApiTestBase {
 
     private StandardApi pay;
 
-    /** 本类公共：标准 API PAY、沙箱接入方（下单原子 API + 单节点流程）与验证账号 MAIN。 */
+    /** 本类公共：标准 API PAY、沙箱渠道（下单原子 API + 单节点流程）与验证账号 MAIN。 */
     @BeforeEach
     void setUpClassMocks() {
         pay = externalApi.standardApi("PAY");
@@ -169,7 +169,7 @@ class VerifyRunTest extends ExternalApiTestBase {
         assertEquals(VerifyCaseStatus.STALE.getCode(), cases.path("items").get(0).path("verifyStatus").asString());
     }
 
-    /** 发起运行缺少操作者请求头时 400 且不创建运行；不存在的运行编号与他人接入方的运行均为 404。 */
+    /** 发起运行缺少操作者请求头时 400 且不创建运行；不存在的运行编号与他人渠道的运行均为 404。 */
     @Test
     void test_actorHeaderAndNotFound() {
         createCase(SANDBOX, "PAY_ONCE", "[" + payStep("pay", "T1", "PAID") + "]");
@@ -182,10 +182,10 @@ class VerifyRunTest extends ExternalApiTestBase {
             .assertProblem(404, CommonErrorCode.NOT_FOUND);
     }
 
-    /** 接入方实现 PAY：下单原子 API CALL 与单节点流程，验证账号 MAIN 与流程身份一致。 */
+    /** 渠道实现 PAY：下单原子 API CALL 与单节点流程，验证账号 MAIN 与流程身份一致。 */
     private void implement(String code, boolean sandbox) {
-        Integration integration =
-            externalApi.integration(code, mockHttpServer.baseUrl() + ChannelMockController.PREFIX + "/api", sandbox);
+        Channel integration =
+            externalApi.channel(code, mockHttpServer.baseUrl() + ChannelMockController.PREFIX + "/api", sandbox);
         externalApi.integrationApi(integration, CALL, ExternalApiSamples.createOrderDefinition());
         externalApi.implementation(integration, pay, ExternalApiFixtures.flow("call-create-order"));
         post(BASE + "/integrations/" + code + "/verify-accounts", new CreateVerifyAccountRequestBody("MAIN",

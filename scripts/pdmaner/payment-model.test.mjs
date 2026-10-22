@@ -6,6 +6,7 @@ import path from "node:path";
 import test from "node:test";
 import { PROTOCOL_TABLES } from "./channel-connector/protocol-model.mjs";
 import { serviceOfTable } from "./payment-service-partition.mjs";
+import { serializePaymentServiceModel } from "./generate-payment-model.mjs";
 
 const workspaceRoot = path.resolve(import.meta.dirname, "../..");
 const paths = Object.freeze({
@@ -939,16 +940,16 @@ function physicalDecisionManifest() {
   assert.ok(match, "Payment Physical Decisions 缺少物理 Manifest 标记区");
   return JSON.parse(match[1]);
 }
-// 2026-10-20 起 channel-connector 模型另含自 Platform 迁入的 10 张渠道协议表与其图组，由 channel-connector-protocol-model.test.mjs
-// 校验；它们不属于本 Payment Orchestration Oracle，并集只取 Payment 分区生成的部分。
+// 2026-10-20 起 channel-connector 模型另含自 Platform 迁入的渠道协议表与其图组；2026-10-22 起其 t_payment_channel 再由
+// channel-connector/channel-model.mjs 改造为 t_channel 并修正若干注释。这些由 channel-connector-protocol-model.test.mjs 与
+// payment-channel-query.test.mjs（模型文件 = 改造(Payment 分区)）校验，不属于本 Payment Orchestration Oracle，
+// 因此并集取 Payment 生成器的 channel-connector 分区（改造前），而不是 channel-connector 模型文件。
 function readModel() {
   const payment = JSON.parse(readFileSync(paths.model, "utf8"));
-  const channelConnector = JSON.parse(readFileSync(paths.channelConnectorModel, "utf8"));
+  const channelConnector = JSON.parse(serializePaymentServiceModel("channel-connector"));
   const names = new Set([...payment.entities.map((entity) => entity.defKey), ...PROTOCOL_TABLES]);
-  const protocolIds = new Set(channelConnector.entities.filter((entity) => PROTOCOL_TABLES.includes(entity.defKey)).map((entity) => entity.id));
   return { ...payment, entities: [...payment.entities, ...channelConnector.entities.filter((entity) => !names.has(entity.defKey))],
-    diagrams: [...payment.diagrams, ...channelConnector.diagrams.filter((diagram) => !diagram.canvasData.cells
-      .some((cell) => cell.shape === "table" && protocolIds.has(cell.originKey)))] };
+    diagrams: [...payment.diagrams, ...channelConnector.diagrams] };
 }
 // 跨服务（跨库）关系在拆分后不再出现在任一模型中；本地关系 = 两端同属一个服务库。
 function isLocalRelation(relation) {

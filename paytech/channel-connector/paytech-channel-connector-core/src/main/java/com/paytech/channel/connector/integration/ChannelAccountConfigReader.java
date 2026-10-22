@@ -56,7 +56,7 @@ public class ChannelAccountConfigReader {
             var tree = JSON.readTree(value);
             if (!tree.isObject() || !tree.path("schemaVersion").isIntegralNumber()
                 || !tree.path("channelCode").isString() || !tree.path("channelAccountId").isString()
-                || !tree.path("entityNo").isString()) {
+                || !(tree.path("entityNo").isString() || tree.path("entityNo").isNull())) {
                 throw new ErrorException("Vault 账号配置结构无效");
             }
             validateMapShape(tree.path("parameters"));

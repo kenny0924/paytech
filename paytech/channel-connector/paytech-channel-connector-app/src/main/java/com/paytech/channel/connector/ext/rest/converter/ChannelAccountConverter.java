@@ -12,7 +12,7 @@ import com.paytech.channel.connector.api.channel.request.UpdateChannelAccountReq
 import com.paytech.channel.connector.api.channel.response.ChannelAccountResponseBody;
 import com.paytech.channel.connector.api.channel.response.ChannelAccountSummaryResponseBody;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelAccount;
-import com.paytech.channel.connector.core.enums.ChannelStatus;
+import com.paytech.channel.connector.protocol.core.enums.ChannelStatus;
 import com.paytech.channel.connector.domain.ChannelAccountDetailView;
 import com.paytech.channel.connector.service.processor.request.ConfigureChannelAccountRequest;
 import com.paytech.channel.connector.service.processor.request.CreateChannelAccountRequest;

@@ -53,7 +53,7 @@ export function FlowSidebar({ flow, context, functions, readOnly, selection, onC
     onSelect({ kind: 'initializer', id });
   }
   const palette: { key: string; title: ReactNode; desc: string; onClick: () => void; disabled?: boolean }[] = [
-    { key: 'api', title: '原子 API 节点', desc: context.apis.length ? '从本接入方原子 API 选择' : '本接入方还没有原子 API',
+    { key: 'api', title: '原子 API 节点', desc: context.apis.length ? '从本渠道原子 API 选择' : '本渠道还没有原子 API',
       onClick: () => setPicking(true), disabled: !context.apis.length },
     { key: 'SUCCESS', title: <><StatusTag status="SUCCESS" /> 出口</>, desc: '返回成功与输出', onClick: () => onAddReturn('SUCCESS') },
     { key: 'FAIL', title: <><StatusTag status="FAIL" /> 出口</>, desc: '返回明确失败与输出', onClick: () => onAddReturn('FAIL') },
@@ -376,7 +376,7 @@ export function InitializerSide({ flow, context, functions, readOnly, onChange, 
     <div className="xflow-returns">{Object.entries(declared?.returnRoots ?? {}).map(([root, type]) => <div key={root}>
       {type === 'PROTECTED_HANDLE' ? <><span className="xapi-handle">🔒 {root}.*</span><span className="xapi-field-hint">受控句柄，只能给 PROTECTED_HANDLE 参数</span></>
         : <><Mono>{root}.*</Mono><span className="xapi-field-hint">普通字符串，可用于请求字段</span></>}</div>)}</div>
-    {item.function === 'CHANNEL_ACCOUNT_CONFIG' && <Note items={['以 platform-support-service 身份、CHANNEL_EXECUTION 用途读取 Vault，并核对渠道、账号与经营主体与传入一致。',
+    {item.function === 'CHANNEL_ACCOUNT_CONFIG' && <Note items={['以 channel-connector-service 身份、CHANNEL_EXECUTION 用途读取 Vault，并核对渠道、账号与经营主体与传入一致。',
       '在数据库事务外执行；结果只在本次调用内存中，不缓存。']} />}
   </Side>;
 }

@@ -17,7 +17,7 @@ import com.paytech.channel.connector.api.externalapi.request.CreateVerifyCaseReq
 import com.paytech.channel.connector.api.externalapi.request.DeleteExternalApiConfigRequestBody;
 import com.paytech.channel.connector.api.externalapi.request.UpdateVerifyAccountRequestBody;
 import com.paytech.channel.connector.api.externalapi.response.VerifyAccountResponseBody;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.Integration;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.Channel;
 import com.paytech.channel.connector.protocol.core.enums.ChangeTargetType;
 import com.paytech.channel.connector.protocol.core.enums.ChangeType;
 import com.paytech.channel.connector.test.base.ExternalApiTestBase;
@@ -38,12 +38,12 @@ class VerifyAccountManagementTest extends ExternalApiTestBase {
 
     private static final String PATH = BASE + "/integrations/DEMO/verify-accounts";
 
-    private Integration demo;
+    private Channel demo;
 
-    /** 本类公共：一个接入方 DEMO。 */
+    /** 本类公共：一个渠道 DEMO。 */
     @BeforeEach
     void setUpClassMocks() {
-        demo = externalApi.integration("DEMO");
+        demo = externalApi.channel("DEMO");
     }
 
     /** 创建后详情返回全部材料并保持顺序，列表只返回身份；修改递增版本；变更记录只有摘要、不含沙箱凭据。 */

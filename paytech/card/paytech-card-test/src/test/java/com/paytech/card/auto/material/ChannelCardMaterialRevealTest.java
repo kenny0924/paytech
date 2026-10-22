@@ -21,8 +21,8 @@ import com.paytech.card.test.base.AbstractCardApiTest;
  * Redis GETDEL 领取 CVV。
  *
  * <p>
- * 覆盖：成功一次并标记已用、CVV 领取后删除；第一段过渡期 channel-connector 与 Platform 两个调用方都能读卡；二次使用拒绝；过期拒绝；用途不符拒绝；
- * 其他调用方 404 且票据不被消耗；票据不存在 404。所有拒绝都不返回卡数据。
+ * 覆盖：成功一次并标记已用、CVV 领取后删除；统一对外渠道出口第二段起只有 channel-connector 能读卡，Platform 404；二次使用拒绝；过期拒绝；
+ * 用途不符拒绝；其他调用方 404 且票据不被消耗；票据不存在 404。所有拒绝都不返回卡数据。
  *
  * @see ChannelCardMaterialApi
  */
@@ -88,26 +88,25 @@ class ChannelCardMaterialRevealTest extends AbstractCardApiTest {
     }
 
     /**
-     * 第一段过渡（统一对外渠道出口）：channel-connector 与 Platform 各凭自己的票据读卡，都返回创建时的卡数据并各自标记已用；
-     * 第二段收回 Platform 后本场景只保留 channel-connector。
+     * 统一对外渠道出口第二段收回 Platform 读卡：platform-support-service 凭票据读卡 404、不返回卡数据、不消耗票据，也不读取卡密钥；
+     * 随后 channel-connector 凭同一票据读到创建时的卡数据并标记已用。
      */
     @Test
-    void test_transitionCallersReveal() {
-        String connectorTicket = issueTicket(newInstrument());
-        String platformTicket = issueTicket(newInstrument());
-        // 同卡号第二次建工具会复用已有卡并读取一次卡密钥，只计两次读卡新增的密钥读取
-        int revealsBefore = vault.cardKeyRevealCount();
+    void test_platformCallerRejected() {
+        String ticket = issueTicket(newInstrument());
 
+        var platform = reveal(CardApiConstants.PLATFORM_SUPPORT_SERVICE, ticket);
+        int revealsAfterPlatform = vault.cardKeyRevealCount();
         var connector = exchange(HttpMethod.POST, REVEAL, CardApiConstants.CHANNEL_CONNECTOR_SERVICE,
-            Map.of("ticket", connectorTicket)).getBody();
-        var platform = exchange(HttpMethod.POST, REVEAL, CardApiConstants.PLATFORM_SUPPORT_SERVICE,
-            Map.of("ticket", platformTicket)).getBody();
+            Map.of("ticket", ticket)).getBody();
 
         Map<String, Object> expected = Map.of("pan", PAN, "expiryMonth", EXPIRY_MONTH, "expiryYear", EXPIRY_YEAR,
             "cardholderName", CARDHOLDER_NAME, "cvv", CVV);
-        assertAll(() -> assertEquals(expected, connector), () -> assertEquals(expected, platform),
-            () -> assertTrue(mapper.tickets().stream().allMatch(row -> row.get("usedAt") != null), "票据未全部标记已用"),
-            () -> assertEquals(revealsBefore + 2, vault.cardKeyRevealCount()));
+        assertAll(() -> assertEquals(404, platform.status()), () -> assertNoCardData(platform),
+            () -> assertEquals(0, revealsAfterPlatform, "Platform 被拒时不得读取卡密钥"),
+            () -> assertEquals(expected, connector),
+            () -> assertTrue(mapper.tickets().stream().allMatch(row -> row.get("usedAt") != null), "票据未标记已用"),
+            () -> assertEquals(1, vault.cardKeyRevealCount()));
         transactions.assertOutsideTransactions();
     }
 

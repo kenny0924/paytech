@@ -8,7 +8,7 @@
         <result column="account_name" property="accountName"/>
         <result column="account_vault_token" property="accountVaultToken"/>
         <result column="account_status" property="accountStatus"
-                javaType="com.paytech.channel.connector.core.enums.ChannelStatus"
+                javaType="com.paytech.channel.connector.protocol.core.enums.ChannelStatus"
                 typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
         <result column="remark" property="remark"/>
         <result column="create_time" property="createTime"
@@ -50,6 +50,20 @@
     </update>
     <select id="countOpenByChannel" resultType="long">
         SELECT COUNT(*) FROM t_channel_account WHERE channel_id = #{channelId} AND account_status &lt;&gt; 'CLOSED'
+    </select>
+    <select id="countActiveByChannel" resultType="long">
+        SELECT COUNT(*) FROM t_channel_account WHERE channel_id = #{channelId} AND account_status = 'ACTIVE'
+    </select>
+    <select id="findActiveByChannel" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM t_channel_account WHERE channel_id = #{channelId} AND account_status = 'ACTIVE'
+        ORDER BY channel_account_id
+    </select>
+    <select id="countByChannels" resultType="com.paytech.channel.connector.core.dal.dataobject.ChannelRowCount">
+        SELECT channel_id AS channelId, COUNT(*) AS rowCount FROM t_channel_account WHERE channel_id IN
+        <foreach collection="channelIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        GROUP BY channel_id
     </select>
     <sql id="pageFilter">
         <where>

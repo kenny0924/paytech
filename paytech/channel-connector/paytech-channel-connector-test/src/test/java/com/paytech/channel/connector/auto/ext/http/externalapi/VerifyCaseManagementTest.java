@@ -16,7 +16,7 @@ import com.paytech.channel.connector.api.externalapi.request.CreateVerifyCaseReq
 import com.paytech.channel.connector.api.externalapi.request.UpdateVerifyCaseRequestBody;
 import com.paytech.channel.connector.api.externalapi.request.ValidateVerifyCaseRequestBody;
 import com.paytech.channel.connector.api.externalapi.response.VerifyCaseResponseBody;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.Integration;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.Channel;
 import com.paytech.channel.connector.protocol.core.enums.ChangeTargetType;
 import com.paytech.channel.connector.protocol.core.enums.ChangeType;
 import com.paytech.channel.connector.test.base.ExternalApiTestBase;
@@ -46,10 +46,10 @@ class VerifyCaseManagementTest extends ExternalApiTestBase {
          "expect":{"executeStatus":"SUCCESS","returnId":"done","outputs":[{"path":"paymentStatus","match":"ONE_OF","value":["PAID"]}]}}""";
 
 
-    /** 本类公共：接入方 DEMO 实现 PAY（单节点流程），验证账号 MAIN。 */
+    /** 本类公共：渠道 DEMO 实现 PAY（单节点流程），验证账号 MAIN。 */
     @BeforeEach
     void setUpClassMocks() {
-        Integration demo = externalApi.integration("DEMO");
+        Channel demo = externalApi.channel("DEMO");
         externalApi.integrationApi(demo, "CALL", ExternalApiSamples.createOrderDefinition());
         externalApi.implementation(demo, externalApi.standardApi("PAY"), ExternalApiFixtures.flow("call-create-order"));
         post(BASE + "/integrations/DEMO/verify-accounts", new CreateVerifyAccountRequestBody("MAIN", "主账号",

@@ -60,7 +60,8 @@ export function pageRoutePaths(menu: ConsoleResource): string[] {
     case 'OPERATIONS_COMMERCIAL_TERMS':
       return [menu.frontendRoute, `${menu.frontendRoute}/versions/:versionId`, `${menu.frontendRoute}/compare/:baseVersionId/:targetVersionId`];
     case 'OPERATIONS_CHANNEL_CHANNELS':
-      return [menu.frontendRoute, `${menu.frontendRoute}/:channelId`];
+      return [menu.frontendRoute, `${menu.frontendRoute}/:channelId`, `${menu.frontendRoute}/code/:channelCode`, `${menu.frontendRoute}/code/:channelCode/protocol/:section/:childCode`,
+        `${menu.frontendRoute}/:channelId/protocol/:section/:childCode`, `${menu.frontendRoute}/:channelId/verify/:section/:childCode`];
     case 'OPERATIONS_CHANNEL_MIDS':
       return [menu.frontendRoute, `${menu.frontendRoute}/:midId`];
     case 'OPERATIONS_CHANNEL_COST_PLANS':
@@ -75,8 +76,6 @@ export function pageRoutePaths(menu: ConsoleResource): string[] {
       return [menu.frontendRoute, `${menu.frontendRoute}/statements/:bankStatementId`, `${menu.frontendRoute}/lines/:bankStatementLineId`];
     case 'OPERATIONS_FINANCE_RECON_EXCEPTIONS':
       return [menu.frontendRoute, `${menu.frontendRoute}/:exceptionId`];
-    case 'OPERATIONS_EXTERNAL_INTEGRATIONS':
-      return [menu.frontendRoute, `${menu.frontendRoute}/:integrationCode`, `${menu.frontendRoute}/:integrationCode/:section/:childCode`];
     case 'OPERATIONS_QUERY_TEMPLATES':
       return [menu.frontendRoute, `${menu.frontendRoute}/:templateId`];
     default:

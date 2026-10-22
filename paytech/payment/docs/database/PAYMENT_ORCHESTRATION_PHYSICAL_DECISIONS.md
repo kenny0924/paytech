@@ -15,6 +15,8 @@
 
 > **2026-09-05 横切规范更新：** 前序 `compensation_event`、Vault 元数据及物理 CHECK/FK 说明不再是新增实现目标。Payment 的 Execution 后继模型已按已确认方案对齐补偿目标字段，实际数据库执行仍单独核验。按 [当前实现台账](../../../../agent-docs/CURRENT_IMPLEMENTATION.md) 的 COMP-01、VAULT-01、DB-01 完成同步迁移前，不得复制旧字段，也不得声称模型已经迁移。
 
+> **渠道表合并（2026-10-22）：** 依据[统一对外出口技术方案](../../../../requirements/20261020/channel-connector-统一对外渠道出口/technique.md)第二段，`t_payment_channel` 与 Platform 迁入的 `t_integration` 合并为 channel-connector 的 `t_channel`（新增 `channel_type` PAYMENT / SERVICE、`description`、`endpoints`、`version`），`t_channel_account.entity_no` 改为可空（服务渠道凭据不属于 OE；支付渠道账号仍由应用要求 OE）。Payment 冻结的 Channel / Channel Account / MID 坐标与 `channel_id` 取值不变；本页旧表名按此读作 `t_channel`。执行状态只见[当前实施台账](../../../../agent-docs/CURRENT_IMPLEMENTATION.md#channel-connector-phase2-20261022)。
+
 > **Channel 五表后继：** [2026-09-21 需求](../../../../requirements/20260921/payment-渠道账号与MID能力查询/requirement.md)及其[实施合同](../../../../requirements/20260921/payment-渠道账号与MID能力查询/implementation-contract.md)取代本页旧账号定位字段、单表能力及健康状态部分；其他历史正文保持证据性质。
 
 ## 1. 范围与权威来源
@@ -59,7 +61,7 @@
 | 服务 / 数据库 | 规范模型 | 表 |
 |---|---|---|
 | payment / `mor_payment` | [`payment.pdma.json`](payment.pdma.json)、[`sql/payment-schema.sql`](sql/payment-schema.sql) | `t_routing_decision`、`t_route_candidate_eval`、`t_payment_intent`、`t_payment_attempt`、`t_payment_instrument_token`、`t_payment_action`、`t_channel_transaction_ref`、`t_duplicate_payment_case`、`t_payment_refund_position`、`t_channel_refund`、`t_compensation_event`；在 dispute 服务建立前暂留的 `t_channel_dispute_notice`、`t_channel_dispute_event`、`t_channel_dispute_action`（归属 dispute，仅 Schema）；待删除的 `t_command_idempotency`（S10） |
-| channel-connector / `mor_channel_connector` | [`channel-connector.pdma.json`](../../../channel-connector/docs/database/channel-connector.pdma.json)、[`sql/channel-connector-schema.sql`](../../../channel-connector/docs/database/sql/channel-connector-schema.sql) | `t_payment_channel`、`t_channel_account`、`t_channel_mid`、`t_mid_capability`、`t_mid_capability_detail`、`t_routing_policy`、`t_routing_policy_version`、`t_routing_policy_mid`、`t_channel_interaction`、`t_channel_callback`、`t_channel_callback_item`、`t_channel_event_exception`、`t_compensation_event` |
+| channel-connector / `mor_channel_connector` | [`channel-connector.pdma.json`](../../../channel-connector/docs/database/channel-connector.pdma.json)、[`sql/channel-connector-schema.sql`](../../../channel-connector/docs/database/sql/channel-connector-schema.sql) | `t_channel`、`t_channel_account`、`t_channel_mid`、`t_mid_capability`、`t_mid_capability_detail`、`t_routing_policy`、`t_routing_policy_version`、`t_routing_policy_mid`、`t_channel_interaction`、`t_channel_callback`、`t_channel_callback_item`、`t_channel_event_exception`、`t_compensation_event` |
 | card / `mor_card`（第 12 步迁出 payment） | [`card.pdma.json`](../../../card/docs/database/card.pdma.json)、[`sql/card-schema.sql`](../../../card/docs/database/sql/card-schema.sql) | `t_payment_card`、`t_payment_card_credential`、`t_payment_card_instrument`、`t_payment_stored_card`、`t_card_material_ticket`、`t_compensation_event`、`t_consumed_event`、`t_consumed_aggregate_version`（卡域 4 表的模型由 `scripts/pdmaner/card-model-additions.mjs` 维护） |
 
 拆分后的统计（由三份模型计算）：payment 15 表、29 条本库关系；channel-connector 13 表、14 条本库关系；card 8 表、5 条本库关系（第 12 步前 payment 为 19 表、34 条）。

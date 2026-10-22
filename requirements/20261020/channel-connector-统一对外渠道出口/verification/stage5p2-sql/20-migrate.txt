@@ -1,0 +1,166 @@
+UTC start 2026-10-22T04:21:41.3NZ mor_channel_connector_v2e2e phase2-20-migrate.sql
+--------------
+--------------
+Query OK, 0 rows affected
+--------------
+--------------
+Query OK, 0 rows affected
+--------------
+--------------
+Query OK, 0 rows affected
+--------------
+--------------
+Query OK, 1 row affected
+--------------
+--------------
+Query OK, 0 rows affected
+Records: 0  Duplicates: 0  Warnings: 0
+--------------
+--------------
+Query OK, 0 rows affected
+--------------
+--------------
+Query OK, 0 rows affected
+--------------
+--------------
+Query OK, 1 row affected
+Records: 1  Duplicates: 0  Warnings: 0
+--------------
+--------------
+Query OK, 0 rows affected
+Records: 0  Duplicates: 0  Warnings: 0
+--------------
+--------------
+Query OK, 0 rows affected
+Records: 0  Duplicates: 0  Warnings: 0
+--------------
+--------------
+Query OK, 0 rows affected
+--------------
+--------------
+Query OK, 14 rows affected
+Records: 14  Duplicates: 0  Warnings: 0
+--------------
+--------------
+Query OK, 0 rows affected
+--------------
+--------------
+Query OK, 1 row affected
+Records: 1  Duplicates: 0  Warnings: 0
+--------------
+--------------
+Query OK, 0 rows affected
+Records: 0  Duplicates: 0  Warnings: 0
+--------------
+--------------
+Query OK, 0 rows affected
+Records: 0  Duplicates: 0  Warnings: 0
+--------------
+--------------
+Query OK, 0 rows affected
+Records: 0  Duplicates: 0  Warnings: 0
+--------------
+--------------
+Query OK, 0 rows affected
+Records: 0  Duplicates: 0  Warnings: 0
+--------------
+--------------
+Query OK, 0 rows affected
+Records: 0  Duplicates: 0  Warnings: 0
+--------------
+--------------
+Query OK, 0 rows affected
+Records: 0  Duplicates: 0  Warnings: 0
+--------------
+--------------
+Query OK, 0 rows affected
+Records: 0  Duplicates: 0  Warnings: 0
+--------------
+--------------
+Query OK, 0 rows affected
+Records: 0  Duplicates: 0  Warnings: 0
+--------------
+--------------
+Query OK, 0 rows affected
+Records: 0  Duplicates: 0  Warnings: 0
+--------------
+--------------
+Query OK, 0 rows affected
+Records: 0  Duplicates: 0  Warnings: 0
+--------------
+--------------
+Query OK, 0 rows affected
+Records: 0  Duplicates: 0  Warnings: 0
+--------------
+--------------
+Query OK, 0 rows affected
+Records: 0  Duplicates: 0  Warnings: 0
+--------------
+--------------
+Query OK, 0 rows affected
+Records: 0  Duplicates: 0  Warnings: 0
+--------------
+--------------
+Query OK, 0 rows affected
+--------------
+--------------
+Query OK, 0 rows affected
+--------------
+--------------
+Query OK, 1 row affected
+Rows matched: 1  Changed: 1  Warnings: 0
+--------------
+--------------
+Query OK, 0 rows affected
+Records: 0  Duplicates: 0  Warnings: 0
+--------------
+--------------
+Query OK, 4 rows affected
+Rows matched: 4  Changed: 4  Warnings: 0
+--------------
+--------------
+Query OK, 2 rows affected
+Rows matched: 2  Changed: 2  Warnings: 0
+--------------
+--------------
+Query OK, 4 rows affected
+Rows matched: 4  Changed: 4  Warnings: 0
+--------------
+--------------
+Query OK, 6 rows affected
+Rows matched: 6  Changed: 6  Warnings: 0
+--------------
+--------------
+Query OK, 6 rows affected
+Rows matched: 6  Changed: 6  Warnings: 0
+--------------
+--------------
+Query OK, 6 rows affected
+Rows matched: 6  Changed: 6  Warnings: 0
+--------------
+--------------
+Query OK, 0 rows affected
+Rows matched: 0  Changed: 0  Warnings: 0
+--------------
+--------------
+Query OK, 0 rows affected
+Rows matched: 0  Changed: 0  Warnings: 0
+--------------
+--------------
+Query OK, 0 rows affected
+Rows matched: 0  Changed: 0  Warnings: 0
+--------------
+--------------
+Query OK, 0 rows affected
+Rows matched: 0  Changed: 0  Warnings: 0
+--------------
+--------------
+Query OK, 0 rows affected
+--------------
+--------------
+Query OK, 0 rows affected
+Records: 0  Duplicates: 0  Warnings: 0
+--------------
+--------------
+Query OK, 0 rows affected
+UTC end 2026-10-22T04:21:43Z

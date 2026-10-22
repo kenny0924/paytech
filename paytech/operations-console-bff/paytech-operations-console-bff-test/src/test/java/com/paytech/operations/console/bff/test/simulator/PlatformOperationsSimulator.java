@@ -332,7 +332,8 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
         Map.entry("operations-commercial-term-acceptance", COMMERCIAL_PRICING_MANAGE_PERMISSION_ID));
 
     /**
-     * 渠道路由权限（注册 DML 块 92，31 条）：渠道配置读写、账号凭据、成本读写与独立的成本审批、变更记录读取；
+     * 渠道路由权限（注册 DML 块 92 的 31 条与块 129 的 4 条）：渠道配置读写（含出站地址）、账号凭据、成本读写与独立的成本审批、
+     * 变更记录读取、调用授权维护；
      * 未登记的 operations-channel-* 视为意外调用。
      */
     public static final String CHANNEL_CONFIG_READ_PERMISSION_ID = "900000000000092101";
@@ -342,12 +343,18 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
     public static final String CHANNEL_COST_MANAGE_PERMISSION_ID = "900000000000092105";
     public static final String CHANNEL_COST_APPROVE_PERMISSION_ID = "900000000000092106";
     public static final String CHANNEL_CHANGE_READ_PERMISSION_ID = "900000000000092107";
+    /** 块 129 新增的调用授权维护权限（测试侧编号，与 PLT-I02 的判定无关）。 */
+    public static final String CHANNEL_CALL_GRANT_MANAGE_PERMISSION_ID = "900000000000129101";
     public static final Map<String, String> CHANNEL_ROUTE_PERMISSIONS = Map.ofEntries(
         Map.entry("operations-channel-channel-list", CHANNEL_CONFIG_READ_PERMISSION_ID),
         Map.entry("operations-channel-channel-detail", CHANNEL_CONFIG_READ_PERMISSION_ID),
         Map.entry("operations-channel-channel-create", CHANNEL_CONFIG_MANAGE_PERMISSION_ID),
         Map.entry("operations-channel-channel-update", CHANNEL_CONFIG_MANAGE_PERMISSION_ID),
         Map.entry("operations-channel-channel-status", CHANNEL_CONFIG_MANAGE_PERMISSION_ID),
+        Map.entry("operations-channel-channel-endpoints", CHANNEL_CONFIG_MANAGE_PERMISSION_ID),
+        Map.entry("operations-channel-call-grant-list", CHANNEL_CONFIG_READ_PERMISSION_ID),
+        Map.entry("operations-channel-call-grant-create", CHANNEL_CALL_GRANT_MANAGE_PERMISSION_ID),
+        Map.entry("operations-channel-call-grant-status", CHANNEL_CALL_GRANT_MANAGE_PERMISSION_ID),
         Map.entry("operations-channel-account-list", CHANNEL_CONFIG_READ_PERMISSION_ID),
         Map.entry("operations-channel-account-detail", CHANNEL_CONFIG_READ_PERMISSION_ID),
         Map.entry("operations-channel-account-create", CHANNEL_CONFIG_MANAGE_PERMISSION_ID),

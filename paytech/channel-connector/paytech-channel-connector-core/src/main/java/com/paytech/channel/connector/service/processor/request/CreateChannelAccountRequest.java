@@ -18,8 +18,7 @@ public class CreateChannelAccountRequest {
     @NotNull
     private Long channelId;
 
-    /** 所属 OE 编号 */
-    @NotBlank
+    /** 所属 OE 编号；支付渠道必填，服务渠道必须为空 */
     private String entityNo;
 
     /** 账号名称 */

@@ -4,21 +4,28 @@
 -- Source: paytech/channel-connector/docs/database/channel-connector.pdma.json
 SET NAMES utf8mb4;
 
-CREATE TABLE `t_payment_channel` (
-  `channel_id` BIGINT NOT NULL COMMENT 'Payment 管理的支付服务商内部唯一标识。',
-  `channel_code` VARCHAR(64) NOT NULL COMMENT '平台稳定识别支付服务商的唯一业务代码。取值来源：Channel Catalog；非固定枚举。',
-  `channel_name` VARCHAR(255) NOT NULL COMMENT '供运营配置和审阅展示的支付服务商正式名称。',
-  `channel_status` VARCHAR(64) NOT NULL COMMENT '支付服务商从草稿、激活、暂停到关闭的当前运行状态。允许值：DRAFT、ACTIVE、SUSPENDED、CLOSED。',
+CREATE TABLE `t_channel` (
+  `channel_id` BIGINT NOT NULL COMMENT '渠道的内部唯一标识；支付渠道的技术账号、MID、成本方案与 Payment 冻结的执行坐标均引用它。',
+  `channel_code` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '平台稳定识别渠道的唯一业务代码，大小写敏感，格式为大写字母开头的大写字母、数字与下划线，2 至 64 字符，创建后不可修改；也是外部 API 管理接口中的接入方编码。取值来源：渠道目录；非固定枚举。',
+  `channel_name` VARCHAR(255) NOT NULL COMMENT '供运营配置和审阅展示的渠道正式名称。',
+  `channel_type` VARCHAR(16) NOT NULL COMMENT '渠道类型，创建后不可修改；PAYMENT 有绑定 OE 的技术账号、MID、能力与成本，只经支付入口执行；SERVICE 最多一个不绑定 OE 的 ACTIVE 账号保存凭据，只经通用执行入口并按调用授权执行。允许值：PAYMENT、SERVICE。',
+  `channel_status` VARCHAR(64) NOT NULL COMMENT '渠道从草稿、激活、暂停到关闭的当前运行状态；激活要求已配置出站地址。允许值：DRAFT、ACTIVE、SUSPENDED、CLOSED。',
+  `description` VARCHAR(512) NULL COMMENT '渠道业务用途说明；未填写时为空，禁止填写凭据。',
+  `endpoints` JSON NULL COMMENT '本环境出站地址数组 [{endpointCode, baseUrl, sandbox}]，1 至 16 项，未配置时为空；endpointCode 在渠道内唯一，baseUrl 的协议受部署允许列表限制（默认仅 https），不含用户信息、查询串与片段，最长 512 字符；保存时拦截回环、私网、链路本地、保留与组播 IP 字面量及 localhost，执行时解析主机名后再次拦截，部署配置的 trusted-networks 网段放行；sandbox 可选、缺省为 false，只有为 true 的地址允许沙箱验证运行。',
+  `version` INT NOT NULL COMMENT '名称、说明或出站地址保存时按版本条件更新并递增的并发版本，初始为 1；不是发布版本。',
+  `created_by` BIGINT NULL COMMENT '创建该渠道的 Operations 账号标识；2026-10-22 合表前创建且无接入方记录的渠道为空。',
+  `updated_by` BIGINT NULL COMMENT '最后一次修改该渠道的 Operations 账号标识；2026-10-22 合表前创建且未再修改、无接入方记录的渠道为空。',
   `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 微秒精度时间。',
   `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最近一次持久化更新的 UTC 微秒精度时间。',
   PRIMARY KEY (`channel_id`),
-  UNIQUE KEY `uk_payment_channel_code` (`channel_code`) COMMENT '唯一索引：channel_code'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='支付渠道的稳定身份和当前运行状态。';
+  UNIQUE KEY `uk_channel_code` (`channel_code`) COMMENT '唯一索引：channel_code',
+  KEY `idx_channel_type_status` (`channel_type`, `channel_status`) COMMENT '访问索引：channel_type、channel_status'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='渠道（支付渠道与服务渠道）的稳定身份、类型、运行状态与本环境出站地址；支付渠道的技术账号、MID 与成本挂在其下。';
 
 CREATE TABLE `t_channel_account` (
   `channel_account_id` BIGINT NOT NULL COMMENT 'Payment 管理的服务商技术认证账户或租户内部唯一标识。',
-  `channel_id` BIGINT NOT NULL COMMENT 'Payment 管理的支付服务商内部唯一标识。',
-  `entity_no` CHAR(5) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '账号所属 Operating Entity 的不可变 CHAR(5) 编号，来源于 CCT；与其当前绑定 MID 的 OE 一致，不作为路由规则。',
+  `channel_id` BIGINT NOT NULL COMMENT '渠道内部唯一标识（本库 t_channel.channel_id）。',
+  `entity_no` CHAR(5) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT '账号所属 Operating Entity 的不可变 CHAR(5) 编号，来源于 CCT；支付渠道账号必填，且与其当前绑定 MID 的 OE 一致，不作为路由规则；服务渠道账号必须为空（应用校验），每个服务渠道最多一个 ACTIVE 账号保存凭据。',
   `account_name` VARCHAR(128) NOT NULL COMMENT '运营维护的账号展示名称，不作为唯一技术身份。',
   `account_vault_token` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT '引用 CHANNEL_ACCOUNT_CONFIG_V1 的 REFERENCE Token，含账号业务参数及渠道凭据；仅执行前以 CHANNEL_EXECUTION 用途读取；DRAFT 可空，其他状态执行时必须存在；不得进入日志或事件。',
   `account_status` VARCHAR(64) NOT NULL COMMENT '技术认证账户或租户从草稿、激活、暂停到关闭的当前状态。允许值：DRAFT、ACTIVE、SUSPENDED、CLOSED。',
@@ -29,11 +36,11 @@ CREATE TABLE `t_channel_account` (
   UNIQUE KEY `uk_channel_account_owner` (`channel_account_id`, `channel_id`) COMMENT '唯一索引：channel_account_id、channel_id',
   KEY `idx_channel_account_status` (`channel_id`, `account_status`) COMMENT '访问索引：channel_id、account_status',
   KEY `idx_channel_account_entity` (`entity_no`, `account_status`) COMMENT '访问索引：entity_no、account_status'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='归属单个 Channel 与 OE 的技术账号；账号参数及凭据只保存 Vault 引用。';
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='归属单个渠道的技术账号：支付渠道账号绑定一个 OE，服务渠道账号不绑定 OE 且每渠道最多一个 ACTIVE；账号参数及凭据只保存 Vault 引用。';
 
 CREATE TABLE `t_channel_mid` (
   `mid_id` BIGINT NOT NULL COMMENT 'Payment 管理且唯一归属于一个 Operating Entity 的服务商商户号标识。',
-  `channel_id` BIGINT NOT NULL COMMENT 'Payment 管理的支付服务商内部唯一标识。',
+  `channel_id` BIGINT NOT NULL COMMENT '渠道内部唯一标识（本库 t_channel.channel_id）。',
   `channel_account_id` BIGINT NOT NULL COMMENT 'Payment 管理的服务商技术认证账户或租户内部唯一标识。',
   `external_mid_code` VARCHAR(128) NOT NULL COMMENT '服务商侧识别该 MID 的稳定代码，不保存凭据或 Secret。取值来源：Channel Adapter Catalog；非固定枚举。',
   `entity_no` CHAR(5) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT 'CCT唯一不可变OE编号，创建时经营国家二位代码加001–999，如AE001；不是数字代理ID，编号不参与路由。',
@@ -220,7 +227,7 @@ CREATE TABLE `t_compensation_event` (
 
 CREATE TABLE `t_channel_cost_plan` (
   `id` BIGINT NOT NULL COMMENT '服务侧生成的渠道成本方案 Snowflake 主键。',
-  `channel_id` BIGINT NOT NULL COMMENT 'Payment Channel（本库 t_payment_channel.id）。',
+  `channel_id` BIGINT NOT NULL COMMENT '支付渠道（本库 t_channel.channel_id，channel_type 为 PAYMENT）。',
   `plan_code` VARCHAR(64) NOT NULL COMMENT '跨版本稳定识别渠道成本方案的业务代码。取值来源：channel-connector 渠道成本方案代码；非固定枚举。',
   `current_ver_id` BIGINT NULL COMMENT '当前发布的本库渠道成本方案版本。',
   `status` VARCHAR(64) NOT NULL COMMENT '渠道成本方案稳定身份的当前生命周期状态。允许值：DRAFT、ACTIVE、INACTIVE。',
@@ -286,36 +293,36 @@ CREATE TABLE `t_channel_cost_component` (
 
 CREATE TABLE `t_channel_config_change` (
   `id` BIGINT NOT NULL COMMENT '服务侧生成的变更记录 Snowflake 主键。',
-  `target_type` VARCHAR(64) NOT NULL COMMENT '被变更对象类型。允许值：CHANNEL、CHANNEL_ACCOUNT、CHANNEL_MID、MID_CAPABILITY、CHANNEL_COST_VERSION、STANDARD_API、INTEGRATION、INTEGRATION_API、INTEGRATION_SCRIPT、INTEGRATION_IMPLEMENTATION、VERIFY_ACCOUNT、VERIFY_CASE。',
+  `target_type` VARCHAR(64) NOT NULL COMMENT '被变更对象类型；渠道出站地址变更记为 CHANNEL 与 CONFIGURATION。允许值：CHANNEL、CHANNEL_ACCOUNT、CHANNEL_MID、MID_CAPABILITY、CHANNEL_COST_VERSION、STANDARD_API、CHANNEL_API、CHANNEL_SCRIPT、CHANNEL_IMPLEMENTATION、VERIFY_ACCOUNT、VERIFY_CASE、CHANNEL_CALL_GRANT。',
   `target_id` BIGINT NOT NULL COMMENT '被变更对象在本库的主键。',
   `change_type` VARCHAR(64) NOT NULL COMMENT '变更类型。允许值：CREATE、UPDATE、STATUS、CONFIGURATION、REBIND、CANCEL、DELETE。',
-  `from_status` VARCHAR(64) NULL COMMENT '状态变更前的状态；非状态变更为空。取值来源：渠道、账号、MID、能力组或成本版本的状态代码；非固定枚举。',
-  `to_status` VARCHAR(64) NULL COMMENT '状态变更后的状态；非状态变更为空。取值来源：渠道、账号、MID、能力组或成本版本的状态代码；非固定枚举。',
+  `from_status` VARCHAR(64) NULL COMMENT '状态变更前的状态；非状态变更为空。取值来源：渠道、账号、MID、能力组、成本版本或调用授权的状态代码；非固定枚举。',
+  `to_status` VARCHAR(64) NULL COMMENT '状态变更后的状态；非状态变更为空。取值来源：渠道、账号、MID、能力组、成本版本或调用授权的状态代码；非固定枚举。',
   `operator_id` BIGINT NOT NULL COMMENT '执行变更的 Platform Actor 稳定业务 ID。',
   `reason` VARCHAR(512) NULL COMMENT '操作者填写的非敏感原因；禁止填写凭据。',
-  `change_detail` JSON NULL COMMENT '外部 API 配置变更的字段摘要：{objectCode, beforeVersion, afterVersion, changes[{field, before, after}]}，字段取值只记名称、编码与 SHA-256 摘要，不含定义原文、参数或凭据值；渠道、账号、MID、能力与成本版本的变更为空。',
+  `change_detail` JSON NULL COMMENT '外部 API 配置与渠道出站地址变更的字段摘要：{objectCode, beforeVersion, afterVersion, changes[{field, before, after}]}，字段取值只记名称、编码与 SHA-256 摘要，不含定义原文、参数或凭据值；渠道状态、账号、MID、能力、成本版本与调用授权的变更为空。',
   `create_time` DATETIME(6) NOT NULL COMMENT '该记录在本库中的 UTC 微秒创建时间。',
   PRIMARY KEY (`id`),
   KEY `idx_channel_config_change_target` (`target_type`, `target_id`, `id`) COMMENT '支持访问路径：target_type、target_id、id'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='渠道配置、成本版本与外部 API 配置的人工变更留痕；与业务变更同事务写入，只增不改。';
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='渠道配置、成本版本、外部 API 配置与调用授权的人工变更留痕；与业务变更同事务写入，只增不改。';
 
 CREATE TABLE `t_standard_api` (
   `standard_api_id` BIGINT NOT NULL COMMENT '标准 API 的内部技术标识。',
-  `standard_api_code` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '业务系统调用内部接口时使用的标准 API 编码，大小写敏感，格式为大写字母开头的字母、数字与下划线。取值来源：Platform 标准 API 目录；非固定枚举。',
+  `standard_api_code` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '业务系统调用渠道执行入口时使用的标准 API 编码，大小写敏感，格式为大写字母开头的字母、数字与下划线。取值来源：channel-connector 标准 API 目录；非固定枚举。',
   `standard_api_name` VARCHAR(128) NOT NULL COMMENT '标准 API 名称，供 Operations 维护页面展示。',
   `description` VARCHAR(512) NULL COMMENT '业务用途说明；未填写时为空。',
   `version` INT NOT NULL COMMENT 'Operations 保存时按版本条件更新的并发版本，初始为 1；不是发布版本。',
   `created_by` BIGINT NOT NULL COMMENT '创建该配置的 Operations 账号标识。',
   `updated_by` BIGINT NOT NULL COMMENT '最后一次修改该配置的 Operations 账号标识。',
-  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Platform Support 数据库中的 UTC 微秒创建时间。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在本库中的 UTC 微秒创建时间。',
   `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
   PRIMARY KEY (`standard_api_id`),
   UNIQUE KEY `uk_standard_api_code` (`standard_api_code`) COMMENT '保证业务唯一性：standard_api_code'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='Platform 对内提供的标准 API 定义，例如 PAY、AUTHORIZE；请求与响应字段由 t_api_field 维护，不保存调用方白名单';
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='渠道对内提供的标准 API 定义，例如 PAY、AUTHORIZE、GEOCODE；请求与响应字段由 t_api_field 维护，服务渠道的调用方授权见 t_channel_call_grant';
 
 CREATE TABLE `t_api_field` (
   `api_field_id` BIGINT NOT NULL COMMENT '字段定义的内部技术标识。',
-  `api_id` BIGINT NOT NULL COMMENT '所属 API 标识：方向为 STANDARD_API_* 时指向 t_standard_api.standard_api_id，为 INTEGRATION_API_* 时指向 t_integration_api.integration_api_id；由应用校验。',
+  `api_id` BIGINT NOT NULL COMMENT '所属 API 标识：方向为 STANDARD_API_* 时指向 t_standard_api.standard_api_id，为 INTEGRATION_API_* 时指向 t_channel_api.channel_api_id；由应用校验。',
   `direction` VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '字段所属的 API 类型与请求或响应方向。允许值：STANDARD_API_REQUEST、STANDARD_API_RESPONSE、INTEGRATION_API_REQUEST、INTEGRATION_API_RESPONSE。',
   `field_location` VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '字段在 HTTP 报文中的位置；请求允许四种，响应只允许 HEADER、BODY。允许值：HEADER、BODY、QUERY、PATH。',
   `field_path` VARCHAR(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT 'BODY 字段的完整点分路径，数组元素用 [] 表示，最多 16 段、每段 1 至 64 字符；HEADER、QUERY、PATH 为参数名，HEADER 名称大小写不敏感判重由应用完成。',
@@ -324,47 +331,32 @@ CREATE TABLE `t_api_field` (
   `required_flag` BOOLEAN NOT NULL COMMENT '1 表示必填，0 表示非必填；子字段只在父对象存在时校验，响应字段只在执行状态为 SUCCESS 时校验。',
   `sort_no` INT NOT NULL COMMENT '同一 API、同一方向内的显示顺序，从小到大。',
   `description` VARCHAR(512) NULL COMMENT '业务用途说明；未填写时为空。',
-  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Platform Support 数据库中的 UTC 微秒创建时间。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在本库中的 UTC 微秒创建时间。',
   `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
   PRIMARY KEY (`api_field_id`),
   UNIQUE KEY `uk_api_field_path` (`api_id`, `direction`, `field_location`, `field_path`) COMMENT '保证业务唯一性：api_id、direction、field_location、field_path'
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='标准 API 与渠道原子 API 共用的请求、响应字段定义；属于所属 API 的配置，随所属 API 整组替换，不单独记录版本与操作人';
 
-CREATE TABLE `t_integration` (
-  `integration_id` BIGINT NOT NULL COMMENT '外部接入方的内部技术标识。',
-  `integration_code` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '业务系统调用标准 API 时传入的接入方编码，大小写敏感，不等同于 Payment Channel 编码。取值来源：Platform 外部接入方目录；非固定枚举。',
-  `integration_name` VARCHAR(128) NOT NULL COMMENT '接入方名称，供 Operations 维护页面展示。',
-  `description` VARCHAR(512) NULL COMMENT '业务用途说明；未填写时为空。',
-  `endpoints` JSON NOT NULL COMMENT '本环境出站地址数组 [{endpointCode, baseUrl, sandbox}]，1 至 16 项；endpointCode 在接入方内唯一，baseUrl 仅允许 https、不含用户信息、查询串与片段，最长 512 字符；sandbox 可选、缺省为 false，只有为 true 的地址允许沙箱验证运行；实际出站仍受部署网络白名单限制。',
-  `version` INT NOT NULL COMMENT 'Operations 保存时按版本条件更新的并发版本，初始为 1；不是发布版本。',
-  `created_by` BIGINT NOT NULL COMMENT '创建该配置的 Operations 账号标识。',
-  `updated_by` BIGINT NOT NULL COMMENT '最后一次修改该配置的 Operations 账号标识。',
-  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Platform Support 数据库中的 UTC 微秒创建时间。',
-  `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
-  PRIMARY KEY (`integration_id`),
-  UNIQUE KEY `uk_integration_code` (`integration_code`) COMMENT '保证业务唯一性：integration_code'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='渠道或其他出站外部接入方及本环境出站地址；与 Client Integration Readiness（PLT-I13）无关';
-
-CREATE TABLE `t_integration_api` (
-  `integration_api_id` BIGINT NOT NULL COMMENT '渠道原子 API 的内部技术标识。',
-  `integration_id` BIGINT NOT NULL COMMENT '所属外部接入方标识。',
-  `api_code` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '接入方内唯一的原子 API 编码，流程节点按此引用，大小写敏感。取值来源：所属接入方的原子 API 目录；非固定枚举。',
+CREATE TABLE `t_channel_api` (
+  `channel_api_id` BIGINT NOT NULL COMMENT '渠道原子 API 的内部技术标识。',
+  `channel_id` BIGINT NOT NULL COMMENT '所属渠道标识（t_channel.channel_id）。',
+  `api_code` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '渠道内唯一的原子 API 编码，流程节点按此引用，大小写敏感。取值来源：所属渠道的原子 API 目录；非固定枚举。',
   `api_name` VARCHAR(128) NOT NULL COMMENT 'API 名称，供 Operations 维护页面展示。',
   `description` VARCHAR(512) NULL COMMENT '业务用途说明；未填写时为空。',
   `definition_json` JSON NOT NULL COMMENT '原子 API 执行定义：调用参数、协议固定值、传输、编解码、脚本引用、状态规则与按 SUCCESS/FAIL 分支的输出映射；序列化后最多 65536 UTF-8 字节，禁止保存凭据明文。',
   `version` INT NOT NULL COMMENT 'Operations 保存时按版本条件更新的并发版本，初始为 1；不是发布版本。',
   `created_by` BIGINT NOT NULL COMMENT '创建该配置的 Operations 账号标识。',
   `updated_by` BIGINT NOT NULL COMMENT '最后一次修改该配置的 Operations 账号标识。',
-  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Platform Support 数据库中的 UTC 微秒创建时间。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在本库中的 UTC 微秒创建时间。',
   `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
-  PRIMARY KEY (`integration_api_id`),
-  UNIQUE KEY `uk_integration_api_code` (`integration_id`, `api_code`) COMMENT '保证业务唯一性：integration_id、api_code'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='接入方的单次外部协议操作；请求与响应结构由 t_api_field 维护，传输、编解码、脚本、状态规则与输出映射保存在 definition_json';
+  PRIMARY KEY (`channel_api_id`),
+  UNIQUE KEY `uk_channel_api_code` (`channel_id`, `api_code`) COMMENT '保证业务唯一性：channel_id、api_code'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='渠道的单次外部协议操作；请求与响应结构由 t_api_field 维护，传输、编解码、脚本、状态规则与输出映射保存在 definition_json';
 
-CREATE TABLE `t_integration_script` (
-  `integration_script_id` BIGINT NOT NULL COMMENT '公共脚本的内部技术标识。',
-  `integration_id` BIGINT NOT NULL COMMENT '所属外部接入方标识。',
-  `script_code` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '接入方内唯一的脚本编码，原子 API 按此引用，大小写敏感。取值来源：所属接入方的公共脚本目录；非固定枚举。',
+CREATE TABLE `t_channel_script` (
+  `channel_script_id` BIGINT NOT NULL COMMENT '公共脚本的内部技术标识。',
+  `channel_id` BIGINT NOT NULL COMMENT '所属渠道标识（t_channel.channel_id）。',
+  `script_code` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '渠道内唯一的脚本编码，原子 API 按此引用，大小写敏感。取值来源：所属渠道的公共脚本目录；非固定枚举。',
   `script_name` VARCHAR(128) NOT NULL COMMENT '脚本名称，供 Operations 维护页面展示。',
   `execution_stage` VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '脚本运行的 HTTP 处理阶段；REQUEST 读写请求工作对象，RESPONSE 读写响应工作副本。允许值：REQUEST、RESPONSE。',
   `parameter_definition` JSON NOT NULL COMMENT '脚本参数声明数组 [{name, dataType, required}]，最多 32 项，无参数时为空数组。',
@@ -373,31 +365,31 @@ CREATE TABLE `t_integration_script` (
   `version` INT NOT NULL COMMENT 'Operations 保存时按版本条件更新的并发版本，初始为 1；不是发布版本。',
   `created_by` BIGINT NOT NULL COMMENT '创建该配置的 Operations 账号标识。',
   `updated_by` BIGINT NOT NULL COMMENT '最后一次修改该配置的 Operations 账号标识。',
-  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Platform Support 数据库中的 UTC 微秒创建时间。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在本库中的 UTC 微秒创建时间。',
   `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
-  PRIMARY KEY (`integration_script_id`),
-  UNIQUE KEY `uk_integration_script_code` (`integration_id`, `script_code`) COMMENT '保证业务唯一性：integration_id、script_code'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='接入方内可复用的请求或响应阶段脚本；复杂签名、加密由代码注册函数提供，脚本不读取凭据明文';
+  PRIMARY KEY (`channel_script_id`),
+  UNIQUE KEY `uk_channel_script_code` (`channel_id`, `script_code`) COMMENT '保证业务唯一性：channel_id、script_code'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='渠道内可复用的请求或响应阶段脚本；复杂签名、加密由代码注册函数提供，脚本不读取凭据明文';
 
-CREATE TABLE `t_integration_standard_api` (
-  `integration_standard_api_id` BIGINT NOT NULL COMMENT '渠道标准 API 实现的内部技术标识。',
-  `integration_id` BIGINT NOT NULL COMMENT '实现该标准 API 的外部接入方标识。',
+CREATE TABLE `t_channel_standard_api` (
+  `channel_standard_api_id` BIGINT NOT NULL COMMENT '渠道标准 API 实现的内部技术标识。',
+  `channel_id` BIGINT NOT NULL COMMENT '实现该标准 API 的渠道标识（t_channel.channel_id）。',
   `standard_api_id` BIGINT NOT NULL COMMENT '被实现的标准 API 标识。',
   `flow_definition_json` JSON NOT NULL COMMENT '流程定义：总预算、初始化项、入口、原子 API 节点、返回出口与条件连线；无环，序列化后最多 65536 UTF-8 字节。',
   `version` INT NOT NULL COMMENT 'Operations 保存时按版本条件更新的并发版本，初始为 1；不是发布版本。',
   `created_by` BIGINT NOT NULL COMMENT '创建该配置的 Operations 账号标识。',
   `updated_by` BIGINT NOT NULL COMMENT '最后一次修改该配置的 Operations 账号标识。',
-  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Platform Support 数据库中的 UTC 微秒创建时间。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在本库中的 UTC 微秒创建时间。',
   `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
-  PRIMARY KEY (`integration_standard_api_id`),
-  UNIQUE KEY `uk_integration_standard_api` (`integration_id`, `standard_api_id`) COMMENT '保证业务唯一性：integration_id、standard_api_id',
-  KEY `idx_integ_std_api_standard` (`standard_api_id`) COMMENT '支持访问路径：standard_api_id'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='接入方对某个标准 API 的当前实现；flow_definition_json 保存初始化、原子 API 节点、条件连线与返回出口，不保存流程实例或运行状态';
+  PRIMARY KEY (`channel_standard_api_id`),
+  UNIQUE KEY `uk_channel_standard_api` (`channel_id`, `standard_api_id`) COMMENT '保证业务唯一性：channel_id、standard_api_id',
+  KEY `idx_channel_std_api_standard` (`standard_api_id`) COMMENT '支持访问路径：standard_api_id'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='渠道对某个标准 API 的当前实现；flow_definition_json 保存初始化、原子 API 节点、条件连线与返回出口，不保存流程实例或运行状态';
 
-CREATE TABLE `t_integration_verify_account` (
+CREATE TABLE `t_channel_verify_account` (
   `verify_account_id` BIGINT NOT NULL COMMENT '验证账号的内部技术标识。',
-  `integration_id` BIGINT NOT NULL COMMENT '所属外部接入方标识。',
-  `account_code` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '接入方内唯一的验证账号编码，验证用例按此引用，大小写敏感。取值来源：所属接入方的验证账号目录；非固定枚举。',
+  `channel_id` BIGINT NOT NULL COMMENT '所属渠道标识（t_channel.channel_id）。',
+  `account_code` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '渠道内唯一的验证账号编码，验证用例按此引用，大小写敏感。取值来源：所属渠道的验证账号目录；非固定枚举。',
   `account_name` VARCHAR(128) NOT NULL COMMENT '账号名称，供 Operations 维护页面展示。',
   `channel_code` VARCHAR(64) NOT NULL COMMENT '账号所属渠道编码，流程初始化时与输入中的账号身份核对。',
   `channel_account_id` VARCHAR(64) NOT NULL COMMENT '流程初始化时与输入中的账号身份核对的渠道账号标识。',
@@ -407,16 +399,16 @@ CREATE TABLE `t_integration_verify_account` (
   `version` INT NOT NULL COMMENT 'Operations 保存时按版本条件更新的并发版本，初始为 1；不是发布版本。',
   `created_by` BIGINT NOT NULL COMMENT '创建该配置的 Operations 账号标识。',
   `updated_by` BIGINT NOT NULL COMMENT '最后一次修改该配置的 Operations 账号标识。',
-  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Platform Support 数据库中的 UTC 微秒创建时间。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在本库中的 UTC 微秒创建时间。',
   `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
   PRIMARY KEY (`verify_account_id`),
-  UNIQUE KEY `uk_verify_account_code` (`integration_id`, `account_code`) COMMENT '保证业务唯一性：integration_id、account_code'
+  UNIQUE KEY `uk_verify_account_code` (`channel_id`, `account_code`) COMMENT '保证业务唯一性：channel_id、account_code'
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='沙箱验证运行使用的渠道账号材料；按用户决定以明文保存非敏感沙箱材料，不写入 Vault，正式执行不读取';
 
-CREATE TABLE `t_integration_verify_case` (
+CREATE TABLE `t_channel_verify_case` (
   `verify_case_id` BIGINT NOT NULL COMMENT '验证用例的内部技术标识。',
-  `integration_id` BIGINT NOT NULL COMMENT '所属外部接入方标识。',
-  `case_code` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '接入方内唯一的验证用例编码，大小写敏感。取值来源：所属接入方的验证用例目录；非固定枚举。',
+  `channel_id` BIGINT NOT NULL COMMENT '所属渠道标识（t_channel.channel_id）。',
+  `case_code` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '渠道内唯一的验证用例编码，大小写敏感。取值来源：所属渠道的验证用例目录；非固定枚举。',
   `case_name` VARCHAR(128) NOT NULL COMMENT '用例名称，供 Operations 维护页面展示。',
   `description` VARCHAR(512) NULL COMMENT '业务用途说明；未填写时为空。',
   `verify_account_id` BIGINT NOT NULL COMMENT '运行时使用的验证账号标识。',
@@ -424,33 +416,33 @@ CREATE TABLE `t_integration_verify_case` (
   `version` INT NOT NULL COMMENT 'Operations 保存时按版本条件更新的并发版本，初始为 1；不是发布版本。',
   `created_by` BIGINT NOT NULL COMMENT '创建该配置的 Operations 账号标识。',
   `updated_by` BIGINT NOT NULL COMMENT '最后一次修改该配置的 Operations 账号标识。',
-  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Platform Support 数据库中的 UTC 微秒创建时间。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在本库中的 UTC 微秒创建时间。',
   `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
   PRIMARY KEY (`verify_case_id`),
-  UNIQUE KEY `uk_verify_case_code` (`integration_id`, `case_code`) COMMENT '保证业务唯一性：integration_id、case_code',
+  UNIQUE KEY `uk_verify_case_code` (`channel_id`, `case_code`) COMMENT '保证业务唯一性：channel_id、case_code',
   KEY `idx_verify_case_account` (`verify_account_id`) COMMENT '支持访问路径：verify_account_id'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='接入方的沙箱验证用例：使用的验证账号与有序步骤，每步包含标准 API、输入模板与期望';
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='渠道的沙箱验证用例：使用的验证账号与有序步骤，每步包含标准 API、输入模板与期望';
 
-CREATE TABLE `t_integration_verify_run` (
+CREATE TABLE `t_channel_verify_run` (
   `verify_run_id` BIGINT NOT NULL COMMENT '验证运行的内部技术标识，以十进制字符串作为对外运行编号。',
   `verify_case_id` BIGINT NOT NULL COMMENT '被运行的验证用例标识；用例删除后保留原值。',
-  `integration_id` BIGINT NOT NULL COMMENT '所属外部接入方标识。',
+  `channel_id` BIGINT NOT NULL COMMENT '所属渠道标识（t_channel.channel_id）。',
   `run_status` VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '运行结论；FAILED 表示期望不满足或步骤出错，INTERRUPTED 表示执行进程中断后不再向沙箱重放。允许值：RUNNING、PASSED、FAILED、INTERRUPTED。',
   `case_snapshot_json` JSON NOT NULL COMMENT '发起运行时的用例步骤、期望、账号编码与账号版本，不含凭据。',
-  `config_versions_json` JSON NULL COMMENT '运行实际加载的标准 API、接入方、原子 API、脚本与实现版本，按编码记录；运行未加载配置时为空。',
-  `endpoints_json` JSON NULL COMMENT '运行时接入方出站地址及沙箱标记；运行未加载配置时为空。',
+  `config_versions_json` JSON NULL COMMENT '运行实际加载的标准 API、渠道、原子 API、脚本与实现版本，按编码记录；运行未加载配置时为空。',
+  `endpoints_json` JSON NULL COMMENT '运行时渠道出站地址及沙箱标记；运行未加载配置时为空。',
   `failure_summary` VARCHAR(512) NULL COMMENT '未通过时的首个原因；通过或运行中为空。',
   `started_by` BIGINT NOT NULL COMMENT '发起运行的 Operations 账号标识。',
   `start_time` DATETIME(6) NOT NULL COMMENT '发起运行的 UTC 微秒时间。',
   `finish_time` DATETIME(6) NULL COMMENT '运行得出结论的 UTC 微秒时间；运行中为空。',
-  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Platform Support 数据库中的 UTC 微秒创建时间。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在本库中的 UTC 微秒创建时间。',
   `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
   PRIMARY KEY (`verify_run_id`),
   KEY `idx_verify_run_case` (`verify_case_id`, `start_time`) COMMENT '支持访问路径：verify_case_id、start_time',
-  KEY `idx_verify_run_integration` (`integration_id`, `start_time`) COMMENT '支持访问路径：integration_id、start_time'
+  KEY `idx_verify_run_channel` (`channel_id`, `start_time`) COMMENT '支持访问路径：channel_id、start_time'
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='一次沙箱验证运行的结论与证据：运行时的用例快照、配置版本与出站地址；记录不删除，用例删除后仍保留';
 
-CREATE TABLE `t_integration_verify_run_step` (
+CREATE TABLE `t_channel_verify_run_step` (
   `verify_run_step_id` BIGINT NOT NULL COMMENT '运行步骤记录的内部技术标识。',
   `verify_run_id` BIGINT NOT NULL COMMENT '所属验证运行标识。',
   `step_no` INT NOT NULL COMMENT '步骤在用例中的顺序，从 1 开始。',
@@ -462,7 +454,23 @@ CREATE TABLE `t_integration_verify_run_step` (
   `assertions_json` JSON NULL COMMENT '每条期望的实际值与是否满足；未执行时为空。',
   `trace_json` JSON NULL COMMENT '初始化项、节点、连线与出口轨迹及脱敏后的渠道请求与响应原文，单段报文最多保留 65536 字节；未执行时为空。',
   `elapsed_ms` INT NULL COMMENT '步骤执行耗时，单位毫秒；未执行时为空。',
-  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Platform Support 数据库中的 UTC 微秒创建时间。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在本库中的 UTC 微秒创建时间。',
   PRIMARY KEY (`verify_run_step_id`),
   UNIQUE KEY `uk_verify_run_step` (`verify_run_id`, `step_no`) COMMENT '保证业务唯一性：verify_run_id、step_no'
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='验证运行中一个步骤的实际输入、结果、期望核对与脱敏轨迹；运行结束时一次写入，不再修改';
+
+CREATE TABLE `t_channel_call_grant` (
+  `call_grant_id` BIGINT NOT NULL COMMENT '调用授权的内部技术标识。',
+  `caller_service` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '调用方服务名（调用方的 spring.application.name），小写字母开头，小写字母、数字或连字符，2 至 64 字符；只校验格式，不维护服务名册。取值来源：内部服务名；非固定枚举。',
+  `channel_id` BIGINT NOT NULL COMMENT '被授权调用的服务渠道标识（t_channel.channel_id，channel_type 为 SERVICE）。',
+  `standard_api_id` BIGINT NOT NULL COMMENT '被授权调用的标准 API 标识（t_standard_api.standard_api_id），授权时须已被该渠道实现；由应用校验。',
+  `grant_status` VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '授权当前是否放行；DISABLED 可再启用。允许值：ACTIVE、DISABLED。',
+  `version` INT NOT NULL COMMENT '启用、停用时按版本条件更新的并发版本，初始为 1。',
+  `created_by` BIGINT NOT NULL COMMENT '创建该授权的 Operations 账号标识。',
+  `updated_by` BIGINT NOT NULL COMMENT '最后一次修改该授权的 Operations 账号标识。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在本库中的 UTC 微秒创建时间。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
+  PRIMARY KEY (`call_grant_id`),
+  UNIQUE KEY `uk_channel_call_grant` (`caller_service`, `channel_id`, `standard_api_id`) COMMENT '保证业务唯一性：caller_service、channel_id、standard_api_id',
+  KEY `idx_channel_call_grant_channel` (`channel_id`, `grant_status`) COMMENT '支持访问路径：channel_id、grant_status'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='服务渠道的调用授权：调用方服务 × 渠道 × 标准 API 白名单，只有 ACTIVE 授权放行通用执行入口；授权只停用、不删除，同一组合只有一行，再启用沿用该行并递增版本';

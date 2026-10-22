@@ -2,12 +2,16 @@ package com.paytech.channel.connector.domainservice.repository.impl;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.Collection;
 
 import org.springframework.stereotype.Repository;
 
 import com.paytech.channel.connector.core.dal.dataobject.ChannelAccount;
+import com.paytech.channel.connector.core.dal.dataobject.ChannelRowCount;
 import com.paytech.channel.connector.core.dal.mapper.ChannelAccountMapper;
-import com.paytech.channel.connector.core.enums.ChannelStatus;
+import com.paytech.channel.connector.protocol.core.enums.ChannelStatus;
 import com.paytech.channel.connector.domainservice.repository.ChannelAccountRepository;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
 import com.paytech.foundation.common.error.ErrorException;
@@ -88,5 +92,27 @@ public class ChannelAccountRepositoryImpl implements ChannelAccountRepository {
         List<ChannelAccount> items = total == 0 ? List.of()
             : mapper.selectPage(channelId, entityNo, status, paging.offset(), paging.size());
         return new PagingResponseBody<>(items, paging.page(), paging.size(), total);
+    }
+
+    /** 统计渠道下 ACTIVE 账号数。 */
+    @Override
+    public long countActiveByChannel(long channelId) {
+        return mapper.countActiveByChannel(channelId);
+    }
+
+    /** 读取渠道下的 ACTIVE 账号。 */
+    @Override
+    public List<ChannelAccount> findActiveByChannel(long channelId) {
+        return mapper.findActiveByChannel(channelId);
+    }
+
+    /** 按渠道分组计数。 */
+    @Override
+    public Map<Long, Long> countByChannels(Collection<Long> channelIds) {
+        if (channelIds.isEmpty()) {
+            return Map.of();
+        }
+        return mapper.countByChannels(channelIds).stream()
+            .collect(Collectors.toMap(ChannelRowCount::getChannelId, ChannelRowCount::getRowCount));
     }
 }

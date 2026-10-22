@@ -72,16 +72,16 @@ class ChannelConnectorArchitectureTest {
     }
 
     /**
-     * 渠道 12 表、渠道成本 4 表、变更记录表与渠道协议 10 表只属于 channel-connector：R4 对两个服务零违规，Payment 源码与 Mapper
-     * 不出现这些表名。
+     * 渠道表、渠道成本 4 表、变更记录表与渠道协议表（2026-10-22 第二段：t_channel 与 7 张 t_channel_* 改名、新增 t_channel_call_grant）
+     * 只属于 channel-connector：R4 对两个服务零违规，Payment 源码与 Mapper 不出现这些表名。
      */
     @Test
     void keepsChannelTablesInsideOwnerModule() throws IOException {
-        var tables = Pattern.compile("\\bt_(?:payment_channel|channel_account|channel_mid|mid_capability(?:_detail)?"
+        var tables = Pattern.compile("\\bt_(?:channel|channel_account|channel_mid|mid_capability(?:_detail)?"
             + "|routing_policy(?:_version|_mid)?|channel_interaction|channel_callback(?:_item)?|channel_event_exception"
             + "|channel_cost_(?:plan(?:_ver)?|scope|component)|channel_config_change"
-            + "|standard_api|api_field|integration|integration_api|integration_script|integration_standard_api"
-            + "|integration_verify_(?:account|case|run|run_step))\\b",
+            + "|standard_api|api_field|channel_api|channel_script|channel_standard_api"
+            + "|channel_verify_(?:account|case|run|run_step)|channel_call_grant)\\b",
             Pattern.CASE_INSENSITIVE);
         for (var module : modules(paymentRoot(), PAYMENT_MODULES)) {
             for (var file : sources(module)) {
@@ -90,6 +90,25 @@ class ChannelConnectorArchitectureTest {
         }
         assertEquals(List.of(), r4("channel-connector", modules(root(), OWN_MODULES)));
         assertEquals(List.of(), r4("payment", modules(paymentRoot(), PAYMENT_MODULES)));
+    }
+
+    /**
+     * 模块级表归属：protocol 拥有渠道身份、协议、沙箱、调用授权与变更记录表，core 拥有账号、MID、能力与成本表；
+     * 双方的生产 Java 与 Mapper XML 都不出现对方的表名（跨模块不 JOIN、不复制 SQL），渠道名称与计数经公开服务组合。
+     */
+    @Test
+    void keepsTablesInsideOwnerModule() throws IOException {
+        var protocolTables = Pattern.compile("\\bt_(?:channel|channel_api|channel_script|channel_standard_api"
+            + "|channel_verify_(?:account|case|run|run_step)|channel_call_grant|channel_config_change|standard_api"
+            + "|api_field)\\b", Pattern.CASE_INSENSITIVE);
+        var coreTables = Pattern.compile("\\bt_(?:channel_account|channel_mid|mid_capability(?:_detail)?"
+            + "|channel_cost_(?:plan(?:_ver)?|scope|component))\\b", Pattern.CASE_INSENSITIVE);
+        for (var file : sources(root().resolve("paytech-channel-connector-core"))) {
+            assertFalse(protocolTables.matcher(code(file)).find(), file + " 访问了 protocol 的表");
+        }
+        for (var file : sources(root().resolve("paytech-channel-connector-protocol"))) {
+            assertFalse(coreTables.matcher(code(file)).find(), file + " 访问了 core 的表");
+        }
     }
 
     /**
@@ -178,6 +197,12 @@ class ChannelConnectorArchitectureTest {
             return files.filter(Files::isRegularFile)
                 .filter(path -> path.toString().endsWith(".java") || path.toString().endsWith(".xml")).toList();
         }
+    }
+
+    /** 去掉 Java 块注释、行首行注释与 XML 注释后的源码；表名只在文档中出现不算访问。 */
+    private static String code(Path file) throws IOException {
+        return Files.readString(file).replaceAll("(?s)/\\*.*?\\*/", "").replaceAll("(?m)^\\s*//.*$", "")
+            .replaceAll("(?s)<!--.*?-->", "");
     }
 
     /** 只取 R4 的违规。 */

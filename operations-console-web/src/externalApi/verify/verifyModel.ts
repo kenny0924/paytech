@@ -1,10 +1,9 @@
 import { ApiError } from '../../api/session.ts';
-import { codePattern, integrationPath, integrationRoute } from '../externalApiModel.ts';
+import { codePattern, integrationPath } from '../externalApiModel.ts';
 
 /** 沙箱验证（沙箱验证技术方案第 4、5 节）：接口路径、响应解码、状态文案与编辑态转换。 */
 
 export const verifyPath = (code: string) => `${integrationPath}/${code}`;
-export const verifyRoute = (code: string) => `${integrationRoute}/${code}`;
 
 export type VerifyCaseStatus = 'NOT_RUN' | 'RUNNING' | 'PASSED' | 'FAILED' | 'STALE';
 export type VerifyRunStatus = 'RUNNING' | 'PASSED' | 'FAILED' | 'INTERRUPTED';
@@ -31,7 +30,8 @@ export const stepStatusLabels: Record<VerifyStepStatus, { label: string; tone: T
 };
 
 export interface VerifyAccountSummary {
-  accountCode: string; accountName: string; channelCode: string; channelAccountId: string; entityNo: string;
+  /** 服务渠道账号不绑定 OE 时为 null。 */
+  accountCode: string; accountName: string; channelCode: string; channelAccountId: string; entityNo: string | null;
   version: number; updateTime: string;
 }
 export interface VerifyAccountDetail extends VerifyAccountSummary {
@@ -81,9 +81,9 @@ const stringMap = (value: unknown): value is Record<string, string> => object(va
 export function decodeAccountSummary(value: unknown): VerifyAccountSummary {
   const v = value as VerifyAccountSummary;
   require(v && code(v.accountCode) && text(v.accountName, 128) && text(v.channelCode, 64) && text(v.channelAccountId, 64)
-    && text(v.entityNo, 64) && version(v.version) && instant(v.updateTime));
+    && nullableText(v.entityNo, 64) && version(v.version) && instant(v.updateTime));
   return { accountCode: v.accountCode, accountName: v.accountName, channelCode: v.channelCode,
-    channelAccountId: v.channelAccountId, entityNo: v.entityNo, version: v.version, updateTime: v.updateTime };
+    channelAccountId: v.channelAccountId, entityNo: v.entityNo ?? null, version: v.version, updateTime: v.updateTime };
 }
 
 export function decodeAccounts(value: unknown): VerifyAccountSummary[] {

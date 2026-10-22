@@ -19,6 +19,8 @@ import com.paytech.channel.connector.service.processor.ApproveChannelCostVersion
 import com.paytech.channel.connector.service.processor.CancelChannelCostVersionProcessor;
 import com.paytech.channel.connector.service.processor.CreateChannelCostPlanProcessor;
 import com.paytech.channel.connector.service.processor.CreateChannelCostVersionProcessor;
+import com.paytech.channel.connector.service.processor.ListChannelCostPlansProcessor;
+import com.paytech.channel.connector.service.processor.request.ListChannelCostPlansRequest;
 import com.paytech.channel.connector.service.processor.RejectChannelCostVersionProcessor;
 import com.paytech.channel.connector.service.processor.SubmitChannelCostVersionProcessor;
 import com.paytech.foundation.web.paging.PagingRequestBody;
@@ -38,6 +40,7 @@ public class ChannelCostPlanController implements ChannelCostPlanApi {
     private final SubmitChannelCostVersionProcessor submitChannelCostVersionProcessor;
     private final ApproveChannelCostVersionProcessor approveChannelCostVersionProcessor;
     private final CancelChannelCostVersionProcessor cancelChannelCostVersionProcessor;
+    private final ListChannelCostPlansProcessor listChannelCostPlansProcessor;
 
     /** 创建方案并返回 201。 */
     @Override
@@ -88,12 +91,12 @@ public class ChannelCostPlanController implements ChannelCostPlanApi {
             cancelChannelCostVersionProcessor.process(converter.toRequest(planCode, costVer, body)));
     }
 
-    /** 分页查询方案列表，直接委托本地 Service。 */
+    /** 分页查询方案列表；渠道编码与名称由查询 Processor 经渠道服务补齐。 */
     @Override
     public PagingResponseBody<ChannelCostPlanSummaryResponseBody> listChannelCostPlans(String channelId, String status,
         Integer page, Integer size) {
-        return channelCostPlanService.findPage(converter.optionalId(channelId), converter.planStatus(status),
-            PagingRequestBody.of(page, size)).map(converter::toSummaryResponseBody);
+        return listChannelCostPlansProcessor.process(new ListChannelCostPlansRequest(converter.optionalId(channelId),
+            converter.planStatus(status), PagingRequestBody.of(page, size))).map(converter::toSummaryResponseBody);
     }
 
     /** 查询方案与版本摘要。 */

@@ -3,12 +3,12 @@ package com.paytech.channel.connector.protocol.domain;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-/** 接入方在本环境的一个出站地址；序列化后保存在 t_integration.endpoints。 */
+/** 渠道在本环境的一个出站地址；序列化后保存在 t_channel.endpoints。 */
 @Getter
 @AllArgsConstructor
 public class EndpointDefinition {
 
-    /** 接入方内唯一的地址代码。 */
+    /** 渠道内唯一的地址代码。 */
     private final String endpointCode;
 
     /** https 基础地址，可带路径前缀。 */

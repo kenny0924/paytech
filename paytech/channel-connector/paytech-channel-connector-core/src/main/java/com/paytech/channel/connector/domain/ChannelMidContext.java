@@ -6,8 +6,8 @@ import java.util.Objects;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelAccount;
 import com.paytech.channel.connector.protocol.domain.ChannelConfigChangeRecord;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelMid;
-import com.paytech.channel.connector.core.dal.dataobject.PaymentChannel;
-import com.paytech.channel.connector.core.enums.ChannelStatus;
+import com.paytech.channel.connector.protocol.domain.ChannelIdentity;
+import com.paytech.channel.connector.protocol.core.enums.ChannelStatus;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -23,7 +23,7 @@ public class ChannelMidContext {
     private final ChannelMid mid;
 
     /** MID 所属渠道。 */
-    private final PaymentChannel channel;
+    private final ChannelIdentity channel;
 
     /** 当前绑定账号，或改绑的目标账号。 */
     private final ChannelAccount account;

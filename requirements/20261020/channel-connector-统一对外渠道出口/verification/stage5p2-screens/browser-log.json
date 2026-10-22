@@ -1,0 +1,265 @@
+{
+ "pages": [
+  {
+   "name": "01-list-all",
+   "requested": "/channel/channels",
+   "finalUrl": "/channel/channels",
+   "check": {
+    "menu": "P PAYTECH 系统管理 平台配置 风控管理 数据保护 外部 API 通知管理 财务 商务 渠道 渠道 MID 与能力 渠道成本 客户入驻审核 Operations Console Hide Navigation | 运营平台 渠道 渠道",
+    "tabs": "全部 2 支付渠道 服务渠道",
+    "rows": 3
+   }
+  },
+  {
+   "name": "02-list-payment",
+   "requested": "/channel/channels?type=PAYMENT",
+   "finalUrl": "/channel/channels?type=PAYMENT",
+   "check": {
+    "rows": ""
+   }
+  },
+  {
+   "name": "03-list-service",
+   "requested": "/channel/channels?type=SERVICE",
+   "finalUrl": "/channel/channels?type=SERVICE",
+   "check": {
+    "rows": "渠道编码 名称 类型 状态 出站地址 账号 / MID 调用授权 更新时间 操作 | S5P2_ECHO 阶段 5 回显服务渠道 服务 ACTIVE 1 个 已建凭据 1 条 2026-10-22 08:31 详情 暂停"
+   }
+  },
+  {
+   "name": "04-payment-overview",
+   "requested": "/channel/channels/238501215359533056?tab=overview",
+   "finalUrl": "/channel/channels/238501215359533056?tab=overview",
+   "check": {
+    "tabs": "概览 技术账号 1 MID 1 协议配置 沙箱验证 变更记录"
+   }
+  },
+  {
+   "name": "05-payment-protocol",
+   "requested": "/channel/channels/238501215359533056?tab=protocol",
+   "finalUrl": "/channel/channels/238501215359533056?tab=protocol",
+   "check": {
+    "rows": 4
+   }
+  },
+  {
+   "name": "06-payment-verify",
+   "requested": "/channel/channels/238501215359533056?tab=verify",
+   "finalUrl": "/channel/channels/238501215359533056?tab=verify",
+   "check": {
+    "rows": 21
+   }
+  },
+  {
+   "name": "07-service-overview",
+   "requested": "/channel/channels/238881239803691008?tab=overview",
+   "finalUrl": "/channel/channels/238881239803691008?tab=overview",
+   "check": {
+    "tabs": "概览 凭据 协议配置 沙箱验证 调用授权 1 变更记录"
+   }
+  },
+  {
+   "name": "08-service-credential",
+   "requested": "/channel/channels/238881239803691008?tab=credential",
+   "finalUrl": "/channel/channels/238881239803691008?tab=credential",
+   "check": {
+    "body": "S5P2_ECHO · 阶段 5 回显服务渠道 服务渠道 ACTIVE 编 辑 暂 停 关 闭 返回列表 渠道编码 S5P2_ECHO 类型 服务渠道（不可修改） 渠道 ID 238881239803691008 配置版本 v4 创建 2026-10-22 08:28 更新 2026-10-22 08:31 概览 凭据 协议配置 沙箱验证 调用授权 1 变更记录 凭据 服务渠道只有一份凭据，不绑定 OE 重新填写 回显凭据 账号 ID 238881240718049280 ACTIVE 停 用 关 闭 参数 与凭据同组加密保存，Owner 不回显名称与值；原子 API 以 ${account.params.名称} 引用 凭据（只写不读） ••••••••••••UQ54 已配置 · Vault Token 保存，仅末 4 位 最近填写 2026-10-22 08:29 Vault 数据类型"
+   }
+  },
+  {
+   "name": "09-service-grants-matrix",
+   "requested": "/channel/channels/238881239803691008?tab=grants",
+   "finalUrl": "/channel/channels/238881239803691008?tab=grants",
+   "check": {
+    "body": "S5P2_ECHO · 阶段 5 回显服务渠道 服务渠道 ACTIVE 编 辑 暂 停 关 闭 返回列表 渠道编码 S5P2_ECHO 类型 服务渠道（不可修改） 渠道 ID 238881239803691008 配置版本 v4 创建 2026-10-22 08:28 更新 2026-10-22 08:31 概览 凭据 协议配置 沙箱验证 调用授权 1 变更记录 调用授权 按「调用方服务 × 标准 API」放行；未授权调用返回 403 CHANNEL_CALL_NOT_GRANTED，不发出外部请求 矩阵 列表 新增授权 ↓ 调用方 / 标准 API → S5P2_ECHO_PING 阶段 5 回显探测 · 已实现 counterparty-service 交易对手 ACTIVE 10-22 ACTIVE 放行 DISABLED 拒绝（保留记录） — 未授权（拒绝） 1 ACTIVE / "
+   }
+  },
+  {
+   "name": "10-service-grants-list",
+   "requested": "/channel/channels/238881239803691008?tab=grants&view=list",
+   "finalUrl": "/channel/channels/238881239803691008?tab=grants&view=list",
+   "check": {
+    "rows": "调用方服务 标准 API 状态 版本 创建 最近更新 操作 | counterparty-service 交易对手 S5P2_ECHO_PING 阶段 5 回显探测 ACTIVE v3 2026-10-22 08:29 · 运营 236033080844881920 2026-10-22 08:29 · 运营 236033080844881920 停用 留痕"
+   }
+  },
+  {
+   "name": "11-endpoints-edit",
+   "requested": null,
+   "finalUrl": "/channel/channels/238881239803691008?tab=overview",
+   "check": {
+    "modal": "编辑出站地址 S5P2_ECHO · 配置版本 v4 生产 删除 被 1 个原子 API 引用（ECHO_CALL），不能删除或改编码；可修改 URL。 + 增加地址 • 只允许 https；保存时校验格式与 IP 字面量，执行时还会在连接前重新解析并固定地址。 • 本机与 mor-test 的 Mock 地址由 channel-connector 配置 trusted-networks 放行，页面不提供绕过开关。 • 保存递增配置版本；并发修改时提示「配置已被他人修改」并保留本次输入。 取 消 保 存"
+   }
+  },
+  {
+   "name": "12-legacy-redirect",
+   "requested": "/external-api/integrations/PAYERMAX_MOCK",
+   "finalUrl": "/channel/channels/238501215359533056",
+   "check": {
+    "heading": "PAYERMAX_MOCK · 本机合成 PayerMax（阶段 5 10210318） | 出站地址 | 描述 | 激活条件 | 关联"
+   }
+  }
+ ],
+ "console": [
+  {
+   "page": "login",
+   "type": "error",
+   "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+  },
+  {
+   "page": "login",
+   "type": "error",
+   "text": "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+  },
+  {
+   "page": "01-list-all",
+   "type": "error",
+   "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+  },
+  {
+   "page": "01-list-all",
+   "type": "error",
+   "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+  },
+  {
+   "page": "01-list-all",
+   "type": "error",
+   "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+  },
+  {
+   "page": "02-list-payment",
+   "type": "error",
+   "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+  },
+  {
+   "page": "02-list-payment",
+   "type": "error",
+   "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+  },
+  {
+   "page": "02-list-payment",
+   "type": "error",
+   "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+  },
+  {
+   "page": "03-list-service",
+   "type": "error",
+   "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+  },
+  {
+   "page": "03-list-service",
+   "type": "error",
+   "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+  },
+  {
+   "page": "03-list-service",
+   "type": "error",
+   "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+  },
+  {
+   "page": "04-payment-overview",
+   "type": "error",
+   "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+  },
+  {
+   "page": "05-payment-protocol",
+   "type": "error",
+   "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+  },
+  {
+   "page": "05-payment-protocol",
+   "type": "error",
+   "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+  },
+  {
+   "page": "06-payment-verify",
+   "type": "error",
+   "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+  },
+  {
+   "page": "07-service-overview",
+   "type": "error",
+   "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+  },
+  {
+   "page": "08-service-credential",
+   "type": "error",
+   "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+  },
+  {
+   "page": "09-service-grants-matrix",
+   "type": "error",
+   "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+  },
+  {
+   "page": "10-service-grants-list",
+   "type": "error",
+   "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+  },
+  {
+   "page": "10-service-grants-list",
+   "type": "error",
+   "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+  },
+  {
+   "page": "10-service-grants-list",
+   "type": "error",
+   "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+  },
+  {
+   "page": "12-legacy-redirect",
+   "type": "error",
+   "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+  }
+ ],
+ "httpErrors": [
+  {
+   "page": "01-list-all",
+   "method": "GET",
+   "path": "/api/operations/channel-admin/v1/channels",
+   "status": 429
+  },
+  {
+   "page": "01-list-all",
+   "method": "GET",
+   "path": "/api/operations/channel-admin/v1/channels",
+   "status": 429
+  },
+  {
+   "page": "02-list-payment",
+   "method": "GET",
+   "path": "/api/operations/channel-admin/v1/channels",
+   "status": 429
+  },
+  {
+   "page": "02-list-payment",
+   "method": "GET",
+   "path": "/api/operations/channel-admin/v1/channels",
+   "status": 429
+  },
+  {
+   "page": "03-list-service",
+   "method": "GET",
+   "path": "/api/operations/channel-admin/v1/channels",
+   "status": 429
+  },
+  {
+   "page": "03-list-service",
+   "method": "GET",
+   "path": "/api/operations/channel-admin/v1/channels",
+   "status": 429
+  },
+  {
+   "page": "05-payment-protocol",
+   "method": "GET",
+   "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX_MOCK/implementations",
+   "status": 429
+  },
+  {
+   "page": "10-service-grants-list",
+   "method": "GET",
+   "path": "/api/operations/channel-admin/v1/channel-call-grants",
+   "status": 429
+  }
+ ],
+ "legacyFinalUrl": "/channel/channels/238501215359533056"
+}

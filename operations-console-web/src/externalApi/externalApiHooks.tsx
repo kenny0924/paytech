@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { App, Button, Form, Input, Modal, Spin, Typography } from 'antd';
+import { Alert, App, Button, Form, Input, Modal, Spin, Typography } from 'antd';
 import { Link } from 'react-router-dom';
 import { ApiError, session } from '../api/session';
 import { requestPage } from '../api/paging';
@@ -68,7 +68,8 @@ export interface DeleteTarget {
 
 /**
  * 删除：先读取引用方，被引用时显示“无法删除”与引用清单；否则填写原因后按当前版本删除。
- * 删除请求若因并发新增引用被拒（400），重新读取引用方并切换到“无法删除”。
+ * 删除请求若因并发新增引用被拒（400），重新读取引用方并切换到“无法删除”；
+ * 409 带 Owner 原因时（例如标准 API 实现仍有 ACTIVE 调用授权）在弹窗内显示原因。
  */
 export function DeleteDialog({ target, onClose, onDeleted, onAuthorizationChanged }: {
   target: DeleteTarget; onClose: () => void; onDeleted: (mutation: Mutation) => void; onAuthorizationChanged: () => void;
@@ -77,6 +78,7 @@ export function DeleteDialog({ target, onClose, onDeleted, onAuthorizationChange
   const notify = useErrorNotification();
   const [saving, setSaving] = useState(false);
   const [references, setReferences] = useState<Reference[] | null>(null);
+  const [rejection, setRejection] = useState<string | null>(null);
   const { references: load } = target;
   const refresh = useCallback(() => {
     setReferences(null);
@@ -95,6 +97,7 @@ export function DeleteDialog({ target, onClose, onDeleted, onAuthorizationChange
     } catch (error) {
       if (error instanceof ApiError && error.status === 403) onAuthorizationChanged();
       if (error instanceof ApiError && error.status === 400 && error.code === 'BUSINESS_CHECK_FAILED') refresh();
+      else if (error instanceof ApiError && error.status === 409 && error.detail) setRejection(error.detail);
       else notify(error, '删除未完成');
     } finally { setSaving(false); }
   }
@@ -110,6 +113,7 @@ export function DeleteDialog({ target, onClose, onDeleted, onAuthorizationChange
   }
   return <Modal open centered title={`删除${target.title} ${code}`} okText="删除" okButtonProps={{ danger: true, loading: saving }}
     cancelText="取消" onCancel={onClose} onOk={() => form.submit()} destroyOnHidden>
+    {rejection && <Alert type="error" showIcon title={`删除被拒绝：${rejection}`} />}
     <p>将删除 <span className="xapi-mono">{target.objectCode}</span>（当前版本 {target.version}），删除后不可恢复。</p>
     <Form form={form} layout="vertical" requiredMark={false} onFinish={submit}>
       <Form.Item name="reason" label="删除原因" rules={[{ required: true, whitespace: true, message: '请填写删除原因' }]}>

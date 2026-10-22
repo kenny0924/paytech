@@ -2,9 +2,11 @@ package com.paytech.channel.connector.domainservice.repository;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.Collection;
 
 import com.paytech.channel.connector.core.dal.dataobject.ChannelAccount;
-import com.paytech.channel.connector.core.enums.ChannelStatus;
+import com.paytech.channel.connector.protocol.core.enums.ChannelStatus;
 import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 
@@ -36,4 +38,13 @@ public interface ChannelAccountRepository {
     /** 按渠道、OE 与状态分页读取；各条件为空表示不筛选。 */
     PagingResponseBody<ChannelAccount> findPage(Long channelId, String entityNo, ChannelStatus status,
         PagingRequestBody paging);
+
+    /** 统计渠道下 ACTIVE 账号数。 */
+    long countActiveByChannel(long channelId);
+
+    /** 读取渠道下的 ACTIVE 账号，按主键排序。 */
+    List<ChannelAccount> findActiveByChannel(long channelId);
+
+    /** 按渠道统计全部账号数（含已关闭）；空集合返回空映射，没有记录的渠道不出现。 */
+    Map<Long, Long> countByChannels(Collection<Long> channelIds);
 }

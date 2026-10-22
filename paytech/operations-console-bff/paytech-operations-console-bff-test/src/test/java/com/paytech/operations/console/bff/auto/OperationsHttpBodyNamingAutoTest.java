@@ -56,7 +56,6 @@ class OperationsHttpBodyNamingAutoTest {
         OperationsAuthenticationApi.class, OperationsAuthorizationApi.class,
         OperationsManagementApi.class, GatewayConfigurationManagementApi.class,
         com.paytech.operations.console.bff.ext.rest.StandardApiManagementController.class,
-        com.paytech.operations.console.bff.ext.rest.IntegrationManagementController.class,
         com.paytech.operations.console.bff.ext.rest.IntegrationApiManagementController.class,
         com.paytech.operations.console.bff.ext.rest.IntegrationScriptManagementController.class,
         com.paytech.operations.console.bff.ext.rest.IntegrationImplementationManagementController.class,

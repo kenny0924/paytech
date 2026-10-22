@@ -6,6 +6,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import com.paytech.channel.connector.core.configuration.ChannelProperties;
 import com.paytech.channel.connector.domain.ChannelExecutionConfigView;
 import com.paytech.channel.connector.domainservice.repository.*;
+import com.paytech.channel.connector.protocol.domainservice.service.ChannelService;
 import com.paytech.channel.connector.integration.ChannelAccountConfigReader;
 import com.paytech.channel.connector.service.processor.request.GetChannelExecutionConfigRequest;
 
@@ -17,7 +18,7 @@ public class GetChannelExecutionConfigProcessor
 
     /** 注入冻结坐标校验与 Vault 账号读取。 */
     public GetChannelExecutionConfigProcessor(ChannelProperties properties, ChannelMidRepository mids,
-        MidCapabilityRepository capabilities, ChannelAccountRepository accounts, PaymentChannelRepository channels,
+        MidCapabilityRepository capabilities, ChannelAccountRepository accounts, ChannelService channels,
         ChannelAccountConfigReader configReader, PlatformTransactionManager transactionManager,
         MidCapabilityDetailRepository details) {
         super(properties, mids, capabilities, accounts, channels, transactionManager, details);

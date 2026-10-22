@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.List;
 
 import com.paytech.channel.connector.protocol.core.dal.dataobject.ApiField;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationApi;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelApi;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -15,7 +15,7 @@ import lombok.Getter;
 public class UpdateIntegrationApiContext {
 
     /** 已锁定并核对版本的原子 API，保存成功后同步新版本。 */
-    private final IntegrationApi integrationApi;
+    private final ChannelApi integrationApi;
 
     /** 新名称。 */
     private final String name;

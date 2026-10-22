@@ -20,7 +20,8 @@ public interface ChannelConfigChangeApi {
     /**
      * 分页查询一个对象的变更记录
      *
-     * @param targetType 被变更对象类型：CHANNEL、CHANNEL_ACCOUNT、CHANNEL_MID、MID_CAPABILITY、CHANNEL_COST_VERSION
+     * @param targetType 被变更对象类型：CHANNEL、CHANNEL_ACCOUNT、CHANNEL_MID、MID_CAPABILITY、CHANNEL_COST_VERSION、STANDARD_API、CHANNEL_API、
+     *        CHANNEL_SCRIPT、CHANNEL_IMPLEMENTATION、VERIFY_ACCOUNT、VERIFY_CASE、CHANNEL_CALL_GRANT
      * @param targetId 被变更对象在本库的主键，正十进制整数字符串
      * @param page 页码，默认 1，范围 1–100000
      * @param size 每页条数，默认 10，只允许 10、20、50、100、200
@@ -28,7 +29,8 @@ public interface ChannelConfigChangeApi {
      */
     @GetExchange
     PagingResponseBody<ChannelConfigChangeResponseBody> listConfigChanges(
-        @RequestParam("targetType") @Pattern(regexp = "CHANNEL|CHANNEL_ACCOUNT|CHANNEL_MID|MID_CAPABILITY|CHANNEL_COST_VERSION")
+        @RequestParam("targetType") @Pattern(regexp = "CHANNEL|CHANNEL_ACCOUNT|CHANNEL_MID|MID_CAPABILITY|CHANNEL_COST_VERSION|STANDARD_API"
+            + "|CHANNEL_API|CHANNEL_SCRIPT|CHANNEL_IMPLEMENTATION|VERIFY_ACCOUNT|VERIFY_CASE|CHANNEL_CALL_GRANT")
         String targetType,
         @RequestParam("targetId") @Pattern(regexp = "[1-9][0-9]{0,18}") String targetId,
         @RequestParam(value = "page", required = false) Integer page,

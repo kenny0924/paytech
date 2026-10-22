@@ -28,7 +28,6 @@ import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.operations.console.bff.ext.rest.ExternalApiEditorController;
 import com.paytech.operations.console.bff.ext.rest.IntegrationApiManagementController;
 import com.paytech.operations.console.bff.ext.rest.IntegrationImplementationManagementController;
-import com.paytech.operations.console.bff.ext.rest.IntegrationManagementController;
 import com.paytech.operations.console.bff.ext.rest.IntegrationScriptManagementController;
 import com.paytech.operations.console.bff.ext.rest.StandardApiManagementController;
 import com.paytech.operations.console.bff.test.base.OperationsBffHttpTestBase;
@@ -41,12 +40,13 @@ import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
- * 外部 API 配置管理 44 个浏览器端点经真实 BFF → PLT-I02（Platform Simulator）→ channel-connector HttpExchange 的转发合同：
- * 先当前授权再转发、Body/Query 原样传递、22 个写命令带会话操作者而查询与静态校验不带身份、不转发 Session ID 与 Idempotency-Key、
+ * 外部 API 配置管理 39 个浏览器端点经真实 BFF → PLT-I02（Platform Simulator）→ channel-connector HttpExchange 的转发合同：
+ * 先当前授权再转发、Body/Query 原样传递、19 个写命令带会话操作者而查询与静态校验不带身份、不转发 Session ID 与 Idempotency-Key、
  * 上游 Problem（不外显 Owner detail）与 422 路径投影、返回编码一致性及上游扩展字段不外露。
+ * <li>2026-10-22 统一对外渠道出口第二段：接入方并入渠道，接入方 5 个 CRUD（E06～E10）下线，其余路径中的 {integrationCode} 即渠道编码；
+ * 渠道身份与出站地址改经 /channel-admin 维护。</li>
  *
  * @see StandardApiManagementController
- * @see IntegrationManagementController
  * @see IntegrationApiManagementController
  * @see IntegrationScriptManagementController
  * @see IntegrationImplementationManagementController
@@ -88,7 +88,7 @@ class ExternalApiBrowserAutoTest extends OperationsBffHttpTestBase {
         }
     }
 
-    /** 44 个端点的请求与 Owner 响应样例。 */
+    /** 39 个端点的请求与 Owner 响应样例。 */
     static Stream<JsonNode> endpoints() throws Exception {
         try (var input = ExternalApiBrowserAutoTest.class.getResourceAsStream("/external-api-boundary.json")) {
             var rows = new ArrayList<JsonNode>();
@@ -254,12 +254,29 @@ class ExternalApiBrowserAutoTest extends OperationsBffHttpTestBase {
         assertTrue(channelConnector.requests().isEmpty(), channelConnector.requests().toString());
     }
 
+    /** 已下线的接入方 CRUD（列表、详情、新建、修改、删除）在 BFF 不再有入口：404，不访问 PLT-I02 与 channel-connector。 */
+    @ParameterizedTest
+    @CsvSource({"GET,/external-api-admin/v1/integrations", "GET,/external-api-admin/v1/integrations/DEMO",
+        "POST,/external-api-admin/v1/integrations", "PUT,/external-api-admin/v1/integrations/DEMO",
+        "DELETE,/external-api-admin/v1/integrations/DEMO"})
+    void test_integrationCrudRemoved(String method, String path) throws Exception {
+        var removed = JSON.createObjectNode().put("method", method).put("path", path)
+            .put("routeCode", "operations-external-api-integration-list");
+        var body = "GET".equals(method) ? JSON.nullNode() : JSON.createObjectNode().put("reason", "下线");
+
+        var response = send(removed, "", body, true);
+
+        assertEquals(404, response.statusCode(), response.body());
+        assertTrue(platform.requests().isEmpty(), platform.requests().toString());
+        assertTrue(channelConnector.requests().isEmpty(), channelConnector.requests().toString());
+    }
+
     /** 按样例的方法与路径配置 channel-connector 的 200 JSON 响应。 */
     private void replyAsOwner(JsonNode c, String json) {
         channelConnector.reply(c.path("method").asString(), c.path("path").asString(), 200, json);
     }
 
-    /** 写命令：非 GET 且不是静态校验（…/validate）；共 22 个，转发时必须携带会话操作者。 */
+    /** 写命令：非 GET 且不是静态校验（…/validate）；共 19 个，转发时必须携带会话操作者。 */
     private static boolean writeCommand(JsonNode c) {
         return !"GET".equals(c.path("method").asString()) && !c.path("path").asString().endsWith("/validate");
     }

@@ -9,7 +9,7 @@ import com.paytech.channel.connector.api.channel.response.MidCapabilityDetailRes
 import com.paytech.channel.connector.api.channel.response.MidCapabilityResponseBody;
 import com.paytech.channel.connector.core.dal.dataobject.MidCapabilityDetail;
 import com.paytech.channel.connector.core.enums.ChannelCostCodes;
-import com.paytech.channel.connector.core.enums.ChannelStatus;
+import com.paytech.channel.connector.protocol.core.enums.ChannelStatus;
 import com.paytech.channel.connector.domain.MidCapabilityView;
 import com.paytech.foundation.common.error.InvalidParameterException;
 

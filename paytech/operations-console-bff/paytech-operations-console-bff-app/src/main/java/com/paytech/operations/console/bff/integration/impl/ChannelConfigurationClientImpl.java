@@ -15,16 +15,19 @@ import org.springframework.stereotype.Component;
 
 import com.paytech.channel.connector.api.change.ChannelConfigChangeApi;
 import com.paytech.channel.connector.api.channel.ChannelAccountApi;
+import com.paytech.channel.connector.api.channel.ChannelApi;
 import com.paytech.channel.connector.api.channel.ChannelMidApi;
 import com.paytech.channel.connector.api.channel.MidCapabilityApi;
-import com.paytech.channel.connector.api.channel.PaymentChannelApi;
+import com.paytech.channel.connector.api.grant.ChannelCallGrantApi;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.operations.console.bff.integration.ChannelConfigurationClient;
 import com.paytech.operations.console.bff.service.model.ChannelModels.CapabilityDefinitionsResponseBody;
 import com.paytech.operations.console.bff.service.model.ChannelModels.ChangeChannelStatusRequestBody;
+import com.paytech.operations.console.bff.service.model.ChannelModels.ChangeChannelCallGrantStatusRequestBody;
 import com.paytech.operations.console.bff.service.model.ChannelModels.ChangeMidCapabilityStatusRequestBody;
 import com.paytech.operations.console.bff.service.model.ChannelModels.ChannelAccountResponseBody;
 import com.paytech.operations.console.bff.service.model.ChannelModels.ChannelAccountSummaryResponseBody;
+import com.paytech.operations.console.bff.service.model.ChannelModels.ChannelCallGrantResponseBody;
 import com.paytech.operations.console.bff.service.model.ChannelModels.ChannelConfigChangeResponseBody;
 import com.paytech.operations.console.bff.service.model.ChannelModels.ChannelMidResponseBody;
 import com.paytech.operations.console.bff.service.model.ChannelModels.ChannelMidSummaryResponseBody;
@@ -32,6 +35,7 @@ import com.paytech.operations.console.bff.service.model.ChannelModels.ChannelRes
 import com.paytech.operations.console.bff.service.model.ChannelModels.ChannelSummaryResponseBody;
 import com.paytech.operations.console.bff.service.model.ChannelModels.ConfigureChannelAccountRequestBody;
 import com.paytech.operations.console.bff.service.model.ChannelModels.CreateChannelAccountRequestBody;
+import com.paytech.operations.console.bff.service.model.ChannelModels.CreateChannelCallGrantRequestBody;
 import com.paytech.operations.console.bff.service.model.ChannelModels.CreateChannelMidRequestBody;
 import com.paytech.operations.console.bff.service.model.ChannelModels.CreateChannelRequestBody;
 import com.paytech.operations.console.bff.service.model.ChannelModels.CreateMidCapabilityRequestBody;
@@ -39,13 +43,14 @@ import com.paytech.operations.console.bff.service.model.ChannelModels.MidCapabil
 import com.paytech.operations.console.bff.service.model.ChannelModels.RebindChannelMidAccountRequestBody;
 import com.paytech.operations.console.bff.service.model.ChannelModels.ReplaceMidCapabilityDetailsRequestBody;
 import com.paytech.operations.console.bff.service.model.ChannelModels.UpdateChannelAccountRequestBody;
+import com.paytech.operations.console.bff.service.model.ChannelModels.UpdateChannelEndpointsRequestBody;
 import com.paytech.operations.console.bff.service.model.ChannelModels.UpdateChannelRequestBody;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
 
 import lombok.AllArgsConstructor;
 
 /**
- * channel-connector 渠道、技术账号、MID、能力与变更记录接口的 HTTP 转发：每个入口只调用一次 channel-connector，不重试
+ * channel-connector 渠道（含出站地址）、技术账号、MID、能力、调用授权与变更记录接口的 HTTP 转发：每个入口只调用一次 channel-connector，不重试
  * <li>命令把会话 Account ID 填入 X-Gateway-Actor-Subject；Owner 4xx 由开启 Owner Problem detail 的代理工厂转为带 Owner 原因的
  * 本地异常，本类不捕获（422 除外：字段路径投影回页面 Body）。</li>
  * <li>回执的对象身份必须与请求一致，状态变更回执的状态必须等于目标状态；详情与目录必须带集合。</li>
@@ -55,40 +60,59 @@ import lombok.AllArgsConstructor;
 @Component
 @AllArgsConstructor
 public class ChannelConfigurationClientImpl implements ChannelConfigurationClient {
+    private final ChannelApi channelApi;
     private final ChannelMidApi midApi;
     private final ChannelAccountApi accountApi;
     private final MidCapabilityApi capabilityApi;
-    private final PaymentChannelApi channelApi;
+    private final ChannelCallGrantApi grantApi;
     private final ChannelConfigChangeApi changeApi;
 
     /** 渠道分页。 */
     @Override
-    public PagingResponseBody<ChannelSummaryResponseBody> listChannels(String status, String keyword, int page, int size) {
-        return page(channelApi.listChannels(status, keyword, page, size), page, size, ChannelSummaryResponseBody.class);
+    public PagingResponseBody<ChannelSummaryResponseBody> listChannels(String channelType, String status, String keyword,
+        int page, int size) {
+        var channels = page(channelApi.listChannels(channelType, status, keyword, page, size), page, size,
+            ChannelSummaryResponseBody.class);
+        require(channelType == null || channels.items().stream().allMatch(item -> channelType.equals(item.getChannelType())));
+        return channels;
     }
 
-    /** 渠道详情；回执渠道 ID 与请求一致。 */
+    /** 渠道详情；回执渠道 ID 与请求一致且带出站地址集合。 */
     @Override
     public ChannelResponseBody channel(String channelId) {
         var channel = convert(channelApi.getChannel(channelId), ChannelResponseBody.class);
         requireSame(channelId, channel.getChannelId());
+        requireEndpoints(channel);
         return channel;
     }
 
-    /** 创建渠道；回执渠道编码与请求一致。 */
+    /** 创建渠道；回执渠道编码与类型与请求一致。 */
     @Override
     public ChannelResponseBody createChannel(OperatorContext operator, CreateChannelRequestBody request) {
         var channel = write(request, () -> body(channelApi.createChannel(operator.accountId(), request(request,
             com.paytech.channel.connector.api.channel.request.CreateChannelRequestBody.class))), ChannelResponseBody.class);
         requireSame(request.getChannelCode(), channel.getChannelCode());
+        requireSame(request.getChannelType(), channel.getChannelType());
+        requireEndpoints(channel);
         return channel;
     }
 
-    /** 修改渠道名称。 */
+    /** 修改渠道名称与描述。 */
     @Override
     public ChannelResponseBody updateChannel(OperatorContext operator, String channelId, UpdateChannelRequestBody request) {
         return sameChannel(channelId, request, () -> channelApi.updateChannel(operator.accountId(), channelId, request(request,
             com.paytech.channel.connector.api.channel.request.UpdateChannelRequestBody.class)));
+    }
+
+    /** 整组替换出站地址；回执地址集合与请求一致（沙箱缺省为 false）。 */
+    @Override
+    public ChannelResponseBody updateChannelEndpoints(OperatorContext operator, String channelId,
+        UpdateChannelEndpointsRequestBody request) {
+        var channel = sameChannel(channelId, request, () -> channelApi.updateChannelEndpoints(operator.accountId(),
+            channelId, request(request,
+                com.paytech.channel.connector.api.channel.request.UpdateChannelEndpointsRequestBody.class)));
+        require(channel.getEndpoints().size() == request.getEndpoints().size());
+        return channel;
     }
 
     /** 变更渠道状态；回执状态等于目标状态。 */
@@ -258,6 +282,52 @@ public class ChannelConfigurationClientImpl implements ChannelConfigurationClien
         return changes;
     }
 
+    /** 调用授权分页；有筛选条件时每条授权必须满足该条件。 */
+    @Override
+    public PagingResponseBody<ChannelCallGrantResponseBody> listCallGrants(String channelId, String callerService,
+        String standardApiCode, String grantStatus, int page, int size) {
+        var grants = page(grantApi.listChannelCallGrants(channelId, callerService, standardApiCode, grantStatus, page,
+            size), page, size, ChannelCallGrantResponseBody.class);
+        require(grants.items().stream().allMatch(grant -> matches(channelId, grant.getChannelId())
+            && matches(callerService, grant.getCallerService()) && matches(standardApiCode, grant.getStandardApiCode())
+            && matches(grantStatus, grant.getGrantStatus())));
+        return grants;
+    }
+
+    /** 新建调用授权；回执的渠道、调用方与标准 API 与请求一致。 */
+    @Override
+    public ChannelCallGrantResponseBody createCallGrant(OperatorContext operator, CreateChannelCallGrantRequestBody request) {
+        var grant = write(request, () -> body(grantApi.createChannelCallGrant(operator.accountId(), request(request,
+            com.paytech.channel.connector.api.grant.request.CreateChannelCallGrantRequestBody.class))),
+            ChannelCallGrantResponseBody.class);
+        requireSame(request.getChannelId(), grant.getChannelId());
+        requireSame(request.getCallerService(), grant.getCallerService());
+        requireSame(request.getStandardApiCode(), grant.getStandardApiCode());
+        return grant;
+    }
+
+    /** 启用或停用调用授权；回执授权 ID 与路径一致、状态等于目标状态。 */
+    @Override
+    public ChannelCallGrantResponseBody changeCallGrantStatus(OperatorContext operator, String callGrantId,
+        ChangeChannelCallGrantStatusRequestBody request) {
+        var grant = write(request, () -> grantApi.changeChannelCallGrantStatus(operator.accountId(), callGrantId,
+            request(request, com.paytech.channel.connector.api.grant.request.ChangeChannelCallGrantStatusRequestBody.class)),
+            ChannelCallGrantResponseBody.class);
+        requireSame(callGrantId, grant.getCallGrantId());
+        requireSame(request.getTargetStatus(), grant.getGrantStatus());
+        return grant;
+    }
+
+    /** 未指定筛选条件，或回执值等于筛选值。 */
+    private static boolean matches(String filter, String actual) {
+        return filter == null || filter.equals(actual);
+    }
+
+    /** 渠道回执必须带出站地址集合（未配置为空数组）且无空项。 */
+    private static void requireEndpoints(ChannelResponseBody channel) {
+        require(channel.getEndpoints() != null && channel.getEndpoints().stream().allMatch(Objects::nonNull));
+    }
+
     /** 状态变更请求转 Owner 合同。 */
     private static com.paytech.channel.connector.api.channel.request.ChangeChannelStatusRequestBody status(
         ChangeChannelStatusRequestBody request) {
@@ -274,6 +344,7 @@ public class ChannelConfigurationClientImpl implements ChannelConfigurationClien
     private static ChannelResponseBody sameChannel(String channelId, Object request, Supplier<Object> call) {
         var channel = write(request, call, ChannelResponseBody.class);
         requireSame(channelId, channel.getChannelId());
+        requireEndpoints(channel);
         return channel;
     }
 

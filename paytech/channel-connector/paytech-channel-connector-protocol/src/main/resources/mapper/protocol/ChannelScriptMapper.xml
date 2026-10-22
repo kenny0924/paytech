@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.channel.connector.protocol.core.dal.mapper.ChannelScriptMapper">
+    <!-- 执行阶段以内联 CodeEnumTypeHandler 按 javaType 绑定（未知 Code 读取失败），不全局登记；其余列按别名自动映射。 -->
+    <resultMap id="row" type="com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelScript" autoMapping="true">
+        <result column="executionStage" property="executionStage" javaType="com.paytech.channel.connector.api.enums.ScriptExecutionStage" typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+    </resultMap>
+    <sql id="columns">channel_script_id channelScriptId, channel_id channelId, script_code scriptCode, script_name scriptName, execution_stage executionStage, parameter_definition parameterDefinition, source_code sourceCode, description description, version version, created_by createdBy, updated_by updatedBy, create_time createTime, update_time updateTime</sql>
+    <sql id="filter">WHERE channel_id=#{channelId}<if test="executionStage != null"> AND execution_stage=#{executionStage.code}</if><if test="keyword != null"> AND (CONVERT(script_code USING utf8mb4) COLLATE utf8mb4_bin LIKE #{keyword} ESCAPE '!' OR script_name LIKE #{keyword} ESCAPE '!')</if></sql>
+    <select id="byCode" resultMap="row" useCache="false">
+        SELECT <include refid="columns"/> FROM t_channel_script WHERE channel_id=#{channelId} AND script_code=#{code}
+    </select>
+    <select id="lock" resultMap="row" useCache="false" flushCache="true">
+        SELECT <include refid="columns"/> FROM t_channel_script WHERE channel_id=#{channelId} AND script_code=#{code} FOR UPDATE
+    </select>
+    <select id="allByChannel" resultMap="row" useCache="false">
+        SELECT <include refid="columns"/> FROM t_channel_script WHERE channel_id=#{channelId} ORDER BY script_code
+    </select>
+    <select id="list" resultMap="row" useCache="false">
+        SELECT <include refid="columns"/> FROM t_channel_script <include refid="filter"/>
+        ORDER BY script_code, channel_script_id LIMIT #{size} OFFSET #{offset}
+    </select>
+    <select id="count" resultType="long" useCache="false">SELECT COUNT(*) FROM t_channel_script <include refid="filter"/></select>
+    <select id="countByChannels" resultType="com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelChildCount" useCache="false">
+        SELECT channel_id channelId, COUNT(*) childCount FROM t_channel_script WHERE channel_id IN
+        <foreach collection="channelIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        GROUP BY channel_id
+    </select>
+    <insert id="insert">
+        INSERT INTO t_channel_script(channel_script_id,channel_id,script_code,script_name,execution_stage,parameter_definition,source_code,description,version,created_by,updated_by,create_time,update_time)
+        VALUES(#{row.channelScriptId},#{row.channelId},#{row.scriptCode},#{row.scriptName},#{row.executionStage.code},#{row.parameterDefinition},#{row.sourceCode},#{row.description},#{row.version},#{row.createdBy},#{row.updatedBy},#{row.createTime},#{row.updateTime})
+    </insert>
+    <update id="update">
+        UPDATE t_channel_script SET script_name=#{scriptName}, execution_stage=#{executionStage.code},
+        parameter_definition=#{parameterDefinition}, source_code=#{sourceCode}, description=#{description},
+        version=version+1, updated_by=#{updatedBy}, update_time=#{updateTime}
+        WHERE channel_script_id=#{row.channelScriptId} AND version=#{row.version}
+    </update>
+    <delete id="delete">
+        DELETE FROM t_channel_script WHERE channel_script_id=#{row.channelScriptId} AND version=#{row.version}
+    </delete>
+</mapper>

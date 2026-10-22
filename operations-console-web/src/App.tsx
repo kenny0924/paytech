@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Layout, Result, Spin, Tag } from 'antd';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { ApiError, session } from './api/session';
@@ -15,6 +15,9 @@ import { getBrowserLocalStorage, loadNavigationCollapsed, saveNavigationCollapse
 import { SidebarMenu } from './navigation/SidebarMenu';
 
 import { ConsolePage } from './navigation/ConsolePage';
+
+/** 原「外部 API › 接入方」地址（channelWorkspace.legacyIntegrationRoute）：接入方并入渠道后按编码跳转到渠道详情的同名页签。 */
+const LegacyIntegrationRedirect = lazy(() => import('./channel/ChannelResolve').then(m => ({ default: m.LegacyIntegrationRedirect })));
 export function App() {
   const notifyError = useErrorNotification();
   const [context, setContext] = useState<SessionContextResponseBody | null>(null);
@@ -115,6 +118,8 @@ function Console({ context }: { context: SessionContextResponseBody }) {
               <Route path="/" element={menus[0] ? <Navigate to={menus[0].frontendRoute!} replace /> : <NoAccess />} />
               {menus.flatMap(menu => pageRoutePaths(menu).map(path => <Route key={`${menu.resourceId}:${path}`} path={path} element={<ConsolePage componentKey={menu.componentKey!}
                 resources={resources} actorId={context.accountId} locationKey={location.key} onAuthorizationChanged={() => setReload(value => value + 1)} />} />))}
+              <Route path="/external-api/integrations/*" element={menus.some(menu => menu.componentKey === 'OPERATIONS_CHANNEL_CHANNELS')
+                ? <LegacyIntegrationRedirect /> : <NoAccess />} />
               <Route path="*" element={<NoAccess />} />
             </Routes>
           </Suspense>}

@@ -27,10 +27,10 @@ import com.paytech.channel.connector.api.channel.request.ConfigureChannelAccount
 import com.paytech.channel.connector.api.channel.request.CreateChannelAccountRequestBody;
 import com.paytech.channel.connector.api.channel.request.UpdateChannelAccountRequestBody;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelAccount;
-import com.paytech.channel.connector.core.dal.dataobject.PaymentChannel;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.Channel;
 import com.paytech.channel.connector.protocol.core.enums.ChangeTargetType;
 import com.paytech.channel.connector.protocol.core.enums.ChangeType;
-import com.paytech.channel.connector.core.enums.ChannelStatus;
+import com.paytech.channel.connector.protocol.core.enums.ChannelStatus;
 import com.paytech.channel.connector.domain.ChannelAccountConfigPayload;
 import com.paytech.channel.connector.test.base.AbstractChannelConfigApiTest;
 import com.paytech.channel.connector.test.builder.ChannelConfigRequestBuilder;
@@ -53,7 +53,7 @@ import com.paytech.vault.client.VaultClientErrorCode;
  */
 class ChannelAccountApiTest extends AbstractChannelConfigApiTest {
     /** 本类公共 ACTIVE 渠道。 */
-    private PaymentChannel channel;
+    private Channel channel;
 
     /** 本类公共：一个 ACTIVE 的 NI 渠道。 */
     @BeforeEach
@@ -172,7 +172,7 @@ class ChannelAccountApiTest extends AbstractChannelConfigApiTest {
         command(HttpMethod.POST, statusPath(account), status(ChannelStatus.ACTIVE)).assertSuccess(200)
             .assertText("status", ChannelStatus.ACTIVE.getCode());
 
-        PaymentChannel draft = data.channel("GEIDEA", ChannelStatus.DRAFT);
+        Channel draft = data.channel("GEIDEA", ChannelStatus.DRAFT);
         ChannelAccount other = data.account(draft.getChannelId(), ENTITY_NO, TOKEN_B, ChannelStatus.DRAFT);
         command(HttpMethod.POST, statusPath(other), status(ChannelStatus.ACTIVE)).assertBusinessRejected("渠道状态 DRAFT");
         assertChange(changes(ChangeTargetType.CHANNEL_ACCOUNT, account.getChannelAccountId()).get(1),

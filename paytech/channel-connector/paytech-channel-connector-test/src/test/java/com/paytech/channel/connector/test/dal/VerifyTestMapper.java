@@ -15,7 +15,7 @@ public interface VerifyTestMapper {
     int activeTasks();
 
     /** 仍为 RUNNING 的运行数。 */
-    @Select("SELECT COUNT(*) FROM t_integration_verify_run WHERE run_status='RUNNING'")
+    @Select("SELECT COUNT(*) FROM t_channel_verify_run WHERE run_status='RUNNING'")
     int runningRuns();
 
     /** 本例留下的验证运行补偿任务（终态失败等）。 */
@@ -27,6 +27,6 @@ public interface VerifyTestMapper {
     int deleteTasks();
 
     /** 运行的步骤原始 JSON，用于核对落库的脱敏轨迹。 */
-    @Select("SELECT trace_json FROM t_integration_verify_run_step WHERE verify_run_id=#{runId} ORDER BY step_no")
+    @Select("SELECT trace_json FROM t_channel_verify_run_step WHERE verify_run_id=#{runId} ORDER BY step_no")
     List<String> traces(@Param("runId") long runId);
 }

@@ -14,7 +14,7 @@ import com.paytech.channel.connector.api.externalapi.IntegrationScriptManagement
 import com.paytech.channel.connector.api.externalapi.request.*;
 import com.paytech.channel.connector.api.externalapi.response.IntegrationScriptResponseBody;
 import com.paytech.channel.connector.api.externalapi.response.IntegrationScriptSummary;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.Integration;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.Channel;
 import com.paytech.channel.connector.protocol.core.enums.ChangeTargetType;
 import com.paytech.channel.connector.protocol.core.enums.ChangeType;
 import com.paytech.channel.connector.protocol.core.enums.ConfigurationField;
@@ -41,12 +41,12 @@ class IntegrationScriptManagementTest extends ExternalApiTestBase {
     private static final String PATH = BASE + "/integrations/DEMO/scripts";
     private static final String SIGN = PATH + "/" + ExternalApiSamples.SIGN_SCRIPT;
 
-    private Integration demo;
+    private Channel demo;
 
-    /** 本类公共：一个接入方 DEMO。 */
+    /** 本类公共：一个渠道 DEMO。 */
     @BeforeEach
     void setUpClassMocks() {
-        demo = externalApi.integration("DEMO");
+        demo = externalApi.channel("DEMO");
     }
 
     /** 创建后详情返回参数与源码，列表按阶段筛选，并同事务写入 CREATE 变更记录（源码只记摘要）。 */
@@ -54,7 +54,7 @@ class IntegrationScriptManagementTest extends ExternalApiTestBase {
     void test_createAndList() {
         assertMutation(post(PATH, ExternalApiRequests.createScript("DEMO_SIGN", ScriptExecutionStage.REQUEST)),
             "INTEGRATION_SCRIPT", "DEMO/DEMO_SIGN", 1);
-        var change = assertChange(ChangeTargetType.INTEGRATION_SCRIPT, externalApiData.scriptId("DEMO", "DEMO_SIGN"),
+        var change = assertChange(ChangeTargetType.CHANNEL_SCRIPT, externalApiData.scriptId("DEMO", "DEMO_SIGN"),
             ChangeType.CREATE, "DEMO/DEMO_SIGN", 0, 1, ExternalApiRequests.REASON);
         assertAll(() -> assertTrue(changedFields(change).contains(ConfigurationField.SOURCE_DIGEST.getCode())),
             () -> assertFalse(change.toString().contains(ExternalApiSamples.signSource()), "变更摘要不应包含脚本源码"));
@@ -99,7 +99,7 @@ class IntegrationScriptManagementTest extends ExternalApiTestBase {
 
         assertMutation(put(SIGN, ExternalApiRequests.updateScript(ScriptExecutionStage.RESPONSE, List.of(), 1)),
             "INTEGRATION_SCRIPT", "DEMO/DEMO_SIGN", 2);
-        var change = assertChange(ChangeTargetType.INTEGRATION_SCRIPT, script.getIntegrationScriptId(),
+        var change = assertChange(ChangeTargetType.CHANNEL_SCRIPT, script.getChannelScriptId(),
             ChangeType.UPDATE, "DEMO/DEMO_SIGN", 1, 2, ExternalApiRequests.REASON);
         assertTrue(changedFields(change).contains(ConfigurationField.EXECUTION_STAGE.getCode()));
         put(SIGN, ExternalApiRequests.updateScript(ScriptExecutionStage.REQUEST, List.of(), 1)).assertProblem(409, CommonErrorCode.CONCURRENT_REQUEST);

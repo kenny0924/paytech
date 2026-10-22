@@ -24,7 +24,7 @@ import com.paytech.channel.connector.api.enums.ApiFieldLocation;
 import com.paytech.channel.connector.api.enums.ExecuteStatus;
 import com.paytech.channel.connector.api.enums.ScriptExecutionStage;
 import com.paytech.channel.connector.api.externalapi.request.ApiFieldBody;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.Integration;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.Channel;
 import com.paytech.channel.connector.protocol.core.dal.dataobject.StandardApi;
 import com.paytech.channel.connector.protocol.domain.ParameterDeclaration;
 import com.paytech.channel.connector.protocol.domain.execution.ExecutionResult;
@@ -153,8 +153,8 @@ class StandardApiUrlSignedChannelTest extends ExternalApiTestBase {
 
     /** 以 URL 编码签名的下单原子 API 实现标准 API。 */
     private void integration(StandardApi standardApi) {
-        Integration integration =
-            externalApi.integration(CODE, mockHttpServer.baseUrl() + ChannelMockController.PREFIX + "/aps");
+        Channel integration =
+            externalApi.channel(CODE, mockHttpServer.baseUrl() + ChannelMockController.PREFIX + "/aps");
         externalApi.script(integration, "URL_SIGN", ScriptExecutionStage.REQUEST,
             List.of(new ParameterDeclaration("privateKey", "PROTECTED_HANDLE", true),
                 new ParameterDeclaration("clientId", "STRING", true), new ParameterDeclaration("path", "STRING", true)),

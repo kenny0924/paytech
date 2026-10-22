@@ -10,7 +10,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public class ValidateImplementationRequest {
 
-    /** 路径中的接入方编码。 */
+    /** 路径中的渠道编码。 */
     private final String integrationCode;
 
     /** 被实现的标准 API 编码。 */

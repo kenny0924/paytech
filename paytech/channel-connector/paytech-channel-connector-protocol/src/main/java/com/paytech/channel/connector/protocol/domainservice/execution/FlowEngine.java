@@ -49,7 +49,7 @@ public class FlowEngine {
             return walk(snapshot, context, deadline, runner);
         } catch (RuntimeException exception) {
             log.warn("外部 API 流程结果为 ERROR standardApiCode={} integrationCode={} reason={}",
-                snapshot.getStandardApiCode(), snapshot.getIntegrationCode(), reason(exception));
+                snapshot.getStandardApiCode(), snapshot.getChannelCode(), reason(exception));
             return ExecutionResult.error();
         }
     }
@@ -86,7 +86,7 @@ public class FlowEngine {
             context.trace().returned(returnId);
         }
         log.info("外部 API 流程结束 standardApiCode={} integrationCode={} returnId={} executeStatus={}",
-            snapshot.getStandardApiCode(), snapshot.getIntegrationCode(), returnId,
+            snapshot.getStandardApiCode(), snapshot.getChannelCode(), returnId,
             result.getExecuteStatus().getCode());
         return result;
     }
@@ -102,7 +102,7 @@ public class FlowEngine {
         } catch (RuntimeException exception) {
             failure = reason(exception);
             log.warn("外部 API 节点异常 standardApiCode={} integrationCode={} nodeId={} reason={}",
-                snapshot.getStandardApiCode(), snapshot.getIntegrationCode(), node.getId(), failure);
+                snapshot.getStandardApiCode(), snapshot.getChannelCode(), node.getId(), failure);
             result = StepResult.error();
         }
         if (context.trace() != null) {
@@ -110,7 +110,7 @@ public class FlowEngine {
                 failure, (System.nanoTime() - started) / 1_000_000L);
         }
         log.info("外部 API 节点结束 standardApiCode={} integrationCode={} nodeId={} executeStatus={} elapsedMs={}",
-            snapshot.getStandardApiCode(), snapshot.getIntegrationCode(), node.getId(),
+            snapshot.getStandardApiCode(), snapshot.getChannelCode(), node.getId(),
             result.getExecuteStatus().getCode(), (System.nanoTime() - started) / 1_000_000L);
         return result;
     }

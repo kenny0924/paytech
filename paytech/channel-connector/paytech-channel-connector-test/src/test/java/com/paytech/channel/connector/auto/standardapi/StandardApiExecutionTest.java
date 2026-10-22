@@ -7,7 +7,7 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.paytech.channel.connector.protocol.core.dal.dataobject.Integration;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.Channel;
 import com.paytech.channel.connector.protocol.core.dal.dataobject.StandardApi;
 import com.paytech.channel.connector.protocol.core.enums.StandardApiNotSentCode;
 import com.paytech.channel.connector.protocol.service.processor.ExecuteStandardApiProcessor;
@@ -33,13 +33,13 @@ class StandardApiExecutionTest extends ExternalApiTestBase {
     private static final String DEMO = "DEMO";
 
     private StandardApi pay;
-    private Integration demo;
+    private Channel demo;
 
-    /** 本类公共：标准 API PAY、接入方 DEMO 及其下单原子 API，DEMO 以样例支付流程实现 PAY。 */
+    /** 本类公共：标准 API PAY、渠道 DEMO 及其下单原子 API，DEMO 以样例支付流程实现 PAY。 */
     @BeforeEach
     void setUpClassMocks() {
         pay = externalApi.standardApi(PAY);
-        demo = externalApi.integration(DEMO);
+        demo = externalApi.channel(DEMO);
         externalApi.createOrderApi(demo);
         externalApi.implementation(demo, pay, ExternalApiSamples.payFlow());
     }
@@ -50,10 +50,10 @@ class StandardApiExecutionTest extends ExternalApiTestBase {
         assertNotSent(StandardApiNotSentCode.STANDARD_API_NOT_FOUND, () -> execute("REFUND", DEMO, validInput()));
     }
 
-    /** 接入方不存在，或接入方存在但没有实现该标准 API：INTEGRATION_IMPLEMENTATION_NOT_FOUND。 */
+    /** 渠道不存在，或渠道存在但没有实现该标准 API：INTEGRATION_IMPLEMENTATION_NOT_FOUND。 */
     @Test
     void test_implementationNotFound() {
-        externalApi.integration("OTHER");
+        externalApi.channel("OTHER");
 
         assertNotSent(StandardApiNotSentCode.INTEGRATION_IMPLEMENTATION_NOT_FOUND,
             () -> execute(PAY, "UNKNOWN", validInput()));
@@ -64,9 +64,9 @@ class StandardApiExecutionTest extends ExternalApiTestBase {
     /** 绕过管理接口写坏的流程或原子 API 定义，运行前校验拒绝：INTEGRATION_CONFIG_INVALID。 */
     @Test
     void test_configInvalid() {
-        externalApi.implementation(externalApi.integration("BROKEN_FLOW"), pay,
+        externalApi.implementation(externalApi.channel("BROKEN_FLOW"), pay,
             ExternalApiSamples.object("{\"timeoutMs\":0}"));
-        Integration brokenApi = externalApi.integration("BROKEN_API");
+        Channel brokenApi = externalApi.channel("BROKEN_API");
         var definition = ExternalApiSamples.createOrderDefinition();
         definition.remove("transport");
         externalApi.integrationApi(brokenApi, ExternalApiSamples.CREATE_ORDER, definition);
@@ -92,13 +92,13 @@ class StandardApiExecutionTest extends ExternalApiTestBase {
         assertAll(() -> assertTrue(channel.requests().isEmpty()), () -> assertEquals(0, vault.revealCount()));
     }
 
-    /** 请求缺少接入方编码或 input：Processor 基础字段约束拒绝，不加载配置。 */
+    /** 请求缺少渠道编码或 input：Processor 基础字段约束拒绝，不加载配置。 */
     @Test
     void test_invalidRequest() {
         var missingIntegration = assertThrows(InvalidParameterException.class, () -> execute(PAY, null, validInput()));
         var missingInput = assertThrows(InvalidParameterException.class, () -> execute(PAY, DEMO, null));
 
-        assertAll(() -> assertTrue(missingIntegration.getMessage().contains("integrationCode"),
+        assertAll(() -> assertTrue(missingIntegration.getMessage().contains("channelCode"),
                 missingIntegration.getMessage()),
             () -> assertTrue(missingInput.getMessage().contains("input"), missingInput.getMessage()),
             () -> assertTrue(channel.requests().isEmpty()));

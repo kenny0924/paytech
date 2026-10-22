@@ -12,7 +12,7 @@ import org.springframework.http.HttpMethod;
 import com.paytech.channel.connector.api.ChannelConnectorHeaders;
 import com.paytech.channel.connector.api.channel.request.ChangeChannelStatusRequestBody;
 import com.paytech.channel.connector.protocol.core.enums.ChangeTargetType;
-import com.paytech.channel.connector.core.enums.ChannelStatus;
+import com.paytech.channel.connector.protocol.core.enums.ChannelStatus;
 import com.paytech.channel.connector.test.checker.ChannelCostResponseChecker;
 import com.paytech.channel.connector.test.dal.ChannelTestMapper;
 import com.paytech.foundation.common.error.CommonErrorCode;
@@ -115,8 +115,8 @@ public abstract class AbstractChannelConfigApiTest extends ChannelConnectorMockT
         checker.assertProblem(409, CommonErrorCode.CONCURRENT_REQUEST.getCode());
     }
 
-    /** 断言 422 字段校验失败。 */
-    protected static void assertValidationError(ChannelCostResponseChecker checker) {
-        checker.assertProblem(422, CommonErrorCode.VALIDATION_ERROR.getCode());
+    /** 断言 422 字段校验失败，返回同一 Checker 以便继续断言字段位置。 */
+    protected static ChannelCostResponseChecker assertValidationError(ChannelCostResponseChecker checker) {
+        return checker.assertProblem(422, CommonErrorCode.VALIDATION_ERROR.getCode());
     }
 }

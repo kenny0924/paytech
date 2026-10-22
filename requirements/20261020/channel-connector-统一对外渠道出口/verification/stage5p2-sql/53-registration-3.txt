@@ -1,0 +1,22 @@
+UTC 2026-10-22T04:24:00Z mor_platform_v2e2e phase2-registration.sql 第 3 段
+Query OK, 0 rows affected
+Query OK, 0 rows affected
+Query OK, 0 rows affected
+Query OK, 4 rows affected
+Rows matched: 4  Changed: 4  Warnings: 0
+routes
+4
+Query OK, 1 row affected
+Rows matched: 1  Changed: 1  Warnings: 0
+resources
+1
+Query OK, 1 row affected
+Rows matched: 1  Changed: 1  Warnings: 0
+grants
+1
+Query OK, 1 row affected
+Rows matched: 1  Changed: 1  Warnings: 0
+role
+1
+Query OK, 0 rows affected
+exit=

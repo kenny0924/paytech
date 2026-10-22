@@ -31,7 +31,7 @@ import tools.jackson.databind.ObjectMapper;
 /**
  * 原子 API definition_json 的静态校验（原子 API 结构第 2～8 节、物理设计 P7）。
  *
- * <p>纯内存校验，依赖调用方事先读取的请求字段、接入方地址代码与同接入方脚本签名；返回全部问题。
+ * <p>纯内存校验，依赖调用方事先读取的请求字段、渠道地址代码与同渠道脚本签名；返回全部问题。
  */
 @Component
 @AllArgsConstructor
@@ -83,8 +83,8 @@ public class IntegrationApiDefinitionValidator {
      *
      * @param definition 请求体中的 definition 对象
      * @param requestFields 本 API 的请求字段
-     * @param endpointCodes 所属接入方的出站地址代码
-     * @param scripts 同接入方全部脚本签名，按编码索引
+     * @param endpointCodes 所属渠道的出站地址代码
+     * @param scripts 同渠道全部脚本签名，按编码索引
      * @return 问题列表；无问题时附带解析出的定义摘要
      */
     public Result validate(JsonNode definition, List<FieldDefinition> requestFields, Set<String> endpointCodes,
@@ -183,7 +183,7 @@ public class IntegrationApiDefinitionValidator {
         }
         String endpoint = node.path("endpointCode").asString("");
         if (!endpointCodes.contains(endpoint)) {
-            issues.add(new ValidationIssue("ENDPOINT_NOT_FOUND", location + ".endpointCode", "接入方没有该出站地址代码"));
+            issues.add(new ValidationIssue("ENDPOINT_NOT_FOUND", location + ".endpointCode", "渠道没有该出站地址代码"));
         }
         String template = node.path("pathTemplate").asString("");
         pathTemplate(template, requestFields, location + ".pathTemplate", issues);
@@ -321,7 +321,7 @@ public class IntegrationApiDefinitionValidator {
             && "STRING".equals(field.get().getDataType().getCode()) && !field.get().getPath().contains("[]");
     }
 
-    /** 脚本引用：同接入方脚本、阶段一致、参数只引用调用参数或常量。 */
+    /** 脚本引用：同渠道脚本、阶段一致、参数只引用调用参数或常量。 */
     List<ScriptUse> scripts(JsonNode node, List<ParameterDeclaration> params, Map<String, ScriptSignature> scripts,
         List<ValidationIssue> issues) {
         var result = new ArrayList<ScriptUse>();
@@ -345,7 +345,7 @@ public class IntegrationApiDefinitionValidator {
             var stage = ScriptExecutionStage.fromCode(item.path("stage").asString(""));
             ScriptSignature signature = scripts.get(item.path("scriptCode").asString(""));
             if (signature == null) {
-                issues.add(new ValidationIssue("SCRIPT_NOT_FOUND", location + ".scriptCode", "同一接入方没有该脚本"));
+                issues.add(new ValidationIssue("SCRIPT_NOT_FOUND", location + ".scriptCode", "同一渠道没有该脚本"));
             } else if (stage != signature.getStage()) {
                 issues.add(new ValidationIssue("SCRIPT_STAGE_MISMATCH", location + ".stage", "引用阶段与脚本的执行阶段不一致"));
             } else {

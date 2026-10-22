@@ -17,10 +17,10 @@ import com.paytech.channel.connector.api.channel.request.CreateChannelMidRequest
 import com.paytech.channel.connector.api.channel.request.RebindChannelMidAccountRequestBody;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelAccount;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelMid;
-import com.paytech.channel.connector.core.dal.dataobject.PaymentChannel;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.Channel;
 import com.paytech.channel.connector.protocol.core.enums.ChangeTargetType;
 import com.paytech.channel.connector.protocol.core.enums.ChangeType;
-import com.paytech.channel.connector.core.enums.ChannelStatus;
+import com.paytech.channel.connector.protocol.core.enums.ChannelStatus;
 import com.paytech.channel.connector.test.base.AbstractChannelConfigApiTest;
 import com.paytech.channel.connector.test.builder.ChannelConfigRequestBuilder;
 import com.paytech.channel.connector.test.checker.ChannelCostResponseChecker;
@@ -35,7 +35,7 @@ import com.paytech.channel.connector.test.checker.ChannelCostResponseChecker;
  */
 class ChannelMidApiTest extends AbstractChannelConfigApiTest {
     /** 本类公共 ACTIVE 渠道。 */
-    private PaymentChannel channel;
+    private Channel channel;
 
     /** 本类公共 ACTIVE 且已配置的账号。 */
     private ChannelAccount account;
@@ -69,7 +69,7 @@ class ChannelMidApiTest extends AbstractChannelConfigApiTest {
 
         assertConflict(createMid(account, "MID-001", ENTITY_NO));
 
-        PaymentChannel other = data.channel("GEIDEA", ChannelStatus.ACTIVE);
+        Channel other = data.channel("GEIDEA", ChannelStatus.ACTIVE);
         ChannelAccount otherAccount = data.account(other.getChannelId(), ENTITY_NO, null, ChannelStatus.DRAFT);
         command(HttpMethod.POST, MID_PATH, ChannelConfigRequestBuilder.mid(other.getChannelId(),
             otherAccount.getChannelAccountId(), "MID-001", ENTITY_NO)).assertSuccess(201);
@@ -80,7 +80,7 @@ class ChannelMidApiTest extends AbstractChannelConfigApiTest {
     @Test
     void test_createRejectsMismatchedAccount() {
         createMid(account, "MID-001", "SA001").assertBusinessRejected("OE 不一致");
-        PaymentChannel other = data.channel("GEIDEA", ChannelStatus.ACTIVE);
+        Channel other = data.channel("GEIDEA", ChannelStatus.ACTIVE);
         command(HttpMethod.POST, MID_PATH, ChannelConfigRequestBuilder.mid(other.getChannelId(),
             account.getChannelAccountId(), "MID-002", ENTITY_NO)).assertBusinessRejected("不属于该渠道");
         ChannelAccount closed = data.account(channel.getChannelId(), ENTITY_NO, null, ChannelStatus.CLOSED);
@@ -95,7 +95,7 @@ class ChannelMidApiTest extends AbstractChannelConfigApiTest {
         ChannelMid mid = data.mid(channel.getChannelId(), account.getChannelAccountId(), ENTITY_NO, ChannelStatus.ACTIVE);
         ChannelAccount sameOe = data.account(channel.getChannelId(), ENTITY_NO, null, ChannelStatus.DRAFT);
         ChannelAccount otherOe = data.account(channel.getChannelId(), "SA001", null, ChannelStatus.DRAFT);
-        PaymentChannel other = data.channel("GEIDEA", ChannelStatus.ACTIVE);
+        Channel other = data.channel("GEIDEA", ChannelStatus.ACTIVE);
         ChannelAccount otherChannel = data.account(other.getChannelId(), ENTITY_NO, null, ChannelStatus.DRAFT);
 
         rebind(mid, otherOe).assertBusinessRejected("OE 不一致");

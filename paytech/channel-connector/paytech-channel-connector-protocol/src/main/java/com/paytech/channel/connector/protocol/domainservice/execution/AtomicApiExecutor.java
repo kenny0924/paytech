@@ -23,8 +23,13 @@ import com.paytech.channel.connector.protocol.ext.outbound.ChannelHttpClient;
 import com.paytech.channel.connector.protocol.ext.outbound.ChannelRequest;
 import com.paytech.channel.connector.protocol.ext.outbound.ChannelResponse;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+
+import com.paytech.foundation.httpproblem.api.ApiProblemProfile;
+
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.StreamReadFeature;
 import tools.jackson.databind.DeserializationFeature;
@@ -36,12 +41,17 @@ import tools.jackson.databind.json.JsonMapper;
  * steps.&lt;节点&gt;。
  *
  * <p>
- * 状态规则全部为假固定为 ERROR；任何异常由流程引擎记为该节点 ERROR。状态规则与输出只读 http 与 不含受控句柄的 params。日志只记节点 ID、渠道 HTTP 状态与耗时，不记 Header 与报文。
+ * 状态规则全部为假固定为 ERROR；任何异常由流程引擎记为该节点 ERROR。状态规则与输出只读 http 与 不含受控句柄的 params。
+ * 每次 HTTP 请求结束写一条对外调用访问日志（logger {@value #ACCESS_LOGGER}），不记 URL、Header 与报文。
  */
-@Slf4j
 @Component
 @AllArgsConstructor
 public class AtomicApiExecutor implements NodeRunner {
+
+    /** 对外调用访问日志的固定 logger 名，部署可单独路由与保留。 */
+    public static final String ACCESS_LOGGER = "channel.outbound.access";
+
+    private static final Logger ACCESS_LOG = LoggerFactory.getLogger(ACCESS_LOGGER);
 
     private static final JsonMapper JSON = JsonMapper.builder().enable(StreamReadFeature.STRICT_DUPLICATE_DETECTION)
         .disable(StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION).enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
@@ -53,6 +63,7 @@ public class AtomicApiExecutor implements NodeRunner {
     private final ExpressionEngine expressionEngine;
     private final ChannelRequestBuilder requestBuilder;
 
+    /** 执行一个原子 API 节点；HTTP 请求发出后无论结果如何都写一条对外调用访问日志。 */
     @Override
     public StepResult run(ExecutionSnapshot snapshot, ExecutionFlow.Node node, ExecutionContext context,
         Deadline deadline) {
@@ -70,15 +81,37 @@ public class AtomicApiExecutor implements NodeRunner {
         long started = System.nanoTime();
         byte[] traceBody =
             context.trace() == null ? null : traceBody(api, channelRequest, request.get(HttpWork.REQUEST_BODY));
-        ChannelResponse response = send(channelRequest, traceBody, node.getId(),
-            castMap(request.get(HttpWork.REQUEST_HEADERS)), context.trace(), started);
-        log.info("外部 API 渠道响应 standardApiCode={} integrationCode={} nodeId={} httpStatus={} elapsedMs={}",
-            snapshot.getStandardApiCode(), snapshot.getIntegrationCode(), node.getId(), response.getStatus(),
-            (System.nanoTime() - started) / 1_000_000L);
-        HttpWork received = HttpWork.response(request, response.getStatus(), response.getHeaders(),
-            decode(api, response), new String(response.getBody(), StandardCharsets.UTF_8));
-        runScripts(snapshot, api, ScriptExecutionStage.RESPONSE, params, received);
-        return result(api, received, params);
+        Integer httpStatus = null;
+        ExecuteStatus executeStatus = ExecuteStatus.ERROR;
+        try {
+            ChannelResponse response = send(snapshot, channelRequest, traceBody, node.getId(),
+                castMap(request.get(HttpWork.REQUEST_HEADERS)), context.trace(), started);
+            httpStatus = response.getStatus();
+            HttpWork received = HttpWork.response(request, response.getStatus(), response.getHeaders(),
+                decode(api, response), new String(response.getBody(), StandardCharsets.UTF_8));
+            runScripts(snapshot, api, ScriptExecutionStage.RESPONSE, params, received);
+            StepResult result = result(api, received, params);
+            executeStatus = result.getExecuteStatus();
+            return result;
+        } finally {
+            accessLog(snapshot, context, api.getCode(), executeStatus, httpStatus, started);
+        }
+    }
+
+    /**
+     * 对外调用访问日志（technique 第 6.5 节）：每次原子 API 的 HTTP 请求结束后一条 INFO
+     * <li>字段：callerService、channelCode、channelType、standardApiCode、apiCode、executeStatus（本节点结论，异常为 ERROR）、
+     * httpStatus（无响应为空）、elapsedMs、requestId。</li>
+     * <li>不记录 URL、查询串、请求头、报文与凭据。</li>
+     */
+    static void accessLog(ExecutionSnapshot snapshot, ExecutionContext context, String apiCode,
+        ExecuteStatus executeStatus, Integer httpStatus, long started) {
+        ACCESS_LOG.info(
+            "callerService={} channelCode={} channelType={} standardApiCode={} apiCode={} executeStatus={} "
+                + "httpStatus={} elapsedMs={} requestId={}",
+            context.getCallerService(), snapshot.getChannelCode(), snapshot.getChannelType().getCode(),
+            snapshot.getStandardApiCode(), apiCode, executeStatus.getCode(), httpStatus,
+            (System.nanoTime() - started) / 1_000_000L, MDC.get(ApiProblemProfile.REQUEST_ID_MDC_KEY));
     }
 
     /** 执行轨迹记录的请求体：含卡值或受控句柄时用同一编码规则重新生成遮蔽副本，否则即发送字节。 */
@@ -88,17 +121,17 @@ public class AtomicApiExecutor implements NodeRunner {
     }
 
     /** 发送请求；沙箱验证运行同时记录脱敏后的渠道交换（无论成功或失败），请求体卡值已遮蔽。 */
-    ChannelResponse send(ChannelRequest request, byte[] traceBody, String nodeId, Map<String, Object> headers,
-        ExecutionTrace trace, long started) {
+    ChannelResponse send(ExecutionSnapshot snapshot, ChannelRequest request, byte[] traceBody, String nodeId,
+        Map<String, Object> headers, ExecutionTrace trace, long started) {
         if (trace == null) {
-            return httpClient.send(request);
+            return httpClient.send(snapshot.getChannelType(), request);
         }
         var exchange = new ExecutionTrace.Exchange(request.getMethod(), request.getUri(), request.getHeaders(), traceBody);
         Set<String> protectedHeaders = headers.entrySet().stream()
             .filter(entry -> entry.getValue() instanceof ProtectedHandle).map(Map.Entry::getKey)
             .collect(Collectors.toSet());
         try {
-            ChannelResponse response = httpClient.send(request);
+            ChannelResponse response = httpClient.send(snapshot.getChannelType(), request);
             trace.exchange(nodeId, exchange, protectedHeaders, response.getStatus(), response.getHeaders(),
                 response.getBody(), (System.nanoTime() - started) / 1_000_000L, null);
             return response;

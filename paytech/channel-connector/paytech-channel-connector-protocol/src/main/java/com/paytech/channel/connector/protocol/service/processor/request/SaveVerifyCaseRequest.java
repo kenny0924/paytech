@@ -15,7 +15,7 @@ public class SaveVerifyCaseRequest {
      */
     private final Long actorId;
 
-    /** 路径中的接入方编码。 */
+    /** 路径中的渠道编码。 */
     private final String integrationCode;
 
     /** 用例编码；只校验时为空。 */

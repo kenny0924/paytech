@@ -11,6 +11,9 @@ import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.testsupport.api.Clear;
 import com.paytech.channel.connector.core.dal.dataobject.*;
 import com.paytech.channel.connector.core.enums.*;
+import com.paytech.channel.connector.api.enums.ChannelType;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.Channel;
+import com.paytech.channel.connector.protocol.core.enums.ChannelStatus;
 import com.paytech.channel.connector.test.dal.ChannelTestMapper;
 
 import lombok.AllArgsConstructor;
@@ -19,7 +22,7 @@ import lombok.Getter;
 
 /**
  * 只操作 mor_channel_connector 的本库 28 张表；Fixture ID 使用正式 Snowflake 接口
- * <li>10 §3.1 渠道表、渠道成本四表、变更记录表，以及 2026-10-20 自 Platform 迁入的 10 张渠道协议表。</li>
+ * <li>10 §3.1 渠道表、渠道成本四表、变更记录表，以及渠道协议表（2026-10-22 第二段：t_channel 合并原接入方，协议表改名，新增调用授权表）。</li>
  * <li>清理按子表在前的依赖顺序执行；异步验证运行由 VerifyRunFixture（更高优先级）先确认结束。</li>
  */
 @TestComponent
@@ -57,15 +60,7 @@ public class ChannelDataMocker implements Clear {
 
     /** 为当前类准备同 OE 的启用渠道、账号、MID 和一项 PAY 能力。 */
     public Fixture activeFixture() {
-        var now = Instant.parse("2026-09-21T00:00:00Z");
-        var channel = new PaymentChannel();
-        channel.setChannelId(ids.nextId());
-        channel.setChannelCode("NI");
-        channel.setChannelName("合成测试渠道");
-        channel.setChannelStatus(ChannelStatus.ACTIVE);
-        channel.setCreateTime(now);
-        channel.setUpdateTime(now);
-        mapper.insertPaymentChannel(channel);
+        var channel = channel("NI", "合成测试渠道", ChannelType.PAYMENT, ChannelStatus.ACTIVE);
         var account = account(channel.getChannelId(), "00001", "A".repeat(43));
         var mid = mid(channel.getChannelId(), account.getChannelAccountId(), "00001");
         var fixture = new Fixture(channel, account, mid);
@@ -75,15 +70,7 @@ public class ChannelDataMocker implements Clear {
 
     /** 为卡直付准备指定渠道编码与 OE 的启用三元组，以及 CARD 支付方式在该币种下的 PAY 能力。 */
     public Fixture cardFixture(String channelCode, String entityNo, String currency) {
-        var now = Instant.parse("2026-09-21T00:00:00Z");
-        var channel = new PaymentChannel();
-        channel.setChannelId(ids.nextId());
-        channel.setChannelCode(channelCode);
-        channel.setChannelName("合成卡直付渠道");
-        channel.setChannelStatus(ChannelStatus.ACTIVE);
-        channel.setCreateTime(now);
-        channel.setUpdateTime(now);
-        mapper.insertPaymentChannel(channel);
+        var channel = channel(channelCode, "合成卡直付渠道", ChannelType.PAYMENT, ChannelStatus.ACTIVE);
         var account = account(channel.getChannelId(), entityNo, "B".repeat(43));
         var mid = mid(channel.getChannelId(), account.getChannelAccountId(), entityNo);
         var fixture = new Fixture(channel, account, mid);
@@ -177,16 +164,28 @@ public class ChannelDataMocker implements Clear {
 
     // ---- CC-B 追加：渠道基础配置测试的指定状态夹具 ----
 
-    /** 插入指定编码与状态的渠道。 */
-    public PaymentChannel channel(String channelCode, ChannelStatus status) {
-        var channel = new PaymentChannel();
+    /** 插入指定编码与状态的支付渠道（未配置出站地址）。 */
+    public Channel channel(String channelCode, ChannelStatus status) {
+        return channel(channelCode, "合成渠道 " + channelCode, ChannelType.PAYMENT, status);
+    }
+
+    /** 插入指定编码与状态的服务渠道（未配置出站地址）。 */
+    public Channel serviceChannel(String channelCode, ChannelStatus status) {
+        return channel(channelCode, "合成服务渠道 " + channelCode, ChannelType.SERVICE, status);
+    }
+
+    /** 插入指定编码、名称、类型与状态的渠道：版本 1，未配置出站地址。 */
+    public Channel channel(String channelCode, String channelName, ChannelType type, ChannelStatus status) {
+        var channel = new Channel();
         channel.setChannelId(ids.nextId());
         channel.setChannelCode(channelCode);
-        channel.setChannelName("合成渠道 " + channelCode);
+        channel.setChannelName(channelName);
+        channel.setChannelType(type);
         channel.setChannelStatus(status);
+        channel.setVersion(1);
         channel.setCreateTime(Instant.parse("2026-09-21T00:00:00Z"));
         channel.setUpdateTime(channel.getCreateTime());
-        mapper.insertPaymentChannel(channel);
+        mapper.insertChannel(channel);
         return channel;
     }
 
@@ -233,10 +232,10 @@ public class ChannelDataMocker implements Clear {
                 mapper::clearEventExceptions, mapper::clearCallbackItems,
                 mapper::clearCallbacks, mapper::clearInteractions, mapper::clearRoutingPolicyMids,
                 mapper::clearRoutingPolicyVersions, mapper::clearRoutingPolicies, mapper::clearDetails,
-                mapper::clearCapabilities, mapper::clearMids, mapper::clearAccounts, mapper::clearChannels,
+                mapper::clearCapabilities, mapper::clearMids, mapper::clearAccounts, mapper::clearChannelCallGrants,
                 mapper::clearVerifyRunSteps, mapper::clearVerifyRuns, mapper::clearVerifyCases,
-                mapper::clearVerifyAccounts, mapper::clearImplementations, mapper::clearIntegrationApis,
-                mapper::clearIntegrationScripts, mapper::clearApiFields, mapper::clearIntegrations,
+                mapper::clearVerifyAccounts, mapper::clearImplementations, mapper::clearChannelApis,
+                mapper::clearChannelScripts, mapper::clearApiFields, mapper::clearChannels,
                 mapper::clearStandardApis);
             assertEquals(0, totalRows());
             cleanupOwned = false;
@@ -256,7 +255,7 @@ public class ChannelDataMocker implements Clear {
     @Getter
     @AllArgsConstructor
     public static class Fixture {
-        private final PaymentChannel channel;
+        private final Channel channel;
         private final ChannelAccount account;
         private final ChannelMid mid;
     }

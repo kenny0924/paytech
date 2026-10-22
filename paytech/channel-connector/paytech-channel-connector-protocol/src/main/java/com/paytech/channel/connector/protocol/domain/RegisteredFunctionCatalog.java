@@ -34,7 +34,7 @@ public final class RegisteredFunctionCatalog {
             List.of(new ParameterDeclaration("vaultToken", "STRING", true),
                 new ParameterDeclaration("channelCode", "STRING", true),
                 new ParameterDeclaration("channelAccountId", "STRING", true),
-                new ParameterDeclaration("entityNo", "STRING", true)),
+                new ParameterDeclaration("entityNo", "STRING", false)),
             "OBJECT{parameters: STRING 映射, credentials: PROTECTED_HANDLE 映射}",
             Map.of("parameters", "STRING", "credentials", "PROTECTED_HANDLE")),
         new RegisteredFunction("PAYMENT_CARD", INITIALIZER,

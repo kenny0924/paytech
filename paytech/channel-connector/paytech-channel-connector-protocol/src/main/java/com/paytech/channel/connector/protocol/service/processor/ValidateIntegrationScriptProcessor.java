@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 import com.paytech.foundation.processor.AbstractProcessor;
 import com.paytech.channel.connector.protocol.domain.ExternalApiLocks;
 import com.paytech.channel.connector.protocol.domain.ValidationIssue;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationScriptRepository;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelScriptRepository;
 import com.paytech.channel.connector.protocol.domainservice.validator.IntegrationScriptValidator;
 import com.paytech.channel.connector.protocol.service.processor.request.ValidateIntegrationScriptRequest;
 
@@ -27,14 +27,14 @@ public class ValidateIntegrationScriptProcessor
     private final IntegrationChildSupport children;
     private final IntegrationScriptValidator validator;
     private final ExternalApiTransactions transactions;
-    private final IntegrationScriptRepository integrationScripts;
+    private final ChannelScriptRepository channelScripts;
 
     @Override
     protected List<ValidationIssue> processRequest(ValidateIntegrationScriptRequest request) {
         return transactions.query(() -> {
-            var integration = children.integration(request.getIntegrationCode());
+            var integration = children.channel(request.getIntegrationCode());
             var issues = new ArrayList<>(validator.validate(request.getParameters(), request.getSourceCode()));
-            var existing = integrationScripts.byCode(integration.getIntegrationId(), request.getCode());
+            var existing = channelScripts.byCode(integration.getChannelId(), request.getCode());
             if (request.getExpectedVersion() == null && existing != null) {
                 issues.add(new ValidationIssue("SCRIPT_CODE_EXISTS", "scriptCode", "公共脚本编码已经存在"));
             } else if (request.getExpectedVersion() != null && existing != null

@@ -57,7 +57,7 @@ function PlanList({ resources, onAuthorizationChanged }: Props) {
     <div className="channel-toolbar">
       <Form form={form} name="channel-cost-filter" layout="vertical" onFinish={(values: FilterValues) => page.applyFilters(listFilters({ ...values }))}>
         <div className="channel-filters">
-          <Form.Item name="channelId" label="渠道"><ChannelSelect /></Form.Item>
+          <Form.Item name="channelId" label="渠道"><ChannelSelect channelType="PAYMENT" /></Form.Item>
           <Form.Item name="status" label="方案状态"><Select allowClear placeholder="全部"
             options={planStatuses.map(value => ({ value, label: `${value} · ${planStatusLabels[value]}` }))} /></Form.Item>
           <div className="channel-filter-actions"><Button type="primary" htmlType="submit">查询</Button>
@@ -96,7 +96,7 @@ function CreatePlanModal({ onCreated, ...base }: Base & { onCreated: (plan: Cost
   };
   return <CommandModal title="新建渠道成本方案" command={command} okText="创建" onOk={() => void submit()} onClose={base.onClose} onReload={base.onClose}>
     <Form form={form} name="channel-cost-plan-create" layout="vertical">
-      <Form.Item name="channelId" label="渠道" rules={[{ required: true, message: '请选择渠道' }]}><ChannelSelect allowClear={false} placeholder="选择渠道" /></Form.Item>
+      <Form.Item name="channelId" label="渠道" rules={[{ required: true, message: '请选择渠道' }]}><ChannelSelect allowClear={false} placeholder="选择渠道" channelType="PAYMENT" /></Form.Item>
       <Form.Item name="planCode" label="方案代码" normalize={(v?: string) => v?.trim().toUpperCase()}
         rules={[{ required: true, message: '必填' }, { pattern: planCodePattern, message: '大写字母开头，大写字母、数字或下划线，最长 64' }]}>
         <Input maxLength={64} placeholder="PAYERMAX_STD" /></Form.Item>

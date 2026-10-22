@@ -33,7 +33,7 @@ public enum ConfigurationField implements CodeEnum {
     /** 响应字段组的规范化 SHA-256 摘要。 */
     RESPONSE_FIELDS_DIGEST("RESPONSE_FIELDS_DIGEST"),
 
-    /** 接入方出站地址列表的规范化 SHA-256 摘要。 */
+    /** 渠道出站地址列表的规范化 SHA-256 摘要。 */
     ENDPOINTS_DIGEST("ENDPOINTS_DIGEST"),
 
     /** 原子 API 执行定义、流程定义或验证内容的规范化 SHA-256 摘要。 */

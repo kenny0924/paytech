@@ -13,6 +13,9 @@ export const channelPaths = {
   channels: `${base}/channels`,
   channel: (channelId: string) => `${base}/channels/${channelId}`,
   channelStatus: (channelId: string) => `${base}/channels/${channelId}/status`,
+  channelEndpoints: (channelId: string) => `${base}/channels/${channelId}/endpoints`,
+  callGrants: `${base}/channel-call-grants`,
+  callGrantStatus: (callGrantId: string) => `${base}/channel-call-grants/${callGrantId}/status`,
   accounts: `${base}/channel-accounts`,
   account: (accountId: string) => `${base}/channel-accounts/${accountId}`,
   accountConfiguration: (accountId: string) => `${base}/channel-accounts/${accountId}/configuration`,
@@ -48,10 +51,11 @@ export const channelRoutes = {
   costCompare: (planCode: string, baseCostVer: string, targetCostVer: string) => `/channel/cost-plans/${planCode}/versions/${targetCostVer}?compareWith=${baseCostVer}`,
 } as const;
 
-/** 按钮资源（块 92）：渠道维护、账号凭据、MID 维护、成本维护与成本审批。 */
+/** 按钮资源（块 92 / 129）：渠道维护、账号凭据、调用授权、MID 维护、成本维护与成本审批。 */
 export const channelButtons = {
   channelManage: 'OPERATIONS_CHANNEL_CHANNEL_MANAGE',
   accountCredential: 'OPERATIONS_CHANNEL_ACCOUNT_CREDENTIAL',
+  callGrantManage: 'OPERATIONS_CHANNEL_CALL_GRANT_MANAGE',
   midManage: 'OPERATIONS_CHANNEL_MID_MANAGE',
   costManage: 'OPERATIONS_CHANNEL_COST_MANAGE',
   costApprove: 'OPERATIONS_CHANNEL_COST_APPROVE',
@@ -65,14 +69,19 @@ export function hasButton(resources: readonly { resourceType: string; resourceCo
 // ---------- 枚举与文案 ----------
 
 export const lifecycleStatuses = ['DRAFT', 'ACTIVE', 'SUSPENDED', 'CLOSED'] as const;
+export const channelTypes = ['PAYMENT', 'SERVICE'] as const;
+export const grantStatuses = ['ACTIVE', 'DISABLED'] as const;
 export const capabilityStatuses = ['ENABLED', 'DISABLED'] as const;
 export const planStatuses = ['DRAFT', 'ACTIVE', 'INACTIVE'] as const;
 export const costVersionStatuses = ['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'ACTIVE', 'INACTIVE', 'REJECTED'] as const;
 export const valueTypes = ['BOOLEAN', 'DECIMAL', 'CODE'] as const;
-export const changeTargetTypes = ['CHANNEL', 'CHANNEL_ACCOUNT', 'CHANNEL_MID', 'MID_CAPABILITY', 'CHANNEL_COST_VERSION'] as const;
+export const changeTargetTypes = ['CHANNEL', 'CHANNEL_ACCOUNT', 'CHANNEL_MID', 'MID_CAPABILITY', 'CHANNEL_COST_VERSION', 'CHANNEL_CALL_GRANT',
+  'CHANNEL_API', 'CHANNEL_SCRIPT', 'CHANNEL_IMPLEMENTATION', 'STANDARD_API', 'VERIFY_ACCOUNT', 'VERIFY_CASE'] as const;
 export const changeTypes = ['CREATE', 'UPDATE', 'STATUS', 'CONFIGURATION', 'REBIND', 'CANCEL'] as const;
 
 export type LifecycleStatus = typeof lifecycleStatuses[number];
+export type ChannelType = typeof channelTypes[number];
+export type GrantStatus = typeof grantStatuses[number];
 export type CapabilityStatus = typeof capabilityStatuses[number];
 export type PlanStatus = typeof planStatuses[number];
 export type CostVersionStatus = typeof costVersionStatuses[number];
@@ -81,14 +90,22 @@ export type ChangeTargetType = typeof changeTargetTypes[number];
 export type CostVersionAction = 'submit' | 'approve' | 'reject' | 'cancel';
 
 export const lifecycleStatusLabels: Record<LifecycleStatus, string> = { DRAFT: '草稿', ACTIVE: '生效', SUSPENDED: '暂停', CLOSED: '已关闭' };
+export const channelTypeLabels: Record<ChannelType, string> = { PAYMENT: '支付渠道', SERVICE: '服务渠道' };
+export const grantStatusLabels: Record<GrantStatus, string> = { ACTIVE: '放行', DISABLED: '已停用' };
 export const capabilityStatusLabels: Record<CapabilityStatus, string> = { ENABLED: '启用', DISABLED: '停用' };
 export const planStatusLabels: Record<PlanStatus, string> = { DRAFT: '草稿', ACTIVE: '生效', INACTIVE: '失效' };
 export const costVersionStatusLabels: Record<CostVersionStatus, string> = {
   DRAFT: '草稿', PENDING_APPROVAL: '待审批', APPROVED: '已批准', ACTIVE: '生效', INACTIVE: '失效', REJECTED: '已驳回',
 };
 export const changeTargetLabels: Record<ChangeTargetType, string> = {
-  CHANNEL: '渠道', CHANNEL_ACCOUNT: '技术账号', CHANNEL_MID: 'MID', MID_CAPABILITY: '能力组', CHANNEL_COST_VERSION: '成本版本',
+  CHANNEL: '渠道', CHANNEL_ACCOUNT: '技术账号 / 凭据', CHANNEL_MID: 'MID', MID_CAPABILITY: '能力组', CHANNEL_COST_VERSION: '成本版本',
+  CHANNEL_CALL_GRANT: '调用授权', CHANNEL_API: '原子 API', CHANNEL_SCRIPT: '公共脚本', CHANNEL_IMPLEMENTATION: '标准 API 实现',
+  STANDARD_API: '标准 API', VERIFY_ACCOUNT: '验证账号', VERIFY_CASE: '验证用例',
 };
+/** 变更对象类型文案；未知类型显示原值。 */
+export function changeTargetLabel(targetType: string): string {
+  return (changeTargetLabels as Readonly<Record<string, string>>)[targetType] ?? targetType;
+}
 export const changeTypeLabels: Readonly<Record<string, string>> = {
   CREATE: '创建', UPDATE: '修改', STATUS: '状态变更', CONFIGURATION: '配置写入', REBIND: '改绑账号', CANCEL: '作废',
 };
@@ -100,10 +117,26 @@ export const channelStatusColors: Readonly<Record<string, string>> = {
 
 // ---------- 读模型 ----------
 
-export interface Channel { channelId: string; channelCode: string; channelName: string; status: LifecycleStatus; createTime: string; updateTime: string }
-export interface ChannelSummary { channelId: string; channelCode: string; channelName: string; status: LifecycleStatus; accountCount: number; midCount: number; updateTime: string }
+/** 出站地址：编码在渠道内唯一，sandbox 标记沙箱验证可调用的地址。 */
+export interface ChannelEndpoint { endpointCode: string; baseUrl: string; sandbox: boolean }
+export interface Channel {
+  channelId: string; channelCode: string; channelName: string; channelType: ChannelType; description: string | null; endpoints: ChannelEndpoint[];
+  version: number; status: LifecycleStatus; createTime: string; updateTime: string;
+}
+export interface ChannelSummary {
+  channelId: string; channelCode: string; channelName: string; channelType: ChannelType; status: LifecycleStatus; accountCount: number; midCount: number;
+  endpointCount: number;
+  /** 服务渠道的 ACTIVE 授权条数；支付渠道为 null。 */
+  activeGrantCount: number | null; updateTime: string;
+}
+/** 调用授权：同一「调用方 × 渠道 × 标准 API」一行，停用后再启用沿用该行并递增版本。 */
+export interface CallGrant {
+  callGrantId: string; channelId: string; callerService: string; standardApiCode: string; standardApiName: string; grantStatus: GrantStatus;
+  version: number; createdBy: string | null; updatedBy: string | null; createTime: string; updateTime: string;
+}
 export interface ChannelAccountSummary {
-  channelAccountId: string; channelId: string; entityNo: string; accountName: string; status: LifecycleStatus; configured: boolean;
+  /** 服务渠道的凭据不绑定 OE，为 null。 */
+  channelAccountId: string; channelId: string; entityNo: string | null; accountName: string; status: LifecycleStatus; configured: boolean;
   vaultTokenSuffix: string | null; updateTime: string;
 }
 export interface ChannelAccount extends ChannelAccountSummary { remark: string | null; boundMidCount: number; createTime: string }
@@ -122,7 +155,8 @@ export interface ChannelMid {
 }
 export interface CapabilityDefinition { capabilityCode: string; valueType: ValueType; allowedCodes: string[] }
 export interface ConfigChange {
-  changeId: string; targetType: ChangeTargetType; targetId: string; changeType: string; fromStatus: string | null; toStatus: string | null;
+  /** 历史记录可能出现已停用的类型（如 INTEGRATION），按原值展示。 */
+  changeId: string; targetType: ChangeTargetType | string; targetId: string; changeType: string; fromStatus: string | null; toStatus: string | null;
   operatorId: string; reason: string | null; createTime: string;
 }
 export interface CostPlanSummary {
@@ -161,6 +195,8 @@ export interface CostVersionDiff {
 export const idPattern = /^[1-9][0-9]{0,18}$/;
 export const entityNoPattern = /^[A-Z]{2}[0-9]{3}$/;
 export const channelCodePattern = /^[A-Z][A-Z0-9_]{1,63}$/;
+/** 调用方服务名：与内部认证中的服务名一致，Owner 只校验格式。 */
+export const callerServicePattern = /^[a-z][a-z0-9-]{1,63}$/;
 export const codePattern = /^[A-Z][A-Z0-9_]{0,63}$/;
 export const planCodePattern = codePattern;
 export const configKeyPattern = /^[A-Za-z][A-Za-z0-9_.-]{0,63}$/;
@@ -187,23 +223,39 @@ const orNull = <T,>(v: T | undefined | null): T | null => v ?? null;
 const require = (valid: boolean) => { if (!valid) throw new ApiError(502, 'INVALID_RESPONSE'); };
 const entityNo = (v: unknown) => typeof v === 'string' && entityNoPattern.test(v);
 
+function decodeEndpoint(value: unknown): ChannelEndpoint {
+  const v = value as ChannelEndpoint;
+  require(object(v) && text(v.endpointCode, 64) && text(v.baseUrl, 512) && optional(b => typeof b === 'boolean')(v.sandbox));
+  return { endpointCode: v.endpointCode, baseUrl: v.baseUrl, sandbox: v.sandbox === true };
+}
 export function decodeChannel(value: unknown, channelId?: string): Channel {
   const v = value as Channel;
   require(object(v) && id(v.channelId) && (!channelId || v.channelId === channelId) && text(v.channelCode, 64) && text(v.channelName, 255)
-    && oneOf(lifecycleStatuses)(v.status) && instant(v.createTime) && instant(v.updateTime));
-  return v;
+    && oneOf(channelTypes)(v.channelType) && optional(text)(v.description) && optional(array)(v.endpoints) && Number.isSafeInteger(v.version)
+    && v.version >= 0 && oneOf(lifecycleStatuses)(v.status) && instant(v.createTime) && instant(v.updateTime));
+  return { ...v, description: orNull(v.description), endpoints: (v.endpoints ?? []).map(decodeEndpoint) };
 }
 export function decodeChannelSummary(value: unknown): ChannelSummary {
   const v = value as ChannelSummary;
-  require(object(v) && id(v.channelId) && text(v.channelCode, 64) && text(v.channelName, 255) && oneOf(lifecycleStatuses)(v.status)
-    && count(v.accountCount) && count(v.midCount) && instant(v.updateTime));
-  return v;
+  require(object(v) && id(v.channelId) && text(v.channelCode, 64) && text(v.channelName, 255) && oneOf(channelTypes)(v.channelType)
+    && oneOf(lifecycleStatuses)(v.status) && count(v.accountCount) && count(v.midCount) && count(v.endpointCount) && optional(count)(v.activeGrantCount)
+    && instant(v.updateTime));
+  return { ...v, activeGrantCount: orNull(v.activeGrantCount) };
+}
+export function decodeCallGrant(value: unknown, callGrantId?: string): CallGrant {
+  const v = value as CallGrant;
+  require(object(v) && id(v.callGrantId) && (!callGrantId || v.callGrantId === callGrantId) && id(v.channelId)
+    && typeof v.callerService === 'string' && callerServicePattern.test(v.callerService) && text(v.standardApiCode, 64)
+    && text(v.standardApiName, 128) && oneOf(grantStatuses)(v.grantStatus) && Number.isSafeInteger(v.version) && v.version >= 1
+    && optional(id)(v.createdBy) && optional(id)(v.updatedBy) && instant(v.createTime) && instant(v.updateTime));
+  return { ...v, createdBy: orNull(v.createdBy), updatedBy: orNull(v.updatedBy) };
 }
 export function decodeAccountSummary(value: unknown): ChannelAccountSummary {
   const v = value as ChannelAccountSummary;
-  require(object(v) && id(v.channelAccountId) && id(v.channelId) && entityNo(v.entityNo) && text(v.accountName, 128) && oneOf(lifecycleStatuses)(v.status)
-    && typeof v.configured === 'boolean' && optional(value => text(value, 16))(v.vaultTokenSuffix) && instant(v.updateTime));
-  return { ...v, vaultTokenSuffix: orNull(v.vaultTokenSuffix) };
+  require(object(v) && id(v.channelAccountId) && id(v.channelId) && optional(entityNo)(v.entityNo) && text(v.accountName, 128)
+    && oneOf(lifecycleStatuses)(v.status) && typeof v.configured === 'boolean' && optional(value => text(value, 16))(v.vaultTokenSuffix)
+    && instant(v.updateTime));
+  return { ...v, entityNo: orNull(v.entityNo), vaultTokenSuffix: orNull(v.vaultTokenSuffix) };
 }
 export function decodeAccount(value: unknown, accountId?: string): ChannelAccount {
   const summary = decodeAccountSummary(value); const v = value as ChannelAccount;
@@ -247,7 +299,7 @@ export function decodeDefinitions(value: unknown): CapabilityDefinition[] {
 }
 export function decodeChange(value: unknown): ConfigChange {
   const v = value as ConfigChange;
-  require(object(v) && id(v.changeId) && oneOf(changeTargetTypes)(v.targetType) && id(v.targetId) && text(v.changeType, 64)
+  require(object(v) && id(v.changeId) && text(v.targetType, 64) && id(v.targetId) && text(v.changeType, 64)
     && optional(s => text(s, 64))(v.fromStatus) && optional(s => text(s, 64))(v.toStatus) && id(v.operatorId) && optional(text)(v.reason)
     && instant(v.createTime));
   return { ...v, fromStatus: orNull(v.fromStatus), toStatus: orNull(v.toStatus), reason: orNull(v.reason) };
@@ -339,6 +391,7 @@ export const decodeChannelPage = pageDecoder(decodeChannelSummary);
 export const decodeAccountPage = pageDecoder(decodeAccountSummary);
 export const decodeMidPage = pageDecoder(decodeMidSummary);
 export const decodeChangePage = pageDecoder(decodeChange);
+export const decodeCallGrantPage = pageDecoder((value: unknown) => decodeCallGrant(value));
 export const decodePlanPage = pageDecoder(decodePlanSummary);
 
 // ---------- 状态按钮可见性 ----------

@@ -4,7 +4,7 @@
     "method": "GET",
     "path": "/channel-admin/v1/channels",
     "ownerPath": "/channel-connector/v1/channels",
-    "query": "?status=ACTIVE&keyword=NI&page=1&size=10",
+    "query": "?channelType=PAYMENT&status=ACTIVE&keyword=NI&page=1&size=10",
     "request": null,
     "ownerRequest": null,
     "ownerActor": false,
@@ -16,9 +16,12 @@
           "channelId": "7400000000000000101",
           "channelCode": "NI",
           "channelName": "Network International",
+          "channelType": "PAYMENT",
           "status": "ACTIVE",
           "accountCount": 2,
           "midCount": 3,
+          "endpointCount": 2,
+          "activeGrantCount": null,
           "updateTime": "2026-10-20T02:00:00Z"
         }
       ],
@@ -43,6 +46,21 @@
       "channelId": "7400000000000000101",
       "channelCode": "NI",
       "channelName": "Network International",
+      "channelType": "PAYMENT",
+      "description": "阿联酋收单渠道",
+      "endpoints": [
+        {
+          "endpointCode": "API",
+          "baseUrl": "https://api.ni.example",
+          "sandbox": false
+        },
+        {
+          "endpointCode": "SANDBOX",
+          "baseUrl": "https://sandbox.ni.example",
+          "sandbox": true
+        }
+      ],
+      "version": 3,
       "status": "ACTIVE",
       "createTime": "2026-10-20T01:00:00Z",
       "updateTime": "2026-10-20T02:00:00Z"
@@ -57,11 +75,15 @@
     "query": "",
     "request": {
       "channelCode": "NI",
-      "channelName": "Network International"
+      "channelName": "Network International",
+      "channelType": "PAYMENT",
+      "description": "阿联酋收单渠道"
     },
     "ownerRequest": {
       "channelCode": "NI",
-      "channelName": "Network International"
+      "channelName": "Network International",
+      "channelType": "PAYMENT",
+      "description": "阿联酋收单渠道"
     },
     "ownerActor": true,
     "status": 201,
@@ -70,6 +92,10 @@
       "channelId": "7400000000000000101",
       "channelCode": "NI",
       "channelName": "Network International",
+      "channelType": "PAYMENT",
+      "description": "阿联酋收单渠道",
+      "endpoints": [],
+      "version": 1,
       "status": "DRAFT",
       "createTime": "2026-10-20T01:00:00Z",
       "updateTime": "2026-10-20T02:00:00Z"
@@ -83,10 +109,12 @@
     "ownerPath": "/channel-connector/v1/channels/7400000000000000101",
     "query": "",
     "request": {
-      "channelName": "Network International AE"
+      "channelName": "Network International AE",
+      "description": "阿联酋收单渠道"
     },
     "ownerRequest": {
-      "channelName": "Network International AE"
+      "channelName": "Network International AE",
+      "description": "阿联酋收单渠道"
     },
     "ownerActor": true,
     "status": 200,
@@ -95,6 +123,21 @@
       "channelId": "7400000000000000101",
       "channelCode": "NI",
       "channelName": "Network International AE",
+      "channelType": "PAYMENT",
+      "description": "阿联酋收单渠道",
+      "endpoints": [
+        {
+          "endpointCode": "API",
+          "baseUrl": "https://api.ni.example",
+          "sandbox": false
+        },
+        {
+          "endpointCode": "SANDBOX",
+          "baseUrl": "https://sandbox.ni.example",
+          "sandbox": true
+        }
+      ],
+      "version": 4,
       "status": "DRAFT",
       "createTime": "2026-10-20T01:00:00Z",
       "updateTime": "2026-10-20T02:00:00Z"
@@ -109,11 +152,11 @@
     "query": "",
     "request": {
       "targetStatus": "ACTIVE",
-      "reason": "接入方已登记"
+      "reason": "出站地址已配置"
     },
     "ownerRequest": {
       "targetStatus": "ACTIVE",
-      "reason": "接入方已登记"
+      "reason": "出站地址已配置"
     },
     "ownerActor": true,
     "status": 200,
@@ -122,11 +165,89 @@
       "channelId": "7400000000000000101",
       "channelCode": "NI",
       "channelName": "Network International",
+      "channelType": "PAYMENT",
+      "description": "阿联酋收单渠道",
+      "endpoints": [
+        {
+          "endpointCode": "API",
+          "baseUrl": "https://api.ni.example",
+          "sandbox": false
+        },
+        {
+          "endpointCode": "SANDBOX",
+          "baseUrl": "https://sandbox.ni.example",
+          "sandbox": true
+        }
+      ],
+      "version": 3,
       "status": "ACTIVE",
       "createTime": "2026-10-20T01:00:00Z",
       "updateTime": "2026-10-20T02:00:00Z"
     },
     "routeCode": "operations-channel-channel-status"
+  },
+  {
+    "id": "H06",
+    "method": "PUT",
+    "path": "/channel-admin/v1/channels/7400000000000000102/endpoints",
+    "ownerPath": "/channel-connector/v1/channels/7400000000000000102/endpoints",
+    "query": "",
+    "request": {
+      "expectedVersion": 2,
+      "endpoints": [
+        {
+          "endpointCode": "API",
+          "baseUrl": "https://maps.example.com/v1",
+          "sandbox": false
+        },
+        {
+          "endpointCode": "SANDBOX",
+          "baseUrl": "https://sandbox.maps.example.com/v1"
+        }
+      ]
+    },
+    "ownerRequest": {
+      "expectedVersion": 2,
+      "endpoints": [
+        {
+          "endpointCode": "API",
+          "baseUrl": "https://maps.example.com/v1",
+          "sandbox": false
+        },
+        {
+          "endpointCode": "SANDBOX",
+          "baseUrl": "https://sandbox.maps.example.com/v1",
+          "sandbox": null
+        }
+      ]
+    },
+    "ownerActor": true,
+    "status": 200,
+    "ownerStatus": 200,
+    "response": {
+      "channelId": "7400000000000000102",
+      "channelCode": "GEO_MAP",
+      "channelName": "地图服务",
+      "channelType": "SERVICE",
+      "description": "地址解析",
+      "endpoints": [
+        {
+          "endpointCode": "API",
+          "baseUrl": "https://maps.example.com/v1",
+          "sandbox": false
+        },
+        {
+          "endpointCode": "SANDBOX",
+          "baseUrl": "https://sandbox.maps.example.com/v1",
+          "sandbox": false
+        }
+      ],
+      "version": 3,
+      "status": "DRAFT",
+      "createTime": "2026-10-22T01:00:00Z",
+      "updateTime": "2026-10-22T02:00:00Z"
+    },
+    "routeCode": "operations-channel-channel-endpoints"
   },
   {
     "id": "A01",
@@ -788,6 +909,107 @@
       "total": 1
     },
     "routeCode": "operations-channel-change-list"
+  },
+  {
+    "id": "R01",
+    "method": "GET",
+    "path": "/channel-admin/v1/channel-call-grants",
+    "ownerPath": "/channel-connector/v1/channel-call-grants",
+    "query": "?channelId=7400000000000000102&callerService=commerce-service&standardApiCode=GEOCODE&grantStatus=ACTIVE&page=1&size=20",
+    "request": null,
+    "ownerRequest": null,
+    "ownerActor": false,
+    "status": 200,
+    "ownerStatus": 200,
+    "response": {
+      "items": [
+        {
+          "callGrantId": "7400000000000000901",
+          "channelId": "7400000000000000102",
+          "callerService": "commerce-service",
+          "standardApiCode": "GEOCODE",
+          "standardApiName": "地址解析",
+          "grantStatus": "ACTIVE",
+          "version": 1,
+          "createdBy": "10001",
+          "updatedBy": "10001",
+          "createTime": "2026-10-22T03:00:00Z",
+          "updateTime": "2026-10-22T03:00:00Z"
+        }
+      ],
+      "page": 1,
+      "size": 20,
+      "total": 1
+    },
+    "routeCode": "operations-channel-call-grant-list"
+  },
+  {
+    "id": "R02",
+    "method": "POST",
+    "path": "/channel-admin/v1/channel-call-grants",
+    "ownerPath": "/channel-connector/v1/channel-call-grants",
+    "query": "",
+    "request": {
+      "channelId": "7400000000000000102",
+      "callerService": "commerce-service",
+      "standardApiCode": "GEOCODE"
+    },
+    "ownerRequest": {
+      "channelId": "7400000000000000102",
+      "callerService": "commerce-service",
+      "standardApiCode": "GEOCODE"
+    },
+    "ownerActor": true,
+    "status": 201,
+    "ownerStatus": 201,
+    "response": {
+      "callGrantId": "7400000000000000901",
+      "channelId": "7400000000000000102",
+      "callerService": "commerce-service",
+      "standardApiCode": "GEOCODE",
+      "standardApiName": "地址解析",
+      "grantStatus": "ACTIVE",
+      "version": 1,
+      "createdBy": "10001",
+      "updatedBy": "10001",
+      "createTime": "2026-10-22T03:00:00Z",
+      "updateTime": "2026-10-22T03:00:00Z"
+    },
+    "routeCode": "operations-channel-call-grant-create"
+  },
+  {
+    "id": "R03",
+    "method": "POST",
+    "path": "/channel-admin/v1/channel-call-grants/7400000000000000901/status",
+    "ownerPath": "/channel-connector/v1/channel-call-grants/7400000000000000901/status",
+    "query": "",
+    "request": {
+      "targetStatus": "DISABLED",
+      "expectedVersion": 1,
+      "reason": "调用方下线"
+    },
+    "ownerRequest": {
+      "targetStatus": "DISABLED",
+      "expectedVersion": 1,
+      "reason": "调用方下线"
+    },
+    "ownerActor": true,
+    "status": 200,
+    "ownerStatus": 200,
+    "response": {
+      "callGrantId": "7400000000000000901",
+      "channelId": "7400000000000000102",
+      "callerService": "commerce-service",
+      "standardApiCode": "GEOCODE",
+      "standardApiName": "地址解析",
+      "grantStatus": "DISABLED",
+      "version": 2,
+      "createdBy": "10001",
+      "updatedBy": "10002",
+      "createTime": "2026-10-22T03:00:00Z",
+      "updateTime": "2026-10-22T04:00:00Z"
+    },
+    "routeCode": "operations-channel-call-grant-status"
   },
   {
     "id": "P01",

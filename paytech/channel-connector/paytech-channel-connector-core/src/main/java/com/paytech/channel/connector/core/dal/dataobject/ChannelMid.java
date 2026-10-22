@@ -4,7 +4,7 @@ import java.time.Instant;
 
 import lombok.Getter;
 import lombok.Setter;
-import com.paytech.channel.connector.core.enums.ChannelStatus;
+import com.paytech.channel.connector.protocol.core.enums.ChannelStatus;
 
 
 /** ChannelMid 对应的 Channel 所属持久化对象。 */

@@ -9,7 +9,7 @@ import com.paytech.foundation.compensation.api.CompensationEvent;
 import com.paytech.foundation.compensation.api.CompensationEventHandler;
 import com.paytech.foundation.compensation.api.CompensationExecutionPolicy;
 import com.paytech.foundation.compensation.api.CompensationHandlerResult;
-import com.paytech.channel.connector.protocol.domainservice.service.impl.IntegrationVerifyRunServiceImpl;
+import com.paytech.channel.connector.protocol.domainservice.service.impl.ChannelVerifyRunServiceImpl;
 import com.paytech.channel.connector.protocol.service.processor.ExecuteVerifyRunProcessor;
 import com.paytech.channel.connector.protocol.service.processor.request.ExecuteVerifyRunRequest;
 
@@ -31,7 +31,7 @@ public class IntegrationVerifyRunHandler implements CompensationEventHandler {
     /** 固定持久化类型。 */
     @Override
     public String eventType() {
-        return IntegrationVerifyRunServiceImpl.EVENT_TYPE;
+        return ChannelVerifyRunServiceImpl.EVENT_TYPE;
     }
 
     /** 不重试：第二次执行只用于把中断的运行收尾。 */

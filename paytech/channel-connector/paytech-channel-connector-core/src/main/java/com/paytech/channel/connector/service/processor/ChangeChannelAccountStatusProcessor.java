@@ -11,17 +11,18 @@ import org.springframework.stereotype.Component;
 import com.paytech.channel.connector.core.constant.ChannelConnectorLocks;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelAccount;
 import com.paytech.channel.connector.protocol.core.enums.ChangeTargetType;
-import com.paytech.channel.connector.core.enums.ChannelStatus;
+import com.paytech.channel.connector.protocol.core.enums.ChannelStatus;
 import com.paytech.channel.connector.domain.ChannelAccountContext;
 import com.paytech.channel.connector.domain.ChannelAccountDetailView;
 import com.paytech.channel.connector.protocol.domain.ChannelConfigChanges;
 import com.paytech.channel.connector.domainservice.repository.ChannelAccountRepository;
 import com.paytech.channel.connector.domainservice.repository.ChannelMidRepository;
 import com.paytech.channel.connector.domainservice.service.ChannelAccountService;
-import com.paytech.channel.connector.domainservice.service.PaymentChannelService;
+import com.paytech.channel.connector.protocol.domainservice.service.ChannelService;
 import com.paytech.channel.connector.domainservice.validator.channel.ChannelStatusTransitionValidator;
 import com.paytech.channel.connector.service.processor.request.ChangeChannelStatusRequest;
 import com.paytech.foundation.common.error.BizCheckFailException;
+import com.paytech.foundation.common.error.ConcurrentRequestException;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
 
@@ -40,16 +41,21 @@ public class ChangeChannelAccountStatusProcessor
     private final IdGenerator idGenerator;
     private final ChannelMidRepository channelMidRepository;
     private final ChannelAccountService channelAccountService;
-    private final PaymentChannelService paymentChannelService;
+    private final ChannelService channelService;
     private final ChannelAccountRepository channelAccountRepository;
     private final ChannelConfigTransactions channelConfigTransactions;
 
-    /** 账号资源锁；关闭时读取不可变的所属渠道并一并加锁。 */
+    /**
+     * 账号资源锁；关闭与激活时读取不可变的所属渠道并一并加锁
+     * <li>关闭：与渠道关闭检查“无未关闭账号”互斥。</li>
+     * <li>激活：同一服务渠道最多一个 ACTIVE 账号，并发激活两个账号时由渠道锁串行。</li>
+     */
     @Override
     protected LockCommand lockCommand(ChangeChannelStatusRequest request) {
         List<String> keys = new ArrayList<>(List.of(ChannelConnectorLocks.channelAccount(request.getTargetId())));
         ChannelAccount account = channelAccountRepository.findById(request.getTargetId());
-        if (request.getTargetStatus() == ChannelStatus.CLOSED && account != null) {
+        if ((request.getTargetStatus() == ChannelStatus.CLOSED || request.getTargetStatus() == ChannelStatus.ACTIVE)
+            && account != null) {
             keys.add(ChannelConnectorLocks.channel(account.getChannelId()));
         }
         return LockCommand.tryLocks(keys, ChannelConnectorLocks.CHANNEL_CONFIG_WAIT,
@@ -65,7 +71,7 @@ public class ChangeChannelAccountStatusProcessor
             account.getAccountStatus(), target);
         Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
         ChannelAccountContext context = new ChannelAccountContext(account,
-            paymentChannelService.loadChannel(account.getChannelId()), ChannelConfigChanges.status(idGenerator.nextId(),
+            channelService.loadChannel(account.getChannelId()), ChannelConfigChanges.status(idGenerator.nextId(),
                 ChangeTargetType.CHANNEL_ACCOUNT, account.getChannelAccountId(), account.getAccountStatus(), target,
                 request.getActorId(), request.getReason(), now), now);
 
@@ -79,13 +85,18 @@ public class ChangeChannelAccountStatusProcessor
         return new ChannelAccountDetailView(account, boundMids);
     }
 
-    /** 激活核对渠道与配置，关闭核对绑定 MID。 */
+    /** 激活核对渠道与配置（服务渠道另核对唯一 ACTIVE 凭据），关闭核对绑定 MID。 */
     void checkPrerequisite(ChannelAccountContext context, ChannelStatus target, long boundMids) {
         ChannelAccount account = context.getAccount();
         if (target == ChannelStatus.ACTIVE && !context.canActivate()) {
             throw new BizCheckFailException("技术账号激活前置不满足（渠道须为 ACTIVE 且账号已写入配置）: 账号 "
                 + account.getChannelAccountId() + ", 渠道状态 " + context.getChannel().getChannelStatus().getCode()
                 + ", 已配置 " + context.configured());
+        }
+        if (target == ChannelStatus.ACTIVE && context.getChannel().service()
+            && channelAccountRepository.countActiveByChannel(account.getChannelId()) > 0) {
+            throw new ConcurrentRequestException("服务渠道已有 ACTIVE 凭据，同一服务渠道最多一个: 渠道 "
+                + context.getChannel().getChannelCode() + ", 账号 " + account.getChannelAccountId());
         }
         if (target == ChannelStatus.CLOSED && boundMids > 0) {
             throw new BizCheckFailException("仍有未关闭的 MID 绑定该技术账号，不能关闭: 账号 " + account.getChannelAccountId()

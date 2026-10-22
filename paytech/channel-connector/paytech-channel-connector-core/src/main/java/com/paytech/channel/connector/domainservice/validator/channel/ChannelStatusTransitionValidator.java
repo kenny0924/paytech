@@ -1,6 +1,6 @@
 package com.paytech.channel.connector.domainservice.validator.channel;
 
-import com.paytech.channel.connector.core.enums.ChannelStatus;
+import com.paytech.channel.connector.protocol.core.enums.ChannelStatus;
 import com.paytech.foundation.common.error.BizCheckFailException;
 
 /** 渠道、技术账号与 MID 状态变更共用的迁移校验；只读入参，不访问数据库。 */

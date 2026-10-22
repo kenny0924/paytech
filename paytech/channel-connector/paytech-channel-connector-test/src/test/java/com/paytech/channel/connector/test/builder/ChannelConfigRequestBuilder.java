@@ -1,6 +1,14 @@
 package com.paytech.channel.connector.test.builder;
 
+import com.paytech.channel.connector.api.channel.request.ChannelEndpointBody;
+import com.paytech.channel.connector.api.channel.request.UpdateChannelEndpointsRequestBody;
+import com.paytech.channel.connector.api.enums.ChannelCallGrantStatus;
+import com.paytech.channel.connector.api.enums.ChannelType;
+import com.paytech.channel.connector.api.grant.request.ChangeChannelCallGrantStatusRequestBody;
+import com.paytech.channel.connector.api.grant.request.CreateChannelCallGrantRequestBody;
+
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.List;
 import java.util.Map;
 
@@ -25,11 +33,59 @@ public final class ChannelConfigRequestBuilder {
     private ChannelConfigRequestBuilder() {
     }
 
-    /** 创建渠道。 */
+    /** 创建支付渠道。 */
     public static CreateChannelRequestBody channel(String channelCode) {
+        return channel(channelCode, ChannelType.PAYMENT);
+    }
+
+    /** 创建指定类型的渠道；类型可为 null 以构造缺字段负例。 */
+    public static CreateChannelRequestBody channel(String channelCode, ChannelType type) {
         CreateChannelRequestBody body = new CreateChannelRequestBody();
         body.setChannelCode(channelCode);
         body.setChannelName("合成渠道 " + channelCode);
+        body.setChannelType(type == null ? null : type.getCode());
+        return body;
+    }
+
+    /** 创建服务渠道的凭据（不绑定 OE）。 */
+    public static CreateChannelAccountRequestBody credential(long channelId) {
+        return account(channelId, null);
+    }
+
+    /** 整组替换出站地址。 */
+    public static UpdateChannelEndpointsRequestBody endpoints(int expectedVersion, ChannelEndpointBody... endpoints) {
+        UpdateChannelEndpointsRequestBody body = new UpdateChannelEndpointsRequestBody();
+        body.setExpectedVersion(expectedVersion);
+        body.setEndpoints(List.of(endpoints));
+        return body;
+    }
+
+    /** 一个出站地址；sandbox 为 null 表示不填写。 */
+    public static ChannelEndpointBody endpoint(String endpointCode, String baseUrl, Boolean sandbox) {
+        ChannelEndpointBody body = new ChannelEndpointBody();
+        body.setEndpointCode(endpointCode);
+        body.setBaseUrl(baseUrl);
+        body.setSandbox(sandbox);
+        return body;
+    }
+
+    /** 新建调用授权。 */
+    public static CreateChannelCallGrantRequestBody grant(long channelId, String callerService,
+        String standardApiCode) {
+        CreateChannelCallGrantRequestBody body = new CreateChannelCallGrantRequestBody();
+        body.setChannelId(String.valueOf(channelId));
+        body.setCallerService(callerService);
+        body.setStandardApiCode(standardApiCode);
+        return body;
+    }
+
+    /** 启停调用授权。 */
+    public static ChangeChannelCallGrantStatusRequestBody grantStatus(ChannelCallGrantStatus target,
+        int expectedVersion, String reason) {
+        ChangeChannelCallGrantStatusRequestBody body = new ChangeChannelCallGrantStatusRequestBody();
+        body.setTargetStatus(target.getCode());
+        body.setExpectedVersion(expectedVersion);
+        body.setReason(reason);
         return body;
     }
 

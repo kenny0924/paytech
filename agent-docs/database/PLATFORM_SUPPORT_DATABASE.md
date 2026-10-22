@@ -1,6 +1,6 @@
 # Platform Support 数据库设计规范
 
-> **渠道协议迁出（2026-10-20）：** 依据[统一对外出口决定](../decisions/2026-10-20-channel-connector-unified-outbound.md)与[技术方案](../../requirements/20261020/channel-connector-统一对外渠道出口/technique.md)，下一条所述 integration 图组 10 表（`t_standard_api`、`t_api_field`、`t_integration*`、验证四表）的 Owner 改为 channel-connector（`mor_channel_connector`，模块 `paytech-channel-connector-protocol`），Platform Schema 由 57 张减为 47 张；下一条保留为字段与历史设计参照，不再表示 Platform 拥有这些表。代码与 SQL 执行状态只见[当前台账](../CURRENT_IMPLEMENTATION.md#channel-connector-unified-outbound-20261020)。
+> **渠道协议迁出（2026-10-20）：** 依据[统一对外出口决定](../decisions/2026-10-20-channel-connector-unified-outbound.md)与[技术方案](../../requirements/20261020/channel-connector-统一对外渠道出口/technique.md)，下一条所述 integration 图组 10 表（`t_standard_api`、`t_api_field`、`t_integration*`、验证四表）的 Owner 改为 channel-connector（`mor_channel_connector`，模块 `paytech-channel-connector-protocol`），Platform Schema 由 57 张减为 47 张；下一条保留为字段与历史设计参照，不再表示 Platform 拥有这些表。2026-10-22 第二段在 channel-connector 内把 `t_integration` 并入 `t_channel`、7 张 `t_integration_*` 改名为 `t_channel_*`，与 Platform 无关；Platform 只保留运营控制台的注册数据（块 71、92、129）。代码与 SQL 执行状态只见[当前台账](../CURRENT_IMPLEMENTATION.md#channel-connector-phase2-20261022)。
 
 > **Integration 后继（2026-09-21，2026-10-13 修订）：** [归属决定](../decisions/2026-09-21-platform-integration-http-execution.md)将受控外部 API 配置和执行纳入 Platform；[标准 API 与流程决定](../decisions/2026-10-13-platform-standard-api-flow.md)改为标准 API 加渠道同步流程。六表见[数据设计](../../requirements/20260914/platform-support-外部API配置与执行/data-design.md)与[物理设计](../../requirements/20260914/platform-support-外部API配置与执行/physical-design.md)，2026-10-13 已进入 PDManer（图组 integration），SQL 未执行；本项是下文“无通用技术配置”的窄例外，不扩展任意配置中心。2026-10-14 同图组增加沙箱验证四表（验证账号、用例、运行、运行步骤），保存验证证据与非敏感沙箱账号材料，依据[沙箱验证决定](../decisions/2026-10-14-platform-integration-sandbox-verification.md)。未因此更新正式模型数量，实际状态见当前台账。
 
@@ -69,7 +69,7 @@ Gateway 和入口应用位于六个核心系统之外：Gateway 负责入口、�
 | 公共 API 控制面 | 6 | `t_gateway_target`、`t_gateway_route`、`t_gateway_route_header`、`t_gateway_route_query_param`、`t_gateway_guard_rule`、`t_console_resource` |
 | 可靠执行 | 2 | `t_compensation_event`、`t_command_idempotency` |
 
-Integration 按顶部专项决定管理受控出站 API 定义；除此之外，不建立 Gateway Policy/Release/Snapshot/Ack、任意通用技术配置、通用 Dictionary、通用 Job、Inbox/Outbox、Retention、Legal Hold、Archive Workflow 或自动销毁表。
+受控出站 API 定义自 2026-10-20 起由 channel-connector 管理（见顶部迁出说明），Platform 不再持有相应表；Platform 不建立 Gateway Policy/Release/Snapshot/Ack、任意通用技术配置、通用 Dictionary、通用 Job、Inbox/Outbox、Retention、Legal Hold、Archive Workflow 或自动销毁表。
 
 ## 4. 通用物理规则
 

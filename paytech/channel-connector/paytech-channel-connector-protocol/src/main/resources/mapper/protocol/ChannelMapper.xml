@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.channel.connector.protocol.core.dal.mapper.ChannelMapper">
+    <resultMap id="row" type="com.paytech.channel.connector.protocol.core.dal.dataobject.Channel">
+        <id column="channel_id" property="channelId"/>
+        <result column="channel_code" property="channelCode"/>
+        <result column="channel_name" property="channelName"/>
+        <result column="channel_type" property="channelType"
+                javaType="com.paytech.channel.connector.api.enums.ChannelType"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="channel_status" property="channelStatus"
+                javaType="com.paytech.channel.connector.protocol.core.enums.ChannelStatus"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="description" property="description"/>
+        <result column="endpoints" property="endpoints"/>
+        <result column="version" property="version"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="updated_by" property="updatedBy"/>
+        <result column="create_time" property="createTime"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        <result column="update_time" property="updateTime"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+    </resultMap>
+    <sql id="columns">channel_id, channel_code, channel_name, channel_type, channel_status, description, endpoints, version, created_by, updated_by, create_time, update_time</sql>
+    <select id="byId" resultMap="row" useCache="false">
+        SELECT <include refid="columns"/> FROM t_channel WHERE channel_id = #{channelId}
+    </select>
+    <select id="byCode" resultMap="row" useCache="false">
+        SELECT <include refid="columns"/> FROM t_channel WHERE channel_code = #{code}
+    </select>
+    <select id="lock" resultMap="row" useCache="false" flushCache="true">
+        SELECT <include refid="columns"/> FROM t_channel WHERE channel_code = #{code} FOR UPDATE
+    </select>
+    <select id="lockById" resultMap="row" useCache="false" flushCache="true">
+        SELECT <include refid="columns"/> FROM t_channel WHERE channel_id = #{channelId} FOR UPDATE
+    </select>
+    <select id="byIds" resultMap="row" useCache="false">
+        SELECT <include refid="columns"/> FROM t_channel WHERE channel_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY channel_code
+    </select>
+    <insert id="insert">
+        INSERT INTO t_channel (<include refid="columns"/>)
+        VALUES (#{row.channelId}, #{row.channelCode}, #{row.channelName}, #{row.channelType.code},
+        #{row.channelStatus.code}, #{row.description}, #{row.endpoints}, #{row.version}, #{row.createdBy},
+        #{row.updatedBy}, #{row.createTime}, #{row.updateTime})
+    </insert>
+    <update id="updateProfile">
+        UPDATE t_channel SET channel_name = #{channelName}, description = #{description}, version = version + 1,
+        updated_by = #{updatedBy}, update_time = #{now}
+        WHERE channel_id = #{channelId} AND channel_status &lt;&gt; 'CLOSED' AND version &lt; 2147483647
+    </update>
+    <update id="updateEndpoints">
+        UPDATE t_channel SET endpoints = #{endpoints}, version = version + 1, updated_by = #{updatedBy},
+        update_time = #{now}
+        WHERE channel_id = #{channelId} AND version = #{version} AND channel_status &lt;&gt; 'CLOSED'
+    </update>
+    <update id="updateStatus">
+        UPDATE t_channel SET channel_status = #{toStatus.code}, updated_by = #{updatedBy}, update_time = #{now}
+        WHERE channel_id = #{channelId} AND channel_status = #{fromStatus.code}
+    </update>
+    <resultMap id="summary" type="com.paytech.channel.connector.protocol.domain.ChannelSummary">
+        <id column="channel_id" property="channelId"/>
+        <result column="channel_code" property="channelCode"/>
+        <result column="channel_name" property="channelName"/>
+        <result column="channel_type" property="channelType"
+                javaType="com.paytech.channel.connector.api.enums.ChannelType"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="channel_status" property="channelStatus"
+                javaType="com.paytech.channel.connector.protocol.core.enums.ChannelStatus"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="endpoint_count" property="endpointCount"/>
+        <result column="active_grant_count" property="activeGrantCount"/>
+        <result column="update_time" property="updateTime"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+    </resultMap>
+    <sql id="summaryFilter">
+        <where>
+            <if test="channelType != null">c.channel_type = #{channelType.code}</if>
+            <if test="status != null">AND c.channel_status = #{status.code}</if>
+            <if test="keyword != null">
+                AND (c.channel_code LIKE CONCAT(#{keyword}, '%') OR c.channel_name LIKE CONCAT(#{keyword}, '%'))
+            </if>
+        </where>
+    </sql>
+    <select id="selectSummaries" resultMap="summary" useCache="false">
+        SELECT c.channel_id, c.channel_code, c.channel_name, c.channel_type, c.channel_status, c.update_time,
+        COALESCE(JSON_LENGTH(c.endpoints), 0) AS endpoint_count,
+        CASE WHEN c.channel_type = 'SERVICE' THEN (SELECT COUNT(*) FROM t_channel_call_grant g
+            WHERE g.channel_id = c.channel_id AND g.grant_status = 'ACTIVE') END AS active_grant_count
+        FROM t_channel c
+        <include refid="summaryFilter"/>
+        ORDER BY c.update_time DESC, c.channel_id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+    <select id="countSummaries" resultType="long" useCache="false">
+        SELECT COUNT(*) FROM t_channel c
+        <include refid="summaryFilter"/>
+    </select>
+</mapper>

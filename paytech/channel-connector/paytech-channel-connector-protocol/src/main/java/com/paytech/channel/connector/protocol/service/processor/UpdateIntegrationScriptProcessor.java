@@ -12,21 +12,21 @@ import com.paytech.channel.connector.protocol.domainservice.service.ChannelConfi
 import com.paytech.channel.connector.protocol.core.enums.ConfigurationField;
 import com.paytech.channel.connector.protocol.domain.ConfigurationFieldChange;
 import com.paytech.channel.connector.protocol.core.configuration.ExternalApiConfigurationProperties;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.Integration;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationScript;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.Channel;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelScript;
 import com.paytech.channel.connector.protocol.domain.ExternalApiConfigurationCodec;
 import com.paytech.channel.connector.protocol.domain.ExternalApiMutation;
 import com.paytech.channel.connector.protocol.domain.ExternalApiLocks;
 import com.paytech.channel.connector.protocol.domain.UpdateIntegrationScriptContext;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationScriptRepository;
-import com.paytech.channel.connector.protocol.domainservice.service.IntegrationScriptManagementService;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelScriptRepository;
+import com.paytech.channel.connector.protocol.domainservice.service.ChannelScriptManagementService;
 import com.paytech.channel.connector.protocol.domainservice.validator.IntegrationScriptValidator;
 import com.paytech.channel.connector.protocol.service.processor.request.UpdateIntegrationScriptRequest;
 
 import lombok.AllArgsConstructor;
 
 /**
- * E20 修改公共脚本：全模块配置锁内锁定接入方与原行、核对版本、校验参数与源码，并用新签名重校验所有引用它的原子 API。
+ * E20 修改公共脚本：全模块配置锁内锁定渠道与原行、核对版本、校验参数与源码，并用新签名重校验所有引用它的原子 API。
  *
  * <p>修改阶段或参数会让引用方失效时拒绝并列出引用方；编码不可修改。
  */
@@ -41,8 +41,8 @@ public class UpdateIntegrationScriptProcessor
     private final IntegrationScriptValidator validator;
     private final ExternalApiTransactions transactions;
     private final ExternalApiProcessorSupport support;
-    private final IntegrationScriptRepository integrationScripts;
-    private final IntegrationScriptManagementService service;
+    private final ChannelScriptRepository channelScripts;
+    private final ChannelScriptManagementService service;
     private final ExternalApiConfigurationProperties properties;
 
     @Override
@@ -55,8 +55,8 @@ public class UpdateIntegrationScriptProcessor
     @Override
     protected ExternalApiMutation processWithinLock(UpdateIntegrationScriptRequest request) {
         return transactions.write(() -> {
-            Integration integration = children.lockIntegration(request.getIntegrationCode());
-            IntegrationScript row = support.requireFound(integrationScripts.lock(integration.getIntegrationId(),
+            Channel integration = children.lockChannel(request.getIntegrationCode());
+            ChannelScript row = support.requireFound(channelScripts.lock(integration.getChannelId(),
                 request.getCode()));
             support.requireVersion(row.getVersion(), request.getExpectedVersion());
             support.requireValid(validator.validate(request.getParameters(), request.getSourceCode()));
@@ -67,8 +67,8 @@ public class UpdateIntegrationScriptProcessor
             var changes = changes(row, context);
             int beforeVersion = row.getVersion();
             service.update(context);
-            String objectCode = integration.getIntegrationCode() + "/" + row.getScriptCode();
-            changeService.record(support.changed(ChangeTargetType.INTEGRATION_SCRIPT, row.getIntegrationScriptId(), ChangeType.UPDATE,
+            String objectCode = integration.getChannelCode() + "/" + row.getScriptCode();
+            changeService.record(support.changed(ChangeTargetType.CHANNEL_SCRIPT, row.getChannelScriptId(), ChangeType.UPDATE,
                 request.getActorId(), objectCode, beforeVersion, row.getVersion(), changes,
                 request.getReason(), context.getUpdateTime()));
             return new ExternalApiMutation("INTEGRATION_SCRIPT", objectCode, row.getVersion());
@@ -76,7 +76,7 @@ public class UpdateIntegrationScriptProcessor
     }
 
     /** 修改阶段或参数会让引用方原子 API 失效时拒绝并列出编码。 */
-    void requireUsersStillValid(Integration integration, UpdateIntegrationScriptRequest request) {
+    void requireUsersStillValid(Channel integration, UpdateIntegrationScriptRequest request) {
         var broken = children.brokenScriptUsers(integration, request.getCode(), request.getStage(),
             request.getParameters());
         if (!broken.isEmpty()) {
@@ -85,7 +85,7 @@ public class UpdateIntegrationScriptProcessor
     }
 
     /** 在更新前冻结名称、说明、阶段、参数与源码摘要的前后值。 */
-    List<ConfigurationFieldChange> changes(IntegrationScript row, UpdateIntegrationScriptContext context) {
+    List<ConfigurationFieldChange> changes(ChannelScript row, UpdateIntegrationScriptContext context) {
         return List.of(new ConfigurationFieldChange(ConfigurationField.CODE, row.getScriptCode(), row.getScriptCode()),
             new ConfigurationFieldChange(ConfigurationField.DISPLAY_NAME, row.getScriptName(), context.getName()),
             new ConfigurationFieldChange(ConfigurationField.DESCRIPTION, row.getDescription(), context.getDescription()),

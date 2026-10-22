@@ -10,34 +10,36 @@ import { ReasonDialog, ValidationPanel, useReasonFlow } from './EditorParts';
 import { decodeCapabilities, decodeScript, decodeValidation, scriptObjects } from './editorModel';
 import type { Capabilities, ScriptDetail, ScriptParameter, ValidationIssue } from './editorModel';
 import { ConflictBanner, Loading, LoadFailure, hasButton, useCopyDraft, useDetail, useEditorSave } from './externalApiHooks';
-import { codePattern, decodeMutation, externalApiBase, integrationPath, integrationRoute, manageIntegrations, replaceQuery } from './externalApiModel';
+import { codePattern, decodeMutation, externalApiBase, integrationPath, manageProtocol, replaceQuery } from './externalApiModel';
+import { workspaceCrumbs, workspaceRoutes } from '../channel/channelWorkspace';
 import type { ScriptStage } from './externalApiModel';
 import { moveItem, paramTypes } from './integrationApiModel';
 import { Field, HandleMark, Mono, PageHeader, Panel, ReadOnlyValue } from './ui';
 
-interface Props { resources: ConsoleResource[]; onAuthorizationChanged: () => void; integrationCode: string; scriptCode: string | null }
+/** integrationCode 为渠道编码（管理接口路径沿用 integrations/{code}），channelId 用于页面路由。 */
+interface Props { resources: ConsoleResource[]; onAuthorizationChanged: () => void; channelId: string; integrationCode: string; scriptCode: string | null }
 const capabilityPath = `${externalApiBase}/editor-capabilities`;
 const maxSourceBytes = 32 * 1024;
 const noManage = '只读 · 无“外部 API 管理”权限';
 const stages: ScriptStage[] = ['REQUEST', 'RESPONSE'];
 
-/** 公共脚本编辑与详情（/integrations/:code/scripts/:scriptCode，?mode=edit；新建为 /scripts/new）。 */
-export function ScriptEditor({ resources, onAuthorizationChanged, integrationCode, scriptCode }: Props) {
+/** 公共脚本编辑与详情（/channel/channels/:channelId/protocol/scripts/:scriptCode，?mode=edit；新建为 /scripts/new）。 */
+export function ScriptEditor({ resources, onAuthorizationChanged, channelId, integrationCode, scriptCode }: Props) {
   const location = useLocation();
-  const creating = scriptCode === null; const canManage = hasButton(resources, manageIntegrations);
+  const creating = scriptCode === null; const canManage = hasButton(resources, manageProtocol);
   const readOnly = !canManage || !creating && new URLSearchParams(location.search).get('mode') !== 'edit';
   const decode = useMemo(() => (value: unknown) => decodeScript(value, scriptCode!), [scriptCode]);
   const script = useDetail<ScriptDetail>(creating ? null : `${integrationPath}/${integrationCode}/scripts/${scriptCode}`, decode);
   const capabilities = useDetail<Capabilities>(capabilityPath, decodeCapabilities);
-  if (creating && !canManage) return <Alert type="warning" showIcon title="当前没有接入方维护权限" />;
+  if (creating && !canManage) return <Alert type="warning" showIcon title="当前没有协议配置维护权限" />;
   if (script.loading || capabilities.loading) return <Loading />;
   if (!creating && !script.data) return <LoadFailure title="公共脚本加载失败" failure={script.failure} retry={script.refresh} />;
-  return <ScriptForm key={`${script.data?.version}:${readOnly}`} integrationCode={integrationCode} detail={script.data} readOnly={readOnly}
+  return <ScriptForm key={`${script.data?.version}:${readOnly}`} channelId={channelId} integrationCode={integrationCode} detail={script.data} readOnly={readOnly}
     canManage={canManage} capabilities={capabilities.data} onAuthorizationChanged={onAuthorizationChanged} onReload={script.refresh} />;
 }
 
-function ScriptForm({ integrationCode, detail, readOnly, canManage, capabilities, onAuthorizationChanged, onReload }: {
-  integrationCode: string; detail?: ScriptDetail; readOnly: boolean; canManage: boolean; capabilities?: Capabilities;
+function ScriptForm({ channelId, integrationCode, detail, readOnly, canManage, capabilities, onAuthorizationChanged, onReload }: {
+  channelId: string; integrationCode: string; detail?: ScriptDetail; readOnly: boolean; canManage: boolean; capabilities?: Capabilities;
   onAuthorizationChanged: () => void; onReload: () => void;
 }) {
   const location = useLocation(); const navigate = useNavigate(); const notify = useErrorNotification(); const { message } = App.useApp(); const copy = useCopyDraft();
@@ -78,7 +80,7 @@ function ScriptForm({ integrationCode, detail, readOnly, canManage, capabilities
       value => decodeMutation(value, 'INTEGRATION_SCRIPT', `${integrationCode}/${code}`));
     if (!result) { if (!editor.conflict) void validate(); return false; }
     flushSync(() => editor.setDirty(false));
-    if (!leaving.current) void navigate(`${integrationRoute}/${integrationCode}/scripts/${code}`, { replace: true });
+    if (!leaving.current) void navigate(workspaceRoutes(channelId).script(code), { replace: true });
     return true;
   }, () => !!scriptName.trim() && !!sourceCode.trim() && (!creating || codePattern.test(scriptCode.trim())));
   const { setSaveForLeave } = editor;
@@ -86,10 +88,9 @@ function ScriptForm({ integrationCode, detail, readOnly, canManage, capabilities
   const latest = useCallback(() => session.request(`${base}/${detail?.scriptCode}`, {}, value => decodeScript(value, detail!.scriptCode)), [base, detail]);
   const functions = (capabilities?.functions ?? []).filter(item => item.kind === 'SCRIPT');
   const code = detail?.scriptCode;
-  const workspace = `${integrationRoute}/${integrationCode}`;
-  const crumbs = [{ label: '渠道' }, { label: '接入方', to: integrationRoute }, { label: integrationCode, to: workspace },
-    { label: '公共脚本', to: `${workspace}?tab=scripts` }, ...(creating ? [{ label: '新建' }]
-      : readOnly ? [{ label: code! }] : [{ label: code!, to: `${workspace}/scripts/${code}` }, { label: '编辑' }])];
+  const routes = workspaceRoutes(channelId);
+  const crumbs = [...workspaceCrumbs(channelId, integrationCode, 'scripts'), ...(creating ? [{ label: '新建' }]
+      : readOnly ? [{ label: code! }] : [{ label: code!, to: routes.script(code!) }, { label: '编辑' }])];
   const title = creating ? '新建公共脚本' : readOnly ? `公共脚本 · ${code}` : `编辑公共脚本 · ${code}`;
   const text = (editable: ReactNode, shown: string, mono?: boolean) => disabled ? <ReadOnlyValue value={shown} mono={mono} /> : editable;
   return <>
@@ -140,7 +141,7 @@ function ScriptForm({ integrationCode, detail, readOnly, canManage, capabilities
       </Panel>
     </div>
     {detail && <div className="xapi-strip">被引用：{detail.referencedApiCodes.length ? detail.referencedApiCodes.map((apiCode, index) => <span key={apiCode}>
-      {index > 0 && '、'}<Link to={`${workspace}/apis/${apiCode}`}>{apiCode}</Link></span>) : '暂无原子 API 引用'}
+      {index > 0 && '、'}<Link to={routes.api(apiCode)}>{apiCode}</Link></span>) : '暂无原子 API 引用'}
       {detail.referencedApiCodes.length > 0 && '。修改阶段或参数时，保存会校验这些原子 API。'}</div>}
     <ValidationPanel issues={issues} stale={stale} onLocate={() => undefined} />
     {editingParam && <ParamModal editing={editingParam} onCancel={() => setEditingParam(null)} onSave={value => {

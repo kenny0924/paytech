@@ -12,10 +12,11 @@ import { decodeCapabilities, decodeValidation } from './editorModel';
 import type { Capabilities, ValidationIssue } from './editorModel';
 import { ConflictBanner, Loading, LoadFailure, hasButton, loadAllPages, useCopyDraft, useDetail, useEditorSave } from './externalApiHooks';
 import {
-  codePattern, decodeIntegration, decodeMutation, decodePage, decodeScriptSummary, errorRows, externalApiBase,
-  fieldDataTypes, integrationPath, integrationRoute, manageIntegrations, replaceQuery, toFieldBodies,
+  codePattern, decodeMutation, decodePage, decodeScriptSummary, errorRows, externalApiBase,
+  fieldDataTypes, integrationPath, manageProtocol, replaceQuery, toFieldBodies,
 } from './externalApiModel';
-import type { ApiField, FieldDataType, FieldLocation, IntegrationDetail, IntegrationScriptSummary } from './externalApiModel';
+import type { ApiField, Endpoint, FieldDataType, FieldLocation, IntegrationScriptSummary } from './externalApiModel';
+import { workspaceCrumbs, workspaceRoutes } from '../channel/channelWorkspace';
 import {
   decodeIntegrationApi, emptyDraft, fieldKey, issueTab, methods, moveItem, nextScriptUseId, normalizeKey, paramTypes,
   decimalEncodings, pathVariables, requestEncodings, responseDecodings, responseReadPaths, toDefinition, toDraft,
@@ -26,7 +27,9 @@ import type {
 } from './integrationApiModel';
 import { Field, HandleMark, Mono, Note, PageHeader, Panel, ReadOnlyValue, StatusTag, counted } from './ui';
 
-interface Props { resources: ConsoleResource[]; onAuthorizationChanged: () => void; integrationCode: string; apiCode: string | null }
+/** 所属渠道：编码用于管理接口路径，出站地址来自渠道详情的 endpoints。 */
+export interface ProtocolChannel { channelId: string; channelCode: string; endpoints: readonly Endpoint[] }
+interface Props { resources: ConsoleResource[]; onAuthorizationChanged: () => void; channel: ProtocolChannel; apiCode: string | null }
 const allLocations: FieldLocation[] = ['HEADER', 'BODY', 'QUERY', 'PATH'];
 const responseLocations: FieldLocation[] = ['HEADER', 'BODY'];
 const capabilityPath = `${externalApiBase}/editor-capabilities`;
@@ -41,14 +44,13 @@ function rawKey(key: string, fields: ApiField[]): string {
   return field ? `${field.fieldLocation}:${field.fieldPath}` : key;
 }
 
-/** 原子 API 编辑与详情（/integrations/:code/apis/:apiCode，?mode=edit；新建为 /apis/new）。 */
-export function IntegrationApiEditor({ resources, onAuthorizationChanged, integrationCode, apiCode }: Props) {
+/** 原子 API 编辑与详情（/channel/channels/:channelId/protocol/apis/:apiCode，?mode=edit；新建为 /apis/new）。 */
+export function IntegrationApiEditor({ resources, onAuthorizationChanged, channel, apiCode }: Props) {
   const location = useLocation();
-  const creating = apiCode === null; const canManage = hasButton(resources, manageIntegrations);
+  const integrationCode = channel.channelCode;
+  const creating = apiCode === null; const canManage = hasButton(resources, manageProtocol);
   const readOnly = !canManage || !creating && new URLSearchParams(location.search).get('mode') !== 'edit';
-  const decodeIntegrationDetail = useMemo(() => (value: unknown) => decodeIntegration(value, integrationCode), [integrationCode]);
   const decodeApi = useMemo(() => (value: unknown) => decodeIntegrationApi(value, apiCode!), [apiCode]);
-  const integration = useDetail<IntegrationDetail>(`${integrationPath}/${integrationCode}`, decodeIntegrationDetail);
   const api = useDetail<IntegrationApiDetail>(creating ? null : `${integrationPath}/${integrationCode}/apis/${apiCode}`, decodeApi);
   const capabilities = useDetail<Capabilities>(capabilityPath, decodeCapabilities);
   const [scripts, setScripts] = useState<IntegrationScriptSummary[]>();
@@ -60,31 +62,30 @@ export function IntegrationApiEditor({ resources, onAuthorizationChanged, integr
       .catch(error => { if (!abort.signal.aborted) { setScripts([]); notify(error, '公共脚本加载失败'); } });
     return () => abort.abort();
   }, [integrationCode, notify]);
-  if (creating && !canManage) return <Alert type="warning" showIcon title="当前没有接入方维护权限" />;
-  if (integration.loading || api.loading || capabilities.loading || scripts === undefined) return <Loading />;
-  if (!integration.data) return <LoadFailure title="接入方加载失败" failure={integration.failure} retry={integration.refresh} />;
+  if (creating && !canManage) return <Alert type="warning" showIcon title="当前没有协议配置维护权限" />;
+  if (api.loading || capabilities.loading || scripts === undefined) return <Loading />;
   if (!creating && !api.data) return <LoadFailure title="原子 API 加载失败" failure={api.failure} retry={api.refresh} />;
-  return <ApiForm key={`${api.data?.version}:${readOnly}`} integration={integration.data} detail={api.data} readOnly={readOnly}
+  return <ApiForm key={`${api.data?.version}:${readOnly}`} channel={channel} detail={api.data} readOnly={readOnly}
     canManage={canManage} capabilities={capabilities.data} scripts={scripts} onAuthorizationChanged={onAuthorizationChanged}
     onReload={api.refresh} />;
 }
 
 interface FormProps {
-  integration: IntegrationDetail; detail?: IntegrationApiDetail; readOnly: boolean; canManage: boolean;
+  channel: ProtocolChannel; detail?: IntegrationApiDetail; readOnly: boolean; canManage: boolean;
   capabilities?: Capabilities; scripts: IntegrationScriptSummary[]; onAuthorizationChanged: () => void; onReload: () => void;
 }
 
-function ApiForm({ integration, detail, readOnly, canManage, capabilities, scripts, onAuthorizationChanged, onReload }: FormProps) {
+function ApiForm({ channel, detail, readOnly, canManage, capabilities, scripts, onAuthorizationChanged, onReload }: FormProps) {
   const location = useLocation(); const navigate = useNavigate(); const notify = useErrorNotification(); const copy = useCopyDraft(); const { message } = App.useApp();
   const editor = useEditorSave(onAuthorizationChanged);
-  const creating = !detail; const integrationCode = integration.integrationCode; const base = `${integrationPath}/${integrationCode}/apis`;
+  const creating = !detail; const integrationCode = channel.channelCode; const base = `${integrationPath}/${integrationCode}/apis`;
   const [apiCode, setApiCode] = useState(detail?.apiCode ?? '');
   const [apiName, setApiName] = useState(detail?.apiName ?? '');
   const [description, setDescription] = useState(detail?.description ?? '');
   const [requestFields, setRequestFields] = useState<ApiField[]>(detail?.requestFields ?? []);
   const [responseFields, setResponseFields] = useState<ApiField[]>(detail?.responseFields ?? []);
   const [draft, setDraft] = useState<DefinitionDraft>(() => detail ? toDraft(detail.definition)
-    : emptyDraft(integration.endpoints[0]?.endpointCode ?? ''));
+    : emptyDraft(channel.endpoints[0]?.endpointCode ?? ''));
   const [tab, setTab] = useState<EditorTab>('interface');
   const [issues, setIssues] = useState<ValidationIssue[] | null>(null);
   const [stale, setStale] = useState(false);
@@ -116,7 +117,7 @@ function ApiForm({ integration, detail, readOnly, canManage, capabilities, scrip
       value => decodeMutation(value, 'INTEGRATION_API', `${integrationCode}/${code}`));
     if (!result) { if (!editor.conflict) void validate(); return false; }
     flushSync(() => editor.setDirty(false));
-    if (!leaving.current) void navigate(`${integrationRoute}/${integrationCode}/apis/${code}`, { replace: true });
+    if (!leaving.current) void navigate(workspaceRoutes(channel.channelId).api(code), { replace: true });
     return true;
   }, () => !!apiName.trim() && (!creating || codePattern.test(apiCode.trim())));
   const { setSaveForLeave } = editor;
@@ -126,14 +127,12 @@ function ApiForm({ integration, detail, readOnly, canManage, capabilities, scrip
   const readPaths = responseReadPaths(responseFields, draft.params);
   const scriptParamPaths = draft.params.filter(param => param.name.trim()).map(param => `params.${param.name.trim()}`);
   const code = detail?.apiCode;
-  const workspace = `${integrationRoute}/${integrationCode}`;
-  const crumbs = [{ label: '渠道' }, { label: '接入方', to: integrationRoute }, { label: integrationCode, to: workspace },
-    { label: '原子 API', to: `${workspace}?tab=apis` }, ...(creating ? [{ label: '新建' }]
-      : readOnly ? [{ label: code! }, { label: '详情' }] : [{ label: code!, to: `${workspace}/apis/${code}` }, { label: '编辑' }])];
+  const crumbs = [...workspaceCrumbs(channel.channelId, integrationCode, 'apis'), ...(creating ? [{ label: '新建' }]
+      : readOnly ? [{ label: code! }, { label: '详情' }] : [{ label: code!, to: workspaceRoutes(channel.channelId).api(code!) }, { label: '编辑' }])];
   const title = creating ? '新建原子 API' : readOnly ? `原子 API · ${code}` : `编辑原子 API · ${code}`;
   const tabs: { key: EditorTab; label: string; children: ReactNode }[] = [
     { key: 'interface', label: '接口', children: <InterfaceTab {...{ creating, disabled, apiCode, setApiCode, apiName, setApiName, description,
-      setDescription, draft, update, integration, requestFields, touch, detail }} /> },
+      setDescription, draft, update, channel, requestFields, touch, detail }} /> },
     { key: 'request', label: counted('请求字段', requestFields.length), children: <>
       <FieldTable value={requestFields} locations={allLocations} readOnly={disabled} fixedValues={fixedValues}
         onSourceChange={(previous, key, expression) => {
@@ -169,14 +168,14 @@ function ApiForm({ integration, detail, readOnly, canManage, capabilities, scrip
   </>;
 }
 
-function InterfaceTab({ creating, disabled, apiCode, setApiCode, apiName, setApiName, description, setDescription, draft, update, integration,
+function InterfaceTab({ creating, disabled, apiCode, setApiCode, apiName, setApiName, description, setDescription, draft, update, channel,
   requestFields, touch, detail }: {
   creating: boolean; disabled: boolean; apiCode: string; setApiCode: (v: string) => void; apiName: string; setApiName: (v: string) => void;
   description: string; setDescription: (v: string) => void; draft: DefinitionDraft; update: (patch: Partial<DefinitionDraft>) => void;
-  integration: IntegrationDetail; requestFields: ApiField[]; touch: () => void; detail?: IntegrationApiDetail;
+  channel: ProtocolChannel; requestFields: ApiField[]; touch: () => void; detail?: IntegrationApiDetail;
 }) {
   const transport = (patch: Partial<DefinitionDraft['transport']>) => update({ transport: { ...draft.transport, ...patch } });
-  const endpoint = integration.endpoints.find(item => item.endpointCode === draft.transport.endpointCode);
+  const endpoint = channel.endpoints.find(item => item.endpointCode === draft.transport.endpointCode);
   const pathFields = requestFields.filter(field => field.fieldLocation === 'PATH').map(field => field.fieldPath);
   const variables = pathVariables(draft.transport.pathTemplate);
   const extraFields = pathFields.filter(name => !variables.includes(name));
@@ -193,9 +192,9 @@ function InterfaceTab({ creating, disabled, apiCode, setApiCode, apiName, setApi
       <div className="xapi-grid xapi-grid-http">
         <Field label="Method">{value(<Select value={draft.transport.method} className="xapi-mono-input"
           options={methods.map(item => ({ value: item, label: item }))} onChange={method => transport({ method })} />, draft.transport.method, true)}</Field>
-        <Field label="地址代码" hint={endpoint ? <Mono tone="muted">{endpoint.baseUrl}</Mono> : '请选择接入方的出站地址'}>
+        <Field label="地址代码" hint={endpoint ? <Mono tone="muted">{endpoint.baseUrl}</Mono> : channel.endpoints.length ? '请选择渠道的出站地址' : '渠道还没有出站地址，请先在概览中配置'}>
           {value(<Select value={draft.transport.endpointCode || undefined} className="xapi-mono-input"
-            options={integration.endpoints.map(item => ({ value: item.endpointCode, label: item.endpointCode }))}
+            options={channel.endpoints.map(item => ({ value: item.endpointCode, label: item.endpointCode }))}
             onChange={endpointCode => transport({ endpointCode })} />, draft.transport.endpointCode, true)}</Field>
         <Field label="路径模板" hint={<span className="xapi-path-checks">
           {variables.map(name => pathFields.includes(name)
@@ -235,7 +234,7 @@ function InterfaceTab({ creating, disabled, apiCode, setApiCode, apiName, setApi
     </Panel>
     {detail && <Panel title="被引用">
       <p className="xapi-desc">{detail.referencedBy.length ? <>{detail.referencedBy.map((item, index) => <span key={item.standardApiCode}>
-        {index > 0 && '；'}<Link to={`${integrationRoute}/${integration.integrationCode}/implementations/${item.standardApiCode}`}>
+        {index > 0 && '；'}<Link to={workspaceRoutes(channel.channelId).implementation(item.standardApiCode)}>
           {item.standardApiCode}</Link> 流程的节点 <Mono>{item.nodeIds.join('、')}</Mono></span>)}。修改必填请求字段或删除本 API 时，保存校验会列出这些引用。</>
         : '暂无标准 API 实现引用本 API。'}</p>
     </Panel>}
@@ -333,7 +332,7 @@ function ScriptsTab({ draft, update, scripts, paramPaths, disabled }: {
     return <div key={stage} className="xapi-group">
       <div className="xapi-group-head"><div><span className="xapi-kind">{stage}</span>
         <span className="xapi-desc">{stage === 'REQUEST' ? '请求组装后、编码发送前' : '解码响应后、状态判定前'}</span></div>
-        {!disabled && <span className="xapi-ops">{!available.length && <span className="xapi-field-hint">本接入方还没有 {stage} 阶段的公共脚本</span>}
+        {!disabled && <span className="xapi-ops">{!available.length && <span className="xapi-field-hint">本渠道还没有 {stage} 阶段的公共脚本</span>}
           <Button disabled={!available.length} onClick={() => setEditing({ stage, index: null,
             value: { id: nextScriptUseId([...draft.requestScripts, ...draft.responseScripts]), scriptCode: available[0]?.scriptCode ?? '', stage, params: {} } })}>
             引用脚本</Button></span>}</div>

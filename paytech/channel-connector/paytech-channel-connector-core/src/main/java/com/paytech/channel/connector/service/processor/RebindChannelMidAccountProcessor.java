@@ -17,7 +17,7 @@ import com.paytech.channel.connector.domain.ChannelMidContext;
 import com.paytech.channel.connector.domain.ChannelMidDetailView;
 import com.paytech.channel.connector.domainservice.service.ChannelAccountService;
 import com.paytech.channel.connector.domainservice.service.ChannelMidService;
-import com.paytech.channel.connector.domainservice.service.PaymentChannelService;
+import com.paytech.channel.connector.protocol.domainservice.service.ChannelService;
 import com.paytech.channel.connector.service.processor.request.RebindChannelMidAccountRequest;
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.id.IdGenerator;
@@ -39,7 +39,7 @@ public class RebindChannelMidAccountProcessor
     private final IdGenerator idGenerator;
     private final ChannelMidService channelMidService;
     private final ChannelAccountService channelAccountService;
-    private final PaymentChannelService paymentChannelService;
+    private final ChannelService channelService;
     private final ChannelConfigTransactions channelConfigTransactions;
 
     /** MID 与目标账号资源锁。 */
@@ -57,7 +57,7 @@ public class RebindChannelMidAccountProcessor
         ChannelMid mid = view.getMid();
         ChannelAccount target = channelAccountService.loadAccount(request.getChannelAccountId());
         Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
-        ChannelMidContext context = new ChannelMidContext(mid, paymentChannelService.loadChannel(mid.getChannelId()),
+        ChannelMidContext context = new ChannelMidContext(mid, channelService.loadChannel(mid.getChannelId()),
             target, ChannelConfigChanges.of(idGenerator.nextId(), ChangeTargetType.CHANNEL_MID, mid.getMidId(),
                 ChangeType.REBIND, request.getActorId(), now), now);
 

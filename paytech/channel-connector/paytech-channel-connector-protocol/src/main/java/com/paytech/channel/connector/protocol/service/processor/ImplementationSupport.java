@@ -11,9 +11,9 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 
 import com.paytech.foundation.common.error.BizCheckFailException;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.Integration;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationApi;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationImplementation;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.Channel;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelApi;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelImplementation;
 import com.paytech.channel.connector.protocol.core.dal.dataobject.StandardApi;
 import com.paytech.channel.connector.protocol.core.enums.ApiFieldDirection;
 import com.paytech.channel.connector.protocol.domain.ApiContract;
@@ -21,9 +21,9 @@ import com.paytech.channel.connector.protocol.domain.ExternalApiConfigurationCod
 import com.paytech.channel.connector.protocol.domain.FieldDefinition;
 import com.paytech.channel.connector.protocol.domain.ValidationIssue;
 import com.paytech.channel.connector.protocol.domainservice.repository.ApiFieldRepository;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationApiRepository;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationImplementationRepository;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationRepository;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelApiRepository;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelImplementationRepository;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelRepository;
 import com.paytech.channel.connector.protocol.domainservice.repository.StandardApiRepository;
 import com.paytech.channel.connector.protocol.domainservice.validator.FlowDefinitionValidator;
 
@@ -47,12 +47,12 @@ public class ImplementationSupport {
 
     private final ApiFieldRepository fields;
     private final ExternalApiConfigurationCodec codec;
-    private final IntegrationRepository integrations;
+    private final ChannelRepository channels;
     private final StandardApiRepository standardApis;
     private final ExternalApiProcessorSupport support;
     private final FlowDefinitionValidator flowValidator;
-    private final IntegrationApiRepository integrationApis;
-    private final IntegrationImplementationRepository implementations;
+    private final ChannelApiRepository channelApis;
+    private final ChannelImplementationRepository implementations;
 
     /** 读取标准 API，不存在返回 404。 */
     StandardApi standardApi(String code) {
@@ -84,18 +84,18 @@ public class ImplementationSupport {
         return result;
     }
 
-    /** 接入方全部原子 API 合同，按编码排序并索引。 */
-    Map<String, ApiContract> apiContracts(long integrationId) {
-        var apis = integrationApis.allByIntegration(integrationId).stream()
-            .sorted(Comparator.comparing(IntegrationApi::getApiCode)).toList();
+    /** 渠道全部原子 API 合同，按编码排序并索引。 */
+    Map<String, ApiContract> apiContracts(long channelId) {
+        var apis = channelApis.allByChannel(channelId).stream()
+            .sorted(Comparator.comparing(ChannelApi::getApiCode)).toList();
         if (apis.isEmpty()) {
             return Map.of();
         }
-        var rows = fields.byApis(apis.stream().map(IntegrationApi::getIntegrationApiId).toList(),
+        var rows = fields.byApis(apis.stream().map(ChannelApi::getChannelApiId).toList(),
             List.of(ApiFieldDirection.INTEGRATION_API_REQUEST));
         var result = new LinkedHashMap<String, ApiContract>();
         for (var api : apis) {
-            var own = rows.stream().filter(row -> row.getApiId().equals(api.getIntegrationApiId())).toList();
+            var own = rows.stream().filter(row -> row.getApiId().equals(api.getChannelApiId())).toList();
             result.put(api.getApiCode(), codec.apiContract(api.getApiCode(), api.getApiName(),
                 support.definitions(own, ApiFieldDirection.INTEGRATION_API_REQUEST), api.getDefinitionJson()));
         }
@@ -103,14 +103,14 @@ public class ImplementationSupport {
     }
 
     /** 用已保存的标准 API 字段与原子 API 合同校验流程。 */
-    FlowDefinitionValidator.Result check(StandardApi standardApi, long integrationId, JsonNode flow) {
+    FlowDefinitionValidator.Result check(StandardApi standardApi, long channelId, JsonNode flow) {
         var standard = standardFields(standardApi);
         return flowValidator.validate(flow, standard.get(ApiFieldDirection.STANDARD_API_REQUEST),
-            standard.get(ApiFieldDirection.STANDARD_API_RESPONSE), apiContracts(integrationId));
+            standard.get(ApiFieldDirection.STANDARD_API_RESPONSE), apiContracts(channelId));
     }
 
     /**
-     * 用修改后的标准 API 字段复核全部实现，返回会失效的接入方编码（按编码排序）。
+     * 用修改后的标准 API 字段复核全部实现，返回会失效的渠道编码（按编码排序）。
      *
      * @param standardApi 被修改的标准 API
      * @param requestFields 新请求字段
@@ -122,36 +122,36 @@ public class ImplementationSupport {
         if (rows.isEmpty()) {
             return List.of();
         }
-        Map<Long, Integration> integrationById = integrations.byIds(rows.stream()
-            .map(IntegrationImplementation::getIntegrationId).toList()).stream()
-            .collect(Collectors.toMap(Integration::getIntegrationId, Function.identity()));
+        Map<Long, Channel> integrationById = channels.byIds(rows.stream()
+            .map(ChannelImplementation::getChannelId).toList()).stream()
+            .collect(Collectors.toMap(Channel::getChannelId, Function.identity()));
         var broken = new ArrayList<String>();
         for (var row : rows) {
             var issues = flowValidator.validate(codec.tree(row.getFlowDefinitionJson()), requestFields, responseFields,
-                apiContracts(row.getIntegrationId())).getIssues();
+                apiContracts(row.getChannelId())).getIssues();
             if (issues.stream().anyMatch(ValidationIssue::blocking)) {
-                broken.add(integrationById.get(row.getIntegrationId()).getIntegrationCode());
+                broken.add(integrationById.get(row.getChannelId()).getChannelCode());
             }
         }
         return broken.stream().sorted().toList();
     }
 
     /**
-     * 用修改后的原子 API 合同复核本接入方引用它的流程，返回会失效的标准 API 编码（按编码排序）。
+     * 用修改后的原子 API 合同复核本渠道引用它的流程，返回会失效的标准 API 编码（按编码排序）。
      *
-     * @param integrationId 所属接入方
+     * @param channelId 所属渠道
      * @param contract 修改后的原子 API 合同
      */
-    List<String> brokenByIntegrationApi(long integrationId, ApiContract contract) {
-        var rows = implementations.allByIntegration(integrationId).stream()
+    List<String> brokenByIntegrationApi(long channelId, ApiContract contract) {
+        var rows = implementations.allByChannel(channelId).stream()
             .filter(row -> !codec.nodesUsing(row.getFlowDefinitionJson(), contract.getCode()).isEmpty()).toList();
         if (rows.isEmpty()) {
             return List.of();
         }
-        var contracts = new LinkedHashMap<>(apiContracts(integrationId));
+        var contracts = new LinkedHashMap<>(apiContracts(channelId));
         contracts.put(contract.getCode(), contract);
         Map<Long, StandardApi> standardApiById = standardApis.byIds(rows.stream()
-            .map(IntegrationImplementation::getStandardApiId).toList()).stream()
+            .map(ChannelImplementation::getStandardApiId).toList()).stream()
             .collect(Collectors.toMap(StandardApi::getStandardApiId, Function.identity()));
         var broken = new ArrayList<String>();
         for (var row : rows) {

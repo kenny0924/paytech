@@ -16,7 +16,7 @@ public enum StandardApiNotSentCode implements CodeEnum {
     /** 标准 API 编码不存在。 */
     STANDARD_API_NOT_FOUND("STANDARD_API_NOT_FOUND", 404),
 
-    /** 接入方不存在，或没有实现该标准 API。 */
+    /** 渠道不存在，或没有实现该标准 API。 */
     INTEGRATION_IMPLEMENTATION_NOT_FOUND("INTEGRATION_IMPLEMENTATION_NOT_FOUND", 404),
 
     /** 加载的流程或原子 API 配置未通过运行前校验。 */
@@ -29,7 +29,10 @@ public enum StandardApiNotSentCode implements CodeEnum {
     INTEGRATION_BUDGET_EXHAUSTED("INTEGRATION_BUDGET_EXHAUSTED", 503),
 
     /** input 不满足标准 API 请求字段。 */
-    VALIDATION_ERROR("VALIDATION_ERROR", 422);
+    VALIDATION_ERROR("VALIDATION_ERROR", 422),
+
+    /** 渠道类型对应的执行舱没有空闲许可（不排队）。 */
+    CHANNEL_EXECUTION_BUSY("CHANNEL_EXECUTION_BUSY", 503);
 
     /** 稳定代码，与原 Platform Problem code 一致。 */
     private final String code;

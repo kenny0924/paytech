@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -15,11 +16,11 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * 渠道控制台（渠道与账号、MID 与能力、渠道成本）的页面模型，是 channel-connector 管理合同的 BFF 投影
+ * 渠道控制台（渠道与出站地址、账号与凭据、MID 与能力、调用授权、渠道成本）的页面模型，是 channel-connector 管理合同的 BFF 投影
  * <li>字段与 channel-connector 合同一一对应，由 Client 适配器严格转换；Owner 新增字段即视为合同漂移（502）。</li>
  * <li>请求不含操作人字段：渠道配置命令的操作人经 X-Gateway-Actor-Subject 传递；成本命令的 makerId / checkerId / operatorId
  * 由 BFF 从会话填入 Owner 请求体。</li>
- * <li>BFF 只做与 Owner 一致的结构性约束；业务规则（状态迁移、归属、Platform 接入方、Maker-Checker）由 channel-connector 执行。</li>
+ * <li>BFF 只做与 Owner 一致的结构性约束；业务规则（状态迁移、归属、渠道类型规则、出站地址、调用授权、Maker-Checker）由 channel-connector 执行。</li>
  *
  * @author Claude
  */
@@ -32,6 +33,15 @@ public final class ChannelModels {
 
     /** OE 编号：两位大写字母加三位数字。 */
     static final String ENTITY_NO = "[A-Z]{2}[0-9]{3}";
+
+    /** 渠道类型：支付渠道或服务渠道。 */
+    static final String CHANNEL_TYPE = "PAYMENT|SERVICE";
+
+    /** 调用授权状态。 */
+    static final String GRANT_STATUS = "ACTIVE|DISABLED";
+
+    /** 调用方服务名：小写字母开头的小写字母、数字或连字符。 */
+    static final String CALLER_SERVICE = "[a-z][a-z0-9-]{1,63}";
 
     /** 大写代码：大写字母开头的大写字母、数字或下划线，最长 64 位。 */
     static final String CODE = "[A-Z][A-Z0-9_]{0,63}";
@@ -54,7 +64,7 @@ public final class ChannelModels {
     public static class CreateChannelRequestBody {
         /**
          * 渠道编码
-         * <li>创建后不可修改；激活时须与 Platform 接入方编码一致。</li>
+         * <li>创建后不可修改；也是外部 API 管理页面中的接入方编码。</li>
          */
         @NotBlank(message = "渠道编码必填")
         @Pattern(regexp = "[A-Z][A-Z0-9_]{1,63}", message = "渠道编码必须是大写字母开头的大写字母、数字或下划线，2–64 位")
@@ -64,9 +74,21 @@ public final class ChannelModels {
         @NotBlank(message = "渠道名称必填")
         @Size(max = 255, message = "渠道名称最长 255 字符")
         private String channelName;
+
+        /**
+         * 渠道类型
+         * <li>PAYMENT 支付渠道或 SERVICE 服务渠道；创建后不可修改。</li>
+         */
+        @NotBlank(message = "渠道类型必填")
+        @Pattern(regexp = CHANNEL_TYPE, message = "渠道类型只能为 PAYMENT 或 SERVICE")
+        private String channelType;
+
+        /** 渠道描述，可空；不得填写凭据 */
+        @Size(max = 512, message = "渠道描述最长 512 字符")
+        private String description;
     }
 
-    /** 修改渠道名称。 */
+    /** 修改渠道名称与描述（整体替换，描述缺省即清空）；编码与类型不可修改。 */
     @Getter
     @Setter
     public static class UpdateChannelRequestBody {
@@ -74,6 +96,43 @@ public final class ChannelModels {
         @NotBlank(message = "渠道名称必填")
         @Size(max = 255, message = "渠道名称最长 255 字符")
         private String channelName;
+
+        /** 渠道描述，可空；不得填写凭据 */
+        @Size(max = 512, message = "渠道描述最长 512 字符")
+        private String description;
+    }
+
+    /** 整组替换渠道出站地址。 */
+    @Getter
+    @Setter
+    public static class UpdateChannelEndpointsRequestBody {
+        /** 期望的渠道并发版本，取自渠道详情 version；不一致时 channel-connector 返回 409 */
+        @NotNull(message = "期望版本必填")
+        @Min(value = 1, message = "期望版本必须为正整数")
+        private Integer expectedVersion;
+
+        /** 本环境出站地址，1–16 项；地址代码在渠道内唯一由 channel-connector 判定 */
+        @NotNull(message = "出站地址必填")
+        @Size(min = 1, max = 16, message = "出站地址为 1–16 项")
+        private List<@NotNull(message = "出站地址不能为空") @Valid ChannelEndpointBody> endpoints;
+    }
+
+    /** 一个出站地址输入。 */
+    @Getter
+    @Setter
+    public static class ChannelEndpointBody {
+        /** 地址代码，原子 API 按此引用 */
+        @NotBlank(message = "地址代码必填")
+        @Pattern(regexp = CODE, message = "地址代码必须是大写字母开头的大写字母、数字或下划线，最长 64 位")
+        private String endpointCode;
+
+        /** 基础地址；协议、私网与 localhost 拦截由 channel-connector 判定 */
+        @NotBlank(message = "基础地址必填")
+        @Size(max = 512, message = "基础地址最长 512 字符")
+        private String baseUrl;
+
+        /** 是否沙箱地址，可空（缺省 false） */
+        private Boolean sandbox;
     }
 
     /** 渠道、技术账号与 MID 共用的状态变更。 */
@@ -106,6 +165,18 @@ public final class ChannelModels {
         /** 渠道名称 */
         private String channelName;
 
+        /** 渠道类型：PAYMENT、SERVICE */
+        private String channelType;
+
+        /** 渠道描述；未填写为空 */
+        private String description;
+
+        /** 本环境出站地址；未配置为空数组 */
+        private List<ChannelEndpointDetail> endpoints;
+
+        /** 并发版本；修改出站地址时作为 expectedVersion 回传 */
+        private int version;
+
         /** 状态：DRAFT、ACTIVE、SUSPENDED、CLOSED */
         private String status;
 
@@ -114,6 +185,20 @@ public final class ChannelModels {
 
         /** 更新时间（UTC） */
         private Instant updateTime;
+    }
+
+    /** 渠道的一个出站地址。 */
+    @Getter
+    @Setter
+    public static class ChannelEndpointDetail {
+        /** 地址代码 */
+        private String endpointCode;
+
+        /** 基础地址 */
+        private String baseUrl;
+
+        /** 是否沙箱地址 */
+        private boolean sandbox;
     }
 
     /** 渠道列表项。 */
@@ -129,14 +214,102 @@ public final class ChannelModels {
         /** 渠道名称 */
         private String channelName;
 
+        /** 渠道类型：PAYMENT、SERVICE */
+        private String channelType;
+
         /** 状态 */
         private String status;
 
-        /** 技术账号数 */
+        /** 技术账号数；服务渠道即凭据数 */
         private long accountCount;
 
-        /** MID 数 */
+        /** MID 数；服务渠道为 0 */
         private long midCount;
+
+        /** 已配置的出站地址数 */
+        private int endpointCount;
+
+        /** ACTIVE 调用授权数；支付渠道为空 */
+        private Long activeGrantCount;
+
+        /** 更新时间（UTC） */
+        private Instant updateTime;
+    }
+
+    // ---------- 服务渠道调用授权 ----------
+
+    /** 新建调用授权（调用方服务 × 渠道 × 标准 API）。 */
+    @Getter
+    @Setter
+    public static class CreateChannelCallGrantRequestBody {
+        /** 服务渠道 ID */
+        @NotBlank(message = "渠道 ID 必填")
+        @Pattern(regexp = ID, message = "渠道 ID 必须是正十进制整数字符串")
+        private String channelId;
+
+        /** 调用方服务名，如 commerce-service */
+        @NotBlank(message = "调用方服务名必填")
+        @Pattern(regexp = CALLER_SERVICE, message = "调用方服务名必须是小写字母开头的小写字母、数字或连字符，2–64 位")
+        private String callerService;
+
+        /** 标准 API 编码，须已被该渠道实现（由 channel-connector 判定） */
+        @NotBlank(message = "标准 API 编码必填")
+        @Pattern(regexp = CODE, message = "标准 API 编码必须是大写字母开头的大写字母、数字或下划线，最长 64 位")
+        private String standardApiCode;
+    }
+
+    /** 启用或停用调用授权。 */
+    @Getter
+    @Setter
+    public static class ChangeChannelCallGrantStatusRequestBody {
+        /** 目标状态：ACTIVE、DISABLED */
+        @NotBlank(message = "目标状态必填")
+        @Pattern(regexp = GRANT_STATUS, message = "目标状态只能为 ACTIVE 或 DISABLED")
+        private String targetStatus;
+
+        /** 期望的授权版本；不一致时 channel-connector 返回 409 */
+        @NotNull(message = "期望版本必填")
+        @Min(value = 1, message = "期望版本必须为正整数")
+        private Integer expectedVersion;
+
+        /** 原因，可空；写入变更记录，不得填写凭据 */
+        @Size(max = 512, message = "原因最长 512 字符")
+        private String reason;
+    }
+
+    /** 调用授权。 */
+    @Getter
+    @Setter
+    public static class ChannelCallGrantResponseBody {
+        /** 授权 ID */
+        private String callGrantId;
+
+        /** 服务渠道 ID */
+        private String channelId;
+
+        /** 调用方服务名 */
+        private String callerService;
+
+        /** 标准 API 编码 */
+        private String standardApiCode;
+
+        /** 标准 API 名称 */
+        private String standardApiName;
+
+        /** 状态：ACTIVE、DISABLED */
+        private String grantStatus;
+
+        /** 并发版本；启停时作为 expectedVersion 回传 */
+        private int version;
+
+        /** 创建授权的 Account ID */
+        private String createdBy;
+
+        /** 最后修改授权的 Account ID */
+        private String updatedBy;
+
+        /** 创建时间（UTC） */
+        private Instant createTime;
 
         /** 更新时间（UTC） */
         private Instant updateTime;
@@ -153,8 +326,10 @@ public final class ChannelModels {
         @Pattern(regexp = ID, message = "渠道 ID 必须是正十进制整数字符串")
         private String channelId;
 
-        /** OE 编号，创建后不可修改 */
-        @NotBlank(message = "OE 编号必填")
+        /**
+         * OE 编号
+         * <li>支付渠道必填，服务渠道必须为空；按渠道类型的必填判断由 channel-connector 执行，BFF 只校验格式。</li>
+         */
         @Pattern(regexp = ENTITY_NO, message = "OE 编号必须是两位大写字母加三位数字")
         private String entityNo;
 
@@ -557,13 +732,16 @@ public final class ChannelModels {
         /** 变更记录 ID */
         private String changeId;
 
-        /** 对象类型：CHANNEL、CHANNEL_ACCOUNT、CHANNEL_MID、MID_CAPABILITY、CHANNEL_COST_VERSION */
+        /**
+         * 对象类型：CHANNEL、CHANNEL_ACCOUNT、CHANNEL_MID、MID_CAPABILITY、CHANNEL_COST_VERSION、STANDARD_API、CHANNEL_API、
+         * CHANNEL_SCRIPT、CHANNEL_IMPLEMENTATION、VERIFY_ACCOUNT、VERIFY_CASE、CHANNEL_CALL_GRANT
+         */
         private String targetType;
 
         /** 对象 ID */
         private String targetId;
 
-        /** 变更类型：CREATE、UPDATE、STATUS、CONFIGURATION、REBIND、CANCEL */
+        /** 变更类型：CREATE、UPDATE、STATUS、CONFIGURATION、REBIND、CANCEL、DELETE */
         private String changeType;
 
         /** 变更前状态；非状态变更为空 */

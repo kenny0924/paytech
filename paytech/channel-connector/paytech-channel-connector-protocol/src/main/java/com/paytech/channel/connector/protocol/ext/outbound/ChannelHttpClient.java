@@ -7,6 +7,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.EnumMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -15,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.stereotype.Component;
 
+import com.paytech.channel.connector.api.enums.ChannelType;
 import com.paytech.channel.connector.protocol.domain.execution.ExecutionErrorException;
 
 /**
@@ -23,6 +25,10 @@ import com.paytech.channel.connector.protocol.domain.execution.ExecutionErrorExc
  * <p>
  * 请求体与响应体各最多 1 MiB，请求 Header 合计最多 16 KiB；Host、Content-Length、Transfer-Encoding、 Connection 等由传输层处理，配置中的同名 Header
  * 不发送。任何传输失败只报固定文字。
+ *
+ * <p>
+ * 本类是全服务唯一直接调用 {@code HttpClient#send} 的位置（架构门禁 R15）。支付渠道与服务渠道各用独立的 HttpClient 实例（执行舱），
+ * 连接池与选择器线程互不共享；发送前经 {@link ChannelAddressGuard} 解析并校验目标主机的全部地址，被拦截时不发出请求。
  */
 @Component
 public class ChannelHttpClient {
@@ -37,22 +43,33 @@ public class ChannelHttpClient {
     static final Set<String> TRANSPORT_HEADERS = Set.of("host", "content-length", "transfer-encoding", "connection",
         "expect", "upgrade", "keep-alive", "te", "trailer", "proxy-connection");
 
-    private final Map<Duration, HttpClient> clients = new ConcurrentHashMap<>();
+    private final Map<ChannelType, Map<Duration, HttpClient>> clients = new EnumMap<>(Map.of(
+        ChannelType.PAYMENT, new ConcurrentHashMap<>(), ChannelType.SERVICE, new ConcurrentHashMap<>()));
+
+    private final ChannelAddressGuard addressGuard;
+
+    /** 注入出站地址防护。 */
+    public ChannelHttpClient(ChannelAddressGuard addressGuard) {
+        this.addressGuard = addressGuard;
+    }
 
     /**
-     * 发送一次请求。
+     * 在渠道类型对应的执行舱中发送一次请求。
      *
+     * @param channelType
+     *            渠道类型，决定使用哪个执行舱的 HttpClient
      * @param request
      *            最终请求
      * @return 响应
      * @throws ExecutionErrorException
-     *             超出大小限制、连接或读取失败、超时
+     *             目标地址被拦截（未发出）、超出大小限制、连接或读取失败、超时
      */
-    public ChannelResponse send(ChannelRequest request) {
+    public ChannelResponse send(ChannelType channelType, ChannelRequest request) {
         HttpRequest httpRequest = build(request);
+        requireAllowedAddress(request);
         try {
-            HttpResponse<InputStream> response =
-                client(request.getConnectTimeout()).send(httpRequest, HttpResponse.BodyHandlers.ofInputStream());
+            HttpResponse<InputStream> response = client(channelType, request.getConnectTimeout()).send(httpRequest,
+                HttpResponse.BodyHandlers.ofInputStream());
             return new ChannelResponse(response.statusCode(), headers(response), read(response.body()));
         } catch (InterruptedException interrupted) {
             Thread.currentThread().interrupt();
@@ -90,12 +107,20 @@ public class ChannelHttpClient {
         return builder.build();
     }
 
+    /** 解析目标主机并校验全部地址；被拦截时不发出请求。无法解析交给 HttpClient 按网络失败处理。 */
+    void requireAllowedAddress(ChannelRequest request) {
+        if (addressGuard.check(request.getUri().getHost()) == ChannelAddressGuard.Verdict.BLOCKED) {
+            throw new ExecutionErrorException("出站地址被拦截：" + request.getUri().getHost());
+        }
+    }
+
     /**
-     * 按连接超时（向上取整到秒，配置上限 10 秒）复用客户端，最多 10 个：不跟随重定向，没有 Cookie 处理器与认证器。 等待响应的超时仍按毫秒精确设置在每个请求上。
+     * 按执行舱与连接超时（向上取整到秒，配置上限 10 秒）复用客户端，每个执行舱最多 10 个：不跟随重定向，没有 Cookie 处理器与认证器。
+     * 等待响应的超时仍按毫秒精确设置在每个请求上。
      */
-    HttpClient client(Duration connectTimeout) {
+    HttpClient client(ChannelType channelType, Duration connectTimeout) {
         long seconds = Math.max(1, (connectTimeout.toMillis() + 999) / 1000);
-        return clients.computeIfAbsent(Duration.ofSeconds(seconds),
+        return clients.get(channelType).computeIfAbsent(Duration.ofSeconds(seconds),
             timeout -> HttpClient.newBuilder().connectTimeout(timeout).followRedirects(HttpClient.Redirect.NEVER)
                 .version(HttpClient.Version.HTTP_1_1).build());
     }

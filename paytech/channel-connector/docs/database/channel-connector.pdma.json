@@ -1,6 +1,6 @@
 {
   "name": "channel-connector",
-  "describe": "支付服务商、账户与商户号、静态能力、路由策略、服务商交互与回调记录、渠道成本配置、标准 API、外部接入方与沙箱验证配置",
+  "describe": "支付服务商、账户与商户号、静态能力、路由策略、服务商交互与回调记录、渠道成本配置、标准 API 与渠道协议、服务渠道调用授权与沙箱验证配置",
   "avatar": "",
   "version": "4.9.3",
   "createdTime": "2025-5-28 13:36:15",
@@ -322,9 +322,9 @@
           "codeRoot": ""
         }
       },
-      "defKey": "t_payment_channel",
-      "defName": "支付服务商",
-      "comment": "支付渠道的稳定身份和当前运行状态。",
+      "defKey": "t_channel",
+      "defName": "渠道",
+      "comment": "渠道（支付渠道与服务渠道）的稳定身份、类型、运行状态与本环境出站地址；支付渠道的技术账号、MID 与成本挂在其下。",
       "properties": {},
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -491,8 +491,8 @@
       "fields": [
         {
           "defKey": "channel_id",
-          "defName": "支付服务商标识",
-          "comment": "Payment 管理的支付服务商内部唯一标识。",
+          "defName": "渠道标识",
+          "comment": "渠道的内部唯一标识；支付渠道的技术账号、MID、成本方案与 Payment 冻结的执行坐标均引用它。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -509,8 +509,8 @@
         },
         {
           "defKey": "channel_code",
-          "defName": "服务商代码",
-          "comment": "平台稳定识别支付服务商的唯一业务代码。取值来源：Channel Catalog；非固定枚举。",
+          "defName": "渠道编码",
+          "comment": "平台稳定识别渠道的唯一业务代码，大小写敏感，格式为大写字母开头的大写字母、数字与下划线，2 至 64 字符，创建后不可修改；也是外部 API 管理接口中的接入方编码。取值来源：渠道目录；非固定枚举。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -521,14 +521,17 @@
           "hideInGraph": false,
           "refDict": "",
           "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
           "domain": "",
           "id": "CB9AF210-2491-5BF9-9DC0-F0C402697131"
         },
         {
           "defKey": "channel_name",
-          "defName": "服务商名称",
-          "comment": "供运营配置和审阅展示的支付服务商正式名称。",
+          "defName": "渠道名称",
+          "comment": "供运营配置和审阅展示的渠道正式名称。",
           "type": "VARCHAR",
           "len": 255,
           "scale": "",
@@ -544,9 +547,27 @@
           "id": "1F99F3E9-6D94-578E-BF17-ABAB9681C0F2"
         },
         {
+          "defKey": "channel_type",
+          "defName": "渠道类型",
+          "comment": "渠道类型，创建后不可修改；PAYMENT 有绑定 OE 的技术账号、MID、能力与成本，只经支付入口执行；SERVICE 最多一个不绑定 OE 的 ACTIVE 账号保存凭据，只经通用执行入口并按调用授权执行。允许值：PAYMENT、SERVICE。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "036012D4-865C-59BA-8A07-CBFB69BF66F3"
+        },
+        {
           "defKey": "channel_status",
-          "defName": "服务商状态",
-          "comment": "支付服务商从草稿、激活、暂停到关闭的当前运行状态。允许值：DRAFT、ACTIVE、SUSPENDED、CLOSED。",
+          "defName": "渠道状态",
+          "comment": "渠道从草稿、激活、暂停到关闭的当前运行状态；激活要求已配置出站地址。允许值：DRAFT、ACTIVE、SUSPENDED、CLOSED。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -560,6 +581,96 @@
           "extProps": {},
           "domain": "",
           "id": "2178ED9A-2C78-550F-84ED-22A58921D1EA"
+        },
+        {
+          "defKey": "description",
+          "defName": "说明",
+          "comment": "渠道业务用途说明；未填写时为空，禁止填写凭据。",
+          "type": "VARCHAR",
+          "len": 512,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "EE25BDD8-5B5E-5536-8850-5E9A1424D6FE"
+        },
+        {
+          "defKey": "endpoints",
+          "defName": "出站地址",
+          "comment": "本环境出站地址数组 [{endpointCode, baseUrl, sandbox}]，1 至 16 项，未配置时为空；endpointCode 在渠道内唯一，baseUrl 的协议受部署允许列表限制（默认仅 https），不含用户信息、查询串与片段，最长 512 字符；保存时拦截回环、私网、链路本地、保留与组播 IP 字面量及 localhost，执行时解析主机名后再次拦截，部署配置的 trusted-networks 网段放行；sandbox 可选、缺省为 false，只有为 true 的地址允许沙箱验证运行。",
+          "type": "JSON",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
+          "extProps": {},
+          "domain": "",
+          "id": "D0F01EF3-BA61-5BEC-90AB-810000F0155C"
+        },
+        {
+          "defKey": "version",
+          "defName": "并发版本",
+          "comment": "名称、说明或出站地址保存时按版本条件更新并递增的并发版本，初始为 1；不是发布版本。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "D7F775BE-4782-5E47-A212-631F5553BF36"
+        },
+        {
+          "defKey": "created_by",
+          "defName": "创建账号",
+          "comment": "创建该渠道的 Operations 账号标识；2026-10-22 合表前创建且无接入方记录的渠道为空。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "34478017-6CF2-55F2-A64C-FEB4C6F6EAC4"
+        },
+        {
+          "defKey": "updated_by",
+          "defName": "修改账号",
+          "comment": "最后一次修改该渠道的 Operations 账号标识；2026-10-22 合表前创建且未再修改、无接入方记录的渠道为空。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "3A9FDBD8-29AF-54EF-A43F-D2ED8F151548"
         },
         {
           "defKey": "create_time",
@@ -601,8 +712,8 @@
       "correlations": [],
       "indexes": [
         {
-          "defKey": "uk_payment_channel_code",
-          "defName": "UK PAYMENT CHANNEL CODE",
+          "defKey": "uk_channel_code",
+          "defName": "UK CHANNEL CODE",
           "unique": true,
           "comment": "唯一索引：channel_code",
           "fields": [
@@ -613,6 +724,25 @@
             }
           ],
           "id": "94F573B8-CB4B-5A74-82A6-F45B9782D71F"
+        },
+        {
+          "defKey": "idx_channel_type_status",
+          "defName": "IDX CHANNEL TYPE STATUS",
+          "unique": false,
+          "comment": "访问索引：channel_type、channel_status",
+          "fields": [
+            {
+              "fieldDefKey": "036012D4-865C-59BA-8A07-CBFB69BF66F3",
+              "ascOrDesc": "A",
+              "id": "66D0186B-A755-5E5B-9E84-E5BD3E652176"
+            },
+            {
+              "fieldDefKey": "2178ED9A-2C78-550F-84ED-22A58921D1EA",
+              "ascOrDesc": "A",
+              "id": "7951C62D-7C6B-53CF-B60F-38198440D391"
+            }
+          ],
+          "id": "ECD20F56-25BA-51A0-BB8E-5785CCE0A511"
         }
       ],
       "type": "P"
@@ -627,7 +757,7 @@
       },
       "defKey": "t_channel_account",
       "defName": "支付服务商账户",
-      "comment": "归属单个 Channel 与 OE 的技术账号；账号参数及凭据只保存 Vault 引用。",
+      "comment": "归属单个渠道的技术账号：支付渠道账号绑定一个 OE，服务渠道账号不绑定 OE 且每渠道最多一个 ACTIVE；账号参数及凭据只保存 Vault 引用。",
       "properties": {},
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -813,7 +943,7 @@
         {
           "defKey": "channel_id",
           "defName": "支付服务商标识",
-          "comment": "Payment 管理的支付服务商内部唯一标识。",
+          "comment": "渠道内部唯一标识（本库 t_channel.channel_id）。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -831,12 +961,12 @@
         {
           "defKey": "entity_no",
           "defName": "经营主体编号",
-          "comment": "账号所属 Operating Entity 的不可变 CHAR(5) 编号，来源于 CCT；与其当前绑定 MID 的 OE 一致，不作为路由规则。",
+          "comment": "账号所属 Operating Entity 的不可变 CHAR(5) 编号，来源于 CCT；支付渠道账号必填，且与其当前绑定 MID 的 OE 一致，不作为路由规则；服务渠道账号必须为空（应用校验），每个服务渠道最多一个 ACTIVE 账号保存凭据。",
           "type": "CHAR",
           "len": 5,
           "scale": "",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoIncrement": false,
           "defaultValue": "",
           "hideInGraph": false,
@@ -1229,7 +1359,7 @@
         {
           "defKey": "channel_id",
           "defName": "支付服务商标识",
-          "comment": "Payment 管理的支付服务商内部唯一标识。",
+          "comment": "渠道内部唯一标识（本库 t_channel.channel_id）。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -6024,7 +6154,7 @@
         {
           "defKey": "channel_id",
           "defName": "支付服务商标识",
-          "comment": "Payment Channel（本库 t_payment_channel.id）。",
+          "comment": "支付渠道（本库 t_channel.channel_id，channel_type 为 PAYMENT）。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -7542,7 +7672,7 @@
       },
       "defKey": "t_channel_config_change",
       "defName": "渠道配置变更记录",
-      "comment": "渠道配置、成本版本与外部 API 配置的人工变更留痕；与业务变更同事务写入，只增不改。",
+      "comment": "渠道配置、成本版本、外部 API 配置与调用授权的人工变更留痕；与业务变更同事务写入，只增不改。",
       "properties": {},
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -7728,7 +7858,7 @@
         {
           "defKey": "target_type",
           "defName": "被变更对象类型",
-          "comment": "被变更对象类型。允许值：CHANNEL、CHANNEL_ACCOUNT、CHANNEL_MID、MID_CAPABILITY、CHANNEL_COST_VERSION、STANDARD_API、INTEGRATION、INTEGRATION_API、INTEGRATION_SCRIPT、INTEGRATION_IMPLEMENTATION、VERIFY_ACCOUNT、VERIFY_CASE。",
+          "comment": "被变更对象类型；渠道出站地址变更记为 CHANNEL 与 CONFIGURATION。允许值：CHANNEL、CHANNEL_ACCOUNT、CHANNEL_MID、MID_CAPABILITY、CHANNEL_COST_VERSION、STANDARD_API、CHANNEL_API、CHANNEL_SCRIPT、CHANNEL_IMPLEMENTATION、VERIFY_ACCOUNT、VERIFY_CASE、CHANNEL_CALL_GRANT。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -7782,7 +7912,7 @@
         {
           "defKey": "from_status",
           "defName": "变更前状态",
-          "comment": "状态变更前的状态；非状态变更为空。取值来源：渠道、账号、MID、能力组或成本版本的状态代码；非固定枚举。",
+          "comment": "状态变更前的状态；非状态变更为空。取值来源：渠道、账号、MID、能力组、成本版本或调用授权的状态代码；非固定枚举。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -7800,7 +7930,7 @@
         {
           "defKey": "to_status",
           "defName": "变更后状态",
-          "comment": "状态变更后的状态；非状态变更为空。取值来源：渠道、账号、MID、能力组或成本版本的状态代码；非固定枚举。",
+          "comment": "状态变更后的状态；非状态变更为空。取值来源：渠道、账号、MID、能力组、成本版本或调用授权的状态代码；非固定枚举。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -7854,7 +7984,7 @@
         {
           "defKey": "change_detail",
           "defName": "变更明细",
-          "comment": "外部 API 配置变更的字段摘要：{objectCode, beforeVersion, afterVersion, changes[{field, before, after}]}，字段取值只记名称、编码与 SHA-256 摘要，不含定义原文、参数或凭据值；渠道、账号、MID、能力与成本版本的变更为空。",
+          "comment": "外部 API 配置与渠道出站地址变更的字段摘要：{objectCode, beforeVersion, afterVersion, changes[{field, before, after}]}，字段取值只记名称、编码与 SHA-256 摘要，不含定义原文、参数或凭据值；渠道状态、账号、MID、能力、成本版本与调用授权的变更为空。",
           "type": "JSON",
           "len": "",
           "scale": "",
@@ -7927,7 +8057,7 @@
       },
       "defKey": "t_standard_api",
       "defName": "标准 API",
-      "comment": "Platform 对内提供的标准 API 定义，例如 PAY、AUTHORIZE；请求与响应字段由 t_api_field 维护，不保存调用方白名单",
+      "comment": "渠道对内提供的标准 API 定义，例如 PAY、AUTHORIZE、GEOCODE；请求与响应字段由 t_api_field 维护，服务渠道的调用方授权见 t_channel_call_grant",
       "properties": {},
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -8113,7 +8243,7 @@
         {
           "defKey": "standard_api_code",
           "defName": "标准 API 编码",
-          "comment": "业务系统调用内部接口时使用的标准 API 编码，大小写敏感，格式为大写字母开头的字母、数字与下划线。取值来源：Platform 标准 API 目录；非固定枚举。",
+          "comment": "业务系统调用渠道执行入口时使用的标准 API 编码，大小写敏感，格式为大写字母开头的字母、数字与下划线。取值来源：channel-connector 标准 API 目录；非固定枚举。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -8224,7 +8354,7 @@
         {
           "defKey": "create_time",
           "defName": "创建时间",
-          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。",
+          "comment": "该记录在本库中的 UTC 微秒创建时间。",
           "type": "DATETIME",
           "len": 6,
           "scale": "",
@@ -8473,7 +8603,7 @@
         {
           "defKey": "api_id",
           "defName": "所属 API",
-          "comment": "所属 API 标识：方向为 STANDARD_API_* 时指向 t_standard_api.standard_api_id，为 INTEGRATION_API_* 时指向 t_integration_api.integration_api_id；由应用校验。",
+          "comment": "所属 API 标识：方向为 STANDARD_API_* 时指向 t_standard_api.standard_api_id，为 INTEGRATION_API_* 时指向 t_channel_api.channel_api_id；由应用校验。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -8647,7 +8777,7 @@
         {
           "defKey": "create_time",
           "defName": "创建时间",
-          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。",
+          "comment": "该记录在本库中的 UTC 微秒创建时间。",
           "type": "DATETIME",
           "len": 6,
           "scale": "",
@@ -8716,394 +8846,16 @@
       "type": "P"
     },
     {
-      "id": "CB780B6E-D725-55B4-8628-3D34A3DEC598",
+      "id": "65A9E8C9-9AC5-5BF9-86C5-DEACD411CEFF",
       "env": {
         "base": {
           "nameSpace": "",
           "codeRoot": ""
         }
       },
-      "defKey": "t_integration",
-      "defName": "外部接入方",
-      "comment": "渠道或其他出站外部接入方及本环境出站地址；与 Client Integration Readiness（PLT-I13）无关",
-      "properties": {},
-      "sysProps": {
-        "nameTemplate": "{defKey}[{defName}]"
-      },
-      "notes": {},
-      "headers": [
-        {
-          "refKey": "defKey",
-          "hideInGraph": false,
-          "value": "字段代码",
-          "freeze": false
-        },
-        {
-          "refKey": "defName",
-          "hideInGraph": false,
-          "value": "显示名称",
-          "freeze": false
-        },
-        {
-          "refKey": "primaryKey",
-          "hideInGraph": false,
-          "value": "主键",
-          "freeze": false
-        },
-        {
-          "refKey": "notNull",
-          "hideInGraph": true,
-          "value": "不为空",
-          "freeze": false
-        },
-        {
-          "refKey": "autoIncrement",
-          "hideInGraph": true,
-          "value": "自增",
-          "freeze": false
-        },
-        {
-          "refKey": "domain",
-          "hideInGraph": true,
-          "value": "数据域",
-          "freeze": false
-        },
-        {
-          "refKey": "type",
-          "hideInGraph": false,
-          "value": "数据类型",
-          "freeze": false
-        },
-        {
-          "refKey": "len",
-          "hideInGraph": false,
-          "value": "长度",
-          "freeze": false
-        },
-        {
-          "refKey": "scale",
-          "hideInGraph": false,
-          "value": "小数位数",
-          "freeze": false
-        },
-        {
-          "refKey": "comment",
-          "hideInGraph": true,
-          "value": "说明",
-          "freeze": false
-        },
-        {
-          "refKey": "refDict",
-          "hideInGraph": true,
-          "value": "数据字典",
-          "freeze": false
-        },
-        {
-          "refKey": "defaultValue",
-          "hideInGraph": true,
-          "value": "默认值",
-          "freeze": false
-        },
-        {
-          "refKey": "isStandard",
-          "hideInGraph": false,
-          "value": "标准字段",
-          "enable": false,
-          "freeze": false
-        },
-        {
-          "refKey": "uiHint",
-          "hideInGraph": true,
-          "value": "UI建议",
-          "enable": true,
-          "freeze": false
-        },
-        {
-          "refKey": "extProps",
-          "hideInGraph": true,
-          "value": "拓展属性",
-          "enable": true,
-          "freeze": false
-        },
-        {
-          "refKey": "attr1",
-          "value": "属性1",
-          "hideInGraph": true,
-          "enable": true,
-          "freeze": false
-        },
-        {
-          "refKey": "attr2",
-          "value": "属性2",
-          "hideInGraph": true,
-          "enable": false,
-          "freeze": false
-        },
-        {
-          "refKey": "attr3",
-          "value": "属性3",
-          "hideInGraph": true,
-          "enable": false,
-          "freeze": false
-        },
-        {
-          "refKey": "attr4",
-          "value": "属性4",
-          "hideInGraph": true,
-          "enable": false,
-          "freeze": false
-        },
-        {
-          "refKey": "attr5",
-          "value": "属性5",
-          "hideInGraph": true,
-          "enable": false,
-          "freeze": false
-        },
-        {
-          "refKey": "attr6",
-          "value": "属性6",
-          "hideInGraph": true,
-          "enable": false,
-          "freeze": false
-        },
-        {
-          "refKey": "attr7",
-          "value": "属性7",
-          "hideInGraph": true,
-          "enable": false,
-          "freeze": false
-        },
-        {
-          "refKey": "attr8",
-          "value": "属性8",
-          "hideInGraph": true,
-          "enable": false,
-          "freeze": false
-        },
-        {
-          "refKey": "attr9",
-          "value": "属性9",
-          "hideInGraph": true,
-          "enable": false,
-          "freeze": false
-        }
-      ],
-      "fields": [
-        {
-          "defKey": "integration_id",
-          "defName": "接入方主键",
-          "comment": "外部接入方的内部技术标识。",
-          "type": "BIGINT",
-          "len": "",
-          "scale": "",
-          "primaryKey": true,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
-          "extProps": {},
-          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
-          "id": "1606014A-1AD6-5961-9CEF-FD6404349BA7"
-        },
-        {
-          "defKey": "integration_code",
-          "defName": "接入方编码",
-          "comment": "业务系统调用标准 API 时传入的接入方编码，大小写敏感，不等同于 Payment Channel 编码。取值来源：Platform 外部接入方目录；非固定枚举。",
-          "type": "VARCHAR",
-          "len": 64,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {
-            "characterSet": "ascii",
-            "collation": "ascii_bin"
-          },
-          "domain": "",
-          "id": "45E0ED80-DFCE-59FD-9AEE-5368B2C182DA"
-        },
-        {
-          "defKey": "integration_name",
-          "defName": "接入方名称",
-          "comment": "接入方名称，供 Operations 维护页面展示。",
-          "type": "VARCHAR",
-          "len": 128,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
-          "domain": "",
-          "id": "E8E7129E-AEFE-51DE-83BB-6890A0550CCC"
-        },
-        {
-          "defKey": "description",
-          "defName": "说明",
-          "comment": "业务用途说明；未填写时为空。",
-          "type": "VARCHAR",
-          "len": 512,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": false,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
-          "domain": "",
-          "id": "D594C187-4AF0-5160-8C43-7E4257478F90"
-        },
-        {
-          "defKey": "endpoints",
-          "defName": "出站地址",
-          "comment": "本环境出站地址数组 [{endpointCode, baseUrl, sandbox}]，1 至 16 项；endpointCode 在接入方内唯一，baseUrl 仅允许 https、不含用户信息、查询串与片段，最长 512 字符；sandbox 可选、缺省为 false，只有为 true 的地址允许沙箱验证运行；实际出站仍受部署网络白名单限制。",
-          "type": "JSON",
-          "len": "",
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
-          "extProps": {},
-          "domain": "",
-          "id": "8BC5E951-51F2-554F-B66E-5773477371C9"
-        },
-        {
-          "defKey": "version",
-          "defName": "并发版本",
-          "comment": "Operations 保存时按版本条件更新的并发版本，初始为 1；不是发布版本。",
-          "type": "INT",
-          "len": "",
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
-          "extProps": {},
-          "domain": "",
-          "id": "FC29D385-D28D-5DB9-BD6E-A0823F0FBA59"
-        },
-        {
-          "defKey": "created_by",
-          "defName": "创建账号",
-          "comment": "创建该配置的 Operations 账号标识。",
-          "type": "BIGINT",
-          "len": "",
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
-          "extProps": {},
-          "domain": "",
-          "id": "0D628CC5-3F30-515B-9AD5-4450B22FDB30"
-        },
-        {
-          "defKey": "updated_by",
-          "defName": "修改账号",
-          "comment": "最后一次修改该配置的 Operations 账号标识。",
-          "type": "BIGINT",
-          "len": "",
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
-          "extProps": {},
-          "domain": "",
-          "id": "94802F6B-7907-5E6A-B338-85BB595D80CA"
-        },
-        {
-          "defKey": "create_time",
-          "defName": "创建时间",
-          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。",
-          "type": "DATETIME",
-          "len": 6,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
-          "extProps": {},
-          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
-          "id": "92B858E5-55F0-57E1-9270-33B1D8260D88"
-        },
-        {
-          "defKey": "update_time",
-          "defName": "更新时间",
-          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。",
-          "type": "DATETIME",
-          "len": 6,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
-          "extProps": {},
-          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
-          "id": "A570F0AE-6BB8-5E88-8F0E-327F9A73368B"
-        }
-      ],
-      "correlations": [],
-      "indexes": [
-        {
-          "defKey": "uk_integration_code",
-          "defName": "唯一索引 integration_code",
-          "unique": true,
-          "comment": "保证业务唯一性：integration_code",
-          "fields": [
-            {
-              "fieldDefKey": "45E0ED80-DFCE-59FD-9AEE-5368B2C182DA",
-              "ascOrDesc": "A",
-              "id": "82FD6806-863A-5D3E-A71B-DC02FA39525D"
-            }
-          ],
-          "id": "C57A02D9-26D3-52DE-8F11-D7F039A62A64"
-        }
-      ],
-      "type": "P"
-    },
-    {
-      "id": "2A3A4302-A91D-5233-A876-F828F5F921FA",
-      "env": {
-        "base": {
-          "nameSpace": "",
-          "codeRoot": ""
-        }
-      },
-      "defKey": "t_integration_api",
+      "defKey": "t_channel_api",
       "defName": "渠道原子 API",
-      "comment": "接入方的单次外部协议操作；请求与响应结构由 t_api_field 维护，传输、编解码、脚本、状态规则与输出映射保存在 definition_json",
+      "comment": "渠道的单次外部协议操作；请求与响应结构由 t_api_field 维护，传输、编解码、脚本、状态规则与输出映射保存在 definition_json",
       "properties": {},
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -9269,7 +9021,7 @@
       ],
       "fields": [
         {
-          "defKey": "integration_api_id",
+          "defKey": "channel_api_id",
           "defName": "原子 API 主键",
           "comment": "渠道原子 API 的内部技术标识。",
           "type": "BIGINT",
@@ -9284,12 +9036,12 @@
           "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
           "extProps": {},
           "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
-          "id": "F357AB36-97FD-56DA-B51F-C9AD7D812370"
+          "id": "9CAFF373-360D-50CE-9247-5ABF5EB2051C"
         },
         {
-          "defKey": "integration_id",
-          "defName": "所属接入方",
-          "comment": "所属外部接入方标识。",
+          "defKey": "channel_id",
+          "defName": "所属渠道",
+          "comment": "所属渠道标识（t_channel.channel_id）。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -9302,12 +9054,12 @@
           "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
           "extProps": {},
           "domain": "",
-          "id": "DE867D6F-A3F5-5681-AFCC-5EBF08A7FBF2"
+          "id": "1C8E2997-0EAD-58E6-BD0F-82C09D004F09"
         },
         {
           "defKey": "api_code",
           "defName": "API 编码",
-          "comment": "接入方内唯一的原子 API 编码，流程节点按此引用，大小写敏感。取值来源：所属接入方的原子 API 目录；非固定枚举。",
+          "comment": "渠道内唯一的原子 API 编码，流程节点按此引用，大小写敏感。取值来源：所属渠道的原子 API 目录；非固定枚举。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -9323,7 +9075,7 @@
             "collation": "ascii_bin"
           },
           "domain": "",
-          "id": "B8EC63EC-708C-5E71-B578-74459EBEA3F7"
+          "id": "61EFA9C5-1C8B-53C9-8664-6D3263EBFBC7"
         },
         {
           "defKey": "api_name",
@@ -9341,7 +9093,7 @@
           "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
           "extProps": {},
           "domain": "",
-          "id": "99A8995A-F0A8-505E-AA83-5E7F1A65E35F"
+          "id": "8BBEDC90-CF9E-5295-B6E0-4715B9EB139F"
         },
         {
           "defKey": "description",
@@ -9359,7 +9111,7 @@
           "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
           "extProps": {},
           "domain": "",
-          "id": "D1DA2859-E278-522F-862A-3BE045CFA9D5"
+          "id": "A03EEF7A-58BF-5489-8CC2-A30681A6A3EA"
         },
         {
           "defKey": "definition_json",
@@ -9377,7 +9129,7 @@
           "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
           "extProps": {},
           "domain": "",
-          "id": "F822F661-FD70-5EA4-BBF7-329DC9251C61"
+          "id": "0FF3098B-B0EF-5BF9-9248-FB57E88ADE53"
         },
         {
           "defKey": "version",
@@ -9395,7 +9147,7 @@
           "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
           "extProps": {},
           "domain": "",
-          "id": "6D89AB02-9629-513B-8B08-6BE11ABC64A8"
+          "id": "492210F3-7F0F-52D2-8C1E-E7E030D32135"
         },
         {
           "defKey": "created_by",
@@ -9413,7 +9165,7 @@
           "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
           "extProps": {},
           "domain": "",
-          "id": "F3FDA522-69BA-5294-9ACE-74A492D04B75"
+          "id": "4D15B760-4E5D-57C1-B206-849FF4656886"
         },
         {
           "defKey": "updated_by",
@@ -9431,12 +9183,12 @@
           "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
           "extProps": {},
           "domain": "",
-          "id": "C2F786F9-1805-5EFC-82F1-C724E251B467"
+          "id": "AC3DD95A-18AD-5DBA-94D6-8191BF1F6CF7"
         },
         {
           "defKey": "create_time",
           "defName": "创建时间",
-          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。",
+          "comment": "该记录在本库中的 UTC 微秒创建时间。",
           "type": "DATETIME",
           "len": 6,
           "scale": "",
@@ -9449,7 +9201,7 @@
           "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
           "extProps": {},
           "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
-          "id": "E7FEA297-BAC2-5DC4-A856-8C315D53B7D0"
+          "id": "9BB86E36-47F8-50FB-BD3D-D8D3A3BAE2E3"
         },
         {
           "defKey": "update_time",
@@ -9467,15 +9219,15 @@
           "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
           "extProps": {},
           "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
-          "id": "419858F3-583F-55E7-A03F-6B5C73296634"
+          "id": "16E74EFF-501E-5376-9D29-DA0C91657370"
         }
       ],
       "correlations": [
         {
-          "id": "17B39D1F-9476-55FD-963F-8054CC8DAB4C",
-          "myField": "DE867D6F-A3F5-5681-AFCC-5EBF08A7FBF2",
-          "refEntity": "CB780B6E-D725-55B4-8628-3D34A3DEC598",
-          "refField": "1606014A-1AD6-5961-9CEF-FD6404349BA7",
+          "id": "4AABC372-7591-5B74-BDED-CCF4AE97F9F9",
+          "myField": "1C8E2997-0EAD-58E6-BD0F-82C09D004F09",
+          "refEntity": "9C656B8F-9AFD-5293-B5EA-E83D183FC1D2",
+          "refField": "CAB586C4-48E7-5A9F-A1B7-F4D032844CA3",
           "myRows": "n",
           "refRows": "1",
           "innerType": ""
@@ -9483,38 +9235,38 @@
       ],
       "indexes": [
         {
-          "defKey": "uk_integration_api_code",
-          "defName": "唯一索引 integration_id、api_code",
+          "defKey": "uk_channel_api_code",
+          "defName": "唯一索引 channel_id、api_code",
           "unique": true,
-          "comment": "保证业务唯一性：integration_id、api_code",
+          "comment": "保证业务唯一性：channel_id、api_code",
           "fields": [
             {
-              "fieldDefKey": "DE867D6F-A3F5-5681-AFCC-5EBF08A7FBF2",
+              "fieldDefKey": "1C8E2997-0EAD-58E6-BD0F-82C09D004F09",
               "ascOrDesc": "A",
-              "id": "F06BDAA1-86C9-568F-9C76-0320271ED06D"
+              "id": "815D29AC-87A7-520A-82FE-1F8A0A5A3596"
             },
             {
-              "fieldDefKey": "B8EC63EC-708C-5E71-B578-74459EBEA3F7",
+              "fieldDefKey": "61EFA9C5-1C8B-53C9-8664-6D3263EBFBC7",
               "ascOrDesc": "A",
-              "id": "ABCBE5F8-55A5-56B7-980B-0F982D61227E"
+              "id": "485DECD8-3307-50AF-8C98-9B75470345D3"
             }
           ],
-          "id": "6D6F3715-1695-5749-9D75-F987DE5C0F94"
+          "id": "39DF7FCA-85E4-552E-A21E-9CDC5A0705C4"
         }
       ],
       "type": "P"
     },
     {
-      "id": "339C9C87-3BAC-52BB-A115-9D33D5F247A3",
+      "id": "85715154-90EA-5F00-ADE1-B41FC3F18961",
       "env": {
         "base": {
           "nameSpace": "",
           "codeRoot": ""
         }
       },
-      "defKey": "t_integration_script",
+      "defKey": "t_channel_script",
       "defName": "公共脚本",
-      "comment": "接入方内可复用的请求或响应阶段脚本；复杂签名、加密由代码注册函数提供，脚本不读取凭据明文",
+      "comment": "渠道内可复用的请求或响应阶段脚本；复杂签名、加密由代码注册函数提供，脚本不读取凭据明文",
       "properties": {},
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -9680,7 +9432,7 @@
       ],
       "fields": [
         {
-          "defKey": "integration_script_id",
+          "defKey": "channel_script_id",
           "defName": "脚本主键",
           "comment": "公共脚本的内部技术标识。",
           "type": "BIGINT",
@@ -9695,12 +9447,12 @@
           "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
           "extProps": {},
           "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
-          "id": "1A13DA97-7F85-5C86-9445-0E542BA96B88"
+          "id": "29234601-2D78-5C45-97F4-166A40D83745"
         },
         {
-          "defKey": "integration_id",
-          "defName": "所属接入方",
-          "comment": "所属外部接入方标识。",
+          "defKey": "channel_id",
+          "defName": "所属渠道",
+          "comment": "所属渠道标识（t_channel.channel_id）。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -9713,12 +9465,12 @@
           "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
           "extProps": {},
           "domain": "",
-          "id": "EEC5CC0F-553B-5C83-A9C7-4F93D514F86B"
+          "id": "7B7DAA48-2EEA-5076-B726-D5B1AC4F91AA"
         },
         {
           "defKey": "script_code",
           "defName": "脚本编码",
-          "comment": "接入方内唯一的脚本编码，原子 API 按此引用，大小写敏感。取值来源：所属接入方的公共脚本目录；非固定枚举。",
+          "comment": "渠道内唯一的脚本编码，原子 API 按此引用，大小写敏感。取值来源：所属渠道的公共脚本目录；非固定枚举。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -9734,7 +9486,7 @@
             "collation": "ascii_bin"
           },
           "domain": "",
-          "id": "AA477E63-FE5A-5BEF-BD88-13193868B420"
+          "id": "3DE55807-594D-5315-879C-7C93D60769EF"
         },
         {
           "defKey": "script_name",
@@ -9752,7 +9504,7 @@
           "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
           "extProps": {},
           "domain": "",
-          "id": "D2FCD66C-4C69-5EFD-9368-D6697449E7D0"
+          "id": "3EF9FAFF-E2A1-5AA7-A1D0-47D37AA2434D"
         },
         {
           "defKey": "execution_stage",
@@ -9773,7 +9525,7 @@
             "collation": "ascii_bin"
           },
           "domain": "",
-          "id": "14C3E1C8-9429-5B76-A9DF-0675AA3F8EA9"
+          "id": "F51D092A-8049-5F21-9ABA-38D0503E6BA0"
         },
         {
           "defKey": "parameter_definition",
@@ -9791,7 +9543,7 @@
           "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
           "extProps": {},
           "domain": "",
-          "id": "9A9EC7CE-B2F7-5255-9E50-3154C81C883C"
+          "id": "AAD47231-8E88-577E-BD9B-FF826E667C29"
         },
         {
           "defKey": "source_code",
@@ -9809,7 +9561,7 @@
           "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
           "extProps": {},
           "domain": "",
-          "id": "50B84746-202F-5961-8A05-E56D4461EBFF"
+          "id": "5D439C28-06F7-5CCE-A658-3190D20DDE27"
         },
         {
           "defKey": "description",
@@ -9827,7 +9579,7 @@
           "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
           "extProps": {},
           "domain": "",
-          "id": "208FF3A6-B3D9-54A7-8344-00F2010B98B9"
+          "id": "3F2AC4F2-EC90-5D03-891A-BE5229249635"
         },
         {
           "defKey": "version",
@@ -9845,7 +9597,7 @@
           "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
           "extProps": {},
           "domain": "",
-          "id": "FB0A3EE8-0EB6-5A32-9675-587C3BF87016"
+          "id": "1F645B71-9E41-5B50-A2ED-16E83695672B"
         },
         {
           "defKey": "created_by",
@@ -9863,7 +9615,7 @@
           "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
           "extProps": {},
           "domain": "",
-          "id": "307523F9-F780-5631-A4D0-4D5F85BBD817"
+          "id": "255B41A6-FD10-5676-9340-2285774FAA6E"
         },
         {
           "defKey": "updated_by",
@@ -9881,12 +9633,12 @@
           "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
           "extProps": {},
           "domain": "",
-          "id": "BFDD979A-110B-5F14-8D20-99DD31E22057"
+          "id": "6D022274-0497-5EFB-B2CD-28392B57641B"
         },
         {
           "defKey": "create_time",
           "defName": "创建时间",
-          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。",
+          "comment": "该记录在本库中的 UTC 微秒创建时间。",
           "type": "DATETIME",
           "len": 6,
           "scale": "",
@@ -9899,7 +9651,7 @@
           "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
           "extProps": {},
           "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
-          "id": "501A9397-FB89-56BD-96DF-D5C1E055328B"
+          "id": "B638813F-E49B-50CE-BF86-BD94D037342F"
         },
         {
           "defKey": "update_time",
@@ -9917,15 +9669,15 @@
           "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
           "extProps": {},
           "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
-          "id": "6F648604-35D7-5D84-83C9-BB9F38E3D4C3"
+          "id": "B8CDFC2A-0ADA-566A-81A4-26F20202C962"
         }
       ],
       "correlations": [
         {
-          "id": "1DB38F76-7932-5CF7-B918-3308F248CE64",
-          "myField": "EEC5CC0F-553B-5C83-A9C7-4F93D514F86B",
-          "refEntity": "CB780B6E-D725-55B4-8628-3D34A3DEC598",
-          "refField": "1606014A-1AD6-5961-9CEF-FD6404349BA7",
+          "id": "0C16950A-0A1C-5C63-B8EA-AC0B1788B3D1",
+          "myField": "7B7DAA48-2EEA-5076-B726-D5B1AC4F91AA",
+          "refEntity": "9C656B8F-9AFD-5293-B5EA-E83D183FC1D2",
+          "refField": "CAB586C4-48E7-5A9F-A1B7-F4D032844CA3",
           "myRows": "n",
           "refRows": "1",
           "innerType": ""
@@ -9933,38 +9685,38 @@
       ],
       "indexes": [
         {
-          "defKey": "uk_integration_script_code",
-          "defName": "唯一索引 integration_id、script_code",
+          "defKey": "uk_channel_script_code",
+          "defName": "唯一索引 channel_id、script_code",
           "unique": true,
-          "comment": "保证业务唯一性：integration_id、script_code",
+          "comment": "保证业务唯一性：channel_id、script_code",
           "fields": [
             {
-              "fieldDefKey": "EEC5CC0F-553B-5C83-A9C7-4F93D514F86B",
+              "fieldDefKey": "7B7DAA48-2EEA-5076-B726-D5B1AC4F91AA",
               "ascOrDesc": "A",
-              "id": "F8FC9821-DEBA-5CD2-81F8-EEBBA4D0F513"
+              "id": "49CBD888-FA45-547E-85CE-DC9793433D62"
             },
             {
-              "fieldDefKey": "AA477E63-FE5A-5BEF-BD88-13193868B420",
+              "fieldDefKey": "3DE55807-594D-5315-879C-7C93D60769EF",
               "ascOrDesc": "A",
-              "id": "3593FA6A-F22F-5F10-A8EA-8058343F3E0A"
+              "id": "D2D0F89E-06BA-5F97-BE91-5B6F69FF09D9"
             }
           ],
-          "id": "D44EB94A-71DA-5EEC-A1DC-CAC75B1ADDE4"
+          "id": "950A6E6D-10F9-554C-807B-917BF1EFAAFE"
         }
       ],
       "type": "P"
     },
     {
-      "id": "C8FC41B3-BFB3-5346-A7E2-63607B640BD5",
+      "id": "4BAA58B3-703C-57F2-883D-805F2F152992",
       "env": {
         "base": {
           "nameSpace": "",
           "codeRoot": ""
         }
       },
-      "defKey": "t_integration_standard_api",
+      "defKey": "t_channel_standard_api",
       "defName": "渠道标准 API 实现",
-      "comment": "接入方对某个标准 API 的当前实现；flow_definition_json 保存初始化、原子 API 节点、条件连线与返回出口，不保存流程实例或运行状态",
+      "comment": "渠道对某个标准 API 的当前实现；flow_definition_json 保存初始化、原子 API 节点、条件连线与返回出口，不保存流程实例或运行状态",
       "properties": {},
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -10130,7 +9882,7 @@
       ],
       "fields": [
         {
-          "defKey": "integration_standard_api_id",
+          "defKey": "channel_standard_api_id",
           "defName": "实现主键",
           "comment": "渠道标准 API 实现的内部技术标识。",
           "type": "BIGINT",
@@ -10145,12 +9897,12 @@
           "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
           "extProps": {},
           "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
-          "id": "D112197B-2066-5427-9FB2-29E64EFF75C9"
+          "id": "13C93FC5-A132-59A3-B79D-467B856FF15A"
         },
         {
-          "defKey": "integration_id",
-          "defName": "接入方",
-          "comment": "实现该标准 API 的外部接入方标识。",
+          "defKey": "channel_id",
+          "defName": "所属渠道",
+          "comment": "实现该标准 API 的渠道标识（t_channel.channel_id）。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -10163,7 +9915,7 @@
           "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
           "extProps": {},
           "domain": "",
-          "id": "F38A4DAB-8E4E-5F21-A083-39FA2279D0FE"
+          "id": "34206356-2522-550F-9B62-543BA349A9A8"
         },
         {
           "defKey": "standard_api_id",
@@ -10181,7 +9933,7 @@
           "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
           "extProps": {},
           "domain": "",
-          "id": "3C4CA658-46C7-50B2-9C06-93A49DF22C71"
+          "id": "77F35A21-58E5-5B50-A947-C009232B9E79"
         },
         {
           "defKey": "flow_definition_json",
@@ -10199,7 +9951,7 @@
           "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
           "extProps": {},
           "domain": "",
-          "id": "D64F9838-48DA-5FA1-A3D1-A0DF37488C02"
+          "id": "5B56A67D-E5D1-513A-A04B-16363212ECB2"
         },
         {
           "defKey": "version",
@@ -10217,7 +9969,7 @@
           "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
           "extProps": {},
           "domain": "",
-          "id": "ED624589-3CB8-56EB-ACB8-AF1AD1FEB296"
+          "id": "41EB9EC9-BBAC-548A-A8A2-61DFE1AAC7AD"
         },
         {
           "defKey": "created_by",
@@ -10235,7 +9987,7 @@
           "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
           "extProps": {},
           "domain": "",
-          "id": "C9FF2572-D08B-52A7-B5C8-3BBC2115F93B"
+          "id": "4A5034E5-B17F-5A65-BACA-B35B4F1DD946"
         },
         {
           "defKey": "updated_by",
@@ -10253,12 +10005,12 @@
           "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
           "extProps": {},
           "domain": "",
-          "id": "EC9F532E-9DD5-54DB-BAB0-1CB679B6755F"
+          "id": "93C2EBDD-B39E-5C11-954C-768B6827DB80"
         },
         {
           "defKey": "create_time",
           "defName": "创建时间",
-          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。",
+          "comment": "该记录在本库中的 UTC 微秒创建时间。",
           "type": "DATETIME",
           "len": 6,
           "scale": "",
@@ -10271,7 +10023,7 @@
           "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
           "extProps": {},
           "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
-          "id": "2F5E378E-4E25-5489-968F-0B9858C6B8A4"
+          "id": "F927068F-6EB2-5F98-9F6A-94812CE886A2"
         },
         {
           "defKey": "update_time",
@@ -10289,22 +10041,22 @@
           "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
           "extProps": {},
           "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
-          "id": "C647E17A-6905-5175-8406-E1E39E39499B"
+          "id": "E0E504C4-A938-5B28-A1B1-C73D50FD66FA"
         }
       ],
       "correlations": [
         {
-          "id": "A51B91DB-2844-5BB5-A953-8B97022D633E",
-          "myField": "F38A4DAB-8E4E-5F21-A083-39FA2279D0FE",
-          "refEntity": "CB780B6E-D725-55B4-8628-3D34A3DEC598",
-          "refField": "1606014A-1AD6-5961-9CEF-FD6404349BA7",
+          "id": "120EA0ED-9D5B-50C8-8B53-552EA960A3C0",
+          "myField": "34206356-2522-550F-9B62-543BA349A9A8",
+          "refEntity": "9C656B8F-9AFD-5293-B5EA-E83D183FC1D2",
+          "refField": "CAB586C4-48E7-5A9F-A1B7-F4D032844CA3",
           "myRows": "n",
           "refRows": "1",
           "innerType": ""
         },
         {
-          "id": "B49A29E6-739B-5F29-A672-86B74F290D40",
-          "myField": "3C4CA658-46C7-50B2-9C06-93A49DF22C71",
+          "id": "44179D72-FCF7-5C3A-8EF6-2D354659EBB8",
+          "myField": "77F35A21-58E5-5B50-A947-C009232B9E79",
           "refEntity": "16EBFBF0-B4DC-5AB0-9ECF-E22FB01879D4",
           "refField": "C8856C1D-C888-5982-B162-3033E67B7B43",
           "myRows": "n",
@@ -10314,50 +10066,50 @@
       ],
       "indexes": [
         {
-          "defKey": "uk_integration_standard_api",
-          "defName": "唯一索引 integration_id、standard_api_id",
+          "defKey": "uk_channel_standard_api",
+          "defName": "唯一索引 channel_id、standard_api_id",
           "unique": true,
-          "comment": "保证业务唯一性：integration_id、standard_api_id",
+          "comment": "保证业务唯一性：channel_id、standard_api_id",
           "fields": [
             {
-              "fieldDefKey": "F38A4DAB-8E4E-5F21-A083-39FA2279D0FE",
+              "fieldDefKey": "34206356-2522-550F-9B62-543BA349A9A8",
               "ascOrDesc": "A",
-              "id": "EE34978D-A1C4-52E7-8805-A87354C0659C"
+              "id": "05098688-EB21-5925-B194-CFE3A6C47626"
             },
             {
-              "fieldDefKey": "3C4CA658-46C7-50B2-9C06-93A49DF22C71",
+              "fieldDefKey": "77F35A21-58E5-5B50-A947-C009232B9E79",
               "ascOrDesc": "A",
-              "id": "29A1EB0A-21FC-5E54-A2EB-317741E0FAB5"
+              "id": "33F5CFCC-A8E8-5DB6-89FE-2C3AB6B00C99"
             }
           ],
-          "id": "273C7899-B6E6-5AF3-B7FF-088BD80FEC87"
+          "id": "166BCC7B-FE24-503A-AD75-7AD574504C01"
         },
         {
-          "defKey": "idx_integ_std_api_standard",
+          "defKey": "idx_channel_std_api_standard",
           "defName": "访问索引 standard_api_id",
           "unique": false,
           "comment": "支持访问路径：standard_api_id",
           "fields": [
             {
-              "fieldDefKey": "3C4CA658-46C7-50B2-9C06-93A49DF22C71",
+              "fieldDefKey": "77F35A21-58E5-5B50-A947-C009232B9E79",
               "ascOrDesc": "A",
-              "id": "6D75E4F4-103A-58EF-AB27-106B270F77A5"
+              "id": "9B695100-79F0-5418-9B15-1E1043CD16AE"
             }
           ],
-          "id": "A6CAF186-B7AA-5B7B-A33A-46554FB288B5"
+          "id": "92F128BA-A74E-56D3-A6B5-0D514DD18515"
         }
       ],
       "type": "P"
     },
     {
-      "id": "73721D76-B05F-51BF-A4B7-8FFE661591C1",
+      "id": "AEF9088B-503D-5A03-9D53-0A94514334C1",
       "env": {
         "base": {
           "nameSpace": "",
           "codeRoot": ""
         }
       },
-      "defKey": "t_integration_verify_account",
+      "defKey": "t_channel_verify_account",
       "defName": "验证账号",
       "comment": "沙箱验证运行使用的渠道账号材料；按用户决定以明文保存非敏感沙箱材料，不写入 Vault，正式执行不读取",
       "properties": {},
@@ -10540,12 +10292,12 @@
           "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
           "extProps": {},
           "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
-          "id": "25729D47-9EB3-5FEB-855D-544656D865F9"
+          "id": "E15DFA29-8CBF-54EA-870D-76749A9BA731"
         },
         {
-          "defKey": "integration_id",
-          "defName": "所属接入方",
-          "comment": "所属外部接入方标识。",
+          "defKey": "channel_id",
+          "defName": "所属渠道",
+          "comment": "所属渠道标识（t_channel.channel_id）。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -10558,12 +10310,12 @@
           "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
           "extProps": {},
           "domain": "",
-          "id": "F34791C3-2114-5CF9-A8FC-6245EEBE5740"
+          "id": "25A486CD-EAC9-5272-BE86-975A8297510A"
         },
         {
           "defKey": "account_code",
           "defName": "账号编码",
-          "comment": "接入方内唯一的验证账号编码，验证用例按此引用，大小写敏感。取值来源：所属接入方的验证账号目录；非固定枚举。",
+          "comment": "渠道内唯一的验证账号编码，验证用例按此引用，大小写敏感。取值来源：所属渠道的验证账号目录；非固定枚举。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -10579,7 +10331,7 @@
             "collation": "ascii_bin"
           },
           "domain": "",
-          "id": "70E013D0-669C-50AE-9504-89AB33033D20"
+          "id": "F2CEE90D-ED7E-5213-B371-27376C1C395F"
         },
         {
           "defKey": "account_name",
@@ -10597,7 +10349,7 @@
           "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
           "extProps": {},
           "domain": "",
-          "id": "AC7EF959-1213-5B22-80D6-7DBB1C790241"
+          "id": "4CFD78A6-13EE-5D26-8D1E-E3B52842684F"
         },
         {
           "defKey": "channel_code",
@@ -10615,7 +10367,7 @@
           "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
           "extProps": {},
           "domain": "",
-          "id": "E216CBB5-8A2C-5C05-A9E7-7FC413B3E5BC"
+          "id": "E72B994F-02A9-5206-B7A8-4AA39FA8A172"
         },
         {
           "defKey": "channel_account_id",
@@ -10633,7 +10385,7 @@
           "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
           "extProps": {},
           "domain": "",
-          "id": "B72D4765-B5F9-5D73-A437-D875F0E49B24"
+          "id": "12E4ED35-0258-5B94-A5C2-18FE2695CD05"
         },
         {
           "defKey": "entity_no",
@@ -10651,7 +10403,7 @@
           "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
           "extProps": {},
           "domain": "",
-          "id": "5DD6DE70-9DF5-5F3C-9BAC-EF24F7A95B65"
+          "id": "26EF578D-80C7-5D13-A531-A06CA81C11BC"
         },
         {
           "defKey": "parameters",
@@ -10669,7 +10421,7 @@
           "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
           "extProps": {},
           "domain": "",
-          "id": "9A5EA7DC-3D02-5D56-AE33-A78B4FC69054"
+          "id": "CBD28430-502D-5002-A27E-F2B89CED1B92"
         },
         {
           "defKey": "credentials",
@@ -10687,7 +10439,7 @@
           "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
           "extProps": {},
           "domain": "",
-          "id": "345A89C1-AFDF-539A-9A82-02D132A59ED6"
+          "id": "64DB1218-5343-51E9-9FC1-55548773F742"
         },
         {
           "defKey": "version",
@@ -10705,7 +10457,7 @@
           "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
           "extProps": {},
           "domain": "",
-          "id": "187C1DE6-83FA-5C9B-AB75-032C1279707D"
+          "id": "63A06CFC-E465-59AA-A8F7-4F93D32140CB"
         },
         {
           "defKey": "created_by",
@@ -10723,7 +10475,7 @@
           "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
           "extProps": {},
           "domain": "",
-          "id": "006EB426-ADF7-506D-8724-3C81BDF4F363"
+          "id": "935FD65F-5A18-5716-B8FC-F26924DD763F"
         },
         {
           "defKey": "updated_by",
@@ -10741,12 +10493,12 @@
           "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
           "extProps": {},
           "domain": "",
-          "id": "6FF098C9-7423-5EF5-BEDC-3FD192C3C9BB"
+          "id": "500EFEA3-19B1-5539-A563-069DB18B72F7"
         },
         {
           "defKey": "create_time",
           "defName": "创建时间",
-          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。",
+          "comment": "该记录在本库中的 UTC 微秒创建时间。",
           "type": "DATETIME",
           "len": 6,
           "scale": "",
@@ -10759,7 +10511,7 @@
           "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
           "extProps": {},
           "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
-          "id": "C8BF13F0-7F49-54E4-A90C-ADF96A4B42C8"
+          "id": "53C92DF3-A389-57C3-8119-798ECF6C59FA"
         },
         {
           "defKey": "update_time",
@@ -10777,15 +10529,15 @@
           "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
           "extProps": {},
           "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
-          "id": "11A46F5E-21DE-5C45-8B25-C4E64D386730"
+          "id": "21D143FD-A20D-560C-9F0E-9CAF76DC3279"
         }
       ],
       "correlations": [
         {
-          "id": "E31D54F9-2DFD-50AA-BD3A-AC1E47C0E6DD",
-          "myField": "F34791C3-2114-5CF9-A8FC-6245EEBE5740",
-          "refEntity": "CB780B6E-D725-55B4-8628-3D34A3DEC598",
-          "refField": "1606014A-1AD6-5961-9CEF-FD6404349BA7",
+          "id": "7B664B46-1068-5753-9020-AD0F42D4B1FD",
+          "myField": "25A486CD-EAC9-5272-BE86-975A8297510A",
+          "refEntity": "9C656B8F-9AFD-5293-B5EA-E83D183FC1D2",
+          "refField": "CAB586C4-48E7-5A9F-A1B7-F4D032844CA3",
           "myRows": "n",
           "refRows": "1",
           "innerType": ""
@@ -10794,37 +10546,37 @@
       "indexes": [
         {
           "defKey": "uk_verify_account_code",
-          "defName": "唯一索引 integration_id、account_code",
+          "defName": "唯一索引 channel_id、account_code",
           "unique": true,
-          "comment": "保证业务唯一性：integration_id、account_code",
+          "comment": "保证业务唯一性：channel_id、account_code",
           "fields": [
             {
-              "fieldDefKey": "F34791C3-2114-5CF9-A8FC-6245EEBE5740",
+              "fieldDefKey": "25A486CD-EAC9-5272-BE86-975A8297510A",
               "ascOrDesc": "A",
-              "id": "565FA83A-EB78-5E41-A2C8-0A6C2BD00EBB"
+              "id": "FF68A523-EBB1-5DFD-8AE7-5820EBDED8C9"
             },
             {
-              "fieldDefKey": "70E013D0-669C-50AE-9504-89AB33033D20",
+              "fieldDefKey": "F2CEE90D-ED7E-5213-B371-27376C1C395F",
               "ascOrDesc": "A",
-              "id": "E86EB95B-CF60-539A-9133-EA6EB13CC40A"
+              "id": "0705E8D8-25A5-5D13-86EC-A33E378B3848"
             }
           ],
-          "id": "47478049-BEF0-5E65-A6C6-5E92AB9155F8"
+          "id": "FEF91F40-DB20-5DAA-A6D5-1DB481F5D275"
         }
       ],
       "type": "P"
     },
     {
-      "id": "8A34B007-CB2C-5D62-B9F2-D06F79E9B375",
+      "id": "5E453CC7-7086-5D03-B314-C8B698F27A29",
       "env": {
         "base": {
           "nameSpace": "",
           "codeRoot": ""
         }
       },
-      "defKey": "t_integration_verify_case",
+      "defKey": "t_channel_verify_case",
       "defName": "验证用例",
-      "comment": "接入方的沙箱验证用例：使用的验证账号与有序步骤，每步包含标准 API、输入模板与期望",
+      "comment": "渠道的沙箱验证用例：使用的验证账号与有序步骤，每步包含标准 API、输入模板与期望",
       "properties": {},
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -11005,12 +10757,12 @@
           "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
           "extProps": {},
           "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
-          "id": "19F429DC-5688-5A30-92BE-2667247DB5D9"
+          "id": "58297F58-B6FC-5B10-9AA9-D7465AC6F7A9"
         },
         {
-          "defKey": "integration_id",
-          "defName": "所属接入方",
-          "comment": "所属外部接入方标识。",
+          "defKey": "channel_id",
+          "defName": "所属渠道",
+          "comment": "所属渠道标识（t_channel.channel_id）。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -11023,12 +10775,12 @@
           "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
           "extProps": {},
           "domain": "",
-          "id": "9D065630-F83B-5A2D-81FA-2F47E6526984"
+          "id": "DB244F09-F304-5FA7-BEC8-9DB215CD4553"
         },
         {
           "defKey": "case_code",
           "defName": "用例编码",
-          "comment": "接入方内唯一的验证用例编码，大小写敏感。取值来源：所属接入方的验证用例目录；非固定枚举。",
+          "comment": "渠道内唯一的验证用例编码，大小写敏感。取值来源：所属渠道的验证用例目录；非固定枚举。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -11044,7 +10796,7 @@
             "collation": "ascii_bin"
           },
           "domain": "",
-          "id": "8D1CB7BC-3EDF-5A51-AB77-766EB4E258FF"
+          "id": "4448DB83-A05D-5D73-8845-18E948583306"
         },
         {
           "defKey": "case_name",
@@ -11062,7 +10814,7 @@
           "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
           "extProps": {},
           "domain": "",
-          "id": "B99D1E78-3BE0-56AD-A9E1-F877AC6F93CE"
+          "id": "FBFDD420-AB92-5EFF-9FB6-D0A8B62B8B1B"
         },
         {
           "defKey": "description",
@@ -11080,7 +10832,7 @@
           "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
           "extProps": {},
           "domain": "",
-          "id": "DBBBE6FF-0B21-533E-845A-CA274E659A6D"
+          "id": "CE14824B-D3A6-5A2C-9953-1A2738C81128"
         },
         {
           "defKey": "verify_account_id",
@@ -11098,7 +10850,7 @@
           "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
           "extProps": {},
           "domain": "",
-          "id": "CFC4814C-6AC8-5080-86D6-3B48B4DDBB4D"
+          "id": "6409EF16-08F1-5655-B132-7392E7CF9416"
         },
         {
           "defKey": "steps_json",
@@ -11116,7 +10868,7 @@
           "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
           "extProps": {},
           "domain": "",
-          "id": "28372FB6-AE48-5C88-9F0C-16005673B601"
+          "id": "854849F3-0F36-50F3-9919-2329C389D341"
         },
         {
           "defKey": "version",
@@ -11134,7 +10886,7 @@
           "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
           "extProps": {},
           "domain": "",
-          "id": "E8E1BB14-FDB6-5CA7-B806-D7F5603EE867"
+          "id": "33DE58C3-D925-5861-8BED-501D4EB935E7"
         },
         {
           "defKey": "created_by",
@@ -11152,7 +10904,7 @@
           "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
           "extProps": {},
           "domain": "",
-          "id": "D5A9551D-99DA-5BC4-BE55-D4E023996063"
+          "id": "116CC938-B8F6-51EF-88F8-B06144E9D8F9"
         },
         {
           "defKey": "updated_by",
@@ -11170,12 +10922,12 @@
           "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
           "extProps": {},
           "domain": "",
-          "id": "AD7FC5C4-52DE-53BB-93C3-C61CBB45E3DE"
+          "id": "CB34774C-D01D-5CA3-BD56-A37B08FA931A"
         },
         {
           "defKey": "create_time",
           "defName": "创建时间",
-          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。",
+          "comment": "该记录在本库中的 UTC 微秒创建时间。",
           "type": "DATETIME",
           "len": 6,
           "scale": "",
@@ -11188,7 +10940,7 @@
           "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
           "extProps": {},
           "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
-          "id": "8588787C-19C6-59FE-ADBF-FCDCB2367393"
+          "id": "BCEB860A-FD17-5CA8-9D6A-8D758C999006"
         },
         {
           "defKey": "update_time",
@@ -11206,24 +10958,24 @@
           "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
           "extProps": {},
           "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
-          "id": "E9697376-3D96-59B0-9D6A-A2F00AC50A4F"
+          "id": "F36574BB-20ED-53F9-AB6E-5664A30A73EC"
         }
       ],
       "correlations": [
         {
-          "id": "C19C2C69-9EFE-5249-A8AA-697F9DCD0CA9",
-          "myField": "9D065630-F83B-5A2D-81FA-2F47E6526984",
-          "refEntity": "CB780B6E-D725-55B4-8628-3D34A3DEC598",
-          "refField": "1606014A-1AD6-5961-9CEF-FD6404349BA7",
+          "id": "EB06108D-1496-510C-9731-4A9EAC360AA4",
+          "myField": "DB244F09-F304-5FA7-BEC8-9DB215CD4553",
+          "refEntity": "9C656B8F-9AFD-5293-B5EA-E83D183FC1D2",
+          "refField": "CAB586C4-48E7-5A9F-A1B7-F4D032844CA3",
           "myRows": "n",
           "refRows": "1",
           "innerType": ""
         },
         {
-          "id": "42D23241-6327-58F8-B9A1-EF5F54FD28FB",
-          "myField": "CFC4814C-6AC8-5080-86D6-3B48B4DDBB4D",
-          "refEntity": "73721D76-B05F-51BF-A4B7-8FFE661591C1",
-          "refField": "25729D47-9EB3-5FEB-855D-544656D865F9",
+          "id": "9194C9F7-952B-5CAA-953A-41B791F2FA23",
+          "myField": "6409EF16-08F1-5655-B132-7392E7CF9416",
+          "refEntity": "AEF9088B-503D-5A03-9D53-0A94514334C1",
+          "refField": "E15DFA29-8CBF-54EA-870D-76749A9BA731",
           "myRows": "n",
           "refRows": "1",
           "innerType": ""
@@ -11232,22 +10984,22 @@
       "indexes": [
         {
           "defKey": "uk_verify_case_code",
-          "defName": "唯一索引 integration_id、case_code",
+          "defName": "唯一索引 channel_id、case_code",
           "unique": true,
-          "comment": "保证业务唯一性：integration_id、case_code",
+          "comment": "保证业务唯一性：channel_id、case_code",
           "fields": [
             {
-              "fieldDefKey": "9D065630-F83B-5A2D-81FA-2F47E6526984",
+              "fieldDefKey": "DB244F09-F304-5FA7-BEC8-9DB215CD4553",
               "ascOrDesc": "A",
-              "id": "744F0046-A92C-5F87-9264-62AF971E8E84"
+              "id": "1135AD35-690D-5604-B966-91F0BBB7249A"
             },
             {
-              "fieldDefKey": "8D1CB7BC-3EDF-5A51-AB77-766EB4E258FF",
+              "fieldDefKey": "4448DB83-A05D-5D73-8845-18E948583306",
               "ascOrDesc": "A",
-              "id": "BA22CDDD-DED7-59FF-9B75-E6B56D136E2B"
+              "id": "BC872D36-500E-51F8-9262-5E1554736076"
             }
           ],
-          "id": "C59BCF62-D4D0-5B24-9762-26B1C887CA23"
+          "id": "3F755675-D2C2-5B0E-96FD-8FFF754DD199"
         },
         {
           "defKey": "idx_verify_case_account",
@@ -11256,25 +11008,25 @@
           "comment": "支持访问路径：verify_account_id",
           "fields": [
             {
-              "fieldDefKey": "CFC4814C-6AC8-5080-86D6-3B48B4DDBB4D",
+              "fieldDefKey": "6409EF16-08F1-5655-B132-7392E7CF9416",
               "ascOrDesc": "A",
-              "id": "9B5143B0-4D38-54E3-9F47-014EC172C467"
+              "id": "667F1F68-471C-5010-9CB5-F66BCB56C608"
             }
           ],
-          "id": "F6DC95C2-9EF4-5F35-8779-88964DE6515C"
+          "id": "E9274086-410B-517B-AE0B-423332B3AF9B"
         }
       ],
       "type": "P"
     },
     {
-      "id": "67273286-9209-57B8-AECE-F0EB8B09B5A6",
+      "id": "925B2841-AD69-5626-9937-D3145F718AFD",
       "env": {
         "base": {
           "nameSpace": "",
           "codeRoot": ""
         }
       },
-      "defKey": "t_integration_verify_run",
+      "defKey": "t_channel_verify_run",
       "defName": "验证运行",
       "comment": "一次沙箱验证运行的结论与证据：运行时的用例快照、配置版本与出站地址；记录不删除，用例删除后仍保留",
       "properties": {},
@@ -11457,7 +11209,7 @@
           "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
           "extProps": {},
           "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
-          "id": "3993494C-4D1A-55F4-8801-2EE3911EC046"
+          "id": "E7AA5F9D-B88D-556A-BB2A-72C67AE60DF6"
         },
         {
           "defKey": "verify_case_id",
@@ -11475,12 +11227,12 @@
           "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
           "extProps": {},
           "domain": "",
-          "id": "FF57A9D9-BFB1-5247-AF00-471DB990A0A4"
+          "id": "8DC92A45-3DC3-5171-BDB9-1149FCB37B24"
         },
         {
-          "defKey": "integration_id",
-          "defName": "所属接入方",
-          "comment": "所属外部接入方标识。",
+          "defKey": "channel_id",
+          "defName": "所属渠道",
+          "comment": "所属渠道标识（t_channel.channel_id）。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -11493,7 +11245,7 @@
           "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
           "extProps": {},
           "domain": "",
-          "id": "26EF2F72-EDCF-5606-A20A-E9B242218B9A"
+          "id": "ABAD698A-A38D-5961-B2A6-014B55222F4E"
         },
         {
           "defKey": "run_status",
@@ -11514,7 +11266,7 @@
             "collation": "ascii_bin"
           },
           "domain": "",
-          "id": "034058B7-2F1D-5F1D-9F32-E684EED11FFE"
+          "id": "C0BC1213-1FD3-51E2-95DD-1DD077B5966E"
         },
         {
           "defKey": "case_snapshot_json",
@@ -11532,12 +11284,12 @@
           "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
           "extProps": {},
           "domain": "",
-          "id": "C0AC129B-0761-5E08-B5E2-ABF1A79DE12D"
+          "id": "7B3E5BBB-8A09-5F89-A421-289B79CAEDBC"
         },
         {
           "defKey": "config_versions_json",
           "defName": "配置版本",
-          "comment": "运行实际加载的标准 API、接入方、原子 API、脚本与实现版本，按编码记录；运行未加载配置时为空。",
+          "comment": "运行实际加载的标准 API、渠道、原子 API、脚本与实现版本，按编码记录；运行未加载配置时为空。",
           "type": "JSON",
           "len": "",
           "scale": "",
@@ -11550,12 +11302,12 @@
           "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
           "extProps": {},
           "domain": "",
-          "id": "740BA381-AB17-56C5-A85D-E07273E07941"
+          "id": "192CD79C-32B4-5838-A857-B4DBB05826A6"
         },
         {
           "defKey": "endpoints_json",
           "defName": "出站地址",
-          "comment": "运行时接入方出站地址及沙箱标记；运行未加载配置时为空。",
+          "comment": "运行时渠道出站地址及沙箱标记；运行未加载配置时为空。",
           "type": "JSON",
           "len": "",
           "scale": "",
@@ -11568,7 +11320,7 @@
           "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
           "extProps": {},
           "domain": "",
-          "id": "677186EC-B845-5CB2-B8FF-3370C390F224"
+          "id": "F4653220-34BA-50D8-815B-E2651B783F2C"
         },
         {
           "defKey": "failure_summary",
@@ -11586,7 +11338,7 @@
           "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
           "extProps": {},
           "domain": "",
-          "id": "868D342F-01C5-5B14-953D-0C833C48CF76"
+          "id": "CE8861C7-AB5C-5244-A3EF-F526E92E8869"
         },
         {
           "defKey": "started_by",
@@ -11604,7 +11356,7 @@
           "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
           "extProps": {},
           "domain": "",
-          "id": "641F1A26-6FE6-5F0A-BAB6-FAE4028FFC00"
+          "id": "AE2A9E76-1EAB-539E-9D94-2230CD086EC0"
         },
         {
           "defKey": "start_time",
@@ -11622,7 +11374,7 @@
           "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
           "extProps": {},
           "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
-          "id": "23279518-69D4-5543-8741-F4802731C459"
+          "id": "F3E8883A-F95F-5D48-8A8B-B08C1F4D0330"
         },
         {
           "defKey": "finish_time",
@@ -11640,12 +11392,12 @@
           "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
           "extProps": {},
           "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
-          "id": "AFA78E5B-065D-5934-AEAF-963A16D47FCF"
+          "id": "E28A4797-301F-528D-B9A9-080D170EA2A9"
         },
         {
           "defKey": "create_time",
           "defName": "创建时间",
-          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。",
+          "comment": "该记录在本库中的 UTC 微秒创建时间。",
           "type": "DATETIME",
           "len": 6,
           "scale": "",
@@ -11658,7 +11410,7 @@
           "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
           "extProps": {},
           "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
-          "id": "B97E7830-10EF-513A-AD4C-A9FA528E5487"
+          "id": "B6EE0150-B99D-5535-B58D-A13A5A616ED4"
         },
         {
           "defKey": "update_time",
@@ -11676,24 +11428,24 @@
           "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
           "extProps": {},
           "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
-          "id": "0F4C2F65-23FD-5E40-9A55-A37E677E4884"
+          "id": "2A0E4A10-6902-52CF-A92F-C41A29DE3368"
         }
       ],
       "correlations": [
         {
-          "id": "FDCE2103-54C0-5D9C-8737-71D0DB178D83",
-          "myField": "FF57A9D9-BFB1-5247-AF00-471DB990A0A4",
-          "refEntity": "8A34B007-CB2C-5D62-B9F2-D06F79E9B375",
-          "refField": "19F429DC-5688-5A30-92BE-2667247DB5D9",
+          "id": "0457F85C-8B86-5EC7-8187-09FDC5F731DF",
+          "myField": "8DC92A45-3DC3-5171-BDB9-1149FCB37B24",
+          "refEntity": "5E453CC7-7086-5D03-B314-C8B698F27A29",
+          "refField": "58297F58-B6FC-5B10-9AA9-D7465AC6F7A9",
           "myRows": "n",
           "refRows": "1",
           "innerType": ""
         },
         {
-          "id": "BD0175CE-6217-5320-B2B7-B1CE1F4ED7BC",
-          "myField": "26EF2F72-EDCF-5606-A20A-E9B242218B9A",
-          "refEntity": "CB780B6E-D725-55B4-8628-3D34A3DEC598",
-          "refField": "1606014A-1AD6-5961-9CEF-FD6404349BA7",
+          "id": "B422C16F-C069-514B-8FCF-E17359C70040",
+          "myField": "ABAD698A-A38D-5961-B2A6-014B55222F4E",
+          "refEntity": "9C656B8F-9AFD-5293-B5EA-E83D183FC1D2",
+          "refField": "CAB586C4-48E7-5A9F-A1B7-F4D032844CA3",
           "myRows": "n",
           "refRows": "1",
           "innerType": ""
@@ -11707,49 +11459,49 @@
           "comment": "支持访问路径：verify_case_id、start_time",
           "fields": [
             {
-              "fieldDefKey": "FF57A9D9-BFB1-5247-AF00-471DB990A0A4",
+              "fieldDefKey": "8DC92A45-3DC3-5171-BDB9-1149FCB37B24",
               "ascOrDesc": "A",
-              "id": "F34FC5DA-9E38-5EDA-A1F5-947278EA3540"
+              "id": "359C044F-968B-5FA6-9981-4CAE301BA48F"
             },
             {
-              "fieldDefKey": "23279518-69D4-5543-8741-F4802731C459",
+              "fieldDefKey": "F3E8883A-F95F-5D48-8A8B-B08C1F4D0330",
               "ascOrDesc": "A",
-              "id": "11AC5C67-4B15-5FD6-A5F6-65FA6FBAA729"
+              "id": "4EB1EE3F-548C-5E75-B400-C55BFD1BB24C"
             }
           ],
-          "id": "6E6D817E-BD29-5C75-9AD1-7C5C737A6035"
+          "id": "D913AFE4-4D8F-5D80-AE5A-A7DB82F98B59"
         },
         {
-          "defKey": "idx_verify_run_integration",
-          "defName": "访问索引 integration_id、start_time",
+          "defKey": "idx_verify_run_channel",
+          "defName": "访问索引 channel_id、start_time",
           "unique": false,
-          "comment": "支持访问路径：integration_id、start_time",
+          "comment": "支持访问路径：channel_id、start_time",
           "fields": [
             {
-              "fieldDefKey": "26EF2F72-EDCF-5606-A20A-E9B242218B9A",
+              "fieldDefKey": "ABAD698A-A38D-5961-B2A6-014B55222F4E",
               "ascOrDesc": "A",
-              "id": "75E12B5E-C0F8-5EA4-9FB4-AF63CC6986F3"
+              "id": "2C888184-06BA-5C09-8C43-3CE219E4A2FE"
             },
             {
-              "fieldDefKey": "23279518-69D4-5543-8741-F4802731C459",
+              "fieldDefKey": "F3E8883A-F95F-5D48-8A8B-B08C1F4D0330",
               "ascOrDesc": "A",
-              "id": "820FEFBB-0AA8-577C-BF77-649A5B961368"
+              "id": "6D1BB06A-FB00-5E29-BAC4-3D7B8A628FA0"
             }
           ],
-          "id": "B5F37BAD-79B1-5998-ADA6-8746A7A27096"
+          "id": "D426A4E5-66F0-5BF3-B26E-B96F2573CFC0"
         }
       ],
       "type": "P"
     },
     {
-      "id": "4BC210C8-4348-5773-8179-B72FFAD253D3",
+      "id": "B71D0C67-DD4A-57F5-8895-7E7F8A74F63F",
       "env": {
         "base": {
           "nameSpace": "",
           "codeRoot": ""
         }
       },
-      "defKey": "t_integration_verify_run_step",
+      "defKey": "t_channel_verify_run_step",
       "defName": "验证运行步骤",
       "comment": "验证运行中一个步骤的实际输入、结果、期望核对与脱敏轨迹；运行结束时一次写入，不再修改",
       "properties": {},
@@ -11932,7 +11684,7 @@
           "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
           "extProps": {},
           "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
-          "id": "226CDCBE-4E39-5D96-B907-EA4F975D1881"
+          "id": "4B67D398-8565-519E-BDB2-1AD6D8642957"
         },
         {
           "defKey": "verify_run_id",
@@ -11950,7 +11702,7 @@
           "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
           "extProps": {},
           "domain": "",
-          "id": "587D100C-5CD2-5B57-AAD9-C7AE56315183"
+          "id": "9EE32F72-A96A-5B7A-BB46-E34A3A93A27F"
         },
         {
           "defKey": "step_no",
@@ -11968,7 +11720,7 @@
           "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
           "extProps": {},
           "domain": "",
-          "id": "2F8BAE78-D7C4-5D98-92B0-AD3A6A7D81C9"
+          "id": "B134182E-68C7-5D13-864E-B985C3254128"
         },
         {
           "defKey": "step_key",
@@ -11989,7 +11741,7 @@
             "collation": "ascii_bin"
           },
           "domain": "",
-          "id": "2699E7ED-D969-55C7-95BB-F50B79A7DE6B"
+          "id": "702750BE-403C-540B-BF76-F0CF0FD3B8FF"
         },
         {
           "defKey": "standard_api_code",
@@ -12010,7 +11762,7 @@
             "collation": "ascii_bin"
           },
           "domain": "",
-          "id": "63F3F0EE-BE1C-5F8C-A0F7-3FDA04CF5969"
+          "id": "DE6EEA60-ED46-5D84-AECE-0ACA3E8CA58B"
         },
         {
           "defKey": "step_status",
@@ -12031,7 +11783,7 @@
             "collation": "ascii_bin"
           },
           "domain": "",
-          "id": "84DFBD51-F204-5552-963B-59E6FD02E39A"
+          "id": "841D97AD-0B67-56F5-B7D0-32A1879BCA4C"
         },
         {
           "defKey": "resolved_input_json",
@@ -12049,7 +11801,7 @@
           "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
           "extProps": {},
           "domain": "",
-          "id": "BED0A7AE-D49B-5DFF-8377-0F4DE8871A64"
+          "id": "FA6BC4CD-5A0E-538F-A868-C041859FC012"
         },
         {
           "defKey": "result_json",
@@ -12067,7 +11819,7 @@
           "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
           "extProps": {},
           "domain": "",
-          "id": "23F44679-DFA3-589D-BCE2-561E1A489E06"
+          "id": "974BA437-E31D-575F-85C6-83314892C1BA"
         },
         {
           "defKey": "assertions_json",
@@ -12085,7 +11837,7 @@
           "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
           "extProps": {},
           "domain": "",
-          "id": "5C206863-28AC-53B9-B2A2-1CDC6FBD4A1C"
+          "id": "1B3A3F29-01E9-503A-835A-4FC6B8B2BA86"
         },
         {
           "defKey": "trace_json",
@@ -12103,7 +11855,7 @@
           "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
           "extProps": {},
           "domain": "",
-          "id": "3FA9EAD8-43EA-581F-B2BC-E699F903B63C"
+          "id": "B11F1FDC-B60F-5DD9-886A-E96A4CCA5EE5"
         },
         {
           "defKey": "elapsed_ms",
@@ -12121,12 +11873,12 @@
           "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
           "extProps": {},
           "domain": "",
-          "id": "314C9408-D5B4-5FD7-BD66-082C151D9DA8"
+          "id": "3491BB3E-FAED-56BE-8141-4F896E12022A"
         },
         {
           "defKey": "create_time",
           "defName": "创建时间",
-          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。",
+          "comment": "该记录在本库中的 UTC 微秒创建时间。",
           "type": "DATETIME",
           "len": 6,
           "scale": "",
@@ -12139,15 +11891,15 @@
           "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
           "extProps": {},
           "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
-          "id": "7CF2AB4F-DC5C-57C4-B493-46E7BD16A4A4"
+          "id": "D0207D8A-C914-5483-9228-8C090147FC19"
         }
       ],
       "correlations": [
         {
-          "id": "0D29FA92-CC15-5192-B6F8-0D5FDCACA177",
-          "myField": "587D100C-5CD2-5B57-AAD9-C7AE56315183",
-          "refEntity": "67273286-9209-57B8-AECE-F0EB8B09B5A6",
-          "refField": "3993494C-4D1A-55F4-8801-2EE3911EC046",
+          "id": "11716747-1D7B-58D6-A26D-F664A109191D",
+          "myField": "9EE32F72-A96A-5B7A-BB46-E34A3A93A27F",
+          "refEntity": "925B2841-AD69-5626-9937-D3145F718AFD",
+          "refField": "E7AA5F9D-B88D-556A-BB2A-72C67AE60DF6",
           "myRows": "n",
           "refRows": "1",
           "innerType": ""
@@ -12161,17 +11913,437 @@
           "comment": "保证业务唯一性：verify_run_id、step_no",
           "fields": [
             {
-              "fieldDefKey": "587D100C-5CD2-5B57-AAD9-C7AE56315183",
+              "fieldDefKey": "9EE32F72-A96A-5B7A-BB46-E34A3A93A27F",
               "ascOrDesc": "A",
-              "id": "15874172-D23A-5C42-8266-7513524FA8A0"
+              "id": "36DB2A77-F222-50D2-92D5-E56C89E78FEC"
             },
             {
-              "fieldDefKey": "2F8BAE78-D7C4-5D98-92B0-AD3A6A7D81C9",
+              "fieldDefKey": "B134182E-68C7-5D13-864E-B985C3254128",
               "ascOrDesc": "A",
-              "id": "EBE35F8E-3C4D-5A6F-B31E-A364C6EB7F8F"
+              "id": "28290601-B35C-57C2-8CA0-F9B95E3101E3"
             }
           ],
-          "id": "670B76B1-CF46-5EE1-B4F8-3949DB0FA7BD"
+          "id": "1363E4CC-A650-5F52-8553-C07542A10FA6"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "452F0EDC-D26C-55EB-B183-570E63147F4A",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_channel_call_grant",
+      "defName": "调用授权",
+      "comment": "服务渠道的调用授权：调用方服务 × 渠道 × 标准 API 白名单，只有 ACTIVE 授权放行通用执行入口；授权只停用、不删除，同一组合只有一行，再启用沿用该行并递增版本",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "call_grant_id",
+          "defName": "授权主键",
+          "comment": "调用授权的内部技术标识。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "F0277FC8-7617-518B-8E32-4E67DA210CF6"
+        },
+        {
+          "defKey": "caller_service",
+          "defName": "调用方服务",
+          "comment": "调用方服务名（调用方的 spring.application.name），小写字母开头，小写字母、数字或连字符，2 至 64 字符；只校验格式，不维护服务名册。取值来源：内部服务名；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "42F79217-F823-5CEA-B6D2-2B0F17ADBA07"
+        },
+        {
+          "defKey": "channel_id",
+          "defName": "服务渠道",
+          "comment": "被授权调用的服务渠道标识（t_channel.channel_id，channel_type 为 SERVICE）。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "350E5AA6-F2B1-53F2-AC90-84B2CC9E84D3"
+        },
+        {
+          "defKey": "standard_api_id",
+          "defName": "标准 API",
+          "comment": "被授权调用的标准 API 标识（t_standard_api.standard_api_id），授权时须已被该渠道实现；由应用校验。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "C400E4A0-A095-57CA-A8C4-DA02BF9CE1F5"
+        },
+        {
+          "defKey": "grant_status",
+          "defName": "授权状态",
+          "comment": "授权当前是否放行；DISABLED 可再启用。允许值：ACTIVE、DISABLED。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "59C72963-D562-551F-BDE0-206674E755AA"
+        },
+        {
+          "defKey": "version",
+          "defName": "并发版本",
+          "comment": "启用、停用时按版本条件更新的并发版本，初始为 1。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "668AB52E-6A7C-52C3-BACD-97C15350983F"
+        },
+        {
+          "defKey": "created_by",
+          "defName": "创建账号",
+          "comment": "创建该授权的 Operations 账号标识。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "B621159A-F554-5635-A539-C54497E23AD2"
+        },
+        {
+          "defKey": "updated_by",
+          "defName": "修改账号",
+          "comment": "最后一次修改该授权的 Operations 账号标识。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "D3DB4A91-CEFF-525D-A278-5D00DF2054AA"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在本库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "65BC5CD0-0C5E-5569-9FFE-FB91325C0EEB"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "F44DF522-B4F3-5058-8D3E-7E6009E84E33"
+        }
+      ],
+      "correlations": [
+        {
+          "id": "26BA4CB1-9933-5FE5-82C3-695162CBF47C",
+          "myField": "350E5AA6-F2B1-53F2-AC90-84B2CC9E84D3",
+          "refEntity": "9C656B8F-9AFD-5293-B5EA-E83D183FC1D2",
+          "refField": "CAB586C4-48E7-5A9F-A1B7-F4D032844CA3",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ],
+      "indexes": [
+        {
+          "defKey": "uk_channel_call_grant",
+          "defName": "唯一索引 caller_service、channel_id、standard_api_id",
+          "unique": true,
+          "comment": "保证业务唯一性：caller_service、channel_id、standard_api_id",
+          "fields": [
+            {
+              "fieldDefKey": "42F79217-F823-5CEA-B6D2-2B0F17ADBA07",
+              "ascOrDesc": "A",
+              "id": "6B843387-2C26-52CE-90A5-53BCCD602C10"
+            },
+            {
+              "fieldDefKey": "350E5AA6-F2B1-53F2-AC90-84B2CC9E84D3",
+              "ascOrDesc": "A",
+              "id": "811B4A06-1E02-5C0F-A280-F5D90869D322"
+            },
+            {
+              "fieldDefKey": "C400E4A0-A095-57CA-A8C4-DA02BF9CE1F5",
+              "ascOrDesc": "A",
+              "id": "F42055E8-ABA2-5DAA-B36C-1B986D8E90CB"
+            }
+          ],
+          "id": "461B4F7A-1913-50C5-AC14-23CBDCA3ADC3"
+        },
+        {
+          "defKey": "idx_channel_call_grant_channel",
+          "defName": "访问索引 channel_id、grant_status",
+          "unique": false,
+          "comment": "支持访问路径：channel_id、grant_status",
+          "fields": [
+            {
+              "fieldDefKey": "350E5AA6-F2B1-53F2-AC90-84B2CC9E84D3",
+              "ascOrDesc": "A",
+              "id": "E6E3A81E-D0FA-5BFC-99B9-CA3A8050B2DA"
+            },
+            {
+              "fieldDefKey": "59C72963-D562-551F-BDE0-206674E755AA",
+              "ascOrDesc": "A",
+              "id": "AD9827DE-FD62-53E2-8B4A-A904C582D3E4"
+            }
+          ],
+          "id": "1A76F0EB-5BF9-5982-A0C7-35A13C8F35D1"
         }
       ],
       "type": "P"
@@ -13308,10 +13480,25 @@
       "canvasData": {
         "cells": [
           {
-            "id": "CDF3A087-635D-582B-A68C-90F66C423D37",
+            "id": "26932745-30F0-5DC4-97BB-C78F5FE49139",
             "shape": "table",
             "position": {
               "x": 0,
+              "y": 0
+            },
+            "count": 0,
+            "originKey": "9C656B8F-9AFD-5293-B5EA-E83D183FC1D2",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 350
+            }
+          },
+          {
+            "id": "CDF3A087-635D-582B-A68C-90F66C423D37",
+            "shape": "table",
+            "position": {
+              "x": 430,
               "y": 0
             },
             "count": 0,
@@ -13326,7 +13513,7 @@
             "id": "69C5FD5D-4F5B-51C3-8480-64D63A4400E8",
             "shape": "table",
             "position": {
-              "x": 430,
+              "x": 860,
               "y": 0
             },
             "count": 0,
@@ -13338,29 +13525,14 @@
             }
           },
           {
-            "id": "A4E954FA-0813-5FBB-8C12-342A2BB1FE75",
-            "shape": "table",
-            "position": {
-              "x": 860,
-              "y": 0
-            },
-            "count": 0,
-            "originKey": "CB780B6E-D725-55B4-8628-3D34A3DEC598",
-            "type": "P",
-            "size": {
-              "width": 390,
-              "height": 306
-            }
-          },
-          {
-            "id": "ED0F93C8-4CD2-5A0D-9A70-6657B2F32823",
+            "id": "C04F1474-DD70-57BA-84E1-44B220DFF217",
             "shape": "table",
             "position": {
               "x": 1290,
               "y": 0
             },
             "count": 0,
-            "originKey": "2A3A4302-A91D-5233-A876-F828F5F921FA",
+            "originKey": "65A9E8C9-9AC5-5BF9-86C5-DEACD411CEFF",
             "type": "P",
             "size": {
               "width": 390,
@@ -13368,14 +13540,14 @@
             }
           },
           {
-            "id": "50E65B0C-F23D-56AF-A315-359172C1A8AF",
+            "id": "F78BE96C-FB86-541E-A0BB-05232C10FB2D",
             "shape": "table",
             "position": {
               "x": 0,
               "y": 410
             },
             "count": 0,
-            "originKey": "339C9C87-3BAC-52BB-A115-9D33D5F247A3",
+            "originKey": "85715154-90EA-5F00-ADE1-B41FC3F18961",
             "type": "P",
             "size": {
               "width": 390,
@@ -13383,14 +13555,14 @@
             }
           },
           {
-            "id": "403467B6-0A0E-5B0F-9F8F-EDFC19CC613A",
+            "id": "13908673-8331-5356-8B10-2869B85C5E9F",
             "shape": "table",
             "position": {
               "x": 430,
               "y": 410
             },
             "count": 0,
-            "originKey": "C8FC41B3-BFB3-5346-A7E2-63607B640BD5",
+            "originKey": "4BAA58B3-703C-57F2-883D-805F2F152992",
             "type": "P",
             "size": {
               "width": 390,
@@ -13398,14 +13570,14 @@
             }
           },
           {
-            "id": "1F3569C8-9DA9-5D53-8F08-C3639459BC94",
+            "id": "3F776746-D6DB-5C84-9FD0-5D40877844D4",
             "shape": "table",
             "position": {
               "x": 860,
               "y": 410
             },
             "count": 0,
-            "originKey": "73721D76-B05F-51BF-A4B7-8FFE661591C1",
+            "originKey": "AEF9088B-503D-5A03-9D53-0A94514334C1",
             "type": "P",
             "size": {
               "width": 390,
@@ -13413,14 +13585,14 @@
             }
           },
           {
-            "id": "7CA014C5-33B2-5701-96CB-E283FCDE7671",
+            "id": "E5941CBC-49C3-5BA9-B951-DD028606B338",
             "shape": "table",
             "position": {
               "x": 1290,
               "y": 410
             },
             "count": 0,
-            "originKey": "8A34B007-CB2C-5D62-B9F2-D06F79E9B375",
+            "originKey": "5E453CC7-7086-5D03-B314-C8B698F27A29",
             "type": "P",
             "size": {
               "width": 390,
@@ -13428,14 +13600,14 @@
             }
           },
           {
-            "id": "A035FA2E-C360-5823-8BCC-4F1DD0EDBF19",
+            "id": "CB6DE9F8-0428-5519-BE51-449075913C25",
             "shape": "table",
             "position": {
               "x": 0,
               "y": 864
             },
             "count": 0,
-            "originKey": "67273286-9209-57B8-AECE-F0EB8B09B5A6",
+            "originKey": "925B2841-AD69-5626-9937-D3145F718AFD",
             "type": "P",
             "size": {
               "width": 390,
@@ -13443,14 +13615,14 @@
             }
           },
           {
-            "id": "3D5E63B4-5080-5572-A862-CA083B8A3CD8",
+            "id": "F3ED5ED2-6E90-5016-A440-031F35515B93",
             "shape": "table",
             "position": {
               "x": 430,
               "y": 864
             },
             "count": 0,
-            "originKey": "4BC210C8-4348-5773-8179-B72FFAD253D3",
+            "originKey": "B71D0C67-DD4A-57F5-8895-7E7F8A74F63F",
             "type": "P",
             "size": {
               "width": 390,
@@ -13458,16 +13630,31 @@
             }
           },
           {
-            "id": "E36EE749-D1E9-5E67-9EAA-592749B672ED",
+            "id": "EB0CFD79-8755-5E20-B66B-13CA08ED3782",
+            "shape": "table",
+            "position": {
+              "x": 860,
+              "y": 864
+            },
+            "count": 0,
+            "originKey": "452F0EDC-D26C-55EB-B183-570E63147F4A",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 306
+            }
+          },
+          {
+            "id": "C2A91B3E-F02D-5BDB-BC11-F3E949653D64",
             "shape": "erdRelation",
-            "originKey": "17B39D1F-9476-55FD-963F-8054CC8DAB4C",
+            "originKey": "4AABC372-7591-5B74-BDED-CCF4AE97F9F9",
             "source": {
-              "cell": "ED0F93C8-4CD2-5A0D-9A70-6657B2F32823",
-              "port": "DE867D6F-A3F5-5681-AFCC-5EBF08A7FBF2%out"
+              "cell": "C04F1474-DD70-57BA-84E1-44B220DFF217",
+              "port": "1C8E2997-0EAD-58E6-BD0F-82C09D004F09%out"
             },
             "target": {
-              "cell": "A4E954FA-0813-5FBB-8C12-342A2BB1FE75",
-              "port": "1606014A-1AD6-5961-9CEF-FD6404349BA7%in"
+              "cell": "26932745-30F0-5DC4-97BB-C78F5FE49139",
+              "port": "CAB586C4-48E7-5A9F-A1B7-F4D032844CA3%in"
             },
             "relation": "n:1",
             "vertices": [],
@@ -13480,16 +13667,16 @@
             "isLock": true
           },
           {
-            "id": "6E554343-8525-542C-B197-185A2DC93449",
+            "id": "99C34038-1D40-548D-9C4A-D54F7B0BA8F7",
             "shape": "erdRelation",
-            "originKey": "1DB38F76-7932-5CF7-B918-3308F248CE64",
+            "originKey": "0C16950A-0A1C-5C63-B8EA-AC0B1788B3D1",
             "source": {
-              "cell": "50E65B0C-F23D-56AF-A315-359172C1A8AF",
-              "port": "EEC5CC0F-553B-5C83-A9C7-4F93D514F86B%out"
+              "cell": "F78BE96C-FB86-541E-A0BB-05232C10FB2D",
+              "port": "7B7DAA48-2EEA-5076-B726-D5B1AC4F91AA%out"
             },
             "target": {
-              "cell": "A4E954FA-0813-5FBB-8C12-342A2BB1FE75",
-              "port": "1606014A-1AD6-5961-9CEF-FD6404349BA7%in"
+              "cell": "26932745-30F0-5DC4-97BB-C78F5FE49139",
+              "port": "CAB586C4-48E7-5A9F-A1B7-F4D032844CA3%in"
             },
             "relation": "n:1",
             "vertices": [],
@@ -13502,16 +13689,16 @@
             "isLock": true
           },
           {
-            "id": "5FC8E23F-90A8-5696-8D0D-2B9520F9C057",
+            "id": "C2DAE6EB-D592-510A-957E-812695A43B10",
             "shape": "erdRelation",
-            "originKey": "A51B91DB-2844-5BB5-A953-8B97022D633E",
+            "originKey": "120EA0ED-9D5B-50C8-8B53-552EA960A3C0",
             "source": {
-              "cell": "403467B6-0A0E-5B0F-9F8F-EDFC19CC613A",
-              "port": "F38A4DAB-8E4E-5F21-A083-39FA2279D0FE%out"
+              "cell": "13908673-8331-5356-8B10-2869B85C5E9F",
+              "port": "34206356-2522-550F-9B62-543BA349A9A8%out"
             },
             "target": {
-              "cell": "A4E954FA-0813-5FBB-8C12-342A2BB1FE75",
-              "port": "1606014A-1AD6-5961-9CEF-FD6404349BA7%in"
+              "cell": "26932745-30F0-5DC4-97BB-C78F5FE49139",
+              "port": "CAB586C4-48E7-5A9F-A1B7-F4D032844CA3%in"
             },
             "relation": "n:1",
             "vertices": [],
@@ -13524,12 +13711,12 @@
             "isLock": true
           },
           {
-            "id": "68570426-57DB-5615-9CC4-7661C37D6592",
+            "id": "04193C9E-2A5E-5059-B086-388A82CBCE07",
             "shape": "erdRelation",
-            "originKey": "B49A29E6-739B-5F29-A672-86B74F290D40",
+            "originKey": "44179D72-FCF7-5C3A-8EF6-2D354659EBB8",
             "source": {
-              "cell": "403467B6-0A0E-5B0F-9F8F-EDFC19CC613A",
-              "port": "3C4CA658-46C7-50B2-9C06-93A49DF22C71%out"
+              "cell": "13908673-8331-5356-8B10-2869B85C5E9F",
+              "port": "77F35A21-58E5-5B50-A947-C009232B9E79%out"
             },
             "target": {
               "cell": "CDF3A087-635D-582B-A68C-90F66C423D37",
@@ -13546,16 +13733,16 @@
             "isLock": true
           },
           {
-            "id": "90FF12AA-5DB5-5EF4-93C0-8B7D4E303D83",
+            "id": "3622CB7D-A3E7-5ACE-AA14-FAFED966CA3F",
             "shape": "erdRelation",
-            "originKey": "E31D54F9-2DFD-50AA-BD3A-AC1E47C0E6DD",
+            "originKey": "7B664B46-1068-5753-9020-AD0F42D4B1FD",
             "source": {
-              "cell": "1F3569C8-9DA9-5D53-8F08-C3639459BC94",
-              "port": "F34791C3-2114-5CF9-A8FC-6245EEBE5740%out"
+              "cell": "3F776746-D6DB-5C84-9FD0-5D40877844D4",
+              "port": "25A486CD-EAC9-5272-BE86-975A8297510A%out"
             },
             "target": {
-              "cell": "A4E954FA-0813-5FBB-8C12-342A2BB1FE75",
-              "port": "1606014A-1AD6-5961-9CEF-FD6404349BA7%in"
+              "cell": "26932745-30F0-5DC4-97BB-C78F5FE49139",
+              "port": "CAB586C4-48E7-5A9F-A1B7-F4D032844CA3%in"
             },
             "relation": "n:1",
             "vertices": [],
@@ -13568,16 +13755,16 @@
             "isLock": true
           },
           {
-            "id": "8CF6D700-115F-5759-A1FA-9025F39FBA00",
+            "id": "8D95ADCE-625E-5242-AD0D-26ADE6576A0F",
             "shape": "erdRelation",
-            "originKey": "C19C2C69-9EFE-5249-A8AA-697F9DCD0CA9",
+            "originKey": "EB06108D-1496-510C-9731-4A9EAC360AA4",
             "source": {
-              "cell": "7CA014C5-33B2-5701-96CB-E283FCDE7671",
-              "port": "9D065630-F83B-5A2D-81FA-2F47E6526984%out"
+              "cell": "E5941CBC-49C3-5BA9-B951-DD028606B338",
+              "port": "DB244F09-F304-5FA7-BEC8-9DB215CD4553%out"
             },
             "target": {
-              "cell": "A4E954FA-0813-5FBB-8C12-342A2BB1FE75",
-              "port": "1606014A-1AD6-5961-9CEF-FD6404349BA7%in"
+              "cell": "26932745-30F0-5DC4-97BB-C78F5FE49139",
+              "port": "CAB586C4-48E7-5A9F-A1B7-F4D032844CA3%in"
             },
             "relation": "n:1",
             "vertices": [],
@@ -13590,16 +13777,16 @@
             "isLock": true
           },
           {
-            "id": "EDF1C052-668F-51C7-8E45-0BB17FA91E55",
+            "id": "220E6CDF-DA16-5602-89EB-A47A904ED59A",
             "shape": "erdRelation",
-            "originKey": "42D23241-6327-58F8-B9A1-EF5F54FD28FB",
+            "originKey": "9194C9F7-952B-5CAA-953A-41B791F2FA23",
             "source": {
-              "cell": "7CA014C5-33B2-5701-96CB-E283FCDE7671",
-              "port": "CFC4814C-6AC8-5080-86D6-3B48B4DDBB4D%out"
+              "cell": "E5941CBC-49C3-5BA9-B951-DD028606B338",
+              "port": "6409EF16-08F1-5655-B132-7392E7CF9416%out"
             },
             "target": {
-              "cell": "1F3569C8-9DA9-5D53-8F08-C3639459BC94",
-              "port": "25729D47-9EB3-5FEB-855D-544656D865F9%in"
+              "cell": "3F776746-D6DB-5C84-9FD0-5D40877844D4",
+              "port": "E15DFA29-8CBF-54EA-870D-76749A9BA731%in"
             },
             "relation": "n:1",
             "vertices": [],
@@ -13612,16 +13799,16 @@
             "isLock": true
           },
           {
-            "id": "662D87D9-9B49-5C5A-BB9D-A02106696FAD",
+            "id": "7F46B938-771E-5062-B314-0D7D348F429D",
             "shape": "erdRelation",
-            "originKey": "FDCE2103-54C0-5D9C-8737-71D0DB178D83",
+            "originKey": "0457F85C-8B86-5EC7-8187-09FDC5F731DF",
             "source": {
-              "cell": "A035FA2E-C360-5823-8BCC-4F1DD0EDBF19",
-              "port": "FF57A9D9-BFB1-5247-AF00-471DB990A0A4%out"
+              "cell": "CB6DE9F8-0428-5519-BE51-449075913C25",
+              "port": "8DC92A45-3DC3-5171-BDB9-1149FCB37B24%out"
             },
             "target": {
-              "cell": "7CA014C5-33B2-5701-96CB-E283FCDE7671",
-              "port": "19F429DC-5688-5A30-92BE-2667247DB5D9%in"
+              "cell": "E5941CBC-49C3-5BA9-B951-DD028606B338",
+              "port": "58297F58-B6FC-5B10-9AA9-D7465AC6F7A9%in"
             },
             "relation": "n:1",
             "vertices": [],
@@ -13634,16 +13821,16 @@
             "isLock": true
           },
           {
-            "id": "CECB044F-B775-59A2-897C-EF1ED633AAA6",
+            "id": "8A3B0B38-481B-5993-9635-76C83D0EAD58",
             "shape": "erdRelation",
-            "originKey": "BD0175CE-6217-5320-B2B7-B1CE1F4ED7BC",
+            "originKey": "B422C16F-C069-514B-8FCF-E17359C70040",
             "source": {
-              "cell": "A035FA2E-C360-5823-8BCC-4F1DD0EDBF19",
-              "port": "26EF2F72-EDCF-5606-A20A-E9B242218B9A%out"
+              "cell": "CB6DE9F8-0428-5519-BE51-449075913C25",
+              "port": "ABAD698A-A38D-5961-B2A6-014B55222F4E%out"
             },
             "target": {
-              "cell": "A4E954FA-0813-5FBB-8C12-342A2BB1FE75",
-              "port": "1606014A-1AD6-5961-9CEF-FD6404349BA7%in"
+              "cell": "26932745-30F0-5DC4-97BB-C78F5FE49139",
+              "port": "CAB586C4-48E7-5A9F-A1B7-F4D032844CA3%in"
             },
             "relation": "n:1",
             "vertices": [],
@@ -13656,16 +13843,38 @@
             "isLock": true
           },
           {
-            "id": "2296D3D8-F899-53E3-B8CC-6065DBD3EE2C",
+            "id": "F9289AB7-26F1-5475-9739-F27D04D9D64A",
             "shape": "erdRelation",
-            "originKey": "0D29FA92-CC15-5192-B6F8-0D5FDCACA177",
+            "originKey": "11716747-1D7B-58D6-A26D-F664A109191D",
             "source": {
-              "cell": "3D5E63B4-5080-5572-A862-CA083B8A3CD8",
-              "port": "587D100C-5CD2-5B57-AAD9-C7AE56315183%out"
+              "cell": "F3ED5ED2-6E90-5016-A440-031F35515B93",
+              "port": "9EE32F72-A96A-5B7A-BB46-E34A3A93A27F%out"
             },
             "target": {
-              "cell": "A035FA2E-C360-5823-8BCC-4F1DD0EDBF19",
-              "port": "3993494C-4D1A-55F4-8801-2EE3911EC046%in"
+              "cell": "CB6DE9F8-0428-5519-BE51-449075913C25",
+              "port": "E7AA5F9D-B88D-556A-BB2A-72C67AE60DF6%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "8895D500-04C1-5C4F-B7CD-C46271A5D8A6",
+            "shape": "erdRelation",
+            "originKey": "26BA4CB1-9933-5FE5-82C3-695162CBF47C",
+            "source": {
+              "cell": "EB0CFD79-8755-5E20-B66B-13CA08ED3782",
+              "port": "350E5AA6-F2B1-53F2-AC90-84B2CC9E84D3%out"
+            },
+            "target": {
+              "cell": "26932745-30F0-5DC4-97BB-C78F5FE49139",
+              "port": "CAB586C4-48E7-5A9F-A1B7-F4D032844CA3%in"
             },
             "relation": "n:1",
             "vertices": [],

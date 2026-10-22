@@ -11,20 +11,20 @@ import com.paytech.channel.connector.protocol.domainservice.service.ChannelConfi
 import com.paytech.channel.connector.protocol.core.enums.ConfigurationField;
 import com.paytech.channel.connector.protocol.domain.ConfigurationFieldChange;
 import com.paytech.channel.connector.protocol.core.configuration.ExternalApiConfigurationProperties;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.Integration;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationImplementation;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.Channel;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelImplementation;
 import com.paytech.channel.connector.protocol.domain.ExternalApiConfigurationCodec;
 import com.paytech.channel.connector.protocol.domain.ExternalApiMutation;
 import com.paytech.channel.connector.protocol.domain.ExternalApiLocks;
 import com.paytech.channel.connector.protocol.domain.UpdateImplementationContext;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationImplementationRepository;
-import com.paytech.channel.connector.protocol.domainservice.service.IntegrationImplementationManagementService;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelImplementationRepository;
+import com.paytech.channel.connector.protocol.domainservice.service.ChannelImplementationManagementService;
 import com.paytech.channel.connector.protocol.service.processor.request.UpdateImplementationRequest;
 
 import lombok.AllArgsConstructor;
 
 /**
- * E26 修改渠道标准 API 实现：全模块配置锁内依次锁定接入方、标准 API 与原行、核对版本，流程静态校验后按原版本替换定义。
+ * E26 修改渠道标准 API 实现：全模块配置锁内依次锁定渠道、标准 API 与原行、核对版本，流程静态校验后按原版本替换定义。
  *
  * <p>标准 API 编码来自路径，不可修改。
  */
@@ -40,8 +40,8 @@ public class UpdateImplementationProcessor
     private final ExternalApiTransactions transactions;
     private final ExternalApiProcessorSupport support;
     private final ExternalApiConfigurationProperties properties;
-    private final IntegrationImplementationRepository implementations;
-    private final IntegrationImplementationManagementService service;
+    private final ChannelImplementationRepository implementations;
+    private final ChannelImplementationManagementService service;
 
     @Override
     protected LockCommand lockCommand(UpdateImplementationRequest request) {
@@ -53,12 +53,12 @@ public class UpdateImplementationProcessor
     @Override
     protected ExternalApiMutation processWithinLock(UpdateImplementationRequest request) {
         return transactions.write(() -> {
-            Integration integration = children.lockIntegration(request.getIntegrationCode());
+            Channel integration = children.lockChannel(request.getIntegrationCode());
             var standardApi = flows.lockStandardApi(request.getStandardApiCode());
-            IntegrationImplementation row = support.requireFound(implementations.lock(integration.getIntegrationId(),
+            ChannelImplementation row = support.requireFound(implementations.lock(integration.getChannelId(),
                 standardApi.getStandardApiId()));
             support.requireVersion(row.getVersion(), request.getExpectedVersion());
-            var result = flows.check(standardApi, integration.getIntegrationId(), request.getFlowDefinition());
+            var result = flows.check(standardApi, integration.getChannelId(), request.getFlowDefinition());
             support.requireValid(result.getIssues());
             String json = result.getSummary().getNormalizedJson();
             var changes = List.of(new ConfigurationFieldChange(ConfigurationField.DEFINITION_DIGEST,
@@ -66,8 +66,8 @@ public class UpdateImplementationProcessor
             int beforeVersion = row.getVersion();
             var context = new UpdateImplementationContext(row, json, request.getActorId(), support.now());
             service.update(context);
-            String objectCode = integration.getIntegrationCode() + "/" + standardApi.getStandardApiCode();
-            changeService.record(support.changed(ChangeTargetType.INTEGRATION_IMPLEMENTATION, row.getIntegrationStandardApiId(), ChangeType.UPDATE,
+            String objectCode = integration.getChannelCode() + "/" + standardApi.getStandardApiCode();
+            changeService.record(support.changed(ChangeTargetType.CHANNEL_IMPLEMENTATION, row.getChannelStandardApiId(), ChangeType.UPDATE,
                 request.getActorId(), objectCode, beforeVersion, row.getVersion(), changes,
                 request.getReason(), context.getUpdateTime()));
             return new ExternalApiMutation(CreateImplementationProcessor.OBJECT_TYPE, objectCode, row.getVersion());

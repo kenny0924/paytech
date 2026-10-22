@@ -13,16 +13,16 @@ import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.processor.AbstractProcessor;
 import com.paytech.channel.connector.api.enums.VerifyRunStatus;
 import com.paytech.channel.connector.api.enums.VerifyStepStatus;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationVerifyAccount;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationVerifyRun;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationVerifyRunStep;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelVerifyAccount;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelVerifyRun;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelVerifyRunStep;
 import com.paytech.channel.connector.protocol.domain.execution.*;
 import com.paytech.channel.connector.protocol.domain.verify.VerifyAssertion;
 import com.paytech.channel.connector.protocol.domain.verify.VerifyStep;
 import com.paytech.channel.connector.protocol.domain.verify.VerifyStepResult;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationVerifyAccountRepository;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationVerifyRunRepository;
-import com.paytech.channel.connector.protocol.domainservice.service.IntegrationVerifyRunService;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelVerifyAccountRepository;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelVerifyRunRepository;
+import com.paytech.channel.connector.protocol.domainservice.service.ChannelVerifyRunService;
 import com.paytech.channel.connector.protocol.domainservice.validator.VerifyCaseValidator;
 import com.paytech.channel.connector.protocol.domainservice.verify.VerifyAssertionEvaluator;
 import com.paytech.channel.connector.protocol.domainservice.verify.VerifyTemplateRenderer;
@@ -51,9 +51,9 @@ public class ExecuteVerifyRunProcessor extends AbstractProcessor<ExecuteVerifyRu
 
     private final VerifySupport verify;
     private final ExternalApiProcessorSupport support;
-    private final IntegrationVerifyRunRepository runs;
-    private final IntegrationVerifyAccountRepository accounts;
-    private final IntegrationVerifyRunService runService;
+    private final ChannelVerifyRunRepository runs;
+    private final ChannelVerifyAccountRepository accounts;
+    private final ChannelVerifyRunService runService;
     private final ExecuteStandardApiProcessor executor;
     private final VerifyTemplateRenderer renderer;
     private final VerifyAssertionEvaluator evaluator;
@@ -61,8 +61,8 @@ public class ExecuteVerifyRunProcessor extends AbstractProcessor<ExecuteVerifyRu
 
     /** 结果写入使用 READ_COMMITTED 短事务，15 秒上限。 */
     public ExecuteVerifyRunProcessor(VerifySupport verify, ExternalApiProcessorSupport support,
-        IntegrationVerifyRunRepository runs, IntegrationVerifyAccountRepository accounts,
-        IntegrationVerifyRunService runService, ExecuteStandardApiProcessor executor, VerifyTemplateRenderer renderer,
+        ChannelVerifyRunRepository runs, ChannelVerifyAccountRepository accounts,
+        ChannelVerifyRunService runService, ExecuteStandardApiProcessor executor, VerifyTemplateRenderer renderer,
         VerifyAssertionEvaluator evaluator, PlatformTransactionManager manager) {
         this.verify = verify;
         this.support = support;
@@ -79,7 +79,7 @@ public class ExecuteVerifyRunProcessor extends AbstractProcessor<ExecuteVerifyRu
 
     @Override
     protected VerifyRunStatus processRequest(ExecuteVerifyRunRequest request) {
-        IntegrationVerifyRun run = runs.byId(request.getRunId());
+        ChannelVerifyRun run = runs.byId(request.getRunId());
         if (run == null || run.getRunStatus() != VerifyRunStatus.RUNNING) {
             return run == null ? null : run.getRunStatus();
         }
@@ -87,7 +87,7 @@ public class ExecuteVerifyRunProcessor extends AbstractProcessor<ExecuteVerifyRu
             return finish(run, VerifyRunStatus.INTERRUPTED, Map.of(), List.of(), "执行进程中断，未向沙箱重放", List.of());
         }
         JsonNode snapshot = verify.tree(run.getCaseSnapshotJson());
-        IntegrationVerifyAccount account = accounts.byId(snapshot.path("accountId").asLong());
+        ChannelVerifyAccount account = accounts.byId(snapshot.path("accountId").asLong());
         if (account == null || account.getVersion() != snapshot.path("accountVersion").asInt()) {
             return finish(run, VerifyRunStatus.FAILED, Map.of(), List.of(), "验证账号在运行发起后已被修改或删除", List.of());
         }
@@ -95,7 +95,7 @@ public class ExecuteVerifyRunProcessor extends AbstractProcessor<ExecuteVerifyRu
     }
 
     /** 依次执行全部步骤并写入结果。 */
-    VerifyRunStatus execute(IntegrationVerifyRun run, JsonNode snapshot, IntegrationVerifyAccount account) {
+    VerifyRunStatus execute(ChannelVerifyRun run, JsonNode snapshot, ChannelVerifyAccount account) {
         String integrationCode = snapshot.path("integrationCode").asString();
         var material = new VerifyAccountMaterial(account.getChannelCode(), account.getChannelAccountId(),
             account.getEntityNo(), verify.map(account.getParameters()), verify.map(account.getCredentials()));
@@ -103,7 +103,7 @@ public class ExecuteVerifyRunProcessor extends AbstractProcessor<ExecuteVerifyRu
             VerifySupport.time(run.getStartTime()), verify.identity(account), new LinkedHashMap<>());
         var versions = new LinkedHashMap<String, Object>();
         List<Map<String, Object>> endpoints = List.of();
-        var rows = new ArrayList<IntegrationVerifyRunStep>();
+        var rows = new ArrayList<ChannelVerifyRunStep>();
         String failure = null;
         int stepNo = 0;
         for (VerifyStep step : VerifyCaseValidator.parse(snapshot.path("steps"))) {
@@ -145,7 +145,8 @@ public class ExecuteVerifyRunProcessor extends AbstractProcessor<ExecuteVerifyRu
     VerifyStepResult run(VerifyStep step, String integrationCode, JsonNode input, VerificationScope scope) {
         try {
             ExecutionResult result = executor.process(
-                new ExecuteStandardApiRequest(step.getStandardApiCode(), integrationCode, input, scope));
+                new ExecuteStandardApiRequest(step.getStandardApiCode(), integrationCode, input,
+                    ExecuteStandardApiRequest.VERIFY_CALLER, scope));
             return VerifyStepResult.executed(result.getExecuteStatus().getCode(), JsonValues.toJson(result.getOutputs()));
         } catch (SandboxRequiredException notSandbox) {
             return VerifyStepResult.failed(notSandbox.getMessage());
@@ -199,16 +200,16 @@ public class ExecuteVerifyRunProcessor extends AbstractProcessor<ExecuteVerifyRu
         return text.length() > MAX_SUMMARY ? text.substring(0, MAX_SUMMARY) : text;
     }
 
-    IntegrationVerifyRunStep row(IntegrationVerifyRun run, int stepNo, VerifyStep step, VerifyStepStatus status,
+    ChannelVerifyRunStep row(ChannelVerifyRun run, int stepNo, VerifyStep step, VerifyStepStatus status,
         JsonNode input, JsonNode result, JsonNode assertions, Map<String, Object> trace, Integer elapsedMs) {
-        return new IntegrationVerifyRunStep(support.nextId(), run.getVerifyRunId(), stepNo, step.getId(),
+        return new ChannelVerifyRunStep(support.nextId(), run.getVerifyRunId(), stepNo, step.getId(),
             step.getStandardApiCode(), status, verify.text(input), verify.text(result), verify.text(assertions),
             verify.text(trace), elapsedMs, support.now());
     }
 
     /** 一个短事务写入步骤与结论。 */
-    VerifyRunStatus finish(IntegrationVerifyRun run, VerifyRunStatus status, Map<String, Object> versions,
-        List<Map<String, Object>> endpoints, String failure, List<IntegrationVerifyRunStep> rows) {
+    VerifyRunStatus finish(ChannelVerifyRun run, VerifyRunStatus status, Map<String, Object> versions,
+        List<Map<String, Object>> endpoints, String failure, List<ChannelVerifyRunStep> rows) {
         var now = support.now();
         write.executeWithoutResult(transaction -> runService.finish(run, status,
             versions.isEmpty() ? null : verify.text(versions), endpoints.isEmpty() ? null : verify.text(endpoints),

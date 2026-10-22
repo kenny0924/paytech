@@ -3,12 +3,12 @@ package com.paytech.channel.connector.protocol.service.processor;
 import org.springframework.stereotype.Component;
 
 import com.paytech.foundation.processor.AbstractProcessor;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationVerifyAccount;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationVerifyCase;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelVerifyAccount;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelVerifyCase;
 import com.paytech.channel.connector.protocol.domain.ExternalApiLocks;
 import com.paytech.channel.connector.protocol.domain.verify.VerifyAccountView;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationVerifyAccountRepository;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationVerifyCaseRepository;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelVerifyAccountRepository;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelVerifyCaseRepository;
 import com.paytech.channel.connector.protocol.service.processor.request.GetIntegrationChildRequest;
 
 import lombok.AllArgsConstructor;
@@ -25,17 +25,17 @@ public class GetVerifyAccountProcessor extends AbstractProcessor<GetIntegrationC
     private final IntegrationChildSupport children;
     private final ExternalApiTransactions transactions;
     private final ExternalApiProcessorSupport support;
-    private final IntegrationVerifyAccountRepository accounts;
-    private final IntegrationVerifyCaseRepository cases;
+    private final ChannelVerifyAccountRepository accounts;
+    private final ChannelVerifyCaseRepository cases;
 
     @Override
     protected VerifyAccountView processRequest(GetIntegrationChildRequest request) {
         return transactions.query(() -> {
-            long integrationId = children.integration(request.getIntegrationCode()).getIntegrationId();
-            IntegrationVerifyAccount row = support.requireFound(accounts.byCode(integrationId, request.getCode()));
-            var referenced = cases.list(integrationId, null, 0, MAX_REFERENCES).stream()
+            long channelId = children.channel(request.getIntegrationCode()).getChannelId();
+            ChannelVerifyAccount row = support.requireFound(accounts.byCode(channelId, request.getCode()));
+            var referenced = cases.list(channelId, null, 0, MAX_REFERENCES).stream()
                 .filter(item -> item.getVerifyAccountId().equals(row.getVerifyAccountId()))
-                .map(IntegrationVerifyCase::getCaseCode).sorted().toList();
+                .map(ChannelVerifyCase::getCaseCode).sorted().toList();
             return verify.accountView(row, referenced, true);
         });
     }

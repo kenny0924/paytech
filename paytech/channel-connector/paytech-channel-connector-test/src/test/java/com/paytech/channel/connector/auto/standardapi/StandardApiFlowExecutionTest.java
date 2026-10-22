@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import com.paytech.channel.connector.api.enums.ExecuteStatus;
 import com.paytech.channel.connector.api.enums.ScriptExecutionStage;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.Integration;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.Channel;
 import com.paytech.channel.connector.protocol.core.dal.dataobject.StandardApi;
 import com.paytech.channel.connector.protocol.core.enums.StandardApiNotSentCode;
 import com.paytech.channel.connector.protocol.domain.execution.ExecutionResult;
@@ -49,13 +49,13 @@ class StandardApiFlowExecutionTest extends ExternalApiTestBase {
     private static final String TOKEN = VaultMocker.token("demo-account");
 
     private StandardApi pay;
-    private Integration demo;
+    private Channel demo;
 
-    /** 本类公共：标准 API PAY；接入方 DEMO 指向 Mock 渠道，下单 API 引用签名脚本，以样例支付流程实现 PAY。 */
+    /** 本类公共：标准 API PAY；渠道 DEMO 指向 Mock 渠道，下单 API 引用签名脚本，以样例支付流程实现 PAY。 */
     @BeforeEach
     void setUpClassMocks() {
         pay = externalApi.standardApi(PAY);
-        demo = externalApi.integration(DEMO, mockHttpServer.baseUrl() + ChannelMockController.PREFIX + "/api");
+        demo = externalApi.channel(DEMO, mockHttpServer.baseUrl() + ChannelMockController.PREFIX + "/api");
         externalApi.signScript(demo, ScriptExecutionStage.REQUEST);
         externalApi.integrationApi(demo, ExternalApiSamples.CREATE_ORDER,
             ExternalApiSamples.createOrderDefinitionWithScript(ExternalApiSamples.SIGN_SCRIPT));
@@ -103,8 +103,8 @@ class StandardApiFlowExecutionTest extends ExternalApiTestBase {
     /** 渠道响应超过原子 API 的响应超时：节点 ERROR。 */
     @Test
     void test_responseTimeout() {
-        Integration slow =
-            externalApi.integration("SLOW", mockHttpServer.baseUrl() + ChannelMockController.PREFIX + "/api");
+        Channel slow =
+            externalApi.channel("SLOW", mockHttpServer.baseUrl() + ChannelMockController.PREFIX + "/api");
         var definition = ExternalApiSamples.createOrderDefinition();
         ((ObjectNode)definition.get("transport")).put("responseTimeoutMs", 100);
         externalApi.integrationApi(slow, ExternalApiSamples.CREATE_ORDER, definition);
@@ -134,7 +134,7 @@ class StandardApiFlowExecutionTest extends ExternalApiTestBase {
             {"paymentContext":{"attemptId":"%s","amount":"10.00","vaultToken":"%s"}}""".formatted(ATTEMPT, TOKEN)));
     }
 
-    /** 经默认接入方 DEMO 执行。 */
+    /** 经默认渠道 DEMO 执行。 */
     private ExecutionResult execute() {
         return execute(DEMO);
     }

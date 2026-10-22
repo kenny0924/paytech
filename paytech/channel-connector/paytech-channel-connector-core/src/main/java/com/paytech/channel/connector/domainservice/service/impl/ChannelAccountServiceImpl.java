@@ -3,7 +3,7 @@ package com.paytech.channel.connector.domainservice.service.impl;
 import org.springframework.stereotype.Service;
 
 import com.paytech.channel.connector.core.dal.dataobject.ChannelAccount;
-import com.paytech.channel.connector.core.enums.ChannelStatus;
+import com.paytech.channel.connector.protocol.core.enums.ChannelStatus;
 import com.paytech.channel.connector.domain.ChannelAccountContext;
 import com.paytech.channel.connector.domain.ChannelAccountDetailView;
 import com.paytech.channel.connector.domainservice.repository.ChannelAccountRepository;

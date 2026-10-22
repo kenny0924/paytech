@@ -2,12 +2,14 @@ package com.paytech.channel.connector.domainservice.repository;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.Collection;
 
 import com.paytech.channel.connector.core.dal.dataobject.ChannelMid;
 import com.paytech.channel.connector.domain.ChannelMidListCriteria;
 import com.paytech.channel.connector.domain.ChannelMidSummaryView;
 import com.paytech.foundation.web.paging.PagingResponseBody;
-import com.paytech.channel.connector.core.enums.ChannelStatus;
+import com.paytech.channel.connector.protocol.core.enums.ChannelStatus;
 
 /** ChannelMid 单表只读仓储。 */
 public interface ChannelMidRepository {
@@ -44,4 +46,7 @@ public interface ChannelMidRepository {
 
     /** 统计当前绑定该账号且未关闭的 MID 数。 */
     long countOpenByAccount(long channelAccountId);
+
+    /** 按渠道统计全部MID数（含已关闭）；空集合返回空映射，没有记录的渠道不出现。 */
+    Map<Long, Long> countByChannels(Collection<Long> channelIds);
 }

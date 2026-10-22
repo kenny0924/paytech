@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 import com.paytech.foundation.processor.AbstractProcessor;
 import com.paytech.channel.connector.protocol.domain.ExternalApiLocks;
 import com.paytech.channel.connector.protocol.domain.ValidationIssue;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationApiRepository;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelApiRepository;
 import com.paytech.channel.connector.protocol.service.processor.request.ValidateIntegrationApiRequest;
 
 import lombok.AllArgsConstructor;
@@ -25,16 +25,16 @@ public class ValidateIntegrationApiProcessor
 
     private final IntegrationChildSupport children;
     private final ExternalApiTransactions transactions;
-    private final IntegrationApiRepository integrationApis;
+    private final ChannelApiRepository channelApis;
 
     @Override
     protected List<ValidationIssue> processRequest(ValidateIntegrationApiRequest request) {
         return transactions.query(() -> {
-            var integration = children.integration(request.getIntegrationCode());
+            var integration = children.channel(request.getIntegrationCode());
             var issues = new ArrayList<ValidationIssue>(children.check(integration, request.getRequestFields(),
                 request.getResponseFields(), request.getDefinition(),
-                children.scriptSignatures(integration.getIntegrationId())).getIssues());
-            var existing = integrationApis.byCode(integration.getIntegrationId(), request.getCode());
+                children.scriptSignatures(integration.getChannelId())).getIssues());
+            var existing = channelApis.byCode(integration.getChannelId(), request.getCode());
             if (request.getExpectedVersion() == null && existing != null) {
                 issues.add(new ValidationIssue("API_CODE_EXISTS", "apiCode", "原子 API 编码已经存在"));
             } else if (request.getExpectedVersion() != null && existing != null

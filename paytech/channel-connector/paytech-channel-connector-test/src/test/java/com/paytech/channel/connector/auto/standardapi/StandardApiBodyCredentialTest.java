@@ -25,7 +25,7 @@ import com.paytech.channel.connector.api.externalapi.request.CreateVerifyCaseReq
 import com.paytech.channel.connector.api.externalapi.request.StartVerifyRunRequestBody;
 import com.paytech.channel.connector.api.externalapi.response.VerifyRunResponseBody;
 import com.paytech.channel.connector.api.externalapi.response.VerifyRunStartResponseBody;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.Integration;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.Channel;
 import com.paytech.channel.connector.protocol.core.dal.dataobject.StandardApi;
 import com.paytech.channel.connector.protocol.domain.ParameterDeclaration;
 import com.paytech.channel.connector.protocol.domain.execution.ExecutionResult;
@@ -150,10 +150,10 @@ class StandardApiBodyCredentialTest extends ExternalApiTestBase {
                 .anyMatch(trace -> trace != null && trace.contains(apiKey())), "轨迹包含凭据"));
     }
 
-    /** 接入方：body apiKey 下单原子 API（可选一个 REQUEST 脚本）与流程。 */
+    /** 渠道：body apiKey 下单原子 API（可选一个 REQUEST 脚本）与流程。 */
     private void bodyKeyIntegration(String code, boolean sandbox, String requestScript) {
-        Integration integration =
-            externalApi.integration(code, mockHttpServer.baseUrl() + ChannelMockController.PREFIX + "/api", sandbox);
+        Channel integration =
+            externalApi.channel(code, mockHttpServer.baseUrl() + ChannelMockController.PREFIX + "/api", sandbox);
         ObjectNode definition = ExternalApiFixtures.definition("body-credential-order");
         if (requestScript != null) {
             externalApi.script(integration, "BODY_SCRIPT", ScriptExecutionStage.REQUEST,

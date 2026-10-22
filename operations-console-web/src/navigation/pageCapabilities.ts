@@ -272,17 +272,6 @@ export const pageCapabilities = [
     ]
   },
   {
-    "componentKey": "OPERATIONS_EXTERNAL_INTEGRATIONS",
-    "displayName": "接入方",
-    "frontendRoute": "/external-api/integrations",
-    "actions": [
-      {
-        "resourceCode": "OPERATIONS_EXTERNAL_INTEGRATION_MANAGE",
-        "displayName": "维护配置"
-      }
-    ]
-  },
-  {
     "componentKey": "OPERATIONS_CLIENT_ONBOARDING_REVIEW",
     "displayName": "客户入驻审核",
     "frontendRoute": "/client-onboarding/reviews",
@@ -637,7 +626,7 @@ export const pageCapabilities = [
   },
   {
     "componentKey": "OPERATIONS_CHANNEL_CHANNELS",
-    "displayName": "渠道与账号",
+    "displayName": "渠道",
     "frontendRoute": "/channel/channels",
     "actions": [
       {
@@ -647,6 +636,10 @@ export const pageCapabilities = [
       {
         "resourceCode": "OPERATIONS_CHANNEL_ACCOUNT_CREDENTIAL",
         "displayName": "账号凭据"
+      },
+      {
+        "resourceCode": "OPERATIONS_CHANNEL_CALL_GRANT_MANAGE",
+        "displayName": "调用授权"
       }
     ]
   },

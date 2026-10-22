@@ -2,9 +2,9 @@ import { useEffect, useMemo } from 'react';
 import { Alert, Collapse, Table } from 'antd';
 import { Link } from 'react-router-dom';
 import { Loading, LoadFailure, useDetail } from '../externalApiHooks';
-import { integrationRoute } from '../externalApiModel';
 import { Field, Mono, PageHeader, Panel, formatTime } from '../ui';
-import { decodeRun, runStatusLabels, stepStatusLabels, verifyPath, verifyRoute } from './verifyModel';
+import { decodeRun, runStatusLabels, stepStatusLabels, verifyPath } from './verifyModel';
+import { workspaceCrumbs, workspaceRoutes } from '../../channel/channelWorkspace';
 import type { VerifyAssertion, VerifyRunDetail as RunDetail, VerifyRunStep } from './verifyModel';
 import { JsonBlock, VerifyTag } from './VerifyParts';
 
@@ -15,7 +15,7 @@ const POLL_MILLIS = 2000;
  * 验证运行详情与证据（沙箱验证技术方案第 6 节）：结论、运行原因、出站地址（含沙箱标记）、配置版本，
  * 以及每一步的实际输入、结果、期望核对与节点轨迹（脱敏后的渠道请求与响应原文）。
  */
-export function VerifyRunDetail({ integrationCode, runCode }: { integrationCode: string; runCode: string }) {
+export function VerifyRunDetail({ channelId, integrationCode, runCode }: { channelId: string; integrationCode: string; runCode: string }) {
   const decode = useMemo(() => (value: unknown) => decodeRun(value, runCode), [runCode]);
   const detail = useDetail<RunDetail>(`${verifyPath(integrationCode)}/verify-runs/${runCode}`, decode);
   const running = detail.data?.runStatus === 'RUNNING';
@@ -27,17 +27,16 @@ export function VerifyRunDetail({ integrationCode, runCode }: { integrationCode:
   }, [running, refresh]);
   if (detail.loading && !detail.data) return <Loading />;
   if (!detail.data) return <LoadFailure title="运行记录加载失败" failure={detail.failure} retry={detail.refresh} />;
-  const run = detail.data; const base = verifyRoute(integrationCode);
+  const run = detail.data;
   const reason = typeof run.caseSnapshot.reason === 'string' ? run.caseSnapshot.reason : '—';
   return <>
-    <PageHeader crumbs={[{ label: '渠道' }, { label: '接入方', to: integrationRoute }, { label: integrationCode, to: `${integrationRoute}/${integrationCode}` },
-      { label: '验证', to: `${integrationRoute}/${integrationCode}?tab=verify` }, { label: `运行 ${run.runCode}` }]}
+    <PageHeader crumbs={[...workspaceCrumbs(channelId, integrationCode, 'verify'), { label: `运行 ${run.runCode}` }]}
       title={`运行 ${run.runCode}`} code={run.caseCode} />
     {running && <Alert type="info" showIcon title="运行在后台执行中，本页每 2 秒刷新。" />}
     {run.stale && !running && <Alert type="warning" showIcon title="这次运行之后，用例、验证账号或引用的配置已修改；本记录只代表运行当时的结果。" />}
     <div className="xapi-facts">
       <Field label="结论"><VerifyTag {...runStatusLabels[run.runStatus]} /></Field>
-      <Field label="验证用例"><Link to={`${base}/verify-cases/${run.caseCode}`}><Mono>{run.caseCode}</Mono></Link> · {run.caseName}</Field>
+      <Field label="验证用例"><Link to={workspaceRoutes(channelId).verifyCase(run.caseCode)}><Mono>{run.caseCode}</Mono></Link> · {run.caseName}</Field>
       <Field label="运行原因">{reason}</Field>
       <Field label="发起">{formatTime(run.startTime)} · 账号 {run.startedBy}{run.finishTime && <> · 结束 {formatTime(run.finishTime)}</>}</Field>
     </div>

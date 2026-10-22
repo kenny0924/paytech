@@ -10,23 +10,31 @@ import org.springframework.stereotype.Component;
 
 import com.paytech.channel.connector.protocol.core.configuration.ExternalApiExecutionProperties;
 
+import com.paytech.channel.connector.protocol.ext.outbound.ChannelAddressGuard;
+
 import lombok.AllArgsConstructor;
 
 import com.paytech.channel.connector.protocol.domain.EndpointDefinition;
 import com.paytech.channel.connector.protocol.domain.ValidationIssue;
 
-/** 接入方出站地址的静态规则（物理设计第 4 节 P5）；纯内存校验，允许的协议来自执行配置（默认只有 https）。 */
+/**
+ * 渠道出站地址的静态规则（物理设计第 4 节 P5）；纯内存校验，允许的协议来自执行配置（默认只有 https）
+ * <li>2026-10-22 第二段：基础地址为被拦截网段的 IP 字面量或 localhost 时拒绝（部署放行网段除外），保存时不做 DNS 解析；
+ * 执行前加载快照时同一规则再校验一次，未通过按配置无效处理。</li>
+ */
 @Component
 @AllArgsConstructor
 public class IntegrationEndpointValidator {
 
-    /** 每个接入方最多出站地址数。 */
+    /** 每个渠道最多出站地址数。 */
     public static final int MAX_ENDPOINTS = 16;
 
     final ExternalApiExecutionProperties properties;
 
+    final ChannelAddressGuard addressGuard;
+
     /**
-     * 校验接入方的全部出站地址。
+     * 校验渠道的全部出站地址。
      *
      * @param endpoints 保存顺序的地址列表
      * @return 发现的问题；为空表示通过
@@ -69,6 +77,6 @@ public class IntegrationEndpointValidator {
         if (uri.getRawUserInfo() != null || uri.getRawQuery() != null || uri.getRawFragment() != null) {
             return "基础地址不能包含用户信息、查询串或片段";
         }
-        return null;
+        return addressGuard.savingProblem(uri.getHost());
     }
 }

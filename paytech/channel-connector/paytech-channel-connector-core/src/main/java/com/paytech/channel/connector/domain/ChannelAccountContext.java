@@ -4,8 +4,8 @@ import java.time.Instant;
 
 import com.paytech.channel.connector.core.dal.dataobject.ChannelAccount;
 import com.paytech.channel.connector.protocol.domain.ChannelConfigChangeRecord;
-import com.paytech.channel.connector.core.dal.dataobject.PaymentChannel;
-import com.paytech.channel.connector.core.enums.ChannelStatus;
+import com.paytech.channel.connector.protocol.domain.ChannelIdentity;
+import com.paytech.channel.connector.protocol.core.enums.ChannelStatus;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -18,7 +18,7 @@ public class ChannelAccountContext {
     private final ChannelAccount account;
 
     /** 账号所属渠道。 */
-    private final PaymentChannel channel;
+    private final ChannelIdentity channel;
 
     /** 与本次写入同事务插入的变更记录。 */
     private final ChannelConfigChangeRecord change;

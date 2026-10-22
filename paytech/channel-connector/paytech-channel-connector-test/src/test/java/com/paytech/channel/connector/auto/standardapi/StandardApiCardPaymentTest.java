@@ -33,7 +33,7 @@ import com.paytech.channel.connector.api.externalapi.request.CreateVerifyCaseReq
 import com.paytech.channel.connector.api.externalapi.request.StartVerifyRunRequestBody;
 import com.paytech.channel.connector.api.externalapi.response.VerifyRunResponseBody;
 import com.paytech.channel.connector.api.externalapi.response.VerifyRunStartResponseBody;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.Integration;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.Channel;
 import com.paytech.channel.connector.protocol.core.dal.dataobject.StandardApi;
 import com.paytech.channel.connector.protocol.core.enums.StandardApiNotSentCode;
 import com.paytech.channel.connector.protocol.domain.ParameterDeclaration;
@@ -195,10 +195,10 @@ class StandardApiCardPaymentTest extends ExternalApiTestBase {
                 "轨迹包含卡值"));
     }
 
-    /** 接入方：签名脚本、卡下单原子 API（五个卡字段）与读卡流程。 */
+    /** 渠道：签名脚本、卡下单原子 API（五个卡字段）与读卡流程。 */
     private void cardIntegration(String code, boolean sandbox) {
-        Integration integration =
-            externalApi.integration(code, mockHttpServer.baseUrl() + ChannelMockController.PREFIX + "/api", sandbox);
+        Channel integration =
+            externalApi.channel(code, mockHttpServer.baseUrl() + ChannelMockController.PREFIX + "/api", sandbox);
         externalApi.script(integration, "RSA_SIGN", ScriptExecutionStage.REQUEST,
             List.of(new ParameterDeclaration("privateKey", "PROTECTED_HANDLE", true)), ExternalApiFixtures.script("rsa-sign"));
         externalApi.integrationApi(integration, CALL, ExternalApiFixtures.definition("card-create-order"),

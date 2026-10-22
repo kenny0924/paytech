@@ -1,5 +1,6 @@
 package com.paytech.channel.connector.protocol.service.processor;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
@@ -11,6 +12,8 @@ import com.paytech.channel.connector.protocol.domain.execution.*;
 import com.paytech.channel.connector.protocol.domainservice.execution.AtomicApiExecutor;
 import com.paytech.channel.connector.protocol.domainservice.execution.FlowEngine;
 import com.paytech.channel.connector.protocol.domainservice.execution.InitializerRunner;
+import com.paytech.channel.connector.protocol.ext.outbound.ChannelAddressGuard;
+import com.paytech.channel.connector.protocol.ext.outbound.ChannelExecutionCompartments;
 import com.paytech.channel.connector.protocol.service.processor.request.ExecuteStandardApiRequest;
 
 import lombok.AllArgsConstructor;
@@ -25,6 +28,10 @@ import lombok.AllArgsConstructor;
  *
  * <p>
  * 沙箱验证运行以同一入口执行（沙箱验证技术方案第 2 节）：请求带验证附加项时，记录配置版本与出站地址， 流程用到的出站地址必须都标记为沙箱，否则在任何外部调用前拒绝；账号改读验证账号，其余步骤不变。
+ *
+ * <p>
+ * 第一个节点开始前还要：解析流程用到的出站地址主机名并校验全部地址（被拦截按配置无效未发出），再取得渠道类型对应执行舱的一个许可
+ * （拿不到为未发出的 CHANNEL_EXECUTION_BUSY，不排队）；许可覆盖初始化与全部节点，执行结束后归还。
  */
 @Component
 @AllArgsConstructor
@@ -34,24 +41,54 @@ public class ExecuteStandardApiProcessor extends AbstractProcessor<ExecuteStanda
     static final String INPUT = "input";
 
     private final FlowEngine flowEngine;
+    private final ChannelAddressGuard addressGuard;
     private final AtomicApiExecutor atomicApiExecutor;
     private final InitializerRunner initializerRunner;
     private final ExecutionSnapshotLoader snapshotLoader;
+    private final ChannelExecutionCompartments compartments;
 
+    /** 执行标准 API。 */
     @Override
     protected ExecutionResult processRequest(ExecuteStandardApiRequest request) {
-        ExecutionSnapshot snapshot = snapshotLoader.load(request.getStandardApiCode(), request.getIntegrationCode());
+        ExecutionSnapshot snapshot = snapshotLoader.load(request.getStandardApiCode(), request.getChannelCode());
         if (request.getVerification() != null) {
             requireSandbox(snapshot, request.getVerification().getTrace());
         }
-        var context = new ExecutionContext(input(snapshot, request), request.getVerification());
-        Deadline deadline = Deadline.start(snapshot.getFlow().getTimeoutMs());
-        initializerRunner.run(snapshot, context, deadline);
-        if (deadline.expired()) {
-            throw new StandardApiNotSentException(StandardApiNotSentCode.INTEGRATION_BUDGET_EXHAUSTED,
-                "第一个节点开始前流程预算已耗尽: " + snapshot.getIntegrationCode() + ", 标准 API: " + snapshot.getStandardApiCode());
+        var context = new ExecutionContext(input(snapshot, request), request.getVerification(),
+            request.getCallerService());
+        requireAllowedAddresses(snapshot);
+        try (var permit = enterCompartment(snapshot)) {
+            Deadline deadline = Deadline.start(snapshot.getFlow().getTimeoutMs());
+            initializerRunner.run(snapshot, context, deadline);
+            if (deadline.expired()) {
+                throw new StandardApiNotSentException(StandardApiNotSentCode.INTEGRATION_BUDGET_EXHAUSTED,
+                    "第一个节点开始前流程预算已耗尽: " + snapshot.getChannelCode() + ", 标准 API: " + snapshot.getStandardApiCode());
+            }
+            return flowEngine.run(snapshot, context, deadline, atomicApiExecutor);
         }
-        return flowEngine.run(snapshot, context, deadline, atomicApiExecutor);
+    }
+
+    /** 流程用到的出站地址：解析主机名后任一地址被拦截即按配置无效拒绝，未发出请求。 */
+    void requireAllowedAddresses(ExecutionSnapshot snapshot) {
+        var blocked = snapshot.usedEndpoints().stream().filter(code -> snapshot.getEndpoints().containsKey(code))
+            .filter(code -> addressGuard.check(URI.create(snapshot.getEndpoints().get(code)).getHost())
+                == ChannelAddressGuard.Verdict.BLOCKED)
+            .toList();
+        if (!blocked.isEmpty()) {
+            throw new StandardApiNotSentException(StandardApiNotSentCode.INTEGRATION_CONFIG_INVALID,
+                "出站地址被拦截，未发出请求: " + String.join("、", blocked) + ", 渠道: " + snapshot.getChannelCode());
+        }
+    }
+
+    /** 取得渠道类型对应执行舱的许可；没有空闲许可时不排队，以未发出的 CHANNEL_EXECUTION_BUSY 返回。 */
+    ChannelExecutionCompartments.Permit enterCompartment(ExecutionSnapshot snapshot) {
+        var permit = compartments.tryEnter(snapshot.getChannelType());
+        if (permit == null) {
+            throw new StandardApiNotSentException(StandardApiNotSentCode.CHANNEL_EXECUTION_BUSY,
+                "渠道执行舱已满，未发出请求: " + snapshot.getChannelType().getCode() + ", 渠道: "
+                    + snapshot.getChannelCode());
+        }
+        return permit;
     }
 
     /** 验证运行：记录加载的配置，流程用到的出站地址必须全部标记为沙箱。 */
@@ -61,7 +98,7 @@ public class ExecuteStandardApiProcessor extends AbstractProcessor<ExecuteStanda
             .filter(code -> !snapshot.getSandboxEndpoints().contains(code)).toList();
         if (!notSandbox.isEmpty()) {
             throw new SandboxRequiredException("出站地址未标记沙箱，验证运行未发出请求: " + String.join("、", notSandbox)
-                + ", 接入方: " + snapshot.getIntegrationCode());
+                + ", 渠道: " + snapshot.getChannelCode());
         }
     }
 

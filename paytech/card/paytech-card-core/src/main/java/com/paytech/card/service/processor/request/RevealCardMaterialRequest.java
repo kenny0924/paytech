@@ -8,7 +8,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class RevealCardMaterialRequest {
-    /** 已解析的调用方服务名，只接受 platform-support-service */
+    /** 已解析的调用方服务名，只接受 channel-connector-service */
     private final String caller;
 
     /** 一次性票据原值 */

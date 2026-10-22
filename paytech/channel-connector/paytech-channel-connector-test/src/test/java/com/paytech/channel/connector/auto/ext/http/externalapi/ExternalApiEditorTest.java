@@ -19,7 +19,7 @@ import com.paytech.channel.connector.test.base.ExternalApiTestBase;
 import com.paytech.channel.connector.test.builder.ExternalApiSamples;
 
 /**
- * 编辑器目录：流程编辑上下文返回标准 API 字段与本接入方全部原子 API 合同摘要；能力目录返回枚举、上限与注册函数
+ * 编辑器目录：流程编辑上下文返回标准 API 字段与本渠道全部原子 API 合同摘要；能力目录返回枚举、上限与注册函数
  * <li>两个目录均为查询，不带操作者请求头；原 Platform 的权限拒绝场景随权限复核移出本 Owner（Gateway / BFF 负责）。</li>
  *
  * @see ExternalApiEditorApi#getFlowEditorContext(String, String)
@@ -31,9 +31,9 @@ class ExternalApiEditorTest extends ExternalApiTestBase {
     @Test
     void test_flowEditorContext() {
         externalApi.standardApi("PAY");
-        var demo = externalApi.integration("DEMO");
+        var demo = externalApi.channel("DEMO");
         externalApi.createOrderApi(demo);
-        externalApi.integration("OTHER");
+        externalApi.channel("OTHER");
 
         var context = get(BASE + "/integrations/DEMO/flow-editor-context?standardApiCode=PAY").assertOk()
             .as(FlowEditorContextResponseBody.class);
@@ -58,10 +58,10 @@ class ExternalApiEditorTest extends ExternalApiTestBase {
                 api.getOutputs().get("FAIL").stream().map(ScriptParameterDetail::getName).toList()));
     }
 
-    /** 标准 API 或接入方不存在时返回 404。 */
+    /** 标准 API 或渠道不存在时返回 404。 */
     @Test
     void test_flowEditorContextNotFound() {
-        externalApi.integration("DEMO");
+        externalApi.channel("DEMO");
 
         get(BASE + "/integrations/DEMO/flow-editor-context?standardApiCode=PAY").assertProblem(404, CommonErrorCode.NOT_FOUND);
         get(BASE + "/integrations/NOPE/flow-editor-context?standardApiCode=PAY").assertProblem(404, CommonErrorCode.NOT_FOUND);

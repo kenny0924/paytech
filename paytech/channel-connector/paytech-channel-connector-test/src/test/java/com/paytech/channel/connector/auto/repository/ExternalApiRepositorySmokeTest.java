@@ -13,15 +13,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
 import com.paytech.channel.connector.protocol.core.dal.dataobject.ApiField;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.Integration;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationImplementation;
+import com.paytech.channel.connector.api.enums.ChannelType;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.Channel;
+import com.paytech.channel.connector.protocol.core.enums.ChannelStatus;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelImplementation;
 import com.paytech.channel.connector.protocol.core.dal.dataobject.StandardApi;
 import com.paytech.channel.connector.api.enums.ApiFieldDataType;
 import com.paytech.channel.connector.protocol.core.enums.ApiFieldDirection;
 import com.paytech.channel.connector.api.enums.ApiFieldLocation;
 import com.paytech.channel.connector.protocol.domainservice.repository.ApiFieldRepository;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationImplementationRepository;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationRepository;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelImplementationRepository;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelRepository;
 import com.paytech.channel.connector.protocol.domainservice.repository.StandardApiRepository;
 import com.paytech.channel.connector.test.base.ChannelConnectorMockTestBase;
 
@@ -31,8 +33,8 @@ import com.paytech.channel.connector.test.base.ChannelConnectorMockTestBase;
  *
  * @see StandardApiRepository
  * @see ApiFieldRepository
- * @see IntegrationRepository
- * @see IntegrationImplementationRepository
+ * @see ChannelRepository
+ * @see ChannelImplementationRepository
  */
 class ExternalApiRepositorySmokeTest extends ChannelConnectorMockTestBase {
 
@@ -42,13 +44,13 @@ class ExternalApiRepositorySmokeTest extends ChannelConnectorMockTestBase {
     private StandardApiRepository standardApiRepository;
 
     @Autowired
-    private IntegrationRepository integrationRepository;
+    private ChannelRepository integrationRepository;
 
     @Autowired
     private ApiFieldRepository apiFieldRepository;
 
     @Autowired
-    private IntegrationImplementationRepository implementationRepository;
+    private ChannelImplementationRepository implementationRepository;
 
     private final Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
 
@@ -108,28 +110,41 @@ class ExternalApiRepositorySmokeTest extends ChannelConnectorMockTestBase {
         assertTrue(apiFieldRepository.byApis(List.of(), List.of(ApiFieldDirection.values())).isEmpty());
     }
 
-    /** 接入方出站地址 JSON 与实现流程 JSON 原样保存，同一接入方与标准 API 只允许一个实现。 */
+    /** 渠道出站地址 JSON 与实现流程 JSON 原样保存，同一渠道与标准 API 只允许一个实现。 */
     @Test
     void test_integrationAndImplementation() {
         StandardApi api = standardApi();
-        Integration integration = new Integration(randomId(), "IT_" + randomId(), "测试渠道", null,
-            "[{\"code\":\"DEFAULT\",\"baseUrl\":\"https://example.test\"}]", 0, OPERATOR_ID, OPERATOR_ID, now, now);
+        Channel integration = new Channel();
+        integration.setChannelId(randomId());
+        integration.setChannelCode("IT_" + randomId());
+        integration.setChannelName("测试渠道");
+        integration.setChannelType(ChannelType.SERVICE);
+        integration.setChannelStatus(ChannelStatus.DRAFT);
+        integration.setEndpoints("[{\"code\":\"DEFAULT\",\"baseUrl\":\"https://example.test\"}]");
+        integration.setVersion(1);
+        integration.setCreatedBy(OPERATOR_ID);
+        integration.setUpdatedBy(OPERATOR_ID);
+        integration.setCreateTime(now);
+        integration.setUpdateTime(now);
         integrationRepository.insert(integration);
-        integrationRepository.update(integration, "测试渠道2", "说明", "[]", OPERATOR_ID, now);
-        assertEquals("[]", integrationRepository.byCode(integration.getIntegrationCode()).getEndpoints());
+        integrationRepository.updateEndpoints(integration, "[]", OPERATOR_ID, now);
+        Channel saved = integrationRepository.byCode(integration.getChannelCode());
+        assertEquals("[]", saved.getEndpoints());
+        assertEquals(ChannelType.SERVICE, saved.getChannelType());
+        assertEquals(2, saved.getVersion());
 
-        IntegrationImplementation implementation = new IntegrationImplementation(randomId(),
-            integration.getIntegrationId(), api.getStandardApiId(), "{\"nodes\":[]}", 0, OPERATOR_ID, OPERATOR_ID, now, now);
+        ChannelImplementation implementation = new ChannelImplementation(randomId(),
+            integration.getChannelId(), api.getStandardApiId(), "{\"nodes\":[]}", 0, OPERATOR_ID, OPERATOR_ID, now, now);
         implementationRepository.insert(implementation);
-        IntegrationImplementation duplicate = new IntegrationImplementation(randomId(),
-            integration.getIntegrationId(), api.getStandardApiId(), "{}", 0, OPERATOR_ID, OPERATOR_ID, now, now);
+        ChannelImplementation duplicate = new ChannelImplementation(randomId(),
+            integration.getChannelId(), api.getStandardApiId(), "{}", 0, OPERATOR_ID, OPERATOR_ID, now, now);
         assertThrows(BizCheckFailException.class, () -> implementationRepository.insert(duplicate));
 
         implementationRepository.update(implementation, "{\"nodes\":[1]}", OPERATOR_ID, now);
-        IntegrationImplementation current = implementationRepository.byKey(integration.getIntegrationId(), api.getStandardApiId());
+        ChannelImplementation current = implementationRepository.byKey(integration.getChannelId(), api.getStandardApiId());
         assertEquals(1, current.getVersion());
         assertEquals(1, implementationRepository.allByStandardApi(api.getStandardApiId()).size());
-        assertEquals(1, implementationRepository.allByIntegrations(List.of(integration.getIntegrationId())).size());
+        assertEquals(1, implementationRepository.allByChannels(List.of(integration.getChannelId())).size());
     }
 
     /** 插入一行随机编码的标准 API，版本 0。 */

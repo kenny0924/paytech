@@ -2,13 +2,17 @@ package com.paytech.channel.connector.domainservice.repository.impl;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.Collection;
 
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
 
 import com.paytech.channel.connector.core.dal.dataobject.ChannelMid;
+import com.paytech.channel.connector.core.dal.dataobject.ChannelRowCount;
 import com.paytech.channel.connector.core.dal.mapper.ChannelMidMapper;
-import com.paytech.channel.connector.core.enums.ChannelStatus;
+import com.paytech.channel.connector.protocol.core.enums.ChannelStatus;
 import com.paytech.channel.connector.domain.ChannelMidListCriteria;
 import com.paytech.channel.connector.domain.ChannelMidSummaryView;
 import com.paytech.channel.connector.domainservice.repository.ChannelMidRepository;
@@ -90,5 +94,15 @@ public class ChannelMidRepositoryImpl implements ChannelMidRepository {
     @Override
     public long countOpenByAccount(long channelAccountId) {
         return mapper.countOpenByAccount(channelAccountId);
+    }
+
+    /** 按渠道分组计数。 */
+    @Override
+    public Map<Long, Long> countByChannels(Collection<Long> channelIds) {
+        if (channelIds.isEmpty()) {
+            return Map.of();
+        }
+        return mapper.countByChannels(channelIds).stream()
+            .collect(Collectors.toMap(ChannelRowCount::getChannelId, ChannelRowCount::getRowCount));
     }
 }

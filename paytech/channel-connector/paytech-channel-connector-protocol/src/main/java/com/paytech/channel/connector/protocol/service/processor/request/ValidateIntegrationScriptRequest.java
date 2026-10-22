@@ -13,7 +13,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public class ValidateIntegrationScriptRequest {
 
-    /** 路径中的接入方编码。 */
+    /** 路径中的渠道编码。 */
     private final String integrationCode;
 
     /** 脚本编码。 */

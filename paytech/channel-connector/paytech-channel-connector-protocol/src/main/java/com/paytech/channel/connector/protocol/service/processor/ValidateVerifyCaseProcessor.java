@@ -5,10 +5,10 @@ import java.util.List;
 import org.springframework.stereotype.Component;
 
 import com.paytech.foundation.processor.AbstractProcessor;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationVerifyAccount;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelVerifyAccount;
 import com.paytech.channel.connector.protocol.domain.ExternalApiLocks;
 import com.paytech.channel.connector.protocol.domain.ValidationIssue;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationVerifyAccountRepository;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelVerifyAccountRepository;
 import com.paytech.channel.connector.protocol.service.processor.request.SaveVerifyCaseRequest;
 
 import lombok.AllArgsConstructor;
@@ -20,15 +20,15 @@ public class ValidateVerifyCaseProcessor extends AbstractProcessor<SaveVerifyCas
 
     private final VerifyCaseChecks checks;
     private final IntegrationChildSupport children;
-    private final IntegrationVerifyAccountRepository accounts;
+    private final ChannelVerifyAccountRepository accounts;
 
     @Override
     protected List<ValidationIssue> processRequest(SaveVerifyCaseRequest request) {
-        var integration = children.integration(request.getIntegrationCode());
-        IntegrationVerifyAccount account = accounts.byCode(integration.getIntegrationId(), request.getAccountCode());
+        var integration = children.channel(request.getIntegrationCode());
+        ChannelVerifyAccount account = accounts.byCode(integration.getChannelId(), request.getAccountCode());
         if (account == null) {
             return List.of(new ValidationIssue("ACCOUNT_NOT_FOUND", "accountCode", "验证账号不存在：" + request.getAccountCode()));
         }
-        return checks.issues(integration.getIntegrationCode(), account, request.getSteps());
+        return checks.issues(integration.getChannelCode(), account, request.getSteps());
     }
 }

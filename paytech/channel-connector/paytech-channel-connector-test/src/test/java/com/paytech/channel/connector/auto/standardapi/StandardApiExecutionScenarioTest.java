@@ -17,7 +17,7 @@ import com.paytech.channel.connector.api.enums.ApiFieldLocation;
 import com.paytech.channel.connector.api.enums.ExecuteStatus;
 import com.paytech.channel.connector.api.enums.ScriptExecutionStage;
 import com.paytech.channel.connector.api.externalapi.request.ApiFieldBody;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.Integration;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.Channel;
 import com.paytech.channel.connector.protocol.core.dal.dataobject.StandardApi;
 import com.paytech.channel.connector.protocol.core.enums.StandardApiNotSentCode;
 import com.paytech.channel.connector.protocol.domain.ParameterDeclaration;
@@ -53,7 +53,7 @@ class StandardApiExecutionScenarioTest extends ExternalApiTestBase {
     private StandardApi pay;
     private ObjectNode account;
 
-    /** 本类公共：标准 API PAY 与合成渠道账号配置；各用例自建接入方、原子 API 与流程。 */
+    /** 本类公共：标准 API PAY 与合成渠道账号配置；各用例自建渠道、原子 API 与流程。 */
     @BeforeEach
     void setUpClassMocks() {
         pay = externalApi.standardApi(PAY);
@@ -66,7 +66,7 @@ class StandardApiExecutionScenarioTest extends ExternalApiTestBase {
      */
     @Test
     void test_getWithBearerAndResponseScript(CapturedOutput output) {
-        Integration query = integration("QUERY");
+        Channel query = integration("QUERY");
         externalApi.script(query, "BEARER", ScriptExecutionStage.REQUEST,
             List.of(new ParameterDeclaration("token", HANDLE, true)), ExternalApiFixtures.script("bearer"));
         externalApi.script(query, "FLATTEN", ScriptExecutionStage.RESPONSE, List.of(),
@@ -92,7 +92,7 @@ class StandardApiExecutionScenarioTest extends ExternalApiTestBase {
     /** 表单编码：BODY 字段编码为 application/x-www-form-urlencoded，basicAuth 以两个受控句柄生成认证 Header。 */
     @Test
     void test_formWithBasicAuth() {
-        Integration form = integration("FORM");
+        Channel form = integration("FORM");
         externalApi.script(form, "BASIC", ScriptExecutionStage.REQUEST, List
             .of(new ParameterDeclaration("username", HANDLE, true), new ParameterDeclaration("password", HANDLE, true)),
             ExternalApiFixtures.script("basic"));
@@ -151,16 +151,16 @@ class StandardApiExecutionScenarioTest extends ExternalApiTestBase {
         assertEquals(1, channel.requests().size());
     }
 
-    /** 以样例下单 API（无脚本）和指定流程实现 PAY 的接入方。 */
+    /** 以样例下单 API（无脚本）和指定流程实现 PAY 的渠道。 */
     private void createOrderIntegration(String code, ObjectNode flow) {
-        Integration integration = integration(code);
+        Channel integration = integration(code);
         externalApi.integrationApi(integration, CALL, ExternalApiSamples.createOrderDefinition());
         externalApi.implementation(integration, pay, flow);
     }
 
-    /** 出站地址指向 Mock 渠道的接入方。 */
-    private Integration integration(String code) {
-        return externalApi.integration(code, mockHttpServer.baseUrl() + ChannelMockController.PREFIX + "/api");
+    /** 出站地址指向 Mock 渠道的渠道。 */
+    private Channel integration(String code) {
+        return externalApi.channel(code, mockHttpServer.baseUrl() + ChannelMockController.PREFIX + "/api");
     }
 
     /** 以合成支付上下文经进程内入口执行 PAY。 */

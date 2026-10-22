@@ -17,11 +17,13 @@ import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.processor.AbstractProcessor;
 import com.paytech.channel.connector.core.configuration.ChannelProperties;
 import com.paytech.channel.connector.core.dal.dataobject.*;
-import com.paytech.channel.connector.core.enums.ChannelStatus;
+import com.paytech.channel.connector.protocol.core.enums.ChannelStatus;
 import com.paytech.channel.connector.domain.CapabilityView;
 import com.paytech.channel.connector.domain.MidCandidateView;
 import com.paytech.channel.connector.domain.MidCapabilityContext;
 import com.paytech.channel.connector.domainservice.repository.*;
+import com.paytech.channel.connector.protocol.domain.ChannelIdentity;
+import com.paytech.channel.connector.protocol.domainservice.service.ChannelService;
 import com.paytech.channel.connector.service.processor.request.QueryMidCandidatesRequest;
 
 import lombok.AllArgsConstructor;
@@ -34,7 +36,7 @@ public class QueryMidCandidatesProcessor extends AbstractProcessor<QueryMidCandi
     private final ChannelMidRepository mids;
     private final MidCapabilityRepository capabilities;
     private final ChannelAccountRepository accounts;
-    private final PaymentChannelRepository channels;
+    private final ChannelService channels;
     private final PlatformTransactionManager transactionManager;
     private final MidCapabilityDetailRepository details;
 
@@ -54,8 +56,8 @@ public class QueryMidCandidatesProcessor extends AbstractProcessor<QueryMidCandi
             .collect(Collectors.toMap(ChannelAccount::getChannelAccountId, Function.identity()));
         var midRows = mids.findByAccountIds(List.copyOf(accountRows.keySet()));
         var channelRows =
-            channels.findByIds(accountRows.values().stream().map(ChannelAccount::getChannelId).distinct().toList())
-                .stream().collect(Collectors.toMap(PaymentChannel::getChannelId, Function.identity()));
+            channels.findChannels(accountRows.values().stream().map(ChannelAccount::getChannelId).distinct().toList())
+                .stream().collect(Collectors.toMap(ChannelIdentity::getChannelId, Function.identity()));
         var eligible = midRows.stream().filter(mid -> eligible(mid, accountRows, channelRows)).toList();
         var scopeRows = capabilities.findByMidIds(eligible.stream().map(ChannelMid::getMidId).toList());
         var detailRows =
@@ -65,7 +67,7 @@ public class QueryMidCandidatesProcessor extends AbstractProcessor<QueryMidCandi
     }
 
     /** 悬空关联或 Channel/OE 不一致属于配置损坏，不能伪装成没有候选。 */
-    boolean eligible(ChannelMid mid, Map<Long, ChannelAccount> accountRows, Map<Long, PaymentChannel> channelRows) {
+    boolean eligible(ChannelMid mid, Map<Long, ChannelAccount> accountRows, Map<Long, ChannelIdentity> channelRows) {
         var account = accountRows.get(mid.getChannelAccountId());
         var channel = channelRows.get(mid.getChannelId());
         if (account == null || channel == null || !Objects.equals(mid.getChannelId(), account.getChannelId())

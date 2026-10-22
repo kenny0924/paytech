@@ -16,7 +16,7 @@ public class CreateIntegrationScriptRequest {
     /** 操作者 Account ID（X-Gateway-Actor-Subject，规范正十进制）。 */
     private final long actorId;
 
-    /** 路径中的接入方编码。 */
+    /** 路径中的渠道编码。 */
     private final String integrationCode;
 
     /** 脚本编码。 */

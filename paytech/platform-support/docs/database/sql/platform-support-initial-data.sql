@@ -5700,6 +5700,118 @@ INSERT INTO t_gateway_guard_rule (guard_rule_id,route_id,rule_type,dimension,cap
 COMMIT;
 
 -- ---------------------------------------------------------------------------
+-- Operations channel console phase 2: service channel call grants and channel outbound endpoints (2026-10-22,
+-- requirements/20261020/channel-connector-统一对外渠道出口, task P2 section 5).
+-- Self-contained block: on an environment already holding the channel console block 92 and the external API console block 71
+-- above, apply ONLY this block. Dormant like block 92: the new permission is ACTIVE, the administrator grant REVOKED, the new
+-- button and routes DISABLED; mor-test applies the same rows plus activation in
+-- requirements/20261020/channel-connector-统一对外渠道出口/db/platform-support-service/phase2-registration.sql.
+-- New permission CHANNEL_CALL_GRANT_MANAGE (resource CHANNEL_CALL_GRANT, action MANAGE) guards creating, enabling and disabling
+-- grants (caller service x channel x standard API) and backs the new button 调用授权 on the channel page (component
+-- OPERATIONS_CHANNEL_CHANNELS); the grant list reuses CHANNEL_CONFIG_READ (900000000000092101) and the endpoint replacement
+-- reuses CHANNEL_CONFIG_MANAGE (900000000000092102). Headers, query whitelist and guard rules copy the block 92 GET / write
+-- routes; the endpoint replacement takes a 65536-byte body (16 endpoints x 512-character base URLs exceed 8192).
+-- The channel list route 900000000000092401 gains the optional channelType query parameter (PAYMENT / SERVICE).
+-- The five integration CRUD routes (900000000000071006-900000000000071010) and the integration page resources
+-- OPERATIONS_EXTERNAL_INTEGRATIONS (900000000000071303) with its button (900000000000071305) are disabled, not deleted: channels
+-- replace integrations; the /external-api-admin/v1/integrations/{integrationCode}/... routes stay. The menu 渠道与账号
+-- (900000000000092302) is renamed 渠道.
+-- Rows: permission 1, role_permission 1, console_resource 1 (+3 updates), gateway_route 4 (+5 updates), route_header 20,
+-- query_param 7, guard_rule 24 (58 inserted). ID block 129: 1291xx permission, 1292xx role_permission, 1293xx console_resource,
+-- 1294xx route, 1295xx route_header, 1290xx query_param, 1297xx guard_rule.
+-- Rollback: delete the rows by the 900000000000129001-900000000000129999 IDs below (children first: guard_rule, query_param,
+-- route_header, gateway_route, console_resource, role_permission, permission); restore display_name 渠道与账号 on 92302 and the
+-- previous status of 71006-71010, 71303 and 71305.
+-- ---------------------------------------------------------------------------
+START TRANSACTION;
+
+SET @channel_grant_time = UTC_TIMESTAMP(6);
+SET @channel_grant_actor_id = 1;
+SET @channel_grant_target_id = 900000000000000001;
+SET @channel_grant_role_id = 900000000000000510;
+
+INSERT INTO t_permission (permission_id,permission_code,resource_type,action_code,risk_level,status,version,create_time,update_time) VALUES
+  (900000000000129101, 'CHANNEL_CALL_GRANT_MANAGE', 'CHANNEL_CALL_GRANT', 'MANAGE', 'HIGH', 'ACTIVE', 1, @channel_grant_time, @channel_grant_time);
+
+INSERT INTO t_role_permission (role_permission_id,role_id,permission_id,status,version,create_time,update_time) VALUES
+  (900000000000129201, @channel_grant_role_id, 900000000000129101, 'REVOKED', 1, @channel_grant_time, @channel_grant_time);
+
+INSERT INTO t_console_resource (resource_id,resource_code,channel,resource_type,parent_resource_id,display_name,frontend_route,component_key,permission_id,sort_order,status,version,create_time,update_time) VALUES
+  (900000000000129301, 'OPERATIONS_CHANNEL_CALL_GRANT_MANAGE', 'OPERATIONS', 'BUTTON', 900000000000092302, '调用授权', NULL, NULL, 900000000000129101, 30, 'DISABLED', 1, @channel_grant_time, @channel_grant_time);
+
+UPDATE t_console_resource SET display_name = '渠道', version = version + 1, update_time = @channel_grant_time
+ WHERE resource_id = 900000000000092302 AND display_name = '渠道与账号';
+UPDATE t_console_resource SET status = 'DISABLED', version = version + 1, update_time = @channel_grant_time
+ WHERE resource_id IN (900000000000071303, 900000000000071305) AND status = 'ACTIVE';
+UPDATE t_gateway_route SET status = 'DISABLED', version = version + 1, updated_by = @channel_grant_actor_id, update_time = @channel_grant_time
+ WHERE route_id BETWEEN 900000000000071006 AND 900000000000071010 AND status = 'ACTIVE';
+
+INSERT INTO t_gateway_route (route_id, route_code, channel, http_method, external_path_template, downstream_path_template, target_id, security_profile_code, authorization_mode, permission_id, required_scope_code, request_cookie_mode, response_cookie_mode, idempotency_mode, body_limit_bytes, body_receive_timeout_millis, response_timeout_millis, status, version, created_by, updated_by, create_time, update_time) VALUES
+  (900000000000129401, 'operations-channel-call-grant-list', 'OPERATIONS', 'GET', '/api/operations/channel-admin/v1/channel-call-grants', '/channel-admin/v1/channel-call-grants', @channel_grant_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000092101, NULL, 'DROP', 'NONE', 'NONE', 0, 5000, 10000, 'DISABLED', 1, @channel_grant_actor_id, @channel_grant_actor_id, @channel_grant_time, @channel_grant_time),
+  (900000000000129402, 'operations-channel-call-grant-create', 'OPERATIONS', 'POST', '/api/operations/channel-admin/v1/channel-call-grants', '/channel-admin/v1/channel-call-grants', @channel_grant_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000129101, NULL, 'DROP', 'NONE', 'NONE', 8192, 5000, 10000, 'DISABLED', 1, @channel_grant_actor_id, @channel_grant_actor_id, @channel_grant_time, @channel_grant_time),
+  (900000000000129403, 'operations-channel-call-grant-status', 'OPERATIONS', 'POST', '/api/operations/channel-admin/v1/channel-call-grants/{callGrantId}/status', '/channel-admin/v1/channel-call-grants/{callGrantId}/status', @channel_grant_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000129101, NULL, 'DROP', 'NONE', 'NONE', 8192, 5000, 10000, 'DISABLED', 1, @channel_grant_actor_id, @channel_grant_actor_id, @channel_grant_time, @channel_grant_time),
+  (900000000000129404, 'operations-channel-channel-endpoints', 'OPERATIONS', 'PUT', '/api/operations/channel-admin/v1/channels/{channelId}/endpoints', '/channel-admin/v1/channels/{channelId}/endpoints', @channel_grant_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000092102, NULL, 'DROP', 'NONE', 'NONE', 65536, 5000, 10000, 'DISABLED', 1, @channel_grant_actor_id, @channel_grant_actor_id, @channel_grant_time, @channel_grant_time);
+
+INSERT INTO t_gateway_route_header (route_header_id,route_id,header_name,header_use) VALUES
+  (900000000000129501, 900000000000129401, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000129502, 900000000000129401, 'origin', 'FORWARD_REQUEST'),
+  (900000000000129503, 900000000000129402, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000129504, 900000000000129402, 'origin', 'FORWARD_REQUEST'),
+  (900000000000129505, 900000000000129402, 'content-type', 'CORS_REQUEST_ALLOWED'),
+  (900000000000129506, 900000000000129402, 'content-type', 'FORWARD_REQUEST'),
+  (900000000000129507, 900000000000129402, 'idempotency-key', 'CORS_REQUEST_ALLOWED'),
+  (900000000000129508, 900000000000129402, 'idempotency-key', 'FORWARD_REQUEST'),
+  (900000000000129509, 900000000000129403, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000129510, 900000000000129403, 'origin', 'FORWARD_REQUEST'),
+  (900000000000129511, 900000000000129403, 'content-type', 'CORS_REQUEST_ALLOWED'),
+  (900000000000129512, 900000000000129403, 'content-type', 'FORWARD_REQUEST'),
+  (900000000000129513, 900000000000129403, 'idempotency-key', 'CORS_REQUEST_ALLOWED'),
+  (900000000000129514, 900000000000129403, 'idempotency-key', 'FORWARD_REQUEST'),
+  (900000000000129515, 900000000000129404, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000129516, 900000000000129404, 'origin', 'FORWARD_REQUEST'),
+  (900000000000129517, 900000000000129404, 'content-type', 'CORS_REQUEST_ALLOWED'),
+  (900000000000129518, 900000000000129404, 'content-type', 'FORWARD_REQUEST'),
+  (900000000000129519, 900000000000129404, 'idempotency-key', 'CORS_REQUEST_ALLOWED'),
+  (900000000000129520, 900000000000129404, 'idempotency-key', 'FORWARD_REQUEST');
+
+INSERT INTO t_gateway_route_query_param (route_query_param_id,route_id,parameter_name) VALUES
+  (900000000000129001, 900000000000129401, 'channelId'),
+  (900000000000129002, 900000000000129401, 'callerService'),
+  (900000000000129003, 900000000000129401, 'standardApiCode'),
+  (900000000000129004, 900000000000129401, 'grantStatus'),
+  (900000000000129005, 900000000000129401, 'page'),
+  (900000000000129006, 900000000000129401, 'size'),
+  (900000000000129007, 900000000000092401, 'channelType');
+
+INSERT INTO t_gateway_guard_rule (guard_rule_id,route_id,rule_type,dimension,capacity,refill_tokens,refill_period_millis,concurrency_limit) VALUES
+  (900000000000129701, 900000000000129401, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000129702, 900000000000129401, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000129703, 900000000000129401, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000129704, 900000000000129401, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000129705, 900000000000129401, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 30, 30, 60000, NULL),
+  (900000000000129706, 900000000000129401, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
+  (900000000000129707, 900000000000129402, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000129708, 900000000000129402, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000129709, 900000000000129402, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000129710, 900000000000129402, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000129711, 900000000000129402, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 10, 10, 60000, NULL),
+  (900000000000129712, 900000000000129402, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
+  (900000000000129713, 900000000000129403, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000129714, 900000000000129403, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000129715, 900000000000129403, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000129716, 900000000000129403, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000129717, 900000000000129403, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 10, 10, 60000, NULL),
+  (900000000000129718, 900000000000129403, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
+  (900000000000129719, 900000000000129404, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000129720, 900000000000129404, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000129721, 900000000000129404, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000129722, 900000000000129404, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000129723, 900000000000129404, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 10, 10, 60000, NULL),
+  (900000000000129724, 900000000000129404, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2);
+
+COMMIT;
+
+-- ---------------------------------------------------------------------------
 -- Operations data query console (2026-10-22, requirements/20261022/platform-support-数据查询服务).
 -- Self-contained block: on an environment already initialized by platform-support-initial-data.sql, apply ONLY this block.
 -- Requires the data query tables (changes/2026-10-22-data-query.sql) for the Platform code it activates.

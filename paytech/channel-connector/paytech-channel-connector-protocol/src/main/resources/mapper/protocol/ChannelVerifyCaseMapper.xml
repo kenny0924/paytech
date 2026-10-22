@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.channel.connector.protocol.core.dal.mapper.ChannelVerifyCaseMapper">
+    <sql id="columns">verify_case_id verifyCaseId, channel_id channelId, case_code caseCode, case_name caseName, description description, verify_account_id verifyAccountId, steps_json stepsJson, version version, created_by createdBy, updated_by updatedBy, create_time createTime, update_time updateTime</sql>
+    <sql id="filter">WHERE channel_id=#{channelId}<if test="keyword != null"> AND (CONVERT(case_code USING utf8mb4) COLLATE utf8mb4_bin LIKE #{keyword} ESCAPE '!' OR case_name LIKE #{keyword} ESCAPE '!')</if></sql>
+    <select id="byCode" resultType="com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelVerifyCase" useCache="false">
+        SELECT <include refid="columns"/> FROM t_channel_verify_case WHERE channel_id=#{channelId} AND case_code=#{code}
+    </select>
+    <select id="lock" resultType="com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelVerifyCase" useCache="false" flushCache="true">
+        SELECT <include refid="columns"/> FROM t_channel_verify_case WHERE channel_id=#{channelId} AND case_code=#{code} FOR UPDATE
+    </select>
+    <select id="list" resultType="com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelVerifyCase" useCache="false">
+        SELECT <include refid="columns"/> FROM t_channel_verify_case <include refid="filter"/>
+        ORDER BY case_code, verify_case_id LIMIT #{size} OFFSET #{offset}
+    </select>
+    <select id="count" resultType="long" useCache="false">SELECT COUNT(*) FROM t_channel_verify_case <include refid="filter"/></select>
+    <select id="countByAccount" resultType="long" useCache="false">SELECT COUNT(*) FROM t_channel_verify_case WHERE verify_account_id=#{verifyAccountId}</select>
+    <insert id="insert">
+        INSERT INTO t_channel_verify_case(verify_case_id,channel_id,case_code,case_name,description,verify_account_id,steps_json,version,created_by,updated_by,create_time,update_time)
+        VALUES(#{row.verifyCaseId},#{row.channelId},#{row.caseCode},#{row.caseName},#{row.description},#{row.verifyAccountId},#{row.stepsJson},#{row.version},#{row.createdBy},#{row.updatedBy},#{row.createTime},#{row.updateTime})
+    </insert>
+    <update id="update">
+        UPDATE t_channel_verify_case SET case_name=#{caseName}, description=#{description}, verify_account_id=#{verifyAccountId},
+        steps_json=#{stepsJson}, version=version+1, updated_by=#{updatedBy}, update_time=#{updateTime}
+        WHERE verify_case_id=#{row.verifyCaseId} AND version=#{row.version}
+    </update>
+    <delete id="delete">
+        DELETE FROM t_channel_verify_case WHERE verify_case_id=#{row.verifyCaseId} AND version=#{row.version}
+    </delete>
+</mapper>

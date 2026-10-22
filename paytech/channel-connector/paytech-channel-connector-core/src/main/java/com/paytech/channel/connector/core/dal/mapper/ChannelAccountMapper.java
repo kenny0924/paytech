@@ -1,12 +1,14 @@
 package com.paytech.channel.connector.core.dal.mapper;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 
 import com.paytech.channel.connector.core.dal.dataobject.ChannelAccount;
-import com.paytech.channel.connector.core.enums.ChannelStatus;
+import com.paytech.channel.connector.core.dal.dataobject.ChannelRowCount;
+import com.paytech.channel.connector.protocol.core.enums.ChannelStatus;
 
 /** ChannelAccount SQL 参数绑定，SQL 仅位于 XML。 */
 public interface ChannelAccountMapper {
@@ -35,6 +37,15 @@ public interface ChannelAccountMapper {
 
     /** 统计渠道下未关闭的账号数。 */
     long countOpenByChannel(@Param("channelId") long channelId);
+
+    /** 统计渠道下 ACTIVE 账号数。 */
+    long countActiveByChannel(@Param("channelId") long channelId);
+
+    /** 读取渠道下的 ACTIVE 账号，按主键排序。 */
+    List<ChannelAccount> findActiveByChannel(@Param("channelId") long channelId);
+
+    /** 按渠道分组统计全部账号数（含已关闭）。 */
+    List<ChannelRowCount> countByChannels(@Param("channelIds") Collection<Long> channelIds);
 
     /** 按渠道、OE 与状态分页读取，按 update_time、主键降序。 */
     List<ChannelAccount> selectPage(@Param("channelId") Long channelId, @Param("entityNo") String entityNo,

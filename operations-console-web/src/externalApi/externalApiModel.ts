@@ -4,11 +4,15 @@ import type { PagingResponseBody } from '../api/types.ts';
 /** 管理接口前缀；浏览器经 Gateway 访问时由会话加上 /api/operations。 */
 export const externalApiBase = '/external-api-admin/v1';
 export const standardApiPath = `${externalApiBase}/standard-apis`;
+/** 渠道协议与沙箱验证的管理路径：路径与字段名保留 integrations / integrationCode，值即渠道编码。 */
 export const integrationPath = `${externalApiBase}/integrations`;
 export const standardApiRoute = '/external-api/standard-apis';
-export const integrationRoute = '/external-api/integrations';
 export const manageStandardApis = 'OPERATIONS_EXTERNAL_STANDARD_API_MANAGE';
-export const manageIntegrations = 'OPERATIONS_EXTERNAL_INTEGRATION_MANAGE';
+/**
+ * 渠道详情「协议配置 / 沙箱验证」写操作的按钮：接入方页面并入渠道后沿用标准 API 页的「维护配置」按钮，
+ * 两者在 Platform 绑定同一外部 API 管理权限。
+ */
+export const manageProtocol = manageStandardApis;
 export const listSizes = [10, 20, 50, 100];
 export const codePattern = /^[A-Z][A-Z0-9_]{0,63}$/;
 
@@ -27,7 +31,6 @@ export interface ApiField {
   description: string | null;
 }
 export interface IntegrationReference { integrationCode: string; integrationName: string }
-export interface StandardApiReference { standardApiCode: string; standardApiName: string }
 export interface StandardApiSummary {
   standardApiCode: string; standardApiName: string; requestFieldCount: number; responseFieldCount: number;
   implementedBy: IntegrationReference[]; version: number; updateTime: string;
@@ -38,16 +41,6 @@ export interface StandardApiDetail {
   updateTime: string; updatedBy: string;
 }
 export interface Endpoint { endpointCode: string; baseUrl: string; sandbox?: boolean }
-export interface EndpointDetail extends Endpoint { referencedApiCodes: string[] }
-export interface IntegrationSummary {
-  integrationCode: string; integrationName: string; endpointCount: number; apiCount: number; scriptCount: number;
-  implementedStandardApis: StandardApiReference[]; version: number; updateTime: string;
-}
-export interface IntegrationDetail {
-  integrationCode: string; integrationName: string; description: string | null; endpoints: EndpointDetail[];
-  apiCount: number; scriptCount: number; implementationCount: number; version: number; createTime: string;
-  updateTime: string; updatedBy: string;
-}
 export interface IntegrationApiSummary {
   apiCode: string; apiName: string; method: string; endpointCode: string; pathTemplate: string;
   requestScriptCount: number; responseScriptCount: number; referencedBy: string[]; version: number; updateTime: string;
@@ -89,11 +82,6 @@ function decodeIntegrationReference(value: unknown): IntegrationReference {
   require(v && code(v.integrationCode) && text(v.integrationName, 128));
   return { integrationCode: v.integrationCode, integrationName: v.integrationName };
 }
-function decodeStandardApiReference(value: unknown): StandardApiReference {
-  const v = value as StandardApiReference;
-  require(v && code(v.standardApiCode) && text(v.standardApiName, 128));
-  return { standardApiCode: v.standardApiCode, standardApiName: v.standardApiName };
-}
 export function decodeStandardApiSummary(value: unknown): StandardApiSummary {
   const v = value as StandardApiSummary;
   require(v && code(v.standardApiCode) && text(v.standardApiName, 128) && count(v.requestFieldCount)
@@ -111,30 +99,6 @@ export function decodeStandardApi(value: unknown, expectedCode: string): Standar
     requestFields: decodeFields(v.requestFields), responseFields: decodeFields(v.responseFields),
     implementations: v.implementations.map(decodeIntegrationReference), version: v.version, createTime: v.createTime,
     updateTime: v.updateTime, updatedBy: v.updatedBy };
-}
-export function decodeIntegrationSummary(value: unknown): IntegrationSummary {
-  const v = value as IntegrationSummary;
-  require(v && code(v.integrationCode) && text(v.integrationName, 128) && count(v.endpointCount) && count(v.apiCount)
-    && count(v.scriptCount) && Array.isArray(v.implementedStandardApis) && version(v.version) && instant(v.updateTime));
-  return { integrationCode: v.integrationCode, integrationName: v.integrationName, endpointCount: v.endpointCount,
-    apiCount: v.apiCount, scriptCount: v.scriptCount,
-    implementedStandardApis: v.implementedStandardApis.map(decodeStandardApiReference), version: v.version,
-    updateTime: v.updateTime };
-}
-export function decodeIntegration(value: unknown, expectedCode: string): IntegrationDetail {
-  const v = value as IntegrationDetail;
-  require(v && v.integrationCode === expectedCode && text(v.integrationName, 128) && nullableText(v.description, 512)
-    && Array.isArray(v.endpoints) && count(v.apiCount) && count(v.scriptCount) && count(v.implementationCount)
-    && version(v.version) && instant(v.createTime) && instant(v.updateTime) && typeof v.updatedBy === 'string');
-  const endpoints = v.endpoints.map(item => {
-    require(item && text(item.endpointCode, 64) && text(item.baseUrl, 512) && codes(item.referencedApiCodes)
-      && (item.sandbox === undefined || typeof item.sandbox === 'boolean'));
-    return { endpointCode: item.endpointCode, baseUrl: item.baseUrl, sandbox: item.sandbox === true,
-      referencedApiCodes: [...item.referencedApiCodes] };
-  });
-  return { integrationCode: v.integrationCode, integrationName: v.integrationName, description: v.description, endpoints,
-    apiCount: v.apiCount, scriptCount: v.scriptCount, implementationCount: v.implementationCount, version: v.version,
-    createTime: v.createTime, updateTime: v.updateTime, updatedBy: v.updatedBy };
 }
 export function decodeIntegrationApiSummary(value: unknown): IntegrationApiSummary {
   const v = value as IntegrationApiSummary;
@@ -176,10 +140,16 @@ export function decodePage<T>(value: unknown, decode: (item: unknown) => T, iden
   return { items, page: v.page, size: v.size, total: v.total };
 }
 
-/** 写结果必须对应本次对象：类型、编码一致，版本为正整数。 */
+/** 第二段合表后 Owner 写结果的对象类型可能改用渠道命名；两种写法都视为同一对象。 */
+const objectTypeAliases: Readonly<Record<string, string>> = {
+  INTEGRATION_API: 'CHANNEL_API', INTEGRATION_SCRIPT: 'CHANNEL_SCRIPT', INTEGRATION_IMPLEMENTATION: 'CHANNEL_IMPLEMENTATION',
+  INTEGRATION_VERIFY_ACCOUNT: 'CHANNEL_VERIFY_ACCOUNT', INTEGRATION_VERIFY_CASE: 'CHANNEL_VERIFY_CASE',
+};
+
+/** 写结果必须对应本次对象：类型（或其渠道命名）、编码一致，版本为正整数。 */
 export function decodeMutation(value: unknown, objectType: string, objectCode: string): Mutation {
   const v = value as Mutation;
-  require(v && v.objectType === objectType && v.objectCode === objectCode && version(v.version));
+  require(v && (v.objectType === objectType || v.objectType === objectTypeAliases[objectType]) && v.objectCode === objectCode && version(v.version));
   return { objectType: v.objectType, objectCode: v.objectCode, version: v.version };
 }
 
@@ -189,7 +159,7 @@ export function fieldDepth(field: Pick<ApiField, 'fieldLocation' | 'fieldPath'>)
   return field.fieldPath.split('.').length - 1;
 }
 
-/** 新建实现时可选的标准 API：全部标准 API 去掉本接入方已实现的，按编码排序。 */
+/** 新建实现时可选的标准 API：全部标准 API 去掉本渠道已实现的，按编码排序。 */
 export function availableStandardApis(all: StandardApiSummary[], implemented: ImplementationSummary[]): StandardApiSummary[] {
   const used = new Set(implemented.map(item => item.standardApiCode));
   return all.filter(item => !used.has(item.standardApiCode))

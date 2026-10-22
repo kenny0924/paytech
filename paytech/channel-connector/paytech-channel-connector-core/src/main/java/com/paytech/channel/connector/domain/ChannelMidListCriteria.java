@@ -1,6 +1,6 @@
 package com.paytech.channel.connector.domain;
 
-import com.paytech.channel.connector.core.enums.ChannelStatus;
+import com.paytech.channel.connector.protocol.core.enums.ChannelStatus;
 import com.paytech.foundation.web.paging.PagingRequestBody;
 
 import lombok.AllArgsConstructor;

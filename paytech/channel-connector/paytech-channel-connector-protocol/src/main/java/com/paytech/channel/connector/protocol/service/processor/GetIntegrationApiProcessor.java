@@ -3,12 +3,12 @@ package com.paytech.channel.connector.protocol.service.processor;
 import org.springframework.stereotype.Component;
 
 import com.paytech.foundation.processor.AbstractProcessor;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationApi;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelApi;
 import com.paytech.channel.connector.protocol.core.enums.ApiFieldDirection;
 import com.paytech.channel.connector.protocol.domain.ExternalApiConfigurationCodec;
 import com.paytech.channel.connector.protocol.domain.ExternalApiLocks;
 import com.paytech.channel.connector.protocol.domain.IntegrationApiDetailView;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationApiRepository;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelApiRepository;
 import com.paytech.channel.connector.protocol.service.processor.request.GetIntegrationChildRequest;
 
 import lombok.AllArgsConstructor;
@@ -22,18 +22,18 @@ public class GetIntegrationApiProcessor extends AbstractProcessor<GetIntegration
     private final IntegrationChildSupport children;
     private final ExternalApiTransactions transactions;
     private final ExternalApiProcessorSupport support;
-    private final IntegrationApiRepository integrationApis;
+    private final ChannelApiRepository channelApis;
 
     @Override
     protected IntegrationApiDetailView processRequest(GetIntegrationChildRequest request) {
         return transactions.query(() -> {
-            long integrationId = children.integration(request.getIntegrationCode()).getIntegrationId();
-            IntegrationApi row = support.requireFound(integrationApis.byCode(integrationId, request.getCode()));
+            long channelId = children.channel(request.getIntegrationCode()).getChannelId();
+            ChannelApi row = support.requireFound(channelApis.byCode(channelId, request.getCode()));
             var fields = children.savedFields(row);
             return new IntegrationApiDetailView(row.getApiCode(), row.getApiName(), row.getDescription(),
                 fields.get(ApiFieldDirection.INTEGRATION_API_REQUEST),
                 fields.get(ApiFieldDirection.INTEGRATION_API_RESPONSE), codec.tree(row.getDefinitionJson()),
-                children.apiReferences(integrationId, row.getApiCode()), row.getVersion(), row.getCreateTime(),
+                children.apiReferences(channelId, row.getApiCode()), row.getVersion(), row.getCreateTime(),
                 row.getUpdateTime(), row.getUpdatedBy());
         });
     }

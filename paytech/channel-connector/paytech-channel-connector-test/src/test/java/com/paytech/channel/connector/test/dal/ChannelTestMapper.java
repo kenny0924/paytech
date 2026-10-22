@@ -8,15 +8,16 @@ import org.apache.ibatis.annotations.*;
 
 import com.paytech.channel.connector.core.dal.dataobject.*;
 import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelConfigChange;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.Channel;
 
 /**
  * mor_channel_connector 的前置数据和清理 SQL；不代替被测生产 Mapper
  * <li>只触碰本库 28 张表：10 §3.1 渠道表、渠道成本四表、变更记录表，以及 2026-10-20 自 Platform 迁入的 10 张渠道协议表。</li>
  */
 public interface ChannelTestMapper {
-    /** 插入本例的 PaymentChannel 配置。 */
-    @Insert("INSERT INTO t_payment_channel (channel_id, channel_code, channel_name, channel_status, create_time, update_time) VALUES (#{channelId}, #{channelCode}, #{channelName}, #{channelStatus.code}, #{createTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}, #{updateTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler})")
-    void insertPaymentChannel(PaymentChannel value);
+    /** 插入本例的渠道（t_channel）；出站地址可空。 */
+    @Insert("INSERT INTO t_channel (channel_id, channel_code, channel_name, channel_type, channel_status, description, endpoints, version, created_by, updated_by, create_time, update_time) VALUES (#{channelId}, #{channelCode}, #{channelName}, #{channelType.code}, #{channelStatus.code}, #{description}, #{endpoints}, #{version}, #{createdBy}, #{updatedBy}, #{createTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}, #{updateTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler})")
+    void insertChannel(Channel value);
 
     /** 插入本例的 ChannelAccount 配置。 */
     @Insert("INSERT INTO t_channel_account (channel_account_id, channel_id, entity_no, account_name, account_vault_token, account_status, remark, create_time, update_time) VALUES (#{channelAccountId}, #{channelId}, #{entityNo}, #{accountName}, #{accountVaultToken}, #{accountStatus.code}, #{remark}, #{createTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}, #{updateTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler})")
@@ -47,7 +48,7 @@ public interface ChannelTestMapper {
     String databaseName();
 
     /** 读取渠道五表总行数，验证查询无新增副作用。 */
-    @Select("SELECT (SELECT COUNT(*) FROM t_payment_channel) + (SELECT COUNT(*) FROM t_channel_account) + (SELECT COUNT(*) FROM t_channel_mid) + (SELECT COUNT(*) FROM t_mid_capability) + (SELECT COUNT(*) FROM t_mid_capability_detail)")
+    @Select("SELECT (SELECT COUNT(*) FROM t_channel) + (SELECT COUNT(*) FROM t_channel_account) + (SELECT COUNT(*) FROM t_channel_mid) + (SELECT COUNT(*) FROM t_mid_capability) + (SELECT COUNT(*) FROM t_mid_capability_detail)")
     int countRows();
 
     /** 读取本库其余八张表（仅 Schema 的路由策略、交互、回调、异常，以及补偿任务）总行数，空基线必须为零。 */
@@ -81,7 +82,7 @@ public interface ChannelTestMapper {
     int countConfigChangeRows();
 
     /** 读取一个对象的全部变更记录（按主键升序），供写入断言。 */
-    @Select("SELECT id, target_type, target_id, change_type, from_status, to_status, operator_id, reason, create_time FROM t_channel_config_change WHERE target_type = #{targetType} AND target_id = #{targetId} ORDER BY id")
+    @Select("SELECT id, target_type, target_id, change_type, from_status, to_status, operator_id, reason, CAST(change_detail AS CHAR) AS change_detail, create_time FROM t_channel_config_change WHERE target_type = #{targetType} AND target_id = #{targetId} ORDER BY id")
     List<Map<String, Object>> selectConfigChanges(@Param("targetType") String targetType, @Param("targetId") long targetId);
 
     /** 读取方案下指定版本号的主键，供变更记录按对象断言。 */
@@ -125,7 +126,7 @@ public interface ChannelTestMapper {
     void rebind(@Param("midId") long midId, @Param("accountId") long accountId);
 
     /** 修改渠道状态以验证每次查询重新读取配置。 */
-    @Update("UPDATE t_payment_channel SET channel_status = #{status}")
+    @Update("UPDATE t_channel SET channel_status = #{status}")
     void channelStatus(String status);
 
     /** 修改账号状态以验证原交易矩阵。 */
@@ -165,7 +166,7 @@ public interface ChannelTestMapper {
     void clearAccounts();
 
     /** 仅清理本测试库的渠道。 */
-    @Delete("DELETE FROM t_payment_channel")
+    @Delete("DELETE FROM t_channel")
     void clearChannels();
 
     /** 仅清理本测试库的路由策略 MID 权重（仅 Schema，防御性清理）。 */
@@ -203,11 +204,11 @@ public interface ChannelTestMapper {
     // ---- CC-B 追加：渠道基础配置写入断言 ----
 
     /** 读取渠道行，不存在为空。 */
-    @Select("SELECT channel_code, channel_name, channel_status FROM t_payment_channel WHERE channel_id = #{channelId}")
+    @Select("SELECT channel_code, channel_name, channel_type, channel_status, description, CAST(endpoints AS CHAR) AS endpoints, version, updated_by FROM t_channel WHERE channel_id = #{channelId}")
     Map<String, Object> selectChannel(@Param("channelId") long channelId);
 
     /** 统计渠道行数。 */
-    @Select("SELECT COUNT(*) FROM t_payment_channel")
+    @Select("SELECT COUNT(*) FROM t_channel")
     int countChannels();
 
     /** 读取账号行，不存在为空。 */
@@ -233,44 +234,52 @@ public interface ChannelTestMapper {
     // ---- 2026-10-20 统一对外渠道出口第一段：渠道协议 10 表 ----
 
     /** 读取渠道协议 10 张表总行数，空基线必须为零。 */
-    @Select("SELECT (SELECT COUNT(*) FROM t_standard_api) + (SELECT COUNT(*) FROM t_api_field) + (SELECT COUNT(*) FROM t_integration) + (SELECT COUNT(*) FROM t_integration_api) + (SELECT COUNT(*) FROM t_integration_script) + (SELECT COUNT(*) FROM t_integration_standard_api) + (SELECT COUNT(*) FROM t_integration_verify_account) + (SELECT COUNT(*) FROM t_integration_verify_case) + (SELECT COUNT(*) FROM t_integration_verify_run) + (SELECT COUNT(*) FROM t_integration_verify_run_step)")
+    @Select("SELECT (SELECT COUNT(*) FROM t_standard_api) + (SELECT COUNT(*) FROM t_api_field) + (SELECT COUNT(*) FROM t_channel_call_grant) + (SELECT COUNT(*) FROM t_channel_api) + (SELECT COUNT(*) FROM t_channel_script) + (SELECT COUNT(*) FROM t_channel_standard_api) + (SELECT COUNT(*) FROM t_channel_verify_account) + (SELECT COUNT(*) FROM t_channel_verify_case) + (SELECT COUNT(*) FROM t_channel_verify_run) + (SELECT COUNT(*) FROM t_channel_verify_run_step)")
     int countProtocolRows();
 
     /** 仅清理本测试库的验证运行步骤。 */
-    @Delete("DELETE FROM t_integration_verify_run_step")
+    @Delete("DELETE FROM t_channel_verify_run_step")
     void clearVerifyRunSteps();
 
     /** 仅清理本测试库的验证运行。 */
-    @Delete("DELETE FROM t_integration_verify_run")
+    @Delete("DELETE FROM t_channel_verify_run")
     void clearVerifyRuns();
 
     /** 仅清理本测试库的验证用例。 */
-    @Delete("DELETE FROM t_integration_verify_case")
+    @Delete("DELETE FROM t_channel_verify_case")
     void clearVerifyCases();
 
     /** 仅清理本测试库的验证账号。 */
-    @Delete("DELETE FROM t_integration_verify_account")
+    @Delete("DELETE FROM t_channel_verify_account")
     void clearVerifyAccounts();
 
     /** 仅清理本测试库的标准 API 实现。 */
-    @Delete("DELETE FROM t_integration_standard_api")
+    @Delete("DELETE FROM t_channel_standard_api")
     void clearImplementations();
 
     /** 仅清理本测试库的原子 API。 */
-    @Delete("DELETE FROM t_integration_api")
-    void clearIntegrationApis();
+    @Delete("DELETE FROM t_channel_api")
+    void clearChannelApis();
 
     /** 仅清理本测试库的公共脚本。 */
-    @Delete("DELETE FROM t_integration_script")
-    void clearIntegrationScripts();
+    @Delete("DELETE FROM t_channel_script")
+    void clearChannelScripts();
 
     /** 仅清理本测试库的 API 字段。 */
     @Delete("DELETE FROM t_api_field")
     void clearApiFields();
 
-    /** 仅清理本测试库的接入方。 */
-    @Delete("DELETE FROM t_integration")
-    void clearIntegrations();
+    /** 渠道下的账号数（含已关闭）。 */
+    @Select("SELECT COUNT(*) FROM t_channel_account WHERE channel_id = #{channelId}")
+    int countAccountsOf(@Param("channelId") long channelId);
+
+    /** 调用授权行数。 */
+    @Select("SELECT COUNT(*) FROM t_channel_call_grant")
+    int countCallGrants();
+
+    /** 仅清理本测试库的调用授权。 */
+    @Delete("DELETE FROM t_channel_call_grant")
+    void clearChannelCallGrants();
 
     /** 仅清理本测试库的标准 API。 */
     @Delete("DELETE FROM t_standard_api")

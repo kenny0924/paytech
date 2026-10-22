@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.channel.connector.protocol.core.dal.mapper.ChannelImplementationMapper">
+    <sql id="columns">channel_standard_api_id channelStandardApiId, channel_id channelId, standard_api_id standardApiId, flow_definition_json flowDefinitionJson, version version, created_by createdBy, updated_by updatedBy, create_time createTime, update_time updateTime</sql>
+    <select id="byKey" resultType="com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelImplementation" useCache="false">
+        SELECT <include refid="columns"/> FROM t_channel_standard_api WHERE channel_id=#{channelId} AND standard_api_id=#{standardApiId}
+    </select>
+    <select id="lock" resultType="com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelImplementation" useCache="false" flushCache="true">
+        SELECT <include refid="columns"/> FROM t_channel_standard_api WHERE channel_id=#{channelId} AND standard_api_id=#{standardApiId} FOR UPDATE
+    </select>
+    <select id="allByChannel" resultType="com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelImplementation" useCache="false">
+        SELECT <include refid="columns"/> FROM t_channel_standard_api WHERE channel_id=#{channelId} ORDER BY standard_api_id
+    </select>
+    <select id="allByStandardApi" resultType="com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelImplementation" useCache="false">
+        SELECT <include refid="columns"/> FROM t_channel_standard_api WHERE standard_api_id=#{standardApiId} ORDER BY channel_id
+    </select>
+    <select id="allByChannels" resultType="com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelImplementation" useCache="false">
+        SELECT <include refid="columns"/> FROM t_channel_standard_api WHERE channel_id IN
+        <foreach collection="channelIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY channel_id, standard_api_id
+    </select>
+    <select id="allByStandardApis" resultType="com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelImplementation" useCache="false">
+        SELECT <include refid="columns"/> FROM t_channel_standard_api WHERE standard_api_id IN
+        <foreach collection="standardApiIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY standard_api_id, channel_id
+    </select>
+    <insert id="insert">
+        INSERT INTO t_channel_standard_api(channel_standard_api_id,channel_id,standard_api_id,flow_definition_json,version,created_by,updated_by,create_time,update_time)
+        VALUES(#{row.channelStandardApiId},#{row.channelId},#{row.standardApiId},#{row.flowDefinitionJson},#{row.version},#{row.createdBy},#{row.updatedBy},#{row.createTime},#{row.updateTime})
+    </insert>
+    <update id="update">
+        UPDATE t_channel_standard_api SET flow_definition_json=#{flowDefinitionJson},
+        version=version+1, updated_by=#{updatedBy}, update_time=#{updateTime}
+        WHERE channel_standard_api_id=#{row.channelStandardApiId} AND version=#{row.version}
+    </update>
+    <delete id="delete">
+        DELETE FROM t_channel_standard_api WHERE channel_standard_api_id=#{row.channelStandardApiId} AND version=#{row.version}
+    </delete>
+</mapper>

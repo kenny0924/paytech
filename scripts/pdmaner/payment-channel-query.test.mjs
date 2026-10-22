@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { reshapeChannelTables } from "./channel-connector/channel-model.mjs";
 import { generateChannelConnectorModel } from "./generate-channel-connector-model.mjs";
 import { generatePaymentModel, serializePaymentServiceModel } from "./generate-payment-model.mjs";
 import { renderSchema } from "./generate-oe-client-schemas.mjs";
@@ -19,9 +20,10 @@ test("Channel target has scoped accounts and separate typed capability details",
   assert.ok(!tables.has("t_mid_health_state"));
   assert.match(tables.get("t_mid_capability").fields.find((f) => f.defKey === "country_code").comment, /消费者国家/u);
   // 渠道表归 channel-connector（design/03 §2.3）：其规范模型与 Schema 等于生成模型的 channel-connector 部分，
-  // 2026-10-20 起再追加自 Platform 迁入的 10 张渠道协议表（channel-connector/protocol-model.mjs）。
+  // 2026-10-20 起再追加自 Platform 迁入的渠道协议表（channel-connector/protocol-model.mjs），2026-10-22 起先把 t_payment_channel
+  // 改造为 t_channel（channel-connector/channel-model.mjs）。
   const source = "paytech/channel-connector/docs/database/channel-connector.pdma.json";
-  const partition = JSON.parse(serializePaymentServiceModel("channel-connector", model));
+  const partition = reshapeChannelTables(JSON.parse(serializePaymentServiceModel("channel-connector", model)));
   const expected = `${JSON.stringify(generateChannelConnectorModel(), null, 2)}\n`;
   assert.deepEqual(JSON.parse(expected).entities.slice(0, partition.entities.length), partition.entities);
   assert.equal(readFileSync(new URL(`../../${source}`, import.meta.url), "utf8"), expected);

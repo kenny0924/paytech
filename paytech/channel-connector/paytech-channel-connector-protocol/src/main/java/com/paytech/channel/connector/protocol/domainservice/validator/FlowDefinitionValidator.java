@@ -31,7 +31,7 @@ import tools.jackson.databind.ObjectMapper;
 /**
  * 渠道标准 API 实现 flow_definition_json 的静态校验（流程结构第 1～7 节、材料交接第 5 节）。
  *
- * <p>纯内存校验，不执行函数、表达式或外部请求；依赖调用方读取的标准 API 字段与本接入方全部原子 API 合同。返回全部问题。
+ * <p>纯内存校验，不执行函数、表达式或外部请求；依赖调用方读取的标准 API 字段与本渠道全部原子 API 合同。返回全部问题。
  */
 @Component
 @AllArgsConstructor
@@ -58,7 +58,7 @@ public class FlowDefinitionValidator {
      * @param flow 请求体中的 flowDefinition 对象
      * @param requestFields 标准 API 请求字段
      * @param responseFields 标准 API 响应字段
-     * @param apis 本接入方全部原子 API 合同，按编码索引
+     * @param apis 本渠道全部原子 API 合同，按编码索引
      * @return 问题列表；无问题时附带摘要
      */
     public Result validate(JsonNode flow, List<FieldDefinition> requestFields, List<FieldDefinition> responseFields,
@@ -187,7 +187,7 @@ public class FlowDefinitionValidator {
         return uses;
     }
 
-    /** 节点：同接入方原子 API，请求与参数绑定合法并覆盖必填项。 */
+    /** 节点：同渠道原子 API，请求与参数绑定合法并覆盖必填项。 */
     void nodes(JsonNode node, State state) {
         if (!state.array(node, "flowDefinition.nodes", 1, MAX_NODES)) {
             return;
@@ -203,7 +203,7 @@ public class FlowDefinitionValidator {
             String id = item.path("id").asString("");
             ApiContract api = state.apis.get(item.path("integrationApi").asString(""));
             if (api == null) {
-                state.issue("INTEGRATION_API_NOT_FOUND", location + ".integrationApi", "同一接入方没有该原子 API");
+                state.issue("INTEGRATION_API_NOT_FOUND", location + ".integrationApi", "同一渠道没有该原子 API");
                 continue;
             }
             nodeRequest(item.get("request"), location + ".request", id, api, state);

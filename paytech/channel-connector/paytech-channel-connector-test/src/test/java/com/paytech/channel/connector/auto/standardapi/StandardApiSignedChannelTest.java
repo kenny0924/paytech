@@ -25,7 +25,7 @@ import com.paytech.channel.connector.api.enums.ApiFieldLocation;
 import com.paytech.channel.connector.api.enums.ExecuteStatus;
 import com.paytech.channel.connector.api.enums.ScriptExecutionStage;
 import com.paytech.channel.connector.api.externalapi.request.ApiFieldBody;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.Integration;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.Channel;
 import com.paytech.channel.connector.protocol.core.dal.dataobject.StandardApi;
 import com.paytech.channel.connector.protocol.domain.ParameterDeclaration;
 import com.paytech.channel.connector.protocol.domain.execution.ExecutionResult;
@@ -160,10 +160,10 @@ class StandardApiSignedChannelTest extends ExternalApiTestBase {
         signedIntegration(standardApi, signScript, CODE);
     }
 
-    /** 以签名下单原子 API、指定的签名脚本与验签脚本，在指定接入方编码下实现标准 API。 */
+    /** 以签名下单原子 API、指定的签名脚本与验签脚本，在指定渠道编码下实现标准 API。 */
     private void signedIntegration(StandardApi standardApi, String signScript, String code) {
-        Integration integration =
-            externalApi.integration(code, mockHttpServer.baseUrl() + ChannelMockController.PREFIX + "/api");
+        Channel integration =
+            externalApi.channel(code, mockHttpServer.baseUrl() + ChannelMockController.PREFIX + "/api");
         externalApi.script(integration, "RSA_SIGN", ScriptExecutionStage.REQUEST,
             List.of(new ParameterDeclaration("privateKey", "PROTECTED_HANDLE", true)),
             ExternalApiFixtures.script(signScript));
@@ -186,7 +186,7 @@ class StandardApiSignedChannelTest extends ExternalApiTestBase {
             Map.of("Content-Type", "application/json", "sign", sign(key, json)), json, 0, false));
     }
 
-    /** 以指定金额经进程内入口执行默认接入方的标准 API。 */
+    /** 以指定金额经进程内入口执行默认渠道的标准 API。 */
     private ExecutionResult execute(String amount) {
         return execute(PAY, CODE, input(amount));
     }

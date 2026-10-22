@@ -20,14 +20,16 @@ import com.paytech.channel.connector.api.enums.ApiFieldLocation;
 import com.paytech.channel.connector.api.enums.ChannelOperation;
 import com.paytech.channel.connector.api.enums.ChannelOperationOutcome;
 import com.paytech.channel.connector.api.enums.ChannelPaymentStatus;
+import com.paytech.channel.connector.api.enums.ChannelType;
 import com.paytech.channel.connector.api.enums.ExecutionPurpose;
 import com.paytech.channel.connector.api.enums.ScriptExecutionStage;
 import com.paytech.channel.connector.api.externalapi.request.ApiFieldBody;
 import com.paytech.channel.connector.api.operation.ChannelOperationApi;
 import com.paytech.channel.connector.api.operation.request.ExecuteChannelOperationRequestBody;
 import com.paytech.channel.connector.api.operation.response.ChannelOperationResponseBody;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.Integration;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.Channel;
 import com.paytech.channel.connector.protocol.core.dal.dataobject.StandardApi;
+import com.paytech.channel.connector.protocol.core.enums.ChannelStatus;
 import com.paytech.channel.connector.protocol.core.enums.StandardApiNotSentCode;
 import com.paytech.channel.connector.protocol.domain.ParameterDeclaration;
 import com.paytech.channel.connector.test.base.ChannelConnectorMockTestBase;
@@ -36,6 +38,7 @@ import com.paytech.channel.connector.test.builder.ExternalApiFixtures;
 import com.paytech.channel.connector.test.builder.ExternalApiSamples;
 import com.paytech.channel.connector.test.dal.ChannelTestMapper;
 import com.paytech.channel.connector.test.mock.ChannelMockController;
+import com.paytech.channel.connector.test.mocker.AccessLogProbe;
 import com.paytech.channel.connector.test.mocker.ChannelDataMocker.Fixture;
 import com.paytech.channel.connector.test.mocker.ChannelMocker;
 import com.paytech.channel.connector.test.mocker.ExternalApiMocker;
@@ -72,6 +75,9 @@ class ExecuteChannelOperationTest extends ChannelConnectorMockTestBase {
 
     @Autowired
     private ExternalApiMocker externalApi;
+
+    @Autowired
+    private AccessLogProbe accessLog;
 
     private Fixture fixture;
 
@@ -112,6 +118,13 @@ class ExecuteChannelOperationTest extends ChannelConnectorMockTestBase {
                 INSTRUMENT)), paymentCard.reveals()));
         vault.assertOnly(fixture.getAccount().getAccountVaultToken());
         transactions.assertOutsideTransactions();
+        var line = accessLog.lines().getFirst();
+        assertAll(() -> assertEquals(1, accessLog.lines().size()),
+            () -> assertTrue(line.contains("callerService=payment-service"), line),
+            () -> assertTrue(line.contains("channelType=PAYMENT"), line),
+            () -> assertTrue(line.contains("apiCode=" + CALL), line),
+            () -> assertFalse(line.contains(PAN), "访问日志不得含卡号"),
+            () -> assertFalse(line.contains("synthetic-api-key"), "访问日志不得含凭据"));
     }
 
     /** 待认证：SUCCESS + PENDING，跳转地址取自 nextAction.redirectUrl，原始状态与交易编号一并返回。 */
@@ -207,11 +220,11 @@ class ExecuteChannelOperationTest extends ChannelConnectorMockTestBase {
         vault.assertNoCalls();
     }
 
-    /** 渠道编码对应的接入方没有实现 PAY：NOT_SENT 且原因代码为 INTEGRATION_IMPLEMENTATION_NOT_FOUND。 */
+    /** 渠道编码对应的渠道没有实现 PAY：NOT_SENT 且原因代码为 INTEGRATION_IMPLEMENTATION_NOT_FOUND。 */
     @Test
     void test_implementationMissingNotSent() {
         externalApi.standardApi(ChannelOperation.PAY.getCode(), requestFields(), responseFields());
-        externalApi.integration(fixture.getChannel().getChannelCode(), channelBaseUrl());
+        externalApi.channel(fixture.getChannel().getChannelCode(), channelBaseUrl());
 
         assertNotSent(StandardApiNotSentCode.INTEGRATION_IMPLEMENTATION_NOT_FOUND,
             execute(ChannelRequestBuilder.operationBody(fixture)));
@@ -279,6 +292,21 @@ class ExecuteChannelOperationTest extends ChannelConnectorMockTestBase {
         assertNoExternalCalls();
     }
 
+    /** 冻结渠道是服务渠道：支付入口一律拒绝，按“配置无效”返回 NOT_SENT（INTEGRATION_CONFIG_INVALID），不进入引擎（AC-06）。 */
+    @Test
+    void test_serviceChannelRejected() {
+        implement(ExternalApiFixtures.flow(FLOW));
+        Channel service = data.channel("GMAP", "合成服务渠道", ChannelType.SERVICE, ChannelStatus.ACTIVE);
+        var account = data.account(service.getChannelId(), "00001", "C".repeat(43));
+        var mid = data.mid(service.getChannelId(), account.getChannelAccountId(), "00001");
+
+        var result = execute(ChannelRequestBuilder.operationBody(new Fixture(service, account, mid)));
+
+        assertAll(() -> assertEquals(ChannelOperationOutcome.NOT_SENT.getCode(), result.getOutcome()),
+            () -> assertEquals(StandardApiNotSentCode.INTEGRATION_CONFIG_INVALID.getCode(), result.getFailureCode()));
+        assertNoExternalCalls();
+    }
+
     /** 冻结账号没有 Vault 配置引用：NOT_SENT，不进入引擎。 */
     @Test
     void test_accountNotConfiguredNotSent() {
@@ -307,10 +335,10 @@ class ExecuteChannelOperationTest extends ChannelConnectorMockTestBase {
         assertNoExternalCalls();
     }
 
-    /** 渠道编码即接入方编码：标准 API PAY、接入方（指向 Mock 渠道）、Bearer 脚本、卡下单原子 API 与指定流程。 */
+    /** 渠道编码即渠道编码：标准 API PAY、渠道（指向 Mock 渠道）、Bearer 脚本、卡下单原子 API 与指定流程。 */
     private void implement(ObjectNode flow) {
         StandardApi pay = externalApi.standardApi(ChannelOperation.PAY.getCode(), requestFields(), responseFields());
-        Integration integration = externalApi.integration(fixture.getChannel().getChannelCode(), channelBaseUrl());
+        Channel integration = externalApi.channel(fixture.getChannel().getChannelCode(), channelBaseUrl());
         externalApi.script(integration, "BEARER", ScriptExecutionStage.REQUEST,
             List.of(new ParameterDeclaration("token", "PROTECTED_HANDLE", true)), ExternalApiFixtures.script("bearer"));
         externalApi.integrationApi(integration, CALL, ExternalApiFixtures.definition(FLOW),
@@ -367,7 +395,7 @@ class ExecuteChannelOperationTest extends ChannelConnectorMockTestBase {
         return ExternalApiSamples.field(location, path, type, required);
     }
 
-    /** 接入方出站地址：本机 Mock 渠道。 */
+    /** 渠道出站地址：本机 Mock 渠道。 */
     private String channelBaseUrl() {
         return mockHttpServer.baseUrl() + ChannelMockController.PREFIX + "/api";
     }

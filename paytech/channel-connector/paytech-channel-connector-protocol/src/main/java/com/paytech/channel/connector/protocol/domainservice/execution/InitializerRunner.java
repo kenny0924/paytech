@@ -69,7 +69,7 @@ public class InitializerRunner {
         for (ExecutionFlow.Initializer initializer : order(snapshot.getFlow().getInitializers())) {
             if (deadline.expired()) {
                 throw new StandardApiNotSentException(StandardApiNotSentCode.INTEGRATION_BUDGET_EXHAUSTED,
-                    "初始化前流程预算已耗尽: " + snapshot.getIntegrationCode() + ", 初始化项: " + initializer.getId());
+                    "初始化前流程预算已耗尽: " + snapshot.getChannelCode() + ", 初始化项: " + initializer.getId());
             }
             try {
                 context.putResource(initializer.getId(), execute(initializer, context));
@@ -82,11 +82,11 @@ public class InitializerRunner {
                         FlowEngine.reason(failure));
                 }
                 log.warn("外部 API 初始化项失败 standardApiCode={} integrationCode={} initializerId={} required={} reason={}",
-                    snapshot.getStandardApiCode(), snapshot.getIntegrationCode(), initializer.getId(),
+                    snapshot.getStandardApiCode(), snapshot.getChannelCode(), initializer.getId(),
                     initializer.isRequired(), FlowEngine.reason(failure));
                 if (initializer.isRequired()) {
                     throw new StandardApiNotSentException(StandardApiNotSentCode.INTEGRATION_INITIALIZATION_FAILED,
-                        "必需初始化项失败: " + snapshot.getIntegrationCode() + ", 初始化项: " + initializer.getId());
+                        "必需初始化项失败: " + snapshot.getChannelCode() + ", 初始化项: " + initializer.getId());
                 }
             }
         }

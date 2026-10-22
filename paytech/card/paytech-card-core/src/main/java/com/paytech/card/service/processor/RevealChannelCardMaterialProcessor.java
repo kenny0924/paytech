@@ -37,12 +37,10 @@ public class RevealChannelCardMaterialProcessor
     private final CardMaterialTicketRepository cardMaterialTicketRepository;
     private final ClaimChannelCardMaterialProcessor claimChannelCardMaterialProcessor;
 
-    /** 只接受 channel-connector 与 Platform；其他调用方按资源不存在返回 404。 */
+    /** 只接受 channel-connector（唯一对外出口）；其他调用方（含 Platform）按资源不存在返回 404。 */
     @Override
     protected void validate(RevealCardMaterialRequest request) {
-        // 第一段过渡，便于回退：外部 API 执行迁往 channel-connector 后仍接受 platform-support-service；第二段收回 platform-support-service。
-        cardCallerService.require(request.getCaller(), CardApiConstants.CHANNEL_CONNECTOR_SERVICE,
-            CardApiConstants.PLATFORM_SUPPORT_SERVICE);
+        cardCallerService.require(request.getCaller(), CardApiConstants.CHANNEL_CONNECTOR_SERVICE);
     }
 
     @Override

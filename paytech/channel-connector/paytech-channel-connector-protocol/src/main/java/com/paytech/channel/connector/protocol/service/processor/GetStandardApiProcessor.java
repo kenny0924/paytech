@@ -6,15 +6,15 @@ import java.util.List;
 import org.springframework.stereotype.Component;
 
 import com.paytech.foundation.processor.AbstractProcessor;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationImplementation;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelImplementation;
 import com.paytech.channel.connector.protocol.core.dal.dataobject.StandardApi;
 import com.paytech.channel.connector.protocol.core.enums.ApiFieldDirection;
 import com.paytech.channel.connector.protocol.domain.ConfigurationReference;
 import com.paytech.channel.connector.protocol.domain.ExternalApiLocks;
 import com.paytech.channel.connector.protocol.domain.StandardApiDetailView;
 import com.paytech.channel.connector.protocol.domainservice.repository.ApiFieldRepository;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationImplementationRepository;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationRepository;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelImplementationRepository;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelRepository;
 import com.paytech.channel.connector.protocol.domainservice.repository.StandardApiRepository;
 import com.paytech.channel.connector.protocol.service.processor.request.GetExternalApiConfigRequest;
 
@@ -26,11 +26,11 @@ import lombok.AllArgsConstructor;
 public class GetStandardApiProcessor extends AbstractProcessor<GetExternalApiConfigRequest, StandardApiDetailView> {
 
     private final ApiFieldRepository fields;
-    private final IntegrationRepository integrations;
+    private final ChannelRepository channels;
     private final StandardApiRepository standardApis;
     private final ExternalApiTransactions transactions;
     private final ExternalApiProcessorSupport support;
-    private final IntegrationImplementationRepository implementations;
+    private final ChannelImplementationRepository implementations;
 
     @Override
     protected StandardApiDetailView processRequest(GetExternalApiConfigRequest request) {
@@ -45,12 +45,12 @@ public class GetStandardApiProcessor extends AbstractProcessor<GetExternalApiCon
         });
     }
 
-    /** 实现该标准 API 的接入方，按编码排序。 */
+    /** 实现该标准 API 的渠道，按编码排序。 */
     List<ConfigurationReference> implementers(StandardApi row) {
         var ids = implementations.allByStandardApi(row.getStandardApiId()).stream()
-            .map(IntegrationImplementation::getIntegrationId).toList();
-        return integrations.byIds(ids).stream()
-            .map(item -> new ConfigurationReference(item.getIntegrationCode(), item.getIntegrationName()))
+            .map(ChannelImplementation::getChannelId).toList();
+        return channels.byIds(ids).stream()
+            .map(item -> new ConfigurationReference(item.getChannelCode(), item.getChannelName()))
             .sorted(Comparator.comparing(ConfigurationReference::getCode)).toList();
     }
 }

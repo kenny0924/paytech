@@ -20,9 +20,11 @@ import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.operations.console.bff.integration.ChannelConfigurationClient;
 import com.paytech.operations.console.bff.service.model.ChannelModels.CapabilityDefinitionsResponseBody;
 import com.paytech.operations.console.bff.service.model.ChannelModels.ChangeChannelStatusRequestBody;
+import com.paytech.operations.console.bff.service.model.ChannelModels.ChangeChannelCallGrantStatusRequestBody;
 import com.paytech.operations.console.bff.service.model.ChannelModels.ChangeMidCapabilityStatusRequestBody;
 import com.paytech.operations.console.bff.service.model.ChannelModels.ChannelAccountResponseBody;
 import com.paytech.operations.console.bff.service.model.ChannelModels.ChannelAccountSummaryResponseBody;
+import com.paytech.operations.console.bff.service.model.ChannelModels.ChannelCallGrantResponseBody;
 import com.paytech.operations.console.bff.service.model.ChannelModels.ChannelConfigChangeResponseBody;
 import com.paytech.operations.console.bff.service.model.ChannelModels.ChannelMidResponseBody;
 import com.paytech.operations.console.bff.service.model.ChannelModels.ChannelMidSummaryResponseBody;
@@ -30,6 +32,7 @@ import com.paytech.operations.console.bff.service.model.ChannelModels.ChannelRes
 import com.paytech.operations.console.bff.service.model.ChannelModels.ChannelSummaryResponseBody;
 import com.paytech.operations.console.bff.service.model.ChannelModels.ConfigureChannelAccountRequestBody;
 import com.paytech.operations.console.bff.service.model.ChannelModels.CreateChannelAccountRequestBody;
+import com.paytech.operations.console.bff.service.model.ChannelModels.CreateChannelCallGrantRequestBody;
 import com.paytech.operations.console.bff.service.model.ChannelModels.CreateChannelMidRequestBody;
 import com.paytech.operations.console.bff.service.model.ChannelModels.CreateChannelRequestBody;
 import com.paytech.operations.console.bff.service.model.ChannelModels.CreateMidCapabilityRequestBody;
@@ -37,6 +40,7 @@ import com.paytech.operations.console.bff.service.model.ChannelModels.MidCapabil
 import com.paytech.operations.console.bff.service.model.ChannelModels.RebindChannelMidAccountRequestBody;
 import com.paytech.operations.console.bff.service.model.ChannelModels.ReplaceMidCapabilityDetailsRequestBody;
 import com.paytech.operations.console.bff.service.model.ChannelModels.UpdateChannelAccountRequestBody;
+import com.paytech.operations.console.bff.service.model.ChannelModels.UpdateChannelEndpointsRequestBody;
 import com.paytech.operations.console.bff.service.model.ChannelModels.UpdateChannelRequestBody;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
 
@@ -48,10 +52,10 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 
 /**
- * 渠道、技术账号、MID、能力与变更记录的运营入口（21 条路由，注册 DML 块 92）
- * <li>Gateway 绑定：GET 为 CHANNEL_CONFIG_READ（变更记录为 CHANNEL_CHANGE_READ）；写入为 CHANNEL_CONFIG_MANAGE；账号参数与凭据写入
- * 为独立的 CHANNEL_ACCOUNT_CREDENTIAL。</li>
- * <li>全部简单转发 channel-connector：操作人取自会话并经 X-Gateway-Actor-Subject 传递；Query 只放行块 92 登记的键。</li>
+ * 渠道（含出站地址）、技术账号、MID、能力、调用授权与变更记录的运营入口（25 条路由，注册 DML 块 92 与块 129）
+ * <li>Gateway 绑定：GET 为 CHANNEL_CONFIG_READ（变更记录为 CHANNEL_CHANGE_READ）；写入与出站地址为 CHANNEL_CONFIG_MANAGE；账号参数与凭据
+ * 写入为独立的 CHANNEL_ACCOUNT_CREDENTIAL；调用授权的新建与启停为 CHANNEL_CALL_GRANT_MANAGE。</li>
+ * <li>全部简单转发 channel-connector：操作人取自会话并经 X-Gateway-Actor-Subject 传递；Query 只放行块 92 / 129 登记的键。</li>
  * <li>账号配置请求含凭据明文，/channel-admin/v1/channel-accounts 在 web.logging 中只记元数据。</li>
  *
  * @author Claude
@@ -63,20 +67,26 @@ public class ChannelConfigurationController {
     private static final String ID = "[1-9][0-9]{0,18}";
     private static final String STATUS = "DRAFT|ACTIVE|SUSPENDED|CLOSED";
     private static final String ENTITY_NO = "[A-Z]{2}[0-9]{3}";
-    private static final String TARGET_TYPE = "CHANNEL|CHANNEL_ACCOUNT|CHANNEL_MID|MID_CAPABILITY|CHANNEL_COST_VERSION";
+    private static final String TARGET_TYPE = "CHANNEL|CHANNEL_ACCOUNT|CHANNEL_MID|MID_CAPABILITY|CHANNEL_COST_VERSION"
+        + "|STANDARD_API|CHANNEL_API|CHANNEL_SCRIPT|CHANNEL_IMPLEMENTATION|VERIFY_ACCOUNT|VERIFY_CASE|CHANNEL_CALL_GRANT";
+    private static final String CHANNEL_TYPE = "PAYMENT|SERVICE";
+    private static final String GRANT_STATUS = "ACTIVE|DISABLED";
+    private static final String CALLER_SERVICE = "[a-z][a-z0-9-]{1,63}";
+    private static final String CODE = "[A-Z][A-Z0-9_]{0,63}";
 
     private final ChannelConfigurationClient client;
 
-    /** 渠道分页：按状态与编码 / 名称前缀筛选。 */
+    /** 渠道分页：按类型、状态与编码 / 名称前缀筛选。 */
     @GetMapping("/channels")
     public PagingResponseBody<ChannelSummaryResponseBody> listChannels(HttpServletRequest servletRequest,
+        @RequestParam(value = "channelType", required = false) @Pattern(regexp = CHANNEL_TYPE) String channelType,
         @RequestParam(value = "status", required = false) @Pattern(regexp = STATUS) String status,
         @RequestParam(value = "keyword", required = false) @Size(max = 255) String keyword,
         @RequestParam(value = "page", required = false) Integer page,
         @RequestParam(value = "size", required = false) Integer size) {
-        requireQueryKeys(servletRequest, Set.of("status", "keyword", "page", "size"));
+        requireQueryKeys(servletRequest, Set.of("channelType", "status", "keyword", "page", "size"));
         PagingRequestBody paging = PagingRequestBody.of(page, size);
-        return client.listChannels(status, keyword, paging.page(), paging.size());
+        return client.listChannels(channelType, status, keyword, paging.page(), paging.size());
     }
 
     /** 渠道详情。 */
@@ -96,7 +106,7 @@ public class ChannelConfigurationController {
         return client.createChannel(operator, body);
     }
 
-    /** 修改渠道名称。 */
+    /** 修改渠道名称与描述。 */
     @PutMapping("/channels/{channelId}")
     public ChannelResponseBody updateChannel(HttpServletRequest servletRequest, OperatorContext operator,
         @PathVariable("channelId") @Pattern(regexp = ID) String channelId,
@@ -105,7 +115,16 @@ public class ChannelConfigurationController {
         return client.updateChannel(operator, channelId, body);
     }
 
-    /** 变更渠道状态；激活由 channel-connector 核对 Platform 同编码接入方。 */
+    /** 整组替换渠道出站地址；版本冲突与仍被原子 API 引用的地址由 channel-connector 以 409 拒绝。 */
+    @PutMapping("/channels/{channelId}/endpoints")
+    public ChannelResponseBody updateChannelEndpoints(HttpServletRequest servletRequest, OperatorContext operator,
+        @PathVariable("channelId") @Pattern(regexp = ID) String channelId,
+        @RequestBody @NotNull @Valid UpdateChannelEndpointsRequestBody body) {
+        requireQueryKeys(servletRequest, Set.of());
+        return client.updateChannelEndpoints(operator, channelId, body);
+    }
+
+    /** 变更渠道状态；激活由 channel-connector 核对渠道已配置出站地址。 */
     @PostMapping("/channels/{channelId}/status")
     public ChannelResponseBody changeChannelStatus(HttpServletRequest servletRequest, OperatorContext operator,
         @PathVariable("channelId") @Pattern(regexp = ID) String channelId,
@@ -266,5 +285,38 @@ public class ChannelConfigurationController {
         requireQueryKeys(servletRequest, Set.of("targetType", "targetId", "page", "size"));
         PagingRequestBody paging = PagingRequestBody.of(page, size);
         return client.listChanges(targetType, targetId, paging.page(), paging.size());
+    }
+
+    /** 调用授权分页（CHANNEL_CONFIG_READ）。 */
+    @GetMapping("/channel-call-grants")
+    public PagingResponseBody<ChannelCallGrantResponseBody> listCallGrants(HttpServletRequest servletRequest,
+        @RequestParam(value = "channelId", required = false) @Pattern(regexp = ID) String channelId,
+        @RequestParam(value = "callerService", required = false) @Pattern(regexp = CALLER_SERVICE) String callerService,
+        @RequestParam(value = "standardApiCode", required = false) @Pattern(regexp = CODE) String standardApiCode,
+        @RequestParam(value = "grantStatus", required = false) @Pattern(regexp = GRANT_STATUS) String grantStatus,
+        @RequestParam(value = "page", required = false) Integer page,
+        @RequestParam(value = "size", required = false) Integer size) {
+        requireQueryKeys(servletRequest, Set.of("channelId", "callerService", "standardApiCode", "grantStatus", "page",
+            "size"));
+        PagingRequestBody paging = PagingRequestBody.of(page, size);
+        return client.listCallGrants(channelId, callerService, standardApiCode, grantStatus, paging.page(), paging.size());
+    }
+
+    /** 新建 ACTIVE 调用授权（CHANNEL_CALL_GRANT_MANAGE）。 */
+    @PostMapping("/channel-call-grants")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ChannelCallGrantResponseBody createCallGrant(HttpServletRequest servletRequest, OperatorContext operator,
+        @RequestBody @NotNull @Valid CreateChannelCallGrantRequestBody body) {
+        requireQueryKeys(servletRequest, Set.of());
+        return client.createCallGrant(operator, body);
+    }
+
+    /** 启用或停用调用授权（CHANNEL_CALL_GRANT_MANAGE）。 */
+    @PostMapping("/channel-call-grants/{callGrantId}/status")
+    public ChannelCallGrantResponseBody changeCallGrantStatus(HttpServletRequest servletRequest, OperatorContext operator,
+        @PathVariable("callGrantId") @Pattern(regexp = ID) String callGrantId,
+        @RequestBody @NotNull @Valid ChangeChannelCallGrantStatusRequestBody body) {
+        requireQueryKeys(servletRequest, Set.of());
+        return client.changeCallGrantStatus(operator, callGrantId, body);
     }
 }

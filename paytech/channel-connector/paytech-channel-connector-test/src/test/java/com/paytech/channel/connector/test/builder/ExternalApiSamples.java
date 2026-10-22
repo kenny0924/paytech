@@ -9,7 +9,7 @@ import java.util.List;
 import com.paytech.channel.connector.api.enums.ApiFieldDataType;
 import com.paytech.channel.connector.api.enums.ApiFieldLocation;
 import com.paytech.channel.connector.api.externalapi.request.ApiFieldBody;
-import com.paytech.channel.connector.api.externalapi.request.IntegrationEndpointBody;
+import com.paytech.channel.connector.api.channel.request.ChannelEndpointBody;
 import com.paytech.channel.connector.api.externalapi.request.ScriptParameterBody;
 
 import tools.jackson.databind.JsonNode;
@@ -18,7 +18,7 @@ import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
- * 外部 API 配置的合成样例：一个支付标准 API、一个 DEMO 接入方及其下单原子 API、签名脚本与流程。
+ * 外部 API 配置的合成样例：一个支付标准 API、一个 DEMO 渠道及其下单原子 API、签名脚本与流程。
  *
  * <p>只构造数据，不访问数据库；每次返回新对象，用例可以在副本上制造负例而不影响其他用例。
  * 字段、定义与流程按合同第 8、10 节的形状合成，不代表真实渠道协议。
@@ -54,9 +54,9 @@ public final class ExternalApiSamples {
             field(BODY, "transactionRef", STRING, false));
     }
 
-    /** 接入方唯一出站地址。 */
-    public static List<IntegrationEndpointBody> endpoints() {
-        return List.of(new IntegrationEndpointBody(ENDPOINT, "https://gateway.example.test/api"));
+    /** 渠道唯一出站地址。 */
+    public static List<ChannelEndpointBody> endpoints() {
+        return List.of(endpoint(ENDPOINT, "https://gateway.example.test/api", null));
     }
 
     /** 下单原子 API 请求字段：路径门店、固定版本头 X-Api-Version、订单号与金额；Content-Type 由请求编码补默认值。 */
@@ -118,5 +118,14 @@ public final class ExternalApiSamples {
     /** 序列化 JSON，供本地 Mocker 写入定义列。 */
     public static String text(JsonNode node) {
         return JSON.writeValueAsString(node);
+    }
+
+    /** 一个出站地址请求项。 */
+    public static ChannelEndpointBody endpoint(String endpointCode, String baseUrl, Boolean sandbox) {
+        ChannelEndpointBody body = new ChannelEndpointBody();
+        body.setEndpointCode(endpointCode);
+        body.setBaseUrl(baseUrl);
+        body.setSandbox(sandbox);
+        return body;
     }
 }

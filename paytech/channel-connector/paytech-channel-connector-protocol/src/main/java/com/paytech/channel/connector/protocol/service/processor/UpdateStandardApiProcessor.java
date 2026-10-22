@@ -91,7 +91,7 @@ public class UpdateStandardApiProcessor extends AbstractLockProcessor<UpdateStan
     void requireImplementationsIntact(StandardApi row, UpdateStandardApiRequest request) {
         var broken = flows.brokenByStandardApi(row, request.getRequestFields(), request.getResponseFields());
         if (!broken.isEmpty()) {
-            throw new BizCheckFailException("修改会使以下接入方的实现失效，请先调整流程：" + String.join("、", broken));
+            throw new BizCheckFailException("修改会使以下渠道的实现失效，请先调整流程：" + String.join("、", broken));
         }
     }
 

@@ -9,21 +9,21 @@ import org.springframework.stereotype.Component;
 
 import com.paytech.foundation.processor.AbstractProcessor;
 import com.paytech.foundation.web.paging.PagingResponseBody;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationApi;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationImplementation;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelApi;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelImplementation;
 import com.paytech.channel.connector.protocol.core.dal.dataobject.StandardApi;
 import com.paytech.channel.connector.protocol.domain.ExternalApiConfigurationCodec;
 import com.paytech.channel.connector.protocol.domain.ExternalApiLocks;
 import com.paytech.channel.connector.protocol.domain.IntegrationApiSummaryView;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationApiRepository;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationImplementationRepository;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelApiRepository;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelImplementationRepository;
 import com.paytech.channel.connector.protocol.domainservice.repository.StandardApiRepository;
 import com.paytech.channel.connector.protocol.service.processor.request.ListIntegrationChildrenRequest;
 
 import lombok.AllArgsConstructor;
 
 /**
- * E11 原子 API 列表：分页读取后从已保存定义提取传输与脚本摘要，并扫描本接入方流程得到引用方。
+ * E11 原子 API 列表：分页读取后从已保存定义提取传输与脚本摘要，并扫描本渠道流程得到引用方。
  *
  * <p>普通列表不开显式事务，允许各查询观察相邻的已提交状态。
  */
@@ -35,25 +35,25 @@ public class ListIntegrationApisProcessor
     private final ExternalApiConfigurationCodec codec;
     private final IntegrationChildSupport children;
     private final StandardApiRepository standardApis;
-    private final IntegrationApiRepository integrationApis;
-    private final IntegrationImplementationRepository implementations;
+    private final ChannelApiRepository channelApis;
+    private final ChannelImplementationRepository implementations;
 
     @Override
     protected PagingResponseBody<IntegrationApiSummaryView> processRequest(ListIntegrationChildrenRequest request) {
-        long integrationId = children.integration(request.getIntegrationCode()).getIntegrationId();
+        long channelId = children.channel(request.getIntegrationCode()).getChannelId();
         var paging = request.getPaging();
-        var rows = integrationApis.list(integrationId, request.getKeyword(), paging.offset(), paging.size());
-        long total = integrationApis.count(integrationId, request.getKeyword());
-        var flows = implementations.allByIntegration(integrationId);
+        var rows = channelApis.list(channelId, request.getKeyword(), paging.offset(), paging.size());
+        long total = channelApis.count(channelId, request.getKeyword());
+        var flows = implementations.allByChannel(channelId);
         Map<Long, StandardApi> standardApiById = standardApis.byIds(flows.stream()
-            .map(IntegrationImplementation::getStandardApiId).toList()).stream()
+            .map(ChannelImplementation::getStandardApiId).toList()).stream()
             .collect(Collectors.toMap(StandardApi::getStandardApiId, Function.identity()));
         var items = rows.stream().map(row -> summary(row, flows, standardApiById)).toList();
         return new PagingResponseBody<>(items, paging.page(), paging.size(), total);
     }
 
     /** 从已保存定义提取摘要，引用方按标准 API 编码排序。 */
-    IntegrationApiSummaryView summary(IntegrationApi row, List<IntegrationImplementation> flows,
+    IntegrationApiSummaryView summary(ChannelApi row, List<ChannelImplementation> flows,
         Map<Long, StandardApi> standardApiById) {
         var definition = codec.tree(row.getDefinitionJson());
         var transport = definition.path("transport");

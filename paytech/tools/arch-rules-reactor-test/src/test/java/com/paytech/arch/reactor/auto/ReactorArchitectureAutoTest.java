@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Reactor 级依赖图校验：读取 {@code paytech/pom.xml} 当前列出的全部模块（含 {@code foundation/} 下的嵌套模块），执行
- * R1、R2、R3、R6、R8 的依赖图部分。
+ * R1、R2、R3、R6、R8、R13、R15 的依赖图部分。
  *
  * <p>
  * 真实 Reactor 中的服务模块除 {@code known-deviations.yaml} 登记的既有偏差外必须零违规；另以真实 Reactor 模型加注入的违规模块证明规则在该模型上确实生效，避免空断言；R8 同时以真实
@@ -39,7 +39,7 @@ class ReactorArchitectureAutoTest {
         "paytech-messaging-api", "paytech-messaging", "paytech-internal-auth");
 
     /** 依赖图部分覆盖的规则；登记偏差中属于这些规则的条目必须仍然出现。 */
-    private static final Set<String> GRAPH_RULES = Set.of("R1", "R2", "R3", "R6", "R8");
+    private static final Set<String> GRAPH_RULES = Set.of("R1", "R2", "R3", "R6", "R8", "R15");
 
     private static final Path REACTOR_ROOT = Path.of(System.getProperty("paytech.reactor.root", "../.."))
         .toAbsolutePath().normalize();
@@ -115,6 +115,25 @@ class ReactorArchitectureAutoTest {
         List<RuleViolation> violations = known.unregistered(ArchitectureRules.checkDependencyGraph(modules));
         Assertions.assertEquals(List.of("R8"), violations.stream().map(RuleViolation::ruleId).distinct().toList(),
             () -> describe(violations));
+    }
+
+    /** R15：真实 Reactor 中外部 SDK 只在例外模块；注入一个依赖 AWS SDK 的 core 后规则生效，-test 模块不计。 */
+    @Test
+    void test_externalSdkDependency() {
+        List<MavenModule> modules = new ArrayList<>(new PomReader().readReactor(REACTOR_ROOT));
+        KnownDeviations known = KnownDeviations.loadDefault();
+        Assertions.assertTrue(known.unregistered(ArchitectureRules.checkDependencyGraph(modules)).stream()
+            .noneMatch(violation -> "R15".equals(violation.ruleId())), "真实 Reactor 不应有 R15 违规");
+
+        modules.add(new MavenModule(REACTOR_ROOT.resolve("ledger/paytech-ledger-test"), "com.paytech",
+            "paytech-ledger-test", "jar", List.of(new MavenDependency("io.minio", "minio", "compile")), List.of()));
+        modules.add(new MavenModule(REACTOR_ROOT.resolve("billing/paytech-billing-core"), "com.paytech",
+            "paytech-billing-core", "jar", List.of(new MavenDependency("software.amazon.awssdk", "s3", "compile")),
+            List.of()));
+        List<RuleViolation> violations = known.unregistered(ArchitectureRules.checkDependencyGraph(modules));
+        Assertions.assertEquals(List.of("R15"), violations.stream().map(RuleViolation::ruleId).distinct().toList(),
+            () -> describe(violations));
+        Assertions.assertEquals(1, violations.size(), () -> describe(violations));
     }
 
     private static int declaredModuleCount(MavenModule aggregator, List<MavenModule> modules) {

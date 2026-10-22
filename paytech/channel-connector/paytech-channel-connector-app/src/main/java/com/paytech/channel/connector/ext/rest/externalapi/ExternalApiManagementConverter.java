@@ -11,14 +11,11 @@ import com.paytech.channel.connector.api.enums.ApiFieldLocation;
 import com.paytech.channel.connector.api.enums.ScriptExecutionStage;
 import com.paytech.channel.connector.api.externalapi.request.ApiFieldBody;
 import com.paytech.channel.connector.api.externalapi.request.CreateIntegrationApiRequestBody;
-import com.paytech.channel.connector.api.externalapi.request.CreateIntegrationRequestBody;
 import com.paytech.channel.connector.api.externalapi.request.CreateIntegrationScriptRequestBody;
 import com.paytech.channel.connector.api.externalapi.request.CreateStandardApiRequestBody;
 import com.paytech.channel.connector.api.externalapi.request.DeleteExternalApiConfigRequestBody;
-import com.paytech.channel.connector.api.externalapi.request.IntegrationEndpointBody;
 import com.paytech.channel.connector.api.externalapi.request.ScriptParameterBody;
 import com.paytech.channel.connector.api.externalapi.request.UpdateIntegrationApiRequestBody;
-import com.paytech.channel.connector.api.externalapi.request.UpdateIntegrationRequestBody;
 import com.paytech.channel.connector.api.externalapi.request.UpdateIntegrationScriptRequestBody;
 import com.paytech.channel.connector.api.externalapi.request.UpdateStandardApiRequestBody;
 import com.paytech.channel.connector.api.externalapi.request.ValidateIntegrationApiRequestBody;
@@ -28,35 +25,27 @@ import com.paytech.channel.connector.api.externalapi.response.ApiReferenceDetail
 import com.paytech.channel.connector.api.externalapi.response.ExternalApiMutationResponseBody;
 import com.paytech.channel.connector.api.externalapi.response.IntegrationApiResponseBody;
 import com.paytech.channel.connector.api.externalapi.response.IntegrationApiSummary;
-import com.paytech.channel.connector.api.externalapi.response.IntegrationEndpointDetail;
 import com.paytech.channel.connector.api.externalapi.response.IntegrationReference;
-import com.paytech.channel.connector.api.externalapi.response.IntegrationResponseBody;
 import com.paytech.channel.connector.api.externalapi.response.IntegrationScriptResponseBody;
 import com.paytech.channel.connector.api.externalapi.response.IntegrationScriptSummary;
-import com.paytech.channel.connector.api.externalapi.response.IntegrationSummary;
 import com.paytech.channel.connector.api.externalapi.response.ScriptParameterDetail;
-import com.paytech.channel.connector.api.externalapi.response.StandardApiReference;
 import com.paytech.channel.connector.api.externalapi.response.StandardApiResponseBody;
 import com.paytech.channel.connector.api.externalapi.response.StandardApiSummary;
 import com.paytech.channel.connector.api.externalapi.response.ValidationIssueDetail;
 import com.paytech.channel.connector.api.externalapi.response.ValidationResponseBody;
 import com.paytech.channel.connector.ext.rest.converter.ChannelConfigurationWire;
 import com.paytech.channel.connector.protocol.domain.ConfigurationReference;
-import com.paytech.channel.connector.protocol.domain.EndpointDefinition;
 import com.paytech.channel.connector.protocol.domain.ExternalApiMutation;
 import com.paytech.channel.connector.protocol.domain.FieldDefinition;
 import com.paytech.channel.connector.protocol.domain.IntegrationApiDetailView;
 import com.paytech.channel.connector.protocol.domain.IntegrationApiSummaryView;
-import com.paytech.channel.connector.protocol.domain.IntegrationDetailView;
 import com.paytech.channel.connector.protocol.domain.IntegrationScriptDetailView;
 import com.paytech.channel.connector.protocol.domain.IntegrationScriptSummaryView;
-import com.paytech.channel.connector.protocol.domain.IntegrationSummaryView;
 import com.paytech.channel.connector.protocol.domain.ParameterDeclaration;
 import com.paytech.channel.connector.protocol.domain.StandardApiDetailView;
 import com.paytech.channel.connector.protocol.domain.StandardApiSummaryView;
 import com.paytech.channel.connector.protocol.domain.ValidationIssue;
 import com.paytech.channel.connector.protocol.service.processor.request.CreateIntegrationApiRequest;
-import com.paytech.channel.connector.protocol.service.processor.request.CreateIntegrationRequest;
 import com.paytech.channel.connector.protocol.service.processor.request.CreateIntegrationScriptRequest;
 import com.paytech.channel.connector.protocol.service.processor.request.CreateStandardApiRequest;
 import com.paytech.channel.connector.protocol.service.processor.request.DeleteExternalApiConfigRequest;
@@ -66,7 +55,6 @@ import com.paytech.channel.connector.protocol.service.processor.request.GetInteg
 import com.paytech.channel.connector.protocol.service.processor.request.ListExternalApiConfigRequest;
 import com.paytech.channel.connector.protocol.service.processor.request.ListIntegrationChildrenRequest;
 import com.paytech.channel.connector.protocol.service.processor.request.UpdateIntegrationApiRequest;
-import com.paytech.channel.connector.protocol.service.processor.request.UpdateIntegrationRequest;
 import com.paytech.channel.connector.protocol.service.processor.request.UpdateIntegrationScriptRequest;
 import com.paytech.channel.connector.protocol.service.processor.request.UpdateStandardApiRequest;
 import com.paytech.channel.connector.protocol.service.processor.request.ValidateIntegrationApiRequest;
@@ -115,23 +103,6 @@ public class ExternalApiManagementConverter {
             ExternalApiInputs.text(body.getReason(), 500, "reason"));
     }
 
-    /** 创建接入方：规范化文本并转换出站地址。 */
-    public CreateIntegrationRequest toCreateRequest(String actor, CreateIntegrationRequestBody body) {
-        return new CreateIntegrationRequest(ChannelConfigurationWire.actor(actor), body.getIntegrationCode(),
-            ExternalApiInputs.text(body.getIntegrationName(), 128, "integrationName"),
-            description(body.getDescription()), endpoints(body.getEndpoints()),
-            ExternalApiInputs.text(body.getReason(), 500, "reason"));
-    }
-
-    /** 修改接入方：编码来自路径。 */
-    public UpdateIntegrationRequest toUpdateRequest(String actor, String code,
-        UpdateIntegrationRequestBody body) {
-        return new UpdateIntegrationRequest(ChannelConfigurationWire.actor(actor), ExternalApiInputs.code(code, CODE_LENGTH),
-            ExternalApiInputs.text(body.getIntegrationName(), 128, "integrationName"),
-            description(body.getDescription()), endpoints(body.getEndpoints()), body.getExpectedVersion(),
-            ExternalApiInputs.text(body.getReason(), 500, "reason"));
-    }
-
     /** 写入结果。 */
     public ExternalApiMutationResponseBody toMutation(ExternalApiMutation result) {
         return new ExternalApiMutationResponseBody(result.getObjectType(), result.getObjectCode(), result.getVersion());
@@ -150,22 +121,6 @@ public class ExternalApiManagementConverter {
             fieldDetails(view.getRequestFields()), fieldDetails(view.getResponseFields()),
             integrationReferences(view.getImplementations()), view.getVersion(), view.getCreateTime(),
             view.getUpdateTime(), Long.toString(view.getUpdatedBy()));
-    }
-
-    /** 接入方列表投影。 */
-    public PagingResponseBody<IntegrationSummary> toIntegrationPage(PagingResponseBody<IntegrationSummaryView> page) {
-        return page.map(view -> new IntegrationSummary(view.getCode(), view.getName(), view.getEndpointCount(),
-            view.getApiCount(), view.getScriptCount(), standardApiReferences(view.getImplementedStandardApis()),
-            view.getVersion(), view.getUpdateTime()));
-    }
-
-    /** 接入方详情投影。 */
-    public IntegrationResponseBody toIntegration(IntegrationDetailView view) {
-        var endpoints = view.getEndpoints().stream().map(endpoint -> new IntegrationEndpointDetail(
-            endpoint.getEndpointCode(), endpoint.getBaseUrl(), endpoint.isSandbox(), endpoint.getReferencedApiCodes())).toList();
-        return new IntegrationResponseBody(view.getCode(), view.getName(), view.getDescription(), endpoints,
-            view.getApiCount(), view.getScriptCount(), view.getImplementationCount(), view.getVersion(),
-            view.getCreateTime(), view.getUpdateTime(), Long.toString(view.getUpdatedBy()));
     }
 
     /** 下级配置列表：补齐分页、转义关键字，解析可选的执行阶段筛选。 */
@@ -318,25 +273,15 @@ public class ExternalApiManagementConverter {
             .toList();
     }
 
-    /** 出站地址转为领域定义，保持提交顺序。 */
-    List<EndpointDefinition> endpoints(List<IntegrationEndpointBody> bodies) {
-        return bodies.stream().map(body -> new EndpointDefinition(body.getEndpointCode(), body.getBaseUrl(),
-            Boolean.TRUE.equals(body.getSandbox()))).toList();
-    }
-
     /** 字段定义投影为响应字段。 */
     List<ApiFieldDetail> fieldDetails(List<FieldDefinition> fields) {
         return fields.stream().map(field -> new ApiFieldDetail(field.getLocation().getCode(), field.getPath(),
             field.getName(), field.getDataType().getCode(), field.isRequired(), field.getDescription())).toList();
     }
 
-    /** 接入方引用投影。 */
+    /** 渠道引用投影。 */
     List<IntegrationReference> integrationReferences(List<ConfigurationReference> references) {
         return references.stream().map(item -> new IntegrationReference(item.getCode(), item.getName())).toList();
     }
 
-    /** 标准 API 引用投影。 */
-    List<StandardApiReference> standardApiReferences(List<ConfigurationReference> references) {
-        return references.stream().map(item -> new StandardApiReference(item.getCode(), item.getName())).toList();
-    }
 }

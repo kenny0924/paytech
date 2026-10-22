@@ -12,8 +12,10 @@ import com.paytech.channel.connector.domain.ChannelExecutionContext;
 import com.paytech.channel.connector.domain.ChannelOperationResult;
 import com.paytech.channel.connector.domain.PayOutputs;
 import com.paytech.channel.connector.domainservice.repository.*;
+import com.paytech.channel.connector.protocol.domainservice.service.ChannelService;
 import com.paytech.channel.connector.protocol.domain.execution.ExecutionResult;
 import com.paytech.channel.connector.protocol.domain.execution.JsonValues;
+import com.paytech.channel.connector.protocol.core.enums.StandardApiNotSentCode;
 import com.paytech.channel.connector.protocol.domain.execution.StandardApiNotSentException;
 import com.paytech.channel.connector.protocol.service.processor.ExecuteStandardApiProcessor;
 import com.paytech.channel.connector.protocol.service.processor.request.ExecuteStandardApiRequest;
@@ -30,10 +32,14 @@ import tools.jackson.databind.json.JsonMapper;
  * Channel/Account/MID 后，把账号身份与 Vault 引用作为标准 API 输入，在事务外调用 protocol 的标准 API 执行入口。
  *
  * <p>
- * 接入方编码沿用渠道编码（channel_code，例如 PAYERMAX）；标准 API 编码取渠道操作代码（PAY → PAY）。账号配置的 Vault Reveal 与读卡由
+ * 渠道编码沿用渠道编码（channel_code，例如 PAYERMAX）；标准 API 编码取渠道操作代码（PAY → PAY）。账号配置的 Vault Reveal 与读卡由
  * protocol 初始化函数以 channel-connector-service 身份完成，本类不接触明文。冻结坐标不可用、账号或 MID 的 OE 与请求不一致、账号未配置时
  * 不发出请求，返回 NOT_SENT；protocol 保证未发出的失败（{@link StandardApiNotSentException}）同为 NOT_SENT，其余失败一律结果未知。
  * 输出按 PAY 合同解释为已映射结论（{@link PayOutputs}，D06）。本入口无数据库写入，在调用方事务之外执行，不自动重试。
+ *
+ * <p>
+ * 只接受支付渠道：冻结渠道为服务渠道时不发出请求，按“配置无效”返回 NOT_SENT（failureCode INTEGRATION_CONFIG_INVALID）。
+ * 执行在支付渠道执行舱中进行；访问日志的调用方记为 Payment（{@value #PAYMENT_CALLER}）。
  */
 @Slf4j
 @Component
@@ -41,11 +47,14 @@ public class ExecuteChannelOperationProcessor
     extends AbstractChannelExecutionProcessor<ExecuteChannelOperationRequest, ChannelOperationResult> {
     private static final JsonMapper JSON = JsonMapper.builder().build();
 
+    /** 支付入口在对外调用访问日志中的调用方；支付入口只供 Payment 调用。 */
+    static final String PAYMENT_CALLER = "payment-service";
+
     private final ExecuteStandardApiProcessor executeStandardApiProcessor;
 
     /** 注入冻结坐标校验与 protocol 标准 API 执行入口。 */
     public ExecuteChannelOperationProcessor(ChannelProperties properties, ChannelMidRepository mids,
-        MidCapabilityRepository capabilities, ChannelAccountRepository accounts, PaymentChannelRepository channels,
+        MidCapabilityRepository capabilities, ChannelAccountRepository accounts, ChannelService channels,
         PlatformTransactionManager transactionManager, MidCapabilityDetailRepository details,
         ExecuteStandardApiProcessor executeStandardApiProcessor) {
         super(properties, mids, capabilities, accounts, channels, transactionManager, details);
@@ -61,6 +70,9 @@ public class ExecuteChannelOperationProcessor
     /** 校验冻结坐标（本地一致读取）后在事务外执行标准 API；坐标不可用时不发出请求。 */
     @Override
     protected ChannelOperationResult processRequest(ExecuteChannelOperationRequest request) {
+        if (serviceChannel(request.getTarget().getChannelId())) {
+            return ChannelOperationResult.notSent(StandardApiNotSentCode.INTEGRATION_CONFIG_INVALID.getCode());
+        }
         ChannelExecutionContext context;
         try {
             context = readChecked(request.getTarget());
@@ -81,7 +93,7 @@ public class ExecuteChannelOperationProcessor
      * <li>其余异常可能发生在渠道请求发出之后，一律按结果未知处理并只记录异常类型，不带请求或响应报文。</li>
      *
      * @param standardApiCode 标准 API 编码
-     * @param integrationCode 接入方编码（渠道编码）
+     * @param integrationCode 渠道编码（渠道编码）
      * @param input 标准 API 输入，含账号身份与 Vault 引用，不含卡值与账号明文
      * @return 已映射的执行结论
      */
@@ -89,7 +101,7 @@ public class ExecuteChannelOperationProcessor
         ExecutionResult result;
         try {
             result = executeStandardApiProcessor.process(
-                new ExecuteStandardApiRequest(standardApiCode, integrationCode, JSON.valueToTree(input)));
+                new ExecuteStandardApiRequest(standardApiCode, integrationCode, JSON.valueToTree(input), PAYMENT_CALLER));
         } catch (StandardApiNotSentException notSent) {
             return ChannelOperationResult.notSent(notSent.getCode());
         } catch (RuntimeException failure) {

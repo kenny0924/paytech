@@ -26,7 +26,7 @@ public class StandardApiDetailView {
     /** 响应字段，按显示顺序。 */
     private final List<FieldDefinition> responseFields;
 
-    /** 已实现的接入方，按编码排序。 */
+    /** 已实现的渠道，按编码排序。 */
     private final List<ConfigurationReference> implementations;
 
     /** 当前版本。 */

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.channel.connector.protocol.core.dal.mapper.ChannelApiMapper">
+    <sql id="columns">channel_api_id channelApiId, channel_id channelId, api_code apiCode, api_name apiName, description description, definition_json definitionJson, version version, created_by createdBy, updated_by updatedBy, create_time createTime, update_time updateTime</sql>
+    <sql id="filter">WHERE channel_id=#{channelId}<if test="keyword != null"> AND (CONVERT(api_code USING utf8mb4) COLLATE utf8mb4_bin LIKE #{keyword} ESCAPE '!' OR api_name LIKE #{keyword} ESCAPE '!')</if></sql>
+    <select id="byCode" resultType="com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelApi" useCache="false">
+        SELECT <include refid="columns"/> FROM t_channel_api WHERE channel_id=#{channelId} AND api_code=#{code}
+    </select>
+    <select id="lock" resultType="com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelApi" useCache="false" flushCache="true">
+        SELECT <include refid="columns"/> FROM t_channel_api WHERE channel_id=#{channelId} AND api_code=#{code} FOR UPDATE
+    </select>
+    <select id="allByChannel" resultType="com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelApi" useCache="false">
+        SELECT <include refid="columns"/> FROM t_channel_api WHERE channel_id=#{channelId} ORDER BY api_code
+    </select>
+    <select id="list" resultType="com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelApi" useCache="false">
+        SELECT <include refid="columns"/> FROM t_channel_api <include refid="filter"/>
+        ORDER BY api_code, channel_api_id LIMIT #{size} OFFSET #{offset}
+    </select>
+    <select id="count" resultType="long" useCache="false">SELECT COUNT(*) FROM t_channel_api <include refid="filter"/></select>
+    <select id="countByChannels" resultType="com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelChildCount" useCache="false">
+        SELECT channel_id channelId, COUNT(*) childCount FROM t_channel_api WHERE channel_id IN
+        <foreach collection="channelIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        GROUP BY channel_id
+    </select>
+    <!-- 只抽取出站地址代码，不加载完整执行定义。 -->
+    <select id="endpointReferences" resultType="com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelApiEndpoint" useCache="false">
+        SELECT api_code apiCode, JSON_UNQUOTE(JSON_EXTRACT(definition_json, '$.transport.endpointCode')) endpointCode
+        FROM t_channel_api WHERE channel_id=#{channelId} ORDER BY api_code
+    </select>
+    <insert id="insert">
+        INSERT INTO t_channel_api(channel_api_id,channel_id,api_code,api_name,description,definition_json,version,created_by,updated_by,create_time,update_time)
+        VALUES(#{row.channelApiId},#{row.channelId},#{row.apiCode},#{row.apiName},#{row.description},#{row.definitionJson},#{row.version},#{row.createdBy},#{row.updatedBy},#{row.createTime},#{row.updateTime})
+    </insert>
+    <update id="update">
+        UPDATE t_channel_api SET api_name=#{apiName}, description=#{description}, definition_json=#{definitionJson},
+        version=version+1, updated_by=#{updatedBy}, update_time=#{updateTime}
+        WHERE channel_api_id=#{row.channelApiId} AND version=#{row.version}
+    </update>
+    <delete id="delete">
+        DELETE FROM t_channel_api WHERE channel_api_id=#{row.channelApiId} AND version=#{row.version}
+    </delete>
+</mapper>

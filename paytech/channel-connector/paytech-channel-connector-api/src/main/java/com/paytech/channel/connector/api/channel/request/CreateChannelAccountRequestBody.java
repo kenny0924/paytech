@@ -19,8 +19,8 @@ public class CreateChannelAccountRequestBody {
     /**
      * 所属 Operating Entity 编号
      * <li>两位大写国家代码加三位数字，如 AE001；本期只校验格式，不向 CCT 核对存在性。创建后不可修改。</li>
+     * <li>支付渠道必填；服务渠道的账号（凭据）不绑定 OE，必须为空。不满足时 400。</li>
      */
-    @NotBlank(message = "OE 编号必填")
     @Pattern(regexp = "[A-Z]{2}[0-9]{3}", message = "OE 编号必须是两位大写字母加三位数字")
     private String entityNo;
 

@@ -13,7 +13,8 @@ import type { CapabilityDefinition, CostPlan, ScopeDraft } from './channel.ts';
 
 const time = '2026-10-20T01:00:00Z';
 const hash = 'a'.repeat(64);
-const channelSummary = { channelId: '7300000000000000001', channelCode: 'PAYERMAX', channelName: 'PayerMax', status: 'ACTIVE', accountCount: 2, midCount: 3, updateTime: time };
+const channelSummary = { channelId: '7300000000000000001', channelCode: 'PAYERMAX', channelName: 'PayerMax', channelType: 'PAYMENT', status: 'ACTIVE', accountCount: 2,
+  midCount: 3, endpointCount: 2, activeGrantCount: null, updateTime: time };
 const account = { channelAccountId: '7312001', channelId: '7300000000000000001', entityNo: 'AE001', accountName: '主账号', status: 'ACTIVE', remark: null,
   configured: true, vaultTokenSuffix: '7Q2x', boundMidCount: 3, createTime: time, updateTime: time };
 const mid = { midId: '7401001', channelId: '7300000000000000001', channelAccountId: '7312001', externalMidCode: 'PM-AE001-CARD', entityNo: 'AE001',
@@ -45,7 +46,9 @@ test('页面注册：三页、按钮码与详情路由和块 92 一致', () => {
     Object.values(channelButtons).sort());
   const menu = (componentKey: string, frontendRoute: string) => ({ resourceId: '1', resourceCode: componentKey, resourceType: 'MENU' as const,
     parentResourceId: null, displayName: '', frontendRoute, componentKey, sortOrder: 1 });
-  assert.deepEqual(pageRoutePaths(menu('OPERATIONS_CHANNEL_CHANNELS', '/channel/channels')), ['/channel/channels', '/channel/channels/:channelId']);
+  assert.deepEqual(pageRoutePaths(menu('OPERATIONS_CHANNEL_CHANNELS', '/channel/channels')), ['/channel/channels', '/channel/channels/:channelId',
+    '/channel/channels/code/:channelCode',
+    '/channel/channels/code/:channelCode/protocol/:section/:childCode', '/channel/channels/:channelId/protocol/:section/:childCode', '/channel/channels/:channelId/verify/:section/:childCode']);
   assert.deepEqual(pageRoutePaths(menu('OPERATIONS_CHANNEL_MIDS', '/channel/mids')), ['/channel/mids', '/channel/mids/:midId']);
   assert.deepEqual(pageRoutePaths(menu('OPERATIONS_CHANNEL_COST_PLANS', '/channel/cost-plans')),
     ['/channel/cost-plans', '/channel/cost-plans/:planCode', '/channel/cost-plans/:planCode/versions/:costVer']);
@@ -70,6 +73,9 @@ test('解码：合法响应通过，身份不一致、缺字段或非法状态�
     assert.throws(invalid, (error: unknown) => error instanceof ApiError && error.status === 502);
   }
   assert.equal(decodeAccount({ ...account, vaultTokenSuffix: undefined, configured: false }).vaultTokenSuffix, null);
+  // 服务渠道凭据不绑定 OE
+  assert.equal(decodeAccount({ ...account, entityNo: null }).entityNo, null);
+  assert.throws(() => decodeAccount({ ...account, entityNo: 'ae001' }));
 });
 
 test('状态按钮：只显示当前状态允许的下一步，CLOSED 与无权限无操作', () => {

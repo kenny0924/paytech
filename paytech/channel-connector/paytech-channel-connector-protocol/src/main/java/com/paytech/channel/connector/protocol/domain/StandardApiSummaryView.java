@@ -23,7 +23,7 @@ public class StandardApiSummaryView {
     /** 响应字段数。 */
     private final int responseFieldCount;
 
-    /** 已实现的接入方，按编码排序。 */
+    /** 已实现的渠道，按编码排序。 */
     private final List<ConfigurationReference> implementedBy;
 
     /** 当前版本。 */

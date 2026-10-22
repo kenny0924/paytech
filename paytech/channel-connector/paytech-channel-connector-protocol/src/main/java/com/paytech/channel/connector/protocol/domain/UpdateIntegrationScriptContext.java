@@ -3,7 +3,7 @@ package com.paytech.channel.connector.protocol.domain;
 import java.time.Instant;
 
 import com.paytech.channel.connector.api.enums.ScriptExecutionStage;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationScript;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelScript;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -14,7 +14,7 @@ import lombok.Getter;
 public class UpdateIntegrationScriptContext {
 
     /** 已锁定并核对版本的脚本，保存成功后同步新版本。 */
-    private final IntegrationScript integrationScript;
+    private final ChannelScript integrationScript;
 
     /** 新名称。 */
     private final String name;

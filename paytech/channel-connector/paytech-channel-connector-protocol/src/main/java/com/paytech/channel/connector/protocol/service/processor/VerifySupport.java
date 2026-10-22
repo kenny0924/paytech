@@ -10,9 +10,9 @@ import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.channel.connector.api.enums.VerifyCaseStatus;
 import com.paytech.channel.connector.api.enums.VerifyRunStatus;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationVerifyAccount;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationVerifyCase;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationVerifyRun;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelVerifyAccount;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelVerifyCase;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelVerifyRun;
 import com.paytech.channel.connector.protocol.domain.ValidationIssue;
 import com.paytech.channel.connector.protocol.domain.execution.ExecutionSnapshot;
 import com.paytech.channel.connector.protocol.domain.execution.StandardApiNotSentException;
@@ -96,7 +96,7 @@ public class VerifySupport {
     }
 
     /** 账号身份对象，供模板变量 account.identity 使用。 */
-    JsonNode identity(IntegrationVerifyAccount account) {
+    JsonNode identity(ChannelVerifyAccount account) {
         ObjectNode identity = json.createObjectNode();
         identity.put("channelCode", account.getChannelCode());
         identity.put("channelAccountId", account.getChannelAccountId());
@@ -106,15 +106,15 @@ public class VerifySupport {
     }
 
     /** 保存时渲染模板用的示例值。 */
-    VerifyTemplateRenderer.Scope sampleScope(IntegrationVerifyAccount account) {
+    VerifyTemplateRenderer.Scope sampleScope(ChannelVerifyAccount account) {
         return new VerifyTemplateRenderer.Scope("1000000000000000001", "2026-01-01T00:00:00Z", identity(account),
             Map.of());
     }
 
     /**
-     * 步骤中出现的标准 API 在本接入方的实现合同；没有实现或配置未通过运行前校验的不在结果中。
+     * 步骤中出现的标准 API 在本渠道的实现合同；没有实现或配置未通过运行前校验的不在结果中。
      *
-     * @param integrationCode 接入方编码
+     * @param integrationCode 渠道编码
      * @param steps steps_json（可能不合法，只取字符串编码）
      * @return 标准 API 编码 → 合同
      */
@@ -158,11 +158,11 @@ public class VerifySupport {
      * @param run 已结束的运行
      * @param currentCase 当前用例；已删除为 null
      * @param currentAccount 当前账号；已删除为 null
-     * @param integrationCode 接入方编码
+     * @param integrationCode 渠道编码
      * @param current 本次请求内的当前配置版本缓存：标准 API 编码 → 版本 JSON（加载失败为 null）
      * @return 已变更为 true
      */
-    boolean stale(IntegrationVerifyRun run, IntegrationVerifyCase currentCase, IntegrationVerifyAccount currentAccount,
+    boolean stale(ChannelVerifyRun run, ChannelVerifyCase currentCase, ChannelVerifyAccount currentAccount,
         String integrationCode, Map<String, JsonNode> current) {
         JsonNode snapshot = tree(run.getCaseSnapshotJson());
         JsonNode recorded = tree(run.getConfigVersionsJson());
@@ -193,7 +193,7 @@ public class VerifySupport {
      * @param stale 已结束运行之后是否发生变更（只在其通过时使用）
      * @return 验证状态
      */
-    static VerifyCaseStatus status(IntegrationVerifyRun latest, IntegrationVerifyRun finished, boolean stale) {
+    static VerifyCaseStatus status(ChannelVerifyRun latest, ChannelVerifyRun finished, boolean stale) {
         if (latest != null && latest.getRunStatus() == VerifyRunStatus.RUNNING) {
             return VerifyCaseStatus.RUNNING;
         }
@@ -207,21 +207,21 @@ public class VerifySupport {
     }
 
     /** 用例视图。 */
-    VerifyCaseView caseView(IntegrationVerifyCase row, String accountCode, VerifyCaseStatus status,
-        IntegrationVerifyRun latest) {
+    VerifyCaseView caseView(ChannelVerifyCase row, String accountCode, VerifyCaseStatus status,
+        ChannelVerifyRun latest) {
         JsonNode steps = tree(row.getStepsJson());
         return new VerifyCaseView(row.getCaseCode(), row.getCaseName(), row.getDescription(), accountCode, steps,
             standardApiCodes(steps), status, brief(latest), row.getVersion(), row.getCreateTime(),
             row.getUpdateTime(), row.getUpdatedBy());
     }
 
-    static VerifyRunBriefView brief(IntegrationVerifyRun run) {
+    static VerifyRunBriefView brief(ChannelVerifyRun run) {
         return run == null ? null
             : new VerifyRunBriefView(run.getVerifyRunId(), run.getRunStatus(), run.getStartTime(), run.getFinishTime());
     }
 
     /** 账号视图；列表项不带参数与凭据。 */
-    VerifyAccountView accountView(IntegrationVerifyAccount row, List<String> referencedCaseCodes, boolean detail) {
+    VerifyAccountView accountView(ChannelVerifyAccount row, List<String> referencedCaseCodes, boolean detail) {
         return new VerifyAccountView(row.getAccountCode(), row.getAccountName(), row.getChannelCode(),
             row.getChannelAccountId(), row.getEntityNo(), detail ? map(row.getParameters()) : Map.of(),
             detail ? map(row.getCredentials()) : Map.of(), referencedCaseCodes, row.getVersion(), row.getCreateTime(),
@@ -234,7 +234,7 @@ public class VerifySupport {
     }
 
     /** 用例快照：运行原因、用例与账号版本、步骤（不含凭据）。 */
-    String caseSnapshot(IntegrationVerifyCase verifyCase, IntegrationVerifyAccount account, String integrationCode,
+    String caseSnapshot(ChannelVerifyCase verifyCase, ChannelVerifyAccount account, String integrationCode,
         String reason) {
         ObjectNode snapshot = json.createObjectNode();
         snapshot.put("reason", reason);

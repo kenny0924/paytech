@@ -75,6 +75,9 @@ const stepRemovedTables = [
   // drop their read-only t_currency_spec copies and read Platform into an in-process snapshot instead.
   { service: 'ledger', database: 'mor_ledger', tables: ['t_currency_spec'] },
   { service: 'billing', database: 'mor_billing', tables: ['t_currency_spec'] },
+  // 2026-10-22 统一对外渠道出口第二段（technique 第 5.1 节）：t_payment_channel 改名为 t_channel 并并入接入方，
+  // 新表名在下方 stepAddedTables 登记。
+  { service: 'channel-connector', database: 'mor_channel_connector', tables: ['t_payment_channel'] },
 ];
 // Tables introduced by a refactor step's approved design on top of design 03 §2 (not part of the §4.2 count).
 const stepAddedTables = [
@@ -125,15 +128,16 @@ const stepAddedTables = [
       't_consumed_aggregate_version'],
   },
   // Same refactor: the channel cost plan, version, scope and component tables are owned by channel-connector (17 tables).
-  // 2026-10-20 统一对外渠道出口第一段：渠道协议 10 表自 platform-support 迁入（连同下方变更记录表共 28 张）；
-  // Platform 的表由其 Schema 自动推导。
+  // 2026-10-20 统一对外渠道出口第一段：渠道协议 10 表自 platform-support 迁入；Platform 的表由其 Schema 自动推导。
+  // 2026-10-22 第二段（technique 第 5.1 节）：t_payment_channel 改名 t_channel（上方 stepRemovedTables 移除旧名）并合并
+  // t_integration；t_integration_* 7 表改名为 t_channel_*；新增 t_channel_call_grant。连同下方变更记录表共 28 张。
   {
     service: 'channel-connector',
     database: 'mor_channel_connector',
     tables: ['t_channel_cost_plan', 't_channel_cost_plan_ver', 't_channel_cost_scope', 't_channel_cost_component',
-      't_standard_api', 't_api_field', 't_integration', 't_integration_api', 't_integration_script',
-      't_integration_standard_api', 't_integration_verify_account', 't_integration_verify_case',
-      't_integration_verify_run', 't_integration_verify_run_step'],
+      't_standard_api', 't_api_field', 't_channel', 't_channel_api', 't_channel_script', 't_channel_standard_api',
+      't_channel_verify_account', 't_channel_verify_case', 't_channel_verify_run', 't_channel_verify_run_step',
+      't_channel_call_grant'],
   },
   // 2026-10-20 channel-connector Operations console (commit 5f12cf3e listed it in the YAML by hand; registered here so the
   // generator reproduces the committed file): channel configuration change records in mor_channel_connector.

@@ -6,15 +6,12 @@ import com.paytech.channel.connector.api.enums.ScriptExecutionStage;
 import com.paytech.channel.connector.api.externalapi.request.ApiFieldBody;
 import com.paytech.channel.connector.api.externalapi.request.CreateImplementationRequestBody;
 import com.paytech.channel.connector.api.externalapi.request.CreateIntegrationApiRequestBody;
-import com.paytech.channel.connector.api.externalapi.request.CreateIntegrationRequestBody;
 import com.paytech.channel.connector.api.externalapi.request.CreateIntegrationScriptRequestBody;
 import com.paytech.channel.connector.api.externalapi.request.CreateStandardApiRequestBody;
 import com.paytech.channel.connector.api.externalapi.request.DeleteExternalApiConfigRequestBody;
-import com.paytech.channel.connector.api.externalapi.request.IntegrationEndpointBody;
 import com.paytech.channel.connector.api.externalapi.request.ScriptParameterBody;
 import com.paytech.channel.connector.api.externalapi.request.UpdateImplementationRequestBody;
 import com.paytech.channel.connector.api.externalapi.request.UpdateIntegrationApiRequestBody;
-import com.paytech.channel.connector.api.externalapi.request.UpdateIntegrationRequestBody;
 import com.paytech.channel.connector.api.externalapi.request.UpdateIntegrationScriptRequestBody;
 import com.paytech.channel.connector.api.externalapi.request.UpdateStandardApiRequestBody;
 import com.paytech.channel.connector.api.externalapi.request.ValidateImplementationRequestBody;
@@ -53,22 +50,6 @@ public final class ExternalApiRequests {
     public static UpdateStandardApiRequestBody updateStandardApi(String name, List<ApiFieldBody> requestFields,
         List<ApiFieldBody> responseFields, int expectedVersion) {
         return new UpdateStandardApiRequestBody(name, null, requestFields, responseFields, expectedVersion, REASON);
-    }
-
-    /** 样例出站地址的接入方创建请求。 */
-    public static CreateIntegrationRequestBody createIntegration(String code) {
-        return createIntegration(code, ExternalApiSamples.endpoints());
-    }
-
-    /** 指定出站地址的接入方创建请求。 */
-    public static CreateIntegrationRequestBody createIntegration(String code, List<IntegrationEndpointBody> endpoints) {
-        return new CreateIntegrationRequestBody(code, code + " 渠道", null, endpoints, REASON);
-    }
-
-    /** 接入方修改请求。 */
-    public static UpdateIntegrationRequestBody updateIntegration(String name, List<IntegrationEndpointBody> endpoints,
-        int expectedVersion) {
-        return new UpdateIntegrationRequestBody(name, null, endpoints, expectedVersion, REASON);
     }
 
     /** 样例字段、指定定义的原子 API 创建请求。 */

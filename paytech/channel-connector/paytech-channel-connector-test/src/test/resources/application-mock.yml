@@ -15,7 +15,7 @@ spring:
         simple:
           instances:
             # 同一独立 Mock HTTP 服务承载 Vault（账号配置读取与 Protect）与 card-service 读卡正式合同；
-            # 合成外部渠道也在同一服务的 /channel 前缀下，接入方出站地址由用例写入。
+            # 合成外部渠道也在同一服务的 /channel 前缀下，渠道出站地址由用例写入。
             vault-service:
               - uri: "${test.mock-http.base-url}"
             card-service:
@@ -123,6 +123,9 @@ channel-connector:
     execution:
       allowed-schemes: [https, http] # 默认只允许 https；只在本机 mock 加入 http，执行测试的出站地址指向本机 Mock 渠道。
       card-context-path: "" # 读卡请求地址 http://card-service{本值}/...；测试 Mock HTTP 服务承载 card 合同，card 本身也无 context path。
+      payment-max-concurrency: 64 # 支付渠道执行舱并发上限，默认 64；拿不到许可不排队，支付入口为 NOT_SENT。
+      service-max-concurrency: 2 # 服务渠道执行舱并发上限，默认 16；测试取 2 以便用两个挂起请求占满执行舱验证隔离。
+      trusted-networks: [127.0.0.1/32] # 出站地址放行网段，默认空；测试渠道 Mock 监听 127.0.0.1 随机端口，只放行该地址。
   identifier:
     # Snowflake Region / Worker 标识（渠道配置、成本、外部 API 配置主键与测试 Fixture 主键）；生产无默认值且必填，修改需重启。测试进程固定 31/29。
     region-id: 31

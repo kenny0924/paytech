@@ -15,11 +15,11 @@ import com.paytech.foundation.compensation.api.CompensationHandlerResult;
 import com.paytech.channel.connector.api.enums.VerifyRunStatus;
 import com.paytech.channel.connector.api.externalapi.request.CreateVerifyAccountRequestBody;
 import com.paytech.channel.connector.api.externalapi.request.CreateVerifyCaseRequestBody;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.Integration;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.IntegrationVerifyRun;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationVerifyCaseRepository;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationVerifyRunRepository;
-import com.paytech.channel.connector.protocol.domainservice.repository.IntegrationVerifyRunStepRepository;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.Channel;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.ChannelVerifyRun;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelVerifyCaseRepository;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelVerifyRunRepository;
+import com.paytech.channel.connector.protocol.domainservice.repository.ChannelVerifyRunStepRepository;
 import com.paytech.channel.connector.protocol.ext.eventhandler.IntegrationVerifyRunHandler;
 import com.paytech.channel.connector.test.base.ExternalApiTestBase;
 import com.paytech.channel.connector.test.builder.ExternalApiFixtures;
@@ -45,20 +45,20 @@ class IntegrationVerifyRunHandlerTest extends ExternalApiTestBase {
     private IdGenerator ids;
 
     @Autowired
-    private IntegrationVerifyRunRepository runs;
+    private ChannelVerifyRunRepository runs;
 
     @Autowired
-    private IntegrationVerifyRunStepRepository steps;
+    private ChannelVerifyRunStepRepository steps;
 
     @Autowired
-    private IntegrationVerifyCaseRepository cases;
+    private ChannelVerifyCaseRepository cases;
 
-    private Integration integration;
+    private Channel integration;
 
-    /** 本类公共：沙箱接入方实现 PAY，验证账号 MAIN 与单步用例 PAY_ONCE。 */
+    /** 本类公共：沙箱渠道实现 PAY，验证账号 MAIN 与单步用例 PAY_ONCE。 */
     @BeforeEach
     void setUpClassMocks() {
-        integration = externalApi.integration("SANDBOX", mockHttpServer.baseUrl() + ChannelMockController.PREFIX + "/api",
+        integration = externalApi.channel("SANDBOX", mockHttpServer.baseUrl() + ChannelMockController.PREFIX + "/api",
             true);
         externalApi.integrationApi(integration, "CALL", ExternalApiSamples.createOrderDefinition());
         externalApi.implementation(integration, externalApi.standardApi("PAY"), ExternalApiFixtures.flow("call-create-order"));
@@ -75,7 +75,7 @@ class IntegrationVerifyRunHandlerTest extends ExternalApiTestBase {
     /** 第一次执行：调用渠道并写入 PASSED 与步骤；再次投递同一事件不再执行。 */
     @Test
     void test_firstExecution() {
-        IntegrationVerifyRun run = run();
+        ChannelVerifyRun run = run();
         channel.respond("POST", "/api/outlets/outlet-1/orders", 201, "{\"reference\":\"r-1\",\"state\":\"CAPTURED\"}");
 
         assertEquals(CompensationHandlerResult.success(), handler.handle(event(run, 1)));
@@ -89,10 +89,10 @@ class IntegrationVerifyRunHandlerTest extends ExternalApiTestBase {
     /** 第二次执行说明前一次中断：记 INTERRUPTED，不写步骤，渠道零请求。 */
     @Test
     void test_interruptedNotReplayed() {
-        IntegrationVerifyRun run = run();
+        ChannelVerifyRun run = run();
 
         assertEquals(CompensationHandlerResult.success(), handler.handle(event(run, 2)));
-        IntegrationVerifyRun stored = runs.byId(run.getVerifyRunId());
+        ChannelVerifyRun stored = runs.byId(run.getVerifyRunId());
         assertAll(() -> assertEquals(VerifyRunStatus.INTERRUPTED, stored.getRunStatus()),
             () -> assertNotNull(stored.getFinishTime()), () -> assertTrue(steps.byRun(run.getVerifyRunId()).isEmpty()),
             () -> assertTrue(channel.requests().isEmpty()));
@@ -109,21 +109,21 @@ class IntegrationVerifyRunHandlerTest extends ExternalApiTestBase {
     }
 
     /** 按 V12 相同的快照形状插入 RUNNING 运行（不登记补偿任务）。 */
-    private IntegrationVerifyRun run() {
-        var verifyCase = cases.byCode(integration.getIntegrationId(), "PAY_ONCE");
+    private ChannelVerifyRun run() {
+        var verifyCase = cases.byCode(integration.getChannelId(), "PAY_ONCE");
         var now = Instant.now().truncatedTo(ChronoUnit.MICROS);
         String snapshot = """
             {"integrationCode":"SANDBOX","caseCode":"PAY_ONCE","caseName":"用例","caseVersion":1,"accountId":%d,
              "accountCode":"MAIN","accountVersion":1,"steps":%s}""".formatted(verifyCase.getVerifyAccountId(),
             verifyCase.getStepsJson());
-        var run = new IntegrationVerifyRun(ids.nextId(), verifyCase.getVerifyCaseId(),
-            integration.getIntegrationId(), VerifyRunStatus.RUNNING, snapshot, null, null, null, 1L, now, null, now, now);
+        var run = new ChannelVerifyRun(ids.nextId(), verifyCase.getVerifyCaseId(),
+            integration.getChannelId(), VerifyRunStatus.RUNNING, snapshot, null, null, null, 1L, now, null, now, now);
         runs.insert(run);
         return run;
     }
 
     /** 指向运行的补偿事件，执行次数由用例指定。 */
-    private static CompensationEvent event(IntegrationVerifyRun run, int executeCount) {
+    private static CompensationEvent event(ChannelVerifyRun run, int executeCount) {
         return new CompensationEvent(1, Long.toString(run.getVerifyRunId()), "INTEGRATION_VERIFY_RUN", "-", null,
             executeCount);
     }

@@ -27,14 +27,34 @@ public class ExecutionContext {
     private final Map<String, Object> resources = new LinkedHashMap<>();
     private final Map<String, Object> steps = new LinkedHashMap<>();
     private final VerificationScope verification;
+    private final String callerService;
 
+    /** 无调用方标识的执行（纯规则验证）。 */
     public ExecutionContext(Map<String, Object> input) {
-        this(input, null);
+        this(input, null, null);
     }
 
+    /** 无调用方标识的执行，可带沙箱验证附加项。 */
     public ExecutionContext(Map<String, Object> input, VerificationScope verification) {
+        this(input, verification, null);
+    }
+
+    /**
+     * 一次执行的上下文
+     *
+     * @param input 已按标准 API 请求字段转换的输入
+     * @param verification 沙箱验证附加项；正式执行为 null
+     * @param callerService 调用方服务名，只用于对外调用访问日志
+     */
+    public ExecutionContext(Map<String, Object> input, VerificationScope verification, String callerService) {
         this.input = input;
         this.verification = verification;
+        this.callerService = callerService;
+    }
+
+    /** 调用方服务名，只用于对外调用访问日志；可能为空。 */
+    public String getCallerService() {
+        return callerService;
     }
 
     /** 沙箱验证附加项；正式执行为 null。 */

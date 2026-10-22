@@ -9,7 +9,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum ChangeTargetType implements CodeEnum {
-    /** 支付渠道（t_payment_channel） */
+    /** 渠道（t_channel）：创建、名称与说明修改、状态变更与出站地址替换（CONFIGURATION） */
     CHANNEL("CHANNEL"),
 
     /** 渠道技术账号（t_channel_account） */
@@ -27,23 +27,29 @@ public enum ChangeTargetType implements CodeEnum {
     /** 标准 API（t_standard_api） */
     STANDARD_API("STANDARD_API"),
 
-    /** 接入方（t_integration） */
+    /**
+     * 原外部接入方（已并入 t_channel）
+     * <li>只为读取第二段合表前、已删除接入方的历史记录保留，不再写入；能对应到渠道的历史记录已迁移为 CHANNEL。</li>
+     */
     INTEGRATION("INTEGRATION"),
 
-    /** 渠道原子 API（t_integration_api） */
-    INTEGRATION_API("INTEGRATION_API"),
+    /** 渠道原子 API（t_channel_api） */
+    CHANNEL_API("CHANNEL_API"),
 
-    /** 接入方公共脚本（t_integration_script） */
-    INTEGRATION_SCRIPT("INTEGRATION_SCRIPT"),
+    /** 渠道公共脚本（t_channel_script） */
+    CHANNEL_SCRIPT("CHANNEL_SCRIPT"),
 
-    /** 标准 API 实现（t_integration_standard_api） */
-    INTEGRATION_IMPLEMENTATION("INTEGRATION_IMPLEMENTATION"),
+    /** 渠道标准 API 实现（t_channel_standard_api） */
+    CHANNEL_IMPLEMENTATION("CHANNEL_IMPLEMENTATION"),
 
-    /** 沙箱验证账号（t_integration_verify_account） */
+    /** 沙箱验证账号（t_channel_verify_account） */
     VERIFY_ACCOUNT("VERIFY_ACCOUNT"),
 
-    /** 沙箱验证用例（t_integration_verify_case） */
-    VERIFY_CASE("VERIFY_CASE");
+    /** 沙箱验证用例（t_channel_verify_case） */
+    VERIFY_CASE("VERIFY_CASE"),
+
+    /** 服务渠道调用授权（t_channel_call_grant） */
+    CHANNEL_CALL_GRANT("CHANNEL_CALL_GRANT");
 
     /** 数据库存储及业务比较使用的稳定代码。 */
     private final String code;

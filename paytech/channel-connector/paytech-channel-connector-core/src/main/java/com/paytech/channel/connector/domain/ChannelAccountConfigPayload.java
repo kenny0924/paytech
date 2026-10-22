@@ -8,7 +8,7 @@ import java.util.HexFormat;
 import java.util.Map;
 
 import com.paytech.channel.connector.core.dal.dataobject.ChannelAccount;
-import com.paytech.channel.connector.core.dal.dataobject.PaymentChannel;
+import com.paytech.channel.connector.protocol.domain.ChannelIdentity;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.jsoncanonicalization.api.Rfc8785JsonCanonicalizer;
 
@@ -63,7 +63,7 @@ public final class ChannelAccountConfigPayload {
      * @param credentials 已校验的凭据
      * @return 规范原值与幂等键
      */
-    public static ChannelAccountConfigPayload of(PaymentChannel channel, ChannelAccount account,
+    public static ChannelAccountConfigPayload of(ChannelIdentity channel, ChannelAccount account,
         Map<String, String> parameters, Map<String, String> credentials) {
         ByteArrayOutputStream json = new ByteArrayOutputStream();
         try (JsonGenerator generator = JSON.createGenerator(ObjectWriteContext.empty(), json)) {
@@ -71,7 +71,11 @@ public final class ChannelAccountConfigPayload {
             generator.writeNumberProperty("schemaVersion", 1);
             generator.writeStringProperty("channelCode", channel.getChannelCode());
             generator.writeStringProperty("channelAccountId", account.getChannelAccountId().toString());
-            generator.writeStringProperty("entityNo", account.getEntityNo());
+            if (account.getEntityNo() == null) {
+                generator.writeNullProperty("entityNo");
+            } else {
+                generator.writeStringProperty("entityNo", account.getEntityNo());
+            }
             writeEntries(generator, "parameters", parameters);
             writeEntries(generator, "credentials", credentials);
             generator.writeEndObject();

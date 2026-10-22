@@ -2,7 +2,7 @@ package com.paytech.channel.connector.domain;
 
 import java.time.Instant;
 
-import com.paytech.channel.connector.core.enums.ChannelStatus;
+import com.paytech.channel.connector.protocol.core.enums.ChannelStatus;
 
 import lombok.Getter;
 import lombok.Setter;

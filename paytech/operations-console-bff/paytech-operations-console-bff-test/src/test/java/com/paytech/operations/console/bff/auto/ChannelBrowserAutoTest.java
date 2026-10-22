@@ -1,6 +1,7 @@
 package com.paytech.operations.console.bff.auto;
 
 import static com.paytech.operations.console.bff.test.simulator.PlatformOperationsSimulator.CHANNEL_ACCOUNT_CREDENTIAL_PERMISSION_ID;
+import static com.paytech.operations.console.bff.test.simulator.PlatformOperationsSimulator.CHANNEL_CALL_GRANT_MANAGE_PERMISSION_ID;
 import static com.paytech.operations.console.bff.test.simulator.PlatformOperationsSimulator.CHANNEL_CHANGE_READ_PERMISSION_ID;
 import static com.paytech.operations.console.bff.test.simulator.PlatformOperationsSimulator.CHANNEL_CONFIG_MANAGE_PERMISSION_ID;
 import static com.paytech.operations.console.bff.test.simulator.PlatformOperationsSimulator.CHANNEL_CONFIG_READ_PERMISSION_ID;
@@ -31,12 +32,14 @@ import com.paytech.operations.console.bff.test.base.ChannelBrowserAutoTestBase;
 import com.paytech.operations.console.bff.test.simulator.ChannelConnectorOwnerSimulator;
 
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
- * 浏览器经真实 BFF 与 HttpExchange 转发 channel-connector 的渠道、账号、MID、能力、变更记录与成本端点（块 92 的 30 条转发路由）
- * <li>channel-connector 由 Loopback Simulator 承担；覆盖转发契约、操作人请求头与成本 Body 操作人、PLT-I02 拒绝、凭据与 Maker / Checker
- * 权限分离、Owner 业务拒绝 detail 透传、409、422 字段投影、依赖失败与本地边界拒绝。</li>
+ * 浏览器经真实 BFF 与 HttpExchange 转发 channel-connector 的渠道（含出站地址）、账号、MID、能力、变更记录、调用授权与成本端点
+ * （块 92 的 30 条与块 129 的 4 条转发路由）
+ * <li>channel-connector 由 Loopback Simulator 承担；覆盖转发契约、渠道类型与出站地址字段透传、操作人请求头与成本 Body 操作人、PLT-I02 拒绝、
+ * 凭据、调用授权与 Maker / Checker 权限分离、Owner 业务拒绝 detail 透传、409、422 字段投影、依赖失败与本地边界拒绝。</li>
  *
  * @see ChannelConfigurationController
  * @see ChannelCostController
@@ -134,7 +137,7 @@ class ChannelBrowserAutoTest extends ChannelBrowserAutoTestBase {
         assertAllowed(row("M01"));
     }
 
-    /** 渠道激活被拒（Platform 不存在同编码接入方）：公共 Code 与 Owner 原因到达浏览器，Owner Request ID 不外露。 */
+    /** 渠道激活被拒（渠道未配置出站地址）：公共 Code 与 Owner 原因到达浏览器，Owner Request ID 不外露。 */
     @Test
     void test_businessRuleViolation() throws Exception {
         var activate = row("H05");
@@ -258,11 +261,11 @@ class ChannelBrowserAutoTest extends ChannelBrowserAutoTestBase {
 
         resetBetweenCalls();
         var create = row("A03");
-        var missingEntity = (ObjectNode) create.path("request").deepCopy();
-        missingEntity.remove("entityNo");
-        var response = send("POST", create.path("path").asString(), create.path("routeCode").asString(), missingEntity);
+        var missingName = (ObjectNode) create.path("request").deepCopy();
+        missingName.remove("accountName");
+        var response = send("POST", create.path("path").asString(), create.path("routeCode").asString(), missingName);
         assertRejectedLocally(422, response);
-        assertEquals("entityNo", JSON.readTree(response.body()).path("errors").get(0).path("field").asString());
+        assertEquals("accountName", JSON.readTree(response.body()).path("errors").get(0).path("field").asString());
 
         resetBetweenCalls();
         var changes = row("G01");
@@ -273,6 +276,164 @@ class ChannelBrowserAutoTest extends ChannelBrowserAutoTestBase {
         var detail = row("H02");
         assertRejectedLocally(400, send("GET", detail.path("path").asString(), detail.path("routeCode").asString(),
             JSON.createObjectNode().put("channelId", "1")));
+    }
+
+    /** 渠道类型、出站地址与调用授权的本地边界：非法类型、缺少类型、空地址集合、非法调用方与未知 Query 均不访问 channel-connector。 */
+    @Test
+    void test_channelTypeEndpointAndGrantBoundaries() throws Exception {
+        var list = row("H01");
+        assertRejectedLocally(400, send("GET", list.path("path").asString() + "?channelType=OTHER",
+            list.path("routeCode").asString(), null));
+
+        resetBetweenCalls();
+        var create = row("H03");
+        var missingType = (ObjectNode) create.path("request").deepCopy();
+        missingType.remove("channelType");
+        var typeResponse = send("POST", create.path("path").asString(), create.path("routeCode").asString(), missingType);
+        assertRejectedLocally(422, typeResponse);
+        assertEquals("channelType", JSON.readTree(typeResponse.body()).path("errors").get(0).path("field").asString());
+
+        resetBetweenCalls();
+        var endpoints = row("H06");
+        var empty = (ObjectNode) endpoints.path("request").deepCopy();
+        empty.putArray("endpoints");
+        assertRejectedLocally(422, send("PUT", endpoints.path("path").asString(), endpoints.path("routeCode").asString(),
+            empty));
+
+        resetBetweenCalls();
+        var noVersion = (ObjectNode) endpoints.path("request").deepCopy();
+        noVersion.remove("expectedVersion");
+        assertRejectedLocally(422, send("PUT", endpoints.path("path").asString(), endpoints.path("routeCode").asString(),
+            noVersion));
+
+        resetBetweenCalls();
+        var grant = row("R02");
+        var badCaller = (ObjectNode) grant.path("request").deepCopy();
+        badCaller.put("callerService", "Commerce_Service");
+        var callerResponse = send("POST", grant.path("path").asString(), grant.path("routeCode").asString(), badCaller);
+        assertRejectedLocally(422, callerResponse);
+        assertEquals("callerService", JSON.readTree(callerResponse.body()).path("errors").get(0).path("field").asString());
+
+        resetBetweenCalls();
+        var grants = row("R01");
+        assertRejectedLocally(400, send("GET", grants.path("path").asString() + "?grantStatus=ENABLED",
+            grants.path("routeCode").asString(), null));
+
+        resetBetweenCalls();
+        assertRejectedLocally(400, send("GET", grants.path("path").asString() + "?channelType=SERVICE",
+            grants.path("routeCode").asString(), null));
+
+        resetBetweenCalls();
+        var status = row("R03");
+        var withActor = (ObjectNode) status.path("request").deepCopy();
+        withActor.put("updatedBy", "10002");
+        assertRejectedLocally(400, send("POST", status.path("path").asString(), status.path("routeCode").asString(),
+            withActor));
+    }
+
+    /** 服务渠道列表项：类型筛选透传，ACTIVE 授权数与无 MID 原样返回。 */
+    @Test
+    void test_serviceChannelSummaryForwarded() throws Exception {
+        var service = (ObjectNode) row("H01").deepCopy();
+        service.put("query", "?channelType=SERVICE&page=1&size=10");
+        var item = (ObjectNode) service.path("response").path("items").get(0);
+        item.put("channelId", "7400000000000000102").put("channelCode", "GEO_MAP").put("channelName", "地图服务")
+            .put("channelType", "SERVICE").put("accountCount", 1).put("midCount", 0).put("endpointCount", 1)
+            .put("activeGrantCount", 2);
+        replyAsOwner(service);
+
+        assertForwarded(service, send(service));
+    }
+
+    /** 调用授权的新建与启停只认 CHANNEL_CALL_GRANT_MANAGE；授权列表沿用渠道读取，出站地址沿用渠道维护。 */
+    @Test
+    void test_callGrantPermissionIsSeparated() throws Exception {
+        for (String id : new String[] {"R02", "R03"}) {
+            resetBetweenCalls();
+            platform.grantPermissions(CHANNEL_CONFIG_MANAGE_PERMISSION_ID);
+            assertDenied(send(row(id)));
+        }
+        for (String id : new String[] {"R02", "R03"}) {
+            resetBetweenCalls();
+            platform.grantPermissions(CHANNEL_CALL_GRANT_MANAGE_PERMISSION_ID);
+            assertAllowed(row(id));
+        }
+        for (String id : new String[] {"R01", "H06"}) {
+            resetBetweenCalls();
+            platform.grantPermissions(CHANNEL_CALL_GRANT_MANAGE_PERMISSION_ID);
+            assertDenied(send(row(id)));
+        }
+
+        resetBetweenCalls();
+        platform.grantPermissions(CHANNEL_CONFIG_READ_PERMISSION_ID);
+        assertAllowed(row("R01"));
+
+        resetBetweenCalls();
+        platform.grantPermissions(CHANNEL_CONFIG_MANAGE_PERMISSION_ID);
+        assertAllowed(row("H06"));
+    }
+
+    /** 出站地址版本冲突或仍被原子 API 引用（409）、私网地址（400），以及授权组合重复（409）：Owner 原因到达浏览器。 */
+    @Test
+    void test_endpointAndGrantRejectionsVisible() throws Exception {
+        var endpoints = row("H06");
+        channelConnector.problem("PUT", endpoints.path("ownerPath").asString(), 409,
+            CommonErrorCode.CONCURRENT_REQUEST.getCode());
+        assertOwnerDetail(409, CommonErrorCode.CONCURRENT_REQUEST, send(endpoints));
+
+        resetBetweenCalls();
+        channelConnector.problem("PUT", endpoints.path("ownerPath").asString(), 400,
+            CommonErrorCode.BUSINESS_CHECK_FAILED.getCode());
+        assertOwnerDetail(400, CommonErrorCode.BUSINESS_CHECK_FAILED, send(endpoints));
+
+        resetBetweenCalls();
+        var grant = row("R02");
+        channelConnector.problem("POST", grant.path("ownerPath").asString(), 409,
+            CommonErrorCode.CONCURRENT_REQUEST.getCode());
+        assertOwnerDetail(409, CommonErrorCode.CONCURRENT_REQUEST, send(grant));
+
+        resetBetweenCalls();
+        channelConnector.problem("POST", grant.path("ownerPath").asString(), 400,
+            CommonErrorCode.BUSINESS_CHECK_FAILED.getCode());
+        assertOwnerDetail(400, CommonErrorCode.BUSINESS_CHECK_FAILED, send(grant));
+    }
+
+    /** 回执不符合合同（502）：授权状态不等于目标状态、授权列表越出筛选、渠道列表类型越出筛选、渠道详情缺出站地址集合、地址数量不一致。 */
+    @Test
+    void test_grantAndEndpointReceiptMismatch() throws Exception {
+        var status = row("R03");
+        var notChanged = (ObjectNode) status.path("response").deepCopy();
+        notChanged.put("grantStatus", "ACTIVE");
+        channelConnector.reply("POST", status.path("ownerPath").asString(), 200, JSON.writeValueAsString(notChanged));
+        assertUpstreamInvalid(send(status));
+
+        resetBetweenCalls();
+        var grants = row("R01");
+        var otherChannel = (ObjectNode) grants.path("response").deepCopy();
+        ((ObjectNode) otherChannel.path("items").get(0)).put("channelId", "7400000000000000999");
+        channelConnector.reply("GET", grants.path("ownerPath").asString(), 200, JSON.writeValueAsString(otherChannel));
+        assertUpstreamInvalid(send(grants));
+
+        resetBetweenCalls();
+        var channels = row("H01");
+        var otherType = (ObjectNode) channels.path("response").deepCopy();
+        ((ObjectNode) otherType.path("items").get(0)).put("channelType", "SERVICE");
+        channelConnector.reply("GET", channels.path("ownerPath").asString(), 200, JSON.writeValueAsString(otherType));
+        assertUpstreamInvalid(send(channels));
+
+        resetBetweenCalls();
+        var detail = row("H02");
+        var noEndpoints = (ObjectNode) detail.path("response").deepCopy();
+        noEndpoints.putNull("endpoints");
+        channelConnector.reply("GET", detail.path("ownerPath").asString(), 200, JSON.writeValueAsString(noEndpoints));
+        assertUpstreamInvalid(send(detail));
+
+        resetBetweenCalls();
+        var endpoints = row("H06");
+        var fewer = (ObjectNode) endpoints.path("response").deepCopy();
+        ((ArrayNode) fewer.path("endpoints")).remove(1);
+        channelConnector.reply("PUT", endpoints.path("ownerPath").asString(), 200, JSON.writeValueAsString(fewer));
+        assertUpstreamInvalid(send(endpoints));
     }
 
     /** 账号配置的凭据明文只经 BFF 转发：请求日志只记元数据，凭据值与参数值不出现在任何日志。 */

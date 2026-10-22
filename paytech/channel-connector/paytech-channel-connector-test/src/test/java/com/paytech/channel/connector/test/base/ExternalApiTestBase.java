@@ -149,7 +149,7 @@ public abstract class ExternalApiTestBase extends ChannelConnectorMockTestBase {
      * @param targetType 被变更对象类型
      * @param targetId 对象主键
      * @param changeType 变更类型
-     * @param objectCode 对象编码，下级对象为 {接入方编码}/{对象编码}
+     * @param objectCode 对象编码，下级对象为 {渠道编码}/{对象编码}
      * @param beforeVersion 变更前版本，创建为 0
      * @param afterVersion 变更后版本；删除为删除前版本
      * @param reason 请求填写的原因
@@ -177,16 +177,20 @@ public abstract class ExternalApiTestBase extends ChannelConnectorMockTestBase {
         return StreamSupport.stream(detail.path("changes").spliterator(), false).map(change -> change.path("field").asString()).toList();
     }
 
+    /** 进程内执行在访问日志中的调用方。 */
+    protected static final String TEST_CALLER = "payment-service";
+
     /**
      * 经 protocol 公开的进程内入口执行标准 API（原 Platform 内部执行接口第 1～3 节）
      *
      * @param standardApiCode 标准 API 编码
-     * @param integrationCode 接入方编码
+     * @param integrationCode 渠道编码
      * @param input 标准 API 输入
      * @return 执行结果
      */
     protected ExecutionResult execute(String standardApiCode, String integrationCode, JsonNode input) {
-        return standardApiExecutor.process(new ExecuteStandardApiRequest(standardApiCode, integrationCode, input));
+        return standardApiExecutor.process(
+            new ExecuteStandardApiRequest(standardApiCode, integrationCode, input, TEST_CALLER));
     }
 
     /** 执行结果的输出，按原内部接口的 JSON 口径（十进制写为字符串）转换。 */

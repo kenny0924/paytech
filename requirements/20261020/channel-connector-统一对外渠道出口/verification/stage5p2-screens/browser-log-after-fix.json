@@ -1,0 +1,92 @@
+{
+ "pages": [
+  {
+   "name": "01-list-all",
+   "path": "/channel/channels",
+   "segments": "全部 2 支付渠道 1 服务渠道 1",
+   "rows": "渠道编码 名称 类型 状态 出站地址 账号 / MID 调用授权 更新时间 操作 | S5P2_ECHO 阶段 5 回显服务渠道 服务 ACTIVE 1 个 已建凭据 1 条 2026-10-22 08:42 详情 暂停 | PAYERMAX_MOCK 本机合成 PayerMax（阶段 5 10210318） 支付 ACTIVE 1 个 1 / 1 — 2026-10-21 07:18 详情 暂停",
+   "alert": "",
+   "listRoute": {
+    "total": 4,
+    "maxInFlight": 2,
+    "statuses": {
+     "200": 4
+    },
+    "queries": [
+     "?page=1&size=10",
+     "?page=1&size=10",
+     "?channelType=PAYMENT&page=1&size=10",
+     "?channelType=SERVICE&page=1&size=10"
+    ]
+   }
+  },
+  {
+   "name": "02-list-payment",
+   "path": "/channel/channels?type=PAYMENT",
+   "segments": "全部 2 支付渠道 1 服务渠道 1",
+   "rows": "渠道编码 名称 类型 状态 出站地址 账号 / MID 调用授权 更新时间 操作 | PAYERMAX_MOCK 本机合成 PayerMax（阶段 5 10210318） 支付 ACTIVE 1 个 1 / 1 — 2026-10-21 07:18 详情 暂停",
+   "alert": "",
+   "listRoute": {
+    "total": 4,
+    "maxInFlight": 2,
+    "statuses": {
+     "200": 4
+    },
+    "queries": [
+     "?channelType=PAYMENT&page=1&size=10",
+     "?page=1&size=10",
+     "?channelType=PAYMENT&page=1&size=10",
+     "?channelType=SERVICE&page=1&size=10"
+    ]
+   }
+  },
+  {
+   "name": "03-list-service",
+   "path": "/channel/channels?type=SERVICE",
+   "segments": "全部 2 支付渠道 1 服务渠道 1",
+   "rows": "渠道编码 名称 类型 状态 出站地址 账号 / MID 调用授权 更新时间 操作 | S5P2_ECHO 阶段 5 回显服务渠道 服务 ACTIVE 1 个 已建凭据 1 条 2026-10-22 08:42 详情 暂停",
+   "alert": "",
+   "listRoute": {
+    "total": 4,
+    "maxInFlight": 2,
+    "statuses": {
+     "200": 4
+    },
+    "queries": [
+     "?channelType=SERVICE&page=1&size=10",
+     "?page=1&size=10",
+     "?channelType=PAYMENT&page=1&size=10",
+     "?channelType=SERVICE&page=1&size=10"
+    ]
+   }
+  }
+ ],
+ "console": [
+  {
+   "page": "login",
+   "type": "error",
+   "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+  },
+  {
+   "page": "login",
+   "type": "error",
+   "text": "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+  },
+  {
+   "page": "01-list-all",
+   "type": "error",
+   "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+  },
+  {
+   "page": "02-list-payment",
+   "type": "error",
+   "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+  },
+  {
+   "page": "03-list-service",
+   "type": "error",
+   "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+  }
+ ],
+ "httpErrors": []
+}

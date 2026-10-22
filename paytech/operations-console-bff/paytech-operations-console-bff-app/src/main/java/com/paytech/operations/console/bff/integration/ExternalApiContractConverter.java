@@ -79,19 +79,6 @@ public final class ExternalApiContractConverter {
             value.getReason());
     }
 
-    /** CreateIntegrationRequestBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.channel.connector.api.externalapi.request.CreateIntegrationRequestBody toOwner(com.paytech.operations.console.bff.service.model.externalapi.request.CreateIntegrationRequestBody value) {
-        if (value == null) {
-            return null;
-        }
-        return new com.paytech.channel.connector.api.externalapi.request.CreateIntegrationRequestBody(
-            value.getIntegrationCode(),
-            value.getIntegrationName(),
-            value.getDescription(),
-            list(value.getEndpoints(), ExternalApiContractConverter::toOwner),
-            value.getReason());
-    }
-
     /** CreateIntegrationScriptRequestBody 逐字段转换；null 保持 null。 */
     public static com.paytech.channel.connector.api.externalapi.request.CreateIntegrationScriptRequestBody toOwner(com.paytech.operations.console.bff.service.model.externalapi.request.CreateIntegrationScriptRequestBody value) {
         if (value == null) {
@@ -277,29 +264,6 @@ public final class ExternalApiContractConverter {
             value.getUpdateTime());
     }
 
-    /** IntegrationEndpointBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.channel.connector.api.externalapi.request.IntegrationEndpointBody toOwner(com.paytech.operations.console.bff.service.model.externalapi.request.IntegrationEndpointBody value) {
-        if (value == null) {
-            return null;
-        }
-        return new com.paytech.channel.connector.api.externalapi.request.IntegrationEndpointBody(
-            value.getEndpointCode(),
-            value.getBaseUrl(),
-            value.getSandbox());
-    }
-
-    /** IntegrationEndpointDetail 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.IntegrationEndpointDetail toBff(com.paytech.channel.connector.api.externalapi.response.IntegrationEndpointDetail value) {
-        if (value == null) {
-            return null;
-        }
-        return new com.paytech.operations.console.bff.service.model.externalapi.response.IntegrationEndpointDetail(
-            value.getEndpointCode(),
-            value.getBaseUrl(),
-            value.isSandbox(),
-            value.getReferencedApiCodes());
-    }
-
     /** IntegrationReference 逐字段转换；null 保持 null。 */
     public static com.paytech.operations.console.bff.service.model.externalapi.response.IntegrationReference toBff(com.paytech.channel.connector.api.externalapi.response.IntegrationReference value) {
         if (value == null) {
@@ -308,25 +272,6 @@ public final class ExternalApiContractConverter {
         return new com.paytech.operations.console.bff.service.model.externalapi.response.IntegrationReference(
             value.getIntegrationCode(),
             value.getIntegrationName());
-    }
-
-    /** IntegrationResponseBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.IntegrationResponseBody toBff(com.paytech.channel.connector.api.externalapi.response.IntegrationResponseBody value) {
-        if (value == null) {
-            return null;
-        }
-        return new com.paytech.operations.console.bff.service.model.externalapi.response.IntegrationResponseBody(
-            value.getIntegrationCode(),
-            value.getIntegrationName(),
-            value.getDescription(),
-            list(value.getEndpoints(), ExternalApiContractConverter::toBff),
-            value.getApiCount(),
-            value.getScriptCount(),
-            value.getImplementationCount(),
-            value.getVersion(),
-            value.getCreateTime(),
-            value.getUpdateTime(),
-            value.getUpdatedBy());
     }
 
     /** IntegrationScriptResponseBody 逐字段转换；null 保持 null。 */
@@ -359,22 +304,6 @@ public final class ExternalApiContractConverter {
             value.getExecutionStage(),
             value.getParameterNames(),
             value.getReferencedApiCodes(),
-            value.getVersion(),
-            value.getUpdateTime());
-    }
-
-    /** IntegrationSummary 逐字段转换；null 保持 null。 */
-    public static com.paytech.operations.console.bff.service.model.externalapi.response.IntegrationSummary toBff(com.paytech.channel.connector.api.externalapi.response.IntegrationSummary value) {
-        if (value == null) {
-            return null;
-        }
-        return new com.paytech.operations.console.bff.service.model.externalapi.response.IntegrationSummary(
-            value.getIntegrationCode(),
-            value.getIntegrationName(),
-            value.getEndpointCount(),
-            value.getApiCount(),
-            value.getScriptCount(),
-            list(value.getImplementedStandardApis(), ExternalApiContractConverter::toBff),
             value.getVersion(),
             value.getUpdateTime());
     }
@@ -480,19 +409,6 @@ public final class ExternalApiContractConverter {
             list(value.getRequestFields(), ExternalApiContractConverter::toOwner),
             list(value.getResponseFields(), ExternalApiContractConverter::toOwner),
             value.getDefinition(),
-            value.getExpectedVersion(),
-            value.getReason());
-    }
-
-    /** UpdateIntegrationRequestBody 逐字段转换；null 保持 null。 */
-    public static com.paytech.channel.connector.api.externalapi.request.UpdateIntegrationRequestBody toOwner(com.paytech.operations.console.bff.service.model.externalapi.request.UpdateIntegrationRequestBody value) {
-        if (value == null) {
-            return null;
-        }
-        return new com.paytech.channel.connector.api.externalapi.request.UpdateIntegrationRequestBody(
-            value.getIntegrationName(),
-            value.getDescription(),
-            list(value.getEndpoints(), ExternalApiContractConverter::toOwner),
             value.getExpectedVersion(),
             value.getReason());
     }

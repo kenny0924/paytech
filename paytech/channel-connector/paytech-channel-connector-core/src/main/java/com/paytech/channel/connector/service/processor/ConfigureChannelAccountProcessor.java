@@ -20,7 +20,7 @@ import com.paytech.channel.connector.domain.ChannelAccountDetailView;
 import com.paytech.channel.connector.protocol.domain.ChannelConfigChanges;
 import com.paytech.channel.connector.domainservice.repository.ChannelMidRepository;
 import com.paytech.channel.connector.domainservice.service.ChannelAccountService;
-import com.paytech.channel.connector.domainservice.service.PaymentChannelService;
+import com.paytech.channel.connector.protocol.domainservice.service.ChannelService;
 import com.paytech.channel.connector.service.processor.request.ConfigureChannelAccountRequest;
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.InvalidParameterException;
@@ -52,7 +52,7 @@ public class ConfigureChannelAccountProcessor
     private final IdGenerator idGenerator;
     private final ChannelMidRepository channelMidRepository;
     private final ChannelAccountService channelAccountService;
-    private final PaymentChannelService paymentChannelService;
+    private final ChannelService channelService;
     private final ChannelConfigTransactions channelConfigTransactions;
 
     /** 账号资源锁。 */
@@ -94,7 +94,7 @@ public class ConfigureChannelAccountProcessor
         ChannelAccount account = channelAccountService.loadAccount(request.getChannelAccountId());
         Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
         ChannelAccountContext context = new ChannelAccountContext(account,
-            paymentChannelService.loadChannel(account.getChannelId()), ChannelConfigChanges.of(idGenerator.nextId(),
+            channelService.loadChannel(account.getChannelId()), ChannelConfigChanges.of(idGenerator.nextId(),
                 ChangeTargetType.CHANNEL_ACCOUNT, account.getChannelAccountId(), ChangeType.CONFIGURATION,
                 request.getActorId(), now), now);
         if (context.closed()) {

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { ApiError } from '../api/session.ts';
 import {
-  availableStandardApis, cleanFilters, errorRows, decodeImplementationList, decodeIntegration, decodeMutation, decodePage,
+  availableStandardApis, cleanFilters, errorRows, decodeImplementationList, decodeMutation, decodePage,
   decodeStandardApi, decodeStandardApiSummary, fieldDepth, fieldHints, replaceQuery, toFieldBodies,
 } from './externalApiModel.ts';
 import type { ApiField, ImplementationSummary, StandardApiSummary } from './externalApiModel.ts';
@@ -27,11 +27,7 @@ test('标准 API 详情只接受请求的编码，字段逐项解码', () => {
   invalid(() => decodeStandardApi({ ...wire, requestFields: [{ ...field('BODY', 'x'), dataType: 'DATE' }] }, 'PAY'));
 });
 
-test('接入方详情保留出站地址的引用方；列表与分页校验条目身份', () => {
-  const detail = decodeIntegration({ integrationCode: 'DEMO', integrationName: 'D', description: null,
-    endpoints: [{ endpointCode: 'GW', baseUrl: 'https://a.test', referencedApiCodes: ['CREATE_ORDER'] }], apiCount: 1,
-    scriptCount: 0, implementationCount: 0, version: 1, createTime: T, updateTime: T, updatedBy: '1' }, 'DEMO');
-  assert.deepEqual(detail.endpoints[0].referencedApiCodes, ['CREATE_ORDER']);
+test('列表与分页校验条目身份', () => {
   const page = { items: [summary('PAY'), summary('PAY')], page: 1, size: 10, total: 2 };
   invalid(() => decodePage(page, decodeStandardApiSummary, item => item.standardApiCode));
   invalid(() => decodePage({ ...page, items: [summary('PAY')], size: 15 }, decodeStandardApiSummary, item => item.standardApiCode));
@@ -44,6 +40,9 @@ test('写结果必须对应本次对象与类型', () => {
   invalid(() => decodeMutation({ objectType: 'STANDARD_API', objectCode: 'REFUND', version: 2 }, 'STANDARD_API', 'PAY'));
   invalid(() => decodeMutation({ objectType: 'INTEGRATION', objectCode: 'PAY', version: 2 }, 'STANDARD_API', 'PAY'));
   invalid(() => decodeMutation({ objectType: 'STANDARD_API', objectCode: 'PAY', version: 0 }, 'STANDARD_API', 'PAY'));
+  // 合表后协议对象可能改用渠道命名
+  assert.equal(decodeMutation({ objectType: 'CHANNEL_API', objectCode: 'NI/CREATE_ORDER', version: 3 }, 'INTEGRATION_API', 'NI/CREATE_ORDER').version, 3);
+  invalid(() => decodeMutation({ objectType: 'CHANNEL_SCRIPT', objectCode: 'NI/X', version: 3 }, 'INTEGRATION_API', 'NI/X'));
 });
 
 test('BODY 路径按点分段缩进，其他位置为顶层', () => {

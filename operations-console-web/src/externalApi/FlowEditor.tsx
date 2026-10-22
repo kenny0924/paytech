@@ -14,14 +14,16 @@ import type { ValueTarget } from './FlowPanels';
 import { decodeCapabilities, decodeValidation } from './editorModel';
 import type { Capabilities, ValidationIssue } from './editorModel';
 import { ConflictBanner, Loading, LoadFailure, hasButton, useCopyDraft, useDetail, useEditorSave } from './externalApiHooks';
-import { decodeMutation, externalApiBase, integrationPath, integrationRoute, manageIntegrations, replaceQuery } from './externalApiModel';
+import { decodeMutation, externalApiBase, integrationPath, manageProtocol, replaceQuery } from './externalApiModel';
+import { workspaceCrumbs, workspaceRoutes } from '../channel/channelWorkspace';
 import {
   addEdge, decodeFlowContext, decodeImplementation, flowTarget, idPrefix, newFlow, nextId, toFlow, toFlowJson,
 } from './flowModel';
 import type { ExecuteStatus, Flow, FlowEditorContext, ImplementationDetail } from './flowModel';
 import { ExternalApiFrame, Note, PageHeader } from './ui';
 
-interface Props { resources: ConsoleResource[]; onAuthorizationChanged: () => void; integrationCode: string; standardApiCode: string }
+/** integrationCode 为渠道编码（管理接口路径沿用 integrations/{code}），channelId 用于页面路由。 */
+interface Props { resources: ConsoleResource[]; onAuthorizationChanged: () => void; channelId: string; integrationCode: string; standardApiCode: string }
 const capabilityPath = `${externalApiBase}/editor-capabilities`;
 const noManage = '只读 · 无“外部 API 管理”权限';
 
@@ -35,10 +37,10 @@ function issueOwner(flow: Flow, location: string): string {
   return '';
 }
 
-/** 渠道标准 API 实现的流程编辑（/integrations/:code/implementations/:standardApiCode，?mode=create|edit）。 */
-export function FlowEditor({ resources, onAuthorizationChanged, integrationCode, standardApiCode }: Props) {
+/** 渠道标准 API 实现的流程编辑（/channel/channels/:channelId/protocol/implementations/:standardApiCode，?mode=create|edit）。 */
+export function FlowEditor({ resources, onAuthorizationChanged, channelId, integrationCode, standardApiCode }: Props) {
   const location = useLocation(); const mode = new URLSearchParams(location.search).get('mode');
-  const canManage = hasButton(resources, manageIntegrations); const creating = mode === 'create';
+  const canManage = hasButton(resources, manageProtocol); const creating = mode === 'create';
   const readOnly = !canManage || mode !== 'edit' && !creating;
   const base = `${integrationPath}/${integrationCode}`;
   const decodeDetail = useMemo(() => (value: unknown) => decodeImplementation(value, standardApiCode), [standardApiCode]);
@@ -46,18 +48,18 @@ export function FlowEditor({ resources, onAuthorizationChanged, integrationCode,
   const capabilities = useDetail<Capabilities>(capabilityPath, decodeCapabilities);
   const detail = useDetail<ImplementationDetail>(creating ? null : `${base}/implementations/${standardApiCode}`, decodeDetail);
   let page;
-  if (creating && !canManage) page = <Alert type="warning" showIcon title="当前没有接入方维护权限" />;
+  if (creating && !canManage) page = <Alert type="warning" showIcon title="当前没有协议配置维护权限" />;
   else if (context.loading || capabilities.loading || detail.loading) page = <Loading />;
   else if (!context.data) page = <LoadFailure title="流程编辑数据加载失败" failure={context.failure} retry={context.refresh} />;
   else if (!creating && !detail.data) page = <LoadFailure title="标准 API 实现加载失败" failure={detail.failure} retry={detail.refresh} />;
-  else page = <ReactFlowProvider><FlowWorkspace key={`${detail.data?.version}:${readOnly}`} integrationCode={integrationCode}
+  else page = <ReactFlowProvider><FlowWorkspace key={`${detail.data?.version}:${readOnly}`} channelId={channelId} integrationCode={integrationCode}
     standardApiCode={standardApiCode} context={context.data} functions={capabilities.data?.functions ?? []} detail={detail.data}
     readOnly={readOnly} canManage={canManage} onAuthorizationChanged={onAuthorizationChanged} onReload={detail.refresh} /></ReactFlowProvider>;
   return <ExternalApiFrame className="xflow-page">{page}</ExternalApiFrame>;
 }
 
-function FlowWorkspace({ integrationCode, standardApiCode, context, functions, detail, readOnly, canManage, onAuthorizationChanged, onReload }: {
-  integrationCode: string; standardApiCode: string; context: FlowEditorContext; functions: Capabilities['functions'];
+function FlowWorkspace({ channelId, integrationCode, standardApiCode, context, functions, detail, readOnly, canManage, onAuthorizationChanged, onReload }: {
+  channelId: string; integrationCode: string; standardApiCode: string; context: FlowEditorContext; functions: Capabilities['functions'];
   detail?: ImplementationDetail; readOnly: boolean; canManage: boolean; onAuthorizationChanged: () => void; onReload: () => void;
 }) {
   const location = useLocation(); const navigate = useNavigate(); const notify = useErrorNotification(); const { message } = App.useApp();
@@ -121,7 +123,7 @@ function FlowWorkspace({ integrationCode, standardApiCode, context, functions, d
       value => decodeMutation(value, 'INTEGRATION_IMPLEMENTATION', objectCode));
     if (!result) { if (!editor.conflict) void validate(); return false; }
     flushSync(() => editor.setDirty(false));
-    if (!leaving.current) void navigate(`${integrationRoute}/${integrationCode}/implementations/${standardApiCode}`, { replace: true });
+    if (!leaving.current) void navigate(workspaceRoutes(channelId).implementation(standardApiCode), { replace: true });
     return true;
   });
   const { setSaveForLeave } = editor;
@@ -140,10 +142,8 @@ function FlowWorkspace({ integrationCode, standardApiCode, context, functions, d
     return result;
   }, [issues, flow]);
   const panelProps = { flow, context, functions, readOnly: disabled, standardApiCode, onChange: change, onSelect: select };
-  const workspace = `${integrationRoute}/${integrationCode}`;
   return <>
-    <PageHeader crumbs={[{ label: '渠道' }, { label: `接入方 ${integrationCode}`, to: workspace },
-      { label: '标准 API 实现', to: `${workspace}?tab=implementations` }, { label: standardApiCode }]}
+    <PageHeader crumbs={[...workspaceCrumbs(channelId, integrationCode, 'implementations'), { label: standardApiCode }]}
       title={`${integrationCode} 实现 ${standardApiCode}`} readOnlyHint={!canManage ? noManage : undefined}
       actions={<><span className="xapi-field-label">流程总预算</span>
         <InputNumber min={1} max={60000} value={flow.timeoutMs} disabled={disabled} className="xapi-mono-input xflow-budget" suffix="ms"
@@ -159,7 +159,7 @@ function FlowWorkspace({ integrationCode, standardApiCode, context, functions, d
         <FlowCanvas flow={flow} apis={context.apis} standardApiCode={standardApiCode} readOnly={disabled} selection={selection} focusId={focusId}
           errors={vertexErrors} onSelect={select} onConnect={connect} />
         <Note items={['保存后对新调用立即生效，无发布流程；进行中的调用使用已加载的配置。', '流程暂不支持环：拖回上游节点的连线会被拒绝；每个节点在一次调用中最多执行一次。',
-          '节点只能引用本接入方的原子 API；流程不编排冲正、撤销、退款等资金反向操作（人工评审）。']} />
+          '节点只能引用本渠道的原子 API；流程不编排冲正、撤销、退款等资金反向操作（人工评审）。']} />
       </div>
       {selection === null && <EmptySide />}
       {selection?.kind === 'start' && <StartSide flow={flow} standardApiCode={standardApiCode} />}

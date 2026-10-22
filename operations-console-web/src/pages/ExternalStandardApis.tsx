@@ -13,11 +13,12 @@ import {
 import type { DeleteTarget, Reference } from '../externalApi/externalApiHooks';
 import {
   cleanFilters, codePattern, decodeMutation, decodePage, decodeStandardApi, decodeStandardApiSummary, errorRows,
-  integrationRoute, listSizes, manageStandardApis, replaceQuery, standardApiPath, standardApiRoute, toFieldBodies,
+  listSizes, manageStandardApis, replaceQuery, standardApiPath, standardApiRoute, toFieldBodies,
 } from '../externalApi/externalApiModel';
 import type { ApiField, FieldLocation, StandardApiDetail, StandardApiSummary } from '../externalApi/externalApiModel';
 import { ExternalApiFrame, Field, Mono, PageHeader, Panel, ReadOnlyValue, counted, formatTime } from '../externalApi/ui';
 import type { Crumb } from '../externalApi/ui';
+import { channelByCodeRoute } from '../channel/channelWorkspace';
 
 interface Props { resources: ConsoleResource[]; onAuthorizationChanged: () => void }
 const bodyOnly: FieldLocation[] = ['BODY'];
@@ -25,12 +26,12 @@ const summaryPage = (value: unknown) => decodePage(value, decodeStandardApiSumma
 const rootCrumbs: Crumb[] = [{ label: '渠道' }, { label: '标准 API', to: standardApiRoute }];
 const noManage = '只读 · 无“外部 API 管理”权限';
 
-/** 标准 API 当前被哪些接入方实现：删除前读取，有实现时不能删除。 */
+/** 标准 API 当前被哪些渠道实现：删除前读取，有实现时不能删除。 */
 export function standardApiReferences(code: string) {
   return () => session.request(`${standardApiPath}/${code}`, {}, value => decodeStandardApi(value, code))
     .then(detail => detail.implementations.map<Reference>(item => ({
       label: <>标准 API 实现 · <Mono>{item.integrationCode}</Mono>（{item.integrationName}）</>,
-      to: `${integrationRoute}/${item.integrationCode}/implementations/${code}` })));
+      to: channelByCodeRoute(item.integrationCode, {}, `/protocol/implementations/${code}`) })));
 }
 
 /** 标准 API：列表、新建（/new）与详情编辑（/:code，?mode=edit 进入编辑）。 */
@@ -71,8 +72,8 @@ function StandardApiList({ resources, onAuthorizationChanged }: Props) {
           { title: '名称', dataIndex: 'standardApiName', width: 180, ellipsis: true },
           { title: '请求字段', dataIndex: 'requestFieldCount', width: 90 },
           { title: '响应字段', dataIndex: 'responseFieldCount', width: 90 },
-          { title: '已实现接入方', render: (_, row) => row.implementedBy.length ? row.implementedBy.map((item, index) => <span key={item.integrationCode}>
-            {index > 0 && '、'}<Link to={`${integrationRoute}/${item.integrationCode}?tab=implementations`}>{item.integrationCode}</Link></span>) : '—' },
+          { title: '已实现渠道', render: (_, row) => row.implementedBy.length ? row.implementedBy.map((item, index) => <span key={item.integrationCode}>
+            {index > 0 && '、'}<Link to={channelByCodeRoute(item.integrationCode, { tab: 'protocol' })}>{item.integrationCode}</Link></span>) : '—' },
           { title: '更新时间', width: 150, render: (_, row) => formatTime(row.updateTime) },
           { title: '操作', width: 70, render: (_, row) => <Dropdown trigger={['click']} menu={{ items: [
             { key: 'view', label: '详情', onClick: () => void navigate(`${standardApiRoute}/${row.standardApiCode}`) },
@@ -174,13 +175,13 @@ function StandardApiForm({ detail, readOnly, canManage, onAuthorizationChanged, 
         <FieldTable value={responseFields} onChange={changeFields(setResponseFields)} locations={bodyOnly} readOnly={disabled} hint={fieldHint}
           serverErrorRows={errorRows(editor.fieldErrors, 'responseFields')} /></div> },
     ]} />
-    {!readOnly && <p className="xapi-desc">保存时服务端校验：若新增或修改的必填字段使已有渠道实现不完整（如出口未赋值新必填输出），保存失败并列出受影响的接入方与位置。</p>}
-    {detail && readOnly && <Panel title="已实现的接入方">
+    {!readOnly && <p className="xapi-desc">保存时服务端校验：若新增或修改的必填字段使已有渠道实现不完整（如出口未赋值新必填输出），保存失败并列出受影响的渠道与位置。</p>}
+    {detail && readOnly && <Panel title="已实现的渠道">
       {detail.implementations.length ? <div>{detail.implementations.map((item, index) => <span key={item.integrationCode}>{index > 0 && '、'}
-        <Link to={`${integrationRoute}/${item.integrationCode}/implementations/${detail.standardApiCode}`}>{item.integrationCode}</Link>
+        <Link to={channelByCodeRoute(item.integrationCode, {}, `/protocol/implementations/${detail.standardApiCode}`)}>{item.integrationCode}</Link>
         <span className="xapi-mono-muted">（{item.integrationName}）</span></span>)}
         <span className="xapi-desc">　· 最近修改 {formatTime(detail.updateTime)} · 版本 {detail.version}</span></div>
-        : <span className="xapi-desc">尚无接入方实现</span>}
+        : <span className="xapi-desc">尚无渠道实现</span>}
     </Panel>}
     <ReasonDialog open={reasonFlow.open} saving={editor.saving} onCancel={reasonFlow.cancel} onConfirm={reason => void reasonFlow.confirm(reason)} />
   </>;

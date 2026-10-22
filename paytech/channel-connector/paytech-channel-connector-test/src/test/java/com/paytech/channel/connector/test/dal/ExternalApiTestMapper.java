@@ -16,29 +16,29 @@ public interface ExternalApiTestMapper {
     @Select("SELECT standard_api_id FROM t_standard_api WHERE standard_api_code = #{code}")
     Long standardApiId(@Param("code") String code);
 
-    /** 接入方主键；不存在为空。 */
-    @Select("SELECT integration_id FROM t_integration WHERE integration_code = #{code}")
-    Long integrationId(@Param("code") String code);
+    /** 渠道主键；不存在为空。 */
+    @Select("SELECT channel_id FROM t_channel WHERE channel_code = #{code}")
+    Long channelId(@Param("code") String code);
 
-    /** 接入方下原子 API 主键；不存在为空。 */
-    @Select("SELECT a.integration_api_id FROM t_integration_api a JOIN t_integration i ON i.integration_id = a.integration_id WHERE i.integration_code = #{integrationCode} AND a.api_code = #{code}")
-    Long integrationApiId(@Param("integrationCode") String integrationCode, @Param("code") String code);
+    /** 渠道下原子 API 主键；不存在为空。 */
+    @Select("SELECT a.channel_api_id FROM t_channel_api a JOIN t_channel i ON i.channel_id = a.channel_id WHERE i.channel_code = #{integrationCode} AND a.api_code = #{code}")
+    Long channelApiId(@Param("integrationCode") String integrationCode, @Param("code") String code);
 
-    /** 接入方下公共脚本主键；不存在为空。 */
-    @Select("SELECT s.integration_script_id FROM t_integration_script s JOIN t_integration i ON i.integration_id = s.integration_id WHERE i.integration_code = #{integrationCode} AND s.script_code = #{code}")
+    /** 渠道下公共脚本主键；不存在为空。 */
+    @Select("SELECT s.channel_script_id FROM t_channel_script s JOIN t_channel i ON i.channel_id = s.channel_id WHERE i.channel_code = #{integrationCode} AND s.script_code = #{code}")
     Long scriptId(@Param("integrationCode") String integrationCode, @Param("code") String code);
 
-    /** 接入方对标准 API 的实现主键；不存在为空。 */
-    @Select("SELECT m.integration_standard_api_id FROM t_integration_standard_api m JOIN t_integration i ON i.integration_id = m.integration_id JOIN t_standard_api s ON s.standard_api_id = m.standard_api_id WHERE i.integration_code = #{integrationCode} AND s.standard_api_code = #{standardApiCode}")
+    /** 渠道对标准 API 的实现主键；不存在为空。 */
+    @Select("SELECT m.channel_standard_api_id FROM t_channel_standard_api m JOIN t_channel i ON i.channel_id = m.channel_id JOIN t_standard_api s ON s.standard_api_id = m.standard_api_id WHERE i.channel_code = #{integrationCode} AND s.standard_api_code = #{standardApiCode}")
     Long implementationId(@Param("integrationCode") String integrationCode,
         @Param("standardApiCode") String standardApiCode);
 
-    /** 接入方下验证账号主键；不存在为空。 */
-    @Select("SELECT a.verify_account_id FROM t_integration_verify_account a JOIN t_integration i ON i.integration_id = a.integration_id WHERE i.integration_code = #{integrationCode} AND a.account_code = #{code}")
+    /** 渠道下验证账号主键；不存在为空。 */
+    @Select("SELECT a.verify_account_id FROM t_channel_verify_account a JOIN t_channel i ON i.channel_id = a.channel_id WHERE i.channel_code = #{integrationCode} AND a.account_code = #{code}")
     Long verifyAccountId(@Param("integrationCode") String integrationCode, @Param("code") String code);
 
-    /** 接入方下验证用例主键；不存在为空。 */
-    @Select("SELECT c.verify_case_id FROM t_integration_verify_case c JOIN t_integration i ON i.integration_id = c.integration_id WHERE i.integration_code = #{integrationCode} AND c.case_code = #{code}")
+    /** 渠道下验证用例主键；不存在为空。 */
+    @Select("SELECT c.verify_case_id FROM t_channel_verify_case c JOIN t_channel i ON i.channel_id = c.channel_id WHERE i.channel_code = #{integrationCode} AND c.case_code = #{code}")
     Long verifyCaseId(@Param("integrationCode") String integrationCode, @Param("code") String code);
 
     /** 一个对象的全部变更记录（按主键升序）；change_detail 以文本读取。 */

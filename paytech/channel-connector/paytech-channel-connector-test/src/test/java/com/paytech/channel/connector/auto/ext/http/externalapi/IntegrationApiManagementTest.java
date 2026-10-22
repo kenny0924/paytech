@@ -18,7 +18,7 @@ import com.paytech.channel.connector.api.externalapi.request.*;
 import com.paytech.channel.connector.api.externalapi.response.IntegrationApiResponseBody;
 import com.paytech.channel.connector.api.externalapi.response.IntegrationApiSummary;
 import com.paytech.channel.connector.api.externalapi.response.ValidationResponseBody;
-import com.paytech.channel.connector.protocol.core.dal.dataobject.Integration;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.Channel;
 import com.paytech.channel.connector.protocol.core.enums.ChangeTargetType;
 import com.paytech.channel.connector.protocol.core.enums.ChangeType;
 import com.paytech.channel.connector.protocol.core.enums.ConfigurationField;
@@ -43,12 +43,12 @@ class IntegrationApiManagementTest extends ExternalApiTestBase {
 
     private static final String PATH = BASE + "/integrations/DEMO/apis";
 
-    private Integration demo;
+    private Channel demo;
 
-    /** 本类公共：一个带样例出站地址的接入方 DEMO。 */
+    /** 本类公共：一个带样例出站地址的渠道 DEMO。 */
     @BeforeEach
     void setUpClassMocks() {
-        demo = externalApi.integration("DEMO");
+        demo = externalApi.channel("DEMO");
     }
 
     /** 引用同阶段脚本的定义保存成功；详情原样返回定义，列表统计脚本数，并同事务写入 CREATE 变更记录（定义只记摘要）。 */
@@ -59,8 +59,8 @@ class IntegrationApiManagementTest extends ExternalApiTestBase {
 
         assertMutation(post(PATH, ExternalApiRequests.createIntegrationApi("CREATE_ORDER", definition)),
             "INTEGRATION_API", "DEMO/CREATE_ORDER", 1);
-        var change = assertChange(ChangeTargetType.INTEGRATION_API,
-            externalApiData.integrationApiId("DEMO", "CREATE_ORDER"), ChangeType.CREATE, "DEMO/CREATE_ORDER", 0, 1,
+        var change = assertChange(ChangeTargetType.CHANNEL_API,
+            externalApiData.channelApiId("DEMO", "CREATE_ORDER"), ChangeType.CREATE, "DEMO/CREATE_ORDER", 0, 1,
             ExternalApiRequests.REASON);
         assertTrue(changedFields(change).contains(ConfigurationField.DEFINITION_DIGEST.getCode()));
 
@@ -163,14 +163,14 @@ class IntegrationApiManagementTest extends ExternalApiTestBase {
         delete(PATH + "/CREATE_ORDER", ExternalApiRequests.delete(1)).assertProblem(400, CommonErrorCode.BUSINESS_CHECK_FAILED);
         assertMutation(delete(PATH + "/QUERY_ORDER", ExternalApiRequests.delete(1)), "INTEGRATION_API",
             "DEMO/QUERY_ORDER", 1);
-        assertChange(ChangeTargetType.INTEGRATION_API, query.getIntegrationApiId(), ChangeType.DELETE,
+        assertChange(ChangeTargetType.CHANNEL_API, query.getChannelApiId(), ChangeType.DELETE,
             "DEMO/QUERY_ORDER", 1, 1, ExternalApiRequests.REASON);
 
         get(PATH + "/QUERY_ORDER").assertProblem(404, CommonErrorCode.NOT_FOUND);
         get(PATH + "/CREATE_ORDER").assertOk();
     }
 
-    /** 接入方不存在时返回 404。 */
+    /** 渠道不存在时返回 404。 */
     @Test
     void test_integrationNotFound() {
         get(BASE + "/integrations/NOPE/apis/CREATE_ORDER").assertProblem(404, CommonErrorCode.NOT_FOUND);

@@ -10,7 +10,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public class ListVerifyRunsRequest {
 
-    /** 路径中的接入方编码。 */
+    /** 路径中的渠道编码。 */
     private final String integrationCode;
 
     /** 可选用例编码。 */

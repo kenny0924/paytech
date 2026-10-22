@@ -27,7 +27,6 @@ const pages: Record<PageComponentKey, ComponentType<PageProps>> = {
   OPERATIONS_PERMISSIONS: lazy(() => import('../pages/Permissions').then(m => ({ default: m.Permissions }))),
   OPERATIONS_CURRENCY_SPECS: lazy(() => import('../pages/CurrencySpecs').then(m => ({ default: m.CurrencySpecs }))),
   OPERATIONS_EXTERNAL_STANDARD_APIS: lazy(() => import('../pages/ExternalStandardApis').then(m => ({ default: m.ExternalStandardApis }))),
-  OPERATIONS_EXTERNAL_INTEGRATIONS: lazy(() => import('../pages/ExternalIntegrations').then(m => ({ default: m.ExternalIntegrations }))),
   OPERATIONS_CLIENT_ONBOARDING_REVIEW: lazy(() => import('../pages/ClientOnboardingReview').then(m => ({ default: m.ClientOnboardingReview }))),
   OPERATIONS_VAULT_DATA_TYPES: lazy(() => import('../pages/VaultDataTypes').then(m => ({ default: m.VaultDataTypes }))),
   OPERATIONS_VAULT_ACCESS_RULES: lazy(() => import('../pages/VaultAccessRules').then(m => ({ default: m.VaultAccessRules }))),

@@ -229,7 +229,7 @@ public class VaultMocker implements Clear {
             result.put("schemaVersion", tree.path("schemaVersion").asInt());
             result.put("channelCode", tree.path("channelCode").asString());
             result.put("channelAccountId", tree.path("channelAccountId").asString());
-            result.put("entityNo", tree.path("entityNo").asString());
+            result.put("entityNo", tree.path("entityNo").isNull() ? null : tree.path("entityNo").asString());
             result.put("parameterKeys", new java.util.TreeSet<>(tree.path("parameters").propertyNames()));
             result.put("credentialKeys", new java.util.TreeSet<>(tree.path("credentials").propertyNames()));
             return result;

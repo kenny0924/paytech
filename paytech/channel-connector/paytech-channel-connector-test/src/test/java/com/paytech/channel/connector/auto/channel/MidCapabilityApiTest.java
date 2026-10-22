@@ -19,12 +19,12 @@ import com.paytech.channel.connector.api.channel.request.MidCapabilityDetailRequ
 import com.paytech.channel.connector.api.channel.request.ReplaceMidCapabilityDetailsRequestBody;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelAccount;
 import com.paytech.channel.connector.core.dal.dataobject.ChannelMid;
-import com.paytech.channel.connector.core.dal.dataobject.PaymentChannel;
+import com.paytech.channel.connector.protocol.core.dal.dataobject.Channel;
 import com.paytech.channel.connector.core.enums.CapabilityStatus;
 import com.paytech.channel.connector.core.enums.CapabilityValueType;
 import com.paytech.channel.connector.protocol.core.enums.ChangeTargetType;
 import com.paytech.channel.connector.protocol.core.enums.ChangeType;
-import com.paytech.channel.connector.core.enums.ChannelStatus;
+import com.paytech.channel.connector.protocol.core.enums.ChannelStatus;
 import com.paytech.channel.connector.test.base.AbstractChannelConfigApiTest;
 import com.paytech.channel.connector.test.builder.ChannelConfigRequestBuilder;
 import com.paytech.channel.connector.test.builder.ChannelRequestBuilder;
@@ -49,7 +49,7 @@ class MidCapabilityApiTest extends AbstractChannelConfigApiTest {
     /** 本类公共：ACTIVE 渠道、已配置的 ACTIVE 账号与 ACTIVE MID，均无能力组。 */
     @BeforeEach
     void setUpClassMocks() {
-        PaymentChannel channel = data.channel("NI", ChannelStatus.ACTIVE);
+        Channel channel = data.channel("NI", ChannelStatus.ACTIVE);
         ChannelAccount account = data.account(channel.getChannelId(), ENTITY_NO, TOKEN_A, ChannelStatus.ACTIVE);
         mid = data.mid(channel.getChannelId(), account.getChannelAccountId(), ENTITY_NO, ChannelStatus.ACTIVE);
     }
