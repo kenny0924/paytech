@@ -103,9 +103,13 @@ def client_flow(client, app, requirement, record):
     c.check("C12 关联材料（提交 fileAddress）", status in (200, 201) and document.get("fileAddress") == address,
             f"HTTP {status} documentId={document.get('documentId')}")
     record["documentId"] = document.get("documentId")
-    rows = c.sql(f"SELECT file_address, file_id IS NULL, content_hash FROM mor_client_master.t_application_document "
+    # 删除 DDL（CCT 第 2 步）之后 file_id 列已不存在，按列是否存在决定核对口径。
+    has_file_id = c.sql("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='mor_client_master' "
+                        "AND TABLE_NAME='t_application_document' AND COLUMN_NAME='file_id'")[0][0] == "1"
+    null_check = "file_id IS NULL" if has_file_id else "1"
+    rows = c.sql(f"SELECT file_address, {null_check}, content_hash FROM mor_client_master.t_application_document "
                  f"WHERE document_id={int(document.get('documentId') or 0)}")
-    c.check("CCT 存 file_address、file_id 为空、冻结哈希", bool(rows) and rows[0][0] == address and rows[0][1] == "1"
+    c.check("CCT 存 file_address、file_id 为空或已删除、冻结哈希", bool(rows) and rows[0][0] == address and rows[0][1] == "1"
             and rows[0][2] == c.sha256(PDF), rows)
     _, detail = c.client_call(client, f"/onboarding/v1/applications/{application_id}")
     linked = [d for d in detail.get("documents") or [] if d.get("documentId") == document.get("documentId")]
@@ -148,9 +152,17 @@ def operations_download(record, since):
 
 
 def legacy_rows():
-    rows = c.sql("SELECT COUNT(*), SUM(file_address IS NULL), SUM(file_id IS NOT NULL AND file_address <> CONCAT('/files/v1/', file_id)) "
-                 "FROM mor_client_master.t_application_document WHERE file_id IS NOT NULL")[0]
-    c.check("旧材料 52 行都有地址且与 file_id 一致", rows[0] == "52" and rows[1] == "0" and rows[2] == "0", rows)
+    has_file_id = c.sql("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='mor_client_master' "
+                        "AND TABLE_NAME='t_application_document' AND COLUMN_NAME='file_id'")[0][0] == "1"
+    if has_file_id:
+        rows = c.sql("SELECT COUNT(*), SUM(file_address IS NULL), SUM(file_id IS NOT NULL AND file_address <> CONCAT('/files/v1/', file_id)) "
+                     "FROM mor_client_master.t_application_document WHERE file_id IS NOT NULL")[0]
+        c.check("旧材料 52 行都有地址且与 file_id 一致", rows[0] == "52" and rows[1] == "0" and rows[2] == "0", rows)
+        return
+    # 删除 DDL 之后：旧 52 行（创建时间早于第二段发布）地址格式都合法。
+    rows = c.sql("SELECT COUNT(*), SUM(file_address NOT REGEXP '^/files/v1/[1-9][0-9]*$') FROM mor_client_master.t_application_document "
+                 "WHERE create_time < '2026-10-22 15:22:00'")[0]
+    c.check("旧材料 52 行地址格式合法（file_id 已删除）", rows[0] == "52" and rows[1] == "0", rows)
 
 
 def internal_api(file_id):

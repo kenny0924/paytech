@@ -38286,7 +38286,6 @@
           "t_file_scan_policy",
           "t_file_scan_requirement",
           "t_file_object",
-          "t_file_owner_ref",
           "t_file_scan_result",
           "t_document_template",
           "t_document_template_translation",
@@ -40431,7 +40430,7 @@
       "controlIntensity": "S",
       "applyObjectType": "P",
       "applyFieldType": "entity",
-      "programCode": "let actual=data.entity.fields.map(field=>field.defKey); let immutable=[\"t_email_otp_attempt\",\"t_file_owner_ref\",\"t_file_scan_result\",\"t_document_delivery\",\"t_webhook_event\",\"t_audit_event\",\"t_audit_event_attr\",\"t_audit_integrity_point\",\"t_security_event\",\"t_security_alert_event\",\"t_security_alert_action\"].includes(data.entity.defKey); let custom=[\"t_gateway_route_header\",\"t_gateway_route_query_param\",\"t_gateway_guard_rule\"].includes(data.entity.defKey); return custom ? !actual.includes('create_time') && !actual.includes('update_time') : actual.includes('create_time') && (immutable ? !actual.includes('update_time') : actual.includes('update_time'));",
+      "programCode": "let actual=data.entity.fields.map(field=>field.defKey); let immutable=[\"t_email_otp_attempt\",\"t_file_scan_result\",\"t_document_delivery\",\"t_webhook_event\",\"t_audit_event\",\"t_audit_event_attr\",\"t_audit_integrity_point\",\"t_security_event\",\"t_security_alert_event\",\"t_security_alert_action\"].includes(data.entity.defKey); let custom=[\"t_gateway_route_header\",\"t_gateway_route_query_param\",\"t_gateway_guard_rule\"].includes(data.entity.defKey); return custom ? !actual.includes('create_time') && !actual.includes('update_time') : actual.includes('create_time') && (immutable ? !actual.includes('update_time') : actual.includes('update_time'));",
       "enable": true
     },
     {

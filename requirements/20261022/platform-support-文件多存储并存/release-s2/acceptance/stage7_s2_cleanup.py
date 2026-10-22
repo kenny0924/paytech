@@ -34,7 +34,7 @@ def main():
     report["documentDelete"] = status
     left = c.sql(f"SELECT COUNT(*) FROM mor_client_master.t_application_document WHERE document_id={int(record['documentId'])}")[0][0]
     report["documentRowsLeft"] = int(left)
-    report["legacyRows"] = c.sql("SELECT COUNT(*) FROM mor_client_master.t_application_document WHERE file_id IS NOT NULL")[0][0]
+    report["legacyRows"] = c.sql("SELECT COUNT(*) FROM mor_client_master.t_application_document WHERE create_time < '2026-10-22 15:22:00'")[0][0]
     print(json.dumps(report, ensure_ascii=False, indent=1))
     c.save(f"cleanup-{record['run']}.json", report)
     if status not in (200, 204) or int(left) != 0 or report["legacyRows"] != "52":

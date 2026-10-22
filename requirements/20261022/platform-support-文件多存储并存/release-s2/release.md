@@ -279,7 +279,7 @@
 | 15:24 | 6 postcheck | 全部等于期望；Platform Owner 列与表仍在；55 个旧文件仍 AVAILABLE / ACTIVE |
 | 15:24—15:27 | 7 验收 / 清理 | 第一次运行 27 项中 26 通过、内部接口段因探针镜像 `:development` 已不存在中断。① “扫描未完成时关联返回 409”得到 201：核对时间戳，扫描 15:24:52.858 已完成、关联 15:24:53.137 在其后，CCT 放行正确；扫描约 0.1 秒完成，无法在 mor-test 构造，按第 7 节约定记为“未能验证”，由本机测试覆盖。② 设 `E2E_PROBE_IMAGE=<Platform 候选>` 补跑内部接口 6/6：无身份 401、带 `X-Caller-Service` 200 且带 `fileAddress`、来源 `client-console-bff`、INLINE 对 pdf 生效、缺省 ATTACHMENT、未知值 400。关键结果：上传回执带地址、本人下载 SHA-256 一致且带原文件名、地址错 422、CCT 存地址 + 冻结哈希、他人文件 404、O10 旧文件下载一致并写 `FILE_DOWNLOAD_AUTHORIZE` 审计、旧 52 行地址一致。清理：本次 C12 关联已删（204），旧 52 行不变。运行记录 `~/Code-MoR-backups/filestore-s2-stage7/run-20261022152433.json` |
 | 15:3x | 8 浏览器冒烟 | **11/11**，控制台错误 0、4xx/5xx 与失败请求 0。客户侧：登录 → 上传弹窗内直传、扫描、关联到“材料已关联” → 列表“查看”下载；运营侧：审核详情下载、存储管理、工作流我的待办与流程实例。脚本修正：密码框选择器、上传流程改在 `<dialog class="editor">` 内操作。本次关联材料已用 C13 删除（204）。截图 `acceptance/screens-s2/` |
-| | 9 删除 DDL（另行授权） | 未执行，待新链路稳定后单独请用户授权 |
+| 16:18—16:20 | 9 删除 DDL | 用户“执行删除 DDL”。前置：四个新镜像在线、CCT 52 行地址齐全；先另备份 `t_application_document`（`before-cct-step2-20261022T161850Z.sql`）。16:18:56 CCT 第 2 步：补回填 0 行，删 `file_id` 与旧唯一键，`file_address` NOT NULL，三个唯一键恢复原名；16:18:57 Platform Owner 备份 `before-owner-removal-20261022T161857Z.sql`；16:19:07 删 `t_file_upload` 三个 Owner 列与 `t_file_owner_ref`。final-check 7/7（`mor_platform` 62 张表）。删除后复验：上传（S3_TEST）→ 扫描未完成 409 → 下载 → 关联 C12 → CCT 行地址与哈希正确，O10 下载旧 MinIO 文件并写审计，内部接口 6 项，均通过；验收脚本中两处查询 `file_id` 的语句改为按列是否存在取口径。此后不能回滚到旧 CCT 或第二段之前的 Platform |
 | 15:4x | 10 记录与通知 | 主 compose 已补 `PLATFORM_SUPPORT_INTERNAL_AUTH_MODE=DUAL`、`PAYTECH_INSTANCE_ID=platform-support-test`，删 `FILES_ONBOARDING_ENABLED`（`compose.sh config` 确认）；已通知各会话新镜像与基线 |
 
 ## 9. 风险与需要主会话 / 用户决定的事项

@@ -95,7 +95,7 @@ public interface FileStorageTestMapper {
 
     /** 按来源系统读取上传。 */
     @Select("""
-        SELECT upload_id,source_system,reason_code,uploader_id,tenant_id,owner_system,storage_provider,
+        SELECT upload_id,source_system,reason_code,uploader_id,tenant_id,storage_provider,
             storage_container_ref,storage_object_ref,display_name,expires_time
         FROM t_file_upload WHERE source_system=#{source} ORDER BY upload_id
         """)
