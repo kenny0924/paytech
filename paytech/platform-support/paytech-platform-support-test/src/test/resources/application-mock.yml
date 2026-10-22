@@ -32,6 +32,16 @@ spring:
         forceConnectionTimeZoneToSession: true
         connectTimeout: 2000
         socketTimeout: 5000
+  # 仓库 local-environment RabbitMQ：工作流回调发布与观察队列；凭据由 LocalMockEnvironmentInitializer 读取 .env.local。
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: "${MOR_RABBITMQ_USER}"
+    password: "${MOR_RABBITMQ_PASSWORD}"
+    virtual-host: "${MOR_RABBITMQ_VHOST:/mor-local}"
+    connection-timeout: 2s
+    publisher-confirm-type: correlated
+    publisher-returns: true
   data:
     redis:
       host: 127.0.0.1
@@ -101,6 +111,8 @@ management:
       access: read-only
   health:
     redis:
+      enabled: false
+    rabbit:
       enabled: false
     livenessstate:
       enabled: true
@@ -177,6 +189,11 @@ internal-auth:
 # Foundation paytech-messaging：只装配编解码与事件目录；未设置 producer/consumer.service，不连接 Broker、不声明队列。
 messaging:
   enabled: true
+  # 工作流业务回调：声明 platform-support.events 并提供 DomainEventPublisher；暂无订阅方，不可路由视为成功。
+  producer:
+    service: platform-support
+  publisher:
+    unroutable-policy: ACK_AND_WARN
   # producer.service / producer.confirm-timeout（默认 10s）、consumer.service / consumer.retry-backoff（默认 1s）、
   # consumers.<producer>.partitions（默认 4）：发布与消费在 D07 后续切片启用，本步不设置。
 
@@ -204,6 +221,8 @@ web:
       - /tenant-projections
       - /notification-admin
       - /webhook-admin
+      - /workflow-admin
+      - /workflow
       - /platform/v1/internal-tokens
       - /data-query-admin/v1/data-sources
       - /data-query-admin/v1/data-source-connection-tests
@@ -301,6 +320,15 @@ api-scope:
     lock-wait-time: 500ms
     lock-lease-time: 30s
 
+# 工作流：锁预算与通知回调上限沿用正式默认值；回调尝试上限缩为 2 次以覆盖 FAILED。
+workflow:
+  lock-wait-time: 500ms
+  lock-lease-time: 30s
+  callback-max-attempts: 2
+  notification-template-code: WORKFLOW_NOTIFICATION
+  event-source-service: platform-support
+  event-instance-id: main
+
 # 通知模块仅在本测试配置启用；Provider 只在 src/test 中按场景配置。
 notification:
   enabled: true
@@ -380,6 +408,7 @@ data-query:
     lock-lease-time: 60s
   http:
     callers: [operations-console-bff] # DataQueryApiTestBase.CALLER；其他调用方用于拒绝用例。
+
 
 # 内部调用 Token 签发端：Mock 中启用；密钥为仓库隔离的合成 P-256 测试值，不对应任何真实环境。
 internal-token:

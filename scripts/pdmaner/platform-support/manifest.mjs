@@ -6,6 +6,7 @@ import { TABLES as AUDIT_SECURITY_TABLES } from "./manifests/05-audit-security.m
 import { TABLES as GATEWAY_CONTROL_TABLES } from "./manifests/06-gateway.mjs";
 import { TABLES as RELIABILITY_TABLES } from "./manifests/08-reliability.mjs";
 import { TABLES as REFERENCE_DATA_TABLES } from "./manifests/10-reference-data.mjs";
+import { TABLES as WORKFLOW_TABLES } from "./manifests/11-workflow.mjs";
 
 export const TABLE_GROUPS = Object.freeze({
   identity_access: IDENTITY_ACCESS_TABLES,
@@ -16,6 +17,7 @@ export const TABLE_GROUPS = Object.freeze({
   gateway_control: GATEWAY_CONTROL_TABLES,
   reliability: RELIABILITY_TABLES,
   reference_data: REFERENCE_DATA_TABLES,
+  workflow: WORKFLOW_TABLES,
 });
 
 export const TABLES = Object.freeze(Object.values(TABLE_GROUPS).flat());
@@ -30,6 +32,7 @@ const expectedGroupSizes = Object.freeze({
   gateway_control: 6,
   reliability: 2,
   reference_data: 1,
+  workflow: 10,
 });
 
 export const EXPECTED_TABLE_TOTAL = Object.values(expectedGroupSizes)

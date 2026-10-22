@@ -2,7 +2,7 @@
 # Source: requirements/20261017/architecture-V2骨架与模块搬迁/design/03-module-and-table-ownership.md §2 and §4.2.
 # 255 source tables, 17 databases, 265 physical tables.
 # Retained: platform-support mor_platform from paytech/platform-support/docs/database/sql/platform-support-schema.sql.
-# 52 retained-service tables added on top of design 03 (not part of the §4.2 count).
+# 62 retained-service tables added on top of design 03 (not part of the §4.2 count).
 # 23 step-removed tables (approved later refactors, e.g. 2026-10-19 billing fact model; applied after the §4.2 count).
 # 53 step-added tables (approved refactor-step designs, e.g. design/05 t_card_material_ticket; not part of the §4.2 count).
 # Structure: services.<service>.<database> = tables owned (or copied / per-database infrastructure);
@@ -296,6 +296,16 @@ services:
       - t_webhook_endpoint
       - t_webhook_event
       - t_webhook_signing_secret
+      - t_workflow_action_run
+      - t_workflow_action_template
+      - t_workflow_approval
+      - t_workflow_callback
+      - t_workflow_definition
+      - t_workflow_definition_version
+      - t_workflow_instance
+      - t_workflow_node_run
+      - t_workflow_transfer
+      - t_workflow_verification
   reconciliation:
     mor_reconciliation:
       - t_bank_match

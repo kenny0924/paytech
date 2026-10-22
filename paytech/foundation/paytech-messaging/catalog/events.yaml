@@ -131,3 +131,16 @@ events:
     consumers: []
     strictOrder: false
     payloadSchemaRef: paytech-reconciliation-api/event/ReconAdjustmentApproved/v1
+  # 工作流业务回调（决定 2026-10-22-workflow-into-platform-support，需求 platform-support-工作流 technique 4.2）：节点或实例状态变化
+  # 命中流程版本冻结的 CALLBACK 规则时，由 Platform 补偿 Handler 发布到 platform-support.events。Payload 为 paytech-platform-support-api 的
+  # com.paytech.platform.support.api.workflow.event.WorkflowCallbackRaisedPayload，不携带表单值或文件；eventId 为 workflow-callback:{callbackId}。
+  # aggregateId 为实例 ID，aggregateVersion 为变化后的实例版本（可能跳号，strictOrder=false）。订阅方按 callbackCode 过滤、以 eventId 幂等，
+  # 事件只是通知，执行前须自行校验业务事实（D13）；目前没有订阅方。
+  - eventType: WorkflowCallbackRaised
+    schemaVersion: 1
+    producer: platform-support
+    aggregateType: WORKFLOW_INSTANCE
+    aggregateVersionField: instanceVersion
+    consumers: []
+    strictOrder: false
+    payloadSchemaRef: paytech-platform-support-api/event/WorkflowCallbackRaised/v1

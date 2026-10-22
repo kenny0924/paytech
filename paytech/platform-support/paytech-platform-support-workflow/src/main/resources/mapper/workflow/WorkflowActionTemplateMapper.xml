@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.workflow.core.dal.mapper.WorkflowActionTemplateMapper">
+
+    <sql id="columns">
+        action_template_id AS actionTemplateId,
+        template_code AS templateCode,
+        template_name AS templateName,
+        action_type AS actionType,
+        description,
+        config_json AS configJson,
+        status,
+        version,
+        created_by AS createdBy,
+        updated_by AS updatedBy,
+        create_time AS createTime,
+        update_time AS updateTime
+    </sql>
+
+    <insert id="insert">
+        INSERT INTO t_workflow_action_template (action_template_id, template_code, template_name, action_type, description, config_json, status, version, created_by, updated_by, create_time, update_time)
+        VALUES (#{row.actionTemplateId}, #{row.templateCode}, #{row.templateName}, #{row.actionType}, #{row.description}, #{row.configJson}, #{row.status}, #{row.version}, #{row.createdBy}, #{row.updatedBy}, #{row.createTime}, #{row.updateTime})
+    </insert>
+
+    <select id="selectById" resultType="com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowActionTemplate">
+        SELECT <include refid="columns"/> FROM t_workflow_action_template WHERE action_template_id = #{id}
+    </select>
+
+    <select id="selectByCode" resultType="com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowActionTemplate">SELECT <include refid="columns"/> FROM t_workflow_action_template WHERE template_code = #{code}</select>
+
+    <select id="selectByIds" resultType="com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowActionTemplate">SELECT <include refid="columns"/> FROM t_workflow_action_template WHERE action_template_id IN <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach></select>
+
+    <update id="update">UPDATE t_workflow_action_template SET template_name = #{row.templateName}, description = #{row.description},
+        config_json = #{row.configJson}, status = #{row.status}, version = version + 1, updated_by = #{row.updatedBy},
+        update_time = #{row.updateTime}
+        WHERE action_template_id = #{row.actionTemplateId} AND version = #{row.version}</update>
+
+    <sql id="filter"><where>
+            <if test="actionType != null">AND action_type = #{actionType}</if>
+            <if test="status != null">AND status = #{status}</if>
+            <if test="keyword != null">AND (template_code LIKE CONCAT('%', #{keyword}, '%') OR template_name LIKE CONCAT('%', #{keyword}, '%'))</if>
+        </where></sql>
+    <select id="page" resultType="com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowActionTemplate">SELECT <include refid="columns"/> FROM t_workflow_action_template <include refid="filter"/>
+        ORDER BY update_time DESC, action_template_id DESC LIMIT #{size} OFFSET #{offset}</select>
+
+    <select id="count" resultType="_long">SELECT COUNT(*) FROM t_workflow_action_template <include refid="filter"/></select>
+
+</mapper>

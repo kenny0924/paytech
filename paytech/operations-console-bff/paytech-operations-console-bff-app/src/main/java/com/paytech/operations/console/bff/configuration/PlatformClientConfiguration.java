@@ -125,6 +125,46 @@ public class PlatformClientConfiguration {
             .createClient(FileStorageManagementApi.class);
     }
 
+    /** 工作流动作目录：沿用配置写操作的发现与字段错误解码，并外显 Platform 业务拒绝原因（如编码已存在、版本冲突）。 */
+    @Bean
+    com.paytech.platform.support.api.workflow.WorkflowActionTemplateManagementApi workflowActionTemplateManagementApi(
+        Environment environment, PlatformDiscoveryInterceptor discovery,
+        @Value("${operations.platform-test-base-url:}") String testBaseUrl, ObjectProvider<InternalTokenSupplier> tokens) {
+        return platformProxy(environment, discovery, testBaseUrl, tokens, true, true, READ_TIMEOUT)
+            .createClient(com.paytech.platform.support.api.workflow.WorkflowActionTemplateManagementApi.class);
+    }
+
+    /** 工作流流程定义：同上，发布校验不通过的原因外显。 */
+    @Bean
+    com.paytech.platform.support.api.workflow.WorkflowDefinitionManagementApi workflowDefinitionManagementApi(
+        Environment environment, PlatformDiscoveryInterceptor discovery,
+        @Value("${operations.platform-test-base-url:}") String testBaseUrl, ObjectProvider<InternalTokenSupplier> tokens) {
+        return platformProxy(environment, discovery, testBaseUrl, tokens, true, true, READ_TIMEOUT)
+            .createClient(com.paytech.platform.support.api.workflow.WorkflowDefinitionManagementApi.class);
+    }
+
+    /** 工作流运行：同上，审批、提交与转交的业务拒绝原因外显。 */
+    @Bean
+    com.paytech.platform.support.api.workflow.WorkflowInstanceApi workflowInstanceApi(Environment environment,
+        PlatformDiscoveryInterceptor discovery, @Value("${operations.platform-test-base-url:}") String testBaseUrl,
+        ObjectProvider<InternalTokenSupplier> tokens) {
+        return platformProxy(environment, discovery, testBaseUrl, tokens, true, true, READ_TIMEOUT)
+            .createClient(com.paytech.platform.support.api.workflow.WorkflowInstanceApi.class);
+    }
+
+    /**
+     * 工作流附件：上传开始需读取存储密钥并签发，完成需核对存储对象，沿用文件存储的读超时；业务拒绝原因外显
+     * <li>额外登记 Platform 文件错误码（类型或大小不符、文件不存在、状态冲突），否则未登记的 Code 会被当作上游无效响应 502。</li>
+     */
+    @Bean
+    com.paytech.platform.support.api.workflow.WorkflowAttachmentApi workflowAttachmentApi(Environment environment,
+        PlatformDiscoveryInterceptor discovery, @Value("${operations.platform-test-base-url:}") String testBaseUrl,
+        ObjectProvider<InternalTokenSupplier> tokens) {
+        return platformProxy(environment, discovery, testBaseUrl, tokens, true, true, FILE_STORAGE_READ_TIMEOUT,
+            OnboardingFileErrorCode.values())
+            .createClient(com.paytech.platform.support.api.workflow.WorkflowAttachmentApi.class);
+    }
+
     /** 数据源维护复用数据查询专用代理：测试连接与启用检查需要连接被查库。 */
     @Bean
     DataSourceManagementApi dataSourceManagementApi(HttpServiceProxyFactory operationsDataQueryPlatformProxyFactory) {

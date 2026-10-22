@@ -1,5 +1,7 @@
 # Platform Support 物理数据库决策
 
+> **2026-10-22 工作流：** 依据[工作流并入 Platform 决定](../../../../agent-docs/decisions/2026-10-22-workflow-into-platform-support.md)，新增 Manifest `scripts/pdmaner/platform-support/manifests/11-workflow.mjs` 与图组 `workflow`（10 张表），写入模型的实体与图组和生成器对该 Manifest 的输出逐字一致；其余实体与生成器的既有漂移不在本次处理范围。Schema 追加 10 张表，已有库按 [`2026-10-22-workflow.sql`](sql/changes/2026-10-22-workflow.sql) 增量执行。回调表触发列因 `trigger` 是 MySQL 保留字命名为 `trigger_code`，审批意见列命名为 `decision_comment`。执行状态只见当前台账。
+
 > **2026-09-15 文件合同后继：** [已确认文件合同](../../../../requirements/20260914/client-console-注册与客户入驻/file-upload-closure-proposal.md)在 Upload 归属/存储恢复字段及补偿表范围内取代下文旧描述。新增原申请＋主体和存储目标，移除 upload_token_hash；补偿表按现行 Foundation 15 列合同单独同步，不再要求六库同时迁移。原字段/索引摘要仅保留历史背景；当前模型、验证和数据库执行状态见[台账](../../../../agent-docs/CURRENT_IMPLEMENTATION.md#client-console-onboarding-20260914)。
 
 > **Client API Scope 后继契约（2026-09-13）：** 本文的公共控制面基线之外，新增独立 Scope 目录及两项查询索引，以[已确认字段与关系](../../../../requirements/20260913/platform-support-ClientAPI接入管理/data-design.md)为准；原 Credential/Grant 表与 PLT-I03 认证语义保持。本文保留原阶段统计/摘要作为历史证据；当前生成统计、实施和环境状态只见[当前台账](../../../../agent-docs/CURRENT_IMPLEMENTATION.md#platform-client-api-access-20260913)。

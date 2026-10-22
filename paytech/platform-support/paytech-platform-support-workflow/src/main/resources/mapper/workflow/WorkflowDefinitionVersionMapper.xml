@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.workflow.core.dal.mapper.WorkflowDefinitionVersionMapper">
+
+    <sql id="columns">
+        definition_version_id AS definitionVersionId,
+        definition_id AS definitionId,
+        version_no AS versionNo,
+        status,
+        graph_json AS graphJson,
+        start_form_json AS startFormJson,
+        action_snapshot_json AS actionSnapshotJson,
+        published_by AS publishedBy,
+        published_time AS publishedTime,
+        version,
+        created_by AS createdBy,
+        updated_by AS updatedBy,
+        create_time AS createTime,
+        update_time AS updateTime
+    </sql>
+
+    <insert id="insert">
+        INSERT INTO t_workflow_definition_version (definition_version_id, definition_id, version_no, status, graph_json, start_form_json, action_snapshot_json, published_by, published_time, version, created_by, updated_by, create_time, update_time)
+        VALUES (#{row.definitionVersionId}, #{row.definitionId}, #{row.versionNo}, #{row.status}, #{row.graphJson}, #{row.startFormJson}, #{row.actionSnapshotJson}, #{row.publishedBy}, #{row.publishedTime}, #{row.version}, #{row.createdBy}, #{row.updatedBy}, #{row.createTime}, #{row.updateTime})
+    </insert>
+
+    <select id="selectById" resultType="com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowDefinitionVersion">
+        SELECT <include refid="columns"/> FROM t_workflow_definition_version WHERE definition_version_id = #{id}
+    </select>
+
+    <select id="selectByNo" resultType="com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowDefinitionVersion">SELECT <include refid="columns"/> FROM t_workflow_definition_version
+        WHERE definition_id = #{definitionId} AND version_no = #{versionNo}</select>
+
+    <select id="selectSummaries" resultType="com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowDefinitionVersion">SELECT definition_version_id AS definitionVersionId, definition_id AS definitionId,
+        version_no AS versionNo, status, published_by AS publishedBy, published_time AS publishedTime, version,
+        created_by AS createdBy, updated_by AS updatedBy, create_time AS createTime, update_time AS updateTime
+        FROM t_workflow_definition_version WHERE definition_id = #{definitionId} ORDER BY version_no DESC</select>
+
+    <update id="updateDraft">UPDATE t_workflow_definition_version SET graph_json = #{row.graphJson}, start_form_json = #{row.startFormJson},
+        version = version + 1, updated_by = #{row.updatedBy}, update_time = #{row.updateTime}
+        WHERE definition_version_id = #{row.definitionVersionId} AND version = #{row.version} AND status = 'DRAFT'</update>
+
+    <update id="publish">UPDATE t_workflow_definition_version SET status = 'PUBLISHED', action_snapshot_json = #{row.actionSnapshotJson},
+        published_by = #{row.publishedBy}, published_time = #{row.publishedTime}, version = version + 1,
+        updated_by = #{row.updatedBy}, update_time = #{row.updateTime}
+        WHERE definition_version_id = #{row.definitionVersionId} AND version = #{row.version} AND status = 'DRAFT'</update>
+
+</mapper>

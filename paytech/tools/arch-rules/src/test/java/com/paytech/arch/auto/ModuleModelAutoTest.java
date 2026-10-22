@@ -49,7 +49,7 @@ class ModuleModelAutoTest {
             ModuleIdentity.classify("org.springframework", "spring-web").role());
         Assertions.assertEquals(ServiceLayer.PROCESS, ServiceCatalog.layerOf("fx"));
         Assertions.assertEquals(ServiceLayer.DOMAIN, ServiceCatalog.layerOf("reconciliation"));
-        Assertions.assertEquals(24, ServiceCatalog.serviceNames().size());
+        Assertions.assertEquals(23, ServiceCatalog.serviceNames().size());
     }
 
     @Test

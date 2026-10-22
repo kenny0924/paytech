@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.workflow.core.dal.mapper.WorkflowInstanceMapper">
+
+    <sql id="columns">
+        instance_id AS instanceId,
+        definition_id AS definitionId,
+        definition_version_id AS definitionVersionId,
+        title,
+        business_key AS businessKey,
+        status,
+        start_values_json AS startValuesJson,
+        assignment_json AS assignmentJson,
+        started_by AS startedBy,
+        start_time AS startTime,
+        end_time AS endTime,
+        terminated_by AS terminatedBy,
+        termination_reason AS terminationReason,
+        version,
+        create_time AS createTime,
+        update_time AS updateTime
+    </sql>
+
+    <sql id="aliasedColumns">
+        i.instance_id AS instanceId,
+        i.definition_id AS definitionId,
+        i.definition_version_id AS definitionVersionId,
+        i.title,
+        i.business_key AS businessKey,
+        i.status,
+        i.start_values_json AS startValuesJson,
+        i.assignment_json AS assignmentJson,
+        i.started_by AS startedBy,
+        i.start_time AS startTime,
+        i.end_time AS endTime,
+        i.terminated_by AS terminatedBy,
+        i.termination_reason AS terminationReason,
+        i.version,
+        i.create_time AS createTime,
+        i.update_time AS updateTime
+    </sql>
+
+    <insert id="insert">
+        INSERT INTO t_workflow_instance (instance_id, definition_id, definition_version_id, title, business_key, status, start_values_json, assignment_json, started_by, start_time, end_time, terminated_by, termination_reason, version, create_time, update_time)
+        VALUES (#{row.instanceId}, #{row.definitionId}, #{row.definitionVersionId}, #{row.title}, #{row.businessKey}, #{row.status}, #{row.startValuesJson}, #{row.assignmentJson}, #{row.startedBy}, #{row.startTime}, #{row.endTime}, #{row.terminatedBy}, #{row.terminationReason}, #{row.version}, #{row.createTime}, #{row.updateTime})
+    </insert>
+
+    <select id="selectById" resultType="com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowInstance">
+        SELECT <include refid="columns"/> FROM t_workflow_instance WHERE instance_id = #{id}
+    </select>
+
+    <update id="update">UPDATE t_workflow_instance SET status = #{row.status}, end_time = #{row.endTime}, terminated_by = #{row.terminatedBy},
+        termination_reason = #{row.terminationReason}, version = version + 1, update_time = #{row.updateTime}
+        WHERE instance_id = #{row.instanceId} AND version = #{row.version} AND status = 'RUNNING'</update>
+
+    <sql id="filter"><where>
+            <if test="filter.definitionId != null">AND i.definition_id = #{filter.definitionId}</if>
+            <if test="filter.status != null">AND i.status = #{filter.status}</if>
+            <if test="filter.startedBy != null">AND i.started_by = #{filter.startedBy}</if>
+            <if test="filter.businessKey != null">AND i.business_key = #{filter.businessKey}</if>
+            <if test="filter.titleKeyword != null">AND i.title LIKE CONCAT('%', #{filter.titleKeyword}, '%') ESCAPE '!'</if>
+            <if test="filter.participantId != null">AND (i.started_by = #{filter.participantId}
+                OR EXISTS (SELECT 1 FROM t_workflow_action_run a WHERE a.instance_id = i.instance_id
+                    AND (a.assignee_id = #{filter.participantId} OR a.submitted_by = #{filter.participantId}))
+                OR EXISTS (SELECT 1 FROM t_workflow_approval p WHERE p.instance_id = i.instance_id
+                    AND p.approver_id = #{filter.participantId})
+                OR EXISTS (SELECT 1 FROM t_workflow_transfer r WHERE r.instance_id = i.instance_id
+                    AND (r.from_user_id = #{filter.participantId} OR r.to_user_id = #{filter.participantId})))</if>
+        </where></sql>
+    <select id="page" resultType="com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowInstance">SELECT <include refid="aliasedColumns"/> FROM t_workflow_instance i <include refid="filter"/>
+        ORDER BY i.start_time DESC, i.instance_id DESC LIMIT #{size} OFFSET #{offset}</select>
+
+    <select id="count" resultType="_long">SELECT COUNT(*) FROM t_workflow_instance i <include refid="filter"/></select>
+
+    <!-- FILE 值为 {"字段": ["/files/v1/{fileId}", ...]}，按文件地址只在第二层数组元素中精确匹配（地址只含 / 与数字，调用方仍按转义符 ! 转义 LIKE 通配符）；无索引，按实例量评估（运营流程量级）。 -->
+    <select id="selectIdsReferencingFile" resultType="long">
+        SELECT instance_id FROM t_workflow_instance
+        WHERE JSON_SEARCH(start_values_json, 'one', #{fileAddress}, '!', '$.*[*]') IS NOT NULL
+        <if test="excludeInstanceId != null">AND instance_id &lt;&gt; #{excludeInstanceId}</if>
+        LIMIT 1
+    </select>
+
+</mapper>

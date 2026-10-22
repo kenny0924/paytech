@@ -7,6 +7,7 @@
 - 用户决定：在现有 Code-MoR 基础上重构为可装配的多实例支付平台，MoR 与 PSP 共存，按产品模块装配、多品牌白标、统一运维；职责划分优先于本地事务便利。
 - 详细材料：[需求目录](../../requirements/20261017/architecture-目标架构V2/requirement.md)、[技术方案](../../requirements/20261017/architecture-目标架构V2/technique.md)、[术语表](../../requirements/20261017/architecture-目标架构V2/glossary.md)、[架构画板](../../requirements/20261017/architecture-目标架构V2/assets/architecture-design.pen)、[收单时序](../../requirements/20261017/architecture-目标架构V2/acquiring-sequence.md)。
 - 实现、验证与部署状态只见[当前台账](../CURRENT_IMPLEMENTATION.md)。
+- 2026-10-22 后继：规划中的独立服务 `workflow-approval`（18121、`mor_workflow_approval`）已被[工作流并入 Platform 决定](./2026-10-22-workflow-into-platform-support.md)取代，工作流是 Platform Support 模块；D13 不变。
 
 ## 1. 决定
 

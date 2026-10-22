@@ -11,6 +11,14 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
+## platform-support 工作流（paytech-platform-support-workflow，2026-10-21—22，已本地提交，未推送，未上 mor-test）
+
+- **范围：** [需求](<../requirements/20261021/platform-support-工作流/requirement.md>)、[技术方案](<../requirements/20261021/platform-support-工作流/technique.md>)（实现期调整见 2.1、5.1）、[交付记录](<../requirements/20261021/platform-support-工作流/delivery.md>)、[并入 Platform 决定](./decisions/2026-10-22-workflow-into-platform-support.md)。`paytech/workflow-approval` 占位已删除。
+- **Implemented：** `mor_platform` 新增 10 张表（PDManer 图组 workflow，增量 `changes/2026-10-22-workflow.sql` 与 `changes/2026-10-22-workflow-comment.sql`）；workflow 模块（发布校验、条件、导航、运行引擎、审批含退回修改 / 驳回 / 转交、通知与业务回调经 `compensation_event` 与 MQ `platform-support.events` / `WorkflowCallbackRaised`）；32 个接口（含附件上传、完成、下载授权、重新验证；附件 Processor 在 core `service/processor/workflowattachment`）；业务数据中文件引用存地址 `/files/v1/{fileId}`（`FileAddress`）；ops-bff 同路径转发；ops-web 我的待办、流程实例、流程定义、动作目录四页；注册块 127（7 权限、10 资源、32 路由，默认休眠）。Platform 启动需要 RabbitMQ。
+- **Verified：** 主工作区（均 `-am`）workflow 核心 64、Platform 工作流 38、ops-bff 全量 2199（工作流 77）、arch-rules 68 + Reactor 4、ops-web tsc + 1325。本机 auto 库 `mor_platform` 已执行两份增量 DDL（备份 `Code-MoR-backups/mor_platform-local-20261022-*`）。
+- **本机端到端（阶段 5，2026-10-22）：** `mor_platform_v2e2e` 已执行 10 表、块 127 与激活、工作流文件路由增量（`verification/local-e2e/30-activate-workflow.sql`、`40-workflow-file-routes.sql`），并为带文件验收执行了文件存储 DDL、块 130 与激活；`mor_vault` 已执行文件存储 Vault DML；存储（MINIO、桶 `mor-platform-files`、默认路由）经运营存储管理登记。e2e platform / ops-bff 为主工作区构建（旧 JAR `*.pre-workflow`），启动器副本 `verification/local-e2e/run-service.sh`（files.enabled、入驻上传关闭）。主流程、并行 / 驳回 / 退回修改、文件上传与下载鉴权、拒绝情形均通过（脚本与截图在 `verification/local-e2e/`）。
+- **Pending / 遗留：** 推送另行授权；mor-test 发布（发布基线与环境变量见交付记录“6 发布备注”，Platform 需加回 RabbitMQ 键）；PDF 内嵌预览待文件存储第二段 `FileDisposition`，前端暂为“下载查看”；完成上传响应带 `fileAddress` 后前端改用响应值；扫描中发起被拒与重新验证仅自动化覆盖；本地无 XXL-Job 唤醒，通知自动重试未在 e2e 观察；本地无邮件服务商，邮件通知未实际送达。
+
 ## platform-support 币种主数据维护与读取缓存（2026-10-20—21，已部署 mor-test，已本地提交，未推送）
 
 - **决定与需求：** [决定记录](./decisions/2026-10-20-currency-spec-platform-snapshot-read.md)（取代 D41 副本部分）；[需求](<../requirements/20261020/platform-support-币种主数据维护与读取缓存/requirement.md>)、[技术方案](<../requirements/20261020/platform-support-币种主数据维护与读取缓存/technique.md>)、[交付记录](<../requirements/20261020/platform-support-币种主数据维护与读取缓存/delivery.md>)；阶段 1—8 完成。
@@ -153,10 +161,10 @@
 
 - **范围：** 按 [V2 决定草案](./decisions/2026-10-17-target-architecture-v2.md) D09、D11、D22、D24–D26、D31–D36 与[需求](<../requirements/20261017/architecture-V2骨架与模块搬迁/requirement.md>)，把 12 个旧工程根并入单一 Maven Reactor `paytech/`（唯一 Wrapper `paytech/mvnw`）。各步任务卡与报告见 [tasks/](<../requirements/20261017/architecture-V2骨架与模块搬迁/tasks/>)。本节只登记事实，规范正文仍以 `DOCUMENT_GOVERNANCE.md` 路由的 Owner 为准。
 - **Implemented：**
-  - **目录与模块：** `paytech/` 下有 23 个服务目录（原 24 个，data-service 已删除，并入 Platform data-query，已部署 mor-test，见 [2026-10-22 决定](./decisions/2026-10-22-data-query-into-platform-support.md)）。
+  - **目录与模块：** `paytech/` 下有 22 个服务目录（原 24 个：data-service 已删除，并入 Platform data-query，已部署 mor-test，见 [2026-10-22 决定](./decisions/2026-10-22-data-query-into-platform-support.md)；workflow-approval 占位已删除，见下）。
     - 17 个已建工程：platform-support、api-gateway、operations-console-bff、client-console-bff、vault、client-master、commercial、acquiring、counterparty（2026-10-20 由 consumer 改名）、payment、channel-connector、card、risk-decision、compliance、billing、account、ledger。
     - 另有 reconciliation、tax 两个空壳服务。
-    - dispute、payout 只有模型；fx、workflow-approval 只有 README 占位。
+    - dispute、payout 只有模型；fx 只有 README 占位。workflow-approval 占位已删除，工作流并入 Platform Support（[2026-10-22 决定](./decisions/2026-10-22-workflow-into-platform-support.md)）。
     - 另有 `paytech/build`（BOM、父 POM）、`paytech/foundation`（17 个模块，含 `paytech-messaging(-api)`、`paytech-internal-auth`）与 `paytech/tools/{arch-rules,arch-rules-reactor-test,instance-manifest,migration-runner}`。
   - **模块坐标：** `com.paytech:paytech-<服务>-{api,core,app,test}`（Gateway 与两个 BFF 无 api / core）。服务名、业务端口与管理端口见 [LOCAL_DEVELOPMENT_ENVIRONMENT.md](./LOCAL_DEVELOPMENT_ENVIRONMENT.md) 8.2 节；服务目录见 `paytech/tools/instance-manifest/src/main/resources/catalog/services.yaml`。
   - **库：** 每个服务独立库：`mor_client_master`、`mor_commercial`、`mor_acquiring`、`mor_counterparty`（2026-10-20 由 `mor_consumer` 改名）、`mor_payment`、`mor_channel_connector`、`mor_card`、`mor_risk_decision`、`mor_compliance`、`mor_ledger`、`mor_billing`、`mor_account`、`mor_reconciliation`、`mor_tax`；`mor_platform`、`mor_vault` 不变。模型为 `paytech/<服务>/docs/database/<服务>.pdma.json`（18 份），R4 表归属由 `paytech/tools/arch-rules/src/main/resources/table-ownership.yaml` 强制（265 张物理表 + 56 张保留表 + 6 张 step-added；2026-10-19 计费事实重构后为 −7 step-removed + 20 step-added）。

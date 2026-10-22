@@ -4,6 +4,8 @@
 
 > **渠道协议迁出（2026-10-20）：** 依据[统一对外出口决定](../decisions/2026-10-20-channel-connector-unified-outbound.md)与[技术方案](../../requirements/20261020/channel-connector-统一对外渠道出口/technique.md)，下一条所述 integration 图组 10 表（`t_standard_api`、`t_api_field`、`t_integration*`、验证四表）的 Owner 改为 channel-connector（`mor_channel_connector`，模块 `paytech-channel-connector-protocol`），Platform Schema 由 57 张减为 47 张；下一条保留为字段与历史设计参照，不再表示 Platform 拥有这些表。2026-10-22 第二段在 channel-connector 内把 `t_integration` 并入 `t_channel`、7 张 `t_integration_*` 改名为 `t_channel_*`，与 Platform 无关；Platform 只保留运营控制台的注册数据（块 71、92、129）。代码与 SQL 执行状态只见[当前台账](../CURRENT_IMPLEMENTATION.md#channel-connector-phase2-20261022)。
 
+> **工作流并入（2026-10-22）：** 依据[工作流并入 Platform 决定](../decisions/2026-10-22-workflow-into-platform-support.md)与[技术方案](../../requirements/20261021/platform-support-工作流/technique.md)第 4.2、6 节，PDManer 新增图组 `workflow`（10 张表），当前 Schema 由 47 张设计为 57 张；字段与规则见第 16 节。本条只描述设计，SQL 执行、代码与部署状态只见[当前台账](../CURRENT_IMPLEMENTATION.md)。
+
 > **Integration 后继（2026-09-21，2026-10-13 修订）：** [归属决定](../decisions/2026-09-21-platform-integration-http-execution.md)将受控外部 API 配置和执行纳入 Platform；[标准 API 与流程决定](../decisions/2026-10-13-platform-standard-api-flow.md)改为标准 API 加渠道同步流程。六表见[数据设计](../../requirements/20260914/platform-support-外部API配置与执行/data-design.md)与[物理设计](../../requirements/20260914/platform-support-外部API配置与执行/physical-design.md)，2026-10-13 已进入 PDManer（图组 integration），SQL 未执行；本项是下文“无通用技术配置”的窄例外，不扩展任意配置中心。2026-10-14 同图组增加沙箱验证四表（验证账号、用例、运行、运行步骤），保存验证证据与非敏感沙箱账号材料，依据[沙箱验证决定](../decisions/2026-10-14-platform-integration-sandbox-verification.md)。未因此更新正式模型数量，实际状态见当前台账。
 
 > **Notification 局部后继（2026-09-21）：** [Delivery 需求](../../requirements/20260920/platform-support-Delivery领域规划/requirement.md)及[七表字段](../../requirements/20260920/platform-support-Delivery领域规划/data-design.md)取代本文前序九表、Revision、消息快照、Callback/Suppression、通知 Hash 与领域 Lease/Fencing 描述；未涉及的 Platform 领域保持原合同。当前生成统计、SQL 执行与验证状态只见[当前台账](../CURRENT_IMPLEMENTATION.md#platform-delivery-domain-plan-20260920)。下列前序总量/拓扑保留历史参照，不是当前模型统计。
@@ -46,6 +48,7 @@ Gateway 和入口应用位于六个核心系统之外：Gateway 负责入口、�
 - Webhook Endpoint（含订阅事件类型）、Signing Secret 引用、Event、Delivery 与 Attempt（2026-10-15 后继合同见第 9 节）；
 - Audit Hash Chain、完整性点、Security Event/Alert；
 - 六类外部 HTTP 入口的受控 Target、Route、Header/Query Allowlist、全局 Guard 参数，以及 Operations/Client/Partner Console Resource；
+- Operations 工作流：流程定义与版本、动作模板、流程实例、节点 / 动作运行、验证记录、审批、转交与通知回调（2026-10-22，见第 16 节）；
 - 本服务的 Compensation Event 与 Command Idempotency。
 
 ### 2.2 只保存稳定引用
@@ -70,6 +73,7 @@ Gateway 和入口应用位于六个核心系统之外：Gateway 负责入口、�
 | 审计与安全 | 8 | `t_audit_chain`、`t_audit_event`、`t_audit_event_attr`、`t_audit_integrity_point`、`t_security_event`、`t_security_alert`、`t_security_alert_event`、`t_security_alert_action` |
 | 公共 API 控制面 | 6 | `t_gateway_target`、`t_gateway_route`、`t_gateway_route_header`、`t_gateway_route_query_param`、`t_gateway_guard_rule`、`t_console_resource` |
 | 可靠执行 | 2 | `t_compensation_event`、`t_command_idempotency` |
+| 工作流（2026-10-22 新增，不计入上方 63 表历史统计） | 10 | `t_workflow_definition`、`t_workflow_definition_version`、`t_workflow_action_template`、`t_workflow_instance`、`t_workflow_node_run`、`t_workflow_action_run`、`t_workflow_verification`、`t_workflow_approval`、`t_workflow_transfer`、`t_workflow_callback` |
 
 受控出站 API 定义自 2026-10-20 起由 channel-connector 管理（见顶部迁出说明），Platform 不再持有相应表；Platform 不建立 Gateway Policy/Release/Snapshot/Ack、任意通用技术配置、通用 Dictionary、通用 Job、Inbox/Outbox、Retention、Legal Hold、Archive Workflow 或自动销毁表。
 
@@ -301,3 +305,26 @@ Platform 可发布 `WebhookDelivered`、`WebhookFailed`、`NotificationSent`、`
 原公共控制面阶段门禁记录：63 表分组 `18 + 12 + 9 + 8 + 8 + 6 + 2`、822 字段、123 个唯一索引、99 个访问索引、107 条本库关系、5 条 1:1、36 Hash Allowlist、31 复合 FK、85 条具名 CHECK sidecar 契约、六张且仅六张公共控制面表、无 Gateway `*_ver`/Release/Snapshot/Tenant Override/新 Hash、无通用 Config/持久化 Readiness、无 `_ver` 物理表、无 Platform `client_id`，以及场景对每表恰有一条满足 NN/CHECK/复合身份的有效字段映射。原公共控制面阶段 Model SHA-256 为 `d07cfbe2153490c79e17715b8e43ae4e1b6c6ea1436fe8a3a6e063ddaee455bb`，Structural Projection SHA-256 为 `18b9c0ea482073457ed5084d0eddc77e51508d6964d34679905667f8a80e4722`，CHECK Policy SHA-256 为 `6260b6db67d05e37a3361c32507363271bee61bd4ad9144358c5bc8a1e6a6f3d`。PDManer 4.9.3 JSON 没有可移植 CHECK 节点；完整名称、表达式与表绑定冻结在 `scripts/pdmaner/platform-support/model-policy.mjs`，独立 Oracle 冻结其摘要，这些表达式作为代码与场景测试的不变量依据，不生成物理数据库 CHECK。
 
 PDManer 4.9.3 仍须人工打开并检查七个 Diagram、关系方向、中文显示名和索引，并运行 Validate；sidecar 作为代码与场景测试的业务不变量清单，不映射为物理 CHECK。未批准的表不得据此落库；已批准的 22 表切片遵循独立手工 SQL 实施边界。
+
+## 16. 工作流（2026-10-22）
+
+完整需求、配置结构与运行规则见[工作流需求](../../requirements/20261021/platform-support-工作流/requirement.md)与[技术方案](../../requirements/20261021/platform-support-工作流/technique.md)；本节只记录表职责与关键不变量。持久化 Owner 为业务模块 `paytech-platform-support-workflow`。
+
+| 分类 | 表 | 职责 |
+| --- | --- | --- |
+| 配置 | `t_workflow_definition` | 流程定义根：编码唯一、ACTIVE / INACTIVE；`current_version_no` 指向最新发布版本，`draft_version_no` 指向唯一草稿，两者在定义锁加 `version` CAS 下切换 |
+| 配置 | `t_workflow_definition_version` | 草稿或已发布版本：`graph_json`（≤ 256 KiB）、`start_form_json`（≤ 50 字段）；发布时写 `action_snapshot_json` 冻结引用模板的 ID、版本、类型与配置，此后不可变 |
+| 配置 | `t_workflow_action_template` | 动作目录：FORM、FILE_UPLOAD、PAGE_TASK、MANUAL_CONFIRM 四类可用，DATA_QUERY 只预留、不能被发布引用；停用只拦新发布 |
+| 运行 | `t_workflow_instance` | 一次运行：绑定发起时的已发布版本，冻结启动值（`start.*` 变量）与人员分配；RUNNING → COMPLETED / TERMINATED |
+| 运行 | `t_workflow_node_run` | 节点的一轮运行：`(instance_id, node_key, round_no)` 唯一；`branch_key` 标记并行分支，`previous_node_run_id` 记录实际来源（START 与汇合为空），驳回沿它跳过网关定位上一 TASK |
+| 运行 | `t_workflow_action_run` | 动作在一轮节点中的执行：`(node_run_id, action_key)` 唯一，以最后一次验证为准，VERIFIED 后不再接受提交 |
+| 证据 | `t_workflow_verification` | 每次验证的结论、证据与原因；只追加 |
+| 运行 | `t_workflow_approval` | 每位审批人一行：`(node_run_id, approver_id)` 唯一；ANY / ALL 放行，退回修改（RETURNED）与驳回（REJECTED）时其余行 WITHDRAWN |
+| 证据 | `t_workflow_transfer` | 动作执行人或审批人的转交历史；只追加 |
+| 投递 | `t_workflow_callback` | 状态变化按规则登记的一次邮件通知或 MQ 业务回调，与状态变化同事务写入并登记 `compensation_event`，提交后执行；PENDING / SENT / FAILED |
+
+- 实例变量不建表：`start.*` 取实例启动值，`<actionKey>.*` 取该动作最新一轮 VERIFIED 的 `output_json`。
+- 人员字段保存 `t_user_account.account_id`，只允许 ACTIVE 的 Operations 账号；同一人不能既提交某节点的动作又审批该节点，在审批决定时校验。
+- 工作流只写本库，不复制业务对象、不调用业务写接口；业务回调只发布 `topic_platform_workflow_event`，订阅方执行前自行校验业务事实（D13）。
+- 运行表不接入 BCR；配置表的修改由统一审计记录。
+- 物理命名与技术方案的差异：`trigger` 是 MySQL 保留字，回调表的触发列命名为 `trigger_code`；`comment` 在模板保留字规则内，审批意见列命名为 `decision_comment`。

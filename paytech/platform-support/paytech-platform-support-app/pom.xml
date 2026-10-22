@@ -34,6 +34,16 @@
             <groupId>com.paytech</groupId>
             <artifactId>paytech-platform-support-delivery</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-platform-support-workflow</artifactId>
+        </dependency>
+        <!-- RabbitMQ 连接：工作流业务回调 WorkflowCallbackRaised 经 platform-support.events 发布（技术方案 4.2）。
+             发布端只在设置 messaging.producer.service 时声明交换机并提供 DomainEventPublisher。 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-compensation-event</artifactId></dependency>
         <dependency>
             <groupId>com.paytech</groupId>

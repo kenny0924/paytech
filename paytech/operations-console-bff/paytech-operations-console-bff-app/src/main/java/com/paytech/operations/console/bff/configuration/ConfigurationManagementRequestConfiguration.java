@@ -70,7 +70,7 @@ public class ConfigurationManagementRequestConfiguration implements WebMvcConfig
                     throw new InvalidParameterException("该请求不接受 Body");
                 return true;
             }
-        }).addPathPatterns("/gateway-admin/v1/**", "/console-admin/v1/**", "/permission-admin/v1/**", "/api-credential-admin/v1/**", "/api-scope-admin/v1/**", "/tenant-access-admin/v1/**", "/external-api-admin/v1/**", "/notification-admin/v1/**", "/webhook-admin/v1/**", "/currency-admin/v1/**", "/storage-admin/v1/**", "/data-query-admin/v1/**", "/data-query/v1/**");
+        }).addPathPatterns("/gateway-admin/v1/**", "/console-admin/v1/**", "/permission-admin/v1/**", "/api-credential-admin/v1/**", "/api-scope-admin/v1/**", "/tenant-access-admin/v1/**", "/external-api-admin/v1/**", "/notification-admin/v1/**", "/webhook-admin/v1/**", "/currency-admin/v1/**", "/storage-admin/v1/**", "/workflow-admin/v1/**", "/workflow/v1/**", "/data-query-admin/v1/**", "/data-query/v1/**");
     }
 
     /** Controller 方法是否声明 RequestBody。 */
@@ -95,13 +95,13 @@ public class ConfigurationManagementRequestConfiguration implements WebMvcConfig
         @Override
         public boolean canRead(ResolvableType type, MediaType mediaType) {
             Class<?> value = type.resolve();
-            return value != null && value.getSimpleName().endsWith("RequestBody") && (FILE_STORAGE_REQUESTS.equals(value.getPackageName()) || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.GatewayConfigurationModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.ConsoleResourceModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.PermissionManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.ApiScopeManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.ApiCredentialManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.TenantAccessManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.NotificationManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.WebhookManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.CurrencySpecManagementModels.class)
+            return value != null && value.getSimpleName().endsWith("RequestBody") && (FILE_STORAGE_REQUESTS.equals(value.getPackageName()) || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.GatewayConfigurationModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.ConsoleResourceModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.PermissionManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.ApiScopeManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.ApiCredentialManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.TenantAccessManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.NotificationManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.WebhookManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.CurrencySpecManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.WorkflowModels.class)
                 && super.canRead(type, mediaType);
         }
 
         @Override
         public Object read(ResolvableType type, HttpInputMessage input, Map<String, Object> hints) throws IOException {
-            // Webhook 写 Body 上限 8192 字节，其余配置 65536 字节。
+            // Webhook 写 Body 上限 8192 字节，其余配置 65536 字节（含工作流草稿，与 Gateway 路由绝对上限一致）。
             int limit = type.resolve().getEnclosingClass() == com.paytech.operations.console.bff.service.model.WebhookManagementModels.class ? 8192 : 65536;
             byte[] body = input.getBody().readNBytes(limit + 1);
             if (body.length > limit) throw new org.springframework.web.server.ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE);

@@ -133,6 +133,11 @@ public class OperationsManagementPolicyServiceImpl implements OperationsManageme
         return current;
     }
 
+    @Override
+    public boolean hasPermission(OperationsSessionService.SessionContext context, String permission) {
+        return context.member() != null && directory.permissions(context.member().id()).contains(permission);
+    }
+
     private void requireAnyPermission(List<String> granted, String... permissions) {
         if (Arrays.stream(permissions).noneMatch(granted::contains)) {
             throw new FailException(OperationsErrorCode.OPERATIONS_PERMISSION_DENIED);

@@ -72,6 +72,19 @@ test('tenant page owns only its three approved routes', () => {
     ['/external-api/integrations']);
 });
 
+test('工作流页面登记子路由：实例详情、流程编辑器与版本只读、动作详情；我的待办只有根路径', () => {
+  const menu = (frontendRoute: string, componentKey: string) => ({ frontendRoute, componentKey }) as ConsoleResource;
+  assert.deepEqual(pageRoutePaths(menu('/workflow/my-tasks', 'OPERATIONS_WORKFLOW_MY_TASKS')), ['/workflow/my-tasks']);
+  assert.deepEqual(pageRoutePaths(menu('/workflow/instances', 'OPERATIONS_WORKFLOW_INSTANCES')), ['/workflow/instances', '/workflow/instances/:instanceId']);
+  assert.deepEqual(pageRoutePaths(menu('/workflow/definitions', 'OPERATIONS_WORKFLOW_DEFINITIONS')),
+    ['/workflow/definitions', '/workflow/definitions/:definitionId', '/workflow/definitions/:definitionId/versions/:versionNo']);
+  assert.deepEqual(pageRoutePaths(menu('/workflow/action-templates', 'OPERATIONS_WORKFLOW_ACTION_TEMPLATES')), ['/workflow/action-templates', '/workflow/action-templates/:templateId']);
+  const group = resource('workflow', { displayName: '工作流' });
+  const tasks = resource('tasks', { parentResourceId: 'workflow', displayName: '我的待办', frontendRoute: '/workflow/my-tasks', componentKey: 'OPERATIONS_WORKFLOW_MY_TASKS', sortOrder: 10 });
+  const definitions = resource('definitions', { parentResourceId: 'workflow', displayName: '流程定义', frontendRoute: '/workflow/definitions', componentKey: 'OPERATIONS_WORKFLOW_DEFINITIONS', sortOrder: 30 });
+  assert.deepEqual(menuPages(buildMenuTree([group, definitions, tasks])).map(item => item.displayName), ['我的待办', '流程定义']);
+});
+
 test('数据查询：模板页登记编辑器子路由（:templateId 含 new），数据源页只有根路径', () => {
   const menu = { frontendRoute: '/data-query/templates', componentKey: 'OPERATIONS_QUERY_TEMPLATES' } as ConsoleResource;
   assert.deepEqual(pageRoutePaths(menu), ['/data-query/templates', '/data-query/templates/:templateId']);

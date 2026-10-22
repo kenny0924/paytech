@@ -30631,6 +30631,4590 @@
       "type": "P"
     },
     {
+      "id": "91075E34-70DF-51C2-BA42-50AC3F0594A5",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_workflow_definition",
+      "defName": "流程定义",
+      "comment": "Operations 用流程图配置的流程模板；草稿可改，发布生成不可变版本，再修改即生成新版本；停用后不能发起新实例，在途实例照常运行",
+      "properties": {
+        "logicalTableKey": "workflow_definition",
+        "compositeForeignKeys": []
+      },
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "definition_id",
+          "defName": "流程定义主键",
+          "comment": "流程定义的 Snowflake 主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "61070BD2-9FEA-5A26-AF10-69C688E94744"
+        },
+        {
+          "defKey": "definition_code",
+          "defName": "流程定义编码",
+          "comment": "流程定义的业务编码；创建后不可修改，全局唯一。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "utf8mb4",
+            "collation": "utf8mb4_bin"
+          },
+          "domain": "",
+          "id": "7736B2D7-598A-57C1-956D-68B77C4C8026"
+        },
+        {
+          "defKey": "definition_name",
+          "defName": "流程定义名称",
+          "comment": "流程定义的显示名称，随草稿保存修改。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "E00354B7-D6AE-5E88-B92C-463B8FDD302A"
+        },
+        {
+          "defKey": "description",
+          "defName": "流程说明",
+          "comment": "流程定义的用途说明；未填写时为空。",
+          "type": "VARCHAR",
+          "len": 512,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "6D956E85-5484-57CB-8CFA-2D35E979A90F"
+        },
+        {
+          "defKey": "status",
+          "defName": "定义状态",
+          "comment": "流程定义是否允许发起新实例；INACTIVE 不影响在途实例。允许值：ACTIVE、INACTIVE。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "B0E9D7FB-7C7E-50A0-8D32-2E446450BD13"
+        },
+        {
+          "defKey": "current_version_no",
+          "defName": "当前发布版本号",
+          "comment": "最新一次发布的版本号，发起实例使用该版本；从未发布时为空。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "A8D30FF7-0F4B-5C3C-9D49-C02CD7524996"
+        },
+        {
+          "defKey": "draft_version_no",
+          "defName": "当前草稿版本号",
+          "comment": "当前唯一草稿的版本号；没有草稿时为空，保证每个定义最多一份草稿。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "1219F156-5A88-568C-AEA7-D5FE59420594"
+        },
+        {
+          "defKey": "version",
+          "defName": "并发版本",
+          "comment": "并发更新版本，初始为 1，每次条件更新成功加一。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "1",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "406B861C-438D-5055-A22D-7C17D4680843"
+        },
+        {
+          "defKey": "created_by",
+          "defName": "创建人",
+          "comment": "创建流程定义的 Operations 账号 ID（t_user_account.account_id）。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "AC9BFF62-F942-5C26-95FE-B2ABB73AFE0C"
+        },
+        {
+          "defKey": "updated_by",
+          "defName": "最后修改人",
+          "comment": "最后修改流程定义或其草稿的 Operations 账号 ID。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "9B8C2593-4B36-58DB-BC75-BCA7B19EB72A"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "D1BAEEDF-DB46-59EE-934B-AC68E33E61AD"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "678A8517-5A38-51EB-9C3F-80F8611A52BB"
+        }
+      ],
+      "correlations": [],
+      "indexes": [
+        {
+          "defKey": "uk_workflow_def_code",
+          "defName": "唯一索引 definition_code",
+          "unique": true,
+          "comment": "保证业务唯一性：definition_code",
+          "fields": [
+            {
+              "fieldDefKey": "7736B2D7-598A-57C1-956D-68B77C4C8026",
+              "ascOrDesc": "A",
+              "id": "3E2E31B0-02D7-5584-85ED-456D0A1E1A21"
+            }
+          ],
+          "id": "C3365EFF-9CF0-55EE-B6B3-CC994226FA20"
+        },
+        {
+          "defKey": "idx_workflow_def_status",
+          "defName": "访问索引 status、update_time",
+          "unique": false,
+          "comment": "支持访问路径：status、update_time",
+          "fields": [
+            {
+              "fieldDefKey": "B0E9D7FB-7C7E-50A0-8D32-2E446450BD13",
+              "ascOrDesc": "A",
+              "id": "6F2324AE-2258-57C1-8190-544C7891D8DF"
+            },
+            {
+              "fieldDefKey": "678A8517-5A38-51EB-9C3F-80F8611A52BB",
+              "ascOrDesc": "A",
+              "id": "0377B4E2-E949-5EED-8209-9199305E76D9"
+            }
+          ],
+          "id": "B94719BA-5322-5AAA-BE61-D1BE72B30F12"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "77CA949F-B929-54AE-A8A1-39F2D4F9FFED",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_workflow_definition_version",
+      "defName": "流程版本",
+      "comment": "流程定义的草稿或已发布版本；发布后流程图、启动表单与动作模板快照不可变，实例发起时绑定版本",
+      "properties": {
+        "logicalTableKey": "workflow_definition_version",
+        "compositeForeignKeys": []
+      },
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "definition_version_id",
+          "defName": "流程版本主键",
+          "comment": "流程版本的 Snowflake 主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "E2DA5446-2F15-5FAF-835C-94D9426A5814"
+        },
+        {
+          "defKey": "definition_id",
+          "defName": "所属流程定义",
+          "comment": "该版本所属的流程定义 ID。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "600D12DF-E224-5F0E-A472-8ABAD2CF56EA"
+        },
+        {
+          "defKey": "version_no",
+          "defName": "版本号",
+          "comment": "定义内从 1 开始递增的版本号；草稿发布后号码不变。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "729C3582-32C5-52F3-A4E6-9806D1A1740E"
+        },
+        {
+          "defKey": "status",
+          "defName": "版本状态",
+          "comment": "DRAFT 可随草稿保存覆盖；PUBLISHED 后内容不可变。允许值：DRAFT、PUBLISHED。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "0A568FD7-0A7C-5907-BD72-DF5F854B65AA"
+        },
+        {
+          "defKey": "graph_json",
+          "defName": "流程图",
+          "comment": "节点、连线、排他条件、审批、动作引用与通知规则，结构见工作流技术方案 3.1；不超过 48 KiB。",
+          "type": "JSON",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
+          "extProps": {},
+          "domain": "",
+          "id": "CE339876-07C7-526E-BC46-FBEAB8FDFD24"
+        },
+        {
+          "defKey": "start_form_json",
+          "defName": "启动表单",
+          "comment": "启动表单字段定义，与表单动作共用结构，见工作流技术方案 3.2；最多 50 个字段，不超过 12 KiB。",
+          "type": "JSON",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
+          "extProps": {},
+          "domain": "",
+          "id": "ECB19723-D953-5C43-8764-BEE1D027DAF2"
+        },
+        {
+          "defKey": "action_snapshot_json",
+          "defName": "动作模板快照",
+          "comment": "发布时冻结的引用动作模板：模板 ID、模板版本、类型与配置；草稿为空。",
+          "type": "JSON",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
+          "extProps": {},
+          "domain": "",
+          "id": "7F084D80-67DD-599A-B34F-F317344A7E37"
+        },
+        {
+          "defKey": "published_by",
+          "defName": "发布人",
+          "comment": "发布该版本的 Operations 账号 ID；草稿为空。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "98F217F4-0C3A-5464-9B88-D0FEA54982D0"
+        },
+        {
+          "defKey": "published_time",
+          "defName": "发布时间",
+          "comment": "版本发布的 UTC 微秒时间；草稿为空。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "2718986F-3A5C-52A2-B20E-A10439E8DF27"
+        },
+        {
+          "defKey": "version",
+          "defName": "并发版本",
+          "comment": "并发更新版本，初始为 1，每次条件更新成功加一。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "1",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "F28B4E04-F99D-5888-8FB9-6BCDEB4F86D2"
+        },
+        {
+          "defKey": "created_by",
+          "defName": "创建人",
+          "comment": "创建该版本（新建定义或从发布版本复制草稿）的 Operations 账号 ID。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "A57115C3-868D-59E9-9AFA-2B3A195D6B45"
+        },
+        {
+          "defKey": "updated_by",
+          "defName": "最后修改人",
+          "comment": "最后保存该草稿或发布该版本的 Operations 账号 ID。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "DAB29FA3-014D-5802-B956-CD8E7E02A63C"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "59D85EFA-8554-5A58-989C-0416386E041C"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "37EC2268-DB73-5BF6-B6C7-B2A360C5AC7F"
+        }
+      ],
+      "correlations": [
+        {
+          "id": "763BFA49-717A-5D5D-B4FC-99AAC396CF63",
+          "myField": "600D12DF-E224-5F0E-A472-8ABAD2CF56EA",
+          "refEntity": "91075E34-70DF-51C2-BA42-50AC3F0594A5",
+          "refField": "61070BD2-9FEA-5A26-AF10-69C688E94744",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ],
+      "indexes": [
+        {
+          "defKey": "uk_workflow_def_ver",
+          "defName": "唯一索引 definition_id、version_no",
+          "unique": true,
+          "comment": "保证业务唯一性：definition_id、version_no",
+          "fields": [
+            {
+              "fieldDefKey": "600D12DF-E224-5F0E-A472-8ABAD2CF56EA",
+              "ascOrDesc": "A",
+              "id": "C7362275-4A59-5F4B-B60E-F6E3C88DC8BA"
+            },
+            {
+              "fieldDefKey": "729C3582-32C5-52F3-A4E6-9806D1A1740E",
+              "ascOrDesc": "A",
+              "id": "BD7F7096-91F4-514A-9FF6-D1AACF8A08E0"
+            }
+          ],
+          "id": "C7858687-D37F-53CF-A5C4-E52A2FDC86C1"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "B08EBEFC-416C-5787-BE10-BDFC6537DAB9",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_workflow_action_template",
+      "defName": "动作模板",
+      "comment": "动作目录中可复用的节点动作配置：类型、输入、输出与验证方式；停用后新发布的流程不能引用，已发布版本使用冻结快照照常运行",
+      "properties": {
+        "logicalTableKey": "workflow_action_template",
+        "compositeForeignKeys": []
+      },
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "action_template_id",
+          "defName": "动作模板主键",
+          "comment": "动作模板的 Snowflake 主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "CE9AD639-2BF3-57C0-9098-05F83AEE9346"
+        },
+        {
+          "defKey": "template_code",
+          "defName": "动作模板编码",
+          "comment": "动作模板的业务编码；创建后不可修改，全局唯一。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "utf8mb4",
+            "collation": "utf8mb4_bin"
+          },
+          "domain": "",
+          "id": "36F09C5E-3773-5822-A1BC-83EAA742990B"
+        },
+        {
+          "defKey": "template_name",
+          "defName": "动作模板名称",
+          "comment": "动作模板的显示名称。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "8E300649-D2AD-5A49-B636-B8CA7ACA00D3"
+        },
+        {
+          "defKey": "action_type",
+          "defName": "动作类型",
+          "comment": "动作的提交与验证方式；DATA_QUERY 本期只预留，不能被发布的流程引用。允许值：FORM、FILE_UPLOAD、PAGE_TASK、MANUAL_CONFIRM、DATA_QUERY。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "B0C3B7FD-E3F4-5986-88B6-029E6B454D1C"
+        },
+        {
+          "defKey": "description",
+          "defName": "模板说明",
+          "comment": "动作模板的用途说明；未填写时为空。",
+          "type": "VARCHAR",
+          "len": 512,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "4EED9148-B44A-5B19-8516-84B71ED73FEC"
+        },
+        {
+          "defKey": "config_json",
+          "defName": "动作配置",
+          "comment": "按动作类型的配置，结构见工作流技术方案 3.3。",
+          "type": "JSON",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
+          "extProps": {},
+          "domain": "",
+          "id": "71C5041C-154E-5C9D-9562-D231BD1FE109"
+        },
+        {
+          "defKey": "status",
+          "defName": "模板状态",
+          "comment": "动作模板是否允许被新发布的流程引用。允许值：ACTIVE、INACTIVE。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "0B0B1846-250A-5DAD-8A83-9DA7F76A306E"
+        },
+        {
+          "defKey": "version",
+          "defName": "并发版本",
+          "comment": "并发更新版本，初始为 1，每次修改加一；发布时作为模板版本冻结进版本快照。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "1",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "9EE2752C-6A11-5B3B-BEE9-7EF125C22C42"
+        },
+        {
+          "defKey": "created_by",
+          "defName": "创建人",
+          "comment": "创建动作模板的 Operations 账号 ID。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "61DDC76C-3C39-5326-92A0-5778C46DB0E3"
+        },
+        {
+          "defKey": "updated_by",
+          "defName": "最后修改人",
+          "comment": "最后修改动作模板的 Operations 账号 ID。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "2FAA7063-1E8E-504B-B71B-D678E4DCC9C0"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "8FEC7DA8-348F-5EB7-8F3B-73840C0A93BF"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "0AD285DF-4094-52DC-B0F9-F27932D5B859"
+        }
+      ],
+      "correlations": [],
+      "indexes": [
+        {
+          "defKey": "uk_workflow_tpl_code",
+          "defName": "唯一索引 template_code",
+          "unique": true,
+          "comment": "保证业务唯一性：template_code",
+          "fields": [
+            {
+              "fieldDefKey": "36F09C5E-3773-5822-A1BC-83EAA742990B",
+              "ascOrDesc": "A",
+              "id": "16FD1155-66A9-55A6-B4D5-31E77DB85AE0"
+            }
+          ],
+          "id": "DFD94ED2-9CE6-5326-A5E2-18ED4CD13205"
+        },
+        {
+          "defKey": "idx_workflow_tpl_type",
+          "defName": "访问索引 action_type、status",
+          "unique": false,
+          "comment": "支持访问路径：action_type、status",
+          "fields": [
+            {
+              "fieldDefKey": "B0C3B7FD-E3F4-5986-88B6-029E6B454D1C",
+              "ascOrDesc": "A",
+              "id": "8AF6FA4C-C8FD-5971-8952-3975CCD3A259"
+            },
+            {
+              "fieldDefKey": "0B0B1846-250A-5DAD-8A83-9DA7F76A306E",
+              "ascOrDesc": "A",
+              "id": "30040E7F-E94F-5A39-85F7-B039A8AA3738"
+            }
+          ],
+          "id": "BAC00E6F-A639-5275-B90D-CB8CB1A5584E"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "F303719D-FA54-58A2-8754-5D41516D8D2A",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_workflow_instance",
+      "defName": "流程实例",
+      "comment": "一次具体的流程运行；绑定发起时的已发布版本，节点、动作与配置全程不变，运行中只能经转交变更人员",
+      "properties": {
+        "logicalTableKey": "workflow_instance",
+        "compositeForeignKeys": []
+      },
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "instance_id",
+          "defName": "流程实例主键",
+          "comment": "流程实例的 Snowflake 主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "78734D01-7540-5822-9077-84D3235CA8C6"
+        },
+        {
+          "defKey": "definition_id",
+          "defName": "所属流程定义",
+          "comment": "实例所属的流程定义 ID。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "961D84F1-A278-5594-9A45-E6AF4637BE9E"
+        },
+        {
+          "defKey": "definition_version_id",
+          "defName": "绑定流程版本",
+          "comment": "发起时绑定的已发布流程版本 ID；实例全程按该版本执行。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "B94047D8-E507-529D-A7A3-A03DB25716F4"
+        },
+        {
+          "defKey": "title",
+          "defName": "实例标题",
+          "comment": "发起人填写的实例标题。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "5D1CF278-7DF9-58DD-BDB9-E1DD4F528AA0"
+        },
+        {
+          "defKey": "business_key",
+          "defName": "业务关联键",
+          "comment": "可选的业务关联键（如 CHANNEL:GEIDEA-SA），只用于检索和展示，工作流不解释其含义；未填写时为空。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "BC503F4A-91B0-5856-8098-33BEF865BC9C"
+        },
+        {
+          "defKey": "status",
+          "defName": "实例状态",
+          "comment": "实例运行状态；COMPLETED、TERMINATED 为终态，终态后只读。允许值：RUNNING、COMPLETED、TERMINATED。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "2003412D-F81C-53BE-8A9D-2DF161E34AE0"
+        },
+        {
+          "defKey": "start_values_json",
+          "defName": "启动值",
+          "comment": "启动表单提交值，作为 start.* 实例变量；发起后不可修改。",
+          "type": "JSON",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
+          "extProps": {},
+          "domain": "",
+          "id": "D9113EF0-0073-5634-9492-62E3FA26F974"
+        },
+        {
+          "defKey": "assignment_json",
+          "defName": "人员分配",
+          "comment": "发起时冻结的各节点审批人与各动作执行人（版本默认值加发起时的修改）。",
+          "type": "JSON",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
+          "extProps": {},
+          "domain": "",
+          "id": "A6B645CA-3B84-545C-BC09-90BB6F0975A9"
+        },
+        {
+          "defKey": "started_by",
+          "defName": "发起人",
+          "comment": "发起实例的 Operations 账号 ID。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "9EB4D8E2-C934-5095-B268-8D44548065C0"
+        },
+        {
+          "defKey": "start_time",
+          "defName": "发起时间",
+          "comment": "实例发起的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "9C7BE2D9-48E0-59BC-8EE7-AC9EAD1A5579"
+        },
+        {
+          "defKey": "end_time",
+          "defName": "结束时间",
+          "comment": "实例完成或终止的 UTC 微秒时间；运行中为空。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "246677C8-0630-5607-8AE9-46805DE3840B"
+        },
+        {
+          "defKey": "terminated_by",
+          "defName": "终止人",
+          "comment": "终止实例的 Operations 账号 ID；未终止时为空。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "5533BAA6-00DB-5B6A-8507-BD39A00A25C3"
+        },
+        {
+          "defKey": "termination_reason",
+          "defName": "终止原因",
+          "comment": "终止实例时填写的原因；未终止时为空。",
+          "type": "VARCHAR",
+          "len": 512,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "1EF69CE5-A73E-56AC-B447-DB39F67822EE"
+        },
+        {
+          "defKey": "version",
+          "defName": "并发版本",
+          "comment": "并发更新版本，初始为 1，每次条件更新成功加一。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "1",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "3B85E741-11A1-525F-A3E8-104AC7E8A97D"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "9BCBEEF0-8E00-5B57-85ED-6CCFFD229B90"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "1CDFCA50-3CD8-5A34-BE82-825DB1BB1FA0"
+        }
+      ],
+      "correlations": [
+        {
+          "id": "0EDD588D-562E-5ECB-92AA-C6DEADFF5304",
+          "myField": "961D84F1-A278-5594-9A45-E6AF4637BE9E",
+          "refEntity": "91075E34-70DF-51C2-BA42-50AC3F0594A5",
+          "refField": "61070BD2-9FEA-5A26-AF10-69C688E94744",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ],
+      "indexes": [
+        {
+          "defKey": "idx_workflow_inst_status",
+          "defName": "访问索引 status、start_time",
+          "unique": false,
+          "comment": "支持访问路径：status、start_time",
+          "fields": [
+            {
+              "fieldDefKey": "2003412D-F81C-53BE-8A9D-2DF161E34AE0",
+              "ascOrDesc": "A",
+              "id": "A142A48D-D8A3-57C8-9592-9D9FC72EB616"
+            },
+            {
+              "fieldDefKey": "9C7BE2D9-48E0-59BC-8EE7-AC9EAD1A5579",
+              "ascOrDesc": "A",
+              "id": "576636AD-D279-571D-B321-C71BAED6BA51"
+            }
+          ],
+          "id": "62BCB18D-B0EB-5EB8-A620-6BAAEAD4E6E6"
+        },
+        {
+          "defKey": "idx_workflow_inst_def",
+          "defName": "访问索引 definition_id、status",
+          "unique": false,
+          "comment": "支持访问路径：definition_id、status",
+          "fields": [
+            {
+              "fieldDefKey": "961D84F1-A278-5594-9A45-E6AF4637BE9E",
+              "ascOrDesc": "A",
+              "id": "B35C6B13-6388-5E55-B63F-7388D6722982"
+            },
+            {
+              "fieldDefKey": "2003412D-F81C-53BE-8A9D-2DF161E34AE0",
+              "ascOrDesc": "A",
+              "id": "ACD67FFA-6EDA-56F6-9444-42178FEC537C"
+            }
+          ],
+          "id": "8A2ED004-27BC-55C9-8420-BEF7EC6E066D"
+        },
+        {
+          "defKey": "idx_workflow_inst_starter",
+          "defName": "访问索引 started_by、start_time",
+          "unique": false,
+          "comment": "支持访问路径：started_by、start_time",
+          "fields": [
+            {
+              "fieldDefKey": "9EB4D8E2-C934-5095-B268-8D44548065C0",
+              "ascOrDesc": "A",
+              "id": "A25A4514-E8E6-5D24-9B7F-8ACD52134D7F"
+            },
+            {
+              "fieldDefKey": "9C7BE2D9-48E0-59BC-8EE7-AC9EAD1A5579",
+              "ascOrDesc": "A",
+              "id": "C5AF5E73-32D7-5A6B-80B1-4BD3C9FA1DD2"
+            }
+          ],
+          "id": "D9D3DC87-32CA-5BA9-81A3-073157DDB3A7"
+        },
+        {
+          "defKey": "idx_workflow_inst_bizkey",
+          "defName": "访问索引 business_key",
+          "unique": false,
+          "comment": "支持访问路径：business_key",
+          "fields": [
+            {
+              "fieldDefKey": "BC503F4A-91B0-5856-8098-33BEF865BC9C",
+              "ascOrDesc": "A",
+              "id": "35B64F2E-190C-5157-B7EF-4FBECC2A536B"
+            }
+          ],
+          "id": "5A373C4F-1357-5F0D-B7B1-937AE2A86A76"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "635FB33C-C2D8-576B-9727-559185631A51",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_workflow_node_run",
+      "defName": "节点运行",
+      "comment": "实例中一个节点的一轮运行；退回修改与驳回重新激活时新建一轮，previous_node_run_id 记录实际来源，用于驳回定位上一节点",
+      "properties": {
+        "logicalTableKey": "workflow_node_run",
+        "compositeForeignKeys": []
+      },
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "node_run_id",
+          "defName": "节点运行主键",
+          "comment": "节点运行的 Snowflake 主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "36172E5E-12F9-510C-95DA-7FC3A6B524A3"
+        },
+        {
+          "defKey": "instance_id",
+          "defName": "所属实例",
+          "comment": "节点运行所属的流程实例 ID。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "B01AC88D-2B11-5719-839F-30453A872616"
+        },
+        {
+          "defKey": "node_key",
+          "defName": "节点 key",
+          "comment": "绑定流程版本中的节点 key。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "utf8mb4",
+            "collation": "utf8mb4_bin"
+          },
+          "domain": "",
+          "id": "DF2F5A21-C8FD-5B7B-85DF-F2A38265467F"
+        },
+        {
+          "defKey": "node_type",
+          "defName": "节点类型",
+          "comment": "节点在流程图中的类型。允许值：START、END、TASK、EXCLUSIVE、PARALLEL_SPLIT、PARALLEL_JOIN。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "8DABB7BE-7AD2-5E05-B8F0-A4DE406F62C1"
+        },
+        {
+          "defKey": "round_no",
+          "defName": "轮次",
+          "comment": "同一实例同一节点的轮次，从 1 开始；新一轮为该节点已有最大轮次加一。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "EB62B06E-929A-56E9-9D5D-AF5BE55EEFB8"
+        },
+        {
+          "defKey": "branch_key",
+          "defName": "并行分支",
+          "comment": "所在并行分支，取并行分叉出边的 key；不在并行分支内时为空。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "utf8mb4",
+            "collation": "utf8mb4_bin"
+          },
+          "domain": "",
+          "id": "F56F88C7-70B2-56E6-84AC-B478D0842A95"
+        },
+        {
+          "defKey": "previous_node_run_id",
+          "defName": "来源节点运行",
+          "comment": "实际来源的节点运行 ID；START 与并行汇合节点为空。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "73573F6D-57A6-50C5-964A-3C8A87C05D17"
+        },
+        {
+          "defKey": "status",
+          "defName": "节点运行状态",
+          "comment": "TASK 依次为 ACTIVE（执行动作）、APPROVING（待审批），结束于 PASSED、RETURNED（退回修改）、REJECTED（被驳回）或 CANCELLED；并行汇合为 WAITING 直到全部分支完成；START、END、排他网关与并行分叉写入即 PASSED。允许值：ACTIVE、APPROVING、WAITING、PASSED、RETURNED、REJECTED、CANCELLED。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "E9445295-3287-5396-9CFC-AD00D0FA35EF"
+        },
+        {
+          "defKey": "selected_edge_key",
+          "defName": "选中出边",
+          "comment": "排他网关按条件选中的出边 key；其他节点为空。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "utf8mb4",
+            "collation": "utf8mb4_bin"
+          },
+          "domain": "",
+          "id": "80011236-8909-51D2-B3F5-E471FBE7C88B"
+        },
+        {
+          "defKey": "activated_time",
+          "defName": "激活时间",
+          "comment": "节点运行创建即激活的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "EFB726BB-4325-5CE5-9CCE-560688447A5A"
+        },
+        {
+          "defKey": "completed_time",
+          "defName": "结束时间",
+          "comment": "节点运行进入 PASSED、RETURNED、REJECTED 或 CANCELLED 的 UTC 微秒时间；进行中为空。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "434B25AC-60BC-5C3D-8777-937600D872BB"
+        },
+        {
+          "defKey": "version",
+          "defName": "并发版本",
+          "comment": "并发更新版本，初始为 1，每次条件更新成功加一。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "1",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "94D165F1-774E-55B0-8B1D-1E5C219926DC"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "2A0567B8-FCFC-58AA-AD6C-B62F741B113D"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "2CF44E4A-74C3-56F7-AA2B-BAE29B8E5767"
+        }
+      ],
+      "correlations": [
+        {
+          "id": "5DDF1EB1-926B-5757-83BF-425ED2C25B21",
+          "myField": "B01AC88D-2B11-5719-839F-30453A872616",
+          "refEntity": "F303719D-FA54-58A2-8754-5D41516D8D2A",
+          "refField": "78734D01-7540-5822-9077-84D3235CA8C6",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ],
+      "indexes": [
+        {
+          "defKey": "uk_workflow_node_round",
+          "defName": "唯一索引 instance_id、node_key、round_no",
+          "unique": true,
+          "comment": "保证业务唯一性：instance_id、node_key、round_no",
+          "fields": [
+            {
+              "fieldDefKey": "B01AC88D-2B11-5719-839F-30453A872616",
+              "ascOrDesc": "A",
+              "id": "83A2FFE2-EEC6-5745-84E9-67AF0E2F0C96"
+            },
+            {
+              "fieldDefKey": "DF2F5A21-C8FD-5B7B-85DF-F2A38265467F",
+              "ascOrDesc": "A",
+              "id": "2737037C-B8CF-5117-ADF4-DBE2AE7CA605"
+            },
+            {
+              "fieldDefKey": "EB62B06E-929A-56E9-9D5D-AF5BE55EEFB8",
+              "ascOrDesc": "A",
+              "id": "F4BB4791-23A2-586E-A1D4-45AE57F23B86"
+            }
+          ],
+          "id": "D39172B5-8D52-50BD-9DA7-2DB5BE866B11"
+        },
+        {
+          "defKey": "idx_workflow_node_status",
+          "defName": "访问索引 instance_id、status",
+          "unique": false,
+          "comment": "支持访问路径：instance_id、status",
+          "fields": [
+            {
+              "fieldDefKey": "B01AC88D-2B11-5719-839F-30453A872616",
+              "ascOrDesc": "A",
+              "id": "DCB18E43-AB4D-581A-8454-BD5AD7CDD3C6"
+            },
+            {
+              "fieldDefKey": "E9445295-3287-5396-9CFC-AD00D0FA35EF",
+              "ascOrDesc": "A",
+              "id": "F63A41D6-6A27-5619-97BB-AF77762D018D"
+            }
+          ],
+          "id": "56374CAC-CBA6-5784-AEF2-731193983002"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "BA69C42F-A614-567E-AF20-565F2A5056A9",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_workflow_action_run",
+      "defName": "动作运行",
+      "comment": "节点运行中一个动作的执行情况与最近一次提交的输出；以最后一次验证为准，验证通过后锁定，变量取自最新一轮 VERIFIED 的输出",
+      "properties": {
+        "logicalTableKey": "workflow_action_run",
+        "compositeForeignKeys": []
+      },
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "action_run_id",
+          "defName": "动作运行主键",
+          "comment": "动作运行的 Snowflake 主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "D88EE356-2522-5CFD-B2FF-CC6DFEA5E6A1"
+        },
+        {
+          "defKey": "instance_id",
+          "defName": "所属实例",
+          "comment": "动作运行所属的流程实例 ID。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "4195EAE0-F3A2-590A-9B19-5F2D9DEADD9F"
+        },
+        {
+          "defKey": "node_run_id",
+          "defName": "所属节点运行",
+          "comment": "动作运行所属的节点运行 ID，每轮节点运行各有一份。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "9B301170-585D-5849-A6FC-B80FD7BA6680"
+        },
+        {
+          "defKey": "action_key",
+          "defName": "动作 key",
+          "comment": "绑定流程版本中的动作 key，同时是输出变量前缀。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "utf8mb4",
+            "collation": "utf8mb4_bin"
+          },
+          "domain": "",
+          "id": "4AF1CC3A-5FB1-5970-860D-613D1E312606"
+        },
+        {
+          "defKey": "action_template_id",
+          "defName": "动作模板",
+          "comment": "引用的动作模板 ID；执行配置以流程版本的模板快照为准。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "2BDA4C7F-F72F-5EBB-9A3D-CDD1B69ABD3B"
+        },
+        {
+          "defKey": "action_type",
+          "defName": "动作类型",
+          "comment": "动作的提交与验证方式，取自版本快照。允许值：FORM、FILE_UPLOAD、PAGE_TASK、MANUAL_CONFIRM。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "8CC5299B-F95F-562A-9C1B-F91699C6FE12"
+        },
+        {
+          "defKey": "required",
+          "defName": "是否必选",
+          "comment": "1 表示必选，节点放行前必须 VERIFIED；0 表示可选，不阻塞放行。",
+          "type": "TINYINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "1666E319-98A0-5435-9C5F-5AFD509B73EF"
+        },
+        {
+          "defKey": "assignee_id",
+          "defName": "执行人",
+          "comment": "当前指派的执行人 Operations 账号 ID；转交后更新。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "8181A9E3-DA6A-5197-AE06-0D90719B42A8"
+        },
+        {
+          "defKey": "status",
+          "defName": "动作运行状态",
+          "comment": "PENDING 未提交；VERIFIED 最后一次验证通过且不再接受提交；UNVERIFIED 最后一次验证未通过；CANCELLED 节点被终止或结束时未完成。允许值：PENDING、VERIFIED、UNVERIFIED、CANCELLED。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "51AE1849-5B84-5FF2-B3F9-BD29A04B9DFD"
+        },
+        {
+          "defKey": "output_json",
+          "defName": "提交输出",
+          "comment": "执行人最近一次提交的输出，按动作类型与配置校验；未提交时为空。",
+          "type": "JSON",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
+          "extProps": {},
+          "domain": "",
+          "id": "0AF22110-DBEE-5C09-A9B9-6627E774719D"
+        },
+        {
+          "defKey": "submitted_by",
+          "defName": "提交人",
+          "comment": "最近一次提交的 Operations 账号 ID；未提交时为空。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "1C39E116-8C12-5F10-A95E-A17DA117E17F"
+        },
+        {
+          "defKey": "submitted_time",
+          "defName": "提交时间",
+          "comment": "最近一次提交的 UTC 微秒时间；未提交时为空。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "0FDBF7A1-2203-534C-8A1B-095A2F8F7125"
+        },
+        {
+          "defKey": "version",
+          "defName": "并发版本",
+          "comment": "并发更新版本，初始为 1，每次条件更新成功加一。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "1",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "B04FD12A-68A1-52CF-8E19-AFE53317A0C9"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "710C6B6C-47A8-591B-A923-D5484538D953"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "B9958F5D-D928-54C6-B8D7-B5181E180923"
+        }
+      ],
+      "correlations": [
+        {
+          "id": "CAC8457D-5344-5BA6-9152-6FBEF3E9B92A",
+          "myField": "9B301170-585D-5849-A6FC-B80FD7BA6680",
+          "refEntity": "635FB33C-C2D8-576B-9727-559185631A51",
+          "refField": "36172E5E-12F9-510C-95DA-7FC3A6B524A3",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        },
+        {
+          "id": "F8AFB075-52FC-5719-9BA0-AF7A28BC7417",
+          "myField": "4195EAE0-F3A2-590A-9B19-5F2D9DEADD9F",
+          "refEntity": "F303719D-FA54-58A2-8754-5D41516D8D2A",
+          "refField": "78734D01-7540-5822-9077-84D3235CA8C6",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ],
+      "indexes": [
+        {
+          "defKey": "uk_workflow_action_node",
+          "defName": "唯一索引 node_run_id、action_key",
+          "unique": true,
+          "comment": "保证业务唯一性：node_run_id、action_key",
+          "fields": [
+            {
+              "fieldDefKey": "9B301170-585D-5849-A6FC-B80FD7BA6680",
+              "ascOrDesc": "A",
+              "id": "C7519B9D-D700-569F-B7BD-5B25AF53FFA3"
+            },
+            {
+              "fieldDefKey": "4AF1CC3A-5FB1-5970-860D-613D1E312606",
+              "ascOrDesc": "A",
+              "id": "82CB17A8-83E2-5875-8F62-80BDDB789510"
+            }
+          ],
+          "id": "DD40FE53-4347-54AD-9D85-29F2C1DB9418"
+        },
+        {
+          "defKey": "idx_workflow_action_assignee",
+          "defName": "访问索引 assignee_id、status",
+          "unique": false,
+          "comment": "支持访问路径：assignee_id、status",
+          "fields": [
+            {
+              "fieldDefKey": "8181A9E3-DA6A-5197-AE06-0D90719B42A8",
+              "ascOrDesc": "A",
+              "id": "4F57423F-1780-573E-B2F8-7B2022336DC1"
+            },
+            {
+              "fieldDefKey": "51AE1849-5B84-5FF2-B3F9-BD29A04B9DFD",
+              "ascOrDesc": "A",
+              "id": "1D18050E-712D-53E4-9963-4B7B7315A8DE"
+            }
+          ],
+          "id": "60DF217A-19D2-5B0A-97FE-C227DFC60484"
+        },
+        {
+          "defKey": "idx_workflow_action_inst",
+          "defName": "访问索引 instance_id",
+          "unique": false,
+          "comment": "支持访问路径：instance_id",
+          "fields": [
+            {
+              "fieldDefKey": "4195EAE0-F3A2-590A-9B19-5F2D9DEADD9F",
+              "ascOrDesc": "A",
+              "id": "0C0019E9-2245-54A8-9F45-083AB012B342"
+            }
+          ],
+          "id": "40F44EE2-C724-58F3-B211-0EF8FBE28F5F"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "4F71DEDA-F535-51CF-B516-3972886832F9",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_workflow_verification",
+      "defName": "验证记录",
+      "comment": "动作每一次验证的结论、证据与未通过原因；追加后不可变，验证调用失败或超时记为 FAILED，不会误判为通过",
+      "properties": {
+        "logicalTableKey": "workflow_verification",
+        "compositeForeignKeys": []
+      },
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "verification_id",
+          "defName": "验证记录主键",
+          "comment": "验证记录的 Snowflake 主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "6111A994-6BE6-5BCC-9F04-D3CCE2DEAABD"
+        },
+        {
+          "defKey": "action_run_id",
+          "defName": "所属动作运行",
+          "comment": "被验证的动作运行 ID。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "2F4934D6-BB3A-5DC5-B295-8031D4FA298F"
+        },
+        {
+          "defKey": "instance_id",
+          "defName": "所属实例",
+          "comment": "验证所属的流程实例 ID。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "D2DD9C2E-F452-5241-B2C9-1A89CE145E52"
+        },
+        {
+          "defKey": "result",
+          "defName": "验证结论",
+          "comment": "本次验证的结论。允许值：PASSED、FAILED。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "16046EB4-EE0F-5EF0-8A67-A80CB5E3C699"
+        },
+        {
+          "defKey": "evidence_json",
+          "defName": "验证证据",
+          "comment": "本次验证依据的证据，如文件 ID 列表、扫描状态或对象类型、ID、版本与状态；没有证据时为空。",
+          "type": "JSON",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
+          "extProps": {},
+          "domain": "",
+          "id": "66507C0D-ED18-5920-9618-F5A2BDC14865"
+        },
+        {
+          "defKey": "failure_reason",
+          "defName": "未通过原因",
+          "comment": "验证未通过的中文原因；通过时为空。",
+          "type": "VARCHAR",
+          "len": 512,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "583CB77A-CC71-53B7-817A-0C4DC49B0408"
+        },
+        {
+          "defKey": "verified_by",
+          "defName": "验证触发人",
+          "comment": "提交或重新验证的 Operations 账号 ID。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "5051E085-B000-5E3C-B5CE-EDC3AB4C896A"
+        },
+        {
+          "defKey": "verified_time",
+          "defName": "验证时间",
+          "comment": "本次验证完成的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "470D42E8-4E5A-5FE2-AC82-CBA9A117DBB4"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "21BC14DE-43B4-51D8-A082-EA33B27904BC"
+        }
+      ],
+      "correlations": [
+        {
+          "id": "99413ED2-94CA-5183-B186-0C781B6E339C",
+          "myField": "2F4934D6-BB3A-5DC5-B295-8031D4FA298F",
+          "refEntity": "BA69C42F-A614-567E-AF20-565F2A5056A9",
+          "refField": "D88EE356-2522-5CFD-B2FF-CC6DFEA5E6A1",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ],
+      "indexes": [
+        {
+          "defKey": "idx_workflow_verify_action",
+          "defName": "访问索引 action_run_id、verified_time",
+          "unique": false,
+          "comment": "支持访问路径：action_run_id、verified_time",
+          "fields": [
+            {
+              "fieldDefKey": "2F4934D6-BB3A-5DC5-B295-8031D4FA298F",
+              "ascOrDesc": "A",
+              "id": "32D57DF4-46D1-556E-A433-872A57906100"
+            },
+            {
+              "fieldDefKey": "470D42E8-4E5A-5FE2-AC82-CBA9A117DBB4",
+              "ascOrDesc": "A",
+              "id": "2A2A6A67-02D3-5F0F-835F-998F48C672BB"
+            }
+          ],
+          "id": "5479CC33-8B14-5189-BF54-74FCE5EDB3BB"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "2CF9823C-4A4F-5E10-A543-6CDA256E15AD",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_workflow_approval",
+      "defName": "审批",
+      "comment": "节点运行中每位审批人的一行审批；ANY 任一人同意即放行，ALL 需全部同意，任一人退回修改或驳回即按该决定处理，其余行撤回",
+      "properties": {
+        "logicalTableKey": "workflow_approval",
+        "compositeForeignKeys": []
+      },
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "approval_id",
+          "defName": "审批主键",
+          "comment": "审批行的 Snowflake 主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "E53DB374-E606-5365-A5BC-C792F3CE782B"
+        },
+        {
+          "defKey": "instance_id",
+          "defName": "所属实例",
+          "comment": "审批所属的流程实例 ID。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "BB77CA59-D7EA-531B-B370-E170A13B6D0E"
+        },
+        {
+          "defKey": "node_run_id",
+          "defName": "所属节点运行",
+          "comment": "审批所属的节点运行 ID，每轮节点运行各有一组。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "C3C4C760-B716-54A8-8787-1F97B1285374"
+        },
+        {
+          "defKey": "approver_id",
+          "defName": "审批人",
+          "comment": "当前审批人 Operations 账号 ID；转交后更新，同一节点运行内不重复。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "03E26099-ACE7-5124-B83F-C90CAE2CC186"
+        },
+        {
+          "defKey": "status",
+          "defName": "审批状态",
+          "comment": "PENDING 待决定；APPROVED 同意；RETURNED 退回修改；REJECTED 驳回；WITHDRAWN 因他人决定或实例终止而撤回。允许值：PENDING、APPROVED、RETURNED、REJECTED、WITHDRAWN。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "29388B53-09CE-57ED-8D30-8DA078B048A6"
+        },
+        {
+          "defKey": "decision_comment",
+          "defName": "审批意见",
+          "comment": "审批人填写的意见；退回修改与驳回必填，同意可空。",
+          "type": "VARCHAR",
+          "len": 512,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "B15BCC40-C324-52CC-B16E-6723811B25C3"
+        },
+        {
+          "defKey": "reject_target_node_key",
+          "defName": "驳回目标节点",
+          "comment": "汇合后第一个节点驳回时指定的目标分支末 TASK 节点 key；其他情形为空。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "utf8mb4",
+            "collation": "utf8mb4_bin"
+          },
+          "domain": "",
+          "id": "4CDFF6D6-2C2E-5444-95C2-0A307DE74B5A"
+        },
+        {
+          "defKey": "decided_time",
+          "defName": "决定时间",
+          "comment": "审批决定或撤回的 UTC 微秒时间；待决定时为空。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "61945510-FDF8-5522-9467-925F1125AB8E"
+        },
+        {
+          "defKey": "version",
+          "defName": "并发版本",
+          "comment": "并发更新版本，初始为 1，每次条件更新成功加一。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "1",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "B28D8B0D-885F-5043-AEB0-F5B8C5076BFE"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "36EC76A1-445E-5660-91E8-67B2E5575B7B"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "2AF7EC31-C530-5369-8471-20FC23D8873E"
+        }
+      ],
+      "correlations": [
+        {
+          "id": "3ABA39C2-691B-5AB4-AD67-3C2933AF9828",
+          "myField": "C3C4C760-B716-54A8-8787-1F97B1285374",
+          "refEntity": "635FB33C-C2D8-576B-9727-559185631A51",
+          "refField": "36172E5E-12F9-510C-95DA-7FC3A6B524A3",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ],
+      "indexes": [
+        {
+          "defKey": "uk_workflow_approval",
+          "defName": "唯一索引 node_run_id、approver_id",
+          "unique": true,
+          "comment": "保证业务唯一性：node_run_id、approver_id",
+          "fields": [
+            {
+              "fieldDefKey": "C3C4C760-B716-54A8-8787-1F97B1285374",
+              "ascOrDesc": "A",
+              "id": "AB02B0AF-37EF-5272-8BDF-9DFA41EDF17A"
+            },
+            {
+              "fieldDefKey": "03E26099-ACE7-5124-B83F-C90CAE2CC186",
+              "ascOrDesc": "A",
+              "id": "9B3AC53A-B741-56EC-8D8C-AC64073040AE"
+            }
+          ],
+          "id": "64EC55FC-5DD5-5548-9629-54A165BB619D"
+        },
+        {
+          "defKey": "idx_workflow_approval_user",
+          "defName": "访问索引 approver_id、status",
+          "unique": false,
+          "comment": "支持访问路径：approver_id、status",
+          "fields": [
+            {
+              "fieldDefKey": "03E26099-ACE7-5124-B83F-C90CAE2CC186",
+              "ascOrDesc": "A",
+              "id": "F1000DD2-B072-5CE7-93AB-C8AA0665CA41"
+            },
+            {
+              "fieldDefKey": "29388B53-09CE-57ED-8D30-8DA078B048A6",
+              "ascOrDesc": "A",
+              "id": "7145B3E3-9E55-5533-90C9-B8A9937DC185"
+            }
+          ],
+          "id": "5FCEB01B-21CE-5E1A-9924-686558765EE8"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "E492DC1D-5645-5158-ABB4-A9BFA08752B6",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_workflow_transfer",
+      "defName": "转交记录",
+      "comment": "动作执行人或审批人的转交历史；追加后不可变，不能转给自己，也不能转给同一节点的其他审批人",
+      "properties": {
+        "logicalTableKey": "workflow_transfer",
+        "compositeForeignKeys": []
+      },
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "transfer_id",
+          "defName": "转交记录主键",
+          "comment": "转交记录的 Snowflake 主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "12F9E382-703B-5545-BF4C-BC1BE17409B8"
+        },
+        {
+          "defKey": "instance_id",
+          "defName": "所属实例",
+          "comment": "转交所属的流程实例 ID。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "20B1055D-5BBD-5745-B9FC-EBF9D688C825"
+        },
+        {
+          "defKey": "target_type",
+          "defName": "转交对象类型",
+          "comment": "被转交的是动作运行还是审批行。允许值：ACTION_RUN、APPROVAL。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "5DD42D62-AF50-5AA8-93BA-7FE3ADD8E740"
+        },
+        {
+          "defKey": "target_id",
+          "defName": "转交对象",
+          "comment": "被转交的动作运行 ID 或审批 ID，由 target_type 区分。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "E7B66D55-119E-529D-A0A0-8750C60F146E"
+        },
+        {
+          "defKey": "from_user_id",
+          "defName": "原处理人",
+          "comment": "转交前的执行人或审批人 Operations 账号 ID。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "F0C62F38-0F95-5DB7-BFB4-10C99718733E"
+        },
+        {
+          "defKey": "to_user_id",
+          "defName": "新处理人",
+          "comment": "转交后的执行人或审批人 Operations 账号 ID。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "8BC34008-8A17-5CE0-8748-9CBCFFB22986"
+        },
+        {
+          "defKey": "reason",
+          "defName": "转交说明",
+          "comment": "转交时填写的说明；未填写时为空。",
+          "type": "VARCHAR",
+          "len": 512,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "A8AFD386-128C-50AB-98E1-444016C2C604"
+        },
+        {
+          "defKey": "transferred_by",
+          "defName": "操作人",
+          "comment": "执行转交的 Operations 账号 ID：原处理人本人或有实例管理权限的人。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "CF1D3943-9FA8-5E96-BB28-44950BEAEC77"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "3040EE3C-47B2-5BA5-9AC1-A1EECBACB852"
+        }
+      ],
+      "correlations": [
+        {
+          "id": "909A2F75-990C-5F11-A67F-A3D985DDFE13",
+          "myField": "20B1055D-5BBD-5745-B9FC-EBF9D688C825",
+          "refEntity": "F303719D-FA54-58A2-8754-5D41516D8D2A",
+          "refField": "78734D01-7540-5822-9077-84D3235CA8C6",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ],
+      "indexes": [
+        {
+          "defKey": "idx_workflow_transfer_inst",
+          "defName": "访问索引 instance_id、create_time",
+          "unique": false,
+          "comment": "支持访问路径：instance_id、create_time",
+          "fields": [
+            {
+              "fieldDefKey": "20B1055D-5BBD-5745-B9FC-EBF9D688C825",
+              "ascOrDesc": "A",
+              "id": "E88CEE70-F938-55A8-8046-FF1BDDD78998"
+            },
+            {
+              "fieldDefKey": "3040EE3C-47B2-5BA5-9AC1-A1EECBACB852",
+              "ascOrDesc": "A",
+              "id": "5C29DAB9-98BD-56F2-AEB8-C0421A9BFECF"
+            }
+          ],
+          "id": "94D331DB-AEA9-53D5-A48C-7D2A6F86F278"
+        },
+        {
+          "defKey": "idx_workflow_transfer_target",
+          "defName": "访问索引 target_type、target_id",
+          "unique": false,
+          "comment": "支持访问路径：target_type、target_id",
+          "fields": [
+            {
+              "fieldDefKey": "5DD42D62-AF50-5AA8-93BA-7FE3ADD8E740",
+              "ascOrDesc": "A",
+              "id": "767EECAF-62AC-5CF1-A459-9EA3862E9C72"
+            },
+            {
+              "fieldDefKey": "E7B66D55-119E-529D-A0A0-8750C60F146E",
+              "ascOrDesc": "A",
+              "id": "CCE76930-F4A8-5D3A-8E5C-19B947F8BAE1"
+            }
+          ],
+          "id": "349A8C99-6061-5EDA-B0A0-9077BD1AFC8A"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "3EF4C9B1-8F28-52B5-BD0F-19E8368FA5B1",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_workflow_callback",
+      "defName": "通知与回调",
+      "comment": "状态变化按规则触发的一次通知（邮件）或业务回调（MQ 事件）及其投递状态；与状态变化同事务登记，提交后由补偿任务执行",
+      "properties": {
+        "logicalTableKey": "workflow_callback",
+        "compositeForeignKeys": []
+      },
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "callback_id",
+          "defName": "通知回调主键",
+          "comment": "通知或回调记录的 Snowflake 主键，也是补偿任务与回调事件的业务键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "125A6737-EE06-5206-B58A-71D72F5882DB"
+        },
+        {
+          "defKey": "instance_id",
+          "defName": "所属实例",
+          "comment": "触发通知或回调的流程实例 ID。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "D673564F-26A2-53E1-A73F-76D369F9E4F4"
+        },
+        {
+          "defKey": "node_run_id",
+          "defName": "触发节点运行",
+          "comment": "节点级触发的节点运行 ID；实例级触发为空。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "037722E5-F511-5A84-A96A-098517FC161D"
+        },
+        {
+          "defKey": "trigger_code",
+          "defName": "触发事件",
+          "comment": "触发规则的状态变化；STARTED、COMPLETED、TERMINATED 为实例级，其余为节点级。允许值：ACTIVATED、APPROVAL_OPENED、PASSED、RETURNED_FOR_REVISION、REJECTED、VERIFICATION_FAILED、TRANSFERRED、STARTED、COMPLETED、TERMINATED。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "B0965832-0C3E-52FF-8394-B14F121DAD61"
+        },
+        {
+          "defKey": "callback_type",
+          "defName": "规则类型",
+          "comment": "NOTIFY 通知人员（邮件）；CALLBACK 向 topic_platform_workflow_event 发布业务事件。允许值：NOTIFY、CALLBACK。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "501AE23B-F8FB-53D6-8028-2DCA8A4C6B1F"
+        },
+        {
+          "defKey": "target",
+          "defName": "投递目标",
+          "comment": "NOTIFY 为解析后的收件人账号 ID 列表与渠道；CALLBACK 为回调编码；登记后不可变。",
+          "type": "JSON",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
+          "extProps": {},
+          "domain": "",
+          "id": "1B44DC8D-91CC-5EB0-8584-F63139A20FE1"
+        },
+        {
+          "defKey": "status",
+          "defName": "投递状态",
+          "comment": "PENDING 待发送或重试中；SENT 已送达；FAILED 超过重试上限，可人工重试。允许值：PENDING、SENT、FAILED。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "E346D121-BAA8-57B3-883F-B750C19A9741"
+        },
+        {
+          "defKey": "attempt_count",
+          "defName": "尝试次数",
+          "comment": "已执行的发送次数，初始为 0。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "0",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "09C879DD-CC71-591C-8239-C6A63CAAB4E4"
+        },
+        {
+          "defKey": "last_error",
+          "defName": "最后错误",
+          "comment": "最近一次失败的脱敏错误摘要；未失败时为空。",
+          "type": "VARCHAR",
+          "len": 512,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "0436DF5A-80E2-5F4C-888C-FD9BA8C91C7F"
+        },
+        {
+          "defKey": "sent_time",
+          "defName": "送达时间",
+          "comment": "发送成功的 UTC 微秒时间；未送达时为空。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "1092C01E-8AFC-5AAD-A95C-7C561697F2FC"
+        },
+        {
+          "defKey": "version",
+          "defName": "并发版本",
+          "comment": "并发更新版本，初始为 1，每次条件更新成功加一。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "1",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "2C3F510E-DFAA-5C09-915C-ED39DBEF9F29"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "290B5FB4-1949-50ED-9A3E-FF8ACB6C8829"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "BE156727-2563-5795-9021-26479110F442"
+        }
+      ],
+      "correlations": [
+        {
+          "id": "9070F2E4-D428-5107-835C-C86CFB00EB93",
+          "myField": "D673564F-26A2-53E1-A73F-76D369F9E4F4",
+          "refEntity": "F303719D-FA54-58A2-8754-5D41516D8D2A",
+          "refField": "78734D01-7540-5822-9077-84D3235CA8C6",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ],
+      "indexes": [
+        {
+          "defKey": "idx_workflow_cb_inst",
+          "defName": "访问索引 instance_id、create_time",
+          "unique": false,
+          "comment": "支持访问路径：instance_id、create_time",
+          "fields": [
+            {
+              "fieldDefKey": "D673564F-26A2-53E1-A73F-76D369F9E4F4",
+              "ascOrDesc": "A",
+              "id": "5FEDF825-8155-5DF3-90FB-1B6A6B74CFC9"
+            },
+            {
+              "fieldDefKey": "290B5FB4-1949-50ED-9A3E-FF8ACB6C8829",
+              "ascOrDesc": "A",
+              "id": "BAC4AFB8-1E91-5846-933F-838D3ADBEF6A"
+            }
+          ],
+          "id": "AF289644-EDC0-5C65-AE7E-F6775E12391C"
+        },
+        {
+          "defKey": "idx_workflow_cb_status",
+          "defName": "访问索引 status、update_time",
+          "unique": false,
+          "comment": "支持访问路径：status、update_time",
+          "fields": [
+            {
+              "fieldDefKey": "E346D121-BAA8-57B3-883F-B750C19A9741",
+              "ascOrDesc": "A",
+              "id": "7F0E0390-5DB4-5569-A9B0-2CAFE520716A"
+            },
+            {
+              "fieldDefKey": "BE156727-2563-5795-9021-26479110F442",
+              "ascOrDesc": "A",
+              "id": "0BCD2CA6-CEA6-5993-BDD6-4EF3BEC734A8"
+            }
+          ],
+          "id": "A7602354-A7F4-57C9-96D0-E91A83D6296E"
+        }
+      ],
+      "type": "P"
+    },
+    {
       "id": "B0E5C9AD-4AE6-509E-BEA3-F72F3B5BAE9D",
       "env": {
         "base": {
@@ -35635,6 +40219,380 @@
       },
       "id": "5E9D7877-930C-5663-9553-2AF3B864E60D",
       "comment": "全平台参考数据边界关系图"
+    },
+    {
+      "defKey": "workflow",
+      "defName": "工作流",
+      "relationType": "field",
+      "canvasData": {
+        "cells": [
+          {
+            "id": "661E64A8-7E27-5D37-9BFD-D6860FB67028",
+            "shape": "table",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "count": 0,
+            "originKey": "91075E34-70DF-51C2-BA42-50AC3F0594A5",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 350
+            }
+          },
+          {
+            "id": "970765E8-50EF-541A-BABE-B0202F4C105A",
+            "shape": "table",
+            "position": {
+              "x": 430,
+              "y": 0
+            },
+            "count": 0,
+            "originKey": "77CA949F-B929-54AE-A8A1-39F2D4F9FFED",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 394
+            }
+          },
+          {
+            "id": "DA53834F-5CBE-56A4-8FD6-815B6F2962B6",
+            "shape": "table",
+            "position": {
+              "x": 860,
+              "y": 0
+            },
+            "count": 0,
+            "originKey": "B08EBEFC-416C-5787-BE10-BDFC6537DAB9",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 350
+            }
+          },
+          {
+            "id": "7CCD35B9-42E8-56F3-B976-3A89D133FDB0",
+            "shape": "table",
+            "position": {
+              "x": 1290,
+              "y": 0
+            },
+            "count": 0,
+            "originKey": "F303719D-FA54-58A2-8754-5D41516D8D2A",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 438
+            }
+          },
+          {
+            "id": "9F264907-5B9F-567A-BA9B-E0554142EC04",
+            "shape": "table",
+            "position": {
+              "x": 0,
+              "y": 498
+            },
+            "count": 0,
+            "originKey": "635FB33C-C2D8-576B-9727-559185631A51",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 394
+            }
+          },
+          {
+            "id": "39D42DCA-471E-5EB5-8431-BAB84AE2100A",
+            "shape": "table",
+            "position": {
+              "x": 430,
+              "y": 498
+            },
+            "count": 0,
+            "originKey": "BA69C42F-A614-567E-AF20-565F2A5056A9",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 416
+            }
+          },
+          {
+            "id": "63658791-75A4-5040-8C72-FFF902CA173F",
+            "shape": "table",
+            "position": {
+              "x": 860,
+              "y": 498
+            },
+            "count": 0,
+            "originKey": "4F71DEDA-F535-51CF-B516-3972886832F9",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 284
+            }
+          },
+          {
+            "id": "5ECB8041-1685-51F9-BB13-57857947D06B",
+            "shape": "table",
+            "position": {
+              "x": 1290,
+              "y": 498
+            },
+            "count": 0,
+            "originKey": "2CF9823C-4A4F-5E10-A543-6CDA256E15AD",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 328
+            }
+          },
+          {
+            "id": "3A80F013-40EB-5ACC-9C9B-0062C71A98DD",
+            "shape": "table",
+            "position": {
+              "x": 0,
+              "y": 974
+            },
+            "count": 0,
+            "originKey": "E492DC1D-5645-5158-ABB4-A9BFA08752B6",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 284
+            }
+          },
+          {
+            "id": "A222BD4E-B708-5A03-A083-E287410CF5BF",
+            "shape": "table",
+            "position": {
+              "x": 430,
+              "y": 974
+            },
+            "count": 0,
+            "originKey": "3EF4C9B1-8F28-52B5-BD0F-19E8368FA5B1",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 372
+            }
+          },
+          {
+            "id": "DCB15D16-9A02-5062-B03F-597F5A6565FA",
+            "shape": "erdRelation",
+            "originKey": "763BFA49-717A-5D5D-B4FC-99AAC396CF63",
+            "source": {
+              "cell": "970765E8-50EF-541A-BABE-B0202F4C105A",
+              "port": "600D12DF-E224-5F0E-A472-8ABAD2CF56EA%out"
+            },
+            "target": {
+              "cell": "661E64A8-7E27-5D37-9BFD-D6860FB67028",
+              "port": "61070BD2-9FEA-5A26-AF10-69C688E94744%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "3196EA39-D93C-53E5-B9F5-3E39F5280D43",
+            "shape": "erdRelation",
+            "originKey": "0EDD588D-562E-5ECB-92AA-C6DEADFF5304",
+            "source": {
+              "cell": "7CCD35B9-42E8-56F3-B976-3A89D133FDB0",
+              "port": "961D84F1-A278-5594-9A45-E6AF4637BE9E%out"
+            },
+            "target": {
+              "cell": "661E64A8-7E27-5D37-9BFD-D6860FB67028",
+              "port": "61070BD2-9FEA-5A26-AF10-69C688E94744%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "C95CD077-5D89-5267-B56B-FF539A9B5323",
+            "shape": "erdRelation",
+            "originKey": "5DDF1EB1-926B-5757-83BF-425ED2C25B21",
+            "source": {
+              "cell": "9F264907-5B9F-567A-BA9B-E0554142EC04",
+              "port": "B01AC88D-2B11-5719-839F-30453A872616%out"
+            },
+            "target": {
+              "cell": "7CCD35B9-42E8-56F3-B976-3A89D133FDB0",
+              "port": "78734D01-7540-5822-9077-84D3235CA8C6%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "FC86243F-07CD-5C72-8438-464D876DFDF1",
+            "shape": "erdRelation",
+            "originKey": "CAC8457D-5344-5BA6-9152-6FBEF3E9B92A",
+            "source": {
+              "cell": "39D42DCA-471E-5EB5-8431-BAB84AE2100A",
+              "port": "9B301170-585D-5849-A6FC-B80FD7BA6680%out"
+            },
+            "target": {
+              "cell": "9F264907-5B9F-567A-BA9B-E0554142EC04",
+              "port": "36172E5E-12F9-510C-95DA-7FC3A6B524A3%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "21D4A31F-C4C1-5069-B114-E200C78315B7",
+            "shape": "erdRelation",
+            "originKey": "F8AFB075-52FC-5719-9BA0-AF7A28BC7417",
+            "source": {
+              "cell": "39D42DCA-471E-5EB5-8431-BAB84AE2100A",
+              "port": "4195EAE0-F3A2-590A-9B19-5F2D9DEADD9F%out"
+            },
+            "target": {
+              "cell": "7CCD35B9-42E8-56F3-B976-3A89D133FDB0",
+              "port": "78734D01-7540-5822-9077-84D3235CA8C6%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "04E83D0F-0044-540D-B947-68EA1D6AB35F",
+            "shape": "erdRelation",
+            "originKey": "99413ED2-94CA-5183-B186-0C781B6E339C",
+            "source": {
+              "cell": "63658791-75A4-5040-8C72-FFF902CA173F",
+              "port": "2F4934D6-BB3A-5DC5-B295-8031D4FA298F%out"
+            },
+            "target": {
+              "cell": "39D42DCA-471E-5EB5-8431-BAB84AE2100A",
+              "port": "D88EE356-2522-5CFD-B2FF-CC6DFEA5E6A1%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "F00A18E3-0E39-56CF-9955-842E3D97E7F0",
+            "shape": "erdRelation",
+            "originKey": "3ABA39C2-691B-5AB4-AD67-3C2933AF9828",
+            "source": {
+              "cell": "5ECB8041-1685-51F9-BB13-57857947D06B",
+              "port": "C3C4C760-B716-54A8-8787-1F97B1285374%out"
+            },
+            "target": {
+              "cell": "9F264907-5B9F-567A-BA9B-E0554142EC04",
+              "port": "36172E5E-12F9-510C-95DA-7FC3A6B524A3%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "FC58027B-3856-5C97-B163-3F1658DB1F64",
+            "shape": "erdRelation",
+            "originKey": "909A2F75-990C-5F11-A67F-A3D985DDFE13",
+            "source": {
+              "cell": "3A80F013-40EB-5ACC-9C9B-0062C71A98DD",
+              "port": "20B1055D-5BBD-5745-B9FC-EBF9D688C825%out"
+            },
+            "target": {
+              "cell": "7CCD35B9-42E8-56F3-B976-3A89D133FDB0",
+              "port": "78734D01-7540-5822-9077-84D3235CA8C6%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "EE77A63A-838A-59B1-86B1-A66111EF7155",
+            "shape": "erdRelation",
+            "originKey": "9070F2E4-D428-5107-835C-C86CFB00EB93",
+            "source": {
+              "cell": "A222BD4E-B708-5A03-A083-E287410CF5BF",
+              "port": "D673564F-26A2-53E1-A73F-76D369F9E4F4%out"
+            },
+            "target": {
+              "cell": "7CCD35B9-42E8-56F3-B976-3A89D133FDB0",
+              "port": "78734D01-7540-5822-9077-84D3235CA8C6%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          }
+        ]
+      },
+      "properties": {
+        "primaryTables": [
+          "t_workflow_definition",
+          "t_workflow_definition_version",
+          "t_workflow_action_template",
+          "t_workflow_instance",
+          "t_workflow_node_run",
+          "t_workflow_action_run",
+          "t_workflow_verification",
+          "t_workflow_approval",
+          "t_workflow_transfer",
+          "t_workflow_callback"
+        ],
+        "referenceTables": []
+      },
+      "id": "98461F0D-2ADA-5DB4-8E7C-EEB2DFFD740B",
+      "comment": "工作流边界关系图"
     },
     {
       "defKey": "data_query",

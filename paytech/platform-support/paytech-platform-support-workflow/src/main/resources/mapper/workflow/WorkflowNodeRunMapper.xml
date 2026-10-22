@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.workflow.core.dal.mapper.WorkflowNodeRunMapper">
+
+    <sql id="columns">
+        node_run_id AS nodeRunId,
+        instance_id AS instanceId,
+        node_key AS nodeKey,
+        node_type AS nodeType,
+        round_no AS roundNo,
+        branch_key AS branchKey,
+        previous_node_run_id AS previousNodeRunId,
+        status,
+        selected_edge_key AS selectedEdgeKey,
+        activated_time AS activatedTime,
+        completed_time AS completedTime,
+        version,
+        create_time AS createTime,
+        update_time AS updateTime
+    </sql>
+
+    <insert id="insert">
+        INSERT INTO t_workflow_node_run (node_run_id, instance_id, node_key, node_type, round_no, branch_key, previous_node_run_id, status, selected_edge_key, activated_time, completed_time, version, create_time, update_time)
+        VALUES (#{row.nodeRunId}, #{row.instanceId}, #{row.nodeKey}, #{row.nodeType}, #{row.roundNo}, #{row.branchKey}, #{row.previousNodeRunId}, #{row.status}, #{row.selectedEdgeKey}, #{row.activatedTime}, #{row.completedTime}, #{row.version}, #{row.createTime}, #{row.updateTime})
+    </insert>
+
+    <select id="selectById" resultType="com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowNodeRun">
+        SELECT <include refid="columns"/> FROM t_workflow_node_run WHERE node_run_id = #{id}
+    </select>
+
+    <select id="selectByInstance" resultType="com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowNodeRun">SELECT <include refid="columns"/> FROM t_workflow_node_run
+        WHERE instance_id = #{instanceId} ORDER BY activated_time, node_run_id</select>
+
+    <update id="updateStatus">UPDATE t_workflow_node_run SET status = #{to}, completed_time = #{completedTime}, version = version + 1,
+        update_time = #{now} WHERE node_run_id = #{nodeRunId} AND status = #{from}</update>
+
+</mapper>

@@ -34,7 +34,7 @@ public final class YamlEventCatalog implements EventCatalog {
     /** 01 §3 的服务名清单。 */
     public static final Set<String> SERVICE_NAMES = Set.of("acquiring", "consumer", "payment", "channel-connector",
         "card", "client-master", "commercial", "risk-decision", "compliance", "billing", "account", "ledger",
-        "reconciliation", "tax", "payout", "dispute", "fx", "platform-support", "workflow-approval",
+        "reconciliation", "tax", "payout", "dispute", "fx", "platform-support",
         "api-gateway", "client-console-bff", "operations-console-bff", "vault");
 
     private static final Set<String> FIELDS = Set.of("eventType", "schemaVersion", "producer", "aggregateType",

@@ -76,6 +76,12 @@ export function pageRoutePaths(menu: ConsoleResource): string[] {
       return [menu.frontendRoute, `${menu.frontendRoute}/statements/:bankStatementId`, `${menu.frontendRoute}/lines/:bankStatementLineId`];
     case 'OPERATIONS_FINANCE_RECON_EXCEPTIONS':
       return [menu.frontendRoute, `${menu.frontendRoute}/:exceptionId`];
+    case 'OPERATIONS_WORKFLOW_INSTANCES':
+      return [menu.frontendRoute, `${menu.frontendRoute}/:instanceId`];
+    case 'OPERATIONS_WORKFLOW_DEFINITIONS':
+      return [menu.frontendRoute, `${menu.frontendRoute}/:definitionId`, `${menu.frontendRoute}/:definitionId/versions/:versionNo`];
+    case 'OPERATIONS_WORKFLOW_ACTION_TEMPLATES':
+      return [menu.frontendRoute, `${menu.frontendRoute}/:templateId`];
     case 'OPERATIONS_QUERY_TEMPLATES':
       return [menu.frontendRoute, `${menu.frontendRoute}/:templateId`];
     default:

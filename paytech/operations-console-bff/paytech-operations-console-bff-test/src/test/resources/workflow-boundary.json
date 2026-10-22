@@ -1,0 +1,1082 @@
+[
+  {
+    "id": "WF01",
+    "method": "GET",
+    "path": "/workflow-admin/v1/action-templates",
+    "ownerPath": "/workflow-admin/v1/action-templates",
+    "query": "?actionType=MANUAL_CONFIRM&status=ACTIVE&keyword=CONF&page=1&size=10",
+    "routeCode": "operations-workflow-template-list",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "templateId": "7300000000000000201",
+          "templateCode": "CONFIRM_SETUP",
+          "templateName": "确认配置",
+          "actionType": "MANUAL_CONFIRM",
+          "description": "人工确认",
+          "config": {
+            "instruction": "确认已完成",
+            "noteRequired": false
+          },
+          "status": "ACTIVE",
+          "version": 2,
+          "updatedBy": "7300000000000000101",
+          "updatedByName": "a***@example.test",
+          "updateTime": "2026-10-22T01:02:03.123456Z"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    }
+  },
+  {
+    "id": "WF02",
+    "method": "GET",
+    "path": "/workflow-admin/v1/action-templates/7300000000000000201",
+    "ownerPath": "/workflow-admin/v1/action-templates/7300000000000000201",
+    "query": "",
+    "routeCode": "operations-workflow-template-detail",
+    "request": null,
+    "status": 200,
+    "response": {
+      "templateId": "7300000000000000201",
+      "templateCode": "CONFIRM_SETUP",
+      "templateName": "确认配置",
+      "actionType": "MANUAL_CONFIRM",
+      "description": "人工确认",
+      "config": {
+        "instruction": "确认已完成",
+        "noteRequired": false
+      },
+      "status": "ACTIVE",
+      "version": 2,
+      "updatedBy": "7300000000000000101",
+      "updatedByName": "a***@example.test",
+      "updateTime": "2026-10-22T01:02:03.123456Z"
+    }
+  },
+  {
+    "id": "WF03",
+    "method": "POST",
+    "path": "/workflow-admin/v1/action-templates",
+    "ownerPath": "/workflow-admin/v1/action-templates",
+    "query": "",
+    "routeCode": "operations-workflow-template-create",
+    "request": {
+      "templateCode": "CONFIRM_SETUP",
+      "templateName": "确认配置",
+      "actionType": "MANUAL_CONFIRM",
+      "description": "人工确认",
+      "config": {
+        "instruction": "确认已完成",
+        "noteRequired": false
+      }
+    },
+    "status": 200,
+    "response": {
+      "objectType": "WORKFLOW_ACTION_TEMPLATE",
+      "objectId": "7300000000000000201",
+      "status": "ACTIVE",
+      "version": 1
+    }
+  },
+  {
+    "id": "WF04",
+    "method": "PUT",
+    "path": "/workflow-admin/v1/action-templates/7300000000000000201",
+    "ownerPath": "/workflow-admin/v1/action-templates/7300000000000000201",
+    "query": "",
+    "routeCode": "operations-workflow-template-update",
+    "request": {
+      "templateName": "确认配置",
+      "description": null,
+      "config": {
+        "instruction": "确认",
+        "noteRequired": true
+      },
+      "expectedVersion": 1
+    },
+    "status": 200,
+    "response": {
+      "objectType": "WORKFLOW_ACTION_TEMPLATE",
+      "objectId": "7300000000000000201",
+      "status": "ACTIVE",
+      "version": 2
+    }
+  },
+  {
+    "id": "WF05",
+    "method": "POST",
+    "path": "/workflow-admin/v1/action-templates/7300000000000000201/status",
+    "ownerPath": "/workflow-admin/v1/action-templates/7300000000000000201/status",
+    "query": "",
+    "routeCode": "operations-workflow-template-status",
+    "request": {
+      "status": "INACTIVE",
+      "expectedVersion": 2
+    },
+    "status": 200,
+    "response": {
+      "objectType": "WORKFLOW_ACTION_TEMPLATE",
+      "objectId": "7300000000000000201",
+      "status": "INACTIVE",
+      "version": 3
+    }
+  },
+  {
+    "id": "WF06",
+    "method": "GET",
+    "path": "/workflow-admin/v1/definitions",
+    "ownerPath": "/workflow-admin/v1/definitions",
+    "query": "?status=ACTIVE&keyword=ON&page=1&size=10",
+    "routeCode": "operations-workflow-definition-list",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "definitionId": "7300000000000000301",
+          "definitionCode": "ONBOARDING",
+          "definitionName": "开通",
+          "description": null,
+          "status": "ACTIVE",
+          "currentVersionNo": 1,
+          "draftVersionNo": null,
+          "version": 3,
+          "updateTime": "2026-10-22T01:02:03.123456Z"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    }
+  },
+  {
+    "id": "WF07",
+    "method": "GET",
+    "path": "/workflow-admin/v1/definitions/7300000000000000301",
+    "ownerPath": "/workflow-admin/v1/definitions/7300000000000000301",
+    "query": "",
+    "routeCode": "operations-workflow-definition-detail",
+    "request": null,
+    "status": 200,
+    "response": {
+      "definition": {
+        "definitionId": "7300000000000000301",
+        "definitionCode": "ONBOARDING",
+        "definitionName": "开通",
+        "description": null,
+        "status": "ACTIVE",
+        "currentVersionNo": 1,
+        "draftVersionNo": null,
+        "version": 3,
+        "updateTime": "2026-10-22T01:02:03.123456Z"
+      },
+      "draft": null,
+      "problems": [],
+      "versions": [
+        {
+          "versionNo": 1,
+          "status": "PUBLISHED",
+          "graph": {
+            "nodes": [
+              {
+                "key": "start",
+                "type": "START",
+                "name": "开始"
+              },
+              {
+                "key": "review",
+                "type": "TASK",
+                "name": "审核",
+                "approval": {
+                  "mode": "ANY",
+                  "approverIds": [
+                    "7300000000000000102"
+                  ]
+                },
+                "actions": []
+              },
+              {
+                "key": "end",
+                "type": "END",
+                "name": "结束"
+              }
+            ],
+            "edges": [
+              {
+                "key": "e1",
+                "from": "start",
+                "to": "review"
+              },
+              {
+                "key": "e2",
+                "from": "review",
+                "to": "end"
+              }
+            ]
+          },
+          "startForm": {
+            "fields": [
+              {
+                "key": "channelCode",
+                "label": "渠道",
+                "type": "TEXT",
+                "required": true
+              }
+            ]
+          },
+          "actionSnapshot": [],
+          "publishedBy": "7300000000000000101",
+          "publishedTime": "2026-10-22T01:02:03.123456Z",
+          "updateTime": "2026-10-22T01:02:03.123456Z"
+        }
+      ],
+      "people": {
+        "7300000000000000102": "b***@example.test"
+      }
+    }
+  },
+  {
+    "id": "WF08",
+    "method": "POST",
+    "path": "/workflow-admin/v1/definitions",
+    "ownerPath": "/workflow-admin/v1/definitions",
+    "query": "",
+    "routeCode": "operations-workflow-definition-create",
+    "request": {
+      "definitionCode": "ONBOARDING",
+      "definitionName": "开通",
+      "description": null
+    },
+    "status": 200,
+    "response": {
+      "objectType": "WORKFLOW_DEFINITION",
+      "objectId": "7300000000000000301",
+      "status": "ACTIVE",
+      "version": 1
+    }
+  },
+  {
+    "id": "WF09",
+    "method": "PUT",
+    "path": "/workflow-admin/v1/definitions/7300000000000000301/draft",
+    "ownerPath": "/workflow-admin/v1/definitions/7300000000000000301/draft",
+    "query": "",
+    "routeCode": "operations-workflow-definition-draft",
+    "request": {
+      "definitionName": "开通",
+      "description": "商户开通",
+      "graph": {
+        "nodes": [
+          {
+            "key": "start",
+            "type": "START",
+            "name": "开始"
+          },
+          {
+            "key": "review",
+            "type": "TASK",
+            "name": "审核",
+            "approval": {
+              "mode": "ANY",
+              "approverIds": [
+                "7300000000000000102"
+              ]
+            },
+            "actions": []
+          },
+          {
+            "key": "end",
+            "type": "END",
+            "name": "结束"
+          }
+        ],
+        "edges": [
+          {
+            "key": "e1",
+            "from": "start",
+            "to": "review"
+          },
+          {
+            "key": "e2",
+            "from": "review",
+            "to": "end"
+          }
+        ]
+      },
+      "startForm": {
+        "fields": [
+          {
+            "key": "channelCode",
+            "label": "渠道",
+            "type": "TEXT",
+            "required": true
+          }
+        ]
+      },
+      "expectedVersion": 1
+    },
+    "status": 200,
+    "response": {
+      "definitionId": "7300000000000000301",
+      "version": 2,
+      "draftVersionNo": 1,
+      "problems": [
+        {
+          "code": "TASK_EMPTY",
+          "nodeKey": "review",
+          "edgeKey": null,
+          "itemKey": null,
+          "message": "任务节点没有动作或审批"
+        }
+      ]
+    }
+  },
+  {
+    "id": "WF10",
+    "method": "POST",
+    "path": "/workflow-admin/v1/definitions/7300000000000000301/publication",
+    "ownerPath": "/workflow-admin/v1/definitions/7300000000000000301/publication",
+    "query": "",
+    "routeCode": "operations-workflow-definition-publish",
+    "request": {
+      "expectedVersion": 2
+    },
+    "status": 200,
+    "response": {
+      "objectType": "WORKFLOW_DEFINITION",
+      "objectId": "7300000000000000301",
+      "status": "ACTIVE",
+      "version": 3
+    }
+  },
+  {
+    "id": "WF11",
+    "method": "POST",
+    "path": "/workflow-admin/v1/definitions/7300000000000000301/status",
+    "ownerPath": "/workflow-admin/v1/definitions/7300000000000000301/status",
+    "query": "",
+    "routeCode": "operations-workflow-definition-status",
+    "request": {
+      "status": "INACTIVE",
+      "expectedVersion": 3
+    },
+    "status": 200,
+    "response": {
+      "objectType": "WORKFLOW_DEFINITION",
+      "objectId": "7300000000000000301",
+      "status": "INACTIVE",
+      "version": 4
+    }
+  },
+  {
+    "id": "WF12",
+    "method": "GET",
+    "path": "/workflow-admin/v1/definitions/7300000000000000301/versions/1",
+    "ownerPath": "/workflow-admin/v1/definitions/7300000000000000301/versions/1",
+    "query": "",
+    "routeCode": "operations-workflow-definition-version",
+    "request": null,
+    "status": 200,
+    "response": {
+      "versionNo": 1,
+      "status": "PUBLISHED",
+      "graph": {
+        "nodes": [
+          {
+            "key": "start",
+            "type": "START",
+            "name": "开始"
+          },
+          {
+            "key": "review",
+            "type": "TASK",
+            "name": "审核",
+            "approval": {
+              "mode": "ANY",
+              "approverIds": [
+                "7300000000000000102"
+              ]
+            },
+            "actions": []
+          },
+          {
+            "key": "end",
+            "type": "END",
+            "name": "结束"
+          }
+        ],
+        "edges": [
+          {
+            "key": "e1",
+            "from": "start",
+            "to": "review"
+          },
+          {
+            "key": "e2",
+            "from": "review",
+            "to": "end"
+          }
+        ]
+      },
+      "startForm": {
+        "fields": [
+          {
+            "key": "channelCode",
+            "label": "渠道",
+            "type": "TEXT",
+            "required": true
+          }
+        ]
+      },
+      "actionSnapshot": [],
+      "publishedBy": "7300000000000000101",
+      "publishedTime": "2026-10-22T01:02:03.123456Z",
+      "updateTime": "2026-10-22T01:02:03.123456Z"
+    }
+  },
+  {
+    "id": "WF13",
+    "method": "GET",
+    "path": "/workflow/v1/launchable-definitions",
+    "ownerPath": "/workflow/v1/launchable-definitions",
+    "query": "?keyword=ON&page=1&size=10",
+    "routeCode": "operations-workflow-launchable-list",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "definitionId": "7300000000000000301",
+          "definitionCode": "ONBOARDING",
+          "definitionName": "开通",
+          "description": null,
+          "status": "ACTIVE",
+          "currentVersionNo": 1,
+          "draftVersionNo": null,
+          "version": 3,
+          "updateTime": "2026-10-22T01:02:03.123456Z"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    }
+  },
+  {
+    "id": "WF14",
+    "method": "GET",
+    "path": "/workflow/v1/launchable-definitions/7300000000000000301",
+    "ownerPath": "/workflow/v1/launchable-definitions/7300000000000000301",
+    "query": "",
+    "routeCode": "operations-workflow-launchable-detail",
+    "request": null,
+    "status": 200,
+    "response": {
+      "definition": {
+        "definitionId": "7300000000000000301",
+        "definitionCode": "ONBOARDING",
+        "definitionName": "开通",
+        "description": null,
+        "status": "ACTIVE",
+        "currentVersionNo": 1,
+        "draftVersionNo": null,
+        "version": 3,
+        "updateTime": "2026-10-22T01:02:03.123456Z"
+      },
+      "versionNo": 1,
+      "graph": {
+        "nodes": [
+          {
+            "key": "start",
+            "type": "START",
+            "name": "开始"
+          },
+          {
+            "key": "review",
+            "type": "TASK",
+            "name": "审核",
+            "approval": {
+              "mode": "ANY",
+              "approverIds": [
+                "7300000000000000102"
+              ]
+            },
+            "actions": []
+          },
+          {
+            "key": "end",
+            "type": "END",
+            "name": "结束"
+          }
+        ],
+        "edges": [
+          {
+            "key": "e1",
+            "from": "start",
+            "to": "review"
+          },
+          {
+            "key": "e2",
+            "from": "review",
+            "to": "end"
+          }
+        ]
+      },
+      "startForm": {
+        "fields": [
+          {
+            "key": "channelCode",
+            "label": "渠道",
+            "type": "TEXT",
+            "required": true
+          }
+        ]
+      },
+      "actionSnapshot": [],
+      "people": {
+        "7300000000000000102": "b***@example.test"
+      }
+    }
+  },
+  {
+    "id": "WF15",
+    "method": "POST",
+    "path": "/workflow/v1/instances",
+    "ownerPath": "/workflow/v1/instances",
+    "query": "",
+    "routeCode": "operations-workflow-instance-start",
+    "request": {
+      "definitionId": "7300000000000000301",
+      "versionNo": 1,
+      "title": "开通 A 商户",
+      "businessKey": "CL-001",
+      "startValues": {
+        "channelCode": "NI"
+      },
+      "approvers": [
+        {
+          "nodeKey": "review",
+          "approverIds": [
+            "7300000000000000103"
+          ]
+        }
+      ],
+      "executors": [
+        {
+          "actionKey": "confirm",
+          "executorId": "7300000000000000104"
+        }
+      ]
+    },
+    "status": 200,
+    "response": {
+      "objectType": "WORKFLOW_INSTANCE",
+      "objectId": "7300000000000000401",
+      "status": "RUNNING",
+      "version": 1
+    }
+  },
+  {
+    "id": "WF16",
+    "method": "GET",
+    "path": "/workflow/v1/instances",
+    "ownerPath": "/workflow/v1/instances",
+    "query": "?scope=ALL&definitionId=7300000000000000301&status=RUNNING&startedBy=7300000000000000101&businessKey=CL-001&keyword=A&page=1&size=10",
+    "routeCode": "operations-workflow-instance-list",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "instanceId": "7300000000000000401",
+          "definitionId": "7300000000000000301",
+          "title": "开通 A 商户",
+          "businessKey": "CL-001",
+          "status": "RUNNING",
+          "startedBy": "7300000000000000101",
+          "startedByName": "a***@example.test",
+          "startTime": "2026-10-22T01:02:03.123456Z",
+          "endTime": null,
+          "definitionName": "开通",
+          "versionNo": 1,
+          "completedTaskCount": 0,
+          "totalTaskCount": 1,
+          "currentNodes": [
+            {
+              "nodeKey": "review",
+              "nodeName": "审核",
+              "status": "APPROVING",
+              "handlers": [
+                {
+                  "accountId": "7300000000000000102",
+                  "displayName": "b***@example.test"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    }
+  },
+  {
+    "id": "WF17",
+    "method": "GET",
+    "path": "/workflow/v1/instances/7300000000000000401",
+    "ownerPath": "/workflow/v1/instances/7300000000000000401",
+    "query": "",
+    "routeCode": "operations-workflow-instance-detail",
+    "request": null,
+    "status": 200,
+    "response": {
+      "instance": {
+        "instanceId": "7300000000000000401",
+        "definitionId": "7300000000000000301",
+        "title": "开通 A 商户",
+        "businessKey": "CL-001",
+        "status": "RUNNING",
+        "startedBy": "7300000000000000101",
+        "startedByName": "a***@example.test",
+        "startTime": "2026-10-22T01:02:03.123456Z",
+        "endTime": null,
+        "definitionName": "开通",
+        "versionNo": 1,
+        "completedTaskCount": 0,
+        "totalTaskCount": 1,
+        "currentNodes": [
+          {
+            "nodeKey": "review",
+            "nodeName": "审核",
+            "status": "APPROVING",
+            "handlers": [
+              {
+                "accountId": "7300000000000000102",
+                "displayName": "b***@example.test"
+              }
+            ]
+          }
+        ]
+      },
+      "definitionCode": "ONBOARDING",
+      "definitionName": "开通",
+      "versionNo": 1,
+      "version": 2,
+      "terminatedBy": null,
+      "terminationReason": null,
+      "graph": {
+        "nodes": [
+          {
+            "key": "start",
+            "type": "START",
+            "name": "开始"
+          },
+          {
+            "key": "review",
+            "type": "TASK",
+            "name": "审核",
+            "approval": {
+              "mode": "ANY",
+              "approverIds": [
+                "7300000000000000102"
+              ]
+            },
+            "actions": []
+          },
+          {
+            "key": "end",
+            "type": "END",
+            "name": "结束"
+          }
+        ],
+        "edges": [
+          {
+            "key": "e1",
+            "from": "start",
+            "to": "review"
+          },
+          {
+            "key": "e2",
+            "from": "review",
+            "to": "end"
+          }
+        ]
+      },
+      "startForm": {
+        "fields": [
+          {
+            "key": "channelCode",
+            "label": "渠道",
+            "type": "TEXT",
+            "required": true
+          }
+        ]
+      },
+      "startValues": {
+        "channelCode": "NI"
+      },
+      "actionSnapshot": [],
+      "nodeRuns": [
+        {
+          "nodeRunId": "7300000000000000801",
+          "nodeKey": "review",
+          "nodeType": "TASK",
+          "roundNo": 1,
+          "branchKey": null,
+          "previousNodeRunId": null,
+          "status": "APPROVING",
+          "selectedEdgeKey": null,
+          "activatedTime": "2026-10-22T01:02:03.123456Z",
+          "completedTime": null,
+          "rejectKind": "FIRST_TASK",
+          "rejectTargets": []
+        }
+      ],
+      "actionRuns": [],
+      "verifications": [],
+      "approvals": [
+        {
+          "approvalId": "7300000000000000601",
+          "nodeRunId": "7300000000000000801",
+          "approverId": "7300000000000000102",
+          "status": "PENDING",
+          "comment": null,
+          "rejectTargetNodeKey": null,
+          "decidedTime": null
+        }
+      ],
+      "transfers": [],
+      "nodeApprovers": {
+        "review": [
+          "7300000000000000102"
+        ]
+      },
+      "people": {
+        "7300000000000000101": "a***@example.test"
+      }
+    }
+  },
+  {
+    "id": "WF18",
+    "method": "GET",
+    "path": "/workflow/v1/instances/7300000000000000401/activities",
+    "ownerPath": "/workflow/v1/instances/7300000000000000401/activities",
+    "query": "",
+    "routeCode": "operations-workflow-instance-activities",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "time": "2026-10-22T01:02:03.123456Z",
+          "activityType": "NODE",
+          "nodeKey": "review",
+          "roundNo": 1,
+          "status": "APPROVING",
+          "actorId": null,
+          "actorName": null,
+          "detail": null,
+          "referenceId": "7300000000000000801"
+        }
+      ]
+    }
+  },
+  {
+    "id": "WF19",
+    "method": "POST",
+    "path": "/workflow/v1/instances/7300000000000000401/termination",
+    "ownerPath": "/workflow/v1/instances/7300000000000000401/termination",
+    "query": "",
+    "routeCode": "operations-workflow-instance-terminate",
+    "request": {
+      "reason": "需求取消"
+    },
+    "status": 200,
+    "response": {
+      "objectType": "WORKFLOW_INSTANCE",
+      "objectId": "7300000000000000401",
+      "status": "TERMINATED",
+      "version": 3
+    }
+  },
+  {
+    "id": "WF20",
+    "method": "POST",
+    "path": "/workflow/v1/action-runs/7300000000000000501/submission",
+    "ownerPath": "/workflow/v1/action-runs/7300000000000000501/submission",
+    "query": "",
+    "routeCode": "operations-workflow-action-submit",
+    "request": {
+      "output": {
+        "note": "已配置"
+      }
+    },
+    "status": 200,
+    "response": {
+      "actionRunId": "7300000000000000501",
+      "status": "VERIFIED",
+      "verificationId": "7300000000000000901",
+      "failureReason": null,
+      "instanceStatus": "RUNNING"
+    }
+  },
+  {
+    "id": "WF21",
+    "method": "POST",
+    "path": "/workflow/v1/action-runs/7300000000000000501/transfer",
+    "ownerPath": "/workflow/v1/action-runs/7300000000000000501/transfer",
+    "query": "",
+    "routeCode": "operations-workflow-action-transfer",
+    "request": {
+      "toUserId": "7300000000000000105",
+      "reason": "休假"
+    },
+    "status": 200,
+    "response": {
+      "objectType": "WORKFLOW_INSTANCE",
+      "objectId": "7300000000000000401",
+      "status": "RUNNING",
+      "version": 3
+    }
+  },
+  {
+    "id": "WF22",
+    "method": "POST",
+    "path": "/workflow/v1/approvals/7300000000000000601/decision",
+    "ownerPath": "/workflow/v1/approvals/7300000000000000601/decision",
+    "query": "",
+    "routeCode": "operations-workflow-approval-decide",
+    "request": {
+      "decision": "REJECT",
+      "comment": "左侧有误",
+      "rejectTargetNodeKey": "left"
+    },
+    "status": 200,
+    "response": {
+      "objectType": "WORKFLOW_INSTANCE",
+      "objectId": "7300000000000000401",
+      "status": "RUNNING",
+      "version": 4
+    }
+  },
+  {
+    "id": "WF23",
+    "method": "POST",
+    "path": "/workflow/v1/approvals/7300000000000000601/transfer",
+    "ownerPath": "/workflow/v1/approvals/7300000000000000601/transfer",
+    "query": "",
+    "routeCode": "operations-workflow-approval-transfer",
+    "request": {
+      "toUserId": "7300000000000000105",
+      "reason": null
+    },
+    "status": 200,
+    "response": {
+      "objectType": "WORKFLOW_INSTANCE",
+      "objectId": "7300000000000000401",
+      "status": "RUNNING",
+      "version": 5
+    }
+  },
+  {
+    "id": "WF24",
+    "method": "GET",
+    "path": "/workflow/v1/my-tasks",
+    "ownerPath": "/workflow/v1/my-tasks",
+    "query": "?taskType=APPROVAL&keyword=A&page=1&size=10",
+    "routeCode": "operations-workflow-task-list",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "taskType": "APPROVAL",
+          "taskId": "7300000000000000601",
+          "instanceId": "7300000000000000401",
+          "instanceTitle": "开通 A 商户",
+          "nodeKey": "review",
+          "roundNo": 1,
+          "actionKey": null,
+          "waitingSince": "2026-10-22T01:02:03.123456Z",
+          "definitionName": "开通",
+          "nodeName": "审核"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    }
+  },
+  {
+    "id": "WF25",
+    "method": "POST",
+    "path": "/workflow/v1/callbacks/7300000000000000701/retry",
+    "ownerPath": "/workflow/v1/callbacks/7300000000000000701/retry",
+    "query": "",
+    "routeCode": "operations-workflow-callback-retry",
+    "request": null,
+    "status": 200,
+    "response": {
+      "objectType": "WORKFLOW_CALLBACK",
+      "objectId": "7300000000000000701",
+      "status": "PENDING",
+      "version": 3
+    }
+  },
+  {
+    "id": "WF26",
+    "method": "GET",
+    "path": "/workflow/v1/assignee-candidates",
+    "ownerPath": "/workflow/v1/assignee-candidates",
+    "query": "?keyword=example.test",
+    "routeCode": "operations-workflow-assignee-list",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "accountId": "7300000000000000102",
+          "loginName": null,
+          "emailMasked": "b***@example.test",
+          "displayName": "b***@example.test"
+        }
+      ]
+    }
+  },
+  {
+    "id": "WF27",
+    "method": "GET",
+    "path": "/workflow/v1/my-tasks/handled",
+    "ownerPath": "/workflow/v1/my-tasks/handled",
+    "query": "?taskType=APPROVAL&keyword=A&page=1&size=10",
+    "routeCode": "operations-workflow-handled-task-list",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "taskType": "APPROVAL",
+          "taskId": "7300000000000000601",
+          "instanceId": "7300000000000000401",
+          "instanceTitle": "开通 A 商户",
+          "instanceStatus": "RUNNING",
+          "definitionName": "开通",
+          "nodeKey": "review",
+          "nodeName": "审核",
+          "roundNo": 1,
+          "actionKey": null,
+          "result": "APPROVED",
+          "handledTime": "2026-10-22T01:02:03.123456Z"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 1
+    }
+  },
+  {
+    "id": "WF28",
+    "method": "GET",
+    "path": "/workflow-admin/v1/action-templates/7300000000000000201/references",
+    "ownerPath": "/workflow-admin/v1/action-templates/7300000000000000201/references",
+    "query": "",
+    "routeCode": "operations-workflow-template-references",
+    "request": null,
+    "status": 200,
+    "response": {
+      "templateId": "7300000000000000201",
+      "currentTemplateVersion": 2,
+      "items": [
+        {
+          "definitionId": "7300000000000000301",
+          "definitionCode": "ONBOARDING",
+          "definitionName": "开通",
+          "versionNo": 1,
+          "currentVersion": true,
+          "frozenTemplateVersion": 1,
+          "sameAsCurrent": false,
+          "runningInstanceCount": 3
+        }
+      ]
+    }
+  },
+  {
+    "id": "WF29",
+    "method": "POST",
+    "path": "/workflow/v1/action-runs/7300000000000000501/verification",
+    "ownerPath": "/workflow/v1/action-runs/7300000000000000501/verification",
+    "query": "",
+    "routeCode": "operations-workflow-action-reverify",
+    "request": null,
+    "status": 200,
+    "response": {
+      "actionRunId": "7300000000000000501",
+      "status": "VERIFIED",
+      "verificationId": "7300000000000000511",
+      "failureReason": null,
+      "instanceStatus": "RUNNING"
+    }
+  },
+  {
+    "id": "WF30",
+    "method": "POST",
+    "path": "/workflow/v1/attachments/uploads",
+    "ownerPath": "/workflow/v1/attachments/uploads",
+    "query": "",
+    "routeCode": "operations-workflow-attachment-upload",
+    "request": {
+      "filename": "contract.pdf",
+      "mimeType": "application/pdf",
+      "sizeBytes": "2048"
+    },
+    "status": 201,
+    "response": {
+      "uploadId": "7300000000000000801",
+      "authorization": {
+        "method": "PUT",
+        "url": "https://storage.local.test/bucket/object?X-Amz-Signature=fixture",
+        "headers": {
+          "Content-Type": "application/pdf",
+          "If-None-Match": "*"
+        },
+        "expiresAt": "2026-10-22T00:15:00Z"
+      },
+      "expiresAt": "2026-10-22T00:15:00Z"
+    }
+  },
+  {
+    "id": "WF31",
+    "method": "POST",
+    "path": "/workflow/v1/attachments/uploads/7300000000000000801/completion",
+    "ownerPath": "/workflow/v1/attachments/uploads/7300000000000000801/completion",
+    "query": "",
+    "routeCode": "operations-workflow-attachment-complete",
+    "request": null,
+    "status": 200,
+    "response": {
+      "uploadId": "7300000000000000801",
+      "fileId": "7300000000000000802",
+      "completedAt": "2026-10-22T00:01:00Z"
+    }
+  },
+  {
+    "id": "WF32",
+    "method": "POST",
+    "path": "/workflow/v1/instances/7300000000000000401/files/7300000000000000802/download",
+    "ownerPath": "/workflow/v1/instances/7300000000000000401/files/7300000000000000802/download",
+    "query": "",
+    "routeCode": "operations-workflow-attachment-download",
+    "request": null,
+    "status": 200,
+    "response": {
+      "url": "https://storage.local.test/bucket/object?X-Amz-Signature=fixture",
+      "expiresAt": "2026-10-22T00:02:00Z"
+    }
+  }
+]

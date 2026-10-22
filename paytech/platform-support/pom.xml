@@ -46,6 +46,11 @@
             </dependency>
             <dependency>
                 <groupId>com.paytech</groupId>
+                <artifactId>paytech-platform-support-workflow</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
                 <artifactId>paytech-platform-support-data-query</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -126,6 +131,7 @@
         <module>paytech-platform-support-audit-security</module>
         <module>paytech-platform-support-file-document</module>
         <module>paytech-platform-support-delivery</module>
+        <module>paytech-platform-support-workflow</module>
         <module>paytech-platform-support-data-query</module>
         <module>paytech-platform-support-core</module>
         <module>paytech-platform-support-app</module>

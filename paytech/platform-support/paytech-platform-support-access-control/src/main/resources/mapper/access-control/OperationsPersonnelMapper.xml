@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.accesscontrol.core.dal.mapper.OperationsPersonnelMapper">
+
+    <select id="selectByIds" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.OperationsPersonnel">
+        SELECT a.account_id AS accountId, a.login_name AS loginName, a.email_masked AS emailMasked,
+            a.email_vault_token AS emailVaultToken,
+            (a.status = 'ACTIVE' AND m.status = 'ACTIVE' AND t.owner_status = 'ACTIVE'
+                AND t.security_status = 'ACTIVE') AS active
+        FROM t_user_account a
+        LEFT JOIN t_access_tenant t ON t.tenant_type = 'INTERNAL' AND t.owner_ref_id = 1
+        LEFT JOIN t_tenant_member m ON m.account_id = a.account_id AND m.tenant_id = t.tenant_id
+        WHERE a.realm = 'OPERATIONS' AND a.account_type = 'HUMAN'
+            AND a.account_id IN
+            <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+    </select>
+
+    <!-- 选人：只取 ACTIVE 的 OPERATIONS 人员账号（账号、内部租户成员与租户均 ACTIVE）；
+         emailToken 非空时按登录邮箱稳定 Token 精确匹配，否则按登录名前缀或脱敏邮箱片段匹配，fragment 为空时不过滤。 -->
+    <select id="searchActive" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.OperationsPersonnel">
+        SELECT a.account_id AS accountId, a.login_name AS loginName, a.email_masked AS emailMasked,
+            TRUE AS active
+        FROM t_user_account a
+        JOIN t_access_tenant t ON t.tenant_type = 'INTERNAL' AND t.owner_ref_id = 1
+            AND t.owner_status = 'ACTIVE' AND t.security_status = 'ACTIVE'
+        JOIN t_tenant_member m ON m.account_id = a.account_id AND m.tenant_id = t.tenant_id AND m.status = 'ACTIVE'
+        WHERE a.realm = 'OPERATIONS' AND a.account_type = 'HUMAN' AND a.status = 'ACTIVE'
+        <choose>
+            <when test="emailToken != null">
+                AND a.email_vault_token = #{emailToken}
+            </when>
+            <when test="fragment != null">
+                AND (a.login_name LIKE CONCAT(#{fragment}, '%') ESCAPE '!'
+                    OR a.email_masked LIKE CONCAT('%', #{fragment}, '%') ESCAPE '!')
+            </when>
+        </choose>
+        ORDER BY a.login_name IS NULL, a.login_name, a.email_masked, a.account_id
+        LIMIT #{limit}
+    </select>
+</mapper>

@@ -31,6 +31,11 @@ export const APPROVED_TABLE_GROUPS = Object.freeze({
   ]),
   reliability: Object.freeze(["t_compensation_event", "t_command_idempotency"]),
   reference_data: Object.freeze(["t_currency_spec"]),
+  workflow: Object.freeze([
+    "t_workflow_definition", "t_workflow_definition_version", "t_workflow_action_template", "t_workflow_instance",
+    "t_workflow_node_run", "t_workflow_action_run", "t_workflow_verification", "t_workflow_approval",
+    "t_workflow_transfer", "t_workflow_callback",
+  ]),
 });
 
 export const EXPECTED_GROUP_SIZES = Object.freeze({
@@ -42,9 +47,10 @@ export const EXPECTED_GROUP_SIZES = Object.freeze({
   gateway_control: 6,
   reliability: 2,
   reference_data: 1,
+  workflow: 10,
 });
 
-export const EXPECTED_TABLE_TOTAL = 63;
+export const EXPECTED_TABLE_TOTAL = 73;
 export const APPROVED_TABLES = Object.freeze(Object.values(APPROVED_TABLE_GROUPS).flat());
 
 export const APPROVED_DIAGRAMS = Object.freeze({
@@ -56,6 +62,7 @@ export const APPROVED_DIAGRAMS = Object.freeze({
   gateway_control: "公共 API 控制面",
   reliability: "可靠执行",
   reference_data: "全平台参考数据",
+  workflow: "工作流",
 });
 
 export const GATEWAY_CONTROL_CONTRACTS = Object.freeze({

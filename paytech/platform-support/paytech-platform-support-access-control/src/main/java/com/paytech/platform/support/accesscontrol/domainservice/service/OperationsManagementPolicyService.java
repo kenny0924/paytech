@@ -22,6 +22,9 @@ public interface OperationsManagementPolicyService {
     OperationsSessionService.SessionContext requirePermission(String accountId, String sessionId,
         String... permissions);
 
+    /** 判断已验证的当前普通 Session 是否持有某项权限，不抛出拒绝；用于“持有则放宽范围”的场景。 */
+    boolean hasPermission(OperationsSessionService.SessionContext context, String permission);
+
     /** 锁定并重检已完成初始改密的 Bootstrap 身份，供首次管理员交接事务使用。 */
     OperationsSessionService.SessionContext requireBootstrapAdministrator(String actorId, String sessionId);
 

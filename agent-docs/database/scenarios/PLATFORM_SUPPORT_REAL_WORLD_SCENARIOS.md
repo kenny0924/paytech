@@ -191,6 +191,25 @@ Platform 是 `t_currency_spec` 的唯一持有者（D41，副本部分由 [2026-
 | --- | --- |
 | `t_currency_spec` | `id=1001，currency=USD，minor_unit=2，rounding_mode=HALF_UP，status=ACTIVE`；USD 金额保留两位小数，八位计算精度按 HALF_UP 归整；未登记的币种查询返回 404。 |
 
+## 10A. SCN-PLT-10：工作流“新渠道上线”
+
+依据[工作流并入 Platform 决定](../../decisions/2026-10-22-workflow-into-platform-support.md)与[工作流技术方案](../../../requirements/20261021/platform-support-工作流/technique.md)。Operations 发布流程“新渠道上线”v1：立项审批 → 商务确认产品（人工确认动作，必选）→ 结束。实例“上线 Geidea 沙特”发起后，商务执行人提交确认说明并验证通过，因节点另配审批人，进入待审批；审批人退回修改，节点开第 2 轮，执行人重新提交、验证通过，审批同意后流转到结束。工作流只记录完成与同意，不写任何业务 Owner 的数据；节点通过时按规则登记一条业务回调。
+
+### 10A.1 工作流 10 表
+
+| 物理表 | 代表性记录与判定 |
+| --- | --- |
+| `t_workflow_definition` | `definition_id=700001，definition_code=NEW_CHANNEL_ONBOARD，definition_name=新渠道上线，description=NULL，status=ACTIVE，current_version_no=1，draft_version_no=NULL，version=3，created_by=900000000000000101，updated_by=900000000000000101`；发布后没有草稿，再次保存草稿时从 v1 复制出 v2。 |
+| `t_workflow_definition_version` | `definition_version_id=700011，definition_id=700001，version_no=1，status=PUBLISHED，graph_json=四节点图（开始、立项审批、商务确认、结束），start_form_json=字段channelCode与paymentMethod，action_snapshot_json=模板700021版本1的MANUAL_CONFIRM配置，published_by=900000000000000101，published_time=2026-10-22T08:00:00Z，version=2，created_by=900000000000000101，updated_by=900000000000000101`；发布后不可变。 |
+| `t_workflow_action_template` | `action_template_id=700021，template_code=COMMERCE_PRODUCT_CONFIRM，template_name=商务确认产品，action_type=MANUAL_CONFIRM，description=NULL，config_json=要求填写确认说明，status=ACTIVE，version=1，created_by=900000000000000101，updated_by=900000000000000101`；之后修改模板不影响已冻结的 v1 快照。 |
+| `t_workflow_instance` | `instance_id=700101，definition_id=700001，definition_version_id=700011，title=上线Geidea沙特，business_key=CHANNEL:GEIDEA-SA，status=COMPLETED，start_values_json=channelCode为GEIDEA_SA，assignment_json=各节点默认人员未修改，started_by=900000000000000103，start_time=2026-10-22T09:00:00Z，end_time=2026-10-22T11:00:00Z，terminated_by=NULL，termination_reason=NULL，version=9`。 |
+| `t_workflow_node_run` | 【商务确认第 1 轮被退回： node_run_id=700201，instance_id=700101，node_key=commerce，node_type=TASK，round_no=1，branch_key=NULL，previous_node_run_id=700200，status=RETURNED，selected_edge_key=NULL，activated_time=2026-10-22T09:10:00Z，completed_time=2026-10-22T10:00:00Z，version=3】；【商务确认第 2 轮通过： node_run_id=700202，instance_id=700101，node_key=commerce，node_type=TASK，round_no=2，branch_key=NULL，previous_node_run_id=700200，status=PASSED，selected_edge_key=NULL，activated_time=2026-10-22T10:00:00Z，completed_time=2026-10-22T11:00:00Z，version=3】；第 2 轮沿用第 1 轮的来源节点运行。 |
+| `t_workflow_action_run` | 【第 2 轮动作： action_run_id=700301，instance_id=700101，node_run_id=700202，action_key=commerceProduct，action_template_id=700021，action_type=MANUAL_CONFIRM，required=1，assignee_id=900000000000000102，status=VERIFIED，output_json=确认说明已更正，submitted_by=900000000000000102，submitted_time=2026-10-22T10:30:00Z，version=2】；`commerceProduct.note` 取自这一轮。 |
+| `t_workflow_verification` | 【第 2 轮验证： verification_id=700401，action_run_id=700301，instance_id=700101，result=PASSED，evidence_json=NULL，failure_reason=NULL，verified_by=900000000000000102，verified_time=2026-10-22T10:30:00Z】；只追加。 |
+| `t_workflow_approval` | 【第 1 轮退回： approval_id=700501，instance_id=700101，node_run_id=700201，approver_id=900000000000000104，status=RETURNED，decision_comment=说明缺少产品编码，reject_target_node_key=NULL，decided_time=2026-10-22T10:00:00Z，version=2】；【第 2 轮同意： approval_id=700502，instance_id=700101，node_run_id=700202，approver_id=900000000000000104，status=APPROVED，decision_comment=NULL，reject_target_node_key=NULL，decided_time=2026-10-22T11:00:00Z，version=2】；审批人从未提交该节点动作。 |
+| `t_workflow_transfer` | `transfer_id=700601，instance_id=700101，target_type=ACTION_RUN，target_id=700301，from_user_id=900000000000000105，to_user_id=900000000000000102，reason=原执行人休假，transferred_by=900000000000000105`；转交后 action_run 的执行人随之更新。 |
+| `t_workflow_callback` | `callback_id=700701，instance_id=700101，node_run_id=700202，trigger_code=PASSED，callback_type=CALLBACK，target=回调编码COMMERCIAL_PRODUCT_READY，status=SENT，attempt_count=1，last_error=NULL，sent_time=2026-10-22T11:00:01Z，version=2`；与节点通过同事务登记，提交后发布到 `topic_platform_workflow_event`，订阅方执行前自行校验业务事实。 |
+
 ## 11. 失败关闭与最小数据清单
 
 - 不保存 Password 明文、Google authorization code、Access/Refresh/ID Token、OIDC client secret、KMS private key、Webhook signing secret 值、PAN 或 CVV。

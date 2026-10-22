@@ -123,3 +123,6 @@ web:
       - /channel-admin/v1/channel-accounts
       # 银行账户新建请求含银行账号明文（I-05），银行账户接口只记元数据。
       - /finance/reconciliation/v1/cash-accounts
+      # 工作流启动值、动作输出、审批意见与选人结果（脱敏邮箱）属业务内容，只记元数据。
+      - /workflow-admin
+      - /workflow

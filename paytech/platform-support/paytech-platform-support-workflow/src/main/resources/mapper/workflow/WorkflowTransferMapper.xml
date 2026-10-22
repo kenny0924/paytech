@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.workflow.core.dal.mapper.WorkflowTransferMapper">
+
+    <sql id="columns">
+        transfer_id AS transferId,
+        instance_id AS instanceId,
+        target_type AS targetType,
+        target_id AS targetId,
+        from_user_id AS fromUserId,
+        to_user_id AS toUserId,
+        reason,
+        transferred_by AS transferredBy,
+        create_time AS createTime
+    </sql>
+
+    <insert id="insert">
+        INSERT INTO t_workflow_transfer (transfer_id, instance_id, target_type, target_id, from_user_id, to_user_id, reason, transferred_by, create_time)
+        VALUES (#{row.transferId}, #{row.instanceId}, #{row.targetType}, #{row.targetId}, #{row.fromUserId}, #{row.toUserId}, #{row.reason}, #{row.transferredBy}, #{row.createTime})
+    </insert>
+
+    <select id="selectById" resultType="com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowTransfer">
+        SELECT <include refid="columns"/> FROM t_workflow_transfer WHERE transfer_id = #{id}
+    </select>
+
+    <select id="selectByInstance" resultType="com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowTransfer">SELECT <include refid="columns"/> FROM t_workflow_transfer
+        WHERE instance_id = #{instanceId} ORDER BY create_time, transfer_id</select>
+
+</mapper>

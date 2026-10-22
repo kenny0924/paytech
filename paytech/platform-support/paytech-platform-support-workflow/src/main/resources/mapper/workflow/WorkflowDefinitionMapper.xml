@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.workflow.core.dal.mapper.WorkflowDefinitionMapper">
+
+    <sql id="columns">
+        definition_id AS definitionId,
+        definition_code AS definitionCode,
+        definition_name AS definitionName,
+        description,
+        status,
+        current_version_no AS currentVersionNo,
+        draft_version_no AS draftVersionNo,
+        version,
+        created_by AS createdBy,
+        updated_by AS updatedBy,
+        create_time AS createTime,
+        update_time AS updateTime
+    </sql>
+
+    <insert id="insert">
+        INSERT INTO t_workflow_definition (definition_id, definition_code, definition_name, description, status, current_version_no, draft_version_no, version, created_by, updated_by, create_time, update_time)
+        VALUES (#{row.definitionId}, #{row.definitionCode}, #{row.definitionName}, #{row.description}, #{row.status}, #{row.currentVersionNo}, #{row.draftVersionNo}, #{row.version}, #{row.createdBy}, #{row.updatedBy}, #{row.createTime}, #{row.updateTime})
+    </insert>
+
+    <select id="selectById" resultType="com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowDefinition">
+        SELECT <include refid="columns"/> FROM t_workflow_definition WHERE definition_id = #{id}
+    </select>
+
+    <select id="selectByCode" resultType="com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowDefinition">SELECT <include refid="columns"/> FROM t_workflow_definition WHERE definition_code = #{code}</select>
+
+    <select id="selectByIds" resultType="com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowDefinition">SELECT <include refid="columns"/> FROM t_workflow_definition WHERE definition_id IN <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach></select>
+
+    <update id="update">UPDATE t_workflow_definition SET definition_name = #{row.definitionName}, description = #{row.description},
+        status = #{row.status}, current_version_no = #{row.currentVersionNo}, draft_version_no = #{row.draftVersionNo},
+        version = version + 1, updated_by = #{row.updatedBy}, update_time = #{row.updateTime}
+        WHERE definition_id = #{row.definitionId} AND version = #{row.version}</update>
+
+    <sql id="filter"><where>
+            <if test="status != null">AND status = #{status}</if>
+            <if test="launchable">AND current_version_no IS NOT NULL</if>
+            <if test="keyword != null">AND (definition_code LIKE CONCAT('%', #{keyword}, '%') OR definition_name LIKE CONCAT('%', #{keyword}, '%'))</if>
+        </where></sql>
+    <select id="page" resultType="com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowDefinition">SELECT <include refid="columns"/> FROM t_workflow_definition <include refid="filter"/>
+        ORDER BY update_time DESC, definition_id DESC LIMIT #{size} OFFSET #{offset}</select>
+
+    <select id="count" resultType="_long">SELECT COUNT(*) FROM t_workflow_definition <include refid="filter"/></select>
+
+</mapper>

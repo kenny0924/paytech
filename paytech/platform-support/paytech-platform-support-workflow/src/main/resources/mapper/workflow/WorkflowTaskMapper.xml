@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.workflow.core.dal.mapper.WorkflowTaskMapper">
+
+    <sql id="tasks">
+        SELECT * FROM (
+            SELECT 'ACTION' AS taskType, a.action_run_id AS taskId, a.instance_id AS instanceId, i.title AS instanceTitle,
+                i.definition_id AS definitionId, i.definition_version_id AS definitionVersionId, n.node_run_id AS nodeRunId, n.node_key AS nodeKey, n.round_no AS roundNo,
+                a.action_key AS actionKey, n.activated_time AS waitingSince
+            FROM t_workflow_action_run a
+            JOIN t_workflow_node_run n ON n.node_run_id = a.node_run_id
+            JOIN t_workflow_instance i ON i.instance_id = a.instance_id
+            WHERE a.assignee_id = #{accountId} AND a.status IN ('PENDING', 'UNVERIFIED') AND n.status = 'ACTIVE'
+                AND i.status = 'RUNNING'
+            UNION ALL
+            SELECT 'APPROVAL', p.approval_id, p.instance_id, i.title, i.definition_id, i.definition_version_id, n.node_run_id, n.node_key,
+                n.round_no, NULL, p.create_time
+            FROM t_workflow_approval p
+            JOIN t_workflow_node_run n ON n.node_run_id = p.node_run_id
+            JOIN t_workflow_instance i ON i.instance_id = p.instance_id
+            WHERE p.approver_id = #{accountId} AND p.status = 'PENDING' AND n.status = 'APPROVING'
+                AND i.status = 'RUNNING'
+        ) t
+        <where>
+            <if test="taskType != null">AND t.taskType = #{taskType}</if>
+            <if test="keyword != null">AND t.instanceTitle LIKE CONCAT('%', #{keyword}, '%') ESCAPE '!'</if>
+        </where>
+    </sql>
+
+    <select id="page" resultType="com.paytech.platform.support.workflow.domain.query.WorkflowTaskView">
+        <include refid="tasks"/>
+        ORDER BY waitingSince DESC, taskId DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="_long">
+        SELECT COUNT(*) FROM (<include refid="tasks"/>) c
+    </select>
+
+    <!-- 我已处理：我提交过的动作运行（最近一次提交人为我）与我已决定的审批（同意、退回修改、驳回）。 -->
+    <sql id="handled">
+        SELECT * FROM (
+            SELECT 'ACTION' AS taskType, a.action_run_id AS taskId, a.instance_id AS instanceId, i.title AS instanceTitle,
+                i.definition_id AS definitionId, i.definition_version_id AS definitionVersionId, n.node_key AS nodeKey,
+                n.round_no AS roundNo, a.action_key AS actionKey, a.status AS result, a.submitted_time AS handledTime,
+                i.status AS instanceStatus
+            FROM t_workflow_action_run a
+            JOIN t_workflow_node_run n ON n.node_run_id = a.node_run_id
+            JOIN t_workflow_instance i ON i.instance_id = a.instance_id
+            WHERE a.submitted_by = #{accountId} AND a.submitted_time IS NOT NULL
+            UNION ALL
+            SELECT 'APPROVAL', p.approval_id, p.instance_id, i.title, i.definition_id, i.definition_version_id, n.node_key,
+                n.round_no, NULL, p.status, p.decided_time, i.status
+            FROM t_workflow_approval p
+            JOIN t_workflow_node_run n ON n.node_run_id = p.node_run_id
+            JOIN t_workflow_instance i ON i.instance_id = p.instance_id
+            WHERE p.approver_id = #{accountId} AND p.status IN ('APPROVED', 'RETURNED', 'REJECTED')
+        ) t
+        <where>
+            <if test="taskType != null">AND t.taskType = #{taskType}</if>
+            <if test="keyword != null">AND t.instanceTitle LIKE CONCAT('%', #{keyword}, '%') ESCAPE '!'</if>
+        </where>
+    </sql>
+
+    <select id="handledPage" resultType="com.paytech.platform.support.workflow.domain.query.WorkflowHandledTaskView">
+        <include refid="handled"/>
+        ORDER BY handledTime DESC, taskId DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="handledCount" resultType="_long">
+        SELECT COUNT(*) FROM (<include refid="handled"/>) c
+    </select>
+
+    <!-- 实例列表的进度：各实例 TASK 节点运行（按节点、轮次）。 -->
+    <select id="taskRuns" resultType="com.paytech.platform.support.workflow.domain.query.WorkflowNodeProgressView">
+        SELECT instance_id AS instanceId, node_key AS nodeKey, round_no AS roundNo, status
+        FROM t_workflow_node_run
+        WHERE node_type = 'TASK' AND instance_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+    </select>
+
+    <!-- 实例列表的当前处理人：进行中节点的未完成动作执行人与待决定审批人。 -->
+    <select id="openAssignments" resultType="com.paytech.platform.support.workflow.domain.query.WorkflowOpenAssignmentView">
+        SELECT n.instance_id AS instanceId, n.node_key AS nodeKey, n.status AS nodeStatus, a.assignee_id AS userId
+        FROM t_workflow_node_run n
+        JOIN t_workflow_action_run a ON a.node_run_id = n.node_run_id AND a.status IN ('PENDING', 'UNVERIFIED')
+        WHERE n.status = 'ACTIVE' AND n.instance_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+        UNION ALL
+        SELECT n.instance_id, n.node_key, n.status, p.approver_id
+        FROM t_workflow_node_run n
+        JOIN t_workflow_approval p ON p.node_run_id = n.node_run_id AND p.status = 'PENDING'
+        WHERE n.status = 'APPROVING' AND n.instance_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+    </select>
+
+    <!-- 动作模板引用：冻结了该模板的已发布版本（按模板 ID 文本匹配后由调用方精确核对）。 -->
+    <select id="templateReferences" resultType="com.paytech.platform.support.workflow.domain.query.WorkflowTemplateReferenceView">
+        SELECT v.definition_version_id AS definitionVersionId, v.definition_id AS definitionId, d.definition_code AS definitionCode,
+            d.definition_name AS definitionName, v.version_no AS versionNo,
+            (d.current_version_no = v.version_no) AS currentVersion, v.action_snapshot_json AS actionSnapshotJson,
+            (SELECT COUNT(*) FROM t_workflow_instance i WHERE i.definition_version_id = v.definition_version_id
+                AND i.status = 'RUNNING') AS runningInstanceCount
+        FROM t_workflow_definition_version v
+        JOIN t_workflow_definition d ON d.definition_id = v.definition_id
+        WHERE v.status = 'PUBLISHED' AND v.action_snapshot_json LIKE CONCAT('%"', #{templateId}, '"%')
+        ORDER BY d.definition_code, v.version_no DESC
+    </select>
+</mapper>

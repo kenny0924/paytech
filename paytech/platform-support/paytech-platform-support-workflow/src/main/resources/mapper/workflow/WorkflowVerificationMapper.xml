@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.workflow.core.dal.mapper.WorkflowVerificationMapper">
+
+    <sql id="columns">
+        verification_id AS verificationId,
+        action_run_id AS actionRunId,
+        instance_id AS instanceId,
+        result,
+        evidence_json AS evidenceJson,
+        failure_reason AS failureReason,
+        verified_by AS verifiedBy,
+        verified_time AS verifiedTime,
+        create_time AS createTime
+    </sql>
+
+    <insert id="insert">
+        INSERT INTO t_workflow_verification (verification_id, action_run_id, instance_id, result, evidence_json, failure_reason, verified_by, verified_time, create_time)
+        VALUES (#{row.verificationId}, #{row.actionRunId}, #{row.instanceId}, #{row.result}, #{row.evidenceJson}, #{row.failureReason}, #{row.verifiedBy}, #{row.verifiedTime}, #{row.createTime})
+    </insert>
+
+    <select id="selectById" resultType="com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowVerification">
+        SELECT <include refid="columns"/> FROM t_workflow_verification WHERE verification_id = #{id}
+    </select>
+
+    <select id="selectByInstance" resultType="com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowVerification">SELECT <include refid="columns"/> FROM t_workflow_verification
+        WHERE instance_id = #{instanceId} ORDER BY verified_time, verification_id</select>
+
+</mapper>

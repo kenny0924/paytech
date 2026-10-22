@@ -195,6 +195,12 @@ services:
       PLATFORM_SUPPORT_REDIS_HOST: redis
       PLATFORM_SUPPORT_REDIS_PORT: "6379"
       PLATFORM_SUPPORT_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?prepare test secrets}
+      # 工作流业务回调 WorkflowCallbackRaised 发布到 platform-support.events（20261021 platform-support 工作流）。
+      PLATFORM_SUPPORT_RABBITMQ_HOST: rabbitmq
+      PLATFORM_SUPPORT_RABBITMQ_PORT: "5672"
+      PLATFORM_SUPPORT_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
+      PLATFORM_SUPPORT_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
+      PLATFORM_SUPPORT_RABBITMQ_VHOST: /mor-test
       OPERATIONS_AUTHENTICATION_ENABLED: "true"
       OPERATIONS_AUTHENTICATION_WORKER_ID: "20"
       # Client 注册与入驻：CUSTOMER 签名/HMAC 材料来自 private/platform.env 的 CLIENT_LOCAL_*。
@@ -238,6 +244,7 @@ services:
       mysql: { condition: service_healthy }
       nacos: { condition: service_healthy }
       redis: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
       vault-service: { condition: service_healthy }
       minio: { condition: service_healthy }
       mailpit: { condition: service_started }

@@ -26,7 +26,7 @@ public final class ServiceCatalog {
         for (String service : new String[] {"acquiring", "payment", "payout", "dispute", "fx"}) {
             SERVICES.put(service, ServiceLayer.PROCESS);
         }
-        for (String service : new String[] {"platform-support", "workflow-approval", "api-gateway",
+        for (String service : new String[] {"platform-support", "api-gateway",
             "client-console-bff", "operations-console-bff", "partner-console-bff", "vault"}) {
             SERVICES.put(service, ServiceLayer.SUPPORT);
         }

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.workflow.core.dal.mapper.WorkflowApprovalMapper">
+
+    <sql id="columns">
+        approval_id AS approvalId,
+        instance_id AS instanceId,
+        node_run_id AS nodeRunId,
+        approver_id AS approverId,
+        status,
+        decision_comment AS decisionComment,
+        reject_target_node_key AS rejectTargetNodeKey,
+        decided_time AS decidedTime,
+        version,
+        create_time AS createTime,
+        update_time AS updateTime
+    </sql>
+
+    <insert id="insert">
+        INSERT INTO t_workflow_approval (approval_id, instance_id, node_run_id, approver_id, status, decision_comment, reject_target_node_key, decided_time, version, create_time, update_time)
+        VALUES (#{row.approvalId}, #{row.instanceId}, #{row.nodeRunId}, #{row.approverId}, #{row.status}, #{row.decisionComment}, #{row.rejectTargetNodeKey}, #{row.decidedTime}, #{row.version}, #{row.createTime}, #{row.updateTime})
+    </insert>
+
+    <select id="selectById" resultType="com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowApproval">
+        SELECT <include refid="columns"/> FROM t_workflow_approval WHERE approval_id = #{id}
+    </select>
+
+    <select id="selectByInstance" resultType="com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowApproval">SELECT <include refid="columns"/> FROM t_workflow_approval
+        WHERE instance_id = #{instanceId} ORDER BY create_time, approval_id</select>
+
+    <update id="update">UPDATE t_workflow_approval SET approver_id = #{row.approverId}, status = #{row.status},
+        decision_comment = #{row.decisionComment}, reject_target_node_key = #{row.rejectTargetNodeKey},
+        decided_time = #{row.decidedTime}, version = version + 1, update_time = #{row.updateTime}
+        WHERE approval_id = #{row.approvalId} AND version = #{row.version}</update>
+
+</mapper>

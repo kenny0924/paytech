@@ -681,6 +681,53 @@ export const pageCapabilities = [
     ]
   },
   {
+    "componentKey": "OPERATIONS_WORKFLOW_MY_TASKS",
+    "displayName": "我的待办",
+    "frontendRoute": "/workflow/my-tasks",
+    "actions": []
+  },
+  {
+    "componentKey": "OPERATIONS_WORKFLOW_INSTANCES",
+    "displayName": "流程实例",
+    "frontendRoute": "/workflow/instances",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_WORKFLOW_INSTANCE_START",
+        "displayName": "发起"
+      },
+      {
+        "resourceCode": "OPERATIONS_WORKFLOW_INSTANCE_READ",
+        "displayName": "查看全部"
+      },
+      {
+        "resourceCode": "OPERATIONS_WORKFLOW_INSTANCE_MANAGE",
+        "displayName": "管理"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_WORKFLOW_DEFINITIONS",
+    "displayName": "流程定义",
+    "frontendRoute": "/workflow/definitions",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_WORKFLOW_DEFINITION_MANAGE",
+        "displayName": "维护"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_WORKFLOW_ACTION_TEMPLATES",
+    "displayName": "动作目录",
+    "frontendRoute": "/workflow/action-templates",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_WORKFLOW_ACTION_TEMPLATE_MANAGE",
+        "displayName": "维护"
+      }
+    ]
+  },
+  {
     "componentKey": "OPERATIONS_DATA_SOURCES",
     "displayName": "数据源",
     "frontendRoute": "/data-query/data-sources",

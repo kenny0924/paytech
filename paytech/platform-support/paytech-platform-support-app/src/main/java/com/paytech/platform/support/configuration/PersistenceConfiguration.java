@@ -27,6 +27,7 @@ import com.paytech.platform.support.auditsecurity.domain.enums.OperationsAuditCl
     "com.paytech.platform.support.auditsecurity.core.dal.mapper",
     "com.paytech.platform.support.core.reliability.mapper",
     "com.paytech.platform.support.referencedata.core.dal.mapper",
+    "com.paytech.platform.support.workflow.core.dal.mapper",
     "com.paytech.platform.support.dataquery.core.dal.mapper"}, sqlSessionTemplateRef = "sqlSessionTemplate")
 public class PersistenceConfiguration {
 
@@ -113,6 +114,28 @@ public class PersistenceConfiguration {
         registry.register(com.paytech.platform.support.dataquery.core.enums.DataSourceStatus.class, CodeEnumTypeHandler.class);
         registry.register(com.paytech.platform.support.dataquery.core.enums.DataSourceCheckResult.class, CodeEnumTypeHandler.class);
         registry.register(com.paytech.platform.support.dataquery.core.enums.QueryTemplateStatus.class, CodeEnumTypeHandler.class);
+        registerWorkflowHandlers(registry);
+    }
+
+    /** 工作流十张表的闭合枚举列。 */
+    private void registerWorkflowHandlers(TypeHandlerRegistry registry) {
+        for (Class<?> type : java.util.List.of(
+            com.paytech.platform.support.workflow.core.enums.WorkflowDefinitionStatus.class,
+            com.paytech.platform.support.workflow.core.enums.WorkflowVersionStatus.class,
+            com.paytech.platform.support.workflow.core.enums.WorkflowActionType.class,
+            com.paytech.platform.support.workflow.core.enums.ActionTemplateStatus.class,
+            com.paytech.platform.support.workflow.core.enums.WorkflowInstanceStatus.class,
+            com.paytech.platform.support.workflow.core.enums.WorkflowNodeType.class,
+            com.paytech.platform.support.workflow.core.enums.NodeRunStatus.class,
+            com.paytech.platform.support.workflow.core.enums.ActionRunStatus.class,
+            com.paytech.platform.support.workflow.core.enums.VerificationResult.class,
+            com.paytech.platform.support.workflow.core.enums.ApprovalStatus.class,
+            com.paytech.platform.support.workflow.core.enums.TransferTargetType.class,
+            com.paytech.platform.support.workflow.core.enums.NotificationTrigger.class,
+            com.paytech.platform.support.workflow.core.enums.NotificationRuleType.class,
+            com.paytech.platform.support.workflow.core.enums.CallbackStatus.class)) {
+            registry.register(type, CodeEnumTypeHandler.class);
+        }
     }
 
     /**

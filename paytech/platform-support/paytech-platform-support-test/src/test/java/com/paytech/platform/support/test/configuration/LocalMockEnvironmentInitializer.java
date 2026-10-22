@@ -18,10 +18,11 @@ public class LocalMockEnvironmentInitializer implements ApplicationContextInitia
 
     private static final Set<String> CONNECTION_KEYS = Set.of("MOR_PLATFORM_DB_PASSWORD", "MOR_REDIS_PASSWORD", "PAYTECH_REDIS_PASSWORD",
         "MOR_MINIO_PLATFORM_ACCESS_KEY", "MOR_MINIO_PLATFORM_SECRET_KEY", "MOR_MINIO_ROOT_USER",
-        "MOR_MINIO_ROOT_PASSWORD", "MOR_DATA_QUERY_FIXTURE_READER_PASSWORD", "MOR_DATA_QUERY_FIXTURE_WRITER_PASSWORD");
+        "MOR_MINIO_ROOT_PASSWORD", "MOR_RABBITMQ_USER", "MOR_RABBITMQ_PASSWORD", "MOR_DATA_QUERY_FIXTURE_READER_PASSWORD",
+        "MOR_DATA_QUERY_FIXTURE_WRITER_PASSWORD");
 
-    /** MinIO 访问键与管理员账号名最短 3 位，其余连接配置沿用 16 位下限。 */
-    private static final Set<String> SHORT_KEYS = Set.of("MOR_MINIO_PLATFORM_ACCESS_KEY", "MOR_MINIO_ROOT_USER");
+    /** MinIO 访问键、管理员账号名与 RabbitMQ 用户名最短 3 位，其余连接配置沿用 16 位下限。 */
+    private static final Set<String> SHORT_KEYS = Set.of("MOR_MINIO_PLATFORM_ACCESS_KEY", "MOR_MINIO_ROOT_USER", "MOR_RABBITMQ_USER");
 
     /**
      * 本地环境目录的唯一锚点（design/10 §4.4）：paytech-parent 经 Surefire 透传，IDE 运行可用 {@code -D} 覆盖。

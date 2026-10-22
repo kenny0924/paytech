@@ -20,6 +20,9 @@ const expectedTables = [
   'authentication_challenge', 'file_upload', 'file_scan_policy', 'file_scan_requirement', 'file_object', 'file_owner_ref', 'file_scan_result',
   'audit_chain', 'audit_event', 'audit_event_attr', 'security_event', 'command_idempotency', 'compensation_event', 'console_resource',
   'webhook_endpoint', 'webhook_signing_secret', 'webhook_event', 'webhook_delivery', 'webhook_attempt',
+  'workflow_definition', 'workflow_definition_version', 'workflow_action_template', 'workflow_instance',
+  'workflow_node_run', 'workflow_action_run', 'workflow_verification', 'workflow_approval', 'workflow_transfer',
+  'workflow_callback',
   'data_source', 'query_template', 'query_template_version',
 ].map(name => `t_${name}`);
 const quote = value => `'${value.replaceAll("'", "''")}'`;
@@ -151,4 +154,42 @@ test('Client Webhook increment is the exact five-table current model and test DD
     assert.ok(testDdl.includes(table[0]));
   }
   assert.doesNotMatch(increment.replace(/^--.*$/gm, ''), /\b(?:DROP|ALTER|DELETE|INSERT|UPDATE|CHECK|FOREIGN)\b/i);
+});
+
+test('Workflow increment is the exact ten-table current model', () => {
+  const increment = readFileSync(new URL('docs/database/sql/changes/2026-10-22-workflow.sql', service), 'utf8');
+  const created = [...increment.matchAll(/CREATE TABLE `(\w+)` \(([\s\S]*?)\) ENGINE=InnoDB([^;]*);/g)];
+  assert.deepEqual(created.map(t => t[1]), ['t_workflow_definition', 't_workflow_definition_version',
+    't_workflow_action_template', 't_workflow_instance', 't_workflow_node_run', 't_workflow_action_run',
+    't_workflow_verification', 't_workflow_approval', 't_workflow_transfer', 't_workflow_callback']);
+  for (const table of created) assert.equal(table[0], tables.find(t => t[1] === table[1])[0]);
+  assert.doesNotMatch(increment.replace(/^--.*$/gm, ''), /\b(?:DROP|ALTER|DELETE|INSERT|UPDATE|CHECK|FOREIGN)\b/i);
+});
+
+test('Workflow console block 127 registers the agreed rows inside its ID block and every BFF route', () => {
+  const initial = readFileSync(new URL('docs/database/sql/platform-support-initial-data.sql', service), 'utf8');
+  const start = initial.indexOf('-- Operations workflow console (2026-10-22');
+  assert.ok(start > 0);
+  const block = initial.slice(start, initial.indexOf('COMMIT;', start));
+  const rows = table => {
+    const statement = block.match(new RegExp(`INSERT INTO ${table} \\([^)]*\\)\\s*VALUES([\\s\\S]*?);`));
+    return statement ? [...statement[1].matchAll(/^\s+\((9000000000001\d{5})/gm)].map(m => m[1]) : [];
+  };
+  const counts = Object.fromEntries(['t_permission', 't_role_permission', 't_console_resource', 't_gateway_route',
+    't_gateway_route_header', 't_gateway_route_query_param', 't_gateway_guard_rule', 't_notification_template',
+    't_notification_template_content', 't_notification_route'].map(table => [table, rows(table)]));
+  assert.deepEqual(Object.fromEntries(Object.entries(counts).map(([table, ids]) => [table, ids.length])), {
+    t_permission: 7, t_role_permission: 7, t_console_resource: 10, t_gateway_route: 32, t_gateway_route_header: 136,
+    t_gateway_route_query_param: 29, t_gateway_guard_rule: 192, t_notification_template: 1,
+    t_notification_template_content: 1, t_notification_route: 1 });
+  const ids = Object.values(counts).flat();
+  assert.equal(new Set(ids).size, ids.length);
+  for (const id of ids) assert.match(id, /^900000000000127\d{3}$/);
+  const routeCodes = [...block.matchAll(/'(operations-workflow-[a-z-]+)'/g)].map(m => m[1]);
+  const boundary = JSON.parse(readFileSync(new URL(
+    '../../paytech/operations-console-bff/paytech-operations-console-bff-test/src/test/resources/workflow-boundary.json',
+    import.meta.url), 'utf8'));
+  assert.deepEqual(routeCodes.toSorted(), boundary.map(row => row.routeCode).toSorted());
+  assert.match(block, /'DISABLED', 1, @workflow_console_actor_id/);
+  assert.doesNotMatch(block.replace(/^--.*$/gm, ''), /'ACTIVE', 1, @workflow_console_actor_id/);
 });

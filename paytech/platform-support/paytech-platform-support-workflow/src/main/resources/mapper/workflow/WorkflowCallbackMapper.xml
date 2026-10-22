@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.workflow.core.dal.mapper.WorkflowCallbackMapper">
+
+    <sql id="columns">
+        callback_id AS callbackId,
+        instance_id AS instanceId,
+        node_run_id AS nodeRunId,
+        trigger_code AS triggerCode,
+        callback_type AS callbackType,
+        target,
+        status,
+        attempt_count AS attemptCount,
+        last_error AS lastError,
+        sent_time AS sentTime,
+        version,
+        create_time AS createTime,
+        update_time AS updateTime
+    </sql>
+
+    <insert id="insert">
+        INSERT INTO t_workflow_callback (callback_id, instance_id, node_run_id, trigger_code, callback_type, target, status, attempt_count, last_error, sent_time, version, create_time, update_time)
+        VALUES (#{row.callbackId}, #{row.instanceId}, #{row.nodeRunId}, #{row.triggerCode}, #{row.callbackType}, #{row.target}, #{row.status}, #{row.attemptCount}, #{row.lastError}, #{row.sentTime}, #{row.version}, #{row.createTime}, #{row.updateTime})
+    </insert>
+
+    <select id="selectById" resultType="com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowCallback">
+        SELECT <include refid="columns"/> FROM t_workflow_callback WHERE callback_id = #{id}
+    </select>
+
+    <select id="selectByInstance" resultType="com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowCallback">SELECT <include refid="columns"/> FROM t_workflow_callback
+        WHERE instance_id = #{instanceId} ORDER BY create_time, callback_id</select>
+
+    <update id="update">UPDATE t_workflow_callback SET status = #{row.status}, attempt_count = #{row.attemptCount}, last_error = #{row.lastError},
+        sent_time = #{row.sentTime}, version = version + 1, update_time = #{row.updateTime}
+        WHERE callback_id = #{row.callbackId} AND version = #{row.version} AND status = #{expected}</update>
+
+</mapper>

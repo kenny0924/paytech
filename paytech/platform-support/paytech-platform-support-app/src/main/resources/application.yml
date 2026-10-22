@@ -6,6 +6,19 @@ server:
 spring:
   application:
     name: platform-support-service
+  # RabbitMQ：工作流业务回调（WorkflowCallbackRaised）的发布端；凭据只经环境变量注入，不写入版本库。
+  # 连接在首次发布时建立；Broker 不可用时回调由补偿任务重试，达到 workflow.callback-max-attempts 后置 FAILED 待人工重试。
+  rabbitmq:
+    host: "${PLATFORM_SUPPORT_RABBITMQ_HOST:127.0.0.1}"
+    port: "${PLATFORM_SUPPORT_RABBITMQ_PORT:5672}"
+    username: "${PLATFORM_SUPPORT_RABBITMQ_USERNAME:}"
+    password: "${PLATFORM_SUPPORT_RABBITMQ_PASSWORD:}"
+    virtual-host: "${PLATFORM_SUPPORT_RABBITMQ_VHOST:/mor-local}"
+    connection-timeout: 2s
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
   data:
     redis:
       host: "${PLATFORM_SUPPORT_REDIS_HOST:127.0.0.1}"
@@ -79,6 +92,9 @@ management:
   health:
     redis:
       enabled: "${operations.authentication.enabled:false}"
+    # RabbitMQ 只承载工作流回调的异步发布，失败由补偿任务重试，不纳入健康状态。
+    rabbit:
+      enabled: false
     livenessstate:
       enabled: true
     readinessstate:
@@ -125,6 +141,8 @@ web:
       - /tenant-projections
       - /notification-admin
       - /webhook-admin
+      - /workflow-admin
+      - /workflow
       - /platform/v1/internal-tokens
       - /data-query-admin/v1/data-sources
       - /data-query-admin/v1/data-source-connection-tests
@@ -142,10 +160,12 @@ tenant:
   projection:
     enabled: false
 
-# 本地补偿执行默认跟随文件开关 files.enabled；单独启用通知等其他消费者时设置 PLATFORM_SUPPORT_COMPENSATION_ENABLED=true。
-# 关闭时不创建补偿 Registrar，通知启用会在启动时因缺少该 Bean 失败；周期扫描的 XXL-Job 调度另行配置。
+# 本地补偿执行默认跟随文件开关（PLATFORM_SUPPORT_FILES_ENABLED），未设置时跟随 Operations 人工认证（工作流通知与回调）；
+# 单独启用通知等其他消费者时设置 PLATFORM_SUPPORT_COMPENSATION_ENABLED=true。按环境变量串联，因为 files.enabled 在本文件中总有值。
+# 关闭时不创建补偿 Registrar：通知启用会在启动时因缺少该 Bean 失败，工作流登记通知回调的写操作会失败回滚。
+# 周期扫描的 XXL-Job 调度另行配置（工作流两类任务 WORKFLOW_NOTIFICATION、WORKFLOW_CALLBACK_EVENT 与其他补偿任务共用同一扫描任务）。
 compensation:
-  enabled: ${PLATFORM_SUPPORT_COMPENSATION_ENABLED:${files.enabled:false}}
+  enabled: ${PLATFORM_SUPPORT_COMPENSATION_ENABLED:${PLATFORM_SUPPORT_FILES_ENABLED:${operations.authentication.enabled:false}}}
 
 # 文件能力：存储实例、存储桶、写入路由与密钥在运营「存储管理」中维护（t_file_storage_*，密钥只存 Vault），不在配置文件中。
 # files.enabled 控制内部文件接口（/internal/files/v1）、FILE_SCAN 扫描任务、格式检查器与存储快照刷新；启用需 Redis 协调与本地补偿执行器。
@@ -291,9 +311,22 @@ internal-token:
     # 例如 payment-service: {targets: [vault-service], purposes: [GENERAL]}
     callers: {}
 
-# Foundation paytech-messaging：本步只装配编解码与事件目录；未设置 producer/consumer.service，不连接 Broker、不声明交换机与队列。
-# 本应用未引入 spring-boot-starter-amqp，没有 RabbitMQ ConnectionFactory；发布与消费在 D07 后续切片启用。
+# 工作流（paytech-platform-support-workflow）：写入口资源锁 workflow-instance:{id}、workflow-definition:{id}、
+# workflow-action-template:{id}（TRY_LOCK）；通知与回调最多尝试 5 次后置 FAILED，可人工重试。修改需重启。
+workflow:
+  lock-wait-time: 500ms
+  lock-lease-time: 30s
+  callback-max-attempts: 5
+  notification-template-code: WORKFLOW_NOTIFICATION # Delivery 普通模板，由注册 DML 登记。
+  event-source-service: platform-support
+  event-instance-id: "${PAYTECH_INSTANCE_ID:main}"
+
+# Foundation paytech-messaging 发布端：声明 platform-support.events（Durable Fanout）并提供 DomainEventPublisher，
+# 只发布工作流业务回调 WorkflowCallbackRaised（事件目录 catalog/events.yaml）。目前没有订阅方，不可路由按 ACK_AND_WARN
+# 视为发布成功并告警；有订阅方后改为 FAIL。Platform 不消费事件，不设置 consumer.service。
 messaging:
   enabled: true
-  # producer.service / producer.confirm-timeout：启用发布端时设置（服务名、默认 10s）。
-  # consumer.service / consumer.retry-backoff / consumers.<producer>.partitions：启用消费端时设置（默认 1s、4 分区）。
+  producer:
+    service: platform-support
+  publisher:
+    unroutable-policy: ACK_AND_WARN

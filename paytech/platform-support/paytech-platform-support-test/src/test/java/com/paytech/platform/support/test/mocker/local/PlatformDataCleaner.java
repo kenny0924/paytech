@@ -26,7 +26,7 @@ import lombok.RequiredArgsConstructor;
  * <p>人工认证、IAM、配置目录、网关、文件与审计表中的内部租户、平台角色和权限编码全局唯一，无法按用例分区；
  * 因此每例开始前要求这些表为空，确认后才在 AfterEach 整表回收。非空时拒绝运行，避免误删本地开发数据。
  * 外部 API 配置六表的编码同样全局唯一，且多数行由被测接口创建、无法预先登记，一并整表回收。
- * Webhook 五表的行同样多由被测接口创建，测试独占并整表回收；数据查询三表同理。
+ * Webhook 五表与工作流十表的行同样多由被测接口创建，测试独占并整表回收；数据查询三表同理。
  * 文件存储实例、存储桶与写入路由的编码全局唯一（含默认路由 *），且多由被测管理接口创建，测试独占并整表回收。
  * 租户、凭证与通知表仍由各自 Mocker 按本例标识回收。
  * 文件扫描策略与要求可能存在已授权的本机开发配置（如 CLIENT_ONBOARDING_FORMAT），不纳入整表回收，
@@ -39,6 +39,9 @@ public class PlatformDataCleaner implements Clear {
 
     /** 测试独占的表；顺序为子表在前，便于定位残留。 */
     public static final List<String> OWNED_TABLES = List.of(
+        "t_workflow_callback", "t_workflow_transfer", "t_workflow_approval", "t_workflow_verification",
+        "t_workflow_action_run", "t_workflow_node_run", "t_workflow_instance", "t_workflow_definition_version",
+        "t_workflow_definition", "t_workflow_action_template",
         "t_auth_session", "t_refresh_token_generation", "t_authentication_challenge", "t_tenant_invitation",
         "t_password_credential",
         "t_tenant_member_role", "t_tenant_member", "t_user_account",
