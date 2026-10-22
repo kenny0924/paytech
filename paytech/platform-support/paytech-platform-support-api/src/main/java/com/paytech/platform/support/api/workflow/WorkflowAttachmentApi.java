@@ -4,6 +4,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
 
@@ -55,10 +56,14 @@ public interface WorkflowAttachmentApi {
      * @param session 可信会话
      * @param instanceId 实例 ID
      * @param fileId 文件 ID
-     * @return 最长 60 秒的临时下载地址；实例不可见或文件不属于本实例返回 404，文件未扫描通过返回 409
+     * @param disposition 可选 Query 参数：{@code FileDisposition} Code（INLINE、ATTACHMENT）；缺省或为空按 ATTACHMENT。INLINE 只对
+     *        扫描 AVAILABLE 且 MIME 为 application/pdf、image/png、image/jpeg 的文件生效，否则由文件入口静默降为 ATTACHMENT
+     * @return 最长 60 秒的临时下载地址、到期时间与实际生效的下载方式；下载方式不合法返回 400，实例不可见或文件不属于本实例返回 404，
+     *         文件未扫描通过返回 409
      */
     @PostExchange("/instances/{instanceId}/files/{fileId}/download")
     FileDownloadResponseBody authorizeDownload(@RequestHeader("X-Gateway-Actor-Subject") String actor,
         @RequestHeader("X-Gateway-Session-Id") String session, @PathVariable("instanceId") String instanceId,
-        @PathVariable("fileId") String fileId);
+        @PathVariable("fileId") String fileId,
+        @RequestParam(name = "disposition", required = false) String disposition);
 }

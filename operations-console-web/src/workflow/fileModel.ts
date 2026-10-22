@@ -30,8 +30,11 @@ export interface UploadGrant {
   authorization: { method: string; url: string; headers: Record<string, string>; expiresAt: string };
   expiresAt: string;
 }
-export interface UploadReceipt { uploadId: string; fileId: string; completedAt: string }
-export interface DownloadGrant { url: string; expiresAt: string }
+export interface UploadReceipt { uploadId: string; fileId: string; fileAddress: string; completedAt: string }
+/** 下载方式：INLINE 浏览器内打开，ATTACHMENT 作为附件下载。 */
+export type FileDisposition = 'INLINE' | 'ATTACHMENT';
+/** 下载授权；disposition 为实际生效的方式，请求 INLINE 不满足条件时由文件服务降为 ATTACHMENT。 */
+export interface DownloadGrant { url: string; expiresAt: string; disposition: FileDisposition }
 
 const object = (value: unknown): Record<string, unknown> =>
   value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
@@ -49,13 +52,19 @@ export function decodeUploadGrant(value: unknown): UploadGrant {
 export function decodeUploadReceipt(value: unknown): UploadReceipt {
   const item = object(value);
   if (typeof item.uploadId !== 'string' || typeof item.fileId !== 'string' || !fileIdPattern.test(item.fileId)) invalid();
-  return { uploadId: item.uploadId, fileId: item.fileId, completedAt: String(item.completedAt ?? '') };
+  const expected = fileAddressOf(item.fileId);
+  // 响应带 fileAddress 时必须与文件 ID 一致；旧响应没有时按固定格式兜底。
+  if (item.fileAddress !== undefined && item.fileAddress !== null
+    && (typeof item.fileAddress !== 'string' || !fileAddressPattern.test(item.fileAddress) || item.fileAddress !== expected)) invalid();
+  return { uploadId: item.uploadId, fileId: item.fileId, fileAddress: expected, completedAt: String(item.completedAt ?? '') };
 }
 
 export function decodeDownloadGrant(value: unknown): DownloadGrant {
   const item = object(value);
   if (typeof item.url !== 'string' || typeof item.expiresAt !== 'string') invalid();
-  return { url: item.url, expiresAt: item.expiresAt };
+  if (item.disposition !== undefined && item.disposition !== null && item.disposition !== 'INLINE' && item.disposition !== 'ATTACHMENT') invalid();
+  // 旧响应没有 disposition 时按附件。
+  return { url: item.url, expiresAt: item.expiresAt, disposition: item.disposition === 'INLINE' ? 'INLINE' : 'ATTACHMENT' };
 }
 
 /** 实例详情里的文件元数据；旧响应没有时为空数组。 */
@@ -162,18 +171,17 @@ export function canReverify(run: ActionRun, template: Pick<FrozenTemplate, 'conf
 export const uploadRules = (config: FileUploadConfig | undefined): FileRules =>
   ({ minFiles: config?.minFiles, maxFiles: config?.maxFiles, mimeTypes: config?.mimeTypes });
 
-/**
- * 文件服务签发的下载地址目前固定为 Content-Disposition: attachment，浏览器无法内嵌显示。
- * 等文件服务支持 inline 后改为 true，届时 PDF 用 iframe、图片用 img 内嵌；不在前端改写存储签名参数。
- */
-export const INLINE_PREVIEW_SUPPORTED = false;
+/** 文件服务可内嵌打开的图片类型，与 Platform 的内联白名单一致（另有 application/pdf）。 */
+const INLINE_IMAGE_TYPES = new Set(['image/png', 'image/jpeg']);
 
 export type PreviewKind = 'pdf' | 'image' | 'other';
-/** 按类型与内嵌能力决定预览方式；不支持内嵌时一律为 other（下载查看）。 */
-export function previewKind(mime: string | null | undefined, inlineSupported = INLINE_PREVIEW_SUPPORTED): PreviewKind {
-  if (!inlineSupported) return 'other';
+/**
+ * 按登记类型决定预览方式：PDF 用 iframe、PNG / JPEG 用 img，以 INLINE 签发；其他类型为 other（下载查看）。
+ * 实际是否内联以下载授权返回的 disposition 为准，不在前端改写存储签名参数。
+ */
+export function previewKind(mime: string | null | undefined): PreviewKind {
   if (mime === 'application/pdf') return 'pdf';
-  if (mime?.startsWith('image/')) return 'image';
+  if (mime && INLINE_IMAGE_TYPES.has(mime)) return 'image';
   return 'other';
 }
 
@@ -227,8 +235,7 @@ export async function uploadOne(file: LocalFile & Blob, paths: { uploads: string
   const receipt = await post(paths.completion(grant.uploadId), undefined, decodeUploadReceipt);
   if (receipt.uploadId !== grant.uploadId) throw new Error('文件完成响应无效');
   onPhase('DONE');
-  // TODO：完成响应带 fileAddress（文件存储第二段）后改为直接使用响应值。
-  return fileAddressOf(receipt.fileId);
+  return receipt.fileAddress;
 }
 
 // ---------- 422 结构错误 ----------

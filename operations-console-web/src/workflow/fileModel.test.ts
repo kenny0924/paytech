@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
-  INLINE_PREVIEW_SUPPORTED, canReverify, countProblem, decodeFiles, decodeUploadGrant, fileAddressesOf, fileAddressOf, fileIdOfAddress, fileIndex, hasFileInput, mimeAllowed,
+  canReverify, countProblem, decodeDownloadGrant, decodeFiles, decodeUploadGrant, decodeUploadReceipt, fileAddressesOf, fileAddressOf, fileIdOfAddress, fileIndex, hasFileInput, mimeAllowed,
   needsLayout, outputFileAddresses, preCheckFiles, previewKind, rulesHint, safeTransferUrl, safeUploadHeaders, sizeText, startFileAddresses, structureProblems,
   uploadOne,
 } from './fileModel.ts';
@@ -49,7 +49,7 @@ test('upload runs start → PUT → completion and returns the file address', as
   const calls: { path: string; body: unknown }[] = []; const phases: UploadPhase[] = [];
   const post: WorkflowPost = async <T,>(path: string, body: unknown, decode: (value: unknown) => T) => {
     calls.push({ path, body });
-    return decode(path.endsWith('/completion') ? { uploadId: '501', fileId: '901', completedAt: future }
+    return decode(path.endsWith('/completion') ? { uploadId: '501', fileId: '901', fileAddress: '/files/v1/901', completedAt: future }
       : { uploadId: '501', authorization: { method: 'PUT', url: 'https://minio.local/b/o', headers: { 'Content-Type': 'application/pdf' }, expiresAt: future }, expiresAt: future });
   };
   let put: RequestInit | undefined; let putUrl = '';
@@ -121,11 +121,27 @@ test('file metadata decoding, preview kind and size text', () => {
   assert.equal(decoded.length, 2);
   assert.equal(fileIndex({ files: decoded }).get('/files/v1/2')?.scanStatus, 'SCANNING');
   assert.deepEqual(decodeFiles(undefined), []);
-  assert.equal(INLINE_PREVIEW_SUPPORTED, false);
-  assert.equal(previewKind('application/pdf'), 'other'); assert.equal(previewKind('image/png'), 'other');
-  assert.equal(previewKind('application/pdf', true), 'pdf'); assert.equal(previewKind('image/png', true), 'image');
-  assert.equal(previewKind('text/csv', true), 'other'); assert.equal(previewKind(null, true), 'other');
+  assert.equal(previewKind('application/pdf'), 'pdf');
+  assert.equal(previewKind('image/png'), 'image'); assert.equal(previewKind('image/jpeg'), 'image');
+  assert.equal(previewKind('image/gif'), 'other'); assert.equal(previewKind('image/svg+xml'), 'other');
+  assert.equal(previewKind('text/csv'), 'other'); assert.equal(previewKind(null), 'other');
   assert.equal(sizeText('2048'), '2.0 KB'); assert.equal(sizeText(10), '10 B'); assert.equal(sizeText(null), '—');
+});
+
+test('upload receipt uses the returned file address and falls back to the fixed format', () => {
+  assert.equal(decodeUploadReceipt({ uploadId: '501', fileId: '901', fileAddress: '/files/v1/901', completedAt: future }).fileAddress, '/files/v1/901');
+  assert.equal(decodeUploadReceipt({ uploadId: '501', fileId: '901', completedAt: future }).fileAddress, '/files/v1/901');
+  assert.throws(() => decodeUploadReceipt({ uploadId: '501', fileId: '901', fileAddress: '/files/v1/902' }), /响应无效/);
+  assert.throws(() => decodeUploadReceipt({ uploadId: '501', fileId: '901', fileAddress: '/files/v1/0901' }), /响应无效/);
+  assert.throws(() => decodeUploadReceipt({ uploadId: '501', fileId: '901', fileAddress: 901 }), /响应无效/);
+});
+
+test('download grant decodes the effective disposition, defaulting to attachment', () => {
+  const url = 'https://minio.local/b/o?sig=1';
+  assert.equal(decodeDownloadGrant({ url, expiresAt: future, disposition: 'INLINE' }).disposition, 'INLINE');
+  assert.equal(decodeDownloadGrant({ url, expiresAt: future, disposition: 'ATTACHMENT' }).disposition, 'ATTACHMENT');
+  assert.equal(decodeDownloadGrant({ url, expiresAt: future }).disposition, 'ATTACHMENT');
+  assert.throws(() => decodeDownloadGrant({ url, expiresAt: future, disposition: 'inline' }), /响应无效/);
 });
 
 test('422 draft field errors map to node, edge or start form field', () => {

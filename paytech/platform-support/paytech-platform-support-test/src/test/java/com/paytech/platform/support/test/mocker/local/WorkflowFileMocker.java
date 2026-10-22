@@ -26,6 +26,9 @@ public class WorkflowFileMocker {
     /** 测试文件的大小。 */
     public static final long SIZE = 2048;
 
+    /** 未指定存储桶时登记的存储桶名；不对应真实存储桶，只用于提交校验与重新验证场景。 */
+    public static final String UNSTORED_CONTAINER = "workflow-test";
+
     /** 默认的 PDF 类型。 */
     public static final String PDF = "application/pdf";
 
@@ -65,15 +68,34 @@ public class WorkflowFileMocker {
      * @return 文件 ID
      */
     public long file(long uploaderId, String source, String reason, FileScanStatus scanStatus, String mime) {
+        return file(uploaderId, source, reason, scanStatus, mime, UNSTORED_CONTAINER);
+    }
+
+    /**
+     * 插入一份登记在 UT_MINIO 实例指定存储桶上的已扫描通过工作流附件，可签发下载地址（不放对象字节）。
+     *
+     * @param uploaderId 上传人
+     * @param mime 媒体类型
+     * @param container 存储桶名
+     * @return 文件 ID
+     */
+    public long stored(long uploaderId, String mime, String container) {
+        return file(uploaderId, AttachmentRules.SOURCE_SYSTEM, AttachmentRules.REASON_CODE, FileScanStatus.AVAILABLE,
+            mime, container);
+    }
+
+    /** 插入任意来源、原因与存储桶的文件。 */
+    private long file(long uploaderId, String source, String reason, FileScanStatus scanStatus, String mime,
+        String container) {
         Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
         long uploadId = OperatorBuilder.nextId();
         long fileId = OperatorBuilder.nextId();
         String objectRef = "workflow/" + fileId;
         long policyId = OperatorBuilder.nextId();
         assertEquals(1, mapper.insertUpload(uploadId, uploaderId, source, reason, SIZE, mime, "附件-" + fileId + ".pdf",
-            objectRef, policyId, now));
-        assertEquals(1, mapper.insertFile(fileId, uploadId, source, reason, SIZE, mime, objectRef, policyId,
-            scanStatus.getCode(), now));
+            container, objectRef, policyId, now));
+        assertEquals(1, mapper.insertFile(fileId, uploadId, source, reason, SIZE, mime, container, objectRef,
+            policyId, scanStatus.getCode(), now));
         return fileId;
     }
 

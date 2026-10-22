@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -47,11 +48,16 @@ public class WorkflowAttachmentController {
         return client.completeAttachmentUpload(context, uploadId);
     }
 
-    /** 签发实例附件的短时下载地址。 */
+    /**
+     * 签发实例附件的短时下载地址
+     * <li>可选 disposition（INLINE、ATTACHMENT）原样转发，缺省由 Platform 按 ATTACHMENT；响应带实际生效的下载方式，
+     * INLINE 不满足 Platform 条件时为 ATTACHMENT。</li>
+     */
     @PostMapping("/instances/{instanceId}/files/{fileId}/download")
     public FileDownloadResponseBody authorizeDownload(OperatorContext context,
         @PathVariable("instanceId") @Pattern(regexp = WorkflowModels.ID) String instanceId,
-        @PathVariable("fileId") @Pattern(regexp = WorkflowModels.ID) String fileId) {
-        return client.authorizeAttachmentDownload(context, instanceId, fileId);
+        @PathVariable("fileId") @Pattern(regexp = WorkflowModels.ID) String fileId,
+        @RequestParam(name = "disposition", required = false) @Pattern(regexp = "INLINE|ATTACHMENT") String disposition) {
+        return client.authorizeAttachmentDownload(context, instanceId, fileId, disposition);
     }
 }

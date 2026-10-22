@@ -19,6 +19,8 @@ import lombok.AllArgsConstructor;
  * 启动值或动作输出中）→ 调用文件入口 AuthorizeFileDownloadProcessor 签发 60 秒地址
  * <li>两步都不开事务、不写数据；读侧检查完成后才在事务外签发。实例不可见或文件不属于本实例返回 404，文件未扫描通过返回 409，
  * 文件能力未开启返回 503。地址只回传给本次调用，不落库、不进日志。</li>
+ * <li>下载方式由调用方选择，缺省为 ATTACHMENT；INLINE 只对扫描 AVAILABLE 且 MIME 为 application/pdf、image/png、image/jpeg 的
+ * 文件生效，否则由文件入口静默降为 ATTACHMENT。响应带实际生效的下载方式。</li>
  */
 @Component
 @AllArgsConstructor
@@ -41,7 +43,6 @@ public class AuthorizeWorkflowAttachmentDownloadProcessor
         if (processor == null) {
             throw new ServiceUnavailableException();
         }
-        // 工作流附件按附件下载（ATTACHMENT），不内联打开
-        return processor.process(new AuthorizeFileDownloadRequest(request.getFileId(), null));
+        return processor.process(new AuthorizeFileDownloadRequest(request.getFileId(), request.getDisposition()));
     }
 }

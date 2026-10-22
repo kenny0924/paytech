@@ -126,8 +126,9 @@ public interface PlatformWorkflowClient {
     /** 完成上传附件。 */
     FileUploadCompletionResponseBody completeAttachmentUpload(OperatorContext context, String uploadId);
 
-    /** 签发实例附件的下载授权。 */
-    FileDownloadResponseBody authorizeAttachmentDownload(OperatorContext context, String instanceId, String fileId);
+    /** 签发实例附件的下载授权；disposition 可空，由 Platform 按 ATTACHMENT。 */
+    FileDownloadResponseBody authorizeAttachmentDownload(OperatorContext context, String instanceId, String fileId,
+        String disposition);
 
     /** 转交动作。 */
     WorkflowMutationResponseBody transferAction(OperatorContext context, String actionRunId,

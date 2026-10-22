@@ -39,7 +39,9 @@ export const workflowPaths = {
   /** 文件接口（26—28）：开始上传、完成上传、按实例签发下载授权。 */
   uploads: `${runtimeBase}/attachments/uploads`,
   uploadCompletion: (uploadId: string) => `${runtimeBase}/attachments/uploads/${encodeURIComponent(uploadId)}/completion`,
-  download: (instanceId: string, fileId: string) => `${runtimeBase}/instances/${encodeURIComponent(instanceId)}/files/${encodeURIComponent(fileId)}/download`,
+  /** 下载授权；disposition 可选（INLINE 浏览器内打开），缺省按附件。 */
+  download: (instanceId: string, fileId: string, disposition?: 'INLINE' | 'ATTACHMENT') =>
+    `${runtimeBase}/instances/${encodeURIComponent(instanceId)}/files/${encodeURIComponent(fileId)}/download${disposition ? `?disposition=${disposition}` : ''}`,
 } as const;
 
 function check(valid: unknown): asserts valid {

@@ -1,0 +1,40 @@
+# platform-support 工作流：mor-test 候选覆盖文件（2026-10-22 阶段 6 准备；阶段 7 由主会话按 release.md 第 5 节执行）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件：
+#   ./test-environment/compose.sh -f "$PWD/requirements/20261021/platform-support-工作流/release/compose-candidate.yaml" \
+#     up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 不加 --remove-orphans。部署只认下列固定 sha256（tag wf-20261022a 仅供辨认，:development 未改动）。
+# 构建源：干净 worktree /Users/kenny/Desktop/Workspace/Code-MoR-wf-rel = main 1d39cd94（父 edabfb46，未推送）。
+#   现网三件 = edabfb46 源码（release.md 第 1 节：ops-web dist 逐字节一致；两个 JAR 与现网只差工作流）。
+#   Java 镜像用 test-environment/java/Dockerfile，health-probe 取自运行容器；Web 用 operations-console-web/Dockerfile。
+# 环境变量（release.md 第 2 节）：以 channel-connector 第二段 compose-candidate-phase2.yaml 为起点，
+#   Platform 唯一变化 = 加回工作流 RabbitMQ 发布端 5 个键（与主 compose.applications.yaml 同一变量引用，取代第二段的 !reset null）；
+#   保留 DATAQUERY_HTTP_CALLERS_0、PLATFORM_SUPPORT_FILES_ENABLED，旧 FILES_ONBOARDING_STORAGE_* / MINIO_* / SCAN_POLICY_CODE 仍置空。
+#   补偿开关沿用现网 COMPENSATION_ENABLED=true（主 compose）。ops-bff、ops-web 只换 image。
+# 回滚：同目录 compose-rollback.yaml。
+services:
+  platform-support-service:
+    # 工作流：/workflow-admin/v1、/workflow/v1（流程定义 / 发布、实例与待办、审批、动作与附件、通知与 MQ 回调）；
+    # 发布端声明 platform-support.events（Durable Fanout），首次发布时建连；rabbit 健康检查关闭。
+    image: sha256:b9301714dfda42217fda8d2e5e80e45df02ec89f4feb2a4f19d187ae48a63b40  # mor-test/platform-support-service:wf-20261022a（JAR 53c0903f2d0ab3c9）
+    environment:
+      DATAQUERY_HTTP_CALLERS_0: operations-console-bff
+      PLATFORM_SUPPORT_FILES_ENABLED: "true"
+      FILES_ONBOARDING_STORAGE_PROVIDER: !reset null
+      FILES_ONBOARDING_STORAGE_CONTAINER_REF: !reset null
+      FILES_ONBOARDING_SCAN_POLICY_CODE: !reset null
+      FILES_ONBOARDING_MINIO_ENDPOINT: !reset null
+      FILES_ONBOARDING_MINIO_REGION: !reset null
+      FILES_ONBOARDING_MINIO_ACCESS_KEY: !reset null
+      FILES_ONBOARDING_MINIO_SECRET_KEY: !reset null
+      FILES_ONBOARDING_MINIO_TRUSTED_CERTIFICATE: !reset null
+      PLATFORM_SUPPORT_RABBITMQ_HOST: rabbitmq
+      PLATFORM_SUPPORT_RABBITMQ_PORT: "5672"
+      PLATFORM_SUPPORT_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
+      PLATFORM_SUPPORT_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
+      PLATFORM_SUPPORT_RABBITMQ_VHOST: /mor-test
+  operations-console-bff:
+    # /workflow-admin/v1、/workflow/v1 32 条同路径转发（metadata-only 日志），PlatformClientConfiguration 登记工作流 Api。
+    image: sha256:f1fbcea1d4e5106f2973bfc0dba31ed67dda32dd035556ca7db3582c295297c0  # mor-test/operations-console-bff:wf-20261022a（JAR 463a0efbf5710daa）
+  operations-console-web:
+    # 一级菜单「工作流」：我的待办 / 流程实例 / 流程定义 / 动作目录。基线 = 现网 9eaa8521（edabfb46 构建，dist 逐字节一致）。
+    image: sha256:c7646648b9d1fe1ebb53c92b5efa1f7f61361808e1d23546794b2207b46e2693  # mor-test/operations-console-web:wf-20261022a

@@ -6042,8 +6042,10 @@ COMMIT;
 -- /workflow prefix is metadata-only logged in BFF and Platform. Incremental script for an environment that already has
 -- the first 364 rows: requirements/20261021/platform-support-工作流/verification/local-e2e/40-workflow-file-routes.sql.
 -- Rows: permission 7, role_permission 7, console_resource 10, gateway_route 32, route_header 136,
--- query_param 29, guard_rule 192, notification_template 1, notification_template_content 1, notification_route 1
--- (416). ID block 127: 1271xx permission, 1272xx role_permission, 1273xx console_resource, 1274xx route,
+-- query_param 30, guard_rule 192, notification_template 1, notification_template_content 1, notification_route 1
+-- (417). #28 accepts the optional query disposition=INLINE|ATTACHMENT (query_param 127030, follow-up 2026-10-22;
+-- incremental script verification/local-e2e/41-workflow-download-disposition.sql).
+-- ID block 127: 1271xx permission, 1272xx role_permission, 1273xx console_resource, 1274xx route,
 -- 1275xx-1276xx route_header, 1270xx query_param, 12708x notification template/content/route, 1277xx-1278xx guard_rule.
 -- Rollback: delete the rows by the 900000000000127001-900000000000127999 IDs below (children first: guard_rule,
 -- query_param, route_header, gateway_route, console_resource, role_permission, permission; notification_route,
@@ -6287,7 +6289,8 @@ INSERT INTO t_gateway_route_query_param (route_query_param_id,route_id,parameter
   (900000000000127026, 900000000000127427, 'taskType'),
   (900000000000127027, 900000000000127427, 'keyword'),
   (900000000000127028, 900000000000127427, 'page'),
-  (900000000000127029, 900000000000127427, 'size');
+  (900000000000127029, 900000000000127427, 'size'),
+  (900000000000127030, 900000000000127432, 'disposition');
 
 INSERT INTO t_gateway_guard_rule (guard_rule_id,route_id,rule_type,dimension,capacity,refill_tokens,refill_period_millis,concurrency_limit) VALUES
   (900000000000127701, 900000000000127401, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),

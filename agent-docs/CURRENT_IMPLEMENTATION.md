@@ -11,13 +11,14 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
-## platform-support 工作流（paytech-platform-support-workflow，2026-10-21—22，已本地提交，未推送，未上 mor-test）
+## platform-support 工作流（paytech-platform-support-workflow，2026-10-21—22，已部署 mor-test，已本地提交 `1d39cd94`，未推送）
 
 - **范围：** [需求](<../requirements/20261021/platform-support-工作流/requirement.md>)、[技术方案](<../requirements/20261021/platform-support-工作流/technique.md>)（实现期调整见 2.1、5.1）、[交付记录](<../requirements/20261021/platform-support-工作流/delivery.md>)、[并入 Platform 决定](./decisions/2026-10-22-workflow-into-platform-support.md)。`paytech/workflow-approval` 占位已删除。
 - **Implemented：** `mor_platform` 新增 10 张表（PDManer 图组 workflow，增量 `changes/2026-10-22-workflow.sql` 与 `changes/2026-10-22-workflow-comment.sql`）；workflow 模块（发布校验、条件、导航、运行引擎、审批含退回修改 / 驳回 / 转交、通知与业务回调经 `compensation_event` 与 MQ `platform-support.events` / `WorkflowCallbackRaised`）；32 个接口（含附件上传、完成、下载授权、重新验证；附件 Processor 在 core `service/processor/workflowattachment`）；业务数据中文件引用存地址 `/files/v1/{fileId}`（`FileAddress`）；ops-bff 同路径转发；ops-web 我的待办、流程实例、流程定义、动作目录四页；注册块 127（7 权限、10 资源、32 路由，默认休眠）。Platform 启动需要 RabbitMQ。
 - **Verified：** 主工作区（均 `-am`）workflow 核心 64、Platform 工作流 38、ops-bff 全量 2199（工作流 77）、arch-rules 68 + Reactor 4、ops-web tsc + 1325。本机 auto 库 `mor_platform` 已执行两份增量 DDL（备份 `Code-MoR-backups/mor_platform-local-20261022-*`）。
 - **本机端到端（阶段 5，2026-10-22）：** `mor_platform_v2e2e` 已执行 10 表、块 127 与激活、工作流文件路由增量（`verification/local-e2e/30-activate-workflow.sql`、`40-workflow-file-routes.sql`），并为带文件验收执行了文件存储 DDL、块 130 与激活；`mor_vault` 已执行文件存储 Vault DML；存储（MINIO、桶 `mor-platform-files`、默认路由）经运营存储管理登记。e2e platform / ops-bff 为主工作区构建（旧 JAR `*.pre-workflow`），启动器副本 `verification/local-e2e/run-service.sh`（files.enabled、入驻上传关闭）。主流程、并行 / 驳回 / 退回修改、文件上传与下载鉴权、拒绝情形均通过（脚本与截图在 `verification/local-e2e/`）。
-- **Pending / 遗留：** 推送另行授权；mor-test 发布（发布基线与环境变量见交付记录“6 发布备注”，Platform 需加回 RabbitMQ 键）；PDF 内嵌预览待文件存储第二段 `FileDisposition`，前端暂为“下载查看”；完成上传响应带 `fileAddress` 后前端改用响应值；扫描中发起被拒与重新验证仅自动化覆盖；本地无 XXL-Job 唤醒，通知自动重试未在 e2e 观察；本地无邮件服务商，邮件通知未实际送达。
+- **Deployed（mor-test，2026-10-22，[发布记录](<../requirements/20261021/platform-support-工作流/release/release.md>)）：** 源码 `1d39cd94`；platform `sha256:b9301714…`、ops-bff `sha256:f1fbcea1…`、ops-web `sha256:c7646648…`（回滚目标 d50f2886… / 0abb662a… / 9eaa8521…）；mor_platform 已执行 10 表、注释、块 127 并激活（PLATFORM_ADMIN 版本 44）；Platform 新增 5 个 RabbitMQ 环境变量，`platform-support.events` 已声明；冒烟 14/14。
+- **Pending / 遗留：** 推送另行授权；mor-test 写数据冒烟已通过（流程 WF_SMOKE_20261022_FLOW）；附件内嵌预览跟进已完成并本机 e2e 验证（#28 可选 Query `disposition`，块 127 追加 query_param `900000000000127030`，前端改用完成响应 `fileAddress`），未上 mor-test（需在 mor_platform 执行同一行并重发 platform / ops-bff / ops-web）；扫描中发起被拒与重新验证仅自动化覆盖；本地无 XXL-Job 唤醒，通知自动重试未在 e2e 观察；本地无邮件服务商，邮件通知未实际送达。
 
 ## platform-support 币种主数据维护与读取缓存（2026-10-20—21，已部署 mor-test，已本地提交，未推送）
 

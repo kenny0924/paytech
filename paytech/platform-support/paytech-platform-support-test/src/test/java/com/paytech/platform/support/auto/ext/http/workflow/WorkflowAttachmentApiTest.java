@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.paytech.foundation.common.error.CommonErrorCode;
+import com.paytech.platform.support.api.enums.FileDisposition;
 import com.paytech.platform.support.api.enums.FileScanStatus;
 import com.paytech.platform.support.api.enums.FileErrorCode;
 import com.paytech.platform.support.api.files.FileAddress;
@@ -42,11 +43,12 @@ import tools.jackson.databind.node.ObjectNode;
 
 /**
  * 工作流附件经真实存储的上传与下载（本机 MinIO）：上传登记 platform-support / WORKFLOW_ATTACHMENT 与当前操作人，
- * 只有上传人能完成；提交后参与人可签发下载并取回原字节，非参与人与不属于本实例的文件按不存在返回 404。
+ * 只有上传人能完成；提交后参与人可签发下载并取回原字节，非参与人与不属于本实例的文件按不存在返回 404；
+ * 下载方式缺省为 ATTACHMENT，INLINE 只对 PDF / PNG / JPEG 生效，否则降为 ATTACHMENT，非法值返回 400。
  *
  * @see WorkflowAttachmentApi#startUpload(String, String, StartWorkflowAttachmentUploadRequestBody)
  * @see WorkflowAttachmentApi#completeUpload(String, String, String)
- * @see WorkflowAttachmentApi#authorizeDownload(String, String, String, String)
+ * @see WorkflowAttachmentApi#authorizeDownload(String, String, String, String, String)
  */
 class WorkflowAttachmentApiTest extends WorkflowFileTestBase {
 
@@ -93,6 +95,9 @@ class WorkflowAttachmentApiTest extends WorkflowFileTestBase {
 
         var download = download(instanceId, receipt.getFileId(), approver).assertOk().as(FileDownloadResponseBody.class);
         byte[] bytes = storage.browserGet(download.getUrl()).body();
+        var inline = download(instanceId, receipt.getFileId(), approver, FileDisposition.INLINE.getCode()).assertOk()
+            .as(FileDownloadResponseBody.class);
+        var inlineResponse = storage.browserGet(inline.getUrl());
         long role = operationsMocker.customRole("WORKFLOW_HANDLER", WorkflowPermissions.TASK_HANDLE);
         Operator outsider = operationsMocker.operator(OperatorBuilder.administrator().roles(role));
         download(instanceId, receipt.getFileId(), outsider).assertProblem(404, CommonErrorCode.NOT_FOUND);
@@ -107,7 +112,44 @@ class WorkflowAttachmentApiTest extends WorkflowFileTestBase {
             () -> assertEquals("VERIFIED", submitted.getStatus()),
             () -> assertTrue(download.getExpiresAt().isAfter(clock.instant())),
             () -> assertEquals("https", URI.create(download.getUrl()).getScheme()),
-            () -> assertArrayEquals(FileBuilder.PDF, bytes));
+            () -> assertArrayEquals(FileBuilder.PDF, bytes),
+            () -> assertEquals(FileDisposition.ATTACHMENT.getCode(), download.getDisposition()),
+            () -> assertEquals(FileDisposition.INLINE.getCode(), inline.getDisposition()),
+            () -> assertTrue(inlineResponse.headers().firstValue("Content-Disposition").orElse("").startsWith("inline")),
+            () -> assertEquals(WorkflowFileMocker.PDF, inlineResponse.headers().firstValue("Content-Type").orElse(null)),
+            () -> assertArrayEquals(FileBuilder.PDF, inlineResponse.body()));
+    }
+
+    /**
+     * 下载方式：PDF 请求 INLINE 生效，缺省与 ATTACHMENT 按附件；不在内联白名单的类型请求 INLINE 静默降为 ATTACHMENT；
+     * 未知或小写的下载方式返回 400。
+     */
+    @Test
+    void test_downloadDisposition() {
+        long pdf = files.stored(admin.accountId(), WorkflowFileMocker.PDF, storage.bucket());
+        long gif = files.stored(admin.accountId(), "image/gif", storage.bucket());
+        JsonNode graph = WorkflowGraphJson.graph().task("review", "审核").approval("ANY", approver.accountId())
+            .end("end").chain("start", "review", "end").build();
+        long instanceId = started(published("FILE_VIEW", graph, materialsForm()), admin, materials(pdf, gif));
+        String pdfId = Long.toString(pdf);
+        String gifId = Long.toString(gif);
+
+        var inline = download(instanceId, pdfId, admin, FileDisposition.INLINE.getCode()).assertOk()
+            .as(FileDownloadResponseBody.class);
+        var absent = download(instanceId, pdfId, admin).assertOk().as(FileDownloadResponseBody.class);
+        var attachment = download(instanceId, pdfId, admin, FileDisposition.ATTACHMENT.getCode()).assertOk()
+            .as(FileDownloadResponseBody.class);
+        var degraded = download(instanceId, gifId, admin, FileDisposition.INLINE.getCode()).assertOk()
+            .as(FileDownloadResponseBody.class);
+        download(instanceId, pdfId, admin, "PREVIEW").assertProblem(400, CommonErrorCode.INVALID_REQUEST);
+        download(instanceId, pdfId, admin, "inline").assertProblem(400, CommonErrorCode.INVALID_REQUEST);
+
+        assertAll(() -> assertEquals(FileDisposition.INLINE.getCode(), inline.getDisposition()),
+            () -> assertEquals(FileDisposition.ATTACHMENT.getCode(), absent.getDisposition()),
+            () -> assertEquals(FileDisposition.ATTACHMENT.getCode(), attachment.getDisposition()),
+            () -> assertEquals(FileDisposition.ATTACHMENT.getCode(), degraded.getDisposition()),
+            () -> assertTrue(URI.create(inline.getUrl()).getQuery().contains("response-content-disposition=inline")),
+            () -> assertTrue(URI.create(degraded.getUrl()).getQuery().contains("response-content-disposition=attachment")));
     }
 
     /** 参数非法返回 422 字段错误，类型不在扫描策略内返回 422 策略拒绝，均不登记上传；不存在的上传返回 404。 */
@@ -163,9 +205,15 @@ class WorkflowAttachmentApiTest extends WorkflowFileTestBase {
         return post(UPLOADS + "/" + uploadId + "/completion", operator, null);
     }
 
-    /** 签发下载。 */
+    /** 签发下载，不带下载方式。 */
     private PlatformResponseChecker download(long instanceId, String fileId, Operator operator) {
         return post(RUNTIME + "/instances/" + instanceId + "/files/" + fileId + "/download", operator, null);
+    }
+
+    /** 签发下载，带下载方式 Query 参数。 */
+    private PlatformResponseChecker download(long instanceId, String fileId, Operator operator, String disposition) {
+        return post(RUNTIME + "/instances/" + instanceId + "/files/" + fileId + "/download?disposition=" + disposition,
+            operator, null);
     }
 
     /** 有界等待扫描任务把文件推进为 AVAILABLE。 */
@@ -183,6 +231,30 @@ class WorkflowAttachmentApiTest extends WorkflowFileTestBase {
         config.putArray("mimeTypes").add(WorkflowFileMocker.PDF);
         config.put("instruction", "上传签署后的合同");
         return config;
+    }
+
+    /** 含一个必填 FILE 字段 materials 的表单：1—2 个文件，不限类型。 */
+    private static JsonNode materialsForm() {
+        ObjectNode form = JsonNodeFactory.instance.objectNode();
+        ObjectNode field = form.putArray("fields").addObject();
+        field.put("key", "materials");
+        field.put("label", "材料");
+        field.put("type", "FILE");
+        field.put("required", true);
+        ObjectNode rules = field.putObject("rules");
+        rules.put("minFiles", 1);
+        rules.put("maxFiles", 2);
+        return form;
+    }
+
+    /** {"materials": [文件地址...]}。 */
+    private static JsonNode materials(long... fileIds) {
+        ObjectNode values = JsonNodeFactory.instance.objectNode();
+        var array = values.putArray("materials");
+        for (long fileId : fileIds) {
+            array.add(FileAddress.of(fileId).value());
+        }
+        return values;
     }
 
     /** {"files": [文件地址]}。 */

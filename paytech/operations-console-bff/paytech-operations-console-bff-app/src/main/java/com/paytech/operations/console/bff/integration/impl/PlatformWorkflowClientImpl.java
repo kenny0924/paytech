@@ -261,9 +261,9 @@ public class PlatformWorkflowClientImpl implements PlatformWorkflowClient {
 
     @Override
     public FileDownloadResponseBody authorizeAttachmentDownload(OperatorContext context, String instanceId,
-        String fileId) {
+        String fileId, String disposition) {
         FileDownloadResponseBody result = require(attachments.authorizeDownload(context.accountId(),
-            context.sessionId(), instanceId, fileId));
+            context.sessionId(), instanceId, fileId, disposition));
         if (result.getUrl() == null || result.getExpiresAt() == null) {
             throw new ErrorException(CommonErrorCode.UPSTREAM_INVALID_RESPONSE);
         }

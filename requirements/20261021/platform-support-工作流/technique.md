@@ -245,7 +245,8 @@
 8. **草稿结构错误**：保存草稿与发布时 `graph` / `startForm` 的结构错误改为 422 `VALIDATION_ERROR` 字段错误，路径以 `graph`、`startForm` 为根（如 `graph.nodes[2].type`）；动作模板配置同理以 `config` 为根。
 9. **路由（块 127 追加）**：900000000000127429—127432 对应 #20、#26、#27、#28，均绑定 `WORKFLOW_TASK_HANDLE`；Body 上限开始上传 4096、其余 1024；重新验证每人每分钟 10 次、并发 2，附件三条每人每分钟 30 次、并发 3。块 127 合计 32 条路由、416 行。已执行过块 127 的环境用 `verification/local-e2e/40-workflow-file-routes.sql` 增量补齐。
 10. **前端**：启动表单、表单动作与 `FILE_UPLOAD` 面板真实上传（开始 → 直传 → 完成 → 显示扫描状态），任务面板与实例详情按需签发预览和下载，`UNVERIFIED` 文件动作提供重新验证。已知待联调风险：存储下载地址若带 `Content-Disposition: attachment`，PDF 无法内嵌预览；发起前没有扫描状态轮询，靠后端拒绝提示。
-11. **存文件地址（2026-10-22 用户确认）**：启动值与 `FORM` 的 `FILE` 字段、`FILE_UPLOAD` 输出、验证证据都存地址；提交与发起先用 `FileAddress.parse` 校验格式（非法 422），再用解析出的 ID 查元数据做归属、内容与扫描检查。下载 #28 的路径参数仍是 `{fileId}`（URL 寻址，不是业务存储），检查 `FileAddress.of(fileId).value()` 出现在本实例引用中。#27 完成上传的响应暂无 `fileAddress`，前端先按固定格式由 fileId 生成地址（代码留 TODO），文件存储第二段响应带上该字段后改用响应值。`FileAddress` 归文件存储需求所有。
+11. **存文件地址（2026-10-22 用户确认）**：启动值与 `FORM` 的 `FILE` 字段、`FILE_UPLOAD` 输出、验证证据都存地址；提交与发起先用 `FileAddress.parse` 校验格式（非法 422），再用解析出的 ID 查元数据做归属、内容与扫描检查。下载 #28 的路径参数仍是 `{fileId}`（URL 寻址，不是业务存储），检查 `FileAddress.of(fileId).value()` 出现在本实例引用中。#27 完成上传的响应带 `fileAddress`（文件存储第二段），前端直接使用并核对与 `fileId` 一致，旧响应缺该字段时才按固定格式生成。`FileAddress` 归文件存储需求所有。
+12. **下载方式（2026-10-22 跟进）**：#28 增加可选 Query `disposition`（`INLINE`、`ATTACHMENT`，缺省或为空按 `ATTACHMENT`，其他值 400 `INVALID_REQUEST`），Platform 原样传给文件入口 `AuthorizeFileDownloadRequest`；`INLINE` 只对扫描 `AVAILABLE` 且 MIME 为 `application/pdf`、`image/png`、`image/jpeg` 的文件生效，否则由文件入口静默降为 `ATTACHMENT`。响应 `FileDownloadResponseBody.disposition` 为实际生效的方式，BFF 同路径转发 Query 并原样返回。前端“查看”对 PDF / PNG / JPEG 请求 `INLINE`，返回 `INLINE` 时 iframe / img 内嵌（不加 sandbox，加 `referrerPolicy="no-referrer"`），降为 `ATTACHMENT` 时改为“下载查看”；“下载”一律请求 `ATTACHMENT`。第 10 条的内嵌预览风险由此关闭。
 
 ## 6. 数据设计（`mor_platform`，新增 10 张表）
 
@@ -326,7 +327,7 @@
 | 25 | GET `/workflow/v1/assignee-candidates` | TASK_HANDLE | 按关键字匹配 ACTIVE Operations 账号的登录名或脱敏邮箱，最多 20 条 |
 | 26 | POST `/workflow/v1/attachments/uploads` | TASK_HANDLE | 开始上传 |
 | 27 | POST `/workflow/v1/attachments/uploads/{uploadId}/completion` | TASK_HANDLE | 完成上传 |
-| 28 | POST `/workflow/v1/instances/{instanceId}/files/{fileId}/download` | TASK_HANDLE | 下载授权 |
+| 28 | POST `/workflow/v1/instances/{instanceId}/files/{fileId}/download` | TASK_HANDLE | 下载授权；可选 Query `disposition`（`INLINE` / `ATTACHMENT`，缺省 `ATTACHMENT`），响应带实际生效的 `disposition`（见 5.1 第 12 条） |
 
 **权限（7 项，块 127）**：
 

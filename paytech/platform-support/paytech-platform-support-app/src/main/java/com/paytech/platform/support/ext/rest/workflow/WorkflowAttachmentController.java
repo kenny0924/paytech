@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.paytech.foundation.common.error.InvalidParameterException;
+import com.paytech.platform.support.api.enums.FileDisposition;
 import com.paytech.platform.support.api.files.FileAddress;
 import com.paytech.platform.support.api.files.response.FileDownloadResponseBody;
 import com.paytech.platform.support.api.files.response.FileUploadAuthorization;
@@ -64,14 +65,26 @@ public class WorkflowAttachmentController implements WorkflowAttachmentApi {
             Long.toString(response.getFileId()), FileAddress.of(response.getFileId()).value(), response.getCompletedAt());
     }
 
-    /** 签发实例附件的短时下载地址。 */
+    /** 签发实例附件的短时下载地址；响应带实际生效的下载方式。 */
     @Override
     public FileDownloadResponseBody authorizeDownload(String actor, String session, String instanceId,
-        String fileId) {
+        String fileId, String disposition) {
         AuthorizeFileDownloadResponse response = downloadProcessor.process(
             new AuthorizeWorkflowAttachmentDownloadRequest(actor, session, converter.id(instanceId, "instanceId"),
-                converter.id(fileId, "fileId")));
+                converter.id(fileId, "fileId"), disposition(disposition)));
         return new FileDownloadResponseBody(response.getUrl(), response.getExpiresAt(), response.getDisposition().getCode());
+    }
+
+    /** 下载方式：缺省或为空按附件，未知 Code 为参数错误。 */
+    static FileDisposition disposition(String value) {
+        if (value == null || value.isEmpty()) {
+            return FileDisposition.ATTACHMENT;
+        }
+        try {
+            return FileDisposition.fromCode(value);
+        } catch (IllegalArgumentException unknown) {
+            throw new InvalidParameterException("disposition 只能为 INLINE 或 ATTACHMENT", unknown);
+        }
     }
 
     /** 声明字节数：Body 已校验为正整数十进制字符串，超出 long 为参数错误。 */

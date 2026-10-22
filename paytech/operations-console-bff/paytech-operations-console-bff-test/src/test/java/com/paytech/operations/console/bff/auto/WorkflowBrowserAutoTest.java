@@ -117,6 +117,9 @@ class WorkflowBrowserAutoTest extends FinanceBrowserAutoTestBase {
         var badFile = row(BOUNDARY, "WF32").deepCopy();
         ((ObjectNode) badFile).put("path", "/workflow/v1/instances/7300000000000000401/files/abc/download");
         assertRejectedBeforePlatform(400, send(badFile, "", JSON.nullNode(), true));
+        var download = row(BOUNDARY, "WF32");
+        assertRejectedBeforePlatform(400, send(download, "?disposition=PREVIEW", JSON.nullNode(), true));
+        assertRejectedBeforePlatform(400, send(download, "?disposition=inline", JSON.nullNode(), true));
 
         var start = row(BOUNDARY, "WF15");
         var badApprover = (ObjectNode) start.path("request").deepCopy();
@@ -125,6 +128,23 @@ class WorkflowBrowserAutoTest extends FinanceBrowserAutoTestBase {
 
         assertEquals(403, send(create, "", create.path("request"), false).statusCode());
         assertTrue(platform.requests().stream().map(RecordedRequest::path).allMatch(AUTHORIZE_PATH::equals));
+    }
+
+    /** 附件下载的 disposition Query 原样转发给 Platform，响应中实际生效的下载方式原样返回（含 INLINE 降为 ATTACHMENT）。 */
+    @ParameterizedTest
+    @CsvSource({"INLINE,INLINE", "INLINE,ATTACHMENT", "ATTACHMENT,ATTACHMENT"})
+    void test_downloadDispositionForwarded(String requested, String effective) throws Exception {
+        var row = row(BOUNDARY, "WF32");
+        var upstream = withResponse(row, "disposition", effective);
+        platform.rawResponse(ownerPath(row), JSON.writeValueAsString(upstream));
+
+        var response = send(row, "?disposition=" + requested, JSON.nullNode(), true);
+
+        assertEquals(200, response.statusCode(), response.body());
+        var call = ownerCall();
+        assertAll(() -> assertEquals("disposition=" + requested, call.query()),
+            () -> assertEquals(effective, JSON.readTree(response.body()).path("disposition").asString()),
+            () -> assertEquals(withoutNulls(upstream), withoutNulls(JSON.readTree(response.body()))));
     }
 
     /** 业务拒绝保留 Platform 状态、公共 Code 与原因（发布校验未通过、被他人处理、版本冲突），使用浏览器 Request ID。 */

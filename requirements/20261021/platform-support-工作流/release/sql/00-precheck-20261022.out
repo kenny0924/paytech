@@ -1,0 +1,38 @@
++--------------------------------------------------------------------+--------+--------+------+
+| item                                                               | actual | expect | ok   |
++--------------------------------------------------------------------+--------+--------+------+
+| workflow tables (expect 0)                                         |      0 |      0 |    1 |
+| mor_platform table count                                           |     53 |   NULL | NULL |
+| block 127 t_permission                                             |      0 |      0 |    1 |
+| block 127 t_role_permission                                        |      0 |      0 |    1 |
+| block 127 t_console_resource                                       |      0 |      0 |    1 |
+| block 127 t_gateway_route                                          |      0 |      0 |    1 |
+| block 127 t_gateway_route_header                                   |      0 |      0 |    1 |
+| block 127 t_gateway_route_query_param                              |      0 |      0 |    1 |
+| block 127 t_gateway_guard_rule                                     |      0 |      0 |    1 |
+| block 127 t_notification_template                                  |      0 |      0 |    1 |
+| block 127 t_notification_template_content                          |      0 |      0 |    1 |
+| block 127 t_notification_route                                     |      0 |      0 |    1 |
+| unique: permission_code WORKFLOW_*                                 |      0 |      0 |    1 |
+| unique: resource_code OPERATIONS_WORKFLOW*                         |      0 |      0 |    1 |
+| unique: route_code operations-workflow-*                           |      0 |      0 |    1 |
+| unique: route path /api/operations/workflow*                       |      0 |      0 |    1 |
+| unique: template_code WORKFLOW_NOTIFICATION                        |      0 |      0 |    1 |
+| role PLATFORM_ADMIN 510 exists                                     |      1 |      1 |    1 |
+| role PLATFORM_ADMIN 510 version (record)                           |     43 |   NULL | NULL |
+| gateway target 900000000000000001 (operations-console-bff) exists  |      1 |      1 |    1 |
+| SES provider 900000000000070001 exists                             |      1 |      1 |    1 |
+| scan policy CLIENT_ONBOARDING_FORMAT ACTIVE (workflow attachments) |      1 |      1 |    1 |
+| storage default route * (workflow attachments)                     |      1 |      1 |    1 |
+| max used route block (record)                                      |    131 |   NULL | NULL |
++--------------------------------------------------------------------+--------+--------+------+
++--------------------+---------------+--------+---------------+--------+----------+----------------+
+| provider_id        | provider_code | medium | provider_type | status | has_from | has_credential |
++--------------------+---------------+--------+---------------+--------+----------+----------------+
+| 900000000000070001 | SES_PRIMARY   | EMAIL  | AMAZON_SES    | ACTIVE |        1 |              1 |
++--------------------+---------------+--------+---------------+--------+----------+----------------+
++--------------------+----------------+--------+---------+
+| role_id            | role_code      | status | version |
++--------------------+----------------+--------+---------+
+| 900000000000000510 | PLATFORM_ADMIN | ACTIVE |      43 |
++--------------------+----------------+--------+---------+

@@ -3,7 +3,7 @@ import { Alert, Button, Space, Spin, Tag } from 'antd';
 import {
   decodeDownloadGrant, downloadable, fileIdOfAddress, previewKind, preCheckFiles, rulesHint, safeTransferUrl, scanStatusColors, scanStatusLabels, sizeText, uploadOne,
 } from './fileModel';
-import type { FileRules, UploadItem, WorkflowPost } from './fileModel';
+import type { FileDisposition, FileRules, UploadItem, WorkflowPost } from './fileModel';
 import { failureText, sendWorkflowCommand, workflowCommand } from './useWorkflowCommand';
 import { workflowPaths } from './workflowApi';
 import type { WorkflowFile } from './workflowTypes';
@@ -11,12 +11,16 @@ import type { WorkflowFile } from './workflowTypes';
 /** 工作流写请求（每次独立幂等键）。 */
 const post: WorkflowPost = (path, body, decode) => sendWorkflowCommand(workflowCommand(path, 'POST', body), decode);
 
-/** 按实例签发一次 60 秒下载地址；文件 ID 从文件地址解析，不保存临时地址。 */
-export async function fetchDownloadUrl(instanceId: string, address: string): Promise<string> {
+/**
+ * 按实例签发一次 60 秒下载地址；文件 ID 从文件地址解析，不保存临时地址。
+ * 返回实际生效的下载方式：请求 INLINE 但文件服务不满足条件时为 ATTACHMENT。
+ */
+export async function fetchDownloadUrl(instanceId: string, address: string, disposition?: FileDisposition)
+  : Promise<{ url: string; disposition: FileDisposition }> {
   const fileId = fileIdOfAddress(address);
   if (!fileId) throw new Error('文件地址无效');
-  const grant = await post(workflowPaths.download(instanceId, fileId), undefined, decodeDownloadGrant);
-  return safeTransferUrl(grant);
+  const grant = await post(workflowPaths.download(instanceId, fileId, disposition), undefined, decodeDownloadGrant);
+  return { url: safeTransferUrl(grant), disposition: grant.disposition };
 }
 
 const errorText = (error: unknown) => error instanceof Error && !(error as { status?: number }).status ? error.message : failureText(error);
@@ -96,7 +100,7 @@ export function AttachmentList({ instanceId, addresses, known, onPreview, select
   if (!addresses.length) return <span className="muted">没有文件</span>;
   async function download(address: string) {
     setError(null);
-    try { window.open(await fetchDownloadUrl(instanceId, address), '_blank', 'noopener'); } catch (failure) { setError(errorText(failure)); }
+    try { window.open((await fetchDownloadUrl(instanceId, address, 'ATTACHMENT')).url, '_blank', 'noopener'); } catch (failure) { setError(errorText(failure)); }
   }
   return <div><ul className="wf-file-list">{addresses.map(id => {
     const file = known.get(id);
@@ -110,26 +114,33 @@ export function AttachmentList({ instanceId, addresses, known, onPreview, select
 }
 
 /**
- * 文件查看：显示原文件名、类型、大小；支持内嵌时（INLINE_PREVIEW_SUPPORTED）PDF 用 iframe、图片用 img，
- * 否则提供“下载查看”，每次点击重新签发 60 秒地址后在新窗口打开。临时地址不保存、不改写。
+ * 文件查看：显示原文件名、类型、大小；PDF 用 iframe、PNG / JPEG 用 img，以 INLINE 签发地址内嵌显示。
+ * 其他类型或文件服务把 INLINE 降为 ATTACHMENT 时提供“下载查看”，每次点击重新签发 60 秒附件地址后在新窗口打开。
+ * 临时地址不保存、不改写；iframe 不加 sandbox（浏览器 PDF 查看器在 sandbox 中无法加载），只禁止 Referrer。
  */
 export function FilePreview({ instanceId, file }: { instanceId: string; file: WorkflowFile | undefined }) {
-  const kind = previewKind(file?.mimeType);
-  const [state, setState] = useState<{ fileId: string; url?: string; error?: string }>();
+  const requested = previewKind(file?.mimeType);
+  const [state, setState] = useState<{ fileId: string; url?: string; degraded?: boolean; error?: string }>();
   const [opening, setOpening] = useState(false);
   useEffect(() => {
-    if (!file || kind === 'other') { setState(undefined); return; }
+    if (!file || requested === 'other') { setState(undefined); return; }
     let active = true; setState({ fileId: file.fileId });
-    fetchDownloadUrl(instanceId, file.fileAddress).then(url => { if (active) setState({ fileId: file.fileId, url }); })
-      .catch(failure => { if (active) setState({ fileId: file.fileId, error: errorText(failure) }); });
+    fetchDownloadUrl(instanceId, file.fileAddress, 'INLINE').then(grant => {
+      if (!active) return;
+      // 文件服务降为附件时不内嵌，改为“下载查看”。
+      setState(grant.disposition === 'INLINE' ? { fileId: file.fileId, url: grant.url } : { fileId: file.fileId, degraded: true });
+    }).catch(failure => { if (active) setState({ fileId: file.fileId, error: errorText(failure) }); });
     return () => { active = false; };
-  }, [instanceId, file?.fileId, kind]);
+  }, [instanceId, file?.fileId, requested]);
   if (!file) return <span className="muted">选择左侧文件查看</span>;
+  // 切换文件后、新地址返回前，上一文件的状态不再使用。
+  const current = state?.fileId === file.fileId ? state : undefined;
+  const kind = current?.degraded ? 'other' : requested;
   async function open() {
     if (!file) return;
-    setOpening(true); setState(undefined);
-    try { window.open(await fetchDownloadUrl(instanceId, file.fileAddress), '_blank', 'noopener'); }
-    catch (failure) { setState({ fileId: file.fileId, error: errorText(failure) }); }
+    setOpening(true); setState(current => current?.degraded ? { fileId: file.fileId, degraded: true } : undefined);
+    try { window.open((await fetchDownloadUrl(instanceId, file.fileAddress, 'ATTACHMENT')).url, '_blank', 'noopener'); }
+    catch (failure) { setState(current => ({ fileId: file.fileId, degraded: current?.degraded, error: errorText(failure) })); }
     finally { setOpening(false); }
   }
   const info = <dl className="wf-output wf-file-info">
@@ -138,13 +149,13 @@ export function FilePreview({ instanceId, file }: { instanceId: string; file: Wo
     <div><dt>大小</dt><dd>{sizeText(file.sizeBytes)}</dd></div>
   </dl>;
   if (kind === 'other') return <div className="wf-file-preview">{info}
-    {state?.error && <Alert type="error" showIcon title={state.error} />}
+    {current?.error && <Alert type="error" showIcon title={current.error} />}
     <Button type="primary" loading={opening} disabled={!downloadable(file)} onClick={() => void open()}>下载查看</Button>
-    <div className="muted">文件服务暂不支持内嵌预览；每次点击重新取 60 秒有效地址。</div></div>;
-  if (state?.error) return <Alert type="error" showIcon title={state.error} />;
-  if (!state?.url) return <Spin />;
+    <div className="muted">该文件不支持内嵌预览；每次点击重新取 60 秒有效地址。</div></div>;
+  if (current?.error) return <Alert type="error" showIcon title={current.error} />;
+  if (!current?.url) return <Spin />;
   return <div className="wf-file-preview">
-    {kind === 'pdf' ? <iframe title={file.displayName ?? file.fileId} src={state.url} />
-      : <img alt={file.displayName ?? file.fileId} src={state.url} />}
+    {kind === 'pdf' ? <iframe title={file.displayName ?? file.fileId} src={current.url} referrerPolicy="no-referrer" />
+      : <img alt={file.displayName ?? file.fileId} src={current.url} referrerPolicy="no-referrer" />}
   </div>;
 }
