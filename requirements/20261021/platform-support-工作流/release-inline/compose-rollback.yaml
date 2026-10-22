@@ -1,0 +1,28 @@
+# 工作流附件内嵌预览跟进：mor-test 回滚覆盖文件（= 2026-10-22 ~17:05Z 读取的运行镜像，环境与 release-s2 候选逐键相同）。
+# 用法同 compose-candidate.yaml，只传本文件。Platform 只能回到 7cb30402（第二段删除 DDL 已执行，更早镜像会缺列失败）。
+services:
+  platform-support-service:
+    image: sha256:7cb304024b520513dd461e22d6c423d11072ede95b47c9a56cf1c6e4f322f226  # 现网 filestore-s2-20261022（JAR 2d12967f2320998c）
+    environment:
+      PLATFORM_SUPPORT_INTERNAL_AUTH_MODE: DUAL
+      PAYTECH_INSTANCE_ID: platform-support-test
+      FILES_ONBOARDING_ENABLED: !reset null
+      DATAQUERY_HTTP_CALLERS_0: operations-console-bff
+      PLATFORM_SUPPORT_FILES_ENABLED: "true"
+      FILES_ONBOARDING_STORAGE_PROVIDER: !reset null
+      FILES_ONBOARDING_STORAGE_CONTAINER_REF: !reset null
+      FILES_ONBOARDING_SCAN_POLICY_CODE: !reset null
+      FILES_ONBOARDING_MINIO_ENDPOINT: !reset null
+      FILES_ONBOARDING_MINIO_REGION: !reset null
+      FILES_ONBOARDING_MINIO_ACCESS_KEY: !reset null
+      FILES_ONBOARDING_MINIO_SECRET_KEY: !reset null
+      FILES_ONBOARDING_MINIO_TRUSTED_CERTIFICATE: !reset null
+      PLATFORM_SUPPORT_RABBITMQ_HOST: rabbitmq
+      PLATFORM_SUPPORT_RABBITMQ_PORT: "5672"
+      PLATFORM_SUPPORT_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
+      PLATFORM_SUPPORT_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
+      PLATFORM_SUPPORT_RABBITMQ_VHOST: /mor-test
+  operations-console-bff:
+    image: sha256:a5b9a17cf88c4b6cc043ef543d890ca5f5e3e8cf1a99d2fcd1c1c34ceabf4820  # 现网 filestore-s2-20261022（JAR 3d10e562aaa68f80）
+  operations-console-web:
+    image: sha256:5a9eb12df3803ee0d34a4520255defa37c1f1f286b61e8e442341bef4a446692  # 现网 dataquery-ux-20261022a
