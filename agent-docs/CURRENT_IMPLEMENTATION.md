@@ -11,7 +11,7 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
-## payment 3DS 全链路 + card BIN 库与卡属性（2026-10-22，已部署 mor-test，已本地提交 `de4f7ba4`，未推送）
+## payment 3DS 全链路 + card BIN 库与卡属性（2026-10-22，已部署 mor-test，已提交 `de4f7ba4` 并推送）
 
 - **范围：** [3DS 需求](<../requirements/20261022/payment-3DS全链路/requirement.md>)、[3DS 技术方案](<../requirements/20261022/payment-3DS全链路/technique.md>)、[Execution 3DS 修订](<../requirements/20261022/payment-3DS全链路/execution-3ds-amendment.md>)、[3DS 交付记录](<../requirements/20261022/payment-3DS全链路/delivery.md>)；[BIN 需求](<../requirements/20261022/card-BIN库与卡属性/requirement.md>)、[BIN 技术方案](<../requirements/20261022/card-BIN库与卡属性/technique.md>)、[BIN 交付记录](<../requirements/20261022/card-BIN库与卡属性/delivery.md>)；两项合并发布 [release.md](<../requirements/20261022/payment-3DS全链路/release/release.md>)。
 - **Implemented：**
@@ -19,7 +19,7 @@
   - **BIN：** card 新增 BIN 库 4 表、7 个运营接口（只允许 ops-bff）、`CARD_BIN_LIBRARY_IMPORT` 两遍导入、激活 / 回切（锁 + `active_slot` + 409）、最长前缀查询；交易工具返回卡属性快照，已存卡返回卡组织；Payment Token 冻结 8 列、Risk 输入 `issuerCountryCode` / `cardBrand` / `fundingType`（合同 v1，新点版本 220003）、路由与执行带 `schemeCode`、`PaymentSucceeded` v2 追加 3 个可空字段；Platform 识别 `text/csv`、`t_country_region` 249 行与查询接口、`CARD_BIN_CSV` 扫描策略、块 132；运营台「平台配置 → 卡 BIN 库」。文件地址按 [文件地址原则](./decisions/2026-10-22-file-upload-address-principles.md) 用 `FileAddress`。
 - **Verified：** 基线 `42879401` 上（`Code-MoR-card3ds-rel2`）：platform-support 803、workflow 64、data-query 48、ops-bff 2236、ops-web 1344；同一改动集在 `73a2460d` 上：payment 96、channel-connector 395、acquiring 806、risk-decision 1738、counterparty 22、commercial 196、api-gateway 1313、client-master 78、arch-rules 68、messaging 73。既有失败：card 2 例（`StoredCardHttpTest.test_payWithStoredCard`、`CardMaterialTicketTest.test_securityCodeClaimedRefused`，干净基线同样失败）、PDManer node 18 个文件（干净基线同样失败）。本机端到端（阶段 5，[报告](<../requirements/20261022/payment-3DS全链路/verification/stage5-report.md>)）：3DS AC-01—11（AC-03 部分）、BIN AC-01—12 通过，缺陷 S5-01 / S5-02 已修。
 - **Deployed（mor-test，2026-10-22 17:58—18:44Z）：** 十个服务（risk `d69ca678`、payment `4cf16f15`、acquiring `3958983e`、counterparty `6586bd73`、platform `96da579b`、card `c39a3990`、channel-connector `23679d45`、api-gateway `270c8ba2`、ops-bff `9c382db3`、ops-web `8bdbdd44`，ops-web 含当时已上线的 16 个他人未提交文件）；五库增量 SQL、块 132 / 133 激活、存储写入路由 `239087906591948800`；备份 `~/Code-MoR-backups/20261022T175834Z-card3ds-mor-test/`。验收：3DS AC-01/02/03/04/07（反向）/11/12 通过（AC-12 为 PayerMax UAT 真实 3DS，用户完成 ACS），BIN AC-01—06/08/11/12 与并发 409 通过，工作流内嵌预览与 CYBS / MPGS 沙箱回归通过。环境变更：payment 加 `PAYMENT_INSTRUMENT_PREPARATION_WINDOW=PT5M`（S7-01）；标准 API PAY v5（`threeDsRequired`、`payment.subject` 改可选，S7-04）；PAYERMAX 渠道 ACTIVE、收银台 PAY 流程删除改为卡直付，验收后 MID SUSPENDED、能力 DISABLED。
-- **Pending / 遗留：** 推送另行授权；PayerMax 真实异步通知（AC-07 正向）需公网入口与 Nginx `CHANNEL_CALLBACK` location；收银台前端（checkout-web）与 commercial 二期执行链路另立需求；billing 写入卡属性三列依赖计费需求 B；Payment 不传 `subject`（另议）；mor-test 运营口令曾出现在验收代理工具输出中，建议更换；acquiring DLQ 1 条验收探针消息（订单不存在，预期）未清理；S7-02 工作流定义页并发 429（既有）。
+- **Pending / 遗留：** PayerMax 真实异步通知（AC-07 正向）需公网入口与 Nginx `CHANNEL_CALLBACK` location；收银台前端（checkout-web）与 commercial 二期执行链路另立需求；billing 写入卡属性三列依赖计费需求 B；Payment 不传 `subject`（另议）；mor-test 运营口令曾出现在验收代理工具输出中，建议更换；acquiring DLQ 1 条验收探针消息已于 2026-10-22 清理；S7-02 工作流定义页并发 429（既有）。
 
 ## platform-support 工作流（paytech-platform-support-workflow，2026-10-21—22，已部署 mor-test，已本地提交 `1d39cd94`，未推送）
 

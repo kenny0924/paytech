@@ -61,7 +61,7 @@ class CardMaterialTicketTest extends AbstractCardApiTest {
         String ref = newInstrument();
         String ticket = issueTicket(ref);
         assertEquals(200, call(HttpMethod.POST, "/card/v1/channel-card-materials/reveal",
-            CardApiConstants.PLATFORM_SUPPORT_SERVICE, java.util.Map.of("ticket", ticket)).status());
+            CardApiConstants.CHANNEL_CONNECTOR_SERVICE, java.util.Map.of("ticket", ticket)).status());
 
         int status = issueStatus(ref, 90);
 

@@ -114,7 +114,7 @@ class StoredCardHttpTest extends AbstractStoredCardTest {
 
         String ref = (String)createInstrument(storedBody(submission(), token, CUSTOMER_ID, NEW_CVV)).get("instrumentRef");
         var card = exchange(HttpMethod.POST, "/card/v1/channel-card-materials/reveal",
-            CardApiConstants.PLATFORM_SUPPORT_SERVICE, Map.of("ticket", issueTicket(ref))).getBody();
+            CardApiConstants.CHANNEL_CONNECTOR_SERVICE, Map.of("ticket", issueTicket(ref))).getBody();
 
         var instrument = mapper.cardInstruments().get(1);
         assertAll(() -> assertEquals(1, mapper.cards().size()), () -> assertEquals(1, mapper.cardCredentials().size()),
