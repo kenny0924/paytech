@@ -29,6 +29,9 @@ public class ClientWebhookEvent {
     /** 本期唯一的订单取消来源；以后增加取消来源时须把原因码补到订单对象上。 */
     public static final String CLIENT_REQUESTED_REASON = "CLIENT_REQUESTED";
 
+    /** 订单到期收尾的原因码，与订单 status_reason_code 写入值一致。 */
+    public static final String EXPIRY_REACHED_REASON = "EXPIRY_REACHED";
+
     /** 公开事件类型。 */
     private final ClientWebhookEventType eventType;
 
@@ -92,6 +95,29 @@ public class ClientWebhookEvent {
         object.put("cancelledAt", order.getCancelledAt().toString());
         object.put("version", order.getVersion());
         return orderEvent(ClientWebhookEventType.ORDER_CANCELLED, order, now, object);
+    }
+
+    /**
+     * 订单首次过期收尾完成；结构与 order.cancelled 对齐，没有会话的 Direct Pay 省略 checkoutStatus。
+     * <li>expiredAt 取订单原到期时刻 expires_at，等待 Payment 收敛而延后的写入时刻不改变它。</li>
+     *
+     * @param order 已同步为 EXPIRED 的订单
+     * @param session 已同步为 EXPIRED 的会话，没有会话时为空
+     * @param now 本次写入时刻
+     * @return 待冻结事件
+     */
+    public static ClientWebhookEvent orderExpired(CommerceOrder order, CheckoutSession session, Instant now) {
+        var object = new LinkedHashMap<String, Object>();
+        object.put("orderNo", order.getOrderNo());
+        object.put("clientOrderId", order.getClientOrderId());
+        object.put("orderStatus", order.getOrderStatus().getCode());
+        if (session != null) {
+            object.put("checkoutStatus", session.getSessionStatus().getCode());
+        }
+        object.put("reasonCode", EXPIRY_REACHED_REASON);
+        object.put("expiredAt", order.getExpiresAt().toString());
+        object.put("version", order.getVersion());
+        return orderEvent(ClientWebhookEventType.ORDER_EXPIRED, order, now, object);
     }
 
     /**

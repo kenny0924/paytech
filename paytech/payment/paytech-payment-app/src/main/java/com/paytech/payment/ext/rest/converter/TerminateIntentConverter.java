@@ -2,8 +2,10 @@ package com.paytech.payment.ext.rest.converter;
 
 import org.springframework.stereotype.Component;
 
+import com.paytech.foundation.common.utils.EnumUtils;
 import com.paytech.payment.api.execution.request.TerminateIntentRequestBody;
 import com.paytech.payment.api.execution.response.TerminateIntentResponseBody;
+import com.paytech.payment.execution.core.enums.TerminationReason;
 import com.paytech.payment.execution.service.processor.request.TerminateIntentRequest;
 import com.paytech.payment.execution.service.processor.response.TerminateIntentResponse;
 
@@ -15,6 +17,7 @@ public class TerminateIntentConverter {
         TerminateIntentRequest request = new TerminateIntentRequest();
         request.setIntentId(PayConverter.parseId(intentId));
         request.setClientId(Long.valueOf(body.getClientId()));
+        request.setReason(EnumUtils.getEnumByCode(TerminationReason.class, body.getReason()));
         return request;
     }
 

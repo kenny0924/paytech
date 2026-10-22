@@ -158,8 +158,8 @@ start_one() {
           "--client.authentication.issuer=$CLIENT_ISSUER" "--client.authentication.public-origin=$CLIENT_ORIGIN" \
           --notification.enabled=true --compensation.instance-id=platform-local-e2e --tenant.projection.enabled=true \
           --webhook.enabled=true --webhook.allowed-schemes=https,http --webhook.trusted-networks=127.0.0.1/32 \
-          `# 第 03 步 Commerce 改名 acquiring-service；只放行已实现的 3 种业务事件` \
-          --webhook.http.callers.acquiring-service=order.paid,order.cancelled,refund.created \
+          `# 第 03 步 Commerce 改名 acquiring-service；只放行已实现的 4 种业务事件（order.expired 见 20261022 订单过期收尾）` \
+          --webhook.http.callers.acquiring-service=order.paid,order.cancelled,order.expired,refund.created \
           `# 合成 PayerMax 在 http://127.0.0.1:18190；外部 API 执行默认只放行 https（仅本机放开）` \
           --ps.integration.execution.allowed-schemes=https,http \
           `# 文件能力：存储实例、桶、写入路由与密钥在运营「存储管理」中登记（本机 MinIO 证书与 Platform 账号经该入口录入，密钥进 Vault）` \

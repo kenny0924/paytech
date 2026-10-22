@@ -25,6 +25,9 @@ public interface CheckoutSessionRepository {
     /** 以 Session 版本 CAS 关闭会话，不修改 Order；参与调用方本地事务。 */
     void cancel(CheckoutSession session, Instant now);
 
+    /** 以 Session 版本将未终结会话推进为 EXPIRED，不修改 Order；参与调用方本地事务。 */
+    void expire(CheckoutSession session, Instant now);
+
     /** 以 Session 版本将未终结会话推进为 COMPLETED；参与调用方本地事务。 */
     void complete(CheckoutSession session, Instant completedAt, Instant now);
 }

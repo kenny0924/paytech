@@ -1,0 +1,17 @@
+{
+ "at": "2026-10-22T21:03Z",
+ "why": "第二轮 client_api_flow.py 在 refund.created 等待中因 InboxReceiver 读取接收端临时文件（以点开头的 .1792702814468413011-…）崩溃；以下为只读补核，不重跑",
+ "receiverInboxSinceRun2": [
+  {"file": "1792702780816228301-1.json", "eventType": "order.cancelled", "eventId": "evt_ord_3L4A55VH9f9vVQvaG5bpdr8b1gO0zJ_cancelled", "version": 3},
+  {"file": "1792702802259448922-1.json", "eventType": "order.expired", "eventId": "evt_ord_3L4A5tBDZVBTzUJK0MCeG6JaFQZBn4_expired", "version": 3},
+  {"file": "1792702807983676883-1.json", "eventType": "order.paid", "eventId": "evt_ord_3L4A8dXXBa3GmFF57anOVaFu8SiCpI_paid", "version": 2},
+  {"file": "1792702814468413011-1.json", "eventType": "refund.created", "eventId": "evt_rfd_3L4A9VO8tBwcnV4LExIjYuNNATiCmr_created", "refundStatus": "PENDING", "version": 1}
+ ],
+ "receiverTotal": 4,
+ "platformEventsSinceRun2": {"order.cancelled": 1, "order.expired": 1, "order.paid": 1, "refund.created": 1},
+ "refundCreated": {"platformEvent": ["239130753097613312", "refund.created", "acquiring-service", "1"],
+                   "delivery": ["239130753110196224", "SUCCEEDED", "1"], "acquiringPendingWebhookTasks": 0,
+                   "refundRow": ["PROCESSING", "2"]},
+ "notVerified": ["refund.created 签名校验（端点密钥只在脚本内存中）", "refund.created 与 GET Refund 逐字比对",
+                 "同一 clientRefundId 重放", "退款结果 GAP 记录", "refundable-amount / refunds 查询"]
+}

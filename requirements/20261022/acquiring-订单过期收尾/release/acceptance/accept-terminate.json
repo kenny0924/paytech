@@ -1,0 +1,181 @@
+{
+ "P-1-2026-10-22T20:47:31Z": {
+  "run": "exp-7858854",
+  "clientId": "236087245667409921",
+  "otherClientId": "236087245667409999",
+  "intentA": "239127482396135424",
+  "sourceA": "551447146788269",
+  "intentB": "239127533369511936",
+  "sourceB": "108049023625312",
+  "verdict": "PASS",
+  "steps": [
+   {
+    "step": "建 Intent A",
+    "expect": "201，OPEN",
+    "result": "PASS",
+    "http": 200,
+    "body": {
+     "intentId": "239127482396135424",
+     "status": "OPEN"
+    },
+    "db": {
+     "status": "OPEN",
+     "version": "1",
+     "sourceType": "COMMERCE_ORDER",
+     "sourceId": "551447146788269"
+    }
+   },
+   {
+    "step": "按来源查询 A",
+    "expect": "200，intentId=A",
+    "result": "PASS",
+    "http": 200,
+    "body": {
+     "intentId": "239127482396135424",
+     "status": "OPEN"
+    }
+   },
+   {
+    "step": "按来源查询，另一个 clientId",
+    "expect": "404 NOT_FOUND",
+    "result": "PASS",
+    "http": 404,
+    "body": {
+     "code": "NOT_FOUND",
+     "title": "Not Found",
+     "detail": "支付意图不存在"
+    }
+   },
+   {
+    "step": "按来源查询，不存在的 sourceId",
+    "expect": "404 NOT_FOUND",
+    "result": "PASS",
+    "http": 404,
+    "body": {
+     "code": "NOT_FOUND",
+     "title": "Not Found",
+     "detail": "支付意图不存在"
+    }
+   },
+   {
+    "step": "按来源查询，小写 sourceType",
+    "expect": "400",
+    "result": "PASS",
+    "http": 400,
+    "body": {
+     "code": "INVALID_REQUEST",
+     "title": "Bad Request",
+     "detail": "请求参数不正确"
+    }
+   },
+   {
+    "step": "终止 A，ORDER_EXPIRED",
+    "expect": "200 TERMINATED / EXPIRED；库内 EXPIRED",
+    "result": "PASS",
+    "http": 200,
+    "body": {
+     "intentId": "239127482396135424",
+     "status": "EXPIRED",
+     "decision": "TERMINATED"
+    },
+    "db": {
+     "status": "EXPIRED",
+     "version": "2",
+     "sourceType": "COMMERCE_ORDER",
+     "sourceId": "551447146788269"
+    }
+   },
+   {
+    "step": "重复终止 A",
+    "expect": "200 ALREADY_TERMINATED，版本不变",
+    "result": "PASS",
+    "http": 200,
+    "body": {
+     "intentId": "239127482396135424",
+     "status": "EXPIRED",
+     "decision": "ALREADY_TERMINATED"
+    },
+    "db": {
+     "status": "EXPIRED",
+     "version": "2",
+     "sourceType": "COMMERCE_ORDER",
+     "sourceId": "551447146788269"
+    },
+    "versionBefore": "2"
+   },
+   {
+    "step": "建 Intent B",
+    "expect": "201，OPEN",
+    "result": "PASS",
+    "http": 200,
+    "body": {
+     "intentId": "239127533369511936",
+     "status": "OPEN"
+    },
+    "db": {
+     "status": "OPEN",
+     "version": "1",
+     "sourceType": "COMMERCE_ORDER",
+     "sourceId": "108049023625312"
+    }
+   },
+   {
+    "step": "另一个 clientId 终止 B",
+    "expect": "400 BUSINESS_CHECK_FAILED，Intent 不变",
+    "result": "PASS",
+    "http": 400,
+    "body": {
+     "code": "BUSINESS_CHECK_FAILED",
+     "title": "Bad Request",
+     "detail": "支付意图不属于当前 Client"
+    },
+    "db": {
+     "status": "OPEN",
+     "version": "1",
+     "sourceType": "COMMERCE_ORDER",
+     "sourceId": "108049023625312"
+    }
+   },
+   {
+    "step": "终止 B，reason=EXPIRED（非法）",
+    "expect": "422，Intent 不变",
+    "result": "PASS",
+    "http": 422,
+    "body": {
+     "code": "VALIDATION_ERROR",
+     "title": "Unprocessable Content",
+     "detail": "请求字段校验未通过",
+     "errors": [
+      {
+       "field": "reason",
+       "message": "has an invalid format"
+      }
+     ]
+    },
+    "db": {
+     "status": "OPEN",
+     "version": "1",
+     "sourceType": "COMMERCE_ORDER",
+     "sourceId": "108049023625312"
+    }
+   },
+   {
+    "step": "终止 B，ORDER_CANCELLED",
+    "expect": "200 TERMINATED / CANCELLED；库内 CANCELLED",
+    "result": "PASS",
+    "http": 200,
+    "body": {
+     "intentId": "239127533369511936",
+     "status": "CANCELLED",
+     "decision": "TERMINATED"
+    },
+    "db": {
+     "status": "CANCELLED",
+     "version": "2",
+     "sourceType": "COMMERCE_ORDER",
+     "sourceId": "108049023625312"
+    }
+   }
+  ]
+ }
+}

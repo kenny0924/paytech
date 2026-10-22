@@ -1,5 +1,6 @@
 package com.paytech.payment.test.dal;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -123,9 +124,13 @@ public interface PaymentTestMapper {
     @Select("SELECT attempt_status AS status, active_action_id AS activeActionId, channel_id AS channelId, channel_account_id AS channelAccountId, mid_id AS midId, version FROM t_payment_attempt WHERE payment_attempt_id = #{attemptId}")
     Map<String, Object> attempt(@Param("attemptId") long attemptId);
 
-    /** 支付意图状态与活动/成功尝试。 */
-    @Select("SELECT intent_status AS status, active_attempt_id AS activeAttemptId, successful_attempt_id AS successfulAttemptId FROM t_payment_intent WHERE payment_intent_id = #{intentId}")
+    /** 支付意图状态、活动/成功尝试与版本。 */
+    @Select("SELECT intent_status AS status, active_attempt_id AS activeAttemptId, successful_attempt_id AS successfulAttemptId, version FROM t_payment_intent WHERE payment_intent_id = #{intentId}")
     Map<String, Object> intent(@Param("intentId") long intentId);
+
+    /** 夹具：把处理中的尝试置为已授权未捕获、无当前动作，与 AUTHORIZE 成功后的落库事实一致（AUTHORIZE 尚未接入渠道）。 */
+    @Update("UPDATE t_payment_attempt SET authorized_amount = #{amount}, active_action_id = NULL, version = version + 1 WHERE payment_attempt_id = #{attemptId} AND attempt_status = 'PROCESSING' AND captured_amount = 0")
+    int authorizeAwaitingCapture(@Param("attemptId") long attemptId, @Param("amount") BigDecimal amount);
 
     /** 某尝试的全部动作，按序号。 */
     @Select("SELECT payment_action_id AS actionId, action_type AS type, action_status AS status, interaction_type AS interactionType, channel_response_code AS code, channel_response_msg AS message, risk_result AS riskResult, transaction_assessment_id AS evaluationId, authentication_requirement AS authentication FROM t_payment_action WHERE payment_attempt_id = #{attemptId} ORDER BY action_no")

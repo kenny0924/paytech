@@ -2,6 +2,8 @@ package com.paytech.payment.test.mocker;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.math.BigDecimal;
+
 import org.springframework.boot.test.context.TestComponent;
 import org.springframework.dao.DataAccessException;
 
@@ -35,6 +37,11 @@ public class PaymentDataMocker implements Clear {
             throw new AssertionError("请先人工审查并应用 paytech-payment-test/src/test/resources/init/ddl.sql 到 mor-local MySQL",
                 failure);
         }
+    }
+
+    /** 把处理中的尝试置为已授权未捕获、无当前动作；用于 AUTHORIZE 尚未接入渠道时的授权后事实。 */
+    public void authorizedAwaitingCapture(long attemptId, BigDecimal amount) {
+        assertEquals(1, mapper.authorizeAwaitingCapture(attemptId, amount), "尝试不处于可置为已授权的状态");
     }
 
     /** 按依赖顺序清理本库全部表，任一失败即禁止环境复用。 */

@@ -71,7 +71,7 @@ public class TerminateIntentProcessor extends AbstractLockProcessor<TerminateInt
                 throw new ErrorException("支付意图关联的活动尝试不存在或不匹配");
             }
         }
-        return new TerminateIntentContext(intent, attempt);
+        return new TerminateIntentContext(intent, attempt, request.getReason());
     }
 
     /** 使用当前上下文组装响应。 */

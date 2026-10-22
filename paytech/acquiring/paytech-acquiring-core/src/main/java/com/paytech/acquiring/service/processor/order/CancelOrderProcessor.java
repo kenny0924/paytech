@@ -138,11 +138,17 @@ public class CancelOrderProcessor
     }
 
     /**
-     * 按订单业务身份终止，不创建或补绑定 Intent。 仅明确的 Intent 不存在错误视为无需终止；超时保留待定，其余错误原样抛出。
+     * 以取消原因终止订单的 Intent，不创建或补绑定 Intent
+     * <li>有支付投影时直接使用其 Intent ID，否则由终止客户端按来源定位。</li>
+     * <li>仅 Payment 404 视为无需终止；超时保留待定，其余错误原样抛出。</li>
+     * <li>已收款或需要撤销授权均返回 409 REVERSAL_REQUIRED。</li>
      */
     boolean terminatePayment(OrderCancellationContext context) {
         var order = context.getOrder();
-        var request = new PaymentTerminationClient.Request(order.getClientId(), order.getOrderId());
+        var payment = context.getPayment();
+        var request = new PaymentTerminationClient.Request(order.getClientId(), order.getOrderId(),
+                payment == null ? null : payment.getPaymentIntentId(),
+                PaymentTerminationClient.TerminationReason.ORDER_CANCELLED);
         PaymentTerminationClient.Result result;
         try {
             result = paymentClient.terminate(request);
@@ -157,7 +163,8 @@ public class CancelOrderProcessor
         if (result == null || result.status() == null || result.orderId() != order.getOrderId()) {
             throw new CheckoutUpstreamProtocolException("Payment 终止响应归属不一致");
         }
-        if (result.status() == PaymentTerminationClient.Status.REVERSAL_REQUIRED) {
+        if (result.status() == PaymentTerminationClient.Status.REVERSAL_REQUIRED
+                || result.status() == PaymentTerminationClient.Status.ALREADY_PAID) {
             throw new FailException(CommerceCheckoutErrorCode.REVERSAL_REQUIRED);
         }
         return result.status() == PaymentTerminationClient.Status.TERMINATED;

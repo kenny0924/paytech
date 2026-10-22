@@ -21,8 +21,15 @@ public interface PaymentIntentRepository {
      */
     PaymentIntent findIntent(long intentId);
 
-    /** 终止开放且无活动或成功尝试的意图，成功后同步原对象。 */
-    void terminateIntent(PaymentIntent intent);
+    /**
+     * 终止开放且无活动或成功尝试的意图，成功后同步原对象。
+     *
+     * @param intent
+     *            支付意图
+     * @param targetStatus
+     *            终态，由终止原因决定：CANCELLED 或 EXPIRED
+     */
+    void terminateIntent(PaymentIntent intent, IntentStatus targetStatus);
 
     /**
      * 绑定支付意图的activeAttempt

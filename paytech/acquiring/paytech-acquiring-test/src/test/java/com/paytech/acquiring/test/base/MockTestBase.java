@@ -3,6 +3,7 @@ package com.paytech.acquiring.test.base;
 import com.paytech.acquiring.test.mocker.external.CheckoutCommercialMocker;
 import com.paytech.acquiring.test.mocker.external.CheckoutRiskMocker;
 import com.paytech.acquiring.test.mocker.external.CounterpartyMocker;
+import com.paytech.acquiring.test.mocker.external.PaymentTerminationMocker;
 import com.paytech.acquiring.test.mocker.external.PlatformWebhookMocker;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.awaitility.Awaitility.await;
@@ -78,6 +79,9 @@ public abstract class MockTestBase extends TestBase {
     protected CounterpartyMocker counterpartyMocker;
 
     @Autowired
+    protected PaymentTerminationMocker paymentTerminationMocker;
+
+    @Autowired
     private CompensationEventDispatcher compensationDispatcher;
 
     @Autowired
@@ -108,7 +112,7 @@ public abstract class MockTestBase extends TestBase {
         }
         assertAll("检查外部 Mock 调用", preparationMocker::assertNoUnexpectedCalls,
             riskMocker::assertNoUnexpectedCalls, platformWebhookMocker::assertNoUnexpectedCalls,
-            counterpartyMocker::assertNoUnexpectedCalls,
+            counterpartyMocker::assertNoUnexpectedCalls, paymentTerminationMocker::assertNoUnexpectedCalls,
             cctCheckoutMockServer::assertNoUnexpectedRequests);
     }
 

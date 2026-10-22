@@ -7,6 +7,8 @@
   AC-01/02     order.paid：真实卡支付（webhook_flow.paid_order：Hosted Checkout Customer API → Payment → 合成 PayerMax），
                PaymentSucceeded v2 真实到 acquiring 与 card；已支付订单再次支付被拒、不产生第二个事件
   AC-03        order.cancelled（含重复取消）
+  过期 AC-12   order.expired（仅 E2E_TARGET=test，20261022 acquiring-订单过期收尾）：建 5 分钟期限结账 → SQL 回拨 expires_at →
+               等 orderExpiryScan 收尾 → GET EXPIRED、签名送达且与 GET 一致 → 过期后取消 409 ORDER_NOT_CANCELLABLE
   AC-04        refund.created（含同一 clientRefundId 重放）及退款查询；RefundSucceeded 为已知缺口（GAP，见 webhook_flow.py）
   幂等         Gateway 请求幂等默认验证（非法 Key、同 Key 重放、换 Body / 换接口复用、并发同 Key、凭证轮换后重放、错误响应重放）
 与 mor-test 版的差异：去掉 --outage（本机无 XXL-Job 调度中心，补偿扫描不会运行；Platform 是宿主机进程，不暂停）；
@@ -21,6 +23,8 @@ E2E_TARGET=test（2026-10-18 mor-test V2，取代 20261017 commerce-ClientAPI测
   再把 PaymentSucceeded v1 信封（paytech-messaging 新格式，sourceService=payment）直接发到 acquiring.payment.hash
   （只到 acquiring，不经 payment.events，不触发 card 等其他订阅方）；--outage：发布前暂停 Platform 容器，确认任务 ERROR 后恢复，
   等 XXL-Job（acquiring-service 执行器）补偿扫描补交。Target 已由迁移 SQL 指向 acquiring-service，不执行 register_client_api.py。
+  过期场景前置：acquiring、payment 为含过期收尾的镜像；XXL-Job 已登记 acquiring-service 执行器的 orderExpiryScan 任务
+  （每分钟、分片广播）并启用。本机无 XXL-Job 调度中心，本机运行时该场景记为 GAP。
   用法：E2E_TARGET=test python3 client_api_flow.py [--outage]
 """
 import concurrent.futures
@@ -55,6 +59,11 @@ TEST_INBOX = TEST_ENV / "private/webhook-receiver/inbox"
 TEST_ENDPOINT_URL = "https://webhook-receiver:8443/hook"
 PLATFORM_CONTAINER = "mor-test-platform-support-service-1"
 ACQUIRING_PAYMENT_EXCHANGE = "acquiring.payment.hash"
+SUBSCRIBED_EVENT_TYPES = wf.EVENT_TYPES + ["order.expired"]
+# 创建期限最短 5 分钟（服务端按受理时刻计算）；加 60 秒余量，避免网络与时钟偏差导致 400
+EXPIRY_LEAD = datetime.timedelta(minutes=5, seconds=60)
+# orderExpiryScan 每分钟一次；回拨后最长等 90 秒
+EXPIRY_WAIT_SECONDS = 90
 
 
 def client_api(method, path, client_id=None, body=None, credential="default", idempotency=True, key=None, raw=None):
@@ -233,6 +242,78 @@ def flow_paid_fixture(receiver, secret, client_id):
     return order_no
 
 
+# ---------- 订单过期收尾（20261022 acquiring-订单过期收尾 AC-12，仅 E2E_TARGET=test） ----------
+
+def rewind_expires_at(order_no):
+    """mor-test 验收专用（technique D5）：把该订单 t_commerce_order.expires_at 回拨到 1 分钟前，让下一轮
+    orderExpiryScan 选中，不等待真实 5 分钟。只改这一行的这一列（按 order_no 定位，仍为 CREATED/OPEN），
+    不改版本、状态与 update_time；收尾仍由生产扫描与 Payment 终止链路完成。"""
+    rows = wf.acquiring_sql(
+        "UPDATE t_commerce_order SET expires_at=UTC_TIMESTAMP(6) - INTERVAL 1 MINUTE "
+        f"WHERE order_no='{order_no}' AND order_status IN ('CREATED','OPEN'); SELECT ROW_COUNT();")
+    return bool(rows) and rows[-1][0] == "1"
+
+
+def session_status(order_id):
+    rows = wf.acquiring_sql(f"SELECT session_status FROM t_checkout_session WHERE order_id={int(order_id)}")
+    return rows[0][0] if rows else None
+
+
+def current_order(order_no):
+    status, order = client_api("GET", f"/orders/{order_no}")
+    return order if status == 200 else None
+
+
+def flow_expired(receiver, secret, client_id):
+    """AC-12：到期扫描收尾未支付订单 → GET EXPIRED → order.expired 签名送达并与 GET 一致 → 过期后不可取消。
+    test 无 Hosted Checkout 提交，订单没有 Intent 投影与接受证据，扫描走本地收尾分支（不调用 Payment 终止）。"""
+    expires_at = datetime.datetime.now(datetime.timezone.utc) + EXPIRY_LEAD
+    request = dict(checkout_body("expired"), expiresAt=expires_at.strftime("%Y-%m-%dT%H:%M:%SZ"))
+    status, created = client_api("POST", "/checkouts", body=request)
+    order_no = (created or {}).get("orderNo")
+    record("过期：建结账（expiresAt = 当前 + 5 分钟，另加 60 秒余量）", status == 201 and order_no,
+           f"HTTP {status} orderNo={order_no} expiresAt={(created or {}).get('expiresAt')} code={(created or {}).get('code')}")
+    if status != 201 or not order_no:
+        return None
+    record("过期：回拨 expires_at 到 1 分钟前（mor-test 验收专用 SQL，只改该订单一行）", rewind_expires_at(order_no),
+           f"orderNo={order_no}")
+    started = time.time()
+    order = wf.wait_for(lambda: (lambda o: o if o and o.get("orderStatus") == "EXPIRED" else None)(current_order(order_no)),
+                        EXPIRY_WAIT_SECONDS, 5) or current_order(order_no) or {}
+    checkout = order.get("checkout") or {}
+    record("AC-12 到期扫描后 GET 为 EXPIRED，收银台地址为空、会话 EXPIRED、未开始支付",
+           order.get("orderStatus") == "EXPIRED" and checkout.get("url") is None and checkout.get("status") == "EXPIRED"
+           and order.get("paymentStatus") == "NOT_STARTED",
+           f"waited={int(time.time() - started)}s orderStatus={order.get('orderStatus')} checkout.status={checkout.get('status')} "
+           f"checkout.url={'null' if checkout.get('url') is None else 'present'} paymentStatus={order.get('paymentStatus')}")
+    row = wf.order_row(order_no)
+    record("AC-12 库内订单 EXPIRED、原因码 EXPIRY_REACHED、会话 EXPIRED",
+           row["status"] == "EXPIRED" and row["reasonCode"] == "EXPIRY_REACHED" and session_status(row["orderId"]) == "EXPIRED",
+           f"status={row['status']} reasonCode={row['reasonCode']} session={session_status(row['orderId'])} version={row['version']}")
+    event_id = f"evt_{order_no}_expired"
+    envelope = wf.check_delivery(receiver, secret, event_id, "order.expired", client_id)
+    if envelope:
+        obj = envelope["data"]["object"]
+        wf.compare("AC-12 order.expired", obj, [
+            ("orderNo", order.get("orderNo"), "str"), ("clientOrderId", order.get("clientOrderId"), "str"),
+            ("orderStatus", order.get("orderStatus"), "str"), ("checkoutStatus", checkout.get("status"), "str"),
+            ("expiredAt", order.get("expiresAt"), "instant"), ("version", row["version"], "int")])
+        record("AC-12 结构化原因码 EXPIRY_REACHED，expiredAt 取到期时刻 expires_at",
+               obj.get("reasonCode") == "EXPIRY_REACHED" and wf.instant(obj.get("expiredAt")) == wf.instant(order.get("expiresAt")),
+               f"reasonCode={obj.get('reasonCode')} expiredAt={obj.get('expiredAt')} expiresAt={order.get('expiresAt')}")
+    status, body = client_api("POST", f"/orders/{order_no}/cancel")
+    record("AC-12 过期后取消 409 ORDER_NOT_CANCELLABLE", status == 409 and (body or {}).get("code") == "ORDER_NOT_CANCELLABLE",
+           f"HTTP {status} code={(body or {}).get('code')}")
+    time.sleep(3)
+    cancelled_id, after = f"evt_{order_no}_cancelled", wf.order_row(order_no)
+    record("AC-12 过期后取消不改写订单、不产生 order.cancelled，order.expired 只送达 1 次",
+           after["status"] == "EXPIRED" and after["version"] == row["version"] and not wf.tasks(cancelled_id)
+           and not wf.received(receiver, cancelled_id) and len(wf.received(receiver, event_id)) == 1,
+           f"status={after['status']} version={row['version']}->{after['version']} cancelledTasks={len(wf.tasks(cancelled_id))} "
+           f"expiredReceived={len(wf.received(receiver, event_id))}")
+    return order_no
+
+
 # ---------- 验收步骤 ----------
 
 def create_credentials(client):
@@ -349,9 +430,10 @@ def main():
         read_only = create_credentials(client)
         receiver = InboxReceiver() if TARGET == "test" else dev.Receiver()
         status, _, created = dev.raw(client, dev.DEV + "/webhook-endpoints", "POST",
-                                     {"url": receiver.url, "eventTypes": wf.EVENT_TYPES})
+                                     {"url": receiver.url, "eventTypes": SUBSCRIBED_EVENT_TYPES})
         secret = (created or {}).get("signingSecret") or ""
-        record(f"端点：{'test 验收接收端' if TARGET == 'test' else '本机接收端'}、订阅 3 种事件", status == 201 and secret.startswith("whsec_"),
+        record(f"端点：{'test 验收接收端' if TARGET == 'test' else '本机接收端'}、订阅 {len(SUBSCRIBED_EVENT_TYPES)} 种事件",
+               status == 201 and secret.startswith("whsec_"),
                f"HTTP {status} endpointId={(created or {}).get('endpointId')} code={(created or {}).get('code')}")
         if status != 201:
             raise Stop("端点未创建")
@@ -364,6 +446,10 @@ def main():
         idempotency_flow(client)
 
         wf.flow_cancel(receiver, secret, client_id)
+        if TARGET == "test":
+            data["orderNoExpired"] = flow_expired(receiver, secret, client_id)
+        else:
+            wf.gap("AC-12 order.expired 到期扫描收尾", "本机无 XXL-Job 调度中心，orderExpiryScan 不会运行；以 acquiring auto 测试为证据")
         paid_order = (flow_paid_fixture if TARGET == "test" else wf.flow_paid)(receiver, secret, client_id)
         data["orderNoPaid"] = paid_order
         data["refundRequestNo"] = wf.flow_refund(receiver, secret, client_id, paid_order)
@@ -371,7 +457,8 @@ def main():
             status, body = client_api("GET", path)
             record(f"退款查询 {path.split('/')[-1].split('?')[0]}", status == 200, f"HTTP {status} code={(body or {}).get('code')}")
         types = [json.loads(r["body"]).get("eventType") for r in receiver.requests]
-        record("接收端总数 = 3（无多余投递）", len(types) == 3, f"eventTypes={types}")
+        expected = 4 if TARGET == "test" else 3
+        record(f"接收端总数 = {expected}（无多余投递）", len(types) == expected, f"eventTypes={types}")
         if TARGET != "test":
             receiver.server.shutdown()
     except Stop as stop:

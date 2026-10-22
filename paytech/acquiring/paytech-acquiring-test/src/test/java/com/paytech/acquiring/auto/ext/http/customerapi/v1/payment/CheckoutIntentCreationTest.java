@@ -32,9 +32,6 @@ import com.paytech.acquiring.test.mocker.external.CheckoutCardMocker;
 import com.paytech.acquiring.test.mocker.external.CheckoutIntentMocker;
 import com.paytech.acquiring.test.mocker.external.PaymentTerminationMocker;
 import com.paytech.acquiring.test.mocker.local.CheckoutPaymentDataMocker;
-import com.paytech.foundation.common.error.CommonErrorCode;
-import com.paytech.foundation.common.error.FailException;
-import com.paytech.foundation.common.error.ServiceUnavailableException;
 import com.paytech.foundation.common.http.ApiHeaderNames;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
 
@@ -66,7 +63,6 @@ class CheckoutIntentCreationTest extends MockTestBase {
     @BeforeEach
     void setUpClassMocks() {
         fixture = data.mockPrepared(true);
-        terminations.mockResult(orderId(), new PaymentTerminationClient.Result(orderId(), PaymentTerminationClient.Status.TERMINATED));
         mockIntent();
         instruments.mockResponse(PaymentResponseBuilder.builder().expiresAt(adjustableUtcClock.instant().plusSeconds(60)).build().instrument());
         cards.mockResponse(CheckoutCardMocker.processing("123456"));
@@ -171,15 +167,20 @@ class CheckoutIntentCreationTest extends MockTestBase {
         checker.assertUnstarted(orderId());
     }
 
-    /** 创建响应丢失后取消只调用终止端口，不再次创建或补写关联。 */
-    /** 验证 cancelAfterCreateTimeoutDoesNotCreateIntent 场景的支付边界。 */
+    /** 创建响应丢失后取消按来源定位并终止原 Intent，不再次创建或补写关联。 */
     @Test
     void test_cancelAfterCreateTimeoutDoesNotCreateIntent() {
         intents.mockFailure(MockHttpFault.disconnect());
         submit().assertProblem(503, "SERVICE_UNAVAILABLE");
+        terminations.mockSource(orderId(), orderId());
+        terminations.mockDecision(orderId(), PaymentTerminationClient.Status.TERMINATED);
         cancel().assertStatus(200);
         checker.assertAccepted(orderId(), false);
         assertEquals(1, intents.calls().size());
+        assertEquals(List.of(PaymentTerminationMocker.SourceQuery.of(orderId(), fixture.getOrder().getClientId())),
+            terminations.sourceQueries());
+        assertEquals(List.of(PaymentTerminationMocker.Termination.of(orderId(), fixture.getOrder().getClientId(),
+            PaymentTerminationClient.TerminationReason.ORDER_CANCELLED)), terminations.calls());
         submit().assertProblem(409, "CHECKOUT_CLOSED");
     }
 
@@ -190,7 +191,7 @@ class CheckoutIntentCreationTest extends MockTestBase {
         intents.observe(
                 request -> {
                     intents.observe(ignored -> {});
-                    terminations.mockFailure(orderId(), new FailException(CommonErrorCode.NOT_FOUND, "支付意图不存在"));
+                    terminations.mockSourceNotFound(orderId());
                     cancel().assertStatus(200);
                 });
         submit().assertProblem(409, "CONCURRENT_REQUEST");
@@ -205,11 +206,12 @@ class CheckoutIntentCreationTest extends MockTestBase {
     void test_cancelRetriesWhenIntentOwnerUnavailable() {
         intents.mockFailure(MockHttpFault.disconnect());
         submit().assertProblem(503, "SERVICE_UNAVAILABLE");
-        terminations.mockFailure(orderId(), new ServiceUnavailableException(new java.net.SocketTimeoutException("termination timeout")));
+        terminations.mockSource(orderId(), orderId());
+        terminations.mockTerminationFault(orderId(), MockHttpFault.disconnect());
         cancel().assertStatus(202);
         checker.assertAccepted(orderId(), false);
         assertTrue(cards.calls().isEmpty());
-        terminations.mockResult(orderId(), new PaymentTerminationClient.Result(orderId(), PaymentTerminationClient.Status.TERMINATED));
+        terminations.mockDecision(orderId(), PaymentTerminationClient.Status.TERMINATED);
         cancel().assertStatus(200);
         checker.assertAccepted(orderId(), false);
         assertEquals(1, intents.calls().size());

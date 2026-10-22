@@ -63,6 +63,17 @@ public class CheckoutSessionRepositoryImpl implements CheckoutSessionRepository 
         session.setUpdateTime(now);
     }
 
+    /** 条件更新成功后同步状态及会话版本；失败由完整用例事务回滚。 */
+    @Override
+    public void expire(CheckoutSession session, Instant now) {
+        if (checkoutSessionMapper.expire(session, now) != 1) {
+            throw new ConcurrentRequestException("过期时 Session 已改变");
+        }
+        session.setSessionStatus(CheckoutSessionStatus.EXPIRED);
+        session.setVersion(session.getVersion() + 1);
+        session.setUpdateTime(now);
+    }
+
     /** 行数确认后同步完成时刻及会话版本；失败由完整用例事务回滚。 */
     @Override
     public void complete(CheckoutSession session, Instant completedAt, Instant now) {

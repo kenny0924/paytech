@@ -1,0 +1,21 @@
+== acquiring-service  compose 键 35  容器键 43  渲染镜像 mor-test/acquiring-service:development
+   ONLY_CONTAINER(image)    HOME
+   ONLY_CONTAINER(image)    HOSTNAME
+   ONLY_CONTAINER(image)    JAVA_HOME
+   ONLY_CONTAINER(image)    JAVA_VERSION
+   ONLY_CONTAINER(image)    LANG
+   ONLY_CONTAINER(image)    LANGUAGE
+   ONLY_CONTAINER(image)    LC_ALL
+   ONLY_CONTAINER(image)    PATH
+   SAME 35 / 35
+== payment-service  compose 键 33  容器键 42  渲染镜像 mor-test/payment-service:development
+   ONLY_CONTAINER(image)    HOME
+   ONLY_CONTAINER(image)    HOSTNAME
+   ONLY_CONTAINER(image)    JAVA_HOME
+   ONLY_CONTAINER(image)    JAVA_VERSION
+   ONLY_CONTAINER(image)    LANG
+   ONLY_CONTAINER(image)    LANGUAGE
+   ONLY_CONTAINER(image)    LC_ALL
+   ONLY_CONTAINER(image)    PATH
+   ONLY_CONTAINER           PAYMENT_CHANNEL_CALLBACK_BASE_URL
+   SAME 33 / 33

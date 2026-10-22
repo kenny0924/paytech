@@ -112,6 +112,14 @@ acquiring:
   identifier:
     region-id: "${COMMERCE_SNOWFLAKE_REGION_ID}"
     worker-id: "${COMMERCE_SNOWFLAKE_WORKER_ID}"
+  # 订单过期扫描（XXL-Job orderExpiryScan，分片广播）：每次执行按分片读取到期仍为 CREATED/OPEN 的订单。
+  order-expiry:
+    # 每页订单数，1—1000。
+    batch-size: 200
+    # 单次执行最多页数，1—1000；限制单次任务时长，剩余订单留待下一轮。
+    max-batches: 50
+    # 终止意图写入后仍 PENDING 的告警阈值；超过后每轮记一条 WARN 转人工，订单保持 OPEN。
+    pending-alert-after: 24h
 
 web:
   logging:

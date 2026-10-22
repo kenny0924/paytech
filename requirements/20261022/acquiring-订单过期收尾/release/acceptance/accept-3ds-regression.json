@@ -1,0 +1,303 @@
+{
+ "AC-02": {
+  "at": "2026-10-22T20:49:22Z",
+  "intentId": "239127988531187712",
+  "submissionId": "829954840980558",
+  "attemptId": "239128004851224576",
+  "payHttp": 200,
+  "pay": {
+   "attemptId": "239128004851224576",
+   "nextAction": null,
+   "status": "FAILED"
+  },
+  "facts": {
+   "attempt": [
+    "FAILED",
+    "238508278684950528",
+    "0.00000000"
+   ],
+   "intent": [
+    "OPEN",
+    "",
+    ""
+   ],
+   "actions": [
+    {
+     "no": "1",
+     "type": "PAY_RISK",
+     "status": "SUCCEEDED",
+     "authReq": "THREE_DS_REQUIRED",
+     "interaction": "",
+     "code": ""
+    },
+    {
+     "no": "2",
+     "type": "PAY",
+     "status": "FAILED",
+     "authReq": "",
+     "interaction": "",
+     "code": "THREE_DS_CHANNEL_UNAVAILABLE"
+    }
+   ],
+   "compensation": [],
+   "routing": [],
+   "token": [
+    [
+     "VISA",
+     "DEBIT",
+     "CLASSIC",
+     "GB",
+     "1",
+     "8"
+    ]
+   ],
+   "risk": [
+    [
+     "GB",
+     "VISA",
+     "DEBIT",
+     "THREE_DS_REQUIRED"
+    ]
+   ]
+  },
+  "channelInteractionsBefore": 0,
+  "channelInteractionsAfter": 0
+ },
+ "checks-2026-10-22T20:50:08Z": {
+  "binActive": [
+   [
+    "1",
+    "ACTIVE",
+    "1"
+   ]
+  ],
+  "queues": [
+   [
+    "acquiring.payment.dlq",
+    0,
+    0
+   ],
+   [
+    "acquiring.payment.p0",
+    0,
+    1
+   ],
+   [
+    "acquiring.payment.p1",
+    0,
+    1
+   ],
+   [
+    "acquiring.payment.p2",
+    0,
+    1
+   ],
+   [
+    "acquiring.payment.p3",
+    0,
+    1
+   ],
+   [
+    "payment.channel-connector.dlq",
+    0,
+    0
+   ],
+   [
+    "payment.channel-connector.p0",
+    0,
+    1
+   ],
+   [
+    "payment.channel-connector.p1",
+    0,
+    1
+   ],
+   [
+    "payment.channel-connector.p2",
+    0,
+    1
+   ],
+   [
+    "payment.channel-connector.p3",
+    0,
+    1
+   ]
+  ],
+  "xxlRegistry": [
+   [
+    "payment-service",
+    "http://172.30.73.35:9999/",
+    "2026-10-22 20:50:06",
+    "3"
+   ],
+   [
+    "acquiring-service",
+    "http://172.30.73.30:9999/",
+    "2026-10-22 20:50:07",
+    "2"
+   ]
+  ],
+  "xxlGroups": [
+   [
+    "4",
+    "acquiring-service",
+    "http://172.30.73.30:9999/"
+   ],
+   [
+    "9",
+    "payment-service",
+    "http://172.30.73.35:9999/"
+   ]
+  ],
+  "xxlJobs": [
+   [
+    "4",
+    "4",
+    "compensationEventScan",
+    "1"
+   ],
+   [
+    "9",
+    "9",
+    "compensationEventScan",
+    "1"
+   ],
+   [
+    "23",
+    "4",
+    "orderExpiryScan",
+    "1"
+   ]
+  ],
+  "xxlLogs30m": [
+   [
+    "4",
+    "59",
+    "57",
+    "57",
+    "0",
+    "2026-10-22 20:50:06"
+   ],
+   [
+    "9",
+    "59",
+    "57",
+    "57",
+    "0",
+    "2026-10-22 20:50:06"
+   ],
+   [
+    "23",
+    "8",
+    "8",
+    "7",
+    "0",
+    "2026-10-22 20:50:07"
+   ]
+  ],
+  "orderExpiryLast": [
+   [
+    "2026-10-22 20:50:07",
+    "0",
+    ""
+   ],
+   [
+    "2026-10-22 20:49:00",
+    "200",
+    ""
+   ],
+   [
+    "2026-10-22 20:48:02",
+    "200",
+    ""
+   ]
+  ]
+ },
+ "health-2026-10-22T20:50:35Z": {
+  "since": "2026-10-22T20:39:03Z",
+  "services": {
+   "risk-decision-service": {
+    "health": "healthy",
+    "restarts": 0,
+    "image": "sha256:d69ca678416a",
+    "startedAt": "2026-10-22T17:59:29.143232548Z",
+    "errorLines": 0,
+    "errorSamples": []
+   },
+   "payment-service": {
+    "health": "healthy",
+    "restarts": 0,
+    "image": "sha256:f3c48d893729",
+    "startedAt": "2026-10-22T20:39:24.406639835Z",
+    "errorLines": 0,
+    "errorSamples": []
+   },
+   "acquiring-service": {
+    "health": "healthy",
+    "restarts": 0,
+    "image": "sha256:55a644fd4618",
+    "startedAt": "2026-10-22T20:40:31.415319796Z",
+    "errorLines": 0,
+    "errorSamples": []
+   },
+   "counterparty-service": {
+    "health": "healthy",
+    "restarts": 0,
+    "image": "sha256:6586bd73b922",
+    "startedAt": "2026-10-22T18:01:11.86406272Z",
+    "errorLines": 0,
+    "errorSamples": []
+   },
+   "platform-support-service": {
+    "health": "healthy",
+    "restarts": 0,
+    "image": "sha256:96da579bb45a",
+    "startedAt": "2026-10-22T18:01:48.164547751Z",
+    "errorLines": 1,
+    "errorSamples": [
+     "2026-10-22T20:49:44.862Z ERROR 1 --- [platform-support-service] [.0-18106-exec-3] c.p.f.w.error.MvcProblemExceptionMapper  : 未处理系统异常, requestId=c0ebb07c-3a7e-4139-863f-33338e55f7b5, exceptionType=org.springframework.transaction.TransactionT"
+    ]
+   },
+   "card-service": {
+    "health": "healthy",
+    "restarts": 0,
+    "image": "sha256:c39a39908a69",
+    "startedAt": "2026-10-22T18:02:32.412341882Z",
+    "errorLines": 0,
+    "errorSamples": []
+   },
+   "channel-connector-service": {
+    "health": "healthy",
+    "restarts": 0,
+    "image": "sha256:23679d451fe4",
+    "startedAt": "2026-10-22T18:03:17.272149459Z",
+    "errorLines": 0,
+    "errorSamples": []
+   },
+   "api-gateway": {
+    "health": "healthy",
+    "restarts": 0,
+    "image": "sha256:270c8ba294dd",
+    "startedAt": "2026-10-22T18:04:04.527778633Z",
+    "errorLines": 0,
+    "errorSamples": []
+   },
+   "operations-console-bff": {
+    "health": "healthy",
+    "restarts": 0,
+    "image": "sha256:9c382db3d498",
+    "startedAt": "2026-10-22T18:04:34.235729217Z",
+    "errorLines": 0,
+    "errorSamples": []
+   },
+   "operations-console-web": {
+    "health": "healthy",
+    "restarts": 0,
+    "image": "sha256:8bdbdd443f95",
+    "startedAt": "2026-10-22T18:04:49.008000376Z",
+    "errorLines": 0,
+    "errorSamples": []
+   }
+  }
+ }
+}

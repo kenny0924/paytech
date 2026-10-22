@@ -41,4 +41,10 @@
             AND payment_intent_id=#{payment.paymentIntentId} AND version=#{payment.version}
             AND successful_attempt_id IS NULL AND intent_status &lt;&gt; 'SUCCEEDED'
     </update>
+    <update id="recordTerminated">
+        UPDATE t_order_payment_projection SET intent_status='EXPIRED',version=version+1,update_time=#{now}
+        WHERE order_payment_projection_id=#{payment.orderPaymentProjectionId} AND order_id=#{payment.orderId}
+            AND payment_intent_id=#{payment.paymentIntentId} AND version=#{payment.version}
+            AND successful_attempt_id IS NULL AND captured_amount=0
+    </update>
 </mapper>

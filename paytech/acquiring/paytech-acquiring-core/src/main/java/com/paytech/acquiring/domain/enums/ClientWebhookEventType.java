@@ -15,6 +15,9 @@ public enum ClientWebhookEventType implements CodeEnum {
     /** 订单首次取消完成。 */
     ORDER_CANCELLED("order.cancelled", "cancelled"),
 
+    /** 订单首次过期收尾完成。 */
+    ORDER_EXPIRED("order.expired", "expired"),
+
     /** 退款请求首次受理。 */
     REFUND_CREATED("refund.created", "created");
 

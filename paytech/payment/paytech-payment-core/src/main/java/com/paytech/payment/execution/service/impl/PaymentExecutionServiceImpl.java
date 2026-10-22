@@ -40,7 +40,7 @@ public class PaymentExecutionServiceImpl implements PaymentExecutionService {
     @Override
     public void terminateIntent(TerminateIntentContext context) {
         transactionTemplate.executeWithoutResult(status -> {
-            paymentIntentRepository.terminateIntent(context.getIntent());
+            paymentIntentRepository.terminateIntent(context.getIntent(), context.getReason().targetStatus());
         });
     }
 

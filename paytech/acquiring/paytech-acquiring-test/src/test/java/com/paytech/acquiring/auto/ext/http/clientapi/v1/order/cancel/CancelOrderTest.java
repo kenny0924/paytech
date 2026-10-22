@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.paytech.acquiring.api.client.v1.enums.CommerceCheckoutErrorCode;
@@ -21,7 +23,8 @@ import com.paytech.acquiring.api.client.v1.order.ClientOrderApi;
 import com.paytech.acquiring.domain.enums.CheckoutSessionStatus;
 import com.paytech.acquiring.domain.enums.OrderStatus;
 import com.paytech.acquiring.domain.enums.PaymentIntentStatus;
-import com.paytech.acquiring.integration.payment.PaymentTerminationClient;
+import com.paytech.acquiring.integration.payment.PaymentTerminationClient.Status;
+import com.paytech.acquiring.integration.payment.PaymentTerminationClient.TerminationReason;
 import com.paytech.acquiring.test.base.MockTestBase;
 import com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.Fixture;
 import com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.Payment;
@@ -29,18 +32,23 @@ import com.paytech.acquiring.test.checker.order.CancelOrderResponseChecker;
 import com.paytech.acquiring.test.checker.order.OrderCancellationChecker;
 import com.paytech.acquiring.test.checker.refund.RefundQueryChecker;
 import com.paytech.acquiring.test.mocker.external.CheckoutIntentMocker;
+import com.paytech.acquiring.test.checkout.PaymentTransactionProbe;
 import com.paytech.acquiring.test.mocker.external.PaymentTerminationMocker;
+import com.paytech.acquiring.test.mocker.external.PaymentTerminationMocker.SourceQuery;
+import com.paytech.acquiring.test.mocker.external.PaymentTerminationMocker.Termination;
 import com.paytech.acquiring.test.mocker.local.CheckoutPaymentDataMocker;
 import com.paytech.acquiring.test.mocker.local.OrderCancellationDataMocker;
 import com.paytech.acquiring.test.mocker.local.OrderQueryDataMocker;
 import com.paytech.foundation.common.error.CommonErrorCode;
-import com.paytech.foundation.common.error.FailException;
-import com.paytech.foundation.common.error.ServiceUnavailableException;
 import com.paytech.foundation.common.http.ApiHeaderNames;
+import com.paytech.foundation.httpproblem.api.ApiProblemProfile;
+import com.paytech.foundation.httpproblem.api.ApiProblemResponse;
+import com.paytech.foundation.testsupport.api.MockHttpFault;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
 
 /**
- * 未支付订单取消、原取消事实重用、Client 隔离和支付创建中断后的取消。 终止端口配置 DTO / 异常；不代表真实 Payment HTTP 合同已接入。
+ * 未支付订单取消、原取消事实重用、Client 隔离和支付创建中断后的取消。
+ * Payment 终止链路经真实 HTTP 客户端访问 Mock 接口：有投影直接终止，无投影先按来源查询；只有 404 视为 Intent 不存在。
  *
  * @see ClientOrderApi#cancelOrder(long, long, String, String)
  */
@@ -61,6 +69,8 @@ class CancelOrderTest extends MockTestBase {
     private CheckoutPaymentDataMocker paymentData;
     @Autowired
     private OrderCancellationDataMocker data;
+    @Autowired
+    private PaymentTransactionProbe paymentTransactions;
 
     private Fixture fixture;
 
@@ -114,23 +124,22 @@ class CancelOrderTest extends MockTestBase {
         assertTrue(intents.calls().isEmpty());
     }
 
-    /** 已有 Intent 时按订单身份请求终止，调用在事务外，成功后本地取消。 */
+    /** 已有 Intent 时按投影 Intent 直接终止（不按来源查询），调用在事务外，成功后本地取消。 */
     @ParameterizedTest
     @EnumSource(value = PaymentIntentStatus.class, names = {"REQUIRES_PAYMENT", "PROCESSING", "CANCELLED"})
     void test_cancelWithExistingIntent(PaymentIntentStatus status) {
         fixture.setPayment(Payment.builder().intentStatus(status).build());
         data.mock(fixture);
-        mockTerminated(orderId());
+        terminations.mockDecision(orderId(), Status.TERMINATED);
         var paymentBefore = objectMapper.valueToTree(checker.payment(orderId()));
 
         invoke().assertCancelled(orderNo(), true, NOW);
 
         checker.assertCancelled(orderId(), true, NOW);
         assertEquals(paymentBefore, objectMapper.valueToTree(checker.payment(orderId())), "取消不能伪造 Payment 投影事件");
-        assertEquals(1, terminations.calls().size());
-        var request = terminations.calls().getFirst();
-        assertAll(() -> assertEquals(checkoutDataMocker.clientId(), request.clientId()),
-            () -> assertEquals(orderId(), request.orderId()));
+        assertEquals(List.of(Termination.of(orderId(), clientId(), TerminationReason.ORDER_CANCELLED)),
+            terminations.calls());
+        assertTrue(terminations.sourceQueries().isEmpty(), "已有投影不能再按来源查询");
         assertTrue(intents.calls().isEmpty());
         invoke().assertCancelled(orderNo(), true, NOW);
         assertEquals(1, terminations.calls().size(), "终态重提不能再次终止 Intent");
@@ -144,7 +153,8 @@ class CancelOrderTest extends MockTestBase {
         String no = accepted.getOrder().getOrderNo();
         data.mockAcceptances(id, NOW);
         long version = checker.order(id).getVersion();
-        terminations.mockResult(id, new PaymentTerminationClient.Result(id, PaymentTerminationClient.Status.PENDING));
+        terminations.mockSource(id, intentIdOf(id));
+        terminations.mockDecision(intentIdOf(id), Status.PENDING);
 
         invoke(no).assertPending(no);
         var before = snapshots.snapshot(checkoutDataMocker.clientId(), checkoutDataMocker.otherClientId());
@@ -158,24 +168,27 @@ class CancelOrderTest extends MockTestBase {
             () -> assertNull(checker.order(id).getCancelledAt()),
             () -> assertEquals(CheckoutSessionStatus.OPEN, checker.session(id).getSessionStatus()));
         assertTrue(intents.calls().isEmpty());
-        assertEquals(2, terminations.calls().size());
+        assertEquals(List.of(SourceQuery.of(id, clientId()), SourceQuery.of(id, clientId())),
+            terminations.sourceQueries());
+        assertEquals(List.of(Termination.of(intentIdOf(id), clientId(), TerminationReason.ORDER_CANCELLED),
+            Termination.of(intentIdOf(id), clientId(), TerminationReason.ORDER_CANCELLED)), terminations.calls());
     }
 
-    /** 取消仅调用终止端口；超时保留原终止意图，重提成功也不创建或绑定 Intent。 */
+    /** 取消仅定位并终止；Payment 503 保留原终止意图，重提成功也不创建或绑定 Intent。 */
     @Test
     void test_retryAfterTerminationUnavailable() {
         var accepted = paymentData.mockPrepared(false);
         long id = accepted.getOrder().getOrderId();
         String no = accepted.getOrder().getOrderNo();
         data.mockAcceptances(id, NOW);
-        terminations.mockFailure(id,
-            new ServiceUnavailableException(new java.net.SocketTimeoutException("response lost")));
+        terminations.mockSource(id, intentIdOf(id));
+        terminations.mockTerminationFault(intentIdOf(id), problem(HttpStatus.SERVICE_UNAVAILABLE, CommonErrorCode.SERVICE_UNAVAILABLE));
 
         invoke(no).assertPending(no);
         assertAll(() -> assertEquals(OrderStatus.OPEN, checker.order(id).getOrderStatus()),
             () -> assertEquals(NOW, checker.order(id).getTerminationRequestedAt()),
             () -> assertNull(checker.payment(id)), () -> assertNull(checker.order(id).getCancelledAt()));
-        mockTerminated(id);
+        terminations.mockDecision(intentIdOf(id), Status.TERMINATED);
         adjustableUtcClock.advance(Duration.ofSeconds(5));
 
         invoke(no).assertCancelled(no, true, NOW.plusSeconds(5));
@@ -185,18 +198,19 @@ class CancelOrderTest extends MockTestBase {
         assertEquals(3, checker.order(id).getVersion());
         assertNull(checker.payment(id));
         assertTrue(intents.calls().isEmpty(), "取消不能创建 Intent");
-        assertEquals(2, terminations.calls().size());
-        assertEquals(terminations.calls().getFirst(), terminations.calls().getLast());
+        var expected = Termination.of(intentIdOf(id), clientId(), TerminationReason.ORDER_CANCELLED);
+        assertEquals(List.of(expected, expected), terminations.calls());
+        assertEquals(2, terminations.sourceQueries().size());
     }
 
-    /** Payment 明确不存在时完成本地取消，重复取消不重新外呼。 */
+    /** 无投影时按来源查询 404：Intent 不存在，完成本地取消且不终止；重复取消不重新外呼。 */
     @Test
-    void test_intentNotFoundCancelsWithoutCreatingIntent() {
+    void test_sourceNotFoundCancelsWithoutCreatingIntent() {
         var accepted = paymentData.mockPrepared(false);
         long id = accepted.getOrder().getOrderId();
         String no = accepted.getOrder().getOrderNo();
         data.mockAcceptances(id, NOW);
-        terminations.mockFailure(id, new FailException(CommonErrorCode.NOT_FOUND, "支付意图不存在"));
+        terminations.mockSourceNotFound(id);
 
         invoke(no).assertCancelled(no, true, NOW);
         invoke(no).assertCancelled(no, true, NOW);
@@ -204,17 +218,63 @@ class CancelOrderTest extends MockTestBase {
         checker.assertCancelled(id, true, NOW);
         assertNull(checker.payment(id));
         assertTrue(intents.calls().isEmpty());
-        assertEquals(1, terminations.calls().size());
-        assertEquals(new PaymentTerminationClient.Request(checkoutDataMocker.clientId(), id),
-            terminations.calls().getFirst());
+        assertEquals(List.of(SourceQuery.of(id, clientId())), terminations.sourceQueries());
+        assertTrue(terminations.calls().isEmpty(), "来源不存在时不能终止");
     }
 
-    /** 非不存在错误不能被吞掉；已保存终止意图不回滚，订单尚未取消。 */
+    /** 无投影但有接受证据：先按来源定位 Intent，再以取消原因终止，确认后本地取消。 */
+    @Test
+    void test_sourceFoundTerminatesLocatedIntent() {
+        var accepted = paymentData.mockPrepared(false);
+        long id = accepted.getOrder().getOrderId();
+        String no = accepted.getOrder().getOrderNo();
+        data.mockAcceptances(id, NOW);
+        terminations.mockSource(id, intentIdOf(id));
+        terminations.mockDecision(intentIdOf(id), Status.TERMINATED);
+
+        invoke(no).assertCancelled(no, true, NOW);
+
+        checker.assertCancelled(id, true, NOW);
+        assertNull(checker.payment(id), "取消不能补写支付投影");
+        assertTrue(intents.calls().isEmpty());
+        assertEquals(List.of(SourceQuery.of(id, clientId())), terminations.sourceQueries());
+        assertEquals(List.of(Termination.of(intentIdOf(id), clientId(), TerminationReason.ORDER_CANCELLED)),
+            terminations.calls());
+    }
+
+    /** 有投影时终止返回 404：Intent 不存在，完成本地取消。 */
+    @Test
+    void test_terminationNotFoundCancels() {
+        fixture.setPayment(Payment.builder().build());
+        data.mock(fixture);
+        terminations.mockTerminationNotFound(orderId());
+
+        invoke().assertCancelled(orderNo(), true, NOW);
+
+        checker.assertCancelled(orderId(), true, NOW);
+        assertEquals(1, terminations.calls().size());
+        assertTrue(terminations.sourceQueries().isEmpty());
+    }
+
+    /** Payment 此前已终止（ALREADY_TERMINATED）与本次终止同样完成本地取消。 */
+    @Test
+    void test_alreadyTerminatedCancels() {
+        fixture.setPayment(Payment.builder().build());
+        data.mock(fixture);
+        terminations.mockDecision(orderId(), PaymentTerminationMocker.ALREADY_TERMINATED);
+
+        invoke().assertCancelled(orderNo(), true, NOW);
+
+        checker.assertCancelled(orderId(), true, NOW);
+        assertEquals(1, terminations.calls().size());
+    }
+
+    /** 非 404 错误（如跨 Client 的 400）不能被当作不存在；已保存终止意图不回滚，订单尚未取消。 */
     @Test
     void test_otherBusinessErrorDoesNotCancel() {
         fixture.setPayment(Payment.builder().build());
         data.mock(fixture);
-        terminations.mockFailure(orderId(), new FailException(CommonErrorCode.BUSINESS_CHECK_FAILED));
+        terminations.mockTerminationFault(orderId(), problem(HttpStatus.BAD_REQUEST, CommonErrorCode.BUSINESS_CHECK_FAILED));
 
         invoke().assertProblem(400, CommonErrorCode.BUSINESS_CHECK_FAILED.getCode());
 
@@ -224,16 +284,16 @@ class CancelOrderTest extends MockTestBase {
         assertTrue(intents.calls().isEmpty());
     }
 
-    /** 未决或需要撤销时不能把本地订单关闭。 */
+    /** 未决返回 202，需要撤销或 Payment 已收款返回 409 REVERSAL_REQUIRED，均不关闭本地订单。 */
     @ParameterizedTest
-    @EnumSource(value = PaymentTerminationClient.Status.class, names = {"PENDING", "REVERSAL_REQUIRED"})
-    void test_terminationNotCompleted(PaymentTerminationClient.Status status) {
+    @EnumSource(value = Status.class, names = {"PENDING", "REVERSAL_REQUIRED", "ALREADY_PAID"})
+    void test_terminationNotCompleted(Status status) {
         fixture.setPayment(Payment.builder().build());
         data.mock(fixture);
-        terminations.mockResult(orderId(), new PaymentTerminationClient.Result(orderId(), status));
+        terminations.mockDecision(orderId(), status);
 
         var response = invoke();
-        if (status == PaymentTerminationClient.Status.PENDING) {
+        if (status == Status.PENDING) {
             response.assertPending(orderNo());
         } else {
             response.assertProblem(409, CommerceCheckoutErrorCode.REVERSAL_REQUIRED.getCode());
@@ -243,13 +303,18 @@ class CancelOrderTest extends MockTestBase {
         assertTrue(intents.calls().isEmpty());
     }
 
-    /** 错归属的取消结果返回协议错误，不能据此关闭原订单。 */
-    @Test
-    void test_terminationRejectsForeignOrder() {
+    /** 终止响应 Intent 错归属或决定未知时返回协议错误，不能据此关闭原订单。 */
+    @ParameterizedTest
+    @ValueSource(strings = {"foreign-intent", "unknown-decision"})
+    void test_terminationRejectsInvalidResponse(String fault) {
         fixture.setPayment(Payment.builder().build());
         data.mock(fixture);
-        terminations.mockResult(orderId(),
-            new PaymentTerminationClient.Result(orderId() + 1, PaymentTerminationClient.Status.TERMINATED));
+        if (fault.equals("foreign-intent")) {
+            terminations.mockTermination(Long.toString(orderId()),
+                PaymentTerminationMocker.termination(Long.toString(orderId() + 1), Status.TERMINATED.getCode()));
+        } else {
+            terminations.mockDecision(orderId(), "UNKNOWN");
+        }
 
         invoke().assertProblem(502, CommerceCheckoutErrorCode.UPSTREAM_PROTOCOL_ERROR.getCode());
 
@@ -389,10 +454,21 @@ class CancelOrderTest extends MockTestBase {
         terminations.assertNoCalls();
     }
 
-    /** 只配置当前订单的终止 DTO，不自动响应其他订单。 */
-    private void mockTerminated(long orderId) {
-        terminations.mockResult(orderId,
-            new PaymentTerminationClient.Result(orderId, PaymentTerminationClient.Status.TERMINATED));
+    /** 无投影订单在 Payment 中的合成 Intent ID，与订单 ID 区分，证明终止使用按来源查询的结果。 */
+    private static long intentIdOf(long orderId) {
+        return orderId + 1;
+    }
+
+    /** Payment 合同的 Problem 故障。 */
+    private static MockHttpFault problem(HttpStatus status, CommonErrorCode code) {
+        return MockHttpFault.json(status.value(), new ApiProblemResponse(ApiProblemProfile.TYPE,
+            status.getReasonPhrase(), "Payment 终止失败", code.getCode(), "payment-test",
+            "2026-09-08T00:00:00.000000Z", null));
+    }
+
+    /** 本例订单归属 Client。 */
+    private long clientId() {
+        return checkoutDataMocker.clientId();
     }
 
     /** 统一验证拒绝后的全列事实保留以及没有远端操作。 */
@@ -444,7 +520,7 @@ class CancelOrderTest extends MockTestBase {
         assertEquals(before.keySet(),
             snapshots.snapshot(checkoutDataMocker.clientId(), checkoutDataMocker.otherClientId()).keySet(),
             "取消不得创建或删除订单");
-        terminations.assertOutsideTransaction();
+        assertFalse(paymentTransactions.transactionStates().contains(true), "事务内调用了 Payment 终止链路");
         preparationMocker.assertNoCalls();
         return new CancelOrderResponseChecker(result, objectMapper, REQUEST_ID);
     }

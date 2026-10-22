@@ -1,0 +1,33 @@
+--- a/verification/local-e2e/acceptance_flow.py
++++ b/verification/local-e2e/acceptance_flow.py
+@@ -211,8 +211,8 @@
+ def upload_material(client, application_id, subject_party_id, requirement):
+     code = requirement["requirementCode"]
+     try:
++        # 2026-10-22 文件上传原则 P1（73a2460d）：上传只声明文件本身，不带申请与主体
+         status, grant = client.command("/onboarding-files/v1/uploads", "POST", {
+-            "applicationId": application_id, "subjectPartyId": subject_party_id,
+             "filename": f"{code.lower()}.pdf", "mimeType": "application/pdf", "sizeBytes": str(len(PDF))})
+     except Failure as failure:
+         record(f"F01 上传授权 {code}", False, problem(failure))
+@@ -227,8 +227,9 @@
+         status, receipt = client.command(f"/onboarding-files/v1/uploads/{grant['uploadId']}/completion", "POST")
+     except Failure as failure:
+         record(f"F02 上传完成 {code}", False, problem(failure))
+-    file_id = receipt.get("fileId")
+-    record(f"F02 上传完成 {code}", status in (200, 201) and file_id, f"HTTP {status} fileId={file_id}")
++    file_id, file_address = receipt.get("fileId"), receipt.get("fileAddress")
++    record(f"F02 上传完成 {code}", status in (200, 201) and file_id and file_address == f"/files/v1/{file_id}",
++           f"HTTP {status} fileId={file_id} fileAddress={file_address}")
+     deadline, meta = time.time() + 75, {}
+     while time.time() < deadline:
+         _, meta = client.call(f"/onboarding-files/v1/files/{file_id}")
+@@ -241,7 +242,7 @@
+     try:
+         status, document = client.command(f"/onboarding/v1/applications/{application_id}/documents", "POST", {
+             "subjectPartyId": subject_party_id, "requirementCode": code,
+-            "documentType": requirement["documentType"], "fileId": file_id})
++            "documentType": requirement["documentType"], "fileAddress": file_address})
+     except Failure as failure:
+         record(f"C12 关联材料 {code}", False, problem(failure))
+     record(f"C12 关联材料 {code}", status in (200, 201), f"HTTP {status} documentId={document.get('documentId')}")

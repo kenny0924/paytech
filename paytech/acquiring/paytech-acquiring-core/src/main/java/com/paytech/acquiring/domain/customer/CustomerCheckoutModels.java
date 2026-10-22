@@ -148,6 +148,9 @@ public final class CustomerCheckoutModels {
     @lombok.Getter
     @lombok.AllArgsConstructor
     public static class IntentRequest {
+        /** Payment 来源业务类型：Commerce 订单。 */
+        public static final String COMMERCE_ORDER_SOURCE_TYPE = "COMMERCE_ORDER";
+
         /** 来源类型，当前固定为 COMMERCE_ORDER。 */
         private final String sourceType;
 
@@ -192,7 +195,7 @@ public final class CustomerCheckoutModels {
             if (frozen == null || order.getTotalAmount() == null || order.getEntityNo() == null) {
                 throw new ErrorException("Intent 创建缺少冻结订单事实");
             }
-            return new IntentRequest("COMMERCE_ORDER", order.getOrderId(), order.getClientId(), order.getEntityNo(),
+            return new IntentRequest(COMMERCE_ORDER_SOURCE_TYPE, order.getOrderId(), order.getClientId(), order.getEntityNo(),
                 order.getCurrency(), order.getTotalAmount(), order.getExpiresAt(), frozen.clientPricingVersionId(),
                 frozen.partnerShareVersionId(), frozen.platformChargeVersionId(), order.getIndustryCode(),
                 order.getMccCode(), order.getConsumerCountryCode());

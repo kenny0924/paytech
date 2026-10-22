@@ -1,0 +1,15 @@
+payment.channel-connector.p3	0	1
+acquiring.payment.p0	0	1
+card.payment.p2	0	1
+payment.channel-connector.p1	0	1
+card.payment.dlq	0	0
+acquiring.payment.p1	0	1
+acquiring.payment.p3	0	1
+payment.channel-connector.p2	0	1
+card.payment.p1	0	1
+payment.channel-connector.p0	0	1
+card.payment.p0	0	1
+acquiring.payment.p2	0	1
+payment.channel-connector.dlq	0	0
+card.payment.p3	0	1
+acquiring.payment.dlq	0	0

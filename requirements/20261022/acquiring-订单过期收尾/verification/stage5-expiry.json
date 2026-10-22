@@ -1,0 +1,754 @@
+{
+  "S1": {
+    "orderNo": "ord_3L42TwGQur5Anf86YZbF4h81zvR3bk",
+    "created": {
+      "http": 201,
+      "orderStatus": null,
+      "checkoutStatus": "OPEN",
+      "total": "10.00",
+      "expiresAt": "2026-10-22T20:27:10.636580Z"
+    },
+    "beforeExpiry": {
+      "facts": {
+        "orderId": "239114882954321920",
+        "status": "OPEN",
+        "reasonCode": "",
+        "version": "1",
+        "expiresAt": "2026-10-22T20:27:10.636580Z",
+        "terminationRequestedAt": "",
+        "paidAt": "",
+        "cancelledAt": "",
+        "updateTime": "2026-10-22T19:57:10.636580Z",
+        "session": {
+          "status": "OPEN",
+          "version": "1"
+        },
+        "projection": null,
+        "paymentIntent": null
+      },
+      "get": {
+        "http": 200,
+        "orderStatus": "OPEN",
+        "paymentStatus": "NOT_STARTED",
+        "checkoutStatus": "OPEN",
+        "checkoutUrlPresent": true,
+        "version": null,
+        "expiresAt": "2026-10-22T20:27:10.636580Z",
+        "clientOrderId": "exp-s1-235710-951004",
+        "keys": [
+          "amountStatus",
+          "amounts",
+          "checkout",
+          "clientOrderId",
+          "consumerCountryCode",
+          "createdAt",
+          "creationMode",
+          "currency",
+          "expiresAt",
+          "fundsAvailability",
+          "items",
+          "orderNo",
+          "orderStatus",
+          "paymentStatus",
+          "preparationStatus",
+          "refundSummary",
+          "updatedAt"
+        ]
+      }
+    },
+    "backdatedExpiresAt": "2026-10-22T19:55:10.000000Z",
+    "scan1": {
+      "logId": 1792699030864,
+      "runAccepted": {
+        "code": 200,
+        "msg": "Success"
+      },
+      "handleCode": 200,
+      "summary": "order expiry scan: scanned 1, expired 1, pending 0, already paid 0, reversal required 0, skipped 0, retry 0, failed 0"
+    },
+    "afterScan1": {
+      "facts": {
+        "orderId": "239114882954321920",
+        "status": "EXPIRED",
+        "reasonCode": "EXPIRY_REACHED",
+        "version": "3",
+        "expiresAt": "2026-10-22T19:55:10.000000Z",
+        "terminationRequestedAt": "2026-10-22T19:57:10.872661Z",
+        "paidAt": "",
+        "cancelledAt": "",
+        "updateTime": "2026-10-22T19:57:10.872661Z",
+        "session": {
+          "status": "EXPIRED",
+          "version": "2"
+        },
+        "projection": null,
+        "paymentIntent": null
+      },
+      "get": {
+        "http": 200,
+        "orderStatus": "EXPIRED",
+        "paymentStatus": "NOT_STARTED",
+        "checkoutStatus": "EXPIRED",
+        "checkoutUrlPresent": false,
+        "version": null,
+        "expiresAt": "2026-10-22T19:55:10Z",
+        "clientOrderId": "exp-s1-235710-951004",
+        "keys": [
+          "amountStatus",
+          "amounts",
+          "checkout",
+          "clientOrderId",
+          "consumerCountryCode",
+          "createdAt",
+          "creationMode",
+          "currency",
+          "expiresAt",
+          "fundsAvailability",
+          "items",
+          "orderNo",
+          "orderStatus",
+          "paymentStatus",
+          "preparationStatus",
+          "refundSummary",
+          "updatedAt"
+        ]
+      },
+      "webhook": {
+        "eventId": "evt_ord_3L42TwGQur5Anf86YZbF4h81zvR3bk_expired",
+        "acquiringTasks": [],
+        "platformEvents": [
+          {
+            "eventType": "order.expired",
+            "sourceSystem": "acquiring-service",
+            "sourceEventKey": "evt_ord_3L42TwGQur5Anf86YZbF4h81zvR3bk_expired",
+            "sourceVersion": "3"
+          }
+        ],
+        "platformDeliveries": "0"
+      },
+      "payloadCheck": {
+        "objectKeys": [
+          "checkoutStatus",
+          "clientOrderId",
+          "expiredAt",
+          "orderNo",
+          "orderStatus",
+          "reasonCode",
+          "version"
+        ],
+        "envelopeKeys": [
+          "createdAt",
+          "data",
+          "eventId",
+          "eventType",
+          "schemaVersion"
+        ],
+        "expiredAt": "2026-10-22T19:55:10Z",
+        "version": 3,
+        "diffs": {},
+        "ok": true
+      }
+    },
+    "cancelAfterExpiry": {
+      "http": 409,
+      "code": "ORDER_NOT_CANCELLABLE",
+      "orderStatus": null
+    },
+    "customerViewAfterExpiry": {
+      "http": 410,
+      "code": "CHECKOUT_EXPIRED",
+      "status": null
+    },
+    "customerSubmitAfterExpiry": {
+      "http": 410,
+      "code": "CHECKOUT_EXPIRED",
+      "status": null
+    },
+    "scan2": {
+      "logId": 1792699032235,
+      "runAccepted": {
+        "code": 200,
+        "msg": "Success"
+      },
+      "handleCode": 200,
+      "summary": "order expiry scan: scanned 0, expired 0, pending 0, already paid 0, reversal required 0, skipped 0, retry 0, failed 0"
+    },
+    "afterScan2": {
+      "facts": {
+        "orderId": "239114882954321920",
+        "status": "EXPIRED",
+        "reasonCode": "EXPIRY_REACHED",
+        "version": "3",
+        "expiresAt": "2026-10-22T19:55:10.000000Z",
+        "terminationRequestedAt": "2026-10-22T19:57:10.872661Z",
+        "paidAt": "",
+        "cancelledAt": "",
+        "updateTime": "2026-10-22T19:57:10.872661Z",
+        "session": {
+          "status": "EXPIRED",
+          "version": "2"
+        },
+        "projection": null,
+        "paymentIntent": null
+      },
+      "webhook": {
+        "eventId": "evt_ord_3L42TwGQur5Anf86YZbF4h81zvR3bk_expired",
+        "acquiringTasks": [],
+        "platformEvents": [
+          {
+            "eventType": "order.expired",
+            "sourceSystem": "acquiring-service",
+            "sourceEventKey": "evt_ord_3L42TwGQur5Anf86YZbF4h81zvR3bk_expired",
+            "sourceVersion": "3"
+          }
+        ],
+        "platformDeliveries": "0"
+      },
+      "cancelledEvent": []
+    },
+    "verdict": {
+      "AC01_orderAndSessionExpired": true,
+      "AC01_get": true,
+      "noIntent": true,
+      "AC06_accepted": true,
+      "AC08_cancel409": true,
+      "AC08_customerExpired": true,
+      "AC08_submitRejected": true,
+      "AC09_secondScanNoWrite": true,
+      "noCancelledEvent": true
+    }
+  },
+  "_runs": [
+    {
+      "scenario": "s1",
+      "startedAt": "2026-10-22T19:55:46.975598Z",
+      "finishedAt": "2026-10-22T19:55:55.738381Z"
+    },
+    {
+      "scenario": "s3",
+      "startedAt": "2026-10-22T19:56:08.038612Z",
+      "finishedAt": "2026-10-22T19:56:17.770158Z"
+    },
+    {
+      "scenario": "s4",
+      "startedAt": "2026-10-22T19:56:22.927594Z",
+      "finishedAt": "2026-10-22T19:56:22.929617Z"
+    },
+    {
+      "scenario": "s4",
+      "startedAt": "2026-10-22T19:56:38.295226Z",
+      "finishedAt": "2026-10-22T19:56:38.350233Z"
+    },
+    {
+      "scenario": "s1",
+      "startedAt": "2026-10-22T19:57:10.586381Z",
+      "finishedAt": "2026-10-22T19:57:16.451689Z"
+    },
+    {
+      "scenario": "s2",
+      "startedAt": "2026-10-22T19:57:16.451835Z",
+      "finishedAt": "2026-10-22T19:57:32.982716Z"
+    },
+    {
+      "scenario": "s3",
+      "startedAt": "2026-10-22T19:57:48.361201Z",
+      "finishedAt": "2026-10-22T19:57:54.202398Z"
+    },
+    {
+      "scenario": "s4",
+      "startedAt": "2026-10-22T19:57:54.202464Z",
+      "finishedAt": "2026-10-22T19:57:54.230364Z"
+    }
+  ],
+  "S3": {
+    "orderNo": "ord_3L42YeikwE0RHdBz3cO1VMAXz759xv",
+    "submissionStatus": "SUCCEEDED",
+    "paid": {
+      "orderId": "239115041515790336",
+      "status": "PAID",
+      "reasonCode": "",
+      "version": "5",
+      "expiresAt": "2026-10-22T20:27:48.439637Z",
+      "terminationRequestedAt": "",
+      "paidAt": "2026-10-22 19:57:50.115978",
+      "cancelledAt": "",
+      "updateTime": "2026-10-22T19:57:50.292661Z",
+      "session": {
+        "status": "COMPLETED",
+        "version": "2"
+      },
+      "projection": {
+        "intentId": "239115043738779648",
+        "intentStatus": "SUCCEEDED",
+        "lastAttemptId": "239115045676548096",
+        "lastAttemptStatus": "SUCCEEDED",
+        "successfulAttemptId": "239115045676548096",
+        "version": "2"
+      },
+      "paymentIntent": {
+        "intentId": "239115043738779648",
+        "status": "SUCCEEDED",
+        "activeAttemptId": "",
+        "successfulAttemptId": "239115045676548096",
+        "version": "3"
+      }
+    },
+    "backdatedExpiresAt": "2026-10-22T19:55:50.000000Z",
+    "scan": {
+      "logId": 1792699070684,
+      "runAccepted": {
+        "code": 200,
+        "msg": "Success"
+      },
+      "handleCode": 200,
+      "summary": "order expiry scan: scanned 0, expired 0, pending 0, already paid 0, reversal required 0, skipped 0, retry 0, failed 0"
+    },
+    "afterScan": {
+      "facts": {
+        "orderId": "239115041515790336",
+        "status": "PAID",
+        "reasonCode": "",
+        "version": "5",
+        "expiresAt": "2026-10-22T19:55:50.000000Z",
+        "terminationRequestedAt": "",
+        "paidAt": "2026-10-22 19:57:50.115978",
+        "cancelledAt": "",
+        "updateTime": "2026-10-22T19:57:50.292661Z",
+        "session": {
+          "status": "COMPLETED",
+          "version": "2"
+        },
+        "projection": {
+          "intentId": "239115043738779648",
+          "intentStatus": "SUCCEEDED",
+          "lastAttemptId": "239115045676548096",
+          "lastAttemptStatus": "SUCCEEDED",
+          "successfulAttemptId": "239115045676548096",
+          "version": "2"
+        },
+        "paymentIntent": {
+          "intentId": "239115043738779648",
+          "status": "SUCCEEDED",
+          "activeAttemptId": "",
+          "successfulAttemptId": "239115045676548096",
+          "version": "3"
+        }
+      },
+      "get": {
+        "http": 200,
+        "orderStatus": "PAID",
+        "paymentStatus": "SUCCEEDED",
+        "checkoutStatus": "COMPLETED",
+        "checkoutUrlPresent": false,
+        "version": null,
+        "expiresAt": "2026-10-22T19:55:50Z",
+        "clientOrderId": "wh-exp-paid-1-235748-db1b70",
+        "keys": [
+          "amountStatus",
+          "amounts",
+          "checkout",
+          "clientOrderId",
+          "consumerCountryCode",
+          "createdAt",
+          "creationMode",
+          "currency",
+          "expiresAt",
+          "fundsAvailability",
+          "items",
+          "lastPaymentAttempt",
+          "orderNo",
+          "orderStatus",
+          "paidAt",
+          "paymentStatus",
+          "preparationStatus",
+          "refundSummary",
+          "updatedAt"
+        ]
+      },
+      "webhook": {
+        "eventId": "evt_ord_3L42YeikwE0RHdBz3cO1VMAXz759xv_expired",
+        "acquiringTasks": [],
+        "platformEvents": [],
+        "platformDeliveries": null
+      },
+      "paidEvent": [
+        {
+          "eventType": "order.paid",
+          "sourceSystem": "acquiring-service",
+          "sourceEventKey": "evt_ord_3L42YeikwE0RHdBz3cO1VMAXz759xv_paid",
+          "sourceVersion": "5"
+        }
+      ]
+    },
+    "verdict": {
+      "stillPaid": true,
+      "noTerminationRequested": true,
+      "intentSucceededUnchanged": true,
+      "noOrderExpired": true
+    }
+  },
+  "S4": {
+    "windowStart": "2026-10-22T19:55:46.975598Z",
+    "acquiring": {
+      "linesInWindow": 156,
+      "hits": {
+        "pan": 0,
+        "cvvKey": 0,
+        "acsSecret": 0,
+        "checkoutPublicToken": 0,
+        "tokenShape": 0,
+        "redirectUrl": 0
+      },
+      "expiryWarnCount": 0,
+      "expiryWarns": [],
+      "warnFieldNames": []
+    },
+    "payment": {
+      "linesInWindow": 22,
+      "hits": {
+        "pan": 0,
+        "cvvKey": 0,
+        "acsSecret": 0,
+        "checkoutPublicToken": 0,
+        "tokenShape": 0,
+        "redirectUrl": 0
+      },
+      "expiryWarnCount": 0,
+      "expiryWarns": [],
+      "warnFieldNames": []
+    },
+    "checkedTokens": 5,
+    "verdict": {
+      "noLeak": true,
+      "warnsOnlyIds": true
+    }
+  },
+  "S2": {
+    "orderNo": "ord_3L42Ujs6lq1hUUc78W7ykTJs5VzGji",
+    "created": {
+      "http": 201,
+      "orderStatus": null,
+      "checkoutStatus": "OPEN",
+      "total": "333.00",
+      "expiresAt": "2026-10-22T20:27:16.487707Z"
+    },
+    "submission": {
+      "status": "REQUIRES_ACTION",
+      "note": "submissionId=239114907985928192 attemptId=239114908992569344 status=REQUIRES_ACTION last4=* failure=None",
+      "actionType": "THREE_DS_CHALLENGE"
+    },
+    "beforeExpiry": {
+      "orderId": "239114907495194624",
+      "status": "OPEN",
+      "reasonCode": "",
+      "version": "4",
+      "expiresAt": "2026-10-22T20:27:16.487707Z",
+      "terminationRequestedAt": "",
+      "paidAt": "",
+      "cancelledAt": "",
+      "updateTime": "2026-10-22T19:57:16.672022Z",
+      "session": {
+        "status": "OPEN",
+        "version": "1"
+      },
+      "projection": {
+        "intentId": "239114908187262976",
+        "intentStatus": "REQUIRES_PAYMENT",
+        "lastAttemptId": "",
+        "lastAttemptStatus": "",
+        "successfulAttemptId": "",
+        "version": "1"
+      },
+      "paymentIntent": {
+        "intentId": "239114908187262976",
+        "status": "OPEN",
+        "activeAttemptId": "239114908992569344",
+        "successfulAttemptId": "",
+        "version": "2"
+      }
+    },
+    "backdatedExpiresAt": "2026-10-22T19:55:17.000000Z",
+    "scan1": {
+      "logId": 1792699037320,
+      "runAccepted": {
+        "code": 200,
+        "msg": "Success"
+      },
+      "handleCode": 200,
+      "summary": "order expiry scan: scanned 1, expired 0, pending 1, already paid 0, reversal required 0, skipped 0, retry 0, failed 0"
+    },
+    "afterScan1": {
+      "facts": {
+        "orderId": "239114907495194624",
+        "status": "OPEN",
+        "reasonCode": "",
+        "version": "5",
+        "expiresAt": "2026-10-22T19:55:17.000000Z",
+        "terminationRequestedAt": "2026-10-22T19:57:17.340286Z",
+        "paidAt": "",
+        "cancelledAt": "",
+        "updateTime": "2026-10-22T19:57:17.340286Z",
+        "session": {
+          "status": "OPEN",
+          "version": "1"
+        },
+        "projection": {
+          "intentId": "239114908187262976",
+          "intentStatus": "REQUIRES_PAYMENT",
+          "lastAttemptId": "",
+          "lastAttemptStatus": "",
+          "successfulAttemptId": "",
+          "version": "1"
+        },
+        "paymentIntent": {
+          "intentId": "239114908187262976",
+          "status": "OPEN",
+          "activeAttemptId": "239114908992569344",
+          "successfulAttemptId": "",
+          "version": "2"
+        }
+      },
+      "attempts": [
+        {
+          "attemptId": "239114908992569344",
+          "status": "PROCESSING"
+        }
+      ],
+      "webhook": {
+        "eventId": "evt_ord_3L42Ujs6lq1hUUc78W7ykTJs5VzGji_expired",
+        "acquiringTasks": [],
+        "platformEvents": [],
+        "platformDeliveries": null
+      }
+    },
+    "resubmitAfterExpiry": {
+      "http": 410,
+      "code": "CHECKOUT_EXPIRED",
+      "status": null
+    },
+    "customerPollAfterExpiry": {
+      "http": 410,
+      "code": "CHECKOUT_EXPIRED"
+    },
+    "paymentRefresh": [
+      {
+        "http": 200,
+        "status": "FAILED",
+        "failureCode": "PAYMENT_FAILED",
+        "code": null
+      }
+    ],
+    "afterFailure": {
+      "facts": {
+        "orderId": "239114907495194624",
+        "status": "OPEN",
+        "reasonCode": "",
+        "version": "5",
+        "expiresAt": "2026-10-22T19:55:17.000000Z",
+        "terminationRequestedAt": "2026-10-22T19:57:17.340286Z",
+        "paidAt": "",
+        "cancelledAt": "",
+        "updateTime": "2026-10-22T19:57:17.340286Z",
+        "session": {
+          "status": "OPEN",
+          "version": "1"
+        },
+        "projection": {
+          "intentId": "239114908187262976",
+          "intentStatus": "REQUIRES_PAYMENT",
+          "lastAttemptId": "",
+          "lastAttemptStatus": "",
+          "successfulAttemptId": "",
+          "version": "1"
+        },
+        "paymentIntent": {
+          "intentId": "239114908187262976",
+          "status": "OPEN",
+          "activeAttemptId": "",
+          "successfulAttemptId": "",
+          "version": "3"
+        }
+      },
+      "attempts": [
+        {
+          "attemptId": "239114908992569344",
+          "status": "FAILED"
+        }
+      ]
+    },
+    "scan2": {
+      "logId": 1792699047189,
+      "runAccepted": {
+        "code": 200,
+        "msg": "Success"
+      },
+      "handleCode": 200,
+      "summary": "order expiry scan: scanned 1, expired 1, pending 0, already paid 0, reversal required 0, skipped 0, retry 0, failed 0"
+    },
+    "afterScan2": {
+      "facts": {
+        "orderId": "239114907495194624",
+        "status": "EXPIRED",
+        "reasonCode": "EXPIRY_REACHED",
+        "version": "6",
+        "expiresAt": "2026-10-22T19:55:17.000000Z",
+        "terminationRequestedAt": "2026-10-22T19:57:17.340286Z",
+        "paidAt": "",
+        "cancelledAt": "",
+        "updateTime": "2026-10-22T19:57:27.286267Z",
+        "session": {
+          "status": "EXPIRED",
+          "version": "2"
+        },
+        "projection": {
+          "intentId": "239114908187262976",
+          "intentStatus": "EXPIRED",
+          "lastAttemptId": "",
+          "lastAttemptStatus": "",
+          "successfulAttemptId": "",
+          "version": "2"
+        },
+        "paymentIntent": {
+          "intentId": "239114908187262976",
+          "status": "EXPIRED",
+          "activeAttemptId": "",
+          "successfulAttemptId": "",
+          "version": "4"
+        }
+      },
+      "get": {
+        "http": 200,
+        "orderStatus": "EXPIRED",
+        "paymentStatus": "EXPIRED",
+        "checkoutStatus": "EXPIRED",
+        "checkoutUrlPresent": false,
+        "version": null,
+        "expiresAt": "2026-10-22T19:55:17Z",
+        "clientOrderId": "exp-s2-235716-3ae66e",
+        "keys": [
+          "amountStatus",
+          "amounts",
+          "checkout",
+          "clientOrderId",
+          "consumerCountryCode",
+          "createdAt",
+          "creationMode",
+          "currency",
+          "expiresAt",
+          "fundsAvailability",
+          "items",
+          "orderNo",
+          "orderStatus",
+          "paymentStatus",
+          "preparationStatus",
+          "refundSummary",
+          "updatedAt"
+        ]
+      },
+      "webhook": {
+        "eventId": "evt_ord_3L42Ujs6lq1hUUc78W7ykTJs5VzGji_expired",
+        "acquiringTasks": [],
+        "platformEvents": [
+          {
+            "eventType": "order.expired",
+            "sourceSystem": "acquiring-service",
+            "sourceEventKey": "evt_ord_3L42Ujs6lq1hUUc78W7ykTJs5VzGji_expired",
+            "sourceVersion": "6"
+          }
+        ],
+        "platformDeliveries": "0"
+      },
+      "payloadCheck": {
+        "objectKeys": [
+          "checkoutStatus",
+          "clientOrderId",
+          "expiredAt",
+          "orderNo",
+          "orderStatus",
+          "reasonCode",
+          "version"
+        ],
+        "envelopeKeys": [
+          "createdAt",
+          "data",
+          "eventId",
+          "eventType",
+          "schemaVersion"
+        ],
+        "expiredAt": "2026-10-22T19:55:17Z",
+        "version": 6,
+        "diffs": {},
+        "ok": true
+      }
+    },
+    "scan3": {
+      "logId": 1792699048809,
+      "runAccepted": {
+        "code": 200,
+        "msg": "Success"
+      },
+      "handleCode": 200,
+      "summary": "order expiry scan: scanned 0, expired 0, pending 0, already paid 0, reversal required 0, skipped 0, retry 0, failed 0"
+    },
+    "terminateAgain": {
+      "http": 200,
+      "body": "{\"decision\":\"ALREADY_TERMINATED\",\"intentId\":\"239114908187262976\",\"status\":\"EXPIRED\"}"
+    },
+    "afterScan3": {
+      "facts": {
+        "orderId": "239114907495194624",
+        "status": "EXPIRED",
+        "reasonCode": "EXPIRY_REACHED",
+        "version": "6",
+        "expiresAt": "2026-10-22T19:55:17.000000Z",
+        "terminationRequestedAt": "2026-10-22T19:57:17.340286Z",
+        "paidAt": "",
+        "cancelledAt": "",
+        "updateTime": "2026-10-22T19:57:27.286267Z",
+        "session": {
+          "status": "EXPIRED",
+          "version": "2"
+        },
+        "projection": {
+          "intentId": "239114908187262976",
+          "intentStatus": "EXPIRED",
+          "lastAttemptId": "",
+          "lastAttemptStatus": "",
+          "successfulAttemptId": "",
+          "version": "2"
+        },
+        "paymentIntent": {
+          "intentId": "239114908187262976",
+          "status": "EXPIRED",
+          "activeAttemptId": "",
+          "successfulAttemptId": "",
+          "version": "4"
+        }
+      },
+      "webhook": {
+        "eventId": "evt_ord_3L42Ujs6lq1hUUc78W7ykTJs5VzGji_expired",
+        "acquiringTasks": [],
+        "platformEvents": [
+          {
+            "eventType": "order.expired",
+            "sourceSystem": "acquiring-service",
+            "sourceEventKey": "evt_ord_3L42Ujs6lq1hUUc78W7ykTJs5VzGji_expired",
+            "sourceVersion": "6"
+          }
+        ],
+        "platformDeliveries": "0"
+      }
+    },
+    "verdict": {
+      "B1_AC03_pendingKeepsOpen": true,
+      "AC03_resubmitRejected": true,
+      "attemptFailed": true,
+      "AC02_intentExpired": true,
+      "AC02_orderSessionProjectionExpired": true,
+      "AC02_get": true,
+      "AC06_accepted": true,
+      "AC11_terminateAgainAlreadyTerminated": true,
+      "AC09_scan3NoWrite": true
+    }
+  }
+}

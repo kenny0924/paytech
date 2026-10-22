@@ -59,6 +59,30 @@ public interface PaymentIntentApi {
                 message = "Client ID 超出有效范围") String clientId);
 
     /**
+     * 按来源业务查询支付意图
+     *
+     * @param sourceType
+     *            来源业务类型，大写字母开头，仅含大写字母、数字与下划线，最长 64 位；当前为 COMMERCE_ORDER
+     * @param sourceId
+     *            来源业务 ID，正十进制 long 字符串，无前导零
+     * @param clientId
+     *            Client ID，格式同上；必须与 Intent 归属一致
+     * @return 与 {@link #getIntent(String, String)} 相同的意图事实
+     *         <li>查询成功返回 200；来源业务没有支付意图或不属于当前 Client 返回 404，两者不区分。</li>
+     *         <li>同一来源业务至多一个支付意图；供调用方在未保存 Intent ID 时定位原意图。</li>
+     */
+    @GetExchange("/intents/by-source/{sourceType}/{sourceId}")
+    ResponseEntity<GetIntentResponseBody> getIntentBySource(
+        @PathVariable("sourceType") @NotBlank(message = "来源业务类型必填") @Pattern(regexp = "[A-Z][A-Z0-9_]{0,63}",
+            message = "来源业务类型格式无效") String sourceType,
+        @PathVariable("sourceId") @NotBlank(message = "来源业务 ID 必填") @Pattern(regexp = "[1-9][0-9]{0,18}",
+            message = "来源业务 ID 必须为无前导零的正整数字符串") @DecimalMax(value = "9223372036854775807",
+                message = "来源业务 ID 超出有效范围") String sourceId,
+        @RequestParam("clientId") @NotBlank(message = "Client ID 必填") @Pattern(regexp = "[1-9][0-9]{0,18}",
+            message = "Client ID 必须为无前导零的正整数字符串") @DecimalMax(value = "9223372036854775807",
+                message = "Client ID 超出有效范围") String clientId);
+
+    /**
      * 按来源提交查询原支付结果（EX-I06）
      *
      * @param intentId

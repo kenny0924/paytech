@@ -1,0 +1,25 @@
+# acquiring 订单与会话过期收尾：mor-test 候选覆盖文件（2026-10-22 阶段 6 准备；阶段 7 由主会话按 release.md 第 6 节执行，另需用户授权）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件，不叠加 3DS 或任何历史候选文件：
+#   ./test-environment/compose.sh -f "$PWD/requirements/20261022/acquiring-订单过期收尾/release/compose-candidate.yaml" \
+#     up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 只换两个服务，顺序 payment-service → acquiring-service（release.md 第 4 节）。不加 --remove-orphans。
+# 镜像：2026-10-22 阶段 6 本机构建，钉 sha256。构建方式：以现网镜像为底（FROM 现网 ID），只覆盖 /app/application.jar；
+#   底层、health-probe、Entrypoint / User / WorkingDir / Env 与现网逐项相同。JAR 来自工作目录 /Users/kenny/Desktop/Workspace/Code-MoR-expiry
+#   （HEAD 22ede435 + 本需求未提交暂存改动），与阶段 5 本机 e2e 验收的 JAR 逐字节相同；相对现网 JAR 的逐条目差异全部属于本需求
+#   （release.md 第 2.4 节）。不使用 :development。
+# 环境变量：2026-10-22 阶段 6 核对，两服务运行容器 = 主 compose + 3DS 候选（requirements/20261022/payment-3DS全链路/release/compose-candidate.yaml）
+#   逐键、逐值相同。3DS 候选中只有 PAYMENT_CHANNEL_CALLBACK_BASE_URL 不在主 compose，本文件原样带入；PAYMENT_INSTRUMENT_PREPARATION_WINDOW
+#   已由 de4f7ba4 写入主 compose，不重复。历次其他 compose-candidate*.yaml 未给这两个服务加过键。
+# 本需求无新增环境变量：acquiring.order-expiry（batch-size 200、max-batches 50、pending-alert-after 24h）写在 application.yml；
+#   acquiring 的 XXL 执行器（XXL_JOB_EXECUTOR_*，APPNAME acquiring-service）已由主 compose 启用。
+# 回滚：同目录 compose-rollback.yaml。
+services:
+  payment-service:
+    # 终止支付意图增加原因 ORDER_EXPIRED（Intent 写 EXPIRED）、新增按来源查询 GET /intents/by-source/{sourceType}/{sourceId}。
+    image: sha256:f3c48d893729ad9d133a4dda40a20fe5beac0a2991cbe90dd4c322eca32b8a1b  # mor-test/payment-service:expiry-20261023（JAR 621ff256dfc74c5c，底 4cf16f15）
+    environment:
+      # 自 3DS 候选继承（主 compose 没有）：渠道通知根地址置空，mor-test 无公网入口（3DS release.md N4）。
+      PAYMENT_CHANNEL_CALLBACK_BASE_URL: ""
+  acquiring-service:
+    # 过期扫描 orderExpiryScan（XXL Handler）与单订单收尾、order.expired Webhook、真实 PAY-I12 终止客户端（取代固定 Mock）。
+    image: sha256:55a644fd4618606d0ff6bbd37a1cc8e414ea8a5e8dc22adba57583305a21278a  # mor-test/acquiring-service:expiry-20261023（JAR de02f36bd0b0c128，底 3958983e）

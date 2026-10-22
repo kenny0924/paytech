@@ -21,4 +21,10 @@ public interface OrderPaymentProjectionRepository {
      */
     void recordSucceeded(OrderPaymentProjection payment, long attemptId, BigDecimal capturedAmount, String eventKey,
         String payloadHash, long sourceVersion, Instant eventTime, Instant now);
+
+    /**
+     * 记录 Intent 已因订单过期终止：意图状态写为 EXPIRED
+     * <li>以投影版本、无成功尝试且未捕获为条件；不满足时抛出并发冲突，成功后同步原对象。</li>
+     */
+    void recordTerminated(OrderPaymentProjection payment, Instant now);
 }

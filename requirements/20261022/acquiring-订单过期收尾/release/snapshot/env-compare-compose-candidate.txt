@@ -1,0 +1,20 @@
+== acquiring-service  compose 键 35  容器键 43  渲染镜像 sha256:55a644fd4618606d0ff6bbd37a1cc8e414ea8a5e8dc22adba57583305a21278a
+   ONLY_CONTAINER(image)    HOME
+   ONLY_CONTAINER(image)    HOSTNAME
+   ONLY_CONTAINER(image)    JAVA_HOME
+   ONLY_CONTAINER(image)    JAVA_VERSION
+   ONLY_CONTAINER(image)    LANG
+   ONLY_CONTAINER(image)    LANGUAGE
+   ONLY_CONTAINER(image)    LC_ALL
+   ONLY_CONTAINER(image)    PATH
+   SAME 35 / 35
+== payment-service  compose 键 34  容器键 42  渲染镜像 sha256:f3c48d893729ad9d133a4dda40a20fe5beac0a2991cbe90dd4c322eca32b8a1b
+   ONLY_CONTAINER(image)    HOME
+   ONLY_CONTAINER(image)    HOSTNAME
+   ONLY_CONTAINER(image)    JAVA_HOME
+   ONLY_CONTAINER(image)    JAVA_VERSION
+   ONLY_CONTAINER(image)    LANG
+   ONLY_CONTAINER(image)    LANGUAGE
+   ONLY_CONTAINER(image)    LC_ALL
+   ONLY_CONTAINER(image)    PATH
+   SAME 34 / 34

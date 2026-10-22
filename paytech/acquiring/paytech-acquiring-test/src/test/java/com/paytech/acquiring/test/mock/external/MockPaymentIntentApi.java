@@ -9,6 +9,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import com.paytech.acquiring.test.mocker.external.CheckoutCardMocker;
 import com.paytech.acquiring.test.mocker.external.CheckoutIntentMocker;
 import com.paytech.acquiring.test.mocker.external.PaymentSubmissionMocker;
+import com.paytech.acquiring.test.mocker.external.PaymentTerminationMocker;
 import com.paytech.payment.api.execution.PaymentIntentApi;
 import com.paytech.payment.api.execution.request.*;
 import com.paytech.payment.api.execution.response.*;
@@ -24,6 +25,7 @@ public class MockPaymentIntentApi implements PaymentIntentApi, WebMvcConfigurer 
     private final CheckoutIntentMocker mocker;
     private final CheckoutCardMocker cards;
     private final PaymentSubmissionMocker submissions;
+    private final PaymentTerminationMocker terminations;
 
     /** 模拟提供方应用的 Context Path，接口内路径仍由正式 API 定义。 */
     @Override
@@ -47,10 +49,19 @@ public class MockPaymentIntentApi implements PaymentIntentApi, WebMvcConfigurer 
         throw new AssertionError("本例不允许调用 getIntent");
     }
 
-    /** 终止沿用独立测试边界，不在本次伪造 HTTP 接入。 */
+    /** 按来源查询由场景配置 DTO、404 或故障。 */
+    @Override
+    public ResponseEntity<GetIntentResponseBody> getIntentBySource(String sourceType, String sourceId,
+        String clientId) {
+        markPaymentResponse();
+        return ResponseEntity.ok(terminations.answerSource(sourceType, sourceId, clientId));
+    }
+
+    /** 终止由场景按 Intent 配置 DTO、404 或故障。 */
     @Override
     public ResponseEntity<TerminateIntentResponseBody> terminateIntent(String intentId, TerminateIntentRequestBody body) {
-        throw new AssertionError("本例不允许调用 terminateIntent");
+        markPaymentResponse();
+        return ResponseEntity.ok(terminations.answerTermination(intentId, body));
     }
 
     /** pay 由场景配置 DTO 或故障；HTTP 状态按 Payment 合同，处理中返回 202。 */
@@ -83,5 +94,12 @@ public class MockPaymentIntentApi implements PaymentIntentApi, WebMvcConfigurer 
         request.getResponse().setHeader("X-Request-Id", "payment-test");
         return ResponseEntity.ok(
             submissions.answer(intentId, sourceSubmissionId, body.getClientId(), PaymentSubmissionMocker.REFRESH));
+    }
+
+    /** 模拟提供方写入响应 Request ID，与 Problem 体中的 requestId 一致。 */
+    private static void markPaymentResponse() {
+        var request = (org.springframework.web.context.request.ServletRequestAttributes)
+            org.springframework.web.context.request.RequestContextHolder.currentRequestAttributes();
+        request.getResponse().setHeader("X-Request-Id", "payment-test");
     }
 }

@@ -1,6 +1,7 @@
 package com.paytech.acquiring.core.dal.mapper.order;
 
 import java.time.Instant;
+import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 
@@ -47,4 +48,12 @@ public interface CommerceOrderMapper {
     int cancel(@Param("order") CommerceOrder order, @Param("payment") OrderPaymentProjection payment,
         @Param("localOnly") boolean localOnly,
         @Param("now") Instant now);
+
+    /** 按订单主键游标与分片取一页已到期、仍为 CREATED/OPEN 的订单主键。 */
+    List<Long> selectExpiredOrderIds(@Param("now") Instant now, @Param("afterOrderId") long afterOrderId,
+        @Param("shardIndex") int shardIndex, @Param("shardTotal") int shardTotal, @Param("limit") int limit);
+
+    /** 仅在已到期、未支付且已请求终止时确认订单过期，支付投影守卫与取消一致。 */
+    int expire(@Param("order") CommerceOrder order, @Param("payment") OrderPaymentProjection payment,
+        @Param("localOnly") boolean localOnly, @Param("now") Instant now);
 }

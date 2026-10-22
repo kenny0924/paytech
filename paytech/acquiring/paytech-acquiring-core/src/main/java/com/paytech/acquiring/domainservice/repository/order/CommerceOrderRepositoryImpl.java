@@ -3,6 +3,7 @@ package com.paytech.acquiring.domainservice.repository.order;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
@@ -102,6 +103,24 @@ public class CommerceOrderRepositoryImpl implements CommerceOrderRepository {
         }
         order.setOrderStatus(OrderStatus.CANCELLED);
         order.setCancelledAt(now);
+        order.setVersion(order.getVersion() + 1);
+        order.setUpdateTime(now);
+    }
+
+    /** 只返回主键，订单事实由收尾入口在锁内重新读取。 */
+    @Override
+    public List<Long> findExpiredOrderIds(Instant now, long afterOrderId, int shardIndex, int shardTotal,
+        int limit) {
+        return commerceOrderMapper.selectExpiredOrderIds(now, afterOrderId, shardIndex, shardTotal, limit);
+    }
+
+    /** 本表过期成功后同步状态和版本；Session、投影更新失败时外层事务一起回滚。 */
+    @Override
+    public void expire(CommerceOrder order, OrderPaymentProjection payment, boolean localOnly, Instant now) {
+        if (commerceOrderMapper.expire(order, payment, localOnly, now) != 1) {
+            throw new ConcurrentRequestException("过期时订单或支付事实已改变");
+        }
+        order.setOrderStatus(OrderStatus.EXPIRED);
         order.setVersion(order.getVersion() + 1);
         order.setUpdateTime(now);
     }

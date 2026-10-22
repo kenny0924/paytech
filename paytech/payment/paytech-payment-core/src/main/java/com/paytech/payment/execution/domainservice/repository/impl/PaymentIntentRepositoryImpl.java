@@ -41,14 +41,14 @@ public class PaymentIntentRepositoryImpl implements PaymentIntentRepository {
         return paymentIntentMapper.findIntent(intentId);
     }
 
-    /** 按原版本终止意图，更新失败不修改内存对象。 */
+    /** 按原版本把意图写为原因对应的终态，更新失败不修改内存对象。 */
     @Override
-    public void terminateIntent(PaymentIntent intent) {
+    public void terminateIntent(PaymentIntent intent, IntentStatus targetStatus) {
         var now = clock.instant().truncatedTo(ChronoUnit.MICROS);
-        if (paymentIntentMapper.terminateIntent(intent, now) != 1) {
+        if (paymentIntentMapper.terminateIntent(intent, targetStatus, now) != 1) {
             throw new ConcurrentRequestException("支付意图状态或活动尝试已变更，无法终止");
         }
-        intent.setIntentStatus(IntentStatus.CANCELLED);
+        intent.setIntentStatus(targetStatus);
         intent.setVersion(intent.getVersion() + 1);
         intent.setUpdateTime(now);
     }

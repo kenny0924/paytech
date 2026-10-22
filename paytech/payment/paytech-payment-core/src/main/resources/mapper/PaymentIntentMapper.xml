@@ -55,7 +55,8 @@
 
     <update id="terminateIntent">
         UPDATE t_payment_intent
-        SET intent_status = 'CANCELLED', version = version + 1, update_time = #{now,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}
+        SET intent_status = #{status,javaType=com.paytech.payment.execution.core.enums.IntentStatus,typeHandler=com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler,jdbcType=VARCHAR},
+        version = version + 1, update_time = #{now,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}
         WHERE payment_intent_id = #{intent.paymentIntentId} AND version = #{intent.version}
           AND intent_status = 'OPEN'
           AND active_attempt_id IS NULL AND successful_attempt_id IS NULL

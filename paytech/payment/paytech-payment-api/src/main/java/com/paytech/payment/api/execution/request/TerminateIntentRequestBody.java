@@ -21,10 +21,11 @@ public class TerminateIntentRequestBody {
 
     /**
      * 终止原因
-     * <li>ORDER_CANCELLED：取消订单；OPERATING_ENTITY_CLOSED：经营主体关闭。</li>
-     * <li>两种原因均须满足安全终止条件，不触发撤销或退款。</li>
+     * <li>ORDER_CANCELLED：取消订单；OPERATING_ENTITY_CLOSED：经营主体关闭；ORDER_EXPIRED：订单到期。</li>
+     * <li>安全终止时前两者写入 CANCELLED，ORDER_EXPIRED 写入 EXPIRED；不影响终止决定。</li>
+     * <li>三种原因均须满足安全终止条件，不触发撤销或退款。</li>
      */
     @NotBlank(message = "终止原因必填")
-    @Pattern(regexp = "ORDER_CANCELLED|OPERATING_ENTITY_CLOSED", message = "终止原因无效")
+    @Pattern(regexp = "ORDER_CANCELLED|OPERATING_ENTITY_CLOSED|ORDER_EXPIRED", message = "终止原因无效")
     private String reason;
 }

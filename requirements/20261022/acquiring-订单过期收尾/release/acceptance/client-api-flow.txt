@@ -1,0 +1,111 @@
+# run2 start 2026-10-22T20:58:58Z E2E_TARGET=test cwd=scratchpad/local-e2e-s7 (copy of Code-MoR-expiry local-e2e + acceptance_flow-upload-contract.patch)
+PASS A01 注册 | HTTP 202 {'accepted': True, 'resendAfterSeconds': 60}
+PASS 验证链接（Mailpit 或本机铸造） | messageId=minted-locally challengeNo=20fa1ca6-de07-44b2-ad26-0cc38817743b
+PASS A03 邮箱验证 | HTTP 200 {'verified': True, 'nextAction': 'LOGIN'}
+PASS A04 登录 | HTTP 200 accountId=239130436935172096 contextType=ACCOUNT refreshCookie=True
+PASS A09 上下文 | HTTP 200 emailMasked=w***@example.test allowedActions=['ONBOARDING', 'SELECT_WORKSPACE', 'LOGOUT']
+PASS A05 刷新（Cookie） | HTTP 200
+PASS C01 Start | HTTP 200 activeApplicationId=None applications=0
+PASS C04 创建个人申请 | HTTP 201 applicationId=239130487124238336 applicationNo=CA-239130487124238336 operation=CREATED
+PASS C03 表单目录 | HTTP 200 catalogStatus=AVAILABLE identifierTypes=[('PASSPORT', 'REQUIRED'), ('NATIONAL_ID', 'REQUIRED'), ('DRIVING_LICENSE', 'REQUIRED'), ('RESIDENCE_PERMIT', 'REQUIRED')] businessModels=['PHYSICAL_GOODS', 'DIGITAL_GOODS', 'SERVICES', 'SUBSCRIPTION', 'OTHER'] requirementsStatus=AVAILABLE requirements=[('ADDRESS', False), ('IDENTITY', True), ('OTHER', False)]
+PASS C06 保存资料（基础/地址/证件/经营） | HTTP 200 fields=21 operation=SAVED
+PASS C06 保存联系邮箱/电话（CCT→Vault STABLE） | HTTP 200 fields=2 operation=SAVED
+PASS C05 材料要求 | materialSubjects=[('239130487124238338', 'AVAILABLE', ['ADDRESS', 'IDENTITY', 'OTHER'])]
+PASS F01 上传授权 IDENTITY | HTTP 201 uploadId=239130489577881600 headers=['content-type', 'if-none-match'] expiresAt=2026-10-22T21:14:10.923752Z
+PASS PUT 对象存储 IDENTITY | HTTP 200 host=s3.ap-southeast-1.amazonaws.com
+PASS F02 上传完成 IDENTITY | HTTP 200 fileId=239130506350903296 fileAddress=/files/v1/239130506350903296
+PASS F03 扫描结果 IDENTITY | scanStatus=AVAILABLE objectStatus=ACTIVE mimeType=application/pdf allowedActions=['DOWNLOAD']
+PASS C12 关联材料 IDENTITY | HTTP 201 documentId=239130521433645056
+PASS C16 提交核对 | HTTP 200 ready=True issues=[]
+PASS C14 提交 | HTTP 202 submissionId=8f7b1607-2e01-443a-89d1-4c6223a6e91f status=SUBMITTED
+PASS C05 进入审核 | status=UNDER_REVIEW editable=False
+PASS O01 案件列表 | total=53 caseId=239130533479698432 caseNo=DD239130533479698432 status=SUBMITTED
+PASS O02 案件详情 | caseStatus=SUBMITTED applicationStatus=AVAILABLE evidence=[('239130533483892739', '239130506350903296', 'RECEIVED')] classificationStatus=AVAILABLE industries=10 blockers=['EVIDENCE_PENDING', 'REQUIRED_MATERIAL_NOT_ACCEPTED', 'CLASSIFICATION_NOT_RECEIVED']
+PASS O05 核验材料 239130533483892739 | ACCEPTED
+PASS O03 设置分类 | industry=RETAIL mcc=5999 confirmed=False
+PASS O04 确认分类 | confirmedAt=2026-10-22T20:59:24.660888Z
+PASS O02 批准门禁 | status=SUBMITTED blockers=[]
+PASS O08 批准 | result={'accepted': True, 'caseId': '239130533479698432', 'processing': False, 'status': 'APPROVED'}
+PASS C05 已批准 | status=APPROVED clientId=239130487124238337
+PASS 进入工作区 | tenantId=239130487644307456 clientId=239130487124238337
+PASS 自助创建凭证（5 个 Scope） | HTTP 201 keyPrefix=ck-ELRTkSulitUcvrExgXZr code=None
+PASS 自助创建只读凭证（orders.read） | HTTP 201
+PASS 端点：test 验收接收端、订阅 4 种事件 | HTTP 201 endpointId=239130581894512640 code=None
+PASS 建结账（query） | HTTP 201 orderNo=ord_3L4A4X64F15Z8tSzGCM6ETYTMhiByi total=42.90 checkoutStatus=OPEN code=None
+PASS AC-02 查单 | HTTP 200 status=OPEN
+PASS AC-02 按 clientOrderId 查单 | HTTP 200
+PASS AC-02 不存在 / 他人订单 404 | HTTP 404 code=ORDER_NOT_FOUND
+PASS Gateway Query 白名单：未知参数被拒 | HTTP 400 code=INVALID_REQUEST
+PASS AC-01 无凭证被 Gateway 拒绝 | HTTP 401 code=UNAUTHENTICATED
+PASS AC-01 错凭证被拒绝 | HTTP 401 code=UNAUTHENTICATED
+PASS AC-01 只读凭证可查单 | HTTP 200
+PASS AC-01 缺 Scope（orders.cancel）被拒绝 | HTTP 403 code=INSUFFICIENT_SCOPE
+PASS AC-01 幂等：POST 缺 Idempotency-Key 由 Gateway 拒绝 | HTTP 400 code=IDEMPOTENCY_KEY_REQUIRED
+PASS 幂等 AC-01 非法 Key 400 INVALID_IDEMPOTENCY_KEY | HTTP 400 code=INVALID_IDEMPOTENCY_KEY
+PASS 幂等 AC-02 同 Key 同请求重放：状态、响应体、Location 逐字一致，新 Request ID | HTTP 201/201 sameBody=True sameLocation=True
+PASS 幂等 AC-02 acquiring 只建 1 单 | orders=1
+PASS 幂等 AC-03 同 Key 换 Body 409 IDEMPOTENCY_KEY_REUSED | HTTP 409 code=IDEMPOTENCY_KEY_REUSED
+PASS 幂等 AC-03 同 Key 换接口 409 IDEMPOTENCY_KEY_REUSED | HTTP 409 code=IDEMPOTENCY_KEY_REUSED
+PASS 幂等 AC-04 并发同 Key：只建 1 单；其余为执行中（Retry-After: 3）或重放 | statuses=[409, 409, 409, 201] orders=1
+PASS 幂等 AC-06 另一凭证（同 Client）同 Key 重放 | HTTP 201 sameBody=True
+PASS 幂等 AC-05 下游 404 Problem 重放：code、timestamp 不变，requestId = 本次响应头 | HTTP 404/404 code=ORDER_NOT_FOUND sameTimestamp=True
+PASS 建结账（cancel） | HTTP 201 orderNo=ord_3L4A55VH9f9vVQvaG5bpdr8b1gO0zJ total=42.90 checkoutStatus=OPEN code=None
+PASS AC-03 取消未支付订单 | HTTP 200 body={'orderNo': 'ord_3L4A55VH9f9vVQvaG5bpdr8b1gO0zJ', 'orderStatus': 'CANCELLED', 'checkoutStatus': 'CANCELLED', 'cancelledAt': '2026-10-22T20:59:40.124692Z'}
+PASS order.cancelled 送达接收端 | eventId=evt_ord_3L4A55VH9f9vVQvaG5bpdr8b1gO0zJ_cancelled received=1
+PASS order.cancelled 签名可用端点密钥校验 | header=True
+PASS order.cancelled eventId/eventType/顶层键 | eventId=evt_ord_3L4A55VH9f9vVQvaG5bpdr8b1gO0zJ_cancelled type=order.cancelled keys=['createdAt', 'data', 'eventId', 'eventType', 'schemaVersion'] createdAt=2026-10-22T20:59:40Z
+PASS order.cancelled acquiring 任务成功完成（行已删除，无 ERROR/FAILED） | remaining=[]
+PASS order.cancelled Platform 事件唯一（来源 acquiring-service）、投递 SUCCEEDED | events=[['239130610457722880', 'order.cancelled', 'acquiring-service', '3']] deliveries=[['239130610684215296', 'SUCCEEDED', '1']]
+PASS order.cancelled 接收内容 = Platform 受理的冻结 Envelope；sourceVersion = object.version | equal=True sourceVersion=3 objectVersion=3
+PASS AC-07 order.cancelled 载荷无内部 ID / 个人信息 / 风控 | objectKeys=['cancelledAt', 'checkoutStatus', 'clientOrderId', 'orderNo', 'orderStatus', 'reasonCode', 'version'] forbidden=[] numericIds=[]
+PASS AC-03 重复取消不产生第二个事件 | HTTP 200 status=CANCELLED tasks=0 received=1
+PASS AC-03 order.cancelled data.object 与 acquiring 查询一致 | diffs=[] formatOnlyDiffs=[]
+PASS AC-03 结构化原因码 | reasonCode=CLIENT_REQUESTED db=CLIENT_REQUESTED
+PASS 过期：建结账（expiresAt = 当前 + 5 分钟，另加 60 秒余量） | HTTP 201 orderNo=ord_3L4A5tBDZVBTzUJK0MCeG6JaFQZBn4 expiresAt=2026-10-22T21:05:46Z code=None
+PASS 过期：回拨 expires_at 到 1 分钟前（mor-test 验收专用 SQL，只改该订单一行） | orderNo=ord_3L4A5tBDZVBTzUJK0MCeG6JaFQZBn4
+PASS AC-12 到期扫描后 GET 为 EXPIRED，收银台地址为空、会话 EXPIRED、未开始支付 | waited=16s orderStatus=EXPIRED checkout.status=EXPIRED checkout.url=null paymentStatus=NOT_STARTED
+PASS AC-12 库内订单 EXPIRED、原因码 EXPIRY_REACHED、会话 EXPIRED | status=EXPIRED reasonCode=EXPIRY_REACHED session=EXPIRED version=3
+PASS order.expired 送达接收端 | eventId=evt_ord_3L4A5tBDZVBTzUJK0MCeG6JaFQZBn4_expired received=1
+PASS order.expired 签名可用端点密钥校验 | header=True
+PASS order.expired eventId/eventType/顶层键 | eventId=evt_ord_3L4A5tBDZVBTzUJK0MCeG6JaFQZBn4_expired type=order.expired keys=['createdAt', 'data', 'eventId', 'eventType', 'schemaVersion'] createdAt=2026-10-22T21:00:01Z
+PASS order.expired acquiring 任务成功完成（行已删除，无 ERROR/FAILED） | remaining=[]
+PASS order.expired Platform 事件唯一（来源 acquiring-service）、投递 SUCCEEDED | events=[['239130701549617152', 'order.expired', 'acquiring-service', '3']] deliveries=[['239130701578977280', 'SUCCEEDED', '1']]
+PASS order.expired 接收内容 = Platform 受理的冻结 Envelope；sourceVersion = object.version | equal=True sourceVersion=3 objectVersion=3
+PASS AC-07 order.expired 载荷无内部 ID / 个人信息 / 风控 | objectKeys=['checkoutStatus', 'clientOrderId', 'expiredAt', 'orderNo', 'orderStatus', 'reasonCode', 'version'] forbidden=[] numericIds=[]
+PASS AC-12 order.expired data.object 与 acquiring 查询一致 | diffs=[] formatOnlyDiffs=[]
+PASS AC-12 结构化原因码 EXPIRY_REACHED，expiredAt 取到期时刻 expires_at | reasonCode=EXPIRY_REACHED expiredAt=2026-10-22T20:58:46.534444Z expiresAt=2026-10-22T20:58:46.534444Z
+PASS AC-12 过期后取消 409 ORDER_NOT_CANCELLABLE | HTTP 409 code=ORDER_NOT_CANCELLABLE
+PASS AC-12 过期后取消不改写订单、不产生 order.cancelled，order.expired 只送达 1 次 | status=EXPIRED version=3->3 cancelledTasks=0 expiredReceived=1
+PASS 建结账（paid） | HTTP 201 orderNo=ord_3L4A8dXXBa3GmFF57anOVaFu8SiCpI total=42.90 checkoutStatus=OPEN code=None
+PASS 夹具：订单 Intent 关联投影（替代 createIntent） | orderId=239130723569745920 paymentIntentId=9410000042720405 projectionId=9400000069327117
+PASS AC-01 PaymentSucceeded（夹具信封）经 acquiring.payment 分区队列落地为订单 PAID | routed=True status=PAID projection={'intentId': '9410000042720405', 'intentStatus': 'SUCCEEDED', 'successfulAttemptId': '9420000002825556', 'capturedAmount': '42.90000000'} attemptId=9420000002825556
+PASS PaymentSucceeded 由 acquiring 消费登记一次（t_consumed_event） | acquiring=1
+PASS order.paid 送达接收端 | eventId=evt_ord_3L4A8dXXBa3GmFF57anOVaFu8SiCpI_paid received=1
+PASS order.paid 签名可用端点密钥校验 | header=True
+PASS order.paid eventId/eventType/顶层键 | eventId=evt_ord_3L4A8dXXBa3GmFF57anOVaFu8SiCpI_paid type=order.paid keys=['createdAt', 'data', 'eventId', 'eventType', 'schemaVersion'] createdAt=2026-10-22T21:00:07Z
+PASS order.paid acquiring 任务成功完成（行已删除，无 ERROR/FAILED） | remaining=[]
+PASS order.paid Platform 事件唯一（来源 acquiring-service）、投递 SUCCEEDED | events=[['239130726077906944', 'order.paid', 'acquiring-service', '2']] deliveries=[['239130726082101248', 'SUCCEEDED', '1']]
+PASS order.paid 接收内容 = Platform 受理的冻结 Envelope；sourceVersion = object.version | equal=True sourceVersion=2 objectVersion=2
+PASS AC-07 order.paid 载荷无内部 ID / 个人信息 / 风控 | objectKeys=['amounts', 'clientOrderId', 'currency', 'orderNo', 'orderStatus', 'paidAt', 'paymentStatus', 'version'] forbidden=[] numericIds=[]
+PASS AC-02 同一 PaymentSucceeded 重复投递不产生第二个事件 | routed=True consumed=1 tasks=0 received=1
+PASS AC-01 order.paid data.object 与 acquiring 查询一致 | diffs=[] formatOnlyDiffs=[]
+PASS AC-04 创建退款 | HTTP 201 refundRequestNo=rfd_3L4A9VO8tBwcnV4LExIjYuNNATiCmr code=None
+Traceback (most recent call last):
+  File "/private/tmp/claude-501/-Users-kenny-Desktop-Workspace-Code-MoR/ba6af14f-0f7f-4481-9091-938816c03267/scratchpad/local-e2e-s7/client_api_flow.py", line 474, in <module>
+    main()
+  File "/private/tmp/claude-501/-Users-kenny-Desktop-Workspace-Code-MoR/ba6af14f-0f7f-4481-9091-938816c03267/scratchpad/local-e2e-s7/client_api_flow.py", line 455, in main
+    data["refundRequestNo"] = wf.flow_refund(receiver, secret, client_id, paid_order)
+  File "/private/tmp/claude-501/-Users-kenny-Desktop-Workspace-Code-MoR/ba6af14f-0f7f-4481-9091-938816c03267/scratchpad/local-e2e-s7/webhook_flow.py", line 373, in flow_refund
+    envelope = check_delivery(receiver, secret, event_id, "refund.created", client_id)
+  File "/private/tmp/claude-501/-Users-kenny-Desktop-Workspace-Code-MoR/ba6af14f-0f7f-4481-9091-938816c03267/scratchpad/local-e2e-s7/webhook_flow.py", line 182, in check_delivery
+    hits = wait_for(lambda: received(receiver, event_id), 40)
+  File "/private/tmp/claude-501/-Users-kenny-Desktop-Workspace-Code-MoR/ba6af14f-0f7f-4481-9091-938816c03267/scratchpad/local-e2e-s7/webhook_flow.py", line 103, in wait_for
+    value = predicate()
+  File "/private/tmp/claude-501/-Users-kenny-Desktop-Workspace-Code-MoR/ba6af14f-0f7f-4481-9091-938816c03267/scratchpad/local-e2e-s7/webhook_flow.py", line 182, in <lambda>
+    hits = wait_for(lambda: received(receiver, event_id), 40)
+  File "/private/tmp/claude-501/-Users-kenny-Desktop-Workspace-Code-MoR/ba6af14f-0f7f-4481-9091-938816c03267/scratchpad/local-e2e-s7/webhook_flow.py", line 175, in received
+    return [r for r in receiver.requests if json.loads(r["body"]).get("eventId") == event_id]
+  File "/private/tmp/claude-501/-Users-kenny-Desktop-Workspace-Code-MoR/ba6af14f-0f7f-4481-9091-938816c03267/scratchpad/local-e2e-s7/client_api_flow.py", line 135, in requests
+    if int(path.name.split("-", 1)[0]) < self.started_ns:
+ValueError: invalid literal for int() with base 10: '.1792702814468413011'
+# exit 1 end 2026-10-22T21:00:14Z

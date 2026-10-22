@@ -21,8 +21,9 @@ public interface PaymentIntentMapper {
     /** 查询 Intent 完整持久化事实。 */
     PaymentIntent findIntent(@Param("intentId") long intentId);
 
-    /** 仅终止原版本仍开放且没有活动或成功尝试的意图。 */
-    int terminateIntent(@Param("intent") PaymentIntent intent, @Param("now") Instant now);
+    /** 仅终止原版本仍开放且没有活动或成功尝试的意图，写入指定终态。 */
+    int terminateIntent(@Param("intent") PaymentIntent intent, @Param("status") IntentStatus status,
+        @Param("now") Instant now);
 
     /** 条件更新 Intent 的活动尝试与版本。 */
     int bindAttempt(@Param("paymentIntentId") Long paymentIntentId, @Param("activeAttemptId") Long activeAttemptId,

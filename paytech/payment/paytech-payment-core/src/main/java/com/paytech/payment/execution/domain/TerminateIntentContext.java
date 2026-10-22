@@ -5,6 +5,7 @@ import com.paytech.payment.execution.core.dal.dataobject.PaymentIntent;
 import com.paytech.payment.execution.core.enums.AttemptStatus;
 import com.paytech.payment.execution.core.enums.IntentStatus;
 import com.paytech.payment.execution.core.enums.TerminationDecision;
+import com.paytech.payment.execution.core.enums.TerminationReason;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -21,6 +22,12 @@ public class TerminateIntentContext {
      * <li>Intent 没有活动尝试时为空。</li>
      */
     private final PaymentAttempt attempt;
+
+    /**
+     * 终止原因
+     * <li>安全终止时按原因写入 CANCELLED 或 EXPIRED。</li>
+     */
+    private final TerminationReason reason;
 
     /** 根据已加载的资金事实判断能否终止，不改变对象状态。 */
     public TerminationDecision terminationDecision() {

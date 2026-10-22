@@ -131,4 +131,34 @@
             </otherwise>
         </choose>
     </update>
+    <select id="selectExpiredOrderIds" resultType="java.lang.Long" useCache="false" flushCache="true">
+        SELECT order_id FROM t_commerce_order
+        WHERE order_status IN ('CREATED','OPEN') AND expires_at &lt;= #{now} AND order_id &gt; #{afterOrderId}
+            AND MOD(order_id, #{shardTotal}) = #{shardIndex}
+        ORDER BY order_id LIMIT #{limit}
+    </select>
+    <update id="expire">
+        UPDATE t_commerce_order SET order_status='EXPIRED',status_reason_code='EXPIRY_REACHED',
+        version=version+1,update_time=#{now}
+        WHERE order_id=#{order.orderId} AND client_id=#{order.clientId} AND version=#{order.version}
+        AND order_status IN ('CREATED','OPEN') AND termination_requested_at IS NOT NULL AND paid_at IS NULL
+        AND expires_at &lt;= #{now}
+        <choose>
+            <when test="payment != null">
+                AND EXISTS (
+                SELECT 1 FROM t_order_payment_projection p
+                WHERE p.order_id=#{order.orderId} AND p.payment_intent_id=#{payment.paymentIntentId}
+                AND p.version=#{payment.version} AND p.successful_attempt_id IS NULL
+                AND p.captured_amount=0 AND p.intent_status &lt;&gt; 'SUCCEEDED'
+                )
+            </when>
+            <otherwise>
+                <if test="localOnly">
+                    AND NOT EXISTS (SELECT 1 FROM t_consumer_acceptance a JOIN t_consumer_contract c
+                    ON c.consumer_contract_id=a.consumer_contract_id WHERE c.order_id=#{order.orderId})
+                </if>
+                AND NOT EXISTS (SELECT 1 FROM t_order_payment_projection p WHERE p.order_id=#{order.orderId})
+            </otherwise>
+        </choose>
+    </update>
 </mapper>

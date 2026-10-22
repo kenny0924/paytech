@@ -31,4 +31,7 @@ public interface CheckoutSessionMapper {
     /** 与 Order 取消共用事务，以会话版本和原状态关闭 Session。 */
     int cancel(@Param("session") CheckoutSession session, @Param("now") Instant now);
 
+    /** 与 Order 过期共用事务，以会话版本和未终结状态把 Session 置为 EXPIRED。 */
+    int expire(@Param("session") CheckoutSession session, @Param("now") Instant now);
+
 }

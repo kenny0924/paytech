@@ -53,4 +53,14 @@ public class OrderPaymentProjectionRepositoryImpl implements OrderPaymentProject
         payment.setLastAttemptPayloadHash(payloadHash);
         payment.setVersion(payment.getVersion() + 1);
     }
+
+    /** 行数确认后同步投影状态与版本；投影对象不持有更新时间。 */
+    @Override
+    public void recordTerminated(OrderPaymentProjection payment, Instant now) {
+        if (orderPaymentProjectionMapper.recordTerminated(payment, now) != 1) {
+            throw new ConcurrentRequestException("过期时订单支付投影已改变");
+        }
+        payment.setIntentStatus(PaymentIntentStatus.EXPIRED);
+        payment.setVersion(payment.getVersion() + 1);
+    }
 }

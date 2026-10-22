@@ -1,6 +1,7 @@
 package com.paytech.acquiring.domainservice.repository.order;
 
 import java.time.Instant;
+import java.util.List;
 
 import com.paytech.acquiring.core.dal.dataobject.order.CommerceOrder;
 import com.paytech.acquiring.core.dal.dataobject.checkout.CheckoutSession;
@@ -44,4 +45,22 @@ public interface CommerceOrderRepository {
 
     /** 以订单版本将 OPEN 订单推进为 PAID，成功后同步状态、支付时刻与版本。 */
     void markPaid(CommerceOrder order, Instant paidAt, Instant now);
+
+    /**
+     * 按订单主键游标与分片读取一页已到期、仍为 CREATED/OPEN 的订单主键，按主键升序
+     *
+     * @param now 判断到期的时刻
+     * @param afterOrderId 上一页最后一个订单主键，首页为 0
+     * @param shardIndex 分片序号，从 0 开始
+     * @param shardTotal 分片总数
+     * @param limit 本页最多条数
+     * @return 订单主键，没有时为空列表
+     */
+    List<Long> findExpiredOrderIds(Instant now, long afterOrderId, int shardIndex, int shardTotal, int limit);
+
+    /**
+     * 按原订单及支付投影更新过期终态，与 Session、投影和 Webhook 的原子提交由 Service 负责。
+     * localOnly 为 true 时额外要求没有接受证据；否则调用方已取得 Payment 的确定终止结果或 Intent 不存在。
+     */
+    void expire(CommerceOrder order, OrderPaymentProjection payment, boolean localOnly, Instant now);
 }

@@ -1,0 +1,45 @@
+{
+ "scan-2026-10-22T20:52:33Z": {
+  "since": "2026-10-22T20:39:03Z",
+  "services": {
+   "acquiring-service": {
+    "lines": 244,
+    "chkTokenLike": 0,
+    "chkPrefix": 0,
+    "checkoutHost": 0,
+    "testPans": 0,
+    "luhnCardLikeRuns": 0,
+    "whsecPrefix": 0,
+    "ckCredentialLike": 0,
+    "errorLines": 0,
+    "warnLines": 14,
+    "warnByLogger": {
+     "trationDelegate$BeanPostProcessorChecker": 13,
+     "c.l.c.ServiceInstanceListSupplierBuilder": 1
+    },
+    "expiryWarnLines": 0,
+    "expiryWarnFieldKeys": []
+   },
+   "payment-service": {
+    "lines": 262,
+    "chkTokenLike": 0,
+    "chkPrefix": 0,
+    "checkoutHost": 0,
+    "testPans": 0,
+    "luhnCardLikeRuns": 0,
+    "whsecPrefix": 0,
+    "ckCredentialLike": 0,
+    "errorLines": 0,
+    "warnLines": 17,
+    "warnByLogger": {
+     "trationDelegate$BeanPostProcessorChecker": 13,
+     "iguration$LoadBalancerCaffeineWarnLogger": 1,
+     "c.p.f.w.error.MvcProblemExceptionMapper": 2,
+     "c.p.p.e.core.action.PayActionActor": 1
+    },
+    "expiryWarnLines": 0,
+    "expiryWarnFieldKeys": []
+   }
+  }
+ }
+}

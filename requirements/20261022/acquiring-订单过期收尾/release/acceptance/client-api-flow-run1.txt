@@ -1,0 +1,19 @@
+# start 2026-10-22T20:47:55Z E2E_TARGET=test cwd=/Users/kenny/Desktop/Workspace/Code-MoR-expiry/requirements/20261017/architecture-V2骨架与模块搬迁/verification/local-e2e
+PASS A01 注册 | HTTP 202 {'accepted': True, 'resendAfterSeconds': 60}
+PASS 验证链接（Mailpit 或本机铸造） | messageId=minted-locally challengeNo=db2395a8-fda5-405a-9e61-799beeaac143
+PASS A03 邮箱验证 | HTTP 200 {'verified': True, 'nextAction': 'LOGIN'}
+PASS A04 登录 | HTTP 200 accountId=239127658322018304 contextType=ACCOUNT refreshCookie=True
+PASS A09 上下文 | HTTP 200 emailMasked=w***@example.test allowedActions=['ONBOARDING', 'SELECT_WORKSPACE', 'LOGOUT']
+PASS A05 刷新（Cookie） | HTTP 200
+PASS C01 Start | HTTP 200 activeApplicationId=None applications=0
+PASS C04 创建个人申请 | HTTP 201 applicationId=239127713112236032 applicationNo=CA-239127713112236032 operation=CREATED
+PASS C03 表单目录 | HTTP 200 catalogStatus=AVAILABLE identifierTypes=[('PASSPORT', 'REQUIRED'), ('NATIONAL_ID', 'REQUIRED'), ('DRIVING_LICENSE', 'REQUIRED'), ('RESIDENCE_PERMIT', 'REQUIRED')] businessModels=['PHYSICAL_GOODS', 'DIGITAL_GOODS', 'SERVICES', 'SUBSCRIPTION', 'OTHER'] requirementsStatus=AVAILABLE requirements=[('ADDRESS', False), ('IDENTITY', True), ('OTHER', False)]
+PASS C06 保存资料（基础/地址/证件/经营） | HTTP 200 fields=21 operation=SAVED
+PASS C06 保存联系邮箱/电话（CCT→Vault STABLE） | HTTP 200 fields=2 operation=SAVED
+PASS C05 材料要求 | materialSubjects=[('239127713112236034', 'AVAILABLE', ['ADDRESS', 'IDENTITY', 'OTHER'])]
+FAIL F01 上传授权 IDENTITY | HTTP 400 code=INVALID_REQUEST requestId=623d2f0f-4b5d-4b0d-8650-f25abcf121e4 detail=请求参数不正确
+中止于：F01 上传授权 IDENTITY
+DATA {}
+
+合计 12/14 通过；GAP 0 项（已知生产缺口，不计入）
+# exit 1 end 2026-10-22T20:48:10Z

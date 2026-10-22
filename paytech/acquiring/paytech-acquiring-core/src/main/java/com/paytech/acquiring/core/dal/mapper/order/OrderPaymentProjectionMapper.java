@@ -22,4 +22,7 @@ public interface OrderPaymentProjectionMapper {
         @Param("capturedAmount") BigDecimal capturedAmount, @Param("eventKey") String eventKey,
         @Param("payloadHash") String payloadHash, @Param("sourceVersion") long sourceVersion,
         @Param("eventTime") Instant eventTime, @Param("now") Instant now);
+
+    /** 以投影版本和无成功、未捕获条件记录 Intent 已因订单过期终止。 */
+    int recordTerminated(@Param("payment") OrderPaymentProjection payment, @Param("now") Instant now);
 }

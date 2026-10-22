@@ -30,18 +30,6 @@ public class GetIntentProcessor extends AbstractProcessor<GetIntentRequest, GetI
         }
 
         // 响应处理
-        return processResponse(intent);
-    }
-
-    /** 从同一条 Intent 记录组装响应。 */
-    GetIntentResponse processResponse(PaymentIntent intent) {
-        GetIntentResponse response = new GetIntentResponse();
-        response.setIntentId(intent.getPaymentIntentId());
-        response.setSourceType(intent.getSourceType());
-        response.setSourceId(intent.getSourceId());
-        response.setStatus(intent.getIntentStatus());
-        response.setActiveAttemptId(intent.getActiveAttemptId());
-        response.setSuccessfulAttemptId(intent.getSuccessfulAttemptId());
-        return response;
+        return GetIntentResponse.of(intent);
     }
 }

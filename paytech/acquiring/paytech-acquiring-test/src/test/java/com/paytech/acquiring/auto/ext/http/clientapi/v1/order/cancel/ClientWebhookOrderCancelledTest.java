@@ -20,7 +20,7 @@ import com.paytech.acquiring.domain.enums.CheckoutSessionStatus;
 import com.paytech.acquiring.domain.enums.ClientWebhookEventType;
 import com.paytech.acquiring.domain.enums.OrderStatus;
 import com.paytech.acquiring.domain.webhook.ClientWebhookEvent;
-import com.paytech.acquiring.integration.payment.PaymentTerminationClient;
+import com.paytech.acquiring.integration.payment.PaymentTerminationClient.Status;
 import com.paytech.acquiring.test.base.MockTestBase;
 import com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.Fixture;
 import com.paytech.acquiring.test.builder.order.GetOrderDataBuilder.Payment;
@@ -86,8 +86,7 @@ class ClientWebhookOrderCancelledTest extends MockTestBase {
     void test_cancelAfterPaymentTermination() {
         fixture.setPayment(Payment.builder().build());
         data.mock(fixture);
-        terminations.mockResult(orderId(),
-            new PaymentTerminationClient.Result(orderId(), PaymentTerminationClient.Status.TERMINATED));
+        terminations.mockDecision(orderId(), Status.TERMINATED);
 
         invoke().assertCancelled(orderNo(), true, NOW);
 
@@ -96,6 +95,7 @@ class ClientWebhookOrderCancelledTest extends MockTestBase {
         webhooks.assertFrozen(submission, ClientWebhookEventType.ORDER_CANCELLED, eventId(), clientId(),
             "2026-09-08T00:00:00Z", expectedObject(true, checker.order(orderId()).getVersion()));
         assertEquals(1, terminations.calls().size());
+        assertEquals(Long.toString(orderId()), terminations.calls().getFirst().intentId());
     }
 
     /** Payment 终止未决时订单保持开放，不登记也不提交。 */
@@ -103,8 +103,7 @@ class ClientWebhookOrderCancelledTest extends MockTestBase {
     void test_pendingTerminationNotSubmitted() {
         fixture.setPayment(Payment.builder().build());
         data.mock(fixture);
-        terminations.mockResult(orderId(),
-            new PaymentTerminationClient.Result(orderId(), PaymentTerminationClient.Status.PENDING));
+        terminations.mockDecision(orderId(), Status.PENDING);
 
         invoke().assertPending(orderNo());
 

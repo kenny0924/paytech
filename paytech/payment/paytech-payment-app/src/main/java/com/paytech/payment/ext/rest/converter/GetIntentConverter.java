@@ -5,6 +5,7 @@ import java.util.Objects;
 import org.springframework.stereotype.Component;
 
 import com.paytech.payment.api.execution.response.GetIntentResponseBody;
+import com.paytech.payment.execution.service.processor.request.GetIntentBySourceRequest;
 import com.paytech.payment.execution.service.processor.request.GetIntentRequest;
 import com.paytech.payment.execution.service.processor.response.GetIntentResponse;
 
@@ -15,6 +16,15 @@ public class GetIntentConverter {
     public GetIntentRequest convertRequest(String intentId, String clientId) {
         GetIntentRequest request = new GetIntentRequest();
         request.setIntentId(Long.valueOf(intentId));
+        request.setClientId(Long.valueOf(clientId));
+        return request;
+    }
+
+    /** 将已通过入口校验的来源业务与 Client ID 转成内部请求。 */
+    public GetIntentBySourceRequest convertBySourceRequest(String sourceType, String sourceId, String clientId) {
+        GetIntentBySourceRequest request = new GetIntentBySourceRequest();
+        request.setSourceType(sourceType);
+        request.setSourceId(Long.valueOf(sourceId));
         request.setClientId(Long.valueOf(clientId));
         return request;
     }

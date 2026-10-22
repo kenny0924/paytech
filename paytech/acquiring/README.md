@@ -228,7 +228,7 @@ TODO(Payment)：正式 PAY-I04、结果查询及 MQ 事实。
 ## Client Webhook 业务事件
 
 `order.paid`（`OrderPaymentServiceImpl.applySucceeded`）、`order.cancelled`（`OrderCancellationServiceImpl.cancel`）、
-`refund.created`（`RefundServiceImpl.saveCreateRefundContext`）在业务变更的同一事务里经
+`order.expired`（`OrderExpiryServiceImpl.expire`）、`refund.created`（`RefundServiceImpl.saveCreateRefundContext`）在业务变更的同一事务里经
 `ClientWebhookSubmissionHandler.buildEvent` 冻结 Envelope 与两个 RFC 8785 Hash，登记 `CLIENT_WEBHOOK_REQUESTED`
 补偿任务；提交后 Handler 核对 Hash，经 `WebhookEventApi` 调 Platform 内部受理接口，204 才完成。
 5xx、网络错误、404 可重试；400/409/422 记为明确失败并输出 WARN。普通日志只记事件 ID 与类型。
@@ -238,8 +238,19 @@ TODO(Payment)：正式 PAY-I04、结果查询及 MQ 事实。
 | `paytech.http.client.groups.platform-support-service.base-url` | `lb://platform-support-service/platform-support` |
 | 连接 / 读取超时 | 2 秒 / 5 秒 |
 
-Platform 需开启 `webhook.enabled`，并在 `webhook.http.callers.commerce-service` 中允许上述三种事件。
-退款终态与 `order.expired`、`order.funds_available` 未实现。范围与验证见
+| 事件 | Event ID | `data.object` 字段 |
+|---|---|---|
+| `order.cancelled` | `evt_<orderNo>_cancelled` | `orderNo`、`clientOrderId`、`orderStatus=CANCELLED`、`checkoutStatus`（仅有会话时）、`reasonCode=CLIENT_REQUESTED`、`cancelledAt`、`version` |
+| `order.expired` | `evt_<orderNo>_expired` | `orderNo`、`clientOrderId`、`orderStatus=EXPIRED`、`checkoutStatus=EXPIRED`（仅有会话时，Direct Pay 省略）、`reasonCode=EXPIRY_REACHED`、`expiredAt`、`version` |
+
+`order.expired` 由订单到期扫描（XXL Handler `orderExpiryScan`）产生：到期只阻止新支付；扫描以原因 `ORDER_EXPIRED`
+调用 Payment 终止 Intent，确认 TERMINATED / ALREADY_TERMINATED 或 Intent 不存在后，才在同一事务把订单、会话、支付投影
+置为 EXPIRED 并登记事件；Payment 返回 PENDING 时订单保持 OPEN、不发事件，已授权或已支付时不改写。`expiredAt` 取订单
+`expires_at`（业务到期时刻，不是实际写入时刻，后者只在 `update_time`）；`version` 为写入 EXPIRED 后的订单版本。重复扫描
+与多实例并发只发送一次。范围与验证见[订单与会话过期收尾](../../requirements/20261022/acquiring-订单过期收尾/technique.md)。
+
+Platform 需开启 `webhook.enabled`，并在 `webhook.http.callers.acquiring-service` 中允许上述事件。
+退款终态与 `order.funds_available` 未实现。范围与验证见
 [Commerce Webhook 业务事件](../../requirements/20261016/commerce-Webhook业务事件/delivery.md)。
 
 Foundation 扫描入口已可恢复到期重试与过期租约，本期未启用外部 XXL-Job 调度。任务达到默认重试上限时

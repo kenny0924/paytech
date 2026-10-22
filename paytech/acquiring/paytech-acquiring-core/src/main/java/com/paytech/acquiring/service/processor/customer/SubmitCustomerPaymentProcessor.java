@@ -10,6 +10,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
+import com.paytech.acquiring.core.constant.Locks;
 import com.paytech.acquiring.core.dal.dataobject.checkout.CheckoutSession;
 import com.paytech.acquiring.core.dal.dataobject.customer.CheckoutNetworkEvidence;
 import com.paytech.acquiring.core.dal.dataobject.customer.ConsumerAcceptance;
@@ -91,7 +92,7 @@ public class SubmitCustomerPaymentProcessor
         if (orderId == null) {
             throw new FailException(CHECKOUT_NOT_FOUND);
         }
-        return LockCommand.tryLock("order:" + orderId);
+        return LockCommand.tryLock(Locks.getOrderLock(orderId));
     }
 
     /** 每次请求按当前业务事实受理，提交本地事务后调用 Payment。 */

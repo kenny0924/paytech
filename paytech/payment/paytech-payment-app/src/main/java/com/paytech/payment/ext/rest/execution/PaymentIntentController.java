@@ -15,12 +15,14 @@ import com.paytech.payment.api.execution.response.GetSubmissionResponseBody;
 import com.paytech.payment.api.execution.response.PayResponseBody;
 import com.paytech.payment.api.execution.response.TerminateIntentResponseBody;
 import com.paytech.payment.execution.service.processor.CreateIntentProcessor;
+import com.paytech.payment.execution.service.processor.GetIntentBySourceProcessor;
 import com.paytech.payment.execution.service.processor.GetIntentProcessor;
 import com.paytech.payment.execution.service.processor.GetSubmissionProcessor;
 import com.paytech.payment.execution.service.processor.PayProcessor;
 import com.paytech.payment.execution.service.processor.RefreshSubmissionProcessor;
 import com.paytech.payment.execution.service.processor.TerminateIntentProcessor;
 import com.paytech.payment.execution.service.processor.request.CreateIntentRequest;
+import com.paytech.payment.execution.service.processor.request.GetIntentBySourceRequest;
 import com.paytech.payment.execution.service.processor.request.GetIntentRequest;
 import com.paytech.payment.execution.service.processor.request.GetSubmissionRequest;
 import com.paytech.payment.execution.service.processor.request.PayRequest;
@@ -47,6 +49,7 @@ public class PaymentIntentController implements PaymentIntentApi {
     final PayProcessor payProcessor;
     final GetIntentConverter getIntentConverter;
     final GetIntentProcessor getIntentProcessor;
+    final GetIntentBySourceProcessor getIntentBySourceProcessor;
     final GetSubmissionConverter getSubmissionConverter;
     final GetSubmissionProcessor getSubmissionProcessor;
     final RefreshSubmissionProcessor refreshSubmissionProcessor;
@@ -69,6 +72,16 @@ public class PaymentIntentController implements PaymentIntentApi {
     public ResponseEntity<GetIntentResponseBody> getIntent(String intentId, String clientId) {
         GetIntentRequest request = getIntentConverter.convertRequest(intentId, clientId);
         GetIntentResponse response = getIntentProcessor.process(request);
+        GetIntentResponseBody responseBody = getIntentConverter.convertResponse(response);
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(responseBody);
+    }
+
+    /** 按来源业务查询支付意图，正常结果统一返回 200。 */
+    @Override
+    public ResponseEntity<GetIntentResponseBody> getIntentBySource(String sourceType, String sourceId,
+        String clientId) {
+        GetIntentBySourceRequest request = getIntentConverter.convertBySourceRequest(sourceType, sourceId, clientId);
+        GetIntentResponse response = getIntentBySourceProcessor.process(request);
         GetIntentResponseBody responseBody = getIntentConverter.convertResponse(response);
         return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(responseBody);
     }

@@ -67,6 +67,15 @@ Commerce 不建设主动履约域。支付成功后的 Order 保持 `PAID`；退
 
 `commerce_order` 冻结 `client_id + client_order_id`、Operating Entity/来源、Industry/MCC、金额币种和 `expires_at`。`uk_order_client_order(client_id,client_order_id)` 永久阻止同一 Client 重用业务标识；它不是传输幂等键。`order_status IN (CREATED,OPEN,PAID,CANCELLED,EXPIRED)`，仅支付成功写 `paid_at`，不含 `fulfilled_at` 或履约状态。可空 `status_reason_code` 来自 Commerce Order Status Reason Catalog，结构化说明当前取消、过期或其他需要解释的终态；它不保存历史，非终态通常为空。
 
+Commerce Order Status Reason Catalog 现行取值（2026-10-22）：
+
+| `status_reason_code` | 对应终态 | 写入时机 |
+|---|---|---|
+| `CLIENT_REQUESTED` | `CANCELLED` | Client API Cancel 在 Payment 确认 Intent 已安全终止（或 Intent 不存在）后，与订单 `cancelled_at`、Session `CANCELLED` 同一本地事务写入 |
+| `EXPIRY_REACHED` | `EXPIRED` | 到期扫描在 Payment 确认终止（TERMINATED / ALREADY_TERMINATED，或 Intent 不存在）后，与 Session `EXPIRED`、支付投影 `EXPIRED`（各自存在时）和 `order.expired` 登记同一本地事务写入；Payment 仍 PENDING、已授权或已支付时不写，订单保持 OPEN。过期终态时刻取 `expires_at`，不另设 `expired_at` 列 |
+
+新增取值须先登记本目录；`order.cancelled` / `order.expired` 的 `reasonCode` 与该列一致。依据：[订单与会话过期收尾](../../requirements/20261022/acquiring-订单过期收尾/technique.md)。
+
 `order_context` 每 Order 一行且不可变，保存 `commercial_context_time`、Assignment、CCT V5 `cct_commercial_context_hash`、Client Pricing Scope、可选 Partner Share Scope、可选 Platform Service Charge Scope、可选 Platform Service Party、Risk Assessment、Finance Tax Snapshot/Hash、Consumer Country 和 Locale。`platform_service_charge_scope_id` 是 CCT-I13 V5 返回的 `PLATFORM_SERVICE_CHARGE` Scope 稳定标识，`platform_service_party_id` 是同一 Partner Agreement 唯一 `PLATFORM_SIGNATORY` 的法律 Party 稳定标识；二者只用于跨系统事实导航，不建立跨库或本库关系。它不保存 Commerce 自建 Snapshot Schema/Hash，不复制 Order 分类/金额、Tax Line 或 Term Component。`order_legal` 与 `order_item` 在创建事务一并插入并冻结。
 
 CreateOrder 必须原样冻结 CCT-I13 V5 的条件元组：PARTNER 来源时，`commerce_order.local_partner_id`、`order_context.partner_share_scope_id`、`order_context.platform_service_charge_scope_id`、`order_context.platform_service_party_id` 四项成组非空；非 PARTNER 来源四项成组为空。任一缺项、额外值或多义 `PLATFORM_SIGNATORY` 都失败关闭，不允许 Commerce 猜测平台主体或费率。

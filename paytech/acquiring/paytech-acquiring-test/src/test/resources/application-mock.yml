@@ -217,6 +217,13 @@ acquiring:
     # 两者均无代码默认值且必填，范围 0～31；同一区域内 worker-id 必须每实例唯一。
     region-id: 0
     worker-id: 0
+  order-expiry:
+    # 过期扫描每页订单数，默认 200，范围 1—1000；测试按需经 OrderExpiryConfigMocker 临时覆盖，每例恢复。
+    batch-size: 200
+    # 单次执行最多页数，默认 50，范围 1—1000；限制单次任务时长。
+    max-batches: 50
+    # 终止意图写入后仍 PENDING 的告警阈值，默认 24h；超过后每轮记一条 WARN，订单保持 OPEN。
+    pending-alert-after: 24h
   test:
     external:
       # 测试专用运行时字段；EnableMockHttpServer 自动注册 Loopback 随机端口。
