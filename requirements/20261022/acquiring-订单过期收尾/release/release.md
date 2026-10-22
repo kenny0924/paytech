@@ -288,6 +288,8 @@ AC-03、AC-04、AC-05、AC-09（多实例）、AC-10 沿用阶段 4 与阶段 5 
 | 20:41—20:42:23 | S5 XXL 登记 | Admin API `/jobinfo/insert` → 任务 **23**（字段与第 7 节一致，库内核对）；首次 `/jobinfo/start` 用了 `id` 参数得 400，紧接着 XXL Admin 于 20:41:31 自行重启（累计第 13 次，阶段 6 已观察到反复重启）；恢复后以 `ids[]=23` 启用成功，`trigger_status=1`，下次 20:43:00 |
 | 20:43:01—20:44:02 | S6 第一轮扫描 | 执行器日志：`scanned 16, expired 16, pending 0, already paid 0, reversal required 0, skipped 0, retry 0, failed 0`；16 笔订单 EXPIRED / `EXPIRY_REACHED` / `termination_requested_at` 已写 / `cancelled_at` 空，16 个会话 EXPIRED；补偿表只剩原有 8 条 FAILED；Platform `order.expired` 16 行、`t_webhook_delivery` 0 行；payment 日志无 terminate / by-source 请求。20:44:01 第二轮 `scanned 0` |
 
+| 2026-10-23 | S8 提交与重建核对 | 本地提交 `623916ac`（父 `32dbdd18`，未推送）。在 detached 工作目录检出该提交，`./mvnw -B -o -DskipTests -pl acquiring/paytech-acquiring-app,payment/paytech-payment-app -am clean package` 后 `jar_diff.py`：acquiring 62698 条目、payment 62317 条目均 `+0 −0 ~0`，**提交与 mor-test 运行内容一致**，不需要重新部署 |
+
 ### 11.1 S7 验收（2026-10-22 20:47Z—21:03Z，执行代理 EXP-S7）
 
 证据目录 `release/acceptance/`：`accept_terminate.py`（P-1、3DS 回归、只读核对、泄漏检索，import 复用 3DS 的 `mt.py`、`accept_3ds.py`、`accept_regression.py`、`accept_leak_scan.py`，结果写本目录，3DS 目录下的文件未改动）、`accept-terminate.json`、`client-api-flow-run1.txt`（第一轮）、`client-api-flow.txt`（第二轮）、`client-api-flow-run2-supplement.json`、`acceptance_flow-upload-contract.patch`、`accept-3ds-regression.json`、`leak-scan.json`。前提：`mor-test-webhook-receiver-1` 已运行（healthy），未启停任何容器。

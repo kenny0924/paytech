@@ -11,7 +11,7 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
-## acquiring 订单与会话过期收尾（2026-10-23，已部署 mor-test，已本地提交，未推送）
+## acquiring 订单与会话过期收尾（2026-10-23，已部署 mor-test，已本地提交 `623916ac`，未推送；提交重建 JAR 与运行一致）
 
 - **范围：** [需求](<../requirements/20261022/acquiring-订单过期收尾/requirement.md>)、[技术方案](<../requirements/20261022/acquiring-订单过期收尾/technique.md>)、[交付记录](<../requirements/20261022/acquiring-订单过期收尾/delivery.md>)、[发布记录](<../requirements/20261022/acquiring-订单过期收尾/release/release.md>)。无 DDL、无 Platform 路由注册；过期终态时刻取 `expires_at`，原因码 `EXPIRY_REACHED` 登记到 [Commerce Order Status Reason Catalog](./database/COMMERCE_DATABASE.md)。
 - **Implemented：** payment 终止支付意图增加原因 `ORDER_EXPIRED`（`ORDER_CANCELLED` / `OPERATING_ENTITY_CLOSED` 落 CANCELLED，`ORDER_EXPIRED` 落 EXPIRED），新增 `GET /payment-execution/v1/intents/by-source/{sourceType}/{sourceId}`；acquiring `PaymentTerminationClientImpl` 取代固定实现（无投影时先按来源定位，只有 404 视为 Intent 不存在），Cancel 对 ALREADY_PAID 返回 409 `REVERSAL_REQUIRED`；XXL Handler `orderExpiryScan`（`OrderExpiryJobHandler`，分片取模，`acquiring.order-expiry.*` 默认 200 / 50 / 24h）→ `ScanExpiredOrdersProcessor` → `ExpireOrderProcessor`（订单锁 TRY_LOCK，与支付提交同锁）：无 Intent 且无接受证据本地收尾；否则先写终止请求，再以 `ORDER_EXPIRED` 终止，TERMINATED / ALREADY_TERMINATED / 404 后同一事务把订单、会话、投影置 EXPIRED 并登记 `order.expired`（`evt_<orderNo>_expired`）；PENDING 保持 OPEN、超阈值 WARN；ALREADY_PAID / REVERSAL_REQUIRED 不改写；Payment 不可用或锁冲突下轮重试。验收脚本 V2 `client_api_flow.py` 新增 `flow_expired`（仅 `E2E_TARGET=test`）；本机启动器 Platform Webhook 调用方加入 `order.expired`。
