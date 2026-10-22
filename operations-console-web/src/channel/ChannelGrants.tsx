@@ -12,7 +12,8 @@ import { ChangeTrail, ChannelNote, CommandModal, StatusChangeModal, StatusTag } 
 import { useChannelCommand } from './useChannelCommand';
 
 interface Props {
-  channel: Channel; implemented: ImplementedApi[] | undefined; canGrant: boolean; onAuthorizationChanged: () => void; onChanged: () => void;
+  channel: Channel; implemented: ImplementedApi[] | undefined; grants: ChannelGrantsState; canGrant: boolean; onAuthorizationChanged: () => void;
+  onChanged: () => void;
 }
 type Step = { kind: 'create'; callerService?: string; standardApiCode?: string } | { kind: 'status'; grant: CallGrant } | null;
 
@@ -32,6 +33,8 @@ export function useChannelGrants(channelId: string, enabled = true) {
   return { grants, failure, refresh: () => setRevision(value => value + 1) };
 }
 
+export type ChannelGrantsState = ReturnType<typeof useChannelGrants>;
+
 const grantColors: Record<GrantStatus, string> = { ACTIVE: 'green', DISABLED: 'default' };
 const operator = (time: string, id: string | null) => `${localTime(time)}${id ? ` · 运营 ${id}` : ''}`;
 
@@ -39,18 +42,18 @@ const operator = (time: string, id: string | null) => `${localTime(time)}${id ? 
  * 调用授权页签（画板 07–09）：按「调用方服务 × 标准 API」放行通用入口调用。矩阵 / 列表两种视图写入 ?view=；
  * 写操作需要「调用授权」按钮，没有时只读。授权不删除：停用后再启用沿用同一条记录。
  */
-export function ChannelGrants({ channel, implemented, canGrant, onAuthorizationChanged, onChanged }: Props) {
+export function ChannelGrants({ channel, implemented, grants: all, canGrant, onAuthorizationChanged, onChanged }: Props) {
   const location = useLocation(); const navigate = useNavigate();
   const routes = workspaceRoutes(channel.channelId);
   const view = grantView(new URLSearchParams(location.search).get('view'));
-  const all = useChannelGrants(channel.channelId);
   const [step, setStep] = useState<Step>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [listRevision, setListRevision] = useState(0);
   const writable = canGrant && channel.status !== 'CLOSED';
   const matrix = useMemo(() => all.grants && implemented ? grantMatrix(all.grants, implemented) : null, [all.grants, implemented]);
   const selected = all.grants?.find(grant => grant.callGrantId === selectedId) ?? null;
-  const reload = () => { setStep(null); all.refresh(); setListRevision(value => value + 1); onChanged(); };
+  // 全部授权由渠道详情读取并传入（onChanged 中刷新），本页不重复请求：授权列表路由的 Gateway 并发上限为每人 2
+  const reload = () => { setStep(null); setListRevision(value => value + 1); onChanged(); };
   return <div className="channel-grants">
     <div className="channel-section-head">
       <div><h2>调用授权</h2><div className="channel-cell-meta">按「调用方服务 × 标准 API」放行；未授权调用返回 403 CHANNEL_CALL_NOT_GRANTED，不发出外部请求</div></div>

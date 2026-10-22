@@ -1,0 +1,9 @@
+{
+ "channelId": "238920450212732928",
+ "channelCode": "S7P2_SVC",
+ "standardApiCode": "S7P2_PING",
+ "apiCode": "S7P2_PING_CALL",
+ "callerService": "counterparty-service",
+ "createdAt": "2026-10-22T07:04:34.108515+00:00",
+ "callGrantId": "238920461801594880"
+}

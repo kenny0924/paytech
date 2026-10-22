@@ -1,0 +1,86 @@
+{
+ "results": [
+  {
+   "page": "登录",
+   "ok": true,
+   "note": "管理员登录"
+  },
+  {
+   "page": "渠道列表 · 全部",
+   "ok": true,
+   "note": "期望文本「S7P2_SVC」可见"
+  },
+  {
+   "page": "渠道列表 · 支付",
+   "ok": true,
+   "note": "期望文本「DEMO_NI」可见"
+  },
+  {
+   "page": "渠道列表 · 服务",
+   "ok": true,
+   "note": "期望文本「S7P2_SVC」可见"
+  },
+  {
+   "page": "支付渠道 · 概览",
+   "ok": true,
+   "note": "期望文本「出站地址」可见"
+  },
+  {
+   "page": "支付渠道 · 协议配置",
+   "ok": true,
+   "note": "期望文本「标准 API 实现」可见"
+  },
+  {
+   "page": "支付渠道 · 沙箱验证",
+   "ok": true,
+   "note": "期望文本「验证账号」可见"
+  },
+  {
+   "page": "服务渠道 · 概览",
+   "ok": true,
+   "note": "期望文本「s7p2-acceptance.example.invalid」可见"
+  },
+  {
+   "page": "服务渠道 · 凭据",
+   "ok": true,
+   "note": "期望文本「凭据」可见"
+  },
+  {
+   "page": "服务渠道 · 调用授权矩阵",
+   "ok": true,
+   "note": "期望文本「counterparty-service」可见"
+  },
+  {
+   "page": "服务渠道 · 调用授权列表",
+   "ok": true,
+   "note": "期望文本「counterparty-service」可见"
+  },
+  {
+   "page": "出站地址编辑弹窗",
+   "ok": true,
+   "note": "打开后取消，不保存"
+  },
+  {
+   "page": "旧接入方地址跳转",
+   "ok": true,
+   "note": "/channel/channels/236063197520543744"
+  }
+ ],
+ "consoleErrors": [],
+ "badResponses": [],
+ "screens": [
+  "p2-01-list-all.png",
+  "p2-02-list-payment.png",
+  "p2-03-list-service.png",
+  "p2-04-payment-overview.png",
+  "p2-05-payment-protocol.png",
+  "p2-06-payment-verify.png",
+  "p2-07-service-overview.png",
+  "p2-08-service-credential.png",
+  "p2-09-service-grants-matrix.png",
+  "p2-10-service-grants-list.png",
+  "p2-11-endpoints-edit.png",
+  "p2-12-legacy-redirect.png"
+ ],
+ "passed": true
+}

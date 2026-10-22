@@ -1,0 +1,21 @@
++-----------------------------------------------------------------------+----+
+| k                                                                     | v  |
++-----------------------------------------------------------------------+----+
+| b129_permission(=0)                                                   |  0 |
+| b129_role_permission(=0)                                              |  0 |
+| b129_console_resource(=0)                                             |  0 |
+| b129_gateway_route(=0)                                                |  0 |
+| b129_route_header(=0)                                                 |  0 |
+| b129_query_param(=0)                                                  |  0 |
+| b129_guard_rule(=0)                                                   |  0 |
+| b92_read_manage_permission_active(=2)                                 |  2 |
+| b92_channel_menu_active(=1，名称 渠道与账号)                  |  1 |
+| b92_channel_list_route_active(=1)                                     |  1 |
+| b92_admin_grants_active(=2)                                           |  2 |
+| b71_integration_crud_routes(=5，记录其中 ACTIVE 数)             |  5 |
+| b71_integration_crud_routes_active(记录；第 2 段停用这些行) |  5 |
+| b71_integration_resources(=2，记录其中 ACTIVE 数)               |  2 |
+| b71_integration_resources_active(记录；第 2 段停用这些行)   |  2 |
+| target_900000000000000001(=1)                                         |  1 |
+| platform_admin_version(记录；第 3 段后 +1)                      | 42 |
++-----------------------------------------------------------------------+----+

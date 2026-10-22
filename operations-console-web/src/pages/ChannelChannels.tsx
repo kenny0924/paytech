@@ -315,10 +315,11 @@ function ChannelDetail({ channelId, resources, onAuthorizationChanged }: Props &
     {tab === 'credential' && (accounts ? <ChannelCredential channel={channel} accounts={accounts} canManage={canManage} canConfigure={canConfigure}
       onAuthorizationChanged={onAuthorizationChanged} onChanged={reload} /> : <Loading />)}
     {tab === 'mids' && <MidTab key={revision} channelId={channelId} />}
-    {tab === 'protocol' && <ChannelProtocol channel={channel} canManage={canProtocol} onAuthorizationChanged={onAuthorizationChanged} />}
+    {tab === 'protocol' && <ChannelProtocol channel={channel} canManage={canProtocol} implementationCount={implementations.data?.length}
+      onAuthorizationChanged={onAuthorizationChanged} onImplementationsChanged={implementations.refresh} />}
     {tab === 'verify' && <ExternalApiFrame><VerifyTab key={location.search} channelId={channel.channelId} code={channel.channelCode} canManage={canProtocol}
       onAuthorizationChanged={onAuthorizationChanged} /></ExternalApiFrame>}
-    {tab === 'grants' && <ChannelGrants channel={channel} implemented={implemented} canGrant={canGrant} onAuthorizationChanged={onAuthorizationChanged}
+    {tab === 'grants' && <ChannelGrants channel={channel} implemented={implemented} grants={grants} canGrant={canGrant} onAuthorizationChanged={onAuthorizationChanged}
       onChanged={() => { setRevision(v => v + 1); grants.refresh(); }} />}
     {tab === 'changes' && <ChannelChanges channel={channel} accounts={accounts} grants={grants.grants} />}
     {step?.kind === 'edit' && <EditChannelModal channel={channel} onClose={() => setStep(null)} onAuthorizationChanged={onAuthorizationChanged} onSaved={reload} />}

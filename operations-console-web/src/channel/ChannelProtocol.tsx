@@ -19,7 +19,10 @@ import type { Channel } from './channel';
 import { protocolSection, protocolSectionLabels, protocolSections, workspaceRoutes } from './channelWorkspace';
 import type { ProtocolSection, WorkspaceRoutes } from './channelWorkspace';
 
-interface Props { channel: Channel; canManage: boolean; onAuthorizationChanged: () => void }
+interface Props {
+  channel: Channel; canManage: boolean; implementationCount: number | undefined; onAuthorizationChanged: () => void;
+  onImplementationsChanged: () => void;
+}
 interface SectionProps { code: string; routes: WorkspaceRoutes; canManage: boolean; onAuthorizationChanged: () => void; onChanged: () => void }
 
 /** 原子 API 被哪些标准 API 实现的哪些节点引用。 */
@@ -38,19 +41,18 @@ function scriptReferences(code: string, scriptCode: string, routes: WorkspaceRou
 
 const noReferences = () => Promise.resolve<Reference[]>([]);
 
-/** 本渠道协议对象的数量，用于子导航计数；读取失败时不显示计数。 */
+/**
+ * 原子 API 与公共脚本的数量，用于子导航计数；读取失败时不显示计数。实现数取自渠道详情已读取的实现列表，
+ * 不再重复请求：同一路由的 Gateway 并发上限为每人 2，详情与实现列表已各占 1 个。
+ */
 function useProtocolCounts(code: string, revision: number) {
   const [counts, setCounts] = useState<Partial<Record<ProtocolSection, number>>>({});
   useEffect(() => {
     const controller = new AbortController();
     const total = (path: string) => session.request<{ total: number }>(`${path}?page=1&size=10`, { signal: controller.signal })
       .then(value => (Number.isSafeInteger(value?.total) ? value.total : undefined)).catch(() => undefined);
-    void Promise.all([
-      session.request(`${integrationPath}/${code}/implementations`, { signal: controller.signal }, decodeImplementationList)
-        .then(items => items.length).catch(() => undefined),
-      total(`${integrationPath}/${code}/apis`), total(`${integrationPath}/${code}/scripts`),
-    ]).then(([implementations, apis, scripts]) => {
-      if (!controller.signal.aborted) setCounts({ implementations, apis, scripts });
+    void Promise.all([total(`${integrationPath}/${code}/apis`), total(`${integrationPath}/${code}/scripts`)]).then(([apis, scripts]) => {
+      if (!controller.signal.aborted) setCounts({ apis, scripts });
     });
     return () => controller.abort();
   }, [code, revision]);
@@ -61,13 +63,14 @@ function useProtocolCounts(code: string, revision: number) {
  * 协议配置页签（画板 10）：左侧子导航（标准 API 实现 / 原子 API / 公共脚本），右侧为原「接入方」页的列表；
  * 编辑器（字段表、脚本、流程画布、字段映射）原样复用，位于 /channel/channels/:channelId/protocol/:section/:code。
  */
-export function ChannelProtocol({ channel, canManage, onAuthorizationChanged }: Props) {
+export function ChannelProtocol({ channel, canManage, implementationCount, onAuthorizationChanged, onImplementationsChanged }: Props) {
   const location = useLocation(); const navigate = useNavigate();
   const section = protocolSection(new URLSearchParams(location.search).get('section'));
   const routes = workspaceRoutes(channel.channelId);
   const [revision, setRevision] = useState(0);
-  const counts = useProtocolCounts(channel.channelCode, revision);
-  const props: SectionProps = { code: channel.channelCode, routes, canManage, onAuthorizationChanged, onChanged: () => setRevision(value => value + 1) };
+  const counts: Partial<Record<ProtocolSection, number>> = { ...useProtocolCounts(channel.channelCode, revision), implementations: implementationCount };
+  const onChanged = () => { setRevision(value => value + 1); onImplementationsChanged(); };
+  const props: SectionProps = { code: channel.channelCode, routes, canManage, onAuthorizationChanged, onChanged };
   return <ExternalApiFrame className="channel-protocol">
     <nav className="channel-subnav" aria-label="协议配置">
       {protocolSections.map(item => <button type="button" key={item} className={item === section ? 'is-active' : ''}

@@ -1,0 +1,124 @@
+--------------
+SET NAMES utf8mb4
+--------------
+
+Query OK, 0 rows affected (0.00 sec)
+
+--------------
+-- ---------------------------------------------------------------------------
+--------------
+
+Query OK, 0 rows affected (0.00 sec)
+
+--------------
+-- 第 3 段：mor-test 激活（新增 4 条 Route、按钮「调用授权」与 PLATFORM_ADMIN 授权），递增 PLATFORM_ADMIN 角色版本使会话重新计算导航。
+--------------
+
+Query OK, 0 rows affected (0.00 sec)
+
+--------------
+-- 预期影响行数：4 / 1 / 1 / 1。
+--------------
+
+Query OK, 0 rows affected (0.00 sec)
+
+--------------
+-- ---------------------------------------------------------------------------
+--------------
+
+Query OK, 0 rows affected (0.00 sec)
+
+--------------
+START TRANSACTION
+--------------
+
+Query OK, 0 rows affected (0.00 sec)
+
+--------------
+SET @channel_grant_act_time = UTC_TIMESTAMP(6)
+--------------
+
+Query OK, 0 rows affected (0.00 sec)
+
+--------------
+UPDATE t_gateway_route SET status = 'ACTIVE', version = version + 1, update_time = @channel_grant_act_time
+ WHERE route_id BETWEEN 900000000000129401 AND 900000000000129404 AND status = 'DISABLED'
+--------------
+
+Query OK, 4 rows affected (0.00 sec)
+Rows matched: 4  Changed: 4  Warnings: 0
+
+--------------
+SELECT ROW_COUNT() AS routes
+--------------
+
++--------+
+| routes |
++--------+
+|      4 |
++--------+
+1 row in set (0.01 sec)
+
+--------------
+UPDATE t_console_resource SET status = 'ACTIVE', version = version + 1, update_time = @channel_grant_act_time
+ WHERE resource_id = 900000000000129301 AND status = 'DISABLED'
+--------------
+
+Query OK, 1 row affected (0.00 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+--------------
+SELECT ROW_COUNT() AS resources
+--------------
+
++-----------+
+| resources |
++-----------+
+|         1 |
++-----------+
+1 row in set (0.00 sec)
+
+--------------
+UPDATE t_role_permission SET status = 'ACTIVE', version = version + 1, update_time = @channel_grant_act_time
+ WHERE role_permission_id = 900000000000129201 AND status = 'REVOKED'
+--------------
+
+Query OK, 1 row affected (0.00 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+--------------
+SELECT ROW_COUNT() AS grants
+--------------
+
++--------+
+| grants |
++--------+
+|      1 |
++--------+
+1 row in set (0.00 sec)
+
+--------------
+UPDATE t_role SET version = version + 1, update_time = @channel_grant_act_time WHERE role_id = 900000000000000510
+--------------
+
+Query OK, 1 row affected (0.00 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+--------------
+SELECT ROW_COUNT() AS role
+--------------
+
++------+
+| role |
++------+
+|    1 |
++------+
+1 row in set (0.00 sec)
+
+--------------
+COMMIT
+--------------
+
+Query OK, 0 rows affected (0.00 sec)
+
+Bye

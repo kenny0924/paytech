@@ -1,0 +1,440 @@
+{
+ "kind": "snapshot",
+ "a": "phase2-snapshot-before.json",
+ "b": "phase2-snapshot-after.json",
+ "comparedAt": "2026-10-22T07:03:21.860989+00:00",
+ "versions": [
+  1,
+  2
+ ],
+ "calls": [
+  355,
+  388
+ ],
+ "statuses": [
+  {
+   "200": 355
+  },
+  {
+   "200": 386,
+   "404": 2
+  }
+ ],
+ "non200": [
+  [],
+  []
+ ],
+ "removedIntegrationCrud": {
+  "integrations": {
+   "status": 404,
+   "code": "GATEWAY_ROUTE_NOT_FOUND"
+  },
+  "integrations/DEMO_NI": {
+   "status": 404,
+   "code": "GATEWAY_ROUTE_NOT_FOUND"
+  }
+ },
+ "v2Only": {
+  "channels?channelType=PAYMENT": {
+   "status": 200,
+   "total": 8
+  },
+  "channels?channelType=SERVICE": {
+   "status": 200,
+   "total": 0
+  },
+  "channel-call-grants": {
+   "status": 200,
+   "total": 0
+  }
+ },
+ "allowed": {
+  "渠道列表新增统计字段（endpointCount / activeGrantCount，P2 合同第 6 节）": [
+   [
+    "channels",
+    "/items[channelCode=AAAA]/activeGrantCount",
+    "missing",
+    false,
+    true
+   ],
+   [
+    "channels",
+    "/items[channelCode=AAAA]/endpointCount",
+    "missing",
+    false,
+    true
+   ],
+   [
+    "channels",
+    "/items[channelCode=DEMO_NI]/activeGrantCount",
+    "missing",
+    false,
+    true
+   ],
+   [
+    "channels",
+    "/items[channelCode=DEMO_NI]/endpointCount",
+    "missing",
+    false,
+    true
+   ]
+  ],
+  "渠道新增字段（channelType / description / endpoints / version）": [
+   [
+    "channels",
+    "/items[channelCode=AAAA]/channelType",
+    "missing",
+    false,
+    true
+   ],
+   [
+    "channels",
+    "/items[channelCode=DEMO_NI]/channelType",
+    "missing",
+    false,
+    true
+   ],
+   [
+    "channels/AAAA",
+    "/body/channelType",
+    "missing",
+    false,
+    true
+   ],
+   [
+    "channels/AAAA",
+    "/body/description",
+    "missing",
+    false,
+    true
+   ],
+   [
+    "channels/AAAA",
+    "/body/endpoints",
+    "missing",
+    false,
+    true
+   ],
+   [
+    "channels/AAAA",
+    "/body/version",
+    "missing",
+    false,
+    true
+   ],
+   [
+    "channels/DEMO_NI",
+    "/body/channelType",
+    "missing",
+    false,
+    true
+   ],
+   [
+    "channels/DEMO_NI",
+    "/body/description",
+    "missing",
+    false,
+    true
+   ],
+   [
+    "channels/DEMO_NI",
+    "/body/endpoints",
+    "missing",
+    false,
+    true
+   ],
+   [
+    "channels/DEMO_NI",
+    "/body/version",
+    "missing",
+    false,
+    true
+   ]
+  ],
+  "接入方列表与详情已下线（新版本 404）": [
+   [
+    "integrations"
+   ],
+   [
+    "integrations/ALIPAY_PLUS"
+   ],
+   [
+    "integrations/DEMO_NI"
+   ],
+   [
+    "integrations/DLOCAL"
+   ],
+   [
+    "integrations/I_MPGS_NI"
+   ],
+   [
+    "integrations/PAYBY"
+   ],
+   [
+    "integrations/PAYERMAX"
+   ],
+   [
+    "integrations/TOSS_PAY"
+   ]
+  ]
+ },
+ "listed": [
+  [
+   "channels",
+   "/items[channelCode=ALIPAY_PLUS]",
+   "missing",
+   false,
+   true
+  ],
+  [
+   "channels",
+   "/items[channelCode=DLOCAL]",
+   "missing",
+   false,
+   true
+  ],
+  [
+   "channels",
+   "/items[channelCode=I_MPGS_NI]",
+   "missing",
+   false,
+   true
+  ],
+  [
+   "channels",
+   "/items[channelCode=PAYBY]",
+   "missing",
+   false,
+   true
+  ],
+  [
+   "channels",
+   "/items[channelCode=PAYERMAX]",
+   "missing",
+   false,
+   true
+  ],
+  [
+   "channels",
+   "/items[channelCode=TOSS_PAY]",
+   "missing",
+   false,
+   true
+  ],
+  [
+   "channels",
+   "/total",
+   "value",
+   "2",
+   "8"
+  ],
+  [
+   "editor-capabilities",
+   "/body/functions[0]/params[3]/required",
+   "value",
+   "True",
+   "False"
+  ]
+ ],
+ "missingInB": [],
+ "extraInB": [
+  [
+   "channel-accounts?channel=ALIPAY_PLUS",
+   200,
+   "新出现的渠道对象读取"
+  ],
+  [
+   "channel-accounts?channel=DLOCAL",
+   200,
+   "新出现的渠道对象读取"
+  ],
+  [
+   "channel-accounts?channel=I_MPGS_NI",
+   200,
+   "新出现的渠道对象读取"
+  ],
+  [
+   "channel-accounts?channel=PAYBY",
+   200,
+   "新出现的渠道对象读取"
+  ],
+  [
+   "channel-accounts?channel=PAYERMAX",
+   200,
+   "新出现的渠道对象读取"
+  ],
+  [
+   "channel-accounts?channel=TOSS_PAY",
+   200,
+   "新出现的渠道对象读取"
+  ],
+  [
+   "channels/ALIPAY_PLUS",
+   200,
+   "接入方迁入为渠道（第 3 节 INTEGRATION_ONLY → DRAFT 支付渠道）"
+  ],
+  [
+   "channels/DLOCAL",
+   200,
+   "接入方迁入为渠道（第 3 节 INTEGRATION_ONLY → DRAFT 支付渠道）"
+  ],
+  [
+   "channels/I_MPGS_NI",
+   200,
+   "接入方迁入为渠道（第 3 节 INTEGRATION_ONLY → DRAFT 支付渠道）"
+  ],
+  [
+   "channels/PAYBY",
+   200,
+   "接入方迁入为渠道（第 3 节 INTEGRATION_ONLY → DRAFT 支付渠道）"
+  ],
+  [
+   "channels/PAYERMAX",
+   200,
+   "接入方迁入为渠道（第 3 节 INTEGRATION_ONLY → DRAFT 支付渠道）"
+  ],
+  [
+   "channels/TOSS_PAY",
+   200,
+   "接入方迁入为渠道（第 3 节 INTEGRATION_ONLY → DRAFT 支付渠道）"
+  ],
+  [
+   "config-changes/CHANNEL/ALIPAY_PLUS",
+   200,
+   "新出现的渠道对象读取"
+  ],
+  [
+   "config-changes/CHANNEL/DLOCAL",
+   200,
+   "新出现的渠道对象读取"
+  ],
+  [
+   "config-changes/CHANNEL/I_MPGS_NI",
+   200,
+   "新出现的渠道对象读取"
+  ],
+  [
+   "config-changes/CHANNEL/PAYBY",
+   200,
+   "新出现的渠道对象读取"
+  ],
+  [
+   "config-changes/CHANNEL/PAYERMAX",
+   200,
+   "新出现的渠道对象读取"
+  ],
+  [
+   "config-changes/CHANNEL/TOSS_PAY",
+   200,
+   "新出现的渠道对象读取"
+  ],
+  [
+   "integrations/AAAA/apis",
+   200,
+   "仅渠道（迁移前无接入方）的外部 API 读取"
+  ],
+  [
+   "integrations/AAAA/flow-editor-context?BALANCE_QUERY",
+   200,
+   "仅渠道（迁移前无接入方）的外部 API 读取"
+  ],
+  [
+   "integrations/AAAA/flow-editor-context?PAY",
+   200,
+   "仅渠道（迁移前无接入方）的外部 API 读取"
+  ],
+  [
+   "integrations/AAAA/flow-editor-context?PAY_CANCEL",
+   200,
+   "仅渠道（迁移前无接入方）的外部 API 读取"
+  ],
+  [
+   "integrations/AAAA/flow-editor-context?PAY_QUERY",
+   200,
+   "仅渠道（迁移前无接入方）的外部 API 读取"
+  ],
+  [
+   "integrations/AAAA/flow-editor-context?REFUND",
+   200,
+   "仅渠道（迁移前无接入方）的外部 API 读取"
+  ],
+  [
+   "integrations/AAAA/flow-editor-context?REFUND_QUERY",
+   200,
+   "仅渠道（迁移前无接入方）的外部 API 读取"
+  ],
+  [
+   "integrations/AAAA/implementations",
+   200,
+   "仅渠道（迁移前无接入方）的外部 API 读取"
+  ],
+  [
+   "integrations/AAAA/scripts",
+   200,
+   "仅渠道（迁移前无接入方）的外部 API 读取"
+  ],
+  [
+   "integrations/AAAA/verify-accounts",
+   200,
+   "仅渠道（迁移前无接入方）的外部 API 读取"
+  ],
+  [
+   "integrations/AAAA/verify-cases",
+   200,
+   "仅渠道（迁移前无接入方）的外部 API 读取"
+  ],
+  [
+   "integrations/AAAA/verify-runs",
+   200,
+   "仅渠道（迁移前无接入方）的外部 API 读取"
+  ],
+  [
+   "mids?channel=ALIPAY_PLUS",
+   200,
+   "新出现的渠道对象读取"
+  ],
+  [
+   "mids?channel=DLOCAL",
+   200,
+   "新出现的渠道对象读取"
+  ],
+  [
+   "mids?channel=I_MPGS_NI",
+   200,
+   "新出现的渠道对象读取"
+  ],
+  [
+   "mids?channel=PAYBY",
+   200,
+   "新出现的渠道对象读取"
+  ],
+  [
+   "mids?channel=PAYERMAX",
+   200,
+   "新出现的渠道对象读取"
+  ],
+  [
+   "mids?channel=TOSS_PAY",
+   200,
+   "新出现的渠道对象读取"
+  ]
+ ],
+ "integrationVsChannel": {
+  "allowed": [
+   [
+    "DEMO_NI",
+    "接入方名改为渠道名",
+    "演示渠道 Network International（DEMO_NI）",
+    "演示渠道 Network International"
+   ]
+  ],
+  "listed": []
+ },
+ "configChangeRows": {
+  "renamed": 14,
+  "unchanged": 26,
+  "mismatch": [],
+  "missingInB": [],
+  "extraInB": []
+ }
+}

@@ -1,0 +1,181 @@
++-------------+--------------+--------------------+
+| table_count | legacy_count | phase2_table_count |
++-------------+--------------+--------------------+
+|          28 |            0 |                  9 |
++-------------+--------------+--------------------+
++---------------------------+--------------+-------------+---------+
+| table_name                | before_count | after_count | matched |
++---------------------------+--------------+-------------+---------+
+| t_api_field               |          521 |         521 |       1 |
+| t_channel                 |            8 |           8 |       1 |
+| t_channel_account         |            2 |           2 |       1 |
+| t_channel_api             |           25 |          25 |       1 |
+| t_channel_call_grant      |            0 |           0 |       1 |
+| t_channel_config_change   |           40 |          40 |       1 |
+| t_channel_cost_plan       |            0 |           0 |       1 |
+| t_channel_mid             |            2 |           2 |       1 |
+| t_channel_script          |           13 |          13 |       1 |
+| t_channel_standard_api    |           26 |          26 |       1 |
+| t_channel_verify_account  |            7 |           7 |       1 |
+| t_channel_verify_case     |           32 |          32 |       1 |
+| t_channel_verify_run      |          130 |         130 |       1 |
+| t_channel_verify_run_step |          189 |         189 |       1 |
+| t_standard_api            |            6 |           6 |       1 |
++---------------------------+--------------+-------------+---------+
++------------------+--------------------+--------------------+--------------+---------------+----------------+---------+---------+
+| match_type       | integration_id     | target_channel_id  | channel_code | target_status | endpoint_count | version | problem |
++------------------+--------------------+--------------------+--------------+---------------+----------------+---------+---------+
+| CHANNEL_ONLY     |               NULL | 238378595028934656 | AAAA         | DRAFT         |           NULL |       1 | NULL    |
+| INTEGRATION_ONLY | 236759135138430976 | 236759135138430976 | ALIPAY_PLUS  | DRAFT         |              1 |       2 | NULL    |
+| MATCHED          | 238508277615378432 | 238508277900615680 | DEMO_NI      | ACTIVE        |              1 |       1 | NULL    |
+| INTEGRATION_ONLY | 236949949626007552 | 236949949626007552 | DLOCAL       | DRAFT         |              1 |       2 | NULL    |
+| INTEGRATION_ONLY | 238636812468330496 | 238636812468330496 | I_MPGS_NI    | DRAFT         |              1 |       2 | NULL    |
+| INTEGRATION_ONLY | 236117587497402368 | 236117587497402368 | PAYBY        | DRAFT         |              1 |       5 | NULL    |
+| INTEGRATION_ONLY | 236063197520543744 | 236063197520543744 | PAYERMAX     | DRAFT         |              1 |       3 | NULL    |
+| INTEGRATION_ONLY | 237086330029424640 | 237086330029424640 | TOSS_PAY     | DRAFT         |              1 |       1 | NULL    |
++------------------+--------------------+--------------------+--------------+---------------+----------------+---------+---------+
++------------------------+-----------+
+| target_type            | row_count |
++------------------------+-----------+
+| CHANNEL                |         5 |
+| CHANNEL_ACCOUNT        |         4 |
+| CHANNEL_API            |         6 |
+| CHANNEL_IMPLEMENTATION |         4 |
+| CHANNEL_MID            |         4 |
+| CHANNEL_SCRIPT         |         2 |
+| MID_CAPABILITY         |         5 |
+| STANDARD_API           |         1 |
+| VERIFY_ACCOUNT         |         2 |
+| VERIFY_CASE            |         7 |
++------------------------+-----------+
++--------------------------+------------------+-------------------------+--------------+-------------+----------------+--------------------+--------------------+
+| TABLE_NAME               | ORDINAL_POSITION | COLUMN_NAME             | COLUMN_TYPE  | IS_NULLABLE | COLUMN_DEFAULT | CHARACTER_SET_NAME | COLLATION_NAME     |
++--------------------------+------------------+-------------------------+--------------+-------------+----------------+--------------------+--------------------+
+| t_channel                |                1 | channel_id              | bigint       | NO          | NULL           | NULL               | NULL               |
+| t_channel                |                2 | channel_code            | varchar(64)  | NO          | NULL           | ascii              | ascii_bin          |
+| t_channel                |                3 | channel_name            | varchar(255) | NO          | NULL           | utf8mb4            | utf8mb4_0900_ai_ci |
+| t_channel                |                4 | channel_type            | varchar(16)  | NO          | NULL           | utf8mb4            | utf8mb4_0900_ai_ci |
+| t_channel                |                5 | channel_status          | varchar(64)  | NO          | NULL           | utf8mb4            | utf8mb4_0900_ai_ci |
+| t_channel                |                6 | description             | varchar(512) | YES         | NULL           | utf8mb4            | utf8mb4_0900_ai_ci |
+| t_channel                |                7 | endpoints               | json         | YES         | NULL           | NULL               | NULL               |
+| t_channel                |                8 | version                 | int          | NO          | NULL           | NULL               | NULL               |
+| t_channel                |                9 | created_by              | bigint       | YES         | NULL           | NULL               | NULL               |
+| t_channel                |               10 | updated_by              | bigint       | YES         | NULL           | NULL               | NULL               |
+| t_channel                |               11 | create_time             | datetime(6)  | NO          | NULL           | NULL               | NULL               |
+| t_channel                |               12 | update_time             | datetime(6)  | NO          | NULL           | NULL               | NULL               |
+| t_channel_account        |                3 | entity_no               | char(5)      | YES         | NULL           | ascii              | ascii_bin          |
+| t_channel_api            |                1 | channel_api_id          | bigint       | NO          | NULL           | NULL               | NULL               |
+| t_channel_api            |                2 | channel_id              | bigint       | NO          | NULL           | NULL               | NULL               |
+| t_channel_api            |                3 | api_code                | varchar(64)  | NO          | NULL           | ascii              | ascii_bin          |
+| t_channel_api            |                4 | api_name                | varchar(128) | NO          | NULL           | utf8mb4            | utf8mb4_0900_ai_ci |
+| t_channel_api            |                5 | description             | varchar(512) | YES         | NULL           | utf8mb4            | utf8mb4_0900_ai_ci |
+| t_channel_api            |                6 | definition_json         | json         | NO          | NULL           | NULL               | NULL               |
+| t_channel_api            |                7 | version                 | int          | NO          | NULL           | NULL               | NULL               |
+| t_channel_api            |                8 | created_by              | bigint       | NO          | NULL           | NULL               | NULL               |
+| t_channel_api            |                9 | updated_by              | bigint       | NO          | NULL           | NULL               | NULL               |
+| t_channel_api            |               10 | create_time             | datetime(6)  | NO          | NULL           | NULL               | NULL               |
+| t_channel_api            |               11 | update_time             | datetime(6)  | NO          | NULL           | NULL               | NULL               |
+| t_channel_call_grant     |                1 | call_grant_id           | bigint       | NO          | NULL           | NULL               | NULL               |
+| t_channel_call_grant     |                2 | caller_service          | varchar(64)  | NO          | NULL           | ascii              | ascii_bin          |
+| t_channel_call_grant     |                3 | channel_id              | bigint       | NO          | NULL           | NULL               | NULL               |
+| t_channel_call_grant     |                4 | standard_api_id         | bigint       | NO          | NULL           | NULL               | NULL               |
+| t_channel_call_grant     |                5 | grant_status            | varchar(16)  | NO          | NULL           | ascii              | ascii_bin          |
+| t_channel_call_grant     |                6 | version                 | int          | NO          | NULL           | NULL               | NULL               |
+| t_channel_call_grant     |                7 | created_by              | bigint       | NO          | NULL           | NULL               | NULL               |
+| t_channel_call_grant     |                8 | updated_by              | bigint       | NO          | NULL           | NULL               | NULL               |
+| t_channel_call_grant     |                9 | create_time             | datetime(6)  | NO          | NULL           | NULL               | NULL               |
+| t_channel_call_grant     |               10 | update_time             | datetime(6)  | NO          | NULL           | NULL               | NULL               |
+| t_channel_script         |                1 | channel_script_id       | bigint       | NO          | NULL           | NULL               | NULL               |
+| t_channel_script         |                2 | channel_id              | bigint       | NO          | NULL           | NULL               | NULL               |
+| t_channel_script         |                3 | script_code             | varchar(64)  | NO          | NULL           | ascii              | ascii_bin          |
+| t_channel_script         |                4 | script_name             | varchar(128) | NO          | NULL           | utf8mb4            | utf8mb4_0900_ai_ci |
+| t_channel_script         |                5 | execution_stage         | varchar(16)  | NO          | NULL           | ascii              | ascii_bin          |
+| t_channel_script         |                6 | parameter_definition    | json         | NO          | NULL           | NULL               | NULL               |
+| t_channel_script         |                7 | source_code             | text         | NO          | NULL           | utf8mb4            | utf8mb4_0900_ai_ci |
+| t_channel_script         |                8 | description             | varchar(512) | YES         | NULL           | utf8mb4            | utf8mb4_0900_ai_ci |
+| t_channel_script         |                9 | version                 | int          | NO          | NULL           | NULL               | NULL               |
+| t_channel_script         |               10 | created_by              | bigint       | NO          | NULL           | NULL               | NULL               |
+| t_channel_script         |               11 | updated_by              | bigint       | NO          | NULL           | NULL               | NULL               |
+| t_channel_script         |               12 | create_time             | datetime(6)  | NO          | NULL           | NULL               | NULL               |
+| t_channel_script         |               13 | update_time             | datetime(6)  | NO          | NULL           | NULL               | NULL               |
+| t_channel_standard_api   |                1 | channel_standard_api_id | bigint       | NO          | NULL           | NULL               | NULL               |
+| t_channel_standard_api   |                2 | channel_id              | bigint       | NO          | NULL           | NULL               | NULL               |
+| t_channel_standard_api   |                3 | standard_api_id         | bigint       | NO          | NULL           | NULL               | NULL               |
+| t_channel_standard_api   |                4 | flow_definition_json    | json         | NO          | NULL           | NULL               | NULL               |
+| t_channel_standard_api   |                5 | version                 | int          | NO          | NULL           | NULL               | NULL               |
+| t_channel_standard_api   |                6 | created_by              | bigint       | NO          | NULL           | NULL               | NULL               |
+| t_channel_standard_api   |                7 | updated_by              | bigint       | NO          | NULL           | NULL               | NULL               |
+| t_channel_standard_api   |                8 | create_time             | datetime(6)  | NO          | NULL           | NULL               | NULL               |
+| t_channel_standard_api   |                9 | update_time             | datetime(6)  | NO          | NULL           | NULL               | NULL               |
+| t_channel_verify_account |                1 | verify_account_id       | bigint       | NO          | NULL           | NULL               | NULL               |
+| t_channel_verify_account |                2 | channel_id              | bigint       | NO          | NULL           | NULL               | NULL               |
+| t_channel_verify_account |                3 | account_code            | varchar(64)  | NO          | NULL           | ascii              | ascii_bin          |
+| t_channel_verify_account |                4 | account_name            | varchar(128) | NO          | NULL           | utf8mb4            | utf8mb4_0900_ai_ci |
+| t_channel_verify_account |                5 | channel_code            | varchar(64)  | NO          | NULL           | utf8mb4            | utf8mb4_0900_ai_ci |
+| t_channel_verify_account |                6 | channel_account_id      | varchar(64)  | NO          | NULL           | utf8mb4            | utf8mb4_0900_ai_ci |
+| t_channel_verify_account |                7 | entity_no               | varchar(64)  | NO          | NULL           | utf8mb4            | utf8mb4_0900_ai_ci |
+| t_channel_verify_account |                8 | parameters              | json         | NO          | NULL           | NULL               | NULL               |
+| t_channel_verify_account |                9 | credentials             | json         | NO          | NULL           | NULL               | NULL               |
+| t_channel_verify_account |               10 | version                 | int          | NO          | NULL           | NULL               | NULL               |
+| t_channel_verify_account |               11 | created_by              | bigint       | NO          | NULL           | NULL               | NULL               |
+| t_channel_verify_account |               12 | updated_by              | bigint       | NO          | NULL           | NULL               | NULL               |
+| t_channel_verify_account |               13 | create_time             | datetime(6)  | NO          | NULL           | NULL               | NULL               |
+| t_channel_verify_account |               14 | update_time             | datetime(6)  | NO          | NULL           | NULL               | NULL               |
+| t_channel_verify_case    |                1 | verify_case_id          | bigint       | NO          | NULL           | NULL               | NULL               |
+| t_channel_verify_case    |                2 | channel_id              | bigint       | NO          | NULL           | NULL               | NULL               |
+| t_channel_verify_case    |                3 | case_code               | varchar(64)  | NO          | NULL           | ascii              | ascii_bin          |
+| t_channel_verify_case    |                4 | case_name               | varchar(128) | NO          | NULL           | utf8mb4            | utf8mb4_0900_ai_ci |
+| t_channel_verify_case    |                5 | description             | varchar(512) | YES         | NULL           | utf8mb4            | utf8mb4_0900_ai_ci |
+| t_channel_verify_case    |                6 | verify_account_id       | bigint       | NO          | NULL           | NULL               | NULL               |
+| t_channel_verify_case    |                7 | steps_json              | json         | NO          | NULL           | NULL               | NULL               |
+| t_channel_verify_case    |                8 | version                 | int          | NO          | NULL           | NULL               | NULL               |
+| t_channel_verify_case    |                9 | created_by              | bigint       | NO          | NULL           | NULL               | NULL               |
+| t_channel_verify_case    |               10 | updated_by              | bigint       | NO          | NULL           | NULL               | NULL               |
+| t_channel_verify_case    |               11 | create_time             | datetime(6)  | NO          | NULL           | NULL               | NULL               |
+| t_channel_verify_case    |               12 | update_time             | datetime(6)  | NO          | NULL           | NULL               | NULL               |
+| t_channel_verify_run     |                1 | verify_run_id           | bigint       | NO          | NULL           | NULL               | NULL               |
+| t_channel_verify_run     |                2 | verify_case_id          | bigint       | NO          | NULL           | NULL               | NULL               |
+| t_channel_verify_run     |                3 | channel_id              | bigint       | NO          | NULL           | NULL               | NULL               |
+| t_channel_verify_run     |                4 | run_status              | varchar(16)  | NO          | NULL           | ascii              | ascii_bin          |
+| t_channel_verify_run     |                5 | case_snapshot_json      | json         | NO          | NULL           | NULL               | NULL               |
+| t_channel_verify_run     |                6 | config_versions_json    | json         | YES         | NULL           | NULL               | NULL               |
+| t_channel_verify_run     |                7 | endpoints_json          | json         | YES         | NULL           | NULL               | NULL               |
+| t_channel_verify_run     |                8 | failure_summary         | varchar(512) | YES         | NULL           | utf8mb4            | utf8mb4_0900_ai_ci |
+| t_channel_verify_run     |                9 | started_by              | bigint       | NO          | NULL           | NULL               | NULL               |
+| t_channel_verify_run     |               10 | start_time              | datetime(6)  | NO          | NULL           | NULL               | NULL               |
+| t_channel_verify_run     |               11 | finish_time             | datetime(6)  | YES         | NULL           | NULL               | NULL               |
+| t_channel_verify_run     |               12 | create_time             | datetime(6)  | NO          | NULL           | NULL               | NULL               |
+| t_channel_verify_run     |               13 | update_time             | datetime(6)  | NO          | NULL           | NULL               | NULL               |
++--------------------------+------------------+-------------------------+--------------+-------------+----------------+--------------------+--------------------+
++------------------------+----------------+
+| TABLE_NAME             | COLUMN_NAME    |
++------------------------+----------------+
+| tmp_phase2_channel_map | integration_id |
++------------------------+----------------+
++---------------------------+--------------------------------+------------+-------------------------------------------+
+| TABLE_NAME                | INDEX_NAME                     | NON_UNIQUE | columns                                   |
++---------------------------+--------------------------------+------------+-------------------------------------------+
+| t_channel                 | idx_channel_type_status        |          1 | channel_type,channel_status               |
+| t_channel                 | PRIMARY                        |          0 | channel_id                                |
+| t_channel                 | uk_channel_code                |          0 | channel_code                              |
+| t_channel_api             | PRIMARY                        |          0 | channel_api_id                            |
+| t_channel_api             | uk_channel_api_code            |          0 | channel_id,api_code                       |
+| t_channel_call_grant      | idx_channel_call_grant_channel |          1 | channel_id,grant_status                   |
+| t_channel_call_grant      | PRIMARY                        |          0 | call_grant_id                             |
+| t_channel_call_grant      | uk_channel_call_grant          |          0 | caller_service,channel_id,standard_api_id |
+| t_channel_script          | PRIMARY                        |          0 | channel_script_id                         |
+| t_channel_script          | uk_channel_script_code         |          0 | channel_id,script_code                    |
+| t_channel_standard_api    | idx_channel_std_api_standard   |          1 | standard_api_id                           |
+| t_channel_standard_api    | PRIMARY                        |          0 | channel_standard_api_id                   |
+| t_channel_standard_api    | uk_channel_standard_api        |          0 | channel_id,standard_api_id                |
+| t_channel_verify_account  | PRIMARY                        |          0 | verify_account_id                         |
+| t_channel_verify_account  | uk_verify_account_code         |          0 | channel_id,account_code                   |
+| t_channel_verify_case     | idx_verify_case_account        |          1 | verify_account_id                         |
+| t_channel_verify_case     | PRIMARY                        |          0 | verify_case_id                            |
+| t_channel_verify_case     | uk_verify_case_code            |          0 | channel_id,case_code                      |
+| t_channel_verify_run      | idx_verify_run_case            |          1 | verify_case_id,start_time                 |
+| t_channel_verify_run      | idx_verify_run_channel         |          1 | channel_id,start_time                     |
+| t_channel_verify_run      | PRIMARY                        |          0 | verify_run_id                             |
+| t_channel_verify_run_step | PRIMARY                        |          0 | verify_run_step_id                        |
+| t_channel_verify_run_step | uk_verify_run_step             |          0 | verify_run_id,step_no                     |
++---------------------------+--------------------------------+------------+-------------------------------------------+

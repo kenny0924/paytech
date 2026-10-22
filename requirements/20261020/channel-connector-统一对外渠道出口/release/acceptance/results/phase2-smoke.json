@@ -1,0 +1,162 @@
+{
+ "kind": "smoke",
+ "finishedAt": "2026-10-22T07:05:12.982121+00:00",
+ "results": [
+  [
+   "运营登录",
+   true,
+   ""
+  ],
+  [
+   "导航含 OPERATIONS_EXTERNAL_STANDARD_APIS",
+   true,
+   "HTTP 200"
+  ],
+  [
+   "导航含 OPERATIONS_CHANNEL_CHANNELS",
+   true,
+   "HTTP 200"
+  ],
+  [
+   "导航含 OPERATIONS_CHANNEL_CALL_GRANT_MANAGE",
+   true,
+   "HTTP 200"
+  ],
+  [
+   "导航含 OPERATIONS_FINANCE_RECON_CHANNEL_LINES",
+   true,
+   "HTTP 200"
+  ],
+  [
+   "导航含 OPERATIONS_DATA_SOURCES",
+   true,
+   "HTTP 200"
+  ],
+  [
+   "导航含 OPERATIONS_QUERY_TEMPLATES",
+   true,
+   "HTTP 200"
+  ],
+  [
+   "导航含 OPERATIONS_FILE_STORAGE",
+   true,
+   "HTTP 200"
+  ],
+  [
+   "导航不含 OPERATIONS_EXTERNAL_INTEGRATIONS",
+   true,
+   ""
+  ],
+  [
+   "渠道页名称为「渠道」",
+   true,
+   "渠道"
+  ],
+  [
+   "控制台外部 API 标准 API 列表",
+   true,
+   "HTTP 200"
+  ],
+  [
+   "控制台接入方列表已下线",
+   true,
+   "HTTP 404"
+  ],
+  [
+   "渠道列表（全部）",
+   true,
+   "HTTP 200"
+  ],
+  [
+   "渠道列表（服务渠道）",
+   true,
+   "HTTP 200"
+  ],
+  [
+   "调用授权列表",
+   true,
+   "HTTP 200"
+  ],
+  [
+   "Platform 私网 /external-api-admin 已下线",
+   true,
+   "HTTP 404"
+  ],
+  [
+   "数据查询 GET /data-query-admin/v1/data-sources",
+   true,
+   "HTTP 200"
+  ],
+  [
+   "数据源详情",
+   true,
+   "HTTP 200"
+  ],
+  [
+   "数据查询 GET /data-query-admin/v1/templates",
+   true,
+   "HTTP 200"
+  ],
+  [
+   "查询模板详情",
+   true,
+   "HTTP 200"
+  ],
+  [
+   "查询模板版本列表",
+   true,
+   "HTTP 200"
+  ],
+  [
+   "文件存储 GET /storage-admin/v1/instances",
+   true,
+   "HTTP 200"
+  ],
+  [
+   "文件存储 GET /storage-admin/v1/routes",
+   true,
+   "HTTP 200"
+  ],
+  [
+   "币种列表含 USD",
+   true,
+   "HTTP 200"
+  ],
+  [
+   "对账 GET /finance/reconciliation/v1/channel-statement-lines",
+   true,
+   "HTTP 200"
+  ],
+  [
+   "对账 GET /finance/reconciliation/v1/channel-statements",
+   true,
+   "HTTP 200"
+  ],
+  [
+   "对账 GET /finance/reconciliation/v1/recon-exceptions",
+   true,
+   "HTTP 200"
+  ],
+  [
+   "商务合同列表",
+   true,
+   "HTTP 200"
+  ],
+  [
+   "商务合同详情",
+   true,
+   "HTTP 200"
+  ],
+  [
+   "商务费率预览",
+   true,
+   "HTTP 200"
+  ],
+  [
+   "商务看板",
+   true,
+   "HTTP 200"
+  ]
+ ],
+ "failed": []
+}

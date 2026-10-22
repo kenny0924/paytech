@@ -1,0 +1,41 @@
+# channel-connector 统一对外渠道出口第二段：mor-test 候选覆盖文件（2026-10-22 阶段 7，清单 phase2-release.md）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件：
+#   ./test-environment/compose.sh -f "$PWD/requirements/20261020/channel-connector-统一对外渠道出口/release/compose-candidate-phase2.yaml" \
+#     up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 不加 --remove-orphans。构建源：干净 worktree Code-MoR-ccu2-rel = main 4b5426e5（数据查询 + 第二段 654cb14f + 文件多存储 346a1822）。
+# 环境变量：Platform 照搬数据查询候选（文件多存储的存储键处理、工作流未发布的 RabbitMQ 键置空、DATAQUERY_HTTP_CALLERS_0）；
+#   其余服务只换 image。回滚：compose-rollback-phase2.yaml。
+services:
+  card-service:
+    # 读卡只接受 channel-connector-service。
+    image: sha256:542a16f0567d57c547734aa9c9ef65f77aa0846c96823e1d4539fc20e48df244  # mor-test/card-service:ccu2-20261022（JAR 192f4a2c30f0）
+  channel-connector-service:
+    # 第二段：t_channel 合表、服务渠道通用入口、调用授权、出站地址守卫、执行分舱；新配置键均有默认值。
+    image: sha256:798940ead0ec7900f2e62c1c08434291fd745d441784e4309f621997d51de366  # mor-test/channel-connector-service:ccu2-20261022（JAR a9a477076df6）
+  platform-support-service:
+    # 数据查询 /data-query-admin/v1（17 个接口）与 /data-query/v1 执行入口、连接池注册表与 5 秒刷新。
+    image: sha256:d50f28864d6c153bf0f77df6dd3df43b442b26852cd988e7eca3ccffc43f5671  # mor-test/platform-support-service:ccu2-20261022（JAR b780c9686fe5）
+    environment:
+      DATAQUERY_HTTP_CALLERS_0: operations-console-bff
+      PLATFORM_SUPPORT_FILES_ENABLED: "true"
+      FILES_ONBOARDING_STORAGE_PROVIDER: !reset null
+      FILES_ONBOARDING_STORAGE_CONTAINER_REF: !reset null
+      FILES_ONBOARDING_SCAN_POLICY_CODE: !reset null
+      FILES_ONBOARDING_MINIO_ENDPOINT: !reset null
+      FILES_ONBOARDING_MINIO_REGION: !reset null
+      FILES_ONBOARDING_MINIO_ACCESS_KEY: !reset null
+      FILES_ONBOARDING_MINIO_SECRET_KEY: !reset null
+      FILES_ONBOARDING_MINIO_TRUSTED_CERTIFICATE: !reset null
+      PLATFORM_SUPPORT_RABBITMQ_HOST: !reset null
+      PLATFORM_SUPPORT_RABBITMQ_PORT: !reset null
+      PLATFORM_SUPPORT_RABBITMQ_USERNAME: !reset null
+      PLATFORM_SUPPORT_RABBITMQ_PASSWORD: !reset null
+      PLATFORM_SUPPORT_RABBITMQ_VHOST: !reset null
+  operations-console-bff:
+    # /data-query-admin/v1、/data-query/v1 18 条转发（metadata-only 日志），PlatformClientConfiguration 登记 3 个数据查询 Api。
+    image: sha256:0abb662a764aa2af09f7dec546396b616f81fe7d8b56ebacc5434e3aa5a6e65f  # mor-test/operations-console-bff:ccu2-20261022（JAR 9b3aec5bda70）
+  operations-console-web:
+    # 数据查询 → 数据源 / 查询模板；CodeMirror 6 懒加载。基线 = 文件多存储并存 d58172d9（163 个文件逐字节一致）。
+    # 第二版：验收修正——新建模板默认超时 5 秒、上限提示 8 秒 / 48 KB，新建数据源后选中新建项（首版 e29197ba）。
+    # 第二版：缺陷 D-3 修正——渠道详情不再对授权列表 / 实现列表同时发 3 个请求（Gateway 每人并发 2）。首版 fb29b533。
+    image: sha256:9eaa85211107a08bc1f4825517ec167444643e8f923363627d344978599cd9bc  # mor-test/operations-console-web:ccu2-20261022b

@@ -1,0 +1,39 @@
+{
+ "kind": "cleanup",
+ "finishedAt": "2026-10-22T07:12:43.004983+00:00",
+ "ok": true,
+ "steps": [
+  [
+   "channel CLOSED",
+   "238920450212732928",
+   200,
+   "CLOSED"
+  ]
+ ],
+ "residue": {
+  "channel": {
+   "channelId": "238920450212732928",
+   "channelCode": "S7P2_SVC",
+   "status": "CLOSED",
+   "reason": "渠道不提供删除；置 CLOSED 保留"
+  },
+  "grants": [
+   {
+    "callGrantId": "238920461801594880",
+    "callerService": "counterparty-service",
+    "standardApiCode": "S7P2_PING",
+    "grantStatus": "DISABLED",
+    "version": 2
+   }
+  ],
+  "grantsNote": "授权只停用、不删除",
+  "protocol": {
+   "standardApi": "S7P2_PING",
+   "atomicApi": "S7P2_SVC/S7P2_PING_CALL",
+   "implementation": "S7P2_SVC/S7P2_PING",
+   "reason": "保留：调用授权行按 standard_api_id 引用 S7P2_PING，删除标准 API 会使授权引用悬空；实现与原子 API 留作审计，渠道已 CLOSED 不会被执行"
+  },
+  "configChanges": "S7P2_SVC 渠道、授权、标准 API、原子 API、实现的 t_channel_config_change 记录只增不改，保留",
+  "accessLog": "channel.outbound.access 日志行保留"
+ }
+}

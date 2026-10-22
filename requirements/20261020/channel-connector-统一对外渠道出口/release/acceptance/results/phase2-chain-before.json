@@ -1,0 +1,27 @@
+{
+ "kind": "chain",
+ "label": "before",
+ "startedAt": "2026-10-22T06:33:26.114577+00:00",
+ "channelTable": "t_payment_channel",
+ "demoNi": {
+  "refundImplementationMissing": {
+   "httpStatus": 200,
+   "outcome": "NOT_SENT",
+   "failureCode": "INTEGRATION_IMPLEMENTATION_NOT_FOUND",
+   "channelStatus": null,
+   "paymentStatus": null,
+   "hasChannelTransactionRef": false,
+   "vaultEvents": []
+  },
+  "queryStandardApiMissing": {
+   "httpStatus": 200,
+   "outcome": "NOT_SENT",
+   "failureCode": "STANDARD_API_NOT_FOUND",
+   "channelStatus": null,
+   "paymentStatus": null,
+   "hasChannelTransactionRef": false,
+   "vaultEvents": []
+  }
+ },
+ "finishedAt": "2026-10-22T06:33:32.650659+00:00"
+}

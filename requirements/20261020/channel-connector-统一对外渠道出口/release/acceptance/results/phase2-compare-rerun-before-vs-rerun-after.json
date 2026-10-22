@@ -1,0 +1,38 @@
+{
+ "kind": "rerun",
+ "a": "phase2-rerun-before.json",
+ "b": "phase2-rerun-after.json",
+ "comparedAt": "2026-10-22T07:04:28.243725+00:00",
+ "ALIPAY_PLUS/SBX_PAY_QUERY_NOT_FOUND": {
+  "equal": true,
+  "diff": []
+ },
+ "DLOCAL/SBX_PAY_QUERY_NOT_FOUND": {
+  "equal": true,
+  "diff": []
+ },
+ "PAYBY/UAT_PAY_QUERY_NOT_FOUND": {
+  "equal": true,
+  "diff": []
+ },
+ "PAYERMAX/UAT_QUERY_NOT_FOUND": {
+  "equal": true,
+  "diff": []
+ },
+ "PAYERMAX/UAT_REFUND_NOT_EXIST": {
+  "equal": true,
+  "diff": []
+ },
+ "PAYERMAX/UAT_REFUND_QUERY_NOT_FOUND": {
+  "equal": true,
+  "diff": []
+ },
+ "TOSS_PAY/SBX_PAY_QUERY_NOT_FOUND": {
+  "equal": true,
+  "diff": []
+ },
+ "_vaultCallers": [
+  [],
+  []
+ ]
+}

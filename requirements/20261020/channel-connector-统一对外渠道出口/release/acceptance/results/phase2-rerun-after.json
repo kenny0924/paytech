@@ -1,0 +1,239 @@
+{
+ "kind": "rerun",
+ "label": "after",
+ "version": 2,
+ "takenAt": "2026-10-22T07:04:23.085187+00:00",
+ "runs": [
+  {
+   "integration": "PAYERMAX",
+   "case": "UAT_QUERY_NOT_FOUND",
+   "startStatus": 200,
+   "runCode": "238920268242853888",
+   "code": null,
+   "runStatus": "PASSED",
+   "failureSummary": null,
+   "steps": [
+    {
+     "stepNo": 1,
+     "stepStatus": "PASSED",
+     "executeStatus": "FAIL",
+     "returnId": null,
+     "assertions": [
+      [
+       "executeStatus",
+       true
+      ],
+      [
+       "outputs.paymentStatus",
+       true
+      ]
+     ]
+    }
+   ],
+   "rowIn": {
+    "t_channel_verify_run": true
+   }
+  },
+  {
+   "integration": "PAYERMAX",
+   "case": "UAT_REFUND_QUERY_NOT_FOUND",
+   "startStatus": 200,
+   "runCode": "238920277336104960",
+   "code": null,
+   "runStatus": "PASSED",
+   "failureSummary": null,
+   "steps": [
+    {
+     "stepNo": 1,
+     "stepStatus": "PASSED",
+     "executeStatus": "FAIL",
+     "returnId": null,
+     "assertions": [
+      [
+       "executeStatus",
+       true
+      ],
+      [
+       "outputs.refundStatus",
+       true
+      ]
+     ]
+    }
+   ],
+   "rowIn": {
+    "t_channel_verify_run": true
+   }
+  },
+  {
+   "integration": "PAYERMAX",
+   "case": "UAT_REFUND_NOT_EXIST",
+   "startStatus": 200,
+   "runCode": "238920286370635776",
+   "code": null,
+   "runStatus": "PASSED",
+   "failureSummary": null,
+   "steps": [
+    {
+     "stepNo": 1,
+     "stepStatus": "PASSED",
+     "executeStatus": "FAIL",
+     "returnId": null,
+     "assertions": [
+      [
+       "executeStatus",
+       true
+      ],
+      [
+       "outputs.refundStatus",
+       true
+      ],
+      [
+       "outputs.failureCode",
+       true
+      ]
+     ]
+    }
+   ],
+   "rowIn": {
+    "t_channel_verify_run": true
+   }
+  },
+  {
+   "integration": "PAYBY",
+   "case": "UAT_PAY_QUERY_NOT_FOUND",
+   "startStatus": 200,
+   "runCode": "238920295363223552",
+   "code": null,
+   "runStatus": "PASSED",
+   "failureSummary": null,
+   "steps": [
+    {
+     "stepNo": 1,
+     "stepStatus": "PASSED",
+     "executeStatus": "FAIL",
+     "returnId": null,
+     "assertions": [
+      [
+       "executeStatus",
+       true
+      ],
+      [
+       "outputs.paymentStatus",
+       true
+      ],
+      [
+       "outputs.failureCode",
+       true
+      ]
+     ]
+    }
+   ],
+   "rowIn": {
+    "t_channel_verify_run": true
+   }
+  },
+  {
+   "integration": "DLOCAL",
+   "case": "SBX_PAY_QUERY_NOT_FOUND",
+   "startStatus": 200,
+   "runCode": "238920321523097600",
+   "code": null,
+   "runStatus": "PASSED",
+   "failureSummary": null,
+   "steps": [
+    {
+     "stepNo": 1,
+     "stepStatus": "PASSED",
+     "executeStatus": "FAIL",
+     "returnId": null,
+     "assertions": [
+      [
+       "executeStatus",
+       true
+      ],
+      [
+       "outputs.paymentStatus",
+       true
+      ],
+      [
+       "outputs.failureCode",
+       true
+      ]
+     ]
+    }
+   ],
+   "rowIn": {
+    "t_channel_verify_run": true
+   }
+  },
+  {
+   "integration": "ALIPAY_PLUS",
+   "case": "SBX_PAY_QUERY_NOT_FOUND",
+   "startStatus": 200,
+   "runCode": "238920343555776512",
+   "code": null,
+   "runStatus": "PASSED",
+   "failureSummary": null,
+   "steps": [
+    {
+     "stepNo": 1,
+     "stepStatus": "PASSED",
+     "executeStatus": "FAIL",
+     "returnId": null,
+     "assertions": [
+      [
+       "executeStatus",
+       true
+      ],
+      [
+       "outputs.paymentStatus",
+       true
+      ],
+      [
+       "outputs.failureCode",
+       true
+      ]
+     ]
+    }
+   ],
+   "rowIn": {
+    "t_channel_verify_run": true
+   }
+  },
+  {
+   "integration": "TOSS_PAY",
+   "case": "SBX_PAY_QUERY_NOT_FOUND",
+   "startStatus": 200,
+   "runCode": "238920370009251840",
+   "code": null,
+   "runStatus": "PASSED",
+   "failureSummary": null,
+   "steps": [
+    {
+     "stepNo": 1,
+     "stepStatus": "PASSED",
+     "executeStatus": "FAIL",
+     "returnId": null,
+     "assertions": [
+      [
+       "executeStatus",
+       true
+      ],
+      [
+       "outputs.paymentStatus",
+       true
+      ],
+      [
+       "outputs.failureCode",
+       true
+      ]
+     ]
+    }
+   ],
+   "rowIn": {
+    "t_channel_verify_run": true
+   }
+  }
+ ],
+ "vaultEvents": []
+}

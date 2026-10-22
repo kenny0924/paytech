@@ -1,0 +1,8 @@
+# 第二段回滚：card / channel-connector 用本文件恢复为第一段镜像；
+# platform / ops-bff / ops-web 用 requirements/20261022/platform-support-数据查询服务/release/compose-candidate.yaml 恢复为
+# 数据查询验收通过后的最终镜像（985d00ea / d221817d / bcadc589，环境变量相同）。
+services:
+  card-service:
+    image: sha256:aee937997621b6246ca4fed8eed7233019246f2a1ecaa3d6e4056b7823b8adb5  # mor-test/card-service:ccu-20261021
+  channel-connector-service:
+    image: sha256:1571ce18b74987b4566ce1786af1a2bc50da14b2bd9cf96d688c69c438702abb  # mor-test/channel-connector-service:ccu-20261021

@@ -1,0 +1,209 @@
+{
+ "kind": "service",
+ "startedAt": "2026-10-22T07:04:34.108515+00:00",
+ "finishedAt": "2026-10-22T07:04:40.747488+00:00",
+ "results": {
+  "counts": {
+   "ok": false,
+   "lists": {
+    "ALL": {
+     "httpStatus": 200,
+     "total": 8,
+     "types": [
+      "PAYMENT"
+     ]
+    },
+    "PAYMENT": {
+     "httpStatus": 429,
+     "total": null,
+     "types": []
+    },
+    "SERVICE": {
+     "httpStatus": 200,
+     "total": 0,
+     "types": []
+    }
+   }
+  },
+  "createServiceChannel": {
+   "ok": true,
+   "httpStatus": 201,
+   "channelType": "SERVICE",
+   "status": "DRAFT",
+   "version": 1
+  },
+  "privateEndpointRejected": {
+   "ok": true,
+   "httpStatus": 422,
+   "problem": {
+    "code": "VALIDATION_ERROR",
+    "title": "Unprocessable Content",
+    "detail": "请求字段校验未通过",
+    "errors": [
+     {
+      "field": "endpoints[1].baseUrl",
+      "message": "请检查此处配置"
+     }
+    ]
+   },
+   "versionBefore": 1,
+   "versionAfter": 1
+  },
+  "publicEndpointSaved": {
+   "ok": true,
+   "httpStatus": 200,
+   "version": 2,
+   "endpoints": [
+    {
+     "baseUrl": "https://s7p2-acceptance.example.invalid",
+     "endpointCode": "PING",
+     "sandbox": false
+    }
+   ]
+  },
+  "activate": {
+   "ok": true,
+   "httpStatus": 200,
+   "status": "ACTIVE",
+   "problem": null
+  },
+  "standardApi": {
+   "ok": true,
+   "httpStatus": 200,
+   "problem": null
+  },
+  "atomicApi": {
+   "ok": true,
+   "httpStatus": 200,
+   "problem": null
+  },
+  "implementation": {
+   "ok": true,
+   "httpStatus": 200,
+   "problem": null
+  },
+  "notGranted": {
+   "ok": true,
+   "httpStatus": 403,
+   "problem": {
+    "code": "CHANNEL_CALL_NOT_GRANTED",
+    "title": "Forbidden",
+    "detail": "调用方未获授权: counterparty-service, 渠道: S7P2_SVC, 标准 API: S7P2_PING"
+   },
+   "priorGrant": null
+  },
+  "createGrant": {
+   "ok": true,
+   "httpStatus": 201,
+   "grant": {
+    "callGrantId": "238920461801594880",
+    "callerService": "counterparty-service",
+    "standardApiCode": "S7P2_PING",
+    "grantStatus": "ACTIVE",
+    "version": 1
+   }
+  },
+  "grantedResultRecorded": {
+   "ok": true,
+   "httpStatus": 200,
+   "executeStatus": "ERROR",
+   "outputs": {},
+   "vaultEvents": [],
+   "note": "授权后到达执行阶段；结果只记录、不判成功"
+  },
+  "disableGrant": {
+   "ok": true,
+   "httpStatus": 200,
+   "version": 2
+  },
+  "disabledRejected": {
+   "ok": true,
+   "httpStatus": 403,
+   "problem": {
+    "code": "CHANNEL_CALL_NOT_GRANTED",
+    "title": "Forbidden",
+    "detail": "调用方未获授权: counterparty-service, 渠道: S7P2_SVC, 标准 API: S7P2_PING"
+   }
+  },
+  "grantChanges": {
+   "ok": true,
+   "httpStatus": 200,
+   "total": 2,
+   "changes": [
+    [
+     "STATUS",
+     "ACTIVE",
+     "DISABLED"
+    ],
+    [
+     "CREATE",
+     null,
+     null
+    ]
+   ]
+  },
+  "paymentChannelRejected": {
+   "ok": true,
+   "httpStatus": 400,
+   "problem": {
+    "code": "BUSINESS_CHECK_FAILED",
+    "title": "Bad Request",
+    "detail": "支付渠道只能经支付入口执行: DEMO_NI"
+   },
+   "note": "期望 400（渠道须为 SERVICE 且 ACTIVE）"
+  },
+  "navigation": {
+   "ok": true,
+   "httpStatus": 200,
+   "hasIntegrationsPage": false,
+   "hasStandardApisPage": true,
+   "hasCallGrantButton": true,
+   "channelPage": {
+    "resourceId": "900000000000092302",
+    "displayName": "渠道",
+    "frontendRoute": "/channel/channels"
+   },
+   "callGrantButton": {
+    "resourceId": "900000000000129301",
+    "displayName": "调用授权",
+    "resourceType": "BUTTON",
+    "parentResourceId": "900000000000092302"
+   }
+  },
+  "removedIntegrationCrud": {
+   "ok": true,
+   "probes": {
+    "list": [
+     404,
+     "GATEWAY_ROUTE_NOT_FOUND"
+    ],
+    "detail": [
+     404,
+     "GATEWAY_ROUTE_NOT_FOUND"
+    ],
+    "create": [
+     404,
+     "GATEWAY_ROUTE_NOT_FOUND"
+    ],
+    "update": [
+     404,
+     "GATEWAY_ROUTE_NOT_FOUND"
+    ],
+    "delete": [
+     404,
+     "GATEWAY_ROUTE_NOT_FOUND"
+    ]
+   }
+  },
+  "serviceChannelListed": {
+   "ok": true,
+   "item": {
+    "channelCode": "S7P2_SVC",
+    "channelType": "SERVICE",
+    "status": "ACTIVE",
+    "endpointCount": 1,
+    "activeGrantCount": 0
+   }
+  }
+ }
+}
