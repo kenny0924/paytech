@@ -23,7 +23,7 @@ export const problemLevels = ['ERROR', 'WARNING'] as const;
 export type ProblemLevel = typeof problemLevels[number];
 
 /** 硬上限（data-query.limits 默认值）：表单提示用，最终以服务端校验为准。 */
-export const templateLimits = { maxRows: 10000, maxTimeoutSeconds: 30, maxBodyBytes: 64 * 1024, maxColumns: 200, maxCursorColumns: 8, maxKeep: 64 } as const;
+export const templateLimits = { maxRows: 10000, maxTimeoutSeconds: 8, maxBodyBytes: 48 * 1024, maxColumns: 200, maxCursorColumns: 8, maxKeep: 64 } as const;
 export const systemParameters = ['__operator.accountId', '__cursor'] as const;
 export const templateTags = ['#if', '#elseif', '#else', '/if', '#each', '/each', '#join', '/join', '#part', '/part'] as const;
 
@@ -314,7 +314,7 @@ export function moveRow<T>(rows: readonly T[], from: number, to: number): T[] {
 // ---------- 约束与列 ----------
 
 export function defaultConstraints(): QueryConstraints {
-  return { maxRows: 1000, timeoutSeconds: 10, pagingMode: 'OFFSET', maxPageSize: 100, countAllowed: true, cursorColumns: [] };
+  return { maxRows: 1000, timeoutSeconds: 5, pagingMode: 'OFFSET', maxPageSize: 100, countAllowed: true, cursorColumns: [] };
 }
 
 /** 约束请求体：只输出当前分页方式适用的字段。 */
@@ -372,7 +372,7 @@ export function updateTemplateBody(draft: TemplateDraft, expectedVersion: number
 /** 未保存判断：与基线草稿的请求内容比较，行键不参与。 */
 export const draftFingerprint = (draft: TemplateDraft) => JSON.stringify({ ...createTemplateBody(draft, ''), templateCode: draft.templateCode.trim() });
 
-/** 正文 UTF-8 字节数（上限 64 KB）。 */
+/** 正文 UTF-8 字节数（上限见 templateLimits.maxBodyBytes）。 */
 export const bodyBytes = (body: string) => new TextEncoder().encode(body).length;
 
 // ---------- 问题 → 编辑器标记与定位 ----------

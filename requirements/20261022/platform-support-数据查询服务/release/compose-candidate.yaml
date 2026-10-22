@@ -1,0 +1,38 @@
+# 数据查询服务：mor-test 候选覆盖文件（2026-10-22 阶段 6—7）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件：
+#   ./test-environment/compose.sh -f "$PWD/requirements/20261022/platform-support-数据查询服务/release/compose-candidate.yaml" \
+#     up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 不加 --remove-orphans。部署只认下列固定 sha256（tag dataquery-20261022* 仅供辨认，:development 未改动）。
+# 构建源：干净 worktree /Users/kenny/Desktop/Workspace/Code-MoR-dataquery-rel = main 9a209e6f + 文件多存储并存的最终发布源码
+#   （Code-MoR-filestore-rel 相对 281a217d 的改动，三方合并）；不含工作流与 channel-connector 第二段。
+#   Java 镜像用 test-environment/java/Dockerfile，health-probe 取自运行容器；Web 用 operations-console-web/Dockerfile。
+# 环境变量：照搬文件多存储并存的处理（删除 8 个旧存储键、PLATFORM_SUPPORT_FILES_ENABLED=true、工作流未发布的 RabbitMQ 键置空），
+#   Platform 另加 DATAQUERY_HTTP_CALLERS_0（执行入口调用方白名单，默认空即全部拒绝）。ops-bff、ops-web 只换 image。
+# 回滚：同目录 compose-rollback.yaml（文件多存储并存发布后的镜像）。
+services:
+  platform-support-service:
+    # 数据查询 /data-query-admin/v1（17 个接口）与 /data-query/v1 执行入口、连接池注册表与 5 秒刷新。
+    image: sha256:985d00ea2868adcfdd16ba7e88e59f53da9695138eae1eaac68524493276356a  # mor-test/platform-support-service:dataquery-20261022b（JAR 3860256957cd0a37）
+    environment:
+      DATAQUERY_HTTP_CALLERS_0: operations-console-bff
+      PLATFORM_SUPPORT_FILES_ENABLED: "true"
+      FILES_ONBOARDING_STORAGE_PROVIDER: !reset null
+      FILES_ONBOARDING_STORAGE_CONTAINER_REF: !reset null
+      FILES_ONBOARDING_SCAN_POLICY_CODE: !reset null
+      FILES_ONBOARDING_MINIO_ENDPOINT: !reset null
+      FILES_ONBOARDING_MINIO_REGION: !reset null
+      FILES_ONBOARDING_MINIO_ACCESS_KEY: !reset null
+      FILES_ONBOARDING_MINIO_SECRET_KEY: !reset null
+      FILES_ONBOARDING_MINIO_TRUSTED_CERTIFICATE: !reset null
+      PLATFORM_SUPPORT_RABBITMQ_HOST: !reset null
+      PLATFORM_SUPPORT_RABBITMQ_PORT: !reset null
+      PLATFORM_SUPPORT_RABBITMQ_USERNAME: !reset null
+      PLATFORM_SUPPORT_RABBITMQ_PASSWORD: !reset null
+      PLATFORM_SUPPORT_RABBITMQ_VHOST: !reset null
+  operations-console-bff:
+    # /data-query-admin/v1、/data-query/v1 18 条转发（metadata-only 日志），PlatformClientConfiguration 登记 3 个数据查询 Api。
+    image: sha256:d221817d693935c2b7070c9e996d523650738235ba5068e9d1656efd963d0598  # mor-test/operations-console-bff:dataquery-20261022（JAR 65c27756）
+  operations-console-web:
+    # 数据查询 → 数据源 / 查询模板；CodeMirror 6 懒加载。基线 = 文件多存储并存 d58172d9（163 个文件逐字节一致）。
+    # 第二版：验收修正——新建模板默认超时 5 秒、上限提示 8 秒 / 48 KB，新建数据源后选中新建项（首版 e29197ba）。
+    image: sha256:bcadc589ba841056fac642996fd527360058b2743389fe7f80c2701b80e082dc  # mor-test/operations-console-web:dataquery-20261022b（dist 169 个文件，清单 7b7c63f9）

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button, Descriptions, Form, Input, Select, Table } from 'antd';
 import { Link } from 'react-router-dom';
 import type { ConsoleResource } from '../api/types';
@@ -32,11 +32,22 @@ export function DataSources({ resources, onAuthorizationChanged }: Props) {
   const [revision, setRevision] = useState(0);
   const canManage = hasButton(resources, dataQueryButtons.dataSourceManage);
   const items = page.data.items;
+  // 新建或修改后要选中的数据源：刷新完成前它可能还不在旧列表中，不能因此回退到第一项。
+  const pendingSelection = useRef<string | null>(null);
   useEffect(() => {
     if (!items.length) return;
-    if (!selectedId || !items.some(item => item.dataSourceId === selectedId)) setSelectedId(items[0].dataSourceId);
+    if (selectedId && items.some(item => item.dataSourceId === selectedId)) {
+      if (pendingSelection.current === selectedId) pendingSelection.current = null;
+      return;
+    }
+    if (selectedId && pendingSelection.current === selectedId) return;
+    setSelectedId(items[0].dataSourceId);
   }, [items, selectedId]);
-  const reload = (dataSourceId?: string) => { setStep(null); if (dataSourceId) setSelectedId(dataSourceId); page.refresh(); setRevision(v => v + 1); };
+  const reload = (dataSourceId?: string) => {
+    setStep(null);
+    if (dataSourceId) { pendingSelection.current = dataSourceId; setSelectedId(dataSourceId); }
+    page.refresh(); setRevision(v => v + 1);
+  };
   return <div className="configuration-page dq-page">
     <div className="page-heading"><h1>数据源</h1>
       {canManage && <Button type="primary" onClick={() => setStep({ kind: 'create' })}>＋ 新建数据源</Button>}</div>

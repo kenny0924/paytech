@@ -1,0 +1,1254 @@
+{
+  "results": [
+    {
+      "scenario": "登录",
+      "ok": true,
+      "note": "管理员登录"
+    },
+    {
+      "scenario": "1 导航与数据源列表",
+      "ok": true,
+      "note": "菜单组可见，子页可见，面包屑“数据查询 / 数据源”可见；列表 3 行；错误提示 无"
+    },
+    {
+      "scenario": "2 新建 reader 数据源",
+      "ok": true,
+      "note": "已存在（重复运行），状态 ACTIVE，跳过新建"
+    },
+    {
+      "scenario": "3 writer 数据源检查不通过",
+      "ok": true,
+      "note": "新建 已存在；检查 FAILED，三步 ['passed', 'failed', 'skipped']，标红 ['INSERT', 'UPDATE']，违规 ['含非只读权限 INSERT: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`', '含非只读权限 UPDATE: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`']；启用被拒 400 BUSINESS_CHECK_FAILED：连接检查未通过，不能启用: 含非只读权限 INSERT: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`；含非只读权限 UPDATE: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`；弹窗提示 ['操作被拒绝：连接检查未通过，不能启用: 含非只读权限 INSERT: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`；含非只读权限 UPDATE: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`', '启用前服务端会重新做连接与只读检查，未通过时拒绝启用。']；最终 INACTIVE/FAILED：含非只读权限 INSERT: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`；含非只读权限 UPDATE: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`"
+    },
+    {
+      "scenario": "4 整实例数据源",
+      "ok": true,
+      "note": "新建 已存在（上一轮已新建并检查通过）；启用 已启用/ACTIVE；列表行：ACC_FIXTURE_INSTANCE 验收 Fixture 整实例 \tMySQL\tmysql:3306 · 整个实例\t启用\t通过 · 2026-10-22 10:00\t1；详情“整个实例”显示"
+    },
+    {
+      "scenario": "R2 新建/修改后选中跟随",
+      "ok": true,
+      "note": "新建（新建前选中 ACC_FIXTURE_INSTANCE，检查 PASSED）：保存 200/INACTIVE v1；右侧详情 ACC_FIXTURE_SELECT2；高亮行“ACC_FIXTURE_SELECT2 验收 选中跟随 \tMySQL\tmysql:3306 / mor_data_query_fixture\t停用\t未检查\t0”；列表 4 行"
+    },
+    {
+      "scenario": "R1 新建草稿默认约束",
+      "ok": true,
+      "note": "默认超时 5；提示“1–8”；正文角标“0.0 / 48 KB”；问题面板 ['错误 1 : 1 解析器不支持该语法 定位']"
+    },
+    {
+      "scenario": "5a 编辑器高亮 / 问题面板 / 定位 / 防抖",
+      "ok": true,
+      "note": "高亮 {'dq-tpl-value': 2, 'dq-tpl-fragment': 1, 'dq-tpl-tag': 7}；未闭合时错误 ['错误 6 : 1 标签不成对：第 4 行第 3 列打开的 {{#if}} 应以 {{/if}} 结束，遇到 {{/join}} 定位']；lint 标记 2；定位后光标行“{{/join}}”（焦点在编辑器 True）；防抖 {'typingMillis': 1700, 'requestsDuringTyping': 0, 'requestsAfter': 1, 'firstDelayMillis': 501, 'abortedSoFar': 0}；改正后错误 []，警告 []，“校验通过”显示"
+    },
+    {
+      "scenario": "5b 保存 ACC_REFUNDS v1（启用）",
+      "ok": true,
+      "note": "已于首轮保存（重复运行未再保存），当前 v7，状态 ACTIVE"
+    },
+    {
+      "scenario": "6 试运行",
+      "ok": true,
+      "note": "200；SQL：SELECT refund_id, refund_no, client_id, refund_status, refund_amount, currency, create_time FROM t_refund_fixture WHERE currency = ? AND (refund_status = ? OR refund_status = ?) ORDER BY create_time ASC, refund_id ASC LIMIT 4 OFFSET 0；绑定 ['USD', 'SUCCEEDED', 'PROCESSING']；总数 7（库中 7），hasMore=True；refund_no 屏蔽 ['FX-*****01', 'FX-*****02', 'FX-*****03'] ↔ 原值 ['FX-RF-2001', 'FX-RF-2002', 'FX-RF-2003']；表头 ['refund_id', '退款号', 'client_id', 'refund_status', 'refund_amount', 'currency', 'create_time']；摘要“成功 3 行 · 还有更多 总数 7 耗时 2 ms 上限：每页 ≤ 100 · 超时 5 s”；第 2 页 3 行"
+    },
+    {
+      "scenario": "7 第 2 版、对比与恢复",
+      "ok": true,
+      "note": "保存 200 → v8；对比“v7 → v8 删除 1 新增 1”，新增行 [\"1\\n+\\nSELECT refund_id, refund_no, 'v2' AS body_version, clien\"]，删除行 ['1\\n−\\nSELECT refund_id, refund_no, client_id, refund_status, r']；按钮“以 v7 恢复为 v9”；恢复 → v9；最新版本 restoredFrom=v7，正文与 v7 相同 True"
+    },
+    {
+      "scenario": "8 整实例模板",
+      "ok": true,
+      "note": "未限定库名错误 ['错误 1 : 15 表 t_number_fixture 未限定库名：数据源未指定默认库，请写成 库.表 定位']；mysql.user 错误 ['错误 1 : 24 不允许引用系统库 mysql 中的表 user 定位']；改正后错误 []；保存 200 v1；试运行 200，总数 50，前 3 行 ['0', '1', '2']，SQL SELECT n FROM mor_data_query_fixture.t_number_fixture WHERE n < 50 ORDER BY n LIMIT 101 OFFSET 0"
+    },
+    {
+      "scenario": "9a 执行 ACC_REFUNDS",
+      "ok": true,
+      "note": "200，versionNo=9，4 行（库中 4），total=4，首行 [['2008', 'FX-*****08', '1003', 'SUCCEEDED', '60.00', 'USD', '2026-10-12T09:00:00']]"
+    },
+    {
+      "scenario": "9b 超时模板",
+      "ok": true,
+      "note": "400 DATA_QUERY_TIMEOUT：查询超时，请缩小查询范围（上限 1 秒）；耗时 1.07s；建模板 已存在"
+    },
+    {
+      "scenario": "10 模板列表",
+      "ok": true,
+      "note": "ACC_REFUNDS 验收：退款查询 \tACC_FIXTURE_READER\t currency statuses[] sortBy⟨片段⟩* \t偏移\tv9\t启用\t221546852372267008 · 2026-10-22 10:12 | ACC_INSTANCE_NUMBERS 验收：整实例数字表 \tACC_FIXTURE_INSTANCE\t 无参数 \t偏移\tv1\t启用\t221546852372267008 · 2026-10-22 10:01 | ACC_TIMEOUT_SUM 验收：超时（三表 CROSS JOIN） \tACC_FIXTURE_READER\t 无参数 \t不分页\tv1\t启用\t221546852372267008 · 2026-10-22 09:58"
+    }
+  ],
+  "consoleErrors": [],
+  "consoleWarnings": [],
+  "unexpectedNetwork": [],
+  "expectedErrors": [
+    {
+      "method": "POST",
+      "path": "/data-sources/238903491215572992/status",
+      "status": 400,
+      "matched": {
+        "url": "/api/operations/data-query-admin/v1/data-sources/238903491215572992/status",
+        "code": "BUSINESS_CHECK_FAILED",
+        "detail": "连接检查未通过，不能启用: 含非只读权限 INSERT: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`；含非只读权限 UPDATE: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`",
+        "errors": null
+      }
+    }
+  ],
+  "expectedConsole": [
+    [
+      "/data-query/data-sources",
+      "error",
+      "Failed to load resource: the server responded with a status of 400 (Bad Request)"
+    ]
+  ],
+  "abortedValidations": 0,
+  "shots": [
+    "01-data-sources-list.png",
+    "04-writer-editor-check-failed.png",
+    "05-writer-enable-rejected.png",
+    "06-instance-detail-active.png",
+    "07-data-sources-list-after.png",
+    "08b-template-new-default-draft.png",
+    "08-templates-list-before.png",
+    "09-template-editor-broken.png",
+    "10-template-editor-located.png",
+    "11-template-editor-fixed.png",
+    "13-template-trial-result.png",
+    "14-version-compare.png",
+    "15-version-history-after-restore.png",
+    "16-instance-unqualified-error.png",
+    "17-instance-system-schema-error.png",
+    "18-instance-trial-result.png",
+    "19-templates-list.png"
+  ],
+  "evidence": {
+    "writer": {
+      "created": null,
+      "test": {
+        "result": "FAILED",
+        "connected": true,
+        "privilegesPassed": false,
+        "grants": [
+          "GRANT USAGE ON *.* TO `data_query_fixture_writer`@`%`",
+          "GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`"
+        ],
+        "violations": [
+          "含非只读权限 INSERT: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`",
+          "含非只读权限 UPDATE: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`"
+        ]
+      },
+      "uiRed": [
+        "INSERT",
+        "UPDATE"
+      ],
+      "uiViolations": [
+        "含非只读权限 INSERT: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`",
+        "含非只读权限 UPDATE: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`"
+      ],
+      "enable": [
+        400,
+        "BUSINESS_CHECK_FAILED",
+        "连接检查未通过，不能启用: 含非只读权限 INSERT: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`；含非只读权限 UPDATE: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`"
+      ],
+      "dialog": [
+        "操作被拒绝：连接检查未通过，不能启用: 含非只读权限 INSERT: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`；含非只读权限 UPDATE: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`",
+        "启用前服务端会重新做连接与只读检查，未通过时拒绝启用。"
+      ],
+      "after": [
+        "INACTIVE",
+        "FAILED",
+        "含非只读权限 INSERT: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`；含非只读权限 UPDATE: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`"
+      ]
+    },
+    "selectFollow": {
+      "how": "新建（新建前选中 ACC_FIXTURE_INSTANCE，检查 PASSED）",
+      "save": [
+        200,
+        {
+          "objectType": "DATA_SOURCE",
+          "objectId": "238907240013185024",
+          "objectCode": "ACC_FIXTURE_SELECT2",
+          "status": "INACTIVE",
+          "version": 1
+        }
+      ],
+      "detail": "ACC_FIXTURE_SELECT2",
+      "highlighted": "ACC_FIXTURE_SELECT2 验收 选中跟随 \tMySQL\tmysql:3306 / mor_data_query_fixture\t停用\t未检查\t0",
+      "rows": 4
+    },
+    "defaultDraftProblems": [
+      "错误 1 : 1 解析器不支持该语法 定位"
+    ],
+    "defaultDraft": {
+      "timeoutSeconds": "5",
+      "hint": "1–8",
+      "badge": "0.0 / 48 KB"
+    },
+    "debounce": {
+      "typingMillis": 1700,
+      "requestsDuringTyping": 0,
+      "requestsAfter": 1,
+      "firstDelayMillis": 501,
+      "abortedSoFar": 0
+    },
+    "trial": {
+      "sql": "SELECT refund_id, refund_no, client_id, refund_status, refund_amount, currency, create_time FROM t_refund_fixture WHERE currency = ? AND (refund_status = ? OR refund_status = ?) ORDER BY create_time ASC, refund_id ASC LIMIT 4 OFFSET 0",
+      "countSql": "SELECT COUNT(*) FROM (SELECT refund_id, refund_no, client_id, refund_status, refund_amount, currency, create_time FROM t_refund_fixture WHERE currency = ? AND (refund_status = ? OR refund_status = ?)) t",
+      "bindings": [
+        "USD",
+        "SUCCEEDED",
+        "PROCESSING"
+      ],
+      "columns": [
+        "refund_id",
+        "refund_no",
+        "client_id",
+        "refund_status",
+        "refund_amount",
+        "currency",
+        "create_time"
+      ],
+      "rows": [
+        [
+          "2001",
+          "FX-*****01",
+          "1001",
+          "SUCCEEDED",
+          "10.00",
+          "USD",
+          "2026-10-05T09:00:00"
+        ],
+        [
+          "2002",
+          "FX-*****02",
+          "1001",
+          "SUCCEEDED",
+          "25.50",
+          "USD",
+          "2026-10-06T09:00:00"
+        ],
+        [
+          "2003",
+          "FX-*****03",
+          "1001",
+          "PROCESSING",
+          "7.25",
+          "USD",
+          "2026-10-07T09:00:00"
+        ]
+      ],
+      "total": 7,
+      "hasMore": true,
+      "page2Rows": [
+        [
+          "2005",
+          "FX-*****05",
+          "1002",
+          "SUCCEEDED",
+          "3.99",
+          "USD",
+          "2026-10-09T09:00:00"
+        ],
+        [
+          "2006",
+          "FX-*****06",
+          "1002",
+          "PROCESSING",
+          "42.00",
+          "USD",
+          "2026-10-10T09:00:00"
+        ],
+        [
+          "2008",
+          "FX-*****08",
+          "1003",
+          "SUCCEEDED",
+          "60.00",
+          "USD",
+          "2026-10-12T09:00:00"
+        ]
+      ],
+      "expectedPlain": [
+        "FX-RF-2001",
+        "FX-RF-2002",
+        "FX-RF-2003",
+        "FX-RF-2005",
+        "FX-RF-2006",
+        "FX-RF-2008",
+        "FX-RF-2010"
+      ]
+    },
+    "versions": {
+      "save": [
+        200,
+        {
+          "currentVersionNo": 8,
+          "status": "ACTIVE",
+          "templateCode": "ACC_REFUNDS",
+          "templateId": "238904438520102912",
+          "version": 8,
+          "warnings": []
+        }
+      ],
+      "restore": {
+        "currentVersionNo": 9,
+        "status": "ACTIVE",
+        "templateCode": "ACC_REFUNDS",
+        "templateId": "238904438520102912",
+        "version": 9,
+        "warnings": []
+      },
+      "list": [
+        {
+          "changeNote": "恢复自 v7",
+          "createTime": "2026-10-22T06:12:48.746815Z",
+          "createdBy": "221546852372267008",
+          "dataSourceCode": "ACC_FIXTURE_READER",
+          "dataSourceId": "238903450409189376",
+          "restoredFromVersionNo": 7,
+          "versionNo": 9
+        },
+        {
+          "changeNote": "验收 v2：增加 body_version 列",
+          "createTime": "2026-10-22T06:12:41.435108Z",
+          "createdBy": "221546852372267008",
+          "dataSourceCode": "ACC_FIXTURE_READER",
+          "dataSourceId": "238903450409189376",
+          "restoredFromVersionNo": null,
+          "versionNo": 8
+        },
+        {
+          "changeNote": "恢复自 v5",
+          "createTime": "2026-10-22T06:06:05.828029Z",
+          "createdBy": "221546852372267008",
+          "dataSourceCode": "ACC_FIXTURE_READER",
+          "dataSourceId": "238903450409189376",
+          "restoredFromVersionNo": 5,
+          "versionNo": 7
+        },
+        {
+          "changeNote": "验收 v2：增加 body_version 列",
+          "createTime": "2026-10-22T06:05:57.890726Z",
+          "createdBy": "221546852372267008",
+          "dataSourceCode": "ACC_FIXTURE_READER",
+          "dataSourceId": "238903450409189376",
+          "restoredFromVersionNo": null,
+          "versionNo": 6
+        },
+        {
+          "changeNote": "恢复自 v3",
+          "createTime": "2026-10-22T06:03:48.695595Z",
+          "createdBy": "221546852372267008",
+          "dataSourceCode": "ACC_FIXTURE_READER",
+          "dataSourceId": "238903450409189376",
+          "restoredFromVersionNo": 3,
+          "versionNo": 5
+        },
+        {
+          "changeNote": "验收 v2：增加 body_version 列",
+          "createTime": "2026-10-22T06:03:41.432224Z",
+          "createdBy": "221546852372267008",
+          "dataSourceCode": "ACC_FIXTURE_READER",
+          "dataSourceId": "238903450409189376",
+          "restoredFromVersionNo": null,
+          "versionNo": 4
+        },
+        {
+          "changeNote": "恢复自 v1",
+          "createTime": "2026-10-22T06:01:18.813921Z",
+          "createdBy": "221546852372267008",
+          "dataSourceCode": "ACC_FIXTURE_READER",
+          "dataSourceId": "238903450409189376",
+          "restoredFromVersionNo": 1,
+          "versionNo": 3
+        },
+        {
+          "changeNote": "验收 v2：增加 body_version 列",
+          "createTime": "2026-10-22T06:01:11.558944Z",
+          "createdBy": "221546852372267008",
+          "dataSourceCode": "ACC_FIXTURE_READER",
+          "dataSourceId": "238903450409189376",
+          "restoredFromVersionNo": null,
+          "versionNo": 2
+        },
+        {
+          "changeNote": "验收 v1：退款查询初版",
+          "createTime": "2026-10-22T06:00:56.773807Z",
+          "createdBy": "221546852372267008",
+          "dataSourceCode": "ACC_FIXTURE_READER",
+          "dataSourceId": "238903450409189376",
+          "restoredFromVersionNo": null,
+          "versionNo": 1
+        }
+      ]
+    },
+    "instance": {
+      "unqualified": [
+        "错误 1 : 15 表 t_number_fixture 未限定库名：数据源未指定默认库，请写成 库.表 定位"
+      ],
+      "system": [
+        "错误 1 : 24 不允许引用系统库 mysql 中的表 user 定位"
+      ],
+      "save": [
+        200,
+        {
+          "currentVersionNo": 1,
+          "note": "首轮已保存，重复运行未再保存"
+        }
+      ],
+      "trialTotal": 50,
+      "trialFirst": [
+        "0",
+        "1",
+        "2"
+      ],
+      "sql": "SELECT n FROM mor_data_query_fixture.t_number_fixture WHERE n < 50 ORDER BY n LIMIT 101 OFFSET 0"
+    },
+    "execution": {
+      "status": 200,
+      "versionNo": 9,
+      "columns": [
+        {
+          "label": "refund_id",
+          "name": "refund_id"
+        },
+        {
+          "label": "退款号",
+          "name": "refund_no"
+        },
+        {
+          "label": "client_id",
+          "name": "client_id"
+        },
+        {
+          "label": "refund_status",
+          "name": "refund_status"
+        },
+        {
+          "label": "refund_amount",
+          "name": "refund_amount"
+        },
+        {
+          "label": "currency",
+          "name": "currency"
+        },
+        {
+          "label": "create_time",
+          "name": "create_time"
+        }
+      ],
+      "rows": [
+        [
+          "2008",
+          "FX-*****08",
+          "1003",
+          "SUCCEEDED",
+          "60.00",
+          "USD",
+          "2026-10-12T09:00:00"
+        ],
+        [
+          "2005",
+          "FX-*****05",
+          "1002",
+          "SUCCEEDED",
+          "3.99",
+          "USD",
+          "2026-10-09T09:00:00"
+        ],
+        [
+          "2002",
+          "FX-*****02",
+          "1001",
+          "SUCCEEDED",
+          "25.50",
+          "USD",
+          "2026-10-06T09:00:00"
+        ],
+        [
+          "2001",
+          "FX-*****01",
+          "1001",
+          "SUCCEEDED",
+          "10.00",
+          "USD",
+          "2026-10-05T09:00:00"
+        ]
+      ],
+      "total": 4,
+      "elapsedSeconds": 0.04
+    },
+    "timeout": {
+      "status": 400,
+      "code": "DATA_QUERY_TIMEOUT",
+      "detail": "查询超时，请缩小查询范围（上限 1 秒）",
+      "elapsedSeconds": 1.07
+    }
+  },
+  "earlierRuns": {
+    "run1_2026-10-22T09:57": {
+      "note": "首轮新建 3 个数据源；仅 reader 一项走完整新建流程（截图 02、03）",
+      "results": [
+        {
+          "scenario": "2 新建 reader 数据源",
+          "ok": true,
+          "note": "检查 PASSED，三步 passed×3，grants=[GRANT USAGE ON *.* …, GRANT SELECT ON `mor_data_query_fixture`.* …]；保存 200/INACTIVE v1；启用 200/ACTIVE；密码“已保存（Vault）”显示；默认库显示"
+        },
+        {
+          "scenario": "缺陷观察",
+          "ok": false,
+          "note": "新建 ACC_FIXTURE_WRITER / ACC_FIXTURE_INSTANCE 保存成功后，右侧详情仍停在 ACC_FIXTURE_READER（新建项未被选中）"
+        }
+      ]
+    },
+    "run2_2026-10-22T10:01": {
+      "results": [
+        {
+          "scenario": "登录",
+          "ok": true,
+          "note": "管理员登录"
+        },
+        {
+          "scenario": "1 导航与数据源列表",
+          "ok": false,
+          "note": "菜单组可见，子页可见，标题缺失；列表 3 行；错误提示 无"
+        },
+        {
+          "scenario": "2 新建 reader 数据源",
+          "ok": true,
+          "note": "已存在（重复运行），状态 ACTIVE，跳过新建"
+        },
+        {
+          "scenario": "3 writer 数据源检查不通过",
+          "ok": true,
+          "note": "新建 已存在；检查 FAILED，三步 ['passed', 'failed', 'skipped']，标红 ['INSERT', 'UPDATE']，违规 ['含非只读权限 INSERT: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`', '含非只读权限 UPDATE: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`']；启用被拒 400 BUSINESS_CHECK_FAILED：连接检查未通过，不能启用: 含非只读权限 INSERT: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`；含非只读权限 UPDATE: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`；弹窗提示 ['操作被拒绝：连接检查未通过，不能启用: 含非只读权限 INSERT: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`；含非只读权限 UPDATE: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`', '启用前服务端会重新做连接与只读检查，未通过时拒绝启用。']；最终 INACTIVE/FAILED：含非只读权限 INSERT: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`；含非只读权限 UPDATE: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`"
+        },
+        {
+          "scenario": "4 整实例数据源",
+          "ok": true,
+          "note": "新建 已存在（上一轮已新建并检查通过）；启用 200/ACTIVE；列表行：ACC_FIXTURE_INSTANCE 验收 Fixture 整实例 \tMySQL\tmysql:3306 · 整个实例\t启用\t通过 · 2026-10-22 10:00\t0；详情“整个实例”显示"
+        },
+        {
+          "scenario": "5a 编辑器高亮 / 问题面板 / 定位 / 防抖",
+          "ok": false,
+          "note": "高亮 {'dq-tpl-value': 2, 'dq-tpl-fragment': 1, 'dq-tpl-tag': 7}；未闭合时错误 ['错误 6 : 1 标签不成对：第 4 行第 3 列打开的 {{#if}} 应以 {{/if}} 结束，遇到 {{/join}} 定位']；lint 标记 2；定位后光标行“{{/join}}”（焦点在编辑器 True）；防抖 {'typingMillis': 1686, 'requestsDuringTyping': 0, 'requestsAfter': 1, 'firstDelayMillis': 501, 'abortedSoFar': 0}；改正后错误 []，警告 []，“校验通过”显示"
+        },
+        {
+          "scenario": "5b 保存 ACC_REFUNDS v1（启用）",
+          "ok": true,
+          "note": "保存 200 {\"currentVersionNo\": 1, \"status\": \"ACTIVE\", \"templateCode\": \"ACC_REFUNDS\", \"templateId\": \"238904438520102912\", \"version\": 1, \"warnings\": []}；顶栏 启用✓ 当前 v1✓；URL /data-query/templates/238904438520102912"
+        },
+        {
+          "scenario": "6 试运行",
+          "ok": true,
+          "note": "200；SQL：SELECT refund_id, refund_no, client_id, refund_status, refund_amount, currency, create_time FROM t_refund_fixture WHERE currency = ? AND (refund_status = ? OR refund_status = ?) ORDER BY create_time ASC, refund_id ASC LIMIT 4 OFFSET 0；绑定 ['USD', 'SUCCEEDED', 'PROCESSING']；总数 7（库中 7），hasMore=True；refund_no 屏蔽 ['FX-*****01', 'FX-*****02', 'FX-*****03'] ↔ 原值 ['FX-RF-2001', 'FX-RF-2002', 'FX-RF-2003']；表头 ['refund_id', '退款号', 'client_id', 'refund_status', 'refund_amount', 'currency', 'create_time']；摘要“成功 3 行 · 还有更多 总数 7 耗时 21 ms 上限：每页 ≤ 100 · 超时 5 s”；第 2 页 3 行"
+        },
+        {
+          "scenario": "7 第 2 版、对比与恢复",
+          "ok": false,
+          "note": "脚本异常 Error: Locator.click: Error: strict mode violation: locator(\".ant-drawer\").filter(has_text=\"版本历史\").get_by_role(\"button\", name=re.compile(r\"^关\\s?闭$\")) resolved to 2 elements:\n    1) <button type=\"button\" aria-label=\"关闭\" class=\"ant-drawer-close\">…</button> aka get_by_role(\"button\", name=\"关闭\")\n    2) <button "
+        },
+        {
+          "scenario": "8 整实例模板",
+          "ok": true,
+          "note": "未限定库名错误 ['错误 1 : 15 表 t_number_fixture 未限定库名：数据源未指定默认库，请写成 库.表 定位']；mysql.user 错误 ['错误 1 : 24 不允许引用系统库 mysql 中的表 user 定位']；改正后错误 []；保存 200 v1；试运行 200，总数 50，前 3 行 ['0', '1', '2']，SQL SELECT n FROM mor_data_query_fixture.t_number_fixture WHERE n < 50 ORDER BY n LIMIT 101 OFFSET 0"
+        },
+        {
+          "scenario": "9a 执行 ACC_REFUNDS",
+          "ok": true,
+          "note": "200，versionNo=3，4 行（库中 4），total=4，首行 [['2008', 'FX-*****08', '1003', 'SUCCEEDED', '60.00', 'USD', '2026-10-12T09:00:00']]"
+        },
+        {
+          "scenario": "9b 超时模板",
+          "ok": true,
+          "note": "400 DATA_QUERY_TIMEOUT：查询超时，请缩小查询范围（上限 1 秒）；耗时 1.06s；建模板 已存在"
+        },
+        {
+          "scenario": "10 模板列表",
+          "ok": true,
+          "note": "ACC_INSTANCE_NUMBERS 验收：整实例数字表 \tACC_FIXTURE_INSTANCE\t 无参数 \t偏移\tv1\t启用\t221546852372267008 · 2026-10-22 10:01 | ACC_REFUNDS 验收：退款查询 \tACC_FIXTURE_READER\t currency statuses[] sortBy⟨片段⟩* \t偏移\tv3\t启用\t221546852372267008 · 2026-10-22 10:01 | ACC_TIMEOUT_SUM 验收：超时（三表 CROSS JOIN） \tACC_FIXTURE_READER\t 无参数 \t不分页\tv1\t启用\t221546852372267008 · 2026-10-22 09:58"
+        }
+      ],
+      "evidence": {
+        "writer": {
+          "created": null,
+          "test": {
+            "result": "FAILED",
+            "connected": true,
+            "privilegesPassed": false,
+            "grants": [
+              "GRANT USAGE ON *.* TO `data_query_fixture_writer`@`%`",
+              "GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`"
+            ],
+            "violations": [
+              "含非只读权限 INSERT: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`",
+              "含非只读权限 UPDATE: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`"
+            ]
+          },
+          "uiRed": [
+            "INSERT",
+            "UPDATE"
+          ],
+          "uiViolations": [
+            "含非只读权限 INSERT: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`",
+            "含非只读权限 UPDATE: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`"
+          ],
+          "enable": [
+            400,
+            "BUSINESS_CHECK_FAILED",
+            "连接检查未通过，不能启用: 含非只读权限 INSERT: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`；含非只读权限 UPDATE: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`"
+          ],
+          "dialog": [
+            "操作被拒绝：连接检查未通过，不能启用: 含非只读权限 INSERT: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`；含非只读权限 UPDATE: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`",
+            "启用前服务端会重新做连接与只读检查，未通过时拒绝启用。"
+          ],
+          "after": [
+            "INACTIVE",
+            "FAILED",
+            "含非只读权限 INSERT: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`；含非只读权限 UPDATE: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`"
+          ]
+        },
+        "defaultDraftProblems": [
+          "错误 constraints.timeoutSeconds 超时必须在 1 到 8 秒之间 定位",
+          "错误 1 : 1 解析器不支持该语法 定位"
+        ],
+        "debounce": {
+          "typingMillis": 1686,
+          "requestsDuringTyping": 0,
+          "requestsAfter": 1,
+          "firstDelayMillis": 501,
+          "abortedSoFar": 0
+        },
+        "refundsSave": [
+          200,
+          {
+            "currentVersionNo": 1,
+            "status": "ACTIVE",
+            "templateCode": "ACC_REFUNDS",
+            "templateId": "238904438520102912",
+            "version": 1,
+            "warnings": []
+          }
+        ],
+        "trial": {
+          "sql": "SELECT refund_id, refund_no, client_id, refund_status, refund_amount, currency, create_time FROM t_refund_fixture WHERE currency = ? AND (refund_status = ? OR refund_status = ?) ORDER BY create_time ASC, refund_id ASC LIMIT 4 OFFSET 0",
+          "countSql": "SELECT COUNT(*) FROM (SELECT refund_id, refund_no, client_id, refund_status, refund_amount, currency, create_time FROM t_refund_fixture WHERE currency = ? AND (refund_status = ? OR refund_status = ?)) t",
+          "bindings": [
+            "USD",
+            "SUCCEEDED",
+            "PROCESSING"
+          ],
+          "columns": [
+            "refund_id",
+            "refund_no",
+            "client_id",
+            "refund_status",
+            "refund_amount",
+            "currency",
+            "create_time"
+          ],
+          "rows": [
+            [
+              "2001",
+              "FX-*****01",
+              "1001",
+              "SUCCEEDED",
+              "10.00",
+              "USD",
+              "2026-10-05T09:00:00"
+            ],
+            [
+              "2002",
+              "FX-*****02",
+              "1001",
+              "SUCCEEDED",
+              "25.50",
+              "USD",
+              "2026-10-06T09:00:00"
+            ],
+            [
+              "2003",
+              "FX-*****03",
+              "1001",
+              "PROCESSING",
+              "7.25",
+              "USD",
+              "2026-10-07T09:00:00"
+            ]
+          ],
+          "total": 7,
+          "hasMore": true,
+          "page2Rows": [
+            [
+              "2005",
+              "FX-*****05",
+              "1002",
+              "SUCCEEDED",
+              "3.99",
+              "USD",
+              "2026-10-09T09:00:00"
+            ],
+            [
+              "2006",
+              "FX-*****06",
+              "1002",
+              "PROCESSING",
+              "42.00",
+              "USD",
+              "2026-10-10T09:00:00"
+            ],
+            [
+              "2008",
+              "FX-*****08",
+              "1003",
+              "SUCCEEDED",
+              "60.00",
+              "USD",
+              "2026-10-12T09:00:00"
+            ]
+          ],
+          "expectedPlain": [
+            "FX-RF-2001",
+            "FX-RF-2002",
+            "FX-RF-2003",
+            "FX-RF-2005",
+            "FX-RF-2006",
+            "FX-RF-2008",
+            "FX-RF-2010"
+          ]
+        },
+        "instance": {
+          "unqualified": [
+            "错误 1 : 15 表 t_number_fixture 未限定库名：数据源未指定默认库，请写成 库.表 定位"
+          ],
+          "system": [
+            "错误 1 : 24 不允许引用系统库 mysql 中的表 user 定位"
+          ],
+          "save": [
+            200,
+            {
+              "currentVersionNo": 1,
+              "status": "ACTIVE",
+              "templateCode": "ACC_INSTANCE_NUMBERS",
+              "templateId": "238904597312258048",
+              "version": 1,
+              "warnings": []
+            }
+          ],
+          "trialTotal": 50,
+          "trialFirst": [
+            "0",
+            "1",
+            "2"
+          ],
+          "sql": "SELECT n FROM mor_data_query_fixture.t_number_fixture WHERE n < 50 ORDER BY n LIMIT 101 OFFSET 0"
+        },
+        "execution": {
+          "status": 200,
+          "versionNo": 3,
+          "columns": [
+            {
+              "label": "refund_id",
+              "name": "refund_id"
+            },
+            {
+              "label": "退款号",
+              "name": "refund_no"
+            },
+            {
+              "label": "client_id",
+              "name": "client_id"
+            },
+            {
+              "label": "refund_status",
+              "name": "refund_status"
+            },
+            {
+              "label": "refund_amount",
+              "name": "refund_amount"
+            },
+            {
+              "label": "currency",
+              "name": "currency"
+            },
+            {
+              "label": "create_time",
+              "name": "create_time"
+            }
+          ],
+          "rows": [
+            [
+              "2008",
+              "FX-*****08",
+              "1003",
+              "SUCCEEDED",
+              "60.00",
+              "USD",
+              "2026-10-12T09:00:00"
+            ],
+            [
+              "2005",
+              "FX-*****05",
+              "1002",
+              "SUCCEEDED",
+              "3.99",
+              "USD",
+              "2026-10-09T09:00:00"
+            ],
+            [
+              "2002",
+              "FX-*****02",
+              "1001",
+              "SUCCEEDED",
+              "25.50",
+              "USD",
+              "2026-10-06T09:00:00"
+            ],
+            [
+              "2001",
+              "FX-*****01",
+              "1001",
+              "SUCCEEDED",
+              "10.00",
+              "USD",
+              "2026-10-05T09:00:00"
+            ]
+          ],
+          "total": 4,
+          "elapsedSeconds": 0.1
+        },
+        "timeout": {
+          "status": 400,
+          "code": "DATA_QUERY_TIMEOUT",
+          "detail": "查询超时，请缩小查询范围（上限 1 秒）",
+          "elapsedSeconds": 1.06
+        }
+      },
+      "expectedErrors": [
+        {
+          "method": "POST",
+          "path": "/data-sources/238903491215572992/status",
+          "status": 400,
+          "matched": {
+            "url": "/api/operations/data-query-admin/v1/data-sources/238903491215572992/status",
+            "code": "BUSINESS_CHECK_FAILED",
+            "detail": "连接检查未通过，不能启用: 含非只读权限 INSERT: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`；含非只读权限 UPDATE: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`",
+            "errors": null
+          }
+        }
+      ],
+      "unexpectedNetwork": [],
+      "consoleErrors": [
+        [
+          "/data-query/data-sources",
+          "error",
+          "Failed to load resource: the server responded with a status of 400 (Bad Request)"
+        ]
+      ]
+    },
+    "run_before_2026-10-22T10:13": {
+      "results": [
+        {
+          "scenario": "登录",
+          "ok": true,
+          "note": "管理员登录"
+        },
+        {
+          "scenario": "1 导航与数据源列表",
+          "ok": true,
+          "note": "菜单组可见，子页可见，面包屑“数据查询 / 数据源”可见；列表 3 行；错误提示 无"
+        },
+        {
+          "scenario": "2 新建 reader 数据源",
+          "ok": true,
+          "note": "已存在（重复运行），状态 ACTIVE，跳过新建"
+        },
+        {
+          "scenario": "3 writer 数据源检查不通过",
+          "ok": true,
+          "note": "新建 已存在；检查 FAILED，三步 ['passed', 'failed', 'skipped']，标红 ['INSERT', 'UPDATE']，违规 ['含非只读权限 INSERT: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`', '含非只读权限 UPDATE: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`']；启用被拒 400 BUSINESS_CHECK_FAILED：连接检查未通过，不能启用: 含非只读权限 INSERT: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`；含非只读权限 UPDATE: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`；弹窗提示 ['操作被拒绝：连接检查未通过，不能启用: 含非只读权限 INSERT: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`；含非只读权限 UPDATE: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`', '启用前服务端会重新做连接与只读检查，未通过时拒绝启用。']；最终 INACTIVE/FAILED：含非只读权限 INSERT: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`；含非只读权限 UPDATE: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`"
+        },
+        {
+          "scenario": "4 整实例数据源",
+          "ok": true,
+          "note": "新建 已存在（上一轮已新建并检查通过）；启用 已启用/ACTIVE；列表行：ACC_FIXTURE_INSTANCE 验收 Fixture 整实例 \tMySQL\tmysql:3306 · 整个实例\t启用\t通过 · 2026-10-22 10:00\t1；详情“整个实例”显示"
+        },
+        {
+          "scenario": "5a 编辑器高亮 / 问题面板 / 定位 / 防抖",
+          "ok": true,
+          "note": "高亮 {'dq-tpl-value': 2, 'dq-tpl-fragment': 1, 'dq-tpl-tag': 7}；未闭合时错误 ['错误 6 : 1 标签不成对：第 4 行第 3 列打开的 {{#if}} 应以 {{/if}} 结束，遇到 {{/join}} 定位']；lint 标记 2；定位后光标行“{{/join}}”（焦点在编辑器 True）；防抖 {'typingMillis': 1668, 'requestsDuringTyping': 0, 'requestsAfter': 1, 'firstDelayMillis': 501, 'abortedSoFar': 0}；改正后错误 []，警告 []，“校验通过”显示"
+        },
+        {
+          "scenario": "5b 保存 ACC_REFUNDS v1（启用）",
+          "ok": true,
+          "note": "已于首轮保存（重复运行未再保存），当前 v5，状态 ACTIVE"
+        },
+        {
+          "scenario": "6 试运行",
+          "ok": true,
+          "note": "200；SQL：SELECT refund_id, refund_no, client_id, refund_status, refund_amount, currency, create_time FROM t_refund_fixture WHERE currency = ? AND (refund_status = ? OR refund_status = ?) ORDER BY create_time ASC, refund_id ASC LIMIT 4 OFFSET 0；绑定 ['USD', 'SUCCEEDED', 'PROCESSING']；总数 7（库中 7），hasMore=True；refund_no 屏蔽 ['FX-*****01', 'FX-*****02', 'FX-*****03'] ↔ 原值 ['FX-RF-2001', 'FX-RF-2002', 'FX-RF-2003']；表头 ['refund_id', '退款号', 'client_id', 'refund_status', 'refund_amount', 'currency', 'create_time']；摘要“成功 3 行 · 还有更多 总数 7 耗时 4 ms 上限：每页 ≤ 100 · 超时 5 s”；第 2 页 3 行"
+        },
+        {
+          "scenario": "7 第 2 版、对比与恢复",
+          "ok": true,
+          "note": "保存 200 → v6；对比“v5 → v6 删除 1 新增 1”，新增行 [\"1\\n+\\nSELECT refund_id, refund_no, 'v2' AS body_version, clien\"]，删除行 ['1\\n−\\nSELECT refund_id, refund_no, client_id, refund_status, r']；按钮“以 v5 恢复为 v7”；恢复 → v7；最新版本 restoredFrom=v5，正文与 v5 相同 True"
+        },
+        {
+          "scenario": "8 整实例模板",
+          "ok": true,
+          "note": "未限定库名错误 ['错误 1 : 15 表 t_number_fixture 未限定库名：数据源未指定默认库，请写成 库.表 定位']；mysql.user 错误 ['错误 1 : 24 不允许引用系统库 mysql 中的表 user 定位']；改正后错误 []；保存 200 v1；试运行 200，总数 50，前 3 行 ['0', '1', '2']，SQL SELECT n FROM mor_data_query_fixture.t_number_fixture WHERE n < 50 ORDER BY n LIMIT 101 OFFSET 0"
+        },
+        {
+          "scenario": "9a 执行 ACC_REFUNDS",
+          "ok": true,
+          "note": "200，versionNo=7，4 行（库中 4），total=4，首行 [['2008', 'FX-*****08', '1003', 'SUCCEEDED', '60.00', 'USD', '2026-10-12T09:00:00']]"
+        },
+        {
+          "scenario": "9b 超时模板",
+          "ok": true,
+          "note": "400 DATA_QUERY_TIMEOUT：查询超时，请缩小查询范围（上限 1 秒）；耗时 1.12s；建模板 已存在"
+        },
+        {
+          "scenario": "10 模板列表",
+          "ok": true,
+          "note": "ACC_REFUNDS 验收：退款查询 \tACC_FIXTURE_READER\t currency statuses[] sortBy⟨片段⟩* \t偏移\tv7\t启用\t221546852372267008 · 2026-10-22 10:06 | ACC_INSTANCE_NUMBERS 验收：整实例数字表 \tACC_FIXTURE_INSTANCE\t 无参数 \t偏移\tv1\t启用\t221546852372267008 · 2026-10-22 10:01 | ACC_TIMEOUT_SUM 验收：超时（三表 CROSS JOIN） \tACC_FIXTURE_READER\t 无参数 \t不分页\tv1\t启用\t221546852372267008 · 2026-10-22 09:58"
+        }
+      ],
+      "evidence": {
+        "writer": {
+          "created": null,
+          "test": {
+            "result": "FAILED",
+            "connected": true,
+            "privilegesPassed": false,
+            "grants": [
+              "GRANT USAGE ON *.* TO `data_query_fixture_writer`@`%`",
+              "GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`"
+            ],
+            "violations": [
+              "含非只读权限 INSERT: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`",
+              "含非只读权限 UPDATE: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`"
+            ]
+          },
+          "uiRed": [
+            "INSERT",
+            "UPDATE"
+          ],
+          "uiViolations": [
+            "含非只读权限 INSERT: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`",
+            "含非只读权限 UPDATE: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`"
+          ],
+          "enable": [
+            400,
+            "BUSINESS_CHECK_FAILED",
+            "连接检查未通过，不能启用: 含非只读权限 INSERT: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`；含非只读权限 UPDATE: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`"
+          ],
+          "dialog": [
+            "操作被拒绝：连接检查未通过，不能启用: 含非只读权限 INSERT: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`；含非只读权限 UPDATE: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`",
+            "启用前服务端会重新做连接与只读检查，未通过时拒绝启用。"
+          ],
+          "after": [
+            "INACTIVE",
+            "FAILED",
+            "含非只读权限 INSERT: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`；含非只读权限 UPDATE: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`"
+          ]
+        },
+        "debounce": {
+          "typingMillis": 1668,
+          "requestsDuringTyping": 0,
+          "requestsAfter": 1,
+          "firstDelayMillis": 501,
+          "abortedSoFar": 0
+        },
+        "trial": {
+          "sql": "SELECT refund_id, refund_no, client_id, refund_status, refund_amount, currency, create_time FROM t_refund_fixture WHERE currency = ? AND (refund_status = ? OR refund_status = ?) ORDER BY create_time ASC, refund_id ASC LIMIT 4 OFFSET 0",
+          "countSql": "SELECT COUNT(*) FROM (SELECT refund_id, refund_no, client_id, refund_status, refund_amount, currency, create_time FROM t_refund_fixture WHERE currency = ? AND (refund_status = ? OR refund_status = ?)) t",
+          "bindings": [
+            "USD",
+            "SUCCEEDED",
+            "PROCESSING"
+          ],
+          "columns": [
+            "refund_id",
+            "refund_no",
+            "client_id",
+            "refund_status",
+            "refund_amount",
+            "currency",
+            "create_time"
+          ],
+          "rows": [
+            [
+              "2001",
+              "FX-*****01",
+              "1001",
+              "SUCCEEDED",
+              "10.00",
+              "USD",
+              "2026-10-05T09:00:00"
+            ],
+            [
+              "2002",
+              "FX-*****02",
+              "1001",
+              "SUCCEEDED",
+              "25.50",
+              "USD",
+              "2026-10-06T09:00:00"
+            ],
+            [
+              "2003",
+              "FX-*****03",
+              "1001",
+              "PROCESSING",
+              "7.25",
+              "USD",
+              "2026-10-07T09:00:00"
+            ]
+          ],
+          "total": 7,
+          "hasMore": true,
+          "page2Rows": [
+            [
+              "2005",
+              "FX-*****05",
+              "1002",
+              "SUCCEEDED",
+              "3.99",
+              "USD",
+              "2026-10-09T09:00:00"
+            ],
+            [
+              "2006",
+              "FX-*****06",
+              "1002",
+              "PROCESSING",
+              "42.00",
+              "USD",
+              "2026-10-10T09:00:00"
+            ],
+            [
+              "2008",
+              "FX-*****08",
+              "1003",
+              "SUCCEEDED",
+              "60.00",
+              "USD",
+              "2026-10-12T09:00:00"
+            ]
+          ],
+          "expectedPlain": [
+            "FX-RF-2001",
+            "FX-RF-2002",
+            "FX-RF-2003",
+            "FX-RF-2005",
+            "FX-RF-2006",
+            "FX-RF-2008",
+            "FX-RF-2010"
+          ]
+        },
+        "versions": {
+          "save": [
+            200,
+            {
+              "currentVersionNo": 6,
+              "status": "ACTIVE",
+              "templateCode": "ACC_REFUNDS",
+              "templateId": "238904438520102912",
+              "version": 6,
+              "warnings": []
+            }
+          ],
+          "restore": {
+            "currentVersionNo": 7,
+            "status": "ACTIVE",
+            "templateCode": "ACC_REFUNDS",
+            "templateId": "238904438520102912",
+            "version": 7,
+            "warnings": []
+          },
+          "list": [
+            {
+              "changeNote": "恢复自 v5",
+              "createTime": "2026-10-22T06:06:05.828029Z",
+              "createdBy": "221546852372267008",
+              "dataSourceCode": "ACC_FIXTURE_READER",
+              "dataSourceId": "238903450409189376",
+              "restoredFromVersionNo": 5,
+              "versionNo": 7
+            },
+            {
+              "changeNote": "验收 v2：增加 body_version 列",
+              "createTime": "2026-10-22T06:05:57.890726Z",
+              "createdBy": "221546852372267008",
+              "dataSourceCode": "ACC_FIXTURE_READER",
+              "dataSourceId": "238903450409189376",
+              "restoredFromVersionNo": null,
+              "versionNo": 6
+            },
+            {
+              "changeNote": "恢复自 v3",
+              "createTime": "2026-10-22T06:03:48.695595Z",
+              "createdBy": "221546852372267008",
+              "dataSourceCode": "ACC_FIXTURE_READER",
+              "dataSourceId": "238903450409189376",
+              "restoredFromVersionNo": 3,
+              "versionNo": 5
+            },
+            {
+              "changeNote": "验收 v2：增加 body_version 列",
+              "createTime": "2026-10-22T06:03:41.432224Z",
+              "createdBy": "221546852372267008",
+              "dataSourceCode": "ACC_FIXTURE_READER",
+              "dataSourceId": "238903450409189376",
+              "restoredFromVersionNo": null,
+              "versionNo": 4
+            },
+            {
+              "changeNote": "恢复自 v1",
+              "createTime": "2026-10-22T06:01:18.813921Z",
+              "createdBy": "221546852372267008",
+              "dataSourceCode": "ACC_FIXTURE_READER",
+              "dataSourceId": "238903450409189376",
+              "restoredFromVersionNo": 1,
+              "versionNo": 3
+            },
+            {
+              "changeNote": "验收 v2：增加 body_version 列",
+              "createTime": "2026-10-22T06:01:11.558944Z",
+              "createdBy": "221546852372267008",
+              "dataSourceCode": "ACC_FIXTURE_READER",
+              "dataSourceId": "238903450409189376",
+              "restoredFromVersionNo": null,
+              "versionNo": 2
+            },
+            {
+              "changeNote": "验收 v1：退款查询初版",
+              "createTime": "2026-10-22T06:00:56.773807Z",
+              "createdBy": "221546852372267008",
+              "dataSourceCode": "ACC_FIXTURE_READER",
+              "dataSourceId": "238903450409189376",
+              "restoredFromVersionNo": null,
+              "versionNo": 1
+            }
+          ]
+        },
+        "instance": {
+          "unqualified": [
+            "错误 1 : 15 表 t_number_fixture 未限定库名：数据源未指定默认库，请写成 库.表 定位"
+          ],
+          "system": [
+            "错误 1 : 24 不允许引用系统库 mysql 中的表 user 定位"
+          ],
+          "save": [
+            200,
+            {
+              "currentVersionNo": 1,
+              "note": "首轮已保存，重复运行未再保存"
+            }
+          ],
+          "trialTotal": 50,
+          "trialFirst": [
+            "0",
+            "1",
+            "2"
+          ],
+          "sql": "SELECT n FROM mor_data_query_fixture.t_number_fixture WHERE n < 50 ORDER BY n LIMIT 101 OFFSET 0"
+        },
+        "execution": {
+          "status": 200,
+          "versionNo": 7,
+          "columns": [
+            {
+              "label": "refund_id",
+              "name": "refund_id"
+            },
+            {
+              "label": "退款号",
+              "name": "refund_no"
+            },
+            {
+              "label": "client_id",
+              "name": "client_id"
+            },
+            {
+              "label": "refund_status",
+              "name": "refund_status"
+            },
+            {
+              "label": "refund_amount",
+              "name": "refund_amount"
+            },
+            {
+              "label": "currency",
+              "name": "currency"
+            },
+            {
+              "label": "create_time",
+              "name": "create_time"
+            }
+          ],
+          "rows": [
+            [
+              "2008",
+              "FX-*****08",
+              "1003",
+              "SUCCEEDED",
+              "60.00",
+              "USD",
+              "2026-10-12T09:00:00"
+            ],
+            [
+              "2005",
+              "FX-*****05",
+              "1002",
+              "SUCCEEDED",
+              "3.99",
+              "USD",
+              "2026-10-09T09:00:00"
+            ],
+            [
+              "2002",
+              "FX-*****02",
+              "1001",
+              "SUCCEEDED",
+              "25.50",
+              "USD",
+              "2026-10-06T09:00:00"
+            ],
+            [
+              "2001",
+              "FX-*****01",
+              "1001",
+              "SUCCEEDED",
+              "10.00",
+              "USD",
+              "2026-10-05T09:00:00"
+            ]
+          ],
+          "total": 4,
+          "elapsedSeconds": 0.07
+        },
+        "timeout": {
+          "status": 400,
+          "code": "DATA_QUERY_TIMEOUT",
+          "detail": "查询超时，请缩小查询范围（上限 1 秒）",
+          "elapsedSeconds": 1.12
+        }
+      },
+      "expectedErrors": [
+        {
+          "method": "POST",
+          "path": "/data-sources/238903491215572992/status",
+          "status": 400,
+          "matched": {
+            "url": "/api/operations/data-query-admin/v1/data-sources/238903491215572992/status",
+            "code": "BUSINESS_CHECK_FAILED",
+            "detail": "连接检查未通过，不能启用: 含非只读权限 INSERT: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`；含非只读权限 UPDATE: GRANT SELECT, INSERT, UPDATE ON `mor_data_query_fixture`.* TO `data_query_fixture_writer`@`%`",
+            "errors": null
+          }
+        }
+      ],
+      "unexpectedNetwork": [],
+      "consoleErrors": []
+    }
+  }
+}

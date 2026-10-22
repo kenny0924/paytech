@@ -1,0 +1,27 @@
+# 数据查询服务：mor-test 回滚覆盖文件。换回文件多存储并存发布后的镜像（2026-10-22 阶段 7 第 1 步核对的运行镜像）。
+# 先执行 test-deactivate.sql，再：
+#   ./test-environment/compose.sh -f "$PWD/requirements/20261022/platform-support-数据查询服务/release/compose-rollback.yaml" \
+#     up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 环境变量同文件多存储并存的候选覆盖（不含 DATAQUERY_HTTP_CALLERS_0）。旧 Platform 不读写数据查询 3 张表，可保留表与注册行。
+services:
+  platform-support-service:
+    image: sha256:6dd8ffffae5e86f6869d9d04a5b0cb52583936b0805a842e648d555f8551cb0a  # mor-test/platform-support-service:filestore-20261022c
+    environment:
+      PLATFORM_SUPPORT_FILES_ENABLED: "true"
+      FILES_ONBOARDING_STORAGE_PROVIDER: !reset null
+      FILES_ONBOARDING_STORAGE_CONTAINER_REF: !reset null
+      FILES_ONBOARDING_SCAN_POLICY_CODE: !reset null
+      FILES_ONBOARDING_MINIO_ENDPOINT: !reset null
+      FILES_ONBOARDING_MINIO_REGION: !reset null
+      FILES_ONBOARDING_MINIO_ACCESS_KEY: !reset null
+      FILES_ONBOARDING_MINIO_SECRET_KEY: !reset null
+      FILES_ONBOARDING_MINIO_TRUSTED_CERTIFICATE: !reset null
+      PLATFORM_SUPPORT_RABBITMQ_HOST: !reset null
+      PLATFORM_SUPPORT_RABBITMQ_PORT: !reset null
+      PLATFORM_SUPPORT_RABBITMQ_USERNAME: !reset null
+      PLATFORM_SUPPORT_RABBITMQ_PASSWORD: !reset null
+      PLATFORM_SUPPORT_RABBITMQ_VHOST: !reset null
+  operations-console-bff:
+    image: sha256:e81b84242c36510722a2a0fbc21f73842a350bf1b7bcc464fc59ba7bedaa5f5c  # mor-test/operations-console-bff:filestore-20261022
+  operations-console-web:
+    image: sha256:d58172d9a291c99f1c1b37ef76e0a77284ab49ede84dafd294f05d1244e8ea9e  # mor-test/operations-console-web:filestore-20261022b

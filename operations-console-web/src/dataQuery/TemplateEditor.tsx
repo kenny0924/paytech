@@ -171,7 +171,7 @@ function Workspace({ detail, canManage, onReload, onAuthorizationChanged }: {
             <span className="muted">{source ? `${engineLabels[source.engineType]} 方言` : '未选数据源'} · 统一模板语法</span>
             <span className="dq-legend"><span className="dq-tpl-value">#{'{}'} 值</span><span className="dq-tpl-fragment">@{'{}'} 片段</span>
               <span className="dq-tpl-tag">{'{{#if}} {{#each}} {{#join}} {{#part}}'}</span><span className="dq-tpl-comment">{'{{!-- --}}'}</span></span>
-            <span className={`dq-bytes${bytes > templateLimits.maxBodyBytes ? ' dq-text-error' : ''}`}>{(bytes / 1024).toFixed(1)} / 64 KB</span>
+            <span className={`dq-bytes${bytes > templateLimits.maxBodyBytes ? ' dq-text-error' : ''}`}>{(bytes / 1024).toFixed(1)} / {templateLimits.maxBodyBytes / 1024} KB</span>
           </div>
           <BodyEditor value={draft.body} onChange={body => change({ body })} diagnostics={diagnostics} completions={words} readOnly={readOnly}
             onReady={handle => { editor.current = handle; }} />

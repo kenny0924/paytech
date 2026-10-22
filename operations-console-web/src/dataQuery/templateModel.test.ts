@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { ApiError } from '../api/session.ts';
 import {
-  completionWords, constraintsBody, columnRows, columnsBody, decodeTemplateDetail, decodeTrialResult, decodeValidation, draftFingerprint,
+  completionWords, constraintsBody, columnRows, defaultConstraints, columnsBody, decodeTemplateDetail, decodeTrialResult, decodeValidation, draftFingerprint,
   draftFromDetail, emptyParameterRow, fieldErrorProblems, moveRow, parameterDeclarations, parameterHint, parameterRows, parameterSummaryTags,
-  problemDiagnostics, problemTarget, trialFields, trialPaging, trialParams, updateTemplateBody,
+  problemDiagnostics, problemTarget, templateLimits, trialFields, trialPaging, trialParams, updateTemplateBody,
 } from './templateModel.ts';
 import type { ParameterDeclaration, QueryConstraints, TemplateProblem } from './templateModel.ts';
 
@@ -152,4 +152,12 @@ test('校验与试运行结果解码：行与列对齐，单元格只允许字�
   assert.equal(decodeTrialResult(trial).countSql, null);
   assert.throws(() => decodeTrialResult({ ...trial, rows: [['1']] }), ApiError);
   assert.throws(() => decodeTrialResult({ ...trial, rows: [[1, true]] }), ApiError);
+});
+
+test('新建模板的默认约束落在服务端硬上限内（data-query.limits：8 秒、48 KB）', () => {
+  const constraints = defaultConstraints();
+  assert.equal(templateLimits.maxTimeoutSeconds, 8);
+  assert.equal(templateLimits.maxBodyBytes, 48 * 1024);
+  assert.ok(constraints.timeoutSeconds >= 1 && constraints.timeoutSeconds <= templateLimits.maxTimeoutSeconds);
+  assert.ok(constraints.maxRows >= 1 && constraints.maxRows <= templateLimits.maxRows);
 });
