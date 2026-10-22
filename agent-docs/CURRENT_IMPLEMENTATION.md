@@ -48,6 +48,26 @@
 - **Pending / 遗留：** billing 需求 B（PAYMENT / REFUND 自动事实、接收四类对账事件、ledger 归类码映射）未开始，在此之前四类事件无订阅方、发布留存 FAILED；切片 2（超期检测、借方暂记、拒付与重复扣款）、切片 3（出款 / 缴税）未开始；D-2 补偿超时只中断不等待（Foundation）；requirements-site FIN-12 / FIN-24 / E2E-08 旧口径待改；本机 `mor_account` 缺 `t_owner_account_no_sequence`（环境）。推送另行授权。
 
 <a id="channel-connector-phase2-20261022"></a>
+## channel-connector MPGS（Network International）卡收单接入（2026-10-21—22，mor-test 配置已部署，沙箱已验证，已本地提交，未推送）
+
+- **Designed：** [需求](<../requirements/20261021/channel-connector-MPGS_NI接入/requirement.md>)、[技术方案](<../requirements/20261021/channel-connector-MPGS_NI接入/technique.md>)、[交付记录](<../requirements/20261021/channel-connector-MPGS_NI接入/delivery.md>)经用户逐阶段确认。
+  - 接入方（第二段后为渠道）`I_MPGS_NI`，MPGS REST v100，HTTP Basic（凭据另存 `apiUser = merchant.<merchantId>`）。
+  - 实现 `PAY`（卡直付，不含 3DS）、`PAY_QUERY`、`REFUND`、`REFUND_QUERY`，2026-10-22 追加 `AUTHORIZE`、`CAPTURE`。
+  - 状态取交易层 `result` + `gatewayCode` + `transaction.type`，修正旧系统原单部分退款后支付查询被判为处理中的问题；渠道引用取 RRN。
+  - 预授权与请款的流程在渠道拒绝时回查本笔交易，避免重发被报成失败。
+- **mor-test 配置 Deployed / Sandbox Verified（2026-10-21—22）：** 经管理接口写入，无代码、SQL、镜像、Nacos 变更，未建渠道账号与 MID。
+  - 标准 API：`PAY` v2 → v3，只追加 4 个可选字段（`card`、`card.token`、`payment.clientIp`、`payment.userAgent`），其他 4 家接入方的流程经服务端复核不受影响；新增标准 API `AUTHORIZE`（请求字段同 `PAY`）和 `CAPTURE`。
+  - `I_MPGS_NI`：脚本 `MPGS_BASIC_AUTH`；原子 API `PAY`、`RETRIEVE`、`REFUND`、`AUTHORIZE`、`CAPTURE`；6 条流程；验证账号 `SBX_APPROVED` / `SBX_DECLINED`（AED 商户 `JOLLYMAX_AED`，沙箱接受 USD）。
+  - 8 个沙箱用例 PASSED（[回执](<../requirements/20261021/channel-connector-MPGS_NI接入/assets/test-sandbox-receipt.json>)），其他渠道回归 8/8 PASSED。运行详情、channel-connector 与 ops BFF 日志按值核对，不含凭据、认证头与卡号。
+  - 测试交易均为终态。配置脚本见 [harness](<../requirements/20261021/channel-connector-MPGS_NI接入/assets/harness/README.md>)，凭据只从仓库外对接包读取。
+- **Pending / 遗留：**
+  - 推送另行授权。
+  - 对接包中 USD 商户和 3 个 PF 商户的凭据已失效（401）。
+  - 未做：3DS、Webhook、PF 模式、`PAY_CANCEL` / `VOID`、预授权与请款的查询标准 API。
+  - Payment 尚未调用 `AUTHORIZE`、`CAPTURE`、`REFUND`；Payment 卡直付在 mor-test 上未与 MPGS 联调。
+  - 已上线的 MPGS `REFUND` 流程在同一订单多笔退款后重发会被报成失败，Payment 接入退款时需按同样方式加回查。
+  - 生产商户币种以 NI 开通为准。
+
 ## channel-connector 统一对外渠道出口 第二段：渠道分类、服务渠道通用入口与调用授权（2026-10-22，已部署 mor-test，已本地提交，未推送）
 
 - **范围：** [技术方案](<../requirements/20261020/channel-connector-统一对外渠道出口/technique.md>)、[交付记录](<../requirements/20261020/channel-connector-统一对外渠道出口/delivery.md>)、[P2 报告](<../requirements/20261020/channel-connector-统一对外渠道出口/tasks/P2-report.md>)、[P2-web 报告](<../requirements/20261020/channel-connector-统一对外渠道出口/tasks/P2-web-report.md>)；画板 `operations-console-web/docs/operations-console.pen`「渠道 · 第二段 01–12」2026-10-22 确认（服务渠道凭据复用技术账号表、授权只停用不删除、激活只要求出站地址、调用方服务名格式 `[a-z][a-z0-9-]{1,63}`）。
