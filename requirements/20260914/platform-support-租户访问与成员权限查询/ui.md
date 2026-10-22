@@ -2,7 +2,7 @@
 
 本期三个功能页面：租户列表、租户详情、成员权限。角色与权限是成员页两个只读页签；确认弹窗、成功提示、空/错状态不重复算新功能页面。沿用 Operations 布局与蓝色主色；Pencil 新增 8 张 1440×1040 状态画板，保留原有画板。
 
-编辑源：[Operations Pencil](../../../operations-console-web/docs/design.pen)。整体审阅：[8 页 PDF](./assets/stage3/pencil/export.pdf)。画板中的名称、ID、授权码和时间均为示意，不代表数据库已创建记录。
+编辑源：[Operations Pencil](../../../operations-console-web/docs/operations-console.pen)。整体审阅：[8 页 PDF](./assets/stage3/pencil/export.pdf)。画板中的名称、ID、授权码和时间均为示意，不代表数据库已创建记录。
 
 | 状态 | Pencil ID | 预览 | 关联验收 |
 |---|---|---|---|

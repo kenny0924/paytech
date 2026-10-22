@@ -1,6 +1,6 @@
 # reconciliation（对账）设计讨论稿
 
-> **状态：已确认（2026-10-20，两轮）。** 本稿把 `mor_reconciliation` 从旧 Finance 单体"对账直接写 Journal"的模型，改为 V2 / V3 链路下"对账只认定事实、记账经 billing"的模型。第一轮确认边界与 Q1–Q11；第二轮确认命名与 13 张表、Q12–Q16 与缺口 G1–G15 的处理方式（能闭环的做，要等真实对接才清楚的先人工处置或暂缓）。均已登记为[决定](../../agent-docs/decisions/2026-10-20-reconciliation-facts-via-billing.md)。配图见同目录 `design.pen`。切片 1 已进入实施（阶段 4），需求与技术方案见 [requirements/20261020/reconciliation-渠道资金对账切片1](../../requirements/20261020/reconciliation-渠道资金对账切片1/requirement.md)。
+> **状态：已确认（2026-10-20，两轮）。** 本稿把 `mor_reconciliation` 从旧 Finance 单体"对账直接写 Journal"的模型，改为 V2 / V3 链路下"对账只认定事实、记账经 billing"的模型。第一轮确认边界与 Q1–Q11；第二轮确认命名与 13 张表、Q12–Q16 与缺口 G1–G15 的处理方式（能闭环的做，要等真实对接才清楚的先人工处置或暂缓）。均已登记为[决定](../../agent-docs/decisions/2026-10-20-reconciliation-facts-via-billing.md)。配图见同目录 `reconciliation.pen`。切片 1 已进入实施（阶段 4），需求与技术方案见 [requirements/20261020/reconciliation-渠道资金对账切片1](../../requirements/20261020/reconciliation-渠道资金对账切片1/requirement.md)。
 
 ## 1. 定位与边界
 

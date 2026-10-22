@@ -126,7 +126,7 @@ Browser ─ Gateway /api/operations/webhook-admin/v1/** ─ Operations BFF（简
 
 ## 4. 页面设计
 
-Pencil：`operations-console-web/docs/design.pen`，新增 10 个画板（`Webhook 管理 · 01—10`），导出见 `assets/stage3/pencil/`。
+Pencil：`operations-console-web/docs/operations-console.pen`，新增 10 个画板（`Webhook 管理 · 01—10`），导出见 `assets/stage3/pencil/`。
 
 | 画板 | 内容 | 导出 |
 |---|---|---|

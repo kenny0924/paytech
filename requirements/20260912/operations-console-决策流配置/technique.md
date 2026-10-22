@@ -54,7 +54,7 @@
 
 ## 2. 核对基线与证据边界
 
-本阶段读取的应用提交基线：Risk `27cf50b`、BFF `6822928`、Web `9165b95`、Gateway `2f1f70e`、Platform `d40b268`。Risk 的 `DecisionDictionaryServiceImpl.java` 已有其他未提交改动，Web 的 `docs/design.pen` 保留前期页面设计；本阶段均不修改。根工作区的其他需求和规范改动同样保留。
+本阶段读取的应用提交基线：Risk `27cf50b`、BFF `6822928`、Web `9165b95`、Gateway `2f1f70e`、Platform `d40b268`。Risk 的 `DecisionDictionaryServiceImpl.java` 已有其他未提交改动，Web 的 `docs/operations-console.pen` 保留前期页面设计；本阶段均不修改。根工作区的其他需求和规范改动同样保留。
 
 当前代码已存在规则集整体管理、历史与字典能力；具体既有测试和 test 发布事实以 [CURRENT_IMPLEMENTATION 第 16/17 节](../../../agent-docs/CURRENT_IMPLEMENTATION.md#16-operations-规则集列表优化2026-09-11) 为准。本次没有访问 test、执行真实 HTTP 或应用 SQL，也没有把历史测试成绩当作决策流功能的验证结果。
 

@@ -45,7 +45,7 @@ Payment 等业务系统 ──内部 HTTP──▶ Platform 标准 API 入口
 
 ## 4. Operations 页面差异
 
-2026-10-13 用户确认后，`design.pen` 中 30 张前序画板（名称以 CAPI、GAPI 开头）已删除；本目录 `assets/pencil*` 中的历史 PNG 保留，原画板可从 git 提交 `fff35d2` 的 `operations-console-web/docs/design.pen` 恢复。
+2026-10-13 用户确认后，`design.pen` 中 30 张前序画板（名称以 CAPI、GAPI 开头）已删除；本目录 `assets/pencil*` 中的历史 PNG 保留，原画板可从 git 提交 `fff35d2` 的 `operations-console-web/docs/operations-console.pen` 恢复。
 
 本目录 `assets/pencil`、`assets/pencil-scripts`、`assets/pencil-models` 截图描述的是前序结构：接口配置、数据模型（M01～M08）、公共脚本（S01～S05）。与现行设计的差异：
 

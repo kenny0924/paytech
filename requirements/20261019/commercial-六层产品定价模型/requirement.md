@@ -1,6 +1,6 @@
 # commercial 六层产品定价模型（含商业关系模式与多币种）
 
-> 状态：阶段 1 评审稿（2026-10-19 登记）。决定记录 [2026-10-19 commercial 六层产品定价模型](../../../agent-docs/decisions/2026-10-19-commercial-six-layer-product-pricing.md)（Confirmed）；详细设计 [design-discuss/commercial/design.md](../../../design-discuss/commercial/design.md)、[database.md](../../../design-discuss/commercial/database.md)、画板 [design.pen](../../../design-discuss/commercial/design.pen)（七张）。确认记录见 [delivery.md](./delivery.md)。
+> 状态：阶段 1 评审稿（2026-10-19 登记）。决定记录 [2026-10-19 commercial 六层产品定价模型](../../../agent-docs/decisions/2026-10-19-commercial-six-layer-product-pricing.md)（Confirmed）；详细设计 [design-discuss/commercial/design.md](../../../design-discuss/commercial/design.md)、[database.md](../../../design-discuss/commercial/database.md)、画板 [commercial.pen](../../../design-discuss/commercial/commercial.pen)（七张）。确认记录见 [delivery.md](./delivery.md)。
 
 ## 1. 背景
 

@@ -225,7 +225,7 @@ DDL → 业务 DML → 注册 DML → Vault 规则 → 部署新 Platform（旧 
 | 更换密钥 | Access Key ID、Secret Access Key（密码框，可切换显示）、原因；说明"保存后无法查看，只能更换；建议保存后先测试发送，再在 AWS 停用旧密钥" |
 | 测试发送 | 收件邮箱、原因；发送后在弹窗内显示结果（成功 / 被拒绝 / 结果未知 + 结果码），不关闭弹窗 |
 
-Pencil（`operations-console-web/docs/design.pen`）：修改「通知管理 · 07 发送账号列表」，新增「07b 新建账号」「07c 编辑账号」「07d 更换密钥」「07e 测试发送结果」。
+Pencil（`operations-console-web/docs/operations-console.pen`）：修改「通知管理 · 07 发送账号列表」，新增「07b 新建账号」「07c 编辑账号」「07d 更换密钥」「07e 测试发送结果」。
 
 ## 5. 研发与验证计划
 

@@ -188,7 +188,7 @@ Web：`src/channel/channel.ts`（路径、解码、命令、文案）、`Channel
 
 ## 8.1 Pencil 页面设计
 
-`operations-console-web/docs/design.pen` 新增 15 个画板（名称前缀「渠道 · 」，位于画布最下方 y≈67380 起四行，x 0 / 1540 / 3080 / 4620），导出见 [assets/stage3/pencil](./assets/stage3/pencil/)（15 张 PNG 与 `export.pdf`）。样式沿用现有运营页（应用栏、左侧导航、`.page-heading`、表格、状态 pill、对话框）；导航新增一级「渠道」及三个子项。
+`operations-console-web/docs/operations-console.pen` 新增 15 个画板（名称前缀「渠道 · 」，位于画布最下方 y≈67380 起四行，x 0 / 1540 / 3080 / 4620），导出见 [assets/stage3/pencil](./assets/stage3/pencil/)（15 张 PNG 与 `export.pdf`）。样式沿用现有运营页（应用栏、左侧导航、`.page-heading`、表格、状态 pill、对话框）；导航新增一级「渠道」及三个子项。
 
 | 画板 | 内容 | 对应范围 / 验收 |
 |---|---|---|

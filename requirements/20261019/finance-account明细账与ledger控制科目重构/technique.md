@@ -39,7 +39,7 @@
 | **paytech/tools/arch-rules** | R4 表归属、R12 事件目录 | `scripts/generate-table-ownership.mjs` 的 `stepAddedTables`（account 五张表名变）与 design/03 §2 / §4.2 同步；`TableOwnershipAutoTest` 总数与 account 表集合；fixture `BalanceEchoHandler` 引用 `BalanceMoved`（仅 fixture，视目录校验范围决定是否改） | 代码 ✔（生成器 + 测试）文档 ✔ | `paytech/scripts/verify-reactor.sh --check` 必须通过 |
 | **scripts/pdmaner** | PDManer 生成与门禁 | ledger 摘出生成器（`service-split.mjs`、`generate-finance-model.mjs`、`manifests/09`、`finance-model.test.mjs`、`pdmaner-canonical-paths.test.mjs`）；新增 `ledger-model.test.mjs`；`account-model.test.mjs` 关系列表随新表更新；84 表逻辑模型冻结不改（与 account 摘出时一致） | 代码 ✔ | `finance-model.test.mjs` 已有 2 例既有失败（cf4a429c 漂移），须区分 |
 | **paytech/operations-console-bff** | 财务页面聚合与转发 | `FinanceLedgerBookController` / Models 正则与 `@Pattern` 改 ledger 枚举；分录模型加来源与 `accountEntryId`；`FinanceBalanceClientImpl` 错误码；新增 `FinanceSubledgerController`（3 条路由）与 account 客户端方法；夹具 `finance-ledger-boundary.json` / `finance-setup-boundary.json` 改 Owner；精确路由集合 +3 | 代码 ✔ 配置 ✘（base-url 不变） | 依赖 account-api / ledger-api 新版本 |
-| **operations-console-web** | 财务页面 | `finance.ts` 枚举、桶规则、错误表、来源类型、新类型与路径；`FinanceModals.tsx` 账户表单；`JournalEntryDrawer.tsx` 来源与跳转；`FinanceBalances.tsx` 错误字段；新增 `pages/FinanceSubledger.tsx` 与 `finance/Subledger*.tsx`；`pageCapabilities.ts` / `ConsolePage.tsx` +1；`finance.test.ts` 与计数断言 33 → 34；`docs/design.pen` 补画板 | 代码 ✔ 设计 ✔ | 现有画板 04 / 05 / 09 / 11 内容变 |
+| **operations-console-web** | 财务页面 | `finance.ts` 枚举、桶规则、错误表、来源类型、新类型与路径；`FinanceModals.tsx` 账户表单；`JournalEntryDrawer.tsx` 来源与跳转；`FinanceBalances.tsx` 错误字段；新增 `pages/FinanceSubledger.tsx` 与 `finance/Subledger*.tsx`；`pageCapabilities.ts` / `ConsolePage.tsx` +1；`finance.test.ts` 与计数断言 33 → 34；`docs/operations-console.pen` 补画板 | 代码 ✔ 设计 ✔ | 现有画板 04 / 05 / 09 / 11 内容变 |
 | **paytech/platform-support** | 路由、权限、Console Resource 注册 | 初始化 SQL 新增独立块（明细账 3 条路由 + 1 个 Console Resource + Header / Query / 限流）；块 97 的 R10 / R11 `ownerType` 白名单不在 SQL 中限定值（只登记参数名），**不需要改**；`console-resource-capabilities.json` +1；`OperationsCatalog` 不加权限 | 配置 / DML ✔ 代码 ✘ | 需求目录放阅读副本与本机 / mor-test 激活 SQL |
 | **test-environment** | mor-test Compose | account 新 XXL Job 无需 Compose 变更；`LEDGER_ACCOUNT_SERVICE_URL` 保留（catch-up）；`ACCOUNT_LEDGER_SERVICE_URL` 删除 | 配置 ✔（1 行删除） | 阶段 6 发布清单含 5 个镜像（account、ledger、billing、BFF、Web）+ Platform 注册 |
 | **local-environment** | 本机库 | 空库由 `init/ddl.sql` 手工建；已有库按变更 SQL | 无脚本改动 | 阶段 5 本机验收前需用户授权执行变更 SQL |
@@ -246,7 +246,7 @@ entries[]: entryId, lineNo, accountId, accountCode, ownerType, ownerId, balanceB
 
 `console-resource-capabilities.json` +1；`OperationsCatalog` 不变。激活 SQL 本机 / mor-test 各一份随阶段 5 / 6 提供。
 
-### 2.4 页面（Pencil `operations-console-web/docs/design.pen`，「财务」画板区）
+### 2.4 页面（Pencil `operations-console-web/docs/operations-console.pen`，「财务」画板区）
 
 已按下表修改并新增画板（2026-10-19），导出见 [assets/stage3/pencil](./assets/stage3/pencil/)；`design.pen` 未提交。
 

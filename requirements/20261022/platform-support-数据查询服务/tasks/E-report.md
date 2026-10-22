@@ -1,6 +1,6 @@
 # 任务卡 E 交付报告：operations-console-web「数据查询」页面
 
-- 工作目录：`/Users/kenny/Desktop/Workspace/Code-MoR-dataquery/operations-console-web`（未改 `docs/design.pen`，未提交、推送或部署）。
+- 工作目录：`/Users/kenny/Desktop/Workspace/Code-MoR-dataquery/operations-console-web`（未改 `docs/operations-console.pen`，未提交、推送或部署）。
 - 已读：任务卡 E、`tasks/C-api-contract.md`、`technique.md` 第 3、4.4、7、8、9 节，以及 Java 合同 DTO（`api/dataquery/response/*`）和参数声明读取器 `ParameterDeclarationReader`（确认 min/max 可以是字符串，maxLength/maxSize 为正整数，default 可以是任意 JSON）。参照了 `CurrencySpecs`、`currencySpecModel`、`ConfigurationStatusModal`、`ConsolePage`、`pageCapabilities`、渠道页（`ChannelChannels`、`useChannelCommand`、`ChannelParts`）以及外部 API 编辑器的校验面板（`EditorParts.ValidationPanel`、`FlowEditor`）。
 - 原型：用 Pencil MCP 只读提取“数据查询 · 01—06”六张画板的文字，并截取了缩略图。
 

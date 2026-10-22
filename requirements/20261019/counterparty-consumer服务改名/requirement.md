@@ -1,6 +1,6 @@
 # counterparty：consumer 服务改名（切片 1）
 
-> 状态：阶段 1 评审稿（2026-10-19 登记）。决定记录 [2026-10-19 counterparty 重新定位](../../../agent-docs/decisions/2026-10-19-counterparty-repositioning.md)（Confirmed）；详细设计 [design-discuss/counterparty/design.md](../../../design-discuss/counterparty/design.md) 第 2.3、11 节，画板 [design.pen](../../../design-discuss/counterparty/design.pen)。确认记录见 [delivery.md](./delivery.md)。
+> 状态：阶段 1 评审稿（2026-10-19 登记）。决定记录 [2026-10-19 counterparty 重新定位](../../../agent-docs/decisions/2026-10-19-counterparty-repositioning.md)（Confirmed）；详细设计 [design-discuss/counterparty/design.md](../../../design-discuss/counterparty/design.md) 第 2.3、11 节，画板 [counterparty.pen](../../../design-discuss/counterparty/counterparty.pen)。确认记录见 [delivery.md](./delivery.md)。
 
 ## 1. 背景
 

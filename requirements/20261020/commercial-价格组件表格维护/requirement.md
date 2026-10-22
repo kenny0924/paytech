@@ -32,7 +32,7 @@
 
 ## 4. 页面设计
 
-设计稿：`operations-console-web/docs/design.pen` 画板「商务 · 10 编辑价格（组件表格）」。
+设计稿：`operations-console-web/docs/operations-console.pen` 画板「商务 · 10 编辑价格（组件表格）」。
 
 ```
 编辑价格 · v1                                                         [取消] [保存全部价格]

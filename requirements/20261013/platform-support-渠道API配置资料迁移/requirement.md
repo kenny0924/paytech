@@ -150,7 +150,7 @@ Owner：Platform Support
 - 旧两表/三表/五表方案、公共对象与响应合同独立存储、原 Payment 管理 HTTP 草稿及旧 JSON 样例标注被取代的范围。
 - 历史交付记录、截图和验证结果保留原日期、原适用范围，不能改写为新设计已经通过的证据。
 - 旧 Payment DDL 与 Platform 管理注册 DML 只作历史资料；保留原语句与原目标含义，通过说明标注不可作为新结构的执行来源。
-- 原 Pencil 源文件继续位于 [Operations Web 设计文件](../../../operations-console-web/docs/design.pen)。本期仅整理设计引用与差异说明，不重画页面。
+- 原 Pencil 源文件继续位于 [Operations Web 设计文件](../../../operations-console-web/docs/operations-console.pen)。本期仅整理设计引用与差异说明，不重画页面。
 
 ### 4.3 引用与权威同步
 

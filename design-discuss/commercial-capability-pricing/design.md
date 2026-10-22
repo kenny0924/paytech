@@ -1,6 +1,6 @@
 # commercial 开通与定价模型调整（开通项 + 接受条件 + 标准价目模板）
 
-> 状态：**已确认**（2026-10-20，Q1–Q7 按建议定稿；决定 [2026-10-20 开通项与接受条件、标准价目模板](../../agent-docs/decisions/2026-10-20-commercial-capability-conditions-and-price-templates.md)）；配图 `design.pen` 五张画板（问题与结论、目标模型、一份合同的例子、跨系统执行、模型改动 · 迁移 · 待定）；定稿后登记决定记录，修订 [2026-10-19 六层模型决定](../../agent-docs/decisions/2026-10-19-commercial-six-layer-product-pricing.md) 的 L1 / L3 / L4。原六层设计见 [../commercial/design.md](../commercial/design.md)。
+> 状态：**已确认**（2026-10-20，Q1–Q7 按建议定稿；决定 [2026-10-20 开通项与接受条件、标准价目模板](../../agent-docs/decisions/2026-10-20-commercial-capability-conditions-and-price-templates.md)）；配图 `commercial-capability-pricing.pen` 五张画板（问题与结论、目标模型、一份合同的例子、跨系统执行、模型改动 · 迁移 · 待定）；定稿后登记决定记录，修订 [2026-10-19 六层模型决定](../../agent-docs/decisions/2026-10-19-commercial-six-layer-product-pricing.md) 的 L1 / L3 / L4。原六层设计见 [../commercial/design.md](../commercial/design.md)。
 
 ## 1. 为什么要改
 

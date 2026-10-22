@@ -6,7 +6,7 @@
 
 范围与验收见 [requirement.md](./requirement.md)，评审记录见 [delivery.md](./delivery.md)。以下源码观察是本阶段证据，实际实现、验证和部署状态由 [当前台账](../../../agent-docs/CURRENT_IMPLEMENTATION.md#client-console-onboarding-20260914) 统一维护。静态清单见 [source-inventory.json](./assets/stage2/source-inventory.json)。
 
-阶段 2 已获用户确认。阶段 3 的 [页面与交互设计](./ui-design.md)已按用户指定归入 [Client 设计文件](../../../client-console-web/design.pen)，Operations 审核图归入其原设计文件；该页面子包不替代尚待闭合的完整 API、数据和 SQL 设计。下表 E-01 是阶段 2 时点观察；用户随后创建了仅含设计文件的 Client Web 目录，不能继续将“目录不存在”作为现状。
+阶段 2 已获用户确认。阶段 3 的 [页面与交互设计](./ui-design.md)已按用户指定归入 [Client 设计文件](../../../client-console-web/client-console.pen)，Operations 审核图归入其原设计文件；该页面子包不替代尚待闭合的完整 API、数据和 SQL 设计。下表 E-01 是阶段 2 时点观察；用户随后创建了仅含设计文件的 Client Web 目录，不能继续将“目录不存在”作为现状。
 
 ## 1. 证据基线
 

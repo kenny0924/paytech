@@ -46,7 +46,7 @@
 - Web 变更历史页（I1 已建壳）：筛选（聚合根类型 AGREEMENT / COMMERCIAL_TERM_PLAN / PAYMENT_METHOD_PROFILE、聚合根 ID 或合同号——合同号经合同列表接口 `agreementNo` 前缀查询换成 ID）、时间线（时间、原因码、聚合版本、操作者、摘要、展开查看快照与差异）。合同详情页、价目页加「变更历史」入口直达。
 
 ### 设计稿
-主工作树 `operations-console-web/docs/design.pen` 内画板「商务 · 01 工作台」「02 合同列表」「03 合同详情」「04 价目总览」「05 版本对比」「06 产品目录」「07 变更历史」（08/09 为 I1 已做页面）。可用 pencil MCP `get_app_state` / `execute` 的 `Get` 读结构；样式沿用现有商务页 CSS。
+主工作树 `operations-console-web/docs/operations-console.pen` 内画板「商务 · 01 工作台」「02 合同列表」「03 合同详情」「04 价目总览」「05 版本对比」「06 产品目录」「07 变更历史」（08/09 为 I1 已做页面）。可用 pencil MCP `get_app_state` / `execute` 的 `Get` 读结构；样式沿用现有商务页 CSS。
 
 ## 3. 验证与提交
 

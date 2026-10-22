@@ -5,7 +5,7 @@
 - 覆盖待决项：[技术说明第 6 节](./technique.md#6-待决事项)第 8 项。
 - 依据：[六表物理设计](./physical-design.md)、[流程结构](./flow-definition-contract.md)、[原子 API 结构](./integration-api-definition-contract.md)、[材料交接](./material-handoff.md)。
 - 沿用：Operations 现有侧栏、顶栏、Ant Design 紧凑表格与权限菜单；流程编辑沿用 [Risk 决策流](../../20260912/operations-console-决策流配置/ui.md)的画布 + 右侧属性面板交互（`@xyflow/react`，有序出口上移/下移、“其他情况”固定最后）。
-- 取代：本目录 [ui.md](./ui.md) 及 `assets/pencil`、`assets/pencil-scripts`、`assets/pencil-models` 中的前序页面（单页 `/channel-apis`、支付方式层级、数据模型页、响应场景）只作历史。2026-10-13 用户确认后，`design.pen` 中 30 张前序画板（名称以 CAPI、GAPI 开头）已删除；本目录 `assets/pencil*` 中的历史 PNG 保留，原画板可从 git 提交 `fff35d2` 的 `operations-console-web/docs/design.pen` 恢复。
+- 取代：本目录 [ui.md](./ui.md) 及 `assets/pencil`、`assets/pencil-scripts`、`assets/pencil-models` 中的前序页面（单页 `/channel-apis`、支付方式层级、数据模型页、响应场景）只作历史。2026-10-13 用户确认后，`design.pen` 中 30 张前序画板（名称以 CAPI、GAPI 开头）已删除；本目录 `assets/pencil*` 中的历史 PNG 保留，原画板可从 git 提交 `fff35d2` 的 `operations-console-web/docs/operations-console.pen` 恢复。
 
 ## 1. 使用者与范围
 
@@ -215,11 +215,11 @@
 | U4 | 试运行 / 调试调用 | **本期不做**。试运行会真正发出渠道请求，涉及资金与凭据，需要单独设计 |
 | U5 | 从示例 JSON 生成字段 | **本期不做**，字段逐行维护；如接入量大再加“粘贴示例 JSON 生成字段”辅助 |
 | U6 | 权限粒度 | 查看、管理两个权限，覆盖整个外部 API 模块 |
-| U7 | 下一步 | 确认后在 Operations [design.pen](../../../operations-console-web/docs/design.pen) 绘制画板：两个列表、标准 API 编辑、接入方工作区、原子 API 编辑（2 张）、脚本编辑、流程编辑（含校验失败）共约 8 张；绘制前与其他会话确认没有同时编辑该文件 |
+| U7 | 下一步 | 确认后在 Operations [operations-console.pen](../../../operations-console-web/docs/operations-console.pen) 绘制画板：两个列表、标准 API 编辑、接入方工作区、原子 API 编辑（2 张）、脚本编辑、流程编辑（含校验失败）共约 8 张；绘制前与其他会话确认没有同时编辑该文件 |
 
 ## 11. 第一版画板（2026-10-13）
 
-位于 [Operations design.pen](../../../operations-console-web/docs/design.pen)，名称以“外部 API 第一版”开头，共 24 张；未修改任何已有画板。按第 10 节建议绘制，U1～U7 确认后再调整。数据均为合成示例。
+位于 [Operations operations-console.pen](../../../operations-console-web/docs/operations-console.pen)，名称以“外部 API 第一版”开头，共 24 张；未修改任何已有画板。按第 10 节建议绘制，U1～U7 确认后再调整。数据均为合成示例。
 
 | 画板 | 节点 / PNG | 内容 |
 |---|---|---|

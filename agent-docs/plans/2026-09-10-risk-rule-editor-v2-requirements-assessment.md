@@ -12,7 +12,7 @@
 
 ## 1. 需求来源和范围
 
-用户要求以 [operations-console-web/docs/design.pen](../../operations-console-web/docs/design.pen) 中的四个“规则编辑 V2”画板为目标，评估现有链路的改动。
+用户要求以 [operations-console-web/docs/operations-console.pen](../../operations-console-web/docs/operations-console.pen) 中的四个“规则编辑 V2”画板为目标，评估现有链路的改动。
 
 | 画板 | ID | 预览 |
 |---|---|---|

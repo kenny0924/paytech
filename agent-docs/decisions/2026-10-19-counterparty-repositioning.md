@@ -5,7 +5,7 @@
 - Deployment status: 切片 1 已部署 mor-test（2026-10-20，counterparty-service / `mor_counterparty`），见 [发布记录](../../requirements/20261019/counterparty-consumer服务改名/release/release.md)
 - Decision date: 2026-10-19
 - 用户决定：2026-10-19 讨论中逐项确认——不建平台级 Consumer，只管 Client 命名空间下的相对方；Customer 增加可变档案；D30 删除编排从 MVP 拿掉；为将来代发收款人重新定位并改名为 counterparty（"end-user 不好"，"可以，counterparty 吧"）；其余待定项 Q1–Q3、Q5、Q6 按建议（"可以"）。
-- 详细设计：[counterparty 的职责与设计](../../design-discuss/counterparty/design.md)，配套图 [design.pen](../../design-discuss/counterparty/design.pen)（四张画板：职责与设计、数据库表、场景例子、未来扩展：代发收款人）。
+- 详细设计：[counterparty 的职责与设计](../../design-discuss/counterparty/design.md)，配套图 [counterparty.pen](../../design-discuss/counterparty/counterparty.pen)（四张画板：职责与设计、数据库表、场景例子、未来扩展：代发收款人）。
 - 实现、验证与部署状态只见[当前台账](../CURRENT_IMPLEMENTATION.md)。
 
 ## 1. 背景

@@ -46,7 +46,7 @@
 2026-09-11 用户要求本阶段补充一句话规模总结，已补入技术入口及公共交付流程；本次补充不视为阶段 3 方案确认或阶段 4 研发授权。
 
 - [技术入口](./technique.md)关联 [API 合同](./api.md)、[数据与兼容设计](./data.md)、[Pencil 页面](./ui.md)及 [研发验证计划](./implementation-plan.md)。14 个新增 API 保留 v1，原按版本详情/保存 Wire 形状不变；精确旧项兼容、数据库最终并发保护与人工确认字典异常结果均为本阶段待确认设计。
-- 通过 Pencil MCP 在 Web 原 `docs/design.pen` 新增 12 个 RCO-16 画板，保留已有画板；Pencil 没有保存接口，因此使用应用的保存操作落盘，窗口 Edited 标识已消失，Git 可见设计文件差异。[PDF](./assets/export.pdf)与 12 份 PNG 为合成正常态设计，没有执行真实页面业务请求。
+- 通过 Pencil MCP 在 Web 原 `docs/operations-console.pen` 新增 12 个 RCO-16 画板，保留已有画板；Pencil 没有保存接口，因此使用应用的保存操作落盘，窗口 Edited 标识已消失，Git 可见设计文件差异。[PDF](./assets/export.pdf)与 12 份 PNG 为合成正常态设计，没有执行真实页面业务请求。
 - [静态检查结果](./assets/design-checks.json)：API 与注册清单逐项一致；Platform 182 条插入的行值、列名、Header/Query/Guard 数量符合设计，对已核对初始化 DML 无 ID/代码/规范化 Method+Path 冲突；Risk 2 表/21 列、2 个反查索引、业务种子 0。此检查不是数据库执行或完整运行 Catalog 验证。
 - Pencil 最终 12 画板结构诊断无裁切问题；检查截图并修正了引用图分页裁切、下拉字符缺字和只读页原因名称来源混淆。交互/错误态/响应式验收要求见 ui.md，尚未由真实浏览器验证。
 - 2026-09-11 运行 `npm --prefix requirements-site test`，构建及现有 136 项检查通过，0 失败/跳过；日志摘要归档 [requirements-site-check.txt](./assets/requirements-site-check.txt)。本阶段未运行应用功能测试；没有 SQL 应用、提交或部署。

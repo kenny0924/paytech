@@ -1,6 +1,6 @@
 # RCO-16 页面与交互方案
 
-阶段 3 已确认页面方案；已去掉标签主体限制及字典变更原因输入。按用户要求，直接使用 Pencil 更新 [operations-console-web/docs/design.pen](../../../operations-console-web/docs/design.pen)，保留既有画板，新增以 `RCO-16` 开头的 12 个画板。原画板中的 V2 标题不决定本期接口或类命名，新画板不带 V1/V2。可直接审阅 [12 页 PDF](./assets/export.pdf)。画板为合成示例，没有连接真实业务数据；页面实现与浏览器验收状态见当前台账。
+阶段 3 已确认页面方案；已去掉标签主体限制及字典变更原因输入。按用户要求，直接使用 Pencil 更新 [operations-console-web/docs/operations-console.pen](../../../operations-console-web/docs/operations-console.pen)，保留既有画板，新增以 `RCO-16` 开头的 12 个画板。原画板中的 V2 标题不决定本期接口或类命名，新画板不带 V1/V2。可直接审阅 [12 页 PDF](./assets/export.pdf)。画板为合成示例，没有连接真实业务数据；页面实现与浏览器验收状态见当前台账。
 
 ## 1. 画板与验收映射
 

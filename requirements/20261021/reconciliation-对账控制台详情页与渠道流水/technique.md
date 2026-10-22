@@ -32,7 +32,7 @@
 - 详情页组件从现有抽屉内容抽出（共享片段放 `src/reconciliation/`），操作按钮与命令沿用；录入抽屉（新建、导入、处置、复核、手工匹配表单）保留，从详情页打开。
 - 列表页保留筛选 / 页码在 URL 查询串，返回时恢复。
 - 新页 `OPERATIONS_FINANCE_RECON_CHANNEL_LINES`（`/finance/reconciliation/channel-lines`），登记 `pageCapabilities.ts` 与 `console-resource-capabilities.json`；点行跳 `/statements/:statementId?line=<lineNo>` 并高亮。
-- 设计稿：沿用渠道 / MID 详情页布局；如需 Pencil 画板，在阶段 4 补到 `operations-console-web/docs/design.pen`。
+- 设计稿：沿用渠道 / MID 详情页布局；如需 Pencil 画板，在阶段 4 补到 `operations-console-web/docs/operations-console.pen`。
 
 ### 2.4 Platform 块 126
 

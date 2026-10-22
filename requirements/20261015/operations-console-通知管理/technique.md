@@ -208,7 +208,7 @@ ID 块 `900000000000086xxx`～`89xxx`（全仓库未使用；`81xxx`～`84xxx` �
 
 ## 4. 页面设计
 
-Pencil 设计：`operations-console-web/docs/design.pen` 新增 10 个画板（名称前缀「通知管理 ·」，位于画布下方 y≈47960 起两行），导出见 [assets/stage3/pencil](./assets/stage3/pencil/)（10 张 PNG 与 `export.pdf`）。
+Pencil 设计：`operations-console-web/docs/operations-console.pen` 新增 10 个画板（名称前缀「通知管理 ·」，位于画布下方 y≈47960 起两行），导出见 [assets/stage3/pencil](./assets/stage3/pencil/)（10 张 PNG 与 `export.pdf`）。
 
 | 画板 | 内容 | 导出 |
 |---|---|---|

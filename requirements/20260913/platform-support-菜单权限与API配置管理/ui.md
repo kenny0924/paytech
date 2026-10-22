@@ -1,6 +1,6 @@
 # Pencil 页面与交互方案
 
-本期在现有 [Operations Pencil 文件](../../../operations-console-web/docs/design.pen)追加 7 张画板，保留原有 47 张。沿用 Noto Sans SC、蓝色主操作、左侧导航、统一表格与字段间距。图中示例记录用于展示布局，不代表 test 中已有同名配置。
+本期在现有 [Operations Pencil 文件](../../../operations-console-web/docs/operations-console.pen)追加 7 张画板，保留原有 47 张。沿用 Noto Sans SC、蓝色主操作、左侧导航、统一表格与字段间距。图中示例记录用于展示布局，不代表 test 中已有同名配置。
 
 可整体查看 [7 页设计 PDF](./assets/export.pdf)。画板和导出图：
 

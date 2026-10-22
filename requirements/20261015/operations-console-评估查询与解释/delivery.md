@@ -54,7 +54,7 @@
 
 - `7fc47d6` feat(operations): risk evaluation query page in the Operations console（BFF 21、Web 13、需求目录、README 本需求行，共 70 个文件）
 - `1cd5a2e` docs(operations): record risk evaluation query delivery in the ledger（CURRENT_IMPLEMENTATION 本需求一节）
-- 核对：`1cd5a2e` 的 operations-console-bff、operations-console-web 与 mor-test 部署镜像的构建源码逐文件一致；未纳入他人改动（含 `operations-console-web/docs/design.pen`）；未推送。
+- 核对：`1cd5a2e` 的 operations-console-bff、operations-console-web 与 mor-test 部署镜像的构建源码逐文件一致；未纳入他人改动（含 `operations-console-web/docs/operations-console.pen`）；未推送。
 
 ## 10. 遗留
 

@@ -170,7 +170,7 @@ ID 块（`9000000000000NNXYY`，NN=97 基础资料与账本，NN=98 余额）：
 
 ## 4. 页面设计（结构稿）
 
-Pencil：`operations-console-web/docs/design.pen` 新增 12 个画板（`财务 · 01—12`，位于 Webhook 画板下方，y 59400 起），导出见 `assets/stage3/pencil/`。三页复用 Webhook 管理 / 通知管理已验收的页面骨架（筛选表单 + 表格 + 对话框表单 + 确认弹窗 + 内联说明），无新组件形态。
+Pencil：`operations-console-web/docs/operations-console.pen` 新增 12 个画板（`财务 · 01—12`，位于 Webhook 画板下方，y 59400 起），导出见 `assets/stage3/pencil/`。三页复用 Webhook 管理 / 通知管理已验收的页面骨架（筛选表单 + 表格 + 对话框表单 + 确认弹窗 + 内联说明），无新组件形态。
 
 | 画板 | 内容 | 对应验收 |
 |---|---|---|

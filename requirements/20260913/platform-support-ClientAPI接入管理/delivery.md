@@ -41,7 +41,7 @@
 
 A09 直接复用 GATEWAY_CONFIG_READ，不增加通用 selector usage 或 HUMAN_AUTHENTICATED 名单；Gateway 无本期业务代码改动。Route 新/变更 Scope 绑定检查目录，未登记旧值保持原绑定和认证兼容。BFF A06 按用户选择聚合一种引用并保留各自权限。Scope 无状态/删除/历史表，写响应不虚构 ACTIVE；紧急撤销只改变指定凭证，原授权行保留。
 
-Pencil 在原 54 个画板后追加 8 个页面状态与 1 张完整字段关系图，已保存至 Web 的 docs/design.pen，共 63 个顶层画板。导出 [8 页 PDF](./assets/stage3/export.pdf) 与 9 张 PNG；新画板布局检查无裁剪，已检查页面与关系图渲染并修正下拉符号缺字。仅设计源文件发生变动，未改 Web 功能代码。
+Pencil 在原 54 个画板后追加 8 个页面状态与 1 张完整字段关系图，已保存至 Web 的 docs/operations-console.pen，共 63 个顶层画板。导出 [8 页 PDF](./assets/stage3/export.pdf) 与 9 张 PNG；新画板布局检查无裁剪，已检查页面与关系图渲染并修正下拉符号缺字。仅设计源文件发生变动，未改 Web 功能代码。
 
 下一确认点：用户整体确认阶段 3 后进入阶段 4“代码研发及开发回归”。本阶段未生成正式模型、应用 SQL、创建示例、发布制品、部署、提交或推送；后续本机 SQL 若有缺口，另给真实目标与具体文件确认，不把本次设计确认当作环境写入授权。
 

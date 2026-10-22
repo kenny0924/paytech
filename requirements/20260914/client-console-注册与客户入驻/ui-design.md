@@ -10,8 +10,8 @@
 
 ## 1. 文件归属与查看顺序
 
-- Client 的唯一可编辑 UI 源文件是用户指定的 [client-console-web/design.pen](../../../client-console-web/design.pen)。该目录目前是设计入口，不代表已经建立可运行前端或独立 Git 仓库。
-- Operations 的审核图追加到 [operations-console-web/docs/design.pen](../../../operations-console-web/docs/design.pen)，名称以 `CCT 入驻 ·` 开头。既有风控、租户与 CAPI 画板不归本需求修改。
+- Client 的唯一可编辑 UI 源文件是用户指定的 [client-console-web/client-console.pen](../../../client-console-web/client-console.pen)。该目录目前是设计入口，不代表已经建立可运行前端或独立 Git 仓库。
+- Operations 的审核图追加到 [operations-console-web/docs/operations-console.pen](../../../operations-console-web/docs/operations-console.pen)，名称以 `CCT 入驻 ·` 开头。既有风控、租户与 CAPI 画板不归本需求修改。
 - Client 导出图在 [设计预览目录](../../../client-console-web/design-previews/)，Operations 导出图在 [审核设计预览目录](../../../operations-console-web/docs/design-previews/client-onboarding/)。PNG 是 `.pen` 的只读投影，修改应回到对应 `.pen`；不另建可编辑副本。
 - 精确画板 ID、尺寸、预览路径与功能页映射见 [ui-manifest.json](./assets/stage3/ui-manifest.json)。画板编号用于检索，不等于产品路由或 API 编号。
 

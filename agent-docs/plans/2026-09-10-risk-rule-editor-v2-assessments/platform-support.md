@@ -6,7 +6,7 @@
 - 性质：Assessment / 条件性建议，不是合同批准、功能实现或上线验收。
 - 范围：Platform Permission、PLT-I02、Console Resource、公共 Route/Guard、PLT-I20 Snapshot 和目录 SQL。
 - 需求来源：[RCO-14 需求与链路评估](../2026-09-10-risk-rule-editor-v2-requirements-assessment.md)。已核对
-  [design.pen](../../../operations-console-web/docs/design.pen) 的 `bi8Au`、`wO9RC`、`AXojG`、`fulZG` 四个画板及
+  [operations-console.pen](../../../operations-console-web/docs/operations-console.pen) 的 `bi8Au`、`wO9RC`、`AXojG`、`fulZG` 四个画板及
   [对应预览](../../../operations-console-web/docs/design-previews/)。
 - 现行权威：[Console 集成设计](../../../docs/superpowers/specs/2026-09-06-risk-operations-rule-configuration-console-integration-design.md)、
   [公共控制面设计](../../../docs/superpowers/specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md)和

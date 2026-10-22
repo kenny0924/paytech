@@ -1,6 +1,6 @@
 # 任务卡 P2-web：第二段 运营控制台渠道页改版
 
-- 依据：需求 F、AC-V01～V03；technique 第 7 节；已确认画板 `operations-console-web/docs/design.pen`「渠道 · 第二段 01–12」（.pen 已加密，只能用 Pencil MCP 工具读取；可以 `TakeScreenshot` / `Get` 查看，**不得修改 .pen**）。
+- 依据：需求 F、AC-V01～V03；technique 第 7 节；已确认画板 `operations-console-web/docs/operations-console.pen`「渠道 · 第二段 01–12」（.pen 已加密，只能用 Pencil MCP 工具读取；可以 `TakeScreenshot` / `Get` 查看，**不得修改 .pen**）。
 - 工作目录：worktree `/Users/kenny/Desktop/Workspace/Code-MoR-ccu2` 的 `operations-console-web/`。**只改这个目录**；同一 worktree 中另有 agent 按 [P2.md](P2.md) 修改 `paytech/` 与需求目录。
 - BFF JSON 合同见 P2.md 第 6 节；以合同为准实现，Mock / 测试数据按合同构造。
 - 执行者：Opus 5.5 agent；主会话评审。

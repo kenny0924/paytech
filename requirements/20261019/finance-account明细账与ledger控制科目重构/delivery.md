@@ -6,7 +6,7 @@
 |---|---|
 | 1. 需求评审与范围确认 | 已确认（2026-10-19，"可以，都按建议"：Q-01—Q-09 全部按建议） |
 | 2. 现状差异与影响分析 | 已确认（2026-10-19，与阶段 1 合并确认），见 [technique.md 第 1 节](./technique.md#1-现状差异能力缺口与逐系统影响阶段-2) |
-| 3. 方案、接口与数据设计 | 评审稿已交付（2026-10-19）：[technique.md 第 2 节](./technique.md#2-方案接口与数据设计阶段-32026-10-19-评审稿)、[db/account/ddl.sql](./db/account/ddl.sql)、[db/ledger/ddl.sql](./db/ledger/ddl.sql)、[db/ledger/dml.sql](./db/ledger/dml.sql)、Pencil 画板 04 / 05 / 07 / 08 / 09 / 11 修改与 13 / 14 / 15 新增（`operations-console-web/docs/design.pen`，未提交；导出见 [assets/stage3/pencil](./assets/stage3/pencil/)） |
+| 3. 方案、接口与数据设计 | 评审稿已交付（2026-10-19）：[technique.md 第 2 节](./technique.md#2-方案接口与数据设计阶段-32026-10-19-评审稿)、[db/account/ddl.sql](./db/account/ddl.sql)、[db/ledger/ddl.sql](./db/ledger/ddl.sql)、[db/ledger/dml.sql](./db/ledger/dml.sql)、Pencil 画板 04 / 05 / 07 / 08 / 09 / 11 修改与 13 / 14 / 15 新增（`operations-console-web/docs/operations-console.pen`，未提交；导出见 [assets/stage3/pencil](./assets/stage3/pencil/)） |
 | 4. 研发实现 | 已确认（2026-10-19，"继续"：接受结果与 3 项偏离的建议）：T0 + A / B / C / D 五个 Opus 5.5 agent，主会话（Fable 5.1）任务卡、门禁、跨线核对与独立重跑；用户授权后 A / B 重建了本机 `mor_account` / `mor_ledger`（local-environment）；未提交，未动 mor-test。见下方「阶段 4 研发结果」 |
 | 5. 综合验证与本地验收 | 已确认（2026-10-19，"继续下一阶段"）：本机 V2 全链路接口 58/58、浏览器 31/31（C-1 修复后重跑）、只读回归 27/34（7 页为未启动的 risk-decision / compliance 503）；清理后 49 张表回到基线。见 [verification/stage5-report.md](./verification/stage5-report.md) |
 | 6. test 发布准备 | 已确认（2026-10-19，"继续"：D1=A、D2=A、D4=A、D5 按建议）：[release/release.md](./release/release.md)（只读核对、D1–D5、执行顺序、恢复）、[compose-candidate.yaml](./release/compose-candidate.yaml)（6 个镜像 tag `subledger-20261019` 固定 ID）、[source-overlay.txt](./release/source-overlay.txt)（HEAD `2bae8597` + 441 文件）、验收脚本已支持 `E2E_TARGET=test`；mor-test 未改 |
@@ -54,7 +54,7 @@
 
 验收映射：AC-01 / 02 / 03 / 05 / 06 / 11 account-test（消费、批次、冲回、桶移动、成熟、重建）；AC-03 / 04 / 07 / 08 / 09 / 10 ledger-test（控制科目、平衡、两段检查、追平、顺延、人工调整与 CLOSED 告警）；AC-12 模块边界测试 + arch-rules + 事件目录测试；AC-13 本节各套件；AC-14 / 15 / 16 / 17 BFF + Web 测试与源码核对；AC-18 块 99 + 阅读副本；AC-19 / 20 留阶段 5 浏览器验收（C 未做浏览器走查）。
 
-环境注意：Pencil 画板改动仍只在 Pen 应用内存中（`operations-console-web/docs/design.pen` 磁盘时间未变），请在 Pen 中保存后再提交。
+环境注意：Pencil 画板改动仍只在 Pen 应用内存中（`operations-console-web/docs/operations-console.pen` 磁盘时间未变），请在 Pen 中保存后再提交。
 
 ## 阶段 5 本机验证（2026-10-19）
 

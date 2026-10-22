@@ -85,7 +85,7 @@
 | UI-07 | Operations 审核详情清楚区分当前任务资料、经营分类、核验结果与决定；批准/拒绝前展示目标及必需理由，冲突后不静默覆盖 |
 | UI-08 | 客户工作区明显显示当前客户身份及受限原因；1280px 桌面和390px窄屏无关键操作裁剪，键盘能够完成主要流程 |
 
-页面精确数量、视觉稿和控件状态在阶段 3 明确；画板数量与功能页面数量分别统计。Client UI 使用用户指定的 [client-console-web/design.pen](../../../client-console-web/design.pen)，Operations 审核 UI 使用 [Operations 设计文件](../../../operations-console-web/docs/design.pen)。
+页面精确数量、视觉稿和控件状态在阶段 3 明确；画板数量与功能页面数量分别统计。Client UI 使用用户指定的 [client-console-web/client-console.pen](../../../client-console-web/client-console.pen)，Operations 审核 UI 使用 [Operations 设计文件](../../../operations-console-web/docs/operations-console.pen)。
 
 ## 7. 详细设计需要闭合的问题
 

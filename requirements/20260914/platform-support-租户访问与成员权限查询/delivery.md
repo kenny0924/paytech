@@ -20,7 +20,7 @@
 
 - 交付 [总体方案](./design.md)、[API](./api.md)、[数据设计](./data-design.md)、[注册 SQL](./db/README.md) 和 [页面方案](./ui.md)。3 应用、8 新业务 API（7 读1写）、0 表结构/字段/索引变更、105 行初始禁用登记，后续启用预计15行更新；3功能页面/8张 Pencil 状态画板。
 - 暂停/恢复一个命令；三个独立权限；既有七表复用，成员授权只读；不建设 CUSTOMER 登录、CCT 投影或成员写入链。保留原接口版本，不加带版本号的类型。
-- Pencil 在 Web docs/design.pen 新增八画板并保存，PNG/PDF 归本需求 assets/stage3；没有应用功能代码或数据库修改。查询两候选库的目录占用情况仅 SELECT，见 [登记观察](./assets/stage3/registration-observation.json)。
+- Pencil 在 Web docs/operations-console.pen 新增八画板并保存，PNG/PDF 归本需求 assets/stage3；没有应用功能代码或数据库修改。查询两候选库的目录占用情况仅 SELECT，见 [登记观察](./assets/stage3/registration-observation.json)。
 - 文档、SQL 清单和 Pencil 静态检查见 [验证记录](./assets/stage3/design-verification.json)。这些检查不代替实际 SQL/应用/HTTP/浏览器回归。
 - **当时停点：阶段 3 待确认。** 后续用户“可以”已确认，进入 Platform/BFF/Web 研发及开发回归；具体本机人工 SQL、test、部署和提交另行处理。没有沿用此前其他需求的环境动作授权。
 
@@ -97,5 +97,5 @@
 - `platform-support-service`：`cb80a2c7c7ab641b7d0646807d34d7fcc05d037a`，38个文件。
 - `operations-console-bff`：`4685f620ad0f93ec9b78c687813a69100caf1666`，12个文件。
 - `operations-console-web`：`ff0b7003b5581eaafd926d7049ab23f3a8dc6462`，18个文件。
-- Web的`docs/design.pen`只提交本期8张租户访问画板，原63张保持原样；另19张其他任务画板仍保留在工作区。根仓库仅归档本期需求目录、PLT-15/E2E-16投影、租户访问状态段和需求索引行；Payment及其他共享文档修改不夹带。
+- Web的`docs/operations-console.pen`只提交本期8张租户访问画板，原63张保持原样；另19张其他任务画板仍保留在工作区。根仓库仅归档本期需求目录、PLT-15/E2E-16投影、租户访问状态段和需求索引行；Payment及其他共享文档修改不夹带。
 - [提交验证记录](./assets/stage8/verification.json)保留应用提交、测试摘要与选择边界。根需求归档随本条记录所在提交完成；不在文件中自引用根提交Hash。Client/Partner Console菜单控制依用户决定暂不开展，本期流程结束。

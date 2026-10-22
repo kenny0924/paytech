@@ -5,7 +5,7 @@
 - Deployment status: Deployed to mor-test（2026-10-20，镜像 tag `commercial-20261020`，见需求目录 release/release.md 第 6 节与[当前台账](../CURRENT_IMPLEMENTATION.md)）
 - Decision date: 2026-10-19
 - 用户决定：commercial（商务 · 售卖）采用六层产品定价模型；2026-10-19 讨论中用户先确认六层模型、IC++ 本期只留字段、月量阶梯"规则归商务 / 用量归 billing"，随后对其余待定项全部"按建议来"。
-- 详细设计：[commercial 的职责与设计](../../design-discuss/commercial/design.md)，配套图 [design.pen](../../design-discuss/commercial/design.pen)（三张画板：职责与设计、数据库表与枚举、六层模型例子）。
+- 详细设计：[commercial 的职责与设计](../../design-discuss/commercial/design.md)，配套图 [commercial.pen](../../design-discuss/commercial/commercial.pen)（三张画板：职责与设计、数据库表与枚举、六层模型例子）。
 - 实现、验证与部署状态只见[当前台账](../CURRENT_IMPLEMENTATION.md)。
 
 ## 1. 背景

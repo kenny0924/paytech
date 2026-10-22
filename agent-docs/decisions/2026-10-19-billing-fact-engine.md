@@ -5,7 +5,7 @@
 - Deployment status: Not applicable
 - Decision date: 2026-10-19
 - 用户决定：2026-10-19 在 [design-discuss/billing](../../design-discuss/billing/design.md) 的讨论中逐项确认 Q1–Q13 按建议、命名 `billing_fact`、模型精简（DB-1–DB-8）；并提出渠道成本配置不应归 billing（Q12）、出款费用不应是同步落事实的命令（Q13）。
-- 详细设计：[职责与设计](../../design-discuss/billing/design.md)、[数据库模型](../../design-discuss/billing/database.md)、[DDL 草案](../../design-discuss/billing/ddl-draft.sql)、[业务案例 C1–C10](../../design-discuss/billing/cases.md)、画板 [design.pen](../../design-discuss/billing/design.pen)。
+- 详细设计：[职责与设计](../../design-discuss/billing/design.md)、[数据库模型](../../design-discuss/billing/database.md)、[DDL 草案](../../design-discuss/billing/ddl-draft.sql)、[业务案例 C1–C10](../../design-discuss/billing/cases.md)、画板 [billing.pen](../../design-discuss/billing/billing.pen)。
 - 实现、验证与部署状态只见[当前台账](../CURRENT_IMPLEMENTATION.md)。
 
 ## 1. 背景

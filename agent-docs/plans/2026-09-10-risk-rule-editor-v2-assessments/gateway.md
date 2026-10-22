@@ -5,7 +5,7 @@
 - 日期：2026-09-10。
 - 性质：Assessment / 条件性建议，不是合同批准、功能实现或上线验收。
 - 范围：Operations Web → Nginx → API Gateway → Operations BFF；Risk 与 Platform 的业务合同由各自 Owner 确认。
-- 需求来源：[RCO-14 需求与链路评估](../2026-09-10-risk-rule-editor-v2-requirements-assessment.md)。已读取 [design.pen](../../../operations-console-web/docs/design.pen) 的 `bi8Au`、`wO9RC`、`AXojG`、`fulZG` 四个画板节点及文案；不纳入决策流编排、生产激活或真实动作执行。
+- 需求来源：[RCO-14 需求与链路评估](../2026-09-10-risk-rule-editor-v2-requirements-assessment.md)。已读取 [operations-console.pen](../../../operations-console-web/docs/operations-console.pen) 的 `bi8Au`、`wO9RC`、`AXojG`、`fulZG` 四个画板节点及文案；不纳入决策流编排、生产激活或真实动作执行。
 - 现行权威：[Console 集成设计](../../../docs/superpowers/specs/2026-09-06-risk-operations-rule-configuration-console-integration-design.md) 第 5、8、12–14 节、[公共控制面设计](../../../docs/superpowers/specs/2026-09-01-gateway-platform-support-dynamic-operations-configuration-design.md) 第 5、9、12、13 节，以及[系统 Problem Profile](../../../docs/superpowers/specs/2026-09-06-system-wide-rfc-9457-problem-details-design.md)。本评估不取代它们。
 
 ## 1. 结论与条件假设

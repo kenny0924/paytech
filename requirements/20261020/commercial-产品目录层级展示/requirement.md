@@ -40,7 +40,7 @@
 
 ### 4.1 桌面布局（≥ 1200px）
 
-设计稿：`operations-console-web/docs/design.pen` 画板「商务 · 06b 产品目录（层级）」（与原「商务 · 06 产品目录」同一行，右侧）。下图为文字版线框。
+设计稿：`operations-console-web/docs/operations-console.pen` 画板「商务 · 06b 产品目录（层级）」（与原「商务 · 06 产品目录」同一行，右侧）。下图为文字版线框。
 
 ```
 商务 / 产品目录                                                      [只读 · 随产品发版维护]

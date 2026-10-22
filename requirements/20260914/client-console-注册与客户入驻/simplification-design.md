@@ -145,7 +145,7 @@
 
 ## 7. 页面工件与评审范围
 
-唯一可编辑源为 [Client design.pen](../../../client-console-web/design.pen)，新增顶部“00 · 简化方案评审”组：
+唯一可编辑源为 [Client client-console.pen](../../../client-console-web/client-console.pen)，新增顶部“00 · 简化方案评审”组：
 
 - S01 邮箱密码登录：[预览](./assets/stage3/simplification/XjnJd.png)。
 - S02 个人单页入驻：[预览](./assets/stage3/simplification/i78Gol.png)。

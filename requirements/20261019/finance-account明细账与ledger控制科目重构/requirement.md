@@ -120,7 +120,7 @@
 
 ## 7. 依据
 
-- [2026-10-18 决定](../../../agent-docs/decisions/2026-10-18-account-ledger-subledger-control-account.md)、[详细设计 V3](../../../design-discuss/finance-account-ledger-v3/design.md)、[pen 图](../../../design-discuss/finance-account-ledger-v3/design.pen)
+- [2026-10-18 决定](../../../agent-docs/decisions/2026-10-18-account-ledger-subledger-control-account.md)、[详细设计 V3](../../../design-discuss/finance-account-ledger-v3/design.md)、[pen 图](../../../design-discuss/finance-account-ledger-v3/finance-account-ledger-v3.pen)
 - 前序：[11b 拆分方案](../../20261017/architecture-V2骨架与模块搬迁/design/04-finance-account-ledger-split.md)（已被取代部分见决定第 3 节）、[Operations 财务第一批](../../20261018/operations-console-财务基础资料与账本余额查询/requirement.md)
 - 合同：`paytech/account/paytech-account-api`、`paytech/ledger/paytech-ledger-api`、`paytech/billing/paytech-billing-api`、`paytech/foundation/paytech-messaging/catalog/events.yaml`
 - 规范：[数据库设计](../../../agent-docs/DATABASE_DESIGN_GUIDE.md)、[补偿事件](../../../agent-docs/COMPENSATION_EVENT_GUIDE.md)、[开发规范](../../../agent-docs/DEVELOPMENT_CONVENTIONS.md)第 5 节事务公理、[单元测试](../../../agent-docs/UNIT_TEST_GUIDE.md)

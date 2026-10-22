@@ -101,13 +101,13 @@
 | 缺陷 | D1 展示缺陷已修复并重发 ops-web，mor-test 重验 7 / 7 通过（截图 `assets/stage7/D1-未配置账号-配置列.png`），重验数据已清理 |
 | 清理 | 验收数据按 ID 清理完毕，渠道各表 0 行；残留：3 个停用合成用户、3 个空角色、1 条 Vault 记录、审计 |
 
-**待提交差异（阶段 8 清单）：** `paytech/channel-connector/**`、`paytech/platform-support/**`（api 2、app / integration / test 7、`console-resource-capabilities.json`、`platform-support-initial-data.sql` 块 92）、`paytech/operations-console-bff/**`、`operations-console-web/**`（含 D1 修复与 `configurationModel.test.ts` 计数 48）、`paytech/tools/arch-rules`、`scripts/pdmaner`、`local-environment/vault/policy.local.json`、本需求目录、`requirements/README.md`、`agent-docs/CURRENT_IMPLEMENTATION.md`、`operations-console-web/docs/design.pen`（Pencil 保存后）。
+**待提交差异（阶段 8 清单）：** `paytech/channel-connector/**`、`paytech/platform-support/**`（api 2、app / integration / test 7、`console-resource-capabilities.json`、`platform-support-initial-data.sql` 块 92）、`paytech/operations-console-bff/**`、`operations-console-web/**`（含 D1 修复与 `configurationModel.test.ts` 计数 48）、`paytech/tools/arch-rules`、`scripts/pdmaner`、`local-environment/vault/policy.local.json`、本需求目录、`requirements/README.md`、`agent-docs/CURRENT_IMPLEMENTATION.md`、`operations-console-web/docs/operations-console.pen`（Pencil 保存后）。
 
 ## 阶段 8 交付报告（2026-10-20）
 
 用户确认「提交」后，以私有 `GIT_INDEX_FILE` 从当时的 `main` 顶端构建树，只收入本需求清单内的路径，`commit-tree` 后前移 `main`，不推送。
 
-- **收入：** `paytech/channel-connector/**`、`paytech/platform-support/**`、`paytech/operations-console-bff/**`、`operations-console-web/**` 中渠道相关文件（`src/channel/**`、三张渠道页、`ConsolePage.tsx`、`menu.ts`、`pageCapabilities.ts`、`configurationModel.test.ts`、`docs/design.pen`）、`paytech/tools/arch-rules` 表归属、`scripts/pdmaner` 的 payment 生成输入与测试（5 个文件）、`local-environment/vault/policy.local.json`、本需求目录、`requirements/README.md` 本需求一行、`agent-docs/CURRENT_IMPLEMENTATION.md` 本需求条目。
+- **收入：** `paytech/channel-connector/**`、`paytech/platform-support/**`、`paytech/operations-console-bff/**`、`operations-console-web/**` 中渠道相关文件（`src/channel/**`、三张渠道页、`ConsolePage.tsx`、`menu.ts`、`pageCapabilities.ts`、`configurationModel.test.ts`、`docs/operations-console.pen`）、`paytech/tools/arch-rules` 表归属、`scripts/pdmaner` 的 payment 生成输入与测试（5 个文件）、`local-environment/vault/policy.local.json`、本需求目录、`requirements/README.md` 本需求一行、`agent-docs/CURRENT_IMPLEMENTATION.md` 本需求条目。
 - **排除（其他会话的未提交内容，保留在工作区）：** 财务页面与样式（`src/finance/**`、`FinanceSetup.tsx`、`FinanceAccountingRules.tsx`）、控制台面包屑（`App.tsx`、`styles.css`、`menuTrail*`、`useTrailTitleHeading.ts`）、对账与计费（`paytech/reconciliation/**`、`paytech/billing/**`、`scripts/pdmaner/billing-model.test.mjs`、`AGENTS.md`、`design-discuss/**`、对账决定）、财务与 ledger、对账、控制台体验需求目录及其在 `requirements/README.md` 的行。
 - **design.pen：** 文件保存时间晚于 15 张画板导出时间，随本次提交收入；该文件为二进制，若其他会话在同一文件上有未提交画板，会一并进入。
 - **口令：** 提交前扫描本需求目录与 Vault 本地策略，未发现明文口令；验证脚本只从 `.env.local` / `.env.test` 读取。

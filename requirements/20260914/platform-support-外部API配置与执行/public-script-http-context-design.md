@@ -58,7 +58,7 @@ Headers 使用大小写不敏感、支持多值的受控容器。页面展示 ge
 
 ## 4. 页面及交互
 
-源文件：[Operations 原设计文件](../../../operations-console-web/docs/design.pen)。以下是合成配置示例，不是实际 NI 的签名合同或已注册函数。
+源文件：[Operations 原设计文件](../../../operations-console-web/docs/operations-console.pen)。以下是合成配置示例，不是实际 NI 的签名合同或已注册函数。
 
 | 画板 | 节点 / 预览 | 内容 |
 |---|---|---|

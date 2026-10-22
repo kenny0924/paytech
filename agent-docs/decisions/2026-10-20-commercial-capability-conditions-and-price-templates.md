@@ -5,7 +5,7 @@
 - Deployment status: Deployed（mor-test，2026-10-20—21；已本地提交，未推送）
 - Decision date: 2026-10-20
 - 用户决定：2026-10-20 多轮讨论确认 D1–D12；待定问题 Q1–Q7「按建议」定稿。
-- 详细设计：[开通与定价模型调整](../../design-discuss/commercial-capability-pricing/design.md)，配套图 [design.pen](../../design-discuss/commercial-capability-pricing/design.pen)（五张画板）。
+- 详细设计：[开通与定价模型调整](../../design-discuss/commercial-capability-pricing/design.md)，配套图 [commercial-capability-pricing.pen](../../design-discuss/commercial-capability-pricing/commercial-capability-pricing.pen)（五张画板）。
 - 修订：[2026-10-19 commercial 六层产品定价模型决定](./2026-10-19-commercial-six-layer-product-pricing.md) 的 L1（能力开通）、L3（定价画像与开通的关系）、L4（价格来源与签署）；其余条款不变。
 - 实现、验证与部署状态只见[当前台账](../CURRENT_IMPLEMENTATION.md)。
 

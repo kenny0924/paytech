@@ -1,9 +1,9 @@
 # 任务卡 E：operations-console-web「数据查询」页面
 
-- 工作目录：`/Users/kenny/Desktop/Workspace/Code-MoR-dataquery`，**只改** `operations-console-web/**`（其中 `docs/design.pen` 不要改）。
+- 工作目录：`/Users/kenny/Desktop/Workspace/Code-MoR-dataquery`，**只改** `operations-console-web/**`（其中 `docs/operations-console.pen` 不要改）。
 - 授权：普通文件编辑、`npm install`（仅为新增 CodeMirror 依赖）、运行前端测试与构建。**不提交、不推送、不部署、不改其他目录。**
 - 合同：同目录 `tasks/C-api-contract.md`；技术方案 `technique.md` 第 3 节（语法）、第 7 节（接口）、第 8 节（页面与原型说明）。
-- 原型：Pencil 文件 `operations-console-web/docs/design.pen` 中名为“数据查询 · 01—06”的画板（y=83100 起）。.pen 是加密格式，**不要用 Read/Grep 打开**；如果你有 Pencil MCP 工具（`mcp__pencil__*`），可以用 `execute` 的 `Get` 只读查看或 `TakeScreenshot` 截图；没有就以 technique.md 第 8 节的文字说明为准。
+- 原型：Pencil 文件 `operations-console-web/docs/operations-console.pen` 中名为“数据查询 · 01—06”的画板（y=83100 起）。.pen 是加密格式，**不要用 Read/Grep 打开**；如果你有 Pencil MCP 工具（`mcp__pencil__*`），可以用 `execute` 的 `Get` 只读查看或 `TakeScreenshot` 截图；没有就以 technique.md 第 8 节的文字说明为准。
 
 ## 开工前必读
 

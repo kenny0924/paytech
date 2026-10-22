@@ -15,7 +15,7 @@
 | [公共模型与响应场景](../../20260914/platform-support-外部API配置与执行/model-library-and-response-scenes.md) | 仍以独立对象模型和响应合同维护 | 保留历史范围，新字段合同归共用字段表 |
 | [公共脚本](../../20260914/platform-support-外部API配置与执行/public-script-http-context-design.md) | 脚本 HTTP 对象原则适用；模型引用和上下文说明需同步 | 保留受控脚本语义，更新现行入口与上下文引用 |
 | [原数据与 SQL 入口](../../20260914/platform-support-外部API配置与执行/db/README.md) | 前序 Payment 配置表与旧管理注册不能作为 Platform 六表 Schema | 保留历史 SQL 原文，新增清楚的适用范围与新设计入口 |
-| [原页面说明](../../20260914/platform-support-外部API配置与执行/ui.md)与[设计源](../../../operations-console-web/docs/design.pen) | 页面曾包含公共模型等前序结构 | 保留设计文件位置，标注与本轮结构的差异，不重画页面 |
+| [原页面说明](../../20260914/platform-support-外部API配置与执行/ui.md)与[设计源](../../../operations-console-web/docs/operations-console.pen) | 页面曾包含公共模型等前序结构 | 保留设计文件位置，标注与本轮结构的差异，不重画页面 |
 | [Payment 账号与 MID 查询需求](../../20260921/payment-渠道账号与MID能力查询/requirement.md) | 有指向旧通用执行资料的引用 | 只更新相关链接，不迁移其模型、源码或查询合同 |
 
 ## 2. 建议实施步骤

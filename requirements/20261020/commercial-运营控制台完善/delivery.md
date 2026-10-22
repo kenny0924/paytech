@@ -39,7 +39,7 @@
 - I2 线完成：`commercial/line-i2` 41e3cf1c（已 rebase 到 c5f2c3f2；60 文件）。BFF 新增 8 端点（合同列表、方案 / 版本列表、版本对比 diff、产品目录三个、变更历史含 changedFields / previousData，工作台改 5 张实数据卡 + 待审批队列）；Web 新增合同列表、价目总览、版本对比、产品目录、变更历史页，表单下拉改目录接口，Client 选择器（ID 手输 + 最近使用 + 审核通过 Client）；Platform 块 93 共 103 行（934xx 8 / 936xx 16 / 937xx 31 / 939xx 48，全部休眠，不新增权限）。BFF 1632/1632，web 1125/1125 + build，initial-data 全量导入临时库通过。与任务书差异：路径沿用 `/commercial-terms/plans|versions` 命名空间；5 张卡而非 4 张。遗留见 `notes/I2-gaps.md`（驳回接口无原因字段、版本行无合同号、BCR 回溯上限 1000 条、状态枚举未发布到 api；Client 名称搜索 / Party / OE 下拉需 client-master 接口）。
 - 集成分支快进到 4d8f4ec3（41e3cf1c + I2 测试补提交，去掉新用例对 Owner detail 的断言），阶段 5 本机冒烟进行中（commercial-smoke agent，结果 `verification/stage5-smoke.md`）。
 - F9 线完成：`commercial/line-f9` c5f2c3f2（Foundation `HttpProblemDecoder.DecodedProblem.detail`、`HttpServiceClientOptions.withOwnerProblemDetail()` 默认关闭、拦截器对 BUSINESS_CHECK_FAILED / CONCURRENT_REQUEST / NOT_FOUND / 已登记合同码用远端 detail，空白、>512 码点或含 ISO 控制字符回退；BFF 删除 `CommercialOwnerProblemDetail`，两个 commercial 工厂开启开关）。http-client-support 130/130，ops-bff 1605/1605，reactor test-compile 通过。规格见 technique.md §2.1。
-- 设计稿：`operations-console-web/docs/design.pen` 新增画板「商务 · 01 工作台」至「09 价格试算」（Pencil 内需手动保存）。
+- 设计稿：`operations-console-web/docs/operations-console.pen` 新增画板「商务 · 01 工作台」至「09 价格试算」（Pencil 内需手动保存）。
 
 **跨会话约束：** code-mor-9c 的科目分级已提交 main e73764d1，发布 ops-bff / ops-web 前仍需通知它；code-mor-32 已把 consumer-service 切为 counterparty（03:24Z），本需求不重建 acquiring / card。
 
@@ -48,7 +48,7 @@
 ### 暂停点（04:1xZ）
 
 - 代码全部已提交在分支上：`commercial/second-slice` 头 4d8f4ec3（= main e73764d1 + H 285c15d4 + I1 95c9834b + F9 c5f2c3f2 + I2 41e3cf1c/4d8f4ec3），各 worktree 干净。main 未合入、未 push、mor-test 未动。
-- 主工作树未提交：本需求目录（requirement / technique / delivery / notes / db）、`requirements/README.md` 索引行、`operations-console-web/docs/design.pen` 商务 01–09 画板（Pencil 内需手动保存）。
+- 主工作树未提交：本需求目录（requirement / technique / delivery / notes / db）、`requirements/README.md` 索引行、`operations-console-web/docs/operations-console.pen` 商务 01–09 画板（Pencil 内需手动保存）。
 - 阶段 5 本机冒烟被强制停止（04:1xZ）：agent 未写出 `verification/stage5-smoke.md`，它启动的 commercial / ops-bff 本机进程已由主会话 kill；本机 `mor_platform_v2e2e` 是否已插入 / 激活块 93 未核实，恢复时先查 `t_gateway_route` 93 段计数再决定是否重跑 DML。冒烟需从头重做。mor-test 发布材料已备好（slice2 worktree `release/`：release.md、test-dml.sql 140 INSERT + 2 菜单排序 UPDATE、test-activate / deactivate 预期 3/8/5/1、compose-candidate 占位、acceptance.md；一次性库演练通过；mor-test 只读核对无 ID / 路由冲突）。发布前置：通知 code-mor-9c；channel-connector 运营台（块 92）也要替换 ops-bff / ops-web，后发布者须基于含对方改动的 main 构建；Platform 镜像不发，其 capability JSON 落后属已知。
 - 恢复顺序：看两份 agent 产物 → 补完冒烟 → second-slice rebase 到最新 main（≥ 5b825160）→ 通知 code-mor-9c → 构建 `commercial-20261020b` → mor-test 发布 / 验收 → 阶段 8 私有索引提交。
 

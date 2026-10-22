@@ -6,7 +6,7 @@
 |---|---|
 | 1. 需求评审与范围确认 | 已确认（2026-10-18，Q-01—Q-06 按建议） |
 | 2. 现状差异与影响分析 | 已确认（2026-10-18） |
-| 3. 方案、接口与数据设计 | 已确认（2026-10-18）；Pencil 12 个画板（`operations-console-web/docs/design.pen`，未提交），导出见 [assets/stage3/pencil](./assets/stage3/pencil/) |
+| 3. 方案、接口与数据设计 | 已确认（2026-10-18）；Pencil 12 个画板（`operations-console-web/docs/operations-console.pen`，未提交），导出见 [assets/stage3/pencil](./assets/stage3/pencil/) |
 | 4. 研发实现 | 已确认（2026-10-18）；Opus 5.5 五个 agent（T0、A、B、C、D）并行，主会话（Fable 5.1）拆任务、合并核对与独立重跑；SQL 只写不执行 |
 | 5. 综合验证与本地验收 | 已确认（2026-10-19）：接口 67/67、浏览器 48/48、清理回基线；限流按建议提到 30 |
 | 6. test 发布准备 | 已确认（2026-10-19，"继续"：D1=A、D2=A） |

@@ -103,7 +103,7 @@
 | BFF | `ClientOnboardingProcessor`、`ClientOnboardingModels`、`FormOptionsResponseBody`、`ClientErrorStatusResolver` | `materialSubjects` 删除 `countryCode` 和 `COUNTRY_REQUIRED`；C03 删除国家参数 |
 | Web | `catalog.ts`、`onboarding.ts`、`OnboardingPage.tsx` | 删除“先填国家”提示和签发机构下拉；签发国改为全量国家；必需项标记改为“基础必需” |
 | 文档 | `api-contract.md` 第 10—12 节、`file-upload-closure-proposal.md`、`ui-design.md`、数据库文档、实现台账 | 标注被取代内容 |
-| UI 稿 | `client-console-web/design.pen` 材料区和证件字段 | 删除签发机构，调整材料提示 |
+| UI 稿 | `client-console-web/client-console.pen` 材料区和证件字段 | 删除签发机构，调整材料提示 |
 
 上述改动只删减国家依赖，不新增外部操作。按新规范顺手迁移请求幂等、Processor 形态的工作不包含在本稿中，另行出迁移方案。
 

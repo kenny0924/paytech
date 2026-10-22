@@ -183,7 +183,7 @@ outputMappings[] = { sceneCode, fields }
 
 ## 8. 工件与验证范围
 
-视觉源文件为[Operations 原 Pencil 文件](../../../operations-console-web/docs/design.pen)。
+视觉源文件为[Operations 原 Pencil 文件](../../../operations-console-web/docs/operations-console.pen)。
 
 | 画板 | 节点 | 预览 |
 |---|---|---|

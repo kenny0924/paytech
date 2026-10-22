@@ -1,6 +1,6 @@
 # Pencil 页面与交互方案
 
-阶段3设计稿。沿用现有Operations浅色、蓝色强调、Ant Design组件和React Flow画布；没有引入新UI框架。使用Pencil在[Operations原设计文件](../../../operations-console-web/docs/design.pen)追加RCO-19画板，原40张画板保留，Checkout文件未修改。
+阶段3设计稿。沿用现有Operations浅色、蓝色强调、Ant Design组件和React Flow画布；没有引入新UI框架。使用Pencil在[Operations原设计文件](../../../operations-console-web/docs/operations-console.pen)追加RCO-19画板，原40张画板保留，Checkout文件未修改。
 
 ## 7个关键页面状态
 

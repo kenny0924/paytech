@@ -153,7 +153,7 @@
 
 ## 9. Operations Web Pencil 设计修订（2026-09-14）
 
-用户明确要求“直接改 operation-console-web 下面的设计文件”，说明 Channel 后续由 Operations 维护，并要求完成 UI 设计。本次直接修改实际目录 [operations-console-web/docs/design.pen](../../../operations-console-web/docs/design.pen)，在同一个文件内新增12张 `CAPI ·` 画板，保留原有设计和工作区其他任务修改。此授权属于阶段3的设计修订，不代表完整设计包已批准或进入应用研发。
+用户明确要求“直接改 operation-console-web 下面的设计文件”，说明 Channel 后续由 Operations 维护，并要求完成 UI 设计。本次直接修改实际目录 [operations-console-web/docs/operations-console.pen](../../../operations-console-web/docs/operations-console.pen)，在同一个文件内新增12张 `CAPI ·` 画板，保留原有设计和工作区其他任务修改。此授权属于阶段3的设计修订，不代表完整设计包已批准或进入应用研发。
 
 ### 交付范围
 
@@ -349,7 +349,7 @@ Pencil 主界面和局部截图复核通过，全部 CAPI 节点无裁切、无�
 - 新增[模型与响应场景设计](./model-library-and-response-scenes.md)：对象模型维护真实父子字段，支持 OBJECT、ARRAY 与无循环模型引用；上下文名称与模型身份分别定义。
 - 数据模型页包含对象模型与响应合同两个页签；输入/输出结构跨接入分组复用。代码函数及其真实返回合同继续由代码注册，模型维护不提供函数实现或真实数据。
 - 响应按 sceneCode 配置，共同场景约定 executeStatus 和输出模型；同为 SUCCESS 的完成/需要交互可返回不同嵌套结构。API 只配置匹配条件和字段来源，返回不新增 sceneCode/resultCode。
-- 在 [Operations 原设计文件](../../../operations-console-web/docs/design.pen)新增 M01 目录、M02 嵌套树、M03 数组、M04 响应合同、M05 输入绑定、M06 响应映射、M07 引用影响、M08 内嵌字段与 M00 索引。旧 CAPI 画板保留，其五条导览标为前版参考。
+- 在 [Operations 原设计文件](../../../operations-console-web/docs/operations-console.pen)新增 M01 目录、M02 嵌套树、M03 数组、M04 响应合同、M05 输入绑定、M06 响应映射、M07 引用影响、M08 内嵌字段与 M00 索引。旧 CAPI 画板保留，其五条导览标为前版参考。
 - 树形输入示例采用 originalTransaction.referenceId、amount.value/currency、items[] 引用 RefundItem；明确是新结构示意，不假称旧平铺调用方已自动兼容。对象属性与数组元素可空性、同级/子字段添加、引用跳转和破坏性修改定位均有具体界面。
 - 同步需求、通用执行、配置字段/注册/管理和 UI 入口，明确替代范围；需求索引只更新本条，未改其他任务内容。
 
@@ -578,7 +578,7 @@ Pencil 主界面和局部截图复核通过，全部 CAPI 节点无裁切、无�
 ## 44. 页面细节调整与流程编辑字段映射（2026-10-13）
 
 - **请求：** 页面验收中的逐项反馈：原子 API 字段表增加“来源”维护、校验通过改为提示消息、必填开关样式、流程编辑页去掉底部保存栏、本地登录预填；随后用户认为流程编辑右侧字段多时难用，确认先改设计图（“先帮我pencil改一下设计图”），看过后确认实现（“可以，这样好多了”）。
-- **设计：** `operations-console-web/docs/design.pen` 新增画板“25 流程编辑｜节点属性紧凑列表”“26 流程编辑｜字段映射面板”，原画板未改。
+- **设计：** `operations-console-web/docs/operations-console.pen` 新增画板“25 流程编辑｜节点属性紧凑列表”“26 流程编辑｜字段映射面板”，原画板未改。
 - **实现：** 只改 `operations-console-web`。右侧节点与出口属性改为紧凑字段列表（分组、层级缩进、全部/未赋值/有错误筛选、字段多于 8 个时可搜索、固定值折叠，点击一行仍用取值浮层）；新增字段映射宽面板（宽度为窗口宽度减 120px，最大 1440px）（逐行就地编辑、路径自动补全带分组与类型、右侧可搜索的变量树、Enter 跳到下一个未赋值字段、类型不一致提示、按同名自动匹配只给建议、完成后写入页面草稿）；`variableOptions` 增加变量类型；纯逻辑在 `mappingModel.ts`。本地登录预填只读 `.env.development.local`（不入库），只在开发模式生效，生产构建不含账号密码。
 - **验证：** 前端测试 976/976、生产构建通过；本机 3e 环境浏览器实测列表、取值浮层、映射面板、同名建议采纳、类型提示与写回草稿，修改未保存，未改动独立库数据。
 - **范围：** 未改 BFF、Platform、接口合同或数据库；未提交。

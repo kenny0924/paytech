@@ -117,7 +117,7 @@
 | 仓库范围 | 文件 |
 |---|---|
 | `operations-console-bff/` | 本需求的全部改动：Web 模块 12 个修改；新增 8 个文件（名单与执行发布的 Controller/Client/Impl/Converter/ResponsePolicy）和 `service/model/risklist`、`riskrelease` 两个目录；测试模块 10 个修改、3 个新增；`README.md` |
-| `operations-console-web/` | `src/` 下 19 个修改、10 个新增；`docs/design.pen`（13 张“支付风控 ·”画板） |
+| `operations-console-web/` | `src/` 下 19 个修改、10 个新增；`docs/operations-console.pen`（13 张“支付风控 ·”画板） |
 | `requirements/20261015/operations-console-支付风控配置接入/` | 全目录：需求、方案、页面、交付记录、`db/`、`release/`、`verification/`、`assets/stage3`、`stage5`、`stage7` |
 | `requirements/README.md` | 只提交本需求那一行（同文件里的 Card 加密存储那一行属于 Payment 会话） |
 | `agent-docs/CURRENT_IMPLEMENTATION.md` | 只提交“Operations 接入支付风控配置与执行发布”一节（同文件里 Card 和 Vault 的改动属于其他会话） |

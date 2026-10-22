@@ -25,9 +25,9 @@
 
 ## 3. 页面入口
 
-[Client 原设计文件](../../../client-console-web/design.pen)保留唯一可编辑入口。顶部 S01—S04 是邮箱登录、注册、个人与组织单页；右侧“09 · 简化流程状态”补充 S05 审核中、S06 退回修改、S07 已通过、S08 最终拒绝。
+[Client 原设计文件](../../../client-console-web/client-console.pen)保留唯一可编辑入口。顶部 S01—S04 是邮箱登录、注册、个人与组织单页；右侧“09 · 简化流程状态”补充 S05 审核中、S06 退回修改、S07 已通过、S08 最终拒绝。
 
-[Operations 原设计文件](../../../operations-console-web/docs/design.pen)增加“OPS · S05 行业与 MCC 确认”，包含只读经营说明、两个独立分类字段、分类确认及审核决定门禁。旧图保留作历史基线，其中 Google、资料版本和旧分步流程已由本包取代；不能直接按旧图实施。
+[Operations 原设计文件](../../../operations-console-web/docs/operations-console.pen)增加“OPS · S05 行业与 MCC 确认”，包含只读经营说明、两个独立分类字段、分类确认及审核决定门禁。旧图保留作历史基线，其中 Google、资料版本和旧分步流程已由本包取代；不能直接按旧图实施。
 
 ### 3.1 登录错误反馈补充（2026-09-16）
 

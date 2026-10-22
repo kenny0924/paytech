@@ -8,7 +8,7 @@
 
 ## Pencil 画板
 
-设计文件：[`operations-console-web/docs/design.pen`](../../../operations-console-web/docs/design.pen)，画板名前缀“支付风控 ·”，位于画布 y≈43400～46800 区域；导出图见 [assets/stage3](./assets/stage3/)。下文 ASCII 图保留为结构说明，以画板为准。
+设计文件：[`operations-console-web/docs/operations-console.pen`](../../../operations-console-web/docs/operations-console.pen)，画板名前缀“支付风控 ·”，位于画布 y≈43400～46800 区域；导出图见 [assets/stage3](./assets/stage3/)。下文 ASCII 图保留为结构说明，以画板为准。
 
 | 画板 | 页面 | 状态/交互 |
 |---|---|---|

@@ -4,7 +4,7 @@
 
 规模：新增 2 个页面容器（流程列表、共用图工作区），扩展 3 个既有页面（规则编辑、拒绝原因引用、规则集发布引用）；本轮追加 6 张状态画板，原 34 张保留。画板数不等于路由或 API 数。
 
-源文件：[Operations design.pen](../../../operations-console-web/docs/design.pen)。新画板从 y=10080 起，名称包含“方案定稿”（现已获页面方案确认）。[六页完整 PDF](./assets/pencil-final/export.pdf)。
+源文件：[Operations operations-console.pen](../../../operations-console-web/docs/operations-console.pen)。新画板从 y=10080 起，名称包含“方案定稿”（现已获页面方案确认）。[六页完整 PDF](./assets/pencil-final/export.pdf)。
 
 | 画板 | ID / PNG | 本轮补齐 |
 |---|---|---|

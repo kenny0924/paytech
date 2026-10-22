@@ -4,7 +4,7 @@
 
 认证文本输入统一复用 `src/TextField.tsx`；标签、红框、提示预留空间、密码显示和 ARIA 关联由组件维护。新增输入使用该组件；自定义校验表单使用 `noValidate`，规则集中在 `auth-form.ts`，提交时由页面校验并调用 `focusField`。不要复制登录页样式或依赖浏览器原生错误气泡。
 
-可编辑设计仍为 [design.pen](./design.pen)，本期认证以 S01/S04 为准。完整需求见[设计入口](../requirements/20260914/client-console-注册与客户入驻/design.md)；实际验证及剩余工作只从[当前台账](../agent-docs/CURRENT_IMPLEMENTATION.md#client-console-onboarding-20260914)读取。
+可编辑设计仍为 [client-console.pen](./client-console.pen)，本期认证以 S01/S04 为准。完整需求见[设计入口](../requirements/20260914/client-console-注册与客户入驻/design.md)；实际验证及剩余工作只从[当前台账](../agent-docs/CURRENT_IMPLEMENTATION.md#client-console-onboarding-20260914)读取。
 
 ## 本地开发
 

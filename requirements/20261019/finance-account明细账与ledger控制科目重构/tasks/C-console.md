@@ -4,7 +4,7 @@
 
 ## 允许改动的路径
 
-`paytech/operations-console-bff/**`、`operations-console-web/src/**`、`operations-console-web/README.md`（不改 `docs/design.pen`）。
+`paytech/operations-console-bff/**`、`operations-console-web/src/**`、`operations-console-web/README.md`（不改 `docs/operations-console.pen`）。
 
 ## 1. BFF（`paytech/operations-console-bff`）
 

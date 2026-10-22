@@ -56,7 +56,7 @@
 5. “连接失败”测试用下游收到请求后断开连接的模拟（比连接拒绝更严格）；整个 Redis 不可用时在更早的入口限流处即返回 503。
 6. Commerce 保留了不再抛出的 3 个错误码（`IDEMPOTENCY_KEY_REQUIRED`、`INVALID_IDEMPOTENCY_KEY`、`IDEMPOTENCY_KEY_REUSED`），待用户决定是否删除。
 
-**设计文件**：`operations-console-web/docs/design.pen` 未加“请求幂等”选择，未改。
+**设计文件**：`operations-console-web/docs/operations-console.pen` 未加“请求幂等”选择，未改。
 
 ## 阶段 6 进度（2026-10-17，进行中）
 

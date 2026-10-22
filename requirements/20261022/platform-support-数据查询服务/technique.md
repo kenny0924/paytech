@@ -380,8 +380,8 @@ public interface QueryEngine {
 
 - 页面沿用现有 Operations 配置页的模式：筛选行、表格、抽屉、二次确认、公共错误提示、分页组件。
 - 编辑器输入时防抖 500 ms 调用接口 16。语法高亮由前端完成；校验以服务端结果为准，前端不重复实现解析器。
-- 页面原型：`operations-console-web/docs/design.pen`，画板说明见本节末尾。
-- **页面原型（2026-10-22）**：`operations-console-web/docs/design.pen` 自 y=83100 起两排，共 6 张 1920 宽画板，与工作流原型同一个外壳（侧栏新增“数据查询 / 数据源 / 查询模板”）：
+- 页面原型：`operations-console-web/docs/operations-console.pen`，画板说明见本节末尾。
+- **页面原型（2026-10-22）**：`operations-console-web/docs/operations-console.pen` 自 y=83100 起两排，共 6 张 1920 宽画板，与工作流原型同一个外壳（侧栏新增“数据查询 / 数据源 / 查询模板”）：
   - 01 数据源列表：左侧表格（状态、最后检查、引用模板数），右侧选中项详情（连接、密码只显示“已保存（Vault）”、最后一次检查的三步结果、引用的模板）。
   - 02 编辑数据源｜检查未通过：启用中的数据源修改账号后重新测试，左侧表单（编码锁定、引擎分段、连接参数只允许 5 项），右侧逐步检查，`SHOW GRANTS` 中的 `INSERT`、`UPDATE` 标红，“保存”置灰，并说明原配置继续生效。
   - 03 查询模板列表：编码、数据源、参数摘要（* 必填、[] 集合、⟨片段⟩）、分页方式、当前版本、状态。
@@ -461,4 +461,4 @@ public interface QueryEngine {
 | Q10 ✅ 按建议 | 游标分页由模板作者自己写 `{{#if __cursor}}` 条件，服务只追加 `LIMIT` 并生成游标（第 4.4 节） | 按此做。服务自动改写 WHERE 条件对 UNION、GROUP BY 等写法不可靠 |
 | Q11 ✅ 按建议 | 模板不绑定权限码，所以有 `DATA_QUERY_EXECUTE` 的人能执行**任意** ACTIVE 模板 | 接受，这是 C11 的直接结果。执行权限只授予需要的角色，以后需要细分时再加模板分组 |
 | Q12 ✅ 按建议 | 自动测试需要一个本地“被查库”和账号：`mor_data_query_fixture` 库、只读账号与写权限账号，写入 `local-environment/mysql/init` 和 `.env.example` | 同意。只在本地使用，不进入 mor-test；已有的本地 MySQL 需要人工执行一次初始化 SQL（届时单独授权） |
-| Q13 ✅ 现在画（2026-10-22 用户） | 页面原型画在哪里、何时画？ | 画在 `operations-console-web/docs/design.pen`，与工作流原型同一文件，放在新的纵向区域，不触碰已有画板 |
+| Q13 ✅ 现在画（2026-10-22 用户） | 页面原型画在哪里、何时画？ | 画在 `operations-console-web/docs/operations-console.pen`，与工作流原型同一文件，放在新的纵向区域，不触碰已有画板 |

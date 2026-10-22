@@ -1,6 +1,6 @@
 # Client API 查看与管控：Pencil 页面方案
 
-阶段 3 已确认页面方案。以 [需求](./requirement.md) 和 [接口](./api.md) 为业务合同；本页明确交互，源文件为 [operations-console-web/docs/design.pen](../../../operations-console-web/docs/design.pen)。本次追加 8 个页面状态与 1 张字段关系图，保留原有画板；画面中的 Client、ID、前缀和记录均为设计示例，不是环境数据。
+阶段 3 已确认页面方案。以 [需求](./requirement.md) 和 [接口](./api.md) 为业务合同；本页明确交互，源文件为 [operations-console-web/docs/operations-console.pen](../../../operations-console-web/docs/operations-console.pen)。本次追加 8 个页面状态与 1 张字段关系图，保留原有画板；画面中的 Client、ID、前缀和记录均为设计示例，不是环境数据。
 
 整体预览见 [8 页设计 PDF](./assets/stage3/export.pdf)，字段全览见 [关系图](./assets/stage3/cRqny.png)。
 

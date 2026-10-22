@@ -5,7 +5,7 @@
 - Deployment status: Not applicable
 - Decision date: 2026-10-20
 - 用户决定：2026-10-20 在 [design-discuss/reconciliation](../../design-discuss/reconciliation/design.md) 的讨论中同意边界与链路；Q2 改为「不回查 Payment」，Q3 选方案 A，Q5 选方案 C，Q10 定为「暂不自动创建、先手动」，其余（Q1、Q4、Q6–Q9、Q11）按建议。第二轮用户确认：银行到账与在途累计不一致的处理、内部推送 / 外部账单对称命名、表收到 13 张，以及 Q12–Q16、缺口 G1–G15「能闭环的做，要等真实对接的先人工处置或暂缓」。
-- 详细设计：[职责与设计](../../design-discuss/reconciliation/design.md)（第 9.2 节为第二轮逐项结论）、画板 [design.pen](../../design-discuss/reconciliation/design.pen)（四张：职责边界与三段账户；业务流程与走数例子；领域模型；用例、枚举与问题）。
+- 详细设计：[职责与设计](../../design-discuss/reconciliation/design.md)（第 9.2 节为第二轮逐项结论）、画板 [reconciliation.pen](../../design-discuss/reconciliation/reconciliation.pen)（四张：职责边界与三段账户；业务流程与走数例子；领域模型；用例、枚举与问题）。
 - 实现、验证与部署状态只见[当前台账](../CURRENT_IMPLEMENTATION.md)。
 
 ## 1. 背景

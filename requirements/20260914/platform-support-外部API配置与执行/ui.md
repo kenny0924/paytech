@@ -1,6 +1,6 @@
 # Operations 渠道 API 页面设计
 
-> **2026-10-13 画板删除：** 2026-10-13 用户确认后，`design.pen` 中 30 张前序画板（名称以 CAPI、GAPI 开头）已删除；本目录 `assets/pencil*` 中的历史 PNG 保留，原画板可从 git 提交 `fff35d2` 的 `operations-console-web/docs/design.pen` 恢复。下文画板 ID 仅作历史定位。
+> **2026-10-13 画板删除：** 2026-10-13 用户确认后，`design.pen` 中 30 张前序画板（名称以 CAPI、GAPI 开头）已删除；本目录 `assets/pencil*` 中的历史 PNG 保留，原画板可从 git 提交 `fff35d2` 的 `operations-console-web/docs/operations-console.pen` 恢复。下文画板 ID 仅作历史定位。
 
 > **2026-10-13 迁移后继：** 本目录已由 `requirements/20260914/payment-渠道API逻辑定义/` 迁至 Platform 命名目录。本文为历史资料，保留原日期与适用范围；现行合同见[需求](./requirement.md)、[六表数据设计](./data-design.md)和[流程设计](./flow-design.md)，本文被取代的范围见[技术说明第 5 节](./technique.md#5-历史资料与取代关系)。
 
@@ -10,7 +10,7 @@
 
 **以下为 CAPI 前版编辑器参考。** 其支付方式、结果码和公共方案分区不代表当前合同；原 Zo7XM、ZpOjN、qunOX 已被 S04、S01、S02 替换，下文旧 PNG 保留历史证据。当前画板位置、交互及生效关系以公共脚本和模型设计为准。
 
-本稿属于[详细设计](./design.md)，维护者为**熟悉渠道文档的接入人员或开发者**。只有 **1 个功能页面**，路由 `/channel-apis`，componentKey 为 OPERATIONS_CHANNEL_APIS；列表、详情、编辑及公共方案均为页内状态。当前视觉源文件为 Operations Web 的 [docs/design.pen](../../../operations-console-web/docs/design.pen)，包含14张可编辑 Pencil 画板及5条流程导览。
+本稿属于[详细设计](./design.md)，维护者为**熟悉渠道文档的接入人员或开发者**。只有 **1 个功能页面**，路由 `/channel-apis`，componentKey 为 OPERATIONS_CHANNEL_APIS；列表、详情、编辑及公共方案均为页内状态。当前视觉源文件为 Operations Web 的 [docs/operations-console.pen](../../../operations-console-web/docs/operations-console.pen)，包含14张可编辑 Pencil 画板及5条流程导览。
 
 静态预览：[请求参数](./assets/pencil/MQlLc.png)、[系统函数与结果表达式](./assets/pencil/Z2kAR.png)、[配置校验](./assets/pencil/OdrlY.png)。本稿取代此前按执行引擎阶段组织的 UI；历史五步流程背景见[交付记录第11节](./delivery.md#11-按接入任务重构-api-维护流程2026-09-14)，系统函数修订见第13节，三种取值方式及 Aviator 修订见第14节；当前技术化编辑器修订见第15节。这是设计稿，未实现表单、试算或真实渠道调用。
 
@@ -150,7 +150,7 @@ API 与方案的筛选、页码、选择和只读/编辑状态由现有页面模
 
 ## 5. Pencil 画板与视觉验收
 
-打开 [Operations 设计文件](../../../operations-console-web/docs/design.pen)，从 Layers 的 `CAPI 导览 · A API 配置索引` 开始。渠道设计自 `(0,23460)` 起；画板编号对应画布阅读顺序，编辑器使用无编号页签；画板编号仅用于评审索引。
+打开 [Operations 设计文件](../../../operations-console-web/docs/operations-console.pen)，从 Layers 的 `CAPI 导览 · A API 配置索引` 开始。渠道设计自 `(0,23460)` 起；画板编号对应画布阅读顺序，编辑器使用无编号页签；画板编号仅用于评审索引。
 
 | 区域 | 位置 | 阅读方式 |
 |---|---|---|

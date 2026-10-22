@@ -69,7 +69,7 @@
 - `definition_json`、`flow_definition_json` 的完整可执行 Schema 和真实渠道适配。
 - 正式 PDManer/Schema、DDL/DML 执行、数据迁移及 Vault 策略调整。
 - 流程状态落库、执行历史、自动重试、后台恢复、发布版本或新增部署服务。
-- 新页面绘制；原 [Pencil 设计](../../../operations-console-web/docs/design.pen)保留，与现行结构的差异见[技术说明](./technique.md#4-operations-页面差异)。
+- 新页面绘制；原 [Pencil 设计](../../../operations-console-web/docs/operations-console.pen)保留，与现行结构的差异见[技术说明](./technique.md#4-operations-页面差异)。
 
 ## 5. 验收标准（设计评审）
 

@@ -93,7 +93,7 @@
 | CAPI-18 | 合同/交互设计 | 同状态可有多个响应场景，各场景引用不同嵌套输出模型；API 只维护匹配与取值；输入名称生成真实 context 根路径；模型及 API 引用错误可审阅 | [模型与场景设计](./model-library-and-response-scenes.md) |
 | CAPI-19 | 脚本/交互设计 | 公共方案并入公共脚本；按阶段读写 HTTP 工作对象，展示系统函数、参数绑定及顺序，保留原始响应验证与最终发送字节约束 | [公共脚本设计](./public-script-http-context-design.md) |
 
-当前 Operations UI 在[现有 Pencil 设计文件](../../../operations-console-web/docs/design.pen)中交付，画板索引见[页面设计](./ui.md)。合成数据与设计状态不代表管理后端或真实渠道执行能力已实现。
+当前 Operations UI 在[现有 Pencil 设计文件](../../../operations-console-web/docs/operations-console.pen)中交付，画板索引见[页面设计](./ui.md)。合成数据与设计状态不代表管理后端或真实渠道执行能力已实现。
 
 ## 6. 权威入口
 
