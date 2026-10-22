@@ -224,6 +224,17 @@ export const pageCapabilities = [
     ]
   },
   {
+    "componentKey": "OPERATIONS_FILE_STORAGE",
+    "displayName": "存储管理",
+    "frontendRoute": "/file-storage",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_FILE_STORAGE_MANAGE",
+        "displayName": "维护"
+      }
+    ]
+  },
+  {
     "componentKey": "OPERATIONS_API_CREDENTIALS",
     "displayName": "API 凭证",
     "frontendRoute": "/api-credentials",

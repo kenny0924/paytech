@@ -1,0 +1,23 @@
+--- a/test-environment/compose.applications.yaml	2026-10-22 08:36:50
++++ b/test-environment/compose.applications.yaml	2026-10-22 08:36:50
+@@ -214,15 +214,12 @@
+       # SES 投递事件：各实例定时拉取账号上配置的 SQS 事件队列（运营后台「发送账号」填写队列 URL），复用账号发送密钥。
+       NOTIFICATION_SES_EVENTS_ENABLED: "true"
+       TENANT_PROJECTION_ENABLED: "true"
++      # 文件能力（20261022 文件多存储并存）：存储实例、桶、写入路由与密钥在运营「存储管理」维护（t_file_storage_*，密钥只存 Vault），
++      # 不再经环境变量配置；旧 FILES_ONBOARDING_STORAGE_* / FILES_ONBOARDING_MINIO_* 残留会使新 Platform 拒绝启动。
++      # 入驻上传要求 files.enabled=true。mor-test 登记：实例 MINIO（https://minio.mor-test.localhost:29400，私有 CA = test-ca.crt）、
++      # 桶 mor-platform-files、默认路由 * → CLIENT_ONBOARDING_FORMAT / 900 秒。
++      PLATFORM_SUPPORT_FILES_ENABLED: "true"
+       FILES_ONBOARDING_ENABLED: "true"
+-      FILES_ONBOARDING_STORAGE_PROVIDER: MINIO
+-      FILES_ONBOARDING_STORAGE_CONTAINER_REF: mor-platform-files
+-      FILES_ONBOARDING_SCAN_POLICY_CODE: CLIENT_ONBOARDING_FORMAT
+-      FILES_ONBOARDING_MINIO_ENDPOINT: https://minio.mor-test.localhost:29400
+-      FILES_ONBOARDING_MINIO_REGION: us-east-1
+-      FILES_ONBOARDING_MINIO_ACCESS_KEY: ${MOR_MINIO_PLATFORM_ACCESS_KEY:?prepare test secrets}
+-      FILES_ONBOARDING_MINIO_SECRET_KEY: ${MOR_MINIO_PLATFORM_SECRET_KEY:?prepare test secrets}
+-      FILES_ONBOARDING_MINIO_TRUSTED_CERTIFICATE: /run/mor-test/test-ca.crt
+       COMPENSATION_ENABLED: "true"
+       COMPENSATION_INSTANCE_ID: platform-test
+       # Client Webhook 投递：签名密钥存 Vault（WEBHOOK_SIGNING_SECRET_V1 / WEBHOOK_SIGNING）；登记 acquiring-service 为事件来源（第 03 步改名）。

@@ -11,6 +11,7 @@ export const APPROVED_TABLE_GROUPS = Object.freeze({
     "t_file_owner_ref", "t_file_scan_result", "t_document_template",
     "t_document_template_translation", "t_consumer_document", "t_document_version",
     "t_document_delivery", "t_document_access_grant",
+    "t_file_storage_instance", "t_file_storage_bucket", "t_file_storage_route",
   ]),
   notification: Object.freeze([
     "t_notification_request", "t_notification_delivery", "t_notification_attempt",
@@ -34,7 +35,7 @@ export const APPROVED_TABLE_GROUPS = Object.freeze({
 
 export const EXPECTED_GROUP_SIZES = Object.freeze({
   identity_access: 19,
-  file_document: 12,
+  file_document: 15,
   notification: 7,
   webhook: 5,
   audit_security: 8,
@@ -43,7 +44,7 @@ export const EXPECTED_GROUP_SIZES = Object.freeze({
   reference_data: 1,
 });
 
-export const EXPECTED_TABLE_TOTAL = 60;
+export const EXPECTED_TABLE_TOTAL = 63;
 export const APPROVED_TABLES = Object.freeze(Object.values(APPROVED_TABLE_GROUPS).flat());
 
 export const APPROVED_DIAGRAMS = Object.freeze({

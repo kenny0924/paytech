@@ -112,6 +112,8 @@ web:
       - /webhook-admin
       # 币种启停原因与权限维护一致，只记元数据。
       - /currency-admin
+      # 新建存储实例与更换密钥的请求含存储密钥，整个存储管理前缀只记元数据。
+      - /storage-admin
       # 数据源新建、修改与测试连接的请求含被查库密码；试运行与执行的请求含查询参数值、响应含结果行，只记元数据。
       - /data-query-admin/v1/data-sources
       - /data-query-admin/v1/data-source-connection-tests

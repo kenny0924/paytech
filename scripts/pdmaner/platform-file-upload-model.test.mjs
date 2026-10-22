@@ -9,13 +9,18 @@ const entity = name => model.entities.find(item => item.defKey === name);
 
 test('upload persists the approved exact target and recovery facts without a second upload secret', () => {
   const upload = entity('t_file_upload');
-  assert.equal(upload.fields.length, 18);
+  // 2026-10-22 文件多存储并存：增加 source_system、reason_code（18 → 20 列）；owner_* 改为可空并注明第二段删除。
+  assert.equal(upload.fields.length, 20);
+  const ownerFields = ['owner_system', 'owner_type', 'owner_ref_id'];
+  const ownerNote = '；内部文件接口的上传为空（第二段删除）。';
   for (const expected of proposal.proposedUploadFields) {
     const actual = upload.fields.find(field => field.defKey === expected.name);
     assert.ok(actual, expected.name);
     assert.equal(actual.type + (actual.len ? `(${actual.len})` : ''), expected.type);
-    assert.equal(actual.notNull, true);
-    assert.equal(actual.comment, expected.comment + (expected.name === 'owner_type' ? '取值来源：Platform 受控文件 Owner 类型目录；非固定枚举。' : ''));
+    const owner = ownerFields.includes(expected.name);
+    assert.equal(actual.notNull, !owner);
+    const base = owner ? expected.comment.replace(/。$/u, '') + ownerNote : expected.comment;
+    assert.equal(actual.comment, base + (expected.name === 'owner_type' ? '取值来源：Platform 受控文件 Owner 类型目录；非固定枚举。' : ''));
   }
   assert.ok(!upload.fields.some(field => field.defKey === 'upload_token_hash'));
   const target = upload.indexes.find(index => index.defKey === 'uk_upload_storage_target');

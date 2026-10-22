@@ -21,7 +21,7 @@ import com.paytech.platform.support.api.enums.OnboardingFileErrorCode;
 import com.paytech.platform.support.api.enums.OnboardingFilePurpose;
 import com.paytech.platform.support.api.onboardingfiles.OnboardingFileVerificationApi;
 import com.paytech.platform.support.api.onboardingfiles.response.FileVerificationResponseBody;
-import com.paytech.platform.support.filedocument.integration.storage.minio.MinioFileStorage;
+import com.paytech.platform.support.test.mocker.local.StorageInstanceMocker;
 import com.paytech.platform.support.test.base.OnboardingFileTestBase;
 import com.paytech.platform.support.test.builder.OnboardingFileBuilder.Spec;
 import com.paytech.platform.support.test.builder.OperatorBuilder;
@@ -47,7 +47,7 @@ class VerifyOnboardingFileTest extends OnboardingFileTestBase {
     void setUpClassMocks() {
         long policyId = fileMocker.formatPolicy().policyId();
         applicant = applicants.applicant();
-        spec = fileMocker.file(material(MinioFileStorage.PROVIDER).policyId(policyId)
+        spec = fileMocker.file(material(StorageInstanceMocker.MINIO_INSTANCE).policyId(policyId)
             .owner(applicant.tenantId(), applicant.accountId(), OperatorBuilder.nextId(), OperatorBuilder.nextId())
             .version("v1").build());
     }

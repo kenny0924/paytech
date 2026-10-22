@@ -104,6 +104,8 @@ web:
   logging:
     metadata-only-path-prefixes:
       - /internal/onboarding-files
+      - /internal/files
+      - /storage-admin
       - /notifications
       - /onboarding-files
       - /review-files
@@ -140,10 +142,27 @@ tenant:
   projection:
     enabled: false
 
-# 本地补偿执行默认跟随入驻文件开关；单独启用通知等其他消费者时设置 PLATFORM_SUPPORT_COMPENSATION_ENABLED=true。
+# 本地补偿执行默认跟随文件开关 files.enabled；单独启用通知等其他消费者时设置 PLATFORM_SUPPORT_COMPENSATION_ENABLED=true。
 # 关闭时不创建补偿 Registrar，通知启用会在启动时因缺少该 Bean 失败；周期扫描的 XXL-Job 调度另行配置。
 compensation:
-  enabled: ${PLATFORM_SUPPORT_COMPENSATION_ENABLED:${files.onboarding.enabled:false}}
+  enabled: ${PLATFORM_SUPPORT_COMPENSATION_ENABLED:${files.enabled:false}}
+
+# 文件能力：存储实例、存储桶、写入路由与密钥在运营「存储管理」中维护（t_file_storage_*，密钥只存 Vault），不在配置文件中。
+# files.enabled 控制内部文件接口（/internal/files/v1）、FILE_SCAN 扫描任务、格式检查器与存储快照刷新；启用需 Redis 协调与本地补偿执行器。
+# files.onboarding.enabled=true（Client 入驻上传）要求 files.enabled=true。旧键 files.onboarding.storage-provider、
+# storage-container-ref、scan-policy-code、upload-seconds、minio.*、s3.* 已删除，残留时启动失败。
+# 存储密钥需要 Vault 规则：platform-support-service / PROTECT / FILE_STORAGE_CREDENTIAL_V1 / FILE_STORAGE_SETUP 与
+# REVEAL / FILE_STORAGE_CREDENTIAL_V1 / FILE_STORAGE_ACCESS。
+files:
+  enabled: ${PLATFORM_SUPPORT_FILES_ENABLED:false}
+  onboarding:
+    enabled: false
+  storage:
+    # 进程内存储快照的刷新间隔；本进程的管理写入提交后立即刷新。
+    snapshot-refresh: 30s
+    # 存储管理写入的资源锁（实例与其存储桶按实例代码、路由按来源系统）；修改需重启。
+    lock-wait-time: 500ms
+    lock-lease-time: 30s
 
 # 币种规则维护按币种代码加锁（currency-spec:{currency}），新建、修改与启停共用；修改需重启。
 ps:

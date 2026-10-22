@@ -13,6 +13,7 @@ import com.paytech.platform.support.filedocument.core.dal.dataobject.FileUpload;
 import com.paytech.platform.support.filedocument.domain.enums.FileUploadStatus;
 import com.paytech.platform.support.filedocument.domain.file.UploadModels.Start;
 import com.paytech.platform.support.filedocument.domain.file.UploadModels.Upload;
+import com.paytech.platform.support.filedocument.domain.storage.StorageWriteTarget;
 import com.paytech.platform.support.filedocument.domainservice.repository.FileUploadRepository;
 import com.paytech.platform.support.filedocument.domainservice.service.FileUploadService;
 
@@ -24,10 +25,9 @@ import tools.jackson.databind.ObjectMapper;
 public class FileUploadServiceImpl implements FileUploadService {
     private final ObjectMapper json;
     private final FileUploadRepository repository;
-    /** Scan Policy 结构损坏与未配置都不能被当作允许任意文件。 */
-    @Override public Upload create(long id, long accountId, long tenantId, Start start, String policyCode,
-        String provider, String container, Instant now, Instant expiresAt) {
-        var policies = repository.policies(policyCode, now);
+    /** Scan Policy 结构损坏与未配置都不能被当作允许任意文件；上传期限取自路由。 */
+    @Override public Upload create(long id, Start start, StorageWriteTarget target, Instant now) {
+        var policies = repository.policies(target.getScanPolicyCode(), now);
         if (policies.size() != 1) throw new ServiceUnavailableException();
         var policy = policies.getFirst();
         if (policy.ruleSchemaVersion() != 1 || policy.requirementCount() < 1 || policy.maxSizeBytes() < 1)
@@ -45,15 +45,17 @@ public class FileUploadServiceImpl implements FileUploadService {
         } catch (RuntimeException invalid) { throw new ServiceUnavailableException(); }
         if (!allowed.contains(start.mimeType()) || start.sizeBytes() > policy.maxSizeBytes())
             throw new FailException(OnboardingFileErrorCode.FILE_POLICY_REJECTED);
-        var value = new FileUpload(id, tenantId, accountId, start.applicationId() + ":" + start.subjectPartyId(),
-            start.displayName(), start.sizeBytes(), start.mimeType(), provider, container,
-            UUID.randomUUID().toString(), policy.policyId(), expiresAt, FileUploadStatus.CREATED);
+        var value = new FileUpload(id, start.tenantId(), start.uploaderId(), start.sourceSystem(), start.reasonCode(),
+            start.ownerRefId(), start.displayName(), start.sizeBytes(), start.mimeType(), target.getProvider(),
+            target.getContainer(), UUID.randomUUID().toString(), policy.policyId(),
+            now.plusSeconds(target.getMaxUploadSeconds()), FileUploadStatus.CREATED);
         repository.insert(value, now);
         return result(value);
     }
     /** 转为文件能力发布的业务事实。 */
     private Upload result(FileUpload value) {
-        return new Upload(value.uploadId(), value.tenantId(), value.uploaderId(), value.ownerRefId(), value.displayName(),
+        return new Upload(value.uploadId(), value.tenantId(), value.uploaderId(), value.sourceSystem(),
+            value.reasonCode(), value.ownerRefId(), value.displayName(),
             value.expectedSize(), value.expectedMime(), value.storageProvider(), value.containerRef(), value.objectRef(),
             value.scanPolicyId(), value.expiresAt(), value.status());
     }

@@ -8,6 +8,7 @@ import com.paytech.platform.support.filedocument.domain.enums.*;
 import com.paytech.platform.support.api.enums.FileScanStatus;
 import com.paytech.platform.support.api.enums.FileObjectStatus;
 import com.paytech.platform.support.filedocument.domain.file.UploadModels.Completed;
+import com.paytech.platform.support.filedocument.domain.file.StoredFileView;
 import com.paytech.platform.support.filedocument.domain.file.UploadModels.Upload;
 import com.paytech.platform.support.filedocument.domain.file.FileModels.*;
 import com.paytech.platform.support.filedocument.core.dal.dataobject.*;
@@ -44,12 +45,28 @@ public class FileLifecycleServiceImpl implements FileLifecycleService {
             return new Owned(file(row),upload,Long.parseLong(target[0]),Long.parseLong(target[1]));
         } catch (IllegalArgumentException invalid) { throw new ServiceUnavailableException(); }
     }
+    /** 任一来源的原上传，不限定 Owner。 */
+    @Override public Upload sourceUpload(long uploadId) { return upload(uploads.findById(uploadId)); }
+    /** 当前读防止 Redis Lease 过期产生重复文件。 */
+    @Override public Upload lockSourceUpload(long uploadId) { return upload(repository.lockSourceUpload(uploadId)); }
+    /** 文件与上传记录组合的元数据。 */
+    @Override public StoredFileView describe(long fileId) {
+        var view=repository.describeFile(fileId);
+        if (view==null) throw new FailException(OnboardingFileErrorCode.FILE_NOT_FOUND);
+        return view;
+    }
+    /** 文件不可变坐标与当前状态。 */
+    @Override public File file(long fileId) {
+        var row=repository.readFile(fileId);
+        if (row==null) throw new FailException(OnboardingFileErrorCode.FILE_NOT_FOUND);
+        return file(row);
+    }
     /** 隐藏其他账号的对象存在性。 */
     @Override public Upload owned(long uploadId,long accountId) { return owned(uploads.find(uploadId),accountId); }
     /** 当前读防止 Redis Lease 过期产生重复文件。 */
     @Override public Upload lockOwned(long uploadId,long accountId,long tenantId) {
         var upload=owned(repository.lockUpload(uploadId),accountId);
-        if (upload.tenantId()!=tenantId) throw new FailException(OnboardingFileErrorCode.FILE_TARGET_CONFLICT);
+        if (!Objects.equals(upload.tenantId(),tenantId)) throw new FailException(OnboardingFileErrorCode.FILE_TARGET_CONFLICT);
         return upload;
     }
     /** 调用者已锁定原 Upload；完成状态与文件在同一事务写入，二者必须同时存在。 */
@@ -73,7 +90,7 @@ public class FileLifecycleServiceImpl implements FileLifecycleService {
         requireOpen(upload,now);
         if (repository.completeUpload(upload.uploadId(),now)!=1) throw new FailException(OnboardingFileErrorCode.FILE_STATE_CONFLICT);
         repository.insertFile(fileId,upload,proof,now);
-        repository.insertOwner(ownerRowId,fileId,upload.ownerRefId(),now);
+        if (upload.ownerRefId()!=null) repository.insertOwner(ownerRowId,fileId,upload.ownerRefId(),now);
     }
     /** 缺失或损坏的冻结规则保持失败关闭，不依赖当前 ACTIVE 默认策略。 */
     @Override public Scan beginScan(long fileId,Instant now) {
@@ -124,8 +141,13 @@ public class FileLifecycleServiceImpl implements FileLifecycleService {
     }
     /** 最小授权读取，不向其他模块泄露 DataObject。 */
     private Upload owned(FileUpload row,long accountId) {
-        if (row==null || row.uploaderId()!=accountId) throw new FailException(OnboardingFileErrorCode.FILE_NOT_FOUND);
-        return new Upload(row.uploadId(),row.tenantId(),row.uploaderId(),row.ownerRefId(),row.displayName(),row.expectedSize(),row.expectedMime(),row.storageProvider(),row.containerRef(),row.objectRef(),row.scanPolicyId(),row.expiresAt(),row.status());
+        if (row==null || !Objects.equals(row.uploaderId(),accountId)) throw new FailException(OnboardingFileErrorCode.FILE_NOT_FOUND);
+        return upload(row);
+    }
+    /** 转为文件能力发布的上传事实；不存在按不可访问处理。 */
+    private Upload upload(FileUpload row) {
+        if (row==null) throw new FailException(OnboardingFileErrorCode.FILE_NOT_FOUND);
+        return new Upload(row.uploadId(),row.tenantId(),row.uploaderId(),row.sourceSystem(),row.reasonCode(),row.ownerRefId(),row.displayName(),row.expectedSize(),row.expectedMime(),row.storageProvider(),row.containerRef(),row.objectRef(),row.scanPolicyId(),row.expiresAt(),row.status());
     }
     /** 发布存储/扫描所需的固定业务事实。 */
     private File file(FileObject row) {

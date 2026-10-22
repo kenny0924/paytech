@@ -1,9 +1,9 @@
 package com.paytech.platform.support.filedocument.integration.storage;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.cert.Certificate;
@@ -15,7 +15,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
-/** 存储连接的私有 CA 信任材料；未配置时使用 JDK 默认信任库。 */
+/** 存储连接的私有 CA 信任材料；实例未登记证书时使用 JDK 默认信任库。 */
 public final class StorageTrust {
     private final X509TrustManager trustManager;
     private final SSLContext context;
@@ -26,13 +26,19 @@ public final class StorageTrust {
     }
 
     /**
-     * 只信任指定 PEM 证书（私有 CA 或本机自签名），不叠加默认信任库。
+     * 只信任实例登记的 PEM 证书文本，不叠加默认信任库。
      *
-     * @param certificate PEM 文件路径
+     * @param pem PEM 文本（公开内容）
      * @return 信任材料
+     * @throws IllegalArgumentException 文本不含合法 X.509 证书
      */
-    public static StorageTrust fromPem(Path certificate) {
-        try (InputStream input = Files.newInputStream(certificate)) {
+    public static StorageTrust fromPemText(String pem) {
+        return fromPem(new ByteArrayInputStream(pem.getBytes(StandardCharsets.US_ASCII)));
+    }
+
+    /** 从 PEM 流建立只含这些证书的信任管理器与 TLS 上下文。 */
+    private static StorageTrust fromPem(InputStream input) {
+        try {
             KeyStore store = KeyStore.getInstance(KeyStore.getDefaultType());
             store.load(null, null);
             int index = 0;
@@ -40,7 +46,7 @@ public final class StorageTrust {
                 store.setCertificateEntry("storage-" + index++, value);
             }
             if (index == 0) {
-                throw new IllegalArgumentException("存储信任证书文件不含 X.509 证书");
+                throw new IllegalArgumentException("存储信任证书不含 X.509 证书");
             }
             TrustManagerFactory factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             factory.init(store);

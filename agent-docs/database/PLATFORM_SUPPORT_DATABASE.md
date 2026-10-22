@@ -1,5 +1,7 @@
 # Platform Support 数据库设计规范
 
+> **文件多存储并存（2026-10-22，第一段）：** 依据[需求](../../requirements/20261022/platform-support-文件多存储并存/requirement.md)与[技术方案](../../requirements/20261022/platform-support-文件多存储并存/technique.md)，文件图组新增 `t_file_storage_instance`（存储实例：类型 MINIO/S3、地址、区域、私有证书、凭据方式、密钥 Vault Token `FILE_STORAGE_CREDENTIAL_V1`）、`t_file_storage_bucket`（存储桶与启用检查结果）、`t_file_storage_route`（来源系统 → 桶、扫描策略、上传期限，默认路由 `*`）三张表；`t_file_upload`、`t_file_object` 增加 `source_system`、`reason_code`（现有记录回填 `platform-support` / `CLIENT_ONBOARDING_MATERIAL`），`t_file_object` 增加 `idx_file_source`；`t_file_upload` 的 `tenant_id`、`uploader_id` 与 `owner_*` 改为可空（内部文件接口的上传没有租户与 Owner，纯系统上传没有上传人）。实例代码即记录上的 `storage_provider`、桶名即 `storage_container_ref`，被记录引用后只能停用；读取永远按记录坐标，不受路由影响。内部系统之间不做文件级权限，文件只记来源系统与原因。第二段再删除 `owner_*` 与 `t_file_owner_ref`。增量 SQL 见 `paytech/platform-support/docs/database/sql/changes/2026-10-22-file-storage-management.sql`（未执行），执行状态只见当前台账。
+
 > **渠道协议迁出（2026-10-20）：** 依据[统一对外出口决定](../decisions/2026-10-20-channel-connector-unified-outbound.md)与[技术方案](../../requirements/20261020/channel-connector-统一对外渠道出口/technique.md)，下一条所述 integration 图组 10 表（`t_standard_api`、`t_api_field`、`t_integration*`、验证四表）的 Owner 改为 channel-connector（`mor_channel_connector`，模块 `paytech-channel-connector-protocol`），Platform Schema 由 57 张减为 47 张；下一条保留为字段与历史设计参照，不再表示 Platform 拥有这些表。2026-10-22 第二段在 channel-connector 内把 `t_integration` 并入 `t_channel`、7 张 `t_integration_*` 改名为 `t_channel_*`，与 Platform 无关；Platform 只保留运营控制台的注册数据（块 71、92、129）。代码与 SQL 执行状态只见[当前台账](../CURRENT_IMPLEMENTATION.md#channel-connector-phase2-20261022)。
 
 > **Integration 后继（2026-09-21，2026-10-13 修订）：** [归属决定](../decisions/2026-09-21-platform-integration-http-execution.md)将受控外部 API 配置和执行纳入 Platform；[标准 API 与流程决定](../decisions/2026-10-13-platform-standard-api-flow.md)改为标准 API 加渠道同步流程。六表见[数据设计](../../requirements/20260914/platform-support-外部API配置与执行/data-design.md)与[物理设计](../../requirements/20260914/platform-support-外部API配置与执行/physical-design.md)，2026-10-13 已进入 PDManer（图组 integration），SQL 未执行；本项是下文“无通用技术配置”的窄例外，不扩展任意配置中心。2026-10-14 同图组增加沙箱验证四表（验证账号、用例、运行、运行步骤），保存验证证据与非敏感沙箱账号材料，依据[沙箱验证决定](../decisions/2026-10-14-platform-integration-sandbox-verification.md)。未因此更新正式模型数量，实际状态见当前台账。
@@ -38,7 +40,7 @@ Gateway 和入口应用位于六个核心系统之外：Gateway 负责入口、�
 - `INTERNAL`、`CLIENT`、`PARTNER` Access Tenant 投影，以及 Tenant Member、Invitation、Role、Permission 与授权关系；
 - CLIENT Tenant-owned API Credential 与显式 Scope；
 - 业务 Email OTP，不作为登录 OTP/MFA；
-- 文件上传、对象存储引用、扫描策略/要求/结果和 Owner 引用；
+- 文件上传、对象存储引用、扫描策略/要求/结果和 Owner 引用，以及运营维护的存储实例、存储桶与写入路由（2026-10-22）；
 - Consumer Document、Document Version、Delivery 与 Access Grant；
 - Notification Provider、Template、Route、Request、Delivery、Attempt、Callback 与 Suppression；
 - Webhook Endpoint（含订阅事件类型）、Signing Secret 引用、Event、Delivery 与 Attempt（2026-10-15 后继合同见第 9 节）；
@@ -195,7 +197,8 @@ Snapshot 只投影 ACTIVE Target 及其 ACTIVE Route/子项；DISABLED Target �
 - 入驻上传按[2026-09-15 已确认文件合同](../../requirements/20260914/client-console-注册与客户入驻/file-upload-closure-proposal.md)固定 Owner 申请＋主体、原存储坐标、展示名和扫描策略；上传授权由存储适配器签发，不保存额外 upload_token_hash。完成上传后生成不可变 File Object。
 - File 冻结一个 Scan Policy Revision，Requirement 明确列出 Scanner/Type/最低版本/接受结果。Scan Result 由应用在本地事务中校验 File 与 Requirement 属于同一 Policy；模型关联不导出物理 FK。
 - `AVAILABLE` 只表示所有要求已通过。后续显式重扫可将同一不可变内容改为 `QUARANTINED/UNAVAILABLE`，不覆盖旧 Result。
-- 普通 File 授权由调用上下文、Owner Ref 和统一 Audit 共同完成；不建设第二套通用 File ACL/Event。
+- 普通 File 授权由调用上下文、Owner Ref 和统一 Audit 共同完成；不建设第二套通用 File ACL/Event。2026-10-22 起内部文件接口不做文件级权限：持有文件 ID 的内部服务都可读取，文件只记录来源系统与 `reason_code`，业务授权由调用方完成。
+- 上传创建时按来源系统的写入路由固定存储实例与桶（`storage_provider` / `storage_container_ref`）并冻结路由的扫描策略；完成、恢复、检查、下载只用记录上的坐标。只有 ACTIVE 桶接受新上传，ACTIVE / READ_ONLY 桶可读，DISABLED 桶或实例读写都不可用。
 - 入驻阶段 PLT-I04 只接受 Account Context 与已认证的 `requested_by_account_id`，由 Platform 解析唯一 PENDING Tenant/Member/Onboarding Role 后落本地 `tenant_id`；调用方不能预填 Tenant，零个或多个候选均 Fail-Closed。
 
 ### 7.2 Consumer Document

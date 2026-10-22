@@ -184,6 +184,8 @@ web:
   logging:
     metadata-only-path-prefixes:
       - /internal/onboarding-files
+      - /internal/files
+      - /storage-admin
       - /onboarding-files
       - /review-files
       - /authentication
@@ -245,33 +247,37 @@ tenant:
   projection:
     enabled: true # CCT 来源投影写入口；依赖人工认证与 Redis 协调。
 files:
+  # 共享 Mock 上下文关闭文件能力；文件测试由 OnboardingFileTestBase 在独立上下文开启 files.enabled 与 files.onboarding.enabled。
+  enabled: false # 内部文件接口、FILE_SCAN、格式检查器与存储快照刷新。
   onboarding:
-    # 共享 Mock 上下文保持关闭；文件测试由 OnboardingFileTestBase 在独立上下文开启并选择 MINIO 或 S3。
-    enabled: false
-    storage-provider: "" # MINIO | S3；启用时由文件测试基类注入。
-    storage-container-ref: mor-platform-files-test # 仓库 MinIO 的测试专用版本化 SSE-S3 存储桶。
-    scan-policy-code: "" # 仅上传开始使用；启用时由文件测试基类注入 UNIT_TEST_ONBOARDING，策略行由各例插入。
-    upload-seconds: 900
+    enabled: false # Client 入驻上传；要求 files.enabled=true。
     cct-test-base-url: "" # 既有受限直连字段；此处禁用，不连接外部系统。
-    # 仓库 local-environment 的 MinIO（profile storage）；凭据优先取环境变量，否则由 LocalMockEnvironmentInitializer 读取 .env.local。
-    minio:
-      endpoint: https://127.0.0.1:19400
-      region: us-east-1
-      access-key: "${MOR_MINIO_PLATFORM_ACCESS_KEY:}"
-      secret-key: "${MOR_MINIO_PLATFORM_SECRET_KEY:}"
-      trusted-certificate: "${paytech.local-environment.dir}/minio/certs/public.crt" # 本机自签名证书；目录取 paytech-parent 透传的 paytech.local-environment.dir（IDE 未设置时由 LocalMockEnvironmentInitializer 回退并写入同名属性）。
-      connect-timeout: 2s
-      read-timeout: 10s
-    # 同一 MinIO 以 S3 兼容终端验证 AWS SDK 适配器：路径风格、静态凭据与私有证书。
-    s3:
-      region: us-east-1
-      endpoint: https://127.0.0.1:19400
-      path-style-access: true
-      access-key: "${MOR_MINIO_PLATFORM_ACCESS_KEY:}"
-      secret-key: "${MOR_MINIO_PLATFORM_SECRET_KEY:}"
-      trusted-certificate: "${paytech.local-environment.dir}/minio/certs/public.crt"
-      connect-timeout: 2s
-      read-timeout: 10s
+  # 存储实例、存储桶与写入路由在 t_file_storage_* 中维护，测试由 StorageInstanceMocker 插入，不在此配置。
+  storage:
+    snapshot-refresh: 1h # 生产默认 30s；测试由 Mocker 与管理写入显式刷新，避免定时刷新与用例交错。
+    lock-wait-time: 500ms # 存储管理写入的 TRY_LOCK 等待。
+    lock-lease-time: 30s # 存储管理写入的资源锁租约。
+# 测试专用：仓库 local-environment 的 MinIO（profile storage），只供测试侧夹具与 Vault 凭据 DTO 使用，生产不读取。
+# 凭据优先取环境变量，否则由 LocalMockEnvironmentInitializer 读取 .env.local；证书目录取 paytech.local-environment.dir。
+test:
+  storage:
+    endpoint: https://127.0.0.1:19400
+    region: us-east-1
+    bucket: mor-platform-files-test # 版本化、SSE-S3 加密的测试专用存储桶。
+    access-key: "${MOR_MINIO_PLATFORM_ACCESS_KEY:}" # 只授权两个 Platform 存储桶的账号。
+    secret-key: "${MOR_MINIO_PLATFORM_SECRET_KEY:}"
+    root-user: "${MOR_MINIO_ROOT_USER:}" # 仅用于在测试中临时创建与删除检查用存储桶。
+    root-password: "${MOR_MINIO_ROOT_PASSWORD:}"
+    trusted-certificate: "${paytech.local-environment.dir}/minio/certs/public.crt" # 本机自签名证书。
+  # 被查库连接参数：仓库隔离的本地测试账号，密码优先取环境变量，其次 local-environment/.env.local，最后为 .env.example 的默认值。
+  data-query:
+    fixture:
+      host: 127.0.0.1
+      port: 13306
+      reader-username: data_query_fixture_reader
+      reader-password: "${MOR_DATA_QUERY_FIXTURE_READER_PASSWORD:local-data-query-fixture-reader-change-me-2026}"
+      writer-username: data_query_fixture_writer
+      writer-password: "${MOR_DATA_QUERY_FIXTURE_WRITER_PASSWORD:local-data-query-fixture-writer-change-me-2026}"
 ps:
   access-control:
     lock-wait-time: 500ms # Scope 管理写接口锁预算。
@@ -375,17 +381,6 @@ data-query:
   http:
     callers: [operations-console-bff] # DataQueryApiTestBase.CALLER；其他调用方用于拒绝用例。
 
-# 被查库连接参数：仓库隔离的本地测试账号，密码优先取环境变量，其次 local-environment/.env.local，最后为 .env.example 的默认值。
-test:
-  data-query:
-    fixture:
-      host: 127.0.0.1
-      port: 13306
-      reader-username: data_query_fixture_reader
-      reader-password: "${MOR_DATA_QUERY_FIXTURE_READER_PASSWORD:local-data-query-fixture-reader-change-me-2026}"
-      writer-username: data_query_fixture_writer
-      writer-password: "${MOR_DATA_QUERY_FIXTURE_WRITER_PASSWORD:local-data-query-fixture-writer-change-me-2026}"
-
 # 内部调用 Token 签发端：Mock 中启用；密钥为仓库隔离的合成 P-256 测试值，不对应任何真实环境。
 internal-token:
   issuer:
@@ -409,6 +404,13 @@ internal-token:
         targets: [platform-support-service]
         purposes: [GENERAL]
       notification-test:
+        targets: [platform-support-service]
+        purposes: [GENERAL]
+      # 内部文件接口测试调用方（StorageInstanceMocker 常量）。
+      file-test:
+        targets: [platform-support-service]
+        purposes: [GENERAL]
+      file-test-peer:
         targets: [platform-support-service]
         purposes: [GENERAL]
       # Platform 自身出站：CCT 文件与 Vault（02d 起 Vault Client 在存在 Supplier 时附加 Token，未授权则失败关闭）。

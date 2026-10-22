@@ -1,0 +1,30 @@
+# 文件多存储并存（第一段）：mor-test 回滚覆盖文件（2026-10-22 阶段 6 读取的运行镜像与环境变量）。
+# 用法同 compose-candidate.yaml，只传本文件：
+#   ./test-environment/compose.sh -f "$PWD/requirements/20261022/platform-support-文件多存储并存/release/compose-rollback.yaml" \
+#     up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# platform-support-service 显式写回 8 个旧存储键并置空 PLATFORM_SUPPORT_FILES_ENABLED：即使主 compose 已按
+#   compose-applications.patch 删除旧键，回滚后的环境变量也与阶段 6 的运行容器逐键相同（旧 Platform 依赖这些键装配 MinIO）。
+# 前提：数据库增量 DDL 已执行时，旧 Platform 写 t_file_upload 不带 source_system / reason_code 会失败，见 release.md 第 6 节。
+# 若阶段 7 第 1 步发现运行镜像已变化（其他会话又发布过），本文件与候选包一起作废，须在新基线上重建。
+services:
+  platform-support-service:
+    image: sha256:2d40c1ba7f9aa1cc0f4da838b23e880f414201574cba36fc4d4dc1587d7ba330  # mor-test/platform-support-service:ccu-20261021（源 281a217d 等价，JAR aa66765d3bf1139c）
+    environment:
+      PLATFORM_SUPPORT_FILES_ENABLED: !reset null
+      FILES_ONBOARDING_STORAGE_PROVIDER: MINIO
+      FILES_ONBOARDING_STORAGE_CONTAINER_REF: mor-platform-files
+      FILES_ONBOARDING_SCAN_POLICY_CODE: CLIENT_ONBOARDING_FORMAT
+      FILES_ONBOARDING_MINIO_ENDPOINT: https://minio.mor-test.localhost:29400
+      FILES_ONBOARDING_MINIO_REGION: us-east-1
+      FILES_ONBOARDING_MINIO_ACCESS_KEY: ${MOR_MINIO_PLATFORM_ACCESS_KEY:?prepare test secrets}
+      FILES_ONBOARDING_MINIO_SECRET_KEY: ${MOR_MINIO_PLATFORM_SECRET_KEY:?prepare test secrets}
+      FILES_ONBOARDING_MINIO_TRUSTED_CERTIFICATE: /run/mor-test/test-ca.crt
+      PLATFORM_SUPPORT_RABBITMQ_HOST: !reset null
+      PLATFORM_SUPPORT_RABBITMQ_PORT: !reset null
+      PLATFORM_SUPPORT_RABBITMQ_USERNAME: !reset null
+      PLATFORM_SUPPORT_RABBITMQ_PASSWORD: !reset null
+      PLATFORM_SUPPORT_RABBITMQ_VHOST: !reset null
+  operations-console-bff:
+    image: sha256:4839c249e59c86d1f507b75ed25858ad7dbeabcfd816c1885fcb62d200ff206b  # mor-test/operations-console-bff:ccu-20261021（JAR 274fed6fb50ed779）
+  operations-console-web:
+    image: sha256:d1e5619f23f2bce4b038336966ce921cd886cab0305dc791d44048cd654d8dfa  # mor-test/operations-console-web:capability-ui-20261022d（281a217d）

@@ -6,6 +6,8 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
+import com.paytech.platform.support.filedocument.domain.file.FileDisplayName;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -61,8 +63,7 @@ public class StartOnboardingUploadRequest {
      * <li>反斜杠视为路径分隔符，只保留最后一段；清除控制与格式字符后去除首尾空白。</li>
      */
     public String displayName() {
-        String name = filename.replace('\\', '/');
-        return name.substring(name.lastIndexOf('/') + 1).replaceAll("[\\p{Cc}\\p{Cf}]", "").strip();
+        return FileDisplayName.normalize(filename);
     }
 
     /** 不记录可能包含个人信息的文件名。 */

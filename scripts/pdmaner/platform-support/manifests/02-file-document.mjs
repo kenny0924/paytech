@@ -19,6 +19,9 @@ import {
 const REVISION_STATUS = ["DRAFT", "ACTIVE", "RETIRED"];
 const FILE_STATUS = ["PENDING_SCAN", "SCANNING", "AVAILABLE", "QUARANTINED", "REJECTED"];
 const SOURCE_SYSTEM = "Code-MoR 系统代码目录";
+const STORAGE_SOURCE_SYSTEM = "内部调用身份的服务名";
+const REASON_CODE_SOURCE = "来源系统自定义";
+const STORAGE_STATUS = ["DRAFT", "ACTIVE", "DISABLED"];
 
 export const TABLES = Object.freeze([
   defineTable({
@@ -27,13 +30,15 @@ export const TABLES = Object.freeze([
     comment: "保存受控上传的准确 Owner 目标、租户与上传人、展示名、原存储目标和冻结扫描策略；上传授权由存储适配器签发，不持久化临时 URL、签名或额外上传秘密",
     fields: [
       pk("upload_id", "文件上传标识", "文件上传会话的稳定业务标识"),
-      id("tenant_id", "访问租户"),
-      id("uploader_id", "上传用户"),
+      field("tenant_id", "BIGINT", "N", "访问租户", "访问租户的稳定业务标识；Client 入驻上传为解析出的入驻租户，内部文件接口的上传为空"),
+      field("uploader_id", "BIGINT", "N", "上传用户", "上传人账号 ID；调用方有人工操作人时传入并原样记录，纯系统上传为空，Platform 不核对其真实性"),
+      field("source_system", "VARCHAR(64)", "NN", "上传来源系统", "上传来源系统，即开始上传时内部调用身份的服务名；Platform 自行发起的上传为 platform-support。创建后不变", { source: STORAGE_SOURCE_SYSTEM }),
+      field("reason_code", "VARCHAR(64)", "NN", "上传原因代码", "来源系统声明的上传原因代码，格式 [A-Z][A-Z0-9_]{0,63}，用于反查文件为什么上传；创建后不变", { source: REASON_CODE_SOURCE }),
       long("expected_size", "预期文件大小"),
       str("expected_mime", "预期媒体类型", "NN", 255),
-      field("owner_system", "VARCHAR(64)", "NN", "来源系统", "上传目标所属业务系统代码，来自 Platform 受控代码目录；Client 入驻由 CCT 授权结果固定，浏览器不得提交。"),
-      field("owner_type", "VARCHAR(64)", "NN", "来源类型", "上传目标的受控资源类型；Client 入驻固定为 CLIENT_APPLICATION_SUBJECT，不允许上传后变更目标类型。", { source: "Platform 受控文件 Owner 类型目录" }),
-      field("owner_ref_id", "VARCHAR(128)", "NN", "来源资源坐标", "来源 Owner 定义的不可变目标坐标；Client 入驻为 CCT 的 applicationId:subjectPartyId，两段均为规范正整数 ID，不复制 Client 名称或其他可变事实。"),
+      field("owner_system", "VARCHAR(64)", "N", "来源系统", "上传目标所属业务系统代码，来自 Platform 受控代码目录；Client 入驻由 CCT 授权结果固定，浏览器不得提交；内部文件接口的上传为空（第二段删除）。"),
+      field("owner_type", "VARCHAR(64)", "N", "来源类型", "上传目标的受控资源类型；Client 入驻固定为 CLIENT_APPLICATION_SUBJECT，不允许上传后变更目标类型；内部文件接口的上传为空（第二段删除）。", { source: "Platform 受控文件 Owner 类型目录" }),
+      field("owner_ref_id", "VARCHAR(128)", "N", "来源资源坐标", "来源 Owner 定义的不可变目标坐标；Client 入驻为 CCT 的 applicationId:subjectPartyId，两段均为规范正整数 ID，不复制 Client 名称或其他可变事实；内部文件接口的上传为空（第二段删除）。"),
       field("display_name", "VARCHAR(255)", "NN", "文件展示名", "去除路径和控制字符后的文件展示名，最大 255 Unicode 字符；仅授权页面展示，不作为对象存储 Key 或鉴权依据。"),
       field("storage_provider", "VARCHAR(64)", "NN", "存储适配器", "此次上传使用的对象存储适配器代码，来自受控配置；创建后固定，恢复不得改用当前默认适配器。"),
       field("storage_container_ref", "VARCHAR(255)", "NN", "存储容器", "此次上传的目标存储容器引用；不含凭据，创建后固定，完成和恢复必须使用原容器。"),
@@ -106,6 +111,8 @@ export const TABLES = Object.freeze([
       pk("file_id", "文件标识", "文件对象的稳定业务标识"),
       code("creation_source", "文件创建来源", "NN", ["UPLOAD", "DOCUMENT_RENDER", "INTERNAL"]),
       id("upload_id", "文件上传", "N"),
+      field("source_system", "VARCHAR(64)", "NN", "文件来源系统", "文件来源系统，完成上传时从上传记录复制，用于反查文件来源", { source: STORAGE_SOURCE_SYSTEM }),
+      field("reason_code", "VARCHAR(64)", "NN", "上传原因代码", "来源系统声明的上传原因代码，完成上传时从上传记录复制", { source: REASON_CODE_SOURCE }),
       code("storage_provider", "存储提供方"),
       str("storage_container_ref", "存储容器引用", "NN", 255),
       str("storage_object_ref", "存储对象引用", "NN", 255),
@@ -127,6 +134,8 @@ export const TABLES = Object.freeze([
       uk("uk_file_content_owner", "file_id", "content_hash"),
       uk("uk_file_policy_owner", "file_id", "scan_policy_id"),
       ix("idx_file_scan_status", "scan_status", "create_time"),
+      { ...ix("idx_file_source", "source_system", "reason_code", "create_time"),
+        comment: "支持访问路径：source_system、reason_code、create_time（按来源与原因反查文件）" },
     ],
     relations: [
       rel("upload_id", "file_upload", "upload_id", "1:1"),
@@ -360,5 +369,62 @@ export const TABLES = Object.freeze([
       rel("document_ver_id", "document_version", "document_ver_id"),
       rel("document_id", "consumer_document", "document_id"),
     ],
+  }),
+  defineTable({
+    key: "file_storage_instance",
+    name: "文件存储实例",
+    comment: "保存运营维护的对象存储实例：类型、地址、区域、私有证书、凭据方式与密钥 Vault Token；实例代码即文件记录上的存储提供方",
+    fields: [
+      pk("instance_id", "存储实例标识", "存储实例主键"),
+      field("instance_code", "VARCHAR(64)", "NN", "存储实例代码", "存储实例代码，即文件与上传记录上的 storage_provider；格式 [A-Z][A-Z0-9_]{0,63}，创建后不可修改，被记录引用后不可删除"),
+      field("storage_type", "VARCHAR(16)", "NN", "存储类型", "存储类型，决定使用的 SDK", { values: ["MINIO", "S3"] }),
+      field("endpoint", "VARCHAR(255)", "N", "存储地址", "HTTPS 根地址，同时是浏览器直传与下载授权的地址；S3 为空时使用区域默认地址，MINIO 必填"),
+      field("region", "VARCHAR(64)", "NN", "签名区域", "签名区域，例如 us-east-1、me-central-1"),
+      field("path_style_access", "TINYINT", "NN", "路径风格访问", "是否使用路径风格访问：1 表示路径风格（兼容 S3 的存储通常需要），0 表示虚拟主机风格"),
+      field("trusted_certificate_pem", "TEXT", "N", "信任证书", "私有 CA 或自签名证书 PEM（公开内容）；为空时使用 JDK 默认信任库，非空时只信任该证书"),
+      field("credential_mode", "VARCHAR(16)", "NN", "凭据方式", "凭据方式；MINIO 只允许 STATIC", { values: ["STATIC", "IAM_ROLE"] }),
+      field("credential_vault_token", "VARCHAR(255)", "N", "密钥 Vault Token", "静态访问密钥的 Vault Token（数据类型 FILE_STORAGE_CREDENTIAL_V1，值为 {\"accessKeyId\",\"secretAccessKey\"}）；STATIC 必填，IAM_ROLE 为空；每次存储操作前以用途 FILE_STORAGE_ACCESS 读取，不缓存原值"),
+      field("credential_update_time", "DATETIME(6)", "N", "密钥更新时间", "最近一次录入或更换密钥（含切换凭据方式）的 UTC 微秒时间"),
+      field("connect_timeout_ms", "INT", "NN", "连接超时", "连接超时毫秒数，1000—10000，默认 2000"),
+      field("read_timeout_ms", "INT", "NN", "读写超时", "读写超时毫秒数，1000—60000，默认 10000"),
+      field("status", "VARCHAR(16)", "NN", "实例状态", "实例状态；只有 ACTIVE 实例可读写，DISABLED 读写都返回不可用", { values: STORAGE_STATUS }),
+      field("version", "INT", "NN", "实例并发版本", "乐观并发版本，新建为 1，每次成功修改递增 1"),
+    ],
+    indexes: [uk("uk_file_storage_instance_code", "instance_code")],
+  }),
+  defineTable({
+    key: "file_storage_bucket",
+    name: "文件存储桶",
+    comment: "保存存储实例下登记的存储桶、读写状态与最近一次启用检查结果；Platform 只登记和检查，不建桶、不改桶策略",
+    fields: [
+      pk("bucket_id", "存储桶标识", "存储桶主键"),
+      field("instance_id", "BIGINT", "NN", "存储实例", "所属存储实例 ID"),
+      field("bucket_name", "VARCHAR(255)", "NN", "存储桶名称", "存储桶名称，即文件与上传记录上的 storage_container_ref；创建后不可修改，被记录引用后不可删除"),
+      field("status", "VARCHAR(16)", "NN", "存储桶状态", "存储桶状态；只有 ACTIVE 接受新上传，ACTIVE 与 READ_ONLY 可读，DISABLED 读写都返回不可用", { values: ["DRAFT", "ACTIVE", "READ_ONLY", "DISABLED"] }),
+      field("last_check_time", "DATETIME(6)", "N", "最近检查时间", "最近一次启用检查的 UTC 微秒时间；从未检查为空"),
+      field("last_check_result", "VARCHAR(64)", "N", "最近检查结果", "最近一次启用检查结果；从未检查为空", { values: ["OK", "NOT_FOUND", "VERSIONING_DISABLED", "ENCRYPTION_DISABLED", "ACCESS_DENIED", "UNAVAILABLE"] }),
+      field("version", "INT", "NN", "存储桶并发版本", "乐观并发版本，新建为 1，每次成功修改递增 1"),
+    ],
+    indexes: [uk("uk_file_storage_bucket", "instance_id", "bucket_name")],
+    relations: [rel("instance_id", "file_storage_instance", "instance_id")],
+  }),
+  defineTable({
+    key: "file_storage_route",
+    name: "文件存储写入路由",
+    comment: "保存按来源系统选择新上传存储桶、扫描策略与上传期限的写入路由；改路由只影响之后的新上传",
+    fields: [
+      pk("route_id", "写入路由标识", "写入路由主键"),
+      field("source_system", "VARCHAR(64)", "NN", "来源系统", "来源系统，即内部调用 Token 的服务名（[a-z][a-z0-9-]{0,63}）；* 表示默认路由，没有精确路由的来源使用默认路由", { source: STORAGE_SOURCE_SYSTEM }),
+      field("bucket_id", "BIGINT", "NN", "存储桶", "新上传写入的存储桶 ID；保存时必须为 ACTIVE 桶且所属实例 ACTIVE"),
+      field("scan_policy_code", "VARCHAR(64)", "NN", "扫描策略代码", "新上传冻结的扫描策略代码；保存时必须存在 ACTIVE 修订，上传开始时冻结当前 ACTIVE 修订", { source: "t_file_scan_policy.policy_code" }),
+      field("max_upload_seconds", "INT", "NN", "上传期限", "新上传的授权有效秒数，60—900"),
+      field("version", "INT", "NN", "写入路由并发版本", "乐观并发版本，新建为 1，每次成功修改递增 1"),
+    ],
+    indexes: [
+      uk("uk_file_storage_route_source", "source_system"),
+      { ...ix("idx_file_storage_route_bucket", "bucket_id"),
+        comment: "支持访问路径：bucket_id（停用实例或桶前检查引用路由）" },
+    ],
+    relations: [rel("bucket_id", "file_storage_bucket", "bucket_id")],
   }),
 ]);

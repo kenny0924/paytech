@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.paytech.platform.support.test.dataquery.DataSourcePasswordVaultMock;
 import com.paytech.platform.support.test.mocker.external.LoginEmailVaultMocker;
+import com.paytech.platform.support.test.mocker.external.StorageVaultMocker;
 import com.paytech.platform.support.test.notification.NotificationVaultMock;
 import com.paytech.platform.support.test.webhook.WebhookVaultMock;
 import com.paytech.vault.client.internal.VaultHttpService;
@@ -30,6 +31,9 @@ public class VaultMockController implements VaultHttpService {
     private static final String PROVIDER_SETUP = "NOTIFICATION_PROVIDER_SETUP";
     private static final String WEBHOOK_SIGNING = "WEBHOOK_SIGNING";
     private static final String WEBHOOK_SECRET = "WEBHOOK_SIGNING_SECRET_V1";
+    private static final String STORAGE_CREDENTIAL = "FILE_STORAGE_CREDENTIAL_V1";
+    private static final String STORAGE_SETUP = "FILE_STORAGE_SETUP";
+    private static final String STORAGE_ACCESS = "FILE_STORAGE_ACCESS";
     private static final String DATA_SOURCE_PASSWORD = "DATA_SOURCE_PASSWORD_V1";
     private static final String DATA_SOURCE_CONFIGURATION = "DATA_SOURCE_CONFIGURATION";
     private static final String DATA_SOURCE_CONNECTION = "DATA_SOURCE_CONNECTION";
@@ -37,15 +41,20 @@ public class VaultMockController implements VaultHttpService {
     private final NotificationVaultMock notification;
     private final LoginEmailVaultMocker login;
     private final WebhookVaultMock webhook;
+    private final StorageVaultMocker storage;
     private final DataSourcePasswordVaultMock dataSourcePasswords;
 
-    /** 只接受本服务的邮箱稳定 Token 与发送账号密钥 REFERENCE 用途，其他用途作为意外请求失败。 */
+    /** 只接受本服务的邮箱稳定 Token、发送账号与存储实例密钥 REFERENCE 用途，其他用途作为意外请求失败。 */
     @Override
     public ProtectResponse protect(String caller, String key, String requestId, ProtectRequest request) {
         require(CALLER.equals(caller));
         if (WEBHOOK_SIGNING.equals(request.purpose())) {
             require(WEBHOOK_SECRET.equals(request.dataType()) && "REFERENCE".equals(request.tokenMode()));
             return new ProtectResponse(webhook.protect(request.value()));
+        }
+        if (STORAGE_SETUP.equals(request.purpose())) {
+            require(STORAGE_CREDENTIAL.equals(request.dataType()) && "REFERENCE".equals(request.tokenMode()));
+            return new ProtectResponse(storage.protect(key, request.value()));
         }
         if (DATA_SOURCE_CONFIGURATION.equals(request.purpose())) {
             require(DATA_SOURCE_PASSWORD.equals(request.dataType()) && "REFERENCE".equals(request.tokenMode()));
@@ -63,7 +72,7 @@ public class VaultMockController implements VaultHttpService {
         };
     }
 
-    /** 只读取本服务已批准的邮箱、通知发送账号凭据、Webhook 签名与数据源密码用途，不伪造其他 Vault 能力。 */
+    /** 只读取本服务已批准的邮箱、通知发送账号凭据、Webhook 签名、存储实例密钥与数据源密码用途，不伪造其他 Vault 能力。 */
     @Override
     public RevealResponse reveal(String caller, String requestId, RevealRequest request) {
         require(CALLER.equals(caller));
@@ -72,6 +81,7 @@ public class VaultMockController implements VaultHttpService {
             case LOGIN -> new RevealResponse(login.reveal(request.token()));
             case NOTIFICATION_DELIVERY -> new RevealResponse(notification.revealCredential(request.token()));
             case WEBHOOK_SIGNING -> new RevealResponse(webhook.reveal(request.token()));
+            case STORAGE_ACCESS -> new RevealResponse(storage.reveal(request.token()));
             case DATA_SOURCE_CONNECTION -> new RevealResponse(dataSourcePasswords.reveal(request.token()));
             default -> throw new IllegalStateException("Vault Reveal 用途不匹配");
         };

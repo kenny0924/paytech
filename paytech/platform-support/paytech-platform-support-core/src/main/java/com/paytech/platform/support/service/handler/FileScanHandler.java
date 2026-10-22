@@ -19,7 +19,7 @@ import com.paytech.platform.support.service.processor.OperationsTransactionExecu
 /** 持久化文件扫描入口；恢复同一次检查，不把补偿执行次数当作新的扫描尝试。 */
 @Component
 @lombok.AllArgsConstructor
-@ConditionalOnProperty(name="files.onboarding.enabled",havingValue="true")
+@ConditionalOnProperty(name="files.enabled",havingValue="true")
 public final class FileScanHandler implements CompensationEventHandler {
     public static final String EVENT_TYPE="FILE_SCAN";
     private final FileLifecycleService files;

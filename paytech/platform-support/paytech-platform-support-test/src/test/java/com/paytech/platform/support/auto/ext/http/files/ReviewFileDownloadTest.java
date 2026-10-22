@@ -22,7 +22,7 @@ import com.paytech.platform.support.api.enums.OperationsErrorCode;
 import com.paytech.platform.support.api.reviewfiles.ReviewFileApi;
 import com.paytech.platform.support.api.reviewfiles.response.ReviewFileDownloadResponseBody;
 import com.paytech.platform.support.auditsecurity.domain.audit.AuditModels;
-import com.paytech.platform.support.filedocument.integration.storage.minio.MinioFileStorage;
+import com.paytech.platform.support.test.mocker.local.StorageInstanceMocker;
 import com.paytech.platform.support.test.base.OnboardingFileTestBase;
 import com.paytech.platform.support.test.builder.OnboardingFileBuilder;
 import com.paytech.platform.support.test.builder.OnboardingFileBuilder.Spec;
@@ -149,7 +149,7 @@ class ReviewFileDownloadTest extends OnboardingFileTestBase {
 
     /** 本例对象上扫描可用的 PDF 材料。 */
     private OnboardingFileBuilder material() {
-        return material(MinioFileStorage.PROVIDER).policyId(policyId);
+        return material(StorageInstanceMocker.MINIO_INSTANCE).policyId(policyId);
     }
 
     /** 以运营人员身份发送空 Body 的下载请求。 */

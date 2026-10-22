@@ -1,5 +1,7 @@
 package com.paytech.platform.support.service.processor;
 
+import java.util.Objects;
+
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.processor.AbstractProcessor;
 import com.paytech.platform.support.accesscontrol.domainservice.service.ClientOnboardingAccessService;
@@ -77,7 +79,7 @@ abstract class AbstractOnboardingFileAccessProcessor<Response>
         return current.applicationId() == original.applicationId()
             && current.subjectPartyId() == original.subjectPartyId()
             && current.upload().uploadId() == original.upload().uploadId()
-            && current.upload().tenantId() == original.upload().tenantId();
+            && Objects.equals(current.upload().tenantId(), original.upload().tenantId());
     }
 
     /** 扫描通过与对象有效必须同时成立。 */

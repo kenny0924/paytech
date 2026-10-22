@@ -35,7 +35,7 @@ import okhttp3.OkHttpClient;
  * 仓库 local-environment MinIO 测试存储桶中的对象夹具：以浏览器身份执行预签名请求，并以 Platform 账号直接写入/读取版本。
  *
  * <p>每个对象引用都位于本例独有的随机前缀下；AfterEach 删除这些前缀下的全部版本与删除标记，不触碰其他对象或存储桶。
- * 连接配置复用 application-mock.yml 的 files.onboarding.minio，凭据来自环境变量，不输出密钥。
+ * 连接配置取 application-mock.yml 的测试专用 test.storage，凭据来自环境变量或 .env.local，不输出密钥。
  */
 @TestComponent
 public class StorageObjectMocker implements Clear {
@@ -52,7 +52,36 @@ public class StorageObjectMocker implements Clear {
 
     /** 测试专用存储桶。 */
     public String bucket() {
-        return environment.getRequiredProperty("files.onboarding.storage-container-ref");
+        return property("bucket");
+    }
+
+    /** 本机 MinIO 的 HTTPS 根地址。 */
+    public String endpoint() {
+        return property("endpoint");
+    }
+
+    /** 签名区域。 */
+    public String region() {
+        return property("region");
+    }
+
+    /** Platform 测试账号，只授权两个 Platform 存储桶。 */
+    public String accessKey() {
+        return property("access-key");
+    }
+
+    /** Platform 测试账号密钥。 */
+    public String secretKey() {
+        return property("secret-key");
+    }
+
+    /** 本机自签名证书 PEM 文本（去除首尾空白，与管理接口保存的形式一致），供存储实例登记。 */
+    public String certificatePem() {
+        try {
+            return java.nio.file.Files.readString(Path.of(property("trusted-certificate"))).strip();
+        } catch (IOException failure) {
+            throw new IllegalStateException("读取本机 MinIO 证书失败", failure);
+        }
     }
 
     /** 生成本例独有的对象引用，并登记其随机前缀以便回收。 */
@@ -86,6 +115,11 @@ public class StorageObjectMocker implements Clear {
             }
         }
         return versions;
+    }
+
+    /** 前缀下全部对象版本（含删除标记）的对象名。 */
+    public List<String> objectsUnder(String prefix) {
+        return list(prefix).stream().map(Item::objectName).toList();
     }
 
     /** 以浏览器身份按预签名地址 PUT，原样携带授权返回的请求头。 */
@@ -182,11 +216,11 @@ public class StorageObjectMocker implements Clear {
 
     /** 复用生产信任材料读取本机证书。 */
     private StorageTrust trust() {
-        return StorageTrust.fromPem(Path.of(property("trusted-certificate")));
+        return StorageTrust.fromPemText(certificatePem());
     }
 
-    /** 读取 files.onboarding.minio 下的必填连接配置。 */
+    /** 读取 test.storage 下的必填连接配置。 */
     private String property(String name) {
-        return environment.getRequiredProperty("files.onboarding.minio." + name);
+        return environment.getRequiredProperty("test.storage." + name);
     }
 }

@@ -1,4 +1,4 @@
--- Current Platform Support schema (50 approved tables). Apply manually to an EMPTY database only.
+-- Current Platform Support schema (53 approved tables). Apply manually to an EMPTY database only.
 -- Business invariants and associations are enforced by application code; retain PK, UNIQUE and NOT NULL.
 SET NAMES utf8mb4;
 
@@ -533,15 +533,66 @@ CREATE TABLE `t_tenant_invitation` (
   KEY `idx_tenant_invit_accepted_accou` (`accepted_account_id`) COMMENT '支持访问路径：accepted_account_id'
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='保存租户邀请的目标邮箱、成员类型、单个初始角色和接受结果；初始角色同租户且当前有效由锁定事务校验';
 
+CREATE TABLE `t_file_storage_instance` (
+  `instance_id` BIGINT NOT NULL COMMENT '存储实例主键。',
+  `instance_code` VARCHAR(64) NOT NULL COMMENT '存储实例代码，即文件与上传记录上的 storage_provider；格式 [A-Z][A-Z0-9_]{0,63}，创建后不可修改，被记录引用后不可删除。',
+  `storage_type` VARCHAR(16) NOT NULL COMMENT '存储类型，决定使用的 SDK。允许值：MINIO、S3。',
+  `endpoint` VARCHAR(255) NULL COMMENT 'HTTPS 根地址，同时是浏览器直传与下载授权的地址；S3 为空时使用区域默认地址，MINIO 必填。',
+  `region` VARCHAR(64) NOT NULL COMMENT '签名区域，例如 us-east-1、me-central-1。',
+  `path_style_access` TINYINT NOT NULL COMMENT '是否使用路径风格访问：1 表示路径风格（兼容 S3 的存储通常需要），0 表示虚拟主机风格。',
+  `trusted_certificate_pem` TEXT NULL COMMENT '私有 CA 或自签名证书 PEM（公开内容）；为空时使用 JDK 默认信任库，非空时只信任该证书。',
+  `credential_mode` VARCHAR(16) NOT NULL COMMENT '凭据方式；MINIO 只允许 STATIC。允许值：STATIC、IAM_ROLE。',
+  `credential_vault_token` VARCHAR(255) NULL COMMENT '静态访问密钥的 Vault Token（数据类型 FILE_STORAGE_CREDENTIAL_V1，值为 {"accessKeyId","secretAccessKey"}）；STATIC 必填，IAM_ROLE 为空；每次存储操作前以用途 FILE_STORAGE_ACCESS 读取，不缓存原值。',
+  `credential_update_time` DATETIME(6) NULL COMMENT '最近一次录入或更换密钥（含切换凭据方式）的 UTC 微秒时间。',
+  `connect_timeout_ms` INT NOT NULL COMMENT '连接超时毫秒数，1000—10000，默认 2000。',
+  `read_timeout_ms` INT NOT NULL COMMENT '读写超时毫秒数，1000—60000，默认 10000。',
+  `status` VARCHAR(16) NOT NULL COMMENT '实例状态；只有 ACTIVE 实例可读写，DISABLED 读写都返回不可用。允许值：DRAFT、ACTIVE、DISABLED。',
+  `version` INT NOT NULL COMMENT '乐观并发版本，新建为 1，每次成功修改递增 1。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Platform Support 数据库中的 UTC 微秒创建时间。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
+  PRIMARY KEY (`instance_id`),
+  UNIQUE KEY `uk_file_storage_instance_code` (`instance_code`) COMMENT '保证业务唯一性：instance_code'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='保存运营维护的对象存储实例：类型、地址、区域、私有证书、凭据方式与密钥 Vault Token；实例代码即文件记录上的存储提供方';
+
+CREATE TABLE `t_file_storage_bucket` (
+  `bucket_id` BIGINT NOT NULL COMMENT '存储桶主键。',
+  `instance_id` BIGINT NOT NULL COMMENT '所属存储实例 ID。',
+  `bucket_name` VARCHAR(255) NOT NULL COMMENT '存储桶名称，即文件与上传记录上的 storage_container_ref；创建后不可修改，被记录引用后不可删除。',
+  `status` VARCHAR(16) NOT NULL COMMENT '存储桶状态；只有 ACTIVE 接受新上传，ACTIVE 与 READ_ONLY 可读，DISABLED 读写都返回不可用。允许值：DRAFT、ACTIVE、READ_ONLY、DISABLED。',
+  `last_check_time` DATETIME(6) NULL COMMENT '最近一次启用检查的 UTC 微秒时间；从未检查为空。',
+  `last_check_result` VARCHAR(64) NULL COMMENT '最近一次启用检查结果；从未检查为空。允许值：OK、NOT_FOUND、VERSIONING_DISABLED、ENCRYPTION_DISABLED、ACCESS_DENIED、UNAVAILABLE。',
+  `version` INT NOT NULL COMMENT '乐观并发版本，新建为 1，每次成功修改递增 1。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Platform Support 数据库中的 UTC 微秒创建时间。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
+  PRIMARY KEY (`bucket_id`),
+  UNIQUE KEY `uk_file_storage_bucket` (`instance_id`, `bucket_name`) COMMENT '保证业务唯一性：instance_id、bucket_name'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='保存存储实例下登记的存储桶、读写状态与最近一次启用检查结果；Platform 只登记和检查，不建桶、不改桶策略';
+
+CREATE TABLE `t_file_storage_route` (
+  `route_id` BIGINT NOT NULL COMMENT '写入路由主键。',
+  `source_system` VARCHAR(64) NOT NULL COMMENT '来源系统，即内部调用 Token 的服务名（[a-z][a-z0-9-]{0,63}）；* 表示默认路由，没有精确路由的来源使用默认路由。取值来源：内部调用身份的服务名；非固定枚举。',
+  `bucket_id` BIGINT NOT NULL COMMENT '新上传写入的存储桶 ID；保存时必须为 ACTIVE 桶且所属实例 ACTIVE。',
+  `scan_policy_code` VARCHAR(64) NOT NULL COMMENT '新上传冻结的扫描策略代码；保存时必须存在 ACTIVE 修订，上传开始时冻结当前 ACTIVE 修订。取值来源：t_file_scan_policy.policy_code；非固定枚举。',
+  `max_upload_seconds` INT NOT NULL COMMENT '新上传的授权有效秒数，60—900。',
+  `version` INT NOT NULL COMMENT '乐观并发版本，新建为 1，每次成功修改递增 1。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Platform Support 数据库中的 UTC 微秒创建时间。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
+  PRIMARY KEY (`route_id`),
+  UNIQUE KEY `uk_file_storage_route_source` (`source_system`) COMMENT '保证业务唯一性：source_system',
+  KEY `idx_file_storage_route_bucket` (`bucket_id`) COMMENT '支持访问路径：bucket_id（停用实例或桶前检查引用路由）'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='保存按来源系统选择新上传存储桶、扫描策略与上传期限的写入路由；改路由只影响之后的新上传';
+
 CREATE TABLE `t_file_upload` (
   `upload_id` BIGINT NOT NULL COMMENT '文件上传会话的稳定业务标识。',
-  `tenant_id` BIGINT NOT NULL COMMENT '访问租户的稳定业务标识。',
-  `uploader_id` BIGINT NOT NULL COMMENT '上传用户的稳定业务标识。',
+  `tenant_id` BIGINT NULL COMMENT '访问租户的稳定业务标识；Client 入驻上传为解析出的入驻租户，内部文件接口的上传为空。',
+  `uploader_id` BIGINT NULL COMMENT '上传人账号 ID；调用方有人工操作人时传入并原样记录，纯系统上传为空，Platform 不核对其真实性。',
+  `source_system` VARCHAR(64) NOT NULL COMMENT '上传来源系统，即开始上传时内部调用身份的服务名；Platform 自行发起的上传为 platform-support。创建后不变。取值来源：内部调用身份的服务名；非固定枚举。',
+  `reason_code` VARCHAR(64) NOT NULL COMMENT '来源系统声明的上传原因代码，格式 [A-Z][A-Z0-9_]{0,63}，用于反查文件为什么上传；创建后不变。取值来源：来源系统自定义；非固定枚举。',
   `expected_size` BIGINT NOT NULL COMMENT '预期文件大小的长整数值。',
   `expected_mime` VARCHAR(255) NOT NULL COMMENT '预期媒体类型的业务值。',
-  `owner_system` VARCHAR(64) NOT NULL COMMENT '上传目标所属业务系统代码，来自 Platform 受控代码目录；Client 入驻由 CCT 授权结果固定，浏览器不得提交。',
-  `owner_type` VARCHAR(64) NOT NULL COMMENT '上传目标的受控资源类型；Client 入驻固定为 CLIENT_APPLICATION_SUBJECT，不允许上传后变更目标类型。取值来源：Platform 受控文件 Owner 类型目录；非固定枚举。',
-  `owner_ref_id` VARCHAR(128) NOT NULL COMMENT '来源 Owner 定义的不可变目标坐标；Client 入驻为 CCT 的 applicationId:subjectPartyId，两段均为规范正整数 ID，不复制 Client 名称或其他可变事实。',
+  `owner_system` VARCHAR(64) NULL COMMENT '上传目标所属业务系统代码，来自 Platform 受控代码目录；Client 入驻由 CCT 授权结果固定，浏览器不得提交；内部文件接口的上传为空（第二段删除）。',
+  `owner_type` VARCHAR(64) NULL COMMENT '上传目标的受控资源类型；Client 入驻固定为 CLIENT_APPLICATION_SUBJECT，不允许上传后变更目标类型；内部文件接口的上传为空（第二段删除）。取值来源：Platform 受控文件 Owner 类型目录；非固定枚举。',
+  `owner_ref_id` VARCHAR(128) NULL COMMENT '来源 Owner 定义的不可变目标坐标；Client 入驻为 CCT 的 applicationId:subjectPartyId，两段均为规范正整数 ID，不复制 Client 名称或其他可变事实；内部文件接口的上传为空（第二段删除）。',
   `display_name` VARCHAR(255) NOT NULL COMMENT '去除路径和控制字符后的文件展示名，最大 255 Unicode 字符；仅授权页面展示，不作为对象存储 Key 或鉴权依据。',
   `storage_provider` VARCHAR(64) NOT NULL COMMENT '此次上传使用的对象存储适配器代码，来自受控配置；创建后固定，恢复不得改用当前默认适配器。',
   `storage_container_ref` VARCHAR(255) NOT NULL COMMENT '此次上传的目标存储容器引用；不含凭据，创建后固定，完成和恢复必须使用原容器。',
@@ -600,6 +651,8 @@ CREATE TABLE `t_file_object` (
   `file_id` BIGINT NOT NULL COMMENT '文件对象的稳定业务标识。',
   `creation_source` VARCHAR(64) NOT NULL COMMENT '文件创建来源的稳定业务代码。允许值：UPLOAD、DOCUMENT_RENDER、INTERNAL。',
   `upload_id` BIGINT NULL COMMENT '文件上传的稳定业务标识。',
+  `source_system` VARCHAR(64) NOT NULL COMMENT '文件来源系统，完成上传时从上传记录复制，用于反查文件来源。取值来源：内部调用身份的服务名；非固定枚举。',
+  `reason_code` VARCHAR(64) NOT NULL COMMENT '来源系统声明的上传原因代码，完成上传时从上传记录复制。取值来源：来源系统自定义；非固定枚举。',
   `storage_provider` VARCHAR(64) NOT NULL COMMENT '存储提供方的稳定业务代码。取值来源：Platform Support 受控代码目录；非固定枚举。',
   `storage_container_ref` VARCHAR(255) NOT NULL COMMENT '存储容器引用的业务值。',
   `storage_object_ref` VARCHAR(255) NOT NULL COMMENT '存储对象引用的业务值。',
@@ -622,7 +675,8 @@ CREATE TABLE `t_file_object` (
   UNIQUE KEY `uk_file_content_owner` (`file_id`, `content_hash`) COMMENT '保证业务唯一性：file_id、content_hash',
   UNIQUE KEY `uk_file_policy_owner` (`file_id`, `scan_policy_id`) COMMENT '保证业务唯一性：file_id、scan_policy_id',
   KEY `idx_file_scan_status` (`scan_status`, `create_time`) COMMENT '支持访问路径：scan_status、create_time',
-  KEY `idx_file_object_scan_policy_id` (`scan_policy_id`) COMMENT '支持访问路径：scan_policy_id'
+  KEY `idx_file_object_scan_policy_id` (`scan_policy_id`) COMMENT '支持访问路径：scan_policy_id',
+  KEY `idx_file_source` (`source_system`, `reason_code`, `create_time`) COMMENT '支持访问路径：source_system、reason_code、create_time（按来源与原因反查文件）'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='保存不可变对象存储引用、内容摘要和创建时冻结的扫描策略修订';
 
 CREATE TABLE `t_file_owner_ref` (

@@ -1,0 +1,94 @@
+{
+  "results": [
+    {
+      "page": "登录",
+      "ok": true,
+      "note": "管理员登录"
+    },
+    {
+      "page": "存储管理/存储实例",
+      "ok": true,
+      "note": "菜单可见；MINIO 行：MINIO\tMinIO\thttps://minio.mor-test.localhost:29400\tus-east-1\t固定密钥（Vault）\t 已配置 更换于 2026/10/22 08:47:05 \t启用\t1\t1\t2026/10/22 08:47:05\t 编辑 更换密钥 停用；新建按钮可见"
+    },
+    {
+      "page": "存储管理/桶",
+      "ok": true,
+      "note": "mor-platform-files 行：MINIO\tmor-platform-files\t启用\t 检查通过 2026/10/22 08:50:13 \t1\t2026/10/22 08:50:13\t 检查 只读 停用"
+    },
+    {
+      "page": "存储管理/桶检查（真实点击）",
+      "ok": true,
+      "note": "BFF 200，result=OK，弹窗显示检查通过"
+    },
+    {
+      "page": "存储管理/写入规则",
+      "ok": true,
+      "note": "默认行：默认\tMINIO\tmor-platform-files\tCLIENT_ONBOARDING_FORMAT\t900 秒\t2026/10/22 08:46:58\t 修改；删除按钮不可见"
+    },
+    {
+      "page": "回归/客户入驻审核材料下载（页面按钮）",
+      "ok": true,
+      "note": "下载文件 237610141443244032：BFF 签发 200；浏览器下载 0db146f4-cdd1-4563-83db-f52a0bd10c56.pdf（193 字节）；错误提示 无；expiresAt=2026-10-22T05:46:27.034876Z（ops-web 解码要求小数位 ≤ 6：满足）"
+    },
+    {
+      "page": "回归/客户入驻审核材料签发地址可下载",
+      "ok": true,
+      "note": "浏览器经签发地址下载 193 字节（登记 193）"
+    },
+    {
+      "page": "回归/币种",
+      "ok": true,
+      "note": "USD 行可见"
+    },
+    {
+      "page": "回归/渠道 MID 详情",
+      "ok": true,
+      "note": "/channel/mids/238508278957580288，能力组页签可见"
+    },
+    {
+      "page": "回归/外部接入方",
+      "ok": true,
+      "note": "列表 7 行"
+    }
+  ],
+  "consoleErrors": [],
+  "consoleWarnings": [],
+  "network": [
+    [
+      "/client-onboarding/reviews/237610171537412096",
+      "FAILED",
+      "GET",
+      "https://minio.mor-test.localhost:29400/mor-platform-files/0db146f4-cdd1-4563-83db-f52a0bd10c56 net::ERR_ABORTED"
+    ],
+    [
+      "/client-onboarding/reviews/237610171537412096",
+      "FAILED",
+      "GET",
+      "https://minio.mor-test.localhost:29400/mor-platform-files/0db146f4-cdd1-4563-83db-f52a0bd10c56 net::ERR_ABORTED"
+    ]
+  ],
+  "minioResponses": [
+    [
+      "/client-onboarding/reviews/237610171537412096",
+      200,
+      "GET",
+      "https://minio.mor-test.localhost:29400/mor-platform-files/0db146f4-cdd1-4563-83db-f52a0bd10c56"
+    ],
+    [
+      "/client-onboarding/reviews/237610171537412096",
+      200,
+      "GET",
+      "https://minio.mor-test.localhost:29400/mor-platform-files/0db146f4-cdd1-4563-83db-f52a0bd10c56"
+    ]
+  ],
+  "shots": [
+    "s01-instances.png",
+    "s02-buckets.png",
+    "s03-bucket-check.png",
+    "s04-routes.png",
+    "r01-review-detail.png",
+    "r02-currency-specs.png",
+    "r03-channel-mid-detail.png",
+    "r04-external-integrations.png"
+  ]
+}

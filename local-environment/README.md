@@ -64,7 +64,12 @@ Gateway tests must connect only to `127.0.0.1:16379`. Each Maven run uses a uniq
 
 ## MinIO storage profile
 
-The optional `storage` profile runs MinIO for Platform onboarding file storage (`files.onboarding.storage-provider=MINIO`).
+The optional `storage` profile runs MinIO for Platform file storage. Platform no longer reads storage settings from
+configuration: register the instance (type `MINIO`, `https://127.0.0.1:19400`, region `us-east-1`, path-style, the
+certificate below, STATIC credentials from `MOR_MINIO_PLATFORM_*`), the bucket `mor-platform-files` and the default
+write route `*` through the Operations "存储管理" page (or `/platform-support/storage-admin/v1`); the credentials are
+stored in Vault only. Auto tests insert their own instances pointing at `mor-platform-files-test` and use
+`MOR_MINIO_ROOT_*` only to create and delete temporary buckets for bucket-check negative cases.
 The community MinIO images were withdrawn from Docker Hub/quay.io, so the image is Chainguard's source build pinned by
 digest. It serves HTTPS only, on loopback, with a local self-signed certificate.
 

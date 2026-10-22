@@ -7,9 +7,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Clock;
 import java.util.HexFormat;
-import java.util.List;
 
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -19,7 +17,8 @@ import com.paytech.platform.support.filedocument.domain.file.FileModels.File;
 import com.paytech.platform.support.filedocument.domain.file.FileModels.Requirement;
 import com.paytech.platform.support.filedocument.domain.file.FileModels.Result;
 import com.paytech.platform.support.filedocument.integration.storage.StoredContentType;
-import com.paytech.platform.support.filedocument.integration.storage.StoredFileReader;
+import com.paytech.platform.support.filedocument.integration.storage.FileObjectStorage;
+import com.paytech.platform.support.filedocument.integration.storage.FileStorageRegistry;
 
 /**
  * Platform 内置格式检查（FORMAT）。
@@ -28,7 +27,7 @@ import com.paytech.platform.support.filedocument.integration.storage.StoredFileR
  * <li>不是病毒扫描；生产启用前须另配 ANTI_MALWARE 要求与真实扫描器</li>
  */
 @Component
-@ConditionalOnProperty(name = "files.onboarding.enabled", havingValue = "true")
+@ConditionalOnProperty(name = "files.enabled", havingValue = "true")
 public final class FormatFileScanner implements FileScanner {
     /** 扫描策略中引用的检查器代码。 */
     public static final String SCANNER_CODE = "PLATFORM_FORMAT";
@@ -39,12 +38,12 @@ public final class FormatFileScanner implements FileScanner {
     /** 类型不一致。 */
     public static final String INVALID = "FORMAT_INVALID";
     private final Clock clock;
-    private final ObjectProvider<StoredFileReader> readers;
+    private final FileStorageRegistry registry;
 
-    /** 注入时钟与按提供方选择的读取端口。 */
-    public FormatFileScanner(Clock clock, ObjectProvider<StoredFileReader> readers) {
+    /** 注入时钟与按记录坐标构建存储适配器的注册表。 */
+    public FormatFileScanner(Clock clock, FileStorageRegistry registry) {
         this.clock = clock;
-        this.readers = readers;
+        this.registry = registry;
     }
 
     /** 固定为 PLATFORM_FORMAT。 */
@@ -66,12 +65,8 @@ public final class FormatFileScanner implements FileScanner {
         if (requirement.type() != FileScanType.FORMAT) {
             throw new ServiceUnavailableException();
         }
-        List<StoredFileReader> matching = readers.orderedStream()
-            .filter(reader -> file.provider().equals(reader.providerCode())).toList();
-        if (matching.size() != 1) {
-            throw new ServiceUnavailableException();
-        }
-        try (InputStream raw = matching.getFirst().open(file)) {
+        try (FileObjectStorage storage = registry.openForRead(file.provider(), file.container());
+            InputStream raw = storage.open(file)) {
             BufferedInputStream bytes = StoredContentType.buffered(raw);
             String detected = StoredContentType.detect(bytes);
             String hash = digest(bytes, file.verified().sizeBytes());

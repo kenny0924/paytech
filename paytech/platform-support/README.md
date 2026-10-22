@@ -282,21 +282,36 @@ Scope creation and update use `AbstractLockProcessor` with the shared logical ke
 and require restart to change. They are independent of the legacy annotation-lock properties.
 The unique Scope code and database row/version checks remain the final concurrency protection.
 
-## Onboarding file storage
+## File storage（文件多存储并存，2026-10-22 第一段）
 
-`files.onboarding.enabled=true` (requires CLIENT authentication, Redis coordination and compensation) also needs exactly
-one storage adapter, chosen by `files.onboarding.storage-provider`:
+需求与方案：[requirement](../../requirements/20261022/platform-support-文件多存储并存/requirement.md)、
+[technique](../../requirements/20261022/platform-support-文件多存储并存/technique.md)。存储不再写在配置文件中：
 
-| Provider | Properties | Use |
-|---|---|---|
-| `MINIO` | `files.onboarding.minio.endpoint` (HTTPS root), `region`, `access-key`, `secret-key`, optional `trusted-certificate` (PEM), `connect-timeout`, `read-timeout` | Local `storage` profile (`https://127.0.0.1:19400`) |
-| `S3` | `files.onboarding.s3.region`, optional `endpoint` (HTTPS), `path-style-access`, optional paired `access-key`/`secret-key` (otherwise the AWS default credential chain), `trusted-certificate`, timeouts | Production AWS S3 |
-
-`storage-container-ref` is the bucket; it must have versioning and default server-side encryption, and the browser
-origin must be allowed by bucket CORS for `PUT` with `Content-Type` and `If-None-Match`. Uploads are create-once and
-completion pins the single object version. `scan-policy-code` must name an ACTIVE `t_file_scan_policy`; the built-in
-`PLATFORM_FORMAT` scanner only re-checks digest, size and file signature (PDF/JPEG/PNG) — it is not malware scanning.
-Operations reviewers download through `POST /review-files/v1/files/{fileId}/download` (metadata-only logging).
+- **存储实例 / 存储桶 / 写入路由**在 `t_file_storage_instance`、`t_file_storage_bucket`、`t_file_storage_route` 中维护，
+  经 Operations「存储管理」（`FileStorageManagementApi`，`/storage-admin/v1`，权限 `FILE_STORAGE_READ` / `FILE_STORAGE_MANAGE`）
+  新建、编辑、更换密钥、登记与检查存储桶、启停、维护路由；写入直接生效并记 Operations 审计。实例代码就是记录上的
+  `storage_provider`，桶名就是 `storage_container_ref`，创建后不可修改。
+- **凭据**：`STATIC` 的访问密钥只存 Vault（`FILE_STORAGE_CREDENTIAL_V1`，录入用途 `FILE_STORAGE_SETUP`，读取用途
+  `FILE_STORAGE_ACCESS`），Platform 表只保存 Token；每次存储操作前读取，不缓存原值。`IAM_ROLE`（只用于 S3）走默认凭据链。
+  需要 Vault 规则 `platform-support-service / PROTECT / FILE_STORAGE_CREDENTIAL_V1 / FILE_STORAGE_SETUP` 与
+  `platform-support-service / REVEAL / FILE_STORAGE_CREDENTIAL_V1 / FILE_STORAGE_ACCESS`。
+- **运行时**：`FileStorageRegistry` 持有不含密钥的进程内快照（`files.storage.snapshot-refresh`，默认 30 秒；本进程管理写入后立即刷新）。
+  新上传按来源系统精确路由，否则默认路由 `*`，要求桶与实例都为 ACTIVE；完成、检查、下载按记录上的实例与桶读取，ACTIVE /
+  READ_ONLY 桶可读，DISABLED 桶或实例读写都返回 503 且不发起存储调用。客户端按操作构建、用完关闭。
+- **桶检查**（启用前要求 10 分钟内 OK）：存在、版本控制已开启、写入 `.platform-readiness/` 高熵探测对象后确认默认加密已生效、
+  读回、删除；Platform 不建桶、不改桶策略。桶的浏览器 CORS 仍需允许 `PUT`（`Content-Type`、`If-None-Match`）。
+- **开关**：`files.enabled`（默认 false）控制内部文件接口、`FILE_SCAN` 扫描任务、格式检查器与快照刷新，需要 Redis 协调与本地补偿执行器；
+  `files.onboarding.enabled=true` 要求 `files.enabled=true`；补偿执行器默认跟随 `files.enabled`。旧键
+  `files.onboarding.storage-provider`、`storage-container-ref`、`scan-policy-code`、`upload-seconds`、`minio.*`、`s3.*`（含环境变量）残留时启动失败。
+- **内部文件接口**（`InternalFileApi`，`/internal/files/v1`，私网、不经 Gateway、只记元数据日志）：开始上传、完成上传、按文件 ID
+  查询元数据、签发 60 秒下载地址。要求 Foundation internal-auth 识别的调用身份（`internal-auth.mode=OFF` 下全部 401），来源系统取
+  调用身份的服务名；只有原来源可以完成上传；内部系统之间不做文件级权限。Platform 内部模块直接调用同名入口：
+  `StartFileUploadProcessor`、`CompleteFileUploadProcessor`、`FileLifecycleService.describe`、`AuthorizeFileDownloadProcessor`，
+  来源系统传 `platform-support`。
+- **入驻链路**第一段不改行为：上传写入 `forWrite("platform-support")` 的目标，扫描策略与上传期限取自路由，记录
+  `source_system=platform-support`、`reason_code=CLIENT_ONBOARDING_MATERIAL`。内置 `PLATFORM_FORMAT` 只复核摘要、大小与文件头
+  （PDF/JPEG/PNG），不是病毒扫描。运营审核下载仍为 `POST /review-files/v1/files/{fileId}/download`（metadata-only 日志）。
+- 增量 SQL：`docs/database/sql/changes/2026-10-22-file-storage-management.sql`（未执行）。
 
 ## Health
 

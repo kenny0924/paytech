@@ -9,6 +9,8 @@ import com.paytech.platform.support.filedocument.core.dal.dataobject.FileScanPol
 public interface FileUploadRepository {
     /** 查询固定 Upload。 */
     FileUpload find(long id);
+    /** 查询任一来源的原上传。 */
+    FileUpload findById(long id);
     /** 查询精确策略目录。 */
     List<FileScanPolicy> policies(String code, Instant now);
     /** 创建上传事实，参与调用者本地事务。 */

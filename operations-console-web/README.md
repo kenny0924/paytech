@@ -267,3 +267,7 @@ POST 使用去重权限与幂等键，PUT 携带当前版本，每次保存只�
 ## 会计科目分级维护与可读账户号（2026-10-20）
 
 需求与设计见[技术方案](../requirements/20261019/ledger-会计科目分级维护/technique.md) 2.5。账务基础资料「科目表与币种」页签的科目改为按编号排序的科目树（`SetupChartsTab.tsx`）：展开 / 折叠、按编号 / 名称 / 代码搜索、「显示已停用」开关，科目表被账簿采用时显示提示条；拥有 `OPERATIONS_FINANCE_SETUP_MANAGE` 时显示新增科目与操作菜单（编辑、新增下级、停用 / 启用），只读账号只保留变更记录。新增 / 编辑弹窗、停用 / 启用确认与变更记录抽屉在 `ChartAccountModals.tsx`，科目维护的 8 个 ledger 错误码按 technique 2.3 落到表单字段或弹窗顶部（`financeErrorTargets` 共 23 个）。账本查询新增「试算平衡」页签（`TrialBalanceTab.tsx`，URL `?tab=trial&tbBook=&tbPeriod=&tbView=&tbRun=`）：选择账簿与期间后查看实时科目余额或试算记录（列表 → 详情抽屉含汇总行与异常），一级科目合计校验借 = 贷，末级行进入账簿下钻；本页不发起试算。账簿账户、账本下钻（列表与面包屑）、明细账账户与流水 / 批次抽屉、分录详情显示账户号，两处账户列表可按账户号精确筛选；建账户弹窗的科目选择为「编号 名称」且只列启用的末级科目。
+
+## 存储管理（2026-10-22）
+
+需求与设计见[技术方案](../requirements/20261022/platform-support-文件多存储并存/technique.md) 4.2。新增页面 `OPERATIONS_FILE_STORAGE → /file-storage`（父「平台配置」，按钮 `OPERATIONS_FILE_STORAGE_MANAGE`），由 `src/pages/FileStorage.tsx` 与 `src/fileStorage/` 实现，三个页签：存储实例（新建 / 编辑抽屉、更换密钥弹窗、启停）、桶（按实例筛选、登记、检查并显示 `OK` / `NOT_FOUND` / `VERSIONING_DISABLED` / `ENCRYPTION_DISABLED` / `ACCESS_DENIED` / `UNAVAILABLE` 的中文说明与检查时间、启用 / 只读 / 停用）、写入规则（默认规则 `*` 显示为「默认」且不可删除）。没有维护按钮时整页只读。密钥只在密码框中输入，提交后清空，不缓存、不回显；桶启用前要求 10 分钟内检查通过、被规则引用的桶不能只读或停用，这些前端预检不替代 Platform 判断，Platform 的拒绝原因由错误通知展示。桶检查请求不带 Body。

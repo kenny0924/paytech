@@ -3,11 +3,8 @@ package com.paytech.platform.support.service.processor;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import com.paytech.foundation.common.error.InvalidParameterException;
@@ -17,11 +14,15 @@ import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
 import com.paytech.platform.support.accesscontrol.domainservice.service.ClientOnboardingAccessService;
 import com.paytech.platform.support.accesscontrol.domainservice.service.CustomerAuthenticationService;
 import com.paytech.platform.support.core.integration.files.CctFileTargetClient;
+import com.paytech.platform.support.filedocument.domain.file.FileDisplayName;
+import com.paytech.platform.support.filedocument.domain.file.FileSourceCodes;
 import com.paytech.platform.support.filedocument.domain.file.UploadModels.Grant;
 import com.paytech.platform.support.filedocument.domain.file.UploadModels.Start;
 import com.paytech.platform.support.filedocument.domain.file.UploadModels.Upload;
+import com.paytech.platform.support.filedocument.domain.storage.StorageWriteTarget;
 import com.paytech.platform.support.filedocument.domainservice.service.FileUploadService;
-import com.paytech.platform.support.filedocument.integration.storage.UploadStorage;
+import com.paytech.platform.support.filedocument.integration.storage.FileObjectStorage;
+import com.paytech.platform.support.filedocument.integration.storage.FileStorageRegistry;
 import com.paytech.platform.support.service.processor.request.StartOnboardingUploadRequest;
 import com.paytech.platform.support.service.processor.response.StartOnboardingUploadResponse;
 
@@ -32,7 +33,8 @@ import lombok.AllArgsConstructor;
  * <li>资源锁按账号、申请与主体串行同一上传目标；账号行锁在 Lease 失效后继续串行 Tenant 解析。</li>
  * <li>每次请求新建 Upload，没有可供比较的原业务操作身份；HTTP 请求重放由 Gateway 处理。</li>
  * <li>会话查询、CCT 授权与存储签发均在数据库事务之外；IAM 锁定与 Upload 登记在同一本地事务提交。</li>
- * <li>存储配置在登记事务内使用时读取；配置无效或适配器不唯一时返回不可用，不签发授权。</li>
+ * <li>存储目标按来源系统 platform-support 的写入路由选择，在事务前确定；没有可用路由或桶时返回不可用，不登记、不签发。</li>
+ * <li>上传记录来源系统 platform-support、原因 CLIENT_ONBOARDING_MATERIAL，同时照旧保存上传账号、租户与 CCT 目标。</li>
  */
 @Component
 @AllArgsConstructor
@@ -40,23 +42,15 @@ import lombok.AllArgsConstructor;
 public class StartOnboardingUploadProcessor
     extends AbstractLockProcessor<StartOnboardingUploadRequest, StartOnboardingUploadResponse> {
 
-    /** 展示文件名的最大 Unicode 字符数。 */
-    static final int MAX_FILENAME_CODE_POINTS = 255;
-
-    /** 未配置上传有效期时使用的秒数。 */
-    static final int DEFAULT_UPLOAD_SECONDS = 900;
-
     private final Clock clock;
 
     private final IdGenerator ids;
-
-    private final Environment environment;
 
     private final FileUploadService files;
 
     private final CctFileTargetClient targets;
 
-    private final ObjectProvider<UploadStorage> adapters;
+    private final FileStorageRegistry registry;
 
     private final ClientOnboardingAccessService access;
 
@@ -68,11 +62,10 @@ public class StartOnboardingUploadProcessor
     @Override
     protected void validate(StartOnboardingUploadRequest request) {
         String filename = request.getFilename();
-        if (filename.codePointCount(0, filename.length()) > MAX_FILENAME_CODE_POINTS) {
+        if (!FileDisplayName.withinLimit(filename)) {
             throw new InvalidParameterException("文件名最多 255 个字符");
         }
-        String displayName = request.displayName();
-        if (displayName.isBlank() || ".".equals(displayName) || "..".equals(displayName)) {
+        if (!FileDisplayName.usable(request.displayName())) {
             throw new InvalidParameterException("文件展示名无效");
         }
     }
@@ -94,55 +87,36 @@ public class StartOnboardingUploadProcessor
         // 事务外向 CCT 授权
         long clientId =
             targets.authorize(request.getAccountId(), request.getApplicationId(), request.getSubjectPartyId());
-        List<UploadStorage> available = adapters.orderedStream().toList();
+
+        // 按写入路由选择存储目标
+        StorageWriteTarget target = registry.forWrite(FileSourceCodes.PLATFORM_SUPPORT);
 
         // 登记上传
-        Upload upload = transactions.write(() -> createUpload(request, clientId, available));
+        Upload upload = transactions.write(() -> createUpload(request, clientId, target));
 
         // 事务外签发上传授权
-        Grant grant = authorizeUpload(upload, available);
+        Grant grant = authorizeUpload(upload);
         return new StartOnboardingUploadResponse(upload.uploadId(), grant, upload.expiresAt());
     }
 
-    /** 事务内：锁定账号与唯一入驻 Tenant，确认存储配置后按当前有效策略登记 Upload。 */
-    Upload createUpload(StartOnboardingUploadRequest request, long clientId, List<UploadStorage> available) {
+    /** 事务内：锁定账号与唯一入驻 Tenant，按路由目标与当前有效策略登记 Upload。 */
+    Upload createUpload(StartOnboardingUploadRequest request, long clientId, StorageWriteTarget target) {
         long tenantId = access.lockUploadTenant(request.getAccountId(), request.getSessionId(), clientId);
         Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
-        String provider = environment.getProperty("files.onboarding.storage-provider", "");
-        String container = environment.getProperty("files.onboarding.storage-container-ref", "");
-        String policy = environment.getProperty("files.onboarding.scan-policy-code", "");
-        int lifetime = environment.getProperty("files.onboarding.upload-seconds", Integer.class, DEFAULT_UPLOAD_SECONDS);
-        if (!validStorageSettings(provider, container, policy, lifetime, available)) {
-            throw new ServiceUnavailableException();
-        }
-        Start start = new Start(request.getApplicationId(), request.getSubjectPartyId(), request.displayName(),
-            request.getMimeType(), request.getSizeBytes());
-        return files.create(ids.nextId(), request.getAccountId(), tenantId, start, policy, provider, container, now,
-            now.plusSeconds(lifetime));
+        Start start = new Start(tenantId, request.getAccountId(),
+            request.getApplicationId() + ":" + request.getSubjectPartyId(), FileSourceCodes.PLATFORM_SUPPORT,
+            FileSourceCodes.CLIENT_ONBOARDING_MATERIAL, request.displayName(), request.getMimeType(),
+            request.getSizeBytes());
+        return files.create(ids.nextId(), start, target, now);
     }
 
-    /** 供应商与策略代码格式合法、容器有界、有效期 60..900 秒，且恰有一个对应的存储适配器。 */
-    boolean validStorageSettings(String provider, String container, String policy, int lifetime,
-        List<UploadStorage> available) {
-        if (!provider.matches("[A-Z][A-Z0-9_]{0,63}") || !policy.matches("[A-Z][A-Z0-9_]{0,63}")) {
-            return false;
-        }
-        if (container.isBlank() || container.length() > 255 || lifetime < 60 || lifetime > 900) {
-            return false;
-        }
-        return available.stream().filter(adapter -> provider.equals(adapter.providerCode())).count() == 1;
-    }
-
-    /** 事务外：由原 Upload 固定的存储适配器签发 PUT 授权，授权不得晚于 Upload 到期且必须为 HTTPS。 */
-    Grant authorizeUpload(Upload upload, List<UploadStorage> available) {
-        List<UploadStorage> matching =
-            available.stream().filter(adapter -> upload.storageProvider().equals(adapter.providerCode())).toList();
-        if (matching.size() != 1) {
-            throw new ServiceUnavailableException();
-        }
+    /** 事务外：由原 Upload 固定的实例与桶签发 PUT 授权，授权不得晚于 Upload 到期且必须为 HTTPS。 */
+    Grant authorizeUpload(Upload upload) {
         Grant grant;
-        try {
-            grant = matching.getFirst().authorize(upload);
+        try (FileObjectStorage storage = registry.openForWrite(upload.storageProvider(), upload.containerRef())) {
+            grant = storage.authorize(upload);
+        } catch (ServiceUnavailableException unavailable) {
+            throw unavailable;
         } catch (RuntimeException unavailable) {
             throw new ServiceUnavailableException(unavailable);
         }

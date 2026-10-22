@@ -23,7 +23,7 @@ export const RELATIONS = Object.freeze(TABLES.flatMap((table) => table.relations
 
 const expectedGroupSizes = Object.freeze({
   identity_access: 19,
-  file_document: 12,
+  file_document: 15,
   notification: 7,
   webhook: 5,
   audit_security: 8,

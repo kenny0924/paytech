@@ -3,6 +3,7 @@ package com.paytech.platform.support.auto.integration.storage;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -16,32 +17,43 @@ import com.paytech.platform.support.filedocument.domain.file.FileModels.File;
 import com.paytech.platform.support.filedocument.domain.file.UploadModels.Upload;
 import com.paytech.platform.support.filedocument.integration.storage.*;
 import com.paytech.platform.support.filedocument.integration.storage.minio.MinioFileStorage;
+import com.paytech.platform.support.api.enums.FileStorageCheckResult;
+import com.paytech.platform.support.filedocument.integration.storage.ProbeObject;
 import com.paytech.platform.support.test.base.FileStorageAdapterTestBase;
+import com.paytech.platform.support.test.mocker.local.StorageInstanceMocker;
 import com.paytech.platform.support.test.builder.OnboardingFileBuilder;
 import com.paytech.platform.support.test.builder.OnboardingFileBuilder.Spec;
 
 /**
  * MinIO 适配器经模块发布端口访问本机 HTTPS MinIO：上传授权与条件写入、唯一版本固定、服务端类型识别、版本下载和期限边界。
  *
+ * @see FileStorageRegistry#openForWrite(String, String)
  * @see UploadStorage#authorize(Upload)
  * @see CompletedUploadStorage#open(Upload)
  * @see FileDownloadStorage#authorize(File, Instant)
  * @see StoredFileReader#open(File)
+ * @see FileObjectStorage#checkBucket(String)
  */
 class MinioFileStorageTest extends FileStorageAdapterTestBase {
 
     @Override
     protected String provider() {
-        return MinioFileStorage.PROVIDER;
+        return StorageInstanceMocker.MINIO_INSTANCE;
     }
 
-    /** 当前上下文的四个端口均由 MinIO 适配器提供。 */
+    /** 注册表按实例类型构建 MinIO SDK 适配器，实例代码即提供方代码。 */
     @Test
     void test_providerSelected() {
-        assertAll(() -> assertEquals(MinioFileStorage.PROVIDER, uploads.providerCode()),
-            () -> assertEquals(MinioFileStorage.PROVIDER, completed.providerCode()),
-            () -> assertEquals(MinioFileStorage.PROVIDER, downloads.providerCode()),
-            () -> assertEquals(MinioFileStorage.PROVIDER, reader.providerCode()));
+        assertAll(() -> assertEquals(provider(), adapter().providerCode()),
+            () -> assertInstanceOf(MinioFileStorage.class, adapter()));
+    }
+
+    /** 存储桶检查：测试存储桶全部满足；不存在的桶为 NOT_FOUND，Platform 账号无权访问的桶为 ACCESS_DENIED。 */
+    @Test
+    void test_checkBucket() {
+        assertAll(() -> assertEquals(FileStorageCheckResult.OK, adapter().checkBucket(storage.bucket())),
+            () -> assertEquals(FileStorageCheckResult.ACCESS_DENIED, adapter().checkBucket(tempBuckets.unversioned())));
+        assertEquals(List.of(), storage.objectsUnder(ProbeObject.PREFIX), "探测对象应已删除");
     }
 
     /** 浏览器按授权直传后，完成读取固定唯一版本；重复打开得到同一版本与原字节。 */
@@ -113,7 +125,9 @@ class MinioFileStorageTest extends FileStorageAdapterTestBase {
 
         assertArrayEquals(OnboardingFileBuilder.PDF, downloaded);
         assertArrayEquals(OnboardingFileBuilder.PDF, readRegistered(registered));
-        assertEquals(requested, downloads.authorize(registered.file(), requested).expiresAt());
+        Instant granted = adapter().authorize(registered.file(), requested).expiresAt();
+        assertEquals(requested, granted);
+        assertEquals(granted.truncatedTo(ChronoUnit.MICROS), granted, "下载授权到期时间为微秒精度");
     }
 
     /** 不足 1 秒的期限拒绝签发；超过 7 天的期限截断为 7 天。 */
@@ -122,11 +136,11 @@ class MinioFileStorageTest extends FileStorageAdapterTestBase {
         Spec expiring = target().expiresAt(now().plusMillis(999)).build();
         Spec distant = target().expiresAt(now().plus(java.time.Duration.ofDays(30))).build();
 
-        assertThrows(ServiceUnavailableException.class, () -> uploads.authorize(expiring.upload()));
+        assertThrows(ServiceUnavailableException.class, () -> adapter().authorize(expiring.upload()));
         assertThrows(ServiceUnavailableException.class,
-            () -> downloads.authorize(distant.file(), now().plusMillis(999)));
-        assertEquals(now().plus(MAX_PRESIGN), uploads.authorize(distant.upload()).expiresAt());
-        assertEquals(now().plus(MAX_PRESIGN), downloads.authorize(distant.file(), distant.expiresAt()).expiresAt());
+            () -> adapter().authorize(distant.file(), now().plusMillis(999)));
+        assertEquals(now().plus(MAX_PRESIGN), adapter().authorize(distant.upload()).expiresAt());
+        assertEquals(now().plus(MAX_PRESIGN), adapter().authorize(distant.file(), distant.expiresAt()).expiresAt());
     }
 
     /** PDF、PNG、JPEG 与无法识别内容。 */

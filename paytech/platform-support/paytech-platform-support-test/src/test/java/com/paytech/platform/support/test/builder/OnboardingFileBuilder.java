@@ -8,6 +8,7 @@ import java.util.HexFormat;
 import com.paytech.platform.support.api.enums.FileObjectStatus;
 import com.paytech.platform.support.api.enums.FileScanStatus;
 import com.paytech.platform.support.filedocument.domain.enums.FileUploadStatus;
+import com.paytech.platform.support.filedocument.domain.file.FileSourceCodes;
 import com.paytech.platform.support.filedocument.domain.file.FileModels.File;
 import com.paytech.platform.support.filedocument.domain.file.FileModels.Verified;
 import com.paytech.platform.support.filedocument.domain.file.UploadModels.Upload;
@@ -165,7 +166,8 @@ public final class OnboardingFileBuilder {
 
         /** 存储端口使用的上传目标。 */
         public Upload upload() {
-            return new Upload(uploadId, tenantId, uploaderId, ownerRefId, displayName, bytes.length, mime, provider,
+            return new Upload(uploadId, tenantId, uploaderId, FileSourceCodes.PLATFORM_SUPPORT,
+                FileSourceCodes.CLIENT_ONBOARDING_MATERIAL, ownerRefId, displayName, bytes.length, mime, provider,
                 container, objectRef, policyId, expiresAt, FileUploadStatus.CREATED);
         }
 

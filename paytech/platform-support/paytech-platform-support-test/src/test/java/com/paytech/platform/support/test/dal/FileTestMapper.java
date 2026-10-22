@@ -38,10 +38,11 @@ public interface FileTestMapper {
 
     /** 插入已完成的 CCT 入驻上传目标。 */
     @Insert("""
-        INSERT INTO t_file_upload(upload_id,tenant_id,uploader_id,expected_size,expected_mime,owner_system,owner_type,
-            owner_ref_id,display_name,storage_provider,storage_container_ref,storage_object_ref,scan_policy_id,
-            expires_time,status,version,create_time,update_time)
-        VALUES(#{id},#{tenantId},#{uploaderId},#{size},#{mime},'CCT','CLIENT_APPLICATION_SUBJECT',#{ownerRefId},
+        INSERT INTO t_file_upload(upload_id,tenant_id,uploader_id,source_system,reason_code,expected_size,expected_mime,
+            owner_system,owner_type,owner_ref_id,display_name,storage_provider,storage_container_ref,storage_object_ref,
+            scan_policy_id,expires_time,status,version,create_time,update_time)
+        VALUES(#{id},#{tenantId},#{uploaderId},'platform-support','CLIENT_ONBOARDING_MATERIAL',#{size},#{mime},
+            'CCT','CLIENT_APPLICATION_SUBJECT',#{ownerRefId},
             #{displayName},#{provider},#{container},#{objectRef},#{policyId},#{expiresAt},'COMPLETED',2,#{now},#{now})
         """)
     int insertUpload(@Param("id") long id, @Param("tenantId") long tenantId, @Param("uploaderId") long uploaderId,
@@ -52,10 +53,11 @@ public interface FileTestMapper {
 
     /** 插入尚未完成、仍在授权期内的 CCT 入驻上传目标。 */
     @Insert("""
-        INSERT INTO t_file_upload(upload_id,tenant_id,uploader_id,expected_size,expected_mime,owner_system,owner_type,
-            owner_ref_id,display_name,storage_provider,storage_container_ref,storage_object_ref,scan_policy_id,
-            expires_time,status,version,create_time,update_time)
-        VALUES(#{id},#{tenantId},#{uploaderId},#{size},#{mime},'CCT','CLIENT_APPLICATION_SUBJECT',#{ownerRefId},
+        INSERT INTO t_file_upload(upload_id,tenant_id,uploader_id,source_system,reason_code,expected_size,expected_mime,
+            owner_system,owner_type,owner_ref_id,display_name,storage_provider,storage_container_ref,storage_object_ref,
+            scan_policy_id,expires_time,status,version,create_time,update_time)
+        VALUES(#{id},#{tenantId},#{uploaderId},'platform-support','CLIENT_ONBOARDING_MATERIAL',#{size},#{mime},
+            'CCT','CLIENT_APPLICATION_SUBJECT',#{ownerRefId},
             #{displayName},#{provider},#{container},#{objectRef},#{policyId},#{expiresAt},'CREATED',1,#{now},#{now})
         """)
     int insertOpenUpload(@Param("id") long id, @Param("tenantId") long tenantId, @Param("uploaderId") long uploaderId,
@@ -66,8 +68,9 @@ public interface FileTestMapper {
 
     /** 读取账号发起的全部上传，按上传 ID 排序。 */
     @Select("""
-        SELECT upload_id,tenant_id,uploader_id,expected_size,expected_mime,owner_ref_id,display_name,storage_provider,
-            storage_container_ref,storage_object_ref,scan_policy_id,expires_time,status,version
+        SELECT upload_id,tenant_id,uploader_id,source_system,reason_code,expected_size,expected_mime,owner_ref_id,
+            display_name,storage_provider,storage_container_ref,storage_object_ref,scan_policy_id,expires_time,status,
+            version
         FROM t_file_upload WHERE uploader_id=#{uploaderId} ORDER BY upload_id
         """)
     List<Map<String, Object>> uploadsOf(long uploaderId);
@@ -76,13 +79,25 @@ public interface FileTestMapper {
     @Select("SELECT status,version FROM t_file_upload WHERE upload_id=#{uploadId}")
     Map<String, Object> upload(long uploadId);
 
+    /** 读取任一来源上传的完整行。 */
+    @Select("""
+        SELECT upload_id,tenant_id,uploader_id,source_system,reason_code,owner_system,owner_type,owner_ref_id,
+            display_name,storage_provider,storage_container_ref,storage_object_ref,scan_policy_id,expires_time,status,version
+        FROM t_file_upload WHERE upload_id=#{uploadId}
+        """)
+    Map<String, Object> uploadRow(long uploadId);
+
     /** 读取上传登记的文件对象。 */
     @Select("""
-        SELECT file_id,object_version,content_hash,size_bytes,mime_type,storage_encryption_key_ref,scan_policy_id,
-            scan_status,object_status,create_time
+        SELECT file_id,source_system,reason_code,storage_provider,storage_container_ref,object_version,content_hash,
+            size_bytes,mime_type,storage_encryption_key_ref,scan_policy_id,scan_status,object_status,create_time
         FROM t_file_object WHERE upload_id=#{uploadId} ORDER BY file_id
         """)
     List<Map<String, Object>> filesOfUpload(long uploadId);
+
+    /** 统计全部 Owner 引用行。 */
+    @Select("SELECT COUNT(*) FROM t_file_owner_ref")
+    long ownerRefCount();
 
     /** 读取文件的入驻材料 Owner 引用。 */
     @Select("SELECT owner_ref_id FROM t_file_owner_ref WHERE file_id=#{fileId}")
@@ -102,10 +117,11 @@ public interface FileTestMapper {
 
     /** 插入由上传完成登记的文件对象。 */
     @Insert("""
-        INSERT INTO t_file_object(file_id,creation_source,upload_id,storage_provider,storage_container_ref,
-            storage_object_ref,object_version,content_hash,size_bytes,mime_type,storage_encryption_key_ref,
-            classification,scan_policy_id,scan_status,object_status,available_time,version,create_time,update_time)
-        VALUES(#{id},'UPLOAD',#{uploadId},#{provider},#{container},#{objectRef},#{version},#{hash},#{size},#{mime},
+        INSERT INTO t_file_object(file_id,creation_source,upload_id,source_system,reason_code,storage_provider,
+            storage_container_ref,storage_object_ref,object_version,content_hash,size_bytes,mime_type,
+            storage_encryption_key_ref,classification,scan_policy_id,scan_status,object_status,available_time,version,
+            create_time,update_time)
+        VALUES(#{id},'UPLOAD',#{uploadId},'platform-support','CLIENT_ONBOARDING_MATERIAL',#{provider},#{container},#{objectRef},#{version},#{hash},#{size},#{mime},
             #{encryption},'RESTRICTED',#{policyId},#{scanStatus},#{objectStatus},#{availableTime},1,#{now},#{now})
         """)
     int insertFile(@Param("id") long id, @Param("uploadId") long uploadId, @Param("provider") String provider,

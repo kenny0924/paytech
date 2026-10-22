@@ -191,6 +191,17 @@
     ]
   },
   {
+    "componentKey": "OPERATIONS_FILE_STORAGE",
+    "displayName": "存储管理",
+    "frontendRoute": "/file-storage",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_FILE_STORAGE_MANAGE",
+        "displayName": "维护"
+      }
+    ]
+  },
+  {
     "componentKey": "OPERATIONS_DATA_SOURCES",
     "displayName": "数据源",
     "frontendRoute": "/data-query/data-sources",

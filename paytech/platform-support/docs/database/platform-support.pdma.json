@@ -10055,12 +10055,12 @@
         {
           "defKey": "tenant_id",
           "defName": "访问租户",
-          "comment": "访问租户的稳定业务标识。",
+          "comment": "访问租户的稳定业务标识；Client 入驻上传为解析出的入驻租户，内部文件接口的上传为空。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoIncrement": false,
           "defaultValue": "",
           "hideInGraph": false,
@@ -10073,12 +10073,12 @@
         {
           "defKey": "uploader_id",
           "defName": "上传用户",
-          "comment": "上传用户的稳定业务标识。",
+          "comment": "上传人账号 ID；调用方有人工操作人时传入并原样记录，纯系统上传为空，Platform 不核对其真实性。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoIncrement": false,
           "defaultValue": "",
           "hideInGraph": false,
@@ -10087,6 +10087,42 @@
           "extProps": {},
           "domain": "",
           "id": "A9E2AA0E-F1BA-5A39-B107-51EBB7F1AB25"
+        },
+        {
+          "defKey": "source_system",
+          "defName": "上传来源系统",
+          "comment": "上传来源系统，即开始上传时内部调用身份的服务名；Platform 自行发起的上传为 platform-support。创建后不变。取值来源：内部调用身份的服务名；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "0826BFA4-DB69-561F-8E21-0807EDD80DDA"
+        },
+        {
+          "defKey": "reason_code",
+          "defName": "上传原因代码",
+          "comment": "来源系统声明的上传原因代码，格式 [A-Z][A-Z0-9_]{0,63}，用于反查文件为什么上传；创建后不变。取值来源：来源系统自定义；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "A7FDE0E9-BB9C-5135-843E-4057A66EA392"
         },
         {
           "defKey": "expected_size",
@@ -10127,12 +10163,12 @@
         {
           "defKey": "owner_system",
           "defName": "来源系统",
-          "comment": "上传目标所属业务系统代码，来自 Platform 受控代码目录；Client 入驻由 CCT 授权结果固定，浏览器不得提交。",
+          "comment": "上传目标所属业务系统代码，来自 Platform 受控代码目录；Client 入驻由 CCT 授权结果固定，浏览器不得提交；内部文件接口的上传为空（第二段删除）。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoIncrement": false,
           "defaultValue": "",
           "hideInGraph": false,
@@ -10145,12 +10181,12 @@
         {
           "defKey": "owner_type",
           "defName": "来源类型",
-          "comment": "上传目标的受控资源类型；Client 入驻固定为 CLIENT_APPLICATION_SUBJECT，不允许上传后变更目标类型。取值来源：Platform 受控文件 Owner 类型目录；非固定枚举。",
+          "comment": "上传目标的受控资源类型；Client 入驻固定为 CLIENT_APPLICATION_SUBJECT，不允许上传后变更目标类型；内部文件接口的上传为空（第二段删除）。取值来源：Platform 受控文件 Owner 类型目录；非固定枚举。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoIncrement": false,
           "defaultValue": "",
           "hideInGraph": false,
@@ -10163,12 +10199,12 @@
         {
           "defKey": "owner_ref_id",
           "defName": "来源资源坐标",
-          "comment": "来源 Owner 定义的不可变目标坐标；Client 入驻为 CCT 的 applicationId:subjectPartyId，两段均为规范正整数 ID，不复制 Client 名称或其他可变事实。",
+          "comment": "来源 Owner 定义的不可变目标坐标；Client 入驻为 CCT 的 applicationId:subjectPartyId，两段均为规范正整数 ID，不复制 Client 名称或其他可变事实；内部文件接口的上传为空（第二段删除）。",
           "type": "VARCHAR",
           "len": 128,
           "scale": "",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoIncrement": false,
           "defaultValue": "",
           "hideInGraph": false,
@@ -11613,6 +11649,42 @@
           "id": "162C49B9-9A6F-5F5C-BF4C-8C929E345506"
         },
         {
+          "defKey": "source_system",
+          "defName": "文件来源系统",
+          "comment": "文件来源系统，完成上传时从上传记录复制，用于反查文件来源。取值来源：内部调用身份的服务名；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "04931EDE-FB14-5F96-92A1-477E20EBEFCE"
+        },
+        {
+          "defKey": "reason_code",
+          "defName": "上传原因代码",
+          "comment": "来源系统声明的上传原因代码，完成上传时从上传记录复制。取值来源：来源系统自定义；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "9855C4FE-53B1-5E8F-B635-644076312FE5"
+        },
+        {
           "defKey": "storage_provider",
           "defName": "存储提供方",
           "comment": "存储提供方的稳定业务代码。取值来源：Platform Support 受控代码目录；非固定枚举。",
@@ -12021,6 +12093,30 @@
             }
           ],
           "id": "7DF9247E-BE26-57C7-8D44-CD05194FECF0"
+        },
+        {
+          "defKey": "idx_file_source",
+          "defName": "访问索引 source_system、reason_code、create_time",
+          "unique": false,
+          "comment": "支持访问路径：source_system、reason_code、create_time（按来源与原因反查文件）",
+          "fields": [
+            {
+              "fieldDefKey": "04931EDE-FB14-5F96-92A1-477E20EBEFCE",
+              "ascOrDesc": "A",
+              "id": "BC8899B0-DC57-50B9-80CC-E3DCEBC02262"
+            },
+            {
+              "fieldDefKey": "9855C4FE-53B1-5E8F-B635-644076312FE5",
+              "ascOrDesc": "A",
+              "id": "67236906-B63F-5400-8342-90BCA17633B1"
+            },
+            {
+              "fieldDefKey": "02D4EB8A-1F24-5FC2-BBA1-ED5F70E6341B",
+              "ascOrDesc": "A",
+              "id": "CDCD9FED-0236-59FF-B94F-607A63FC8A48"
+            }
+          ],
+          "id": "1948848F-3E0C-5C18-ABF8-C40BE4080C80"
         },
         {
           "defKey": "idx_file_object_scan_policy_id",
@@ -16412,6 +16508,1233 @@
             }
           ],
           "id": "13DAA108-5F04-5FA5-8B3F-89DEBF7E92A8"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "5E68DF47-6FEB-5C58-A6AE-B840D89584A7",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_file_storage_instance",
+      "defName": "文件存储实例",
+      "comment": "保存运营维护的对象存储实例：类型、地址、区域、私有证书、凭据方式与密钥 Vault Token；实例代码即文件记录上的存储提供方",
+      "properties": {
+        "logicalTableKey": "file_storage_instance",
+        "compositeForeignKeys": []
+      },
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "instance_id",
+          "defName": "存储实例标识",
+          "comment": "存储实例主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "D0A9E59E-28CA-5D82-BAF7-6E1DBF926D0B"
+        },
+        {
+          "defKey": "instance_code",
+          "defName": "存储实例代码",
+          "comment": "存储实例代码，即文件与上传记录上的 storage_provider；格式 [A-Z][A-Z0-9_]{0,63}，创建后不可修改，被记录引用后不可删除。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "2C9F0E7C-E8B6-5A2D-8AEC-479D7C0D19EA"
+        },
+        {
+          "defKey": "storage_type",
+          "defName": "存储类型",
+          "comment": "存储类型，决定使用的 SDK。允许值：MINIO、S3。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "34CBFCC4-3DC4-530A-A655-80B8DB251ACA"
+        },
+        {
+          "defKey": "endpoint",
+          "defName": "存储地址",
+          "comment": "HTTPS 根地址，同时是浏览器直传与下载授权的地址；S3 为空时使用区域默认地址，MINIO 必填。",
+          "type": "VARCHAR",
+          "len": 255,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "46193107-F1A0-5860-953C-E667FBAA9766"
+        },
+        {
+          "defKey": "region",
+          "defName": "签名区域",
+          "comment": "签名区域，例如 us-east-1、me-central-1。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "1FF9C0E3-4E78-55FE-B5C9-646E4B676D80"
+        },
+        {
+          "defKey": "path_style_access",
+          "defName": "路径风格访问",
+          "comment": "是否使用路径风格访问：1 表示路径风格（兼容 S3 的存储通常需要），0 表示虚拟主机风格。",
+          "type": "TINYINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "BB0B756A-1592-5D7A-8DD0-C84FD6BC6622"
+        },
+        {
+          "defKey": "trusted_certificate_pem",
+          "defName": "信任证书",
+          "comment": "私有 CA 或自签名证书 PEM（公开内容）；为空时使用 JDK 默认信任库，非空时只信任该证书。",
+          "type": "TEXT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
+          "extProps": {},
+          "domain": "",
+          "id": "DAE3E5A6-1D18-5838-BC8C-0E7244C66EA1"
+        },
+        {
+          "defKey": "credential_mode",
+          "defName": "凭据方式",
+          "comment": "凭据方式；MINIO 只允许 STATIC。允许值：STATIC、IAM_ROLE。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "92D4AB01-EF40-541F-8858-12D4A349464F"
+        },
+        {
+          "defKey": "credential_vault_token",
+          "defName": "密钥 Vault Token",
+          "comment": "静态访问密钥的 Vault Token（数据类型 FILE_STORAGE_CREDENTIAL_V1，值为 {\"accessKeyId\",\"secretAccessKey\"}）；STATIC 必填，IAM_ROLE 为空；每次存储操作前以用途 FILE_STORAGE_ACCESS 读取，不缓存原值。",
+          "type": "VARCHAR",
+          "len": 255,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "ABB209A1-9AA0-546E-9FED-C668CFC4F1AA"
+        },
+        {
+          "defKey": "credential_update_time",
+          "defName": "密钥更新时间",
+          "comment": "最近一次录入或更换密钥（含切换凭据方式）的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "F2DC48BE-8FF2-5298-A561-8FCDE6913BC5"
+        },
+        {
+          "defKey": "connect_timeout_ms",
+          "defName": "连接超时",
+          "comment": "连接超时毫秒数，1000—10000，默认 2000。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "881AF33A-526C-58C1-972D-D368F97ADC6B"
+        },
+        {
+          "defKey": "read_timeout_ms",
+          "defName": "读写超时",
+          "comment": "读写超时毫秒数，1000—60000，默认 10000。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "5F2ED9CF-D349-51AD-9AD2-790B5ECDD194"
+        },
+        {
+          "defKey": "status",
+          "defName": "实例状态",
+          "comment": "实例状态；只有 ACTIVE 实例可读写，DISABLED 读写都返回不可用。允许值：DRAFT、ACTIVE、DISABLED。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "B4A9B2C0-F20A-52B3-8FAE-42275A32E7E6"
+        },
+        {
+          "defKey": "version",
+          "defName": "实例并发版本",
+          "comment": "乐观并发版本，新建为 1，每次成功修改递增 1。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "5FC9FDB7-6020-58BB-B278-CE587166798E"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "B5FF56C9-2E8E-5750-B115-8A0B0C38F2D7"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "58479123-C42F-5CAE-ABB0-FA3875FF6802"
+        }
+      ],
+      "correlations": [],
+      "indexes": [
+        {
+          "defKey": "uk_file_storage_instance_code",
+          "defName": "唯一索引 instance_code",
+          "unique": true,
+          "comment": "保证业务唯一性：instance_code",
+          "fields": [
+            {
+              "fieldDefKey": "2C9F0E7C-E8B6-5A2D-8AEC-479D7C0D19EA",
+              "ascOrDesc": "A",
+              "id": "F1411890-FEFC-5A1E-8AAE-AC48CBC23706"
+            }
+          ],
+          "id": "0D5ACC45-7273-51A9-89EE-631C9DC21CCA"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "253BB82C-97FF-5370-ABF1-8B5228B965F3",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_file_storage_bucket",
+      "defName": "文件存储桶",
+      "comment": "保存存储实例下登记的存储桶、读写状态与最近一次启用检查结果；Platform 只登记和检查，不建桶、不改桶策略",
+      "properties": {
+        "logicalTableKey": "file_storage_bucket",
+        "compositeForeignKeys": []
+      },
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "bucket_id",
+          "defName": "存储桶标识",
+          "comment": "存储桶主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "1471E50D-45E1-5426-A42E-4DA3E2E78335"
+        },
+        {
+          "defKey": "instance_id",
+          "defName": "存储实例",
+          "comment": "所属存储实例 ID。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "98098E72-119D-59BB-9665-5ECDAE626895"
+        },
+        {
+          "defKey": "bucket_name",
+          "defName": "存储桶名称",
+          "comment": "存储桶名称，即文件与上传记录上的 storage_container_ref；创建后不可修改，被记录引用后不可删除。",
+          "type": "VARCHAR",
+          "len": 255,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "5C4CC7B0-D84D-5DE7-9859-5EAA001BBD07"
+        },
+        {
+          "defKey": "status",
+          "defName": "存储桶状态",
+          "comment": "存储桶状态；只有 ACTIVE 接受新上传，ACTIVE 与 READ_ONLY 可读，DISABLED 读写都返回不可用。允许值：DRAFT、ACTIVE、READ_ONLY、DISABLED。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "D39F2B19-C4C8-55A8-B6B4-787175F8D784"
+        },
+        {
+          "defKey": "last_check_time",
+          "defName": "最近检查时间",
+          "comment": "最近一次启用检查的 UTC 微秒时间；从未检查为空。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "40A1F180-22BC-5A8E-840C-DDAA40419D3F"
+        },
+        {
+          "defKey": "last_check_result",
+          "defName": "最近检查结果",
+          "comment": "最近一次启用检查结果；从未检查为空。允许值：OK、NOT_FOUND、VERSIONING_DISABLED、ENCRYPTION_DISABLED、ACCESS_DENIED、UNAVAILABLE。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "6A300FF8-F786-5D3E-9894-AFB42EF05059"
+        },
+        {
+          "defKey": "version",
+          "defName": "存储桶并发版本",
+          "comment": "乐观并发版本，新建为 1，每次成功修改递增 1。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "A7C5D2E7-6067-543C-9BF7-912C367643C3"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "7C88C181-D220-53AF-8106-D8E3E1430B6F"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "88C80BA5-00BE-57B3-85FC-728E1279E517"
+        }
+      ],
+      "correlations": [
+        {
+          "id": "412E9D30-5007-5864-8723-F853B84A1F0A",
+          "myField": "98098E72-119D-59BB-9665-5ECDAE626895",
+          "refEntity": "5E68DF47-6FEB-5C58-A6AE-B840D89584A7",
+          "refField": "D0A9E59E-28CA-5D82-BAF7-6E1DBF926D0B",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ],
+      "indexes": [
+        {
+          "defKey": "uk_file_storage_bucket",
+          "defName": "唯一索引 instance_id、bucket_name",
+          "unique": true,
+          "comment": "保证业务唯一性：instance_id、bucket_name",
+          "fields": [
+            {
+              "fieldDefKey": "98098E72-119D-59BB-9665-5ECDAE626895",
+              "ascOrDesc": "A",
+              "id": "605957E8-8B5F-5399-9357-19CAB48EECE6"
+            },
+            {
+              "fieldDefKey": "5C4CC7B0-D84D-5DE7-9859-5EAA001BBD07",
+              "ascOrDesc": "A",
+              "id": "B5DC34FA-1556-5AB3-A8F9-986C9B7F04D7"
+            }
+          ],
+          "id": "ADD1F647-3C16-5A97-A878-8D47355B7AC5"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "1EA6E8B3-C297-59BE-BE1F-CC7C081DA847",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_file_storage_route",
+      "defName": "文件存储写入路由",
+      "comment": "保存按来源系统选择新上传存储桶、扫描策略与上传期限的写入路由；改路由只影响之后的新上传",
+      "properties": {
+        "logicalTableKey": "file_storage_route",
+        "compositeForeignKeys": []
+      },
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "route_id",
+          "defName": "写入路由标识",
+          "comment": "写入路由主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "3AF273EF-2393-5D06-AE41-918610366C85"
+        },
+        {
+          "defKey": "source_system",
+          "defName": "来源系统",
+          "comment": "来源系统，即内部调用 Token 的服务名（[a-z][a-z0-9-]{0,63}）；* 表示默认路由，没有精确路由的来源使用默认路由。取值来源：内部调用身份的服务名；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "B99A0993-9B25-50BB-882C-96E79E6EB7A5"
+        },
+        {
+          "defKey": "bucket_id",
+          "defName": "存储桶",
+          "comment": "新上传写入的存储桶 ID；保存时必须为 ACTIVE 桶且所属实例 ACTIVE。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "A0DEA33D-9627-5C69-B28A-97FFED8595F0"
+        },
+        {
+          "defKey": "scan_policy_code",
+          "defName": "扫描策略代码",
+          "comment": "新上传冻结的扫描策略代码；保存时必须存在 ACTIVE 修订，上传开始时冻结当前 ACTIVE 修订。取值来源：t_file_scan_policy.policy_code；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "292F992A-7815-5ECD-AA39-400239932D92"
+        },
+        {
+          "defKey": "max_upload_seconds",
+          "defName": "上传期限",
+          "comment": "新上传的授权有效秒数，60—900。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "9F8164F9-2BA1-5750-BC79-941682214C79"
+        },
+        {
+          "defKey": "version",
+          "defName": "写入路由并发版本",
+          "comment": "乐观并发版本，新建为 1，每次成功修改递增 1。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "192C7841-CD75-5D0F-8B95-9332D94C1233"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "3A371C75-D860-52F9-8134-C921BA9D836E"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "2B32054F-4BC4-5906-B549-AC6AA2C63970"
+        }
+      ],
+      "correlations": [
+        {
+          "id": "97CE323A-DB34-5CB2-90B1-1958A11C1047",
+          "myField": "A0DEA33D-9627-5C69-B28A-97FFED8595F0",
+          "refEntity": "253BB82C-97FF-5370-ABF1-8B5228B965F3",
+          "refField": "1471E50D-45E1-5426-A42E-4DA3E2E78335",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ],
+      "indexes": [
+        {
+          "defKey": "uk_file_storage_route_source",
+          "defName": "唯一索引 source_system",
+          "unique": true,
+          "comment": "保证业务唯一性：source_system",
+          "fields": [
+            {
+              "fieldDefKey": "B99A0993-9B25-50BB-882C-96E79E6EB7A5",
+              "ascOrDesc": "A",
+              "id": "612F79ED-84F5-5105-8264-75B5F1D85814"
+            }
+          ],
+          "id": "13F27193-2756-59D5-BCDE-0D486449021C"
+        },
+        {
+          "defKey": "idx_file_storage_route_bucket",
+          "defName": "访问索引 bucket_id",
+          "unique": false,
+          "comment": "支持访问路径：bucket_id（停用实例或桶前检查引用路由）",
+          "fields": [
+            {
+              "fieldDefKey": "A0DEA33D-9627-5C69-B28A-97FFED8595F0",
+              "ascOrDesc": "A",
+              "id": "14CE2552-DB7F-5D8D-9FDA-463C66C8514D"
+            }
+          ],
+          "id": "1BA2B499-D474-5D30-960F-DA6852015D7A"
         }
       ],
       "type": "P"
@@ -31964,7 +33287,7 @@
             "type": "P",
             "size": {
               "width": 390,
-              "height": 482
+              "height": 526
             }
           },
           {
@@ -32009,7 +33332,7 @@
             "type": "P",
             "size": {
               "width": 390,
-              "height": 504
+              "height": 548
             }
           },
           {
@@ -32017,7 +33340,7 @@
             "shape": "table",
             "position": {
               "x": 0,
-              "y": 564
+              "y": 608
             },
             "count": 0,
             "originKey": "D4D113B3-F9E2-5FAA-BDEB-CDEAE8D20912",
@@ -32032,7 +33355,7 @@
             "shape": "table",
             "position": {
               "x": 430,
-              "y": 564
+              "y": 608
             },
             "count": 0,
             "originKey": "A650270C-F59B-551A-A3FF-BC3E644DCD4F",
@@ -32047,7 +33370,7 @@
             "shape": "table",
             "position": {
               "x": 860,
-              "y": 564
+              "y": 608
             },
             "count": 0,
             "originKey": "808B9421-E000-5880-8AED-EAA81844C8BA",
@@ -32062,7 +33385,7 @@
             "shape": "table",
             "position": {
               "x": 1290,
-              "y": 564
+              "y": 608
             },
             "count": 0,
             "originKey": "F88D78E9-56C1-5DD4-B151-6C4D93DDC563",
@@ -32077,7 +33400,7 @@
             "shape": "table",
             "position": {
               "x": 0,
-              "y": 974
+              "y": 1018
             },
             "count": 0,
             "originKey": "8EDE1520-C015-5D9C-B6AF-9148B49BB442",
@@ -32092,7 +33415,7 @@
             "shape": "table",
             "position": {
               "x": 430,
-              "y": 974
+              "y": 1018
             },
             "count": 0,
             "originKey": "6EB6F465-C6E4-590F-9FA5-984A5B204B12",
@@ -32107,7 +33430,7 @@
             "shape": "table",
             "position": {
               "x": 860,
-              "y": 974
+              "y": 1018
             },
             "count": 0,
             "originKey": "DC9D0FA3-E4EB-574C-AC9E-5E8A37771C07",
@@ -32122,7 +33445,7 @@
             "shape": "table",
             "position": {
               "x": 1290,
-              "y": 974
+              "y": 1018
             },
             "count": 0,
             "originKey": "B9BB9CA1-4330-535A-B442-EE96433ECD4F",
@@ -32133,11 +33456,56 @@
             }
           },
           {
-            "id": "A271647D-7115-553B-BB84-C14A3181DD91",
+            "id": "B4CD471E-4D90-543D-AD7E-C48FEFEE1132",
             "shape": "table",
             "position": {
               "x": 0,
-              "y": 1670
+              "y": 1714
+            },
+            "count": 0,
+            "originKey": "5E68DF47-6FEB-5C58-A6AE-B840D89584A7",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 438
+            }
+          },
+          {
+            "id": "76F2FD56-D100-5717-9948-89A2F1DF1D00",
+            "shape": "table",
+            "position": {
+              "x": 430,
+              "y": 1714
+            },
+            "count": 0,
+            "originKey": "253BB82C-97FF-5370-ABF1-8B5228B965F3",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 284
+            }
+          },
+          {
+            "id": "9ABCBAE9-791E-5ED6-8180-811C755980FA",
+            "shape": "table",
+            "position": {
+              "x": 860,
+              "y": 1714
+            },
+            "count": 0,
+            "originKey": "1EA6E8B3-C297-59BE-BE1F-CC7C081DA847",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 262
+            }
+          },
+          {
+            "id": "A271647D-7115-553B-BB84-C14A3181DD91",
+            "shape": "table",
+            "position": {
+              "x": 1290,
+              "y": 1714
             },
             "count": 0,
             "originKey": "4D93B5E9-A715-5801-81C9-8B9BDEA68DA3",
@@ -32151,8 +33519,8 @@
             "id": "912994A3-F743-5642-9EAF-921AA8513276",
             "shape": "table",
             "position": {
-              "x": 430,
-              "y": 1670
+              "x": 0,
+              "y": 2212
             },
             "count": 0,
             "originKey": "677B1152-0ECC-56EB-81C5-5615075AAFBE",
@@ -32166,8 +33534,8 @@
             "id": "9EFAD0D2-9A5E-5A5D-89BF-099BDE87944A",
             "shape": "table",
             "position": {
-              "x": 860,
-              "y": 1670
+              "x": 430,
+              "y": 2212
             },
             "count": 0,
             "originKey": "B0E48668-8FE5-5F7C-82C9-E52C1E9F761B",
@@ -32726,6 +34094,50 @@
               }
             },
             "isLock": true
+          },
+          {
+            "id": "A384F4B1-F427-5C31-A25F-7DE232C6DB97",
+            "shape": "erdRelation",
+            "originKey": "412E9D30-5007-5864-8723-F853B84A1F0A",
+            "source": {
+              "cell": "76F2FD56-D100-5717-9948-89A2F1DF1D00",
+              "port": "98098E72-119D-59BB-9665-5ECDAE626895%out"
+            },
+            "target": {
+              "cell": "B4CD471E-4D90-543D-AD7E-C48FEFEE1132",
+              "port": "D0A9E59E-28CA-5D82-BAF7-6E1DBF926D0B%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "2ADEEFF7-80D6-5A19-9D8D-8202FC565A08",
+            "shape": "erdRelation",
+            "originKey": "97CE323A-DB34-5CB2-90B1-1958A11C1047",
+            "source": {
+              "cell": "9ABCBAE9-791E-5ED6-8180-811C755980FA",
+              "port": "A0DEA33D-9627-5C69-B28A-97FFED8595F0%out"
+            },
+            "target": {
+              "cell": "76F2FD56-D100-5717-9948-89A2F1DF1D00",
+              "port": "1471E50D-45E1-5426-A42E-4DA3E2E78335%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
           }
         ]
       },
@@ -32742,7 +34154,10 @@
           "t_consumer_document",
           "t_document_version",
           "t_document_delivery",
-          "t_document_access_grant"
+          "t_document_access_grant",
+          "t_file_storage_instance",
+          "t_file_storage_bucket",
+          "t_file_storage_route"
         ],
         "referenceTables": [
           "t_access_tenant",

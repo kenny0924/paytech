@@ -16,8 +16,10 @@ import com.paytech.foundation.compensation.api.CompensationHandlerResult;
 import com.paytech.foundation.compensation.api.CompensationHandlerResult.Outcome;
 import com.paytech.platform.support.api.enums.FileObjectStatus;
 import com.paytech.platform.support.api.enums.FileScanStatus;
+import com.paytech.platform.support.api.enums.FileStorageBucketStatus;
+import com.paytech.platform.support.api.enums.FileStorageInstanceStatus;
 import com.paytech.platform.support.filedocument.integration.scanning.FormatFileScanner;
-import com.paytech.platform.support.filedocument.integration.storage.minio.MinioFileStorage;
+import com.paytech.platform.support.test.mocker.local.StorageInstanceMocker;
 import com.paytech.platform.support.service.handler.FileScanHandler;
 import com.paytech.platform.support.test.base.OnboardingFileTestBase;
 import com.paytech.platform.support.test.builder.OnboardingFileBuilder;
@@ -25,7 +27,8 @@ import com.paytech.platform.support.test.builder.OnboardingFileBuilder.Spec;
 import com.paytech.platform.support.test.mocker.local.OnboardingFileMocker.Policy;
 
 /**
- * 文件扫描补偿入口：经真实 Handler、文件生命周期服务、Platform 格式检查器与 MinIO 准确版本读取，追加终局结果并推进扫描状态。
+ * 文件扫描补偿入口：经真实 Handler、文件生命周期服务、Platform 格式检查器与存储注册表按记录实例读取 MinIO 准确版本，
+ * 追加终局结果并推进扫描状态；记录的实例或桶停用时不读取密钥、不调用存储。
  *
  * @see FileScanHandler#handle(CompensationEvent)
  */
@@ -95,6 +98,38 @@ class FileScanHandlerTest extends OnboardingFileTestBase {
         assertEquals(FileScanStatus.SCANNING.getCode(), fileData.file(spec.fileId()).get("scan_status"));
     }
 
+    /** 多存储并存：文件记录在 S3 类型实例上，默认路由指向 MINIO 实例时仍按记录的实例读取并完成检查。 */
+    @Test
+    void test_readsRecordedInstance() {
+        Spec spec = stored(material(StorageInstanceMocker.S3_INSTANCE).policyId(policy.policyId())
+            .scanStatus(FileScanStatus.PENDING_SCAN).objectStatus(FileObjectStatus.ACTIVE).build());
+
+        assertEquals(CompensationHandlerResult.success(), handle(spec.fileId()));
+
+        assertScan(spec, FileScanStatus.AVAILABLE, FormatFileScanner.VALID);
+        assertAll(() -> assertEquals(1, storageVault.revealCount(StorageInstanceMocker.S3_TOKEN)),
+            () -> assertEquals(0, storageVault.revealCount(StorageInstanceMocker.MINIO_TOKEN)));
+    }
+
+    /** 记录的存储桶或实例已停用：可重试失败，不读取密钥、不发起存储调用、不追加结果。 */
+    @Test
+    void test_disabledStorageRetries() {
+        Spec spec = stored(material().build());
+        storageInstances.bucketStatus(StorageInstanceMocker.MINIO_INSTANCE, FileStorageBucketStatus.DISABLED);
+
+        assertRetryable(handle(spec.fileId()));
+
+        storageInstances.bucketStatus(StorageInstanceMocker.MINIO_INSTANCE, FileStorageBucketStatus.READ_ONLY);
+        storageInstances.instanceStatus(StorageInstanceMocker.MINIO_INSTANCE, FileStorageInstanceStatus.DISABLED);
+        assertRetryable(handle(spec.fileId()));
+
+        assertEquals(0, storageVault.revealCount());
+        assertTrue(fileData.results(spec.fileId()).isEmpty());
+        storageInstances.instanceStatus(StorageInstanceMocker.MINIO_INSTANCE, FileStorageInstanceStatus.ACTIVE);
+        assertEquals(CompensationHandlerResult.success(), handle(spec.fileId()), "只读桶仍可读");
+        assertScan(spec, FileScanStatus.AVAILABLE, FormatFileScanner.VALID);
+    }
+
     /** 损坏的任务身份为终局失败，不读取文件。 */
     @Test
     void test_invalidParameter() {
@@ -116,7 +151,7 @@ class FileScanHandlerTest extends OnboardingFileTestBase {
 
     /** 本例对象上待扫描的 PDF 材料，使用本类策略。 */
     private OnboardingFileBuilder material() {
-        return material(MinioFileStorage.PROVIDER).policyId(policy.policyId()).scanStatus(FileScanStatus.PENDING_SCAN)
+        return material(StorageInstanceMocker.MINIO_INSTANCE).policyId(policy.policyId()).scanStatus(FileScanStatus.PENDING_SCAN)
             .objectStatus(FileObjectStatus.ACTIVE);
     }
 

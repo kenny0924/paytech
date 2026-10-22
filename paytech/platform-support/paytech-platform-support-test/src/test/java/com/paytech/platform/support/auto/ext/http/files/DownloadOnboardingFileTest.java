@@ -24,7 +24,7 @@ import com.paytech.platform.support.api.enums.FileScanStatus;
 import com.paytech.platform.support.api.enums.OnboardingFileErrorCode;
 import com.paytech.platform.support.api.onboardingfiles.OnboardingFileApi;
 import com.paytech.platform.support.api.onboardingfiles.response.DownloadResponseBody;
-import com.paytech.platform.support.filedocument.integration.storage.minio.MinioFileStorage;
+import com.paytech.platform.support.test.mocker.local.StorageInstanceMocker;
 import com.paytech.platform.support.test.base.OnboardingFileTestBase;
 import com.paytech.platform.support.test.builder.OnboardingFileBuilder;
 import com.paytech.platform.support.test.builder.OnboardingFileBuilder.Spec;
@@ -162,7 +162,7 @@ class DownloadOnboardingFileTest extends OnboardingFileTestBase {
 
     /** 申请人在本类申请主体上、引用本类策略的已完成 PDF 材料。 */
     private OnboardingFileBuilder material() {
-        return material(MinioFileStorage.PROVIDER).policyId(policyId)
+        return material(StorageInstanceMocker.MINIO_INSTANCE).policyId(policyId)
             .owner(applicant.tenantId(), applicant.accountId(), applicationId, subjectPartyId);
     }
 

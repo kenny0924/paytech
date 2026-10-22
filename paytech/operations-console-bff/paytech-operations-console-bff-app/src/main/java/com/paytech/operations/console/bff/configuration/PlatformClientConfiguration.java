@@ -37,6 +37,7 @@ import com.paytech.platform.support.api.enums.GatewayConfigurationErrorCode;
 import com.paytech.platform.support.api.enums.OnboardingFileErrorCode;
 import com.paytech.platform.support.api.enums.OperationsErrorCode;
 import com.paytech.platform.support.api.enums.WebhookEndpointErrorCode;
+import com.paytech.platform.support.api.filestorage.FileStorageManagementApi;
 import com.paytech.platform.support.api.gatewayconfiguration.management.GatewayConfigurationManagementApi;
 import com.paytech.platform.support.api.operations.OperationsManagementApi;
 import com.paytech.platform.support.api.referencedata.CurrencySpecManagementApi;
@@ -53,6 +54,8 @@ public class PlatformClientConfiguration {
     private static final String PLATFORM_BASE_URL = "http://" + PLATFORM_SERVICE + "/platform-support";
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(3);
     private static final Duration READ_TIMEOUT = Duration.ofSeconds(5);
+    /** 存储管理会在 Platform 事务外访问 Vault 与存储（桶检查依次多次调用），取 Gateway 10 秒响应上限内的 9 秒。 */
+    private static final Duration FILE_STORAGE_READ_TIMEOUT = Duration.ofSeconds(9);
     private static final JsonMapper PROBLEM_JSON = JsonMapper.builder().build();
 
     /** 租户访问复用既有 Platform 私网发现及字段错误解码。 */
@@ -110,8 +113,16 @@ public class PlatformClientConfiguration {
     @Bean
     CurrencySpecManagementApi currencySpecManagementApi(Environment environment, PlatformDiscoveryInterceptor discovery,
         @Value("${operations.platform-test-base-url:}") String testBaseUrl, ObjectProvider<InternalTokenSupplier> tokens) {
-        return platformProxy(environment, discovery, testBaseUrl, tokens, true, true)
+        return platformProxy(environment, discovery, testBaseUrl, tokens, true, true, READ_TIMEOUT)
             .createClient(CurrencySpecManagementApi.class);
+    }
+
+    /** 存储管理沿用配置写操作的发现与字段错误解码，外显 Platform 业务拒绝原因（如被写入路由引用不能停用），读取超时放宽到 9 秒。 */
+    @Bean
+    FileStorageManagementApi fileStorageManagementApi(Environment environment, PlatformDiscoveryInterceptor discovery,
+        @Value("${operations.platform-test-base-url:}") String testBaseUrl, ObjectProvider<InternalTokenSupplier> tokens) {
+        return platformProxy(environment, discovery, testBaseUrl, tokens, true, true, FILE_STORAGE_READ_TIMEOUT)
+            .createClient(FileStorageManagementApi.class);
     }
 
     /** 数据源维护复用数据查询专用代理：测试连接与启用检查需要连接被查库。 */
@@ -212,14 +223,15 @@ public class PlatformClientConfiguration {
     private HttpServiceProxyFactory platformProxy(Environment environment, PlatformDiscoveryInterceptor discovery,
         String testBaseUrl, ObjectProvider<InternalTokenSupplier> tokens, boolean configurationValidation,
         CodeMessageEnum... extraErrors) {
-        return platformProxy(environment, discovery, testBaseUrl, tokens, configurationValidation, false, extraErrors);
+        return platformProxy(environment, discovery, testBaseUrl, tokens, configurationValidation, false, READ_TIMEOUT,
+            extraErrors);
     }
 
     /** ownerProblemDetail 只对已承诺 detail 可安全外显的 Platform 合同开启。 */
     private HttpServiceProxyFactory platformProxy(Environment environment, PlatformDiscoveryInterceptor discovery,
         String testBaseUrl, ObjectProvider<InternalTokenSupplier> tokens, boolean configurationValidation,
-        boolean ownerProblemDetail, CodeMessageEnum... extraErrors) {
-        RestClient client = platformClient(environment, discovery, testBaseUrl, READ_TIMEOUT);
+        boolean ownerProblemDetail, Duration readTimeout, CodeMessageEnum... extraErrors) {
+        RestClient client = platformClient(environment, discovery, testBaseUrl, readTimeout);
         CodeMessageEnum[] errors = platformErrors(extraErrors);
         HttpServiceClientOptions options = InternalCallTokenOptions.apply(
             HttpServiceClientOptions.migrationWithLegacyErrorResponse(), tokens, PLATFORM_SERVICE)

@@ -20,12 +20,14 @@ import com.paytech.foundation.httpclient.api.HttpServiceClientFactory;
 import com.paytech.foundation.httpclient.api.HttpServiceClientOptions;
 import com.paytech.platform.support.core.integration.files.CctFileTargetClient;
 
-/** 文件入口默认关闭；启用仍须真实 CLIENT 认证和 Redis，未配置供应商时不返回成功。 */
+/** 入驻文件入口默认关闭；启用须同时启用 files.enabled、真实 CLIENT 认证和 Redis，存储目标由运营存储管理的写入路由决定。 */
 @Configuration(proxyBeanMethods=false)
 @ConditionalOnProperty(name="files.onboarding.enabled",havingValue="true")
 public class OnboardingFileConfiguration {
-    /** 文件上传不接受关闭 IAM 或协调保护的运行模式。 */
+    /** 文件上传不接受关闭文件能力、IAM 或协调保护的运行模式。 */
     public OnboardingFileConfiguration(Environment environment) {
+        if (!environment.getProperty("files.enabled",Boolean.class,false))
+            throw new IllegalStateException("files.onboarding.enabled=true 需要 files.enabled=true");
         if (!environment.getProperty("client.authentication.enabled",Boolean.class,false)
             || !environment.getProperty("redis.coordination.enabled",Boolean.class,false)
             || !environment.getProperty("compensation.enabled",Boolean.class,true))

@@ -19,6 +19,10 @@ public interface FileLifecycleMapper {
     CompletedUploadFile completedFile(@Param("uploadId") long uploadId);
     /** 当前读锁住原 Upload。 */
     FileUpload lockUpload(@Param("id") long id);
+    /** 当前读锁住任一来源的原 Upload。 */
+    FileUpload lockSourceUpload(@Param("id") long id);
+    /** 文件与上传记录组合的元数据。 */
+    com.paytech.platform.support.filedocument.domain.file.StoredFileView describeFile(@Param("fileId") long fileId);
     /** 锁住文件，防止失去 Lease 的旧工作者覆盖新事实。 */
     FileObject lockFile(@Param("id") long id);
     /** 读取固定策略和要求及终局结果。 */

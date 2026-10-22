@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.filedocument.core.dal.mapper.FileStorageInstanceMapper">
+
+    <sql id="columns">
+        instance_id AS instanceId, instance_code AS instanceCode, storage_type AS storageType, endpoint, region,
+        path_style_access AS pathStyleAccess, trusted_certificate_pem AS trustedCertificatePem,
+        credential_mode AS credentialMode, credential_vault_token AS credentialVaultToken,
+        credential_update_time AS credentialUpdateTime, connect_timeout_ms AS connectTimeoutMs,
+        read_timeout_ms AS readTimeoutMs, status, version, create_time AS createTime, update_time AS updateTime
+    </sql>
+
+    <select id="selectAll" timeout="2"
+            resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileStorageInstance">
+        SELECT <include refid="columns"/> FROM t_file_storage_instance ORDER BY instance_code
+    </select>
+
+    <select id="selectByCode" timeout="2"
+            resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileStorageInstance">
+        SELECT <include refid="columns"/> FROM t_file_storage_instance WHERE instance_code = #{code}
+    </select>
+
+    <select id="lockByCode" flushCache="true" useCache="false"
+            resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileStorageInstance">
+        SELECT <include refid="columns"/> FROM t_file_storage_instance WHERE instance_code = #{code} FOR UPDATE
+    </select>
+
+    <insert id="insert">
+        INSERT INTO t_file_storage_instance (instance_id, instance_code, storage_type, endpoint, region, path_style_access,
+            trusted_certificate_pem, credential_mode, credential_vault_token, credential_update_time, connect_timeout_ms,
+            read_timeout_ms, status, version, create_time, update_time)
+        VALUES (#{row.instanceId}, #{row.instanceCode}, #{row.storageType}, #{row.endpoint}, #{row.region},
+            #{row.pathStyleAccess}, #{row.trustedCertificatePem}, #{row.credentialMode}, #{row.credentialVaultToken},
+            #{row.credentialUpdateTime}, #{row.connectTimeoutMs}, #{row.readTimeoutMs}, #{row.status}, #{row.version},
+            #{row.createTime}, #{row.updateTime})
+    </insert>
+
+    <update id="updateSettings">
+        UPDATE t_file_storage_instance
+        SET endpoint = #{target.endpoint}, region = #{target.region}, path_style_access = #{target.pathStyleAccess},
+            trusted_certificate_pem = #{target.trustedCertificatePem}, connect_timeout_ms = #{target.connectTimeoutMs},
+            read_timeout_ms = #{target.readTimeoutMs}, version = version + 1, update_time = #{now}
+        WHERE instance_id = #{row.instanceId} AND version = #{row.version}
+    </update>
+
+    <update id="updateCredential">
+        UPDATE t_file_storage_instance
+        SET credential_mode = #{mode}, credential_vault_token = #{token}, credential_update_time = #{now},
+            version = version + 1, update_time = #{now}
+        WHERE instance_id = #{row.instanceId} AND version = #{row.version}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE t_file_storage_instance
+        SET status = #{status}, version = version + 1, update_time = #{now}
+        WHERE instance_id = #{row.instanceId} AND version = #{row.version} AND status = #{row.status}
+    </update>
+</mapper>

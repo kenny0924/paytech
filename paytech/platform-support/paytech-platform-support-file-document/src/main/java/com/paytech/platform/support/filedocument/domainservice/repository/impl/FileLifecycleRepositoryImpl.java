@@ -23,6 +23,10 @@ public class FileLifecycleRepositoryImpl implements FileLifecycleRepository {
  @Override public CompletedUploadFile completedFile(long uploadId) { return mapper.completedFile(uploadId); }
  /** 通过同库 Mapper 执行 lockUpload。 */
  @Override public FileUpload lockUpload(long id) { return mapper.lockUpload(id); }
+ /** 当前读锁住任一来源的原 Upload。 */
+ @Override public FileUpload lockSourceUpload(long id) { return mapper.lockSourceUpload(id); }
+ /** 文件元数据组合查询。 */
+ @Override public com.paytech.platform.support.filedocument.domain.file.StoredFileView describeFile(long fileId) { return mapper.describeFile(fileId); }
  /** 通过同库 Mapper 执行 lockFile。 */
  @Override public FileObject lockFile(long id) { return mapper.lockFile(id); }
  /** 通过同库 Mapper 执行 requirements。 */

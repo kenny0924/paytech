@@ -1,0 +1,22 @@
+# platform-support：文件多存储并存 · 交付记录
+
+| 日期 | 阶段 | 内容 | 状态 |
+|---|---|---|---|
+| 2026-10-22 | 来源 | 用户在了解文件模块现状（同一时刻只能装配 MinIO 或 S3 之一）后要求："先写一份多存储并存的改动方案" | 已登记 |
+| 2026-10-22 | 1—3 评审稿 v1 | 配置文件定义多实例、注册表、按 `owner_type` 写入路由；待确认 Q1—Q5 | 已被 v2 取代 |
+| 2026-10-22 | 用户意见 1 | 账号密码要能管理、不放配置文件；桶如何管理；owner 粗到调用服务即可 | 已采纳（D1、D2） |
+| 2026-10-22 | 用户意见 2 | "platform 为什么要调用 cct？很奇怪"；"内部系统不做太多权限处理，谁有文件 ID / 文件地址都能读取。只需要记录来源系统，然后加一个 reason_code"；分两段做，与工作流会话由 Claude 沟通 | 已采纳（D3、D4） |
+| 2026-10-22 | 1—3 评审稿 v2 | [需求](./requirement.md)：决定 D1—D4、第一段 R1—R8、第二段 R9—R11、规则 B1—B6、验收 AC-01—AC-12；[技术方案](./technique.md)：3 张新表、2 张表各加 2 列、内部文件接口 4 个、存储管理接口、Vault 凭据、迁移与测试；待确认 Q6—Q11 | 已确认（2026-10-22 用户“按建议来，开始做吧”：Q6—Q11 全部按建议） |
+| 2026-10-22 | 协调 | 工作流会话 code-mor-ae 回复：尚未改 file-document，不必等待；接受不写 `t_file_owner_ref`、走 Service 入口；需要按文件 ID 查询状态 / MIME / 大小 / 来源 / `reason_code` / **上传人账号**及下载授权入口。方案补充：`t_file_upload.uploader_id` 保留（改为可空，调用方可选传入），元数据查询返回上传人 | 已回复对方 |
+| 2026-10-22 | 协调 | 工作流会话转告：用户已确认工作流按本方案的新入口实现文件（不泛化 owner、不写 `t_file_owner_ref`、传 `uploaderAccountId`、`reason_code=WORKFLOW_ATTACHMENT`）；待本方案接口名定稿后通知对方 | 待通知 |
+| 2026-10-22 | 4 研发实现 | 独立工作目录 `/Users/kenny/Desktop/Workspace/Code-MoR-filestore`（detached，基于 `281a217d`，不建分支、不提交）；任务卡 [A Platform](./tasks/A-platform.md)、B Operations BFF / Web（A 完成后下发）；Platform 注册块 130 | 进行中 |
+| 2026-10-22 | 4 SQL 授权 | Platform auto 测试使用的就是本机 `mor_platform`（无独立测试库）。用户授权把 `2026-10-22-file-storage-management.sql` 增量 DDL（3 张新表、2 张表加列 / 回填 / NOT NULL、上传人与租户改可空）执行到本机 `mor_platform`；不含 mor-test | 已授权 |
+| 2026-10-22 | 4 并行 | 用户问"为什么没有并行"：改为 A、B 并行。A 先定 `FileStorageManagementApi` / `InternalFileApi` 合同；B 在独立工作目录 `/Users/kenny/Desktop/Workspace/Code-MoR-filestore-ops` 先做注册块 130 与 Web，收到合同后复制 api 文件完成 BFF；任务卡 [B Operations](./tasks/B-operations.md) | 进行中 |
+| 2026-10-22 | 4 进度 | B 完成（草稿合同）：注册块 130 共 152 行、BFF 12 路由转发、Web 三页签；BFF 2057/2057、Web 1252/1252 与构建通过。A 代码与测试已编译，内部接口 `InternalFileApi`（`/internal/files/v1`）及 Service 入口定名；已批准重生成 `table-ownership.yaml`、调整受本次变更影响的 PDManer 模型测试断言；A 误写的块 130 改由 B 的版本为准 | 进行中 |
+| 2026-10-22 | 遗留 | Vault 需登记：数据类型 `FILE_STORAGE_CREDENTIAL_V1`；规则 `platform-support-service / PROTECT / FILE_STORAGE_CREDENTIAL_V1 / FILE_STORAGE_SETUP`、`REVEAL / FILE_STORAGE_ACCESS`（不在本任务范围，待用户决定） | 用户"一起做了吧"：已写 [db/vault/dml.sql](./db/vault/dml.sql)（ID 9100000000000740—742，未执行，发布时随 mor-test 执行），并在工作目录同步 `local-environment/vault/policy.local.json`（数据类型 6、规则 17） |
+| 2026-10-22 | 4—5 完成 | [A 报告](./reports/A-platform-report.md)：Platform auto 全量 791/791（独占窗口 2026-10-21T23:39:36Z—23:47:08Z UTC）；本次改动行分支 85.4%（379/444），整体门禁按 README 既有记录未达标（指令 76.0%、分支 55.9%）。[B 报告](./reports/B-operations-report.md)：BFF 2057/2057、Web 1252/1252 与构建。主会话合入主工作区（两份补丁无重叠，api 文件逐字节一致）后复验：全仓库 test-compile 通过、BFF 2057/2057、Web 1252/1252 与构建；PDManer 两个测试文件 30/33、需求站 137 项中 127 通过，失败项与未改动 HEAD 完全相同。偏差：`owner_*` 可空、加密按探测对象判断、DUAL 模式接受 `X-Caller-Service`、本机 `mor_platform` 4 个列注释仍为旧文字、2026-10-21T23:26:44Z 误 `install` 覆盖共用 `~/.m3` SNAPSHOT（已通知各会话） | 待用户确认 |
+| 2026-10-22 | 遗留 | 本机 e2e 与 mor-test 启动配置仍含已删除的旧存储键，换新 jar 前须删除并登记实例 / 桶 / 默认路由；mor-test 激活块 130 的 SQL、Platform DDL 与 Vault DML 随阶段 6 发布清单准备；第二段（R9—R11）另行评审 | 待处理 |
+| 2026-10-22 | 协调 | Platform 注册块：127 工作流、128 Webhook、129 channel-connector 第二段（code-mor-0e 登记），本需求开工前另行申请 | 记录 |
+| 2026-10-22 | 6—7 授权 | 用户确认阶段 4—5，"可以，发布到 mor-test 吧"：授权替换 mor-test 的 platform、ops-bff、ops-web，执行本需求的 Platform DDL、Vault DML、块 130 注册与激活，并经存储管理登记 `MINIO` 实例、桶与默认路由；提交与推送不在授权内。准备工作见[任务卡 C](./tasks/C-release.md)，环境变更由主会话执行 | 已完成 |
+| 2026-10-22 | 6—7 发布 mor-test | [发布清单与执行记录](./release/release.md)：基线 `281a217d` 与线上三个服务逐项 0 差异；04:42—04:47Z 执行 Vault DML、块 130 注册、换 ops-bff / ops-web、DDL 后紧接换 Platform、激活、登记 `MINIO` 实例 / 桶 / 默认路由，入驻上传与下载不可用约 4 分钟；验收 33/33。发布中修复两处：① 桶检查路由未登记 `content-type`、页面无请求体时不声明 JSON，导致 415（`sql/11` 补两行请求头，块 130 共 154 行；Web 写命令一律声明 JSON）；② 审核材料下载 `expiresAt` 为纳秒精度，前端拒绝（既有缺陷，存储适配器截到微秒）。期间宿主机磁盘写满致 Docker I/O 故障，用户清理并重启后数据核对完好。浏览器冒烟 10/10。最终镜像 Platform `6dd8ffff…`、ops-bff `e81b8424…`、ops-web `d58172d9…`；主 compose 已删旧存储键、加 `PLATFORM_SUPPORT_FILES_ENABLED` | 已完成 |
+| 2026-10-22 | 遗留 | 本机 e2e 启动参数仍含旧存储键，换新 jar 前须删除并在本机存储管理登记实例 / 桶 / 默认路由；Web `sendStorageCommand` 一律声明 JSON 尚无单元测试断言；提交与推送未授权；第二段（R9—R11）另行评审 | 待处理 |

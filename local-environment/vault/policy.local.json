@@ -6,6 +6,7 @@
     "PAYMENT_CARD_DEK": { "tokenMode": "REFERENCE" },
     "CHANNEL_ACCOUNT_CONFIG_V1": { "tokenMode": "REFERENCE" },
     "CASH_ACCOUNT_NUMBER_V1": { "tokenMode": "REFERENCE" },
+    "FILE_STORAGE_CREDENTIAL_V1": { "tokenMode": "REFERENCE" },
     "DATA_SOURCE_PASSWORD_V1": { "tokenMode": "REFERENCE" }
   },
   "rules": [
@@ -24,6 +25,8 @@
     { "callerService": "channel-connector-service", "action": "REVEAL", "dataType": "CHANNEL_ACCOUNT_CONFIG_V1", "purposes": ["CHANNEL_EXECUTION"] },
     { "callerService": "channel-connector-service", "action": "PROTECT", "dataType": "CHANNEL_ACCOUNT_CONFIG_V1", "purposes": ["CHANNEL_CONFIGURATION"] },
     { "callerService": "reconciliation-service", "action": "PROTECT", "dataType": "CASH_ACCOUNT_NUMBER_V1", "purposes": ["RECON_CASH_ACCOUNT"] },
+    { "callerService": "platform-support-service", "action": "PROTECT", "dataType": "FILE_STORAGE_CREDENTIAL_V1", "purposes": ["FILE_STORAGE_SETUP"] },
+    { "callerService": "platform-support-service", "action": "REVEAL", "dataType": "FILE_STORAGE_CREDENTIAL_V1", "purposes": ["FILE_STORAGE_ACCESS"] },
     { "callerService": "platform-support-service", "action": "PROTECT", "dataType": "DATA_SOURCE_PASSWORD_V1", "purposes": ["DATA_SOURCE_CONFIGURATION"] },
     { "callerService": "platform-support-service", "action": "REVEAL", "dataType": "DATA_SOURCE_PASSWORD_V1", "purposes": ["DATA_SOURCE_CONNECTION"] }
   ]

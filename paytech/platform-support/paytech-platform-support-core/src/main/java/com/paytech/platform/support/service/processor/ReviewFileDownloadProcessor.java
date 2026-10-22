@@ -3,9 +3,6 @@ package com.paytech.platform.support.service.processor;
 import java.net.URI;
 import java.time.Clock;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
-
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 
@@ -23,6 +20,8 @@ import com.paytech.platform.support.auditsecurity.domainservice.service.Operatio
 import com.paytech.platform.support.filedocument.domain.file.FileModels.Owned;
 import com.paytech.platform.support.filedocument.domainservice.service.FileLifecycleService;
 import com.paytech.platform.support.filedocument.integration.storage.FileDownloadStorage;
+import com.paytech.platform.support.filedocument.integration.storage.FileObjectStorage;
+import com.paytech.platform.support.filedocument.integration.storage.FileStorageRegistry;
 import com.paytech.platform.support.service.processor.request.ReviewFileDownloadRequest;
 import com.paytech.platform.support.service.processor.response.ReviewFileDownloadResponse;
 
@@ -52,7 +51,7 @@ public class ReviewFileDownloadProcessor extends AbstractProcessor<ReviewFileDow
     private final FileLifecycleService files;
     private final OperationsAuditService audit;
     private final OperationsTransactionExecutor transactions;
-    private final ObjectProvider<FileDownloadStorage> adapters;
+    private final FileStorageRegistry registry;
     private final OperationsManagementPolicyService policy;
 
     @Override
@@ -87,15 +86,12 @@ public class ReviewFileDownloadProcessor extends AbstractProcessor<ReviewFileDow
     record Authorized(SessionContext actor, Owned owned) {
     }
 
-    /** 事务外调用原提供方签名；适配器缺失或失败为依赖不可用。 */
+    /** 事务外按原文件记录的实例与桶签名；实例或桶不可读、适配器失败为依赖不可用。 */
     FileDownloadStorage.Download sign(Owned owned, java.time.Instant expires) {
-        List<FileDownloadStorage> matching = adapters.orderedStream()
-            .filter(adapter -> owned.file().provider().equals(adapter.providerCode())).toList();
-        if (matching.size() != 1) {
-            throw new ServiceUnavailableException();
-        }
-        try {
-            return matching.getFirst().authorize(owned.file(), expires);
+        try (FileObjectStorage storage = registry.openForRead(owned.file().provider(), owned.file().container())) {
+            return storage.authorize(owned.file(), expires);
+        } catch (ServiceUnavailableException unavailable) {
+            throw unavailable;
         } catch (RuntimeException unavailable) {
             throw new ServiceUnavailableException(unavailable);
         }

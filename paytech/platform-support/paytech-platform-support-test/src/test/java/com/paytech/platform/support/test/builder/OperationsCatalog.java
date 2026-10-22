@@ -73,6 +73,8 @@ public final class OperationsCatalog {
             false),
         new Permission(900000000000125101L, "CURRENCY_SPEC_READ", "CURRENCY_SPEC", "READ", "LOW", false),
         new Permission(900000000000125102L, "CURRENCY_SPEC_MANAGE", "CURRENCY_SPEC", "MANAGE", "HIGH", false),
+        new Permission(900000000000130101L, "FILE_STORAGE_READ", "FILE_STORAGE", "READ", "LOW", false),
+        new Permission(900000000000130102L, "FILE_STORAGE_MANAGE", "FILE_STORAGE", "MANAGE", "HIGH", false),
         new Permission(900000000000131101L, "DATA_QUERY_READ", "DATA_QUERY", "READ", "LOW", true),
         new Permission(900000000000131102L, "DATA_SOURCE_MANAGE", "DATA_SOURCE", "MANAGE", "HIGH", false),
         new Permission(900000000000131103L, "DATA_QUERY_TEMPLATE_MANAGE", "DATA_QUERY_TEMPLATE", "MANAGE", "HIGH",

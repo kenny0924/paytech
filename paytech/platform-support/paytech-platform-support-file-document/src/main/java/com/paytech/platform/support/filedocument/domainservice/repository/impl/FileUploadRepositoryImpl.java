@@ -15,6 +15,8 @@ public class FileUploadRepositoryImpl implements FileUploadRepository {
     private final FileUploadMapper mapper;
     /** 查询固定 Upload。 */
     @Override public FileUpload find(long id) { return mapper.find(id); }
+    /** 查询任一来源的原上传。 */
+    @Override public FileUpload findById(long id) { return mapper.findById(id); }
     /** 查询有效策略。 */
     @Override public List<FileScanPolicy> policies(String code, Instant now) { return mapper.policies(code, now); }
     /** 不自行开启事务。 */

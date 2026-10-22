@@ -1,0 +1,308 @@
+[
+  {
+    "id": "S01",
+    "method": "GET",
+    "path": "/storage-admin/v1/instances",
+    "ownerPath": "/storage-admin/v1/instances",
+    "query": "",
+    "routeCode": "operations-file-storage-instance-list",
+    "request": null,
+    "response": {
+      "items": [
+        {
+          "instanceCode": "MINIO",
+          "storageType": "MINIO",
+          "endpoint": "https://minio.local.test:19400",
+          "region": "us-east-1",
+          "pathStyleAccess": true,
+          "trustedCertificatePem": "-----BEGIN CERTIFICATE-----\nMIIBsynthetic\n-----END CERTIFICATE-----",
+          "credentialMode": "STATIC",
+          "credentialConfigured": true,
+          "credentialUpdateTime": "2026-10-22T01:02:03.123456Z",
+          "connectTimeoutMs": 2000,
+          "readTimeoutMs": 10000,
+          "status": "ACTIVE",
+          "version": 3,
+          "updateTime": "2026-10-22T01:02:04.123456Z",
+          "routeCount": 1,
+          "buckets": [
+            {
+              "bucketName": "mor-platform-files",
+              "status": "ACTIVE",
+              "lastCheckTime": "2026-10-22T01:00:00.000001Z",
+              "lastCheckResult": "OK",
+              "routeCount": 1,
+              "version": 2,
+              "updateTime": "2026-10-22T01:00:01.000001Z"
+            }
+          ]
+        },
+        {
+          "instanceCode": "AWS_ME",
+          "storageType": "S3",
+          "endpoint": null,
+          "region": "me-central-1",
+          "pathStyleAccess": false,
+          "trustedCertificatePem": null,
+          "credentialMode": "IAM_ROLE",
+          "credentialConfigured": false,
+          "credentialUpdateTime": null,
+          "connectTimeoutMs": 2000,
+          "readTimeoutMs": 10000,
+          "status": "DRAFT",
+          "version": 1,
+          "updateTime": "2026-10-22T02:00:00.000001Z",
+          "routeCount": 0,
+          "buckets": []
+        }
+      ]
+    }
+  },
+  {
+    "id": "S02",
+    "method": "POST",
+    "path": "/storage-admin/v1/instances",
+    "ownerPath": "/storage-admin/v1/instances",
+    "query": "",
+    "routeCode": "operations-file-storage-instance-create",
+    "request": {
+      "instanceCode": "MINIO_SECOND",
+      "storageType": "MINIO",
+      "endpoint": "https://minio-second.local.test",
+      "region": "us-east-1",
+      "pathStyleAccess": true,
+      "trustedCertificatePem": null,
+      "connectTimeoutMs": 2000,
+      "readTimeoutMs": 10000,
+      "credentialMode": "STATIC",
+      "accessKey": "synthetic-access-key",
+      "secretKey": "synthetic-secret-key",
+      "reason": "新增第二个 MinIO"
+    },
+    "response": {
+      "objectType": "FILE_STORAGE_INSTANCE",
+      "objectId": "7312345678901234567",
+      "objectCode": "MINIO_SECOND",
+      "status": "DRAFT",
+      "version": 1
+    }
+  },
+  {
+    "id": "S03",
+    "method": "PUT",
+    "path": "/storage-admin/v1/instances/MINIO",
+    "ownerPath": "/storage-admin/v1/instances/MINIO",
+    "query": "",
+    "routeCode": "operations-file-storage-instance-update",
+    "request": {
+      "endpoint": "https://minio.local.test:19400",
+      "region": "us-east-1",
+      "pathStyleAccess": true,
+      "trustedCertificatePem": null,
+      "connectTimeoutMs": 3000,
+      "readTimeoutMs": 10000,
+      "expectedVersion": 3,
+      "reason": "调整连接超时"
+    },
+    "response": {
+      "objectType": "FILE_STORAGE_INSTANCE",
+      "objectId": "7312345678901234567",
+      "objectCode": "MINIO",
+      "status": "ACTIVE",
+      "version": 4
+    }
+  },
+  {
+    "id": "S04",
+    "method": "PUT",
+    "path": "/storage-admin/v1/instances/MINIO/credential",
+    "ownerPath": "/storage-admin/v1/instances/MINIO/credential",
+    "query": "",
+    "routeCode": "operations-file-storage-instance-credential",
+    "request": {
+      "credentialMode": "STATIC",
+      "accessKey": "synthetic-access-key-2",
+      "secretKey": "synthetic-secret-key-2",
+      "expectedVersion": 3,
+      "reason": "定期轮换"
+    },
+    "response": {
+      "objectType": "FILE_STORAGE_INSTANCE",
+      "objectId": "7312345678901234567",
+      "objectCode": "MINIO",
+      "status": "ACTIVE",
+      "version": 4
+    }
+  },
+  {
+    "id": "S05",
+    "method": "PATCH",
+    "path": "/storage-admin/v1/instances/MINIO/status",
+    "ownerPath": "/storage-admin/v1/instances/MINIO/status",
+    "query": "",
+    "routeCode": "operations-file-storage-instance-status",
+    "request": {
+      "status": "DISABLED",
+      "expectedVersion": 3,
+      "reason": "迁移完成"
+    },
+    "response": {
+      "objectType": "FILE_STORAGE_INSTANCE",
+      "objectId": "7312345678901234567",
+      "objectCode": "MINIO",
+      "status": "DISABLED",
+      "version": 4
+    }
+  },
+  {
+    "id": "S06",
+    "method": "POST",
+    "path": "/storage-admin/v1/instances/MINIO/buckets",
+    "ownerPath": "/storage-admin/v1/instances/MINIO/buckets",
+    "query": "",
+    "routeCode": "operations-file-storage-bucket-create",
+    "request": {
+      "bucketName": "mor-workflow-files",
+      "reason": "工作流附件"
+    },
+    "response": {
+      "objectType": "FILE_STORAGE_BUCKET",
+      "objectId": "7312345678901234568",
+      "objectCode": "MINIO/mor-workflow-files",
+      "status": "DRAFT",
+      "version": 1
+    }
+  },
+  {
+    "id": "S07",
+    "method": "POST",
+    "path": "/storage-admin/v1/instances/MINIO/buckets/mor-workflow-files/check",
+    "ownerPath": "/storage-admin/v1/instances/MINIO/buckets/mor-workflow-files/check",
+    "query": "",
+    "routeCode": "operations-file-storage-bucket-check",
+    "request": null,
+    "response": {
+      "instanceCode": "MINIO",
+      "bucketName": "mor-workflow-files",
+      "result": "VERSIONING_DISABLED",
+      "checkedAt": "2026-10-22T03:00:00.000001Z",
+      "version": 2
+    }
+  },
+  {
+    "id": "S08",
+    "method": "PATCH",
+    "path": "/storage-admin/v1/instances/MINIO/buckets/mor-workflow-files/status",
+    "ownerPath": "/storage-admin/v1/instances/MINIO/buckets/mor-workflow-files/status",
+    "query": "",
+    "routeCode": "operations-file-storage-bucket-status",
+    "request": {
+      "status": "ACTIVE",
+      "expectedVersion": 2,
+      "reason": "检查通过"
+    },
+    "response": {
+      "objectType": "FILE_STORAGE_BUCKET",
+      "objectId": "7312345678901234568",
+      "objectCode": "MINIO/mor-workflow-files",
+      "status": "ACTIVE",
+      "version": 3
+    }
+  },
+  {
+    "id": "S09",
+    "method": "GET",
+    "path": "/storage-admin/v1/routes",
+    "ownerPath": "/storage-admin/v1/routes",
+    "query": "",
+    "routeCode": "operations-file-storage-route-list",
+    "request": null,
+    "response": {
+      "items": [
+        {
+          "sourceSystem": "*",
+          "instanceCode": "MINIO",
+          "bucketName": "mor-platform-files",
+          "scanPolicyCode": "CLIENT_ONBOARDING_FORMAT",
+          "maxUploadSeconds": 300,
+          "version": 1,
+          "updateTime": "2026-10-22T01:00:02.000001Z"
+        },
+        {
+          "sourceSystem": "client-master-service",
+          "instanceCode": "MINIO",
+          "bucketName": "mor-platform-files",
+          "scanPolicyCode": "CLIENT_ONBOARDING_FORMAT",
+          "maxUploadSeconds": 600,
+          "version": 2,
+          "updateTime": "2026-10-22T01:00:03.000001Z"
+        }
+      ]
+    }
+  },
+  {
+    "id": "S10",
+    "method": "POST",
+    "path": "/storage-admin/v1/routes",
+    "ownerPath": "/storage-admin/v1/routes",
+    "query": "",
+    "routeCode": "operations-file-storage-route-create",
+    "request": {
+      "sourceSystem": "platform-support",
+      "instanceCode": "MINIO",
+      "bucketName": "mor-platform-files",
+      "scanPolicyCode": "CLIENT_ONBOARDING_FORMAT",
+      "maxUploadSeconds": 300,
+      "reason": "入驻材料"
+    },
+    "response": {
+      "objectType": "FILE_STORAGE_ROUTE",
+      "objectId": "7312345678901234569",
+      "objectCode": "platform-support",
+      "status": null,
+      "version": 1
+    }
+  },
+  {
+    "id": "S11",
+    "method": "PUT",
+    "path": "/storage-admin/v1/routes/*",
+    "ownerPath": "/storage-admin/v1/routes/*",
+    "query": "",
+    "routeCode": "operations-file-storage-route-update",
+    "request": {
+      "instanceCode": "MINIO",
+      "bucketName": "mor-workflow-files",
+      "scanPolicyCode": "CLIENT_ONBOARDING_FORMAT",
+      "maxUploadSeconds": 900,
+      "expectedVersion": 1,
+      "reason": "默认改到新桶"
+    },
+    "response": {
+      "objectType": "FILE_STORAGE_ROUTE",
+      "objectId": "7312345678901234570",
+      "objectCode": "*",
+      "status": null,
+      "version": 2
+    }
+  },
+  {
+    "id": "S12",
+    "method": "DELETE",
+    "path": "/storage-admin/v1/routes/client-master-service",
+    "ownerPath": "/storage-admin/v1/routes/client-master-service",
+    "query": "",
+    "routeCode": "operations-file-storage-route-delete",
+    "request": {
+      "expectedVersion": 2,
+      "reason": "改用默认规则"
+    },
+    "response": {
+      "objectType": "FILE_STORAGE_ROUTE",
+      "objectId": "7312345678901234571",
+      "objectCode": "client-master-service",
+      "status": null,
+      "version": 2
+    }
+  }
+]

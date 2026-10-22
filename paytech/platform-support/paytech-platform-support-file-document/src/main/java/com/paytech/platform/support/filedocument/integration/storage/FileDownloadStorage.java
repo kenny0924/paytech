@@ -20,6 +20,28 @@ public interface FileDownloadStorage {
      * @param expiresAt 实际到期时间，不得晚于请求期限
      */
     record Download(String url,Instant expiresAt) {
+        /** 下载地址的最大长度。 */
+        static final int MAX_URL_LENGTH = 8192;
+
+        /**
+         * 授权仍有效、不晚于签发期限，地址为有主机、无用户信息与片段的有界 HTTPS 地址
+         *
+         * @param deadline 本次签发期限
+         * @param now 当前时间
+         */
+        public boolean usableUntil(Instant deadline, Instant now) {
+            if (url == null || expiresAt == null || url.length() > MAX_URL_LENGTH || !now.isBefore(expiresAt)
+                || expiresAt.isAfter(deadline)) {
+                return false;
+            }
+            try {
+                java.net.URI uri = java.net.URI.create(url);
+                return "https".equals(uri.getScheme()) && uri.getHost() != null && uri.getUserInfo() == null
+                    && uri.getFragment() == null;
+            } catch (IllegalArgumentException invalid) {
+                return false;
+            }
+        }
         /** 临时 URL 不进入日志。 */
         @Override public String toString() { return "Download[REDACTED]"; }
     }

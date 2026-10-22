@@ -22,29 +22,30 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.TestPropertySource;
 
 import com.paytech.platform.support.filedocument.integration.storage.StorageTrust;
-import com.paytech.platform.support.filedocument.integration.storage.minio.MinioFileStorage;
 import com.paytech.platform.support.test.builder.OnboardingFileBuilder;
 import com.paytech.platform.support.test.configuration.LocalMockEnvironmentInitializer;
 import com.paytech.platform.support.test.dal.FileTestMapper;
 import com.paytech.platform.support.test.mocker.external.CctFileTargetMocker;
+import com.paytech.platform.support.test.mocker.external.StorageVaultMocker;
 import com.paytech.platform.support.test.mocker.local.OnboardingApplicantMocker;
 import com.paytech.platform.support.test.mocker.local.OnboardingApplicantMocker.Applicant;
 import com.paytech.platform.support.test.mocker.local.OnboardingFileMocker;
+import com.paytech.platform.support.test.mocker.local.StorageInstanceMocker;
 import com.paytech.platform.support.test.mocker.local.StorageObjectMocker;
+import com.paytech.platform.support.test.mocker.local.TempBucketMocker;
 
 /**
- * 入驻文件测试基类：在独立 Spring 上下文开启文件能力并连接仓库 local-environment 的 MinIO；共享 Mock 上下文保持关闭。
+ * 文件测试基类：在独立 Spring 上下文开启 files.enabled 与 files.onboarding.enabled 并连接仓库 local-environment 的 MinIO；
+ * 共享 Mock 上下文保持关闭。
  *
- * <p>
- * 默认存储提供方为 MINIO；子类可用 {@link TestPropertySource} 覆盖 {@code files.onboarding.storage-provider}。 本机 MinIO、Platform
- * 账号环境变量或自签名证书缺失时在加载上下文前明确失败并提示准备步骤。
+ * <p>存储实例、存储桶与写入路由由 {@link StorageInstanceMocker} 每例插入：MINIO 类型与 S3 类型（AWS SDK）两个实例都指向本机
+ * MinIO 的测试存储桶，默认路由指向 MINIO 实例；密钥经 Vault 测试接口返回。本机 MinIO、Platform 账号或自签名证书缺失时在加载上下文前
+ * 明确失败并提示准备步骤。
  *
  * <p>上传开始使用本例插入的测试扫描策略；CCT 文件目标授权经真实出站 Client 访问独立 Mock HTTP 服务。
  * 每例结束先等待上传完成登记的扫描任务结束，再检查 CCT 意外调用，最后由公共清理回收。
  */
-@TestPropertySource(properties = {"files.onboarding.enabled=true",
-    "files.onboarding.storage-provider=" + MinioFileStorage.PROVIDER,
-    "files.onboarding.scan-policy-code=" + OnboardingFileMocker.POLICY_CODE})
+@TestPropertySource(properties = {"files.enabled=true", "files.onboarding.enabled=true"})
 public abstract class OnboardingFileTestBase extends OperationsApiTestBase {
 
     /** 本机自签名证书，相对 local-environment；与 application-mock.yml 的 trusted-certificate 一致。 */
@@ -75,6 +76,15 @@ public abstract class OnboardingFileTestBase extends OperationsApiTestBase {
     @Autowired
     protected OnboardingApplicantMocker applicants;
 
+    @Autowired
+    protected StorageInstanceMocker storageInstances;
+
+    @Autowired
+    protected StorageVaultMocker storageVault;
+
+    @Autowired
+    protected TempBucketMocker tempBuckets;
+
     /** 上下文加载前确认本机 MinIO、证书与 Platform 账号配置就绪（与 Mock 上下文同样读取 .env.local）；不启动或修改容器。 */
     @BeforeAll
     static void requireLocalMinio() {
@@ -96,7 +106,7 @@ public abstract class OnboardingFileTestBase extends OperationsApiTestBase {
             fail("缺少本机 MinIO 证书 " + certificate.toAbsolutePath().normalize()
                 + "；请先执行 local-environment/minio/generate-certs.sh" + SETUP);
         }
-        HttpClient client = HttpClient.newBuilder().sslContext(StorageTrust.fromPem(certificate).context())
+        HttpClient client = HttpClient.newBuilder().sslContext(pemTrust(certificate).context())
             .connectTimeout(Duration.ofSeconds(2)).build();
         try {
             int status =
@@ -113,19 +123,32 @@ public abstract class OnboardingFileTestBase extends OperationsApiTestBase {
         }
     }
 
-    /** 父类全局初始化后确认没有遗留的存储对象、测试扫描策略与 CCT 登记。 */
+    /** 父类全局初始化后确认没有遗留的存储对象、测试扫描策略、CCT 与 Vault 登记，再登记标准存储实例与默认路由。 */
     @BeforeEach
     void setUpOnboardingFileBase() {
         storage.assertEmpty();
         fileMocker.assertEmpty();
         cct.assertEmpty();
+        storageVault.assertEmpty();
+        tempBuckets.assertEmpty();
+        storageInstances.standard(OnboardingFileMocker.POLICY_CODE);
     }
 
-    /** 先等待扫描任务结束，再检查被业务捕获的 CCT 意外调用；公共清理随后执行。 */
+    /** 先等待扫描任务结束，再检查被业务捕获的 CCT 与 Vault 意外调用；公共清理随后执行。 */
     @AfterEach
     void tearDownOnboardingFileBase() {
         fileMocker.awaitScanTasks(platformDataCleaner);
         cct.assertNoUnexpectedCalls();
+        storageVault.assertNoUnexpectedCalls();
+    }
+
+    /** 读取 PEM 文件并复用生产信任材料。 */
+    static StorageTrust pemTrust(Path certificate) {
+        try {
+            return StorageTrust.fromPemText(Files.readString(certificate));
+        } catch (IOException failure) {
+            throw new IllegalStateException("读取本机 MinIO 证书失败", failure);
+        }
     }
 
     /** 应用固定时钟的当前微秒时间。 */

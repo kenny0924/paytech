@@ -4,9 +4,6 @@ import java.net.URI;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
-
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -19,8 +16,9 @@ import com.paytech.platform.support.core.integration.files.CctFileTargetClient;
 import com.paytech.platform.support.filedocument.domain.file.FileModels.File;
 import com.paytech.platform.support.filedocument.domain.file.FileModels.Owned;
 import com.paytech.platform.support.filedocument.domainservice.service.FileLifecycleService;
-import com.paytech.platform.support.filedocument.integration.storage.FileDownloadStorage;
 import com.paytech.platform.support.filedocument.integration.storage.FileDownloadStorage.Download;
+import com.paytech.platform.support.filedocument.integration.storage.FileObjectStorage;
+import com.paytech.platform.support.filedocument.integration.storage.FileStorageRegistry;
 import com.paytech.platform.support.service.processor.request.OnboardingFileAccessRequest;
 import com.paytech.platform.support.service.processor.response.DownloadOnboardingFileResponse;
 
@@ -43,15 +41,15 @@ public class DownloadOnboardingFileProcessor
 
     private final Clock clock;
 
-    private final ObjectProvider<FileDownloadStorage> adapters;
+    private final FileStorageRegistry registry;
 
     /** 注入公共授权步骤与下载签发的依赖。 */
     public DownloadOnboardingFileProcessor(Clock clock, CctFileTargetClient targets, FileLifecycleService files,
-        ObjectProvider<FileDownloadStorage> adapters, ClientOnboardingAccessService access,
+        FileStorageRegistry registry, ClientOnboardingAccessService access,
         CustomerAuthenticationService authentication, OperationsTransactionExecutor transactions) {
         super(targets, files, access, authentication, transactions);
         this.clock = clock;
-        this.adapters = adapters;
+        this.registry = registry;
     }
 
     @Override
@@ -61,9 +59,8 @@ public class DownloadOnboardingFileProcessor
         requireDownloadable(owned);
 
         // 事务外签发下载授权
-        FileDownloadStorage storage = storageFor(owned.file());
         Instant expiresAt = clock.instant().truncatedTo(ChronoUnit.MICROS).plusSeconds(DOWNLOAD_SECONDS);
-        Download grant = requestDownload(storage, owned.file(), expiresAt);
+        Download grant = requestDownload(owned.file(), expiresAt);
 
         // 网络等待后重新授权并核对文件未变
         Owned current = authorized(request);
@@ -77,20 +74,12 @@ public class DownloadOnboardingFileProcessor
         return new DownloadOnboardingFileResponse(grant.url(), grant.expiresAt());
     }
 
-    /** 原文件固定的存储适配器必须恰有一个。 */
-    FileDownloadStorage storageFor(File file) {
-        List<FileDownloadStorage> matching =
-            adapters.orderedStream().filter(adapter -> file.provider().equals(adapter.providerCode())).toList();
-        if (matching.size() != 1) {
-            throw new ServiceUnavailableException();
-        }
-        return matching.getFirst();
-    }
-
-    /** 事务外签发原版本的只读授权；适配器失败统一报告不可用并保留原因。 */
-    Download requestDownload(FileDownloadStorage storage, File file, Instant expiresAt) {
-        try {
+    /** 事务外按原文件记录的实例与桶签发原版本的只读授权；实例或桶不可读、适配器失败统一报告不可用并保留原因。 */
+    Download requestDownload(File file, Instant expiresAt) {
+        try (FileObjectStorage storage = registry.openForRead(file.provider(), file.container())) {
             return storage.authorize(file, expiresAt);
+        } catch (ServiceUnavailableException unavailable) {
+            throw unavailable;
         } catch (RuntimeException unavailable) {
             throw new ServiceUnavailableException(unavailable);
         }

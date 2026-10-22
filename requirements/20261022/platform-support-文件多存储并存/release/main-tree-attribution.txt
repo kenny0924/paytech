@@ -1,0 +1,103 @@
+# 发布树（281a217d + A/B 补丁）与主工作区逐文件差异归属（2026-10-22 阶段 6）
+# 每行：OK=差异行全部出现在他人来源的增删行中；REV=有合并产物（计数、合并列表、重排），已逐条人工核对，见 release.md 第 1 节
+# 来源：data-query = git diff 281a217d 9a209e6f；workflow = Code-MoR-workflow 未提交改动；ccu2 = Code-MoR-ccu2（channel-connector 第二段）未提交改动
+OK  +5/-2 {'data-query': (5, 2), 'dataquery-wt': (5, 2)} agent-docs/TECHNOLOGY_STACK.md
+REV +29/-1 {'workflow': (27, 0)} agent-docs/database/PLATFORM_SUPPORT_DATABASE.md
+    U+ > **渠道协议迁出（2026-10-20）：** 依据[统一对外出口决定](../decisions/2026-10-20-channel-connector-unified-outbound.md)与[技术方案](../../requirements/20261020/channel-connector-统一对外渠道出口/techni
+    U+ 受控出站 API 定义自 2026-10-20 起由 channel-connector 管理（见顶部迁出说明），Platform 不再持有相应表；Platform 不建立 Gateway Policy/Release/Snapshot/Ack、任意通用技术配置、通用 Dictionary、通用 Job、Inbox/Outbox、Rete
+    U- Integration 按顶部专项决定管理受控出站 API 定义；除此之外，不建立 Gateway Policy/Release/Snapshot/Ack、任意通用技术配置、通用 Dictionary、通用 Job、Inbox/Outbox、Retention、Legal Hold、Archive Workflow 或自动销毁表。
+OK  +65/-11 {'data-query': (65, 11), 'dataquery-wt': (65, 11)} local-environment/README.md
+REV +5/-2 {'data-query': (5, 2), 'dataquery-wt': (5, 2)} local-environment/vault/policy.local.json
+    U+ "FILE_STORAGE_CREDENTIAL_V1": { "tokenMode": "REFERENCE" },
+    U+ { "callerService": "platform-support-service", "action": "REVEAL", "dataType": "FILE_STORAGE_CREDENTIAL_V1", "purposes": ["FILE_STORAGE_ACCESS"] },
+    U- "FILE_STORAGE_CREDENTIAL_V1": { "tokenMode": "REFERENCE" }
+    U- { "callerService": "platform-support-service", "action": "REVEAL", "dataType": "FILE_STORAGE_CREDENTIAL_V1", "purposes": ["FILE_STORAGE_ACCESS"] }
+REV +6/-3 {'data-query': (4, 2), 'workflow': (2, 2), 'ccu2': (4, 3), 'dataquery-wt': (4, 2)} operations-console-web/src/configuration/configurationModel.test.ts
+    U+ assert.equal(pageCapabilities.length, 64);
+    U+ assert.equal(new Set(pageCapabilities.map(p => p.componentKey)).size, 64);
+    U- assert.equal(pageCapabilities.length, 59);
+    U- assert.equal(new Set(pageCapabilities.map(p => p.componentKey)).size, 59);
+OK  +6/-1 {'data-query': (2, 0), 'workflow': (4, 0), 'ccu2': (0, 1), 'dataquery-wt': (2, 0)} operations-console-web/src/navigation/ConsolePage.tsx
+OK  +74/-12 {'data-query': (22, 0), 'workflow': (47, 0), 'ccu2': (5, 12), 'dataquery-wt': (22, 0)} operations-console-web/src/navigation/pageCapabilities.ts
+OK  +5/-5 {'ccu2': (5, 5)} paytech/operations-console-bff/README.md
+REV +3/-3 {'data-query': (1, 1), 'workflow': (3, 3), 'dataquery-wt': (1, 1)} paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/configuration/ConfigurationManagementRequestConfiguration.java
+    U+ }).addPathPatterns("/gateway-admin/v1/**", "/console-admin/v1/**", "/permission-admin/v1/**", "/api-credential-admin/v1/**", "/api-scope-admin/v1/**", "/tenant-access-adm
+    U+ return value != null && value.getSimpleName().endsWith("RequestBody") && (FILE_STORAGE_REQUESTS.equals(value.getPackageName()) || value.getEnclosingClass() == com.paytech
+    U- }).addPathPatterns("/gateway-admin/v1/**", "/console-admin/v1/**", "/permission-admin/v1/**", "/api-credential-admin/v1/**", "/api-scope-admin/v1/**", "/tenant-access-adm
+    U- return value != null && value.getSimpleName().endsWith("RequestBody") && (FILE_STORAGE_REQUESTS.equals(value.getPackageName()) || value.getEnclosingClass() == com.paytech
+REV +111/-12 {'data-query': (86, 14), 'workflow': (27, 0), 'dataquery-wt': (86, 14)} paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/configuration/PlatformClientConfiguration.java
+    U+ return platformProxy(environment, discovery, testBaseUrl, tokens, true, true, READ_TIMEOUT)
+    U+ RestClient client = platformClient(environment, discovery, testBaseUrl, readTimeout);
+    U- RestClient client = builder.requestFactory(requestFactory(readTimeout))
+OK  +10/-0 {'data-query': (7, 0), 'workflow': (3, 0), 'dataquery-wt': (7, 0)} paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/resources/application.yml
+REV +53/-8 {'data-query': (21, 1), 'ccu2': (2, 5), 'dataquery-wt': (21, 1)} paytech/operations-console-bff/paytech-operations-console-bff-test/src/test/java/com/paytech/operations/console/bff/auto/OperationsConsoleBffApplicationAutoTest.java
+    U+ "/channel-admin/v1/channel-accounts", "/finance/reconciliation/v1/cash-accounts", "/workflow-admin", "/workflow"),
+    U+ "GET /finance/reconciliation/v1/bank-statement-lines/{bankStatementLineId}",
+    U+ "GET /workflow-admin/v1/action-templates",
+    U+ "GET /workflow-admin/v1/action-templates/{templateId}",
+    U+ "GET /workflow-admin/v1/action-templates/{templateId}/references",
+    U+ "POST /workflow-admin/v1/action-templates",
+    U+ "PUT /workflow-admin/v1/action-templates/{templateId}",
+    U+ "POST /workflow-admin/v1/action-templates/{templateId}/status",
+    U- "/channel-admin/v1/channel-accounts", "/finance/reconciliation/v1/cash-accounts"),
+    U- "GET /finance/reconciliation/v1/bank-statement-lines/{bankStatementLineId}"), routes);
+OK  +0/-1 {'ccu2': (0, 1)} paytech/operations-console-bff/paytech-operations-console-bff-test/src/test/java/com/paytech/operations/console/bff/auto/OperationsHttpBodyNamingAutoTest.java
+REV +7268/-685 {'data-query': (1625, 0), 'workflow': (5693, 735), 'dataquery-wt': (1625, 0)} paytech/platform-support/docs/database/platform-support.pdma.json
+    U+ "id": "A384F4B1-F427-5C31-A25F-7DE232C6DB97",
+    U+ "originKey": "412E9D30-5007-5864-8723-F853B84A1F0A",
+    U+ "cell": "76F2FD56-D100-5717-9948-89A2F1DF1D00",
+    U+ "port": "98098E72-119D-59BB-9665-5ECDAE626895%out"
+    U+ "cell": "B4CD471E-4D90-543D-AD7E-C48FEFEE1132",
+    U+ "port": "D0A9E59E-28CA-5D82-BAF7-6E1DBF926D0B%in"
+    U+ "id": "2ADEEFF7-80D6-5A19-9D8D-8202FC565A08",
+    U+ "originKey": "97CE323A-DB34-5CB2-90B1-1958A11C1047",
+    U- "id": "A384F4B1-F427-5C31-A25F-7DE232C6DB97",
+    U- "originKey": "412E9D30-5007-5864-8723-F853B84A1F0A",
+    U- "cell": "76F2FD56-D100-5717-9948-89A2F1DF1D00",
+    U- "port": "98098E72-119D-59BB-9665-5ECDAE626895%out"
+    U- "cell": "B4CD471E-4D90-543D-AD7E-C48FEFEE1132",
+    U- "port": "D0A9E59E-28CA-5D82-BAF7-6E1DBF926D0B%in"
+    U- "id": "2ADEEFF7-80D6-5A19-9D8D-8202FC565A08",
+    U- "originKey": "97CE323A-DB34-5CB2-90B1-1958A11C1047",
+OK  +828/-0 {'data-query': (284, 0), 'workflow': (434, 0), 'ccu2': (112, 0), 'dataquery-wt': (284, 0)} paytech/platform-support/docs/database/sql/platform-support-initial-data.sql
+REV +251/-0 {'data-query': (64, 0), 'workflow': (188, 0), 'dataquery-wt': (64, 0)} paytech/platform-support/docs/database/sql/platform-support-schema.sql
+    U+ -- Current Platform Support schema (63 approved tables). Apply manually to an EMPTY database only.
+OK  +74/-12 {'data-query': (22, 0), 'workflow': (47, 0), 'ccu2': (5, 12), 'dataquery-wt': (22, 0)} paytech/platform-support/paytech-platform-support-access-control/src/main/resources/operations/console-resource-capabilities.json
+REV +30/-1 {'data-query': (7, 1), 'workflow': (24, 1), 'dataquery-wt': (7, 1)} paytech/platform-support/paytech-platform-support-app/src/main/java/com/paytech/platform/support/configuration/PersistenceConfiguration.java
+    U+ "com.paytech.platform.support.workflow.core.dal.mapper",
+REV +69/-7 {'data-query': (29, 0), 'workflow': (40, 7), 'dataquery-wt': (29, 0)} paytech/platform-support/paytech-platform-support-app/src/main/resources/application.yml
+    U+ # 本地补偿执行默认跟随文件开关（PLATFORM_SUPPORT_FILES_ENABLED），未设置时跟随 Operations 人工认证（工作流通知与回调）；
+    U+ # 单独启用通知等其他消费者时设置 PLATFORM_SUPPORT_COMPENSATION_ENABLED=true。按环境变量串联，因为 files.enabled 在本文件中总有值。
+    U+ # 关闭时不创建补偿 Registrar：通知启用会在启动时因缺少该 Bean 失败，工作流登记通知回调的写操作会失败回滚。
+    U+ # 周期扫描的 XXL-Job 调度另行配置（工作流两类任务 WORKFLOW_NOTIFICATION、WORKFLOW_CALLBACK_EVENT 与其他补偿任务共用同一扫描任务）。
+    U+ enabled: ${PLATFORM_SUPPORT_COMPENSATION_ENABLED:${PLATFORM_SUPPORT_FILES_ENABLED:${operations.authentication.enabled:false}}}
+    U- # 本地补偿执行默认跟随文件开关 files.enabled；单独启用通知等其他消费者时设置 PLATFORM_SUPPORT_COMPENSATION_ENABLED=true。
+    U- enabled: ${PLATFORM_SUPPORT_COMPENSATION_ENABLED:${files.enabled:false}}
+REV +14/-1 {'data-query': (6, 1), 'workflow': (9, 1), 'dataquery-wt': (6, 1)} paytech/platform-support/paytech-platform-support-test/src/test/java/com/paytech/platform/support/test/builder/OperationsCatalog.java
+    U+ new Permission(900000000000127107L, "WORKFLOW_INSTANCE_MANAGE", "WORKFLOW_INSTANCE", "MANAGE", "HIGH", false),
+    U+ new Permission(900000000000130102L, "FILE_STORAGE_MANAGE", "FILE_STORAGE", "MANAGE", "HIGH", false),
+    U- new Permission(900000000000130102L, "FILE_STORAGE_MANAGE", "FILE_STORAGE", "MANAGE", "HIGH", false));
+REV +5/-4 {'data-query': (3, 2), 'workflow': (3, 3), 'dataquery-wt': (3, 2)} paytech/platform-support/paytech-platform-support-test/src/test/java/com/paytech/platform/support/test/configuration/LocalMockEnvironmentInitializer.java
+    U+ "MOR_MINIO_ROOT_PASSWORD", "MOR_RABBITMQ_USER", "MOR_RABBITMQ_PASSWORD", "MOR_DATA_QUERY_FIXTURE_READER_PASSWORD",
+    U+ /** MinIO 访问键、管理员账号名与 RabbitMQ 用户名最短 3 位，其余连接配置沿用 16 位下限。 */
+    U+ private static final Set<String> SHORT_KEYS = Set.of("MOR_MINIO_PLATFORM_ACCESS_KEY", "MOR_MINIO_ROOT_USER", "MOR_RABBITMQ_USER");
+    U+ /** 只读取本服务数据库、Redis、MinIO 账号（含仅供测试临时建桶的管理员账号）与数据查询被查库账号配置；文件不存在时沿用 YAML 的仓库默认配置。 */
+    U- "MOR_MINIO_ROOT_PASSWORD");
+    U- /** MinIO 访问键与管理员账号名最短 3 位，其余连接配置沿用 16 位下限。 */
+    U- private static final Set<String> SHORT_KEYS = Set.of("MOR_MINIO_PLATFORM_ACCESS_KEY", "MOR_MINIO_ROOT_USER");
+    U- /** 只读取本服务数据库、Redis 与 MinIO 账号（含仅供测试临时建桶的管理员账号）配置；文件不存在时沿用 YAML 的仓库默认配置。 */
+REV +11/-1 {'data-query': (11, 1), 'dataquery-wt': (11, 1)} paytech/platform-support/paytech-platform-support-test/src/test/java/com/paytech/platform/support/test/mock/external/VaultMockController.java
+    U+ /** 只读取本服务已批准的邮箱、通知发送账号凭据、Webhook 签名、存储实例密钥与数据源密码用途，不伪造其他 Vault 能力。 */
+    U- /** 只读取本服务已批准的邮箱、通知发送账号凭据、Webhook 签名与存储实例密钥用途，不伪造其他 Vault 能力。 */
+REV +6/-2 {'data-query': (3, 2), 'workflow': (4, 1), 'dataquery-wt': (3, 2)} paytech/platform-support/paytech-platform-support-test/src/test/java/com/paytech/platform/support/test/mocker/local/PlatformDataCleaner.java
+    U+ * Webhook 五表与工作流十表的行同样多由被测接口创建，测试独占并整表回收；数据查询三表同理。
+OK  +62/-0 {'data-query': (35, 0), 'workflow': (28, 0), 'dataquery-wt': (35, 0)} paytech/platform-support/paytech-platform-support-test/src/test/resources/application-mock.yml
+OK  +251/-0 {'data-query': (64, 0), 'workflow': (187, 0), 'dataquery-wt': (64, 0)} paytech/platform-support/paytech-platform-support-test/src/test/resources/init/ddl.sql
+REV +25/-12 {'data-query': (4, 1), 'workflow': (11, 1), 'ccu2': (11, 11), 'dataquery-wt': (4, 1)} paytech/tools/arch-rules/src/main/resources/table-ownership.yaml
+    U+ # 62 retained-service tables added on top of design 03 (not part of the §4.2 count).
+    U- # 49 retained-service tables added on top of design 03 (not part of the §4.2 count).
+OK  +2/-2 {'workflow': (2, 2)} scripts/pdmaner/platform-support-model.test.mjs
+REV +8/-1 {'workflow': (8, 1)} scripts/pdmaner/platform-support-test-oracle/schema.oracle.mjs
+    U+ export const EXPECTED_TABLE_TOTAL = 73;
+    U- export const EXPECTED_TABLE_TOTAL = 63;
+OK  +3/-0 {'workflow': (3, 0)} scripts/pdmaner/platform-support/manifest.mjs

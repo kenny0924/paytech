@@ -173,7 +173,46 @@ public sealed interface OperationsAuditFact permits OperationsAuditFact.Outcome,
         MINOR_UNIT,
 
         /** 币种金额舍入方式。 */
-        ROUNDING_MODE
+        ROUNDING_MODE,
+
+        /** 文件存储实例类型。 */
+        STORAGE_TYPE,
+
+        /** 文件存储实例服务地址。 */
+        ENDPOINT,
+
+        /** 文件存储实例是否使用路径风格访问。 */
+        PATH_STYLE_ACCESS,
+
+        /** 文件存储实例信任证书 PEM 的 SHA-256 摘要。 */
+        TRUSTED_CERTIFICATE_DIGEST,
+
+        /** 文件存储实例凭据方式。 */
+        CREDENTIAL_MODE,
+
+        /** 文件存储实例连接超时毫秒数。 */
+        CONNECT_TIMEOUT_MILLIS,
+
+        /** 文件存储实例读写超时毫秒数。 */
+        READ_TIMEOUT_MILLIS,
+
+        /** 文件存储桶名称。 */
+        BUCKET_NAME,
+
+        /** 文件存储桶启用检查结果。 */
+        CHECK_RESULT,
+
+        /** 文件写入路由的目标实例代码。 */
+        STORAGE_INSTANCE,
+
+        /** 文件写入路由的目标存储桶。 */
+        STORAGE_BUCKET,
+
+        /** 文件写入路由的扫描策略代码。 */
+        SCAN_POLICY,
+
+        /** 文件写入路由的上传期限秒数。 */
+        MAX_UPLOAD_SECONDS
     }
 
     /** 集合使用规范化指纹，防止完整子集合突破既有审计属性容量。 */

@@ -26,7 +26,8 @@ import com.paytech.platform.support.api.enums.OnboardingFileErrorCode;
 import com.paytech.platform.support.api.onboardingfiles.OnboardingFileApi;
 import com.paytech.platform.support.api.onboardingfiles.response.UploadCompletionResponseBody;
 import com.paytech.platform.support.filedocument.domain.enums.FileUploadStatus;
-import com.paytech.platform.support.filedocument.integration.storage.minio.MinioFileStorage;
+import com.paytech.platform.support.filedocument.domain.file.FileSourceCodes;
+import com.paytech.platform.support.test.mocker.local.StorageInstanceMocker;
 import com.paytech.platform.support.service.handler.FileScanHandler;
 import com.paytech.platform.support.test.base.OnboardingFileTestBase;
 import com.paytech.platform.support.test.builder.OnboardingFileBuilder;
@@ -81,6 +82,9 @@ class CompleteOnboardingUploadTest extends OnboardingFileTestBase {
             () -> assertEquals(fileId, receipt.getFileId()),
             () -> assertEquals(now(), receipt.getCompletedAt()),
             () -> assertEquals(FileUploadStatus.COMPLETED.getCode(), fileData.upload(spec.uploadId()).get("status")),
+            () -> assertEquals(FileSourceCodes.PLATFORM_SUPPORT, file.get("source_system")),
+            () -> assertEquals(FileSourceCodes.CLIENT_ONBOARDING_MATERIAL, file.get("reason_code")),
+            () -> assertEquals(StorageInstanceMocker.MINIO_INSTANCE, file.get("storage_provider")),
             () -> assertEquals(spec.contentHash(), file.get("content_hash")),
             () -> assertEquals(spec.size(), ((Number) file.get("size_bytes")).longValue()),
             () -> assertEquals(spec.mime(), file.get("mime_type")),
@@ -175,13 +179,14 @@ class CompleteOnboardingUploadTest extends OnboardingFileTestBase {
         cct.assertNoCalls();
     }
 
-    /** 其他账号的 Upload 不暴露存在性，不读取 CCT。 */
+    /** 其他账号的 Upload 与不存在的 Upload 同样返回 404，不暴露存在性，不读取 CCT。 */
     @Test
     void test_noDataFound() {
         Spec spec = storedOpenUpload(material().build());
         Applicant other = applicants.applicant();
 
         complete(headers(other), spec.uploadId()).assertProblem(404, OnboardingFileErrorCode.FILE_NOT_FOUND);
+        complete(headers(applicant), OperatorBuilder.nextId()).assertProblem(404, OnboardingFileErrorCode.FILE_NOT_FOUND);
 
         assertNotCompleted(spec);
         cct.assertNoCalls();
@@ -230,7 +235,7 @@ class CompleteOnboardingUploadTest extends OnboardingFileTestBase {
 
     /** 本类申请主体上、引用本类策略的 PDF 材料。 */
     private OnboardingFileBuilder material() {
-        return material(MinioFileStorage.PROVIDER).policyId(policyId)
+        return material(StorageInstanceMocker.MINIO_INSTANCE).policyId(policyId)
             .owner(applicant.tenantId(), applicant.accountId(), applicationId, subjectPartyId)
             .scanStatus(FileScanStatus.PENDING_SCAN).objectStatus(FileObjectStatus.ACTIVE);
     }

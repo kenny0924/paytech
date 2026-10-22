@@ -63,13 +63,14 @@ public class ConfigurationManagementRequestConfiguration implements WebMvcConfig
                 }
                 if (request.getMethod().equals("GET") && request.getInputStream().read() != -1)
                     throw new InvalidParameterException("查询请求不接受 Body");
-                // Webhook 测试事件等无 RequestBody 的命令同样不接受 Body。
-                if (request.getServletPath().startsWith("/webhook-admin/") && !hasRequestBody(method)
+                // Webhook 测试事件、存储桶检查等无 RequestBody 的命令同样不接受 Body。
+                if ((request.getServletPath().startsWith("/webhook-admin/") || request.getServletPath().startsWith("/storage-admin/"))
+                    && !hasRequestBody(method)
                     && request.getInputStream().read() != -1)
                     throw new InvalidParameterException("该请求不接受 Body");
                 return true;
             }
-        }).addPathPatterns("/gateway-admin/v1/**", "/console-admin/v1/**", "/permission-admin/v1/**", "/api-credential-admin/v1/**", "/api-scope-admin/v1/**", "/tenant-access-admin/v1/**", "/external-api-admin/v1/**", "/notification-admin/v1/**", "/webhook-admin/v1/**", "/currency-admin/v1/**", "/data-query-admin/v1/**", "/data-query/v1/**");
+        }).addPathPatterns("/gateway-admin/v1/**", "/console-admin/v1/**", "/permission-admin/v1/**", "/api-credential-admin/v1/**", "/api-scope-admin/v1/**", "/tenant-access-admin/v1/**", "/external-api-admin/v1/**", "/notification-admin/v1/**", "/webhook-admin/v1/**", "/currency-admin/v1/**", "/storage-admin/v1/**", "/data-query-admin/v1/**", "/data-query/v1/**");
     }
 
     /** Controller 方法是否声明 RequestBody。 */
@@ -86,12 +87,15 @@ public class ConfigurationManagementRequestConfiguration implements WebMvcConfig
     }
 
     private static final class ConfigurationRequestConverter extends JacksonJsonHttpMessageConverter {
+        /** 存储管理页直接使用 Platform 管理合同的请求模型，同样走严格解析。 */
+        private static final String FILE_STORAGE_REQUESTS = "com.paytech.platform.support.api.filestorage.request";
+
         private ConfigurationRequestConverter(JsonMapper mapper) { super(mapper); }
 
         @Override
         public boolean canRead(ResolvableType type, MediaType mediaType) {
             Class<?> value = type.resolve();
-            return value != null && value.getSimpleName().endsWith("RequestBody") && (value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.GatewayConfigurationModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.ConsoleResourceModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.PermissionManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.ApiScopeManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.ApiCredentialManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.TenantAccessManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.NotificationManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.WebhookManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.CurrencySpecManagementModels.class)
+            return value != null && value.getSimpleName().endsWith("RequestBody") && (FILE_STORAGE_REQUESTS.equals(value.getPackageName()) || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.GatewayConfigurationModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.ConsoleResourceModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.PermissionManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.ApiScopeManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.ApiCredentialManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.TenantAccessManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.NotificationManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.WebhookManagementModels.class || value.getEnclosingClass() == com.paytech.operations.console.bff.service.model.CurrencySpecManagementModels.class)
                 && super.canRead(type, mediaType);
         }
 

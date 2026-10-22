@@ -17,11 +17,11 @@ import org.springframework.core.env.MapPropertySource;
 public class LocalMockEnvironmentInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
     private static final Set<String> CONNECTION_KEYS = Set.of("MOR_PLATFORM_DB_PASSWORD", "MOR_REDIS_PASSWORD", "PAYTECH_REDIS_PASSWORD",
-        "MOR_MINIO_PLATFORM_ACCESS_KEY", "MOR_MINIO_PLATFORM_SECRET_KEY", "MOR_DATA_QUERY_FIXTURE_READER_PASSWORD",
-        "MOR_DATA_QUERY_FIXTURE_WRITER_PASSWORD");
+        "MOR_MINIO_PLATFORM_ACCESS_KEY", "MOR_MINIO_PLATFORM_SECRET_KEY", "MOR_MINIO_ROOT_USER",
+        "MOR_MINIO_ROOT_PASSWORD", "MOR_DATA_QUERY_FIXTURE_READER_PASSWORD", "MOR_DATA_QUERY_FIXTURE_WRITER_PASSWORD");
 
-    /** MinIO 访问键最短 3 位，其余连接配置沿用 16 位下限。 */
-    private static final Set<String> SHORT_KEYS = Set.of("MOR_MINIO_PLATFORM_ACCESS_KEY");
+    /** MinIO 访问键与管理员账号名最短 3 位，其余连接配置沿用 16 位下限。 */
+    private static final Set<String> SHORT_KEYS = Set.of("MOR_MINIO_PLATFORM_ACCESS_KEY", "MOR_MINIO_ROOT_USER");
 
     /**
      * 本地环境目录的唯一锚点（design/10 §4.4）：paytech-parent 经 Surefire 透传，IDE 运行可用 {@code -D} 覆盖。
@@ -107,7 +107,7 @@ public class LocalMockEnvironmentInitializer implements ApplicationContextInitia
         return directory;
     }
 
-    /** 只读取本服务数据库、Redis、MinIO 与数据查询被查库账号配置；文件不存在时沿用 YAML 的仓库默认配置。 */
+    /** 只读取本服务数据库、Redis、MinIO 账号（含仅供测试临时建桶的管理员账号）与数据查询被查库账号配置；文件不存在时沿用 YAML 的仓库默认配置。 */
     private Map<String, Object> loadConnectionProperties(Path file) {
         Map<String, Object> values = new LinkedHashMap<>();
         if (!Files.exists(file)) {

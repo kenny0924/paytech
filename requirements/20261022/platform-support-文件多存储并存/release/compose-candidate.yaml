@@ -1,0 +1,41 @@
+# 文件多存储并存（第一段）：mor-test 候选覆盖文件（2026-10-22 阶段 6 准备；阶段 7 由主会话按 release.md 第 5 节执行）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件：
+#   ./test-environment/compose.sh -f "$PWD/requirements/20261022/platform-support-文件多存储并存/release/compose-candidate.yaml" \
+#     up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 不加 --remove-orphans。部署只认下列固定 sha256（tag filestore-20261022 仅供辨认，:development 未改动）。
+# 构建源：干净 worktree /Users/kenny/Desktop/Workspace/Code-MoR-filestore-rel = main 281a217d（三个服务与 mor-test 运行版逐项一致，
+#   release.md 第 1 节）+ Code-MoR-filestore（任务卡 A）与 Code-MoR-filestore-ops（任务卡 B，api 副本除外）相对 281a217d 的改动。
+#   Java 镜像用 test-environment/java/Dockerfile，health-probe 取自运行容器；Web 用 operations-console-web/Dockerfile。
+# 环境变量（release.md 第 2 节）：只有 platform-support-service 变化——删除 8 个旧存储键（新 Platform 见到任一即拒绝启动），
+#   新增 PLATFORM_SUPPORT_FILES_ENABLED=true（FILES_ONBOARDING_ENABLED=true 要求 files.enabled=true）；
+#   另把主 compose 中工作流会话尚未发布的 PLATFORM_SUPPORT_RABBITMQ_* 置空，使其余环境变量与运行容器逐键相同。
+#   ops-bff、ops-web 只换 image。
+# 回滚：同目录 compose-rollback.yaml。
+services:
+  platform-support-service:
+    # 存储管理 /storage-admin/v1（12 个接口）、内部文件接口 /internal/files/v1、存储注册表；入驻链路改走库中写入路由。
+    # 阶段 7 修正：MinIO / S3 适配器的上传与下载授权到期时间截到微秒（原为纳秒，运营端审核下载解码拒绝）；
+    # 与首版 04c12879（JAR 415a3639c046975b）逐条目比较只差 MinioFileStorage、S3FileStorage 两个类。
+    image: sha256:6dd8ffffae5e86f6869d9d04a5b0cb52583936b0805a842e648d555f8551cb0a  # mor-test/platform-support-service:filestore-20261022c（JAR c00359f59e3d3485）
+    environment:
+      PLATFORM_SUPPORT_FILES_ENABLED: "true"
+      FILES_ONBOARDING_STORAGE_PROVIDER: !reset null
+      FILES_ONBOARDING_STORAGE_CONTAINER_REF: !reset null
+      FILES_ONBOARDING_SCAN_POLICY_CODE: !reset null
+      FILES_ONBOARDING_MINIO_ENDPOINT: !reset null
+      FILES_ONBOARDING_MINIO_REGION: !reset null
+      FILES_ONBOARDING_MINIO_ACCESS_KEY: !reset null
+      FILES_ONBOARDING_MINIO_SECRET_KEY: !reset null
+      FILES_ONBOARDING_MINIO_TRUSTED_CERTIFICATE: !reset null
+      # 工作流会话的未提交改动（主 compose 第 198—203 行），不属于本次；工作流发布时由其覆盖文件带上。
+      PLATFORM_SUPPORT_RABBITMQ_HOST: !reset null
+      PLATFORM_SUPPORT_RABBITMQ_PORT: !reset null
+      PLATFORM_SUPPORT_RABBITMQ_USERNAME: !reset null
+      PLATFORM_SUPPORT_RABBITMQ_PASSWORD: !reset null
+      PLATFORM_SUPPORT_RABBITMQ_VHOST: !reset null
+  operations-console-bff:
+    # /storage-admin/v1 12 个转发端点（metadata-only 日志）、PlatformClientConfiguration 登记 FileStorageManagementApi。
+    image: sha256:e81b84242c36510722a2a0fbc21f73842a350bf1b7bcc464fc59ba7bedaa5f5c  # mor-test/operations-console-bff:filestore-20261022（JAR 97fc918028ea1edd）
+  operations-console-web:
+    # 平台配置 → 存储管理（OPERATIONS_FILE_STORAGE，/file-storage）。基线 = 现网 capability-ui-20261022d（d1e5619f…，162 个文件逐字节一致）。
+    image: sha256:d58172d9a291c99f1c1b37ef76e0a77284ab49ede84dafd294f05d1244e8ea9e  # mor-test/operations-console-web:filestore-20261022b（入口 assets/index-BwlcgcJr.js；阶段 7 修正：写命令一律声明 JSON，替换首版 8c224936）

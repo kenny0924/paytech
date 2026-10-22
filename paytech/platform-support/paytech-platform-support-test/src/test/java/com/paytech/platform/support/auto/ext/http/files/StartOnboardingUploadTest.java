@@ -31,13 +31,16 @@ import com.paytech.platform.support.api.onboardingfiles.request.StartUploadReque
 import com.paytech.platform.support.api.onboardingfiles.response.UploadAuthorization;
 import com.paytech.platform.support.api.onboardingfiles.response.UploadResponseBody;
 import com.paytech.platform.support.filedocument.domain.enums.FileUploadStatus;
-import com.paytech.platform.support.filedocument.integration.storage.minio.MinioFileStorage;
+import com.paytech.platform.support.api.enums.FileStorageBucketStatus;
+import com.paytech.platform.support.filedocument.domain.file.FileSourceCodes;
+import com.paytech.platform.support.test.mocker.local.StorageInstanceMocker;
 import com.paytech.platform.support.test.base.OnboardingFileTestBase;
 import com.paytech.platform.support.test.builder.OnboardingFileBuilder;
 import com.paytech.platform.support.test.builder.OperatorBuilder;
 import com.paytech.platform.support.test.builder.StartUploadRequestBuilder;
 import com.paytech.platform.support.test.checker.PlatformResponseChecker;
 import com.paytech.platform.support.test.mocker.local.OnboardingApplicantMocker.Applicant;
+import com.paytech.platform.support.test.mocker.local.OnboardingFileMocker;
 import com.paytech.platform.support.test.mocker.local.OnboardingFileMocker.Policy;
 
 /**
@@ -53,8 +56,8 @@ class StartOnboardingUploadTest extends OnboardingFileTestBase {
     /** 原注解锁与模板锁共用的互斥域前缀。 */
     private static final String START_LOCK_PREFIX = "file:upload:start:";
 
-    /** Upload 默认有效秒数，与 application-mock.yml 的 files.onboarding.upload-seconds 一致。 */
-    private static final long UPLOAD_SECONDS = 900;
+    /** Upload 有效秒数，取默认写入路由的上传期限。 */
+    private static final long UPLOAD_SECONDS = StorageInstanceMocker.UPLOAD_SECONDS;
 
     @Autowired
     private RedissonClient redisson;
@@ -93,7 +96,10 @@ class StartOnboardingUploadTest extends OnboardingFileTestBase {
             () -> assertEquals(StartUploadRequestBuilder.DEFAULT_FILENAME, upload.get("display_name")),
             () -> assertEquals((long) OnboardingFileBuilder.PDF.length, ((Number) upload.get("expected_size")).longValue()),
             () -> assertEquals(StartUploadRequestBuilder.DEFAULT_MIME, upload.get("expected_mime")),
-            () -> assertEquals(MinioFileStorage.PROVIDER, upload.get("storage_provider")),
+            () -> assertEquals(FileSourceCodes.PLATFORM_SUPPORT, upload.get("source_system")),
+            () -> assertEquals(FileSourceCodes.CLIENT_ONBOARDING_MATERIAL, upload.get("reason_code")),
+            () -> assertEquals(applicant.accountId(), ((Number) upload.get("uploader_id")).longValue()),
+            () -> assertEquals(StorageInstanceMocker.MINIO_INSTANCE, upload.get("storage_provider")),
             () -> assertEquals(storage.bucket(), upload.get("storage_container_ref")),
             () -> assertEquals(policy.policyId(), ((Number) upload.get("scan_policy_id")).longValue()),
             () -> assertEquals(FileUploadStatus.CREATED.getCode(), upload.get("status")),
@@ -200,6 +206,23 @@ class StartOnboardingUploadTest extends OnboardingFileTestBase {
      * 同一账号、申请与主体的上传目标已被锁定时（沿用原注解锁的完整 Key），新请求在等待上限后返回并发冲突且不访问 CCT；
      * 同一账号的其他主体不受影响。
      */
+    /** 入驻上传按来源系统 platform-support 的精确路由选择存储；路由指向的桶只读时返回 503，不调用 CCT 之后的登记与签发。 */
+    @Test
+    void test_routedByPlatformSource() {
+        storageInstances.route(FileSourceCodes.PLATFORM_SUPPORT, StorageInstanceMocker.S3_INSTANCE,
+            OnboardingFileMocker.POLICY_CODE);
+        storageInstances.refresh();
+        cct.allow(applicant.accountId(), applicationId, subjectPartyId, applicant.clientId(), true);
+
+        start(headers(applicant), request().build()).assertStatus(201);
+        storage.track((String) onlyUpload().get("storage_object_ref"));
+        assertEquals(StorageInstanceMocker.S3_INSTANCE, onlyUpload().get("storage_provider"));
+
+        storageInstances.bucketStatus(StorageInstanceMocker.S3_INSTANCE, FileStorageBucketStatus.READ_ONLY);
+        start(headers(applicant), request().build()).assertProblem(503, CommonErrorCode.SERVICE_UNAVAILABLE);
+        assertEquals(1, fileData.uploadsOf(applicant.accountId()).size());
+    }
+
     @Test
     void test_concurrentStartSameTarget() throws InterruptedException {
         long otherSubjectPartyId = OperatorBuilder.nextId();

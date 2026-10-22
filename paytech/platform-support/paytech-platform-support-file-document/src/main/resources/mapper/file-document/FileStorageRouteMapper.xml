@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.filedocument.core.dal.mapper.FileStorageRouteMapper">
+
+    <sql id="columns">
+        route_id AS routeId, source_system AS sourceSystem, bucket_id AS bucketId, scan_policy_code AS scanPolicyCode,
+        max_upload_seconds AS maxUploadSeconds, version, create_time AS createTime, update_time AS updateTime
+    </sql>
+
+    <select id="selectAll" timeout="2"
+            resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileStorageRoute">
+        SELECT <include refid="columns"/> FROM t_file_storage_route ORDER BY source_system
+    </select>
+
+    <select id="lockBySource" flushCache="true" useCache="false"
+            resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileStorageRoute">
+        SELECT <include refid="columns"/> FROM t_file_storage_route WHERE source_system = #{sourceSystem} FOR UPDATE
+    </select>
+
+    <select id="countByBucket" resultType="int">
+        SELECT COUNT(*) FROM t_file_storage_route WHERE bucket_id = #{bucketId}
+    </select>
+
+    <select id="countByInstance" resultType="int">
+        SELECT COUNT(*) FROM t_file_storage_route r JOIN t_file_storage_bucket b ON b.bucket_id = r.bucket_id
+        WHERE b.instance_id = #{instanceId}
+    </select>
+
+    <insert id="insert">
+        INSERT INTO t_file_storage_route (route_id, source_system, bucket_id, scan_policy_code, max_upload_seconds,
+            version, create_time, update_time)
+        VALUES (#{row.routeId}, #{row.sourceSystem}, #{row.bucketId}, #{row.scanPolicyCode}, #{row.maxUploadSeconds},
+            #{row.version}, #{row.createTime}, #{row.updateTime})
+    </insert>
+
+    <update id="update">
+        UPDATE t_file_storage_route
+        SET bucket_id = #{target.bucketId}, scan_policy_code = #{target.scanPolicyCode},
+            max_upload_seconds = #{target.maxUploadSeconds}, version = version + 1, update_time = #{now}
+        WHERE route_id = #{row.routeId} AND version = #{row.version}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM t_file_storage_route WHERE route_id = #{row.routeId} AND version = #{row.version}
+    </delete>
+</mapper>
