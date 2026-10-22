@@ -13,24 +13,24 @@ import com.paytech.client.console.bff.domain.enums.SectionAvailability;
 import com.paytech.client.console.bff.integration.CctOnboardingClient;
 import com.paytech.client.console.bff.integration.ComplianceOnboardingClient;
 import com.paytech.client.console.bff.integration.PlatformAuthenticationClient;
-import com.paytech.client.console.bff.integration.PlatformOnboardingFileClient;
-import com.paytech.client.console.bff.service.model.ClientActor;
+import com.paytech.client.console.bff.integration.PlatformFileClient;
 import com.paytech.client.console.bff.service.model.response.ApplicationResponseBody;
 import com.paytech.client.console.bff.service.model.response.ApplicationDocument;
 import com.paytech.client.console.bff.service.model.response.MaterialSubject;
+import com.paytech.client.console.bff.service.model.response.OnboardingFileResponseBody;
 import com.paytech.client.console.bff.service.model.response.ReviewResult;
 import com.paytech.client.console.bff.service.processor.request.ClientApplicationDetailsRequest;
 import com.paytech.client.contract.api.onboarding.ClientDraftModels.ClientDraftResponseBody;
 import com.paytech.compliance.api.MaterialRequirementsModels.RequirementBody;
 import com.paytech.compliance.api.enums.MaterialQualificationType;
 import com.paytech.foundation.processor.AbstractProcessor;
-import com.paytech.platform.support.api.onboardingfiles.response.FileResponseBody;
+import com.paytech.platform.support.api.files.FileAddress;
 
 import lombok.AllArgsConstructor;
 
 /**
  * 入驻申请详情：CCT 草稿为主，并发补充 Compliance 材料要求、审核结果与 Platform 文件状态
- * <li>材料要求按资格类型各查询一次；文件按 fileId 各查询一次；审核结果只在 CCT 状态为 RETURNED/APPROVED/REJECTED 时读取。</li>
+ * <li>材料要求按资格类型各查询一次；文件按 CCT 保存的文件地址各查询一次（地址出现在本人申请中即可读）；审核结果只在 CCT 状态为 RETURNED/APPROVED/REJECTED 时读取。</li>
  * <li>部分依赖失败只把对应区域标为 UNAVAILABLE，保留 CCT 引用、不伪造空数据；会话失效终止整页。</li>
  * <li>全部并发读取共享 3 秒等待上限、最多 8 个并发；读取前后各回读一次 Platform 会话。</li>
  */
@@ -54,7 +54,7 @@ public class ClientApplicationDetailsProcessor
     private final CctOnboardingClient onboarding;
     private final ComplianceOnboardingClient compliance;
     private final PlatformAuthenticationClient authentication;
-    private final PlatformOnboardingFileClient files;
+    private final PlatformFileClient files;
 
     @Override
     protected ApplicationResponseBody processRequest(ClientApplicationDetailsRequest request) {
@@ -71,7 +71,7 @@ public class ClientApplicationDetailsProcessor
                     ? executor.submit(ConcurrentPageReads
                         .withRequestContext(() -> compliance.reviewResult(draft.applicationId(), draft.status())))
                     : null;
-            var fileFutures = submitFiles(executor, actor, draft);
+            var fileFutures = submitFiles(executor, draft);
             var materials = materials(subjects, requirements, deadline);
             var documents = documents(draft, fileFutures, deadline);
             var review = ConcurrentPageReads.result(reviewFuture, deadline);
@@ -116,15 +116,20 @@ public class ClientApplicationDetailsProcessor
         return futures;
     }
 
-    /** 每个 fileId 提交一次文件状态读取。 */
-    Map<String, Future<FileResponseBody>> submitFiles(ExecutorService executor, ClientActor actor,
+    /** 每个文件地址提交一次文件状态读取。 */
+    Map<String, Future<OnboardingFileResponseBody>> submitFiles(ExecutorService executor,
         ClientDraftResponseBody draft) {
-        var futures = new LinkedHashMap<String, Future<FileResponseBody>>();
+        var futures = new LinkedHashMap<String, Future<OnboardingFileResponseBody>>();
         for (var document : draft.documents()) {
-            futures.computeIfAbsent(document.fileId(),
-                id -> executor.submit(ConcurrentPageReads.withRequestContext(() -> files.file(actor, id))));
+            futures.computeIfAbsent(document.fileAddress(), address -> executor.submit(ConcurrentPageReads
+                .withRequestContext(() -> OnboardingFileResponseBody.of(files.file(fileId(address))))));
         }
         return futures;
+    }
+
+    /** CCT 回执已校验地址格式，这里只取出接口寻址用的文件 ID。 */
+    static String fileId(String fileAddress) {
+        return Long.toString(FileAddress.parse(fileAddress).fileId());
     }
 
     /** 为每个材料主体填入要求；读取失败的类型标为不可用。 */
@@ -138,13 +143,13 @@ public class ClientApplicationDetailsProcessor
     }
 
     /** 为每条材料引用附上文件状态；文件无法查询时只保留 CCT 引用。 */
-    static List<ApplicationDocument> documents(ClientDraftResponseBody draft, Map<String, Future<FileResponseBody>> files,
-        long deadline) {
+    static List<ApplicationDocument> documents(ClientDraftResponseBody draft,
+        Map<String, Future<OnboardingFileResponseBody>> files, long deadline) {
         return draft.documents().stream().map(document -> {
-            var file = ConcurrentPageReads.result(files.get(document.fileId()), deadline);
+            var file = ConcurrentPageReads.result(files.get(document.fileAddress()), deadline);
             return new ApplicationDocument(document.documentId(), document.subjectPartyId(), document.requirementCode(),
-                document.documentType(), document.fileId(), document.subjectInScope(), SectionAvailability.of(file),
-                file);
+                document.documentType(), fileId(document.fileAddress()), document.fileAddress(),
+                document.subjectInScope(), SectionAvailability.of(file), file);
         }).toList();
     }
 

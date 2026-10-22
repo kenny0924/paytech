@@ -97,10 +97,12 @@ export SPRING_CLOUD_NACOS_DISCOVERY_PASSWORD="$E2E_NACOS_PASSWORD" NACOS_NAMESPA
 COMMON=(--server.address=127.0.0.1 "--spring.data.redis.database=$REDIS_DB"
   --spring.rabbitmq.host=127.0.0.1 --spring.rabbitmq.port=5672 "--spring.rabbitmq.virtual-host=$VHOST")
 export PAYTECH_INSTANCE_ID=local-e2e
-# 一致性修正：internal-auth 全部 OFF（本步不验证 D26 切换）；带 *_INTERNAL_AUTH_MODE 键的服务显式设置，其余在 application.yml 固定 "OFF"。
+# 一致性修正：internal-auth 除 Platform 外全部 OFF（本步不验证 D26 切换）；带 *_INTERNAL_AUTH_MODE 键的服务显式设置，其余在
+# application.yml 固定 "OFF"。Platform 为 DUAL（文件多存储并存第二段）：内部文件接口按调用方 X-Caller-Service 取来源系统，
+# 其他内部入口无 Token、无头时照常放行；DUAL 还需要上面的 PAYTECH_INSTANCE_ID，JWKS 地址用 application.yml 默认值。
 export ACQUIRING_INTERNAL_AUTH_MODE=OFF CARD_INTERNAL_AUTH_MODE=OFF CHANNEL_CONNECTOR_INTERNAL_AUTH_MODE=OFF \
   COMPLIANCE_INTERNAL_AUTH_MODE=OFF COUNTERPARTY_INTERNAL_AUTH_MODE=OFF PAYMENT_INTERNAL_AUTH_MODE=OFF \
-  PLATFORM_SUPPORT_INTERNAL_AUTH_MODE=OFF RISK_DECISION_INTERNAL_AUTH_MODE=OFF
+  PLATFORM_SUPPORT_INTERNAL_AUTH_MODE=DUAL RISK_DECISION_INTERNAL_AUTH_MODE=OFF
 # RabbitMQ 账号经 Spring 通用键注入（各服务自有前缀键默认值为空，二者都设）
 export SPRING_RABBITMQ_USERNAME="$MOR_RABBITMQ_USER" SPRING_RABBITMQ_PASSWORD="$MOR_RABBITMQ_PASSWORD"
 export SPRING_DATA_REDIS_HOST=127.0.0.1 SPRING_DATA_REDIS_PORT=16379 SPRING_DATA_REDIS_PASSWORD="$MOR_REDIS_PASSWORD"
@@ -150,7 +152,6 @@ start_one() {
     platform)
       PLATFORM_SUPPORT_DB_URL="$(db_url platform)" PLATFORM_SUPPORT_DB_USERNAME=platform_app \
       PLATFORM_SUPPORT_DB_PASSWORD="$MOR_PLATFORM_DB_PASSWORD" PLATFORM_SUPPORT_REDIS_PASSWORD="$MOR_REDIS_PASSWORD" \
-      MINIO_ACCESS="$MOR_MINIO_PLATFORM_ACCESS_KEY" MINIO_SECRET="$MOR_MINIO_PLATFORM_SECRET_KEY" \
         java_app platform --spring.profiles.active=local "${NACOS[@]}" \
           --operations.authentication.enabled=true --operations.authentication.worker-id=1 \
           --client.authentication.enabled=true --client.authentication.worker-id=2 \
@@ -161,11 +162,8 @@ start_one() {
           --webhook.http.callers.acquiring-service=order.paid,order.cancelled,refund.created \
           `# 合成 PayerMax 在 http://127.0.0.1:18190；外部 API 执行默认只放行 https（仅本机放开）` \
           --ps.integration.execution.allowed-schemes=https,http \
-          --files.onboarding.enabled=true --files.onboarding.storage-provider=MINIO \
-          --files.onboarding.storage-container-ref=mor-platform-files --files.onboarding.scan-policy-code=CLIENT_ONBOARDING_FORMAT \
-          --files.onboarding.minio.endpoint=https://127.0.0.1:19400 --files.onboarding.minio.region=us-east-1 \
-          '--files.onboarding.minio.access-key=${MINIO_ACCESS}' '--files.onboarding.minio.secret-key=${MINIO_SECRET}' \
-          "--files.onboarding.minio.trusted-certificate=$LOCAL_ENV/minio/certs/public.crt" ;;
+          `# 文件能力：存储实例、桶、写入路由与密钥在运营「存储管理」中登记（本机 MinIO 证书与 Platform 账号经该入口录入，密钥进 Vault）` \
+          --files.enabled=true ;;
     client-master)
       SPRING_DATASOURCE_URL="$(db_url client-master)" SPRING_DATASOURCE_USERNAME=client_master_app \
       SPRING_DATASOURCE_PASSWORD="$(db_password MOR_CLIENT_MASTER_DB_PASSWORD client-master)" \

@@ -1,46 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.paytech.platform.support.accesscontrol.core.dal.mapper.TenantProjectionMapper">
-    <sql id="FileReadCandidates">
-        SELECT t.tenant_id,m.member_id,t.owner_ref_id AS client_id
-        FROM t_access_tenant t JOIN t_tenant_member m ON m.tenant_id=t.tenant_id
-        JOIN t_tenant_member_role g ON g.tenant_id=t.tenant_id AND g.tenant_member_id=m.member_id
-        JOIN t_role r ON r.role_id=g.role_id AND r.tenant_id=t.tenant_id
-        WHERE m.account_id=#{accountId} AND m.member_type='OWNER' AND m.status='ACTIVE'
-            AND t.tenant_type='CLIENT' AND t.tenant_id=#{tenantId} AND t.security_status='ACTIVE'
-            AND t.source_version &gt;= 1 AND REGEXP_LIKE(t.source_payload_hash,'^[0-9a-f]{64}$','c')
-            AND g.status='ACTIVE' AND g.role_scope_key=CAST(t.tenant_id AS CHAR)
-            AND g.effective_from &lt;= #{now} AND (g.effective_to IS NULL OR g.effective_to &gt; #{now})
-            AND r.tenant_scope='TENANT' AND r.scope_key=g.role_scope_key AND r.status='ACTIVE'
-            AND r.system_role=1 AND ((t.owner_status='PENDING' AND r.role_code='TENANT_ONBOARDING_OWNER')
-                OR (t.owner_status='ACTIVE' AND r.role_code='TENANT_OWNER'))
-        ORDER BY t.tenant_id,m.member_id
-    </sql>
-    <select id="fileReadCandidates" useCache="false" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.OnboardingTenantCandidate">
-        <include refid="FileReadCandidates"/>
-    </select>
-    <select id="fileAccount" useCache="false" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.TenantProjectionAccount">
-        SELECT account_id AS accountId,realm,account_type AS accountType,status FROM t_user_account WHERE account_id=#{id}
-    </select>
-    <select id="lockFileReadCandidates" flushCache="true" useCache="false"
-        resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.OnboardingTenantCandidate">
-        <include refid="FileReadCandidates"/> FOR UPDATE
-    </select>
-    <select id="lockUploadCandidates" flushCache="true" useCache="false"
-        resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.OnboardingTenantCandidate">
-        SELECT t.tenant_id,m.member_id,t.owner_ref_id AS client_id
-        FROM t_access_tenant t JOIN t_tenant_member m ON m.tenant_id=t.tenant_id
-        JOIN t_tenant_member_role g ON g.tenant_id=t.tenant_id AND g.tenant_member_id=m.member_id
-        JOIN t_role r ON r.role_id=g.role_id AND r.tenant_id=t.tenant_id
-        WHERE m.account_id=#{accountId} AND m.member_type='OWNER' AND m.status='ACTIVE'
-            AND t.tenant_type='CLIENT' AND t.owner_status='PENDING' AND t.security_status='ACTIVE'
-            AND t.source_version &gt;= 1 AND REGEXP_LIKE(t.source_payload_hash,'^[0-9a-f]{64}$','c')
-            AND g.status='ACTIVE' AND g.role_scope_key=CAST(t.tenant_id AS CHAR)
-            AND g.effective_from &lt;= #{now} AND (g.effective_to IS NULL OR g.effective_to &gt; #{now})
-            AND r.tenant_scope='TENANT' AND r.scope_key=g.role_scope_key AND r.status='ACTIVE'
-            AND r.system_role=1 AND r.role_code='TENANT_ONBOARDING_OWNER'
-        ORDER BY t.tenant_id,m.member_id FOR UPDATE
-    </select>
     <!-- 全局未开启下划线转驼峰；Lombok fluent DataObject 需显式别名。 -->
     <sql id="ProjectionColumns">tenant_id AS tenantId, owner_ref_id AS ownerRefId, owner_status AS ownerStatus,
         source_version AS sourceVersion, source_payload_hash AS sourcePayloadHash, version</sql>

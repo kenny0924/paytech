@@ -108,6 +108,7 @@ const VARCHAR_LENGTH_OVERRIDES = new Map(Object.entries({
   "agreement_acceptance.acceptance_reference": 128,
   "client_business_classification.mcc_code": 4,
   "client_business_profile.website_url": 2048,
+  "application_document.file_address": 255,
   "client_entity_affiliation.mcc_code": 4,
   "client_entity_assignment.mcc_code": 4,
   "pricing_profile.profile_name": 128,

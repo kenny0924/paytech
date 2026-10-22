@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.paytech.foundation.common.error.InvalidParameterException;
+import com.paytech.platform.support.api.files.FileAddress;
 import com.paytech.platform.support.api.files.response.FileDownloadResponseBody;
 import com.paytech.platform.support.api.files.response.FileUploadAuthorization;
 import com.paytech.platform.support.api.files.response.FileUploadCompletionResponseBody;
@@ -60,7 +61,7 @@ public class WorkflowAttachmentController implements WorkflowAttachmentApi {
         CompleteFileUploadResponse response = completeProcessor.process(new CompleteWorkflowAttachmentUploadRequest(
             actor, session, converter.id(uploadId, "uploadId")));
         return new FileUploadCompletionResponseBody(Long.toString(response.getUploadId()),
-            Long.toString(response.getFileId()), response.getCompletedAt());
+            Long.toString(response.getFileId()), FileAddress.of(response.getFileId()).value(), response.getCompletedAt());
     }
 
     /** 签发实例附件的短时下载地址。 */
@@ -70,7 +71,7 @@ public class WorkflowAttachmentController implements WorkflowAttachmentApi {
         AuthorizeFileDownloadResponse response = downloadProcessor.process(
             new AuthorizeWorkflowAttachmentDownloadRequest(actor, session, converter.id(instanceId, "instanceId"),
                 converter.id(fileId, "fileId")));
-        return new FileDownloadResponseBody(response.getUrl(), response.getExpiresAt());
+        return new FileDownloadResponseBody(response.getUrl(), response.getExpiresAt(), response.getDisposition().getCode());
     }
 
     /** 声明字节数：Body 已校验为正整数十进制字符串，超出 long 为参数错误。 */

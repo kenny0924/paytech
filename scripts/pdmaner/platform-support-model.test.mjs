@@ -382,11 +382,11 @@ test("Platform Support Identity group uses global accounts and tenant-owned cred
   );
 });
 
-test("Platform Support File and Consumer Document use fifteen consumer-driven tables", async () => {
+test("Platform Support File and Consumer Document use fourteen consumer-driven tables", async () => {
   const { TABLES } = await import("./platform-support/manifests/02-file-document.mjs");
   assert.deepEqual(TABLES.map((table) => table.defKey), [
     "file_upload", "file_scan_policy", "file_scan_requirement", "file_object",
-    "file_owner_ref", "file_scan_result", "document_template",
+    "file_scan_result", "document_template",
     "document_template_translation", "consumer_document", "document_version",
     "document_delivery", "document_access_grant",
     "file_storage_instance", "file_storage_bucket", "file_storage_route",
@@ -719,7 +719,6 @@ test("Platform Support separates mutable lifecycle metadata from immutable facts
     assert.ok(fields.has("update_time"), `${tableKey} 的生命周期更新必须可审计`);
   }
   for (const tableKey of [
-    "t_file_owner_ref",
     "t_file_scan_result",
     "t_document_delivery",
     "t_webhook_event",

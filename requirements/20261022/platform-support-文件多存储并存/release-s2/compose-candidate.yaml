@@ -1,0 +1,51 @@
+# 文件多存储并存第二段：mor-test 候选覆盖文件（2026-10-22 阶段 6 准备；阶段 7 由主会话按 release.md 第 5 节执行，另需用户授权）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件：
+#   ./test-environment/compose.sh -f "$PWD/requirements/20261022/platform-support-文件多存储并存/release-s2/compose-candidate.yaml" \
+#     up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service...>
+# 不加 --remove-orphans。部署只认下列固定 sha256（tag filestore-s2-20261022 仅供辨认，:development 未改动）。
+# 构建源：集成工作目录 /Users/kenny/Desktop/Workspace/Code-MoR-fs2-int = main 1d39cd94 + 第二段（S2-A/B/C 三卡三方合并，
+#   验证见 delivery.md）；main 3a4574c7 只多 Cybersource（channel-connector 与文档），与本次服务无关。
+#   Java 镜像用 test-environment/java/Dockerfile，health-probe 取自各运行容器；client-console-web 用自身 Dockerfile。
+# operations-console-web 不换：第二段相对 1d39cd94 没有 ops-web 改动；现网为 code-mor-42 的 opsui-20261022a（7551dc3b，1d39cd94 + 按钮布局），本包不涉及。
+# 环境变量（release.md 第 2 节）：以工作流发布的覆盖文件为起点（其渲染结果与六个运行容器逐键相同），Platform 只变三处：
+#   + PLATFORM_SUPPORT_INTERNAL_AUTH_MODE=DUAL；+ PAYTECH_INSTANCE_ID=platform-support-test（各实例唯一，命名同 payment-test 等）；
+#   − FILES_ONBOARDING_ENABLED（第二段已删除入驻文件入口，该键被忽略）。
+#   其余服务只换 image：调用方头 X-Caller-Service 写在代码里，不需要新增变量。
+# 回滚：同目录 compose-rollback.yaml。
+services:
+  platform-support-service:
+    # 删除入驻文件入口 F01—F04（OnboardingFileApi）、/internal/onboarding-files、/review-files 与反调 CCT；内部文件接口带
+    # fileAddress、disposition、原文件名与可选操作人审计；internal-auth DUAL（只认 X-Caller-Service，不拒绝无身份请求）。
+    image: sha256:7cb304024b520513dd461e22d6c423d11072ede95b47c9a56cf1c6e4f322f226  # mor-test/platform-support-service:filestore-s2-20261022（JAR 2d12967f2320998c）
+    environment:
+      PLATFORM_SUPPORT_INTERNAL_AUTH_MODE: DUAL
+      PAYTECH_INSTANCE_ID: platform-support-test
+      FILES_ONBOARDING_ENABLED: !reset null
+      DATAQUERY_HTTP_CALLERS_0: operations-console-bff
+      PLATFORM_SUPPORT_FILES_ENABLED: "true"
+      FILES_ONBOARDING_STORAGE_PROVIDER: !reset null
+      FILES_ONBOARDING_STORAGE_CONTAINER_REF: !reset null
+      FILES_ONBOARDING_SCAN_POLICY_CODE: !reset null
+      FILES_ONBOARDING_MINIO_ENDPOINT: !reset null
+      FILES_ONBOARDING_MINIO_REGION: !reset null
+      FILES_ONBOARDING_MINIO_ACCESS_KEY: !reset null
+      FILES_ONBOARDING_MINIO_SECRET_KEY: !reset null
+      FILES_ONBOARDING_MINIO_TRUSTED_CERTIFICATE: !reset null
+      PLATFORM_SUPPORT_RABBITMQ_HOST: rabbitmq
+      PLATFORM_SUPPORT_RABBITMQ_PORT: "5672"
+      PLATFORM_SUPPORT_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
+      PLATFORM_SUPPORT_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
+      PLATFORM_SUPPORT_RABBITMQ_VHOST: /mor-test
+  operations-console-bff:
+    # O10 审核下载改为 Risk 证据核对 → InternalFileApi getFile + authorizeDownload（X-Operator-Account-Id）；删除 ReviewFileApi。
+    image: sha256:a5b9a17cf88c4b6cc043ef543d890ca5f5e3e8cf1a99d2fcd1c1c34ceabf4820  # mor-test/operations-console-bff:filestore-s2-20261022（JAR 3d10e562aaa68f80）
+  client-master-service:
+    # C12 / C14 改收 fileAddress、调 Platform getFile 核对（上传人 = 本人）；t_application_document 改存 file_address；删除 ClientFileTargetApi。
+    # 注意：现网是 2026-10-18 的 e119cbd1 构建，本镜像同时带上 1d39cd94 之前已提交未发布的改动（release.md 第 1.3 节）。
+    image: sha256:e3fded0b701ddca6d2375b180f40c9d91e759f1f8773dc8457b67a3c1937aad0  # mor-test/client-master-service:filestore-s2-20261022（JAR 41a647487f7df657）
+  client-console-bff:
+    # 入驻文件路由（浏览器路径不变）改调 Platform 内部文件接口；下载按“本人上传或本人可读申请的材料”授权。同上，带上未发布改动。
+    image: sha256:105b962e775819d41933b41b673910ad768d511fd0ee06a8745aa40b8e4d5b7a  # mor-test/client-console-bff:filestore-s2-20261022（JAR 82398677c4278014）
+  client-console-web:
+    # 开始上传不再带 applicationId / subjectPartyId；关联材料提交 fileAddress。同上，带上 22815887（保存资料逐字段标红）。
+    image: sha256:25b30a78547bfe8a510560500ad1ab19623252ede81ebcba2b78c2bc3a19423d  # mor-test/client-console-web:filestore-s2-20261022

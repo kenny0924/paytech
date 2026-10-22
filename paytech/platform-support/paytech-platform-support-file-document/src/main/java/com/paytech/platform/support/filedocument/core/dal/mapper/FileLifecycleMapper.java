@@ -8,17 +8,11 @@ import com.paytech.platform.support.filedocument.domain.file.FileModels.*;
 import com.paytech.platform.support.api.enums.FileScanStatus;
 /** 文件登记与扫描仅操作本服务数据库。 */
 public interface FileLifecycleMapper {
-    /** 准确上传与 Owner 一致才提供读取入口。 */
-    Long readUploadId(@Param("fileId") long fileId,@Param("accountId") long accountId);
-    /** 入驻材料范围内按文件读取上传身份。 */
-    Long readReviewUploadId(@Param("fileId") long fileId);
     /** 文件当前状态的纯查询。 */
     FileObject readFile(@Param("id") long id);
 
     /** 上传已产生的唯一文件；未完成为空。 */
     CompletedUploadFile completedFile(@Param("uploadId") long uploadId);
-    /** 当前读锁住原 Upload。 */
-    FileUpload lockUpload(@Param("id") long id);
     /** 当前读锁住任一来源的原 Upload。 */
     FileUpload lockSourceUpload(@Param("id") long id);
     /** 文件与上传记录组合的元数据。 */
@@ -29,8 +23,6 @@ public interface FileLifecycleMapper {
     List<FileScanRequirement> requirements(@Param("fileId") long fileId,@Param("policyId") long policyId);
     /** 插入唯一文件。 */
     void insertFile(@Param("id") long id,@Param("upload") Upload upload,@Param("proof") Verified proof,@Param("now") Instant now);
-    /** 继承原 Owner；禁止挂到新的申请或主体。 */
-    void insertOwner(@Param("id") long id,@Param("fileId") long fileId,@Param("owner") String owner,@Param("now") Instant now);
     /** 原 Upload 状态 CAS。 */
     int completeUpload(@Param("id") long id,@Param("now") Instant now);
     /** 文件扫描状态更新，调用者必须已持有文件行锁。 */

@@ -31,7 +31,7 @@ import com.paytech.platform.support.filedocument.integration.storage.FileStorage
 import com.paytech.platform.support.test.base.FileStorageManagementTestBase;
 import com.paytech.platform.support.test.builder.OperatorBuilder;
 import com.paytech.platform.support.test.builder.OperatorBuilder.Operator;
-import com.paytech.platform.support.test.mocker.local.OnboardingFileMocker;
+import com.paytech.platform.support.test.mocker.local.FileMocker;
 import com.paytech.platform.support.test.mocker.local.StorageInstanceMocker;
 
 /**
@@ -85,7 +85,7 @@ class FileStorageRouteManagementTest extends FileStorageManagementTestBase {
             routes.stream().map(StorageRouteResponseBody::getSourceSystem).toList()),
             () -> assertEquals(S3, routes.getLast().getInstanceCode()),
             () -> assertEquals(storage.bucket(), routes.getLast().getBucketName()),
-            () -> assertEquals(OnboardingFileMocker.POLICY_CODE, routes.getLast().getScanPolicyCode()),
+            () -> assertEquals(FileMocker.POLICY_CODE, routes.getLast().getScanPolicyCode()),
             () -> assertEquals(S3, attributes(event).get("after.STORAGE_INSTANCE")));
         var instances = get(BASE + "/instances", admin).assertOk().as(StorageInstanceListResponseBody.class).getItems();
         assertEquals(List.of(1, 1), instances.stream().map(i -> i.getRouteCount()).toList());
@@ -94,8 +94,8 @@ class FileStorageRouteManagementTest extends FileStorageManagementTestBase {
     /** 修改路由只影响之后的选择；删除来源路由后回到默认路由；默认路由不能删除；旧版本 409。 */
     @Test
     void test_updateAndDelete() {
-        storageInstances.route(StorageInstanceMocker.DEFAULT_ROUTE, MINIO, OnboardingFileMocker.POLICY_CODE);
-        storageInstances.route(SOURCE, MINIO, OnboardingFileMocker.POLICY_CODE);
+        storageInstances.route(StorageInstanceMocker.DEFAULT_ROUTE, MINIO, FileMocker.POLICY_CODE);
+        storageInstances.route(SOURCE, MINIO, FileMocker.POLICY_CODE);
 
         assertMutation(put(BASE + "/routes/" + SOURCE, admin, update(S3, 600, 1)), SOURCE, 2);
         assertTarget(SOURCE, S3);
@@ -124,25 +124,25 @@ class FileStorageRouteManagementTest extends FileStorageManagementTestBase {
         post(BASE + "/routes", admin, create(SOURCE, "UT_MISSING"))
             .assertProblem(400, CommonErrorCode.BUSINESS_CHECK_FAILED);
         post(BASE + "/routes", admin, new CreateStorageRouteRequestBody(SOURCE, MINIO, "ut-unregistered-bucket",
-            OnboardingFileMocker.POLICY_CODE, 300, REASON)).assertProblem(400, CommonErrorCode.BUSINESS_CHECK_FAILED);
+            FileMocker.POLICY_CODE, 300, REASON)).assertProblem(400, CommonErrorCode.BUSINESS_CHECK_FAILED);
         post(BASE + "/routes", admin, new CreateStorageRouteRequestBody(SOURCE, MINIO, storage.bucket(), "UT_NO_POLICY",
             300, REASON)).assertProblem(400, CommonErrorCode.BUSINESS_CHECK_FAILED);
         post(BASE + "/routes", admin, new CreateStorageRouteRequestBody("File_Test", MINIO, storage.bucket(),
-            OnboardingFileMocker.POLICY_CODE, 300, REASON)).assertProblem(422, CommonErrorCode.VALIDATION_ERROR)
+            FileMocker.POLICY_CODE, 300, REASON)).assertProblem(422, CommonErrorCode.VALIDATION_ERROR)
             .assertFieldError("sourceSystem");
         post(BASE + "/routes", admin, new CreateStorageRouteRequestBody(SOURCE, MINIO, storage.bucket(),
-            OnboardingFileMocker.POLICY_CODE, 59, REASON)).assertProblem(422, CommonErrorCode.VALIDATION_ERROR)
+            FileMocker.POLICY_CODE, 59, REASON)).assertProblem(422, CommonErrorCode.VALIDATION_ERROR)
             .assertFieldError("maxUploadSeconds");
 
         assertNull(storageData.route(SOURCE));
-        storageInstances.route(SOURCE, MINIO, OnboardingFileMocker.POLICY_CODE);
+        storageInstances.route(SOURCE, MINIO, FileMocker.POLICY_CODE);
         post(BASE + "/routes", admin, create(SOURCE, MINIO)).assertProblem(400, CommonErrorCode.BUSINESS_CHECK_FAILED);
     }
 
     /** 有路由指向时，存储桶不能设为只读或停用，实例不能停用。 */
     @Test
     void test_referencedTargetsProtected() {
-        storageInstances.route(SOURCE, MINIO, OnboardingFileMocker.POLICY_CODE);
+        storageInstances.route(SOURCE, MINIO, FileMocker.POLICY_CODE);
         String bucketPath = BASE + "/instances/" + MINIO + "/buckets/" + storage.bucket() + "/status";
 
         patch(bucketPath, admin, status(FileStorageBucketStatus.READ_ONLY.getCode(), 1))
@@ -159,9 +159,9 @@ class FileStorageRouteManagementTest extends FileStorageManagementTestBase {
     /** 路由指向的存储桶已不存在（数据不一致）：列表按空目标返回以便运营发现，其余路由正常列出。 */
     @Test
     void test_danglingRoute() {
-        storageInstances.route(StorageInstanceMocker.DEFAULT_ROUTE, MINIO, OnboardingFileMocker.POLICY_CODE);
+        storageInstances.route(StorageInstanceMocker.DEFAULT_ROUTE, MINIO, FileMocker.POLICY_CODE);
         assertEquals(1, storageData.insertRoute(OperatorBuilder.nextId(), SOURCE, OperatorBuilder.nextId(),
-            OnboardingFileMocker.POLICY_CODE, StorageInstanceMocker.UPLOAD_SECONDS,
+            FileMocker.POLICY_CODE, StorageInstanceMocker.UPLOAD_SECONDS,
             clock.instant().truncatedTo(ChronoUnit.MICROS)));
 
         var routes = get(BASE + "/routes", admin).assertOk().as(StorageRouteListResponseBody.class).getItems();
@@ -182,13 +182,13 @@ class FileStorageRouteManagementTest extends FileStorageManagementTestBase {
 
     /** 新建路由请求，指向实例的测试存储桶与测试策略。 */
     private CreateStorageRouteRequestBody create(String source, String instanceCode) {
-        return new CreateStorageRouteRequestBody(source, instanceCode, storage.bucket(), OnboardingFileMocker.POLICY_CODE,
+        return new CreateStorageRouteRequestBody(source, instanceCode, storage.bucket(), FileMocker.POLICY_CODE,
             StorageInstanceMocker.UPLOAD_SECONDS, REASON);
     }
 
     /** 修改路由请求。 */
     private UpdateStorageRouteRequestBody update(String instanceCode, int seconds, int expectedVersion) {
-        return new UpdateStorageRouteRequestBody(instanceCode, storage.bucket(), OnboardingFileMocker.POLICY_CODE, seconds,
+        return new UpdateStorageRouteRequestBody(instanceCode, storage.bucket(), FileMocker.POLICY_CODE, seconds,
             expectedVersion, REASON);
     }
 

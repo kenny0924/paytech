@@ -14,7 +14,7 @@ import com.paytech.platform.support.test.checker.PlatformResponseChecker;
 import com.paytech.platform.support.test.dal.AuditTestMapper;
 import com.paytech.platform.support.test.dal.FileStorageTestMapper;
 import com.paytech.platform.support.test.mocker.external.StorageVaultMocker;
-import com.paytech.platform.support.test.mocker.local.OnboardingFileMocker;
+import com.paytech.platform.support.test.mocker.local.FileMocker;
 import com.paytech.platform.support.test.mocker.local.StorageInstanceMocker;
 import com.paytech.platform.support.test.mocker.local.StorageObjectMocker;
 import com.paytech.platform.support.test.mocker.local.TempBucketMocker;
@@ -47,7 +47,7 @@ public abstract class FileStorageManagementTestBase extends OperationsApiTestBas
     protected FileStorageTestMapper storageData;
 
     @Autowired
-    protected OnboardingFileMocker fileMocker;
+    protected FileMocker fileMocker;
 
     @Autowired
     protected AuditTestMapper auditData;

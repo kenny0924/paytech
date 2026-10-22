@@ -1,0 +1,36 @@
+-- 00-precheck.sql 只读执行结果（阶段 6，2026-10-22T15:12:13Z，root，mor-test-mysql-1）
++----------------------------------------------------------------+--------+--------+
+| item                                                           | actual | expect |
++----------------------------------------------------------------+--------+--------+
+| CCT t_application_document 尚无 file_address                   |      0 |      0 |
+| CCT file_id 仍为 NOT NULL                                      |      1 |      1 |
+| CCT 旧唯一键 uk_app_doc_client/partner/entity 存在             |      3 |      3 |
+| CCT 新唯一键 *_addr 不存在                                     |      0 |      0 |
+| CCT 材料行数                                                   |     52 |     52 |
+| CCT 材料引用的文件全部在 Platform                              |      0 |      0 |
+| Platform t_file_upload 三个 owner 列仍在                       |      3 |      3 |
+| Platform t_file_owner_ref 存在                                 |      1 |      1 |
+| Platform t_file_owner_ref 行数                                 |     55 |     55 |
+| Platform 上传行数                                              |     55 |     55 |
+| Platform 文件行数                                              |     55 |     55 |
+| 文件全部 AVAILABLE 且 ACTIVE                                   |      0 |      0 |
+| 进行中的上传                                                   |      0 |      0 |
+| 默认写入路由 * → MINIO / mor-platform-files ACTIVE             |      1 |      1 |
+| 没有 client-console-bff 的精确路由（走默认路由）               |      0 |      0 |
+| mor_platform 表数                                              |     63 |     63 |
+| 入驻审核证据引用的文件                                         |     52 |     52 |
+| Client 入驻文件 4 条 Gateway 路由 ACTIVE                       |      4 |      4 |
+| O10 审核下载路由 ACTIVE                                        |      1 |      1 |
+| 新审计动作 FILE_DOWNLOAD_AUTHORIZE 尚无记录                    |      0 |      0 |
++----------------------------------------------------------------+--------+--------+
++----------------------------------------------+-------+
+| item                                         | value |
++----------------------------------------------+-------+
+| APPROVED                                     |    35 |
+| RETURNED                                     |     3 |
+| REJECTED                                     |     3 |
+| UNDER_REVIEW                                 |     5 |
+| DRAFT                                        |     4 |
+| OPERATIONS_REVIEW_FILE_DOWNLOAD 审计条数     |    14 |
+| CCT 材料的不同 file_id                       |    52 |
++----------------------------------------------+-------+

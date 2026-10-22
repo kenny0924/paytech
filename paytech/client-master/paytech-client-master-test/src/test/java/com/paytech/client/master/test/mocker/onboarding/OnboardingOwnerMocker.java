@@ -14,7 +14,8 @@ import com.paytech.foundation.httpproblem.api.ApiProblemProfile;
 import com.paytech.foundation.httpproblem.api.ApiProblemResponse;
 import com.paytech.foundation.testsupport.api.Clear;
 import com.paytech.platform.support.api.authentication.response.AccountContextResponseBody;
-import com.paytech.platform.support.api.onboardingfiles.response.FileVerificationResponseBody;
+import com.paytech.platform.support.api.files.FileAddress;
+import com.paytech.platform.support.api.files.response.StoredFileResponseBody;
 import com.paytech.compliance.api.MaterialRequirementsModels.RequirementBody;
 import com.paytech.compliance.api.MaterialRequirementsModels.RequirementsResponseBody;
 import com.paytech.platform.support.api.tenantprojection.request.StatusRequestBody;
@@ -40,6 +41,7 @@ public class OnboardingOwnerMocker implements Clear {
     private final Map<String, Object> files = new HashMap<>();
     private Object review;
     private final List<String> calls = new CopyOnWriteArrayList<>();
+    private final List<String> fileCallers = new CopyOnWriteArrayList<>();
     private final List<ClientReviewRegistrationRequestBody> reviewRequests = new CopyOnWriteArrayList<>();
     private Object classificationReply;
     private final List<ClientReviewClassificationsRequestBody> classificationRequests = new CopyOnWriteArrayList<>();
@@ -67,10 +69,26 @@ public class OnboardingOwnerMocker implements Clear {
         requirements.put(qualificationType, new Fault(0, null, true));
     }
 
-    /** 文件当前可用，内容摘要固定。 */
-    public synchronized void mockFile(long fileId, String contentHash, String scanStatus) {
-        files.put(Long.toString(fileId), new FileVerificationResponseBody(Long.toString(fileId), "77" + fileId, contentHash, "1024",
-            "application/pdf", scanStatus, "ACTIVE", null));
+    /** 某账号上传的文件，对象 ACTIVE，扫描状态与内容摘要按本例指定。 */
+    public synchronized void mockFile(long uploaderAccountId, long fileId, String contentHash, String scanStatus) {
+        mockFile(uploaderAccountId, fileId, contentHash, scanStatus, "ACTIVE");
+    }
+
+    /** 某账号上传的文件，扫描与对象状态、内容摘要都按本例指定。 */
+    public synchronized void mockFile(long uploaderAccountId, long fileId, String contentHash, String scanStatus, String objectStatus) {
+        files.put(Long.toString(fileId), new StoredFileResponseBody(Long.toString(fileId), FileAddress.of(fileId).value(), "client-console-bff",
+            "CLIENT_ONBOARDING_MATERIAL", "material.pdf", "application/pdf", "1024", contentHash, scanStatus, objectStatus,
+            Long.toString(uploaderAccountId), Instant.parse("2026-10-22T00:00:00Z")));
+    }
+
+    /** 文件查询返回 Platform 的明确拒绝，例如 404 FILE_NOT_FOUND。 */
+    public synchronized void mockFileRejected(long fileId, int status, String code) {
+        files.put(Long.toString(fileId), new Fault(status, problem(status, code), false));
+    }
+
+    /** 文件查询返回 Platform 503。 */
+    public synchronized void mockFileUnavailable(long fileId) {
+        files.put(Long.toString(fileId), new Fault(503, problem(503, "SERVICE_UNAVAILABLE"), false));
     }
 
     /** Risk 登记成功并返回主审核任务。 */
@@ -168,12 +186,16 @@ public class OnboardingOwnerMocker implements Clear {
         return requirements.get(qualificationType);
     }
 
-    /** 文件核验；checkedAt 使用当前时间以满足 CCT 新鲜度检查。 */
-    public synchronized FileVerificationResponseBody file(String fileId) {
+    /** Platform 内部文件查询；记录文件与调用身份头，返回 DTO、Fault 或 null。 */
+    public synchronized Object file(String fileId, String callerService) {
         calls.add("file:" + fileId);
-        var proof = (FileVerificationResponseBody)files.get(fileId);
-        return proof == null ? null : new FileVerificationResponseBody(proof.getFileId(), proof.getUploadId(), proof.getContentHash(),
-            proof.getSizeBytes(), proof.getMimeType(), proof.getScanStatus(), proof.getObjectStatus(), Instant.now());
+        fileCallers.add(String.valueOf(callerService));
+        return files.get(fileId);
+    }
+
+    /** 文件查询请求携带的 X-Caller-Service 快照。 */
+    public List<String> fileCallers() {
+        return new ArrayList<>(fileCallers);
     }
 
     /** I01 审核登记；返回 DTO、Fault 或 null。 */
@@ -214,6 +236,7 @@ public class OnboardingOwnerMocker implements Clear {
         files.clear();
         review = null;
         calls.clear();
+        fileCallers.clear();
         reviewRequests.clear();
         classificationReply = null;
         classificationRequests.clear();

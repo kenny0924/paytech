@@ -17,6 +17,12 @@ public class StoredFileResponseBody {
     /** 文件 ID，十进制字符串。 */
     private String fileId;
 
+    /**
+     * 文件地址 {@code /files/v1/{fileId}}
+     * <li>业务数据保存此地址；格式与解析见 {@code FileAddress}。</li>
+     */
+    private String fileAddress;
+
     /** 来源系统，即开始上传时的内部调用服务名；Platform 自行发起为 platform-support。 */
     private String sourceSystem;
 

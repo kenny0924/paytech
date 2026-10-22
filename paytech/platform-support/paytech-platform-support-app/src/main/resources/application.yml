@@ -119,12 +119,9 @@ redis:
 web:
   logging:
     metadata-only-path-prefixes:
-      - /internal/onboarding-files
       - /internal/files
       - /storage-admin
       - /notifications
-      - /onboarding-files
-      - /review-files
       - /authentication
       - /authorization
       - /operations
@@ -169,14 +166,12 @@ compensation:
 
 # 文件能力：存储实例、存储桶、写入路由与密钥在运营「存储管理」中维护（t_file_storage_*，密钥只存 Vault），不在配置文件中。
 # files.enabled 控制内部文件接口（/internal/files/v1）、FILE_SCAN 扫描任务、格式检查器与存储快照刷新；启用需 Redis 协调与本地补偿执行器。
-# files.onboarding.enabled=true（Client 入驻上传）要求 files.enabled=true。旧键 files.onboarding.storage-provider、
-# storage-container-ref、scan-policy-code、upload-seconds、minio.*、s3.* 已删除，残留时启动失败。
+# 旧键 files.onboarding.storage-provider、storage-container-ref、scan-policy-code、upload-seconds、minio.*、s3.* 已删除，
+# 残留时启动失败。入驻文件入口（files.onboarding.enabled）已删除：上传、下载经 BFF 调内部文件接口，业务只保存文件地址。
 # 存储密钥需要 Vault 规则：platform-support-service / PROTECT / FILE_STORAGE_CREDENTIAL_V1 / FILE_STORAGE_SETUP 与
 # REVEAL / FILE_STORAGE_CREDENTIAL_V1 / FILE_STORAGE_ACCESS。
 files:
   enabled: ${PLATFORM_SUPPORT_FILES_ENABLED:false}
-  onboarding:
-    enabled: false
   storage:
     # 进程内存储快照的刷新间隔；本进程的管理写入提交后立即刷新。
     snapshot-refresh: 30s
@@ -293,7 +288,11 @@ internal-auth:
     - /public/
     - /platform/v1/internal-tokens
     - /platform/v1/internal-auth/jwks
-  # jwks-uri: 签发端启用时以本地密钥集合校验入站 Token，无需配置；未启用签发端而 mode 非 OFF 时必须配置。
+  # Token 校验公钥来源：签发端启用（internal-token.issuer.enabled=true）时用本地密钥集合，此键不生效；未启用签发端时按此地址
+  # 惰性拉取 JWKS，默认指向本服务自己的 JWKS 端点（签发端关闭时不存在）。DUAL 下调用方只带 X-Caller-Service、不带 Token，不会拉取；
+  # 带 Token 而公钥不可用时 DUAL 回退 X-Caller-Service，REQUIRED 返回 503。切换 REQUIRED 前须启用签发端或配置真实 JWKS 地址。
+  # mode 非 OFF 时还需要 PAYTECH_INSTANCE_ID（paytech.instance-id，Token inst 校验）。
+  jwks-uri: "${PLATFORM_SUPPORT_INTERNAL_AUTH_JWKS_URI:http://127.0.0.1:${server.port}${server.servlet.context-path}/platform/v1/internal-auth/jwks}"
 
 # 内部调用 Token 签发端（D26）：POST /platform/v1/internal-tokens 与 GET /platform/v1/internal-auth/jwks；默认关闭。
 # 启用时须同时启用 operations 或 client 人工认证（签发与拒绝写入审计），并通过安全配置注入签名私钥。

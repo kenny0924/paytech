@@ -53,7 +53,7 @@ public abstract class AbstractSubmissionApiTest extends ClientMasterMockTestBase
     /** 关联一份可用材料。 */
     protected long availableDocument(ApplicationFixture app, long subjectPartyId, String requirementCode, String documentType) {
         long fileId = applications.nextId();
-        owners.mockFile(fileId, HASH, "AVAILABLE");
+        owners.mockFile(app.accountId(), fileId, HASH, "AVAILABLE");
         return applications.document(app, subjectPartyId, requirementCode, documentType, fileId, HASH);
     }
 }

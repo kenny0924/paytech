@@ -1,12 +1,16 @@
 package com.paytech.platform.support.ext.rest.files;
 
+import org.slf4j.MDC;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import com.paytech.foundation.common.error.InvalidParameterException;
+import com.paytech.foundation.httpproblem.api.ApiProblemProfile;
 import com.paytech.foundation.internalauth.api.CallerIdentity;
 import com.paytech.foundation.internalauth.api.CallerIdentityHolder;
 import com.paytech.foundation.internalauth.api.InternalTokenInvalidException;
+import com.paytech.platform.support.api.enums.FileDisposition;
+import com.paytech.platform.support.api.files.FileAddress;
 import com.paytech.platform.support.api.files.request.StartFileUploadRequestBody;
 import com.paytech.platform.support.api.files.response.FileDownloadResponseBody;
 import com.paytech.platform.support.api.files.response.FileUploadAuthorization;
@@ -33,6 +37,9 @@ public class InternalFileConverter {
 
     private static final String UPLOAD_METHOD = "PUT";
 
+    /** 无请求 ID 时写入审计的占位值（正常经 RequestIdFilter 总是存在）。 */
+    private static final String UNKNOWN_REQUEST = "UNKNOWN";
+
     /** 当前请求的调用方服务名；没有调用身份时拒绝。 */
     String callerService() {
         CallerIdentity identity = CallerIdentityHolder.current();
@@ -54,10 +61,25 @@ public class InternalFileConverter {
         return new CompleteFileUploadRequest(callerService(), id(uploadId, "上传 ID 必须为规范正整数"));
     }
 
-    /** 下载授权：只要求存在调用身份。 */
-    AuthorizeFileDownloadRequest downloadRequest(String fileId) {
-        callerService();
-        return new AuthorizeFileDownloadRequest(id(fileId, "文件 ID 必须为规范正整数"));
+    /** 下载授权：要求存在调用身份；可选人工操作人按规范正整数解析，下载方式缺省为附件，请求 ID 取 MDC 供审计。 */
+    AuthorizeFileDownloadRequest downloadRequest(String fileId, String operatorAccountId, String disposition) {
+        String caller = callerService();
+        Long operator = operatorAccountId == null ? null : id(operatorAccountId, "操作人账号 ID 必须为规范正整数");
+        String requestId = MDC.get(ApiProblemProfile.REQUEST_ID_MDC_KEY);
+        return new AuthorizeFileDownloadRequest(caller, id(fileId, "文件 ID 必须为规范正整数"), disposition(disposition),
+            operator, requestId == null ? UNKNOWN_REQUEST : requestId);
+    }
+
+    /** 下载方式：缺省或为空按附件，未知 Code 拒绝。 */
+    FileDisposition disposition(String value) {
+        if (value == null || value.isEmpty()) {
+            return FileDisposition.ATTACHMENT;
+        }
+        try {
+            return FileDisposition.fromCode(value);
+        } catch (IllegalArgumentException unknown) {
+            throw new InvalidParameterException("下载方式只能为 INLINE 或 ATTACHMENT");
+        }
     }
 
     /** 解析规范正整数 ID。 */
@@ -80,22 +102,25 @@ public class InternalFileConverter {
             response.getExpiresAt());
     }
 
-    /** 完成回执。 */
+    /** 完成回执：文件 ID 同时输出文件地址。 */
     FileUploadCompletionResponseBody completion(CompleteFileUploadResponse response) {
         return new FileUploadCompletionResponseBody(Long.toString(response.getUploadId()),
-            Long.toString(response.getFileId()), response.getCompletedAt());
+            Long.toString(response.getFileId()), FileAddress.of(response.getFileId()).value(),
+            response.getCompletedAt());
     }
 
-    /** 文件元数据：ID 与大小输出十进制字符串，状态输出稳定 Code。 */
+    /** 文件元数据：ID 与大小输出十进制字符串并附文件地址，状态输出稳定 Code。 */
     StoredFileResponseBody file(StoredFileView view) {
-        return new StoredFileResponseBody(view.getFileId().toString(), view.getSourceSystem(), view.getReasonCode(),
+        return new StoredFileResponseBody(view.getFileId().toString(), FileAddress.of(view.getFileId()).value(),
+            view.getSourceSystem(), view.getReasonCode(),
             view.getDisplayName(), view.getMimeType(), view.getSizeBytes().toString(), view.getContentHash(),
             view.getScanStatus().getCode(), view.getObjectStatus().getCode(),
             view.getUploaderId() == null ? null : view.getUploaderId().toString(), view.getCreateTime());
     }
 
-    /** 下载授权。 */
+    /** 下载授权与实际生效的下载方式。 */
     FileDownloadResponseBody downloadResult(AuthorizeFileDownloadResponse response) {
-        return new FileDownloadResponseBody(response.getUrl(), response.getExpiresAt());
+        return new FileDownloadResponseBody(response.getUrl(), response.getExpiresAt(),
+            response.getDisposition().getCode());
     }
 }

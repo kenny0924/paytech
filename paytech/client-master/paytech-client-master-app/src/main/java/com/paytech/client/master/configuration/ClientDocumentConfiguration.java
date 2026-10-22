@@ -25,8 +25,8 @@ import com.paytech.client.master.integration.*;
 import com.paytech.client.master.service.processor.AssociateClientDocumentProcessor;
 import com.paytech.client.master.service.processor.RemoveClientDocumentProcessor;
 import com.paytech.foundation.redis.core.autoconfigure.RedisResourceLockProperties;
-import com.paytech.platform.support.api.onboardingfiles.OnboardingFileVerificationApi;
-import com.paytech.platform.support.api.enums.OnboardingFileErrorCode;
+import com.paytech.platform.support.api.enums.FileErrorCode;
+import com.paytech.platform.support.api.files.InternalFileApi;
 import com.paytech.compliance.api.MaterialRequirementsApi;
 /** 默认随已批准的草稿开关关闭；没有真实规则或文件服务时明确不可用。 */
 @Configuration(proxyBeanMethods=false)
@@ -36,16 +36,16 @@ public class ClientDocumentConfiguration {
     @Bean public ClientDocumentRepository clientDocumentRepository(SqlSessionFactory factory) { return new ClientDocumentRepositoryImpl(new SqlSessionTemplate(factory).getMapper(ClientDocumentMapper.class)); }
     /** 同库业务规则不依赖 Owner 网络客户端。 */
     @Bean public ClientDocumentService clientDocumentService(ClientDraftRepository drafts,ClientPeopleRepository people,ClientDocumentRepository documents,IdGenerator ids,Clock clock) { return new ClientDocumentServiceImpl(drafts,people,documents,ids,clock); }
-    /** 显式私网 HTTP 合同，不由浏览器指定 URL。 */
-    @Bean public ClientMaterialAuthorityClient clientMaterialAuthorityClient(Environment env,ObjectProvider<LoadBalancerClient> discovery,Clock clock,
+    /** 显式私网 HTTP 合同，不由浏览器指定 URL；注册 Platform 文件错误码，使 FILE_NOT_FOUND 可映射为材料不存在。 */
+    @Bean public ClientMaterialAuthorityClient clientMaterialAuthorityClient(Environment env,ObjectProvider<LoadBalancerClient> discovery,
         ObjectProvider<InternalTokenSupplier> tokens) {
         var platform=HttpServiceClientFactory.create(ClientOnboardingRecoveryConfiguration.platformTransport(env,discovery),
             InternalCallTokenOptions.apply(HttpServiceClientOptions.strict().withStrictJsonResponses(8192),tokens,"platform-support-service"),
-            OnboardingFileErrorCode.values()).createClient(OnboardingFileVerificationApi.class);
+            FileErrorCode.values()).createClient(InternalFileApi.class);
         var risk=HttpServiceClientFactory.create(riskTransport(env,discovery),
             InternalCallTokenOptions.apply(HttpServiceClientOptions.strict().withStrictJsonResponses(262144),tokens,"compliance-service"))
             .createClient(MaterialRequirementsApi.class);
-        return new ClientMaterialAuthorityClient(risk,platform,clock);
+        return new ClientMaterialAuthorityClient(risk,platform);
     }
     /** 生产使用 Risk 服务发现，测试仅允许 auto 的随机 loopback 根路径。 */
     static RestClient riskTransport(Environment env,ObjectProvider<LoadBalancerClient> discovery) {

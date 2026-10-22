@@ -3,7 +3,7 @@ import java.security.MessageDigest;
 import java.util.HexFormat;
 import org.springframework.stereotype.Component;
 import com.paytech.foundation.common.error.*;
-import com.paytech.platform.support.api.enums.OnboardingFileErrorCode;
+import com.paytech.platform.support.api.enums.FileErrorCode;
 import com.paytech.platform.support.filedocument.domain.file.UploadModels.Upload;
 import com.paytech.platform.support.filedocument.domain.file.FileModels.Verified;
 /** 流式读取实际对象，内存有界；外部 I/O 由调用者安排在本地事务之外。存储按上传记录上的实例与桶定位，不受路由影响。 */
@@ -17,14 +17,14 @@ public final class CompletedUploadVerifier {
             var value=storage.open(upload)) {
             if (value==null || !bounded(value.version(),128) || "null".equalsIgnoreCase(value.version())
                 || !bounded(value.encryptionKeyRef(),255) || value.bytes()==null) throw new ServiceUnavailableException();
-            if (!upload.expectedMime().equals(value.detectedMime())) throw new FailException(OnboardingFileErrorCode.FILE_POLICY_REJECTED);
+            if (!upload.expectedMime().equals(value.detectedMime())) throw new FailException(FileErrorCode.FILE_POLICY_REJECTED);
             var digest=MessageDigest.getInstance("SHA-256");byte[] buffer=new byte[8192];long count=0;
             int length;
             while ((length=value.bytes().read(buffer))!=-1) {
-                if (length>upload.expectedSize()-count) throw new FailException(OnboardingFileErrorCode.FILE_POLICY_REJECTED);
+                if (length>upload.expectedSize()-count) throw new FailException(FileErrorCode.FILE_POLICY_REJECTED);
                 count+=length;digest.update(buffer,0,length);
             }
-            if (count!=upload.expectedSize()) throw new FailException(OnboardingFileErrorCode.FILE_POLICY_REJECTED);
+            if (count!=upload.expectedSize()) throw new FailException(FileErrorCode.FILE_POLICY_REJECTED);
             return new Verified(value.version(),HexFormat.of().formatHex(digest.digest()),count,value.detectedMime(),value.encryptionKeyRef());
         } catch (FailException | ServiceUnavailableException rejected) { throw rejected; }
         catch (Exception unavailable) { throw new ServiceUnavailableException(); }

@@ -17,10 +17,10 @@ public class PlatformApiErrorConfiguration {
     @Bean
     ApiErrorStatusResolver platformApiErrorStatusResolver() {
         return (errorCode, defaultStatus) -> {
-            if (errorCode instanceof com.paytech.platform.support.api.enums.OnboardingFileErrorCode fileError) {
+            if (errorCode instanceof com.paytech.platform.support.api.enums.FileErrorCode fileError) {
                 return switch (fileError) {
                     case FILE_NOT_FOUND -> HttpStatus.NOT_FOUND;
-                    case FILE_TARGET_CONFLICT, FILE_STATE_CONFLICT -> HttpStatus.CONFLICT;
+                    case FILE_STATE_CONFLICT -> HttpStatus.CONFLICT;
                     case FILE_POLICY_REJECTED -> HttpStatus.UNPROCESSABLE_CONTENT;
                 };
             }

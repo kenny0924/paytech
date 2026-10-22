@@ -18,7 +18,6 @@ import {
 
 const REVISION_STATUS = ["DRAFT", "ACTIVE", "RETIRED"];
 const FILE_STATUS = ["PENDING_SCAN", "SCANNING", "AVAILABLE", "QUARANTINED", "REJECTED"];
-const SOURCE_SYSTEM = "Code-MoR 系统代码目录";
 const STORAGE_SOURCE_SYSTEM = "内部调用身份的服务名";
 const REASON_CODE_SOURCE = "来源系统自定义";
 const STORAGE_STATUS = ["DRAFT", "ACTIVE", "DISABLED"];
@@ -27,18 +26,15 @@ export const TABLES = Object.freeze([
   defineTable({
     key: "file_upload",
     name: "文件上传会话",
-    comment: "保存受控上传的准确 Owner 目标、租户与上传人、展示名、原存储目标和冻结扫描策略；上传授权由存储适配器签发，不持久化临时 URL、签名或额外上传秘密",
+    comment: "保存受控上传的来源系统与原因、租户与上传人、展示名、原存储目标和冻结扫描策略；不记录业务归属，上传授权由存储适配器签发，不持久化临时 URL、签名或额外上传秘密",
     fields: [
       pk("upload_id", "文件上传标识", "文件上传会话的稳定业务标识"),
-      field("tenant_id", "BIGINT", "N", "访问租户", "访问租户的稳定业务标识；Client 入驻上传为解析出的入驻租户，内部文件接口的上传为空"),
+      field("tenant_id", "BIGINT", "N", "访问租户", "访问租户的稳定业务标识；内部文件接口的上传为空，历史 Client 入驻上传保留当时解析出的入驻租户"),
       field("uploader_id", "BIGINT", "N", "上传用户", "上传人账号 ID；调用方有人工操作人时传入并原样记录，纯系统上传为空，Platform 不核对其真实性"),
       field("source_system", "VARCHAR(64)", "NN", "上传来源系统", "上传来源系统，即开始上传时内部调用身份的服务名；Platform 自行发起的上传为 platform-support。创建后不变", { source: STORAGE_SOURCE_SYSTEM }),
       field("reason_code", "VARCHAR(64)", "NN", "上传原因代码", "来源系统声明的上传原因代码，格式 [A-Z][A-Z0-9_]{0,63}，用于反查文件为什么上传；创建后不变", { source: REASON_CODE_SOURCE }),
       long("expected_size", "预期文件大小"),
       str("expected_mime", "预期媒体类型", "NN", 255),
-      field("owner_system", "VARCHAR(64)", "N", "来源系统", "上传目标所属业务系统代码，来自 Platform 受控代码目录；Client 入驻由 CCT 授权结果固定，浏览器不得提交；内部文件接口的上传为空（第二段删除）。"),
-      field("owner_type", "VARCHAR(64)", "N", "来源类型", "上传目标的受控资源类型；Client 入驻固定为 CLIENT_APPLICATION_SUBJECT，不允许上传后变更目标类型；内部文件接口的上传为空（第二段删除）。", { source: "Platform 受控文件 Owner 类型目录" }),
-      field("owner_ref_id", "VARCHAR(128)", "N", "来源资源坐标", "来源 Owner 定义的不可变目标坐标；Client 入驻为 CCT 的 applicationId:subjectPartyId，两段均为规范正整数 ID，不复制 Client 名称或其他可变事实；内部文件接口的上传为空（第二段删除）。"),
       field("display_name", "VARCHAR(255)", "NN", "文件展示名", "去除路径和控制字符后的文件展示名，最大 255 Unicode 字符；仅授权页面展示，不作为对象存储 Key 或鉴权依据。"),
       field("storage_provider", "VARCHAR(64)", "NN", "存储适配器", "此次上传使用的对象存储适配器代码，来自受控配置；创建后固定，恢复不得改用当前默认适配器。"),
       field("storage_container_ref", "VARCHAR(255)", "NN", "存储容器", "此次上传的目标存储容器引用；不含凭据，创建后固定，完成和恢复必须使用原容器。"),
@@ -141,22 +137,6 @@ export const TABLES = Object.freeze([
       rel("upload_id", "file_upload", "upload_id", "1:1"),
       rel("scan_policy_id", "file_scan_policy", "policy_id"),
     ],
-  }),
-  defineTable({
-    key: "file_owner_ref",
-    name: "文件所有者引用",
-    comment: "保存文件与来源系统业务资源之间的最小安全引用",
-    audit: "immutable",
-    fields: [
-      pk("owner_ref_row_id", "文件所有者引用标识", "文件所有者引用的稳定业务标识"),
-      id("file_id", "文件"),
-      code("owner_system", "所有者系统", "NN", null, SOURCE_SYSTEM),
-      code("owner_type", "所有者资源类型"),
-      str("owner_ref_id", "所有者资源标识", "NN", 128),
-      code("purpose_code", "文件用途代码"),
-    ],
-    indexes: [uk("uk_file_owner", "file_id", "owner_system", "owner_type", "owner_ref_id", "purpose_code")],
-    relations: [rel("file_id", "file_object", "file_id")],
   }),
   defineTable({
     key: "file_scan_result",

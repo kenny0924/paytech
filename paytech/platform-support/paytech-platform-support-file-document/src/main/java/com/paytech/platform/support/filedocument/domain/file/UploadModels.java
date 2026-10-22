@@ -13,18 +13,17 @@ public final class UploadModels {
      *
      * @param tenantId 入驻上传的租户；内部文件接口为空
      * @param uploaderId 上传人账号；纯系统上传为空
-     * @param ownerRefId 入驻上传的 CCT applicationId:subjectPartyId；内部文件接口为空
      * @param sourceSystem 来源系统
      * @param reasonCode 来源系统声明的上传原因
      */
-    public record Start(Long tenantId, Long uploaderId, String ownerRefId, String sourceSystem, String reasonCode,
+    public record Start(Long tenantId, Long uploaderId, String sourceSystem, String reasonCode,
         String displayName, String mimeType, long sizeBytes) {
         /** 文件名可能含个人信息。 */
         @Override public String toString() { return "Start[REDACTED]"; }
     }
     /** 已固定的上传目标；expiry 和扫描策略不得在重放时替换。 */
     public record Upload(long uploadId, Long tenantId, Long uploaderId, String sourceSystem, String reasonCode,
-        String ownerRefId, String displayName,
+        String displayName,
         long expectedSize, String expectedMime, String storageProvider, String containerRef, String objectRef,
         long scanPolicyId, Instant expiresAt, FileUploadStatus status) {
         /** 不在普通日志中暴露展示名或存储坐标。 */

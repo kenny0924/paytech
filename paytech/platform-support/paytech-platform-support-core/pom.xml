@@ -46,11 +46,6 @@
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
-            <artifactId>paytech-client-master-api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.paytech</groupId>
             <artifactId>paytech-common-core</artifactId>
         </dependency>
         <dependency>

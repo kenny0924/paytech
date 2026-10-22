@@ -20,7 +20,7 @@ import static com.paytech.client.contract.api.enums.ClientDraftErrorCode.*;
 /**
  * C12 关联入驻材料。
  * <li>实际资源是原申请，按 client-onboarding:application:{applicationId} 串行；行锁和唯一键在 Redis Lease 失效后仍保护材料集合。</li>
- * <li>只读快照确定材料目标后，Risk 材料要求与 Platform 文件核验在事务外完成，再次核验会话后进入最终短事务。</li>
+ * <li>只读快照确定材料目标后，Risk 材料要求与 Platform 文件核验（含上传人为当前账号）在事务外完成，再次核验会话后进入最终短事务。</li>
  * <li>同一申请、主体、要求、类型和文件的重复关联返回原引用；并发同一关联返回 DOCUMENT_ALREADY_EXISTS。</li>
  */
 public class AssociateClientDocumentProcessor
@@ -62,7 +62,7 @@ public class AssociateClientDocumentProcessor
             throw new FailException(INVALID_DRAFT);
         }
         long subject = ClientDraftCommand.id(document.subjectPartyId());
-        ClientDraftCommand.id(document.fileId());
+        ClientDraftCommand.fileAddress(document.fileAddress());
         var command = ClientDraftCommand.of(accountId, "CLIENT_DOCUMENT_ASSOCIATE");
         var target = reads.execute(tx -> service.target(accountId, request.getApplicationId(), subject, false));
         String hash = authority.verify(accountId, target, document);

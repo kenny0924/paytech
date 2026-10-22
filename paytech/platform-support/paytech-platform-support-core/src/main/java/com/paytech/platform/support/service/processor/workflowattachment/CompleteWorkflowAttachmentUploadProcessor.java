@@ -8,7 +8,7 @@ import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.common.error.ServiceUnavailableException;
 import com.paytech.foundation.processor.AbstractProcessor;
 import com.paytech.platform.support.accesscontrol.domainservice.service.OperationsManagementPolicyService;
-import com.paytech.platform.support.api.enums.OnboardingFileErrorCode;
+import com.paytech.platform.support.api.enums.FileErrorCode;
 import com.paytech.platform.support.filedocument.domain.file.UploadModels.Upload;
 import com.paytech.platform.support.filedocument.domainservice.service.FileLifecycleService;
 import com.paytech.platform.support.service.processor.files.CompleteFileUploadProcessor;
@@ -60,7 +60,7 @@ public class CompleteWorkflowAttachmentUploadProcessor
         if (!AttachmentRules.SOURCE_SYSTEM.equals(upload.sourceSystem())
             || !AttachmentRules.REASON_CODE.equals(upload.reasonCode())
             || upload.uploaderId() == null || upload.uploaderId() != actor) {
-            throw new FailException(OnboardingFileErrorCode.FILE_NOT_FOUND);
+            throw new FailException(FileErrorCode.FILE_NOT_FOUND);
         }
     }
 }

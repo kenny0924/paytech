@@ -13,9 +13,7 @@ public final class ClientDocumentRepositoryImpl implements ClientDocumentReposit
     @Override public List<ClientApplicationDocument> documents(long applicationId) { return mapper.documents(applicationId); }
     /** 查询准确原引用。 */
     @Override public ClientApplicationDocument document(long applicationId,long id) { return mapper.document(applicationId,id); }
-    /** 保留材料读取范围。 */
-    @Override public boolean retainedSubject(long applicationId,long partyId) { return mapper.retainedSubject(applicationId,partyId); }
-    /** 保存准确文件摘要。 */
+    /** 保存准确文件地址与摘要。 */
     @Override public void insert(long applicationId,ClientApplicationDocument document,Instant now) { mapper.insert(applicationId,document,now); }
     /** 只删除引用。 */
     @Override public int remove(long applicationId,long id) { return mapper.remove(applicationId,id); }

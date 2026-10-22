@@ -1,0 +1,36 @@
+# 文件多存储并存第二段：mor-test 回滚覆盖文件（2026-10-22 阶段 6 读取的运行镜像与环境变量）。
+# 用法同 compose-candidate.yaml，只传本文件。前提：CCT 第 2 步与 Platform 删 Owner 的 DDL 都还没有执行（release.md 第 6 节）。
+# Platform 环境回到工作流发布的覆盖文件（与现网逐键相同）：去掉 DUAL 与 PAYTECH_INSTANCE_ID，加回 FILES_ONBOARDING_ENABLED。
+# client-console-bff 的现网镜像 51f5263b 已不在本机 Docker（2026-10-22 磁盘事故后被清理）：用 e119cbd1 重新构建的
+#   2ff7bff9 代替，其 JAR 与现网容器内 JAR 逐条目比较 0 差异（release.md 第 1.2 节）。
+# client-master、client-console-bff、client-console-web 现网用 :development tag，回滚改钉 sha256，避免 tag 已被他人重建。
+services:
+  platform-support-service:
+    image: sha256:b9301714dfda42217fda8d2e5e80e45df02ec89f4feb2a4f19d187ae48a63b40  # mor-test/platform-support-service:wf-20261022a（JAR 53c0903f2d0ab3c9）
+    environment:
+      PLATFORM_SUPPORT_INTERNAL_AUTH_MODE: !reset null
+      PAYTECH_INSTANCE_ID: !reset null
+      FILES_ONBOARDING_ENABLED: "true"
+      DATAQUERY_HTTP_CALLERS_0: operations-console-bff
+      PLATFORM_SUPPORT_FILES_ENABLED: "true"
+      FILES_ONBOARDING_STORAGE_PROVIDER: !reset null
+      FILES_ONBOARDING_STORAGE_CONTAINER_REF: !reset null
+      FILES_ONBOARDING_SCAN_POLICY_CODE: !reset null
+      FILES_ONBOARDING_MINIO_ENDPOINT: !reset null
+      FILES_ONBOARDING_MINIO_REGION: !reset null
+      FILES_ONBOARDING_MINIO_ACCESS_KEY: !reset null
+      FILES_ONBOARDING_MINIO_SECRET_KEY: !reset null
+      FILES_ONBOARDING_MINIO_TRUSTED_CERTIFICATE: !reset null
+      PLATFORM_SUPPORT_RABBITMQ_HOST: rabbitmq
+      PLATFORM_SUPPORT_RABBITMQ_PORT: "5672"
+      PLATFORM_SUPPORT_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
+      PLATFORM_SUPPORT_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
+      PLATFORM_SUPPORT_RABBITMQ_VHOST: /mor-test
+  operations-console-bff:
+    image: sha256:f1fbcea1d4e5106f2973bfc0dba31ed67dda32dd035556ca7db3582c295297c0  # mor-test/operations-console-bff:wf-20261022a（JAR 463a0efbf5710daa）
+  client-master-service:
+    image: sha256:6f1dce5e7dda88e0dfd387fdb0a883c8178b6d58c9514e04a4422115e7a57afd  # 现网 2026-10-18 构建（e119cbd1 应用代码 + messaging 恢复 91333d28，JAR 8ded0f8d53d5a0d7）
+  client-console-bff:
+    image: sha256:2ff7bff9ad263d38760e813c8ebcfd524d9db6971e49f6e0d12ca98f9089980c  # mor-test/client-console-bff:rollback-e119cbd1（代替已丢失的 51f5263b，JAR 与现网 0 差异）
+  client-console-web:
+    image: sha256:b060cd3dd086b5ae7040c84bae43937d244f0eca0f60670ec9350c5622f0dc26  # 现网 2026-10-18 构建（= e119cbd1 dist，3 个文件与 nginx.conf 逐字节一致）

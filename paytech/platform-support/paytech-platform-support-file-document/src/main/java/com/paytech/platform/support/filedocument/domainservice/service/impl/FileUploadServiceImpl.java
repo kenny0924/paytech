@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.common.error.ServiceUnavailableException;
-import com.paytech.platform.support.api.enums.OnboardingFileErrorCode;
+import com.paytech.platform.support.api.enums.FileErrorCode;
 import com.paytech.platform.support.filedocument.core.dal.dataobject.FileUpload;
 import com.paytech.platform.support.filedocument.domain.enums.FileUploadStatus;
 import com.paytech.platform.support.filedocument.domain.file.UploadModels.Start;
@@ -44,9 +44,9 @@ public class FileUploadServiceImpl implements FileUploadService {
             }
         } catch (RuntimeException invalid) { throw new ServiceUnavailableException(); }
         if (!allowed.contains(start.mimeType()) || start.sizeBytes() > policy.maxSizeBytes())
-            throw new FailException(OnboardingFileErrorCode.FILE_POLICY_REJECTED);
+            throw new FailException(FileErrorCode.FILE_POLICY_REJECTED);
         var value = new FileUpload(id, start.tenantId(), start.uploaderId(), start.sourceSystem(), start.reasonCode(),
-            start.ownerRefId(), start.displayName(), start.sizeBytes(), start.mimeType(), target.getProvider(),
+            start.displayName(), start.sizeBytes(), start.mimeType(), target.getProvider(),
             target.getContainer(), UUID.randomUUID().toString(), policy.policyId(),
             now.plusSeconds(target.getMaxUploadSeconds()), FileUploadStatus.CREATED);
         repository.insert(value, now);
@@ -55,7 +55,7 @@ public class FileUploadServiceImpl implements FileUploadService {
     /** 转为文件能力发布的业务事实。 */
     private Upload result(FileUpload value) {
         return new Upload(value.uploadId(), value.tenantId(), value.uploaderId(), value.sourceSystem(),
-            value.reasonCode(), value.ownerRefId(), value.displayName(),
+            value.reasonCode(), value.displayName(),
             value.expectedSize(), value.expectedMime(), value.storageProvider(), value.containerRef(), value.objectRef(),
             value.scanPolicyId(), value.expiresAt(), value.status());
     }

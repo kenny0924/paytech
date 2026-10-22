@@ -15,6 +15,7 @@ import org.springframework.boot.test.context.TestComponent;
 
 import com.paytech.client.master.test.dal.onboarding.OnboardingTestMapper;
 import com.paytech.foundation.testsupport.api.Clear;
+import com.paytech.platform.support.api.files.FileAddress;
 
 /**
  * 插入完整、可提交的入驻草稿夹具；用例只覆盖与场景有关的部分。
@@ -71,11 +72,12 @@ public class OnboardingApplicationMocker implements Clear {
         return new PersonFixture(partyId, profileId, relationId);
     }
 
-    /** 给主体关联一份材料，返回材料引用 ID。 */
+    /** 给主体关联一份材料（保存该文件的规范地址），返回材料引用 ID。 */
     public long document(ApplicationFixture app, long subjectPartyId, String requirementCode, String documentType, long fileId,
         String contentHash) {
         long documentId = nextId();
-        mapper.insertDocument(documentId, app.applicationId(), subjectPartyId, requirementCode, documentType, fileId, contentHash, now());
+        mapper.insertDocument(documentId, app.applicationId(), subjectPartyId, requirementCode, documentType, FileAddress.of(fileId).value(),
+            contentHash, now());
         return documentId;
     }
 

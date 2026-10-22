@@ -22,6 +22,7 @@ import com.paytech.platform.support.api.workflow.response.WorkflowAttachmentBody
 import com.paytech.platform.support.api.workflow.response.WorkflowInstanceDetailResponseBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowSubmissionResponseBody;
 import com.paytech.platform.support.filedocument.domain.file.FileSourceCodes;
+import com.paytech.platform.support.test.builder.FileBuilder;
 import com.paytech.platform.support.test.base.WorkflowApiTestBase;
 import com.paytech.platform.support.test.builder.OperatorBuilder.Operator;
 import com.paytech.platform.support.test.builder.WorkflowGraphJson;
@@ -69,7 +70,7 @@ class WorkflowAttachmentValidationApiTest extends WorkflowApiTestBase {
         long definitionId = published("FILE_START", reviewOnly(), contractForm());
         long others = files.available(approver.accountId());
         long onboarding = files.file(admin.accountId(), FileSourceCodes.PLATFORM_SUPPORT,
-            FileSourceCodes.CLIENT_ONBOARDING_MATERIAL, FileScanStatus.AVAILABLE, WorkflowFileMocker.PDF);
+            FileBuilder.REASON_CODE, FileScanStatus.AVAILABLE, WorkflowFileMocker.PDF);
         long scanning = files.attachment(admin.accountId(), FileScanStatus.SCANNING, WorkflowFileMocker.PDF);
         long png = files.attachment(admin.accountId(), FileScanStatus.AVAILABLE, "image/png");
         long first = files.available(admin.accountId());

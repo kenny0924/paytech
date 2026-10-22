@@ -70,8 +70,8 @@ class ReapplyAfterRejectionTest extends AbstractClientReviewTest {
     /** 主体与关联人员各关联一份可用材料。 */
     void uploadMaterials(ApplicationFixture app, long personPartyId) {
         long organizationFile = applications.nextId(), personFile = applications.nextId();
-        owners.mockFile(organizationFile, HASH, "AVAILABLE");
-        owners.mockFile(personFile, HASH, "AVAILABLE");
+        owners.mockFile(ACCOUNT_ID, organizationFile, HASH, "AVAILABLE");
+        owners.mockFile(ACCOUNT_ID, personFile, HASH, "AVAILABLE");
         applications.document(app, app.partyId(), "REGISTRATION", "REGISTRATION_CERTIFICATE", organizationFile, HASH);
         applications.document(app, personPartyId, "IDENTITY", "IDENTITY_DOCUMENT", personFile, HASH);
     }

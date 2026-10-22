@@ -23,6 +23,12 @@ public class FileDownloadResponseBody {
      */
     private Instant expiresAt;
 
+    /**
+     * 实际生效的下载方式
+     * <li>{@code FileDisposition} Code：INLINE、ATTACHMENT；请求 INLINE 但不满足条件时为 ATTACHMENT。</li>
+     */
+    private String disposition;
+
     /** 临时地址不可进入普通日志。 */
     @Override
     public String toString() {

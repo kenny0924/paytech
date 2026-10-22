@@ -14,6 +14,7 @@ import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.operations.console.bff.integration.ClientReviewCctClient;
 import com.paytech.operations.console.bff.integration.ClientReviewRiskClient;
 import com.paytech.operations.console.bff.service.processor.ClientReviewDetailsProcessor;
+import com.paytech.operations.console.bff.service.model.response.ClientReviewFileDownloadResponseBody;
 import com.paytech.operations.console.bff.service.processor.ClientReviewFileDownloadProcessor;
 import com.paytech.operations.console.bff.service.processor.request.ClientReviewDetailsRequest;
 import com.paytech.operations.console.bff.service.processor.request.ClientReviewFileDownloadRequest;
@@ -23,7 +24,6 @@ import com.paytech.operations.console.bff.service.model.ClientReviewModels.Evide
 import com.paytech.operations.console.bff.service.model.ClientReviewModels.ReturnRequestBody;
 import com.paytech.operations.console.bff.service.model.ClientReviewModels.ReviewCaseDetailResponseBody;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
-import com.paytech.platform.support.api.reviewfiles.response.ReviewFileDownloadResponseBody;
 import com.paytech.compliance.api.response.ClientReviewCaseResponseBody;
 import com.paytech.compliance.api.response.ClientReviewCommandResponseBody;
 
@@ -110,7 +110,7 @@ public class ClientOnboardingReviewController {
 
     /** O10 下载任务证据中的材料，返回最长 60 秒的原版本地址。 */
     @PostMapping("/cases/{caseId}/files/{fileId}/download")
-    public ReviewFileDownloadResponseBody downloadFile(OperatorContext operator, @PathVariable @Pattern(regexp = ID) String caseId,
+    public ClientReviewFileDownloadResponseBody downloadFile(OperatorContext operator, @PathVariable @Pattern(regexp = ID) String caseId,
         @PathVariable @Pattern(regexp = ID) String fileId) {
         return fileDownload.process(new ClientReviewFileDownloadRequest(operator, caseId, fileId));
     }

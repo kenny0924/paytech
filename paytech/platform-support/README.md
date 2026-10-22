@@ -2,7 +2,7 @@
 
 租户访问与成员权限查询的现行合同见 [需求 API](../../requirements/20260914/platform-support-租户访问与成员权限查询/api.md)：8 项能力，复用既有 IAM 模型；当前研发、验证和部署状态见 [根台账](../../agent-docs/CURRENT_IMPLEMENTATION.md#platform-tenant-access-20260914)。
 
-Client 入驻文件的归属、幂等与扫描边界见[文件合同](../../requirements/20260914/client-console-注册与客户入驻/file-upload-closure-proposal.md)；代码、人工 SQL 和本机验证状态统一见[Client 实现台账](../../agent-docs/CURRENT_IMPLEMENTATION.md#client-console-onboarding-20260914)。
+Client 入驻文件的上传、下载自 2026-10-22 第二段起经 client-console-bff / operations-console-bff 调内部文件接口，业务只保存文件地址，见[第二段方案](../../requirements/20261022/platform-support-文件多存储并存/segment2.md)；早期[文件合同](../../requirements/20260914/client-console-注册与客户入驻/file-upload-closure-proposal.md)中的 Owner 归属与 Platform 授权部分已被取代。代码、人工 SQL 和本机验证状态统一见[Client 实现台账](../../agent-docs/CURRENT_IMPLEMENTATION.md#client-console-onboarding-20260914)。
 
 `paytech/platform-support` (`spring.application.name=platform-support-service`) is the Platform Support core-service
 aggregator. The current vertical slice implements the
@@ -282,10 +282,11 @@ Scope creation and update use `AbstractLockProcessor` with the shared logical ke
 and require restart to change. They are independent of the legacy annotation-lock properties.
 The unique Scope code and database row/version checks remain the final concurrency protection.
 
-## File storage（文件多存储并存，2026-10-22 第一段）
+## File storage（文件多存储并存，2026-10-22 第一段、第二段）
 
 需求与方案：[requirement](../../requirements/20261022/platform-support-文件多存储并存/requirement.md)、
-[technique](../../requirements/20261022/platform-support-文件多存储并存/technique.md)。存储不再写在配置文件中：
+[technique](../../requirements/20261022/platform-support-文件多存储并存/technique.md)、
+[第二段](../../requirements/20261022/platform-support-文件多存储并存/segment2.md)。存储不再写在配置文件中：
 
 - **存储实例 / 存储桶 / 写入路由**在 `t_file_storage_instance`、`t_file_storage_bucket`、`t_file_storage_route` 中维护，
   经 Operations「存储管理」（`FileStorageManagementApi`，`/storage-admin/v1`，权限 `FILE_STORAGE_READ` / `FILE_STORAGE_MANAGE`）
@@ -301,17 +302,31 @@ The unique Scope code and database row/version checks remain the final concurren
 - **桶检查**（启用前要求 10 分钟内 OK）：存在、版本控制已开启、写入 `.platform-readiness/` 高熵探测对象后确认默认加密已生效、
   读回、删除；Platform 不建桶、不改桶策略。桶的浏览器 CORS 仍需允许 `PUT`（`Content-Type`、`If-None-Match`）。
 - **开关**：`files.enabled`（默认 false）控制内部文件接口、`FILE_SCAN` 扫描任务、格式检查器与快照刷新，需要 Redis 协调与本地补偿执行器；
-  `files.onboarding.enabled=true` 要求 `files.enabled=true`；补偿执行器默认跟随 `files.enabled`。旧键
-  `files.onboarding.storage-provider`、`storage-container-ref`、`scan-policy-code`、`upload-seconds`、`minio.*`、`s3.*`（含环境变量）残留时启动失败。
+  补偿执行器默认跟随 `files.enabled`。旧键 `files.onboarding.storage-provider`、`storage-container-ref`、`scan-policy-code`、
+  `upload-seconds`、`minio.*`、`s3.*`（含环境变量）残留时启动失败；`files.onboarding.enabled` 已随入驻文件入口删除，不再生效。
 - **内部文件接口**（`InternalFileApi`，`/internal/files/v1`，私网、不经 Gateway、只记元数据日志）：开始上传、完成上传、按文件 ID
   查询元数据、签发 60 秒下载地址。要求 Foundation internal-auth 识别的调用身份（`internal-auth.mode=OFF` 下全部 401），来源系统取
-  调用身份的服务名；只有原来源可以完成上传；内部系统之间不做文件级权限。Platform 内部模块直接调用同名入口：
-  `StartFileUploadProcessor`、`CompleteFileUploadProcessor`、`FileLifecycleService.describe`、`AuthorizeFileDownloadProcessor`，
-  来源系统传 `platform-support`。
-- **入驻链路**第一段不改行为：上传写入 `forWrite("platform-support")` 的目标，扫描策略与上传期限取自路由，记录
-  `source_system=platform-support`、`reason_code=CLIENT_ONBOARDING_MATERIAL`。内置 `PLATFORM_FORMAT` 只复核摘要、大小与文件头
-  （PDF/JPEG/PNG），不是病毒扫描。运营审核下载仍为 `POST /review-files/v1/files/{fileId}/download`（metadata-only 日志）。
-- 增量 SQL：`docs/database/sql/changes/2026-10-22-file-storage-management.sql`（未执行）。
+  调用身份的服务名；只有原来源可以完成上传；内部系统之间不做文件级权限，浏览器侧的业务授权由调用方（BFF）完成。Platform 内部模块
+  直接调用同名入口：`StartFileUploadProcessor`、`CompleteFileUploadProcessor`、`FileLifecycleService.describe`、
+  `AuthorizeFileDownloadProcessor`，来源系统传 `platform-support`。
+- **文件地址**：`FileAddress`（`paytech-platform-support-api`）格式化与解析稳定逻辑地址 `/files/v1/{fileId}`；完成回执与元数据查询
+  在 `fileId` 之外返回 `fileAddress`。业务数据保存地址而不是文件 ID；地址不含实例与桶，存储迁移后不变，只能经本接口换取临时下载地址。
+- **下载方式与原文件名**：下载授权接受可选 Query `disposition`（`FileDisposition`：`INLINE` / `ATTACHMENT`，缺省或为空按附件，
+  未知值 400）。地址总是签入 `response-content-disposition: <type>; filename="<ASCII 回退>"; filename*=UTF-8''<RFC 5987>`；
+  只有扫描 AVAILABLE 且登记 MIME 为 PDF / PNG / JPEG 时才内联，并签入登记 MIME 为 `response-content-type`，否则静默降为附件。
+  响应 `disposition` 为实际生效的方式；Platform 内部模块用 `AuthorizeFileDownloadRequest(fileId, disposition)`。
+- **人工下载审计**：下载授权接受可选请求头 `X-Operator-Account-Id`（规范正整数）；有值时签发成功后写一条审计
+  `FILE_DOWNLOAD_AUTHORIZE`（主体为操作人账号，资源 `FILE/{fileId}`，属性 `caller_service`，不记地址），审计写入失败或审计未启用
+  时不返回地址。
+- **调用身份**：本段起 Platform 以 `internal-auth.mode=DUAL` 运行（`PLATFORM_SUPPORT_INTERNAL_AUTH_MODE=DUAL`，另需
+  `PAYTECH_INSTANCE_ID`）；调用方带 `X-Caller-Service: <spring.application.name>`。DUAL 下既无 Token 也无该头的其他内部入口照常放行。
+  未启用签发端时 Token 公钥按 `internal-auth.jwks-uri`（`PLATFORM_SUPPORT_INTERNAL_AUTH_JWKS_URI`，默认本服务 JWKS 端点）惰性拉取。
+- **已删除**（第二段）：入驻文件入口 `OnboardingFileApi`（`/onboarding-files/v1`）、CCT 提交前核对 `OnboardingFileVerificationApi`
+  （`/internal/onboarding-files`）、运营审核下载 `ReviewFileApi`（`/review-files/v1`）、Platform 反调 CCT 的 `CctFileTargetClient`，
+  以及文件业务归属数据 `t_file_upload.owner_*` 与 `t_file_owner_ref`。文件只记来源系统与原因；内置 `PLATFORM_FORMAT` 只复核摘要、
+  大小与文件头（PDF/JPEG/PNG），不是病毒扫描。
+- 增量 SQL（均未执行）：`docs/database/sql/changes/2026-10-22-file-storage-management.sql`（第一段）、
+  `docs/database/sql/changes/2026-10-22-file-owner-removal.sql`（第二段删除 Owner 列与表，新链路验收后执行，执行前备份）。
 
 ## Health
 

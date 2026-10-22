@@ -68,7 +68,7 @@ class OnboardingDuplicateWriteTest extends AbstractSubmissionApiTest {
     void test_associateSameDocument() {
         var app = applications.organization(ACCOUNT_ID);
         long fileId = applications.nextId();
-        owners.mockFile(fileId, HASH, "AVAILABLE");
+        owners.mockFile(ACCOUNT_ID, fileId, HASH, "AVAILABLE");
 
         var first = associate(app, fileId);
         var again = associate(app, fileId);
@@ -112,7 +112,7 @@ class OnboardingDuplicateWriteTest extends AbstractSubmissionApiTest {
     /** 通过真实 HTTP 调用 C12，关联组织注册证明。 */
     EntityExchangeResult<byte[]> associate(ApplicationFixture app, long fileId) {
         var document = Map.of("subjectPartyId", Long.toString(app.partyId()), "requirementCode", "REGISTRATION",
-            "documentType", "REGISTRATION_CERTIFICATE", "fileId", Long.toString(fileId));
+            "documentType", "REGISTRATION_CERTIFICATE", "fileAddress", "/files/v1/" + fileId);
         return http.post().uri("/client-onboarding/v1/applications/{id}/documents", app.applicationId()).headers(this::client)
             .header("Content-Type", "application/json").body(JSON.writeValueAsString(document))
             .exchange().expectBody(byte[].class).returnResult();

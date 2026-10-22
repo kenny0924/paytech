@@ -23,7 +23,7 @@ class TableOwnershipAutoTest {
     void test_normalFlow() {
         // design/03 §4.2：17 个目标库共 265 张物理表；另加保留服务 platform-support 自身 Schema 的 46 张表
         // （2026-10-20 渠道协议 10 表迁往 channel-connector 后由 56 张减为 46 张，总表数不变）。
-        Assertions.assertEquals(265 + 46 + 1 + 6 - 7 + 9 + 4 + 6 + 1 + 2 + 1 - 13 + 10 + 2 + 10 - 2 - 2 + 2 + 3 + 10 + 3, ownership.physicalTableCount(),
+        Assertions.assertEquals(265 + 46 + 1 + 6 - 7 + 9 + 4 + 6 + 1 + 2 + 1 - 13 + 10 + 2 + 10 - 2 - 2 + 2 + 3 + 10 + 3 - 1, ownership.physicalTableCount(),
             "design 03 + Platform 保留表 + 第 12 步 t_card_material_ticket + account 明细账六张业务表（2026-10-19 重构）"
                 + " - billing 经济事实三表与渠道成本四表 + billing 计费事实九表 + channel-connector 渠道成本四表（2026-10-19 计费事实重构）"
                 + " + commercial 产品目录三表与合同订阅 / 开通 / 约束三表（2026-10-19 六层产品定价模型）"
@@ -36,9 +36,11 @@ class TableOwnershipAutoTest {
                 + " - t_payment_channel 与 t_integration + t_channel 与 t_channel_call_grant（2026-10-22 统一对外渠道出口第二段，"
                 + "t_integration_* 7 表改名 t_channel_*，表数不变）"
                 + "；+ Platform 文件存储 3 表（2026-10-22 文件多存储并存）+ Platform 工作流 10 表（2026-10-22 工作流并入 Platform Support）"
-                + " + Platform data-query 数据源与查询模板三表（2026-10-22）");
-        // mor_platform：2026-10-20 渠道协议 10 表迁往 channel-connector，由 57 张减为 47 张；2026-10-22 文件存储 3 表、工作流 10 表与 data-query 3 表并入，共 63 张。
-        Assertions.assertEquals(63, ownership.databasesOf("platform-support").get("mor_platform").size());
+                + " + Platform data-query 数据源与查询模板三表（2026-10-22）"
+                + " - Platform t_file_owner_ref（2026-10-22 文件多存储并存第二段）");
+        // mor_platform：2026-10-20 渠道协议 10 表迁往 channel-connector，由 57 张减为 47 张；2026-10-22 文件存储 3 表、工作流 10 表与 data-query 3 表并入，
+        // 第二段删除 t_file_owner_ref，共 62 张。
+        Assertions.assertEquals(62, ownership.databasesOf("platform-support").get("mor_platform").size());
         Assertions.assertTrue(ownership.allowedTables("platform-support").containsAll(
             List.of("t_workflow_definition", "t_workflow_instance", "t_workflow_callback")), "2026-10-22 工作流表");
         Assertions.assertEquals(30, ownership.databasesOf("ledger").get("mor_ledger").size());

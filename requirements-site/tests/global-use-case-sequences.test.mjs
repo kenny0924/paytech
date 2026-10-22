@@ -608,8 +608,8 @@ test("E2E-01 authenticates a CUSTOMER Account and provisions its Client Tenant b
   const accountContextIndex = labels.findIndex((label) => /Account Context/u.test(label));
   const draftApplicationIndex = labels.findIndex((label) => /CCT-I15 START_OR_RESUME.*DRAFT.*requested_by_account_id/u.test(label));
   const provisionIndex = labels.findIndex((label) => /PLT-I17.*tenant_type=CLIENT.*owner_ref_id.*requested_by_account_id.*source_version.*payload_hash/u.test(label));
-  const uploadIndex = labels.findIndex((label) => /PLT-I04.*Account Context.*PENDING.*TENANT_ONBOARDING_OWNER.*tenant_id/u.test(label));
-  const finalSubmitIndex = labels.findIndex((label) => /CCT-I15 SUBMIT.*冻结.*File ID.*Risk/u.test(label));
+  const uploadIndex = labels.findIndex((label) => /PLT-I04.*Account Context.*client-console-bff.*Platform 不反调 CCT/u.test(label));
+  const finalSubmitIndex = labels.findIndex((label) => /CCT-I15 SUBMIT.*冻结.*文件地址.*File ID.*Risk/u.test(label));
   const riskIndex = labels.findIndex((label) => /CCT_CLIENT_APPLICATION.*RCO-I11/u.test(label));
   const activationIndex = labels.findIndex((label) => /激活 Client Tenant.*撤销 TENANT_ONBOARDING_OWNER.*授予 TENANT_OWNER/u.test(label));
   const tenantSelectionIndex = labels.findIndex((label) => /PLT-I16.*选择.*Client Tenant Member/u.test(label));

@@ -21,7 +21,7 @@ import com.paytech.platform.support.api.authentication.response.AccountContextRe
 import com.paytech.platform.support.api.authentication.response.AuthenticationResponseBody;
 import com.paytech.platform.support.api.authentication.response.ClientWorkspacesResponseBody;
 import com.paytech.platform.support.api.authentication.response.VerificationResponseBody;
-import com.paytech.platform.support.api.onboardingfiles.OnboardingFileVerificationApi;
+import com.paytech.platform.support.api.files.InternalFileApi;
 
 /** Platform 会话的测试 HTTP 实现；CCT 只应调用 context，其他方法视为意外调用。 */
 @RestController
@@ -38,7 +38,7 @@ public class MockPlatformAuthenticationApi implements ClientAuthenticationApi, W
     @Override
     public void configurePathMatch(PathMatchConfigurer configurer) {
         configurer.addPathPrefix("/platform-support", type -> ClientAuthenticationApi.class.isAssignableFrom(type)
-            || OnboardingFileVerificationApi.class.isAssignableFrom(type)
+            || InternalFileApi.class.isAssignableFrom(type)
             || com.paytech.platform.support.api.tenantprojection.TenantProjectionApi.class.isAssignableFrom(type));
     }
 

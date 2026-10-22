@@ -77,11 +77,11 @@ public class OnboardingTestMapper {
 
     /** 插入材料引用。 */
     public void insertDocument(long documentId, long applicationId, long subjectPartyId, String requirementCode, String documentType,
-        long fileId, String contentHash, Instant now) {
+        String fileAddress, String contentHash, Instant now) {
         var at = Timestamp.from(now);
         jdbc.update("INSERT INTO t_application_document(document_id,client_application_id,subject_party_id,requirement_code,"
-            + "document_type,file_id,content_hash,create_time,update_time) VALUES(?,?,?,?,?,?,?,?,?)", documentId, applicationId,
-            subjectPartyId, requirementCode, documentType, fileId, contentHash, at, at);
+            + "document_type,file_address,content_hash,create_time,update_time) VALUES(?,?,?,?,?,?,?,?,?)", documentId, applicationId,
+            subjectPartyId, requirementCode, documentType, fileAddress, contentHash, at, at);
     }
 
     /** 插入属于其他主体的永久身份键。 */
@@ -265,6 +265,12 @@ public class OnboardingTestMapper {
     public int documentCount(long applicationId) {
         return jdbc.queryForObject("SELECT COUNT(*) FROM t_application_document WHERE client_application_id=?", Integer.class,
             applicationId);
+    }
+
+    /** 申请下各材料引用保存的文件地址与摘要，按材料 ID 排序。 */
+    public List<Map<String, Object>> documents(long applicationId) {
+        return jdbc.queryForList("SELECT document_id,file_address,content_hash FROM t_application_document WHERE client_application_id=? "
+            + "ORDER BY document_id", applicationId);
     }
 
     /** 已插入夹具数量，用于检查空基线。 */

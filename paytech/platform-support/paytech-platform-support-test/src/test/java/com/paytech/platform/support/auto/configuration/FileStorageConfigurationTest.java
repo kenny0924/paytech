@@ -53,12 +53,11 @@ class FileStorageConfigurationTest {
         assertThrows(IllegalStateException.class, () -> new FileStorageConfiguration(environment));
     }
 
-    /** 新键与入驻开关、CCT 测试直连等保留键不触发拒绝。 */
+    /** 当前文件键不触发拒绝。 */
     @Test
     void test_currentKeysAccepted() {
         var environment = new StandardEnvironment();
         environment.getPropertySources().addFirst(new MapPropertySource("current", Map.of("files.enabled", "true",
-            "files.onboarding.enabled", "true", "files.onboarding.cct-test-base-url", "",
             "files.storage.snapshot-refresh", "30s")));
 
         assertDoesNotThrow(() -> new FileStorageConfiguration(environment));

@@ -14,6 +14,7 @@ import java.util.Map;
 import com.paytech.foundation.common.error.ServiceUnavailableException;
 import com.paytech.platform.support.api.enums.FileStorageCheckResult;
 import com.paytech.platform.support.filedocument.core.dal.dataobject.FileStorageInstance;
+import com.paytech.platform.support.filedocument.domain.file.DownloadPresentation;
 import com.paytech.platform.support.filedocument.domain.file.FileModels.File;
 import com.paytech.platform.support.filedocument.domain.file.UploadModels.Grant;
 import com.paytech.platform.support.filedocument.domain.file.UploadModels.Upload;
@@ -117,23 +118,35 @@ public final class MinioFileStorage implements FileObjectStorage {
     }
 
     /**
-     * 签发原版本的短时只读下载地址，以附件方式返回。
+     * 签发原版本的短时只读下载地址；签入 response-content-disposition，INLINE 时另签入 response-content-type。
      *
      * @param file
      *            原不可变文件坐标
      * @param expiresAt
      *            本次授权期限
+     * @param presentation
+     *            下载方式与文件名
      * @return 不晚于期限的下载授权
      */
     @Override
-    public Download authorize(File file, Instant expiresAt) {
+    public Download authorize(File file, Instant expiresAt, DownloadPresentation presentation) {
         // 到期时间取微秒精度，与审核下载等调用方的期限一致（运营端只接受最多 6 位小数）。
         Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
         long seconds = presignSeconds(now, expiresAt);
         String url = call(() -> client.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().method(Method.GET)
             .bucket(file.container()).object(file.objectRef()).versionId(file.verified().objectVersion())
-            .expiry((int)seconds).extraQueryParams(Map.of("response-content-disposition", "attachment")).build()));
+            .expiry((int)seconds).extraQueryParams(responseParams(presentation)).build()));
         return new Download(url, now.plusSeconds(seconds));
+    }
+
+    /** 下载响应头覆盖参数：总是带 Content-Disposition，INLINE 时带 Content-Type。 */
+    static Map<String, String> responseParams(DownloadPresentation presentation) {
+        Map<String, String> params = new java.util.LinkedHashMap<>();
+        params.put("response-content-disposition", presentation.contentDisposition());
+        if (presentation.contentType() != null) {
+            params.put("response-content-type", presentation.contentType());
+        }
+        return params;
     }
 
     /** 按登记版本读取原字节。 */

@@ -26,7 +26,7 @@ import lombok.AllArgsConstructor;
 
 /**
  * 开始一次内部文件上传：按来源系统路由选择存储 → 登记上传 → 事务外签发 PUT 授权
- * <li>内部 HTTP 入口与 Platform 内部模块（如工作流，来源系统 platform-support）共用；不做文件级权限，不绑定业务 Owner。</li>
+ * <li>内部 HTTP 入口与 Platform 内部模块（如工作流，来源系统 platform-support）共用；不做文件级权限，不记录业务归属。</li>
  * <li>每次请求新建上传，没有可比较的原业务操作身份；上传登记为单条插入，不需要显式事务。</li>
  * <li>没有可用路由、桶或实例返回 503 且不登记；类型或大小不符合路由扫描策略返回 400。</li>
  */
@@ -61,7 +61,7 @@ public class StartFileUploadProcessor extends AbstractProcessor<StartFileUploadR
 
         // 登记上传
         Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
-        Start start = new Start(null, request.getUploaderAccountId(), null, request.getSourceSystem(),
+        Start start = new Start(null, request.getUploaderAccountId(), request.getSourceSystem(),
             request.getReasonCode(), request.displayName(), request.getMimeType(), request.getSizeBytes());
         Upload upload = files.create(ids.nextId(), start, target, now);
 

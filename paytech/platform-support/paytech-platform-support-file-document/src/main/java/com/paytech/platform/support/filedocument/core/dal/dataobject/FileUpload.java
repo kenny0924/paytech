@@ -10,7 +10,6 @@ import com.paytech.platform.support.filedocument.domain.enums.FileUploadStatus;
  * @param uploaderId 原账号；纯系统上传为空
  * @param sourceSystem 来源系统
  * @param reasonCode 来源系统声明的上传原因
- * @param ownerRefId 申请与主体的固定组合；内部文件接口的上传为空
  * @param displayName 清理后的展示名
  * @param expectedSize 声明字节数
  * @param expectedMime 声明 MIME
@@ -22,6 +21,6 @@ import com.paytech.platform.support.filedocument.domain.enums.FileUploadStatus;
  * @param status 当前受控上传状态
  */
 public record FileUpload(long uploadId, Long tenantId, Long uploaderId, String sourceSystem, String reasonCode,
-    String ownerRefId, String displayName,
+    String displayName,
     long expectedSize, String expectedMime, String storageProvider, String containerRef, String objectRef,
     long scanPolicyId, Instant expiresAt, FileUploadStatus status) {}

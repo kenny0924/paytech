@@ -68,13 +68,6 @@ public class ClientDraftConfiguration {
     @Bean public ClientPeopleService clientPeopleService(ClientDraftRepository drafts,ClientPeopleRepository people,IdGenerator ids,Clock clock) {
         return new ClientPeopleServiceImpl(drafts,people,ids,clock);
     }
-    /** 文件授权必须同时观察原申请状态与人员关系，避免相邻提交产生混合授权事实。 */
-    @Bean public ClientFileTargetService clientFileTargetService(ClientDraftRepository drafts,
-        ClientPeopleRepository people,ClientDocumentRepository documents,PlatformTransactionManager transactions) {
-        var reads=new TransactionTemplate(transactions);reads.setReadOnly(true);reads.setTimeout(5);
-        reads.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-        return new ClientFileTargetServiceImpl(reads,drafts,people,documents);
-    }
     /** C08 新增人员；锁参数沿用既有注解锁配置。 */
     @Bean public CreateClientPersonProcessor createClientPersonProcessor(RedisResourceLockProperties locks,ClientPeopleService service,
         ClientDraftAccountClient accounts,PlatformTransactionManager transactions,Validator validator) {

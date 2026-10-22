@@ -154,7 +154,7 @@ Platform CUSTOMER Account 验证严格先于 CCT ONBOARDING。`requested_by_acco
 
 ### 5.3 Application Document
 
-`application_document.client_application_id`、`partner_application_id` 与 `operating_entity_application_id` 全部可空；Sidecar 表达式 `((client_application_id IS NOT NULL) + (partner_application_id IS NOT NULL) + (operating_entity_application_id IS NOT NULL) = 1)` 只冻结逻辑不变量，不生成物理 `CHECK`。写入事务必须校验恰好一个非空并锁定其实际 Parent；三条 Parent Relation 都是 CCT 本库逻辑 `RESTRICT` 关系，不创建物理 FK，并分别以五列 `uk_app_doc_client`、`uk_app_doc_partner`、`uk_app_doc_entity` 保证同一材料身份唯一。`file_id` 仍是 Platform 文件外部引用。Client/Partner 入驻的 File 必须先由 Platform PLT-I04 在 Account Context 解析 PENDING Tenant 与 `TENANT_ONBOARDING_OWNER` 后创建，CCT 不接受调用方自报 Tenant 或未受控 File ID。Application Document 继续 BCR-excluded。
+`application_document.client_application_id`、`partner_application_id` 与 `operating_entity_application_id` 全部可空；Sidecar 表达式 `((client_application_id IS NOT NULL) + (partner_application_id IS NOT NULL) + (operating_entity_application_id IS NOT NULL) = 1)` 只冻结逻辑不变量，不生成物理 `CHECK`。写入事务必须校验恰好一个非空并锁定其实际 Parent；三条 Parent Relation 都是 CCT 本库逻辑 `RESTRICT` 关系，不创建物理 FK，并分别以五列 `uk_app_doc_client`、`uk_app_doc_partner`、`uk_app_doc_entity` 保证同一材料身份唯一。材料保存 Platform 文件服务签发的稳定逻辑地址 `file_address`（`/files/v1/{fileId}`，2026-10-22 文件多存储第二段由 `file_id` 改存地址），与 `content_hash` 成组冻结。文件经 client-console-bff 上传到 Platform，CCT 不经手上传与下载；C12 关联与 C14 提交前 CCT 以 Platform 内部文件接口核对地址格式、扫描 `AVAILABLE`、对象 `ACTIVE`、64 位摘要以及上传人为当前账号。发给 compliance 的审核登记仍按原合同发送由地址解析出的文件 ID 与摘要。Application Document 继续 BCR-excluded。
 
 ### 5.4 Operating Entity Application
 
@@ -246,8 +246,8 @@ MVP 暂不建设通用 Retention/Legal Hold 投影、Worker、归档、匿名化
 | 本库关系 / 1:1 关系 | 40 / 5 |
 | Diagram Groups | 6 |
 | Table Cells / Relation Cells | 36 / 40 |
-| Structural Projection SHA-256 | `80dba108a6322e957ca7c652a1911979705388b47b71caa24ee51bb14f989802` |
-| Model SHA-256 | `3101e35c5f5626dfdf201bc88c3bdfbe71a443a1edf351b312e374bbab4a55cc` |
+| Structural Projection SHA-256 | `807d9f8e889d77662bb3ea2538b5787491d1610a9a8ad96c1d12d3d85fdd94d6` |
+| Model SHA-256 | `7b4416465b95db3c3c77c8f29ee9f983b55c002d48006db8ed37c8bc4a164cfe` |
 | Template SHA-256 | `51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540` |
 
 全部 300 个字段中 285 个来自批准 Catalog，`client_stored_card_setting` 的 5 个字段原样复制自 Commerce 模型，`t_consumed_event`（6）与 `t_consumed_aggregate_version`（4）来自 paytech-messaging 消费端标准表，没有在 Catalog 之外重复注入公共字段。40 条关系均为本库关系；6 个图组覆盖全部 29 张表，并让每条关系恰好可视化一次。

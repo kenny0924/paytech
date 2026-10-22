@@ -7,17 +7,11 @@ import com.paytech.platform.support.filedocument.domain.file.FileModels.*;
 import com.paytech.platform.support.api.enums.FileScanStatus;
 /** 文件登记与扫描仅操作本服务数据库。 */
 public interface FileLifecycleRepository {
-    /** 准确上传与 Owner 一致才提供读取入口。 */
-    Long readUploadId(long fileId,long accountId);
-    /** 入驻材料范围内按文件读取原上传，不限定上传账号。 */
-    Long readReviewUploadId(long fileId);
     /** 文件当前状态的纯查询。 */
     FileObject readFile(long id);
 
     /** 上传已产生的唯一文件；未完成为空。 */
     CompletedUploadFile completedFile(long uploadId);
-    /** 当前读锁住原 Upload。 */
-    FileUpload lockUpload(long id);
     /** 当前读锁住任一来源的原 Upload。 */
     FileUpload lockSourceUpload(long id);
     /** 文件与上传记录组合的元数据；不存在为空。 */
@@ -28,8 +22,6 @@ public interface FileLifecycleRepository {
     List<FileScanRequirement> requirements(long fileId,long policyId);
     /** 插入唯一文件。 */
     void insertFile(long id,Upload upload,Verified proof,Instant now);
-    /** 继承原 Owner；禁止挂到新的申请或主体。 */
-    void insertOwner(long id,long fileId,String owner,Instant now);
     /** 原 Upload 状态 CAS。 */
     int completeUpload(long id,Instant now);
     /** 文件扫描状态更新，调用者必须已持有文件行锁。 */

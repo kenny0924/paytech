@@ -14,7 +14,7 @@ import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.httpproblem.api.ProblemFieldError;
 import com.paytech.foundation.httpproblem.api.RequestBodyValidationException;
-import com.paytech.platform.support.api.enums.OnboardingFileErrorCode;
+import com.paytech.platform.support.api.enums.FileErrorCode;
 import com.paytech.platform.support.filedocument.domain.file.StoredFileView;
 import com.paytech.platform.support.filedocument.domainservice.service.FileLifecycleService;
 import com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowActionRun;
@@ -159,7 +159,7 @@ public class WorkflowAttachments {
         try {
             return files.describe(fileId);
         } catch (FailException failure) {
-            if (OnboardingFileErrorCode.FILE_NOT_FOUND.getCode().equals(failure.getCode())) {
+            if (FileErrorCode.FILE_NOT_FOUND.getCode().equals(failure.getCode())) {
                 return null;
             }
             throw failure;

@@ -13,8 +13,6 @@ import com.paytech.platform.support.filedocument.domainservice.repository.FileUp
 @lombok.AllArgsConstructor
 public class FileUploadRepositoryImpl implements FileUploadRepository {
     private final FileUploadMapper mapper;
-    /** 查询固定 Upload。 */
-    @Override public FileUpload find(long id) { return mapper.find(id); }
     /** 查询任一来源的原上传。 */
     @Override public FileUpload findById(long id) { return mapper.findById(id); }
     /** 查询有效策略。 */

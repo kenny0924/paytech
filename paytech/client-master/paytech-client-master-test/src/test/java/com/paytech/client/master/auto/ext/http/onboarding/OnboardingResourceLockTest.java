@@ -68,7 +68,7 @@ class OnboardingResourceLockTest extends AbstractSubmissionApiTest {
                 person.relationId()),
             call("DELETE", "/{id}/relations/{relationId}", null, app.applicationId(), person.relationId()),
             call("POST", "/{id}/documents", "{\"subjectPartyId\":\"" + app.partyId()
-                + "\",\"requirementCode\":\"REGISTRATION\",\"documentType\":\"REGISTRATION_CERTIFICATE\",\"fileId\":\"1\"}",
+                + "\",\"requirementCode\":\"REGISTRATION\",\"documentType\":\"REGISTRATION_CERTIFICATE\",\"fileAddress\":\"/files/v1/1\"}",
                 app.applicationId()),
             call("DELETE", "/{id}/documents/{documentId}", null, app.applicationId(), documentId)));
 

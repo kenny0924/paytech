@@ -57,10 +57,8 @@ spring:
       client:
         simple:
           instances:
-            # 同一独立 Mock HTTP 服务承载 Vault 与 CCT 正式合同，地址由 EnableMockHttpServer 运行时注入。
+            # 同一独立 Mock HTTP 服务承载 Vault 等正式合同，地址由 EnableMockHttpServer 运行时注入。
             vault-service:
-              - uri: "${test.mock-http.base-url}"
-            client-master-service:
               - uri: "${test.mock-http.base-url}"
             payment-service:
               - uri: "${test.mock-http.base-url}"
@@ -200,11 +198,8 @@ messaging:
 web:
   logging:
     metadata-only-path-prefixes:
-      - /internal/onboarding-files
       - /internal/files
       - /storage-admin
-      - /onboarding-files
-      - /review-files
       - /authentication
       - /authorization
       - /operations
@@ -266,11 +261,8 @@ tenant:
   projection:
     enabled: true # CCT 来源投影写入口；依赖人工认证与 Redis 协调。
 files:
-  # 共享 Mock 上下文关闭文件能力；文件测试由 OnboardingFileTestBase 在独立上下文开启 files.enabled 与 files.onboarding.enabled。
+  # 共享 Mock 上下文关闭文件能力；文件测试由 FileTestBase 在独立上下文开启 files.enabled。
   enabled: false # 内部文件接口、FILE_SCAN、格式检查器与存储快照刷新。
-  onboarding:
-    enabled: false # Client 入驻上传；要求 files.enabled=true。
-    cct-test-base-url: "" # 既有受限直连字段；此处禁用，不连接外部系统。
   # 存储实例、存储桶与写入路由在 t_file_storage_* 中维护，测试由 StorageInstanceMocker 插入，不在此配置。
   storage:
     snapshot-refresh: 1h # 生产默认 30s；测试由 Mocker 与管理写入显式刷新，避免定时刷新与用例交错。

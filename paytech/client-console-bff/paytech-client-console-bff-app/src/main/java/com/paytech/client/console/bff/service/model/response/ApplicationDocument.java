@@ -1,7 +1,5 @@
 package com.paytech.client.console.bff.service.model.response;
 
-import com.paytech.platform.support.api.onboardingfiles.response.FileResponseBody;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -22,8 +20,11 @@ public class ApplicationDocument {
     /** 材料类型 */
     private final String documentType;
 
-    /** 文件 ID */
+    /** 文件 ID，由 CCT 保存的文件地址解析 */
     private final String fileId;
+
+    /** CCT 保存的文件地址 /files/v1/{fileId} */
+    private final String fileAddress;
 
     /** 所属主体是否仍在申请范围内 */
     private final boolean subjectInScope;
@@ -35,5 +36,5 @@ public class ApplicationDocument {
      * 文件元数据
      * <li>fileStatus 为 UNAVAILABLE 时为空。</li>
      */
-    private final FileResponseBody file;
+    private final OnboardingFileResponseBody file;
 }

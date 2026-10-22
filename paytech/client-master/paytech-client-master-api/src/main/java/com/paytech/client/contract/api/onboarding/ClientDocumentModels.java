@@ -7,26 +7,26 @@ public final class ClientDocumentModels {
      * @param subjectPartyId 当前申请主主体或当前关联人员
      * @param requirementCode Risk 材料要求代码
      * @param documentType Risk 指定的材料类型
-     * @param fileId 原申请与主体的 Platform 文件
+     * @param fileAddress 当前账号上传的 Platform 文件地址，格式 /files/v1/{fileId}
      */
-    public record DocumentReferenceRequestBody(String subjectPartyId,String requirementCode,String documentType,String fileId) {}
+    public record DocumentReferenceRequestBody(String subjectPartyId,String requirementCode,String documentType,String fileAddress) {}
     /**
      * @param commandId 已停用，恒为空；请求幂等由 Gateway 处理
      * @param applicationId 原申请
      * @param documentId 唯一材料引用
      * @param subjectPartyId 原主体
-     * @param fileId 原文件
+     * @param fileAddress 原文件地址
      * @param operation 固定 ASSOCIATED
      * @param completedAt 首次成功时间
      */
-    public record DocumentCommandReceiptResponseBody(String commandId,String applicationId,String documentId,String subjectPartyId,String fileId,String operation,String completedAt) {}
+    public record DocumentCommandReceiptResponseBody(String commandId,String applicationId,String documentId,String subjectPartyId,String fileAddress,String operation,String completedAt) {}
     /**
      * @param documentId 当前材料引用
      * @param subjectPartyId 原材料主体
      * @param requirementCode 原材料要求
      * @param documentType 原材料类型
-     * @param fileId 原文件
+     * @param fileAddress 原文件地址
      * @param subjectInScope 主体是否仍在当前申请范围内
      */
-    public record DocumentResponseBody(String documentId,String subjectPartyId,String requirementCode,String documentType,String fileId,boolean subjectInScope) {}
+    public record DocumentResponseBody(String documentId,String subjectPartyId,String requirementCode,String documentType,String fileAddress,boolean subjectInScope) {}
 }

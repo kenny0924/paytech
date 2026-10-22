@@ -34,15 +34,15 @@ import com.paytech.platform.support.api.dataquery.DataSourceManagementApi;
 import com.paytech.platform.support.api.dataquery.QueryTemplateManagementApi;
 import com.paytech.platform.support.api.enums.DataQueryErrorCode;
 import com.paytech.platform.support.api.enums.GatewayConfigurationErrorCode;
-import com.paytech.platform.support.api.enums.OnboardingFileErrorCode;
+import com.paytech.platform.support.api.enums.FileErrorCode;
 import com.paytech.platform.support.api.enums.OperationsErrorCode;
 import com.paytech.platform.support.api.enums.WebhookEndpointErrorCode;
+import com.paytech.platform.support.api.files.InternalFileApi;
 import com.paytech.platform.support.api.filestorage.FileStorageManagementApi;
 import com.paytech.platform.support.api.gatewayconfiguration.management.GatewayConfigurationManagementApi;
 import com.paytech.platform.support.api.operations.OperationsManagementApi;
 import com.paytech.platform.support.api.referencedata.CurrencySpecManagementApi;
 import com.paytech.platform.support.api.referencedata.CurrencySpecQueryApi;
-import com.paytech.platform.support.api.reviewfiles.ReviewFileApi;
 
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
@@ -51,6 +51,7 @@ import tools.jackson.databind.json.JsonMapper;
 @Configuration(proxyBeanMethods = false)
 public class PlatformClientConfiguration {
     private static final String PLATFORM_SERVICE = "platform-support-service";
+    private static final String CALLER_SERVICE_HEADER = "X-Caller-Service";
     private static final String PLATFORM_BASE_URL = "http://" + PLATFORM_SERVICE + "/platform-support";
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(3);
     private static final Duration READ_TIMEOUT = Duration.ofSeconds(5);
@@ -161,7 +162,7 @@ public class PlatformClientConfiguration {
         PlatformDiscoveryInterceptor discovery, @Value("${operations.platform-test-base-url:}") String testBaseUrl,
         ObjectProvider<InternalTokenSupplier> tokens) {
         return platformProxy(environment, discovery, testBaseUrl, tokens, true, true, FILE_STORAGE_READ_TIMEOUT,
-            OnboardingFileErrorCode.values())
+            FileErrorCode.values())
             .createClient(com.paytech.platform.support.api.workflow.WorkflowAttachmentApi.class);
     }
 
@@ -224,12 +225,12 @@ public class PlatformClientConfiguration {
         return operationsConfigurationPlatformProxyFactory.createClient(GatewayConfigurationManagementApi.class);
     }
 
-    /** 审核材料下载额外登记 Platform 文件错误码，其余沿用 Platform 发现与 Problem 解码。 */
+    /** 审核材料下载（O10）使用内部文件接口，额外登记 Platform 文件错误码，其余沿用 Platform 发现与 Problem 解码。 */
     @Bean
-    ReviewFileApi reviewFileApi(Environment environment, PlatformDiscoveryInterceptor discovery,
+    InternalFileApi internalFileApi(Environment environment, PlatformDiscoveryInterceptor discovery,
         @Value("${operations.platform-test-base-url:}") String testBaseUrl, ObjectProvider<InternalTokenSupplier> tokens) {
         return platformProxy(environment, discovery, testBaseUrl, tokens, false,
-            OnboardingFileErrorCode.values()).createClient(ReviewFileApi.class);
+            FileErrorCode.values()).createClient(InternalFileApi.class);
     }
 
     @Bean
@@ -294,7 +295,9 @@ public class PlatformClientConfiguration {
             validateTestAddress(testBaseUrl, environment);
             builder.baseUrl(testBaseUrl);
         }
-        return builder.requestFactory(requestFactory(readTimeout)).requestInterceptor(requestIdInterceptor()).build();
+        // Platform 以 internal-auth DUAL 模式从该头识别调用服务（内部文件接口据此确定来源系统与审计中的调用服务）。
+        return builder.defaultHeader(CALLER_SERVICE_HEADER, CommercialClientConfiguration.CALLER_SERVICE)
+            .requestFactory(requestFactory(readTimeout)).requestInterceptor(requestIdInterceptor()).build();
     }
 
     /** Platform 公共错误码之外再登记本合同的专有错误码。 */

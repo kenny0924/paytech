@@ -11,6 +11,7 @@ export type Requirement = {
 };
 export type FileInfo = {
   fileId: string;
+  fileAddress: string;
   displayName: string;
   sizeBytes: string;
   mimeType: string;
@@ -45,6 +46,7 @@ export type Application = {
     documentId: string;
     subjectPartyId: string;
     fileId: string;
+    fileAddress: string;
     requirementCode: string;
     documentType: string;
     subjectInScope: boolean;
@@ -216,6 +218,7 @@ export type Upload = {
   phase: "PUT" | "COMPLETE" | "SCAN" | "ASSOCIATE" | "DONE";
   uploadId?: string;
   fileId?: string;
+  fileAddress?: string;
 };
 export function newUpload(
   applicationId: string,
@@ -251,6 +254,9 @@ const id = (value: unknown): value is string =>
   typeof value === "string" &&
   /^[1-9][0-9]{0,18}$/.test(value) &&
   BigInt(value) <= 9223372036854775807n;
+// 文件服务签发的稳定地址只能对应同一文件 ID；关联材料时原样提交。
+const fileAddress = (value: unknown, fileId: string): value is string =>
+  value === "/files/v1/" + fileId;
 // 只在文件成功传输后持久化无敏感内容的恢复坐标；临时 URL、文件名、字节与资料永不落浏览器存储。
 export function readCheckpoint(
   raw: string | null,
@@ -266,7 +272,11 @@ export function readCheckpoint(
       !["COMPLETE", "SCAN", "ASSOCIATE"].includes(value.phase)
     )
       return null;
-    if (value.phase !== "COMPLETE" && !id(value.fileId)) return null;
+    if (
+      value.phase !== "COMPLETE" &&
+      !(id(value.fileId) && fileAddress(value.fileAddress, value.fileId))
+    )
+      return null;
     if (
       ![value.startKey, value.completeKey, value.associateKey].every((key) =>
         /^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(key),
@@ -289,7 +299,9 @@ export function readCheckpoint(
       associateKey: value.associateKey,
       phase: value.phase,
       uploadId: value.uploadId,
-      ...(value.fileId ? { fileId: value.fileId } : {}),
+      ...(value.fileId
+        ? { fileId: value.fileId, fileAddress: value.fileAddress }
+        : {}),
     };
   } catch {
     return null;
@@ -316,8 +328,6 @@ export async function runUpload(
       method: "POST",
       key: state.startKey,
       body: {
-        applicationId: state.applicationId,
-        subjectPartyId: state.subjectPartyId,
         filename: file.name,
         mimeType: file.type || "application/octet-stream",
         sizeBytes: String(file.size),
@@ -351,13 +361,22 @@ export async function runUpload(
     checkpoint(state);
   }
   if (state.phase === "COMPLETE") {
-    const receipt = await api<{ uploadId: string; fileId: string }>(
-      files + "/uploads/" + state.uploadId + "/completion",
-      { method: "POST", key: state.completeKey },
-    );
-    if (receipt.uploadId !== state.uploadId || !id(receipt.fileId))
+    const receipt = await api<{
+      uploadId: string;
+      fileId: string;
+      fileAddress: string;
+    }>(files + "/uploads/" + state.uploadId + "/completion", {
+      method: "POST",
+      key: state.completeKey,
+    });
+    if (
+      receipt.uploadId !== state.uploadId ||
+      !id(receipt.fileId) ||
+      !fileAddress(receipt.fileAddress, receipt.fileId)
+    )
       throw new Error("文件完成响应无效");
     state.fileId = receipt.fileId;
+    state.fileAddress = receipt.fileAddress;
     state.phase = "SCAN";
     checkpoint(state);
   }
@@ -379,7 +398,7 @@ export async function runUpload(
         subjectPartyId: state.subjectPartyId,
         requirementCode: state.requirementCode,
         documentType: state.documentType,
-        fileId: state.fileId,
+        fileAddress: state.fileAddress,
       },
     });
     state.phase = "DONE";

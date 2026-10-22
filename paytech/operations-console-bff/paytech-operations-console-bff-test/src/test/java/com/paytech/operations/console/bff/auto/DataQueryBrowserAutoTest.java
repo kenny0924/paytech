@@ -78,15 +78,14 @@ class DataQueryBrowserAutoTest extends FinanceBrowserAutoTestBase {
         assertEquals(200, response.statusCode(), response.body());
         assertEquals(row.path("response"), JSON.readTree(response.body()));
         var call = ownerCall();
-        boolean execution = row.path("path").asString().startsWith("/data-query/v1/");
         assertAll(() -> assertEquals(row.path("method").asString(), call.method()),
             () -> assertEquals(ownerPath(row), call.path()),
             () -> assertEquals(query(row.path("query").asString()), query(call.query())),
             () -> assertEquals(REQUEST_ID, call.header("X-Request-Id")),
             () -> assertEquals(ACCOUNT_ID, call.header("X-Gateway-Actor-Subject")),
             () -> assertEquals(SESSION_ID, call.header("X-Gateway-Session-Id")),
-            () -> assertEquals(execution ? CALLER_SERVICE : null,
-                call.header(DataQueryExecutionApi.CALLER_SERVICE_HEADER)),
+            // 所有 Platform 出站请求都带调用服务头（internal-auth DUAL 识别调用方），执行接口另在合同中显式声明。
+            () -> assertEquals(CALLER_SERVICE, call.header(DataQueryExecutionApi.CALLER_SERVICE_HEADER)),
             () -> assertNull(call.header("Authorization")), () -> assertNull(call.header("Cookie")),
             () -> assertNull(call.header("Idempotency-Key")));
         if (row.path("request").isNull()) {

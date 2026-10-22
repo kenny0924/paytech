@@ -17,7 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.platform.support.api.enums.FileScanStatus;
-import com.paytech.platform.support.api.enums.OnboardingFileErrorCode;
+import com.paytech.platform.support.api.enums.FileErrorCode;
 import com.paytech.platform.support.api.files.FileAddress;
 import com.paytech.platform.support.api.files.response.FileDownloadResponseBody;
 import com.paytech.platform.support.api.files.response.FileUploadCompletionResponseBody;
@@ -27,7 +27,7 @@ import com.paytech.platform.support.api.workflow.request.StartWorkflowAttachment
 import com.paytech.platform.support.api.workflow.response.WorkflowSubmissionResponseBody;
 import com.paytech.platform.support.service.handler.FileScanHandler;
 import com.paytech.platform.support.test.base.WorkflowFileTestBase;
-import com.paytech.platform.support.test.builder.OnboardingFileBuilder;
+import com.paytech.platform.support.test.builder.FileBuilder;
 import com.paytech.platform.support.test.builder.OperatorBuilder;
 import com.paytech.platform.support.test.builder.OperatorBuilder.Operator;
 import com.paytech.platform.support.test.builder.WorkflowGraphJson;
@@ -77,7 +77,7 @@ class WorkflowAttachmentApiTest extends WorkflowFileTestBase {
         String uploadId = uploadPdf(executor);
         Map<String, Object> row = fileData.uploadRow(Long.parseLong(uploadId));
 
-        complete(uploadId, approver).assertProblem(404, OnboardingFileErrorCode.FILE_NOT_FOUND);
+        complete(uploadId, approver).assertProblem(404, FileErrorCode.FILE_NOT_FOUND);
         var receipt = complete(uploadId, executor).assertOk().as(FileUploadCompletionResponseBody.class);
         var repeated = complete(uploadId, executor).assertOk().as(FileUploadCompletionResponseBody.class);
         awaitAvailable(receipt.getFileId());
@@ -107,7 +107,7 @@ class WorkflowAttachmentApiTest extends WorkflowFileTestBase {
             () -> assertEquals("VERIFIED", submitted.getStatus()),
             () -> assertTrue(download.getExpiresAt().isAfter(clock.instant())),
             () -> assertEquals("https", URI.create(download.getUrl()).getScheme()),
-            () -> assertArrayEquals(OnboardingFileBuilder.PDF, bytes));
+            () -> assertArrayEquals(FileBuilder.PDF, bytes));
     }
 
     /** 参数非法返回 422 字段错误，类型不在扫描策略内返回 422 策略拒绝，均不登记上传；不存在的上传返回 404。 */
@@ -118,9 +118,9 @@ class WorkflowAttachmentApiTest extends WorkflowFileTestBase {
         post(UPLOADS, executor, new StartWorkflowAttachmentUploadRequestBody("a.pdf", WorkflowFileMocker.PDF, "0"))
             .assertProblem(422, CommonErrorCode.VALIDATION_ERROR).assertFieldError("sizeBytes");
         post(UPLOADS, executor, new StartWorkflowAttachmentUploadRequestBody("a.txt", "text/plain", "10"))
-            .assertProblem(422, OnboardingFileErrorCode.FILE_POLICY_REJECTED);
+            .assertProblem(422, FileErrorCode.FILE_POLICY_REJECTED);
         complete(Long.toString(OperatorBuilder.nextId()), executor).assertProblem(404,
-            OnboardingFileErrorCode.FILE_NOT_FOUND);
+            FileErrorCode.FILE_NOT_FOUND);
 
         assertTrue(fileData.uploadsOf(executor.accountId()).isEmpty());
     }
@@ -133,7 +133,7 @@ class WorkflowAttachmentApiTest extends WorkflowFileTestBase {
     void test_declaredTypeMismatch() {
         String uploadId = uploadPdf(executor, "image/png");
 
-        var rejected = complete(uploadId, executor).assertProblem(422, OnboardingFileErrorCode.FILE_POLICY_REJECTED);
+        var rejected = complete(uploadId, executor).assertProblem(422, FileErrorCode.FILE_POLICY_REJECTED);
 
         assertAll(() -> assertEquals("文件类型或大小不符合要求", rejected.json().path("detail").asString()),
             () -> assertTrue(fileData.filesOfUpload(Long.parseLong(uploadId)).isEmpty()),
@@ -148,13 +148,13 @@ class WorkflowAttachmentApiTest extends WorkflowFileTestBase {
     /** 以声明的类型开始上传并按授权直传 PDF 字节，返回上传 ID。 */
     private String uploadPdf(Operator operator, String declaredMime) {
         FileUploadResponseBody upload = post(UPLOADS, operator, new StartWorkflowAttachmentUploadRequestBody(
-            "contract.pdf", declaredMime, Integer.toString(OnboardingFileBuilder.PDF.length)))
+            "contract.pdf", declaredMime, Integer.toString(FileBuilder.PDF.length)))
             .assertStatus(201).as(FileUploadResponseBody.class);
         storage.track((String) fileData.uploadRow(Long.parseLong(upload.getUploadId())).get("storage_object_ref"));
         var authorization = upload.getAuthorization();
         assertEquals("PUT", authorization.getMethod());
         assertEquals(200, storage.browserPut(authorization.getUrl(), authorization.getHeaders(),
-            OnboardingFileBuilder.PDF).statusCode());
+            FileBuilder.PDF).statusCode());
         return upload.getUploadId();
     }
 

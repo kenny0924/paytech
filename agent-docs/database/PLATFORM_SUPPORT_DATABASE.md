@@ -1,5 +1,7 @@
 # Platform Support 数据库设计规范
 
+> **文件多存储并存（2026-10-22，第二段）：** 依据[第二段方案](../../requirements/20261022/platform-support-文件多存储并存/segment2.md)，入驻文件的上传、下载改由 client-console-bff / operations-console-bff 调内部文件接口，业务系统只保存 Platform 签发的文件地址 `/files/v1/{fileId}`。Platform 删除 `t_file_upload.owner_system / owner_type / owner_ref_id` 与 `t_file_owner_ref`，文件不再记录业务归属，只记来源系统与 `reason_code`；本文下列关于入驻文件 Owner 申请＋主体、Owner Ref 授权、PLT-I04 入驻租户解析的描述均被取代。下载授权可带人工操作人，由 Platform 写下载审计。增量 SQL 见 `paytech/platform-support/docs/database/sql/changes/2026-10-22-file-owner-removal.sql`（未执行，新链路验收后执行），执行状态只见当前台账。
+
 > **文件多存储并存（2026-10-22，第一段）：** 依据[需求](../../requirements/20261022/platform-support-文件多存储并存/requirement.md)与[技术方案](../../requirements/20261022/platform-support-文件多存储并存/technique.md)，文件图组新增 `t_file_storage_instance`（存储实例：类型 MINIO/S3、地址、区域、私有证书、凭据方式、密钥 Vault Token `FILE_STORAGE_CREDENTIAL_V1`）、`t_file_storage_bucket`（存储桶与启用检查结果）、`t_file_storage_route`（来源系统 → 桶、扫描策略、上传期限，默认路由 `*`）三张表；`t_file_upload`、`t_file_object` 增加 `source_system`、`reason_code`（现有记录回填 `platform-support` / `CLIENT_ONBOARDING_MATERIAL`），`t_file_object` 增加 `idx_file_source`；`t_file_upload` 的 `tenant_id`、`uploader_id` 与 `owner_*` 改为可空（内部文件接口的上传没有租户与 Owner，纯系统上传没有上传人）。实例代码即记录上的 `storage_provider`、桶名即 `storage_container_ref`，被记录引用后只能停用；读取永远按记录坐标，不受路由影响。内部系统之间不做文件级权限，文件只记来源系统与原因。第二段再删除 `owner_*` 与 `t_file_owner_ref`。增量 SQL 见 `paytech/platform-support/docs/database/sql/changes/2026-10-22-file-storage-management.sql`（未执行），执行状态只见当前台账。
 
 > **渠道协议迁出（2026-10-20）：** 依据[统一对外出口决定](../decisions/2026-10-20-channel-connector-unified-outbound.md)与[技术方案](../../requirements/20261020/channel-connector-统一对外渠道出口/technique.md)，下一条所述 integration 图组 10 表（`t_standard_api`、`t_api_field`、`t_integration*`、验证四表）的 Owner 改为 channel-connector（`mor_channel_connector`，模块 `paytech-channel-connector-protocol`），Platform Schema 由 57 张减为 47 张；下一条保留为字段与历史设计参照，不再表示 Platform 拥有这些表。2026-10-22 第二段在 channel-connector 内把 `t_integration` 并入 `t_channel`、7 张 `t_integration_*` 改名为 `t_channel_*`，与 Platform 无关；Platform 只保留运营控制台的注册数据（块 71、92、129）。代码与 SQL 执行状态只见[当前台账](../CURRENT_IMPLEMENTATION.md#channel-connector-phase2-20261022)。
@@ -42,7 +44,7 @@ Gateway 和入口应用位于六个核心系统之外：Gateway 负责入口、�
 - `INTERNAL`、`CLIENT`、`PARTNER` Access Tenant 投影，以及 Tenant Member、Invitation、Role、Permission 与授权关系；
 - CLIENT Tenant-owned API Credential 与显式 Scope；
 - 业务 Email OTP，不作为登录 OTP/MFA；
-- 文件上传、对象存储引用、扫描策略/要求/结果和 Owner 引用，以及运营维护的存储实例、存储桶与写入路由（2026-10-22）；
+- 文件上传、对象存储引用、扫描策略/要求/结果，以及运营维护的存储实例、存储桶与写入路由（2026-10-22；Owner 引用已于第二段删除）；
 - Consumer Document、Document Version、Delivery 与 Access Grant；
 - Notification Provider、Template、Route、Request、Delivery、Attempt、Callback 与 Suppression；
 - Webhook Endpoint（含订阅事件类型）、Signing Secret 引用、Event、Delivery 与 Attempt（2026-10-15 后继合同见第 9 节）；
@@ -67,7 +69,7 @@ Gateway 和入口应用位于六个核心系统之外：Gateway 负责入口、�
 | Diagram Group | 表数 | 精确物理表 |
 | --- | ---: | --- |
 | 身份、授权与接入 | 18 | `t_user_account`、`t_password_credential`、`t_federated_identity`、`t_access_tenant`、`t_tenant_member`、`t_tenant_invitation`、`t_authentication_challenge`、`t_auth_session`、`t_refresh_token_generation`、`t_jwt_signing_key`、`t_role`、`t_permission`、`t_tenant_member_role`、`t_role_permission`、`t_api_credential`、`t_api_credential_scope`、`t_email_otp_challenge`、`t_email_otp_attempt` |
-| 文件与消费者文档 | 12 | `t_file_upload`、`t_file_scan_policy`、`t_file_scan_requirement`、`t_file_object`、`t_file_owner_ref`、`t_file_scan_result`、`t_document_template`、`t_document_template_translation`、`t_consumer_document`、`t_document_version`、`t_document_delivery`、`t_document_access_grant` |
+| 文件与消费者文档 | 11 | `t_file_upload`、`t_file_scan_policy`、`t_file_scan_requirement`、`t_file_object`、`t_file_scan_result`、`t_document_template`、`t_document_template_translation`、`t_consumer_document`、`t_document_version`、`t_document_delivery`、`t_document_access_grant` |
 | 通知与 Email | 9 | `t_notification_provider`、`t_notification_request`、`t_notification_delivery`、`t_notification_attempt`、`t_notification_route`、`t_notification_provider_callback`、`t_notification_suppression`、`t_notification_template`、`t_notify_template_translation` |
 | Client Webhook | 5 | `t_webhook_endpoint`、`t_webhook_signing_secret`、`t_webhook_event`、`t_webhook_delivery`、`t_webhook_attempt`（2026-10-15 由 8 表收敛，见第 9 节） |
 | 审计与安全 | 8 | `t_audit_chain`、`t_audit_event`、`t_audit_event_attr`、`t_audit_integrity_point`、`t_security_event`、`t_security_alert`、`t_security_alert_event`、`t_security_alert_action` |
@@ -155,7 +157,7 @@ PHC verifier、HMAC、Blind Index、Secret Fingerprint 与 KMS Signature Ref 使
 - Platform Role 使用 `tenant_scope=PLATFORM + scope_key=PLATFORM`；Tenant Role 使用精确 Tenant Scope Key。`t_role.scope_key` 由 `tenant_scope + tenant_id` 派生，不接受调用方输入；`t_tenant_member_role` 通过 `(tenant_member_id, tenant_id)` 与 `(role_id, role_scope_key)` 两条复合 FK，以及 `role_scope_key='PLATFORM' OR role_scope_key=CAST(tenant_id AS CHAR)` CHECK，阻止授予其他 Tenant 的 Role。核心系统仍在资源使用点执行自己的资源授权。
 - Invitation Accept 在一个本地事务中验证 Email Challenge、Tenant/Role 当前状态，创建唯一 Member，授予一个初始 Role 并关闭活动 Invitation。
 - CCT-I15 `START_OR_RESUME` 先创建 DRAFT Application，并通过 PLT-I17 的 `tenant_type + owner_ref_id + requested_by_account_id + source_version + payload_hash` 创建 PENDING Tenant/Member/`TENANT_ONBOARDING_OWNER`。同版本同 Hash 幂等，同版本异 Hash 冲突，旧版本拒绝。
-- PENDING Tenant 不签发普通 Tenant Context Token。入驻材料由 Client/Partner BFF 在 Account Context 调用 PLT-I04；Platform 以 `requested_by_account_id` 唯一解析同一 PENDING Tenant 下的 ACTIVE Member 与 `TENANT_ONBOARDING_OWNER`，再写本地 `tenant_id`。CCT-I15 `SUBMIT` 冻结受控 File ID 后才登记 Risk。CCT 批准时 Platform 撤销临时 Onboarding Role 并授予 `TENANT_OWNER`。
+- PENDING Tenant 不签发普通 Tenant Context Token。入驻材料由 client-console-bff 调 Platform 内部文件接口上传（2026-10-22 第二段起不再解析入驻 Tenant），CCT-I15 `SUBMIT` 冻结文件地址与哈希后才登记 Risk。CCT 批准时 Platform 撤销临时 Onboarding Role 并授予 `TENANT_OWNER`。
 
 ## 6. API Credential、派生 Readiness 与 Gateway 边界
 
@@ -198,12 +200,12 @@ Snapshot 只投影 ACTIVE Target 及其 ACTIVE Route/子项；DISABLED Target �
 
 ### 7.1 File
 
-- 入驻上传按[2026-09-15 已确认文件合同](../../requirements/20260914/client-console-注册与客户入驻/file-upload-closure-proposal.md)固定 Owner 申请＋主体、原存储坐标、展示名和扫描策略；上传授权由存储适配器签发，不保存额外 upload_token_hash。完成上传后生成不可变 File Object。
+- 上传固定来源系统、上传原因、上传人、原存储坐标、展示名和扫描策略；上传授权由存储适配器签发，不保存额外 upload_token_hash。完成上传后生成不可变 File Object。2026-10-22 第二段起不再固定入驻 Owner 申请＋主体（原[2026-09-15 文件合同](../../requirements/20260914/client-console-注册与客户入驻/file-upload-closure-proposal.md)的归属部分已被取代）。
 - File 冻结一个 Scan Policy Revision，Requirement 明确列出 Scanner/Type/最低版本/接受结果。Scan Result 由应用在本地事务中校验 File 与 Requirement 属于同一 Policy；模型关联不导出物理 FK。
 - `AVAILABLE` 只表示所有要求已通过。后续显式重扫可将同一不可变内容改为 `QUARANTINED/UNAVAILABLE`，不覆盖旧 Result。
-- 普通 File 授权由调用上下文、Owner Ref 和统一 Audit 共同完成；不建设第二套通用 File ACL/Event。2026-10-22 起内部文件接口不做文件级权限：持有文件 ID 的内部服务都可读取，文件只记录来源系统与 `reason_code`，业务授权由调用方完成。
+- 不建设通用 File ACL/Event。2026-10-22 起内部文件接口不做文件级权限：持有文件 ID 的内部服务都可读取，文件只记录来源系统与 `reason_code`，业务授权由调用方（BFF）完成；业务数据保存文件地址 `/files/v1/{fileId}`。下载授权带人工操作人时，Platform 写一条 `FILE_DOWNLOAD_AUTHORIZE` 审计（操作人、文件、调用服务，不记地址）。
 - 上传创建时按来源系统的写入路由固定存储实例与桶（`storage_provider` / `storage_container_ref`）并冻结路由的扫描策略；完成、恢复、检查、下载只用记录上的坐标。只有 ACTIVE 桶接受新上传，ACTIVE / READ_ONLY 桶可读，DISABLED 桶或实例读写都不可用。
-- 入驻阶段 PLT-I04 只接受 Account Context 与已认证的 `requested_by_account_id`，由 Platform 解析唯一 PENDING Tenant/Member/Onboarding Role 后落本地 `tenant_id`；调用方不能预填 Tenant，零个或多个候选均 Fail-Closed。
+- （已取代，2026-10-22 第二段）原入驻阶段 PLT-I04 由 Platform 解析唯一 PENDING Tenant/Member/Onboarding Role 后落本地 `tenant_id`；现入驻上传只要求客户已登录，由 client-console-bff 调内部文件接口，`tenant_id` 为空，历史记录保留原值。
 
 ### 7.2 Consumer Document
 
@@ -272,7 +274,7 @@ Notification 现行事实、七表字段、事务与恢复规则由 [Delivery �
 | PLT-I01 / PLT-I15 | Operations 或 CUSTOMER 注册、Email 验证、Password/Google 登录、Refresh、Logout；浏览器只经对应 BFF |
 | PLT-I02 / PLT-I16 / PLT-I18 | 当前权限校验、Account/Tenant Context 选择、Tenant Invitation 创建/接受/撤销 |
 | PLT-I03 | Credential JOIN 同一 ACTIVE CLIENT Tenant 并校验 PHC，只返回该 Credential 的 ACTIVE Scope 与可信 `tenant_id + tenant_type=CLIENT + owner_ref_id + credential_id`；调用方不得覆盖 Owner，也不得从 Key Prefix 推断 |
-| PLT-I04 | 普通 Tenant Context 保存/读取 File；入驻时 BFF 用 Account Context + `requested_by_account_id`，Platform 唯一解析 PENDING Tenant/Member/Onboarding Role 后写入受控 File ID、Content Hash 与 Scan Status |
+| PLT-I04 | 内部文件接口（2026-10-22 第二段）：调用方服务经 BFF 上传、查询、下载，来源系统取调用身份；返回文件 ID 与文件地址、Content Hash 与 Scan Status，下载可带人工操作人并写审计 |
 | PLT-I05 / PLT-I06 | 写入与授权查询统一 Audit，不接收敏感明文 |
 | PLT-I07 / PLT-I08 | 2026-10-15 起：来源系统经内部 HTTP `POST /webhooks/v1/events` 提交冻结事件；Operations 经 `/webhook-admin/v1` 维护 Endpoint/订阅/密钥、查询 Delivery/Attempt 并 Replay |
 | PLT-I09 | 创建 Tenant-owned、可追踪 Notification Request/Delivery |

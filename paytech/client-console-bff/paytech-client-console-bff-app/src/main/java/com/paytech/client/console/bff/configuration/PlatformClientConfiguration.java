@@ -5,6 +5,7 @@ import java.time.Duration;
 import java.util.Arrays;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.*;
 import org.springframework.core.env.Environment;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
@@ -13,6 +14,7 @@ import com.paytech.foundation.common.error.*;
 import com.paytech.foundation.httpclient.api.*;
 import com.paytech.foundation.internalauth.api.InternalTokenSupplier;
 import com.paytech.client.console.bff.domain.enums.ClientBffErrorCode;
+import com.paytech.client.console.bff.integration.CallerServiceCodes;
 import com.paytech.client.console.bff.integration.PlatformDiscoveryInterceptor;
 import com.paytech.platform.support.api.authentication.ClientAuthenticationApi;
 import com.paytech.platform.support.api.authorization.ClientAuthorizationApi;
@@ -22,6 +24,8 @@ import com.paytech.platform.support.api.clientteam.ClientTeamApi;
 import com.paytech.platform.support.api.clientwebhook.ClientWebhookApi;
 import com.paytech.platform.support.api.enums.ClientAuthenticationErrorCode;
 import com.paytech.platform.support.api.enums.ClientTeamErrorCode;
+import com.paytech.platform.support.api.enums.FileErrorCode;
+import com.paytech.platform.support.api.files.InternalFileApi;
 import com.paytech.foundation.common.enums.CodeMessageEnum;
 import java.util.stream.Stream;
 
@@ -29,6 +33,7 @@ import java.util.stream.Stream;
 @Configuration(proxyBeanMethods=false)
 public class PlatformClientConfiguration {
     private static final String PLATFORM_SERVICE = "platform-support-service";
+    private static final String CALLER_SERVICE_HEADER = "X-Caller-Service";
 
     /** 只在测试侧显式指定 loopback 协议替身；正常服务由 Nacos 发现。 */
     @Bean ClientAuthenticationApi clientAuthenticationApi(Environment env, PlatformDiscoveryInterceptor discovery,
@@ -66,6 +71,14 @@ public class PlatformClientConfiguration {
         return create(env, discovery, testUrl, tokens, ClientInvitationApi.class, teamErrors());
     }
 
+    /** 入驻材料上传、查询与下载；文件错误码原样投影到浏览器（不存在 404、状态冲突 409、策略不符 422）。 */
+    @Bean
+    @ConditionalOnProperty(name = "client.onboarding-enabled", havingValue = "true")
+    InternalFileApi internalFileApi(Environment env, PlatformDiscoveryInterceptor discovery,
+        @Value("${client.platform-test-base-url:}") String testUrl, ObjectProvider<InternalTokenSupplier> tokens) {
+        return create(env, discovery, testUrl, tokens, InternalFileApi.class, FileErrorCode.values());
+    }
+
     /** 团队与邀请接口同时使用认证类与团队类错误码（会话、权限、工作区不可用沿用认证类）。 */
     static CodeMessageEnum[] teamErrors() {
         return Stream.concat(Stream.of(ClientAuthenticationErrorCode.values()), Stream.of(ClientTeamErrorCode.values()))
@@ -93,6 +106,8 @@ public class PlatformClientConfiguration {
             }
             builder.baseUrl(testUrl);
         }
+        // Platform 以 internal-auth DUAL 模式从该头识别调用服务，内部文件接口据此确定来源系统。
+        builder.defaultHeader(CALLER_SERVICE_HEADER, CallerServiceCodes.CLIENT_CONSOLE_BFF);
         var factory=new JdkClientHttpRequestFactory(HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3))
             .followRedirects(HttpClient.Redirect.NEVER).build());
         factory.setReadTimeout(Duration.ofSeconds(5));

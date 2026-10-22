@@ -21,8 +21,8 @@ import com.paytech.platform.support.api.enums.FileStorageCheckResult;
 import com.paytech.platform.support.filedocument.integration.storage.ProbeObject;
 import com.paytech.platform.support.test.base.FileStorageAdapterTestBase;
 import com.paytech.platform.support.test.mocker.local.StorageInstanceMocker;
-import com.paytech.platform.support.test.builder.OnboardingFileBuilder;
-import com.paytech.platform.support.test.builder.OnboardingFileBuilder.Spec;
+import com.paytech.platform.support.test.builder.FileBuilder;
+import com.paytech.platform.support.test.builder.FileBuilder.Spec;
 
 /**
  * MinIO 适配器经模块发布端口访问本机 HTTPS MinIO：上传授权与条件写入、唯一版本固定、服务端类型识别、版本下载和期限边界。
@@ -30,7 +30,7 @@ import com.paytech.platform.support.test.builder.OnboardingFileBuilder.Spec;
  * @see FileStorageRegistry#openForWrite(String, String)
  * @see UploadStorage#authorize(Upload)
  * @see CompletedUploadStorage#open(Upload)
- * @see FileDownloadStorage#authorize(File, Instant)
+ * @see FileDownloadStorage#authorize(File, Instant, com.paytech.platform.support.filedocument.domain.file.DownloadPresentation)
  * @see StoredFileReader#open(File)
  * @see FileObjectStorage#checkBucket(String)
  */
@@ -77,7 +77,7 @@ class MinioFileStorageTest extends FileStorageAdapterTestBase {
         var grant = uploadThroughGrant(spec);
         String version = assertOpened(spec, spec.mime());
 
-        var second = storage.browserPut(grant.url(), grant.headers(), OnboardingFileBuilder.PNG);
+        var second = storage.browserPut(grant.url(), grant.headers(), FileBuilder.PNG);
 
         assertEquals(412, second.statusCode(), "If-None-Match:* 应拒绝覆盖");
         assertEquals(List.of(version), versions(spec));
@@ -89,7 +89,7 @@ class MinioFileStorageTest extends FileStorageAdapterTestBase {
     void test_overwrittenObjectUnavailable() {
         Spec spec = target().build();
         uploadThroughGrant(spec);
-        storage.put(spec.objectRef(), OnboardingFileBuilder.PNG);
+        storage.put(spec.objectRef(), FileBuilder.PNG);
 
         assertEquals(2, versions(spec).size());
         assertOpenUnavailable(spec);
@@ -116,18 +116,24 @@ class MinioFileStorageTest extends FileStorageAdapterTestBase {
     void test_downloadPinnedVersion() {
         Spec uploaded = target().build();
         uploadThroughGrant(uploaded);
-        Spec registered = OnboardingFileBuilder.template(provider(), uploaded.container(), uploaded.objectRef())
+        Spec registered = FileBuilder.template(provider(), uploaded.container(), uploaded.objectRef())
             .version(assertOpened(uploaded, uploaded.mime())).build();
-        storage.put(uploaded.objectRef(), OnboardingFileBuilder.PNG);
+        storage.put(uploaded.objectRef(), FileBuilder.PNG);
         Instant requested = now().plusSeconds(60);
 
         byte[] downloaded = downloadThroughGrant(registered, requested);
 
-        assertArrayEquals(OnboardingFileBuilder.PDF, downloaded);
-        assertArrayEquals(OnboardingFileBuilder.PDF, readRegistered(registered));
-        Instant granted = adapter().authorize(registered.file(), requested).expiresAt();
+        assertArrayEquals(FileBuilder.PDF, downloaded);
+        assertArrayEquals(FileBuilder.PDF, readRegistered(registered));
+        Instant granted = adapter().authorize(registered.file(), requested, attachment(registered)).expiresAt();
         assertEquals(requested, granted);
         assertEquals(granted.truncatedTo(ChronoUnit.MICROS), granted, "下载授权到期时间为微秒精度");
+    }
+
+    /** 下载方式与中英文原文件名签入地址并由存储原样返回；INLINE 不满足条件时降为附件。 */
+    @Test
+    void test_downloadPresentation() {
+        assertDownloadPresentation();
     }
 
     /** 不足 1 秒的期限拒绝签发；超过 7 天的期限截断为 7 天。 */
@@ -138,16 +144,16 @@ class MinioFileStorageTest extends FileStorageAdapterTestBase {
 
         assertThrows(ServiceUnavailableException.class, () -> adapter().authorize(expiring.upload()));
         assertThrows(ServiceUnavailableException.class,
-            () -> adapter().authorize(distant.file(), now().plusMillis(999)));
+            () -> adapter().authorize(distant.file(), now().plusMillis(999), attachment(distant)));
         assertEquals(now().plus(MAX_PRESIGN), adapter().authorize(distant.upload()).expiresAt());
-        assertEquals(now().plus(MAX_PRESIGN), adapter().authorize(distant.file(), distant.expiresAt()).expiresAt());
+        assertEquals(now().plus(MAX_PRESIGN), adapter().authorize(distant.file(), distant.expiresAt(), attachment(distant)).expiresAt());
     }
 
     /** PDF、PNG、JPEG 与无法识别内容。 */
     static Stream<Arguments> contentTypes() {
-        return Stream.of(Arguments.of("pdf", OnboardingFileBuilder.PDF, "application/pdf"),
-            Arguments.of("png", OnboardingFileBuilder.PNG, "image/png"),
-            Arguments.of("jpeg", OnboardingFileBuilder.JPEG, "image/jpeg"),
-            Arguments.of("unknown", OnboardingFileBuilder.TEXT, StoredContentType.UNKNOWN));
+        return Stream.of(Arguments.of("pdf", FileBuilder.PDF, "application/pdf"),
+            Arguments.of("png", FileBuilder.PNG, "image/png"),
+            Arguments.of("jpeg", FileBuilder.JPEG, "image/jpeg"),
+            Arguments.of("unknown", FileBuilder.TEXT, StoredContentType.UNKNOWN));
     }
 }

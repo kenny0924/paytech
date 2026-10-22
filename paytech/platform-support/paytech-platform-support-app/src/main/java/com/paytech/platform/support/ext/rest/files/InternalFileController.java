@@ -50,9 +50,10 @@ public class InternalFileController implements InternalFileApi {
         return converter.file(files.describe(converter.id(fileId, "文件 ID 必须为规范正整数")));
     }
 
-    /** 签发短时下载地址；不做文件级权限。 */
+    /** 签发短时下载地址；不做文件级权限，带人工操作人时写下载审计，下载方式缺省为附件。 */
     @Override
-    public FileDownloadResponseBody authorizeDownload(String fileId) {
-        return converter.downloadResult(downloadProcessor.process(converter.downloadRequest(fileId)));
+    public FileDownloadResponseBody authorizeDownload(String fileId, String operatorAccountId, String disposition) {
+        return converter.downloadResult(
+            downloadProcessor.process(converter.downloadRequest(fileId, operatorAccountId, disposition)));
     }
 }

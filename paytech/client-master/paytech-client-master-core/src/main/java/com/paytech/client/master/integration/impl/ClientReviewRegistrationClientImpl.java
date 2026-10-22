@@ -20,6 +20,7 @@ import com.paytech.compliance.api.request.ClientReviewDocumentBody;
 import com.paytech.compliance.api.request.ClientReviewRegistrationRequestBody;
 import com.paytech.compliance.api.request.ClientReviewRelationBody;
 import com.paytech.compliance.api.request.ClientReviewSubjectBody;
+import com.paytech.platform.support.api.files.FileAddress;
 
 import lombok.AllArgsConstructor;
 
@@ -132,14 +133,14 @@ public class ClientReviewRegistrationClientImpl implements ClientReviewRegistrat
         return body;
     }
 
-    /** 材料引用。 */
+    /** 材料引用；Risk 合同仍为文件 ID + 摘要，ID 由 CCT 保存的规范地址解析。 */
     ClientReviewDocumentBody document(ClientApplicationDocument document) {
         var body = new ClientReviewDocumentBody();
         body.setDocumentId(Long.toString(document.documentId()));
         body.setSubjectPartyId(Long.toString(document.subjectPartyId()));
         body.setRequirementCode(document.requirementCode());
         body.setDocumentType(document.documentType());
-        body.setFileId(Long.toString(document.fileId()));
+        body.setFileId(Long.toString(FileAddress.parse(document.fileAddress()).fileId()));
         body.setContentHash(document.contentHash());
         return body;
     }

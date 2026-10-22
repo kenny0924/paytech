@@ -21,10 +21,10 @@ import com.paytech.platform.support.api.enums.FileStorageInstanceStatus;
 import com.paytech.platform.support.filedocument.integration.scanning.FormatFileScanner;
 import com.paytech.platform.support.test.mocker.local.StorageInstanceMocker;
 import com.paytech.platform.support.service.handler.FileScanHandler;
-import com.paytech.platform.support.test.base.OnboardingFileTestBase;
-import com.paytech.platform.support.test.builder.OnboardingFileBuilder;
-import com.paytech.platform.support.test.builder.OnboardingFileBuilder.Spec;
-import com.paytech.platform.support.test.mocker.local.OnboardingFileMocker.Policy;
+import com.paytech.platform.support.test.base.FileTestBase;
+import com.paytech.platform.support.test.builder.FileBuilder;
+import com.paytech.platform.support.test.builder.FileBuilder.Spec;
+import com.paytech.platform.support.test.mocker.local.FileMocker.Policy;
 
 /**
  * 文件扫描补偿入口：经真实 Handler、文件生命周期服务、Platform 格式检查器与存储注册表按记录实例读取 MinIO 准确版本，
@@ -32,7 +32,7 @@ import com.paytech.platform.support.test.mocker.local.OnboardingFileMocker.Polic
  *
  * @see FileScanHandler#handle(CompensationEvent)
  */
-class FileScanHandlerTest extends OnboardingFileTestBase {
+class FileScanHandlerTest extends FileTestBase {
 
     /** 格式检查器当前运行版本（生产常量为包内可见）。 */
     private static final String FORMAT_RUNTIME_VERSION = "1";
@@ -68,7 +68,7 @@ class FileScanHandlerTest extends OnboardingFileTestBase {
     /** 登记为 PDF 但实际是 PNG：结果 FORMAT_INVALID 不在接受集合，FORMAT 要求使文件 REJECTED。 */
     @Test
     void test_businessRuleViolation() {
-        Spec spec = stored(material().bytes(OnboardingFileBuilder.PNG).build());
+        Spec spec = stored(material().bytes(FileBuilder.PNG).build());
 
         assertEquals(CompensationHandlerResult.success(), handle(spec.fileId()));
 
@@ -90,7 +90,7 @@ class FileScanHandlerTest extends OnboardingFileTestBase {
     /** 实际字节与登记摘要不符：可重试失败，不追加结果。 */
     @Test
     void test_contentHashMismatch() {
-        Spec spec = stored(material().contentHash(OnboardingFileBuilder.sha256(OnboardingFileBuilder.TEXT)).build());
+        Spec spec = stored(material().contentHash(FileBuilder.sha256(FileBuilder.TEXT)).build());
 
         assertRetryable(handle(spec.fileId()));
 
@@ -150,7 +150,7 @@ class FileScanHandlerTest extends OnboardingFileTestBase {
     }
 
     /** 本例对象上待扫描的 PDF 材料，使用本类策略。 */
-    private OnboardingFileBuilder material() {
+    private FileBuilder material() {
         return material(StorageInstanceMocker.MINIO_INSTANCE).policyId(policy.policyId()).scanStatus(FileScanStatus.PENDING_SCAN)
             .objectStatus(FileObjectStatus.ACTIVE);
     }

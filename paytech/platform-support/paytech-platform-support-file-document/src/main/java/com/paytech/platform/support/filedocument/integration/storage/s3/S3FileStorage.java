@@ -17,6 +17,7 @@ import javax.net.ssl.TrustManager;
 import com.paytech.foundation.common.error.ServiceUnavailableException;
 import com.paytech.platform.support.api.enums.FileStorageCheckResult;
 import com.paytech.platform.support.filedocument.core.dal.dataobject.FileStorageInstance;
+import com.paytech.platform.support.filedocument.domain.file.DownloadPresentation;
 import com.paytech.platform.support.filedocument.domain.file.FileModels.File;
 import com.paytech.platform.support.filedocument.domain.file.UploadModels.Grant;
 import com.paytech.platform.support.filedocument.domain.file.UploadModels.Upload;
@@ -159,23 +160,27 @@ public final class S3FileStorage implements FileObjectStorage {
     }
 
     /**
-     * 签发原版本的短时只读下载地址，以附件方式返回。
+     * 签发原版本的短时只读下载地址；签入 response-content-disposition，INLINE 时另签入 response-content-type。
      *
      * @param file
      *            原不可变文件坐标
      * @param expiresAt
      *            本次授权期限
+     * @param presentation
+     *            下载方式与文件名
      * @return 不晚于期限的下载授权
      */
     @Override
-    public Download authorize(File file, Instant expiresAt) {
+    public Download authorize(File file, Instant expiresAt, DownloadPresentation presentation) {
         // 到期时间取微秒精度，与审核下载等调用方的期限一致（运营端只接受最多 6 位小数）。
         Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
         long seconds = presignSeconds(now, expiresAt);
         PresignedGetObjectRequest presigned =
             call(() -> presigner.presignGetObject(request -> request.signatureDuration(Duration.ofSeconds(seconds))
                 .getObjectRequest(GetObjectRequest.builder().bucket(file.container()).key(file.objectRef())
-                    .versionId(file.verified().objectVersion()).responseContentDisposition("attachment").build())));
+                    .versionId(file.verified().objectVersion())
+                    .responseContentDisposition(presentation.contentDisposition())
+                    .responseContentType(presentation.contentType()).build())));
         return new Download(presigned.url().toString(), expiration(presigned.expiration(), now, seconds));
     }
 

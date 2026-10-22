@@ -41,6 +41,7 @@ public class AuthorizeWorkflowAttachmentDownloadProcessor
         if (processor == null) {
             throw new ServiceUnavailableException();
         }
-        return processor.process(new AuthorizeFileDownloadRequest(request.getFileId()));
+        // 工作流附件按附件下载（ATTACHMENT），不内联打开
+        return processor.process(new AuthorizeFileDownloadRequest(request.getFileId(), null));
     }
 }

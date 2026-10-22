@@ -3,6 +3,9 @@ package com.paytech.client.console.bff.auto;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.paytech.client.console.bff.ClientConsoleBffApplication;
+import com.paytech.platform.support.api.enums.FileObjectStatus;
+import com.paytech.platform.support.api.enums.FileScanStatus;
+import com.paytech.platform.support.api.enums.FileErrorCode;
 import com.sun.net.httpserver.*;
 import java.net.*;
 import java.net.http.*;
@@ -22,11 +25,16 @@ class ClientOnboardingHttpAutoTest {
 
     private static final String KEY = "78d8c036-c414-4311-8715-d7c601a0ce48";
     private static final String ORIGIN = "https://client-console.local.test";
+    private static final String FILES = "/platform-support/internal/files/v1";
+    private static final tools.jackson.databind.json.JsonMapper JSON = tools.jackson.databind.json.JsonMapper.builder().build();
     private static final List<Call> CALLS = new CopyOnWriteArrayList<>();
     private static final AtomicInteger CONTEXT = new AtomicInteger();
     private static final HttpServer OWNER = startOwner();
     private static volatile String mode = "ok";
     private static volatile boolean associated = true;
+    /** 文件 40 的上传人与来源系统；文件 42 固定属于他人且不在任何申请中。 */
+    private static volatile String fileUploader = "1";
+    private static volatile String fileSource = "client-console-bff";
 
     private record Call(
         String method,
@@ -35,6 +43,7 @@ class ClientOnboardingHttpAutoTest {
         String body,
         String key,
         String caller,
+        String operator,
         String account,
         String session,
         String requestId
@@ -63,6 +72,8 @@ class ClientOnboardingHttpAutoTest {
         CONTEXT.set(0);
         mode = "ok";
         associated = true;
+        fileUploader = "1";
+        fileSource = "client-console-bff";
     }
 
     @AfterAll
@@ -96,6 +107,8 @@ class ClientOnboardingHttpAutoTest {
         assertEquals(200, result.statusCode(), result.body());
         assertTrue(result.body().contains("\"subjectPartyId\":\"30\""));
         assertTrue(result.body().contains("fixture.pdf"));
+        assertTrue(result.body().contains("\"fileId\":\"40\",\"fileAddress\":\"/files/v1/40\""), result.body());
+        assertFalse(result.body().contains("contentHash"));
         assertFalse(result.body().contains("programVersionId"));
         assertFalse(result.body().contains("https://storage"));
         var rules = CALLS.stream()
@@ -217,17 +230,10 @@ class ClientOnboardingHttpAutoTest {
     }
 
     @Test
-    void filesSessionFailureIsNotDowngradedToDisplayOutage() throws Exception {
-        mode = "file-session";
-        var result = send("GET", "/client-onboarding/v1/applications/10", null);
-        assertEquals(401, result.statusCode(), result.body());
-    }
-
-    @Test
     void commandsPreserveOriginalIdentityAndNeverCallOtherOwners() throws Exception {
         associated = false;
         String body =
-            "{\"subjectPartyId\":\"30\",\"requirementCode\":\"REGISTRATION\",\"documentType\":\"REGISTRATION_CERTIFICATE\",\"fileId\":\"40\"}";
+            "{\"subjectPartyId\":\"30\",\"requirementCode\":\"REGISTRATION\",\"documentType\":\"REGISTRATION_CERTIFICATE\",\"fileAddress\":\"/files/v1/40\"}";
         for (int i = 0; i < 2; i++) {
             var result = send("POST", "/client-onboarding/v1/applications/10/documents", body);
             assertEquals(i == 0 ? 201 : 200, result.statusCode(), result.body());
@@ -250,6 +256,113 @@ class ClientOnboardingHttpAutoTest {
         assertEquals(200, send("POST", "/onboarding-files/v1/files/40/download", null).statusCode());
         assertTrue(CALLS.stream().allMatch(call -> call.body().isEmpty()));
         assertNull(CALLS.getLast().key());
+    }
+
+    /** 开始上传只声明文件本身；BFF 固定用途与上传人，以调用身份 client-console-bff 请求 Platform 内部文件接口。 */
+    @Test
+    void test_startUploadFixesReasonAndUploader() throws Exception {
+        var result = send("POST", "/onboarding-files/v1/uploads",
+            "{\"filename\":\"fixture.pdf\",\"mimeType\":\"application/pdf\",\"sizeBytes\":\"4\"}");
+
+        assertEquals(201, result.statusCode(), result.body());
+        var body = JSON.readTree(result.body());
+        assertEquals("60", body.path("uploadId").asString());
+        assertEquals("PUT", body.path("authorization").path("method").asString());
+        var start = CALLS.stream().filter(call -> call.path().equals(FILES + "/uploads")).toList();
+        assertEquals(1, start.size());
+        var sent = JSON.readTree(start.getFirst().body());
+        assertEquals("CLIENT_ONBOARDING_MATERIAL", sent.path("reasonCode").asString());
+        assertEquals("1", sent.path("uploaderAccountId").asString());
+        assertEquals("fixture.pdf", sent.path("filename").asString());
+        assertTrue(sent.path("applicationId").isMissingNode());
+        assertTrue(CALLS.stream().filter(call -> call.path().startsWith("/platform-support/"))
+            .allMatch(call -> "client-console-bff".equals(call.caller())));
+    }
+
+    /** 旧页面仍提交申请与主体：入口按未知字段拒绝，不访问任何 Owner。 */
+    @Test
+    void test_startUploadRejectsApplicationTarget() throws Exception {
+        var result = send("POST", "/onboarding-files/v1/uploads",
+            "{\"applicationId\":\"10\",\"subjectPartyId\":\"30\",\"filename\":\"fixture.pdf\",\"mimeType\":\"application/pdf\",\"sizeBytes\":\"4\"}");
+
+        assertEquals(400, result.statusCode(), result.body());
+        assertTrue(CALLS.isEmpty());
+    }
+
+    /** 完成上传：本人上传返回文件地址；他人上传按文件不存在拒绝且不返回地址。 */
+    @Test
+    void test_completionRequiresOwnUpload() throws Exception {
+        var own = send("POST", "/onboarding-files/v1/uploads/60/completion", null);
+        assertEquals(200, own.statusCode(), own.body());
+        var body = JSON.readTree(own.body());
+        assertEquals("60", body.path("commandId").asString());
+        assertEquals("40", body.path("fileId").asString());
+        assertEquals("/files/v1/40", body.path("fileAddress").asString());
+
+        fileUploader = "9";
+        var foreign = send("POST", "/onboarding-files/v1/uploads/60/completion", null);
+        assertProblem(foreign, 404, FileErrorCode.FILE_NOT_FOUND.getCode());
+        assertFalse(foreign.body().contains("/files/v1/40"));
+    }
+
+    /** 本人上传、尚未关联的文件可查可下载，不需要查询 CCT 申请；客户下载不带操作人。 */
+    @Test
+    void test_ownUploadCanReadAndDownload() throws Exception {
+        var read = send("GET", "/onboarding-files/v1/files/40", null);
+        assertEquals(200, read.statusCode(), read.body());
+        var file = JSON.readTree(read.body());
+        assertEquals("/files/v1/40", file.path("fileAddress").asString());
+        assertEquals("DOWNLOAD", file.path("allowedActions").get(0).asString());
+        assertTrue(file.path("contentHash").isMissingNode());
+        assertTrue(file.path("uploaderAccountId").isMissingNode());
+
+        var download = send("POST", "/onboarding-files/v1/files/40/download", null);
+        assertEquals(200, download.statusCode(), download.body());
+        assertTrue(download.body().contains("https://storage.example.test/object"));
+        var grant = CALLS.stream().filter(call -> call.path().equals(FILES + "/files/40/download")).toList();
+        assertEquals(1, grant.size());
+        assertNull(grant.getFirst().operator());
+        assertNull(grant.getFirst().query(), "不指定下载方式，按 Platform 默认附件下载");
+        assertTrue(CALLS.stream().noneMatch(call -> call.path().startsWith("/client-onboarding/")));
+    }
+
+    /** 他人上传、但地址已关联在本人申请中的材料可读、可下载。 */
+    @Test
+    void test_linkedMaterialIsReadable() throws Exception {
+        fileUploader = "9";
+        fileSource = "platform-support";
+
+        assertEquals(200, send("GET", "/onboarding-files/v1/files/40", null).statusCode());
+        assertEquals(200, send("POST", "/onboarding-files/v1/files/40/download", null).statusCode());
+        assertTrue(CALLS.stream().anyMatch(call -> call.path().endsWith("/start")));
+        assertTrue(CALLS.stream().anyMatch(call -> call.path().endsWith("/applications/10")));
+    }
+
+    /** 他人文件既非本人上传也不在本人申请中：查与下载都按文件不存在拒绝，不签发地址。 */
+    @Test
+    void test_foreignFileIsNotFound() throws Exception {
+        assertProblem(send("GET", "/onboarding-files/v1/files/42", null), 404,
+            FileErrorCode.FILE_NOT_FOUND.getCode());
+        assertProblem(send("POST", "/onboarding-files/v1/files/42/download", null), 404,
+            FileErrorCode.FILE_NOT_FOUND.getCode());
+        assertTrue(CALLS.stream().noneMatch(call -> call.path().endsWith("/download")));
+    }
+
+    /** Platform 的文件错误与不可用原样到达浏览器；会话失效时不查询文件。 */
+    @Test
+    void test_platformFailuresReachBrowser() throws Exception {
+        mode = "file-missing";
+        assertProblem(send("GET", "/onboarding-files/v1/files/40", null), 404,
+            FileErrorCode.FILE_NOT_FOUND.getCode());
+        mode = "download-conflict";
+        assertProblem(send("POST", "/onboarding-files/v1/files/40/download", null), 409,
+            FileErrorCode.FILE_STATE_CONFLICT.getCode());
+        mode = "unavailable";
+        assertEquals(503, send("GET", "/onboarding-files/v1/files/40", null).statusCode());
+        CALLS.clear();
+        mode = "session-invalid";
+        assertEquals(401, send("GET", "/onboarding-files/v1/files/40", null).statusCode());
+        assertTrue(CALLS.stream().noneMatch(call -> call.path().startsWith(FILES)));
     }
 
     @Test
@@ -420,6 +533,12 @@ class ClientOnboardingHttpAutoTest {
         assertTrue(CALLS.isEmpty());
     }
 
+    /** 断言浏览器收到的 Problem 状态与业务 Code。 */
+    private static void assertProblem(HttpResponse<String> result, int status, String code) {
+        assertEquals(status, result.statusCode(), result.body());
+        assertEquals(code, JSON.readTree(result.body()).path("code").asString(), result.body());
+    }
+
     /** 经 Gateway 唯一重建的测试身份；不使用真实凭据。 */
     /** 发送 C14，可选择是否附带 Idempotency-Key。 */
     private HttpResponse<String> submit(boolean withKey, String body) throws Exception {
@@ -495,6 +614,7 @@ class ClientOnboardingHttpAutoTest {
                 new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8),
                 h.getFirst("Idempotency-Key"),
                 h.getFirst("X-Caller-Service"),
+                h.getFirst("X-Operator-Account-Id"),
                 h.getFirst("X-Gateway-Actor-Subject"),
                 h.getFirst("X-Gateway-Session-Id"),
                 h.getFirst("X-Request-Id")
@@ -503,7 +623,7 @@ class ClientOnboardingHttpAutoTest {
         int status = 200;
         String body;
         if (path.endsWith("/context")) {
-            if (CONTEXT.incrementAndGet() > 1 && mode.equals("revoke")) {
+            if (CONTEXT.incrementAndGet() > 1 && mode.equals("revoke") || mode.equals("session-invalid")) {
                 failure(exchange, 401);
                 return;
             }
@@ -545,7 +665,7 @@ class ClientOnboardingHttpAutoTest {
                 organization +
                 "},\"people\":[{\"partyId\":\"31\",\"editable\":true,\"values\":{\"individual\":" +
                 individual +
-                "}}"+(mode.equals("two-people") ? ",{\"partyId\":\"33\",\"editable\":true,\"values\":{}}" : "")+"],\"relations\":[{\"relationId\":\"32\",\"relatedPartyId\":\"31\",\"relationType\":\"DIRECTOR\",\"ownershipPercentage\":null,\"effectiveFrom\":\"2026-01-01\",\"effectiveTo\":null,\"status\":\"DRAFT\",\"editable\":true}"+(mode.equals("two-people") ? ",{\"relationId\":\"34\",\"relatedPartyId\":\"33\",\"relationType\":\"UBO\",\"ownershipPercentage\":\"30\",\"effectiveFrom\":\"2026-01-01\",\"effectiveTo\":null,\"status\":\"DRAFT\",\"editable\":true}" : "")+"],\"documents\":[{\"documentId\":\"50\",\"subjectPartyId\":\"30\",\"requirementCode\":\"REGISTRATION\",\"documentType\":\"REGISTRATION_CERTIFICATE\",\"fileId\":\"40\",\"subjectInScope\":true},{\"documentId\":\"51\",\"subjectPartyId\":\"30\",\"requirementCode\":\"ADDRESS\",\"documentType\":\"ADDRESS_PROOF\",\"fileId\":\"40\",\"subjectInScope\":true}]}";
+                "}}"+(mode.equals("two-people") ? ",{\"partyId\":\"33\",\"editable\":true,\"values\":{}}" : "")+"],\"relations\":[{\"relationId\":\"32\",\"relatedPartyId\":\"31\",\"relationType\":\"DIRECTOR\",\"ownershipPercentage\":null,\"effectiveFrom\":\"2026-01-01\",\"effectiveTo\":null,\"status\":\"DRAFT\",\"editable\":true}"+(mode.equals("two-people") ? ",{\"relationId\":\"34\",\"relatedPartyId\":\"33\",\"relationType\":\"UBO\",\"ownershipPercentage\":\"30\",\"effectiveFrom\":\"2026-01-01\",\"effectiveTo\":null,\"status\":\"DRAFT\",\"editable\":true}" : "")+"],\"documents\":[{\"documentId\":\"50\",\"subjectPartyId\":\"30\",\"requirementCode\":\"REGISTRATION\",\"documentType\":\"REGISTRATION_CERTIFICATE\",\"fileAddress\":\"/files/v1/40\",\"subjectInScope\":true},{\"documentId\":\"51\",\"subjectPartyId\":\"30\",\"requirementCode\":\"ADDRESS\",\"documentType\":\"ADDRESS_PROOF\",\"fileAddress\":\"/files/v1/40\",\"subjectInScope\":true}]}";
         } else if (path.endsWith("/applications/10/result")) {
             if (mode.equals("review-down")) {
                 failure(exchange, 503);
@@ -556,25 +676,36 @@ class ClientOnboardingHttpAutoTest {
             body = "{\"applicationId\":\"10\",\"caseId\":\"90\",\"status\":\"" + (mode.equals("review-mismatch") ? "UNDER_REVIEW" : applicationStatus())
                 + "\",\"outcome\":" + outcome + ",\"returnSection\":" + section
                 + ",\"publicNote\":\"请补充经营地址\",\"decidedAt\":\"2026-10-13T00:00:00.000000Z\"}";
-        } else if (path.endsWith("/files/40")) {
-            if (mode.equals("unavailable") || mode.equals("file-session")) {
-                failure(exchange, mode.equals("file-session") ? 401 : 503);
+        } else if (path.startsWith(FILES + "/files/") && method.equals("GET")) {
+            if (mode.equals("unavailable")) {
+                failure(exchange, 503);
                 return;
             }
+            if (mode.equals("file-missing")) {
+                problem(exchange, 404, FileErrorCode.FILE_NOT_FOUND.getCode());
+                return;
+            }
+            String id = path.substring(path.lastIndexOf('/') + 1);
+            body = storedFile(id, id.equals("42") ? "9" : fileUploader, id.equals("42") ? "client-console-bff" : fileSource,
+                mode.equals("unknown-file") ? "UNKNOWN" : FileScanStatus.AVAILABLE.getCode());
+        } else if (path.startsWith(FILES + "/files/") && path.endsWith("/download")) {
+            if (mode.equals("download-conflict")) {
+                problem(exchange, 409, FileErrorCode.FILE_STATE_CONFLICT.getCode());
+                return;
+            }
+            body = "{\"url\":\"https://storage.example.test/object\",\"expiresAt\":\"2099-01-01T00:00:00Z\",\"disposition\":\"ATTACHMENT\"}";
+        } else if (path.equals(FILES + "/uploads/60/completion")) {
             body =
-                "{\"fileId\":\"40\",\"displayName\":\"fixture.pdf\",\"sizeBytes\":\"4\",\"mimeType\":\"application/pdf\",\"scanStatus\":\"" +
-                (mode.equals("unknown-file") ? "UNKNOWN" : "AVAILABLE") +
-                "\",\"objectStatus\":\"ACTIVE\",\"allowedActions\":[\"DOWNLOAD\"]}";
-        } else if (path.endsWith("/download")) {
-            body = "{\"url\":\"https://storage.example.test/object\",\"expiresAt\":\"2099-01-01T00:00:00Z\"}";
-        } else if (path.endsWith("/completion")) {
+                "{\"uploadId\":\"60\",\"fileId\":\"40\",\"fileAddress\":\"/files/v1/40\",\"completedAt\":\"2026-09-16T00:00:00Z\"}";
+        } else if (path.equals(FILES + "/uploads") && method.equals("POST")) {
+            status = 201;
             body =
-                "{\"commandId\":\"60\",\"uploadId\":\"60\",\"fileId\":\"40\",\"completedAt\":\"2026-09-16T00:00:00Z\"}";
+                "{\"uploadId\":\"60\",\"authorization\":{\"method\":\"PUT\",\"url\":\"https://storage.example.test/upload\",\"headers\":{\"Content-Type\":\"application/pdf\"},\"expiresAt\":\"2099-01-01T00:00:00Z\"},\"expiresAt\":\"2099-01-01T00:00:00Z\"}";
         } else if (path.endsWith("/documents") && method.equals("POST")) {
             status = associated ? 200 : 201;
             associated = true;
             body =
-                "{\"commandId\":\"80\",\"applicationId\":\"10\",\"documentId\":\"50\",\"subjectPartyId\":\"30\",\"fileId\":\"40\",\"operation\":\"ASSOCIATED\",\"completedAt\":\"2026-09-16T00:00:00.000000Z\"}";
+                "{\"commandId\":null,\"applicationId\":\"10\",\"documentId\":\"50\",\"subjectPartyId\":\"30\",\"fileAddress\":\"/files/v1/40\",\"operation\":\"ASSOCIATED\",\"completedAt\":\"2026-09-16T00:00:00.000000Z\"}";
         } else if (method.equals("DELETE")) {
             associated = false;
             exchange.sendResponseHeaders(204, -1);
@@ -608,6 +739,24 @@ class ClientOnboardingHttpAutoTest {
             case "review-down" -> "REJECTED";
             default -> "DRAFT";
         };
+    }
+
+    /** Platform 内部文件接口的元数据合同：带文件地址、来源系统与上传人。 */
+    private static String storedFile(String id, String uploader, String source, String scanStatus) {
+        return "{\"fileId\":\"" + id + "\",\"fileAddress\":\"/files/v1/" + id + "\",\"sourceSystem\":\"" + source
+            + "\",\"reasonCode\":\"CLIENT_ONBOARDING_MATERIAL\",\"displayName\":\"fixture.pdf\",\"mimeType\":\"application/pdf\","
+            + "\"sizeBytes\":\"4\",\"contentHash\":\"" + "a".repeat(64) + "\",\"scanStatus\":\"" + scanStatus
+            + "\",\"objectStatus\":\"" + FileObjectStatus.ACTIVE.getCode() + "\",\"uploaderAccountId\":\"" + uploader
+            + "\",\"createTime\":\"2026-09-16T00:00:00Z\"}";
+    }
+
+    /** 带指定业务 Code 的严格 Problem。 */
+    private static void problem(HttpExchange exchange, int status, String code) throws java.io.IOException {
+        exchange.getResponseHeaders().set("X-Request-Id", "fixture-owner");
+        write(exchange, status, "{\"type\":\"about:blank\",\"title\":\""
+            + org.springframework.http.HttpStatus.valueOf(status).getReasonPhrase() + "\",\"detail\":\"Fixture problem\",\"code\":\""
+            + code + "\",\"requestId\":\"fixture-owner\",\"timestamp\":\"2026-09-16T00:00:00.000000Z\"}",
+            "application/problem+json");
     }
 
     /** 严格 Problem 协议，测试业务失败与依赖失败的实际映射。 */

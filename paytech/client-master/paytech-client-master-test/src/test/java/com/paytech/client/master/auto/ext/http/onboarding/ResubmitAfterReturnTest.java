@@ -38,7 +38,7 @@ class ResubmitAfterReturnTest extends AbstractClientReviewTest {
     void test_changeIdentifierAfterReturn() throws Exception {
         var app = applications.individual(ACCOUNT_ID);
         long fileId = applications.nextId();
-        owners.mockFile(fileId, HASH, "AVAILABLE");
+        owners.mockFile(ACCOUNT_ID, fileId, HASH, "AVAILABLE");
         applications.document(app, app.partyId(), "IDENTITY", "IDENTITY_DOCUMENT", fileId, HASH);
         var review = submitAndWaitUnderReview(app, applications.nextId());
         Object oldKeyId = mapper.identifier(app.profileId()).get("identity_key_id");

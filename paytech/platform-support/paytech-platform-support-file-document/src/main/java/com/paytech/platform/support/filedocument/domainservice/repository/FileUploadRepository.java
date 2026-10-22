@@ -7,8 +7,6 @@ import com.paytech.platform.support.filedocument.core.dal.dataobject.FileScanPol
 
 /** 文件能力内部持久化端口。 */
 public interface FileUploadRepository {
-    /** 查询固定 Upload。 */
-    FileUpload find(long id);
     /** 查询任一来源的原上传。 */
     FileUpload findById(long id);
     /** 查询精确策略目录。 */

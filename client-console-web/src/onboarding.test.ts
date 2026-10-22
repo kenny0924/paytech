@@ -49,8 +49,13 @@ test("uncertain completion retries original upload without reupload; scanning ca
   let puts = 0,
     completion = 0,
     associate = 0;
-  const api = async <T>(path: string): Promise<T> => {
-    if (path.endsWith("/uploads"))
+  let startBody: unknown;
+  const api = async <T>(
+    path: string,
+    options?: { body?: unknown },
+  ): Promise<T> => {
+    if (path.endsWith("/uploads")) {
+      startBody = options?.body;
       return {
         uploadId: "3",
         authorization: {
@@ -61,9 +66,10 @@ test("uncertain completion retries original upload without reupload; scanning ca
         },
         expiresAt: "2099-01-01",
       } as T;
+    }
     if (path.endsWith("/completion")) {
       if (!completion++) throw new RequestFailure(0, "offline");
-      return { uploadId: "3", fileId: "4" } as T;
+      return { uploadId: "3", fileId: "4", fileAddress: "/files/v1/4" } as T;
     }
     if (path.endsWith("/files/4"))
       return {
@@ -89,11 +95,29 @@ test("uncertain completion retries original upload without reupload; scanning ca
   assert.equal(completion, 2);
   assert.equal(associate, 0);
   assert.equal(state.phase, "SCAN");
+  assert.equal(state.fileAddress, "/files/v1/4");
+  // 开始上传只声明文件本身，不携带申请或主体。
+  assert.deepEqual(startBody, {
+    filename: "test.pdf",
+    mimeType: "application/pdf",
+    sizeBytes: "4",
+  });
+});
+test("completion receipt with a mismatched file address is rejected", async () => {
+  const state = newUpload("1", "2", "IDENTITY", "PASSPORT");
+  state.phase = "COMPLETE";
+  state.uploadId = "3";
+  const api = async <T>(): Promise<T> =>
+    ({ uploadId: "3", fileId: "4", fileAddress: "/files/v1/5" }) as T;
+  await assert.rejects(runUpload(state, api));
+  assert.equal(state.phase, "COMPLETE");
+  assert.equal(state.fileAddress, undefined);
 });
 test("unknown or infected file cannot associate; available file can", async () => {
   const state = newUpload("1", "2", "IDENTITY", "PASSPORT");
   state.phase = "SCAN";
   state.fileId = "4";
+  state.fileAddress = "/files/v1/4";
   let scan = "MYSTERY",
     calls = 0;
   const api = async <T>(path: string): Promise<T> => {
@@ -140,12 +164,29 @@ test("checkpoint strips unexpected content and rejects a different application",
   });
   assert.deepEqual(readCheckpoint(raw, "1"), state);
   assert.equal(readCheckpoint(raw, "9"), null);
+  const scanning = { ...state, phase: "SCAN", fileId: "4" };
+  assert.equal(readCheckpoint(JSON.stringify(scanning), "1"), null);
+  assert.equal(
+    readCheckpoint(
+      JSON.stringify({ ...scanning, fileAddress: "/files/v1/5" }),
+      "1",
+    ),
+    null,
+  );
+  assert.deepEqual(
+    readCheckpoint(
+      JSON.stringify({ ...scanning, fileAddress: "/files/v1/4" }),
+      "1",
+    ),
+    { ...scanning, fileAddress: "/files/v1/4" },
+  );
 });
 test("association response loss retries association only under the original key", async () => {
   const state = newUpload("1", "2", "IDENTITY", "PASSPORT");
   state.phase = "ASSOCIATE";
   state.uploadId = "3";
   state.fileId = "4";
+  state.fileAddress = "/files/v1/4";
   const calls: unknown[] = [];
   const api: import("./auth.ts").ApiRequest = async (path, options) => {
     calls.push({ path, options });
@@ -156,6 +197,16 @@ test("association response loss retries association only under the original key"
   await runUpload(state, api);
   assert.deepEqual(calls[0], calls[1]);
   assert.equal(state.phase, "DONE");
+  // 关联材料只提交文件地址。
+  assert.deepEqual(
+    (calls[0] as { options: { body: unknown } }).options.body,
+    {
+      subjectPartyId: "2",
+      requirementCode: "IDENTITY",
+      documentType: "PASSPORT",
+      fileAddress: "/files/v1/4",
+    },
+  );
 });
 
 test("relation patch preserves concurrent untouched attributes and explicit clearing", async () => {

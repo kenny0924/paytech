@@ -75,7 +75,7 @@ const expectedTemplateDigest =
 const pendingStructuralProjectionDigest = "PENDING_APPROVED_40_DIGEST";
 // Approved per-database Structural Projection digests after the CCT split.
 const expectedStructuralProjectionDigests = Object.freeze({
-  "client-master": "80dba108a6322e957ca7c652a1911979705388b47b71caa24ee51bb14f989802",
+  "client-master": "807d9f8e889d77662bb3ea2538b5787491d1610a9a8ad96c1d12d3d85fdd94d6",
   commercial: "fa296dd8cfd6c00cb13ef52c6f42fe8887dab8858491a644ce0e672fc9721b45",
 });
 
@@ -279,7 +279,7 @@ const changedTableUniqueKeys = Object.freeze({
   "partner_application": ["application_no","local_partner_id,active_slot"],
   "operating_entity_application": ["application_no","entity_no,active_slot"],
   "operating_entity_scope": ["application_id,consumer_country_code,currency,industry_code,mcc_code","entity_no,consumer_country_code,currency,industry_code,mcc_code,active_slot"],
-  "application_document": ["client_application_id,subject_party_id,requirement_code,document_type,file_id","partner_application_id,subject_party_id,requirement_code,document_type,file_id","operating_entity_application_id,subject_party_id,requirement_code,document_type,file_id"],
+  "application_document": ["client_application_id,subject_party_id,requirement_code,document_type,file_address","partner_application_id,subject_party_id,requirement_code,document_type,file_address","operating_entity_application_id,subject_party_id,requirement_code,document_type,file_address"],
   "client_entity_affiliation": ["client_id,entity_no,active_slot","client_id,priority_no,active_slot","client_id,entity_no,effective_from"],
   "entity_source_relation": ["entity_no,effective_from","entity_no,active_source_slot"],
   "agreement": ["agreement_no"],
@@ -327,7 +327,7 @@ const expectedUniqueKeys = Object.freeze({
   "partner_application": ["application_no","local_partner_id,active_slot"],
   "operating_entity_application": ["application_no","entity_no,active_slot"],
   "operating_entity_scope": ["application_id,consumer_country_code,currency,industry_code,mcc_code","entity_no,consumer_country_code,currency,industry_code,mcc_code,active_slot"],
-  "application_document": ["client_application_id,subject_party_id,requirement_code,document_type,file_id","partner_application_id,subject_party_id,requirement_code,document_type,file_id","operating_entity_application_id,subject_party_id,requirement_code,document_type,file_id"],
+  "application_document": ["client_application_id,subject_party_id,requirement_code,document_type,file_address","partner_application_id,subject_party_id,requirement_code,document_type,file_address","operating_entity_application_id,subject_party_id,requirement_code,document_type,file_address"],
   "client_entity_affiliation": ["client_id,entity_no,active_slot","client_id,priority_no,active_slot","client_id,entity_no,effective_from"],
   "entity_source_relation": ["entity_no,effective_from","entity_no,active_source_slot"],
   "agreement": ["agreement_no"],
@@ -377,7 +377,7 @@ const forbiddenExternalRelationFields = new Set([
   "agreement_acceptance.evidence_file_id",
   "agreement_document_ref.file_id",
   "agreement_scope_binding.owner_id",
-  "application_document.file_id",
+  "application_document.file_address",
   "business_change_record.aggregate_root_id",
   "business_change_record.record_id",
   "business_change_version.create_by",
@@ -402,7 +402,7 @@ const expectedFields = Object.freeze({
   "partner_application": ["application_id","application_no","local_partner_id","target_party_profile_id","requested_by_account_id","status","active_slot","due_diligence_case_id","qualification_decision_id","qualification_decision_version","qualification_type","submitted_time","submission_hash_schema_version","submission_content_hash","create_by","create_time","update_time"],
   "operating_entity_application": ["application_id","application_no","application_type","base_entity_change_version","entity_no","party_profile_id","source_type","source_client_id","source_partner_id","client_source_basis","status","active_slot","due_diligence_case_id","qualification_decision_id","qualification_decision_version","qualification_type","submitted_time","submission_hash_schema_version","submission_content_hash","approved_source_relation_id","create_time","update_time"],
   "operating_entity_scope": ["scope_id","entity_no","application_id","consumer_country_code","currency","industry_code","mcc_code","status","active_slot","effective_from","effective_to","create_time","update_time"],
-  "application_document": ["document_id","client_application_id","partner_application_id","operating_entity_application_id","subject_party_id","requirement_code","document_type","file_id","content_hash","create_time","update_time"],
+  "application_document": ["document_id","client_application_id","partner_application_id","operating_entity_application_id","subject_party_id","requirement_code","document_type","file_address","content_hash","create_time","update_time"],
   "client_entity_affiliation": ["affiliation_id","client_id","entity_no","priority_no","status","active_slot","effective_from","effective_to","create_time","update_time"],
   "entity_source_relation": ["source_relation_id","entity_no","source_type","source_client_id","source_partner_id","client_source_basis","status","active_source_slot","effective_from","effective_to","create_time","update_time"],
   "agreement": ["agreement_id","agreement_no","agreement_name","agreement_type","business_mode","fund_mode","pricing_authority","referral_partner_id","client_id","local_partner_id","entity_no","agreement_format","status","effective_from","effective_to","signed_time","activated_time","create_by","create_time","update_time"],
@@ -447,7 +447,7 @@ const expectedFinalFields = Object.freeze({
   "partner_application": ["application_id","application_no","local_partner_id","target_party_profile_id","requested_by_account_id","status","active_slot","due_diligence_case_id","qualification_decision_id","qualification_decision_version","qualification_type","submitted_time","submission_hash_schema_version","submission_content_hash","create_by","create_time","update_time"],
   "operating_entity_application": ["application_id","application_no","application_type","base_entity_change_version","entity_no","party_profile_id","source_type","source_client_id","source_partner_id","client_source_basis","status","active_slot","due_diligence_case_id","qualification_decision_id","qualification_decision_version","qualification_type","submitted_time","submission_hash_schema_version","submission_content_hash","approved_source_relation_id","create_time","update_time"],
   "operating_entity_scope": ["scope_id","entity_no","application_id","consumer_country_code","currency","industry_code","mcc_code","status","active_slot","effective_from","effective_to","create_time","update_time"],
-  "application_document": ["document_id","client_application_id","partner_application_id","operating_entity_application_id","subject_party_id","requirement_code","document_type","file_id","content_hash","create_time","update_time"],
+  "application_document": ["document_id","client_application_id","partner_application_id","operating_entity_application_id","subject_party_id","requirement_code","document_type","file_address","content_hash","create_time","update_time"],
   "client_entity_affiliation": ["affiliation_id","client_id","entity_no","priority_no","status","active_slot","effective_from","effective_to","create_time","update_time"],
   "entity_source_relation": ["source_relation_id","entity_no","source_type","source_client_id","source_partner_id","client_source_basis","status","active_source_slot","effective_from","effective_to","create_time","update_time"],
   "agreement": ["agreement_id","agreement_no","agreement_name","agreement_type","business_mode","fund_mode","pricing_authority","referral_partner_id","client_id","local_partner_id","entity_no","agreement_format","status","effective_from","effective_to","signed_time","activated_time","create_by","create_time","update_time"],
@@ -841,6 +841,7 @@ const expectedVarcharLengthOverrides = Object.freeze({
   "party_profile_identifier.identifier_value": 128,
   "party_identity_key.normalized_identifier_value": 128,
   "client_business_profile.website_url": 2048,
+  "application_document.file_address": 255,
   "client_business_profile.business_description": 2000,
   "agreement.business_mode": 16,
   "agreement.fund_mode": 32,
@@ -891,7 +892,7 @@ const expectedHashFields = Object.freeze({
   "party_profile.content_hash": [false,null,"批准资料内容摘要，保留现有 Checkout 法律资料消费者；未批准为空，批准后不可变。"],
   "client_business_profile.content_hash": [false,null,"已批准单份经营资料内容摘要；未批准为空，不用于草稿版本冲突控制。"],
   "partner_application.submission_content_hash": [true,"submission_hash_schema_version","输入遵循 CODE-MOR:CCT:PARTNER_APPLICATION_SUBMISSION:1，使用 UTF-8 RFC 8785/JCS 后的 SHA-256 小写 64 位 Hex。"],
-  "application_document.content_hash": [true,null,"输入为 Platform File 返回的文件正文 SHA-256，与 file_id 成组冻结。"],
+  "application_document.content_hash": [true,null,"输入为 Platform File 返回的文件正文 SHA-256，与 file_address 成组冻结。"],
   "operating_entity_application.submission_content_hash": [true,"submission_hash_schema_version","输入遵循 CODE-MOR:CCT:OPERATING_ENTITY_APPLICATION_SUBMISSION:3，使用 UTF-8 RFC 8785/JCS 后的 SHA-256 小写 64 位 Hex。"],
   "agreement_document_ref.content_hash": [true,null,"输入为 Platform Support 返回的合同文件 SHA-256，与 file_id 成组冻结。"],
   "consumer_legal_document.content_hash": [true,null,"输入为 Platform Support 返回的消费者法律文档 SHA-256，与 content_file_id 成组冻结。"],
@@ -1455,7 +1456,7 @@ function assertApplicationDocumentContract(model) {
   }
   for (const fieldKey of [
     "document_id", "subject_party_id", "requirement_code", "document_type",
-    "file_id", "content_hash", "create_time", "update_time",
+    "file_address", "content_hash", "create_time", "update_time",
   ]) {
     assert.equal(fields.get(fieldKey)?.notNull, true, `required Application Document field: ${fieldKey}`);
   }
@@ -2279,7 +2280,7 @@ function relationContractFixture() {
   }
 
   const document = requireFixtureEntity("application_document");
-  const fileField = requireFixtureField("application_document", "file_id");
+  const fileField = requireFixtureField("application_document", "file_address");
   document.indexes.push({ fields: [{ fieldDefKey: fileField.id }] });
   return { entities: [...entities.values()] };
 }
@@ -2368,7 +2369,7 @@ function applicationDocumentSemanticFixture() {
   }
   for (const fieldKey of [
     "document_id", "subject_party_id", "requirement_code", "document_type",
-    "file_id", "content_hash", "create_time", "update_time",
+    "file_address", "content_hash", "create_time", "update_time",
   ]) ensureField(fieldKey, true);
   document.comment = `父申请 CHECK ${applicationDocumentXor}；client_application_id、partner_application_id 与 operating_entity_application_id 三个 Parent FK 均为本库 RESTRICT。`;
   return model;
@@ -3942,7 +3943,7 @@ test("relation contract evaluator rejects an external File FK", () => {
   assertRelationContract(model);
   const entities = entityMap(model);
   const document = entities.get("application_document");
-  const fileField = fieldMap(document).get("file_id");
+  const fileField = fieldMap(document).get("file_address");
   const party = entities.get("party");
   const partyId = fieldMap(party).get("party_id");
   document.correlations.push({

@@ -7833,7 +7833,7 @@
       },
       "defKey": "t_application_document",
       "defName": "申请材料",
-      "comment": "三类申请共享的材料引用；uk_app_doc_client(client_application_id,subject_party_id,requirement_code,document_type,file_id)、uk_app_doc_partner(partner_application_id,subject_party_id,requirement_code,document_type,file_id)、uk_app_doc_entity(operating_entity_application_id,subject_party_id,requirement_code,document_type,file_id)；三个 Parent FK 均可空但满足 (client_application_id IS NOT NULL) + (partner_application_id IS NOT NULL) + (operating_entity_application_id IS NOT NULL) = 1，且均为本库 RESTRICT；subject_party_id -> party 为真实 FK；CHECK ((client_application_id IS NOT NULL) + (partner_application_id IS NOT NULL) + (operating_entity_application_id IS NOT NULL) = 1)；client_application_id、partner_application_id 与 operating_entity_application_id 三个 Parent FK 均为本库 RESTRICT。",
+      "comment": "三类申请共享的材料引用；uk_app_doc_client(client_application_id,subject_party_id,requirement_code,document_type,file_address)、uk_app_doc_partner(partner_application_id,subject_party_id,requirement_code,document_type,file_address)、uk_app_doc_entity(operating_entity_application_id,subject_party_id,requirement_code,document_type,file_address)；三个 Parent FK 均可空但满足 (client_application_id IS NOT NULL) + (partner_application_id IS NOT NULL) + (operating_entity_application_id IS NOT NULL) = 1，且均为本库 RESTRICT；subject_party_id -> party 为真实 FK；CHECK ((client_application_id IS NOT NULL) + (partner_application_id IS NOT NULL) + (operating_entity_application_id IS NOT NULL) = 1)；client_application_id、partner_application_id 与 operating_entity_application_id 三个 Parent FK 均为本库 RESTRICT。",
       "properties": {},
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -8125,11 +8125,11 @@
           "id": "9138526E-26A7-557E-AA6A-0F6141517BC2"
         },
         {
-          "defKey": "file_id",
-          "defName": "文件标识",
-          "comment": "Platform File 的逻辑引用，与 content_hash 成组冻结，不建立跨库物理外键。",
-          "type": "BIGINT",
-          "len": "",
+          "defKey": "file_address",
+          "defName": "文件地址",
+          "comment": "Platform 文件服务签发的稳定逻辑地址，格式 /files/v1/{fileId}，与 content_hash 成组冻结；不是下载链接，不含存储实例与桶，只能经文件服务换取临时下载地址；不建立跨库物理外键。",
+          "type": "VARCHAR",
+          "len": 255,
           "scale": "",
           "primaryKey": false,
           "notNull": true,
@@ -8137,7 +8137,7 @@
           "defaultValue": "",
           "hideInGraph": false,
           "refDict": "",
-          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
           "extProps": {},
           "domain": "",
           "id": "4D13238A-7CBC-5752-BF24-21F61AD6AB15"
@@ -8145,7 +8145,7 @@
         {
           "defKey": "content_hash",
           "defName": "材料文件内容哈希",
-          "comment": "Platform 文件内容哈希；输入为 Platform File 返回的文件正文 SHA-256，与 file_id 成组冻结。",
+          "comment": "Platform 文件内容哈希；输入为 Platform File 返回的文件正文 SHA-256，与 file_address 成组冻结。",
           "type": "CHAR",
           "len": 64,
           "scale": "",
@@ -8236,7 +8236,7 @@
           "defKey": "uk_app_doc_client",
           "defName": "Uk App Doc Client",
           "unique": true,
-          "comment": "Unique index for application_document on client_application_id, subject_party_id, requirement_code, document_type, file_id",
+          "comment": "Unique index for application_document on client_application_id, subject_party_id, requirement_code, document_type, file_address",
           "fields": [
             {
               "fieldDefKey": "BBAAE600-E8D4-5B3A-908E-F569A7C7442E",
@@ -8270,7 +8270,7 @@
           "defKey": "uk_app_doc_partner",
           "defName": "Uk App Doc Partner",
           "unique": true,
-          "comment": "Unique index for application_document on partner_application_id, subject_party_id, requirement_code, document_type, file_id",
+          "comment": "Unique index for application_document on partner_application_id, subject_party_id, requirement_code, document_type, file_address",
           "fields": [
             {
               "fieldDefKey": "72E24BC8-CEE3-5668-AE84-28F9807E7C1C",
@@ -8304,7 +8304,7 @@
           "defKey": "uk_app_doc_entity",
           "defName": "Uk App Doc Entity",
           "unique": true,
-          "comment": "Unique index for application_document on operating_entity_application_id, subject_party_id, requirement_code, document_type, file_id",
+          "comment": "Unique index for application_document on operating_entity_application_id, subject_party_id, requirement_code, document_type, file_address",
           "fields": [
             {
               "fieldDefKey": "008C1661-938E-5510-AB33-CFA09022FE39",

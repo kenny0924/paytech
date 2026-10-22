@@ -23,11 +23,13 @@ class SubmitClientApplicationTest extends AbstractSubmissionApiTest {
         mockGenericRequirements();
     }
 
-    /** 个人完整申请：202、绑定身份、登记审核后进入审核中；重复提交返回原提交且不再检查。 */
+    /** 个人完整申请：202、绑定身份、登记审核（材料仍发文件 ID + 摘要）后进入审核中；重复提交返回原提交且不再检查。 */
     @Test
     void test_individualSubmittedAndRegistered() {
         var app = applications.individual(ACCOUNT_ID);
-        long documentId = availableDocument(app, app.partyId(), "IDENTITY", "IDENTITY_DOCUMENT");
+        long fileId = applications.nextId();
+        owners.mockFile(ACCOUNT_ID, fileId, HASH, "AVAILABLE");
+        long documentId = applications.document(app, app.partyId(), "IDENTITY", "IDENTITY_DOCUMENT", fileId, HASH);
         owners.mockReviewRegistered(880001L);
 
         var result = submit(app);
@@ -53,6 +55,7 @@ class SubmitClientApplicationTest extends AbstractSubmissionApiTest {
         assertEquals("PRIMARY", request.getSubjects().getFirst().getSubjectRole());
         assertEquals("p 12-" + app.partyId() % 1_000_000, request.getSubjects().getFirst().getIdentifierValue());
         assertEquals(Long.toString(documentId), request.getDocuments().getFirst().getDocumentId());
+        assertEquals(Long.toString(fileId), request.getDocuments().getFirst().getFileId());
         assertEquals(HASH, request.getDocuments().getFirst().getContentHash());
         assertEquals("50000", request.getBusiness().getExpectedVolume());
 
@@ -143,8 +146,8 @@ class SubmitClientApplicationTest extends AbstractSubmissionApiTest {
     void test_unusableFiles() {
         var app = applications.individual(ACCOUNT_ID);
         long pendingFile = applications.nextId(), changedFile = applications.nextId();
-        owners.mockFile(pendingFile, HASH, "SCANNING");
-        owners.mockFile(changedFile, "b".repeat(64), "AVAILABLE");
+        owners.mockFile(ACCOUNT_ID, pendingFile, HASH, "SCANNING");
+        owners.mockFile(ACCOUNT_ID, changedFile, "b".repeat(64), "AVAILABLE");
         long pending = applications.document(app, app.partyId(), "IDENTITY", "IDENTITY_DOCUMENT", pendingFile, HASH);
         long changed = applications.document(app, app.partyId(), "ADDRESS", "PROOF_OF_ADDRESS", changedFile, HASH);
 
@@ -154,6 +157,40 @@ class SubmitClientApplicationTest extends AbstractSubmissionApiTest {
         assertTrue(issues.contains("\"documents[" + changed + "]\""), issues);
         assertEquals(422, submit(app).getStatus().value());
         assertEquals("DRAFT", mapper.application(app.applicationId()).get("status"));
+    }
+
+    /** 材料文件不是当前账号上传：该材料逐项不可用，C14 拒绝且不登记审核。 */
+    @Test
+    void test_uploaderNotCurrentAccount() {
+        var app = applications.individual(ACCOUNT_ID);
+        long fileId = applications.nextId();
+        owners.mockFile(ACCOUNT_ID + 1, fileId, HASH, "AVAILABLE");
+        long documentId = applications.document(app, app.partyId(), "IDENTITY", "IDENTITY_DOCUMENT", fileId, HASH);
+
+        var issues = body(check(app)).path("issues").toString();
+
+        assertTrue(issues.contains("\"documents[" + documentId + "]\""), issues);
+        var result = submit(app);
+        assertEquals(422, result.getStatus().value());
+        assertEquals("SUBMISSION_INCOMPLETE", body(result).path("code").asString());
+        assertEquals("DRAFT", mapper.application(app.applicationId()).get("status"));
+        assertEquals(0, mapper.reviewEventCount());
+    }
+
+    /** Platform 文件查询 503：C14 整体 503，申请不变。 */
+    @Test
+    void test_platformUnavailable() {
+        var app = applications.individual(ACCOUNT_ID);
+        long fileId = applications.nextId();
+        owners.mockFileUnavailable(fileId);
+        applications.document(app, app.partyId(), "IDENTITY", "IDENTITY_DOCUMENT", fileId, HASH);
+
+        var result = submit(app);
+
+        assertEquals(503, result.getStatus().value());
+        assertEquals("ONBOARDING_DEPENDENCY_UNAVAILABLE", body(result).path("code").asString());
+        assertEquals("DRAFT", mapper.application(app.applicationId()).get("status"));
+        assertEquals(0, mapper.reviewEventCount());
     }
 
     /** Risk 材料要求不可用：503，申请不变，不视为无需材料。 */

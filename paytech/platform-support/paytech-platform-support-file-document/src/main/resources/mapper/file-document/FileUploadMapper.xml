@@ -2,14 +2,10 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.paytech.platform.support.filedocument.core.dal.mapper.FileUploadMapper">
  <sql id="UploadColumns">
-  upload_id,tenant_id,uploader_id,source_system,reason_code,owner_ref_id,display_name,expected_size,expected_mime,
+  upload_id,tenant_id,uploader_id,source_system,reason_code,display_name,expected_size,expected_mime,
    storage_provider,storage_container_ref AS container_ref,storage_object_ref AS object_ref,
    scan_policy_id,expires_time AS expires_at,status
  </sql>
- <select id="find" resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileUpload">
-  SELECT <include refid="UploadColumns"/>
-  FROM t_file_upload WHERE upload_id=#{id} AND owner_system='CCT' AND owner_type='CLIENT_APPLICATION_SUBJECT'
- </select>
  <select id="findById" resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileUpload">
   SELECT <include refid="UploadColumns"/> FROM t_file_upload WHERE upload_id=#{id}
  </select>
@@ -22,13 +18,10 @@
  </select>
  <insert id="insert">
   INSERT INTO t_file_upload(upload_id,tenant_id,uploader_id,source_system,reason_code,expected_size,expected_mime,
-   owner_system,owner_type,owner_ref_id,display_name,storage_provider,storage_container_ref,storage_object_ref,
+   display_name,storage_provider,storage_container_ref,storage_object_ref,
    scan_policy_id,expires_time,status,version,create_time,update_time)
   VALUES(#{upload.uploadId},#{upload.tenantId},#{upload.uploaderId},#{upload.sourceSystem},#{upload.reasonCode},
-   #{upload.expectedSize},#{upload.expectedMime},
-   CASE WHEN #{upload.ownerRefId} IS NULL THEN NULL ELSE 'CCT' END,
-   CASE WHEN #{upload.ownerRefId} IS NULL THEN NULL ELSE 'CLIENT_APPLICATION_SUBJECT' END,
-   #{upload.ownerRefId},#{upload.displayName},#{upload.storageProvider},
+   #{upload.expectedSize},#{upload.expectedMime},#{upload.displayName},#{upload.storageProvider},
    #{upload.containerRef},#{upload.objectRef},#{upload.scanPolicyId},#{upload.expiresAt},'CREATED',1,#{now},#{now})
  </insert>
 </mapper>

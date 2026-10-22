@@ -62,7 +62,11 @@ public class ClientOnboardingRecoveryConfiguration {
             .createClient(TenantProjectionApi.class);
         return new ClientTenantProjectionClientImpl(api);
     }
-    /** 同一 Platform 发现/测试传输边界供会话核对与 Tenant 恢复复用。 */
+    /** Platform 以 internal-auth DUAL 识别调用身份时读取的请求头。 */
+    static final String CALLER_SERVICE_HEADER = "X-Caller-Service";
+    /** 本服务 spring.application.name，作为 Platform 内部调用的来源系统。 */
+    static final String CALLER_SERVICE = "client-master-service";
+    /** 同一 Platform 发现/测试传输边界供会话核对、Tenant 恢复与文件核对复用；每个请求都带本服务调用身份头。 */
     static RestClient platformTransport(Environment env,ObjectProvider<LoadBalancerClient> discovery) {
         String url = env.getProperty("onboarding.platform-test-base-url", "");
         RestClient.Builder builder = RestClient.builder();
@@ -87,7 +91,7 @@ public class ClientOnboardingRecoveryConfiguration {
         var transport = new JdkClientHttpRequestFactory(HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(2))
             .followRedirects(HttpClient.Redirect.NEVER).build());
         transport.setReadTimeout(Duration.ofSeconds(3));
-        return builder.requestFactory(transport).build();
+        return builder.requestFactory(transport).defaultHeader(CALLER_SERVICE_HEADER, CALLER_SERVICE).build();
     }
     @Bean public ClientTenantProjectionHandler clientTenantProjectionHandler(ClientProjectionSourceService source,
             ClientTenantProjectionClient platform) { return new ClientTenantProjectionHandler(source, platform); }

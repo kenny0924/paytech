@@ -6,11 +6,6 @@ import com.paytech.platform.support.filedocument.domain.file.UploadModels.Upload
 import com.paytech.platform.support.filedocument.domain.file.FileModels.*;
 /** 文件 Owner 发布的同步能力；调用者持有本地短事务。 */
 public interface FileLifecycleService {
-    /** 返回准确原文件和上传绑定，不选择最新申请或修改扫描任务。 */
-    Owned read(long fileId,long accountId);
-    /** 运营审核按文件身份读取原文件和上传绑定，不限定上传账号；权限由调用方先行确认。 */
-    Owned readForReview(long fileId);
-
     /** 读取任一来源的原 Upload；不存在返回 FILE_NOT_FOUND。 */
     Upload sourceUpload(long uploadId);
     /** 当前读锁住任一来源的原 Upload；不存在返回 FILE_NOT_FOUND。 */
@@ -20,16 +15,12 @@ public interface FileLifecycleService {
     /** 按文件 ID 读取不可变坐标与当前状态；不存在返回 FILE_NOT_FOUND。 */
     File file(long fileId);
 
-    /** 读取原账号的原 Upload，不替换为最新申请。 */
-    Upload owned(long uploadId,long accountId);
-    /** 锁定并校验冻结目标，允许先检查原命令回执。 */
-    Upload lockOwned(long uploadId,long accountId,long tenantId);
     /** 已完成 Upload 产生的唯一文件，供重复完成返回原结果；未完成为空，已完成却缺文件视为数据不一致。 */
     Completed completedFile(Upload upload);
     /** 新完成操作只允许有效且未完成的 Upload。 */
     void requireOpen(Upload upload,Instant now);
-    /** 原子创建 File 并关闭原 Upload；入驻上传同时登记 Owner 引用。 */
-    void complete(long fileId,long ownerRowId,Upload upload,Verified proof,Instant now);
+    /** 原子创建 File 并关闭原 Upload。 */
+    void complete(long fileId,Upload upload,Verified proof,Instant now);
     /** 锁定文件，恢复原策略的尚未完成要求。 */
     Scan beginScan(long fileId,Instant now);
     /** 只追加原检查终局；同一身份已存在时不让旧工作者覆盖。 */

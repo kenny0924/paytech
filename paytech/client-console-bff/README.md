@@ -35,6 +35,13 @@ Gateway 路由和客户端认证默认启用状态不由本工程启动改变。
 
 `client.onboarding-enabled` 默认 false。按批准环境配置启用后，`/client-onboarding/v1` 提供原申请导航、材料要求、主表单与人员/关系/材料转发；`/onboarding-files/v1` 提供 F01—F04。管理监听仍不暴露这些路径。公共 Gateway 注册与启用是独立交付，启动开关不代替该授权。
 
+`/onboarding-files/v1` 的浏览器路径与 Gateway 路由不变，2026-10-22 起改调 Platform 内部文件接口 `InternalFileApi`（[第二段方案](../../requirements/20261022/platform-support-文件多存储并存/segment2.md)）：所有 Platform 出站请求带 `X-Caller-Service: client-console-bff`，Platform 以 DUAL 模式据此确定来源系统。
+
+- **开始上传（F01）：** 只收文件名、类型、大小，固定 `reasonCode=CLIENT_ONBOARDING_MATERIAL`、`uploaderAccountId` = 当前账号；不带申请、主体或 tenant_id。
+- **完成上传（F02）：** 完成后查询文件，来源为本 BFF 且上传人为当前账号才返回回执（含 `fileAddress`），否则按文件不存在拒绝。
+- **查文件 / 下载（F03 / F04）：** `ClientOnboardingFileAccess` 先回读 Platform 会话，再要求二选一：本 BFF 上传且上传人为当前账号；或文件地址出现在本人可读申请（CCT 导航最多 20 条，逐份读草稿）的材料中。否则按 `FILE_NOT_FOUND` 拒绝；下载在授权通过后才请求下载地址，不带操作人，客户下载不在 Platform 审计。
+- **地址：** 响应中涉及文件的都带 `fileAddress`（`/files/v1/{fileId}`），关联材料（C12）原样提交；申请详情按 CCT 保存的地址查 Platform，用 `FileAddress` 解析，不自行拼接。
+
 client-master 使用 `client-master-service`，compliance（入驻审核与材料要求）使用 `compliance-service`，Platform 使用既有 `platform-support-service` 私网发现。测试专用 `client.cct-test-base-url` / `client.risk-test-base-url` 仅允许 auto 的随机 loopback 根路径；Platform 测试基址必须精确为 `/platform-support`。真实聚合留在 Processor：保留 CCT 引用，组合 Risk 非个人要求与 Platform 状态；部分依赖失败显式 unavailable，权限失效整页失败。写入仍只调用一个 Owner。
 
 `ClientOnboardingHttpAutoTest` 覆盖真实 Spring/HTTP Client、三 Owner 协议模拟器、归属 Header、空 Body、幂等重放、材料聚合、部分失败、会话撤销及监听隔离；默认关闭也有独立认证套件断言。它不替代真实 Owner 数据库测试、供应商验收或多 Owner 端到端。最新验证从[台账](../../agent-docs/CURRENT_IMPLEMENTATION.md#client-console-onboarding-20260914)读取。

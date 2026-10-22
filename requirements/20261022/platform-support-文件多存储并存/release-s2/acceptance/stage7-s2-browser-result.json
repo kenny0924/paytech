@@ -1,0 +1,87 @@
+{
+ "results": [
+  [
+   "客户登录",
+   true,
+   "https://localhost:28443/onboarding"
+  ],
+  [
+   "客户页面上传：开始 → 直传 → 完成 → 扫描 → 关联（弹窗关闭）",
+   true,
+   "文件已选择 → 文件已上传，等待扫描结果"
+  ],
+  [
+   "材料列表显示已关联材料（含本次上传）",
+   true,
+   "查看按钮 1 个"
+  ],
+  [
+   "客户下载材料",
+   true,
+   "MinIO [200, 'ABORTED_TO_DOWNLOAD']"
+  ],
+  [
+   "运营审核详情材料下载",
+   true,
+   ""
+  ],
+  [
+   "运营页面 /file-storage",
+   true,
+   ""
+  ],
+  [
+   "运营页面 /workflow/my-tasks",
+   true,
+   ""
+  ],
+  [
+   "运营页面 /workflow/instances",
+   true,
+   ""
+  ],
+  [
+   "清理本次浏览器关联的材料（C13）",
+   true,
+   {
+    "deleted": [
+     [
+      "239047109813313536",
+      204
+     ]
+    ],
+    "left": "0"
+   }
+  ],
+  [
+   "控制台错误 0",
+   true,
+   []
+  ],
+  [
+   "4xx / 5xx / 失败请求 0",
+   true,
+   []
+  ]
+ ],
+ "console": [],
+ "network": [],
+ "minio": [
+  [
+   "client:/onboarding/applications",
+   200
+  ],
+  [
+   "client:/onboarding/applications",
+   "ABORTED_TO_DOWNLOAD"
+  ],
+  [
+   "ops:/client-onboarding/reviews/236087253233930240",
+   200
+  ],
+  [
+   "ops:/client-onboarding/reviews/236087253233930240",
+   "ABORTED_TO_DOWNLOAD"
+  ]
+ ]
+}

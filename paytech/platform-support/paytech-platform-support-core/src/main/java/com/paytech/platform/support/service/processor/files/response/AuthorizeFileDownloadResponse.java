@@ -2,6 +2,8 @@ package com.paytech.platform.support.service.processor.files.response;
 
 import java.time.Instant;
 
+import com.paytech.platform.support.api.enums.FileDisposition;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,6 +17,9 @@ public class AuthorizeFileDownloadResponse {
 
     /** 到期时间。 */
     private final Instant expiresAt;
+
+    /** 实际生效的下载方式。 */
+    private final FileDisposition disposition;
 
     /** 临时地址不可打印。 */
     @Override

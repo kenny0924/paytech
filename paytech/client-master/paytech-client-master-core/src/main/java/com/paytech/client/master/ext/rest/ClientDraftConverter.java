@@ -48,7 +48,7 @@ public final class ClientDraftConverter {
             row.clientType().getCode(),Long.toString(row.partyId()),row.status().getCode(),new DateTimeFormatterBuilder().appendInstant(6).toFormatter().format(row.savedAt()),
             ClientDraftPolicy.isEditable(row),values,people,relations,view.documents().stream().map(document ->
                 new com.paytech.client.contract.api.onboarding.ClientDocumentModels.DocumentResponseBody(Long.toString(document.documentId()),Long.toString(document.subjectPartyId()),
-                    document.requirementCode(),document.documentType(),Long.toString(document.fileId()),document.subjectPartyId()==row.partyId()
+                    document.requirementCode(),document.documentType(),document.fileAddress(),document.subjectPartyId()==row.partyId()
                     || view.people().stream().anyMatch(person -> person.identity().partyId()==document.subjectPartyId())
                         && view.relations().stream().anyMatch(relation -> relation.relatedPartyId()==document.subjectPartyId()
                             && (relation.status()==PartyRelationStatus.DRAFT || relation.status()==PartyRelationStatus.ACTIVE)))).toList());

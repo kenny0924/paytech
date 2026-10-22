@@ -47,15 +47,19 @@ class ClientOnboardingReviewBrowserAutoTest extends OperationsBffHttpTestBase {
         + "\"confirmedAt\":null,\"items\":[{\"industryCode\":\"RETAIL\",\"mccCode\":\"5411\",\"primary\":true}]}";
     private static final String OPTIONS = "{\"industries\":[{\"code\":\"RETAIL\",\"label\":\"零售\"}]}";
     private static final String FILE = "9001";
-    private static final String FILE_PATH = "/review-files/v1/files/" + FILE + "/download";
+    private static final String FILE_PATH = "/internal/files/v1/files/" + FILE;
+    private static final String DOWNLOAD_PATH = FILE_PATH + "/download";
     private static final String RISK_CASE_WITH_FILE = RISK_CASE.replace("\"subjects\":[]", "\"subjects\":[{\"caseId\":\"7001\","
         + "\"caseStatus\":\"SUBMITTED\",\"partyId\":\"8201\",\"profileId\":\"8301\",\"roleType\":\"CLIENT\","
         + "\"qualificationType\":\"ORGANIZATION_KYB\",\"dependencyTypes\":[],\"requirements\":[{\"requirementId\":\"8401\","
         + "\"requirementCode\":\"REGISTRATION\",\"documentType\":\"REGISTRATION_CERTIFICATE\",\"required\":true,"
         + "\"status\":\"SUBMITTED\",\"evidence\":[{\"evidenceId\":\"8501\",\"fileId\":\"" + FILE + "\",\"status\":\"PENDING\"}]}]}]");
-    private static final String DOWNLOAD = "{\"fileId\":\"" + FILE + "\",\"displayName\":\"registration.pdf\","
-        + "\"mimeType\":\"application/pdf\",\"sizeBytes\":\"1024\",\"url\":\"https://storage.local.test/obj?sig=1\","
-        + "\"expiresAt\":\"2026-10-14T00:01:00Z\"}";
+    private static final String STORED_FILE = "{\"fileId\":\"" + FILE + "\",\"fileAddress\":\"/files/v1/" + FILE + "\","
+        + "\"sourceSystem\":\"client-console-bff\",\"reasonCode\":\"CLIENT_ONBOARDING_MATERIAL\",\"displayName\":\"registration.pdf\","
+        + "\"mimeType\":\"application/pdf\",\"sizeBytes\":\"1024\",\"contentHash\":\"" + "a".repeat(64) + "\","
+        + "\"scanStatus\":\"AVAILABLE\",\"objectStatus\":\"ACTIVE\",\"uploaderAccountId\":\"8601\","
+        + "\"createTime\":\"2026-10-13T00:00:00Z\"}";
+    private static final String DOWNLOAD = "{\"url\":\"https://storage.local.test/obj?sig=1\",\"expiresAt\":\"2026-10-14T00:01:00Z\",\"disposition\":\"ATTACHMENT\"}";
     private static final String COMMAND = "{\"caseId\":\"7001\",\"status\":\"RETURNED\",\"accepted\":true,\"processing\":false}";
 
     @Autowired
@@ -239,28 +243,42 @@ class ClientOnboardingReviewBrowserAutoTest extends OperationsBffHttpTestBase {
         assertEquals(1, owners.requests().size());
     }
 
-    /** O10 下载：文件属于任务证据时，Platform 以可信身份签发地址并原样返回。 */
+    /** O10 下载：文件属于任务证据时，先取 Platform 元数据，再以操作人签发地址，拼成原响应。 */
     @Test
     void test_fileDownloadChecksCaseEvidence() throws Exception {
         owners.reply("GET", ROOT + "/cases/" + CASE, 200, RISK_CASE_WITH_FILE);
-        platform.rawResponse(FILE_PATH, DOWNLOAD);
+        platform.groupedResponses(Map.of(FILE_PATH, STORED_FILE, DOWNLOAD_PATH, DOWNLOAD));
 
         var response = send("POST", ROOT + "/cases/" + CASE + "/files/" + FILE + "/download", "client-onboarding-o10", null);
 
         assertOk(response);
         JsonNode body = JSON.readTree(response.body());
         assertEquals(FILE, body.path("fileId").asString());
+        assertEquals("registration.pdf", body.path("displayName").asString());
+        assertEquals("application/pdf", body.path("mimeType").asString());
+        assertEquals("1024", body.path("sizeBytes").asString());
         assertEquals("https://storage.local.test/obj?sig=1", body.path("url").asString());
-        var call = platform.requests().stream().filter(request -> request.path().equals(FILE_PATH)).toList();
-        assertEquals(1, call.size());
-        assertEquals("POST", call.getFirst().method());
-        assertEquals(RISK_ACCOUNT_ID, call.getFirst().headers().get("x-gateway-actor-subject").getFirst());
-        assertEquals(SESSION_ID, call.getFirst().headers().get("x-gateway-session-id").getFirst());
-        assertNull(call.getFirst().headers().get("idempotency-key"));
+        assertEquals("2026-10-14T00:01:00Z", body.path("expiresAt").asString());
+        assertFalse(body.has("contentHash"));
+        assertFalse(body.has("uploaderAccountId"));
+        var meta = fileCalls(FILE_PATH);
+        var grant = fileCalls(DOWNLOAD_PATH);
+        assertEquals(1, meta.size());
+        assertEquals(1, grant.size());
+        assertEquals("GET", meta.getFirst().method());
+        assertEquals("POST", grant.getFirst().method());
+        assertTrue(meta.getFirst().sequence() < grant.getFirst().sequence());
+        assertNull(meta.getFirst().header("X-Operator-Account-Id"));
+        assertEquals(RISK_ACCOUNT_ID, grant.getFirst().header("X-Operator-Account-Id"));
+        assertNull(grant.getFirst().query(), "不指定下载方式，按 Platform 默认附件下载");
+        for (var call : List.of(meta.getFirst(), grant.getFirst())) {
+            assertEquals("operations-console-bff", call.header("X-Caller-Service"));
+            assertNull(call.header("Idempotency-Key"));
+        }
         assertTrustedCalls();
     }
 
-    /** 文件不在任务证据中：404 FILE_NOT_FOUND，不调用 Platform 签发。 */
+    /** 文件不在任务证据中：404 FILE_NOT_FOUND，不调用 Platform 文件接口。 */
     @Test
     void test_fileOutsideCaseIsNotFound() throws Exception {
         owners.reply("GET", ROOT + "/cases/" + CASE, 200, RISK_CASE);
@@ -268,30 +286,64 @@ class ClientOnboardingReviewBrowserAutoTest extends OperationsBffHttpTestBase {
         var response = send("POST", ROOT + "/cases/" + CASE + "/files/" + FILE + "/download", "client-onboarding-o10", null);
 
         assertProblem(response, 404, "FILE_NOT_FOUND");
-        assertTrue(platform.requests().stream().noneMatch(request -> request.path().equals(FILE_PATH)));
+        assertTrue(fileCalls(FILE_PATH).isEmpty());
+        assertTrue(fileCalls(DOWNLOAD_PATH).isEmpty());
     }
 
-    /** Platform 拒绝（文件尚不可用）：保留 409 与错误码。 */
+    /** Platform 查不到文件：保留 404 FILE_NOT_FOUND，不再签发地址。 */
+    @Test
+    void test_fileMissingStopsBeforeDownload() throws Exception {
+        owners.reply("GET", ROOT + "/cases/" + CASE, 200, RISK_CASE_WITH_FILE);
+        platform.problem(FILE_PATH, 404, "FILE_NOT_FOUND");
+
+        var response = send("POST", ROOT + "/cases/" + CASE + "/files/" + FILE + "/download", "client-onboarding-o10", null);
+
+        assertProblem(response, 404, "FILE_NOT_FOUND");
+        assertTrue(fileCalls(DOWNLOAD_PATH).isEmpty());
+    }
+
+    /** Platform 拒绝签发（文件尚不可用）：保留 409 与错误码。 */
     @Test
     void test_fileStateConflictKeepsCode() throws Exception {
         owners.reply("GET", ROOT + "/cases/" + CASE, 200, RISK_CASE_WITH_FILE);
-        platform.problem(FILE_PATH, 409, "FILE_STATE_CONFLICT");
+        platform.rawResponse(FILE_PATH, STORED_FILE);
+        platform.problem(DOWNLOAD_PATH, 409, "FILE_STATE_CONFLICT");
 
         var response = send("POST", ROOT + "/cases/" + CASE + "/files/" + FILE + "/download", "client-onboarding-o10", null);
 
         assertProblem(response, 409, "FILE_STATE_CONFLICT");
     }
 
-    /** Platform 返回其他文件的授权：上游响应无效 502，不外露地址。 */
+    /** Platform 签发不可用：503 透传，不外露地址。 */
+    @Test
+    void test_downloadUnavailableIsServiceUnavailable() throws Exception {
+        owners.reply("GET", ROOT + "/cases/" + CASE, 200, RISK_CASE_WITH_FILE);
+        platform.rawResponse(FILE_PATH, STORED_FILE);
+        platform.problem(DOWNLOAD_PATH, 503, "SERVICE_UNAVAILABLE");
+
+        var response = send("POST", ROOT + "/cases/" + CASE + "/files/" + FILE + "/download", "client-onboarding-o10", null);
+
+        assertEquals(503, response.statusCode(), response.body());
+        assertFalse(response.body().contains("storage.local.test"));
+    }
+
+    /** Platform 返回其他文件的元数据：上游响应无效 502，不签发地址。 */
     @Test
     void test_mismatchedFileResponseIsRejected() throws Exception {
         owners.reply("GET", ROOT + "/cases/" + CASE, 200, RISK_CASE_WITH_FILE);
-        platform.rawResponse(FILE_PATH, DOWNLOAD.replace("\"fileId\":\"" + FILE + "\"", "\"fileId\":\"9002\""));
+        platform.groupedResponses(Map.of(FILE_PATH, STORED_FILE.replace("\"fileId\":\"" + FILE + "\"", "\"fileId\":\"9002\""),
+            DOWNLOAD_PATH, DOWNLOAD));
 
         var response = send("POST", ROOT + "/cases/" + CASE + "/files/" + FILE + "/download", "client-onboarding-o10", null);
 
         assertEquals(502, response.statusCode(), response.body());
         assertFalse(response.body().contains("storage.local.test"));
+        assertTrue(fileCalls(DOWNLOAD_PATH).isEmpty());
+    }
+
+    /** Platform 文件接口的调用记录。 */
+    private List<PlatformOperationsSimulator.RecordedRequest> fileCalls(String path) {
+        return platform.requests().stream().filter(request -> request.path().equals(path)).toList();
     }
 
     private void detailOwners() {

@@ -17,6 +17,7 @@ import com.paytech.client.contract.api.onboarding.ClientFormOptionsApi;
 import com.paytech.client.contract.api.onboarding.ClientOnboardingStartApi;
 import com.paytech.client.contract.api.onboarding.response.ClientFormOptionsResponseBody;
 import com.paytech.foundation.common.error.ServiceUnavailableException;
+import com.paytech.platform.support.api.files.FileAddress;
 
 import lombok.AllArgsConstructor;
 
@@ -99,7 +100,18 @@ public class CctOnboardingClientImpl implements CctOnboardingClient {
         if (draft.people() == null || draft.relations() == null || draft.documents() == null || draft.values() == null) {
             return false;
         }
-        return draft.people().size() <= MAX_PEOPLE && draft.documents().size() <= MAX_DOCUMENTS;
+        return draft.people().size() <= MAX_PEOPLE && draft.documents().size() <= MAX_DOCUMENTS
+            && draft.documents().stream().allMatch(document -> document != null && validFileAddress(document.fileAddress()));
+    }
+
+    /** 材料保存的文件地址必须符合文件服务签发的格式。 */
+    static boolean validFileAddress(String fileAddress) {
+        try {
+            FileAddress.parse(fileAddress);
+            return true;
+        } catch (IllegalArgumentException invalid) {
+            return false;
+        }
     }
 
     /** 三类选项列表都存在且不超过上限。 */

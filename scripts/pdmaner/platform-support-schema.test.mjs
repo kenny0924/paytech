@@ -17,7 +17,7 @@ const expectedTables = [
   'tenant_member_role', 'role_permission', 'auth_session', 'refresh_token_generation', 'jwt_signing_key',
   'api_credential', 'api_scope', 'api_credential_scope',
   'gateway_target', 'gateway_route', 'gateway_route_header', 'gateway_route_query_param', 'gateway_guard_rule',
-  'authentication_challenge', 'file_upload', 'file_scan_policy', 'file_scan_requirement', 'file_object', 'file_owner_ref', 'file_scan_result',
+  'authentication_challenge', 'file_upload', 'file_scan_policy', 'file_scan_requirement', 'file_object', 'file_scan_result',
   'audit_chain', 'audit_event', 'audit_event_attr', 'security_event', 'command_idempotency', 'compensation_event', 'console_resource',
   'webhook_endpoint', 'webhook_signing_secret', 'webhook_event', 'webhook_delivery', 'webhook_attempt',
   'workflow_definition', 'workflow_definition_version', 'workflow_action_template', 'workflow_instance',

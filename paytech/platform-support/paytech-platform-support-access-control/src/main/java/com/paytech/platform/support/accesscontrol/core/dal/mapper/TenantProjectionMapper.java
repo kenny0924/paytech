@@ -11,18 +11,6 @@ import com.paytech.platform.support.accesscontrol.domain.enums.OperationsTenantO
 
 /** PLT-I17 只访问 Platform 自己的 IAM 表。 */
 public interface TenantProjectionMapper {
-    /** 无副作用地读取准确 Tenant 当前权限。 */
-    java.util.List<com.paytech.platform.support.accesscontrol.core.dal.dataobject.OnboardingTenantCandidate> fileReadCandidates(@Param("accountId") long accountId,@Param("tenantId") long tenantId,@Param("now") Instant now);
-    /** 私网核验需要当前真实客户账号。 */
-    TenantProjectionAccount fileAccount(@Param("id") long id);
-
-    /** 只读命令回执使用原 Tenant 当前权限，不重新选择最新入驻身份。 */
-    java.util.List<com.paytech.platform.support.accesscontrol.core.dal.dataobject.OnboardingTenantCandidate> lockFileReadCandidates(@Param("accountId") long accountId,@Param("tenantId") long tenantId,@Param("now") Instant now);
-
-    /** 锁定当前账号全部有效 PENDING Client 入驻授权，调用者必须核对唯一候选与 CCT Client。 */
-    java.util.List<com.paytech.platform.support.accesscontrol.core.dal.dataobject.OnboardingTenantCandidate> lockUploadCandidates(
-        @Param("accountId") long accountId, @Param("now") Instant now);
-
     /** 锁定申请人账号，始终先于 Tenant 和 Member 行锁。 */
     TenantProjectionAccount lockAccount(@Param("id") long id);
 

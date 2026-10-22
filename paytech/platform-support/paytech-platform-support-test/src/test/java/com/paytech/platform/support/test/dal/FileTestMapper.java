@@ -36,39 +36,37 @@ public interface FileTestMapper {
         @Param("minimumVersion") String minimumVersion, @Param("acceptedCodes") String acceptedCodes,
         @Param("now") Instant now);
 
-    /** 插入已完成的 CCT 入驻上传目标。 */
+    /** 插入已完成的上传目标。 */
     @Insert("""
         INSERT INTO t_file_upload(upload_id,tenant_id,uploader_id,source_system,reason_code,expected_size,expected_mime,
-            owner_system,owner_type,owner_ref_id,display_name,storage_provider,storage_container_ref,storage_object_ref,
+            display_name,storage_provider,storage_container_ref,storage_object_ref,
             scan_policy_id,expires_time,status,version,create_time,update_time)
         VALUES(#{id},#{tenantId},#{uploaderId},'platform-support','CLIENT_ONBOARDING_MATERIAL',#{size},#{mime},
-            'CCT','CLIENT_APPLICATION_SUBJECT',#{ownerRefId},
             #{displayName},#{provider},#{container},#{objectRef},#{policyId},#{expiresAt},'COMPLETED',2,#{now},#{now})
         """)
     int insertUpload(@Param("id") long id, @Param("tenantId") long tenantId, @Param("uploaderId") long uploaderId,
-        @Param("size") long size, @Param("mime") String mime, @Param("ownerRefId") String ownerRefId,
+        @Param("size") long size, @Param("mime") String mime,
         @Param("displayName") String displayName, @Param("provider") String provider,
         @Param("container") String container, @Param("objectRef") String objectRef,
         @Param("policyId") long policyId, @Param("expiresAt") Instant expiresAt, @Param("now") Instant now);
 
-    /** 插入尚未完成、仍在授权期内的 CCT 入驻上传目标。 */
+    /** 插入尚未完成、仍在授权期内的上传目标。 */
     @Insert("""
         INSERT INTO t_file_upload(upload_id,tenant_id,uploader_id,source_system,reason_code,expected_size,expected_mime,
-            owner_system,owner_type,owner_ref_id,display_name,storage_provider,storage_container_ref,storage_object_ref,
+            display_name,storage_provider,storage_container_ref,storage_object_ref,
             scan_policy_id,expires_time,status,version,create_time,update_time)
         VALUES(#{id},#{tenantId},#{uploaderId},'platform-support','CLIENT_ONBOARDING_MATERIAL',#{size},#{mime},
-            'CCT','CLIENT_APPLICATION_SUBJECT',#{ownerRefId},
             #{displayName},#{provider},#{container},#{objectRef},#{policyId},#{expiresAt},'CREATED',1,#{now},#{now})
         """)
     int insertOpenUpload(@Param("id") long id, @Param("tenantId") long tenantId, @Param("uploaderId") long uploaderId,
-        @Param("size") long size, @Param("mime") String mime, @Param("ownerRefId") String ownerRefId,
+        @Param("size") long size, @Param("mime") String mime,
         @Param("displayName") String displayName, @Param("provider") String provider,
         @Param("container") String container, @Param("objectRef") String objectRef,
         @Param("policyId") long policyId, @Param("expiresAt") Instant expiresAt, @Param("now") Instant now);
 
     /** 读取账号发起的全部上传，按上传 ID 排序。 */
     @Select("""
-        SELECT upload_id,tenant_id,uploader_id,source_system,reason_code,expected_size,expected_mime,owner_ref_id,
+        SELECT upload_id,tenant_id,uploader_id,source_system,reason_code,expected_size,expected_mime,
             display_name,storage_provider,storage_container_ref,storage_object_ref,scan_policy_id,expires_time,status,
             version
         FROM t_file_upload WHERE uploader_id=#{uploaderId} ORDER BY upload_id
@@ -81,7 +79,7 @@ public interface FileTestMapper {
 
     /** 读取任一来源上传的完整行。 */
     @Select("""
-        SELECT upload_id,tenant_id,uploader_id,source_system,reason_code,owner_system,owner_type,owner_ref_id,
+        SELECT upload_id,tenant_id,uploader_id,source_system,reason_code,
             display_name,storage_provider,storage_container_ref,storage_object_ref,scan_policy_id,expires_time,status,version
         FROM t_file_upload WHERE upload_id=#{uploadId}
         """)
@@ -94,14 +92,6 @@ public interface FileTestMapper {
         FROM t_file_object WHERE upload_id=#{uploadId} ORDER BY file_id
         """)
     List<Map<String, Object>> filesOfUpload(long uploadId);
-
-    /** 统计全部 Owner 引用行。 */
-    @Select("SELECT COUNT(*) FROM t_file_owner_ref")
-    long ownerRefCount();
-
-    /** 读取文件的入驻材料 Owner 引用。 */
-    @Select("SELECT owner_ref_id FROM t_file_owner_ref WHERE file_id=#{fileId}")
-    List<String> ownerRefs(long fileId);
 
     /** 统计指定类型尚未结束（INIT / PROCESSING）的补偿任务。 */
     @Select("SELECT COUNT(*) FROM t_compensation_event WHERE event_type=#{eventType} AND execute_status IN ('INIT','PROCESSING')")
@@ -130,15 +120,6 @@ public interface FileTestMapper {
         @Param("encryption") String encryption, @Param("policyId") long policyId,
         @Param("scanStatus") String scanStatus, @Param("objectStatus") String objectStatus,
         @Param("availableTime") Instant availableTime, @Param("now") Instant now);
-
-    /** 插入文件的入驻材料 Owner 引用。 */
-    @Insert("""
-        INSERT INTO t_file_owner_ref(owner_ref_row_id,file_id,owner_system,owner_type,owner_ref_id,purpose_code,
-            create_time)
-        VALUES(#{id},#{fileId},'CCT','CLIENT_APPLICATION_SUBJECT',#{ownerRefId},'CLIENT_ONBOARDING_MATERIAL',#{now})
-        """)
-    int insertOwner(@Param("id") long id, @Param("fileId") long fileId, @Param("ownerRefId") String ownerRefId,
-        @Param("now") Instant now);
 
     /** 统计指定策略代码的修订数，确认测试策略没有残留。 */
     @Select("SELECT COUNT(*) FROM t_file_scan_policy WHERE policy_code=#{code}")

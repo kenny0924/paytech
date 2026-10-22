@@ -160,7 +160,7 @@ Nova 地址或名称变化时创建 Profile V2：V1 进入 `SUPERSEDED`、`activ
 
 ## 4. 场景二：Client、Local Partner 与 Operating Entity 入驻
 
-2026-09-11 当前模型映射：`t_client`、`t_local_partner`、`t_operating_entity`、`t_client_business_profile`、`t_client_business_classification`、`t_client_application`、`t_partner_application`、`t_operating_entity_application`、`t_application_document`；字段引用：`t_client.client_id`、`t_client.status`、`t_local_partner.local_partner_id`、`t_local_partner.status`、`t_operating_entity.entity_no`、`t_operating_entity.status`、`t_client_business_profile.business_profile_id`、`t_client_business_profile.content_hash`、`t_client_business_classification.classification_id`、`t_client_business_classification.mcc_code`、`t_client_application.application_id`、`t_client_application.requested_by_account_id`、`t_client_application.submission_content_hash`、`t_partner_application.application_id`、`t_partner_application.local_partner_id`、`t_partner_application.requested_by_account_id`、`t_partner_application.qualification_type`、`t_partner_application.submission_content_hash`、`t_operating_entity_application.application_id`、`t_operating_entity_application.approved_source_relation_id`、`t_application_document.document_id`、`t_application_document.partner_application_id`、`t_application_document.file_id`。新流按 [四系统决定](../../decisions/2026-09-11-cct-commerce-oe-pricing-model.md) 执行；下文旧数字/Assignment/分表签署示例保留为历史合同说明。
+2026-09-11 当前模型映射：`t_client`、`t_local_partner`、`t_operating_entity`、`t_client_business_profile`、`t_client_business_classification`、`t_client_application`、`t_partner_application`、`t_operating_entity_application`、`t_application_document`；字段引用：`t_client.client_id`、`t_client.status`、`t_local_partner.local_partner_id`、`t_local_partner.status`、`t_operating_entity.entity_no`、`t_operating_entity.status`、`t_client_business_profile.business_profile_id`、`t_client_business_profile.content_hash`、`t_client_business_classification.classification_id`、`t_client_business_classification.mcc_code`、`t_client_application.application_id`、`t_client_application.requested_by_account_id`、`t_client_application.submission_content_hash`、`t_partner_application.application_id`、`t_partner_application.local_partner_id`、`t_partner_application.requested_by_account_id`、`t_partner_application.qualification_type`、`t_partner_application.submission_content_hash`、`t_operating_entity_application.application_id`、`t_operating_entity_application.approved_source_relation_id`、`t_application_document.document_id`、`t_application_document.partner_application_id`、`t_application_document.file_address`。新流按 [四系统决定](../../decisions/2026-09-11-cct-commerce-oe-pricing-model.md) 执行；下文旧数字/Assignment/分表签署示例保留为历史合同说明。
 
 
 ### 4.1 角色主档
@@ -287,7 +287,7 @@ Gulf 的 Local Partner 首次入驻先由 `START_OR_RESUME` 在同一 CCT 本地
 | `t_application_document.subject_party_id` | `730100000000000001` | `730100000000000003` | `730100000000000005` |
 | `t_application_document.requirement_code` | `LEGAL_ENTITY_REGISTRATION` | `PARTNER_REGISTRATION` | `ENTITY_REGISTRATION` |
 | `t_application_document.document_type` | `INCORPORATION_CERTIFICATE` | `TRADE_LICENSE` | `TRADE_LICENSE` |
-| `t_application_document.file_id` | `930100000000000001` | `930100000000000003` | `930100000000000002` |
+| `t_application_document.file_address` | `/files/v1/930100000000000001` | `/files/v1/930100000000000003` | `/files/v1/930100000000000002` |
 | `t_application_document.content_hash` | `7777777777777777777777777777777777777777777777777777777777777777` | `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa` | `8888888888888888888888888888888888888888888888888888888888888888` |
 
 这里的 `requirement_code` 来自 Risk 冻结材料要求目录，`document_type` 来自申请材料类型目录；表中的代码只是现实示例，不构成 CCT 闭合枚举。
@@ -989,7 +989,7 @@ BCR 白名单是 20 类 Record Type、17 类 Root Type。`PARTY_PROFILE -> PARTY
         "t_operating_entity_application.approved_source_relation_id",
         "t_application_document.document_id",
         "t_application_document.partner_application_id",
-        "t_application_document.file_id"
+        "t_application_document.file_address"
       ],
       "flowSteps": [
         "input",

@@ -2,6 +2,7 @@ package com.paytech.platform.support.filedocument.integration.storage;
 
 import java.time.Instant;
 
+import com.paytech.platform.support.filedocument.domain.file.DownloadPresentation;
 import com.paytech.platform.support.filedocument.domain.file.FileModels.File;
 /** 下载供应商端口；生产供应商未选定时没有默认实现。 */
 public interface FileDownloadStorage {
@@ -12,9 +13,10 @@ public interface FileDownloadStorage {
      * 适配器负责受信存储域名与有界网络超时，调用者始终在事务外调用。
      * @param file 原不可变文件坐标
      * @param expiresAt 不可延长的本次授权期限
+     * @param presentation 签入地址的 response-content-disposition 与可选 response-content-type
      * @return 服务端签发的受控授权
      */
-    Download authorize(File file,Instant expiresAt);
+    Download authorize(File file,Instant expiresAt,DownloadPresentation presentation);
     /**
      * @param url 准确版本的短时 URL
      * @param expiresAt 实际到期时间，不得晚于请求期限

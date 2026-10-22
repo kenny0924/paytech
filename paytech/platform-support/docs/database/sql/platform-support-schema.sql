@@ -1,4 +1,4 @@
--- Current Platform Support schema (63 approved tables). Apply manually to an EMPTY database only.
+-- Current Platform Support schema (62 approved tables). Apply manually to an EMPTY database only.
 -- Business invariants and associations are enforced by application code; retain PK, UNIQUE and NOT NULL.
 SET NAMES utf8mb4;
 
@@ -584,15 +584,12 @@ CREATE TABLE `t_file_storage_route` (
 
 CREATE TABLE `t_file_upload` (
   `upload_id` BIGINT NOT NULL COMMENT '文件上传会话的稳定业务标识。',
-  `tenant_id` BIGINT NULL COMMENT '访问租户的稳定业务标识；Client 入驻上传为解析出的入驻租户，内部文件接口的上传为空。',
+  `tenant_id` BIGINT NULL COMMENT '访问租户的稳定业务标识；内部文件接口的上传为空，历史 Client 入驻上传保留当时解析出的入驻租户。',
   `uploader_id` BIGINT NULL COMMENT '上传人账号 ID；调用方有人工操作人时传入并原样记录，纯系统上传为空，Platform 不核对其真实性。',
   `source_system` VARCHAR(64) NOT NULL COMMENT '上传来源系统，即开始上传时内部调用身份的服务名；Platform 自行发起的上传为 platform-support。创建后不变。取值来源：内部调用身份的服务名；非固定枚举。',
   `reason_code` VARCHAR(64) NOT NULL COMMENT '来源系统声明的上传原因代码，格式 [A-Z][A-Z0-9_]{0,63}，用于反查文件为什么上传；创建后不变。取值来源：来源系统自定义；非固定枚举。',
   `expected_size` BIGINT NOT NULL COMMENT '预期文件大小的长整数值。',
   `expected_mime` VARCHAR(255) NOT NULL COMMENT '预期媒体类型的业务值。',
-  `owner_system` VARCHAR(64) NULL COMMENT '上传目标所属业务系统代码，来自 Platform 受控代码目录；Client 入驻由 CCT 授权结果固定，浏览器不得提交；内部文件接口的上传为空（第二段删除）。',
-  `owner_type` VARCHAR(64) NULL COMMENT '上传目标的受控资源类型；Client 入驻固定为 CLIENT_APPLICATION_SUBJECT，不允许上传后变更目标类型；内部文件接口的上传为空（第二段删除）。取值来源：Platform 受控文件 Owner 类型目录；非固定枚举。',
-  `owner_ref_id` VARCHAR(128) NULL COMMENT '来源 Owner 定义的不可变目标坐标；Client 入驻为 CCT 的 applicationId:subjectPartyId，两段均为规范正整数 ID，不复制 Client 名称或其他可变事实；内部文件接口的上传为空（第二段删除）。',
   `display_name` VARCHAR(255) NOT NULL COMMENT '去除路径和控制字符后的文件展示名，最大 255 Unicode 字符；仅授权页面展示，不作为对象存储 Key 或鉴权依据。',
   `storage_provider` VARCHAR(64) NOT NULL COMMENT '此次上传使用的对象存储适配器代码，来自受控配置；创建后固定，恢复不得改用当前默认适配器。',
   `storage_container_ref` VARCHAR(255) NOT NULL COMMENT '此次上传的目标存储容器引用；不含凭据，创建后固定，完成和恢复必须使用原容器。',
@@ -608,7 +605,7 @@ CREATE TABLE `t_file_upload` (
   KEY `idx_file_upload_tenant` (`tenant_id`, `status`, `create_time`) COMMENT '支持访问路径：tenant_id、status、create_time',
   KEY `idx_file_upload_due` (`status`, `expires_time`) COMMENT '支持访问路径：status、expires_time',
   KEY `idx_file_upload_uploader_id` (`uploader_id`) COMMENT '支持访问路径：uploader_id'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='保存受控上传的准确 Owner 目标、租户与上传人、展示名、原存储目标和冻结扫描策略；上传授权由存储适配器签发，不持久化临时 URL、签名或额外上传秘密';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='保存受控上传的来源系统与原因、租户与上传人、展示名、原存储目标和冻结扫描策略；不记录业务归属，上传授权由存储适配器签发，不持久化临时 URL、签名或额外上传秘密';
 
 CREATE TABLE `t_file_scan_policy` (
   `policy_id` BIGINT NOT NULL COMMENT '文件扫描策略修订的稳定业务标识。',
@@ -678,18 +675,6 @@ CREATE TABLE `t_file_object` (
   KEY `idx_file_object_scan_policy_id` (`scan_policy_id`) COMMENT '支持访问路径：scan_policy_id',
   KEY `idx_file_source` (`source_system`, `reason_code`, `create_time`) COMMENT '支持访问路径：source_system、reason_code、create_time（按来源与原因反查文件）'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='保存不可变对象存储引用、内容摘要和创建时冻结的扫描策略修订';
-
-CREATE TABLE `t_file_owner_ref` (
-  `owner_ref_row_id` BIGINT NOT NULL COMMENT '文件所有者引用的稳定业务标识。',
-  `file_id` BIGINT NOT NULL COMMENT '文件的稳定业务标识。',
-  `owner_system` VARCHAR(64) NOT NULL COMMENT '所有者系统的稳定业务代码。取值来源：Code-MoR 系统代码目录；非固定枚举。',
-  `owner_type` VARCHAR(64) NOT NULL COMMENT '所有者资源类型的稳定业务代码。取值来源：Platform Support 受控代码目录；非固定枚举。',
-  `owner_ref_id` VARCHAR(128) NOT NULL COMMENT '所有者资源标识的业务值。',
-  `purpose_code` VARCHAR(64) NOT NULL COMMENT '文件用途代码的稳定业务代码。取值来源：Platform Support 受控代码目录；非固定枚举。',
-  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Platform Support 数据库中的 UTC 微秒创建时间。',
-  PRIMARY KEY (`owner_ref_row_id`),
-  UNIQUE KEY `uk_file_owner` (`file_id`, `owner_system`, `owner_type`, `owner_ref_id`, `purpose_code`) COMMENT '保证业务唯一性：file_id、owner_system、owner_type、owner_ref_id、purpose_code'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='保存文件与来源系统业务资源之间的最小安全引用';
 
 CREATE TABLE `t_file_scan_result` (
   `scan_result_id` BIGINT NOT NULL COMMENT '文件扫描结果的稳定业务标识。',

@@ -43,7 +43,7 @@ public class ClientErrorStatusResolver implements ApiErrorStatusResolver {
                 default -> HttpStatus.CONFLICT;
             };
         }
-        if(code instanceof com.paytech.platform.support.api.enums.OnboardingFileErrorCode) {
+        if(code instanceof com.paytech.platform.support.api.enums.FileErrorCode) {
             return switch(code.getCode()) {
                 case "FILE_NOT_FOUND" -> HttpStatus.NOT_FOUND;
                 case "FILE_POLICY_REJECTED" -> HttpStatus.UNPROCESSABLE_CONTENT;

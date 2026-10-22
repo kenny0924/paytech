@@ -52,7 +52,7 @@ public class ConfigurationManagementRequestConfiguration implements WebMvcConfig
             @Override
             public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws IOException {
                 if (!(handler instanceof HandlerMethod method)) return true;
-                if (request.getServletPath().startsWith("/onboarding-files/") || request.getServletPath().startsWith("/internal/onboarding-files/") || request.getServletPath().startsWith("/api-credential-admin/") || request.getServletPath().startsWith("/api-scope-admin/") || request.getServletPath().startsWith("/tenant-access-admin/") || request.getServletPath().startsWith("/tenant-projections/"))
+                if (request.getServletPath().startsWith("/api-credential-admin/") || request.getServletPath().startsWith("/api-scope-admin/") || request.getServletPath().startsWith("/tenant-access-admin/") || request.getServletPath().startsWith("/tenant-projections/"))
                     { response.setHeader("Cache-Control", "no-store"); }
                 Set<String> keys = new HashSet<>();
                 for (var parameter : method.getMethodParameters()) {
@@ -66,13 +66,12 @@ public class ConfigurationManagementRequestConfiguration implements WebMvcConfig
                     if (!keys.contains(parameter.getKey()) || parameter.getValue().length != 1 || (parameter.getValue()[0].isBlank() && !request.getServletPath().startsWith("/tenant-access-admin/")))
                         throw new InvalidParameterException("Query 参数未知、重复或为空");
                 }
-                boolean emptyBody=request.getMethod().equals("GET")
-                    || request.getMethod().equals("POST") && request.getServletPath().matches("/onboarding-files/v1/(uploads/[^/]+/completion|files/[^/]+/download)");
+                boolean emptyBody=request.getMethod().equals("GET");
                 if (emptyBody && request.getInputStream().read() != -1)
                     throw new InvalidParameterException("当前请求不接受 Body");
                 return true;
             }
-        }).addPathPatterns("/gateway-admin/v1/**", "/console-admin/v1/**", "/permission-admin/v1/**", "/api-credential-admin/v1/**", "/api-scope-admin/v1/**", "/tenant-access-admin/v1/**", "/tenant-projections/v1/**", "/onboarding-files/v1/**", "/internal/onboarding-files/**");
+        }).addPathPatterns("/gateway-admin/v1/**", "/console-admin/v1/**", "/permission-admin/v1/**", "/api-credential-admin/v1/**", "/api-scope-admin/v1/**", "/tenant-access-admin/v1/**", "/tenant-projections/v1/**");
     }
 
     /** 写 Body 有界解析，响应序列化继续走原有转换器。 */

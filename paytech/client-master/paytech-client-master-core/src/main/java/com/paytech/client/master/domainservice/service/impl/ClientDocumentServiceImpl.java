@@ -44,12 +44,12 @@ public final class ClientDocumentServiceImpl implements ClientDocumentService {
         var current=target(command.accountId(),expected.applicationId(),expected.subjectPartyId(),true);
         if (!expected.equals(current)) throw new FailException(MATERIAL_CONTEXT_CHANGED);
         var now=clock.instant().truncatedTo(ChronoUnit.MICROS);
-        long fileId=ClientDraftCommand.id(request.fileId());
-        var same=sameDocument(app.applicationId(),current.subjectPartyId(),request,fileId);
+        String fileAddress=ClientDraftCommand.fileAddress(request.fileAddress()).value();
+        var same=sameDocument(app.applicationId(),current.subjectPartyId(),request,fileAddress);
         if (same!=null) {
             return receipt(command,app.applicationId(),same,now);
         }
-        var document=new ClientApplicationDocument(ids.nextId(),current.subjectPartyId(),request.requirementCode(),request.documentType(),fileId,hash);
+        var document=new ClientApplicationDocument(ids.nextId(),current.subjectPartyId(),request.requirementCode(),request.documentType(),fileAddress,hash);
         documents.insert(app.applicationId(),document,now);people.touch(app,now);
         return receipt(command,app.applicationId(),document,now);
     }
@@ -64,15 +64,15 @@ public final class ClientDocumentServiceImpl implements ClientDocumentService {
         var now=clock.instant().truncatedTo(ChronoUnit.MICROS);people.touch(app,now);
     }
     /** 当前申请下相同主体、要求、类型和文件的已有引用；没有为空。 */
-    private ClientApplicationDocument sameDocument(long applicationId,long subjectPartyId,DocumentReferenceRequestBody request,long fileId) {
+    private ClientApplicationDocument sameDocument(long applicationId,long subjectPartyId,DocumentReferenceRequestBody request,String fileAddress) {
         return documents.documents(applicationId).stream()
-            .filter(document -> document.subjectPartyId()==subjectPartyId && document.fileId()==fileId
+            .filter(document -> document.subjectPartyId()==subjectPartyId && fileAddress.equals(document.fileAddress())
                 && request.requirementCode().equals(document.requirementCode()) && request.documentType().equals(document.documentType()))
             .findFirst().orElse(null);
     }
     /** 协议回执中的时间为本次处理的 UTC 微秒；commandId 已停用，恒为空。 */
     private DocumentCommandReceiptResponseBody receipt(ClientDraftCommand command,long app,ClientApplicationDocument document,Instant time) {
-        return new DocumentCommandReceiptResponseBody(null,Long.toString(app),Long.toString(document.documentId()),Long.toString(document.subjectPartyId()),Long.toString(document.fileId()),
+        return new DocumentCommandReceiptResponseBody(null,Long.toString(app),Long.toString(document.documentId()),Long.toString(document.subjectPartyId()),document.fileAddress(),
             "CLIENT_DOCUMENT_ASSOCIATE".equals(command.operation())?"ASSOCIATED":"REMOVED",new DateTimeFormatterBuilder().appendInstant(6).toFormatter().format(time));
     }
     /** 读取与写入都核验准确原申请，不用最新申请替换。 */

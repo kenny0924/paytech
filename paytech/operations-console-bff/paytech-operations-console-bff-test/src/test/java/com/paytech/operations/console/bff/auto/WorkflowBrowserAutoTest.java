@@ -153,8 +153,8 @@ class WorkflowBrowserAutoTest extends FinanceBrowserAutoTestBase {
      * 例如声明 image/png 而实际上传 PDF 时完成上传被拒。
      */
     @ParameterizedTest
-    @CsvSource({"WF31,422,FILE_POLICY_REJECTED,文件类型或大小不符合要求,400",
-        "WF30,422,FILE_POLICY_REJECTED,文件类型或大小不符合要求,400",
+    @CsvSource({"WF31,422,FILE_POLICY_REJECTED,文件类型或大小不符合要求,422",
+        "WF30,422,FILE_POLICY_REJECTED,文件类型或大小不符合要求,422",
         "WF31,404,FILE_NOT_FOUND,文件目标不可访问,404",
         "WF32,409,FILE_STATE_CONFLICT,当前文件状态不允许此操作，请刷新申请,409"})
     void test_attachmentFileRejection(String id, int ownerStatus, String code, String detail, int status)

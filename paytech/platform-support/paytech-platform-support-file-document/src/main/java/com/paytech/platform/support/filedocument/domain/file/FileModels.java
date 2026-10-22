@@ -6,16 +6,6 @@ import com.paytech.platform.support.api.enums.FileScanStatus;
 import com.paytech.platform.support.api.enums.FileObjectStatus;
 /** 文件模块发布的不可变事实，不发布持久化对象。 */
 public final class FileModels {
-    /**
-     * @param file 当前文件事实
-     * @param upload 原上传及授权坐标
-     * @param applicationId 原申请
-     * @param subjectPartyId 原主体
-     */
-    public record Owned(File file,UploadModels.Upload upload,long applicationId,long subjectPartyId) {
-        /** 上传展示名和存储坐标不进入日志。 */
-        @Override public String toString() { return "Owned[REDACTED]"; }
-    }
     /** 仅作为模型容器。 */
     private FileModels() {}
     /**

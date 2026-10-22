@@ -3,7 +3,7 @@ import java.time.Instant;
 import java.util.*;
 import org.springframework.stereotype.Service;
 import com.paytech.foundation.common.error.*;
-import com.paytech.platform.support.api.enums.OnboardingFileErrorCode;
+import com.paytech.platform.support.api.enums.FileErrorCode;
 import com.paytech.platform.support.filedocument.domain.enums.*;
 import com.paytech.platform.support.api.enums.FileScanStatus;
 import com.paytech.platform.support.api.enums.FileObjectStatus;
@@ -21,53 +21,21 @@ public class FileLifecycleServiceImpl implements FileLifecycleService {
     private final FileUploadRepository uploads;
     private final FileLifecycleRepository repository;
     private final ObjectMapper json;
-    /** 文件与上传/Owner 的完整绑定必须仍存在；异常坐标不扩大授权。 */
-    @Override public Owned read(long fileId,long accountId) {
-        Long uploadId=repository.readUploadId(fileId,accountId);
-        if (uploadId==null) throw new FailException(OnboardingFileErrorCode.FILE_NOT_FOUND);
-        return owned(fileId,owned(uploadId,accountId));
-    }
-    /** 与 read 相同的入驻材料范围，仅去掉上传账号条件。 */
-    @Override public Owned readForReview(long fileId) {
-        Long uploadId=repository.readReviewUploadId(fileId);
-        if (uploadId==null) throw new FailException(OnboardingFileErrorCode.FILE_NOT_FOUND);
-        var row=uploads.find(uploadId);
-        if (row==null) throw new FailException(OnboardingFileErrorCode.FILE_NOT_FOUND);
-        return owned(fileId,owned(row,row.uploaderId()));
-    }
-    /** 组合文件事实与原上传目标；目标格式损坏时失败关闭。 */
-    private Owned owned(long fileId,Upload upload) {
-        var row=repository.readFile(fileId);
-        String[] target=upload.ownerRefId().split(":",-1);
-        try {
-            if (target.length!=2 || !target[0].matches("[1-9][0-9]{0,18}") || !target[1].matches("[1-9][0-9]{0,18}"))
-                throw new IllegalArgumentException();
-            return new Owned(file(row),upload,Long.parseLong(target[0]),Long.parseLong(target[1]));
-        } catch (IllegalArgumentException invalid) { throw new ServiceUnavailableException(); }
-    }
-    /** 任一来源的原上传，不限定 Owner。 */
+    /** 任一来源的原上传。 */
     @Override public Upload sourceUpload(long uploadId) { return upload(uploads.findById(uploadId)); }
     /** 当前读防止 Redis Lease 过期产生重复文件。 */
     @Override public Upload lockSourceUpload(long uploadId) { return upload(repository.lockSourceUpload(uploadId)); }
     /** 文件与上传记录组合的元数据。 */
     @Override public StoredFileView describe(long fileId) {
         var view=repository.describeFile(fileId);
-        if (view==null) throw new FailException(OnboardingFileErrorCode.FILE_NOT_FOUND);
+        if (view==null) throw new FailException(FileErrorCode.FILE_NOT_FOUND);
         return view;
     }
     /** 文件不可变坐标与当前状态。 */
     @Override public File file(long fileId) {
         var row=repository.readFile(fileId);
-        if (row==null) throw new FailException(OnboardingFileErrorCode.FILE_NOT_FOUND);
+        if (row==null) throw new FailException(FileErrorCode.FILE_NOT_FOUND);
         return file(row);
-    }
-    /** 隐藏其他账号的对象存在性。 */
-    @Override public Upload owned(long uploadId,long accountId) { return owned(uploads.find(uploadId),accountId); }
-    /** 当前读防止 Redis Lease 过期产生重复文件。 */
-    @Override public Upload lockOwned(long uploadId,long accountId,long tenantId) {
-        var upload=owned(repository.lockUpload(uploadId),accountId);
-        if (!Objects.equals(upload.tenantId(),tenantId)) throw new FailException(OnboardingFileErrorCode.FILE_TARGET_CONFLICT);
-        return upload;
     }
     /** 调用者已锁定原 Upload；完成状态与文件在同一事务写入，二者必须同时存在。 */
     @Override public Completed completedFile(Upload upload) {
@@ -83,14 +51,13 @@ public class FileLifecycleServiceImpl implements FileLifecycleService {
     /** 只有原授权有效期内的新完成请求可以登记。 */
     @Override public void requireOpen(Upload upload,Instant now) {
         if (!(upload.status()==FileUploadStatus.CREATED || upload.status()==FileUploadStatus.UPLOADING) || !now.isBefore(upload.expiresAt()))
-            throw new FailException(OnboardingFileErrorCode.FILE_STATE_CONFLICT);
+            throw new FailException(FileErrorCode.FILE_STATE_CONFLICT);
     }
-    /** File、Owner、Upload 与调用者的回执和补偿事件处于同一本地事务。 */
-    @Override public void complete(long fileId,long ownerRowId,Upload upload,Verified proof,Instant now) {
+    /** File、Upload 与调用者的扫描补偿事件处于同一本地事务。 */
+    @Override public void complete(long fileId,Upload upload,Verified proof,Instant now) {
         requireOpen(upload,now);
-        if (repository.completeUpload(upload.uploadId(),now)!=1) throw new FailException(OnboardingFileErrorCode.FILE_STATE_CONFLICT);
+        if (repository.completeUpload(upload.uploadId(),now)!=1) throw new FailException(FileErrorCode.FILE_STATE_CONFLICT);
         repository.insertFile(fileId,upload,proof,now);
-        if (upload.ownerRefId()!=null) repository.insertOwner(ownerRowId,fileId,upload.ownerRefId(),now);
     }
     /** 缺失或损坏的冻结规则保持失败关闭，不依赖当前 ACTIVE 默认策略。 */
     @Override public Scan beginScan(long fileId,Instant now) {
@@ -139,15 +106,10 @@ public class FileLifecycleServiceImpl implements FileLifecycleService {
             return new Requirement(row.id(),row.scannerCode(),row.type(),row.minimumVersion(),List.copyOf(values));
         } catch (RuntimeException invalid) { throw new ServiceUnavailableException(); }
     }
-    /** 最小授权读取，不向其他模块泄露 DataObject。 */
-    private Upload owned(FileUpload row,long accountId) {
-        if (row==null || !Objects.equals(row.uploaderId(),accountId)) throw new FailException(OnboardingFileErrorCode.FILE_NOT_FOUND);
-        return upload(row);
-    }
     /** 转为文件能力发布的上传事实；不存在按不可访问处理。 */
     private Upload upload(FileUpload row) {
-        if (row==null) throw new FailException(OnboardingFileErrorCode.FILE_NOT_FOUND);
-        return new Upload(row.uploadId(),row.tenantId(),row.uploaderId(),row.sourceSystem(),row.reasonCode(),row.ownerRefId(),row.displayName(),row.expectedSize(),row.expectedMime(),row.storageProvider(),row.containerRef(),row.objectRef(),row.scanPolicyId(),row.expiresAt(),row.status());
+        if (row==null) throw new FailException(FileErrorCode.FILE_NOT_FOUND);
+        return new Upload(row.uploadId(),row.tenantId(),row.uploaderId(),row.sourceSystem(),row.reasonCode(),row.displayName(),row.expectedSize(),row.expectedMime(),row.storageProvider(),row.containerRef(),row.objectRef(),row.scanPolicyId(),row.expiresAt(),row.status());
     }
     /** 发布存储/扫描所需的固定业务事实。 */
     private File file(FileObject row) {

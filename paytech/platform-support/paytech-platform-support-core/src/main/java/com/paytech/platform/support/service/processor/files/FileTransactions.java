@@ -11,7 +11,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * 内部文件写入的事务策略：读已提交、15 秒超时
- * <li>不依赖人工认证，也不登记 Operations 审计；内部文件接口不写 Operations 审计。</li>
+ * <li>不依赖人工认证；带人工操作人的下载审计由审计模块自己的独立事务写入，不在本事务内。</li>
  */
 @Component
 @ConditionalOnProperty(name = "files.enabled", havingValue = "true")

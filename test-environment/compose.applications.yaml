@@ -218,8 +218,11 @@ services:
       # 不再经环境变量配置；旧 FILES_ONBOARDING_STORAGE_* / FILES_ONBOARDING_MINIO_* 残留会使新 Platform 拒绝启动。
       # 入驻上传要求 files.enabled=true。mor-test 登记：实例 MINIO（https://minio.mor-test.localhost:29400，私有 CA = test-ca.crt）、
       # 桶 mor-platform-files、默认路由 * → CLIENT_ONBOARDING_FORMAT / 900 秒。
+      # 第二段：入驻上传 / 下载由 client-console-bff、ops-bff 直调内部文件接口，来源系统取调用身份，须 DUAL（调用方带 X-Caller-Service）；
+      # DUAL 要求实例 ID。files.onboarding.enabled 已删除，不再配置。
       PLATFORM_SUPPORT_FILES_ENABLED: "true"
-      FILES_ONBOARDING_ENABLED: "true"
+      PLATFORM_SUPPORT_INTERNAL_AUTH_MODE: DUAL
+      PAYTECH_INSTANCE_ID: platform-support-test
       COMPENSATION_ENABLED: "true"
       COMPENSATION_INSTANCE_ID: platform-test
       # Client Webhook 投递：签名密钥存 Vault（WEBHOOK_SIGNING_SECRET_V1 / WEBHOOK_SIGNING）；登记 acquiring-service 为事件来源（第 03 步改名）。

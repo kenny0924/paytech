@@ -3,6 +3,9 @@ package com.paytech.platform.support.service.processor.files;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
+
+import org.springframework.beans.factory.ObjectProvider;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -12,8 +15,16 @@ import com.paytech.foundation.common.error.ServiceUnavailableException;
 import com.paytech.foundation.processor.AbstractProcessor;
 import com.paytech.platform.support.api.enums.FileObjectStatus;
 import com.paytech.platform.support.api.enums.FileScanStatus;
-import com.paytech.platform.support.api.enums.OnboardingFileErrorCode;
+import com.paytech.platform.support.api.enums.FileErrorCode;
+import com.paytech.platform.support.auditsecurity.domain.audit.AuditModels.Attribute;
+import com.paytech.platform.support.auditsecurity.domain.audit.AuditModels.Event;
+import com.paytech.platform.support.auditsecurity.domain.audit.AuditModels.Identity;
+import com.paytech.platform.support.auditsecurity.domain.audit.AuditModels.Result;
+import com.paytech.platform.support.auditsecurity.domain.audit.AuditModels.Target;
+import com.paytech.platform.support.auditsecurity.domainservice.service.OperationsAuditWriter;
+import com.paytech.platform.support.filedocument.domain.file.DownloadPresentation;
 import com.paytech.platform.support.filedocument.domain.file.FileModels.File;
+import com.paytech.platform.support.filedocument.domain.file.StoredFileView;
 import com.paytech.platform.support.filedocument.domainservice.service.FileLifecycleService;
 import com.paytech.platform.support.filedocument.integration.storage.FileDownloadStorage.Download;
 import com.paytech.platform.support.filedocument.integration.storage.FileObjectStorage;
@@ -26,7 +37,11 @@ import lombok.AllArgsConstructor;
 /**
  * 签发文件原版本的短时只读下载地址；内部系统之间不做文件级权限
  * <li>要求扫描 AVAILABLE、对象 ACTIVE；按文件记录上的实例与桶签发，实例或桶已停用返回 503 且不发起存储调用。</li>
- * <li>地址最长 60 秒，只回传给本次调用，不落库、不写审计；不写业务数据、不加锁、不开事务。</li>
+ * <li>地址签入下载方式与原文件名：请求 INLINE 且登记 MIME 为 PDF / PNG / JPEG 时内联打开并签入登记的 Content-Type，
+ * 否则按附件下载；响应返回实际生效的方式。</li>
+ * <li>地址最长 60 秒，只回传给本次调用，不落库；不写业务数据、不加锁、不开事务。</li>
+ * <li>调用方带人工操作人时，签发成功后写一条 {@value #AUDIT_ACTION} 审计（操作人、文件、调用服务，不含地址）；审计写入在审计模块
+ * 自己的独立事务中完成，写入失败或审计未启用时不返回地址（失败关闭）。无操作人时不写审计。</li>
  */
 @Component
 @AllArgsConstructor
@@ -37,31 +52,55 @@ public class AuthorizeFileDownloadProcessor
     /** 下载授权的最长有效秒数。 */
     static final long DOWNLOAD_SECONDS = 60;
 
+    /** 人工下载审计动作。 */
+    static final String AUDIT_ACTION = "FILE_DOWNLOAD_AUTHORIZE";
+
+    /** 审计资源类型。 */
+    static final String AUDIT_RESOURCE_TYPE = "FILE";
+
+    /** 审计属性：调用服务名。 */
+    static final String CALLER_SERVICE_ATTRIBUTE = "caller_service";
+
     private final Clock clock;
 
     private final FileLifecycleService files;
 
     private final FileStorageRegistry registry;
 
+    private final ObjectProvider<OperationsAuditWriter> auditWriters;
+
     @Override
     protected AuthorizeFileDownloadResponse processRequest(AuthorizeFileDownloadRequest request) {
         // 读取文件并确认可下载
         File file = files.file(request.getFileId());
         if (file.scanStatus() != FileScanStatus.AVAILABLE || file.objectStatus() != FileObjectStatus.ACTIVE) {
-            throw new FailException(OnboardingFileErrorCode.FILE_STATE_CONFLICT);
+            throw new FailException(FileErrorCode.FILE_STATE_CONFLICT);
         }
+        DownloadPresentation presentation = presentation(request, file);
 
         // 事务外签发原版本授权
         Instant expiresAt = clock.instant().truncatedTo(ChronoUnit.MICROS).plusSeconds(DOWNLOAD_SECONDS);
-        Download grant = sign(file, expiresAt);
-        return new AuthorizeFileDownloadResponse(grant.url(), grant.expiresAt());
+        Download grant = sign(file, expiresAt, presentation);
+
+        // 人工操作人审计后返回
+        if (request.getOperatorAccountId() != null) {
+            audit(request);
+        }
+        return new AuthorizeFileDownloadResponse(grant.url(), grant.expiresAt(), presentation.disposition());
+    }
+
+    /** 下载方式与原文件名：文件名取上传登记的展示名，MIME 与扫描状态取文件记录。 */
+    DownloadPresentation presentation(AuthorizeFileDownloadRequest request, File file) {
+        StoredFileView view = files.describe(file.fileId());
+        return DownloadPresentation.of(request.getDisposition(), view.getDisplayName(), file.fileId(),
+            file.verified().mimeType(), file.scanStatus());
     }
 
     /** 按记录坐标签发；适配器失败或授权越界返回不可用。 */
-    Download sign(File file, Instant expiresAt) {
+    Download sign(File file, Instant expiresAt, DownloadPresentation presentation) {
         Download grant;
         try (FileObjectStorage storage = registry.openForRead(file.provider(), file.container())) {
-            grant = storage.authorize(file, expiresAt);
+            grant = storage.authorize(file, expiresAt, presentation);
         } catch (ServiceUnavailableException unavailable) {
             throw unavailable;
         } catch (RuntimeException unavailable) {
@@ -71,5 +110,20 @@ public class AuthorizeFileDownloadProcessor
             throw new ServiceUnavailableException();
         }
         return grant;
+    }
+
+    /**
+     * 写一条人工下载审计：主体为操作人账号，资源为文件，属性只含调用服务名，不含下载地址
+     * <li>审计未启用（Operations 与 Client 人工认证均关闭）时返回 503，不签发给有操作人的请求。</li>
+     */
+    void audit(AuthorizeFileDownloadRequest request) {
+        OperationsAuditWriter writer = auditWriters.getIfAvailable();
+        if (writer == null) {
+            throw new ServiceUnavailableException();
+        }
+        writer.write(new Event(new Identity(request.getOperatorAccountId().toString(), null), AUDIT_ACTION,
+            new Target(AUDIT_RESOURCE_TYPE, Long.toString(request.getFileId())), Result.SUCCEEDED,
+            List.of(new Attribute(CALLER_SERVICE_ATTRIBUTE, request.getCallerService())), request.getRequestId(),
+            clock.instant()));
     }
 }

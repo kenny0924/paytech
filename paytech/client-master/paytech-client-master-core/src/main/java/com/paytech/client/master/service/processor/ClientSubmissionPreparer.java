@@ -20,7 +20,6 @@ import com.paytech.client.master.domain.enums.PartyRelationStatus;
 import com.paytech.client.master.domain.onboarding.ClientAgreementPartyUsage;
 import com.paytech.client.master.domain.onboarding.ClientDraftPolicy;
 import com.paytech.client.master.domain.onboarding.ClientIdentifierNormalizer;
-import com.paytech.client.master.domain.onboarding.ClientMaterialTarget;
 import com.paytech.client.master.domain.onboarding.ClientPersonView;
 import com.paytech.client.master.domain.onboarding.ClientSubmissionPreparation;
 import com.paytech.client.master.domain.onboarding.ClientSubmissionSubject;
@@ -36,6 +35,7 @@ import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.httpproblem.api.ProblemFieldError;
 import com.paytech.compliance.api.MaterialRequirementsModels.RequirementBody;
 import com.paytech.compliance.api.enums.MaterialQualificationType;
+import com.paytech.platform.support.api.files.FileAddress;
 
 import static com.paytech.client.contract.api.enums.ClientDraftErrorCode.*;
 
@@ -88,7 +88,7 @@ public class ClientSubmissionPreparer {
         List<ClientApplicationDocument> materials = documents.documents(identity.applicationId());
         Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
         var issues = new ArrayList<>(validator.validate(identity.clientType(), subjects, materials, requirements(subjects),
-            unusableDocuments(accountId, identity, subjects, materials), now));
+            unusableDocuments(accountId, subjects, materials), now));
         var conflicts = identityConflicts(subjects);
         issues.addAll(conflicts);
         return new ClientSubmissionPreparation(subjects, relations, materials, List.copyOf(issues), !conflicts.isEmpty());
@@ -155,21 +155,19 @@ public class ClientSubmissionPreparer {
         return result;
     }
 
-    /** 核验范围内材料的文件当前可用且字节未变；Platform 不可用时整体 503。 */
-    Set<Long> unusableDocuments(long accountId, ClientDraftIdentity identity, List<ClientSubmissionSubject> subjects,
+    /** 核验范围内材料的文件当前可用、仍由当前账号上传且字节未变；Platform 不可用时整体 503。 */
+    Set<Long> unusableDocuments(long accountId, List<ClientSubmissionSubject> subjects,
         List<ClientApplicationDocument> materials) {
-        Map<Long, ClientSubmissionSubject> bySubject = new HashMap<>();
-        subjects.forEach(subject -> bySubject.put(subject.getPartyId(), subject));
+        var inScope = new HashSet<Long>();
+        subjects.forEach(subject -> inScope.add(subject.getPartyId()));
         var unusable = new HashSet<Long>();
         for (ClientApplicationDocument document : materials) {
-            ClientSubmissionSubject subject = bySubject.get(document.subjectPartyId());
-            if (subject == null) {
+            if (!inScope.contains(document.subjectPartyId())) {
                 continue;
             }
-            var target = new ClientMaterialTarget(identity.applicationId(), identity.clientId(), subject.getPartyId(),
-                subject.getQualificationType());
             try {
-                if (!document.contentHash().equals(authority.fileHash(accountId, target, document.fileId()))) {
+                FileAddress address = FileAddress.parse(document.fileAddress());
+                if (!document.contentHash().equals(authority.fileHash(accountId, address))) {
                     unusable.add(document.documentId());
                 }
             } catch (FailException rejected) {

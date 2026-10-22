@@ -30,7 +30,7 @@ class ClientApplicationAdminTest extends AbstractClientReviewTest {
         assertTrue(body.path("values").path("individual").size() > 0);
         assertEquals(0, body.path("values").path("contact").size());
         assertEquals(Long.toString(documentId), body.path("documents").get(0).path("documentId").asString());
-        assertEquals(Long.toString(fileId), body.path("documents").get(0).path("fileId").asString());
+        assertEquals("/files/v1/" + fileId, body.path("documents").get(0).path("fileAddress").asString());
     }
 
     /** 未知任务 404；非法任务 ID 按不存在处理；缺少会话 400。 */

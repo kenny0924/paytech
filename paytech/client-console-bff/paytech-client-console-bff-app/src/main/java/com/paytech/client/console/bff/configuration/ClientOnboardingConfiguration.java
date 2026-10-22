@@ -6,8 +6,6 @@ import com.paytech.client.contract.api.workspace.ClientWorkspaceApi;
 import com.paytech.foundation.common.error.*;
 import com.paytech.foundation.httpclient.api.*;
 import com.paytech.foundation.internalauth.api.InternalTokenSupplier;
-import com.paytech.platform.support.api.enums.*;
-import com.paytech.platform.support.api.onboardingfiles.OnboardingFileApi;
 import com.paytech.compliance.api.MaterialRequirementsApi;
 import com.paytech.compliance.api.ClientReviewResultApi;
 import java.net.URI;
@@ -79,20 +77,6 @@ public class ClientOnboardingConfiguration {
     @Bean
     ClientDocumentApi clientDocumentApi(HttpServiceProxyFactory clientOnboardingCctFactory) {
         return clientOnboardingCctFactory.createClient(ClientDocumentApi.class);
-    }
-
-    /** F01—F04 原申请文件合同，不请求 Platform 私网审核验证。 */
-    @Bean
-    OnboardingFileApi onboardingFileApi(Environment env, ObjectProvider<LoadBalancerClient> discovery,
-        ObjectProvider<InternalTokenSupplier> tokens) {
-        return HttpServiceClientFactory.create(
-            transport(env, discovery, "platform", "platform-support-service", "/platform-support"),
-            options(tokens, "platform-support-service"),
-            java.util.stream.Stream.concat(
-                Arrays.stream(OnboardingFileErrorCode.values()),
-                Arrays.stream(ClientAuthenticationErrorCode.values())
-            ).toArray(com.paytech.foundation.common.enums.CodeMessageEnum[]::new)
-        ).createClient(OnboardingFileApi.class);
     }
 
     /** Risk 的非个人材料目录仅供授权页面查询。 */
