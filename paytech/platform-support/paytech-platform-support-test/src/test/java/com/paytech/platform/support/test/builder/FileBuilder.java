@@ -29,11 +29,31 @@ public final class FileBuilder {
     /** JPEG 文件头开头的合成内容。 */
     public static final byte[] JPEG = {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0, 0, 16, 'J', 'F', 'I', 'F', 0};
 
-    /** 无法识别的纯文本内容。 */
+    /** 纯 ASCII 文本内容，按 UTF-8 文本识别为 text/csv。 */
     public static final byte[] TEXT = "plain text material".getBytes(java.nio.charset.StandardCharsets.US_ASCII);
 
     /** 测试上传的原因代码，与 FileTestMapper 插入的 reason_code 一致。 */
     public static final String REASON_CODE = "CLIENT_ONBOARDING_MATERIAL";
+    /** 卡 BIN 库标准表头与一行数据的 CSV，含 BOM 与多字节发卡行名称。 */
+    public static final byte[] CSV = ("\uFEFFbin_prefix,card_brand,funding_type,card_level,card_product,issuer_country,"
+        + "issuer_name\r\n41111111,VISA,CREDIT,CLASSIC,CONSUMER,AE,\"Banque Misr — بنك مصر\"\r\n")
+        .getBytes(java.nio.charset.StandardCharsets.UTF_8);
+
+    /** 既无已知文件头也不是 UTF-8 文本的二进制内容（含 NUL 与非法 UTF-8 字节）。 */
+    public static final byte[] BINARY = {'b', 'i', 'n', 0, (byte) 0xC3, (byte) 0x28, (byte) 0xFE, 0x01};
+
+    /**
+     * 开头 8 KiB 是合法 CSV、其后出现 NUL 的内容：完成上传时按开头识别为 text/csv，全文格式检查不通过。
+     *
+     * @return 新数组
+     */
+    public static byte[] csvWithLateNul() {
+        byte[] bytes = new byte[8192 + 64];
+        java.util.Arrays.fill(bytes, (byte) 'A');
+        System.arraycopy(CSV, 0, bytes, 0, CSV.length);
+        bytes[8192 + 10] = 0;
+        return bytes;
+    }
 
     /** 存储加密引用的默认合成值，与本机 SSE-S3 存储桶的算法一致。 */
     public static final String SSE_S3 = "AES256";

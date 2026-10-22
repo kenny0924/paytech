@@ -123,6 +123,13 @@ public class GetCheckoutResponseBody {
         /** 卡号后四位。 */
         private String last4;
 
+        /**
+         * 卡组织（主品牌），供收银台展示卡组织图标
+         * <li>VISA、MASTERCARD、AMEX、UNIONPAY、MADA、DISCOVER、JCB、DINERS；平台 BIN 库未识别时为 null。</li>
+         * <li>按 card 当前生效 BIN 库实时识别，只用于展示，不代表交易时冻结的卡属性。</li>
+         */
+        private String cardBrand;
+
         /** 有效期月份，两位。 */
         private String expiryMonth;
 

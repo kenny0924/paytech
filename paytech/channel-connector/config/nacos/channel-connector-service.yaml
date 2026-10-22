@@ -13,8 +13,29 @@ spring:
     hikari:
       connection-timeout: 2000
       validation-timeout: 1000
+  # 3DS 全链路：ChannelPaymentNotified 发布；账号密码由 CHANNEL_CONNECTOR_RABBITMQ_USERNAME / PASSWORD 提供，不写入模板。
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    virtual-host: /mor-local
+    connection-timeout: 2s
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
+
+# ChannelPaymentNotified 经 paytech-messaging 发布到 channel-connector.events；订阅方 payment 已接入，未路由按发布失败重试。
+messaging:
+  producer:
+    service: channel-connector
+  publisher:
+    unroutable-policy: FAIL
 
 channel-connector:
+  # ChannelPaymentNotified 信封身份：sourceService 与 messaging.producer.service 一致。
+  event:
+    source-service: channel-connector
+    instance-id: main
   # 能力代码目录（D06：能力代码只在 channel-connector 解析）；未注册代码失败关闭，修改需重启。
   capability-definitions:
     "[ACTION.PAY]": { value-type: BOOLEAN }

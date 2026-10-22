@@ -16,6 +16,7 @@ import com.paytech.acquiring.domainservice.port.customer.CheckoutCardPaymentPort
 import com.paytech.acquiring.api.checkout.v1.enums.CustomerPaymentStatus;
 import com.paytech.payment.api.execution.PaymentIntentApi;
 import com.paytech.payment.api.execution.request.PayRequestBody;
+import com.paytech.payment.api.execution.request.RefreshSubmissionRequestBody;
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.payment.api.execution.response.GetSubmissionResponseBody;
@@ -29,7 +30,8 @@ import lombok.AllArgsConstructor;
  * <p>
  * 以来源提交 ID 作为 Payment 原提交身份，Idempotency-Key 为 {@code submission:<sourceSubmissionId>}；本期只支持自动捕获。 Payment 的尝试状态映射为 Checkout
  * 支付状态：成功、失败、取消直接映射；处理中带 3DS 指令或待完成交互时为待消费者操作（动作标识使用尝试 ID），否则为处理中；其他值失败关闭。
- * 查询经 EX-I06 读取原提交，不返回 3DS 跳转地址。
+ * 查询经 EX-I06 读取原提交；刷新经 Payment 刷新接口读取原提交，处理中时由 Payment 限频触发一次查单确认。两者都不返回 3DS 跳转地址。
+ * 交互类型接受 THREE_DS_CHALLENGE 与 REDIRECT（3DS 全链路 R2）。
  */
 @Component
 @AllArgsConstructor
@@ -72,6 +74,30 @@ public class CheckoutCardPaymentPortImpl implements CheckoutCardPaymentPort {
         }
         if (response == null || response.getBody() == null || response.getStatusCode().value() != 200) {
             throw new CheckoutUpstreamProtocolException("Payment 支付查询响应状态或内容无效");
+        }
+        return queried(reference, response.getBody());
+    }
+
+    /**
+     * 经 Payment 刷新接口读取原提交结果，处理中时 Payment 限频触发一次查单确认
+     * <li>404 返回 null；依赖不可用、其他 Problem 与解码异常由公共客户端原样抛出，与查询相同。</li>
+     */
+    @Override
+    public PaymentResult refresh(long clientId, PaymentReference reference) {
+        var body = new RefreshSubmissionRequestBody();
+        body.setClientId(Long.toString(clientId));
+        ResponseEntity<GetSubmissionResponseBody> response;
+        try {
+            response = intents.refreshSubmission(Long.toString(reference.intentId()),
+                Long.toString(reference.submissionId()), body);
+        } catch (FailException failure) {
+            if (CommonErrorCode.NOT_FOUND.getCode().equals(failure.getCode())) {
+                return null;
+            }
+            throw failure;
+        }
+        if (response == null || response.getBody() == null || response.getStatusCode().value() != 200) {
+            throw new CheckoutUpstreamProtocolException("Payment 支付刷新响应状态或内容无效");
         }
         return queried(reference, response.getBody());
     }
@@ -148,7 +174,7 @@ public class CheckoutCardPaymentPortImpl implements CheckoutCardPaymentPort {
         }
     }
 
-    /** 3DS 指令：动作标识使用尝试 ID；其他交互类型失败关闭。 */
+    /** 交互指令：动作标识使用尝试 ID；类型由提交结果校验（THREE_DS_CHALLENGE、REDIRECT），其他类型失败关闭。 */
     static CustomerAction action(PayResponseBody body) {
         var next = body.getNextAction();
         if (next == null) {

@@ -84,6 +84,8 @@ flowchart TD
 
 ## 2. Card 与后续命令
 
+> 2026-10-22 修订：卡流程不再使用 AUTHENTICATE，风控放行后 AUTOMATIC 直接进入 PAY，3DS 由渠道在 PAY 内完成；下图与本节认证说明为历史设计，现行描述见 [Execution 3DS 修订](../../20261022/payment-3DS全链路/execution-3ds-amendment.md)。
+
 ```mermaid
 flowchart TD
     START((开始)) --> ACCEPT["原提交去重 / 创建 Attempt"]
@@ -125,6 +127,8 @@ AUTHENTICATE 超时同样进入 UNKNOWN；图中的循环表示原认证恢复�
 | Reversal | 锁内判定：未扣款授权建 Void；已全额扣款返回 REFUND_REQUIRED，由 Commerce 发起标准全额退款；在途资金动作返回 PENDING |
 
 ## 3. 持久化取舍
+
+> 2026-10-22 修订：AUTHENTICATE 动作类型保留但卡流程不再使用，交互事实记在 PAY 上，见 [Execution 3DS 修订](../../20261022/payment-3DS全链路/execution-3ds-amendment.md)。
 
 - 来源提交直接绑定 Attempt，不新增 Submission 表。
 - 来源唯一关联保存在 Intent；取消须先确认 Intent 创建结果，再请求终止已有 Intent。

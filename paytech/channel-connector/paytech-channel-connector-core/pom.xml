@@ -34,6 +34,9 @@
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-vault-client</artifactId></dependency>
         <!-- 渠道协议能力（2026-10-20 统一对外出口第一段）：进程内执行标准 API、接入方存在性查询与变更记录服务；core → protocol 单向。 -->
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-channel-connector-protocol</artifactId></dependency>
+        <!-- 3DS 全链路：渠道支付通知入库同事务登记发布任务，提交后由 Handler 经 DomainEventPublisher 端口发布 ChannelPaymentNotified；发布实现只在 app。 -->
+        <dependency><groupId>com.paytech</groupId><artifactId>paytech-compensation-event</artifactId></dependency>
+        <dependency><groupId>com.paytech</groupId><artifactId>paytech-messaging-api</artifactId></dependency>
         <dependency><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><scope>provided</scope></dependency>
     </dependencies>
     <build>

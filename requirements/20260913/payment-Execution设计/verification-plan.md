@@ -51,6 +51,8 @@
 | V20 | 跨 Client/来源/Account/MID 的查询/回调、错金额 | 拒绝泄露/应用；原事实不变；当前资格依赖失败阻止首次资金提交 | 05、08、12 |
 | V21 | 所有外部依赖观察事务、Redis 锁失效后双执行 | 外部调用无数据库活动事务；数据库 CAS/唯一/额度规则仍防重复 | 03、10、11 |
 
+> 2026-10-22 修订：V02 的 AUTHENTICATE→AUTHORIZE 路径不再适用于卡流程，3DS 由 PAY 承载，见 [Execution 3DS 修订](../../20261022/payment-3DS全链路/execution-3ds-amendment.md)。
+
 ## 3. 代表性持久化记录
 
 以下 ID 为说明性短号，金额均为 AED 100；省略公共字段，实际测试用 Builder 完整构造。
@@ -63,6 +65,8 @@
 | 授权 Void | 另一原授权 A703；X806(VOID,SUCCEEDED,target_ref=904)；A703 VOIDED；Intent CANCELLED | Commerce Refund、退款预占、Finance Journal |
 | 退款未知 | R1101(commerceRefund=1201,UNKNOWN,amount=40)；X807(REFUND,UNKNOWN,target_ref=903)；P1002(reserved=40,refunded=0) | RefundFailed、释放预占、另一笔同身份 Refund |
 | 认证等待 | X808(AUTHENTICATE,REQUIRES_ACTION,operation_ref=非秘密引用,interaction=THREE_DS_CHALLENGE,expires=确定时刻) | 交互表、URL、SDK Token、CVV、恢复 payload 中的 Card 引用 |
+
+> 2026-10-22 修订：“认证后授权”“认证等待”样例中的 AUTHENTICATE 行改为 PAY 上的交互（PROCESSING + interaction_type），见 [Execution 3DS 修订](../../20261022/payment-3DS全链路/execution-3ds-amendment.md)。
 
 ## 4. 验证环境与证据边界
 

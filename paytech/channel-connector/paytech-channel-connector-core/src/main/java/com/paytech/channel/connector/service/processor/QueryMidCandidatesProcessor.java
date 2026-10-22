@@ -62,7 +62,8 @@ public class QueryMidCandidatesProcessor extends AbstractProcessor<QueryMidCandi
         var scopeRows = capabilities.findByMidIds(eligible.stream().map(ChannelMid::getMidId).toList());
         var detailRows =
             details.findByCapabilityIds(scopeRows.stream().map(MidCapability::getMidCapabilityId).toList());
-        return eligible.stream().map(mid -> candidate(mid, scopeRows, detailRows, request))
+        return eligible.stream()
+            .map(mid -> candidate(mid, channelRows.get(mid.getChannelId()), scopeRows, detailRows, request))
             .filter(candidate -> !candidate.getCapabilities().isEmpty()).toList();
     }
 
@@ -79,13 +80,14 @@ public class QueryMidCandidatesProcessor extends AbstractProcessor<QueryMidCandi
     }
 
     /** 只投影候选身份与有效能力，绝不携带账号参数、Token 或密钥；能力代码在此一处解析为支持操作与金额上下限（D06）。 */
-    MidCandidateView candidate(ChannelMid mid, List<MidCapability> scopes, List<MidCapabilityDetail> values,
-        QueryMidCandidatesRequest request) {
+    MidCandidateView candidate(ChannelMid mid, ChannelIdentity channel, List<MidCapability> scopes,
+        List<MidCapabilityDetail> values, QueryMidCandidatesRequest request) {
         var midScopes = scopes.stream().filter(scope -> mid.getMidId().equals(scope.getMidId())).toList();
         var scopeIds = midScopes.stream().map(MidCapability::getMidCapabilityId).collect(Collectors.toSet());
         var midValues = values.stream().filter(value -> scopeIds.contains(value.getMidCapabilityId())).toList();
         var result = new MidCandidateView();
         result.setChannelId(mid.getChannelId());
+        result.setChannelCode(channel.getChannelCode());
         result.setChannelAccountId(mid.getChannelAccountId());
         result.setMidId(mid.getMidId());
         result.setCapabilities(new MidCapabilityContext(midScopes, midValues).resolve(request.getCriteria(),
@@ -94,7 +96,7 @@ public class QueryMidCandidatesProcessor extends AbstractProcessor<QueryMidCandi
         return result;
     }
 
-    /** ACTION.* 为 true 的操作与 AMOUNT.MIN/MAX；能力按代码升序，因此支持操作也按代码升序。 */
+    /** ACTION.* 为 true 的操作、AMOUNT.MIN/MAX 与 SECURITY.3DS_MODE；能力按代码升序，因此支持操作也按代码升序。 */
     static void project(MidCandidateView candidate) {
         var operations = new LinkedHashSet<String>();
         for (CapabilityView capability : candidate.getCapabilities()) {
@@ -107,6 +109,9 @@ public class QueryMidCandidatesProcessor extends AbstractProcessor<QueryMidCandi
             }
             if (ChannelCapabilityCodes.AMOUNT_MAX.equals(code)) {
                 candidate.setMaxAmount(capability.getDecimalValue());
+            }
+            if (ChannelCapabilityCodes.SECURITY_3DS_MODE.equals(code)) {
+                candidate.setThreeDsMode(capability.getCodeValue());
             }
         }
         candidate.setSupportedOperations(operations);

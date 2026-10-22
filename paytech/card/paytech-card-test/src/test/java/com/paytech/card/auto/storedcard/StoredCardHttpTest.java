@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
 
 import com.paytech.card.api.CardApiConstants;
+import com.paytech.card.api.enums.BinLibraryVersionStatus;
+import com.paytech.card.api.enums.CardBrand;
 import com.paytech.card.api.storedcard.StoredCardApi;
 import com.paytech.card.test.base.AbstractStoredCardTest;
 
@@ -17,7 +19,7 @@ import com.paytech.card.test.base.AbstractStoredCardTest;
  * 以及以已存卡加新 CVV 创建工具并凭票据读卡。
  *
  * <p>
- * 覆盖：列表只有 Token、前 6 后 4、有效期与创建时间；跨 Customer 删除 404、重复删除幂等；失效可重复；调用方白名单（列出 acquiring / counterparty，
+ * 覆盖：列表只有 Token、前 6 后 4、卡组织（当前生效 BIN 库实时查询）、有效期与创建时间；跨 Customer 删除 404、重复删除幂等；失效可重复；调用方白名单（列出 acquiring / counterparty，
  * 删除与失效只 counterparty）；已存卡支付不新增卡与凭证，读卡得到保存的卡值与本次 CVV；已存卡不属于该 Customer 或已删除为 400。
  *
  * @see StoredCardApi
@@ -27,7 +29,7 @@ class StoredCardHttpTest extends AbstractStoredCardTest {
     private static final String OTHER_CUSTOMER_ID = "70002";
     private static final String NEW_CVV = "4321";
 
-    /** 列出：acquiring 与 counterparty 均可，只返回 Token、掩码卡号、后四位、有效期与创建时间。 */
+    /** 列出：acquiring 与 counterparty 均可，只返回 Token、掩码卡号、后四位、卡组织、有效期与创建时间；没有生效 BIN 库时卡组织为 null。 */
     @Test
     void test_listStoredCards() {
         paySucceeded(CUSTOMER_ID, true, EXPIRY_YEAR);
@@ -40,8 +42,24 @@ class StoredCardHttpTest extends AbstractStoredCardTest {
             () -> assertEquals(mapper.storedCards().getFirst().get("token"), listed.get("storedCardToken")),
             () -> assertEquals("411111******1111", listed.get("maskedPan")), () -> assertEquals("1111", listed.get("last4")),
             () -> assertEquals(EXPIRY_MONTH, listed.get("expiryMonth")), () -> assertEquals(EXPIRY_YEAR, listed.get("expiryYear")),
-            () -> assertEquals(6, listed.size(), "列表字段只有 Token、掩码、后四位、有效期与创建时间"),
+            () -> assertEquals(7, listed.size(), "列表字段只有 Token、掩码、后四位、卡组织、有效期与创建时间"),
+            () -> assertTrue(listed.containsKey("cardBrand")), () -> assertNull(listed.get("cardBrand")),
             () -> assertTrue(list(CardApiConstants.COUNTERPARTY_SERVICE, OTHER_CUSTOMER_ID).isEmpty()));
+    }
+
+    /** 卡组织按当前生效 BIN 库实时查询：命中号段返回卡组织；生效版本中不再有该号段时为 null（只用于展示，不冻结）。 */
+    @Test
+    void test_listStoredCardsWithCardBrand() {
+        long active = binLibrary.version(1, BinLibraryVersionStatus.ACTIVE, 1);
+        binLibrary.range(active, "411111", CardBrand.VISA, "US", "NORTH_AMERICA");
+        paySucceeded(CUSTOMER_ID, true, EXPIRY_YEAR);
+
+        var withBrand = list(CardApiConstants.ACQUIRING_SERVICE, CUSTOMER_ID).getFirst();
+        mapper.clearBinRanges();
+        var withoutRange = list(CardApiConstants.COUNTERPARTY_SERVICE, CUSTOMER_ID).getFirst();
+
+        assertAll(() -> assertEquals(CardBrand.VISA.getCode(), withBrand.get("cardBrand")),
+            () -> assertNull(withoutRange.get("cardBrand")));
     }
 
     /** 删除：跨 Customer 404；首次与重复删除 204；删除后列表为空。 */

@@ -111,6 +111,7 @@ public class PayProcessor extends AbstractLockProcessor<PayRequest, PayResponse>
     /**
      * 选择并绑定渠道
      * <li>仅新 Attempt 选路；候选查询与选择都在本地保存事务之前完成。</li>
+     * <li>选中渠道的编码与 MID 的 3DS 模式只放进本次 Context，供同一请求内的 PAY 拼通知地址与检查 3DS 能力，不落库。</li>
      */
     void route(PayContext context) {
         PaymentIntent intent = context.getIntent();
@@ -123,11 +124,14 @@ public class PayProcessor extends AbstractLockProcessor<PayRequest, PayResponse>
         routeContext.setCaptureMode(attempt.getCaptureMode());
         routeContext.setCountryCode(intent.getConsumerCountryCode());
         routeContext.setMccCode(intent.getMccCode());
+        routeContext.setSchemeCode(context.getInstToken().getCardBrand());
 
         RouteResult result = routeService.route(routeContext, paymentChannelClient.queryRouteCandidates(routeContext));
         attempt.setChannelId(result.getChannelId());
         attempt.setChannelAccountId(result.getChannelAccountId());
         attempt.setMidId(result.getMidId());
+        context.setChannelCode(result.getChannelCode());
+        context.setMidThreeDsMode(result.getThreeDsMode());
     }
 
     /** 获取 & 检查Intent */

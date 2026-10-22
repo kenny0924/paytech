@@ -126,3 +126,5 @@ web:
       # 工作流启动值、动作输出、审批意见与选人结果（脱敏邮箱）属业务内容，只记元数据。
       - /workflow-admin
       - /workflow
+      # BIN 库上传开始的响应含对象存储的临时 PUT 授权，只记元数据。
+      - /card-admin/v1/bin-library/uploads

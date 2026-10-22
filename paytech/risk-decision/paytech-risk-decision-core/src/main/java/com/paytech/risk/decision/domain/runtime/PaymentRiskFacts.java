@@ -107,6 +107,9 @@ public final class PaymentRiskFacts {
         row.setUserAgent(input.userAgent());
         row.setCardFingerprint(input.cardFingerprint());
         row.setCardBin(input.cardBin());
+        row.setIssuerCountryCode(input.issuerCountryCode());
+        row.setCardBrand(input.cardBrand());
+        row.setFundingType(input.fundingType());
         row.setAuthenticationRequirement(
             run.status() == TechnicalStatus.SUCCEEDED ? authentication(run.outcome()) : null);
         row.setStableInputHash(stableHash(input));
@@ -115,7 +118,10 @@ public final class PaymentRiskFacts {
         return row;
     }
 
-    /** Payment 能重放的字段。 */
+    /**
+     * Payment 能重放的字段
+     * <li>卡属性三个字段只在有值时进入，未提供时摘要与扩展前相同。</li>
+     */
     static Map<String, String> stableFields(PaymentRiskInput input) {
         Map<String, String> values = new LinkedHashMap<>();
         values.put("paymentAttemptId", Long.toString(input.paymentAttemptId()));
@@ -134,7 +140,17 @@ public final class PaymentRiskFacts {
         values.put("consumerReference", input.consumerReference());
         values.put("cardFingerprint", input.cardFingerprint());
         values.put("cardBin", input.cardBin());
+        putPresent(values, "issuerCountryCode", input.issuerCountryCode());
+        putPresent(values, "cardBrand", input.cardBrand());
+        putPresent(values, "fundingType", input.fundingType());
         return values;
+    }
+
+    /** 只放入非空值，保持旧评估的摘要不变。 */
+    private static void putPresent(Map<String, String> values, String key, String value) {
+        if (value != null) {
+            values.put(key, value);
+        }
     }
 
     /** 全部冻结输入。 */

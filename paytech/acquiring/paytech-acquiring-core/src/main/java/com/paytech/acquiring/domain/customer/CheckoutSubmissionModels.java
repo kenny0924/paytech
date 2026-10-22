@@ -130,6 +130,9 @@ public final class CheckoutSubmissionModels {
         private static final Set<String> STATUSES = Arrays.stream(CustomerPaymentStatus.values())
             .map(CustomerPaymentStatus::getCode).collect(Collectors.toUnmodifiableSet());
 
+        /** Payment 交互类型中收银台承认的两种跳转：3DS 挑战与普通跳转（3DS 全链路 R2）。 */
+        static final Set<String> ACTION_TYPES = Set.of("THREE_DS_CHALLENGE", "REDIRECT");
+
         /** 校验 pay 响应的归属和公开字段；3DS 动作必须携带当次跳转地址。 */
         public void validate(PaymentReference reference, Instant now) {
             validateFacts(reference);
@@ -158,14 +161,14 @@ public final class CheckoutSubmissionModels {
         }
 
         /**
-         * 3DS 指令仅允许原动作的未过期 HTTPS 地址，不由 Commerce 抓取或持久化
+         * 交互指令（THREE_DS_CHALLENGE 或 REDIRECT）仅允许原动作的未过期 HTTPS 地址，不由 Commerce 抓取或持久化
          *
          * @param now 当前时间
          * @param redirectRequired pay 响应为 true；查询结果为 false，此时无地址合法，有地址仍按同一规则校验
          */
         void validateAction(Instant now, boolean redirectRequired) {
             if (!CustomerPaymentStatus.REQUIRES_ACTION.getCode().equals(status)
-                || !"THREE_DS_CHALLENGE".equals(nextAction.type()) || nextAction.actionId() == null
+                || nextAction.type() == null || !ACTION_TYPES.contains(nextAction.type()) || nextAction.actionId() == null
                 || !nextAction.actionId().matches("[1-9][0-9]{0,18}")
                 || (redirectRequired && nextAction.redirectUrl() == null)
                 || (nextAction.expiresAt() != null && !nextAction.expiresAt().isAfter(now))) {

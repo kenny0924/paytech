@@ -1,0 +1,127 @@
+{
+ "setup": {
+  "at": "2026-10-22T18:31:44Z",
+  "channelId": "236063197520543744",
+  "channelStatusBefore": "DRAFT",
+  "channelAccountId": "239093383992287232",
+  "midId": "239093386823442432",
+  "externalMidCode": "PMX-UAT-AE001-10221831",
+  "midCapabilityId": "239093387985264640",
+  "vaultTokenSuffix": "6Ols"
+ },
+ "verify-2026-10-22T18:33:05Z": {
+  "PAY": {
+   "version": 4,
+   "threeDsRequired": true,
+   "paymentChannelRef": false,
+   "implementations": [
+    "ALIPAY_PLUS",
+    "DLOCAL",
+    "I_CYBS_NI",
+    "I_MPGS_NI",
+    "PAYERMAX",
+    "TOSS_PAY"
+   ]
+  },
+  "REFUND": {
+   "version": 2,
+   "threeDsRequired": false,
+   "paymentChannelRef": true,
+   "implementations": [
+    "ALIPAY_PLUS",
+    "DLOCAL",
+    "I_CYBS_NI",
+    "I_MPGS_NI",
+    "PAYBY",
+    "PAYERMAX",
+    "TOSS_PAY"
+   ]
+  },
+  "CAPTURE": {
+   "version": 2,
+   "threeDsRequired": false,
+   "paymentChannelRef": true,
+   "implementations": [
+    "I_CYBS_NI",
+    "I_MPGS_NI"
+   ]
+  },
+  "PAY_QUERY": {
+   "version": 1,
+   "threeDsRequired": false,
+   "paymentChannelRef": false,
+   "implementations": [
+    "ALIPAY_PLUS",
+    "DLOCAL",
+    "I_CYBS_NI",
+    "I_MPGS_NI",
+    "PAYBY",
+    "PAYERMAX",
+    "TOSS_PAY"
+   ]
+  },
+  "PAYERMAX_PAY_QUERY": {
+   "http": 200,
+   "version": 1,
+   "NOT_FOUND": true,
+   "passthroughStatus": true
+  },
+  "PAYERMAX_PAY": {
+   "http": 200,
+   "version": 2,
+   "PAYMENT_CARD": true,
+   "do3DS": true
+  }
+ },
+ "post-s7-04-validate-2026-10-22T18:37:53Z": {
+  "payVersion": 5,
+  "subjectRequired": [
+   false
+  ],
+  "ALIPAY_PLUS": {
+   "implVersion": 2,
+   "validateHttp": 200,
+   "valid": true,
+   "problems": []
+  },
+  "DLOCAL": {
+   "implVersion": 1,
+   "validateHttp": 200,
+   "valid": true,
+   "problems": []
+  },
+  "I_CYBS_NI": {
+   "implVersion": 5,
+   "validateHttp": 200,
+   "valid": true,
+   "problems": []
+  },
+  "I_MPGS_NI": {
+   "implVersion": 2,
+   "validateHttp": 200,
+   "valid": true,
+   "problems": []
+  },
+  "PAYERMAX": {
+   "implVersion": 2,
+   "validateHttp": 200,
+   "valid": true,
+   "problems": []
+  },
+  "TOSS_PAY": {
+   "implVersion": 1,
+   "validateHttp": 200,
+   "valid": true,
+   "problems": []
+  }
+ },
+ "teardown": {
+  "at": "2026-10-22T18:42:33Z",
+  "capability": 400,
+  "mid": 200
+ },
+ "teardown-capability-retry": {
+  "at": "2026-10-22T18:42:41Z",
+  "http": 200
+ }
+}

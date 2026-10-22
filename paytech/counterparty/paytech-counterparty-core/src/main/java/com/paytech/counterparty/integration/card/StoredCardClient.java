@@ -43,10 +43,11 @@ public interface StoredCardClient {
      * @param storedCardToken 已存卡 Token
      * @param maskedPan 前 6 后 4 掩码卡号
      * @param last4 卡号后 4 位
+     * @param cardBrand 卡组织 Code（card 按当前生效 BIN 库实时查询，只用于展示）；未识别为 null
      * @param expiryMonth 有效期月份
      * @param expiryYear 有效期年份
      * @param createdAt 保存时间
      */
-    record StoredCard(String storedCardToken, String maskedPan, String last4, String expiryMonth, String expiryYear,
-        Instant createdAt) {}
+    record StoredCard(String storedCardToken, String maskedPan, String last4, String cardBrand, String expiryMonth,
+        String expiryYear, Instant createdAt) {}
 }

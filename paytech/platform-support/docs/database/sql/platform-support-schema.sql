@@ -1,4 +1,4 @@
--- Current Platform Support schema (62 approved tables). Apply manually to an EMPTY database only.
+-- Current Platform Support schema (63 approved tables). Apply manually to an EMPTY database only.
 -- Business invariants and associations are enforced by application code; retain PK, UNIQUE and NOT NULL.
 SET NAMES utf8mb4;
 
@@ -1124,6 +1124,16 @@ CREATE TABLE `t_workflow_callback` (
   KEY `idx_workflow_cb_inst` (`instance_id`, `create_time`) COMMENT '支持访问路径：instance_id、create_time',
   KEY `idx_workflow_cb_status` (`status`, `update_time`) COMMENT '支持访问路径：status、update_time'
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='状态变化按规则触发的一次通知（邮件）或业务回调（MQ 事件）及其投递状态；与状态变化同事务登记，提交后由补偿任务执行';
+
+CREATE TABLE `t_country_region` (
+  `id` BIGINT NOT NULL COMMENT '国家区域映射主键；初始化数据使用 2001 起的固定 ID，低于 Snowflake 范围。',
+  `country_code` CHAR(2) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT 'ISO 3166-1 alpha-2 国家或地区代码。取值来源：ISO 3166-1 alpha-2；非固定枚举。',
+  `region_code` VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '平台地理区域代码。允许值：GCC、MEA、EUROPE、NORTH_AMERICA、LATAM、APAC。GCC 为海湾合作委员会六国；MEA 为其余中东与非洲。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Platform Support 数据库中的 UTC 微秒创建时间。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_country_region_country` (`country_code`) COMMENT '保证业务唯一性：country_code'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='保存全平台使用的国家到地理区域映射；Platform 唯一持有，Card 导入 BIN 库时经内部 HTTP 读取并推导发卡区域。本期只经初始化数据维护，不提供维护页面。';
 
 CREATE TABLE `t_data_source` (
   `data_source_id` BIGINT NOT NULL COMMENT '服务侧生成的数据源 Snowflake 主键。',

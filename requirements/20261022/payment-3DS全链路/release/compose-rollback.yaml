@@ -1,0 +1,48 @@
+# 3DS 全链路 + 卡 BIN 库合并发布：mor-test 回滚覆盖文件（2026-10-22 阶段 6 只读核对时的现网镜像；单独使用，不叠加候选文件）。
+#   ./test-environment/compose.sh -f "$PWD/requirements/20261022/payment-3DS全链路/release/compose-rollback.yaml" \
+#     up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 回滚顺序与前置（先停用入口、哪些数据要先处理）见 release.md 第 8 节。
+# 环境：渲染后须与 2026-10-22 阶段 6 的运行容器逐键相同（release/snapshot/env-keys-*.txt）。为防主 compose 在本次发布后补入新键，
+#   本文件对本次新增的键显式置空；Platform 带回主 compose 缺的 DATAQUERY_HTTP_CALLERS_0。
+# api-gateway 现网镜像 sha256:4cf14912… 已不在本机镜像库（推测 10-22 磁盘事故后被清理，容器仍在运行）；N1 已处理：
+#   用 e119cbd1 重建的回滚镜像（JAR 与运行容器 0 差异），见 api-gateway 处。
+# Platform 回滚下限：文件多存储第二段删除 DDL 已在 mor-test 执行（t_file_upload 无 owner_*、无 t_file_owner_ref），现网回滚目标为下面的
+#   ac0b4845（第二段 + 42879401 工作流附件内嵌预览）；任何情况下不得早于 7cb30402（第二段版本）（release.md 第 8.2 节）。
+# payment / risk-decision 现网用 :development tag 启动，这里改钉 sha256（两者当前 tag 仍指向同一 ID）。
+services:
+  risk-decision-service:
+    image: sha256:0a5de56f1120b5184cd2d3125a4dee42b9ec542997aaffe06b65dcb389f904ab  # mor-test/risk-decision-service:development（10-18 15:55Z，JAR 3b2738eeab8beba9）
+  payment-service:
+    image: sha256:447406cb0ace267cec2e5efd7b91759256bce223f8d47058136df9a49bc68519  # mor-test/payment-service:development（10-18 15:55Z，JAR 668bc1332f064e51）
+    environment:
+      PAYMENT_CHANNEL_CALLBACK_BASE_URL: !reset null
+  acquiring-service:
+    image: sha256:03729ba82e28d0776570c4ff12864dda6380ac49bc1deea785aaf426e68dae91  # mor-test/acquiring-service:counterparty-20261020（JAR 225936725982042c）
+  counterparty-service:
+    image: sha256:c71436804e2f3400e5f5b078216821d4de5473965340df46a21ba2d27df31a20  # mor-test/counterparty-service:counterparty-20261020（JAR fe1e3d9c62a669a5）
+  platform-support-service:
+    # 17:18Z 工作流附件内嵌预览发布（code-mor-ae，main 42879401）后的现网；回退下限说明仍适用（不得早于第二段 7cb30402）。
+    image: sha256:ac0b484565011b0cc328329bbae77b0236d706c493aed141984d24a0a48fd211  # mor-test/platform-support-service:wfinline-20261022（JAR d306f83b935d85e4）
+    environment:
+      DATAQUERY_HTTP_CALLERS_0: operations-console-bff
+  card-service:
+    image: sha256:542a16f0567d57c547734aa9c9ef65f77aa0846c96823e1d4539fc20e48df244  # mor-test/card-service:ccu2-20261022（JAR 192f4a2c30f0efef）
+    environment:
+      JAVA_TOOL_OPTIONS: !reset null
+    volumes: !reset []
+  channel-connector-service:
+    image: sha256:5f22b55b29e26beb44582c788530d71bfc9a2d863b8a022282d6251a0033bfa8  # mor-test/channel-connector-service:cybs-20261022（JAR 8c9db543ae40a973）
+    environment:
+      CHANNEL_CONNECTOR_RABBITMQ_HOST: !reset null
+      CHANNEL_CONNECTOR_RABBITMQ_PORT: !reset null
+      CHANNEL_CONNECTOR_RABBITMQ_USERNAME: !reset null
+      CHANNEL_CONNECTOR_RABBITMQ_PASSWORD: !reset null
+      CHANNEL_CONNECTOR_RABBITMQ_VHOST: !reset null
+  api-gateway:
+    # 现网 sha256:4cf14912…（JAR 1054e867223a9a28）已丢失；2026-10-22 卡 H 从 e119cbd1 重建，JAR 与运行容器逐条目 0 差异（838 项），见 release.md 第 2.4 节。
+    image: sha256:da54e23c2b17c0e49dc11a9393ca2987489ace8273f03c7037976f17c97f6937  # mor-test/api-gateway:rollback-gateway-e119cbd1（JAR 1e05b91f4b37c662）
+  operations-console-bff:
+    image: sha256:798d5e4cd450486d98b79c39bf8a37ade084e2d31ae44b0987b5f6fcfe1618af  # mor-test/operations-console-bff:wfinline-20261022（JAR caf95fee3688094b）
+  operations-console-web:
+    # 阶段 6 核对时为 7551dc3b；16:44Z 换成 5a9eb12d（数据查询页面体验），17:18Z 换成 11f1d24e（42879401 + 16 个未提交文件）；回滚指现网，避免回退其改动。
+    image: sha256:11f1d24eb8df09113a484cfb06324c050be925cd64ce9c1a37b06fa80f07442d  # mor-test/operations-console-web:wfinline-20261022

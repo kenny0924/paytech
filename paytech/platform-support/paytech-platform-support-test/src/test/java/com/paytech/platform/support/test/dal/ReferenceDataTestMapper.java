@@ -22,6 +22,14 @@ public interface ReferenceDataTestMapper {
         """)
     int currencySpecVersionColumnCount();
 
+    /** 当前库是否已人工创建 t_country_region。 */
+    @Select("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 't_country_region'")
+    int countryRegionTableCount();
+
+    /** t_country_region 初始化种子 ID 2001—2249 的行数。 */
+    @Select("SELECT COUNT(*) FROM t_country_region WHERE id BETWEEN 2001 AND 2249")
+    long countryRegionSeedCount();
+
     /** t_currency_spec 行数。 */
     @Select("SELECT COUNT(*) FROM t_currency_spec")
     long currencySpecCount();

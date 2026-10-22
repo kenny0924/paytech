@@ -22,4 +22,7 @@ public interface PaymentActionMapper {
 
     /** 按动作序号读取尝试的最后一个动作。 */
     PaymentAction selectLatestByAttempt(@Param("attemptId") long attemptId);
+
+    /** 按尝试与动作序号读取一个动作；不存在返回 null。 */
+    PaymentAction selectByAttemptAndNo(@Param("attemptId") long attemptId, @Param("actionNo") int actionNo);
 }

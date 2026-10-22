@@ -36,7 +36,7 @@
 | 争议 | channel_dispute_notice_id=109001；event_id=110001；dispute_action_id=111001 |
 | 可靠执行 | command_idempotency_id=112001；id=113001 |
 
-时间线：09:00 配置有效；09:30 Attempt 1 完成风控及路由后收到明确失败并释放 Intent 活动指针；10:00 创建 Attempt 2；10:01 完成 RISK_CHECK 后发起 AUTHENTICATE 并要求 3DS；10:03 首次网络结果 UNKNOWN；10:05 原操作恢复/Callback 确认 Attempt 2 SALE 成功；11:00 创建并成功退款 20；11:05 Channel 才报告 Attempt 1 的迟到真实成功，触发补偿；12:00 批量 Callback；次日收到争议并提交 Risk 指定的证据。
+时间线：09:00 配置有效；09:30 Attempt 1 完成风控及路由后收到明确失败并释放 Intent 活动指针；10:00 创建 Attempt 2；10:01 完成 PAY_RISK 后发起要求 3DS 的 PAY（挑战在渠道 PAY 内完成）；10:03 首次网络结果 UNKNOWN；10:05 PAY 查单（定时任务、收银台刷新或渠道通知触发）确认 Attempt 2 支付成功；11:00 创建并成功退款 20；11:05 Channel 才报告 Attempt 1 的迟到真实成功，触发补偿；12:00 批量 Callback；次日收到争议并提交 Risk 指定的证据。
 
 ## 2. Channel/MID 配置与路由
 
@@ -59,7 +59,7 @@ NI_CARD_V1 对 81101 的 integration_config_key=payment.ni.ae.primary 解析当�
 
 本节按 [Execution 后继方案](../../../requirements/20260913/payment-Execution设计/data-design.md)更新示例；NI、Channel、Risk 等是跨系统目标场景，不是当前执行日志或真实接入证明。
 
-Attempt 1 已在 09:30 经过完整路由、获得 Channel 的明确 FAILED 结果并释放 Intent 活动指针。Commerce 随后创建 Attempt 2；Attempt 从 Payment Method Catalog 冻结 payment_method_code=CARD，三条法律 Acceptance 由 Commerce 校验并保存，Payment 不复制。首先以 RISK_CHECK Action 保存原 Risk 评估的准确身份与 ALLOW 结果，清空风险执行位，再路由并创建 AUTHENTICATE Action；内部 Risk 要求的挑战成功后，再创建同 Attempt 的 SALE Action，Channel 再核验原认证证明。首次 Channel 提交前，Payment 在 10:00:03 紧邻调用 NI 前同步检查 Client/Operating Entity 当前状态与 Compliance 当前限制；Action 创建时即为 PROCESSING；三项均明确允许后才开始 Channel Interaction。检查明确阻断、超时、技术失败或缺少任一结论均 Fail-Closed：不调用 NI，Action 与 Attempt 记为 FAILED，运行原因记入安全日志/可靠任务，真实渠道响应仅记录到 Action.channel_response_code/channel_response_msg。通过结果不持久化为独立 Gate，权威状态历史仍由 CCT/Risk 持有。
+Attempt 1 已在 09:30 经过完整路由、获得 Channel 的明确 FAILED 结果并释放 Intent 活动指针。Commerce 随后创建 Attempt 2；Attempt 从 Payment Method Catalog 冻结 payment_method_code=CARD，三条法律 Acceptance 由 Commerce 校验并保存，Payment 不复制。首先以 PAY_RISK Action 保存原 Risk 评估的准确身份与 ALLOW 结果，清空风险执行位，再路由（优先支持 3DS 的 MID）并创建同 Attempt 的 PAY Action，以 `payment.threeDsRequired=true` 把内部 Risk 的认证要求交给 Channel，挑战在渠道 PAY 内完成，不再创建 AUTHENTICATE（[Execution 3DS 修订](../../../requirements/20261022/payment-3DS全链路/execution-3ds-amendment.md)）。首次 Channel 提交前，Payment 在 10:00:03 紧邻调用 NI 前同步检查 Client/Operating Entity 当前状态与 Compliance 当前限制；Action 创建时即为 PROCESSING；三项均明确允许后才开始 Channel Interaction。检查明确阻断、超时、技术失败或缺少任一结论均 Fail-Closed：不调用 NI，Action 与 Attempt 记为 FAILED，运行原因记入安全日志/可靠任务，真实渠道响应仅记录到 Action.channel_response_code/channel_response_msg。通过结果不持久化为独立 Gate，权威状态历史仍由 CCT/Risk 持有。
 
 交易级工具 Token 绑定 Client、Intent、原 source_submission_id 和精确支付方式，先准备工具，再调用统一 pay；一个 Token 最多关联一个 Attempt。t_payment_attempt.payment_instrument_token_id 直接关联 t_payment_instrument_token，不创建旧 Instrument 行、工具会话表或方式子表。Card Owner 保存稳定 instrument_ref 并在事务外提供瞬时用卡材料；Token 期限不延长，首次资金已提交后不得重新领取材料发送，UNKNOWN 重入原标准操作，由 Channel 按自身特性查询或安全重试。Wallet/Crypto 的具体 Owner 能力后续设计。原 Action 的 interaction_type 目录保留 REDIRECT、THREE_DS_CHALLENGE、SDK、APP_SWITCH、QR_CODE 统一表达消费者后续动作；本期只写 THREE_DS_CHALLENGE，只保存类型、状态与交互期限；渠道操作引用和认证证明归 Channel，不保存 Redirect URL、Client Secret、SDK Token、QR Payload 或 bearer-like 参数。
 
@@ -71,13 +71,13 @@ Attempt 1 已在 09:30 经过完整路由、获得 Channel 的明确 FAILED 结�
 | t_routing_decision | routing_decision_id=83302，payment_attempt_id=101002，routing_policy_id=83001，routing_policy_version_id=83101，selected_channel_id=81001，selected_channel_account_id=81101，selected_mid_id=82001，decision_status=SELECTED，decision_reason_code=LOWEST_PRIORITY_HEALTHY |
 | t_route_candidate_eval | route_candidate_eval_id=83403，routing_decision_id=83302，channel_id=81001，channel_account_id=81101，mid_id=82001，eligible_flag=1，candidate_priority=10，weight_value=100.0000000000，health_status=HEALTHY，circuit_status=CLOSED，health_score=96，technical_success_rate=0.96000000，timeout_rate=0.02000000，p95_latency_ms=680，sample_count=100，health_observed_at=2026-08-25T09:58:00.000000Z；route_candidate_eval_id=83404，routing_decision_id=83302，channel_id=81001，channel_account_id=81101，mid_id=82002，eligible_flag=0，candidate_priority=20，weight_value=100.0000000000，exclusion_reason_code=HEALTH_DEGRADED，health_status=DEGRADED，circuit_status=HALF_OPEN，health_score=54，technical_success_rate=0.82000000，timeout_rate=0.15000000，p95_latency_ms=2400，sample_count=100，health_observed_at=2026-08-25T09:58:00.000000Z |
 | t_payment_action | payment_action_id=102100，payment_attempt_id=101002，action_no=1，action_type=PAY_RISK，action_status=SUCCEEDED，channel_idempotency_key=NULL，transaction_assessment_id=72001，risk_result=ALLOW，authentication_requirement=CHALLENGE_REQUIRED，amount=100.00000000，currency=USD，version=3 |
-| t_payment_action | payment_action_id=102101，payment_attempt_id=101002，action_no=2，action_type=AUTHENTICATE，action_status=PROCESSING，amount=100.00000000，currency=USD，channel_idempotency_key=action:102101，interaction_type=THREE_DS_CHALLENGE，interaction_expires_at=2026-08-25T10:10:00.000000Z，version=3，channel_response_code=CHALLENGE_REQUIRED，channel_response_msg=等待持卡人完成挑战 |
+| t_payment_action | payment_action_id=102101，payment_attempt_id=101002，action_no=2，action_type=PAY，action_status=PROCESSING，amount=100.00000000，currency=USD，channel_idempotency_key=action:102101，interaction_type=THREE_DS_CHALLENGE，interaction_expires_at=2026-08-25T10:10:00.000000Z，version=3，channel_response_code=CHALLENGE_REQUIRED，channel_response_msg=等待持卡人完成挑战 |
 | t_channel_interaction | channel_interaction_id=103101，payment_action_id=102101，channel_dispute_action_id=NULL，interaction_no=1，interaction_status=RESPONSE_RECEIVED，started_at=2026-08-25T10:00:04.000000Z，finished_at=2026-08-25T10:00:05.000000Z，request_file_id=NULL，request_content_hash=NULL，response_file_id=NULL，response_content_hash=NULL，http_status=200，channel_result_code=THREEDS_REQUIRED，latency_ms=1000 |
 | t_command_idempotency | command_idempotency_id=112001，caller_scope=COMMERCE_INTERNAL，operation_type=CREATE_PAYMENT_ATTEMPT，idempotency_key=cmd-order-70001-pay-2，request_hash=sha256:request-100001-2，process_status=SUCCEEDED，resource_type=PAYMENT_ATTEMPT，resource_id=101002，response_code=PROCESSING |
 
 ## 4. UNKNOWN 原操作恢复为 SALE 成功
 
-下列行表示先后发生的阶段，不能理解为同时存在多个未终态动作。AUTHENTICATE 完成后，才将 active_action_id 从认证动作切换到新建 SALE；各次 HTTP 恢复均关联原 SALE。
+下列行表示先后发生的阶段，不能理解为同时存在多个未终态动作。现行卡流程中 3DS 等待与 UNKNOWN 恢复都发生在同一 PAY 上，由 `PAY_RESULT_QUERY` 任务、收银台刷新或渠道通知触发查单推进，不在认证后另建资金动作；下表沿用的 102002 恢复行只用于说明原操作恢复与成功事务，各次查单均关联原 PAY（[Execution 3DS 修订](../../../requirements/20261022/payment-3DS全链路/execution-3ds-amendment.md)）。
 
 Consumer 完成 3DS 且可信认证结果落库后，创建 SALE 102002（action_no=3、认证步骤 102101）；NI 首次资金提交超时。原 SALE Action 转 UNKNOWN，Attempt 保持 PROCESSING、active_action_id=102002，Intent 保持 OPEN 并继续占用 Attempt。LOCAL_HANDLER 重入原 SALE 和原渠道幂等键，Channel 内部按自身特性恢复；确认成功后写不可变外部 Ref，并在本地事务清空两个活动指针、设置唯一成功 Attempt 指针，不新增 QUERY 行。
 

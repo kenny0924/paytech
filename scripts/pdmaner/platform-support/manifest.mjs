@@ -31,7 +31,7 @@ const expectedGroupSizes = Object.freeze({
   audit_security: 8,
   gateway_control: 6,
   reliability: 2,
-  reference_data: 1,
+  reference_data: 2,
   workflow: 10,
 });
 

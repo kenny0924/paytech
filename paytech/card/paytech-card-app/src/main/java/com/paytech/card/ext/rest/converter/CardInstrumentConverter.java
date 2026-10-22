@@ -10,6 +10,7 @@ import com.paytech.card.api.instrument.response.CreateCardInstrumentResponseBody
 import com.paytech.card.domain.CardInstrumentContext;
 import com.paytech.card.domain.CardInstrumentContext.CardInput;
 import com.paytech.card.domain.CreatedCardInstrument;
+import com.paytech.card.domain.binlibrary.CardAttributes;
 import com.paytech.foundation.common.error.InvalidParameterException;
 
 /** 卡交易工具创建协议转换；不记录、不缓存卡值。 */
@@ -50,6 +51,22 @@ public class CardInstrumentConverter {
         body.setMaskedPan(created.maskedPan());
         body.setExpiresAt(created.expiresAt().toString());
         body.setRiskAttributes(risk);
+        body.setCardAttributes(convertAttributes(created.cardAttributes()));
+        return body;
+    }
+
+    /** BIN 库卡属性快照。 */
+    static CreateCardInstrumentResponseBody.CardAttributes convertAttributes(CardAttributes attributes) {
+        var body = new CreateCardInstrumentResponseBody.CardAttributes();
+        body.setRecognized(attributes.isRecognized());
+        body.setBinLibraryVersionNo(attributes.getBinLibraryVersionNo());
+        body.setMatchedPrefixLength(attributes.getMatchedPrefixLength());
+        body.setCardBrand(attributes.getCardBrand());
+        body.setFundingType(attributes.getFundingType());
+        body.setCardLevel(attributes.getCardLevel());
+        body.setCardProduct(attributes.getCardProduct());
+        body.setIssuerCountry(attributes.getIssuerCountry());
+        body.setIssuerRegion(attributes.getIssuerRegion());
         return body;
     }
 

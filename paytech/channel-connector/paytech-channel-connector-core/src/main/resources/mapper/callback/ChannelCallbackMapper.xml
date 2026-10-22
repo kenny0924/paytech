@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.channel.connector.core.dal.mapper.ChannelCallbackMapper">
+    <resultMap id="row" type="com.paytech.channel.connector.core.dal.dataobject.ChannelCallback">
+        <result column="channel_callback_id" property="channelCallbackId"/>
+        <result column="channel_id" property="channelId"/>
+        <result column="channel_account_id" property="channelAccountId"/>
+        <result column="external_event_id" property="externalEventId"/>
+        <result column="payload_fingerprint" property="payloadFingerprint"/>
+        <result column="signature_status" property="signatureStatus"
+                javaType="com.paytech.channel.connector.core.enums.CallbackSignatureStatus"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="callback_status" property="callbackStatus"
+                javaType="com.paytech.channel.connector.core.enums.CallbackStatus"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="received_at" property="receivedAt"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        <result column="file_id" property="fileId"/>
+        <result column="content_hash" property="contentHash"/>
+        <result column="version" property="version"/>
+        <result column="create_time" property="createTime"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        <result column="update_time" property="updateTime"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+    </resultMap>
+    <sql id="columns">channel_callback_id, channel_id, channel_account_id, external_event_id, payload_fingerprint,
+        signature_status, callback_status, received_at, file_id, content_hash, version, create_time, update_time
+    </sql>
+    <insert id="insert">
+        INSERT INTO t_channel_callback (<include refid="columns"/>)
+        VALUES (#{channelCallbackId}, #{channelId}, #{channelAccountId}, #{externalEventId,jdbcType=VARCHAR},
+        #{payloadFingerprint,jdbcType=CHAR}, #{signatureStatus.code}, #{callbackStatus.code},
+        #{receivedAt,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP},
+        #{fileId,jdbcType=BIGINT}, #{contentHash,jdbcType=CHAR}, #{version},
+        #{createTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP},
+        #{updateTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP})
+    </insert>
+    <select id="findById" resultMap="row">
+        SELECT <include refid="columns"/> FROM t_channel_callback WHERE channel_callback_id = #{id}
+    </select>
+    <update id="updateStatus">
+        UPDATE t_channel_callback SET callback_status = #{toStatus.code}, version = version + 1,
+        update_time = #{now,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}
+        WHERE channel_callback_id = #{id} AND version = #{version} AND callback_status = #{fromStatus.code}
+    </update>
+</mapper>

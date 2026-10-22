@@ -28,7 +28,8 @@ import com.paytech.foundation.testsupport.api.MockHttpFault;
 import com.paytech.payment.api.execution.response.GetSubmissionResponseBody;
 
 /**
- * Customer 查询原支付提交：真实 HTTP 入口经公共客户端调用 Payment EX-I06 的测试接口，覆盖状态映射、未找到与不可用降级。
+ * Customer 查询原支付提交：真实 HTTP 入口经公共客户端调用 Payment 刷新接口（3DS 全链路 technique 3.3.6：处理中时由 Payment 限频查单确认）的
+ * 测试接口，覆盖状态映射、REDIRECT 交互（AC-03）、确认中（AC-10）、未找到与不可用降级。
  *
  * @see CustomerPaymentApi#getPayment(String, String)
  */
@@ -36,6 +37,7 @@ class GetCustomerPaymentTest extends MockTestBase {
     private static final long SUBMISSION_ID = 7_000_001L;
     private static final String ATTEMPT_ID = "8000001";
     private static final String THREE_DS = "THREE_DS_CHALLENGE";
+    private static final String REDIRECT = "REDIRECT";
 
     @Autowired
     CheckoutPaymentDataMocker data;
@@ -70,7 +72,7 @@ class GetCustomerPaymentTest extends MockTestBase {
         assertNull(body.getPollAfterMs());
         assertEquals(failureCode, body.getFailure() == null ? null : body.getFailure().getCode());
         assertEquals(List.of(new PaymentSubmissionMocker.Call(Long.toString(orderId()), Long.toString(SUBMISSION_ID),
-            Long.toString(fixture.getOrder().getClientId()))), submissions.calls());
+            Long.toString(fixture.getOrder().getClientId()), PaymentSubmissionMocker.REFRESH)), submissions.calls());
     }
 
     /** 渠道失败码不符合公开格式（如纯数字）时统一为 CHANNEL_DECLINED，不当作协议错误。 */
@@ -105,7 +107,24 @@ class GetCustomerPaymentTest extends MockTestBase {
         assertNull(body.getNextAction().getRedirectUrl());
     }
 
-    /** 处理中无交互保持处理中并继续轮询。 */
+    /** 渠道普通跳转（REDIRECT）同样映射为待消费者操作（AC-03）。 */
+    @Test
+    void test_requiresRedirectAction() {
+        var response = submission(PaymentAttemptStatus.PROCESSING.getCode());
+        var interaction = new GetSubmissionResponseBody.Interaction();
+        interaction.setType(REDIRECT);
+        interaction.setExpiresAt("2026-09-08T00:10:00Z");
+        response.setInteraction(interaction);
+        submissions.mockResponse(response);
+
+        var body = query().assertStatus(200).paymentBody();
+
+        assertEquals(CustomerPaymentStatus.REQUIRES_ACTION.getCode(), body.getStatus());
+        assertEquals(REDIRECT, body.getNextAction().getType());
+        assertEquals(PaymentSubmissionMocker.REFRESH, submissions.calls().getFirst().operation());
+    }
+
+    /** 处理中无交互（交互已过期、仍在确认，AC-10）保持处理中并继续轮询。 */
     @Test
     void test_processing() {
         submissions.mockResponse(submission(PaymentAttemptStatus.PROCESSING.getCode()));

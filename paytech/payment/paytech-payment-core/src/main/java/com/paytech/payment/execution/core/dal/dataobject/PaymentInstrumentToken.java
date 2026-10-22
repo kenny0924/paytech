@@ -48,6 +48,36 @@ public class PaymentInstrumentToken {
     /** Card 返回的卡指纹（受限值），只经内部同步请求传给 Risk。 */
     private String cardFingerprint;
 
+    /**
+     * 冻结的卡组织（BIN 库快照）
+     * <li>card {@code CardBrand} Code；未识别或非卡工具为空。用于 Risk 输入、路由 schemeCode 与 PaymentSucceeded。</li>
+     */
+    private String cardBrand;
+
+    /** 冻结的借贷记类型：CREDIT、DEBIT、PREPAID、CHARGE；未识别或号段未提供为空。 */
+    private String fundingType;
+
+    /** 冻结的卡等级（开放代码）；未识别或号段未提供为空。 */
+    private String cardLevel;
+
+    /** 冻结的卡产品类别：CONSUMER、COMMERCIAL；未识别或号段未提供为空。 */
+    private String cardProduct;
+
+    /** 冻结的发卡国 ISO 3166-1 alpha-2；未识别为空。 */
+    private String issuerCountry;
+
+    /** 冻结的发卡区域（Platform 国家区域映射 region_code）；未识别为空。 */
+    private String issuerRegion;
+
+    /**
+     * 查询时的 BIN 库生效版本号
+     * <li>没有生效版本或非卡工具为空；有版本但未命中时仍有值。</li>
+     */
+    private Integer binLibraryVersionNo;
+
+    /** 命中号段的前缀位数（6、7、8）；未识别为空。 */
+    private Integer binMatchLength;
+
     /** 业务到期时间。 */
     private Instant expiresAt;
 

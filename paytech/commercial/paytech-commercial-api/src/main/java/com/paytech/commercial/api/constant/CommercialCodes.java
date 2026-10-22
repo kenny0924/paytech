@@ -139,7 +139,10 @@ public final class CommercialCodes {
         }
     }
 
-    /** CARD_BRAND 维度的规范化值。 */
+    /**
+     * CARD_BRAND 维度的规范化值
+     * <li>与 Card BIN 库号段的卡组织（主品牌）、Payment 交易工具快照及 MID 能力 scheme_code 同一套代码（BIN 库需求 E6）。</li>
+     */
     public static final class CardBrand {
         /** Visa */
         public static final String VISA = "VISA";
@@ -152,6 +155,18 @@ public final class CommercialCodes {
 
         /** 银联 */
         public static final String UNIONPAY = "UNIONPAY";
+
+        /** mada（沙特本地卡组织） */
+        public static final String MADA = "MADA";
+
+        /** Discover */
+        public static final String DISCOVER = "DISCOVER";
+
+        /** JCB */
+        public static final String JCB = "JCB";
+
+        /** Diners Club */
+        public static final String DINERS = "DINERS";
 
         private CardBrand() {
         }

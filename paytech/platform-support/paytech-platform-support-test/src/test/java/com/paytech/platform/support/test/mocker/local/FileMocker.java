@@ -45,7 +45,7 @@ public class FileMocker implements Clear {
     private final List<Long> policyIds = new ArrayList<>();
 
     /**
-     * 插入只含一项 FORMAT 要求的 ACTIVE 策略：检查器 PLATFORM_FORMAT，只接受 FORMAT_VALID。
+     * 插入只含一项 FORMAT 要求的 ACTIVE 策略：允许 PDF、PNG、JPEG 与 CSV，检查器 PLATFORM_FORMAT，只接受 FORMAT_VALID。
      *
      * @return 策略与要求标识
      */
@@ -54,7 +54,7 @@ public class FileMocker implements Clear {
         long policyId = OperatorBuilder.nextId();
         long requirementId = OperatorBuilder.nextId();
         assertEquals(1, mapper.insertPolicy(policyId, POLICY_CODE,
-            "{\"mimeTypes\":[\"application/pdf\",\"image/png\",\"image/jpeg\"]}", 10_485_760L, now));
+            "{\"mimeTypes\":[\"application/pdf\",\"image/png\",\"image/jpeg\",\"text/csv\"]}", 10_485_760L, now));
         policyIds.add(policyId);
         assertEquals(1, mapper.insertRequirement(requirementId, policyId, 1, FormatFileScanner.SCANNER_CODE,
             FileScanType.FORMAT.getCode(), FORMAT_MINIMUM_VERSION, "[\"" + FormatFileScanner.VALID + "\"]", now));

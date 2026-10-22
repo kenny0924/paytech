@@ -13,6 +13,9 @@ public class MidCandidateView {
     /** 候选渠道 ID。 */
     private Long channelId;
 
+    /** 候选渠道编码；调用方用于拼渠道通知地址（3DS 全链路 technique 3.3.4）。 */
+    private String channelCode;
+
     /** 候选账号 ID。 */
     private Long channelAccountId;
 
@@ -30,4 +33,7 @@ public class MidCandidateView {
 
     /** 本次维度匹配到的金额上限（AMOUNT.MAX），未声明为 null。 */
     private BigDecimal maxAmount;
+
+    /** 本次维度匹配到的 3DS 模式（SECURITY.3DS_MODE：REQUIRED、SUPPORTED、UNSUPPORTED），未声明为 null。 */
+    private String threeDsMode;
 }

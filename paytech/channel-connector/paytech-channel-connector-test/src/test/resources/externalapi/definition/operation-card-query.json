@@ -1,0 +1,42 @@
+{
+  "params": [
+    {"name": "apiKey", "dataType": "PROTECTED_HANDLE", "required": true}
+  ],
+  "fixedValues": {},
+  "transport": {
+    "protocol": "HTTP",
+    "method": "GET",
+    "endpointCode": "DEMO_GATEWAY",
+    "pathTemplate": "/merchants/{merchantId}/payments/{orderRef}",
+    "connectTimeoutMs": 2000,
+    "responseTimeoutMs": 1000
+  },
+  "requestEncoding": "NONE",
+  "responseDecoding": "JSON",
+  "scripts": [
+    {"id": "auth", "scriptCode": "BEARER", "stage": "REQUEST",
+     "params": {"token": {"kind": "PATH", "path": "params.apiKey"}}}
+  ],
+  "statusRules": [
+    {"condition": "http.responseStatus == 200 && http.responseBody.result == 'FOUND'", "executeStatus": "SUCCESS"},
+    {"condition": "http.responseStatus == 404", "executeStatus": "FAIL"}
+  ],
+  "outputs": {
+    "SUCCESS": [
+      {"name": "reference", "dataType": "STRING", "required": false,
+       "value": {"kind": "PATH", "path": "http.responseBody.reference"}},
+      {"name": "paymentStatus", "dataType": "STRING", "required": true,
+       "value": {"kind": "PATH", "path": "http.responseBody.paymentStatus"}},
+      {"name": "state", "dataType": "STRING", "required": false,
+       "value": {"kind": "PATH", "path": "http.responseBody.state"}},
+      {"name": "amount", "dataType": "STRING", "required": false,
+       "value": {"kind": "PATH", "path": "http.responseBody.amount"}},
+      {"name": "currency", "dataType": "STRING", "required": false,
+       "value": {"kind": "PATH", "path": "http.responseBody.currency"}}
+    ],
+    "FAIL": [
+      {"name": "errorCode", "dataType": "STRING", "required": false,
+       "value": {"kind": "PATH", "path": "http.responseBody.errorCode"}}
+    ]
+  }
+}

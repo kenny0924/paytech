@@ -9,7 +9,8 @@ import com.paytech.risk.decision.api.evaluation.request.PaymentAttemptRiskInput;
 
 /**
  * 支付尝试风控点统一评估请求的测试 Builder
- * <li>{@link #template()} 为一笔合法卡支付：随机支付尝试身份（业务身份），USD 100，带消费者引用、IPv4、卡指纹与 BIN。</li>
+ * <li>{@link #template()} 为一笔合法卡支付：随机支付尝试身份（业务身份），USD 100，带消费者引用、IPv4、卡指纹、BIN
+ * 与 BIN 库卡属性（发卡国 AE、VISA、CREDIT）。</li>
  * <li>字段可显式设为 null（省略）或非法值，{@link #build()} 不修复；返回的请求 inputs 可直接修改以构造重放差异。</li>
  *
  * @author Kenny
@@ -27,7 +28,7 @@ public final class PaymentRiskRequestBuilder {
         builder.paymentAttemptId = randomId();
         builder.inputs.putAll(new PaymentAttemptRiskInput(randomId(), randomId(), randomId(), "800001", "AE001",
             "CARD_VISA", "AUTOMATIC", "100.00", "USD", "DIGITAL_GOODS", "5816", "AE", "consumer-001", "203.0.113.10",
-            "Mozilla/5.0 risk-test", "fp_card_" + randomId(), "411111").inputs());
+            "Mozilla/5.0 risk-test", "fp_card_" + randomId(), "411111", "AE", "VISA", "CREDIT").inputs());
         return builder;
     }
 
@@ -81,6 +82,26 @@ public final class PaymentRiskRequestBuilder {
     /** 卡 BIN；传 null 表示非卡或未知。 */
     public PaymentRiskRequestBuilder cardBin(String value) {
         return input("cardBin", value);
+    }
+
+    /** 发卡国；传 null 表示未识别或 BIN 库接入前的 Payment。 */
+    public PaymentRiskRequestBuilder issuerCountryCode(String value) {
+        return input("issuerCountryCode", value);
+    }
+
+    /** 卡组织；传 null 表示未识别。 */
+    public PaymentRiskRequestBuilder cardBrand(String value) {
+        return input("cardBrand", value);
+    }
+
+    /** 借贷记类型；传 null 表示未识别。 */
+    public PaymentRiskRequestBuilder fundingType(String value) {
+        return input("fundingType", value);
+    }
+
+    /** 不带卡属性三字段，等同 BIN 库接入前的 Payment 请求。 */
+    public PaymentRiskRequestBuilder withoutCardAttributes() {
+        return issuerCountryCode(null).cardBrand(null).fundingType(null);
     }
 
     /** 消费者引用。 */

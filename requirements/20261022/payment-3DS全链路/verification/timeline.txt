@@ -1,0 +1,25 @@
+GO received; start 2026-10-22T15:15:01Z
+stopped ops-web ops-bff gateway card channel-connector platform payermax-mock 2026-10-22T15:16:10Z
+jars replaced 2026-10-22T15:17:37Z
+platform, risk-decision started 2026-10-22T15:18:00Z
+payment started (XXL executor 19993, callback base https://channel-callback.local.test) 2026-10-22T15:18:13Z
+channel-connector, card(XXL 19991, truststore), ops-bff, gateway started 2026-10-22T15:18:41Z
+PayerMax3dsMock started on 18190 2026-10-22T15:19:03Z
+ops-web started from integration dir 2026-10-22T15:19:14Z
+configure_3ds PAYERMAX_MOCK 2026-10-22T15:19:57Z
+risk release 239045324600000512 ACTIVE on 220003 2026-10-22T15:21:01Z
+3DS scenario handler start 2026-10-22T15:23:56Z
+mock restarted (challenge default PENDING) 2026-10-22T15:24:39Z
+MQ capture queue s5-card3ds-capture bound 2026-10-22T15:25:05Z
+mock restarted (do3DS bypasses last-digit errors) 2026-10-22T15:25:45Z
+routing setup MID2 239047412893679616 2026-10-22T15:29:07Z
+regression stage5p2 set run (label c3ds) 2026-10-22T15:32:33Z
+routing teardown (MID2 SUSPENDED, MC capabilities DISABLED) 2026-10-22T15:33:30Z
+storage route operations-console-bff -> CARD_BIN_CSV created 2026-10-22T15:37:05Z
+platform restarted internal-auth DUAL (SPRING_APPLICATION_JSON) 2026-10-22T15:39:01Z
+DUAL checks: snapshot refresh ok, ops login ok, workflow lists 200; data-query has no local tables/routes (pre-existing, N/A)
+BIN import v2 VALID, v3 INVALID rows, v4 INVALID header, v5 VALID; race v5 won; rollback to v1 2026-10-22T15:42:01Z
+ops-web restarted with S5-01 fix 2026-10-22T15:42:13Z
+leak scan final; capture queue deleted; original payermax-mock restored 2026-10-22T15:47:59Z
+ops-web restarted with S5-02 fix 2026-10-22T15:50:28Z
+S5-02 recheck pass 2026-10-22T15:52:02Z

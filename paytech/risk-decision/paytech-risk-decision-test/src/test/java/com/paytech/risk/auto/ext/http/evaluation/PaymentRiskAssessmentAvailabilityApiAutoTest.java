@@ -179,6 +179,13 @@ class PaymentRiskAssessmentAvailabilityApiAutoTest extends AbstractPaymentRiskAp
             Arguments.of("币种小写", "inputs.currency", change(builder -> builder.currency("usd"))),
             Arguments.of("MCC 非 4 位", "inputs.mccCode", change(builder -> builder.mccCode("58161"))),
             Arguments.of("卡指纹过短", "inputs.cardFingerprint", change(builder -> builder.cardFingerprint("short"))),
+            Arguments.of("发卡国小写", "inputs.issuerCountryCode", change(builder -> builder.issuerCountryCode("ae"))),
+            Arguments.of("发卡国三位", "inputs.issuerCountryCode", change(builder -> builder.issuerCountryCode("ARE"))),
+            Arguments.of("卡组织含小写", "inputs.cardBrand", change(builder -> builder.cardBrand("Visa"))),
+            Arguments.of("卡组织超过 32 位", "inputs.cardBrand", change(builder -> builder.cardBrand("V".repeat(33)))),
+            Arguments.of("借贷记类型含连字符", "inputs.fundingType", change(builder -> builder.fundingType("PRE-PAID"))),
+            Arguments.of("借贷记类型超过 16 位", "inputs.fundingType",
+                change(builder -> builder.fundingType("C".repeat(17)))),
             Arguments.of("IP 超长", "inputs.clientIpAddress", change(builder -> builder.clientIpAddress("1".repeat(46)))));
     }
 

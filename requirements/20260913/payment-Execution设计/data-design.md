@@ -59,12 +59,14 @@
 | target_payment_action_id | BIGINT / 是 | QUERY 必填，指向被查询原 Action；资金操作通过原资金交易引用导航，不用 QUERY 的结果代替原交易 |
 | authentication_action_id | BIGINT / 是 | 需要认证的 AUTHORIZE/SALE 必填；同 Attempt 的成功 AUTHENTICATE，其他类型为空 |
 | channel_operation_ref | VARCHAR(255) ascii_bin / 是 | 渠道已返回稳定非 bearer 操作/认证上下文引用时保存；唯一性范围由渠道定义，不假设全局唯一 |
-| interaction_type | VARCHAR(32) ascii_bin / 是 | 等待消费者时必填；受控目录 `REDIRECT / THREE_DS_CHALLENGE / SDK / APP_SWITCH / QR_CODE`，本期只写 THREE_DS_CHALLENGE |
+| interaction_type | VARCHAR(32) ascii_bin / 是 | 等待消费者时必填；受控目录 `REDIRECT / THREE_DS_CHALLENGE / SDK / APP_SWITCH / QR_CODE`，本期按渠道返回写 THREE_DS_CHALLENGE 或 REDIRECT，记在 PAY 上 |
 | interaction_expires_at | DATETIME(6) / 是 | REQUIRES_ACTION 时必填；等待指令期限，终态后保留历史值 |
 | authentication_outcome | VARCHAR(32) ascii_bin / 是 | AUTHENTICATE 收到可信结论后必填：`AUTHENTICATED / ATTEMPTED / FAILED / UNAVAILABLE`；不直接透传协议码 |
 | challenge_performed | TINYINT / 是 | 认证可信结论具有证据时为 0/1；未知为空，不把没有回跳解释为未挑战 |
 | authentication_valid_until | DATETIME(6) / 是 | 成功 AUTHENTICATE 必填，认证证明有效期；与交互等待到期不是同一事实 |
 | status_reason_code | VARCHAR(64) ascii_bin / 是 | 失败/未知/受控等待的安全原因，非自由文本或远程原始错误 |
+
+> 2026-10-22 修订：卡流程不再使用 AUTHENTICATE，交互类型记在 PAY 上；`interaction_type` 本期按渠道返回写 THREE_DS_CHALLENGE 或 REDIRECT，见 [Execution 3DS 修订](../../20261022/payment-3DS全链路/execution-3ds-amendment.md)。
 
 新增普通索引：`idx_pay_action_target_action(target_payment_action_id)`、`idx_pay_action_authentication(authentication_action_id)`、`idx_pay_action_operation(channel_account_id,channel_operation_ref)`。既有唯一 Action key、父对象 action_no 索引保持。
 
@@ -81,6 +83,8 @@
 
 认证严格绑定同 Attempt、card_reference、金额/币种、Channel/Account/MID；AUTHENTICATE 后的资金动作复制认证 Action 已冻结坐标，不重新路由。`THREE_DS_REQUIRED` 只接受 AUTHENTICATED；`CHALLENGE_REQUIRED` 额外要求 challenge_performed=1。仅 ATTEMPTED 不满足本期强制认证要求；可信无感成功不满足强制挑战时记录实际 outcome，但 Action FAILED，原因 REQUIREMENT_NOT_MET。
 
+> 2026-10-22 修订：卡流程不再有 AUTHENTICATE 后的资金动作，认证要求由 PAY 传给渠道，见 [Execution 3DS 修订](../../20261022/payment-3DS全链路/execution-3ds-amendment.md)。
+
 交互指令只存在于即时响应；channel_operation_ref 必须不能凭持有绕开调用方/账户授权。不能满足这一点的渠道引用不允许明文入表，需由 Channel/Card Owner 提供安全间接引用后再接入。本期 Mock 用合成引用。删除交互表后 completion 由原 Action 终态、channel_result_time 和状态历史表达，不再重复一套交互状态机。
 
 ## 5. 保留表的关键约束
@@ -95,6 +99,8 @@
 | Channel Refund | 先在本地事务创建并预占，再外部发送；同 commerceRefundId 同内容返回原 Refund，异内容冲突 |
 | Duplicate Case | 第二笔真实成功有不同资金动作/引用才建；正常 AUTHORIZE→CAPTURE 不是重复支付；一 duplicateAction 最多一 Case |
 | State Transition | 只对真实发生的业务状态变化追加；版本/CAS 决定一次生效，重投事件不新增相同变化；无流程节点、CVV、交互指令或卡引用 |
+
+> 2026-10-22 修订：PAY 查单确认写交易引用时，同一动作同一外部编号已存在则跳过，不同外部编号视为系统错误，见 [Execution 3DS 修订](../../20261022/payment-3DS全链路/execution-3ds-amendment.md)。
 
 ## 6. 补偿表兼容差异
 

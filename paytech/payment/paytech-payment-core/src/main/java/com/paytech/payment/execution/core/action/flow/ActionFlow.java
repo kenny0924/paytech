@@ -91,6 +91,19 @@ public abstract class ActionFlow<T extends ActionContext> {
         return result;
     }
 
+    /**
+     * 把事务外确认得到的结果套到原执行中动作（3DS 全链路“确认支付结果”）
+     * <li>复用 {@link #advanceAction} 的结果事务：版本与原状态 CAS 保证终态只写一次，失败释放 Intent，成功按转移规则完成尝试。</li>
+     * <li>不执行 Actor；结果须带上原动作的交互类型与期限等需保留的历史值。仍在运行时登记的恢复任务按已存在处理。</li>
+     *
+     * @param context 由已提交事实组成的上下文（无本次提交的渠道输入）
+     * @param action 原 PROCESSING / UNKNOWN 动作
+     * @param result 确认得到的完整结果
+     */
+    public void complete(T context, PaymentAction action, ActionResult result) {
+        advanceAction(context, actionFactory.getAction(action.getActionType()), action, result);
+    }
+
     /** 同事务保存结果、下一动作及执行位，版本冲突时整体回滚。 */
     PaymentAction advanceAction(T context, ActionActor actor, PaymentAction action, ActionResult result) {
         return transactionTemplate.execute(status -> {
@@ -98,6 +111,7 @@ public abstract class ActionFlow<T extends ActionContext> {
             actions.saveResult(action, result);
             saveChannelTransaction(context, action, result);
             if (action.isRunning()) {
+                actor.onRunningInTransaction(context, action);
                 return null;
             } else if (action.statusIn(ActionStatus.FAILED)) {
                 failAttempt(context);
@@ -131,9 +145,18 @@ public abstract class ActionFlow<T extends ActionContext> {
         intents.releaseAttempt(context.getIntent());
     }
 
-    /** 渠道已创建交易时，在结果事务内保存渠道交易引用（冻结的渠道与 MID、本动作类型与金额）。 */
+    /**
+     * 渠道已创建交易时，在结果事务内保存渠道交易引用（冻结的渠道与 MID、本动作类型与金额）
+     * <li>同一动作已保存同一外部编号时跳过（PENDING 已保存、查单确认后再次带回）；同一动作出现不同外部编号属于系统错误，整体回滚。</li>
+     */
     void saveChannelTransaction(T context, PaymentAction action, ActionResult result) {
         if (result.getChannelTransactionId() == null) {
+            return;
+        }
+        for (ChannelTransactionRef saved : refs.findByAction(action.getPaymentActionId())) {
+            if (!saved.getExternalTransactionId().equals(result.getChannelTransactionId())) {
+                throw new ErrorException("同一支付动作出现不同的渠道交易编号: actionId=" + action.getPaymentActionId());
+            }
             return;
         }
         var attempt = context.getAttempt();

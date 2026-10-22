@@ -42,13 +42,13 @@ public class PaymentChannelClientImpl implements PaymentChannelClient {
     public List<RouteCandidate> queryRouteCandidates(RouteContext context) {
         var request = new QueryMidCandidatesRequestBody();
         request.setEntityNo(context.getEntityNo());
-        request.setCriteria(criteria(context.getPaymentMethodCode(), context.getCountryCode(),
+        request.setCriteria(criteria(context.getPaymentMethodCode(), context.getSchemeCode(), context.getCountryCode(),
             context.getAmount().getCurrency(), context.getMccCode()));
         return channelCandidateQueryApi.queryMidCandidates(request).getCandidates().stream()
             .map(PaymentChannelClientImpl::candidate).toList();
     }
 
-    /** 以新支付用途在冻结坐标上执行渠道动作。 */
+    /** 按命令的用途在冻结坐标上执行渠道动作（新支付或原交易查单）。 */
     @Override
     public ChannelExecutionResult execute(ChannelExecutionCommand command) {
         ChannelOperationResponseBody response = channelOperationApi.execute(request(command));
@@ -58,11 +58,12 @@ public class PaymentChannelClientImpl implements PaymentChannelClient {
         }
         return new ChannelExecutionResult(outcome,
             EnumUtils.getEnumByCode(ChannelPaymentStatus.class, response.getPaymentStatus()), response.getRedirectUrl(),
-            response.getChannelTransactionRef(), response.getChannelStatus(), response.getFailureCode(),
-            response.getFailureMessage());
+            response.getNextActionType(), response.getChannelTransactionRef(), response.getChannelStatus(),
+            response.getFailureCode(), response.getFailureMessage(), amount(response.getAmount()),
+            response.getCurrency());
     }
 
-    /** 新支付的冻结坐标、交易维度与标准 API 输入；ID 与金额为十进制字符串。 */
+    /** 冻结坐标与标准 API 输入；新支付另带交易维度与金额。ID 与金额为十进制字符串。 */
     static ExecuteChannelOperationRequestBody request(ChannelExecutionCommand command) {
         var request = new ExecuteChannelOperationRequestBody();
         request.setEntityNo(command.getEntityNo());
@@ -70,33 +71,51 @@ public class PaymentChannelClientImpl implements PaymentChannelClient {
         request.setChannelAccountId(command.getChannelAccountId().toString());
         request.setMidId(command.getMidId().toString());
         request.setOperation(command.getOperation().getCode());
-        request.setPurpose(ExecutionPurpose.NEW_PAYMENT.getCode());
-        request.setCriteria(criteria(command.getPaymentMethodCode(), command.getCountryCode(), command.getCurrency(),
-            command.getMccCode()));
-        request.setAmount(command.getAmount().toPlainString());
+        request.setPurpose(command.getPurpose().getCode());
+        if (command.getPurpose() == ExecutionPurpose.NEW_PAYMENT) {
+            request.setCriteria(criteria(command.getPaymentMethodCode(), command.getSchemeCode(),
+                command.getCountryCode(), command.getCurrency(), command.getMccCode()));
+            request.setAmount(command.getAmount().toPlainString());
+        }
         request.setInput(new LinkedHashMap<>(command.getInput()));
         return request;
     }
 
-    /** MID 能力匹配维度；卡组织暂不参与。 */
-    static MidCriteriaBody criteria(String paymentMethodCode, String countryCode, String currency, String mccCode) {
+    /** 查单返回的金额；不是合法十进制时按未返回处理，由调用方视为金额不一致。 */
+    static BigDecimal amount(String amount) {
+        if (amount == null) {
+            return null;
+        }
+        try {
+            return new BigDecimal(amount);
+        } catch (NumberFormatException invalid) {
+            return null;
+        }
+    }
+
+    /** MID 能力匹配维度；卡组织未识别时不传，只命中配置为 * 的能力。 */
+    static MidCriteriaBody criteria(String paymentMethodCode, String schemeCode, String countryCode, String currency,
+        String mccCode) {
         var criteria = new MidCriteriaBody();
         criteria.setPaymentMethodCode(paymentMethodCode);
+        criteria.setSchemeCode(schemeCode);
         criteria.setCountryCode(countryCode);
         criteria.setCurrency(currency);
         criteria.setMccCode(mccCode);
         return criteria;
     }
 
-    /** channel-connector 已解析的支持操作与金额上下限。 */
+    /** channel-connector 已解析的支持操作、金额上下限与 3DS 模式。 */
     static RouteCandidate candidate(MidCandidateBody body) {
         var candidate = new RouteCandidate();
         candidate.setChannelId(Long.valueOf(body.getChannelId()));
+        candidate.setChannelCode(body.getChannelCode());
         candidate.setChannelAccountId(Long.valueOf(body.getChannelAccountId()));
         candidate.setMidId(Long.valueOf(body.getMidId()));
         candidate.setSupportedActions(new LinkedHashSet<>(body.getSupportedOperations()));
         candidate.setMinAmount(decimal(body.getMinAmount()));
         candidate.setMaxAmount(decimal(body.getMaxAmount()));
+        candidate.setThreeDsMode(body.getThreeDsMode());
         return candidate;
     }
 

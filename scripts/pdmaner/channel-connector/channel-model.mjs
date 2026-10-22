@@ -4,6 +4,8 @@
 // 改造只作用于 channel-connector 模型：Payment 生成器（generate-payment-model.mjs）与 payment / card 模型不变。
 // 渠道实体沿用原实体、原有字段与唯一索引的稳定 ID，分区图组与 t_channel_account / t_channel_mid / t_channel_cost_plan 的关系保持连通；
 // 新增字段与索引的 ID 使用本文件的命名空间。
+// 2026-10-22 3DS 全链路（requirements/20261022/payment-3DS全链路/technique.md 第 3.4 节）：t_channel 增加 callback_definition_json，
+// 并修正回调表 target_type、received_at 的注释。
 import { createHash } from "node:crypto";
 
 /** 新增字段与索引的稳定 ID 命名空间。 */
@@ -42,6 +44,10 @@ const CHANNEL_FIELDS = Object.freeze([
       + "baseUrl 的协议受部署允许列表限制（默认仅 https），不含用户信息、查询串与片段，最长 512 字符；保存时拦截回环、私网、链路本地、"
       + "保留与组播 IP 字面量及 localhost，执行时解析主机名后再次拦截，部署配置的 trusted-networks 网段放行；"
       + "sandbox 可选、缺省为 false，只有为 true 的地址允许沙箱验证运行。" },
+  { defKey: "callback_definition_json", type: "JSON", len: "", notNull: false, defName: "通知定义", baseType: "largeText",
+    comment: "支付渠道的支付结果通知定义：验签（algorithm 本期只允许 RSA_SHA256、签名请求头名、账号参数中的公钥名）、"
+      + "通知字段路径（merchantReference、channelTransactionRef、status、eventTime）与成功应答（contentType、body）；"
+      + "序列化后最多 4096 UTF-8 字节，禁止保存凭据或密钥；为空表示该渠道不接收通知，入站请求返回 404。" },
   { defKey: "version", type: "INT", len: "", notNull: true, defName: "并发版本", baseType: "int",
     comment: "名称、说明或出站地址保存时按版本条件更新并递增的并发版本，初始为 1；不是发布版本。" },
   { defKey: "created_by", type: "BIGINT", len: "", notNull: false, defName: "创建账号", baseType: "BIGINT",
@@ -60,6 +66,11 @@ const FIELD_OVERRIDES = Object.freeze({
       + "不作为路由规则；服务渠道账号必须为空（应用校验），每个服务渠道最多一个 ACTIVE 账号保存凭据。" },
   "t_channel_mid.channel_id": { comment: CHANNEL_ID_COMMENT },
   "t_channel_cost_plan.channel_id": { comment: "支付渠道（本库 t_channel.channel_id，channel_type 为 PAYMENT）。" },
+  // 2026-10-22 3DS 全链路（technique 第 3.4 节）：支付结果通知映射到 Payment Attempt；回调表随渠道迁入归 channel-connector。
+  "t_channel_callback_item.target_type": { comment: "回调项映射到的业务对象闭合类型；PAYMENT_ATTEMPT 表示支付结果通知按商户订单号映射到 "
+    + "Payment Attempt（target_id 为 Attempt ID，跨库引用不建外键）。允许值：PAYMENT_ATTEMPT、PAYMENT_ACTION、CHANNEL_REFUND、"
+    + "CHANNEL_DISPUTE_NOTICE、CHANNEL_DISPUTE_ACTION、UNKNOWN。" },
+  "t_channel_callback.received_at": { comment: "channel-connector 首次收到服务商回调或争议通知的业务时刻。" },
   "t_channel_config_change.target_type": { comment: `被变更对象类型；渠道出站地址变更记为 CHANNEL 与 CONFIGURATION。允许值：${TARGET_TYPES.join("、")}。` },
   "t_channel_config_change.from_status": { comment: "状态变更前的状态；非状态变更为空。取值来源：渠道、账号、MID、能力组、成本版本或调用授权的状态代码；非固定枚举。" },
   "t_channel_config_change.to_status": { comment: "状态变更后的状态；非状态变更为空。取值来源：渠道、账号、MID、能力组、成本版本或调用授权的状态代码；非固定枚举。" },

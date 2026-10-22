@@ -22,9 +22,9 @@ export const dimensionLabels: Readonly<Record<string, string>> = {
 /** 常见取值建议（只作下拉建议，仍可输入其他代码）。 */
 export const dimensionSuggestions: Readonly<Record<string, readonly string[]>> = {
   CURRENCY: ['AED', 'USD', 'SAR', 'EUR', 'GBP'], CONSUMER_COUNTRY: ['AE', 'SA', 'US', 'GB'], ISSUER_COUNTRY: ['AE', 'SA', 'US', 'GB'],
-  DESTINATION_COUNTRY: ['AE', 'SA', 'US', 'GB'], CARD_BRAND: ['VISA', 'MASTERCARD', 'AMEX', 'UNIONPAY', 'MADA', 'DISCOVER', 'JCB'],
-  FUNDING_TYPE: ['CREDIT', 'DEBIT', 'PREPAID'], CARD_LEVEL: ['CLASSIC', 'GOLD', 'PLATINUM', 'SIGNATURE', 'INFINITE', 'WORLD', 'WORLD_ELITE'],
-  CARD_PRODUCT: ['CONSUMER', 'COMMERCIAL'], ISSUER_REGION: ['DOMESTIC', 'GCC', 'INTERNATIONAL'], CURRENCY_PAIR: ['USD/AED', 'EUR/AED'],
+  DESTINATION_COUNTRY: ['AE', 'SA', 'US', 'GB'], CARD_BRAND: ['VISA', 'MASTERCARD', 'AMEX', 'UNIONPAY', 'MADA', 'DISCOVER', 'JCB', 'DINERS'],
+  FUNDING_TYPE: ['CREDIT', 'DEBIT', 'PREPAID', 'CHARGE'], CARD_LEVEL: ['CLASSIC', 'GOLD', 'PLATINUM', 'SIGNATURE', 'INFINITE', 'WORLD', 'WORLD_ELITE'],
+  CARD_PRODUCT: ['CONSUMER', 'COMMERCIAL'], ISSUER_REGION: ['GCC', 'MEA', 'EUROPE', 'NORTH_AMERICA', 'LATAM', 'APAC'], CURRENCY_PAIR: ['USD/AED', 'EUR/AED'],
 };
 
 // TODO by CLAUDE: 币种改为字典维护后替换此常量
@@ -64,9 +64,9 @@ export const countryLabels: Readonly<Record<string, string>> = {
 
 /** 枚举型取值中文名（汇总与标签用；未列出的取值原样显示）。 */
 const valueLabels: Readonly<Record<string, Readonly<Record<string, string>>>> = {
-  FUNDING_TYPE: { CREDIT: '贷记', DEBIT: '借记', PREPAID: '预付' },
+  FUNDING_TYPE: { CREDIT: '贷记', DEBIT: '借记', PREPAID: '预付', CHARGE: '签账' },
   CARD_PRODUCT: { CONSUMER: '个人卡', COMMERCIAL: '商务卡' },
-  ISSUER_REGION: { DOMESTIC: '境内', GCC: '海湾国家', INTERNATIONAL: '境外' },
+  ISSUER_REGION: { GCC: '海湾国家', MEA: '中东非洲（不含海湾）', EUROPE: '欧洲', NORTH_AMERICA: '北美', LATAM: '拉丁美洲', APAC: '亚太' },
 };
 
 /** 标签上的取值文字：国家为「AE 阿联酋」（与抽屉选项一致），枚举为中文名，币种等其余为代码。 */

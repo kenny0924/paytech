@@ -1,0 +1,44 @@
+[
+  {
+    "name": "login-admin",
+    "method": "POST",
+    "path": "/api/operations/auth/v1/login",
+    "status": 200
+  },
+  {
+    "name": "api-ORDER_AND_PAY-get",
+    "method": "GET",
+    "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX/apis/ORDER_AND_PAY",
+    "status": 200
+  },
+  {
+    "name": "api-ORDER_AND_PAY-update",
+    "method": "PUT",
+    "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX/apis/ORDER_AND_PAY",
+    "status": 200
+  },
+  {
+    "name": "implementation-get-PAY",
+    "method": "GET",
+    "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX/implementations/PAY",
+    "status": 404
+  },
+  {
+    "name": "implementation-validate-PAY",
+    "method": "POST",
+    "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX/implementations/validate",
+    "status": 200
+  },
+  {
+    "name": "implementation-PAY-get",
+    "method": "GET",
+    "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX/implementations/PAY",
+    "status": 404
+  },
+  {
+    "name": "implementation-PAY-create",
+    "method": "POST",
+    "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX/implementations",
+    "status": 200
+  }
+]

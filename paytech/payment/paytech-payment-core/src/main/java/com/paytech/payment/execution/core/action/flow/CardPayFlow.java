@@ -14,7 +14,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import com.paytech.payment.execution.core.action.ActionFactory;
 import com.paytech.payment.execution.core.action.flow.condition.ActionStatusCondition;
-import com.paytech.payment.execution.core.action.flow.condition.AuthenticationRequiredCondition;
 import com.paytech.payment.execution.core.action.flow.condition.CaptureModeCondition;
 import com.paytech.payment.execution.core.action.flow.condition.RiskResultCondition;
 import com.paytech.payment.execution.domain.PayContext;
@@ -34,22 +33,21 @@ public class CardPayFlow extends ActionFlow<PayContext> {
             paymentActionRepository, paymentAttemptRepository, clock, intents, refs);
     }
 
-    /** 条件对象组合定义业务分支；风控评估完成但未放行时 Attempt 失败，Capture/Void 属于后续独立入口。 */
+    /**
+     * 条件对象组合定义业务分支；风控评估完成但未放行时 Attempt 失败，Capture/Void 属于后续独立入口。
+     * <li>3DS 全链路（Execution 3DS 修订）：放行后不论是否要求认证，AUTOMATIC 进入 PAY（3DS 要求作为 PAY 的渠道输入，渠道内 3DS），
+     * MANUAL 进入 AUTHORIZE；AUTHENTICATE 不再出现在卡流程中，动作类型与 Actor 保留给未来的独立认证（MPI）。</li>
+     */
     static List<ActionTransition<PayContext>> defineTransitions() {
         var succeeded = new ActionStatusCondition(ActionStatus.SUCCEEDED);
         var failed = new ActionStatusCondition(ActionStatus.FAILED);
         var allowed = succeeded.and(new RiskResultCondition(RiskResult.ALLOW));
         var notAllowed = succeeded.and(new RiskResultCondition(RiskResult.ALLOW).negate());
-        var authentication = new AuthenticationRequiredCondition();
         var manual = new CaptureModeCondition(CaptureMode.MANUAL);
         var automatic = new CaptureModeCondition(CaptureMode.AUTOMATIC);
-        return List.of(ActionTransition.next(PAY_RISK, allowed.and(authentication), AUTHENTICATE),
-            ActionTransition.next(PAY_RISK, allowed.and(authentication.negate()).and(manual), AUTHORIZE),
-            ActionTransition.next(PAY_RISK, allowed.and(authentication.negate()).and(automatic), PAY),
-            ActionTransition.fail(PAY_RISK, notAllowed), ActionTransition.end(PAY_RISK, failed),
-            ActionTransition.next(AUTHENTICATE, succeeded.and(manual), AUTHORIZE),
-            ActionTransition.next(AUTHENTICATE, succeeded.and(automatic), PAY),
-            ActionTransition.end(AUTHENTICATE, failed), ActionTransition.end(AUTHORIZE, succeeded.or(failed)),
+        return List.of(ActionTransition.next(PAY_RISK, allowed.and(manual), AUTHORIZE),
+            ActionTransition.next(PAY_RISK, allowed.and(automatic), PAY), ActionTransition.fail(PAY_RISK, notAllowed),
+            ActionTransition.end(PAY_RISK, failed), ActionTransition.end(AUTHORIZE, succeeded.or(failed)),
             ActionTransition.end(PAY, succeeded.or(failed)));
     }
 }

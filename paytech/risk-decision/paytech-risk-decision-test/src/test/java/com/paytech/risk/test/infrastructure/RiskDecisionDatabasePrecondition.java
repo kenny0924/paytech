@@ -167,6 +167,7 @@ public final class RiskDecisionDatabasePrecondition
         require(count(connection, "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() "
             + "AND table_name='t_evaluation_flow_trace'") == 11L);
         verifyCheckoutRuntime(connection);
+        verifyPaymentCardAttributes(connection);
     }
 
     /** 结账点运行期评估的快照表结构、v5 结账变量与结账运行期点版本。 */
@@ -201,6 +202,17 @@ public final class RiskDecisionDatabasePrecondition
             + "AND table_name='t_decision_flow_end_output'") == 6L);
         require(count(connection, "SELECT COUNT(*) FROM t_risk_variable WHERE variable_id BETWEEN 900000000000093001 AND 900000000000093013") == 13L);
         require(count(connection, "SELECT COUNT(*) FROM t_risk_variable_member WHERE member_id BETWEEN 900000000000094001 AND 900000000000094003") == 3L);
+    }
+
+    /** BIN 库卡属性输入：评估快照 3 列、支付点版本 2 与 3 个输入变量。 */
+    private static void verifyPaymentCardAttributes(Connection connection) throws SQLException {
+        require(count(connection, "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() "
+            + "AND table_name='t_transaction_risk_assessment' "
+            + "AND column_name IN ('issuer_country_code','card_brand','funding_type')") == 3L);
+        require(count(connection, "SELECT COUNT(*) FROM t_decision_point_version WHERE point_version_id=220003 "
+            + "AND decision_point_id=210002 AND version_no=2 AND status='FROZEN'") == 1L);
+        require(count(connection, "SELECT COUNT(*) FROM t_risk_variable WHERE variable_id BETWEEN 900000000000093014 "
+            + "AND 900000000000093016 AND source_field IN ('issuer_country_code','card_brand','funding_type')") == 3L);
     }
 
     private static long count(Connection connection, String sql) throws SQLException {

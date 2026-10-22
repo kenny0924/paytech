@@ -2,12 +2,16 @@ package com.paytech.channel.connector.auto.channel;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.Set;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.paytech.channel.connector.api.ChannelCapabilityCodes;
+import com.paytech.channel.connector.api.enums.ChannelOperation;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.channel.connector.service.processor.QueryMidCandidatesProcessor;
@@ -49,6 +53,21 @@ class QueryMidCandidatesTest extends ChannelConnectorMockTestBase {
         assertEquals("ACTION.PAY", candidate.getCapabilities().getFirst().getCapabilityCode());
         assertEquals(Boolean.TRUE, candidate.getCapabilities().getFirst().getBooleanValue());
         assertEquals(5, mapper.countRows());
+        vault.assertNoCalls();
+    }
+
+    /** 3DS 全链路（technique 3.3.3）：投影本次维度匹配到的 SECURITY.3DS_MODE 与渠道编码；未声明时 3DS 模式为空。 */
+    @Test
+    void projectsThreeDsModeAndChannelCode() {
+        var undeclared = query.process(ChannelRequestBuilder.candidates()).getFirst();
+        data.codeCapabilityDetail(fixture, ChannelCapabilityCodes.SECURITY_3DS_MODE, ChannelCapabilityCodes.THREE_DS_SUPPORTED);
+
+        var declared = query.process(ChannelRequestBuilder.candidates()).getFirst();
+
+        assertAll(() -> assertNull(undeclared.getThreeDsMode()),
+            () -> assertEquals(fixture.getChannel().getChannelCode(), undeclared.getChannelCode()),
+            () -> assertEquals(ChannelCapabilityCodes.THREE_DS_SUPPORTED, declared.getThreeDsMode()),
+            () -> assertEquals(Set.of(ChannelOperation.PAY.getCode()), declared.getSupportedOperations()));
         vault.assertNoCalls();
     }
 

@@ -38,6 +38,8 @@
 
 ## 3. Card 首次支付流程
 
+> 2026-10-22 修订：下图“需要 3DS → AUTHENTICATE”已改为由 PAY 携带 3DS 要求、在渠道内完成挑战，见 [Execution 3DS 修订](../../20261022/payment-3DS全链路/execution-3ds-amendment.md)。
+
 ```mermaid
 flowchart TD
     IN["Commerce 提交 Card 支付与业务目标"] --> START((开始))

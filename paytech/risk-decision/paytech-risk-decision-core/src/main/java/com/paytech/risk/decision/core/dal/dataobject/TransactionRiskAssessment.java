@@ -79,6 +79,15 @@ public class TransactionRiskAssessment {
     /** 卡 BIN；非卡支付为空。 */
     private String cardBin;
 
+    /** 发卡国 ISO 3166-1 alpha-2；未识别或非卡支付为空。 */
+    private String issuerCountryCode;
+
+    /** 卡组织代码；未识别或非卡支付为空。 */
+    private String cardBrand;
+
+    /** 借贷记类型代码；未识别或非卡支付为空。 */
+    private String fundingType;
+
     /** 认证要求；仅结论为 ALLOW 时非空。 */
     private AuthenticationRequirement authenticationRequirement;
 

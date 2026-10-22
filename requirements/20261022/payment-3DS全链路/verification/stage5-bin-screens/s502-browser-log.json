@@ -1,0 +1,128 @@
+{
+ "pages": [
+  {
+   "name": "s502-01-main",
+   "url": "/card-bin-library",
+   "check": {
+    "menu": true,
+    "summary": "运营平台 平台配置 卡 BIN 库 开发环境 o***@example.test 退出 | 当前生效版本 v1 生效中 2026-10-22 19:41 由 236033080844881920 激活 生效号段数 17 最近导入 v5 已停用 2026-10-22 19:40 由 236033080844881920 导入 待处理版本 1 个可激活",
+    "rows": "版本 状态 文件名 号段数 错误行 导入人 创建时间 操作 | v5 已停用 s5-bin-good.csv 8 0 236033080844881920 2026-10-22 19:40 查看 回 切 | v4 校验失败 s5-bin-header.csv — 0 236033080844881920 2026-10-22 19:40 查看 | v3 校验失败 s5-bin-bad.csv — 9 236033080844881920 2026-10-22 19:40 查看 | v2 可激活 s5-bin-good.csv 8 0 236033080844881920 2026-10-22 19:40 查看 激 活 | v1 生效中 种子数据（初始化） 17 0 system 2026-10-22 19:16 查看 | 文件 — | 文件摘要 — | 号段数 17（错误 0） | 导入人 system · 2026-10-22 19:16 | 最近更新 2026-10-22 19:41 | 2026-10-22 19:41 回切 v1 ← v5 236033080844881920 | 2026-10-22 19:41 激活 v1 → v5 236033080844881920 | 2026-10-22 19:16 激活 v1 system"
+   }
+  },
+  {
+   "name": "s502-02-lookup-8digit",
+   "url": "/card-bin-library",
+   "check": {
+    "result": "BIN 查询 当前生效 查 询 输入 6～8 位数字；只按 BIN 查询，不接受完整卡号 命中前缀 40128888（8 位） 卡组织 VISA 借贷记 DEBIT 卡等级 CLASSIC 卡产品 CONSUMER 发卡国 GB 发卡区域 EUROPE 发卡行 SYNTHETIC TEST ISSUER GB 版本 v1 | 命中前缀 40128888（8 位） 卡组织 VISA 借贷记 DEBIT 卡等级 CLASSIC 卡产品 CONSUMER 发卡国 GB 发卡区域 EUROPE 发卡行 SYNTHETIC TEST ISSUER GB 版本 v1 | 文件 — 文件摘要 — 号段数 17（错误 0） 导入人 system · 2026-10-22 19:16 最近更新 2026-10-22 19:41"
+   }
+  },
+  {
+   "name": "s502-03-lookup-unrecognized",
+   "url": "/card-bin-library",
+   "check": {
+    "result": "BIN 查询 当前生效 查 询 输入 6～8 位数字；只按 BIN 查询，不接受完整卡号 未识别（版本 v1） | 文件 — 文件摘要 — 号段数 17（错误 0） 导入人 system · 2026-10-22 19:16 最近更新 2026-10-22 19:41"
+   }
+  },
+  {
+   "name": "s502-04-lookup-invalid",
+   "url": "/card-bin-library",
+   "check": {
+    "queryDisabled": true,
+    "hint": "BIN 查询 当前生效 查 询 只能输入数字 未识别（版本 v1）"
+   }
+  },
+  {
+   "name": "s502-05-detail-row1",
+   "url": "/card-bin-library",
+   "check": {
+    "row": "v5 已停用 s5-bin-good.csv 8 0 236033080844881920 2026-10-22 19:40 查看 回 切",
+    "detail": "版本 v5 s5-bin-good.csv 已停用 文件 s5-bin-good.csv 文件摘要 SHA-256 5e25…4eab 号段数 8（错误 0） 导入人 236033080844881920 · 2026-10-22 19:40 最近更新 2026-10-22 19:41 回 切 激活历史 时间 类型 版本 操作人 2026-10-22 19:41 回切 v1 ← v5 236033080844881920 2026-10-22 19:41 激活 v1 → v5 236033080844881920 2026-10-22 19:16 激活 v1 system 1 10 条/页"
+   }
+  },
+  {
+   "name": "s502-05-detail-row2",
+   "url": "/card-bin-library",
+   "check": {
+    "row": "v4 校验失败 s5-bin-header.csv — 0 236033080844881920 2026-10-22 19:40 查看",
+    "detail": "版本 v4 s5-bin-header.csv 校验失败 表头不符：第 1 行必须为 bin_prefix,card_brand,funding_type,card_level,card_product,issuer_country,issuer_name 请修正源文件后重新导入新版本。失败版本保留用于追溯。 文件 s5-bin-header.csv 文件摘要 SHA-256 cb16…3c46 号段数 —（错误 0） 导入人 236033080844881920 · 2026-10-22 19:40 最近更新 2026-10-22 19:40 激活历史 时间 类型 版本 操作人 2026-10-22 19:41 回切 v1 ← v5 236033080844881920 2026-10-22 19:41 激活 v1 → v5 236033080844881920 2026-10-22 19:16 激活 v1 system 1 10 条/页"
+   }
+  },
+  {
+   "name": "s502-05-detail-row3",
+   "url": "/card-bin-library",
+   "check": {
+    "row": "v3 校验失败 s5-bin-bad.csv — 9 236033080844881920 2026-10-22 19:40 查看",
+    "detail": "版本 v3 s5-bin-bad.csv 校验失败 9 行内容错误，本版本不能激活 请修正源文件后重新导入新版本。失败版本保留用于追溯。 行号 列 错误 说明 / 值摘录 2 bin_prefix DUPLICATE_PREFIX 同一前缀在文件中出现多次：400000 3 bin_prefix DUPLICATE_PREFIX 同一前缀在文件中出现多次：400000 4 card_brand INVALID_VALUE card_brand 只允许 VISA、MASTERCARD、AMEX、UNIONPAY、MADA、DISCOVER、JCB、DINERS：VISAX 5 issuer_country REQUIRED_MISSING issuer_country 必填 6 issuer_country COUNTRY_REGION_MISSING 发卡国 XX 未登记区域：XX 7 bin_prefix INVALID_FORMAT bin_prefix 必须为 6 至 8 位数字 8 bin_prefix INVALID_FORMAT bin_prefix 必须为 6 至 8 位数字：45AB12 9 整行 COLUMN_COUNT_MISMATCH 列数必须为 7，且引号须成对闭合 10 funding_type INVALID_VALUE funding_type 只允许"
+   }
+  },
+  {
+   "name": "s502-05-detail-row4",
+   "url": "/card-bin-library",
+   "check": {
+    "row": "v2 可激活 s5-bin-good.csv 8 0 236033080844881920 2026-10-22 19:40 查看 激 活",
+    "detail": "版本 v2 s5-bin-good.csv 可激活 文件 s5-bin-good.csv 文件摘要 SHA-256 5e25…4eab 号段数 8（错误 0） 导入人 236033080844881920 · 2026-10-22 19:40 最近更新 2026-10-22 19:40 激 活 激活历史 时间 类型 版本 操作人 2026-10-22 19:41 回切 v1 ← v5 236033080844881920 2026-10-22 19:41 激活 v1 → v5 236033080844881920 2026-10-22 19:16 激活 v1 system 1 10 条/页"
+   }
+  },
+  {
+   "name": "s502-05-detail-row5",
+   "url": "/card-bin-library",
+   "check": {
+    "row": "v1 生效中 种子数据（初始化） 17 0 system 2026-10-22 19:16 查看",
+    "detail": "版本 v1 种子数据（初始化） 生效中 文件 — 文件摘要 — 号段数 17（错误 0） 导入人 system · 2026-10-22 19:16 最近更新 2026-10-22 19:41 回切只影响之后新建的支付工具，已冻结的交易卡属性不变。 激活历史 时间 类型 版本 操作人 2026-10-22 19:41 回切 v1 ← v5 236033080844881920 2026-10-22 19:41 激活 v1 → v5 236033080844881920 2026-10-22 19:16 激活 v1 system 1 10 条/页"
+   }
+  },
+  {
+   "name": "s502-06-import-dialog",
+   "url": "/card-bin-library",
+   "check": {
+    "modal": "导入新版本 1 选择文件 2 上传文件 3 创建版本并校验 选择 CSV 文件 文件不经过网关，直接上传到对象存储；上传完成后自动创建版本，并在后台完整校验。关闭对话框会中止上传。 平台标准 CSV：UTF-8 · 逗号分隔 · 第 1 行为固定表头 · 文件 ≤ 50 MB、≤ 100 万行 · bin_prefix 6～8 位数字且同一前缀不得重复 · card_brand、issuer_country 必填 · 发卡区域按平台国家区域映射自动推导。 下载示例模板 取 消 开始导入"
+   }
+  },
+  {
+   "name": "s502-07-confirm-activate",
+   "url": "/card-bin-library",
+   "check": {
+    "modal": "激活版本 v2 v1 当前生效 17 个号段 → v2 可激活 8 个号段（-9） 提交后所有实例立即按 v2 查询，无需重启。 已创建的支付工具保留原卡属性，不受影响。 如页面打开后已有他人切换了生效版本，提交会被拒绝并提示刷新。 我确认激活 v2，替换当前生效的 v1 取 消 确认激活"
+   }
+  },
+  {
+   "name": "s502-07-confirm-rollback",
+   "url": "/card-bin-library",
+   "check": {
+    "modal": "回切到 v5 v1 当前生效 17 个号段 → v5 已停用 8 个号段（-9） 回切只影响之后新建的支付工具，已创建的交易保留原卡属性。 v1 变为已停用，之后仍可再次激活。 回切会记录在激活历史中（操作人与时间）。 我确认回切到 v5，之后新交易按 v5 识别 取 消 确认回切"
+   }
+  },
+  {
+   "name": "s502-08-filter-invalid",
+   "url": "/card-bin-library",
+   "check": {
+    "rows": "版本 状态 文件名 号段数 错误行 导入人 创建时间 操作 | v4 校验失败 s5-bin-header.csv — 0 236033080844881920 2026-10-22 19:40 查看 | v3 校验失败 s5-bin-bad.csv — 9 236033080844881920 2026-10-22 19:40 查看 | 文件 s5-bin-header.csv | 文件摘要 SHA-256 cb16…3c46 | 号段数 —（错误 0） | 导入人 236033080844881920 · 2026-10-22 19:40 | 最近更新 2026-10-22 19:40 | 2026-10-22 19:41 回切 v1 ← v5 236033080844881920 | 2026-10-22 19:41 激活 v1 → v5 236033080844881920 | 2026-10-22 19:16 激活 v1 system"
+   }
+  },
+  {
+   "name": "s502-08-filter-active",
+   "url": "/card-bin-library",
+   "check": {
+    "rows": "版本 状态 文件名 号段数 错误行 导入人 创建时间 操作 | v1 生效中 种子数据（初始化） 17 0 system 2026-10-22 19:16 查看 | 文件 — | 文件摘要 — | 号段数 17（错误 0） | 导入人 system · 2026-10-22 19:16 | 最近更新 2026-10-22 19:41 | 2026-10-22 19:41 回切 v1 ← v5 236033080844881920 | 2026-10-22 19:41 激活 v1 → v5 236033080844881920 | 2026-10-22 19:16 激活 v1 system"
+   }
+  }
+ ],
+ "console": [
+  {
+   "page": "login",
+   "type": "error",
+   "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+  },
+  {
+   "page": "login",
+   "type": "error",
+   "text": "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+  },
+  {
+   "page": "01-main",
+   "type": "error",
+   "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+  }
+ ],
+ "httpErrors": []
+}

@@ -53,12 +53,20 @@ messaging:
   publisher:
     # 订阅方（acquiring）已接入：未路由视为发布失败，由补偿任务重试（第 08 步由过渡期的 ACK_AND_WARN 改回）。
     unroutable-policy: FAIL
+  # 消费 channel-connector 的 ChannelPaymentNotified（3DS 全链路）：分区队列 payment.channel-connector.p0..p3；修改分区数需先排空队列。
+  consumer:
+    service: payment
+  consumers:
+    channel-connector:
+      partitions: 4
 
 payment:
   # 能力代码目录随渠道配置迁到 channel-connector（channel-connector-service.yaml）。
   execution:
     # 零值禁用新申请；本地合成流程可配置 PT5M，实际期限受 Intent/Card 限制。
     instrument-preparation-window: PT0S
+    # 渠道支付通知入口的公网根地址（https，不以斜杠结尾）；为空时不传 notifyUrl，只靠查单确认结果（mor-test 无公网入口，D5）。
+    channel-callback-base-url: ""
   # 第 12 步起卡域为 card-service：卡指纹密钥与卡 DEK 的 Vault 配置都在 card-service.yaml，Payment 不再访问 Vault。
   outbound:
     # channel-connector、card 与 Risk 统一评估的对方 context path 与读取超时；修改需重启。

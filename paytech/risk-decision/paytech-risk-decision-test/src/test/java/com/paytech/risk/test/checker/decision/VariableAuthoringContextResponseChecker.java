@@ -124,7 +124,10 @@ public final class VariableAuthoringContextResponseChecker
                 condition("amount", NUMBER, MONEY, "currency", null), condition("currency", STRING, null, null, "CURRENCY"),
                 condition("industry_code", STRING, null, null, null), condition("mcc_code", STRING, null, null, null),
                 field("consumer_country_code", STRING, false, List.of(FLOW_CONDITION, RULE_CONDITION), null, null, null),
-                field("card_bin", STRING, false, List.of(FLOW_CONDITION, RULE_CONDITION), null, null, null))));
+                field("card_bin", STRING, false, List.of(FLOW_CONDITION, RULE_CONDITION), null, null, null),
+                field("issuer_country_code", STRING, false, List.of(FLOW_CONDITION, RULE_CONDITION), null, null, null),
+                field("card_brand", STRING, false, List.of(FLOW_CONDITION, RULE_CONDITION), null, null, null),
+                field("funding_type", STRING, false, List.of(FLOW_CONDITION, RULE_CONDITION), null, null, null))));
             contracts.add(nodeResult(PAYMENT));
         }
         if (PAYMENT.equals(pointCode)) {

@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.paytech.payment.api.execution.PaymentIntentApi;
 import com.paytech.payment.api.execution.request.CreateIntentRequestBody;
 import com.paytech.payment.api.execution.request.PayRequestBody;
+import com.paytech.payment.api.execution.request.RefreshSubmissionRequestBody;
 import com.paytech.payment.api.execution.request.TerminateIntentRequestBody;
 import com.paytech.payment.api.execution.response.CreateIntentResponseBody;
 import com.paytech.payment.api.execution.response.GetIntentResponseBody;
@@ -17,6 +18,7 @@ import com.paytech.payment.execution.service.processor.CreateIntentProcessor;
 import com.paytech.payment.execution.service.processor.GetIntentProcessor;
 import com.paytech.payment.execution.service.processor.GetSubmissionProcessor;
 import com.paytech.payment.execution.service.processor.PayProcessor;
+import com.paytech.payment.execution.service.processor.RefreshSubmissionProcessor;
 import com.paytech.payment.execution.service.processor.TerminateIntentProcessor;
 import com.paytech.payment.execution.service.processor.request.CreateIntentRequest;
 import com.paytech.payment.execution.service.processor.request.GetIntentRequest;
@@ -47,6 +49,7 @@ public class PaymentIntentController implements PaymentIntentApi {
     final GetIntentProcessor getIntentProcessor;
     final GetSubmissionConverter getSubmissionConverter;
     final GetSubmissionProcessor getSubmissionProcessor;
+    final RefreshSubmissionProcessor refreshSubmissionProcessor;
     final CreateIntentConverter createIntentConverter;
     final CreateIntentProcessor createIntentProcessor;
     final TerminateIntentConverter terminateIntentConverter;
@@ -76,6 +79,17 @@ public class PaymentIntentController implements PaymentIntentApi {
         String clientId) {
         GetSubmissionRequest request = getSubmissionConverter.convertRequest(intentId, sourceSubmissionId, clientId);
         GetSubmissionResponse response = getSubmissionProcessor.process(request);
+        GetSubmissionResponseBody responseBody = getSubmissionConverter.convertResponse(response);
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(responseBody);
+    }
+
+    /** 刷新来源提交的支付结果，按需触发一次查单确认，响应与 EX-I06 相同。 */
+    @Override
+    public ResponseEntity<GetSubmissionResponseBody> refreshSubmission(String intentId, String sourceSubmissionId,
+        RefreshSubmissionRequestBody body) {
+        GetSubmissionRequest request =
+            getSubmissionConverter.convertRequest(intentId, sourceSubmissionId, body.getClientId());
+        GetSubmissionResponse response = refreshSubmissionProcessor.process(request);
         GetSubmissionResponseBody responseBody = getSubmissionConverter.convertResponse(response);
         return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(responseBody);
     }

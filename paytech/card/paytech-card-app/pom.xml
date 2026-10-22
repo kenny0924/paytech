@@ -19,6 +19,8 @@
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-card-api</artifactId></dependency>
         <!-- 内部调用身份（D26）：默认 OFF；入站校验由 MVC Starter 装配，Vault Client 在存在 Token 来源时附加 Token。 -->
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-internal-auth</artifactId></dependency>
+        <!-- BIN 库导入的 Platform 出站：内部文件接口与国家区域映射复用 Foundation 公共出站边界（2026-10-22）。 -->
+        <dependency><groupId>com.paytech</groupId><artifactId>paytech-http-client-support</artifactId></dependency>
         <dependency><groupId>org.springframework.cloud</groupId><artifactId>spring-cloud-starter-loadbalancer</artifactId></dependency>
         <!-- 注册到 Nacos（Payment、Platform、acquiring、consumer 经服务发现调用）并发现 Vault。 -->
         <dependency><groupId>com.alibaba.cloud</groupId><artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId></dependency>

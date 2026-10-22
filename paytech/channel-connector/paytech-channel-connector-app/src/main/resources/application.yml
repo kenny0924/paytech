@@ -34,6 +34,18 @@ spring:
   sql:
     init:
       mode: never
+  # 3DS 全链路：ChannelPaymentNotified 经 paytech-messaging 发布（Publisher Confirm、mandatory）；账号密码只从环境变量注入。
+  rabbitmq:
+    host: "${CHANNEL_CONNECTOR_RABBITMQ_HOST:127.0.0.1}"
+    port: "${CHANNEL_CONNECTOR_RABBITMQ_PORT:5672}"
+    username: "${CHANNEL_CONNECTOR_RABBITMQ_USERNAME:}"
+    password: "${CHANNEL_CONNECTOR_RABBITMQ_PASSWORD:}"
+    virtual-host: "${CHANNEL_CONNECTOR_RABBITMQ_VHOST:/mor-local}"
+    connection-timeout: 2s
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
   jmx:
     enabled: false
 
@@ -63,6 +75,14 @@ compensation:
   # 多实例 Claim/Lease 的实例标识前缀；部署多实例时由 CHANNEL_CONNECTOR_COMPENSATION_INSTANCE_ID 注入带实例后缀的值。
   instance-id: "${CHANNEL_CONNECTOR_COMPENSATION_INSTANCE_ID:channel-connector}"
 
+# paytech-messaging 发布端（3DS 全链路 technique 3.5，channel-connector 首次作为生产者）：声明 channel-connector.events（Durable Fanout）
+# 并提供 DomainEventPublisher；订阅方 payment 已接入，未路由视为发布失败，由补偿任务 CHANNEL_PAYMENT_NOTIFIED 重试。
+messaging:
+  producer:
+    service: channel-connector
+  publisher:
+    unroutable-policy: FAIL
+
 # 实例 ID（实例清单 instance.id，01 §5）：内部调用 Token 的 inst；internal-auth.mode 非 OFF 时必填。
 paytech:
   instance-id: "${PAYTECH_INSTANCE_ID:}"
@@ -72,6 +92,10 @@ internal-auth:
   mode: "${CHANNEL_CONNECTOR_INTERNAL_AUTH_MODE:OFF}"
 
 channel-connector:
+  # ChannelPaymentNotified 信封身份：sourceService 与 messaging.producer.service 一致；instanceId 未注入时为 main。
+  event:
+    source-service: channel-connector
+    instance-id: "${PAYTECH_INSTANCE_ID:main}"
   # 能力代码目录：未注册的能力代码失败关闭；能力代码只在本服务解析（D06）。
   capability-definitions:
     "[ACTION.PAY]": { value-type: BOOLEAN }

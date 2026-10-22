@@ -22,4 +22,16 @@ export const TABLES = Object.freeze([
     ],
     indexes: [uk("uk_currency", "currency")],
   }),
+  // 2026-10-22 卡 BIN 库（requirements/20261022/card-BIN库与卡属性 E3）：国家到地理区域映射，只经初始化数据维护。
+  defineTable({
+    key: "country_region",
+    name: "国家区域映射",
+    comment: "保存全平台使用的国家到地理区域映射；Platform 唯一持有，Card 导入 BIN 库时经内部 HTTP 读取并推导发卡区域。本期只经初始化数据维护，不提供维护页面。",
+    fields: [
+      pk("id", "国家区域映射ID", "国家区域映射主键；初始化数据使用 2001 起的固定 ID，低于 Snowflake 范围"),
+      field("country_code", "CHAR(2)", "NN", "国家或地区代码", "ISO 3166-1 alpha-2 国家或地区代码", { source: "ISO 3166-1 alpha-2", characterSet: "ascii", collation: "ascii_bin" }),
+      field("region_code", "VARCHAR(16)", "NN", "地理区域", "平台地理区域代码", { values: ["GCC", "MEA", "EUROPE", "NORTH_AMERICA", "LATAM", "APAC"], characterSet: "ascii", collation: "ascii_bin" }),
+    ],
+    indexes: [uk("uk_country_region_country", "country_code")],
+  }),
 ]);

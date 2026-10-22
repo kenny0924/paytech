@@ -24,11 +24,11 @@ final class ClientCustomerConverter {
             customer.getCustomerStatus().getCode(), customer.getCreateTime(), customer.getDeletedTime());
     }
 
-    /** 已存卡列表；不返回后四位以外的卡要素。 */
+    /** 已存卡列表；只返回掩码卡号、卡组织与有效期，不返回其他卡要素。 */
     static ListStoredCardsResponseBody storedCards(List<StoredCard> cards) {
         return new ListStoredCardsResponseBody(cards.stream()
             .map(card -> new ListStoredCardsResponseBody.StoredCardInfo(card.storedCardToken(), card.maskedPan(),
-                card.expiryMonth(), card.expiryYear(), card.createdAt()))
+                card.cardBrand(), card.expiryMonth(), card.expiryYear(), card.createdAt()))
             .toList());
     }
 }

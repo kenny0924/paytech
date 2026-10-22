@@ -48,7 +48,7 @@
     "diagramGroups": 7
   },
   "templateSha256": "51d37256d7396bb3fab0ec20275098e30e148c85dfb506bc850990fd74859540",
-  "modelSha256": "4fb5a4c88f00bd5552dc4c66de1811aee4bc73aee40c40674c264966261e4979",
+  "modelSha256": "a58ac7f2957cab09ad11fc5351af661a59734e7c8125791dc6a9ccaf7db703fd",
   "structuralProjectionSha256": "2793402a691608c374c988e9ef2e01a24ad965d3fdec1b0f9acaf8ade026b690"
 }
 ```
@@ -56,11 +56,11 @@
 
 ### 2.1 按服务的表归属（重构第 05 步，不改表结构）
 
-上方 Manifest 记录的是拆分前的 Payment Orchestration 统一模型统计（27 表，不含卡域表）；第 12 步 `t_payment_instrument_token` 在 `instrument_ref` 后新增 `customer_id`、`consent_to_save`、`card_bin`、`card_fingerprint`，字段数由 345 变为 349，其余表结构与字段不变。重构第 05 步按 [design/03 §2.3](../../../../requirements/20261017/architecture-V2骨架与模块搬迁/design/03-module-and-table-ownership.md) 把模型拆为两份规范模型，由同一生成器的分区（`scripts/pdmaner/payment-service-partition.mjs`）产出；跨服务关系不再出现在任一模型中，`t_compensation_event` 每库一份：
+上方 Manifest 记录的是拆分前的 Payment Orchestration 统一模型统计（27 表，不含卡域表）；第 12 步 `t_payment_instrument_token` 在 `instrument_ref` 后新增 `customer_id`、`consent_to_save`、`card_bin`、`card_fingerprint`，字段数由 345 变为 349，其余表结构与字段不变。2026-10-22 [BIN 库需求](../../../../requirements/20261022/card-BIN库与卡属性/technique.md)（3.4 快照）在 `card_fingerprint` 后追加 8 个可空列 `card_brand`、`funding_type`、`card_level`、`card_product`、`issuer_country`、`issuer_region`、`bin_library_version_no`、`bin_match_length`，冻结交易工具创建时的 BIN 库卡属性快照（首次绑定写入，重放沿用，不随 BIN 库更新改变）；两份模型并集字段数由 401 变为 409，不改索引。重构第 05 步按 [design/03 §2.3](../../../../requirements/20261017/architecture-V2骨架与模块搬迁/design/03-module-and-table-ownership.md) 把模型拆为两份规范模型，由同一生成器的分区（`scripts/pdmaner/payment-service-partition.mjs`）产出；跨服务关系不再出现在任一模型中，`t_compensation_event` 每库一份：
 
 | 服务 / 数据库 | 规范模型 | 表 |
 |---|---|---|
-| payment / `mor_payment` | [`payment.pdma.json`](payment.pdma.json)、[`sql/payment-schema.sql`](sql/payment-schema.sql) | `t_routing_decision`、`t_route_candidate_eval`、`t_payment_intent`、`t_payment_attempt`、`t_payment_instrument_token`、`t_payment_action`、`t_channel_transaction_ref`、`t_duplicate_payment_case`、`t_payment_refund_position`、`t_channel_refund`、`t_compensation_event`；在 dispute 服务建立前暂留的 `t_channel_dispute_notice`、`t_channel_dispute_event`、`t_channel_dispute_action`（归属 dispute，仅 Schema）；待删除的 `t_command_idempotency`（S10） |
+| payment / `mor_payment` | [`payment.pdma.json`](payment.pdma.json)、[`sql/payment-schema.sql`](sql/payment-schema.sql) | `t_routing_decision`、`t_route_candidate_eval`、`t_payment_intent`、`t_payment_attempt`、`t_payment_instrument_token`、`t_payment_action`、`t_channel_transaction_ref`、`t_duplicate_payment_case`、`t_payment_refund_position`、`t_channel_refund`、`t_compensation_event`、`t_consumed_event`、`t_consumed_aggregate_version`（2026-10-22 3DS 全链路：Payment 首次消费 `ChannelPaymentNotified`，messaging 标准消费表由 `scripts/pdmaner/payment/payment-model-additions.mjs` 追加）；在 dispute 服务建立前暂留的 `t_channel_dispute_notice`、`t_channel_dispute_event`、`t_channel_dispute_action`（归属 dispute，仅 Schema）；待删除的 `t_command_idempotency`（S10） |
 | channel-connector / `mor_channel_connector` | [`channel-connector.pdma.json`](../../../channel-connector/docs/database/channel-connector.pdma.json)、[`sql/channel-connector-schema.sql`](../../../channel-connector/docs/database/sql/channel-connector-schema.sql) | `t_channel`、`t_channel_account`、`t_channel_mid`、`t_mid_capability`、`t_mid_capability_detail`、`t_routing_policy`、`t_routing_policy_version`、`t_routing_policy_mid`、`t_channel_interaction`、`t_channel_callback`、`t_channel_callback_item`、`t_channel_event_exception`、`t_compensation_event` |
 | card / `mor_card`（第 12 步迁出 payment） | [`card.pdma.json`](../../../card/docs/database/card.pdma.json)、[`sql/card-schema.sql`](../../../card/docs/database/sql/card-schema.sql) | `t_payment_card`、`t_payment_card_credential`、`t_payment_card_instrument`、`t_payment_stored_card`、`t_card_material_ticket`、`t_compensation_event`、`t_consumed_event`、`t_consumed_aggregate_version`（卡域 4 表的模型由 `scripts/pdmaner/card-model-additions.mjs` 维护） |
 

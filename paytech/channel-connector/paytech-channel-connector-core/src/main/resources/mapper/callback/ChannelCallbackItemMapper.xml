@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.channel.connector.core.dal.mapper.ChannelCallbackItemMapper">
+    <resultMap id="row" type="com.paytech.channel.connector.core.dal.dataobject.ChannelCallbackItem">
+        <result column="channel_callback_item_id" property="channelCallbackItemId"/>
+        <result column="channel_callback_id" property="channelCallbackId"/>
+        <result column="item_no" property="itemNo"/>
+        <result column="event_type" property="eventType"/>
+        <result column="external_transaction_id" property="externalTransactionId"/>
+        <result column="target_type" property="targetType"
+                javaType="com.paytech.channel.connector.core.enums.CallbackTargetType"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="target_id" property="targetId"/>
+        <result column="normalized_status" property="normalizedStatus"/>
+        <result column="channel_event_time" property="channelEventTime"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        <result column="mapping_status" property="mappingStatus"
+                javaType="com.paytech.channel.connector.core.enums.CallbackMappingStatus"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="create_time" property="createTime"
+                typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+    </resultMap>
+    <sql id="columns">channel_callback_item_id, channel_callback_id, item_no, event_type, external_transaction_id,
+        target_type, target_id, normalized_status, channel_event_time, mapping_status, create_time
+    </sql>
+    <insert id="insert">
+        INSERT INTO t_channel_callback_item (<include refid="columns"/>)
+        VALUES (#{channelCallbackItemId}, #{channelCallbackId}, #{itemNo}, #{eventType},
+        #{externalTransactionId,jdbcType=VARCHAR}, #{targetType.code}, #{targetId,jdbcType=BIGINT},
+        #{normalizedStatus,jdbcType=VARCHAR},
+        #{channelEventTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP},
+        #{mappingStatus.code},
+        #{createTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP})
+    </insert>
+    <select id="findByCallback" resultMap="row">
+        SELECT <include refid="columns"/> FROM t_channel_callback_item WHERE channel_callback_id = #{callbackId}
+        ORDER BY item_no
+    </select>
+</mapper>

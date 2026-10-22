@@ -25,6 +25,12 @@ public class StoredCardListResponseBody {
         /** 卡号后 4 位 */
         private String last4;
 
+        /**
+         * 卡组织（主品牌），{@code CardBrand} Code，供展示图标
+         * <li>按当前生效 BIN 库实时查询，只用于展示；回切 BIN 库后可能与历史交易快照不同。未识别或没有生效版本时为 null。</li>
+         */
+        private String cardBrand;
+
         /** 有效期月份，两位 */
         private String expiryMonth;
 

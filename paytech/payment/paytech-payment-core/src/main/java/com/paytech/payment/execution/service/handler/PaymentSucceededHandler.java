@@ -38,7 +38,8 @@ import lombok.AllArgsConstructor;
  * 支付成功提交后发布 PaymentSucceeded
  * <li>eventKey 是支付尝试 ID；Handler 从尝试、意图、成功 PAY 动作及其渠道交易引用重建事件，补偿记录不保存业务内容。</li>
  * <li>经 {@link DomainEventPublisher} 向 payment.events 发布 Schema v2 信封（aggregateType=PAYMENT_ATTEMPT、aggregateId=尝试 ID、
- * aggregateVersion=尝试版本，design/08 §3、D34；v2 增加 instrumentRef、consentToSave、customerId 供 card 存卡，design/05 §2.3）；
+ * aggregateVersion=尝试版本，design/08 §3、D34；v2 增加 instrumentRef、consentToSave、customerId 供 card 存卡，design/05 §2.3；
+ * BIN 库需求再追加可空 cardBrand、fundingType、cardLevel 供 billing，版本仍为 2）；
  * 消费方已全部切到新信封，旧 Topic 第 08 步停发。</li>
  * <li>收到 Broker 确认且至少路由到一个订阅队列才成功；失败按可重试处理，消费方按 eventId 防重。</li>
  * <li>同一尝试的发布任务经 messaging 的 AggregateKeySequencer 按事件键串行执行（payment-app 装配）。</li>
@@ -138,7 +139,7 @@ public class PaymentSucceededHandler implements CompensationEventHandler {
             .payload(PaymentSucceededPayload.json(result)).build();
     }
 
-    /** 组装事件事实；成功时间优先取渠道结果时间；卡工具字段只在卡支付时填写。 */
+    /** 组装事件事实；成功时间优先取渠道结果时间；卡工具字段与冻结的卡属性只在卡支付时填写。 */
     static PaymentSucceededResult result(PaymentIntent intent, PaymentAttempt attempt, PaymentAction pay,
         ChannelTransactionRef ref, PaymentInstrumentToken token) {
         boolean card = token.getInstrumentType() == InstrumentType.CARD;
@@ -151,6 +152,8 @@ public class PaymentSucceededHandler implements CompensationEventHandler {
             .paymentMethodCode(attempt.getPaymentMethodCode()).channelId(attempt.getChannelId())
             .channelAccountId(attempt.getChannelAccountId()).midId(attempt.getMidId())
             .channelTransactionRef(ref.getExternalTransactionId()).instrumentRef(card ? token.getInstrumentRef() : null)
-            .consentToSave(card && token.isConsentToSave()).customerId(token.getCustomerId()).build();
+            .consentToSave(card && token.isConsentToSave()).customerId(token.getCustomerId())
+            .cardBrand(card ? token.getCardBrand() : null).fundingType(card ? token.getFundingType() : null)
+            .cardLevel(card ? token.getCardLevel() : null).build();
     }
 }

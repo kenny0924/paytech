@@ -1,0 +1,386 @@
+{
+ "pages-2026-10-22T18:17:58Z": {
+  "navigation": {
+   "http": 404,
+   "total": null,
+   "code": "GATEWAY_ROUTE_NOT_FOUND"
+  },
+  "wfDefinitions": {
+   "http": 400,
+   "total": null,
+   "code": "INVALID_REQUEST"
+  },
+  "wfTemplates": {
+   "http": 400,
+   "total": null,
+   "code": "INVALID_REQUEST"
+  },
+  "wfInstances": {
+   "http": 400,
+   "total": null,
+   "code": "INVALID_REQUEST"
+  },
+  "wfTodos": {
+   "http": 404,
+   "total": null,
+   "code": "GATEWAY_ROUTE_NOT_FOUND"
+  },
+  "storageRoutes": {
+   "http": 200,
+   "total": null,
+   "code": null
+  },
+  "storageInstances": {
+   "http": 200,
+   "total": null,
+   "code": null
+  },
+  "dataSources": {
+   "http": 400,
+   "total": null,
+   "code": "INVALID_REQUEST"
+  },
+  "queryTemplates": {
+   "http": 400,
+   "total": null,
+   "code": "INVALID_REQUEST"
+  },
+  "channels": {
+   "http": 200,
+   "total": 10,
+   "code": null
+  },
+  "standardApis": {
+   "http": 200,
+   "total": 9,
+   "code": null
+  },
+  "gatewayRoutes": {
+   "http": 400,
+   "total": null,
+   "code": "INVALID_REQUEST"
+  },
+  "standardApiFields": {
+   "REFUND": {
+    "http": 200,
+    "version": 2,
+    "paymentChannelRef": true,
+    "threeDsRequired": false
+   },
+   "CAPTURE": {
+    "http": 200,
+    "version": 2,
+    "paymentChannelRef": true,
+    "threeDsRequired": false
+   },
+   "PAY": {
+    "http": 200,
+    "version": 3,
+    "paymentChannelRef": false,
+    "threeDsRequired": false
+   },
+   "PAY_QUERY": {
+    "http": 200,
+    "version": 1,
+    "paymentChannelRef": false,
+    "threeDsRequired": false
+   },
+   "QUERY": {
+    "http": 404,
+    "version": null,
+    "paymentChannelRef": false,
+    "threeDsRequired": false
+   }
+  }
+ },
+ "health-2026-10-22T18:27:38Z": {
+  "since": "2026-10-22T17:55:00Z",
+  "services": {
+   "risk-decision-service": {
+    "health": "healthy",
+    "restarts": 0,
+    "image": "sha256:d69ca678416a",
+    "startedAt": "2026-10-22T17:59:29.143232548Z",
+    "errorLines": 0,
+    "errorSamples": []
+   },
+   "payment-service": {
+    "health": "healthy",
+    "restarts": 0,
+    "image": "sha256:4cf16f15d784",
+    "startedAt": "2026-10-22T18:14:42.728078721Z",
+    "errorLines": 0,
+    "errorSamples": []
+   },
+   "acquiring-service": {
+    "health": "healthy",
+    "restarts": 0,
+    "image": "sha256:3958983e2fa3",
+    "startedAt": "2026-10-22T18:00:43.179663346Z",
+    "errorLines": 0,
+    "errorSamples": []
+   },
+   "counterparty-service": {
+    "health": "healthy",
+    "restarts": 0,
+    "image": "sha256:6586bd73b922",
+    "startedAt": "2026-10-22T18:01:11.86406272Z",
+    "errorLines": 0,
+    "errorSamples": []
+   },
+   "platform-support-service": {
+    "health": "healthy",
+    "restarts": 0,
+    "image": "sha256:96da579bb45a",
+    "startedAt": "2026-10-22T18:01:48.164547751Z",
+    "errorLines": 0,
+    "errorSamples": []
+   },
+   "card-service": {
+    "health": "healthy",
+    "restarts": 0,
+    "image": "sha256:c39a39908a69",
+    "startedAt": "2026-10-22T18:02:32.412341882Z",
+    "errorLines": 0,
+    "errorSamples": []
+   },
+   "channel-connector-service": {
+    "health": "healthy",
+    "restarts": 0,
+    "image": "sha256:23679d451fe4",
+    "startedAt": "2026-10-22T18:03:17.272149459Z",
+    "errorLines": 0,
+    "errorSamples": []
+   },
+   "api-gateway": {
+    "health": "healthy",
+    "restarts": 0,
+    "image": "sha256:270c8ba294dd",
+    "startedAt": "2026-10-22T18:04:04.527778633Z",
+    "errorLines": 0,
+    "errorSamples": []
+   },
+   "operations-console-bff": {
+    "health": "healthy",
+    "restarts": 0,
+    "image": "sha256:9c382db3d498",
+    "startedAt": "2026-10-22T18:04:34.235729217Z",
+    "errorLines": 0,
+    "errorSamples": []
+   },
+   "operations-console-web": {
+    "health": "healthy",
+    "restarts": 0,
+    "image": "sha256:8bdbdd443f95",
+    "startedAt": "2026-10-22T18:04:49.008000376Z",
+    "errorLines": 0,
+    "errorSamples": []
+   }
+  }
+ },
+ "sandbox-2026-10-22T18:27:52Z": {
+  "I_CYBS_NI/SBX_AUTH_CAPTURE": {
+   "http": 200,
+   "start": {
+    "runCode": "239090632642109440",
+    "runStatus": "RUNNING"
+   },
+   "status": null,
+   "result": null,
+   "steps": [
+    {
+     "stepNo": 1,
+     "standardApiCode": "AUTHORIZE",
+     "status": null,
+     "outcome": null,
+     "resultStatus": null
+    },
+    {
+     "stepNo": 2,
+     "standardApiCode": "CAPTURE",
+     "status": null,
+     "outcome": null,
+     "resultStatus": null
+    },
+    {
+     "stepNo": 3,
+     "standardApiCode": "CAPTURE",
+     "status": null,
+     "outcome": null,
+     "resultStatus": null
+    },
+    {
+     "stepNo": 4,
+     "standardApiCode": "REFUND",
+     "status": null,
+     "outcome": null,
+     "resultStatus": null
+    }
+   ]
+  },
+  "I_MPGS_NI/SBX_AUTH_CAPTURE_CHAIN": {
+   "http": 200,
+   "start": {
+    "runCode": "239091405828497408",
+    "runStatus": "RUNNING"
+   },
+   "status": null,
+   "result": null,
+   "steps": [
+    {
+     "stepNo": 1,
+     "standardApiCode": "AUTHORIZE",
+     "status": null,
+     "outcome": null,
+     "resultStatus": null
+    },
+    {
+     "stepNo": 2,
+     "standardApiCode": "CAPTURE",
+     "status": null,
+     "outcome": null,
+     "resultStatus": null
+    },
+    {
+     "stepNo": 3,
+     "standardApiCode": "CAPTURE",
+     "status": null,
+     "outcome": null,
+     "resultStatus": null
+    },
+    {
+     "stepNo": 4,
+     "standardApiCode": "CAPTURE",
+     "status": null,
+     "outcome": null,
+     "resultStatus": null
+    },
+    {
+     "stepNo": 5,
+     "standardApiCode": "CAPTURE",
+     "status": null,
+     "outcome": null,
+     "resultStatus": null
+    },
+    {
+     "stepNo": 6,
+     "standardApiCode": "REFUND",
+     "status": null,
+     "outcome": null,
+     "resultStatus": null
+    }
+   ]
+  }
+ },
+ "sandbox-results-2026-10-22T18:29Z": {
+  "I_CYBS_NI/SBX_AUTH_CAPTURE": {
+   "runCode": "239090632642109440",
+   "runStatus": "PASSED",
+   "steps": [
+    "AUTHORIZE PASSED",
+    "CAPTURE PASSED",
+    "CAPTURE PASSED",
+    "REFUND PASSED"
+   ]
+  },
+  "I_MPGS_NI/SBX_AUTH_CAPTURE_CHAIN": {
+   "runCode": "239091405828497408",
+   "runStatus": "PASSED",
+   "steps": [
+    "AUTHORIZE PASSED",
+    "CAPTURE PASSED",
+    "CAPTURE PASSED",
+    "CAPTURE PASSED",
+    "CAPTURE PASSED",
+    "REFUND PASSED"
+   ]
+  }
+ },
+ "health-2026-10-22T18:42:34Z": {
+  "since": "2026-10-22T17:55:00Z",
+  "services": {
+   "risk-decision-service": {
+    "health": "healthy",
+    "restarts": 0,
+    "image": "sha256:d69ca678416a",
+    "startedAt": "2026-10-22T17:59:29.143232548Z",
+    "errorLines": 0,
+    "errorSamples": []
+   },
+   "payment-service": {
+    "health": "healthy",
+    "restarts": 0,
+    "image": "sha256:4cf16f15d784",
+    "startedAt": "2026-10-22T18:14:42.728078721Z",
+    "errorLines": 0,
+    "errorSamples": []
+   },
+   "acquiring-service": {
+    "health": "healthy",
+    "restarts": 0,
+    "image": "sha256:3958983e2fa3",
+    "startedAt": "2026-10-22T18:00:43.179663346Z",
+    "errorLines": 1,
+    "errorSamples": [
+     "2026-10-22T18:41:31.476Z ERROR 1 --- [acquiring-service] [ng.payment.p2-1] c.p.f.m.c.DomainEventMessageListener     : 领域事件进入 DLQ: Handler 拒绝领域事件: DomainEvent[PaymentSucceeded PAYMENT_ATTEMPT:239094961201565696 v5 id=PAYMENT_ATTEMPT:23909496"
+    ]
+   },
+   "counterparty-service": {
+    "health": "healthy",
+    "restarts": 0,
+    "image": "sha256:6586bd73b922",
+    "startedAt": "2026-10-22T18:01:11.86406272Z",
+    "errorLines": 0,
+    "errorSamples": []
+   },
+   "platform-support-service": {
+    "health": "healthy",
+    "restarts": 0,
+    "image": "sha256:96da579bb45a",
+    "startedAt": "2026-10-22T18:01:48.164547751Z",
+    "errorLines": 0,
+    "errorSamples": []
+   },
+   "card-service": {
+    "health": "healthy",
+    "restarts": 0,
+    "image": "sha256:c39a39908a69",
+    "startedAt": "2026-10-22T18:02:32.412341882Z",
+    "errorLines": 0,
+    "errorSamples": []
+   },
+   "channel-connector-service": {
+    "health": "healthy",
+    "restarts": 0,
+    "image": "sha256:23679d451fe4",
+    "startedAt": "2026-10-22T18:03:17.272149459Z",
+    "errorLines": 0,
+    "errorSamples": []
+   },
+   "api-gateway": {
+    "health": "healthy",
+    "restarts": 0,
+    "image": "sha256:270c8ba294dd",
+    "startedAt": "2026-10-22T18:04:04.527778633Z",
+    "errorLines": 0,
+    "errorSamples": []
+   },
+   "operations-console-bff": {
+    "health": "healthy",
+    "restarts": 0,
+    "image": "sha256:9c382db3d498",
+    "startedAt": "2026-10-22T18:04:34.235729217Z",
+    "errorLines": 0,
+    "errorSamples": []
+   },
+   "operations-console-web": {
+    "health": "healthy",
+    "restarts": 0,
+    "image": "sha256:8bdbdd443f95",
+    "startedAt": "2026-10-22T18:04:49.008000376Z",
+    "errorLines": 0,
+    "errorSamples": []
+   }
+  }
+ }
+}

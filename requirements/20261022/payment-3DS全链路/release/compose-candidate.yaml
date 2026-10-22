@@ -1,0 +1,78 @@
+# 3DS 全链路 + 卡 BIN 库合并发布：mor-test 候选覆盖文件（2026-10-22 阶段 6 准备；阶段 7 由主会话按 release.md 第 6 节执行，另需用户授权）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件，不叠加任何历史候选文件：
+#   ./test-environment/compose.sh -f "$PWD/requirements/20261022/payment-3DS全链路/release/compose-candidate.yaml" \
+#     up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 一次只换一个服务，顺序见 release.md 第 6 节。不加 --remove-orphans。
+# 镜像：2026-10-22 卡 H 已构建，钉 sha256。42879401 工作流发布后改以 rel2（/Users/kenny/Desktop/Workspace/Code-MoR-card3ds-rel2 = 42879401 + 两项需求）构建：
+#   platform、ops-bff、ops-web、acquiring、card、api-gateway 为 card3ds-20261022b；risk-decision、payment、counterparty、channel-connector
+#   的 rel2 构建与原 card3ds-20261022 逐条目相同，沿用原镜像。构建源 = 卡 F 集成代码（初版 rel = 73a2460d，现 rel2 = 42879401）
+#   （含 CYBS 3 个脚本函数、文件多存储第二段、工作流附件内嵌预览；ops-web 另带主工作区 16 个未提交文件，见 release.md 需要决定 N6）。
+#   镜像内 JAR / dist 与构建产物逐字节相同，基线证明与差异见 release.md 第 2.4 节。不使用 :development。
+# 环境变量：2026-10-22 阶段 6 核对，主 compose 渲染结果与十个运行容器逐键、逐值相同，唯一例外是 Platform 运行中有 DATAQUERY_HTTP_CALLERS_0、
+#   主 compose 没有（release.md 第 2.3 节）。历次 compose-candidate*.yaml 中出现过的这十个服务的键（Platform 的 DUAL、PAYTECH_INSTANCE_ID、
+#   5 个 PLATFORM_SUPPORT_RABBITMQ_*、PLATFORM_SUPPORT_FILES_ENABLED、COMPENSATION_ENABLED；Gateway 的 GATEWAY_CLIENT_SECURITY_*；
+#   ops-bff 的 OPERATIONS_ACCOUNT/BILLING/LEDGER/RECONCILIATION_BASE_URL）主 compose 都已包含，只有 DATAQUERY_HTTP_CALLERS_0 需要本文件带入。
+#   旧 FILES_ONBOARDING_* 键主 compose 已删除，现网也没有，不再置空。
+# 本次新增：payment PAYMENT_CHANNEL_CALLBACK_BASE_URL（置空，mor-test 无公网入口）；channel-connector 5 个 RabbitMQ 键；
+#   card 信任库（下载 MinIO 预签名地址，私有 CA）。Payment 的 MQ 消费配置（consumer.service、partitions 4）写在 application.yml，不需要变量。
+# 回滚：同目录 compose-rollback.yaml。
+services:
+  risk-decision-service:
+    # PAYMENT_ATTEMPT 合同 v1 原地追加 issuer_country_code / card_brand / funding_type；评估快照 3 列；新发布引用点版本 220003。
+    image: sha256:d69ca678416aaceb746d3fac0933e0e138c6eb36441c6e8ea7e75804d0bca523  # mor-test/risk-decision-service:card3ds-20261022（JAR 3b0195e5267cf692）
+  payment-service:
+    # 卡属性快照、Risk 输入、schemeCode 路由、PaymentSucceeded v2 追加 3 个可空字段；3DS：PAY 带 threeDsRequired、按 SECURITY.3DS_MODE
+    # 选路由、确认支付结果（刷新接口 / PAY_RESULT_QUERY / ChannelPaymentNotified 监听）、t_consumed_* 消费表。
+    image: sha256:4cf16f15d7840f4027f79c1a743f87d2325e57d4d37df558606085ef9c5e8356  # mor-test/payment-service:card3ds-20261022（JAR c452c35e0b9e060f）
+    environment:
+      # 渠道通知根地址（https、不以 / 结尾）；为空时 PAY 不传 notifyUrl，只靠查单与刷新确认结果。mor-test 没有公网入口，置空（需要决定 N4）。
+      PAYMENT_CHANNEL_CALLBACK_BASE_URL: ""
+      # 阶段 7 缺陷 S7-01（2026-10-22，用户确认）：mor-test 从未配置支付工具申请窗口（默认 PT0S 禁止新建卡工具）；按 README 示例值设 PT5M。
+      # 主 compose（test-environment/compose.applications.yaml）尚无此键，列入发布后待办。
+      PAYMENT_INSTRUMENT_PREPARATION_WINDOW: PT5M
+  acquiring-service:
+    # 收银台轮询触发 Payment 刷新；交互类型接受 THREE_DS_CHALLENGE / REDIRECT；已存卡与 Card 响应新字段。
+    image: sha256:3958983e2fa397ccca4415b9b373f24dd3b248fffb96752ca0e723d3cedacb21  # mor-test/acquiring-service:card3ds-20261022b（rel2，JAR 68a30b6cbd287210）
+  counterparty-service:
+    # Card 已存卡列表新增 cardBrand（严格 JSON 客户端须先认识新字段）。
+    image: sha256:6586bd73b9223c92186978fe457540272c34ee8c9c7772526b4cd867c6de4a81  # mor-test/counterparty-service:card3ds-20261022（JAR c8fd57787d79e61b）
+  platform-support-service:
+    # text/csv 识别与扫描、GET /platform/v1/country-regions；基线须含文件多存储第二段（DUAL、内部文件接口 fileAddress）。
+    # 构建源 rel2（42879401 + 两项需求，含工作流附件 disposition），不回退现网 ac0b4845（release.md 第 2.4.6 节）。
+    image: sha256:96da579bb45a88f7a4639a75961ed1dd85b1858e6bdca77085fd7f7073b396c4  # mor-test/platform-support-service:card3ds-20261022b（JAR 8f35483745704c94）
+    environment:
+      # 主 compose 缺此键（数据查询发布遗留），现网有；不带会使 ops-bff 的数据查询被拒。
+      DATAQUERY_HTTP_CALLERS_0: operations-console-bff
+  card-service:
+    # BIN 库 4 表、运营 7 接口、导入补偿任务 CARD_BIN_LIBRARY_IMPORT（lease 20m 写在 application.yml）、Redis 协调锁（redis.coordination.enabled=true，
+    # 复用已有 MOR_REDIS_*）；交易工具与已存卡返回卡属性。服务端首次下载对象存储文件：MinIO https://minio.mor-test.localhost:29400 为私有 CA，
+    # 与 Platform 共用同一信任库（JDK 默认 cacerts + test-ca，scripts/prepare_client_api_acceptance.sh 生成）。
+    image: sha256:c39a39908a69415a3f1e512f0f0b3767a2775e1e8d16aa1664afa7b25b233465  # mor-test/card-service:card3ds-20261022b（rel2，JAR 221dd930caf4a95e）
+    environment:
+      JAVA_TOOL_OPTIONS: -Djavax.net.ssl.trustStore=/run/mor-test/platform-truststore.p12 -Djavax.net.ssl.trustStoreType=PKCS12 -Djavax.net.ssl.trustStorePassword=changeit
+    volumes:
+      - ./private/platform-truststore.p12:/run/mor-test/platform-truststore.p12:ro
+  channel-connector-service:
+    # QUERY → PAY_QUERY、候选 threeDsMode、nextActionType；渠道回调入站（验签、去重入库）与 ChannelPaymentNotified 发布（首次作为 MQ 生产者）。
+    # 基线须含 code-mor-46 的 3 个脚本函数（3a4574c7）。
+    image: sha256:23679d451fe44dfce08426777b5ec7cbc73a60253c604f149dfc48291c3890aa  # mor-test/channel-connector-service:card3ds-20261022（JAR 9cb23e8161abc430）
+    environment:
+      CHANNEL_CONNECTOR_RABBITMQ_HOST: rabbitmq
+      CHANNEL_CONNECTOR_RABBITMQ_PORT: "5672"
+      CHANNEL_CONNECTOR_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
+      CHANNEL_CONNECTOR_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
+      CHANNEL_CONNECTOR_RABBITMQ_VHOST: /mor-test
+    depends_on:
+      rabbitmq: { condition: service_healthy }
+  api-gateway:
+    # CHANNEL_CALLBACK 安全链（permitAll、关闭 CSRF / Basic / Form），Body 与 sign 头原样转发。
+    image: sha256:270c8ba294ddbb026a70b030e02eb1f998c8d95a49ba88cecaeab49b516efbf4  # mor-test/api-gateway:card3ds-20261022b（rel2，JAR fc425b2e5eea0856）
+  operations-console-bff:
+    # BIN 库运营 9 条路由的 BFF 接口；上传经 Platform 内部文件接口（第二段客户端与 X-Caller-Service）。
+    # 构建源 rel2（42879401 + 两项需求），不回退现网 798d5e4c（release.md 第 2.4.6 节）。
+    image: sha256:9c382db3d4985e0c1d8079d55ef36e3df93e535d65e277390879c9c8d0b750fa  # mor-test/operations-console-bff:card3ds-20261022b（JAR 9a310cf3af3e53d3）
+  operations-console-web:
+    # 平台配置 → 卡 BIN 库页面（含 S5-01、S5-02 修复）。必须同时带上现网 7551dc3b 的按钮布局改动（需要决定 N6）。
+    # 构建源（N6 裁决 B，基线改为 42879401）：rel2 的 operations-console-web + 主工作区 16 个未提交文件（按钮布局 6 + 数据查询页面体验 10），
+    #   不回退现网 11f1d24e；42879401 + 16 文件复现现网逐字节一致；候选源 tsc 通过、npm test 1344 / 1344。差异见 release.md 第 2.4.4、2.4.6 节。
+    image: sha256:8bdbdd443f956e4e8548e41882cda15f07aa5d57919d7eed3fc76ac25b87ae66  # mor-test/operations-console-web:card3ds-20261022b

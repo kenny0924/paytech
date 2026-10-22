@@ -82,9 +82,15 @@ mybatis:
   mapper-locations: "classpath*:mapper/**/*.xml"
 
 # paytech-messaging 发布端：声明 payment.events 并提供 DomainEventPublisher（未路由 FAIL、按聚合串行沿用 application.yml）。
+# 消费端（3DS 全链路）：订阅 channel-connector.events 的 ChannelPaymentNotified，分区队列 payment.channel-connector.p0..p3。
 messaging:
   producer:
     service: payment
+  consumer:
+    service: payment
+  consumers:
+    channel-connector:
+      partitions: 4
 
 paytech:
   instance-id: "main"
@@ -138,6 +144,8 @@ payment:
   execution:
     # 必须显式配置有效窗口；零值仅禁用首次申请，不影响原工具重放。
     instrument-preparation-window: PT30M
+    # 渠道支付通知入口根地址；生产默认空（不传 notifyUrl），测试配置合成 https 地址以验证 PAY 输入中的 notifyUrl。
+    channel-callback-base-url: "https://gateway.local.invalid"
   outbound:
     channel-connector-context-path: ""
     channel-candidate-read-timeout: 5s

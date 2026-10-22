@@ -1,0 +1,50 @@
+-- 00-precheck.sql 阶段 6 试跑输出（第二次，补第二段删除 DDL 核对）：2026-10-22T16:27Z，mor-test-mysql-1（root，只读）。
++------------------------------------------------------------------------------------------------------------------------------------------------+-----------------+-----------------+------+
+| item                                                                                                                                           | actual          | expected        | ok   |
++------------------------------------------------------------------------------------------------------------------------------------------------+-----------------+-----------------+------+
+| 01 mor_card BIN 4 表不存在                                                                                                                     | 0               | 0               |    1 |
+| 02 mor_payment 消费表 2 张不存在                                                                                                               | 0               | 0               |    1 |
+| 03 mor_payment Token 卡属性 8 列不存在                                                                                                         | 0               | 0               |    1 |
+| 04 mor_payment Token 锚点列 card_fingerprint 存在                                                                                              | 1               | 1               |    1 |
+| 05 mor_payment 交互类型列定义 varchar(32) ascii_bin 可空                                                                                       | 1               | 1               |    1 |
+| 06 mor_risk_decision 评估快照 3 列不存在                                                                                                       | 0               | 0               |    1 |
+| 07 mor_risk_decision 锚点列 card_bin 存在                                                                                                      | 1               | 1               |    1 |
+| 08 mor_channel_connector t_channel.callback_definition_json 不存在                                                                             | 0               | 0               |    1 |
+| 09 mor_channel_connector 锚点列 endpoints 存在                                                                                                 | 1               | 1               |    1 |
+| 10 mor_channel_connector target_type varchar(64) NOT NULL utf8mb4                                                                              | 1               | 1               |    1 |
+| 11 mor_channel_connector received_at datetime(6) NOT NULL                                                                                      | 1               | 1               |    1 |
+| 12 mor_platform t_country_region 不存在                                                                                                        | 0               | 0               |    1 |
+| 13 表数 mor_card / payment / channel_connector / risk_decision / platform = 8/15/28/54/62                                                      | 8/15/28/54/62   | 8/15/28/54/62   |    1 |
+| 14 文件多存储第二段删除 DDL 已执行：t_file_upload 无 owner_* 三列、无 t_file_owner_ref、t_application_document 无 file_id                      | 0               | 0               |    1 |
+| 15 t_application_document 只按 file_address 关联                                                                                               | 1               | 1               |    1 |
+| 20 mor_platform 块 132/133 九张表 ID 段全空                                                                                                    | 0               | 0               |    1 |
+| 21 权限码 CARD_BIN_LIBRARY_READ / MANAGE 未占用                                                                                                | 0               | 0               |    1 |
+| 22 扫描策略 CARD_BIN_CSV 未占用                                                                                                                | 0               | 0               |    1 |
+| 23 路由码 channel-payment-callback 与 BIN / 回调外部路径未占用                                                                                 | 0               | 0               |    1 |
+| 24 Target channel-connector-service / 渠道 CHANNEL_CALLBACK 未占用                                                                             | 0               | 0               |    1 |
+| 25 菜单路由 /card-bin-library 未占用                                                                                                           | 0               | 0               |    1 |
+| 26 块 132 依赖：ops-bff Target 900000000000000001 ACTIVE                                                                                       | 1               | 1               |    1 |
+| 27 块 132 依赖：父菜单 平台配置 900000000000000562 ACTIVE                                                                                      | 1               | 1               |    1 |
+| 28 PLATFORM_ADMIN 角色版本 = 44                                                                                                                | 44              | 44              |    1 |
+| 29 Gateway 路由总数 / ACTIVE = 526 / 521                                                                                                       | 526/521         | 526/521         |    1 |
+| 30 ops-bff 文件写入路由不存在（发布时在存储管理页登记）                                                                                        | 0               | 0               |    1 |
+| 31 写入路由目标桶 mor-platform-files ACTIVE                                                                                                    | 1               | 1               |    1 |
+| 40 Risk 点版本 220003 / 210002 版本 2 未占用                                                                                                   | 0               | 0               |    1 |
+| 41 Risk 220002 摘要与初始化数据一致                                                                                                            | 1               | 1               |    1 |
+| 42 Risk 变量 93014—016 与三个变量码未占用                                                                                                      | 0               | 0               |    1 |
+| 43 支付点 ACTIVE 发布 = release 11（点版本 220002）                                                                                            | 11              | 11              |    1 |
+| 44 R-11：THREE_DS_AMOUNT（金额 > 500 → THREE_DS_REQUIRED）在生效流程中                                                                         | 1               | 1               |    1 |
+| 50 渠道 PAYERMAX 存在（PAYMENT）                                                                                                               | 1               | 1               |    1 |
+| 51 渠道 PAYERMAX_MOCK 不存在（回调定义 DML 在 mor-test 只影响 1 行）                                                                           | 0               | 0               |    1 |
+| 52 PAYERMAX 无技术账号与 MID                                                                                                                   | 0               | 0               |    1 |
+| 53 PAYERMAX 原子 API ORDER_AND_PAY 仍为收银台版（无 cardInfo）                                                                                 | 1               | 1               |    1 |
+| 54 标准 API 版本 PAY/PAY_QUERY/REFUND/CAPTURE = 3/1/2/2                                                                                        | 3/1/2/2         | 3/1/2/2         |    1 |
+| 55 标准 API PAY 尚无 payment.threeDsRequired                                                                                                   | 0               | 0               |    1 |
+| 56 code-mor-46 字段 REFUND / CAPTURE paymentChannelRef 存在（不得被覆盖）                                                                      | 2               | 2               |    1 |
+| 57 t_mid_capability.scheme_code 全为 *（3 行）                                                                                                 | 3 rows; non-* 0 | 3 rows; non-* 0 |    1 |
+| 58 尚无 SECURITY.3DS_MODE 能力明细                                                                                                             | 0               | 0               |    1 |
+| 59 回调两表为空                                                                                                                                | 0               | 0               |    1 |
+| 60 mor_payment 意图 / 尝试 / 动作 / Token / 补偿 全为 0                                                                                        | 0/0/0/0/0       | 0/0/0/0/0       |    1 |
+| 61 mor_card 补偿事件为 0                                                                                                                       | 0               | 0               |    1 |
+| 70 XXL compensationEventScan 已登记且启用（payment / card / channel-connector）                                                                | 3               | 3               |    1 |
++------------------------------------------------------------------------------------------------------------------------------------------------+-----------------+-----------------+------+

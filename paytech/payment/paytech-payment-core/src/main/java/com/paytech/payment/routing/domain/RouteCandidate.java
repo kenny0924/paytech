@@ -13,6 +13,9 @@ public class RouteCandidate {
     /** 渠道 ID */
     private Long channelId;
 
+    /** 渠道编码，用于拼渠道支付通知地址 */
+    private String channelCode;
+
     /** 渠道账号 ID */
     private Long channelAccountId;
 
@@ -30,4 +33,10 @@ public class RouteCandidate {
 
     /** 本次币种匹配到的金额上限，未声明为 null */
     private BigDecimal maxAmount;
+
+    /**
+     * 3DS 模式（SECURITY.3DS_MODE）
+     * <li>REQUIRED、SUPPORTED、UNSUPPORTED，取值常量见 ChannelCapabilityCodes；未声明为 null。</li>
+     */
+    private String threeDsMode;
 }

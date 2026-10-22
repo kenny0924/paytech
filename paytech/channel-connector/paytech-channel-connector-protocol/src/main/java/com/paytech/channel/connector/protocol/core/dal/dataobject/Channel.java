@@ -36,6 +36,12 @@ public class Channel {
      */
     private String endpoints;
 
+    /**
+     * 支付结果通知定义 JSON（验签、字段路径与成功应答，3DS 全链路 technique 3.4）
+     * <li>只有支付渠道可配置，人工 DML 写入；为空表示不接收通知。创建与修改渠道时不写入。</li>
+     */
+    private String callbackDefinitionJson;
+
     /** 名称、说明或出站地址保存时递增的并发版本，初始为 1。 */
     private int version;
 

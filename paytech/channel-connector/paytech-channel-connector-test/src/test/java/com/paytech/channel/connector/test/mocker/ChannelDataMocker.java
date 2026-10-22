@@ -146,6 +146,19 @@ public class ChannelDataMocker implements Clear {
         mapper.insertMidCapabilityDetail(detail);
     }
 
+    /** 在已有条件组上增加一个 CODE 能力明细（例如 SECURITY.3DS_MODE），复用已有组而不制造重复唯一键。 */
+    public void codeCapabilityDetail(Fixture fixture, String code, String value) {
+        var detail = new MidCapabilityDetail();
+        detail.setMidCapabilityDetailId(ids.nextId());
+        detail.setMidCapabilityId(mapper.capabilityId(fixture.getMid().getMidId()));
+        detail.setCapabilityCode(code);
+        detail.setValueType(CapabilityValueType.CODE);
+        detail.setCodeValue(value);
+        detail.setCreateTime(fixture.getMid().getCreateTime());
+        detail.setUpdateTime(detail.getCreateTime());
+        mapper.insertMidCapabilityDetail(detail);
+    }
+
     /** 在明确币种条件下增加精确金额上下限，复用已有组而不制造重复唯一键。 */
     public void amountBounds(Fixture fixture, BigDecimal minimum, BigDecimal maximum) {
         long scopeId = mapper.capabilityId(fixture.getMid().getMidId());

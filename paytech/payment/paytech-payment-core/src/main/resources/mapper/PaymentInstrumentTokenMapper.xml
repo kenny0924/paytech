@@ -15,6 +15,14 @@
         <result column="consent_to_save" property="consentToSave"/>
         <result column="card_bin" property="cardBin"/>
         <result column="card_fingerprint" property="cardFingerprint"/>
+        <result column="card_brand" property="cardBrand"/>
+        <result column="funding_type" property="fundingType"/>
+        <result column="card_level" property="cardLevel"/>
+        <result column="card_product" property="cardProduct"/>
+        <result column="issuer_country" property="issuerCountry"/>
+        <result column="issuer_region" property="issuerRegion"/>
+        <result column="bin_library_version_no" property="binLibraryVersionNo"/>
+        <result column="bin_match_length" property="binMatchLength"/>
         <result column="expires_at" property="expiresAt" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
         <result column="revoked_at" property="revokedAt" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
         <result column="create_time" property="createTime" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
@@ -24,7 +32,8 @@
     <sql id="PaymentInstrumentTokenColumns">
         payment_instrument_token_id, payment_instrument_token, client_id, payment_intent_id, source_submission_id,
         payment_method_code, instrument_type, instrument_ref, customer_id, consent_to_save, card_bin, card_fingerprint,
-        expires_at, revoked_at, create_time, update_time
+        card_brand, funding_type, card_level, card_product, issuer_country, issuer_region, bin_library_version_no,
+        bin_match_length, expires_at, revoked_at, create_time, update_time
     </sql>
 
     <select id="findTokenBySubmission" resultMap="row">
@@ -38,7 +47,9 @@
         INSERT INTO t_payment_instrument_token (<include refid="PaymentInstrumentTokenColumns"/>)
         SELECT #{paymentInstrumentTokenId}, #{paymentInstrumentToken}, #{clientId}, #{paymentIntentId},
             #{sourceSubmissionId}, #{paymentMethodCode}, #{instrumentType,javaType=com.paytech.payment.execution.core.enums.InstrumentType,typeHandler=com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler,jdbcType=VARCHAR}, #{instrumentRef},
-            #{customerId}, #{consentToSave}, #{cardBin}, #{cardFingerprint},
+            #{customerId}, #{consentToSave}, #{cardBin}, #{cardFingerprint}, #{cardBrand}, #{fundingType}, #{cardLevel},
+            #{cardProduct}, #{issuerCountry}, #{issuerRegion}, #{binLibraryVersionNo,jdbcType=INTEGER},
+            #{binMatchLength,jdbcType=INTEGER},
             #{expiresAt,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}, #{revokedAt,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}, #{createTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}, #{updateTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}
         FROM t_payment_intent
         WHERE payment_intent_id = #{paymentIntentId} AND client_id = #{clientId}

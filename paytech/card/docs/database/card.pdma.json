@@ -2385,6 +2385,1674 @@
       "type": "P"
     },
     {
+      "id": "7D3C28E9-E945-5DAF-B479-07BFD95C0461",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_card_bin_library_version",
+      "defName": "BIN 库版本",
+      "comment": "Card 拥有的 BIN 库版本：一次导入的完整号段数据集；同一时刻只有一个 ACTIVE 版本，激活与回切原子切换。",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "version_id",
+          "defName": "版本标识",
+          "comment": "BIN 库版本的 Snowflake 内部主键，创建后不可修改。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "DFBC34CE-1A39-5A59-A93C-09F80A6CAB2C"
+        },
+        {
+          "defKey": "version_no",
+          "defName": "版本号",
+          "comment": "对运营展示的版本号，从 1 起按创建顺序递增，创建后不可修改。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "DB718F47-8B78-5ED9-9436-4D5D96A4DFDE"
+        },
+        {
+          "defKey": "status",
+          "defName": "版本状态",
+          "comment": "版本状态。允许值：VALIDATING、VALID、INVALID、ACTIVE、RETIRED。VALIDATING 为等待扫描、校验与写入；INVALID 为文件或数据校验失败，不能激活；ACTIVE 为当前生效版本；RETIRED 为曾经生效、已被其他版本替换，可再次激活（回切）。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "355BA487-2451-59F0-A11A-DF1A38F550B4"
+        },
+        {
+          "defKey": "active_slot",
+          "defName": "生效占位",
+          "comment": "当前生效占位：status=ACTIVE 时为 1，其余状态为 NULL；与唯一索引一起保证同一时刻只有一个 ACTIVE 版本。",
+          "type": "TINYINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "F6079371-089B-5552-96B7-A589CD99A67D"
+        },
+        {
+          "defKey": "file_address",
+          "defName": "文件地址",
+          "comment": "导入文件在 Platform 文件服务的稳定地址 /files/v1/{fileId}；初始化种子版本为 NULL。",
+          "type": "VARCHAR",
+          "len": 255,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "ABA71F49-4D05-5486-958A-10B91E8F8ED3"
+        },
+        {
+          "defKey": "file_content_hash",
+          "defName": "文件摘要",
+          "comment": "创建版本时从 Platform 读取并冻结的文件 SHA-256 小写十六进制；导入时逐字节核对，不一致判 INVALID。种子版本为 NULL。",
+          "type": "CHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "4629ED77-822E-4610-86D1-82426E63066E",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "6F7E13BF-A7BB-5025-A722-936CAF148CD0"
+        },
+        {
+          "defKey": "file_name",
+          "defName": "文件名",
+          "comment": "导入文件的展示名，取自 Platform 文件元数据；仅用于运营页面展示。种子版本为 NULL。",
+          "type": "VARCHAR",
+          "len": 255,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "A09E7C8E-0CAE-550E-8A36-D342A3D93A4E"
+        },
+        {
+          "defKey": "total_rows",
+          "defName": "数据行数",
+          "comment": "文件数据行数（不含表头）；校验完成前为 NULL。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "CBAB4F30-FF40-56AE-8E9B-1F4AF76A38C3"
+        },
+        {
+          "defKey": "processed_rows",
+          "defName": "已写入行数",
+          "comment": "已写入号段的数据行数，用于展示导入进度；VALID、ACTIVE、RETIRED 时等于 total_rows。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "0",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "BA2509AD-C6BF-524C-8238-970E6EE4E72E"
+        },
+        {
+          "defKey": "error_rows",
+          "defName": "错误行数",
+          "comment": "校验失败的数据行数（可能大于已记录的错误明细条数）；大于 0 时状态为 INVALID。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "0",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "F0E050E5-5ECD-5274-9F52-8FA8D39D55E9"
+        },
+        {
+          "defKey": "failure_reason",
+          "defName": "失败原因",
+          "comment": "文件级失败原因（扫描未通过、表头不符、哈希不一致、超过行数上限等）；不含卡号；其他状态为 NULL。",
+          "type": "VARCHAR",
+          "len": 256,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "E788A662-1E21-54A9-A664-F5BD89F73FA8"
+        },
+        {
+          "defKey": "created_by",
+          "defName": "导入人",
+          "comment": "发起导入的 Operations 账号 ID；初始化种子版本为 NULL。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "A39410E3-701D-5C84-872F-78B577976F12"
+        },
+        {
+          "defKey": "version",
+          "defName": "并发版本",
+          "comment": "乐观并发版本，新建为 1，每次状态或进度更新成功加 1。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "1",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "33287EE6-054B-51D7-AADD-E13DED94247F"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "应用写入的版本创建 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "895F3309-FF0B-586F-9063-39E5E72CA68F"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "应用写入的版本最近更新 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "F4270818-E584-5A25-A713-96EA2926D02F"
+        }
+      ],
+      "correlations": [],
+      "indexes": [
+        {
+          "defKey": "uk_bin_library_version_no",
+          "defName": "UK BIN LIBRARY VERSION NO",
+          "unique": true,
+          "comment": "唯一索引：version_no",
+          "fields": [
+            {
+              "fieldDefKey": "DB718F47-8B78-5ED9-9436-4D5D96A4DFDE",
+              "ascOrDesc": "A",
+              "id": "64EDBE0E-124D-5AC0-9756-C6C2224A4702"
+            }
+          ],
+          "id": "409ACDBB-9C7E-5358-8BA8-92C1B95B467E"
+        },
+        {
+          "defKey": "uk_bin_library_active",
+          "defName": "UK BIN LIBRARY ACTIVE",
+          "unique": true,
+          "comment": "唯一索引：active_slot；保证同一时刻至多一个 ACTIVE 版本",
+          "fields": [
+            {
+              "fieldDefKey": "F6079371-089B-5552-96B7-A589CD99A67D",
+              "ascOrDesc": "A",
+              "id": "EB59E3C3-906A-5768-85B1-5766793630AF"
+            }
+          ],
+          "id": "C8FDB896-5F55-5EAD-8287-9BC930C0B207"
+        },
+        {
+          "defKey": "uk_bin_library_file",
+          "defName": "UK BIN LIBRARY FILE",
+          "unique": true,
+          "comment": "唯一索引：file_address；同一文件只建一个版本，重复提交返回原版本",
+          "fields": [
+            {
+              "fieldDefKey": "ABA71F49-4D05-5486-958A-10B91E8F8ED3",
+              "ascOrDesc": "A",
+              "id": "40F2BCE0-631B-5C2E-96D6-FB3382582687"
+            }
+          ],
+          "id": "E2FF4412-B749-54F8-AD82-14D77F4BEDE6"
+        },
+        {
+          "defKey": "idx_bin_library_status",
+          "defName": "IDX BIN LIBRARY STATUS",
+          "unique": false,
+          "comment": "支持访问路径：按状态筛选的版本列表",
+          "fields": [
+            {
+              "fieldDefKey": "355BA487-2451-59F0-A11A-DF1A38F550B4",
+              "ascOrDesc": "A",
+              "id": "26B3E7AD-74F7-5D43-AD43-3849124CFDF6"
+            },
+            {
+              "fieldDefKey": "895F3309-FF0B-586F-9063-39E5E72CA68F",
+              "ascOrDesc": "A",
+              "id": "8BFADC9D-44B1-5A20-8D26-7BADB898F46B"
+            }
+          ],
+          "id": "75541C30-6973-5CAB-96D3-399506DE9A42"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "4F842B56-F75D-54B6-8B7F-E4959E3F64F3",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_card_bin_range",
+      "defName": "BIN 号段",
+      "comment": "BIN 库版本中的号段与标准化卡属性；只按 BIN 前缀保存，不含完整卡号。",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "range_id",
+          "defName": "号段标识",
+          "comment": "BIN 号段的 Snowflake 内部主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "39B2B0AF-9455-58C5-94A8-C8756928CC25"
+        },
+        {
+          "defKey": "version_id",
+          "defName": "版本标识",
+          "comment": "所属 BIN 库版本，创建后不可修改。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "ACA00065-7510-570D-ACFB-AF8D1356A708"
+        },
+        {
+          "defKey": "bin_prefix",
+          "defName": "号段前缀",
+          "comment": "号段前缀，6 至 8 位数字；按最长前缀匹配卡 BIN。",
+          "type": "VARCHAR",
+          "len": 8,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "C135488C-A81A-5C0A-9915-6DC0E7AE5981"
+        },
+        {
+          "defKey": "prefix_length",
+          "defName": "前缀位数",
+          "comment": "号段前缀位数，6、7 或 8，等于 bin_prefix 长度。",
+          "type": "TINYINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "C238FE1A-7879-52C8-8086-D0C32DDD81AB"
+        },
+        {
+          "defKey": "card_brand",
+          "defName": "卡组织",
+          "comment": "卡组织（主品牌）。允许值：VISA、MASTERCARD、AMEX、UNIONPAY、MADA、DISCOVER、JCB、DINERS。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "04BA4DF8-F395-5D88-8629-43284C01F053"
+        },
+        {
+          "defKey": "funding_type",
+          "defName": "借贷记类型",
+          "comment": "借贷记类型；数据文件未提供时为 NULL。允许值：CREDIT、DEBIT、PREPAID、CHARGE。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "440811B6-1F47-59A6-B4D5-6AB08E782E9A"
+        },
+        {
+          "defKey": "card_level",
+          "defName": "卡等级",
+          "comment": "卡等级，格式 [A-Z0-9_]{1,32}；未提供时为 NULL。取值来源：BIN 数据文件；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "904C5B7D-126D-5CEF-A5BE-092E32EF1FD7"
+        },
+        {
+          "defKey": "card_product",
+          "defName": "卡产品",
+          "comment": "卡产品类别；未提供时为 NULL。允许值：CONSUMER、COMMERCIAL。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "34C77F30-791F-5A93-814F-BF03D3E43258"
+        },
+        {
+          "defKey": "issuer_country",
+          "defName": "发卡国",
+          "comment": "发卡国 ISO 3166-1 alpha-2。取值来源：ISO 3166-1 alpha-2；非固定枚举。",
+          "type": "CHAR",
+          "len": 2,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "4629ED77-822E-4610-86D1-82426E63066E",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "58C7B7E7-5D32-5F9A-98B3-7AB3991832ED"
+        },
+        {
+          "defKey": "issuer_region",
+          "defName": "发卡区域",
+          "comment": "发卡区域，导入时按 Platform 国家区域映射由 issuer_country 推导并冻结；映射之后变化不影响本行。取值来源：Platform t_country_region.region_code；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "8E98D0F2-4682-5AA9-9F23-5D4EAD158DF8"
+        },
+        {
+          "defKey": "issuer_name",
+          "defName": "发卡行",
+          "comment": "发卡行名称，仅供运营查询展示；未提供时为 NULL。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "1CA11546-B150-54F9-A479-418B44884B0C"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "应用写入的号段创建 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "AC517310-AD97-5B90-B7F3-F9C4E986FC8E"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "应用写入的号段最近更新 UTC 微秒时间；号段创建后不修改，与 create_time 相同。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "00A389ED-EC6E-56DA-BC32-AF3479893C5D"
+        }
+      ],
+      "correlations": [],
+      "indexes": [
+        {
+          "defKey": "uk_card_bin_range",
+          "defName": "UK CARD BIN RANGE",
+          "unique": true,
+          "comment": "唯一索引：version_id、bin_prefix；同一版本内同一前缀只有一行，也是按前缀查询的访问路径",
+          "fields": [
+            {
+              "fieldDefKey": "ACA00065-7510-570D-ACFB-AF8D1356A708",
+              "ascOrDesc": "A",
+              "id": "857060C1-0171-5D5D-AE2E-5B0F0BBE8E22"
+            },
+            {
+              "fieldDefKey": "C135488C-A81A-5C0A-9915-6DC0E7AE5981",
+              "ascOrDesc": "A",
+              "id": "D491634D-631B-5D66-A67B-A601EC83CAEF"
+            }
+          ],
+          "id": "417E0AF8-BEAE-5444-BABB-1C2FFFAA8E24"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "224385C2-79D0-5B7B-AE28-64B5E81592B6",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_card_bin_import_error",
+      "defName": "BIN 导入错误",
+      "comment": "BIN 库导入校验失败的行级错误明细，每个版本至多记录前 200 条。",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "error_id",
+          "defName": "错误标识",
+          "comment": "导入错误明细的 Snowflake 内部主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "50C4DE31-87F7-5F61-914C-F12D9A51BCBD"
+        },
+        {
+          "defKey": "version_id",
+          "defName": "版本标识",
+          "comment": "所属 BIN 库版本。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "86370A56-6EAC-57CD-B57A-02967A7E67B8"
+        },
+        {
+          "defKey": "line_no",
+          "defName": "行号",
+          "comment": "数据文件中的物理行号，表头为第 1 行。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "5F9C8435-96CF-575A-8DD8-114DAE3B5020"
+        },
+        {
+          "defKey": "column_name",
+          "defName": "列名",
+          "comment": "出错列名；整行错误（列数不符、重复前缀等）为 NULL。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "3D0956F3-9C47-5BA4-9BC4-EC66A79736E7"
+        },
+        {
+          "defKey": "error_code",
+          "defName": "错误代码",
+          "comment": "错误代码。允许值：COLUMN_COUNT_MISMATCH、REQUIRED_MISSING、INVALID_FORMAT、INVALID_VALUE、DUPLICATE_PREFIX、COUNTRY_REGION_MISSING、ENCODING_INVALID。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "26FB2E36-5BC5-5C82-AD28-56E410EE37E4"
+        },
+        {
+          "defKey": "error_message",
+          "defName": "错误说明",
+          "comment": "面向运营的中文错误说明，不含卡号。",
+          "type": "VARCHAR",
+          "len": 256,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "6A3679FF-1AFE-5473-B3D6-D128FA755CE0"
+        },
+        {
+          "defKey": "value_excerpt",
+          "defName": "值摘录",
+          "comment": "出错值摘录：超过 8 位的连续数字不回显（存 NULL），其他值截断到 64 字符。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "A593E3B3-B070-558D-906B-45A0E085D241"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "应用写入的错误明细创建 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "D8D03120-2138-5F73-A486-3A68F2137E0B"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "应用写入的错误明细最近更新 UTC 微秒时间；创建后不修改。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "36E0F81A-7472-5F4F-887A-3BC16BF8DF62"
+        }
+      ],
+      "correlations": [],
+      "indexes": [
+        {
+          "defKey": "idx_bin_import_error_version",
+          "defName": "IDX BIN IMPORT ERROR VERSION",
+          "unique": false,
+          "comment": "支持访问路径：按版本分页列出错误，按行号排序",
+          "fields": [
+            {
+              "fieldDefKey": "86370A56-6EAC-57CD-B57A-02967A7E67B8",
+              "ascOrDesc": "A",
+              "id": "F2174934-505D-53AB-B3C1-562625D9327A"
+            },
+            {
+              "fieldDefKey": "5F9C8435-96CF-575A-8DD8-114DAE3B5020",
+              "ascOrDesc": "A",
+              "id": "B48E4FFB-8B72-597F-BFF9-46ED272E1B3B"
+            }
+          ],
+          "id": "729AE73B-8F7F-5CFD-8CFC-45B7A5870D38"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "64237029-6898-5D5E-9A7A-EAE184CA6648",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_card_bin_library_activation",
+      "defName": "BIN 库激活记录",
+      "comment": "BIN 库激活与回切的追加记录，满足操作人与时间留痕；与版本状态切换在同一本地事务写入。",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "activation_id",
+          "defName": "激活标识",
+          "comment": "激活记录的 Snowflake 内部主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "CEB2CF79-34EC-5226-9C58-672CB82AE521"
+        },
+        {
+          "defKey": "version_id",
+          "defName": "版本标识",
+          "comment": "本次被激活的 BIN 库版本。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "B17C4AB1-A08C-5FE1-A051-FB1E7FF3210D"
+        },
+        {
+          "defKey": "previous_version_id",
+          "defName": "原生效版本",
+          "comment": "本次激活前的 ACTIVE 版本，激活后变为 RETIRED；此前没有生效版本时为 NULL。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "D94D4D29-9913-5CEC-8574-7E854B8EAD9E"
+        },
+        {
+          "defKey": "activation_type",
+          "defName": "激活类型",
+          "comment": "激活类型。允许值：ACTIVATE、ROLLBACK。ACTIVATE 为激活 VALID 版本；ROLLBACK 为重新激活 RETIRED 版本（回切）。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "02570AD4-5584-541D-8849-0A2B63127DE2"
+        },
+        {
+          "defKey": "operator_account_id",
+          "defName": "操作人",
+          "comment": "操作的 Operations 账号 ID；初始化种子激活为 NULL。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "E2821549-6599-56ED-A9A8-AA7A982779C7"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "应用写入的激活 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "DFFCFF47-A662-5495-96CE-7AD5BD953BA2"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "应用写入的记录最近更新 UTC 微秒时间；创建后不修改。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "724E00A5-7E95-574B-B247-BAE438A923E2"
+        }
+      ],
+      "correlations": [],
+      "indexes": [
+        {
+          "defKey": "idx_bin_activation_time",
+          "defName": "IDX BIN ACTIVATION TIME",
+          "unique": false,
+          "comment": "支持访问路径：激活历史按时间倒序分页",
+          "fields": [
+            {
+              "fieldDefKey": "DFFCFF47-A662-5495-96CE-7AD5BD953BA2",
+              "ascOrDesc": "A",
+              "id": "E542F95A-EE87-5BC6-933A-8DB0308560E5"
+            }
+          ],
+          "id": "34665396-44D9-5CA6-B51B-FE2DC90B902E"
+        }
+      ],
+      "type": "P"
+    },
+    {
       "id": "6B5563A0-CD61-5DE9-A8EC-87E71AE1EC14",
       "env": {
         "base": {
@@ -3841,6 +5509,77 @@
       "comment": "Card 服务的卡、卡凭证、卡交易工具、已存卡与一次性读卡票据。"
     },
     {
+      "defKey": "bin_library",
+      "defName": "BIN 库",
+      "relationType": "field",
+      "canvasData": {
+        "cells": [
+          {
+            "id": "278233DB-69EB-5048-AEE5-20863B2031A0",
+            "shape": "table",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "count": 0,
+            "originKey": "7D3C28E9-E945-5DAF-B479-07BFD95C0461",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 416
+            }
+          },
+          {
+            "id": "BDF87E46-217C-5032-BF49-EBC1938FF37F",
+            "shape": "table",
+            "position": {
+              "x": 430,
+              "y": 0
+            },
+            "count": 0,
+            "originKey": "4F842B56-F75D-54B6-8B7F-E4959E3F64F3",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 372
+            }
+          },
+          {
+            "id": "DAAE1E2B-F29B-5832-8030-F806CF7AD33C",
+            "shape": "table",
+            "position": {
+              "x": 860,
+              "y": 0
+            },
+            "count": 0,
+            "originKey": "224385C2-79D0-5B7B-AE28-64B5E81592B6",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 284
+            }
+          },
+          {
+            "id": "8E1E08F9-A5DA-5A75-B8CB-C8B84DE9D8E3",
+            "shape": "table",
+            "position": {
+              "x": 1290,
+              "y": 0
+            },
+            "count": 0,
+            "originKey": "64237029-6898-5D5E-9A7A-EAE184CA6648",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 240
+            }
+          }
+        ]
+      },
+      "id": "0EC91EEA-AA0B-568E-A7EE-7FBE1E0A4DE4",
+      "comment": "Card BIN 库：版本、号段、导入错误明细与激活记录。"
+    },
+    {
       "defKey": "reliability",
       "defName": "可靠执行",
       "relationType": "field",
@@ -4048,7 +5787,7 @@
       "controlIntensity": "S",
       "applyObjectType": "P",
       "applyFieldType": "entity",
-      "programCode": "let actual=data.entity.fields.map(field=>field.defKey); let immutable=[\"t_routing_policy_version\",\"t_routing_policy_mid\",\"t_routing_decision\",\"t_route_candidate_eval\",\"t_channel_transaction_ref\",\"t_channel_callback_item\",\"t_channel_dispute_event\"].includes(data.entity.defKey); return actual.includes('create_time') && (immutable ? !actual.includes('update_time') : actual.includes('update_time'));",
+      "programCode": "let actual=data.entity.fields.map(field=>field.defKey); let immutable=[\"t_routing_policy_version\",\"t_routing_policy_mid\",\"t_routing_decision\",\"t_route_candidate_eval\",\"t_channel_transaction_ref\",\"t_channel_callback_item\",\"t_channel_dispute_event\",\"t_channel_cost_scope\",\"t_channel_cost_component\",\"t_channel_config_change\"].includes(data.entity.defKey); return actual.includes('create_time') && (immutable ? !actual.includes('update_time') : actual.includes('update_time'));",
       "enable": true
     },
     {

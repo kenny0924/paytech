@@ -52,7 +52,11 @@ public final class DecisionSourceContracts {
             input("industry_code", DecisionValueType.STRING, null, null, null),
             input("mcc_code", DecisionValueType.STRING, null, null, null),
             optional("consumer_country_code"),
-            optional("card_bin")
+            optional("card_bin"),
+            // 2026-10-22 BIN 库：Payment 冻结的卡属性快照，合同 v1 原地追加可选字段，旧调用方不传仍合法。
+            optional("issuer_country_code"),
+            optional("card_brand"),
+            optional("funding_type")
         )),
         nodeResult("PAYMENT_ATTEMPT_RISK")
     );

@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.card.core.dal.mapper.CardBinLibraryVersionMapper">
+    <resultMap id="row" type="com.paytech.card.core.dal.dataobject.CardBinLibraryVersion">
+        <id column="version_id" property="versionId"/>
+        <result column="version_no" property="versionNo"/>
+        <result column="status" property="status" javaType="com.paytech.card.api.enums.BinLibraryVersionStatus" typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="active_slot" property="activeSlot"/>
+        <result column="file_address" property="fileAddress"/>
+        <result column="file_content_hash" property="fileContentHash"/>
+        <result column="file_name" property="fileName"/>
+        <result column="total_rows" property="totalRows"/>
+        <result column="processed_rows" property="processedRows"/>
+        <result column="error_rows" property="errorRows"/>
+        <result column="failure_reason" property="failureReason"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="version" property="version"/>
+        <result column="create_time" property="createTime" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        <result column="update_time" property="updateTime" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+    </resultMap>
+
+    <sql id="VersionColumns">
+        version_id, version_no, status, active_slot, file_address, file_content_hash, file_name, total_rows, processed_rows,
+        error_rows, failure_reason, created_by, version, create_time, update_time
+    </sql>
+
+    <insert id="insertVersion">
+        INSERT INTO t_card_bin_library_version (<include refid="VersionColumns"/>)
+        VALUES (#{versionId}, #{versionNo},
+            #{status,javaType=com.paytech.card.api.enums.BinLibraryVersionStatus,typeHandler=com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler,jdbcType=VARCHAR},
+            #{activeSlot}, #{fileAddress}, #{fileContentHash}, #{fileName}, #{totalRows}, #{processedRows}, #{errorRows},
+            #{failureReason}, #{createdBy}, #{version},
+            #{createTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP},
+            #{updateTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP})
+    </insert>
+
+    <select id="findById" resultMap="row">
+        SELECT <include refid="VersionColumns"/>
+        FROM t_card_bin_library_version
+        WHERE version_id = #{versionId}
+    </select>
+
+    <select id="findByVersionNo" resultMap="row">
+        SELECT <include refid="VersionColumns"/>
+        FROM t_card_bin_library_version
+        WHERE version_no = #{versionNo}
+    </select>
+
+    <select id="findByFileAddress" resultMap="row">
+        SELECT <include refid="VersionColumns"/>
+        FROM t_card_bin_library_version
+        WHERE file_address = #{fileAddress}
+    </select>
+
+    <select id="findActive" resultMap="row">
+        SELECT <include refid="VersionColumns"/>
+        FROM t_card_bin_library_version
+        WHERE active_slot = 1
+    </select>
+
+    <select id="maxVersionNo" resultType="java.lang.Integer">
+        SELECT MAX(version_no) FROM t_card_bin_library_version
+    </select>
+
+    <sql id="StatusFilter">
+        <where>
+            <if test="status != null">
+                status = #{status,javaType=com.paytech.card.api.enums.BinLibraryVersionStatus,typeHandler=com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler,jdbcType=VARCHAR}
+            </if>
+        </where>
+    </sql>
+
+    <select id="countVersions" resultType="long">
+        SELECT COUNT(*) FROM t_card_bin_library_version
+        <include refid="StatusFilter"/>
+    </select>
+
+    <select id="listVersions" resultMap="row">
+        SELECT <include refid="VersionColumns"/>
+        FROM t_card_bin_library_version
+        <include refid="StatusFilter"/>
+        ORDER BY version_no DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <update id="markInvalid">
+        UPDATE t_card_bin_library_version
+        SET status = 'INVALID', failure_reason = #{failureReason}, total_rows = #{totalRows}, error_rows = #{errorRows},
+            version = version + 1,
+            update_time = #{now,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}
+        WHERE version_id = #{versionId} AND status = 'VALIDATING' AND version = #{version}
+    </update>
+
+    <update id="updateProgress">
+        UPDATE t_card_bin_library_version
+        SET processed_rows = #{processedRows}, version = version + 1,
+            update_time = #{now,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}
+        WHERE version_id = #{versionId} AND status = 'VALIDATING' AND version = #{version}
+    </update>
+
+    <update id="markValid">
+        UPDATE t_card_bin_library_version
+        SET status = 'VALID', total_rows = #{totalRows}, processed_rows = #{totalRows}, version = version + 1,
+            update_time = #{now,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}
+        WHERE version_id = #{versionId} AND status = 'VALIDATING' AND version = #{version}
+    </update>
+
+    <update id="retire">
+        UPDATE t_card_bin_library_version
+        SET status = 'RETIRED', active_slot = NULL, version = version + 1,
+            update_time = #{now,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}
+        WHERE version_id = #{versionId} AND status = 'ACTIVE' AND active_slot = 1 AND version = #{version}
+    </update>
+
+    <update id="activate">
+        UPDATE t_card_bin_library_version
+        SET status = 'ACTIVE', active_slot = 1, version = version + 1,
+            update_time = #{now,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP}
+        WHERE version_id = #{versionId} AND active_slot IS NULL AND version = #{version}
+          AND status = #{expectedStatus,javaType=com.paytech.card.api.enums.BinLibraryVersionStatus,typeHandler=com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler,jdbcType=VARCHAR}
+    </update>
+</mapper>

@@ -17,13 +17,16 @@ import com.paytech.platform.support.filedocument.domain.file.FileModels.File;
 import com.paytech.platform.support.filedocument.domain.file.FileModels.Requirement;
 import com.paytech.platform.support.filedocument.domain.file.FileModels.Result;
 import com.paytech.platform.support.filedocument.integration.storage.StoredContentType;
+import com.paytech.platform.support.filedocument.integration.storage.Utf8TextInspector;
 import com.paytech.platform.support.filedocument.integration.storage.FileObjectStorage;
 import com.paytech.platform.support.filedocument.integration.storage.FileStorageRegistry;
 
 /**
  * Platform 内置格式检查（FORMAT）。
  * <li>按登记版本重新读取字节，复核 SHA-256 与大小，并以文件头复核媒体类型等于登记类型</li>
- * <li>类型一致返回 FORMAT_VALID，否则 FORMAT_INVALID；字节与登记不符或存储不可用时抛出异常，由补偿重试，不伪造结果</li>
+ * <li>text/csv 只凭开头字节识别，另在读取全文时复核全部字节是不含 NUL 的合法 UTF-8</li>
+ * <li>类型一致（CSV 还须全文合法）返回 FORMAT_VALID，否则 FORMAT_INVALID；字节与登记不符或存储不可用时抛出异常，
+ * 由补偿重试，不伪造结果</li>
  * <li>不是病毒扫描；生产启用前须另配 ANTI_MALWARE 要求与真实扫描器</li>
  */
 @Component
@@ -69,11 +72,13 @@ public final class FormatFileScanner implements FileScanner {
             InputStream raw = storage.open(file)) {
             BufferedInputStream bytes = StoredContentType.buffered(raw);
             String detected = StoredContentType.detect(bytes);
-            String hash = digest(bytes, file.verified().sizeBytes());
+            Utf8TextInspector text = StoredContentType.CSV.equals(detected) ? new Utf8TextInspector() : null;
+            String hash = digest(bytes, file.verified().sizeBytes(), text);
             if (!hash.equals(file.verified().contentHash())) {
                 throw new ServiceUnavailableException();
             }
-            String code = detected.equals(file.verified().mimeType()) ? VALID : INVALID;
+            boolean formatValid = detected.equals(file.verified().mimeType()) && (text == null || text.finish());
+            String code = formatValid ? VALID : INVALID;
             return new Result(file.fileId(), requirement.id(), attemptNo, file.verified().objectVersion(), hash,
                 Integer.toString(RUNTIME_VERSION), code, clock.instant());
         } catch (IOException exception) {
@@ -91,8 +96,15 @@ public final class FormatFileScanner implements FileScanner {
         }
     }
 
-    /** 读满全部字节计算 SHA-256；实际长度与登记不一致视为字节不符。 */
-    static String digest(InputStream bytes, long expectedSize) throws IOException {
+    /**
+     * 读满全部字节计算 SHA-256；实际长度与登记不一致视为字节不符。
+     *
+     * @param bytes 文件字节
+     * @param expectedSize 登记大小
+     * @param text 识别为文本时同步检查全文的检查器；其他类型为空
+     * @return SHA-256 小写十六进制
+     */
+    static String digest(InputStream bytes, long expectedSize, Utf8TextInspector text) throws IOException {
         MessageDigest digest = sha256();
         byte[] buffer = new byte[8192];
         long count = 0;
@@ -103,6 +115,9 @@ public final class FormatFileScanner implements FileScanner {
                 throw new ServiceUnavailableException();
             }
             digest.update(buffer, 0, length);
+            if (text != null) {
+                text.update(buffer, 0, length);
+            }
         }
         if (count != expectedSize) {
             throw new ServiceUnavailableException();

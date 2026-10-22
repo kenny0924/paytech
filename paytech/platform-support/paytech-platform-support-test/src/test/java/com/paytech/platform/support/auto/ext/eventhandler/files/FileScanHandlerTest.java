@@ -19,6 +19,7 @@ import com.paytech.platform.support.api.enums.FileScanStatus;
 import com.paytech.platform.support.api.enums.FileStorageBucketStatus;
 import com.paytech.platform.support.api.enums.FileStorageInstanceStatus;
 import com.paytech.platform.support.filedocument.integration.scanning.FormatFileScanner;
+import com.paytech.platform.support.filedocument.integration.storage.StoredContentType;
 import com.paytech.platform.support.test.mocker.local.StorageInstanceMocker;
 import com.paytech.platform.support.service.handler.FileScanHandler;
 import com.paytech.platform.support.test.base.FileTestBase;
@@ -28,7 +29,7 @@ import com.paytech.platform.support.test.mocker.local.FileMocker.Policy;
 
 /**
  * 文件扫描补偿入口：经真实 Handler、文件生命周期服务、Platform 格式检查器与存储注册表按记录实例读取 MinIO 准确版本，
- * 追加终局结果并推进扫描状态；记录的实例或桶停用时不读取密钥、不调用存储。
+ * 追加终局结果并推进扫描状态；记录的实例或桶停用时不读取密钥、不调用存储。text/csv 另复核全文为不含 NUL 的 UTF-8。
  *
  * @see FileScanHandler#handle(CompensationEvent)
  */
@@ -74,6 +75,31 @@ class FileScanHandlerTest extends FileTestBase {
 
         assertScan(spec, FileScanStatus.REJECTED, FormatFileScanner.INVALID);
         assertNull(fileData.file(spec.fileId()).get("available_time"));
+    }
+
+    /** 登记为 text/csv 的合法 UTF-8 CSV（含 BOM 与多字节字符）：结果 FORMAT_VALID，文件变为 AVAILABLE。 */
+    @Test
+    void test_normalFlow_csv() {
+        Spec spec = stored(material().mime(StoredContentType.CSV).bytes(FileBuilder.CSV).build());
+
+        assertEquals(CompensationHandlerResult.success(), handle(spec.fileId()));
+
+        assertScan(spec, FileScanStatus.AVAILABLE, FormatFileScanner.VALID);
+    }
+
+    /**
+     * CSV 开头 8 KiB 合法但其后含 NUL，或登记为 text/csv 的实际是二进制内容：结果 FORMAT_INVALID，文件 REJECTED。
+     */
+    @Test
+    void test_businessRuleViolation_csvNotText() {
+        Spec lateNul = stored(material().mime(StoredContentType.CSV).bytes(FileBuilder.csvWithLateNul()).build());
+        Spec binary = stored(material().mime(StoredContentType.CSV).bytes(FileBuilder.BINARY).build());
+
+        assertEquals(CompensationHandlerResult.success(), handle(lateNul.fileId()));
+        assertEquals(CompensationHandlerResult.success(), handle(binary.fileId()));
+
+        assertScan(lateNul, FileScanStatus.REJECTED, FormatFileScanner.INVALID);
+        assertScan(binary, FileScanStatus.REJECTED, FormatFileScanner.INVALID);
     }
 
     /** 登记版本在存储中不存在：可重试失败，不追加结果，文件停留在 SCANNING。 */

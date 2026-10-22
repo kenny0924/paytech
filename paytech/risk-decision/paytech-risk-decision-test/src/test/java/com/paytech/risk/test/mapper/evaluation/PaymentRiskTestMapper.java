@@ -22,6 +22,9 @@ public class PaymentRiskTestMapper {
     /** 支付决策点 ID（初始化数据）。 */
     public static final long PAYMENT_POINT_ID = 210002L;
 
+    /** 新执行发布引用的支付点冻结版本（初始化数据，版本 2）。 */
+    public static final long PAYMENT_RUNTIME_POINT_VERSION_ID = 220003L;
+
     private static final String PAYMENT_EVALUATIONS =
         "SELECT evaluation_id FROM t_decision_evaluation WHERE decision_point_id=" + PAYMENT_POINT_ID;
 
@@ -38,7 +41,7 @@ public class PaymentRiskTestMapper {
         "SELECT velocity_event_id FROM t_velocity_event WHERE source_type='" + SOURCE_TYPE + "'";
 
     private static final String TEST_VARIABLES = "point_code='PAYMENT_ATTEMPT_RISK' "
-        + "AND variable_id NOT BETWEEN 900000000000093001 AND 900000000000093013";
+        + "AND variable_id NOT BETWEEN 900000000000093001 AND 900000000000093016";
 
     private static final String PAYMENT_FEATURES =
         "SELECT feature_version_id FROM t_risk_variable WHERE feature_version_id IS NOT NULL AND " + TEST_VARIABLES;
@@ -70,17 +73,17 @@ public class PaymentRiskTestMapper {
             + "WHERE v.rule_set_version_id=?", ruleSetVersionId);
     }
 
-    /** 支付决策点冻结版本的超时毫秒数。 */
+    /** 新执行发布引用的支付点冻结版本的超时毫秒数。 */
     public int pointTimeoutMillis() {
-        Integer value = jdbc.queryForObject("SELECT timeout_ms FROM t_decision_point_version WHERE decision_point_id=?",
-            Integer.class, PAYMENT_POINT_ID);
+        Integer value = jdbc.queryForObject("SELECT timeout_ms FROM t_decision_point_version WHERE point_version_id=?",
+            Integer.class, PAYMENT_RUNTIME_POINT_VERSION_ID);
         return value == null ? 0 : value;
     }
 
-    /** 改写支付决策点冻结版本的超时毫秒数，用于构造评估超时；由 Mocker 清理时恢复原值。 */
+    /** 改写新执行发布引用的支付点冻结版本的超时毫秒数，用于构造评估超时；由 Mocker 清理时恢复原值。 */
     public void updatePointTimeoutMillis(int timeoutMillis) {
-        jdbc.update("UPDATE t_decision_point_version SET timeout_ms=? WHERE decision_point_id=?", timeoutMillis,
-            PAYMENT_POINT_ID);
+        jdbc.update("UPDATE t_decision_point_version SET timeout_ms=? WHERE point_version_id=?", timeoutMillis,
+            PAYMENT_RUNTIME_POINT_VERSION_ID);
     }
 
     /** 读取支付尝试的交易评估快照。 */

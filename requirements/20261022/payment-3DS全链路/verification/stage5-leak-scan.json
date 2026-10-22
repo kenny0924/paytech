@@ -1,0 +1,89 @@
+{
+  "since": "2026-10-22T15:15:00",
+  "terms": [
+    "3ds.local.invalid",
+    "acsSecret=",
+    "S5ACS",
+    "测试卡完整卡号 ×6"
+  ],
+  "logs": {
+    "payment": {
+      "linesScanned": 1967,
+      "hits": {},
+      "luhnCardLikeRuns": 0
+    },
+    "card": {
+      "linesScanned": 2029,
+      "hits": {},
+      "luhnCardLikeRuns": 0
+    },
+    "channel-connector": {
+      "linesScanned": 524,
+      "hits": {},
+      "luhnCardLikeRuns": 0
+    },
+    "risk-decision": {
+      "linesScanned": 102,
+      "hits": {},
+      "luhnCardLikeRuns": 0
+    },
+    "gateway": {
+      "linesScanned": 774,
+      "hits": {},
+      "luhnCardLikeRuns": 0
+    },
+    "platform": {
+      "linesScanned": 380,
+      "hits": {},
+      "luhnCardLikeRuns": 0
+    },
+    "ops-bff": {
+      "linesScanned": 412,
+      "hits": {},
+      "luhnCardLikeRuns": 0
+    },
+    "payermax-mock": {
+      "linesScanned": 0,
+      "hits": {},
+      "luhnCardLikeRuns": 0
+    }
+  },
+  "mq": {
+    "messages": 17,
+    "hits": {},
+    "redirectUrlKey": 0,
+    "luhnCardLikeRuns": 3
+  },
+  "tables": {
+    "payment: IFNULL(payload_json,'') FROM t_compensation_event": {
+      "rows": 0,
+      "hits": {},
+      "luhnCardLikeRuns": 0
+    },
+    "channel-connector: IFNULL(payload_json,'') FROM t_compensation_event": {
+      "rows": 0,
+      "hits": {},
+      "luhnCardLikeRuns": 0
+    },
+    "card: IFNULL(payload_json,'') FROM t_compensation_event": {
+      "rows": 0,
+      "hits": {},
+      "luhnCardLikeRuns": 0
+    },
+    "card: CONCAT_WS('|', IFNULL(error_message,''), IFNULL(value": {
+      "rows": 9,
+      "hits": {},
+      "luhnCardLikeRuns": 0
+    },
+    "payment: CONCAT_WS('|', IFNULL(channel_response_code,''), IFNU": {
+      "rows": 49,
+      "hits": {},
+      "luhnCardLikeRuns": 0
+    },
+    "channel-connector: CONCAT_WS('|', c.channel_callback_id, IFNULL(i.target": {
+      "rows": 6,
+      "hits": {},
+      "luhnCardLikeRuns": 0
+    }
+  }
+}

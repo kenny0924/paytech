@@ -16,4 +16,7 @@ public interface PaymentActionRepository {
 
     /** 读取尝试按序号的最后一个动作；尚无动作时返回空。 */
     PaymentAction findLatestByAttempt(long attemptId);
+
+    /** 读取尝试中指定序号的动作；不存在时返回空。 */
+    PaymentAction findByAttemptAndNo(long attemptId, int actionNo);
 }

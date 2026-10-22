@@ -26,13 +26,13 @@ public class RiskDecisionDataCleaner implements Clear {
     /** 目录表 → 主键列与初始化主键（与 risk-decision-initial-data.sql 一致）。 */
     static final Map<String, Catalog> CATALOG_TABLES = Map.of(
         "t_decision_point", new Catalog("decision_point_id", List.of(210001L, 210002L)),
-        "t_decision_point_version", new Catalog("point_version_id", List.of(220001L, 220002L)),
+        "t_decision_point_version", new Catalog("point_version_id", List.of(220001L, 220002L, 220003L)),
         "t_action_version", new Catalog("action_version_id", List.of(240001L, 240002L, 240003L, 240004L, 240005L,
             240006L, 240007L, 240008L)),
         "t_action_parameter_definition", new Catalog("parameter_definition_id",
             List.of(2400041L, 2400042L, 2400051L, 2400052L)),
         "t_risk_variable", new Catalog("variable_id", Stream.concat(range(900000000000091001L, 20),
-            range(900000000000093001L, 13)).toList()),
+            range(900000000000093001L, 16)).toList()),
         "t_risk_variable_member", new Catalog("member_id", Stream.concat(range(900000000000092001L, 9),
             range(900000000000094001L, 3)).toList()));
 

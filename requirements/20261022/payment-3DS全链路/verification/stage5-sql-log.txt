@@ -1,0 +1,75 @@
+2026-10-22T15:16:11Z backup mor_card_v2e2e -> local-environment/e2e/backup/20261022T151611Z-card3ds-stage5/mor_card_v2e2e.sql    23454 bytes, sha256 38dbe24f81e0a310
+2026-10-22T15:16:11Z backup mor_payment_v2e2e -> local-environment/e2e/backup/20261022T151611Z-card3ds-stage5/mor_payment_v2e2e.sql     1324 bytes, sha256 9432b29dc005d052
+2026-10-22T15:16:11Z backup mor_channel_connector_v2e2e -> local-environment/e2e/backup/20261022T151611Z-card3ds-stage5/mor_channel_connector_v2e2e.sql   224128 bytes, sha256 f810743f45088672
+2026-10-22T15:16:11Z backup mor_risk_decision_v2e2e -> local-environment/e2e/backup/20261022T151611Z-card3ds-stage5/mor_risk_decision_v2e2e.sql     1336 bytes, sha256 a0e1b3fbe8b4b37d
+2026-10-22T15:16:12Z backup mor_platform_v2e2e -> local-environment/e2e/backup/20261022T151611Z-card3ds-stage5/mor_platform_v2e2e.sql  4218057 bytes, sha256 3a0d44ed6bc93f21
+2026-10-22T15:16:41Z mor_payment_v2e2e <- /Users/kenny/Desktop/Workspace/Code-MoR-card3ds-int/paytech/payment/docs/database/sql/payment-schema.sql
+      `last_version` BIGINT NOT NULL COMMENT '本服务已处理的该聚合最大领域事件版本。',
+      `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最近一次持久化更新的 UTC 微秒精度时间。',
+      PRIMARY KEY (`aggregate_type`, `aggregate_id`)
+    ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='已消费聚合版本：paytech-messaging 消费端按聚合记录已处理的最大版本，用于判定乱序、重放与缺口（design/08 §4）；列、类型与主键与 messaging-consumed-event.sql 一致。'
+    
+2026-10-22T15:16:45Z mor_risk_decision_v2e2e <- /Users/kenny/Desktop/Workspace/Code-MoR-card3ds-int/paytech/risk-decision/docs/database/sql/risk-decision-schema.sql
+      UNIQUE KEY `uk_comp_event_identity` (`event_key`, `event_type`, `sub_event_type`) COMMENT '保证业务唯一性：event_key、event_type、sub_event_type',
+      KEY `idx_comp_event_ready` (`execute_status`, `next_execute_at`, `id`) COMMENT '支持访问路径：execute_status、next_execute_at、id',
+      KEY `idx_comp_event_lease` (`execute_status`, `lock_until`, `id`) COMMENT '支持访问路径：execute_status、lock_until、id'
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='保存与业务事务原子登记的 MQ 发布或本地可恢复动作及 Claim Lease'
+    
+2026-10-22T15:16:45Z mor_risk_decision_v2e2e <- /Users/kenny/Desktop/Workspace/Code-MoR-card3ds-int/paytech/risk-decision/docs/database/sql/risk-decision-initial-data.sql
+      (900000000000093015, 'PAY_INPUT_CARD_BRAND', '卡组织', NULL, 'INPUT', 'STRING', 'PAYMENT_ATTEMPT_RISK', 'PAYMENT_ATTEMPT', 1, 'card_brand', 1, 1, 0, 1, 'TOKEN', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'ACTIVE', 1, 1, 1, @payment_card_attribute_seed_time, @payment_card_attribute_seed_time),
+      (900000000000093016, 'PAY_INPUT_FUNDING_TYPE', '借贷记类型', NULL, 'INPUT', 'STRING', 'PAYMENT_ATTEMPT_RISK', 'PAYMENT_ATTEMPT', 1, 'funding_type', 1, 1, 0, 1, 'TOKEN', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'ACTIVE', 1, 1, 1, @payment_card_attribute_seed_time, @payment_card_attribute_seed_time)
+    
+    COMMIT
+    
+2026-10-22T15:16:49Z mor_card_v2e2e <- requirements/20261022/card-BIN库与卡属性/db/card/ddl.sql
+      `update_time` DATETIME(6) NOT NULL COMMENT '应用写入的记录最近更新 UTC 微秒时间；创建后不修改。',
+      PRIMARY KEY (`activation_id`),
+      KEY `idx_bin_activation_time` (`create_time`) COMMENT '支持访问路径：激活历史按时间倒序分页'
+    ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='BIN 库激活与回切的追加记录，满足操作人与时间留痕；与版本状态切换在同一本地事务写入。'
+    
+2026-10-22T15:16:49Z mor_card_v2e2e <- requirements/20261022/card-BIN库与卡属性/db/card/dml.sql
+      create_time, update_time) VALUES
+      (1201, 1001, NULL, 'ACTIVATE', NULL, @card_bin_seed_time, @card_bin_seed_time)
+    
+    COMMIT
+    
+2026-10-22T15:16:49Z mor_channel_connector_v2e2e <- requirements/20261022/payment-3DS全链路/db/channel-connector/ddl.sql
+      MODIFY COLUMN `target_type` VARCHAR(64) NOT NULL COMMENT '回调项映射到的业务对象闭合类型；PAYMENT_ATTEMPT 表示支付结果通知按商户订单号映射到 Payment Attempt（target_id 为 Attempt ID，跨库引用不建外键）。允许值：PAYMENT_ATTEMPT、PAYMENT_ACTION、CHANNEL_REFUND、CHANNEL_DISPUTE_NOTICE、CHANNEL_DISPUTE_ACTION、UNKNOWN。'
+    
+    ALTER TABLE `t_channel_callback`
+      MODIFY COLUMN `received_at` DATETIME(6) NOT NULL COMMENT 'channel-connector 首次收到服务商回调或争议通知的业务时刻。'
+    
+2026-10-22T15:16:49Z mor_channel_connector_v2e2e <- requirements/20261022/payment-3DS全链路/db/channel-connector/dml.sql
+    
+    channel_code	algorithm
+    PAYERMAX_MOCK	"RSA_SHA256"
+    COMMIT
+    
+2026-10-22T15:17:18Z mor_platform_v2e2e <- requirements/20261022/card-BIN库与卡属性/db/platform-support/ddl.sql
+      `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
+      PRIMARY KEY (`id`),
+      UNIQUE KEY `uk_country_region_country` (`country_code`) COMMENT '保证业务唯一性：country_code'
+    ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='保存全平台使用的国家到地理区域映射；Platform 唯一持有，Card 导入 BIN 库时经内部 HTTP 读取并推导发卡区域。本期只经初始化数据维护，不提供维护页面。'
+    
+2026-10-22T15:17:18Z mor_platform_v2e2e <- requirements/20261022/card-BIN库与卡属性/db/platform-support/dml.sql
+      (900000000000132753, 900000000000132409, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 10, 10, 60000, NULL),
+      (900000000000132754, 900000000000132409, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2)
+    
+    COMMIT
+    
+2026-10-22T15:17:18Z mor_platform_v2e2e <- requirements/20261022/payment-3DS全链路/db/platform-support/dml.sql
+      
+      (900000000000133704, 900000000000133401, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 20)
+    
+    COMMIT
+    
+2026-10-22T15:17:25Z post-apply mor_payment_v2e2e: 17 tables, 0 rows total
+2026-10-22T15:17:27Z post-apply mor_risk_decision_v2e2e: 54 tables, 65 rows total
+PAYERMAX_MOCK	3
+S5P2_ECHO	NULL
+2026-10-22T15:19:20Z mor_platform_v2e2e <- /var/folders/t2/xvr6hr7x4yq2c64fx_216r8c0000gn/T/tmp.6CvgSBlyfh
+    
+    active 132/133 routes	COUNT(*)
+    active 132/133 routes	10
+    COMMIT
+    

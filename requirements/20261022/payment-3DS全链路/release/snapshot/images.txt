@@ -1,0 +1,10 @@
+card-service|sha256:542a16f0567d57c547734aa9c9ef65f77aa0846c96823e1d4539fc20e48df244|2026-10-22T06:20:43.103322011Z mor-test/card-service:ccu2-20261022
+payment-service|sha256:447406cb0ace267cec2e5efd7b91759256bce223f8d47058136df9a49bc68519|2026-10-18T15:55:31.726614343Z mor-test/payment-service:development
+channel-connector-service|sha256:5f22b55b29e26beb44582c788530d71bfc9a2d863b8a022282d6251a0033bfa8|2026-10-22T12:48:04.983956835Z mor-test/channel-connector-service:cybs-20261022
+risk-decision-service|sha256:0a5de56f1120b5184cd2d3125a4dee42b9ec542997aaffe06b65dcb389f904ab|2026-10-18T15:55:31.682738676Z mor-test/risk-decision-service:development
+acquiring-service|sha256:03729ba82e28d0776570c4ff12864dda6380ac49bc1deea785aaf426e68dae91|2026-10-20T03:18:26.04692743Z mor-test/acquiring-service:counterparty-20261020
+counterparty-service|sha256:c71436804e2f3400e5f5b078216821d4de5473965340df46a21ba2d27df31a20|2026-10-20T03:18:20.563181928Z mor-test/counterparty-service:counterparty-20261020
+platform-support-service|sha256:7cb304024b520513dd461e22d6c423d11072ede95b47c9a56cf1c6e4f322f226|2026-10-22T15:05:36.992834428Z mor-test/platform-support-service:filestore-s2-20261022
+api-gateway|sha256:4cf14912680a3f51ff1383711351ceb4f33378b13476a1fe963b7b8454df5b11|
+operations-console-bff|sha256:a5b9a17cf88c4b6cc043ef543d890ca5f5e3e8cf1a99d2fcd1c1c34ceabf4820|2026-10-22T15:05:41.87762418Z mor-test/operations-console-bff:filestore-s2-20261022
+operations-console-web|sha256:7551dc3b3dd7cb48176bebb1863b7011cecc851897b190782b513c6969873180|2026-10-22T15:15:17.874362085Z mor-test/operations-console-web:opsui-20261022a

@@ -41,4 +41,10 @@ public class RouteContext {
      * <li>4 位数字，来自 Intent；参与 MID 能力匹配。</li>
      */
     private String mccCode;
+
+    /**
+     * 卡组织（支付体系）代码
+     * <li>取自支付工具 Token 冻结的 BIN 库卡组织，参与 MID 能力 scheme_code 匹配；未识别或非卡支付为空，此时只命中 *。</li>
+     */
+    private String schemeCode;
 }

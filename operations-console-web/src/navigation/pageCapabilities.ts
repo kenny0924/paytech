@@ -235,6 +235,17 @@ export const pageCapabilities = [
     ]
   },
   {
+    "componentKey": "OPERATIONS_CARD_BIN_LIBRARY",
+    "displayName": "卡 BIN 库",
+    "frontendRoute": "/card-bin-library",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_CARD_BIN_LIBRARY_MANAGE",
+        "displayName": "维护"
+      }
+    ]
+  },
+  {
     "componentKey": "OPERATIONS_API_CREDENTIALS",
     "displayName": "API 凭证",
     "frontendRoute": "/api-credentials",

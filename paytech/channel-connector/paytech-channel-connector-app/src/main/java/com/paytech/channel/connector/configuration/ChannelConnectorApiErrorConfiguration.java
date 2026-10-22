@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 
+import com.paytech.channel.connector.api.enums.ChannelCallbackErrorCode;
 import com.paytech.channel.connector.api.enums.ServiceExecutionErrorCode;
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.foundation.web.api.ApiErrorStatusResolver;
@@ -15,6 +16,7 @@ import com.paytech.foundation.web.api.ApiErrorStatusResolver;
  * <li>渠道配置既有接口以业务校验失败表示对象不存在，不经此映射，状态保持 400。</li>
  * <li>服务渠道通用执行入口的未发出类失败（{@link ServiceExecutionErrorCode}）：沿用原 Platform 合同的 404 / 500 / 503，
  * 未授权 403、执行舱繁忙 503。</li>
+ * <li>渠道支付通知入站（{@link ChannelCallbackErrorCode}，3DS 全链路）：验签失败 401、非 Gateway 调用方 403。</li>
  */
 @Configuration(proxyBeanMethods = false)
 public class ChannelConnectorApiErrorConfiguration {
@@ -24,6 +26,12 @@ public class ChannelConnectorApiErrorConfiguration {
         return (errorCode, defaultStatus) -> {
             if (errorCode == CommonErrorCode.NOT_FOUND) {
                 return HttpStatus.NOT_FOUND;
+            }
+            if (errorCode instanceof ChannelCallbackErrorCode callbackError) {
+                return switch (callbackError) {
+                    case CHANNEL_CALLBACK_SIGNATURE_INVALID -> HttpStatus.UNAUTHORIZED;
+                    case CHANNEL_CALLBACK_CALLER_FORBIDDEN -> HttpStatus.FORBIDDEN;
+                };
             }
             if (errorCode instanceof ServiceExecutionErrorCode executionError) {
                 return switch (executionError) {

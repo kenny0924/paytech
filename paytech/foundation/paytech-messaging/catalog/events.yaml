@@ -5,7 +5,9 @@ events:
   # Payment 支付成功（第 05 步按实现核对，第 08 步复核）：aggregateId 为支付尝试 ID，aggregateVersion 取 t_payment_attempt.version
   # （可能跳号，故 strictOrder=false）。acquiring 第 08 步切到 acquiring.payment.p0..p3（Handler strictOrder=false、HANDLER_MANAGED），
   # 旧 Topic 停发。第 12 步升 v2（design/05 §2.3），在 v1 字段之后追加 instrumentRef、consentToSave、customerId，供 card 标记凭证
-  # 已验证并存卡（card.payment.p0..p3）；acquiring 忽略新增字段。
+  # 已验证并存卡（card.payment.p0..p3）；acquiring 忽略新增字段。2026-10-22 BIN 库需求在 v2 末尾再追加可空 cardBrand、fundingType、
+  # cardLevel（支付工具 Token 冻结的 BIN 库卡属性，未识别或非卡支付为 null），只追加可空字段故 schemaVersion 仍为 2；billing 写入
+  # card_network、funding_type、card_level 由计费需求 B 接入，届时再登记为消费方。
   - eventType: PaymentSucceeded
     schemaVersion: 2
     producer: payment
@@ -144,3 +146,16 @@ events:
     consumers: []
     strictOrder: false
     payloadSchemaRef: paytech-platform-support-api/event/WorkflowCallbackRaised/v1
+  # 渠道支付通知（需求 payment-3DS全链路 technique 3.3.5）：channel-connector 收到并验签通过一条支付渠道的支付结果通知后，由补偿 Handler
+  # CHANNEL_PAYMENT_NOTIFIED 发布到 channel-connector.events。Payload 为 paytech-channel-connector-api 的
+  # com.paytech.channel.connector.api.event.ChannelPaymentNotifiedPayload（channelId、channelAccountId、merchantReference=支付尝试 ID、
+  # channelTransactionRef、reportedStatus、receivedAt），不含通知原文、签名与金额。aggregateId 为 channel_callback_id，回调不可变，
+  # aggregateVersion 固定为 1，strictOrder=false。payment 的 Handler 为 HANDLER_MANAGED：只把通知当作去查单的信号，经确认支付结果推进。
+  - eventType: ChannelPaymentNotified
+    schemaVersion: 1
+    producer: channel-connector
+    aggregateType: CHANNEL_CALLBACK
+    aggregateVersionField: aggregateVersion
+    consumers: [payment]
+    strictOrder: false
+    payloadSchemaRef: paytech-channel-connector-api/event/ChannelPaymentNotified/v1

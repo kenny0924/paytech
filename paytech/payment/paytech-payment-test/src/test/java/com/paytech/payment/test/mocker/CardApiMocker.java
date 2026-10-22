@@ -39,12 +39,19 @@ import lombok.RequiredArgsConstructor;
  * 只保留合同可观察的行为：同一 Client 同一来源提交返回同一工具，换卡、换 Customer 或保存意愿返回 409；BIN 按卡号长度取 8 或 6 位，
  * 指纹为卡号的 SHA-256（仅测试合成值）；票据只能使用一次，使用后本工具的 CVV 视为已领取，不能再签票。卡号校验、过期等 card 业务拒绝
  * 由用例以 {@link #rejectInstruments(MockHttpFault)} 显式配置。调用方不符记为意外调用。卡值只在内存中保存到本例结束。
+ *
+ * <p>
+ * 卡属性快照（BIN 库需求 technique 3.4）：每次创建（含重放）按当前生效 BIN 库查询一次，卡号 8、7、6 位前缀依次匹配用例登记的号段；
+ * 默认生效版本为 {@link #BIN_LIBRARY_VERSION_NO} 且无号段，即“查询过但未识别”。负例可用 {@link #rawCardAttributes} 原样返回违约快照。
  */
 @TestComponent
 @RequiredArgsConstructor
 public class CardApiMocker implements Clear {
     /** 故障 Problem 与响应头使用的 Request ID。 */
     public static final String ERROR_REQUEST_ID = "card-test-error";
+
+    /** 默认生效 BIN 库版本号。 */
+    public static final int BIN_LIBRARY_VERSION_NO = 3;
 
     private static final SecureRandom RANDOM = new SecureRandom();
 
@@ -56,6 +63,10 @@ public class CardApiMocker implements Clear {
     private final List<CreateCardInstrumentRequestBody> creates = new ArrayList<>();
     private final List<IssueCardMaterialTicketRequestBody> ticketRequests = new ArrayList<>();
     private final List<String> reveals = new ArrayList<>();
+    private final Map<String, CreateCardInstrumentResponseBody.CardAttributes> binRanges = new LinkedHashMap<>();
+    private Integer binLibraryVersionNo = BIN_LIBRARY_VERSION_NO;
+    private CreateCardInstrumentResponseBody.CardAttributes rawCardAttributes;
+    private boolean rawCardAttributesSet;
     private MockHttpFault instrumentFault;
     private MockHttpFault ticketFault;
     private int unexpected;
@@ -68,6 +79,46 @@ public class CardApiMocker implements Clear {
         String token = "sc_" + Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
         storedCards.put(token, new StoredCard(clientId, customerId, pan, expiryMonth, expiryYear, cardholderName));
         return token;
+    }
+
+    /**
+     * 在生效 BIN 库登记一个号段的已识别卡属性
+     *
+     * @param prefix 号段前缀，6 至 8 位
+     * @param attributes 卡属性，见 {@link #attributes}；命中位数与版本号在响应时填写
+     */
+    public synchronized void binRange(String prefix, CreateCardInstrumentResponseBody.CardAttributes attributes) {
+        binRanges.put(prefix, attributes);
+    }
+
+    /** 清空已登记号段：之后的查询为“有生效版本但未识别”。 */
+    public synchronized void clearBinRanges() {
+        binRanges.clear();
+    }
+
+    /** 切换生效 BIN 库版本；null 表示没有生效版本。已登记号段保留，供“新版本”命中。 */
+    public synchronized void activeBinLibrary(Integer versionNo) {
+        binLibraryVersionNo = versionNo;
+    }
+
+    /** 之后的工具创建原样返回该卡属性快照（可为 null），用于违反 Card 合同的负例。 */
+    public synchronized void rawCardAttributes(CreateCardInstrumentResponseBody.CardAttributes attributes) {
+        rawCardAttributes = attributes;
+        rawCardAttributesSet = true;
+    }
+
+    /** 已识别号段的卡属性（各项可为 null 以表达号段未提供）。 */
+    public static CreateCardInstrumentResponseBody.CardAttributes attributes(String cardBrand, String fundingType,
+        String cardLevel, String cardProduct, String issuerCountry, String issuerRegion) {
+        var attributes = new CreateCardInstrumentResponseBody.CardAttributes();
+        attributes.setRecognized(true);
+        attributes.setCardBrand(cardBrand);
+        attributes.setFundingType(fundingType);
+        attributes.setCardLevel(cardLevel);
+        attributes.setCardProduct(cardProduct);
+        attributes.setIssuerCountry(issuerCountry);
+        attributes.setIssuerRegion(issuerRegion);
+        return attributes;
     }
 
     /** 之后的工具创建一律返回指定故障（card 业务拒绝或不可用）。 */
@@ -201,7 +252,8 @@ public class CardApiMocker implements Clear {
     public synchronized void assertEmpty() {
         assertTrue(bySubmission.isEmpty() && storedCards.isEmpty() && tickets.isEmpty() && creates.isEmpty()
             && ticketRequests.isEmpty() && reveals.isEmpty() && instrumentFault == null && ticketFault == null
-            && unexpected == 0);
+            && unexpected == 0 && binRanges.isEmpty() && !rawCardAttributesSet
+            && Objects.equals(BIN_LIBRARY_VERSION_NO, binLibraryVersionNo));
     }
 
     /** 每例结束检查没有调用方不符的请求。 */
@@ -221,6 +273,10 @@ public class CardApiMocker implements Clear {
         instrumentFault = null;
         ticketFault = null;
         unexpected = 0;
+        binRanges.clear();
+        binLibraryVersionNo = BIN_LIBRARY_VERSION_NO;
+        rawCardAttributes = null;
+        rawCardAttributesSet = false;
     }
 
     /** 手输卡取请求原值；已存卡取登记的卡与本次 CVV，Client 或 Customer 不符为 400。 */
@@ -239,8 +295,8 @@ public class CardApiMocker implements Clear {
             body.getStoredCard().getCvv());
     }
 
-    /** 合同响应。 */
-    static CreateCardInstrumentResponseBody response(Instrument instrument) {
+    /** 合同响应：卡属性快照按本次查询时的生效 BIN 库计算。 */
+    CreateCardInstrumentResponseBody response(Instrument instrument) {
         var risk = new CreateCardInstrumentResponseBody.RiskAttributes();
         risk.setBin(bin(instrument.material.pan()));
         risk.setFingerprint(fingerprint(instrument.material.pan()));
@@ -250,7 +306,28 @@ public class CardApiMocker implements Clear {
             + instrument.material.pan().substring(instrument.material.pan().length() - 4));
         body.setExpiresAt(instrument.expiresAt.toString());
         body.setRiskAttributes(risk);
+        body.setCardAttributes(rawCardAttributesSet ? rawCardAttributes : cardAttributes(instrument.material.pan()));
         return body;
+    }
+
+    /** 当前生效 BIN 库按 8、7、6 位前缀匹配；没有生效版本或未命中为未识别。 */
+    CreateCardInstrumentResponseBody.CardAttributes cardAttributes(String pan) {
+        var snapshot = new CreateCardInstrumentResponseBody.CardAttributes();
+        snapshot.setBinLibraryVersionNo(binLibraryVersionNo);
+        if (binLibraryVersionNo == null) {
+            return snapshot;
+        }
+        for (int length = 8; length >= 6; length--) {
+            var range = binRanges.get(pan.substring(0, length));
+            if (range != null) {
+                var matched = attributes(range.getCardBrand(), range.getFundingType(), range.getCardLevel(),
+                    range.getCardProduct(), range.getIssuerCountry(), range.getIssuerRegion());
+                matched.setBinLibraryVersionNo(binLibraryVersionNo);
+                matched.setMatchedPrefixLength(length);
+                return matched;
+            }
+        }
+        return snapshot;
     }
 
     /**

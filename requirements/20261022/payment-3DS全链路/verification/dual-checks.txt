@@ -1,0 +1,5 @@
+login ok
+{"/workflow-admin/v1/definitions?page=1&size=10": [200, 4, null], "/workflow/v1/instances?page=1&size=10": [200, 17, null], "/workflow-admin/v1/action-templates?page=1&size=10": [200, 5, null], "/data-query-admin/v1/data-sources?page=1&size=10": [404, null, "GATEWAY_ROUTE_NOT_FOUND"], "/storage-admin/v1/routes": [200, null, null]}
+{'X-Caller-Service': 'operations-console-bff'} 400 {"type":"about:blank","title":"Bad Request","detail":"请求参数不正确","code":"INVALID_REQUEST","requestId":"5b2d086f-0517-40f4-accd-7487380ecc7e","timestamp":"2026-10-22T15:40:15.621095Z"}
+{} 400 {"type":"about:blank","title":"Bad Request","detail":"请求参数不正确","code":"INVALID_REQUEST","requestId":"efcbfb7a-0448-4ade-be6a-97be0384ded7","timestamp":"2026-10-22T15:40:15.630326Z"}
+country-regions 200 10364

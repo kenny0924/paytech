@@ -47,6 +47,9 @@ public class ChannelIdentity {
     /** 最后变更 UTC 时间。 */
     private Instant updateTime;
 
+    /** 支付结果通知定义 JSON；未配置为 null（不接收通知）。由支付扩展（core）解析与校验。 */
+    private final String callbackDefinitionJson;
+
     /**
      * 由本模块渠道行与已解析的出站地址构造
      *
@@ -57,7 +60,7 @@ public class ChannelIdentity {
     public static ChannelIdentity of(Channel row, List<EndpointDefinition> endpoints) {
         return new ChannelIdentity(row.getChannelId(), row.getChannelCode(), row.getChannelName(),
             row.getChannelType(), row.getChannelStatus(), row.getDescription(), List.copyOf(endpoints),
-            row.getVersion(), row.getCreateTime(), row.getUpdateTime());
+            row.getVersion(), row.getCreateTime(), row.getUpdateTime(), row.getCallbackDefinitionJson());
     }
 
     /** 是否已关闭；关闭后拒绝一切写入。 */

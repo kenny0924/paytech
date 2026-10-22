@@ -1,0 +1,136 @@
+{
+ "pages": [
+  {
+   "name": "home",
+   "url": "/accounts",
+   "text": "＋ 创建人员 共 21 位人员 刷 新 账号 角色 状态 操作 账号 角色 状态 操作 o***@example.test 221546852372267008 平台管理员 启用 分配角色 1***@xx.com 221592347010482176 平台管理员 启用 首次登录需改密 分配角色 停用 删除 a***@example.test 221644001797816320 独立编辑角色验收 停用 首次登录需改密 分配角色 启用 删除 r***@example.test 221649980790751232 运营只读人员 停用 分配角色 启用 删除 r***@example.test 22"
+  },
+  {
+   "name": "wf-my-tasks",
+   "url": "/workflow/my-tasks?task=239080011733221376",
+   "text": "我的待办 待处理 已处理 我发起的 全部 待我执行 待我审批 超过 1 天 ✓ 上传待审文件 停留 39 分钟 WF-INLINE-20261022 内嵌预览实例 · WF-INLINE-20261022 内嵌预览流程 审批 · ANY 处理完自动打开下一条 共 1 条 JK 上下切换 A 同意 R 退回修改 T 转交 CtrlEnter 提交 上传待审文件 待审批 转 交 查看完整流程 WF-INLINE-20261022 内嵌预览实例 · WF-INLINE-20261022 内嵌预览流程 v1 · WF-INLINE-20261022 · 发起人 o***@example.test · "
+  },
+  {
+   "name": "wf-instances",
+   "url": "/workflow/instances",
+   "text": "流程实例 运行中 已完成 已终止 全部 ＋ 发起流程 范围：我参与的 流程：全部 发起人：全部 实例 流程 进度 当前节点 · 处理人 发起 WF-INLINE-20261022 内嵌预览实例 WF-INLINE-20261022 WF-INLINE-20261022 内嵌预览流程 · v1 0 / 1 个任务节点已完成 O* 上传待审文件 o***@example.test 待审批 o***@example.test · 10-22 21:19 › 1 10 条/页"
+  },
+  {
+   "name": "wf-definitions",
+   "url": "/workflow/definitions",
+   "text": "流程定义 启用 停用 全部 动作目录 ＋ 新建流程 WF-INLINE-20261022-C 内嵌预览流程 v1 WF_INLINE_20261022_C_FLOW · mor-test 内嵌预览验收 更新 10-22 22:16 编 辑 发 起 停 用 版 本 WF-INLINE-20261022-B 内嵌预览流程 v1 WF_INLINE_20261022_B_FLOW · mor-test 内嵌预览验收 更新 10-22 21:21 编 辑 发 起 停 用 版 本 WF-INLINE-20261022 内嵌预览流程 v1 WF_INLINE_20261022_FLOW · mor-tes"
+  },
+  {
+   "name": "wf-action-templates",
+   "url": "/workflow/action-templates",
+   "text": "动作目录 可复用的节点动作，流程发布时冻结当时的配置 ＋ 新建动作 全部 4 表单 1 上传文件 3 页面任务 0 人工确认 0 数据查询 0 数据查询：本期只预留，以后由 data-service 执行其维护的查询。 WF-INLINE-20261022-C 内嵌预览上传 启用 WF_INLINE_20261022_C_UPLOAD · 上传文件 · mor-test 内嵌预览验收 WF-INLINE-20261022-B 内嵌预览上传 启用 WF_INLINE_20261022_B_UPLOAD · 上传文件 · mor-test 内嵌预览验收 WF-INLINE-20261022 内嵌预"
+  },
+  {
+   "name": "file-storage",
+   "url": "/file-storage",
+   "text": "存储管理 文件按「来源系统」的写入规则选择实例和桶；已上传的文件始终从原实例和桶读取。实例代码与桶名创建后不可修改； 桶由基础设施预先创建，这里只登记和检查。密钥保存在 Vault，录入后无法查看，只能更换。 存储实例 桶 写入规则 共 2 个实例 ＋ 新建实例 刷 新 代码 类型 地址 区域 凭据方式 凭据已配置 状态 桶数 被规则引用 更新时间 操作 代码 类型 地址 区域 凭据方式 凭据已配置 状态 桶数 被规则引用 更新时间 操作 MINIO MinIO https://minio.mor-test.localhost:29400 us-east-1 固定密钥（Vault） 已配置 更"
+  },
+  {
+   "name": "dq-sources",
+   "url": "/data-query/data-sources",
+   "text": "状态 全部 引擎 全部 编码 / 名称 查 询 重 置 共 7 个数据源 只读数据库连接；密码只存 Vault Token、不回显，启用前必须通过只读检查。 ＋ 新建数据源 编码 / 名称 引擎 地址 / 默认库 状态 最后检查 引用模板 编码 / 名称 引擎 地址 / 默认库 状态 最后检查 引用模板 MOR_TEST_MYSQL_INSTANCE mor-test MySQL 整实例 MySQL mysql:3306 · 整个实例 启用 通过 · 2026-10-22 20:45 1 MOR_CHANNEL_CONNECTOR_REPLICA 渠道连接器从库 MySQL mysql:330"
+  },
+  {
+   "name": "dq-templates",
+   "url": "/data-query/templates",
+   "text": "数据源 全部 状态 全部 编码 / 名称 查 询 重 置 共 7 个模板 用统一语法书写只读 SQL，保存即生成新版本并立即生效；调用方按模板编码执行。 ＋ 新建模板 编码 / 名称 数据源 参数 分页 当前版本 状态 最近修改 编码 / 名称 数据源 参数 分页 当前版本 状态 最近修改 DEMO_CLIENT_ORDER_SUMMARY Client 订单汇总（跨库） MOR_TEST_MYSQL_INSTANCE currency 不分页 v1 启用 221546852372267008 · 2026-10-22 20:22 DEMO_RECON_EXCEPTIONS 对账异常 MOR_"
+  },
+  {
+   "name": "channels",
+   "url": "/channel/channels",
+   "text": "新建渠道 全部 10 支付渠道 9 服务渠道 1 全部状态 查 询 渠道编码 名称 类型 状态 出站地址 账号 / MID 调用授权 更新时间 操作 渠道编码 名称 类型 状态 出站地址 账号 / MID 调用授权 更新时间 操作 PAYERMAX PayerMax（PAYERMAX） 支付 DRAFT 1 个 0 / 0 — 2026-10-22 22:03 详情 激活 I_CYBS_NI Cybersource（Network International） 支付 DRAFT 1 个 0 / 0 — 2026-10-22 16:53 详情 激活 S7P2_SVC 第二段 mor-test 验"
+  },
+  {
+   "name": "mids",
+   "url": "/channel/mids",
+   "text": "渠道 全部 OE 状态 全部 外部 MID 查 询 重 置 新建 MID 外部 MID 渠道 OE 当前账号 状态 能力组 激活时间 操作 外部 MID 渠道 OE 当前账号 状态 能力组 激活时间 操作 DEMO-NI-AE001-02 ID 238508278957580288 DEMO_NI AE001 AE001 NI 技术账号（演示） ID 238508278357794816 ACTIVE 2 组 · 2 启用 2026-10-21 07:46 详情 改绑账号 暂停 DEMO-NI-AE001-01 ID 238508278684950528 DEMO_NI AE001 AE001"
+  },
+  {
+   "name": "standard-apis",
+   "url": "/external-api/standard-apis",
+   "text": "渠道/标准 API 标准 API 新建标准 API 编码 / 名称 查询 编码 名称 请求字段 响应字段 已实现渠道 更新时间 操作 AUTHORIZE 预授权 22 8 I_CYBS_NI、I_MPGS_NI 2026-10-22 15:25 ··· BALANCE_QUERY 渠道余额查询 6 5 PAYBY 2026-10-14 17:29 ··· CAPTURE 请款 12 5 I_CYBS_NI、I_MPGS_NI 2026-10-22 17:15 ··· PAY 支付 22 8 ALIPAY_PLUS、DLOCAL、I_CYBS_NI、I_MPGS_NI、PAYERMAX、TOSS"
+  },
+  {
+   "name": "gateway-configuration",
+   "url": "/gateway-configuration",
+   "text": "路由 目标服务 路由编码 目标服务编码 API Scope Channel 全部 状态 全部 查 询 重 置 共 536 条配置 ＋ 新增路由 路由编码 Method 入口路径 目标服务 Channel 状态 版本 操作 路由编码 Method 入口路径 目标服务 Channel 状态 版本 操作 channel-payment-callback POST /api/channel-callbacks/v1/{channelCode}/{channelAccountId} channel-connector-service CHANNEL_CALLBACK 启用 2 操作 ▾ client-a"
+  },
+  {
+   "name": "card-bin-library",
+   "url": "/card-bin-library",
+   "text": "＋ 导入新版本 按卡 BIN 识别卡组织、借贷记、发卡国等属性。新版本导入并校验通过后由人工激活；每笔交易在创建支付工具时冻结当时的卡属性，回切不改已有交易。 当前生效版本 v5 生效中 2026-10-22 22:14 由 221546852372267008 激活 · 文件 c3ds-bin-good2.csv 生效号段数 8 最近导入 v5 生效中 2026-10-22 22:13 由 221546852372267008 导入 待处理版本 1 个可激活 BIN 查询 当前生效 查 询 输入 6～8 位数字；只按 BIN 查询，不接受完整卡号 版本列表 全部 校验中 可激活 校验失败 生"
+  },
+  {
+   "name": "channel-I_CYBS_NI",
+   "url": "/channel/channels",
+   "text": "新建渠道 全部 10 支付渠道 9 服务渠道 1 全部状态 查 询 渠道编码 名称 类型 状态 出站地址 账号 / MID 调用授权 更新时间 操作 渠道编码 名称 类型 状态 出站地址 账号 / MID 调用授权 更新时间 操作 PAYERMAX PayerMax（PAYERMAX） 支付 DRAFT 1 个 0 / 0 — 2026-10-22 22:03 详情 激活 I_CYBS_NI Cybersource（Network International） 支付 DRAFT 1 个 0 / 0 — 2026-10-22 16:53 详情 激活 S7P2_SVC 第二段 mor-test 验",
+   "check": {
+    "hasStandardApis": true
+   }
+  },
+  {
+   "name": "channel-I_MPGS_NI",
+   "url": "/channel/channels",
+   "text": "新建渠道 全部 10 支付渠道 9 服务渠道 1 全部状态 查 询 渠道编码 名称 类型 状态 出站地址 账号 / MID 调用授权 更新时间 操作 渠道编码 名称 类型 状态 出站地址 账号 / MID 调用授权 更新时间 操作 PAYERMAX PayerMax（PAYERMAX） 支付 DRAFT 1 个 0 / 0 — 2026-10-22 22:03 详情 激活 I_CYBS_NI Cybersource（Network International） 支付 DRAFT 1 个 0 / 0 — 2026-10-22 16:53 详情 激活 S7P2_SVC 第二段 mor-test 验",
+   "check": {
+    "hasStandardApis": true
+   }
+  },
+  {
+   "name": "standard-api-REFUND",
+   "url": "/external-api/standard-apis/REFUND",
+   "text": "渠道/标准 API/REFUND 标准 API · REFUND 编辑 编码（创建后只读） REFUND 名称 退款 说明 渠道无关标准 API（草案，PayerMax 退款） 请求字段 · 14 响应字段 · 5 按路径缩进显示层级；[] 表示数组元素，子字段必填只在父对象存在时校验。 位置 字段路径 显示名称 类型 必填 说明 BODY channelAccount channelAccount OBJECT 是 — BODY channelCode channelAccount.channelCode STRING 是 — BODY channelAccountId channelAcc",
+   "check": {
+    "paymentChannelRef": true,
+    "threeDsRequired": false
+   }
+  },
+  {
+   "name": "standard-api-CAPTURE",
+   "url": "/external-api/standard-apis/CAPTURE",
+   "text": "渠道/标准 API/CAPTURE 标准 API · CAPTURE 编辑 编码（创建后只读） CAPTURE 名称 请款 说明 渠道无关标准 API：对已成功的预授权请款，可部分、可多次 请求字段 · 12 响应字段 · 5 按路径缩进显示层级；[] 表示数组元素，子字段必填只在父对象存在时校验。 位置 字段路径 显示名称 类型 必填 说明 BODY channelAccount channelAccount OBJECT 是 — BODY channelCode channelAccount.channelCode STRING 是 — BODY channelAccountId chan",
+   "check": {
+    "paymentChannelRef": true,
+    "threeDsRequired": false
+   }
+  },
+  {
+   "name": "standard-api-PAY",
+   "url": "/external-api/standard-apis/BALANCE_QUERY",
+   "text": "渠道/标准 API/BALANCE_QUERY 标准 API · BALANCE_QUERY 编辑 编码（创建后只读） BALANCE_QUERY 名称 渠道余额查询 说明 渠道无关标准 API（草案，PayBy 接入） 请求字段 · 6 响应字段 · 5 按路径缩进显示层级；[] 表示数组元素，子字段必填只在父对象存在时校验。 位置 字段路径 显示名称 类型 必填 说明 BODY channelAccount channelAccount OBJECT 是 — BODY channelCode channelAccount.channelCode STRING 是 — BODY channe",
+   "check": {
+    "paymentChannelRef": false,
+    "threeDsRequired": false
+   }
+  }
+ ],
+ "console": [
+  {
+   "page": "wf-definitions",
+   "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+  },
+  {
+   "page": "wf-definitions",
+   "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+  }
+ ],
+ "httpErrors": [
+  {
+   "page": "wf-definitions",
+   "method": "GET",
+   "path": "/api/operations/workflow-admin/v1/definitions/239089501853532160",
+   "status": 429
+  },
+  {
+   "page": "wf-definitions",
+   "method": "GET",
+   "path": "/api/operations/workflow-admin/v1/definitions/239000942396129280",
+   "status": 429
+  }
+ ]
+}

@@ -37,6 +37,12 @@
                 <artifactId>paytech-vault-client</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <!-- Reactor 内的 Platform 合同：BIN 库导入读取内部文件接口与国家区域映射（2026-10-22 BIN 库需求）。 -->
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>paytech-platform-support-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
     <build>

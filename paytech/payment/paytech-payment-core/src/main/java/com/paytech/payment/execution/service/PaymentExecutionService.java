@@ -1,5 +1,6 @@
 package com.paytech.payment.execution.service;
 
+import com.paytech.payment.execution.core.dal.dataobject.PaymentAttempt;
 import com.paytech.payment.execution.domain.ApplyCardInstrumentContext;
 import com.paytech.payment.execution.domain.CreateIntentContext;
 import com.paytech.payment.execution.domain.PayContext;
@@ -19,6 +20,14 @@ public interface PaymentExecutionService {
 
     /** 在本地事务中终止已确认无活动或成功尝试的支付意图。 */
     void terminateIntent(TerminateIntentContext context);
+
+    /**
+     * 读取支付尝试（查单恢复与渠道通知入口用来定位 Intent 与冻结坐标）
+     *
+     * @param attemptId 支付尝试 ID
+     * @return 支付尝试；不存在时为 null
+     */
+    PaymentAttempt findAttempt(long attemptId);
 
     /**
      * 保存支付上下文

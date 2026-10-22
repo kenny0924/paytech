@@ -72,4 +72,13 @@ public class PaymentSucceededResult {
 
     /** 本次支付关联的 Commerce Customer；访客支付为空（Schema v2） */
     private final Long customerId;
+
+    /** Token 冻结的 BIN 库卡组织；非卡支付或未识别为空（Schema v2 追加，billing card_network） */
+    private final String cardBrand;
+
+    /** Token 冻结的借贷记类型；非卡支付、未识别或号段未提供为空（Schema v2 追加，billing funding_type） */
+    private final String fundingType;
+
+    /** Token 冻结的卡等级；非卡支付、未识别或号段未提供为空（Schema v2 追加，billing card_level） */
+    private final String cardLevel;
 }

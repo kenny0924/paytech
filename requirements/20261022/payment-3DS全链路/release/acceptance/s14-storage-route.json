@@ -1,0 +1,48 @@
+{
+ "create": {
+  "at": "2026-10-22T18:09:59Z",
+  "http": 200,
+  "body": {
+   "objectType": "FILE_STORAGE_ROUTE",
+   "objectId": "239087906591948800",
+   "objectCode": "operations-console-bff",
+   "status": null,
+   "version": 1
+  }
+ },
+ "routesAfter": {
+  "at": "2026-10-22T18:09:59Z",
+  "http": 200,
+  "body": {
+   "items": [
+    {
+     "sourceSystem": "*",
+     "instanceCode": "MINIO",
+     "bucketName": "mor-platform-files",
+     "scanPolicyCode": "CLIENT_ONBOARDING_FORMAT",
+     "maxUploadSeconds": 900,
+     "version": 1,
+     "updateTime": "2026-10-22T04:46:58.207363Z"
+    },
+    {
+     "sourceSystem": "client-console-bff",
+     "instanceCode": "S3_TEST",
+     "bucketName": "mor-test-platform-files-k7q2",
+     "scanPolicyCode": "CLIENT_ONBOARDING_FORMAT",
+     "maxUploadSeconds": 900,
+     "version": 1,
+     "updateTime": "2026-10-22T15:41:08.774140Z"
+    },
+    {
+     "sourceSystem": "operations-console-bff",
+     "instanceCode": "MINIO",
+     "bucketName": "mor-platform-files",
+     "scanPolicyCode": "CARD_BIN_CSV",
+     "maxUploadSeconds": 900,
+     "version": 1,
+     "updateTime": "2026-10-22T18:09:58.970428Z"
+    }
+   ]
+  }
+ }
+}

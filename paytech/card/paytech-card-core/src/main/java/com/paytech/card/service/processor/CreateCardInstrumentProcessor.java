@@ -10,6 +10,8 @@ import com.paytech.card.domain.CardInstrumentContext;
 import com.paytech.card.domain.CardInstrumentRecord;
 import com.paytech.card.domain.CardRiskAttributes;
 import com.paytech.card.domain.CreatedCardInstrument;
+import com.paytech.card.domain.binlibrary.CardAttributes;
+import com.paytech.card.domainservice.repository.CardBinRangeRepository;
 import com.paytech.card.domainservice.repository.PaymentCardInstrumentRepository;
 import com.paytech.card.service.CardCallerService;
 import com.paytech.card.service.CardService;
@@ -29,6 +31,7 @@ import lombok.AllArgsConstructor;
  * 按（Client、来源提交）查原工具 → 已有则由 {@link CheckCardInstrumentProcessor} 核对同卡、同 Customer、同保存意愿后原样返回（不访问 Vault、
  * 不覆盖 CVV）→ 没有则准备卡、凭证、DEK 与 CVV 并插入交易工具；并发同一提交撞唯一键时改读赢得竞争的工具并同样核对。Payment 第二段失败留下的
  * 孤立工具从未签发票据，到期后由 {@link PurgeOrphanCardInstrumentsProcessor} 回收；其 CVV 随工具期限过期。
+ * <li>响应附带按当前生效 BIN 库查询的卡属性快照（BIN 库需求 B4）：新建与原提交重放都查询一次，Payment 只在首次绑定时冻结；未识别不使创建失败。</li>
  */
 @Component
 @AllArgsConstructor
@@ -39,6 +42,7 @@ public class CreateCardInstrumentProcessor
     private final CardStorageService cardStorageService;
     private final PrepareCardInstrumentProcessor prepareCardInstrumentProcessor;
     private final CheckCardInstrumentProcessor checkCardInstrumentProcessor;
+    private final CardBinRangeRepository cardBinRangeRepository;
     private final PaymentCardInstrumentRepository paymentCardInstrumentRepository;
 
     /** 只接受 Payment；卡来源必须恰好一种，Client、来源提交与期限上限必填。 */
@@ -82,15 +86,16 @@ public class CreateCardInstrumentProcessor
         return result(cardStorageService.findInstrument(context.getInstrumentRef()));
     }
 
-    /** 工具引用、掩码卡号、期限与风控属性。 */
-    static CreatedCardInstrument result(CardInstrumentRecord record) {
+    /** 工具引用、掩码卡号、期限、风控属性与当前生效 BIN 库的卡属性快照。 */
+    CreatedCardInstrument result(CardInstrumentRecord record) {
         if (record == null) {
             throw new ErrorException("卡交易工具保存后不存在");
         }
         PaymentCard card = record.card();
         return new CreatedCardInstrument(String.valueOf(record.instrument().getPaymentCardInstrumentId()),
             maskedPan(card), record.instrument().getExpiresAt(),
-            new CardRiskAttributes(card.getCardBin(), card.getCardFingerprint()));
+            new CardRiskAttributes(card.getCardBin(), card.getCardFingerprint()),
+            CardAttributes.of(cardBinRangeRepository.findMatch(card.getCardBin(), null)));
     }
 
     /** 前 6 位、6 个星号与后 4 位。 */

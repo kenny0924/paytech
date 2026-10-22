@@ -3,6 +3,7 @@ package com.paytech.payment.execution.service.impl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.paytech.payment.execution.core.dal.dataobject.PaymentAttempt;
 import com.paytech.payment.execution.domain.ApplyCardInstrumentContext;
 import com.paytech.payment.execution.domain.CreateIntentContext;
 import com.paytech.payment.execution.domain.PayContext;
@@ -41,6 +42,12 @@ public class PaymentExecutionServiceImpl implements PaymentExecutionService {
         transactionTemplate.executeWithoutResult(status -> {
             paymentIntentRepository.terminateIntent(context.getIntent());
         });
+    }
+
+    /** 按主键读取支付尝试。 */
+    @Override
+    public PaymentAttempt findAttempt(long attemptId) {
+        return paymentAttemptRepository.selectById(attemptId);
     }
 
     @Override

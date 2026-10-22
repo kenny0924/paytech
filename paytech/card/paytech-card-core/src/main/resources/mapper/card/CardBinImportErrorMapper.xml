@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.card.core.dal.mapper.CardBinImportErrorMapper">
+    <resultMap id="row" type="com.paytech.card.core.dal.dataobject.CardBinImportError">
+        <id column="error_id" property="errorId"/>
+        <result column="version_id" property="versionId"/>
+        <result column="line_no" property="lineNo"/>
+        <result column="column_name" property="columnName"/>
+        <result column="error_code" property="errorCode" javaType="com.paytech.card.api.enums.BinImportErrorCode" typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="error_message" property="errorMessage"/>
+        <result column="value_excerpt" property="valueExcerpt"/>
+        <result column="create_time" property="createTime" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        <result column="update_time" property="updateTime" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+    </resultMap>
+
+    <insert id="insertErrors">
+        INSERT INTO t_card_bin_import_error (error_id, version_id, line_no, column_name, error_code, error_message,
+            value_excerpt, create_time, update_time)
+        VALUES
+        <foreach collection="errors" item="error" separator=",">
+            (#{error.errorId}, #{error.versionId}, #{error.lineNo}, #{error.columnName},
+            #{error.errorCode,javaType=com.paytech.card.api.enums.BinImportErrorCode,typeHandler=com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler,jdbcType=VARCHAR},
+            #{error.errorMessage}, #{error.valueExcerpt},
+            #{error.createTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP},
+            #{error.updateTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP})
+        </foreach>
+    </insert>
+
+    <select id="countErrors" resultType="long">
+        SELECT COUNT(*) FROM t_card_bin_import_error WHERE version_id = #{versionId}
+    </select>
+
+    <select id="listErrors" resultMap="row">
+        SELECT error_id, version_id, line_no, column_name, error_code, error_message, value_excerpt, create_time, update_time
+        FROM t_card_bin_import_error
+        WHERE version_id = #{versionId}
+        ORDER BY line_no, error_id
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+</mapper>

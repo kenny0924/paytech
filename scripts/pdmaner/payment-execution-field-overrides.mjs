@@ -48,7 +48,7 @@ export const EXECUTION_FIELD_OVERRIDES = Object.freeze({
     "defaultValue": "NULL"
   },
   "payment_action.interaction_type": {
-    "comment": "原 Action 的消费者交互类型，无交互时为空。允许值：REDIRECT、THREE_DS_CHALLENGE、SDK、APP_SWITCH、QR_CODE。本期只写 THREE_DS_CHALLENGE。",
+    "comment": "原 Action 的消费者交互类型，无交互时为空。允许值：REDIRECT、THREE_DS_CHALLENGE、SDK、APP_SWITCH、QR_CODE。本期按渠道返回写 THREE_DS_CHALLENGE 或 REDIRECT；完成后保留历史值，可据此判断是否发生过挑战。",
     "extProps": {
       "characterSet": "ascii",
       "collation": "ascii_bin"
@@ -198,6 +198,42 @@ export const EXECUTION_FIELD_OVERRIDES = Object.freeze({
       "collation": "ascii_bin"
     }
   },
+  "payment_instrument_token.card_brand": {
+    "extProps": {
+      "characterSet": "ascii",
+      "collation": "ascii_bin"
+    }
+  },
+  "payment_instrument_token.funding_type": {
+    "extProps": {
+      "characterSet": "ascii",
+      "collation": "ascii_bin"
+    }
+  },
+  "payment_instrument_token.card_level": {
+    "extProps": {
+      "characterSet": "ascii",
+      "collation": "ascii_bin"
+    }
+  },
+  "payment_instrument_token.card_product": {
+    "extProps": {
+      "characterSet": "ascii",
+      "collation": "ascii_bin"
+    }
+  },
+  "payment_instrument_token.issuer_country": {
+    "extProps": {
+      "characterSet": "ascii",
+      "collation": "ascii_bin"
+    }
+  },
+  "payment_instrument_token.issuer_region": {
+    "extProps": {
+      "characterSet": "ascii",
+      "collation": "ascii_bin"
+    }
+  },
   "payment_instrument_token.expires_at": {
     "comment": "首次用卡资格的 UTC 微秒精度截止时间，创建时按原支付和材料期限冻结；重试不延长，不表示在途资金失效。"
   },
@@ -225,7 +261,7 @@ export const EXECUTION_FIELD_OVERRIDES = Object.freeze({
     "comment": "原尝试当前唯一未终结业务动作；PROCESSING、UNKNOWN 占位，终态须核对仍指向原动作才清空；等待手动 Capture 时为空，但 Intent 继续占用该 Attempt。"
   },
   "payment_action.transaction_assessment_id": {
-    "comment": "Risk 返回的原交易评估稳定标识；仅 PAY_RISK 可填，取得可信原评估身份前为空，已知后不可替换；渠道动作为空。"
+    "comment": "Risk 统一评估返回的评估 ID（evaluationId）；仅 PAY_RISK 取得结论后填写，已知后不可替换；渠道动作为空。"
   },
   "payment_action.risk_result": {
     "comment": "原 PAY_RISK 的可信评估结论；渠道动作及未知评估为空。允许值：ALLOW、REVIEW、DENY、FAILED、TIMED_OUT。评估完成不等于允许支付。"

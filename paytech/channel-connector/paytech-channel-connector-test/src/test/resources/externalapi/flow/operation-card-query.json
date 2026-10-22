@@ -1,0 +1,57 @@
+{
+  "timeoutMs": 10000,
+  "initializers": [
+    {
+      "id": "channelAccount",
+      "function": "CHANNEL_ACCOUNT_CONFIG",
+      "required": true,
+      "args": {
+        "vaultToken": {"kind": "PATH", "path": "input.channelAccount.accountVaultToken"},
+        "channelCode": {"kind": "PATH", "path": "input.channelAccount.channelCode"},
+        "channelAccountId": {"kind": "PATH", "path": "input.channelAccount.channelAccountId"},
+        "entityNo": {"kind": "PATH", "path": "input.channelAccount.entityNo"}
+      }
+    }
+  ],
+  "entry": "query",
+  "nodes": [
+    {
+      "id": "query",
+      "integrationApi": "CARD_QUERY",
+      "request": {
+        "PATH:merchantId": {"kind": "PATH", "path": "resources.channelAccount.parameters.outletId"},
+        "PATH:orderRef": {"kind": "PATH", "path": "input.payment.attemptId"}
+      },
+      "params": {
+        "apiKey": {"kind": "PATH", "path": "resources.channelAccount.credentials.apiKey"}
+      }
+    }
+  ],
+  "returns": [
+    {
+      "id": "found",
+      "executeStatus": "SUCCESS",
+      "outputs": {
+        "paymentStatus": {"kind": "PATH", "path": "steps.query.outputs.paymentStatus"},
+        "channelTransactionRef": {"kind": "PATH", "path": "steps.query.outputs.reference"},
+        "channelStatus": {"kind": "PATH", "path": "steps.query.outputs.state"},
+        "amount.value": {"kind": "PATH", "path": "steps.query.outputs.amount"},
+        "amount.currency": {"kind": "PATH", "path": "steps.query.outputs.currency"}
+      }
+    },
+    {
+      "id": "notFound",
+      "executeStatus": "FAIL",
+      "outputs": {
+        "paymentStatus": {"kind": "EXPRESSION", "expression": "'NOT_FOUND'"},
+        "failureCode": {"kind": "PATH", "path": "steps.query.outputs.errorCode"}
+      }
+    },
+    {"id": "unknown", "executeStatus": "ERROR"}
+  ],
+  "edges": [
+    {"from": "query", "to": "found", "condition": "steps.query.executeStatus == 'SUCCESS'", "priority": 1},
+    {"from": "query", "to": "notFound", "condition": "steps.query.executeStatus == 'FAIL'", "priority": 2},
+    {"from": "query", "to": "unknown", "default": true}
+  ]
+}

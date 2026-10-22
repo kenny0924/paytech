@@ -31,6 +31,7 @@ public class StoredCardConverter {
         card.setStoredCardToken(view.storedCardToken());
         card.setMaskedPan(view.maskedPan());
         card.setLast4(view.last4());
+        card.setCardBrand(view.cardBrand());
         card.setExpiryMonth(view.expiryMonth());
         card.setExpiryYear(view.expiryYear());
         card.setCreatedAt(view.createdAt().toString());

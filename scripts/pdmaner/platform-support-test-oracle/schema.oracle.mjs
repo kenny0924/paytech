@@ -30,7 +30,7 @@ export const APPROVED_TABLE_GROUPS = Object.freeze({
     "t_gateway_route_query_param", "t_gateway_guard_rule", "t_console_resource",
   ]),
   reliability: Object.freeze(["t_compensation_event", "t_command_idempotency"]),
-  reference_data: Object.freeze(["t_currency_spec"]),
+  reference_data: Object.freeze(["t_currency_spec", "t_country_region"]),
   workflow: Object.freeze([
     "t_workflow_definition", "t_workflow_definition_version", "t_workflow_action_template", "t_workflow_instance",
     "t_workflow_node_run", "t_workflow_action_run", "t_workflow_verification", "t_workflow_approval",
@@ -46,11 +46,11 @@ export const EXPECTED_GROUP_SIZES = Object.freeze({
   audit_security: 8,
   gateway_control: 6,
   reliability: 2,
-  reference_data: 1,
+  reference_data: 2,
   workflow: 10,
 });
 
-export const EXPECTED_TABLE_TOTAL = 72;
+export const EXPECTED_TABLE_TOTAL = 73;
 export const APPROVED_TABLES = Object.freeze(Object.values(APPROVED_TABLE_GROUPS).flat());
 
 export const APPROVED_DIAGRAMS = Object.freeze({

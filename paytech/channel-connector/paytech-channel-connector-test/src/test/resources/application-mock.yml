@@ -50,6 +50,18 @@ spring:
   sql:
     init:
       mode: never
+  # 仓库 local-environment 的本机 RabbitMQ（3DS 全链路：ChannelPaymentNotified 发布）；凭据只来自 .env.local 或同名环境变量，不写默认值。
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: "${MOR_RABBITMQ_USER}"
+    password: "${MOR_RABBITMQ_PASSWORD}"
+    virtual-host: "${MOR_RABBITMQ_VHOST:/mor-local}"
+    connection-timeout: 2s
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
   jmx:
     enabled: false
 
@@ -96,6 +108,13 @@ xxl:
     executor:
       enabled: false
 
+# paytech-messaging 发布端：声明 channel-connector.events 并提供 DomainEventPublisher；未路由按发布失败（用例以临时队列观察）。
+messaging:
+  producer:
+    service: channel-connector
+  publisher:
+    unroutable-policy: FAIL
+
 # 实例 ID（内部调用 Token 的 inst）：mode=OFF 时不使用；DUAL 读卡出站测试以独立上下文注入。
 paytech:
   instance-id: ""
@@ -105,6 +124,10 @@ internal-auth:
   mode: "OFF"
 
 channel-connector:
+  # ChannelPaymentNotified 信封身份（3DS 全链路）：sourceService 与 messaging.producer.service 一致；测试固定实例 ID。
+  event:
+    source-service: channel-connector
+    instance-id: channel-connector-test
   capability-definitions:
     "[ACTION.PAY]": { value-type: BOOLEAN }
     "[ACTION.AUTHORIZE]": { value-type: BOOLEAN }

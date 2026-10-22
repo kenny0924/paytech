@@ -5,17 +5,20 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
@@ -25,7 +28,11 @@ import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
+import com.paytech.card.api.enums.CardBrand;
+import com.paytech.card.api.enums.CardFundingType;
+import com.paytech.card.api.enums.CardProduct;
 import com.paytech.card.api.instrument.request.CreateCardInstrumentRequestBody;
+import com.paytech.card.api.instrument.response.CreateCardInstrumentResponseBody;
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.payment.api.instrument.PaymentInstrumentApi;
 import com.paytech.payment.execution.core.enums.AttemptStatus;
@@ -44,6 +51,11 @@ import com.paytech.payment.test.mocker.PlatformMocker;
  * Payment 库不含卡号；并发首用；凭票据读卡与票据一次性；不同交易的工具各自签票；原提交同卡重放与换卡 409；card 业务拒绝 400 与 card 不可用 503
  * 时不写 Token；卡值不进日志。卡号均为公开测试卡号。
  *
+ * <p>
+ * BIN 库卡属性快照（BIN 库需求 AC-02、AC-04、AC-08）：识别时 Token 冻结 8 列；未识别仍成功且只记版本号；没有生效版本时全空；
+ * 原提交重放沿用首次冻结的快照，BIN 库切换版本后的新工具使用新版本；旧 Card 缺快照对象时按未识别（全空）并记 WARN；
+ * Card 快照违约时失败关闭（500），不写 Token。
+ *
  * @see PaymentInstrumentApi
  */
 @ExtendWith(OutputCaptureExtension.class)
@@ -54,6 +66,9 @@ class CardStorageTest extends AbstractPayCardTest {
 
     @Autowired
     private PlatformMocker platform;
+
+    private static final String CARD_LEVEL = "CLASSIC";
+    private static final String ISSUER_REGION = "GCC";
 
     /** 本类公共：MID 候选与风控放行，pay 用例按需配置渠道结论。 */
     @BeforeEach
@@ -247,6 +262,123 @@ class CardStorageTest extends AbstractPayCardTest {
             () -> assertFalse(logs.contains(CARDHOLDER_NAME), "日志包含持卡人"),
             () -> assertFalse(logs.contains(CardApiMocker.fingerprint(PAN)), "日志包含卡指纹"),
             () -> assertFalse(logs.contains(cardApi.tickets().getFirst()), "日志包含读卡票据"));
+    }
+
+    /** 识别的 BIN：Token 冻结卡组织、借贷记、等级、产品、发卡国、区域、BIN 库版本与命中 8 位前缀。 */
+    @Test
+    void test_cardAttributesFrozen() {
+        cardApi.binRange(CardApiMocker.bin(PAN), visaCredit());
+
+        newPayment();
+
+        assertEquals(List.of(CardBrand.VISA.getCode(), CardFundingType.CREDIT.getCode(), CARD_LEVEL,
+            CardProduct.CONSUMER.getCode(), COUNTRY_CODE, ISSUER_REGION, CardApiMocker.BIN_LIBRARY_VERSION_NO, 8),
+            snapshot(mapper.instrumentTokens().getFirst()));
+    }
+
+    /** 未识别的 BIN（AC-04）：工具照常创建，卡属性全空，只记查询时的 BIN 库版本号。 */
+    @Test
+    void test_cardAttributesUnrecognized() {
+        String token = newPayment().token;
+
+        assertAll(() -> assertNotNull(token),
+            () -> assertEquals(Arrays.asList(null, null, null, null, null, null, CardApiMocker.BIN_LIBRARY_VERSION_NO, null),
+                snapshot(mapper.instrumentTokens().getFirst())));
+    }
+
+    /** 没有生效 BIN 库版本：工具照常创建，快照 8 列全空。 */
+    @Test
+    void test_cardAttributesWithoutActiveLibrary() {
+        cardApi.binRange(CardApiMocker.bin(PAN), visaCredit());
+        cardApi.activeBinLibrary(null);
+
+        newPayment();
+
+        assertEquals(Arrays.asList(null, null, null, null, null, null, null, null),
+            snapshot(mapper.instrumentTokens().getFirst()));
+    }
+
+    /**
+     * 快照冻结（AC-02、B4）：首次按 6 位号段识别；BIN 库切到新版本（新增 8 位号段、另一卡组织）后原提交重放沿用原快照，新工具使用新版本。
+     */
+    @Test
+    void test_replayKeepsFrozenAttributes() {
+        cardApi.binRange(PAN.substring(0, 6), visaCredit());
+        var paid = newPayment();
+        cardApi.activeBinLibrary(CardApiMocker.BIN_LIBRARY_VERSION_NO + 1);
+        cardApi.binRange(CardApiMocker.bin(PAN), CardApiMocker.attributes(CardBrand.MASTERCARD.getCode(),
+            CardFundingType.DEBIT.getCode(), null, null, COUNTRY_CODE, ISSUER_REGION));
+
+        String replayed = applyCard(String.valueOf(paid.intentId), paid.submissionId);
+        newPayment();
+
+        var tokens = mapper.instrumentTokens();
+        assertAll(() -> assertEquals(paid.token, replayed), () -> assertEquals(2, tokens.size()),
+            () -> assertEquals(List.of(CardBrand.VISA.getCode(), CardFundingType.CREDIT.getCode(), CARD_LEVEL,
+                CardProduct.CONSUMER.getCode(), COUNTRY_CODE, ISSUER_REGION, CardApiMocker.BIN_LIBRARY_VERSION_NO, 6),
+                snapshot(tokens.get(0)), "重放不得改写已冻结快照"),
+            () -> assertEquals(Arrays.asList(CardBrand.MASTERCARD.getCode(), CardFundingType.DEBIT.getCode(), null, null,
+                COUNTRY_CODE, ISSUER_REGION, CardApiMocker.BIN_LIBRARY_VERSION_NO + 1, 8), snapshot(tokens.get(1))));
+    }
+
+    /** 旧 Card 响应缺少卡属性快照对象：工具照常创建，8 列全空（按未识别），记一条不含卡值的 WARN。 */
+    @Test
+    void test_cardAttributesMissingFromOldCard(CapturedOutput output) {
+        cardApi.binRange(CardApiMocker.bin(PAN), visaCredit());
+        cardApi.rawCardAttributes(null);
+
+        String token = newPayment().token;
+
+        String logs = output.getAll();
+        assertAll(() -> assertNotNull(token),
+            () -> assertEquals(Arrays.asList(null, null, null, null, null, null, null, null),
+                snapshot(mapper.instrumentTokens().getFirst())),
+            () -> assertTrue(logs.contains("缺少卡属性快照"), "缺对象应记 WARN"),
+            () -> assertFalse(logs.contains(PAN), "日志包含卡号"));
+    }
+
+    /** Card 卡属性快照违反合同（识别却缺卡组织、未知卡组织、未识别却带属性）：失败关闭返回 500，不写 Token。 */
+    @ParameterizedTest
+    @MethodSource("invalidCardAttributes")
+    void test_invalidCardAttributesRejected(CreateCardInstrumentResponseBody.CardAttributes attributes) {
+        cardApi.rawCardAttributes(attributes);
+        var payment = newIntent();
+
+        int status = applyStatus(payment.intentId, payment.submissionId, card(PAN, EXPIRY_YEAR, CARDHOLDER_NAME));
+
+        assertAll(() -> assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.value(), status),
+            () -> assertTrue(mapper.instrumentTokens().isEmpty()), () -> assertEquals(1, cardApi.creates().size()));
+    }
+
+    /** 违反 Card 合同的卡属性快照。 */
+    static Stream<CreateCardInstrumentResponseBody.CardAttributes> invalidCardAttributes() {
+        var withoutBrand = CardApiMocker.attributes(null, null, null, null, COUNTRY_CODE, ISSUER_REGION);
+        withoutBrand.setBinLibraryVersionNo(CardApiMocker.BIN_LIBRARY_VERSION_NO);
+        withoutBrand.setMatchedPrefixLength(8);
+        var unknownBrand = CardApiMocker.attributes("UNKNOWN_SCHEME", null, null, null, COUNTRY_CODE, ISSUER_REGION);
+        unknownBrand.setBinLibraryVersionNo(CardApiMocker.BIN_LIBRARY_VERSION_NO);
+        unknownBrand.setMatchedPrefixLength(8);
+        var unrecognizedWithBrand = CardApiMocker.attributes(CardBrand.VISA.getCode(), null, null, null, null, null);
+        unrecognizedWithBrand.setRecognized(false);
+        return Stream.of(withoutBrand, unknownBrand, unrecognizedWithBrand);
+    }
+
+    /** 本类识别号段的卡属性：VISA 信用卡、个人卡、AE 发卡。 */
+    static CreateCardInstrumentResponseBody.CardAttributes visaCredit() {
+        return CardApiMocker.attributes(CardBrand.VISA.getCode(), CardFundingType.CREDIT.getCode(), CARD_LEVEL,
+            CardProduct.CONSUMER.getCode(), COUNTRY_CODE, ISSUER_REGION);
+    }
+
+    /** Token 行冻结的 8 列快照，按 DDL 列序；数字列统一为 Integer。 */
+    static List<Object> snapshot(Map<String, Object> token) {
+        return Arrays.asList(token.get("cardBrand"), token.get("fundingType"), token.get("cardLevel"),
+            token.get("cardProduct"), token.get("issuerCountry"), token.get("issuerRegion"),
+            integer(token.get("binLibraryVersionNo")), integer(token.get("binMatchLength")));
+    }
+
+    /** MySQL INT / TINYINT 映射的数字；NULL 保持为空。 */
+    static Integer integer(Object value) {
+        return value == null ? null : ((Number)value).intValue();
     }
 
     /** Token 行的保存意愿（MySQL TINYINT 映射为 Boolean 或数字）。 */

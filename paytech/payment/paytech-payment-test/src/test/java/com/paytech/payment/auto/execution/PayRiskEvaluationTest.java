@@ -20,10 +20,13 @@ import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import com.paytech.card.api.enums.CardBrand;
+import com.paytech.card.api.enums.CardFundingType;
 import com.paytech.channel.connector.api.enums.ChannelOperation;
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.payment.api.execution.PaymentIntentApi;
 import com.paytech.payment.execution.core.action.ActionType;
+import com.paytech.payment.execution.core.action.PayActionActor;
 import com.paytech.payment.execution.core.enums.ActionStatus;
 import com.paytech.payment.execution.core.enums.AttemptStatus;
 import com.paytech.payment.execution.core.enums.AuthenticationRequirement;
@@ -31,6 +34,7 @@ import com.paytech.payment.execution.core.enums.CaptureMode;
 import com.paytech.payment.execution.core.enums.IntentStatus;
 import com.paytech.payment.execution.core.enums.RiskResult;
 import com.paytech.payment.test.base.AbstractPayCardTest;
+import com.paytech.payment.test.mocker.CardApiMocker;
 import com.paytech.payment.test.mocker.ChannelConnectorMocker.Candidate;
 import com.paytech.payment.test.mocker.RiskMocker;
 import com.paytech.payment.test.mocker.RiskMocker.Reply;
@@ -43,7 +47,7 @@ import com.paytech.risk.decision.api.evaluation.response.EvaluateDecisionRespons
  * Risk 测试 HTTP 服务。
  *
  * <p>
- * 覆盖：统一请求的 17 个输入字段；ALLOW 的三个后继分支；REVIEW/DENY/FAILED/TIMED_OUT 使 Attempt 失败并释放 Intent；400/422/无效响应
+ * 覆盖：统一请求的 17 个输入字段及 BIN 库卡属性（发卡国、卡组织、借贷记，未识别时省略）；ALLOW 的后继分支（3DS 全链路起要求认证也进入 PAY）；REVIEW/DENY/FAILED/TIMED_OUT 使 Attempt 失败并释放 Intent；400/422/无效响应
  * 不重试；409、503 与读超时用同一请求重试一次；受限值不进日志。消费者引用、IP、UA 与卡号均为合成值。
  *
  * @see PaymentIntentApi#pay(String, String, com.paytech.payment.api.execution.request.PayRequestBody)
@@ -51,6 +55,7 @@ import com.paytech.risk.decision.api.evaluation.response.EvaluateDecisionRespons
 @ExtendWith(OutputCaptureExtension.class)
 class PayRiskEvaluationTest extends AbstractPayCardTest {
     private static final String BIN = "41111111";
+    private static final String ISSUER_REGION = "GCC";
     private static final Duration BEYOND_READ_TIMEOUT = Duration.ofMillis(1500);
 
     private Candidate candidate;
@@ -84,6 +89,26 @@ class PayRiskEvaluationTest extends AbstractPayCardTest {
         assertRiskSaved(riskAction, RiskResult.ALLOW, AuthenticationRequirement.NOT_REQUIRED);
     }
 
+    /**
+     * 识别的 BIN（BIN 库需求 AC-08）：评估请求在 17 个字段之外带上 Token 冻结的发卡国、卡组织与借贷记类型；号段未提供的卡等级等不传 Risk。
+     * 未识别时三个字段省略，见 {@link #test_allowWithoutAuthentication()}。
+     */
+    @Test
+    void test_cardAttributesInRiskInput() {
+        cardApi.binRange(BIN, CardApiMocker.attributes(CardBrand.VISA.getCode(), CardFundingType.DEBIT.getCode(), null,
+            null, COUNTRY_CODE, ISSUER_REGION));
+        risk.respond(RiskResult.DENY, null);
+        var paid = newPayment();
+
+        long attemptId = attemptId(paid.pay());
+
+        var expected = expectedInputs(paid, mapper.actions(attemptId).getFirst().get("actionId"), CaptureMode.AUTOMATIC);
+        expected.put("issuerCountryCode", COUNTRY_CODE);
+        expected.put("cardBrand", CardBrand.VISA.getCode());
+        expected.put("fundingType", CardFundingType.DEBIT.getCode());
+        assertEquals(expected, withoutFingerprint(risk.requests().getFirst().getInputs()));
+    }
+
     /** 同一张卡在不同 Intent 的支付尝试中指纹相同，且不包含卡号（风控拒绝，不进入渠道）。 */
     @Test
     void test_cardFingerprintStableAcrossAttempts() {
@@ -112,15 +137,23 @@ class PayRiskEvaluationTest extends AbstractPayCardTest {
             () -> assertTrue(channel.calls().isEmpty()));
     }
 
-    /** 放行且要求 3DS：保存认证要求并进入 AUTHENTICATE。 */
+    /**
+     * 放行且要求 3DS（3DS 全链路 AC-01、AC-02）：保存认证要求后进入 PAY，不再进入 AUTHENTICATE；本类候选未声明 3DS 模式，PAY 不发出
+     * 渠道请求，以 THREE_DS_CHANNEL_UNAVAILABLE 失败并释放 Intent，不会卡在 UNKNOWN。
+     */
     @Test
     void test_allowWithThreeDs() {
         risk.respond(RiskResult.ALLOW, AuthenticationRequirement.THREE_DS_REQUIRED);
+        var paid = newPayment();
 
-        long attemptId = attemptId(newPayment().pay());
+        var response = paid.pay();
 
+        long attemptId = attemptId(response);
         var riskAction = mapper.actions(attemptId).getFirst();
-        assertAll(() -> assertEquals(actionTypes(ActionType.PAY_RISK, ActionType.AUTHENTICATE), types(attemptId)),
+        assertAll(() -> assertEquals(actionTypes(ActionType.PAY_RISK, ActionType.PAY), types(attemptId)),
+            () -> assertEquals(AttemptStatus.FAILED.getCode(), response.getBody().get("status")),
+            () -> assertEquals(PayActionActor.THREE_DS_CHANNEL_UNAVAILABLE, mapper.actions(attemptId).get(1).get("code")),
+            () -> assertNull(mapper.intent(paid.intentId).get("activeAttemptId")),
             () -> assertTrue(channel.calls().isEmpty()));
         assertRiskSaved(riskAction, RiskResult.ALLOW, AuthenticationRequirement.THREE_DS_REQUIRED);
     }

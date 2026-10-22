@@ -1,6 +1,9 @@
 package com.paytech.card.test.base;
 
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertAll;
+
+import java.time.Duration;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,7 +15,9 @@ import org.springframework.test.context.ActiveProfiles;
 import com.paytech.card.CardApplication;
 import com.paytech.card.test.configuration.CardTestConfiguration;
 import com.paytech.card.test.dal.CardTestMapper;
+import com.paytech.card.test.mocker.BinLibraryMocker;
 import com.paytech.card.test.mocker.CardDataMocker;
+import com.paytech.card.test.mocker.PlatformMocker;
 import com.paytech.card.test.mocker.VaultMocker;
 import com.paytech.card.test.mocker.VaultTransactionObserver;
 import com.paytech.card.test.probe.PaymentEventPublisher;
@@ -21,7 +26,9 @@ import com.paytech.foundation.testsupport.api.TestBase;
 
 /**
  * 共用正式 card 应用：每例验证 mor_card 空基线、清空本服务的 payment 分区队列，结束时检查意外调用并由 Foundation 统一清理。
- * <li>MockHttpServer 以服务发现名承载 Vault（卡 DEK）；PaymentSucceeded 由 {@link PaymentEventPublisher} 扮演 Payment 发到真实本机 RabbitMQ。</li>
+ * <li>MockHttpServer 以服务发现名承载 Vault（卡 DEK）与 Platform（BIN 库导入的文件接口、对象存储下载与国家区域映射）；PaymentSucceeded 由
+ * {@link PaymentEventPublisher} 扮演 Payment 发到真实本机 RabbitMQ。</li>
+ * <li>BIN 库导入任务在补偿执行器线程异步运行：结束时先等到没有执行中的补偿任务，再检查意外调用与清理。</li>
  */
 @SpringBootTest(classes = CardApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("mock")
@@ -35,6 +42,12 @@ public abstract class CardMockTestBase extends TestBase {
 
     @Autowired
     protected VaultMocker vault;
+
+    @Autowired
+    protected PlatformMocker platform;
+
+    @Autowired
+    protected BinLibraryMocker binLibrary;
 
     @Autowired
     protected VaultTransactionObserver transactions;
@@ -51,15 +64,17 @@ public abstract class CardMockTestBase extends TestBase {
         payment.purge();
         data.assertEmpty();
         vault.assertEmpty();
+        platform.assertEmpty();
     }
 
     /** 所有 HTTP 请求结束并检查意外调用后，清空本服务分区队列，父类继续执行全部 Clear。 */
     @AfterEach
     protected final void tearDownGlobalMocks() {
+        await().atMost(Duration.ofSeconds(30)).until(() -> mapper.countProcessingCompensationEvents() == 0);
         mockHttpServer.awaitIdle();
         try {
-            assertAll(vault::assertNoUnexpectedCalls, mockHttpServer::assertNoUnexpectedRequests,
-                transactions::assertOutsideTransactions);
+            assertAll(vault::assertNoUnexpectedCalls, platform::assertNoUnexpectedCalls, platform::assertCallerIsCard,
+                mockHttpServer::assertNoUnexpectedRequests, transactions::assertOutsideTransactions);
         } finally {
             payment.purge();
         }

@@ -3,7 +3,9 @@ package com.paytech.channel.connector.auto.operation;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.net.http.HttpClient;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,6 +29,7 @@ import com.paytech.channel.connector.api.externalapi.request.ApiFieldBody;
 import com.paytech.channel.connector.api.operation.ChannelOperationApi;
 import com.paytech.channel.connector.api.operation.request.ExecuteChannelOperationRequestBody;
 import com.paytech.channel.connector.api.operation.response.ChannelOperationResponseBody;
+import com.paytech.channel.connector.domain.PayOutputs;
 import com.paytech.channel.connector.protocol.core.dal.dataobject.Channel;
 import com.paytech.channel.connector.protocol.core.dal.dataobject.StandardApi;
 import com.paytech.channel.connector.protocol.core.enums.ChannelStatus;
@@ -52,7 +55,8 @@ import tools.jackson.databind.node.ObjectNode;
  * 凭票据读卡，再把请求发到合成外部渠道；channel-connector 把执行结果映射为已映射结论（PayOutputs）。
  *
  * <p>
- * 覆盖：SUCCEEDED / PENDING（跳转地址）/ 受理后 FAILED / 渠道 FAIL / 无法识别的支付状态；引擎在第一个节点前的未发出失败
+ * 覆盖：SUCCEEDED / PENDING（跳转地址与交互类型）/ 受理后 FAILED / 渠道 FAIL / 无法识别的支付状态；原交易查单 QUERY → 标准 API
+ * PAY_QUERY（3DS 全链路 technique 3.3.2：SUCCEEDED 带金额币种、CLOSED、处理中、FAIL + NOT_FOUND，PAY 不承认 CLOSED）；引擎在第一个节点前的未发出失败
  * （标准 API 或实现不存在、配置无效、初始化失败、预算耗尽、输入不满足请求字段）→ NOT_SENT 且原因代码为未发出代码；
  * 渠道已收到请求后的错误、断连与超时 → ERROR；OE 不一致与账号未配置在发出前 NOT_SENT；请求校验失败不进入引擎。
  *
@@ -66,6 +70,9 @@ class ExecuteChannelOperationTest extends ChannelConnectorMockTestBase {
     private static final String CALL = "CARD_PAY";
     private static final String PAYMENTS = "/api/merchants/synthetic-outlet/payments";
     private static final String FLOW = "operation-card-pay";
+    private static final String QUERY_CALL = "CARD_QUERY";
+    private static final String QUERY_FLOW = "operation-card-query";
+    private static final String QUERY_PATH = PAYMENTS + "/9001";
 
     @LocalServerPort
     private int port;
@@ -127,7 +134,7 @@ class ExecuteChannelOperationTest extends ChannelConnectorMockTestBase {
             () -> assertFalse(line.contains("synthetic-api-key"), "访问日志不得含凭据"));
     }
 
-    /** 待认证：SUCCESS + PENDING，跳转地址取自 nextAction.redirectUrl，原始状态与交易编号一并返回。 */
+    /** 待认证：SUCCESS + PENDING，跳转地址取自 nextAction.redirectUrl，渠道未给交互类型时为 REDIRECT，原始状态与交易编号一并返回。 */
     @Test
     void test_pendingWithRedirect() {
         implement(ExternalApiFixtures.flow(FLOW));
@@ -140,8 +147,112 @@ class ExecuteChannelOperationTest extends ChannelConnectorMockTestBase {
         assertAll(() -> assertEquals(ChannelOperationOutcome.SUCCESS.getCode(), result.getOutcome()),
             () -> assertEquals(ChannelPaymentStatus.PENDING.getCode(), result.getPaymentStatus()),
             () -> assertEquals(REDIRECT_URL, result.getRedirectUrl()),
+            () -> assertEquals(PayOutputs.REDIRECT, result.getNextActionType()),
             () -> assertEquals("T-CC-3DS", result.getChannelTransactionRef()),
             () -> assertEquals("PENDING", result.getChannelStatus()));
+    }
+
+    /** 渠道给出 nextAction.type 时如实返回（3DS 全链路 R2）；合同外的类型按 REDIRECT。 */
+    @Test
+    void test_pendingWithChallengeType() {
+        ObjectNode flow = ExternalApiFixtures.flow(FLOW);
+        ((ObjectNode)flow.path("returns").get(0).path("outputs")).putObject("nextAction.type").put("kind", "PATH")
+            .put("path", "steps.pay.outputs.state");
+        implement(flow);
+        channel.respond("POST", PAYMENTS, 200, """
+            {"result":"ACCEPTED","reference":"T-CC-3DS","paymentStatus":"PENDING","state":"THREE_DS_CHALLENGE","redirectUrl":"%s"}"""
+            .formatted(REDIRECT_URL))
+            .respond("POST", PAYMENTS, 200, """
+            {"result":"ACCEPTED","reference":"T-CC-APP","paymentStatus":"PENDING","state":"APP_SWITCH","redirectUrl":"%s"}"""
+            .formatted(REDIRECT_URL));
+
+        var challenge = execute(ChannelRequestBuilder.operationBody(fixture));
+        var other = execute(ChannelRequestBuilder.operationBody(fixture));
+
+        assertAll(() -> assertEquals("THREE_DS_CHALLENGE", challenge.getNextActionType()),
+            () -> assertEquals(REDIRECT_URL, challenge.getRedirectUrl()),
+            () -> assertEquals(PayOutputs.REDIRECT, other.getNextActionType()));
+    }
+
+    /** PAY 输出 CLOSED / NOT_FOUND 不属于 PAY 合同：支付状态为空，由调用方按结果未知处理。 */
+    @Test
+    void test_payDoesNotAcceptQueryStatuses() {
+        implement(ExternalApiFixtures.flow(FLOW));
+        channel.respond("POST", PAYMENTS, 200, """
+            {"result":"ACCEPTED","reference":"T-CC-C","paymentStatus":"CLOSED"}""");
+
+        var result = execute(ChannelRequestBuilder.operationBody(fixture));
+
+        assertAll(() -> assertEquals(ChannelOperationOutcome.SUCCESS.getCode(), result.getOutcome()),
+            () -> assertNull(result.getPaymentStatus()), () -> assertNull(result.getAmount()));
+    }
+
+    /**
+     * 原交易查单成功：QUERY + ORIGINAL_TRANSACTION 执行标准 API PAY_QUERY（不是 QUERY），渠道收到 GET 查单；
+     * 结论 SUCCESS + SUCCEEDED，带渠道交易编号与渠道记录的金额、币种，没有交互指令；不读卡。
+     */
+    @Test
+    void test_querySucceededWithAmount() {
+        implementQuery();
+        channel.respond("GET", QUERY_PATH, 200, """
+            {"result":"FOUND","reference":"T-Q-1","paymentStatus":"SUCCEEDED","state":"SUCCESS","amount":"10.00","currency":"AED"}""");
+
+        var result = execute(queryBody());
+
+        var request = channel.only();
+        assertAll(() -> assertEquals(ChannelOperationOutcome.SUCCESS.getCode(), result.getOutcome()),
+            () -> assertEquals(ChannelPaymentStatus.SUCCEEDED.getCode(), result.getPaymentStatus()),
+            () -> assertEquals("T-Q-1", result.getChannelTransactionRef()),
+            () -> assertEquals("10.00", result.getAmount()), () -> assertEquals("AED", result.getCurrency()),
+            () -> assertNull(result.getRedirectUrl()), () -> assertNull(result.getNextActionType()),
+            () -> assertEquals("GET", request.method()),
+            () -> assertEquals("Bearer synthetic-api-key", request.headers().get("authorization")),
+            () -> assertTrue(paymentCard.reveals().isEmpty(), "查单不读卡"));
+        transactions.assertOutsideTransactions();
+        assertTrue(accessLog.lines().getFirst().contains("apiCode=" + QUERY_CALL), accessLog.lines().getFirst());
+    }
+
+    /** 查单得到渠道订单已关闭与仍在处理：SUCCESS + CLOSED / PENDING。 */
+    @Test
+    void test_queryClosedAndPending() {
+        implementQuery();
+        channel.respond("GET", QUERY_PATH, 200, """
+            {"result":"FOUND","reference":"T-Q-C","paymentStatus":"CLOSED","state":"CLOSED","amount":"10.00","currency":"AED"}""")
+            .respond("GET", QUERY_PATH, 200, """
+            {"result":"FOUND","reference":"T-Q-P","paymentStatus":"PENDING","state":"PENDING"}""");
+
+        var closed = execute(queryBody());
+        var pending = execute(queryBody());
+
+        assertAll(() -> assertEquals(ChannelPaymentStatus.CLOSED.getCode(), closed.getPaymentStatus()),
+            () -> assertEquals(ChannelPaymentStatus.PENDING.getCode(), pending.getPaymentStatus()),
+            () -> assertNull(pending.getAmount()), () -> assertNull(pending.getCurrency()));
+    }
+
+    /** 渠道无此交易：FAIL + NOT_FOUND，失败代码取自渠道。 */
+    @Test
+    void test_queryNotFound() {
+        implementQuery();
+        channel.respond("GET", QUERY_PATH, 404, """
+            {"errorCode":"ORDER_NOT_EXIST"}""");
+
+        var result = execute(queryBody());
+
+        assertAll(() -> assertEquals(ChannelOperationOutcome.FAIL.getCode(), result.getOutcome()),
+            () -> assertEquals(ChannelPaymentStatus.NOT_FOUND.getCode(), result.getPaymentStatus()),
+            () -> assertEquals("ORDER_NOT_EXIST", result.getFailureCode()));
+    }
+
+    /** 查单只接受原交易用途：QUERY + NEW_PAYMENT 返回 400，不进入引擎。 */
+    @Test
+    void test_queryRequiresOriginalTransaction() {
+        var body = queryBody();
+        body.setPurpose(ExecutionPurpose.NEW_PAYMENT.getCode());
+        body.setCriteria(ChannelRequestBuilder.operationBody(fixture).getCriteria());
+        body.setAmount("10.00");
+
+        assertEquals(400, status(body));
+        assertNoExternalCalls();
     }
 
     /** 受理后拒绝：SUCCESS + FAILED，渠道失败代码与说明原样返回。 */
@@ -362,6 +473,50 @@ class ExecuteChannelOperationTest extends ChannelConnectorMockTestBase {
         externalApi.implementation(integration, pay, flow);
     }
 
+    /** 标准 API PAY_QUERY、查单原子 API 与流程（渠道、Bearer 脚本同 PAY）。 */
+    private void implementQuery() {
+        StandardApi query = externalApi.standardApi(ChannelOperation.QUERY.getStandardApiCode(),
+            List.of(field(ApiFieldLocation.BODY, "payment", ApiFieldDataType.OBJECT, true),
+                field(ApiFieldLocation.BODY, "payment.attemptId", ApiFieldDataType.STRING, true),
+                field(ApiFieldLocation.BODY, "channelAccount", ApiFieldDataType.OBJECT, true),
+                field(ApiFieldLocation.BODY, "channelAccount.channelCode", ApiFieldDataType.STRING, true),
+                field(ApiFieldLocation.BODY, "channelAccount.channelAccountId", ApiFieldDataType.STRING, true),
+                field(ApiFieldLocation.BODY, "channelAccount.entityNo", ApiFieldDataType.STRING, true),
+                field(ApiFieldLocation.BODY, "channelAccount.accountVaultToken", ApiFieldDataType.STRING, true)),
+            List.of(field(ApiFieldLocation.BODY, "paymentStatus", ApiFieldDataType.STRING, false),
+                field(ApiFieldLocation.BODY, "channelTransactionRef", ApiFieldDataType.STRING, false),
+                field(ApiFieldLocation.BODY, "channelStatus", ApiFieldDataType.STRING, false),
+                field(ApiFieldLocation.BODY, "amount", ApiFieldDataType.OBJECT, false),
+                field(ApiFieldLocation.BODY, "amount.value", ApiFieldDataType.STRING, false),
+                field(ApiFieldLocation.BODY, "amount.currency", ApiFieldDataType.STRING, false),
+                field(ApiFieldLocation.BODY, "failureCode", ApiFieldDataType.STRING, false)));
+        Channel integration = externalApi.channel(fixture.getChannel().getChannelCode(), channelBaseUrl());
+        externalApi.script(integration, "BEARER", ScriptExecutionStage.REQUEST,
+            List.of(new ParameterDeclaration("token", "PROTECTED_HANDLE", true)), ExternalApiFixtures.script("bearer"));
+        externalApi.integrationApi(integration, QUERY_CALL, ExternalApiFixtures.definition(QUERY_FLOW),
+            List.of(field(ApiFieldLocation.PATH, "merchantId", ApiFieldDataType.STRING, true),
+                field(ApiFieldLocation.PATH, "orderRef", ApiFieldDataType.STRING, true)),
+            List.of(field(ApiFieldLocation.BODY, "result", ApiFieldDataType.STRING, false),
+                field(ApiFieldLocation.BODY, "reference", ApiFieldDataType.STRING, false),
+                field(ApiFieldLocation.BODY, "paymentStatus", ApiFieldDataType.STRING, false),
+                field(ApiFieldLocation.BODY, "state", ApiFieldDataType.STRING, false),
+                field(ApiFieldLocation.BODY, "amount", ApiFieldDataType.STRING, false),
+                field(ApiFieldLocation.BODY, "currency", ApiFieldDataType.STRING, false),
+                field(ApiFieldLocation.BODY, "errorCode", ApiFieldDataType.STRING, false)));
+        externalApi.implementation(integration, query, ExternalApiFixtures.flow(QUERY_FLOW));
+    }
+
+    /** 原交易查单请求：冻结三元组、QUERY + ORIGINAL_TRANSACTION，只带支付尝试 ID，没有交易维度与金额。 */
+    private ExecuteChannelOperationRequestBody queryBody() {
+        var body = ChannelRequestBuilder.operationBody(fixture);
+        body.setOperation(ChannelOperation.QUERY.getCode());
+        body.setPurpose(ExecutionPurpose.ORIGINAL_TRANSACTION.getCode());
+        body.setCriteria(null);
+        body.setAmount(null);
+        body.setInput(new LinkedHashMap<>(Map.of("payment", Map.of("attemptId", "9001"))));
+        return body;
+    }
+
     /** 标准 API PAY 的请求字段：Payment 传入的支付工具与支付信息，以及 channel-connector 补上的冻结账号身份。 */
     private static List<ApiFieldBody> requestFields() {
         return List.of(field(ApiFieldLocation.BODY, "card", ApiFieldDataType.OBJECT, true),
@@ -387,7 +542,8 @@ class ExecuteChannelOperationTest extends ChannelConnectorMockTestBase {
             field(ApiFieldLocation.BODY, "failureCode", ApiFieldDataType.STRING, false),
             field(ApiFieldLocation.BODY, "failureMessage", ApiFieldDataType.STRING, false),
             field(ApiFieldLocation.BODY, "nextAction", ApiFieldDataType.OBJECT, false),
-            field(ApiFieldLocation.BODY, "nextAction.redirectUrl", ApiFieldDataType.STRING, false));
+            field(ApiFieldLocation.BODY, "nextAction.redirectUrl", ApiFieldDataType.STRING, false),
+            field(ApiFieldLocation.BODY, "nextAction.type", ApiFieldDataType.STRING, false));
     }
 
     /** 构造字段，显示名称同路径。 */

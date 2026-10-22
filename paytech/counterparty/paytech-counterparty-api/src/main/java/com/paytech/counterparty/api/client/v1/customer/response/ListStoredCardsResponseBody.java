@@ -23,7 +23,7 @@ public class ListStoredCardsResponseBody {
     @JsonProperty(isRequired = OptBoolean.TRUE)
     private List<StoredCardInfo> storedCards;
 
-    /** 对外可展示的已存卡：不含卡号、卡组或完整 BIN。 */
+    /** 对外可展示的已存卡：不含卡号或完整 BIN。 */
     @Getter
     @Setter
     @NoArgsConstructor
@@ -37,6 +37,13 @@ public class ListStoredCardsResponseBody {
         /** 掩码卡号：前 6 位、6 个星号与后 4 位。 */
         @JsonProperty(isRequired = OptBoolean.TRUE)
         private String maskedPan;
+
+        /**
+         * 卡组织（主品牌），供展示卡组织图标
+         * <li>VISA、MASTERCARD、AMEX、UNIONPAY、MADA、DISCOVER、JCB、DINERS；平台 BIN 库未识别时为 null。</li>
+         * <li>按平台当前 BIN 库实时识别，只用于展示；2026-10-22 新增的可选字段，旧客户端可忽略。</li>
+         */
+        private String cardBrand;
 
         /** 有效期月份，两位。 */
         @JsonProperty(isRequired = OptBoolean.TRUE)

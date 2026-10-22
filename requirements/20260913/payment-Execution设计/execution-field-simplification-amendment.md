@@ -35,6 +35,8 @@
 | 表 | t_payment_pricing_fact | 删除；本期 Execution 不再维护独立定价快照表。CCT/Commerce/Finance 所需的支付属性证据与旧 payment_fact_id 消费合同须另行迁移，不能改成零费率或猜测卡属性 |
 | 表 | t_payment_state_transition | 删除；不新增通用历史替代表。Channel Transaction Ref、Callback/Item/Exception、Dispute Event、Duplicate Case 仍保留各自业务证据 |
 
+> 2026-10-22 修订：卡流程已不使用 AUTHENTICATE，3DS 由 PAY 承载，见 [Execution 3DS 修订](../../20261022/payment-3DS全链路/execution-3ds-amendment.md)。
+
 未在上表修改的 Token 字段、状态枚举、可靠执行表及退款/争议业务字段维持原合同。AUTHENTICATE 名称沿用当前模型，不在本次另起同义枚举。
 
 ## 2. 渠道与原交易导航
@@ -57,6 +59,8 @@ flowchart LR
 - 原 `(channel_id, channel_idempotency_key)` 唯一索引改成 `UNIQUE(channel_idempotency_key)`，ASCII 二进制比较。Payment 根据全局唯一 Action 身份生成非空稳定键，风险步骤为空；重试不换键。旧环境必须核查跨渠道同键冲突，不能直接收紧后假定兼容。
 
 ## 3. 风控、认证与方式流程
+
+> 2026-10-22 修订：本节“可选 AUTHENTICATE”对卡流程已取消，认证要求作为 PAY 的渠道输入（`payment.threeDsRequired`），见 [Execution 3DS 修订](../../20261022/payment-3DS全链路/execution-3ds-amendment.md)。
 
 一次新 Attempt 按第 9 节修订为：`Routing → 本地受理 → RISK_CHECK → 可选 AUTHENTICATE → SALE / AUTHORIZE`。手动授权后等待同 Attempt 的 Capture/Void。Wallet 直接扣款使用 SALE；Wallet 跳转是原 SALE 的消费者交互，不伪装成卡的 AUTHENTICATE。Wallet/Crypto 的实际能力仍未启用。
 

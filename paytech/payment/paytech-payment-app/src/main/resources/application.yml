@@ -77,6 +77,14 @@ messaging:
   publisher:
     # 订阅方（acquiring）已接入：未路由视为发布失败，由补偿任务重试（第 08 步由过渡期的 ACK_AND_WARN 改回）。
     unroutable-policy: FAIL
+  # 消费端（3DS 全链路 technique 3.5，Payment 首次作为消费者）：订阅 channel-connector.events 的 ChannelPaymentNotified，声明
+  # payment.channel-connector.hash 与 payment.channel-connector.p0..p3（DLQ payment.channel-connector.dlq）；消费登记
+  # t_consumed_event / t_consumed_aggregate_version 与业务表同库。上线后修改分区数需先排空分区队列。
+  consumer:
+    service: payment
+  consumers:
+    channel-connector:
+      partitions: 4
 
 # 实例 ID（实例清单 instance.id，01 §5）：领域事件信封 instanceId 与内部调用 Token 的 inst。
 paytech:
@@ -110,6 +118,8 @@ payment:
   execution:
     # 必须显式配置有效窗口；零值仅禁用首次申请，不影响原工具重放。
     instrument-preparation-window: "${PAYMENT_INSTRUMENT_PREPARATION_WINDOW:PT0S}"
+    # 渠道支付通知入口的公网根地址（Gateway 公网入口，https、不以斜杠结尾）；为空时 PAY 不传 notifyUrl，只靠查单确认结果。
+    channel-callback-base-url: "${PAYMENT_CHANNEL_CALLBACK_BASE_URL:}"
   identifier:
     region-id: "${PAYMENT_SNOWFLAKE_REGION_ID}"
     worker-id: "${PAYMENT_SNOWFLAKE_WORKER_ID}"

@@ -14,6 +14,17 @@ spring:
         # 注册本服务（Payment、Platform、acquiring、counterparty 经服务发现调用）并发现 Vault；地址与命名空间由部署环境注入。
         server-addr: "${NACOS_SERVER_ADDR:127.0.0.1:8848}"
         namespace: "${NACOS_NAMESPACE:mor-local}"
+    loadbalancer:
+      retry:
+        enabled: false
+  http:
+    serviceclient:
+      # BIN 库导入（2026-10-22）：Platform 内部文件接口与国家区域映射；基址含 Platform Context Path。
+      platform-support-service:
+        base-url: lb://platform-support-service/platform-support
+        connect-timeout: 2s
+        read-timeout: 5s
+        redirects: dont-follow
   datasource:
     url: "${MOR_CARD_DB_URL:jdbc:mysql://127.0.0.1:13306/mor_card?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}"
     username: "${MOR_CARD_DB_USERNAME:card_app}"
@@ -66,9 +77,11 @@ messaging:
     payment:
       partitions: 4
 
-# paytech-compensation-event：本库 t_compensation_event；目前没有卡域补偿 Handler。XXL-Job 兜底唤醒与回收任务沿用组件默认。
+# paytech-compensation-event：本库 t_compensation_event；BIN 库导入任务 CARD_BIN_LIBRARY_IMPORT（单次最长 15 分钟）。
+# Lease 必须长于 Handler 超时（组件启动校验），取 20 分钟。XXL-Job 兜底唤醒与回收任务沿用组件默认。
 compensation:
   enabled: true
+  lease-duration: 20m
 
 # 实例 ID（实例清单 instance.id，01 §5）：内部调用 Token 的 inst；internal-auth.mode 非 OFF 时必填。
 paytech:
@@ -80,7 +93,8 @@ internal-auth:
 
 redis:
   coordination:
-    enabled: false
+    # BIN 库创建版本与激活 / 回切共用 card-bin-library 资源锁（AbstractLockProcessor，Redisson）。
+    enabled: true
 
 card:
   # 卡指纹的 HMAC-SHA256 密钥（Base64，解码后至少 32 字节）；必填，缺失则启动失败。原 payment.card.fingerprint-key 的值原样迁移，

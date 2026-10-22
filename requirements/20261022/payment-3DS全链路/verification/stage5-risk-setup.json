@@ -1,0 +1,10 @@
+{
+  "blockRuleSetVersionId": "239045321827565568",
+  "authRuleSetVersionId": "239045322867752960",
+  "flowVersionId": "239045324239290369",
+  "releaseId": "239045324600000512",
+  "status": "ACTIVE",
+  "pointVersionId": "220003",
+  "environment": "TEST",
+  "note": "首次运行在写结果文件时因查询表名错误中止（发布已激活），本文件按库中记录补写；脚本已修正查询"
+}

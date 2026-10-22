@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.card.core.dal.mapper.CardBinRangeMapper">
+    <resultMap id="match" type="com.paytech.card.domain.binlibrary.CardBinMatchView">
+        <result column="version_no" property="versionNo"/>
+        <result column="version_status" property="versionStatus" javaType="com.paytech.card.api.enums.BinLibraryVersionStatus" typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="bin_prefix" property="binPrefix"/>
+        <result column="prefix_length" property="prefixLength"/>
+        <result column="card_brand" property="cardBrand" javaType="com.paytech.card.api.enums.CardBrand" typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="funding_type" property="fundingType" javaType="com.paytech.card.api.enums.CardFundingType" typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="card_level" property="cardLevel"/>
+        <result column="card_product" property="cardProduct" javaType="com.paytech.card.api.enums.CardProduct" typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="issuer_country" property="issuerCountry"/>
+        <result column="issuer_region" property="issuerRegion"/>
+        <result column="issuer_name" property="issuerName"/>
+    </resultMap>
+
+    <insert id="insertRanges">
+        INSERT INTO t_card_bin_range (range_id, version_id, bin_prefix, prefix_length, card_brand, funding_type, card_level,
+            card_product, issuer_country, issuer_region, issuer_name, create_time, update_time)
+        VALUES
+        <foreach collection="ranges" item="range" separator=",">
+            (#{range.rangeId}, #{range.versionId}, #{range.binPrefix}, #{range.prefixLength},
+            #{range.cardBrand,javaType=com.paytech.card.api.enums.CardBrand,typeHandler=com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler,jdbcType=VARCHAR},
+            #{range.fundingType,javaType=com.paytech.card.api.enums.CardFundingType,typeHandler=com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler,jdbcType=VARCHAR},
+            #{range.cardLevel},
+            #{range.cardProduct,javaType=com.paytech.card.api.enums.CardProduct,typeHandler=com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler,jdbcType=VARCHAR},
+            #{range.issuerCountry}, #{range.issuerRegion}, #{range.issuerName},
+            #{range.createTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP},
+            #{range.updateTime,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler,jdbcType=TIMESTAMP})
+        </foreach>
+    </insert>
+
+    <delete id="deleteRanges">
+        DELETE FROM t_card_bin_range WHERE version_id = #{versionId} LIMIT #{limit}
+    </delete>
+
+    <select id="selectMatch" resultMap="match">
+        SELECT v.version_no, v.status AS version_status, r.bin_prefix, r.prefix_length, r.card_brand, r.funding_type,
+            r.card_level, r.card_product, r.issuer_country, r.issuer_region, r.issuer_name
+        FROM t_card_bin_library_version v
+        LEFT JOIN t_card_bin_range r
+          ON r.version_id = v.version_id
+         AND r.bin_prefix IN
+            <foreach collection="prefixes" item="prefix" open="(" separator="," close=")">#{prefix}</foreach>
+        <where>
+            <choose>
+                <when test="versionNo != null">v.version_no = #{versionNo}</when>
+                <otherwise>v.active_slot = 1</otherwise>
+            </choose>
+        </where>
+        ORDER BY r.prefix_length DESC
+        LIMIT 1
+    </select>
+</mapper>

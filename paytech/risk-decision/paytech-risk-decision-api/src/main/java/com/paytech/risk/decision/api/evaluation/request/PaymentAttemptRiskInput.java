@@ -26,11 +26,14 @@ import java.util.Map;
  * @param userAgent User-Agent，可空
  * @param cardFingerprint Card 生成的跨交易稳定卡指纹，非卡支付为空
  * @param cardBin 卡 BIN，6 至 8 位数字，非卡支付为空
+ * @param issuerCountryCode 发卡国 ISO 3166-1 alpha-2，取自 Card BIN 库快照；未识别或非卡支付为空
+ * @param cardBrand 卡组织代码，取自 Card BIN 库快照；未识别或非卡支付为空
+ * @param fundingType 借贷记类型代码，取自 Card BIN 库快照；未识别或非卡支付为空
  */
 public record PaymentAttemptRiskInput(String paymentIntentId, String riskActionId, String orderId, String clientId,
     String entityNo, String paymentMethodCode, String captureMode, String amount, String currency, String industryCode,
     String mccCode, String consumerCountryCode, String consumerReference, String clientIpAddress, String userAgent,
-    String cardFingerprint, String cardBin) {
+    String cardFingerprint, String cardBin, String issuerCountryCode, String cardBrand, String fundingType) {
 
     /** 风控点编码。 */
     public static final String POINT_CODE = "PAYMENT_ATTEMPT_RISK";
@@ -76,6 +79,9 @@ public record PaymentAttemptRiskInput(String paymentIntentId, String riskActionI
         put(values, "userAgent", userAgent);
         put(values, "cardFingerprint", cardFingerprint);
         put(values, "cardBin", cardBin);
+        put(values, "issuerCountryCode", issuerCountryCode);
+        put(values, "cardBrand", cardBrand);
+        put(values, "fundingType", fundingType);
         return values;
     }
 

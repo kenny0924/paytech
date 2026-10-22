@@ -10,6 +10,8 @@
 
 Flow 按支付工具类型和入口操作定义，当前只实现 `CARD + PAY`。Attempt 仍冻结精确 `payment_method_code`，不能用 CARD 代替具体支付方式。Action 类型统一在 `core.action.ActionType`，不保留第二份枚举。
 
+> 2026-10-22 修订：下图 AUTHENTICATE 分支已取消，ALLOW + AUTOMATIC 不论是否要求认证都进入 PAY（PAY 携带 `payment.threeDsRequired`），本节状态表中“AUTHENTICATE 成功”一行不再出现，见 [Execution 3DS 修订](../../20261022/payment-3DS全链路/execution-3ds-amendment.md)。
+
 ```mermaid
 flowchart TD
     S([开始]) --> R[PAY_RISK]

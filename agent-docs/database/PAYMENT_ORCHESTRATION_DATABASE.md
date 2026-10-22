@@ -127,9 +127,9 @@ active_action_id 只能指向本 Attempt 的一个未终态 Action；CREATED/PRO
 
 一次内部风控或渠道业务步骤。字段：payment_action_id、payment_attempt_id、channel_refund_id、duplicate_payment_case_id、action_no、action_type、action_status、target_channel_txn_ref_id、amount、currency、channel_idempotency_key、transaction_assessment_id、risk_result、authentication_requirement、interaction_type、interaction_expires_at、channel_response_code、channel_response_msg、channel_result_time、version、create_time、update_time。
 
-父级 payment_attempt_id、channel_refund_id、duplicate_payment_case_id 严格 XOR。Attempt 支持 RISK_CHECK、AUTHENTICATE、AUTHORIZE、SALE、CAPTURE、VOID；Refund/重复支付处置支持 REFUND。action_no 在父级内递增；不存在 QUERY 或 REVERSAL 业务 Action。action_status 为 CREATED、PROCESSING、UNKNOWN、SUCCEEDED、FAILED；原操作超时由相同 Action 恢复。
+父级 payment_attempt_id、channel_refund_id、duplicate_payment_case_id 严格 XOR。Attempt 支持 RISK_CHECK、AUTHENTICATE、AUTHORIZE、SALE、CAPTURE、VOID（AUTHENTICATE 保留给将来独立认证，卡流程不使用）；Refund/重复支付处置支持 REFUND。action_no 在父级内递增；不存在 QUERY 或 REVERSAL 业务 Action。action_status 为 CREATED、PROCESSING、UNKNOWN、SUCCEEDED、FAILED；原操作超时由相同 Action 恢复。
 
-RISK_CHECK 保存原 transaction_assessment_id、risk_result；可信 ALLOW 同时冻结 authentication_requirement，其他情况为空。AUTHENTICATE.SUCCEEDED 必须表示满足内部认证要求；表单创建和浏览器回跳不构成成功。认证证明、挑战事实与有效期由 Channel 管理并在原资金提交中核验，本表不复制这些字段或认证操作引用。原 Action 保留 interaction_type/interaction_expires_at，交互秘密仅瞬时返回。
+RISK_CHECK 保存原 transaction_assessment_id、risk_result；可信 ALLOW 同时冻结 authentication_requirement，其他情况为空。卡流程的认证要求作为 PAY 的渠道输入（`payment.threeDsRequired`），挑战在渠道的 PAY 内完成，PAY 保持 PROCESSING 直到查单确认终态；表单创建、浏览器回跳和渠道通知内容都不构成成功。认证证明、挑战事实与有效期由 Channel 管理，本表不复制这些字段或认证操作引用。原 Action 保留 interaction_type（按渠道返回为 THREE_DS_CHALLENGE 或 REDIRECT）/interaction_expires_at，交互秘密仅瞬时返回。见 [Execution 3DS 修订](../../requirements/20261022/payment-3DS全链路/execution-3ds-amendment.md)。
 
 渠道坐标由所属 Attempt 取得。Capture/Void 的 target_channel_txn_ref_id 指原 AUTHORIZE Ref，Refund 指原 SALE/CAPTURE Ref，再从该 Ref 的原资金 Action 导航到 Attempt。不得用当前配置或最新成功 Action 替代精确原交易。channel_idempotency_key 为全局唯一、ASCII 区分大小写的原渠道操作键；RISK_CHECK 为空，渠道动作必填，恢复不换键。
 

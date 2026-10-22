@@ -1,0 +1,631 @@
+{
+  "2026-10-22T15:29:09.616419Z": {
+    "state": {
+      "mid2": "239047412893679616",
+      "mid2Capability": "239047413891923968",
+      "mid1McCapability": "239047414198108160"
+    },
+    "mc_3ds": {
+      "payHttp": 200,
+      "payStatus": "FAILED",
+      "payCode": null,
+      "detail": "None",
+      "attemptId": "239047428685201408",
+      "token": {
+        "cardBrand": "MASTERCARD",
+        "fundingType": "CREDIT",
+        "cardLevel": "WORLD",
+        "cardProduct": "CONSUMER",
+        "issuerCountry": "US",
+        "issuerRegion": "NORTH_AMERICA",
+        "binLibraryVersionNo": "1",
+        "binMatchLength": "6"
+      },
+      "routing": null,
+      "risk": {
+        "issuerCountryCode": "US",
+        "cardBrand": "MASTERCARD",
+        "fundingType": "CREDIT",
+        "authenticationRequirement": "THREE_DS_REQUIRED"
+      },
+      "facts": {
+        "attemptStatus": "FAILED",
+        "midId": "239047412893679616",
+        "capturedAmount": "0.00000000",
+        "intentStatus": "OPEN",
+        "activeAttemptId": "",
+        "successfulAttemptId": "",
+        "compensation": [],
+        "channelTxnRefs": 0,
+        "actions": [
+          {
+            "no": "1",
+            "type": "PAY_RISK",
+            "status": "SUCCEEDED",
+            "authReq": "THREE_DS_REQUIRED",
+            "interaction": "",
+            "expires": "",
+            "code": ""
+          },
+          {
+            "no": "2",
+            "type": "PAY",
+            "status": "FAILED",
+            "authReq": "",
+            "interaction": "",
+            "expires": "",
+            "code": "THREE_DS_CHANNEL_UNAVAILABLE"
+          }
+        ]
+      },
+      "mock": []
+    },
+    "mc_plain": {
+      "payHttp": 200,
+      "payStatus": "SUCCEEDED",
+      "payCode": null,
+      "detail": "None",
+      "attemptId": "239047429993824256",
+      "token": {
+        "cardBrand": "MASTERCARD",
+        "fundingType": "CREDIT",
+        "cardLevel": "WORLD",
+        "cardProduct": "CONSUMER",
+        "issuerCountry": "US",
+        "issuerRegion": "NORTH_AMERICA",
+        "binLibraryVersionNo": "1",
+        "binMatchLength": "6"
+      },
+      "routing": null,
+      "risk": {
+        "issuerCountryCode": "US",
+        "cardBrand": "MASTERCARD",
+        "fundingType": "CREDIT",
+        "authenticationRequirement": "NOT_REQUIRED"
+      },
+      "facts": {
+        "attemptStatus": "SUCCEEDED",
+        "midId": "239047412893679616",
+        "capturedAmount": "10.00000000",
+        "intentStatus": "SUCCEEDED",
+        "activeAttemptId": "",
+        "successfulAttemptId": "239047429993824256",
+        "compensation": [],
+        "channelTxnRefs": 1,
+        "actions": [
+          {
+            "no": "1",
+            "type": "PAY_RISK",
+            "status": "SUCCEEDED",
+            "authReq": "NOT_REQUIRED",
+            "interaction": "",
+            "expires": "",
+            "code": ""
+          },
+          {
+            "no": "2",
+            "type": "PAY",
+            "status": "SUCCEEDED",
+            "authReq": "",
+            "interaction": "",
+            "expires": "",
+            "code": "SUCCESS"
+          }
+        ]
+      },
+      "mock": [
+        {
+          "operation": "orderAndPay",
+          "code": "APPLY_SUCCESS",
+          "status": "SUCCESS",
+          "dynamic3DS": "",
+          "notifyUrlPresent": true,
+          "queryControl": "",
+          "signatureValid": true,
+          "cardValid": true
+        }
+      ]
+    },
+    "visa_plain": {
+      "payHttp": 200,
+      "payStatus": "SUCCEEDED",
+      "payCode": null,
+      "detail": "None",
+      "attemptId": "239047431629602816",
+      "token": {
+        "cardBrand": "VISA",
+        "fundingType": "CREDIT",
+        "cardLevel": "CLASSIC",
+        "cardProduct": "CONSUMER",
+        "issuerCountry": "US",
+        "issuerRegion": "NORTH_AMERICA",
+        "binLibraryVersionNo": "1",
+        "binMatchLength": "6"
+      },
+      "routing": null,
+      "risk": {
+        "issuerCountryCode": "US",
+        "cardBrand": "VISA",
+        "fundingType": "CREDIT",
+        "authenticationRequirement": "NOT_REQUIRED"
+      },
+      "facts": {
+        "attemptStatus": "SUCCEEDED",
+        "midId": "238501217200832512",
+        "capturedAmount": "10.00000000",
+        "intentStatus": "SUCCEEDED",
+        "activeAttemptId": "",
+        "successfulAttemptId": "239047431629602816",
+        "compensation": [],
+        "channelTxnRefs": 1,
+        "actions": [
+          {
+            "no": "1",
+            "type": "PAY_RISK",
+            "status": "SUCCEEDED",
+            "authReq": "NOT_REQUIRED",
+            "interaction": "",
+            "expires": "",
+            "code": ""
+          },
+          {
+            "no": "2",
+            "type": "PAY",
+            "status": "SUCCEEDED",
+            "authReq": "",
+            "interaction": "",
+            "expires": "",
+            "code": "SUCCESS"
+          }
+        ]
+      },
+      "mock": [
+        {
+          "operation": "orderAndPay",
+          "code": "APPLY_SUCCESS",
+          "status": "SUCCESS",
+          "dynamic3DS": "",
+          "notifyUrlPresent": true,
+          "queryControl": "",
+          "signatureValid": true,
+          "cardValid": true
+        }
+      ]
+    },
+    "unknown": {
+      "payHttp": 202,
+      "payStatus": "PROCESSING",
+      "payCode": null,
+      "detail": "None",
+      "attemptId": "239047433043083264",
+      "token": {
+        "cardBrand": "",
+        "fundingType": "",
+        "cardLevel": "",
+        "cardProduct": "",
+        "issuerCountry": "",
+        "issuerRegion": "",
+        "binLibraryVersionNo": "1",
+        "binMatchLength": ""
+      },
+      "routing": null,
+      "risk": {
+        "issuerCountryCode": "",
+        "cardBrand": "",
+        "fundingType": "",
+        "authenticationRequirement": "NOT_REQUIRED"
+      },
+      "facts": {
+        "attemptStatus": "SUCCEEDED",
+        "midId": "238501217200832512",
+        "capturedAmount": "10.00000000",
+        "intentStatus": "SUCCEEDED",
+        "activeAttemptId": "",
+        "successfulAttemptId": "239047433043083264",
+        "compensation": [],
+        "channelTxnRefs": 1,
+        "actions": [
+          {
+            "no": "1",
+            "type": "PAY_RISK",
+            "status": "SUCCEEDED",
+            "authReq": "NOT_REQUIRED",
+            "interaction": "",
+            "expires": "",
+            "code": ""
+          },
+          {
+            "no": "2",
+            "type": "PAY",
+            "status": "SUCCEEDED",
+            "authReq": "",
+            "interaction": "",
+            "expires": "",
+            "code": "SUCCESS"
+          }
+        ]
+      },
+      "mock": [
+        {
+          "operation": "orderAndPay",
+          "code": "APPLY_SUCCESS",
+          "status": "SUCCESS",
+          "dynamic3DS": "",
+          "notifyUrlPresent": true,
+          "queryControl": "",
+          "signatureValid": true,
+          "cardValid": true
+        },
+        {
+          "operation": "orderQuery",
+          "code": "APPLY_SUCCESS",
+          "status": "SUCCESS",
+          "dynamic3DS": "",
+          "notifyUrlPresent": false,
+          "queryControl": "",
+          "signatureValid": true,
+          "cardValid": true
+        }
+      ]
+    }
+  },
+  "2026-10-22T15:41:43.468022Z": {
+    "state": {
+      "mid2": "239047412893679616",
+      "mid2Capability": "239047413891923968",
+      "mid1McCapability": "239047414198108160"
+    },
+    "mc_3ds": {
+      "payHttp": 202,
+      "payStatus": "PROCESSING",
+      "payCode": null,
+      "detail": "None",
+      "attemptId": "239050587310686208",
+      "token": {
+        "cardBrand": "MASTERCARD",
+        "fundingType": "CREDIT",
+        "cardLevel": "WORLD",
+        "cardProduct": "CONSUMER",
+        "issuerCountry": "US",
+        "issuerRegion": "NORTH_AMERICA",
+        "binLibraryVersionNo": "5",
+        "binMatchLength": "6"
+      },
+      "routing": null,
+      "risk": {
+        "issuerCountryCode": "US",
+        "cardBrand": "MASTERCARD",
+        "fundingType": "CREDIT",
+        "authenticationRequirement": "THREE_DS_REQUIRED"
+      },
+      "facts": {
+        "attemptStatus": "PROCESSING",
+        "midId": "238501217200832512",
+        "capturedAmount": "0.00000000",
+        "intentStatus": "OPEN",
+        "activeAttemptId": "239050587310686208",
+        "successfulAttemptId": "",
+        "compensation": [
+          [
+            "PAY_RESULT_QUERY",
+            "ERROR",
+            "1"
+          ]
+        ],
+        "channelTxnRefs": 1,
+        "actions": [
+          {
+            "no": "1",
+            "type": "PAY_RISK",
+            "status": "SUCCEEDED",
+            "authReq": "THREE_DS_REQUIRED",
+            "interaction": "",
+            "expires": "",
+            "code": ""
+          },
+          {
+            "no": "2",
+            "type": "PAY",
+            "status": "PROCESSING",
+            "authReq": "",
+            "interaction": "THREE_DS_CHALLENGE",
+            "expires": "2026-10-22 16:11:41.649335",
+            "code": "PENDING"
+          }
+        ]
+      },
+      "mock": [
+        {
+          "operation": "orderAndPay",
+          "code": "APPLY_SUCCESS",
+          "status": "PENDING",
+          "dynamic3DS": "do3DS",
+          "notifyUrlPresent": true,
+          "queryControl": "PENDING",
+          "signatureValid": true,
+          "cardValid": true
+        },
+        {
+          "operation": "orderQuery",
+          "code": "APPLY_SUCCESS",
+          "status": "PENDING",
+          "dynamic3DS": "",
+          "notifyUrlPresent": false,
+          "queryControl": "PENDING",
+          "signatureValid": true,
+          "cardValid": true
+        }
+      ]
+    },
+    "mc_plain": {
+      "payHttp": 200,
+      "payStatus": "SUCCEEDED",
+      "payCode": null,
+      "detail": "None",
+      "attemptId": "239050589546250240",
+      "token": {
+        "cardBrand": "MASTERCARD",
+        "fundingType": "CREDIT",
+        "cardLevel": "WORLD",
+        "cardProduct": "CONSUMER",
+        "issuerCountry": "US",
+        "issuerRegion": "NORTH_AMERICA",
+        "binLibraryVersionNo": "5",
+        "binMatchLength": "6"
+      },
+      "routing": null,
+      "risk": {
+        "issuerCountryCode": "US",
+        "cardBrand": "MASTERCARD",
+        "fundingType": "CREDIT",
+        "authenticationRequirement": "NOT_REQUIRED"
+      },
+      "facts": {
+        "attemptStatus": "SUCCEEDED",
+        "midId": "238501217200832512",
+        "capturedAmount": "10.00000000",
+        "intentStatus": "SUCCEEDED",
+        "activeAttemptId": "",
+        "successfulAttemptId": "239050589546250240",
+        "compensation": [],
+        "channelTxnRefs": 1,
+        "actions": [
+          {
+            "no": "1",
+            "type": "PAY_RISK",
+            "status": "SUCCEEDED",
+            "authReq": "NOT_REQUIRED",
+            "interaction": "",
+            "expires": "",
+            "code": ""
+          },
+          {
+            "no": "2",
+            "type": "PAY",
+            "status": "SUCCEEDED",
+            "authReq": "",
+            "interaction": "",
+            "expires": "",
+            "code": "SUCCESS"
+          }
+        ]
+      },
+      "mock": [
+        {
+          "operation": "orderAndPay",
+          "code": "APPLY_SUCCESS",
+          "status": "SUCCESS",
+          "dynamic3DS": "",
+          "notifyUrlPresent": true,
+          "queryControl": "",
+          "signatureValid": true,
+          "cardValid": true
+        }
+      ]
+    },
+    "visa_plain": {
+      "payHttp": 202,
+      "payStatus": "PROCESSING",
+      "payCode": null,
+      "detail": "None",
+      "attemptId": "239050591005868032",
+      "token": {
+        "cardBrand": "VISA",
+        "fundingType": "DEBIT",
+        "cardLevel": "CLASSIC",
+        "cardProduct": "CONSUMER",
+        "issuerCountry": "GB",
+        "issuerRegion": "EUROPE",
+        "binLibraryVersionNo": "5",
+        "binMatchLength": "7"
+      },
+      "routing": null,
+      "risk": {
+        "issuerCountryCode": "GB",
+        "cardBrand": "VISA",
+        "fundingType": "DEBIT",
+        "authenticationRequirement": "THREE_DS_REQUIRED"
+      },
+      "facts": {
+        "attemptStatus": "PROCESSING",
+        "midId": "238501217200832512",
+        "capturedAmount": "0.00000000",
+        "intentStatus": "OPEN",
+        "activeAttemptId": "239050591005868032",
+        "successfulAttemptId": "",
+        "compensation": [
+          [
+            "PAY_RESULT_QUERY",
+            "ERROR",
+            "1"
+          ]
+        ],
+        "channelTxnRefs": 1,
+        "actions": [
+          {
+            "no": "1",
+            "type": "PAY_RISK",
+            "status": "SUCCEEDED",
+            "authReq": "THREE_DS_REQUIRED",
+            "interaction": "",
+            "expires": "",
+            "code": ""
+          },
+          {
+            "no": "2",
+            "type": "PAY",
+            "status": "PROCESSING",
+            "authReq": "",
+            "interaction": "THREE_DS_CHALLENGE",
+            "expires": "2026-10-22 16:11:42.429847",
+            "code": "PENDING"
+          }
+        ]
+      },
+      "mock": [
+        {
+          "operation": "orderAndPay",
+          "code": "APPLY_SUCCESS",
+          "status": "PENDING",
+          "dynamic3DS": "do3DS",
+          "notifyUrlPresent": true,
+          "queryControl": "PENDING",
+          "signatureValid": true,
+          "cardValid": true
+        },
+        {
+          "operation": "orderQuery",
+          "code": "APPLY_SUCCESS",
+          "status": "PENDING",
+          "dynamic3DS": "",
+          "notifyUrlPresent": false,
+          "queryControl": "PENDING",
+          "signatureValid": true,
+          "cardValid": true
+        }
+      ]
+    },
+    "unknown": {
+      "payHttp": 202,
+      "payStatus": "PROCESSING",
+      "payCode": null,
+      "detail": "None",
+      "attemptId": "239050592989773824",
+      "token": {
+        "cardBrand": "",
+        "fundingType": "",
+        "cardLevel": "",
+        "cardProduct": "",
+        "issuerCountry": "",
+        "issuerRegion": "",
+        "binLibraryVersionNo": "5",
+        "binMatchLength": ""
+      },
+      "routing": null,
+      "risk": {
+        "issuerCountryCode": "",
+        "cardBrand": "",
+        "fundingType": "",
+        "authenticationRequirement": "NOT_REQUIRED"
+      },
+      "facts": {
+        "attemptStatus": "SUCCEEDED",
+        "midId": "238501217200832512",
+        "capturedAmount": "10.00000000",
+        "intentStatus": "SUCCEEDED",
+        "activeAttemptId": "",
+        "successfulAttemptId": "239050592989773824",
+        "compensation": [],
+        "channelTxnRefs": 1,
+        "actions": [
+          {
+            "no": "1",
+            "type": "PAY_RISK",
+            "status": "SUCCEEDED",
+            "authReq": "NOT_REQUIRED",
+            "interaction": "",
+            "expires": "",
+            "code": ""
+          },
+          {
+            "no": "2",
+            "type": "PAY",
+            "status": "SUCCEEDED",
+            "authReq": "",
+            "interaction": "",
+            "expires": "",
+            "code": "SUCCESS"
+          }
+        ]
+      },
+      "mock": [
+        {
+          "operation": "orderAndPay",
+          "code": "APPLY_SUCCESS",
+          "status": "SUCCESS",
+          "dynamic3DS": "",
+          "notifyUrlPresent": true,
+          "queryControl": "",
+          "signatureValid": true,
+          "cardValid": true
+        },
+        {
+          "operation": "orderQuery",
+          "code": "APPLY_SUCCESS",
+          "status": "SUCCESS",
+          "dynamic3DS": "",
+          "notifyUrlPresent": false,
+          "queryControl": "",
+          "signatureValid": true,
+          "cardValid": true
+        }
+      ]
+    },
+    "ng_review": {
+      "payHttp": 200,
+      "payStatus": "FAILED",
+      "payCode": null,
+      "detail": "None",
+      "attemptId": "239050595024011264",
+      "token": {
+        "cardBrand": "MASTERCARD",
+        "fundingType": "DEBIT",
+        "cardLevel": "",
+        "cardProduct": "CONSUMER",
+        "issuerCountry": "NG",
+        "issuerRegion": "MEA",
+        "binLibraryVersionNo": "5",
+        "binMatchLength": "8"
+      },
+      "routing": null,
+      "risk": {
+        "issuerCountryCode": "NG",
+        "cardBrand": "MASTERCARD",
+        "fundingType": "DEBIT",
+        "authenticationRequirement": ""
+      },
+      "facts": {
+        "attemptStatus": "FAILED",
+        "midId": "238501217200832512",
+        "capturedAmount": "0.00000000",
+        "intentStatus": "OPEN",
+        "activeAttemptId": "",
+        "successfulAttemptId": "",
+        "compensation": [],
+        "channelTxnRefs": 0,
+        "actions": [
+          {
+            "no": "1",
+            "type": "PAY_RISK",
+            "status": "SUCCEEDED",
+            "authReq": "",
+            "interaction": "",
+            "expires": "",
+            "code": ""
+          }
+        ]
+      },
+      "mock": []
+    }
+  }
+}

@@ -1,5 +1,7 @@
 package com.paytech.payment.execution.domain;
 
+import java.math.BigDecimal;
+
 import com.paytech.channel.connector.api.enums.ChannelPaymentStatus;
 import com.paytech.payment.execution.core.enums.ChannelExecutionOutcome;
 
@@ -22,6 +24,9 @@ public class ChannelExecutionResult {
     /** 待认证跳转地址；没有交互指令时为 null */
     private final String redirectUrl;
 
+    /** 渠道给出的交互类型代码（THREE_DS_CHALLENGE、REDIRECT）；没有交互指令时为 null */
+    private final String nextActionType;
+
     /** 渠道交易编号 */
     private final String channelTransactionRef;
 
@@ -34,9 +39,16 @@ public class ChannelExecutionResult {
     /** 渠道失败说明 */
     private final String failureMessage;
 
+    /** 查单时渠道记录的金额（主单位）；其他操作或未返回时为 null */
+    private final BigDecimal amount;
+
+    /** 查单时渠道记录的币种；其他操作或未返回时为 null */
+    private final String currency;
+
     /** 结果未知（channel-connector 不可达、超时或返回无法识别的结论）。 */
     public static ChannelExecutionResult unknown() {
-        return new ChannelExecutionResult(ChannelExecutionOutcome.ERROR, null, null, null, null, null, null);
+        return new ChannelExecutionResult(ChannelExecutionOutcome.ERROR, null, null, null, null, null, null, null, null,
+            null);
     }
 
     @Override

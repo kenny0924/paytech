@@ -29,7 +29,7 @@ public interface CustomerPaymentApi {
         @Valid @RequestBody SubmitPaymentRequestBody body);
 
     /**
-     * 查询当前 Checkout 所属订单的一次支付提交，不创建或推进支付。
+     * 查询当前 Checkout 所属订单的一次支付提交，不创建支付；仍在验证或确认中时可能触发 Payment 向渠道确认结果（同一提交 5 秒内最多一次）。
      *
      * @param token
      *            原 Checkout 公开 Token，按原订单期限校验

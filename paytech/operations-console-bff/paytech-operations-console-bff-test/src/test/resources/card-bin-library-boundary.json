@@ -1,0 +1,314 @@
+[
+ {
+  "id": "B1",
+  "method": "GET",
+  "path": "/card-admin/v1/bin-library/versions",
+  "ownerPath": "/card/v1/bin-library/versions",
+  "query": "?status=VALID&page=1&size=20",
+  "ownerQuery": "?status=VALID&page=1&size=20",
+  "request": null,
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "items": [
+    {
+     "versionNo": 4,
+     "status": "VALID",
+     "active": false,
+     "fileAddress": "/files/v1/7409912387612",
+     "fileName": "bin-2026-10-21.csv",
+     "fileContentHash": "9f2c000000000000000000000000000000000000000000000000000000000000",
+     "totalRows": 315902,
+     "processedRows": 315902,
+     "errorRows": 0,
+     "failureReason": null,
+     "createdBy": "10001",
+     "createTime": "2026-10-21T08:40:00.123456Z",
+     "updateTime": "2026-10-21T08:46:12.654321Z"
+    }
+   ],
+   "page": 1,
+   "size": 20,
+   "total": 1
+  },
+  "routeCode": "operations-card-bin-version-list"
+ },
+ {
+  "id": "B1D",
+  "method": "GET",
+  "path": "/card-admin/v1/bin-library/versions",
+  "ownerPath": "/card/v1/bin-library/versions",
+  "query": "",
+  "ownerQuery": "?page=1&size=10",
+  "request": null,
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "items": [
+    {
+     "versionNo": 4,
+     "status": "VALID",
+     "active": false,
+     "fileAddress": "/files/v1/7409912387612",
+     "fileName": "bin-2026-10-21.csv",
+     "fileContentHash": "9f2c000000000000000000000000000000000000000000000000000000000000",
+     "totalRows": 315902,
+     "processedRows": 315902,
+     "errorRows": 0,
+     "failureReason": null,
+     "createdBy": "10001",
+     "createTime": "2026-10-21T08:40:00.123456Z",
+     "updateTime": "2026-10-21T08:46:12.654321Z"
+    },
+    {
+     "versionNo": 3,
+     "status": "ACTIVE",
+     "active": true,
+     "fileAddress": "/files/v1/7409912387600",
+     "fileName": "bin-2026-10-20.csv",
+     "fileContentHash": "9f2c000000000000000000000000000000000000000000000000000000000000",
+     "totalRows": 312480,
+     "processedRows": 312480,
+     "errorRows": 0,
+     "failureReason": null,
+     "createdBy": "10001",
+     "createTime": "2026-10-21T08:40:00.123456Z",
+     "updateTime": "2026-10-21T08:46:12.654321Z"
+    }
+   ],
+   "page": 1,
+   "size": 10,
+   "total": 2
+  },
+  "routeCode": "operations-card-bin-version-list"
+ },
+ {
+  "id": "B2",
+  "method": "GET",
+  "path": "/card-admin/v1/bin-library/versions/3",
+  "ownerPath": "/card/v1/bin-library/versions/3",
+  "query": "",
+  "ownerQuery": "",
+  "request": null,
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "versionNo": 3,
+   "status": "ACTIVE",
+   "active": true,
+   "fileAddress": "/files/v1/7409912387600",
+   "fileName": "bin-2026-10-20.csv",
+   "fileContentHash": "9f2c000000000000000000000000000000000000000000000000000000000000",
+   "totalRows": 312480,
+   "processedRows": 312480,
+   "errorRows": 0,
+   "failureReason": null,
+   "createdBy": "10001",
+   "createTime": "2026-10-21T08:40:00.123456Z",
+   "updateTime": "2026-10-21T08:46:12.654321Z"
+  },
+  "routeCode": "operations-card-bin-version-detail"
+ },
+ {
+  "id": "B3",
+  "method": "GET",
+  "path": "/card-admin/v1/bin-library/versions/5/errors",
+  "ownerPath": "/card/v1/bin-library/versions/5/errors",
+  "query": "?page=2&size=10",
+  "ownerQuery": "?page=2&size=10",
+  "request": null,
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "items": [
+    {
+     "lineNo": 12002,
+     "columnName": "bin_prefix",
+     "errorCode": "INVALID_FORMAT",
+     "errorMessage": "不是 6～8 位数字",
+     "valueExcerpt": null
+    }
+   ],
+   "page": 2,
+   "size": 10,
+   "total": 11
+  },
+  "routeCode": "operations-card-bin-version-errors"
+ },
+ {
+  "id": "B4",
+  "method": "GET",
+  "path": "/card-admin/v1/bin-library/activations",
+  "ownerPath": "/card/v1/bin-library/activations",
+  "query": "?page=1&size=10",
+  "ownerQuery": "?page=1&size=10",
+  "request": null,
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "items": [
+    {
+     "activationType": "ROLLBACK",
+     "versionNo": 2,
+     "previousVersionNo": 3,
+     "operatorAccountId": "10001",
+     "activatedAt": "2026-10-22T09:00:00.250001Z"
+    }
+   ],
+   "page": 1,
+   "size": 10,
+   "total": 1
+  },
+  "routeCode": "operations-card-bin-activation-list"
+ },
+ {
+  "id": "B5",
+  "method": "GET",
+  "path": "/card-admin/v1/bin-library/bins/41111111",
+  "ownerPath": "/card/v1/bin-library/bins/41111111",
+  "query": "?versionNo=3",
+  "ownerQuery": "?versionNo=3",
+  "request": null,
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "recognized": true,
+   "binLibraryVersionNo": 3,
+   "matchedPrefixLength": 8,
+   "binPrefix": "41111111",
+   "cardBrand": "VISA",
+   "fundingType": "CREDIT",
+   "cardLevel": "CLASSIC",
+   "cardProduct": "CONSUMER",
+   "issuerCountry": "US",
+   "issuerRegion": "NORTH_AMERICA",
+   "issuerName": "TEST BANK"
+  },
+  "routeCode": "operations-card-bin-lookup"
+ },
+ {
+  "id": "B5U",
+  "method": "GET",
+  "path": "/card-admin/v1/bin-library/bins/999999",
+  "ownerPath": "/card/v1/bin-library/bins/999999",
+  "query": "",
+  "ownerQuery": "",
+  "request": null,
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "recognized": false,
+   "binLibraryVersionNo": 3,
+   "matchedPrefixLength": null,
+   "binPrefix": null,
+   "cardBrand": null,
+   "fundingType": null,
+   "cardLevel": null,
+   "cardProduct": null,
+   "issuerCountry": null,
+   "issuerRegion": null,
+   "issuerName": null
+  },
+  "routeCode": "operations-card-bin-lookup"
+ },
+ {
+  "id": "B8",
+  "method": "POST",
+  "path": "/card-admin/v1/bin-library/versions",
+  "ownerPath": "/card/v1/bin-library/versions",
+  "query": "",
+  "ownerQuery": "",
+  "request": {
+   "fileAddress": "/files/v1/7409912387650"
+  },
+  "status": 201,
+  "ownerStatus": 201,
+  "response": {
+   "versionNo": 5,
+   "status": "VALIDATING",
+   "active": false,
+   "fileAddress": "/files/v1/7409912387650",
+   "fileName": "bin-2026-10-22.csv",
+   "fileContentHash": "9f2c000000000000000000000000000000000000000000000000000000000000",
+   "totalRows": null,
+   "processedRows": 0,
+   "errorRows": 0,
+   "failureReason": null,
+   "createdBy": "10001",
+   "createTime": "2026-10-22T08:00:00.100200Z",
+   "updateTime": "2026-10-22T08:00:00.100200Z"
+  },
+  "routeCode": "operations-card-bin-version-create"
+ },
+ {
+  "id": "B8R",
+  "method": "POST",
+  "path": "/card-admin/v1/bin-library/versions",
+  "ownerPath": "/card/v1/bin-library/versions",
+  "query": "",
+  "ownerQuery": "",
+  "request": {
+   "fileAddress": "/files/v1/7409912387650"
+  },
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "versionNo": 5,
+   "status": "VALIDATING",
+   "active": false,
+   "fileAddress": "/files/v1/7409912387650",
+   "fileName": "bin-2026-10-22.csv",
+   "fileContentHash": "9f2c000000000000000000000000000000000000000000000000000000000000",
+   "totalRows": null,
+   "processedRows": 0,
+   "errorRows": 0,
+   "failureReason": null,
+   "createdBy": "10001",
+   "createTime": "2026-10-22T08:00:00.100200Z",
+   "updateTime": "2026-10-22T08:00:00.100200Z"
+  },
+  "routeCode": "operations-card-bin-version-create"
+ },
+ {
+  "id": "B9",
+  "method": "POST",
+  "path": "/card-admin/v1/bin-library/versions/4/activation",
+  "ownerPath": "/card/v1/bin-library/versions/4/activation",
+  "query": "",
+  "ownerQuery": "",
+  "request": {
+   "expectedActiveVersionNo": 3
+  },
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "activationType": "ACTIVATE",
+   "versionNo": 4,
+   "previousVersionNo": 3,
+   "operatorAccountId": "10001",
+   "activatedAt": "2026-10-22T09:00:00.250001Z"
+  },
+  "routeCode": "operations-card-bin-version-activate"
+ },
+ {
+  "id": "B9N",
+  "method": "POST",
+  "path": "/card-admin/v1/bin-library/versions/4/activation",
+  "ownerPath": "/card/v1/bin-library/versions/4/activation",
+  "query": "",
+  "ownerQuery": "",
+  "request": {
+   "expectedActiveVersionNo": null
+  },
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "activationType": "ACTIVATE",
+   "versionNo": 4,
+   "previousVersionNo": null,
+   "operatorAccountId": "10001",
+   "activatedAt": "2026-10-22T09:00:00.250001Z"
+  },
+  "routeCode": "operations-card-bin-version-activate"
+ }
+]

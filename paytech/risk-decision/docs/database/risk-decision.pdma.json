@@ -18984,6 +18984,69 @@
           "id": "D7744375-9C0C-575C-A9BE-BF816455AD50"
         },
         {
+          "defKey": "issuer_country_code",
+          "defName": "发卡国",
+          "comment": "Payment 冻结的发卡国 ISO 3166-1 alpha-2；未识别或非卡支付为空。取值来源：ISO 3166-1 alpha-2；非固定枚举。",
+          "type": "CHAR",
+          "len": 2,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "4629ED77-822E-4610-86D1-82426E63066E",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "21C08529-AD1B-5BB0-BF3D-424B623ABC6E"
+        },
+        {
+          "defKey": "card_brand",
+          "defName": "卡组织",
+          "comment": "Payment 冻结的卡组织；未识别或非卡支付为空。取值来源：Card BIN 库卡组织代码；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "80E41E4A-8569-5EF7-BA56-B975CE7F5C69"
+        },
+        {
+          "defKey": "funding_type",
+          "defName": "借贷记类型",
+          "comment": "Payment 冻结的借贷记类型；未识别或非卡支付为空。取值来源：Card BIN 库借贷记代码；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "421C21D4-8093-5A53-86B3-649FB5FB93A6"
+        },
+        {
           "defKey": "authentication_requirement",
           "defName": "认证要求",
           "comment": "认证要求的稳定业务代码。允许值：NOT_REQUIRED、THREE_DS_REQUIRED、CHALLENGE_REQUIRED。",

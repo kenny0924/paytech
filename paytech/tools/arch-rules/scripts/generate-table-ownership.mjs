@@ -106,8 +106,18 @@ const stepAddedTables = [
     database: 'mor_commercial',
     tables: ['t_product_capability_dimension', 't_term_version_acceptance'],
   },
+  // 2026-10-22 payment-3DS全链路 (technique 3.4): payment consumes ChannelPaymentNotified for the first time and adds the
+  // Foundation consume-idempotency pair to mor_payment.
+  { service: 'payment', database: 'mor_payment', tables: ['t_consumed_event', 't_consumed_aggregate_version'] },
   // Step 12 (design/05 §2.1, S3): one-time card material tickets in mor_card.
   { service: 'card', database: 'mor_card', tables: ['t_card_material_ticket'] },
+  // 2026-10-22 BIN library (requirements/20261022/card-BIN库与卡属性 technique §3.6): versions, ranges, import errors and
+  // activation records in mor_card.
+  {
+    service: 'card',
+    database: 'mor_card',
+    tables: ['t_card_bin_library_version', 't_card_bin_range', 't_card_bin_import_error', 't_card_bin_library_activation'],
+  },
   // Step 11b (design/04 §3.2) reshaped by the 2026-10-19 subledger refactor (decision 2026-10-18, technique 2.3):
   // account is the Owner subledger in mor_account - Owner accounts, posting streams, postings, entries, applied facts and
   // bucket movements. t_account_balance, t_balance_applied_entry and t_balance_discrepancy are dropped.

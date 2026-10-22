@@ -13,7 +13,7 @@ import com.paytech.foundation.testsupport.api.Clear;
 import lombok.RequiredArgsConstructor;
 
 /**
- * mor_card 的空基线与清理：只触碰本库 8 张表（10 §3.1 card 行加 S3 票据表与消费记录表）与本库卡工具的 Redis CVV 键。
+ * mor_card 的空基线与清理：只触碰本库 12 张表（10 §3.1 card 行加 S3 票据表、BIN 库 4 表与消费记录表）与本库卡工具的 Redis CVV 键。
  */
 @TestComponent
 @RequiredArgsConstructor
@@ -58,7 +58,8 @@ public class CardDataMocker implements Clear {
             }
             assertAll(mapper::clearConsumedVersions, mapper::clearConsumedEvents, mapper::clearCompensationEvents,
                 mapper::clearTickets, mapper::clearStoredCards, mapper::clearCardInstruments,
-                mapper::clearCardCredentials, mapper::clearCards);
+                mapper::clearCardCredentials, mapper::clearCards, mapper::clearBinActivations,
+                mapper::clearBinImportErrors, mapper::clearBinRanges, mapper::clearBinVersions);
             assertEquals(0, mapper.countRows());
             cleanupOwned = false;
         } catch (RuntimeException | AssertionError failure) {

@@ -45,7 +45,8 @@ public class PaymentDataMocker implements Clear {
         }
         assertEquals(DATABASE, mapper.databaseName());
         try {
-            assertAll(mapper::clearCompensationEvents, mapper::clearChannelRefunds, mapper::clearRefundPositions,
+            assertAll(mapper::clearCompensationEvents, mapper::clearConsumedEvents,
+                mapper::clearConsumedAggregateVersions, mapper::clearChannelRefunds, mapper::clearRefundPositions,
                 mapper::clearDuplicatePaymentCases, mapper::clearTransactionRefs, mapper::clearActions,
                 mapper::clearRouteCandidateEvals, mapper::clearRoutingDecisions, mapper::clearAttempts,
                 mapper::clearInstrumentTokens, mapper::clearIntents);

@@ -26,7 +26,10 @@ import com.paytech.foundation.processor.AbstractProcessor;
 
 import lombok.AllArgsConstructor;
 
-/** 按已授权订单和 Intent 查询 Payment 原提交，不读取命令或响应快照。 */
+/**
+ * 按已授权订单和 Intent 查询 Payment 原提交，不读取命令或响应快照。
+ * <li>经 Payment 刷新接口读取（3DS 全链路 technique 3.3.6）：仍在验证或确认中时由 Payment 限频触发一次查单确认，本服务不写库。</li>
+ */
 @Component
 @AllArgsConstructor
 public class GetCustomerPaymentProcessor
@@ -88,7 +91,7 @@ public class GetCustomerPaymentProcessor
     }
 
     /**
-     * 只读查询同订单、Intent 和提交编号的结果
+     * 刷新查询同订单、Intent 和提交编号的结果
      * <li>Payment 未找到时返回 PAYMENT_SUBMISSION_NOT_FOUND，不推断为支付失败。</li>
      * <li>Payment 不可用时与提交响应未知相同降级：返回空结果，由响应保持处理中并继续轮询。</li>
      */
@@ -96,7 +99,7 @@ public class GetCustomerPaymentProcessor
         var reference = context.paymentReference();
         PaymentResult result;
         try {
-            result = payment.query(context.getOrder().getClientId(), reference);
+            result = payment.refresh(context.getOrder().getClientId(), reference);
         } catch (ServiceUnavailableException unavailable) {
             return null;
         }

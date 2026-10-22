@@ -2,6 +2,7 @@ package com.paytech.channel.connector.domain;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeSet;
 
 import com.paytech.channel.connector.api.enums.ChannelPaymentStatus;
@@ -33,6 +34,19 @@ public class PayOutputs {
     /** 交互指令中的跳转地址 */
     public static final String REDIRECT_URL = "redirectUrl";
 
+    /** 交互指令中的交互类型 */
+    public static final String NEXT_ACTION_TYPE = "type";
+
+    /** 有跳转地址但渠道未给出或给出不认识的类型时使用的交互类型 */
+    public static final String REDIRECT = "REDIRECT";
+
+    /** PAY 合同承认的交互类型 */
+    static final Set<String> NEXT_ACTION_TYPES = Set.of("THREE_DS_CHALLENGE", REDIRECT);
+
+    /** PAY 合同承认的支付状态；CLOSED、NOT_FOUND 只属于查单 */
+    static final Set<ChannelPaymentStatus> PAY_STATUSES =
+        Set.of(ChannelPaymentStatus.SUCCEEDED, ChannelPaymentStatus.PENDING, ChannelPaymentStatus.FAILED);
+
     private final Map<String, Object> values;
 
     private PayOutputs(Map<String, Object> values) {
@@ -46,13 +60,8 @@ public class PayOutputs {
 
     /** 支付状态：SUCCEEDED、PENDING、FAILED；缺失或不认识的取值为 null，由调用方按结果未知处理。 */
     public ChannelPaymentStatus getPaymentStatus() {
-        String status = text(values, PAYMENT_STATUS);
-        for (ChannelPaymentStatus candidate : ChannelPaymentStatus.values()) {
-            if (candidate.getCode().equals(status)) {
-                return candidate;
-            }
-        }
-        return null;
+        ChannelPaymentStatus status = paymentStatus(values);
+        return status != null && PAY_STATUSES.contains(status) ? status : null;
     }
 
     /** 渠道交易编号。 */
@@ -80,9 +89,32 @@ public class PayOutputs {
         return values.get(NEXT_ACTION) instanceof Map<?, ?> next ? text(next, REDIRECT_URL) : null;
     }
 
+    /**
+     * 交互类型：THREE_DS_CHALLENGE 或 REDIRECT
+     * <li>没有跳转地址时为 null；渠道未给类型或类型不在合同内时按 REDIRECT。</li>
+     */
+    public String getNextActionType() {
+        if (getRedirectUrl() == null) {
+            return null;
+        }
+        String type = text((Map<?, ?>)values.get(NEXT_ACTION), NEXT_ACTION_TYPE);
+        return type != null && NEXT_ACTION_TYPES.contains(type) ? type : REDIRECT;
+    }
+
     /** 输出中出现的顶层字段名，升序；只用于排障，不含值。 */
     public List<String> keys() {
         return List.copyOf(new TreeSet<>(values.keySet()));
+    }
+
+    /** 输出中的支付状态代码；缺失或不认识为 null。 */
+    static ChannelPaymentStatus paymentStatus(Map<?, ?> values) {
+        String status = text(values, PAYMENT_STATUS);
+        for (ChannelPaymentStatus candidate : ChannelPaymentStatus.values()) {
+            if (candidate.getCode().equals(status)) {
+                return candidate;
+            }
+        }
+        return null;
     }
 
     /** 字符串字段；不存在或类型不符为 null。 */

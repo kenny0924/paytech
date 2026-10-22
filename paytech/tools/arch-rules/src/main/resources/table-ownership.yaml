@@ -2,9 +2,9 @@
 # Source: requirements/20261017/architecture-V2骨架与模块搬迁/design/03-module-and-table-ownership.md §2 and §4.2.
 # 255 source tables, 17 databases, 265 physical tables.
 # Retained: platform-support mor_platform from paytech/platform-support/docs/database/sql/platform-support-schema.sql.
-# 61 retained-service tables added on top of design 03 (not part of the §4.2 count).
+# 62 retained-service tables added on top of design 03 (not part of the §4.2 count).
 # 23 step-removed tables (approved later refactors, e.g. 2026-10-19 billing fact model; applied after the §4.2 count).
-# 53 step-added tables (approved refactor-step designs, e.g. design/05 t_card_material_ticket; not part of the §4.2 count).
+# 59 step-added tables (approved refactor-step designs, e.g. design/05 t_card_material_ticket; not part of the §4.2 count).
 # Structure: services.<service>.<database> = tables owned (or copied / per-database infrastructure);
 # Renamed: t_transaction_economics -> t_economic_fact, t_transaction_economic_component -> t_economic_fact_line, t_transaction_economic_comp_link -> t_economic_fact_line_link, t_account -> t_ledger_account, t_payment_method_profile -> t_pricing_profile, t_payment_method_profile_cond -> t_pricing_profile_cond.
 # Renamed services: consumer -> counterparty; databases: mor_consumer -> mor_counterparty.
@@ -54,6 +54,10 @@ services:
       - t_consumed_event
   card:
     mor_card:
+      - t_card_bin_import_error
+      - t_card_bin_library_activation
+      - t_card_bin_library_version
+      - t_card_bin_range
       - t_card_material_ticket
       - t_compensation_event
       - t_payment_card
@@ -223,6 +227,8 @@ services:
       - t_channel_refund
       - t_channel_transaction_ref
       - t_compensation_event
+      - t_consumed_aggregate_version
+      - t_consumed_event
       - t_duplicate_payment_case
       - t_payment_action
       - t_payment_attempt
@@ -255,6 +261,7 @@ services:
       - t_command_idempotency
       - t_compensation_event
       - t_console_resource
+      - t_country_region
       - t_currency_spec
       - t_data_source
       - t_file_object

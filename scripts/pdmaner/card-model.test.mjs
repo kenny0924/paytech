@@ -14,6 +14,9 @@ const read = (relative) => readFileSync(path.join(root, relative), "utf8");
 const createTables = (sql) => sql.split("\n\n").map((block) => block.trim()).filter((block) => block.startsWith("CREATE TABLE"));
 // paytech-messaging tables are copied verbatim from their foundation SQL, whose layout differs from the PDManer rendering.
 const MESSAGING_TABLES = ["t_consumed_event", "t_consumed_aggregate_version"];
+// 2026-10-22 BIN library tables (requirements/20261022/card-BIN库与卡属性 technique §3.6).
+const BIN_LIBRARY_TABLES = ["t_card_bin_library_version", "t_card_bin_range", "t_card_bin_import_error",
+  "t_card_bin_library_activation"];
 const normalize = (block) => block
   .replaceAll("`", "")
   .replace(/ COMMENT ''/gu, "")
@@ -24,7 +27,7 @@ test("Card model is the deterministic card partition plus the step 12 additions"
   assert.equal(read(source), serializePaymentModel(generateCardModel()));
   const model = JSON.parse(read(source));
   assert.deepEqual(model.entities.map((entity) => entity.defKey), [
-    ...CARD_TABLES, "t_card_material_ticket", "t_compensation_event", ...MESSAGING_TABLES,
+    ...CARD_TABLES, "t_card_material_ticket", ...BIN_LIBRARY_TABLES, "t_compensation_event", ...MESSAGING_TABLES,
   ]);
   const payment = JSON.parse(read("paytech/payment/docs/database/payment.pdma.json"));
   const shared = payment.entities.map((entity) => entity.defKey).filter((table) => model.entities.some((entity) => entity.defKey === table));

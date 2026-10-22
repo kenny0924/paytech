@@ -90,3 +90,14 @@ test('数据查询：模板页登记编辑器子路由（:templateId 含 new）�
   assert.deepEqual(pageRoutePaths(menu), ['/data-query/templates', '/data-query/templates/:templateId']);
   assert.deepEqual(pageRoutePaths({ ...menu, frontendRoute: '/data-query/data-sources', componentKey: 'OPERATIONS_DATA_SOURCES' }), ['/data-query/data-sources']);
 });
+
+test('卡 BIN 库：平台配置下注册 /card-bin-library 单一路由，维护按钮不进入菜单', () => {
+  const platform = resource('platform', { displayName: '平台配置' });
+  const page = resource('card-bin', { parentResourceId: 'platform', resourceCode: 'OPERATIONS_CARD_BIN_LIBRARY', displayName: '卡 BIN 库',
+    frontendRoute: '/card-bin-library', componentKey: 'OPERATIONS_CARD_BIN_LIBRARY', sortOrder: 90 });
+  const manage = resource('card-bin-manage', { parentResourceId: 'card-bin', resourceType: 'BUTTON', resourceCode: 'OPERATIONS_CARD_BIN_LIBRARY_MANAGE' });
+  const tree = buildMenuTree([platform, page, manage]);
+  assert.deepEqual(menuPages(tree).map(item => item.frontendRoute), ['/card-bin-library']);
+  assert.deepEqual(pageRoutePaths(page), ['/card-bin-library']);
+  assert.deepEqual(buildMenuTree([platform, { ...page, frontendRoute: '/card-bin' }]), []);
+});

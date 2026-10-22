@@ -284,4 +284,22 @@ public interface ChannelTestMapper {
     /** 仅清理本测试库的标准 API。 */
     @Delete("DELETE FROM t_standard_api")
     void clearStandardApis();
+
+    // ---- 3DS 全链路：渠道支付通知入站 ----
+
+    /** 写入渠道的支付结果通知定义（生产只由人工 DML 维护，测试直接写入前置数据）。 */
+    @Update("UPDATE t_channel SET callback_definition_json = #{json} WHERE channel_id = #{channelId}")
+    void callbackDefinition(@Param("channelId") long channelId, @Param("json") String json);
+
+    /** 本库全部回调信封，按接收先后。 */
+    @Select("SELECT channel_callback_id AS callbackId, channel_id AS channelId, channel_account_id AS channelAccountId, payload_fingerprint AS fingerprint, signature_status AS signatureStatus, callback_status AS callbackStatus, file_id AS fileId, version FROM t_channel_callback ORDER BY received_at, channel_callback_id")
+    List<Map<String, Object>> callbacks();
+
+    /** 本库全部回调项，按信封与序号。 */
+    @Select("SELECT channel_callback_id AS callbackId, item_no AS itemNo, event_type AS eventType, external_transaction_id AS externalTransactionId, target_type AS targetType, target_id AS targetId, normalized_status AS normalizedStatus, channel_event_time AS channelEventTime, mapping_status AS mappingStatus FROM t_channel_callback_item ORDER BY channel_callback_id, item_no")
+    List<Map<String, Object>> callbackItems();
+
+    /** 某类型的补偿任务（事件键与执行状态）。 */
+    @Select("SELECT event_key AS eventKey, execute_status AS status FROM t_compensation_event WHERE event_type = #{eventType} ORDER BY id")
+    List<Map<String, Object>> compensationEvents(@Param("eventType") String eventType);
 }

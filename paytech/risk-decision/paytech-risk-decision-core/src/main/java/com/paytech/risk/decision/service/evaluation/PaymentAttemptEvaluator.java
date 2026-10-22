@@ -57,7 +57,10 @@ public class PaymentAttemptEvaluator implements DecisionPointEvaluator {
             new Field("consumerReference", false, Pattern.compile("[\\x21-\\x7E]{1,128}"), 128),
             new Field("clientIpAddress", false, null, 45), new Field("userAgent", false, null, 512),
             new Field("cardFingerprint", false, Pattern.compile("[A-Za-z0-9_\\-+/=]{8,128}"), 128),
-            new Field("cardBin", false, Pattern.compile("[0-9]{6,8}"), 8)));
+            new Field("cardBin", false, Pattern.compile("[0-9]{6,8}"), 8),
+            new Field("issuerCountryCode", false, Pattern.compile("[A-Z]{2}"), 2),
+            new Field("cardBrand", false, Pattern.compile("[A-Z0-9_]{1,32}"), 32),
+            new Field("fundingType", false, Pattern.compile("[A-Z0-9_]{1,16}"), 16)));
 
     private final RuntimeEvaluationExecutor executor;
     private final PaymentRiskAssessmentService service;
@@ -101,7 +104,7 @@ public class PaymentAttemptEvaluator implements DecisionPointEvaluator {
         return assessments.findByAttempt(Long.parseLong(businessKey)).map(TransactionRiskAssessment::getEvaluationId);
     }
 
-    /** 交易评估快照中的支付尝试、17 个输入字段与认证要求。 */
+    /** 交易评估快照中的支付尝试、20 个输入字段与认证要求。 */
     @Override
     public EvaluationSubject subject(long primaryEvaluationId) {
         TransactionRiskAssessment assessment = assessment(primaryEvaluationId);
@@ -136,7 +139,7 @@ public class PaymentAttemptEvaluator implements DecisionPointEvaluator {
             row.getOrderId(), row.getClientId(), row.getEntityNo(), row.getPaymentMethodCode(), row.getCaptureMode(),
             row.getAmount(), row.getCurrency(), row.getIndustryCode(), row.getMccCode(), row.getConsumerCountryCode(),
             row.getConsumerReference(), row.getClientIpAddress(), row.getUserAgent(), row.getCardFingerprint(),
-            row.getCardBin());
+            row.getCardBin(), row.getIssuerCountryCode(), row.getCardBrand(), row.getFundingType());
     }
 
     /** 统一评估请求的输入字段原值，按合同字段顺序。 */
@@ -159,6 +162,9 @@ public class PaymentAttemptEvaluator implements DecisionPointEvaluator {
         values.put("userAgent", input.userAgent());
         values.put("cardFingerprint", input.cardFingerprint());
         values.put("cardBin", input.cardBin());
+        values.put("issuerCountryCode", input.issuerCountryCode());
+        values.put("cardBrand", input.cardBrand());
+        values.put("fundingType", input.fundingType());
         return values;
     }
 
@@ -170,7 +176,8 @@ public class PaymentAttemptEvaluator implements DecisionPointEvaluator {
             inputs.get("captureMode"), new BigDecimal(inputs.get("amount")), inputs.get("currency"),
             inputs.get("industryCode"), inputs.get("mccCode"), inputs.get("consumerCountryCode"),
             inputs.get("consumerReference"), inputs.get("clientIpAddress"), inputs.get("userAgent"),
-            inputs.get("cardFingerprint"), inputs.get("cardBin"));
+            inputs.get("cardFingerprint"), inputs.get("cardBin"), inputs.get("issuerCountryCode"),
+            inputs.get("cardBrand"), inputs.get("fundingType"));
     }
 
     /** 同一风控 Action 且稳定输入相同才返回原结果。 */

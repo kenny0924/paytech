@@ -27,4 +27,10 @@ public interface ActionActor {
      * Flow执行完后的事务处理
      */
     default void doInTransaction(ActionContext context, PaymentAction action) {}
+
+    /**
+     * 结果保存后动作仍在运行（PROCESSING 或 UNKNOWN）时的事务处理
+     * <li>与结果同事务执行，只能写本库，例如登记恢复任务；默认无处理。</li>
+     */
+    default void onRunningInTransaction(ActionContext context, PaymentAction action) {}
 }

@@ -62,6 +62,7 @@ public class PaymentRiskClientImpl implements PaymentRiskClient {
             command.getEntityNo(), command.getPaymentMethodCode(), command.getCaptureMode().getCode(),
             command.getAmount().stripTrailingZeros().toPlainString(), command.getCurrency(), command.getIndustryCode(),
             command.getMccCode(), command.getConsumerCountryCode(), command.getConsumerReference(),
-            command.getClientIpAddress(), command.getUserAgent(), command.getCardFingerprint(), command.getCardBin());
+            command.getClientIpAddress(), command.getUserAgent(), command.getCardFingerprint(), command.getCardBin(),
+            command.getIssuerCountryCode(), command.getCardBrand(), command.getFundingType());
     }
 }

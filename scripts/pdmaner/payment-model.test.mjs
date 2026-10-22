@@ -26,9 +26,9 @@ const historicalModelTotals = Object.freeze({ tables: 27, fields: 349, uniqueInd
 const historicalStructuralDigest = "2793402a691608c374c988e9ef2e01a24ad965d3fdec1b0f9acaf8ade026b690";
 // Current models: payment.pdma.json bytes, and the union with channel-connector.pdma.json (31 tables since the 2026-10-19
 // channel cost tables moved into the channel-connector partition, 32 since the 2026-10-20 t_channel_config_change).
-const currentModelTotals = Object.freeze({ tables: 32, fields: 401, uniqueIndexes: 45, accessIndexes: 46, relations: 68, oneToOneRelations: 7, diagramGroups: 9 });
-const expectedModelDigest = "4fb5a4c88f00bd5552dc4c66de1811aee4bc73aee40c40674c264966261e4979";
-const expectedStructuralDigest = "3588e21f75a01a0563a1547a123b19168db0129039169820c7db3af19ad7abf7";
+const currentModelTotals = Object.freeze({ tables: 32, fields: 409, uniqueIndexes: 45, accessIndexes: 46, relations: 68, oneToOneRelations: 7, diagramGroups: 9 });
+const expectedModelDigest = "a58ac7f2957cab09ad11fc5351af661a59734e7c8125791dc6a9ccaf7db703fd";
+const expectedStructuralDigest = "1b201dae8d970423e40b8d07437667464e23ce7b803498d051e171eef419f6a9";
 
 // Test-owned oracle. It must never import a generator manifest or parse Markdown.
 const APPROVED_FIELD_MANIFEST = String.raw`
@@ -205,6 +205,14 @@ customer_id BIGINT N
 consent_to_save TINYINT(1) NN
 card_bin VARCHAR(8) N
 card_fingerprint CHAR(64) N
+card_brand VARCHAR(32) N {VISA,MASTERCARD,AMEX,UNIONPAY,MADA,DISCOVER,JCB,DINERS}
+funding_type VARCHAR(16) N {CREDIT,DEBIT,PREPAID,CHARGE}
+card_level VARCHAR(32) N OPEN(Card BIN 库)
+card_product VARCHAR(16) N {CONSUMER,COMMERCIAL}
+issuer_country CHAR(2) N OPEN(ISO 3166-1 alpha-2)
+issuer_region VARCHAR(16) N OPEN(Platform 国家区域映射 region_code)
+bin_library_version_no INT N
+bin_match_length TINYINT N
 expires_at DATETIME(6) NN
 revoked_at DATETIME(6) N
 create_time DATETIME(6) NN
@@ -809,6 +817,10 @@ const approvedTableNames = Object.freeze([
   "t_channel_config_change",
 ]);
 
+// 2026-10-22 3DS 全链路：Payment 首次作为 MQ 消费者，payment 模型追加 paytech-messaging 标准消费表（payment/payment-model-additions.mjs）。
+// 两张表的列与 acquiring / card 一致，由 messaging 组件拥有语义，不进入本文件的 Payment 字段 oracle 与字段元数据。
+const paymentAdditionTables = Object.freeze(["t_consumed_event", "t_consumed_aggregate_version"]);
+
 const forbiddenTables = Object.freeze([
   "t_payment_pricing_fact", "t_payment_state_transition",
   "t_payment_customer_action", "t_channel_connection", "t_channel_connection_version", "t_mid_limit", "t_mid_credential_ref", "t_mid_health", "t_routing_policy_binding", "t_routing_rule", "t_routing_rule_condition", "t_payment_execution_gate", "t_payment_execution_gate_result", "t_three_ds_context", "t_payment_recovery_task", "t_channel_refund_attempt", "t_refund_transaction_ref", "t_payment_state_conflict", "t_channel_dispute_projection", "t_restriction_projection", "t_business_change_record", "t_business_change_version",
@@ -871,7 +883,7 @@ const expectedDiagramGroups = Object.freeze({
   channel_refund: Object.freeze({ defName: "Channel Refund", primary: Object.freeze(["payment_refund_position", "channel_refund"]), references: Object.freeze(["payment_intent", "payment_attempt", "payment_action", "channel_transaction_ref"]) }),
   channel_callback: Object.freeze({ defName: "Channel Callback", primary: Object.freeze(["channel_callback", "channel_callback_item", "channel_event_exception"]), references: Object.freeze(["payment_channel", "channel_account", "payment_action", "channel_refund", "channel_dispute_notice", "channel_dispute_action"]) }),
   channel_dispute: Object.freeze({ defName: "Channel Dispute", primary: Object.freeze(["channel_dispute_notice", "channel_dispute_event", "channel_dispute_action"]), references: Object.freeze(["payment_channel", "channel_account", "channel_mid", "channel_transaction_ref", "channel_interaction"]) }),
-  reliability: Object.freeze({ defName: "可靠执行", primary: Object.freeze(["command_idempotency", "compensation_event"]), references: Object.freeze([]) }),
+  reliability: Object.freeze({ defName: "可靠执行", primary: Object.freeze(["command_idempotency", "compensation_event", "consumed_event", "consumed_aggregate_version"]), references: Object.freeze([]) }),
   channel_cost: Object.freeze({ defName: "渠道成本配置", primary: Object.freeze(["channel_cost_plan", "channel_cost_plan_ver", "channel_cost_scope", "channel_cost_component"]), references: Object.freeze(["payment_channel", "channel_mid"]) }),
   channel_config_change: Object.freeze({ defName: "渠道配置变更留痕", primary: Object.freeze(["channel_config_change"]), references: Object.freeze([]) }),
 });
@@ -1077,7 +1089,7 @@ test("Payment test-owned Oracle is internally complete for all 32 tables", () =>
   assert.deepEqual(approvedFields.map((table) => table.defKey), approvedTableNames);
   assert.ok(approvedFields.every((table) => table.fields.length > 1));
   assert.deepEqual([...parseIndexes().keys()], approvedTableNames);
-  assert.equal(approvedFields.reduce((count, table) => count + table.fields.length, 0), 401);
+  assert.equal(approvedFields.reduce((count, table) => count + table.fields.length, 0), 409);
   const oracleIndexes = [...parseIndexes().values()].flat();
   assert.equal(oracleIndexes.filter((index) => index.unique).length, 45);
   assert.equal(oracleIndexes.filter((index) => !index.unique).length, 46);
@@ -1162,12 +1174,12 @@ test("Payment Physical Decisions freezes every approved row-level CHECK", () => 
 }
 
 if (coreArtifactsReadyAtRegistration) {
-test("Payment model has the exact approved 32-table set and no retired roots", () => {
+test("Payment model has the exact approved 34-table set and no retired roots", () => {
     assertCoreReady();
     const model = readModel();
     // The union lists payment tables before channel-connector tables (step 05 split), so compare as a set.
     const actualTableNames = model.entities.map((entity) => entity.defKey);
-    assert.deepEqual([...actualTableNames].sort(), [...approvedTableNames].sort());
+    assert.deepEqual([...actualTableNames].sort(), [...approvedTableNames, ...paymentAdditionTables].sort());
     assert.equal(new Set(actualTableNames).size, actualTableNames.length);
     const names = new Set(actualTableNames);
     for (const table of forbiddenTables) assert.ok(!names.has(table), `恢复已删除表 ${table}`);
@@ -1314,8 +1326,8 @@ test("Payment model is deterministic and preserves nine diagram themes", async (
         diagramRelationIds.push(cell.originKey);
       }
     }
-    assert.deepEqual(primaryTables.sort(), approvedTableNames.map(logicalTableKey).sort());
-    assert.equal(new Set(primaryTables).size, 32);
+    assert.deepEqual(primaryTables.sort(), [...approvedTableNames, ...paymentAdditionTables].map(logicalTableKey).sort());
+    assert.equal(new Set(primaryTables).size, 34);
     assert.deepEqual(diagramRelationIds.sort(), relationIds.sort());
     assert.equal(new Set(diagramRelationIds).size, relationIds.length);
     const result = spawnSync(process.execPath, [paths.generator, "--check"], { cwd: workspaceRoot, encoding: "utf8" });

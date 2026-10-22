@@ -20,6 +20,13 @@
     <dependencies>
         <dependency><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><scope>test</scope></dependency>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-test-support</artifactId><scope>test</scope></dependency>
+        <!-- 3DS 全链路：Payment 首次消费 ChannelPaymentNotified，分区队列基线（design/08 第 12x 步测试接入）。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-messaging</artifactId>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-payment-app</artifactId>

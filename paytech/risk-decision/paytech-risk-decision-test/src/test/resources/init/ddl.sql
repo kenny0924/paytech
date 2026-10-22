@@ -760,6 +760,9 @@ CREATE TABLE `t_transaction_risk_assessment` (
   `user_agent` VARCHAR(512) NULL COMMENT '首次评估冻结的浏览器 User-Agent；仅记录，不参与规则或稳定输入摘要。',
   `card_fingerprint` VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT 'Payment Card 提供的跨交易稳定卡指纹；非卡支付为空。',
   `card_bin` VARCHAR(8) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT '卡号前 6 至 8 位数字；非卡支付为空。',
+  `issuer_country_code` CHAR(2) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT 'Payment 冻结的发卡国 ISO 3166-1 alpha-2；未识别或非卡支付为空。取值来源：ISO 3166-1 alpha-2；非固定枚举。',
+  `card_brand` VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT 'Payment 冻结的卡组织；未识别或非卡支付为空。取值来源：Card BIN 库卡组织代码；非固定枚举。',
+  `funding_type` VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT 'Payment 冻结的借贷记类型；未识别或非卡支付为空。取值来源：Card BIN 库借贷记代码；非固定枚举。',
   `authentication_requirement` VARCHAR(64) NULL COMMENT '认证要求的稳定业务代码。允许值：NOT_REQUIRED、THREE_DS_REQUIRED、CHALLENGE_REQUIRED。',
   `stable_input_hash` CHAR(64) NOT NULL COMMENT '稳定输入哈希的 SHA-256 小写十六进制值。',
   `restricted_input_hash` CHAR(64) NOT NULL COMMENT '受限输入哈希的 SHA-256 小写十六进制值。',
@@ -1164,3 +1167,19 @@ COMMIT;
 -- content_hash 由 DecisionPointAuthoringDescriptor.checkoutPrepare() 经 RiskDecisionCanonicalizerImpl 计算（requirements/20261016/risk-结账点运行期评估）。
 INSERT INTO `t_decision_point_version` (`point_version_id`, `decision_point_id`, `version_no`, `input_contract_code`, `input_contract_version`, `output_contract_code`, `default_decision`, `evaluation_strategy`, `failure_strategy`, `timeout_ms`, `status`, `content_hash`, `create_time`, `update_time`) VALUES
   (220001, 210001, 100, 'ORDER_PREPARATION', 5, 'RISK_DECISION_RESULT', 'REVIEW', 'FIRST_TERMINAL', 'FAIL_CLOSED', 500, 'FROZEN', '7f730e195b2c465db93671fbba3c8fb51e596c9b82256f7098a5416c59b04a45', '2026-10-16 00:00:00.000000', '2026-10-16 00:00:00.000000');
+
+-- 2026-10-22 BIN 库与卡属性：支付输入合同 PAYMENT_ATTEMPT v1 原地追加可选的发卡国、卡组织、借贷记类型（requirements/20261022/card-BIN库与卡属性）。
+-- 输入字段变化使支付点版本内容摘要变化：版本 1（220002）保持原摘要供已创建发布引用，新增冻结版本 2（220003）供新发布引用；
+-- content_hash 由 DecisionPointAuthoringDescriptor.paymentAttemptRisk() 经 RiskDecisionCanonicalizerImpl 计算。
+-- 三个系统变量开放规则与流程条件用途，不自动绑定或启用规则。
+START TRANSACTION;
+SET @payment_card_attribute_seed_time = '2026-10-22 00:00:00.000000';
+
+INSERT INTO `t_decision_point_version` (`point_version_id`, `decision_point_id`, `version_no`, `input_contract_code`, `input_contract_version`, `output_contract_code`, `default_decision`, `evaluation_strategy`, `failure_strategy`, `timeout_ms`, `status`, `content_hash`, `create_time`, `update_time`) VALUES
+  (220003, 210002, 2, 'PAYMENT_ATTEMPT', 1, 'RISK_DECISION_RESULT', 'ALLOW', 'FIRST_TERMINAL', 'FAIL_CLOSED', 500, 'FROZEN', 'b4336cc40bb90d81fbacd14a31b8fe67848dc1e832c6f9fdb4228cb529833cd0', @payment_card_attribute_seed_time, @payment_card_attribute_seed_time);
+
+INSERT INTO t_risk_variable (variable_id, variable_code, variable_name, description, source_type, value_type, point_code, source_contract_code, source_contract_version, source_field, rule_condition_flag, flow_condition_flag, action_parameter_flag, system_managed_flag, format_code, numeric_unit, currency_code, currency_variable_code, allowed_values_variable_code, string_value, number_value, boolean_value, datetime_value, duration_value, status, version, create_by, update_by, create_time, update_time) VALUES
+  (900000000000093014, 'PAY_INPUT_ISSUER_COUNTRY', '发卡国', NULL, 'INPUT', 'STRING', 'PAYMENT_ATTEMPT_RISK', 'PAYMENT_ATTEMPT', 1, 'issuer_country_code', 1, 1, 0, 1, 'UPPER_ALPHA_2', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'ACTIVE', 1, 1, 1, @payment_card_attribute_seed_time, @payment_card_attribute_seed_time),
+  (900000000000093015, 'PAY_INPUT_CARD_BRAND', '卡组织', NULL, 'INPUT', 'STRING', 'PAYMENT_ATTEMPT_RISK', 'PAYMENT_ATTEMPT', 1, 'card_brand', 1, 1, 0, 1, 'TOKEN', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'ACTIVE', 1, 1, 1, @payment_card_attribute_seed_time, @payment_card_attribute_seed_time),
+  (900000000000093016, 'PAY_INPUT_FUNDING_TYPE', '借贷记类型', NULL, 'INPUT', 'STRING', 'PAYMENT_ATTEMPT_RISK', 'PAYMENT_ATTEMPT', 1, 'funding_type', 1, 1, 0, 1, 'TOKEN', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'ACTIVE', 1, 1, 1, @payment_card_attribute_seed_time, @payment_card_attribute_seed_time);
+COMMIT;

@@ -15,17 +15,21 @@ import com.paytech.counterparty.test.mocker.external.StoredCardMocker.Call;
 import com.paytech.foundation.httpproblem.api.ApiProblemProfile;
 import com.paytech.foundation.httpproblem.api.ApiProblemResponse;
 import com.paytech.foundation.testsupport.api.MockHttpFault;
+import com.paytech.card.api.enums.CardBrand;
 import com.paytech.card.api.storedcard.response.StoredCardListResponseBody;
 
 /**
  * Client 已存卡接口（需求 20261015 commerce-Customer与存卡支付，AC-04、AC-11、AC-14）：经真实 Client API 入口与 Payment 测试 HTTP 服务。
+ *
+ * <p>
+ * 2026-10-22 BIN 库需求：列表元素新增可空 cardBrand（card 按当前生效 BIN 库实时识别）。
  *
  * @see ClientCustomerApi
  */
 class StoredCardApiTest extends AbstractCustomerApiTest {
     private static final String TOKEN = "sc_AAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 
-    /** 列出：调用 Payment 时带 Client 与 Customer 主键，响应只含 Token、掩码与有效期、保存时间。 */
+    /** 列出：调用 card 时带 Client 与 Customer 主键，响应只含 Token、掩码、卡组织、有效期与保存时间。 */
     @Test
     void test_list() {
         String customerNo = create("user-1").text("customerNo");
@@ -39,9 +43,30 @@ class StoredCardApiTest extends AbstractCustomerApiTest {
             () -> assertEquals(List.of(new Call("LIST", Long.toString(clientId()), customerId, null)), storedCards.calls()),
             () -> assertEquals(TOKEN, card.get("storedCardToken").asString()),
             () -> assertEquals("411111******1111", card.get("maskedPan").asString()),
+            () -> assertEquals(CardBrand.VISA.getCode(), card.get("cardBrand").asString()),
             () -> assertEquals("12", card.get("expiryMonth").asString()),
             () -> assertEquals("2030", card.get("expiryYear").asString()),
-            () -> assertEquals(5, card.size(), "只返回 Token、掩码、有效期月年与保存时间"));
+            () -> assertEquals(6, card.size(), "只返回 Token、掩码、卡组织、有效期月年与保存时间"));
+    }
+
+    /** 卡组织：card 未识别时为 null（字段仍在）；card 返回未发布的卡组织代码按协议违例 502，不透传。 */
+    @Test
+    void test_cardBrand() {
+        String customerNo = create("user-1").text("customerNo");
+        var unrecognized = card();
+        unrecognized.setCardBrand(null);
+        storedCards.mockCards(List.of(unrecognized));
+        var withoutBrand = listCards(clientId(), customerNo);
+        var unknown = card();
+        unknown.setCardBrand("ELO");
+        storedCards.mockCards(List.of(unknown));
+
+        var rejected = listCards(clientId(), customerNo);
+
+        var listed = withoutBrand.body().get("storedCards").get(0);
+        assertAll(() -> assertEquals(200, withoutBrand.status()), () -> assertTrue(listed.has("cardBrand")),
+            () -> assertTrue(listed.get("cardBrand").isNull()), () -> assertEquals(502, rejected.status()),
+            () -> assertEquals(CounterpartyErrorCode.UPSTREAM_PROTOCOL_ERROR.getCode(), rejected.text("code")));
     }
 
     /** 已删除 Customer 返回空列表、不调用 Payment；删除其卡 404；跨 Client 404。 */
@@ -89,6 +114,7 @@ class StoredCardApiTest extends AbstractCustomerApiTest {
         card.setStoredCardToken(TOKEN);
         card.setMaskedPan("411111******1111");
         card.setLast4("1111");
+        card.setCardBrand(CardBrand.VISA.getCode());
         card.setExpiryMonth("12");
         card.setExpiryYear("2030");
         card.setCreatedAt("2026-09-08T00:00:00Z");

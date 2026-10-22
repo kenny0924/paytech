@@ -12,6 +12,7 @@ import lombok.Getter;
  * 一次渠道操作的已映射结论：执行结论加上从标准 API 输出解释出的业务字段；不含卡值或账号材料（D06）。
  * <li>SUCCESS、FAIL 的业务字段取自标准 API 输出；NOT_SENT 只有原因代码；ERROR 全部为空。</li>
  * <li>redirectUrl 是临时交互指令，调用方不得持久化。</li>
+ * <li>PAY 结论带交互类型；QUERY 结论带渠道记录的金额与币种，没有交互指令。</li>
  */
 @Getter
 @AllArgsConstructor
@@ -25,6 +26,9 @@ public class ChannelOperationResult {
     /** 待认证跳转地址。 */
     private final String redirectUrl;
 
+    /** PAY 待交互时的交互类型（THREE_DS_CHALLENGE、REDIRECT）；没有跳转地址时为 null。 */
+    private final String nextActionType;
+
     /** 渠道交易编号。 */
     private final String channelTransactionRef;
 
@@ -37,25 +41,39 @@ public class ChannelOperationResult {
     /** 渠道失败说明。 */
     private final String failureMessage;
 
+    /** QUERY 时渠道记录的金额，主单位十进制文本；其他操作或未返回时为 null。 */
+    private final String amount;
+
+    /** QUERY 时渠道记录的币种；其他操作或未返回时为 null。 */
+    private final String currency;
+
     /** 标准 API 输出的顶层字段名，升序，不含值。 */
     private final List<String> rawOutputKeys;
 
     /** 构造执行前失败的结论。 */
     public static ChannelOperationResult notSent(String failureCode) {
-        return new ChannelOperationResult(ChannelOperationOutcome.NOT_SENT, null, null, null, null, failureCode, null,
-            List.of());
+        return new ChannelOperationResult(ChannelOperationOutcome.NOT_SENT, null, null, null, null, null, failureCode,
+            null, null, null, List.of());
     }
 
     /** 构造结果未知的结论。 */
     public static ChannelOperationResult unknown() {
-        return new ChannelOperationResult(ChannelOperationOutcome.ERROR, null, null, null, null, null, null, List.of());
+        return new ChannelOperationResult(ChannelOperationOutcome.ERROR, null, null, null, null, null, null, null, null,
+            null, List.of());
     }
 
     /** 渠道已受理（SUCCESS）或明确拒绝（FAIL）：按 PAY 输出合同解释业务字段。 */
     public static ChannelOperationResult answered(ChannelOperationOutcome outcome, PayOutputs outputs) {
         return new ChannelOperationResult(outcome, outputs.getPaymentStatus(), outputs.getRedirectUrl(),
+            outputs.getNextActionType(), outputs.getChannelTransactionRef(), outputs.getChannelStatus(),
+            outputs.getFailureCode(), outputs.getFailureMessage(), null, null, outputs.keys());
+    }
+
+    /** 查单得到渠道结果（SUCCESS）或渠道明确失败（FAIL，含无此交易）：按 PAY_QUERY 输出合同解释业务字段。 */
+    public static ChannelOperationResult queried(ChannelOperationOutcome outcome, PayQueryOutputs outputs) {
+        return new ChannelOperationResult(outcome, outputs.getPaymentStatus(), null, null,
             outputs.getChannelTransactionRef(), outputs.getChannelStatus(), outputs.getFailureCode(),
-            outputs.getFailureMessage(), outputs.keys());
+            outputs.getFailureMessage(), outputs.getAmount(), outputs.getCurrency(), outputs.keys());
     }
 
     @Override

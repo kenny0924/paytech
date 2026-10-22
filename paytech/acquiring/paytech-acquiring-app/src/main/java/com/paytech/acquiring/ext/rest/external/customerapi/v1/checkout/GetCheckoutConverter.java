@@ -39,7 +39,7 @@ public final class GetCheckoutConverter {
             seller(result.getSeller()), legal(result), payment(result), result.getAllowedActions(), result.getPollAfterMs(),
             new CardSavingInfo(result.isCardSavingAvailable()),
             result.getStoredCards().stream().map(card -> new StoredCardInfo(card.storedCardToken(), card.last4(),
-                card.expiryMonth(), card.expiryYear())).toList());
+                card.cardBrand(), card.expiryMonth(), card.expiryYear())).toList());
     }
 
     /** 原值只在查询结果已包含显式回填时输出。 */

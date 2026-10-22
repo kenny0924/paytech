@@ -87,6 +87,24 @@ public class PaymentRiskCommand {
      */
     private String cardBin;
 
+    /**
+     * 发卡国 ISO 3166-1 alpha-2
+     * <li>取自 Token 冻结的 BIN 库快照；非卡支付或未识别时为空。</li>
+     */
+    private String issuerCountryCode;
+
+    /**
+     * 卡组织代码
+     * <li>取自 Token 冻结的 BIN 库快照；非卡支付或未识别时为空。</li>
+     */
+    private String cardBrand;
+
+    /**
+     * 借贷记类型代码
+     * <li>取自 Token 冻结的 BIN 库快照；非卡支付、未识别或号段未提供时为空。</li>
+     */
+    private String fundingType;
+
     @Override
     public String toString() {
         return "PaymentRiskCommand[paymentAttemptId=" + paymentAttemptId + ", riskActionId=" + riskActionId + "]";

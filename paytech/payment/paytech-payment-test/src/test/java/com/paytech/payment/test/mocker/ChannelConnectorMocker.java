@@ -32,6 +32,11 @@ import tools.jackson.databind.json.JsonMapper;
  * <p>
  * 渠道操作请求含 card.token 时，先像真实 Platform 一样经 {@link PlatformMocker} 回调 Payment 读卡接口；读卡被拒时返回 Platform
  * 初始化失败对应的 NOT_SENT（channel-connector 的组合行为）。未配置结论的执行记为意外调用。
+ *
+ * <p>
+ * 3DS 全链路：原交易查单（operation=QUERY）与 PAY 分开配置与记录；查单结论是常驻配置，查单恢复任务的每次执行都返回同一结论，
+ * 未配置时记为意外调用。PAY 配置为待认证或结果未知时同时配置查单“仍处理中 / 结果未知”，使 PAY 结果事务登记的查单恢复任务首轮执行
+ * 不推进动作；需要推进的用例再显式改配查单结论。
  */
 @TestComponent
 @RequiredArgsConstructor
@@ -46,14 +51,24 @@ public class ChannelConnectorMocker implements Clear {
     private final List<Candidate> candidates = new ArrayList<>();
     private final List<QueryMidCandidatesRequestBody> queries = new ArrayList<>();
     private final List<Call> calls = new ArrayList<>();
+    private final List<ExecuteChannelOperationRequestBody> queryCalls = new ArrayList<>();
     private ChannelOperationResponseBody reply;
+    private ChannelOperationResponseBody queryReply;
     private MockHttpFault fault;
     private int unexpected;
 
-    /** 配置指定 OE 与币种下一个启用的 MID 候选，明确支持 PAY；三元组 ID 用正式 Snowflake 生成。 */
-    public synchronized Candidate candidate(String entityNo, String currency) {
+    /** 渠道编码，用于拼渠道通知地址。 */
+    public static final String CHANNEL_CODE = "PAYERMAX_MOCK";
+
+    /** 配置指定 OE 与币种下一个启用的 MID 候选，明确支持 PAY、未声明 3DS 模式；三元组 ID 用正式 Snowflake 生成。 */
+    public Candidate candidate(String entityNo, String currency) {
+        return candidate(entityNo, currency, null);
+    }
+
+    /** 配置指定 OE 与币种下一个启用的 MID 候选，明确支持 PAY，并声明 3DS 模式（可空）。 */
+    public synchronized Candidate candidate(String entityNo, String currency, String threeDsMode) {
         var candidate = new Candidate(entityNo, currency, ids.nextId(), ids.nextId(), ids.nextId(),
-            new LinkedHashSet<>(List.of(ChannelOperation.PAY.getCode())));
+            new LinkedHashSet<>(List.of(ChannelOperation.PAY.getCode())), threeDsMode);
         candidates.add(candidate);
         return candidate;
     }
@@ -68,11 +83,18 @@ public class ChannelConnectorMocker implements Clear {
         respond(body(ChannelOperationOutcome.SUCCESS, ChannelPaymentStatus.SUCCEEDED, channelTransactionRef, "SUCCESS"));
     }
 
-    /** 待认证：带跳转地址。 */
+    /** 待认证：带 3DS 挑战跳转地址（交互类型 THREE_DS_CHALLENGE）；查单仍处理中。 */
     public void pending(String channelTransactionRef, String redirectUrl) {
+        pending(channelTransactionRef, redirectUrl, "THREE_DS_CHALLENGE");
+    }
+
+    /** 待交互：带跳转地址与渠道给出的交互类型；查单仍处理中。 */
+    public synchronized void pending(String channelTransactionRef, String redirectUrl, String nextActionType) {
         var body = body(ChannelOperationOutcome.SUCCESS, ChannelPaymentStatus.PENDING, channelTransactionRef, "PENDING");
         body.setRedirectUrl(redirectUrl);
+        body.setNextActionType(nextActionType);
         respond(body);
+        queryReply = body(ChannelOperationOutcome.SUCCESS, ChannelPaymentStatus.PENDING, channelTransactionRef, "PENDING");
     }
 
     /** 渠道受理后拒绝：带失败代码与说明。 */
@@ -83,9 +105,47 @@ public class ChannelConnectorMocker implements Clear {
         respond(body);
     }
 
-    /** 结果未知（channel-connector 把 Platform 未知错误映射为 ERROR）。 */
-    public void unknown() {
+    /** 结果未知（channel-connector 把 Platform 未知错误映射为 ERROR）；查单同样没有结论。 */
+    public synchronized void unknown() {
         respond(body(ChannelOperationOutcome.ERROR, null, null, null));
+        queryReply = body(ChannelOperationOutcome.ERROR, null, null, null);
+    }
+
+    /** 查单：渠道确认成功，带渠道记录的金额与币种。 */
+    public void querySucceeded(String channelTransactionRef, String amount, String currency) {
+        var body = body(ChannelOperationOutcome.SUCCESS, ChannelPaymentStatus.SUCCEEDED, channelTransactionRef, "SUCCESS");
+        body.setAmount(amount);
+        body.setCurrency(currency);
+        queried(body);
+    }
+
+    /** 查单：渠道最终拒绝，带失败代码。 */
+    public void queryFailed(String channelTransactionRef, String failureCode) {
+        var body = body(ChannelOperationOutcome.SUCCESS, ChannelPaymentStatus.FAILED, channelTransactionRef, "FAILED");
+        body.setFailureCode(failureCode);
+        queried(body);
+    }
+
+    /** 查单：渠道订单已关闭未支付。 */
+    public void queryClosed(String channelTransactionRef) {
+        queried(body(ChannelOperationOutcome.SUCCESS, ChannelPaymentStatus.CLOSED, channelTransactionRef, "CLOSED"));
+    }
+
+    /** 查单：渠道无此交易（FAIL + NOT_FOUND）。 */
+    public void queryNotFound() {
+        var body = body(ChannelOperationOutcome.FAIL, ChannelPaymentStatus.NOT_FOUND, null, null);
+        body.setFailureCode("ORDER_NOT_EXIST");
+        queried(body);
+    }
+
+    /** 查单：渠道仍在处理。 */
+    public void queryPending(String channelTransactionRef) {
+        queried(body(ChannelOperationOutcome.SUCCESS, ChannelPaymentStatus.PENDING, channelTransactionRef, "PENDING"));
+    }
+
+    /** 配置常驻的查单结论 DTO；查单恢复任务每次执行都返回它。 */
+    public synchronized void queried(ChannelOperationResponseBody body) {
+        queryReply = body;
     }
 
     /** 保证未发出渠道请求。 */
@@ -118,8 +178,11 @@ public class ChannelConnectorMocker implements Clear {
         return response;
     }
 
-    /** HTTP Mock 实际调用此处：按需先回调读卡，再记录请求并返回配置的结论。 */
+    /** HTTP Mock 实际调用此处：查单按查单配置返回；其他操作按需先回调读卡，再记录请求并返回配置的结论。 */
     public ChannelOperationResponseBody execute(ExecuteChannelOperationRequestBody request) {
+        if (ChannelOperation.QUERY.getCode().equals(request.getOperation())) {
+            return query(request);
+        }
         JsonNode input = JSON.valueToTree(request.getInput());
         String[] revealed = platform.revealCard(input);
         synchronized (this) {
@@ -140,7 +203,25 @@ public class ChannelConnectorMocker implements Clear {
         }
     }
 
-    /** 本例渠道操作请求。 */
+    /** 查单：记录请求后返回常驻结论；HTTP 故障同样作用于查单；未配置为意外调用。 */
+    synchronized ChannelOperationResponseBody query(ExecuteChannelOperationRequestBody request) {
+        queryCalls.add(request);
+        if (fault != null) {
+            throw fault;
+        }
+        if (queryReply == null) {
+            unexpected++;
+            throw new AssertionError("未配置的查单");
+        }
+        return queryReply;
+    }
+
+    /** 本例查单请求，按到达顺序。 */
+    public synchronized List<ExecuteChannelOperationRequestBody> queryCalls() {
+        return List.copyOf(queryCalls);
+    }
+
+    /** 本例渠道操作请求（不含查单）。 */
     public synchronized List<Call> calls() {
         return List.copyOf(calls);
     }
@@ -156,17 +237,19 @@ public class ChannelConnectorMocker implements Clear {
         return List.copyOf(queries);
     }
 
-    /** 只清空渠道操作的结论与记录，保留候选配置（同一用例内换一种渠道结论）。 */
+    /** 只清空渠道操作（含查单）的结论与记录，保留候选配置（同一用例内换一种渠道结论）。 */
     public synchronized void clearOperations() {
         calls.clear();
+        queryCalls.clear();
         reply = null;
+        queryReply = null;
         fault = null;
     }
 
     /** 每例必须从完全空的 Mock 状态开始。 */
     public synchronized void assertEmpty() {
-        assertTrue(candidates.isEmpty() && queries.isEmpty() && calls.isEmpty() && reply == null && fault == null
-            && unexpected == 0);
+        assertTrue(candidates.isEmpty() && queries.isEmpty() && calls.isEmpty() && queryCalls.isEmpty() && reply == null
+            && queryReply == null && fault == null && unexpected == 0);
     }
 
     /** 每例结束检查没有未配置的渠道操作。 */
@@ -203,13 +286,16 @@ public class ChannelConnectorMocker implements Clear {
      * @param channelAccountId 渠道账号 ID
      * @param midId MID ID
      * @param supportedOperations 明确支持的渠道操作代码
+     * @param threeDsMode SECURITY.3DS_MODE；未声明为 null
      */
     public record Candidate(String entityNo, String currency, long channelId, long channelAccountId, long midId,
-        Set<String> supportedOperations) {
+        Set<String> supportedOperations, String threeDsMode) {
         /** 合同 DTO。 */
         MidCandidateBody body() {
             var body = new MidCandidateBody();
             body.setChannelId(Long.toString(channelId));
+            body.setChannelCode(CHANNEL_CODE);
+            body.setThreeDsMode(threeDsMode);
             body.setChannelAccountId(Long.toString(channelAccountId));
             body.setMidId(Long.toString(midId));
             body.setSupportedOperations(List.copyOf(supportedOperations));

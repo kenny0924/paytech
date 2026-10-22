@@ -1,0 +1,9 @@
+card-service 192f4a2c30f0efef
+payment-service 668bc1332f064e51
+channel-connector-service 8c9db543ae40a973
+risk-decision-service 3b2738eeab8beba9
+acquiring-service 225936725982042c
+counterparty-service fe1e3d9c62a669a5
+platform-support-service 2d12967f2320998c
+api-gateway 1054e867223a9a28
+operations-console-bff 3d10e562aaa68f80

@@ -2,6 +2,7 @@ import { CHANNEL_FIELD_OVERRIDES, CHANNEL_INDEX_COMMENTS } from "./payment-chann
 import { EXECUTION_FIELD_OVERRIDES } from "./payment-execution-field-overrides.mjs";
 import { paymentChannelIdentityKey } from "./payment-channel-identity.mjs";
 import { partitionModel } from "./payment-service-partition.mjs";
+import { applyPaymentModelAdditions } from "./payment/payment-model-additions.mjs";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -208,6 +209,14 @@ customer_id BIGINT N
 consent_to_save TINYINT(1) NN
 card_bin VARCHAR(8) N
 card_fingerprint CHAR(64) N
+card_brand VARCHAR(32) N {VISA,MASTERCARD,AMEX,UNIONPAY,MADA,DISCOVER,JCB,DINERS}
+funding_type VARCHAR(16) N {CREDIT,DEBIT,PREPAID,CHARGE}
+card_level VARCHAR(32) N OPEN(Card BIN 库)
+card_product VARCHAR(16) N {CONSUMER,COMMERCIAL}
+issuer_country CHAR(2) N OPEN(ISO 3166-1 alpha-2)
+issuer_region VARCHAR(16) N OPEN(Platform 国家区域映射 region_code)
+bin_library_version_no INT N
+bin_match_length TINYINT N
 expires_at DATETIME(6) NN
 revoked_at DATETIME(6) N
 create_time DATETIME(6) NN
@@ -1244,7 +1253,7 @@ function validateMetadata(tables) {
     .filter((field) => field.openSourceHint)
     .map((field) => `${table.defKey}.${field.defKey}`)).sort();
   invariant(JSON.stringify(openMetadataKeys) === JSON.stringify(openManifestKeys), "Open-code metadata must exactly cover the manifest");
-  invariant(openManifestKeys.length === 53, `Expected 53 true open-code rows, found ${openManifestKeys.length}`);
+  invariant(openManifestKeys.length === 56, `Expected 56 true open-code rows, found ${openManifestKeys.length}`);
   for (const [key, value] of Object.entries(FIELD_METADATA)) {
     invariant(/[\u3400-\u9fff]/u.test(value.defName), `Field display name is not Chinese: ${key}`);
     invariant(/[\u3400-\u9fff]/u.test(value.description), `Field description is not Chinese: ${key}`);
@@ -1254,7 +1263,7 @@ function validateMetadata(tables) {
 function validateGeneratedModel(model, tables, relations) {
   invariant(JSON.stringify(modelTotals(model)) === JSON.stringify({
     tables: 32,
-    fields: 401,
+    fields: 409,
     uniqueIndexes: 45,
     accessIndexes: 46,
     relations: 68,
@@ -1407,10 +1416,15 @@ export function serializePaymentServiceModel(service, model = generatePaymentMod
   return serializePaymentModel(partitionModel(model, service));
 }
 
+/** payment 模型：payment 分区加上 3DS 全链路的消费表与注释修正（payment/payment-model-additions.mjs）。 */
+export function serializePaymentOwnModel(model = generatePaymentModel()) {
+  return serializePaymentModel(applyPaymentModelAdditions(partitionModel(model, "payment")));
+}
+
 function runCli() {
   const unknown = process.argv.slice(2).filter((argument) => argument !== "--check");
   invariant(unknown.length === 0, `Unknown argument(s): ${unknown.join(", ")}`);
-  const expected = serializePaymentServiceModel("payment");
+  const expected = serializePaymentOwnModel();
   const totals = modelTotals(JSON.parse(expected));
   const summary = `${totals.tables} tables, ${totals.fields} fields, ${totals.uniqueIndexes} unique indexes, ${totals.accessIndexes} access indexes, ${totals.relations} relations, ${totals.diagramGroups} diagram groups`;
   if (process.argv.includes("--check")) {

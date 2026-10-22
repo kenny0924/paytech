@@ -22,7 +22,7 @@ public interface PaymentChannelClient {
     List<RouteCandidate> queryRouteCandidates(RouteContext context);
 
     /**
-     * 按冻结坐标经 Platform 执行一次渠道动作
+     * 按冻结坐标经 Platform 执行一次渠道动作（新支付 PAY 或原交易查单 QUERY）
      * <li>冻结坐标不可用或 Platform 保证未发出请求时为 NOT_SENT；channel-connector 不可达、超时或其他失败为 ERROR，不自动重试。</li>
      *
      * @param command

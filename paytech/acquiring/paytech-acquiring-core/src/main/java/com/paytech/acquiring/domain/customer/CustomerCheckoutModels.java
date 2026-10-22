@@ -226,7 +226,8 @@ public final class CustomerCheckoutModels {
                 "SUCCEEDED", "FAILED", "CANCELLED", "VOIDED", "EXPIRED").contains(status)) {
                 throw new CheckoutUpstreamProtocolException("Payment 概要状态无效");
             }
-            if (actionId != null && (!"REQUIRES_ACTION".equals(status) || !"THREE_DS_CHALLENGE".equals(actionType))) {
+            if (actionId != null && (!"REQUIRES_ACTION".equals(status) || actionType == null
+                || !CheckoutSubmissionModels.PaymentResult.ACTION_TYPES.contains(actionType))) {
                 throw new CheckoutUpstreamProtocolException("Payment 概要动作与状态不匹配");
             }
         }

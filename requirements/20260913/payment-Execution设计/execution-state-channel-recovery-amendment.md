@@ -53,6 +53,8 @@ stateDiagram-v2
 
 原 AUTHENTICATE 为 UNKNOWN，Channel 可信确认原认证仍在等待且原操作身份、期限均有效时，可回到 PROCESSING 并提供当次交互；此特例不允许资金未知重置为未发送。重复结果不新增状态转换；迟到等待/失败不覆盖成功。原窄范围重复收款纠正保持独立：存在 canonical 收款后，旧失败 Action 的真实额外扣款由专用处置转为 SUCCEEDED，Attempt 转 SUCCEEDED、建立 Duplicate Case，保留 canonical 指针且不再次发布 PaymentSucceeded；不开放通用失败重试转换。
 
+> 2026-10-22 修订：PAY 的 PROCESSING / UNKNOWN 查单恢复已实现（`PAY_RESULT_QUERY` 任务、刷新接口、渠道通知三入口，查单后 UNKNOWN 可回到 PROCESSING），见 [Execution 3DS 修订](../../20261022/payment-3DS全链路/execution-3ds-amendment.md)。
+
 ### 3.1 两层占位
 
 - `Intent.active_attempt_id`：当前仍占用该收款目标的支付尝试。
@@ -71,6 +73,8 @@ stateDiagram-v2
 
 AUTHENTICATE 表示整个认证过程。取得 3DS 表单只进入/保持 PROCESSING，可信认证满足冻结要求后才 SUCCEEDED；不能把“创建挑战”当成“认证通过”。认证成功后，代码流程根据 mode 和已冻结能力选择 SALE 或 AUTHORIZE。
 
+> 2026-10-22 修订：卡支付的 3DS 交互改由 PAY 承载，AUTHENTICATE 不再用于卡流程，见 [Execution 3DS 修订](../../20261022/payment-3DS全链路/execution-3ds-amendment.md)。
+
 删除 REQUIRES_ACTION 枚举不删除交互事实。Action 保留 `interaction_type / interaction_expires_at / channel_operation_ref`；认证结论及证明期限仍保留。nextAction 为当次可信结果或只读交互接口返回的瞬时指令；历史 interaction_type 非空不证明当前仍需挑战。缺少瞬时卡材料时仍可返回 PROVIDE_CARD_INPUT，Attempt 保持 PROCESSING，不新增空壳业务 Action。
 
 Wallet 直接付款对应 SALE；跳转、扫码、SDK 在原 SALE 的 PROCESSING 阶段提供交互，可信付款结果后原 SALE 成功。不为 Wallet 人造 AUTHENTICATE 或卡 3DS。浏览器返回、关闭窗口或链接过期都不能直接判定资金成功/失败。
@@ -78,6 +82,8 @@ Wallet 直接付款对应 SALE；跳转、扫码、SDK 在原 SALE 的 PROCESSIN
 ## 4. Channel 原操作恢复
 
 ActionType 只保留 `AUTHENTICATE / AUTHORIZE / CAPTURE / SALE / VOID / REFUND`。没有 QUERY 业务动作，也没有 QUERY 对执行占位的例外。
+
+> 2026-10-22 修订：仍不建 QUERY 业务动作；PAY 查单恢复已按 [Execution 3DS 修订](../../20261022/payment-3DS全链路/execution-3ds-amendment.md)实现，经 channel-connector `QUERY`（标准 API `PAY_QUERY`）确认原操作。
 
 | 层 | 职责 |
 |---|---|

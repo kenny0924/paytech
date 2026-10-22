@@ -590,6 +590,10 @@ components:
               maskedPan:
                 type: string
                 pattern: '^[0-9]{6}[*]{6}[0-9]{4}$'
+              cardBrand:
+                type: [string, 'null']
+                description: 卡组织（主品牌）代码，供展示图标；当前取值 VISA、MASTERCARD、AMEX、UNIONPAY、MADA、DISCOVER、JCB、DINERS，按平台当前 BIN 库实时识别，未识别时为 null。2026-10-22 新增的可选字段，客户端须容忍未来新增取值。
+                pattern: '^[A-Z0-9_]{1,32}$'
               expiryMonth:
                 type: string
                 pattern: '^(0[1-9]|1[0-2])$'

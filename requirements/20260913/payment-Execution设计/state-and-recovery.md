@@ -28,6 +28,8 @@
 
 ## 2. Action 和聚合转换
 
+> 2026-10-22 修订：PAY 的 UNKNOWN / PROCESSING 由查单确认推进（回调只作为去查单的信号），见 [Execution 3DS 修订](../../20261022/payment-3DS全链路/execution-3ds-amendment.md)。
+
 ```mermaid
 stateDiagram-v2
     [*] --> CREATED
@@ -69,6 +71,8 @@ stateDiagram-v2
 Intent 到期不会撤销成功授权，也不能让 UNKNOWN 变为 EXPIRED。已授权需继续查询/显式业务处理，禁止自动新支付；成功资金回调必须如实处理，不因本地到期丢弃。现行模型已有 VOIDED；本稿沿用该精确状态，取代早期文档把 Void 后 Attempt 写成 FAILED(AUTHORIZATION_VOIDED) 的描述，仅在本稿获批的新执行范围生效。
 
 认证 UNKNOWN 也保留原 Attempt 并查询；若原操作查询确认仍在等待挑战，可在校验原操作引用和期限后回到同一 Action 的 REQUIRES_ACTION，此规则仅适用于无资金效应的 AUTHENTICATE；认证操作没有资金效应且确认未创建任何初始资金 Action 时，认证到期可结束原认证。只要 AUTHORIZE/SALE/CAPTURE 已 SUBMITTED/UNKNOWN，认证到期不得把资金视为未发送。
+
+> 2026-10-22 修订：卡流程不再使用 AUTHENTICATE，3DS 等待记在 PAY 上，由 PAY 查单恢复，见 [Execution 3DS 修订](../../20261022/payment-3DS全链路/execution-3ds-amendment.md)。
 
 ## 3. 资金命令与退款状态
 
@@ -142,6 +146,8 @@ sequenceDiagram
 | MQ Confirm 后、删除任务前崩溃 | 重发同 eventId；消费者业务幂等 | 不声称消息精确一次 |
 
 本地切片恢复任务使用 `clientId:intentId` 或 `clientId:actionId` 的最小 event_key，event_type 为带 V1 的单职责 Handler；Attempt 任务的 sub_event_type 为原 submissionId，Action 任务为 `-`，Intent 任务为 `EXPIRY/CLOSE`。任务重新核对 Client 归属；不在 payload 中复制上下文。任务登记与状态变化同事务；CreateIntent 同事务登记到期任务。Foundation 当前接口不接收首次执行时刻；处理器按 expiresAt 检查并使用有界退避，后备扫描仍由 XXL-Job 配置提供；本地首次发送门禁直接检查 expiresAt，不依赖任务准点触发。到期任务关闭新初始支付资格，只在不存在成功授权/资金未决时终止；授权/UNKNOWN 继续由原操作恢复，不能以到期任务完成假称支付已取消。等待结果时按 Handler 退避继续保留任务，不能“查询一次仍 UNKNOWN”就删除；重试耗尽只把技术任务置 FAILED 并告警，原资金 UNKNOWN 不改失败。
+
+> 2026-10-22 修订：PAY 结果确认任务 `PAY_RESULT_QUERY`（eventKey=attemptId，24 小时无结论转人工）已实现，见 [Execution 3DS 修订](../../20261022/payment-3DS全链路/execution-3ds-amendment.md)。
 
 ## 6. 可信结果、重复成功与事件
 

@@ -54,6 +54,8 @@ Windows 使用 `paytech/mvnw.cmd` 并设置对应 `JAVA_HOME`。测试实现及�
 
 按来源提交查询原支付结果（EX-I06）使用 `GET /payment/payment-execution/v1/intents/{intentId}/submissions/{sourceSubmissionId}?clientId=101`，返回尝试 ID、支付方式、尝试状态、按币种精度的已捕获金额与币种；仅处理中且交互未过期时返回交互类型与截止时间（不返回 3DS 跳转地址），仅失败时返回最后动作的渠道失败码。Intent 不存在或跨 Client、该提交没有支付尝试（含只申请了工具）或属于其他 Intent 返回 404。见[技术方案](../../requirements/20261015/payment-支付结果查询与回传/technique.md) §2.1。
 
+刷新支付结果使用 `POST /payment/payment-execution/v1/intents/{intentId}/submissions/{sourceSubmissionId}/refresh`（Body `clientId`），返回体与 EX-I06 相同：同一提交 5 秒内（Redis 限频）最多触发一次“确认支付结果”，其余请求直接返回当前状态。acquiring 收银台查询提交（`GET payment-submissions/{id}`）改为调用该接口。见 [Execution 3DS 修订](../../requirements/20261022/payment-3DS全链路/execution-3ds-amendment.md)。
+
 卡支付成功时，PAY 动作的成功事务内登记 `PAYMENT_SUCCEEDED` 补偿任务（`t_compensation_event`，事件键为尝试 ID），提交后由 `PaymentSucceededHandler` 从尝试、意图、成功 PAY 动作与渠道交易引用重建事件，以 `paytech-messaging` Schema v1 信封发布到 `payment.events`（`aggregateType=PAYMENT_ATTEMPT`、`aggregateId`=尝试 ID、`aggregateVersion`=尝试版本，design/08 §3）；收到 Broker 确认且路由到订阅队列（acquiring 的 `acquiring.payment.p0..p3`）才删除任务，未路由按 FAIL 由补偿重试。发布任务经 `AggregateKeySequencer` 按尝试串行。旧 Topic 已于第 08 步停发。运行需 RabbitMQ（`PAYMENT_RABBITMQ_*`，见[配置清单](docs/development/configuration.md)）及 Payment 库中的 `t_compensation_event`。支付失败、处理中与授权不发布。
 
 终止 Intent 使用 `POST /payment/payment-execution/v1/intents/{intentId}/terminate`，Body 为 `clientId/reason`，无需幂等 Header，返回 `intentId/status/decision`。与 pay 共用 Intent 资源锁；安全终止只更新 Intent，已取消/过期直接返回，活动尝试返回 PENDING，授权等待返回 REVERSAL_REQUIRED，已收款返回 ALREADY_PAID；正常业务结果统一使用 HTTP 200，由上游判断 decision。完整边界见[终止接口合同](../../requirements/20260913/payment-Execution设计/terminate-intent-amendment.md)；不自动撤销授权、退款或后台重试。
@@ -65,9 +67,11 @@ pay 的 PAY 动作在发起渠道调用前（事务外、Intent 锁内）先做�
 本地运行需设置正的 `PAYMENT_INSTRUMENT_PREPARATION_WINDOW`（ISO 8601 Duration，例如 `PT5M`；默认 `PT0S` 不接受新申请）并能经服务发现访问 `card-service`；卡指纹密钥（`CARD_FINGERPRINT_KEY`）与 Vault `PAYMENT_CARD_DEK` 访问规则随卡域属于 card-service。
 
 
-新 Attempt 在 Context 构建后调用 RouteService，再把渠道三元组随受理事务保存，状态仍为 PROCESSING。按本期用户要求，RouteServiceImpl 暂时固定返回合成 Channel/Account/MID `9001/9002/9003`，没有校验真实渠道配置或可用性；接通真实资金前必须替换该 Mock。保存上下文后单独创建 PROCESSING 状态的 PAY_RISK 并绑定 Attempt 的执行位，再通过 ActionFactory 取得实现并直接执行。PAY_RISK 调用 Risk 统一评估（[需求](../../requirements/20261015/payment-接入Risk统一评估/technique.md)）：放行按认证要求进入 AUTHENTICATE、AUTHORIZE 或 PAY，其他结论或未取得结论时 Attempt 失败并释放 Intent；认证与授权能力目前明确返回未接入，原 Action 保持 UNKNOWN。真实选路、选择证据与 Owner 调用仍为 TODO。调用需要预先存在有效且匹配的 Intent 和交易级工具 Token。
+新 Attempt 在 Context 构建后调用 RouteService，再把渠道三元组随受理事务保存，状态仍为 PROCESSING。按本期用户要求，RouteServiceImpl 暂时固定返回合成 Channel/Account/MID `9001/9002/9003`，没有校验真实渠道配置或可用性；接通真实资金前必须替换该 Mock。保存上下文后单独创建 PROCESSING 状态的 PAY_RISK 并绑定 Attempt 的执行位，再通过 ActionFactory 取得实现并直接执行。PAY_RISK 调用 Risk 统一评估（[需求](../../requirements/20261015/payment-接入Risk统一评估/technique.md)）：放行后 AUTOMATIC 直接进入 PAY（MANUAL 进入 AUTHORIZE，仍为未接入的桩），卡流程不再使用 AUTHENTICATE；Risk 要求 `THREE_DS_REQUIRED` / `CHALLENGE_REQUIRED` 时 PAY 的渠道输入带 `payment.threeDsRequired=true`，由渠道在 PAY 内完成挑战，交互类型按渠道返回记 THREE_DS_CHALLENGE 或 REDIRECT。选路按 MID 的 `SECURITY.3DS_MODE` 依次优先 SUPPORTED、REQUIRED、未声明、UNSUPPORTED；要求 3DS 而冻结 MID 不是 SUPPORTED / REQUIRED 时，PAY 不调渠道、以 `THREE_DS_CHANNEL_UNAVAILABLE` 失败。其他结论或未取得结论时 Attempt 失败并释放 Intent（[Execution 3DS 修订](../../requirements/20261022/payment-3DS全链路/execution-3ds-amendment.md)）。真实选路、选择证据与 Owner 调用仍为 TODO。调用需要预先存在有效且匹配的 Intent 和交易级工具 Token。
 
-ActionExecutionService 通过 ActionFlowFactory 选择 CARD:PAY；ActionFlow 调用 Actor，统一保存结果并推进下一步。Actor 异常转为 UNKNOWN，保存成功后 pay 返回 202 / PROCESSING。动作定义和事务顺序见 [Action Flow 修订](../../requirements/20260913/payment-Execution设计/card-pay-action-flow-amendment.md)。除收款成功登记 PaymentSucceeded 发布任务外，动作执行不登记补偿事件；创建和后继切换使用 active_action_id 与版本条件更新，等待或未知结果保留原执行位。回调和恢复入口仍待后续接入。旧动作名称切换见[迁移约束](../../requirements/20260913/payment-Execution设计/db/card-pay-action-migration.md)。
+ActionExecutionService 通过 ActionFlowFactory 选择 CARD:PAY；ActionFlow 调用 Actor，统一保存结果并推进下一步。Actor 异常转为 UNKNOWN，保存成功后 pay 返回 202 / PROCESSING。动作定义和事务顺序见 [Action Flow 修订](../../requirements/20260913/payment-Execution设计/card-pay-action-flow-amendment.md)。创建和后继切换使用 active_action_id 与版本条件更新，等待或未知结果保留原执行位。除收款成功登记 PaymentSucceeded 发布任务外，PAY 保存为 PROCESSING / UNKNOWN 时同事务登记 `PAY_RESULT_QUERY` 补偿任务（事件键为尝试 ID）。
+
+“确认支付结果”（`ConfirmPayResultProcessor`）在 Intent 锁内（TRY_LOCK 500 ms）、事务外经 channel-connector `QUERY` + `ORIGINAL_TRANSACTION`（标准 API `PAY_QUERY`）查单，再以短事务经 ActionFlow 推进原 PAY：成功且金额币种一致 → SUCCEEDED；FAILED / CLOSED → FAILED（CLOSED 记 `CHANNEL_ORDER_CLOSED`）；无此交易且动作已超过 10 分钟 → FAILED（`CHANNEL_TRANSACTION_NOT_FOUND`）；处理中时 UNKNOWN 改回 PROCESSING；金额币种不一致不推进、转人工。只采信查单结果，不采信回跳参数与通知内容。入口有三个：`PayResultQueryHandler`（首次立即执行，之后 10 秒起 ×2 退避、上限 30 分钟、最多 56 次；动作创建 24 小时仍无结论则以 `PAY_RESULT_UNRESOLVED` 置 FAILED 转人工）、上述刷新接口，以及消费 channel-connector 的 `ChannelPaymentNotified`（`ChannelPaymentNotifiedListener`，`HANDLER_MANAGED`，队列 `payment.channel-connector.p0..p3`，DLQ `payment.channel-connector.dlq`；核对 Attempt 冻结的渠道与账号一致后才确认，消费登记写 `t_consumed_event` / `t_consumed_aggregate_version`）。渠道通知地址由 `payment.execution.channel-callback-base-url`（`PAYMENT_CHANNEL_CALLBACK_BASE_URL`）拼成 `{base}/api/channel-callbacks/v1/{channelCode}/{channelAccountId}` 作为 notifyUrl，为空时不传、只靠查单。旧动作名称切换见[迁移约束](../../requirements/20260913/payment-Execution设计/db/card-pay-action-migration.md)。
 
 管理端口 19103 的 `/actuator/health` 及其 `/liveness`、`/readiness` 子路径提供进程与依赖健康信息（独立管理端口不带 `/payment` Context Path），不能证明支付链路已经完成验收。统一 Request ID、Problem 错误体与元信息访问日志由 Foundation 提供；请求 Body、Token、查询参数和交互地址不记录到普通日志。
 
@@ -77,7 +81,7 @@ ActionExecutionService 通过 ActionFlowFactory 选择 CARD:PAY；ActionFlow 调
 
 ## 测试
 
-测试依赖仓库 mor-local MySQL/Redis/RabbitMQ（凭据读取 `paytech.local-environment.dir` 下的 `.env.local`，默认仓库根 `local-environment/`）。先人工审查 [测试 DDL](paytech-payment-test/src/test/resources/init/ddl.sql)，把 15 张表应用到空的 `mor_payment`（`payment_app`）；应用和测试不会自行创建或迁移表。只有空基线才接管并清理本例数据；发现非空数据会拒绝运行。
+测试依赖仓库 mor-local MySQL/Redis/RabbitMQ（凭据读取 `paytech.local-environment.dir` 下的 `.env.local`，默认仓库根 `local-environment/`）。先人工审查 [测试 DDL](paytech-payment-test/src/test/resources/init/ddl.sql)，把 13 张表应用到空的 `mor_payment`（`payment_app`）；应用和测试不会自行创建或迁移表。只有空基线才接管并清理本例数据；发现非空数据会拒绝运行。
 
 在 `paytech/` 下使用上述 JDK 25 环境执行：
 

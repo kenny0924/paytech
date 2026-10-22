@@ -36,7 +36,8 @@ import lombok.RequiredArgsConstructor;
  *
  * <p>
  * 原提交重放：查到原 Token 后以同一来源提交再调 card，card 核对同卡并返回原工具（不访问 Vault、不覆盖 CVV），工具引用须与原 Token 一致。
- * 新申请：校验资格 → 事务外调 card 创建 → 绑定工具引用、期限、风控属性、Customer 与保存意愿 → 本地事务插入 Token（条件插入依赖 Intent 状态）。
+ * 新申请：校验资格 → 事务外调 card 创建 → 绑定工具引用、期限、风控属性、BIN 库卡属性快照、Customer 与保存意愿 → 本地事务插入 Token（条件插入依赖 Intent 状态）。
+ * 卡属性快照只在首次绑定时冻结；重放沿用原 Token，即使 BIN 库已切换版本也不改写。
  * 第二段失败时 card 侧留下的孤立工具由 card 的到期回收任务处理。
  */
 @Component
@@ -159,7 +160,7 @@ public class ApplyCardInstrumentProcessor
         transactionTemplate.executeWithoutResult(status -> paymentExecutionService.saveApplyCardInstrumentContext(context));
     }
 
-    /** 将 card 返回的引用、期限与风控属性绑定到待保存 Token */
+    /** 将 card 返回的引用、期限、风控属性与卡属性快照绑定到待保存 Token */
     void bindCardInstrument(PaymentInstrumentToken token, CardInstrumentResult card) {
         if (card.instrumentRef().length() > 128 || card.expiresAt().isAfter(token.getExpiresAt())) {
             throw new ErrorException("Card 返回的工具引用或期限无效");
@@ -168,6 +169,19 @@ public class ApplyCardInstrumentProcessor
         token.setExpiresAt(card.expiresAt().truncatedTo(ChronoUnit.MICROS));
         token.setCardBin(card.cardBin());
         token.setCardFingerprint(card.cardFingerprint());
+        bindCardAttributes(token, card.cardAttributes());
+    }
+
+    /** 首次绑定时冻结 BIN 库卡属性快照；原提交重放沿用已存 Token，不再改写（B4）。 */
+    void bindCardAttributes(PaymentInstrumentToken token, CardInstrumentResult.CardAttributes attributes) {
+        token.setCardBrand(attributes.cardBrand());
+        token.setFundingType(attributes.fundingType());
+        token.setCardLevel(attributes.cardLevel());
+        token.setCardProduct(attributes.cardProduct());
+        token.setIssuerCountry(attributes.issuerCountry());
+        token.setIssuerRegion(attributes.issuerRegion());
+        token.setBinLibraryVersionNo(attributes.binLibraryVersionNo());
+        token.setBinMatchLength(attributes.matchedPrefixLength());
     }
 
     /** card 只接收自己需要的参数；重放时期限上限取原 Token 期限 */

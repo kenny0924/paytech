@@ -31,6 +31,7 @@ import com.paytech.acquiring.test.mocker.local.CheckoutPaymentDataMocker;
 import com.paytech.counterparty.api.enums.CardSavingIneligibleReason;
 import com.paytech.foundation.common.http.ApiHeaderNames;
 import com.paytech.foundation.testsupport.api.MockHttpFault;
+import com.paytech.card.api.enums.CardBrand;
 import com.paytech.card.api.storedcard.response.StoredCardListResponseBody;
 import com.paytech.payment.api.instrument.request.ApplyCardInstrumentRequestBody;
 
@@ -75,7 +76,7 @@ class StoredCardCheckoutTest extends MockTestBase {
         storedCards.mockCards(List.of(storedCard()));
     }
 
-    /** 有效 Customer 且已开通：可保存卡，并列出已存卡（只含 Token、后四位与有效期）。 */
+    /** 有效 Customer 且已开通：可保存卡，并列出已存卡（只含 Token、后四位、卡组织与有效期）。 */
     @Test
     void test_getOffersStoredCards() {
         attachCustomer(true);
@@ -85,9 +86,29 @@ class StoredCardCheckoutTest extends MockTestBase {
         var card = body.get("storedCards").get(0);
         assertAll(() -> assertTrue(body.get("cardSaving").get("available").asBoolean()),
             () -> assertEquals(TOKEN, card.get("storedCardToken").asString()),
-            () -> assertEquals("1111", card.get("last4").asString()), () -> assertEquals(4, card.size()),
+            () -> assertEquals("1111", card.get("last4").asString()),
+            () -> assertEquals(CardBrand.VISA.getCode(), card.get("cardBrand").asString()), () -> assertEquals(5, card.size()),
             () -> assertEquals(List.of(new StoredCardMocker.Call("LIST", Long.toString(clientId()),
                 Long.toString(CUSTOMER_ID), null)), storedCards.calls()));
+    }
+
+    /** card 未识别卡组织时为 null；返回未发布的卡组织代码按上游协议违例拒绝，不透传给收银台。 */
+    @Test
+    void test_getStoredCardBrand() {
+        attachCustomer(true);
+        var unrecognized = storedCard();
+        unrecognized.setCardBrand(null);
+        storedCards.mockCards(List.of(unrecognized));
+        JsonNode withoutBrand = read(getCheckout());
+        var unknown = storedCard();
+        unknown.setCardBrand("ELO");
+        storedCards.mockCards(List.of(unknown));
+
+        var rejected = httpTestInvoker.get(path(), headers());
+
+        var card = withoutBrand.get("storedCards").get(0);
+        assertAll(() -> assertTrue(card.has("cardBrand")), () -> assertTrue(card.get("cardBrand").isNull()),
+            () -> assertTrue(rejected.getStatus().is5xxServerError(), "未知卡组织失败关闭: " + rejected.getStatus()));
     }
 
     /** 未开通或访客订单：不可保存卡、已存卡为空，且不调用 Payment 已存卡接口。 */
@@ -218,6 +239,7 @@ class StoredCardCheckoutTest extends MockTestBase {
         card.setStoredCardToken(TOKEN);
         card.setMaskedPan("411111******1111");
         card.setLast4("1111");
+        card.setCardBrand(CardBrand.VISA.getCode());
         card.setExpiryMonth("12");
         card.setExpiryYear("2030");
         card.setCreatedAt("2026-09-08T00:00:00Z");

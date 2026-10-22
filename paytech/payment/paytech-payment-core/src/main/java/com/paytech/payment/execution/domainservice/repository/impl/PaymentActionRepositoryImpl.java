@@ -62,4 +62,10 @@ public class PaymentActionRepositoryImpl implements PaymentActionRepository {
     public PaymentAction findLatestByAttempt(long attemptId) {
         return paymentActionMapper.selectLatestByAttempt(attemptId);
     }
+
+    /** 按尝试与动作序号读取动作。 */
+    @Override
+    public PaymentAction findByAttemptAndNo(long attemptId, int actionNo) {
+        return paymentActionMapper.selectByAttemptAndNo(attemptId, actionNo);
+    }
 }

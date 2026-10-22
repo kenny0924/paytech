@@ -1,0 +1,9 @@
+card pre=cabf63edd0d6 new=75a267ababec
+payment pre=none new=694d62e992d3
+channel-connector pre=d46d38ed4cf1 new=e8566840eefd
+risk-decision pre=none new=c80d48ba0faa
+acquiring pre=none new=a50d6f7feea7
+counterparty pre=none new=3c3063c7193e
+platform-support pre=34a0a3a42a3b new=b3e81954d0b4
+api-gateway pre=none new=470dbade49ba
+operations-console-bff pre=86aa96b25d0c new=c56de541c16b

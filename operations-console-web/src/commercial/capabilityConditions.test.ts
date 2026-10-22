@@ -6,7 +6,7 @@ import type { AgreementCapability } from './commercial.ts';
 import {
   addConditionValue, capabilityBody, capabilityChoices, capabilityDimensions, capabilityFormPatch, conditionControl, conditionForm, conditionIssues,
   conditionOptions, conditionSummary, conditionTags, conditionValueIssue, conditionValueLabel, conditionsBody, currencyOptions, currencySelectOptions,
-  conditionTagValue, decodeDimensions, dimensionLabel, dimensionNames, existingMark, mergeCurrencies, normalizeValues, orderedDimensions, require3dsTag,
+  conditionTagValue, decodeDimensions, dimensionLabel, dimensionSuggestions, dimensionNames, existingMark, mergeCurrencies, normalizeValues, orderedDimensions, require3dsTag,
   splitCurrencies, reservePercent, reservePercentIssue, reserveText, toggleConditionValue, unrestricted,
 } from './capabilityConditions.ts';
 import type { DimensionDefinition } from './capabilityConditions.ts';
@@ -174,4 +174,13 @@ test('解码：开通项读回 conditions 与 require3ds；维度清单缺省中
     pricingAllowed: true }, ...definitions] });
   assert.deepEqual(dims.map(d => d.displayName), ['币种', '卡品牌']);
   assert.throws(() => decodeDimensions({ dimensions: [{ dimensionCode: 'CURRENCY' }] }), ApiError);
+});
+
+test('卡维度建议值：卡组织 8 个规范值、借贷记含 CHARGE、发卡区域为 6 个地理区域（不含境内 / 境外）', () => {
+  assert.deepEqual(dimensionSuggestions.CARD_BRAND, ['VISA', 'MASTERCARD', 'AMEX', 'UNIONPAY', 'MADA', 'DISCOVER', 'JCB', 'DINERS']);
+  assert.deepEqual(dimensionSuggestions.FUNDING_TYPE, ['CREDIT', 'DEBIT', 'PREPAID', 'CHARGE']);
+  assert.deepEqual(dimensionSuggestions.ISSUER_REGION, ['GCC', 'MEA', 'EUROPE', 'NORTH_AMERICA', 'LATAM', 'APAC']);
+  assert.equal(conditionValueLabel('ISSUER_REGION', 'NORTH_AMERICA'), '北美');
+  assert.equal(conditionValueLabel('ISSUER_REGION', 'DOMESTIC'), 'DOMESTIC');
+  assert.equal(conditionValueLabel('FUNDING_TYPE', 'CHARGE'), '签账');
 });

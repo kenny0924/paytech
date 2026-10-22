@@ -1,0 +1,32 @@
+[
+  {
+    "name": "login-admin",
+    "method": "POST",
+    "path": "/api/operations/auth/v1/login",
+    "status": 200
+  },
+  {
+    "name": "standard-api-PAY-get",
+    "method": "GET",
+    "path": "/api/operations/external-api-admin/v1/standard-apis/PAY",
+    "status": 200
+  },
+  {
+    "name": "api-ORDER_AND_PAY-get",
+    "method": "GET",
+    "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX/apis/ORDER_AND_PAY",
+    "status": 200
+  },
+  {
+    "name": "implementation-get-PAY",
+    "method": "GET",
+    "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX/implementations/PAY",
+    "status": 200
+  },
+  {
+    "name": "implementation-get-PAY_QUERY",
+    "method": "GET",
+    "path": "/api/operations/external-api-admin/v1/integrations/PAYERMAX/implementations/PAY_QUERY",
+    "status": 200
+  }
+]

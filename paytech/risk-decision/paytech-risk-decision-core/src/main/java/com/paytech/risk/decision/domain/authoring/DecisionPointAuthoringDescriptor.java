@@ -77,6 +77,13 @@ public final class DecisionPointAuthoringDescriptor {
             "CHECKOUT_PREPARE_AUTHORING_V1", checkoutPoint(4), 240001L, CHECKOUT_ACTIONS, List.of(),
             new RuntimeCapabilities(false, false, 0, List.of(), List.of(), null), List.of(4));
 
+    /**
+     * 支付运行期点版本号
+     * <li>版本 1（220002）冻结 BIN 库接入前的 17 字段输入合同；版本 2（220003）同为 PAYMENT_ATTEMPT v1，
+     * 输入字段增加发卡国、卡组织与借贷记类型。已创建的发布继续引用版本 1，新发布引用版本 2。</li>
+     */
+    static final int PAYMENT_RUNTIME_POINT_VERSION_NO = 2;
+
     private static final DecisionPointAuthoringDescriptor PAYMENT_ATTEMPT_RISK =
         new DecisionPointAuthoringDescriptor(
             "PAYMENT_ATTEMPT_RISK_AUTHORING_V1", new DecisionPointDescriptor("PAYMENT_ATTEMPT_RISK",
@@ -94,7 +101,7 @@ public final class DecisionPointAuthoringDescriptor {
                 List.of(new OutputValue(AuthenticationRequirement.NOT_REQUIRED.getCode(), "无需认证"),
                     new OutputValue(AuthenticationRequirement.THREE_DS_REQUIRED.getCode(), "需要 3DS")),
                 AuthenticationRequirement.NOT_REQUIRED.getCode())),
-            new RuntimeCapabilities(true, true, 1, PAYMENT_VELOCITY_SUBJECTS,
+            new RuntimeCapabilities(true, true, PAYMENT_RUNTIME_POINT_VERSION_NO, PAYMENT_VELOCITY_SUBJECTS,
                 PAYMENT_LIST_SUBJECTS, "PAY_INPUT_CURRENCY"), List.of(1));
 
     private static final List<DecisionPointAuthoringDescriptor> ALL = List.of(CHECKOUT_PREPARE, PAYMENT_ATTEMPT_RISK);

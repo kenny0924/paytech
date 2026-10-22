@@ -13,6 +13,7 @@
                 typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
         <result column="description" property="description"/>
         <result column="endpoints" property="endpoints"/>
+        <result column="callback_definition_json" property="callbackDefinitionJson"/>
         <result column="version" property="version"/>
         <result column="created_by" property="createdBy"/>
         <result column="updated_by" property="updatedBy"/>
@@ -22,20 +23,22 @@
                 typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
     </resultMap>
     <sql id="columns">channel_id, channel_code, channel_name, channel_type, channel_status, description, endpoints, version, created_by, updated_by, create_time, update_time</sql>
+    <!-- 读取另含人工维护的通知定义；插入不写该列（默认 NULL）。 -->
+    <sql id="selectColumns"><include refid="columns"/>, callback_definition_json</sql>
     <select id="byId" resultMap="row" useCache="false">
-        SELECT <include refid="columns"/> FROM t_channel WHERE channel_id = #{channelId}
+        SELECT <include refid="selectColumns"/> FROM t_channel WHERE channel_id = #{channelId}
     </select>
     <select id="byCode" resultMap="row" useCache="false">
-        SELECT <include refid="columns"/> FROM t_channel WHERE channel_code = #{code}
+        SELECT <include refid="selectColumns"/> FROM t_channel WHERE channel_code = #{code}
     </select>
     <select id="lock" resultMap="row" useCache="false" flushCache="true">
-        SELECT <include refid="columns"/> FROM t_channel WHERE channel_code = #{code} FOR UPDATE
+        SELECT <include refid="selectColumns"/> FROM t_channel WHERE channel_code = #{code} FOR UPDATE
     </select>
     <select id="lockById" resultMap="row" useCache="false" flushCache="true">
-        SELECT <include refid="columns"/> FROM t_channel WHERE channel_id = #{channelId} FOR UPDATE
+        SELECT <include refid="selectColumns"/> FROM t_channel WHERE channel_id = #{channelId} FOR UPDATE
     </select>
     <select id="byIds" resultMap="row" useCache="false">
-        SELECT <include refid="columns"/> FROM t_channel WHERE channel_id IN
+        SELECT <include refid="selectColumns"/> FROM t_channel WHERE channel_id IN
         <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
         ORDER BY channel_code
     </select>

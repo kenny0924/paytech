@@ -6792,3 +6792,499 @@ INSERT INTO t_gateway_guard_rule (guard_rule_id,route_id,rule_type,dimension,cap
   (900000000000131808, 900000000000131418, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2);
 
 COMMIT;
+
+-- ---------------------------------------------------------------------------
+-- Platform ID block 133 (2026-10-22, requirements/20261022/payment-3DS全链路): public CHANNEL_CALLBACK ingress for channel
+-- payment result notifications.
+-- Self-contained block: on an environment already initialized by platform-support-initial-data.sql, apply ONLY this block.
+-- One new Gateway Target (channel-connector-service on the CHANNEL_CALLBACK channel), one Route
+-- POST /api/channel-callbacks/v1/{channelCode}/{channelAccountId} -> /channel-callbacks/v1/{channelCode}/{channelAccountId},
+-- security profile / authorization mode CHANNEL_CALLBACK (no authentication at Gateway; channel-connector verifies the
+-- channel signature over the raw body), no permission or scope, cookies DROP / NONE, idempotency NONE, body limit 65536
+-- bytes, body receive and response timeout 5000 ms. Forwarded request headers: sign (channel signature), content-type.
+-- Guards: SHARED_ROUTE rate 600/min and concurrency 50 (required baseline), CLIENT_IP rate 120/min and concurrency 20.
+-- The CLIENT_IP concurrency row is required: the Platform compiler accepts an unpaired CLIENT_IP rate, but the Gateway
+-- Snapshot compiler rejects a dimension declared without its Rate/Concurrency pair and would then discard the whole
+-- Snapshot (keeping the last valid one) as soon as this Route is activated.
+-- No console resource, permission or role grant: this is a machine-to-machine route.
+-- Nginx must route the public callback host/path with X-Entry-Channel: CHANNEL_CALLBACK and the overwritten X-Real-IP.
+-- Rows: gateway_target 1, gateway_route 1, route_header 2, guard_rule 4 (8). ID block 133: 1334xx route, 1335xx
+-- route_header, 1337xx guard_rule, 1338xx gateway_target (8xx is used because the 1xx-7xx convention has no target slot).
+-- The Target is ACTIVE (it is inert without an ACTIVE Route); the Route is inserted DISABLED.
+-- Before applying, re-check on the live mor_platform that no row in 900000000000133001-900000000000133999 exists, that
+-- target_service_code 'channel-connector-service' and route code 'channel-payment-callback' are unused, and that
+-- (POST, /api/channel-callbacks/v1/{channelCode}/{channelAccountId}) is unused.
+-- Activation (after the new channel-connector and api-gateway are deployed and the Gateway Snapshot is republished):
+--   UPDATE t_gateway_route SET status = 'ACTIVE', version = version + 1, update_time = UTC_TIMESTAMP(6)
+--   WHERE route_id = 900000000000133401 AND status = 'DISABLED';
+-- Deactivation: the same statement with status 'DISABLED' / 'ACTIVE' swapped.
+-- Rollback: delete the rows by the 900000000000133001-900000000000133999 IDs below (children first: guard_rule,
+-- route_header, gateway_route, gateway_target), then republish the Gateway Snapshot.
+-- ---------------------------------------------------------------------------
+START TRANSACTION;
+
+SET @channel_callback_time = UTC_TIMESTAMP(6);
+SET @channel_callback_actor_id = 1;
+SET @channel_callback_target_id = 900000000000133801;
+
+INSERT INTO t_gateway_target (target_id,target_service_code,discovery_service_name,channel,status,version,created_by,updated_by,create_time,update_time) VALUES
+  (@channel_callback_target_id, 'channel-connector-service', 'channel-connector-service', 'CHANNEL_CALLBACK', 'ACTIVE', 1, @channel_callback_actor_id, @channel_callback_actor_id, @channel_callback_time, @channel_callback_time);
+
+INSERT INTO t_gateway_route (route_id, route_code, channel, http_method, external_path_template, downstream_path_template, target_id, security_profile_code, authorization_mode, permission_id, required_scope_code, request_cookie_mode, response_cookie_mode, idempotency_mode, body_limit_bytes, body_receive_timeout_millis, response_timeout_millis, status, version, created_by, updated_by, create_time, update_time) VALUES
+  (900000000000133401, 'channel-payment-callback', 'CHANNEL_CALLBACK', 'POST', '/api/channel-callbacks/v1/{channelCode}/{channelAccountId}', '/channel-callbacks/v1/{channelCode}/{channelAccountId}', @channel_callback_target_id, 'CHANNEL_CALLBACK', 'CHANNEL_CALLBACK', NULL, NULL, 'DROP', 'NONE', 'NONE', 65536, 5000, 5000, 'DISABLED', 1, @channel_callback_actor_id, @channel_callback_actor_id, @channel_callback_time, @channel_callback_time);
+
+INSERT INTO t_gateway_route_header (route_header_id,route_id,header_name,header_use) VALUES
+  (900000000000133501, 900000000000133401, 'sign', 'FORWARD_REQUEST'),
+  (900000000000133502, 900000000000133401, 'content-type', 'FORWARD_REQUEST');
+
+INSERT INTO t_gateway_guard_rule (guard_rule_id,route_id,rule_type,dimension,capacity,refill_tokens,refill_period_millis,concurrency_limit) VALUES
+  (900000000000133701, 900000000000133401, 'RATE_LIMIT', 'SHARED_ROUTE', 600, 600, 60000, NULL),
+  (900000000000133702, 900000000000133401, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000133703, 900000000000133401, 'RATE_LIMIT', 'CLIENT_IP', 120, 120, 60000, NULL),
+  (900000000000133704, 900000000000133401, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 20);
+
+-- Country region seed (2026-10-22, requirements/20261022/card-BIN库与卡属性, technique.md E3 / 3.5.3).
+-- Self-contained block: on an environment already initialized by platform-support-initial-data.sql, apply ONLY this block
+-- after changes/2026-10-22-country-region.sql. 249 rows: every ISO 3166-1 alpha-2 officially assigned code mapped to one of
+-- GCC, MEA, EUROPE, NORTH_AMERICA, LATAM, APAC. Fixed IDs 2001-2249 sit below the Snowflake range (same as t_currency_spec 1001).
+-- Region conventions: TR, AM, AZ, GE, CY are EUROPE (card scheme convention); the five Central Asian states, AF and PK are APAC;
+-- MX, the Caribbean and Central America are LATAM; GL, BM, PM, UM are NORTH_AMERICA; uninhabited or polar territories follow
+-- the nearest region (AQ, BV, HM are APAC; TF is MEA). Card derives issuer_region from this table when importing a BIN library.
+-- Rollback: DELETE FROM t_country_region WHERE id BETWEEN 2001 AND 2249;
+-- ---------------------------------------------------------------------------
+START TRANSACTION;
+SET @country_region_seed_time = UTC_TIMESTAMP(6);
+INSERT INTO t_country_region (id, country_code, region_code, create_time, update_time) VALUES
+  (2001, 'AD', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2002, 'AE', 'GCC', @country_region_seed_time, @country_region_seed_time),
+  (2003, 'AF', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2004, 'AG', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2005, 'AI', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2006, 'AL', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2007, 'AM', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2008, 'AO', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2009, 'AQ', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2010, 'AR', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2011, 'AS', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2012, 'AT', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2013, 'AU', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2014, 'AW', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2015, 'AX', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2016, 'AZ', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2017, 'BA', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2018, 'BB', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2019, 'BD', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2020, 'BE', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2021, 'BF', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2022, 'BG', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2023, 'BH', 'GCC', @country_region_seed_time, @country_region_seed_time),
+  (2024, 'BI', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2025, 'BJ', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2026, 'BL', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2027, 'BM', 'NORTH_AMERICA', @country_region_seed_time, @country_region_seed_time),
+  (2028, 'BN', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2029, 'BO', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2030, 'BQ', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2031, 'BR', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2032, 'BS', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2033, 'BT', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2034, 'BV', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2035, 'BW', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2036, 'BY', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2037, 'BZ', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2038, 'CA', 'NORTH_AMERICA', @country_region_seed_time, @country_region_seed_time),
+  (2039, 'CC', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2040, 'CD', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2041, 'CF', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2042, 'CG', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2043, 'CH', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2044, 'CI', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2045, 'CK', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2046, 'CL', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2047, 'CM', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2048, 'CN', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2049, 'CO', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2050, 'CR', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2051, 'CU', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2052, 'CV', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2053, 'CW', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2054, 'CX', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2055, 'CY', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2056, 'CZ', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2057, 'DE', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2058, 'DJ', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2059, 'DK', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2060, 'DM', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2061, 'DO', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2062, 'DZ', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2063, 'EC', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2064, 'EE', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2065, 'EG', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2066, 'EH', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2067, 'ER', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2068, 'ES', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2069, 'ET', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2070, 'FI', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2071, 'FJ', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2072, 'FK', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2073, 'FM', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2074, 'FO', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2075, 'FR', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2076, 'GA', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2077, 'GB', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2078, 'GD', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2079, 'GE', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2080, 'GF', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2081, 'GG', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2082, 'GH', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2083, 'GI', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2084, 'GL', 'NORTH_AMERICA', @country_region_seed_time, @country_region_seed_time),
+  (2085, 'GM', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2086, 'GN', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2087, 'GP', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2088, 'GQ', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2089, 'GR', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2090, 'GS', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2091, 'GT', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2092, 'GU', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2093, 'GW', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2094, 'GY', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2095, 'HK', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2096, 'HM', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2097, 'HN', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2098, 'HR', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2099, 'HT', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2100, 'HU', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2101, 'ID', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2102, 'IE', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2103, 'IL', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2104, 'IM', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2105, 'IN', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2106, 'IO', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2107, 'IQ', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2108, 'IR', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2109, 'IS', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2110, 'IT', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2111, 'JE', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2112, 'JM', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2113, 'JO', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2114, 'JP', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2115, 'KE', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2116, 'KG', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2117, 'KH', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2118, 'KI', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2119, 'KM', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2120, 'KN', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2121, 'KP', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2122, 'KR', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2123, 'KW', 'GCC', @country_region_seed_time, @country_region_seed_time),
+  (2124, 'KY', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2125, 'KZ', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2126, 'LA', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2127, 'LB', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2128, 'LC', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2129, 'LI', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2130, 'LK', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2131, 'LR', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2132, 'LS', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2133, 'LT', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2134, 'LU', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2135, 'LV', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2136, 'LY', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2137, 'MA', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2138, 'MC', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2139, 'MD', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2140, 'ME', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2141, 'MF', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2142, 'MG', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2143, 'MH', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2144, 'MK', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2145, 'ML', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2146, 'MM', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2147, 'MN', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2148, 'MO', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2149, 'MP', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2150, 'MQ', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2151, 'MR', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2152, 'MS', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2153, 'MT', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2154, 'MU', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2155, 'MV', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2156, 'MW', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2157, 'MX', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2158, 'MY', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2159, 'MZ', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2160, 'NA', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2161, 'NC', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2162, 'NE', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2163, 'NF', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2164, 'NG', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2165, 'NI', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2166, 'NL', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2167, 'NO', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2168, 'NP', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2169, 'NR', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2170, 'NU', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2171, 'NZ', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2172, 'OM', 'GCC', @country_region_seed_time, @country_region_seed_time),
+  (2173, 'PA', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2174, 'PE', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2175, 'PF', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2176, 'PG', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2177, 'PH', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2178, 'PK', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2179, 'PL', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2180, 'PM', 'NORTH_AMERICA', @country_region_seed_time, @country_region_seed_time),
+  (2181, 'PN', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2182, 'PR', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2183, 'PS', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2184, 'PT', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2185, 'PW', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2186, 'PY', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2187, 'QA', 'GCC', @country_region_seed_time, @country_region_seed_time),
+  (2188, 'RE', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2189, 'RO', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2190, 'RS', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2191, 'RU', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2192, 'RW', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2193, 'SA', 'GCC', @country_region_seed_time, @country_region_seed_time),
+  (2194, 'SB', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2195, 'SC', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2196, 'SD', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2197, 'SE', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2198, 'SG', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2199, 'SH', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2200, 'SI', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2201, 'SJ', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2202, 'SK', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2203, 'SL', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2204, 'SM', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2205, 'SN', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2206, 'SO', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2207, 'SR', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2208, 'SS', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2209, 'ST', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2210, 'SV', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2211, 'SX', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2212, 'SY', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2213, 'SZ', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2214, 'TC', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2215, 'TD', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2216, 'TF', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2217, 'TG', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2218, 'TH', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2219, 'TJ', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2220, 'TK', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2221, 'TL', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2222, 'TM', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2223, 'TN', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2224, 'TO', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2225, 'TR', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2226, 'TT', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2227, 'TV', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2228, 'TW', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2229, 'TZ', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2230, 'UA', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2231, 'UG', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2232, 'UM', 'NORTH_AMERICA', @country_region_seed_time, @country_region_seed_time),
+  (2233, 'US', 'NORTH_AMERICA', @country_region_seed_time, @country_region_seed_time),
+  (2234, 'UY', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2235, 'UZ', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2236, 'VA', 'EUROPE', @country_region_seed_time, @country_region_seed_time),
+  (2237, 'VC', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2238, 'VE', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2239, 'VG', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2240, 'VI', 'LATAM', @country_region_seed_time, @country_region_seed_time),
+  (2241, 'VN', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2242, 'VU', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2243, 'WF', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2244, 'WS', 'APAC', @country_region_seed_time, @country_region_seed_time),
+  (2245, 'YE', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2246, 'YT', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2247, 'ZA', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2248, 'ZM', 'MEA', @country_region_seed_time, @country_region_seed_time),
+  (2249, 'ZW', 'MEA', @country_region_seed_time, @country_region_seed_time);
+COMMIT;
+
+-- ---------------------------------------------------------------------------
+-- Card BIN library CSV scan policy (2026-10-22, requirements/20261022/card-BIN库与卡属性, technique.md E2 / 3.2).
+-- Self-contained block. Requires a Platform image whose PLATFORM_FORMAT check recognizes text/csv (no PDF/PNG/JPEG header,
+-- valid UTF-8, no NUL). Only text/csv, at most 50 MiB; the FORMAT requirement keeps PLATFORM_FORMAT, minimum runtime 1 and
+-- accepts FORMAT_VALID only. IDs come from the 1329xx range of block 132. The operations-console-bff write route that freezes
+-- CARD_BIN_CSV needs an environment bucket ID, so it is registered on the Operations storage page at release time.
+-- Before applying, re-check that policy_code CARD_BIN_CSV and IDs 900000000000132901-900000000000132902 are unused.
+-- Rollback (only when no write route references CARD_BIN_CSV):
+--   DELETE FROM t_file_scan_requirement WHERE requirement_id = 900000000000132902;
+--   DELETE FROM t_file_scan_policy WHERE policy_id = 900000000000132901;
+-- ---------------------------------------------------------------------------
+START TRANSACTION;
+SET @card_bin_scan_time = UTC_TIMESTAMP(6);
+INSERT INTO t_file_scan_policy (policy_id, policy_code, revision_no, rule_schema_version, allowed_mime_rules, max_size_bytes,
+  effective_from, effective_to, status, active_slot, version, create_time, update_time) VALUES
+  (900000000000132901, 'CARD_BIN_CSV', 1, 1, '{"mimeTypes":["text/csv"]}', 52428800, @card_bin_scan_time, NULL, 'ACTIVE', 1, 1,
+   @card_bin_scan_time, @card_bin_scan_time);
+INSERT INTO t_file_scan_requirement (requirement_id, policy_id, requirement_no, scanner_code, scan_type, minimum_scanner_version,
+  accepted_result_codes, version, create_time, update_time) VALUES
+  (900000000000132902, 900000000000132901, 1, 'PLATFORM_FORMAT', 'FORMAT', '1', '["FORMAT_VALID"]', 1, @card_bin_scan_time,
+   @card_bin_scan_time);
+COMMIT;
+
+-- ---------------------------------------------------------------------------
+-- Operations card BIN library console (2026-10-22, requirements/20261022/card-BIN库与卡属性, technique.md 3.5.7).
+-- Self-contained block: on an environment already initialized by platform-support-initial-data.sql, apply ONLY this block.
+-- Dormant like earlier Operations features: permissions ACTIVE, administrator grants REVOKED, menus and routes DISABLED;
+-- activate them in a separate reviewed change. BFF routes forward to operations-console-bff on /card-admin/v1/bin-library/...,
+-- which calls card-service (/card/v1/bin-library/...) and, for uploads, Platform InternalFileApi with reasonCode
+-- CARD_BIN_LIBRARY_IMPORT; operator identity comes from the Gateway actor headers.
+-- Permissions: CARD_BIN_LIBRARY_READ (LOW: version list/detail/errors, activation history, BIN lookup),
+-- CARD_BIN_LIBRARY_MANAGE (HIGH: upload, create version, activate/rollback).
+-- Menu: 卡 BIN 库 /card-bin-library under 平台配置 (900000000000000562, sort 90); button 维护 gates the write actions.
+-- Routes: 9; headers and guard rules copy block 131 (GET: authorization + origin; POST: plus content-type and
+-- idempotency-key; guard rules SHARED_ROUTE 300/min + 50 concurrent, CLIENT_IP 30/min + 3, principal 30/min (writes 10/min) + 2).
+-- The CSV body never passes Gateway: the browser PUTs it straight to object storage with the Platform-issued authorization.
+-- Rows: permission 2, role_permission 2, console_resource 2, gateway_route 9, route_header 34, query_param 8,
+-- guard_rule 54 (111). ID block 132: 1321xx permission, 1322xx role_permission, 1323xx console_resource, 1324xx route,
+-- 1325xx route_header, 1326xx query_param, 1327xx-1328xx guard_rule, 1329xx the CSV scan policy block above.
+-- Before applying, re-check on the live mor_platform that no row in 900000000000132001-900000000000132999 exists and that
+-- the permission codes, resource codes, route codes and (method, external path) pairs above are unused.
+-- Rollback: delete the rows by the 900000000000132001-900000000000132899 IDs below (children first: guard_rule, query_param,
+-- route_header, gateway_route, console_resource, role_permission, permission).
+-- Activation (separate reviewed change, after Card/ops-bff/ops-web are deployed):
+--   UPDATE t_role_permission SET status='ACTIVE', version=version+1, update_time=UTC_TIMESTAMP(6) WHERE role_permission_id IN (900000000000132201,900000000000132202);
+--   UPDATE t_console_resource SET status='ACTIVE', version=version+1, update_time=UTC_TIMESTAMP(6) WHERE resource_id IN (900000000000132301,900000000000132302);
+--   UPDATE t_gateway_route SET status='ACTIVE', version=version+1, update_time=UTC_TIMESTAMP(6) WHERE route_id BETWEEN 900000000000132401 AND 900000000000132409;
+--   then republish the Gateway Snapshot.
+-- ---------------------------------------------------------------------------
+START TRANSACTION;
+
+SET @card_bin_console_time = UTC_TIMESTAMP(6);
+SET @card_bin_console_actor_id = 1;
+SET @card_bin_console_target_id = 900000000000000001;
+SET @card_bin_console_role_id = 900000000000000510;
+
+INSERT INTO t_permission (permission_id,permission_code,resource_type,action_code,risk_level,status,version,create_time,update_time) VALUES
+  (900000000000132101, 'CARD_BIN_LIBRARY_READ', 'CARD_BIN_LIBRARY', 'READ', 'LOW', 'ACTIVE', 1, @card_bin_console_time, @card_bin_console_time),
+  (900000000000132102, 'CARD_BIN_LIBRARY_MANAGE', 'CARD_BIN_LIBRARY', 'MANAGE', 'HIGH', 'ACTIVE', 1, @card_bin_console_time, @card_bin_console_time);
+
+INSERT INTO t_role_permission (role_permission_id,role_id,permission_id,status,version,create_time,update_time) VALUES
+  (900000000000132201, @card_bin_console_role_id, 900000000000132101, 'REVOKED', 1, @card_bin_console_time, @card_bin_console_time),
+  (900000000000132202, @card_bin_console_role_id, 900000000000132102, 'REVOKED', 1, @card_bin_console_time, @card_bin_console_time);
+
+INSERT INTO t_console_resource (resource_id,resource_code,channel,resource_type,parent_resource_id,display_name,frontend_route,component_key,permission_id,sort_order,status,version,create_time,update_time) VALUES
+  (900000000000132301, 'OPERATIONS_CARD_BIN_LIBRARY', 'OPERATIONS', 'MENU', 900000000000000562, '卡 BIN 库', '/card-bin-library', 'OPERATIONS_CARD_BIN_LIBRARY', 900000000000132101, 90, 'DISABLED', 1, @card_bin_console_time, @card_bin_console_time),
+  (900000000000132302, 'OPERATIONS_CARD_BIN_LIBRARY_MANAGE', 'OPERATIONS', 'BUTTON', 900000000000132301, '维护', NULL, NULL, 900000000000132102, 10, 'DISABLED', 1, @card_bin_console_time, @card_bin_console_time);
+
+INSERT INTO t_gateway_route (route_id, route_code, channel, http_method, external_path_template, downstream_path_template, target_id, security_profile_code, authorization_mode, permission_id, required_scope_code, request_cookie_mode, response_cookie_mode, idempotency_mode, body_limit_bytes, body_receive_timeout_millis, response_timeout_millis, status, version, created_by, updated_by, create_time, update_time) VALUES
+  (900000000000132401, 'operations-card-bin-version-list', 'OPERATIONS', 'GET', '/api/operations/card-admin/v1/bin-library/versions', '/card-admin/v1/bin-library/versions', @card_bin_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000132101, NULL, 'DROP', 'NONE', 'NONE', 0, 5000, 10000, 'DISABLED', 1, @card_bin_console_actor_id, @card_bin_console_actor_id, @card_bin_console_time, @card_bin_console_time),
+  (900000000000132402, 'operations-card-bin-version-detail', 'OPERATIONS', 'GET', '/api/operations/card-admin/v1/bin-library/versions/{versionNo}', '/card-admin/v1/bin-library/versions/{versionNo}', @card_bin_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000132101, NULL, 'DROP', 'NONE', 'NONE', 0, 5000, 10000, 'DISABLED', 1, @card_bin_console_actor_id, @card_bin_console_actor_id, @card_bin_console_time, @card_bin_console_time),
+  (900000000000132403, 'operations-card-bin-version-errors', 'OPERATIONS', 'GET', '/api/operations/card-admin/v1/bin-library/versions/{versionNo}/errors', '/card-admin/v1/bin-library/versions/{versionNo}/errors', @card_bin_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000132101, NULL, 'DROP', 'NONE', 'NONE', 0, 5000, 10000, 'DISABLED', 1, @card_bin_console_actor_id, @card_bin_console_actor_id, @card_bin_console_time, @card_bin_console_time),
+  (900000000000132404, 'operations-card-bin-activation-list', 'OPERATIONS', 'GET', '/api/operations/card-admin/v1/bin-library/activations', '/card-admin/v1/bin-library/activations', @card_bin_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000132101, NULL, 'DROP', 'NONE', 'NONE', 0, 5000, 10000, 'DISABLED', 1, @card_bin_console_actor_id, @card_bin_console_actor_id, @card_bin_console_time, @card_bin_console_time),
+  (900000000000132405, 'operations-card-bin-lookup', 'OPERATIONS', 'GET', '/api/operations/card-admin/v1/bin-library/bins/{bin}', '/card-admin/v1/bin-library/bins/{bin}', @card_bin_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000132101, NULL, 'DROP', 'NONE', 'NONE', 0, 5000, 10000, 'DISABLED', 1, @card_bin_console_actor_id, @card_bin_console_actor_id, @card_bin_console_time, @card_bin_console_time),
+  (900000000000132406, 'operations-card-bin-upload-start', 'OPERATIONS', 'POST', '/api/operations/card-admin/v1/bin-library/uploads', '/card-admin/v1/bin-library/uploads', @card_bin_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000132102, NULL, 'DROP', 'NONE', 'NONE', 65536, 5000, 10000, 'DISABLED', 1, @card_bin_console_actor_id, @card_bin_console_actor_id, @card_bin_console_time, @card_bin_console_time),
+  (900000000000132407, 'operations-card-bin-upload-complete', 'OPERATIONS', 'POST', '/api/operations/card-admin/v1/bin-library/uploads/{uploadId}/completion', '/card-admin/v1/bin-library/uploads/{uploadId}/completion', @card_bin_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000132102, NULL, 'DROP', 'NONE', 'NONE', 65536, 5000, 10000, 'DISABLED', 1, @card_bin_console_actor_id, @card_bin_console_actor_id, @card_bin_console_time, @card_bin_console_time),
+  (900000000000132408, 'operations-card-bin-version-create', 'OPERATIONS', 'POST', '/api/operations/card-admin/v1/bin-library/versions', '/card-admin/v1/bin-library/versions', @card_bin_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000132102, NULL, 'DROP', 'NONE', 'NONE', 65536, 5000, 10000, 'DISABLED', 1, @card_bin_console_actor_id, @card_bin_console_actor_id, @card_bin_console_time, @card_bin_console_time),
+  (900000000000132409, 'operations-card-bin-version-activate', 'OPERATIONS', 'POST', '/api/operations/card-admin/v1/bin-library/versions/{versionNo}/activation', '/card-admin/v1/bin-library/versions/{versionNo}/activation', @card_bin_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000132102, NULL, 'DROP', 'NONE', 'NONE', 65536, 5000, 10000, 'DISABLED', 1, @card_bin_console_actor_id, @card_bin_console_actor_id, @card_bin_console_time, @card_bin_console_time);
+
+INSERT INTO t_gateway_route_header (route_header_id,route_id,header_name,header_use) VALUES
+  (900000000000132501, 900000000000132401, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000132502, 900000000000132401, 'origin', 'FORWARD_REQUEST'),
+  (900000000000132503, 900000000000132402, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000132504, 900000000000132402, 'origin', 'FORWARD_REQUEST'),
+  (900000000000132505, 900000000000132403, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000132506, 900000000000132403, 'origin', 'FORWARD_REQUEST'),
+  (900000000000132507, 900000000000132404, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000132508, 900000000000132404, 'origin', 'FORWARD_REQUEST'),
+  (900000000000132509, 900000000000132405, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000132510, 900000000000132405, 'origin', 'FORWARD_REQUEST'),
+  (900000000000132511, 900000000000132406, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000132512, 900000000000132406, 'origin', 'FORWARD_REQUEST'),
+  (900000000000132513, 900000000000132406, 'content-type', 'CORS_REQUEST_ALLOWED'),
+  (900000000000132514, 900000000000132406, 'content-type', 'FORWARD_REQUEST'),
+  (900000000000132515, 900000000000132406, 'idempotency-key', 'CORS_REQUEST_ALLOWED'),
+  (900000000000132516, 900000000000132406, 'idempotency-key', 'FORWARD_REQUEST'),
+  (900000000000132517, 900000000000132407, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000132518, 900000000000132407, 'origin', 'FORWARD_REQUEST'),
+  (900000000000132519, 900000000000132407, 'content-type', 'CORS_REQUEST_ALLOWED'),
+  (900000000000132520, 900000000000132407, 'content-type', 'FORWARD_REQUEST'),
+  (900000000000132521, 900000000000132407, 'idempotency-key', 'CORS_REQUEST_ALLOWED'),
+  (900000000000132522, 900000000000132407, 'idempotency-key', 'FORWARD_REQUEST'),
+  (900000000000132523, 900000000000132408, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000132524, 900000000000132408, 'origin', 'FORWARD_REQUEST'),
+  (900000000000132525, 900000000000132408, 'content-type', 'CORS_REQUEST_ALLOWED'),
+  (900000000000132526, 900000000000132408, 'content-type', 'FORWARD_REQUEST'),
+  (900000000000132527, 900000000000132408, 'idempotency-key', 'CORS_REQUEST_ALLOWED'),
+  (900000000000132528, 900000000000132408, 'idempotency-key', 'FORWARD_REQUEST'),
+  (900000000000132529, 900000000000132409, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000132530, 900000000000132409, 'origin', 'FORWARD_REQUEST'),
+  (900000000000132531, 900000000000132409, 'content-type', 'CORS_REQUEST_ALLOWED'),
+  (900000000000132532, 900000000000132409, 'content-type', 'FORWARD_REQUEST'),
+  (900000000000132533, 900000000000132409, 'idempotency-key', 'CORS_REQUEST_ALLOWED'),
+  (900000000000132534, 900000000000132409, 'idempotency-key', 'FORWARD_REQUEST');
+
+INSERT INTO t_gateway_route_query_param (route_query_param_id,route_id,parameter_name) VALUES
+  (900000000000132601, 900000000000132401, 'status'),
+  (900000000000132602, 900000000000132401, 'page'),
+  (900000000000132603, 900000000000132401, 'size'),
+  (900000000000132604, 900000000000132403, 'page'),
+  (900000000000132605, 900000000000132403, 'size'),
+  (900000000000132606, 900000000000132404, 'page'),
+  (900000000000132607, 900000000000132404, 'size'),
+  (900000000000132608, 900000000000132405, 'versionNo');
+
+INSERT INTO t_gateway_guard_rule (guard_rule_id,route_id,rule_type,dimension,capacity,refill_tokens,refill_period_millis,concurrency_limit) VALUES
+  (900000000000132701, 900000000000132401, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000132702, 900000000000132401, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000132703, 900000000000132401, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000132704, 900000000000132401, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000132705, 900000000000132401, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 30, 30, 60000, NULL),
+  (900000000000132706, 900000000000132401, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
+  (900000000000132707, 900000000000132402, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000132708, 900000000000132402, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000132709, 900000000000132402, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000132710, 900000000000132402, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000132711, 900000000000132402, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 30, 30, 60000, NULL),
+  (900000000000132712, 900000000000132402, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
+  (900000000000132713, 900000000000132403, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000132714, 900000000000132403, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000132715, 900000000000132403, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000132716, 900000000000132403, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000132717, 900000000000132403, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 30, 30, 60000, NULL),
+  (900000000000132718, 900000000000132403, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
+  (900000000000132719, 900000000000132404, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000132720, 900000000000132404, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000132721, 900000000000132404, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000132722, 900000000000132404, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000132723, 900000000000132404, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 30, 30, 60000, NULL),
+  (900000000000132724, 900000000000132404, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
+  (900000000000132725, 900000000000132405, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000132726, 900000000000132405, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000132727, 900000000000132405, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000132728, 900000000000132405, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000132729, 900000000000132405, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 30, 30, 60000, NULL),
+  (900000000000132730, 900000000000132405, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
+  (900000000000132731, 900000000000132406, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000132732, 900000000000132406, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000132733, 900000000000132406, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000132734, 900000000000132406, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000132735, 900000000000132406, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 10, 10, 60000, NULL),
+  (900000000000132736, 900000000000132406, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
+  (900000000000132737, 900000000000132407, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000132738, 900000000000132407, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000132739, 900000000000132407, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000132740, 900000000000132407, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000132741, 900000000000132407, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 10, 10, 60000, NULL),
+  (900000000000132742, 900000000000132407, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
+  (900000000000132743, 900000000000132408, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000132744, 900000000000132408, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000132745, 900000000000132408, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000132746, 900000000000132408, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000132747, 900000000000132408, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 10, 10, 60000, NULL),
+  (900000000000132748, 900000000000132408, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
+  (900000000000132749, 900000000000132409, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000132750, 900000000000132409, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000132751, 900000000000132409, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000132752, 900000000000132409, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000132753, 900000000000132409, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 10, 10, 60000, NULL),
+  (900000000000132754, 900000000000132409, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2);
+
+COMMIT;

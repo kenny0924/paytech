@@ -67,7 +67,7 @@ test("full schema keeps exactly 28 tables and the test DDL copies every block ve
 
 test("t_channel merges payment channel identity with outbound endpoints and an immutable type", () => {
   assert.deepEqual(fieldsOf(CHANNEL_TABLE), ["channel_id", "channel_code", "channel_name", "channel_type", "channel_status",
-    "description", "endpoints", "version", "created_by", "updated_by", "create_time", "update_time"]);
+    "description", "endpoints", "callback_definition_json", "version", "created_by", "updated_by", "create_time", "update_time"]);
   const field = (key) => entity(CHANNEL_TABLE).fields.find((item) => item.defKey === key);
   assert.deepEqual(field("channel_code").extProps, { characterSet: "ascii", collation: "ascii_bin" });
   assert.match(field("channel_type").comment, /允许值：PAYMENT、SERVICE。$/u);

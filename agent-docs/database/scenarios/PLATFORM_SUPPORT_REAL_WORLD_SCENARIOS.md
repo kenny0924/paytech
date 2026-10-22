@@ -184,11 +184,14 @@ Audit append 在 Chain 行上串行分配序号；`previous_event_hash` 必须�
 
 Platform 是 `t_currency_spec` 的唯一持有者（D41，副本部分由 [2026-10-20 决定](../../decisions/2026-10-20-currency-spec-platform-snapshot-read.md) 取代）。Operations 经「平台配置 → 币种」维护，只有 DRAFT 可改小数位与舍入方式。Ledger 与 Billing 经 `GET /platform-support/platform/v1/currency-specs` 读取全量规则，并持进程内快照；事务内只读快照，不回源。ACTIVE 允许新用途；INACTIVE 只拦新用途，已有账簿与计费事实照常处理；DRAFT 不可使用。
 
-### 10.1 全平台参考数据 1 表
+Platform 同样唯一持有 `t_country_region`（2026-10-22 [卡 BIN 库](../../../requirements/20261022/card-BIN库与卡属性/technique.md) E3）：249 个 ISO 3166-1 alpha-2 代码各映射到 GCC、MEA、EUROPE、NORTH_AMERICA、LATAM、APAC 之一，只经初始化数据维护。Card 导入 BIN 库时经 `GET /platform-support/platform/v1/country-regions` 读取全量映射，推导并冻结号段的发卡区域；交易链路不再读取 Platform。
+
+### 10.1 全平台参考数据 2 表
 
 | 物理表 | 代表性记录与判定 |
 | --- | --- |
 | `t_currency_spec` | `id=1001，currency=USD，minor_unit=2，rounding_mode=HALF_UP，status=ACTIVE`；USD 金额保留两位小数，八位计算精度按 HALF_UP 归整；未登记的币种查询返回 404。 |
+| `t_country_region` | `id=2002，country_code=AE，region_code=GCC`；阿联酋发卡的号段导入时得到发卡区域 GCC；CSV 中的发卡国未在本表登记时，该行以 COUNTRY_REGION_MISSING 判为错误。 |
 
 ## 10A. SCN-PLT-10：工作流“新渠道上线”
 

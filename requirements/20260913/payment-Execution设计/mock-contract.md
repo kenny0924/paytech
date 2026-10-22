@@ -35,6 +35,8 @@ Commerce 是上游调用者，按[调用方向修订](./payment-commerce-directi
 | Channel `queryOperation` / `readInteraction` | 原 Action + account + 原 key + operationRef? | 原操作当前可信结果；或现存安全指令、NOT_FOUND/UNAVAILABLE | 无 txnRef 也能按原 key 查询；晚到成功；重复/乱序；单次 NOT_FOUND 后原请求成功 |
 | 事实接收器（Commerce/Finance） | 本地事实发布 Handler 产生的安全事件 | 观察接收或模拟失败/响应丢失 | 重复投递、Confirm 丢失、收款与授权区分、UNKNOWN 不出现退款失败 |
 
+> 2026-10-22 修订：卡流程不再调用独立 `authenticate`，3DS 在渠道 PAY 内完成，结果经 `PAY_QUERY` 确认，见 [Execution 3DS 修订](../../20261022/payment-3DS全链路/execution-3ds-amendment.md)。
+
 Card 的 USABLE 不是可存入任意 Context 的通用对象；只允许当次事务外调用透传给指定适配器，使用结束即释放引用。Mock 不保存或构造真实 PAN/CVV，不通过测试证明未来真实卡数据处理已满足要求。
 
 ## 3. Routing 和认证能力

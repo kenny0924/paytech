@@ -10,6 +10,8 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
+import com.paytech.card.api.enums.CardBrand;
+import com.paytech.card.api.enums.CardFundingType;
 import com.paytech.foundation.compensation.api.CompensationExecutionSequencer;
 import com.paytech.foundation.messaging.core.autoconfigure.MessagingProperties;
 import com.paytech.foundation.messaging.ordering.AggregateKeySequencer;
@@ -21,6 +23,7 @@ import com.paytech.payment.execution.core.enums.AuthenticationRequirement;
 import com.paytech.payment.execution.core.enums.RiskResult;
 import com.paytech.payment.execution.service.handler.PaymentSucceededHandler;
 import com.paytech.payment.test.base.AbstractPayCardTest;
+import com.paytech.payment.test.mocker.CardApiMocker;
 import com.paytech.payment.test.mocker.ChannelConnectorMocker.Candidate;
 
 /**
@@ -30,7 +33,7 @@ import com.paytech.payment.test.mocker.ChannelConnectorMocker.Candidate;
  *
  * <p>
  * 每例用一个临时排他队列绑定 payment.events 观察：成功时恰好一条、信封与最小 Payload 正确、Payload Hash 经消费端解码器校验、
- * 不含卡数据、读卡票据与付款人信息，发布确认后补偿任务删除；支付失败与处理中都不发布。发布端为 FAIL 策略并按聚合串行。
+ * 不含卡数据、读卡票据与付款人信息，发布确认后补偿任务删除；v2 末尾的 BIN 库卡属性未识别为 null、识别时为冻结值；支付失败与处理中都不发布。发布端为 FAIL 策略并按聚合串行。
  *
  * @see PaymentIntentApi#pay(String, String, com.paytech.payment.api.execution.request.PayRequestBody)
  */
@@ -84,14 +87,31 @@ class PaymentSucceededPublishTest extends AbstractPayCardTest {
         expected.put("midId", String.valueOf(candidate.midId()));
         expected.put("channelTransactionRef", "T-PUB-1");
         long version = ((Number)attempt.get("version")).longValue();
+        // v2 追加的 cardBrand、cardLevel 合法含 card 前缀，只禁止卡对象键 "card"。
         String[] forbidden = {PAN, paid.token, CONSUMER_REFERENCE, CONSUMER_IP, CONSUMER_USER_AGENT, RETURN_URL,
-            "consumerReference", "cardToken", "card", "cvv", "clientIp", "userAgent"};
+            "consumerReference", "cardToken", "\"card\"", "cvv", "clientIp", "userAgent"};
         String[] tickets = cardApi.tickets().toArray(String[]::new);
         assertEquals(1, tickets.length, "每次资金动作签发一张读卡票据");
         envelope.envelope(attemptId, version, instanceId).payload(expected).excludes(forbidden).excludes(tickets)
-            .cardFields((String)mapper.instrumentTokens().getFirst().get("instrumentRef"), false, null);
+            .cardFields((String)mapper.instrumentTokens().getFirst().get("instrumentRef"), false, null)
+            .cardAttributes(null, null, null);
         assertTrue(mapper.compensationEvents(PaymentSucceededHandler.EVENT_TYPE, String.valueOf(attemptId)).isEmpty(),
             "发布确认后补偿任务应删除");
+    }
+
+    /** 识别的 BIN（BIN 库需求 AC-10）：v2 Payload 末尾带 Token 冻结的卡组织、借贷记与卡等级，schemaVersion 仍为 2。 */
+    @Test
+    void test_succeededCarriesCardAttributes() {
+        cardApi.binRange(CardApiMocker.bin(PAN), CardApiMocker.attributes(CardBrand.MASTERCARD.getCode(),
+            CardFundingType.PREPAID.getCode(), "PLATINUM", null, COUNTRY_CODE, "GCC"));
+        channel.succeeded("T-PUB-BIN");
+        long attemptId = attemptId(newPayment().pay());
+
+        var envelope = results.awaitEnvelope(attemptId);
+
+        long version = ((Number)mapper.attempt(attemptId).get("version")).longValue();
+        envelope.envelope(attemptId, version, instanceId)
+            .cardAttributes(CardBrand.MASTERCARD.getCode(), CardFundingType.PREPAID.getCode(), "PLATINUM");
     }
 
     /** 原提交重放不重复登记或发布。 */

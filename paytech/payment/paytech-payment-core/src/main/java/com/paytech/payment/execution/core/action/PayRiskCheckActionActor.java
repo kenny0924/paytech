@@ -115,11 +115,17 @@ public class PayRiskCheckActionActor extends AbstractActionActor<PayContext> {
     }
 
     /**
-     * 卡支付时取申请工具时 card 返回并存入 Token 行的 BIN 与指纹（design/05 §2.4），不再调用 card；非卡支付或缺失时省略。
+     * 卡支付时取申请工具时 card 返回并存入 Token 行的 BIN、指纹（design/05 §2.4）与冻结的 BIN 库卡属性（发卡国、卡组织、借贷记），
+     * 不再调用 card；非卡支付或缺失时省略。
      */
     static void fillCard(PaymentRiskCommand command, PaymentInstrumentToken token) {
-        if (token.getInstrumentType() != InstrumentType.CARD || token.getCardBin() == null
-            || token.getCardFingerprint() == null) {
+        if (token.getInstrumentType() != InstrumentType.CARD) {
+            return;
+        }
+        command.setIssuerCountryCode(token.getIssuerCountry());
+        command.setCardBrand(token.getCardBrand());
+        command.setFundingType(token.getFundingType());
+        if (token.getCardBin() == null || token.getCardFingerprint() == null) {
             return;
         }
         command.setCardBin(token.getCardBin());

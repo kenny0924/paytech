@@ -10,6 +10,8 @@
 
 ## 1. 流程与职责
 
+> 2026-10-22 修订：下图 Card 需要 3DS 时不再进入 AUTHENTICATE，而是由 PAY 携带 3DS 要求并在渠道内完成挑战，见 [Execution 3DS 修订](../../20261022/payment-3DS全链路/execution-3ds-amendment.md)。
+
 ```mermaid
 flowchart TD
     START([开始]) --> TOKEN[准备本次提交的工具 Token]

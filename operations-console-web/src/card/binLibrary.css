@@ -1,0 +1,26 @@
+/* 卡 BIN 库页面（原型：平台配置 · 卡 BIN 库 01—05）；布局基础复用 dataQuery.css 的 dq-* 类。 */
+.bin-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.bin-summary-card { background: #fff; border: 1px solid var(--dq-border); border-radius: 10px; padding: 12px 16px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.bin-summary-card > .muted { font-size: 12px; overflow-wrap: anywhere; }
+.bin-summary-value { font-size: 20px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.bin-lookup { margin-bottom: 16px; }
+.bin-lookup-form { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.bin-lookup-input { width: 180px; }
+.bin-lookup-version { width: 180px; }
+.bin-lookup-result { margin-top: 12px; }
+.bin-unrecognized { margin: 12px 0 0; }
+.bin-table-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.bin-row-actions { display: inline-flex; align-items: center; gap: 8px; }
+.bin-footnote { margin: 8px 0 0; font-size: 12px; }
+.bin-progress { margin: 8px 0 12px; }
+.bin-progress-pending { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.bin-steps { margin-bottom: 16px; }
+.bin-file-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+.bin-file-button { cursor: pointer; display: inline-flex; align-items: center; }
+.bin-upload-progress { margin: 12px 0; }
+.bin-compare { display: flex; align-items: stretch; gap: 12px; margin: 8px 0 12px; }
+.bin-compare-box { flex: 1; border: 1px solid var(--dq-border); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+.bin-compare-box strong { font-size: 18px; }
+.bin-compare-arrow { align-self: center; font-size: 18px; color: var(--dq-muted); }
+.bin-impact { padding-left: 18px; margin: 0 0 12px; color: rgba(0, 0, 0, 0.7); }
+@media (max-width: 1200px) { .bin-page .dq-master-detail { grid-template-columns: minmax(0, 1fr); } }

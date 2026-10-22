@@ -1,0 +1,693 @@
+{
+ "versions": [
+  2,
+  2
+ ],
+ "chain": {
+  "candidates": {
+   "equal": true,
+   "diff": []
+  },
+  "refund": {
+   "equal": true,
+   "diff": []
+  },
+  "payWithCardRead": {
+   "equal": true,
+   "diff": []
+  },
+  "notSentStandardApiMissing": {
+   "equal": false,
+   "diff": [
+    [
+     "/channelJournal/count",
+     "value",
+     "0",
+     "1"
+    ],
+    [
+     "/channelJournal/entries",
+     "len",
+     0,
+     1
+    ],
+    [
+     "/channelStatus",
+     "type",
+     "None",
+     "CLOSED"
+    ],
+    [
+     "/failureCode",
+     "type",
+     "STANDARD_API_NOT_FOUND",
+     "None"
+    ],
+    [
+     "/hasChannelTransactionRef",
+     "value",
+     "False",
+     "True"
+    ],
+    [
+     "/outcome",
+     "value",
+     "NOT_SENT",
+     "SUCCESS"
+    ],
+    [
+     "/paymentStatus",
+     "type",
+     "None",
+     "CLOSED"
+    ],
+    [
+     "/vault",
+     "len",
+     0,
+     1
+    ]
+   ]
+  },
+  "notSentInvalidInput": {
+   "equal": true,
+   "diff": []
+  }
+ },
+ "realCard": {
+  "equal": true,
+  "diff": [],
+  "afterPlatformCallerReveal": {
+   "httpStatus": 404,
+   "code": "NOT_FOUND",
+   "returnedCardFields": false,
+   "ticketUsedAfter": [
+    "0"
+   ]
+  }
+ },
+ "cardGate": {
+  "equal": true,
+  "baseline": {
+   "platform-support-service": {
+    "httpStatus": 404,
+    "code": "NOT_FOUND"
+   },
+   "channel-connector-service": {
+    "httpStatus": 404,
+    "code": "NOT_FOUND"
+   },
+   "other-service": {
+    "httpStatus": 404,
+    "code": "NOT_FOUND"
+   }
+  },
+  "after": {
+   "platform-support-service": {
+    "httpStatus": 404,
+    "code": "NOT_FOUND"
+   },
+   "channel-connector-service": {
+    "httpStatus": 404,
+    "code": "NOT_FOUND"
+   },
+   "other-service": {
+    "httpStatus": 404,
+    "code": "NOT_FOUND"
+   }
+  }
+ },
+ "sandbox": {
+  "equal": true,
+  "diff": [],
+  "codes": [
+   [
+    "S5_P2AFTER_ACCT",
+    "S5_P2AFTER_CASE",
+    "238880140006850560"
+   ],
+   [
+    "S5_P2C3DS_ACCT",
+    "S5_P2C3DS_CASE",
+    "239048213619867648"
+   ]
+  ]
+ },
+ "snapshot": {
+  "calls": [
+   47,
+   53
+  ],
+  "callsEqualAfterRemovingNewAndRemoved": false,
+  "nonOkCalls": [],
+  "removedIntegrationCrud": {
+   "baseline": {},
+   "after": {
+    "integrations": {
+     "status": 404,
+     "code": "GATEWAY_ROUTE_NOT_FOUND"
+    },
+    "integrations/PAYERMAX_MOCK": {
+     "status": 404,
+     "code": "GATEWAY_ROUTE_NOT_FOUND"
+    }
+   }
+  },
+  "equalAfterRemovingNew": false,
+  "diff": [
+   [
+    "/integrations/PAYERMAX_MOCK/apis/items[0]/version",
+    "value",
+    "2",
+    "3"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/apis/ORDER_AND_PAY/body/requestFields",
+    "len",
+    27,
+    28
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/apis/ORDER_AND_PAY/body/version",
+    "value",
+    "2",
+    "3"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/flow-editor-context?PAY/body/apis[0]/requestFields",
+    "len",
+    27,
+    28
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/flow-editor-context?PAY/body/standardApi/requestFields",
+    "len",
+    19,
+    20
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/flow-editor-context?PAY_QUERY/body/apis[0]/requestFields",
+    "len",
+    27,
+    28
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/flow-editor-context?REFUND/body/apis[0]/requestFields",
+    "len",
+    27,
+    28
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/flow-editor-context?REFUND_QUERY/body/apis[0]/requestFields",
+    "len",
+    27,
+    28
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/flow-editor-context?S5P2_ECHO_PING",
+    "missing",
+    false,
+    true
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/implementations/body/items[0]/version",
+    "value",
+    "1",
+    "2"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/implementations/PAY/body/flowDefinition/nodes[0]/request/BODY:data.paymentDetail.cardInfo.dynamic3DS",
+    "missing",
+    false,
+    true
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/implementations/PAY/body/version",
+    "value",
+    "1",
+    "2"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-cases/items[0]/verifyStatus",
+    "value",
+    "PASSED",
+    "STALE"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-cases/items[1]/verifyStatus",
+    "value",
+    "PASSED",
+    "STALE"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-cases/items[2]/verifyStatus",
+    "value",
+    "PASSED",
+    "STALE"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-cases/items[3]/latestRun/runCode",
+    "value",
+    "238880140006850560",
+    "239047986070487040"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-cases/items[4]/verifyStatus",
+    "value",
+    "PASSED",
+    "STALE"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-cases/items[5]/verifyStatus",
+    "value",
+    "PASSED",
+    "STALE"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-cases/items[6]/verifyStatus",
+    "value",
+    "PASSED",
+    "STALE"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-cases/S5_AFTER_CASE/body/verifyStatus",
+    "value",
+    "PASSED",
+    "STALE"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-cases/S5_BASELINE2_CASE/body/verifyStatus",
+    "value",
+    "PASSED",
+    "STALE"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-cases/S5_BASELINE_CASE/body/verifyStatus",
+    "value",
+    "PASSED",
+    "STALE"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-cases/S5_P2AFTER_CASE/body/latestRun/runCode",
+    "value",
+    "238880140006850560",
+    "239047986070487040"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-cases/S5_P2BASELINE2_CASE/body/verifyStatus",
+    "value",
+    "PASSED",
+    "STALE"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-cases/S5_P2BASELINE3_CASE/body/verifyStatus",
+    "value",
+    "PASSED",
+    "STALE"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-cases/S5_P2BASELINE_CASE/body/verifyStatus",
+    "value",
+    "PASSED",
+    "STALE"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-runs/items",
+    "len",
+    7,
+    8
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-runs/items[0]/runCode",
+    "value",
+    "238880140006850560",
+    "239047986070487040"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-runs/items[1]/caseCode",
+    "value",
+    "S5_P2BASELINE3_CASE",
+    "S5_P2AFTER_CASE"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-runs/items[1]/caseName",
+    "value",
+    "阶段 5 P2baseline3 卡直付成功",
+    "阶段 5 P2after 卡直付成功"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-runs/items[1]/runCode",
+    "value",
+    "238878871359913984",
+    "238880140006850560"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-runs/items[2]/caseCode",
+    "value",
+    "S5_P2BASELINE2_CASE",
+    "S5_P2BASELINE3_CASE"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-runs/items[2]/caseName",
+    "value",
+    "阶段 5 P2baseline2 卡直付成功",
+    "阶段 5 P2baseline3 卡直付成功"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-runs/items[2]/runCode",
+    "value",
+    "238878799083667456",
+    "238878871359913984"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-runs/items[3]/caseCode",
+    "value",
+    "S5_P2BASELINE_CASE",
+    "S5_P2BASELINE2_CASE"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-runs/items[3]/caseName",
+    "value",
+    "阶段 5 P2baseline 卡直付成功",
+    "阶段 5 P2baseline2 卡直付成功"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-runs/items[3]/runCode",
+    "value",
+    "238878631701577728",
+    "238878799083667456"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-runs/items[4]/caseCode",
+    "value",
+    "S5_AFTER_CASE",
+    "S5_P2BASELINE_CASE"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-runs/items[4]/caseName",
+    "value",
+    "阶段 5 after 卡直付成功",
+    "阶段 5 P2baseline 卡直付成功"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-runs/items[4]/runCode",
+    "value",
+    "238502870792601600",
+    "238878631701577728"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-runs/items[5]/caseCode",
+    "value",
+    "S5_BASELINE2_CASE",
+    "S5_AFTER_CASE"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-runs/items[5]/caseName",
+    "value",
+    "阶段 5 baseline2 卡直付成功",
+    "阶段 5 after 卡直付成功"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-runs/items[5]/runCode",
+    "value",
+    "238501454321553408",
+    "238502870792601600"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-runs/items[6]/caseCode",
+    "value",
+    "S5_BASELINE_CASE",
+    "S5_BASELINE2_CASE"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-runs/items[6]/caseName",
+    "value",
+    "阶段 5 baseline 卡直付成功",
+    "阶段 5 baseline2 卡直付成功"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-runs/items[6]/runCode",
+    "value",
+    "238501320716193792",
+    "238501454321553408"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-runs/total",
+    "value",
+    "7",
+    "8"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-runs/238501320716193792/body/stale",
+    "value",
+    "False",
+    "True"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-runs/238501454321553408/body/stale",
+    "value",
+    "False",
+    "True"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-runs/238502870792601600/body/stale",
+    "value",
+    "False",
+    "True"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-runs/238878631701577728/body/stale",
+    "value",
+    "False",
+    "True"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-runs/238878799083667456/body/stale",
+    "value",
+    "False",
+    "True"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-runs/238878871359913984/body/stale",
+    "value",
+    "False",
+    "True"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-runs/238880140006850560/body/stale",
+    "value",
+    "False",
+    "True"
+   ],
+   [
+    "/integrations/PAYERMAX_MOCK/verify-runs/239047986070487040",
+    "missing",
+    false,
+    true
+   ],
+   [
+    "/standard-apis/items",
+    "len",
+    4,
+    5
+   ],
+   [
+    "/standard-apis/items[0]/requestFieldCount",
+    "value",
+    "19",
+    "20"
+   ],
+   [
+    "/standard-apis/items[0]/version",
+    "value",
+    "2",
+    "3"
+   ],
+   [
+    "/standard-apis/total",
+    "value",
+    "4",
+    "5"
+   ],
+   [
+    "/standard-apis/PAY/body/requestFields",
+    "len",
+    19,
+    20
+   ],
+   [
+    "/standard-apis/PAY/body/version",
+    "value",
+    "2",
+    "3"
+   ],
+   [
+    "/standard-apis/S5P2_ECHO_PING",
+    "missing",
+    false,
+    true
+   ]
+  ],
+  "newRunVsBaselineRun": {
+   "equal": false,
+   "diff": [
+    [
+     "/body/configVersions/pay/apis/ORDER_AND_PAY",
+     "value",
+     "2",
+     "3"
+    ],
+    [
+     "/body/configVersions/pay/implementation",
+     "value",
+     "1",
+     "2"
+    ],
+    [
+     "/body/configVersions/pay/integration",
+     "value",
+     "2",
+     "3"
+    ],
+    [
+     "/body/configVersions/pay/standardApi",
+     "value",
+     "2",
+     "3"
+    ]
+   ]
+  },
+  "new-verify-accounts-detail": {
+   "equal": false,
+   "diff": [
+    [
+     "/body/referencedCaseCodes[0]",
+     "value",
+     "S5_P2[label]_CASE",
+     "S5_P2C3DS_CASE"
+    ]
+   ]
+  },
+  "new-verify-cases-detail": {
+   "equal": true,
+   "diff": []
+  }
+ },
+ "channelAdmin": {
+  "channels": {
+   "allowed": [],
+   "unexplained": [
+    [
+     "/body/items",
+     "len",
+     1,
+     2
+    ],
+    [
+     "/body/items[0]/midCount",
+     "value",
+     "1",
+     "2"
+    ],
+    [
+     "/body/total",
+     "value",
+     "1",
+     "2"
+    ]
+   ]
+  },
+  "channels/{id}": {
+   "allowed": [],
+   "unexplained": [
+    [
+     "/body/version",
+     "value",
+     "2",
+     "3"
+    ]
+   ]
+  },
+  "channel-accounts": {
+   "allowed": [],
+   "unexplained": []
+  },
+  "channel-accounts/{id}": {
+   "allowed": [],
+   "unexplained": [
+    [
+     "/body/boundMidCount",
+     "value",
+     "1",
+     "2"
+    ]
+   ]
+  },
+  "mids": {
+   "allowed": [],
+   "unexplained": [
+    [
+     "/body/items",
+     "len",
+     1,
+     2
+    ],
+    [
+     "/body/items[0]/activatedAt",
+     "value",
+     "2026-10-21T03:18:41.365254Z",
+     "2026-10-22T15:29:04.654804Z"
+    ],
+    [
+     "/body/items[0]/externalMidCode",
+     "value",
+     "PMX-CCU-10210318",
+     "PMX-S5-MC"
+    ],
+    [
+     "/body/items[0]/midId",
+     "value",
+     "238501217200832512",
+     "239047412893679616"
+    ],
+    [
+     "/body/total",
+     "value",
+     "1",
+     "2"
+    ]
+   ]
+  },
+  "mids/{id}": {
+   "allowed": [],
+   "unexplained": [
+    [
+     "/body/capabilities",
+     "len",
+     1,
+     2
+    ]
+   ]
+  },
+  "mid-capabilities/definitions": {
+   "allowed": [],
+   "unexplained": []
+  },
+  "config-changes/CHANNEL": {
+   "allowed": [],
+   "unexplained": []
+  },
+  "config-changes/CHANNEL_ACCOUNT": {
+   "allowed": [],
+   "unexplained": []
+  },
+  "config-changes/CHANNEL_MID": {
+   "allowed": [],
+   "unexplained": []
+  },
+  "config-changes/MID_CAPABILITY": {
+   "allowed": [],
+   "unexplained": []
+  }
+ }
+}

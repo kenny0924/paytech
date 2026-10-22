@@ -1,0 +1,332 @@
+{
+ "scan-2026-10-22T18:29:50Z": {
+  "since": "2026-10-22T17:55:00Z",
+  "redirectHostsChecked": 0,
+  "logs": {
+   "risk-decision-service": {
+    "lines": 134,
+    "hits": {},
+    "luhnCardLikeRuns": 0
+   },
+   "payment-service": {
+    "lines": 121,
+    "hits": {},
+    "luhnCardLikeRuns": 0
+   },
+   "acquiring-service": {
+    "lines": 130,
+    "hits": {},
+    "luhnCardLikeRuns": 0
+   },
+   "counterparty-service": {
+    "lines": 109,
+    "hits": {},
+    "luhnCardLikeRuns": 0
+   },
+   "platform-support-service": {
+    "lines": 1138,
+    "hits": {},
+    "luhnCardLikeRuns": 0
+   },
+   "card-service": {
+    "lines": 206,
+    "hits": {},
+    "luhnCardLikeRuns": 0
+   },
+   "channel-connector-service": {
+    "lines": 298,
+    "hits": {},
+    "luhnCardLikeRuns": 0
+   },
+   "api-gateway": {
+    "lines": 875,
+    "hits": {},
+    "luhnCardLikeRuns": 0
+   },
+   "operations-console-bff": {
+    "lines": 378,
+    "hits": {},
+    "luhnCardLikeRuns": 0
+   },
+   "operations-console-web": {
+    "lines": 0,
+    "hits": {},
+    "luhnCardLikeRuns": 0
+   }
+  },
+  "tables": {
+   "payment: IFNULL(payload_json,'') FROM t_compensation_event": {
+    "rows": 0,
+    "hits": {},
+    "luhnCardLikeRuns": 0
+   },
+   "channel-connector: IFNULL(payload_json,'') FROM t_compensation_event": {
+    "rows": 0,
+    "hits": {},
+    "luhnCardLikeRuns": 0
+   },
+   "card: IFNULL(payload_json,'') FROM t_compensation_event": {
+    "rows": 0,
+    "hits": {},
+    "luhnCardLikeRuns": 0
+   },
+   "card: CONCAT_WS('|', IFNULL(error_message,''), IFNULL(value": {
+    "rows": 9,
+    "hits": {},
+    "luhnCardLikeRuns": 0
+   },
+   "payment: CONCAT_WS('|', IFNULL(channel_response_code,''), IFNU": {
+    "rows": 3,
+    "hits": {},
+    "luhnCardLikeRuns": 0
+   },
+   "channel-connector: CONCAT_WS('|', c.channel_callback_id, IFNULL(i.target": {
+    "rows": 0,
+    "hits": {},
+    "luhnCardLikeRuns": 0
+   }
+  },
+  "queues": [
+   [
+    "acquiring.payment.dlq",
+    0,
+    0
+   ],
+   [
+    "acquiring.payment.p0",
+    0,
+    1
+   ],
+   [
+    "acquiring.payment.p1",
+    0,
+    1
+   ],
+   [
+    "acquiring.payment.p2",
+    0,
+    1
+   ],
+   [
+    "acquiring.payment.p3",
+    0,
+    1
+   ],
+   [
+    "card.payment.dlq",
+    0,
+    0
+   ],
+   [
+    "card.payment.p0",
+    0,
+    1
+   ],
+   [
+    "card.payment.p1",
+    0,
+    1
+   ],
+   [
+    "card.payment.p2",
+    0,
+    1
+   ],
+   [
+    "card.payment.p3",
+    0,
+    1
+   ],
+   [
+    "payment.channel-connector.dlq",
+    0,
+    0
+   ],
+   [
+    "payment.channel-connector.p0",
+    0,
+    1
+   ],
+   [
+    "payment.channel-connector.p1",
+    0,
+    1
+   ],
+   [
+    "payment.channel-connector.p2",
+    0,
+    1
+   ],
+   [
+    "payment.channel-connector.p3",
+    0,
+    1
+   ]
+  ]
+ },
+ "scan-2026-10-22T18:42:23Z": {
+  "since": "2026-10-22T17:55:00Z",
+  "redirectHostsChecked": 5,
+  "logs": {
+   "risk-decision-service": {
+    "lines": 136,
+    "hits": {},
+    "luhnCardLikeRuns": 0
+   },
+   "payment-service": {
+    "lines": 128,
+    "hits": {},
+    "luhnCardLikeRuns": 0
+   },
+   "acquiring-service": {
+    "lines": 132,
+    "hits": {},
+    "luhnCardLikeRuns": 0
+   },
+   "counterparty-service": {
+    "lines": 109,
+    "hits": {},
+    "luhnCardLikeRuns": 0
+   },
+   "platform-support-service": {
+    "lines": 1444,
+    "hits": {},
+    "luhnCardLikeRuns": 0
+   },
+   "card-service": {
+    "lines": 211,
+    "hits": {},
+    "luhnCardLikeRuns": 0
+   },
+   "channel-connector-service": {
+    "lines": 388,
+    "hits": {},
+    "luhnCardLikeRuns": 0
+   },
+   "api-gateway": {
+    "lines": 1157,
+    "hits": {},
+    "luhnCardLikeRuns": 0
+   },
+   "operations-console-bff": {
+    "lines": 444,
+    "hits": {},
+    "luhnCardLikeRuns": 0
+   },
+   "operations-console-web": {
+    "lines": 0,
+    "hits": {},
+    "luhnCardLikeRuns": 0
+   }
+  },
+  "tables": {
+   "payment: IFNULL(payload_json,'') FROM t_compensation_event": {
+    "rows": 0,
+    "hits": {},
+    "luhnCardLikeRuns": 0
+   },
+   "channel-connector: IFNULL(payload_json,'') FROM t_compensation_event": {
+    "rows": 0,
+    "hits": {},
+    "luhnCardLikeRuns": 0
+   },
+   "card: IFNULL(payload_json,'') FROM t_compensation_event": {
+    "rows": 0,
+    "hits": {},
+    "luhnCardLikeRuns": 0
+   },
+   "card: CONCAT_WS('|', IFNULL(error_message,''), IFNULL(value": {
+    "rows": 9,
+    "hits": {},
+    "luhnCardLikeRuns": 0
+   },
+   "payment: CONCAT_WS('|', IFNULL(channel_response_code,''), IFNU": {
+    "rows": 7,
+    "hits": {},
+    "luhnCardLikeRuns": 0
+   },
+   "channel-connector: CONCAT_WS('|', c.channel_callback_id, IFNULL(i.target": {
+    "rows": 1,
+    "hits": {},
+    "luhnCardLikeRuns": 0
+   }
+  },
+  "queues": [
+   [
+    "acquiring.payment.dlq",
+    1,
+    0
+   ],
+   [
+    "acquiring.payment.p0",
+    0,
+    1
+   ],
+   [
+    "acquiring.payment.p1",
+    0,
+    1
+   ],
+   [
+    "acquiring.payment.p2",
+    0,
+    1
+   ],
+   [
+    "acquiring.payment.p3",
+    0,
+    1
+   ],
+   [
+    "card.payment.dlq",
+    0,
+    0
+   ],
+   [
+    "card.payment.p0",
+    0,
+    1
+   ],
+   [
+    "card.payment.p1",
+    0,
+    1
+   ],
+   [
+    "card.payment.p2",
+    0,
+    1
+   ],
+   [
+    "card.payment.p3",
+    0,
+    1
+   ],
+   [
+    "payment.channel-connector.dlq",
+    0,
+    0
+   ],
+   [
+    "payment.channel-connector.p0",
+    0,
+    1
+   ],
+   [
+    "payment.channel-connector.p1",
+    0,
+    1
+   ],
+   [
+    "payment.channel-connector.p2",
+    0,
+    1
+   ],
+   [
+    "payment.channel-connector.p3",
+    0,
+    1
+   ]
+  ]
+ }
+}

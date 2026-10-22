@@ -14,8 +14,10 @@ spring:
       client:
         simple:
           instances:
-            # 独立 Mock HTTP 服务承载 Vault（卡 DEK）。
+            # 独立 Mock HTTP 服务承载 Vault（卡 DEK）与 Platform（BIN 库导入）。
             vault-service:
+              - uri: "${test.mock-http.base-url}"
+            platform-support-service:
               - uri: "${test.mock-http.base-url}"
     loadbalancer:
       retry:
@@ -27,6 +29,14 @@ spring:
         # 自动测试不连接 Nacos，外部服务由 simple discovery 指向测试 Mock HTTP 服务。
         enabled: false
         register-enabled: false
+  http:
+    serviceclient:
+      # BIN 库导入：Platform 内部文件接口与国家区域映射，经 simple discovery 指向 Mock 服务（Mock 加 /platform-support 前缀）。
+      platform-support-service:
+        base-url: lb://platform-support-service/platform-support
+        connect-timeout: 2s
+        read-timeout: 5s
+        redirects: dont-follow
   datasource:
     url: "jdbc:mysql://127.0.0.1:13306/mor_card?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
     username: card_app
@@ -90,12 +100,16 @@ redis:
   # 随机后缀允许多个 JVM 并行而互不清理（10 §5.2）。
   key-prefix: card-test-${random.uuid}
   coordination:
-    enabled: false
+    # BIN 库创建版本与激活 / 回切的 card-bin-library 资源锁。
+    enabled: true
+    threads: 2
+    netty-threads: 2
 
 compensation:
   enabled: true
   instance-id: card-test
-  lease-duration: 2m
+  # 须长于 BIN 库导入 Handler 的 15 分钟超时（组件启动校验）。
+  lease-duration: 20m
   scanner-batch-size: 100
   coordinator:
     core-size: 2

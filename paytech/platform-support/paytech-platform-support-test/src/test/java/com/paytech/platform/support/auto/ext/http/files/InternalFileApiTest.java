@@ -38,6 +38,7 @@ import com.paytech.platform.support.api.files.response.StoredFileResponseBody;
 import com.paytech.platform.support.auditsecurity.domain.audit.AuditModels.Result;
 import com.paytech.platform.support.auditsecurity.domain.enums.AuditActorType;
 import com.paytech.platform.support.filedocument.domain.enums.FileUploadStatus;
+import com.paytech.platform.support.filedocument.integration.storage.StoredContentType;
 import com.paytech.platform.support.service.handler.FileScanHandler;
 import com.paytech.platform.support.test.base.FileTestBase;
 import com.paytech.platform.support.test.builder.FileBuilder;
@@ -50,7 +51,8 @@ import com.paytech.platform.support.test.mocker.local.StorageInstanceMocker;
 import com.paytech.platform.support.test.util.InternalTokens;
 
 /**
- * 内部文件接口：调用身份决定来源系统、按来源路由选择存储、完成与扫描、元数据查询、任意内部服务下载，以及多存储并存下读路径不受路由影响。
+ * 内部文件接口：调用身份决定来源系统、按来源路由选择存储、完成与扫描、元数据查询、任意内部服务下载，以及多存储并存下读路径不受路由影响；
+ * CSV 按内容识别为 text/csv，二进制伪装的 CSV 在完成时被拒。
  * <li>internal-auth.mode=DUAL：合法内部 Token 以 sub 为来源系统；无 Token 时回退 X-Caller-Service；两者都没有返回 401。</li>
  * <li>带 fileId 的响应同时返回 fileAddress；下载带 X-Operator-Account-Id 时写一条人工下载审计；下载方式缺省为附件。</li>
  *
@@ -158,6 +160,33 @@ class InternalFileApiTest extends FileTestBase {
             () -> assertEquals(0, auditData.eventCount()),
             () -> assertTrue(download.getExpiresAt().isAfter(now())));
         assertArrayEquals(FileBuilder.PDF, storage.browserGet(download.getUrl()).body());
+    }
+
+    /** 声明为 text/csv 的 UTF-8 CSV：完成时按内容识别为 text/csv，格式检查通过后文件可用，元数据类型为 text/csv。 */
+    @Test
+    void test_normalFlow_csv() {
+        String uploadId = uploadThroughGrant(SOURCE, "bin-2026-10.csv", StoredContentType.CSV, FileBuilder.CSV);
+
+        String fileId = complete(SOURCE, uploadId).assertOk().as(FileUploadCompletionResponseBody.class).getFileId();
+        awaitAvailable(fileId);
+
+        StoredFileResponseBody file = call(HttpMethod.GET, BASE + "/files/" + fileId, PEER, null).assertOk()
+            .as(StoredFileResponseBody.class);
+        assertAll(() -> assertEquals(StoredContentType.CSV, file.getMimeType()),
+            () -> assertEquals("bin-2026-10.csv", file.getDisplayName()),
+            () -> assertEquals(FileBuilder.sha256(FileBuilder.CSV), file.getContentHash()));
+    }
+
+    /** 二进制内容伪装成 text/csv：完成上传时识别类型不符，422 拒绝，不登记文件。 */
+    @Test
+    void test_businessRuleViolation_binaryDisguisedAsCsv() {
+        String uploadId = uploadThroughGrant(SOURCE, "bin.csv", StoredContentType.CSV, FileBuilder.BINARY);
+
+        complete(SOURCE, uploadId).assertProblem(422, FileErrorCode.FILE_POLICY_REJECTED);
+
+        assertAll(() -> assertEquals(FileUploadStatus.CREATED.getCode(),
+            fileData.uploadRow(Long.parseLong(uploadId)).get("status")),
+            () -> assertTrue(fileData.filesOfUpload(Long.parseLong(uploadId)).isEmpty(), "不登记文件"));
     }
 
     /**
@@ -355,13 +384,22 @@ class InternalFileApiTest extends FileTestBase {
 
     /** 指定上传人（可空）开始上传并直传 PDF，返回上传 ID。 */
     private String uploadThroughGrant(String caller, String uploaderAccountId) {
-        FileUploadResponseBody upload = start(caller, null, new StartFileUploadRequestBody(REASON, "contract.pdf",
-            "application/pdf", Integer.toString(FileBuilder.PDF.length), uploaderAccountId))
-            .assertStatus(201).as(FileUploadResponseBody.class);
+        return uploadThroughGrant(caller, "contract.pdf", "application/pdf", FileBuilder.PDF, uploaderAccountId);
+    }
+
+    /** 以声明的文件名与类型开始上传并直传给定字节，上传人 42，返回上传 ID。 */
+    private String uploadThroughGrant(String caller, String filename, String mimeType, byte[] bytes) {
+        return uploadThroughGrant(caller, filename, mimeType, bytes, "42");
+    }
+
+    /** 以声明的文件名、类型与上传人开始上传并按授权直传给定字节，返回上传 ID。 */
+    private String uploadThroughGrant(String caller, String filename, String mimeType, byte[] bytes,
+        String uploaderAccountId) {
+        FileUploadResponseBody upload = start(caller, null, new StartFileUploadRequestBody(REASON, filename, mimeType,
+            Integer.toString(bytes.length), uploaderAccountId)).assertStatus(201).as(FileUploadResponseBody.class);
         storage.track((String) fileData.uploadRow(Long.parseLong(upload.getUploadId())).get("storage_object_ref"));
         var authorization = upload.getAuthorization();
-        assertEquals(200, storage.browserPut(authorization.getUrl(), authorization.getHeaders(),
-            FileBuilder.PDF).statusCode());
+        assertEquals(200, storage.browserPut(authorization.getUrl(), authorization.getHeaders(), bytes).statusCode());
         return upload.getUploadId();
     }
 

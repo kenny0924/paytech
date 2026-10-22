@@ -26,6 +26,15 @@ public final class CardApiConstants {
     /** 已存卡列出、删除与失效的调用方之一（Client API Customer）。 */
     public static final String COUNTERPARTY_SERVICE = "counterparty-service";
 
+    /** BIN 库运营接口的唯一调用方（2026-10-22 BIN 库需求）。 */
+    public static final String OPERATIONS_CONSOLE_BFF = "operations-console-bff";
+
+    /**
+     * 操作人 Operations Account ID 请求头
+     * <li>Gateway 按会话写入，Operations BFF 透传；BIN 库写接口必填，规范正十进制字符串，作为导入人或激活操作人落库。</li>
+     */
+    public static final String ACTOR_HEADER = "X-Gateway-Actor-Subject";
+
     private CardApiConstants() {
     }
 }

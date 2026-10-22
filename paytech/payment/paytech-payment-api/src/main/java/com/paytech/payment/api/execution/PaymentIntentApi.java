@@ -11,6 +11,7 @@ import org.springframework.web.service.annotation.PostExchange;
 
 import com.paytech.payment.api.execution.request.CreateIntentRequestBody;
 import com.paytech.payment.api.execution.request.PayRequestBody;
+import com.paytech.payment.api.execution.request.RefreshSubmissionRequestBody;
 import com.paytech.payment.api.execution.request.TerminateIntentRequestBody;
 import com.paytech.payment.api.execution.response.CreateIntentResponseBody;
 import com.paytech.payment.api.execution.response.GetIntentResponseBody;
@@ -81,6 +82,30 @@ public interface PaymentIntentApi {
         @RequestParam("clientId") @NotBlank(message = "Client ID 必填") @Pattern(regexp = "[1-9][0-9]{0,18}",
             message = "Client ID 必须为无前导零的正整数字符串") @DecimalMax(value = "9223372036854775807",
                 message = "Client ID 超出有效范围") String clientId);
+
+    /**
+     * 刷新来源提交的支付结果（3DS 全链路 technique 3.3.1，收银台轮询调用）
+     *
+     * @param intentId
+     *            支付意图 ID，正十进制 long 字符串，无前导零
+     * @param sourceSubmissionId
+     *            来源提交 ID，格式同上
+     * @param body
+     *            请求；clientId 必须与 Intent 归属一致
+     * @return 与按来源提交查询（EX-I06）相同的响应体
+     *         <li>归属与 404 规则同 EX-I06；当前 PAY 处理中或结果未知时，同一尝试 5 秒内最多触发一次向渠道查单确认结果，其余情况直接返回当前事实。</li>
+     *         <li>Redis 不可用或 Intent 正被其他请求处理时跳过确认、返回当前事实；没有新错误码。</li>
+     *         <li>不返回 3DS 跳转地址；响应不缓存。</li>
+     */
+    @PostExchange("/intents/{intentId}/submissions/{sourceSubmissionId}/refresh")
+    ResponseEntity<GetSubmissionResponseBody> refreshSubmission(
+        @PathVariable("intentId") @NotBlank(message = "支付意图 ID 必填") @Pattern(regexp = "[1-9][0-9]{0,18}",
+            message = "支付意图 ID 必须为无前导零的正整数字符串") @DecimalMax(value = "9223372036854775807",
+                message = "支付意图 ID 超出有效范围") String intentId,
+        @PathVariable("sourceSubmissionId") @NotBlank(message = "来源提交 ID 必填") @Pattern(regexp = "[1-9][0-9]{0,18}",
+            message = "来源提交 ID 必须为无前导零的正整数字符串") @DecimalMax(value = "9223372036854775807",
+                message = "来源提交 ID 超出有效范围") String sourceSubmissionId,
+        @Valid @RequestBody RefreshSubmissionRequestBody body);
 
     /**
      * 终止支付意图

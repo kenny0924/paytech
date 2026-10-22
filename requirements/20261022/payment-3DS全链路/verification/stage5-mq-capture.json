@@ -1,0 +1,62 @@
+{
+ "messages": 14,
+ "paymentSucceeded": 9,
+ "maxPerAttempt": 1,
+ "channelPaymentNotified": 5,
+ "cardFieldsByAttempt": {
+  "239046597990711296": [
+   "VISA",
+   "DEBIT",
+   "CLASSIC",
+   2
+  ],
+  "239046653259055104": [
+   "VISA",
+   "DEBIT",
+   "CLASSIC",
+   2
+  ],
+  "239046670409564160": [
+   "VISA",
+   "DEBIT",
+   "CLASSIC",
+   2
+  ],
+  "239046736515989504": [
+   "VISA",
+   "DEBIT",
+   "CLASSIC",
+   2
+  ],
+  "239046838383050752": [
+   "VISA",
+   "DEBIT",
+   "CLASSIC",
+   2
+  ],
+  "239046905730990080": [
+   "VISA",
+   "CREDIT",
+   "CLASSIC",
+   2
+  ],
+  "239047429993824256": [
+   "MASTERCARD",
+   "CREDIT",
+   "WORLD",
+   2
+  ],
+  "239047431629602816": [
+   "VISA",
+   "CREDIT",
+   "CLASSIC",
+   2
+  ],
+  "239047433043083264": [
+   null,
+   null,
+   null,
+   2
+  ]
+ }
+}

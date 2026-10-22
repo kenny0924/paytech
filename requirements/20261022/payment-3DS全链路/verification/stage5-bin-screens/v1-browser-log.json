@@ -1,0 +1,105 @@
+{
+ "pages": [
+  {
+   "name": "v1-01-main",
+   "url": "/card-bin-library",
+   "check": {
+    "menu": true,
+    "summary": "运营平台 平台配置 卡 BIN 库 开发环境 o***@example.test 退出 | 当前生效版本 无 生效号段数 — 最近导入 v1 生效中 2026-10-22 19:16 由 system 导入 待处理版本 0 个可激活",
+    "rows": "2026-10-22 19:16 激活 v1 system"
+   }
+  },
+  {
+   "name": "v1-02-lookup-8digit",
+   "url": "/card-bin-library",
+   "check": {
+    "result": "BIN 查询 当前生效 查 询 输入 6～8 位数字；只按 BIN 查询，不接受完整卡号 命中前缀 40128888（8 位） 卡组织 VISA 借贷记 DEBIT 卡等级 CLASSIC 卡产品 CONSUMER 发卡国 GB 发卡区域 EUROPE 发卡行 SYNTHETIC TEST ISSUER GB 版本 v1 | 命中前缀 40128888（8 位） 卡组织 VISA 借贷记 DEBIT 卡等级 CLASSIC 卡产品 CONSUMER 发卡国 GB 发卡区域 EUROPE 发卡行 SYNTHETIC TEST ISSUER GB 版本 v1"
+   }
+  },
+  {
+   "name": "v1-03-lookup-unrecognized",
+   "url": "/card-bin-library",
+   "check": {
+    "result": "BIN 查询 当前生效 查 询 输入 6～8 位数字；只按 BIN 查询，不接受完整卡号 未识别（版本 v1）"
+   }
+  },
+  {
+   "name": "v1-04-lookup-invalid",
+   "url": "/card-bin-library",
+   "check": {
+    "queryDisabled": true,
+    "hint": "BIN 查询 当前生效 查 询 只能输入数字 未识别（版本 v1）"
+   }
+  },
+  {
+   "name": "v1-05-detail-row1",
+   "url": "/card-bin-library",
+   "check": {
+    "row": "2026-10-22 19:16 激活 v1 system",
+    "detail": "选择左侧版本查看详情。 激活历史 时间 类型 版本 操作人 2026-10-22 19:16 激活 v1 system 1 10 条/页"
+   }
+  },
+  {
+   "name": "v1-06-import-dialog",
+   "url": "/card-bin-library",
+   "check": {
+    "modal": "导入新版本 1 选择文件 2 上传文件 3 创建版本并校验 选择 CSV 文件 文件不经过网关，直接上传到对象存储；上传完成后自动创建版本，并在后台完整校验。关闭对话框会中止上传。 平台标准 CSV：UTF-8 · 逗号分隔 · 第 1 行为固定表头 · 文件 ≤ 50 MB、≤ 100 万行 · bin_prefix 6～8 位数字且同一前缀不得重复 · card_brand、issuer_country 必填 · 发卡区域按平台国家区域映射自动推导。 下载示例模板 取 消 开始导入"
+   }
+  },
+  {
+   "name": "v1-08-filter-invalid",
+   "url": "/card-bin-library",
+   "check": {
+    "rows": "版本 状态 文件名 号段数 错误行 导入人 创建时间 操作 | 没有该状态的版本 | 2026-10-22 19:16 激活 v1 system"
+   }
+  },
+  {
+   "name": "v1-08-filter-active",
+   "url": "/card-bin-library",
+   "check": {
+    "rows": "版本 状态 文件名 号段数 错误行 导入人 创建时间 操作 | v1 生效中 种子数据（初始化） 17 0 system 2026-10-22 19:16 查看 | 文件 — | 文件摘要 — | 号段数 17（错误 0） | 导入人 system · 2026-10-22 19:16 | 最近更新 2026-10-22 19:16 | 2026-10-22 19:16 激活 v1 system"
+   }
+  }
+ ],
+ "console": [
+  {
+   "page": "login",
+   "type": "error",
+   "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+  },
+  {
+   "page": "login",
+   "type": "error",
+   "text": "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+  },
+  {
+   "page": "01-main",
+   "type": "error",
+   "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+  },
+  {
+   "page": "01-main",
+   "type": "error",
+   "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+  },
+  {
+   "page": "01-main",
+   "type": "error",
+   "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+  }
+ ],
+ "httpErrors": [
+  {
+   "page": "01-main",
+   "method": "GET",
+   "path": "/api/operations/card-admin/v1/bin-library/versions",
+   "status": 429
+  },
+  {
+   "page": "01-main",
+   "method": "GET",
+   "path": "/api/operations/card-admin/v1/bin-library/versions",
+   "status": 429
+  }
+ ]
+}

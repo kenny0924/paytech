@@ -1,0 +1,834 @@
+{
+  "lookup_2026-10-22T15:31:00.326308Z": {
+    "40128888": {
+      "http": 200,
+      "body": {
+        "binLibraryVersionNo": 1,
+        "binPrefix": "40128888",
+        "cardBrand": "VISA",
+        "cardLevel": "CLASSIC",
+        "cardProduct": "CONSUMER",
+        "fundingType": "DEBIT",
+        "issuerCountry": "GB",
+        "issuerName": "SYNTHETIC TEST ISSUER GB",
+        "issuerRegion": "EUROPE",
+        "matchedPrefixLength": 8,
+        "recognized": true
+      }
+    },
+    "401288": {
+      "http": 200,
+      "body": {
+        "binLibraryVersionNo": 1,
+        "binPrefix": "401288",
+        "cardBrand": "VISA",
+        "cardLevel": "GOLD",
+        "cardProduct": "CONSUMER",
+        "fundingType": "CREDIT",
+        "issuerCountry": "US",
+        "issuerName": "SYNTHETIC TEST ISSUER US",
+        "issuerRegion": "NORTH_AMERICA",
+        "matchedPrefixLength": 6,
+        "recognized": true
+      }
+    },
+    "60110009": {
+      "http": 200,
+      "body": {
+        "binLibraryVersionNo": 1,
+        "binPrefix": null,
+        "cardBrand": null,
+        "cardLevel": null,
+        "cardProduct": null,
+        "fundingType": null,
+        "issuerCountry": null,
+        "issuerName": null,
+        "issuerRegion": null,
+        "matchedPrefixLength": null,
+        "recognized": false
+      }
+    },
+    "12ab56": {
+      "http": 400,
+      "body": {
+        "code": "INVALID_REQUEST"
+      }
+    },
+    "123456789": {
+      "http": 400,
+      "body": {
+        "code": "INVALID_REQUEST"
+      }
+    },
+    "versions": {
+      "http": 200,
+      "items": [
+        {
+          "versionNo": 1,
+          "status": "ACTIVE",
+          "active": true,
+          "totalRows": 17,
+          "errorRows": 0,
+          "fileName": null
+        }
+      ]
+    },
+    "activations": {
+      "http": 200,
+      "items": [
+        {
+          "activatedAt": "2026-10-22T15:16:49.545634Z",
+          "activationType": "ACTIVATE",
+          "operatorAccountId": null,
+          "previousVersionNo": null,
+          "versionNo": 1
+        }
+      ]
+    }
+  },
+  "instrument_v1_GB_VISA": {
+    "intent": "239047899470659584",
+    "submission": "869931512722720",
+    "token": {
+      "cardBrand": "VISA",
+      "fundingType": "DEBIT",
+      "cardLevel": "CLASSIC",
+      "cardProduct": "CONSUMER",
+      "issuerCountry": "GB",
+      "issuerRegion": "EUROPE",
+      "binLibraryVersionNo": "1",
+      "binMatchLength": "8"
+    }
+  },
+  "import_good_run1_platformOFF": {
+    "file": "s5-bin-good.csv",
+    "bytes": 576,
+    "rows": 8,
+    "start": {
+      "http": 502,
+      "code": "UPSTREAM_INVALID_RESPONSE",
+      "detail": "依赖服务响应异常，请稍后重试"
+    }
+  },
+  "import_good_run2_completionBody": {
+    "file": "s5-bin-good.csv",
+    "bytes": 576,
+    "rows": 8,
+    "start": {
+      "http": 201,
+      "code": null,
+      "detail": "None"
+    },
+    "put": 200,
+    "complete": {
+      "http": 400,
+      "scanStatus": null,
+      "fileAddress": null,
+      "code": "INVALID_REQUEST",
+      "detail": "该请求不接受 Body"
+    }
+  },
+  "lookup_2026-10-22T15:40:44.027932Z": {
+    "40128888": {
+      "http": 200,
+      "body": {
+        "binLibraryVersionNo": 1,
+        "binPrefix": "40128888",
+        "cardBrand": "VISA",
+        "cardLevel": "CLASSIC",
+        "cardProduct": "CONSUMER",
+        "fundingType": "DEBIT",
+        "issuerCountry": "GB",
+        "issuerName": "SYNTHETIC TEST ISSUER GB",
+        "issuerRegion": "EUROPE",
+        "matchedPrefixLength": 8,
+        "recognized": true
+      }
+    },
+    "401288": {
+      "http": 200,
+      "body": {
+        "binLibraryVersionNo": 1,
+        "binPrefix": "401288",
+        "cardBrand": "VISA",
+        "cardLevel": "GOLD",
+        "cardProduct": "CONSUMER",
+        "fundingType": "CREDIT",
+        "issuerCountry": "US",
+        "issuerName": "SYNTHETIC TEST ISSUER US",
+        "issuerRegion": "NORTH_AMERICA",
+        "matchedPrefixLength": 6,
+        "recognized": true
+      }
+    },
+    "60110009": {
+      "http": 200,
+      "body": {
+        "binLibraryVersionNo": 1,
+        "binPrefix": null,
+        "cardBrand": null,
+        "cardLevel": null,
+        "cardProduct": null,
+        "fundingType": null,
+        "issuerCountry": null,
+        "issuerName": null,
+        "issuerRegion": null,
+        "matchedPrefixLength": null,
+        "recognized": false
+      }
+    },
+    "12ab56": {
+      "http": 400,
+      "body": {
+        "code": "INVALID_REQUEST"
+      }
+    },
+    "123456789": {
+      "http": 400,
+      "body": {
+        "code": "INVALID_REQUEST"
+      }
+    },
+    "versions": {
+      "http": 200,
+      "items": [
+        {
+          "versionNo": 2,
+          "status": "VALID",
+          "active": false,
+          "totalRows": 8,
+          "errorRows": 0,
+          "fileName": "s5-bin-good.csv"
+        },
+        {
+          "versionNo": 1,
+          "status": "ACTIVE",
+          "active": true,
+          "totalRows": 17,
+          "errorRows": 0,
+          "fileName": null
+        }
+      ]
+    },
+    "activations": {
+      "http": 200,
+      "items": [
+        {
+          "activatedAt": "2026-10-22T15:16:49.545634Z",
+          "activationType": "ACTIVATE",
+          "operatorAccountId": null,
+          "previousVersionNo": null,
+          "versionNo": 1
+        }
+      ]
+    }
+  },
+  "import_bad": {
+    "file": "s5-bin-bad.csv",
+    "bytes": 510,
+    "rows": 9,
+    "start": {
+      "http": 201,
+      "code": null,
+      "detail": "None"
+    },
+    "put": 200,
+    "complete": {
+      "http": 200,
+      "scanStatus": "PENDING_SCAN",
+      "fileAddress": "/files/v1/239050348394713088",
+      "code": null,
+      "detail": "None"
+    },
+    "create": {
+      "http": 201,
+      "versionNo": 3,
+      "status": "VALIDATING",
+      "code": null,
+      "detail": "None"
+    },
+    "createReplay": {
+      "http": 200,
+      "versionNo": 3
+    },
+    "final": {
+      "versionNo": 3,
+      "status": "INVALID",
+      "active": false,
+      "totalRows": 9,
+      "processedRows": 0,
+      "errorRows": 9,
+      "failureReason": null,
+      "fileContentHash": "50c5fa46b65c8cb39d8fc35ea9e1d1aa9e3fbced6f46453ae5c3104e1ce1f66f",
+      "createdBy": "236033080844881920"
+    },
+    "pollStatuses": [
+      "INVALID"
+    ],
+    "xxlScans": [],
+    "errors": {
+      "http": 200,
+      "total": 9,
+      "items": [
+        {
+          "columnName": "bin_prefix",
+          "errorCode": "DUPLICATE_PREFIX",
+          "errorMessage": "同一前缀在文件中出现多次",
+          "lineNo": 2,
+          "valueExcerpt": "400000"
+        },
+        {
+          "columnName": "bin_prefix",
+          "errorCode": "DUPLICATE_PREFIX",
+          "errorMessage": "同一前缀在文件中出现多次",
+          "lineNo": 3,
+          "valueExcerpt": "400000"
+        },
+        {
+          "columnName": "card_brand",
+          "errorCode": "INVALID_VALUE",
+          "errorMessage": "card_brand 只允许 VISA、MASTERCARD、AMEX、UNIONPAY、MADA、DISCOVER、JCB、DINERS",
+          "lineNo": 4,
+          "valueExcerpt": "VISAX"
+        },
+        {
+          "columnName": "issuer_country",
+          "errorCode": "REQUIRED_MISSING",
+          "errorMessage": "issuer_country 必填",
+          "lineNo": 5,
+          "valueExcerpt": null
+        },
+        {
+          "columnName": "issuer_country",
+          "errorCode": "COUNTRY_REGION_MISSING",
+          "errorMessage": "发卡国 XX 未登记区域",
+          "lineNo": 6,
+          "valueExcerpt": "XX"
+        },
+        {
+          "columnName": "bin_prefix",
+          "errorCode": "INVALID_FORMAT",
+          "errorMessage": "bin_prefix 必须为 6 至 8 位数字",
+          "lineNo": 7,
+          "valueExcerpt": null
+        },
+        {
+          "columnName": "bin_prefix",
+          "errorCode": "INVALID_FORMAT",
+          "errorMessage": "bin_prefix 必须为 6 至 8 位数字",
+          "lineNo": 8,
+          "valueExcerpt": "45AB12"
+        },
+        {
+          "columnName": null,
+          "errorCode": "COLUMN_COUNT_MISMATCH",
+          "errorMessage": "列数必须为 7，且引号须成对闭合",
+          "lineNo": 9,
+          "valueExcerpt": null
+        },
+        {
+          "columnName": "funding_type",
+          "errorCode": "INVALID_VALUE",
+          "errorMessage": "funding_type 只允许 CREDIT、DEBIT、PREPAID、CHARGE",
+          "lineNo": 10,
+          "valueExcerpt": "OVERDRAFT"
+        }
+      ]
+    },
+    "listAfter": [
+      {
+        "versionNo": 3,
+        "status": "INVALID",
+        "active": false,
+        "totalRows": 9,
+        "errorRows": 9
+      },
+      {
+        "versionNo": 2,
+        "status": "VALID",
+        "active": false,
+        "totalRows": 8,
+        "errorRows": 0
+      },
+      {
+        "versionNo": 1,
+        "status": "ACTIVE",
+        "active": true,
+        "totalRows": 17,
+        "errorRows": 0
+      }
+    ]
+  },
+  "import_header": {
+    "file": "s5-bin-header.csv",
+    "bytes": 33,
+    "rows": 1,
+    "start": {
+      "http": 201,
+      "code": null,
+      "detail": "None"
+    },
+    "put": 200,
+    "complete": {
+      "http": 200,
+      "scanStatus": "PENDING_SCAN",
+      "fileAddress": "/files/v1/239050403600142336",
+      "code": null,
+      "detail": "None"
+    },
+    "create": {
+      "http": 201,
+      "versionNo": 4,
+      "status": "VALIDATING",
+      "code": null,
+      "detail": "None"
+    },
+    "createReplay": {
+      "http": 200,
+      "versionNo": 4
+    },
+    "final": {
+      "versionNo": 4,
+      "status": "INVALID",
+      "active": false,
+      "totalRows": null,
+      "processedRows": 0,
+      "errorRows": 0,
+      "failureReason": "表头不符：第 1 行必须为 bin_prefix,card_brand,funding_type,card_level,card_product,issuer_country,issuer_name",
+      "fileContentHash": "cb16c56f44e6ec243fa3e426ad73119e1effde1e921980dcd5d9438ee1353c46",
+      "createdBy": "236033080844881920"
+    },
+    "pollStatuses": [
+      "INVALID"
+    ],
+    "xxlScans": [],
+    "errors": {
+      "http": 200,
+      "total": 0,
+      "items": []
+    },
+    "listAfter": [
+      {
+        "versionNo": 4,
+        "status": "INVALID",
+        "active": false,
+        "totalRows": null,
+        "errorRows": 0
+      },
+      {
+        "versionNo": 3,
+        "status": "INVALID",
+        "active": false,
+        "totalRows": 9,
+        "errorRows": 9
+      },
+      {
+        "versionNo": 2,
+        "status": "VALID",
+        "active": false,
+        "totalRows": 8,
+        "errorRows": 0
+      },
+      {
+        "versionNo": 1,
+        "status": "ACTIVE",
+        "active": true,
+        "totalRows": 17,
+        "errorRows": 0
+      }
+    ]
+  },
+  "import_good_first": {
+    "file": "s5-bin-good.csv",
+    "bytes": 576,
+    "rows": 8,
+    "start": {
+      "http": 201,
+      "code": null,
+      "detail": "None"
+    },
+    "put": 200,
+    "complete": {
+      "http": 200,
+      "scanStatus": "PENDING_SCAN",
+      "fileAddress": "/files/v1/239050284062478336",
+      "code": null,
+      "detail": "None"
+    },
+    "create": {
+      "http": 201,
+      "versionNo": 2,
+      "status": "VALIDATING",
+      "code": null,
+      "detail": "None"
+    },
+    "createReplay": {
+      "http": 200,
+      "versionNo": 2
+    },
+    "final": {
+      "versionNo": 2,
+      "status": "VALID",
+      "active": false,
+      "totalRows": 8,
+      "processedRows": 8,
+      "errorRows": 0,
+      "failureReason": null,
+      "fileContentHash": "5e25edb59746e72f3012abb65b856fd5f65fea91ace041e7c5c551b4e41f4eab",
+      "createdBy": "236033080844881920"
+    },
+    "pollStatuses": [
+      "VALID",
+      "VALIDATING"
+    ],
+    "xxlScans": [],
+    "errors": {
+      "http": 200,
+      "total": 0,
+      "items": []
+    },
+    "listAfter": [
+      {
+        "versionNo": 2,
+        "status": "VALID",
+        "active": false,
+        "totalRows": 8,
+        "errorRows": 0
+      },
+      {
+        "versionNo": 1,
+        "status": "ACTIVE",
+        "active": true,
+        "totalRows": 17,
+        "errorRows": 0
+      }
+    ]
+  },
+  "import_good": {
+    "file": "s5-bin-good.csv",
+    "bytes": 576,
+    "rows": 8,
+    "start": {
+      "http": 201,
+      "code": null,
+      "detail": "None"
+    },
+    "put": 200,
+    "complete": {
+      "http": 200,
+      "scanStatus": "PENDING_SCAN",
+      "fileAddress": "/files/v1/239050406309662720",
+      "code": null,
+      "detail": "None"
+    },
+    "create": {
+      "http": 201,
+      "versionNo": 5,
+      "status": "VALIDATING",
+      "code": null,
+      "detail": "None"
+    },
+    "createReplay": {
+      "http": 200,
+      "versionNo": 5
+    },
+    "final": {
+      "versionNo": 5,
+      "status": "VALID",
+      "active": false,
+      "totalRows": 8,
+      "processedRows": 8,
+      "errorRows": 0,
+      "failureReason": null,
+      "fileContentHash": "5e25edb59746e72f3012abb65b856fd5f65fea91ace041e7c5c551b4e41f4eab",
+      "createdBy": "236033080844881920"
+    },
+    "pollStatuses": [
+      "VALID"
+    ],
+    "xxlScans": [],
+    "errors": {
+      "http": 200,
+      "total": 0,
+      "items": []
+    },
+    "listAfter": [
+      {
+        "versionNo": 5,
+        "status": "VALID",
+        "active": false,
+        "totalRows": 8,
+        "errorRows": 0
+      },
+      {
+        "versionNo": 4,
+        "status": "INVALID",
+        "active": false,
+        "totalRows": null,
+        "errorRows": 0
+      },
+      {
+        "versionNo": 3,
+        "status": "INVALID",
+        "active": false,
+        "totalRows": 9,
+        "errorRows": 9
+      },
+      {
+        "versionNo": 2,
+        "status": "VALID",
+        "active": false,
+        "totalRows": 8,
+        "errorRows": 0
+      },
+      {
+        "versionNo": 1,
+        "status": "ACTIVE",
+        "active": true,
+        "totalRows": 17,
+        "errorRows": 0
+      }
+    ]
+  },
+  "activate_3_2026-10-22T15:41:07.499117Z": {
+    "http": 400,
+    "body": {
+      "type": "about:blank",
+      "title": "Bad Request",
+      "detail": "BIN 库版本 v3 状态为 INVALID，不能激活",
+      "code": "BUSINESS_CHECK_FAILED",
+      "requestId": "23fa19ea-5de6-42c1-85ba-54cd1973b62b",
+      "timestamp": "2026-10-22T15:41:07.496612Z"
+    }
+  },
+  "activate_2_2026-10-22T15:41:07.864907Z": {
+    "http": 409,
+    "body": {
+      "type": "about:blank",
+      "title": "Conflict",
+      "detail": "生效版本已被他人修改，请刷新后重试",
+      "code": "CONCURRENT_REQUEST",
+      "requestId": "a643e2fd-50c2-467c-8c5b-218fae673e6d",
+      "timestamp": "2026-10-22T15:41:07.863368Z"
+    }
+  },
+  "race_2026-10-22T15:41:11.506250Z": {
+    "expectedActive": 1,
+    "outcomes": {
+      "2": {
+        "http": 409,
+        "code": "CONCURRENT_REQUEST",
+        "detail": "当前资源正在执行",
+        "versionNo": null
+      },
+      "5": {
+        "http": 200,
+        "code": null,
+        "detail": "None",
+        "versionNo": 5
+      }
+    },
+    "activeAfter": 5
+  },
+  "instrument_v5_GB_VISA": {
+    "intent": "239050584332730368",
+    "submission": "386198936366237",
+    "token": {
+      "cardBrand": "VISA",
+      "fundingType": "CREDIT",
+      "cardLevel": "PLATINUM",
+      "cardProduct": "CONSUMER",
+      "issuerCountry": "AE",
+      "issuerRegion": "GCC",
+      "binLibraryVersionNo": "5",
+      "binMatchLength": "8"
+    }
+  },
+  "activate_1_2026-10-22T15:41:59.698577Z": {
+    "http": 200,
+    "body": {
+      "activatedAt": "2026-10-22T15:41:59.684041Z",
+      "activationType": "ROLLBACK",
+      "operatorAccountId": "236033080844881920",
+      "previousVersionNo": 5,
+      "versionNo": 1
+    }
+  },
+  "instrument_rollback_v1_GB_VISA": {
+    "intent": "239050665047916544",
+    "submission": "101574316534449",
+    "token": {
+      "cardBrand": "VISA",
+      "fundingType": "DEBIT",
+      "cardLevel": "CLASSIC",
+      "cardProduct": "CONSUMER",
+      "issuerCountry": "GB",
+      "issuerRegion": "EUROPE",
+      "binLibraryVersionNo": "1",
+      "binMatchLength": "8"
+    }
+  },
+  "lookup_2026-10-22T15:42:01.196499Z": {
+    "40128888": {
+      "http": 200,
+      "body": {
+        "binLibraryVersionNo": 1,
+        "binPrefix": "40128888",
+        "cardBrand": "VISA",
+        "cardLevel": "CLASSIC",
+        "cardProduct": "CONSUMER",
+        "fundingType": "DEBIT",
+        "issuerCountry": "GB",
+        "issuerName": "SYNTHETIC TEST ISSUER GB",
+        "issuerRegion": "EUROPE",
+        "matchedPrefixLength": 8,
+        "recognized": true
+      }
+    },
+    "401288": {
+      "http": 200,
+      "body": {
+        "binLibraryVersionNo": 1,
+        "binPrefix": "401288",
+        "cardBrand": "VISA",
+        "cardLevel": "GOLD",
+        "cardProduct": "CONSUMER",
+        "fundingType": "CREDIT",
+        "issuerCountry": "US",
+        "issuerName": "SYNTHETIC TEST ISSUER US",
+        "issuerRegion": "NORTH_AMERICA",
+        "matchedPrefixLength": 6,
+        "recognized": true
+      }
+    },
+    "60110009": {
+      "http": 200,
+      "body": {
+        "binLibraryVersionNo": 1,
+        "binPrefix": null,
+        "cardBrand": null,
+        "cardLevel": null,
+        "cardProduct": null,
+        "fundingType": null,
+        "issuerCountry": null,
+        "issuerName": null,
+        "issuerRegion": null,
+        "matchedPrefixLength": null,
+        "recognized": false
+      }
+    },
+    "12ab56": {
+      "http": 400,
+      "body": {
+        "code": "INVALID_REQUEST"
+      }
+    },
+    "123456789": {
+      "http": 400,
+      "body": {
+        "code": "INVALID_REQUEST"
+      }
+    },
+    "versions": {
+      "http": 200,
+      "items": [
+        {
+          "versionNo": 5,
+          "status": "RETIRED",
+          "active": false,
+          "totalRows": 8,
+          "errorRows": 0,
+          "fileName": "s5-bin-good.csv"
+        },
+        {
+          "versionNo": 4,
+          "status": "INVALID",
+          "active": false,
+          "totalRows": null,
+          "errorRows": 0,
+          "fileName": "s5-bin-header.csv"
+        },
+        {
+          "versionNo": 3,
+          "status": "INVALID",
+          "active": false,
+          "totalRows": 9,
+          "errorRows": 9,
+          "fileName": "s5-bin-bad.csv"
+        },
+        {
+          "versionNo": 2,
+          "status": "VALID",
+          "active": false,
+          "totalRows": 8,
+          "errorRows": 0,
+          "fileName": "s5-bin-good.csv"
+        },
+        {
+          "versionNo": 1,
+          "status": "ACTIVE",
+          "active": true,
+          "totalRows": 17,
+          "errorRows": 0,
+          "fileName": null
+        }
+      ]
+    },
+    "activations": {
+      "http": 200,
+      "items": [
+        {
+          "activatedAt": "2026-10-22T15:41:59.684041Z",
+          "activationType": "ROLLBACK",
+          "operatorAccountId": "236033080844881920",
+          "previousVersionNo": 5,
+          "versionNo": 1
+        },
+        {
+          "activatedAt": "2026-10-22T15:41:11.485195Z",
+          "activationType": "ACTIVATE",
+          "operatorAccountId": "236033080844881920",
+          "previousVersionNo": 1,
+          "versionNo": 5
+        },
+        {
+          "activatedAt": "2026-10-22T15:16:49.545634Z",
+          "activationType": "ACTIVATE",
+          "operatorAccountId": null,
+          "previousVersionNo": null,
+          "versionNo": 1
+        }
+      ]
+    }
+  },
+  "storedCards_cardBrand": {
+    "apply": 200,
+    "pay": [
+      202,
+      "PROCESSING"
+    ],
+    "attempt": "239052036082008064",
+    "acquiring-service": {
+      "http": 200,
+      "cards": [
+        {
+          "cardBrand": "MASTERCARD",
+          "panLast4": null,
+          "expiryMonth": "03",
+          "expiryYear": "2030"
+        }
+      ]
+    },
+    "counterparty-service": {
+      "http": 200,
+      "cards": [
+        {
+          "cardBrand": "MASTERCARD",
+          "panLast4": null,
+          "expiryMonth": "03",
+          "expiryYear": "2030"
+        }
+      ]
+    }
+  }
+}

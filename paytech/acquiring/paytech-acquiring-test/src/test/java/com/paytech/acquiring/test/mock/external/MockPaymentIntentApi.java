@@ -71,6 +71,17 @@ public class MockPaymentIntentApi implements PaymentIntentApi, WebMvcConfigurer 
         var request = (org.springframework.web.context.request.ServletRequestAttributes)
             org.springframework.web.context.request.RequestContextHolder.currentRequestAttributes();
         request.getResponse().setHeader("X-Request-Id", "payment-test");
-        return ResponseEntity.ok(submissions.answer(intentId, sourceSubmissionId, clientId));
+        return ResponseEntity.ok(submissions.answer(intentId, sourceSubmissionId, clientId, PaymentSubmissionMocker.GET));
+    }
+
+    /** 刷新（3DS 全链路）与 EX-I06 共用 DTO 配置，按调用记录区分。 */
+    @Override
+    public ResponseEntity<GetSubmissionResponseBody> refreshSubmission(String intentId, String sourceSubmissionId,
+        RefreshSubmissionRequestBody body) {
+        var request = (org.springframework.web.context.request.ServletRequestAttributes)
+            org.springframework.web.context.request.RequestContextHolder.currentRequestAttributes();
+        request.getResponse().setHeader("X-Request-Id", "payment-test");
+        return ResponseEntity.ok(
+            submissions.answer(intentId, sourceSubmissionId, body.getClientId(), PaymentSubmissionMocker.REFRESH));
     }
 }

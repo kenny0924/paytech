@@ -23,14 +23,15 @@ import tools.jackson.databind.JsonNode;
 
 /**
  * payment.events 上一条 PaymentSucceeded 信封（Schema v2，design/08 §2、design/05 §2.3）的断言：信封字段、AMQP 属性、Payload 为 v1 字段
- * 加 v2 卡域字段（instrumentRef、consentToSave、customerId）、以真实消费端解码器校验 payloadHash，以及禁止字段。
+ * 加 v2 卡域字段（instrumentRef、consentToSave、customerId）与 BIN 库卡属性（cardBrand、fundingType、cardLevel）、以真实消费端解码器
+ * 校验 payloadHash，以及禁止字段。
  */
 public class PaymentSucceededEnvelopeChecker {
-    /** Payload 固定字段顺序（Schema v2）：v1 字段之后依次为 instrumentRef、consentToSave、customerId。 */
+    /** Payload 固定字段顺序（Schema v2）：v1 字段之后依次为 instrumentRef、consentToSave、customerId、cardBrand、fundingType、cardLevel。 */
     public static final List<String> PAYLOAD_FIELDS = List.of("clientId", "orderId", "sourceType", "paymentIntentId",
         "paymentAttemptId", "sourceSubmissionId", "entityNo", "amount", "currency", "capturedAmount", "paymentSucceededTime",
         "paymentMethodCode", "channelId", "channelAccountId", "midId", "channelTransactionRef", "instrumentRef", "consentToSave",
-        "customerId");
+        "customerId", "cardBrand", "fundingType", "cardLevel");
 
     private final Message message;
 
@@ -91,6 +92,30 @@ public class PaymentSucceededEnvelopeChecker {
             () -> assertEquals(customerId == null, payload.path("customerId").isNull(), "customerId 是否为 null"),
             () -> assertEquals(customerId, customerId == null ? null : payload.path("customerId").asString()));
         return this;
+    }
+
+    /**
+     * v2 追加的 BIN 库卡属性：有值为字符串，未识别或号段未提供为 JSON null
+     *
+     * @param cardBrand 期望的卡组织
+     * @param fundingType 期望的借贷记类型
+     * @param cardLevel 期望的卡等级
+     */
+    public PaymentSucceededEnvelopeChecker cardAttributes(String cardBrand, String fundingType, String cardLevel) {
+        JsonNode payload = envelope.path("payload");
+        assertAll(() -> assertTextOrNull(cardBrand, payload.path("cardBrand"), "cardBrand"),
+            () -> assertTextOrNull(fundingType, payload.path("fundingType"), "fundingType"),
+            () -> assertTextOrNull(cardLevel, payload.path("cardLevel"), "cardLevel"));
+        return this;
+    }
+
+    /** 期望为 null 时字段须为 JSON null，否则为相同字符串。 */
+    static void assertTextOrNull(String expected, JsonNode actual, String field) {
+        if (expected == null) {
+            assertTrue(actual.isNull(), field + " 应为 JSON null");
+            return;
+        }
+        assertEquals(expected, actual.asString(), field);
     }
 
     /** 整条消息不含给定的受限值或字段名。 */

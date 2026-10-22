@@ -56,10 +56,18 @@ customer_id|Customer 标识|本次支付关联的 Commerce Customer 标识；访
 consent_to_save|同意保存卡|1 表示消费者同意支付成功后保存卡，0 表示不同意；仅手输卡且有 customer_id 时可为 1
 card_bin|卡 BIN|Card 创建卡工具时返回的 6 或 8 位卡 BIN，只用作支付风控输入；非卡工具为 NULL
 card_fingerprint|卡指纹|Card 创建卡工具时返回的跨交易稳定受限卡指纹，不能反推卡号；非卡工具为 NULL
+card_brand|卡组织|Card 创建卡工具时按 BIN 库冻结的卡组织；未识别或非卡工具为 NULL。用于 Risk 输入、路由 schemeCode 与 PaymentSucceeded
+funding_type|借贷记类型|冻结的借贷记类型；未识别、数据未提供或非卡工具为 NULL
+card_level|卡等级|冻结的卡等级；未识别、数据未提供或非卡工具为 NULL
+card_product|卡产品|冻结的卡产品类别；未识别、数据未提供或非卡工具为 NULL
+issuer_country|发卡国|冻结的发卡国 ISO 3166-1 alpha-2；未识别或非卡工具为 NULL
+issuer_region|发卡区域|冻结的发卡区域；未识别或非卡工具为 NULL
+bin_library_version_no|BIN 库版本号|查询时的 BIN 库生效版本号；没有生效版本或非卡工具为 NULL。识别与否都记录，用于追溯
+bin_match_length|命中前缀位数|命中号段的前缀位数（6、7、8）；未识别或非卡工具为 NULL，NULL 与 bin_library_version_no 非空同时出现表示查询过但未识别
 revoked_at|撤销时间|单向撤销新使用资格的 UTC 时间，不表示渠道资金撤销
 sub_event_type|补偿业务子类型|同一 Handler 下的受控业务子类型，最长 64 个 Java 字符；与 event_key、event_type 共同组成稳定唯一身份
 interaction_expires_at|交互截止时间|原消费者交互可继续等待的 UTC 微秒截止时间；REQUIRES_ACTION 时必填，完成后保留历史值，不等于认证证明有效期
-interaction_type|交互类型|原 Action 的消费者交互类型，无交互时为空。允许值：REDIRECT、THREE_DS_CHALLENGE、SDK、APP_SWITCH、QR_CODE；本期只写 THREE_DS_CHALLENGE
+interaction_type|交互类型|原 Action 的消费者交互类型，无交互时为空。允许值：REDIRECT、THREE_DS_CHALLENGE、SDK、APP_SWITCH、QR_CODE；本期按渠道返回写 THREE_DS_CHALLENGE 或 REDIRECT
 authentication_requirement|认证要求|原 PAY_RISK 获得可信 ALLOW 后冻结的认证要求。允许值：NOT_REQUIRED、THREE_DS_REQUIRED、CHALLENGE_REQUIRED；尚无确定允许结果时为空
 capture_mode|捕获模式|本次支付尝试冻结的捕获模式；新执行必填且不可修改。允许值：AUTOMATIC、MANUAL；历史未核对时为空
 source_submission_id|原支付提交标识|Commerce 原支付提交命令标识；新执行必填且全局唯一绑定一个 Attempt，历史无可靠身份时为空，不得猜测回填
@@ -297,8 +305,8 @@ function parseFieldMetadataSource(source) {
     }
     result[fieldKey] = metadata(defName, description);
   }
-  if (Object.keys(result).length !== 233) {
-    throw new Error(`Payment 字段元数据必须精确覆盖 233 个唯一字段键，实际 ${Object.keys(result).length}`);
+  if (Object.keys(result).length !== 241) {
+    throw new Error(`Payment 字段元数据必须精确覆盖 241 个唯一字段键，实际 ${Object.keys(result).length}`);
   }
   return Object.freeze(result);
 }
@@ -309,6 +317,9 @@ export const FIELD_METADATA = parseFieldMetadataSource(FIELD_METADATA_SOURCE);
 export const CLOSED_ENUM_VALUES = Object.freeze({
   "payment_action.authentication_requirement": ["NOT_REQUIRED", "THREE_DS_REQUIRED", "CHALLENGE_REQUIRED"],
   "payment_instrument_token.instrument_type": ["CARD"],
+  "payment_instrument_token.card_brand": ["VISA", "MASTERCARD", "AMEX", "UNIONPAY", "MADA", "DISCOVER", "JCB", "DINERS"],
+  "payment_instrument_token.funding_type": ["CREDIT", "DEBIT", "PREPAID", "CHARGE"],
+  "payment_instrument_token.card_product": ["CONSUMER", "COMMERCIAL"],
   "payment_channel.channel_status": ["DRAFT", "ACTIVE", "SUSPENDED", "CLOSED"],
   "channel_account.account_status": ["DRAFT", "ACTIVE", "SUSPENDED", "CLOSED"],
   "channel_mid.mid_status": ["DRAFT", "ACTIVE", "SUSPENDED", "CLOSED"],
@@ -357,6 +368,9 @@ export const CLOSED_ENUM_VALUES = Object.freeze({
 export const OPEN_CODE_SOURCES = Object.freeze({
   "payment_action.channel_response_code": "Channel Adapter Catalog",
   "payment_instrument_token.payment_method_code": "Payment Method Catalog",
+  "payment_instrument_token.card_level": "Card BIN 库",
+  "payment_instrument_token.issuer_country": "ISO 3166-1 alpha-2",
+  "payment_instrument_token.issuer_region": "Platform 国家区域映射 region_code",
   "compensation_event.sub_event_type": "Payment Compensation Sub Event Catalog",
   "payment_channel.channel_code": "Channel Catalog",
   "channel_mid.external_mid_code": "Channel Adapter Catalog",

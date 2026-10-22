@@ -48,6 +48,18 @@ public class PayContext implements ActionContext {
      */
     private PayNextAction nextAction;
 
+    /**
+     * 路由选中渠道的编码
+     * <li>只用于本次新提交拼渠道支付通知地址；不持久化，原提交重放与确认支付结果时为 null。</li>
+     */
+    private String channelCode;
+
+    /**
+     * 路由选中 MID 的 3DS 模式（SECURITY.3DS_MODE）
+     * <li>只用于本次新提交在 PAY 前检查风控要求的 3DS 能力；不持久化，未声明为 null。</li>
+     */
+    private String midThreeDsMode;
+
     /** 当前工具类型对应的支付入口流程。 */
     public String actionFlowKey() {
         return instToken.getInstrumentType().getCode() + ":PAY";

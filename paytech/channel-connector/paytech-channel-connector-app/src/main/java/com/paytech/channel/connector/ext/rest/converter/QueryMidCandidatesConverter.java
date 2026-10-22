@@ -33,11 +33,13 @@ public class QueryMidCandidatesConverter {
     static MidCandidateBody candidate(MidCandidateView view) {
         var body = new MidCandidateBody();
         body.setChannelId(view.getChannelId().toString());
+        body.setChannelCode(view.getChannelCode());
         body.setChannelAccountId(view.getChannelAccountId().toString());
         body.setMidId(view.getMidId().toString());
         body.setSupportedOperations(List.copyOf(view.getSupportedOperations()));
         body.setMinAmount(text(view.getMinAmount()));
         body.setMaxAmount(text(view.getMaxAmount()));
+        body.setThreeDsMode(view.getThreeDsMode());
         return body;
     }
 

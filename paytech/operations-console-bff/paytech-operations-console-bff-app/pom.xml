@@ -49,6 +49,10 @@
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
+            <artifactId>paytech-card-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.paytech</groupId>
             <artifactId>paytech-channel-connector-api</artifactId>
         </dependency>
         <dependency>

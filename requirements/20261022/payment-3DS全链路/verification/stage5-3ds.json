@@ -1,0 +1,886 @@
+{
+  "_runs": [
+    {
+      "scenario": "handler",
+      "startedAt": "2026-10-22T15:24:18.891231Z",
+      "finishedAt": "2026-10-22T15:24:20.567030Z"
+    },
+    {
+      "scenario": "handler",
+      "startedAt": "2026-10-22T15:24:44.391052Z",
+      "finishedAt": "2026-10-22T15:24:58.144156Z"
+    },
+    {
+      "scenario": "failed",
+      "startedAt": "2026-10-22T15:25:09.366061Z",
+      "finishedAt": "2026-10-22T15:25:10.564913Z"
+    },
+    {
+      "scenario": "refresh",
+      "startedAt": "2026-10-22T15:25:10.564951Z",
+      "finishedAt": "2026-10-22T15:25:22.586380Z"
+    },
+    {
+      "scenario": "refresh",
+      "startedAt": "2026-10-22T15:25:49.994895Z",
+      "finishedAt": "2026-10-22T15:26:03.144296Z"
+    },
+    {
+      "scenario": "callback",
+      "startedAt": "2026-10-22T15:26:03.144938Z",
+      "finishedAt": "2026-10-22T15:26:11.134306Z"
+    },
+    {
+      "scenario": "concurrent",
+      "startedAt": "2026-10-22T15:26:23.077930Z",
+      "finishedAt": "2026-10-22T15:26:26.964778Z"
+    },
+    {
+      "scenario": "expiry",
+      "startedAt": "2026-10-22T15:26:26.964856Z",
+      "finishedAt": "2026-10-22T15:26:33.589104Z"
+    },
+    {
+      "scenario": "concurrent",
+      "startedAt": "2026-10-22T15:26:47.391906Z",
+      "finishedAt": "2026-10-22T15:26:51.498215Z"
+    },
+    {
+      "scenario": "expiry",
+      "startedAt": "2026-10-22T15:26:51.498272Z",
+      "finishedAt": "2026-10-22T15:27:20.042795Z"
+    }
+  ],
+  "AC01_AC04_handler_run1_mockFallback": {
+    "payHttp": 202,
+    "payStatus": "PROCESSING",
+    "nextActionType": "THREE_DS_CHALLENGE",
+    "redirectUrlPresent": true,
+    "riskAssessment": {
+      "issuerCountryCode": "GB",
+      "cardBrand": "VISA",
+      "fundingType": "DEBIT",
+      "authenticationRequirement": "THREE_DS_REQUIRED"
+    },
+    "afterPay": {
+      "attemptStatus": "PROCESSING",
+      "midId": "238501217200832512",
+      "capturedAmount": "0.00000000",
+      "intentStatus": "OPEN",
+      "activeAttemptId": "239046216015446016",
+      "successfulAttemptId": "",
+      "compensation": [
+        [
+          "PAY_RESULT_QUERY",
+          "PROCESSING",
+          "1"
+        ]
+      ],
+      "channelTxnRefs": 1,
+      "actions": [
+        {
+          "no": "1",
+          "type": "PAY_RISK",
+          "status": "SUCCEEDED",
+          "authReq": "THREE_DS_REQUIRED",
+          "interaction": "",
+          "expires": "",
+          "code": ""
+        },
+        {
+          "no": "2",
+          "type": "PAY",
+          "status": "FAILED",
+          "authReq": "",
+          "interaction": "THREE_DS_CHALLENGE",
+          "expires": "2026-10-22 15:54:20.091874",
+          "code": "PAYMENT_FAILED"
+        }
+      ]
+    },
+    "submissionView": {
+      "http": 200,
+      "status": "FAILED",
+      "interaction": null
+    },
+    "waitedForBackoffSeconds": 0.0,
+    "xxlTrigger": {
+      "code": 200,
+      "msg": "Success"
+    },
+    "finalStatus": "FAILED",
+    "after": {
+      "attemptStatus": "FAILED",
+      "midId": "238501217200832512",
+      "capturedAmount": "0.00000000",
+      "intentStatus": "OPEN",
+      "activeAttemptId": "",
+      "successfulAttemptId": "",
+      "compensation": [],
+      "channelTxnRefs": 1,
+      "actions": [
+        {
+          "no": "1",
+          "type": "PAY_RISK",
+          "status": "SUCCEEDED",
+          "authReq": "THREE_DS_REQUIRED",
+          "interaction": "",
+          "expires": "",
+          "code": ""
+        },
+        {
+          "no": "2",
+          "type": "PAY",
+          "status": "FAILED",
+          "authReq": "",
+          "interaction": "THREE_DS_CHALLENGE",
+          "expires": "2026-10-22 15:54:20.091874",
+          "code": "PAYMENT_FAILED"
+        }
+      ]
+    },
+    "mock": [
+      {
+        "operation": "orderAndPay",
+        "code": "APPLY_SUCCESS",
+        "status": "PENDING",
+        "dynamic3DS": "do3DS",
+        "notifyUrlPresent": true,
+        "queryControl": "",
+        "signatureValid": true,
+        "cardValid": true
+      },
+      {
+        "operation": "orderQuery",
+        "code": "APPLY_SUCCESS",
+        "status": "FAILED",
+        "dynamic3DS": "",
+        "notifyUrlPresent": false,
+        "queryControl": "",
+        "signatureValid": true,
+        "cardValid": true
+      }
+    ]
+  },
+  "AC01_AC04_handler": {
+    "payHttp": 202,
+    "payStatus": "PROCESSING",
+    "nextActionType": "THREE_DS_CHALLENGE",
+    "redirectUrlPresent": true,
+    "riskAssessment": {
+      "issuerCountryCode": "GB",
+      "cardBrand": "VISA",
+      "fundingType": "DEBIT",
+      "authenticationRequirement": "THREE_DS_REQUIRED"
+    },
+    "afterPay": {
+      "attemptStatus": "PROCESSING",
+      "midId": "238501217200832512",
+      "capturedAmount": "0.00000000",
+      "intentStatus": "OPEN",
+      "activeAttemptId": "239046323716784128",
+      "successfulAttemptId": "",
+      "compensation": [
+        [
+          "PAY_RESULT_QUERY",
+          "ERROR",
+          "1"
+        ]
+      ],
+      "channelTxnRefs": 1,
+      "actions": [
+        {
+          "no": "1",
+          "type": "PAY_RISK",
+          "status": "SUCCEEDED",
+          "authReq": "THREE_DS_REQUIRED",
+          "interaction": "",
+          "expires": "",
+          "code": ""
+        },
+        {
+          "no": "2",
+          "type": "PAY",
+          "status": "PROCESSING",
+          "authReq": "",
+          "interaction": "THREE_DS_CHALLENGE",
+          "expires": "2026-10-22 15:54:45.382364",
+          "code": "PENDING"
+        }
+      ]
+    },
+    "submissionView": {
+      "http": 200,
+      "status": "PROCESSING",
+      "interaction": {
+        "expiresAt": "2026-10-22T15:54:45.382364Z",
+        "type": "THREE_DS_CHALLENGE"
+      }
+    },
+    "waitedForBackoffSeconds": 11.8,
+    "xxlTrigger": {
+      "code": 200,
+      "msg": "Success"
+    },
+    "finalStatus": "SUCCEEDED",
+    "after": {
+      "attemptStatus": "SUCCEEDED",
+      "midId": "238501217200832512",
+      "capturedAmount": "10.00000000",
+      "intentStatus": "SUCCEEDED",
+      "activeAttemptId": "",
+      "successfulAttemptId": "239046323716784128",
+      "compensation": [],
+      "channelTxnRefs": 1,
+      "actions": [
+        {
+          "no": "1",
+          "type": "PAY_RISK",
+          "status": "SUCCEEDED",
+          "authReq": "THREE_DS_REQUIRED",
+          "interaction": "",
+          "expires": "",
+          "code": ""
+        },
+        {
+          "no": "2",
+          "type": "PAY",
+          "status": "SUCCEEDED",
+          "authReq": "",
+          "interaction": "THREE_DS_CHALLENGE",
+          "expires": "2026-10-22 15:54:45.382364",
+          "code": "SUCCESS"
+        }
+      ]
+    },
+    "mock": [
+      {
+        "operation": "orderAndPay",
+        "code": "APPLY_SUCCESS",
+        "status": "PENDING",
+        "dynamic3DS": "do3DS",
+        "notifyUrlPresent": true,
+        "queryControl": "PENDING",
+        "signatureValid": true,
+        "cardValid": true
+      },
+      {
+        "operation": "orderQuery",
+        "code": "APPLY_SUCCESS",
+        "status": "PENDING",
+        "dynamic3DS": "",
+        "notifyUrlPresent": false,
+        "queryControl": "PENDING",
+        "signatureValid": true,
+        "cardValid": true
+      },
+      {
+        "operation": "orderQuery",
+        "code": "APPLY_SUCCESS",
+        "status": "SUCCESS",
+        "dynamic3DS": "",
+        "notifyUrlPresent": false,
+        "queryControl": "SUCCESS",
+        "signatureValid": true,
+        "cardValid": true
+      }
+    ]
+  },
+  "AC05_failed": {
+    "payHttp": 202,
+    "nextActionType": "THREE_DS_CHALLENGE",
+    "riskAssessment": {
+      "issuerCountryCode": "US",
+      "cardBrand": "VISA",
+      "fundingType": "CREDIT",
+      "authenticationRequirement": "THREE_DS_REQUIRED"
+    },
+    "refresh": {
+      "http": 200,
+      "status": "FAILED",
+      "failureCode": "PAYMENT_FAILED"
+    },
+    "afterRefresh": {
+      "attemptStatus": "FAILED",
+      "midId": "238501217200832512",
+      "capturedAmount": "0.00000000",
+      "intentStatus": "OPEN",
+      "activeAttemptId": "",
+      "successfulAttemptId": "",
+      "compensation": [],
+      "channelTxnRefs": 1,
+      "actions": [
+        {
+          "no": "1",
+          "type": "PAY_RISK",
+          "status": "SUCCEEDED",
+          "authReq": "THREE_DS_REQUIRED",
+          "interaction": "",
+          "expires": "",
+          "code": ""
+        },
+        {
+          "no": "2",
+          "type": "PAY",
+          "status": "FAILED",
+          "authReq": "",
+          "interaction": "THREE_DS_CHALLENGE",
+          "expires": "2026-10-22 15:55:09.854874",
+          "code": "PAYMENT_FAILED"
+        }
+      ]
+    },
+    "mock": [
+      {
+        "operation": "orderAndPay",
+        "code": "APPLY_SUCCESS",
+        "status": "PENDING",
+        "dynamic3DS": "do3DS",
+        "notifyUrlPresent": true,
+        "queryControl": "PENDING",
+        "signatureValid": true,
+        "cardValid": true
+      },
+      {
+        "operation": "orderQuery",
+        "code": "APPLY_SUCCESS",
+        "status": "FAILED",
+        "dynamic3DS": "",
+        "notifyUrlPresent": false,
+        "queryControl": "FAILED",
+        "signatureValid": true,
+        "cardValid": true
+      }
+    ],
+    "resubmit": {
+      "http": 202,
+      "status": "PROCESSING",
+      "attemptId": "239046430629593088",
+      "newAttempt": true
+    }
+  },
+  "AC06_refresh_run1_mockLastDigit2": {
+    "payHttp": 200,
+    "queriesBefore": 0,
+    "threeRefreshesWithinWindow": [
+      "FAILED",
+      "FAILED",
+      "FAILED"
+    ],
+    "queriesAfterThreeRefreshes": 0,
+    "afterWindowRefresh": {
+      "http": 200,
+      "status": "FAILED"
+    },
+    "queriesAtEnd": 0,
+    "after": {
+      "attemptStatus": "FAILED",
+      "midId": "238501217200832512",
+      "capturedAmount": "0.00000000",
+      "intentStatus": "OPEN",
+      "activeAttemptId": "",
+      "successfulAttemptId": "",
+      "compensation": [],
+      "channelTxnRefs": 0,
+      "actions": [
+        {
+          "no": "1",
+          "type": "PAY_RISK",
+          "status": "SUCCEEDED",
+          "authReq": "THREE_DS_REQUIRED",
+          "interaction": "",
+          "expires": "",
+          "code": ""
+        },
+        {
+          "no": "2",
+          "type": "PAY",
+          "status": "FAILED",
+          "authReq": "",
+          "interaction": "",
+          "expires": "",
+          "code": "PARAMS_INVALID"
+        }
+      ]
+    }
+  },
+  "AC06_refresh": {
+    "payHttp": 202,
+    "queriesBefore": 1,
+    "threeRefreshesWithinWindow": [
+      "PROCESSING",
+      "PROCESSING",
+      "PROCESSING"
+    ],
+    "queriesAfterThreeRefreshes": 2,
+    "afterWindowRefresh": {
+      "http": 200,
+      "status": "SUCCEEDED"
+    },
+    "queriesAtEnd": 3,
+    "after": {
+      "attemptStatus": "SUCCEEDED",
+      "midId": "238501217200832512",
+      "capturedAmount": "10.00000000",
+      "intentStatus": "SUCCEEDED",
+      "activeAttemptId": "",
+      "successfulAttemptId": "239046597990711296",
+      "compensation": [
+        [
+          "PAY_RESULT_QUERY",
+          "ERROR",
+          "1"
+        ]
+      ],
+      "channelTxnRefs": 1,
+      "actions": [
+        {
+          "no": "1",
+          "type": "PAY_RISK",
+          "status": "SUCCEEDED",
+          "authReq": "THREE_DS_REQUIRED",
+          "interaction": "",
+          "expires": "",
+          "code": ""
+        },
+        {
+          "no": "2",
+          "type": "PAY",
+          "status": "SUCCEEDED",
+          "authReq": "",
+          "interaction": "THREE_DS_CHALLENGE",
+          "expires": "2026-10-22 15:55:50.579745",
+          "code": "SUCCESS"
+        }
+      ]
+    }
+  },
+  "AC07_AC08_callback": {
+    "payHttp": 202,
+    "callback": [
+      200,
+      "{\"code\":\"SUCCESS\",\"msg\":\"Success\"}"
+    ],
+    "attemptStatusAfterCallback": "SUCCEEDED",
+    "secondsToTerminal": 0.04,
+    "duplicateCallback": [
+      200,
+      "{\"code\":\"SUCCESS\",\"msg\":\"Success\"}"
+    ],
+    "refreshAfterTerminal": {
+      "http": 200,
+      "status": "SUCCEEDED"
+    },
+    "after": {
+      "attemptStatus": "SUCCEEDED",
+      "midId": "238501217200832512",
+      "capturedAmount": "10.00000000",
+      "intentStatus": "SUCCEEDED",
+      "activeAttemptId": "",
+      "successfulAttemptId": "239046653259055104",
+      "compensation": [],
+      "channelTxnRefs": 1,
+      "actions": [
+        {
+          "no": "1",
+          "type": "PAY_RISK",
+          "status": "SUCCEEDED",
+          "authReq": "THREE_DS_REQUIRED",
+          "interaction": "",
+          "expires": "",
+          "code": ""
+        },
+        {
+          "no": "2",
+          "type": "PAY",
+          "status": "SUCCEEDED",
+          "authReq": "",
+          "interaction": "THREE_DS_CHALLENGE",
+          "expires": "2026-10-22 15:56:03.703213",
+          "code": "SUCCESS"
+        }
+      ]
+    },
+    "callbackRows": [
+      {
+        "callbackId": "239046656165740544",
+        "signature": "VERIFIED",
+        "status": "PROCESSED",
+        "mapping": "MAPPED",
+        "target": "239046653259055104"
+      },
+      {
+        "callbackId": "239046656694222848",
+        "signature": "VERIFIED",
+        "status": "PROCESSED",
+        "mapping": "MAPPED",
+        "target": "239046653259055104"
+      }
+    ],
+    "mock": [
+      {
+        "operation": "orderAndPay",
+        "code": "APPLY_SUCCESS",
+        "status": "PENDING",
+        "dynamic3DS": "do3DS",
+        "notifyUrlPresent": true,
+        "queryControl": "PENDING",
+        "signatureValid": true,
+        "cardValid": true
+      },
+      {
+        "operation": "orderQuery",
+        "code": "APPLY_SUCCESS",
+        "status": "SUCCESS",
+        "dynamic3DS": "",
+        "notifyUrlPresent": false,
+        "queryControl": "SUCCESS",
+        "signatureValid": true,
+        "cardValid": true
+      }
+    ],
+    "tampered": {
+      "http": 401,
+      "body": "{\"type\":\"about:blank\",\"title\":\"Unauthorized\",\"detail\":\"渠道通知验签失败\",\"code\":\"CHANNEL_CALLBACK_SIGNATURE_INVALID\",\"requestId\":\"f6fc409c-4e99-4166-8c31-8d3f862ac709\",\"timestamp\":\"2026-10-22T15:26:07.787406Z\"}",
+      "attemptStatus": "SUCCEEDED",
+      "rejectedRows": "1"
+    }
+  },
+  "AC08_concurrent_run1_distinctNotifyTime": {
+    "payHttp": 202,
+    "outcomes": [
+      [
+        "xxl",
+        200
+      ],
+      [
+        "refresh",
+        "SUCCEEDED"
+      ],
+      [
+        "callback",
+        200
+      ],
+      [
+        "callback-same-body",
+        200
+      ]
+    ],
+    "final": "SUCCEEDED",
+    "after": {
+      "attemptStatus": "SUCCEEDED",
+      "midId": "238501217200832512",
+      "capturedAmount": "10.00000000",
+      "intentStatus": "SUCCEEDED",
+      "activeAttemptId": "",
+      "successfulAttemptId": "239046736515989504",
+      "compensation": [],
+      "channelTxnRefs": 1,
+      "actions": [
+        {
+          "no": "1",
+          "type": "PAY_RISK",
+          "status": "SUCCEEDED",
+          "authReq": "THREE_DS_REQUIRED",
+          "interaction": "",
+          "expires": "",
+          "code": ""
+        },
+        {
+          "no": "2",
+          "type": "PAY",
+          "status": "SUCCEEDED",
+          "authReq": "",
+          "interaction": "THREE_DS_CHALLENGE",
+          "expires": "2026-10-22 15:56:23.497773",
+          "code": "SUCCESS"
+        }
+      ]
+    },
+    "paymentSucceededEvents": "0",
+    "callbackRows": [
+      {
+        "callbackId": "239046737979834368",
+        "signature": "VERIFIED",
+        "status": "PROCESSED",
+        "mapping": "MAPPED",
+        "target": "239046736515989504"
+      },
+      {
+        "callbackId": "239046738013388800",
+        "signature": "VERIFIED",
+        "status": "PROCESSED",
+        "mapping": "MAPPED",
+        "target": "239046736515989504"
+      }
+    ]
+  },
+  "AC08_concurrent": {
+    "payHttp": 202,
+    "outcomes": [
+      [
+        "xxl",
+        200
+      ],
+      [
+        "refresh",
+        "SUCCEEDED"
+      ],
+      [
+        "callback",
+        200
+      ],
+      [
+        "callback-same-body",
+        200
+      ]
+    ],
+    "final": "SUCCEEDED",
+    "after": {
+      "attemptStatus": "SUCCEEDED",
+      "midId": "238501217200832512",
+      "capturedAmount": "10.00000000",
+      "intentStatus": "SUCCEEDED",
+      "activeAttemptId": "",
+      "successfulAttemptId": "239046838383050752",
+      "compensation": [],
+      "channelTxnRefs": 1,
+      "actions": [
+        {
+          "no": "1",
+          "type": "PAY_RISK",
+          "status": "SUCCEEDED",
+          "authReq": "THREE_DS_REQUIRED",
+          "interaction": "",
+          "expires": "",
+          "code": ""
+        },
+        {
+          "no": "2",
+          "type": "PAY",
+          "status": "SUCCEEDED",
+          "authReq": "",
+          "interaction": "THREE_DS_CHALLENGE",
+          "expires": "2026-10-22 15:56:47.898790",
+          "code": "SUCCESS"
+        }
+      ]
+    },
+    "paymentSucceededEvents": "0",
+    "callbackRows": [
+      {
+        "callbackId": "239046840568315904",
+        "signature": "VERIFIED",
+        "status": "PROCESSED",
+        "mapping": "MAPPED",
+        "target": "239046838383050752"
+      }
+    ]
+  },
+  "AC09_AC10_expiry": {
+    "pendingAfterExpiry": {
+      "refresh": {
+        "status": "PROCESSING",
+        "interaction": null
+      },
+      "view": {
+        "status": "PROCESSING",
+        "interaction": null
+      },
+      "resubmitApplyInstrument": {
+        "http": 400,
+        "code": "BUSINESS_CHECK_FAILED",
+        "detail": "支付意图已有进行中或成功的支付尝试"
+      },
+      "facts": {
+        "attemptStatus": "PROCESSING",
+        "midId": "238501217200832512",
+        "capturedAmount": "0.00000000",
+        "intentStatus": "OPEN",
+        "activeAttemptId": "239046855709720576",
+        "successfulAttemptId": "",
+        "compensation": [
+          [
+            "PAY_RESULT_QUERY",
+            "ERROR",
+            "1"
+          ]
+        ],
+        "channelTxnRefs": 1,
+        "actions": [
+          {
+            "no": "1",
+            "type": "PAY_RISK",
+            "status": "SUCCEEDED",
+            "authReq": "THREE_DS_REQUIRED",
+            "interaction": "",
+            "expires": "",
+            "code": ""
+          },
+          {
+            "no": "2",
+            "type": "PAY",
+            "status": "PROCESSING",
+            "authReq": "",
+            "interaction": "THREE_DS_CHALLENGE",
+            "expires": "2026-10-22 15:25:51.905183",
+            "code": "PENDING"
+          }
+        ]
+      }
+    },
+    "closed": {
+      "refresh": {
+        "status": "FAILED",
+        "failureCode": "CHANNEL_ORDER_CLOSED"
+      },
+      "facts": {
+        "attemptStatus": "FAILED",
+        "midId": "238501217200832512",
+        "capturedAmount": "0.00000000",
+        "intentStatus": "OPEN",
+        "activeAttemptId": "",
+        "successfulAttemptId": "",
+        "compensation": [
+          [
+            "PAY_RESULT_QUERY",
+            "ERROR",
+            "1"
+          ]
+        ],
+        "channelTxnRefs": 1,
+        "actions": [
+          {
+            "no": "1",
+            "type": "PAY_RISK",
+            "status": "SUCCEEDED",
+            "authReq": "THREE_DS_REQUIRED",
+            "interaction": "",
+            "expires": "",
+            "code": ""
+          },
+          {
+            "no": "2",
+            "type": "PAY",
+            "status": "FAILED",
+            "authReq": "",
+            "interaction": "THREE_DS_CHALLENGE",
+            "expires": "2026-10-22 15:25:51.905183",
+            "code": "CHANNEL_ORDER_CLOSED"
+          }
+        ]
+      }
+    },
+    "closedResubmit": {
+      "http": 200,
+      "status": "SUCCEEDED"
+    },
+    "notFound": {
+      "within10Min": "PROCESSING",
+      "after10Min": {
+        "status": "FAILED",
+        "failureCode": "CHANNEL_TRANSACTION_NOT_FOUND"
+      },
+      "facts": {
+        "attemptStatus": "FAILED",
+        "midId": "238501217200832512",
+        "capturedAmount": "0.00000000",
+        "intentStatus": "OPEN",
+        "activeAttemptId": "",
+        "successfulAttemptId": "",
+        "compensation": [
+          [
+            "PAY_RESULT_QUERY",
+            "ERROR",
+            "1"
+          ]
+        ],
+        "channelTxnRefs": 1,
+        "actions": [
+          {
+            "no": "1",
+            "type": "PAY_RISK",
+            "status": "SUCCEEDED",
+            "authReq": "THREE_DS_REQUIRED",
+            "interaction": "",
+            "expires": "",
+            "code": ""
+          },
+          {
+            "no": "2",
+            "type": "PAY",
+            "status": "FAILED",
+            "authReq": "",
+            "interaction": "THREE_DS_CHALLENGE",
+            "expires": "2026-10-22 15:26:09.745907",
+            "code": "CHANNEL_TRANSACTION_NOT_FOUND"
+          }
+        ]
+      }
+    },
+    "xxl": {
+      "code": 200,
+      "msg": "Success"
+    },
+    "over24h": {
+      "facts": {
+        "attemptStatus": "PROCESSING",
+        "midId": "238501217200832512",
+        "capturedAmount": "0.00000000",
+        "intentStatus": "OPEN",
+        "activeAttemptId": "239046956255576064",
+        "successfulAttemptId": "",
+        "compensation": [
+          [
+            "PAY_RESULT_QUERY",
+            "ERROR",
+            "1"
+          ]
+        ],
+        "channelTxnRefs": 1,
+        "actions": [
+          {
+            "no": "1",
+            "type": "PAY_RISK",
+            "status": "SUCCEEDED",
+            "authReq": "THREE_DS_REQUIRED",
+            "interaction": "",
+            "expires": "",
+            "code": ""
+          },
+          {
+            "no": "2",
+            "type": "PAY",
+            "status": "PROCESSING",
+            "authReq": "",
+            "interaction": "THREE_DS_CHALLENGE",
+            "expires": "2026-10-22 05:27:15.855867",
+            "code": "PENDING"
+          }
+        ]
+      },
+      "compensation": [
+        [
+          "PAY_RESULT_QUERY",
+          "ERROR",
+          "1",
+          "PAY_RESULT_PENDING",
+          "Payment result not yet final"
+        ]
+      ],
+      "retrigger": {
+        "note": "首次触发与拨时 UPDATE 相隔不足 1 秒，扫描未取到该任务（下次执行时刻与应用时钟边界），约 15 秒后再次触发",
+        "after": {
+          "compensation": [
+            "PAY_RESULT_QUERY",
+            "FAILED",
+            "2",
+            "PAY_RESULT_UNRESOLVED",
+            "Payment result unresolved after 24 hours; manual handling required"
+          ],
+          "attemptStatus": "PROCESSING"
+        }
+      }
+    }
+  }
+}

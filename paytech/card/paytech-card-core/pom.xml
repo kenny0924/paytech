@@ -52,6 +52,16 @@
             <groupId>com.paytech</groupId>
             <artifactId>paytech-vault-client</artifactId>
         </dependency>
+        <!-- BIN 库导入任务（CARD_BIN_LIBRARY_IMPORT）：版本创建同事务登记，Handler 在 core（R12）。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-compensation-event</artifactId>
+        </dependency>
+        <!-- BIN 库导入读取 Platform 内部文件接口与国家区域映射（技术方案 §3.5.3），出站适配在 integration。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-platform-support-api</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>

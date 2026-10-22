@@ -6,8 +6,10 @@ CREATE DATABASE IF NOT EXISTS mor_payment CHARACTER SET utf8mb4 COLLATE utf8mb4_
 GRANT SELECT, INSERT, UPDATE, DELETE ON mor_payment.* TO 'payment_app'@'%';
 USE mor_payment;
 
--- 11 tables: 10 payment tables (design/03 §2.3) and the per-database t_compensation_event; copied verbatim from
--- paytech/payment/docs/database/sql/payment-schema.sql. The four card tables moved to mor_card in step 12 (design/05);
+-- 13 tables: 10 payment tables (design/03 §2.3), the per-database t_compensation_event and, since the 2026-10-22 3DS
+-- requirement (payment consumes ChannelPaymentNotified), the paytech-messaging t_consumed_event / t_consumed_aggregate_version;
+-- copied verbatim from paytech/payment/docs/database/sql/payment-schema.sql. An existing local mor_payment applies
+-- requirements/20261022/payment-3DS全链路/db/payment/ddl.sql instead. The four card tables moved to mor_card in step 12 (design/05);
 -- an existing local mor_payment keeps its card tables untouched (no DROP) and only needs the four new
 -- t_payment_instrument_token columns, see requirements/20261017/architecture-V2骨架与模块搬迁/tasks/12-card-isolation-report.md.
 SET NAMES utf8mb4;
@@ -126,6 +128,14 @@ CREATE TABLE `t_payment_instrument_token` (
   `consent_to_save` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '消费者是否同意本次支付成功后保存卡；1 表示同意，仅手输卡且有 customer_id 时可为 1。随 PaymentSucceeded v2 交给 Card。',
   `card_bin` VARCHAR(8) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT 'Card 创建卡工具时返回的卡 BIN（6 或 8 位），只用作支付风控输入；非卡工具为 NULL。',
   `card_fingerprint` CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT 'Card 创建卡工具时返回的跨交易稳定卡指纹（受限值，不能反推卡号），只经内部同步请求传给 Risk，不进日志或 MQ；非卡工具为 NULL。',
+  `card_brand` VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT 'Card 创建卡工具时按 BIN 库冻结的卡组织；未识别或非卡工具为 NULL。用于 Risk 输入、路由 schemeCode 与 PaymentSucceeded。允许值：VISA、MASTERCARD、AMEX、UNIONPAY、MADA、DISCOVER、JCB、DINERS。',
+  `funding_type` VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT '冻结的借贷记类型；未识别、数据未提供或非卡工具为 NULL。允许值：CREDIT、DEBIT、PREPAID、CHARGE。',
+  `card_level` VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT '冻结的卡等级；未识别、数据未提供或非卡工具为 NULL。取值来源：Card BIN 库；非固定枚举。',
+  `card_product` VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT '冻结的卡产品类别；未识别、数据未提供或非卡工具为 NULL。允许值：CONSUMER、COMMERCIAL。',
+  `issuer_country` CHAR(2) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT '冻结的发卡国 ISO 3166-1 alpha-2；未识别或非卡工具为 NULL。取值来源：ISO 3166-1 alpha-2；非固定枚举。',
+  `issuer_region` VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT '冻结的发卡区域；未识别或非卡工具为 NULL。取值来源：Platform 国家区域映射 region_code；非固定枚举。',
+  `bin_library_version_no` INT NULL COMMENT '查询时的 BIN 库生效版本号；没有生效版本或非卡工具为 NULL。识别与否都记录，用于追溯。',
+  `bin_match_length` TINYINT NULL COMMENT '命中号段的前缀位数（6、7、8）；未识别或非卡工具为 NULL，NULL 与 bin_library_version_no 非空同时出现表示查询过但未识别。',
   `expires_at` DATETIME(6) NOT NULL COMMENT '首次用卡资格的 UTC 微秒精度截止时间，创建时按原支付和材料期限冻结；重试不延长，不表示在途资金失效。',
   `revoked_at` DATETIME(6) NULL COMMENT '主动撤销新用卡资格的 UTC 微秒精度时间；NULL 表示未主动撤销，仍须检查期限和原执行事实；不能据此撤销渠道资金。',
   `create_time` DATETIME(6) NOT NULL COMMENT '应用写入的工具绑定创建 UTC 微秒精度时间。',
@@ -150,7 +160,7 @@ CREATE TABLE `t_payment_action` (
   `transaction_assessment_id` BIGINT NULL COMMENT 'Risk 统一评估返回的评估 ID（evaluationId）；仅 PAY_RISK 取得结论后填写，已知后不可替换；渠道动作为空。',
   `risk_result` VARCHAR(64) NULL COMMENT '原 PAY_RISK 的可信评估结论；渠道动作及未知评估为空。允许值：ALLOW、REVIEW、DENY、FAILED、TIMED_OUT。评估完成不等于允许支付。',
   `authentication_requirement` VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NULL DEFAULT NULL COMMENT '仅原 PAY_RISK 获得可信 ALLOW 后冻结的认证要求；其他动作及未放行结果为空。允许值：NOT_REQUIRED、THREE_DS_REQUIRED、CHALLENGE_REQUIRED。',
-  `interaction_type` VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NULL DEFAULT NULL COMMENT '原 Action 的消费者交互类型，无交互时为空。允许值：REDIRECT、THREE_DS_CHALLENGE、SDK、APP_SWITCH、QR_CODE。本期只写 THREE_DS_CHALLENGE。',
+  `interaction_type` VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NULL DEFAULT NULL COMMENT '原 Action 的消费者交互类型，无交互时为空。允许值：REDIRECT、THREE_DS_CHALLENGE、SDK、APP_SWITCH、QR_CODE。本期按渠道返回写 THREE_DS_CHALLENGE 或 REDIRECT；完成后保留历史值，可据此判断是否发生过挑战。',
   `interaction_expires_at` DATETIME(6) NULL DEFAULT NULL COMMENT '原消费者交互的 UTC 微秒截止时间；PROCESSING 且需要交互时必填，完成后保留历史值，不等于认证证明有效期。',
   `channel_response_code` VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NULL DEFAULT NULL COMMENT '渠道适配器返回的安全响应代码；仅渠道动作可填，风控结果使用 risk_result，本地异常或未取得响应时为空。取值来源：Channel Adapter Catalog；非固定枚举。',
   `channel_response_msg` VARCHAR(512) NULL DEFAULT NULL COMMENT '渠道适配器清洗后的安全响应说明，最长512字符；不得保存原始报文、卡数据、个人信息、凭据或临时交互参数；不是状态机判断依据。',
@@ -266,3 +276,22 @@ CREATE TABLE `t_compensation_event` (
   KEY `idx_comp_event_ready` (`execute_status`, `next_execute_at`, `id`) COMMENT '访问索引：execute_status、next_execute_at、id',
   KEY `idx_comp_event_lease` (`execute_status`, `lock_until`, `id`) COMMENT '访问索引：execute_status、lock_until、id'
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='业务变化同事务登记的本地可靠执行记录；成功后删除，FAILED 保留并可受控重开。';
+
+CREATE TABLE `t_consumed_event` (
+  `event_id` VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '领域事件信封 eventId（默认等于 eventKey），按其去重。',
+  `event_type` VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '已消费领域事件的类型（PascalCase，登记于 paytech-messaging 事件目录）。',
+  `aggregate_type` VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '领域事件所属聚合的大写类型代码。',
+  `aggregate_id` VARCHAR(40) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '领域事件所属聚合的标识，同时是 RabbitMQ 分区路由键。',
+  `aggregate_version` BIGINT NOT NULL COMMENT '本条已消费领域事件携带的聚合版本。',
+  `consumed_at` DATETIME(6) NOT NULL COMMENT '消费事务提交的 UTC 微秒精度时间。',
+  PRIMARY KEY (`event_id`),
+  KEY `idx_consumed_event_aggregate` (`aggregate_type`, `aggregate_id`, `aggregate_version`) COMMENT '访问索引：aggregate_type、aggregate_id、aggregate_version'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='已消费领域事件：paytech-messaging 消费端按事件 ID 去重的标准表（design/08 §4），列、类型、主键与索引与 paytech-messaging 的 messaging-consumed-event.sql 一致；事件与版本合法性由消费拦截器保证。';
+
+CREATE TABLE `t_consumed_aggregate_version` (
+  `aggregate_type` VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '领域事件所属聚合的大写类型代码。',
+  `aggregate_id` VARCHAR(40) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '领域事件所属聚合的标识，同时是 RabbitMQ 分区路由键。',
+  `last_version` BIGINT NOT NULL COMMENT '本服务已处理的该聚合最大领域事件版本。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最近一次持久化更新的 UTC 微秒精度时间。',
+  PRIMARY KEY (`aggregate_type`, `aggregate_id`)
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='已消费聚合版本：paytech-messaging 消费端按聚合记录已处理的最大版本，用于判定乱序、重放与缺口（design/08 §4）；列、类型与主键与 messaging-consumed-event.sql 一致。';

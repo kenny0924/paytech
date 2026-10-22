@@ -14,6 +14,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import com.paytech.foundation.compensation.core.execution.CompensationEventDispatcher;
 import com.paytech.foundation.messaging.ordering.AggregateKeySequencer;
+import com.paytech.foundation.messaging.testkit.PartitionQueueBaselineConfiguration;
 import com.paytech.foundation.testsupport.api.MockHttpServer;
 import com.paytech.foundation.testsupport.api.TestBase;
 import com.paytech.payment.PaymentApplication;
@@ -31,10 +32,12 @@ import static org.junit.jupiter.api.Assertions.assertAll;
  * 共用正式 Payment 应用；每例验证 mor_payment 空基线，等待异步补偿任务结束后由 Foundation 在最后统一清理。
  * <li>MockHttpServer 以服务发现名承载 channel-connector、card 与 Risk；channel-connector 的 DTO 由 {@link ChannelConnectorMocker}、
  * card-api 的 DTO 由 {@link CardApiMocker} 配置（第 12 步起 Payment 不再访问 Vault 与卡表）。</li>
+ * <li>3DS 全链路起 Payment 消费 ChannelPaymentNotified：{@link PartitionQueueBaselineConfiguration} 在监听容器启动前清空
+ * payment.channel-connector.p0..p3 与 DLQ。PAY 保存为处理中或未知时登记的查单恢复任务在提交后立即执行一次，teardown 一并等待。</li>
  */
 @SpringBootTest(classes = PaymentApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("mock")
-@Import({PaymentTestConfiguration.class, PaymentResultProbe.class})
+@Import({PaymentTestConfiguration.class, PaymentResultProbe.class, PartitionQueueBaselineConfiguration.class})
 public abstract class PaymentMockTestBase extends TestBase {
     @Autowired
     protected PaymentDataMocker data;

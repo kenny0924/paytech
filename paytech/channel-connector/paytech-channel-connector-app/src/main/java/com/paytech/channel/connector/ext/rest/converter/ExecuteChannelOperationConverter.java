@@ -41,6 +41,9 @@ public class ExecuteChannelOperationConverter {
         body.setOutcome(result.getOutcome().getCode());
         body.setPaymentStatus(code(result.getPaymentStatus()));
         body.setRedirectUrl(result.getRedirectUrl());
+        body.setNextActionType(result.getNextActionType());
+        body.setAmount(result.getAmount());
+        body.setCurrency(result.getCurrency());
         body.setChannelTransactionRef(result.getChannelTransactionRef());
         body.setChannelStatus(result.getChannelStatus());
         body.setFailureCode(result.getFailureCode());

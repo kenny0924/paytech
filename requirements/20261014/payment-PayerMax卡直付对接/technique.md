@@ -124,6 +124,8 @@ Platform 新增 Payment 内部 HTTP 客户端（`@HttpExchange`，服务发现�
 
 ### 5.3 恢复（本期不做）
 
+> 2026-10-22 修订：PAY 查单恢复与渠道异步通知已实现（`PAY_RESULT_QUERY`、刷新接口、`ChannelPaymentNotified`），交互类型按渠道返回记录，见 [Execution 3DS 修订](../../20261022/payment-3DS全链路/execution-3ds-amendment.md)。
+
 按用户意见 4，将来以渠道异步通知为主、重试查询为辅；本期 `PROCESSING`（等待 3DS）与 `UNKNOWN` 的 Action 保持原状，不自动推进。端到端验证中 3DS 场景只验证到“返回跳转指令、Action 为 PROCESSING”，认证后的结果由 Platform `PAY_QUERY` 单独核对。
 
 ## 6. 风控与路由

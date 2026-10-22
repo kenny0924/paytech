@@ -17,6 +17,8 @@ import com.paytech.card.core.dal.dataobject.PaymentCardCredential;
 import com.paytech.card.core.dal.dataobject.PaymentStoredCard;
 import com.paytech.card.core.enums.StoredCardStatus;
 import com.paytech.card.domain.StoredCardView;
+import com.paytech.card.domain.binlibrary.CardBinMatchView;
+import com.paytech.card.domainservice.repository.CardBinRangeRepository;
 import com.paytech.card.domainservice.repository.PaymentCardCredentialRepository;
 import com.paytech.card.domainservice.repository.PaymentCardRepository;
 import com.paytech.card.domainservice.repository.PaymentStoredCardRepository;
@@ -32,8 +34,9 @@ public class StoredCardServiceImpl implements StoredCardService {
     private final PaymentStoredCardRepository paymentStoredCardRepository;
     private final PaymentCardRepository paymentCardRepository;
     private final PaymentCardCredentialRepository paymentCardCredentialRepository;
+    private final CardBinRangeRepository cardBinRangeRepository;
 
-    /** 过期的已存卡不返回；掩码卡号取 BIN 前 6 位与后 4 位。 */
+    /** 过期的已存卡不返回；掩码卡号取 BIN 前 6 位与后 4 位；卡组织按当前生效 BIN 库实时查询，只用于展示。 */
     @Override
     public List<StoredCardView> listStoredCards(long clientId, long customerId) {
         YearMonth currentMonth = YearMonth.now(clock.withZone(ZoneOffset.UTC));
@@ -48,7 +51,7 @@ public class StoredCardServiceImpl implements StoredCardService {
             if (expiryMonth(credential).isBefore(currentMonth)) {
                 continue;
             }
-            views.add(view(storedCard, card, credential));
+            views.add(view(storedCard, card, credential, cardBrand(card)));
         }
         return views;
     }
@@ -77,10 +80,17 @@ public class StoredCardServiceImpl implements StoredCardService {
         return YearMonth.of(Integer.parseInt(credential.getExpiryYear()), Integer.parseInt(credential.getExpiryMonth()));
     }
 
+    /** 当前生效 BIN 库中的卡组织；未识别或没有生效版本为 null。 */
+    String cardBrand(PaymentCard card) {
+        CardBinMatchView match = cardBinRangeRepository.findMatch(card.getCardBin(), null);
+        return match == null || !match.isRecognized() ? null : match.getCardBrand().getCode();
+    }
+
     /** 对外视图：不含内部 ID、指纹与完整 BIN。 */
-    static StoredCardView view(PaymentStoredCard storedCard, PaymentCard card, PaymentCardCredential credential) {
+    static StoredCardView view(PaymentStoredCard storedCard, PaymentCard card, PaymentCardCredential credential,
+        String cardBrand) {
         String maskedPan = card.getCardBin().substring(0, 6) + "******" + card.getPanLast4();
-        return new StoredCardView(storedCard.getStoredCardToken(), maskedPan, card.getPanLast4(),
+        return new StoredCardView(storedCard.getStoredCardToken(), maskedPan, card.getPanLast4(), cardBrand,
             credential.getExpiryMonth(), credential.getExpiryYear(), storedCard.getCreateTime());
     }
 }

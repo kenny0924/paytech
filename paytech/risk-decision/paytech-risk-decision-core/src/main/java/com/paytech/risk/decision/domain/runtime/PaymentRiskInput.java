@@ -46,11 +46,18 @@ import com.paytech.risk.control.domain.list.RiskSubjectType;
  *            卡指纹，可空
  * @param cardBin
  *            卡 BIN，可空
+ * @param issuerCountryCode
+ *            发卡国，可空；Payment 冻结的 BIN 库快照
+ * @param cardBrand
+ *            卡组织，可空；Payment 冻结的 BIN 库快照
+ * @param fundingType
+ *            借贷记类型，可空；Payment 冻结的 BIN 库快照
  */
 public record PaymentRiskInput(long paymentAttemptId, long paymentIntentId, long riskActionId, long orderId,
     long clientId, String entityNo, String paymentMethodCode, String captureMode, BigDecimal amount, String currency,
     String industryCode, String mccCode, String consumerCountryCode, String consumerReference, String clientIpAddress,
-    String userAgent, String cardFingerprint, String cardBin) implements RuntimeRiskInput {
+    String userAgent, String cardFingerprint, String cardBin, String issuerCountryCode, String cardBrand,
+    String fundingType) implements RuntimeRiskInput {
 
     /** HTTP 合同只限制 IP 长度；在进入评估前按名单同一规则解析，非法字面量以参数错误拒绝，不产生评估。 */
     public PaymentRiskInput {
@@ -77,6 +84,9 @@ public record PaymentRiskInput(long paymentAttemptId, long paymentIntentId, long
         values.put("mcc_code", mccCode);
         putOptional(values, "consumer_country_code", consumerCountryCode);
         putOptional(values, "card_bin", cardBin);
+        putOptional(values, "issuer_country_code", issuerCountryCode);
+        putOptional(values, "card_brand", cardBrand);
+        putOptional(values, "funding_type", fundingType);
         return values;
     }
 

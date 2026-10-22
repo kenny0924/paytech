@@ -10,6 +10,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.paytech.card.api.enums.CardBrand;
+import com.paytech.channel.connector.api.ChannelCapabilityCodes;
 import com.paytech.channel.connector.api.enums.ChannelOperation;
 import com.paytech.channel.connector.api.enums.ExecutionPurpose;
 import com.paytech.payment.api.execution.PaymentIntentApi;
@@ -22,6 +24,7 @@ import com.paytech.payment.execution.core.enums.AuthenticationRequirement;
 import com.paytech.payment.execution.core.enums.InteractionType;
 import com.paytech.payment.execution.core.enums.IntentStatus;
 import com.paytech.payment.execution.core.enums.RiskResult;
+import com.paytech.payment.execution.service.handler.PayResultQueryHandler;
 import com.paytech.payment.test.base.AbstractPayCardTest;
 import com.paytech.payment.test.mocker.CardApiMocker;
 import com.paytech.payment.test.mocker.ChannelConnectorMocker;
@@ -34,7 +37,9 @@ import com.paytech.payment.test.mocker.PlatformMocker;
  * 向 card 申请一次性读卡票据（design/05 §2.1），渠道输入只带票据；测试服务像真实 Platform 一样凭票据向 card 读卡取得卡数据。
  *
  * <p>
- * 覆盖：成功、3DS 待认证（临时交互指令不落库）、发卡行拒绝、结果未知、保证未发出请求、原提交重放不再执行，
+ * 覆盖：成功、3DS 待认证（临时交互指令不落库，按渠道类型记 THREE_DS_CHALLENGE / REDIRECT，登记查单恢复任务）、风控要求 3DS 时
+ * 以 payment.threeDsRequired 交给渠道且路由优先支持 3DS 的 MID、冻结 MID 不支持 3DS 时不调渠道失败（3DS 全链路 AC-01—AC-03）、
+ * 渠道通知地址、发卡行拒绝、结果未知、保证未发出请求、原提交重放不再执行，
  * 以及票据只能使用一次、card 拒签（CVV 已领取）时动作以 NOT_SENT 语义失败且不调用渠道。卡号为公开测试卡号，属合成数据。风控各结论与故障见 {@link PayRiskEvaluationTest}。
  *
  * @see PaymentIntentApi#pay(String, String, com.paytech.payment.api.execution.request.PayRequestBody)
@@ -89,6 +94,9 @@ class PayCardChannelTest extends AbstractPayCardTest {
             () -> assertEquals(COUNTRY_CODE, input.path("payment").path("country").asString()),
             () -> assertEquals(RETURN_URL, input.path("payment").path("returnUrl").asString()),
             () -> assertEquals(CONSUMER_IP, input.path("payment").path("clientIp").asString()),
+            () -> assertFalse(input.path("payment").has("threeDsRequired"), "未要求 3DS 时不传该字段"),
+            () -> assertEquals("https://gateway.local.invalid/api/channel-callbacks/v1/" + ChannelConnectorMocker.CHANNEL_CODE
+                + "/" + candidate.channelAccountId(), input.path("payment").path("notifyUrl").asString()),
             () -> assertFalse(input.toString().contains(PAN), "Platform 输入包含卡号"),
             () -> assertEquals("1111/true", call.revealed(), "读卡取得卡号与 CVV"),
             () -> assertEquals(List.of(String.valueOf(attemptId(response))), risk.attempts()));
@@ -100,6 +108,31 @@ class PayCardChannelTest extends AbstractPayCardTest {
             () -> assertEquals(ActionStatus.SUCCEEDED.getCode(), mapper.actions(attemptId).get(1).get("status")),
             () -> assertEquals("T-PMX-1", mapper.transactionRefs().getFirst().get("externalId")),
             () -> assertEquals(candidate.midId(), ((Number)mapper.attempt(attemptId).get("midId")).longValue()));
+    }
+
+    /**
+     * 卡组织参与选路与执行（BIN 库需求 AC-09）：识别的 BIN 以 Token 冻结的卡组织作为 schemeCode 同时传给 MID 候选查询与渠道执行，
+     * 使 channel-connector 能命中配置了具体 scheme_code 的 MID；未识别时两处都不传，只命中 *。
+     */
+    @Test
+    void test_schemeCodeFromCardBrand() {
+        channel.succeeded("T-PMX-SCHEME");
+        cardApi.binRange(CardApiMocker.bin(PAN), CardApiMocker.attributes(CardBrand.VISA.getCode(), null, null, null,
+            COUNTRY_CODE, "GCC"));
+        newPayment().pay();
+        String recognizedQuery = channel.queries().getFirst().getCriteria().getSchemeCode();
+        String recognizedExecution = channel.only().request().getCriteria().getSchemeCode();
+        channel.clearOperations();
+        channel.succeeded("T-PMX-NO-SCHEME");
+        cardApi.clearBinRanges();
+
+        newPayment().pay();
+
+        assertAll(() -> assertEquals(CardBrand.VISA.getCode(), recognizedQuery),
+            () -> assertEquals(CardBrand.VISA.getCode(), recognizedExecution),
+            () -> assertEquals(2, channel.queries().size()),
+            () -> assertNull(channel.queries().get(1).getCriteria().getSchemeCode()),
+            () -> assertNull(channel.only().request().getCriteria().getSchemeCode()));
     }
 
     /** 3DS：返回 202 与临时交互指令；PAY 动作处理中并记 3DS 交互类型，跳转地址不落库；渠道交易引用已保存。 */
@@ -121,7 +154,68 @@ class PayCardChannelTest extends AbstractPayCardTest {
             () -> assertEquals(ActionStatus.PROCESSING.getCode(), pay.get("status")),
             () -> assertEquals(InteractionType.THREE_DS_CHALLENGE.getCode(), pay.get("interactionType")),
             () -> assertEquals("T-PMX-3DS", mapper.transactionRefs().getFirst().get("externalId")),
-            () -> assertFalse(mapper.executionText().contains("transient-3ds"), "跳转地址落库"));
+            () -> assertFalse(mapper.executionText().contains("transient-3ds"), "跳转地址落库"),
+            () -> assertFalse(mapper.compensationEvents(PayResultQueryHandler.EVENT_TYPE, String.valueOf(attemptId)).isEmpty(),
+                "处理中的 PAY 登记查单恢复任务"));
+    }
+
+    /** 渠道给出 REDIRECT 交互：pay 响应与动作如实记录 REDIRECT（AC-03）。 */
+    @Test
+    void test_redirectInteraction() {
+        channel.pending("T-PMX-RD", REDIRECT_URL, InteractionType.REDIRECT.getCode());
+
+        var response = newPayment().pay();
+
+        long attemptId = attemptId(response);
+        @SuppressWarnings("unchecked")
+        var nextAction = (Map<String, Object>)response.getBody().get("nextAction");
+        assertAll(() -> assertEquals(202, response.getStatusCode().value()),
+            () -> assertEquals(InteractionType.REDIRECT.getCode(), nextAction.get("type")),
+            () -> assertEquals(REDIRECT_URL, nextAction.get("redirectUrl")),
+            () -> assertEquals(InteractionType.REDIRECT.getCode(), mapper.actions(attemptId).get(1).get("interactionType")));
+    }
+
+    /**
+     * 风控要求 3DS（AC-01）：路由在未声明与 SUPPORTED 两个候选中选中 SUPPORTED（D2），PAY 以 payment.threeDsRequired=true 交给渠道并返回挑战；
+     * 不产生 AUTHENTICATE 动作。
+     */
+    @Test
+    void test_riskRequiresThreeDs() {
+        Candidate supported = channel.candidate(ENTITY_NO, CURRENCY, ChannelCapabilityCodes.THREE_DS_SUPPORTED);
+        risk.respond(RiskResult.ALLOW, AuthenticationRequirement.THREE_DS_REQUIRED);
+        channel.pending("T-PMX-R3DS", REDIRECT_URL);
+
+        var response = newPayment().pay();
+
+        long attemptId = attemptId(response);
+        var input = channel.only().input();
+        assertAll(() -> assertEquals(202, response.getStatusCode().value()),
+            () -> assertTrue(input.path("payment").path("threeDsRequired").asBoolean(), "要求 3DS"),
+            () -> assertEquals(List.of(ActionType.PAY_RISK.getCode(), ActionType.PAY.getCode()),
+                mapper.actions(attemptId).stream().map(row -> row.get("type")).toList()),
+            () -> assertEquals(supported.midId(), ((Number)mapper.attempt(attemptId).get("midId")).longValue()),
+            () -> assertEquals(String.valueOf(supported.midId()), channel.only().request().getMidId()));
+    }
+
+    /**
+     * 风控要求 3DS 而冻结 MID 不支持（AC-02、B4）：候选只有未声明与 UNSUPPORTED 时选中未声明（优先次序高于 UNSUPPORTED），PAY 不申请读卡票据、
+     * 不调渠道，以 THREE_DS_CHANNEL_UNAVAILABLE 失败并释放 Intent；不降级为无 3DS 支付。
+     */
+    @Test
+    void test_threeDsChannelUnavailable() {
+        channel.candidate(ENTITY_NO, CURRENCY, ChannelCapabilityCodes.THREE_DS_UNSUPPORTED);
+        risk.respond(RiskResult.ALLOW, AuthenticationRequirement.THREE_DS_REQUIRED);
+        var paid = newPayment();
+
+        var response = paid.pay();
+
+        long attemptId = attemptId(response);
+        assertAll(() -> assertEquals(AttemptStatus.FAILED.getCode(), response.getBody().get("status")),
+            () -> assertEquals(PayActionActor.THREE_DS_CHANNEL_UNAVAILABLE, mapper.actions(attemptId).get(1).get("code")),
+            () -> assertEquals(candidate.midId(), ((Number)mapper.attempt(attemptId).get("midId")).longValue()),
+            () -> assertTrue(channel.calls().isEmpty(), "不支持 3DS 时不得调用渠道"),
+            () -> assertTrue(cardApi.ticketRequests().isEmpty(), "不申请读卡票据"),
+            () -> assertNull(mapper.intent(paid.intentId).get("activeAttemptId")));
     }
 
     /** 发卡行拒绝：Attempt 失败、Intent 释放活动尝试，记录渠道失败码；已创建的渠道交易仍保存引用。 */
