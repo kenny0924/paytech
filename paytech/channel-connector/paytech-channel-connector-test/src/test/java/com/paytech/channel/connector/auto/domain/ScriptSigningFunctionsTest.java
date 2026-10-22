@@ -20,6 +20,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 import com.paytech.channel.connector.protocol.domain.RegisteredFunctionCatalog;
+import com.paytech.channel.connector.protocol.domain.execution.ExecutionErrorException;
 import com.paytech.channel.connector.protocol.domain.execution.JsonValues;
 import com.paytech.channel.connector.protocol.domain.execution.ProtectedHandle;
 import com.paytech.channel.connector.protocol.domainservice.execution.HttpWork;
@@ -33,12 +34,23 @@ import tools.jackson.databind.json.JsonMapper;
  * 公共脚本的签名字节锁定、RSA 签名与验签、协议时间（PayerMax 接入技术方案第 3 节）：直接以脚本剖面执行源码，
  * 覆盖锁定后只读、重复与不可锁定阶段、篡改与错误密钥、异常信息不含密钥。完整 HTTP 链路见 StandardApiSignedChannelTest。
  *
+ * <p>
+ * Cybersource HTTP Signature 所需的 sha256Base64、hmacSha256Base64DecodedKey 与 nowRfc1123（CYBS_NI 接入技术方案第 4 节）
+ * 以对接包 test-vectors.json 的样本逐字节断言；样本密钥是本机随机生成的测试专用值（testOnly），与任何真实商户无关。
+ *
  * @see ExpressionEngine#compile(ExpressionProfile, String)
  */
 class ScriptSigningFunctionsTest {
 
     private static final KeyPair KEYS = keyPair();
     private static final KeyPair OTHER = keyPair();
+    /** 测试专用 HMAC 密钥（Base64）。 */
+    private static final String CYBS_SECRET_KEY = "v9EJBDh1IuYowEzGJ4Wr74fy/eFcxHs+tzby2ypVChc=";
+    /** 样本请求体 {"a":1} 的 SHA-256 Base64。 */
+    private static final String CYBS_DIGEST = "AVq9f1zFei3ZS3WQ8ErYCEJzkF7jPsXOvq5iJ2qX+GI=";
+    /** 样本五行签名串。 */
+    private static final String CYBS_SIGNING_STRING = "host: api.cybersource.com\ndate: Wed, 21 Oct 2026 08:30:00 GMT\n"
+        + "request-target: post /pts/v2/payments\ndigest: SHA-256=" + CYBS_DIGEST + "\nv-c-merchant-id: testonly_merchant";
     private static final JsonMapper JSON =
         JsonMapper.builder().enable(StreamWriteFeature.WRITE_BIGDECIMAL_AS_PLAIN).build();
 
@@ -49,7 +61,7 @@ class ScriptSigningFunctionsTest {
     @Test
     void test_catalog() {
         for (String name : List.of("sealJsonBody", "rsaSha256Sign", "requireRsaSha256Signature", "nowRfc3339", "urlEncode",
-            "urlDecode")) {
+            "urlDecode", "sha256Base64", "hmacSha256Base64DecodedKey", "nowRfc1123")) {
             assertTrue(RegisteredFunctionCatalog.codes(RegisteredFunctionCatalog.SCRIPT).contains(name), name);
             assertTrue(ExpressionProfile.SCRIPT.getFunctions().contains(name), name);
             assertFalse(ExpressionProfile.READ_ONLY.getFunctions().contains(name), name);
@@ -146,6 +158,57 @@ class ScriptSigningFunctionsTest {
         for (String invalid : List.of("%", "%2", "abc%G1", "%FF", "%E4%B8")) {
             assertThrows(RuntimeException.class, () -> script("urlDecode('" + invalid + "')"), invalid);
         }
+    }
+
+    /** sha256Base64：UTF-8 字节的 SHA-256 标准 Base64（带填充），与样本一致；非字符串参数按固定文字失败。 */
+    @Test
+    void test_sha256Base64() {
+        assertEquals(CYBS_DIGEST, script("sha256Base64('{\"a\":1}')"));
+        assertEquals("47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=", script("sha256Base64('')"));
+        ExecutionErrorException thrown = assertThrows(ExecutionErrorException.class, () -> script("sha256Base64(1)"));
+        assertEquals("sha256Base64 的参数必须是字符串", thrown.getMessage());
+    }
+
+    /** hmacSha256Base64DecodedKey：密钥按 Base64 解码后计算 HmacSHA256，结果与样本逐字节一致。 */
+    @Test
+    void test_hmacSha256Base64DecodedKey() {
+        var params = new HashMap<String, Object>();
+        params.put("key", new ProtectedHandle(CYBS_SECRET_KEY));
+        params.put("message", CYBS_SIGNING_STRING);
+        assertEquals("dEKh5lsiIfAITWPFPZu9sAl8grzT2UrM1BdCQVEhh2U=", engine.compile(ExpressionProfile.SCRIPT,
+            "hmacSha256Base64DecodedKey(params.key, params.message)").execute(env(request(), params)));
+    }
+
+    /** 密钥不是合法 Base64：固定文字的异常，不含密钥；密钥是普通字符串而非受控句柄时拒绝。 */
+    @Test
+    void test_hmacSha256Base64DecodedKeyRejectsKey() {
+        String invalid = "not-base64-secret!";
+        var params = new HashMap<String, Object>();
+        params.put("key", new ProtectedHandle(invalid));
+        ExecutionErrorException thrown = assertThrows(ExecutionErrorException.class, () -> engine
+            .compile(ExpressionProfile.SCRIPT, "hmacSha256Base64DecodedKey(params.key, 'x')").execute(env(request(), params)));
+        assertAll(() -> assertEquals("hmacSha256Base64DecodedKey 的密钥不是合法 Base64", thrown.getMessage()),
+            () -> assertFalse(thrown.getMessage().contains(invalid)));
+
+        params.put("key", CYBS_SECRET_KEY);
+        ExecutionErrorException plain = assertThrows(ExecutionErrorException.class, () -> engine
+            .compile(ExpressionProfile.SCRIPT, "hmacSha256Base64DecodedKey(params.key, 'x')").execute(env(request(), params)));
+        assertAll(() -> assertEquals("hmacSha256Base64DecodedKey 的凭据参数必须是受控句柄", plain.getMessage()),
+            () -> assertFalse(plain.getMessage().contains(CYBS_SECRET_KEY)));
+    }
+
+    /** nowRfc1123：引擎时钟的 UTC 秒精度，英文星期与月份，个位日期补零。 */
+    @Test
+    void test_nowRfc1123() {
+        var sample = new ExpressionEngine(Clock.fixed(Instant.parse("2026-10-21T08:30:00Z"), ZoneOffset.UTC));
+        assertEquals("Wed, 21 Oct 2026 08:30:00 GMT",
+            sample.compile(ExpressionProfile.SCRIPT, "nowRfc1123()").execute(new HashMap<>()));
+        var singleDigitDay = new ExpressionEngine(Clock.fixed(Instant.parse("2026-03-05T07:04:09.987Z"), ZoneOffset.UTC));
+        assertEquals("Thu, 05 Mar 2026 07:04:09 GMT",
+            singleDigitDay.compile(ExpressionProfile.SCRIPT, "nowRfc1123()").execute(new HashMap<>()));
+        HttpWork http = request();
+        run("http.requestHeaders.Date = nowRfc1123()", http);
+        assertEquals("Wed, 14 Oct 2026 07:29:00 GMT", headers(http).get("Date"));
     }
 
     /** 金额为 10.00 的 JSON 请求体，锁定时按 JSON 数字编码。 */

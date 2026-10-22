@@ -18,6 +18,7 @@ import java.util.Base64;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import javax.crypto.Mac;
@@ -59,6 +60,12 @@ public final class ScriptFunctions {
     /** SHA-256，十六进制小写。 */
     public static final String SHA256_HEX = "sha256Hex";
 
+    /** SHA-256，标准 Base64（带填充）。 */
+    public static final String SHA256_BASE64 = "sha256Base64";
+
+    /** HMAC-SHA256，密钥先按标准 Base64 解码，结果为标准 Base64。 */
+    public static final String HMAC_SHA256_BASE64_DECODED_KEY = "hmacSha256Base64DecodedKey";
+
     /** UTF-8 字符串的 Base64。 */
     public static final String BASE64_ENCODE = "base64Encode";
 
@@ -80,6 +87,9 @@ public final class ScriptFunctions {
     /** 当前 UTC 时间，RFC 3339 毫秒精度。 */
     public static final String NOW_RFC3339 = "nowRfc3339";
 
+    /** 当前 UTC 时间，RFC 1123（HTTP Date 头格式）。 */
+    public static final String NOW_RFC1123 = "nowRfc1123";
+
     /** RFC 3986 百分号编码，unreserved 字符保持原样。 */
     public static final String URL_ENCODE = "urlEncode";
 
@@ -89,20 +99,24 @@ public final class ScriptFunctions {
     private static final DateTimeFormatter RFC3339_MILLIS =
         DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(ZoneOffset.UTC);
 
+    /** 固定英文星期与月份、两位日期，不随默认 Locale 变化。 */
+    private static final DateTimeFormatter RFC1123_GMT =
+        DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.US).withZone(ZoneOffset.UTC);
+
     private ScriptFunctions() {
     }
 
     /**
      * 全部脚本函数的 Aviator 实现。
      *
-     * @param clock nowRfc3339 使用的时钟
+     * @param clock nowRfc3339 与 nowRfc1123 使用的时钟
      * @return 函数实现
      */
     public static List<AviatorFunction> all(Clock clock) {
         return List.of(new BearerAuth(), new BasicAuth(), new HmacSha256(HMAC_SHA256_HEX, false),
-            new HmacSha256(HMAC_SHA256_BASE64, true), new Sha256Hex(), new Base64Encode(), new JsonGet(), new JsonSet(),
-            new SealJsonBody(), new RsaSha256Sign(), new RequireRsaSha256Signature(), new NowRfc3339(clock), new UrlEncode(),
-            new UrlDecode());
+            new HmacSha256(HMAC_SHA256_BASE64, true), new HmacSha256Base64DecodedKey(), new Sha256Hex(), new Sha256Base64(),
+            new Base64Encode(), new JsonGet(), new JsonSet(), new SealJsonBody(), new RsaSha256Sign(),
+            new RequireRsaSha256Signature(), new NowRfc3339(clock), new NowRfc1123(clock), new UrlEncode(), new UrlDecode());
     }
 
     static ProtectedHandle handle(AviatorObject argument, Map<String, Object> env, String function) {
@@ -207,6 +221,54 @@ public final class ScriptFunctions {
                 return AviatorRuntimeJavaType.valueOf(HexFormat.of().formatHex(digest));
             } catch (GeneralSecurityException failure) {
                 throw new ExecutionErrorException(SHA256_HEX + " 计算失败");
+            }
+        }
+    }
+
+    /** 密钥以 Base64 保存的 HMAC 协议（如 Cybersource HTTP Signature）：解码只在句柄内进行，异常不带密钥或其片段。 */
+    static final class HmacSha256Base64DecodedKey extends AbstractFunction {
+        @Override
+        public String getName() {
+            return HMAC_SHA256_BASE64_DECODED_KEY;
+        }
+
+        @Override
+        public AviatorObject call(Map<String, Object> env, AviatorObject key, AviatorObject message) {
+            byte[] data = text(message, env, HMAC_SHA256_BASE64_DECODED_KEY).getBytes(StandardCharsets.UTF_8);
+            byte[] digest = handle(key, env, HMAC_SHA256_BASE64_DECODED_KEY).apply(secret -> {
+                byte[] decoded;
+                try {
+                    decoded = Base64.getDecoder().decode(secret);
+                } catch (IllegalArgumentException failure) {
+                    throw new ExecutionErrorException(HMAC_SHA256_BASE64_DECODED_KEY + " 的密钥不是合法 Base64");
+                }
+                try {
+                    Mac mac = Mac.getInstance("HmacSHA256");
+                    mac.init(new SecretKeySpec(decoded, "HmacSHA256"));
+                    return mac.doFinal(data);
+                } catch (GeneralSecurityException | IllegalArgumentException failure) {
+                    throw new ExecutionErrorException(HMAC_SHA256_BASE64_DECODED_KEY + " 计算失败");
+                }
+            });
+            return AviatorRuntimeJavaType.valueOf(Base64.getEncoder().encodeToString(digest));
+        }
+    }
+
+    /** 请求体摘要（如 Cybersource Digest 头）：UTF-8 字节的 SHA-256，标准 Base64。 */
+    static final class Sha256Base64 extends AbstractFunction {
+        @Override
+        public String getName() {
+            return SHA256_BASE64;
+        }
+
+        @Override
+        public AviatorObject call(Map<String, Object> env, AviatorObject message) {
+            try {
+                byte[] digest = MessageDigest.getInstance("SHA-256")
+                    .digest(text(message, env, SHA256_BASE64).getBytes(StandardCharsets.UTF_8));
+                return AviatorRuntimeJavaType.valueOf(Base64.getEncoder().encodeToString(digest));
+            } catch (GeneralSecurityException failure) {
+                throw new ExecutionErrorException(SHA256_BASE64 + " 计算失败");
             }
         }
     }
@@ -351,6 +413,25 @@ public final class ScriptFunctions {
         @Override
         public AviatorObject call(Map<String, Object> env) {
             return AviatorRuntimeJavaType.valueOf(RFC3339_MILLIS.format(clock.instant()));
+        }
+    }
+
+    /** HTTP Date 头时间：与 nowRfc3339 共用注入时钟，秒精度。 */
+    static final class NowRfc1123 extends AbstractFunction {
+        private final Clock clock;
+
+        NowRfc1123(Clock clock) {
+            this.clock = clock;
+        }
+
+        @Override
+        public String getName() {
+            return NOW_RFC1123;
+        }
+
+        @Override
+        public AviatorObject call(Map<String, Object> env) {
+            return AviatorRuntimeJavaType.valueOf(RFC1123_GMT.format(clock.instant()));
         }
     }
 

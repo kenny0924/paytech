@@ -1,0 +1,10 @@
+let digest = 'SHA-256=' + sha256Base64(sealJsonBody(http));
+let date = nowRfc1123();
+let content = 'host: ' + params.host + '\ndate: ' + date + '\nrequest-target: ' + params.requestTarget
+  + '\ndigest: ' + digest + '\nv-c-merchant-id: ' + params.merchantId;
+seq.put(http.requestHeaders, 'Date', date);
+seq.put(http.requestHeaders, 'Digest', digest);
+seq.put(http.requestHeaders, 'v-c-merchant-id', params.merchantId);
+seq.put(http.requestHeaders, 'Signature', 'keyid="' + params.keyId
+  + '", algorithm="HmacSHA256", headers="host date request-target digest v-c-merchant-id", signature="'
+  + hmacSha256Base64DecodedKey(params.secretKey, content) + '"');

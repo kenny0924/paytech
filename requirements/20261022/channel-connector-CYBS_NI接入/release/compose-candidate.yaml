@@ -1,0 +1,5 @@
+# Cybersource（NI）接入阶段 5：只替换 channel-connector。基线 main 1d39cd94 + 阶段 4 脚本函数（sha256Base64、hmacSha256Base64DecodedKey、nowRfc1123）。
+# 与运行镜像 798940ea 的 JAR 只差 ScriptFunctions 与 RegisteredFunctionCatalog；环境变量全部来自 compose.applications.yaml，无覆盖。
+services:
+  channel-connector-service:
+    image: sha256:5f22b55b29e26beb44582c788530d71bfc9a2d863b8a022282d6251a0033bfa8  # mor-test/channel-connector-service:cybs-20261022（JAR 8c9db543ae40）

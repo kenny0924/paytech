@@ -10,7 +10,8 @@ import java.util.Optional;
  * <p>CHANNEL_ACCOUNT_CONFIG 签名见材料交接第 4 节；PAYMENT_CARD 凭 card 签发的一次性读卡票据（参数名沿用 paymentInstrumentToken）向 card-service 读取卡数据（design/05 §2.1），
  * 见 PayerMax 卡直付对接技术方案第 3.1 节（requirements/20261014/payment-PayerMax卡直付对接）；MONEY_MINOR_UNITS 按币种精度把主单位金额精确换算为最小单位整数。
  * 脚本函数（研发计划第 3 步第 5 节）只能在公共脚本中调用：认证函数返回受控句柄，由传输层发送时取出明文。
- * 签名字节锁定、RSA 与协议时间见 PayerMax 接入技术方案第 3 节（requirements/20261014/platform-support-PayerMax接入）。
+ * 签名字节锁定、RSA 与协议时间见 PayerMax 接入技术方案第 3 节（requirements/20261014/platform-support-PayerMax接入）；
+ * sha256Base64、hmacSha256Base64DecodedKey 与 nowRfc1123 见 Cybersource 接入技术方案第 4 节（requirements/20261022/channel-connector-CYBS_NI接入）。
  */
 public final class RegisteredFunctionCatalog {
 
@@ -56,7 +57,11 @@ public final class RegisteredFunctionCatalog {
             new ParameterDeclaration("message", "STRING", true)),
         script("hmacSha256Base64", "STRING（Base64）", new ParameterDeclaration("key", HANDLE, true),
             new ParameterDeclaration("message", "STRING", true)),
+        script("hmacSha256Base64DecodedKey", "STRING（密钥先按标准 Base64 解码后计算 HmacSHA256，结果为标准 Base64；密钥不是合法 Base64 时节点 ERROR）",
+            new ParameterDeclaration("key", HANDLE, true), new ParameterDeclaration("message", "STRING", true)),
         script("sha256Hex", "STRING（小写十六进制）", new ParameterDeclaration("message", "STRING", true)),
+        script("sha256Base64", "STRING（UTF-8 字节 SHA-256 的标准 Base64，带 = 填充）",
+            new ParameterDeclaration("message", "STRING", true)),
         script("base64Encode", "STRING（UTF-8 字节的 Base64）", new ParameterDeclaration("value", "STRING", true)),
         script("json.get", "按点分路径读取的值，不存在为 nil", new ParameterDeclaration("target", "OBJECT", true),
             new ParameterDeclaration("path", "STRING", true)),
@@ -70,6 +75,7 @@ public final class RegisteredFunctionCatalog {
             new ParameterDeclaration("publicKey", "STRING", true), new ParameterDeclaration("message", "STRING", true),
             new ParameterDeclaration("signature", "STRING", true)),
         script("nowRfc3339", "STRING（当前 UTC 时间，yyyy-MM-dd'T'HH:mm:ss.SSS'Z'）"),
+        script("nowRfc1123", "STRING（当前 UTC 时间，HTTP Date 格式 EEE, dd MMM yyyy HH:mm:ss 'GMT'，英文星期与月份）"),
         script("urlEncode", "STRING（RFC 3986：A-Za-z0-9-._~ 以外按 UTF-8 百分号编码，大写十六进制）",
             new ParameterDeclaration("value", "STRING", true)),
         script("urlDecode", "STRING（百分号解码为 UTF-8；+ 保持原样；非法序列时节点 ERROR）",

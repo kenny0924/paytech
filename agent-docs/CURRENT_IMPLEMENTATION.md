@@ -56,6 +56,34 @@
 - **Pending / 遗留：** billing 需求 B（PAYMENT / REFUND 自动事实、接收四类对账事件、ledger 归类码映射）未开始，在此之前四类事件无订阅方、发布留存 FAILED；切片 2（超期检测、借方暂记、拒付与重复扣款）、切片 3（出款 / 缴税）未开始；D-2 补偿超时只中断不等待（Foundation）；requirements-site FIN-12 / FIN-24 / E2E-08 旧口径待改；本机 `mor_account` 缺 `t_owner_account_no_sequence`（环境）。推送另行授权。
 
 <a id="channel-connector-phase2-20261022"></a>
+## channel-connector Cybersource（Network International）卡收单接入（2026-10-22，channel-connector 已部署 mor-test，渠道配置已部署，沙箱已验证，已本地提交，未推送）
+
+- **Designed：** [需求](<../requirements/20261022/channel-connector-CYBS_NI接入/requirement.md>)、[技术方案](<../requirements/20261022/channel-connector-CYBS_NI接入/technique.md>)、[交付记录](<../requirements/20261022/channel-connector-CYBS_NI接入/delivery.md>)经用户逐阶段确认。
+  - 渠道 `I_CYBS_NI`（Cybersource REST，HMAC HTTP Signature）实现 `PAY`、`AUTHORIZE`、`PAY_QUERY`、`REFUND`、`REFUND_QUERY`、`CAPTURE`，不含 3DS、钱包、网络 token、PF。
+  - 查询走 Transaction Search；`DUPLICATE_REQUEST` 时回查原交易。
+  - 一笔授权只能请款一次（不带分次参数）。
+  - 退款、请款同步 `PENDING` 即受理成功。
+  - 决定 F1：Cybersource 读接口最终一致（下单后 1～3 秒查不到，结果可能前后不一致），所以退款、请款按渠道引用直接调用。
+- **Implemented（本地提交）：** channel-connector `ScriptFunctions` 新增 `sha256Base64`、`hmacSha256Base64DecodedKey`（密钥在受控句柄内做 Base64 解码）、`nowRfc1123`（`Locale.US`），并在 `RegisteredFunctionCatalog` 登记；不改表、接口、配置。
+- **Verified：**
+  - channel-connector auto 381/381，含用测试专用样本逐字节核对摘要和签名，以及一条端到端签名用例。
+  - 8 个签名样本本机复算一致。
+- **Deployed（mor-test，2026-10-22 12:49Z）：**
+  - channel-connector `sha256:5f22b55b…`（tag `cybs-20261022`，基线 main `1d39cd94` 加本需求），回滚目标 `798940ea…`，发布文件见[release](<../requirements/20261022/channel-connector-CYBS_NI接入/release/>)。
+  - 与原镜像 JAR 比对只差两个类；环境变量逐项相同。
+- **mor-test 配置 Deployed / Sandbox Verified：**
+  - 标准 API `REFUND`、`CAPTURE` 各追加可选字段 `paymentChannelRef`，服务端复核其他接入方流程，不受影响。
+  - 渠道 `I_CYBS_NI`（PAYMENT，DRAFT），出站地址为 apitest（沙箱）；脚本 2 个、原子 API 4 个、流程 6 条；验证账号 `SBX_APPROVED` / `SBX_DECLINED`（商户 `PMAE01_CYBS_USD`）。
+  - 7 个沙箱用例 PASSED（4 个写用例，等待 10 秒后 3 个读用例），[回执](<../requirements/20261022/channel-connector-CYBS_NI接入/assets/test-sandbox-receipt.json>)；MPGS 8/8 与其他渠道回归 8/8 PASSED。
+  - 密钥与卡号按值核对：运行详情、日志、仓库均为 0 次。
+- **Pending / 遗留：**
+  - 推送另行授权。
+  - 对接包 AED、BHD、EGP、KWD、ZAR 五组凭据在 apitest 返回 401。
+  - Payment 调用 Cybersource 的退款、请款必须传 `paymentChannelRef`（缺失时为 NOT_SENT）；`PAY_QUERY` 在提交后几秒内返回 `NOT_FOUND` 不能视为终态。
+  - 运行轨迹中的 `Signature` 头没有遮蔽，与其他脚本签名渠道相同。
+  - `sealJsonBody` 会把含卡号的发送文本返回给脚本（技术方案 1.4），建议另行加固。
+  - 未做：3DS、分次请款、`VOID`、PF。
+
 ## channel-connector MPGS（Network International）卡收单接入（2026-10-21—22，mor-test 配置已部署，沙箱已验证，已本地提交，未推送）
 
 - **Designed：** [需求](<../requirements/20261021/channel-connector-MPGS_NI接入/requirement.md>)、[技术方案](<../requirements/20261021/channel-connector-MPGS_NI接入/technique.md>)、[交付记录](<../requirements/20261021/channel-connector-MPGS_NI接入/delivery.md>)经用户逐阶段确认。

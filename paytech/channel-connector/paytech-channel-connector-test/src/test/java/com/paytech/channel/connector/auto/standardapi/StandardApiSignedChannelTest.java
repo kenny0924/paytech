@@ -6,12 +6,16 @@ import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.MessageDigest;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,7 +52,12 @@ import tools.jackson.databind.node.ObjectNode;
  * requireRsaSha256Signature 验签，失败即节点 ERROR；锁定后再改请求体同样 ERROR 且不发出请求。
  *
  * <p>
- * 渠道是测试 Mock HTTP 服务：用商户公钥独立验证收到的签名，并用渠道私钥对配置的响应原文签名。密钥对每次运行随机生成，属合成数据。
+ * Cybersource 式 HTTP Signature（CYBS_NI 接入技术方案第 4 节）：REQUEST 脚本对锁定字节求 sha256Base64 作 Digest，以 nowRfc1123
+ * 写 Date，用 hmacSha256Base64DecodedKey 对 host、date、request-target、digest、v-c-merchant-id 五行签名。
+ *
+ * <p>
+ * 渠道是测试 Mock HTTP 服务：用商户公钥独立验证收到的签名，并用渠道私钥对配置的响应原文签名。密钥对每次运行随机生成，属合成数据；
+ * HMAC 密钥是对接包 test-vectors.json 中本机随机生成的测试专用值（testOnly），与任何真实商户无关。
  *
  * @see ExecuteStandardApiProcessor#process(ExecuteStandardApiRequest)
  */
@@ -64,6 +73,17 @@ class StandardApiSignedChannelTest extends ExternalApiTestBase {
     private static final KeyPair CHANNEL = keyPair();
     /** 固定测试时钟 TestClock.PLATFORM_FIXED_NOW 按 RFC 3339 毫秒精度。 */
     private static final String REQUEST_TIME = "2026-09-17T12:00:00.123Z";
+    /** 同一固定时钟按 RFC 1123 秒精度。 */
+    private static final String HTTP_DATE = "Thu, 17 Sep 2026 12:00:00 GMT";
+    private static final String CYBS = "CYBS";
+    private static final String CYBS_PAY = "PAY_CYBS";
+    /** 签名串中的 request-target，与原子 API 定义绑定的脚本参数一致。 */
+    private static final String CYBS_REQUEST_TARGET = "post /pts/v2/payments";
+    private static final String CYBS_HOST = "apitest.cybersource.com";
+    private static final String CYBS_MERCHANT_ID = "testonly_merchant";
+    private static final String CYBS_KEY_ID = "testonly-key-id";
+    /** 测试专用 HMAC 密钥（Base64）。 */
+    private static final String CYBS_SECRET_KEY = "v9EJBDh1IuYowEzGJ4Wr74fy/eFcxHs+tzby2ypVChc=";
 
     @Autowired
     private TestClock clock;
@@ -144,6 +164,36 @@ class StandardApiSignedChannelTest extends ExternalApiTestBase {
         assertTrue(channel.requests().isEmpty());
     }
 
+    /**
+     * Cybersource 式签名：渠道对实际收到的请求体字节独立重算 Digest，按收到的 Date 与账号参数重建五行签名串并以解码后的密钥重算
+     * Signature；Date 取自应用时钟；日志与执行结果不含密钥。
+     */
+    @Test
+    void test_cybersourceHttpSignature(CapturedOutput output) {
+        cybersourceIntegration();
+        channel.respond("POST", PATH, 200, """
+            {"code":"APPLY_SUCCESS","data":{"tradeToken":"T2026","totalAmount":10}}""");
+
+        var result = execute(CYBS_PAY, CYBS, input("10.50"));
+
+        var request = channel.only();
+        String digest = "SHA-256=" + encode(sha256(request.body().getBytes(StandardCharsets.UTF_8)));
+        String content = String.join("\n", "host: " + CYBS_HOST, "date: " + request.headers().get("date"),
+            "request-target: " + CYBS_REQUEST_TARGET, "digest: " + digest, "v-c-merchant-id: " + CYBS_MERCHANT_ID);
+        String signature = """
+            keyid="%s", algorithm="HmacSHA256", headers="host date request-target digest v-c-merchant-id", \
+            signature="%s\"""".formatted(CYBS_KEY_ID, hmacSha256(CYBS_SECRET_KEY, content));
+        assertAll(() -> assertEquals(ExecuteStatus.SUCCESS, result.getExecuteStatus()),
+            () -> assertEquals("""
+                {"version":"1.5","data":{"outTradeNo":"%s","totalAmount":10.50}}""".formatted(attempt()), request.body()),
+            () -> assertEquals(digest, request.headers().get("digest"), "Digest 未覆盖实际发送的字节"),
+            () -> assertEquals(HTTP_DATE, request.headers().get("date")),
+            () -> assertEquals(CYBS_MERCHANT_ID, request.headers().get("v-c-merchant-id")),
+            () -> assertEquals(signature, request.headers().get("signature"), "渠道验签"),
+            () -> assertFalse(outputs(result).toString().contains(CYBS_SECRET_KEY), "执行结果包含密钥"),
+            () -> assertFalse(output.getAll().contains(CYBS_SECRET_KEY), "日志包含密钥"));
+    }
+
     /** 金额为 DECIMAL 的支付标准 API。 */
     private StandardApi standardApi(String code) {
         return externalApi.standardApi(code, List.of(field("paymentContext", ApiFieldDataType.OBJECT, true),
@@ -177,6 +227,30 @@ class StandardApiSignedChannelTest extends ExternalApiTestBase {
                 field("data.tradeToken", ApiFieldDataType.STRING, false),
                 field("data.totalAmount", ApiFieldDataType.DECIMAL, false)));
         externalApi.implementation(integration, standardApi, ExternalApiFixtures.flow("call-signed-create-order"));
+        vault.allow(TOKEN, ExternalApiSamples.text(account));
+    }
+
+    /** 以 Cybersource 式签名脚本与下单原子 API 实现标准 API；账号参数含 host、merchantId、keyId，凭据含 Base64 密钥。 */
+    private void cybersourceIntegration() {
+        Channel integration =
+            externalApi.channel(CYBS, mockHttpServer.baseUrl() + ChannelMockController.PREFIX + "/api");
+        externalApi.script(integration, "CYBS_SIGN", ScriptExecutionStage.REQUEST,
+            List.of(new ParameterDeclaration("secretKey", "PROTECTED_HANDLE", true),
+                new ParameterDeclaration("keyId", "STRING", true), new ParameterDeclaration("merchantId", "STRING", true),
+                new ParameterDeclaration("host", "STRING", true), new ParameterDeclaration("requestTarget", "STRING", true)),
+            ExternalApiFixtures.script("cybs-signature"));
+        externalApi.integrationApi(integration, CALL, ExternalApiFixtures.definition("cybs-signed-create-order"),
+            List.of(field("version", ApiFieldDataType.STRING, true), field("data", ApiFieldDataType.OBJECT, false),
+                field("data.outTradeNo", ApiFieldDataType.STRING, true),
+                field("data.totalAmount", ApiFieldDataType.DECIMAL, true)),
+            List.of(field("code", ApiFieldDataType.STRING, true), field("data", ApiFieldDataType.OBJECT, false),
+                field("data.tradeToken", ApiFieldDataType.STRING, false),
+                field("data.totalAmount", ApiFieldDataType.DECIMAL, false)));
+        externalApi.implementation(integration, standardApi(CYBS_PAY),
+            ExternalApiFixtures.flow("call-cybs-signed-create-order"));
+        ((ObjectNode)account.get("parameters")).put("host", CYBS_HOST).put("merchantId", CYBS_MERCHANT_ID)
+            .put("keyId", CYBS_KEY_ID);
+        ((ObjectNode)account.get("credentials")).put("secretKey", CYBS_SECRET_KEY);
         vault.allow(TOKEN, ExternalApiSamples.text(account));
     }
 
@@ -249,6 +323,26 @@ class StandardApiSignedChannelTest extends ExternalApiTestBase {
             verifier.initVerify(key);
             verifier.update(text.getBytes(StandardCharsets.UTF_8));
             return signature != null && verifier.verify(Base64.getDecoder().decode(signature));
+        } catch (GeneralSecurityException failure) {
+            throw new IllegalStateException(failure);
+        }
+    }
+
+    /** SHA-256 摘要。 */
+    private static byte[] sha256(byte[] bytes) {
+        try {
+            return MessageDigest.getInstance("SHA-256").digest(bytes);
+        } catch (GeneralSecurityException failure) {
+            throw new IllegalStateException(failure);
+        }
+    }
+
+    /** 以 Base64 解码后的密钥计算 HmacSHA256，Base64 编码。 */
+    private static String hmacSha256(String base64Key, String text) {
+        try {
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(Base64.getDecoder().decode(base64Key), "HmacSHA256"));
+            return encode(mac.doFinal(text.getBytes(StandardCharsets.UTF_8)));
         } catch (GeneralSecurityException failure) {
             throw new IllegalStateException(failure);
         }

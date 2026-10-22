@@ -1,0 +1,4 @@
+# 回滚：channel-connector 恢复为统一出口第二段镜像。
+services:
+  channel-connector-service:
+    image: sha256:798940ead0ec7900f2e62c1c08434291fd745d441784e4309f621997d51de366  # mor-test/channel-connector-service:ccu2-20261022（JAR a9a477076df6）

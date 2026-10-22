@@ -48,7 +48,7 @@ public class ExpressionEngine {
     /**
      * 按应用时钟创建引擎。
      *
-     * @param clock 脚本函数 nowRfc3339 使用的时钟
+     * @param clock 脚本函数 nowRfc3339 与 nowRfc1123 使用的时钟
      */
     @Autowired
     public ExpressionEngine(Clock clock) {
