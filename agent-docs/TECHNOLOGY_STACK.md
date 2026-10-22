@@ -1,6 +1,6 @@
 # Code-MoR 技术栈基线
 
-最后更新：2026-10-14
+最后更新：2026-10-22
 
 状态：Confirmed technology baseline。本文只定义产品、版本与技术边界；当前组件的实现、验证和部署状态统一见 [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md)。
 
@@ -47,6 +47,7 @@ Code-MoR 不追逐刚发布的最新功能线。版本选择遵循以下优先�
 | MyBatis Core | MyBatis | 3.5.19 | 由统一 BOM 管理；公共 TypeHandler 位于无 Spring 自动配置的 `paytech-mybatis-support` |
 | JSON 规范化 | RFC 8785 + Code-MoR JSON Object Profile | `io.github.erdtman:java-json-canonicalization:1.1` | BOM 固定；Foundation 严格前置验证并只对受限 Object/Number Profile 背书，第三方类型不进公共 API，升级必须通过逐字节门禁 |
 | 配置表达式与脚本 | AviatorScript | `com.googlecode.aviator:aviator:5.3.3` | 只用于 Platform 外部 API 配置的条件、取值表达式与公共脚本；版本暂由 Platform 根 POM 固定，其他服务需要时先上移到统一 BOM。必须经 `ExpressionEngine` 的白名单剖面解释执行：禁用模块/use/new/静态调用/Lambda/fn/while/正则匹配，不开放任何 Java 类，循环次数有上限；5.3.3 无求值超时，不得作为通用规则引擎或在其他场景直接使用 |
+| SQL 只读校验 | JSqlParser | `com.github.jsqlparser:jsqlparser:5.4`，由 `paytech-dependencies` 固定 | 只用于 Platform data-query 模块 `engine` 包：`ReadOnlySqlGuard` 解析渲染后的 SQL，只放行单条只读查询并拒绝系统库引用；`SqlPagingRewriter` 在语法树上追加 LIMIT/OFFSET 与生成计数查询；不用于生成或改写其他业务 SQL，第三方类型不出该包（[2026-10-22 决定](./decisions/2026-10-22-data-query-into-platform-support.md)） |
 | 对象存储适配 | MinIO Java SDK / AWS SDK for Java v2（S3） | `io.minio:minio:8.5.17`；`software.amazon.awssdk:bom:2.31.50` | 统一 BOM 固定；只出现在 Platform 文件模块 `integration/storage` 的对应适配器，按 `files.onboarding.storage-provider` 唯一装配（本机 `MINIO`、生产 `S3`），不进入 Domain/Processor。本机服务端 MinIO 用 Chainguard 源码构建镜像（RELEASE.2026-09-22，按 `cgr.dev/chainguard/minio@sha256:2136d593…` 摘要固定；官方社区镜像已下架），HTTPS 自签名证书只用于本机 |
 | 邮件发送适配 | AWS SDK for Java v2（SES v2，`sesv2` + `url-connection-client`） | `software.amazon.awssdk:bom:2.31.50` | 统一 BOM 固定；只出现在 Platform Delivery 模块 `integration/provider/ses` 的 `EmailProvider` 适配器，`notification.enabled` 与 `notification.ses.enabled` 同时开启才装配；关闭 SDK 内置重试，不进入 Domain/Processor；IAM 用户密钥对存 Vault，每次发送前读取并只用于该次请求签名。Client 认证邮件经 Delivery 即时发送复用同一适配器，Spring Mail SMTP 已移除（2026-10-15） |
 | 数据库 | MySQL LTS | 8.4；本地固定 8.4.11 | 早期允许一个实例承载多数据库，但每系统独立数据库和账号 |
@@ -66,6 +67,8 @@ Code-MoR 不追逐刚发布的最新功能线。版本选择遵循以下优先�
 | Java 测试 | JUnit 5 + 仓库 `local-environment` | BOM 管理 | 默认 `auto` 经过真实生产链；MySQL/Redis/RabbitMQ 均复用本地固定版本服务并做受限清理 |
 
 OpenTelemetry、Prometheus、Loki、Tempo、Grafana 和 Alertmanager 的产品组合已经确认。它们发布频繁，实际创建 Compose 时固定经过同一次兼容验证的明确补丁版本和镜像摘要，而不是在架构文档中永久冻结一个很快失效的补丁号。
+
+本表只登记服务端技术；前端依赖由各前端工程的 `package.json` 与锁文件固定。例外登记：operations-console-web 的 data-query 模板编辑器使用 CodeMirror 6（`@codemirror/*`）提供高亮与错误定位，只在模板编辑器页面懒加载，不进入其他页面的首屏包（[2026-10-22 决定](./decisions/2026-10-22-data-query-into-platform-support.md)）。
 
 ## 4. Java 与虚拟线程
 
@@ -324,7 +327,7 @@ paytech-foundation/
 
 - 六个核心系统、Vault、Nacos 和 XXL-Job 使用各自数据库；
 - 每个服务使用独立数据库账号，只拥有自己的数据库权限；
-- 禁止跨数据库查询、写入、外键、视图、触发器和事务；
+- 禁止跨数据库查询、写入、外键、视图、触发器和事务；唯一的受控读取例外是 Platform data-query 经已登记数据源的只读账号读取，只用于 Operations 查询与工作流验证、结果不作为业务执行依据、系统库不可查询，见 [2026-10-22 决定](./decisions/2026-10-22-data-query-into-platform-support.md)；
 - 备份、恢复演练、容量和性能可以按共享实例管理，但数据所有权不能因此合并；
 - Vault 在处理真实敏感数据前重新评估独立实例和更严格网络/审计边界。
 

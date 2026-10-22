@@ -203,6 +203,10 @@ web:
       - /notification-admin
       - /webhook-admin
       - /platform/v1/internal-tokens
+      - /data-query-admin/v1/data-sources
+      - /data-query-admin/v1/data-source-connection-tests
+      - /data-query-admin/v1/template-trials
+      - /data-query/v1
 
 # 人工认证、管理接口与租户投影在 Mock 中全部启用；本地密钥为仓库隔离的合成测试值。
 operations:
@@ -350,6 +354,37 @@ webhook:
     callers:
       webhook-test: [order.paid, order.cancelled, refund.succeeded]
       webhook-test-peer: [order.paid]
+
+# 数据查询：被查库为本地 MySQL 的 mor_data_query_fixture（Q12，人工执行 local-environment/mysql/manual/2026-10-22-data-query-fixture.sql）。
+data-query:
+  limits: # 与正式默认值相同；超时与结果过大用例按这些上限构造查询。
+    max-rows: 10000
+    max-timeout: 8s # 低于 BFF 9s 与 Gateway 10s 响应超时
+    max-offset: 100000
+    max-response-bytes: 10MB
+    max-pool-size: 10
+    max-list-size: 1000
+    max-body-length: 48KB # Gateway Body 上限 65536 字节内留出其余字段
+    max-validation-combinations: 256
+  datasource:
+    refresh-enabled: false # 关闭定时刷新：用例经提交后的本地刷新与显式 refresh() 驱动，避免后台任务与每例清理交错。
+    refresh-interval: 5s
+  management:
+    lock-wait-time: 500ms
+    lock-lease-time: 60s
+  http:
+    callers: [operations-console-bff] # DataQueryApiTestBase.CALLER；其他调用方用于拒绝用例。
+
+# 被查库连接参数：仓库隔离的本地测试账号，密码优先取环境变量，其次 local-environment/.env.local，最后为 .env.example 的默认值。
+test:
+  data-query:
+    fixture:
+      host: 127.0.0.1
+      port: 13306
+      reader-username: data_query_fixture_reader
+      reader-password: "${MOR_DATA_QUERY_FIXTURE_READER_PASSWORD:local-data-query-fixture-reader-change-me-2026}"
+      writer-username: data_query_fixture_writer
+      writer-password: "${MOR_DATA_QUERY_FIXTURE_WRITER_PASSWORD:local-data-query-fixture-writer-change-me-2026}"
 
 # 内部调用 Token 签发端：Mock 中启用；密钥为仓库隔离的合成 P-256 测试值，不对应任何真实环境。
 internal-token:

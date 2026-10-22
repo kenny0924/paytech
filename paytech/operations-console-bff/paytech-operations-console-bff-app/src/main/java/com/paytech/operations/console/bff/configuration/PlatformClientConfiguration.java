@@ -15,6 +15,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 
 import com.paytech.foundation.common.enums.CodeMessageEnum;
@@ -28,6 +29,10 @@ import com.paytech.operations.console.bff.domain.enums.OperationsBffErrorCode;
 import com.paytech.operations.console.bff.integration.PlatformDiscoveryInterceptor;
 import com.paytech.platform.support.api.authentication.OperationsAuthenticationApi;
 import com.paytech.platform.support.api.authorization.OperationsAuthorizationApi;
+import com.paytech.platform.support.api.dataquery.DataQueryExecutionApi;
+import com.paytech.platform.support.api.dataquery.DataSourceManagementApi;
+import com.paytech.platform.support.api.dataquery.QueryTemplateManagementApi;
+import com.paytech.platform.support.api.enums.DataQueryErrorCode;
 import com.paytech.platform.support.api.enums.GatewayConfigurationErrorCode;
 import com.paytech.platform.support.api.enums.OnboardingFileErrorCode;
 import com.paytech.platform.support.api.enums.OperationsErrorCode;
@@ -38,6 +43,9 @@ import com.paytech.platform.support.api.referencedata.CurrencySpecManagementApi;
 import com.paytech.platform.support.api.referencedata.CurrencySpecQueryApi;
 import com.paytech.platform.support.api.reviewfiles.ReviewFileApi;
 
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
+
 /** Platform HTTP 接口代理的单例注册，以及发现、超时和关联标识配置。 @author Codex */
 @Configuration(proxyBeanMethods = false)
 public class PlatformClientConfiguration {
@@ -45,6 +53,7 @@ public class PlatformClientConfiguration {
     private static final String PLATFORM_BASE_URL = "http://" + PLATFORM_SERVICE + "/platform-support";
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(3);
     private static final Duration READ_TIMEOUT = Duration.ofSeconds(5);
+    private static final JsonMapper PROBLEM_JSON = JsonMapper.builder().build();
 
     /** 租户访问复用既有 Platform 私网发现及字段错误解码。 */
     @Bean
@@ -105,6 +114,59 @@ public class PlatformClientConfiguration {
             .createClient(CurrencySpecManagementApi.class);
     }
 
+    /** 数据源维护复用数据查询专用代理：测试连接与启用检查需要连接被查库。 */
+    @Bean
+    DataSourceManagementApi dataSourceManagementApi(HttpServiceProxyFactory operationsDataQueryPlatformProxyFactory) {
+        return operationsDataQueryPlatformProxyFactory.createClient(DataSourceManagementApi.class);
+    }
+
+    /** 模板维护复用数据查询专用代理：保存与校验需要读取数据源，试运行执行查询。 */
+    @Bean
+    QueryTemplateManagementApi queryTemplateManagementApi(HttpServiceProxyFactory operationsDataQueryPlatformProxyFactory) {
+        return operationsDataQueryPlatformProxyFactory.createClient(QueryTemplateManagementApi.class);
+    }
+
+    /** 模板执行复用数据查询专用代理。 */
+    @Bean
+    DataQueryExecutionApi dataQueryExecutionApi(HttpServiceProxyFactory operationsDataQueryPlatformProxyFactory) {
+        return operationsDataQueryPlatformProxyFactory.createClient(DataQueryExecutionApi.class);
+    }
+
+    /**
+     * 数据查询三个合同的共用代理
+     * <li>登记 DataQueryErrorCode；开启字段错误与 Owner detail 外显，Platform 的业务拒绝原因（如启用检查未通过、有模板引用）原样到达页面。</li>
+     * <li>读取超时取 operations.data-query-read-timeout（默认 9 秒，小于 Gateway 路由响应超时上限 10 秒），容纳连接检查与查询执行。</li>
+     * <li>Platform 503 DATA_SOURCE_UNAVAILABLE 保留该 Code，页面据此提示稍后重试；其他 5xx 仍为 DEPENDENCY_UNAVAILABLE。</li>
+     */
+    @Bean
+    HttpServiceProxyFactory operationsDataQueryPlatformProxyFactory(Environment environment,
+        PlatformDiscoveryInterceptor discovery, @Value("${operations.platform-test-base-url:}") String testBaseUrl,
+        @Value("${operations.data-query-read-timeout:9s}") Duration readTimeout,
+        ObjectProvider<InternalTokenSupplier> tokens) {
+        HttpServiceClientOptions options = InternalCallTokenOptions.apply(
+            HttpServiceClientOptions.migrationWithLegacyErrorResponse(), tokens, PLATFORM_SERVICE)
+            .withDependencyFailureMapper((kind, cause) -> switch (kind) {
+                case TIMEOUT -> new ErrorException(OperationsBffErrorCode.DEPENDENCY_TIMEOUT, null, cause);
+                case UNAVAILABLE -> new ServiceUnavailableException(dataSourceUnavailable(cause)
+                    ? DataQueryErrorCode.DATA_SOURCE_UNAVAILABLE : OperationsBffErrorCode.DEPENDENCY_UNAVAILABLE, cause);
+            }).withRequestValidationFailures().withOwnerProblemDetail();
+        return HttpServiceClientFactory.create(platformClient(environment, discovery, testBaseUrl, readTimeout), options,
+            platformErrors(DataQueryErrorCode.values()));
+    }
+
+    /** Foundation 已校验为合规 Problem 的 503，且 Code 为 DATA_SOURCE_UNAVAILABLE。 */
+    private static boolean dataSourceUnavailable(Throwable cause) {
+        if (!(cause instanceof RestClientResponseException response) || response.getStatusCode().value() != 503) {
+            return false;
+        }
+        try {
+            return DataQueryErrorCode.DATA_SOURCE_UNAVAILABLE.getCode().equals(
+                PROBLEM_JSON.readTree(response.getResponseBodyAsString()).path("code").asString());
+        } catch (JacksonException unreadable) {
+            return false;
+        }
+    }
+
     @Bean
     GatewayConfigurationManagementApi gatewayConfigurationManagementApi(
         HttpServiceProxyFactory operationsConfigurationPlatformProxyFactory) {
@@ -157,18 +219,8 @@ public class PlatformClientConfiguration {
     private HttpServiceProxyFactory platformProxy(Environment environment, PlatformDiscoveryInterceptor discovery,
         String testBaseUrl, ObjectProvider<InternalTokenSupplier> tokens, boolean configurationValidation,
         boolean ownerProblemDetail, CodeMessageEnum... extraErrors) {
-        RestClient.Builder builder = RestClient.builder();
-        if (testBaseUrl.isBlank()) {
-            builder.baseUrl(PLATFORM_BASE_URL).requestInterceptor(discovery);
-        } else {
-            validateTestAddress(testBaseUrl, environment);
-            builder.baseUrl(testBaseUrl);
-        }
-        RestClient client = builder.requestFactory(requestFactory())
-            .requestInterceptor(requestIdInterceptor()).build();
-        CodeMessageEnum[] errors = Stream.concat(Arrays.stream(OperationsErrorCode.values()),
-            Stream.concat(Arrays.stream(GatewayConfigurationErrorCode.values()), Arrays.stream(extraErrors)))
-            .toArray(CodeMessageEnum[]::new);
+        RestClient client = platformClient(environment, discovery, testBaseUrl, READ_TIMEOUT);
+        CodeMessageEnum[] errors = platformErrors(extraErrors);
         HttpServiceClientOptions options = InternalCallTokenOptions.apply(
             HttpServiceClientOptions.migrationWithLegacyErrorResponse(), tokens, PLATFORM_SERVICE)
             .withDependencyFailureMapper((kind, cause) -> switch (kind) {
@@ -180,11 +232,31 @@ public class PlatformClientConfiguration {
         return HttpServiceClientFactory.create(client, ownerProblemDetail ? options.withOwnerProblemDetail() : options, errors);
     }
 
-    private JdkClientHttpRequestFactory requestFactory() {
+    /** Platform 私网发现或 auto 测试直连地址，带 Request ID 传播与给定读取超时。 */
+    private RestClient platformClient(Environment environment, PlatformDiscoveryInterceptor discovery,
+        String testBaseUrl, Duration readTimeout) {
+        RestClient.Builder builder = RestClient.builder();
+        if (testBaseUrl.isBlank()) {
+            builder.baseUrl(PLATFORM_BASE_URL).requestInterceptor(discovery);
+        } else {
+            validateTestAddress(testBaseUrl, environment);
+            builder.baseUrl(testBaseUrl);
+        }
+        return builder.requestFactory(requestFactory(readTimeout)).requestInterceptor(requestIdInterceptor()).build();
+    }
+
+    /** Platform 公共错误码之外再登记本合同的专有错误码。 */
+    private static CodeMessageEnum[] platformErrors(CodeMessageEnum... extraErrors) {
+        return Stream.concat(Arrays.stream(OperationsErrorCode.values()),
+            Stream.concat(Arrays.stream(GatewayConfigurationErrorCode.values()), Arrays.stream(extraErrors)))
+            .toArray(CodeMessageEnum[]::new);
+    }
+
+    private JdkClientHttpRequestFactory requestFactory(Duration readTimeout) {
         HttpClient client = HttpClient.newBuilder().connectTimeout(CONNECT_TIMEOUT)
             .followRedirects(HttpClient.Redirect.NEVER).build();
         var factory = new JdkClientHttpRequestFactory(client);
-        factory.setReadTimeout(READ_TIMEOUT);
+        factory.setReadTimeout(readTimeout);
         return factory;
     }
 

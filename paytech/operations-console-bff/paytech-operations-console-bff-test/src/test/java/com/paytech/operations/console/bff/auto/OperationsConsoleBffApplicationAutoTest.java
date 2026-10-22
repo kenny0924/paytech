@@ -140,6 +140,8 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
         assertEquals(List.of("/auth", "/authorization", "/iam", "/audit", "/gateway-admin", "/console-admin", "/permission-admin", "/api-credential-admin", "/api-scope-admin",
                 "/decision-dictionaries", "/decision-rule-sets", "/decision-releases", "/decision-flows", "/decision-variables", "/risk-lists", "/risk-decisions", "/external-api-admin",
                 "/client-onboarding-admin", "/vault-admin", "/notification-admin", "/webhook-admin", "/currency-admin",
+                "/data-query-admin/v1/data-sources", "/data-query-admin/v1/data-source-connection-tests",
+                "/data-query-admin/v1/template-trials", "/data-query/v1",
                 "/channel-admin/v1/channel-accounts", "/finance/reconciliation/v1/cash-accounts"),
             applicationContext.getBean(WebLoggingProperties.class).metadataOnlyPathPrefixes(),
             "身份、管理筛选和状态原因只能写元数据日志");
@@ -233,6 +235,24 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
             "POST /currency-admin/v1/currency-specs",
             "PUT /currency-admin/v1/currency-specs/{currency}",
             "PATCH /currency-admin/v1/currency-specs/{currency}/status",
+            "GET /data-query-admin/v1/data-sources",
+            "GET /data-query-admin/v1/data-sources/{dataSourceId}",
+            "POST /data-query-admin/v1/data-sources",
+            "PUT /data-query-admin/v1/data-sources/{dataSourceId}",
+            "POST /data-query-admin/v1/data-source-connection-tests",
+            "POST /data-query-admin/v1/data-sources/{dataSourceId}/status",
+            "DELETE /data-query-admin/v1/data-sources/{dataSourceId}",
+            "GET /data-query-admin/v1/templates",
+            "GET /data-query-admin/v1/templates/{templateId}",
+            "POST /data-query-admin/v1/templates",
+            "PUT /data-query-admin/v1/templates/{templateId}",
+            "POST /data-query-admin/v1/templates/{templateId}/status",
+            "GET /data-query-admin/v1/templates/{templateId}/versions",
+            "GET /data-query-admin/v1/templates/{templateId}/versions/{versionNo}",
+            "POST /data-query-admin/v1/templates/{templateId}/restoration",
+            "POST /data-query-admin/v1/template-validations",
+            "POST /data-query-admin/v1/template-trials",
+            "POST /data-query/v1/templates/{templateCode}/executions",
             "GET /api-credential-admin/v1/credentials",
             "GET /api-credential-admin/v1/credentials/{credentialId}",
             "GET /api-credential-admin/v1/credentials/{credentialId}/scopes",
@@ -509,7 +529,7 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
         assertEquals(RiskDecisionConfigurationClientImpl.class, clients.values().iterator().next().getClass());
         var factories = applicationContext.getBeansOfType(HttpServiceProxyFactory.class);
         assertEquals(Set.of("operationsPlatformProxyFactory", "operationsConfigurationPlatformProxyFactory", "operationsRiskProxyFactory",
-            "operationsRiskFlowProxyFactory"), factories.keySet());
+            "operationsRiskFlowProxyFactory", "operationsDataQueryPlatformProxyFactory"), factories.keySet());
         assertNotSame(factories.get("operationsPlatformProxyFactory"), factories.get("operationsRiskProxyFactory"));
         assertNotSame(factories.get("operationsRiskProxyFactory"), factories.get("operationsRiskFlowProxyFactory"));
         assertTrue(applicationContext.getBeansOfType(DataSource.class).isEmpty(), "无状态 BFF 不得装配数据库");

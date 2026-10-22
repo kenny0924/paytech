@@ -37,6 +37,7 @@
         <lang3.version>3.19.0</lang3.version>
         <minio.version>8.5.17</minio.version>
         <aws-sdk.version>2.31.50</aws-sdk.version>
+        <jsqlparser.version>5.4</jsqlparser.version>
         <archunit.version>1.4.2</archunit.version>
         <!-- Same version Spring Security 7.0 OAuth2 JOSE uses; Spring Boot 4.0 BOM does not manage it directly. -->
         <nimbus-jose-jwt.version>10.4</nimbus-jose-jwt.version>
@@ -55,6 +56,11 @@
                 <version>${aws-sdk.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.github.jsqlparser</groupId>
+                <artifactId>jsqlparser</artifactId>
+                <version>${jsqlparser.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.tngtech.archunit</groupId>

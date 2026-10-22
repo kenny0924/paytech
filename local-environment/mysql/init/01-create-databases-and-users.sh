@@ -76,8 +76,8 @@ GRANT ALL PRIVILEGES ON nacos_config.* TO 'nacos'@'%';
 GRANT ALL PRIVILEGES ON xxl_job.* TO 'xxl_job'@'%';
 GRANT ALL PRIVILEGES ON paytech_foundation_test.* TO 'foundation_test'@'%';
 
--- Flink CDC reader for the analytics profile: binlog replication globally, SELECT only on whitelisted databases
--- (paytech/data-service/cdc/whitelist.yaml). Add a GRANT SELECT line here when a new database enters the whitelist.
+-- Flink CDC reader for the analytics profile: binlog replication globally, SELECT only on the source databases of the
+-- demo pipelines in local-environment/flink/pipelines. Add a GRANT SELECT line here when a demo pipeline needs another database.
 GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'cdc_reader'@'%';
 GRANT SELECT ON mor_finance.* TO 'cdc_reader'@'%';
 EOSQL

@@ -675,6 +675,28 @@ export const pageCapabilities = [
         "displayName": "审批"
       }
     ]
+  },
+  {
+    "componentKey": "OPERATIONS_DATA_SOURCES",
+    "displayName": "数据源",
+    "frontendRoute": "/data-query/data-sources",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_DATA_SOURCE_MANAGE",
+        "displayName": "维护"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_QUERY_TEMPLATES",
+    "displayName": "查询模板",
+    "frontendRoute": "/data-query/templates",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_DATA_QUERY_TEMPLATE_MANAGE",
+        "displayName": "维护"
+      }
+    ]
   }
 ] as const;
 export type PageComponentKey = typeof pageCapabilities[number]["componentKey"];

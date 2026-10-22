@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.dataquery.core.dal.mapper.QueryTemplateVersionMapper">
+
+    <sql id="columns">
+        template_version_id AS templateVersionId, template_id AS templateId, version_no AS versionNo,
+        data_source_id AS dataSourceId, body, parameters_json AS parametersJson, columns_json AS columnsJson,
+        constraints_json AS constraintsJson, restored_from_version_no AS restoredFromVersionNo,
+        change_note AS changeNote, created_by AS createdBy, create_time AS createTime
+    </sql>
+
+    <insert id="insert">
+        INSERT INTO t_query_template_version (template_version_id, template_id, version_no, data_source_id, body,
+            parameters_json, columns_json, constraints_json, restored_from_version_no, change_note, created_by,
+            create_time)
+        VALUES (#{row.templateVersionId}, #{row.templateId}, #{row.versionNo}, #{row.dataSourceId}, #{row.body},
+            #{row.parametersJson}, #{row.columnsJson}, #{row.constraintsJson}, #{row.restoredFromVersionNo},
+            #{row.changeNote}, #{row.createdBy}, #{row.createTime})
+    </insert>
+
+    <select id="selectByTemplateAndNo" timeout="2"
+            resultType="com.paytech.platform.support.dataquery.core.dal.dataobject.QueryTemplateVersion">
+        SELECT <include refid="columns"/>
+        FROM t_query_template_version
+        WHERE template_id = #{templateId} AND version_no = #{versionNo}
+    </select>
+
+    <select id="selectCurrentVersions" timeout="5"
+            resultType="com.paytech.platform.support.dataquery.core.dal.dataobject.QueryTemplateVersion">
+        SELECT <include refid="columns"/>
+        FROM t_query_template_version
+        WHERE (template_id, version_no) IN
+        <foreach collection="templates" item="template" open="(" separator="," close=")">
+            (#{template.templateId}, #{template.currentVersionNo})
+        </foreach>
+    </select>
+
+    <select id="selectPage" timeout="5"
+            resultType="com.paytech.platform.support.dataquery.core.dal.dataobject.QueryTemplateVersion">
+        SELECT <include refid="columns"/>
+        FROM t_query_template_version
+        WHERE template_id = #{templateId}
+        ORDER BY version_no DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="count" timeout="2" resultType="long">
+        SELECT COUNT(*)
+        FROM t_query_template_version
+        WHERE template_id = #{templateId}
+    </select>
+</mapper>

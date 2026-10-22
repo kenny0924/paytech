@@ -31,7 +31,6 @@ class ModuleModelAutoTest {
         assertIdentity("paytech-risk-decision-app", "risk-decision", ModuleRole.APP);
         assertIdentity("paytech-client-master-test", "client-master", ModuleRole.TEST);
         assertIdentity("paytech-client-console-bff-app", "client-console-bff", ModuleRole.APP);
-        assertIdentity("paytech-data-service-api", "data-service", ModuleRole.API);
         assertIdentity("paytech-vault-client", "vault", ModuleRole.CLIENT);
         assertIdentity("paytech-ledger", "ledger", ModuleRole.SERVICE_AGGREGATOR);
     }
@@ -49,8 +48,8 @@ class ModuleModelAutoTest {
         Assertions.assertEquals(ModuleRole.UNCLASSIFIED,
             ModuleIdentity.classify("org.springframework", "spring-web").role());
         Assertions.assertEquals(ServiceLayer.PROCESS, ServiceCatalog.layerOf("fx"));
-        Assertions.assertEquals(ServiceLayer.DOMAIN, ServiceCatalog.layerOf("data-service"));
-        Assertions.assertEquals(25, ServiceCatalog.serviceNames().size());
+        Assertions.assertEquals(ServiceLayer.DOMAIN, ServiceCatalog.layerOf("reconciliation"));
+        Assertions.assertEquals(24, ServiceCatalog.serviceNames().size());
     }
 
     @Test

@@ -26,7 +26,8 @@ import com.paytech.platform.support.auditsecurity.domain.enums.OperationsAuditCl
     "com.paytech.platform.support.delivery.core.dal.mapper",
     "com.paytech.platform.support.auditsecurity.core.dal.mapper",
     "com.paytech.platform.support.core.reliability.mapper",
-    "com.paytech.platform.support.referencedata.core.dal.mapper"}, sqlSessionTemplateRef = "sqlSessionTemplate")
+    "com.paytech.platform.support.referencedata.core.dal.mapper",
+    "com.paytech.platform.support.dataquery.core.dal.mapper"}, sqlSessionTemplateRef = "sqlSessionTemplate")
 public class PersistenceConfiguration {
 
     /**
@@ -102,6 +103,11 @@ public class PersistenceConfiguration {
         registry.register(OperationsPermissionRiskLevel.class, CodeEnumTypeHandler.class);
         registry.register(JwtSigningAlgorithm.class, CodeEnumTypeHandler.class);
         registry.register(JwtSigningKeyStatus.class, CodeEnumTypeHandler.class);
+
+        registry.register(com.paytech.platform.support.dataquery.core.enums.DataSourceEngineType.class, CodeEnumTypeHandler.class);
+        registry.register(com.paytech.platform.support.dataquery.core.enums.DataSourceStatus.class, CodeEnumTypeHandler.class);
+        registry.register(com.paytech.platform.support.dataquery.core.enums.DataSourceCheckResult.class, CodeEnumTypeHandler.class);
+        registry.register(com.paytech.platform.support.dataquery.core.enums.QueryTemplateStatus.class, CodeEnumTypeHandler.class);
     }
 
     /**

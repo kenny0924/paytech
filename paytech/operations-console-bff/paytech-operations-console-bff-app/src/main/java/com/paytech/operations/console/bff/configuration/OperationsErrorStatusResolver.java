@@ -47,6 +47,12 @@ public final class OperationsErrorStatusResolver implements ApiErrorStatusResolv
                 case OPERATIONS_PERMISSION_DENIED -> HttpStatus.FORBIDDEN;
             };
         }
+        if (errorCode instanceof com.paytech.platform.support.api.enums.DataQueryErrorCode dataQuery) {
+            return switch (dataQuery) {
+                case DATA_QUERY_TIMEOUT, DATA_QUERY_RESULT_TOO_LARGE -> HttpStatus.BAD_REQUEST;
+                case DATA_SOURCE_UNAVAILABLE -> HttpStatus.SERVICE_UNAVAILABLE;
+            };
+        }
         if (errorCode instanceof GatewayConfigurationErrorCode gatewayCode) {
             return switch (gatewayCode) {
                 case GATEWAY_CONFIGURATION_NOT_FOUND -> HttpStatus.NOT_FOUND;

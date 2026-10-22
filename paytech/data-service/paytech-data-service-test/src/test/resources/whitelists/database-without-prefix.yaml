@@ -1,5 +1,0 @@
-services:
-  - service: ledger
-    database: finance
-    tables:
-      - name: t_currency_spec

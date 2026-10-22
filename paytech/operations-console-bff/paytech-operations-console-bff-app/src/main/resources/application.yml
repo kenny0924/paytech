@@ -77,6 +77,8 @@ operations:
   ledger-long-running-read-timeout: ${OPERATIONS_LEDGER_LONG_RUNNING_READ_TIMEOUT:9s}
   # reconciliation 运营接口固定私网地址（与 ledger / account / billing 同一接入方式），规则同上；auto 测试指向本地 Simulator。
   reconciliation-base-url: ${OPERATIONS_RECONCILIATION_BASE_URL:http://127.0.0.1:18115}
+  # Platform 数据查询（数据源连接检查、模板试运行与执行）的读取超时，须小于 Gateway 路由响应超时上限 10 秒。
+  data-query-read-timeout: ${OPERATIONS_DATA_QUERY_READ_TIMEOUT:9s}
 
 web:
   logging:
@@ -110,6 +112,11 @@ web:
       - /webhook-admin
       # 币种启停原因与权限维护一致，只记元数据。
       - /currency-admin
+      # 数据源新建、修改与测试连接的请求含被查库密码；试运行与执行的请求含查询参数值、响应含结果行，只记元数据。
+      - /data-query-admin/v1/data-sources
+      - /data-query-admin/v1/data-source-connection-tests
+      - /data-query-admin/v1/template-trials
+      - /data-query/v1
       # 渠道技术账号配置请求含渠道参数与凭据明文，账号接口只记元数据。
       - /channel-admin/v1/channel-accounts
       # 银行账户新建请求含银行账号明文（I-05），银行账户接口只记元数据。

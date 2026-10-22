@@ -1,0 +1,177 @@
+/* 数据查询：数据源、查询模板列表与模板编辑器（原型“数据查询 · 01—06”）。 */
+.dq-page, .dq-modal { --dq-border: #e4e8f0; --dq-muted: #69717d; --dq-error: #d4380d; --dq-warning: #ad6800; }
+.dq-page .mono, .dq-modal .mono, .dq-check .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; overflow-wrap: anywhere; }
+.dq-page .muted, .dq-modal .muted { color: var(--dq-muted); }
+.dq-intro { margin: -8px 0 16px; font-size: 12px; }
+.dq-banner { margin-bottom: 12px; }
+.dq-text-error { color: var(--dq-error); }
+.dq-ok { color: #389e0d; font-weight: 600; }
+.dq-link { background: none; border: 0; padding: 0; color: #315dca; cursor: pointer; font: inherit; }
+.dq-spacer { flex: 1; }
+.dq-note { background: #f8fafc; border-radius: 6px; padding: 10px 14px; color: rgba(0, 0, 0, 0.6); font-size: 12px; margin: 8px 0; }
+.dq-note.is-warning { background: #fffbe6; color: var(--dq-warning); }
+.dq-note.is-error { background: #fff2f0; color: var(--dq-error); }
+.dq-sub-title { font-size: 12px; font-weight: 600; color: #4a5568; margin: 12px 0 6px; }
+
+/* 筛选与列表 */
+.dq-filters { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0 12px; align-items: end; }
+.dq-filters .ant-form-item { margin-bottom: 12px; }
+.dq-filter-actions { display: flex; gap: 8px; margin-bottom: 12px; }
+.dq-panel { background: #fff; border: 1px solid var(--dq-border); border-radius: 10px; padding: 12px; min-width: 0; }
+.dq-cell { display: grid; gap: 2px; font-size: 12px; }
+.dq-clickable { cursor: pointer; }
+.dq-selected-row > td { background: #f1f5ff !important; }
+.dq-table-foot { font-size: 12px; padding: 8px 4px 0; }
+.dq-param-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.dq-param-tag { margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; }
+.dq-param-tag.is-list { background: #f0f5ff; border-color: #d6e4ff; }
+.dq-param-tag.is-fragment { background: #f9f0ff; border-color: #efdbff; }
+.dq-param-tag.is-required { font-weight: 600; }
+.dq-link.mono, .dq-page .dq-link { color: #315dca; }
+
+/* 数据源主从布局 */
+.dq-master-detail { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 16px; align-items: start; }
+.dq-detail { padding: 18px 20px; }
+.dq-detail-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+.dq-detail-head h2 { margin: 0 0 4px; font-size: 16px; }
+.dq-section-title { font-size: 13px; color: #63728b; font-weight: 600; margin: 18px 0 8px; border-top: 1px solid #edf0f5; padding-top: 14px; }
+.dq-reference-list { list-style: none; padding: 0; margin: 0 0 8px; display: grid; gap: 6px; }
+.dq-reference-list li { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.dq-detail-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; padding-top: 14px; border-top: 1px solid #edf0f5; }
+
+/* 数据源编辑弹窗 */
+.dq-editor-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 24px; }
+.dq-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+.dq-form-row.is-host { grid-template-columns: 1fr 140px; }
+.dq-param-list { display: grid; gap: 6px; }
+.dq-param-row { display: grid; grid-template-columns: 180px 12px minmax(0, 1fr) 32px; gap: 6px; align-items: start; }
+.dq-param-row .ant-form-item { margin: 0; }
+.dq-param-row > span { line-height: 32px; text-align: center; }
+.dq-check-panel { background: #f8fafc; border-radius: 8px; padding: 16px; align-self: start; }
+.dq-check-panel h3 { margin: 0 0 8px; font-size: 14px; }
+.dq-check-title { font-size: 12px; color: var(--dq-muted); margin-bottom: 8px; }
+.dq-step { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; padding: 8px 0; border-top: 1px solid #edf0f5; }
+.dq-step-mark { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; color: #fff; background: #bfc6d1; }
+.dq-step.is-passed .dq-step-mark { background: #52c41a; }
+.dq-step.is-failed .dq-step-mark { background: var(--dq-error); }
+.dq-step-name { font-weight: 600; }
+.dq-step-detail { font-size: 12px; color: #4a5568; }
+.dq-step-hint { margin-top: 6px; color: var(--dq-error); }
+.dq-grant { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; background: #fff; border: 1px solid #edf0f5; border-radius: 4px; padding: 4px 6px; margin-top: 4px; overflow-wrap: anywhere; }
+.dq-grant .is-violation { color: var(--dq-error); font-weight: 700; background: #fff1f0; border-radius: 2px; }
+.dq-violations { margin: 8px 0 0; padding-left: 18px; color: var(--dq-error); font-size: 12px; }
+.dq-modal-footer { display: flex; align-items: center; gap: 8px; }
+.dq-modal-footer > .muted { flex: 1; text-align: left; font-size: 12px; color: #69717d; }
+
+/* 模板编辑器 */
+.dq-editor { display: grid; gap: 12px; }
+.dq-editor-top { display: grid; gap: 8px; }
+.dq-crumbs { display: flex; gap: 6px; font-size: 12px; color: var(--dq-muted); }
+.dq-editor-title { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.dq-editor-title h1 { margin: 0; font-size: 18px; }
+.dq-code-input { width: 280px; }
+.dq-name-input { width: 220px; }
+.dq-source-select { min-width: 220px; }
+.dq-source-select.is-focused .ant-select-selector, .dq-source-select.is-focused { box-shadow: 0 0 0 2px #ffccc7; border-radius: 6px; }
+.dq-description-input { padding-left: 0; color: var(--dq-muted); }
+.dq-editor-body { display: grid; grid-template-columns: minmax(0, 3fr) minmax(360px, 2fr); gap: 16px; align-items: start; }
+.dq-editor-left { display: grid; gap: 12px; min-width: 0; }
+.dq-editor-right { background: #fff; border: 1px solid var(--dq-border); border-radius: 10px; padding: 4px 14px 14px; min-width: 0; }
+.dq-code-card { background: #fff; border: 1px solid var(--dq-border); border-radius: 10px; overflow: hidden; }
+.dq-code-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; padding: 8px 12px; border-bottom: 1px solid #edf0f5; font-size: 12px; }
+.dq-legend { display: inline-flex; flex-wrap: wrap; gap: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.dq-bytes { margin-left: auto; color: var(--dq-muted); }
+.dq-code { min-height: 360px; max-height: 62vh; overflow: auto; font-size: 13px; }
+.dq-code .cm-editor { min-height: 360px; }
+.dq-code .cm-editor.cm-focused { outline: none; }
+.dq-code .cm-scroller { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; line-height: 1.6; }
+.dq-tpl-value { color: #0958d9; background: #e6f4ff; border-radius: 2px; }
+.dq-tpl-fragment { color: #531dab; background: #f9f0ff; border-radius: 2px; }
+.dq-tpl-tag { color: #d46b08; font-weight: 600; }
+.dq-tpl-comment, .dq-tpl-comment * { color: #8c8c8c !important; font-style: italic; }
+.dq-bottom { background: #fff; border: 1px solid var(--dq-border); border-radius: 10px; padding: 0 12px 12px; }
+.dq-problems { display: grid; gap: 4px; }
+.dq-problem { display: grid; grid-template-columns: 52px 90px minmax(0, 1fr) 40px; gap: 8px; align-items: center; padding: 4px 0; font-size: 12px; }
+.dq-problem .ant-tag { margin: 0; text-align: center; }
+.dq-problem-at { color: var(--dq-muted); }
+.dq-problem-status { font-size: 12px; }
+.dq-warning-list { margin: 4px 0 0; padding-left: 18px; }
+
+/* 参数 / 约束 / 列 */
+.dq-param-head, .dq-param-line { display: grid; grid-template-columns: 20px minmax(0, 1.1fr) 112px 36px minmax(0, 1.4fr) 28px; gap: 6px; align-items: center; }
+.dq-param-head { font-size: 12px; color: var(--dq-muted); padding: 0 0 6px; }
+.dq-param-table { display: grid; gap: 4px; }
+.dq-param-item { border: 1px solid transparent; border-radius: 6px; padding: 4px; }
+.dq-param-item.is-focused { border-color: #ff7875; background: #fff1f0; }
+.dq-param-item.is-dragging { opacity: .5; }
+.dq-drag { cursor: grab; color: #a0aec0; user-select: none; text-align: center; }
+.dq-hint { text-align: left; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dq-param-detail { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; padding: 8px 4px 4px 26px; }
+.dq-param-detail .dq-choice-list, .dq-param-detail .dq-field-list { grid-column: 1 / -1; }
+.dq-labeled { display: grid; gap: 2px; font-size: 12px; }
+.dq-labeled > span { color: #4a5568; }
+.dq-labeled .ant-input-number, .dq-labeled .ant-select { width: 100%; }
+.dq-choice-row { display: grid; grid-template-columns: 120px 14px minmax(0, 1fr) 28px; gap: 6px; align-items: center; margin-bottom: 4px; }
+.dq-field-row { border-top: 1px dashed #edf0f5; padding: 6px 0; }
+.dq-field-main { display: grid; grid-template-columns: minmax(0, 1fr) 110px auto 28px; gap: 6px; align-items: center; }
+.dq-field-constraints { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 12px; margin-top: 6px; }
+.dq-constraints { display: grid; gap: 12px; }
+.dq-constraint { border-radius: 6px; padding: 4px; }
+.dq-constraint.is-focused { background: #fff1f0; box-shadow: 0 0 0 1px #ff7875; }
+.dq-column-head, .dq-column-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.6fr) 28px; gap: 6px; align-items: center; }
+.dq-column-head { font-size: 12px; color: var(--dq-muted); }
+.dq-column-list { display: grid; gap: 6px; }
+.dq-column-row.is-focused { background: #fff1f0; border-radius: 6px; }
+.dq-mask { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.dq-mask .ant-select { min-width: 96px; }
+.dq-keep { display: inline-flex; gap: 4px; align-items: center; font-size: 12px; }
+.dq-keep .ant-input-number { width: 56px; }
+
+/* 试运行 */
+.dq-trial { display: grid; gap: 12px; }
+.dq-trial-form { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px 12px; align-items: start; }
+.dq-trial-hint, .dq-trial-paging, .dq-trial-form > .dq-note, .dq-trial-form > .dq-banner { grid-column: 1 / -1; }
+.dq-trial-field { display: grid; gap: 4px; font-size: 12px; }
+.dq-trial-field .ant-select, .dq-trial-field .ant-picker { width: 100%; }
+.dq-trial-paging { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 12px; }
+.dq-trial-paging .ant-input-number { width: 72px; }
+.dq-trial-summary { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; font-size: 12px; }
+.dq-sql { margin: 0; background: #f8fafc; border: 1px solid #edf0f5; border-radius: 6px; padding: 8px 10px; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.dq-sql.is-count { color: var(--dq-muted); }
+.dq-bindings { display: flex; flex-wrap: wrap; gap: 4px 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+.dq-trial-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 12px; flex-wrap: wrap; }
+.dq-page-no { margin: 0 8px; }
+
+/* 版本历史 */
+.dq-drawer-footer { display: flex; gap: 8px; align-items: center; justify-content: flex-end; }
+.dq-drawer-footer > :first-child { flex: 1; margin: 0; }
+.dq-version-layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 16px; }
+.dq-version-list { display: grid; gap: 6px; align-content: start; }
+.dq-version-item { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 8px; padding: 8px; border: 1px solid #edf0f5; border-radius: 6px; cursor: pointer; font-size: 12px; }
+.dq-version-item.is-selected { border-color: #adc6ff; background: #f0f5ff; }
+.dq-version-pager { display: flex; gap: 8px; align-items: center; justify-content: center; }
+.dq-diff-legend { display: flex; gap: 12px; align-items: center; margin-bottom: 8px; font-size: 12px; }
+.dq-diff-removed { color: var(--dq-error); }
+.dq-diff-added { color: #389e0d; }
+.dq-diff { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #edf0f5; border-radius: 6px; overflow: auto; max-height: 52vh; }
+.dq-diff-head { background: #f8fafc; font-size: 12px; font-weight: 600; padding: 6px 10px; border-bottom: 1px solid #edf0f5; position: sticky; top: 0; }
+.dq-diff-row { display: contents; }
+.dq-diff-cell { display: grid; grid-template-columns: 34px 14px minmax(0, 1fr); font-size: 12px; line-height: 1.6; min-width: 0; }
+.dq-diff-cell code { white-space: pre-wrap; overflow-wrap: anywhere; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.dq-diff-cell.is-removed { background: #fff1f0; }
+.dq-diff-cell.is-added { background: #f6ffed; }
+.dq-diff-cell.is-empty { background: #fafafa; }
+.dq-diff-no { color: #a0aec0; text-align: right; padding-right: 6px; }
+.dq-diff-sign { color: var(--dq-muted); }
+.dq-changes { display: grid; gap: 4px; margin: 0; font-size: 12px; }
+.dq-changes > div { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 8px; }
+.dq-changes dt { color: #4a5568; font-weight: 600; }
+.dq-changes dd { margin: 0; }
+
+@media (max-width: 1280px) {
+  .dq-master-detail, .dq-editor-body { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+  .dq-editor-grid, .dq-version-layout, .dq-form-row { grid-template-columns: minmax(0, 1fr); }
+  .dq-diff { grid-template-columns: minmax(0, 1fr); }
+}

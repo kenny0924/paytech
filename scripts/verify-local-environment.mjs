@@ -13,7 +13,6 @@ const flinkDockerfile = join(environmentRoot, 'flink', 'Dockerfile');
 const flinkPipelineDirectory = join(environmentRoot, 'flink', 'pipelines');
 const flinkSubmitScript = join(environmentRoot, 'flink', 'submit-pipeline.sh');
 const dorisInitScript = join(environmentRoot, 'doris', 'init', 'init-doris.sh');
-const cdcWhitelistFile = join(repositoryRoot, 'paytech', 'data-service', 'cdc', 'whitelist.yaml');
 const exampleEnvironment = join(environmentRoot, '.env.example');
 const mysqlInitScript = join(
   environmentRoot,
@@ -61,6 +60,8 @@ const expectedEnvironmentVariables = new Map([
   ['MOR_XXL_JOB_DB_PASSWORD', 'local-xxl-job-change-me-2026'],
   ['PAYTECH_FOUNDATION_TEST_DB_PASSWORD', 'local-foundation-test-change-me-2026'],
   ['MOR_CDC_DB_PASSWORD', 'local-cdc-reader-change-me-2026'],
+  ['MOR_DATA_QUERY_FIXTURE_READER_PASSWORD', 'local-data-query-fixture-reader-change-me-2026'],
+  ['MOR_DATA_QUERY_FIXTURE_WRITER_PASSWORD', 'local-data-query-fixture-writer-change-me-2026'],
   [redisPasswordEnvironmentVariable, 'local-redis-change-me-2026'],
   ['MOR_RABBITMQ_USER', 'mor_local'],
   ['MOR_RABBITMQ_PASSWORD', 'local-rabbit-change-me-2026'],
@@ -612,37 +613,9 @@ if (verifiedDownloads.length !== 4 || !flinkBuild.includes('sha256sum -c -')) {
   errors.push(`Flink Dockerfile must verify exactly four downloads with SHA-256: ${verifiedDownloads.length}`);
 }
 
-const whitelistContent = readFileSync(cdcWhitelistFile, 'utf8');
-const whitelistedTables = new Set();
-let whitelistDatabase;
-for (const line of whitelistContent.split('\n')) {
-  const databaseMatch = line.match(/^\s+database:\s*(\S+)\s*$/u);
-  if (databaseMatch) {
-    whitelistDatabase = databaseMatch[1];
-    continue;
-  }
-  const tableMatch = line.match(/^\s+- name:\s*(\S+)\s*$/u);
-  if (tableMatch && whitelistDatabase) {
-    whitelistedTables.add(`${whitelistDatabase}.${tableMatch[1]}`);
-  }
-}
-if (whitelistedTables.size === 0) {
-  errors.push('CDC whitelist declares no table');
-}
+// Demo pipelines carry no contract since the 2026-10-22 data-query decision; only the password rule is checked.
 for (const pipelineName of readdirSync(flinkPipelineDirectory).filter((name) => name.endsWith('.yaml'))) {
   const pipeline = readFileSync(join(flinkPipelineDirectory, pipelineName), 'utf8');
-  const referenced = [
-    ...[...pipeline.matchAll(/^\s+tables:\s*(\S+)\s*$/gmu)].flatMap((match) => match[1].split(',')),
-    ...[...pipeline.matchAll(/^\s+- source-table:\s*(\S+)\s*$/gmu)].map((match) => match[1]),
-  ];
-  if (referenced.length === 0) {
-    errors.push(`Flink pipeline ${pipelineName} references no source table`);
-  }
-  for (const table of referenced) {
-    if (!whitelistedTables.has(table)) {
-      errors.push(`Flink pipeline ${pipelineName} references a table outside the CDC whitelist: ${table}`);
-    }
-  }
   for (const match of pipeline.matchAll(/^\s+password:\s*(.*)$/gmu)) {
     if (!/^\$\{MOR_[A-Z_]+_PASSWORD\}$/u.test(match[1].trim())) {
       errors.push(`Flink pipeline ${pipelineName} must reference passwords only as \${MOR_*_PASSWORD}`);
@@ -663,6 +636,22 @@ const shellResult = spawnSync('bash', ['-n', mysqlInitScript], {
 });
 if (shellResult.status !== 0) {
   errors.push(`MySQL initialization script is invalid:\n${shellResult.stderr}`);
+}
+
+// The data-query fixture runs from mysql/init on a new volume and from mysql/manual on an existing one: same SQL body.
+const dataQueryFixtureInitScript = join(environmentRoot, 'mysql', 'init', '05-data-query-fixture.sh');
+const dataQueryFixtureManualFile = join(environmentRoot, 'mysql', 'manual', '2026-10-22-data-query-fixture.sql');
+const fixtureSyntax = spawnSync('bash', ['-n', dataQueryFixtureInitScript], { cwd: repositoryRoot, encoding: 'utf8' });
+if (fixtureSyntax.status !== 0) {
+  errors.push(`data-query fixture script is invalid:\n${fixtureSyntax.stderr}`);
+}
+const fixtureBody = (content) => content.match(/^-- BEGIN data-query fixture\n[\s\S]*?^-- END data-query fixture$/mu)?.[0];
+const initFixtureBody = fixtureBody(readFileSync(dataQueryFixtureInitScript, 'utf8'));
+if (!initFixtureBody || initFixtureBody !== fixtureBody(readFileSync(dataQueryFixtureManualFile, 'utf8'))) {
+  errors.push('data-query fixture SQL differs between mysql/init/05-data-query-fixture.sh and its mysql/manual file');
+}
+if (initFixtureBody && /^GRANT (?!SELECT ON |SELECT, INSERT, UPDATE ON )/mu.test(initFixtureBody)) {
+  errors.push('data-query fixture grants must stay SELECT (reader) and SELECT, INSERT, UPDATE (writer)');
 }
 
 const mysqlInit = readFileSync(mysqlInitScript, 'utf8');
@@ -717,7 +706,7 @@ for (const grant of mysqlInit.matchAll(/^GRANT (.+) ON (\S+) TO 'cdc_reader'@'%'
   const allowed = grant[1] === 'REPLICATION SLAVE, REPLICATION CLIENT' && grant[2] === '*.*'
     || grant[1] === 'SELECT' && /^mor_[a-z0-9_]+\.\*$/u.test(grant[2]);
   if (!allowed) {
-    errors.push(`cdc_reader grant exceeds SELECT on whitelisted databases plus replication: ${grant[0]}`);
+    errors.push(`cdc_reader grant exceeds SELECT on demo source databases plus replication: ${grant[0]}`);
   }
 }
 const runtimeNamespaceFiles = [
@@ -729,6 +718,8 @@ const runtimeNamespaceFiles = [
   flinkSubmitScript,
   exampleEnvironment,
   mysqlInitScript,
+  dataQueryFixtureInitScript,
+  dataQueryFixtureManualFile,
   xxlJobSchemaFile,
   xxlJobSchemaVersionFile,
 ];

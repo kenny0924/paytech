@@ -23,7 +23,7 @@ class TableOwnershipAutoTest {
     void test_normalFlow() {
         // design/03 §4.2：17 个目标库共 265 张物理表；另加保留服务 platform-support 自身 Schema 的 46 张表
         // （2026-10-20 渠道协议 10 表迁往 channel-connector 后由 56 张减为 46 张，总表数不变）。
-        Assertions.assertEquals(265 + 46 + 1 + 6 - 7 + 9 + 4 + 6 + 1 + 2 + 1 - 13 + 10 + 2 + 10 - 2, ownership.physicalTableCount(),
+        Assertions.assertEquals(265 + 46 + 1 + 6 - 7 + 9 + 4 + 6 + 1 + 2 + 1 - 13 + 10 + 2 + 10 - 2 + 3, ownership.physicalTableCount(),
             "design 03 + Platform 保留表 + 第 12 步 t_card_material_ticket + account 明细账六张业务表（2026-10-19 重构）"
                 + " - billing 经济事实三表与渠道成本四表 + billing 计费事实九表 + channel-connector 渠道成本四表（2026-10-19 计费事实重构）"
                 + " + commercial 产品目录三表与合同订阅 / 开通 / 约束三表（2026-10-19 六层产品定价模型）"
@@ -32,9 +32,10 @@ class TableOwnershipAutoTest {
                 + " - reconciliation 旧对账十三表 + 新模型八张业务表与消费幂等两表（2026-10-20 对账切片 1）"
                 + " + commercial 可配维度与价格协议签署两表（2026-10-20 开通与定价模型调整）"
                 + " + channel-connector 渠道协议 10 表（2026-10-20 统一对外渠道出口第一段，自 Platform 迁入）"
-                + " - ledger 与 billing 的 t_currency_spec 只读副本（2026-10-20 币种快照读取）");
-        // mor_platform：2026-10-20 渠道协议 10 表迁往 channel-connector，由 57 张减为 47 张。
-        Assertions.assertEquals(47, ownership.databasesOf("platform-support").get("mor_platform").size());
+                + " - ledger 与 billing 的 t_currency_spec 只读副本（2026-10-20 币种快照读取）"
+                + " + Platform data-query 数据源与查询模板三表（2026-10-22）");
+        // mor_platform：2026-10-20 渠道协议 10 表迁往 channel-connector，由 57 张减为 47 张；2026-10-22 data-query 新增 3 张，共 50 张。
+        Assertions.assertEquals(50, ownership.databasesOf("platform-support").get("mor_platform").size());
         Assertions.assertEquals(30, ownership.databasesOf("ledger").get("mor_ledger").size());
         Assertions.assertTrue(ownership.allowedTables("ledger").containsAll(
             List.of("t_chart_account_change", "t_account_no_sequence")), "2026-10-19 科目分级新增的 ledger 表");

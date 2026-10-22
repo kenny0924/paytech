@@ -71,3 +71,9 @@ test('tenant page owns only its three approved routes', () => {
   assert.deepEqual(pageRoutePaths({ ...menu, frontendRoute: '/external-api/integrations', componentKey: 'OPERATIONS_EXTERNAL_INTEGRATIONS' }),
     ['/external-api/integrations', '/external-api/integrations/:integrationCode', '/external-api/integrations/:integrationCode/:section/:childCode']);
 });
+
+test('数据查询：模板页登记编辑器子路由（:templateId 含 new），数据源页只有根路径', () => {
+  const menu = { frontendRoute: '/data-query/templates', componentKey: 'OPERATIONS_QUERY_TEMPLATES' } as ConsoleResource;
+  assert.deepEqual(pageRoutePaths(menu), ['/data-query/templates', '/data-query/templates/:templateId']);
+  assert.deepEqual(pageRoutePaths({ ...menu, frontendRoute: '/data-query/data-sources', componentKey: 'OPERATIONS_DATA_SOURCES' }), ['/data-query/data-sources']);
+});

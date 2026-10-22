@@ -42,7 +42,7 @@
 | D22 | 多实例运维平面权限与版本兼容 | 已定 | 不持任何实例数据库凭据；下发版本与脚本、兼容预检；实例内迁移执行器执行 SQL 并回传日志；升级按实例原子执行，允许 N 与 N-1 并存。 |
 | D23 | 站点归属与分站前置设计 | 待定 | 订单按 Client 归属站点落库；回调经 MID → OE → 站点；站点不可用失败关闭。快照下发 / 失效、中心限制下传、站点事件积压需单独设计后才允许分站。 |
 | D24 | 事件顺序保证 | 已定 | 分区有序 + 版本号兜底：按聚合键投递同一分区，事件携带聚合版本号，消费者按版本判定乱序与重放。 |
-| D25 | 读模型：数据服务替代交易中心 | 已定 | 近实时 OLAP 数仓上的数据服务（秒级）；CDC 同步各服务白名单表 DML，不经 MQ；白名单与 PII 屏蔽是公开契约；Client / Partner 只走查询模板 + 服务端租户过滤；每实例一套；详情与操作前校验实时读 Owner。 |
+| D25 | 读模型：数据服务替代交易中心 | 已定 | 近实时 OLAP 数仓上的数据服务（秒级）；CDC 同步各服务白名单表 DML，不经 MQ；白名单与 PII 屏蔽是公开契约；Client / Partner 只走查询模板 + 服务端租户过滤；每实例一套；详情与操作前校验实时读 Owner。**2026-10-22 起查询部分由 [数据查询并入 Platform 决定](./2026-10-22-data-query-into-platform-support.md) 修订：并入 Platform 模块 data-query，读运营登记的只读数据源，CDC 白名单契约废止；“详情与操作前校验实时读 Owner”不变。** |
 | D26 | 服务间调用身份 | 已定 | Platform 签发短期内部签名 Token（调用方、目标、实例 ID、Purpose）；替代 X-Caller-Service + 静态白名单；后续可叠加 mTLS。 |
 | D27 | 合规限制传播范围 | 已定 | 出款拒绝新出款与待审批出款；账户停止该 Owner 的在途转可用；新收单不受影响。 |
 | D28 | 平台法人的 Owner | 已定 | 所有法律主体含平台自身法人都是客户主档的 Party；会计只为账簿主体开账簿并引用其 ID。 |
@@ -52,7 +52,7 @@
 | D32 | NFR 目标 | 已定 | 单实例收单峰值 100–500 TPS；RTO 1 小时 / RPO 接近 0。 |
 | D33 | 支付执行与收单的关系 | 已定 | 支付执行保持独立服务与部署；Acquiring → Payment → Channel 三层；收单创建 Intent 为可逆跨服务命令，由支付执行终态裁决。 |
 | D34 | 事件总线选型 | 已定 | 继续 RabbitMQ；分区有序用一致性哈希交换机按聚合键路由到固定队列组，每队列单活消费者；事件信封带聚合键、版本号、事件 ID、Schema 版本；落在 compensation-event 库与事件目录。不引入 Kafka。 |
-| D35 | 数仓选型 | 已定 | 数据服务建在 Apache Doris 上，Flink CDC 同步白名单表 MySQL DML，每实例一套；阶段 0 只建本地容器骨架与白名单约定。 |
+| D35 | 数仓选型 | 已定 | 数据服务建在 Apache Doris 上，Flink CDC 同步白名单表 MySQL DML，每实例一套；阶段 0 只建本地容器骨架与白名单约定。**2026-10-22 起由 [数据查询并入 Platform 决定](./2026-10-22-data-query-into-platform-support.md) 取代：Doris 降为可接入的数据源类型之一，本地 analytics Profile 只作 Doris 方言 manual 测试环境。** |
 | D36 | 重构落地方式、分支策略与阶段 0 范围 | 已定（2026-10-17 修订） | 同仓新骨架：仓库顶层 `paytech/` 单一 reactor，下按 V2 服务分目录。逐模块 git mv 搬迁，顺序 Foundation → Platform / Gateway / BFF / Vault → Commerce / CCT / Payment / Risk / Finance；搬迁期间该系统其他会话暂停。分支：长期集成分支 `refactor-main`，每步短分支合入，不逐步合回 main；每步后合入 main 控制分叉；全部完成后在 refactor-main 全链路验证，验收后整体合并 main。阶段 0 范围：模块重组与每服务独立部署（D09 修订）、门禁、事件信封与目录 v1、数据服务与迁移执行器骨架、内部签名 Token，**以及两处事务逻辑重做**——Finance 账户与会计分库（`t_account` 拆为会计科目账户与账户余额账户，过账与余额更新改为最终一致，按 D16 / S1）、Payment 卡域独立进程与独立库（支付成功对卡表的写入改为事件驱动，读卡回调改为 payment 签发的一次性有范围授权，按 S3）。两处方案在阶段 3 设计、阶段 4 实现，其余搬迁不改业务行为。不另起项目，不原地改造。 |
 | D37 | 经济事实唯一来源与账户消费口径（阶段 3 C1） | 已定（2026-10-17） | 计费是唯一经济事实来源；阶段 0 即引入最小计费能力（`t_transaction_economics` 三表更名为 `t_economic_fact*`，人工调整与成本调整经计费登记为经济事实，发布 `EconomicFactRecorded`）。账户从一开始只消费经济事实维护余额桶，不消费会计过账事件；会计消费同一事实自动过账（2026-10-18 修订为会计消费账户入账，见 [决定](./2026-10-18-account-ledger-subledger-control-account.md)）；影响 Owner 余额的人工调整不得直接在会计提交。方案见阶段 0 需求 design/04。 |
 | D38 | 结算控制归属（阶段 3 C3） | 已定（2026-10-17） | `t_settlement_control`、`t_settlement_control_scope`、`t_settle_control_state_change` 归合规服务（`mor_compliance`）。风控决策 Action Effect 产生控制时经 compliance-api 创建（幂等键 `source_action_effect_id`），出款检查点评估在事务前经 compliance-api 读取 ACTIVE 控制集合并冻结 `control_set_hash`；合规不可用则评估失败关闭。变更经 `SettlementRestrictionChanged` 事件通知出款与账户。 |
@@ -65,7 +65,7 @@
 
 本决定当前**不取代**任何现行权威。`AGENTS.md`、`PROJECT_CONTEXT.md`、`APPLICATION_ARCHITECTURE.md`、`JAVA_PROJECT_STRUCTURE.md`、`database/` 文档与各专项决定继续描述并约束**运行中的系统**。本决定描述**重构目标**；每个切片落地时，由该切片的需求交付流程逐一提出对现行文档的精确取代范围并确认。
 
-已知将被后续切片取代或修订的现行规则：D11（人工执行 SQL 的执行方式）、D26（`X-Caller-Service` + 静态白名单）、D09（模块与部署单元的组合方式）、D25（BFF 页面聚合与读模型分工）。
+已知将被后续切片取代或修订的现行规则：D11（人工执行 SQL 的执行方式）、D26（`X-Caller-Service` + 静态白名单）、D09（模块与部署单元的组合方式）、D25（BFF 页面聚合与读模型分工；查询部分已由 [2026-10-22 数据查询决定](./2026-10-22-data-query-into-platform-support.md)修订，D35 同时被取代）。
 
 ## 4. 后续细化
 

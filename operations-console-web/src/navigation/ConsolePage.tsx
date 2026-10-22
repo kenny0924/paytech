@@ -66,6 +66,8 @@ const pages: Record<PageComponentKey, ComponentType<PageProps>> = {
   OPERATIONS_CHANNEL_CHANNELS: lazy(() => import('../pages/ChannelChannels').then(m => ({ default: m.ChannelChannels }))),
   OPERATIONS_CHANNEL_MIDS: lazy(() => import('../pages/ChannelMids').then(m => ({ default: m.ChannelMids }))),
   OPERATIONS_CHANNEL_COST_PLANS: lazy(() => import('../pages/ChannelCostPlans').then(m => ({ default: m.ChannelCostPlans }))),
+  OPERATIONS_DATA_SOURCES: lazy(() => import('../pages/DataSources').then(m => ({ default: m.DataSources }))),
+  OPERATIONS_QUERY_TEMPLATES: lazy(() => import('../pages/QueryTemplates').then(m => ({ default: m.QueryTemplates }))),
 };
 export function ConsolePage({ componentKey, ...props }: PageProps & { componentKey: string }) {
   const Page = pages[componentKey as PageComponentKey];

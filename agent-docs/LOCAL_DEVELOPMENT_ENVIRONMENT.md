@@ -1,6 +1,6 @@
 # Code-MoR 本地开发环境方案
 
-最后更新：2026-09-05
+最后更新：2026-10-22
 
 状态：Confirmed local environment topology and operating guide。本页只维护当前 Mac 的资源基线、`mor-local` 拓扑、端口、依赖准备、安全隔离和日常操作。组件实现、验证、`mor-test` 部署及迁移状态统一见 [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md) 和相应仓库运行手册，不在此复制。
 
@@ -193,7 +193,7 @@ local-environment/
 环境事实登记（2026-10-17/18，V2 搬迁第 01、09 步）：
 
 - RabbitMQ 以只读方式挂载 `local-environment/rabbitmq/enabled_plugins` 到 `/etc/rabbitmq/enabled_plugins`，启用 `rabbitmq_management`、`rabbitmq_prometheus` 与 `rabbitmq_consistent_hash_exchange`。`paytech-messaging` 的分区订阅依赖一致性哈希插件，缺插件时应用启动失败并提示。已运行的容器经 `rabbitmq-plugins enable` 在线启用，重建后由该挂载保持。
-- MySQL 启动参数增加 `--binlog-format=ROW`、`--binlog-row-image=FULL`、`--gtid-mode=ON`、`--enforce-gtid-consistency=ON`，供 `analytics` Profile 的 Flink CDC 读取；GTID 参数在 MySQL 容器下次重建后生效。初始化脚本另建 CDC 账号 `cdc_reader`：全局只有 `REPLICATION SLAVE, REPLICATION CLIENT`，`SELECT` 只授予白名单库。
+- MySQL 启动参数增加 `--binlog-format=ROW`、`--binlog-row-image=FULL`、`--gtid-mode=ON`、`--enforce-gtid-consistency=ON`，供 `analytics` Profile 的 Flink CDC 读取；GTID 参数在 MySQL 容器下次重建后生效。初始化脚本另建 CDC 账号 `cdc_reader`：全局只有 `REPLICATION SLAVE, REPLICATION CLIENT`，`SELECT` 只授予演示管道的来源库。
 
 ### 7.2 `scheduler` Profile
 
@@ -219,12 +219,15 @@ local-environment/
 - LOCAL AES 根密钥、密钥引用与 Nacos 账号来自本机全链路材料，由 `local-environment/vault/vault.sh build` 写入不提交的 `vault/private/vault.env`（0600）；访问策略只从 `mor_vault` 策略表读取（[dml-local.sql](../requirements/20261014/operations-console-Vault数据类型与手动加解密/db/vault/dml-local.sql) 初始化），`vault/policy.local.json` 仅作转写来源、不再读取；管理调用方 `VAULT_ADMIN_CALLERS=operations-console-bff`；
 - 与宿主机进程方式（`run-service.sh vault`）互斥，同一时间只运行一种；不是生产 KMS，也不改变 Vault 的生产缺口。
 
-### 7.5 `analytics` Profile（2026-10-17，V2 搬迁第 09 步）
+### 7.5 `analytics` Profile：Doris 方言 manual 测试环境（data-query）
+
+2026-10-17 由 V2 搬迁第 09 步建立；2026-10-22 起按[数据查询决定](./decisions/2026-10-22-data-query-into-platform-support.md)不再承载 data-service 与 CDC 白名单契约，只供 Platform data-query 的 Doris 方言 manual 测试使用。
 
 - 定义在 `local-environment/compose.analytics.yaml`，需与 `compose.yaml` 一起以 `-f compose.yaml -f compose.analytics.yaml --profile analytics` 使用；
-- 服务：`doris-fe`、`doris-be`（Doris 3.0.8 单节点）、一次性 `doris-init`（root 密码、注册 BE、建库 `mor_data_service`、只读账号 `data_service_app`）、`flink-jobmanager`、`flink-taskmanager`（Flink 1.20.5 + Flink CDC 3.7.0，本地镜像 `mor-local/flink-cdc:1.20.5-cdc3.7.0`）与一次性 `flink-cdc-submit`；
+- 服务：`doris-fe`、`doris-be`（Doris 3.0.8 单节点）、一次性 `doris-init`（root 密码、注册 BE、建库 `mor_data_service`、只读账号 `data_service_app`，两者保留为 manual 测试的被查库与只读账号）、`flink-jobmanager`、`flink-taskmanager`（Flink 1.20.5 + Flink CDC 3.7.0，本地镜像 `mor-local/flink-cdc:1.20.5-cdc3.7.0`）与一次性 `flink-cdc-submit`（演示管道只演示把数据放进 Doris，不承担契约）；
 - 端口只绑定 `127.0.0.1`，见 8.1 节；卷 `mor-local-doris-fe-meta`、`mor-local-doris-be-storage`；
-- 实测空闲内存约 2.7 GiB（上限合计 4.75 GiB），镜像使 Docker 镜像存储增长约 14 GB；不作为日常启动条件，`mor-test` 未接入。运行手册见 [`local-environment/README.md`](../local-environment/README.md) 与 [`paytech/data-service/README.md`](../paytech/data-service/README.md)。
+- 实测空闲内存约 2.7 GiB（上限合计 4.75 GiB），镜像使 Docker 镜像存储增长约 14 GB；不作为日常启动条件，`mor-test` 未接入。运行手册、版本与校验值见 [`local-environment/README.md`](../local-environment/README.md)。
+- data-query 的 MySQL 自动测试不依赖本 Profile，使用 base MySQL 中的测试被查库 `mor_data_query_fixture`（只读账号 `data_query_fixture_reader`、写权限账号 `data_query_fixture_writer`，后者只用来验证拒绝启用），准备方式见 `local-environment/README.md` 的 “Data-query test fixture”。
 
 ### 7.6 可选安全基础设施 Profile
 
@@ -283,7 +286,6 @@ V2 服务端口（2026-10-17/18 搬迁后，取自各 `paytech/<service>/paytech
 | payout（`payout-service`，未建工程） | 18117 | — | — | 预留 |
 | dispute（`dispute-service`，只有模型） | 18118 | — | — | 预留 |
 | fx（`fx-service`，未建工程） | 18119 | — | — | 预留 |
-| data-service（`data-service`） | 18120 | 19120 | — | 新建 |
 | workflow-approval（`workflow-approval-service`，未建工程） | 18121 | — | — | 预留 |
 | Operations Console BFF（`operations-console-bff`） | 18201 | 19201 | — | operations-console-bff |
 | Client Console BFF（`client-console-bff`） | 18202 | 19202 | — | client-console-bff |
@@ -464,6 +466,7 @@ Java 服务至少验证：
 | `MOR_LEDGER_DB_PASSWORD`、`MOR_BILLING_DB_PASSWORD`、`MOR_ACCOUNT_DB_PASSWORD`、`MOR_RECONCILIATION_DB_PASSWORD`、`MOR_TAX_DB_PASSWORD` | Finance 五个服务库账号 | 07 |
 | `MOR_CARD_DB_PASSWORD` | card 库账号 | 12 |
 | `MOR_CDC_DB_PASSWORD` | CDC 账号 `cdc_reader` | 09 |
+| `MOR_DATA_QUERY_FIXTURE_READER_PASSWORD`、`MOR_DATA_QUERY_FIXTURE_WRITER_PASSWORD` | data-query 测试被查库 `mor_data_query_fixture` 的只读与写权限账号 | 2026-10-22 data-query |
 | `MOR_DORIS_ROOT_PASSWORD`、`MOR_DATA_SERVICE_DORIS_PASSWORD` | `analytics` Profile 的 Doris root 与 `data_service_app` | 09 |
 | `PAYTECH_REDIS_PASSWORD` | Redis 密码（取代 `MOR_REDIS_PASSWORD`，Compose 插值与测试都读该键） | 既有，搬迁中统一使用 |
 

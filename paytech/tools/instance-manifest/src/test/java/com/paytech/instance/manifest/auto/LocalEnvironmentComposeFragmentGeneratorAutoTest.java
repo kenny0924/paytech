@@ -44,9 +44,9 @@ class LocalEnvironmentComposeFragmentGeneratorAutoTest {
 
     @Test
     void test_edgeCase() {
-        // 服务清单与 design/03 §1.2 一致：25 个逻辑服务（含预留的 partner-console-bff），端口不重复。
-        Assertions.assertEquals(25, catalog.all().size());
-        Assertions.assertEquals(25, catalog.all().stream().map(definition -> definition.port()).distinct().count());
+        // 服务清单与 design/03 §1.2 一致（2026-10-22 data-service 并入 Platform 后）：24 个逻辑服务（含预留的 partner-console-bff），端口不重复。
+        Assertions.assertEquals(24, catalog.all().size());
+        Assertions.assertEquals(24, catalog.all().stream().map(definition -> definition.port()).distinct().count());
         Assertions.assertEquals("client-master-service", catalog.find("client-master").orElseThrow().applicationName());
         Assertions.assertNull(catalog.find("api-gateway").orElseThrow().database());
     }

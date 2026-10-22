@@ -124,6 +124,10 @@ web:
       - /notification-admin
       - /webhook-admin
       - /platform/v1/internal-tokens
+      - /data-query-admin/v1/data-sources
+      - /data-query-admin/v1/data-source-connection-tests
+      - /data-query-admin/v1/template-trials
+      - /data-query/v1
 
 
 client:
@@ -215,6 +219,31 @@ webhook:
   # 默认为空，全部拒绝；例如 acquiring-service: [order.paid, refund.succeeded]（第 03 步由 commerce-service 改名）
   http:
     callers: {}
+
+# 数据查询（paytech-platform-support-data-query）：Operations 数据源 / 模板维护（/data-query-admin/v1）与执行（/data-query/v1）。
+# 依赖 operations.authentication.enabled=true；需先手工执行 docs/database/sql/changes/2026-10-22-data-query.sql，
+# 并在 Vault 登记 DATA_SOURCE_PASSWORD_V1 的 PROTECT（DATA_SOURCE_CONFIGURATION）与 REVEAL（DATA_SOURCE_CONNECTION）规则。
+data-query:
+  # 系统硬上限：模板约束与请求都不能超过；修改需重启。
+  limits:
+    max-rows: 10000
+    max-timeout: 8s # 低于 BFF 9s 与 Gateway 10s 响应超时
+    max-offset: 100000
+    max-response-bytes: 10MB
+    max-pool-size: 10
+    max-list-size: 1000
+    max-body-length: 48KB # Gateway Body 上限 65536 字节内留出其余字段
+    max-validation-combinations: 256
+  datasource:
+    refresh-enabled: true # 定时比较数据源版本并重建 / 退役连接池；关闭后只有修改所在实例在提交后刷新。
+    refresh-interval: 5s
+  management:
+    lock-wait-time: 500ms # lock:data-query:source:{id} / lock:data-query:template:{id} 的 TRY_LOCK 等待。
+    lock-lease-time: 60s # 覆盖锁内 Vault 调用、连接检查与本地事务。
+  # 执行接口调用方白名单（过渡信任：X-Caller-Service 可伪造，部署须限制私网访问）；默认为空，全部拒绝。
+  # 各环境配置：[operations-console-bff]
+  http:
+    callers: []
 
 # 内部调用身份（D26，Foundation paytech-internal-auth）：默认 OFF，不校验入站、不附加出站 Token；DUAL 接受 Token 并回退 X-Caller-Service。
 internal-auth:

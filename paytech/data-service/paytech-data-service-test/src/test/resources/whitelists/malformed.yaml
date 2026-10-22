@@ -1,3 +1,0 @@
-services:
-  - service: ledger
-    database: [mor_finance

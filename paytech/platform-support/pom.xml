@@ -15,7 +15,7 @@
     <packaging>pom</packaging>
 
     <name>PayTech Platform Support</name>
-    <description>Platform Support service aggregator: api / five business core modules / application core / app / test.</description>
+    <description>Platform Support service aggregator: api / six business core modules / application core / app / test.</description>
 
     <dependencyManagement>
         <dependencies>
@@ -42,6 +42,11 @@
             <dependency>
                 <groupId>com.paytech</groupId>
                 <artifactId>paytech-platform-support-delivery</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>paytech-platform-support-data-query</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -121,6 +126,7 @@
         <module>paytech-platform-support-audit-security</module>
         <module>paytech-platform-support-file-document</module>
         <module>paytech-platform-support-delivery</module>
+        <module>paytech-platform-support-data-query</module>
         <module>paytech-platform-support-core</module>
         <module>paytech-platform-support-app</module>
         <module>paytech-platform-support-test</module>

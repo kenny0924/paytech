@@ -20,6 +20,7 @@ import com.paytech.foundation.testsupport.api.TestBase;
 import com.paytech.platform.support.PlatformSupportTestApplication;
 import com.paytech.platform.support.core.audit.AuditDispatcher;
 import com.paytech.platform.support.test.configuration.LocalMockEnvironmentInitializer;
+import com.paytech.platform.support.test.dataquery.DataSourcePasswordVaultMock;
 import com.paytech.platform.support.test.mocker.external.LoginEmailVaultMocker;
 import com.paytech.platform.support.test.mocker.external.SesMocker;
 import com.paytech.platform.support.test.mocker.external.SqsMocker;
@@ -63,6 +64,9 @@ public abstract class MockTestBase extends TestBase {
     protected SesMocker ses;
 
     @Autowired
+    protected DataSourcePasswordVaultMock dataSourcePasswordVault;
+
+    @Autowired
     protected SqsMocker sqs;
 
     @Autowired
@@ -90,6 +94,7 @@ public abstract class MockTestBase extends TestBase {
         loginEmailVault.assertEmpty();
         ses.assertEmpty();
         sqs.assertEmpty();
+        dataSourcePasswordVault.assertEmpty();
         operationsMocker.mockCatalog();
     }
 
@@ -105,6 +110,6 @@ public abstract class MockTestBase extends TestBase {
         }
         mockHttpServer.awaitIdle();
         assertAll(loginEmailVault::assertNoUnexpectedCalls, ses::assertNoUnexpectedCalls, sqs::assertNoUnexpectedCalls,
-            mockHttpServer::assertNoUnexpectedRequests);
+            dataSourcePasswordVault::assertNoUnexpectedCalls, mockHttpServer::assertNoUnexpectedRequests);
     }
 }

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.dataquery.core.dal.mapper.QueryTemplateMapper">
+
+    <sql id="columns">
+        template_id AS templateId, template_code AS templateCode, template_name AS templateName, description,
+        data_source_id AS dataSourceId, status, current_version_no AS currentVersionNo, version,
+        created_by AS createdBy, updated_by AS updatedBy, create_time AS createTime, update_time AS updateTime
+    </sql>
+
+    <sql id="pageConditions">
+        <where>
+            <if test="dataSourceId != null">AND data_source_id = #{dataSourceId}</if>
+            <if test="status != null">AND status = #{status}</if>
+            <if test="keyword != null">
+                AND (template_code LIKE CONCAT('%', #{keyword}, '%') OR template_name LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+    </sql>
+
+    <insert id="insert">
+        INSERT INTO t_query_template (template_id, template_code, template_name, description, data_source_id, status,
+            current_version_no, version, created_by, updated_by, create_time, update_time)
+        VALUES (#{row.templateId}, #{row.templateCode}, #{row.templateName}, #{row.description}, #{row.dataSourceId},
+            #{row.status}, #{row.currentVersionNo}, #{row.version}, #{row.createdBy}, #{row.updatedBy},
+            #{row.createTime}, #{row.updateTime})
+    </insert>
+
+    <select id="selectById" timeout="2"
+            resultType="com.paytech.platform.support.dataquery.core.dal.dataobject.QueryTemplate">
+        SELECT <include refid="columns"/>
+        FROM t_query_template
+        WHERE template_id = #{templateId}
+    </select>
+
+    <select id="selectByCode" timeout="2"
+            resultType="com.paytech.platform.support.dataquery.core.dal.dataobject.QueryTemplate">
+        SELECT <include refid="columns"/>
+        FROM t_query_template
+        WHERE template_code = #{templateCode}
+    </select>
+
+    <select id="selectPage" timeout="5"
+            resultType="com.paytech.platform.support.dataquery.core.dal.dataobject.QueryTemplate">
+        SELECT <include refid="columns"/>
+        FROM t_query_template
+        <include refid="pageConditions"/>
+        ORDER BY update_time DESC, template_id DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="count" timeout="5" resultType="long">
+        SELECT COUNT(*)
+        FROM t_query_template
+        <include refid="pageConditions"/>
+    </select>
+
+    <select id="countByDataSource" timeout="2" resultType="long">
+        SELECT COUNT(*)
+        FROM t_query_template
+        WHERE data_source_id = #{dataSourceId}
+        <if test="status != null">AND status = #{status}</if>
+    </select>
+
+    <select id="selectCodesByDataSource" timeout="2" resultType="string">
+        SELECT template_code
+        FROM t_query_template
+        WHERE data_source_id = #{dataSourceId}
+        <if test="status != null">AND status = #{status}</if>
+        ORDER BY template_code
+        LIMIT #{limit}
+    </select>
+
+    <update id="updateCurrentVersion">
+        UPDATE t_query_template
+        SET template_name = #{next.templateName}, description = #{next.description},
+            data_source_id = #{next.dataSourceId}, current_version_no = #{next.currentVersionNo},
+            version = version + 1, updated_by = #{next.updatedBy}, update_time = #{next.updateTime}
+        WHERE template_id = #{row.templateId} AND version = #{row.version}
+            AND current_version_no = #{row.currentVersionNo}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE t_query_template
+        SET status = #{status}, version = version + 1, updated_by = #{updatedBy}, update_time = #{updateTime}
+        WHERE template_id = #{row.templateId} AND version = #{row.version} AND status = #{row.status}
+    </update>
+</mapper>

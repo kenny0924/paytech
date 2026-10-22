@@ -1,0 +1,892 @@
+[
+  {
+    "id": "Q01",
+    "method": "GET",
+    "path": "/data-query-admin/v1/data-sources",
+    "query": "?status=ACTIVE&engineType=MYSQL&keyword=RECON&page=1&size=20",
+    "routeCode": "operations-data-source-list",
+    "request": null,
+    "response": {
+      "items": [
+        {
+          "dataSourceId": "7312345678901234567",
+          "dataSourceCode": "RECON_REPLICA",
+          "dataSourceName": "对账从库",
+          "engineType": "MYSQL",
+          "host": "10.0.0.12",
+          "port": 3306,
+          "databaseName": "mor_fixture",
+          "username": "data_query_reader",
+          "connectionParams": {
+            "sslMode": "REQUIRED"
+          },
+          "maxPoolSize": 5,
+          "status": "ACTIVE",
+          "lastCheckResult": "PASSED",
+          "lastCheckMessage": null,
+          "lastCheckTime": "2026-10-22T01:02:03.123456Z",
+          "description": null,
+          "templateCount": 3,
+          "activeTemplateCount": 2,
+          "version": 4,
+          "createdBy": "10001",
+          "updatedBy": "10002",
+          "createTime": "2026-10-22T01:02:03.123456Z",
+          "updateTime": "2026-10-22T02:03:04.654321Z"
+        },
+        {
+          "dataSourceId": "7312345678901234568",
+          "dataSourceCode": "RISK_DORIS",
+          "dataSourceName": "对账从库",
+          "engineType": "MYSQL",
+          "host": "10.0.0.12",
+          "port": 3306,
+          "databaseName": null,
+          "username": "data_query_reader",
+          "connectionParams": {
+            "sslMode": "REQUIRED"
+          },
+          "maxPoolSize": 5,
+          "status": "ACTIVE",
+          "lastCheckResult": "PASSED",
+          "lastCheckMessage": null,
+          "lastCheckTime": "2026-10-22T01:02:03.123456Z",
+          "description": null,
+          "templateCount": 3,
+          "activeTemplateCount": 2,
+          "version": 4,
+          "createdBy": "10001",
+          "updatedBy": "10002",
+          "createTime": "2026-10-22T01:02:03.123456Z",
+          "updateTime": "2026-10-22T02:03:04.654321Z"
+        }
+      ],
+      "page": 1,
+      "size": 20,
+      "total": 2
+    },
+    "ownerPath": "/data-query-admin/v1/data-sources",
+    "status": 200
+  },
+  {
+    "id": "Q02",
+    "method": "GET",
+    "path": "/data-query-admin/v1/data-sources/7312345678901234567",
+    "query": "",
+    "routeCode": "operations-data-source-detail",
+    "request": null,
+    "response": {
+      "dataSourceId": "7312345678901234567",
+      "dataSourceCode": "RECON_REPLICA",
+      "dataSourceName": "对账从库",
+      "engineType": "MYSQL",
+      "host": "10.0.0.12",
+      "port": 3306,
+      "databaseName": "mor_fixture",
+      "username": "data_query_reader",
+      "connectionParams": {
+        "sslMode": "REQUIRED"
+      },
+      "maxPoolSize": 5,
+      "status": "INACTIVE",
+      "lastCheckResult": "FAILED",
+      "lastCheckMessage": "含写权限 INSERT",
+      "lastCheckTime": "2026-10-22T01:02:03.123456Z",
+      "description": null,
+      "templateCount": 3,
+      "activeTemplateCount": 2,
+      "version": 4,
+      "createdBy": "10001",
+      "updatedBy": "10002",
+      "createTime": "2026-10-22T01:02:03.123456Z",
+      "updateTime": "2026-10-22T02:03:04.654321Z"
+    },
+    "ownerPath": "/data-query-admin/v1/data-sources/7312345678901234567",
+    "status": 200
+  },
+  {
+    "id": "Q03",
+    "method": "POST",
+    "path": "/data-query-admin/v1/data-sources",
+    "query": "",
+    "routeCode": "operations-data-source-create",
+    "request": {
+      "dataSourceCode": "RECON_REPLICA",
+      "dataSourceName": "对账从库",
+      "engineType": "MYSQL",
+      "host": "10.0.0.12",
+      "port": 3306,
+      "databaseName": null,
+      "username": "data_query_reader",
+      "password": "data-source-password-canary",
+      "connectionParams": {
+        "sslMode": "REQUIRED",
+        "connectTimeout": "3000"
+      },
+      "maxPoolSize": 5,
+      "description": "整个实例"
+    },
+    "response": {
+      "objectType": "DATA_SOURCE",
+      "objectId": "7312345678901234567",
+      "objectCode": "RECON_REPLICA",
+      "status": "INACTIVE",
+      "version": 1
+    },
+    "ownerPath": "/data-query-admin/v1/data-sources",
+    "status": 200
+  },
+  {
+    "id": "Q04",
+    "method": "PUT",
+    "path": "/data-query-admin/v1/data-sources/7312345678901234567",
+    "query": "",
+    "routeCode": "operations-data-source-update",
+    "request": {
+      "dataSourceName": "对账从库",
+      "engineType": "MYSQL",
+      "host": "10.0.0.13",
+      "port": 3306,
+      "databaseName": "mor_fixture",
+      "username": "data_query_reader",
+      "password": null,
+      "connectionParams": {},
+      "maxPoolSize": 5,
+      "description": null,
+      "expectedVersion": 4
+    },
+    "response": {
+      "objectType": "DATA_SOURCE",
+      "objectId": "7312345678901234567",
+      "objectCode": "RECON_REPLICA",
+      "status": "ACTIVE",
+      "version": 5
+    },
+    "ownerPath": "/data-query-admin/v1/data-sources/7312345678901234567",
+    "status": 200
+  },
+  {
+    "id": "Q05",
+    "method": "POST",
+    "path": "/data-query-admin/v1/data-source-connection-tests",
+    "query": "",
+    "routeCode": "operations-data-source-connection-test",
+    "request": {
+      "dataSourceId": "7312345678901234567",
+      "engineType": "MYSQL",
+      "host": "10.0.0.13",
+      "port": 3306,
+      "databaseName": "mor_fixture",
+      "username": "data_query_writer",
+      "password": null,
+      "connectionParams": {
+        "sslMode": "REQUIRED"
+      }
+    },
+    "response": {
+      "result": "FAILED",
+      "connected": true,
+      "privilegesPassed": false,
+      "grants": [
+        "GRANT SELECT, INSERT ON `mor_fixture`.* TO `data_query_writer`@`%`"
+      ],
+      "violations": [
+        "含写权限 INSERT: GRANT SELECT, INSERT ON `mor_fixture`.* TO `data_query_writer`@`%`"
+      ],
+      "checkedAt": "2026-10-22T02:03:04.654321Z"
+    },
+    "ownerPath": "/data-query-admin/v1/data-source-connection-tests",
+    "status": 200
+  },
+  {
+    "id": "Q06",
+    "method": "POST",
+    "path": "/data-query-admin/v1/data-sources/7312345678901234567/status",
+    "query": "",
+    "routeCode": "operations-data-source-status",
+    "request": {
+      "status": "ACTIVE",
+      "expectedVersion": 5
+    },
+    "response": {
+      "objectType": "DATA_SOURCE",
+      "objectId": "7312345678901234567",
+      "objectCode": "RECON_REPLICA",
+      "status": "ACTIVE",
+      "version": 6
+    },
+    "ownerPath": "/data-query-admin/v1/data-sources/7312345678901234567/status",
+    "status": 200
+  },
+  {
+    "id": "Q07",
+    "method": "DELETE",
+    "path": "/data-query-admin/v1/data-sources/7312345678901234567",
+    "query": "?expectedVersion=6",
+    "routeCode": "operations-data-source-delete",
+    "request": null,
+    "response": {
+      "objectType": "DATA_SOURCE",
+      "objectId": "7312345678901234567",
+      "objectCode": "RECON_REPLICA",
+      "status": "DELETED",
+      "version": 7
+    },
+    "ownerPath": "/data-query-admin/v1/data-sources/7312345678901234567",
+    "status": 200
+  },
+  {
+    "id": "Q08",
+    "method": "GET",
+    "path": "/data-query-admin/v1/templates",
+    "query": "?dataSourceId=7312345678901234567&status=ACTIVE&keyword=ORDER&page=2&size=10",
+    "routeCode": "operations-query-template-list",
+    "request": null,
+    "response": {
+      "items": [
+        {
+          "templateId": "7312345678901230001",
+          "templateCode": "ORDER_LOOKUP",
+          "templateName": "订单查询",
+          "description": null,
+          "dataSourceId": "7312345678901234567",
+          "dataSourceCode": "RECON_REPLICA",
+          "dataSourceName": "对账从库",
+          "status": "ACTIVE",
+          "currentVersionNo": 3,
+          "pagingMode": "OFFSET",
+          "parameters": [
+            {
+              "name": "merchantId",
+              "type": "STRING",
+              "elementType": null,
+              "required": true
+            },
+            {
+              "name": "statuses",
+              "type": "LIST",
+              "elementType": "ENUM",
+              "required": false
+            }
+          ],
+          "version": 5,
+          "updatedBy": "10002",
+          "updateTime": "2026-10-22T02:03:04.654321Z"
+        }
+      ],
+      "page": 2,
+      "size": 10,
+      "total": 11
+    },
+    "ownerPath": "/data-query-admin/v1/templates",
+    "status": 200
+  },
+  {
+    "id": "Q09",
+    "method": "GET",
+    "path": "/data-query-admin/v1/templates/7312345678901230001",
+    "query": "",
+    "routeCode": "operations-query-template-detail",
+    "request": null,
+    "response": {
+      "templateId": "7312345678901230001",
+      "templateCode": "ORDER_LOOKUP",
+      "templateName": "订单查询",
+      "description": "按商户查订单",
+      "status": "ACTIVE",
+      "currentVersionNo": 3,
+      "version": 5,
+      "createdBy": "10001",
+      "updatedBy": "10002",
+      "createTime": "2026-10-22T01:02:03.123456Z",
+      "updateTime": "2026-10-22T02:03:04.654321Z",
+      "currentVersion": {
+        "templateId": "7312345678901230001",
+        "versionNo": 3,
+        "dataSourceId": "7312345678901234567",
+        "dataSourceCode": "RECON_REPLICA",
+        "dataSourceName": "对账从库",
+        "dataSourceStatus": "ACTIVE",
+        "body": "SELECT order_no, card_no FROM t_order WHERE merchant_id = {{merchantId}}\n{{#if statuses}} AND status IN ({{#join statuses}}){{/if}}\nORDER BY order_no",
+        "parameters": [
+          {
+            "name": "merchantId",
+            "type": "STRING",
+            "required": true,
+            "maxLength": 32
+          },
+          {
+            "name": "statuses",
+            "type": "LIST",
+            "elementType": "ENUM",
+            "required": false,
+            "allowedValues": [
+              "PAID",
+              "REFUNDED"
+            ]
+          }
+        ],
+        "columns": [
+          {
+            "name": "order_no",
+            "label": "订单号",
+            "mask": "NONE",
+            "keepStart": null,
+            "keepEnd": null
+          },
+          {
+            "name": "card_no",
+            "label": "卡号",
+            "mask": "KEEP_EDGES",
+            "keepStart": 6,
+            "keepEnd": 4
+          }
+        ],
+        "constraints": {
+          "maxRows": 1000,
+          "timeoutSeconds": 10,
+          "pagingMode": "OFFSET",
+          "maxPageSize": 100,
+          "countAllowed": true,
+          "cursorColumns": null
+        },
+        "restoredFromVersionNo": 1,
+        "changeNote": "恢复自版本 1",
+        "createdBy": "10002",
+        "createTime": "2026-10-22T02:03:04.654321Z"
+      }
+    },
+    "ownerPath": "/data-query-admin/v1/templates/7312345678901230001",
+    "status": 200
+  },
+  {
+    "id": "Q10",
+    "method": "POST",
+    "path": "/data-query-admin/v1/templates",
+    "query": "",
+    "routeCode": "operations-query-template-create",
+    "request": {
+      "templateCode": "ORDER_LOOKUP",
+      "templateName": "订单查询",
+      "description": "按商户查订单",
+      "dataSourceId": "7312345678901234567",
+      "body": "SELECT order_no, card_no FROM t_order WHERE merchant_id = {{merchantId}}\n{{#if statuses}} AND status IN ({{#join statuses}}){{/if}}\nORDER BY order_no",
+      "parameters": [
+        {
+          "name": "merchantId",
+          "type": "STRING",
+          "required": true,
+          "maxLength": 32
+        },
+        {
+          "name": "statuses",
+          "type": "LIST",
+          "elementType": "ENUM",
+          "required": false,
+          "allowedValues": [
+            "PAID",
+            "REFUNDED"
+          ]
+        }
+      ],
+      "columns": [
+        {
+          "name": "order_no",
+          "label": "订单号",
+          "mask": "NONE",
+          "keepStart": null,
+          "keepEnd": null
+        },
+        {
+          "name": "card_no",
+          "label": "卡号",
+          "mask": "KEEP_EDGES",
+          "keepStart": 6,
+          "keepEnd": 4
+        }
+      ],
+      "constraints": {
+        "maxRows": 1000,
+        "timeoutSeconds": 10,
+        "pagingMode": "OFFSET",
+        "maxPageSize": 100,
+        "countAllowed": true,
+        "cursorColumns": null
+      },
+      "changeNote": null
+    },
+    "response": {
+      "templateId": "7312345678901230001",
+      "templateCode": "ORDER_LOOKUP",
+      "status": "ACTIVE",
+      "version": 1,
+      "currentVersionNo": 1,
+      "warnings": [
+        {
+          "level": "WARNING",
+          "line": null,
+          "column": null,
+          "field": "parameters[1]",
+          "message": "参数 statuses 已声明但未在正文中使用"
+        }
+      ]
+    },
+    "ownerPath": "/data-query-admin/v1/templates",
+    "status": 200
+  },
+  {
+    "id": "Q11",
+    "method": "PUT",
+    "path": "/data-query-admin/v1/templates/7312345678901230001",
+    "query": "",
+    "routeCode": "operations-query-template-update",
+    "request": {
+      "templateName": "订单查询",
+      "description": null,
+      "dataSourceId": "7312345678901234567",
+      "body": "SELECT order_no, card_no FROM t_order WHERE merchant_id = {{merchantId}}\n{{#if statuses}} AND status IN ({{#join statuses}}){{/if}}\nORDER BY order_no",
+      "parameters": [
+        {
+          "name": "merchantId",
+          "type": "STRING",
+          "required": true,
+          "maxLength": 32
+        },
+        {
+          "name": "statuses",
+          "type": "LIST",
+          "elementType": "ENUM",
+          "required": false,
+          "allowedValues": [
+            "PAID",
+            "REFUNDED"
+          ]
+        }
+      ],
+      "columns": [
+        {
+          "name": "order_no",
+          "label": "订单号",
+          "mask": "NONE",
+          "keepStart": null,
+          "keepEnd": null
+        },
+        {
+          "name": "card_no",
+          "label": "卡号",
+          "mask": "KEEP_EDGES",
+          "keepStart": 6,
+          "keepEnd": 4
+        }
+      ],
+      "constraints": {
+        "maxRows": 1000,
+        "timeoutSeconds": 10,
+        "pagingMode": "OFFSET",
+        "maxPageSize": 100,
+        "countAllowed": true,
+        "cursorColumns": null
+      },
+      "changeNote": "增加状态筛选",
+      "expectedVersion": 4
+    },
+    "response": {
+      "templateId": "7312345678901230001",
+      "templateCode": "ORDER_LOOKUP",
+      "status": "ACTIVE",
+      "version": 5,
+      "currentVersionNo": 3,
+      "warnings": [
+        {
+          "level": "WARNING",
+          "line": null,
+          "column": null,
+          "field": "parameters[1]",
+          "message": "参数 statuses 已声明但未在正文中使用"
+        }
+      ]
+    },
+    "ownerPath": "/data-query-admin/v1/templates/7312345678901230001",
+    "status": 200
+  },
+  {
+    "id": "Q12",
+    "method": "POST",
+    "path": "/data-query-admin/v1/templates/7312345678901230001/status",
+    "query": "",
+    "routeCode": "operations-query-template-status",
+    "request": {
+      "status": "INACTIVE",
+      "expectedVersion": 5
+    },
+    "response": {
+      "objectType": "QUERY_TEMPLATE",
+      "objectId": "7312345678901230001",
+      "objectCode": "ORDER_LOOKUP",
+      "status": "INACTIVE",
+      "version": 6
+    },
+    "ownerPath": "/data-query-admin/v1/templates/7312345678901230001/status",
+    "status": 200
+  },
+  {
+    "id": "Q13",
+    "method": "GET",
+    "path": "/data-query-admin/v1/templates/7312345678901230001/versions",
+    "query": "?page=1&size=10",
+    "routeCode": "operations-query-template-version-list",
+    "request": null,
+    "response": {
+      "items": [
+        {
+          "versionNo": 3,
+          "dataSourceId": "7312345678901234567",
+          "dataSourceCode": "RECON_REPLICA",
+          "restoredFromVersionNo": 1,
+          "changeNote": "恢复自版本 1",
+          "createdBy": "10002",
+          "createTime": "2026-10-22T02:03:04.654321Z"
+        },
+        {
+          "versionNo": 2,
+          "dataSourceId": "7312345678901234567",
+          "dataSourceCode": "RECON_REPLICA",
+          "restoredFromVersionNo": null,
+          "changeNote": null,
+          "createdBy": "10001",
+          "createTime": "2026-10-22T01:02:03.123456Z"
+        }
+      ],
+      "page": 1,
+      "size": 10,
+      "total": 2
+    },
+    "ownerPath": "/data-query-admin/v1/templates/7312345678901230001/versions",
+    "status": 200
+  },
+  {
+    "id": "Q14",
+    "method": "GET",
+    "path": "/data-query-admin/v1/templates/7312345678901230001/versions/3",
+    "query": "",
+    "routeCode": "operations-query-template-version-detail",
+    "request": null,
+    "response": {
+      "templateId": "7312345678901230001",
+      "versionNo": 3,
+      "dataSourceId": "7312345678901234567",
+      "dataSourceCode": "RECON_REPLICA",
+      "dataSourceName": "对账从库",
+      "dataSourceStatus": "ACTIVE",
+      "body": "SELECT order_no, card_no FROM t_order WHERE merchant_id = {{merchantId}}\n{{#if statuses}} AND status IN ({{#join statuses}}){{/if}}\nORDER BY order_no",
+      "parameters": [
+        {
+          "name": "merchantId",
+          "type": "STRING",
+          "required": true,
+          "maxLength": 32
+        },
+        {
+          "name": "statuses",
+          "type": "LIST",
+          "elementType": "ENUM",
+          "required": false,
+          "allowedValues": [
+            "PAID",
+            "REFUNDED"
+          ]
+        }
+      ],
+      "columns": [
+        {
+          "name": "order_no",
+          "label": "订单号",
+          "mask": "NONE",
+          "keepStart": null,
+          "keepEnd": null
+        },
+        {
+          "name": "card_no",
+          "label": "卡号",
+          "mask": "KEEP_EDGES",
+          "keepStart": 6,
+          "keepEnd": 4
+        }
+      ],
+      "constraints": {
+        "maxRows": 1000,
+        "timeoutSeconds": 10,
+        "pagingMode": "OFFSET",
+        "maxPageSize": 100,
+        "countAllowed": true,
+        "cursorColumns": null
+      },
+      "restoredFromVersionNo": 1,
+      "changeNote": "恢复自版本 1",
+      "createdBy": "10002",
+      "createTime": "2026-10-22T02:03:04.654321Z"
+    },
+    "ownerPath": "/data-query-admin/v1/templates/7312345678901230001/versions/3",
+    "status": 200
+  },
+  {
+    "id": "Q15",
+    "method": "POST",
+    "path": "/data-query-admin/v1/templates/7312345678901230001/restoration",
+    "query": "",
+    "routeCode": "operations-query-template-restore",
+    "request": {
+      "versionNo": 1,
+      "expectedVersion": 5,
+      "changeNote": null
+    },
+    "response": {
+      "templateId": "7312345678901230001",
+      "templateCode": "ORDER_LOOKUP",
+      "status": "ACTIVE",
+      "version": 6,
+      "currentVersionNo": 4,
+      "warnings": [
+        {
+          "level": "WARNING",
+          "line": null,
+          "column": null,
+          "field": "parameters[1]",
+          "message": "参数 statuses 已声明但未在正文中使用"
+        }
+      ]
+    },
+    "ownerPath": "/data-query-admin/v1/templates/7312345678901230001/restoration",
+    "status": 200
+  },
+  {
+    "id": "Q16",
+    "method": "POST",
+    "path": "/data-query-admin/v1/template-validations",
+    "query": "",
+    "routeCode": "operations-query-template-validate",
+    "request": {
+      "dataSourceId": "7312345678901234567",
+      "body": "SELECT order_no, card_no FROM t_order WHERE merchant_id = {{merchantId}}\n{{#if statuses}} AND status IN ({{#join statuses}}){{/if}}\nORDER BY order_no",
+      "parameters": [
+        {
+          "name": "merchantId",
+          "type": "STRING",
+          "required": true,
+          "maxLength": 32
+        },
+        {
+          "name": "statuses",
+          "type": "LIST",
+          "elementType": "ENUM",
+          "required": false,
+          "allowedValues": [
+            "PAID",
+            "REFUNDED"
+          ]
+        }
+      ],
+      "columns": [
+        {
+          "name": "order_no",
+          "label": "订单号",
+          "mask": "NONE",
+          "keepStart": null,
+          "keepEnd": null
+        },
+        {
+          "name": "card_no",
+          "label": "卡号",
+          "mask": "KEEP_EDGES",
+          "keepStart": 6,
+          "keepEnd": 4
+        }
+      ],
+      "constraints": {
+        "maxRows": 1000,
+        "timeoutSeconds": 10,
+        "pagingMode": "OFFSET",
+        "maxPageSize": 100,
+        "countAllowed": true,
+        "cursorColumns": null
+      }
+    },
+    "response": {
+      "valid": false,
+      "problems": [
+        {
+          "level": "ERROR",
+          "line": 2,
+          "column": 14,
+          "field": "body",
+          "message": "第 2 行第 14 列：引用了未声明的参数 status"
+        },
+        {
+          "level": "WARNING",
+          "line": null,
+          "column": null,
+          "field": "parameters[1]",
+          "message": "参数 statuses 已声明但未在正文中使用"
+        }
+      ]
+    },
+    "ownerPath": "/data-query-admin/v1/template-validations",
+    "status": 200
+  },
+  {
+    "id": "Q17",
+    "method": "POST",
+    "path": "/data-query-admin/v1/template-trials",
+    "query": "",
+    "routeCode": "operations-query-template-trial",
+    "request": {
+      "dataSourceId": "7312345678901234567",
+      "body": "SELECT order_no, card_no FROM t_order WHERE merchant_id = {{merchantId}}\n{{#if statuses}} AND status IN ({{#join statuses}}){{/if}}\nORDER BY order_no",
+      "parameters": [
+        {
+          "name": "merchantId",
+          "type": "STRING",
+          "required": true,
+          "maxLength": 32
+        },
+        {
+          "name": "statuses",
+          "type": "LIST",
+          "elementType": "ENUM",
+          "required": false,
+          "allowedValues": [
+            "PAID",
+            "REFUNDED"
+          ]
+        }
+      ],
+      "columns": [
+        {
+          "name": "order_no",
+          "label": "订单号",
+          "mask": "NONE",
+          "keepStart": null,
+          "keepEnd": null
+        },
+        {
+          "name": "card_no",
+          "label": "卡号",
+          "mask": "KEEP_EDGES",
+          "keepStart": 6,
+          "keepEnd": 4
+        }
+      ],
+      "constraints": {
+        "maxRows": 1000,
+        "timeoutSeconds": 10,
+        "pagingMode": "OFFSET",
+        "maxPageSize": 100,
+        "countAllowed": true,
+        "cursorColumns": null
+      },
+      "params": {
+        "merchantId": "M10001",
+        "statuses": [
+          "PAID"
+        ]
+      },
+      "page": 2,
+      "size": 50,
+      "withTotal": true,
+      "cursor": null
+    },
+    "response": {
+      "versionNo": 0,
+      "columns": [
+        {
+          "name": "order_no",
+          "label": "订单号"
+        },
+        {
+          "name": "card_no",
+          "label": "卡号"
+        }
+      ],
+      "rows": [
+        [
+          "O-1001",
+          "411111******1111"
+        ],
+        [
+          "O-1002",
+          null
+        ],
+        [
+          "O-1003",
+          "[binary]"
+        ]
+      ],
+      "hasMore": true,
+      "total": 153,
+      "nextCursor": null,
+      "elapsedMillis": 42,
+      "sql": "SELECT order_no, card_no FROM t_order WHERE merchant_id = ? AND status IN (?) ORDER BY order_no LIMIT ? OFFSET ?",
+      "bindings": [
+        "M10001",
+        "PAID",
+        "50",
+        "50"
+      ],
+      "countSql": "SELECT COUNT(*) FROM (SELECT order_no, card_no FROM t_order WHERE merchant_id = ? AND status IN (?)) t"
+    },
+    "ownerPath": "/data-query-admin/v1/template-trials",
+    "status": 200
+  },
+  {
+    "id": "Q18",
+    "method": "POST",
+    "path": "/data-query/v1/templates/ORDER_LOOKUP/executions",
+    "query": "",
+    "routeCode": "operations-data-query-execute",
+    "request": {
+      "params": {
+        "merchantId": "M10001",
+        "statuses": [
+          "PAID"
+        ]
+      },
+      "page": 2,
+      "size": 50,
+      "withTotal": true,
+      "cursor": null
+    },
+    "response": {
+      "versionNo": 3,
+      "columns": [
+        {
+          "name": "order_no",
+          "label": "订单号"
+        },
+        {
+          "name": "card_no",
+          "label": "卡号"
+        }
+      ],
+      "rows": [
+        [
+          "O-1001",
+          "411111******1111"
+        ],
+        [
+          "O-1002",
+          null
+        ],
+        [
+          "O-1003",
+          "[binary]"
+        ]
+      ],
+      "hasMore": true,
+      "total": 153,
+      "nextCursor": null,
+      "elapsedMillis": 42
+    },
+    "ownerPath": "/data-query/v1/templates/ORDER_LOOKUP/executions",
+    "status": 200
+  }
+]

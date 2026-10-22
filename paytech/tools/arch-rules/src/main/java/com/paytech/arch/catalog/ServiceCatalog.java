@@ -20,8 +20,7 @@ public final class ServiceCatalog {
 
     static {
         for (String service : new String[] {"client-master", "commercial", "counterparty", "card", "risk-decision",
-            "compliance", "channel-connector", "billing", "account", "ledger", "reconciliation", "tax",
-            "data-service"}) {
+            "compliance", "channel-connector", "billing", "account", "ledger", "reconciliation", "tax"}) {
             SERVICES.put(service, ServiceLayer.DOMAIN);
         }
         for (String service : new String[] {"acquiring", "payment", "payout", "dispute", "fx"}) {

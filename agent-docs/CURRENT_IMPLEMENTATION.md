@@ -29,7 +29,7 @@
 - **Known gaps：**
   - ledger 读取 Platform 币种响应的严格 JSON 上限是 8 KB，约 60 个币种会超限（billing 为 64 KB）。
   - 本机 `local-environment` 的 `mor_ledger`、`mor_billing` 仍保留副本表，等其他会话的旧代码不再使用后再删。
-  - `data-service/cdc/whitelist.yaml` 与本地 Flink 示例仍指向不存在的 `mor_finance.t_currency_spec`。
+  - 本地 Flink 演示管道仍指向不存在的 `mor_finance.t_currency_spec`。`data-service` 骨架与 CDC 白名单已删除，并入 Platform data-query（研发中，见[需求目录](<../requirements/20261022/platform-support-数据查询服务/requirement.md>)与[决定](./decisions/2026-10-22-data-query-into-platform-support.md)）。
 
 ## reconciliation 对账控制台详情页与渠道流水（2026-10-21，已部署 mor-test，已本地提交，未推送）
 
@@ -118,8 +118,8 @@
 
 - **范围：** 按 [V2 决定草案](./decisions/2026-10-17-target-architecture-v2.md) D09、D11、D22、D24–D26、D31–D36 与[需求](<../requirements/20261017/architecture-V2骨架与模块搬迁/requirement.md>)，把 12 个旧工程根并入单一 Maven Reactor `paytech/`（唯一 Wrapper `paytech/mvnw`）。各步任务卡与报告见 [tasks/](<../requirements/20261017/architecture-V2骨架与模块搬迁/tasks/>)。本节只登记事实，规范正文仍以 `DOCUMENT_GOVERNANCE.md` 路由的 Owner 为准。
 - **Implemented：**
-  - **目录与模块：** `paytech/` 下有 24 个服务目录。
-    - 18 个已建工程：platform-support、api-gateway、operations-console-bff、client-console-bff、vault、client-master、commercial、acquiring、counterparty（2026-10-20 由 consumer 改名）、payment、channel-connector、card、risk-decision、compliance、billing、account、ledger、data-service。
+  - **目录与模块：** `paytech/` 下有 23 个服务目录（原 24 个，data-service 已删除，并入 Platform data-query，研发中，见 [2026-10-22 决定](./decisions/2026-10-22-data-query-into-platform-support.md)）。
+    - 17 个已建工程：platform-support、api-gateway、operations-console-bff、client-console-bff、vault、client-master、commercial、acquiring、counterparty（2026-10-20 由 consumer 改名）、payment、channel-connector、card、risk-decision、compliance、billing、account、ledger。
     - 另有 reconciliation、tax 两个空壳服务。
     - dispute、payout 只有模型；fx、workflow-approval 只有 README 占位。
     - 另有 `paytech/build`（BOM、父 POM）、`paytech/foundation`（17 个模块，含 `paytech-messaging(-api)`、`paytech-internal-auth`）与 `paytech/tools/{arch-rules,arch-rules-reactor-test,instance-manifest,migration-runner}`。
@@ -148,7 +148,7 @@
     | 06 Risk | 2083 | risk-decision 1726 + compliance 374 |
     | 07 Finance | 242 | 316 |
 
-  - **后续各步终值：** 08 起：acquiring 803、client-master 58；11a：billing 89；11b：ledger 204、account 40；12：card-test 38、card-core 11、payment 62；12x：payment 63。arch-rules 56、data-service-test 16、migration-runner 27。
+  - **后续各步终值：** 08 起：acquiring 803、client-master 58；11a：billing 89；11b：ledger 204、account 40；12：card-test 38、card-core 11、payment 62；12x：payment 63。arch-rules 56、data-service-test 16（data-service 已删除，并入 Platform data-query，研发中）、migration-runner 27。
   - **app 启动：** 各步 app 以 mock Profile 启动后，管理端口健康检查均为 UP。
   - **第 13 步：** `scripts/verify-markdown-links.mjs` 0 broken；`scripts/rewrite-moved-links.mjs --check` 0 待改；`verify-java-foundation.mjs` 通过。requirements-site 137 / 127 / 10、PDManer 557 / 520 / 37 均与起点失败集相同。test-environment Python 336 项、3 failures、37 errors，均为搬迁前即有的 Risk rollout 工具钉值漂移。
   - **本机库 DDL 应用情况**（`mor-local-mysql-1`，root 执行各服务测试 `init/ddl.sql` 或评审增量 SQL）：

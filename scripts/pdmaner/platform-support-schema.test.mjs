@@ -20,6 +20,7 @@ const expectedTables = [
   'authentication_challenge', 'file_upload', 'file_scan_policy', 'file_scan_requirement', 'file_object', 'file_owner_ref', 'file_scan_result',
   'audit_chain', 'audit_event', 'audit_event_attr', 'security_event', 'command_idempotency', 'compensation_event', 'console_resource',
   'webhook_endpoint', 'webhook_signing_secret', 'webhook_event', 'webhook_delivery', 'webhook_attempt',
+  'data_source', 'query_template', 'query_template_version',
 ].map(name => `t_${name}`);
 const quote = value => `'${value.replaceAll("'", "''")}'`;
 

@@ -150,10 +150,13 @@ The existing host Redis on `6379` and Nexus on `18081` are outside this Compose 
 
 ## Analytics profile
 
-The optional `analytics` profile backs the data service (`paytech/data-service`, decisions D25 / D35). It contains a
-single-node Apache Doris 3.0.8 (FE + BE), a Flink 1.20.5 session cluster with Flink CDC 3.7.0 pipeline connectors,
-and two one-shot containers. Images, versions and SHA-256 values are listed in
-[`paytech/data-service/README.md`](../paytech/data-service/README.md#版本与校验值) and `flink/Dockerfile`.
+The optional `analytics` profile is the Doris dialect manual test environment for Platform data-query. Since the
+[2026-10-22 data-query decision](../agent-docs/decisions/2026-10-22-data-query-into-platform-support.md) the former
+`paytech/data-service` and its CDC whitelist contract are removed; Doris is one data source type that data-query can
+register, and the containers, `mor_data_service` and `data_service_app` stay as the queried database and read-only
+account for those manual tests. It contains a single-node Apache Doris 3.0.8 (FE + BE), a Flink 1.20.5 session
+cluster with Flink CDC 3.7.0 pipeline connectors, and two one-shot containers. Images, versions and SHA-256 values are
+listed under [Versions and checksums](#versions-and-checksums) and in `flink/Dockerfile`.
 
 | Service | Role | Host endpoint |
 |---|---|---|
@@ -164,8 +167,8 @@ and two one-shot containers. Images, versions and SHA-256 values are listed in
 | `flink-taskmanager` | Flink TaskManager, 2 slots | none |
 | `flink-cdc-submit` | one-shot: submits `flink/pipelines/demo-currency-spec.yaml`; skips when that pipeline is already RUNNING | none |
 
-Every pipeline file may reference only tables in `paytech/data-service/cdc/whitelist.yaml`; `node
-scripts/verify-local-environment.mjs` enforces it. Volumes `mor-local-doris-fe-meta` and `mor-local-doris-be-storage`
+The demo pipeline only shows how data gets into Doris; it carries no contract. Pipeline files reference passwords only
+as `${MOR_*_PASSWORD}`, which `node scripts/verify-local-environment.mjs` checks. Volumes `mor-local-doris-fe-meta` and `mor-local-doris-be-storage`
 keep Doris metadata and data; Flink keeps no volume, so a stopped pipeline is re-submitted (and re-snapshotted) on the next
 start.
 
@@ -195,8 +198,8 @@ start.
      | docker exec -i -e MYSQL_PWD="$MOR_MYSQL_ROOT_PASSWORD" mor-local-mysql-1 mysql -uroot
    ```
 
-   `cdc_reader` gets only `REPLICATION SLAVE, REPLICATION CLIENT` globally and `SELECT` on whitelisted databases; add a
-   `GRANT SELECT` when a new database enters the whitelist.
+   `cdc_reader` gets only `REPLICATION SLAVE, REPLICATION CLIENT` globally and `SELECT` on the demo pipelines' source
+   databases; add a `GRANT SELECT` when a demo pipeline needs another database.
 
 ### Start, submit, inspect
 
@@ -213,7 +216,19 @@ docker compose --env-file .env.local -f compose.yaml -f compose.analytics.yaml -
 ```
 
 `flink-cdc-submit` prints `Pipeline has been submitted to cluster.` or `... already RUNNING; nothing submitted`.
-The demo update and Doris query are in [`paytech/data-service/README.md`](../paytech/data-service/README.md#本地演示人工执行).
+The demo pipeline needs `mor_finance.t_currency_spec` with rows in the running MySQL; if it is missing, apply only that
+table's DDL and initial rows from its owner's reviewed SQL by hand (never from an automated script). To watch a change
+arrive in Doris, update only the technical column and, after one checkpoint (about 10 s), read it with the read-only
+account:
+
+```bash
+set -a; source .env.local; set +a
+docker exec -e MYSQL_PWD="$MOR_MYSQL_ROOT_PASSWORD" mor-local-mysql-1 mysql -uroot mor_finance -e \
+  "UPDATE t_currency_spec SET update_time = UTC_TIMESTAMP(6) WHERE currency = 'USD'"
+docker exec -e MYSQL_PWD="$MOR_DATA_SERVICE_DORIS_PASSWORD" mor-local-doris-fe-1 \
+  mysql -h127.0.0.1 -P9030 -udata_service_app -e "SELECT currency, update_time FROM mor_data_service.t_currency_spec"
+```
+
 Compose warns about orphan `xxl-job-*` containers when the scheduler file is not included; do not add
 `--remove-orphans`.
 
@@ -254,6 +269,44 @@ docker compose --env-file .env.local -f compose.yaml -f compose.analytics.yaml -
 
 Do not add `-v` unless removal of the two Doris volumes has been explicitly approved.
 
+### Versions and checksums
+
+Moved here from the removed `paytech/data-service/README.md`:
+
+| Component | Version | Pinned as |
+|---|---|---|
+| Apache Doris FE | 3.0.8 | `apache/doris:fe-3.0.8@sha256:749afa2be75cd58d54a0bdb3edaa805d5974646f67500f094912f8dbc4a96b8f` (arm64 / amd64) |
+| Apache Doris BE | 3.0.8 | `apache/doris:be-3.0.8@sha256:a337e2b17a65c86c22a1205467a825d46dc3380c94ba8024e53eea033641f12e` (arm64 / amd64) |
+| Apache Flink | 1.20.5 (Java 17) | `flink:1.20.5-scala_2.12-java17@sha256:80401a8ee20e2246718c01303712c10ccaf13961e31316d9b8c4549f7b2cfc9b` |
+| Flink CDC distribution | 3.7.0 (Flink 1.20 line) | `flink-cdc-3.7.0-1.20-bin.tar.gz` SHA-256 `c7c48f9011e2835ceebaf25d98074e44716a106248da285d0a723fa738385a78` |
+| MySQL pipeline connector | 3.7.0-1.20 | SHA-256 `59ed5bbf92f6e8b7d2291d6365a2d0b12438fb011892d8898b756f1d718339f9` |
+| Doris pipeline connector | 3.7.0-1.20 | SHA-256 `72537db0a9b832732f756b0c846dcdc1e83a24d23671e3a126181e4c6be6e626` |
+| MySQL JDBC (Flink side) | mysql-connector-java 8.0.27 | SHA-256 `d670e85fa1075a80d91b8f17dbd620d76717bc20c74ab4aea8356e37a8545ffe` |
+
+`flink/Dockerfile` verifies every download with `sha256sum -c` at build time; the values above were first compared with
+the upstream `.sha512` (Apache dist) or `.sha1` (Maven Central). The built local image is
+`mor-local/flink-cdc:1.20.5-cdc3.7.0`. These versions serve only this local manual-test profile.
+
+## Data-query test fixture
+
+Platform data-query's HTTP entry tests query a dedicated local database instead of any service database
+(requirement `requirements/20261022/platform-support-数据查询服务`, Q12). It lives in the `base` MySQL, is local only and
+never reaches `mor-test`:
+
+| Object | Purpose |
+|---|---|
+| `mor_data_query_fixture` | `t_client_fixture` (3 rows), `t_refund_fixture` (10 rows), `t_number_fixture` (0–999, for CROSS JOIN timeout tests) |
+| `data_query_fixture_reader` | `SELECT` on `mor_data_query_fixture.*` only; the data source account that may be enabled |
+| `data_query_fixture_writer` | `SELECT, INSERT, UPDATE` on the same database; used only to prove that enabling is rejected |
+
+Passwords are `MOR_DATA_QUERY_FIXTURE_READER_PASSWORD` and `MOR_DATA_QUERY_FIXTURE_WRITER_PASSWORD` in `.env.local`.
+A new MySQL volume creates the fixture through `mysql/init/05-data-query-fixture.sh` only when both variables reach the
+mysql container (like the V2 successor accounts, `compose.yaml` does not pass them yet). An existing MySQL applies the
+same SQL once by hand, after review, with the command in the header of
+[`mysql/manual/2026-10-22-data-query-fixture.sql`](mysql/manual/2026-10-22-data-query-fixture.sql); the file is
+idempotent (accounts re-created, table rows reset) and its header lists the rollback. Tests never create or reset this
+database; they fail fast with this preparation instruction when it is missing.
+
 ## Stop safely
 
 ```bash
@@ -284,9 +337,10 @@ The first MySQL initialization creates empty schemas and one scoped account per 
 - `nacos_config` / `nacos`
 - `xxl_job` / `xxl_job`
 - `paytech_foundation_test` / `foundation_test` (local Java test schema)
-- `cdc_reader`: no schema of its own; binlog replication plus `SELECT` on CDC-whitelisted databases (analytics profile)
+- `cdc_reader`: no schema of its own; binlog replication plus `SELECT` on the demo pipelines' source databases (analytics profile)
+- `mor_data_query_fixture` / `data_query_fixture_reader` (`SELECT`) and `data_query_fixture_writer` (`SELECT, INSERT, UPDATE`): data-query test fixture, see [Data-query test fixture](#data-query-test-fixture); created only when both `MOR_DATA_QUERY_FIXTURE_*_PASSWORD` variables reach the mysql container
 
-Only `nacos_config` and `xxl_job` receive infrastructure-owned tables during environment initialization. `xxl_job`
+Only `nacos_config`, `xxl_job` and the test-only `mor_data_query_fixture` receive tables during environment initialization. `xxl_job`
 contains eight upstream Admin tables plus one local schema-version marker. Business/Vault/Foundation application tables
 are never created or rebuilt by Compose, Java startup, Maven or JUnit. Apply each reviewed test Schema/DML manually to
 its scoped database before running the owning test suite; tests may clean only rows and namespaces they own. A missing

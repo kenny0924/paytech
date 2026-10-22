@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.dataquery.core.dal.mapper.DataSourceMapper">
+
+    <sql id="columns">
+        data_source_id AS dataSourceId, data_source_code AS dataSourceCode, data_source_name AS dataSourceName,
+        engine_type AS engineType, host, port, database_name AS databaseName, username,
+        password_token AS passwordToken, connection_params_json AS connectionParamsJson,
+        max_pool_size AS maxPoolSize, status, last_check_result AS lastCheckResult,
+        last_check_message AS lastCheckMessage, last_check_time AS lastCheckTime, description, version,
+        created_by AS createdBy, updated_by AS updatedBy, create_time AS createTime, update_time AS updateTime
+    </sql>
+
+    <sql id="pageConditions">
+        WHERE status &lt;&gt; 'DELETED'
+        <if test="status != null">AND status = #{status}</if>
+        <if test="engineType != null">AND engine_type = #{engineType}</if>
+        <if test="keyword != null">
+            AND (data_source_code LIKE CONCAT('%', #{keyword}, '%') OR data_source_name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+    </sql>
+
+    <insert id="insert">
+        INSERT INTO t_data_source (data_source_id, data_source_code, data_source_name, engine_type, host, port,
+            database_name, username, password_token, connection_params_json, max_pool_size, status,
+            last_check_result, last_check_message, last_check_time, description, version, created_by, updated_by,
+            create_time, update_time)
+        VALUES (#{row.dataSourceId}, #{row.dataSourceCode}, #{row.dataSourceName}, #{row.engineType}, #{row.host},
+            #{row.port}, #{row.databaseName}, #{row.username}, #{row.passwordToken}, #{row.connectionParamsJson},
+            #{row.maxPoolSize}, #{row.status}, #{row.lastCheckResult}, #{row.lastCheckMessage}, #{row.lastCheckTime},
+            #{row.description}, #{row.version}, #{row.createdBy}, #{row.updatedBy}, #{row.createTime},
+            #{row.updateTime})
+    </insert>
+
+    <select id="selectById" timeout="2"
+            resultType="com.paytech.platform.support.dataquery.core.dal.dataobject.DataSource">
+        SELECT <include refid="columns"/>
+        FROM t_data_source
+        WHERE data_source_id = #{dataSourceId}
+    </select>
+
+    <select id="selectByIdForShare" flushCache="true" useCache="false"
+            resultType="com.paytech.platform.support.dataquery.core.dal.dataobject.DataSource">
+        SELECT <include refid="columns"/>
+        FROM t_data_source
+        WHERE data_source_id = #{dataSourceId}
+        FOR SHARE
+    </select>
+
+    <select id="selectByIds" timeout="2"
+            resultType="com.paytech.platform.support.dataquery.core.dal.dataobject.DataSource">
+        SELECT <include refid="columns"/>
+        FROM t_data_source
+        WHERE data_source_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+    </select>
+
+    <select id="selectPage" timeout="5"
+            resultType="com.paytech.platform.support.dataquery.core.dal.dataobject.DataSource">
+        SELECT <include refid="columns"/>
+        FROM t_data_source
+        <include refid="pageConditions"/>
+        ORDER BY update_time DESC, data_source_id DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="count" timeout="5" resultType="long">
+        SELECT COUNT(*)
+        FROM t_data_source
+        <include refid="pageConditions"/>
+    </select>
+
+    <select id="selectRefreshStates" timeout="2"
+            resultType="com.paytech.platform.support.dataquery.core.dal.dataobject.DataSource">
+        SELECT data_source_id AS dataSourceId, version, status
+        FROM t_data_source
+        WHERE status &lt;&gt; 'DELETED'
+    </select>
+
+    <update id="updateConfiguration">
+        UPDATE t_data_source
+        SET data_source_name = #{next.dataSourceName}, engine_type = #{next.engineType}, host = #{next.host},
+            port = #{next.port}, database_name = #{next.databaseName}, username = #{next.username},
+            password_token = #{next.passwordToken}, connection_params_json = #{next.connectionParamsJson},
+            max_pool_size = #{next.maxPoolSize}, description = #{next.description}, version = version + 1,
+            updated_by = #{next.updatedBy}, update_time = #{next.updateTime}
+        WHERE data_source_id = #{row.dataSourceId} AND version = #{row.version} AND status = #{row.status}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE t_data_source
+        SET status = #{status}, version = version + 1, updated_by = #{updatedBy}, update_time = #{updateTime}
+        WHERE data_source_id = #{row.dataSourceId} AND version = #{row.version} AND status = #{row.status}
+    </update>
+
+    <update id="updateLastCheck">
+        UPDATE t_data_source
+        SET last_check_result = #{result}, last_check_message = #{message}, last_check_time = #{checkTime}
+        WHERE data_source_id = #{dataSourceId} AND status &lt;&gt; 'DELETED'
+    </update>
+</mapper>

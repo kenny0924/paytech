@@ -18,7 +18,6 @@ services:
   - {name: payout, applicationName: payout-service, port: 18117, database: mor_payout, source: finance-service}
   - {name: dispute, applicationName: dispute-service, port: 18118, database: mor_dispute, source: risk-compliance-service + payment-orchestration-service}
   - {name: fx, applicationName: fx-service, port: 18119, database: mor_fx, source: new}
-  - {name: data-service, applicationName: data-service, port: 18120, database: mor_data_service, source: new}
   - {name: platform-support, applicationName: platform-support-service, port: 18106, database: mor_platform, source: platform-support-service}
   - {name: workflow-approval, applicationName: workflow-approval-service, port: 18121, database: mor_workflow_approval, source: new}
   - {name: api-gateway, applicationName: api-gateway, port: 18080, database: null, source: api-gateway}

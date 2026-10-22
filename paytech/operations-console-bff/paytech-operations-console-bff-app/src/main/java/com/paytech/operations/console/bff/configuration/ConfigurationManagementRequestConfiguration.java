@@ -69,7 +69,7 @@ public class ConfigurationManagementRequestConfiguration implements WebMvcConfig
                     throw new InvalidParameterException("该请求不接受 Body");
                 return true;
             }
-        }).addPathPatterns("/gateway-admin/v1/**", "/console-admin/v1/**", "/permission-admin/v1/**", "/api-credential-admin/v1/**", "/api-scope-admin/v1/**", "/tenant-access-admin/v1/**", "/external-api-admin/v1/**", "/notification-admin/v1/**", "/webhook-admin/v1/**", "/currency-admin/v1/**");
+        }).addPathPatterns("/gateway-admin/v1/**", "/console-admin/v1/**", "/permission-admin/v1/**", "/api-credential-admin/v1/**", "/api-scope-admin/v1/**", "/tenant-access-admin/v1/**", "/external-api-admin/v1/**", "/notification-admin/v1/**", "/webhook-admin/v1/**", "/currency-admin/v1/**", "/data-query-admin/v1/**", "/data-query/v1/**");
     }
 
     /** Controller 方法是否声明 RequestBody。 */

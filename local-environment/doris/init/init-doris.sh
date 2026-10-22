@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # One-shot Doris bootstrap for the analytics profile (runs in the doris-init container, Doris FE image).
 # Idempotent: sets the root password on first run, registers the single BE, creates mor_data_service and the
-# read-only data_service_app account. Passwords come from the environment and are never printed.
+# read-only data_service_app account. Both remain only as the queried database and read-only account for the
+# Platform data-query Doris dialect manual tests (2026-10-22 decision); the former data-service is removed.
+# Passwords come from the environment and are never printed.
 set -euo pipefail
 
 readonly FE_HOST=doris-fe

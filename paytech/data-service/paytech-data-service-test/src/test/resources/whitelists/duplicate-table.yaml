@@ -1,6 +1,0 @@
-services:
-  - service: ledger
-    database: mor_finance
-    tables:
-      - name: t_currency_spec
-      - name: t_currency_spec

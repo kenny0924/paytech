@@ -77,6 +77,8 @@ export function pageRoutePaths(menu: ConsoleResource): string[] {
       return [menu.frontendRoute, `${menu.frontendRoute}/:exceptionId`];
     case 'OPERATIONS_EXTERNAL_INTEGRATIONS':
       return [menu.frontendRoute, `${menu.frontendRoute}/:integrationCode`, `${menu.frontendRoute}/:integrationCode/:section/:childCode`];
+    case 'OPERATIONS_QUERY_TEMPLATES':
+      return [menu.frontendRoute, `${menu.frontendRoute}/:templateId`];
     default:
       return [menu.frontendRoute];
   }

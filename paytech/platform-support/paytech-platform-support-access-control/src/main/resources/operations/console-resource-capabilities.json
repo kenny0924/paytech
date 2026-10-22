@@ -191,6 +191,28 @@
     ]
   },
   {
+    "componentKey": "OPERATIONS_DATA_SOURCES",
+    "displayName": "数据源",
+    "frontendRoute": "/data-query/data-sources",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_DATA_SOURCE_MANAGE",
+        "displayName": "维护"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_QUERY_TEMPLATES",
+    "displayName": "查询模板",
+    "frontendRoute": "/data-query/templates",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_DATA_QUERY_TEMPLATE_MANAGE",
+        "displayName": "维护"
+      }
+    ]
+  },
+  {
     "componentKey": "OPERATIONS_API_CREDENTIALS",
     "displayName": "API 凭证",
     "frontendRoute": "/api-credentials",

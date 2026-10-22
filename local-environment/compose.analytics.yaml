@@ -1,6 +1,7 @@
-# Optional analytics profile (D25 / D35): Apache Doris single node + Flink with Flink CDC pipeline connectors.
+# Optional analytics profile: Apache Doris single node + Flink with Flink CDC pipeline connectors, kept as the Doris
+# dialect manual test environment for Platform data-query (2026-10-22 decision; no data-service, no CDC whitelist).
 # Always combine with compose.yaml (shared mor network); MySQL from the base profile must already be running.
-# Images, versions and SHA-256 values are recorded in flink/Dockerfile and paytech/data-service/README.md.
+# Images, versions and SHA-256 values are recorded in flink/Dockerfile and local-environment/README.md.
 services:
   doris-fe:
     profiles: [analytics]

@@ -1,0 +1,1 @@
+-- 本需求的 DDL 见 paytech/platform-support/docs/database/sql/changes/2026-10-22-data-query.sql（文件头含预检、执行顺序与回滚）；完整 Schema 见同目录 platform-support-schema.sql。
