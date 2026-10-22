@@ -26,10 +26,11 @@
 | 2026-10-22 | 7 S16 / S7-04 | S16：PAYERMAX 渠道 DRAFT→ACTIVE，账号 239093383992287232、MID 239093386823442432、能力 CARD/*/*/USD/5999（PAY、3DS SUPPORTED）；configure_card 的标准 API PAY 改写被 Platform 拒绝（mor-test PAY 为 APM 超集、有 5 个实现），只运行其接入方部分（卡直付流程，收银台 PAY 流程已删）；configure_3ds：PAY v4 含 threeDsRequired、PayerMax 流程带 do3DS，复跑无修改。AC-07 反向通过（401、回调行 REJECTED、无 MQ）。缺陷 S7-04：mor-test 标准 API PAY 的 payment.subject 为必填而 Payment 不传，任何 PAY 在校验阶段失败（既有问题）；用户确认后主会话经运营接口改为非必填（PAY v4→v5，其他字段不变；回退脚本 `release/acceptance/s7_04_subject_optional.py --revert`） | 进行中 |
 | 2026-10-22 | 7 完成 | mor-test 验收（[release.md 第 11 节](../payment-3DS全链路/release/release.md)）：3DS AC-01/02/03/04/07（反向）/11/12 通过，AC-05/08/09/10 沿用阶段 5，AC-06 未做（交易已终态）；BIN AC-01—06、08（三列冻结）、11、12、并发 409、新数据查询样式下页面布局通过，已回切 v1，AC-07/09/10 沿用阶段 5；回归：工作流内嵌预览 RUN=C 全通过、CYBS/MPGS 沙箱通过、十个服务 healthy 0 重启。PaymentSucceeded：card 正常消费；acquiring 1 条进 DLQ（探针绕过 acquiring 建单，订单不存在，预期，消息保留）。收尾：PAYERMAX MID SUSPENDED、能力 DISABLED，账号与渠道保留 ACTIVE。缺陷 / 观察：S7-01（已修）、S7-02 低（工作流定义页并发 429，既有）、S7-03 观察（Risk 冷启动首笔失败关闭）、S7-04（已改 subject 可选）。会话私有凭据目录已删除。现网镜像：risk d69ca678、payment 4cf16f15、acquiring 3958983e、counterparty 6586bd73、platform 96da579b、card c39a3990、channel-connector 23679d45、api-gateway 270c8ba2、ops-bff 9c382db3、ops-web 8bdbdd44；已通知各会话 | 已确认 |
 | 2026-10-22 | 7 确认 | 用户“继续”：接受阶段 7 结果；授权阶段 8 本地提交（不推送）：两项需求代码（rel2 相对 `42879401` 的改动）、两个需求目录与 README 索引、`CURRENT_IMPLEMENTATION.md` 条目、主 compose 补丁（payment 申请窗口、card 信任库与挂载、Platform `DATAQUERY_HTTP_CALLERS_0`；channel-connector RabbitMQ 键已在代码改动内）；不提交 `operations-console.pen` 与他人未提交文件 | 已确认 |
+| 2026-10-22 | 8 提交 | 本地提交 `de4f7ba4`（父 `54d6efc4`，583 个文件：两项需求代码与 rel2 测试 / 发布版本逐字节一致、两个需求目录、README 索引、CURRENT_IMPLEMENTATION 条目、主 compose 补丁），私有 index 构建，未推送；首次构建 `afba320b` 因两个发布脚本丢失可执行位，在任何会话基于它之前以同一父提交重建为 `de4f7ba4`。主工作区与共享 index 已同步本提交路径，未触碰其他会话的未提交改动。`operations-console.pen` 未提交 | 完成 |
 
 ## 当前阶段与下一确认点
 
-阶段 8 代码提交与交付归档进行中。
+阶段 8 已完成（本地提交 `de4f7ba4`，未推送），待用户确认本次交付结束。推送另行授权。
 
 ## 实现 / 验证 / 部署状态
 

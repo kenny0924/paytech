@@ -11,7 +11,7 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
-## payment 3DS 全链路 + card BIN 库与卡属性（2026-10-22，已部署 mor-test，已本地提交，未推送）
+## payment 3DS 全链路 + card BIN 库与卡属性（2026-10-22，已部署 mor-test，已本地提交 `de4f7ba4`，未推送）
 
 - **范围：** [3DS 需求](<../requirements/20261022/payment-3DS全链路/requirement.md>)、[3DS 技术方案](<../requirements/20261022/payment-3DS全链路/technique.md>)、[Execution 3DS 修订](<../requirements/20261022/payment-3DS全链路/execution-3ds-amendment.md>)、[3DS 交付记录](<../requirements/20261022/payment-3DS全链路/delivery.md>)；[BIN 需求](<../requirements/20261022/card-BIN库与卡属性/requirement.md>)、[BIN 技术方案](<../requirements/20261022/card-BIN库与卡属性/technique.md>)、[BIN 交付记录](<../requirements/20261022/card-BIN库与卡属性/delivery.md>)；两项合并发布 [release.md](<../requirements/20261022/payment-3DS全链路/release/release.md>)。
 - **Implemented：**
